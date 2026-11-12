@@ -1,6 +1,7 @@
 import type { AsteroidSize } from "./asteroid-catalog.ts";
 import type { EnemyArchetype } from "./enemy-catalog.ts";
-import type { SectorId, Weapon } from "./types.ts";
+import type { RoutePosition } from "./galaxies.ts";
+import type { Weapon } from "./types.ts";
 
 export type UpgradeWeapon = Exclude<Weapon, "basic">;
 export type UpgradeTrack = "shield" | "shieldRecharge" | "engine" | "tractor";
@@ -34,8 +35,13 @@ export interface EconomyCatalog {
   enemyStardust: Readonly<Record<EnemyArchetype, number>>;
   /** Inclusive Stardust range released by a destroyed asteroid of each size. */
   asteroidStardust: Readonly<Record<AsteroidSize, readonly [number, number]>>;
-  /** Chance per galaxy that a destroyed enemy drops a random upgrade weapon. */
-  weaponDropChance: Readonly<Record<SectorId, Readonly<Record<EnemyArchetype, number>>>>;
+  /**
+   * Chance by route position that a destroyed enemy drops a random upgrade weapon; a placeholder
+   * reads the built galaxy before it.
+   */
+  weaponDropChance: Readonly<
+    Partial<Record<RoutePosition, Readonly<Record<EnemyArchetype, number>>>>
+  >;
   /**
    * Ammunition for every upgrade weapon (Basic is unlimited): each pack's shots, about a minute
    * of steady fire at level 1; one shot uses one. A new weapon includes `grantPacks` packs and a
@@ -247,7 +253,7 @@ export const ECONOMY: EconomyCatalog = {
       swarm: 0.0025,
     },
     2: { ...small, capital: 0.05, frigate: 0.05, platform: 0.05 },
-    3: { ...small, capital: 0.05, frigate: 0.05, platform: 0.05 },
+    5: { ...small, capital: 0.05, frigate: 0.05, platform: 0.05 },
   },
   weaponPrices: {
     heavyMissile: 300,

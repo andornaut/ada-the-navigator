@@ -2,7 +2,7 @@ import type { InstallStepsKind } from "@andornaut/game-kit/web/pwa/installState"
 
 import type { ShipPhysics } from "./ship-physics.ts";
 
-export type SectorId = 1 | 2 | 3;
+export type SectorId = 1 | 2 | 3 | 4 | 5 | 6;
 export type Weapon =
   "basic" | "rapidMissile" | "multiLaser" | "heavyMissile" | "scattershot" | "phaser";
 
@@ -83,8 +83,8 @@ export interface PremiseContent {
     handover: string;
     /** Plays as each recovered holodisk is inserted into Astra's drive. */
     inserted: readonly PremiseLine[];
-    /** Astra's memory line after each galaxy's insertion. */
-    memories: Readonly<Record<SectorId, string>>;
+    /** Astra's memory line after each built galaxy's insertion. */
+    memories: Readonly<Partial<Record<SectorId, string>>>;
     /** The holodisk's name in the hub's purchase confirm. */
     name: string;
   };
@@ -98,7 +98,8 @@ export interface PremiseContent {
 }
 
 export interface PrototypeContent {
-  chapters: Readonly<Record<SectorId, ChapterContent>>;
+  /** The built galaxies' chapters; a placeholder galaxy has none. */
+  chapters: Readonly<Partial<Record<SectorId, ChapterContent>>>;
   premise: PremiseContent;
   labels: Readonly<Record<string, string>>;
   /** Each browser kind's own install steps, shown where the browser holds no install prompt. */

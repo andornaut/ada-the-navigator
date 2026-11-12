@@ -7,6 +7,7 @@ import {
   escortTuning,
   sectorEncounters,
 } from "../data/enemy-catalog.ts";
+import { byPosition } from "../data/galaxies.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
 import { fromScreen, outlineContact, outlinesContact, type Parts } from "./convex.ts";
@@ -429,7 +430,7 @@ describe("sector encounter tables", () => {
     const escorts = new Set<string>();
     for (let i = 0; i < total; i++) {
       const count = next();
-      const roll = rollEncounter(sectorEncounters[1], count, next());
+      const roll = rollEncounter(sectorEncounters[1]!, count, next());
       seen.set(roll.archetype, [...(seen.get(roll.archetype) ?? []), roll.count]);
       if (roll.escorts) {
         escorts.add(`${roll.archetype}:${roll.escorts.archetype}:${roll.escorts.count}`);
@@ -498,21 +499,19 @@ describe("sector encounter tables", () => {
       },
     ],
   ] as const)("rolls galaxy %i's roster groups and weights", (sector, roster) => {
+    const encounters = byPosition(sectorEncounters, sector);
     const table = Object.fromEntries(
-      sectorEncounters[sector].map((entry) => [
-        entry.archetype,
-        [...entry.groupSize, entry.weight],
-      ]),
+      encounters.map((entry) => [entry.archetype, [...entry.groupSize, entry.weight]]),
     );
     expect(table).toEqual(roster);
-    expect(sectorEncounters[sector].find((entry) => entry.escorts)?.escorts).toEqual({
+    expect(encounters.find((entry) => entry.escorts)?.escorts).toEqual({
       archetype: "fighter",
       count: 4,
     });
     // Every roll lands in the chosen archetype's group range.
     const next = rolls(sector * 7919);
     for (let i = 0; i < 2000; i++) {
-      const { archetype, count } = rollEncounter(sectorEncounters[sector], next(), next());
+      const { archetype, count } = rollEncounter(encounters, next(), next());
       const [low, high] = roster[archetype as keyof typeof roster];
       expect(count).toBeGreaterThanOrEqual(low);
       expect(count).toBeLessThanOrEqual(high);
@@ -533,7 +532,7 @@ describe("sector encounter tables", () => {
         }
       }
     }
-    const ranges = new Map(sectorEncounters[1].map((entry) => [entry.archetype, entry.groupSize]));
+    const ranges = new Map(sectorEncounters[1]!.map((entry) => [entry.archetype, entry.groupSize]));
     expect(packs.size).toBeGreaterThan(3);
     for (const [id, archetypes] of packs) {
       expect(archetypes.size).toBe(1);

@@ -22,7 +22,7 @@ import { playOpening } from "./test-launch.ts";
 // Gameplay's economy doc, with its line wrapping undone.
 const ECONOMY_DOC = readFileSync(new URL("../../gameplay/economy.md", import.meta.url), "utf8");
 
-const sunflower = PROJECTS[1];
+const sunflower = PROJECTS[1]!;
 const cost = (id: string) => sunflower.find((project) => project.id === id)!.cost;
 const progress = (resolved = true, donated: Record<string, number> = {}): ProjectProgress => ({
   donated,

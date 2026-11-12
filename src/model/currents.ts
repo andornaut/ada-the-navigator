@@ -18,8 +18,8 @@ export interface Current {
   width: number;
 }
 
-/** Fixed per-sector seeds, so currents are the same on every flight. */
-const SECTOR_SEEDS: Readonly<Record<SectorId, number>> = {
+/** Fixed seeds for the galaxies with currents, so currents are the same on every flight. */
+const SECTOR_SEEDS: Readonly<Partial<Record<SectorId, number>>> = {
   1: 0xc0_4401,
   2: 0xc0_4402,
   3: 0xc0_4403,
@@ -75,7 +75,7 @@ function buildCurrent(sector: SectorId, cell: Vec): Current | null {
   if (!CURRENTS.sectors.includes(sector)) {
     return null;
   }
-  const seed = SECTOR_SEEDS[sector];
+  const seed = SECTOR_SEEDS[sector]!;
   const roll = (salt: number) => unit(mix(seed ^ salt, cell.x, cell.y));
   if (roll(0) >= chance) {
     return null;

@@ -6,6 +6,8 @@ import { refuse } from "./refusal.ts";
 
 export interface GalaxySelectLabels {
   readonly close: string;
+  /** A placeholder galaxy's line under its flavor text. */
+  readonly development: string;
   readonly home: string;
   readonly jump: string;
   readonly locked: string;
@@ -17,10 +19,15 @@ export interface GalaxySelectLabels {
 
 export interface GalaxyPage {
   readonly flavor: string;
-  /** The page's preview: the galaxy in its own field colours when unlocked, else the locked greyscale. */
+  /**
+   * The page's preview: the galaxy in its own field colours when unlocked, else the locked
+   * greyscale; empty where Art has none yet.
+   */
   readonly preview: string;
   readonly name: string;
   readonly number: number;
+  /** A placeholder galaxy, whose page adds the development line once unlocked. */
+  readonly placeholder: boolean;
   readonly unlocked: boolean;
   readonly first: boolean;
   readonly last: boolean;
@@ -77,6 +84,13 @@ export const GALAXY_SELECT_STYLE = `
 .ada-controls .ada-galaxy-flavors > p[data-current]{
   visibility:visible
 }
+/* Its line is held on every page, so a placeholder's page keeps the card's height. */
+.ada-controls .ada-galaxy-development{
+  visibility:hidden
+}
+.ada-controls .ada-galaxy-development[data-current]{
+  visibility:visible
+}
 `;
 
 // The action row's buttons in GALAXY_CARD.actions' roles, each tagged galaxy-<id>.
@@ -121,7 +135,10 @@ export function createGalaxySelect(root: HTMLElement, options: GalaxySelectOptio
     return line;
   });
   flavors.append(...lines);
-  galaxy.append(shot, name, flavors);
+  const development = document.createElement("p");
+  development.className = "ada-galaxy-development ada-prose";
+  development.textContent = labels.development;
+  galaxy.append(shot, name, flavors, development);
   const actions = document.createElement("div");
   actions.className = "ada-actions";
   actions.dataset.inkTop = "0";
@@ -185,13 +202,16 @@ export function createGalaxySelect(root: HTMLElement, options: GalaxySelectOptio
       } else {
         galaxy.dataset.locked = "true";
       }
-      shot.style.backgroundImage = `url('${page.preview}')`;
+      shot.style.backgroundImage = page.preview ? `url('${page.preview}')` : "none";
       name.textContent = page.unlocked ? page.name : labels.locked;
       const text = page.unlocked ? page.flavor : labels.locked;
       for (const line of lines) {
         line.toggleAttribute("data-current", line.textContent === text);
         line.setAttribute("aria-hidden", String(line.textContent !== text));
       }
+      const developing = page.unlocked && page.placeholder;
+      development.toggleAttribute("data-current", developing);
+      development.setAttribute("aria-hidden", String(!developing));
       previous.disabled = page.first;
       next.disabled = page.last;
       jump.classList.toggle("ada-unavailable", !page.unlocked);

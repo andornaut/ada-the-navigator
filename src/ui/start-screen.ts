@@ -6,13 +6,13 @@ import { jetPolygons, type TitleScreenArt, titleShip } from "./title-screen.ts";
 import { applyButtonSkin } from "./ui-skin.ts";
 
 // The start screen (art/layout.md "Start screen"): a full-screen HTML view over the canvas, after
-// Chibi's, with Ada's ship and its jets above the wordmark, the action row and the note, all in
-// play-view px from the game area's left edge. Achievements and Settings stay the HUD row's nav
+// Chibi's, with Ada's ship and its jets above the wordmark and the action row, all in play-view
+// px from the game area's left edge. Achievements and Settings stay the HUD row's nav
 // discs above it. Nothing animates.
 
 export const START_SCREEN_CLASS = "ada-start";
 
-const { actions, note, ship, wordmark } = START_SCREEN;
+const { actions, ship, wordmark } = START_SCREEN;
 const SVG = "http://www.w3.org/2000/svg";
 
 export const START_SCREEN_STYLE = `
@@ -78,17 +78,6 @@ ${(Object.keys(actions.left) as StartAction[])
 }`,
   )
   .join("\n\n")}
-
-.${START_SCREEN_CLASS} .ada-start-note{
-  left:${fromAreaLeft(note.centre)};
-  top:${units(note.top)};
-  transform:translateX(-50%);
-  margin:0;
-  font:${font(TYPE.body)};
-  line-height:${units(note.height)};
-  color:#ead4aa;
-  white-space:nowrap
-}
 `;
 
 export interface StartScreenContent {
@@ -101,14 +90,13 @@ export interface StartScreenContent {
   }[];
   /** The selected paint, or null for Classic. */
   readonly paint: string | null;
-  readonly note: string;
   readonly title: string;
 }
 
 /**
  * Builds the start screen into parent: the field, the jets, the ship frame, the wordmark (named by
- * the title), the actions and the note, in draw order. Without Art's title art it shows the
- * actions and the note under a plain-text title.
+ * the title) and the actions, in draw order. Without Art's title art it shows the actions under a
+ * plain-text title.
  */
 export function createStartScreen(
   parent: HTMLElement,
@@ -168,10 +156,7 @@ export function createStartScreen(
     row.append(button);
     return button;
   });
-  const notice = document.createElement("p");
-  notice.className = "ada-start-note";
-  notice.textContent = content.note;
-  root.append(...parts, title, row, notice);
+  root.append(...parts, title, row);
   // First in the play area, so its actions are the first Tab stops, before the HUD row's discs.
   parent.prepend(root);
   // Art's button faces, as the controls overlay takes them.

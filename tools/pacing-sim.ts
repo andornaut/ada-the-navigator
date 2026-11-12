@@ -30,9 +30,10 @@ import {
   enemyDefinition,
   sectorEncounters,
 } from "../src/data/enemy-catalog.ts";
+import { BUILT, byPosition, ROUTE_POSITION } from "../src/data/galaxies.ts";
 import { HOLODISKS } from "../src/data/holodisks.ts";
 import { JOB_TUNING, JOB_TYPES, type JobType } from "../src/data/jobs.ts";
-import { PROJECTS } from "../src/data/projects.ts";
+import { galaxyProjects } from "../src/data/projects.ts";
 import { PROTOTYPE } from "../src/data/prototype.ts";
 import { SCREEN } from "../src/data/screen.ts";
 import type { SectorId, Weapon } from "../src/data/types.ts";
@@ -224,7 +225,7 @@ export const SCENARIOS: Readonly<Record<string, Omit<Scenario, "behaviour" | "na
  * one guard per distinct required destination, and galaxy three's holodisk leader and pack.
  * Cartwheel's miner and visitors wait beside the hub without guards, so only the hub has one.
  */
-const ROUTE_GUARDS: Readonly<Record<SectorId, readonly (readonly EnemyArchetype[])[]>> = {
+const ROUTE_GUARDS: Readonly<Partial<Record<SectorId, readonly (readonly EnemyArchetype[])[]>>> = {
   1: [["frigate"], ["frigate"], ["frigate"]],
   2: [["capital"]],
   3: [
@@ -349,11 +350,16 @@ export function scenarioEconomy(overrides: EconomyOverrides): EconomyCatalog {
     discoveryStardust: overrides.discoveryStardust ?? ECONOMY.discoveryStardust,
     enemyStardust: { ...ECONOMY.enemyStardust, ...overrides.enemyStardust },
     ammo: { ...ECONOMY.ammo, packPrice: overrides.ammoPackPrice ?? ECONOMY.ammo.packPrice },
-    weaponDropChance: {
-      1: { ...ECONOMY.weaponDropChance[1], ...overrides.weaponDropChance?.[1] },
-      2: { ...ECONOMY.weaponDropChance[2], ...overrides.weaponDropChance?.[2] },
-      3: { ...ECONOMY.weaponDropChance[3], ...overrides.weaponDropChance?.[3] },
-    },
+    // Overrides name galaxies; the catalog keys drop chances by their route positions.
+    weaponDropChance: Object.fromEntries(
+      [...BUILT].map((galaxy) => [
+        ROUTE_POSITION[galaxy],
+        {
+          ...byPosition(ECONOMY.weaponDropChance, galaxy),
+          ...overrides.weaponDropChance?.[galaxy],
+        },
+      ]),
+    ),
     station: { ...ECONOMY.station, ...overrides.station },
   };
 }
@@ -423,7 +429,10 @@ export function generateChunk(
     }
   }
   const plan = planChunk(CHUNK_CATALOG, {
-    asteroids: { field: ASTEROID_FIELDS[sector], shapes: [...ASTEROID_SHAPES.values()] },
+    asteroids: {
+      field: byPosition(ASTEROID_FIELDS, sector),
+      shapes: [...ASTEROID_SHAPES.values()],
+    },
     clearance: flight.shipRadius,
     objectsPerChunk: flight.objectsPerChunk,
     rockRadius: flight.rockRadius,
@@ -552,7 +561,7 @@ export function asteroidKillSeconds(
   weapon: Weapon,
   size: AsteroidSize,
 ): number {
-  return volleySeconds(behaviour, weapon, ASTEROID_FIELDS[sector].hp[size]);
+  return volleySeconds(behaviour, weapon, byPosition(ASTEROID_FIELDS, sector).hp[size]);
 }
 /** Hull damage after which a ship flees on its own, or null when it never does. */
 function fleeAfter(archetype: EnemyArchetype): number | null {
@@ -970,7 +979,7 @@ export function simulate(input: SimulationInput): RunResult {
   const running = () => time < end;
   while (running()) {
     const near = region();
-    const guards = ROUTE_GUARDS[sector][guard];
+    const guards = ROUTE_GUARDS[sector]?.[guard];
     if (
       guards &&
       guard < behaviour.guardMinutes.length &&
@@ -1371,7 +1380,7 @@ export function runScenario(options: RunOptions): { runs: RunResult[]; summary: 
   const prices: Prices = {
     firstWeapon: Math.min(...Object.values(ECONOMY.weaponPrices)),
     holodisk: HOLODISKS.hubPrice,
-    projects: PROJECTS[options.sector].map((_, index, projects) =>
+    projects: galaxyProjects(options.sector).map((_, index, projects) =>
       projects.slice(0, index + 1).reduce((sum, { cost }) => sum + cost, 0),
     ),
     ...scenario.prices,
@@ -1396,7 +1405,8 @@ export function runScenario(options: RunOptions): { runs: RunResult[]; summary: 
       catalog,
       minutes: options.minutes,
       prices,
-      encounters: scenario.encounters?.[options.sector] ?? sectorEncounters[options.sector],
+      encounters:
+        scenario.encounters?.[options.sector] ?? byPosition(sectorEncounters, options.sector),
       startWeapons: scenario.startWeapons ?? [],
       sector: options.sector,
       seed: index + 1,

@@ -86,10 +86,11 @@ describe("stateless chunk plans", () => {
   });
 
   it("uses the sector catalog and configured content weights without changing the shared openings", () => {
+    // By route position: Sunflower 1, Whirlpool (galaxy 3) 2, Cartwheel (galaxy 2) 5.
     const catalog: ChunkCatalog = {
       1: [{ id: "quiet", weight: 1 }],
-      2: [{ id: "cluster", weight: 1 }],
-      3: [{ id: "poi", weight: 1 }],
+      2: [{ id: "poi", weight: 1 }],
+      5: [{ id: "cluster", weight: 1 }],
     };
     const first = planChunk(catalog, options);
     const second = planChunk(catalog, {

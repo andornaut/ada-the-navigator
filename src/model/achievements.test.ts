@@ -205,7 +205,8 @@ describe("collections and helping", () => {
   it("counts landmarks and projects toward the game's own totals", () => {
     expect(ACHIEVEMENT_TOTALS).toEqual({
       allies: 0,
-      landmarks: { 1: 12, 2: 12, 3: 12 },
+      // Placeholders have no landmarks.
+      landmarks: { 1: 12, 2: 12, 3: 12, 4: 0, 5: 0, 6: 0 },
       paints: Object.keys(ECONOMY.paints).length,
       projects: Object.values(PROJECTS).flat().length,
     });
@@ -213,7 +214,7 @@ describe("collections and helping", () => {
     for (const site of landmarkSites(2).slice(0, 3)) {
       model.recordAchievement({ galaxy: 2, id: site.id, kind: "landmarkCharted" });
     }
-    model.recordAchievement({ id: PROJECTS[1][0]!.id, kind: "projectFunded" });
+    model.recordAchievement({ id: PROJECTS[1]![0]!.id, kind: "projectFunded" });
     expect(view(model, "Cartographer").progress).toEqual({ have: 3, need: 12 });
     expect(view(model, "Community Builder").progress).toEqual({
       have: 1,
@@ -244,7 +245,7 @@ describe("collections and helping", () => {
     const totals: AchievementTotals = {
       ...ACHIEVEMENT_TOTALS,
       allies: 2,
-      landmarks: { 1: 3, 2: 2, 3: 2, 4: 2 },
+      landmarks: { 1: 2, 2: 2, 3: 2, 4: 1, 5: 1, 6: 1 },
       projects: 3,
     };
     const state = newAchievements();

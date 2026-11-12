@@ -128,7 +128,6 @@ export class StoryShell {
       const paint = state.economy.paint;
       this.startScreen = createStartScreen(this.host, this.titleArt, {
         actions,
-        note: PROTOTYPE.labels.deferred ?? "",
         paint: paint === ECONOMY.defaultPaint ? null : paint,
         title: PROTOTYPE.labels.home ?? "",
       });

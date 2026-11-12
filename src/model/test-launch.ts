@@ -1,4 +1,5 @@
-import type { PrototypeContent } from "../data/types.ts";
+import { ROUTE_POSITION } from "../data/galaxies.ts";
+import type { PrototypeContent, SectorId } from "../data/types.ts";
 import { GameModel } from "./game.ts";
 import type { StoryPage } from "./storybook.ts";
 
@@ -51,10 +52,10 @@ export function readStory(model: GameModel, choice = 0): StoryPage[] {
 }
 
 /** Test support: a home visit read to galaxy selection, then Jump to `galaxy`. */
-export function boardAndJump(model: GameModel, galaxy: number, choice = 0): StoryPage[] {
+export function boardAndJump(model: GameModel, galaxy: SectorId, choice = 0): StoryPage[] {
   const pages = readStory(model, choice);
-  const selected = model.selectedGalaxy ?? galaxy;
-  model.pageGalaxy(galaxy - selected);
+  const position = ROUTE_POSITION[galaxy];
+  model.pageGalaxy(position - (model.selectedPosition ?? position));
   model.jump();
   return pages;
 }

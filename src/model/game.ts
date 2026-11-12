@@ -10,14 +10,24 @@ import {
 } from "../data/conversations.ts";
 import { DESTINATIONS, STATION_SENTENCE } from "../data/destinations.ts";
 import { ECONOMY } from "../data/economy.ts";
+import {
+  BUILT,
+  GALAXY_COUNT,
+  galaxyAt,
+  ROUTE,
+  ROUTE_POSITION,
+  type RoutePosition,
+  SECTORS,
+  unlockedBy,
+} from "../data/galaxies.ts";
 import { HUNTING_PACKS } from "../data/galaxy-features.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { JOB_TUNING, type JobType } from "../data/jobs.ts";
-import { PROJECT_THANKS, PROJECTS } from "../data/projects.ts";
+import { galaxyProjects, PROJECT_THANKS } from "../data/projects.ts";
 import { SCREEN } from "../data/screen.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
-import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
-import type { PrototypeContent, SectorId, Weapon } from "../data/types.ts";
+import { galaxyCard, OVERNIGHT_SLEEP } from "../data/storybook.ts";
+import type { ChapterContent, PrototypeContent, SectorId, Weapon } from "../data/types.ts";
 import {
   ACHIEVEMENT_TOTALS,
   type AchievementEvent,
@@ -87,6 +97,7 @@ import {
   unchartedNear,
 } from "./landmarks.ts";
 import { type GalaxyMap, galaxyMap, recordExplored } from "./map.ts";
+import { newProgress } from "./progress.ts";
 import {
   donate,
   type DonationRequest,
@@ -160,26 +171,7 @@ import {
   type WeaponChoice,
 } from "./weapons.ts";
 
-export function newProgress(): SectorProgress {
-  return {
-    charted: [],
-    deposited: 0,
-    disabledEnemies: 0,
-    discoveries: 0,
-    donated: {},
-    explored: [],
-    holodisk: false,
-    introduced: false,
-    known: [],
-    opened: false,
-    questComplete: false,
-    questItem: null,
-    resolved: false,
-    revealed: [],
-    stage: 0,
-    stations: [],
-  };
-}
+export { newProgress } from "./progress.ts";
 const progress = newProgress;
 /** A first launch: galaxy one unlocked and nothing begun. */
 export function newGameState(): GameState {
@@ -193,7 +185,10 @@ export function newGameState(): GameState {
     jobs: { boards: {}, made: 0 },
     mode: "home",
     notice: "",
-    progress: { 1: progress(), 2: progress(), 3: progress() },
+    progress: Object.fromEntries(SECTORS.map((id) => [id, progress()])) as Record<
+      SectorId,
+      SectorProgress
+    >,
     prologueSeen: false,
     seenConversations: [],
     selectedSector: 1,
@@ -203,8 +198,6 @@ export function newGameState(): GameState {
     version: 1,
   };
 }
-/** Galaxies one to four in galaxy selection; galaxy four's story is in development. */
-export const GALAXY_COUNT = 4;
 /** What the home half shows: the start screen, a storybook page or galaxy selection. */
 export type Screen = "selector" | "space" | "start" | "story";
 /**
@@ -225,7 +218,8 @@ export interface StoryView {
   /** The choices shown: a choice page's, or the optional questions not yet asked. */
   readonly choices: readonly StoryChoice[];
 }
-const required: Record<SectorId, readonly string[]> = {
+// The built galaxies' story destinations; a placeholder galaxy has none.
+const required: Partial<Record<SectorId, readonly string[]>> = {
   1: ["growers", "workshop", "salvagers", "workshop"],
   2: ["hub", "hub", "miner", "visitors", "hub"],
   3: ["whale", "whale", "whale", "family", "whale"],
@@ -233,9 +227,27 @@ const required: Record<SectorId, readonly string[]> = {
 
 /** A galaxy's story destinations in the order its route first visits them; the first opens it. */
 export function galaxyRoute(sector: SectorId): readonly string[] {
-  return [...new Set(required[sector])];
+  return [...new Set(required[sector] ?? [])];
 }
-const first = (sector: SectorId): string => galaxyRoute(sector)[0]!;
+/** The destination that opens a built galaxy's story; none in a placeholder. */
+const first = (sector: SectorId): string | undefined => galaxyRoute(sector)[0];
+
+/** A placeholder galaxy's chapter: its name, with no story, objectives or dialogue. */
+function placeholderChapter(sector: SectorId): ChapterContent {
+  const none = ["", ""] as const;
+  return {
+    closing: "",
+    dialogue: {},
+    name: galaxyCard(sector).name,
+    objectives: [],
+    opening: "",
+    openingBranches: none,
+    openingChoices: none,
+    resolution: "",
+    resolutionBranches: none,
+    resolutionChoices: none,
+  };
+}
 const dialogueKeys: Record<string, string> = { growers: "grower", salvagers: "salvager" };
 
 /** A job board row: the held job (Active, with Drop) or an offer, refused while Ada is busy. */
@@ -317,7 +329,7 @@ export class GameModel {
   private heldFlight: Pick<GameState, "dialogue" | "docked" | "flight" | "mode" | "notice"> | null =
     null;
   private story: StoryPosition | null = null;
-  private selection: number | null = null;
+  private selection: RoutePosition | null = null;
   constructor(content: PrototypeContent, saved?: unknown) {
     this.content = content;
     this.state = restoreSave(saved) ?? newGameState();
@@ -416,8 +428,12 @@ export class GameModel {
   get roomPage(): boolean {
     return this.story !== null && this.screen === "story" && currentPage(this.story).id === "room";
   }
-  /** The galaxy on show in galaxy selection, 1 to 4. */
-  get selectedGalaxy(): number | null {
+  /** The galaxy on show in galaxy selection. */
+  get selectedGalaxy(): SectorId | null {
+    return this.screen === "selector" && this.selection !== null ? galaxyAt(this.selection) : null;
+  }
+  /** The route position on show in galaxy selection, 1 to 6. */
+  get selectedPosition(): RoutePosition | null {
     return this.screen === "selector" ? this.selection : null;
   }
   isUnlocked(galaxy: number): boolean {
@@ -426,8 +442,9 @@ export class GameModel {
   private get current(): SectorProgress {
     return this.state.progress[this.state.selectedSector];
   }
-  private get chapter() {
-    return this.content.chapters[this.state.selectedSector];
+  private get chapter(): ChapterContent {
+    const sector = this.state.selectedSector;
+    return this.content.chapters[sector] ?? placeholderChapter(sector);
   }
   private label(id: string): string {
     return this.content.labels[id] ?? "";
@@ -437,7 +454,7 @@ export class GameModel {
   }
   get objective(): string {
     const p = this.current;
-    const stages: Record<SectorId, readonly number[]> = {
+    const stages: Partial<Record<SectorId, readonly number[]>> = {
       1: [0, 1, 2, 3, 4],
       2: [0, 1, 2, 3, 4, 5],
       3: [0, 1, 2, 3, 4, 5],
@@ -446,7 +463,7 @@ export class GameModel {
     const last = this.chapter.objectives.length - 1;
     const index = p.questComplete
       ? last - (p.holodisk ? 0 : 1)
-      : (stages[this.state.selectedSector][p.stage] ?? 0);
+      : (stages[this.state.selectedSector]?.[p.stage] ?? 0);
     return this.chapter.objectives[index] ?? "";
   }
   private nearest(): string | undefined {
@@ -604,7 +621,7 @@ export class GameModel {
     if (!this.state.docked || !sector || !projectsOffered(this.state.progress[sector])) {
       return null;
     }
-    return projectViews(PROJECTS[sector], this.state.progress[sector]);
+    return projectViews(galaxyProjects(sector), this.state.progress[sector]);
   }
   /** The donation confirm for a docked galaxy's project (projects.ts). */
   donationRequest(id: string): DonationRequest {
@@ -613,7 +630,7 @@ export class GameModel {
       return { kind: "refused" };
     }
     return donationRequest(
-      PROJECTS[sector],
+      galaxyProjects(sector),
       this.state.progress[sector],
       this.state.economy.stardust,
       id,
@@ -629,7 +646,12 @@ export class GameModel {
       return { kind: "refused" };
     }
     const economy = this.state.economy;
-    const result = donate(PROJECTS[sector], this.state.progress[sector], economy.stardust, id);
+    const result = donate(
+      galaxyProjects(sector),
+      this.state.progress[sector],
+      economy.stardust,
+      id,
+    );
     if (result.kind === "paid") {
       economy.stardust -= result.amount;
       if (result.funded) {
@@ -642,15 +664,15 @@ export class GameModel {
   }
   /** Each galaxy's allies for the Black Eye finale, one per funded project. */
   allies(sector: SectorId): ReturnType<typeof projectAllies> {
-    return projectAllies(PROJECTS[sector], this.state.progress[sector]);
+    return projectAllies(galaxyProjects(sector), this.state.progress[sector]);
   }
   /** Each galaxy's world changes at their sites, one per funded project (projects.ts). */
   worldChanges(sector: SectorId): WorldChange[] {
-    return worldChanges(PROJECTS[sector], this.state.progress[sector]);
+    return worldChanges(galaxyProjects(sector), this.state.progress[sector]);
   }
   /** Records that a funded project's world change has played its one reveal (projects.ts). */
   revealWorldChange(sector: SectorId, id: string): boolean {
-    return revealWorldChange(PROJECTS[sector], this.state.progress[sector], id);
+    return revealWorldChange(galaxyProjects(sector), this.state.progress[sector], id);
   }
   selectPaint(scheme: string): boolean {
     return selectPaint(ECONOMY, scheme, this.state.economy);
@@ -935,21 +957,22 @@ export class GameModel {
       this.notify(this.label("chapterComplete"));
     }
   }
-  /** Unlocks the next galaxy once its holodisk, space quest and home resolution are done. */
+  /**
+   * Once a galaxy's holodisk, space quest and home resolution are done, unlocks the next position
+   * on the route, every placeholder after it and the next built galaxy (unlockedBy).
+   */
   private unlockNext(galaxy: SectorId = this.state.selectedSector): void {
     const p = this.state.progress[galaxy];
-    const next = galaxy + 1;
-    if (
-      p.holodisk &&
-      p.questComplete &&
-      p.resolved &&
-      next <= 3 &&
-      !this.state.unlocked.includes(next as SectorId)
-    ) {
-      this.state.unlocked.push(next as SectorId);
-      // Galaxy four's story is in development, so only a galaxy with a story is announced.
-      this.state.announceGalaxy = Object.hasOwn(this.content.chapters, next);
+    if (!p.holodisk || !p.questComplete || !p.resolved) {
+      return;
     }
+    const fresh = unlockedBy(galaxy).filter((id) => !this.state.unlocked.includes(id));
+    if (fresh.length === 0) {
+      return;
+    }
+    this.state.unlocked.push(...fresh);
+    // Astra announces it only when a newly unlocked galaxy has a built story.
+    this.state.announceGalaxy = fresh.some((id) => Object.hasOwn(this.content.chapters, id));
   }
   /**
    * Ada inserts a recovered holodisk into Astra's drive at once; `giver` names the outpost
@@ -978,7 +1001,10 @@ export class GameModel {
   private insertion(index: number): void {
     const { inserted, memories } = this.content.premise.holodisk;
     // Astra, who speaks the last insertion line, continues with the memory.
-    const memory = { speaker: inserted.at(-1)?.speaker, text: memories[this.state.selectedSector] };
+    const memory = {
+      speaker: inserted.at(-1)?.speaker,
+      text: memories[this.state.selectedSector] ?? "",
+    };
     const lines = [...inserted, memory];
     const line = lines[index];
     if (line) {
@@ -1137,13 +1163,15 @@ export class GameModel {
     if (unlocked !== undefined) {
       this.notify(fill(this.label("achievement"), { name: unlocked }));
     }
-    if (!this.current.introduced && f.freshDistance >= this.content.tuning.introFreshDistance) {
-      ensureDestination(this.content, first(f.sector), f);
-      if (
-        f.freshDistance > previousFreshDistance &&
-        !this.current.known.includes(first(f.sector))
-      ) {
-        this.placePending(first(f.sector));
+    const opener = first(f.sector);
+    if (
+      opener !== undefined &&
+      !this.current.introduced &&
+      f.freshDistance >= this.content.tuning.introFreshDistance
+    ) {
+      ensureDestination(this.content, opener, f);
+      if (f.freshDistance > previousFreshDistance && !this.current.known.includes(opener)) {
+        this.placePending(opener);
       }
     }
     if (
@@ -1153,7 +1181,7 @@ export class GameModel {
         this.content.tuning.introFreshDistance +
           this.current.stage * this.content.tuning.encounterFreshDistance
     ) {
-      const id = required[f.sector][this.current.stage];
+      const id = required[f.sector]?.[this.current.stage];
       if (id) {
         ensureDestination(this.content, id, f);
         if (f.freshDistance > previousFreshDistance && !this.current.known.includes(id)) {
@@ -1192,6 +1220,7 @@ export class GameModel {
     }
     const intro = first(f.sector);
     if (
+      intro !== undefined &&
       !this.current.introduced &&
       this.current.known.includes(intro) &&
       this.nearest() === intro
@@ -2018,7 +2047,7 @@ export class GameModel {
   /** Pages galaxy selection by delta, within galaxies one to four. */
   pageGalaxy(delta: number): void {
     if (this.selection !== null && this.screen === "selector") {
-      this.selection = Math.min(GALAXY_COUNT, Math.max(1, this.selection + delta));
+      this.selection = Math.min(GALAXY_COUNT, Math.max(1, this.selection + delta)) as RoutePosition;
     }
   }
   /** Jump: the selected galaxy's flight; a locked galaxy refuses. */
@@ -2027,7 +2056,7 @@ export class GameModel {
     if (galaxy === null || !this.isUnlocked(galaxy)) {
       return false;
     }
-    this.startSector(galaxy as SectorId);
+    this.startSector(galaxy);
     return true;
   }
   /** Earth, the close X, an outside tap, back and Escape: Ada's room, without a jump. */
@@ -2039,7 +2068,8 @@ export class GameModel {
   }
   /** The first home scene waiting on story progress: a resolution, then an opening. */
   private waitingScene(): Scene | null {
-    const galaxies = [1, 2, 3] as const;
+    // Only built galaxies have Earth scenes, in route order.
+    const galaxies = ROUTE.filter((id) => BUILT.has(id));
     const resolution = galaxies.find(
       (id) => this.state.progress[id].questComplete && !this.state.progress[id].resolved,
     );
@@ -2199,10 +2229,12 @@ export class GameModel {
       };
     });
   }
-  /** Galaxy selection in the cockpit, open on the farthest unlocked galaxy. */
+  /** Galaxy selection in the cockpit, open on the farthest unlocked position on the route. */
   private openSelection(): void {
     this.story = null;
-    this.selection = Math.max(...this.state.unlocked);
+    this.selection = Math.max(
+      ...this.state.unlocked.map((id) => ROUTE_POSITION[id]),
+    ) as RoutePosition;
   }
   save(): string {
     this.pullLoadout();

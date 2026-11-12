@@ -10,6 +10,7 @@ import {
   sectorEncounters,
   sectorEnemyTuning,
 } from "../data/enemy-catalog.ts";
+import { byPosition } from "../data/galaxies.ts";
 import { CURRENTS, HUNTING_PACKS, ORE_FIELDS } from "../data/galaxy-features.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { JOB_TUNING, LANDMARK_TUNING } from "../data/jobs.ts";
@@ -476,7 +477,7 @@ function generate(content: PrototypeContent, point: Vec, flight: FlightState): v
       flight.chunks.push(key);
       generated.add(key);
       chunkIndexes.get(flight)!.length = flight.chunks.length;
-      const field = ASTEROID_FIELDS[flight.sector];
+      const field = byPosition(ASTEROID_FIELDS, flight.sector);
       const plan = planChunk(CHUNK_CATALOG, {
         asteroids: { field, shapes: ASTEROID_SHAPE_LIST },
         clearance: content.tuning.flight.shipRadius,
@@ -689,7 +690,7 @@ export function encounterSpacing(content: PrototypeContent, sector: SectorId): n
     3,
     Math.ceil(enemyEncounterTuning.quietDistance / content.tuning.chunkSize),
   );
-  return base / Math.sqrt(sectorEnemyTuning[sector].encounterRate);
+  return base / Math.sqrt(byPosition(sectorEnemyTuning, sector).encounterRate);
 }
 
 /** Ships too heavy to drift with a current, and the fixed platform. */
@@ -779,7 +780,7 @@ function generateRegion(
   const packId = `pack:${x},${y}`;
   const countRoll = next();
   const { archetype, count, escorts } = rollEncounter(
-    sectorEncounters[flight.sector],
+    byPosition(sectorEncounters, flight.sector),
     countRoll,
     next(),
   );

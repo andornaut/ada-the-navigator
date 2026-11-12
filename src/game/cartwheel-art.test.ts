@@ -95,7 +95,7 @@ describe("Cartwheel art", () => {
     const keys = new Set(
       assets.flatMap((asset) => (asset.destination === "hub" && asset.project) || []),
     );
-    const ids = PROJECTS[2].map(({ id }) => id);
+    const ids = PROJECTS[2]!.map(({ id }) => id);
     expect(Object.keys(HUB_PROJECT_ART).sort()).toEqual(ids.sort());
     for (const id of ids) {
       expect(keys.has(HUB_PROJECT_ART[id as keyof typeof HUB_PROJECT_ART])).toBe(true);

@@ -4,9 +4,15 @@ export type { ArtBackground, Background } from "./types.ts";
 
 /** Each chapter's Earth scenes and their locations. */
 export const CHAPTER_BACKGROUNDS: Readonly<
-  Record<
-    SectorId,
-    { readonly closing: Background; readonly opening: Background; readonly resolution: Background }
+  Partial<
+    Record<
+      SectorId,
+      {
+        readonly closing: Background;
+        readonly opening: Background;
+        readonly resolution: Background;
+      }
+    >
   >
 > = {
   1: { closing: "gardenLot", opening: "grandmaGarden", resolution: "gardenLot" },
@@ -60,10 +66,15 @@ export const ASTRA = "Astra";
 
 /** One galaxy in galaxy selection, after Chibi's stage cards. */
 export interface GalaxyCard {
+  /** Gameplay's flavor line (player-copy.md). */
   readonly flavor: string;
+  /** The galaxy's numeric id. */
+  readonly galaxy: SectorId;
   /** Art's galaxy id (public/art/galaxies.json), which also names its selector previews. */
   readonly id: string;
   readonly name: string;
+  /** Whether Art has drawn its selector previews. */
+  readonly preview: boolean;
 }
 
 /**
@@ -71,26 +82,60 @@ export interface GalaxyCard {
  * CLEANUP (added 2026-11-11): recapture with `make previews` once Sunflower's light field lands
  * and once the hub and the whale (Cartwheel's and Whirlpool's first destinations) draw as art.
  */
-export function galaxyPreview(galaxy: Pick<GalaxyCard, "id">, locked: boolean): string {
-  return `/previews/galaxy-${galaxy.id}${locked ? "-locked" : ""}.png`;
+export function galaxyPreview(galaxy: Pick<GalaxyCard, "id" | "preview">, locked: boolean): string {
+  return galaxy.preview ? `/previews/galaxy-${galaxy.id}${locked ? "-locked" : ""}.png` : "";
 }
 
-/** Galaxies one to four, in order. Galaxy four's story is in development. */
+/**
+ * The six galaxies in route order (galaxies.ts). Needle, Andromeda and Black Eye are placeholders
+ * under Art's ids, so their art replaces them in place.
+ */
 export const GALAXIES: readonly GalaxyCard[] = [
   {
     flavor: "Scattered outposts grow, build and salvage, each on their own.",
+    galaxy: 1,
     id: "sunflower",
     name: "Sunflower",
-  },
-  {
-    flavor: "A busy mining hub where every rock is worth something.",
-    id: "cartwheel",
-    name: "Cartwheel",
+    preview: true,
   },
   {
     flavor: "Swirling debris, and a song somewhere in the dark.",
+    galaxy: 3,
     id: "whirlpool",
     name: "Whirlpool",
+    preview: true,
   },
-  { flavor: "A shadowed rim where someone is watching.", id: "black-eye", name: "Black Eye" },
+  {
+    flavor: "A thin silver line of stars, where nothing can be rushed.",
+    galaxy: 4,
+    id: "needle",
+    name: "Needle",
+    preview: false,
+  },
+  {
+    flavor: "A great bright spiral, close enough to feel like a neighbor.",
+    galaxy: 5,
+    id: "andromeda",
+    name: "Andromeda",
+    preview: false,
+  },
+  {
+    flavor: "A busy mining hub where every rock is worth something.",
+    galaxy: 2,
+    id: "cartwheel",
+    name: "Cartwheel",
+    preview: true,
+  },
+  {
+    flavor: "A shadowed rim where someone is watching.",
+    galaxy: 6,
+    id: "black-eye",
+    name: "Black Eye",
+    preview: true,
+  },
 ];
+
+/** A galaxy's selector card. */
+export function galaxyCard(galaxy: SectorId): GalaxyCard {
+  return GALAXIES.find((card) => card.galaxy === galaxy)!;
+}

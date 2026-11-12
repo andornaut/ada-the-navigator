@@ -108,13 +108,18 @@ export function objectiveDestination(
 ): string | null {
   if (progress.questComplete) {
     // Any outpost hands over galaxy one's holodisk; the hub sells galaxy two's.
-    return progress.holodisk ? null : { 1: "workshop", 2: "hub", 3: null }[sector];
+    return progress.holodisk
+      ? null
+      : (({ 1: "workshop", 2: "hub" } as Partial<Record<SectorId, string>>)[sector] ?? null);
   }
+  // A placeholder galaxy has no story destinations.
   if (!progress.introduced) {
-    return { 1: "growers", 2: "hub", 3: "whale" }[sector];
+    return (
+      ({ 1: "growers", 2: "hub", 3: "whale" } as Partial<Record<SectorId, string>>)[sector] ?? null
+    );
   }
   const { questItem, stage } = progress;
-  const stages: Record<SectorId, readonly (string | null)[]> = {
+  const stages: Partial<Record<SectorId, readonly (string | null)[]>> = {
     1: [
       "growers",
       questItem === "food" ? "workshop" : "growers",
@@ -124,5 +129,5 @@ export function objectiveDestination(
     2: ["hub", "hub", minerReady ? "miner" : "hub", "visitors", "hub"],
     3: ["whale", "whale", "whale", "family", "whale"],
   };
-  return stages[sector][stage] ?? null;
+  return stages[sector]?.[stage] ?? null;
 }

@@ -2,6 +2,7 @@ import { ECONOMY } from "../data/economy.ts";
 import {
   LANDMARK_KINDS,
   LANDMARK_TUNING,
+  type LandmarkGalaxy,
   type LandmarkKind,
   landmarkNameKey,
 } from "../data/jobs.ts";
@@ -22,8 +23,11 @@ export interface LandmarkSite extends Vec {
   readonly name: string;
 }
 
-/** Fixed per-galaxy seeds, so every flight places the same landmarks. */
-const LANDMARK_SEEDS: Readonly<Record<SectorId, number>> = {
+/**
+ * Fixed per-galaxy seeds, so every flight places the same landmarks. A placeholder galaxy has
+ * none, so no landmarks.
+ */
+const LANDMARK_SEEDS: Readonly<Partial<Record<LandmarkGalaxy & SectorId, number>>> = {
   1: 0x1a4d_0101,
   2: 0x1a4d_0202,
   3: 0x1a4d_0303,
@@ -35,8 +39,8 @@ const sites = new Map<SectorId, readonly LandmarkSite[]>();
  * The galaxy's seeded kinds, a third of each in an order its seed shuffles. Their own stream keeps
  * the placement's positions unchanged.
  */
-function seededKinds(sector: SectorId): LandmarkKind[] {
-  const next = dropRandom(LANDMARK_SEEDS[sector], `landmark-kinds:${sector}`);
+function seededKinds(sector: LandmarkGalaxy & SectorId, seed: number): LandmarkKind[] {
+  const next = dropRandom(seed, `landmark-kinds:${sector}`);
   const per = LANDMARK_TUNING.count / LANDMARK_KINDS.length;
   const kinds = LANDMARK_KINDS.flatMap((kind) => Array.from({ length: per }, () => kind));
   for (let index = kinds.length - 1; index > 0; index--) {
@@ -56,9 +60,15 @@ export function landmarkSites(sector: SectorId): readonly LandmarkSite[] {
   if (cached) {
     return cached;
   }
+  const seed = LANDMARK_SEEDS[sector as LandmarkGalaxy & SectorId];
+  if (seed === undefined) {
+    sites.set(sector, []);
+    return [];
+  }
+  const galaxy = sector as LandmarkGalaxy & SectorId;
   const { count, placeClearance, radius, spacing } = LANDMARK_TUNING;
-  const next = dropRandom(LANDMARK_SEEDS[sector], `landmarks:${sector}`);
-  const kinds = seededKinds(sector);
+  const next = dropRandom(seed, `landmarks:${sector}`);
+  const kinds = seededKinds(galaxy, seed);
   const named = { beacon: 0, nebula: 0, wreck: 0 };
   const placed: LandmarkSite[] = [];
   for (let attempt = 0; placed.length < count && attempt < 10000; attempt++) {
@@ -78,7 +88,7 @@ export function landmarkSites(sector: SectorId): readonly LandmarkSite[] {
       ...at,
       id: `landmark:${sector}:${index}`,
       kind,
-      name: landmarkNameKey(sector, kind, ++named[kind]),
+      name: landmarkNameKey(galaxy, kind, ++named[kind]),
     });
   }
   sites.set(sector, placed);

@@ -1,4 +1,4 @@
-import { PROJECTS } from "../data/projects.ts";
+import { galaxyProjects } from "../data/projects.ts";
 import {
   CARTWHEEL_STORY_SHIPS,
   type StoryPath,
@@ -152,7 +152,7 @@ export function drawnHeading(heading: Vec): Vec {
 
 /** Whether Cartwheel's project with this id is funded. */
 function cartwheelFunded(progress: ProjectProgress, id: string): boolean {
-  return fundedProjects(PROJECTS[2], progress).some((project) => project.id === id);
+  return fundedProjects(galaxyProjects(2), progress).some((project) => project.id === id);
 }
 
 /** The hub looks worn until its Hub repairs project is funded. */

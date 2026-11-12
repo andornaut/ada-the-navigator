@@ -141,37 +141,39 @@ describe("home visits", () => {
       "resolution@gardenLot",
       "resolution:branch:1@gardenLot",
       "closing@gardenLot",
-      "opening@schoolHallway",
-      "opening:branch:1@schoolHallway",
-      // Dinner with Dad, where the story rejoins.
-      "opening:rejoin:0@kitchen",
-      "opening:rejoin:1@kitchen",
+      // Whirlpool, next on the route, opens at the front door; Mom's line rejoins it.
+      "opening@frontDoor",
+      "opening:branch:1@frontDoor",
+      "opening:rejoin:0@frontDoorMom",
       "room@adaRoom",
       "boarding:0@adaRoom",
       "boarding:1@cockpitSeated",
     ]);
-    expect(pages[1]?.text).toBe(PROTOTYPE.chapters[1].resolutionBranches[1]);
-    expect(pages[4]?.text).toBe(PROTOTYPE.chapters[2].openingBranches[1]);
-    expect(pages.slice(5, 7).map(({ speaker, text }) => [speaker ?? "", text])).toEqual(
-      (PROTOTYPE.chapters[2].openingRejoin ?? []).map(({ speaker, text }) => [speaker ?? "", text]),
+    expect(pages[1]?.text).toBe(PROTOTYPE.chapters[1]!.resolutionBranches[1]);
+    expect(pages[4]?.text).toBe(PROTOTYPE.chapters[3]!.openingBranches[1]);
+    expect(pages.slice(5, 6).map(({ speaker, text }) => [speaker ?? "", text])).toEqual(
+      (PROTOTYPE.chapters[3]!.openingRejoin ?? []).map(({ speaker, text }) => [
+        speaker ?? "",
+        text,
+      ]),
     );
-    expect(pages[7]).toMatchObject({
+    expect(pages[6]).toMatchObject({
       action: "Pick up the rock.",
       text: "Ada's rock glows softly on her desk.",
     });
     // Narration pages have no name tab; Astra's line has hers.
     expect(pages.map(({ speaker }) => speaker ?? "")).toEqual([
-      ...Array<string>(6).fill(""),
-      "Dad",
+      ...Array<string>(5).fill(""),
+      "Mom",
       "",
       "",
       "Astra",
     ]);
     expect(pages.at(-1)?.text).toBe("Welcome back, Navigator. A new galaxy is ready.");
     expect(model.state.progress[1].resolved).toBe(true);
-    expect(model.state.progress[2].opened).toBe(true);
+    expect(model.state.progress[3].opened).toBe(true);
     expect(model.screen).toBe("selector");
-    expect(model.selectedGalaxy).toBe(2);
+    expect(model.selectedGalaxy).toBe(3);
   });
 
   it("never replays old scenes: an empty visit shows Penny's line, then the rock", () => {
@@ -193,11 +195,12 @@ describe("home visits", () => {
     model.returnHome();
     expect(model.storyView?.page.id).toBe("resolution");
     model.storySkip();
-    // The resolution and the next opening pass by their default paths to Ada's room.
+    // The resolution passes by its default path to Ada's room. Cartwheel unlocks Black Eye, a
+    // placeholder with no opening to play.
     expect(model.storyView).toMatchObject({ canSkip: false, page: { id: "room" } });
     expect(model.state.progress[2].resolved).toBe(true);
-    expect(model.state.progress[3].opened).toBe(true);
-    expect(model.state.unlocked).toEqual([1, 2, 3]);
+    expect(model.state.progress[6].opened).toBe(false);
+    expect(model.state.unlocked).toEqual([1, 2, 6]);
   });
 });
 
@@ -266,7 +269,7 @@ describe("story runs", () => {
     model.storyPrevious();
     expect(model.storyView?.page.id).toBe("closing");
     expect(model.state.progress[1].resolved).toBe(true);
-    expect(model.state.unlocked).toEqual([1, 2]);
+    expect(model.state.unlocked).toEqual([1, 3]);
   });
 
   it("starts at a flight's end and ends on Ada's room page with its named action", () => {
@@ -341,21 +344,24 @@ describe("story runs", () => {
 });
 
 describe("galaxy selection", () => {
-  it("pages one galaxy at a time within the four galaxies", () => {
+  it("pages one route position at a time within the six galaxies", () => {
     const model = questDone(2);
     model.returnHome();
     readStory(model);
-    expect(model.selectedGalaxy).toBe(3);
+    // Cartwheel unlocks Black Eye, the farthest position, where selection opens.
+    expect([model.selectedPosition, model.selectedGalaxy]).toEqual([6, 6]);
     model.pageGalaxy(1);
-    expect(model.selectedGalaxy).toBe(4);
-    model.pageGalaxy(1);
-    expect(model.selectedGalaxy).toBe(4);
+    expect([model.selectedPosition, model.selectedGalaxy]).toEqual([6, 6]);
+    model.pageGalaxy(-1);
+    expect([model.selectedPosition, model.selectedGalaxy]).toEqual([5, 2]);
     model.pageGalaxy(-9);
-    expect(model.selectedGalaxy).toBe(1);
+    expect([model.selectedPosition, model.selectedGalaxy]).toEqual([1, 1]);
     expect(GALAXIES.map(({ id, name }) => [name, id])).toEqual([
       ["Sunflower", "sunflower"],
-      ["Cartwheel", "cartwheel"],
       ["Whirlpool", "whirlpool"],
+      ["Needle", "needle"],
+      ["Andromeda", "andromeda"],
+      ["Cartwheel", "cartwheel"],
       ["Black Eye", "black-eye"],
     ]);
   });
@@ -364,9 +370,10 @@ describe("galaxy selection", () => {
     const model = questDone(1);
     model.returnHome();
     readStory(model);
+    // From Whirlpool, the farthest open, to Needle, still locked.
     model.pageGalaxy(1);
-    expect(model.selectedGalaxy).toBe(3);
-    expect(model.isUnlocked(3)).toBe(false);
+    expect(model.selectedGalaxy).toBe(4);
+    expect(model.isUnlocked(4)).toBe(false);
     expect(model.jump()).toBe(false);
     expect(model.screen).toBe("selector");
     model.pageGalaxy(-2);
@@ -449,7 +456,7 @@ describe("start flow", () => {
     home.continueGame();
     expect(home.storyView?.page.id).toBe("resolution");
     readStory(home);
-    expect(home.selectedGalaxy).toBe(2);
+    expect(home.selectedGalaxy).toBe(3);
   });
 
   it("restarts from Start, clearing story, galaxies, holodisks, Stardust and purchases", () => {

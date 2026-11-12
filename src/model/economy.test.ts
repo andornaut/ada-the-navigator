@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunk-catalog.ts";
 import { ECONOMY, type UpgradeWeapon } from "../data/economy.ts";
 import { type EnemyArchetype, enemyCatalog } from "../data/enemy-catalog.ts";
+import { byPosition } from "../data/galaxies.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { RESOURCE_ROCKS } from "../data/resource-rocks.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
@@ -425,7 +426,7 @@ describe("Stardust drops", () => {
     for (let x = -20; x < 20; x++) {
       for (let y = -20; y < 20; y++) {
         const plan = planChunk(CHUNK_CATALOG, {
-          asteroids: { field: ASTEROID_FIELDS[2], shapes },
+          asteroids: { field: byPosition(ASTEROID_FIELDS, 2), shapes },
           clearance: PROTOTYPE.tuning.flight.shipRadius,
           objectsPerChunk: PROTOTYPE.tuning.flight.objectsPerChunk,
           rockRadius: PROTOTYPE.tuning.flight.rockRadius,

@@ -3,9 +3,10 @@ import { CONVERSATIONS } from "../data/conversations.ts";
 import { deliveryDestination } from "../data/destinations.ts";
 import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemy-catalog.ts";
+import { BUILT, SECTORS, unlockedBy } from "../data/galaxies.ts";
 import { HUNTING_PACKS } from "../data/galaxy-features.ts";
 import { JOB_TYPES } from "../data/jobs.ts";
-import { PROJECTS } from "../data/projects.ts";
+import { galaxyProjects } from "../data/projects.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { RESOURCE_ROCKS } from "../data/resource-rocks.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
@@ -18,6 +19,7 @@ import { enemyEffects, restoreEnemyState, type SavedEnemyState } from "./enemy-a
 import { ACTIVE_CHUNK_RADIUS, encounterOf, persistentObject } from "./geography.ts";
 import { isLandmark } from "./landmarks.ts";
 import { validExplored } from "./map.ts";
+import { newProgress } from "./progress.ts";
 import { fundedProjects } from "./projects.ts";
 import { stationById } from "./stations.ts";
 import type {
@@ -676,7 +678,7 @@ function donations(sector: SectorId, value: unknown): boolean {
   return (
     record(value) &&
     Object.entries(value).every(([id, paid]) => {
-      const project = PROJECTS[sector].find((entry) => entry.id === id);
+      const project = galaxyProjects(sector).find((entry) => entry.id === id);
       return (
         project !== undefined &&
         Number.isInteger(paid) &&
@@ -694,7 +696,7 @@ function revealedProjects(sector: SectorId, donated: unknown, value: unknown): b
     Array.isArray(value) &&
     new Set(value).size === value.length &&
     value.every((id) => {
-      const project = PROJECTS[sector].find((entry) => entry.id === id);
+      const project = galaxyProjects(sector).find((entry) => entry.id === id);
       return project !== undefined && paid[id] === project.cost;
     })
   );
@@ -818,15 +820,22 @@ export function restoreSave(saved: unknown): GameState | null {
       !record(value) ||
       value.version !== 1 ||
       !["home", "space"].includes(String(value.mode)) ||
-      ![1, 2, 3].includes(value.selectedSector as number) ||
+      !SECTORS.includes(value.selectedSector as SectorId) ||
       !record(value.progress)
     ) {
       return null;
     }
+    // A save from before the placeholder galaxies has no progress for them yet; every built
+    // galaxy's progress must be there.
+    for (const id of SECTORS) {
+      if (!BUILT.has(id)) {
+        value.progress[id] ??= newProgress();
+      }
+    }
     if (
       !Array.isArray(value.unlocked) ||
       !value.unlocked.includes(1) ||
-      value.unlocked.some((v) => ![1, 2, 3].includes(v)) ||
+      value.unlocked.some((v) => !SECTORS.includes(v as SectorId)) ||
       !value.unlocked.includes(value.selectedSector)
     ) {
       return null;
@@ -841,7 +850,7 @@ export function restoreSave(saved: unknown): GameState | null {
     ) {
       return null;
     }
-    for (const id of [1, 2, 3]) {
+    for (const id of SECTORS) {
       const p = value.progress[id];
       if (
         !record(p) ||
@@ -1079,6 +1088,18 @@ export function restoreSave(saved: unknown): GameState | null {
     if (!Array.isArray(value.seenConversations)) {
       restored.seenConversations = playedConversations(restored);
     }
+    // Each completed galaxy keeps what it unlocks along the route, so a save from before the
+    // route also holds the galaxies after it; every stored unlock stays.
+    for (const id of SECTORS) {
+      const p = restored.progress[id];
+      if (p.holodisk && p.questComplete && p.resolved) {
+        for (const next of unlockedBy(id)) {
+          if (!restored.unlocked.includes(next)) {
+            restored.unlocked.push(next);
+          }
+        }
+      }
+    }
     // CLEANUP (added 2026-11-11): saves from before achievements start with their charted
     // landmarks and funded projects counted, and the model unlocks what they reached. Remove once
     // no save from before achievements remains in play.
@@ -1088,7 +1109,7 @@ export function restoreSave(saved: unknown): GameState | null {
         const progress = restored.progress[sector];
         restored.achievements.charted[sector] = [...progress.charted];
         restored.achievements.projects.push(
-          ...fundedProjects(PROJECTS[sector], progress).map(({ id }) => id),
+          ...fundedProjects(galaxyProjects(sector), progress).map(({ id }) => id),
         );
       }
     }

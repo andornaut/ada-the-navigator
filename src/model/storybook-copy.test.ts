@@ -71,7 +71,7 @@ describe("storybook text", () => {
     const narration = scenes.flatMap(({ pages }) => pages).filter(({ speaker }) => !speaker);
     expect(narration.map(({ text }) => text)).toEqual(
       expect.arrayContaining([
-        PROTOTYPE.chapters[1].opening,
+        PROTOTYPE.chapters[1]!.opening,
         PROTOTYPE.premise.roomRock,
         PROTOTYPE.premise.emptyHome,
         "Ada holds Penny close and touches the rock's glow.",
@@ -122,7 +122,7 @@ describe("storybook text", () => {
 
   it("follows each chapter choice with its own branch page", () => {
     for (const galaxy of galaxies) {
-      const chapter = PROTOTYPE.chapters[galaxy];
+      const chapter = PROTOTYPE.chapters[galaxy]!;
       const pairs = [
         [chapter.openingChoices, chapter.openingBranches],
         [chapter.resolutionChoices, chapter.resolutionBranches],
@@ -184,7 +184,7 @@ describe("storybook text", () => {
 
   it("heads the opening, resolution and closing pages with the chapter's panel title", () => {
     for (const galaxy of galaxies) {
-      const chapter = PROTOTYPE.chapters[galaxy];
+      const chapter = PROTOTYPE.chapters[galaxy]!;
       expect(COPY).toContain(`Panel title: ${chapter.name}.`);
       const headed = [openingScene(PROTOTYPE, galaxy), resolutionScene(PROTOTYPE, galaxy)]
         .flatMap(({ pages }) => pages)

@@ -9,13 +9,20 @@ import { destinationDrawn } from "../data/destinations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { EDGE_MARKER_GLYPHS } from "../data/edge-markers.ts";
 import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
+import { BUILT, GALAXY_COUNT } from "../data/galaxies.ts";
 import { CURRENTS } from "../data/galaxy-features.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { resourceArtId } from "../data/resource-rocks.ts";
 import { SCREEN } from "../data/screen.ts";
 import { CARTWHEEL_STORY_SHIPS, STORY_SHIP_CRAFT } from "../data/story-ships.ts";
-import { GALAXIES, galaxyPreview, OVERNIGHT_SLEEP, SELECTOR_BACKDROP } from "../data/storybook.ts";
+import {
+  GALAXIES,
+  galaxyCard,
+  galaxyPreview,
+  OVERNIGHT_SLEEP,
+  SELECTOR_BACKDROP,
+} from "../data/storybook.ts";
 import type { SectorId } from "../data/types.ts";
 import { PICKUP_GLYPH, pickupGlyphKey, weaponGlyphPath } from "../data/weapon-glyphs.ts";
 import { coarsePointer } from "../input/coarse-pointer.ts";
@@ -590,9 +597,15 @@ export class PrototypeScene extends Phaser.Scene {
     this.basePalette =
       readSpacePalette(this.cache.json.get("space-palette")) ?? FALLBACK_SPACE_PALETTE;
     this.palette = this.basePalette;
+    // Art's field colours for the built galaxies, whose ids are Art's galaxy numbers; a
+    // placeholder flies in the base field.
     this.galaxyPalettes = galaxyPalettes(
       this.basePalette,
-      readGalaxyFields(this.cache.json.get("galaxy-fields")),
+      new Map(
+        [...readGalaxyFields(this.cache.json.get("galaxy-fields"))].filter(([galaxy]) =>
+          BUILT.has(galaxy as SectorId),
+        ),
+      ),
     );
     this.lightGalaxies = readLightGalaxies(this.cache.json.get("galaxy-fields"));
     const background = this.palette.background;
@@ -1034,6 +1047,7 @@ export class PrototypeScene extends Phaser.Scene {
       flavors: GALAXIES.map(({ flavor }) => flavor),
       labels: {
         close: label("close"),
+        development: label("galaxyInDevelopment"),
         home: label("homeButton"),
         jump: label("jump"),
         locked: label("galaxyLocked"),
@@ -1564,15 +1578,17 @@ export class PrototypeScene extends Phaser.Scene {
       },
       selected === null ? null : SELECTOR_BACKDROP,
     );
-    const galaxy = selected === null || this.hideSelector ? undefined : GALAXIES[selected - 1];
+    const position = this.model.selectedPosition;
+    const galaxy = selected === null || this.hideSelector ? undefined : galaxyCard(selected);
     this.galaxies.show(
-      galaxy && selected !== null
+      galaxy && selected !== null && position !== null
         ? {
-            first: selected === 1,
+            first: position === 1,
             flavor: galaxy.flavor,
-            last: selected === GALAXIES.length,
+            last: position === GALAXY_COUNT,
             name: galaxy.name,
-            number: selected,
+            number: position,
+            placeholder: !BUILT.has(selected),
             preview: galaxyPreview(galaxy, !this.model.isUnlocked(selected)),
             unlocked: this.model.isUnlocked(selected),
           }
@@ -1662,7 +1678,7 @@ export class PrototypeScene extends Phaser.Scene {
     return {
       background: `#${palette.background.toString(16).padStart(6, "0")}`,
       fog: fogColor(palette.environment, palette.environmentDetail),
-      name: GALAXIES[sector - 1]?.name ?? "",
+      name: galaxyCard(sector).name,
     };
   }
 

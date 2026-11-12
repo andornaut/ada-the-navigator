@@ -1,3 +1,4 @@
+import { byPosition, type RoutePosition } from "./galaxies.ts";
 import { SHIP_PHYSICS, type ShipPhysics } from "./ship-physics.ts";
 import type { SectorId } from "./types.ts";
 
@@ -224,69 +225,78 @@ export interface EncounterEntry {
   weight: number;
 }
 
-/** Open-space encounter tables per sector; frigates and capitals also keep their route roles. */
-export const sectorEncounters: Readonly<Record<SectorId, readonly EncounterEntry[]>> = {
-  1: [
-    { archetype: "swarm", groupSize: [4, 6], weight: 0.35 },
-    { archetype: "fighter", groupSize: [1, 3], weight: 0.3 },
-    { archetype: "interceptor", groupSize: [1, 1], weight: 0.15 },
-    { archetype: "retaliator", groupSize: [1, 1], weight: 0.1 },
-    { archetype: "frigate", groupSize: [1, 1], weight: 0.07 },
-    {
-      archetype: "capital",
-      escorts: { archetype: "fighter", count: 4 },
-      groupSize: [1, 1],
-      weight: 0.03,
-    },
-  ],
-  2: [
-    { archetype: "swarm", groupSize: [5, 7], weight: 0.25 },
-    { archetype: "fighter", groupSize: [2, 4], weight: 0.4 },
-    { archetype: "interceptor", groupSize: [1, 2], weight: 0.12 },
-    { archetype: "retaliator", groupSize: [1, 1], weight: 0.1 },
-    { archetype: "frigate", groupSize: [1, 1], weight: 0.1 },
-    {
-      archetype: "capital",
-      escorts: { archetype: "fighter", count: 4 },
-      groupSize: [1, 1],
-      weight: 0.03,
-    },
-  ],
-  3: [
-    { archetype: "swarm", groupSize: [5, 8], weight: 0.25 },
-    { archetype: "fighter", groupSize: [3, 4], weight: 0.3 },
-    { archetype: "interceptor", groupSize: [1, 2], weight: 0.15 },
-    { archetype: "retaliator", groupSize: [1, 1], weight: 0.1 },
-    { archetype: "frigate", groupSize: [1, 1], weight: 0.15 },
-    {
-      archetype: "capital",
-      escorts: { archetype: "fighter", count: 4 },
-      groupSize: [1, 1],
-      weight: 0.05,
-    },
-  ],
-};
+/**
+ * Open-space encounter tables by route position (galaxies.ts); frigates and capitals also keep
+ * their route roles. A placeholder reads the built galaxy before it.
+ */
+export const sectorEncounters: Readonly<Partial<Record<RoutePosition, readonly EncounterEntry[]>>> =
+  {
+    1: [
+      { archetype: "swarm", groupSize: [4, 6], weight: 0.35 },
+      { archetype: "fighter", groupSize: [1, 3], weight: 0.3 },
+      { archetype: "interceptor", groupSize: [1, 1], weight: 0.15 },
+      { archetype: "retaliator", groupSize: [1, 1], weight: 0.1 },
+      { archetype: "frigate", groupSize: [1, 1], weight: 0.07 },
+      {
+        archetype: "capital",
+        escorts: { archetype: "fighter", count: 4 },
+        groupSize: [1, 1],
+        weight: 0.03,
+      },
+    ],
+    2: [
+      { archetype: "swarm", groupSize: [5, 8], weight: 0.25 },
+      { archetype: "fighter", groupSize: [3, 4], weight: 0.3 },
+      { archetype: "interceptor", groupSize: [1, 2], weight: 0.15 },
+      { archetype: "retaliator", groupSize: [1, 1], weight: 0.1 },
+      { archetype: "frigate", groupSize: [1, 1], weight: 0.15 },
+      {
+        archetype: "capital",
+        escorts: { archetype: "fighter", count: 4 },
+        groupSize: [1, 1],
+        weight: 0.05,
+      },
+    ],
+    5: [
+      { archetype: "swarm", groupSize: [5, 7], weight: 0.25 },
+      { archetype: "fighter", groupSize: [2, 4], weight: 0.4 },
+      { archetype: "interceptor", groupSize: [1, 2], weight: 0.12 },
+      { archetype: "retaliator", groupSize: [1, 1], weight: 0.1 },
+      { archetype: "frigate", groupSize: [1, 1], weight: 0.1 },
+      {
+        archetype: "capital",
+        escorts: { archetype: "fighter", count: 4 },
+        groupSize: [1, 1],
+        weight: 0.03,
+      },
+    ],
+  };
 
-/** Per-galaxy archetype changes: hull HP and movement behaviour (gameplay/ships.md). */
+/**
+ * Archetype changes by route position: hull HP and movement behaviour (gameplay/ships.md). A
+ * placeholder reads the built galaxy before it.
+ */
 export const sectorArchetypes: Readonly<
-  Record<
-    SectorId,
-    Partial<Record<EnemyArchetype, Partial<Pick<EnemyDefinition, "behaviour" | "hp">>>>
+  Partial<
+    Record<
+      RoutePosition,
+      Partial<Record<EnemyArchetype, Partial<Pick<EnemyDefinition, "behaviour" | "hp">>>>
+    >
   >
 > = {
   1: {},
   2: {
-    fighter: { hp: 5 },
-    frigate: { hp: 12 },
-    interceptor: { behaviour: { burstVolleys: 3, kind: "hitAndRun", retreatSeconds: 1.6 } },
-    retaliator: { hp: 9 },
-  },
-  3: {
     fighter: { behaviour: { kind: "chase" }, hp: 5 },
     frigate: { hp: 12 },
     interceptor: { behaviour: { kind: "chase" }, hp: 4 },
     retaliator: { hp: 10 },
     swarm: { hp: 3 },
+  },
+  5: {
+    fighter: { hp: 5 },
+    frigate: { hp: 12 },
+    interceptor: { behaviour: { burstVolleys: 3, kind: "hitAndRun", retreatSeconds: 1.6 } },
+    retaliator: { hp: 9 },
   },
 };
 
@@ -301,21 +311,21 @@ export const enemyEncounterTuning = {
   speedCapRatio: 1.1,
 } as const;
 
-/** Per-galaxy difficulty: perception reach, fire rate and encounter frequency multipliers. */
+/** Difficulty by route position: perception reach, fire rate and encounter frequency multipliers. */
 export interface SectorEnemyTuning {
   encounterRate: number;
   fireRate: number;
   perception: number;
 }
-export const sectorEnemyTuning: Readonly<Record<SectorId, SectorEnemyTuning>> = {
+export const sectorEnemyTuning: Readonly<Partial<Record<RoutePosition, SectorEnemyTuning>>> = {
   1: { encounterRate: 1.2, fireRate: 1.15, perception: 1.2 },
-  2: { encounterRate: 1.3, fireRate: 1.3, perception: 1.3 },
-  3: { encounterRate: 1.35, fireRate: 1.45, perception: 1.4 },
+  2: { encounterRate: 1.35, fireRate: 1.45, perception: 1.4 },
+  5: { encounterRate: 1.3, fireRate: 1.3, perception: 1.3 },
 };
 
 /** Quiet travel and time between encounters shorten with the galaxy's encounter rate. */
 export function encounterQuiet(sector: SectorId): { distance: number; seconds: number } {
-  const rate = sectorEnemyTuning[sector].encounterRate;
+  const rate = byPosition(sectorEnemyTuning, sector).encounterRate;
   return {
     distance: enemyEncounterTuning.quietDistance / rate,
     seconds: enemyEncounterTuning.quietSeconds / rate,
@@ -331,10 +341,10 @@ export function enemyDefinition(sector: SectorId, archetype: EnemyArchetype): En
   const key = `${sector}:${archetype}`;
   let definition = scaled.get(key);
   if (!definition) {
-    const { fireRate, perception } = sectorEnemyTuning[sector];
+    const { fireRate, perception } = byPosition(sectorEnemyTuning, sector);
     const catalog: EnemyDefinition = {
       ...enemyCatalog[archetype],
-      ...sectorArchetypes[sector][archetype],
+      ...byPosition(sectorArchetypes, sector)[archetype],
     };
     const faster = (fire: FireProfile): FireProfile => ({
       ...fire,

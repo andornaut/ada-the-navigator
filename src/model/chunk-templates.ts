@@ -1,5 +1,6 @@
 import type { AsteroidSize } from "../data/asteroid-catalog.ts";
 import type { AsteroidField, ChunkCatalog, ChunkTemplateId } from "../data/chunk-catalog.ts";
+import { byPosition } from "../data/galaxies.ts";
 import { RESOURCE_ROCKS, type ResourceClass, resourceClass } from "../data/resource-rocks.ts";
 import type { SectorId } from "../data/types.ts";
 import { type AsteroidShape, resourceShapes } from "./asteroids.ts";
@@ -181,7 +182,7 @@ function validate(options: ChunkPlanOptions): void {
 /** Pure plans use normalized authored slots and return world coordinates without retaining visits. */
 export function planChunk(catalog: ChunkCatalog, options: ChunkPlanOptions): ChunkPlan {
   validate(options);
-  const choices = catalog[options.sector];
+  const choices = byPosition(catalog, options.sector);
   if (
     !choices.length ||
     choices.some((choice) => !Number.isFinite(choice.weight) || choice.weight < 0)

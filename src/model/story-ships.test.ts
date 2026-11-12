@@ -220,7 +220,7 @@ describe("Cartwheel story ships", () => {
   });
 
   it("keeps the hub worn until Hub repairs is funded, and adds the bay once it is funded", () => {
-    const cost = (id: string) => PROJECTS[2].find((project) => project.id === id)!.cost;
+    const cost = (id: string) => PROJECTS[2]!.find((project) => project.id === id)!.cost;
     const progress = (donated: Record<string, number>) => ({
       donated,
       resolved: true,

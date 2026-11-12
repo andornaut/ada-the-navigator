@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { ASTEROID_ART, LEGACY_ASTEROIDS, readAsteroidCatalog } from "./asteroid-catalog.ts";
+import { BUILT } from "./galaxies.ts";
 import { GALAXIES } from "./storybook.ts";
 
 const PUBLIC = new URL("../../public", import.meta.url).pathname;
@@ -59,8 +60,13 @@ describe("Art's asteroid catalog, version 1", () => {
     for (const file of files) {
       expect(existsSync(`${PUBLIC}${file}`), file).toBe(true);
     }
+    // The base field and every built galaxy have a tint; each other tint names a galaxy.
     const ids = GALAXIES.map((galaxy) => galaxy.id);
-    expect(Object.keys(catalog.tints).sort()).toEqual(["base", ...ids].sort());
+    const built = GALAXIES.filter(({ galaxy }) => BUILT.has(galaxy)).map(({ id }) => id);
+    expect(Object.keys(catalog.tints)).toEqual(expect.arrayContaining(["base", ...built]));
+    expect(Object.keys(catalog.tints).filter((id) => id !== "base" && !ids.includes(id))).toEqual(
+      [],
+    );
   });
 
   const first = FILE.asteroids[0]!;

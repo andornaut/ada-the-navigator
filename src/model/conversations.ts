@@ -96,10 +96,10 @@ export function pennyInstance(sector: SectorId, point: string): string {
 
 /** The name on a speaker's tab: the General's is unknown until the Whirlpool holodisk is in. */
 export function speakerName(
-  progress: Readonly<Record<SectorId, Pick<SectorProgress, "holodisk">>>,
+  progress: Readonly<Partial<Record<SectorId, Pick<SectorProgress, "holodisk">>>>,
   speaker: Speaker,
 ): string {
-  return speaker === "general" && progress[GENERAL_NAMED.sector].holodisk
+  return speaker === "general" && progress[GENERAL_NAMED.sector]?.holodisk
     ? GENERAL_NAMED.name
     : SPEAKERS[speaker].name;
 }

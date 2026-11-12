@@ -13,8 +13,8 @@ export interface OreField extends Vec {
   rocks: readonly (Vec & { asteroid: string; resource: ResourceClass; spinStart: number })[];
 }
 
-/** Fixed per-sector seeds, so ore fields are the same on every flight. */
-const SECTOR_SEEDS: Readonly<Record<SectorId, number>> = {
+/** Fixed seeds for the galaxies with ore fields, so ore fields are the same on every flight. */
+const SECTOR_SEEDS: Readonly<Partial<Record<SectorId, number>>> = {
   1: 0x0e5e_0101,
   2: 0x0e5e_0202,
   3: 0x0e5e_0303,
@@ -40,7 +40,7 @@ export function oreFieldInCell(sector: SectorId, cell: Vec): OreField | null {
   if (!ORE_FIELDS.sectors.includes(sector)) {
     return null;
   }
-  const seed = SECTOR_SEEDS[sector];
+  const seed = SECTOR_SEEDS[sector]!;
   const roll = (salt: number) => unit(mix(seed ^ salt, cell.x, cell.y));
   if (roll(0) >= chance) {
     return null;

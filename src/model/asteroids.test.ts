@@ -55,7 +55,7 @@ const progress: SectorProgress = {
 const shapes = [...ASTEROID_SHAPES.values()];
 const tuning = PROTOTYPE.tuning.flight;
 const options: ChunkPlanOptions = {
-  asteroids: { field: ASTEROID_FIELDS[1], shapes },
+  asteroids: { field: ASTEROID_FIELDS[1]!, shapes },
   clearance: tuning.shipRadius,
   objectsPerChunk: tuning.objectsPerChunk,
   rockRadius: tuning.rockRadius,
@@ -497,7 +497,7 @@ describe("asteroid chunk fields", () => {
   it("keeps every drift path clear of every other rock and drift path in its chunk", () => {
     const free = options.shipRadius + options.clearance;
     // Every eligible rock drifts, so neighbouring paths compete for the same room.
-    const asteroids = { field: { ...ASTEROID_FIELDS[1], driftChance: 1 }, shapes };
+    const asteroids = { field: { ...ASTEROID_FIELDS[1]!, driftChance: 1 }, shapes };
     let pairs = 0;
     let bothDrift = 0;
     for (let x = -24; x < 24; x++) {
@@ -603,7 +603,7 @@ describe("asteroids in flight", () => {
     expect(all.some((object) => ASTEROID_SHAPES.get(object.asteroid!)!.size === "huge")).toBe(true);
     expect(all.some((object) => object.orbit && object.velocity && !object.persistent)).toBe(true);
     const sized = all.find((object) => ASTEROID_SHAPES.get(object.asteroid!)!.size === "large");
-    expect(sized?.hp).toBe(ASTEROID_FIELDS[1].hp.large);
+    expect(sized?.hp).toBe(ASTEROID_FIELDS[1]!.hp.large);
   });
 
   it("bounces Ada off a large irregular asteroid head-on and glancing, without damage or sticking", () => {

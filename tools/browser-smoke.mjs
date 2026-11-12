@@ -2327,7 +2327,7 @@ try {
         ]),
         achievements: box('[data-action="achievements"]'),
         focused: document.activeElement?.dataset.action ?? null,
-        note: box(".ada-start-note"),
+        note: document.querySelectorAll(".ada-start-note").length,
         settings: box('[data-action="settings"]'),
         ship: box(".ada-start-ship"),
         shipSrc: document.querySelector(".ada-start-ship")?.getAttribute("src"),
@@ -2377,7 +2377,7 @@ try {
   );
   await page.setViewportSize({ height: 720, width: 1280 });
   save("start-screen-proof.json", startScreens);
-  const { actions, note, ship, wordmark } = START_SCREEN;
+  const { actions, ship, wordmark } = START_SCREEN;
   for (const [name, shot] of Object.entries(startScreens)) {
     assert.deepEqual(
       shot.wordmark,
@@ -2389,11 +2389,7 @@ try {
       [ship.centre.x - ship.size / 2, ship.centre.y - ship.size / 2, ship.size, ship.size],
       `${name}: the ship frame is 280 square on its centre`,
     );
-    assert.equal(shot.note[1], note.top, `${name}: the note's line box starts at its top`);
-    assert.ok(
-      Math.abs(shot.note[0] + shot.note[2] / 2 - note.centre) < 0.6,
-      `${name}: the note is centred on the game area`,
-    );
+    assert.equal(shot.note, 0, `${name}: the start screen has no note`);
     assert.equal(shot.title, PROTOTYPE.labels.home, `${name}: the wordmark is named by home`);
     assert.equal(shot.shipSrc, "/art/ship-26.svg", `${name}: Classic's ship-26 before a paint`);
     for (const [action, box, role] of shot.actions) {
@@ -2470,7 +2466,7 @@ try {
     "An open modal draws over the start screen and its nav discs",
   );
   events.checks.push(
-    "The start screen draws the field, ship, wordmark, actions and note at their play-view places " +
+    "The start screen draws the field, ship, wordmark and actions at their play-view places " +
       "at 720x360 and 844x390, with and without insets, defaults to Start or Continue and tabs " +
       "Continue, Restart, Achievements, Settings",
   );
@@ -2702,12 +2698,16 @@ try {
   assert.equal(await choices.count(), 0, "The closing is an ordinary page");
   const homePages = await readStory();
   assert.equal(homePages[0]?.text, PROTOTYPE.chapters[1].closing);
-  assert.equal(homePages[1]?.text, PROTOTYPE.chapters[2].opening, "Galaxy two's opening follows");
+  assert.equal(
+    homePages[1]?.text,
+    PROTOTYPE.chapters[3].opening,
+    "Whirlpool's opening follows, second on the route",
+  );
   await selector().waitFor({ state: "visible" });
   assert.equal(
     (await selector().locator("h2").textContent())?.trim(),
     PROTOTYPE.labels.galaxyNumber.replace("{number}", "2"),
-    "Galaxy selection opens on the farthest unlocked galaxy",
+    "Galaxy selection opens on the farthest unlocked galaxy, Whirlpool at route position 2",
   );
   assert.equal(
     (await page.locator('[data-action="galaxy-home"]').textContent())?.trim(),
@@ -2718,11 +2718,11 @@ try {
   assert.equal(
     await page.locator('[data-action="galaxy-jump"]').getAttribute("aria-disabled"),
     null,
-    "home resolution must unlock galaxy two",
+    "home resolution must unlock Whirlpool",
   );
   await page.waitForFunction((key) => {
     const state = JSON.parse(localStorage.getItem(key));
-    return state?.progress[1].resolved && state.unlocked.includes(2);
+    return state?.progress[1].resolved && state.unlocked.includes(3);
   }, storageKey);
   events.checks.push(
     "Fixture-based home resolution, closing and the next opening lead to galaxy selection on " +

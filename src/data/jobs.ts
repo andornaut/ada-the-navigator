@@ -1,3 +1,4 @@
+import type { RoutePosition } from "./galaxies.ts";
 import type { SectorId } from "./types.ts";
 
 // Station jobs and the landmarks surveys chart (gameplay/quests.md). Every number is Gameplay's
@@ -38,22 +39,32 @@ export const JOB_TUNING = {
   },
 } as const;
 
-/** Stardust per job, by galaxy (quests.md "Rewards"). */
-export const JOB_REWARDS: Readonly<Record<SectorId, Readonly<Record<JobRewardKind, number>>>> = {
+/**
+ * Stardust per job by route position (quests.md "Rewards"); a placeholder reads the built galaxy
+ * before it.
+ */
+export const JOB_REWARDS: Readonly<
+  Partial<Record<RoutePosition, Readonly<Record<JobRewardKind, number>>>>
+> = {
   1: { deliveryLong: 25, deliveryShort: 15, hunt: 15, rescue: 25, survey: 10 },
-  2: { deliveryLong: 35, deliveryShort: 20, hunt: 20, rescue: 35, survey: 15 },
-  3: { deliveryLong: 50, deliveryShort: 30, hunt: 30, rescue: 50, survey: 20 },
+  2: { deliveryLong: 50, deliveryShort: 30, hunt: 30, rescue: 50, survey: 20 },
+  5: { deliveryLong: 35, deliveryShort: 20, hunt: 20, rescue: 35, survey: 15 },
 };
 
-/** Each galaxy's pool: what its jobs carry, tow and look for (quests.md "Job pool"). */
+/**
+ * Each built galaxy's pool: what its jobs carry, tow and look for (quests.md "Job pool").
+ * Placeholders have no stations, so no jobs.
+ */
 export const JOB_POOL: Readonly<
-  Record<
-    SectorId,
-    {
-      readonly craft: readonly string[];
-      readonly delivery: readonly string[];
-      readonly lost: readonly string[];
-    }
+  Partial<
+    Record<
+      SectorId,
+      {
+        readonly craft: readonly string[];
+        readonly delivery: readonly string[];
+        readonly lost: readonly string[];
+      }
+    >
   >
 > = {
   1: {
@@ -73,8 +84,8 @@ export const JOB_POOL: Readonly<
   },
 };
 
-/** Astra's lore lines after a job completes, one unseen line per job. */
-export const JOB_LORE: Readonly<Record<SectorId, readonly string[]>> = {
+/** Astra's lore lines after a job completes, one unseen line per job, for each built galaxy. */
+export const JOB_LORE: Readonly<Partial<Record<SectorId, readonly string[]>>> = {
   1: [
     "Nebulae are clouds where new stars are born.",
     "The growers trade seeds the way some people trade stories.",

@@ -1,6 +1,7 @@
 import type { AsteroidSize } from "../data/asteroid-catalog.ts";
 import type { EconomyCatalog, UpgradeWeapon } from "../data/economy.ts";
 import type { EnemyArchetype } from "../data/enemy-catalog.ts";
+import { byPosition } from "../data/galaxies.ts";
 import type { SectorId } from "../data/types.ts";
 import type { SpaceObject } from "./types.ts";
 import { UPGRADE_WEAPONS } from "./weapons.ts";
@@ -38,7 +39,7 @@ export function rollEnemyDrop(
   next: () => number,
 ): Drop {
   const drop: Drop = { stardust: catalog.enemyStardust[archetype], weapon: null };
-  if (next() < catalog.weaponDropChance[sector][archetype]) {
+  if (next() < byPosition(catalog.weaponDropChance, sector)[archetype]) {
     drop.weapon = UPGRADE_WEAPONS[Math.floor(next() * UPGRADE_WEAPONS.length)] ?? "rapidMissile";
   }
   return drop;

@@ -28,7 +28,7 @@ function started(choice = 0): GameModel {
   expect(arrival).toEqual(garden);
   model.storyChoose(choice);
   // The choice's branch page, Grandma's farewell, then the story rejoins at the prologue.
-  expect(model.storyView?.page.text).toBe(PROTOTYPE.chapters[1].openingBranches[choice]);
+  expect(model.storyView?.page.text).toBe(PROTOTYPE.chapters[1]!.openingBranches[choice]);
   model.storyNext();
   expect(model.storyView?.page).toMatchObject({
     background: "grandmaGarden",
@@ -79,10 +79,10 @@ describe("prologue", () => {
       [
         "grandmaGarden",
         "",
-        PROTOTYPE.chapters[1].opening,
-        PROTOTYPE.chapters[1].openingChoices.map((label) => label),
+        PROTOTYPE.chapters[1]!.opening,
+        PROTOTYPE.chapters[1]!.openingChoices.map((label) => label),
       ],
-      ["grandmaGarden", "", PROTOTYPE.chapters[1].openingBranches[0], "Next"],
+      ["grandmaGarden", "", PROTOTYPE.chapters[1]!.openingBranches[0], "Next"],
       [
         "grandmaGarden",
         "Grandma",

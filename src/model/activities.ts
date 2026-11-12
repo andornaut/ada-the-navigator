@@ -4,6 +4,7 @@ import {
   MINING_CONTRACT_DEPOSITS,
 } from "../data/activities.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { byPosition } from "../data/galaxies.ts";
 import { JOB_REWARDS, JOB_TUNING } from "../data/jobs.ts";
 import type { SectorId } from "../data/types.ts";
 import { stationById, type StationSite } from "./stations.ts";
@@ -75,7 +76,7 @@ export function supplyTerms(
   }
   const long = length(site) >= JOB_TUNING.delivery.longFrom;
   return {
-    reward: JOB_REWARDS[sector][long ? "deliveryLong" : "deliveryShort"],
+    reward: byPosition(JOB_REWARDS, sector)[long ? "deliveryLong" : "deliveryShort"],
     target: { id: site.id, x: site.x, y: site.y },
   };
 }
@@ -147,8 +148,8 @@ export function validActivity(sector: SectorId, value: Record<string, unknown>):
     typeof value.place === "string" &&
     Object.hasOwn(activity.places, value.place) &&
     (activity.id === "supplyRun"
-      ? (value.reward === JOB_REWARDS[sector].deliveryShort ||
-          value.reward === JOB_REWARDS[sector].deliveryLong) &&
+      ? (value.reward === byPosition(JOB_REWARDS, sector).deliveryShort ||
+          value.reward === byPosition(JOB_REWARDS, sector).deliveryLong) &&
         typeof value.target === "object" &&
         value.target !== null &&
         vector(value.target) &&

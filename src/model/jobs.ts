@@ -1,5 +1,6 @@
 import { deliveryDestination } from "../data/destinations.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { byPosition } from "../data/galaxies.ts";
 import {
   JOB_POOL,
   JOB_REWARDS,
@@ -115,7 +116,7 @@ function jobTarget(
   station: StationSite,
   type: JobType,
 ): Pick<JobOffer, "item" | "spot" | "target"> | null {
-  const pool = JOB_POOL[context.sector];
+  const pool = JOB_POOL[context.sector]!;
   if (type === "survey") {
     const taken = surveyed(context.sector, book);
     // One of the three nearest uncharted landmarks no other survey names.
@@ -187,7 +188,9 @@ function makeOffer(
       return {
         ...target,
         id: `job:${made}`,
-        reward: JOB_REWARDS[context.sector][rewardKind(type, distance(target.target, station))],
+        reward: byPosition(JOB_REWARDS, context.sector)[
+          rewardKind(type, distance(target.target, station))
+        ],
         station: station.id,
         type,
       };

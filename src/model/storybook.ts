@@ -1,5 +1,5 @@
 import { type Background, CHAPTER_BACKGROUNDS } from "../data/storybook.ts";
-import type { PrologueStep, PrototypeContent, SectorId } from "../data/types.ts";
+import type { ChapterContent, PrologueStep, PrototypeContent, SectorId } from "../data/types.ts";
 
 /** A choice and the page it leads to; without one, the choice ends the scene. */
 export interface StoryChoice {
@@ -193,6 +193,19 @@ function linePage(
   };
 }
 
+/** A built galaxy's chapter and Earth scenes; a placeholder galaxy has none to play. */
+function builtChapter(
+  content: PrototypeContent,
+  galaxy: SectorId,
+): [ChapterContent, NonNullable<(typeof CHAPTER_BACKGROUNDS)[SectorId]>] {
+  const chapter = content.chapters[galaxy];
+  const backgrounds = CHAPTER_BACKGROUNDS[galaxy];
+  if (!chapter || !backgrounds) {
+    throw new RangeError(`Galaxy ${galaxy} has no chapter`);
+  }
+  return [chapter, backgrounds];
+}
+
 /**
  * A chapter's home opening: its narration and choices, each with a branch page before the story
  * rejoins as the scene ends. On the first launch, chapter one's opening is framed by Grandma's
@@ -203,8 +216,7 @@ export function openingScene(
   galaxy: SectorId,
   firstLaunch = false,
 ): Scene {
-  const chapter = content.chapters[galaxy];
-  const background = CHAPTER_BACKGROUNDS[galaxy].opening;
+  const [chapter, { opening: background }] = builtChapter(content, galaxy);
   const framed = firstLaunch && galaxy === 1;
   const arrival = framed ? content.premise.gardenArrival : [];
   const arrivalPages = arrival.map((step, index) =>
@@ -256,8 +268,7 @@ export function openingScene(
 /** A chapter's home resolution: its narration and choices, each with a branch page before the
  * closing. */
 export function resolutionScene(content: PrototypeContent, galaxy: SectorId): Scene {
-  const chapter = content.chapters[galaxy];
-  const backgrounds = CHAPTER_BACKGROUNDS[galaxy];
+  const [chapter, backgrounds] = builtChapter(content, galaxy);
   return {
     effect: { galaxy, kind: "resolved" },
     id: `resolution:${galaxy}`,

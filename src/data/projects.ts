@@ -25,7 +25,7 @@ export interface CommunityProject {
 // Each galaxy's community projects (gameplay/economy.md "Donations"), with provisional costs.
 // Funding one plays its thank-you line, changes the world at its site, counts toward achievements
 // and makes one ally for the finale; none gives combat power outside it.
-export const PROJECTS: Readonly<Record<SectorId, readonly CommunityProject[]>> = {
+export const PROJECTS: Readonly<Partial<Record<SectorId, readonly CommunityProject[]>>> = {
   1: [
     {
       ally: "escort",
@@ -110,6 +110,11 @@ export const PROJECTS: Readonly<Record<SectorId, readonly CommunityProject[]>> =
     },
   ],
 };
+
+/** A galaxy's community projects; a placeholder galaxy has none. */
+export function galaxyProjects(sector: SectorId): readonly CommunityProject[] {
+  return PROJECTS[sector] ?? [];
+}
 
 /** Each project's thank-you, a one-line space conversation that plays once, when it is funded. */
 export const PROJECT_THANKS: readonly Conversation[] = Object.values(PROJECTS)

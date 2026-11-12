@@ -23,7 +23,7 @@ const tow = json(manifest.tow);
 
 describe("tow art", () => {
   it("names a stranded craft for each of Cartwheel's rescue items", () => {
-    expect(Object.keys(STRANDED_CRAFT).sort()).toEqual([...JOB_POOL[2].craft].sort());
+    expect(Object.keys(STRANDED_CRAFT).sort()).toEqual([...JOB_POOL[2]!.craft].sort());
   });
 
   it("reads the cable's layers, beads and cap", () => {

@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { BUILT } from "../data/galaxies.ts";
 import { GALAXIES, galaxyPreview } from "../data/storybook.ts";
 import type { SpaceObject } from "../model/types.ts";
 import {
@@ -131,12 +132,22 @@ describe("galaxy fields", () => {
 
   it("names each selector galaxy by its galaxies.json id, with both previews committed", () => {
     const ids = (galaxiesData as { galaxies: { id: string; number: number }[] }).galaxies;
-    expect(GALAXIES.map(({ id }, index) => ({ id, number: index + 1 }))).toEqual(
-      ids.map(({ id, number }) => ({ id, number })),
-    );
+    // Every galaxies.json entry is a selector galaxy; a built galaxy's number is its own id.
+    for (const { id, number } of ids) {
+      const card = GALAXIES.find((galaxy) => galaxy.id === id);
+      expect(card, id).toBeDefined();
+      if (BUILT.has(card!.galaxy)) {
+        expect(number, id).toBe(card!.galaxy);
+      }
+    }
     for (const galaxy of GALAXIES) {
       for (const locked of [false, true]) {
-        expect(existsSync(publicFile(galaxyPreview(galaxy, locked))), galaxy.id).toBe(true);
+        const preview = galaxyPreview(galaxy, locked);
+        // A galaxy without Art's previews shows none.
+        expect(preview === "", galaxy.id).toBe(!galaxy.preview);
+        if (galaxy.preview) {
+          expect(existsSync(publicFile(preview)), galaxy.id).toBe(true);
+        }
       }
     }
   });

@@ -14,9 +14,14 @@ describe("player text", () => {
   it("calls each story area a galaxy, never a sector", () => {
     expect(playerText).not.toMatch(/sector/i);
     for (const id of [1, 2, 3] as const) {
-      expect(PROTOTYPE.chapters[id].objectives[0]).toBe("Explore the galaxy.");
+      expect(PROTOTYPE.chapters[id]!.objectives[0]).toBe("Explore the galaxy.");
     }
-    expect(PROTOTYPE.labels.deferred).toBe("Galaxy four: story in development");
+    // A placeholder galaxy's panel line is the only story-in-development string.
+    expect(PROTOTYPE.labels.deferred).toBeUndefined();
+    expect(PROTOTYPE.labels.galaxyInDevelopment).toBe("Story in development.");
+    expect(Object.values(PROTOTYPE.labels).filter((text) => /in development/i.test(text))).toEqual([
+      "Story in development.",
+    ]);
   });
 
   it("calls Ada's home home or Earth and never names her city", () => {

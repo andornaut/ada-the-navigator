@@ -6,8 +6,11 @@ export interface StationSite extends Vec {
   id: string;
 }
 
-/** Fixed per-sector seeds, so station sites are the same on every flight. */
-const SECTOR_SEEDS: Readonly<Record<SectorId, number>> = {
+/**
+ * Fixed per-galaxy seeds, so station sites are the same on every flight. A placeholder galaxy has
+ * none, so no stations.
+ */
+const SECTOR_SEEDS: Readonly<Partial<Record<SectorId, number>>> = {
   1: 0x5eed_0101,
   2: 0x5eed_0202,
   3: 0x5eed_0303,
@@ -37,7 +40,7 @@ export function stationInCell(
 ): StationSite | null {
   const { cellSize, chance, jitter, originClearance } = catalog.station;
   const seed = SECTOR_SEEDS[sector];
-  if (unit(mix(seed, cell.x, cell.y)) >= chance) {
+  if (seed === undefined || unit(mix(seed, cell.x, cell.y)) >= chance) {
     return null;
   }
   const margin = (cellSize - jitter) / 2;

@@ -13,6 +13,7 @@ import { ASTEROID_SIZES } from "../data/asteroid-catalog.ts";
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunk-catalog.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { sectorEncounters } from "../data/enemy-catalog.ts";
+import { byPosition } from "../data/galaxies.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { SectorId } from "../data/types.ts";
@@ -30,7 +31,7 @@ describe("pacing simulation world", () => {
         const flight = createFlight(PROTOTYPE, sector, seed, { known: [] });
         const world = {
           catalog: ECONOMY,
-          encounters: sectorEncounters[sector],
+          encounters: byPosition(sectorEncounters, sector),
           sector,
           seed,
           spawnWeights,
@@ -92,7 +93,7 @@ describe("pacing simulation runs", () => {
   });
 
   it("spends firing time on each asteroid in proportion to its size's hit points", () => {
-    const hp = ASTEROID_FIELDS[1].hp;
+    const hp = ASTEROID_FIELDS[1]!.hp;
     const basic = weaponAt("basic", 1);
     // Basic deals one hit point per volley, so each hit point costs one interval over the hit rate.
     for (const size of ASTEROID_SIZES) {
@@ -125,7 +126,7 @@ describe("pacing simulation runs", () => {
       for (let x = -20; x < 20; x++) {
         for (let y = -20; y < 20; y++) {
           const plan = planChunk(CHUNK_CATALOG, {
-            asteroids: { field: ASTEROID_FIELDS[1], shapes: [...ASTEROID_SHAPES.values()] },
+            asteroids: { field: ASTEROID_FIELDS[1]!, shapes: [...ASTEROID_SHAPES.values()] },
             clearance: PROTOTYPE.tuning.flight.shipRadius,
             objectsPerChunk: PROTOTYPE.tuning.flight.objectsPerChunk,
             rockRadius: PROTOTYPE.tuning.flight.rockRadius,

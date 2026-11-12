@@ -1,12 +1,13 @@
 import type { AsteroidSize } from "./asteroid-catalog.ts";
-import type { SectorId } from "./types.ts";
+import type { RoutePosition } from "./galaxies.ts";
 
 export type ChunkTemplateId = "quiet" | "cluster" | "passage" | "poi";
+/** Chunk template weights by route position; a placeholder reads the built galaxy before it. */
 export type ChunkCatalog = Readonly<
-  Record<SectorId, readonly { id: ChunkTemplateId; weight: number }[]>
+  Partial<Record<RoutePosition, readonly { id: ChunkTemplateId; weight: number }[]>>
 >;
 
-/** Per-sector asteroid mix: slot and feature size weights, feature chance per template. */
+/** A galaxy's asteroid mix: slot and feature size weights, feature chance per template. */
 export interface AsteroidField {
   readonly driftChance: number;
   readonly featureChance: Readonly<Record<ChunkTemplateId, number>>;
@@ -24,10 +25,11 @@ const SHARED_ASTEROID_FIELD: AsteroidField = {
   hp: { huge: 16, large: 10, medium: 5, small: 3 },
   slotSizes: { medium: 0.4, small: 0.6 },
 };
-export const ASTEROID_FIELDS: Readonly<Record<SectorId, AsteroidField>> = {
+/** Asteroid fields by route position; a placeholder reads the built galaxy before it. */
+export const ASTEROID_FIELDS: Readonly<Partial<Record<RoutePosition, AsteroidField>>> = {
   1: SHARED_ASTEROID_FIELD,
   2: SHARED_ASTEROID_FIELD,
-  3: SHARED_ASTEROID_FIELD,
+  5: SHARED_ASTEROID_FIELD,
 };
 
 // Provisional neutral weights for all sectors.
@@ -44,7 +46,7 @@ export const CHUNK_CATALOG: ChunkCatalog = {
     { id: "passage", weight: 1 },
     { id: "poi", weight: 1 },
   ],
-  3: [
+  5: [
     { id: "quiet", weight: 1 },
     { id: "cluster", weight: 1 },
     { id: "passage", weight: 1 },

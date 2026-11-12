@@ -29,7 +29,9 @@ describe("save boundary", () => {
       { flight: {} },
       { progress: {} },
       { unlocked: [4] },
+      { unlocked: [1, 7] },
       { selectedSector: "1" },
+      { selectedSector: 7 },
     ]) {
       expect(restoreSave({ ...model.state, ...change })).toBeNull();
     }

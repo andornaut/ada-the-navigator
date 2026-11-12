@@ -274,14 +274,14 @@ describe("job boards", () => {
       const reach = distance(offer.target, station);
       if (offer.type === "delivery") {
         expect(offer.target.id).toBe("growers");
-        expect(offer.reward).toBe(JOB_REWARDS[1].deliveryShort);
+        expect(offer.reward).toBe(JOB_REWARDS[1]!.deliveryShort);
       } else if (offer.type === "survey") {
         expect(landmarkSites(1).some(({ id }) => id === offer.target.id)).toBe(true);
-        expect(offer.reward).toBe(JOB_REWARDS[1].survey);
+        expect(offer.reward).toBe(JOB_REWARDS[1]!.survey);
       } else {
         expect(reach).toBeGreaterThanOrEqual(3000);
         expect(reach).toBeLessThanOrEqual(7000);
-        expect(offer.reward).toBe(JOB_REWARDS[1][offer.type]);
+        expect(offer.reward).toBe(JOB_REWARDS[1]![offer.type]);
       }
       if (offer.type === "hunt") {
         expect(distance(offer.spot!, offer.target)).toBeLessThan(JOB_TUNING.hunt.radius);
@@ -313,7 +313,7 @@ describe("job boards", () => {
     expect(deliveryTo([station.id], [near])).toBeUndefined();
     const offer = deliveryTo([station.id], [near, farther, far]);
     expect(offer?.target).toEqual(far);
-    expect(offer?.reward).toBe(JOB_REWARDS[1].deliveryLong);
+    expect(offer?.reward).toBe(JOB_REWARDS[1]!.deliveryLong);
     // A discovered station nearer than the outposts is preferred; undiscovered ones never count.
     // Station sites are at least 8000 apart, so a neighbour sits between 3000 and the outpost.
     const [other] = stationsNear(ECONOMY, 1, 19_000, station)

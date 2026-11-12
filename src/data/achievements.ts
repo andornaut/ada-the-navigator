@@ -12,7 +12,7 @@ export type AchievementGoal =
   | { readonly kind: "blockade" }
   /** Landmarks charted in the galaxy with the most charted, of that galaxy's landmarks. */
   | { readonly kind: "chartOne" }
-  /** Landmarks charted across all four galaxies, of all their landmarks. */
+  /** Landmarks charted across every galaxy, of all their landmarks. */
   | { readonly kind: "chartAll" }
   | { readonly kind: "jobs"; readonly need: number }
   /** Station jobs and repeatable activities together. */

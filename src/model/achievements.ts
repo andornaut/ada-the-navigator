@@ -1,5 +1,6 @@
 import type { Achievement, AchievementGoal } from "../data/achievements.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { SECTORS } from "../data/galaxies.ts";
 import { PROJECTS } from "../data/projects.ts";
 import type { SectorId } from "../data/types.ts";
 import { landmarkSites } from "./landmarks.ts";
@@ -43,14 +44,13 @@ export interface AchievementTotals {
 
 /**
  * The game's totals: each galaxy's landmarks, every community project and every paint. Optional
- * allies stay at zero until the ally roster exists; Black Eye has no landmarks yet, so Astra's
- * Atlas, which needs all four galaxies, stays locked without a count.
+ * allies stay at zero until the ally roster exists. A placeholder galaxy has no landmarks, so it
+ * never counts toward charting one galaxy, and Astra's Atlas, which needs every galaxy, stays
+ * locked without a count.
  */
 export const ACHIEVEMENT_TOTALS: AchievementTotals = {
   allies: 0,
-  landmarks: Object.fromEntries(
-    ([1, 2, 3] as const).map((sector) => [sector, landmarkSites(sector).length]),
-  ),
+  landmarks: Object.fromEntries(SECTORS.map((sector) => [sector, landmarkSites(sector).length])),
   paints: Object.keys(ECONOMY.paints).length,
   projects: Object.values(PROJECTS).flat().length,
 };
@@ -177,7 +177,7 @@ export function achievementProgress(
       return { have: charted(achievements, best), need: totals.landmarks[best] ?? 0 };
     }
     case "chartAll": {
-      const galaxies = [1, 2, 3, 4];
+      const galaxies = SECTORS;
       const need = galaxies.every((galaxy) => (totals.landmarks[galaxy] ?? 0) > 0)
         ? galaxies.reduce((sum, galaxy) => sum + (totals.landmarks[galaxy] ?? 0), 0)
         : 0;

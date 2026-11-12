@@ -101,9 +101,9 @@ describe("previewUrls", () => {
     const files = readdirSync(join(publicDir, PREVIEW_DIRECTORY));
     const urls = previewUrls(files);
     expect(urls).toEqual(
-      GALAXIES.flatMap((galaxy) =>
-        [false, true].map((locked) => galaxyPreview(galaxy, locked)),
-      ).sort(),
+      GALAXIES.filter(({ preview }) => preview)
+        .flatMap((galaxy) => [false, true].map((locked) => galaxyPreview(galaxy, locked)))
+        .sort(),
     );
     expect(urls.filter((url) => isHashedAssetUrl(CACHE_POLICY, url))).toEqual([]);
   });

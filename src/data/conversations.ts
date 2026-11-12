@@ -1,3 +1,4 @@
+import { SECTORS } from "./galaxies.ts";
 import { JOB_LORE } from "./jobs.ts";
 import type { SectorId } from "./types.ts";
 
@@ -366,8 +367,8 @@ export const CONVERSATIONS: readonly Conversation[] = [
     repeat: "never",
     trigger: { kind: "job", moment: "searchEntered" },
   },
-  ...([1, 2, 3] as const).flatMap((sector) =>
-    JOB_LORE[sector].map((text, index): Conversation => ({
+  ...SECTORS.flatMap((sector) =>
+    (JOB_LORE[sector] ?? []).map((text, index): Conversation => ({
       id: `jobLore:${sector}:${index}`,
       lines: [line("astra", text)],
       priority: "lore",

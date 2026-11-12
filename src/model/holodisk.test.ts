@@ -73,7 +73,7 @@ describe("holodisk objectives", () => {
       [2, "Buy the holodisk at the hub."],
       [3, "Fight your way to the holodisk."],
     ] as const) {
-      expect(PROTOTYPE.chapters[id].objectives.slice(-2)).toEqual([
+      expect(PROTOTYPE.chapters[id]!.objectives.slice(-2)).toEqual([
         objective,
         "Return to Earth when ready.",
       ]);
@@ -152,7 +152,8 @@ describe("new galaxy announcement", () => {
     insertion(model);
     expect(model.state.announceGalaxy).toBe(false);
     resolveAtHome(model);
-    expect(model.state.unlocked).toEqual([1, 2]);
+    // Sunflower unlocks Whirlpool, next on the route.
+    expect(model.state.unlocked).toEqual([1, 3]);
     expect(model.state.announceGalaxy).toBe(true);
     const saved = relaunch(PROTOTYPE, model.save());
     expect(saved.state.announceGalaxy).toBe(true);
@@ -177,7 +178,7 @@ describe("new galaxy announcement", () => {
     expect(model.state.announceGalaxy).toBe(true);
   });
 
-  it("is skipped after galaxy three, whose next galaxy's story is in development", () => {
+  it("is skipped when the galaxies Whirlpool unlocks are all placeholders", () => {
     const model = questDone(3, ["whale", "family"]);
     resolveAtHome(model);
     model.startSector(3);
@@ -190,7 +191,8 @@ describe("new galaxy announcement", () => {
     model.step(0.01, idle);
     insertion(model);
     expect(model.state.progress[3].holodisk).toBe(true);
-    expect(model.state.unlocked).toEqual([1, 2, 3]);
+    // Cartwheel was already open, so only Needle and Andromeda are new, and neither has a story.
+    expect(model.state.unlocked).toEqual([1, 2, 3, 4, 5]);
     expect(model.state.announceGalaxy).toBe(false);
   });
 });
@@ -209,7 +211,7 @@ describe("unlocking the next galaxy", () => {
     arrive(model, "growers");
     model.interact();
     insertion(model);
-    expect(model.state.unlocked).toEqual([1, 2]);
+    expect(model.state.unlocked).toEqual([1, 3]);
   });
 
   it("unlocks at the home resolution when the holodisk came first", () => {
@@ -219,7 +221,7 @@ describe("unlocking the next galaxy", () => {
     insertion(model);
     expect(model.state.unlocked).toEqual([1]);
     resolveAtHome(model);
-    expect(model.state.unlocked).toEqual([1, 2]);
+    expect(model.state.unlocked).toEqual([1, 3]);
   });
 });
 
@@ -271,7 +273,8 @@ describe("galaxy two's holodisk", () => {
     model.interact();
     expect(model.state.dialogue?.context).toBe("hub");
     resolveAtHome(model);
-    expect(model.state.unlocked).toEqual([1, 2, 3]);
+    // Cartwheel, fifth on the route, unlocks Black Eye.
+    expect(model.state.unlocked).toEqual([1, 2, 6]);
   });
 });
 

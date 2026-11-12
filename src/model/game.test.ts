@@ -115,7 +115,7 @@ describe("prototype story and persistence", () => {
       expect(model.state.progress[1].questComplete).toBe(true);
       recoverHolodisk(model);
       finishHome(model, choice);
-      expect(model.state.unlocked).toEqual([1, 2]);
+      expect(model.state.unlocked).toEqual([1, 3]);
       expect(relaunch(PROTOTYPE, model.save()).state).toEqual(model.state);
     }
   });
@@ -137,7 +137,8 @@ describe("prototype story and persistence", () => {
     expect(model.state.progress[2].questComplete).toBe(true);
     recoverHolodisk(model);
     finishHome(model);
-    expect(model.state.unlocked).toEqual([1, 2, 3]);
+    // Cartwheel, fifth on the route, unlocks Black Eye.
+    expect(model.state.unlocked).toEqual([1, 2, 6]);
     expect(relaunch(PROTOTYPE, model.save()).state).toEqual(model.state);
   });
   it("pauses flight during dialogue and does not advance exploration while standing still", () => {
@@ -167,7 +168,7 @@ describe("prototype story and persistence", () => {
   });
 });
 
-it("finishes all three chapters in order and resumes each terminal state", () => {
+it("finishes all three chapters in route order and resumes each terminal state", () => {
   const model = new GameModel(PROTOTYPE);
   launch(model);
   introduce(model, "growers");
@@ -176,26 +177,8 @@ it("finishes all three chapters in order and resumes each terminal state", () =>
   talk(model, "workshop");
   recoverHolodisk(model);
   finishHome(model);
-  expect(model.state.unlocked).toEqual([1, 2]);
-  expect(relaunch(PROTOTYPE, model.save()).state).toEqual(model.state);
-  launch(model, 2);
-  introduce(model, "hub");
-  model.state.flight!.cargo = PROTOTYPE.tuning.miningMilestones[1];
-  talk(model, "hub");
-  expect(model.state.flight!.storyScene?.id).toBe("blocked");
-  talk(model, "miner");
-  talk(model, "visitors");
-  model.state.flight!.cargo =
-    PROTOTYPE.tuning.miningMilestones[2] - model.state.progress[2].deposited;
-  talk(model, "hub");
-  expect(model.state.flight!.storyScene).toEqual({
-    at: model.state.flight!.time,
-    id: "docking",
-    lineDue: true,
-  });
-  recoverHolodisk(model);
-  finishHome(model);
-  expect(model.state.unlocked).toEqual([1, 2, 3]);
+  // Sunflower unlocks Whirlpool, next on the route.
+  expect(model.state.unlocked).toEqual([1, 3]);
   expect(relaunch(PROTOTYPE, model.save()).state).toEqual(model.state);
   launch(model, 3);
   introduce(model, "whale");
@@ -228,9 +211,33 @@ it("finishes all three chapters in order and resumes each terminal state", () =>
   expect(model.state.progress[3].questComplete).toBe(true);
   expect(model.state.mode).toBe("space");
   expect(relaunch(PROTOTYPE, model.save()).state).toEqual(model.state);
+  // Whirlpool's guarded holodisk, recovered as holodisk.test.ts plays it.
+  model.state.progress[3].holodisk = true;
   finishHome(model);
-  expect(model.state.unlocked).toEqual([1, 2, 3]);
+  // Whirlpool unlocks Needle and Andromeda, placeholders, with Cartwheel after them.
+  expect(model.state.unlocked).toEqual([1, 3, 4, 5, 2]);
   expect(model.state.progress[3].resolved).toBe(true);
+  expect(relaunch(PROTOTYPE, model.save()).state).toEqual(model.state);
+  launch(model, 2);
+  introduce(model, "hub");
+  model.state.flight!.cargo = PROTOTYPE.tuning.miningMilestones[1];
+  talk(model, "hub");
+  expect(model.state.flight!.storyScene?.id).toBe("blocked");
+  talk(model, "miner");
+  talk(model, "visitors");
+  model.state.flight!.cargo =
+    PROTOTYPE.tuning.miningMilestones[2] - model.state.progress[2].deposited;
+  talk(model, "hub");
+  expect(model.state.flight!.storyScene).toEqual({
+    at: model.state.flight!.time,
+    id: "docking",
+    lineDue: true,
+  });
+  recoverHolodisk(model);
+  finishHome(model);
+  // Cartwheel unlocks Black Eye, last on the route.
+  expect(model.state.unlocked).toEqual([1, 3, 4, 5, 2, 6]);
+  expect(model.state.progress[2].resolved).toBe(true);
   expect(relaunch(PROTOTYPE, model.save()).state).toEqual(model.state);
 });
 
@@ -258,7 +265,7 @@ it("plays each Cartwheel story scene first, then its line, at the held story des
   expect(f.time - f.storyScene!.at).toBeGreaterThanOrEqual(
     CARTWHEEL_STORY_SHIPS.scenes.blocked.duration,
   );
-  expect(model.state.dialogue?.text).toBe(PROTOTYPE.chapters[2].dialogue.firstDeposit?.text);
+  expect(model.state.dialogue?.text).toBe(PROTOTYPE.chapters[2]!.dialogue.firstDeposit?.text);
   expect(f.storyScene!.lineDue).toBe(false);
   // The miner and the visitors stand at their holding points beside the hub, unguarded.
   const hub = f.objects.find((o) => o.id === "hub")!;
@@ -303,7 +310,7 @@ it("replays a story scene cut short by the flight's end at the hub after a reloa
       reloaded.step(0.05, idle);
     }
   }
-  expect(reloaded.state.dialogue?.text).toBe(PROTOTYPE.chapters[2].dialogue.firstDeposit?.text);
+  expect(reloaded.state.dialogue?.text).toBe(PROTOTYPE.chapters[2]!.dialogue.firstDeposit?.text);
   // Spoken once: a later flight does not replay it.
   reloaded.state.dialogue = null;
   reloaded.returnHome();
@@ -340,7 +347,7 @@ it("places whale debris offscreen and preserves pre-introduction clearing", () =
   expect(restored.state).toEqual(model.state);
   arrive(restored, "whale");
   restored.step(0.01, idle);
-  expect(restored.state.dialogue?.text).toBe(PROTOTYPE.chapters[3].dialogue.freed?.text);
+  expect(restored.state.dialogue?.text).toBe(PROTOTYPE.chapters[3]!.dialogue.freed?.text);
   expect(restored.state.progress[3].stage).toBe(3);
   expect(restored.state.flight!.objects.some((o) => o.id.startsWith("whale-debris:"))).toBe(false);
   restored.choose("continue");
@@ -402,7 +409,7 @@ it("discovers a cleared required approach after reversing away from its first lo
   expect(model.state.progress[1].known).toEqual(["growers"]);
   expect(model.state.progress[1].discoveries).toBe(1);
   expect(model.state.progress[1].introduced).toBe(true);
-  expect(model.state.dialogue?.text).toBe(content.chapters[1].dialogue.grower?.text);
+  expect(model.state.dialogue?.text).toBe(content.chapters[1]!.dialogue.grower?.text);
   expect(model.state.dialogue?.context).toBe("grower");
 });
 

@@ -1,3 +1,4 @@
+import { BUILT } from "../data/galaxies.ts";
 import type { SectorId } from "../data/types.ts";
 import { type EnemyFrame, enemyPartFrame } from "./enemy-art.ts";
 import { whaleFrameAsset } from "./whale-art.ts";
@@ -5,8 +6,6 @@ import { whaleFrameAsset } from "./whale-art.ts";
 // Art's split manifest (art/README.md): the core manifest at public/art/manifest.json holds the
 // boot set and shared data links and maps each galaxy to its own manifest, which holds the
 // entries and data links only that galaxy uses.
-
-const SECTORS: readonly SectorId[] = [1, 2, 3];
 
 /** The core manifest's assets and links that the game reads. */
 export interface CoreManifest<T> {
@@ -58,11 +57,14 @@ export function galaxyManifestKey(sector: SectorId): string {
   return `art-manifest-galaxy-${sector}`;
 }
 
-/** Each galaxy's manifest path from the core manifest's galaxies map; non-string values drop. */
+/**
+ * Each built galaxy's manifest path from the core manifest's galaxies map; non-string values
+ * drop. A placeholder galaxy loads no galaxy art.
+ */
 export function galaxyManifestPaths(value: unknown): Partial<Record<SectorId, string>> {
   const map = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
   const paths: Partial<Record<SectorId, string>> = {};
-  for (const sector of SECTORS) {
+  for (const sector of BUILT) {
     const path = map[String(sector)];
     if (typeof path === "string" && path.startsWith("/art/")) {
       paths[sector] = path;

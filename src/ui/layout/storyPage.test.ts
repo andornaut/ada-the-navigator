@@ -371,7 +371,7 @@ describe("story text fit", () => {
 
   it("sizes the pages of Art's card table", () => {
     const opening = PAGES.find(
-      ({ id, text }) => id === "opening" && text === PROTOTYPE.chapters[1].opening,
+      ({ id, text }) => id === "opening" && text === PROTOTYPE.chapters[1]!.opening,
     )!;
     const longest = PAGES.reduce((a, b) => (b.text.length > a.text.length ? b : a));
     expect(longest).toBe(opening);
@@ -472,7 +472,7 @@ describe("story figures", () => {
   const needle: StoryPage[] = [
     {
       background: "adaRoomRecorder",
-      choices: PROTOTYPE.chapters[1].openingChoices.map((label) => ({ label, next: "x" })),
+      choices: PROTOTYPE.chapters[1]!.openingChoices.map((label) => ({ label, next: "x" })),
       heading: "Threading the Needle",
       id: "opening",
       text: limit,
