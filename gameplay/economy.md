@@ -4,7 +4,8 @@ Stardust is the game's one currency. It is shimmering dust released by destroyed
 ships and asteroids, and every station trades in it. Stardust and purchases persist
 across flights with story progress. All amounts, prices and rates are provisional
 tuning toward these pacing targets: affording the first weapon (225) takes about
-25 minutes of play, saving 300 for Cartwheel's holodisk takes about 40 minutes,
+25 minutes of play, saving 500 for Cartwheel's holodisk takes about 30 minutes of
+Cartwheel play,
 and exploring finds a station every few minutes.
 
 ## Earning Stardust
