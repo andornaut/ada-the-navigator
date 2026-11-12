@@ -33,7 +33,7 @@ const watchdog = setTimeout(() => {
 // that shows it again. Each element's own style is set through CSSOM, which the page's CSP allows
 // where an injected <style> is blocked.
 async function hideOverCanvas(target) {
-  const selector = ".ada-conversation,#game-status,#save-status";
+  const selector = ".ada-conversation,.ada-shield,#game-status,#save-status";
   await target.evaluate((list) => {
     for (const node of document.querySelectorAll(list)) {
       node.style.setProperty("visibility", "hidden", "important");
