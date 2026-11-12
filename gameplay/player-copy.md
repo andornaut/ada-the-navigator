@@ -508,7 +508,7 @@ Branch pages, then the story rejoins:
   together. One by one, Ada's friends join them, and the table gets louder and
   happier."
 
-Closing: "Ada and her friends include Sam. The next time someone is unkind, Ada
+Closing: "Sam joins their lunch table. The next time someone is unkind, Ada
 and her friends stay right beside Sam. Nobody has to stand alone."
 
 Objectives, in order:
