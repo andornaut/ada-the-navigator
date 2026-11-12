@@ -1,4 +1,4 @@
-import { byPosition, type RoutePosition } from "./galaxies.ts";
+import { byPosition, ROUTE_POSITION, type RoutePosition } from "./galaxies.ts";
 import { SHIP_PHYSICS, type ShipPhysics } from "./ship-physics.ts";
 import type { EnemyOnlyWeapon, EnemyWeapon, SectorId, WeaponLevel } from "./types.ts";
 import { weaponAt } from "./weapon-catalog.ts";
@@ -425,32 +425,120 @@ export const sectorEncounters: Readonly<Partial<Record<RoutePosition, readonly E
   };
 
 /**
- * Archetype changes by route position: hull HP and movement behaviour (gameplay/ships.md). A
- * placeholder reads the built galaxy before it.
+ * Roster behaviour changes by route position (gameplay/ships.md rosters). A placeholder reads
+ * the built galaxy before it.
  */
 export const sectorArchetypes: Readonly<
   Partial<
-    Record<
-      RoutePosition,
-      Partial<Record<EnemyArchetype, Partial<Pick<EnemyDefinition, "behaviour" | "hp">>>>
-    >
+    Record<RoutePosition, Partial<Record<EnemyArchetype, Pick<EnemyDefinition, "behaviour">>>>
   >
 > = {
   1: {},
   2: {
-    fighter: { behaviour: { kind: "chase" }, hp: 5 },
-    frigate: { hp: 12 },
-    interceptor: { behaviour: { kind: "chase" }, hp: 4 },
-    retaliator: { hp: 10 },
-    swarm: { hp: 3 },
+    fighter: { behaviour: { kind: "chase" } },
+    interceptor: { behaviour: { kind: "chase" } },
   },
   5: {
-    fighter: { hp: 5 },
-    frigate: { hp: 12 },
     interceptor: { behaviour: { burstVolleys: 3, kind: "hitAndRun", retreatSeconds: 1.6 } },
-    retaliator: { hp: 9 },
   },
 };
+
+/** The small craft, whose hull HP each position sets. */
+export type SmallCraft = "fighter" | "interceptor" | "retaliator" | "swarm";
+/** One route position's difficulty (gameplay/ships.md "Difficulty"). */
+export interface PositionDifficulty {
+  /** Multiplies the roster's frigate and capital weights before the weights renormalize. */
+  heavyShare: number;
+  /** HP of every heavy hardpoint: weapon, engine, command and platform turret. */
+  hardpointHp: number;
+  /** Hull HP of a frigate and a capital; a platform's hull is half the frigate's. */
+  hulls: { capital: number; frigate: number };
+  /** Hull HP of each small craft. */
+  hp: Readonly<Record<SmallCraft, number>>;
+  /** Added to both ends of every swarm and fighter group range. */
+  groupBonus: number;
+  /** Seconds a hitAndRun ship pulls away. */
+  retreatSeconds: number;
+  /** Multipliers on the base catalog's perception, fire rate and encounter rate. */
+  rates: { encounters: number; fire: number; notice: number };
+}
+
+/**
+ * One tuning value multiplying every enemy's HP, the fire rate and the encounter rate at every
+ * position, so the whole curve tunes at once; Stardust uses the unscaled HP.
+ */
+export const DIFFICULTY_SCALE = 1;
+
+const position = (
+  hp: [swarm: number, fighter: number, interceptor: number, retaliator: number],
+  groupBonus: number,
+  retreatSeconds: number,
+  rates: [notice: number, fire: number, encounters: number],
+  hardpointHp: number,
+  hulls: [frigate: number, capital: number],
+  heavyShare: number,
+): PositionDifficulty => ({
+  groupBonus,
+  hardpointHp,
+  heavyShare,
+  hp: { fighter: hp[1], interceptor: hp[2], retaliator: hp[3], swarm: hp[0] },
+  hulls: { capital: hulls[1], frigate: hulls[0] },
+  rates: { encounters: rates[2], fire: rates[1], notice: rates[0] },
+  retreatSeconds,
+});
+
+/** Difficulty by route position (gameplay/ships.md "Difficulty"). */
+export const POSITION_DIFFICULTY: Readonly<Record<RoutePosition, PositionDifficulty>> = {
+  1: position([2, 4, 3, 8], 1, 1.6, [1.2, 1.44, 1.5], 4, [20, 40], 1),
+  2: position([2, 5, 3, 9], 1, 1.5, [1.3, 1.63, 1.63], 4, [22, 44], 1),
+  3: position([3, 5, 4, 10], 2, 1.4, [1.4, 1.81, 1.69], 5, [30, 60], 1.2),
+  4: position([3, 6, 4, 11], 2, 1.2, [1.45, 1.88, 1.75], 5, [32, 64], 1.3),
+  5: position([3, 6, 5, 11], 3, 1.1, [1.5, 1.94, 1.75], 6, [44, 88], 1.4),
+  6: position([3, 6, 5, 12], 3, 1, [1.5, 2, 1.75], 6, [48, 96], 1.5),
+};
+
+/** A galaxy's difficulty, by its route position. */
+export function difficultyOf(sector: SectorId): PositionDifficulty {
+  return POSITION_DIFFICULTY[ROUTE_POSITION[sector]];
+}
+
+/** An archetype's hull HP at a galaxy's position before difficultyScale. */
+export function unscaledHullHp(sector: SectorId, archetype: EnemyArchetype): number {
+  const difficulty = difficultyOf(sector);
+  switch (archetype) {
+    case "capital":
+    case "frigate":
+      return difficulty.hulls[archetype];
+    case "platform":
+      return difficulty.hulls.frigate / 2;
+    default:
+      return difficulty.hp[archetype];
+  }
+}
+
+/** A galaxy's encounter rate: its position's, times difficultyScale. */
+export function encounterRate(sector: SectorId): number {
+  return difficultyOf(sector).rates.encounters * DIFFICULTY_SCALE;
+}
+
+/**
+ * A galaxy's encounter table: its roster with the position's group bonus on both ends of every
+ * swarm and fighter range and its heavy share on the frigate and capital weights.
+ */
+export function encounterTable(sector: SectorId): readonly EncounterEntry[] {
+  const { groupBonus, heavyShare } = difficultyOf(sector);
+  return byPosition(sectorEncounters, sector).map((entry) => ({
+    ...entry,
+    groupSize:
+      entry.archetype === "swarm" || entry.archetype === "fighter"
+        ? [entry.groupSize[0] + groupBonus, entry.groupSize[1] + groupBonus]
+        : entry.groupSize,
+    weight:
+      entry.archetype === "frigate" || entry.archetype === "capital"
+        ? entry.weight * heavyShare
+        : entry.weight,
+  }));
+}
 
 /**
  * The enemy-only weapons' damage per hit as multiples of base shot damage (gameplay/ships.md
@@ -510,21 +598,9 @@ export const enemyEncounterTuning = {
   quietSeconds: 12,
 } as const;
 
-/** Difficulty by route position: perception reach, fire rate and encounter frequency multipliers. */
-export interface SectorEnemyTuning {
-  encounterRate: number;
-  fireRate: number;
-  perception: number;
-}
-export const sectorEnemyTuning: Readonly<Partial<Record<RoutePosition, SectorEnemyTuning>>> = {
-  1: { encounterRate: 1.2, fireRate: 1.15, perception: 1.2 },
-  2: { encounterRate: 1.35, fireRate: 1.45, perception: 1.4 },
-  5: { encounterRate: 1.3, fireRate: 1.3, perception: 1.3 },
-};
-
 /** Quiet travel and time between encounters shorten with the galaxy's encounter rate. */
 export function encounterQuiet(sector: SectorId): { distance: number; seconds: number } {
-  const rate = byPosition(sectorEnemyTuning, sector).encounterRate;
+  const rate = encounterRate(sector);
   return {
     distance: enemyEncounterTuning.quietDistance / rate,
     seconds: enemyEncounterTuning.quietSeconds / rate,
@@ -533,29 +609,40 @@ export function encounterQuiet(sector: SectorId): { distance: number; seconds: n
 
 const scaled = new Map<string, EnemyDefinition>();
 /**
- * The catalog definition with the galaxy's archetype changes and its perception and fire-rate
- * multipliers applied.
+ * The catalog definition at a galaxy's route position: its roster behaviour, its position's hull
+ * and hardpoint HP, hitAndRun retreat and perception, and its fire rate, with difficultyScale on
+ * HP and fire rate.
  */
 export function enemyDefinition(sector: SectorId, archetype: EnemyArchetype): EnemyDefinition {
   const key = `${sector}:${archetype}`;
   let definition = scaled.get(key);
   if (!definition) {
-    const { fireRate, perception } = byPosition(sectorEnemyTuning, sector);
+    const difficulty = difficultyOf(sector);
     const catalog: EnemyDefinition = {
       ...enemyCatalog[archetype],
       ...byPosition(sectorArchetypes, sector)[archetype],
     };
+    const fireRate = difficulty.rates.fire * DIFFICULTY_SCALE;
     const faster = (fire: FireProfile): FireProfile => ({
       ...fire,
       interval: fire.interval / fireRate,
     });
+    const behaviour: Behaviour =
+      catalog.behaviour.kind === "hitAndRun"
+        ? { ...catalog.behaviour, retreatSeconds: difficulty.retreatSeconds }
+        : catalog.behaviour;
+    const hardpointHp = difficulty.hardpointHp * DIFFICULTY_SCALE;
     definition = {
       ...catalog,
+      behaviour,
       fire: faster(catalog.fire),
       hardpoints: catalog.hardpoints.map((part) =>
-        part.kind === "weapon" ? { ...part, fire: faster(part.fire) } : part,
+        part.kind === "weapon"
+          ? { ...part, fire: faster(part.fire), hp: hardpointHp }
+          : { ...part, hp: hardpointHp },
       ),
-      perception: catalog.perception * perception,
+      hp: unscaledHullHp(sector, archetype) * DIFFICULTY_SCALE,
+      perception: catalog.perception * difficulty.rates.notice,
     };
     scaled.set(key, definition);
   }

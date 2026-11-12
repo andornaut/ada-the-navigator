@@ -2,14 +2,14 @@ import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunk-catalog.ts";
 import { ECONOMY } from "../data/economy.ts";
 import {
   type EncounterEntry,
+  encounterRate,
+  encounterTable,
   ENEMY_AIM,
   type EnemyArchetype,
   enemyCatalog,
   enemyDefinition,
   enemyEncounterTuning,
   escortTuning,
-  sectorEncounters,
-  sectorEnemyTuning,
 } from "../data/enemy-catalog.ts";
 import { byPosition, ROUTE_POSITION, type RoutePosition } from "../data/galaxies.ts";
 import { CURRENTS, HUNTING_PACKS, ORE_FIELDS } from "../data/galaxy-features.ts";
@@ -768,7 +768,7 @@ export function encounterSpacing(content: PrototypeContent, sector: SectorId): n
     3,
     Math.ceil(enemyEncounterTuning.quietDistance / content.tuning.chunkSize),
   );
-  return base / Math.sqrt(byPosition(sectorEnemyTuning, sector).encounterRate);
+  return base / Math.sqrt(encounterRate(sector));
 }
 
 /** Ships too heavy to drift with a current, and the fixed platform. */
@@ -858,7 +858,7 @@ function generateRegion(
   const packId = `pack:${x},${y}`;
   const countRoll = next();
   const { archetype, count, escorts } = rollEncounter(
-    byPosition(sectorEncounters, flight.sector),
+    encounterTable(flight.sector),
     countRoll,
     next(),
   );

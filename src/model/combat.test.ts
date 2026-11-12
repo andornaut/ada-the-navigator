@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   encounterQuiet,
+  encounterTable,
   type EnemyArchetype,
   enemyCatalog,
   escortTuning,
@@ -329,7 +330,8 @@ describe("integrated combat", () => {
     }
     const packs = flight.combat?.initialPackSizes ?? {};
     expect(Object.keys(packs).length).toBeGreaterThan(2);
-    expect(Object.values(packs).every((size) => size >= 1 && size <= 6)).toBe(true);
+    // Galaxy one's largest group is a swarm pack of 4 to 6 with the position's +1 bonus.
+    expect(Object.values(packs).every((size) => size >= 1 && size <= 7)).toBe(true);
     expect(
       flight.objects.some(
         (object) => object.id.startsWith("chunk:") && ["rock", "resource"].includes(object.kind),
@@ -414,12 +416,13 @@ describe("galaxy one encounters", () => {
   });
 
   it.each([
-    [1, 700, true],
-    [1, 800, false],
-    [2, 800, true],
-    [2, 900, false],
-    [3, 900, true],
-    [3, 950, false],
+    // Perception 650 times the route position's notice: 780, 975 and 845.
+    [1, 770, true],
+    [1, 790, false],
+    [2, 970, true],
+    [2, 980, false],
+    [3, 840, true],
+    [3, 850, false],
   ] as const)("in galaxy %i, notices Ada %i units away: %s", (sector, away, engaged) => {
     const flight = empty();
     flight.sector = sector;
@@ -559,7 +562,7 @@ describe("sector encounter tables", () => {
         }
       }
     }
-    const ranges = new Map(sectorEncounters[1]!.map((entry) => [entry.archetype, entry.groupSize]));
+    const ranges = new Map(encounterTable(1).map((entry) => [entry.archetype, entry.groupSize]));
     expect(packs.size).toBeGreaterThan(3);
     for (const [id, archetypes] of packs) {
       expect(archetypes.size).toBe(1);

@@ -25,10 +25,10 @@ import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../src/data/chunk-catalog.ts";
 import { ECONOMY, type EconomyCatalog, type UpgradeWeapon } from "../src/data/economy.ts";
 import {
   type EncounterEntry,
+  encounterTable,
   type EnemyArchetype,
   enemyCatalog,
   enemyDefinition,
-  sectorEncounters,
 } from "../src/data/enemy-catalog.ts";
 import { BUILT, byPosition, ROUTE_POSITION } from "../src/data/galaxies.ts";
 import { HOLODISKS } from "../src/data/holodisks.ts";
@@ -1409,8 +1409,7 @@ export function runScenario(options: RunOptions): { runs: RunResult[]; summary: 
       catalog,
       minutes: options.minutes,
       prices,
-      encounters:
-        scenario.encounters?.[options.sector] ?? byPosition(sectorEncounters, options.sector),
+      encounters: scenario.encounters?.[options.sector] ?? encounterTable(options.sector),
       startWeapons: scenario.startWeapons ?? [],
       sector: options.sector,
       seed: index + 1,

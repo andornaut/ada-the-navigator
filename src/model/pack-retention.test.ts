@@ -42,17 +42,21 @@ function fixture() {
   content.tuning.flight.playerShotDamage = 1e-6;
   for (let seed = 0; seed < 256; seed++) {
     const flight = createFlight(content, 1, seed, progress);
-    const members = flight.objects.filter((object) => object.enemy?.archetype === "swarm");
-    if (members.length === 4 && members[0]?.enemy?.packId) {
+    // A four-member fighter group: galaxy one's swarm packs start at five.
+    const members = flight.objects.filter(
+      (object) => object.enemy?.archetype === "fighter" && object.enemy.escortOf === null,
+    );
+    const packId = members[0]?.enemy?.packId;
+    if (members.length === 4 && packId && members.every((m) => m.enemy?.packId === packId)) {
       const model = new GameModel(content);
       model.state.flight = flight;
       model.state.mode = "space";
       // A flight has begun, as startSector records.
       model.state.started = true;
-      return { content, model, packId: members[0].enemy.packId };
+      return { content, model, packId };
     }
   }
-  throw new Error("No four-member swarm fixture");
+  throw new Error("No four-member fighter fixture");
 }
 function members(model: GameModel, packId: string): SpaceObject[] {
   return model.state.flight!.objects.filter((object) => object.enemy?.packId === packId);

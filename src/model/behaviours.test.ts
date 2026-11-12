@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  DIFFICULTY_SCALE,
   encounterQuiet,
   type EnemyArchetype,
   enemyCatalog,
@@ -8,6 +9,7 @@ import {
   escortTuning,
 } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
+import type { SectorId } from "../data/types.ts";
 import {
   aimDrift,
   createEnemy,
@@ -393,11 +395,14 @@ describe("standoff", () => {
 
 describe("galaxy difficulty", () => {
   it.each([
-    [1, 1.2, 1.15],
-    [2, 1.3, 1.3],
-    [3, 1.4, 1.45],
+    [1, 1.2, 1.44],
+    [3, 1.3, 1.63],
+    [4, 1.4, 1.81],
+    [5, 1.45, 1.88],
+    [2, 1.5, 1.94],
+    [6, 1.5, 2],
   ] as const)(
-    "scales galaxy %i's perception by %f and fire rate by %f",
+    "scales galaxy %i's perception by %f and fire rate by %f, its route position's",
     (sector, perception, fireRate) => {
       for (const archetype of Object.keys(enemyCatalog) as EnemyArchetype[]) {
         const base = enemyCatalog[archetype];
@@ -414,17 +419,37 @@ describe("galaxy difficulty", () => {
     },
   );
 
-  it("gives Cartwheel and Whirlpool their roster HP and behaviours", () => {
-    const hp = (sector: 1 | 2 | 3) =>
-      Object.fromEntries(
-        (["swarm", "fighter", "interceptor", "retaliator", "frigate"] as const).map((archetype) => [
-          archetype,
-          enemyDefinition(sector, archetype).hp,
-        ]),
-      );
-    expect(hp(1)).toEqual({ fighter: 4, frigate: 10, interceptor: 3, retaliator: 8, swarm: 2 });
-    expect(hp(2)).toEqual({ fighter: 5, frigate: 12, interceptor: 3, retaliator: 9, swarm: 2 });
-    expect(hp(3)).toEqual({ fighter: 5, frigate: 12, interceptor: 4, retaliator: 10, swarm: 3 });
+  it("gives every route position Gameplay's hull and hardpoint HP and retreat time", () => {
+    const archetypes = [
+      "swarm",
+      "fighter",
+      "interceptor",
+      "retaliator",
+      "frigate",
+      "capital",
+      "platform",
+    ] as const;
+    // Galaxies in route order: Sunflower, Whirlpool, Needle, Andromeda, Cartwheel, Black Eye.
+    const rows = ([1, 3, 4, 5, 2, 6] as const).map((sector) => [
+      ...archetypes.map((archetype) => enemyDefinition(sector, archetype).hp),
+      enemyDefinition(sector, "capital").hardpoints[0]!.hp,
+      enemyDefinition(sector, "frigate").hardpoints.at(-1)!.hp,
+    ]);
+    expect(rows).toEqual([
+      [2, 4, 3, 8, 20, 40, 10, 4, 4],
+      [2, 5, 3, 9, 22, 44, 11, 4, 4],
+      [3, 5, 4, 10, 30, 60, 15, 5, 5],
+      [3, 6, 4, 11, 32, 64, 16, 5, 5],
+      [3, 6, 5, 11, 44, 88, 22, 6, 6],
+      [3, 6, 5, 12, 48, 96, 24, 6, 6],
+    ]);
+    const retreat = (sector: SectorId) => {
+      const behaviour = enemyDefinition(sector, "fighter").behaviour;
+      return behaviour.kind === "hitAndRun" ? behaviour.retreatSeconds : null;
+    };
+    // Sunflower's and Cartwheel's fighters hit and run; Black Eye reads Cartwheel's roster.
+    expect([1, 2, 6].map((sector) => retreat(sector as SectorId))).toEqual([1.6, 1.1, 1]);
+    expect(DIFFICULTY_SCALE).toBe(1);
     expect(enemyDefinition(2, "fighter").behaviour.kind).toBe("hitAndRun");
     expect(enemyDefinition(2, "interceptor").behaviour.kind).toBe("hitAndRun");
     expect(enemyDefinition(3, "fighter").behaviour.kind).toBe("chase");
@@ -432,11 +457,11 @@ describe("galaxy difficulty", () => {
     expect(enemyDefinition(1, "interceptor").behaviour.kind).toBe("strafe");
   });
 
-  it("shortens quiet travel and time 20% and raises encounter density 20% in galaxy one", () => {
-    expect(encounterQuiet(1)).toEqual({ distance: 1500, seconds: 10 });
-    expect(encounterQuiet(2).distance).toBeCloseTo(1800 / 1.3, 9);
-    expect(encounterQuiet(3).seconds).toBeCloseTo(12 / 1.35, 9);
-    expect(encounterSpacing(PROTOTYPE, 3)).toBeCloseTo(4 / Math.sqrt(1.35), 9);
+  it("shortens quiet travel and time and raises encounter density 50% in galaxy one", () => {
+    expect(encounterQuiet(1)).toEqual({ distance: 1200, seconds: 8 });
+    expect(encounterQuiet(2).distance).toBeCloseTo(1800 / 1.75, 9);
+    expect(encounterQuiet(3).seconds).toBeCloseTo(12 / 1.63, 9);
+    expect(encounterSpacing(PROTOTYPE, 3)).toBeCloseTo(4 / Math.sqrt(1.63), 9);
     const spacing = encounterSpacing(PROTOTYPE, 1);
     const hosts = (value: number) =>
       Array.from({ length: 20000 }, (_, index) => index - 10000).filter((index) =>
@@ -445,7 +470,7 @@ describe("galaxy difficulty", () => {
     const first = hosts(spacing);
     const shared = hosts(4);
     // Cells sit on a grid, so per-axis density squared is the areal density.
-    expect((first.length / shared.length) ** 2).toBeCloseTo(1.2, 2);
+    expect((first.length / shared.length) ** 2).toBeCloseTo(1.5, 2);
     expect(shared.every((index) => index % 4 === 0)).toBe(true);
     const gaps = first.slice(1).map((index, at) => index - first[at]!);
     expect(Math.min(...gaps) * PROTOTYPE.tuning.chunkSize).toBeGreaterThanOrEqual(
