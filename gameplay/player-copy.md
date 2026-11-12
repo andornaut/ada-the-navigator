@@ -260,6 +260,10 @@ listening."
 Narration: "The whale swims off, and soon the family is traveling together
 again."
 
+Whale family, as the holodisk waypoint appears: "You listened when nobody else
+did. Now listen to us." Then: "A shining disk drifts on the current ahead. Drones
+guard it. Follow our song."
+
 Home resolution: "Ada returns to the same moment. Penny is still waiting by the
 door. Ada thinks of the whale, who wanted to roam and find its family. Penny
 wants to explore too."
@@ -408,6 +412,9 @@ Ada: "I won't tell on you, Pip. But I'll come with you while you tell them."
 Settler, after Pip owns up: "So it wasn't the drones at all. Thank you for
 telling us, Pip. That took courage. Now, who can help us fix it?"
 
+Pip: "I can help! Spare beacon parts are kept at the settlement. Let's go get
+them."
+
 Settler, when Ada brings the beacon parts: "There. The beacon is lit again, and
 ships can find their way."
 
@@ -439,9 +446,10 @@ Objectives, in order:
 2. Find out why ships are getting lost.
 3. Talk with Pip.
 4. Go with Pip to the settlers.
-5. Bring beacon parts to the dark beacon.
-6. Take the holodisk from Pip.
-7. Go home to Earth when ready.
+5. Get beacon parts at the settlement with Pip.
+6. Bring beacon parts to the dark beacon.
+7. Take the holodisk from Pip.
+8. Go home to Earth when ready.
 
 ## Chapter five: the mining hub
 
@@ -579,6 +587,9 @@ Cartwheel:
 
 - First arrival: Astra: "Cartwheel. I remember the noise of this place." Ada:
   "Noisy is good. Busy means people." (happy)
+- Meeting the Cobbles, when Ada first nears the mining hub: Ada: "Astra, did
+  that rock just wave at us?" (happy) Astra: "That's a Cobble. They're made of
+  stone, and they eat the ore they mine." Ada: "Rocks that eat rocks!" (happy)
 - Quiet stretch: Astra: "I used to rush everywhere. With you, I notice more."
   Ada: "That's what exploring is for." (happy)
 - Quiet stretch: Astra: "Almost whole. I'm a little scared of that." Ada: "We'll
@@ -588,6 +599,12 @@ Whirlpool:
 
 - First arrival: Astra: "Whirlpool. I'm sure of my course now, Navigator." Ada:
   "You sound more like yourself." (happy)
+- Meeting the whale family, when Ada first sees them: Ada: "So many whales! Why
+  do they sing like that?" (happy) Astra: "Whale songs carry far. It's how
+  families find each other in the dark." Ada: "No wonder it missed them."
+- Meeting the Voron, when Ada first nears a Voron station: Ada: "Who are the
+  squid folk by the currents?" Astra: "The Voron. They ride the currents with
+  the whales and write in glowing ink."
 - Quiet stretch: Astra: "My maps feel fuller every day." Ada: "Our maps." (happy)
 - Quiet stretch: Astra: "I'm glad it was you who found the rock." Ada: "Me too."
   (happy)
@@ -599,6 +616,10 @@ Needle:
 
 - First arrival: Astra: "Needle. So thin, and so long." Ada: "Like a road made of
   stars."
+- Meeting the Avi, as Elder Loom comes into view, before Elder Loom's arrival
+  line: Ada: "Who's that, standing so still?" Astra: "An Avi. They wait and
+  watch before they move. That's Elder Loom." Astra: "The young Avi pilots
+  learn their channels from Elder Loom."
 - Quiet stretch: Astra: "I used to jump without thinking. Now I like to look
   first." Ada: "Me too." (happy)
 - Quiet stretch: Ada: "Do you dream, Astra?" Astra: "Not yet. Maybe I'll learn."
@@ -607,6 +628,10 @@ Andromeda:
 
 - First arrival: Astra: "Andromeda. It feels like visiting a neighbor." Ada: "A
   very big, very bright neighbor." (happy)
+- Meeting the Munix, when Ada first nears a settlers' station or settlement:
+  Ada: "Are the settlers robots?" Astra: "They're Munix. They were built, like
+  me, and they steer by beacon light." Ada: "So you have cousins out here!"
+  (happy)
 - Quiet stretch: Astra: "When I scattered my disks, I didn't tell anyone. Not
   even myself." Ada: "You can tell me now."
 - Quiet stretch: Astra: "I like that you never pretend, Ada." Ada: "Penny can
@@ -746,6 +771,9 @@ beacon light. Welcome!"
 - Unavailable in danger: Unavailable while you are in danger.
 - Shield depletion: Astra jumped you back to Earth to recharge. Your story progress is
   saved.
+- Shield depletion with undeposited ore, after that line on the same page:
+  Astra: "We're safe, and that matters most. The ore we carried didn't make the
+  jump."
 - After the sleep scene, morning: Narration: "Astra recharges overnight. In the
   morning, the rock is warm again, and Archie and Kiwi are curled at her feet."
 - Station welcome: Welcome aboard. Trade your Stardust, or take a job.
@@ -756,6 +784,8 @@ beacon light. Welcome!"
   internet to update Ada the Navigator.
 - Saving failure: Couldn't save progress. You can keep playing, but recent
   progress may be lost if you close the game.
+- Completed story, the notice when a chapter completes: Chapter complete. You
+  can keep exploring.
 
 ### Carried item names
 
