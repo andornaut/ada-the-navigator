@@ -26,6 +26,7 @@ import {
   reflectDirection,
   rockFrame,
   sceneryBlocksSegment,
+  sceneryBound,
   sceneryContact,
   sceneryShape,
 } from "./asteroids.ts";
@@ -244,7 +245,8 @@ function resolveScenery(
   position: Vec,
 ): void {
   const touched = new Set<SpaceObject>();
-  for (let pass = 0; pass < 4; pass++) {
+  // A notch between two silhouette parts settles over alternating push-outs.
+  for (let pass = 0; pass < 16; pass++) {
     let deepest: { contact: { normal: Vec; depth: number }; object: SpaceObject } | null = null;
     for (const object of flight.objects) {
       if (!SCENERY.includes(object.kind) || object.hp <= 0) {
@@ -2076,7 +2078,7 @@ export function rayCircle(
  * on a miss. A multipart ship blocks it only at a live hardpoint.
  */
 /**
- * Where a beam first meets a scenery object's shape (its asteroid polygon, else its circle),
+ * Where a beam first meets a scenery object where it is drawn (its silhouette, else its circle),
  * within the beam half-width: the bounding circle's entry, refined in 2-unit steps.
  */
 function sceneryEntry(
@@ -2086,10 +2088,9 @@ function sceneryEntry(
   frame: number,
   object: SpaceObject,
 ): number | null {
-  const shape = sceneryShape(object);
-  const bound = (shape?.radius ?? object.radius) + BEAM.halfWidth;
+  const bound = sceneryBound(object, BEAM.halfWidth);
   const entry = rayCircle(origin, direction, range, object, bound);
-  if (entry === null || !shape) {
+  if (entry === null || !sceneryShape(object)) {
     return entry;
   }
   const exit = Math.min(range, entry + 2 * bound);

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { ASTEROID_ART, ASTEROID_SIZES } from "../data/asteroid-catalog.ts";
+import {
+  ASTEROID_ART,
+  ASTEROID_SIZES,
+  type AsteroidArt,
+  RESOURCE_ART,
+} from "../data/asteroid-catalog.ts";
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunk-catalog.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemy-catalog.ts";
@@ -13,6 +18,8 @@ import {
   rockFrame,
   sceneryBlocksSegment,
   sceneryContact,
+  scenerySilhouette,
+  silhouette,
 } from "./asteroids.ts";
 import { type ChunkPlanOptions, planChunk } from "./chunk-templates.ts";
 import { createEnemy } from "./enemy-ai.ts";
@@ -67,6 +74,29 @@ const rock = (id: string, extra: Partial<SpaceObject> = {}): SpaceObject => ({
   ...extra,
 });
 const huge = shapes.find((shape) => shape.size === "huge")!;
+// A screen offset from a rock's pivot as the world offset that projects to it.
+const world = (screen: Vec): Vec => ({ x: screen.y + screen.x / 2, y: screen.y - screen.x / 2 });
+const idleInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
+const screenOf = (offset: Vec): Vec => ({ x: offset.x - offset.y, y: (offset.x + offset.y) / 2 });
+// Every Art rock as the flight object that draws it: plain rocks as rocks, resource rocks on the
+// plain shape they collide on.
+const drawnRocks: { art: AsteroidArt; object: SpaceObject }[] = [
+  ...ASTEROID_ART.asteroids.map((art) => ({
+    art,
+    object: rock(art.id, { asteroid: art.id, radius: art.footprintRadius }),
+  })),
+  ...RESOURCE_ART!.rocks.map((art) => {
+    const plain = art.id.replace(/^resource-/, "asteroid-");
+    return {
+      art,
+      object: rock(art.id, {
+        asteroid: plain,
+        kind: "resource",
+        radius: ASTEROID_SHAPES.get(plain)!.radius,
+      }),
+    };
+  }),
+];
 
 describe("asteroid footprints", () => {
   // Gameplay's size classes (art/asteroids.md "Classes"): footprint radius ranges in world units.
@@ -126,14 +156,18 @@ describe("asteroid footprints", () => {
   });
 
   it("hit a spinning rock's current frame, not frame 0", () => {
-    // A medium rock whose frames differ: a probe inside one frame's base and outside another's.
+    // A medium rock whose frames differ: a point drawn in one frame and not in frame 0.
     const medium = shapes.find((shape) => shape.id === "asteroid-m4")!;
     const object = rock("spinner", { asteroid: medium.id, radius: medium.radius });
+    const reach = medium.silhouette.reach;
     let probe: { frame: number; at: Vec } | undefined;
     for (let frame = 1; frame < medium.frames.length && !probe; frame++) {
       for (let angle = 0; angle < Math.PI * 2 && !probe; angle += Math.PI / 32) {
-        for (const reach of [0.6, 0.75, 0.9].map((share) => share * medium.radius)) {
-          const at = { x: Math.cos(angle) * reach, y: Math.sin(angle) * reach };
+        for (const share of [0.6, 0.75, 0.9]) {
+          const at = world({
+            x: Math.cos(angle) * reach * share,
+            y: Math.sin(angle) * reach * share,
+          });
           if (sceneryContact(object, at, 1, frame) && !sceneryContact(object, at, 1, 0)) {
             probe = { at, frame };
             break;
@@ -141,25 +175,210 @@ describe("asteroid footprints", () => {
         }
       }
     }
-    expect(probe, "frames differ in footprint").toBeDefined();
+    expect(probe, "frames differ in silhouette").toBeDefined();
+  });
+});
+
+describe("rock silhouettes", () => {
+  it("sit inside each rock's drawn sprite box, a resource rock on its own drawing", () => {
+    for (const { art, object } of drawnRocks) {
+      const left = -art.pivot.x * art.display.width;
+      const top = -art.pivot.y * art.display.height;
+      const drawn = scenerySilhouette(object)!;
+      expect(drawn, art.id).toEqual(silhouette(art));
+      // The silhouette radius is the farthest drawn vertex from the pivot over every frame.
+      const farthest = art.frames.flatMap((frame) =>
+        frame.collision
+          .flat()
+          .map((at) =>
+            Math.hypot(
+              (at.x - art.pivot.x * art.frame.width) * (art.display.width / art.frame.width),
+              (at.y - art.pivot.y * art.frame.height) * (art.display.height / art.frame.height),
+            ),
+          ),
+      );
+      expect(drawn.reach, art.id).toBeCloseTo(Math.max(...farthest), 9);
+      expect(drawn.frames.flat(2).every((at) => Math.hypot(at.x, at.y) <= drawn.reach)).toBe(true);
+      for (const at of drawn.frames.flat(2)) {
+        expect(at.x, art.id).toBeGreaterThanOrEqual(left - 1e-6);
+        expect(at.x, art.id).toBeLessThanOrEqual(left + art.display.width + 1e-6);
+        expect(at.y, art.id).toBeGreaterThanOrEqual(top - 1e-6);
+        expect(at.y, art.id).toBeLessThanOrEqual(top + art.display.height + 1e-6);
+      }
+    }
+  });
+
+  it("meet a body at every rock's drawn top, bottom and sides in every frame, not past them", () => {
+    // A body of radius 3 screen px touches 2 px beyond the outermost drawn point and misses 3.5 px
+    // beyond it, where every drawn point lies on the far side of that line.
+    const directions = [
+      { x: 0, y: -1 },
+      { x: 0, y: 1 },
+      { x: -1, y: 0 },
+      { x: 1, y: 0 },
+    ];
+    let checked = 0;
+    for (const { art, object } of drawnRocks) {
+      const drawn = scenerySilhouette(object)!;
+      drawn.frames.forEach((parts, frame) => {
+        const points = parts.flat();
+        for (const direction of directions) {
+          const extreme = points.reduce((best, at) =>
+            at.x * direction.x + at.y * direction.y > best.x * direction.x + best.y * direction.y
+              ? at
+              : best,
+          );
+          const beyond = (gap: number) =>
+            world({ x: extreme.x + direction.x * gap, y: extreme.y + direction.y * gap });
+          expect(sceneryContact(object, beyond(2), 3, frame), `${art.id} ${frame}`).not.toBeNull();
+          expect(sceneryContact(object, beyond(3.5), 3, frame), `${art.id} ${frame}`).toBeNull();
+          checked++;
+        }
+      });
+    }
+    expect(checked).toBe(
+      4 *
+        [...ASTEROID_ART.asteroids, ...RESOURCE_ART!.rocks].reduce(
+          (n, a) => n + a.frames.length,
+          0,
+        ),
+    );
+  });
+
+  it("draw a resource rock's crystals above its plain shape, and hit them", () => {
+    const highest = (object: SpaceObject, frame: number) =>
+      scenerySilhouette(object)!
+        .frames[frame]!.flat()
+        .reduce((best, at) => (at.y < best.y ? at : best));
+    // The resource rock and frame whose crest stands highest above its plain rock's top.
+    let tallest: { frame: number; gap: number; plain: SpaceObject; resource: SpaceObject } | null =
+      null;
+    for (const { object } of drawnRocks.filter((entry) => entry.object.kind === "resource")) {
+      const plain = rock("plain", { asteroid: object.asteroid!, radius: object.radius });
+      for (let frame = 0; frame < scenerySilhouette(object)!.frames.length; frame++) {
+        const gap = highest(plain, frame).y - highest(object, frame).y;
+        if (!tallest || gap > tallest.gap) {
+          tallest = { frame, gap, plain, resource: object };
+        }
+      }
+    }
+    const { frame, gap, plain, resource } = tallest!;
+    expect(gap).toBeGreaterThan(6);
+    // Just under the crystals' crest and above the plain rock's top.
+    const crest = highest(resource, frame);
+    const at = world({ x: crest.x, y: crest.y + 2 });
+    expect(sceneryContact(resource, at, 1, frame)).not.toBeNull();
+    expect(sceneryContact(plain, at, 1, frame)).toBeNull();
+  });
+
+  it("strike a real shot through the drawn top of a rock, not one just above it", () => {
+    const speed = PROTOTYPE.tuning.maxSpeed * PROTOTYPE.tuning.flight.projectileSpeedFactor;
+    const art = ASTEROID_ART.asteroids.find((entry) => entry.id === "asteroid-l1")!;
+    const object = drawnRocks.find((entry) => entry.art === art)!.object;
+    const top = Math.min(
+      ...scenerySilhouette(object)!
+        .frames[0]!.flat()
+        .map((at) => at.y),
+    );
+    // The top lies on a vertex: 2 px into the rock below it hits, 4 px above it misses.
+    const fire = (screenY: number) => {
+      const flight = createFlight(PROTOTYPE, 1, 7, { known: [] });
+      flight.objects = [{ ...object, hp: 999, persistent: true }];
+      flight.player = world({ x: 0, y: 260 });
+      const direction = world({ x: 1, y: 0 });
+      const span = Math.hypot(direction.x, direction.y);
+      flight.shots = [
+        {
+          damage: 1,
+          enemy: false,
+          hitIds: [],
+          id: "shot",
+          life: 2,
+          piercing: false,
+          projectile: "bolt",
+          velocity: { x: (direction.x / span) * speed, y: (direction.y / span) * speed },
+          ...world({ x: -260, y: screenY }),
+        },
+      ];
+      for (let step = 0; step < 60 && flight.shots.length; step++) {
+        stepFlight(PROTOTYPE, 1 / 60, { ...idleInput, reducedMotion: true }, flight);
+        flight.objects = flight.objects.filter((entry) => entry.id === object.id);
+      }
+      return flight.objects[0]!.hp < 999;
+    };
+    expect(fire(top + 2)).toBe(true);
+    expect(fire(top - 4)).toBe(false);
+  });
+
+  it("never draw Ada overlapping a rock after contact, in any frame or approach", () => {
+    const { shipRadius } = PROTOTYPE.tuning.flight;
+    const flight = createFlight(PROTOTYPE, 1, 7, { known: [] });
+    let approaches = 0;
+    for (const { art, object } of drawnRocks) {
+      const drawn = scenerySilhouette(object)!;
+      for (let frame = 0; frame < drawn.frames.length; frame++) {
+        for (let turn = 0; turn < 16; turn++) {
+          const angle = (turn / 16) * Math.PI * 2;
+          const gap = drawn.reach + shipRadius + 4;
+          const start = world({ x: Math.cos(angle) * gap, y: Math.sin(angle) * gap });
+          const toward = { x: -start.x, y: -start.y };
+          const span = Math.hypot(toward.x, toward.y);
+          const move = { x: toward.x / span, y: toward.y / span };
+          const held = { ...object, hp: 999, persistent: true, spinStart: frame };
+          flight.objects = [held];
+          flight.shots = [];
+          flight.player = { ...start };
+          flight.velocity = {
+            x: move.x * PROTOTYPE.tuning.maxSpeed,
+            y: move.y * PROTOTYPE.tuning.maxSpeed,
+          };
+          for (let step = 0; step < 30; step++) {
+            stepFlight(PROTOTYPE, 1 / 60, { ...idleInput, move, reducedMotion: true }, flight);
+            flight.objects = flight.objects.filter((entry) => entry.id === object.id);
+            // Ada's drawn circle stays off the silhouette, to the push-out's 0.01 margin.
+            const overlap = sceneryContact(held, flight.player, shipRadius - 0.01, frame);
+            const at = screenOf({ x: flight.player.x - held.x, y: flight.player.y - held.y });
+            expect(
+              overlap,
+              `${art.id} frame ${frame} angle ${turn} at ${at.x}, ${at.y}`,
+            ).toBeNull();
+          }
+          approaches++;
+        }
+      }
+    }
+    expect(approaches).toBeGreaterThan(16 * drawnRocks.length);
   });
 });
 
 describe("scenery contact and bounce", () => {
-  it("measures circle overlap with a circle and with the actual polygon of a huge asteroid", () => {
+  it("measures circle overlap with a circle and with the drawn silhouette of a huge asteroid", () => {
     const contact = sceneryContact(rock("circle"), { x: 45, y: 0 }, 10)!;
     expect(contact.depth).toBeCloseTo(5);
     expect(contact.normal).toEqual({ x: 1, y: 0 });
     const object = rock("huge", { asteroid: huge.id, radius: huge.radius });
-    // Inside the bounding circle but outside the outline, a probe must not collide.
+    const reach = huge.silhouette.reach;
+    // Inside the silhouette's bounding circle but outside the outline, a probe must not collide.
     const gaps = Array.from({ length: 64 }, (_, index) => {
       const angle = (index / 64) * Math.PI * 2;
-      return { x: Math.cos(angle) * (huge.radius - 1), y: Math.sin(angle) * (huge.radius - 1) };
+      return world({ x: Math.cos(angle) * (reach - 1), y: Math.sin(angle) * (reach - 1) });
     });
     expect(gaps.some((at) => !sceneryContact(object, at, 1))).toBe(true);
-    const inner = sceneryContact(object, { x: 0, y: 0 }, 10)!;
+    // A body at the centre of the drawn rock is pushed out along a world unit normal, by a depth
+    // that clears the drawing once moved.
+    const part = huge.silhouette.frames[0]![0]!;
+    const centre = world({
+      x: part.reduce((sum, at) => sum + at.x, 0) / part.length,
+      y: part.reduce((sum, at) => sum + at.y, 0) / part.length,
+    });
+    const inner = sceneryContact(object, centre, 10)!;
     expect(inner.depth).toBeGreaterThan(10);
     expect(Math.hypot(inner.normal.x, inner.normal.y)).toBeCloseTo(1);
+    const out = {
+      x: centre.x + inner.normal.x * (inner.depth + 0.01),
+      y: centre.y + inner.normal.y * (inner.depth + 0.01),
+    };
+    expect(sceneryContact(object, out, 10)).toBeNull();
   });
 
   it("reverses only the approaching normal component, at least the recoil speed", () => {
@@ -175,17 +394,22 @@ describe("scenery contact and bounce", () => {
     expect(reflectDirection(normal, { x: 1, y: 0 })).toEqual({ x: -1, y: 0 });
   });
 
-  it("blocks sight lines through the outline, not the empty bounding circle", () => {
+  it("blocks sight lines through the drawn rock, not just above its drawn top", () => {
     const object = rock("huge", { asteroid: huge.id, radius: huge.radius });
-    expect(sceneryBlocksSegment(object, { x: -300, y: 0 }, { x: 300, y: 0 }, 0)).toBe(true);
+    const top = Math.min(...huge.silhouette.frames[0]!.flat().map((at) => at.y));
+    const line = (y: number) =>
+      sceneryBlocksSegment(object, world({ x: -400, y }), world({ x: 400, y }), 0);
+    expect(line(top + 2)).toBe(true);
+    expect(line(top - 2)).toBe(false);
+    // Within the inflation of the top, a segment counts as blocked.
     expect(
       sceneryBlocksSegment(
         object,
-        { x: -300, y: huge.radius + 5 },
-        { x: 300, y: huge.radius + 5 },
-        0,
+        world({ x: -400, y: top - 2 }),
+        world({ x: 400, y: top - 2 }),
+        3,
       ),
-    ).toBe(false);
+    ).toBe(true);
   });
 });
 

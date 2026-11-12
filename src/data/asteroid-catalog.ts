@@ -1,4 +1,5 @@
 import ART_FILE from "../../public/art/asteroids.json" with { type: "json" };
+import RESOURCE_FILE from "../../public/art/resource-rocks.json" with { type: "json" };
 import type { Vec } from "../model/types.ts";
 
 export const ASTEROID_SIZES = ["small", "medium", "large", "huge"] as const;
@@ -11,8 +12,8 @@ interface Size2 {
 
 /**
  * One frame of an Art asteroid: its SVG, its drawn silhouette as convex parts in frame px (for
- * drawing bounds and the drift cue), and its footprint, the rock's base on the world plane, as
- * convex parts in world units from the pivot (for hits and placement).
+ * shot hits, drawing bounds and the drift cue), and its footprint, the rock's base on the world
+ * plane, as convex parts in world units from the pivot (for ship contact and placement).
  */
 export interface AsteroidArtFrame {
   readonly file: string;
@@ -31,8 +32,6 @@ export interface AsteroidArt {
   readonly display: Size2;
   /** Fraction of the frame at the rock's base centre: its world position and sort point. */
   readonly pivot: Vec;
-  /** Frame px from the pivot to the farthest drawn outline point over all frames. */
-  readonly radius: number;
   /** World units from the pivot to the farthest footprint point over all frames. */
   readonly footprintRadius: number;
   /** Drift speed range in logical px per second for eligible rocks. */
@@ -156,7 +155,6 @@ function readAsteroid(value: unknown): AsteroidArt | undefined {
     !frame ||
     !display ||
     !pivot ||
-    !positive(entry.radius) ||
     !positive(entry.footprintRadius) ||
     !drift ||
     typeof drift.eligible !== "boolean" ||
@@ -178,7 +176,6 @@ function readAsteroid(value: unknown): AsteroidArt | undefined {
     frames: frames as AsteroidArtFrame[],
     id: entry.id,
     pivot,
-    radius: entry.radius,
     size: entry.size as AsteroidSize,
     spin: spin
       ? { degPerSecond: [(spin.degPerSecond as number[])[0]!, (spin.degPerSecond as number[])[1]!] }
@@ -315,6 +312,9 @@ function required(catalog: AsteroidArtCatalog | undefined): AsteroidArtCatalog {
 
 /** Art's rocks and backdrop: collision, placement and drawing all read it. */
 export const ASTEROID_ART: AsteroidArtCatalog = required(readAsteroidCatalog(ART_FILE));
+
+/** Art's resource rocks, or undefined when the file does not read; shots read their silhouettes. */
+export const RESOURCE_ART: ResourceRockCatalog | undefined = readResourceRocks(RESOURCE_FILE);
 
 /**
  * CLEANUP (added 2026-11-11): saves from before Art's footprints name the former seeded

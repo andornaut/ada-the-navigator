@@ -21,7 +21,7 @@ import { coarsePointer } from "../input/coarse-pointer.ts";
 import { createControls } from "../input/controls.ts";
 import { type LoadTracker, trackLoader } from "../loading/loadingBar.ts";
 import { loadingProgress } from "../loading/progress.ts";
-import { rockFrame } from "../model/asteroids.ts";
+import { rockFrame, scenerySilhouette } from "../model/asteroids.ts";
 import { grantAllWeapons } from "../model/cheats.ts";
 import { currentsNear, flowFraction } from "../model/currents.ts";
 import { carriesStardust } from "../model/drops.ts";
@@ -3274,8 +3274,8 @@ export class PrototypeScene extends Phaser.Scene {
       ? Math.max(object.radius, definition.sizeRatio * PROTOTYPE.tuning.flight.shipRadius * 2)
       : object.radius;
     const rock = object.asteroid ? rockArt(object.asteroid) : undefined;
-    // Art's rocks reach past their footprint; cull by the drawn reach.
-    const reach = rock ? Math.max(radius, rock.radius * this.asteroidArt.displayScale) : radius;
+    // Art's rocks reach past their footprint; cull by the drawn silhouette's reach.
+    const reach = Math.max(radius, scenerySilhouette(object)?.reach ?? 0);
     if (
       point.x < -reach - 60 ||
       point.y < -reach - 60 ||
