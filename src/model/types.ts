@@ -4,7 +4,7 @@ import type { EnemyArchetype } from "../data/enemy-catalog.ts";
 import type { JobType } from "../data/jobs.ts";
 import type { ResourceClass } from "../data/resource-rocks.ts";
 import type { StorySceneId } from "../data/story-ships.ts";
-import type { PickupKind, SectorId, Weapon } from "../data/types.ts";
+import type { SectorId, Weapon } from "../data/types.ts";
 import type { AchievementState } from "./achievements.ts";
 import type { EnemyState } from "./enemy-ai.ts";
 import type { ProjectileFade } from "./player-projectiles.ts";
@@ -333,4 +333,4 @@ export type FlightEvent =
     }
   | { type: "discovered"; id: string }
   /** A pickup collected at contact, for the view's zip into the ship; it changes no state. */
-  | { type: "collected"; id: string; kind: PickupKind; x: number; y: number };
+  | { type: "collected"; id: string; lostItem?: true; x: number; y: number };

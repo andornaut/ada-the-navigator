@@ -33,7 +33,7 @@ import { chartLandmarks, landmarkSites } from "./landmarks.ts";
 import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
 import type { FlightState, HeldJob, Vec } from "./types.ts";
-import { shipTuning } from "./upgrades.ts";
+import { noLevels, shipTuning } from "./upgrades.ts";
 
 const QUESTS = readFileSync(new URL("../../gameplay/quests.md", import.meta.url), "utf8");
 /** A Markdown table's body rows as trimmed cells, from the table after a heading or lead-in. */
@@ -636,13 +636,35 @@ describe("jobs in play", () => {
     // Collected at contact, with the event the view zips its glint into the ship from.
     expect(model.flightEvents).toContainEqual({
       id: "hunt-glint",
-      kind: "lostItem",
+      lostItem: true,
       type: "collected",
       x: spot.x,
       y: spot.y,
     });
     expect(model.state.economy.stardust).toBe(stardust + held.reward);
   });
+
+  it.each([
+    [1, 60, 120],
+    [2, 90, 160],
+    [3, 120, 200],
+  ])(
+    "pulls a lost item at tractor level %i from within %i at %i a second, as every pickup",
+    (level, radius, speed) => {
+      const { model } = docked();
+      const held = take(model, "hunt");
+      const spot = { ...held.spot! };
+      model.state.flight!.levels = { ...noLevels(), tractor: level };
+      flyTo(model, { x: spot.x + radius - 1, y: spot.y });
+      const moved = (model.state.tasks[1] as HeldJob).spot!;
+      expect(moved.x).toBeCloseTo(spot.x + speed * 0.05, 6);
+      expect(moved.y).toBeCloseTo(spot.y, 9);
+      // Just outside the pull radius it stays put.
+      const still = { ...moved };
+      flyTo(model, { x: still.x + radius + 1, y: still.y });
+      expect((model.state.tasks[1] as HeldJob).spot).toEqual(still);
+    },
+  );
 
   it("deliver to a station with Use before Dock, and replace a lost item on docking at the issuing station", () => {
     const { model, station } = docked();

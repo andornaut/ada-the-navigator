@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { ECONOMY } from "../data/economy.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { SectorId } from "../data/types.ts";
@@ -9,6 +10,7 @@ import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { shipTouches } from "./ship-body.ts";
 import type { GameState, SectorProgress } from "./types.ts";
+import { noLevels, shipTuning } from "./upgrades.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const inserted = [
@@ -339,26 +341,27 @@ describe("galaxy three's holodisk", () => {
     f.dangerFor = 0;
     const disk = f.objects.find((o) => o.id === "holodisk")!;
     const at = { x: disk.x, y: disk.y };
-    const { pickupMargins, pickupRadius } = PROTOTYPE.tuning.flight;
-    expect(pickupMargins.holodisk).toBe(20);
+    const { pickupMargin, pickupRadius } = PROTOTYPE.tuning.flight;
+    expect(pickupMargin).toBe(20);
     // How far east of the disk Ada's drawn ship last reaches it, to 0.001.
     let low = 0;
     let high = 200;
     while (high - low > 1e-3) {
       const middle = (low + high) / 2;
       const player = { x: disk.x + middle, y: disk.y };
-      if (shipTouches(f.facing, player, disk, pickupRadius + pickupMargins.holodisk)) {
+      if (shipTouches(f.facing, player, disk, pickupRadius + pickupMargin)) {
         low = middle;
       } else {
         high = middle;
       }
     }
     const contact = high;
-    f.player = { x: disk.x + contact + 1, y: disk.y };
+    // Past the tractor beam's pull radius, the disk stays where it is and is not recovered.
+    const pull = shipTuning(ECONOMY, PROTOTYPE, f.levels).tractorRadius;
+    f.player = { x: disk.x + pull + 1, y: disk.y };
     f.velocity = { x: 0, y: 0 };
     model.step(0.01, idle);
     expect(model.state.progress[3].holodisk).toBe(false);
-    // The tractor beam pulls only Stardust, so the holodisk stays where it is.
     expect(f.objects.find((o) => o.id === "holodisk")).toMatchObject(at);
     f.player = { x: disk.x + contact - 1, y: disk.y };
     f.velocity = { x: 0, y: 0 };
@@ -366,6 +369,34 @@ describe("galaxy three's holodisk", () => {
     insertion(model);
     expect(model.state.progress[3].holodisk).toBe(true);
   });
+
+  it.each([
+    [1, 60, 120],
+    [2, 90, 160],
+    [3, 120, 200],
+  ])(
+    "is pulled at tractor level %i from within %i at %i a second, as every pickup is",
+    (level, radius, speed) => {
+      const model = questDone(3, ["whale", "family"]);
+      model.step(0.01, idle);
+      const f = model.state.flight!;
+      f.objects = f.objects.filter((o) => o.routeId !== "holodisk");
+      f.dangerFor = 0;
+      f.levels = { ...noLevels(), tractor: level };
+      const disk = f.objects.find((o) => o.id === "holodisk")!;
+      const from = disk.x;
+      f.player = { x: disk.x + radius - 1, y: disk.y };
+      f.velocity = { x: 0, y: 0 };
+      model.step(0.01, idle);
+      expect(model.state.progress[3].holodisk).toBe(false);
+      expect(disk.x).toBeCloseTo(from + speed * 0.01, 6);
+      // Just outside the pull radius it stays put.
+      const still = disk.x;
+      f.player = { x: disk.x + radius + 1, y: disk.y };
+      model.step(0.01, idle);
+      expect(disk.x).toBe(still);
+    },
+  );
 
   it("has no waypoint before the reunion", () => {
     const model = questDone(3, ["whale", "family"]);

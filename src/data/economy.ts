@@ -225,8 +225,9 @@ export const ECONOMY: EconomyCatalog = {
     shieldRecharge: [150, 300],
     tractor: [80, 160],
   },
-  tractorRadius: { base: 65, levels: [100, 135] },
-  tractorSpeed: { base: 150, levels: [220, 300] },
+  // The tractor beam's pull radius and speed by level, alike for every pickup.
+  tractorRadius: { base: 60, levels: [90, 120] },
+  tractorSpeed: { base: 120, levels: [160, 200] },
   // Galaxy one drops weapons more rarely, so its first weapon is usually bought.
   weaponDropChance: {
     1: {

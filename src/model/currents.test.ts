@@ -118,6 +118,33 @@ describe("space currents", () => {
     );
   });
 
+  it("drift every pickup kind alike with the flow, out of the tractor beam's reach", () => {
+    const current = currents.find((entry) => entry.length > 3500)!;
+    const { point } = middle(current);
+    const flow = flowAt(3, point);
+    const kinds = [
+      { amount: 1, radius: ECONOMY.stardustPickupRadius, role: "stardust" },
+      { amount: 3, radius: 10, role: "discovery" },
+      { radius: 7, role: "cargo" },
+      { radius: 10, weapon: "rapidMissile" },
+    ] as const;
+    for (const [index, extra] of kinds.entries()) {
+      const flight = createFlight(PROTOTYPE, 3, 5, { known: [] });
+      flight.objects = [{ hp: 1, id: `pickup:${index}`, kind: "pickup", ...point, ...extra }];
+      flight.player = { x: point.x + 200, y: point.y + 200 };
+      flight.velocity = { x: 0, y: 0 };
+      stepFlight(
+        PROTOTYPE,
+        1 / 60,
+        { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false },
+        flight,
+      );
+      const moved = flight.objects.find((object) => object.id === `pickup:${index}`)!;
+      expect(moved.x - point.x, String(index)).toBeCloseTo(flow.x / 60, 6);
+      expect(moved.y - point.y, String(index)).toBeCloseTo(flow.y / 60, 6);
+    }
+  });
+
   it("draw streaks on the path with a tangent that turns smoothly at each vertex", () => {
     const current = currents.find((entry) => entry.length > 3500)!;
     const { points, stations } = current;

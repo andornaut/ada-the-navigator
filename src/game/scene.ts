@@ -1827,7 +1827,7 @@ export class PrototypeScene extends Scene {
       if (event.type !== "collected") {
         continue;
       }
-      const source = event.kind === "lostItem" ? this.glintSprite : this.enemySprites.get(event.id);
+      const source = event.lostItem ? this.glintSprite : this.enemySprites.get(event.id);
       if (!source?.visible) {
         continue;
       }

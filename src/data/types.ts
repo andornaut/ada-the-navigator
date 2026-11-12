@@ -97,12 +97,6 @@ export interface PremiseContent {
   roomRock: string;
 }
 
-/**
- * What Ada collects on contact: a discovery cache, Stardust, an ore nugget, a weapon pickup, a
- * hunt's lost item, and a floating holodisk.
- */
-export type PickupKind = "cache" | "holodisk" | "lostItem" | "ore" | "stardust" | "weapon";
-
 export interface PrototypeContent {
   /** The built galaxies' chapters; a placeholder galaxy has none. */
   chapters: Readonly<Partial<Record<SectorId, ChapterContent>>>;
@@ -164,10 +158,10 @@ export interface PrototypeContent {
       pickupRadius: number;
       pieceRadius: number;
       /**
-       * How far past Ada's drawn ship each kind collects, in world units on the world plane
-       * from its drawn outline (gameplay/rules.md forgiving contacts).
+       * How far past Ada's drawn ship every pickup collects, in world units on the world plane
+       * from its drawn outline: the one pickup rule (gameplay/rules.md forgiving contacts).
        */
-      pickupMargins: Readonly<Record<PickupKind, number>>;
+      pickupMargin: number;
       /** The seconds a collected pickup takes to zip into the ship, drawn only. */
       pickupZip: number;
       engagementChunks: number;

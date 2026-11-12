@@ -17,7 +17,7 @@ import { JOB_TUNING, LANDMARK_TUNING } from "../data/jobs.ts";
 import { RESOURCE_ROCKS, resourceRock } from "../data/resource-rocks.ts";
 import { SCREEN } from "../data/screen.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
-import type { PickupKind, PrototypeContent, SectorId } from "../data/types.ts";
+import type { PrototypeContent, SectorId } from "../data/types.ts";
 import { BEAM, weaponAt, type WeaponDefinition } from "../data/weapon-catalog.ts";
 import {
   ASTEROID_SHAPES,
@@ -97,7 +97,7 @@ import type {
   SpaceObject,
   Vec,
 } from "./types.ts";
-import { noLevels, shipTuning } from "./upgrades.ts";
+import { noLevels, type ShipTuning, shipTuning } from "./upgrades.ts";
 import { markVisited, visitedChunk } from "./visited.ts";
 import { collectWeapon, ensureOwnedWeapons, grantedAmmo, shotsLeft, spendShot } from "./weapons.ts";
 
@@ -1537,30 +1537,19 @@ export function shipSpeedFraction(
     flight.velocity,
   );
 }
-/** A flight pickup's kind, which sets its reach: cache, Stardust, ore nugget or weapon. */
-export function pickupKind(object: SpaceObject): PickupKind {
-  if (object.role === "cargo") {
-    return "ore";
-  }
-  if (object.weapon) {
-    return "weapon";
-  }
-  return object.role === "discovery" ? "cache" : "stardust";
-}
 /**
- * Whether Ada's drawn ship reaches a pickup of `kind` at `center`: within its margin, in world
- * units on the world plane, between the ship's drawn body and the pickup's drawn `outline`, or
- * its circle of `radius`.
+ * Whether Ada's drawn ship reaches a pickup at `center`, by the one pickup rule: within the
+ * pickup margin, in world units on the world plane, between the ship's drawn body and the
+ * pickup's drawn `outline`, or its circle of `radius`.
  */
 export function pickupTouched(
   content: PrototypeContent,
   flight: FlightState,
-  kind: PickupKind,
   center: Vec,
   radius: number,
   outline: Parts | null = null,
 ): boolean {
-  const margin = content.tuning.flight.pickupMargins[kind];
+  const margin = content.tuning.flight.pickupMargin;
   return outline
     ? outlinesContact(outline, center, shipBody(flight.facing), flight.player, margin) !== null
     : shipTouches(flight.facing, flight.player, center, radius + margin);
@@ -2507,21 +2496,27 @@ function stepWrecks(
   }
 }
 
-/** The tractor beam draws Stardust inside its pull radius toward Ada at its pull speed. */
-function pullStardust(
-  radius: number,
-  speed: number,
+/**
+ * A pickup's motion over `dt`, alike for every kind (gameplay/rules.md): a current drifts it
+ * until it leaves the current, and the tractor beam draws it toward Ada at its pull speed while
+ * its centre lies within the pull radius of hers.
+ */
+export function carryPickup(
+  ship: Pick<ShipTuning, "tractorRadius" | "tractorSpeed">,
   dt: number,
-  object: SpaceObject,
   flight: FlightState,
-) {
-  const gap = distance(object, flight.player);
-  if (!carriesStardust(object) || gap > radius || gap === 0) {
+  pickup: Vec,
+): void {
+  const drift = flowAt(flight.sector, pickup);
+  pickup.x += drift.x * dt;
+  pickup.y += drift.y * dt;
+  const gap = distance(pickup, flight.player);
+  if (gap > ship.tractorRadius || gap === 0) {
     return;
   }
-  const step = Math.min(gap, speed * dt);
-  object.x += ((flight.player.x - object.x) / gap) * step;
-  object.y += ((flight.player.y - object.y) / gap) * step;
+  const step = Math.min(gap, ship.tractorSpeed * dt);
+  pickup.x += ((flight.player.x - pickup.x) / gap) * step;
+  pickup.y += ((flight.player.y - pickup.y) / gap) * step;
 }
 
 export function stepFlight(
@@ -2583,17 +2578,12 @@ export function stepFlight(
       if (object.kind !== "pickup" || object.hp <= 0) {
         continue;
       }
-      // Stardust and weapon pickups drift with a current until they leave it.
-      const drift = flowAt(flight.sector, object);
-      object.x += drift.x * slice;
-      object.y += drift.y * slice;
-      pullStardust(ship.tractorRadius, ship.tractorSpeed, slice, object, flight);
-      const kind = pickupKind(object);
-      if (!pickupTouched(content, flight, kind, object, object.radius, pickupOutline(object))) {
+      carryPickup(ship, slice, flight, object);
+      if (!pickupTouched(content, flight, object, object.radius, pickupOutline(object))) {
         continue;
       }
       // Collected at contact; the zip into the ship is the view's.
-      events.push({ id: object.id, kind, type: "collected", x: object.x, y: object.y });
+      events.push({ id: object.id, type: "collected", x: object.x, y: object.y });
       if (object.role === "cargo") {
         flight.cargo++;
         object.hp = 0;

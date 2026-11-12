@@ -62,6 +62,7 @@ import { inCurrent } from "./currents.ts";
 import { carriesStardust, dropRandom } from "./drops.ts";
 import {
   activateRouteEncounter,
+  carryPickup,
   createFlight,
   dockFlight,
   dronesNear,
@@ -173,6 +174,7 @@ import type {
   JobTarget,
   SectorProgress,
   ShipState,
+  SpaceObject,
   UseAction,
   Vec,
 } from "./types.ts";
@@ -1188,6 +1190,7 @@ export class GameModel {
     reachSensed(PENNY_FIND_RANGE, f.sector, f.objects, f.player, this.state.achievements);
     const previousFreshDistance = f.freshDistance;
     const events = stepFlight(this.content, dt, input, f);
+    this.carryStoryPickups(dt, f);
     this.explore(f);
     this.flightEvents = events;
     this.pullLoadout();
@@ -1425,13 +1428,34 @@ export class GameModel {
   private get holodiskWaypoint(): boolean {
     return this.state.flight?.sector === 3 && this.current.questComplete && !this.current.holodisk;
   }
-  /** Ada is within pickup reach of the holodisk, a pickup-sized object; the tractor never pulls it. */
+  /** The floating holodisk while it is a pickup, the waypoint the family gives. */
+  private floatingHolodisk(f: FlightState): SpaceObject | undefined {
+    return this.holodiskWaypoint
+      ? f.objects.find((o) => o.kind === "destination" && o.id === "holodisk")
+      : undefined;
+  }
+  /** Ada is within pickup reach of the holodisk, a pickup-sized object. */
   private holodiskTouched(f: NonNullable<GameState["flight"]>): boolean {
-    const disk = f.objects.find((o) => o.kind === "destination" && o.id === "holodisk");
+    const disk = this.floatingHolodisk(f);
     return (
       disk !== undefined &&
-      pickupTouched(this.content, f, "holodisk", disk, this.content.tuning.flight.pickupRadius)
+      pickupTouched(this.content, f, disk, this.content.tuning.flight.pickupRadius)
     );
+  }
+  /**
+   * The pickups the model holds outside the flight's objects, the floating holodisk and a hunt's
+   * lost item, move as every pickup does: a current drifts them and the tractor beam pulls them.
+   */
+  private carryStoryPickups(dt: number, f: FlightState): void {
+    const ship = shipTuning(ECONOMY, this.content, f.levels);
+    const disk = this.floatingHolodisk(f);
+    if (disk) {
+      carryPickup(ship, dt, f, disk);
+    }
+    const held = this.held;
+    if (held?.type === "hunt" && held.spot) {
+      carryPickup(ship, dt, f, held.spot);
+    }
   }
   private ensureRequiredApproaches(): void {
     const f = this.state.flight;
@@ -1896,11 +1920,11 @@ export class GameModel {
       // The lost item is touched as its glint is drawn, with the pickups' shared reach.
       if (
         held.spot &&
-        pickupTouched(this.content, f, "lostItem", held.spot, pickupRadius, HUNT_GLINT ?? null)
+        pickupTouched(this.content, f, held.spot, pickupRadius, HUNT_GLINT ?? null)
       ) {
         this.flightEvents.push({
           id: "hunt-glint",
-          kind: "lostItem",
+          lostItem: true,
           type: "collected",
           ...held.spot,
         });

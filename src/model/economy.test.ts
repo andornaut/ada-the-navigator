@@ -489,7 +489,8 @@ describe("discovery caches", () => {
       y: 0,
     });
     stepFlight(PROTOTYPE, 0.1, idle, value);
-    expect(value.objects[0]!.x).toBeCloseTo(60 - 15, 6);
+    // The base pull: 120 a second from within 60.
+    expect(value.objects[0]!.x).toBeCloseTo(60 - 12, 6);
     expect(gained(stepFlight(PROTOTYPE, 1, idle, value))).toBe(5);
     expect(value.weapon).toBe("basic");
     expect(value.ownedWeapons).toEqual([]);
@@ -497,30 +498,49 @@ describe("discovery caches", () => {
 });
 
 describe("tractor beam and pickup reach", () => {
-  it("pulls Stardust inside the pull radius toward Ada at the pull speed", () => {
-    const value = flight();
-    value.objects.push(stardust("near", 60, 0), stardust("far", 0, 70));
-    stepFlight(PROTOTYPE, 0.1, idle, value);
-    const near = value.objects.find((object) => object.id === "near")!;
-    const far = value.objects.find((object) => object.id === "far")!;
-    expect(near.x).toBeCloseTo(60 - 150 * 0.1, 6);
-    expect(near.y).toBeCloseTo(0, 9);
-    expect(far).toMatchObject({ x: 0, y: 70 });
-  });
+  /** The tractor beam's pull radius and speed at each level: alike for every pickup kind. */
+  const TRACTOR = [
+    [1, 60, 120],
+    [2, 90, 160],
+    [3, 120, 200],
+  ] as const;
+  const KINDS = [
+    ["Stardust gem", { amount: 1, radius: ECONOMY.stardustPickupRadius, role: "stardust" }],
+    ["cache", { amount: 3, radius: 10, role: "discovery" }],
+    ["ore nugget", { radius: 7, role: "cargo" }],
+    ["weapon pickup", { radius: 10, weapon: "rapidMissile" }],
+  ] as const;
 
-  it("does not pull weapon pickups", () => {
+  it.each(KINDS.flatMap(([name, extra]) => TRACTOR.map((row) => [name, ...row, extra] as const)))(
+    "pulls a %s at tractor level %i from within %i at %i a second, and none beyond",
+    (_, level, radius, speed, extra) => {
+      const value = flight();
+      value.levels = { ...noLevels(), tractor: level };
+      value.objects.push(
+        { hp: 1, id: "inside", kind: "pickup", x: radius - 1, y: 0, ...extra },
+        { hp: 1, id: "outside", kind: "pickup", x: 0, y: radius + 1, ...extra },
+      );
+      stepFlight(PROTOTYPE, 0.05, idle, value);
+      const inside = value.objects.find((object) => object.id === "inside")!;
+      expect(inside.x).toBeCloseTo(radius - 1 - speed * 0.05, 6);
+      expect(inside.y).toBeCloseTo(0, 9);
+      expect(value.objects.find((object) => object.id === "outside")).toMatchObject({
+        x: 0,
+        y: radius + 1,
+      });
+    },
+  );
+
+  it("zips Stardust into the ship as it collects, as every pickup does", () => {
     const value = flight();
-    value.objects.push({
-      hp: 1,
-      id: "weapon",
-      kind: "pickup",
-      radius: 10,
-      weapon: "rapidMissile",
-      x: 50,
-      y: 0,
-    });
-    stepFlight(PROTOTYPE, 0.5, idle, value);
-    expect(value.objects.find((object) => object.id === "weapon")).toMatchObject({ x: 50, y: 0 });
+    value.objects.push(stardust("dust", 5, 0));
+    const events = stepFlight(PROTOTYPE, 0.001, idle, value);
+    // The collected event is the one the view zips the gem's sprite into the ship from.
+    expect(events).toContainEqual(
+      expect.objectContaining({ id: "dust", type: "collected", x: expect.any(Number) }),
+    );
+    expect(events).toContainEqual({ amount: 1, type: "stardust" });
+    expect(PROTOTYPE.tuning.flight.pickupZip).toBe(0.15);
   });
 
   /** Least world distance between two drawn outlines placed apart, 0 if they cross. */
@@ -561,7 +581,7 @@ describe("tractor beam and pickup reach", () => {
 
   it.each([
     ["cache", 20, { amount: 3, radius: 10, role: "discovery" }],
-    ["Stardust gem", 4, { amount: 3, radius: ECONOMY.stardustPickupRadius, role: "stardust" }],
+    ["Stardust gem", 20, { amount: 3, radius: ECONOMY.stardustPickupRadius, role: "stardust" }],
     ["ore nugget", 20, { radius: 7, role: "cargo" }],
     ["weapon pickup", 20, { radius: 10, weapon: "rapidMissile" }],
   ] as const)(
@@ -616,14 +636,8 @@ describe("tractor beam and pickup reach", () => {
   );
 
   it("collects a hunt's lost item within 20 world units of Ada's drawn ship, as its glint", () => {
-    expect(PROTOTYPE.tuning.flight.pickupMargins).toEqual({
-      cache: 20,
-      holodisk: 20,
-      lostItem: 20,
-      ore: 20,
-      stardust: 4,
-      weapon: 20,
-    });
+    // One pickup rule: every kind reaches 20 past the drawn ship.
+    expect(PROTOTYPE.tuning.flight.pickupMargin).toBe(20);
     const value = flight();
     const body = shipBody(value.facing);
     let low = 0;
@@ -639,19 +653,11 @@ describe("tractor beam and pickup reach", () => {
     }
     const at = (x: number) => ({ x: value.player.x + x, y: value.player.y });
     const { pickupRadius } = PROTOTYPE.tuning.flight;
-    expect(
-      pickupTouched(PROTOTYPE, value, "lostItem", at(high - 0.3), pickupRadius, HUNT_GLINT),
-    ).toBe(true);
-    expect(
-      pickupTouched(PROTOTYPE, value, "lostItem", at(high + 1), pickupRadius, HUNT_GLINT),
-    ).toBe(false);
+    expect(pickupTouched(PROTOTYPE, value, at(high - 0.3), pickupRadius, HUNT_GLINT)).toBe(true);
+    expect(pickupTouched(PROTOTYPE, value, at(high + 1), pickupRadius, HUNT_GLINT)).toBe(false);
   });
 
-  it.each([
-    [1, 65, 150],
-    [2, 100, 220],
-    [3, 135, 300],
-  ])("tractor level %i has pull radius %i and speed %i", (level, radius, speed) => {
+  it.each(TRACTOR)("tractor level %i has pull radius %i and speed %i", (level, radius, speed) => {
     const levels = { ...noLevels(), tractor: level };
     expect(shipTuning(ECONOMY, PROTOTYPE, levels)).toMatchObject({
       tractorRadius: radius,
@@ -668,7 +674,7 @@ describe("tractor beam and pickup reach", () => {
     expect(value.objects.find((object) => object.id === "outside")!.y).toBe(radius + 1);
   });
 
-  it("does not change pickup reach with tractor levels", () => {
+  it("does not change pickup reach with tractor levels: a higher level pulls from farther", () => {
     const value = flight();
     value.levels.tractor = 3;
     value.objects.push({
@@ -677,12 +683,13 @@ describe("tractor beam and pickup reach", () => {
       kind: "pickup",
       radius: 10,
       weapon: "rapidMissile",
-      // Past its 20 reach, within the level 3 tractor's 135, which pulls only Stardust.
+      // Past its 20 reach, within the level 3 tractor's 120, which pulls it in.
       x: 70,
       y: 0,
     });
     stepFlight(PROTOTYPE, 0.001, idle, value);
     expect(value.ownedWeapons).toEqual([]);
+    expect(value.objects.find((object) => object.id === "weapon")!.x).toBeCloseTo(70 - 0.2, 6);
   });
 
   it("turns a found weapon Ada already owns into one pack of its ammunition", () => {
