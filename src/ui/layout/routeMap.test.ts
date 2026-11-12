@@ -28,7 +28,7 @@ const inside = (outer: Rect, inner: Rect) =>
   inner.y + inner.height <= outer.y + outer.height + 1e-9;
 
 describe("route map layout", () => {
-  it("places the panel, capture, text, Earth and Jump as Art's table at 720x360, with no close X", () => {
+  it("places the panel, capture, text, Earth, Jump and close X as Art's table at 720x360", () => {
     const plain = routeMapRects(NO_INSETS, BASE);
     const phone = routeMapRects(PHONE, BASE);
     expect([plain, phone].map((rects) => box(rects.available))).toEqual([
@@ -57,7 +57,21 @@ describe("route map layout", () => {
         [368, 293, 192, 48],
       ],
     ]);
-    expect(Object.keys(plain)).not.toContain("close");
+    expect([plain, phone].map(({ close }) => [box(close.target), box(close.face)])).toEqual([
+      [
+        [672, 0, 48, 48],
+        [684, 12, 24, 24],
+      ],
+      [
+        [641, 0, 48, 48],
+        [653, 12, 24, 24],
+      ],
+    ]);
+  });
+
+  it("puts the close face on the HUD rect's corner at 844x390 with phone insets", () => {
+    const view = { height: 360, width: (844 * 360) / 390 };
+    expect(routeMapRects(PHONE, view).close.face.x).toBeCloseTo(712.08, 2);
   });
 
   it("keeps every rect in the available rect, the end labels 15 and 12 above the panel", () => {
@@ -81,12 +95,13 @@ describe("route map layout", () => {
     }
   });
 
-  it("keeps marker press areas apart from each other", () => {
+  it("keeps marker press areas apart from each other and from the close target", () => {
     for (const insets of [NO_INSETS, PHONE]) {
-      const { markers } = routeMapRects(insets, BASE);
+      const { close, markers } = routeMapRects(insets, BASE);
       const overlap = (a: Rect, b: Rect) =>
         a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
       for (const [index, marker] of markers.entries()) {
+        expect(overlap(marker, close.target)).toBe(false);
         for (const other of markers.slice(index + 1)) {
           expect(overlap(marker, other)).toBe(false);
         }

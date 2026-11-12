@@ -354,10 +354,12 @@ export class GameModel {
   private heldFlight: Pick<GameState, "dialogue" | "docked" | "flight" | "mode" | "notice"> | null =
     null;
   private story: StoryPosition | null = null;
-  // Galaxy selection's ship, always on an open galaxy, and the locked galaxy whose panel shows
+  // The galaxy map's ship, always on an open galaxy, and the locked galaxy whose panel shows
   // in its place after a tap or focus (null for the ship's own).
   private selection: RoutePosition | null = null;
   private viewing: RoutePosition | null = null;
+  // The galaxy map opened in flight from the local map's Galaxies, over the paused flight.
+  private galaxyMapInFlight = false;
   // The last unlock, flown on the route map at the next boarding: from the galaxy completed to
   // the farthest it opened, the opened positions still showing locked until then.
   private unlockFlight: RouteFlight | null = null;
@@ -459,20 +461,35 @@ export class GameModel {
   get roomPage(): boolean {
     return this.story !== null && this.screen === "story" && currentPage(this.story).id === "room";
   }
-  /** The galaxy on show in galaxy selection's panel: the ship's, or a locked one viewed. */
+  /** Whether the galaxy map shows: at boarding, or in flight over the local map. */
+  get galaxyMapOpen(): boolean {
+    return this.screen === "selector" || this.galaxyMapShownInFlight;
+  }
+  /** Whether the galaxy map opened in flight shows, over the paused flight's local map. */
+  get galaxyMapShownInFlight(): boolean {
+    return this.galaxyMapInFlight && this.state.mode === "space" && this.state.flight !== null;
+  }
+  /**
+   * Whether the galaxy map's default action is Stay here: in flight, with the panel on the galaxy
+   * Ada is flying in.
+   */
+  get galaxyMapStays(): boolean {
+    return this.galaxyMapShownInFlight && this.selectedGalaxy === this.state.selectedSector;
+  }
+  /** The galaxy on show in the galaxy map's panel: the ship's, or a locked one viewed. */
   get selectedGalaxy(): SectorId | null {
     const position = this.selectedPosition;
     return position === null ? null : galaxyAt(position);
   }
-  /** The route position on show in galaxy selection's panel, 1 to 6. */
+  /** The route position on show in the galaxy map's panel, 1 to 6. */
   get selectedPosition(): RoutePosition | null {
-    return this.screen === "selector" ? (this.viewing ?? this.selection) : null;
+    return this.galaxyMapOpen ? (this.viewing ?? this.selection) : null;
   }
-  /** The route position the route map's ship is on, always an open galaxy. */
+  /** The route position the galaxy map's ship is on, always an open galaxy. */
   get shipPosition(): RoutePosition | null {
-    return this.screen === "selector" ? this.selection : null;
+    return this.galaxyMapOpen ? this.selection : null;
   }
-  /** The unlock the route map flies as galaxy selection opens, until it ends or is skipped. */
+  /** The unlock the galaxy map flies as it opens at boarding, until it ends or is skipped. */
   get routeFlight(): RouteFlight | null {
     return this.screen === "selector" ? this.unlockFlight : null;
   }
@@ -908,6 +925,16 @@ export class GameModel {
       this.notify(this.label("travelUnavailable"));
       return;
     }
+    this.endFlight();
+    this.beginVisit();
+  }
+  /**
+   * Ends the flight with story progress saved: a carried story or delivery item is lost, a towed
+   * craft, a guided calf and Pip return to their starts, and a scene still due its line replays
+   * at the hub next time.
+   */
+  private endFlight(): void {
+    this.closeGalaxyMapInFlight();
     this.current.questItem = null;
     // A delivery's item is lost like a story item, and a towed craft returns to where it was
     // stranded with the flight.
@@ -932,7 +959,6 @@ export class GameModel {
     this.state.flight = null;
     this.state.dialogue = null;
     this.state.docked = null;
-    this.beginVisit();
   }
   returnHome(): void {
     this.home(false);
@@ -2172,7 +2198,7 @@ export class GameModel {
    * skipping locked ones; at either end it stays. The panel returns to the ship's galaxy.
    */
   stepGalaxy(delta: 1 | -1): void {
-    if (this.selection === null || this.screen !== "selector") {
+    if (this.selection === null || !this.galaxyMapOpen) {
       return;
     }
     this.finishRouteFlight();
@@ -2189,7 +2215,7 @@ export class GameModel {
    * one shows its panel while the ship stays.
    */
   viewGalaxy(position: RoutePosition): void {
-    if (this.selection === null || this.screen !== "selector") {
+    if (this.selection === null || !this.galaxyMapOpen) {
       return;
     }
     this.finishRouteFlight();
@@ -2200,11 +2226,52 @@ export class GameModel {
       this.viewing = position;
     }
   }
-  /** Leaves galaxy selection; an unlock flight it showed is done. */
+  /**
+   * The local map's Galaxies: the galaxy map over the paused flight, its ship on the galaxy Ada is
+   * flying in. Refused in danger (galaxiesAvailable); towing never refuses it.
+   */
+  openGalaxyMap(): boolean {
+    const f = this.state.flight;
+    if (this.state.mode !== "space" || !f || this.state.dialogue || this.state.docked) {
+      return false;
+    }
+    if (this.inDanger) {
+      this.notify(this.label("travelUnavailable"));
+      return false;
+    }
+    this.selection = ROUTE_POSITION[this.state.selectedSector];
+    this.viewing = null;
+    this.galaxyMapInFlight = true;
+    return true;
+  }
+  /** Stay here, and the galaxy map's close X, back and Escape in flight: the local map again. */
+  private closeGalaxyMapInFlight(): void {
+    if (this.galaxyMapInFlight) {
+      this.galaxyMapInFlight = false;
+      this.selection = null;
+      this.viewing = null;
+    }
+  }
+  /**
+   * The galaxy map's close X, back and Escape: in flight, the local map it opened from; at
+   * boarding, Ada's room, as Earth.
+   */
+  closeGalaxyMap(): void {
+    if (this.galaxyMapShownInFlight) {
+      this.closeGalaxyMapInFlight();
+    } else {
+      this.leaveCockpit();
+    }
+  }
+  /**
+   * Leaves the galaxy map at boarding; an unlock flight it showed is done. Every flight start
+   * passes here, so a galaxy map opened in a flight that ended otherwise never reopens.
+   */
   private closeSelection(): void {
-    if (this.selection !== null) {
+    if (this.selection !== null && !this.galaxyMapInFlight) {
       this.unlockFlight = null;
     }
+    this.galaxyMapInFlight = false;
     this.selection = null;
     this.viewing = null;
   }
@@ -2216,18 +2283,34 @@ export class GameModel {
       this.unlockFlight = null;
     }
   }
-  /** Jump: the selected galaxy's flight; a locked galaxy refuses. */
+  /**
+   * Jump: the selected galaxy's flight; a locked galaxy refuses. In flight, Stay here on the
+   * galaxy Ada is flying in closes the galaxy map and resumes the same flight; another galaxy
+   * ends the flight, story progress saved, and starts its own.
+   */
   jump(): boolean {
     const galaxy = this.selectedGalaxy;
     if (galaxy === null || !this.isUnlocked(galaxy)) {
       return false;
     }
+    if (this.galaxyMapStays) {
+      this.closeGalaxyMapInFlight();
+      return true;
+    }
+    if (this.galaxyMapShownInFlight) {
+      this.endFlight();
+    }
     this.startSector(galaxy);
     return true;
   }
-  /** Earth, the close X, an outside tap, back and Escape: Ada's room, without a jump. */
+  /**
+   * Earth: Ada's room. At boarding, back and Escape do the same, without a jump; in flight it
+   * ends the flight as Return to Earth did, story progress saved and no sleep scene.
+   */
   leaveCockpit(): void {
-    if (this.screen === "selector") {
+    if (this.galaxyMapShownInFlight) {
+      this.returnHome();
+    } else if (this.screen === "selector") {
       this.closeSelection();
       this.beginVisit();
     }

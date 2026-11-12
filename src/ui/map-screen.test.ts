@@ -63,10 +63,10 @@ describe("map screen strings", () => {
     expect(row?.split("|")[2]?.trim()).toBe(LABELS.towTravel);
   });
 
-  it("offer Return to Earth and Quests by the player copy's Map and Quests modal lines", () => {
-    expect(LABELS.returnHome).toBe("Return to Earth");
+  it("offer Galaxies and Quests by the player copy's local map and Quests modal lines", () => {
+    expect(LABELS.galaxies).toBe("Galaxies");
     expect(COPY).toContain(
-      `Map: Map; {percent}% mapped; Travel here; ${LABELS.returnHome}; ${LABELS.quests}.`,
+      `Local map: Map; {percent}% mapped; Travel here; ${LABELS.galaxies}; ${LABELS.quests}.`,
     );
     expect(COPY).toContain(
       `Quests modal: ${LABELS.quests}; ${LABELS.questsStoryComplete}; ${LABELS.jobObjective}; ` +

@@ -136,8 +136,8 @@ function cards() {
   const options = {
     labels: LABELS,
     onBackToTitle: vi.fn(),
+    onGalaxies: vi.fn(),
     onOpenChange: vi.fn(),
-    onReturnToEarth: vi.fn(),
     onSettings: vi.fn(),
     onTravel: vi.fn(),
     reducedMotion: () => true,

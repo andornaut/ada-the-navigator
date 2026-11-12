@@ -6,13 +6,13 @@ import { PROTOTYPE } from "../data/prototype.ts";
 import { createBackStack, pressBack } from "./back-stack.ts";
 import {
   escapeTarget,
+  galaxiesAvailable,
   mapShowsEmpty,
   PAUSE_ART,
   pauseActions,
   pauseButtonShown,
   pauseFrames,
   pausePose,
-  returnToEarthAvailable,
 } from "./pause.ts";
 
 const json = (path: string): unknown =>
@@ -36,15 +36,16 @@ describe("Paused card", () => {
     ]);
   });
 
-  it("refuses Return to Earth only in danger, never for towing", () => {
-    expect(returnToEarthAvailable(false)).toBe(true);
-    expect(returnToEarthAvailable(true)).toBe(false);
+  it("refuses the local map's Galaxies only in danger, never for towing", () => {
+    expect(galaxiesAvailable(false)).toBe(true);
+    expect(galaxiesAvailable(true)).toBe(false);
   });
 
   it("has Gameplay's strings, and no player-visible city name remains", () => {
     expect(PROTOTYPE.labels.pause).toBe("Pause");
     expect(PROTOTYPE.labels.pauseTitle).toBe("Paused");
-    expect(PROTOTYPE.labels.returnHome).toBe("Return to Earth");
+    expect(PROTOTYPE.labels.galaxies).toBe("Galaxies");
+    expect(PROTOTYPE.labels.stayHere).toBe("Stay here");
     expect(PROTOTYPE.labels.backToTitle).toBe("Back to title");
     expect(PROTOTYPE.labels.homeButton).toBe("Earth");
     expect(PROTOTYPE.labels.jumpHome).toBe(

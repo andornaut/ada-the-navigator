@@ -30,7 +30,7 @@ export interface PauseOptions {
   readonly onBackToTitle: () => void;
   readonly onOpenChange: (open: boolean) => void;
   /** Return to Earth, from the Map. */
-  readonly onReturnToEarth: () => void;
+  readonly onGalaxies: () => void;
   readonly onSettings: () => void;
   readonly onTravel: (destination: string) => void;
   // Whether the player chose Reduced motion, which keeps the refusal cue still.
@@ -148,10 +148,8 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   const mapScreen = createMapScreen(root, {
     labels: labels.mapScreen,
     onClose: () => closeMap(),
-    onReturnToEarth: () => {
-      setOpen(false);
-      options.onReturnToEarth();
-    },
+    // The galaxy map opens over the local map, which stays open beneath it.
+    onGalaxies: () => options.onGalaxies(),
     onTravel: (id) => {
       setOpen(false);
       options.onTravel(id);

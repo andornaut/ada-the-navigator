@@ -84,7 +84,7 @@ export interface ControlsOptions {
     readonly labels: PauseLabels;
     readonly onBackToTitle: () => void;
     /** Return to Earth, which the Map offers. */
-    readonly onReturnToEarth: () => void;
+    readonly onGalaxies: () => void;
     readonly onTravel: (destination: string) => void;
   };
   // The scene's SVG raster scale when the controls are made; the scene emits
@@ -114,6 +114,8 @@ export interface UseContext {
 
 export interface Controls {
   closeSettings(): void;
+  // Closes the Paused card and the local map, resuming the flight.
+  closePause(): void;
   // Opens the Achievements card, as the start screen's Achievements does.
   openAchievements(): void;
   // Adds a card that back and Escape close while it is open, innermost so far.
@@ -225,8 +227,8 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const pause = createPauseCards(settings.root, {
     labels: options.pause.labels,
     onBackToTitle: () => options.pause.onBackToTitle(),
+    onGalaxies: () => options.pause.onGalaxies(),
     onOpenChange: () => syncModal(),
-    onReturnToEarth: () => options.pause.onReturnToEarth(),
     onSettings: () => {
       returnToPause = true;
       settings.open();
@@ -605,6 +607,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   scene.events.on("pause", reset);
   scene.events.on("sleep", reset);
   const controls: Controls = {
+    closePause: () => pause.close(),
     closeSettings: () => {
       cheats.close();
       settings.close();

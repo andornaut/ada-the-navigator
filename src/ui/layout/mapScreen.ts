@@ -12,6 +12,13 @@ import { BUTTON_GAP, SMALL_BUTTON_GAP, SPACING } from "./tokens.ts";
 // the projection, fit, zoom and pan that place them. Projected units are the flight's projection
 // of world units; a view's scale is logical px per projected unit.
 
+/**
+ * The local map's HUD row labels' TYPE.label widths, up to the quarter pixel (art/map.md "Quests
+ * and Galaxies"): both buttons take the wider plus TEXT_BUTTON.inset each side.
+ */
+const HUD_LABEL_WIDTHS = { galaxies: 66, quests: 54.25 } as const;
+const HUD_ACTION_WIDTH = Math.max(...Object.values(HUD_LABEL_WIDTHS)) + 2 * TEXT_BUTTON.inset;
+
 export const MAP_SCREEN = {
   /** The charting disc minScale fits (model/map.ts CHARTING_RADIUS). */
   chartRadius: CHARTING_RADIUS,
@@ -56,16 +63,16 @@ export const MAP_SCREEN = {
     stackTop: 9,
   },
   /**
-   * The HUD row's two secondary TEXT_BUTTONs, left to right: Quests and Return to Earth, each its
-   * label plus TEXT_BUTTON.inset each side (Quests 54.25, Return to Earth 116.5), BUTTON_GAP
-   * apart. Return to Earth ends right in from the HUD rect's right: SMALL_BUTTON_GAP left of the
-   * close tool's disc, a small button whose drawn right edge is on that line.
+   * The HUD row's two secondary TEXT_BUTTONs, left to right: Quests and Galaxies, one action
+   * row of one width (HUD_ACTION_WIDTH), BUTTON_GAP apart. Galaxies (`earth`) ends right in from
+   * the HUD rect's right: SMALL_BUTTON_GAP left of the close tool's disc, a small button whose
+   * drawn right edge is on that line.
    */
   hudRow: {
-    earth: { width: 116.5 + 2 * TEXT_BUTTON.inset },
+    earth: { width: HUD_ACTION_WIDTH },
     gap: BUTTON_GAP,
     height: TEXT_BUTTON.height,
-    quests: { width: 54.25 + 2 * TEXT_BUTTON.inset },
+    quests: { width: HUD_ACTION_WIDTH },
     right: HUD_BUTTON.disc + SMALL_BUTTON_GAP,
   },
   /** The opening box is at least this many projected units across and down. */
@@ -252,9 +259,8 @@ export function panelMaxWidth(insets: Insets, view: Size): number {
 }
 
 /**
- * Return to Earth on the HUD row (art/map.md "Quests and Return to Earth"): its top on the Map's HUD
- * row (mapRowTop) and its right edge SPACING.pageInset left of the tool column; it never moves with
- * the header.
+ * Galaxies on the local map's HUD row (art/map.md): its top on the HUD row (mapRowTop) and its
+ * right edge SPACING.pageInset left of the tool column; it never moves with the header.
  */
 export function mapEarthRect(insets: Insets, view: Size): Rect {
   const hud = hudRect(insets, view);
@@ -263,7 +269,7 @@ export function mapEarthRect(insets: Insets, view: Size): Rect {
   return { height, width: earth.width, x: right - earth.width, y: mapRowTop(insets, view) };
 }
 
-/** Quests on the HUD row: ending hudRow.gap left of Return to Earth, at the same top. */
+/** Quests on the HUD row: ending hudRow.gap left of Galaxies, at the same top. */
 export function mapQuestsRect(insets: Insets, view: Size): Rect {
   const earth = mapEarthRect(insets, view);
   const { gap, height, quests } = MAP_SCREEN.hudRow;

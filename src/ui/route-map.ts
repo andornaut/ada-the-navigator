@@ -1,8 +1,9 @@
 import { GALAXY_COUNT, type RoutePosition } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { RouteFlight } from "../model/game.ts";
+import { CARD_CLOSE } from "./layout/cardFrame.ts";
 import { CARD_SLICE } from "./layout/controls.ts";
-import { font, fromAreaLeft, safeEdge, slice, units } from "./layout/css.ts";
+import { font, fromAreaLeft, fromHudEdge, safeEdge, slice, units } from "./layout/css.ts";
 import { SAFE_MARGIN } from "./layout/playView.ts";
 import {
   easeInOutSine,
@@ -27,13 +28,14 @@ import { SPACING, TYPE } from "./layout/tokens.ts";
 import { createButton, FOCUS_STYLE, MODAL_LAYER } from "./modal.ts";
 import { refuse } from "./refusal.ts";
 
-// Galaxy selection as a route map (art/layout.md "Galaxy selector"), after Chibi's MapScene:
-// the route sky and ground, the chart's legs, markers, labels and Ada's ship, the panel for the
-// chosen galaxy, and Earth and Jump; there is no close X. The model holds the
-// ship's galaxy, a locked galaxy viewed in the panel and the unlock flight; this draws them and
-// animates the ship between them.
+// The galaxy map (art/layout.md "Galaxy selector"), after Chibi's MapScene: the route sky and
+// ground, the chart's legs, markers, labels and Ada's ship, the panel for the chosen galaxy, Earth
+// and Jump (Stay here on the galaxy Ada is flying in), and the close X on the HUD rect's corner.
+// The model holds the ship's galaxy, a locked galaxy viewed in the panel and the unlock flight;
+// this draws them and animates the ship between them.
 
 export interface RouteMapLabels {
+  readonly close: string;
   /** A placeholder galaxy's line under its flavour line. */
   readonly development: string;
   readonly home: string;
@@ -41,6 +43,8 @@ export interface RouteMapLabels {
   readonly locked: string;
   /** "Galaxy {number}". */
   readonly number: string;
+  /** Jump's label on the galaxy Ada is flying in, opened in flight. */
+  readonly stay: string;
 }
 
 /** One route position's galaxy, in route order. */
@@ -64,6 +68,8 @@ export interface RouteMapView {
   readonly panel: RoutePosition;
   /** The route position the ship is on. */
   readonly ship: RoutePosition;
+  /** Whether Jump reads Stay here: in flight, the panel on the galaxy Ada is flying in. */
+  readonly stay: boolean;
 }
 
 /** The route sky, its ground and figures, and Ada's ship frames by heading. */
@@ -85,7 +91,9 @@ export interface RouteMapArt {
 
 export interface RouteMapOptions {
   readonly labels: RouteMapLabels;
-  /** Earth: Ada's room, without a jump, as back and Escape (the scene's back layer). */
+  /** The close X, as back and Escape (the scene's back layer): where the galaxy map opened from. */
+  readonly onClose: () => void;
+  /** Earth: Ada's room. */
   readonly onEarth: () => void;
   /** The unlock flight ended or was skipped. */
   readonly onFlightEnd: () => void;
@@ -315,6 +323,11 @@ export const ROUTE_MAP_STYLE = `
 .ada-controls .ada-route-action[data-action="galaxy-jump"]{
   left:${fromAreaLeft(ROUTE_ACTIONS.jump)}
 }
+/* The close X: its 24 face's top and right edges on the HUD rect's top-right corner. */
+.ada-controls .ada-route .ada-close{
+  top:${fromHudEdge("top", -(CARD_CLOSE.hit.height - CARD_CLOSE.art.height) / 2)};
+  right:${fromHudEdge("right", -(CARD_CLOSE.hit.width - CARD_CLOSE.art.width) / 2)}
+}
 `;
 
 /** A leg's open and locked stamps in play-view px, and where each sits along the route. */
@@ -453,7 +466,12 @@ export function createRouteMap(root: HTMLElement, options: RouteMapOptions) {
   const jump = createButton(labels.jump, "primary");
   jump.classList.add("ada-route-action");
   jump.dataset.action = "galaxy-jump";
-  screen.append(sky, rules, ground, chart, panel, earth, jump);
+  const close = document.createElement("button");
+  close.type = "button";
+  close.className = "ada-close";
+  close.dataset.action = "close-galaxies";
+  close.setAttribute("aria-label", labels.close);
+  screen.append(sky, rules, ground, chart, panel, earth, jump, close);
   root.append(screen);
 
   let view: RouteMapView | null = null;
@@ -534,6 +552,7 @@ export function createRouteMap(root: HTMLElement, options: RouteMapOptions) {
     development.hidden = !(galaxy.unlocked && galaxy.placeholder);
     const preview = galaxy.unlocked ? galaxy.preview.open : galaxy.preview.locked;
     shot.style.backgroundImage = preview ? `url('${preview}')` : "none";
+    jump.textContent = view.stay ? labels.stay : labels.jump;
     jump.classList.toggle("ada-unavailable", !galaxy.unlocked);
     if (galaxy.unlocked) {
       jump.removeAttribute("aria-disabled");
@@ -723,6 +742,7 @@ export function createRouteMap(root: HTMLElement, options: RouteMapOptions) {
   );
 
   earth.addEventListener("click", () => options.onEarth());
+  close.addEventListener("click", () => options.onClose());
   jump.addEventListener("click", () => {
     const galaxy = view?.galaxies[view.panel - 1];
     if (galaxy?.unlocked) {
@@ -732,7 +752,7 @@ export function createRouteMap(root: HTMLElement, options: RouteMapOptions) {
     }
   });
   // The arrows walk the route wherever focus is; Tab stays on the map, markers in route order,
-  // then Earth and Jump.
+  // then Earth, Jump and the close X.
   screen.addEventListener("keydown", (event) => {
     if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
       event.preventDefault();
@@ -742,7 +762,7 @@ export function createRouteMap(root: HTMLElement, options: RouteMapOptions) {
     if (event.key !== "Tab") {
       return;
     }
-    const order = [...markers.map(({ button }) => button), earth, jump];
+    const order = [...markers.map(({ button }) => button), earth, jump, close];
     event.preventDefault();
     const at = order.indexOf(document.activeElement as HTMLButtonElement);
     const step = event.shiftKey ? -1 : 1;

@@ -366,6 +366,7 @@ export const PROTOTYPE: PrototypeContent = {
     engineTuning: "Engine tuning",
     equipment: "Equipment",
     exit: "Exit",
+    galaxies: "Galaxies",
     galaxyInDevelopment: "Story in development.",
     galaxyLocked: "...",
     galaxyNumber: "Galaxy {number}",
@@ -508,7 +509,6 @@ export const PROTOTYPE: PrototypeContent = {
     restart: "Restart",
     restartTitle: "Restart?",
     resume: "Resume",
-    returnHome: "Return to Earth",
     salvage: "Salvage",
     savingUnavailable: [
       "Couldn't save progress. You can keep playing, but recent progress may be lost ",
@@ -536,6 +536,7 @@ export const PROTOTYPE: PrototypeContent = {
     start: "Start",
     station: "Station",
     stationWelcome: "Welcome aboard. Trade your Stardust, or take a job.",
+    stayHere: "Stay here",
     supplyGoal: "Carry supplies to a station.",
     supplyObjective: "Carry {item} to {destination}.",
     surveyAbout: "Astra's map has a gap here. Fly close.",

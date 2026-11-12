@@ -84,7 +84,7 @@ import { VIEW_HOST_ID } from "../ui/layout/css.ts";
 import { fogColor } from "../ui/layout/mapScreen.ts";
 import { type MapField, mapScreenLabels } from "../ui/map-screen.ts";
 import { BOX_OCCUPANT, type BoxOccupant, boxOccupant } from "../ui/notice.ts";
-import { returnToEarthAvailable } from "../ui/pause.ts";
+import { galaxiesAvailable } from "../ui/pause.ts";
 import { createRestartCard } from "../ui/restart-card.ts";
 import { createRouteMap, type RouteMapView } from "../ui/route-map.ts";
 import { aboardLabel, type ShipView } from "../ui/ship-card.ts";
@@ -564,9 +564,9 @@ export class PrototypeScene extends Scene {
   private paintLoads = new Set<string>();
   private settingsOpen = false;
   private screenOn = false;
-  // Return to Earth, one command wherever it is offered (the Map): refused in danger, never while
-  // towing (pause.ts returnToEarthAvailable). Set once the quantum jump is ready.
-  private returnToEarth: () => void = () => {};
+  // The local map's Galaxies: the galaxy map over the paused flight; refused in danger, never
+  // while towing (pause.ts galaxiesAvailable). Set once the scene's commands are ready.
+  private openGalaxies: () => void = () => {};
   private startShown = false;
   private enabled: boolean | undefined;
   private durable = "";
@@ -846,10 +846,18 @@ export class PrototypeScene extends Scene {
         source: this.jumpScene(),
       });
     };
-    this.returnToEarth = () => {
-      if (returnToEarthAvailable(this.model.inDanger)) {
-        jumpThen(() => this.model.returnHome());
+    this.openGalaxies = () => {
+      if (galaxiesAvailable(this.model.inDanger)) {
+        apply(() => this.model.openGalaxyMap());
       }
+    };
+    // Leaving the flight from the galaxy map closes the Paused card and the local map under it, so
+    // the jump plays over the flight.
+    const leaveFlight = (action: () => void): void => {
+      if (this.model.galaxyMapShownInFlight) {
+        this.controls.closePause();
+      }
+      jumpThen(action);
     };
     this.shell = new StoryShell({
       choose: (id) => apply(() => this.model.choose(id)),
@@ -970,7 +978,7 @@ export class PrototypeScene extends Scene {
             apply(() => this.model.backToTitle());
           }
         },
-        onReturnToEarth: () => this.returnToEarth(),
+        onGalaxies: () => this.openGalaxies(),
         onTravel: (id) => {
           if (!this.model.inDanger && !this.model.towing) {
             jumpThen(() => this.model.teleport(id));
@@ -1181,19 +1189,35 @@ export class PrototypeScene extends Scene {
     });
     this.galaxies = createRouteMap(this.controls.overlay, {
       labels: {
+        close: label("close"),
         development: label("galaxyInDevelopment"),
         home: label("homeButton"),
         jump: label("jump"),
         locked: label("galaxyLocked"),
         number: label("galaxyNumber"),
+        stay: label("stayHere"),
       },
-      onEarth: () => apply(() => this.model.leaveCockpit()),
+      // In flight, the local map it opened from; at boarding, Ada's room, as Earth.
+      onClose: () => apply(() => this.model.closeGalaxyMap()),
+      // In flight Earth ends the flight with the jump home, as Return to Earth did; at boarding it
+      // is the room at once.
+      onEarth: () => {
+        if (this.model.galaxyMapShownInFlight) {
+          leaveFlight(() => this.model.leaveCockpit());
+        } else {
+          apply(() => this.model.leaveCockpit());
+        }
+      },
       onFlightEnd: () => apply(() => this.model.finishRouteFlight()),
       onJump: () => {
         const selected = this.model.selectedGalaxy;
-        if (selected !== null && this.model.isUnlocked(selected)) {
+        if (this.model.galaxyMapStays) {
+          // Stay here: both maps close and the same flight resumes, with no jump.
+          apply(() => this.model.jump());
+          this.controls.closePause();
+        } else if (selected !== null && this.model.isUnlocked(selected)) {
           this.hideSelector = Boolean(this.quantum) && !this.jumping;
-          jumpThen(() => {
+          leaveFlight(() => {
             this.hideSelector = false;
             this.model.jump();
           });
@@ -1243,8 +1267,9 @@ export class PrototypeScene extends Scene {
         back: () => apply(() => this.model.storyPrevious()),
         isOpen: () => this.model.screen === "story" && !this.model.roomPage && !this.settingsOpen,
       }),
+      // Back and Escape on the galaxy map: where it opened from, as its close X.
       this.controls.registerBack({
-        back: () => apply(() => this.model.leaveCockpit()),
+        back: () => apply(() => this.model.closeGalaxyMap()),
         isOpen: () => this.galaxies.isOpen() && !this.settingsOpen,
       }),
       this.controls.registerBack({
@@ -1989,6 +2014,7 @@ export class PrototypeScene extends Scene {
             galaxies: this.routeGalaxies(),
             panel,
             ship,
+            stay: this.model.galaxyMapStays,
           }
         : null,
     );

@@ -17,15 +17,15 @@ export interface PauseActionView {
 }
 
 /**
- * Return to Earth's rule wherever it is offered: unavailable while Ada is in danger, when it
- * refuses with the shared cue. Unlike Travel here, towing never refuses it.
+ * The local map's Galaxies: unavailable while Ada is in danger, when it refuses with the shared
+ * cue. Unlike Travel here, towing never refuses it.
  */
-export function returnToEarthAvailable(inDanger: boolean): boolean {
+export function galaxiesAvailable(inDanger: boolean): boolean {
   return !inDanger;
 }
 
 // The Paused card's actions for its place, top to bottom. Back to title stays available in
-// danger; Map still opens, where Travel here and Return to Earth are unavailable instead.
+// danger; Map still opens, where Travel here and Galaxies are unavailable instead.
 export function pauseActions(place: PausePlace): readonly PauseActionView[] {
   if (place === "room") {
     return [

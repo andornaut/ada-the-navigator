@@ -46,7 +46,7 @@ import { HUD_ROW, SAFE_MARGIN } from "./layout/playView.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createButton, createCard, isTap, TEXT_TOKENS } from "./modal.ts";
-import { mapShowsEmpty, returnToEarthAvailable } from "./pause.ts";
+import { galaxiesAvailable, mapShowsEmpty } from "./pause.ts";
 import { refuse } from "./refusal.ts";
 import { hudDiscStyle } from "./weapons.ts";
 
@@ -67,12 +67,12 @@ export interface MapScreenLabels {
   readonly jobObjective: string;
   readonly map: string;
   /** "{percent}% mapped". */
+  readonly galaxies: string;
   readonly mapPercent: string;
   readonly quests: string;
   readonly questsEmpty: string;
   readonly questsJobBoards: string;
   readonly questsStoryComplete: string;
-  readonly returnHome: string;
   readonly towTravel: string;
   readonly travelEmpty: string;
   readonly travelHere: string;
@@ -93,6 +93,7 @@ export function mapScreenLabels(strings: Readonly<Record<string, string>>): MapS
     close: label("close"),
     distance: label("mapDistance"),
     distanceOne: label("mapDistanceOne"),
+    galaxies: label("galaxies"),
     jobObjective: label("jobObjective"),
     map: label("map"),
     mapPercent: label("mapPercent"),
@@ -100,7 +101,6 @@ export function mapScreenLabels(strings: Readonly<Record<string, string>>): MapS
     questsEmpty: label("questsEmpty"),
     questsJobBoards: label("questsJobBoards"),
     questsStoryComplete: label("questsStoryComplete"),
-    returnHome: label("returnHome"),
     towTravel: label("towTravel"),
     travelEmpty: label("travelEmpty"),
     travelHere: label("travelHere"),
@@ -139,8 +139,8 @@ export interface MapScreenState {
 export interface MapScreenOptions {
   readonly labels: MapScreenLabels;
   readonly onClose: () => void;
-  /** Return to Earth: refused in danger, never while towing (pause.ts returnToEarthAvailable). */
-  readonly onReturnToEarth: () => void;
+  /** Galaxies: the galaxy map; refused in danger, never while towing (pause.ts galaxiesAvailable). */
+  readonly onGalaxies: () => void;
   readonly onTravel: (destination: string) => void;
   readonly reducedMotion: () => boolean;
 }
@@ -148,7 +148,7 @@ export interface MapScreenOptions {
 /**
  * Travel here for a place: offered only by destinations and stations, refused in danger and while
  * towing, with the one reason line that shows. The danger reason shows in every state, since
- * Return to Earth refuses in danger too; the towing reason only beside Travel here.
+ * Galaxies refuses in danger too; the towing reason only beside Travel here.
  */
 export function travelState(
   inDanger: boolean,
@@ -341,7 +341,7 @@ export const MAP_SCREEN_STYLE = `
 
 /* The HUD row, on the tool targets' row box (layout/mapScreen.ts mapRowTop), from the HUD rect's
    left to SMALL_BUTTON_GAP short of the close tool's disc (mapEarthRect): the header on its left,
-   SPACING.gap from Quests, which caps it (mapHeaderCap), then Quests and Return to Earth,
+   SPACING.gap from Quests, which caps it (mapHeaderCap), then Quests and Galaxies,
    secondary text buttons MAP_SCREEN.hudRow sets, hudRow.gap apart, on its right. */
 .ada-controls .ada-map-hud-row{
   position:absolute;
@@ -368,7 +368,7 @@ export const MAP_SCREEN_STYLE = `
   margin-left:auto;
   width:${units(MAP_SCREEN.hudRow.quests.width)}
 }
-.ada-controls .ada-map-hud-row [data-action="map-returnHome"]{
+.ada-controls .ada-map-hud-row [data-action="map-galaxies"]{
   margin-left:${units(MAP_SCREEN.hudRow.gap - SPACING.gap)};
   width:${units(MAP_SCREEN.hudRow.earth.width)}
 }
@@ -801,15 +801,17 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   empty.className = "ada-map-empty";
   empty.textContent = labels.travelEmpty;
   panel.append(row, reason, empty);
-  // Quests, then Return to Earth, on the HUD row; Return to Earth has no confirm, as for Travel here.
+  // Quests, then Galaxies, on the HUD row; Galaxies opens the galaxy map with no confirm, as for
+  // Travel here.
   const hudRow = document.createElement("div");
   hudRow.className = "ada-map-hud-row";
   const questsButton = createButton(labels.quests, "secondary");
   questsButton.dataset.action = "map-quests";
   questsButton.setAttribute("aria-haspopup", "dialog");
-  const returnHome = createButton(labels.returnHome, "secondary");
-  returnHome.dataset.action = "map-returnHome";
-  hudRow.append(header, questsButton, returnHome);
+  const galaxies = createButton(labels.galaxies, "secondary");
+  galaxies.dataset.action = "map-galaxies";
+  galaxies.setAttribute("aria-haspopup", "dialog");
+  hudRow.append(header, questsButton, galaxies);
   // The Quests modal over the whole map.
   const questsModal = document.createElement("div");
   questsModal.className = "ada-modal ada-map-quests";
@@ -1040,12 +1042,12 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     }
     reasons.danger.toggleAttribute("data-shown", travelling.reason === "danger");
     reasons.towing.toggleAttribute("data-shown", travelling.reason === "towing");
-    const earthAvailable = returnToEarthAvailable(state?.inDanger ?? false);
-    returnHome.classList.toggle("ada-unavailable", !earthAvailable);
-    if (earthAvailable) {
-      returnHome.removeAttribute("aria-disabled");
+    const galaxiesShown = galaxiesAvailable(state?.inDanger ?? false);
+    galaxies.classList.toggle("ada-unavailable", !galaxiesShown);
+    if (galaxiesShown) {
+      galaxies.removeAttribute("aria-disabled");
     } else {
-      returnHome.setAttribute("aria-disabled", "true");
+      galaxies.setAttribute("aria-disabled", "true");
     }
   };
 
@@ -1192,12 +1194,12 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     }
     outside = undefined;
   });
-  returnHome.addEventListener("click", () => {
-    if (!returnToEarthAvailable(state?.inDanger ?? false)) {
-      refuse(returnHome, options.reducedMotion());
+  galaxies.addEventListener("click", () => {
+    if (!galaxiesAvailable(state?.inDanger ?? false)) {
+      refuse(galaxies, options.reducedMotion());
       return;
     }
-    options.onReturnToEarth();
+    options.onGalaxies();
   });
 
   // Field presses: a press within dragThreshold selects what pressedArea gives; more pans; two
@@ -1309,7 +1311,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     },
     { passive: false },
   );
-  // Tab stays on the screen in art/map.md's order: the tools, Quests, Return to Earth, the places
+  // Tab stays on the screen in art/map.md's order: the tools, Quests, Galaxies, the places
   // in reading order, then Travel here; on the Quests card, its line buttons then its X. It wraps
   // at either end.
   screen.addEventListener("keydown", (event) => {
@@ -1321,7 +1323,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       : [
           ...tools.querySelectorAll<HTMLButtonElement>("button"),
           questsButton,
-          returnHome,
+          galaxies,
           ...placesLayer.querySelectorAll<HTMLButtonElement>("button"),
           travel,
         ];

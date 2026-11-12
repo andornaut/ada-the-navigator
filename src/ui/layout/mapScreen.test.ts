@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import type { SectorId } from "../../data/types.ts";
 import { FALLBACK_SPACE_PALETTE, readGalaxyFields } from "../../game/space-palette.ts";
+import { TEXT_BUTTON } from "./controls.ts";
 import {
   adaAngle,
   chipRect,
@@ -127,37 +128,42 @@ describe("map projection and fit", () => {
     expect(round(scaleLimits(wide.inner).max, 5)).toBe(0.04742);
   });
 
-  it("puts Quests then Return to Earth on the HUD row, 24 left of the close disc, capping the header", () => {
+  it("puts Quests then Galaxies on the HUD row, one 98 width, 24 left of the close disc", () => {
     // 720 logical with phone insets of 43 at each side.
     const phone = { bottom: 0, left: 43, right: 43, top: 0 };
+    // One action row: the wider label, Galaxies' 66 (TYPE.label 65.83), plus the inset each side.
+    const width = 66 + 2 * TEXT_BUTTON.inset;
+    expect(width).toBe(98);
     expect(MAP_SCREEN.hudRow).toEqual({
-      earth: { width: 148.5 },
+      earth: { width },
       gap: BUTTON_GAP,
       height: 48,
-      quests: { width: 86.25 },
+      quests: { width },
       right: 33 + SMALL_BUTTON_GAP,
     });
     const span = (rect: { width: number; x: number }) => [rect.x, rect.x + rect.width];
-    // Art's table: Quests 400.25 to 486.5 and Return to Earth 502.5 to 651 at the base, 369.25 to
-    // 455.5 and 471.5 to 620 with phone insets.
-    expect(span(mapQuestsRect(NO_INSETS, BASE))).toEqual([400.25, 486.5]);
-    expect(span(mapEarthRect(NO_INSETS, BASE))).toEqual([502.5, 651]);
-    expect(span(mapQuestsRect(phone, BASE))).toEqual([369.25, 455.5]);
-    expect(span(mapEarthRect(phone, BASE))).toEqual([471.5, 620]);
-    // Return to Earth, a standard button, ends SMALL_BUTTON_GAP left of the close tool's small disc,
-    // and Quests ends BUTTON_GAP left of it.
+    // Art's table: Quests 439 to 537 and Galaxies 553 to 651 at the base, 408 to 506 and 522 to
+    // 620 with phone insets; the tool column's left at 667.5 and 636.5.
+    expect(span(mapQuestsRect(NO_INSETS, BASE))).toEqual([439, 537]);
+    expect(span(mapEarthRect(NO_INSETS, BASE))).toEqual([553, 651]);
+    expect(span(mapQuestsRect(phone, BASE))).toEqual([408, 506]);
+    expect(span(mapEarthRect(phone, BASE))).toEqual([522, 620]);
+    expect([toolColumnLeft(NO_INSETS, BASE), toolColumnLeft(phone, BASE)]).toEqual([667.5, 636.5]);
+    // Galaxies, a standard button, ends SMALL_BUTTON_GAP left of the close tool's small disc, and
+    // Quests ends BUTTON_GAP left of it.
     const hud = hudRect(phone, BASE);
     const closeDisc = toolColumnLeft(phone, BASE) + HUD_BUTTON_INSET.disc;
     expect(closeDisc).toBe(hud.x + hud.width - 33);
-    expect(closeDisc - (mapEarthRect(phone, BASE).x + 148.5)).toBe(SMALL_BUTTON_GAP);
-    expect(mapEarthRect(phone, BASE).x - (mapQuestsRect(phone, BASE).x + 86.25)).toBe(BUTTON_GAP);
+    expect(closeDisc - (mapEarthRect(phone, BASE).x + width)).toBe(SMALL_BUTTON_GAP);
+    expect(mapEarthRect(phone, BASE).x - (mapQuestsRect(phone, BASE).x + width)).toBe(BUTTON_GAP);
     expect(mapQuestsRect(phone, BASE).y).toBe(mapEarthRect(phone, BASE).y);
-    // The header reaches Quests less SPACING.gap: 380.25 at the base, 318.25 with phone insets.
-    expect(mapHeaderCap(NO_INSETS, BASE)).toBe(380.25);
-    expect(mapHeaderCap(phone, BASE)).toBe(318.25);
+    // The header reaches Quests less SPACING.gap: 12 to 431 (419) at the base, 43 to 400 (357)
+    // with phone insets, the smallest view.
+    expect(mapHeaderCap(NO_INSETS, BASE)).toBe(419);
+    expect(mapHeaderCap(phone, BASE)).toBe(357);
   });
 
-  it("stacks the pips over the percent: the widest header is 279.8 and the cap holds 18 pips", () => {
+  it("stacks the pips over the percent: the widest header is 279.8 and the cap holds 23 pips", () => {
     const { header } = MAP_SCREEN;
     expect([header.stackTop, header.stackGap, header.labelTop]).toEqual([9, 4, 14]);
     // The column tops at stackTop: 6 pips, the gap and the 20 line centre on the 48 row.
@@ -167,8 +173,8 @@ describe("map projection and fit", () => {
     expect(mapHeaderWidth(116, 0, 12)).toBe(32 + 116 + 25 + 94);
     expect(mapHeaderWidth(116, 106.8, 0)).toBeCloseTo(279.8, 9);
     const cap = mapHeaderCap({ bottom: 0, left: 43, right: 43, top: 0 }, BASE);
-    expect(mapHeaderWidth(116, 106.8, 18)).toBeLessThanOrEqual(cap);
-    expect(mapHeaderWidth(116, 106.8, 19)).toBeGreaterThan(cap);
+    expect(mapHeaderWidth(116, 106.8, 23)).toBeLessThanOrEqual(cap);
+    expect(mapHeaderWidth(116, 106.8, 24)).toBeGreaterThan(cap);
   });
 
   it("sets the Quests lines: a 28 chip overhanging the 20 label by 4, text from 50", () => {

@@ -1617,21 +1617,17 @@ try {
     ["close", "mapZoomIn", "mapZoomOut", "mapCenterOnAda"].map((key) => PROTOTYPE.labels[key]),
     "The map's tools carry Gameplay's accessible labels",
   );
-  // Return to Earth on the HUD row: 148.5 wide, its right edge 16 left of the tool column, the
-  // header capped SPACING.gap short of it, 15 pips included. In danger it refuses, and the
-  // reason-only panel shows the danger line with nothing selected.
-  const mapEarth = mapScreen.locator('[data-action="map-returnHome"]');
+  // Galaxies on the HUD row: Quests and Galaxies one 98 width, Galaxies' right edge 16 left of
+  // the tool column, the header capped SPACING.gap short of Quests, 18 pips included. In danger
+  // it refuses, and the reason-only panel shows the danger line with nothing selected.
+  const mapEarth = mapScreen.locator('[data-action="map-galaxies"]');
   assert.equal(
     await mapEarth.textContent(),
-    PROTOTYPE.labels.returnHome,
-    "The Map offers Return to Earth",
+    PROTOTYPE.labels.galaxies,
+    "The local map offers Galaxies",
   );
   await assertNoTapFlash(
-    [
-      '[data-action="map-returnHome"]',
-      '[data-action="map-quests"]',
-      ".ada-map-tools [data-action]",
-    ],
+    ['[data-action="map-galaxies"]', '[data-action="map-quests"]', ".ada-map-tools [data-action]"],
     "The Map",
   );
   const hudRow = await mapScreen.evaluate((screen) => {
@@ -1645,7 +1641,7 @@ try {
       pips.append(pips.firstElementChild.cloneNode(true));
     }
     const result = {
-      earth: box('[data-action="map-returnHome"]'),
+      earth: box('[data-action="map-galaxies"]'),
       quests: box('[data-action="map-quests"]'),
       fits: header.scrollWidth <= header.clientWidth,
       header: box(".ada-map-header"),
@@ -1658,22 +1654,22 @@ try {
     return result;
   });
   const logical = (px) => Math.round((px / hudRow.unit) * 10) / 10;
-  // The close tool's disc is small: its drawn left edge is 7.5 inside its target, and Return to
-  // Earth ends SMALL_BUTTON_GAP (24) left of it.
+  // The close tool's disc is small: its drawn left edge is 7.5 inside its target, and Galaxies
+  // ends SMALL_BUTTON_GAP (24) left of it.
   assert.ok(
-    logical(hudRow.earth.width) === 148.5 &&
+    logical(hudRow.earth.width) === 98 &&
       logical(hudRow.earth.height) === 48 &&
       Math.abs(logical(hudRow.tools.left - hudRow.earth.right) + 7.5 - 24) <= 0.1 &&
       Math.abs(hudRow.earth.top - hudRow.tools.top) <= 0.5,
-    `Return to Earth is 148.5 by 48 on the HUD row, 24 left of the close disc: ${JSON.stringify(hudRow)}`,
+    `Galaxies is 98 by 48 on the HUD row, 24 left of the close disc: ${JSON.stringify(hudRow)}`,
   );
   assert.ok(
-    // Device-pixel snapping puts the 86.25 width within 0.1 either side.
-    Math.abs(hudRow.quests.width / hudRow.unit - 86.25) <= 0.1 &&
+    // Device-pixel snapping puts the 98 width within 0.1 either side.
+    Math.abs(hudRow.quests.width / hudRow.unit - 98) <= 0.1 &&
       logical(hudRow.quests.height) === 48 &&
       Math.abs(logical(hudRow.earth.left - hudRow.quests.right) - 16) <= 0.1 &&
       Math.abs(hudRow.quests.top - hudRow.earth.top) <= 0.5,
-    `Quests is 86.25 by 48, BUTTON_GAP (16) left of Return to Earth: ${JSON.stringify(hudRow)}`,
+    `Quests is 98 by 48, BUTTON_GAP (16) left of Galaxies: ${JSON.stringify(hudRow)}`,
   );
   assert.ok(
     hudRow.fits && hudRow.header.right <= hudRow.quests.left - 8 * hudRow.unit + 0.5,
@@ -1710,7 +1706,7 @@ try {
     "In danger with nothing selected the reason-only panel is 360 by 52, or 80 with the empty note",
   );
   await page.screenshot({ path: `${output}/map-earth-danger.png` });
-  // Tab order: the tools, Return to Earth, the places, then Travel here.
+  // Tab order: the tools, Quests, Galaxies, the places, then Travel here.
   await mapScreen.locator('[data-tool="close"]').focus();
   // Each press in turn, then what it focused.
   const tabThrough = async (presses, seen = []) => {
@@ -1726,8 +1722,8 @@ try {
   const tabbed = await tabThrough(5);
   assert.deepEqual(
     tabbed.slice(0, 5),
-    ["zoomIn", "zoomOut", "recentre", "map-quests", "map-returnHome"],
-    `Tab moves through the tools, then Quests and Return to Earth: ${tabbed}`,
+    ["zoomIn", "zoomOut", "recentre", "map-quests", "map-galaxies"],
+    `Tab moves through the tools, then Quests and Galaxies: ${tabbed}`,
   );
   // Quests: the card under a dim over the whole map, focus on its first line button or its X;
   // Escape closes it back to the map, and a mapped line selects its chip.
@@ -1771,7 +1767,7 @@ try {
   assert.ok(
     (await mapScreen.isVisible()) &&
       (await page.locator('#game-status[data-mode="space"]').count()) === 1,
-    "A refused Return to Earth keeps the Map and the flight",
+    "A refused Galaxies keeps the local map and the flight",
   );
   const known = dangerInput.state.progress[dangerInput.state.flight.sector];
   const chips = mapScreen.locator(".ada-map-places .ada-map-place");
@@ -1812,7 +1808,7 @@ try {
   await page.locator('[data-action="pause-resume"]').click();
   await contextControlProof(0, "danger outside a friendly destination");
   events.checks.push(
-    "Danger refuses the Map's Return to Earth with its reason; the full-screen Map opens " +
+    "Danger refuses the local map's Galaxies with its reason; the full-screen local map opens " +
       "with its galaxy, percent and tools, focus on close, and closes on Escape and its close " +
       "tool, and " +
       "no inapplicable or duplicate contextual control shows",
@@ -1927,9 +1923,12 @@ try {
     false,
     "Continue resumes from the title",
   );
-  // Ada's room page: the Map's Return to Earth lands there, where the Paused card holds only
-  // Settings and Back to title, and closes on Escape and its X. With the opening and prologue
-  // seen, Return to Earth lands on the room page itself.
+  // The local map's Galaxies opens the galaxy map over the paused flight: its ship on the galaxy
+  // Ada is flying in, whose default action reads Stay here, and its close X on the HUD rect's
+  // corner. Stay here closes both maps on the same flight; the close X returns to the local map;
+  // Earth lands on Ada's room page, where the Paused card holds only Settings and Back to title,
+  // and closes on Escape and its X. With the opening and prologue seen, Earth lands on the room
+  // page itself.
   const roomInput = relaunch(PROTOTYPE, safeSerialized);
   roomInput.state.progress[1].opened = true;
   roomInput.state.prologueSeen = true;
@@ -1938,7 +1937,82 @@ try {
   await openPause();
   await page.locator('[data-action="pause-map"]').click();
   await page.screenshot({ path: `${output}/map-earth.png` });
-  await page.locator('[data-dialog="map"] [data-action="map-returnHome"]').click();
+  const galaxyMap = page.locator('.ada-route[data-dialog="galaxies"]');
+  const localMap = page.locator('[data-dialog="map"]');
+  const flightSaved = () =>
+    page.evaluate((key) => JSON.parse(localStorage.getItem(key))?.flight ?? null, storageKey);
+  const flightBefore = await flightSaved();
+  await localMap.locator('[data-action="map-galaxies"]').click();
+  await galaxyMap.waitFor({ state: "visible" });
+  assert.equal(
+    (await galaxyMap.locator('[data-action="galaxy-jump"]').textContent())?.trim(),
+    PROTOTYPE.labels.stayHere,
+    "The galaxy map opened in flight offers Stay here on the galaxy Ada is flying in",
+  );
+  assert.equal(
+    (await galaxyMap.locator("h2").textContent())?.trim(),
+    PROTOTYPE.labels.galaxyNumber.replace("{number}", "1"),
+    "The galaxy map opens on Sunflower, where Ada is flying",
+  );
+  const galaxyClose = galaxyMap.locator('[data-action="close-galaxies"]');
+  assert.equal(await galaxyClose.count(), 1, "The galaxy map has its close X");
+  // The galaxy map with its X at 844x390, without and with phone insets.
+  const viewportBefore = page.viewportSize();
+  await page.setViewportSize({ height: 390, width: 844 });
+  await page.waitForTimeout(250);
+  await page.screenshot({ path: `${output}/galaxy-map-844.png` });
+  const setInsets = (logical) =>
+    page.evaluate((insets) => {
+      const unit = Number(
+        getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
+      );
+      for (const [side, value] of Object.entries(insets)) {
+        if (value === null) {
+          document.documentElement.style.removeProperty(`--inset-${side}`);
+        } else {
+          document.documentElement.style.setProperty(`--inset-${side}`, `${value * unit}px`);
+        }
+      }
+    }, logical);
+  await setInsets({ bottom: 19, left: 43, right: 43, top: 0 });
+  await page.waitForTimeout(250);
+  await page.screenshot({ path: `${output}/galaxy-map-844-insets.png` });
+  const closeShown = await galaxyClose.evaluate((close) => {
+    const box = close.getBoundingClientRect();
+    return box.width > 0 && box.right <= window.innerWidth && box.top >= 0;
+  });
+  assert.ok(closeShown, "The galaxy map's close X shows on the HUD rect's corner with insets");
+  await setInsets({ bottom: null, left: null, right: null, top: null });
+  if (viewportBefore) {
+    await page.setViewportSize(viewportBefore);
+  }
+  // Stay here: both maps close and the same flight resumes, with no jump and no new layout.
+  await galaxyMap.locator('[data-action="galaxy-jump"]').click();
+  await galaxyMap.waitFor({ state: "hidden" });
+  await localMap.waitFor({ state: "hidden" });
+  await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+  await page.waitForTimeout(1200);
+  const flightAfter = await flightSaved();
+  assert.ok(
+    flightBefore &&
+      flightAfter &&
+      flightAfter.seed === flightBefore.seed &&
+      flightAfter.sector === flightBefore.sector &&
+      (await page.locator('[data-dialog="pause"]').isVisible()) === false,
+    `Stay here resumes the same flight: ${JSON.stringify([flightBefore?.seed, flightAfter?.seed])}`,
+  );
+  // The close X returns to the local map it opened from.
+  await openPause();
+  await page.locator('[data-action="pause-map"]').click();
+  await localMap.locator('[data-action="map-galaxies"]').click();
+  await galaxyMap.waitFor({ state: "visible" });
+  await galaxyClose.click();
+  await galaxyMap.waitFor({ state: "hidden" });
+  assert.ok(await localMap.isVisible(), "The galaxy map's close X returns to the local map");
+  // Earth: the flight ends with the jump home.
+  await localMap.locator('[data-action="map-galaxies"]').click();
+  await galaxyMap.waitFor({ state: "visible" });
+  await galaxyMap.locator('[data-action="galaxy-home"]').click();
   await page
     .locator(".ada-story-panel:not([hidden])")
     .getByText(PROTOTYPE.labels.pickUpRock, { exact: true })
@@ -1946,7 +2020,12 @@ try {
   const roomSaved = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey);
   assert.ok(
     roomSaved.mode === "home" && roomSaved.flight === null,
-    "The Map's Return to Earth ends the flight, saved",
+    "The galaxy map's Earth ends the flight, saved",
+  );
+  events.checks.push(
+    "The local map's Galaxies opens the galaxy map on the galaxy Ada is flying in, with Stay here " +
+      "and its close X; Stay here resumes the same flight, the X returns to the local map, and " +
+      "Earth ends the flight home",
   );
   const roomPause = page.locator('[data-action="pause"]');
   if (await roomPause.isVisible()) {
@@ -3112,7 +3191,8 @@ try {
       "the newly unlocked galaxy",
   );
   // The route runs left to right along one arc, so Left and Right follow screen order and skip
-  // locked galaxies; galaxy selection has no close X, and Escape returns Ada to her room.
+  // locked galaxies; the galaxy map's close X comes last in Tab order, and Escape returns Ada to
+  // her room, as its X and Earth do at boarding.
   const routeMarkers = selector().locator(".ada-route-marker");
   const markerLefts = await routeMarkers.evaluateAll((markers) =>
     markers.map((marker) => marker.getBoundingClientRect().left),
@@ -3123,9 +3203,16 @@ try {
     "The markers run left to right in route order",
   );
   assert.equal(
-    await page.locator('.ada-route .ada-close, [data-action="close-galaxies"]').count(),
-    0,
-    "Galaxy selection has no close X",
+    await selector().locator('[data-action="close-galaxies"]').count(),
+    1,
+    "The galaxy map has its close X",
+  );
+  await page.locator('[data-action="galaxy-jump"]').focus();
+  await page.keyboard.press("Tab");
+  assert.equal(
+    await page.evaluate(() => document.activeElement?.dataset.action ?? ""),
+    "close-galaxies",
+    "The close X follows Jump, last in Tab order",
   );
   await page.screenshot({ path: `${output}/route-map.png` });
   const panelNumber = (number) => PROTOTYPE.labels.galaxyNumber.replace("{number}", number);
@@ -3179,8 +3266,9 @@ try {
     );
   assert.ok(escapedRoom, "Escape from galaxy selection shows Ada's room");
   events.checks.push(
-    "Galaxy selection lays the markers left to right on one arc with no close X; Left and Right " +
-      "follow screen order and skip locked galaxies, and Escape returns Ada to her room",
+    "The galaxy map lays the markers left to right on one arc with its close X last in Tab " +
+      "order; Left and Right follow screen order and skip locked galaxies, and Escape returns " +
+      "Ada to her room",
   );
   // Canonical save fixtures exercise rendering and restore boundaries, not natural combat progression.
   const [{ enemyCatalog }, { createEnemy, damageEnemy }, { restoreSave }] = await Promise.all([

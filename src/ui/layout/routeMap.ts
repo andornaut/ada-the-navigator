@@ -1,10 +1,12 @@
 import type { Rect } from "@andornaut/game-kit/rect";
+import { HIT_RULE, hitAround } from "@andornaut/game-kit/ui/hitAreas";
 
 import { GALAXY_COUNT, type RoutePosition } from "../../data/galaxies.ts";
 import { SCREEN } from "../../data/screen.ts";
 import { SHIP_HEADINGS, SHIP_NOSE } from "../../model/nose.ts";
+import { CARD_CLOSE } from "./cardFrame.ts";
 import { FRAME_LINE, TEXT_BUTTON } from "./controls.ts";
-import { type Insets, playView, SAFE_MARGIN, safeRect, type Size } from "./playView.ts";
+import { hudRect, type Insets, playView, SAFE_MARGIN, safeRect, type Size } from "./playView.ts";
 import { BUTTON_GAP, SPACING } from "./tokens.ts";
 
 // Galaxy selection's route map (art/layout.md "Galaxy selector", art/route-sky.md), after Chibi's
@@ -152,6 +154,8 @@ export const ROUTE_MOVE = {
 export interface RouteMapRects {
   readonly available: Rect;
   readonly capture: Rect;
+  /** The close X's 24 face on the HUD rect's top-right corner, and its 48 press area. */
+  readonly close: { readonly face: Rect; readonly target: Rect };
   readonly earth: Rect;
   readonly jump: Rect;
   /** Each route position's 48 press area, in route order. */
@@ -174,6 +178,13 @@ export function routeMapRects(insets: Insets, view: Size): RouteMapRects {
   const panelTop = actionsTop - SPACING.gap - ROUTE_PANEL.height;
   const panelLeft = x0 + (SCREEN.width - ROUTE_PANEL.width) / 2;
   const inner = { x: panelLeft + ROUTE_PANEL.padding, y: panelTop + ROUTE_PANEL.padding };
+  const hud = hudRect(insets, view);
+  const face: Rect = {
+    height: CARD_CLOSE.art.height,
+    width: CARD_CLOSE.art.width,
+    x: hud.x + hud.width - CARD_CLOSE.art.width,
+    y: hud.y,
+  };
   const action = (left: number): Rect => ({
     height: ROUTE_ACTIONS.height,
     width: ROUTE_ACTIONS.width,
@@ -187,6 +198,7 @@ export function routeMapRects(insets: Insets, view: Size): RouteMapRects {
       width: ROUTE_PANEL.capture.width + 2 * ROUTE_PANEL.capture.frame,
       ...inner,
     },
+    close: { face, target: hitAround(HIT_RULE, face) },
     earth: action(ROUTE_ACTIONS.earth),
     jump: action(ROUTE_ACTIONS.jump),
     markers: ROUTE_MAP.centres.map(({ x, y }) => ({
