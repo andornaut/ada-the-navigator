@@ -474,7 +474,7 @@ with fractional widths.
 | ------ | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | Normal | 25% of capacity or more, not regenerating | Fill, rim and icon in their normal colours                                                                              | Static                                                                                                                                 |
 | Hit    | The shield drops                          | The lost part (new value to old) in the flash colour                                                                    | One flash, 100 ms, then the part joins the delay part. A flash starts at most once per 334 ms; a hit inside that window does not flash |
-| Delay  | From a hit until regeneration starts      | The delay part in the delay colour, and the delay strip filling left to right                                           | Gameplay's recharge delay (20, 15 or 10 s by Shield level), from the last hit or the last moment in battle                             |
+| Delay  | From a hit until regeneration starts      | The delay part in the delay colour, and the delay strip filling left to right                                           | Gameplay's recharge delay, 30 s after the last hit at every Shield level                                                               |
 | Regen  | The delay ends, until the shield is full  | The delay part clears at once; the fill grows (Gameplay: 18 per s) with a 2 px leading edge inside the fill's right end | The edge shows while regenerating and is removed at capacity                                                                           |
 | Low    | Above 0 and below 25% of capacity         | Fill in the low colour; icon and rim pulse; a delay part keeps the delay colour                                         | Pulse: low colour to the pulse peak and back, sine, 1000 ms per cycle, while low; ends at once at 25%                                  |
 | Empty  | The shield reaches 0                      | Empty track; icon and rim in the low colour, no pulse                                                                   | Held until the depletion outcome: Astra's jump home, or (upgrade selected) the refill, which draws full at once with no flash or edge  |
@@ -512,13 +512,12 @@ top 5 rows (bar y 2 to 7).
 - It shows only while the recharge delay runs: the shield is below capacity and
   not regenerating. It is hidden while the shield is full or regenerating.
 - It grows linearly with Gameplay's delay timer, `elapsed / delay` of the fill
-  area's width, so `(bar - 4) / delay` px/s at every Shield level, with
-  fractional widths: at Gameplay's 20, 15 and 10 s delays, 5.8, 11.73 and
-  23.6 px/s.
+  area's width, so `(bar - 4) / 30` px/s over Gameplay's 30 s delay, with
+  fractional widths: 3.87, 5.87 and 7.87 px/s at Shield levels 1 to 3.
 - At full, recharge starts: the strip hides at once, with no fade, and the
   regeneration edge takes over.
-- Whatever restarts Gameplay's delay (a hit, or Ada back in battle) empties it
-  at once, the same frame as the hit flash, and it grows again from 0.
+- Damage restarts the delay and empties the strip at once, the same frame as
+  the hit flash; it grows again from 0. Nothing else resets it.
 - Layers, bottom to top: track, fill, delay part, hit flash, then the strip and
   its ink edge, all inside the rim. The low-shield pulse changes only the icon
   and rim, so it never covers or recolours the strip; the strip's colours are
