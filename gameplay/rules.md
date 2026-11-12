@@ -460,8 +460,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   the game area. The drawn knob stays inside the ring, as in
   Chibi. Each joystick draws a line from its origin to the thumb's actual position,
   extending past the ring however far the thumb travels, so the line shows the
-  drag. Both joysticks' drawn rings sit 32 logical pixels in from the game area's
-  outer side edges and 32 above its bottom, mirrored, as in Chibi. Use is
+  drag. Both joysticks' drawn rings sit 40 logical pixels in from the game area's
+  outer side edges and 40 above its bottom, mirrored as in Chibi. Use is
   Chibi's touch disc, placed beside the aim stick as in Chibi. The move ring lights its left or right marker only when the
   move direction is within 67.5 degrees of that side.
 - Speed rises steeply with stick deflection so the difference is clearly
