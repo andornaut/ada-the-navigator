@@ -1,5 +1,5 @@
 // The space backdrop: sky, far items, plates, stars and streaks.
-// Functions over GameScene (scene.ts).
+// Functions over the scene's BackdropContext.
 import { MAX_RENDER_SCALE } from "@andornaut/game-kit/view/renderScale";
 import { BlendModes, Math as PhaserMath } from "phaser";
 
@@ -29,8 +29,69 @@ import type { GameScene } from "./scene.ts";
 import { bakeScale, bakeTexture, rockTexture } from "./sceneAssets.ts";
 import { STREAK_PIECES } from "./sceneShared.ts";
 
+/** The scene state and methods this module's functions use. */
+export type BackdropContext = Pick<
+  GameScene,
+  | "add"
+  | "asteroidArt"
+  | "backdropImage"
+  | "backdropItems"
+  | "backdropRules"
+  | "backdropSprites"
+  | "backdrops"
+  | "buoyArt"
+  | "cache"
+  | "children"
+  | "coreAssetIds"
+  | "craftArt"
+  | "debrisArt"
+  | "destruction"
+  | "enemyArt"
+  | "familyArts"
+  | "familyParts"
+  | "familyShards"
+  | "galaxyBackdrops"
+  | "galaxyLoads"
+  | "galaxyManifestPaths"
+  | "galaxyManifests"
+  | "galaxyStations"
+  | "hubArt"
+  | "jobArt"
+  | "load"
+  | "loads"
+  | "manifest"
+  | "model"
+  | "paintAssets"
+  | "paintLoads"
+  | "partAssets"
+  | "partLoads"
+  | "plateInk"
+  | "projectLayer"
+  | "rasters"
+  | "reducedMotion"
+  | "resourceFiles"
+  | "resourceRocks"
+  | "rockQueued"
+  | "rockRequests"
+  | "scale"
+  | "shell"
+  | "shipAssets"
+  | "skyImage"
+  | "starImages"
+  | "storyNoses"
+  | "strandedCraft"
+  | "streakInk"
+  | "streakSpec"
+  | "textures"
+  | "time"
+  | "towLine"
+  | "whaleArt"
+  | "whaleRequests"
+  | "whirlpoolProjects"
+>;
+
 /** The flight's galaxy's fixed backdrop layer, on the play view's centre, or none. */
-export function drawBackdropLayer(scene: GameScene, galaxy: GalaxyNumber | null): void {
+export function drawBackdropLayer(scene: BackdropContext, galaxy: GalaxyNumber | null): void {
   const layer = galaxy === null ? undefined : scene.backdrops.get(galaxy);
   if (!layer) {
     scene.backdropImage?.setVisible(false);
@@ -50,7 +111,7 @@ export function drawBackdropLayer(scene: GameScene, galaxy: GalaxyNumber | null)
  * sky, the far items and planets, the plates, the stars and the dust streaks, for the camera at
  * Ada's world position. The fixed layers draw with drawBackdropLayer.
  */
-export function drawBackdropLayers(scene: GameScene, flight: FlightState | null): void {
+export function drawBackdropLayers(scene: BackdropContext, flight: FlightState | null): void {
   const rules = scene.backdropRules;
   const backdrop = flight ? scene.galaxyBackdrops.get(flight.galaxy) : undefined;
   scene.skyImage?.setVisible(false);
@@ -82,7 +143,11 @@ export function drawBackdropLayers(scene: GameScene, flight: FlightState | null)
 }
 
 /** L0: the galaxy's sky, one quad over the view, baked once at a quarter texel per px. */
-export function drawSky(scene: GameScene, galaxy: GalaxyNumber, backdrop: GalaxyBackdrop): void {
+export function drawSky(
+  scene: BackdropContext,
+  galaxy: GalaxyNumber,
+  backdrop: GalaxyBackdrop,
+): void {
   const key = `backdrop-sky-${galaxy}`;
   bakeTexture(scene, key, () => paintSky(backdrop.sky, 1 / 4));
   scene.skyImage ??= scene.add
@@ -99,7 +164,7 @@ export function drawSky(scene: GameScene, galaxy: GalaxyNumber, backdrop: Galaxy
 
 /** The image drawing backdrop item `key` this frame, made on first use. */
 export function backdropItem(
-  scene: GameScene,
+  scene: BackdropContext,
   key: string,
   texture: string,
   depth: number,
@@ -119,7 +184,7 @@ export function backdropItem(
  * each released once it leaves.
  */
 export function drawFarItems(
-  scene: GameScene,
+  scene: BackdropContext,
   rules: BackdropRules,
   galaxy: GalaxyNumber,
   backdrop: GalaxyBackdrop,
@@ -157,7 +222,7 @@ export function drawFarItems(
 
 /** L1: the plates in view, darker steps multiplied by their grey, lighter ones screened. */
 export function drawPlates(
-  scene: GameScene,
+  scene: BackdropContext,
   rules: BackdropRules,
   backdrop: GalaxyBackdrop,
   camera: readonly [number, number],
@@ -189,7 +254,7 @@ export function drawPlates(
 
 /** L3: both star depths as tinted antialiased discs, unsnapped, with their twinkle. */
 export function drawStars(
-  scene: GameScene,
+  scene: BackdropContext,
   rules: BackdropRules,
   backdrop: GalaxyBackdrop,
   camera: readonly [number, number],
@@ -217,7 +282,7 @@ export function drawStars(
 
 /** L4: the dust streaks, 1 px lines fading to clear at both ends along a half sine. */
 export function drawStreaks(
-  scene: GameScene,
+  scene: BackdropContext,
   rules: BackdropRules,
   backdrop: GalaxyBackdrop,
   camera: readonly [number, number],
@@ -241,7 +306,7 @@ export function drawStreaks(
  * display size.
  */
 export function drawBackdrop(
-  scene: GameScene,
+  scene: BackdropContext,
   flight: NonNullable<typeof scene.model.state.flight>,
 ): void {
   const catalog = scene.asteroidArt;

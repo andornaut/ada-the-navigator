@@ -1,7 +1,7 @@
 // Drawing enemies, salvaged hulks and enemy weapons.
-// Functions over GameScene (scene.ts).
+// Functions over the scene's EnemiesContext.
 import { densityTexels } from "@andornaut/game-kit/view/renderScale";
-import { Math as PhaserMath, TintModes } from "phaser";
+import { Math as PhaserMath, type Scene, TintModes } from "phaser";
 
 import { CONTENT } from "../data/content.ts";
 import { enemyCatalog, enemyDefinition, MINE_LAYER } from "../data/enemyCatalog.ts";
@@ -39,7 +39,89 @@ import { type Asset } from "./sceneShared.ts";
 import { drawTaper, objectSprite } from "./sceneSprites.ts";
 import { type EffectShape } from "./weaponEffects.ts";
 
-export function drawEnemy(scene: GameScene, point: Vec, object: SpaceObject): void {
+/** The scene state and methods this module's functions use. */
+export type EnemiesContext = Scene &
+  Pick<
+    GameScene,
+    | "add"
+    | "asteroidArt"
+    | "backdropRules"
+    | "backdrops"
+    | "banners"
+    | "buoyArt"
+    | "cache"
+    | "calloutState"
+    | "children"
+    | "controls"
+    | "coreAssetIds"
+    | "craftArt"
+    | "debrisArt"
+    | "destruction"
+    | "drawnTops"
+    | "edgeMarkerInk"
+    | "edgeMarkers"
+    | "enemyArt"
+    | "enemyJets"
+    | "enemyPlaceholders"
+    | "enemySprites"
+    | "enemyWeaponsArt"
+    | "familyArts"
+    | "familyParts"
+    | "familyShards"
+    | "feedback"
+    | "frameTops"
+    | "galaxyBackdrops"
+    | "galaxyLoads"
+    | "galaxyManifestPaths"
+    | "galaxyManifests"
+    | "galaxyStations"
+    | "hitFlashes"
+    | "hubArt"
+    | "indicatorInk"
+    | "ink"
+    | "jobArt"
+    | "keyed"
+    | "keylines"
+    | "light"
+    | "load"
+    | "loads"
+    | "manifest"
+    | "mineInk"
+    | "model"
+    | "overlay"
+    | "paintAssets"
+    | "paintLoads"
+    | "palette"
+    | "partAssets"
+    | "partLoads"
+    | "passes"
+    | "project"
+    | "quantum"
+    | "rasters"
+    | "reducedMotion"
+    | "resourceFiles"
+    | "resourceRocks"
+    | "rockQueued"
+    | "rockRequests"
+    | "salvagedGroups"
+    | "scale"
+    | "shell"
+    | "shipAssets"
+    | "silhouettes"
+    | "spaceBackground"
+    | "storyNoses"
+    | "strandedCraft"
+    | "streakSpec"
+    | "textures"
+    | "time"
+    | "towLine"
+    | "useCallout"
+    | "whaleArt"
+    | "whaleRequests"
+    | "whirlpoolProjects"
+  >;
+
+export function drawEnemy(scene: EnemiesContext, point: Vec, object: SpaceObject): void {
   const enemy = object.enemy;
   if (!enemy) {
     scene.ink.strokeTriangle(
@@ -179,7 +261,7 @@ export function drawEnemy(scene: GameScene, point: Vec, object: SpaceObject): vo
  * one group with no jets.
  */
 export function drawEnemySprite(
-  scene: GameScene,
+  scene: EnemiesContext,
   art: EnemyArt<Asset>,
   point: Vec,
   id: string,
@@ -246,7 +328,7 @@ export function drawEnemySprite(
  * the group alpha, so overlapping layers never show through each other.
  */
 export function drawSalvaged(
-  scene: GameScene,
+  scene: EnemiesContext,
   id: string,
   archetype: string,
   sprites: readonly PartSprite<Asset>[],
@@ -309,7 +391,7 @@ export function drawSalvaged(
  * edges, if any.
  */
 export function drawEffect(
-  scene: GameScene,
+  scene: EnemiesContext,
   shapes: readonly EffectShape[],
   edges: readonly EffectShape[] = [],
   graphics: Phaser.GameObjects.Graphics = scene.overlay,
@@ -384,7 +466,7 @@ export function enemyWeaponsView(flight: FlightState): EnemyWeaponsView {
  * Art's enemy-only weapon effects and the enemy Phaser in the effect layer, each over its ink
  * edges on a light field; each mine sorts with the play objects by its centre's screen y.
  */
-export function drawEnemyWeapons(scene: GameScene, view: EnemyWeaponsView): void {
+export function drawEnemyWeapons(scene: EnemiesContext, view: EnemyWeaponsView): void {
   const art = scene.enemyWeaponsArt;
   const used = new Set<string>();
   if (art) {

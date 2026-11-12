@@ -179,7 +179,7 @@ export class GameScene extends Scene {
   keylines = new Map<string, GameObjects.Image[]>();
   // This frame's fly-through objects as drawn, which Ada draws above while she overlaps them
   // (drawOrder.ts), and the tow craft's pivot depth while its line is drawn.
-  passable: PassableDraw[] = [];
+  private passable: PassableDraw[] = [];
   towDepth: number | undefined;
   silhouettes = new Silhouettes();
   // Every SVG's raster scale (svgRasters.ts), from the canvas's fit when preload starts.
@@ -318,7 +318,7 @@ export class GameScene extends Scene {
   // scene's specks, and the warp ship's paint: its source and the scheme last loaded.
   quantum: ReturnType<typeof createJumpOverlay> | null = null;
   jumping = false;
-  holdSource = false;
+  private holdSource = false;
   warpCover = false;
   specks: Vec[] = [];
   warpPaint: (() => WarpPaint) | null = null;
@@ -333,8 +333,8 @@ export class GameScene extends Scene {
   openGalaxies: () => void = () => {};
   startShown = false;
   enabled: boolean | undefined;
-  durable = "";
-  savedAt = 0;
+  private durable = "";
+  private savedAt = 0;
   feedback = new ModelFeedback();
   feedbackSound = new FeedbackSound();
   screenShake = true;
@@ -563,7 +563,7 @@ export class GameScene extends Scene {
     return { x: SCREEN.width / 2 + x - y, y: SCREEN.height / 2 + (x + y) / 2 };
   }
 
-  draw(): void {
+  private draw(): void {
     const flight = this.model.state.flight;
     this.ink.clear();
     this.jets.clear();
@@ -869,7 +869,7 @@ export class GameScene extends Scene {
    * Ada's depth: her pivot's, raised above any fly-through object her hull and jet flames
    * overlap, with her jets, their keyline and her tow line just beneath her.
    */
-  placeAda(flames: readonly Vec[]): void {
+  private placeAda(flames: readonly Vec[]): void {
     const pivot = playDepth(this.ship.y);
     const depth = adaDepth(this.passable, boxWith(drawnBox(this.ship), flames), pivot);
     this.ship.setDepth(depth);

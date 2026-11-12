@@ -1,6 +1,6 @@
 // Drawing story ships, currents, Whirlpool projects, landmarks, tows and jobs.
-// Functions over GameScene (scene.ts).
-import { Math as PhaserMath } from "phaser";
+// Functions over the scene's WorldContext.
+import { Math as PhaserMath, type Scene } from "phaser";
 
 import { CURRENTS } from "../data/galaxyFeatures.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
@@ -46,12 +46,99 @@ import {
   whalesCurrent,
 } from "./whirlpoolProjects.ts";
 
+/** The scene state and methods this module's functions use. */
+export type WorldContext = Scene &
+  Pick<
+    GameScene,
+    | "add"
+    | "asteroidArt"
+    | "backdropRules"
+    | "backdrops"
+    | "buoyArt"
+    | "buoySprites"
+    | "cache"
+    | "calloutState"
+    | "children"
+    | "controls"
+    | "coreAssetIds"
+    | "craftArt"
+    | "debrisArt"
+    | "destruction"
+    | "drawnTops"
+    | "edgeMarkerInk"
+    | "edgeMarkers"
+    | "enemyArt"
+    | "enemyJets"
+    | "enemySprites"
+    | "familyArts"
+    | "familyParts"
+    | "familyShards"
+    | "feedback"
+    | "flightClock"
+    | "flightLive"
+    | "frameTops"
+    | "galaxyBackdrops"
+    | "galaxyLoads"
+    | "galaxyManifestPaths"
+    | "galaxyManifests"
+    | "galaxyStations"
+    | "glintSprite"
+    | "hubArt"
+    | "indicatorInk"
+    | "ink"
+    | "jobArt"
+    | "keyed"
+    | "keylines"
+    | "landmarkSprites"
+    | "landmarksDrawn"
+    | "light"
+    | "load"
+    | "loads"
+    | "manifest"
+    | "model"
+    | "overlay"
+    | "paintAssets"
+    | "paintLoads"
+    | "palette"
+    | "partAssets"
+    | "partLoads"
+    | "passes"
+    | "project"
+    | "projectArt"
+    | "quantum"
+    | "rasters"
+    | "reducedMotion"
+    | "resourceFiles"
+    | "resourceRocks"
+    | "reveals"
+    | "rockQueued"
+    | "rockRequests"
+    | "scale"
+    | "shell"
+    | "shipAssets"
+    | "silhouettes"
+    | "storyNoses"
+    | "strandedCraft"
+    | "streakSpec"
+    | "textures"
+    | "time"
+    | "towDepth"
+    | "towInk"
+    | "towLine"
+    | "towSprite"
+    | "useCallout"
+    | "whaleArt"
+    | "whaleRequests"
+    | "whalesCurrentFor"
+    | "whirlpoolProjects"
+  >;
+
 /**
  * Cartwheel's buoys and story ships around the hub. Each craft draws Art's frame for the
  * nearest of its 16 headings, with its speed jets while it moves; a craft whose frames are not
  * loaded yet draws as a vector dart.
  */
-export function drawStoryShips(scene: GameScene, flight: FlightState): void {
+export function drawStoryShips(scene: WorldContext, flight: FlightState): void {
   const hub =
     flight.galaxy === CARTWHEEL_STORY_SHIPS.galaxy
       ? flight.objects.find((object) => object.kind === "destination" && object.id === "hub")
@@ -126,7 +213,7 @@ export function drawStoryShips(scene: GameScene, flight: FlightState): void {
  * plane in each lane, moving with the lane's flow and fading with it, on the field above the
  * specks and backdrop rocks and below every play object.
  */
-export function drawCurrents(scene: GameScene, flight: FlightState): void {
+export function drawCurrents(scene: WorldContext, flight: FlightState): void {
   const spec = scene.streakSpec;
   if (!spec) {
     return;
@@ -174,7 +261,7 @@ export function drawCurrents(scene: GameScene, flight: FlightState): void {
  * Ada draws in front of while she overlaps them. A change not yet revealed stays unseen until
  * the first frame its site is on screen in live flight, then fades in (reduced motion cuts).
  */
-export function drawWhirlpoolProjects(scene: GameScene, flight: FlightState): void {
+export function drawWhirlpoolProjects(scene: WorldContext, flight: FlightState): void {
   const art = scene.whirlpoolProjects;
   const family = flight.objects.find(
     (object) => object.kind === "destination" && object.id === "family",
@@ -300,7 +387,7 @@ export function drawWhirlpoolProjects(scene: GameScene, flight: FlightState): vo
 }
 
 /** Destroys the buoy sprites not drawn this frame. */
-export function pruneBuoys(scene: GameScene, drawn: ReadonlySet<string>): void {
+export function pruneBuoys(scene: WorldContext, drawn: ReadonlySet<string>): void {
   for (const [key, sprite] of scene.buoySprites) {
     if (!drawn.has(key)) {
       sprite.destroy();
@@ -315,7 +402,7 @@ export function pruneBuoys(scene: GameScene, drawn: ReadonlySet<string>): void {
  * play objects, and Ada flies through the landmarks; a part whose art is missing keeps its
  * placeholder.
  */
-export function drawJobs(scene: GameScene): void {
+export function drawJobs(scene: WorldContext): void {
   const scenery = scene.model.jobScenery;
   const galaxy = scene.model.state.flight?.galaxy;
   const art = scene.jobArt;
@@ -448,7 +535,7 @@ export function drawJobs(scene: GameScene): void {
  * point, multiplied by its galaxy tint, keylined on a light field when its kind is.
  */
 export function drawLandmarkLayer(
-  scene: GameScene,
+  scene: WorldContext,
   key: string,
   frame: JobFrame,
   point: Vec,
@@ -483,7 +570,7 @@ export function drawLandmarkLayer(
  * craft, keylined on a light field, and Art's cable, else the placeholder ellipse and line.
  */
 export function drawTow(
-  scene: GameScene,
+  scene: WorldContext,
   craft: Vec & { readonly item: string },
   towing: boolean,
 ): void {
@@ -528,7 +615,7 @@ export function drawTow(
  * Art's layered stroke with round joins and caps, its beads and the tow point's cap.
  */
 export function drawTowLine(
-  scene: GameScene,
+  scene: WorldContext,
   line: TowLine,
   flight: NonNullable<typeof scene.model.state.flight>,
   craft: Vec,

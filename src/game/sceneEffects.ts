@@ -1,5 +1,7 @@
 // Stardust zips and rock breaks.
-// Functions over GameScene (scene.ts).
+// Functions over the scene's EffectsContext.
+import type { Scene } from "phaser";
+
 import { CONTENT } from "../data/content.ts";
 import { resourceArtId } from "../data/resourceRocks.ts";
 import { rockFrame } from "../model/asteroids.ts";
@@ -10,11 +12,86 @@ import type { GameScene } from "./scene.ts";
 import { rockFrameTexture } from "./sceneAssets.ts";
 import { keylineSprite } from "./sceneHud.ts";
 
+/** The scene state and methods this module's functions use. */
+export type EffectsContext = Scene &
+  Pick<
+    GameScene,
+    | "add"
+    | "asteroidArt"
+    | "backdropRules"
+    | "backdrops"
+    | "buoyArt"
+    | "cache"
+    | "calloutState"
+    | "children"
+    | "controls"
+    | "coreAssetIds"
+    | "craftArt"
+    | "debrisArt"
+    | "destruction"
+    | "drawnTops"
+    | "edgeMarkerInk"
+    | "edgeMarkers"
+    | "enemyArt"
+    | "enemySprites"
+    | "familyArts"
+    | "familyParts"
+    | "familyShards"
+    | "feedback"
+    | "frameTops"
+    | "galaxyBackdrops"
+    | "galaxyLoads"
+    | "galaxyManifestPaths"
+    | "galaxyManifests"
+    | "galaxyStations"
+    | "glintSprite"
+    | "hubArt"
+    | "indicatorInk"
+    | "jobArt"
+    | "keyed"
+    | "keylines"
+    | "light"
+    | "load"
+    | "loads"
+    | "manifest"
+    | "model"
+    | "overlay"
+    | "paintAssets"
+    | "paintLoads"
+    | "palette"
+    | "partAssets"
+    | "partLoads"
+    | "project"
+    | "quantum"
+    | "rasters"
+    | "reducedMotion"
+    | "resourceFiles"
+    | "resourceRocks"
+    | "rockBreaks"
+    | "rockQueued"
+    | "rockRequests"
+    | "scale"
+    | "shell"
+    | "shipAssets"
+    | "silhouettes"
+    | "storyNoses"
+    | "strandedCraft"
+    | "streakSpec"
+    | "textures"
+    | "time"
+    | "towLine"
+    | "useCallout"
+    | "whaleArt"
+    | "whaleRequests"
+    | "whirlpoolProjects"
+    | "zips"
+  >;
+
 /**
  * Each pickup collected this step zips into the ship as it last showed (its sprite copied);
  * reduced motion, or a pickup drawn without a sprite, shows none.
  */
-export function startZips(scene: GameScene, nowMs: number): void {
+export function startZips(scene: EffectsContext, nowMs: number): void {
   if (scene.reducedMotion) {
     return;
   }
@@ -45,7 +122,7 @@ export function startZips(scene: GameScene, nowMs: number): void {
 }
 
 /** Moves each zipping pickup toward Ada for CONTENT's pickupZip, then removes it. */
-export function drawZips(scene: GameScene): void {
+export function drawZips(scene: EffectsContext): void {
   const flight = scene.model.state.flight;
   scene.zips = scene.zips.filter((zip) => {
     const state =
@@ -70,7 +147,7 @@ export function drawZips(scene: GameScene): void {
 }
 
 /** Each rock destroyed this step breaks where it stood, in the frame it last showed. */
-export function startRockBreaks(scene: GameScene, nowMs: number): void {
+export function startRockBreaks(scene: EffectsContext, nowMs: number): void {
   const flight = scene.model.state.flight;
   const catalog = scene.asteroidArt;
   if (!flight || !catalog) {
@@ -99,7 +176,7 @@ export function startRockBreaks(scene: GameScene, nowMs: number): void {
  * "Destruction"): shrink about the pivot, multiply darken and fade linearly, at every motion
  * setting. Asteroid timings are not authored; the fighter's reduced timing stands in.
  */
-export function drawRockBreaks(scene: GameScene): void {
+export function drawRockBreaks(scene: EffectsContext): void {
   const data = scene.destruction;
   const timing = data?.archetypes.fighter;
   scene.rockBreaks = scene.rockBreaks.filter((rock) => {

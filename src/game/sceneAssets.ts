@@ -1,5 +1,5 @@
 // The scene's art loading: galaxy, rock, enemy, whale and ship textures and SVG rasters.
-// Functions over GameScene (scene.ts).
+// Functions over the scene's AssetsContext.
 import { setTextureFilters } from "@andornaut/game-kit/view/phaser/textureFilter";
 import { MAX_RENDER_SCALE } from "@andornaut/game-kit/view/renderScale";
 import { GameObjects, Loader } from "phaser";
@@ -55,12 +55,62 @@ import { readStrandedCraft, readTowLine } from "./towArt.ts";
 import { readWhaleArt, whaleFrameAsset } from "./whaleArt.ts";
 import { readWhirlpoolProjects } from "./whirlpoolProjects.ts";
 
+/** The scene state and methods this module's functions use. */
+export type AssetsContext = Pick<
+  GameScene,
+  | "asteroidArt"
+  | "backdropRules"
+  | "backdrops"
+  | "buoyArt"
+  | "cache"
+  | "children"
+  | "coreAssetIds"
+  | "craftArt"
+  | "debrisArt"
+  | "destruction"
+  | "enemyArt"
+  | "familyArts"
+  | "familyParts"
+  | "familyShards"
+  | "galaxyBackdrops"
+  | "galaxyLoads"
+  | "galaxyManifestPaths"
+  | "galaxyManifests"
+  | "galaxyStations"
+  | "hubArt"
+  | "jobArt"
+  | "load"
+  | "loads"
+  | "manifest"
+  | "model"
+  | "paintAssets"
+  | "paintLoads"
+  | "partAssets"
+  | "partLoads"
+  | "rasters"
+  | "resourceFiles"
+  | "resourceRocks"
+  | "rockQueued"
+  | "rockRequests"
+  | "scale"
+  | "shell"
+  | "shipAssets"
+  | "storyNoses"
+  | "strandedCraft"
+  | "streakSpec"
+  | "textures"
+  | "towLine"
+  | "whaleArt"
+  | "whaleRequests"
+  | "whirlpoolProjects"
+>;
+
 /**
  * Art's rock frames load after the scene starts, at display size times r: each rock's frame 0
  * and the backdrop sprites first, then each spin frame the first time it is drawn, so starting
  * the scene never waits on 202 SVGs.
  */
-export function loadAsteroidArt(scene: GameScene): void {
+export function loadAsteroidArt(scene: AssetsContext): void {
   const catalog = ASTEROID_ART;
   scene.shell.setAsteroidArt(false);
   const first = [
@@ -84,7 +134,7 @@ export function loadAsteroidArt(scene: GameScene): void {
  * Loads a galaxy's own art the first time one of its flights draws: SVGs (loadSvg), the nugget
  * sheet and the data files, then reads them. Until then its objects keep their placeholders.
  */
-export function loadGalaxyArt(scene: GameScene, galaxy: GalaxyNumber): void {
+export function loadGalaxyArt(scene: AssetsContext, galaxy: GalaxyNumber): void {
   if (scene.galaxyLoads.has(galaxy)) {
     return;
   }
@@ -117,7 +167,7 @@ export function loadGalaxyArt(scene: GameScene, galaxy: GalaxyNumber): void {
 }
 
 /** Queues one of a galaxy manifest's SVGs or sheets; whale frames and part frames wait. */
-export function loadGalaxyAsset(scene: GameScene, asset: Asset): void {
+export function loadGalaxyAsset(scene: AssetsContext, asset: Asset): void {
   if (!galaxyLoadsAtOnce(asset) || scene.textures.exists(asset.id)) {
     return;
   }
@@ -135,7 +185,7 @@ export function loadGalaxyAsset(scene: GameScene, asset: Asset): void {
  * Adds a galaxy's loaded manifest to the known assets and data links, then queues its art:
  * its SVGs and sheets, its craft and claim jumper data and its own data files.
  */
-export function queueGalaxyArt(scene: GameScene, galaxy: GalaxyNumber): void {
+export function queueGalaxyArt(scene: AssetsContext, galaxy: GalaxyNumber): void {
   const manifest =
     scene.galaxyManifests.get(galaxy) ??
     readGalaxyManifest<Asset>(scene.cache.json.get(galaxyManifestKey(galaxy)));
@@ -206,7 +256,7 @@ export function queueGalaxyArt(scene: GameScene, galaxy: GalaxyNumber): void {
  * textures, which draw with linear filtering since at parallax 0.05 nearest texels would crawl.
  */
 export function queueBackdrop(
-  scene: GameScene,
+  scene: AssetsContext,
   galaxy: GalaxyNumber,
   manifest: GalaxyManifest<Asset>,
 ): void {
@@ -244,7 +294,7 @@ export function queueBackdrop(
  * filtering since its half-resolution texels must never show.
  */
 export function queueHaze(
-  scene: GameScene,
+  scene: AssetsContext,
   galaxy: GalaxyNumber,
   manifest: GalaxyManifest<Asset>,
 ): void {
@@ -277,7 +327,7 @@ export function queueHaze(
  * at the maximum render scale, so its 1.2 px core and point stars stay sharp.
  */
 export function queueBand(
-  scene: GameScene,
+  scene: AssetsContext,
   galaxy: GalaxyNumber,
   manifest: GalaxyManifest<Asset>,
 ): void {
@@ -308,7 +358,7 @@ export function queueBand(
 }
 
 /** Reads the galaxy art whose textures and data have loaded. */
-export function readGalaxyArt(scene: GameScene): void {
+export function readGalaxyArt(scene: AssetsContext): void {
   scene.backdropRules ??= readBackdropRules(scene.cache.json.get("backdrop-layers"));
   readEnemyArt(scene);
   for (const { family, wired } of GALAXY_FAMILIES) {
@@ -378,7 +428,7 @@ export function readGalaxyArt(scene: GameScene): void {
 }
 
 /** Whether a rock or backdrop SVG is ready; a missing one is queued for the next load. */
-export function rockTexture(scene: GameScene, file: string): boolean {
+export function rockTexture(scene: AssetsContext, file: string): boolean {
   if (scene.textures.exists(file)) {
     return true;
   }
@@ -393,7 +443,7 @@ export function rockTexture(scene: GameScene, file: string): boolean {
 }
 
 /** Starts loading any queued rock SVGs; false when none were queued. */
-export function startRockLoads(scene: GameScene): boolean {
+export function startRockLoads(scene: AssetsContext): boolean {
   if (!scene.rockQueued) {
     return false;
   }
@@ -404,7 +454,7 @@ export function startRockLoads(scene: GameScene): boolean {
 
 /** The loaded texture for a rock frame: that frame, else frame 0, else none yet. */
 export function rockFrameTexture(
-  scene: GameScene,
+  scene: AssetsContext,
   art: AsteroidArt,
   frame: number,
 ): string | undefined {
@@ -417,7 +467,7 @@ export function rockFrameTexture(
 }
 
 /** Archetypes without a complete loaded frame set keep their vector placeholders. */
-export function readEnemyArt(scene: GameScene): void {
+export function readEnemyArt(scene: AssetsContext): void {
   scene.enemyArt = enemyArt(
     (archetype) => scene.cache.json.get(`enemy-jets-${archetype}`),
     (archetype) => scene.cache.json.get(`enemy-hardpoints-${archetype}`),
@@ -445,13 +495,13 @@ export function readEnemyArt(scene: GameScene): void {
  * The family the flight's galaxy draws a craft in: its own (Cartwheel's claim jumpers,
  * Andromeda's garnet drones), else Gadget's coral.
  */
-export function familyOf(scene: GameScene, archetype: string): EnemyFamily | undefined {
+export function familyOf(scene: AssetsContext, archetype: string): EnemyFamily | undefined {
   const galaxy = scene.model.state.flight?.galaxy;
   return galaxyFamily(galaxy === undefined ? undefined : GALAXY_ID[galaxy], archetype);
 }
 
 /** A craft's art in its galaxy's family, while that family's frames are loaded. */
-export function familyArt(scene: GameScene, archetype: string): EnemyArt<Asset> | undefined {
+export function familyArt(scene: AssetsContext, archetype: string): EnemyArt<Asset> | undefined {
   const family = familyOf(scene, archetype);
   return family
     ? scene.familyArts.get(family.family)?.get(archetype)
@@ -463,7 +513,7 @@ export function familyArt(scene: GameScene, archetype: string): EnemyArt<Asset> 
  * their hundreds of frames never delay a screen that shows none. Until they load, the craft
  * keeps its vector placeholder.
  */
-export function loadEnemyParts(scene: GameScene, archetype: string): void {
+export function loadEnemyParts(scene: AssetsContext, archetype: string): void {
   const family = familyOf(scene, archetype);
   const galaxy = scene.model.state.flight?.galaxy;
   // Coral parts are in the core manifest; a galaxy family's in its galaxy's, which may not
@@ -495,7 +545,7 @@ export function loadEnemyParts(scene: GameScene, archetype: string): void {
 }
 
 /** Queues an SVG at the current raster scale (svgRasters.ts). */
-export function queueSvg(scene: GameScene, request: SvgRequest): void {
+export function queueSvg(scene: AssetsContext, request: SvgRequest): void {
   scene.load.svg(request.key, request.path, scene.rasters.request(request));
 }
 
@@ -504,7 +554,7 @@ export function queueSvg(scene: GameScene, request: SvgRequest): void {
  * key, then replaces its texture's image in place, and every image drawing it keeps its display
  * size and origin. A raster for a scale replaced meanwhile is dropped.
  */
-export function rasterAgain(scene: GameScene, requests: readonly SvgRequest[]): void {
+export function rasterAgain(scene: AssetsContext, requests: readonly SvgRequest[]): void {
   if (requests.length === 0) {
     return;
   }
@@ -526,7 +576,7 @@ export function rasterAgain(scene: GameScene, requests: readonly SvgRequest[]): 
 }
 
 /** Puts the image of texture from into texture key, keeping every user's display size. */
-export function replaceImage(scene: GameScene, key: string, from: string): void {
+export function replaceImage(scene: AssetsContext, key: string, from: string): void {
   const texture = scene.textures.get(key);
   const users = scene.children.list.filter(
     (child): child is GameObjects.Image =>
@@ -546,7 +596,7 @@ export function replaceImage(scene: GameScene, key: string, from: string): void 
 }
 
 /** Sets a texture's filter on every source it draws from. */
-export function filterTexture(scene: GameScene, key: string, filter: TextureFilter): void {
+export function filterTexture(scene: AssetsContext, key: string, filter: TextureFilter): void {
   setTextureFilters(scene.textures, new Map([[key, filter]]));
 }
 
@@ -554,7 +604,7 @@ export function filterTexture(scene: GameScene, key: string, filter: TextureFilt
  * Queues a manifest SVG at its display size times the raster scale (vectorRaster), or at its
  * own size times it when it declares none.
  */
-export function loadSvg(scene: GameScene, asset: Asset): void {
+export function loadSvg(scene: AssetsContext, asset: Asset): void {
   const { displayHeight, displayWidth } = asset;
   queueSvg(scene, {
     key: asset.id,
@@ -570,7 +620,7 @@ export function loadSvg(scene: GameScene, asset: Asset): void {
  * The painted scheme in use, or null for Classic. A scheme's idle frames load the first
  * time it is used; until then the ship keeps Classic's frames.
  */
-export function paintInUse(scene: GameScene): string | null {
+export function paintInUse(scene: AssetsContext): string | null {
   const paint = scene.model.state.economy.paint;
   if (paint === ECONOMY.defaultPaint) {
     return null;
@@ -583,7 +633,7 @@ export function paintInUse(scene: GameScene): string | null {
 }
 
 /** Loads ship frames after preload; each joins the selectable frames once its texture exists. */
-export function loadShipFrames(scene: GameScene, frames: readonly Asset[]): void {
+export function loadShipFrames(scene: AssetsContext, frames: readonly Asset[]): void {
   if (!frames.length) {
     return;
   }
@@ -600,7 +650,7 @@ export function loadShipFrames(scene: GameScene, frames: readonly Asset[]): void
 }
 
 /** Whether a whale frame is ready; a missing one is queued (loadSvg). */
-export function whaleTexture(scene: GameScene, frame: Asset): boolean {
+export function whaleTexture(scene: AssetsContext, frame: Asset): boolean {
   if (scene.textures.exists(frame.id)) {
     return true;
   }
@@ -614,7 +664,7 @@ export function whaleTexture(scene: GameScene, frame: Asset): boolean {
 }
 
 /** A raster as a linear-filtered canvas texture under `key`, once. */
-export function bakeTexture(scene: GameScene, key: string, paint: () => Raster): void {
+export function bakeTexture(scene: AssetsContext, key: string, paint: () => Raster): void {
   if (scene.textures.exists(key)) {
     return;
   }
@@ -629,6 +679,6 @@ export function bakeTexture(scene: GameScene, key: string, paint: () => Raster):
 }
 
 /** Texels per logical px for a baked layer: the view's, at most MAX_RENDER_SCALE. */
-export function bakeScale(scene: GameScene): number {
+export function bakeScale(scene: AssetsContext): number {
   return Math.min(sceneFit(scene).zoom, MAX_RENDER_SCALE);
 }

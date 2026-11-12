@@ -1,6 +1,6 @@
 // The scene's DOM interface: building the controls, cards and screens, and refreshing them.
-// Functions over GameScene (scene.ts).
-import { Scale, Scenes } from "phaser";
+// Functions over the scene's UiContext.
+import { Scale, type Scene, Scenes } from "phaser";
 
 import PROJECTS_FILE from "../../public/art/projects.json" with { type: "json" };
 import { CHEAT_COPY } from "../data/cheatCopy.ts";
@@ -92,7 +92,114 @@ import { RASTER_SCALE_EVENT } from "./svgRasters.ts";
 import { readUpgradePickup } from "./upgradePickup.ts";
 import { BEACON_FRAMES, CACHE_FRAMES, HOLODISK_FRAMES, readLoopArt } from "./worldArt.ts";
 
-export function buildScene(scene: GameScene): void {
+/** The scene state and methods this module's functions use. */
+export type UiContext = Scene &
+  Pick<
+    GameScene,
+    | "add"
+    | "asteroidArt"
+    | "backdropRules"
+    | "backdrops"
+    | "bannerLayer"
+    | "basePalette"
+    | "beaconArt"
+    | "boxOccupant"
+    | "buoyArt"
+    | "cache"
+    | "cacheArt"
+    | "cameras"
+    | "children"
+    | "controls"
+    | "conversationBox"
+    | "coreAssetIds"
+    | "craftArt"
+    | "debrisArt"
+    | "destruction"
+    | "edgeMarkerInk"
+    | "enabled"
+    | "enemyArt"
+    | "enemyJets"
+    | "enemyWeaponsArt"
+    | "events"
+    | "familyArts"
+    | "familyParts"
+    | "familyShards"
+    | "feedback"
+    | "feedbackSound"
+    | "galaxies"
+    | "galaxyBackdrops"
+    | "galaxyLoads"
+    | "galaxyManifestPaths"
+    | "galaxyManifests"
+    | "galaxyPalettes"
+    | "galaxyStations"
+    | "game"
+    | "held"
+    | "holodiskArt"
+    | "hubArt"
+    | "indicatorInk"
+    | "ink"
+    | "jetKeyline"
+    | "jets"
+    | "jobArt"
+    | "jumping"
+    | "lightGalaxies"
+    | "load"
+    | "loads"
+    | "manifest"
+    | "model"
+    | "openGalaxies"
+    | "outpostArt"
+    | "overlay"
+    | "paintAssets"
+    | "paintLoads"
+    | "palette"
+    | "partAssets"
+    | "partLoads"
+    | "projectArt"
+    | "quantum"
+    | "rasters"
+    | "reducedMotion"
+    | "resourceFiles"
+    | "resourceRocks"
+    | "restartCard"
+    | "rockQueued"
+    | "rockRequests"
+    | "routeGalaxies"
+    | "savingUnavailable"
+    | "scale"
+    | "screenOn"
+    | "screenShake"
+    | "settingsOpen"
+    | "shards"
+    | "shell"
+    | "ship"
+    | "shipAssets"
+    | "shipJets"
+    | "spaceBackground"
+    | "specks"
+    | "stardustArt"
+    | "startShown"
+    | "station"
+    | "stationArt"
+    | "storyNoses"
+    | "storybook"
+    | "strandedCraft"
+    | "streakSpec"
+    | "textures"
+    | "towInk"
+    | "towLine"
+    | "towSprite"
+    | "upgradePickupArt"
+    | "warpCover"
+    | "warpPaint"
+    | "warpScheme"
+    | "whaleArt"
+    | "whaleRequests"
+    | "whirlpoolProjects"
+  >;
+
+export function buildScene(scene: UiContext): void {
   const saved = readSave();
   const newer = newerSave(saved);
   if (newer) {
@@ -720,7 +827,7 @@ export function buildScene(scene: GameScene): void {
 }
 
 /** The conversation box, in the desktop wording without a coarse pointer. */
-export function renderConversation(scene: GameScene): void {
+export function renderConversation(scene: UiContext): void {
   scene.conversationBox.render(
     scene.model.conversation,
     !coarsePointer(window),
@@ -748,7 +855,7 @@ export function renderConversation(scene: GameScene): void {
   }
 }
 
-export function observeFeedback(scene: GameScene): void {
+export function observeFeedback(scene: UiContext): void {
   const kinds = scene.feedback.observe(TELEPORT_DISTANCE, scene.model.state);
   scene.feedbackSound.play(kinds);
   if (scene.screenShake && kinds.includes("damage")) {
@@ -758,7 +865,7 @@ export function observeFeedback(scene: GameScene): void {
 }
 
 /** The Ship card's facts with the paint named. */
-export function shipView(scene: GameScene): ShipView {
+export function shipView(scene: UiContext): ShipView {
   const ship = scene.model.ship;
   const paint = ECONOMY.paints[ship.paint]?.label;
   return { ...ship, paint: (paint && CONTENT.labels[paint]) ?? "" };
@@ -766,7 +873,7 @@ export function shipView(scene: GameScene): ShipView {
 
 // Queues item notices for what Ada gained since last frame; a new flight starts from what she
 // holds, and leaving flight clears them.
-export function noticeGains(scene: GameScene): void {
+export function noticeGains(scene: UiContext): void {
   const { flight, mode } = scene.model.state;
   if (mode !== "space" || !flight) {
     if (scene.held) {
@@ -787,7 +894,7 @@ export function noticeGains(scene: GameScene): void {
   scene.held = { flight, snapshot };
 }
 
-export function refreshScene(scene: GameScene): void {
+export function refreshScene(scene: UiContext): void {
   const state = scene.model.state;
   // The warp ship loads the paint in use, again on a paint change.
   if (scene.quantum && scene.warpPaint && state.economy.paint !== scene.warpScheme) {
@@ -887,7 +994,7 @@ export function refreshScene(scene: GameScene): void {
 }
 
 /** The flight's galaxy for the map: its name, its field's background and its fog. */
-export function mapField(scene: GameScene): MapField | null {
+export function mapField(scene: UiContext): MapField | null {
   const galaxy = scene.model.state.mode === "space" ? scene.model.state.flight?.galaxy : undefined;
   if (!galaxy) {
     return null;
@@ -901,11 +1008,11 @@ export function mapField(scene: GameScene): MapField | null {
 }
 
 // Back stays on the game except on the start screen with nothing open, where it is the browser's.
-export function armBack(scene: GameScene): void {
+export function armBack(scene: UiContext): void {
   setBackArmed(!backReleased(scene.startShown, scene.settingsOpen));
 }
 
-export function flushScene(scene: GameScene): void {
+export function flushScene(scene: UiContext): void {
   const available = writeSave(scene.model.save());
   scene.shell.setSavingAvailable(available);
   scene.savingUnavailable = !available;

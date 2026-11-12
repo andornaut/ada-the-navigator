@@ -1,6 +1,6 @@
 // Drawing the in-world HUD: the Use callout, edge markers, indicators, feedback and keylines.
-// Functions over GameScene (scene.ts).
-import { GameObjects, Math as PhaserMath, ScaleModes, Textures } from "phaser";
+// Functions over the scene's HudContext.
+import { GameObjects, Math as PhaserMath, ScaleModes, type Scene, Textures } from "phaser";
 
 import { EDGE_MARKER_GLYPHS, edgeMarkerInset } from "../data/edgeMarkers.ts";
 import { SCREEN } from "../data/screen.ts";
@@ -24,13 +24,85 @@ import { filterTexture } from "./sceneAssets.ts";
 import { createUseCallout } from "./touchChrome.ts";
 import { type EffectShape } from "./weaponEffects.ts";
 
+/** The scene state and methods this module's functions use. */
+export type HudContext = Scene &
+  Pick<
+    GameScene,
+    | "add"
+    | "asteroidArt"
+    | "backdropRules"
+    | "backdrops"
+    | "buoyArt"
+    | "cache"
+    | "calloutState"
+    | "children"
+    | "controls"
+    | "coreAssetIds"
+    | "craftArt"
+    | "debrisArt"
+    | "destruction"
+    | "drawnTops"
+    | "edgeMarkerInk"
+    | "edgeMarkers"
+    | "enemyArt"
+    | "enemySprites"
+    | "familyArts"
+    | "familyParts"
+    | "familyShards"
+    | "feedback"
+    | "frameTops"
+    | "galaxyBackdrops"
+    | "galaxyLoads"
+    | "galaxyManifestPaths"
+    | "galaxyManifests"
+    | "galaxyStations"
+    | "hubArt"
+    | "indicatorInk"
+    | "jobArt"
+    | "keyed"
+    | "keylines"
+    | "light"
+    | "load"
+    | "loads"
+    | "manifest"
+    | "model"
+    | "overlay"
+    | "paintAssets"
+    | "paintLoads"
+    | "palette"
+    | "partAssets"
+    | "partLoads"
+    | "project"
+    | "quantum"
+    | "rasters"
+    | "reducedMotion"
+    | "resourceFiles"
+    | "resourceRocks"
+    | "rockQueued"
+    | "rockRequests"
+    | "scale"
+    | "shell"
+    | "shipAssets"
+    | "silhouettes"
+    | "storyNoses"
+    | "strandedCraft"
+    | "streakSpec"
+    | "textures"
+    | "time"
+    | "towLine"
+    | "useCallout"
+    | "whaleArt"
+    | "whaleRequests"
+    | "whirlpoolProjects"
+  >;
+
 /**
  * The Use callout above the destination Use acts on (art/destinations.md "Use callout"): its
  * action's symbol, O on the pivot's vertical with the tail tip 3 px above the drawn top, fading
  * in and out over 150 ms with cubicOut, at once under reduced motion. It holds its place while
  * it fades out.
  */
-export function drawUseCallout(scene: GameScene, flight: FlightState | null | undefined): void {
+export function drawUseCallout(scene: HudContext, flight: FlightState | null | undefined): void {
   scene.useCallout ??= createUseCallout(scene, scene.rasters.scale).setDepth(USE_CALLOUT_DEPTH);
   const target = flight ? scene.model.useTarget : undefined;
   const object =
@@ -62,7 +134,7 @@ export function drawUseCallout(scene: GameScene, flight: FlightState | null | un
  * How far into the opposite fade the callout's current alpha already is, so a reversed fade
  * continues from where it stands: fading in, 1 - (1 - t)^3 = a; fading out, (1 - t)^3 = a.
  */
-export function calloutRemaining(scene: GameScene, now: number): number {
+export function calloutRemaining(scene: HudContext, now: number): number {
   const state = scene.calloutState;
   const alpha = useCalloutAlpha(now - state.edge, scene.reducedMotion, state.showing);
   const t = state.showing ? 1 - Math.cbrt(alpha) : 1 - Math.cbrt(1 - alpha);
@@ -73,7 +145,7 @@ export function calloutRemaining(scene: GameScene, now: number): number {
  * A drawn object's top in display px above its pivot at `point`: the topmost pixel at alpha 0.5
  * or more over its sprites and every frame they have shown this flight.
  */
-export function drawnTop(scene: GameScene, id: string, point: Vec): number {
+export function drawnTop(scene: HudContext, id: string, point: Vec): number {
   let top = scene.drawnTops.get(id) ?? 0;
   for (const [key, sprite] of scene.enemySprites) {
     if ((key === id || key.startsWith(`${id}#`)) && sprite.visible) {
@@ -88,7 +160,7 @@ export function drawnTop(scene: GameScene, id: string, point: Vec): number {
 }
 
 /** The topmost row of a frame with alpha 0.5 or more, as a fraction of its height. */
-export function frameTop(scene: GameScene, frame: Textures.Frame): number {
+export function frameTop(scene: HudContext, frame: Textures.Frame): number {
   const key = `${frame.texture.key}#${String(frame.name)}@${frame.cutWidth}`;
   const known = scene.frameTops.get(key);
   if (known !== undefined) {
@@ -126,7 +198,7 @@ export function frameTop(scene: GameScene, frame: Textures.Frame): number {
  * frame's ink keyline.
  */
 export function keylineSprite(
-  scene: GameScene,
+  scene: HudContext,
   kind: string,
   key: string,
   sprite: GameObjects.Image,
@@ -146,7 +218,7 @@ export function keylineSprite(
  * slot (or at its group's keyline depth), at its alpha. Keylines not drawn this frame are
  * destroyed.
  */
-export function drawKeylines(scene: GameScene): void {
+export function drawKeylines(scene: HudContext): void {
   const used = new Set<string>();
   for (const { depth, key, sprite, width } of scene.keyed) {
     const offsets = keylineOffsets(width);
@@ -197,7 +269,7 @@ export function drawKeylines(scene: GameScene): void {
  * at least KEYLINE_ALPHA, clear elsewhere, so the grown edge is crisp.
  */
 export function keylineSilhouette(
-  scene: GameScene,
+  scene: HudContext,
   sprite: { frame: Textures.Frame },
 ): string | undefined {
   const frame = sprite.frame;
@@ -238,7 +310,7 @@ export function keylineSilhouette(
 
 /** On a light field, the ink edges beneath an effect whose kind takes them (`lightField.effects`). */
 export function keylineEdges(
-  scene: GameScene,
+  scene: HudContext,
   kinds: readonly string[],
   shapes: readonly EffectShape[],
 ): EffectShape[] {
@@ -253,7 +325,7 @@ export function keylineEdges(
  * the palette's threat, the station diamond in pointOfInterest; a light field adds an ink outline
  * (lightField.markerOutline) under each, as the indicators' ink does.
  */
-export function drawEdgeMarkers(scene: GameScene, flight: FlightState): void {
+export function drawEdgeMarkers(scene: HudContext, flight: FlightState): void {
   const indicated = new Set(scene.model.indicatorTargets.map(({ id }) => id));
   const centre = scene.project(flight.player);
   const outline = LIGHT_FIELD.markerOutline;
@@ -307,7 +379,7 @@ export function drawEdgeMarkers(scene: GameScene, flight: FlightState): void {
  * An arrow at the view's edge toward each marked place off screen, at any distance
  * (model/indicators.ts), and the holodisk's placeholder beacon ring while it is on screen.
  */
-export function drawIndicators(scene: GameScene): void {
+export function drawIndicators(scene: HudContext): void {
   const cx = SCREEN.width / 2;
   const cy = SCREEN.height / 2;
   for (const target of scene.model.indicatorTargets) {
@@ -358,7 +430,7 @@ export function drawIndicators(scene: GameScene): void {
  * It draws opaque on a layer at alpha 0.8, so the joins do not stack.
  */
 export function drawIndicatorInk(
-  scene: GameScene,
+  scene: HudContext,
   arrow: readonly [Vec, Vec, Vec],
   ring: Vec,
 ): void {
@@ -377,7 +449,7 @@ export function drawIndicatorInk(
  * Feedback pulses; on a light field each stroke first draws in ink 2 keyline wider on the same
  * path, its 1 px ink edge.
  */
-export function drawFeedback(scene: GameScene): void {
+export function drawFeedback(scene: HudContext): void {
   const grow = scene.light ? LIGHT_FIELD.keyline : 0;
   for (const edge of grow ? [true, false] : [false]) {
     for (const pulse of scene.feedback.pulses) {
@@ -387,7 +459,7 @@ export function drawFeedback(scene: GameScene): void {
 }
 
 /** One feedback pulse, or with `grow` its ink edge: the same strokes `2 grow` wider in ink. */
-export function drawPulse(scene: GameScene, grow: number, pulse: FeedbackPulse): void {
+export function drawPulse(scene: HudContext, grow: number, pulse: FeedbackPulse): void {
   // Travel plays the quantum jump; the old teleport ring is retired with it.
   if (pulse.kind === "teleport" && scene.quantum) {
     return;

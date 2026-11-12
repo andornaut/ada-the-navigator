@@ -1,13 +1,16 @@
 // Sprite and primitive helpers the object and enemy drawing share.
-// Functions over GameScene (scene.ts).
+// Functions over the scene's SpritesContext.
 import { GameObjects } from "phaser";
 
 import type { GameScene } from "./scene.ts";
 import { type TaperShape } from "./weaponEffects.ts";
 
+/** The scene state and methods this module's functions use. */
+export type SpritesContext = Pick<GameScene, "add" | "enemySprites" | "overlay">;
+
 /** A reusable sprite for an object, reset to opaque and untinted each frame. */
 export function objectSprite(
-  scene: GameScene,
+  scene: SpritesContext,
   id: string,
   texture: string,
   frame?: number,
@@ -22,7 +25,7 @@ export function objectSprite(
 
 /** A taper as two triangles whose vertex alphas run linearly from tail to head. */
 export function drawTaper(
-  scene: GameScene,
+  scene: SpritesContext,
   shape: TaperShape,
   graphics: Phaser.GameObjects.Graphics = scene.overlay,
 ): void {

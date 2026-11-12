@@ -1,7 +1,7 @@
 // Drawing flight objects: rocks, stations, outposts, destinations, pickups and wrecks.
-// Functions over GameScene (scene.ts).
+// Functions over the scene's ObjectsContext.
 import { densityTexels } from "@andornaut/game-kit/view/renderScale";
-import { Math as PhaserMath, TintModes } from "phaser";
+import { Math as PhaserMath, type Scene, TintModes } from "phaser";
 
 import { type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { CONTENT } from "../data/content.ts";
@@ -71,12 +71,115 @@ import {
   loopPhase,
 } from "./worldArt.ts";
 
+/** The scene state and methods this module's functions use. */
+export type ObjectsContext = Scene &
+  Pick<
+    GameScene,
+    | "add"
+    | "asteroidArt"
+    | "backdropRules"
+    | "backdrops"
+    | "banners"
+    | "beaconArt"
+    | "buoyArt"
+    | "cache"
+    | "cacheArt"
+    | "calfHeading"
+    | "calloutState"
+    | "children"
+    | "controls"
+    | "coreAssetIds"
+    | "craftArt"
+    | "debrisArt"
+    | "destruction"
+    | "drawnTops"
+    | "edgeMarkerInk"
+    | "edgeMarkers"
+    | "enemyArt"
+    | "enemyJets"
+    | "enemyPlaceholders"
+    | "enemySprites"
+    | "enemyWeaponsArt"
+    | "familyArts"
+    | "familyParts"
+    | "familyShards"
+    | "feedback"
+    | "flightClock"
+    | "flightLive"
+    | "frameTops"
+    | "galaxyBackdrops"
+    | "galaxyLoads"
+    | "galaxyManifestPaths"
+    | "galaxyManifests"
+    | "galaxyStations"
+    | "hitFlashes"
+    | "holodiskArt"
+    | "hubArt"
+    | "indicatorInk"
+    | "ink"
+    | "jobArt"
+    | "keyed"
+    | "keylines"
+    | "light"
+    | "litCaches"
+    | "litFlight"
+    | "load"
+    | "loads"
+    | "manifest"
+    | "mineInk"
+    | "model"
+    | "outpostArt"
+    | "overlay"
+    | "paintAssets"
+    | "paintLoads"
+    | "palette"
+    | "partAssets"
+    | "partLoads"
+    | "passes"
+    | "pickupSeen"
+    | "project"
+    | "projectArt"
+    | "quantum"
+    | "rasters"
+    | "reducedMotion"
+    | "resourceFiles"
+    | "resourceRocks"
+    | "revealGroups"
+    | "reveals"
+    | "rockQueued"
+    | "rockRequests"
+    | "salvagedGroups"
+    | "scale"
+    | "shards"
+    | "shell"
+    | "shipAssets"
+    | "silhouettes"
+    | "spaceBackground"
+    | "stardustArt"
+    | "stationArt"
+    | "storyNoses"
+    | "strandedCraft"
+    | "streakSpec"
+    | "textures"
+    | "time"
+    | "towLine"
+    | "upgradePickupArt"
+    | "useCallout"
+    | "whaleArt"
+    | "whaleRequests"
+    | "whirlpoolProjects"
+  >;
+
 /**
  * Traveling debris, ballistic or in a river, in a galaxy with Art's debris: its tumbling piece
  * over the trailing coral dashes (art/cartwheel-props.md, art/whirlpool.md). False without
  * that art, so the placeholder draws.
  */
-export function drawTravelingDebris(scene: GameScene, object: SpaceObject, point: Vec): boolean {
+export function drawTravelingDebris(
+  scene: ObjectsContext,
+  object: SpaceObject,
+  point: Vec,
+): boolean {
   const flight = scene.model.state.flight!;
   const art = scene.debrisArt.get(flight.galaxy);
   if (!art || !object.velocity || object.orbit) {
@@ -112,7 +215,7 @@ export function drawTravelingDebris(scene: GameScene, object: SpaceObject, point
  * for its step; reduced motion holds the still frame.
  */
 export function drawUpgradeChevrons(
-  scene: GameScene,
+  scene: ObjectsContext,
   object: SpaceObject,
   point: Vec,
   color: number,
@@ -143,7 +246,7 @@ export function drawUpgradeChevrons(
  * no name label.
  */
 export function drawStation(
-  scene: GameScene,
+  scene: ObjectsContext,
   object: SpaceObject,
   point: Vec,
   radius: number,
@@ -169,7 +272,7 @@ export function drawStation(
  * `layer` orders a layered outpost's frames within that slot.
  */
 export function drawBlink(
-  scene: GameScene,
+  scene: ObjectsContext,
   art: StationArt<Asset>,
   kind: "outpost" | "station",
   object: SpaceObject,
@@ -190,7 +293,7 @@ export function drawBlink(
 
 /** One fixed-facing station or outpost frame at its pivot, sorted by its pivot. */
 export function placeStationFrame(
-  scene: GameScene,
+  scene: ObjectsContext,
   frame: Asset,
   kind: "outpost" | "station",
   object: SpaceObject,
@@ -213,7 +316,7 @@ export function placeStationFrame(
  * the after state in over the before state as one group (reduced motion cuts to it).
  */
 export function drawOutpost(
-  scene: GameScene,
+  scene: ObjectsContext,
   art: StationArt<Asset>,
   object: SpaceObject,
   point: Vec,
@@ -270,7 +373,7 @@ export function drawOutpost(
  * silhouette beneath them all.
  */
 export function drawOutpostParts(
-  scene: GameScene,
+  scene: ObjectsContext,
   id: string,
   parts: readonly OutpostPart<Asset>[],
   point: Vec,
@@ -295,7 +398,7 @@ export function drawOutpostParts(
  * sprites, then shown over the before state at the reveal's alpha, so the group fades as one.
  */
 export function drawRevealGroup(
-  scene: GameScene,
+  scene: ObjectsContext,
   id: string,
   parts: readonly OutpostPart<Asset>[],
   point: Vec,
@@ -357,7 +460,7 @@ export function drawRevealGroup(
  * data marks undrawn (data/destinations.ts), which its buoy and craft stand for.
  */
 export function drawDestination(
-  scene: GameScene,
+  scene: ObjectsContext,
   object: SpaceObject,
   point: Vec,
   radius: number,
@@ -414,7 +517,7 @@ export function drawDestination(
  * Guide a calf's calf, owned by the family destination: Art's `calf` frames in the heading of
  * its travel, swimming while it moves and idling while it waits (art/whales.md "Placement").
  */
-export function drawGuidedCalf(scene: GameScene): void {
+export function drawGuidedCalf(scene: ObjectsContext): void {
   const calf = scene.model.guidedCalf;
   if (!calf) {
     return;
@@ -437,7 +540,7 @@ export function drawGuidedCalf(scene: GameScene): void {
  * loop's frames load on first draw; false until frame 0 has.
  */
 export function drawWhale(
-  scene: GameScene,
+  scene: ObjectsContext,
   kind: WhaleKind,
   id: string,
   at: Vec,
@@ -480,7 +583,7 @@ export function drawWhale(
  * The holodisk turns from its own phase over the beacon, which pulses on its waypoint while
  * the holodisk's location is known and it is not yet recovered.
  */
-export function drawHolodisk(scene: GameScene, object: SpaceObject, point: Vec): void {
+export function drawHolodisk(scene: ObjectsContext, object: SpaceObject, point: Vec): void {
   const flight = scene.model.state.flight;
   const art = scene.holodiskArt!;
   const beacon = scene.beaconArt;
@@ -518,7 +621,7 @@ export function drawHolodisk(scene: GameScene, object: SpaceObject, point: Vec):
 }
 
 /** A discovery cache stays hidden until Ada first approaches it, then loops its lights. */
-export function drawCache(scene: GameScene, object: SpaceObject, point: Vec): void {
+export function drawCache(scene: ObjectsContext, object: SpaceObject, point: Vec): void {
   const flight = scene.model.state.flight!;
   const art = scene.cacheArt!;
   if (scene.litFlight !== flight.seed) {
@@ -542,7 +645,7 @@ export function drawCache(scene: GameScene, object: SpaceObject, point: Vec): vo
 }
 
 /** Fallback without the station art: a ring hull and its safe-area outline. */
-export function drawStationPlaceholder(scene: GameScene, point: Vec, radius: number): void {
+export function drawStationPlaceholder(scene: ObjectsContext, point: Vec, radius: number): void {
   const safe = ECONOMY.station.safeRadius;
   scene.ink.lineStyle(1, scene.palette.pointOfInterest, 0.35);
   scene.ink.strokeEllipse(point.x, point.y, safe * 2, safe);
@@ -558,7 +661,7 @@ export function drawStationPlaceholder(scene: GameScene, point: Vec, radius: num
  * shows the rest frame where it lands.
  */
 export function drawStardust(
-  scene: GameScene,
+  scene: ObjectsContext,
   object: SpaceObject,
   point: Vec,
   radius: number,
@@ -597,7 +700,7 @@ export function drawStardust(
  * Art's destruction: shards and a flash, or under reduced motion the idle frame tinting,
  * shrinking and fading. Frigates and capitals, without shard art, keep the placeholder.
  */
-export function drawWreck(scene: GameScene, object: SpaceObject, point: Vec): void {
+export function drawWreck(scene: ObjectsContext, object: SpaceObject, point: Vec): void {
   const wreck = object.wreck;
   if (!wreck) {
     return;
@@ -672,7 +775,7 @@ export function drawWreck(scene: GameScene, object: SpaceObject, point: Vec): vo
 
 /** Fallback without shard art: hull fragments flying outward. */
 export function drawWreckPlaceholder(
-  scene: GameScene,
+  scene: ObjectsContext,
   wreck: NonNullable<SpaceObject["wreck"]>,
   point: Vec,
 ): void {
@@ -694,7 +797,7 @@ export function drawWreckPlaceholder(
   }
 }
 
-export function drawObject(scene: GameScene, object: SpaceObject): void {
+export function drawObject(scene: ObjectsContext, object: SpaceObject): void {
   // A heavy anywhere in the loaded region starts loading its parts before it comes into view.
   const family = (object.enemy && familyOf(scene, object.enemy.archetype)?.family) ?? "coral";
   if (object.enemy && !scene.partLoads.has(`${family}:${object.enemy.archetype}`)) {
@@ -828,7 +931,7 @@ export function drawObject(scene: GameScene, object: SpaceObject): void {
  * drifting rock trails its stone chips (art/asteroids.md "Drift cue").
  */
 export function drawAsteroidSprite(
-  scene: GameScene,
+  scene: ObjectsContext,
   object: SpaceObject,
   point: Vec,
   art: AsteroidArt,
@@ -871,7 +974,7 @@ export function drawAsteroidSprite(
 }
 
 /** A rock whose frame has not loaded: its footprint in shadow stone, outlined on the union. */
-export function drawAsteroid(scene: GameScene, point: Vec, outline: AsteroidOutline): void {
+export function drawAsteroid(scene: ObjectsContext, point: Vec, outline: AsteroidOutline): void {
   const stone = scene.asteroidArt.stone;
   scene.ink.fillStyle(hexNumber(stone.at(-1)!));
   for (const part of outline.parts) {
