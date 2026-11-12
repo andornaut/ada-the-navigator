@@ -59,8 +59,8 @@ generic art included; one that several galaxies or none use (boot, HUD, UI,
 Ada, story) is in core. Usage follows the game's content data: Sunflower holds
 its outposts and their project frames; Cartwheel the hub, mooring buoy, claim
 jumpers, story craft other than the miner, stranded craft, traveling debris
-and the `cartwheelDebris` and `oreField` links; Whirlpool the whale calves, river debris, project frames and the
-`whales`, `whirlpoolCurrents`, `whirlpoolDebris` and `whirlpoolProjects` links;
+and the `cartwheelDebris` and `oreField` links; Whirlpool the whale calves,
+river debris, project frames and the `whales`, `whirlpoolCurrents`, `whirlpoolDebris` and `whirlpoolProjects` links;
 Andromeda the settlers' station, the settlements, the guide beacons, their
 project frames, the garnet drones, Pip's and the settler's portraits, the
 backdrop haze and the `backdropHaze` link. The station, discovery cache, coral
@@ -98,9 +98,8 @@ the jets file is unavailable. [Ship geometry](ship.md),
 [sector one enemies](enemies.md) and [portrait provenance](portraits.md) describe
 the authored and reused assets.
 
-Ship, enemy, station, outpost, Cartwheel, Cartwheel prop, asteroid, whale, Whirlpool the whales, river debris, project frames and the
-`whales`, `whirlpoolCurrents`, `whirlpoolDebris` and `whirlpoolProjects` links;
-Andromeda SVGs are deterministic exports from `art/tools/ship.ts`,
+Ship, enemy, station, outpost, Cartwheel, Cartwheel prop, asteroid, whale, Whirlpool
+debris, project and Andromeda SVGs are deterministic exports from `art/tools/ship.ts`,
 `art/tools/enemies.ts`, `art/tools/station.ts`, `art/tools/outposts.ts`,
 `art/tools/cartwheel.ts`, `art/tools/cartwheel-props.ts`, `art/tools/asteroids.ts`,
 `art/tools/whales.ts`, `art/tools/whirlpool.ts` and `art/tools/andromeda.ts`, with the
