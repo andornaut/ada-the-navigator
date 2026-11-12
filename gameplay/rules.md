@@ -506,7 +506,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - Destinations Ada visits (stations, the mining hub, outposts, settlements and
   quest points of interest) are drawn at 1.5 times their earlier size, the mining
   hub at 1.25 times, with a 2 pixel ink outline on light fields so they stand out
-  from the background. While Ada is within Use range of one, a small callout
+  from the background. While Ada is within Talk range of one, a small callout
   above it shows its Use action's symbol; it is hidden otherwise. At a station
   or the mining hub, an action due there comes before Dock, and Dock shows once
   it is done: Deliver for a carried item bound there, Deposit while Ada carries
