@@ -14,8 +14,8 @@ const context: VolleyContext = {
 
 describe("pure player projectile volleys", () => {
   it.each([
-    ["rapidMissile", 0.3, 1.3, 1.5, 25],
-    ["heavyMissile", 1.2, 0.6, 8, 60],
+    ["rapidMissile", 0.3, 500 / 600, 1.5, 25],
+    ["heavyMissile", 1.2, 400 / 600, 8, 60],
   ] as const)(
     "plans one straight %s at interval %f, speed x%f, damage x%f and blast %i",
     (weapon, interval, speed, damage, blast) => {
@@ -29,7 +29,8 @@ describe("pure player projectile volleys", () => {
       expect(missile.damage).toBe(context.baseDamage * damage);
       expect(missile.blast).toBe(blast);
       expect(missile.projectile).toBe("missile");
-      expect(missile.life).toBe(context.baseLifetime);
+      // Every missile reaches 220: its lifetime is that over its speed.
+      expect(missile.life).toBeCloseTo(220 / (context.baseSpeed * speed), 9);
       expect(missile).toMatchObject(context.origin);
       expect(missile.fade).toBeUndefined();
     },

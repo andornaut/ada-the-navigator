@@ -2236,18 +2236,7 @@ function shots(
           continue;
         }
         shot.life = 0;
-        // A missile's blast damages Ada within its radius, once, however it struck.
-        if (shot.blast !== undefined) {
-          const blasts = blastFlashes.get(flight) ?? [];
-          blasts.push({ age: 0, radius: shot.blast, x: shot.x, y: shot.y });
-          blastFlashes.set(flight, blasts);
-        }
-        if (
-          struck ||
-          (shot.blast !== undefined && shipTouches(flight.facing, flight.player, shot, shot.blast))
-        ) {
-          damage(content, shot.damage, flight);
-        }
+        enemyImpact(content, shot, struck, flight);
         continue;
       }
       if (shot.damage === undefined) {
@@ -2259,7 +2248,16 @@ function shots(
       }
       strike(content, shot, flight, events);
     }
+    // A missile still flying at the end of its reach explodes where it is.
+    const reachEnd = shot.life > 0 && shot.life <= elapsed;
     shot.life = Math.max(0, shot.life - elapsed);
+    if (reachEnd && shot.blast !== undefined) {
+      if (shot.enemy) {
+        enemyImpact(content, shot, false, flight);
+      } else {
+        blast(content, shot.damage, shot.blast, shot, null, flight, events);
+      }
+    }
   }
   flight.shots = flight.shots.filter((s) => s.life > 0);
   for (const object of flight.objects) {
@@ -2268,6 +2266,24 @@ function shots(
     }
   }
   flight.objects = flight.objects.filter((o) => o.hp > 0);
+}
+
+/**
+ * An enemy shot spent on Ada, an obstacle or the end of its reach: a missile's blast shows and
+ * damages Ada within its radius, and a direct hit damages her; either way, once.
+ */
+function enemyImpact(content: GameContent, shot: Shot, struck: boolean, flight: FlightState): void {
+  if (shot.blast !== undefined) {
+    const blasts = blastFlashes.get(flight) ?? [];
+    blasts.push({ age: 0, radius: shot.blast, x: shot.x, y: shot.y });
+    blastFlashes.set(flight, blasts);
+  }
+  if (
+    struck ||
+    (shot.blast !== undefined && shipTouches(flight.facing, flight.player, shot, shot.blast))
+  ) {
+    damage(content, shot.damage, flight);
+  }
 }
 
 /**
@@ -2462,14 +2478,14 @@ function hit(
  * A missile's blast damages every other live enemy within its radius of the impact, and never
  * Ada; a multipart ship takes it at its nearest live hardpoint in reach. The blast shows one
  * flash, which stands in for the destruction flash of every enemy the impact destroys, the
- * struck one included.
+ * struck one included. `struck` is null for a missile that exploded at the end of its reach.
  */
 function blast(
   content: GameContent,
   amount: number,
   radius: number,
   at: Vec,
-  struck: SpaceObject,
+  struck: SpaceObject | null,
   flight: FlightState,
   events: FlightEvent[],
 ): void {
@@ -2493,7 +2509,9 @@ function blast(
     hit(content, amount, part, object, flight, events);
     markBlasted(object, flight);
   }
-  markBlasted(struck, flight);
+  if (struck) {
+    markBlasted(struck, flight);
+  }
 }
 
 /** Marks a destroyed enemy's wreck as destroyed by a blast. */

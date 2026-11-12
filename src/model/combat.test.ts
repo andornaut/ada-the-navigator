@@ -19,6 +19,7 @@ import { carriesStardust } from "./drops.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
 import {
+  activeBlastFlashes,
   activeEnemyBeams,
   activeRingEmissions,
   bounceShips,
@@ -353,6 +354,77 @@ describe("integrated combat", () => {
     stepFlight(CONTENT, 1.5, idle, flight);
     expect(flight.shots).toEqual([]);
     expect(flight.shield).toBe(CONTENT.tuning.shieldMax - 6);
+  });
+
+  it("explodes Ada's missile at the end of its reach, its blast striking an enemy beside it", () => {
+    const flight = empty();
+    const target = ship("interceptor", { x: 300, y: 50 });
+    flight.objects.push(target);
+    const hp = target.hp;
+    // From 200 at 200 a second for 0.5 s: it ends at 300 without touching the interceptor.
+    flight.shots.push({
+      blast: 60,
+      damage: 2,
+      enemy: false,
+      hitIds: [],
+      id: "rapid",
+      life: 0.5,
+      piercing: false,
+      projectile: "missile",
+      velocity: { x: 200, y: 0 },
+      x: 200,
+      y: 0,
+    });
+    stepFlight(CONTENT, 0.6, idle, flight);
+    expect(flight.shots).toEqual([]);
+    expect(target.hp).toBe(hp - 2);
+    expect(activeBlastFlashes(flight)).toEqual([
+      expect.objectContaining({ radius: 60, x: expect.closeTo(300, 6), y: 0 }),
+    ]);
+    expect(flight.shield).toBe(CONTENT.tuning.shieldMax);
+  });
+
+  it("explodes an enemy missile at the end of its reach, its blast damaging Ada", () => {
+    const flight = empty();
+    // From 200 toward Ada at 100 a second for 1.5 s: it ends 50 from her, inside a 60 blast.
+    flight.shots.push({
+      blast: 60,
+      damage: 3,
+      enemy: true,
+      hitIds: [],
+      id: "heavy",
+      life: 1.5,
+      piercing: false,
+      projectile: "missile",
+      velocity: { x: -100, y: 0 },
+      x: 200,
+      y: 0,
+    });
+    stepFlight(CONTENT, 1.6, idle, flight);
+    expect(flight.shots).toEqual([]);
+    expect(flight.shield).toBe(CONTENT.tuning.shieldMax - 3);
+    expect(activeBlastFlashes(flight)).toEqual([
+      expect.objectContaining({ radius: 60, x: expect.closeTo(50, 6), y: 0 }),
+    ]);
+  });
+
+  it("lets a bolt at the end of its reach vanish with no blast", () => {
+    const flight = empty();
+    flight.shots.push({
+      damage: 1,
+      enemy: false,
+      hitIds: [],
+      id: "bolt",
+      life: 0.5,
+      piercing: false,
+      projectile: "bolt",
+      velocity: { x: 200, y: 0 },
+      x: 200,
+      y: 0,
+    });
+    stepFlight(CONTENT, 0.6, idle, flight);
+    expect(flight.shots).toEqual([]);
+    expect(activeBlastFlashes(flight)).toEqual([]);
   });
 
   it("fires an enemy Phaser along its fixed aim line 0.4 s after it appears", () => {

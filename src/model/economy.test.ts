@@ -782,25 +782,33 @@ describe("upgrade effects", () => {
   });
 
   it.each([
-    ["laser", 1, 500],
-    ["laser", 2, 600],
-    ["laser", 3, 700],
-    ["multiLaser", 1, 400],
-    ["multiLaser", 2, 500],
-    ["multiLaser", 3, 600],
+    ["laser", 1, 500, 1200],
+    ["laser", 2, 600, 1200],
+    ["laser", 3, 700, 1200],
+    ["multiLaser", 1, 400, 1200],
+    ["multiLaser", 2, 500, 1200],
+    ["multiLaser", 3, 600, 1200],
+    ["rapidMissile", 1, 500, 220],
+    ["rapidMissile", 2, 600, 220],
+    ["rapidMissile", 3, 700, 220],
+    ["heavyMissile", 1, 400, 220],
+    ["heavyMissile", 2, 400, 220],
+    ["heavyMissile", 3, 400, 220],
   ] as const)(
-    "fires %s at level %i at %i world units per second, reaching 1200",
-    (weapon, level, speed) => {
+    "fires %s at level %i at %i world units per second, reaching %i",
+    (weapon, level, speed, reach) => {
       const value = flight();
       value.weapon = weapon;
-      value.ammo.multiLaser = 5;
+      if (weapon !== "laser") {
+        value.ammo[weapon] = 5;
+      }
       value.levels.weapons[weapon] = level;
       stepFlight(CONTENT, 1 / 60, { ...idle, aim: { x: 1, y: 0 } }, value);
       expect(value.shots.length).toBeGreaterThan(0);
       for (const { fade, life, velocity } of value.shots) {
         expect(Math.hypot(velocity.x, velocity.y)).toBeCloseTo(speed, 6);
-        // The bolt's lifetime is its reach over its speed, less the step it has flown; no fade.
-        expect((life + 1 / 60) * speed).toBeCloseTo(1200, 6);
+        // The lifetime is the reach over the speed, less the step already flown; no fade.
+        expect((life + 1 / 60) * speed).toBeCloseTo(reach, 6);
         expect(fade).toBeUndefined();
       }
     },

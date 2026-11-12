@@ -16,7 +16,7 @@ const output = (definition: WeaponDefinition) =>
   (definition.damageRatio / definition.intervalSeconds) * hits(definition);
 
 describe("weapon levels", () => {
-  it.each(Object.keys(WEAPON_CATALOG) as Weapon[])(
+  it.each((Object.keys(WEAPON_CATALOG) as Weapon[]).filter((weapon) => weapon !== "rapidMissile"))(
     "grows %s's single-target output 1.5 times per level",
     (weapon) => {
       const [first, second, third] = WEAPON_CATALOG[weapon].map(output) as [number, number, number];
@@ -24,6 +24,33 @@ describe("weapon levels", () => {
       expect(third / first).toBeCloseTo(2.25, 9);
     },
   );
+
+  it("grows Rapid Missile's output by fire rate alone, 1.2 then 1.5 times level 1", () => {
+    const [first, second, third] = WEAPON_CATALOG.rapidMissile.map(output) as [
+      number,
+      number,
+      number,
+    ];
+    expect(second / first).toBeCloseTo(1.2, 9);
+    expect(third / first).toBeCloseTo(1.5, 9);
+    expect(WEAPON_CATALOG.rapidMissile.map((level) => level.damageRatio)).toEqual([1.5, 1.5, 1.5]);
+    expect(WEAPON_CATALOG.rapidMissile.map((level) => level.intervalSeconds)).toEqual([
+      0.3, 0.25, 0.2,
+    ]);
+  });
+
+  it("makes Rapid Missile faster and Heavy Missile more damaging at every level", () => {
+    for (const index of [0, 1, 2]) {
+      const rapid = WEAPON_CATALOG.rapidMissile[index]!;
+      const heavy = WEAPON_CATALOG.heavyMissile[index]!;
+      expect(rapid.speedRatio).toBeGreaterThan(heavy.speedRatio);
+      expect(rapid.intervalSeconds).toBeLessThan(heavy.intervalSeconds);
+      expect(heavy.damageRatio).toBeGreaterThan(rapid.damageRatio);
+      expect(heavy.damageRatio / heavy.intervalSeconds).toBeGreaterThan(
+        rapid.damageRatio / rapid.intervalSeconds,
+      );
+    }
+  });
 
   it("grows the Heavy Missile's blast and the Phaser's range as a bonus", () => {
     // The Heavy Missile's levels are felt through fire rate, with damage keeping the 1.5 steps.
@@ -43,7 +70,6 @@ describe("weapon levels", () => {
       blastRadius: 25,
       damageRatio: 1.5,
       intervalSeconds: 0.3,
-      speedRatio: 1.3,
     });
     expect([1, 2, 3].map((level) => weaponAt("rapidMissile", level).blastRadius)).toEqual([
       25, 25, 25,
@@ -51,7 +77,6 @@ describe("weapon levels", () => {
     expect(weaponAt("heavyMissile", 1)).toMatchObject({
       damageRatio: 8,
       intervalSeconds: 1.2,
-      speedRatio: 0.6,
     });
     expect([1, 2, 3].map((level) => weaponAt("heavyMissile", level).blastRadius)).toEqual([
       60, 72, 85,
@@ -71,7 +96,7 @@ describe("weapon levels", () => {
       );
     };
     expect(changed("laser").sort()).toEqual(["damageRatio", "intervalSeconds", "speedRatio"]);
-    expect(changed("rapidMissile").sort()).toEqual(["damageRatio", "intervalSeconds"]);
+    expect(changed("rapidMissile").sort()).toEqual(["intervalSeconds", "speedRatio"]);
     expect(changed("heavyMissile").sort()).toEqual([
       "blastRadius",
       "damageRatio",
@@ -107,9 +132,24 @@ describe("weapon levels", () => {
         [1200, null],
       ]);
     }
+    // Each missile reaches 220 at every level; its lifetime follows from its speed.
+    for (const weapon of ["rapidMissile", "heavyMissile"] as const) {
+      expect(
+        WEAPON_CATALOG[weapon].map(({ fadeStartFraction, rangeWorld }) => [
+          rangeWorld,
+          fadeStartFraction,
+        ]),
+      ).toEqual([
+        [220, null],
+        [220, null],
+        [220, null],
+      ]);
+    }
     // The other projectile weapons keep their ratios at every level.
-    expect(speeds("rapidMissile").map((speed) => speed / 600)).toEqual([1.3, 1.3, 1.3]);
-    expect(speeds("heavyMissile").map((speed) => speed / 600)).toEqual([0.6, 0.6, 0.6]);
+    speeds("rapidMissile").forEach((speed, index) =>
+      expect(speed).toBeCloseTo([500, 600, 700][index]!, 9),
+    );
+    speeds("heavyMissile").forEach((speed) => expect(speed).toBeCloseTo(400, 9));
     expect(speeds("scattershot").map((speed) => speed / 600)).toEqual([1, 1, 1]);
   });
 
