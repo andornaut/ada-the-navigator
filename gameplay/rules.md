@@ -488,7 +488,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   "Paused" over the dimmed game, which pauses play, with a close X. Its buttons,
   one shape, in a full-width stack: "Resume" (primary), "Map", "Ship",
   "Settings" and "Back to title". Ship opens a card titled "Ship" with a close
-  X, back to the pause card, in two sections. "Carried" lists Stardust, ore
+  X, back to the pause card, in two sections. "Cargo" lists Stardust, ore
   carried this flight, "Holodisks: {n} of 6", and the carried job item or towed
   craft when there is one. "Equipment" lists the shield, shield recharge, engine
   and tractor beam, each with its level ("Level {n} of 3"); every owned weapon in
