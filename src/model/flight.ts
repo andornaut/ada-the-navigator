@@ -293,23 +293,39 @@ function settleAda(content: PrototypeContent, flight: FlightState): void {
 }
 
 /** A body's overlap with a scenery object from `position`, at the object's current frame. */
-type SceneryContactOf = (
+export type SceneryContactOf = (
   object: SpaceObject,
   position: Vec,
   frame: number,
   drawn: Silhouette | null,
 ) => Contact | null;
 
-function resolveScenery(
+const SCENERY_PASSES = 16;
+// The least share of a contact's normal a combined push may carry: below it the push would run
+// past 50 times the contact's depth.
+const SCENERY_COMBINED_MIN = 0.02;
+
+/**
+ * Pushes a body at `position` out of overlapping scenery, deepest contact first, reporting each
+ * object's first contact to onContact with the object's velocity. In a notch between two
+ * silhouette parts the escape normals oppose, so pushing out of one part re-enters the other:
+ * a push back against an escape normal already taken from that object goes along the
+ * normalized sum of the two instead. A body still overlapping after SCENERY_PASSES has `undo`
+ * return it to where its move began (its position, or the heading it turned from), and
+ * onContact reflects it off the combined normal, so it bounces rather than freezing. Without an
+ * undo it stays where the passes left it.
+ */
+export function resolveScenery(
   flight: FlightState,
   contactOf: SceneryContactOf,
   onContact: (normal: Vec, surface: Vec) => void,
   position: Vec,
+  undo?: () => void,
 ): void {
   const touched = new Set<SpaceObject>();
-  // A notch between two silhouette parts settles over alternating push-outs.
-  for (let pass = 0; pass < 16; pass++) {
-    let deepest: { contact: { normal: Vec; depth: number }; object: SpaceObject } | null = null;
+  const escapes = new Map<SpaceObject, Vec[]>();
+  const deepestAt = () => {
+    let deepest: { contact: Contact; object: SpaceObject } | null = null;
     for (const object of flight.objects) {
       if (!SCENERY.includes(object.kind) || object.hp <= 0) {
         continue;
@@ -319,17 +335,66 @@ function resolveScenery(
         deepest = { contact, object };
       }
     }
+    return deepest;
+  };
+  for (let pass = 0; pass < SCENERY_PASSES; pass++) {
+    const deepest = deepestAt();
     if (!deepest) {
       return;
     }
     const { depth, normal } = deepest.contact;
-    position.x += normal.x * (depth + 0.01);
-    position.y += normal.y * (depth + 0.01);
+    const taken = escapes.get(deepest.object) ?? [];
+    escapes.set(deepest.object, [...taken, normal]);
+    const opposed = taken.find((earlier) => earlier.x * normal.x + earlier.y * normal.y < 0);
+    const both = opposed && combined([opposed, normal]);
+    // Far enough along the combined normal to clear this contact; normals that nearly cancel
+    // leave the alternation to the pass limit.
+    const along = both ? both.x * normal.x + both.y * normal.y : 0;
+    const [push, distance] =
+      both && along > SCENERY_COMBINED_MIN
+        ? [both, (depth + 0.01) / along]
+        : [normal, depth + 0.01];
+    position.x += push.x * distance;
+    position.y += push.y * distance;
     if (!touched.has(deepest.object)) {
       touched.add(deepest.object);
       onContact(normal, deepest.object.velocity ?? { x: 0, y: 0 });
     }
   }
+  const stuck = undo && deepestAt();
+  if (!stuck) {
+    return;
+  }
+  const at = { ...position };
+  undo();
+  // The escape normals' mean direction, or back along the move where they mostly cancel.
+  const taken = escapes.get(stuck.object) ?? [];
+  const mean = combined(taken);
+  const agree = mean
+    ? taken.reduce((sum, d) => sum + d.x * mean.x + d.y * mean.y, 0) > taken.length / 2
+    : false;
+  const back = combined([{ x: position.x - at.x, y: position.y - at.y }]);
+  const normal = (agree ? mean : back) ?? mean ?? stuck.contact.normal;
+  onContact(normal, stuck.object.velocity ?? { x: 0, y: 0 });
+}
+
+/** An undo that returns position to where it is now. */
+function returnTo(position: Vec): () => void {
+  const { x, y } = position;
+  return () => {
+    position.x = x;
+    position.y = y;
+  };
+}
+
+/** The unit sum of directions, or null when they cancel. */
+function combined(directions: readonly Vec[]): Vec | null {
+  const sum = directions.reduce((total, d) => ({ x: total.x + d.x, y: total.y + d.y }), {
+    x: 0,
+    y: 0,
+  });
+  const size = length(sum);
+  return size > 1e-6 ? { x: sum.x / size, y: sum.y / size } : null;
 }
 /**
  * A debris river's rocks for each current within the active region that carries one: evenly
@@ -1615,7 +1680,10 @@ function move(
     const key = chunk(content, before);
     flight.player.x += (travel.x * dt) / steps;
     flight.player.y += (travel.y * dt) / steps;
-    resolveScenery(flight, contactOf, onContact, flight.player);
+    resolveScenery(flight, contactOf, onContact, flight.player, () => {
+      flight.player.x = before.x;
+      flight.player.y = before.y;
+    });
     const afterKey = chunk(content, flight.player);
     if (flight.freshChunk === key) {
       flight.freshDistance += distance(before, flight.player);
@@ -1630,9 +1698,14 @@ function move(
     distance(start, flight.player) > 0.001 &&
     length(flight.velocity)
   ) {
+    const turnedFrom = flight.facing;
+    const settled = returnTo(flight.player);
     flight.facing = turnToward(dt, physics.aimTurnSeconds, flight.velocity, flight.facing);
-    // A new heading draws a new outline, which may reach scenery.
-    resolveScenery(flight, contactOf, onContact, flight.player);
+    // A new heading draws a new outline, which may reach scenery; one wedged in it keeps the old.
+    resolveScenery(flight, contactOf, onContact, flight.player, () => {
+      settled();
+      flight.facing = turnedFrom;
+    });
   }
 }
 /**

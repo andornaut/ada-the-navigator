@@ -657,6 +657,43 @@ describe("asteroids in flight", () => {
     }
   });
 
+  it("never ends a step with Ada's drawn ship inside a large rock, from any angle or speed", () => {
+    const large = shapes.find((shape) => shape.size === "large")!;
+    const { flight, model } = launched();
+    const shield = flight.shield;
+    const start = { ...flight.player };
+    const overlaps: string[] = [];
+    for (let degrees = 0; degrees < 360; degrees += 15) {
+      for (const deflection of [0.35, 0.7, 1]) {
+        const angle = (degrees * Math.PI) / 180;
+        const toward = { x: Math.cos(angle), y: Math.sin(angle) };
+        const wall = rock(`sweep:${degrees}:${deflection}`, {
+          asteroid: large.id,
+          radius: large.radius,
+          x: start.x + toward.x * (large.radius + 60),
+          y: start.y + toward.y * (large.radius + 60),
+        });
+        flight.player = { ...start };
+        flight.velocity = { x: 0, y: 0 };
+        flight.facing = { ...toward };
+        const move = { x: toward.x * deflection, y: toward.y * deflection };
+        for (let step = 0; step < 150; step++) {
+          flight.objects = [
+            wall,
+            ...flight.objects.filter((object) => ["destination", "station"].includes(object.kind)),
+          ];
+          model.step(1 / 60, { ...idle, move: step < 100 ? move : { x: 0, y: 0 } });
+          if (sceneryBodyContact(wall, flight.player, shipBody(flight.facing))) {
+            overlaps.push(`${degrees} deg at ${deflection} on step ${step}`);
+            break;
+          }
+        }
+      }
+    }
+    expect(overlaps).toEqual([]);
+    expect(flight.shield).toBe(shield);
+  });
+
   it("returns the restitution share of a head-on approach as recoil", () => {
     const { flight, model } = launched();
     flight.facing = { x: 1, y: 0 };
