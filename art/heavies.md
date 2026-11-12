@@ -152,6 +152,46 @@ straight after it.
 - Hit flash is a tint over the hardpoint's base and top. There are no flash
   frames.
 
+## Collision
+
+The hull and every hardpoint sprite collide, make contact and are placed by
+their drawn silhouettes, in `{a}-hardpoints.json`. Each value is an array of
+convex parts, each an array of `[x, y]` in frame px, the schema of the ship's
+`collision[k]`. Positions follow the file's rule: hull frame px, except tops,
+which are relative to the pivot like muzzles.
+
+- `headings[k].collision`: the hull layer drawn for heading `k`. The platform's
+  hull never turns, so every heading holds `platform.svg`'s.
+- `headings[k].hardpoints[j].collision`: `{ "intact": parts, "destroyed": parts }`,
+  one per state in `states`, for that hardpoint's base at heading `k`, placed
+  at its `anchor` in hull frame px.
+- `tops[t][i].collision`: top `t` at aim `i`, relative to the pivot.
+
+`art/tools/heavies.ts` traces every sprite's fills with the
+[shared tracer](ship.md#shared-tracer); the frames have no strokes, so nothing
+grows. Each sprite takes the first Douglas-Peucker tolerance of 0.4 and 0.3
+frame px that passes the 0.98 floor. Only the destroyed deck turret stump at
+heading 7 needs 0.3 (six sprites: the frigate's `port` and `starboard`, the
+capital's four weapons); at 0.4 its ragged scorch paint, quantized by the cell
+grid, reaches 0.9797. The frigate hull cuts 8 notch tips between its prow
+tines; its frames draw them under the faces.
+
+Checked against the fills plus the tips: every part strictly convex and every
+boundary within 0.36 frame px of the drawing. librsvg renders at 4 px per frame
+px agree within 0.002.
+
+| Sprite                                  | Parts    | Intersection over union |
+| --------------------------------------- | -------- | ----------------------- |
+| Frigate hull                            | 12 to 15 | 0.996 to 0.997          |
+| Capital hull                            | 15 to 21 | 0.998                   |
+| Platform hull                           | 26       | 0.997                   |
+| Engines and command, intact             | 1 to 4   | 0.992 to 0.999          |
+| Engines and command, destroyed          | 1 to 5   | 0.991 to 0.998          |
+| Deck turret bases, intact               | 1        | 0.981 to 0.992          |
+| Deck turret bases, destroyed            | 4 to 7   | 0.982 to 0.989          |
+| Platform turret bases                   | 1 to 12  | 0.988 to 0.995          |
+| Turret tops (`gun`, `turret`, platform) | 2 to 9   | 0.983 to 0.998          |
+
 ## Speed jets
 
 `{a}-jets.json` uses the [family jets schema](enemies.md#speed-jets) for its
@@ -206,8 +246,9 @@ platform. Sunflower keeps the coral originals.
   coral family; only fills change. Every SVG and shards file goes through the
   colour swap below, every jets file through the claim jet colours, and the
   tool stops on any colour outside the family.
-- Jets files keep the coral shape, lengths, layers and mouth data; hardpoints
-  files are the coral family's, unchanged. Destruction uses the shared
+- Jets files keep the coral shape, lengths, layers, mouth data and
+  [collision](enemies.md#collision); hardpoints files, collision included, are
+  the coral family's, unchanged. Claim frames draw the coral notch tips. Destruction uses the shared
   `destruction.json` timing and flash with the claim shards.
 
 ### Claim files and entries

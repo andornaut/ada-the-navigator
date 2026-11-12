@@ -27,7 +27,7 @@ import {
   visorSide,
 } from "./crafts.ts";
 import { shards } from "./destruction.ts";
-import { jets, svg } from "./enemies.ts";
+import { jets, silhouettes, svg } from "./enemies.ts";
 import {
   ADA_WIDTH,
   build,
@@ -314,6 +314,7 @@ export const platform: HeavyCraft = {
     { id: "port", model: platformTurret() },
     { id: "starboard", model: platformTurret() },
   ],
+  fixed: true,
 };
 
 // ---------------------------------------------------------------- export
@@ -353,10 +354,14 @@ async function main() {
   const files = new Map<string, string>();
   const entries: Entry[] = [];
   for (const craft of crafts) {
+    const traced = silhouettes(craft);
     for (let yaw = 0; yaw < ENEMY_HEADINGS; yaw++) {
-      files.set(`${craft.name}-${yaw}.svg`, svg(craft, yaw));
+      files.set(`${craft.name}-${yaw}.svg`, svg(craft, yaw, traced[yaw]!.tips));
     }
-    files.set(`${craft.name}-jets.json`, jets(craft));
+    files.set(
+      `${craft.name}-jets.json`,
+      jets(craft, (yaw) => traced[yaw]!.collision),
+    );
     files.set(`${craft.name}-shards.json`, shards(craft));
     entries.push(...hullEntries(craft.name, craft.frame).map(claimEntry));
   }

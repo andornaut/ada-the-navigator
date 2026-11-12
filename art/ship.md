@@ -228,3 +228,8 @@ resource rocks ([asteroid collision](asteroids.md#collision)) use it too.
 matches the drawing (enclosed background filled) with intersection over union
 0.98 or more, and no cell that one has and the other lacks lies more than 1
 frame px from the other.
+
+`traceFills` traces a frame of unstroked vector fills: it tries each given
+tolerance in order, keeps the first whose parts pass `check`, and returns the
+notch tips in the colour of the topmost fill within 0.6 frame px of each apex,
+rounded as the SVG writes them.

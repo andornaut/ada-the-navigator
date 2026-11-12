@@ -99,8 +99,8 @@ sprites from `art/tools/heavies.ts` and Cartwheel's claim jumpers from
 regenerate the matching outputs. `art/tools/silhouette.ts` is the shared
 [tracer](ship.md#shared-tracer) that turns a frame's drawn alpha into convex
 collision parts, for [the ship](ship.md#collision), the
-[sector one enemies](enemies.md#collision) and the
-[asteroids](asteroids.md#collision). Reused portrait PNGs remain byte-identical to their documented source exports,
+[sector one enemies](enemies.md#collision), the
+[heavies](heavies.md#collision) and the [asteroids](asteroids.md#collision). Reused portrait PNGs remain byte-identical to their documented source exports,
 and their sprite metadata changes only the local image filename.
 `art/tools/portraits.ts` draws the Astra and General Gadget portraits and the
 compact conversation sheets ([Conversation portraits](conversation.md)). No generated kit source or assets

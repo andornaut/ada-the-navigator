@@ -401,3 +401,60 @@ export function check(
     );
   return { distance, iou };
 }
+
+// ------------------------------------------------------------------ vector fills
+
+// One filled polygon as an SVG writes it, in frame px.
+export type Fill = { color: string; points: V2[] };
+
+// Whether a polygon covers a point, within NOTCH_WIDTH of its edges.
+function near(poly: readonly V2[], p: V2): boolean {
+  const sign = Math.sign(area(poly));
+  return (
+    poly.every((a, i) => cross(a, poly[(i + 1) % poly.length]!, p) * sign >= 0) ||
+    poly.some((a, i) => segDist(p, a, poly[(i + 1) % poly.length]!) <= NOTCH_WIDTH)
+  );
+}
+
+// The drawn silhouette of a size by size frame of unstroked fills, at the first of `tolerances`
+// that passes `check`, and its notch tips, each in the colour of the topmost fill at its apex
+// and rounded to 0.01 frame px. The frame draws the tips first, under the fills; the check
+// covers the fills plus the tips.
+export function traceFills(
+  id: string,
+  fills: readonly Fill[],
+  size: number,
+  tolerances: readonly number[],
+): { collision: V2[][]; tips: Fill[]; tolerance: number } {
+  const mask = rasterize(
+    fills.map(({ points }) => points),
+    size,
+    size,
+  );
+  for (const [i, tolerance] of tolerances.entries()) {
+    const { collision, tips } = trace(mask, tolerance);
+    const drawn = tips.map((tip) => ({
+      color: fills.findLast(({ points }) => near(points, tip[1]!))?.color ?? fills[0]!.color,
+      points: tip.map(([x, y]) => [Number(x.toFixed(2)), Number(y.toFixed(2))] as V2),
+    }));
+    try {
+      check(
+        id,
+        collision,
+        union(
+          mask,
+          rasterize(
+            drawn.map(({ points }) => points),
+            size,
+            size,
+          ),
+        ),
+      );
+    } catch (error) {
+      if (i === tolerances.length - 1) throw error;
+      continue;
+    }
+    return { collision, tips: drawn, tolerance };
+  }
+  throw new Error(`${id}: no tolerance`);
+}

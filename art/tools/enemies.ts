@@ -12,17 +12,7 @@ import {
 } from "./crafts.ts";
 import { replaceEntries } from "./manifest.ts";
 import { anchor, ENEMY_HEADINGS, project, vector } from "./projection.ts";
-import {
-  area,
-  check,
-  cross,
-  NOTCH_WIDTH,
-  rasterize,
-  segDist,
-  trace,
-  union,
-  type V2,
-} from "./silhouette.ts";
+import { type Fill, traceFills, type V2 } from "./silhouette.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const output = `${art}enemies/`;
@@ -31,13 +21,11 @@ const MOUTH_Z = 2;
 // interceptor frames fall below the intersection-over-union floor.
 const SILHOUETTE_TOLERANCE = 0.4;
 
-type Polygon = { color: string; points: V2[] };
-
 const point = (text: string) => text.split(",").map(Number) as V2;
 const text = (points: readonly V2[]) => points.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`);
 
 // The frame's polygons in draw order, in frame px rounded as the SVG writes them.
-function drawn(craft: Craft, yaw: number): Polygon[] {
+function drawn(craft: Craft, yaw: number): Fill[] {
   const centre = craft.frame / 2;
   return drawOrder(yaw, craft.parts[0]!.z1, craft.parts)
     .flatMap((part) => faces(yaw, part))
@@ -48,7 +36,7 @@ function drawn(craft: Craft, yaw: number): Polygon[] {
 }
 
 // `tips` fill notch tips under the facets, as the drawn silhouette cuts them.
-export function svg(craft: Craft, yaw: number, tips: readonly Polygon[] = []): string {
+export function svg(craft: Craft, yaw: number, tips: readonly Fill[] = []): string {
   const polygons = [...tips, ...drawn(craft, yaw)].map(
     ({ color, points }) => `  <polygon fill="${color}" points="${text(points).join(" ")}"/>`,
   );
@@ -62,37 +50,12 @@ export function svg(craft: Craft, yaw: number, tips: readonly Polygon[] = []): s
   ].join("\n");
 }
 
-// Whether a polygon covers a point, within NOTCH_WIDTH of its edges.
-function near(poly: readonly V2[], p: V2): boolean {
-  const sign = Math.sign(area(poly));
-  return (
-    poly.every((a, i) => cross(a, poly[(i + 1) % poly.length]!, p) * sign >= 0) ||
-    poly.some((a, i) => segDist(p, a, poly[(i + 1) % poly.length]!) <= NOTCH_WIDTH)
+// Each heading's drawn silhouette as convex parts in frame px, traced from the frame's fills
+// (no strokes, so no growth), and its notch tips.
+export function silhouettes(craft: Craft): { collision: V2[][]; tips: Fill[] }[] {
+  return Array.from({ length: ENEMY_HEADINGS }, (_, yaw) =>
+    traceFills(`${craft.name} ${yaw}`, drawn(craft, yaw), craft.frame, [SILHOUETTE_TOLERANCE]),
   );
-}
-
-// The drawn silhouette of heading `yaw` as convex parts in frame px, traced from the frame's
-// fills (no strokes, so no growth), and its notch tips, each in the colour of the topmost
-// polygon at its apex. Checked against the fills plus the tips.
-function silhouette(craft: Craft, yaw: number): { collision: V2[][]; tips: Polygon[] } {
-  const polygons = drawn(craft, yaw);
-  const mask = rasterize(
-    polygons.map(({ points }) => points),
-    craft.frame,
-    craft.frame,
-  );
-  const { collision, tips } = trace(mask, SILHOUETTE_TOLERANCE);
-  const filled = tips.map((tip) => ({
-    color: polygons.findLast(({ points }) => near(points, tip[1]!))?.color ?? polygons[0]!.color,
-    points: tip.map((p) => point(text([p])[0]!)),
-  }));
-  const tipMask = rasterize(
-    filled.map(({ points }) => points),
-    craft.frame,
-    craft.frame,
-  );
-  check(`${craft.name} ${yaw}`, collision, union(mask, tipMask));
-  return { collision, tips: filled };
 }
 
 // `collision` adds each heading's drawn silhouette after its mouths.
@@ -116,7 +79,7 @@ export function jets(craft: Craft, collision?: (yaw: number) => V2[][]): string 
 function main() {
   mkdirSync(output, { recursive: true });
   for (const craft of crafts) {
-    const traced = Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => silhouette(craft, yaw));
+    const traced = silhouettes(craft);
     writeFileSync(
       `${output}${craft.name}-jets.json`,
       jets(craft, (yaw) => traced[yaw]!.collision),

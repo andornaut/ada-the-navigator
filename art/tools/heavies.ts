@@ -45,6 +45,7 @@ import {
   round,
   vector,
 } from "./projection.ts";
+import { type Fill, strictlyConvex, traceFills, type V2 } from "./silhouette.ts";
 
 // Model units per Ada width: Ada's 42.88-unit wingspan.
 export const ADA_WIDTH = 42.88;
@@ -87,6 +88,8 @@ export type HeavyCraft = {
   hull: Part[];
   hullTop: number;
   hardpoints: { id: string; model: Model }[];
+  // The hull never turns: frame 0 is the hull layer for every heading.
+  fixed?: true;
 };
 
 // Offsets input: tools/enemy-hardpoints.json, which Tech exports from Gameplay's catalog.
@@ -667,13 +670,22 @@ export function spriteSize(pivotZ: number, sets: readonly (readonly Face[])[]): 
   return Math.ceil((2 * extent + 2) / 8) * 8;
 }
 
-function svg(size: number, pivotZ: number, title: string, list: readonly Face[]): string {
+// A sprite's faces as fills in frame px, rounded as the SVG writes them.
+function fills(size: number, pivotZ: number, list: readonly Face[]): Fill[] {
   const c = size / 2;
-  const polygons = list.map(({ color, points }) => {
-    const projected = points.map((point) => {
+  return list.map(({ color, points }) => ({
+    color,
+    points: points.map((point) => {
       const [x, y] = projectAt(c, c + pivotZ, point);
-      return `${x.toFixed(2)},${y.toFixed(2)}`;
-    });
+      return [Number(x.toFixed(2)), Number(y.toFixed(2))] as V2;
+    }),
+  }));
+}
+
+// `tips` fill notch tips under the faces, as the drawn silhouette cuts them.
+function svg(size: number, title: string, list: readonly Fill[], tips: readonly Fill[]): string {
+  const polygons = [...tips, ...list].map(({ color, points }) => {
+    const projected = points.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`);
     return `  <polygon fill="${color}" points="${projected.join(" ")}"/>`;
   });
   // The viewBox stays in frame px; the intrinsic size is the display size, so browsers
@@ -692,6 +704,43 @@ function svg(size: number, pivotZ: number, title: string, list: readonly Face[])
 
 const yaws = Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => yaw);
 
+// Douglas-Peucker tolerances for the drawn silhouettes, in frame px: each sprite takes the first
+// that passes the checks. Only the destroyed deck turret stump at heading 7, whose ragged scorch
+// paint the cell grid quantizes, needs 0.3.
+const SILHOUETTE_TOLERANCES = [0.4, 0.3];
+
+// One sprite drawn and traced: the SVG and its drawn silhouette in sprite frame px.
+function sprite(
+  id: string,
+  size: number,
+  pivotZ: number,
+  list: readonly Face[],
+): { svg: string; collision: V2[][] } {
+  const drawn = fills(size, pivotZ, list);
+  const { collision, tips } = traceFills(id, drawn, size, SILHOUETTE_TOLERANCES);
+  return { collision, svg: svg(size, id, drawn, tips) };
+}
+
+// Parts moved by (dx, dy) and rounded to 0.01 frame px, still strictly convex.
+function offset(id: string, dx: number, dy: number, parts: readonly V2[][]): V2[][] {
+  const moved = parts.map((part) =>
+    part.map(
+      ([x, y]) => [Math.round((x + dx) * 100) / 100, Math.round((y + dy) * 100) / 100] as V2,
+    ),
+  );
+  if (!moved.every(strictlyConvex)) throw new Error(`${id}: an offset part is not convex`);
+  return moved;
+}
+
+// Drawn silhouettes for the hardpoints file: the hull layer per heading in hull frame px, each
+// hardpoint base per heading and state in hull frame px, and each top per aim relative to its
+// pivot.
+export type Collision = {
+  hull: V2[][][];
+  bases: Map<string, Partial<Record<State, V2[][][]>>>;
+  tops: Map<string, V2[][][]>;
+};
+
 type Entry = Record<string, unknown> & { id: string };
 
 // Every file for one craft (name to content) and its manifest entries.
@@ -702,7 +751,8 @@ export function build(
   const { frame, hullTop, name, title } = craft;
   const files = new Map<string, string>();
   const entries: Entry[] = [];
-  const sprite = (file: string, size: number, fields: Record<string, unknown>) => {
+  const collision: Collision = { bases: new Map(), hull: [], tops: new Map() };
+  const entry = (file: string, size: number, fields: Record<string, unknown>) => {
     const display = size * DISPLAY_SCALE;
     entries.push({
       id: `enemy-${file}`,
@@ -720,8 +770,11 @@ export function build(
   if (craft.source === "heavies") {
     for (const yaw of yaws) {
       const list = drawOrder(yaw, hullTop, craft.hull).flatMap((part) => faces(yaw, part));
-      files.set(`${name}-${yaw}.svg`, svg(frame, 0, `${title} ${yaw} idle`, list));
+      const hull = sprite(`${title} ${yaw} idle`, frame, 0, list);
+      files.set(`${name}-${yaw}.svg`, hull.svg);
+      collision.hull.push(hull.collision);
     }
+    if (craft.fixed) collision.hull = yaws.map(() => collision.hull[0]!);
     entries.push(...hullEntries(name, frame));
     files.set(
       `${name}-jets.json`,
@@ -750,13 +803,20 @@ export function build(
       0,
       lists.flatMap(({ byYaw }) => byYaw),
     );
+    const bases: Partial<Record<State, V2[][][]>> = {};
     for (const { byYaw, state } of lists) {
+      bases[state] = [];
       for (const yaw of yaws) {
         const file = `${name}-${id}-${state}-${yaw}`;
-        files.set(`${file}.svg`, svg(size, 0, `${title} ${id} ${state} ${yaw}`, byYaw[yaw]!));
-        sprite(file, size, { facing: `world-${yaw}`, directionIndex: yaw, hardpoint: id, state });
+        const base = sprite(`${title} ${id} ${state} ${yaw}`, size, 0, byYaw[yaw]!);
+        files.set(`${file}.svg`, base.svg);
+        // The sprite centre sits on the anchor in the hull frame.
+        const [ax, ay] = hardpointAnchor(frame, yaw, origin, model.z);
+        bases[state].push(offset(file, ax - size / 2, ay - size / 2, base.collision));
+        entry(file, size, { facing: `world-${yaw}`, directionIndex: yaw, hardpoint: id, state });
       }
     }
+    collision.bases.set(id, bases);
   }
 
   for (const top of sharedTops(craft.name, placed)) {
@@ -764,14 +824,19 @@ export function build(
       partOrder(aim, hullTop, top.parts).flatMap((part) => faces(aim, part)),
     );
     const topSize = spriteSize(top.z, byAim);
+    const traced: V2[][][] = [];
     for (const aim of yaws) {
       const file = `${name}-${top.name}-top-${aim}`;
-      files.set(`${file}.svg`, svg(topSize, top.z, `${title} ${top.name} top ${aim}`, byAim[aim]!));
-      sprite(file, topSize, { facing: `world-${aim}`, aimIndex: aim, top: top.name });
+      const drawn = sprite(`${title} ${top.name} top ${aim}`, topSize, top.z, byAim[aim]!);
+      files.set(`${file}.svg`, drawn.svg);
+      // The pivot is the sprite centre.
+      traced.push(offset(file, -topSize / 2, -topSize / 2, drawn.collision));
+      entry(file, topSize, { facing: `world-${aim}`, aimIndex: aim, top: top.name });
     }
+    collision.tops.set(top.name, traced);
   }
 
-  files.set(`${name}-hardpoints.json`, hardpointsFile(craft, placed));
+  files.set(`${name}-hardpoints.json`, hardpointsFile(craft, placed, collision));
   return { files, entries };
 }
 
@@ -806,8 +871,13 @@ export function jetMouths(frame: number, yaw: number, placed: readonly Placed[])
 }
 
 // `{craft}-hardpoints.json` version 1: ids, per-heading anchors, pivots and layer order, and
-// per-aim muzzles relative to each shared top's pivot.
-export function hardpointsFile(craft: HeavyCraft, placed: readonly Placed[]): string {
+// per-aim muzzles relative to each shared top's pivot. `collision` adds the drawn silhouettes:
+// the hull's and each base's per heading, and each top's per aim.
+export function hardpointsFile(
+  craft: HeavyCraft,
+  placed: readonly Placed[],
+  collision?: Collision,
+): string {
   return json({
     version: 1,
     archetype: craft.name,
@@ -821,11 +891,22 @@ export function hardpointsFile(craft: HeavyCraft, placed: readonly Placed[]): st
     headings: yaws.map((yaw) => ({
       index: yaw,
       order: layerOrder(yaw, craft, placed),
-      hardpoints: placed.map(({ id, model, origin }) => ({
-        id,
-        anchor: hardpointAnchor(craft.frame, yaw, origin, model.z),
-        ...(model.top ? { pivot: hardpointAnchor(craft.frame, yaw, origin, model.top.z) } : {}),
-      })),
+      hardpoints: placed.map(({ id, model, origin }) => {
+        const bases = collision?.bases.get(id);
+        return {
+          id,
+          anchor: hardpointAnchor(craft.frame, yaw, origin, model.z),
+          ...(model.top ? { pivot: hardpointAnchor(craft.frame, yaw, origin, model.top.z) } : {}),
+          ...(bases
+            ? {
+                collision: Object.fromEntries(
+                  states(model).map((state) => [state, bases[state]![yaw]!]),
+                ),
+              }
+            : {}),
+        };
+      }),
+      ...(collision?.hull[yaw] ? { collision: collision.hull[yaw] } : {}),
     })),
     tops: Object.fromEntries(
       sharedTops(craft.name, placed).map((top) => [
@@ -833,6 +914,9 @@ export function hardpointsFile(craft: HeavyCraft, placed: readonly Placed[]): st
         yaws.map((aim) => ({
           index: aim,
           muzzles: top.muzzles.map((muzzle) => relative(aim, top.z, muzzle)),
+          ...(collision?.tops.get(top.name)
+            ? { collision: collision.tops.get(top.name)![aim]! }
+            : {}),
         })),
       ]),
     ),
