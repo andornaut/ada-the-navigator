@@ -656,9 +656,9 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   [Economy](economy.md#ammunition)).
 - Weapon order (Laser, Multi-Laser, Rapid Missile, Heavy Missile, Scattershot,
   Phaser) is also the order of power and rarity: each later weapon costs more,
-  drops less often, gets fewer seconds of fire per ammo pack and deals at least
-  as much single-target damage per second at level 1 (Laser 3.3, Multi-Laser 3.3
-  per bolt with 3 bolts, Rapid Missile 5, Heavy Missile 5, Scattershot 6.0 with
+  drops less often, gets fewer seconds of fire per ammo pack and generally deals
+  more single-target damage per second at level 1 (Laser 3.3, Multi-Laser 2.5
+  per bolt and 7.5 with all 3 bolts, Rapid Missile 5, Heavy Missile 5, Scattershot 6.0 with
   every dot hitting, Phaser 6.5). Slower weapons deal more damage per hit. The
   later weapons are situational, each with a limit that offsets its damage:
   Heavy Missile fires slowly, Scattershot works only up close and Phaser fires
@@ -673,15 +673,16 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   other owned weapons are kept.
 - Every weapon and the shield have three levels. For most weapons each level
   multiplies effective output (damage times fire rate times how often it hits)
-  by about 1.5, so level 3 is about 2.25 times level 1; Rapid Missile gains
-  about 1.2 to 1.3 times per level. Single-target output meets
+  by about 1.5, so level 3 is about 2.25 times level 1; Rapid Missile and
+  Multi-Laser gain about 1.2 to 1.33 times per level. Single-target output meets
   those steps on its own; range, blast and spread growth add to them. The
   shield's capacity is 10, 15 and 20, so level 3 holds 2 times level 1. Each
   weapon grows along its own dimensions:
   - Laser: damage, fire rate and bolt speed: every 0.30, 0.25, 0.20 s, dealing 1,
     1.25 and 1.5 times Laser damage.
   - Multi-Laser: a fan of bolts evenly spaced across a fixed 40 degrees, 3 at
-    level 1 (-20, 0 and 20 degrees), then 4, then 5, with a small damage rise to reach the level step. Its bolts are slower than Laser's at the same level.
+    level 1 (-20, 0 and 20 degrees), then 4, then 5, every 0.30 s. Each bolt deals a fixed 0.75 times Laser damage;
+    levels add only bolts. Its bolts are slower than Laser's at the same level.
   - Rapid Missile: quick straight missiles with a small blast (25) and a fixed
     2.5 times Laser damage; levels grow its fire rate (every 0.50, 0.42, 0.33 s)
     and missile speed.
@@ -715,8 +716,10 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   speed for the weapon (see [Ships](ships.md#enemy-weapons)). An enemy Heavy
   Missile hit (10) can empty a full base shield, so it fires rarely.
 - Laser bolts travel at 500, 600 and 700 world units per second at weapon
-  levels 1, 2 and 3; Multi-Laser bolts at 400, 500 and 600. Both reach a fixed 370 world units at
-  every level, one play view with a small margin, so flight time follows speed. Rapid Missile flies at 500, 600 and
+  levels 1, 2 and 3; Multi-Laser bolts at 400, 500 and 600. Both reach a fixed 300 world units at
+  every level, past the play view's edges straight left, right, up and down
+  (about 255) but short of its corners, which only Phaser reaches; flight time
+  follows speed. Rapid Missile flies at 500, 600 and
   700, and Heavy Missile at a fixed 400; both missiles reach a fixed 220 at every
   level, so a missile that hits nothing explodes on screen. Enemy missiles share
   this reach. Scattershot dots use a fixed base
