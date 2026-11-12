@@ -14,6 +14,7 @@ import {
   ASTEROID_SHAPES,
   bounce,
   orbitMotion,
+  placementRadius,
   reflectDirection,
   rockFrame,
   sceneryBlocksSegment,
@@ -719,11 +720,15 @@ describe("asteroids in flight", () => {
     expect(restoreSave(resumed.save())?.flight?.objects).toContainEqual(back);
   });
 
-  /** Distance from `point` to the edge of an object's footprint, a drift path included. */
+  /**
+   * Distance from `point` to the edge of an object's reach for clearances: a drawn rock's
+   * silhouette radius, else its radius, a drift path included.
+   */
   const gap = (point: Vec, object: SpaceObject) => {
+    const radius = placementRadius(object);
     const reach = object.orbit
-      ? { radius: object.radius + object.orbit.radius, x: object.orbit.x, y: object.orbit.y }
-      : object;
+      ? { radius: radius + object.orbit.radius, x: object.orbit.x, y: object.orbit.y }
+      : { radius, x: object.x, y: object.y };
     return Math.hypot(reach.x - point.x, reach.y - point.y) - reach.radius;
   };
   const drifter = (id: string, from: Vec, distance: number): SpaceObject => {
@@ -781,7 +786,7 @@ describe("asteroids in flight", () => {
         const plan = planChunk(CHUNK_CATALOG, { ...options, seed: flight.seed, x, y });
         planned.push(
           ...plan.placements.filter((placement) => {
-            const reach = placement.radius + (placement.orbit?.radius ?? 0);
+            const reach = placementRadius(placement) + (placement.orbit?.radius ?? 0);
             return (
               Math.hypot(placement.x, placement.y) - reach <= safe &&
               Math.hypot(placement.x - beside.x, placement.y - beside.y) - reach > safe
@@ -812,6 +817,24 @@ describe("asteroids in flight", () => {
     expect(Math.hypot(reaching.x - target.x, reaching.y - target.y)).toBeGreaterThan(safe);
     flight.objects.push(reaching, clear);
     ensureDestination(PROTOTYPE, "probe", flight);
+    expect(flight.objects).not.toContain(reaching);
+    expect(flight.objects).toContain(clear);
+  });
+
+  it("clears a huge rock whose drawn silhouette, not its footprint, reaches a new station's safe area", () => {
+    const flight = createFlight(PROTOTYPE, 1, 173, progress);
+    const site = stationsNear(ECONOMY, 1, ECONOMY.station.cellSize, { x: 60000, y: 0 })[0]!;
+    const safe = ECONOMY.station.safeRadius;
+    const shape = ASTEROID_SHAPES.get("asteroid-h2")!;
+    const silhouette = placementRadius({ asteroid: shape.id, kind: "rock", radius: shape.radius });
+    // The silhouette radius on the world plane reaches far past the footprint.
+    expect(silhouette).toBeGreaterThan(shape.radius + 40);
+    const at = (id: string, distance: number) =>
+      rock(id, { asteroid: shape.id, radius: shape.radius, x: site.x + distance, y: site.y });
+    const reaching = at("reaching", safe + shape.radius + 10);
+    const clear = at("clear", safe + silhouette + 10);
+    flight.objects.push(reaching, clear);
+    expect(ensureStation(PROTOTYPE, site.id, flight)).not.toBeNull();
     expect(flight.objects).not.toContain(reaching);
     expect(flight.objects).toContain(clear);
   });

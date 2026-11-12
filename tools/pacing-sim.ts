@@ -38,7 +38,7 @@ import { PROTOTYPE } from "../src/data/prototype.ts";
 import { SCREEN } from "../src/data/screen.ts";
 import type { SectorId, Weapon } from "../src/data/types.ts";
 import { weaponAt } from "../src/data/weapon-catalog.ts";
-import { ASTEROID_SHAPES, orbitMotion } from "../src/model/asteroids.ts";
+import { ASTEROID_SHAPES, orbitMotion, placementRadius } from "../src/model/asteroids.ts";
 import { planChunk } from "../src/model/chunk-templates.ts";
 import {
   dropRandom,
@@ -445,9 +445,10 @@ export function generateChunk(
     y,
   });
   for (const placement of plan.placements) {
-    // A drifting asteroid keeps clear of Ada and safe areas over its whole path.
+    // A drifting asteroid keeps clear of Ada and safe areas over its whole path, a drawn rock by
+    // its silhouette radius, as in flight.ts.
     const reach =
-      (placement.kind === "pickup" ? flight.pickupRadius : placement.radius) +
+      (placement.kind === "pickup" ? flight.pickupRadius : placementRadius(placement)) +
       (placement.orbit?.radius ?? 0);
     // Asteroids keep out of ore fields, as in flight.ts; caches may lie there.
     const clear =

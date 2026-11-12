@@ -155,7 +155,7 @@ export function resourceShapes(
   return shapes.filter((shape) => shape.size === resource);
 }
 
-export function sceneryShape(object: SpaceObject): AsteroidShape | null {
+export function sceneryShape(object: Pick<SpaceObject, "asteroid">): AsteroidShape | null {
   return object.asteroid ? (ASTEROID_SHAPES.get(object.asteroid) ?? null) : null;
 }
 
@@ -168,7 +168,9 @@ export function asteroidSize(object: SpaceObject): AsteroidSize {
  * The silhouette a scenery object is drawn with: a resource rock's own drawing, else its asteroid
  * shape's; null for a circle obstacle.
  */
-export function scenerySilhouette(object: SpaceObject): Silhouette | null {
+export function scenerySilhouette(
+  object: Pick<SpaceObject, "asteroid" | "kind">,
+): Silhouette | null {
   if (!object.asteroid) {
     return null;
   }
@@ -177,6 +179,29 @@ export function scenerySilhouette(object: SpaceObject): Silhouette | null {
     sceneryShape(object)?.silhouette ??
     null
   );
+}
+
+const WORLD_REACH = new WeakMap<Silhouette, number>();
+/**
+ * A silhouette's radius on the world plane: the farthest point of any frame's outline from the
+ * pivot, as the world offset that projects to it.
+ */
+export function silhouetteWorldReach(drawn: Silhouette): number {
+  let reach = WORLD_REACH.get(drawn);
+  if (reach === undefined) {
+    reach = Math.max(...drawn.frames.map((parts) => partsReach(worldParts(parts))));
+    WORLD_REACH.set(drawn, reach);
+  }
+  return reach;
+}
+
+/**
+ * The radius a clearance stated as radius plus a margin measures (gameplay/rules.md): a drawn
+ * rock's silhouette radius on the world plane, over all its frames; else the object's radius.
+ */
+export function placementRadius(object: Pick<SpaceObject, "asteroid" | "kind" | "radius">): number {
+  const drawn = scenerySilhouette(object);
+  return drawn ? silhouetteWorldReach(drawn) : object.radius;
 }
 
 /**

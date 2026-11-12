@@ -24,6 +24,7 @@ import {
   asteroidSize,
   bounce,
   orbitMotion,
+  placementRadius,
   reflectDirection,
   rockFrame,
   sceneryBlocksSegment,
@@ -170,11 +171,15 @@ function safe(content: PrototypeContent, point: Vec, flight: FlightState): boole
     return radius !== null && distance(point, o) <= radius;
   });
 }
-/** An object's whole footprint: a drifting asteroid's covers its path around the orbit center. */
+/**
+ * An object's whole reach for clearances: a drawn rock's silhouette radius, else its radius, and
+ * a drifting asteroid's covers its path around the orbit center.
+ */
 function footprint(object: SpaceObject): Vec & { radius: number } {
+  const radius = placementRadius(object);
   return object.orbit
-    ? { radius: object.radius + object.orbit.radius, x: object.orbit.x, y: object.orbit.y }
-    : object;
+    ? { radius: radius + object.orbit.radius, x: object.orbit.x, y: object.orbit.y }
+    : { radius, x: object.x, y: object.y };
 }
 /** Whether an object's footprint stays more than `clearance` from `point`. */
 function clearOf(clearance: number, point: Vec, object: SpaceObject): boolean {
@@ -529,7 +534,7 @@ function generate(content: PrototypeContent, point: Vec, flight: FlightState): v
         }
         // Asteroids and resource rocks are not placed in currents or ore fields, drift loops
         // included; an ore field holds only its own rocks.
-        const footprint = object.radius + (object.orbit?.radius ?? 0);
+        const footprint = placementRadius(object) + (object.orbit?.radius ?? 0);
         const at = object.orbit ?? object;
         if (
           !existing.has(object.id) &&
