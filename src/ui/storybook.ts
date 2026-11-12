@@ -410,8 +410,8 @@ ${STORY_PORTRAIT_RULES}
 }
 
 /* Previous at the left and Next at the right, each half the column less the gap; a named action
-   too wide for its half fills the column on its own row below Previous, which moves to the right
-   half: the primary stays at the column's bottom right. */
+   too wide for its half fills the column on its own row SMALL_BUTTON_GAP below Previous, which
+   keeps its left half (art/layout.md "Named action"). */
 .ada-controls .ada-story-controls{
   flex:none;
   margin-top:auto;
@@ -421,7 +421,7 @@ ${STORY_PORTRAIT_RULES}
   gap:${units(SMALL_BUTTON_GAP)}
 }
 .ada-controls .ada-story-controls.ada-story-wide{
-  grid-template-areas:". previous" "next next";
+  grid-template-areas:"previous ." "next next";
 }
 .ada-controls .ada-story-controls > [data-action="story-previous"]{
   grid-area:previous

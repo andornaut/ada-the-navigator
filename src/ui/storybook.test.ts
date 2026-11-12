@@ -122,7 +122,7 @@ describe("storybook page", () => {
     );
     // A named action too wide for its half fills the row below Previous, at the bottom right.
     expect(rule(".ada-controls .ada-story-controls.ada-story-wide")).toContain(
-      'grid-template-areas:". previous" "next next"',
+      'grid-template-areas:"previous ." "next next"',
     );
   });
 
