@@ -49,11 +49,18 @@ describe("split art manifest", () => {
       whirlpoolProjects: "/art/whirlpool/projects.json",
     });
     expect(GALAXY_MANIFESTS.get(1)!.links).toEqual({ backdrop: "/art/sunflower/backdrop.json" });
-    // A placeholder galaxy's manifest holds only its backdrop link.
-    expect(GALAXY_MANIFESTS.get(6)).toEqual({
-      assets: [],
-      links: { backdrop: "/art/black-eye/backdrop.json" },
-    });
+    // Black Eye holds its Blurb settlements, smoke banks and portraits, and its backdrop link.
+    const blackEye = GALAXY_MANIFESTS.get(6)!;
+    expect(blackEye.links).toEqual({ backdrop: "/art/black-eye/backdrop.json" });
+    expect(blackEye.assets.map(({ id }) => id)).toEqual(
+      expect.arrayContaining([
+        "outpost-homes-mended-a",
+        "outpost-harbour-cracked-b",
+        "outpost-signal-mended-b",
+        "nebula-black-eye-1",
+        "dollop-portrait",
+      ]),
+    );
     expect(readGalaxyManifest({ assets: [], tow: 3, version: 1, whales: "/art/w.json" })).toEqual({
       assets: [],
       links: { whales: "/art/w.json" },
