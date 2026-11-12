@@ -6,7 +6,7 @@ import { PROTOTYPE } from "../data/prototype.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
 import { createEnemy, stepDebris, stepEnemy } from "./enemy-ai.ts";
 import { GameModel } from "./game.ts";
-import { readSave, restoreSave, writeSave } from "./save.ts";
+import { newerSave, readSave, restoreSave, SAVE_VERSION, writeSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
 import type { FlightState, GameState, PickupRelease, SpaceObject } from "./types.ts";
 
@@ -719,5 +719,29 @@ describe("deliveries to story places in older saves", () => {
     kept.tasks[3] = { ...job("job:7", other.id), carrying: true, kind: "job" };
     kept.jobs.boards[3] = {};
     expect(restoreSave(JSON.stringify(kept))!.tasks[3]).toMatchObject({ target: { id: other.id } });
+  });
+});
+
+describe("a save from a newer version", () => {
+  it("is told apart from this build's, older and malformed saves", () => {
+    expect(SAVE_VERSION).toBe(1);
+    expect(newerSave({ version: 2 })).toBe(true);
+    expect(newerSave(JSON.stringify({ mode: "home", version: 7 }))).toBe(true);
+    for (const saved of [
+      { version: 1 },
+      { version: 0 },
+      { version: "2" },
+      { version: Number.NaN },
+      {},
+      null,
+      "not json",
+      [2],
+    ]) {
+      expect(newerSave(saved), JSON.stringify(saved)).toBe(false);
+    }
+  });
+
+  it("is never restored, so the game cannot read or replace it", () => {
+    expect(restoreSave({ mode: "home", version: 2 })).toBeNull();
   });
 });

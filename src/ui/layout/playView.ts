@@ -1,8 +1,8 @@
 import type { Rect } from "@andornaut/game-kit/rect";
+import { HIT_RULE, hitAround } from "@andornaut/game-kit/ui/hitAreas";
 
 import { SCREEN } from "../../data/screen.ts";
 import { PILL, TEXT_BUTTON } from "./controls.ts";
-import { HIT_RULE, hitAround } from "./hitAreas.ts";
 import { SMALL_BUTTON_GAP, SPACING, TYPE } from "./tokens.ts";
 
 // The logical view, its scale and the safe-margin clamp (art/layout.md "Coordinates and scale"
@@ -117,7 +117,7 @@ export function hudRect(insets: Insets, view: Size): Rect {
 // The pause button on the HUD rect's top-left corner: the 35 frame, its 33 disc drawn 1 inside it
 // on the corner, in the press area hitAround(frame) (52.5). Relative to the corner.
 const PAUSE_ART: Rect = { height: 35, width: 35, x: -1, y: -1 };
-export const PAUSE_BUTTON = { art: PAUSE_ART, hit: hitAround(PAUSE_ART) } as const;
+export const PAUSE_BUTTON = { art: PAUSE_ART, hit: hitAround(HIT_RULE, PAUSE_ART) } as const;
 
 // The HUD's disc buttons (the weapons, and the start screen's Settings), Chibi's SKILL_BUTTON: a
 // 48 target that is the press area, a 33 disc centred in it with a 1 ink edge (a 4 ink annulus

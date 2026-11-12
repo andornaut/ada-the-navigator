@@ -3,8 +3,9 @@
 // the page loads; the Settings Install row reads the install functions below, and the start
 // screen the update offer and the back guard's arming.
 //
-// Waiting updates activate only through the start screen's update offer, never automatically
-// before input or during play.
+// The game starts at once from the version on disk. A newer version downloads in the background
+// and activates only through the start screen's update offer, never on its own; a save written
+// by a newer version requires it (requireNewerVersion).
 import { appCannotClose } from "@andornaut/game-kit/web/pwa/appWindow";
 import {
   backCloseWatcher,
@@ -36,8 +37,9 @@ import {
 import type { InstallState, InstallStepsKind } from "@andornaut/game-kit/web/pwa/installState";
 import { serviceWorkerUrl } from "@andornaut/game-kit/web/pwa/serviceWorkerUrl";
 import { requestPersistentStorage } from "@andornaut/game-kit/web/pwa/storagePersistence";
+import type { RequiredUpdateState } from "@andornaut/game-kit/web/pwa/updateReady";
 
-import { offlineActivity } from "../loading/progress.ts";
+import { offlineActivity, requiredUpdateActivity } from "../loading/progress.ts";
 import { dispatchPhoneEvent, PHONE_EVENTS } from "./events.ts";
 import {
   createUpdateOffer,
@@ -57,15 +59,13 @@ export {
 const SERVICE_WORKER_URL = "/sw.js";
 // The history state key of the extra entry that back pops instead of leaving the game.
 const BACK_GUARD_KEY = "adaBackGuard";
-// A startup check may hold the first screen and saves for this long; activation remains manual.
-const BOOT_WAIT_MS = 4000;
-
 let flow: InstallFlow | undefined;
 let offlinePlay: OfflinePlay | undefined;
 let startScreen: StartScreen | undefined;
 let screenWakeLock: ScreenWakeLock | undefined;
-// Resolves once the game may show its first screen and use its save (UpdateFlow.bootable).
-let ready: Promise<void> = Promise.resolve();
+// The forced update's state once a newer save requires it, and who hears it.
+let required: RequiredUpdateState | undefined;
+let onRequired: ((state: RequiredUpdateState) => void) | undefined;
 
 // The start screen's update offer: Update now switches to the waiting version and reloads; a
 // defer keeps the current one until the next start-screen visit.
@@ -81,6 +81,15 @@ function installFlow(): InstallFlow {
   return flow;
 }
 
+// The forced update's state: "updating" while the newer version downloads, which the loading
+// bar shows travelling, and "unavailable" while it cannot (offline), which the start screen shows
+// as one message. The kit retries on its own and reloads once the newer version is in.
+function requiredUpdate(state: RequiredUpdateState): void {
+  required = state;
+  requiredUpdateActivity(state);
+  onRequired?.(state);
+}
+
 // The production build only: the dev server has no sw.js, and a worker would serve stale modules
 // over hot reloads. A page a version controls registers now, so its update check runs while the
 // game loads; a first visit registers once the game shows (gameShown), so the precache does not
@@ -92,9 +101,8 @@ function setupOfflinePlay(): void {
   }
   const play = startOfflinePlay(
     {
-      activationPolicy: "manual",
-      bootWaitMs: BOOT_WAIT_MS,
       onOfflineActivity: offlineActivity,
+      onRequireNewer: requiredUpdate,
       onUpdateShown: updateOffer.setVisible,
       serviceWorkerUrl: serviceWorkerUrl(SERVICE_WORKER_URL, undefined),
     },
@@ -102,7 +110,6 @@ function setupOfflinePlay(): void {
   );
   offlinePlay = play;
   startScreen = trackStartScreen(play.flow.setOfferVisible);
-  ready = play.bootable;
 }
 
 // Whether back stays on the game. The start screen with nothing open releases it; flight or an
@@ -232,11 +239,20 @@ export function exitGame(): void {
   exitApp(browserExitPage());
 }
 
-// Resolves once the game may show its first screen and read or write its save: at once, or after
-// a fresh load has checked for a newer version, for at most BOOT_WAIT_MS, so a version already
-// waiting is offered on the start screen before play begins.
-export function launchReady(): Promise<void> {
-  return ready;
+// A save written by a newer version: the game must update before it plays, so the kit installs
+// the newer version and reloads into it. The save stays untouched and Start stays closed.
+// onState hears the forced update's state now, if known, and on each change. Outside the
+// production build, with no service worker, the state is "unavailable" at once.
+export function requireNewerVersion(onState: (state: RequiredUpdateState) => void): void {
+  onRequired = onState;
+  if (offlinePlay) {
+    offlinePlay.flow.requireNewer();
+  } else {
+    requiredUpdate("unavailable");
+  }
+  if (required !== undefined) {
+    onState(required);
+  }
 }
 
 // The game's first screen has drawn with its art loaded: a first visit registers the service

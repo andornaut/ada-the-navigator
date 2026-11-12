@@ -12,6 +12,7 @@ function updating(waiting: boolean) {
     state: "installed",
   });
   const registration = Object.assign(new EventTarget(), {
+    active: null,
     installing: null,
     update: () => Promise.resolve(),
     waiting: waiting ? worker : null,
@@ -26,14 +27,9 @@ function updating(waiting: boolean) {
   );
   offer.subscribe(shown);
   const flow = createUpdateFlow(
-    container,
-    () => 0,
-    () => true,
-    reload,
-    offer.setVisible,
-    {
-      activationPolicy: "manual",
-    },
+    { container, now: () => 0, online: () => true, reload, session: undefined },
+    () => Promise.resolve(),
+    { onRequireNewer: vi.fn(), onUpdateShown: offer.setVisible },
   );
   accept = () => flow.accept();
   dismiss = () => flow.dismissOffer();

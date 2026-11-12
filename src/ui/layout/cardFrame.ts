@@ -1,8 +1,8 @@
 import { MODAL_CONTENT } from "@andornaut/game-kit/modalLayout";
 import type { Rect } from "@andornaut/game-kit/rect";
+import { HIT_RULE, hitAround } from "@andornaut/game-kit/ui/hitAreas";
 
 import { CARD_SLICE } from "./controls.ts";
-import { hitAround } from "./hitAreas.ts";
 import { SPACING, TYPE } from "./tokens.ts";
 
 // The modal card's frame and header (art/layout.md "Modals"), as Chibi's
@@ -28,7 +28,7 @@ const CLOSE_ART: Rect = {
   y: CARD_CONTENT.closeInset,
 };
 
-export const CARD_CLOSE = { art: CLOSE_ART, hit: hitAround(CLOSE_ART) } as const;
+export const CARD_CLOSE = { art: CLOSE_ART, hit: hitAround(HIT_RULE, CLOSE_ART) } as const;
 
 // The title's clearance on each side: the full positioned close target plus a gap, mirrored, or
 // the ordinary padding without a close control.

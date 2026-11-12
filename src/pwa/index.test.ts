@@ -5,15 +5,21 @@ const offline = vi.hoisted(() => {
     accept: vi.fn(),
     beginOfferVisit: vi.fn(),
     dismissOffer: vi.fn(),
+    requireNewer: vi.fn(),
     setOfferVisible: vi.fn(),
   };
-  const play = { bootable: Promise.resolve(), flow, registrationReady: vi.fn() };
+  const play = { flow, registrationReady: vi.fn() };
   return {
     play,
-    start: vi.fn((options: { activationPolicy?: string; serviceWorkerUrl: string }) => {
-      void options;
-      return play;
-    }),
+    start: vi.fn(
+      (options: {
+        onRequireNewer: (state: "unavailable" | "updating") => void;
+        serviceWorkerUrl: string;
+      }) => {
+        void options;
+        return play;
+      },
+    ),
   };
 });
 vi.mock("@andornaut/game-kit/web/pwa/dom/offlinePlay", () => ({
@@ -102,12 +108,17 @@ afterEach(() => {
 });
 
 describe("offline play", () => {
-  it("registers /sw.js with manual activation once a first visit's game shows", async () => {
+  it("registers /sw.js once a first visit's game shows, with no boot wait", async () => {
     stubDevice({});
     const pwa = await import("./index.ts");
     pwa.setupPhoneApp();
     const options = offline.start.mock.calls[0]![0];
-    expect(options.activationPolicy).toBe("manual");
+    expect(Object.keys(options).sort()).toEqual([
+      "onOfflineActivity",
+      "onRequireNewer",
+      "onUpdateShown",
+      "serviceWorkerUrl",
+    ]);
     expect(options.serviceWorkerUrl).toBe("/sw.js");
     expect(offline.play.registrationReady).not.toHaveBeenCalled();
     pwa.gameShown();
@@ -135,6 +146,31 @@ describe("offline play", () => {
     options.onUpdateShown(true);
     pwa.updateOffer.accept();
     expect(flow.accept).toHaveBeenCalledOnce();
+  });
+
+  it("requires the newer version for a newer save and reports its state as it changes", async () => {
+    stubDevice({});
+    const pwa = await import("./index.ts");
+    pwa.setupPhoneApp();
+    const options = offline.start.mock.calls[0]![0];
+    const states: string[] = [];
+    pwa.requireNewerVersion((state) => states.push(state));
+    expect(offline.play.flow.requireNewer).toHaveBeenCalledOnce();
+    expect(states).toEqual([]);
+    options.onRequireNewer("unavailable");
+    options.onRequireNewer("updating");
+    expect(states).toEqual(["unavailable", "updating"]);
+  });
+
+  it("reports a newer save's update unavailable without a service worker", async () => {
+    vi.stubEnv("PROD", false);
+    stubDevice({});
+    const pwa = await import("./index.ts");
+    pwa.setupPhoneApp();
+    const states: string[] = [];
+    pwa.requireNewerVersion((state) => states.push(state));
+    expect(offline.play.flow.requireNewer).not.toHaveBeenCalled();
+    expect(states).toEqual(["unavailable"]);
   });
 
   it("starts no service worker outside the production build", async () => {

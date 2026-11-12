@@ -1,26 +1,37 @@
 import "@andornaut/game-kit/web/progress/dom/progressBar.css";
 
 import type { ProgressBarStyle } from "@andornaut/game-kit/progress";
-import { createProgressState, type ProgressHandle } from "@andornaut/game-kit/progressState";
+import {
+  createLayeredProgress,
+  createProgressState,
+  type ProgressHandle,
+} from "@andornaut/game-kit/progressState";
 import {
   createDomProgressBar,
   type DomProgressTiming,
 } from "@andornaut/game-kit/web/progress/dom/progressBar";
 import type { OfflineActivity } from "@andornaut/game-kit/web/pwa/dom/offlinePlay";
+import type { RequiredUpdateState } from "@andornaut/game-kit/web/pwa/updateReady";
 
 import { SCREEN } from "../data/screen.ts";
 import { VIEW_PROPERTIES } from "../ui/layout/css.ts";
 import { VIEW_SCALE_EVENT } from "../ui/layout/viewScale.ts";
 import { LOADING_BAR } from "../ui/loading-bar.ts";
-import { followLoading } from "./loadingBar.ts";
 
-// The game's loads and the offline precache, shown as one loading bar along the top edge of the
-// play area (src/ui/loading-bar.ts). The game's own loads (Phaser's loader: the boot preload, a
-// galaxy's art and any later art) measure their share; the precache reports activity only.
+// The loads the player waits for over the background work, shown as one loading bar along the
+// top edge of the play area (src/ui/loading-bar.ts): known progress fills, holds and fades, work
+// of unknown total travels, and nothing shows while idle.
 
-/** The game's own loads, measured. */
+/**
+ * The loads the player waits for, which alone show the bar in the foreground: the boot preload
+ * before the first screen, and a galaxy's own art as its first flight starts. On-demand art during
+ * play (scenery, rocks, ship parts, paint) loads silently.
+ */
+export type WaitedLoad = "boot" | "galaxy";
+
+/** The waited-for loads, each measured by the kit's loader watch (src/game/scene.ts). */
 export const loadingProgress = createProgressState();
-/** The service worker's precache, of unknown total. */
+/** The background work, of unknown total: the first visit's precache or a forced update. */
 export const installProgress = createProgressState();
 
 const colour = (hex: string) => Number.parseInt(hex.slice(1), 16);
@@ -44,14 +55,17 @@ export const BAR_TIMING: DomProgressTiming = {
 // The kit's bar, the fill and track band; the host holds it and the rule below, the whole height.
 const FRAME = { height: LOADING_BAR.fillHeight, width: SCREEN.width, x: 0, y: 0 };
 
+// What the background shows for: the first visit's precache, and a forced update downloading.
+const background = new Set<"precaching" | "required">();
 let install: ProgressHandle | undefined;
 
-/**
- * offlinePlay's activity: only the first visit's precache shows, until it ends; an update installs
- * silently.
- */
-export function offlineActivity(activity: OfflineActivity): void {
-  if (activity === "precaching") {
+function showBackground(reason: "precaching" | "required", shown: boolean): void {
+  if (shown) {
+    background.add(reason);
+  } else {
+    background.delete(reason);
+  }
+  if (background.size > 0) {
     install ??= installProgress.begin();
   } else {
     install?.finish();
@@ -60,9 +74,22 @@ export function offlineActivity(activity: OfflineActivity): void {
 }
 
 /**
- * Mounts the loading bar's host along the top of parent, the play area: drawn in logical px,
- * stretched to parent's whole width and scaled by its view unit, insets ignored. A bar element
- * exists only while something loads. Returns the function that removes it.
+ * offlinePlay's activity: only the first visit's precache shows, until it ends; an update installs
+ * silently.
+ */
+export function offlineActivity(activity: OfflineActivity): void {
+  showBackground("precaching", activity === "precaching");
+}
+
+/** A forced update for a newer save: the bar travels while it downloads ("updating"). */
+export function requiredUpdateActivity(state: RequiredUpdateState): void {
+  showBackground("required", state === "updating");
+}
+
+/**
+ * Mounts the loading bar along the top of parent, the play area: drawn in logical px, stretched to
+ * parent's whole width and scaled by its view unit, insets ignored. The kit's bar stays mounted
+ * and hides itself while idle. Returns the function that removes it.
  */
 export function mountLoading(parent: HTMLElement): () => void {
   const document = parent.ownerDocument;
@@ -84,36 +111,35 @@ export function mountLoading(parent: HTMLElement): () => void {
   parent.append(host);
   window.addEventListener("resize", fit);
   window.addEventListener(VIEW_SCALE_EVENT, fit);
-  const stop = followLoading(
-    {
-      clearTimeout: (handle) => window.clearTimeout(handle as number),
-      create: () => {
-        const bar = createDomProgressBar(host, BAR_STYLE, FRAME, BAR_TIMING);
-        // The opaque ink rule under the band: inside the kit's bar, so it fades and goes with it.
-        const rule = document.createElement("div");
-        rule.className = "ada-loading-rule";
-        Object.assign(rule.style, {
-          backgroundColor: LOADING_BAR.rule,
-          height: `${LOADING_BAR.ruleHeight}px`,
-          left: "0",
-          position: "absolute",
-          top: `${FRAME.height}px`,
-          width: `${FRAME.width}px`,
-        });
-        bar.element.append(rule);
-        // Named for the game, as Chibi's is, with no string of its own.
-        const name = parent.getAttribute("aria-label");
-        if (name) {
-          bar.element.setAttribute("aria-label", name);
-        }
-        return bar;
-      },
-      fadeMs: BAR_TIMING.fadeMs ?? 0,
-      fullMs: BAR_TIMING.fullMs,
-      setTimeout: (handler, ms) => window.setTimeout(handler, ms),
-    },
+  const bar = createDomProgressBar(host, BAR_STYLE, FRAME, BAR_TIMING);
+  // The opaque ink rule under the band: inside the kit's bar, so it fades and hides with it.
+  const rule = document.createElement("div");
+  rule.className = "ada-loading-rule";
+  Object.assign(rule.style, {
+    backgroundColor: LOADING_BAR.rule,
+    height: `${LOADING_BAR.ruleHeight}px`,
+    left: "0",
+    position: "absolute",
+    top: `${FRAME.height}px`,
+    width: `${FRAME.width}px`,
+  });
+  bar.element.append(rule);
+  // Named for the game, as Chibi's is, with no string of its own.
+  const name = parent.getAttribute("aria-label");
+  if (name) {
+    bar.element.setAttribute("aria-label", name);
+  }
+  const layered = createLayeredProgress(
+    window,
+    { fadeMs: BAR_TIMING.fadeMs ?? 0, fullMs: BAR_TIMING.fullMs },
     { background: installProgress, foreground: loadingProgress },
   );
+  const unsubscribe = layered.subscribe(bar.report);
+  const stop = () => {
+    unsubscribe();
+    layered.dispose();
+    bar.remove();
+  };
   return () => {
     stop();
     window.removeEventListener("resize", fit);

@@ -1,11 +1,11 @@
 import type { Rect } from "@andornaut/game-kit/rect";
+import { HIT_RULE } from "@andornaut/game-kit/ui/hitAreas";
 import { describe, expect, it } from "vitest";
 
 import { MOVE_STICK_GEOMETRY, STICK_GEOMETRY, stickVector } from "../../input/state.ts";
 import { PILL, TEXT_BUTTON } from "./controls.ts";
 import { conversationBoxRect } from "./conversationBox.ts";
 import { fromSafeEdge, safeEdge, slice, units, VIEW_PROPERTIES } from "./css.ts";
-import { HIT_RULE } from "./hitAreas.ts";
 import {
   CONTROL_EDGE,
   gameAreaGap,

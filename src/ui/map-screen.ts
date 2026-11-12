@@ -1,4 +1,5 @@
 import type { Rect } from "@andornaut/game-kit/rect";
+import { HIT_RULE, hitAround, type PressArea, pressedArea } from "@andornaut/game-kit/ui/hitAreas";
 
 import JOBS from "../../public/art/jobs.json" with { type: "json" };
 import { readMapArea } from "../game/job-art.ts";
@@ -12,7 +13,6 @@ import {
 import type { Vec } from "../model/types.ts";
 import { CARD_SLICE, FOCUS_RING, TEXT_BUTTON } from "./layout/controls.ts";
 import { font, fromHudEdge, safeEdge, slice, units, VIEW_PROPERTIES } from "./layout/css.ts";
-import { hitAround, type PressArea, pressedArea } from "./layout/hitAreas.ts";
 import {
   adaAngle,
   chipRect,
@@ -1285,7 +1285,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       const current = view;
       const areas: PressArea<string>[] = places().map((place) => {
         const art = chipRect(toScreen(inner, current, place));
-        return { art, hit: hitAround(art), key: place.id };
+        return { art, hit: hitAround(HIT_RULE, art), key: place.id };
       });
       // Exact ties go to the chip drawn on top: the later one in the map's order.
       select(pressedArea([...areas].reverse(), press.at) ?? null);

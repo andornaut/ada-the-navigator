@@ -1,3 +1,4 @@
+import { type LoaderWatch, watchLoader } from "@andornaut/game-kit/load/phaser/watchLoader";
 import { setTextureFilters } from "@andornaut/game-kit/view/phaser/textureFilter";
 import { densityTexels, MAX_RENDER_SCALE } from "@andornaut/game-kit/view/renderScale";
 import {
@@ -31,8 +32,7 @@ import type { SectorId } from "../data/types.ts";
 import { PICKUP_GLYPH, pickupGlyphKey, weaponGlyphPath } from "../data/weapon-glyphs.ts";
 import { coarsePointer } from "../input/coarse-pointer.ts";
 import { createControls } from "../input/controls.ts";
-import { type LoadTracker, trackLoader } from "../loading/loadingBar.ts";
-import { loadingProgress } from "../loading/progress.ts";
+import { loadingProgress, type WaitedLoad } from "../loading/progress.ts";
 import { rockFrame, scenerySilhouette } from "../model/asteroids.ts";
 import { grantAllWeapons } from "../model/cheats.ts";
 import { type Current, currentsNear, flowFraction } from "../model/currents.ts";
@@ -49,6 +49,7 @@ import { GameModel } from "../model/game.ts";
 import { type GainSnapshot, itemGains } from "../model/item-gains.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 import { projectileOpacity } from "../model/player-projectiles.ts";
+import { newerSave } from "../model/save.ts";
 import { hullOffset } from "../model/ship-physics.ts";
 import { fill, itemAbout, itemName, type ShopItem } from "../model/shop.ts";
 import {
@@ -67,9 +68,9 @@ import {
   installApp,
   installState,
   keepScreenOn,
-  launchReady,
   offersInstall,
   onInstallStateChange,
+  requireNewerVersion,
   setBackArmed,
   startScreenShown,
   stepsKind,
@@ -190,7 +191,7 @@ import {
   readLightGalaxies,
   thresholdSilhouette,
 } from "./light-field.ts";
-import { readSave, writeSave } from "./persistence.ts";
+import { readSave, stopSaving, writeSave } from "./persistence.ts";
 import { zipAt } from "./pickup-zip.ts";
 import {
   canvasSize,
@@ -555,15 +556,20 @@ export class PrototypeScene extends Scene {
   private routeGalaxies: () => RouteMapView["galaxies"] = () => [];
   private restartCard!: ReturnType<typeof createRestartCard>;
   private conversationBox!: ConversationBox;
-  // The loader runs the player waits for show the loading bar; on-demand art loads silently.
-  private loads: LoadTracker | undefined;
+  // The loader runs the player waits for show the loading bar; on-demand art loads silently. The
+  // kit's watch also gives every file the loader's timeout and retries failed loads in rounds.
+  private loads: LoaderWatch<WaitedLoad> | undefined;
 
   constructor() {
     super("prototype");
   }
 
   preload(): void {
-    this.loads ??= trackLoader(loadingProgress, this.load);
+    // Each time the scene starts, before its files queue; scene shutdown disposes it.
+    this.loads = watchLoader<WaitedLoad>(
+      { console, progress: loadingProgress, timer: window },
+      this,
+    );
     this.loads.waitFor("boot");
     // Preload runs before followFrameTurn sizes the canvas, so the raster scale starts from the
     // fit the canvas's parent will give.
@@ -667,15 +673,20 @@ export class PrototypeScene extends Scene {
     preloadTouchChrome(this);
   }
 
-  // The art loads while a fresh launch checks for a newer version; the save is read and the
-  // first screen, always the start screen, built once that check lets it show (launchReady).
-  // update waits for the controls build makes.
+  // The first screen, always the start screen, shows at once from the version on disk. A save
+  // from a newer version is never read or overwritten: saving stops, Start stays closed and the
+  // newer version installs (requireNewerVersion). update waits for the controls build makes.
   create(): void {
-    void launchReady().then(() => this.build());
+    this.build();
   }
 
   private build(): void {
-    this.model = new GameModel(PROTOTYPE, readSave());
+    const saved = readSave();
+    const newer = newerSave(saved);
+    if (newer) {
+      stopSaving();
+    }
+    this.model = new GameModel(PROTOTYPE, newer ? null : saved);
     this.basePalette =
       readSpacePalette(this.cache.json.get("space-palette")) ?? FALLBACK_SPACE_PALETTE;
     this.palette = this.basePalette;
@@ -1235,6 +1246,9 @@ export class PrototypeScene extends Scene {
       this.shell.dispose();
     });
     this.observeFeedback();
+    if (newer) {
+      requireNewerVersion((state) => this.shell.setRequiredUpdate(state));
+    }
     this.refresh();
     this.loadAsteroidArt();
   }

@@ -1,3 +1,5 @@
+import { HIT_RULE, hitMargin } from "@andornaut/game-kit/ui/hitAreas";
+
 import {
   CARD_CLOSE,
   CARD_CONTENT,
@@ -14,7 +16,6 @@ import {
   TEXT_BUTTON,
 } from "./layout/controls.ts";
 import { font, fromHudEdge, safeEdge, slice, units } from "./layout/css.ts";
-import { hitMargin } from "./layout/hitAreas.ts";
 import { PAUSE_BUTTON, SAFE_MARGIN } from "./layout/playView.ts";
 import { BUTTON_GAP, SPACING, STACK_BUTTON_GAP, TYPE } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
@@ -94,7 +95,7 @@ const STORY_SUNK_PADDING = `${lessSlice(
   top,
 )} ${STORY_SIDE} ${lessSlice(STORY_BUTTON.verticalInset + lipHeight - pressedSink, bottom)}`;
 // The story action's press area grows its face by hitAround's margin on each side.
-const STORY_HIT = hitMargin({
+const STORY_HIT = hitMargin(HIT_RULE, {
   height: STORY_BUTTON.height,
   width: STORY_BUTTON.height,
   x: 0,

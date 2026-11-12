@@ -1,4 +1,5 @@
 import { MODAL_CONTENT } from "@andornaut/game-kit/modalLayout";
+import { HIT_RULE, hitAround, hitMargin, pressedArea } from "@andornaut/game-kit/ui/hitAreas";
 import { describe, expect, it } from "vitest";
 
 import { CARD_CONTENT } from "./cardFrame.ts";
@@ -10,7 +11,6 @@ import {
   TEXT_BUTTON,
   WHOLE_PX_EDGES,
 } from "./controls.ts";
-import { HIT_RULE, hitAround, hitMargin, pressedArea } from "./hitAreas.ts";
 import { CONTROL_EDGE, SAFE_MARGIN } from "./playView.ts";
 import { SPACING, TYPE } from "./tokens.ts";
 
@@ -85,16 +85,16 @@ describe("layout tokens", () => {
 describe("press areas", () => {
   it("grow a face by a quarter of its shorter side, clamped to 6..16, then to 48", () => {
     expect(HIT_RULE).toEqual({ leastMargin: 6, marginShare: 0.25, minTarget: 48, mostMargin: 16 });
-    expect(hitMargin({ height: 24, width: 24, x: 0, y: 0 })).toBe(6);
-    expect(hitMargin({ height: 48, width: 200, x: 0, y: 0 })).toBe(12);
-    expect(hitMargin({ height: 100, width: 100, x: 0, y: 0 })).toBe(16);
-    expect(hitAround({ height: 24, width: 24, x: 10, y: 10 })).toEqual({
+    expect(hitMargin(HIT_RULE, { height: 24, width: 24, x: 0, y: 0 })).toBe(6);
+    expect(hitMargin(HIT_RULE, { height: 48, width: 200, x: 0, y: 0 })).toBe(12);
+    expect(hitMargin(HIT_RULE, { height: 100, width: 100, x: 0, y: 0 })).toBe(16);
+    expect(hitAround(HIT_RULE, { height: 24, width: 24, x: 10, y: 10 })).toEqual({
       height: 48,
       width: 48,
       x: -2,
       y: -2,
     });
-    expect(hitAround({ height: 48, width: 48, x: 0, y: 0 })).toEqual({
+    expect(hitAround(HIT_RULE, { height: 48, width: 48, x: 0, y: 0 })).toEqual({
       height: 72,
       width: 72,
       x: -12,
@@ -106,8 +106,8 @@ describe("press areas", () => {
     const a = { height: 48, width: 48, x: 0, y: 0 };
     const b = { height: 48, width: 48, x: 56, y: 0 };
     const areas = [
-      { art: a, hit: hitAround(a), key: "a" },
-      { art: b, hit: hitAround(b), key: "b" },
+      { art: a, hit: hitAround(HIT_RULE, a), key: "a" },
+      { art: b, hit: hitAround(HIT_RULE, b), key: "b" },
     ];
     expect(pressedArea(areas, { x: 50, y: 24 })).toBe("a");
     expect(pressedArea(areas, { x: 54, y: 24 })).toBe("b");

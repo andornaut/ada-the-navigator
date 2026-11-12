@@ -1,4 +1,5 @@
 import { modalWidth } from "@andornaut/game-kit/modalLayout";
+import { HIT_RULE, hitAround } from "@andornaut/game-kit/ui/hitAreas";
 import { describe, expect, it } from "vitest";
 
 import { CARD_CLOSE, CARD_CONTENT, cardHeaderLayout, cardTitleReserve } from "./cardFrame.ts";
@@ -12,7 +13,6 @@ import {
   SCROLL,
 } from "./contentCard.ts";
 import { CONTROL_ROW, TEXT_BUTTON } from "./controls.ts";
-import { hitAround } from "./hitAreas.ts";
 import { logicalView, SAFE_MARGIN, safeRect } from "./playView.ts";
 import { BUTTON_GAP, SPACING } from "./tokens.ts";
 
@@ -43,7 +43,7 @@ describe("content-fitted card width", () => {
   });
 
   it("counts the title with its derived 50 clearance on each side as content", () => {
-    expect(CARD_CLOSE.hit).toEqual(hitAround(CARD_CLOSE.art));
+    expect(CARD_CLOSE.hit).toEqual(hitAround(HIT_RULE, CARD_CLOSE.art));
     expect(CARD_CLOSE.hit).toEqual({ height: 48, width: 48, x: -6, y: -6 });
     expect(cardTitleReserve(true)).toBe(CARD_CLOSE.hit.x + CARD_CLOSE.hit.width + SPACING.gap);
     expect(cardTitleReserve(true)).toBe(50);

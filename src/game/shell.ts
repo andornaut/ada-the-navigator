@@ -1,3 +1,5 @@
+import type { RequiredUpdateState } from "@andornaut/game-kit/web/pwa/updateReady";
+
 import { ECONOMY } from "../data/economy.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { Screen } from "../model/game.ts";
@@ -28,6 +30,8 @@ export class StoryShell {
   private readonly status = document.createElement("div");
   private readonly panel = document.createElement("section");
   private signature = "";
+  // A newer save's forced update, while it runs: Start stays closed.
+  private requiredUpdate: RequiredUpdateState | undefined;
   private startScreen: ReturnType<typeof createStartScreen> | undefined;
   // Art's title art, once the scene has read it; the start screen draws without it until then.
   private titleArt: TitleScreenArt | null = null;
@@ -61,6 +65,7 @@ export class StoryShell {
       state.dialogue,
       state.economy.paint,
       this.titleArt !== null,
+      this.requiredUpdate ?? null,
     ]);
     if (nextSignature === this.signature) {
       return;
@@ -102,32 +107,38 @@ export class StoryShell {
     } else if (screen === "start") {
       // Start until the first flight begins, then Continue (primary, the default and first Tab
       // stop) and Restart (secondary, on its left).
-      const actions = state.started
-        ? ([
-            {
-              action: "continue",
-              label: PROTOTYPE.labels.continue ?? "",
-              role: "primary",
-              run: this.actions.continueGame,
-            },
-            {
-              action: "restart",
-              label: PROTOTYPE.labels.restart ?? "",
-              role: "secondary",
-              run: this.actions.restart,
-            },
-          ] as const)
-        : ([
-            {
-              action: "start",
-              label: PROTOTYPE.labels.start ?? "",
-              role: "primary",
-              run: this.actions.start,
-            },
-          ] as const);
+      const actions = this.requiredUpdate
+        ? []
+        : state.started
+          ? ([
+              {
+                action: "continue",
+                label: PROTOTYPE.labels.continue ?? "",
+                role: "primary",
+                run: this.actions.continueGame,
+              },
+              {
+                action: "restart",
+                label: PROTOTYPE.labels.restart ?? "",
+                role: "secondary",
+                run: this.actions.restart,
+              },
+            ] as const)
+          : ([
+              {
+                action: "start",
+                label: PROTOTYPE.labels.start ?? "",
+                role: "primary",
+                run: this.actions.start,
+              },
+            ] as const);
       const paint = state.economy.paint;
       this.startScreen = createStartScreen(this.host, this.titleArt, {
         actions,
+        // Offline, the forced update says so where Start would be; downloading, the loading bar
+        // travels instead.
+        note:
+          this.requiredUpdate === "unavailable" ? (PROTOTYPE.labels.updateRequired ?? "") : null,
         paint: paint === ECONOMY.defaultPaint ? null : paint,
         title: PROTOTYPE.labels.home ?? "",
       });
@@ -148,6 +159,15 @@ export class StoryShell {
     } else if (screen === "start" || state.dialogue) {
       shown.querySelector<HTMLButtonElement>("button")?.focus();
     }
+  }
+
+  /**
+   * A newer save's forced update (requireNewerVersion): the start screen offers no action, and
+   * while the update cannot download it shows the update-required message.
+   */
+  setRequiredUpdate(state: RequiredUpdateState): void {
+    this.requiredUpdate = state;
+    this.signature = "";
   }
 
   /** Focuses the start screen's default button, its first, as a card over it closes. */

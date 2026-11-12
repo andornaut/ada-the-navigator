@@ -1,7 +1,7 @@
 import { font, fromAreaLeft, units } from "./layout/css.ts";
 import { START_SCREEN, type StartAction } from "./layout/startScreen.ts";
 import { TYPE } from "./layout/tokens.ts";
-import { createButton } from "./modal.ts";
+import { createButton, TEXT_TOKENS } from "./modal.ts";
 import { jetPolygons, type TitleScreenArt, titleShip } from "./title-screen.ts";
 import { applyButtonSkin } from "./ui-skin.ts";
 
@@ -12,7 +12,7 @@ import { applyButtonSkin } from "./ui-skin.ts";
 
 export const START_SCREEN_CLASS = "ada-start";
 
-const { actions, ship, wordmark } = START_SCREEN;
+const { actions, note, ship, wordmark } = START_SCREEN;
 const SVG = "http://www.w3.org/2000/svg";
 
 export const START_SCREEN_STYLE = `
@@ -52,6 +52,17 @@ export const START_SCREEN_STYLE = `
   font:${font(TYPE.heading)}
 }
 
+/* The note (art/layout.md "Start screen"): one body line box a gap below the action row,
+   centred on the game area, cream with no panel. */
+.${START_SCREEN_CLASS} .ada-start-note{
+  left:${fromAreaLeft(note.centre)};
+  top:${units(note.top)};
+  transform:translateX(-50%);
+  margin:0;
+  white-space:nowrap;
+  font:${font(TYPE.body)};
+  color:${TEXT_TOKENS.label}
+}
 .${START_SCREEN_CLASS} .ada-start-title img{
   display:block;
   width:100%;
@@ -88,6 +99,8 @@ export interface StartScreenContent {
     readonly role: "primary" | "secondary";
     readonly run: () => void;
   }[];
+  /** The note under the action row, or null for none. */
+  readonly note?: string | null;
   /** The selected paint, or null for Classic. */
   readonly paint: string | null;
   readonly title: string;
@@ -157,6 +170,13 @@ export function createStartScreen(
     return button;
   });
   root.append(...parts, title, row);
+  if (content.note) {
+    const note = document.createElement("p");
+    note.className = "ada-start-note";
+    note.setAttribute("role", "status");
+    note.textContent = content.note;
+    root.append(note);
+  }
   // First in the play area, so its actions are the first Tab stops, before the HUD row's discs.
   parent.prepend(root);
   // Art's button faces, as the controls overlay takes them.

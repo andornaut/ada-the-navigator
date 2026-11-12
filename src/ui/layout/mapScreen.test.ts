@@ -1,10 +1,10 @@
 import { readFileSync } from "node:fs";
 
+import { HIT_RULE, hitAround, pressedArea } from "@andornaut/game-kit/ui/hitAreas";
 import { describe, expect, it } from "vitest";
 
 import type { SectorId } from "../../data/types.ts";
 import { FALLBACK_SPACE_PALETTE, readGalaxyFields } from "../../game/space-palette.ts";
-import { hitAround, pressedArea } from "./hitAreas.ts";
 import {
   adaAngle,
   chipRect,
@@ -292,11 +292,11 @@ describe("map projection and fit", () => {
 describe("close places", () => {
   it("give every chip a 48 press area where the nearest centre wins", () => {
     const art = chipRect({ x: 100, y: 100 });
-    expect(hitAround(art).width).toBe(MAP_SYMBOL.hit);
+    expect(hitAround(HIT_RULE, art).width).toBe(MAP_SYMBOL.hit);
     const areas = [
       { art: chipRect({ x: 100, y: 100 }), key: "a" },
       { art: chipRect({ x: 112, y: 100 }), key: "b" },
-    ].map(({ art: rect, key }) => ({ art: rect, hit: hitAround(rect), key }));
+    ].map(({ art: rect, key }) => ({ art: rect, hit: hitAround(HIT_RULE, rect), key }));
     expect(pressedArea(areas, { x: 101, y: 100 })).toBe("a");
     expect(pressedArea(areas, { x: 111, y: 100 })).toBe("b");
   });

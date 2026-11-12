@@ -15,7 +15,6 @@ import * as contentCard from "../src/ui/layout/contentCard.ts";
 import * as controls from "../src/ui/layout/controls.ts";
 import * as conversationBox from "../src/ui/layout/conversationBox.ts";
 import * as css from "../src/ui/layout/css.ts";
-import * as hitAreas from "../src/ui/layout/hitAreas.ts";
 import * as itemNotice from "../src/ui/layout/itemNotice.ts";
 import * as mapScreen from "../src/ui/layout/mapScreen.ts";
 import * as playView from "../src/ui/layout/playView.ts";
@@ -34,7 +33,6 @@ export const LAYOUT_MODULES: Readonly<Record<string, Readonly<Record<string, unk
   "controls.ts": controls,
   "conversationBox.ts": conversationBox,
   "css.ts": css,
-  "hitAreas.ts": hitAreas,
   "itemNotice.ts": itemNotice,
   "mapScreen.ts": mapScreen,
   "playView.ts": playView,
@@ -243,30 +241,6 @@ function stateCases(call: ReturnType<typeof recorder>): void {
   }
   for (const exit of [false, true]) {
     call("playView.ts", "startNavOrder", playView.startNavOrder, exit);
-  }
-  const arts: readonly Rect[] = [
-    { height: 8, width: 12, x: 0, y: 0 },
-    { height: 24, width: 24, x: 6, y: 6 },
-    { height: 33, width: 33, x: 0, y: 0 },
-    { height: 35, width: 35, x: -1, y: -1 },
-    { height: 20, width: 100, x: 10, y: 4 },
-    { height: 80, width: 200, x: 0, y: 0 },
-  ];
-  for (const art of arts) {
-    call("hitAreas.ts", "hitMargin", hitAreas.hitMargin, art);
-    call("hitAreas.ts", "hitAround", hitAreas.hitAround, art);
-  }
-  const areas = [
-    { art: arts[2]!, hit: hitAreas.hitAround(arts[2]!), key: "left" },
-    { art: { ...arts[2]!, x: 40 }, hit: hitAreas.hitAround({ ...arts[2]!, x: 40 }), key: "right" },
-  ];
-  for (const point of [
-    { x: 16, y: 16 },
-    { x: 38, y: 16 },
-    { x: 54, y: 16 },
-    { x: 200, y: 200 },
-  ]) {
-    call("hitAreas.ts", "pressedArea", hitAreas.pressedArea, areas, point);
   }
   for (const lines of [0, 1, 2, 3]) {
     call("conversationBox.ts", "conversationTextTop", conversationBox.conversationTextTop, lines);

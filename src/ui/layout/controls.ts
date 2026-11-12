@@ -1,4 +1,5 @@
-import { HIT_RULE } from "./hitAreas.ts";
+import { HIT_RULE } from "@andornaut/game-kit/ui/hitAreas";
+
 import { SPACING, TYPE } from "./tokens.ts";
 
 // Control geometry (art/layout.md "Controls and targets"), in logical px. Faces, content insets,

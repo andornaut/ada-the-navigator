@@ -548,6 +548,7 @@ export const PROTOTYPE: PrototypeContent = {
     travelHere: "Travel here",
     travelUnavailable: "Unavailable while you are in danger.",
     undock: "Undock",
+    updateRequired: "Connect to the internet to update Ada the Navigator.",
     use: "Use",
     weapon: "Weapon",
     weaponAmmoLabel: "{weapon}, {count} left",

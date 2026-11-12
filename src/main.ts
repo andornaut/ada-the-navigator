@@ -5,6 +5,7 @@ import "./style.css";
 // The HTML interface's stylesheet (src/ui/stylesheet.ts, served by src/tools/ui-style-plugin.ts).
 import "virtual:ada-ui.css";
 
+import { LOADER_CONFIG } from "@andornaut/game-kit/load/loaderConfig";
 import { MAX_RENDER_SCALE } from "@andornaut/game-kit/view/renderScale";
 import { lockGameOrientation } from "@andornaut/game-kit/web/view/dom/watchFrameTurn";
 import { followFrameTurn } from "@andornaut/game-kit/web/view/phaser/followFrameTurn";
@@ -52,6 +53,9 @@ const game = new Game({
     },
   },
   height: SCREEN.height,
+  // The kit's loader timeout and retries; its loader watch gives each file the timeout
+  // (src/game/scene.ts).
+  loader: LOADER_CONFIG,
   parent,
   // Lower input-to-screen delay: a desynchronized context lets the browser show a frame without
   // waiting on the page compositor, and the high-performance GPU where there is a choice.

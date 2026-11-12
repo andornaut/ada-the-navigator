@@ -1,11 +1,11 @@
 import type { Rect } from "@andornaut/game-kit/rect";
+import { HIT_RULE, hitAround } from "@andornaut/game-kit/ui/hitAreas";
 
 import { GALAXY_COUNT, type RoutePosition } from "../../data/galaxies.ts";
 import { SCREEN } from "../../data/screen.ts";
 import { SHIP_HEADINGS, SHIP_NOSE } from "../../model/nose.ts";
 import { CARD_CLOSE } from "./cardFrame.ts";
 import { FRAME_LINE, TEXT_BUTTON } from "./controls.ts";
-import { hitAround } from "./hitAreas.ts";
 import { hudRect, type Insets, playView, SAFE_MARGIN, safeRect, type Size } from "./playView.ts";
 import { BUTTON_GAP, SPACING } from "./tokens.ts";
 
@@ -172,7 +172,7 @@ export function routeMapRects(insets: Insets, view: Size): RouteMapRects {
       width: ROUTE_PANEL.capture.width + 2 * ROUTE_PANEL.capture.frame,
       ...inner,
     },
-    close: { face, target: hitAround(face) },
+    close: { face, target: hitAround(HIT_RULE, face) },
     earth: action(ROUTE_ACTIONS.earth),
     jump: action(ROUTE_ACTIONS.jump),
     markers: ROUTE_MAP.centres.map(({ x, y }) => ({

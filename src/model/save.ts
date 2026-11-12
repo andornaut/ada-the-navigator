@@ -35,6 +35,26 @@ import { newEconomy } from "./upgrades.ts";
 import { chunkCoordinates, validVisitedPages } from "./visited.ts";
 import { grantedAmmo, UPGRADE_WEAPONS } from "./weapons.ts";
 
+/** The save format this build writes and reads. */
+export const SAVE_VERSION = 1;
+
+/**
+ * Whether saved was written by a newer build: its version is above SAVE_VERSION. Such a save is
+ * never read or overwritten here; the game requires the newer version first. Any other save this
+ * build cannot read, older or malformed, resets to a new game.
+ */
+export function newerSave(saved: unknown): boolean {
+  let value = saved;
+  if (typeof saved === "string") {
+    try {
+      value = JSON.parse(saved) as unknown;
+    } catch {
+      return false;
+    }
+  }
+  return record(value) && finite(value.version) && value.version > SAVE_VERSION;
+}
+
 /** Storage access can fail in private browsing or when quotas are exhausted. */
 export function readSave(storage: Pick<Storage, "getItem">, key: string): unknown {
   try {
@@ -818,7 +838,7 @@ export function restoreSave(saved: unknown): GameState | null {
     }
     if (
       !record(value) ||
-      value.version !== 1 ||
+      value.version !== SAVE_VERSION ||
       !["home", "space"].includes(String(value.mode)) ||
       !SECTORS.includes(value.selectedSector as SectorId) ||
       !record(value.progress)
