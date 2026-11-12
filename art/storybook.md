@@ -170,7 +170,7 @@ with the same insets, and 1280x720 (720x405). A star marks a clamped
 placement. Runs: the first launch (chapter one's opening, then the prologue),
 a visit (a waiting chapter scene, Ada's room, boarding), the empty visit and
 the jump home (night, morning, then the visit). The four new backgrounds have
-no pages yet; their rows assume a chapter page at Gameplay's limit (218
+no pages yet; their rows assume a chapter page at Gameplay's limit (220
 characters, the heading and two choices).
 
 | Background, runs                                                    | 720x360, insets                 | 844x390, insets                 | 1280x720                        |
@@ -201,7 +201,7 @@ at 0.85, and with the panel top at 93 at 360-high views (141 at 720x405) the
 the panel at 720x405. Every other cockpit page shows the whole dome. At
 Gameplay's limit the four new backgrounds clear too: Needle's recorder room
 and concert hall rise 7 rows so their bands end by row 293, the lowest visible
-row under a 218-character page at 360-high views.
+row under a 220-character page at 360-high views.
 
 ## Ada's sprites
 

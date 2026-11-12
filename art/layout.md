@@ -575,13 +575,13 @@ top is its bottom minus its height.
 
 Panel height and top by page:
 
-| Page                                                       | 720x360, insets | 844x390, insets | 844x390  | 1280x720 |
-| ---------------------------------------------------------- | --------------- | --------------- | -------- | -------- |
-| One line, Next only                                        | 68, top 273     | 68, top 273     | 68, 276  | 68, 321  |
-| Three-line narration (78 text over a 36 control row)       | 110, top 231    | 110, top 231    | 110, 234 | 110, 279 |
-| Two choices: the garden opening with its heading (205)     | 228, top 113    | 228, top 113    | 208, 136 | 228, 161 |
-| Gameplay's limit case: 218 characters, heading and choices | 228, top 113    | 228, top 113    | 208, 136 | 228, 161 |
-| Astra's three questions with Continue (the tallest)        | 248, top 93     | 248, top 93     | 248, 96  | 248, 141 |
+| Page                                                           | 720x360, insets | 844x390, insets | 844x390  | 1280x720 |
+| -------------------------------------------------------------- | --------------- | --------------- | -------- | -------- |
+| One line, Next only                                            | 68, top 273     | 68, top 273     | 68, 276  | 68, 321  |
+| Three-line narration (78 text over a 36 control row)           | 110, top 231    | 110, top 231    | 110, 234 | 110, 279 |
+| Two choices: the garden opening with its heading (205)         | 228, top 113    | 228, top 113    | 208, 136 | 228, 161 |
+| Gameplay's limit case: 220 characters, heading and two choices | 228, top 113    | 228, top 113    | 208, 136 | 228, 161 |
+| Astra's three questions with Continue (the tallest)            | 248, top 93     | 248, top 93     | 248, 96  | 248, 141 |
 
 Story buttons follow the button gap rule (to implement): buttons smaller than
 the 48 standard keep `SMALL_BUTTON_GAP` 24 between faces in any direction,
@@ -606,8 +606,11 @@ Gameplay's copy, by group:
 | Overnight  | 3     | Night, the sleep scene and morning                                                             |
 
 That is 60 pages, 59 of them with text: the sleep scene has none. The longest is chapter
-one's opening at 205 characters. 218 characters, six lines in the 349 column
-and five in the wider ones, is Gameplay's limit case.
+one's opening at 205 characters. Gameplay's limit is 220 characters: with the
+heading and two wrapped choices it is six lines in the 349 column and five in
+the wider ones, a 192 or 166 text column beside the 196 choice column (176 at
+844x390 without insets), so panels of 228, 228, 208 and 228 at the four screens
+above, under their caps of 280.5, 280.5, 283.5 and 328.5.
 
 The limits give, not the layout. A wrapped label adds 20 to its face (56). At
 720x360 with insets the cap is 341 - 60.5 = 280.5, so the choice column may
