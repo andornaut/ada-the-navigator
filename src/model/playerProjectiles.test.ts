@@ -87,7 +87,9 @@ describe("pure player projectile volleys", () => {
           const cross = forward.x * screen.y - forward.y * screen.x;
           const dot = forward.x * screen.x + forward.y * screen.y;
           expect((Math.atan2(cross, dot) * 180) / Math.PI).toBeCloseTo(expected);
-          expect(Math.hypot(shot.velocity.x, shot.velocity.y)).toBeCloseTo(context.baseSpeed);
+          expect(Math.hypot(shot.velocity.x, shot.velocity.y)).toBeCloseTo(
+            context.baseSpeed * definition.speedRatio,
+          );
           expect(shot.damage).toBeCloseTo(context.baseDamage * definition.damageRatio);
           expect(shot.projectile).toBe(definition.projectileKind);
         }

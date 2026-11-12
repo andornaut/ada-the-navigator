@@ -35,6 +35,14 @@ const projectile = {
   rangeWorld: null,
   speedRatio: 1,
 } as const;
+/**
+ * Bolt speeds at levels 1, 2 and 3 as ratios of the base projectile speed (600): Laser's 500, 600
+ * and 700 world units per second, and Multi-Laser's 400, 500 and 600, slower at every level.
+ */
+const BOLT_SPEED_RATIOS = {
+  laser: [500 / 600, 1, 700 / 600],
+  multiLaser: [400 / 600, 500 / 600, 1],
+} as const;
 const fan = (count: number, spread: number) =>
   Array.from({ length: count }, (_, index) => -spread + (2 * spread * index) / (count - 1));
 
@@ -76,7 +84,8 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       speedRatio: 0.6,
     },
   ],
-  // Damage and fire rate each grow 1.25/1.2 then 1.5/1.5.
+  // Damage and fire rate each grow 1.25/1.2 then 1.5/1.5; the bolt flies 500, 600 and 700 world
+  // units per second.
   laser: [
     {
       ...projectile,
@@ -84,6 +93,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       damageRatio: 1,
       intervalSeconds: 0.28,
       projectileKind: "bolt",
+      speedRatio: BOLT_SPEED_RATIOS.laser[0],
     },
     {
       ...projectile,
@@ -91,6 +101,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       damageRatio: 1.25,
       intervalSeconds: 0.28 / 1.2,
       projectileKind: "bolt",
+      speedRatio: BOLT_SPEED_RATIOS.laser[1],
     },
     {
       ...projectile,
@@ -98,9 +109,11 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       damageRatio: 1.5,
       intervalSeconds: 0.28 / 1.5,
       projectileKind: "bolt",
+      speedRatio: BOLT_SPEED_RATIOS.laser[2],
     },
   ],
   // Bolt count grows hits 4/3 then 5/3 across the same -20 to 20 fan; damage makes up the rest.
+  // Its bolts fly 400, 500 and 600 world units per second.
   multiLaser: [
     {
       ...projectile,
@@ -108,6 +121,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       damageRatio: 1,
       intervalSeconds: 0.3,
       projectileKind: "bolt",
+      speedRatio: BOLT_SPEED_RATIOS.multiLaser[0],
     },
     {
       ...projectile,
@@ -115,6 +129,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       damageRatio: 1.125,
       intervalSeconds: 0.3,
       projectileKind: "bolt",
+      speedRatio: BOLT_SPEED_RATIOS.multiLaser[1],
     },
     {
       ...projectile,
@@ -122,6 +137,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       damageRatio: 1.35,
       intervalSeconds: 0.3,
       projectileKind: "bolt",
+      speedRatio: BOLT_SPEED_RATIOS.multiLaser[2],
     },
   ],
   // 4x Laser damage at a 4x Laser interval matches Laser's single-target output. Damage alone

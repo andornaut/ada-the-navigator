@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { CONTENT } from "./content.ts";
 import type { Weapon } from "./types.ts";
 import { WEAPON_CATALOG, weaponAt, type WeaponDefinition } from "./weaponCatalog.ts";
 
@@ -69,16 +70,34 @@ describe("weapon levels", () => {
         rest.some((level) => JSON.stringify(level[key]) !== JSON.stringify(first[key])),
       );
     };
-    expect(changed("laser").sort()).toEqual(["damageRatio", "intervalSeconds"]);
+    expect(changed("laser").sort()).toEqual(["damageRatio", "intervalSeconds", "speedRatio"]);
     expect(changed("rapidMissile").sort()).toEqual(["damageRatio", "intervalSeconds"]);
     expect(changed("heavyMissile").sort()).toEqual([
       "blastRadius",
       "damageRatio",
       "intervalSeconds",
     ]);
-    expect(changed("multiLaser").sort()).toEqual(["anglesDegrees", "damageRatio"]);
+    expect(changed("multiLaser").sort()).toEqual(["anglesDegrees", "damageRatio", "speedRatio"]);
     expect(changed("scattershot").sort()).toEqual(["anglesDegrees", "damageRatio"]);
     expect(changed("phaser").sort()).toEqual(["beamRange", "damageRatio"]);
+  });
+
+  it("flies Laser bolts at 500, 600 and 700 and Multi-Laser's slower, at 400, 500 and 600", () => {
+    const speeds = (weapon: Weapon) =>
+      WEAPON_CATALOG[weapon].map(
+        (level) => CONTENT.tuning.flight.projectileSpeed * level.speedRatio,
+      );
+    expect(CONTENT.tuning.flight.projectileSpeed).toBe(600);
+    speeds("laser").forEach((speed, index) =>
+      expect(speed).toBeCloseTo([500, 600, 700][index]!, 9),
+    );
+    speeds("multiLaser").forEach((speed, index) =>
+      expect(speed).toBeCloseTo([400, 500, 600][index]!, 9),
+    );
+    // The other projectile weapons keep their ratios at every level.
+    expect(speeds("rapidMissile").map((speed) => speed / 600)).toEqual([1.3, 1.3, 1.3]);
+    expect(speeds("heavyMissile").map((speed) => speed / 600)).toEqual([0.6, 0.6, 0.6]);
+    expect(speeds("scattershot").map((speed) => speed / 600)).toEqual([1, 1, 1]);
   });
 
   it("clamps levels outside 1 to 3", () => {

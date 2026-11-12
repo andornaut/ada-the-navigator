@@ -773,15 +773,33 @@ describe("upgrade effects", () => {
     },
   );
 
-  it.each([1, 2, 3])("fires Ada's Laser at 600 at engine level %i", (level) => {
+  it.each([1, 2, 3])("fires Ada's level 1 Laser at 500 at engine level %i", (level) => {
     const value = flight();
     value.levels.engine = level;
     stepFlight(CONTENT, 1 / 60, { ...idle, aim: { x: 1, y: 0 } }, value);
     const { velocity } = value.shots[0]!;
-    expect(Math.hypot(velocity.x, velocity.y)).toBeCloseTo(
-      600 * WEAPON_CATALOG.laser[0].speedRatio,
-      6,
-    );
+    expect(Math.hypot(velocity.x, velocity.y)).toBeCloseTo(500, 6);
+  });
+
+  it.each([
+    ["laser", 1, 500],
+    ["laser", 2, 600],
+    ["laser", 3, 700],
+    ["multiLaser", 1, 400],
+    ["multiLaser", 2, 500],
+    ["multiLaser", 3, 600],
+  ] as const)("fires %s at level %i at %i world units per second", (weapon, level, speed) => {
+    const value = flight();
+    value.weapon = weapon;
+    value.ammo.multiLaser = 5;
+    value.levels.weapons[weapon] = level;
+    stepFlight(CONTENT, 1 / 60, { ...idle, aim: { x: 1, y: 0 } }, value);
+    expect(value.shots.length).toBeGreaterThan(0);
+    for (const { life, velocity } of value.shots) {
+      expect(Math.hypot(velocity.x, velocity.y)).toBeCloseTo(speed, 6);
+      // A bolt has no world range: it flies the base lifetime at any speed.
+      expect(life).toBeCloseTo(CONTENT.tuning.flight.projectileLifetime, 1);
+    }
   });
 
   it("fires the equipped weapon at its own level", () => {
