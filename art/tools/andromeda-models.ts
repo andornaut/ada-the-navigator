@@ -2,6 +2,7 @@
 // heading convention (crafts.ts): the settlers' station and its courier school, the settlements,
 // the guide beacons and the spare beacon, and Pip's mail scooter. Contract: art/andromeda.md.
 import { tiers } from "./cartwheel-craft.ts";
+import { ball, craftBox, cube as hsCube, disc, hcyl, part, scaleGroups } from "./hull-shapes.ts";
 import {
   along,
   blue,
@@ -15,7 +16,6 @@ import {
   facing,
   ngon,
   orientedBox,
-  orientedPlan,
   type Part,
   type Plan,
   wallWindows,
@@ -574,9 +574,6 @@ export function spareBeacon(lit: boolean): Part[][] {
 // Craft-local plans in (u forward, v across); forward is -y, as for every story craft.
 const FWD = -Math.PI / 2;
 export const uv = (u: number, v: number) => along(FWD, u, v);
-const craftPlan = (local: Plan) => orientedPlan(0, 0, FWD, local);
-const craftBox = (u: number, v: number, length: number, width: number) =>
-  orientedBox(...uv(u, v), FWD, length, width);
 
 export type StoryCraft = {
   name: string;
@@ -589,76 +586,47 @@ export type StoryCraft = {
   mouthWidth: number;
 };
 
-// A short cream capsule with a warm-lit cab, two periwinkle mail panniers with cream flaps, a tail
-// fin carrying the marker courier lamp, twin small engines and two warm headlights.
+// A pod scooter: a round cream cab pod with warm bow panes and headlights between two periwinkle
+// pannier pods on short struts, twin small engines astern and the marker courier lamp on a mast
+// over the cab; no fin or wings. Design units, built at PIP_SCALE.
+const PIP_SCALE = 1.5;
+const capCream = "#f7f0e2";
+const podCap = "#a9b3f4";
 export const pip: StoryCraft = {
   name: "pip",
   title: "Pip's mail scooter",
-  levels: [10, 14],
-  mouthWidth: 3,
-  mouths: [
-    [-19, -4, 6.5],
-    [-19, 4, 6.5],
-  ],
-  build: (visible) => {
-    const hull = craftPlan([
-      [-15, -6],
-      [6, -7],
-      [13, -5],
-      [16, 0],
-      [13, 5],
-      [6, 7],
-      [-15, 6],
-    ]);
-    const cab = craftPlan([
-      [-1, -4.6],
-      [8, -4.6],
-      [11, 0],
-      [8, 4.6],
-      [-1, 4.6],
-    ]);
-    return [
-      ...[-1, 1].map((s): Part[] => [
-        {
-          plan: craftBox(-3, s * 9.2, 15, 5),
-          z0: 3.5,
-          z1: 10.5,
-          top: a.markerDim,
-          side: a.markerDark,
-          rear: a.markerDeep,
-        },
-        { plan: craftBox(1.5, s * 9.2, 4, 5.6), z0: 9, z1: 11, top: cream, side: creamSide },
+  levels: [13 * PIP_SCALE],
+  mouthWidth: 2.6 * PIP_SCALE,
+  mouths: (
+    [
+      [-11.6, -2.6, 5.4],
+      [-11.6, 2.6, 5.4],
+    ] as const
+  ).map(([u, v, z]) => [u * PIP_SCALE, v * PIP_SCALE, z * PIP_SCALE] as const),
+  build: () => {
+    const engine = {
+      top: a.steelDark,
+      side: a.steelDarkSide,
+      front: "flat",
+      back: "flat",
+    } as const;
+    return scaleGroups(PIP_SCALE, [
+      ...[-1, 1].map((s) => hcyl(-11, -5, s * 2.6, 5.4, 1.9, engine)),
+      ...[-1, 1].map((s) => [part(craftBox(-1, s * 6.5, 2, 4), 4.6, 6.4, creamSide, creamSide)]),
+      [
+        ...ball(2.5, 0, 6.6, 6.6, cream, creamSide, capCream),
+        ...[-1, 1].map((s) => part(craftBox(7.2, s * 1.8, 0.7, 2.2), 8.4, 10.2, warm, warm)),
+      ],
+      ...[-1, 1].map((s) => [
+        ...ball(-1.5, s * 10, 6, 4, a.markerDim, a.markerDark, podCap, 10),
+        part(craftBox(-1.5, s * 10, 5.4, 1.2), 9.4, 10.2, podCap, a.markerDark),
       ]),
-      ...[-1, 1].map((s): Part[] => [
-        {
-          plan: craftBox(-15.5, s * 4, 6, 4.6),
-          z0: 4,
-          z1: 9,
-          top: a.steelDark,
-          side: a.steelDarkSide,
-        },
-      ]),
+      [hsCube(8, -3.4, 4.6, 1.2, warm)],
+      [hsCube(8, 3.4, 4.6, 1.2, warm)],
       [
-        { plan: hull, z0: 3, z1: 10, top: cream, side: creamSide, rear: a.creamRear },
-        ...wallWindows(
-          (nx, ny) => visible(nx, ny) && Math.abs(nx) > 0.9,
-          5.5,
-          8,
-          1,
-          3,
-          hull,
-          a.markerDark,
-        ),
+        part(craftBox(1, 0, 0.8, 0.8), 13, 16.4, a.steelDark, a.steelDark),
+        disc(1, 0, 1.4, 16.4, 18.4, a.marker, a.markerDark, 8),
       ],
-      [
-        { plan: cab, z0: 10, z1: 14, top: cream, side: creamSide, rear: a.creamRear },
-        ...wallWindows(visible, 10.8, 13.2, 1, 3.6, cab),
-      ],
-      [
-        { plan: craftBox(-11, 0, 7, 1.6), z0: 10, z1: 18, top: a.markerDim, side: a.markerDark },
-        { plan: craftBox(-12, 0, 2.6, 2.6), z0: 18, z1: 20.6, top: a.marker, side: a.marker },
-      ],
-      [-1, 1].map((s) => cube(...uv(14, s * 3.2), 5.5, 1.8, warm)),
-    ];
+    ]);
   },
 };

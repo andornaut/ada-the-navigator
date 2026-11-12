@@ -140,14 +140,15 @@ it, drones ignore it and it has no hit circle.
   the selected frame with rotation zero. No blink and no thrust frames.
 - Entries carry `craft` `pip`, `directionIndex` and `facing` `world-{k}`; ids
   are `craft-pip-{k}`.
-- A short cream capsule (`#efe4cf`, sides `#bfae94`, rear `#a08f78`) with a
-  warm-lit cab, two periwinkle mail panniers `#8f9cf0` (sides `#6f78b8`, rear
-  `#4a5080`) with cream flaps, a tail fin carrying the marker courier lamp
-  `#b8c1ff`, twin small graphite engines `#6e7482` and two warm headlights.
-  35 by 23 model units: 0.82 by 0.54 Ada wingspans, about the size of
-  Cartwheel's visitors, and nothing like Ada's white triangle.
-- Groups draw far to near; a group resting on the hull top (10) or the cab top
-  (14) draws after every group below that level.
+- A pod scooter: a round cream cab pod (`#efe4cf`, sides `#bfae94`, cap
+  `#f7f0e2`) with two warm bow panes and two warm headlights, between two round
+  periwinkle mail pannier pods `#8f9cf0` (sides `#6f78b8`, caps and flaps
+  `#a9b3f4`) on short cream struts, twin small graphite engines `#6e7482`
+  astern and the marker courier lamp `#b8c1ff` on a mast over the cab. No fin
+  or wings. Modelled in design units and built at 1.5 times: 29.8 by 42 model
+  units, 0.69 by 0.98 Ada wingspans, and nothing like Ada's white triangle.
+- Groups draw far to near; a group resting on the cab top (19.5) draws after
+  every group below that level.
 
 ### Speed jets and nose
 
@@ -155,8 +156,8 @@ it, drones ignore it and it has no hit circle.
 (version 1, outer and core layers, no halo, length
 `(6 + 24 f²) * sqrt(frame / 96)`) in the civil story-craft palette shared
 with Cartwheel's story craft: outer `#c9a978` to `#ffe9b8` and core `#efe4cf`
-to `#ffffff`. Two mouths 3 units wide at `(u, v, z)` `(-19, ±4, 6.5)`, u
-forward.
+to `#ffffff`. Two mouths 3.9 units wide at `(u, v, z)` `(-17.4, ±3.9, 8.1)`,
+u forward.
 
 The file also carries `nose`: 16 entries, `nose[k]` for heading `k`. The nose
 reaches to the forward-most solid part; the 0.6-deep window panes do not count.
@@ -171,8 +172,8 @@ reaches to the forward-most solid part; the 0.6-deep window panes do not count.
   fails unless it lies within 0.5 frame px of an edge of a face the heading's
   frame draws.
 
-The scooter's reach is 16 units, to the hull nose: `distance` is 7 at headings
-2 and 10, 6.548 at 0, 4, 8 and 12, and 6.062 at 6 and 14. A docked scooter
+The scooter's reach is 13.31 units, to the cab pod's bow: `distance` is 5.824
+at headings 2 and 10, 5.448 at 0, 4, 8 and 12, and 5.044 at 6 and 14. A docked scooter
 holds with its pivot on the dock or berth point moved along `outward` by
 `nose[k].distance` for its docking heading `k`, so the nose meets the dock
 face.
