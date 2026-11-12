@@ -3,8 +3,8 @@
 Stardust is the game's one currency. It is shimmering dust released by destroyed
 ships and asteroids, and every station trades in it. Stardust and purchases persist
 across flights with story progress. All amounts, prices and rates are provisional
-tuning toward these pacing targets: affording the first weapon (150) takes about
-20 minutes of play, saving 300 for Cartwheel's holodisk takes about 40 minutes,
+tuning toward these pacing targets: affording the first weapon (225) takes about
+25 minutes of play, saving 300 for Cartwheel's holodisk takes about 40 minutes,
 and exploring finds a station every few minutes.
 
 ## Earning Stardust
@@ -81,15 +81,15 @@ not yet designed, so the station card shows no quest board until it is.
 
 | Item           | Effect                                                                                          | Prices   |
 | -------------- | ----------------------------------------------------------------------------------------------- | -------- |
-| Multi-Laser    | Owned weapon                                                                                    | 250      |
-| Rapid Missile  | Owned weapon                                                                                    | 150      |
-| Heavy Missile  | Owned weapon                                                                                    | 300      |
-| Scattershot    | Owned weapon                                                                                    | 350      |
-| Phaser         | Owned weapon                                                                                    | 400      |
-| Weapon upgrade | Per weapon, Laser included: levels 2 and 3, each about ×1.5 effective output                    | 150, 300 |
-| Shield         | Levels 2 and 3: capacity 15, then 20; recharge delay 15, then 10 s; empty to full 45, then 30 s | 300, 600 |
-| Engine tuning  | Levels 2 and 3: top speed 190, then 220; each −10% acceleration and braking seconds             | 120, 240 |
-| Tractor beam   | Levels 2 and 3: pull radius 90, then 120; pull speed 160, then 200                              | 80, 160  |
+| Multi-Laser    | Owned weapon                                                                                    | 375      |
+| Rapid Missile  | Owned weapon                                                                                    | 225      |
+| Heavy Missile  | Owned weapon                                                                                    | 450      |
+| Scattershot    | Owned weapon                                                                                    | 525      |
+| Phaser         | Owned weapon                                                                                    | 600      |
+| Weapon upgrade | Per weapon, Laser included: levels 2 and 3, each about ×1.5 effective output                    | 225, 450 |
+| Shield         | Levels 2 and 3: capacity 15, then 20; recharge delay 15, then 10 s; empty to full 45, then 30 s | 450, 900 |
+| Engine tuning  | Levels 2 and 3: top speed 190, then 220; each −10% acceleration and braking seconds             | 180, 360 |
+| Tractor beam   | Levels 2 and 3: pull radius 90, then 120; pull speed 160, then 200                              | 120, 240 |
 | Ship paint     | Cosmetic colour schemes for Ada's ship; the white and blue scheme stays free                    | 50 each  |
 
 Enemy speeds are fixed, so engine tuning lets Ada outrun every enemy but the

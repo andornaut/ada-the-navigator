@@ -932,7 +932,8 @@ from ordinary shots. Homing is not part of this combat pass.
 
 Enemy speeds are fixed in world units and the same in every galaxy (see
 [Ships](ships.md#values)); pursuit range is finite. Frigates and capital ships can
-block required quest routes in the first five galaxies. This encounter expansion
+block required quest routes in the first five galaxies. A guard stops blocking
+its route once it is disabled or destroyed. This encounter expansion
 does not define galaxy six's story or conclusion.
 
 ## Verification priorities
