@@ -22,7 +22,7 @@ const space = JSON.parse(readFileSync(`${art}space-palette.json`, "utf8")) as {
   colors: Record<string, string>;
 };
 const fields = JSON.parse(readFileSync(`${art}galaxies.json`, "utf8")) as {
-  galaxies: { id: string; colors: Record<string, string>; tint: { light?: boolean } }[];
+  galaxies: Record<string, { colors: Record<string, string>; tint: { light?: boolean } }>;
 };
 const POI = space.colors.pointOfInterest!.toLowerCase();
 const POI_SIDE = "#8f7c9c";
@@ -60,7 +60,7 @@ function tints(detail: string, light: boolean) {
 }
 const TINTS = Object.fromEntries([
   ["base", tints(space.colors.environmentDetail!, false)],
-  ...fields.galaxies.map(({ colors, id, tint }) => [
+  ...Object.entries(fields.galaxies).map(([id, { colors, tint }]) => [
     id,
     tints(colors.environmentDetail!, Boolean(tint.light)),
   ]),

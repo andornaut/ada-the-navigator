@@ -49,21 +49,29 @@
       "nebulaCore": "#6d6578",
       "nebulaOuter": "#555161"
     },
-    "sunflower": {
-      "nebulaCore": "#9d9068",
-      "nebulaOuter": "#baab77"
+    "andromeda": {
+      "nebulaCore": "#696481",
+      "nebulaOuter": "#50506d"
+    },
+    "black-eye": {
+      "nebulaCore": "#6c586c",
+      "nebulaOuter": "#544052"
     },
     "cartwheel": {
       "nebulaCore": "#796269",
       "nebulaOuter": "#644d4e"
     },
+    "needle": {
+      "nebulaCore": "#6c6169",
+      "nebulaOuter": "#534c4e"
+    },
+    "sunflower": {
+      "nebulaCore": "#9d9068",
+      "nebulaOuter": "#baab77"
+    },
     "whirlpool": {
       "nebulaCore": "#5f6a78",
       "nebulaOuter": "#435760"
-    },
-    "black-eye": {
-      "nebulaCore": "#6c586c",
-      "nebulaOuter": "#544052"
     }
   },
   "searchArea": {
