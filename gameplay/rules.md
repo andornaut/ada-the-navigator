@@ -568,10 +568,13 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   waiting, the start screen offers it in a compact modal titled "Update available", with secondary "Cancel"
   on the left, primary "Update now" on the right, the ordinary close X and no body
   text. Only Update now reloads into the new version. Cancel, the close X, an
-  outside tap, Escape and back defer it for that start-screen visit; the next return checks and offers it again. Closing a card opened from the start screen (Settings, Achievements, the cheats card) does not start a new visit, so a deferred offer stays hidden until the next real return. Settings and
+  outside tap, Escape and back cancel it for the rest of that game session: the
+  offer stays hidden on every later start-screen arrival until the game is closed
+  and reopened. A required update (a save from a newer version) is unaffected.
+  Settings and
   install steps covering the start screen suppress the offer.
 - Back, as in Chibi: it closes the innermost open card (install steps, Settings,
-  the cheats card, the station card or shop) or defers the update offer; during
+  the cheats card, the station card or shop) or cancels the update offer; during
   flight with nothing open it opens the pause card, and with the pause card open it
   resumes.
   On the start screen with nothing open, and where the browser cannot hand back to
