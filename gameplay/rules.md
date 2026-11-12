@@ -703,7 +703,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   Laser shot deals 1 damage. Enemies fire the same weapons, with the same damage,
   blast, spread and reach at the same level, plus three enemy-only weapons; each enemy
   keeps its own cadence and projectile speed (see
-  [Ships](ships.md#enemy-weapons)).
+  [Ships](ships.md#enemy-weapons)). Enemy Phaser and Scattershot keep their own
+  lower damage, so a single enemy hit never empties a base shield.
 - Laser bolts travel at 500, 600 and 700 world units per second at weapon
   levels 1, 2 and 3; Multi-Laser bolts at 400, 500 and 600. Both reach a fixed 1200 world units at
   every level, so flight time follows speed. Rapid Missile flies at 500, 600 and

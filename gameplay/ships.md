@@ -193,7 +193,9 @@ move off it.
 
 Intervals are before the position's fire rate. Projectile speeds multiply the
 base enemy projectile speed, a fixed 200 world units per second. Damage at each
-level is the shared per-level damage of Ada's weapon. The three enemy-only weapons:
+level is the shared per-level damage of Ada's weapon, except that enemy Phaser
+deals 4 and an enemy Scattershot dot 0.35 at level 1 (levels 2 and 3 share 1.5
+and 2.25 times that level 1 volley across their dots). The three enemy-only weapons:
 
 - **Ring burst:** 8 bolts outward in a ring, 1.5 damage each, every 3.5 seconds,
   at ×1.2.
