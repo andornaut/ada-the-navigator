@@ -534,7 +534,7 @@ export class GameModel {
           o.kind === "destination" &&
           this.current.known.includes(o.id) &&
           !routeBlocked(o.id, f) &&
-          Math.hypot(o.x - f.player.x, o.y - f.player.y) <= this.content.tuning.safeRadius,
+          Math.hypot(o.x - f.player.x, o.y - f.player.y) <= this.content.tuning.talkRange,
       )
       .sort(
         (a, b) =>

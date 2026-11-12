@@ -131,6 +131,11 @@ export interface PrototypeContent {
     introFreshDistance: number;
     encounterFreshDistance: number;
     safeRadius: number;
+    /**
+     * Talk range, centre to centre: Use at a destination, its discovery, and Salvage on a
+     * disabled heavy (gameplay/rules.md).
+     */
+    talkRange: number;
     /** The least distance between a flight's story destinations (gameplay/rules.md). */
     storySpacing: number;
     dangerReleaseSeconds: number;

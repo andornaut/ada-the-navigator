@@ -20,6 +20,26 @@ const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function launch(model: GameModel, sector: SectorId = 1) {
   model.startSector(sector);
 }
+
+it("talks within the 160 Talk range, whatever the safe radius", () => {
+  expect(PROTOTYPE.tuning.talkRange).toBe(160);
+  // A smaller safe radius leaves the interaction range alone.
+  const content = { ...PROTOTYPE, tuning: { ...PROTOTYPE.tuning, safeRadius: 40 } };
+  const model = new GameModel(content);
+  Object.assign(model.state, { prologueSeen: true, started: true });
+  model.startSector(1);
+  readStory(model);
+  model.state.dialogue = null;
+  const flight = model.state.flight!;
+  ensureDestination(content, "growers", flight);
+  const growers = flight.objects.find((object) => object.id === "growers")!;
+  model.state.progress[1].known.push("growers");
+  flight.objects = [growers];
+  flight.player = { x: growers.x + 150, y: growers.y };
+  expect(model.contextLabel).toBe("Talk");
+  flight.player = { x: growers.x + 170, y: growers.y };
+  expect(model.contextLabel).toBeUndefined();
+});
 function arrive(model: GameModel, id: string) {
   const f = model.state.flight!;
   ensureDestination(PROTOTYPE, id, f);

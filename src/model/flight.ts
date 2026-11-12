@@ -2668,7 +2668,7 @@ export function stepFlight(
     if (
       object.kind === "destination" &&
       !routeBlocked(object.id, flight) &&
-      distance(object, flight.player) <= content.tuning.safeRadius
+      distance(object, flight.player) <= content.tuning.talkRange
     ) {
       events.push({ id: object.id, type: "discovered" });
     }

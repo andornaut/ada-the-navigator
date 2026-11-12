@@ -609,6 +609,8 @@ export const PROTOTYPE: PrototypeContent = {
     speedCurveExponent: 2.5,
     // A relaunch spaces story destinations at least this far apart, beyond the Map's 1020.
     storySpacing: 1200,
+    // Talk range, centre to centre (gameplay/rules.md); safeRadius keeps the clearances.
+    talkRange: 160,
     // Medium stone rocks from the asteroid set; a ring 86 from the whale's centre clears
     // Art's 48 footprint plus the largest of their footprints (33).
     whaleDebris: {
