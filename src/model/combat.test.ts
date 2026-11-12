@@ -5,6 +5,8 @@ import {
   encounterTable,
   type EnemyArchetype,
   enemyCatalog,
+  type EnemyDefinition,
+  enemyDefinition,
   escortTuning,
   sectorEncounters,
 } from "../data/enemy-catalog.ts";
@@ -53,8 +55,11 @@ function empty(): FlightState {
   flight.objects = [];
   return flight;
 }
-function ship(archetype: EnemyArchetype, point: Vec): SpaceObject {
-  const definition = enemyCatalog[archetype];
+function ship(
+  archetype: EnemyArchetype,
+  point: Vec,
+  definition: EnemyDefinition = enemyCatalog[archetype],
+): SpaceObject {
   return {
     ...point,
     enemy: createEnemy(definition, { archetype, id: "target", packId: null, phase: 0 }, point),
@@ -111,17 +116,16 @@ function partPosition(object: SpaceObject, id: string): Vec {
 }
 
 describe("integrated combat", () => {
-  it("fires bolts and straight missiles from independent capital hardpoints and preserves saved futures", () => {
-    const flight = empty();
-    const target = ship("capital", { x: 400, y: 0 });
+  it("fires bolts and missiles from independent capital hardpoints and preserves saved futures", () => {
+    // Needle (position 3): two Lasers, two four-bolt Multi-Lasers, a Rapid and a Heavy Missile.
+    const flight = createFlight(PROTOTYPE, 4, 173, progress);
+    flight.objects = [];
+    const target = ship("capital", { x: 400, y: 0 }, enemyDefinition(4, "capital"));
     flight.objects.push(target);
     stepFlight(PROTOTYPE, 0.01, idle, flight);
-    expect(flight.shots.map((shot) => shot.projectile).sort()).toEqual([
-      "bolt",
-      "bolt",
-      "missile",
-      "missile",
-    ]);
+    const kinds = flight.shots.map((shot) => shot.projectile);
+    expect(kinds.filter((kind) => kind === "bolt")).toHaveLength(10);
+    expect(kinds.filter((kind) => kind === "missile")).toHaveLength(2);
     const missile = flight.shots.find((shot) => shot.projectile === "missile")!;
     const velocity = { ...missile.velocity };
     const position = { x: missile.x, y: missile.y };
@@ -151,13 +155,10 @@ describe("integrated combat", () => {
       part.cooldown = 0;
     }
     stepFlight(PROTOTYPE, 0.01, idle, flight);
-    // One working engine of two still drives the hull at half its top speed.
+    // One working engine of two still drives the hull at half its top speed, and the other
+    // Laser and both three-bolt Multi-Lasers still fire.
     expect({ x: target.x, y: target.y }).not.toEqual(before);
-    expect(flight.shots.map((shot) => shot.projectile).sort()).toEqual([
-      "bolt",
-      "missile",
-      "missile",
-    ]);
+    expect(flight.shots.map((shot) => shot.projectile)).toEqual(Array(7).fill("bolt"));
     for (const id of ["engine-right", "weapon-right", "weapon-rear-left", "weapon-rear-right"]) {
       hit(flight, partPosition(target, id), 5);
     }

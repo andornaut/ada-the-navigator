@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ECONOMY } from "../data/economy.ts";
-import { enemyCatalog } from "../data/enemy-catalog.ts";
+import { enemyCatalog, enemyDefinition } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
 import { createEnemy, stepDebris, stepEnemy } from "./enemy-ai.ts";
@@ -268,6 +268,18 @@ describe("combat save boundary", () => {
   ])("rejects malformed or duplicate hardpoints %j", (change) => {
     const snapshot = combatSnapshot();
     Object.assign(snapshot.flight.objects[0]!.enemy!.hardpoints[1]!, change);
+    expect(restoreSave(snapshot)).toBeNull();
+  });
+
+  it("rejects a saved heavy whose hardpoints are another position's mounts", () => {
+    // Sunflower's capital carries four weapons; Black Eye's carries eight.
+    const snapshot = combatSnapshot();
+    const enemy = snapshot.flight.objects[0]!.enemy!;
+    enemy.hardpoints = createEnemy(
+      enemyDefinition(6, "capital"),
+      { archetype: "capital", id: enemy.id, packId: enemy.packId, phase: enemy.phase },
+      enemy.position,
+    ).hardpoints;
     expect(restoreSave(snapshot)).toBeNull();
   });
 

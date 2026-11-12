@@ -3,10 +3,12 @@ import { describe, expect, it } from "vitest";
 import {
   DIFFICULTY_SCALE,
   encounterQuiet,
+  ENEMY_FIRE,
   type EnemyArchetype,
   enemyCatalog,
   enemyDefinition,
   escortTuning,
+  type FireProfile,
 } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { SectorId } from "../data/types.ts";
@@ -407,14 +409,16 @@ describe("galaxy difficulty", () => {
       for (const archetype of Object.keys(enemyCatalog) as EnemyArchetype[]) {
         const base = enemyCatalog[archetype];
         const scaled = enemyDefinition(sector, archetype);
+        // Each weapon's enemy cadence before the fire rate; the swarm's Laser is slower.
+        const cadence = (fire: FireProfile) =>
+          fire.weapon === "laser" && archetype === "swarm" ? 1.8 : ENEMY_FIRE[fire.weapon].interval;
         expect(scaled.perception).toBeCloseTo(base.perception * perception, 9);
-        expect(1 / scaled.fire.interval).toBeCloseTo((1 / base.fire.interval) * fireRate, 9);
-        scaled.hardpoints.forEach((part, index) => {
-          const original = base.hardpoints[index]!;
-          if (part.kind === "weapon" && original.kind === "weapon") {
-            expect(part.fire.interval).toBeCloseTo(original.fire.interval / fireRate, 9);
+        expect(1 / scaled.fire.interval).toBeCloseTo((1 / cadence(scaled.fire)) * fireRate, 9);
+        for (const part of scaled.hardpoints) {
+          if (part.kind === "weapon") {
+            expect(part.fire.interval).toBeCloseTo(cadence(part.fire) / fireRate, 9);
           }
-        });
+        }
       }
     },
   );

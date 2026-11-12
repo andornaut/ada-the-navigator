@@ -3,6 +3,7 @@ import {
   type EnemyArchetype,
   enemyCatalog,
   type EnemyDefinition,
+  enemyOnly,
   escortTuning,
   fireDamageRatio,
   type FireProfile,
@@ -12,6 +13,7 @@ import {
 import { MUZZLE_ART, muzzleLayout } from "../data/enemy-muzzles.ts";
 import { SHARED_SHIP_PHYSICS } from "../data/ship-physics.ts";
 import { muzzleOffset } from "./muzzles.ts";
+import { fanHeading } from "./player-projectiles.ts";
 import {
   direction,
   hullOffset,
@@ -98,11 +100,14 @@ export interface FireIntent {
   damageRatio: number;
   delay: number;
   hardpointId: string | null;
+  level: FireProfile["level"];
   origin: Point;
-  profileId: string;
-  projectile: FireProfile["projectile"];
+  projectile: FlyingProjectile;
   speed: number;
+  weapon: FireProfile["weapon"];
 }
+/** The projectiles a fire intent launches; beams and mines resolve elsewhere. */
+export type FlyingProjectile = Exclude<FireProfile["projectile"], "beam" | "mine">;
 export interface EnemyEffects {
   defeated: boolean;
   disabledHardpoints: string[];
@@ -217,6 +222,14 @@ export function hardpointOffset(
   return hullOffset(facing, { x: part.offset.x * width, y: part.offset.y * width });
 }
 
+/**
+ * Whether an enemy is defeated from its state alone: every hardpoint destroyed on a ship with
+ * hardpoints, all of them required, else its hull at 0.
+ */
+export function enemyDefeated(state: Pick<EnemyState, "hardpoints" | "hp">): boolean {
+  return state.hardpoints.length ? state.hardpoints.every((part) => part.hp <= 0) : state.hp <= 0;
+}
+
 /** Hull plus hardpoint hp; a drop between steps means the ship was hit. */
 export function enemyIntegrity(state: Pick<EnemyState, "hardpoints" | "hp">): number {
   return state.hardpoints.reduce((sum, part) => sum + part.hp, state.hp);
@@ -239,7 +252,7 @@ export function enemyEffects(definition: EnemyDefinition, state: EnemyState): En
   return {
     defeated: required.length
       ? required.every((part) => disabledHardpoints.includes(part.id))
-      : state.hp <= 0,
+      : enemyDefeated(state),
     disabledHardpoints,
     movementStopped: engines.length > 0 && working === 0,
     thrust: engines.length ? working / engines.length : 1,
@@ -675,14 +688,16 @@ export function stepEnemy(
    * weapon leads a seen Ada by the ship's skill at its shot's speed, then drifts sideways.
    */
   const track = (origin: Point, current: Point | null, profile: FireProfile): Point | null => {
+    // A hitscan beam aims at Ada directly.
+    const direct = profile.projectile === "beam";
     const speed = context.projectileSpeed * profile.projectileSpeedRatio;
-    const velocity = observed ? context.playerVelocity : { x: 0, y: 0 };
+    const velocity = observed && !direct ? context.playerVelocity : { x: 0, y: 0 };
     const point = leadPoint(origin, target, velocity, speed, skill);
     const line = unit({ x: point.x - origin.x, y: point.y - origin.y });
     if (!magnitude(line)) {
       return current;
     }
-    const wanted = rotate(line, drift);
+    const wanted = direct ? line : rotate(line, drift);
     return current ? turnToward(context.dt, physics.aimTurnSeconds, wanted, current) : wanted;
   };
   let volleys = 0;
@@ -710,7 +725,9 @@ export function stepEnemy(
     const interval = Math.max(0.01, profile.interval);
     const count = Math.max(1, profile.burst?.count ?? 1);
     const gap = Math.min(interval / count, Math.max(0, profile.burst?.gap ?? 0));
-    if (!canFire) {
+    const projectile = profile.projectile;
+    // The Phaser and the enemy-only weapons are not fired yet; their cooldowns still run.
+    if (!canFire || projectile === "beam" || projectile === "mine" || enemyOnly(profile.weapon)) {
       return { burst: 0, cooldown: Math.max(0, cooldown - context.dt) };
     }
     let delay = Math.max(0, cooldown);
@@ -721,19 +738,17 @@ export function stepEnemy(
       }
       const volley = Math.floor((state.age + delay) / interval) * count + bolt;
       const from = spawn(origin, hardpointId, muzzleAim, volley);
-      for (const angle of profile.angles) {
+      for (const degrees of profile.angles) {
         fire.push({
-          aim: {
-            x: muzzleAim.x * Math.cos(angle) - muzzleAim.y * Math.sin(angle),
-            y: muzzleAim.x * Math.sin(angle) + muzzleAim.y * Math.cos(angle),
-          },
+          aim: fanHeading(muzzleAim, degrees),
           damageRatio: fireDamageRatio(profile),
           delay,
           hardpointId,
+          level: profile.level,
           origin: { ...from },
-          profileId: profile.id,
-          projectile: profile.projectile,
+          projectile,
           speed: context.projectileSpeed * profile.projectileSpeedRatio,
+          weapon: profile.weapon,
         });
       }
       bolt++;

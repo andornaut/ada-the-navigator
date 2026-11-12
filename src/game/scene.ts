@@ -20,7 +20,7 @@ import { CHEAT_COPY } from "../data/cheat-copy.ts";
 import { destinationDrawn } from "../data/destinations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { EDGE_MARKER_GLYPHS, edgeMarkerInset } from "../data/edge-markers.ts";
-import { enemyCatalog } from "../data/enemy-catalog.ts";
+import { enemyCatalog, enemyDefinition } from "../data/enemy-catalog.ts";
 import { BUILT, GALAXY_ID, ROUTE, ROUTE_POSITION } from "../data/galaxies.ts";
 import { CURRENTS } from "../data/galaxy-features.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
@@ -2850,7 +2850,7 @@ export class PrototypeScene extends Scene {
       );
       return;
     }
-    const definition = enemyCatalog[enemy.archetype];
+    const definition = enemyDefinition(this.model.state.flight!.sector, enemy.archetype);
     const art = this.familyArt(enemy.archetype);
     if (art) {
       this.drawEnemySprite(art, point, object.id, enemy);

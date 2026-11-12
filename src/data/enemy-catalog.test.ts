@@ -1,11 +1,19 @@
 import { describe, expect, it } from "vitest";
 
-import { enemyCatalog, type FireProfile, type WeaponMounts } from "./enemy-catalog.ts";
+import {
+  ENEMY_FIRE,
+  type EnemyArchetype,
+  enemyCatalog,
+  enemyDefinition,
+  type FireProfile,
+  type WeaponMounts,
+} from "./enemy-catalog.ts";
 import type { RoutePosition } from "./galaxies.ts";
-import type { Weapon } from "./types.ts";
+import type { SectorId, Weapon } from "./types.ts";
 import { WEAPON_CATALOG, weaponAt } from "./weapon-catalog.ts";
 
 const ROUTE_POSITIONS: readonly RoutePosition[] = [1, 2, 3, 4, 5, 6];
+const SECTORS: readonly SectorId[] = [1, 2, 3, 4, 5, 6];
 
 const HEAVY_MOUNTS: Readonly<Record<"capital" | "frigate", WeaponMounts>> = {
   capital: enemyCatalog.capital.mounts,
@@ -71,17 +79,105 @@ describe("heavy weapon mounts", () => {
 });
 
 describe("enemy fire profiles", () => {
-  const profiles: FireProfile[] = Object.values(enemyCatalog).flatMap((definition) => [
-    definition.fire,
-    ...definition.hardpoints.flatMap((part) => (part.kind === "weapon" ? [part.fire] : [])),
-  ]);
+  const archetypes = Object.keys(enemyCatalog) as EnemyArchetype[];
+  const profiles: FireProfile[] = SECTORS.flatMap((sector) =>
+    archetypes.flatMap((archetype) => {
+      const definition = enemyDefinition(sector, archetype);
+      return [
+        definition.fire,
+        ...definition.hardpoints.flatMap((part) => (part.kind === "weapon" ? [part.fire] : [])),
+      ];
+    }),
+  );
 
-  it("fire a shared weapon's own projectile kind at their level", () => {
+  it("fire a shared weapon's own projectile kind and fan at their level", () => {
     const shared = profiles.filter((profile) => Object.hasOwn(WEAPON_CATALOG, profile.weapon));
     expect(shared.length).toBeGreaterThan(0);
     for (const profile of shared) {
-      const kind = weaponAt(profile.weapon as Weapon, profile.level).projectileKind;
-      expect(kind, profile.id).toBe(profile.projectile);
+      const definition = weaponAt(profile.weapon as Weapon, profile.level);
+      expect(profile.projectile, profile.weapon).toBe(definition.projectileKind);
+      expect(profile.angles, profile.weapon).toEqual(definition.anglesDegrees);
     }
+  });
+
+  it("arms each heavy at every position with its tier's mounted weapons, capped mounts left out", () => {
+    // Weapons and levels in fill order (gameplay/ships.md "Enemy weapons").
+    const loadout = (sector: SectorId, archetype: EnemyArchetype) =>
+      enemyDefinition(sector, archetype).hardpoints.flatMap((part) =>
+        part.kind === "weapon" ? [`${part.id} ${part.fire.weapon} ${part.fire.level}`] : [],
+      );
+    // Galaxy (route position): Sunflower 1 (1), Whirlpool 3 (2), Needle 4 (3), Andromeda 5 (4),
+    // Cartwheel 2 (5), Black Eye 6 (6).
+    expect(loadout(1, "frigate")).toEqual(["port laser 1", "starboard laser 1"]);
+    expect(loadout(3, "frigate")).toEqual(["port laser 1", "starboard laser 1"]);
+    expect(loadout(4, "frigate")).toEqual([
+      "port laser 2",
+      "starboard laser 2",
+      "spine rapidMissile 2",
+    ]);
+    expect(loadout(2, "frigate")).toEqual([
+      "port laser 3",
+      "starboard laser 3",
+      "spine rapidMissile 3",
+      "bow chargedLance 1",
+    ]);
+    expect(loadout(1, "capital")).toEqual([
+      "weapon-left laser 1",
+      "weapon-right laser 1",
+      "weapon-rear-left multiLaser 1",
+      "weapon-rear-right multiLaser 1",
+    ]);
+    expect(loadout(5, "capital")).toEqual([
+      "weapon-left laser 2",
+      "weapon-right laser 2",
+      "weapon-rear-left multiLaser 2",
+      "weapon-rear-right multiLaser 2",
+      "claw-left rapidMissile 2",
+      "claw-right heavyMissile 1",
+    ]);
+    expect(loadout(6, "capital")).toEqual([
+      "weapon-left laser 3",
+      "weapon-right laser 3",
+      "weapon-rear-left rapidMissile 3",
+      "weapon-rear-right rapidMissile 3",
+      "claw-left phaser 1",
+      "claw-right heavyMissile 1",
+      "stern-left ringBurst 1",
+      "stern-right mineLayer 1",
+    ]);
+    expect(loadout(1, "platform")).toEqual(["port laser 1", "starboard laser 1"]);
+    expect(loadout(5, "platform")).toEqual(["port laser 2", "starboard laser 2"]);
+    expect(loadout(6, "platform")).toEqual(["port laser 3", "starboard laser 3"]);
+    // Engines and command stay; every hardpoint takes the position's HP.
+    const capital = enemyDefinition(6, "capital").hardpoints;
+    expect(capital.filter((part) => part.kind !== "weapon").map((part) => part.id)).toEqual([
+      "command",
+      "engine-left",
+      "engine-right",
+    ]);
+    expect(new Set(capital.map((part) => part.hp))).toEqual(new Set([6]));
+  });
+
+  it("arms small craft by position and fires at the enemy cadence over the position's fire rate", () => {
+    const fire = (sector: SectorId, archetype: EnemyArchetype) => {
+      const profile = enemyDefinition(sector, archetype).fire;
+      return [profile.weapon, profile.level, profile.interval, profile.projectileSpeedRatio];
+    };
+    // Sunflower (position 1, fire +44%), Needle (3, +81%) and Black Eye (6, +100%).
+    expect(fire(1, "swarm")).toEqual(["laser", 1, 1.8 / 1.44, 1.5]);
+    expect(fire(1, "fighter")).toEqual(["laser", 1, 1.4 / 1.44, 1.7]);
+    expect(fire(1, "interceptor")).toEqual(["laser", 1, 1.4 / 1.44, 1.7]);
+    expect(fire(1, "retaliator")).toEqual(["multiLaser", 1, 2.2 / 1.44, 1.7]);
+    expect(fire(4, "swarm")).toEqual(["laser", 2, 1.8 / 1.81, 1.5]);
+    expect(fire(4, "fighter")).toEqual(["rapidMissile", 2, 2 / 1.81, 1.3]);
+    expect(fire(4, "interceptor")).toEqual(["scattershot", 2, 2.4 / 1.81, 1.7]);
+    expect(fire(4, "retaliator")).toEqual(["multiLaser", 2, 2.2 / 1.81, 1.7]);
+    expect(fire(6, "fighter")).toEqual(["rapidMissile", 3, 2 / 2, 1.3]);
+    expect(fire(6, "interceptor")).toEqual(["scattershot", 3, 2.4 / 2, 1.7]);
+    expect(ENEMY_FIRE.heavyMissile).toEqual({ interval: 4, projectileSpeedRatio: 0.6 });
+    expect(ENEMY_FIRE.phaser.interval).toBe(3);
+    // The platform's Laser fires two-shot bursts 0.15 s apart.
+    const turret = enemyDefinition(2, "platform").hardpoints[0]!;
+    expect(turret.kind === "weapon" && turret.fire.burst).toEqual({ count: 2, gap: 0.15 });
   });
 });

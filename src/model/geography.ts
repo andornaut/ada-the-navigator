@@ -1,6 +1,5 @@
-import { enemyCatalog } from "../data/enemy-catalog.ts";
 import type { PrototypeContent } from "../data/types.ts";
-import { enemyEffects } from "./enemy-ai.ts";
+import { enemyDefeated } from "./enemy-ai.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
 import { chunkCoordinates } from "./visited.ts";
 
@@ -42,9 +41,7 @@ function near(first: Vec, second: Vec): boolean {
  */
 export function liveEnemy(object: SpaceObject): boolean {
   return (
-    object.kind === "enemy" &&
-    object.hp > 0 &&
-    (!object.enemy || !enemyEffects(enemyCatalog[object.enemy.archetype], object.enemy).defeated)
+    object.kind === "enemy" && object.hp > 0 && (!object.enemy || !enemyDefeated(object.enemy))
   );
 }
 export function persistentObject(object: SpaceObject): boolean {

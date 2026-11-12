@@ -1,6 +1,6 @@
 import { deliveryDestination } from "../data/destinations.ts";
 import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
-import { enemyCatalog } from "../data/enemy-catalog.ts";
+import { enemyCatalog, enemyDefinition } from "../data/enemy-catalog.ts";
 import { SECTORS } from "../data/galaxies.ts";
 import { HUNTING_PACKS } from "../data/galaxy-features.ts";
 import { JOB_TYPES } from "../data/jobs.ts";
@@ -12,7 +12,7 @@ import type { SectorId } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import { validActivity } from "./activities.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
-import { enemyEffects } from "./enemy-ai.ts";
+import { enemyDefeated } from "./enemy-ai.ts";
 import { ACTIVE_CHUNK_RADIUS, encounterOf, persistentObject } from "./geography.ts";
 import { isLandmark } from "./landmarks.ts";
 import { validExplored } from "./map.ts";
@@ -33,7 +33,7 @@ import { chunkCoordinates, validVisitedPages } from "./visited.ts";
 import { UPGRADE_WEAPONS } from "./weapons.ts";
 
 /** The save format this build writes and reads. */
-export const SAVE_VERSION: GameState["version"] = 5;
+export const SAVE_VERSION: GameState["version"] = 6;
 
 /**
  * Whether saved was written by a newer build: its version is above SAVE_VERSION. Such a save is
@@ -110,7 +110,7 @@ function achievementState(value: unknown): boolean {
 function nonnegative(value: unknown): boolean {
   return finite(value) && value >= 0;
 }
-function enemyState(value: unknown): boolean {
+function enemyState(sector: SectorId, value: unknown): boolean {
   if (
     !record(value) ||
     typeof value.archetype !== "string" ||
@@ -135,7 +135,7 @@ function enemyState(value: unknown): boolean {
   ) {
     return false;
   }
-  const definition = enemyCatalog[value.archetype as keyof typeof enemyCatalog];
+  const definition = enemyDefinition(sector, value.archetype as keyof typeof enemyCatalog);
   const hardpoints: unknown[] = value.hardpoints;
   return (
     hardpoints.length === definition.hardpoints.length &&
@@ -269,7 +269,7 @@ function spaceObject(
         finite(value.river.arc))) &&
     (value.enemy === undefined ||
       (value.kind === "enemy" &&
-        enemyState(value.enemy) &&
+        enemyState(sector, value.enemy) &&
         record(value.enemy) &&
         value.enemy.id === value.id)) &&
     nonnegative(value.radius) &&
@@ -315,9 +315,7 @@ function persistentWorld(
       object.hp <= 0 ||
       object.kind === "destination" ||
       object.id.startsWith("whale-debris:") ||
-      (object.kind === "enemy" &&
-        object.enemy &&
-        enemyEffects(enemyCatalog[object.enemy.archetype], object.enemy).defeated)
+      (object.kind === "enemy" && object.enemy && enemyDefeated(object.enemy))
     ) {
       return false;
     }
@@ -337,7 +335,7 @@ function unloadedPackState(
       object.kind !== "enemy" ||
       object.hp <= 0 ||
       !object.enemy?.packId ||
-      enemyEffects(enemyCatalog[object.enemy.archetype], object.enemy).defeated
+      enemyDefeated(object.enemy)
     ) {
       continue;
     }

@@ -42,6 +42,7 @@ import {
   averageVelocity,
   createEnemy,
   damageEnemy,
+  enemyDefeated,
   enemyEffects,
   hardpointOffset,
   stepDebris,
@@ -975,7 +976,7 @@ function capital(object: SpaceObject): boolean {
     object.kind === "enemy" &&
     object.hp > 0 &&
     object.enemy?.archetype === "capital" &&
-    !enemyEffects(enemyCatalog[object.enemy.archetype], object.enemy).defeated
+    !enemyDefeated(object.enemy)
   );
 }
 
@@ -1020,8 +1021,7 @@ function relocateRouteGuards(content: PrototypeContent, flight: FlightState): vo
         object.kind === "enemy" &&
         persistentObject(object) &&
         object.hp > 0 &&
-        (!object.enemy ||
-          !enemyEffects(enemyCatalog[object.enemy.archetype], object.enemy).defeated),
+        (!object.enemy || !enemyDefeated(object.enemy)),
     ),
     flight,
   );
@@ -2023,14 +2023,7 @@ function strike(
       continue;
     }
     shot.hitIds.push(object.id);
-    const part = hitPart(
-      content,
-      ROUTE_POSITION[flight.sector],
-      partReach(content),
-      3,
-      shot,
-      object,
-    );
+    const part = hitPart(content, flight.sector, partReach(content), 3, shot, object);
     // Large hulls only consume a shot at a live hardpoint; this keeps interior parts reachable.
     if (part === undefined) {
       shot.hitIds.pop();
@@ -2057,13 +2050,14 @@ function partReach(content: PrototypeContent): number {
 /** A multipart enemy's live hardpoints, in world coordinates. */
 function liveParts(
   content: PrototypeContent,
+  sector: SectorId,
   object: SpaceObject,
 ): { id: string; x: number; y: number }[] {
   const enemy = object.enemy;
   if (!enemy) {
     return [];
   }
-  const definition = enemyCatalog[enemy.archetype];
+  const definition = enemyDefinition(sector, enemy.archetype);
   const adaWidth = content.tuning.flight.shipRadius * 2;
   return definition.hardpoints
     .filter((part) => enemy.hardpoints.some((value) => value.id === part.id && value.hp > 0))
@@ -2105,7 +2099,7 @@ function enemyTouched(
  */
 function hitPart(
   content: PrototypeContent,
-  position: RoutePosition,
+  sector: SectorId,
   reach: number,
   tolerance: number,
   point: Vec,
@@ -2115,12 +2109,12 @@ function hitPart(
   if (object.kind !== "enemy" || !enemy) {
     return null;
   }
-  if (!enemyCatalog[enemy.archetype].hardpoints.length) {
+  if (!enemy.hardpoints.length) {
     return null;
   }
   let nearest: { id: string; gap: number } | undefined;
-  for (const part of liveParts(content, object)) {
-    const outline = enemyPartOutline(position, enemy, part.id);
+  for (const part of liveParts(content, sector, object)) {
+    const outline = enemyPartOutline(ROUTE_POSITION[sector], enemy, part.id);
     const contact = outline && outlineContact(outline, object, point, tolerance);
     // A drawn part ranks by overlap depth, deepest first; an undrawn one by its anchor gap.
     const gap = outline ? (contact ? -contact.depth : Infinity) : distance(point, part);
@@ -2144,7 +2138,7 @@ function hit(
     return;
   }
   if (object.kind === "enemy" && object.enemy) {
-    const definition = enemyCatalog[object.enemy.archetype];
+    const definition = enemyDefinition(flight.sector, object.enemy.archetype);
     object.enemy = damageEnemy(definition, { amount, hardpointId: part }, object.enemy);
     object.hp = enemyEffects(definition, object.enemy).defeated ? 0 : Math.max(1, object.enemy.hp);
   } else {
@@ -2216,7 +2210,7 @@ function blast(
       continue;
     }
     const position = ROUTE_POSITION[flight.sector];
-    const part = hitPart(content, position, radius + partReach(content), radius, at, object);
+    const part = hitPart(content, flight.sector, radius + partReach(content), radius, at, object);
     if (part === undefined || (part === null && !enemyTouched(position, object, at, radius))) {
       continue;
     }
@@ -2397,8 +2391,8 @@ function fireBeam(
       );
     } else if (object.kind === "enemy" && object.enemy) {
       const hull = enemyHull(object.enemy);
-      if (enemyCatalog[object.enemy.archetype].hardpoints.length) {
-        for (const part of liveParts(content, object)) {
+      if (object.enemy.hardpoints.length) {
+        for (const part of liveParts(content, flight.sector, object)) {
           const outline = enemyPartOutline(ROUTE_POSITION[flight.sector], object.enemy, part.id);
           if (outline) {
             drawn(object, part.id, outline);

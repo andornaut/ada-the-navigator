@@ -1,8 +1,13 @@
-import { type EnemyArchetype, enemyCatalog, type EnemyDefinition } from "./enemy-catalog.ts";
+import {
+  type EnemyArchetype,
+  enemyCatalog,
+  type EnemyDefinition,
+  type FireProfile,
+} from "./enemy-catalog.ts";
 
 /** One hardpoint in the export Art's generator reads to anchor parts on each heading. */
 export interface ExportedHardpoint {
-  fire?: "bolt" | "missile";
+  fire?: FireProfile["projectile"];
   id: string;
   /** Fraction of hull width in the hull's local frame: `-y` forward, `+x` starboard. */
   offset: [number, number];

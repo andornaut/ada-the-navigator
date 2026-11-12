@@ -4,6 +4,8 @@ import {
   ENEMY_AIM,
   type EnemyArchetype,
   enemyCatalog,
+  type EnemyDefinition,
+  enemyDefinition,
   fireDamageRatio,
 } from "../data/enemy-catalog.ts";
 import { SHARED_SHIP_PHYSICS, SHIP_PHYSICS } from "../data/ship-physics.ts";
@@ -23,6 +25,7 @@ import {
   stepDebris,
   stepEnemy,
 } from "./enemy-ai.ts";
+import { fanHeading } from "./player-projectiles.ts";
 import { stepShipMotion } from "./ship-physics.ts";
 
 /** `vector` turned by `angle` radians, as a ship's aim drift turns its line of fire. */
@@ -31,12 +34,11 @@ const rotate = (vector: { x: number; y: number }, angle: number) => ({
   y: vector.x * Math.sin(angle) + vector.y * Math.cos(angle),
 });
 
-const spawn = (archetype: EnemyArchetype): EnemyState =>
-  createEnemy(
-    enemyCatalog[archetype],
-    { archetype, id: "enemy", packId: null, phase: 0.4 },
-    { x: 0, y: 0 },
-  );
+const spawn = (
+  archetype: EnemyArchetype,
+  definition: EnemyDefinition = enemyCatalog[archetype],
+): EnemyState =>
+  createEnemy(definition, { archetype, id: "enemy", packId: null, phase: 0.4 }, { x: 0, y: 0 });
 const observation = (state: EnemyState): EnemyContext => ({
   adaWidth: 20,
   dt: 1 / 60,
@@ -173,9 +175,13 @@ describe("enemy rules", () => {
     expect(idle.velocity).toEqual({ x: 0, y: 0 });
     expect(idle.fire).toEqual([]);
     const hit = damageEnemy(definition, { amount: 1, hardpointId: null }, state);
-    expect(stepEnemy(definition, observation(hit), hit).fire.map((shot) => shot.profileId)).toEqual(
-      ["retaliator-spread", "retaliator-spread", "retaliator-spread"],
-    );
+    expect(
+      stepEnemy(definition, observation(hit), hit).fire.map((shot) => [shot.weapon, shot.level]),
+    ).toEqual([
+      ["multiLaser", 1],
+      ["multiLaser", 1],
+      ["multiLaser", 1],
+    ]);
     const unknown = { ...observation(hit), visibility: "unknown" as const };
     expect(stepEnemy(definition, unknown, hit).fire).toEqual([]);
     expect(stepEnemy(definition, unknown, hit).state.lastSeen).toBeNull();
@@ -208,22 +214,27 @@ describe("enemy rules", () => {
     }
   });
 
-  it("keeps bolt and missile profiles and independent cooldowns", () => {
-    const definition = enemyCatalog.capital;
-    const state = spawn("capital");
+  it("fires each hardpoint's own weapon and level with independent cooldowns", () => {
+    // Andromeda (position 4): Lasers and Multi-Lasers at level 2, a Rapid and a Heavy Missile.
+    const definition = enemyDefinition(5, "capital");
+    const state = spawn("capital", definition);
     const first = stepEnemy(definition, observation(state), state);
-    expect(first.fire.map((shot) => [shot.hardpointId, shot.profileId, shot.projectile])).toEqual([
-      ["weapon-left", "turret-bolt", "bolt"],
-      ["weapon-right", "turret-bolt", "bolt"],
-      ["weapon-rear-left", "straight-missile", "missile"],
-      ["weapon-rear-right", "straight-missile", "missile"],
+    const fired = first.fire.map((shot) => `${shot.hardpointId} ${shot.weapon} ${shot.level}`);
+    expect([...new Set(fired)]).toEqual([
+      "weapon-left laser 2",
+      "weapon-right laser 2",
+      "weapon-rear-left multiLaser 2",
+      "weapon-rear-right multiLaser 2",
+      "claw-left rapidMissile 2",
+      "claw-right heavyMissile 1",
     ]);
-    expect(first.state.hardpoints.find((part) => part.id === "weapon-left")?.cooldown).toBeCloseTo(
-      1.4 - 1 / 60,
-    );
-    expect(
-      first.state.hardpoints.find((part) => part.id === "weapon-rear-left")?.cooldown,
-    ).toBeCloseTo(3 - 1 / 60);
+    // A level 2 Multi-Laser fires its level's four-bolt fan.
+    expect(fired.filter((shot) => shot === "weapon-rear-left multiLaser 2")).toHaveLength(4);
+    expect(first.fire.find((shot) => shot.weapon === "heavyMissile")?.projectile).toBe("missile");
+    const cooldown = (id: string) =>
+      first.state.hardpoints.find((part) => part.id === id)?.cooldown;
+    expect(cooldown("weapon-left")).toBeCloseTo(1.4 / 1.88 - 1 / 60);
+    expect(cooldown("claw-right")).toBeCloseTo(4 / 1.88 - 1 / 60);
     const ready = {
       ...first.state,
       hardpoints: first.state.hardpoints.map((part) => ({
@@ -233,18 +244,20 @@ describe("enemy rules", () => {
     };
     const second = stepEnemy(definition, observation(ready), ready);
     expect(second.fire.map((shot) => shot.hardpointId)).toEqual(["weapon-left"]);
-    expect(first.fire[0]?.speed).not.toBe(first.fire[2]?.speed);
+    expect(first.fire[0]?.speed).not.toBe(first.fire.at(-1)?.speed);
   });
 
   it.each(["capital"] as const)(
     "aims every %s bolt and missile from its own muzzle before applying spread",
     (archetype) => {
-      const state = { ...spawn(archetype), position: { x: 110, y: -75 } };
+      // Andromeda's capital fires bolts and missiles.
+      const positioned = enemyDefinition(5, archetype);
+      const state = { ...spawn(archetype, positioned), position: { x: 110, y: -75 } };
       const context = { ...observation(state), player: { x: 390, y: 145 } };
-      const angles = [-0.2, 0, 0.35];
+      const angles = [-20, 0, 35];
       const definition = {
-        ...enemyCatalog[archetype],
-        hardpoints: enemyCatalog[archetype].hardpoints.map((part) =>
+        ...positioned,
+        hardpoints: positioned.hardpoints.map((part) =>
           part.kind === "weapon" ? { ...part, fire: { ...part.fire, angles } } : part,
         ),
       };
@@ -266,13 +279,14 @@ describe("enemy rules", () => {
           expect(shot.origin).toEqual(shots[0]!.origin);
           const dx = context.player.x - mount.x;
           const dy = context.player.y - mount.y;
-          const cross = dx * shot.aim.y - dy * shot.aim.x;
-          const dot = dx * shot.aim.x + dy * shot.aim.y;
           expect(Math.hypot(shot.aim.x, shot.aim.y)).toBeCloseTo(1, 12);
-          // Each spread angle is taken from the drifted line of fire.
+          // Each spread angle is taken from the drifted line of fire in the projected aim
+          // plane, as Ada's fans are.
           const drift = aimDrift(state.id, state.age);
-          expect(Math.atan2(cross, dot)).toBeCloseTo(angles[index]! + drift, 12);
-          expect(dot).toBeGreaterThan(0);
+          const line = rotate({ x: dx / Math.hypot(dx, dy), y: dy / Math.hypot(dx, dy) }, drift);
+          const expected = fanHeading(line, angles[index]!);
+          expect(shot.aim.x).toBeCloseTo(expected.x, 12);
+          expect(shot.aim.y).toBeCloseTo(expected.y, 12);
         }
       }
     },
@@ -307,7 +321,8 @@ describe("enemy rules", () => {
   it("requires the command part after hull, engines and weapons are disabled", () => {
     const definition = enemyCatalog.capital;
     let state = damageEnemy(definition, { amount: 999, hardpointId: null }, spawn("capital"));
-    expect(stepEnemy(definition, observation(state), state).fire).toHaveLength(4);
+    // Two Lasers and two three-bolt Multi-Lasers.
+    expect(stepEnemy(definition, observation(state), state).fire).toHaveLength(8);
     for (const part of definition.hardpoints.filter((part) => part.kind !== "command")) {
       state = damageEnemy(definition, { amount: 999, hardpointId: part.id }, state);
     }
@@ -401,7 +416,11 @@ describe("enemy ship physics and hull rotation", () => {
     });
     expect(pick("frigate")).toEqual({ behaviour: "siege", engagement: 500, hp: 10, sizeRatio: 4 });
     expect(pick("capital")).toEqual({ behaviour: "siege", engagement: 750, hp: 18, sizeRatio: 5 });
-    expect(enemyCatalog.retaliator.fire).toMatchObject({ angles: [-0.2, 0, 0.2], interval: 2.2 });
+    expect(enemyCatalog.retaliator.fire).toMatchObject({
+      angles: [-20, 0, 20],
+      interval: 2.2,
+      weapon: "multiLaser",
+    });
     expect(enemyCatalog.retaliator.aggression).toBe("retaliate");
     expect(enemyCatalog.swarm.steering).toEqual({ separation: 85, wobble: 0.65 });
     expect(Object.keys(enemyCatalog)).not.toContain("oversizedCapital");

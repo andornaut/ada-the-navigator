@@ -8,14 +8,16 @@ export interface Point {
   y: number;
 }
 export interface FireProfile {
-  angles: number[];
+  /** The weapon's fan at its level, in degrees in the projected aim plane, as Ada fires it. */
+  angles: readonly number[];
   /** Bolts per volley fired `gap` seconds apart; a volley starts every `interval`. */
   burst?: { count: number; gap: number };
-  id: string;
   interval: number;
   /** The weapon's level; an enemy-only weapon has only level 1. */
   level: WeaponLevel;
-  projectile: "bolt" | "missile";
+  /** A beam is hitscan and a mine is laid in place: neither flies. */
+  projectile: "beam" | "bolt" | "dot" | "mine" | "missile";
+  /** Multiplies the base enemy projectile speed; 0 for a weapon without projectile flight. */
   projectileSpeedRatio: number;
   /** The weapon this profile fires (gameplay/ships.md "Enemy weapons"). */
   weapon: EnemyWeapon;
@@ -103,24 +105,54 @@ const engine = (id: string, x: number, y: number): HardpointDefinition => ({
   offset: { x, y },
   required: true,
 });
-const bolt: FireProfile = {
-  angles: [0],
-  id: "turret-bolt",
-  interval: 1.4,
-  level: 1,
-  projectile: "bolt",
-  projectileSpeedRatio: 1.7,
-  weapon: "laser",
+type Cadence = Pick<FireProfile, "burst" | "interval" | "projectileSpeedRatio">;
+/**
+ * Each weapon's enemy cadence and projectile speed (gameplay/ships.md "Enemy weapons"), before
+ * the position's fire rate. The Phaser and the lance are hitscan and mines are laid in place.
+ */
+export const ENEMY_FIRE: Readonly<Record<EnemyWeapon, Cadence>> = {
+  chargedLance: { interval: 6, projectileSpeedRatio: 0 },
+  heavyMissile: { interval: 4, projectileSpeedRatio: 0.6 },
+  laser: { interval: 1.4, projectileSpeedRatio: 1.7 },
+  mineLayer: { interval: 5, projectileSpeedRatio: 0 },
+  multiLaser: { interval: 2.2, projectileSpeedRatio: 1.7 },
+  phaser: { interval: 3, projectileSpeedRatio: 0 },
+  rapidMissile: { interval: 2, projectileSpeedRatio: 1.3 },
+  ringBurst: { interval: 3.5, projectileSpeedRatio: 1.2 },
+  scattershot: { interval: 2.4, projectileSpeedRatio: 1.7 },
 };
-const missile: FireProfile = {
-  angles: [0],
-  id: "straight-missile",
-  interval: 3,
-  level: 1,
-  projectile: "missile",
-  projectileSpeedRatio: 1.3,
-  weapon: "rapidMissile",
+/** The swarm's slower, lighter Laser and the platform's two-shot Laser bursts. */
+const ARCHETYPE_FIRE: Readonly<Partial<Record<string, Partial<Record<EnemyWeapon, Cadence>>>>> = {
+  platform: { laser: { ...ENEMY_FIRE.laser, burst: { count: 2, gap: 0.15 } } },
+  swarm: { laser: { interval: 1.8, projectileSpeedRatio: 1.5 } },
 };
+const ENEMY_ONLY_PROJECTILE: Readonly<Record<EnemyOnlyWeapon, FireProfile["projectile"]>> = {
+  chargedLance: "beam",
+  mineLayer: "mine",
+  ringBurst: "bolt",
+};
+
+/** Whether a weapon is one only enemies carry. */
+export function enemyOnly(weapon: EnemyWeapon): weapon is EnemyOnlyWeapon {
+  return weapon === "chargedLance" || weapon === "mineLayer" || weapon === "ringBurst";
+}
+
+/**
+ * An archetype's fire profile for a weapon at a level: the weapon's fan and projectile at that
+ * level, the same whoever fires it, at the enemy's own cadence and speed.
+ */
+export function enemyFire(archetype: string, mounted: MountedWeapon): FireProfile {
+  const { level, weapon } = mounted;
+  const cadence = ARCHETYPE_FIRE[archetype]?.[weapon] ?? ENEMY_FIRE[weapon];
+  const shared = enemyOnly(weapon) ? null : weaponAt(weapon, level);
+  return {
+    ...cadence,
+    angles: shared?.anglesDegrees ?? [0],
+    level,
+    projectile: shared?.projectileKind ?? ENEMY_ONLY_PROJECTILE[weapon as EnemyOnlyWeapon],
+    weapon,
+  };
+}
 const command: HardpointDefinition = {
   hp: 5,
   id: "command",
@@ -128,14 +160,6 @@ const command: HardpointDefinition = {
   offset: { x: 0, y: 0 },
   required: true,
 };
-const weapon = (fire: FireProfile, id: string, offset: Point, hp = 3): HardpointDefinition => ({
-  fire,
-  hp,
-  id,
-  kind: "weapon",
-  offset: { ...offset },
-  required: true,
-});
 const armed = (weapon: EnemyWeapon, level: WeaponLevel = 1): MountedWeapon => ({ level, weapon });
 /**
  * Frigate mounts: the sponson pair, the dorsal spine and the bow between the tine roots, with
@@ -241,12 +265,70 @@ const capitalMounts = {
     },
   ],
 } as const satisfies WeaponMounts;
+/**
+ * Cartwheel's fixed ore-field guard: two turrets at Art's offsets (art/heavies.md "Turret
+ * platform"), as in tools/enemy-hardpoints.json, each firing two-shot Laser bursts.
+ */
+const platformMounts = {
+  fill: ["port", "starboard"],
+  offsets: { port: { x: -0.29, y: 0 }, starboard: { x: 0.29, y: 0 } },
+  tiers: [
+    { mounts: { port: armed("laser"), starboard: armed("laser") }, positions: [1, 2] },
+    { mounts: { port: armed("laser", 2), starboard: armed("laser", 2) }, positions: [3, 4] },
+    { mounts: { port: armed("laser", 3), starboard: armed("laser", 3) }, positions: [5, 6] },
+  ],
+} as const satisfies WeaponMounts;
+
+/** The mount tier for a route position. */
+export function mountTier(mounts: WeaponMounts, position: RoutePosition): MountTier {
+  return mounts.tiers.find(
+    (tier) => position >= tier.positions[0] && position <= tier.positions[1],
+  )!;
+}
+
+/** A heavy's weapon hardpoints at a tier: each armed mount, in fill order, at Art's offset. */
+function mountedHardpoints(
+  archetype: string,
+  mounts: WeaponMounts,
+  tier: MountTier,
+  hp: number,
+): HardpointDefinition[] {
+  return mounts.fill.flatMap((id): HardpointDefinition[] => {
+    const mounted = tier.mounts[id];
+    return mounted
+      ? [
+          {
+            fire: enemyFire(archetype, mounted),
+            hp,
+            id,
+            kind: "weapon",
+            offset: { ...mounts.offsets[id]! },
+            required: true,
+          },
+        ]
+      : [];
+  });
+}
+
+/**
+ * Small craft weapons at positions 1-2, 3-4 and 5-6 (gameplay/ships.md "Enemy weapons"); the
+ * base catalog carries the first.
+ */
+export const SMALL_CRAFT_WEAPONS: Readonly<
+  Record<"fighter" | "interceptor" | "retaliator" | "swarm", readonly MountedWeapon[]>
+> = {
+  fighter: [armed("laser"), armed("rapidMissile", 2), armed("rapidMissile", 3)],
+  interceptor: [armed("laser"), armed("scattershot", 2), armed("scattershot", 3)],
+  retaliator: [armed("multiLaser"), armed("multiLaser", 2), armed("multiLaser", 3)],
+  swarm: [armed("laser"), armed("laser", 2), armed("laser", 3)],
+};
+
 /** Shared ship-sized defaults; each archetype states its own physics. */
 const base: Omit<EnemyDefinition, "physics"> = {
   aggression: "sight",
   behaviour: { kind: "chase" },
   engagement: 360,
-  fire: bolt,
+  fire: enemyFire("fighter", armed("laser")),
   hardpoints: [],
   hp: 4,
   morale: { individualHpRatio: 0.3, packLossRatio: 0.5 },
@@ -256,17 +338,6 @@ const base: Omit<EnemyDefinition, "physics"> = {
   steering: { separation: 70, wobble: 0 },
 };
 const siege: Behaviour = { kind: "siege", speedFraction: 0.5 };
-/**
- * Cartwheel's fixed ore-field guard: two required turrets, each firing two-bolt bursts with
- * the base bolt. The turrets' offsets are Art's (art/heavies.md "Turret platform"), as in
- * tools/enemy-hardpoints.json.
- */
-const platformBurst: FireProfile = {
-  ...bolt,
-  burst: { count: 2, gap: 0.15 },
-  id: "platform-burst",
-  interval: 1.4,
-};
 
 /** Provisional tuning in world units and seconds, not user-selected values. */
 export const enemyCatalog = {
@@ -279,10 +350,7 @@ export const enemyCatalog = {
       command,
       engine("engine-left", -0.25, 0.4),
       engine("engine-right", 0.25, 0.4),
-      weapon(bolt, "weapon-left", capitalMounts.offsets["weapon-left"]),
-      weapon(bolt, "weapon-right", capitalMounts.offsets["weapon-right"]),
-      weapon(missile, "weapon-rear-left", capitalMounts.offsets["weapon-rear-left"]),
-      weapon(missile, "weapon-rear-right", capitalMounts.offsets["weapon-rear-right"]),
+      ...mountedHardpoints("capital", capitalMounts, capitalMounts.tiers[0], 3),
     ],
     hp: 18,
     morale: { individualHpRatio: 0, packLossRatio: 1 },
@@ -303,8 +371,7 @@ export const enemyCatalog = {
     engagement: 500,
     hardpoints: [
       engine("engine", 0, 0.3),
-      weapon(bolt, "port", frigateMounts.offsets.port),
-      weapon(bolt, "starboard", frigateMounts.offsets.starboard),
+      ...mountedHardpoints("frigate", frigateMounts, frigateMounts.tiers[0], 3),
     ],
     hp: 10,
     mounts: frigateMounts,
@@ -325,13 +392,11 @@ export const enemyCatalog = {
     ...base,
     behaviour: { kind: "siege", speedFraction: 0 },
     engagement: 520,
-    hardpoints: [
-      weapon(platformBurst, "port", { x: -0.29, y: 0 }, 6),
-      weapon(platformBurst, "starboard", { x: 0.29, y: 0 }, 6),
-    ],
+    hardpoints: mountedHardpoints("platform", platformMounts, platformMounts.tiers[0], 6),
     // The hull has no HP of its own: hits land only on its turrets.
     hp: 12,
     morale: { individualHpRatio: 0, packLossRatio: 1 },
+    mounts: platformMounts,
     perception: 520,
     physics: SHIP_PHYSICS.platform,
     sizeRatio: 3,
@@ -339,13 +404,7 @@ export const enemyCatalog = {
   retaliator: {
     ...base,
     aggression: "retaliate",
-    fire: {
-      ...bolt,
-      angles: [-0.2, 0, 0.2],
-      id: "retaliator-spread",
-      interval: 2.2,
-      weapon: "multiLaser",
-    },
+    fire: enemyFire("retaliator", SMALL_CRAFT_WEAPONS.retaliator[0]!),
     hp: 8,
     physics: SHIP_PHYSICS.retaliator,
     sizeRatio: 2,
@@ -354,7 +413,7 @@ export const enemyCatalog = {
   swarm: {
     ...base,
     behaviour: { kind: "swarm" },
-    fire: { ...bolt, id: "swarm-bolt", interval: 1.8, projectileSpeedRatio: 1.5 },
+    fire: enemyFire("swarm", SMALL_CRAFT_WEAPONS.swarm[0]!),
     hp: 2,
     morale: { individualHpRatio: 0.5, packLossRatio: 0.4 },
     physics: SHIP_PHYSICS.swarm,
@@ -443,8 +502,8 @@ export const sectorArchetypes: Readonly<
   },
 };
 
-/** The small craft, whose hull HP each position sets. */
-export type SmallCraft = "fighter" | "interceptor" | "retaliator" | "swarm";
+/** The small craft, whose hull HP and weapon each position sets. */
+export type SmallCraft = keyof typeof SMALL_CRAFT_WEAPONS;
 /** One route position's difficulty (gameplay/ships.md "Difficulty"). */
 export interface PositionDifficulty {
   /** Multiplies the roster's frigate and capital weights before the weights renormalize. */
@@ -526,7 +585,7 @@ export const HEAVIES: readonly EnemyArchetype[] = ["frigate", "capital", "platfo
  */
 export function enemyStardust(sector: SectorId, archetype: EnemyArchetype): number {
   const hp = HEAVIES.includes(archetype)
-    ? enemyCatalog[archetype].hardpoints.length * difficultyOf(sector).hardpointHp
+    ? enemyDefinition(sector, archetype).hardpoints.length * difficultyOf(sector).hardpointHp
     : unscaledHullHp(sector, archetype);
   return Math.max(1, Math.floor(hp / 2));
 }
@@ -571,7 +630,7 @@ export const ENEMY_ONLY_DAMAGE: Readonly<Record<EnemyOnlyWeapon, number>> = {
  */
 export function fireDamageRatio(profile: Pick<FireProfile, "level" | "weapon">): number {
   const weapon = profile.weapon;
-  return weapon === "chargedLance" || weapon === "mineLayer" || weapon === "ringBurst"
+  return enemyOnly(weapon)
     ? ENEMY_ONLY_DAMAGE[weapon]
     : weaponAt(weapon, profile.level).damageRatio;
 }
@@ -624,18 +683,30 @@ export function encounterQuiet(sector: SectorId): { distance: number; seconds: n
 
 const scaled = new Map<string, EnemyDefinition>();
 /**
- * The catalog definition at a galaxy's route position: its roster behaviour, its position's hull
- * and hardpoint HP, hitAndRun retreat and perception, and its fire rate, with difficultyScale on
- * HP and fire rate.
+ * The catalog definition at a galaxy's route position: its roster behaviour, its position's
+ * weapons, hull and hardpoint HP, hitAndRun retreat and perception, and its fire rate, with
+ * difficultyScale on HP and fire rate. A heavy's weapon hardpoints are its tier's armed mounts.
  */
 export function enemyDefinition(sector: SectorId, archetype: EnemyArchetype): EnemyDefinition {
   const key = `${sector}:${archetype}`;
   let definition = scaled.get(key);
   if (!definition) {
     const difficulty = difficultyOf(sector);
+    const route = ROUTE_POSITION[sector];
+    const entry: EnemyDefinition = enemyCatalog[archetype];
+    const small = Object.hasOwn(SMALL_CRAFT_WEAPONS, archetype)
+      ? SMALL_CRAFT_WEAPONS[archetype as SmallCraft][Math.ceil(route / 2) - 1]!
+      : null;
     const catalog: EnemyDefinition = {
-      ...enemyCatalog[archetype],
+      ...entry,
       ...byPosition(sectorArchetypes, sector)[archetype],
+      fire: small ? enemyFire(archetype, small) : entry.fire,
+      hardpoints: entry.mounts
+        ? [
+            ...entry.hardpoints.filter((part) => part.kind !== "weapon"),
+            ...mountedHardpoints(archetype, entry.mounts, mountTier(entry.mounts, route), 0),
+          ]
+        : entry.hardpoints,
     };
     const fireRate = difficulty.rates.fire * DIFFICULTY_SCALE;
     const faster = (fire: FireProfile): FireProfile => ({
