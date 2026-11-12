@@ -336,14 +336,14 @@ describe("rock silhouettes", () => {
           const angle =
             ((turn + ((heading + frame * 7) % SHIP_HEADINGS) / SHIP_HEADINGS) / 4) * Math.PI * 2;
           const held = { ...object, hp: 999, persistent: true, spinStart: frame };
-          // Start 32 px out from where the drawn rock ends along this screen direction, beyond
+          // Start 26 px out from where the drawn rock ends along this screen direction, beyond
           // the ship's 21 px half-width, and fly at its pivot.
           const along = (t: number) => world({ x: Math.cos(angle) * t, y: Math.sin(angle) * t });
           let edge = drawn.reach;
           while (edge > 0 && !sceneryContact(held, along(edge), 0.5, frame)) {
             edge -= 1;
           }
-          const start = along(edge + 32);
+          const start = along(edge + 26);
           const span = Math.hypot(start.x, start.y);
           const move = { x: -start.x / span, y: -start.y / span };
           flight.objects = [held];
@@ -355,7 +355,7 @@ describe("rock silhouettes", () => {
             y: move.y * PROTOTYPE.tuning.maxSpeed,
           };
           let reached = false;
-          for (let step = 0; step < 20; step++) {
+          for (let step = 0; step < 16; step++) {
             // Aiming holds the heading while she flies in.
             stepFlight(
               PROTOTYPE,
@@ -382,7 +382,8 @@ describe("rock silhouettes", () => {
     expect(approaches).toBeGreaterThan(4 * SHIP_HEADINGS * drawnRocks.length);
     // Nearly every approach reaches the rock, so the check above is not vacuous.
     expect(touched / approaches).toBeGreaterThan(0.9);
-  }, 60_000);
+    // About 4.5 s in the check container and up to twice that on CI runners: over 6x locally.
+  }, 40_000);
 });
 
 describe("scenery contact and bounce", () => {
