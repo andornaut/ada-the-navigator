@@ -12,6 +12,12 @@ import {
   type Scene,
 } from "./storybook.ts";
 
+// A dialogue line as the copy has it: its speaker, perhaps with where it shows ("Mom, after the
+// branch page:"), then the line in quotes.
+const literal = (text: string) => text.replace(/[.*+?^$()|[\]\\{}]/gu, "\\$&");
+const spoken = (speaker: string, text: string) =>
+  new RegExp(`${literal(speaker)}(?:, [^:"]+)?: "${literal(text)}"`, "u");
+
 // Gameplay's player copy and rules, with their line wrapping undone.
 const read = (name: string) =>
   readFileSync(new URL(`../../gameplay/${name}`, import.meta.url), "utf8")
@@ -46,7 +52,7 @@ describe("storybook text", () => {
         const source = text === PROTOTYPE.premise.roomRock ? CONTRACT : COPY;
         expect(source).toContain(`"${text}"`);
         if (speaker) {
-          expect(COPY).toContain(`${speaker}: "${text}"`);
+          expect(COPY).toMatch(spoken(speaker, text));
         }
       }
     }
@@ -58,7 +64,7 @@ describe("storybook text", () => {
         if (COPY.includes(`Narration: "${text}"`) || speaker === undefined) {
           expect(speaker).toBeUndefined();
         } else {
-          expect(COPY).toContain(`${speaker}: "${text}"`);
+          expect(COPY).toMatch(spoken(speaker, text));
         }
       }
     }
@@ -107,7 +113,7 @@ describe("storybook text", () => {
       "park",
       "park",
       "adaRoomUnpolished",
-      "adaRoomUnpolished",
+      "adaRoomUnpolishedCats",
       "adaRoom",
     ]);
     expect(standing).toHaveLength(14);

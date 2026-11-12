@@ -246,7 +246,7 @@ describe("quantum jump home", () => {
     expect(model.storyView?.page.id).toBe("sleep");
     model.storyTick(OVERNIGHT_SLEEP.seconds, 0.1);
     expect(model.storyView?.page).toMatchObject({
-      background: "adaRoomMorning",
+      background: "adaRoomMorningCats",
       id: "morning",
       text:
         "Astra recharges overnight. In the morning, the rock is warm again, and Archie and Kiwi " +

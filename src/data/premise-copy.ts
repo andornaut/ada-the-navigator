@@ -76,7 +76,7 @@ export const PREMISE: PremiseContent = {
       ].join(""),
     },
     {
-      background: "adaRoomUnpolished",
+      background: "adaRoomUnpolishedCats",
       text: "Archie and Kiwi watch from the bed, tails twitching.",
     },
     {

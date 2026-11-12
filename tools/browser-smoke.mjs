@@ -2102,7 +2102,7 @@ try {
     )
   ).jsonValue();
   await page.screenshot({ path: `${output}/overnight-waking-fade.png` });
-  await roomShows("adaRoomMorning");
+  await roomShows("adaRoomMorningCats");
   const sleptMs = Date.now() - sleepStart;
   await storyNext().waitFor({ state: "visible" });
   await page.waitForTimeout(200);
@@ -2147,10 +2147,12 @@ try {
       fadeState.opacity < 1,
     `The capture falls inside the cross-fade to morning: ${JSON.stringify(fadeState)}`,
   );
+  // Ada waking and the cats curled at her feet fade in with the morning.
+  const morningFigures = ["story-ada-waking", "story-archie-curled", "story-kiwi-curled"];
   assert.deepEqual(
     fadeState.overlays,
-    ["story-ada-waking"],
-    "Ada's waking sprite fades in with the morning",
+    morningFigures,
+    "Ada's waking sprite and the cats fade in with the morning",
   );
   assert.equal(
     morning.sampling.overlay,
@@ -2159,8 +2161,8 @@ try {
   );
   assert.deepEqual(
     morning.overlays,
-    ["story-ada-waking"],
-    "The cross-fade to morning ends the night's overlays and leaves Ada waking",
+    morningFigures,
+    "The cross-fade to morning ends the night's overlays and leaves Ada waking with the cats",
   );
   events.checks.push(
     "The browser's jump home lands in Art's night room, plays the overnight sequence and wakes " +

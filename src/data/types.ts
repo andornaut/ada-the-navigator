@@ -12,6 +12,8 @@ export interface ChapterContent {
   /** One branch page per opening choice, in choice order, before the story rejoins. */
   openingBranches: readonly [string, string];
   openingChoices: readonly [string, string];
+  /** Pages after either branch page, where the story rejoins, each at its own location. */
+  openingRejoin?: readonly PrologueStep[];
   resolution: string;
   /** One branch page per resolution choice, in choice order, before the closing. */
   resolutionBranches: readonly [string, string];
@@ -35,18 +37,23 @@ export interface PremiseLine {
 export type ArtBackground =
   | "adaRoom"
   | "adaRoomMorning"
+  | "adaRoomMorningCats"
   | "adaRoomNight"
   | "adaRoomRecorder"
+  | "adaRoomRecorderDad"
   | "adaRoomSleep"
   | "adaRoomUnpolished"
+  | "adaRoomUnpolishedCats"
   | "cockpit"
   | "cockpitSeated"
   | "concertHall"
   | "frontDoor"
+  | "frontDoorMom"
   | "gardenLot"
   | "grandmaGarden"
   | "grandmaGardenReplanted"
   | "grandmaGardenSpilled"
+  | "kitchen"
   | "park"
   | "schoolHallway"
   | "schoolyard";

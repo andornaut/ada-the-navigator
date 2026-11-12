@@ -43,12 +43,19 @@ describe("Art's overnight room", () => {
     expect(backgrounds.adaRoomMorning).toBe("/art/story/ada-room-morning.png");
     expect(backgrounds.adaRoomSleep).toBe(backgrounds.adaRoomNight);
     // Every background whose entry lists overlays is a composite: the sleeping figures on the
-    // night, and Ada's sprites waking in the morning and playing in the concert hall.
+    // night, Ada's sprites waking in the morning and playing in the concert hall, and Ada's
+    // family: the cats on the bed and at her feet, Mom at the front door, Dad at dinner and at
+    // her door.
     const composites = storyComposites(manifest.assets);
     expect(Object.keys(composites).sort()).toEqual([
       "adaRoomMorning",
+      "adaRoomMorningCats",
+      "adaRoomRecorderDad",
       "adaRoomSleep",
+      "adaRoomUnpolishedCats",
       "concertHall",
+      "frontDoorMom",
+      "kitchen",
     ]);
     expect(composites.adaRoomSleep).toEqual([
       readOverlay(manifest.assets, "story-ada-room-sleep-figures"),
@@ -98,7 +105,7 @@ describe("Art's overnight room", () => {
   it("fades the figures in, breathes the glow once, then cross-fades to morning over 2.5 s", () => {
     expect(overnight.from).toBe(path("story-ada-room-night"));
     expect(overnight.sleep).toBe(path("story-ada-room-sleep"));
-    expect(overnight.to).toBe(path("story-ada-room-morning"));
+    expect(overnight.to).toBe(path("story-ada-room-morning-cats"));
     expect(
       overnight.steps.map((step) => [step.kind, "ms" in step ? step.ms : step.fadeMs]),
     ).toEqual([
@@ -110,8 +117,11 @@ describe("Art's overnight room", () => {
     expect(overnightSeconds(overnight, false)).toBe(2.5);
   });
 
-  it("fades Ada's waking sprite in with the morning, not after the cross-fade", () => {
-    const waking = [readOverlay(manifest.assets, "story-ada-waking")];
+  it("fades Ada waking and both cats curled in with the morning, not after the cross-fade", () => {
+    expect(data.overnight.to).toBe("story-ada-room-morning-cats");
+    const waking = ["story-ada-waking", "story-archie-curled", "story-kiwi-curled"].map((id) =>
+      readOverlay(manifest.assets, id),
+    );
     for (const reduced of [false, true]) {
       const morning = overnightSteps(overnight, reduced).at(-1)!;
       expect(morning.kind).toBe("background");
@@ -132,8 +142,10 @@ describe("Art's overnight room", () => {
         fadeMs: 400,
         holdMs: 0,
         kind: "background",
-        overlays: [readOverlay(manifest.assets, "story-ada-waking")],
-        url: path("story-ada-room-morning"),
+        overlays: ["story-ada-waking", "story-archie-curled", "story-kiwi-curled"].map((id) =>
+          readOverlay(manifest.assets, id),
+        ),
+        url: path("story-ada-room-morning-cats"),
       },
     ]);
     // No breath: the glow holds steady.
@@ -157,7 +169,7 @@ describe("Art's overnight room", () => {
     expect(pages.map(({ background, sleep }) => [background, sleep ?? false])).toEqual([
       ["adaRoomNight", false],
       ["adaRoomSleep", true],
-      ["adaRoomMorning", false],
+      ["adaRoomMorningCats", false],
     ]);
   });
 
@@ -209,10 +221,11 @@ describe("Art's overnight room", () => {
     // Only the broken composite drops; the others keep their overlays.
     const composites = storyComposites(assets);
     expect(composites).not.toHaveProperty("adaRoomSleep");
-    expect(composites).toEqual({
-      adaRoomMorning: storyComposites(manifest.assets).adaRoomMorning,
-      concertHall: storyComposites(manifest.assets).concertHall,
-    });
+    expect(composites).toEqual(
+      Object.fromEntries(
+        Object.entries(storyComposites(manifest.assets)).filter(([key]) => key !== "adaRoomSleep"),
+      ),
+    );
     expect(storyBackgrounds(assets).adaRoomSleep).toBe(path("story-ada-room-night"));
   });
 
@@ -223,5 +236,6 @@ describe("Art's overnight room", () => {
     const morning = readOvernight(assets, data)?.steps.at(-1);
     expect(morning?.kind === "background" && morning.overlays).toEqual([]);
     expect(storyComposites(assets)).not.toHaveProperty("adaRoomMorning");
+    expect(storyComposites(assets)).not.toHaveProperty("adaRoomMorningCats");
   });
 });

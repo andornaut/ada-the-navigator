@@ -11,6 +11,7 @@ import {
   type ArtAsset,
   readStoryTransitions,
   storyBackgrounds,
+  storyBases,
   storySubjects,
   transitionSteps,
 } from "./story-art.ts";
@@ -47,6 +48,22 @@ describe("storybook art", () => {
     }
   });
 
+  it("places each composite as its base: the family's pages and the sleep scene", () => {
+    expect(storyBases(manifest.assets)).toEqual({
+      adaRoomMorningCats: "adaRoomMorning",
+      adaRoomRecorderDad: "adaRoomRecorder",
+      adaRoomSleep: "adaRoomNight",
+      adaRoomUnpolishedCats: "adaRoomUnpolished",
+      frontDoorMom: "frontDoor",
+    });
+    // A composite draws its base's image, with its base's band.
+    const subjects = storySubjects(manifest.assets);
+    for (const [key, base] of Object.entries(storyBases(manifest.assets))) {
+      expect(backgrounds[key as ArtBackground], key).toBe(backgrounds[base]);
+      expect(subjects[key as ArtBackground], key).toEqual(subjects[base]);
+    }
+  });
+
   it("reads every background's subject band from its manifest entry", () => {
     const subjects = storySubjects(manifest.assets);
     for (const key of KEYS) {
@@ -70,8 +87,10 @@ describe("storybook art", () => {
     ),
     { cockpit: "cockpitSeated", frames: "story-ada-room-recorder-glow", room: "adaRoomRecorder" },
   ] as const;
+  // A composite shares its base's image, so a page on Dad's recorder room glows as the room does.
+  const bases = storyBases(manifest.assets);
   const glows = (from: ArtBackground, to: ArtBackground) =>
-    GLOWS.some(({ cockpit, room }) => room === from && cockpit === to);
+    GLOWS.some(({ cockpit, room }) => room === (bases[from] ?? from) && cockpit === to);
 
   it("joins each glowing room to its cockpits with its rock glow frames", () => {
     for (const { cockpit, frames, room } of GLOWS) {

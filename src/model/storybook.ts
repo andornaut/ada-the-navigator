@@ -216,10 +216,14 @@ export function openingScene(
     ),
   );
   const farewell = framed ? "opening:farewell" : undefined;
+  // Either branch rejoins on the chapter's rejoin pages (Cartwheel's dinner), then the farewell.
+  const rejoin = chapter.openingRejoin ?? [];
+  const rejoinIds = rejoin.map((_, index) => `opening:rejoin:${index}`);
+  const after = [...rejoinIds, ...(farewell ? [farewell] : [])];
   return {
     effect: { galaxy, kind: "opened" },
     id: `opening:${galaxy}`,
-    last: farewell ?? "opening:branch:0",
+    last: after.at(-1) ?? "opening:branch:0",
     lead: "home",
     pages: [
       ...arrivalPages,
@@ -236,9 +240,12 @@ export function openingScene(
       ...chapter.openingBranches.map((text, index): StoryPage => ({
         background,
         id: `opening:branch:${index}`,
-        ...(farewell ? { next: farewell } : {}),
+        ...(after[0] ? { next: after[0] } : {}),
         text,
       })),
+      ...rejoin.map((step, index) =>
+        linePage(background, rejoinIds[index]!, after[index + 1], step),
+      ),
       ...(farewell
         ? [linePage(background, farewell, undefined, content.premise.gardenFarewell)]
         : []),
@@ -343,7 +350,7 @@ export function jumpHomeScene(jumpHome: string, morning: string): Scene {
     pages: [
       { background: "adaRoomNight", id: "jumpHome", next: "sleep", text: jumpHome },
       { background: "adaRoomSleep", id: "sleep", next: "morning", sleep: true, text: "" },
-      { background: "adaRoomMorning", id: "morning", text: morning },
+      { background: "adaRoomMorningCats", id: "morning", text: morning },
     ],
   };
 }

@@ -118,7 +118,7 @@ describe("prologue", () => {
           "a map of somewhere far away.",
         "Next",
       ],
-      ["adaRoomUnpolished", "", "Archie and Kiwi watch from the bed, tails twitching.", "Next"],
+      ["adaRoomUnpolishedCats", "", "Archie and Kiwi watch from the bed, tails twitching.", "Next"],
       [
         "adaRoom",
         "",
@@ -227,7 +227,7 @@ describe("prologue", () => {
       ["park", "Next"],
       ["park", "Next"],
       ["adaRoomUnpolished", "Next"],
-      ["adaRoomUnpolished", "Next"],
+      ["adaRoomUnpolishedCats", "Next"],
       ["adaRoom", "Touch the glow."],
     ]);
     // Every later Ada's-room page keeps the glowing room.

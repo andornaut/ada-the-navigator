@@ -143,19 +143,28 @@ describe("home visits", () => {
       "closing@gardenLot",
       "opening@schoolHallway",
       "opening:branch:1@schoolHallway",
+      // Dinner with Dad, where the story rejoins.
+      "opening:rejoin:0@kitchen",
+      "opening:rejoin:1@kitchen",
       "room@adaRoom",
       "boarding:0@adaRoom",
       "boarding:1@cockpitSeated",
     ]);
     expect(pages[1]?.text).toBe(PROTOTYPE.chapters[1].resolutionBranches[1]);
     expect(pages[4]?.text).toBe(PROTOTYPE.chapters[2].openingBranches[1]);
-    expect(pages[5]).toMatchObject({
+    expect(pages.slice(5, 7).map(({ speaker, text }) => [speaker ?? "", text])).toEqual(
+      (PROTOTYPE.chapters[2].openingRejoin ?? []).map(({ speaker, text }) => [speaker ?? "", text]),
+    );
+    expect(pages[7]).toMatchObject({
       action: "Pick up the rock.",
       text: "Ada's rock glows softly on her desk.",
     });
     // Narration pages have no name tab; Astra's line has hers.
     expect(pages.map(({ speaker }) => speaker ?? "")).toEqual([
-      ...Array<string>(7).fill(""),
+      ...Array<string>(6).fill(""),
+      "Dad",
+      "",
+      "",
       "Astra",
     ]);
     expect(pages.at(-1)?.text).toBe("Welcome back, Navigator. A new galaxy is ready.");

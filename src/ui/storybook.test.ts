@@ -17,6 +17,7 @@ import { SMALL_BUTTON_GAP, SPACING, TYPE } from "./layout/tokens.ts";
 import { MODAL_STYLE } from "./modal.ts";
 import {
   STORY_PORTRAITS,
+  STORY_TAB_COLOURS,
   STORYBOOK_STYLE,
   storyPortrait,
   storyPortraitFrame,
@@ -161,6 +162,14 @@ describe("storybook page", () => {
     expect(storyTabColour("Ada")).toBe(TAB_COLOURS.ada);
     expect(storyTabColour("General Gadget")).toBe(TAB_COLOURS.generalNamed);
     expect(storyTabColour("Grandma")).toBe(AWAITING_TAB);
+    // Mom's and Dad's tabs, which only story pages show, as Art's table sets them.
+    const table = readFileSync(new URL("../../art/controls.md", import.meta.url), "utf8");
+    for (const name of ["Mom", "Dad"]) {
+      const fill = new RegExp(`^\\| ${name} tab +\\| \`(#[0-9a-f]{6})\``, "mu").exec(table)?.[1];
+      expect(fill, name).toBeDefined();
+      expect(storyTabColour(name), name).toBe(fill);
+    }
+    expect(STORY_TAB_COLOURS).toEqual({ Dad: "#c4a6ec", Mom: "#9fd98a" });
   });
 });
 

@@ -164,6 +164,14 @@ export const PROTOTYPE: PrototypeContent = {
         ].join(""),
       ],
       openingChoices: ["Notice who might help.", "Think about how to offer support."],
+      openingRejoin: [
+        { background: "kitchen", text: "At dinner, Ada tells Dad what she saw at school." },
+        {
+          background: "kitchen",
+          speaker: "Dad",
+          text: "That sounds hard to watch. What do you think you could do?",
+        },
+      ],
       resolution: [
         "Back at school, Ada speaks privately with the child: 'I saw what ",
         "happened. Would you like to join us?' They would. Ada talks with her ",
@@ -255,6 +263,13 @@ export const PROTOTYPE: PrototypeContent = {
         ].join(""),
       ],
       openingChoices: ["Wonder why walks matter so much.", "Think about what Penny can choose."],
+      openingRejoin: [
+        {
+          background: "frontDoorMom",
+          speaker: "Mom",
+          text: "Penny's been waiting by the door all morning, Ada.",
+        },
+      ],
       resolution: [
         "Ada returns to the same moment. Penny is still waiting. She remembers the whale's ",
         "wish to move, explore and find its family. Penny needs opportunities to experience ",

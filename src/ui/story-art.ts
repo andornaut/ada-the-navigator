@@ -8,6 +8,8 @@ import { STORY_BACKGROUND, type SubjectBand } from "./layout/storyPage.ts";
 export const ART_MANIFEST_URL = "/art/manifest.json";
 
 export interface ArtAsset {
+  /** A composite background's base: the background its pages are placed as. */
+  readonly base?: string;
   readonly displayHeight?: number;
   readonly displayWidth?: number;
   readonly id: string;
@@ -93,6 +95,8 @@ export interface StoryTransition {
 
 export interface StoryArt {
   readonly backgrounds: Partial<Record<Background, string>>;
+  /** Each composite background's base, by key, for the keys whose base the game names. */
+  readonly bases: Partial<Record<Background, Background>>;
   /** Each composite background's overlays, drawn over its image. */
   readonly composites: Partial<Record<Background, readonly StoryOverlay[]>>;
   readonly overnight: Overnight | null;
@@ -112,6 +116,21 @@ export function storyBackgrounds(assets: readonly ArtAsset[]): Partial<Record<Ba
       return url ? [[key, url]] : [];
     }),
   ) as Partial<Record<Background, string>>;
+}
+
+/**
+ * Each composite background key's base key (art/storybook.md "Story figures"): the background
+ * whose entry its `base` names, so a page on the composite is placed as a page on the base.
+ */
+export function storyBases(assets: readonly ArtAsset[]): Partial<Record<Background, Background>> {
+  const keyOf = new Map(Object.entries(BACKGROUND_ART).map(([key, id]) => [id, key]));
+  return Object.fromEntries(
+    Object.entries(BACKGROUND_ART).flatMap(([key, id]) => {
+      const base = assets.find((asset) => asset.id === id)?.base;
+      const baseKey = base === undefined ? undefined : keyOf.get(base);
+      return baseKey && baseKey !== key ? [[key, baseKey]] : [];
+    }),
+  ) as Partial<Record<Background, Background>>;
 }
 
 /** Each background key's subject band, for the keys whose entry gives rows top above bottom. */
@@ -402,6 +421,7 @@ export async function loadStoryArt(): Promise<StoryArt> {
   ]);
   return {
     backgrounds: storyBackgrounds(assets),
+    bases: storyBases(assets),
     composites: storyComposites(assets),
     overnight: readOvernight(assets, overnight),
     subjects: storySubjects(assets),

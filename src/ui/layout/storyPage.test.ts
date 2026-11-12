@@ -14,6 +14,7 @@ import {
   roomScene,
   type StoryPage,
 } from "../../model/storybook.ts";
+import { type ArtAsset, backgroundOverlays, storyBases } from "../story-art.ts";
 import { STORY_BUTTON } from "./controls.ts";
 import {
   hudRect,
@@ -27,7 +28,6 @@ import {
   storyBackgroundTop,
   storyChoiceWidth,
   storyPanelLayout,
-  type SubjectBand,
 } from "./storyPage.ts";
 import { SMALL_BUTTON_GAP, SPACING, TYPE } from "./tokens.ts";
 
@@ -352,11 +352,12 @@ describe("story text fit", () => {
       room: distinct([roomScene(PROTOTYPE, labels, false), roomScene(PROTOTYPE, labels, true)]),
     };
     // Chapters: Grandma's garden framing (4 arrival pages and her farewell) round chapter one's
-    // opening, each opening and resolution with its two branches, and each closing. The prologue:
-    // 23 lines with Archie and Kiwi, and Astra's 3 answers.
-    expect(counts).toEqual({ boarding: 3, chapters: 26, overnight: 3, prologue: 26, room: 2 });
-    // 57 scene pages and the overnight 3, of which the sleep scene has no text.
-    expect(PAGES).toHaveLength(57 + 2);
+    // opening, each opening and resolution with its two branches, Cartwheel's dinner with Dad (2)
+    // and Mom at the front door (1) where the story rejoins, and each closing. The prologue: 23
+    // lines with Archie and Kiwi, and Astra's 3 answers.
+    expect(counts).toEqual({ boarding: 3, chapters: 29, overnight: 3, prologue: 26, room: 2 });
+    // 60 scene pages and the overnight 3, of which the sleep scene has no text.
+    expect(PAGES).toHaveLength(60 + 2);
   });
 
   it("fits every page under the top cap at every screen, so none scrolls", () => {
@@ -444,9 +445,141 @@ describe("Gameplay's limits", () => {
 
 const MANIFEST = JSON.parse(
   readFileSync(new URL("../../../public/art/manifest.json", import.meta.url), "utf8"),
-) as { assets: { id: string; subject?: SubjectBand }[] };
+) as { assets: ArtAsset[] };
+const BASES = storyBases(MANIFEST.assets);
 const subject = (key: Background) =>
   MANIFEST.assets.find(({ id }) => id === BACKGROUND_ART[key])!.subject!;
+
+describe("story figures", () => {
+  // Each figure page with its run's pages on the same base, and Art's rows (art/storybook.md
+  // "Story figures") at 720x360 with insets, 844x390 with insets and 1280x720: canvas y, the
+  // page's panel top and the figures' view rows. Needle's pages are not on main, so Dad looking
+  // in follows a chapter page at Gameplay's limit (218 characters, the heading and two choices)
+  // in the recorder room, as Art's row assumes.
+  const chapter = (galaxy: 1 | 2 | 3) => openingScene(PROTOTYPE, galaxy).pages;
+  const prologue = prologueScene(PROTOTYPE, labels).pages;
+  const morning = jumpHomeScene("night", PROTOTYPE.labels.morningRecharge ?? "").pages;
+  const find = (pages: readonly StoryPage[], background: Background, text?: string) =>
+    pages.find((page) => page.background === background && (!text || page.text === text))!;
+  const limit = (() => {
+    const words = "Ada plays the hard part slowly and then the whole song again".split(" ");
+    let text = "";
+    for (let index = 0; text.length < 218; index++) {
+      text = `${text} ${words[index % words.length]}`.trim();
+    }
+    return text.slice(0, 218);
+  })();
+  const needle: StoryPage[] = [
+    {
+      background: "adaRoomRecorder",
+      choices: PROTOTYPE.chapters[1].openingChoices.map((label) => ({ label, next: "x" })),
+      heading: "Threading the Needle",
+      id: "opening",
+      text: limit,
+    },
+    {
+      background: "adaRoomRecorderDad",
+      id: "opening:rejoin:0",
+      speaker: "Dad",
+      text: "Sounding better every day.",
+    },
+  ];
+  const cases = [
+    {
+      expected: [
+        [-180, 255, 31, 183],
+        [-180, 255, 31, 183],
+        [-135, 303, 76, 228],
+      ],
+      name: "Dad looking in",
+      page: needle[1]!,
+      run: needle,
+    },
+    {
+      expected: [
+        [-171, 229, 57, 199],
+        [-171, 229, 57, 199],
+        [-135, 277, 93, 235],
+      ],
+      name: "Mom's line",
+      page: find(chapter(3), "frontDoorMom"),
+      run: chapter(3),
+    },
+    {
+      expected: [
+        [-105, 257, 41, 135],
+        [-105, 273, 41, 135],
+        [-81, 321, 65, 159],
+      ],
+      name: "Dinner narration",
+      page: find(chapter(2), "kitchen", "At dinner, Ada tells Dad what she saw at school."),
+      run: chapter(2),
+    },
+    {
+      expected: [
+        [-105, 229, 41, 135],
+        [-105, 229, 41, 135],
+        [-81, 277, 65, 159],
+      ],
+      name: "Dad's line",
+      page: chapter(2).find(({ speaker }) => speaker === "Dad")!,
+      run: chapter(2),
+    },
+    {
+      expected: [
+        [-162, 257, 191, 244],
+        [-162, 257, 191, 244],
+        [-135, 305, 218, 271],
+      ],
+      name: "Archie and Kiwi on the bed",
+      page: find(prologue, "adaRoomUnpolishedCats"),
+      run: prologue,
+    },
+    {
+      expected: [
+        [-180, 231, 84, 226],
+        [-180, 231, 84, 226],
+        [-135, 279, 129, 271],
+      ],
+      name: "Morning, the cats at her feet",
+      page: find(morning, "adaRoomMorningCats"),
+      run: morning,
+    },
+  ];
+  const screens = [SCREENS[0]!, SCREENS[1]!, SCREENS[3]!];
+
+  it("place each figure page as Art's table, its figures clear of its panel", () => {
+    const measured: Record<string, number[][]> = {};
+    const wanted: Record<string, number[][]> = {};
+    for (const { expected, name, page, run } of cases) {
+      measured[name] = [];
+      wanted[name] = expected;
+      const base = BASES[page.background] ?? page.background;
+      const onBase = run.filter(
+        (other) => !other.sleep && (BASES[other.background] ?? other.background) === base,
+      );
+      const overlays = backgroundOverlays(MANIFEST.assets, BACKGROUND_ART[page.background]);
+      expect(overlays.length, name).toBeGreaterThan(0);
+      screens.forEach((screen) => {
+        const strip = Math.min(...onBase.map((other) => panelFor(other, screen).top));
+        const y = storyBackgroundTop(screen.view, subject(base), strip);
+        const { top } = panelFor(page, screen);
+        // Each overlay's box is in percent of the 540 high canvas, at scale 1 at these views.
+        const rows = overlays.map(({ box }) => [
+          y + (box.top / 100) * 540,
+          y + ((box.top + box.height) / 100) * 540,
+        ]);
+        const figures = [Math.min(...rows.map(([a]) => a!)), Math.max(...rows.map(([, b]) => b!))];
+        const round = (value: number) => Math.round(value * 10) / 10;
+        measured[name]!.push([y, top, figures[0]!, figures[1]!].map(round));
+        expect(figures[1], `${name} at ${screen.name}: clear of the panel`).toBeLessThanOrEqual(
+          top,
+        );
+      });
+    }
+    expect(measured).toEqual(wanted);
+  });
+});
 
 describe("story background placement", () => {
   it("centres each background's subject band in the strip above the panel, clamped to cover", () => {
@@ -474,7 +607,9 @@ describe("story background placement", () => {
       const highest = new Map<Background, number>();
       for (const page of run.filter(({ sleep }) => !sleep)) {
         const { top } = panelFor(page, screen);
-        highest.set(page.background, Math.min(highest.get(page.background) ?? top, top));
+        // A composite's pages count as pages on its base.
+        const anchor = BASES[page.background] ?? page.background;
+        highest.set(anchor, Math.min(highest.get(anchor) ?? top, top));
       }
       return Object.fromEntries(highest);
     };

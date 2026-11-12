@@ -120,8 +120,18 @@ export function storyPortrait(name: string | undefined): StoryPortrait | null {
   return speaker ? { named: false, side: SPEAKERS[speaker].side, speaker } : null;
 }
 
-/** The speaker's name tab fill: their conversation tab, or the neutral one for anyone else. */
+// The tab fills of speakers who appear only on story pages (art/controls.md).
+export const STORY_TAB_COLOURS: Readonly<Record<string, string>> = {
+  Dad: "#c4a6ec",
+  Mom: "#9fd98a",
+};
+
+/** The speaker's name tab fill: their story or conversation tab, or the neutral one. */
 export function storyTabColour(name: string): string {
+  const story = STORY_TAB_COLOURS[name];
+  if (story) {
+    return story;
+  }
   if (name === GENERAL_NAMED.name) {
     return TAB_COLOURS.generalNamed ?? AWAITING_TAB;
   }
@@ -486,6 +496,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   });
   let art: StoryArt = {
     backgrounds: {},
+    bases: {},
     composites: {},
     overnight: null,
     subjects: {},
@@ -611,6 +622,8 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   };
   const panelTop = (unit: number) =>
     (panel.getBoundingClientRect().top - background.getBoundingClientRect().top) / unit;
+  // The background a key is placed as: a composite's base, else itself.
+  const anchorOf = (key: Background): Background => art.bases[key] ?? key;
   // Measures each page of the story run in the panel, keeping the highest panel top on each
   // background: the run's anchor for it, so the background never moves between its pages.
   const measureRun = (page: StoryPageView) => {
@@ -626,16 +639,18 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     for (const runPage of run.pages.filter(({ sleep }) => !sleep)) {
       fill(tallestView(runPage));
       const top = panelTop(unit);
-      tops.set(runPage.background, Math.min(tops.get(runPage.background) ?? top, top));
+      const anchor = anchorOf(runPage.background);
+      tops.set(anchor, Math.min(tops.get(anchor) ?? top, top));
     }
     panel.hidden = panelHidden;
     stripTops = tops;
   };
   // The canvas top for a background in the current run: its anchor, or centred without a panel.
-  // The sleep scene keeps the night's placement.
+  // A composite is placed as its base, so the sleep scene keeps the night's placement and a page
+  // that adds figures never moves the scene.
   const placement = (key: Background, anchored: boolean): string => {
     const { height, width } = viewSize();
-    const anchor = key === "adaRoomSleep" ? "adaRoomNight" : key;
+    const anchor = anchorOf(key);
     const subject: SubjectBand | null = anchored ? (art.subjects[anchor] ?? null) : null;
     const top = storyBackgroundTop({ height, width }, subject, stripTops.get(anchor) ?? null);
     return units(top);
@@ -892,6 +907,10 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       ...art.transitions.flatMap(({ steps }) => steps.map((step) => step.url)),
     ])) {
       new Image().src = url;
+    }
+    if (rendered) {
+      // The bases arrive with the art: the run is measured again on them.
+      relayout();
     }
     if (shownKey && nightTimer === undefined) {
       setBackground(shownKey, rendered !== null);
