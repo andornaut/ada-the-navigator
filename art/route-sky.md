@@ -2,7 +2,9 @@
 
 - Rebuild with `node art/tools/route-sky.ts` (about 2 s). It writes
   `public/art/route-sky.png` and `route-ground.png` and their `route-` entries
-  in the root [manifest](../public/art/manifest.json).
+  in the root [manifest](../public/art/manifest.json). It reads each galaxy's
+  marker from [galaxies.json](../public/art/galaxies.json), so rebuild it after
+  `node art/tools/galaxies.ts` changes a marker.
 - `node art/tools/storybook.ts` draws the figures on the ground,
   `story-ada-skywatch` and `story-penny-sitting`
   ([Ada's sprites](storybook.md#adas-sprites)), and lists them with the story
@@ -51,7 +53,9 @@ ramp, or a galaxy's [marker hue](galaxies.md#markers).
 | Dust lane | `#1F1A38` over the band 6 below its centre line, sigma 7, at up to 0.55 by the same noise                                                                                                 |
 | Stars     | 1,100 dim (alpha 0.12 to 0.45) and 110 bright (0.55 to 0.95, a third with cross spikes) in `#C4AFCC`, `#DCC3F2`, `#9B82D4`, `#70ACE8`, `#8FE0F2` and `#F0BD68`, weighted 5, 4, 3, 1, 1, 1 |
 
-Phenomena sit in the chart's gaps, under the arc and over its ends (play view px):
+Phenomena sit in the chart's gaps, under the arc and over its ends (play view px).
+A galaxy's colour in a phenomenon is that galaxy's `marker` in `galaxies.json`,
+read at build time, never a copy; the table shows today's values:
 
 | Phenomenon                      | At         | Colours                                |
 | ------------------------------- | ---------- | -------------------------------------- |

@@ -2,6 +2,7 @@
 // behind the chart, and a ground strip with the afterglow and the grass Ada and Penny stand on.
 // The sky is dimmed behind every chart mark (the guard), and the build fails if a mark's ground
 // is brighter than the guard's cap. art/tools/storybook.ts draws Ada and Penny's sprites.
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { blankImage, type RgbaImage } from "@andornaut/art-kit/rgbaImage";
@@ -12,6 +13,18 @@ import { writePng } from "./paint.ts";
 import { Random } from "./random.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
+
+// Each galaxy's phenomenon takes that galaxy's marker hue from galaxies.json, so the sky follows
+// a retinted field.
+const MARKER: Readonly<Record<string, string>> = Object.fromEntries(
+  Object.entries(
+    (
+      JSON.parse(readFileSync(`${art}galaxies.json`, "utf8")) as {
+        galaxies: Record<string, { marker: string }>;
+      }
+    ).galaxies,
+  ).map(([id, { marker }]) => [id, marker]),
+);
 
 // The sky canvas in logical px at 2 image px each. Its top-centre sits on the play view's
 // top-centre, so a play view point (x, y) is canvas point (x + SKY.offset, y).
@@ -226,7 +239,7 @@ function spiral(sky: Buffer, cx: number, cy: number, size: number, tilt: number,
     for (let x = cx - reach; x <= cx + reach; x += 1) peak = Math.max(peak, field(x, y));
   }
   sky.add(
-    "#b8c1ff",
+    MARKER.andromeda!,
     [cx - reach, cy - reach, cx + reach, cy + reach],
     (x, y) => (field(x, y) / peak) * 0.55,
   );
@@ -244,24 +257,32 @@ function phenomena(sky: Buffer) {
   const [rx, ry] = P(452, 120);
   const outer = gauss(rx, ry, 15, 6.5, 0.15);
   const inner = gauss(rx, ry, 10, 4.2, 0.15);
-  sky.add("#f3b6ac", outer.window, (x, y) => Math.max(0, outer.at(x, y) - inner.at(x, y)) * 0.65);
+  sky.add(
+    MARKER.cartwheel!,
+    outer.window,
+    (x, y) => Math.max(0, outer.at(x, y) - inner.at(x, y)) * 0.65,
+  );
   const nucleus = gauss(rx, ry, 2.2, 1.6);
   sky.add("#ead4aa", nucleus.window, (x, y) => nucleus.at(x, y) * 0.7);
   // Needle's silver: an edge-on galaxy under the arc, left of Andromeda.
   const needle = gauss(...P(200, 148), 26, 2.2, -0.21);
-  sky.add("#cfc5bd", needle.window, (x, y) => needle.at(x, y) * 0.45);
+  sky.add(MARKER.needle!, needle.window, (x, y) => needle.at(x, y) * 0.45);
   const bulge = gauss(...P(200, 148), 4, 2.4, -0.21);
   sky.add("#ead4aa", bulge.window, (x, y) => bulge.at(x, y) * 0.45);
   // Phantom's violet nebula in its marker hue with a Whirlpool teal knot, over the arc's left end.
   const cloud = valueNoise(8, SKY.width, SKY.height, 22);
   const nebula = gauss(...P(48, 46), 42, 26, 0.4);
-  sky.add("#dcbae3", nebula.window, (x, y) => nebula.at(x, y) * (0.2 + 0.25 * cloud(x, y)));
+  sky.add(MARKER.phantom!, nebula.window, (x, y) => nebula.at(x, y) * (0.2 + 0.25 * cloud(x, y)));
   const knot = gauss(...P(68, 62), 20, 14, 0.4);
-  sky.add("#94d3e3", knot.window, (x, y) => knot.at(x, y) * (0.12 + 0.18 * cloud(x, y)));
+  sky.add(MARKER.whirlpool!, knot.window, (x, y) => knot.at(x, y) * (0.12 + 0.18 * cloud(x, y)));
   // Whirlpool's teal: a planetary nebula ring with a shimmer core, under Andromeda.
   const ring = gauss(...P(600, 196), 7, 7);
   const hole = gauss(...P(600, 196), 4.6, 4.6);
-  sky.add("#94d3e3", ring.window, (x, y) => Math.max(0, ring.at(x, y) - hole.at(x, y)) * 0.7);
+  sky.add(
+    MARKER.whirlpool!,
+    ring.window,
+    (x, y) => Math.max(0, ring.at(x, y) - hole.at(x, y)) * 0.7,
+  );
   const star = gauss(...P(600, 196), 1.1, 1.1);
   sky.add("#8fe0f2", star.window, (x, y) => star.at(x, y) * 0.9);
   // A comet between Whirlpool and Needle, its tail rising to the right.
