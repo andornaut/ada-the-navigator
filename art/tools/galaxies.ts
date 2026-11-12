@@ -92,7 +92,7 @@ const LIGHT_FIELD = {
     "outpost",
     "station",
     "holodisk",
-    "weaponPickup",
+    "upgradePickup",
     "wreck",
     "beacon",
     "nebulaStars",

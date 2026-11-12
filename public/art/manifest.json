@@ -3301,7 +3301,10 @@
         "bottom": 300
       },
       "base": "story-ada-room-unpolished",
-      "overlays": ["story-archie-bed", "story-kiwi-bed"]
+      "overlays": [
+        "story-archie-bed",
+        "story-kiwi-bed"
+      ]
     },
     {
       "id": "story-archie-bed",
@@ -3493,7 +3496,9 @@
         "top": 146,
         "bottom": 293
       },
-      "overlays": ["story-dad-dinner"]
+      "overlays": [
+        "story-dad-dinner"
+      ]
     },
     {
       "id": "story-dad-dinner",
@@ -3548,7 +3553,9 @@
         "bottom": 280
       },
       "base": "story-front-door",
-      "overlays": ["story-mom-door"]
+      "overlays": [
+        "story-mom-door"
+      ]
     },
     {
       "id": "story-mom-door",
@@ -3603,7 +3610,9 @@
         "bottom": 293
       },
       "base": "story-ada-room-recorder",
-      "overlays": ["story-dad-door"]
+      "overlays": [
+        "story-dad-door"
+      ]
     },
     {
       "id": "story-dad-door",
@@ -3691,7 +3700,9 @@
         "top": 188,
         "bottom": 293
       },
-      "overlays": ["story-ada-playing"]
+      "overlays": [
+        "story-ada-playing"
+      ]
     },
     {
       "id": "story-ada-playing",
@@ -3780,7 +3791,9 @@
         "bottom": 300
       },
       "base": "story-ada-room-night",
-      "overlays": ["story-ada-room-sleep-figures"]
+      "overlays": [
+        "story-ada-room-sleep-figures"
+      ]
     },
     {
       "id": "story-ada-room-sleep-figures",
@@ -3832,7 +3845,9 @@
         "top": 255,
         "bottom": 348
       },
-      "overlays": ["story-ada-waking"]
+      "overlays": [
+        "story-ada-waking"
+      ]
     },
     {
       "id": "story-ada-waking",
@@ -3870,7 +3885,11 @@
         "bottom": 348
       },
       "base": "story-ada-room-morning",
-      "overlays": ["story-ada-waking", "story-archie-curled", "story-kiwi-curled"]
+      "overlays": [
+        "story-ada-waking",
+        "story-archie-curled",
+        "story-kiwi-curled"
+      ]
     },
     {
       "id": "story-archie-curled",
@@ -4033,7 +4052,10 @@
         "x": 0.5,
         "y": 1
       },
-      "overlays": ["story-ada-skywatch", "story-penny-sitting"]
+      "overlays": [
+        "story-ada-skywatch",
+        "story-penny-sitting"
+      ]
     },
     {
       "id": "holodisk",
@@ -31973,6 +31995,48 @@
       },
       "kind": "adult",
       "loopFrame": 7
+    },
+    {
+      "id": "upgrade-chevron",
+      "path": "/art/pickups/upgrade-chevron.svg",
+      "width": 12,
+      "height": 8,
+      "displayWidth": 12,
+      "displayHeight": 8,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "chevrons": [
+        {
+          "name": "lower",
+          "offset": [
+            0,
+            2.4
+          ]
+        },
+        {
+          "name": "upper",
+          "offset": [
+            0,
+            -2.4
+          ]
+        }
+      ],
+      "climb": [
+        {
+          "ms": 900
+        },
+        {
+          "ms": 120,
+          "lit": "lower"
+        },
+        {
+          "ms": 120,
+          "lit": "upper"
+        }
+      ]
     }
   ],
   "spacePalette": "/art/space-palette.json",

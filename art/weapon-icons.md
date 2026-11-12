@@ -63,8 +63,8 @@ the state colours of [Controls](controls.md#top-right-hud-icon-buttons).
 The top-right weapon selector draws the 20 px icons as masks on its 33 px discs;
 [Controls](controls.md#top-right-hud-icon-buttons) defines their states and
 colours. It shows owned weapons only, left to right in the order Laser, Multi-Laser,
-Rapid Missile, Heavy Missile, Scattershot, Phaser. The same 20 px SVGs draw at 14 px in amber inside
-[weapon pickups](weapons.md#pickups). Each non-Laser disc
+Rapid Missile, Heavy Missile, Scattershot, Phaser. The
+[upgrade pickup](weapons.md#pickups) shows no weapon glyph. Each non-Laser disc
 carries its ammunition [count pill](controls.md#ammunition-count), and an empty
 weapon's glyph dims to `#75748c`.
 

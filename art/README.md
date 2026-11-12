@@ -129,7 +129,8 @@ heavies' layered sprites from `art/tools/heavies.ts`, Cartwheel's claim jumpers 
 `needle-gates.ts`, `needle-channels.ts`, `needle-sky.ts`, `needle-craft.ts`,
 `needle-portraits.ts`, `needle-drones.ts` and `needle-projects.ts`. The
 [backdrop layers](backdrop.md)' data and the nebula textures of Whirlpool and
-Black Eye come from `art/tools/backdrop.ts`; edit the generators and
+Black Eye come from `art/tools/backdrop.ts`, and the upgrade pickup's chevron mask from
+`art/tools/upgrade-pickup.ts`; edit the generators and
 regenerate the matching outputs. `art/tools/silhouette.ts` is the shared
 [tracer](ship.md#shared-tracer) that turns a frame's drawn alpha into convex
 collision parts, for [the ship](ship.md#collision), the
@@ -138,7 +139,7 @@ collision parts, for [the ship](ship.md#collision), the
 ([Cartwheel](cartwheel-props.md#collision), [Whirlpool](whirlpool.md#collision)),
 the pickups ([Stardust](stardust.md#pickup), the
 [discovery cache](outposts.md#discovery-cache),
-[ore nugget](cartwheel-props.md#ore-nugget), [weapon pickups](weapons.md#pickups))
+[ore nugget](cartwheel-props.md#ore-nugget), [the upgrade pickup](weapons.md#pickups))
 and the [asteroids](asteroids.md#collision). Reused portrait PNGs remain byte-identical to their documented source exports,
 and their sprite metadata changes only the local image filename.
 `art/tools/andromeda-portraits.ts` draws Andromeda's Munix portraits, `needle-portraits.ts`

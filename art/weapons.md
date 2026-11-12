@@ -1,8 +1,9 @@
 # Weapons
 
 Projectiles, missile blasts, the Multi-Laser fan, the Phaser beam, the enemy
-Phaser, the [enemy-only weapons](#enemy-only-weapons) and weapon pickups. Tech
-draws every effect in code (Phaser Graphics); none uses a sprite or sheet. The HUD and shop glyphs are in [weapon icons](weapon-icons.md) and [shop icons](shop-icons.md).
+Phaser, the [enemy-only weapons](#enemy-only-weapons) and the upgrade pickup. Tech
+draws every effect in code (Phaser Graphics); none uses a sprite or sheet, and the
+pickup's only image is its chevron mask. The HUD and shop glyphs are in [weapon icons](weapon-icons.md) and [shop icons](shop-icons.md).
 
 ## Gameplay values
 
@@ -392,18 +393,36 @@ is an unrotated coral ring, radius 4, 1.5 px, alpha `1 - p` over 160 ms.
 
 ## Pickups
 
-A weapon pickup in space is the existing square: a 1.5 px amber `#f0bd68`
-outline, no fill, centred on the pickup's projected point, half-size
-`pickupRadius` (10, so 20 px across). Inside it, the weapon's 20 px HUD mask SVG,
-`weapon-<id>.svg`, draws at 14 px in amber, centred on the same point. This
-applies to `scattershot`, `rapidMissile`, `multiLaser`, `heavyMissile` and
-`phaser`, and replaces the old line glyphs, Scattershot's dot fan and the missile
-line glyph included. Galaxy field retints leave the amber signal unchanged.
+Every upgrade drop is one shared upgrade pickup; what it gives is chosen when
+Ada collects it, so it shows no weapon or upgrade kind. Galaxy field retints
+leave its amber signal unchanged.
+
+- Square: a 1.5 px amber `#f0bd68` (`weapon`) outline, no fill, centred on the
+  pickup's projected point and aligned with the screen, half-size
+  `pickupRadius` (10, so 20 px across).
+- Chevrons: two copies of the generic upgrade chevron, the core manifest mask
+  `upgrade-chevron` (`public/art/pickups/upgrade-chevron.svg`, 12 by 8 px, pivot
+  at the centre, rebuilt by `node art/tools/upgrade-pickup.ts`), tinted amber
+  and centred at `(0, 2.4)` (lower) and `(0, -2.4)` (upper) from the pickup's
+  point, 4.8 px apart. Each is a 2.2 px
+  stroke with butt caps and a mitred apex along a centreline from
+  `(-5.2, 2.1)` up to `(0, -2.1)` and down to `(5.2, 2.1)` about its own centre.
+  Its outline, in frame px: `(0.109, 5.244) (6, 0.486) (11.891, 5.244)
+(10.509, 6.956) (6, 3.314) (1.491, 6.956)`.
+- Climb, looping from the still frame when the pickup appears: still 900 ms
+  (both amber), lower chevron white `#ffffff` 120 ms, upper chevron white
+  120 ms; 1140 ms in all. The manifest entry carries the offsets (`chevrons`)
+  and the keys (`climb`, each `ms` with the lit chevron's name, or none).
+- Light field: the square's stroke draws over an ink stroke 2 px wider on the
+  same path, and each chevron over its silhouette grown by 1 px in ink, at the
+  pickup's alpha (`upgradePickup` in [Light fields](galaxies.md#light-fields)).
+- Reduced motion: the still frame only, both chevrons amber.
 
 The pickup's drawn silhouette is the outline's outer edge, which encloses the
-icon: one square part, half-size `pickupRadius` plus half the 1.5 px outline
+chevrons: one square part, half-size `pickupRadius` plus half the 1.5 px outline
 (10.75 display px), centred on the projected point and aligned with the
-screen. Tech draws the pickup at runtime, so it has no frame data.
+screen. The chevrons and the climb do not change it, and the square has no frame
+data.
 
 ## Reduced motion summary
 
@@ -416,3 +435,4 @@ screen. Tech draws the pickup at runtime, so it has no frame data.
 | Tells    | Lance dashes march, lock pulses   | Still dashes, no pulses             |
 | Ring     | Emission ring and muzzle discs    | Emission ring only                  |
 | Mine     | Spin, blink, fizzle, pop flash    | Still, amber, fade, static ring     |
+| Pickup   | Chevron climb                     | Still frame, both chevrons amber    |
