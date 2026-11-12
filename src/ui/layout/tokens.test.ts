@@ -30,12 +30,13 @@ describe("layout tokens", () => {
     expect(SAFE_MARGIN).toEqual({ edge: 0, hud: 8, page: 16 });
   });
 
-  it("set the heading, body and label roles, and the HUD count role", () => {
+  it("set the heading, body, label and story roles, and the HUD count role", () => {
     expect(TYPE).toEqual({
       body: { lineHeight: 20, size: 16, weight: 400 },
       count: { lineHeight: 14, size: 12, weight: 700 },
       heading: { lineHeight: 28, size: 24, weight: 700 },
       label: { lineHeight: 20, size: 16, weight: 700 },
+      story: { lineHeight: 26, size: 18, weight: 400 },
     });
   });
 

@@ -10,6 +10,8 @@ export interface StoryChoice {
 export interface StoryPage {
   readonly id: string;
   readonly background: Background;
+  /** The chapter's panel title heading the text, on opening, resolution and closing pages. */
+  readonly heading?: string;
   /** The speaker's name tab on a dialogue page; narration has none. */
   readonly speaker?: string;
   /** The page's text. */
@@ -227,6 +229,7 @@ export function openingScene(
           label,
           next: `opening:branch:${index}`,
         })),
+        heading: chapter.name,
         id: "opening",
         text: chapter.opening,
       },
@@ -260,6 +263,7 @@ export function resolutionScene(content: PrototypeContent, galaxy: SectorId): Sc
           label,
           next: `resolution:branch:${index}`,
         })),
+        heading: chapter.name,
         id: "resolution",
         text: chapter.resolution,
       },
@@ -269,7 +273,12 @@ export function resolutionScene(content: PrototypeContent, galaxy: SectorId): Sc
         next: "closing",
         text,
       })),
-      { background: backgrounds.closing, id: "closing", text: chapter.closing },
+      {
+        background: backgrounds.closing,
+        heading: chapter.name,
+        id: "closing",
+        text: chapter.closing,
+      },
     ],
   };
 }

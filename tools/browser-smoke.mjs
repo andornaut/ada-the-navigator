@@ -317,9 +317,32 @@ try {
         .evaluate((art) => art.style.backgroundImage),
       background: await page.locator(".ada-story-background").getAttribute("data-background"),
       speaker: await panel.evaluate(
-        (node) => node.querySelector(".ada-story-speaker:not([hidden])")?.textContent ?? "",
+        (node) => node.querySelector(".ada-story-tab:not([hidden])")?.textContent ?? "",
       ),
       text: (await panel.locator(".ada-story-paragraph").textContent()) ?? "",
+      // The spread: its top and the canvas top in logical px, and whether the text column scrolls.
+      spread: await panel.evaluate((node) => {
+        const unit = Number(
+          getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
+        );
+        const view = document.querySelector(".ada-story-background").getBoundingClientRect();
+        const round = (value) => Math.round((value / unit) * 100) / 100;
+        return {
+          artTop: round(
+            document.querySelector(".ada-story-art").getBoundingClientRect().top - view.top,
+          ),
+          heading: node.querySelector(".ada-story-heading:not([hidden])")?.textContent ?? "",
+          scrolls: node.querySelector(".ada-story-copy").classList.contains("ada-story-scrolls"),
+          // The choice column never overflows its panel: every choice and page control shows.
+          clipped: [...node.querySelector(".ada-story-choice-column").querySelectorAll("button")]
+            .filter((button) => button.offsetParent !== null)
+            .some(
+              (button) =>
+                button.getBoundingClientRect().bottom > node.getBoundingClientRect().bottom + 0.5,
+            ),
+          top: round(node.getBoundingClientRect().top - view.top),
+        };
+      }),
       portrait: await panel.evaluate((node) => {
         const frame = node.querySelector(".ada-story-frame");
         if (!frame || frame.hidden) {
@@ -329,7 +352,7 @@ try {
           getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
         );
         const box = frame.getBoundingClientRect();
-        const card = node.getBoundingClientRect();
+        const card = node.querySelector(".ada-story-copy").getBoundingClientRect();
         const round = (value) => Math.round((value / unit) * 10) / 10;
         const face = frame.querySelector(".ada-story-portrait");
         return {
@@ -337,7 +360,7 @@ try {
           image: getComputedStyle(face).backgroundImage,
           left: round(box.left - card.left),
           right: round(card.right - box.right),
-          side: node.querySelector(".ada-story-line").dataset.side,
+          side: node.querySelector(".ada-story-text").dataset.side,
           size: round(box.width),
           speaker: face.dataset.speaker,
         };
@@ -575,8 +598,9 @@ try {
   const astraPages = launchPages.filter(({ portrait }) => portrait?.speaker === "astra");
   assert.ok(adaPage && astraPages.length, "Ada and Astra both speak with portraits");
   assert.ok(
-    astraPages.every(({ portrait }) => Math.abs(portrait.right - adaPage.portrait.left) < 0.2),
-    "Astra's frame keeps the inset at the right that Ada's keeps at the left",
+    Math.abs(adaPage.portrait.left) < 0.2 &&
+      astraPages.every(({ portrait }) => Math.abs(portrait.right) < 0.2),
+    "Ada's frame sits on the text column's left edge and Astra's on its right",
   );
   assert.deepEqual(
     [...storyShots].sort(),
@@ -586,6 +610,32 @@ try {
   assert.ok(
     launchPages.filter(({ looped }) => looped).length === 2,
     "Astra's speaking loop runs on the cockpit pages",
+  );
+  // The light spread: no page scrolls or rises past the top cap, opening, resolution and closing
+  // pages carry the chapter heading, and each background keeps one placement through the run.
+  for (const { spread, text } of launchPages) {
+    assert.ok(
+      !spread.scrolls && !spread.clipped && spread.top >= 60.5 - 0.01,
+      `"${text}" fits: ${JSON.stringify(spread)}`,
+    );
+  }
+  assert.deepEqual(
+    launchPages.filter(({ spread }) => spread.heading).map(({ text }) => text),
+    [PROTOTYPE.chapters[1].opening],
+    "Only the first launch's chapter opening carries the panel title",
+  );
+  for (const background of new Set(launchPages.map(({ background }) => background))) {
+    const tops = new Set(
+      launchPages
+        .filter((entry) => entry.background === background)
+        .map(({ spread }) => spread.artTop),
+    );
+    assert.equal(tops.size, 1, `${background} keeps one placement through the run: ${[...tops]}`);
+  }
+  events.checks.push(
+    "Story pages lay out as the light spread: every launch page fits under the top cap without " +
+      "scrolling, the opening carries the chapter heading, and each background keeps one " +
+      "placement through the run",
   );
   events.checks.push(
     "Story pages show the speaker's 32 portrait in the 68 frame, Ada left and Astra right, " +

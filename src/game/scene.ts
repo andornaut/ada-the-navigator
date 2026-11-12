@@ -70,7 +70,7 @@ import { BOX_OCCUPANT, type BoxOccupant, boxOccupant } from "../ui/notice.ts";
 import { returnToEarthAvailable } from "../ui/pause.ts";
 import { createRestartCard } from "../ui/restart-card.ts";
 import { createStationView } from "../ui/station.ts";
-import { createStorybook } from "../ui/storybook.ts";
+import { createStorybook, storyPageView } from "../ui/storybook.ts";
 import { readTitleScreen } from "../ui/title-screen.ts";
 import {
   type CoreManifest,
@@ -1540,15 +1540,8 @@ export class PrototypeScene extends Phaser.Scene {
     const selected = this.model.selectedGalaxy;
     this.storybook.show(
       story && {
-        background: story.page.background,
-        canGoBack: story.canGoBack,
-        canSkip: story.canSkip,
-        text: story.page.text,
-        ...(story.page.speaker ? { speaker: story.page.speaker } : {}),
-        ...(story.choices.length ? { choices: story.choices } : {}),
-        ...(story.page.action ? { action: story.page.action } : {}),
-        ...(story.page.sleep ? { sleep: true } : {}),
-        next: !story.page.choices,
+        ...storyPageView(story.page, story.choices, story.canGoBack, story.canSkip),
+        run: story.run,
       },
       selected === null ? null : SELECTOR_BACKDROP,
     );

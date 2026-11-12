@@ -39,12 +39,7 @@ function started(choice = 0): GameModel {
   return model;
 }
 
-const questions = [
-  "What's a holodisk?",
-  "How did you get to Earth?",
-  "Can Penny come?",
-  "How do I get home?",
-];
+const questions = ["What's a holodisk?", "Can Penny come?", "How do I get home?"];
 
 describe("prologue", () => {
   it("frames chapter one's first-launch opening with Grandma's garden", () => {
@@ -254,8 +249,8 @@ describe("prologue", () => {
       background: "cockpit",
       speaker: "Astra",
       text:
-        "A disc that holds part of my memory. Each one you find helps me remember, and shows me " +
-        "new places to jump.",
+        "A disc that holds part of my memory. Each one you find helps me remember, maybe even how " +
+        "I came to Earth, and shows me new places to jump.",
     });
     model.storyNext();
     expect(model.storyView?.page.id).toBe(hub);
@@ -269,7 +264,7 @@ describe("prologue", () => {
     }
     const hub = model.storyView.page.id;
     const answers: string[] = [];
-    for (const index of [2, 1, 0, 0]) {
+    for (const index of [1, 0, 0]) {
       const remaining = model.storyView!.choices.map(({ label }) => label);
       model.storyChoose(index);
       answers.push(`${remaining[index]} ${model.storyView!.page.text}`);
@@ -281,9 +276,8 @@ describe("prologue", () => {
     }
     expect(answers).toEqual([
       "Can Penny come? There are two seats. Please strap Penny in.",
-      "How did you get to Earth? I don't remember. The holodisks may help.",
       "What's a holodisk? A disc that holds part of my memory. Each one you find helps me " +
-        "remember, and shows me new places to jump.",
+        "remember, maybe even how I came to Earth, and shows me new places to jump.",
       "How do I get home? Ask me any time you're safe. I'll jump you back to the moment you left.",
     ]);
     expect(model.storyView?.choices).toEqual([]);

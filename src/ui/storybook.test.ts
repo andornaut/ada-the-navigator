@@ -2,17 +2,25 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { SPEAKING_FRAME_MS } from "./conversation.ts";
+import { AWAITING_TAB, SPEAKING_FRAME_MS, TAB_COLOURS } from "./conversation.ts";
 import { TEXT_BUTTON } from "./layout/controls.ts";
-import { fromHudEdge, safeEdge, units } from "./layout/css.ts";
-import { HUD_BUTTON, HUD_ROW, STORY_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
+import { font, fromHudEdge, safeEdge, units } from "./layout/css.ts";
+import {
+  HUD_BUTTON,
+  HUD_ROW,
+  STORY_PANEL_TOP,
+  STORY_ROOM_PANEL_TOP,
+  STORY_SKIP,
+} from "./layout/playView.ts";
 import { STORY_PANEL } from "./layout/storyPage.ts";
-import { SMALL_BUTTON_GAP, SPACING } from "./layout/tokens.ts";
+import { SMALL_BUTTON_GAP, SPACING, TYPE } from "./layout/tokens.ts";
+import { MODAL_STYLE } from "./modal.ts";
 import {
   STORY_PORTRAITS,
   STORYBOOK_STYLE,
   storyPortrait,
   storyPortraitFrame,
+  storyTabColour,
 } from "./storybook.ts";
 
 // One CSS rule's body from the storybook style.
@@ -23,18 +31,89 @@ function rule(selector: string): string {
 }
 
 describe("storybook page", () => {
-  it("anchors the text panel to the page safe rect's bottom, never centred", () => {
-    expect(STORY_PANEL.anchor).toBe("bottom");
+  it("anchors the spread to the page safe rect's bottom, only as tall as its page", () => {
     const panel = rule(".ada-controls .ada-story-panel");
     expect(panel).toContain(`bottom:${safeEdge("bottom", SPACING.pageInset)};`);
-    expect(panel).not.toMatch(/(^|[\s;{])top:/u);
+    expect(panel).not.toMatch(/(^|[\s;{])(top|height):/u);
     expect(panel).not.toContain("translateY");
-    expect(panel).not.toContain("translate(");
+    expect(panel).toContain(`width:min(`);
+    expect(panel).toContain(`${units(STORY_PANEL.maxWidth)})`);
+    expect(STORY_PANEL.maxWidth).toBe(760);
+    expect(panel).toContain("flex-direction:row");
+    expect(panel).toContain(`gap:${units(STORY_PANEL.columnGap)}`);
   });
 
-  it("puts Previous at the inner left and Next or the named action at the inner right", () => {
-    expect(STORY_PANEL.pageControls).toEqual(["previous", "next"]);
-    expect(rule(".ada-controls .ada-story-controls")).toContain("justify-content:space-between");
+  it("caps the panel's top a gap below the HUD row, lower on Ada's room page", () => {
+    expect(STORY_PANEL_TOP).toBe(48.5);
+    expect(STORY_PANEL_TOP).toBe(HUD_ROW.bottom + SPACING.gap);
+    // From the 12 HUD rect top: y 60.5, and 62.75 under the room's pause press area.
+    expect(STORY_ROOM_PANEL_TOP).toBe(50.75);
+    const height = (top: number) =>
+      `max-height:calc(100% - ${fromHudEdge("top", top)} - ${safeEdge("bottom", SPACING.pageInset)})`;
+    expect(rule(".ada-controls .ada-story-panel")).toContain(height(STORY_PANEL_TOP));
+    expect(rule(".ada-controls .ada-story-panel.ada-story-room")).toContain(
+      height(STORY_ROOM_PANEL_TOP),
+    );
+  });
+
+  it("gives the choice column its share of the inner width within 228 and 300", () => {
+    const column = rule(".ada-controls .ada-story-choice-column");
+    expect(STORY_PANEL.choiceColumn).toEqual({ max: 300, min: 228, share: 0.38 });
+    expect(column).toContain(
+      `flex:0 0 clamp(${units(228)}, calc((100% - ${units(25)}) * 0.38), ${units(300)})`,
+    );
+    // The rule: 1 in the card rim, 12 from each column.
+    const line = rule(".ada-controls .ada-story-choice-column::before");
+    expect(line).toContain(`left:${units(-13)}`);
+    expect(line).toContain(`width:${units(1)}`);
+    expect(line).toContain("background:#6b6685");
+  });
+
+  it("scrolls only the text column, with the choices and page controls fixed", () => {
+    const copy = rule(".ada-controls .ada-story-copy");
+    expect(copy).toContain("overflow-y:auto");
+    expect(copy).toContain("min-height:0");
+    expect(rule(".ada-controls .ada-story-copy.ada-story-scrolls")).toContain(
+      `padding-right:${units(14)}`,
+    );
+    expect(rule(".ada-controls .ada-story-choice-column")).not.toContain("overflow");
+    expect(rule(".ada-controls .ada-story-controls")).toContain("margin-top:auto");
+  });
+
+  it("sets the story text 18 on 26 and the heading as the card title", () => {
+    expect(TYPE.story).toEqual({ lineHeight: 26, size: 18, weight: 400 });
+    expect(rule(".ada-controls .ada-story-panel .ada-story-paragraph")).toContain(
+      `font:${font(TYPE.story)}`,
+    );
+    const heading = rule(".ada-controls .ada-story-panel .ada-story-heading");
+    expect(heading).toContain("#ffffff");
+    expect(heading).toContain("text-align:left");
+    expect(heading).toContain(`margin:0 0 ${units(SPACING.gap)}`);
+  });
+
+  it("keeps small story buttons SMALL_BUTTON_GAP apart in every direction", () => {
+    expect(SMALL_BUTTON_GAP).toBe(24);
+    for (const selector of [
+      ".ada-controls .ada-story-choice-column",
+      ".ada-controls .ada-story-choices",
+      ".ada-controls .ada-story-controls",
+    ]) {
+      expect(rule(selector), selector).toContain(`gap:${units(SMALL_BUTTON_GAP)}`);
+    }
+    expect(rule(".ada-controls .ada-story-controls")).toContain(
+      "grid-template-columns:minmax(0, 1fr) minmax(0, 1fr)",
+    );
+    // A named action too wide for its half fills the row above Previous.
+    expect(rule(".ada-controls .ada-story-controls.ada-story-wide")).toContain(
+      'grid-template-areas:"next next" "previous ."',
+    );
+  });
+
+  it("draws story buttons 36 high with a press area grown 9 past the face", () => {
+    const button = MODAL_STYLE.slice(MODAL_STYLE.indexOf(".ada-button.ada-story-button{"));
+    expect(button).toContain(`min-height:${units(36)}`);
+    const press = MODAL_STYLE.slice(MODAL_STYLE.indexOf(".ada-button.ada-story-button::after{"));
+    expect(press.slice(0, press.indexOf("}"))).toContain(`inset:${units(-9)}`);
   });
 
   it("sets Skip apart at the top right, SMALL_BUTTON_GAP left of the settings disc", () => {
@@ -61,23 +140,11 @@ describe("storybook page", () => {
     expect(STORY_SKIP.top).toBe(2.5);
   });
 
-  it("keeps the panel's top a gap below the HUD row, clear of Skip and Settings", () => {
-    expect(STORY_PANEL_TOP).toBe(48.5);
-    expect(STORY_PANEL_TOP).toBe(HUD_ROW.bottom + SPACING.gap);
-    expect(rule(".ada-controls .ada-story-panel")).toContain(
-      `max-height:calc(100% - ${fromHudEdge("top", STORY_PANEL_TOP)} - ${safeEdge(
-        "bottom",
-        SPACING.pageInset,
-      )});`,
-    );
-  });
-
-  it("scrolls the text and the choices as one group with the page controls fixed", () => {
-    const scroll = rule(".ada-controls .ada-story-scroll");
-    expect(scroll).toContain("overflow-y:auto");
-    expect(scroll).toContain("min-height:0");
-    expect(rule(".ada-controls .ada-story-text")).not.toContain("overflow");
-    expect(rule(".ada-controls .ada-story-controls")).toContain("flex:none");
+  it("fills the speaker's tab with their conversation colour, or the neutral one", () => {
+    expect(storyTabColour("Astra")).toBe(TAB_COLOURS.astra);
+    expect(storyTabColour("Ada")).toBe(TAB_COLOURS.ada);
+    expect(storyTabColour("General Gadget")).toBe(TAB_COLOURS.generalNamed);
+    expect(storyTabColour("Grandma")).toBe(AWAITING_TAB);
   });
 });
 
@@ -141,8 +208,9 @@ describe("story page portraits", () => {
       expect(storyPortrait(name)?.side, name).toBe("right");
     }
     expect(storyPortrait("General Gadget")?.named).toBe(true);
-    expect(rule('.ada-controls .ada-story-line[data-side="right"]')).toContain(
-      "flex-direction:row-reverse",
+    expect(rule(".ada-controls .ada-story-frame")).toContain("float:right");
+    expect(rule('.ada-controls .ada-story-text[data-side="left"] .ada-story-frame')).toContain(
+      "float:left",
     );
     expect(STORYBOOK_STYLE).not.toMatch(/scaleX|scale\(-/u);
   });

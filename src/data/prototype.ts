@@ -179,7 +179,7 @@ export const PROTOTYPE: PrototypeContent = {
           "and the table gets louder and happier.",
         ].join(""),
       ],
-      resolutionChoices: ["Make room in the game.", "Sit together and invite friends over."],
+      resolutionChoices: ["Make room in the game.", "Sit with them and invite friends."],
     },
     3: {
       closing: [

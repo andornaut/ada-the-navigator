@@ -168,6 +168,9 @@ export const STORY_SKIP = {
 // the panel never runs under Skip or the settings button.
 export const STORY_PANEL_TOP = HUD_ROW.bottom + SPACING.gap;
 
+// On Ada's room page, the pause button's press area's bottom plus a gap, from the HUD rect's top.
+export const STORY_ROOM_PANEL_TOP = PAUSE_BUTTON.hit.y + PAUSE_BUTTON.hit.height + SPACING.gap;
+
 // The target of the HUD button index places from the right (0 rightmost), relative to the HUD
 // rect's top-right corner, x growing rightward: the row reaches HUD_ROW.reach past the corner.
 export function hudButtonTarget(index: number): Rect {

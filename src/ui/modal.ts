@@ -10,9 +10,11 @@ import {
   CARD_SLICE,
   CONTROL_ROW,
   FOCUS_RING,
+  STORY_BUTTON,
   TEXT_BUTTON,
 } from "./layout/controls.ts";
 import { font, fromHudEdge, safeEdge, slice, units } from "./layout/css.ts";
+import { hitMargin } from "./layout/hitAreas.ts";
 import { PAUSE_BUTTON, SAFE_MARGIN } from "./layout/playView.ts";
 import { BUTTON_GAP, SPACING, STACK_BUTTON_GAP, TYPE } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
@@ -75,6 +77,25 @@ const SUNK_PADDING = `${lessSlice(verticalInset + pressedSink, top)} ${BUTTON_SI
   bottom,
 )}`;
 const COMPACT_SIDE = lessSlice(TEXT_BUTTON.compactInset, left);
+
+// Story action insets (STORY_BUTTON): the label's line box 6 below the face's top and above its
+// bottom, 16 in from each side; pressed and disabled faces sink as every button's do.
+const STORY_SIDE = lessSlice(STORY_BUTTON.inset, left);
+const STORY_PADDING = `${lessSlice(STORY_BUTTON.verticalInset, top)} ${STORY_SIDE} ${lessSlice(
+  STORY_BUTTON.verticalInset + lipHeight,
+  bottom,
+)}`;
+const STORY_SUNK_PADDING = `${lessSlice(
+  STORY_BUTTON.verticalInset + pressedSink,
+  top,
+)} ${STORY_SIDE} ${lessSlice(STORY_BUTTON.verticalInset + lipHeight - pressedSink, bottom)}`;
+// The story action's press area grows its face by hitAround's margin on each side.
+const STORY_HIT = hitMargin({
+  height: STORY_BUTTON.height,
+  width: STORY_BUTTON.height,
+  x: 0,
+  y: 0,
+});
 
 // Focus: a cream band between ink fringes, FOCUS_RING.outset outside the control (the HTML form
 // of ui-focus).
@@ -421,6 +442,24 @@ ${UI_SCOPE} .ada-button.ada-compact{
 ${UI_SCOPE} .ada-button.ada-compact:active:not(:disabled){
   padding:0 ${COMPACT_SIDE};
   border-image-source:var(--ui-button-pressed)
+}
+
+/* Story actions: a 36 face, the label 6 down and 16 across; a wrapped label grows the face by a
+   line box per line. The press area reaches hitAround's margin past the face on every side. */
+${UI_SCOPE} .ada-button.ada-story-button{
+  position:relative;
+  min-width:0;
+  min-height:${units(STORY_BUTTON.height)};
+  padding:${STORY_PADDING}
+}
+${UI_SCOPE} .ada-button.ada-story-button:active:not(:disabled),
+${UI_SCOPE} .ada-button.ada-story-button:disabled{
+  padding:${STORY_SUNK_PADDING}
+}
+${UI_SCOPE} .ada-button.ada-story-button::after{
+  content:"";
+  position:absolute;
+  inset:${units(-STORY_HIT)}
 }
 
 /* Control rows: at least 48 high (their text plus a row gap above and below), icon, label and

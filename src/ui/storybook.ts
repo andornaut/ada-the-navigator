@@ -1,13 +1,26 @@
-import { GENERAL_NAMED, SPEAKERS } from "../data/conversations.ts";
+import { GENERAL_NAMED, type Speaker, SPEAKERS } from "../data/conversations.ts";
 import type { Background } from "../data/storybook.ts";
-import { COMPACT_PORTRAITS, portraitFrame, SPEAKING_FRAME_MS } from "./conversation.ts";
+import type { StoryChoice, StoryPage } from "../model/storybook.ts";
+import {
+  AWAITING_TAB,
+  COMPACT_PORTRAITS,
+  portraitFrame,
+  SPEAKING_FRAME_MS,
+  TAB_COLOURS,
+} from "./conversation.ts";
+import { SCROLL } from "./layout/contentCard.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
-import { font, fromHudEdge, safeEdge, units } from "./layout/css.ts";
-import { STORY_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
-import { STORY_BACKGROUND, STORY_PANEL } from "./layout/storyPage.ts";
-import { SPACING, TYPE } from "./layout/tokens.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
-import { createButton, TEXT_TOKENS } from "./modal.ts";
+import { font, fromHudEdge, safeEdge, slice, units } from "./layout/css.ts";
+import { STORY_PANEL_TOP, STORY_ROOM_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
+import {
+  STORY_BACKGROUND,
+  STORY_PANEL,
+  storyBackgroundTop,
+  type SubjectBand,
+} from "./layout/storyPage.ts";
+import { SMALL_BUTTON_GAP, SPACING, TYPE } from "./layout/tokens.ts";
+import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
+import { createButton, FOCUS_STYLE, TEXT_TOKENS } from "./modal.ts";
 import {
   breathKeyframes,
   loadStoryArt,
@@ -28,6 +41,8 @@ export interface StoryLabels {
 
 export interface StoryPageView {
   readonly background: Background;
+  /** The chapter's panel title, heading the text on opening, resolution and closing pages. */
+  readonly heading?: string;
   readonly speaker?: string;
   readonly text: string;
   readonly choices?: readonly { readonly label: string }[];
@@ -37,11 +52,42 @@ export interface StoryPageView {
   readonly canGoBack: boolean;
   /** Whether Skip shows: every page but the story run's end and the sleep scene. */
   readonly canSkip: boolean;
+  /** Ada's room page, where the pause button shows, so the panel's top cap sits lower. */
+  readonly room?: boolean;
   /**
    * The overnight sleep scene: no panel or Skip, and a tap anywhere moves on. Art's overnight
    * sequence plays over it, or its reduced-motion steps when motion is reduced.
    */
   readonly sleep?: boolean;
+  /** The story run the page belongs to: its pages anchor each background for the whole run. */
+  readonly run?: { readonly id: string; readonly pages: readonly StoryPage[] };
+}
+
+/** A model page as the storybook shows it, with the choices on show. */
+export function storyPageView(
+  page: StoryPage,
+  choices: readonly StoryChoice[],
+  canGoBack: boolean,
+  canSkip: boolean,
+): StoryPageView {
+  return {
+    background: page.background,
+    canGoBack,
+    canSkip,
+    ...(page.heading ? { heading: page.heading } : {}),
+    text: page.text,
+    ...(page.speaker ? { speaker: page.speaker } : {}),
+    ...(choices.length ? { choices: choices.map(({ label }) => ({ label })) } : {}),
+    ...(page.action ? { action: page.action } : {}),
+    ...(page.id === "room" ? { room: true } : {}),
+    ...(page.sleep ? { sleep: true } : {}),
+    next: !page.choices,
+  };
+}
+
+/** A run page at its tallest: every choice or question it offers, as on its first showing. */
+function tallestView(page: StoryPage): StoryPageView {
+  return storyPageView(page, page.choices ?? page.questions ?? [], true, true);
 }
 
 // The breath's alpha curve as linear keyframes, fine enough to follow the cosine.
@@ -72,6 +118,15 @@ export function storyPortrait(name: string | undefined): StoryPortrait | null {
     (id) => SPEAKERS[id].name === name,
   );
   return speaker ? { named: false, side: SPEAKERS[speaker].side, speaker } : null;
+}
+
+/** The speaker's name tab fill: their conversation tab, or the neutral one for anyone else. */
+export function storyTabColour(name: string): string {
+  if (name === GENERAL_NAMED.name) {
+    return TAB_COLOURS.generalNamed ?? AWAITING_TAB;
+  }
+  const speaker = (Object.keys(SPEAKERS) as Speaker[]).find((id) => SPEAKERS[id].name === name);
+  return (speaker && TAB_COLOURS[speaker]) ?? AWAITING_TAB;
 }
 
 /**
@@ -116,17 +171,25 @@ const AVAILABLE_WIDTH = `calc(100% - ${safeEdge("left", SPACING.pageInset)} - ${
   "right",
   SPACING.pageInset,
 )})`;
-// The panel grows from the available bottom up to its highest top, below the HUD row.
-const AVAILABLE_HEIGHT = `calc(100% - ${fromHudEdge("top", STORY_PANEL_TOP)} - ${safeEdge(
-  "bottom",
-  SPACING.pageInset,
-)})`;
+// The panel grows from the available bottom up to its top cap, below the HUD row's lowest press
+// area: Skip and Settings, or the pause button on Ada's room page.
+const availableHeight = (top: number) =>
+  `calc(100% - ${fromHudEdge("top", top)} - ${safeEdge("bottom", SPACING.pageInset)})`;
 
 // The background canvas's width: display size, or the view's width or its height at the canvas's
 // aspect, whichever is largest.
 const ART_WIDTH = `max(${units(STORY_BACKGROUND.width)}, 100cqw, calc(100cqh * ${
   STORY_BACKGROUND.width
 } / ${STORY_BACKGROUND.height}))`;
+
+// The panel's padding, including the card's 2 frame.
+const PANEL_PADDING = `calc(${units(STORY_PANEL.padding)} - ${slice(2)})`;
+const { choiceColumn, columnGap, rule } = STORY_PANEL;
+// The choice column: its share of the inner width less the column gap, within its min and max.
+const CHOICE_WIDTH = `clamp(${units(choiceColumn.min)}, calc((100% - ${units(columnGap)}) * ${
+  choiceColumn.share
+}), ${units(choiceColumn.max)})`;
+const { tab } = CONVERSATION_BOX;
 
 export const STORYBOOK_STYLE = `
 .ada-controls .ada-story-background{
@@ -137,16 +200,17 @@ export const STORYBOOK_STYLE = `
   pointer-events:auto
 }
 
-/* Art's canvas at display size, centred on the view under the insets and scaled up only to cover
-   a view past it, nearest neighbour (art/layout.md "Storybook page"). The second image is a
-   transition's incoming frame, faded in over the first. */
+/* Art's canvas at display size, centred across the view under the insets and scaled up only to
+   cover a view past it, nearest neighbour; its top is the story run's anchor for its background
+   (art/layout.md "Run anchor"), set as each page shows. The second image is a transition's
+   incoming frame, faded in over the first. */
 .ada-controls .ada-story-art{
   position:absolute;
   left:50%;
-  top:50%;
+  top:0;
   width:${ART_WIDTH};
   aspect-ratio:${STORY_BACKGROUND.width} / ${STORY_BACKGROUND.height};
-  transform:translate(-50%, -50%);
+  transform:translateX(-50%);
   background:center / 100% 100% no-repeat;
   image-rendering:pixelated
 }
@@ -160,51 +224,93 @@ export const STORYBOOK_STYLE = `
   pointer-events:none
 }
 
+/* The light spread: the text column and the choice column side by side, the panel only as tall as
+   its page needs up to its top cap, its width and bottom edge fixed. */
 .ada-controls .ada-story-panel{
   position:absolute;
   left:50%;
   bottom:${safeEdge("bottom", SPACING.pageInset)};
   transform:translateX(-50%);
   width:min(${AVAILABLE_WIDTH}, ${units(STORY_PANEL.maxWidth)});
-  max-height:${AVAILABLE_HEIGHT};
-  padding:${units(STORY_PANEL.padding)};
-  gap:${units(STORY_PANEL.gap)};
+  max-width:none;
+  max-height:${availableHeight(STORY_PANEL_TOP)};
+  padding:${PANEL_PADDING};
+  flex-direction:row;
+  align-items:stretch;
+  gap:${units(columnGap)};
   pointer-events:auto
 }
+.ada-controls .ada-story-panel.ada-story-room{
+  max-height:${availableHeight(STORY_ROOM_PANEL_TOP)}
+}
 
-/* The scroll group: the text column and the choices scroll as one when the page is taller than the
-   panel's room, as a card's do; the page controls stay fixed below. */
-.ada-controls .ada-story-scroll{
-  flex:0 1 auto;
+/* The text column: the heading, the name tab and portrait, then the paragraph; it alone scrolls,
+   once the panel reaches its top cap, reserving the scroll track on its right. */
+.ada-controls .ada-story-copy{
+  flex:1 1 0;
+  min-width:0;
   min-height:0;
   overflow-y:auto;
   overscroll-behavior:contain;
-  display:flex;
-  flex-direction:column;
-  gap:${units(STORY_PANEL.gap)};
   scrollbar-color:#9690b4 #2f2d3d
 }
-
-/* A dialogue page's portrait and text column: Ada's frame at the left, every other speaker's at
-   the right, never mirrored, its top on the column's top. */
-.ada-controls .ada-story-line{
-  flex:none;
-  display:flex;
-  align-items:flex-start;
-  gap:${units(STORY_PANEL.gap)}
+.ada-controls .ada-story-copy.ada-story-scrolls{
+  padding-right:${units(SCROLL.gap + SCROLL.track)}
 }
-.ada-controls .ada-story-line[data-side="right"]{
-  flex-direction:row-reverse
+.ada-controls .ada-story-copy:focus-visible{${FOCUS_STYLE}
 }
 
-/* The 68 frame: a 2 ink edge round the navy face, the 32 sheet at 2x inside. */
+/* Floats stay inside, so the column's height includes a portrait taller than its text. */
+.ada-controls .ada-story-text{
+  display:flow-root
+}
+
+/* The chapter heading: left-aligned on the column's first line, unlike a card title. */
+.ada-controls .ada-story-panel .ada-story-heading{
+  margin:0 0 ${units(SPACING.gap)};
+  font:${font(TYPE.heading)};
+  text-align:left;
+  color:${TEXT_TOKENS.title}
+}
+
+/* The speaker's name tab, as the conversation box's, a gap above the paragraph; it sits beside
+   the portrait, never under it. */
+.ada-controls .ada-story-panel .ada-story-tab{
+  display:flow-root;
+  width:max-content;
+  box-sizing:border-box;
+  height:${units(tab.height)};
+  margin:0 0 ${units(SPACING.gap)};
+  padding:0 ${units(tab.labelInset - tab.edge)};
+  border:${units(tab.edge)} solid ${CONVERSATION_BOX.panel.ink};
+  border-radius:${units(tab.radius)};
+  font:${font(TYPE.label)};
+  line-height:${units(tab.height - 2 * tab.edge)};
+  white-space:nowrap;
+  color:${CONVERSATION_BOX.panel.ink}
+}
+
+.ada-controls .ada-story-panel .ada-story-paragraph{
+  margin:0;
+  font:${font(TYPE.story)};
+  color:${TEXT_TOKENS.label}
+}
+
+/* The 68 frame: a 2 ink edge round the navy face, the 32 sheet at 2x inside, floated on the
+   column's top: at the inner right for every speaker but Ada, at the inner left for Ada; never
+   mirrored. The tab and paragraph wrap beside it, a gap away, then take the full measure. */
 .ada-controls .ada-story-frame{
-  flex:none;
+  float:right;
   box-sizing:border-box;
   width:${units(STORY_PANEL.portrait.frame)};
   height:${units(STORY_PANEL.portrait.frame)};
+  margin:0 0 ${units(SPACING.rowGap)} ${units(SPACING.gap)};
   border:${units(PORTRAIT_EDGE)} solid ${CONVERSATION_BOX.panel.ink};
   background:${CONVERSATION_BOX.portrait.face}
+}
+.ada-controls .ada-story-text[data-side="left"] .ada-story-frame{
+  float:left;
+  margin:0 ${units(SPACING.gap)} ${units(SPACING.rowGap)} 0
 }
 
 .ada-controls .ada-story-portrait{
@@ -215,35 +321,56 @@ export const STORYBOOK_STYLE = `
 }
 ${STORY_PORTRAIT_RULES}
 
-.ada-controls .ada-story-text{
-  flex:1 1 auto;
-  min-width:0;
+/* The choice column: the choices stacked from its top, a full-row named action, then the page
+   controls on its bottom, small buttons SMALL_BUTTON_GAP apart in every direction. A 1 rule in
+   the card rim runs the full inner height in the middle of the column gap. */
+.ada-controls .ada-story-choice-column{
+  flex:0 0 ${CHOICE_WIDTH};
+  position:relative;
   display:flex;
   flex-direction:column;
-  gap:${units(STORY_PANEL.speakerGap)}
+  gap:${units(SMALL_BUTTON_GAP)}
+}
+.ada-controls .ada-story-choice-column::before{
+  content:"";
+  position:absolute;
+  top:0;
+  bottom:0;
+  left:${units(-(columnGap + rule.width) / 2)};
+  width:${units(rule.width)};
+  background:${rule.colour}
 }
 
 .ada-controls .ada-story-choices{
-  flex:none
-}
-
-.ada-controls .ada-story-panel .ada-story-speaker{
-  font:${font(TYPE.label)};
-  color:${TEXT_TOKENS.title}
-}
-
-.ada-controls .ada-story-panel .ada-story-paragraph{
-  font:${font(TYPE.body)};
-  color:${TEXT_TOKENS.label}
-}
-
-/* Previous at the inner left, Next or the named action at the inner right; the two share one
-   width, set from the wider label as each page renders. */
-.ada-controls .ada-story-controls{
-  flex:none;
   display:flex;
-  justify-content:space-between;
-  gap:${units(STORY_PANEL.controlsGap)}
+  flex-direction:column;
+  gap:${units(SMALL_BUTTON_GAP)}
+}
+.ada-controls .ada-story-choices > .ada-button{
+  width:100%
+}
+
+/* Previous at the left and Next at the right, each half the column less the gap; a named action
+   too wide for its half fills the column on its own row above Previous. */
+.ada-controls .ada-story-controls{
+  margin-top:auto;
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas:"previous next";
+  gap:${units(SMALL_BUTTON_GAP)}
+}
+.ada-controls .ada-story-controls.ada-story-wide{
+  grid-template-areas:"next next" "previous .";
+}
+.ada-controls .ada-story-controls > [data-action="story-previous"]{
+  grid-area:previous
+}
+.ada-controls .ada-story-controls > [data-action="story-next"]{
+  grid-area:next;
+  white-space:nowrap
+}
+.ada-controls .ada-story-controls.ada-story-wide > [data-action="story-next"]{
+  white-space:normal
 }
 
 /* Skip, apart from page navigation, in the HUD row left of the settings button (STORY_SKIP), or
@@ -259,12 +386,14 @@ ${STORY_PORTRAIT_RULES}
 `;
 
 /**
- * A storybook page: the full location background with its bottom panel of text, choices and
- * page controls, with Skip apart at the top right on every page but the story run's end and the
- * sleep scene. Previous (left) uses the disabled face on the run's first page; Next (right) is
- * absent on a choice page and shows a
- * page's named action in its slot. A question page shows its
- * remaining questions with Continue in Next's slot. Between two pages whose images Art's story
+ * A storybook page: the full location background with its bottom spread of text and choices,
+ * with Skip apart at the top right on every page but the story run's end and the sleep scene.
+ * The text column holds the chapter heading, the speaker's tab and portrait, then the paragraph;
+ * the choice column holds the choices and the page controls: Previous (left), disabled on the
+ * run's first page, and Next (right), absent on a choice page, showing a page's named action in
+ * its slot or on its own row when the action is too wide. A question page shows its remaining
+ * questions with Continue in Next's place. Each background keeps one placement for the story run,
+ * anchored on the run's tallest page on it. Between two pages whose images Art's story
  * transition joins (Ada's room to the cockpit), the panel hides while its frames play.
  */
 export function createStorybook(root: HTMLElement, options: StoryOptions) {
@@ -288,39 +417,44 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   const panel = document.createElement("section");
   panel.className = "ada-card ada-story-panel";
   panel.setAttribute("role", "region");
+  // The text column scrolls on its own past the top cap.
+  const copy = document.createElement("div");
+  copy.className = "ada-story-copy";
   const text = document.createElement("div");
   text.className = "ada-story-text";
-  const speaker = document.createElement("p");
-  speaker.className = "ada-story-speaker";
-  const paragraph = document.createElement("p");
-  paragraph.className = "ada-story-paragraph";
-  text.append(speaker, paragraph);
+  const heading = document.createElement("h2");
+  heading.className = "ada-story-heading";
   const portraitFrameNode = document.createElement("div");
   portraitFrameNode.className = "ada-story-frame";
   portraitFrameNode.setAttribute("aria-hidden", "true");
   const face = document.createElement("span");
   face.className = "ada-story-portrait";
   portraitFrameNode.append(face);
-  const line = document.createElement("div");
-  line.className = "ada-story-line";
-  line.append(portraitFrameNode, text);
+  const speaker = document.createElement("p");
+  speaker.className = "ada-story-tab";
+  const paragraph = document.createElement("p");
+  paragraph.className = "ada-story-paragraph";
+  text.append(heading, portraitFrameNode, speaker, paragraph);
+  copy.append(text);
+  const column = document.createElement("div");
+  column.className = "ada-story-choice-column";
   const choices = document.createElement("div");
-  choices.className = "ada-actions ada-stack ada-story-choices";
+  choices.className = "ada-story-choices";
   const controls = document.createElement("div");
   controls.className = "ada-story-controls";
   const skip = createButton(labels.skip);
   skip.classList.add("ada-compact", "ada-story-skip");
   skip.dataset.action = "story-skip";
   const previous = createButton(labels.previous);
+  previous.classList.add("ada-story-button");
   previous.dataset.action = "story-previous";
   const next = createButton(labels.next, "primary");
+  next.classList.add("ada-story-button");
   next.dataset.action = "story-next";
-  const pageButtons = { next, previous };
-  controls.append(...STORY_PANEL.pageControls.map((id) => pageButtons[id]));
-  const scroll = document.createElement("div");
-  scroll.className = "ada-story-scroll";
-  scroll.append(line, choices);
-  panel.append(scroll, controls);
+  // In focus order: the full-row named action before Previous, else Previous then Next.
+  controls.append(previous, next);
+  column.append(choices, controls);
+  panel.append(copy, column);
   layer.append(background, panel, skip);
   // The page goes first in the controls layer, so the HUD's settings button draws and presses
   // above it; its style goes last, after the shared card styles it refines.
@@ -339,6 +473,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     backgrounds: {},
     composites: {},
     overnight: null,
+    subjects: {},
     transitions: [],
   };
   // What the layer last showed; re-rendering only on a change keeps each button across frames.
@@ -348,24 +483,23 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   let timer: ReturnType<typeof setTimeout> | undefined;
   let fade: Animation | undefined;
   let rendered: StoryPageView | null = null;
+  let backdropShown: Background | null = null;
+  // The story run measured, and its tallest page's panel top on each background, logical px.
+  let measuredRun = "";
+  let stripTops = new Map<Background, number>();
   // The speaking loop's timer while a looping speaker's page shows.
   let portraitTimer: ReturnType<typeof setInterval> | undefined;
   const stopPortrait = () => {
     clearInterval(portraitTimer);
     portraitTimer = undefined;
   };
-  // Shows the page speaker's portrait on its side and runs its speaking loop while the page
-  // shows; narration and a speaker Art has not drawn show no frame.
-  const showPortrait = (page: StoryPageView) => {
+  // Runs the page speaker's speaking loop while the page shows.
+  const playPortrait = (page: StoryPageView) => {
     stopPortrait();
     const portrait = storyPortrait(page.speaker);
-    portraitFrameNode.hidden = portrait === null;
-    line.dataset.side = portrait?.side ?? "left";
     if (!portrait) {
-      delete face.dataset.speaker;
       return;
     }
-    face.dataset.speaker = portrait.speaker;
     let ticks = 0;
     const draw = () => {
       const index = storyPortraitFrame(
@@ -384,8 +518,111 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       }, SPEAKING_FRAME_MS);
     }
   };
+  // Lays a page's content into the panel: heading, tab and portrait on their side, paragraph,
+  // choices and page controls, the named action on its own row when it does not fit its half,
+  // and the text column's scroll reserve when it scrolls. Returns the choice buttons.
+  const fill = (page: StoryPageView): HTMLButtonElement[] => {
+    panel.classList.toggle("ada-story-room", page.room === true);
+    heading.hidden = !page.heading;
+    heading.textContent = page.heading ?? "";
+    speaker.hidden = !page.speaker;
+    speaker.textContent = page.speaker ?? "";
+    speaker.style.background = page.speaker ? storyTabColour(page.speaker) : "";
+    paragraph.hidden = page.text === "";
+    paragraph.textContent = page.text;
+    const portrait = storyPortrait(page.speaker);
+    portraitFrameNode.hidden = portrait === null;
+    text.dataset.side = portrait?.side ?? "right";
+    if (portrait) {
+      face.dataset.speaker = portrait.speaker;
+      const index = storyPortraitFrame(options.reducedMotion(), portrait, 0);
+      face.dataset.frame = String(index);
+      face.style.backgroundPositionX = units(-index * PORTRAIT_IMAGE);
+    } else {
+      delete face.dataset.speaker;
+    }
+    panel.setAttribute("aria-label", page.heading ?? page.speaker ?? page.text);
+    const buttons = (page.choices ?? []).map(({ label }, index) => {
+      const button = createButton(label);
+      button.classList.add("ada-story-button");
+      button.dataset.action = "story-choice";
+      button.dataset.choice = String(index);
+      button.addEventListener("click", () => options.onChoose(index));
+      return button;
+    });
+    choices.replaceChildren(...buttons);
+    choices.hidden = buttons.length === 0;
+    previous.disabled = !page.canGoBack;
+    next.hidden = !page.next;
+    next.textContent = page.action ?? labels.next;
+    // A named action wider than its half takes the column's full row above Previous: its face at
+    // its label's width, measured against Previous's half. The press area's pseudo-element
+    // overflows the face, so the face's own box is measured, not its scroll width.
+    controls.classList.remove("ada-story-wide");
+    controls.replaceChildren(previous, next);
+    next.style.width = "max-content";
+    const wide =
+      page.next &&
+      page.action !== undefined &&
+      next.getBoundingClientRect().width > previous.getBoundingClientRect().width + 0.5;
+    next.style.width = "";
+    controls.classList.toggle("ada-story-wide", wide);
+    controls.replaceChildren(...(wide ? [next, previous] : [previous, next]));
+    // Only the text column scrolls, focusable while it does, past the panel's top cap.
+    copy.classList.remove("ada-story-scrolls");
+    const scrolls = copy.scrollHeight > copy.clientHeight + 1;
+    copy.classList.toggle("ada-story-scrolls", scrolls);
+    if (scrolls) {
+      copy.tabIndex = 0;
+    } else {
+      copy.removeAttribute("tabindex");
+    }
+    return buttons;
+  };
+  // The logical view and the panel's top in it, as laid out now.
+  const viewSize = () => {
+    const unit = readViewUnit(panel);
+    return {
+      height: background.clientHeight / unit,
+      unit,
+      width: background.clientWidth / unit,
+    };
+  };
+  const panelTop = (unit: number) =>
+    (panel.getBoundingClientRect().top - background.getBoundingClientRect().top) / unit;
+  // Measures each page of the story run in the panel, keeping the highest panel top on each
+  // background: the run's anchor for it, so the background never moves between its pages.
+  const measureRun = (page: StoryPageView) => {
+    const run = page.run;
+    if (!run || layer.hidden) {
+      return;
+    }
+    measuredRun = run.id;
+    const { unit } = viewSize();
+    const panelHidden = panel.hidden;
+    panel.hidden = false;
+    const tops = new Map<Background, number>();
+    for (const runPage of run.pages.filter(({ sleep }) => !sleep)) {
+      fill(tallestView(runPage));
+      const top = panelTop(unit);
+      tops.set(runPage.background, Math.min(tops.get(runPage.background) ?? top, top));
+    }
+    panel.hidden = panelHidden;
+    stripTops = tops;
+  };
+  // The canvas top for a background in the current run: its anchor, or centred without a panel.
+  // The sleep scene keeps the night's placement.
+  const placement = (key: Background, anchored: boolean): string => {
+    const { height, width } = viewSize();
+    const anchor = key === "adaRoomSleep" ? "adaRoomNight" : key;
+    const subject: SubjectBand | null = anchored ? (art.subjects[anchor] ?? null) : null;
+    const top = storyBackgroundTop({ height, width }, subject, stripTops.get(anchor) ?? null);
+    return units(top);
+  };
+  const place = (node: HTMLDivElement, key: Background, anchored: boolean) => {
+    node.style.top = placement(key, anchored);
+  };
   const image = (url: string | undefined) => (url ? `url('${url}')` : "");
-  // One overlay's element, made on first use and placed by its box.
   // An overlay element for overlay, placed on the canvas by its box.
   const placeOverlay = (overlay: StoryOverlay, node = document.createElement("div")) => {
     node.className = "ada-story-overlay";
@@ -425,10 +662,11 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       node.style.opacity = String(opacity);
     }
   };
-  const setBackground = (key: Background) => {
+  const setBackground = (key: Background, anchored: boolean) => {
     shownKey = key;
     background.dataset.background = key;
     base.style.backgroundImage = image(art.backgrounds[key]);
+    place(base, key, anchored);
     showOverlays(art.composites[key] ?? [], 1);
   };
   // The overnight sequence's running animations and step timer.
@@ -445,7 +683,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   };
   // Each step in turn (art/storybook.md "Sequence"): an overlay fades in linearly and holds, a
   // breath runs the overlay's alpha through one cosine, and a background cross-fades the whole
-  // picture and ends the overlays.
+  // picture and ends the overlays. The morning draws at its own page's placement.
   const playNight = (steps: readonly OvernightStep[], index = 0): void => {
     const step = steps[index];
     if (!step) {
@@ -476,6 +714,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     } else {
       // The morning's own overlays (Ada waking) fade in with it, not after the cross-fade.
       incoming.style.backgroundImage = image(step.url);
+      place(incoming, "adaRoomMorning", true);
       showIncomingOverlays(step.overlays);
       if (step.fadeMs > 0) {
         nightAnimations.push(
@@ -491,6 +730,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     nightTimer = setTimeout(() => {
       if (step.kind === "background") {
         base.style.backgroundImage = image(step.url);
+        base.style.top = incoming.style.top;
         showOverlays(step.overlays, 1);
         incoming.style.backgroundImage = "";
         showIncomingOverlays([]);
@@ -520,7 +760,8 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     fade = undefined;
     incoming.style.backgroundImage = "";
   };
-  // Each step cross-fades linearly to its image over fadeMs (0 cuts), then holds for holdMs.
+  // Each step cross-fades linearly to its image over fadeMs (0 cuts), then holds for holdMs, at
+  // the outgoing page's placement; the incoming page then cuts to its own.
   const play = (steps: readonly TransitionStep[], done: () => void, index = 0): void => {
     const step = steps[index];
     if (!step) {
@@ -529,6 +770,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     }
     if (step.fadeMs > 0) {
       incoming.style.backgroundImage = image(step.url);
+      incoming.style.top = base.style.top;
       fade = incoming.animate([{ opacity: 0 }, { opacity: 1 }], {
         duration: step.fadeMs,
         easing: "linear",
@@ -543,61 +785,55 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   };
   const render = (page: StoryPageView | null, backdrop: Background | null, focusFirst: boolean) => {
     rendered = page;
+    backdropShown = backdrop;
     layer.hidden = page === null && backdrop === null;
-    panel.hidden = page === null || page.sleep === true;
     skip.hidden = page === null || !page.canSkip;
     if (!page) {
+      panel.hidden = true;
       stopPortrait();
       if (backdrop) {
-        setBackground(backdrop);
+        setBackground(backdrop, false);
       }
       return;
     }
-    setBackground(page.background);
+    if (page.run && page.run.id !== measuredRun) {
+      measureRun(page);
+    }
+    panel.hidden = page.sleep === true;
+    const buttons = fill(page);
+    setBackground(page.background, true);
     startNight(page);
-    speaker.hidden = !page.speaker;
-    speaker.textContent = page.speaker ?? "";
-    paragraph.hidden = page.text === "";
-    paragraph.textContent = page.text;
-    text.hidden = !page.speaker && page.text === "";
-    showPortrait(page);
-    line.hidden = text.hidden && portraitFrameNode.hidden;
-    panel.setAttribute("aria-label", page.speaker ?? page.text);
-    const buttons = (page.choices ?? []).map(({ label }, index) => {
-      const button = createButton(label);
-      button.dataset.action = "story-choice";
-      button.dataset.choice = String(index);
-      button.addEventListener("click", () => options.onChoose(index));
-      return button;
-    });
-    choices.replaceChildren(...buttons);
-    choices.hidden = buttons.length === 0;
-    previous.disabled = !page.canGoBack;
-    next.hidden = !page.next;
-    next.textContent = page.action ?? labels.next;
-    // Previous and Next share the wider one's width, in logical px.
-    const pageControls = [previous, next];
-    for (const button of pageControls) {
-      button.style.width = "";
-    }
-    const unit = readViewUnit(panel);
-    // offsetWidth rounds to whole CSS px, so the next px up keeps the widest label on one line.
-    const widest =
-      Math.max(
-        ...pageControls.filter((button) => !button.hidden).map((button) => button.offsetWidth),
-      ) + 1;
-    for (const button of pageControls) {
-      button.style.width = units(widest / unit);
-    }
-    // Focus starts on the first choice, the default; otherwise on Next.
+    playPortrait(page);
+    // Focus starts on the first choice, the default; otherwise on Next or the named action.
     if (focusFirst || buttons.length > 0) {
       (buttons[0] ?? next).focus();
     }
   };
+  // A new view size or font re-measures the run and re-lays the page, keeping focus.
+  const relayout = () => {
+    if (!rendered) {
+      if (backdropShown) {
+        place(base, backdropShown, false);
+      }
+      return;
+    }
+    const focused = document.activeElement;
+    measuredRun = "";
+    measureRun(rendered);
+    panel.hidden = rendered.sleep === true;
+    const buttons = fill(rendered);
+    place(base, rendered.background, true);
+    if (focused?.closest(".ada-story-panel")) {
+      const choice = focused instanceof HTMLElement ? focused.dataset.choice : undefined;
+      (choice === undefined ? next : (buttons[Number(choice)] ?? next)).focus();
+    }
+  };
+  window.addEventListener(VIEW_SCALE_EVENT, relayout);
+  void document.fonts.ready.then(relayout);
   // Shows a page, or only a background (the cockpit behind galaxy selection), or nothing. A new
   // state ends any transition still playing and shows at once.
   const show = (page: StoryPageView | null, backdrop: Background | null = null): void => {
-    const signature = JSON.stringify([page, backdrop]);
+    const signature = JSON.stringify([page && { ...page, run: page.run?.id }, backdrop]);
     if (signature === shown) {
       return;
     }
@@ -637,7 +873,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       new Image().src = url;
     }
     if (shownKey && nightTimer === undefined) {
-      setBackground(shownKey);
+      setBackground(shownKey, rendered !== null);
     }
   });
   return {
@@ -645,6 +881,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       stop();
       stopNight();
       stopPortrait();
+      window.removeEventListener(VIEW_SCALE_EVENT, relayout);
       style.remove();
       layer.remove();
     },

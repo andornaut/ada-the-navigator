@@ -170,6 +170,23 @@ function viewportCases(call: ReturnType<typeof recorder>): void {
       );
       call("conversationBox.ts", "shipHullTop", conversationBox.shipHullTop, view);
       call("startScreen.ts", "startScreenRects", startScreen.startScreenRects, view);
+      call("storyPage.ts", "storyPanelLayout", storyPage.storyPanelLayout, logical, view);
+      call("storyPage.ts", "storyBackgroundScale", storyPage.storyBackgroundScale, view);
+      // Grandma's garden band under its tallest first-launch panel, and the centred backdrop.
+      for (const [subject, stripTop] of [
+        [{ bottom: 285, top: 199 }, 113],
+        [{ bottom: 298, top: 175 }, 250],
+        [null, null],
+      ] as const) {
+        call(
+          "storyPage.ts",
+          "storyBackgroundTop",
+          storyPage.storyBackgroundTop,
+          view,
+          subject,
+          stripTop,
+        );
+      }
       call("touchControls.ts", "stickRestCentres", touchControls.stickRestCentres, view, logical);
       call("touchControls.ts", "stickTargets", touchControls.stickTargets, view, logical);
       // Cards and the shop fit the page safe rect's width.
@@ -194,6 +211,9 @@ function stateCases(call: ReturnType<typeof recorder>): void {
   // Count widths: none, "125", "12,500" and the widest the four-weapon clearance allows.
   for (const countWidth of [0, 26.7, 48.94, 162.25]) {
     call("playView.ts", "statusPillWidth", playView.statusPillWidth, countWidth);
+  }
+  for (const inner of [400, 602, 661.08, 715.08, 1000]) {
+    call("storyPage.ts", "storyChoiceWidth", storyPage.storyChoiceWidth, inner);
   }
   for (const count of COUNTS) {
     call("playView.ts", "hudButtonTarget", playView.hudButtonTarget, count);

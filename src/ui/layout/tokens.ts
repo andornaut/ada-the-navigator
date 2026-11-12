@@ -32,4 +32,6 @@ export const TYPE = {
   count: { lineHeight: 14, size: 12, weight: 700 },
   heading: { lineHeight: 28, size: 24, weight: 700 },
   label: { lineHeight: 20, size: 16, weight: 700 },
+  // The storybook text column.
+  story: { lineHeight: 26, size: 18, weight: 400 },
 } as const;

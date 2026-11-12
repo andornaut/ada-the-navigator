@@ -20,6 +20,16 @@ export const TEXT_BUTTON = {
   verticalInset: 12,
 } as const;
 
+// Storybook choices and page controls (art/layout.md "Story action"): 36 high, a 32 face over the
+// lip, the label inset 16 across and 6 down; a wrapped label grows the face by a label line box.
+// The button is small, so its faces keep SMALL_BUTTON_GAP from their neighbours in every
+// direction, and its press area is hitAround(face).
+export const STORY_BUTTON = {
+  height: 36,
+  inset: 16,
+  verticalInset: 6,
+} as const;
+
 // Settings and install-step control rows: one control 48 high (growing to its text plus a row
 // gap above and below), a 16 icon, a gap, the label, a gap, then the action at the right end.
 export const CONTROL_ROW = {

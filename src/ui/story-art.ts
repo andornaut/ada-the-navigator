@@ -1,5 +1,5 @@
 import { type Background, BACKGROUND_ART } from "../data/storybook.ts";
-import { STORY_BACKGROUND } from "./layout/storyPage.ts";
+import { STORY_BACKGROUND, type SubjectBand } from "./layout/storyPage.ts";
 
 // Art's storybook backgrounds, their composite overlays, the rock glow transitions and the
 // overnight sequence (art/storybook.md), read from the root manifest and the story transition and
@@ -16,6 +16,8 @@ export interface ArtAsset {
   readonly at?: { readonly x: number; readonly y: number };
   /** A composite background's overlay entries, drawn over its path in order. */
   readonly overlays?: readonly string[];
+  /** A background's subject band, for the story page's run anchor. */
+  readonly subject?: SubjectBand;
   readonly width?: number;
 }
 
@@ -94,6 +96,8 @@ export interface StoryArt {
   /** Each composite background's overlays, drawn over its image. */
   readonly composites: Partial<Record<Background, readonly StoryOverlay[]>>;
   readonly overnight: Overnight | null;
+  /** Each background's subject band, for the keys whose entry gives one. */
+  readonly subjects: Partial<Record<Background, SubjectBand>>;
   readonly transitions: readonly StoryTransition[];
 }
 
@@ -108,6 +112,23 @@ export function storyBackgrounds(assets: readonly ArtAsset[]): Partial<Record<Ba
       return url ? [[key, url]] : [];
     }),
   ) as Partial<Record<Background, string>>;
+}
+
+/** Each background key's subject band, for the keys whose entry gives rows top above bottom. */
+export function storySubjects(
+  assets: readonly ArtAsset[],
+): Partial<Record<Background, SubjectBand>> {
+  return Object.fromEntries(
+    Object.entries(BACKGROUND_ART).flatMap(([key, id]) => {
+      const subject = assets.find((asset) => asset.id === id)?.subject;
+      return subject &&
+        Number.isFinite(subject.top) &&
+        Number.isFinite(subject.bottom) &&
+        subject.top <= subject.bottom
+        ? [[key, { bottom: subject.bottom, top: subject.top }]]
+        : [];
+    }),
+  ) as Partial<Record<Background, SubjectBand>>;
 }
 
 function readSteps(
@@ -383,6 +404,7 @@ export async function loadStoryArt(): Promise<StoryArt> {
     backgrounds: storyBackgrounds(assets),
     composites: storyComposites(assets),
     overnight: readOvernight(assets, overnight),
+    subjects: storySubjects(assets),
     transitions: readStoryTransitions(assets, transition),
   };
 }

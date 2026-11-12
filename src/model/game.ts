@@ -206,8 +206,18 @@ export function newGameState(): GameState {
 export const GALAXY_COUNT = 4;
 /** What the home half shows: the start screen, a storybook page or galaxy selection. */
 export type Screen = "selector" | "space" | "start" | "story";
+/**
+ * A story run's pages: every page of each scene it chains by the default path from its start,
+ * the run's first page through its end, fixed when the run starts. `id` changes with each run.
+ */
+export interface StoryRun {
+  readonly id: string;
+  readonly pages: readonly StoryPage[];
+}
 export interface StoryView {
   readonly page: StoryPage;
+  /** The story run the page belongs to. */
+  readonly run: StoryRun;
   readonly canGoBack: boolean;
   /** Skip shows on every page but the story run's end and the sleep scene. */
   readonly canSkip: boolean;
@@ -397,6 +407,7 @@ export class GameModel {
           canSkip: !atRunEnd(this.story) && !currentPage(this.story).sleep,
           choices: shownChoices(this.story),
           page: currentPage(this.story),
+          run: this.run,
         }
       : null;
   }
@@ -2063,7 +2074,40 @@ export class GameModel {
   /** A scene's first page; `trail` carries the story run's earlier pages, empty at a run's start. */
   private showScene(scene: Scene, trail: readonly StoryStep[] = []): void {
     this.story = storyStart(scene, trail);
+    if (trail.length === 0 && !this.simulating) {
+      this.runs += 1;
+      this.run = { id: `${scene.id}#${this.runs}`, pages: this.runPages(scene) };
+    }
     this.showPage();
+  }
+  /** The story run on show, and how many have started. */
+  private run: StoryRun = { id: "", pages: [] };
+  private runs = 0;
+  /** A copy that follows a run's scenes without starting runs of its own. */
+  private simulating = false;
+  /**
+   * The pages of every scene the run starting at scene chains by the default path, as moveStory
+   * follows it: each scene's end applies its effect to a copy of the state, which picks the next.
+   */
+  private runPages(scene: Scene): readonly StoryPage[] {
+    const copy = new GameModel(this.content, JSON.stringify(this.state));
+    copy.simulating = true;
+    copy.startShown = false;
+    copy.story = storyStart(scene);
+    const scenes = [scene];
+    // A run chains only a few scenes; the bound only guards a cycle.
+    for (let steps = 0; copy.story && steps < 32; steps++) {
+      const end = sceneEnd(copy.story);
+      if (atRunEnd(end)) {
+        break;
+      }
+      copy.story = end;
+      copy.moveStory(null);
+      if (copy.story) {
+        scenes.push(copy.story.scene);
+      }
+    }
+    return scenes.flatMap(({ pages }) => pages);
   }
   private showPage(): void {
     this.slept = 0;

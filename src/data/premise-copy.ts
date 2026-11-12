@@ -132,14 +132,10 @@ export const PREMISE: PremiseContent = {
       questions: [
         {
           answer: [
-            "A disc that holds part of my memory. Each one you find helps me remember, and ",
-            "shows me new places to jump.",
+            "A disc that holds part of my memory. Each one you find helps me remember, maybe ",
+            "even how I came to Earth, and shows me new places to jump.",
           ].join(""),
           question: "What's a holodisk?",
-        },
-        {
-          answer: "I don't remember. The holodisks may help.",
-          question: "How did you get to Earth?",
         },
         { answer: "There are two seats. Please strap Penny in.", question: "Can Penny come?" },
         {

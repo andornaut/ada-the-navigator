@@ -153,4 +153,36 @@ describe("storybook text", () => {
       `Earth with nothing new: Narration: "${PROTOTYPE.premise.emptyHome}" then ${labels.pickUpRock}`,
     );
   });
+  it("keeps every page within Gameplay's limits: 220 characters, 3 choices of at most 36", () => {
+    expect(COPY).toContain(
+      "A story page's text is at most 220 characters, a choice label at most 36, and a page " +
+        "offers at most three choices",
+    );
+    for (const { pages } of scenes) {
+      for (const { choices, questions, text } of pages) {
+        const offered = choices ?? questions ?? [];
+        expect(text.length, text).toBeLessThanOrEqual(220);
+        expect(offered.length, text).toBeLessThanOrEqual(3);
+        for (const { label } of offered) {
+          expect(label.length, label).toBeLessThanOrEqual(36);
+        }
+      }
+    }
+  });
+
+  it("heads the opening, resolution and closing pages with the chapter's panel title", () => {
+    for (const galaxy of galaxies) {
+      const chapter = PROTOTYPE.chapters[galaxy];
+      expect(COPY).toContain(`Panel title: ${chapter.name}.`);
+      const headed = [openingScene(PROTOTYPE, galaxy), resolutionScene(PROTOTYPE, galaxy)]
+        .flatMap(({ pages }) => pages)
+        .filter(({ heading }) => heading !== undefined);
+      expect(headed.map(({ id }) => id)).toEqual(["opening", "resolution", "closing"]);
+      expect(new Set(headed.map(({ heading }) => heading))).toEqual(new Set([chapter.name]));
+    }
+    // Every other page shows no heading.
+    for (const scene of [prologueScene(PROTOTYPE, labels), roomScene(PROTOTYPE, labels, true)]) {
+      expect(scene.pages.filter(({ heading }) => heading !== undefined)).toEqual([]);
+    }
+  });
 });

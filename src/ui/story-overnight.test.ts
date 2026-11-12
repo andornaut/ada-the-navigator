@@ -75,7 +75,7 @@ describe("Art's overnight room", () => {
       (361 / 960) * 100,
       12,
     );
-    // Ada's sprites: 48 by 42 at scale 2 on (249, 264), 44 by 56 at scale 1 on (480, 228).
+    // Ada's sprites: 48 by 42 at scale 2 on (249, 264), 44 by 56 at scale 1 on (480, 221).
     expect(readOverlay(manifest.assets, "story-ada-waking")?.box).toEqual({
       height: (84 / 540) * 100,
       left: (249 / 960) * 100,
@@ -85,7 +85,7 @@ describe("Art's overnight room", () => {
     expect(readOverlay(manifest.assets, "story-ada-playing")?.box).toEqual({
       height: (56 / 540) * 100,
       left: (480 / 960) * 100,
-      top: (228 / 540) * 100,
+      top: (221 / 540) * 100,
       width: (44 / 960) * 100,
     });
     expect(readOverlay(manifest.assets, "story-ada-room-night")).toBeNull();

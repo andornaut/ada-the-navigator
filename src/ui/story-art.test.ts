@@ -11,6 +11,7 @@ import {
   type ArtAsset,
   readStoryTransitions,
   storyBackgrounds,
+  storySubjects,
   transitionSteps,
 } from "./story-art.ts";
 import { STORYBOOK_STYLE } from "./storybook.ts";
@@ -44,6 +45,19 @@ describe("storybook art", () => {
       expect(existsSync(publicFile(entry!.path)), entry!.path).toBe(true);
       expect(backgrounds[key]).toBe(entry!.path);
     }
+  });
+
+  it("reads every background's subject band from its manifest entry", () => {
+    const subjects = storySubjects(manifest.assets);
+    for (const key of KEYS) {
+      const band = (asset(BACKGROUND_ART[key]) as { subject?: unknown } | undefined)?.subject;
+      expect(subjects[key], key).toEqual(band);
+      expect(subjects[key]!.top, key).toBeLessThan(subjects[key]!.bottom);
+    }
+    const broken = manifest.assets.map((entry) =>
+      entry.id === "story-park" ? { ...entry, subject: { bottom: 100, top: 200 } } : entry,
+    );
+    expect(storySubjects(broken)).not.toHaveProperty("park");
   });
 
   // Each cockpit Ada's room leads into: the empty one in the prologue, the seated one at boarding.
@@ -129,7 +143,7 @@ describe("storybook art", () => {
     expect(readStoryTransitions(manifest.assets, data)).toEqual([]);
   });
 
-  it("draws the canvas at display size, centred, cover-scaled only past it, nearest neighbour", () => {
+  it("draws the canvas at display size, centred across, cover-scaled only past it, nearest", () => {
     const start = STORYBOOK_STYLE.indexOf(".ada-controls .ada-story-art{");
     const art = STORYBOOK_STYLE.slice(start, STORYBOOK_STYLE.indexOf("}", start));
     expect(art).toContain(
@@ -137,8 +151,9 @@ describe("storybook art", () => {
     );
     expect(art).toContain("aspect-ratio:960 / 540;");
     expect(art).toContain("left:50%;");
-    expect(art).toContain("top:50%;");
-    expect(art).toContain("transform:translate(-50%, -50%);");
+    // Its top is the run anchor, set as each page shows.
+    expect(art).toContain("top:0;");
+    expect(art).toContain("transform:translateX(-50%);");
     expect(art).toContain("image-rendering:pixelated");
   });
 

@@ -57,7 +57,7 @@ export const AWAITING_ART = [
   "whaleFamily",
   "workshop",
 ] as const;
-const AWAITING_TAB = "#b8b3c9";
+export const AWAITING_TAB = "#b8b3c9";
 
 /** Whether speaker has no drawn portrait, so the box shows it no frame. */
 export function isUndrawn(speaker: string): boolean {
