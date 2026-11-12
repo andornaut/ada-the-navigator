@@ -22,7 +22,9 @@ Smoke violet, tint `lightness` -0.05, `chroma` 0.034, `hue` 320
 `#302333`, detail `#3C2E3F` and marker `#DCBAE3`. Every signal stays above
 5:1 on the background, lowest `obstacle` at 6.31:1, and the ship's darkest
 hull tone `#9AABBF` is 7.25:1. Backdrop rocks tint to `#49344E` lit and
-`#3A2A3E` side.
+`#3A2A3E` side. Its [backdrop](galaxies.md#backdrop-layers) is smoke:
+plates toned by drifting bands, one dim crescent and violet smoke-bank
+nebulae (`nebula-black-eye-1`, `-2`).
 
 ## Settlements
 

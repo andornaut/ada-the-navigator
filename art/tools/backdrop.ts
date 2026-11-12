@@ -1,6 +1,6 @@
 // Layered parallax backdrop: the shared layer rules in /art/backdrop.json, each galaxy's
 // /art/{galaxy}/backdrop.json (sky, plates, phenomena, stars and streaks in its own field
-// tones), Whirlpool's quarter-resolution nebula textures, and contrast checks over sampled
+// tones), the nebula galaxies' quarter-resolution textures, and contrast checks over sampled
 // cameras that fail the build when a layer passes its cap. A placeholder galaxy gets a
 // monochrome placeholder backdrop in the base space palette and a galaxy manifest holding only
 // that link, until its own art replaces both.
@@ -232,6 +232,8 @@ type GalaxyConfig = {
   planets: readonly { look: PlanetLook; hue: number; size: number }[];
   far: readonly ("nebula" | "cluster")[];
   fixed: readonly string[];
+  // A nebula far look's tones: hue offset and chroma scale of its core and veil; null without one.
+  nebula: { core: { hue: number; chroma: number }; veil: { hue: number; chroma: number } } | null;
   // A placeholder flies the base space palette in monochrome: no hue offsets and the field's
   // own chroma, so it adds no hue of its own.
   placeholder: boolean;
@@ -242,9 +244,10 @@ const fbm = (weight: number) => [
   { scale: 1100, weight: round(weight * 0.65), salt: "plate-n1" },
   { scale: 478, weight: round(weight * 0.35), salt: "plate-n2" },
 ];
-// The placeholder galaxies' shared recipe: noise-toned triangles, one grey gibbous planet, no
-// far items. Each galaxy's own seed still gives it its own sky.
-const PLACEHOLDER: GalaxyConfig = {
+// The placeholder recipe a galaxy flies until its art is built: noise-toned triangles, one grey
+// gibbous planet, no far items. Each galaxy's own seed still gives it its own sky. Every galaxy
+// has its own recipe now.
+export const PLACEHOLDER: GalaxyConfig = {
   lattice: [
     [420, 0],
     [210, 365],
@@ -261,6 +264,7 @@ const PLACEHOLDER: GalaxyConfig = {
   planets: [{ look: "gibbous", hue: 0, size: 0.8 }],
   far: [],
   fixed: [],
+  nebula: null,
   placeholder: true,
 };
 
@@ -286,6 +290,7 @@ const CONFIG: Record<GalaxyId, GalaxyConfig> = {
     ],
     far: [],
     fixed: [],
+    nebula: null,
     placeholder: false,
   },
   // Spokes round far hubs.
@@ -312,6 +317,7 @@ const CONFIG: Record<GalaxyId, GalaxyConfig> = {
     ],
     far: ["cluster"],
     fixed: [],
+    nebula: null,
     placeholder: false,
   },
   // Flowing wave bands.
@@ -343,6 +349,7 @@ const CONFIG: Record<GalaxyId, GalaxyConfig> = {
     ],
     far: ["nebula"],
     fixed: [],
+    nebula: { core: { hue: 40, chroma: 1.7 }, veil: { hue: -10, chroma: 1.5 } },
     placeholder: false,
   },
   // Shadow plates only, so the spiral haze stays Andromeda's light and its core is never
@@ -364,6 +371,7 @@ const CONFIG: Record<GalaxyId, GalaxyConfig> = {
     planets: [{ look: "crescent", hue: 10, size: 0.7 }],
     far: ["cluster"],
     fixed: ["backdropHaze"],
+    nebula: null,
     placeholder: false,
   },
   // Long slivers parallel to the band.
@@ -392,9 +400,39 @@ const CONFIG: Record<GalaxyId, GalaxyConfig> = {
     planets: [{ look: "crescent", hue: 0, size: 0.65 }],
     far: [],
     fixed: ["needleBand"],
+    nebula: null,
     placeholder: false,
   },
-  "black-eye": PLACEHOLDER,
+  // Smoke: noise-warped drifting bands, lighter wisps over shadow, and violet smoke banks.
+  "black-eye": {
+    lattice: [
+      [420, 0],
+      [210, 360],
+    ],
+    split: true,
+    jitter: 0.32,
+    lighter: true,
+    pattern: {
+      noise: fbm(0.5),
+      wave: {
+        weight: 0.8,
+        direction: [0.85, -0.4],
+        period: 300,
+        warp: { kind: "noise", weight: 2.4, octave: { scale: 760, weight: 1, salt: "plate-warp" } },
+      },
+    },
+    lightHue: -14,
+    darkHue: 10,
+    skyFlip: true,
+    star: null,
+    streakAngle: 16,
+    planets: [{ look: "crescent", hue: -12, size: 0.85 }],
+    far: ["nebula"],
+    fixed: [],
+    // Violet smoke: Whirlpool's +40 core offset would turn it rose.
+    nebula: { core: { hue: -18, chroma: 1.6 }, veil: { hue: 8, chroma: 1.3 } },
+    placeholder: false,
+  },
 };
 
 const roundXy = (xy: Xy): Xy => [round(xy[0]), round(xy[1])];
@@ -580,7 +618,10 @@ function build(galaxy: GalaxyId): GalaxyBackdrop {
       ? {
           look,
           assets: [1, 2].map((k) => `nebula-${galaxy}-${k}`),
-          colors: { core: capped(1.24, 40, 1.7), veil: tone(bg, 1.12, -10, 1.5) },
+          colors: {
+            core: capped(1.24, cfg.nebula!.core.hue, cfg.nebula!.core.chroma),
+            veil: tone(bg, 1.12, cfg.nebula!.veil.hue, cfg.nebula!.veil.chroma),
+          },
         }
       : {
           look,
@@ -672,7 +713,7 @@ function sample(t: Texture, x: number, y: number): [number, number, number, numb
   return a > 1e-6 ? [out[0]! / a, out[1]! / a, out[2]! / a, a] : [0, 0, 0, 0];
 }
 
-/** One Whirlpool nebula bank: two soft field-tone veils in an elliptical envelope. */
+/** One nebula bank: two soft field-tone veils in an elliptical envelope. */
 function nebulaTexture(seed: number, variant: number, colors: Record<string, string>): Texture {
   const { display, scale } = RULES.phenomena.nebula;
   const [w, h] = [display[0] / scale, display[1] / scale];

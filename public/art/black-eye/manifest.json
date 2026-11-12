@@ -278,6 +278,32 @@
       "state": "mended"
     },
     {
+      "id": "nebula-black-eye-1",
+      "path": "/art/black-eye/nebula-1.png",
+      "width": 192,
+      "height": 80,
+      "displayWidth": 768,
+      "displayHeight": 320,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "id": "nebula-black-eye-2",
+      "path": "/art/black-eye/nebula-2.png",
+      "width": 192,
+      "height": 80,
+      "displayWidth": 768,
+      "displayHeight": 320,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
       "id": "blurb-settler-portrait",
       "path": "/art/black-eye/portraits/blurb-settler.png",
       "width": 32,

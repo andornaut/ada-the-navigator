@@ -249,7 +249,7 @@ Each gets its own character within the system:
 | Whirlpool | Triangles toned in flowing wave bands                                                                  | A ringed planet and a crescent; blue-violet nebula banks                      | Marker-teal stars                              |
 | Andromeda | Shadow plates only, so the haze stays the light                                                        | The [spiral haze](#backdrop-haze), fixed; a lavender crescent; a star cluster | Marker-blue stars                              |
 | Needle    | Long slivers parallel to the band at -6 degrees                                                        | The [edge-on band](needle.md#space-look), fixed; a graphite crescent          | Marker-silver stars; streaks along the band    |
-| Black Eye | [Placeholders](backdrop.md#placeholder-galaxies): noise-toned triangles in the base field, monochrome  | One grey gibbous planet                                                       | Base-hue stars; streaks in the base rock tone  |
+| Black Eye | Smoke: triangles toned by drifting bands under a noise warp, lighter wisps over shadow                 | One dim crescent; violet smoke-bank nebulae                                   | Marker-violet stars; streaks rising gently     |
 
 On Sunflower the backdrop takes no keyline: the [light-field rule](#light-fields)
 keylines play objects only, and the plates step darker within the caps, so the

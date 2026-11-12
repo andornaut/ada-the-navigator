@@ -50,7 +50,7 @@ its own cap against the galaxy background (light field in brackets):
 | Dust streaks        | 1.35:1, 1 px                                                                                         |
 | Backdrop rocks      | 1.8:1 ([backdrop rule](asteroids.md#backdrop))                                                       |
 
-The art build fails when any cap is passed. Placeholder galaxies fly the base
+The art build fails when any cap is passed. A placeholder galaxy flies the base
 field above, with a monochrome backdrop under the same caps.
 
 Preserve the selected ship's white body and opaque blue canopy. Hardpoint color

@@ -77,7 +77,7 @@ drones, the Munix portraits, the backdrop haze and the `backdropHaze` link;
 Needle the Weavers' station and its Loom hall, the ring gates, channel debris,
 Channel lights, Elder Loom's glider and portrait, the crimson drones and the
 `needleGates`, `needleChannels`, `needleEye` and `needleBand` links;
-Black Eye the Blurb settlements.
+Black Eye the Blurb settlements and its smoke-bank nebulae.
 Sunflower, Whirlpool and Cartwheel each also hold their cast's portraits;
 General Gadget's and Grandma's are in core. The station, discovery cache, coral
 family, ore nugget, `tow`, the landmarks, the lost item's glint and `jobs` serve every
@@ -126,8 +126,8 @@ heavies' layered sprites from `art/tools/heavies.ts`, Cartwheel's claim jumpers 
 `art/tools/garnet-drones.ts`. Needle's art comes from `art/tools/needle-station.ts`,
 `needle-gates.ts`, `needle-channels.ts`, `needle-sky.ts`, `needle-craft.ts`,
 `needle-portraits.ts`, `needle-drones.ts` and `needle-projects.ts`. The
-[backdrop layers](backdrop.md)' data, Whirlpool's nebula textures and the placeholder
-galaxy's manifest come from `art/tools/backdrop.ts`; edit the generators and
+[backdrop layers](backdrop.md)' data and the nebula textures of Whirlpool and
+Black Eye come from `art/tools/backdrop.ts`; edit the generators and
 regenerate the matching outputs. `art/tools/silhouette.ts` is the shared
 [tracer](ship.md#shared-tracer) that turns a frame's drawn alpha into convex
 collision parts, for [the ship](ship.md#collision), the
