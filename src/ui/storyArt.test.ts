@@ -181,14 +181,12 @@ describe("storybook art", () => {
       expect(page.background, page.id).toBe("aboard");
     }
     expect(prologue.slice(arrival).some(({ id }) => id.includes(":answer:"))).toBe(true);
-    for (const fromRoom of [true, false]) {
-      for (const announce of [false, true]) {
-        const aboard = boardingScene(CONTENT, announce, fromRoom)
-          .pages.filter(({ speaker }) => speaker)
-          .map(({ background }) => background);
-        expect(aboard.length).toBeGreaterThan(0);
-        expect(new Set(aboard)).toEqual(new Set(["aboard"]));
-      }
+    for (const announce of [false, true]) {
+      const aboard = boardingScene(CONTENT, announce)
+        .pages.filter(({ speaker }) => speaker)
+        .map(({ background }) => background);
+      expect(aboard.length).toBeGreaterThan(0);
+      expect(new Set(aboard)).toEqual(new Set(["aboard"]));
     }
     expect(BACKGROUND_ART.aboard).toBe("aboard");
     expect(BACKGROUND_ART.aboardEmergency).toBe("aboard-emergency");

@@ -116,7 +116,8 @@ describe("the galaxy map in flight", () => {
 });
 
 describe("the galaxy map at boarding", () => {
-  it("closes to Ada's room on its close X, back and Escape, as Earth does", () => {
+  /** Ada home from a Sunflower flight with Whirlpool open, read through the rock to the map. */
+  const boarded = () => {
     const model = new GameModel(CONTENT);
     model.state.unlocked = [1, 3];
     model.state.prologueSeen = true;
@@ -124,12 +125,55 @@ describe("the galaxy map at boarding", () => {
     playOpening(model);
     model.state.flight!.dangerFor = 0;
     model.returnHome();
-    // Ada's room, then Pick up the rock and the boarding pages, to the galaxy map.
-    readStory(model);
+    const pages = readStory(model);
+    return { model, pages };
+  };
+
+  it("closes one step back to the Welcome back page, whose Previous returns to Ada's room", () => {
+    const { model, pages } = boarded();
+    expect(pages.map(({ id }) => id).slice(-3)).toEqual(["room", "boarding:0", "boarding:1"]);
     expect(model.screen).toBe("selector");
-    expect(model.galaxyMapStays).toBe(false);
+    model.stepGalaxy(-1);
     model.closeGalaxyMap();
     expect(model.screen).toBe("story");
     expect(model.state.mode).toBe("home");
+    expect(model.galaxyMapOpen).toBe(false);
+    expect(model.storyView?.page).toMatchObject({
+      id: "boarding:1",
+      text: "Welcome back, Navigator.",
+    });
+    expect(model.storyView?.canGoBack).toBe(true);
+    // Next opens the map again on the farthest unlocked galaxy.
+    model.storyNext();
+    expect(model.screen).toBe("selector");
+    expect(model.shipPosition).toBe(ROUTE_POSITION[3]);
+    model.closeGalaxyMap();
+    model.storyPrevious();
+    expect(model.storyView?.page.id).toBe("boarding:0");
+    model.storyPrevious();
+    expect(model.roomPage).toBe(true);
+  });
+
+  it("is reached from Continue without a saved flight through Ada's room page", () => {
+    const { model } = boarded();
+    model.closeGalaxyMap();
+    model.storyPrevious();
+    model.storyPrevious();
+    model.backToTitle();
+    const launched = relaunch(CONTENT, model.save());
+    launched.continueGame();
+    expect(launched.roomPage).toBe(true);
+    launched.storyNext();
+    expect(launched.storyView?.page.id).toBe("boarding:0");
+    launched.storyNext();
+    expect(launched.storyView?.page.text).toBe("Welcome back, Navigator.");
+    launched.storyNext();
+    expect(launched.screen).toBe("selector");
+    expect(launched.shipPosition).toBe(ROUTE_POSITION[3]);
+    launched.closeGalaxyMap();
+    expect(launched.storyView?.page.text).toBe("Welcome back, Navigator.");
+    launched.storyPrevious();
+    launched.storyPrevious();
+    expect(launched.roomPage).toBe(true);
   });
 });

@@ -3496,8 +3496,8 @@ try {
       "the newly unlocked galaxy",
   );
   // The route runs left to right along one arc, so Left and Right follow screen order and skip
-  // locked galaxies; the galaxy map's close X comes last in Tab order, and Escape returns Ada to
-  // her room, as its X and Earth do at boarding.
+  // locked galaxies; the galaxy map's close X comes last in Tab order, and Escape, as its X, goes
+  // one step back to the "Welcome back, Navigator." page.
   const routeMarkers = selector().locator(".ada-route-marker");
   const markerLefts = await routeMarkers.evaluateAll((markers) =>
     markers.map((marker) => marker.getBoundingClientRect().left),
@@ -3562,16 +3562,23 @@ try {
   assert.equal(await selectedMarker(), 1);
   await page.keyboard.press("Escape");
   await selector().waitFor({ state: "hidden" });
-  const escapedRoom = await page
-    .locator('.ada-story-background[data-background="adaRoom"]')
-    .waitFor({ state: "attached", timeout: 10000 })
+  const escapedWelcome = await page
+    .waitForFunction(
+      () =>
+        document.querySelector(".ada-story-background")?.dataset.background === "aboard" &&
+        document
+          .querySelector(".ada-story-panel:not([hidden]) .ada-story-paragraph")
+          ?.textContent?.startsWith("Welcome back, Navigator."),
+      null,
+      { timeout: 10000 },
+    )
     .then(
       () => true,
       () => false,
     );
-  assert.ok(escapedRoom, "Escape from galaxy selection shows Ada's room");
-  // Focus moves to the room page's own action once its page shows.
-  const roomFocused = await page
+  assert.ok(escapedWelcome, "Escape from galaxy selection shows the Welcome back page");
+  // Focus moves to the page's Next, which opened the galaxy map, once its page shows.
+  const welcomeFocused = await page
     .waitForFunction(
       () =>
         document.activeElement?.dataset.action === "story-next" &&
@@ -3583,11 +3590,11 @@ try {
       () => true,
       () => false,
     );
-  assert.ok(roomFocused, "Closing the galaxy map at boarding focuses the room's action");
+  assert.ok(welcomeFocused, "Closing the galaxy map at boarding focuses the page's Next");
   events.checks.push(
     "The galaxy map lays the markers left to right on one arc with its close X last in Tab " +
-      "order; Left and Right follow screen order and skip locked galaxies, and Escape returns " +
-      "Ada to her room",
+      "order; Left and Right follow screen order and skip locked galaxies, and Escape goes one " +
+      "step back to the Welcome back page",
   );
   // Canonical save fixtures exercise rendering and restore boundaries, not natural combat progression.
   const [{ enemyCatalog }, { createEnemy, damageEnemy }, { restoreSave }] = await Promise.all([

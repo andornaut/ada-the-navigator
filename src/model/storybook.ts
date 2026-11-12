@@ -443,16 +443,14 @@ export function roomScene(content: GameContent, labels: StoryLabels, empty: bool
 }
 
 /**
- * Boarding: the narration in Ada's room as she touches the glow, then Astra's line aboard; once
- * after a galaxy unlocks, Astra announces it instead. Continue from the start screen lands aboard
- * and plays only Astra's line.
+ * Boarding, after Ada's room page: the narration as she touches the glow, then Astra's line
+ * aboard; once after a galaxy unlocks, Astra announces it instead.
  */
-export function boardingScene(content: GameContent, announce: boolean, fromRoom = true): Scene {
+export function boardingScene(content: GameContent, announce: boolean): Scene {
   const { boarding, boardingNewGalaxy } = content.premise;
-  const lines = boarding.map((line, index) =>
+  const shown = boarding.map((line, index) =>
     index === boarding.length - 1 && announce ? { ...boardingNewGalaxy, announces: true } : line,
   );
-  const shown = fromRoom ? lines : lines.filter(({ speaker }) => speaker !== undefined);
   const pages = shown.map((line, index): StoryPage => ({
     ...("announces" in line ? { announces: true } : {}),
     background: line.speaker === undefined ? "adaRoom" : "aboard",

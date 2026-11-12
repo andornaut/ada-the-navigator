@@ -348,8 +348,8 @@ export function buildScene(scene: UiContext): void {
     }
     jumpThen(action);
   };
-  // The galaxy map's close X, back and Escape: in flight the local map again, focus back on its
-  // Galaxies; at boarding Ada's room, whose page focuses its own action.
+  // The galaxy map's close X, back and Escape, one step back: in flight the local map again, focus
+  // back on its Galaxies; at boarding the Welcome back page, whose page focuses its Next.
   const closeGalaxyMap = (): void => {
     const inFlight = scene.model.galaxyMapShownInFlight;
     apply(() => scene.model.closeGalaxyMap());
@@ -704,7 +704,7 @@ export function buildScene(scene: UiContext): void {
       number: label("galaxyNumber"),
       stay: label("stayHere"),
     },
-    // In flight, the local map it opened from; at boarding, Ada's room, as Earth.
+    // In flight, the local map it opened from; at boarding, the Welcome back page.
     onClose: closeGalaxyMap,
     // In flight Earth ends the flight with the jump home; at boarding it is the room at once.
     onEarth: () => {
@@ -780,7 +780,7 @@ export function buildScene(scene: UiContext): void {
       back: () => apply(() => scene.model.storyPrevious()),
       isOpen: () => scene.model.screen === "story" && !scene.model.roomPage && !scene.settingsOpen,
     }),
-    // Back and Escape on the galaxy map: where it opened from, as its close X. In flight it opens
+    // Back and Escape on the galaxy map: one step back, as its close X. In flight it opens
     // over the Paused card's local map, so it is the innermost card while that card is open.
     scene.controls.registerBack({
       back: closeGalaxyMap,

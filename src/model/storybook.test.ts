@@ -402,18 +402,22 @@ describe("story runs", () => {
     expect(model.storyView?.page.id).toBe("closing");
   });
 
-  it("starts on Continue from the start screen aboard, with Previous disabled", () => {
+  it("starts on Continue from the start screen on Ada's room page, with Previous disabled", () => {
     const model = questDone(2);
     model.state.progress[2].questComplete = false;
     model.returnHome();
     const reloaded = relaunch(CONTENT, model.save());
     reloaded.continueGame();
-    // Its one page leads straight to galaxy selection, so Skip would pass nothing.
+    // The run ends on the room page, so Skip would pass nothing.
+    expect(reloaded.roomPage).toBe(true);
     expect(reloaded.storyView).toMatchObject({ canGoBack: false, canSkip: false });
     reloaded.storySkip();
-    expect(reloaded.screen).toBe("story");
+    expect(reloaded.roomPage).toBe(true);
+    // Picking up the rock starts the run its boarding pages continue, back to the room.
     reloaded.storyNext();
-    expect(reloaded.screen).toBe("selector");
+    expect(reloaded.storyView).toMatchObject({ canGoBack: true, page: { id: "boarding:0" } });
+    reloaded.storyPrevious();
+    expect(reloaded.roomPage).toBe(true);
   });
 });
 
@@ -510,7 +514,7 @@ describe("start flow", () => {
     expect(relaunch(CONTENT, reloaded.save()).state.started).toBe(true);
   });
 
-  it("continues aboard with Astra's line, then the farthest unlocked galaxy", () => {
+  it("continues to Ada's room page, the glow, Astra's line, then the farthest unlocked galaxy", () => {
     const model = questDone(2);
     model.state.progress[2].questComplete = false;
     model.returnHome();
@@ -519,10 +523,13 @@ describe("start flow", () => {
     reloaded.start();
     expect(reloaded.screen).toBe("start");
     reloaded.continueGame();
-    // The room and rock are skipped, never Astra's boarding line.
     expect(
       readStory(reloaded).map(({ background, speaker, text }) => [background, speaker, text]),
-    ).toEqual([["aboard", "Astra", "Welcome back, Navigator."]]);
+    ).toEqual([
+      ["adaRoom", undefined, CONTENT.premise.emptyHome],
+      ["adaRoom", undefined, CONTENT.premise.boarding[0]?.text],
+      ["aboard", "Astra", "Welcome back, Navigator."],
+    ]);
     expect(reloaded.screen).toBe("selector");
     expect(reloaded.galaxyMapSelection).toBe(2);
   });
@@ -535,6 +542,8 @@ describe("start flow", () => {
     const reloaded = relaunch(CONTENT, model.save());
     reloaded.continueGame();
     expect(readStory(reloaded).map(({ text }) => text)).toEqual([
+      CONTENT.premise.emptyHome,
+      CONTENT.premise.boarding[0]?.text,
       "Welcome back, Navigator. A new galaxy is ready.",
     ]);
     expect(reloaded.state.announceGalaxy).toBe(false);

@@ -387,6 +387,8 @@ export class GameModel {
   // in its place after a tap or focus (null for the ship's own).
   private selection: RoutePosition | null = null;
   private viewing: RoutePosition | null = null;
+  // The story page the galaxy map opened from at boarding, which its close X shows again.
+  private boardedFrom: StoryPosition | null = null;
   // The galaxy map opened in flight from the local map's Galaxies, over the paused flight.
   private galaxyMapInFlight = false;
   // The last unlock, flown on the route map at the next boarding: from the galaxy completed to
@@ -2382,8 +2384,8 @@ export class GameModel {
     this.beginVisit();
   }
   /**
-   * Continue: a flight saved mid-flight resumes exactly as saved; otherwise any waiting home
-   * scene, else Astra's line aboard, then galaxy selection.
+   * Continue: a flight saved mid-flight resumes exactly as saved; otherwise a home visit, any
+   * waiting home scene first, then Ada's room page.
    */
   continueGame(): void {
     if (this.screen !== "start" || !this.state.started) {
@@ -2400,12 +2402,7 @@ export class GameModel {
       }
       return;
     }
-    if (this.waitingScene() || !this.state.prologueSeen) {
-      this.beginVisit();
-    } else {
-      // Nothing waiting: Astra's boarding line aboard, then galaxy selection.
-      this.showScene(boardingScene(this.content, this.state.announceGalaxy, false));
-    }
+    this.beginVisit();
   }
   /**
    * Restart clears story progress, galaxies, holodisks, Stardust and purchases and replays from
@@ -2539,14 +2536,18 @@ export class GameModel {
     }
   }
   /**
-   * The galaxy map's close X, back and Escape: in flight, the local map it opened from; at
-   * boarding, Ada's room, as Earth.
+   * The galaxy map's close X, back and Escape, one step back: in flight, the local map it opened
+   * from; at boarding, the story page it opened from, "Welcome back, Navigator.", with its run's
+   * Previous intact.
    */
   closeGalaxyMap(): void {
     if (this.galaxyMapShownInFlight) {
       this.closeGalaxyMapInFlight();
-    } else {
-      this.leaveCockpit();
+    } else if (this.screen === "selector" && this.boardedFrom) {
+      const from = this.boardedFrom;
+      this.closeSelection();
+      this.story = from;
+      this.showPage();
     }
   }
   /**
@@ -2560,6 +2561,7 @@ export class GameModel {
     this.galaxyMapInFlight = false;
     this.selection = null;
     this.viewing = null;
+    this.boardedFrom = null;
   }
   /** Ends the unlock flight, or skips it: the ship on the farthest galaxy it opened. */
   finishRouteFlight(): void {
@@ -2590,8 +2592,8 @@ export class GameModel {
     return true;
   }
   /**
-   * Earth: Ada's room. At boarding, back and Escape do the same, without a jump; in flight it
-   * ends the flight, story progress saved and no sleep scene.
+   * Earth: Ada's room, at boarding without a jump; in flight it ends the flight, story progress
+   * saved and no sleep scene.
    */
   leaveCockpit(): void {
     if (this.galaxyMapShownInFlight) {
@@ -2739,7 +2741,7 @@ export class GameModel {
         this.state.dialogue = null;
       }
     } else {
-      this.openSelection();
+      this.openSelection(position);
     }
   }
   private applyEffect(scene: Scene): void {
@@ -2786,9 +2788,11 @@ export class GameModel {
   }
   /**
    * Galaxy selection, the ship on the farthest unlocked position on the route; after an unlock,
-   * on the galaxy it flew from until the unlock flight ends.
+   * on the galaxy it flew from until the unlock flight ends. `from` is the story page it opened
+   * from, which its close X shows again.
    */
-  private openSelection(): void {
+  private openSelection(from: StoryPosition): void {
+    this.boardedFrom = from;
     this.story = null;
     this.viewing = null;
     this.selection =
