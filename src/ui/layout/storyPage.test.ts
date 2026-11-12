@@ -453,16 +453,16 @@ describe("story background placement", () => {
     };
     // Art's placement table: the run's panel tops at 720x360 with insets and at 1280x720.
     expect(tops(SCREENS[0]!)).toEqual({
+      aboard: 93,
       adaRoom: 213,
       adaRoomUnpolished: 231,
-      aboard: 93,
       grandmaGarden: 113,
       park: 229,
     });
     expect(tops(SCREENS[3]!)).toEqual({
+      aboard: 141,
       adaRoom: 261,
       adaRoomUnpolished: 279,
-      aboard: 141,
       grandmaGarden: 161,
       park: 285,
     });
