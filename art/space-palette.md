@@ -37,9 +37,10 @@ the borrowed UI palette remains separate.
 
 ## Edge markers
 
-A seen object outside the view shows a marker on the game area's border,
-flush, its centre 8 logical px in from the edge, on the line from the view's
-centre to the object. Markers draw on the canvas above every play object and
+A seen object outside the view shows a marker on the game area's border, on
+the line from the view's centre to the object. The marker's outermost drawn
+pixel, its light-field ink outline included, sits 1 logical px in from the game
+area's edge. Markers draw on the canvas above every play object and
 under the HTML HUD, at alpha 1. Sizes are logical px, scaled by `s`.
 
 | Kind                                               | Glyph                                                                                  | Colour            |
