@@ -31,7 +31,7 @@ import { chunkCoordinates, validVisitedPages } from "./visited.ts";
 import { UPGRADE_WEAPONS } from "./weapons.ts";
 
 /** The save format this build writes and reads. */
-export const SAVE_VERSION: GameState["version"] = 9;
+export const SAVE_VERSION: GameState["version"] = 10;
 
 /**
  * Whether saved was written by a newer build: its version is above SAVE_VERSION. Such a save is
@@ -415,6 +415,16 @@ function economyState(value: unknown): value is EconomyState {
   );
 }
 /** Each paid amount is a whole number of Stardust toward one of the galaxy's projects, at most its cost. */
+/** Each greeted place is one of the galaxy's stations, greeted a whole number of times. */
+function greetingCounts(sector: SectorId, value: unknown): boolean {
+  return (
+    record(value) &&
+    Object.entries(value).every(
+      ([id, docked]) =>
+        namesStation(ECONOMY, sector, id) && Number.isSafeInteger(docked) && Number(docked) > 0,
+    )
+  );
+}
 function donations(sector: SectorId, value: unknown): boolean {
   return (
     record(value) &&
@@ -493,7 +503,8 @@ function jobOffer(sector: SectorId, value: unknown): boolean {
   }
   return target === "" && (value.type === "rescue" || vector(value.spot));
 }
-const SECTOR_KEYS = ["1", "2", "3"];
+// Every galaxy has stations, so job boards and held tasks.
+const SECTOR_KEYS = SECTORS.map(String);
 /** Saved job boards. */
 function jobsState(value: unknown): boolean {
   if (
@@ -594,6 +605,7 @@ export function restoreSave(saved: unknown): GameState | null {
         !["holodisk", "opened"].every((k) => typeof p[k] === "boolean") ||
         !stationIds(id as SectorId, p.stations) ||
         !donations(id as SectorId, p.donated) ||
+        !greetingCounts(id as SectorId, p.greetings) ||
         !chartedIds(id as SectorId, p.charted) ||
         !revealedProjects(id as SectorId, p.donated, p.revealed) ||
         !validExplored(PROTOTYPE.tuning.chunkSize, p.explored) ||

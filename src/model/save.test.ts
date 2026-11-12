@@ -767,6 +767,6 @@ describe("a save from a newer version", () => {
   });
 
   it("is never restored, so the game cannot read or replace it", () => {
-    expect(restoreSave({ mode: "home", version: 2 })).toBeNull();
+    expect(restoreSave({ mode: "home", version: SAVE_VERSION + 1 })).toBeNull();
   });
 });

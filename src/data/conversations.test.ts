@@ -13,6 +13,7 @@ import {
   GENERAL_NAMED,
   SPEAKERS,
 } from "./conversations.ts";
+import { JOB_LORE } from "./jobs.ts";
 
 // Gameplay's documents, with their line wrapping undone.
 const read = (name: string) =>
@@ -45,8 +46,18 @@ function spokenLines(text: string): { mood?: string; name: string; text: string 
 }
 
 // Black Eye's pool waits for a Black Eye flight: no galaxy past Whirlpool can be flown yet.
-// Needle's and Andromeda's pools wait for their chapters, and the heavy-disabled reaction for
-// disabling and salvage.
+// Needle's and Andromeda's pools wait for their chapters.
+const UNBUILT_LINES = [
+  // The first meetings, whose triggers come with Gameplay's rules for them.
+  "Astra, did that rock just wave at us?",
+  "That's a Cobble. They're made of stone, and they eat the ore they mine.",
+  "Rocks that eat rocks!",
+  "So many whales! Why do they sing like that?",
+  "Whale songs carry far. It's how families find each other in the dark.",
+  "No wonder it missed them.",
+  "Who are the squid folk by the currents?",
+  "The Voron. They ride the currents with the whales and write in glowing ink.",
+];
 const IN_FLIGHT = passage("## In-flight conversations", " Needle: - First arrival");
 const BLACK_EYE = passage("Black Eye: - First arrival");
 const BROADCASTS = passage("Memory lines and broadcasts follow", "Outposts handing over");
@@ -99,7 +110,9 @@ describe("in-flight conversations", () => {
   });
 
   it("speak every line of the copy's in-flight section and the General's broadcasts", () => {
-    const copied = [...spokenLines(IN_FLIGHT), ...spokenLines(BROADCASTS)];
+    const copied = [...spokenLines(IN_FLIGHT), ...spokenLines(BROADCASTS)].filter(
+      ({ text }) => !UNBUILT_LINES.includes(text),
+    );
     expect(copied.length).toBeGreaterThan(30);
     expect(DATA_LINES).toEqual(expect.arrayContaining(copied));
     expect(copied).toEqual(expect.arrayContaining(DATA_LINES));
@@ -114,15 +127,21 @@ describe("in-flight conversations", () => {
     expect(jobs).toContainEqual({ mood: "happy", name: "Ada", text: "Hold on, we've got you!" });
   });
 
-  it("leave out Black Eye's pool, which has no flight to play in", () => {
+  it("leave out Black Eye's pool, which has no flight to play in, apart from its job lore", () => {
     const pool = spokenLines(BLACK_EYE);
     expect(pool).toHaveLength(6);
-    for (const line of pool) {
+    // Black Eye's stations give jobs, so Astra's two job lore lines play there.
+    const lore = new Set(JOB_LORE[6]);
+    expect(lore.size).toBe(2);
+    for (const line of pool.filter(({ text }) => !lore.has(text))) {
       expect(DATA_LINES).not.toContainEqual(line);
     }
-    expect(CONVERSATIONS.some(({ trigger }) => "sector" in trigger && trigger.sector > 3)).toBe(
-      false,
-    );
+    // Only job lore plays past the built galaxies, where every galaxy's stations give jobs.
+    expect(
+      CONVERSATIONS.filter(({ trigger }) => "sector" in trigger && trigger.sector > 3).every(
+        ({ trigger }) => trigger.kind === "jobLore",
+      ),
+    ).toBe(true);
   });
 
   it("grow Astra with an arrival and two quiet stretches in each of Cartwheel and Whirlpool", () => {

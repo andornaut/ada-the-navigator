@@ -121,6 +121,7 @@ const MAP: GalaxyMap = {
   searchArea: null,
 };
 const state = (change: Partial<PauseState> = {}): PauseState => ({
+  carrying: false,
   field: null,
   inDanger: false,
   job: null,

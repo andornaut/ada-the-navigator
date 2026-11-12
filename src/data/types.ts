@@ -26,7 +26,13 @@ export interface ChapterContent {
   resolutionChoices: readonly [string, string];
   closing: string;
   objectives: readonly string[];
-  dialogue: Readonly<Record<string, { speaker: string; text: string; optional?: string }>>;
+  /**
+   * Space dialogue panels by key, one speaker each; narration has none and shows the chapter's
+   * panel title. `then` names the panel Continue shows next.
+   */
+  dialogue: Readonly<
+    Record<string, { speaker?: string; text: string; optional?: string; then?: string }>
+  >;
 }
 
 /** A dialogue panel; narration has no speaker. */

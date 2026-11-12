@@ -63,8 +63,9 @@ describe("the galaxy route", () => {
 
 describe("tuning by route position", () => {
   it("keeps each built galaxy's tuning as it was, now at its route position", () => {
-    expect(byPosition(JOB_REWARDS, 2).deliveryLong).toBe(35);
-    expect(byPosition(JOB_REWARDS, 3).deliveryLong).toBe(50);
+    // Job rewards follow route position (quests.md "Rewards"): Whirlpool second, Cartwheel fifth.
+    expect(byPosition(JOB_REWARDS, 3).deliveryLong).toBe(35);
+    expect(byPosition(JOB_REWARDS, 2).deliveryLong).toBe(50);
     // Whirlpool's hunters chase; Cartwheel's interceptors hit and run.
     expect(byPosition(sectorArchetypes, 3).fighter).toEqual({ behaviour: { kind: "chase" } });
     expect(byPosition(sectorArchetypes, 2).interceptor?.behaviour.kind).toBe("hitAndRun");
@@ -110,7 +111,6 @@ describe("tuning by route position", () => {
     const tables: readonly Readonly<Partial<Record<RoutePosition, unknown>>>[] = [
       ASTEROID_FIELDS,
       CHUNK_CATALOG,
-      JOB_REWARDS,
     ];
     for (const table of tables) {
       // Needle and Andromeda read Whirlpool's, Black Eye Cartwheel's.
@@ -122,5 +122,13 @@ describe("tuning by route position", () => {
         expect(table[ROUTE_POSITION[galaxy]]).toBeDefined();
       }
     }
+    // Job rewards are Gameplay's per position, every galaxy having stations: positions 3 to 5
+    // pay alike, and Black Eye only surveys and rescues.
+    expect([3, 4, 5].map((position) => JOB_REWARDS[position as RoutePosition])).toEqual([
+      { deliveryLong: 50, deliveryShort: 30, hunt: 30, rescue: 50, survey: 20 },
+      { deliveryLong: 50, deliveryShort: 30, hunt: 30, rescue: 50, survey: 20 },
+      { deliveryLong: 50, deliveryShort: 30, hunt: 30, rescue: 50, survey: 20 },
+    ]);
+    expect(JOB_REWARDS[6]).toEqual({ rescue: 50, survey: 20 });
   });
 });

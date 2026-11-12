@@ -19,7 +19,8 @@ Jobs. Jobs opens the job board, which follows the shop's card pattern; its close
 X, an outside tap, back and Escape return to the station card.
 
 - Each board offers three jobs at once, drawn from its galaxy's job pool by the
-  station's seed, with no two of the same type while the pool allows.
+  station's seed, with no two of the same type while the pool allows. Short and
+  long deliveries count as one type.
 - Each row shows the job type's icon, a title, one line of detail and the reward,
   with Accept. Accept takes the job at once, with no confirm.
 - Ada holds at most one station job per galaxy. While she holds one, other rows' Accept stays focusable, refuses with
@@ -27,9 +28,12 @@ X, an outside tap, back and Escape return to the station card.
 - The held job shows at the top of every board in its galaxy, marked Active,
   with Drop. Drop asks "Drop this job?" with Drop and Cancel. Dropping loses the
   job's progress and returns it to the board that offered it.
-- A board's offers stay until taken. A slot refills with a new job from the pool
-  when its job is completed. When every landmark in a galaxy is charted, its
-  boards stop offering surveys.
+- Untaken offers re-roll at the start of each new flight. A slot refills with a
+  new job from the pool when its job is completed. When every landmark in a
+  galaxy is charted, its boards stop offering surveys.
+- An offer whose target becomes invalid, such as a survey landmark charted
+  meanwhile or a target another offer already uses, is replaced with a new job
+  from the pool.
 - The held job's objective shows in the local map's Quests modal under the story
   objective, as "Job: {objective}". Its target uses the direction indicator for quest
   events and is marked on the local map.
@@ -37,7 +41,7 @@ X, an outside tap, back and Escape return to the station card.
   Stardust", then Astra says one unseen lore line from the galaxy's job pool.
 
 Jobs persist across flights, regeneration, closing the game and visits to other
-galaxies. A job's targets are fixed and saved when it is accepted, and survive
+galaxies. A job's targets are fixed and saved when it is offered, and survive
 layout regeneration like stations. Restart clears jobs and boards.
 
 ### Job types
@@ -48,14 +52,17 @@ layout regeneration like stations. Restart clears jobs and boards.
 - **Delivery**: carry cargo or a message from the issuing station to another
   known station or outpost in the galaxy at least 3000 world units away,
   preferring the nearest, with no upper limit. The job names the destination by
-  its Map name. An outpost destination keeps its id and reward when the layout
-  regenerates, and the indicator points to its current position. Accepting
-  loads the item into a job carried-item slot, separate from story items and
-  mining cargo. Deliver at the destination completes the job. A lost item is
-  replaced at the issuing station, as for story deliveries. Travel here from the
-  Map is allowed outside danger.
+  its Map name. A board offers no delivery while no known place qualifies as its
+  destination, and shows no line about it. An outpost destination keeps its id
+  and reward when the layout regenerates, and the indicator points to its
+  current position. Accepting loads the item into a job carried-item slot,
+  separate from story items and mining cargo. Deliver at the destination
+  completes the job. A lost item is replaced at the issuing station, as for
+  story deliveries. While Ada carries a job item (a delivery's or a supply
+  run's), the local map's Travel here is unavailable and refuses with the shared
+  refusal feedback, as while towing.
 - **Rescue and tow**: find a stranded pod or small ship 3000 to 7000 world units
-  away and tow it to safety at the issuing station or any known outpost. See
+  away and tow it to safety at any known station or outpost in the galaxy. See
   [Tow handling](#tow-handling).
 - **Lost-item hunt**: search a marked area, 900 world units in radius, for a lost
   item. The indicator points to the area's centre while Ada is outside it and
@@ -63,6 +70,7 @@ layout regeneration like stations. Restart clears jobs and boards.
   "Woof! Woof!" conversation plays once for that item, ignoring its usual 60 second
   limit. The item glints within 160 world units, like a discovery cache, and is
   collected as a pickup by the one pickup rule, and the tractor beam pulls it.
+  Collecting the item completes the job, which pays then.
 
 ### Tow handling
 
@@ -77,12 +85,13 @@ the line is taut, and passes through scenery so it never snags. While towing:
 
 The multipliers apply to Ada's current values, so engine tuning still helps.
 Enemies ignore the towed craft, and it takes no damage. Ada fights normally.
-The local map's Travel here is unavailable while towing and refuses with the shared
-refusal feedback.
-Bringing the craft within 400 world units of the safe place completes the rescue,
-and the craft parks there. Leaving the galaxy (Earth or Jump from the galaxy map), Back to title or a
-shield-depletion jump returns the craft to where it was stranded, still marked. Closing the game resumes the tow
-exactly.
+The local map's Travel here is unavailable while towing, as while carrying a job
+item, and refuses with the shared refusal feedback.
+Bringing the craft within 400 world units of any known station or outpost in the
+galaxy completes the rescue,
+and the craft parks there. Leaving the galaxy (Earth or Jump from the galaxy map) or a shield-depletion
+jump returns the craft to where it was stranded, still marked. Closing the game
+or Back to title keeps the tow, and Continue resumes it exactly.
 
 ### Rewards
 
@@ -150,6 +159,7 @@ Job lore lines, said by Astra after a job completes, one unseen line per job:
 | `jobComplete`   | Job complete: +{amount} Stardust           |
 | `tow`           | Tow                                        |
 | `towTravel`     | Unavailable while towing.                  |
+| `carryTravel`   | Unavailable while carrying a delivery.     |
 | `surveyTitle`   | Chart the {landmark}                       |
 | `surveyAbout`   | Astra's map has a gap here. Fly close.     |
 | `deliveryTitle` | Deliver {item} to {place}                  |
@@ -199,9 +209,8 @@ Once a galaxy's chapter is complete, its story places offer a repeatable
 activity through Talk, with Accept and Not now. The mining hub is a station, so
 its mining contract is offered instead as a row at the top of the hub's job
 board, with the activity icon, its name, its goal, its reward and Accept. An activity takes the galaxy's
-one optional task slot, shared with station jobs: while it is active, that
-galaxy's job boards offer no job, and an active job keeps the activity from
-being offered. An accepted activity, its galaxy and its progress persist across
+one optional task slot, shared with station jobs, so Ada holds a job or an
+activity in a galaxy, never both. An accepted activity, its galaxy and its progress persist across
 flights like a job; a supply run's carried item uses the job carried-item slot.
 It pays at completion with the job completion notice alone, with no lore line,
 and is offered again on the next Talk. Black Eye has no repeatable activity yet.
@@ -256,17 +265,18 @@ rewards.
   it. The calf reaching within 400 world units of the family completes the activity.
   While the calf is away, the family shows one calf fewer. The indicator points
   to the calf until it follows, then to the family. Closing the game resumes the
-  guide exactly, as for a tow.
-  Leaving the galaxy, Back to title or a shield-depletion jump returns the calf to its start.
+  guide exactly, as for a tow, and so does Back to title.
+  Leaving the galaxy or a shield-depletion jump returns the calf to its start.
 - **Courier run**: Pip flies a parcel to a seeded settlement 5000 to 8000 world
   units away at 0.7 of Ada's base top speed, and Ada escorts him. Pip waits
   whenever Ada is more than 600 world units away and goes on when she returns.
   Pip takes no damage, and drones ignore him; one drone patrol waits along the
-  way. Pip reaching the settlement completes the activity. Leaving the galaxy,
-  Back to title or a shield-depletion jump returns Pip to his start.
+  way. Pip reaching the settlement completes the activity. Leaving the galaxy or a
+  shield-depletion jump returns Pip to his start; closing the game or Back to
+  title keeps the run for Continue.
 - **Thread the needle**: a gate run (see [Needle](rules.md#galaxy-three-needle-threading-the-needle))
   through a seeded practice channel of 8 gates near Elder Loom. A gate passed too
-  fast sends Ada back to the first gate. Lighting the last gate completes the
+  fast sends Ada back to the last lit gate, or the first if none is lit. Lighting the last gate completes the
   activity.
 
 Activity lines:
@@ -330,17 +340,19 @@ count and starts a new list of found points.
 The card lists every achievement in table order; none is hidden. A locked entry
 shows its full name and condition in muted grey with a grey badge; an unlocked
 entry has an ink name and a coloured badge, as in Chibi. A locked counted
-achievement also shows its progress as `{have}/{need}`:
+achievement also shows its progress as `{have}/{need}`. Every count is lifetime
+progress and survives Restart; a landmark, project, ally or paint counts once
+however often Restart lets Ada repeat it:
 
-| Name               | Counts                                                    |
-| ------------------ | --------------------------------------------------------- |
-| Cartographer       | Landmarks charted in the galaxy with the most charted     |
-| Astra's Atlas      | Landmarks charted across all six galaxies                 |
-| Good Neighbor      | Station jobs and repeatable activities completed, of 25   |
-| Friends Everywhere | Optional allies made                                      |
-| Community Builder  | Community projects funded                                 |
-| Good Nose          | Penny finds, of 10                                        |
-| Full Palette       | Ship paints ever owned, Classic included; kept on Restart |
+| Name               | Counts                                                       |
+| ------------------ | ------------------------------------------------------------ |
+| Cartographer       | Landmarks ever charted in the galaxy with the most           |
+| Astra's Atlas      | Landmarks ever charted across all six galaxies               |
+| Good Neighbor      | Station jobs and repeatable activities ever completed, of 25 |
+| Friends Everywhere | Optional allies ever made                                    |
+| Community Builder  | Community projects ever funded                               |
+| Good Nose          | Penny finds ever made, of 10                                 |
+| Full Palette       | Ship paints ever owned, Classic included                     |
 
 The other achievements show no count. When the list is longer than the card, it
 pages with Previous, the page count and Next, as in Chibi. Achievements is

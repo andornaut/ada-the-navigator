@@ -251,7 +251,7 @@ describe("prologue", () => {
       background: "cockpit",
       speaker: "Astra",
       text:
-        "A disc that holds part of my memory. Each one you find helps me remember, maybe even how " +
+        "A disk that holds part of my memory. Each one you find helps me remember, maybe even how " +
         "I came to Earth, and shows me new places to jump.",
     });
     model.storyNext();
@@ -278,7 +278,7 @@ describe("prologue", () => {
     }
     expect(answers).toEqual([
       "Can Penny come? There are two seats. Please strap Penny in.",
-      "What's a holodisk? A disc that holds part of my memory. Each one you find helps me " +
+      "What's a holodisk? A disk that holds part of my memory. Each one you find helps me " +
         "remember, maybe even how I came to Earth, and shows me new places to jump.",
       "How do I get home? Ask me any time you're safe. I'll jump you back to the moment you left.",
     ]);

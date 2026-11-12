@@ -31,6 +31,9 @@ const LANDMARK_SEEDS: Readonly<Partial<Record<LandmarkGalaxy & SectorId, number>
   1: 0x1a4d_0101,
   2: 0x1a4d_0202,
   3: 0x1a4d_0303,
+  4: 0x1a4d_0404,
+  5: 0x1a4d_0505,
+  6: 0x1a4d_0606,
 };
 
 const sites = new Map<SectorId, readonly LandmarkSite[]>();

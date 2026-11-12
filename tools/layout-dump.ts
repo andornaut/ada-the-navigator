@@ -21,6 +21,7 @@ import * as playView from "../src/ui/layout/playView.ts";
 import * as routeMap from "../src/ui/layout/routeMap.ts";
 import * as shopCard from "../src/ui/layout/shopCard.ts";
 import * as startScreen from "../src/ui/layout/startScreen.ts";
+import * as stationCard from "../src/ui/layout/stationCard.ts";
 import * as storyPage from "../src/ui/layout/storyPage.ts";
 import * as tokens from "../src/ui/layout/tokens.ts";
 import * as touchControls from "../src/ui/layout/touchControls.ts";
@@ -39,6 +40,7 @@ export const LAYOUT_MODULES: Readonly<Record<string, Readonly<Record<string, unk
   "routeMap.ts": routeMap,
   "shopCard.ts": shopCard,
   "startScreen.ts": startScreen,
+  "stationCard.ts": stationCard,
   "storyPage.ts": storyPage,
   "tokens.ts": tokens,
   "touchControls.ts": touchControls,
@@ -224,6 +226,7 @@ function viewportCases(call: ReturnType<typeof recorder>): void {
       for (const rowWidth of [180, 260, 320]) {
         call("shopCard.ts", "shopColumns", shopCard.shopColumns, available, rowWidth);
       }
+      call("stationCard.ts", "stationCardRect", stationCard.stationCardRect, logical, view);
     }
   }
 }
@@ -317,6 +320,10 @@ function stateCases(call: ReturnType<typeof recorder>): void {
     for (const row of [180, 260]) {
       call("shopCard.ts", "shopListWidth", shopCard.shopListWidth, columns, row);
     }
+  }
+  call("stationCard.ts", "stationCardHeight", stationCard.stationCardHeight);
+  for (const lines of [0, 1, 2, 3]) {
+    call("stationCard.ts", "keeperPips", stationCard.keeperPips, lines);
   }
 }
 

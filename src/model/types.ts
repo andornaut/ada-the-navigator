@@ -177,6 +177,11 @@ export interface SectorProgress {
   destroyedEnemies: number;
   /** Discovered station ids, which are travel destinations. */
   stations: string[];
+  /**
+   * How many dockings each station's keeper has greeted, by station id: 1 after the first, full
+   * greeting, then one more per later line (model/keepers.ts). Restart clears it.
+   */
+  greetings: Record<string, number>;
   /** The galaxy's holodisk is recovered and inserted into Astra's drive. */
   holodisk: boolean;
   /** The chapter's home opening has played; old scenes never replay. */
@@ -309,7 +314,7 @@ export interface DialogueState {
 }
 export interface GameState {
   /** The save format; a save of another version is reset, not migrated. */
-  version: 9;
+  version: 10;
   mode: "home" | "space";
   selectedSector: SectorId;
   unlocked: SectorId[];

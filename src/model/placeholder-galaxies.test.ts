@@ -67,31 +67,41 @@ function questDone(galaxy: SectorId, unlocked: SectorId[]): GameModel {
 }
 
 describe("placeholder galaxies", () => {
-  it.each(PLACEHOLDERS)("galaxy %i flies with generic enemies and rocks only", (sector) => {
-    const objects = flown(sector);
-    const kinds = new Set(objects.map(({ kind }) => kind));
-    expect(kinds.has("enemy")).toBe(true);
-    expect(kinds.has("rock")).toBe(true);
-    // No stations, story destinations or current debris; resource rocks are generic chunk rocks
-    // in every galaxy, and ore fields are checked below.
-    for (const kind of ["station", "destination"] as const) {
-      expect(kinds.has(kind), kind).toBe(false);
-    }
-    expect(objects.some((object) => object.river)).toBe(false);
-    // Enemies come from the tuning table it reads, the built galaxy before it on the route.
-    const roster = new Set(byPosition(sectorEncounters, sector).map(({ archetype }) => archetype));
-    for (const object of objects.filter(({ kind }) => kind === "enemy")) {
-      expect(roster.has(object.enemy!.archetype), object.enemy!.archetype).toBe(true);
-    }
-    expect(stationsNear(ECONOMY, sector, 40000, { x: 0, y: 0 })).toEqual([]);
-    expect(landmarkSites(sector)).toEqual([]);
-    for (let x = -4; x <= 4; x++) {
-      for (let y = -4; y <= 4; y++) {
-        expect(currentInCell(sector, { x, y })).toBeNull();
-        expect(oreFieldInCell(sector, { x, y })).toBeNull();
+  it.each(PLACEHOLDERS)(
+    "galaxy %i flies with generic enemies, rocks and its stations",
+    (sector) => {
+      const objects = flown(sector);
+      const kinds = new Set(objects.map(({ kind }) => kind));
+      expect(kinds.has("enemy")).toBe(true);
+      expect(kinds.has("rock")).toBe(true);
+      // No story destinations or current debris; resource rocks are generic chunk rocks in every
+      // galaxy, and ore fields are checked below.
+      expect(kinds.has("destination")).toBe(false);
+      expect(objects.some((object) => object.river)).toBe(false);
+      // Enemies come from the tuning table it reads, the built galaxy before it on the route.
+      const roster = new Set(
+        byPosition(sectorEncounters, sector).map(({ archetype }) => archetype),
+      );
+      for (const object of objects.filter(({ kind }) => kind === "enemy")) {
+        expect(roster.has(object.enemy!.archetype), object.enemy!.archetype).toBe(true);
       }
-    }
-  });
+      // Every galaxy has seeded stations, at least 8000 apart, and twelve landmarks.
+      const stations = stationsNear(ECONOMY, sector, 40000, { x: 0, y: 0 });
+      expect(stations.length).toBeGreaterThan(0);
+      for (const [index, a] of stations.entries()) {
+        for (const b of stations.slice(index + 1)) {
+          expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThanOrEqual(8000);
+        }
+      }
+      expect(landmarkSites(sector)).toHaveLength(12);
+      for (let x = -4; x <= 4; x++) {
+        for (let y = -4; y <= 4; y++) {
+          expect(currentInCell(sector, { x, y })).toBeNull();
+          expect(oreFieldInCell(sector, { x, y })).toBeNull();
+        }
+      }
+    },
+  );
 
   it.each(PLACEHOLDERS)("galaxy %i has no story, holodisk or objective", (sector) => {
     const model = new GameModel(PROTOTYPE);

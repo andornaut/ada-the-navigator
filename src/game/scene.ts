@@ -1057,7 +1057,7 @@ export class PrototypeScene extends Scene {
         },
         onGalaxies: () => this.openGalaxies(),
         onTravel: (id) => {
-          if (!this.model.inDanger && !this.model.towing) {
+          if (!this.model.inDanger && !this.model.towing && !this.model.carrying) {
             jumpThen(() => this.model.teleport(id));
           }
         },
@@ -1104,6 +1104,7 @@ export class PrototypeScene extends Scene {
         });
         return accepted;
       },
+      advanceGreeting: () => this.model.advanceGreeting(),
       balance: () => ({
         amount: this.model.state.economy.stardust,
         text: amount(this.model.state.economy.stardust),
@@ -1118,6 +1119,7 @@ export class PrototypeScene extends Scene {
           }
         }),
       dropJob: () => apply(() => this.model.dropJob()),
+      greeting: () => this.model.stationGreeting,
       jobs: () =>
         this.model.jobBoard().map((job) => ({
           ...job,
@@ -1138,6 +1140,7 @@ export class PrototypeScene extends Scene {
         jobDropCancel: label("jobDropCancel"),
         jobDropTitle: label("jobDropTitle"),
         jobs: label("jobs"),
+        nextLine: label("nextLine"),
         owned: label("owned"),
         projectFunded: label("projectFunded"),
         projects: label("projects"),
@@ -2060,6 +2063,7 @@ export class PrototypeScene extends Scene {
     this.controls.setAchievementsButton(start);
     this.controls.setExitButton(start);
     this.controls.setPause({
+      carrying: this.model.carrying,
       field: this.mapField(),
       inDanger: this.model.inDanger,
       job: this.model.jobObjective,

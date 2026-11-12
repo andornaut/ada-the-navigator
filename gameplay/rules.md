@@ -88,7 +88,8 @@ text or dialogue in a readable panel at the bottom.
 
 A story run is every Earth and aboard page shown in a row between two points of
 play: it starts when Ada leaves the start screen, a flight or the galaxy map,
-and ends at the galaxy map or on Ada's room page with its named action. Next
+or with Ada's room page's named action, and ends at the galaxy map or on Ada's
+room page with its named action. Next
 turns one page. Previous returns to the page shown before, across scene
 boundaries within the run, and is disabled only on the run's first page. The
 run that starts with Ada's room page's named action counts that room page as
@@ -477,7 +478,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   the game area. The drawn knob stays inside the ring, as in
   Chibi. Each joystick draws a line from its origin to the thumb's actual position,
   extending past the ring however far the thumb travels, so the line shows the
-  drag. Both joysticks' drawn rings sit 40 logical pixels from the screen's
+  drag. Both joysticks' drawn rings sit 60 logical pixels from the screen's
   outer side edges and 40 above its bottom, inside the safe insets, mirrored as
   in Chibi. Each stick is then clamped so it is drawn fully inside the game
   area, keeping a small border (8 logical pixels by default; Art sets the exact
@@ -506,7 +507,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - Destinations Ada visits (stations, the mining hub, outposts, settlements and
   quest points of interest) are drawn at 1.5 times their earlier size, the mining
   hub at 1.25 times, with a 2 pixel ink outline on light fields so they stand out
-  from the background. While Ada is within Use range of one, a small callout
+  from the background. While Ada is within Talk range of one, a small callout
   above it shows its Use action's symbol; it is hidden otherwise. At a station
   or the mining hub, an action due there comes before Dock, and Dock shows once
   it is done: Deliver for a carried item bound there, Deposit while Ada carries

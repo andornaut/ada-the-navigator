@@ -62,10 +62,9 @@ export const PROTOTYPE: PrototypeContent = {
         "Go home to Earth when ready.",
       ],
       opening: [
-        "Ada has gardened with her grandmother since she was little. Today, ",
-        "her grandmother mentions a nearby community garden that never got ",
-        "started. Its organizer needs help, but nobody can look after ",
-        "everything.",
+        "Ada has gardened with Grandma since she was little. Today, Grandma ",
+        "mentions a nearby community garden that never got started. Its ",
+        "organizer needs help, but nobody can look after everything.",
       ].join(""),
       openingBranches: [
         "Grandma smiles. 'Planting, watering, tools... more than one person can manage.'",
@@ -73,9 +72,9 @@ export const PROTOTYPE: PrototypeContent = {
       ],
       openingChoices: ["What kind of help do they need?", "I'd like to meet the organizer."],
       resolution: [
-        "Back home, Ada asks which jobs need doing. The organizer lists ",
-        "planting, finding tools, watering and teaching new gardeners. Her ",
-        "grandmother offers to help people learn.",
+        "Back on Earth, Ada meets the organizer at the empty lot and asks which ",
+        "jobs need doing. The organizer lists planting, finding tools, watering ",
+        "and teaching new gardeners. Grandma offers to help people learn.",
       ].join(""),
       resolutionBranches: [
         [
@@ -91,23 +90,28 @@ export const PROTOTYPE: PrototypeContent = {
     },
     2: {
       closing: [
-        "Ada and her friends include Sam. When the behavior happens again, ",
-        "they stay supportive instead of leaving them alone.",
+        "Sam joins their lunch table. The next time someone is unkind, Ada ",
+        "and her friends stay right beside Sam. Nobody has to stand alone.",
       ].join(""),
       dialogue: {
         approach: {
           speaker: "Regular visitor",
-          text: [
-            "There's room for everyone here. Let them dock. We are staying. The ",
-            "miner approaches with company, docks and unloads. 'Thank you for ",
-            "staying. See you next trip.'",
-          ].join(""),
+          text: "There's room for everyone here. Let them dock. We are staying.",
+          then: "approachDocking",
+        },
+        approachDocking: {
+          text: "The miner flies in with company, docks and unloads.",
+          then: "approachThanks",
+        },
+        approachThanks: {
+          speaker: "Miner",
+          text: "Thank you for staying. See you next trip.",
         },
         firstDeposit: {
           speaker: "Ada",
           text: [
-            "That pilot cut across the miner's approach and made them retreat. ",
-            "There are free docks. Why won't they let that miner through?",
+            "That pilot cut right in front of the miner! There's plenty of room. ",
+            "Why block them?",
           ].join(""),
         },
         hub: {
@@ -149,9 +153,8 @@ export const PROTOTYPE: PrototypeContent = {
         "Go home to Earth when ready.",
       ],
       opening: [
-        "At school, Ada sees Sam, a child in her class, being pushed out of a ",
-        "playground game. Other children look away. There is no excuse for ",
-        "treating someone that way. Ada wonders who else noticed.",
+        "At school, Ada sees Sam, a child in her class, left out of a game at ",
+        "recess. Other children look away. Ada wonders who else noticed.",
       ].join(""),
       openingBranches: [
         [
@@ -191,8 +194,8 @@ export const PROTOTYPE: PrototypeContent = {
     },
     3: {
       closing: [
-        "Ada takes Penny out and gives her time to stop, sniff and explore. ",
-        "Caring means making time for what Penny needs.",
+        "Ada takes Penny out and lets her stop, sniff and explore. They come ",
+        "home muddy and happy.",
       ].join(""),
       dialogue: {
         family: {
@@ -215,11 +218,11 @@ export const PROTOTYPE: PrototypeContent = {
         },
         reunion: {
           speaker: "Whale",
-          text: [
-            "You found my family! Now I know where to go. Thank you for ",
-            "listening. The whale departs, and soon the family is traveling ",
-            "together again.",
-          ].join(""),
+          text: "You found my family! Now I know where to go. Thank you for listening.",
+          then: "reunionDeparture",
+        },
+        reunionDeparture: {
+          text: "The whale swims off, and soon the family is traveling together again.",
         },
         trapped: {
           speaker: "Ada",
@@ -271,13 +274,12 @@ export const PROTOTYPE: PrototypeContent = {
         },
       ],
       resolution: [
-        "Ada returns to the same moment. Penny is still waiting. She remembers the whale's ",
-        "wish to move, explore and find its family. Penny needs opportunities to experience ",
-        "the world too.",
+        "Ada returns to the same moment. Penny is still waiting by the door. Ada thinks of ",
+        "the whale, who wanted to roam and find its family. Penny wants to explore too.",
       ].join(""),
       resolutionBranches: [
         [
-          "Penny's tail goes wild as Ada clips on the lead. 'Come on, girl. Let's see what's ",
+          "Penny's tail goes wild as Ada clips on the leash. 'Come on, girl. Let's see what's ",
           "out there today.'",
         ].join(""),
         [
@@ -285,7 +287,7 @@ export const PROTOTYPE: PrototypeContent = {
           "sniffs every exciting thing.",
         ].join(""),
       ],
-      resolutionChoices: ["Get the lead.", "Let's go exploring."],
+      resolutionChoices: ["Get the leash.", "Let's go exploring."],
     },
   },
   installSteps: {
@@ -344,6 +346,7 @@ export const PROTOTYPE: PrototypeContent = {
     calfGoal: "Guide a whale calf home.",
     calfGuide: "Guide the calf home.",
     cargo: "Cargo",
+    carryTravel: "Unavailable while carrying a delivery.",
     chapterComplete: "Chapter complete. You can keep exploring.",
     close: "Close",
     confirmBuy: "Buy",
@@ -441,18 +444,42 @@ export const PROTOTYPE: PrototypeContent = {
     landmark3Wreck2: "Coral Hull",
     landmark3Wreck3: "Driftwood Hull",
     landmark3Wreck4: "Old Diving Bell",
-    landmark4Beacon1: "Red Lamp",
-    landmark4Beacon2: "Watch Light",
-    landmark4Beacon3: "Lost Signal",
-    landmark4Beacon4: "Far Marker",
-    landmark4Nebula1: "Shadow Cloud",
-    landmark4Nebula2: "Inkwell Nebula",
-    landmark4Nebula3: "Dim Veil",
-    landmark4Nebula4: "Smoke Haze",
-    landmark4Wreck1: "Broken Drone",
-    landmark4Wreck2: "Silent Hull",
-    landmark4Wreck3: "Cold Freighter",
-    landmark4Wreck4: "Old Patrol Ship",
+    landmark4Beacon1: "Gate Light",
+    landmark4Beacon2: "Thread Marker",
+    landmark4Beacon3: "Stitch Beacon",
+    landmark4Beacon4: "Pin Lamp",
+    landmark4Nebula1: "Silver Thread",
+    landmark4Nebula2: "Spindle Cloud",
+    landmark4Nebula3: "Loom Haze",
+    landmark4Nebula4: "Eye Nebula",
+    landmark4Wreck1: "Tangled Glider",
+    landmark4Wreck2: "Snapped Spool Ship",
+    landmark4Wreck3: "Old Avi Hull",
+    landmark4Wreck4: "Quiet Shuttle",
+    landmark5Beacon1: "Guide Light",
+    landmark5Beacon2: "Harbor Beacon",
+    landmark5Beacon3: "Truth Lamp",
+    landmark5Beacon4: "Courier Marker",
+    landmark5Nebula1: "Bright Veil",
+    landmark5Nebula2: "Neighbor Nebula",
+    landmark5Nebula3: "Pearl Cloud",
+    landmark5Nebula4: "Dawn Haze",
+    landmark5Wreck1: "Old Mail Ship",
+    landmark5Wreck2: "Lost Courier Pod",
+    landmark5Wreck3: "Rusted Lamp Barge",
+    landmark5Wreck4: "Sleepy Ferry",
+    landmark6Beacon1: "Red Lamp",
+    landmark6Beacon2: "Watch Light",
+    landmark6Beacon3: "Lost Signal",
+    landmark6Beacon4: "Far Marker",
+    landmark6Nebula1: "Shadow Cloud",
+    landmark6Nebula2: "Inkwell Nebula",
+    landmark6Nebula3: "Dim Veil",
+    landmark6Nebula4: "Smoke Haze",
+    landmark6Wreck1: "Broken Drone",
+    landmark6Wreck2: "Silent Hull",
+    landmark6Wreck3: "Cold Freighter",
+    landmark6Wreck4: "Old Patrol Ship",
     level: "Level {level} of {max}",
     map: "Map",
     mapCenterOnAda: "Center on Ada",
@@ -475,9 +502,8 @@ export const PROTOTYPE: PrototypeContent = {
       "curled at her feet.",
     motionNote: "Skips screen shakes",
     moveControls: "Move controls",
-    nearbyDiscovery: "Nearby discovery",
     next: "Next",
-    objective: "Objective",
+    nextLine: "Next line",
     ore: "Ore",
     outOfAmmo: "Out of ammo.",
     owned: "Owned",

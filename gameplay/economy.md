@@ -50,6 +50,7 @@ salvaging it drops its Stardust and has the heavy upgrade chance (see
 | `retaliator`     |        4 |
 | `frigate`        |  12 or 6 |
 | `capital`        | 28 or 14 |
+| `platform`       |   8 or 4 |
 
 An enemy's Stardust is half its hit points, rounded down, and at least 1; a
 heavy counts all its hardpoints' hit points, not its hull, and a destroyed heavy
@@ -112,12 +113,10 @@ stay rare but findable. A station is a safe
 area. Ada docks with Use (Dock) within Talk range, 160 world units from the
 station's centre, like any other destination; the station has no dock mouth and
 flying over it does nothing. Undocking leaves Ada at rest where she docked, so
-Use offers Dock again at once. Docking opens the station card, which pauses action like a
-conversation. The card shows the Stardust balance, a welcome line (the keeper's greeting; see [Species and greeters](rules.md#species-and-greeters)), Undock, Shop and Jobs; Jobs
+Use offers Dock again at once. Docking opens the station card, which pauses play like other cards. The card shows the Stardust balance, a welcome line (the keeper's greeting; see [Species and greeters](rules.md#species-and-greeters)), Undock, Shop and Jobs; Jobs
 opens the station's job board (see [Quests](quests.md)).
 Like Archie's modals it has a close X; the X, an outside tap, back and Escape all
-undock. Station quests are part of the station concept; their content is
-not yet designed, so the station card shows no quest board until it is.
+undock.
 
 ## Shop
 
@@ -266,7 +265,8 @@ same suffixes after `projectAbout`.
 When the shield is depleted, Astra quantum jumps the ship home to Earth so it can
 recharge overnight. The cost is only the inconvenience: the flight ends, the
 galaxy's layout regenerates on the next flight, and open-space enemies, pickups,
-carried cargo and a towed pod are lost. Accepted quests stay open to retry. Ada
+undeposited ore and a towed pod are lost; the jump-home page says when ore was
+lost. Accepted jobs stay open, each with its carried item (see [Rules](rules.md)). Ada
 keeps every weapon, upgrade level, Stardust, purchase, charted landmark and story
 progress.
 

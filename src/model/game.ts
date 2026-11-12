@@ -1,5 +1,6 @@
 import { ACHIEVEMENTS, PENNY_FIND_RANGE } from "../data/achievements.ts";
 import { ACTIVITIES, SUPPLY_ITEMS } from "../data/activities.ts";
+import type { CastKey } from "../data/cast.ts";
 import {
   CONVERSATION_TUNING,
   CONVERSATIONS,
@@ -98,8 +99,10 @@ import {
   jobHostiles,
   nearestSafePlace,
   pullTow,
+  rerollBoards,
   stationBoard,
 } from "./jobs.ts";
+import { greetingLines, type StationGreeting, stationKeeper } from "./keepers.ts";
 import {
   chartLandmarks,
   galaxyLandmarks,
@@ -352,6 +355,12 @@ export class GameModel {
   private jobMoments: (JobMoment | "jobComplete")[] = [];
   /** Whether Ada has docked this flight, which marks the dock lesson done. */
   private dockedThisFlight = false;
+  // The docked station keeper's greeting: the keeper, this docking's lines and the one on show.
+  private greeting: {
+    index: number;
+    readonly keeper: CastKey;
+    readonly lines: readonly string[];
+  } | null = null;
   /** Achievements unlocked whose notice has not shown yet; notices show in flight. */
   private achievementNotices: string[] = [];
   private previousSeed = 0;
@@ -851,6 +860,45 @@ export class GameModel {
       undockFlight(this.state.flight);
     }
     this.state.docked = null;
+    this.greeting = null;
+  }
+  /**
+   * A docking's keeper greeting (gameplay/rules.md "Species and greeters"): the full greeting the
+   * first time, then one later line in turn. The docking counts as greeted at once.
+   */
+  private greet(sector: SectorId, id: string): void {
+    const keeper = stationKeeper(ECONOMY, sector, id);
+    if (!keeper) {
+      this.greeting = null;
+      return;
+    }
+    const greetings = this.state.progress[sector].greetings;
+    const docked = greetings[id] ?? 0;
+    greetings[id] = docked + 1;
+    this.greeting = {
+      index: 0,
+      keeper: keeper.key,
+      lines: greetingLines(keeper.greetings, docked),
+    };
+  }
+  /** The docked station keeper's line on show; null where the generic welcome shows. */
+  get stationGreeting(): StationGreeting | null {
+    const greeting = this.greeting;
+    return this.state.docked && greeting
+      ? {
+          count: greeting.lines.length,
+          index: greeting.index,
+          keeper: greeting.keeper,
+          line: greeting.lines[greeting.index]!,
+        }
+      : null;
+  }
+  /** A tap on the keeper block: the greeting's next line, the last staying on show. */
+  advanceGreeting(): void {
+    const greeting = this.greeting;
+    if (this.state.docked && greeting && greeting.index < greeting.lines.length - 1) {
+      greeting.index += 1;
+    }
   }
   /**
    * Docks at a station in Talk range: the station card opens, and a delivery job's lost item is
@@ -862,6 +910,7 @@ export class GameModel {
     }
     this.state.docked = id;
     this.dockedThisFlight = true;
+    this.greet(f.sector, id);
     const held = this.held;
     if (held?.type === "delivery" && held.station === id) {
       held.carrying = true;
@@ -1030,6 +1079,7 @@ export class GameModel {
     this.state.mode = "space";
     this.state.dialogue = null;
     this.state.docked = null;
+    rerollBoards(this.state.selectedSector, this.state);
     for (const id of this.current.known) {
       ensureDestination(this.content, id, this.state.flight);
     }
@@ -1129,6 +1179,10 @@ export class GameModel {
     }
     if (f.tow) {
       this.notify(this.label("towTravel"));
+      return;
+    }
+    if (this.carrying) {
+      this.notify(this.label("carryTravel"));
       return;
     }
     if (station) {
@@ -1724,6 +1778,19 @@ export class GameModel {
       )
       .map(({ id, x, y }) => ({ id, x, y }));
   }
+  /**
+   * Where a towed craft is safe (quests.md "Rescue and tow"): any known station or outpost in
+   * the galaxy, the issuing station among them, the hub listed once as the outpost it also is.
+   */
+  private towPlaces(flight: FlightState): JobTarget[] {
+    const outposts = this.outposts(flight);
+    const held = this.held;
+    const ids = [...this.current.stations, ...(held ? [held.station] : [])];
+    const stations = [...new Set(ids)]
+      .filter((id) => !outposts.some((outpost) => outpost.id === id))
+      .flatMap((id) => this.stationSite(flight, id) ?? []);
+    return [...outposts, ...stations.map(({ id, x, y }) => ({ id, x, y }))];
+  }
   private jobContext(flight: FlightState): BoardContext {
     return {
       hostiles: jobHostiles(flight),
@@ -1965,6 +2032,17 @@ export class GameModel {
       salvageTarget(this.content, f) !== undefined
     );
   }
+  /** A delivery's or a supply run's item is aboard in flight: Travel here refuses, as towing. */
+  get carrying(): boolean {
+    if (this.state.mode !== "space" || !this.state.flight) {
+      return false;
+    }
+    const activity = this.activity;
+    return Boolean(
+      (this.held?.type === "delivery" && this.held.carrying) ||
+      (activity?.id === "supplyRun" && activity.carrying),
+    );
+  }
   /** What the Use button does for the held job here, if anything: Tow or Deliver. */
   private jobUse(): "tow" | "deliver" | null {
     const f = this.state.flight;
@@ -2027,7 +2105,7 @@ export class GameModel {
       this.finishJob(f);
     } else if (held.type === "rescue" && f.tow) {
       pullTow(f.player, f.tow);
-      const place = nearestSafePlace(this.outposts(f), this.jobStation(held), f.tow);
+      const place = nearestSafePlace(this.towPlaces(f), null, f.tow);
       if (place && distance(place, f.tow) <= JOB_TUNING.tow.complete) {
         this.finishJob(f);
       }
@@ -2144,9 +2222,7 @@ export class GameModel {
       return mark({ id: station, x: place.x, y: place.y });
     }
     if (held.type === "rescue") {
-      const place = f.tow
-        ? nearestSafePlace(this.outposts(f), this.jobStation(held), f.tow)
-        : held.target;
+      const place = f.tow ? nearestSafePlace(this.towPlaces(f), null, f.tow) : held.target;
       return place ? mark(place) : null;
     }
     return mark(held.target);
@@ -2243,6 +2319,12 @@ export class GameModel {
     const inserted = /^holodisk:(\d+)$/.exec(dialogue.context);
     if (inserted) {
       this.insertion(Number(inserted[1]) + 1);
+      return;
+    }
+    // A panel that hands on to another speaker's shows it next, one speaker a panel.
+    const next = id === "continue" ? this.chapter.dialogue[dialogue.context]?.then : undefined;
+    if (next) {
+      this.exchange(next);
       return;
     }
     this.state.dialogue = null;
