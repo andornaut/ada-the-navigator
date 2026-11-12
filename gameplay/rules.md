@@ -440,8 +440,11 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   silhouette: every hit, bounce, pickup, dock and tow contact between Ada's
   ship, enemies and their heavy parts, stations and docks, outposts, asteroids
   and resource rocks, debris, hazards, wrecks, story ships, towed craft, pickups
-  and shots. Which objects interact is unchanged. Nothing passes behind another
-  object on screen, and placement and spawning keep drawn objects from
+  and shots. Which objects interact is unchanged. Objects Ada flies through today stay passable:
+  stations and docks, outposts and destinations, story ships and buoys, towed
+  craft, whales and the calf, wrecks, the holodisk and landmarks; Ada is drawn in
+  front of any of them while she overlaps it, so she is never hidden. Nothing
+  else passes behind another object on screen, and placement and spawning keep drawn objects from
   overlapping on screen. A clearance stated as an object's radius plus a margin
   uses its silhouette radius, the greatest distance from its pivot to its drawn
   silhouette over all its frames, so a turning or spinning object stays clear
