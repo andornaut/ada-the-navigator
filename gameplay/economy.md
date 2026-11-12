@@ -149,18 +149,18 @@ until she returns to a galaxy that unlocks it.
 
 ### Prices
 
-| Item           | Effect                                                                                          | Prices   |
-| -------------- | ----------------------------------------------------------------------------------------------- | -------- |
-| Multi-Laser    | Owned weapon                                                                                    | 225      |
-| Rapid Missile  | Owned weapon                                                                                    | 375      |
-| Heavy Missile  | Owned weapon                                                                                    | 450      |
-| Scattershot    | Owned weapon                                                                                    | 525      |
-| Phaser         | Owned weapon                                                                                    | 600      |
-| Weapon upgrade | Per weapon, Laser included: levels 2 and 3, each about ×1.5 effective output                    | 225, 450 |
-| Shield         | Levels 2 and 3: capacity 15, then 20; recharge delay 15, then 10 s; empty to full 45, then 30 s | 450, 900 |
-| Engine tuning  | Levels 2 and 3: top speed 190, then 220; each −10% acceleration and braking seconds             | 180, 360 |
-| Tractor beam   | Levels 2 and 3: pull radius 90, then 120; pull speed 160, then 200                              | 120, 240 |
-| Ship paint     | Cosmetic colour schemes for Ada's ship; the white and blue scheme stays free                    | 75 each  |
+| Item           | Effect                                                                                                                        | Prices   |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------- |
+| Multi-Laser    | Owned weapon                                                                                                                  | 225      |
+| Rapid Missile  | Owned weapon                                                                                                                  | 375      |
+| Heavy Missile  | Owned weapon                                                                                                                  | 450      |
+| Scattershot    | Owned weapon                                                                                                                  | 525      |
+| Phaser         | Owned weapon                                                                                                                  | 600      |
+| Weapon upgrade | Per weapon, Laser included: levels 2 and 3, each about ×1.5 effective output (×1.2 to 1.33 for Rapid Missile and Multi-Laser) | 300, 600 |
+| Shield         | Levels 2 and 3: capacity 15, then 20; recharge delay 15, then 10 s; empty to full 45, then 30 s                               | 450, 900 |
+| Engine tuning  | Levels 2 and 3: top speed 190, then 220; each −10% acceleration and braking seconds                                           | 180, 360 |
+| Tractor beam   | Levels 2 and 3: pull radius 90, then 120; pull speed 160, then 200                                                            | 120, 240 |
+| Ship paint     | Cosmetic colour schemes for Ada's ship; the white and blue scheme stays free                                                  | 75 each  |
 
 Enemy speeds are fixed, so engine tuning lets Ada outrun every enemy but the
 interceptor at level 2 and all of them at level 3. The shop follows Archie's Pet shop pattern: tabs, owned
