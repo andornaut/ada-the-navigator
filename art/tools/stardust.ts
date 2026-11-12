@@ -6,6 +6,7 @@ import { writeSpriteSheet } from "@andornaut/art-kit/spriteSheet";
 import { format, resolveConfig } from "prettier";
 
 import { editManifest } from "./manifest.ts";
+import { traceGrid, withCollision } from "./silhouette.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const sprites = `${art}ui/sprites/`;
@@ -115,10 +116,19 @@ async function prettify(path: string): Promise<void> {
   writeFileSync(path, await format(readFileSync(path, "utf8"), { ...options, filepath: path }));
 }
 
+const glint = LOOP.map(([name]) => frame(PICKUP[name]));
 await writeSpriteSheet(
   { data: `${art}stardust.json`, sheet: `${art}stardust.png` },
   { key: "stardust" },
-  [["glint", LOOP.map(([name]) => frame(PICKUP[name])), LOOP.map(([, ms]) => ms)]],
+  [["glint", glint, LOOP.map(([, ms]) => ms)]],
+);
+// Each frame's drawn silhouette, in frame px.
+writeFileSync(
+  `${art}stardust.json`,
+  withCollision(
+    readFileSync(`${art}stardust.json`, "utf8"),
+    glint.map((rows, i) => traceGrid(`stardust ${i}`, rows).collision),
+  ),
 );
 await prettify(`${art}stardust.json`);
 for (const [key, rows] of Object.entries(ICONS)) {

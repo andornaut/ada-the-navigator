@@ -238,3 +238,7 @@ frame px from the other.
 it tries each given tolerance in order, keeps the first whose parts pass
 `check`, and returns the notch tips in the colour of the topmost fill within
 0.6 frame px of each apex (stroke included), rounded as the SVG writes them.
+`traceGrid` traces a pixel-art frame (every drawn pixel opaque) and
+`withCollision` adds the parts to each frame of its Aseprite data. `TOLERANCES`
+is the per-sprite ladder 0.75, 0.5, 0.4 and 0.3 frame px; each sprite takes
+the first that passes.

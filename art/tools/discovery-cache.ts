@@ -6,6 +6,7 @@ import { writeSpriteSheet } from "@andornaut/art-kit/spriteSheet";
 import { format, resolveConfig } from "prettier";
 
 import { editManifest } from "./manifest.ts";
+import { traceGrid, withCollision } from "./silhouette.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const SIZE = 21;
@@ -97,6 +98,17 @@ await writeSpriteSheet(
     ["hidden", [frame(HIDDEN, false)], BLINK_MS],
     ["lit", [frame(LIT_A, false), frame(LIT_B, true)], BLINK_MS],
   ],
+);
+// Each frame's drawn silhouette, in frame px. The halo is light, not matter, so lit B traces
+// its pod alone.
+writeFileSync(
+  `${art}discovery-cache.json`,
+  withCollision(
+    readFileSync(`${art}discovery-cache.json`, "utf8"),
+    [frame(HIDDEN, false), frame(LIT_A, false), frame(LIT_B, false)].map(
+      (rows, i) => traceGrid(`discovery-cache ${i}`, rows).collision,
+    ),
+  ),
 );
 await prettify(`${art}discovery-cache.json`);
 

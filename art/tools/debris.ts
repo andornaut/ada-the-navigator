@@ -6,7 +6,7 @@ import { writeFileSync } from "node:fs";
 import { DISPLAY_SCALE } from "./crafts.ts";
 import { fromOklab, hex, rgb, toOklab } from "./oklab.ts";
 import { depth, facesViewer, type Point, projectAt } from "./projection.ts";
-import { traceFills, type V2 } from "./silhouette.ts";
+import { TOLERANCES, traceFills, type V2 } from "./silhouette.ts";
 
 // Contour outside the silhouette, in display px.
 export const CONTOUR = 1.5;
@@ -25,9 +25,6 @@ const LIGHT = unit([-0.25, 0.45, 1]);
 const STEPS = [0.9, 0.7, 0.45, 0.15];
 // Same-colour seam stroke in frame px: hides anti-aliasing cracks between facets.
 const SEAM = 1.2;
-// Douglas-Peucker tolerances for the drawn silhouettes, in frame px: each frame takes the first
-// that passes the checks.
-const SILHOUETTE_TOLERANCES = [0.75, 0.5, 0.4, 0.3];
 
 // Direction mark, logical px: three coral dashes trailing a traveling debris piece. Dash i is
 // centred `behind` px past the edge of its frame's drawn bounds along the reverse velocity and
@@ -283,7 +280,7 @@ export function exportDebris(
         points: pts.map(([x, y]) => [Number(x.toFixed(2)), Number(y.toFixed(2))] as V2),
       })),
       [w, h],
-      SILHOUETTE_TOLERANCES,
+      TOLERANCES,
       Number(stroke.toFixed(2)) / 2,
     );
     if (traced.tips.length) throw new Error(`${title} ${k}: the outline has a notch tip`);

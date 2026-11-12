@@ -89,6 +89,12 @@ The cargo piece a resource rock releases, collected on contact.
   11 by 11 logical px with the pivot at the centre, nearest-neighbour filtered.
   Its Aseprite data is `ore-nugget.json`.
 - Pixel art from a character grid; every pixel is opaque or clear.
+- Collision: the `rest` frame of `ore-nugget.json` carries `collision`, its
+  drawn silhouette: an array of convex parts, each an array of `[x, y]` in frame px of that
+  frame (one frame px is one display px), the schema of the ship's
+  `collision[k]`. Traced by the
+  [shared tracer](ship.md#shared-tracer) at 0.4 frame px, the first of the
+  ladder that passes: 13 parts, intersection over union 0.998.
 
 | Role      | Colour    |
 | --------- | --------- |

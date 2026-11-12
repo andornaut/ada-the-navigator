@@ -82,6 +82,14 @@ nearest-neighbour filtering.
   to a warm core and shows eight warm halo pixels around the pod. The table
   lists frame A; B changes only the beacon and adds the halo.
 - Reduced motion: `hidden` before approach, then `litA` without the loop.
+- Collision: each frame of `discovery-cache.json` carries `collision`, its
+  drawn silhouette: an array of convex parts, each an array of `[x, y]` in frame px of that
+  frame (one frame px is one display px), the schema of the ship's
+  `collision[k]`. Traced by the
+  [shared tracer](ship.md#shared-tracer) at 0.4 frame px, the first of the
+  ladder that passes: 16 parts, intersection over union 0.999. The halo is
+  light, not matter, like the ship's speed jets, so `litB` traces its pod
+  alone and all three frames carry the same parts.
 
 | Role        | Hidden    | Lit       |
 | ----------- | --------- | --------- |

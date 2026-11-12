@@ -31,6 +31,14 @@ Every pickup looks the same regardless of the Stardust it carries.
   glint2 80 ms, glint1 60 ms; 620 ms in all. Each pickup starts at a random phase
   so a cluster twinkles out of step.
 - Reduced motion: the rest frame only.
+- Collision: each frame of `stardust.json` carries `collision`, its drawn
+  silhouette: an array of convex parts, each an array of `[x, y]` in frame px of that
+  frame (one frame px is one display px), the schema of the ship's
+  `collision[k]`. Traced by the
+  [shared tracer](ship.md#shared-tracer) at 0.4 frame px, the first of the
+  ladder that passes: 12 parts per frame, intersection over union 0.991 to
+  0.995. `glint1` and `glint2` share one outline, so frames 1 to 3 carry the
+  same parts.
 - The tractor beam has no visual. A pulled pickup's drift toward Ada is the only
   feedback.
 

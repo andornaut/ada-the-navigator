@@ -17,6 +17,8 @@ export interface Mask {
 
 export const SS = 4;
 export const TOLERANCE = 0.75;
+// The per-sprite ladder: each sprite takes the first that passes `check`.
+export const TOLERANCES = [0.75, 0.5, 0.4, 0.3] as const;
 export const MIN_IOU = 0.98;
 export const MAX_DISTANCE = 1;
 
@@ -462,4 +464,49 @@ export function traceFills(
     return { collision, tips: drawn, tolerance };
   }
   throw new Error(`${id}: no tolerance`);
+}
+
+// ------------------------------------------------------------------ pixel art
+
+// A pixel-art frame, a colour or null per pixel, as a mask: every drawn pixel is opaque.
+export function gridMask(rows: readonly (readonly (string | null)[])[]): Mask {
+  const height = rows.length;
+  const width = rows[0]?.length ?? 0;
+  const data = new Uint8Array(width * height * 4);
+  for (const [y, row] of rows.entries())
+    for (const [x, cell] of row.entries()) if (cell != null) data[(y * width + x) * 4 + 3] = 255;
+  return alphaMask({ data, height, width });
+}
+
+// A pixel-art frame's drawn silhouette at the first of `tolerances` that passes `check`. A
+// raster cannot draw notch tips, so a frame with one fails.
+export function traceGrid(
+  id: string,
+  rows: readonly (readonly (string | null)[])[],
+  tolerances: readonly number[] = TOLERANCES,
+): { collision: V2[][]; tolerance: number } {
+  const mask = gridMask(rows);
+  for (const [i, tolerance] of tolerances.entries()) {
+    const { collision, tips } = trace(mask, tolerance);
+    if (tips.length) throw new Error(`${id}: the outline has a notch tip`);
+    try {
+      check(id, collision, mask);
+    } catch (error) {
+      if (i === tolerances.length - 1) throw error;
+      continue;
+    }
+    return { collision, tolerance };
+  }
+  throw new Error(`${id}: no tolerance`);
+}
+
+// Aseprite JSON hash data with `collision` added to each frame, in sheet order.
+export function withCollision(text: string, collisions: readonly V2[][][]): string {
+  const data = JSON.parse(text) as { frames: Record<string, Record<string, unknown>> };
+  const names = Object.keys(data.frames);
+  if (names.length !== collisions.length) {
+    throw new Error(`${names.length} frames but ${collisions.length} collision sets`);
+  }
+  for (const [i, name] of names.entries()) data.frames[name]!.collision = collisions[i];
+  return JSON.stringify(data);
 }

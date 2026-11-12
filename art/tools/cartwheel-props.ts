@@ -45,6 +45,7 @@ import {
   rotate,
   round,
 } from "./projection.ts";
+import { traceGrid, withCollision } from "./silhouette.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const dir = `${art}cartwheel/`;
@@ -323,9 +324,13 @@ await writeSpriteSheet(
   [["rest", [nuggetFrame(NUGGET)], 100]],
 );
 const nuggetData = `${dir}ore-nugget.json`;
+// The frame's drawn silhouette, in frame px.
+const nuggetText = withCollision(readFileSync(nuggetData, "utf8"), [
+  traceGrid("ore-nugget", nuggetFrame(NUGGET)).collision,
+]);
 writeFileSync(
   nuggetData,
-  await format(readFileSync(nuggetData, "utf8"), {
+  await format(nuggetText, {
     ...(await resolveConfig(nuggetData)),
     filepath: nuggetData,
   }),

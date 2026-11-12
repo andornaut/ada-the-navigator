@@ -203,6 +203,11 @@ applies to `scattershot`, `rapidMissile`, `multiLaser`, `heavyMissile` and
 `phaser`, and replaces the old line glyphs, Scattershot's dot fan and the missile
 line glyph included. Galaxy field retints leave the amber signal unchanged.
 
+The pickup's drawn silhouette is the outline's outer edge, which encloses the
+icon: one square part, half-size `pickupRadius` plus half the 1.5 px outline
+(10.75 display px), centred on the projected point and aligned with the
+screen. Tech draws the pickup at runtime, so it has no frame data.
+
 ## Reduced motion summary
 
 | Effect   | Full                              | Reduced                             |

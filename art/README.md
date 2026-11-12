@@ -102,6 +102,9 @@ collision parts, for [the ship](ship.md#collision), the
 [sector one enemies](enemies.md#collision), the
 [heavies](heavies.md#collision), the traveling debris
 ([Cartwheel](cartwheel-props.md#collision), [Whirlpool](whirlpool.md#collision))
+the pickups ([Stardust](stardust.md#pickup), the
+[discovery cache](outposts.md#discovery-cache),
+[ore nugget](cartwheel-props.md#ore-nugget), [weapon pickups](weapons.md#pickups))
 and the [asteroids](asteroids.md#collision). Reused portrait PNGs remain byte-identical to their documented source exports,
 and their sprite metadata changes only the local image filename.
 `art/tools/portraits.ts` draws the Astra and General Gadget portraits and the
