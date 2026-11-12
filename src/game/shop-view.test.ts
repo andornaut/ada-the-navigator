@@ -64,7 +64,7 @@ describe("shop rows on the station view", () => {
   });
 
   it("puts paint rows in their own group with levels and prices for the rest", () => {
-    const economy = { ...newEconomy(ECONOMY), stardust: 90 };
+    const economy = { ...newEconomy(ECONOMY), stardust: 130 };
     const rows = shopRows(ECONOMY, economy, "ship").map((row) =>
       stationRow(ECONOMY, PROTOTYPE.labels, economy.stardust, row),
     );
@@ -73,10 +73,10 @@ describe("shop rows on the station view", () => {
       group: "items",
       level: "Level 1 of 3",
       name: "Shield",
-      price: 300,
+      price: 450,
       state: "unaffordable",
     });
-    expect(rows[2]).toMatchObject({ name: "Tractor beam", price: 80, state: "forSale" });
+    expect(rows[2]).toMatchObject({ name: "Tractor beam", price: 120, state: "forSale" });
     expect(rows.slice(3).map((row) => [row.group, row.name, row.state])).toEqual([
       ["paint", "Classic", "inUse"],
       ["paint", "Cobalt", "forSale"],

@@ -431,12 +431,12 @@ describe("shop through the model", () => {
     model.state.economy.stardust = 400;
     expect(model.requestPurchase({ kind: "weapon", weapon: "rapidMissile" })).toEqual({
       kind: "confirm",
-      left: 250,
-      price: 150,
+      left: 175,
+      price: 225,
     });
     expect(model.buy({ kind: "weapon", weapon: "rapidMissile" })).toEqual({
       kind: "bought",
-      price: 150,
+      price: 225,
     });
     expect(model.weapons().map((choice) => choice.id)).toEqual(["laser", "rapidMissile"]);
     model.undock();
@@ -444,12 +444,12 @@ describe("shop through the model", () => {
     model.startSector(1);
     playOpening(model);
     expect(model.weapons().map((choice) => choice.id)).toEqual(["laser", "rapidMissile"]);
-    expect(model.state.economy.stardust).toBe(250);
+    expect(model.state.economy.stardust).toBe(175);
   });
 
   it("raises the shield capacity and current charge when a shield level is bought", () => {
     const model = docked();
-    model.state.economy.stardust = 300;
+    model.state.economy.stardust = 450;
     model.state.flight!.shield = 5;
     model.buy({ kind: "track", track: "shield" });
     expect(model.shieldMax).toBe(15);

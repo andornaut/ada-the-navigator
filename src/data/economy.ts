@@ -207,9 +207,9 @@ export const ECONOMY: EconomyCatalog = {
     safeRadius: 320,
   },
   trackPrices: {
-    engine: [120, 240],
-    shield: [300, 600],
-    tractor: [80, 160],
+    engine: [180, 360],
+    shield: [450, 900],
+    tractor: [120, 240],
   },
   // The tractor beam's pull radius and speed by level, alike for every pickup.
   tractorRadius: { base: 60, levels: [90, 120] },
@@ -229,12 +229,12 @@ export const ECONOMY: EconomyCatalog = {
     5: { ...small, capital: 0.05, frigate: 0.05, platform: 0.05 },
   },
   weaponPrices: {
-    heavyMissile: 300,
-    multiLaser: 250,
-    phaser: 400,
-    rapidMissile: 150,
-    scattershot: 350,
+    heavyMissile: 450,
+    multiLaser: 375,
+    phaser: 600,
+    rapidMissile: 225,
+    scattershot: 525,
   },
   weaponSwitchSeconds: 1,
-  weaponUpgradePrices: [150, 300],
+  weaponUpgradePrices: [225, 450],
 };

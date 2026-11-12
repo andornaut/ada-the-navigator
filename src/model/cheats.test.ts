@@ -109,10 +109,10 @@ describe("grant all weapons", () => {
     expect(model.state.economy.ownedWeapons).toEqual(["scattershot"]);
     expect(model.state.economy.stardust).toBe(0);
     model.state.docked = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 })[0]!.id;
-    model.state.economy.stardust = 150;
+    model.state.economy.stardust = 225;
     expect(model.buy({ kind: "weapon", weapon: "rapidMissile" })).toEqual({
       kind: "bought",
-      price: 150,
+      price: 225,
     });
     expect(model.state.economy.ownedWeapons).toEqual(["scattershot", "rapidMissile"]);
     expect(flight.grantedWeapons).toEqual(["multiLaser", "heavyMissile", "phaser"]);
