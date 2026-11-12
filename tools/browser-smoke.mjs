@@ -2124,15 +2124,25 @@ try {
   const unit = await page
     .locator("#app")
     .evaluate((app) => Number(getComputedStyle(app).getPropertyValue("--ada-unit")));
+  // The shield sits apart in its 202x28 pill at the bottom centre, its bar 160x12, centred
+  // across the canvas.
+  const canvasBox = await settledBox("#game-canvas > canvas");
+  const shieldPill = await settledBox(".ada-shield");
   assert.ok(
     bar &&
       pill &&
-      Math.abs(bar.width - 96 * unit) <= 1 &&
+      canvasBox &&
+      shieldPill &&
+      Math.abs(shieldPill.width - 202 * unit) <= 1 &&
+      Math.abs(shieldPill.height - 28 * unit) <= 1 &&
+      bar.x > shieldPill.x &&
+      bar.x + bar.width < shieldPill.x + shieldPill.width &&
+      Math.abs(shieldPill.x + shieldPill.width / 2 - (canvasBox.x + canvasBox.width / 2)) <= 1 &&
+      Math.abs(bar.width - 160 * unit) <= 1 &&
       Math.abs(bar.height - 12 * unit) <= 1 &&
       Math.abs(pill.height - 28 * unit) <= 1 &&
-      bar.x > pill.x &&
-      bar.x + bar.width < pill.x + pill.width,
-    "The shield meter must be the status pill's 96x12 bar",
+      bar.y > canvasBox.y + canvasBox.height / 2,
+    "The shield meter must be the shield pill's 160x12 bar at the bottom centre",
   );
   if (pauseBox && (await page.locator('[data-action="pause"]').isVisible())) {
     assert.ok(
@@ -2168,7 +2178,7 @@ try {
   await page.screenshot({ path: `${output}/weapon-shield.png` });
   events.checks.push(
     "Owned upgrade weapons support accessible selection, the switch wait's refusal, saved " +
-      "ammunition, reload, modal guards and the status pill's shield meter",
+      "ammunition, reload, modal guards and the bottom-centre shield meter",
   );
 
   const damaged = relaunch(PROTOTYPE, equipmentSave);

@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { STATUS_PILL } from "../ui/layout/playView.ts";
+import { SHIELD_PILL } from "../ui/layout/playView.ts";
 import {
   BOX_PRIORITIES,
   CONVERSATION_PRIORITIES,
@@ -204,8 +204,8 @@ describe("in-flight conversations", () => {
     ).toEqual(Array(4).fill("warning"));
   });
 
-  it("warn of a low shield at the same share that turns the status pill low", () => {
-    expect(CONVERSATION_TUNING.shieldLowFraction).toBe(STATUS_PILL.low);
+  it("warn of a low shield at the same share that turns the shield pill low", () => {
+    expect(CONVERSATION_TUNING.shieldLowFraction).toBe(SHIELD_PILL.low);
   });
 
   it("use the provisional timing and ranges", () => {

@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { CONVERSATIONS } from "../../data/conversations.ts";
+import { PILL } from "./controls.ts";
 import {
   CONVERSATION_BOX,
   conversationBoxRect,
@@ -28,7 +29,6 @@ import {
   safeInsets,
   type Size,
   STATUS_PILL,
-  statusPillWidth,
 } from "./playView.ts";
 import { SPACING, TYPE } from "./tokens.ts";
 
@@ -92,12 +92,15 @@ describe("conversation box", () => {
     expect(conversationTabTop(NO_INSETS, BASE)).toBe(53.5);
   });
 
-  it("puts the tab top below the pill by 11, the +N line by 15, the discs by 8.5, targets by 1", () => {
+  it("puts the tab top below the pill by 11, the discs by 8.5, targets by 1", () => {
     const hud = hudRect(NO_INSETS, BASE);
     const tabTop = conversationTabTop(NO_INSETS, BASE) - hud.y;
     expect(tabTop).toBe(41.5);
     expect(tabTop - (STATUS_PILL.y + STATUS_PILL.pill.height)).toBe(11);
-    expect(tabTop - (STATUS_PILL.y + STATUS_PILL.tick.top + TYPE.label.lineHeight)).toBe(15);
+    // The +N labels sit under their counts and draw over the tab and the box.
+    expect(STATUS_PILL.y + (PILL.height - TYPE.label.lineHeight) / 2 + STATUS_PILL.tick.top).toBe(
+      36.5,
+    );
     const target = hudButtonTarget(0);
     expect(tabTop - (target.y + HUD_BUTTON_INSET.disc + HUD_BUTTON.disc)).toBe(8.5);
     expect(tabTop - (target.y + HUD_BUTTON.target)).toBe(1);
@@ -241,8 +244,6 @@ describe("tab clearance on every view", () => {
   // label plus a mark gap each side.
   const ADA_TAB = 42.23;
   const WIDEST_TAB = 131.15;
-  // The widest +N label, "+9,999" with its outline, and the rise above its line box.
-  const TICK_WIDTH = 51.38;
   type Span = {
     readonly bottom: number;
     readonly left: number;
@@ -252,7 +253,7 @@ describe("tab clearance on every view", () => {
   const overlap = (a: Span, b: Span) =>
     a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
 
-  it("keeps every tab off the count pills, +N and pause, and the box below the HUD row", () => {
+  it("keeps every tab off the count pills and pause, and the box below the HUD row", () => {
     for (const css of sizes) {
       const view = logicalView(css);
       for (const cssInsets of insetCases) {
@@ -286,19 +287,10 @@ describe("tab clearance on every view", () => {
           right: hud.x + PAUSE_BUTTON.hit.x + PAUSE_BUTTON.hit.width,
           top: hud.y + PAUSE_BUTTON.hit.y,
         };
-        // The +N label at its highest, beside the widest pill Art allows (a 109.37 count).
-        const pillRight = hud.x + STATUS_PILL.x + statusPillWidth(109.37);
-        const tick: Span = {
-          bottom: hud.y + STATUS_PILL.y + STATUS_PILL.tick.top + TYPE.label.lineHeight,
-          left: pillRight + STATUS_PILL.tick.gap,
-          right: pillRight + STATUS_PILL.tick.gap + TICK_WIDTH,
-          top: hud.y + STATUS_PILL.y + STATUS_PILL.tick.top - STATUS_PILL.tick.rise,
-        };
         for (const nameTab of tabs) {
           for (const column of columns) {
             expect(overlap(nameTab, column), `${label} tab against a weapon column`).toBe(false);
           }
-          expect(overlap(nameTab, tick), `${label} tab against +N`).toBe(false);
           expect(overlap(nameTab, pause), `${label} tab against pause`).toBe(false);
         }
         // The box starts below the whole HUD row and the count pills.
@@ -306,7 +298,6 @@ describe("tab clearance on every view", () => {
         for (const column of columns) {
           expect(box.y - column.bottom, label).toBeCloseTo(HUD_AMMO_COUNT.clearance, 9);
         }
-        expect(box.y, label).toBeGreaterThan(tick.bottom);
       }
     }
   });

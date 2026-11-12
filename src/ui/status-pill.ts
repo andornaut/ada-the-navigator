@@ -1,15 +1,17 @@
 import { LIGHT_FIELD } from "../game/light-field.ts";
-import { font, fromHudEdge, units } from "./layout/css.ts";
-import { STATUS_PILL } from "./layout/playView.ts";
+import { font, fromAreaBottom, fromHudEdge, hudCentreX, units } from "./layout/css.ts";
+import { SHIELD_PILL, STATUS_PILL } from "./layout/playView.ts";
 import { TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 
 // The HUD status pill (art/layout.md "Status pill", art/controls.md "Status pill"): one ink pill
-// beside pause holding the shield bar and the Stardust count, then, while Ada carries them, her
-// ore count and the job item or towed craft (gameplay/rules.md), each after its own divider. The
-// bar draws in CSS at logical units with fractional widths; the shield's states are a pure
-// function of what the model shows each frame, so they are tested without a browser. On a light
-// field the shield icon and bar each draw inside an ink outline (art/galaxies.md "Light fields").
+// beside pause holding the Stardust count, then, while Ada carries them, her ore count and the job
+// or story item or towed craft (gameplay/rules.md), each after its own divider; Stardust and ore
+// gains tick "+N" under their counts. The shield sits apart in its own pill at the bottom centre
+// (SHIELD_PILL). The bar draws in CSS at logical units with fractional widths; the shield's states
+// are a pure function of what the model shows each frame, so they are tested without a browser.
+// On a light field the shield icon and bar each draw inside an ink outline (art/galaxies.md
+// "Light fields").
 
 export const STATUS_COLOURS = {
   count: "#ead4aa",
@@ -17,6 +19,8 @@ export const STATUS_COLOURS = {
   flash: "#ffffff",
   low: "#e4574e",
   lowPeak: "#ff8a80",
+  // The ore +N tick: ore's light rust (art/controls.md "Status pill").
+  oreTick: "#eaa676",
   panel: "rgb(24 20 37 / 0.65)",
   rim: "#9a96ad",
   shield: "#70ace8",
@@ -55,7 +59,7 @@ export interface ShieldInput {
 
 export type ShieldTone = "empty" | "low" | "normal";
 
-// The bar as drawn: each part's start and end in the 92 fill area, the tone and the pulse (0 at
+// The bar as drawn: each part's start and end in the 156 fill area, the tone and the pulse (0 at
 // the low colour, 1 at the peak).
 export interface ShieldBarView {
   readonly delay: { readonly from: number; readonly to: number } | null;
@@ -100,10 +104,10 @@ export class ShieldBar {
       this.flash = null;
     }
     this.previous = shield;
-    const area = STATUS_PILL.bar.fill.width;
+    const area = SHIELD_PILL.bar.fill.width;
     const at = (value: number) => (area * value) / capacity;
     const tone: ShieldTone =
-      shield <= 0 ? "empty" : shield < STATUS_PILL.low * capacity ? "low" : "normal";
+      shield <= 0 ? "empty" : shield < SHIELD_PILL.low * capacity ? "low" : "normal";
     const delay =
       this.delayMark !== null && this.delayMark > shield
         ? { from: at(shield), to: at(this.delayMark) }
@@ -151,7 +155,7 @@ export function stardustCount(amount: number): string {
   return COUNT_FORMAT.format(Math.max(0, Math.floor(amount)));
 }
 
-const { bar } = STATUS_PILL;
+const { bar } = SHIELD_PILL;
 // The tick's ink outline: its text offset by the outline width each way.
 const OUTLINE = units(STATUS_PILL.tick.outline);
 const OUTLINE_SHADOW = [
@@ -206,25 +210,42 @@ export const STATUS_PILL_STYLE = `
   font:${font(TYPE.label)};
   color:${STATUS_COLOURS.count};
   white-space:nowrap;
-  pointer-events:none;
-  --shield-mark:${STATUS_COLOURS.shield};
-  --shield-rim:${STATUS_COLOURS.rim}
+  pointer-events:none
 }
 /* With the pause button hidden the pill is the leftmost art, on the HUD rect's left edge. */
 .ada-controls .ada-pause[hidden] ~ .ada-status{
   left:${fromHudEdge("left", STATUS_PILL.xAlone)}
 }
+/* The shield pill at the bottom centre: centred across the HUD rect, its bottom level with the
+   sticks' drawn bottom (shieldPillRect). */
+.ada-controls .ada-shield{
+  position:absolute;
+  left:${hudCentreX()};
+  bottom:${fromAreaBottom(SHIELD_PILL.bottom)};
+  margin-left:${units(-SHIELD_PILL.width / 2)};
+  box-sizing:border-box;
+  width:${units(SHIELD_PILL.width)};
+  height:${units(SHIELD_PILL.pill.height)};
+  padding:0 ${units(SHIELD_PILL.pill.padding)};
+  display:flex;
+  align-items:center;
+  border-radius:${units(SHIELD_PILL.pill.radius)};
+  background:${STATUS_COLOURS.panel};
+  pointer-events:none;
+  --shield-mark:${STATUS_COLOURS.shield};
+  --shield-rim:${STATUS_COLOURS.rim}
+}
 .ada-controls .ada-status-mark{
   flex:none;
   display:flex;
-  margin-right:${units(STATUS_PILL.markGap)}
+  margin-right:${units(SHIELD_PILL.markGap)}
 }
-.ada-controls .ada-status[data-field=light] .ada-status-mark{
+.ada-controls .ada-shield[data-field=light] .ada-status-mark{
   filter:${ICON_OUTLINE}
 }
 .ada-controls .ada-status-shield{
-  width:${units(STATUS_PILL.icon)};
-  height:${units(STATUS_PILL.icon)};
+  width:${units(SHIELD_PILL.icon)};
+  height:${units(SHIELD_PILL.icon)};
   background:var(--shield-mark);
   -webkit-mask:url('/art/ui/icons/shield.svg') center / 100% 100% no-repeat;
   mask:url('/art/ui/icons/shield.svg') center / 100% 100% no-repeat
@@ -238,7 +259,7 @@ export const STATUS_PILL_STYLE = `
   border:${units(bar.rim)} solid var(--shield-rim);
   background:${STATUS_COLOURS.track}
 }
-.ada-controls .ada-status[data-field=light] .ada-status-bar{
+.ada-controls .ada-shield[data-field=light] .ada-status-bar{
   box-shadow:0 0 0 ${units(LIGHT_OUTLINE.width)} ${LIGHT_OUTLINE.ink}
 }
 .ada-controls .ada-status-bar > span{
@@ -251,7 +272,7 @@ export const STATUS_PILL_STYLE = `
 .ada-controls .ada-status-fill{
   background:${STATUS_COLOURS.shield}
 }
-.ada-controls .ada-status[data-tone=low] .ada-status-fill{
+.ada-controls .ada-shield[data-tone=low] .ada-status-fill{
   background:${STATUS_COLOURS.low}
 }
 .ada-controls .ada-status-delay{
@@ -291,21 +312,31 @@ export const STATUS_PILL_STYLE = `
 .ada-controls .ada-status-cargo[data-kind=towing]{
   ${cargoIcon(CARGO_ICONS.towing)}
 }
-.ada-controls .ada-status-count{
+/* A count's slot: the tick hangs from it, so the count's bump never moves the tick. */
+.ada-controls .ada-status-slot{
   position:relative;
+  display:inline-block
+}
+.ada-controls .ada-status-slot[hidden]{
+  display:none
+}
+.ada-controls .ada-status-count{
   display:inline-block;
   line-height:${units(TYPE.label.lineHeight)};
   transform-origin:left center
 }
-/* The +N tick on the pill's row, its outlined left edge STATUS_PILL.tick.gap right of the pill;
-   it follows the pill as the count grows. */
+/* The +N tick under its count, centred across on it, its line box on the item notice's row. */
 .ada-controls .ada-status-tick{
   position:absolute;
-  left:calc(100% + ${units(STATUS_PILL.tick.gap + STATUS_PILL.tick.outline)});
+  left:50%;
+  transform:translateX(-50%);
   top:${units(STATUS_PILL.tick.top)};
   line-height:${units(TYPE.label.lineHeight)};
   color:${STATUS_COLOURS.tick};
   text-shadow:${OUTLINE_SHADOW}
+}
+.ada-controls .ada-status-tick[data-kind=ore]{
+  color:${STATUS_COLOURS.oreTick}
 }
 `;
 
@@ -325,6 +356,91 @@ export interface StatusView {
   readonly stardustLabel: string;
 }
 
+// A count that ticks "+N" just below itself on a gain, merging gains while a tick shows; bump
+// scales the count, at most once per STATUS_TIMING.bumpMs.
+function createCounter(
+  kind: "ore" | "stardust",
+  reducedMotion: () => boolean,
+): {
+  readonly count: HTMLSpanElement;
+  readonly slot: HTMLSpanElement;
+  readonly set: (value: number, label: string | null, nowMs: number) => void;
+} {
+  const slot = document.createElement("span");
+  slot.className = `ada-status-slot ada-status-${kind}-slot`;
+  const count = document.createElement("span");
+  count.className = `ada-status-count ada-status-${kind}-count`;
+  const text = document.createTextNode("");
+  count.append(text);
+  slot.append(count);
+  let shown: number | undefined;
+  let tick: { amount: number; node: HTMLSpanElement; animation: Animation } | null = null;
+  let lastBump = -Infinity;
+  const gain = (amount: number, now: number) => {
+    const reduced = reducedMotion();
+    if (!reduced && now - lastBump >= STATUS_TIMING.bumpMs) {
+      lastBump = now;
+      count.animate(
+        [
+          { transform: "scale(1)" },
+          { transform: `scale(${STATUS_TIMING.bumpScale})` },
+          { transform: "scale(1)" },
+        ],
+        { duration: STATUS_TIMING.bumpMs, easing: "ease-out" },
+      );
+    }
+    const total = (tick?.amount ?? 0) + amount;
+    tick?.animation.cancel();
+    tick?.node.remove();
+    const node = document.createElement("span");
+    node.className = "ada-status-tick";
+    node.dataset.kind = kind;
+    node.setAttribute("aria-hidden", "true");
+    node.textContent = `+${stardustCount(total)}`;
+    slot.append(node);
+    const timing = reduced ? STATUS_TIMING.tickReduced : STATUS_TIMING.tick;
+    const duration = timing.holdMs + timing.fadeMs;
+    const hold = timing.holdMs / duration;
+    const rise = reduced ? "0px" : units(-STATUS_PILL.tick.rise);
+    const animation = node.animate(
+      [
+        { offset: 0, opacity: 1, translate: "0 0" },
+        { offset: hold, opacity: 1, translate: "0 0" },
+        { easing: "ease-out", offset: hold, opacity: 1, translate: "0 0" },
+        { offset: 1, opacity: 0, translate: `0 ${rise}` },
+      ],
+      { duration, fill: "forwards" },
+    );
+    const current = { amount: total, animation, node };
+    tick = current;
+    void animation.finished
+      .then(() => {
+        if (tick === current) {
+          node.remove();
+          tick = null;
+        }
+      })
+      .catch(() => undefined);
+  };
+  return {
+    count,
+    set(value, label, nowMs) {
+      const next = stardustCount(value);
+      if (text.data !== next) {
+        text.data = next;
+      }
+      if (label !== null && count.getAttribute("aria-label") !== label) {
+        count.setAttribute("aria-label", label);
+      }
+      if (shown !== undefined && value > shown) {
+        gain(value - shown, nowMs);
+      }
+      shown = value;
+    },
+    slot,
+  };
+}
+
 export function createStatusPill(
   parent: HTMLElement,
   options: { readonly reducedMotion: () => boolean; readonly shieldLabel: string },
@@ -332,6 +448,9 @@ export function createStatusPill(
   const root = document.createElement("div");
   root.className = "ada-status";
   root.hidden = true;
+  const shieldRoot = document.createElement("div");
+  shieldRoot.className = "ada-shield";
+  shieldRoot.hidden = true;
   // The icon's outline is a filter on a wrapper: the icon's own mask would clip it.
   const shieldMark = document.createElement("span");
   shieldMark.className = "ada-status-mark";
@@ -351,149 +470,78 @@ export function createStatusPill(
     meter.append(node);
     return node;
   }) as [HTMLSpanElement, HTMLSpanElement, HTMLSpanElement, HTMLSpanElement];
-  const divider = document.createElement("span");
-  divider.className = "ada-status-divider";
-  divider.setAttribute("aria-hidden", "true");
+  shieldRoot.append(shieldMark, meter);
   const sparkle = document.createElement("span");
   sparkle.className = "ada-status-stardust";
   sparkle.setAttribute("aria-hidden", "true");
-  const count = document.createElement("span");
-  count.className = "ada-status-count";
-  count.setAttribute("role", "status");
-  const countText = document.createTextNode("");
-  count.append(countText);
-  const part = (className: string, hidden = true) => {
+  const stardust = createCounter("stardust", options.reducedMotion);
+  stardust.count.setAttribute("role", "status");
+  const part = (className: string) => {
     const node = document.createElement("span");
     node.className = className;
     node.setAttribute("aria-hidden", "true");
-    node.hidden = hidden;
+    node.hidden = true;
     return node;
   };
   const oreDivider = part("ada-status-divider");
   const oreIcon = part("ada-status-cargo ada-status-ore");
   oreIcon.removeAttribute("aria-hidden");
   oreIcon.setAttribute("role", "img");
-  const oreCount = part("ada-status-count ada-status-ore-count");
-  oreCount.removeAttribute("aria-hidden");
+  const ore = createCounter("ore", options.reducedMotion);
+  ore.slot.hidden = true;
   const aboardDivider = part("ada-status-divider");
   const aboardIcon = part("ada-status-cargo ada-status-aboard");
   aboardIcon.removeAttribute("aria-hidden");
   aboardIcon.setAttribute("role", "img");
-  root.append(
-    shieldMark,
-    meter,
-    divider,
-    sparkle,
-    count,
-    oreDivider,
-    oreIcon,
-    oreCount,
-    aboardDivider,
-    aboardIcon,
-  );
-  parent.append(root);
+  root.append(sparkle, stardust.slot, oreDivider, oreIcon, ore.slot, aboardDivider, aboardIcon);
+  parent.append(root, shieldRoot);
 
   const shieldBar = new ShieldBar();
-  let stardust: number | undefined;
-  let tick: { amount: number; node: HTMLSpanElement; animation: Animation } | null = null;
-  let lastBump = -Infinity;
 
   const place = (node: HTMLElement, from: number, to: number) => {
-    const offset = STATUS_PILL.bar.inset - STATUS_PILL.bar.rim;
+    const offset = SHIELD_PILL.bar.inset - SHIELD_PILL.bar.rim;
     node.hidden = to <= from;
     node.style.left = units(offset + from);
     node.style.width = units(Math.max(0, to - from));
   };
 
-  const pickup = (gain: number, now: number) => {
-    const reduced = options.reducedMotion();
-    if (!reduced && now - lastBump >= STATUS_TIMING.bumpMs) {
-      lastBump = now;
-      count.animate(
-        [
-          { transform: "scale(1)" },
-          { transform: `scale(${STATUS_TIMING.bumpScale})` },
-          { transform: "scale(1)" },
-        ],
-        { duration: STATUS_TIMING.bumpMs, easing: "ease-out" },
-      );
-    }
-    const amount = (tick?.amount ?? 0) + gain;
-    tick?.animation.cancel();
-    tick?.node.remove();
-    const node = document.createElement("span");
-    node.className = "ada-status-tick";
-    node.setAttribute("aria-hidden", "true");
-    node.textContent = `+${stardustCount(amount)}`;
-    root.append(node);
-    const timing = reduced ? STATUS_TIMING.tickReduced : STATUS_TIMING.tick;
-    const total = timing.holdMs + timing.fadeMs;
-    const hold = timing.holdMs / total;
-    const rise = reduced ? "0px" : units(-STATUS_PILL.tick.rise);
-    const animation = node.animate(
-      [
-        { offset: 0, opacity: 1, translate: "0 0" },
-        { offset: hold, opacity: 1, translate: "0 0" },
-        { easing: "ease-out", offset: hold, opacity: 1, translate: "0 0" },
-        { offset: 1, opacity: 0, translate: `0 ${rise}` },
-      ],
-      { duration: total, fill: "forwards" },
-    );
-    const current = { amount, animation, node };
-    tick = current;
-    void animation.finished
-      .then(() => {
-        if (tick === current) {
-          node.remove();
-          tick = null;
-        }
-      })
-      .catch(() => undefined);
-  };
-
   return {
-    dispose: () => root.remove(),
+    dispose: () => {
+      root.remove();
+      shieldRoot.remove();
+    },
     setShown(shown: boolean): void {
       root.hidden = !shown;
+      shieldRoot.hidden = !shown;
     },
     setStatus(view: StatusView, nowMs: number): void {
       const bar = shieldBar.update(view, nowMs, options.reducedMotion());
-      if (root.dataset.tone !== bar.tone) {
-        root.dataset.tone = bar.tone;
+      if (shieldRoot.dataset.tone !== bar.tone) {
+        shieldRoot.dataset.tone = bar.tone;
       }
       const field = view.lightField ? "light" : "dark";
-      if (root.dataset.field !== field) {
-        root.dataset.field = field;
+      if (shieldRoot.dataset.field !== field) {
+        shieldRoot.dataset.field = field;
       }
       const mark = shieldMarkColour(bar.tone, bar.pulse);
-      root.style.setProperty("--shield-mark", mark);
-      root.style.setProperty("--shield-rim", bar.tone === "normal" ? STATUS_COLOURS.rim : mark);
+      shieldRoot.style.setProperty("--shield-mark", mark);
+      shieldRoot.style.setProperty(
+        "--shield-rim",
+        bar.tone === "normal" ? STATUS_COLOURS.rim : mark,
+      );
       place(fill, 0, bar.fill);
       place(delay, bar.delay?.from ?? 0, bar.delay?.to ?? 0);
       place(flash, bar.flash?.from ?? 0, bar.flash?.to ?? 0);
-      place(edge, Math.max(0, bar.fill - STATUS_PILL.edge), bar.edge ? bar.fill : 0);
+      place(edge, Math.max(0, bar.fill - SHIELD_PILL.edge), bar.edge ? bar.fill : 0);
       meter.setAttribute("aria-valuemax", String(view.capacity));
       meter.setAttribute("aria-valuenow", String(Math.max(0, Math.round(view.shield))));
-      const text = stardustCount(view.stardust);
-      if (countText.data !== text) {
-        countText.data = text;
-      }
-      if (count.getAttribute("aria-label") !== view.stardustLabel) {
-        count.setAttribute("aria-label", view.stardustLabel);
-      }
-      if (stardust !== undefined && view.stardust > stardust) {
-        pickup(view.stardust - stardust, nowMs);
-      }
-      stardust = view.stardust;
+      stardust.set(view.stardust, view.stardustLabel, nowMs);
       const segments = statusSegments(view);
-      const ore = segments.includes("ore");
-      oreDivider.hidden = !ore;
-      oreIcon.hidden = !ore;
-      oreCount.hidden = !ore;
-      const oreText = stardustCount(view.ore);
-      if (oreCount.textContent !== oreText) {
-        oreCount.textContent = oreText;
-      }
+      const hasOre = segments.includes("ore");
+      oreDivider.hidden = !hasOre;
+      oreIcon.hidden = !hasOre;
+      ore.slot.hidden = !hasOre;
+      ore.set(view.ore, null, nowMs);
       if (oreIcon.getAttribute("aria-label") !== view.oreLabel) {
         oreIcon.setAttribute("aria-label", view.oreLabel);
       }

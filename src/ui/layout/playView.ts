@@ -196,21 +196,52 @@ export function hudRowWidth(count: number): number {
   return count > 0 ? count * HUD_BUTTON.target + (count - 1) * HUD_BUTTON.gap : 0;
 }
 
-// The status pill (art/layout.md "Status pill"): one PILL holding the shield bar and the Stardust
-// count. Its left edge is a gap right of the pause press area while the pause button shows, and
-// on the HUD rect's left edge (xAlone) while it is hidden, so the leftmost drawn art always sits
-// HUD_EDGE in; it centres on the HUD row's centre line, relative to the HUD rect's top-left
-// corner, and grows rightward with the count. Parts, left to right: the 20 shield icon, a mark gap, the 96x12 bar
-// (a 1 rim, 1 ink, then the 92x8 fill area), the divider (12, 1x16, 12), the 20 Stardust icon, a
-// mark gap and the count; while Ada carries ore, another divider, the 20 ore icon, a mark gap and
-// its count; while she carries a job item or tows a craft, a divider and its 20 icon last. The +N
-// tick rides the pill's row: its left edge, the outline included, a mark
-// gap right of the pill, its line box centred on the row (top inside the pill's top).
+// The status pill (art/layout.md "Status pill"): one PILL holding the Stardust count. Its left
+// edge is a gap right of the pause press area while the pause button shows, and on the HUD rect's
+// left edge (xAlone) while it is hidden, so the leftmost drawn art always sits HUD_EDGE in; it
+// centres on the HUD row's centre line, relative to the HUD rect's top-left corner. Parts, left
+// to right: the 20 Stardust icon, a mark gap and the count; while Ada carries ore, a divider (12,
+// 1x16, 12), the 20 ore icon, a mark gap and its count; while she carries a job or story item or
+// tows a craft, a divider and its 20 icon last. A +N tick sits under its count, centred across on
+// it, its 20 line box top tick.top below the count's (HUD rect top + 36.5, on the item notice's
+// row).
 export const STATUS_PILL = {
-  bar: { fill: { height: 8, width: 92 }, height: 12, inset: 2, rim: 1, width: 96 },
   cargoIcon: 20,
   divider: { height: 16, width: 1 },
   dividerGap: 12,
+  markGap: SPACING.markGap,
+  pill: PILL,
+  stardustIcon: 20,
+  tick: {
+    outline: 1,
+    rise: 4,
+    // From the count's line box top: the count's line, the pill's padding below it and a mark gap.
+    top: (PILL.height + TYPE.label.lineHeight) / 2 + SPACING.markGap,
+  },
+  x: PAUSE_BUTTON.hit.x + PAUSE_BUTTON.hit.width + SPACING.gap,
+  xAlone: 0,
+  y: HUD_ROW.centre - PILL.height / 2,
+} as const;
+
+// The pill's width for a countWidth count: the padding, the Stardust icon and its mark gap, plus
+// the count; an ore count of oreWidth adds a divider with its gaps, the ore icon, a mark gap and
+// the count, and something aboard a divider and its icon.
+export function statusPillWidth(countWidth: number, oreWidth?: number, aboard = false): number {
+  const { cargoIcon, divider, dividerGap, markGap, pill, stardustIcon } = STATUS_PILL;
+  const segment = 2 * dividerGap + divider.width + cargoIcon;
+  const ore = oreWidth === undefined ? 0 : segment + markGap + oreWidth;
+  return 2 * pill.padding + stardustIcon + markGap + countWidth + ore + (aboard ? segment : 0);
+}
+
+// The shield pill (art/layout.md "Shield pill"): one PILL at the bottom centre holding the 20
+// shield icon, a mark gap and the 160x12 bar (a 1 rim, 1 ink, then the 156x8 fill area at inset
+// 2), 202 wide. It centres across on the HUD rect (the view's centre, as the rect mirrors); its
+// bottom sits level with the sticks' drawn bottom, bottom above the game area's bottom, which a
+// bottom safe inset raises (TOUCH_STICK.bottom). The same place on touch and desktop.
+const SHIELD_BAR = { fill: { height: 8, width: 156 }, height: 12, inset: 2, rim: 1, width: 160 };
+export const SHIELD_PILL = {
+  bar: SHIELD_BAR,
+  bottom: 32,
   // The leading edge inside the fill's right end while the shield regenerates.
   edge: 2,
   icon: HUD_BUTTON.glyph,
@@ -218,25 +249,18 @@ export const STATUS_PILL = {
   low: 0.25,
   markGap: SPACING.markGap,
   pill: PILL,
-  stardustIcon: 20,
-  tick: {
-    gap: SPACING.markGap,
-    outline: 1,
-    rise: 4,
-    top: (PILL.height - TYPE.label.lineHeight) / 2,
-  },
-  x: PAUSE_BUTTON.hit.x + PAUSE_BUTTON.hit.width + SPACING.gap,
-  xAlone: 0,
-  y: HUD_ROW.centre - PILL.height / 2,
+  width: 2 * PILL.padding + HUD_BUTTON.glyph + SPACING.markGap + SHIELD_BAR.width,
 } as const;
 
-// The pill's width for a countWidth count: the padding, both icons and mark gaps, the bar and the
-// divider with its gaps, plus the count; an ore count of oreWidth adds a divider, the ore icon, a
-// mark gap and the count, and something aboard a divider and its icon.
-export function statusPillWidth(countWidth: number, oreWidth?: number, aboard = false): number {
-  const { bar, cargoIcon, divider, dividerGap, icon, markGap, pill, stardustIcon } = STATUS_PILL;
-  const fixed = 2 * pill.padding + icon + markGap + bar.width + 2 * dividerGap + divider.width;
-  const segment = 2 * dividerGap + divider.width + cargoIcon;
-  const ore = oreWidth === undefined ? 0 : segment + markGap + oreWidth;
-  return fixed + stardustIcon + markGap + countWidth + ore + (aboard ? segment : 0);
+/** The shield pill's rect in a logical view view big with insets. */
+export function shieldPillRect(insets: Insets, view: Size): Rect {
+  const area = playView(view);
+  const hud = hudRect(insets, view);
+  const bottom = Math.min(area.y + area.height, view.height - insets.bottom) - SHIELD_PILL.bottom;
+  return {
+    height: PILL.height,
+    width: SHIELD_PILL.width,
+    x: hud.x + hud.width / 2 - SHIELD_PILL.width / 2,
+    y: bottom - PILL.height,
+  };
 }

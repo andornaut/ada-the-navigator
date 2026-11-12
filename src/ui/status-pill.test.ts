@@ -18,10 +18,12 @@ import {
 const full = { capacity: 100, recharging: false, shield: 100 };
 
 describe("status pill shield bar", () => {
-  it("maps the current capacity to the 92 fill area, so a full bar has one length at every level", () => {
-    expect(new ShieldBar().update(full, 0, false).fill).toBe(92);
-    expect(new ShieldBar().update({ ...full, capacity: 140, shield: 140 }, 0, false).fill).toBe(92);
-    expect(new ShieldBar().update({ ...full, shield: 50 }, 0, false).fill).toBe(46);
+  it("maps the current capacity to the 156 fill area, so a full bar has one length at every level", () => {
+    expect(new ShieldBar().update(full, 0, false).fill).toBe(156);
+    expect(new ShieldBar().update({ ...full, capacity: 140, shield: 140 }, 0, false).fill).toBe(
+      156,
+    );
+    expect(new ShieldBar().update({ ...full, shield: 50 }, 0, false).fill).toBe(78);
   });
 
   it("is normal at 25% or more, low above 0 and below 25%, and empty at 0", () => {
@@ -34,8 +36,8 @@ describe("status pill shield bar", () => {
     const bar = new ShieldBar();
     bar.update(full, 0, false);
     const hit = bar.update({ ...full, shield: 80 }, 1000, false);
-    expect(hit.flash).toEqual({ from: 73.6, to: 92 });
-    expect(hit.delay).toEqual({ from: 73.6, to: 92 });
+    expect(hit.flash).toEqual({ from: 124.8, to: 156 });
+    expect(hit.delay).toEqual({ from: 124.8, to: 156 });
     expect(
       bar.update({ ...full, shield: 80 }, 1000 + STATUS_TIMING.flashMs, false).flash,
     ).toBeNull();
@@ -47,10 +49,12 @@ describe("status pill shield bar", () => {
     bar.update({ ...full, shield: 80 }, 1000, false);
     const soon = bar.update({ ...full, shield: 60 }, 1200, false);
     expect(soon.flash).toBeNull();
-    expect(soon.delay).toEqual({ from: 55.2, to: 92 });
+    expect(soon.delay?.from).toBeCloseTo(93.6, 9);
+    expect(soon.delay?.to).toBe(156);
     const later = bar.update({ ...full, shield: 50 }, 1000 + STATUS_TIMING.flashEveryMs, false);
-    expect(later.flash).toEqual({ from: 46, to: 55.2 });
-    expect(later.delay?.to).toBe(92);
+    expect(later.flash?.from).toBe(78);
+    expect(later.flash?.to).toBeCloseTo(93.6, 9);
+    expect(later.delay?.to).toBe(156);
   });
 
   it("joins a hit to the delay part at once under reduced motion", () => {
@@ -58,7 +62,7 @@ describe("status pill shield bar", () => {
     bar.update(full, 0, true);
     const hit = bar.update({ ...full, shield: 80 }, 1000, true);
     expect(hit.flash).toBeNull();
-    expect(hit.delay).toEqual({ from: 73.6, to: 92 });
+    expect(hit.delay).toEqual({ from: 124.8, to: 156 });
   });
 
   it("clears the delay part when regeneration starts and draws the leading edge until capacity", () => {
@@ -91,7 +95,7 @@ describe("status pill shield bar", () => {
     expect(refill).toMatchObject({
       delay: null,
       edge: false,
-      fill: 92,
+      fill: 156,
       flash: null,
       tone: "normal",
     });
@@ -104,6 +108,7 @@ describe("status pill shield bar", () => {
       flash: "#ffffff",
       low: "#e4574e",
       lowPeak: "#ff8a80",
+      oreTick: "#eaa676",
       rim: "#9a96ad",
       shield: "#70ace8",
       shieldDelay: "#4f7aa6",
@@ -123,20 +128,32 @@ describe("status pill shield bar", () => {
     );
     expect(light).toHaveLength(2);
     const [icon, bar] = light;
-    expect(icon).toContain(".ada-status-mark{");
+    expect(icon).toContain(".ada-shield[data-field=light] .ada-status-mark{");
     // Four chained 1 px shadows grow the icon mask by a square kernel.
     expect(icon!.match(/drop-shadow\(/g)).toHaveLength(4);
     expect(icon).toContain("#181425");
-    expect(bar).toContain(".ada-status-bar{");
+    expect(bar).toContain(".ada-shield[data-field=light] .ada-status-bar{");
     expect(bar).toMatch(/box-shadow:0 0 0 .+ #181425/);
   });
 
-  it("puts the +N tick on the pill's row, its outlined left edge a mark gap right of the pill", () => {
-    const tick = STATUS_PILL_STYLE.split("}").find((rule) => rule.includes(".ada-status-tick{"));
-    // 6 plus the 1 outline from the pill's right edge, its 20 line box 4 inside the 28 pill.
-    expect(tick).toContain(`left:calc(100% + ${units(7)})`);
-    expect(tick).toContain(`top:${units(4)}`);
-    expect(tick).not.toContain("transform");
+  it("puts each +N tick under its count, centred across on it, ore's in light rust", () => {
+    const rule = (selector: string) =>
+      STATUS_PILL_STYLE.split("}").find((part) => part.includes(`${selector}{`));
+    const tick = rule(".ada-status-tick");
+    // 30 below the count's line box top: HUD rect top + 36.5.
+    expect(tick).toContain("left:50%");
+    expect(tick).toContain("transform:translateX(-50%)");
+    expect(tick).toContain(`top:${units(30)}`);
+    expect(rule(".ada-status-tick[data-kind=ore]")).toContain("color:#eaa676");
+  });
+
+  it("draws the shield pill as an ink PILL at the bottom centre, apart from the status pill", () => {
+    const shield = STATUS_PILL_STYLE.split("}").find((part) => part.includes(".ada-shield{"));
+    expect(shield).toContain(`width:${units(202)}`);
+    expect(shield).toContain(`height:${units(28)}`);
+    expect(shield).toContain(`margin-left:${units(-101)}`);
+    expect(shield).toContain(`background:${STATUS_COLOURS.panel}`);
+    expect(shield).toContain("pointer-events:none");
   });
 });
 

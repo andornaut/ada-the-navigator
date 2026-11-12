@@ -24,6 +24,8 @@ import {
   SAFE_MARGIN,
   safeInsets,
   safeRect,
+  SHIELD_PILL,
+  shieldPillRect,
   type Size,
   startNavOrder,
   STATUS_PILL,
@@ -283,25 +285,62 @@ describe("HUD anchors", () => {
     expect(STATUS_PILL.y + STATUS_PILL.pill.height / 2).toBe(discCentre);
     expect(STATUS_PILL.y).toBe(2.5);
     expect(STATUS_PILL.pill).toEqual(PILL);
-    // The +N tick rides the pill's row, its 20 line box centred on it: HUD rect top + 6.5 to + 26.5,
-    // its outlined left edge a mark gap right of the pill.
-    expect(STATUS_PILL.y + STATUS_PILL.tick.top).toBe(6.5);
-    expect(STATUS_PILL.y + STATUS_PILL.tick.top + TYPE.label.lineHeight / 2).toBe(HUD_ROW.centre);
-    expect(STATUS_PILL.tick.gap).toBe(SPACING.markGap);
+    // A +N tick sits under its count: its 20 line box from HUD rect top + 36.5, centred on the
+    // item notice's 24 row from + 34.5, a mark gap below the pill.
+    const countTop = STATUS_PILL.y + (PILL.height - TYPE.label.lineHeight) / 2;
+    expect(countTop + STATUS_PILL.tick.top).toBe(36.5);
+    expect(countTop + STATUS_PILL.tick.top + TYPE.label.lineHeight / 2).toBe(34.5 + 24 / 2);
+    expect(countTop + STATUS_PILL.tick.top - (STATUS_PILL.y + PILL.height)).toBe(SPACING.markGap);
   });
 
-  it("measure the pill as 189 plus the count, 215.70 at 125 and 237.94 at 12,500", () => {
-    expect(statusPillWidth(0)).toBe(189);
-    expect(statusPillWidth(26.7)).toBeCloseTo(215.7, 9);
-    expect(statusPillWidth(48.94)).toBeCloseTo(237.94, 9);
-    expect(STATUS_PILL.bar).toEqual({
-      fill: { height: 8, width: 92 },
+  it("measure the pill as 42 plus the count, with no shield in it", () => {
+    expect(statusPillWidth(0)).toBe(42);
+    expect(statusPillWidth(40.92)).toBeCloseTo(82.92, 9);
+    expect("bar" in STATUS_PILL).toBe(false);
+  });
+
+  it("make the shield pill 202 wide: padding, the 20 icon, a mark gap and the 160x12 bar", () => {
+    expect(SHIELD_PILL.bar).toEqual({
+      fill: { height: 8, width: 156 },
       height: 12,
       inset: 2,
       rim: 1,
-      width: 96,
+      width: 160,
     });
-    expect(STATUS_PILL.bar.width - 2 * STATUS_PILL.bar.inset).toBe(STATUS_PILL.bar.fill.width);
+    expect(SHIELD_PILL.bar.width - 2 * SHIELD_PILL.bar.inset).toBe(SHIELD_PILL.bar.fill.width);
+    expect(SHIELD_PILL).toMatchObject({ bottom: TOUCH_STICK.bottom, edge: 2, icon: 20, low: 0.25 });
+    expect(SHIELD_PILL.pill).toEqual(PILL);
+    expect(SHIELD_PILL.width).toBe(202);
+    expect(2 * PILL.padding + SHIELD_PILL.icon + SHIELD_PILL.markGap + SHIELD_PILL.bar.width).toBe(
+      202,
+    );
+  });
+
+  it.each([
+    ["the 720 base", { height: 360, width: 720 }, NO_INSETS, { x: 259, y: 300 }],
+    ["1280x720", logicalView({ height: 720, width: 1280 }), NO_INSETS, { x: 259, y: 300 }],
+    [
+      "the 720 base with phone insets",
+      { height: 360, width: 720 },
+      { bottom: 19, left: 43, right: 43, top: 0 },
+      { x: 259, y: 281 },
+    ],
+    [
+      "844x390 with phone insets",
+      logicalView({ height: 390, width: 844 }),
+      { bottom: 19, left: 43, right: 43, top: 0 },
+      { x: 288.54, y: 281 },
+    ],
+  ] as const)("put the shield pill at the bottom centre at %s", (_, view, insets, at) => {
+    const rect = shieldPillRect(insets, view);
+    expect(rect.x).toBeCloseTo(at.x, 2);
+    expect(rect.y).toBe(at.y);
+    expect(rect).toMatchObject({ height: 28, width: 202 });
+    // Its bottom sits level with the sticks' drawn bottom, clear of both rings across.
+    const { aim, move } = stickRestCentres(view, insets);
+    expect(rect.y + rect.height).toBe(move.y + 37);
+    expect(rect.x - (move.x + 37)).toBeGreaterThanOrEqual(142);
+    expect(aim.x - 36 - (rect.x + rect.width)).toBeGreaterThanOrEqual(142);
   });
 
   it("add 45 per cargo segment (a divider with its gaps and a 20 icon), and the ore count after a mark gap", () => {
@@ -317,16 +356,14 @@ describe("HUD anchors", () => {
     );
   });
 
-  it("keep the pill at a 109.37 count and a +9,999 label a page inset from four weapons", () => {
-    // 720 with phone insets; "+9,999" is 51.38 wide with its outline, a mark gap beyond the pill.
+  it("keep the pill with a 109.37 count a page inset clear of four weapons", () => {
+    // 720 with phone insets; the +N labels sit under their counts, adding nothing across.
     const view = { height: 360, width: 720 };
     const hud = hudRect({ bottom: 19, left: 43, right: 43, top: 0 }, view);
     const pillRight = hud.x + STATUS_PILL.x + statusPillWidth(109.37);
-    const tickRight = pillRight + STATUS_PILL.tick.gap + 51.38;
     const leftmost = hud.x + hud.width + hudButtonTarget(3).x;
     expect(leftmost).toBe(465.5);
-    expect(statusPillWidth(109.37)).toBeCloseTo(298.37, 9);
-    expect(leftmost - tickRight).toBeCloseTo(SPACING.pageInset, 9);
+    expect(leftmost - pillRight).toBeGreaterThan(SPACING.pageInset);
   });
 });
 
