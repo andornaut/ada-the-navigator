@@ -366,8 +366,11 @@ pilot: non-hostile small craft drawn with 16 headings and thrust jets, which
 shots pass through and which never fight. Each scene is a short scripted path
 near the hub that plays without Ada steering it. At the first deposit milestone
 the blocking pilot cuts across the miner's approach and the miner turns away. At
-the final milestone the miner and the visitors fly in together and dock, and the
-blocking pilot flies off. Between scenes the miner and visitors wait at
+the final milestone the miner and the visitors fly in together and the
+blocking pilot flies off. The hub has two berths: the miner docks at the left
+and the first visitor at the right, while the second visitor holds at its
+holding point beside the hub. Once the Second docking bay project is funded,
+that visitor docks at the new bay. Between scenes the miner and visitors wait at
 holding points near the hub, inside the view while Ada is docked, which are
 their story destinations; these have no
 route guards, since Cartwheel's danger is at the ore fields. Each scene plays
