@@ -1,16 +1,90 @@
-# Whirlpool currents, debris rivers and project world changes
+# Whirlpool station, currents, debris rivers and project world changes
 
-- Rebuild with `node art/tools/whirlpool.ts`. It writes `public/art/whirlpool/`:
+- Rebuild the station with `node art/tools/whirlpool-station.ts`, and the rest
+  with `node art/tools/whirlpool.ts`. It writes `public/art/whirlpool/`:
   `currents.json` (the streak spec), the river debris frames and `debris.json`,
   the project world change frames and `projects.json`, and its own `whirlpool-`
   entries in [Whirlpool's manifest](../public/art/whirlpool/manifest.json),
   which names the data files as `whirlpoolCurrents`, `whirlpoolDebris` and
-  `whirlpoolProjects`.
+  `whirlpoolProjects`. Each generator replaces its own entries in place.
 - The build fails if the whale's lit hull (`hull[0]` in `whales.json`) falls
   below 3:1 over the streak colour, or if the beacon glass, the lit buoy lamp
   or the cream body falls below 5:1 on the field.
 - The debris model is shared in [art/tools/debris.ts](tools/debris.ts); the
   project models are in [art/tools/whirlpool-projects.ts](tools/whirlpool-projects.ts).
+
+## Station
+
+Whirlpool's own station, the Eddy, in place of the shared
+[trading station](station.md) at every Whirlpool station. Ada enters it by
+Use, the Dock action; it has no dock, mouth or approach lights.
+
+- A pale teal ramp spirals in and up to a tower, as a whirlpool's eddy: 30
+  segments over 1.3 turns, radius 66 to 24 model units, 11 wide, rising from 3
+  to 16 as it winds in. The turns stay apart, so the spiral reads open.
+- Current chevrons on every other ramp segment, 15 in all, point inward along
+  the ramp, as the [current streaks](#current-streaks) point downstream.
+- A hexagonal tower with two rows of warm windows, a cream cap, a mast and the
+  blue beacon; three salvaged debris plates on its skirt, in the river debris'
+  field-matter tones.
+- An arm toward the viewer ending in the station family's closed collar with
+  two warm windows: no mouth.
+- The [station](station.md) solid model, projection and culling, in a fixed
+  orientation: no headings and no screen rotation. 3.0 Ada wingspans across
+  at its widest, as the trading station.
+
+### Frames and manifest
+
+| Field         | Value                                                                                      |
+| ------------- | ------------------------------------------------------------------------------------------ |
+| Ids           | `whirlpool-station-{k}`, `k` 0 to 3, files `/art/whirlpool/station-{k}.svg`                |
+| Frame         | 176 by 128 frame px; display 115.5 by 84 at the [destination scale](destinations.md#scale) |
+| Pivot         | `(0.5, 0.4375)`: the tower base on the world plane                                         |
+| `facing`      | `fixed`                                                                                    |
+| `frameMs`     | 350                                                                                        |
+| `destination` | `station`; `frameIndex` `k`                                                                |
+
+- Show frame `k` for 350 ms, 0 to 3 in order, and loop (1.4 s). Frames 0 and
+  1 light the mast beacon `#70ace8`, the windows and the collar windows; 2 and
+  3 dim them (`#3f5878`, `#a08f78`), the station family's 700 ms blink.
+- Chevron `k`, counted from the outer end, is lit `#f7f2ff` on frame `f` when
+  `(k + f) mod 4 = 0`, otherwise `#5b8089`, so the lit chevrons step inward one
+  place per frame, flowing to the tower.
+- Reduced motion holds frame 0.
+- Every frame shares one frame size and pivot. Silhouette radius 55.2 and top
+  32.5 above the pivot over all four frames, at 1.5x; the Dock callout's centre
+  sits 52.5 above the pivot
+  ([Destinations](destinations.md#collision-silhouette-dock-and-clearance)).
+  Pass-through, with no `collision`, as every destination.
+- No project world change attaches to the station: the nursery beacon sits at
+  the whale family, 1200 or more from any station, and the current-map buoys
+  along the whales' current, which keeps 800 clear of stations.
+
+### Palette
+
+| Role                  | Colour    | On the field |
+| --------------------- | --------- | -----------: |
+| Tower                 | `#dff6fa` |      12.89:1 |
+| Ramp                  | `#c8eef5` |      11.72:1 |
+| Tower side            | `#a9cfd8` |       8.69:1 |
+| Ramp side             | `#7aa4ae` |       5.34:1 |
+| Ramp rear             | `#6d8f97` |       4.15:1 |
+| Cap, collar           | `#efe4cf` |      11.49:1 |
+| Cap side, collar side | `#bfae94` |       6.68:1 |
+| Chevron lit           | `#f7f2ff` |      13.16:1 |
+| Chevron unlit, plates | `#5b8089` |       3.37:1 |
+| Plate side            | `#3e636c` |       2.21:1 |
+| Windows               | `#ffe9b8` |      12.13:1 |
+| Windows dim           | `#a08f78` |       4.61:1 |
+| Beacon                | `#70ace8` |       6.03:1 |
+
+- The build fails if the tower, ramp, cap, lit chevron, windows or beacon falls
+  below 5:1 on the field, Whirlpool's floor for bodies and lamps.
+- The silhouette's edge median is 5.34:1, with 92.2% of edge pixels at 3:1 or
+  more (librsvg at 1x over the field), above the station edge bar of a 5:1
+  median and 90% at 3:1.
+- The ramp's teal stays pale, clear of the mint `active` (`#65C9BF`) of ore
+  and Stardust, and the station takes no coral `obstacle`.
 
 ## Current streaks
 

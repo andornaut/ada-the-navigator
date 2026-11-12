@@ -2,6 +2,70 @@
   "version": 1,
   "assets": [
     {
+      "id": "whirlpool-station-0",
+      "path": "/art/whirlpool/station-0.svg",
+      "width": 176,
+      "height": 128,
+      "displayWidth": 115.5,
+      "displayHeight": 84,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.4375
+      },
+      "frameMs": 350,
+      "destination": "station",
+      "frameIndex": 0
+    },
+    {
+      "id": "whirlpool-station-1",
+      "path": "/art/whirlpool/station-1.svg",
+      "width": 176,
+      "height": 128,
+      "displayWidth": 115.5,
+      "displayHeight": 84,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.4375
+      },
+      "frameMs": 350,
+      "destination": "station",
+      "frameIndex": 1
+    },
+    {
+      "id": "whirlpool-station-2",
+      "path": "/art/whirlpool/station-2.svg",
+      "width": 176,
+      "height": 128,
+      "displayWidth": 115.5,
+      "displayHeight": 84,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.4375
+      },
+      "frameMs": 350,
+      "destination": "station",
+      "frameIndex": 2
+    },
+    {
+      "id": "whirlpool-station-3",
+      "path": "/art/whirlpool/station-3.svg",
+      "width": 176,
+      "height": 128,
+      "displayWidth": 115.5,
+      "displayHeight": 84,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.4375
+      },
+      "frameMs": 350,
+      "destination": "station",
+      "frameIndex": 3
+    },
+    {
       "id": "whale-calf-0-0",
       "path": "/art/whales/calf-0-0.svg",
       "width": 43,

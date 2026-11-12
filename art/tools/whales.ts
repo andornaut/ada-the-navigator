@@ -4,7 +4,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { linkData, placeEntries } from "./manifest.ts";
+import { linkData, placeEntries, replaceEntries } from "./manifest.ts";
 import {
   depth,
   ENEMY_HEADINGS,
@@ -635,7 +635,12 @@ writeFileSync(
 // both.
 const SHARED = ["whale", "adult"];
 const shared = (entry: object) => SHARED.includes((entry as { kind: string }).kind);
-placeEntries("whirlpool", "whale-", entries.filter((entry) => !shared(entry)) as { id: string }[]);
+// In place in Whirlpool's manifest, which the station opens.
+replaceEntries(
+  "whirlpool",
+  (id) => id.startsWith("whale-"),
+  entries.filter((entry) => !shared(entry)) as { id: string }[],
+);
 placeEntries("core", "whale-", entries.filter(shared) as { id: string }[]);
 
 // Whirlpool's manifest names the whale data.

@@ -14,11 +14,11 @@ scale with the display size like every other manifest value. SVGs that declare
 their display size declare the scaled one; the trading station's and
 Sunflower's outposts' declare their frame, as before.
 
-| Scale                             | Value | Assets                                                                                                                                                                                                                                                                                                                                       |
-| --------------------------------- | ----: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Destination (`DESTINATION_SCALE`) |   1.5 | The [trading station](station.md); Sunflower's [outposts](outposts.md) and their project frames; Andromeda's [settlers' station, courier school, settlements, guide beacons and spare beacon](andromeda.md); Needle's [Weavers' station and Loom hall](needle.md#weavers-station); Black Eye's [station and Blurb settlements](black-eye.md) |
-| Hub (`HUB_SCALE`)                 |  1.25 | Cartwheel's [hub](cartwheel.md), repaired and with its second bay: it is already built at about 1.55 times the outposts' proportions                                                                                                                                                                                                         |
-| None                              |     1 | Ships, story craft, the mooring buoy, gates, channel lamps, whales and every other asset                                                                                                                                                                                                                                                     |
+| Scale                             | Value | Assets                                                                                                                                                                                                                                                                                                                                                                                    |
+| --------------------------------- | ----: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Destination (`DESTINATION_SCALE`) |   1.5 | The [trading station](station.md); Sunflower's [outposts](outposts.md) and their project frames; Andromeda's [settlers' station, courier school, settlements, guide beacons and spare beacon](andromeda.md); Needle's [Weavers' station and Loom hall](needle.md#weavers-station); Whirlpool's [station](whirlpool.md#station); Black Eye's [station and Blurb settlements](black-eye.md) |
+| Hub (`HUB_SCALE`)                 |  1.25 | Cartwheel's [hub](cartwheel.md), repaired and with its second bay: it is already built at about 1.55 times the outposts' proportions                                                                                                                                                                                                                                                      |
+| None                              |     1 | Ships, story craft, the mooring buoy, gates, channel lamps, whales and every other asset                                                                                                                                                                                                                                                                                                  |
 
 Every guide beacon state shares the dark beacon's frame and scale, so the chain
 and the story beacon stay alike and a state change swaps in place.
@@ -86,10 +86,10 @@ the outposts' and settlements' decorative dock points and mouths grow with the
 scale, linearly; nothing else changes. Stations have no dock: Ada enters one by
 Use, the Dock action. Display px from the pivot; world units through the game's projection
 `(x - y, (x + y) / 2)`. Silhouette radius is frame A and the top is over every blink frame, at the
-display size, measured at 4 times (over all 8 rotation frames for Black Eye's
-station); the earlier radius is the same divided by the scale. The Dock
-callout's centre sits `top + 20` above the pivot: the Weavers' station's 74.8
-and Black Eye's station's 72.5. The Blurb settlements' Talk callout centres sit
+display size, measured at 4 times (over all 4 frames for Whirlpool's station and all 8
+for Black Eye's); the earlier radius is the same divided by the scale. The Dock
+callout's centre sits `top + 20` above the pivot: the Weavers' station's 74.8,
+Whirlpool's station's 52.5 and Black Eye's station's 72.5. The Blurb settlements' Talk callout centres sit
 40.9 (homes), 37.8 (harbour) and 52.0 (signal) above their pivots; their top
 and radius are frame A of the mended state and the top over all four sprites.
 
@@ -105,6 +105,7 @@ and radius are frame A of the mended state and the top over all four sprites.
 | Lamp house        |   1.5 | 42 by 52.5        |             28.6 (19.1) |            28.5 | (13.921, 13.921)     |             4.547 (3.031) |
 | Dark beacon       |   1.5 | 31.5 by 42        |             27.8 (18.5) |            27.2 | none                 |                      none |
 | Weavers' station  |   1.5 | 220.5 by 84       |            106.5 (71.0) |            54.8 | none, entered by Use |                      none |
+| Whirlpool station |   1.5 | 115.5 by 84       |             55.2 (36.8) |            32.5 | none, entered by Use |                      none |
 | Black Eye station |   1.5 | 189 by 73.5       |             90.2 (60.1) |            52.5 | none, entered by Use |                      none |
 | Blurb homes       |   1.5 | 63 by 63          |             28.1 (18.7) |            20.9 | (16.706, 16.706)     |              5.115 (3.41) |
 | Blurb harbour     |   1.5 | 73.5 by 52.5      |             32.3 (21.5) |            17.8 | (16.706, 16.706)     |              5.115 (3.41) |
@@ -119,7 +120,7 @@ and radius are frame A of the mended state and the top over all four sprites.
 - **Clearance**: every rule stated as an object's silhouette radius plus a
   margin (large rocks keep theirs plus 160 clear of stations, destinations and
   launch points) grows by the radius increase in the table, for example 18.8 for
-  the trading station, 35.5 for the Weavers' station, 30.1 for Black Eye's
+  the trading station, 18.4 for Whirlpool's, 35.5 for the Weavers' station, 30.1 for Black Eye's
   station and 9.4 (homes), 10.8 (harbour) and 10.6 (signal) for the Blurb
   settlements. Centre-to-centre
   spacings are unchanged: 8000 between stations, 1200 between story

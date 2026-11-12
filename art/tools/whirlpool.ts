@@ -23,7 +23,7 @@ import {
   TUMBLE_FRAMES,
   unit,
 } from "./debris.ts";
-import { linkData, placeEntries } from "./manifest.ts";
+import { linkData, replaceEntries } from "./manifest.ts";
 import { json } from "./projection.ts";
 import {
   BUOY,
@@ -182,10 +182,12 @@ await writeJson(`${dir}projects.json`, {
   projects: PROJECTS,
 });
 
-placeEntries("whirlpool", "whirlpool-", [
-  ...pieces.flatMap(({ entries }) => entries),
-  ...projectEntries,
-]);
+// Every whirlpool- entry but the station's (whirlpool-station.ts), in place.
+replaceEntries(
+  "whirlpool",
+  (id) => id.startsWith("whirlpool-") && !id.startsWith("whirlpool-station-"),
+  [...pieces.flatMap(({ entries }) => entries), ...projectEntries],
+);
 
 // Whirlpool's manifest names the streak and debris data after the whale data.
 linkData("whirlpool", {

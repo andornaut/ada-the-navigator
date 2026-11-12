@@ -7,8 +7,9 @@
   fixed orientation: no headings and no screen rotation.
 - The shared station for every galaxy without its own station art. Cartwheel's
   [hub](cartwheel.md), Andromeda's [settlers' station](andromeda.md),
-  Needle's [Weavers' station](needle.md#weavers-station) and Black Eye's
-  [station](black-eye.md#station) take its place in their galaxies.
+  Needle's [Weavers' station](needle.md#weavers-station), Whirlpool's
+  [Eddy](whirlpool.md#station) and Black Eye's [station](black-eye.md#station)
+  take its place in their galaxies, so Sunflower is the only galaxy on it.
 
 ## Design
 
