@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { units } from "./layout/css.ts";
-import { countSlot, shieldRechargeStrip, STATUS_PILL } from "./layout/playView.ts";
+import { countSlot, shieldDelayStrip, STATUS_PILL } from "./layout/playView.ts";
 import {
   blendHex,
   CARGO_ICONS,
@@ -116,9 +116,21 @@ describe("status pill shield bar", () => {
     expect(
       new ShieldBar().update({ ...full, shield: 60, sinceDamage: 12 }, 0, true).recharge,
     ).toBeCloseTo(0.4, 9);
-    // Its full length is the bar's inside at each Shield level, 2 thick.
-    expect(shieldRechargeStrip(1, 1)).toEqual({ height: 2, width: 118 });
-    expect(shieldRechargeStrip(3, 0.5)).toEqual({ height: 2, width: 119 });
+    // Art's rects from the bar's top-left: the ink edge (2, 7, w, 1) over the strip (2, 8, w, 2),
+    // w the fill area's 116, 176 or 236 times the fill.
+    for (const [level, area] of [
+      [1, 116],
+      [2, 176],
+      [3, 236],
+    ] as const) {
+      for (const p of [0, 0.25, 1]) {
+        expect(shieldDelayStrip(level, p)).toEqual({
+          edge: { height: 1, width: area * p, x: 2, y: 7 },
+          strip: { height: 2, width: area * p, x: 2, y: 8 },
+        });
+      }
+    }
+    expect(STATUS_COLOURS.recharge).toBe("#ffffff");
   });
 
   it("pulses icon and rim while low, holding the low colour under reduced motion", () => {

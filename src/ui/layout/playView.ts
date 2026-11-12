@@ -273,17 +273,17 @@ export function shieldFillWidth(level: number): number {
 }
 
 /**
- * The recharge-delay strip at Shield level `level` (gameplay/rules.md): inside the bar's rim
- * along its bottom edge, its full length the bar's inside, filled from the left to `fraction`.
+ * The recharge-delay strip at Shield level `level` and fill `fraction` (art/layout.md "Shield
+ * pill"), each rect relative to the bar's top-left: the strip on the fill area's bottom rows from
+ * its left, its full length the fill area's, and its ink edge on the row above, the same length.
  */
-export function shieldRechargeStrip(
-  level: number,
-  fraction: number,
-): { height: number; width: number } {
-  const inside = shieldBarWidth(level) - 2 * SHIELD_PILL.bar.rim;
+export function shieldDelayStrip(level: number, fraction: number): { edge: Rect; strip: Rect } {
+  const { bar, delayStrip } = SHIELD_PILL;
+  const width = shieldFillWidth(level) * Math.max(0, Math.min(1, fraction));
+  const y = bar.height - bar.inset - delayStrip.height;
   return {
-    height: SHIELD_PILL.rechargeStrip,
-    width: inside * Math.max(0, Math.min(1, fraction)),
+    edge: { height: delayStrip.edge, width, x: bar.inset, y: y - delayStrip.edge },
+    strip: { height: delayStrip.height, width, x: bar.inset, y },
   };
 }
 

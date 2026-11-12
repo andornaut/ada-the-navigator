@@ -361,6 +361,9 @@ export const SHIELD_PILL = {
   bar: { height: 12, inset: 2, rim: 1 },
   bars: SHIELD_BARS,
   bottom: CONTROLS_BOTTOM,
+  // The recharge-delay strip (art/layout.md "Shield pill"): 2 high on the fill area's bottom
+  // rows under a 1 px ink edge.
+  delayStrip: { edge: 1, height: 2 },
   // The leading edge inside the fill's right end while the shield regenerates.
   edge: 2,
   icon: HUD_BUTTON.glyph,
@@ -368,8 +371,6 @@ export const SHIELD_PILL = {
   low: 0.25,
   markGap: SPACING.markGap,
   pill: PILL,
-  // The recharge-delay strip's thickness along the inside of the bar's bottom edge.
-  rechargeStrip: 2,
 } as const;
 
 // conversationBox (src/ui/layout/conversationBox.ts)

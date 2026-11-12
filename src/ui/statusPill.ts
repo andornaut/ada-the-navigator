@@ -4,9 +4,9 @@ import {
   countSlot,
   SHIELD_PILL,
   shieldBarWidth,
+  shieldDelayStrip,
   shieldFillWidth,
   shieldPillWidth,
-  shieldRechargeStrip,
   STATUS_PILL,
   STICK_AREA_MARGIN,
 } from "./layout/playView.ts";
@@ -31,8 +31,9 @@ export const STATUS_COLOURS = {
   // The ore +N tick: ore's light rust (art/controls.md "Status pill").
   oreTick: "#eaa676",
   panel: "rgb(24 20 37 / 0.65)",
-  // The recharge-delay strip: the bar's blue until Art pins its own.
-  recharge: "#70ace8",
+  // The recharge-delay strip, under an ink edge (art/controls.md "Status pill").
+  recharge: "#ffffff",
+  rechargeEdge: "#181425",
   rim: "#9a96ad",
   shield: "#70ace8",
   shieldDelay: "#4f7aa6",
@@ -342,12 +343,11 @@ ${SHIELD_PILL.bars
 .ada-controls .ada-status-edge{
   background:${STATUS_COLOURS.flash}
 }
-/* The recharge-delay strip: a steady fill inside the rim along the bar's bottom edge, under the
-   light-field outline, which draws outside the bar. */
+/* The recharge-delay strip: a steady fill on the fill area's bottom rows under its 1 px ink edge,
+   above the other parts and inside the rim; its rect comes from shieldDelayStrip. */
 .ada-controls .ada-status-bar > .ada-status-recharge{
-  top:auto;
-  bottom:0;
-  left:0;
+  box-sizing:content-box;
+  border-top:${units(SHIELD_PILL.delayStrip.edge)} solid ${STATUS_COLOURS.rechargeEdge};
   background:${STATUS_COLOURS.recharge}
 }
 .ada-controls .ada-status-divider{
@@ -642,7 +642,10 @@ export function createStatusPill(
       place(edge, Math.max(0, bar.fill - SHIELD_PILL.edge), bar.edge ? bar.fill : 0);
       recharge.hidden = bar.recharge === null;
       if (bar.recharge !== null) {
-        const strip = shieldRechargeStrip(Number(level), bar.recharge);
+        // Bar-relative rects to the rim's inside, where the bar's parts are placed.
+        const { edge: ink, strip } = shieldDelayStrip(Number(level), bar.recharge);
+        recharge.style.left = units(strip.x - SHIELD_PILL.bar.rim);
+        recharge.style.top = units(ink.y - SHIELD_PILL.bar.rim);
         recharge.style.width = units(strip.width);
         recharge.style.height = units(strip.height);
       }
