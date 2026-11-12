@@ -141,7 +141,8 @@ Boarding after a new galaxy unlocks, once, instead of "Welcome back, Navigator."
 Astra: "Welcome back, Navigator. A new galaxy is ready." Shown when any newly
 unlocked galaxy has a built story.
 
-Hub holodisk purchase confirm: "Buy Holodisk?" with the shared shop strings.
+Hub shop holodisk row: Holodisk; Restores part of Astra's memory. Purchase
+confirm: "Buy Holodisk?" with the shared shop strings.
 
 ## Chapter one: the garden
 

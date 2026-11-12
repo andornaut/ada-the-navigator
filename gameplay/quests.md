@@ -196,7 +196,9 @@ flight. The Map and survey titles use these names.
 ## Repeatable activities
 
 Once a galaxy's chapter is complete, its story places offer a repeatable
-activity through Talk, with Accept and Not now. An activity takes the galaxy's
+activity through Talk, with Accept and Not now. The mining hub is a station, so
+its mining contract is offered instead as a row at the top of the hub's job
+board, with the activity icon, its name, its goal, its reward and Accept. An activity takes the galaxy's
 one optional task slot, shared with station jobs: while it is active, that
 galaxy's job boards offer no job, and an active job keeps the activity from
 being offered. An accepted activity, its galaxy and its progress persist across
@@ -272,7 +274,6 @@ Activity lines:
 - Grower: "Fresh food for the station traders. Would you carry it?"
 - Workshop: "A station ordered these repaired tools. Could you take them?"
 - Salvager: "A station shop needs these spare parts. Will you bring them?"
-- Station: "Contract open: deposit 30 ore here. Partial loads count."
 - Whale family: "One of our young ones swam off to play. Could you guide them
   home? Stay close. They follow friends."
 - Pip: "I've got a parcel for the far settlement. Fly with me? It's less scary

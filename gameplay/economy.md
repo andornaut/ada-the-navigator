@@ -100,6 +100,11 @@ row shows Ada's current level ("Level 1 of 3" before the first upgrade) and the
 price of the next level; a maxed row shows Owned. The buy confirm shows a weapon's
 one-line description.
 
+The mining hub's shop also lists the galaxy's holodisk as the first row of its
+Ship tab once Cartwheel's space quest is complete: "Holodisk", the detail
+"Restores part of Astra's memory." and its price. Buying it asks "Buy Holodisk?"
+and the row then shows Owned.
+
 Ship paint schemes are Classic (the free white and blue default), Cobalt,
 Seafoam, Graphite and Iris. Tapping an owned scheme puts it in use at once, with
 no confirm; the scheme in use has the selection ring and shows In use instead of

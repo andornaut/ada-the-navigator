@@ -361,7 +361,8 @@ company would be welcome, and helps arrange an approach together. Others make
 space and reject the intimidation. The targeted miner docks; they do not need
 better piloting skills. No instant apology or friendship is required. Subsequent
 visits preserve the changed relationships. The hub sells the galaxy's holodisk for
-a provisional 450 Stardust.
+a provisional 500 Stardust, in its shop. Once discovered, the hub is one of the
+galaxy's discovered stations like any other.
 
 Cartwheel's story ships are the miner, two regular visitors and the blocking
 pilot: non-hostile small craft drawn with 16 headings and thrust jets, which
@@ -503,8 +504,11 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   hub at 1.25 times, with a 2 pixel ink outline on light fields so they stand out
   from the background. While Ada is within Use range of one, a small callout
   above it shows its Use action's symbol; it is hidden otherwise. At a station
-  or the mining hub, an action due there (Deliver, Deposit or a story Talk) comes
-  before Dock, and Dock shows once it is done.
+  or the mining hub, an action due there comes before Dock, and Dock shows once
+  it is done: Deliver for a carried item bound there, Deposit while Ada carries
+  ore, or a story Talk while a story line there is unheard. With nothing due,
+  Use offers Dock. While a Cartwheel story scene plays near the hub, Dock waits
+  until the scene and its line have ended.
 - Space shows no in-world name labels. Each named destination has a distinct
   look by role, the current objective's destination is marked by the direction
   indicator, and the Use disc's action symbol and the conversation name tab identify
