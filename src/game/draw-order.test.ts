@@ -3,7 +3,15 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { playDepth } from "./asteroid-art.ts";
-import { ADA_LAYERS, adaDepth, boxWith, drawnBox, overlaps, type Placed } from "./draw-order.ts";
+import {
+  ADA_LAYERS,
+  adaDepth,
+  boxWith,
+  drawnBox,
+  EDGE_MARKER_DEPTH,
+  overlaps,
+  type Placed,
+} from "./draw-order.ts";
 
 interface Frame {
   readonly displayHeight: number;
@@ -153,5 +161,17 @@ describe("Ada's draw order among the objects she flies through", () => {
 
   it("leaves Ada at her pivot's depth with nothing overlapping", () => {
     expect(adaDepth([], adaBox, pivot)).toBe(pivot);
+  });
+
+  it("keeps the edge markers above Ada at her highest lift and the destruction flash", () => {
+    // The frontmost play depth with a heavy's parts stacked on it, all overlapping Ada.
+    const front = 1e4;
+    const parts = Array.from({ length: 20 }, (_, index) => ({
+      box: adaBox,
+      depth: playDepth(front) + index * 1e-7,
+    }));
+    expect(adaDepth(parts, adaBox, playDepth(front))).toBeLessThan(EDGE_MARKER_DEPTH);
+    // Shots and indicators draw at 3, the destruction flash at 4.
+    expect(EDGE_MARKER_DEPTH).toBeGreaterThan(4);
   });
 });

@@ -128,6 +128,7 @@ import {
   adaDepth,
   boxWith,
   drawnBox,
+  EDGE_MARKER_DEPTH,
   type PassableDraw,
   type Placed,
 } from "./draw-order.ts";
@@ -335,6 +336,7 @@ export class PrototypeScene extends Phaser.Scene {
   private shipJets: ShipJets | undefined;
   /** Shots and feedback draw above enemy sprites. */
   private overlay!: Phaser.GameObjects.Graphics;
+  private edgeMarkerInk!: Phaser.GameObjects.Graphics;
   private enemyJets!: Phaser.GameObjects.Graphics;
   private enemyArt = new Map<string, EnemyArt<Asset>>();
   private enemySprites = new Map<string, Phaser.GameObjects.Image>();
@@ -625,6 +627,7 @@ export class PrototypeScene extends Phaser.Scene {
     this.enemyJets = this.add.graphics().setDepth(1);
     this.overlay = this.add.graphics().setDepth(3);
     this.indicatorInk = this.add.graphics().setDepth(3 - 1e-6);
+    this.edgeMarkerInk = this.add.graphics().setDepth(EDGE_MARKER_DEPTH);
     this.jetKeyline = this.add.graphics();
     this.jets = this.add.graphics().setDepth(9);
     this.ship = this.add.image(0, 0, "ship").setDepth(10);
@@ -1795,6 +1798,7 @@ export class PrototypeScene extends Phaser.Scene {
     this.ink.clear();
     this.jets.clear();
     this.overlay.clear();
+    this.edgeMarkerInk.clear();
     this.enemyJets.clear();
     this.jetKeyline.clear();
     this.indicatorInk.clear();
@@ -2517,20 +2521,20 @@ export class PrototypeScene extends Phaser.Scene {
           new Phaser.Math.Vector2(at.x - half, at.y),
         ];
         if (this.light) {
-          this.overlay.lineStyle(stroke + 2 * outline, LIGHT_FIELD.ink, 1);
-          this.overlay.strokePoints(points, true, true);
+          this.edgeMarkerInk.lineStyle(stroke + 2 * outline, LIGHT_FIELD.ink, 1);
+          this.edgeMarkerInk.strokePoints(points, true, true);
         }
-        this.overlay.lineStyle(stroke, this.palette.pointOfInterest, 1);
-        this.overlay.strokePoints(points, true, true);
+        this.edgeMarkerInk.lineStyle(stroke, this.palette.pointOfInterest, 1);
+        this.edgeMarkerInk.strokePoints(points, true, true);
         continue;
       }
       const radius = EDGE_MARKER_GLYPHS[marker.kind].disc / 2;
       if (this.light) {
-        this.overlay.fillStyle(LIGHT_FIELD.ink, 1);
-        this.overlay.fillCircle(at.x, at.y, radius + outline);
+        this.edgeMarkerInk.fillStyle(LIGHT_FIELD.ink, 1);
+        this.edgeMarkerInk.fillCircle(at.x, at.y, radius + outline);
       }
-      this.overlay.fillStyle(EDGE_MARKER_THREAT_PLACEHOLDER, 1);
-      this.overlay.fillCircle(at.x, at.y, radius);
+      this.edgeMarkerInk.fillStyle(EDGE_MARKER_THREAT_PLACEHOLDER, 1);
+      this.edgeMarkerInk.fillCircle(at.x, at.y, radius);
     }
   }
 

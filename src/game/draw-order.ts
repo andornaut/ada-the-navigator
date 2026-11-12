@@ -36,6 +36,13 @@ export const ADA_LAYERS = { jetKeyline: -2e-6, jets: -1e-6, towLine: -3e-6 } as 
 // Above an overlapped object and its parts (1e-7 apart) with Ada's lowest layer still above it.
 const LIFT = 5e-6;
 
+/**
+ * The edge markers' layer (model/edge-markers.ts): above every play object, Ada at her highest
+ * lift, the shots and indicators (3) and the destruction flash (4). The HTML HUD stays above the
+ * canvas.
+ */
+export const EDGE_MARKER_DEPTH = 5;
+
 /** A sprite's drawn rectangle from its pivot, display size and origin. */
 export function drawnBox(sprite: Placed): DrawnBox {
   const left = sprite.x - sprite.originX * sprite.displayWidth;
