@@ -29,7 +29,7 @@
   },
   "resources": {
     "cpus": 4,
-    "loadLimit": 20
+    "loadLimit": 30
   },
   "ci": {
     "requiredNames": ["AI attributions", "Lint", "Test"],
