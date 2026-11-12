@@ -1,6 +1,6 @@
 import { byPosition, type RoutePosition } from "./galaxies.ts";
 import { SHIP_PHYSICS, type ShipPhysics } from "./ship-physics.ts";
-import type { SectorId } from "./types.ts";
+import type { EnemyWeapon, SectorId, WeaponLevel } from "./types.ts";
 
 export interface Point {
   x: number;
@@ -12,8 +12,32 @@ export interface FireProfile {
   burst?: { count: number; gap: number };
   id: string;
   interval: number;
+  /** The weapon's level; an enemy-only weapon has only level 1. */
+  level: WeaponLevel;
   projectile: "bolt" | "missile";
   projectileSpeedRatio: number;
+  /** The weapon this profile fires (gameplay/ships.md "Enemy weapons"). */
+  weapon: EnemyWeapon;
+}
+/** The weapon a mount carries at one position tier. */
+export interface MountedWeapon {
+  level: WeaponLevel;
+  weapon: EnemyWeapon;
+}
+/** One route-position tier's weapon per mount; a mount the tier leaves null is capped. */
+export interface MountTier {
+  mounts: Readonly<Record<string, MountedWeapon | null>>;
+  positions: readonly [RoutePosition, RoutePosition];
+}
+/**
+ * A heavy's weapon mounts (art/heavies.md "Mounts"): weapons fill them pairs first in `fill`
+ * order, so the loadout stays symmetric, and an odd count adds a centreline mount.
+ */
+export interface WeaponMounts {
+  fill: readonly string[];
+  /** Art's offsets, in the hardpoint offset frame. */
+  offsets: Readonly<Record<string, Point>>;
+  tiers: readonly MountTier[];
 }
 interface HardpointBase {
   hp: number;
@@ -53,6 +77,8 @@ export interface EnemyDefinition {
   hardpoints: HardpointDefinition[];
   hp: number;
   morale: { individualHpRatio: number; packLossRatio: number };
+  /** A heavy's weapon mounts and their loadout by position tier. */
+  mounts?: WeaponMounts;
   perception: number;
   physics: ShipPhysics;
   pursuit: { homeRadius: number; maxSeconds: number; unseenSeconds: number };
@@ -71,15 +97,19 @@ const bolt: FireProfile = {
   angles: [0],
   id: "turret-bolt",
   interval: 1.4,
+  level: 1,
   projectile: "bolt",
   projectileSpeedRatio: 1.7,
+  weapon: "basic",
 };
 const missile: FireProfile = {
   angles: [0],
   id: "straight-missile",
   interval: 3,
+  level: 1,
   projectile: "missile",
   projectileSpeedRatio: 1.3,
+  weapon: "rapidMissile",
 };
 const command: HardpointDefinition = {
   hp: 5,
@@ -88,20 +118,119 @@ const command: HardpointDefinition = {
   offset: { x: 0, y: 0 },
   required: true,
 };
-const weapon = (
-  fire: FireProfile,
-  id: string,
-  x: number,
-  y: number,
-  hp = 3,
-): HardpointDefinition => ({
+const weapon = (fire: FireProfile, id: string, offset: Point, hp = 3): HardpointDefinition => ({
   fire,
   hp,
   id,
   kind: "weapon",
-  offset: { x, y },
+  offset: { ...offset },
   required: true,
 });
+const armed = (weapon: EnemyWeapon, level: WeaponLevel = 1): MountedWeapon => ({ level, weapon });
+/**
+ * Frigate mounts: the sponson pair, the dorsal spine and the bow between the tine roots, with
+ * each tier's weapons from gameplay/ships.md "Enemy weapons".
+ */
+const frigateMounts = {
+  fill: ["port", "starboard", "spine", "bow"],
+  offsets: {
+    bow: { x: 0, y: -0.22 },
+    port: { x: -0.3, y: 0 },
+    spine: { x: 0, y: 0.025 },
+    starboard: { x: 0.3, y: 0 },
+  },
+  tiers: [
+    {
+      mounts: { bow: null, port: armed("basic"), spine: null, starboard: armed("basic") },
+      positions: [1, 2],
+    },
+    {
+      mounts: {
+        bow: null,
+        port: armed("basic", 2),
+        spine: armed("rapidMissile", 2),
+        starboard: armed("basic", 2),
+      },
+      positions: [3, 4],
+    },
+    {
+      mounts: {
+        bow: armed("chargedLance"),
+        port: armed("basic", 3),
+        spine: armed("rapidMissile", 3),
+        starboard: armed("basic", 3),
+      },
+      positions: [5, 6],
+    },
+  ],
+} as const satisfies WeaponMounts;
+/**
+ * Capital mounts in four pairs: shoulders, wings, claw arms and stern deck. The mine layer sits
+ * at the stern because its mines drop behind the ship.
+ */
+const capitalMounts = {
+  fill: [
+    "weapon-left",
+    "weapon-right",
+    "weapon-rear-left",
+    "weapon-rear-right",
+    "claw-left",
+    "claw-right",
+    "stern-left",
+    "stern-right",
+  ],
+  offsets: {
+    "claw-left": { x: -0.15, y: -0.45 },
+    "claw-right": { x: 0.15, y: -0.45 },
+    "stern-left": { x: -0.1, y: 0.31 },
+    "stern-right": { x: 0.1, y: 0.31 },
+    "weapon-left": { x: -0.35, y: -0.3 },
+    "weapon-rear-left": { x: -0.42, y: 0.08 },
+    "weapon-rear-right": { x: 0.42, y: 0.08 },
+    "weapon-right": { x: 0.35, y: -0.3 },
+  },
+  tiers: [
+    {
+      mounts: {
+        "claw-left": null,
+        "claw-right": null,
+        "stern-left": null,
+        "stern-right": null,
+        "weapon-left": armed("basic"),
+        "weapon-rear-left": armed("multiLaser"),
+        "weapon-rear-right": armed("multiLaser"),
+        "weapon-right": armed("basic"),
+      },
+      positions: [1, 2],
+    },
+    {
+      mounts: {
+        "claw-left": armed("rapidMissile", 2),
+        "claw-right": armed("heavyMissile"),
+        "stern-left": null,
+        "stern-right": null,
+        "weapon-left": armed("basic", 2),
+        "weapon-rear-left": armed("multiLaser", 2),
+        "weapon-rear-right": armed("multiLaser", 2),
+        "weapon-right": armed("basic", 2),
+      },
+      positions: [3, 4],
+    },
+    {
+      mounts: {
+        "claw-left": armed("phaser"),
+        "claw-right": armed("heavyMissile"),
+        "stern-left": armed("ringBurst"),
+        "stern-right": armed("mineLayer"),
+        "weapon-left": armed("basic", 3),
+        "weapon-rear-left": armed("rapidMissile", 3),
+        "weapon-rear-right": armed("rapidMissile", 3),
+        "weapon-right": armed("basic", 3),
+      },
+      positions: [5, 6],
+    },
+  ],
+} as const satisfies WeaponMounts;
 /** Shared ship-sized defaults; each archetype states its own physics. */
 const base: Omit<EnemyDefinition, "physics"> = {
   aggression: "sight",
@@ -140,13 +269,14 @@ export const enemyCatalog = {
       command,
       engine("engine-left", -0.25, 0.4),
       engine("engine-right", 0.25, 0.4),
-      weapon(bolt, "weapon-left", -0.35, -0.3),
-      weapon(bolt, "weapon-right", 0.35, -0.3),
-      weapon(missile, "weapon-rear-left", -0.42, 0.08),
-      weapon(missile, "weapon-rear-right", 0.42, 0.08),
+      weapon(bolt, "weapon-left", capitalMounts.offsets["weapon-left"]),
+      weapon(bolt, "weapon-right", capitalMounts.offsets["weapon-right"]),
+      weapon(missile, "weapon-rear-left", capitalMounts.offsets["weapon-rear-left"]),
+      weapon(missile, "weapon-rear-right", capitalMounts.offsets["weapon-rear-right"]),
     ],
     hp: 18,
     morale: { individualHpRatio: 0, packLossRatio: 1 },
+    mounts: capitalMounts,
     perception: 1100,
     physics: SHIP_PHYSICS.capital,
     sizeRatio: 5,
@@ -162,10 +292,11 @@ export const enemyCatalog = {
     engagement: 500,
     hardpoints: [
       engine("engine", 0, 0.3),
-      weapon(bolt, "port", -0.3, 0),
-      weapon(bolt, "starboard", 0.3, 0),
+      weapon(bolt, "port", frigateMounts.offsets.port),
+      weapon(bolt, "starboard", frigateMounts.offsets.starboard),
     ],
     hp: 10,
+    mounts: frigateMounts,
     physics: SHIP_PHYSICS.frigate,
     sizeRatio: 4,
   },
@@ -182,8 +313,8 @@ export const enemyCatalog = {
     behaviour: { kind: "siege", speedFraction: 0 },
     engagement: 520,
     hardpoints: [
-      weapon(platformBurst, "port", -0.29, 0, 6),
-      weapon(platformBurst, "starboard", 0.29, 0, 6),
+      weapon(platformBurst, "port", { x: -0.29, y: 0 }, 6),
+      weapon(platformBurst, "starboard", { x: 0.29, y: 0 }, 6),
     ],
     // The hull has no HP of its own: hits land only on its turrets.
     hp: 12,
@@ -195,7 +326,13 @@ export const enemyCatalog = {
   retaliator: {
     ...base,
     aggression: "retaliate",
-    fire: { ...bolt, angles: [-0.2, 0, 0.2], id: "retaliator-spread", interval: 2.2 },
+    fire: {
+      ...bolt,
+      angles: [-0.2, 0, 0.2],
+      id: "retaliator-spread",
+      interval: 2.2,
+      weapon: "multiLaser",
+    },
     hp: 8,
     physics: SHIP_PHYSICS.retaliator,
     sizeRatio: 2,

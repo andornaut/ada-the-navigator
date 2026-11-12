@@ -25,7 +25,9 @@ describe("save boundary", () => {
     model.startSector(1);
     playOpening(model);
     for (const change of [
-      { version: 2 },
+      // An earlier or later save format resets rather than migrating.
+      { version: SAVE_VERSION - 1 },
+      { version: SAVE_VERSION + 1 },
       { flight: {} },
       { progress: {} },
       { unlocked: [4] },
@@ -199,6 +201,9 @@ describe("combat save boundary", () => {
     { engaged: 1 },
     { fleeing: "false" },
     { returning: null },
+    { disabled: "true" },
+    { disabled: undefined },
+    { salvaged: 1 },
     { packId: 2 },
     { id: "wrong-object" },
     { lastSeen: {} },
@@ -724,11 +729,10 @@ describe("deliveries to story places in older saves", () => {
 
 describe("a save from a newer version", () => {
   it("is told apart from this build's, older and malformed saves", () => {
-    expect(SAVE_VERSION).toBe(1);
-    expect(newerSave({ version: 2 })).toBe(true);
-    expect(newerSave(JSON.stringify({ mode: "home", version: 7 }))).toBe(true);
+    expect(newerSave({ version: SAVE_VERSION + 1 })).toBe(true);
+    expect(newerSave(JSON.stringify({ mode: "home", version: SAVE_VERSION + 6 }))).toBe(true);
     for (const saved of [
-      { version: 1 },
+      { version: SAVE_VERSION },
       { version: 0 },
       { version: "2" },
       { version: Number.NaN },

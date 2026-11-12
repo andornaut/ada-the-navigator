@@ -36,7 +36,7 @@ import { chunkCoordinates, validVisitedPages } from "./visited.ts";
 import { grantedAmmo, UPGRADE_WEAPONS } from "./weapons.ts";
 
 /** The save format this build writes and reads. */
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION: GameState["version"] = 2;
 
 /**
  * Whether saved was written by a newer build: its version is above SAVE_VERSION. Such a save is
@@ -120,7 +120,9 @@ function enemyState(value: unknown): boolean {
     !Object.hasOwn(enemyCatalog, value.archetype) ||
     typeof value.id !== "string" ||
     !(value.packId === null || typeof value.packId === "string") ||
-    !["engaged", "fleeing", "returning"].every((key) => typeof value[key] === "boolean") ||
+    !["disabled", "engaged", "fleeing", "returning", "salvaged"].every(
+      (key) => typeof value[key] === "boolean",
+    ) ||
     !["home", "position", "velocity"].every((key) => vector(value[key])) ||
     !(value.lastSeen === null || vector(value.lastSeen)) ||
     !["age", "hp", "lastSeenAge", "primaryCooldown", "pursuitSeconds"].every((key) =>

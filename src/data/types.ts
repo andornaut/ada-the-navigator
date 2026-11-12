@@ -5,6 +5,12 @@ import type { ShipPhysics } from "./ship-physics.ts";
 export type SectorId = 1 | 2 | 3 | 4 | 5 | 6;
 export type Weapon =
   "basic" | "rapidMissile" | "multiLaser" | "heavyMissile" | "scattershot" | "phaser";
+/** Weapons only enemies carry (gameplay/ships.md "Enemy weapons"). */
+export type EnemyOnlyWeapon = "chargedLance" | "mineLayer" | "ringBurst";
+/** Any weapon an enemy fires: the shared weapons and the enemy-only ones. */
+export type EnemyWeapon = Weapon | EnemyOnlyWeapon;
+/** A weapon level; level 1 is the base and levels 2 and 3 are bought or reached by position. */
+export type WeaponLevel = 1 | 2 | 3;
 
 export interface ChapterContent {
   name: string;

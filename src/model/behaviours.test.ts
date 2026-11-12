@@ -398,10 +398,12 @@ describe("behaviour state saves", () => {
     expect(next.state.tactic.phase).toBe("attack");
   });
 
-  it("keeps saved behaviour state and escorts exactly", () => {
+  it("keeps saved behaviour, escort, disabled and salvaged state exactly", () => {
     const state = {
       ...spawn("fighter", { x: 0, y: 0 }),
+      disabled: true,
       escortOf: "capital",
+      salvaged: true,
       tactic: { integrity: 3, phase: "retreat" as const, seconds: 0.4, volleys: 0 },
     };
     expect(restoreEnemyState(JSON.parse(JSON.stringify(state)) as SavedEnemyState)).toEqual(state);

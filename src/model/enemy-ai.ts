@@ -43,6 +43,11 @@ export interface EnemyState {
   /** Smoothed hull-weapon aim; null until the ship first has a target direction. */
   aim: Point | null;
   archetype: EnemyArchetype;
+  /**
+   * A heavy with every weapon hardpoint destroyed: it stops attacking and steering, coasts to
+   * rest and no longer counts for battle (gameplay/ships.md "Heavy hull and disabling").
+   */
+  disabled: boolean;
   engaged: boolean;
   /** The capital this ship escorts, or null. */
   escortOf: string | null;
@@ -53,6 +58,7 @@ export interface EnemyState {
   /** Smoothed movement heading; null at rest or with no movement request. */
   heading: Point | null;
   home: Point;
+  /** Hull hp; a heavy's is its hull HP (gameplay/ships.md "Heavy hull and disabling"). */
   hp: number;
   id: string;
   lastSeen: Point | null;
@@ -63,6 +69,8 @@ export interface EnemyState {
   primaryCooldown: number;
   pursuitSeconds: number;
   returning: boolean;
+  /** A disabled heavy Ada salvaged: powered down, passable and drawn dimmed. */
+  salvaged: boolean;
   tactic: TacticState;
   velocity: Point;
 }
@@ -222,6 +230,7 @@ export function createEnemy(
     age: 0,
     aim: null,
     ...identity,
+    disabled: false,
     engaged: false,
     escortOf: identity.escortOf ?? null,
     facing: { ...UP },
@@ -241,6 +250,7 @@ export function createEnemy(
     primaryCooldown: 0,
     pursuitSeconds: 0,
     returning: false,
+    salvaged: false,
     tactic: freshTactic(definition.hardpoints.reduce((sum, part) => sum + part.hp, definition.hp)),
     velocity: { x: 0, y: 0 },
   };

@@ -287,7 +287,8 @@ export interface DialogueState {
   context: string;
 }
 export interface GameState {
-  version: 1;
+  /** The save format; a save of another version is reset, not migrated. */
+  version: 2;
   mode: "home" | "space";
   selectedSector: SectorId;
   unlocked: SectorId[];

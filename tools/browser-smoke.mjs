@@ -1272,7 +1272,7 @@ try {
     );
   }, storageKey);
   const persisted = await readSave();
-  assert.equal(persisted.version, 1);
+  assert.equal(persisted.version, 2);
   await page.reload();
   await continueFlight();
   const resumed = await readSave();

@@ -121,7 +121,7 @@ import {
   type WorldChange,
   worldChanges,
 } from "./projects.ts";
-import { restoreSave } from "./save.ts";
+import { restoreSave, SAVE_VERSION } from "./save.ts";
 import {
   buy,
   fill,
@@ -211,7 +211,7 @@ export function newGameState(): GameState {
     started: false,
     tasks: {},
     unlocked: [1],
-    version: 1,
+    version: SAVE_VERSION,
   };
 }
 /** What the home half shows: the start screen, a storybook page or galaxy selection. */
