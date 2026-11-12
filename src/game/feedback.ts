@@ -2,6 +2,9 @@ import { wreckId } from "../model/flight.ts";
 import { archivedObjectIds } from "../model/geography.ts";
 import type { GameState, Vec } from "../model/types.ts";
 
+/** A frame-to-frame jump of Ada's ship farther than this, in world units, reads as a teleport. */
+export const TELEPORT_DISTANCE = 20;
+
 export type FeedbackKind =
   "hit" | "disabled" | "damage" | "shield" | "pickup" | "deposit" | "teleport";
 export interface FeedbackPulse extends Vec {

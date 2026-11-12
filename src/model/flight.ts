@@ -820,8 +820,8 @@ function generateRegion(
     const [low, high] = enemyEncounterTuning.debris.count;
     const count = low + Math.floor(next() * (high - low + 1));
     const angle = next() * Math.PI * 2;
-    const [slow, fast] = enemyEncounterTuning.debris.speedRatio;
-    const speed = content.tuning.maxSpeed * (slow + next() * (fast - slow));
+    const [slow, fast] = enemyEncounterTuning.debris.speed;
+    const speed = slow + next() * (fast - slow);
     for (let i = 0; i < count; i++) {
       const point = { x: center.x + (next() - 0.5) * size, y: center.y + (next() - 0.5) * size };
       const id = `ballistic:${x},${y}:${i}`;
@@ -1478,7 +1478,7 @@ function fire(
     aim,
     baseDamage: content.tuning.flight.playerShotDamage,
     baseLifetime: content.tuning.flight.projectileLifetime,
-    baseSpeed: content.tuning.maxSpeed * content.tuning.flight.projectileSpeedFactor,
+    baseSpeed: content.tuning.flight.projectileSpeed,
     origin,
     viewportWidth,
   });
@@ -1747,6 +1747,7 @@ function enemies(
         initialPackSizes: combat(flight).initialPackSizes,
         peers,
         player: flight.player,
+        projectileSpeed: content.tuning.enemyProjectileSpeed,
         speedCapRatio: enemyEncounterTuning.speedCapRatio,
         targetable,
         visibility: visible ? "visible" : "occluded",

@@ -82,6 +82,8 @@ export interface EnemyContext {
   initialPackSizes: Readonly<Record<string, number>>;
   peers: readonly EnemyState[];
   player: Point;
+  /** Base enemy projectile speed; each fire profile's projectileSpeedRatio multiplies it. */
+  projectileSpeed: number;
   speedCapRatio: number;
   targetable: boolean;
   visibility: "visible" | "occluded" | "unknown";
@@ -580,7 +582,7 @@ export function stepEnemy(
           origin: { ...from },
           profileId: profile.id,
           projectile: profile.projectile,
-          speed: context.adaSpeed * profile.projectileSpeedRatio,
+          speed: context.projectileSpeed * profile.projectileSpeedRatio,
         });
       }
       bolt++;

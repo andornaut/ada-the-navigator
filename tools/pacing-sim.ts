@@ -1475,7 +1475,7 @@ export function realLoop(
   const engagedPacks = new Set<string>();
   const stations = new Set<string>();
   const dt = 1 / 30;
-  const shotSpeed = tuning.maxSpeed * tuning.flight.projectileSpeedFactor;
+  const shotSpeed = tuning.flight.projectileSpeed;
   for (let time = 0; time < minutes * 60; time += dt) {
     if (time >= nextTurn) {
       heading += (gauss() * behaviour.turnDegrees * Math.PI) / 180;

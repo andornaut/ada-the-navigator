@@ -182,6 +182,7 @@ describe("platform", () => {
     initialPackSizes: {},
     peers: [state],
     player: { x: away, y: 0 },
+    projectileSpeed: 100,
     speedCapRatio: enemyEncounterTuning.speedCapRatio,
     targetable: true,
     visibility: "visible",

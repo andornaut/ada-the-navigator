@@ -187,7 +187,7 @@ import {
   type PartPose,
   selectEnemyFrame,
 } from "./enemy-art.ts";
-import { type FeedbackPulse, FeedbackSound, ModelFeedback } from "./feedback.ts";
+import { type FeedbackPulse, FeedbackSound, ModelFeedback, TELEPORT_DISTANCE } from "./feedback.ts";
 import {
   beaconLandmarkFrame,
   dashes,
@@ -1929,7 +1929,7 @@ export class PrototypeScene extends Scene {
   }
 
   private observeFeedback(): void {
-    const kinds = this.feedback.observe(PROTOTYPE.tuning.maxSpeed * 0.1, this.model.state);
+    const kinds = this.feedback.observe(TELEPORT_DISTANCE, this.model.state);
     this.feedbackSound.play(kinds);
     if (this.screenShake && kinds.includes("damage")) {
       const camera = this.cameras.main;

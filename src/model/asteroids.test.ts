@@ -275,7 +275,7 @@ describe("rock silhouettes", () => {
   });
 
   it("strike a real shot through the drawn top of a rock, not one just above it", () => {
-    const speed = PROTOTYPE.tuning.maxSpeed * PROTOTYPE.tuning.flight.projectileSpeedFactor;
+    const speed = PROTOTYPE.tuning.flight.projectileSpeed;
     const art = ASTEROID_ART.asteroids.find((entry) => entry.id === "asteroid-l1")!;
     const object = drawnRocks.find((entry) => entry.art === art)!.object;
     const top = Math.min(

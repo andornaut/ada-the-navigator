@@ -36,6 +36,7 @@ const context = (peers: readonly EnemyState[], player = ada): EnemyContext => ({
   initialPackSizes: {},
   peers,
   player,
+  projectileSpeed: PROTOTYPE.tuning.enemyProjectileSpeed,
   speedCapRatio: 1.1,
   targetable: true,
   visibility: "visible",

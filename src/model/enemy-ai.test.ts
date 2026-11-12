@@ -28,6 +28,7 @@ const observation = (state: EnemyState): EnemyContext => ({
   initialPackSizes: {},
   peers: [state],
   player: { x: 300, y: 0 },
+  projectileSpeed: 100,
   speedCapRatio: enemyEncounterTuning.speedCapRatio,
   targetable: true,
   visibility: "visible",
@@ -170,6 +171,22 @@ describe("enemy rules", () => {
     expect(result.velocity).toEqual({ x: 0, y: 0 });
     expect(result.effects.defeated).toBe(false);
     expect(result.fire.map((shot) => shot.hardpointId)).toEqual(["starboard"]);
+  });
+
+  it("fires at the base enemy projectile speed times each profile's ratio, not Ada's speed", () => {
+    const definition = enemyCatalog.capital;
+    const state = spawn("capital");
+    const context = { ...observation(state), adaSpeed: 37, projectileSpeed: 200 };
+    const ratios = new Map(
+      definition.hardpoints.flatMap((part) =>
+        part.kind === "weapon" ? [[part.id, part.fire.projectileSpeedRatio] as const] : [],
+      ),
+    );
+    const fire = stepEnemy(definition, context, state).fire;
+    expect(fire.length).toBeGreaterThan(0);
+    for (const shot of fire) {
+      expect(shot.speed).toBeCloseTo(200 * ratios.get(shot.hardpointId!)!, 9);
+    }
   });
 
   it("keeps bolt and missile profiles and independent cooldowns", () => {

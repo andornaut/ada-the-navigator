@@ -34,6 +34,7 @@ const context = (state: EnemyState, player = { x: 300, y: 40 }): EnemyContext =>
   initialPackSizes: {},
   peers: [state],
   player,
+  projectileSpeed: 100,
   speedCapRatio: enemyEncounterTuning.speedCapRatio,
   targetable: true,
   visibility: "visible",

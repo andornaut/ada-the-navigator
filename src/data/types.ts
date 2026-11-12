@@ -126,6 +126,7 @@ export interface PrototypeContent {
     shieldRechargeDelay: number;
     shieldRechargeRate: number;
     enemyDamage: number;
+    /** Base enemy projectile speed; each fire profile's projectileSpeedRatio multiplies it. */
     enemyProjectileSpeed: number;
     miningMilestones: readonly [number, number, number];
     introFreshDistance: number;
@@ -149,7 +150,8 @@ export interface PrototypeContent {
       pursuitSpeedFactor: number;
       damageInterval: number;
       enemyFireInterval: number;
-      projectileSpeedFactor: number;
+      /** Ada's base projectile speed, whatever her engine level; weapon speed ratios multiply it. */
+      projectileSpeed: number;
       projectileLifetime: number;
       enemyProjectileLifetime: number;
       shipRadius: number;

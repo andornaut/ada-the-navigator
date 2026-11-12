@@ -187,6 +187,7 @@ describe("combat save boundary", () => {
       initialPackSizes: snapshot.flight.combat.initialPackSizes,
       peers: [before],
       player: { x: 50, y: -10 },
+      projectileSpeed: 200,
       speedCapRatio: 1.1,
       targetable: true,
       visibility: "visible" as const,

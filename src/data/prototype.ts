@@ -570,7 +570,7 @@ export const PROTOTYPE: PrototypeContent = {
     dangerReleaseSeconds: 3,
     encounterFreshDistance: 600,
     enemyDamage: 6,
-    enemyProjectileSpeed: 150,
+    enemyProjectileSpeed: 200,
     flight: {
       arrivalCalm: 2000,
       damageInterval: 1,
@@ -587,7 +587,7 @@ export const PROTOTYPE: PrototypeContent = {
       pieceRadius: 7,
       playerShotDamage: 1,
       projectileLifetime: 2,
-      projectileSpeedFactor: 3,
+      projectileSpeed: 600,
       pursuitSpeedFactor: 0.55,
       rockHp: 3,
       rockRadius: 20,
