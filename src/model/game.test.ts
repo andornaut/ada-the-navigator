@@ -592,14 +592,16 @@ describe("Use at an outpost", () => {
   it("offers Talk once the guard is disabled, its hull still standing nearby", () => {
     const { flight, model } = besideGrowers();
     const guard = ensureRouteEncounter(PROTOTYPE, "growers", flight)!;
-    const required = new Set(
-      enemyCatalog.frigate.hardpoints.filter((part) => part.required).map(({ id }) => id),
+    // Its weapons go: every weapon hardpoint destroyed disables it.
+    const weapons = new Set(
+      enemyCatalog.frigate.hardpoints.filter((part) => part.kind === "weapon").map(({ id }) => id),
     );
     for (const hardpoint of guard.enemy!.hardpoints) {
-      if (required.has(hardpoint.id)) {
+      if (weapons.has(hardpoint.id)) {
         hardpoint.hp = 0;
       }
     }
+    guard.enemy!.disabled = true;
     expect(guard.hp).toBeGreaterThan(0);
     model.step(0.05, idle);
     model.state.dialogue = null;

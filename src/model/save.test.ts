@@ -58,7 +58,7 @@ describe("save boundary", () => {
       ),
       ["progress", "4"],
       ["economy", "ammo"],
-      ...["levels", "ammo", "weaponSwitchFor", "dockId"].map((key) => ["flight", key]),
+      ...["levels", "ammo", "weaponSwitchFor"].map((key) => ["flight", key]),
     ].map((path) => [path.join("."), path] as const),
   )("rejects a save without %s", (_, path) => {
     const model = new GameModel(PROTOTYPE);

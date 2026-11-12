@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 
-import { SMOKE_LIMIT_SECONDS } from "./smoke-limit.mjs";
 import {
   asteroidFixture,
   backdropSeed,
@@ -15,6 +14,7 @@ import {
   save,
   storageKey,
 } from "./browser-support.mjs";
+import { SMOKE_LIMIT_SECONDS } from "./smoke-limit.mjs";
 
 const events = { errors: [], failedRequests: [], badResponses: [], checks: [] };
 

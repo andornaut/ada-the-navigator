@@ -94,13 +94,7 @@ import { nosePoint } from "./nose.ts";
 import { clearOfOreFields, oreFieldsNear } from "./ore-fields.ts";
 import { pickupOutline } from "./pickup-body.ts";
 import { planPlayerVolley, projectileReach } from "./player-projectiles.ts";
-import {
-  SHIP_REACH,
-  shipBody,
-  shipCircleContact,
-  shipNearSegment,
-  shipTouches,
-} from "./ship-body.ts";
+import { shipBody, shipCircleContact, shipNearSegment, shipTouches } from "./ship-body.ts";
 import { direction, speedFraction, stepShipMotion, turnToward } from "./ship-physics.ts";
 import { HUB_STATION, stationById, stationsNear } from "./stations.ts";
 import type {

@@ -571,15 +571,17 @@ describe("integrated combat", () => {
       flight.sector = sector;
       const destination = ensureDestination(PROTOTYPE, "quest", flight);
       const guard = ensureRouteEncounter(PROTOTYPE, "quest", flight)!;
-      const required = enemyCatalog[guard.enemy!.archetype].hardpoints.filter(
-        ({ required: part }) => part,
+      // Its weapons go: every weapon hardpoint destroyed disables it.
+      const weapons = enemyCatalog[guard.enemy!.archetype].hardpoints.filter(
+        ({ kind }) => kind === "weapon",
       );
-      expect(required.length).toBeGreaterThan(0);
+      expect(weapons.length).toBeGreaterThan(0);
       for (const hardpoint of guard.enemy!.hardpoints) {
-        if (required.some(({ id }) => id === hardpoint.id)) {
+        if (weapons.some(({ id }) => id === hardpoint.id)) {
           hardpoint.hp = 0;
         }
       }
+      guard.enemy!.disabled = true;
       expect(guard.hp).toBeGreaterThan(0);
       expect(routeBlocked("quest", flight)).toBe(false);
       flight.player = { x: destination.x, y: destination.y };

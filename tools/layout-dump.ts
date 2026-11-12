@@ -143,6 +143,7 @@ function viewportCases(call: ReturnType<typeof recorder>): void {
         call("playView.ts", "safeRect", playView.safeRect, logical, margin, view);
       }
       call("playView.ts", "playView", playView.playView, view);
+      call("playView.ts", "safeGameArea", playView.safeGameArea, logical, view);
       call("playView.ts", "gameAreaGap", playView.gameAreaGap, view);
       call("playView.ts", "mirroredSideInset", playView.mirroredSideInset, logical);
       call("playView.ts", "mirroredSide", playView.mirroredSide, logical, playView.HUD_EDGE, view);

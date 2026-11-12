@@ -744,7 +744,7 @@ describe("jobs in play", () => {
       tractor: 1,
     });
     expect(ship.weapons.map(({ id }) => id)).toEqual(model.weapons().map(({ id }) => id));
-    expect(ship.weapons[0]).toEqual({ ammo: null, id: "basic", level: 1 });
+    expect(ship.weapons[0]).toEqual({ ammo: null, id: "laser", level: 1 });
   });
 
   it("restore saved jobs, charted landmarks and the tow, and reject invalid ones", () => {

@@ -152,10 +152,10 @@ describe("enemy frame sets", () => {
       return sum + (bases + tops.size) * 16;
     }, 0);
     expect(parts).toHaveLength(expected);
-    // The coral and claim families' tiered heavies, and each recoloured family's frigate and
-    // capital.
+    // The coral and claim families' tiered heavies with Gadget's capital, and each recoloured
+    // family's tiered frigate and capital.
     const recoloured = GALAXY_FAMILIES.filter(({ wired }) => !wired.has("platform")).length;
-    expect(expected).toBe(2096 + 352 * recoloured);
+    expect(expected).toBe(2096 + 752 * recoloured);
     expect(parts.some((asset) => /^enemy-[a-z]+-\d+$/i.test(asset.id))).toBe(false);
   });
 
@@ -588,9 +588,9 @@ describe("enemy SVGs", () => {
       ["capital", "frigate", "gadget", "platform"].includes(archetype ?? ""),
     );
     // The coral and claim frigates (256 frames each) and capitals (528 each), Gadget's 528, the
-    // claim platform's 81, and each recoloured family's frigate and capital, 384 frames.
+    // claim platform's 81, and each recoloured family's frigate (256) and capital (528).
     const recoloured = GALAXY_FAMILIES.filter(({ wired }) => !wired.has("platform")).length;
-    expect(heavies).toHaveLength((256 + 528) * 2 + 528 + 81 + 384 * recoloured);
+    expect(heavies).toHaveLength((256 + 528) * (2 + recoloured) + 528 + 81);
     for (const asset of heavies) {
       const svg = readFileSync(new URL(`../../public${asset.path}`, import.meta.url), "utf8");
       const root = /<svg\b[^>]*>/u.exec(svg)?.[0] ?? "";

@@ -564,7 +564,7 @@ export class GameModel {
       return job;
     }
     if (this.salvageable()) {
-      return this.label("salvage");
+      return "salvage";
     }
     const id = this.nearest();
     if (!id) {

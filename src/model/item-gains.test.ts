@@ -6,7 +6,7 @@ const BASE: GainSnapshot = {
   aboard: null,
   holodisks: 1,
   weapons: [
-    { ammo: null, id: "basic" },
+    { ammo: null, id: "laser" },
     { ammo: 40, id: "rapidMissile" },
   ],
 };

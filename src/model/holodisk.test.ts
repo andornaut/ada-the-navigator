@@ -9,7 +9,7 @@ import { ensureDestination, routeBlocked } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { shipTouches } from "./ship-body.ts";
-import type { GameState, SectorProgress } from "./types.ts";
+import type { SectorProgress } from "./types.ts";
 import { noLevels, shipTuning } from "./upgrades.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };

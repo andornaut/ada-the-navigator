@@ -3912,7 +3912,6 @@ export class PrototypeScene extends Scene {
     }
   }
 
-
   /**
    * A station in its galaxy's own art where it has some, its funded replacement swapped in (the
    * Loom hall), else the shared station's A/B blink; reduced motion holds frame 0. Stations draw

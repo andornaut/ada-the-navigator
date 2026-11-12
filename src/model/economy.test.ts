@@ -725,16 +725,16 @@ describe("tractor beam and pickup reach", () => {
     value.levels.tractor = 3;
     value.objects.push({
       hp: 1,
-      id: "upgrade",
+      id: "weapon",
       kind: "pickup",
       radius: 10,
-      upgrade: true,
+      weapon: "rapidMissile",
       // Past its 20 reach, within the level 3 tractor's 120, which pulls it in.
       x: 70,
       y: 0,
     });
-    const events = stepFlight(PROTOTYPE, 0.001, idle, value);
-    expect(events.some((event) => event.type === "upgradeCollected")).toBe(false);
+    stepFlight(PROTOTYPE, 0.001, idle, value);
+    expect(value.ownedWeapons).toEqual([]);
     expect(value.objects.find((object) => object.id === "weapon")!.x).toBeCloseTo(70 - 0.2, 6);
   });
 

@@ -16,8 +16,6 @@ import { enemyDefeated } from "./enemy-ai.ts";
 import { ACTIVE_CHUNK_RADIUS, encounterOf, persistentObject } from "./geography.ts";
 import { isLandmark } from "./landmarks.ts";
 import { validExplored } from "./map.ts";
-import { newProgress } from "./progress.ts";
-import { fundedProjects } from "./projects.ts";
 import { namesStation, stationById } from "./stations.ts";
 import type {
   AmmoCounts,
@@ -649,7 +647,6 @@ export function restoreSave(saved: unknown): GameState | null {
           "weaponSwitchFor",
         ].every((k) => nonnegative(f[k])) ||
         !ammoCounts(f.ammo) ||
-        !(f.dockId === null || typeof f.dockId === "string") ||
         (f.tow !== undefined && !vector(f.tow)) ||
         (f.calf !== undefined &&
           !(
