@@ -2797,6 +2797,10 @@ function stepEnemyBeams(
         !out.has(beam) && beam.age < BEAM_TIMING[beam.kind].fires + BEAM_TIMING[beam.kind].shows,
     ),
   );
+}
+
+/** Ages each ring burst emission until it has shown. */
+function stepRingEmissions(dt: number, flight: FlightState): void {
   const emissions = ringEmissions.get(flight);
   if (emissions) {
     emissions.forEach((emission) => (emission.age += dt));
@@ -3046,6 +3050,7 @@ export function stepFlight(
     const viewportWidth = input.viewportWidth ?? SCREEN.width;
     const threat = enemies(content, slice, viewportWidth, flight, events, shotDelays);
     stepEnemyBeams(content, slice, viewportWidth, flight);
+    stepRingEmissions(slice, flight);
     shots(content, slice, flight, events, shotDelays);
     stepMines(content, slice, flight);
     stepWrecks(content, slice, input.reducedMotion ?? false, flight);

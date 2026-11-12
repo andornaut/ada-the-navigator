@@ -440,6 +440,10 @@ describe("integrated combat", () => {
         9,
       );
     }
+    // The emission shows for 180 ms, then goes.
+    flight.objects = [];
+    stepFlight(PROTOTYPE, 0.2, idle, flight);
+    expect(activeRingEmissions(flight)).toEqual([]);
   });
 
   it("lays at most four mines, each bursting on Ada for 3 or fading after 20 seconds", () => {
