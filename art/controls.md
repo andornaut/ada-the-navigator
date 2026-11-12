@@ -406,17 +406,17 @@ and Gameplay's label: "+ {item}", "+ {weapon}", "+ {weapon} ammo",
 after a merged label. The label is `TYPE.label`,
 cream, with the "+" in the rim's accent colour.
 
-| Gain                           | Icon                                                                      | Rim and "+"                                      | Lands on                      |
-| ------------------------------ | ------------------------------------------------------------------------- | ------------------------------------------------ | ----------------------------- |
-| Job, story or lost item        | `icon-cargo-20`                                                           | `#feae34`                                        | The pill's cargo segment      |
-| Towed craft                    | `icon-tow-20`                                                             | `#b8bfc9`                                        | The pill's cargo segment      |
-| New weapon, or a weapon's ammo | `weapon-<id>.svg`, a cream `#ead4aa` mask                                 | `#bfa06f`                                        | That weapon's disc            |
-| Holodisk                       | `icon-holodisk-20`                                                        | `#e868c8`                                        | Nothing: it fades in place    |
-| Weapon level                   | `icon-shop-weapon-<id>` (Laser: `icon-shop-weapon-basic`), frame `normal` | The level's tier: `#ff8f1f` at 2, `#a66bff` at 3 | That weapon's disc            |
-| Shield level                   | `icon-shop-shield`, frame `normal`                                        | The level's tier                                 | The shield pill's shield icon |
-| Engine level                   | `icon-shop-engine-tuning`, frame `normal`                                 | The level's tier                                 | Nothing: it fades in place    |
-| Tractor beam level             | `icon-shop-tractor-beam`, frame `normal`                                  | The level's tier                                 | Nothing: it fades in place    |
-| Paint scheme                   | `icon-shop-ship-paint`, frame `normal`                                    | The scheme's `top` (`ship-paint.json`)           | Nothing: it fades in place    |
+| Gain                           | Icon                                                                             | Rim and "+"                                      | Lands on                      |
+| ------------------------------ | -------------------------------------------------------------------------------- | ------------------------------------------------ | ----------------------------- |
+| Job, story or lost item        | `icon-cargo-20`                                                                  | `#feae34`                                        | The pill's cargo segment      |
+| Towed craft                    | `icon-tow-20`                                                                    | `#b8bfc9`                                        | The pill's cargo segment      |
+| New weapon, or a weapon's ammo | `weapon-<id>.svg`, a cream `#ead4aa` mask                                        | `#bfa06f`                                        | That weapon's disc            |
+| Holodisk                       | `icon-holodisk-20`                                                               | `#e868c8`                                        | Nothing: it fades in place    |
+| Weapon level                   | `icon-shop-weapon-<id>` (`icon-shop-weapon-laser` for the Laser), frame `normal` | The level's tier: `#ff8f1f` at 2, `#a66bff` at 3 | That weapon's disc            |
+| Shield level                   | `icon-shop-shield`, frame `normal`                                               | The level's tier                                 | The shield pill's shield icon |
+| Engine level                   | `icon-shop-engine-tuning`, frame `normal`                                        | The level's tier                                 | Nothing: it fades in place    |
+| Tractor beam level             | `icon-shop-tractor-beam`, frame `normal`                                         | The level's tier                                 | Nothing: it fades in place    |
+| Paint scheme                   | `icon-shop-ship-paint`, frame `normal`                                           | The scheme's `top` (`ship-paint.json`)           | Nothing: it fades in place    |
 
 The accents are the job orange and tow steel of the cargo icons, the selected
 weapon disc's gold and the holodisk's pink. A level reached by an upgrade drop
