@@ -62,7 +62,6 @@ import {
 } from "../model/story-ships.ts";
 import type { FlightInput, FlightState, SpaceObject, Vec } from "../model/types.ts";
 import {
-  beginStartUpdateVisit,
   coverStartScreen,
   exitGame,
   exitShown,
@@ -1937,14 +1936,11 @@ export class PrototypeScene extends Scene {
       }),
     });
     this.station.setOpen(state.mode === "space" && Boolean(state.docked));
-    // Each arrival at the start screen begins an update visit.
+    // Each arrival at the start screen shows the offer there, which checks for a new version.
     const screen = this.model.screen;
     const start = screen === "start";
     if (start !== this.startShown) {
       this.startShown = start;
-      if (start) {
-        beginStartUpdateVisit();
-      }
       startScreenShown(start);
     }
     // Play keeps the screen on; the start screen and the Paused card let it sleep.

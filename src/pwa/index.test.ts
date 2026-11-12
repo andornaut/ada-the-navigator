@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const offline = vi.hoisted(() => {
   const flow = {
     accept: vi.fn(),
-    beginOfferVisit: vi.fn(),
     dismissOffer: vi.fn(),
     requireNewer: vi.fn(),
     setOfferVisible: vi.fn(),
@@ -133,9 +132,7 @@ describe("offline play", () => {
       onUpdateShown: (shown: boolean) => void;
     };
     const { flow } = offline.play;
-    pwa.beginStartUpdateVisit();
     pwa.startScreenShown(true);
-    expect(flow.beginOfferVisit).toHaveBeenCalledOnce();
     expect(flow.setOfferVisible).toHaveBeenLastCalledWith(true);
     pwa.coverStartScreen("settings", true);
     expect(flow.setOfferVisible).toHaveBeenLastCalledWith(false);

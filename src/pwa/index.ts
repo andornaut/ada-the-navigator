@@ -284,11 +284,6 @@ export function stepsKind(): InstallStepsKind {
   return installFlow().stepsKind;
 }
 
-// A new start-screen visit, as the start screen appears: a deferred offer may show again.
-export function beginStartUpdateVisit(): void {
-  offlinePlay?.flow.beginOfferVisit();
-}
-
 // Whether the start screen shows; the update offer appears only there.
 export function startScreenShown(shown: boolean): void {
   startScreen?.shown(shown);
