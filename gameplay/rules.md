@@ -657,7 +657,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - Weapon order (Laser, Multi-Laser, Rapid Missile, Heavy Missile, Scattershot,
   Phaser) is also the order of power and rarity: each later weapon costs more,
   drops less often, gets fewer seconds of fire per ammo pack and deals at least
-  as much single-target damage per second at level 1 (Laser 3.6, Multi-Laser 3.3
+  as much single-target damage per second at level 1 (Laser 3.3, Multi-Laser 3.3
   per bolt with 3 bolts, Rapid Missile 5, Heavy Missile 5, Scattershot 6.0 with
   every dot hitting, Phaser 6.5). Slower weapons deal more damage per hit. The
   later weapons are situational, each with a limit that offsets its damage:
@@ -677,11 +677,12 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   those steps on its own; range, blast and spread growth add to them. The
   shield's capacity is 10, 15 and 20, so level 3 holds 2 times level 1. Each
   weapon grows along its own dimensions:
-  - Laser: damage, fire rate and bolt speed.
+  - Laser: damage, fire rate and bolt speed: every 0.30, 0.25, 0.20 s, dealing 1,
+    1.25 and 1.5 times Laser damage.
   - Multi-Laser: a fan of bolts evenly spaced across a fixed 40 degrees, 3 at
     level 1 (-20, 0 and 20 degrees), then 4, then 5, with a small damage rise to reach the level step. Its bolts are slower than Laser's at the same level.
   - Rapid Missile: quick straight missiles with a small blast (25) and a fixed
-    1.5 times Laser damage; levels grow its fire rate (every 0.30, 0.25, 0.20 s)
+    2.5 times Laser damage; levels grow its fire rate (every 0.50, 0.42, 0.33 s)
     and missile speed.
   - Heavy Missile: one slow straight missile with a large blast; levels shorten
     its interval (2.0, 1.67, 1.33 s) and grow its damage (10, 12.5, 15 times
