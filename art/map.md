@@ -282,9 +282,8 @@ The 439.9 width is "Take food from the growers to the workshop." in a button.
 
 Every place carries a symbol key (`MapPlace.symbol`, the table below), the
 holodisk waypoint included; `src/model/map.test.ts` covers every key and its
-type line. Each place but a job's own spot is a round chip: a `chip` disc in
-the symbol's face colour with a 1 ink edge inside it, and the symbol's 20 glyph
-in ink, centred. Ada is her arrow. The objective carries the flight's direction
+type line. Each place is a round chip: a `chip` disc in the symbol's face
+colour with a 1 ink edge inside it, and the symbol's 20 glyph in ink, centred. Ada is her arrow. The objective carries the flight's direction
 indicator.
 
 | Token                         | Value | Rule                                                                 |
@@ -313,16 +312,20 @@ indicator.
 | `nebula`      | A nebula landmark           | `#EAD4AA` | `map-nebula.svg`      | Nebula      |
 | `wreck`       | A wreck landmark            | `#EAD4AA` | `map-wreck.svg`       | Wreck       |
 | `beacon`      | A beacon landmark           | `#EAD4AA` | `map-beacon.svg`      | Beacon      |
-| `job`         | A held job's own spot       | `#FEAE34` | None                  | None        |
+| `job`         | A held job's own spot       | `#FEAE34` | `map-job-<type>.svg`  | None        |
 
 - Faces are the in-world key colours: lavender `pointOfInterest` for
   stations, each outpost's own colour, mint `active` for destinations, the
   holodisk's pink; landmarks share cream, so their glyph tells them apart.
-- Job marks: the current marks from main's jobs code, which Art's job board
-  art will replace. The held job's target keeps its own symbol and glyph on an
-  orange `#FEAE34` face (`MAP_JOB_FACE`). A job's own spot, a target that is
-  no other place, takes the `job` symbol: an orange diamond, the chip square
-  rotated 45 degrees at 0.78 scale, with the ink edge and no glyph.
+- Job marks, one cue for every held job: the job-orange `#FEAE34` face
+  (`MAP_JOB_FACE`). A held job's target that is another place (a survey's
+  landmark, a delivery's station or outpost) keeps its own symbol and glyph on
+  the orange face. A job's own spot, a target that is no other place (a
+  rescue's stranded craft, a hunt's search area centre), takes the `job`
+  symbol: the round chip on the orange face with its job type's glyph,
+  `map-job-survey`, `map-job-delivery`, `map-job-rescue` or `map-job-hunt`
+  (the board row's [job icons](shop-icons.md#job-icons)). A hunt also draws its
+  [search area](#search-area).
 - Selected: the selection ring around the chip. Focus-visible: the shared
   focus ring, `FOCUS_RING.outset` outside the face and round with it; the two
   may overlap.
@@ -340,35 +343,63 @@ indicator.
   `atan2((fx + fy) / 2, fx - fy)`.
 - Ada is not a press target.
 
-Draw order, bottom to top: field, fog, landmark chips, other chips, the
+Draw order, bottom to top: field, fog, the search area, landmark chips, other chips, the
 objective indicator, the selected chip and its ring, Ada, then the header,
 tools and panel. Within a layer, later places in the map's order draw on top.
 
 ### Glyphs
 
-Thirteen 20 x 20 pixel grids in `art/tools/map-icons.ts`, written as one path of
+Seventeen 20 x 20 pixel grids in `art/tools/map-icons.ts`, written as one path of
 whole-pixel runs each, like the [weapon icons](weapon-icons.md). The tool
 fails if a symbol pixel reaches past the chip's 13 face radius. The fill is
 each file's default colour only (ink for symbols, cream for tools); the
 runtime draws every glyph as a CSS mask in its state colour, with smooth
 sampling, so it stays sharp at fractional scales. Every SVG is decorative
-(`aria-hidden="true"`). Rebuild with `node art/tools/map-icons.ts`.
+(`aria-hidden="true"`). The four `map-job-*` grids are the job board's row
+icons, shared from `art/tools/job-glyphs.ts`. Rebuild with
+`node art/tools/map-icons.ts`.
 
-| SVG                   | Glyph                                          | SHA-256                                                            |
-| --------------------- | ---------------------------------------------- | ------------------------------------------------------------------ |
-| `map-station.svg`     | Mast and dome over an elliptical ring          | `c2a127db459dc3ee1d48a4b8a6560ac59b41c35921d4f345fca0cc1e941c6bb1` |
-| `map-growers.svg`     | Sunflower head: an 8 disc in eight petals      | `39afebe5011328317255fefb81f6a1f2ad869d4ef3514aeb034e78f208e9eb6a` |
-| `map-workshop.svg`    | Wrench on the diagonal, jaw to the top right   | `8128bbfe49ad653c57a232531f9418068704f52920c8f4a37e5f8c245c7d152c` |
-| `map-salvagers.svg`   | Electromagnet: horseshoe with gapped pole tips | `cb6121dfddb4782d78fd18f61cb550fb31243736fdc5f57717b988dd9af00ba8` |
-| `map-destination.svg` | Swallowtail flag on a footed pole              | `9869982e9c42b3d88bc60e10c09fc75ef02b01253d6d5084b37b6474d2c4a922` |
-| `map-holodisk.svg`    | Disc band around a spindle hole                | `8d40d73ea39fb43e51db27fe34a7596714b12f2e331654067313906ed3e15fd6` |
-| `map-nebula.svg`      | Cloud with two stars                           | `ea5ba9ecbcb0e0ba937cf9881b8658fb2c3d7505ca69b2708ad2951824b38594` |
-| `map-wreck.svg`       | Hull split in two with debris                  | `ce77a498d883397da78ab728e2aa8b0745744857738b2d6131bff19e3624519c` |
-| `map-beacon.svg`      | Mast with a lamp and two pairs of signal arcs  | `3666df581a95d05be737af27b8b327fd9a8b386af3c1e0591bce9b21b4e04810` |
-| `map-close.svg`       | X, 2 to 3 px strokes                           | `dfa06d6c874628b4d8234d834349f9d084329bf797483a8941cb8743a3858835` |
-| `map-zoom-in.svg`     | Plus, 14 long, 2 thick                         | `2941643dfb9821cddf4f9211799ce06a831d4f734dee00b761525faed2185d49` |
-| `map-zoom-out.svg`    | Minus, 14 long, 2 thick                        | `4f12cd67b7dec154e9b555609d22d9a5e92fe74b55f26b70ce64bf7c239fe2c7` |
-| `map-recentre.svg`    | Crosshair: ring, centre dot and four ticks     | `e37051fd500afbb0613a0844f27e96f69011dfcb283e6554ea4fc23c21c723e4` |
+### Search area
+
+A held hunt's search area, the circle Gameplay marks around the lost item
+(`gameplay/quests.md`, 900 world units in radius), draws on the Map around the
+hunt's own chip, from `mapArea` in [jobs.json](../public/art/jobs.json).
+
+| Token               | Value   | Rule                                                                       |
+| ------------------- | ------- | -------------------------------------------------------------------------- |
+| Shape               | Ellipse | The world circle projected: `rx = radius * sqrt(2) * scale`, `ry = rx / 2` |
+| `mapArea.width`     | 2       | Job-orange `#FEAE34` dash                                                  |
+| `mapArea.ink`       | 4       | Ink `#181425` dash under it on the same path, on every field               |
+| `mapArea.dash`      | 6, 4    | On, off, in logical px along the path; butt caps                           |
+| `mapArea.minRadius` | 19      | Hidden while `rx` is under the selection ring's outer radius               |
+
+- It draws over the fog and under every chip, so the hunt's chip and its
+  selection ring sit on top. At `maxScale` it is about 51 x 25 at the phone
+  view; at `minScale` (rx about 8.5) it hides and the chip alone marks the
+  hunt.
+- It takes no press: the hunt's chip is the place.
+- The search area is always explored: the hunt's own spot is a discovered
+  place, so the fog reveals 1500 world units around it, past the 900 radius.
+
+| SVG                    | Glyph                                          | SHA-256                                                            |
+| ---------------------- | ---------------------------------------------- | ------------------------------------------------------------------ |
+| `map-station.svg`      | Mast and dome over an elliptical ring          | `c2a127db459dc3ee1d48a4b8a6560ac59b41c35921d4f345fca0cc1e941c6bb1` |
+| `map-growers.svg`      | Sunflower head: an 8 disc in eight petals      | `39afebe5011328317255fefb81f6a1f2ad869d4ef3514aeb034e78f208e9eb6a` |
+| `map-workshop.svg`     | Wrench on the diagonal, jaw to the top right   | `8128bbfe49ad653c57a232531f9418068704f52920c8f4a37e5f8c245c7d152c` |
+| `map-salvagers.svg`    | Electromagnet: horseshoe with gapped pole tips | `cb6121dfddb4782d78fd18f61cb550fb31243736fdc5f57717b988dd9af00ba8` |
+| `map-destination.svg`  | Swallowtail flag on a footed pole              | `9869982e9c42b3d88bc60e10c09fc75ef02b01253d6d5084b37b6474d2c4a922` |
+| `map-holodisk.svg`     | Disc band around a spindle hole                | `8d40d73ea39fb43e51db27fe34a7596714b12f2e331654067313906ed3e15fd6` |
+| `map-nebula.svg`       | Cloud with two stars                           | `ea5ba9ecbcb0e0ba937cf9881b8658fb2c3d7505ca69b2708ad2951824b38594` |
+| `map-wreck.svg`        | Hull split in two with debris                  | `ce77a498d883397da78ab728e2aa8b0745744857738b2d6131bff19e3624519c` |
+| `map-beacon.svg`       | Mast with a lamp and two pairs of signal arcs  | `3666df581a95d05be737af27b8b327fd9a8b386af3c1e0591bce9b21b4e04810` |
+| `map-job-survey.svg`   | Folded chart, middle panel raised, X knockout  | `96af3a92c85b64992f8366d56ac8acd62c95aa6c99748b29111f67aa7f8518d8` |
+| `map-job-delivery.svg` | Parcel: lid over the box, knocked-out label    | `87af099b17421f9bfc05899288bab445c7eae71f86add2a46e087254f070431e` |
+| `map-job-rescue.svg`   | Tow hook hanging from its eye                  | `e5806879887e1ecd1c974f45a1f13de756548e4c43e50aadbc69340f8a9a5910` |
+| `map-job-hunt.svg`     | Magnifier with a glint in the lens             | `87b6a33ba4f42714c233f7e7eeaf67ba924a7de70c44ce024a1b3fd8e83d22d0` |
+| `map-close.svg`        | X, 2 to 3 px strokes                           | `dfa06d6c874628b4d8234d834349f9d084329bf797483a8941cb8743a3858835` |
+| `map-zoom-in.svg`      | Plus, 14 long, 2 thick                         | `2941643dfb9821cddf4f9211799ce06a831d4f734dee00b761525faed2185d49` |
+| `map-zoom-out.svg`     | Minus, 14 long, 2 thick                        | `4f12cd67b7dec154e9b555609d22d9a5e92fe74b55f26b70ce64bf7c239fe2c7` |
+| `map-recentre.svg`     | Crosshair: ring, centre dot and four ticks     | `e37051fd500afbb0613a0844f27e96f69011dfcb283e6554ea4fc23c21c723e4` |
 
 ### Contrast per field
 
@@ -386,6 +417,7 @@ farm-yellow field `#D8C994`; the others are dark.
 | Holodisk face             | `#E868C8` | 1.75                | 5.09                | 4.99                | 5.98                |
 | Landmark face             | `#EAD4AA` | 1.14                | 10.19               | 9.99                | 11.97               |
 | Job face                  | `#FEAE34` | 1.12                | 7.96                | 7.80                | 9.34                |
+| Search area dash          | `#FEAE34` | 1.12                | 7.96                | 7.80                | 9.34                |
 | Ada hull                  | `#ffffff` | 1.65                | 14.77               | 14.47               | 17.34               |
 | Objective stroke          | `#C4AFCC` | 1.22                | 7.28                | 7.13                | 8.55                |
 | Ring band                 | `#ead4aa` | 1.14                | 10.19               | 9.99                | 11.97               |
@@ -399,6 +431,8 @@ farm-yellow field `#D8C994`; the others are dark.
   or more) and the ink parts are outlines. Every mark draws its ink parts on
   every field, so a mark has one look across galaxies; a map mark with no ink
   edge is not allowed.
+- The search area's ink dash carries it on Sunflower, 10.89:1 on the field and
+  8.62:1 on the fog; its orange dash carries it on the dark fields.
 - Glyphs are ink on the face: 6.21:1 (holodisk) to 12.43:1 (landmarks);
   9.71:1 on the job face.
 - Tool glyphs on the navy disc: supporting 6.83:1, cream 9.59:1, as in flight.
@@ -415,7 +449,8 @@ farm-yellow field `#D8C994`; the others are dark.
 
 Unexplored space is fog: one flat colour over the field, with a feathered edge
 around what Ada has explored. It draws directly over the field, under every
-symbol and the chrome.
+symbol, the [search area](#search-area) and the chrome. A held job's own spot is a
+discovered place for the reveal, so a hunt's search area is never fogged.
 
 | Token                       | Value | Rule                                                                             |
 | --------------------------- | ----- | -------------------------------------------------------------------------------- |
@@ -553,7 +588,7 @@ presses first; a chip under them takes no press there.
 | Travel place selected | Selection ring on the chip                      | Chip, name, type line, Travel here (primary)                                    |
 | Other place selected  | Selection ring on the landmark or holodisk chip | Chip, name, type line; no action                                                |
 | Job target selected   | Selection ring on the orange-faced chip         | Row grows to 68: name, type line, "Job: {objective}"; Travel here where offered |
-| Job spot selected     | Selection ring on the orange diamond            | Diamond and the job's name; no action                                           |
+| Job spot selected     | Selection ring on the orange job chip           | Job chip and the job's name; no action                                          |
 | In danger             | Return to Earth unavailable                     | Travel here unavailable, "Unavailable while you are in danger."                 |
 | Towing                | Return to Earth available                       | Travel here unavailable, "Unavailable while towing."                            |
 | Quests open           | Under the modal dim                             | Under the modal dim                                                             |

@@ -34,6 +34,24 @@ The focus sheet `ui-focus` is a 16x16 nine-slice with 4px margins: a 1px ink
 fringe, a 2px cream band and a 1px ink fringe. HTML pages draw the same ring with
 a 2px cream outline at 1px offset over 1px and 4px ink shadows.
 
+## Compact row action
+
+A tile row's action at its right end, drawn inside the row: the row stays one
+control, so no button gap applies between the action and the row (the Install
+row's compact action is the same part). Job rows use it for Accept and Drop.
+
+| Rule      | Value                                                                                                       |
+| --------- | ----------------------------------------------------------------------------------------------------------- |
+| Geometry  | `TEXT_BUTTON.compactHeight` 28: a 24 face over the 4 lip; 72 wide, or the label plus 8 px insets when wider |
+| Sheets    | `ui-button-primary` for the row's one action, `ui-button` for Drop; nine-slice 2/4/2/6                      |
+| Label     | `TYPE.label`, ink `#181425`, its 20 line box centred on the 24 face (2 above)                               |
+| Pressed   | Follows the row: the row's press sinks the whole row, the action included; it has no press of its own       |
+| Disabled  | In a busy row: the disabled frame, flat over the full 28, the label in row disabled `#a6a2b8`, centred at 4 |
+| Placement | `SPACING.gap` right of the reward pill, at the row's right inset, centred on the row's face                 |
+
+Accept ink is 7.26:1 on the primary face and Drop ink 5.95:1 on the secondary
+face; the faces are 3.84:1 and 3.15:1 against the `#46425e` tile.
+
 ## Cards and modals
 
 Every modal uses the content-fitted card in
@@ -128,6 +146,14 @@ Runtime text is drawn by the game, never baked into sprites.
 | Primary label   | `#181425` | `TYPE.label`   | `#bfa06f` | 7.27:1   |
 | Secondary label | `#181425` | `TYPE.label`   | `#9690b4` | 5.96:1   |
 | Disabled label  | `#9a96ad` | `TYPE.label`   | `#2f2d3d` | 4.69:1   |
+| Row supporting  | `#c0bbd0` | `TYPE.body`    | `#46425e` | 5.11:1   |
+| Row disabled    | `#a6a2b8` | Any            | `#2f2d3d` | 5.42:1   |
+
+Tile rows (shop items, ammunition, projects and jobs) draw their second line
+and Owned in row supporting, on the `#46425e` tile face, and every text of an
+unaffordable or busy row in row disabled, on the flat `#2f2d3d` face, so row
+text is 5:1 or more. Glyphs keep their `disabled` frames (`#9a96ad`, marks at
+3:1 or more).
 
 Labels meet 4.5:1 and essential marks 3:1. Card icons, the close X and the focus
 ring are 7.76:1 on the card; the focus ring is 10.11:1 on the page background

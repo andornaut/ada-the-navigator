@@ -93,6 +93,10 @@ const LIGHT_FIELD = {
     "station",
     "holodisk",
     "weaponPickup",
+    "wreck",
+    "beacon",
+    "nebulaStars",
+    "huntGlint",
   ],
   effects: ["missile", "blastRing", "blastFlash", "hitSpark", "destructionShards"],
   // The status pill's 1 px ink outlines, as on the +N tick.

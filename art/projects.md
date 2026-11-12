@@ -18,13 +18,13 @@ every tab.
 
 ### Project row
 
-| Part          | Art                                                                                    |
-| ------------- | -------------------------------------------------------------------------------------- |
-| Well and icon | The 36 item well with the project's 20x20 `icon-project-*` glyph at 8                  |
-| Name          | The project name, cream                                                                |
-| Second line   | Supporting text: the effect line, or `projectProgress` ("{paid} of {price}") once paid |
-| Price pill    | The item row's pill with what remains: `price - paid`                                  |
-| Funded        | `icon-shop-check` and `projectFunded` ("Funded") in supporting text, like Owned        |
+| Part          | Art                                                                                             |
+| ------------- | ----------------------------------------------------------------------------------------------- |
+| Well and icon | The 36 item well with the project's 20x20 `icon-project-*` glyph at 8                           |
+| Name          | The project name, cream                                                                         |
+| Second line   | Row supporting `#c0bbd0`: the effect line, or `projectProgress` ("{paid} of {price}") once paid |
+| Price pill    | The item row's pill with what remains: `price - paid`                                           |
+| Funded        | `icon-shop-check` and `projectFunded` ("Funded") in row supporting, like Owned                  |
 
 Row states:
 
@@ -34,7 +34,8 @@ Row states:
   what remains. Activating opens the donation confirm.
 - **Unaffordable**: Gameplay's donation rule refuses at the current balance.
   The unaffordable shop row: the tile's disabled frame, well `#2f2d3d`, glyph
-  frame 1 (`#9a96ad`), name, second line and price in `#9a96ad`. It stays
+  frame 1 (`#9a96ad`), name, second line and price in row disabled
+  `#a6a2b8`. It stays
   focusable; activation plays the [refusal cue](controls.md#refusal-cue) on the
   name and price.
 - **Funded**: the check and Funded, the effect line on the second line.

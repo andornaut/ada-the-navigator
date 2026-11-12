@@ -1,6 +1,8 @@
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
+import { JOB_GLYPHS } from "./job-glyphs.ts";
+
 // Map glyphs on the 20 px grid: "#" is an opaque pixel, "." is clear. One grid per map symbol
 // and map tool writes its mask SVG (public/art/ui/icons/map-<id>.svg). Symbols draw in ink on
 // their chip's face and tools in their HUD_BUTTON state colour (art/map.md); the fill below is
@@ -357,7 +359,13 @@ function check(id: string, rows: readonly string[]): void {
   }
 }
 
-for (const [id, rows] of Object.entries(SYMBOLS)) {
+// A held job's own spot (a rescue's craft, a hunt's search area) carries its job type's glyph,
+// the board row's grid (art/tools/job-glyphs.ts), as map-job-<type>.
+const JOB_SYMBOLS = Object.fromEntries(
+  Object.entries(JOB_GLYPHS).map(([type, rows]) => [`job-${type}`, rows]),
+);
+
+for (const [id, rows] of Object.entries({ ...SYMBOLS, ...JOB_SYMBOLS })) {
   check(id, rows);
   if (reach(rows) > FACE_RADIUS) {
     throw new Error(`${id}: a pixel reaches ${reach(rows).toFixed(2)} past the chip face`);

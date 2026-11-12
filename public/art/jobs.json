@@ -1,0 +1,102 @@
+{
+  "version": 1,
+  "landmarks": {
+    "nebula": {
+      "layers": [
+        {
+          "id": "landmark-nebula-outer",
+          "tint": "nebulaOuter"
+        },
+        {
+          "id": "landmark-nebula-core",
+          "tint": "nebulaCore"
+        },
+        {
+          "id": "landmark-nebula-stars",
+          "keyline": "nebulaStars"
+        }
+      ]
+    },
+    "wreck": {
+      "layers": [
+        {
+          "id": "landmark-wreck",
+          "keyline": "wreck"
+        }
+      ]
+    },
+    "beacon": {
+      "frames": ["landmark-beacon-a", "landmark-beacon-b"],
+      "frameMs": 700,
+      "reducedMotion": "landmark-beacon-a",
+      "keyline": "beacon"
+    }
+  },
+  "tintRule": {
+    "dark": {
+      "toward": "pointOfInterest",
+      "core": 0.34,
+      "outer": 0.16
+    },
+    "light": {
+      "toward": "ink",
+      "core": 0.18,
+      "outer": 0
+    }
+  },
+  "tints": {
+    "base": {
+      "nebulaCore": "#6d6578",
+      "nebulaOuter": "#555161"
+    },
+    "sunflower": {
+      "nebulaCore": "#9d9068",
+      "nebulaOuter": "#baab77"
+    },
+    "cartwheel": {
+      "nebulaCore": "#796269",
+      "nebulaOuter": "#644d4e"
+    },
+    "whirlpool": {
+      "nebulaCore": "#5f6a78",
+      "nebulaOuter": "#435760"
+    },
+    "black-eye": {
+      "nebulaCore": "#6c586c",
+      "nebulaOuter": "#544052"
+    }
+  },
+  "searchArea": {
+    "colour": "pointOfInterest",
+    "width": 2,
+    "alpha": 0.8,
+    "dash": [12, 8],
+    "lightInk": {
+      "width": 4,
+      "alpha": 0.8
+    }
+  },
+  "mapArea": {
+    "colour": "#feae34",
+    "width": 2,
+    "ink": 4,
+    "dash": [6, 4],
+    "minRadius": 19
+  },
+  "glint": {
+    "id": "hunt-glint",
+    "keyline": "huntGlint",
+    "reducedMotion": "rest",
+    "ping": {
+      "colour": "pointOfInterest",
+      "width": 1,
+      "lightInk": 3,
+      "from": 8,
+      "to": 28,
+      "aspect": 0.5,
+      "ms": 1200,
+      "alpha": [0.9, 0],
+      "reducedMotion": false
+    }
+  }
+}

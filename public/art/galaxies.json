@@ -38,7 +38,11 @@
       "outpost",
       "station",
       "holodisk",
-      "weaponPickup"
+      "weaponPickup",
+      "wreck",
+      "beacon",
+      "nebulaStars",
+      "huntGlint"
     ],
     "effects": ["missile", "blastRing", "blastFlash", "hitSpark", "destructionShards"],
     "hudOutline": {

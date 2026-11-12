@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="380" height="180" viewBox="0 0 380 180">
+  <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="7" /></filter>
+  <g fill="#ffffff" filter="url(#soft)">
+    <ellipse cx="180" cy="92" rx="56" ry="22" transform="rotate(-6.875 180 92)" />
+    <ellipse cx="236" cy="82" rx="34" ry="16" transform="rotate(-6.875 236 82)" />
+  </g>
+</svg>

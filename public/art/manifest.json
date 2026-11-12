@@ -4286,6 +4286,128 @@
       ]
     },
     {
+      "id": "landmark-nebula-outer",
+      "path": "/art/landmarks/nebula-outer.svg",
+      "width": 380,
+      "height": 180,
+      "displayWidth": 380,
+      "displayHeight": 180,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "id": "landmark-nebula-core",
+      "path": "/art/landmarks/nebula-core.svg",
+      "width": 380,
+      "height": 180,
+      "displayWidth": 380,
+      "displayHeight": 180,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "id": "landmark-nebula-stars",
+      "path": "/art/landmarks/nebula-stars.svg",
+      "width": 380,
+      "height": 180,
+      "displayWidth": 380,
+      "displayHeight": 180,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "id": "landmark-wreck",
+      "path": "/art/landmarks/wreck.svg",
+      "width": 140,
+      "height": 84,
+      "displayWidth": 140,
+      "displayHeight": 84,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "id": "landmark-beacon-a",
+      "path": "/art/landmarks/beacon-a.svg",
+      "width": 45,
+      "height": 60,
+      "displayWidth": 45,
+      "displayHeight": 60,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.825
+      },
+      "frameMs": 700
+    },
+    {
+      "id": "landmark-beacon-b",
+      "path": "/art/landmarks/beacon-b.svg",
+      "width": 45,
+      "height": 60,
+      "displayWidth": 45,
+      "displayHeight": 60,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.825
+      },
+      "frameMs": 700
+    },
+    {
+      "id": "hunt-glint",
+      "path": "/art/hunt-glint.png",
+      "width": 60,
+      "height": 15,
+      "displayWidth": 15,
+      "displayHeight": 15,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 15,
+      "frameHeight": 15,
+      "frames": {
+        "rest": 0,
+        "glint1": 1,
+        "glint2": 2
+      },
+      "loop": [
+        {
+          "frame": 0,
+          "name": "rest",
+          "ms": 420
+        },
+        {
+          "frame": 1,
+          "name": "glint1",
+          "ms": 60
+        },
+        {
+          "frame": 2,
+          "name": "glint2",
+          "ms": 80
+        },
+        {
+          "frame": 3,
+          "name": "glint1",
+          "ms": 60
+        }
+      ]
+    },
+    {
       "id": "enemy-swarm-0",
       "path": "/art/enemies/swarm-0.svg",
       "width": 80,
@@ -16337,5 +16459,6 @@
   "storyOvernight": "/art/story-overnight.json",
   "resourceRocks": "/art/resource-rocks.json",
   "tow": "/art/cartwheel/tow.json",
-  "titleScreen": "/art/title-screen.json"
+  "titleScreen": "/art/title-screen.json",
+  "jobs": "/art/jobs.json"
 }

@@ -22,6 +22,8 @@ its [garnet drones](andromeda.md#garnet-drones) and [backdrop haze](galaxies.md#
 [Needle](needle.md)'s Weavers' station, ring gates, channels, the Eye, Elder
 Loom's glider and portrait and the crimson drones, character portraits, and the
 [storybook](storybook.md) Earth backgrounds with Ada's and her family's storybook sprites.
+The station jobs have [job art in space](jobs.md) (landmarks, the search area
+and the lost item's glint), the job board's row icons and Map marks.
 [Community projects](projects.md) add the Projects shop tab and the world
 changes that funding them shows. [Galaxies](galaxies.md) retint the space field per galaxy. Other space objects
 use simple runtime shapes with the [space palette](space-palette.md): muted
@@ -74,7 +76,8 @@ Channel lights, Elder Loom's glider and portrait, the crimson drones and the
 `needleGates`, `needleChannels`, `needleEye` and `needleBand` links.
 Sunflower, Whirlpool and Cartwheel each also hold their cast's portraits;
 General Gadget's and Grandma's are in core. The station, discovery cache, coral
-family, ore nugget and `tow` serve every galaxy and stay in core, as do the
+family, ore nugget, `tow`, the landmarks, the lost item's glint and `jobs` serve every
+galaxy and stay in core, as do the
 miner, the whale, the smaller adult and Pip's mail scooter, which the Black Eye
 finale also draws. Core entries keep their files' paths, so a galaxy's art
 stays in its folder wherever its entries are listed.

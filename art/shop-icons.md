@@ -40,6 +40,27 @@ and each ammunition sheet the same grid as its
 chevron is the generic upgrade glyph, for any place that names upgrades without
 a weapon.
 
+## Job icons
+
+The [job board](shop.md#job-board) rows' glyphs, one per Gameplay job type,
+cream on the navy well and `#9a96ad` in busy rows. Each grid is also the Map's
+job glyph, `map-job-<type>.svg`, ink on the job-orange chip
+([Map](map.md#symbols)), as each weapon glyph serves the HUD and the shop.
+
+| Job type       | Sheet               | Glyph                                                     |
+| -------------- | ------------------- | --------------------------------------------------------- |
+| Survey         | `icon-job-survey`   | A folded chart, its middle panel raised, an X knocked out |
+| Delivery       | `icon-job-delivery` | A parcel: a lid over the box with a knocked-out label     |
+| Rescue and tow | `icon-job-rescue`   | A tow hook hanging from its eye                           |
+| Lost-item hunt | `icon-job-hunt`     | A magnifier with a glint in the lens                      |
+
+The grids are in `art/tools/job-glyphs.ts`, every pixel inside the Map chip's
+13 px face (reach 9.49 to 11.40). `art/tools/job-icons.ts` writes the sheets
+with tags `normal` (frame 0, cream) and `disabled` (frame 1, `#9a96ad`) and
+registers them in the UI subset manifest; rebuild with
+`node art/tools/job-icons.ts`, and the Map masks with
+`node art/tools/map-icons.ts`.
+
 ## Upgrade composite
 
 A weapon upgrade row draws the weapon's 20px glyph at (0, 4) of a 24x24 box and
@@ -78,6 +99,10 @@ run Prettier on the written JSON.
 | `icon-shop-ammo-energy.png`         | `3d1cda8ba36de4069bf310b662b9276880372f287b165cc741215089f19fff9a` |
 | `icon-shop-ammo-missile.png`        | `b2830979f4bec10fe08e2df534ed3fd5097242e72f84ce4989cb1f4fdfcb15d4` |
 | `icon-shop-ammo-shell.png`          | `b6e9725afc78907e5a68e4e22f9c44e326aaa927f90ab8ca1c48b45750bdf93a` |
+| `icon-job-delivery.png`             | `ecc66fad164c64485072eec6f73603bd57f48740d3f61b1a0db71dc4928d3d2d` |
+| `icon-job-hunt.png`                 | `d9cbae46f8cfff4f8c5e9740e6b3a4c0166eff8eb93d7d26f5e06ba0238bfe5c` |
+| `icon-job-rescue.png`               | `25dfc9bd8ddb14ef307f0deef93e2f234e9373f5ffbcfa77b5c8d4dbada00404` |
+| `icon-job-survey.png`               | `a64d28393eeaf585a2713663f4e5b51ef298224eda159b6d7566152acc3af334` |
 | `icon-project-current-buoys.png`    | `5506bbcad2512bfde4a81aff6de192c0323362489c7328d38a94affbbf60f5ef` |
 | `icon-project-docking-bay.png`      | `e095d8686977f4106b3c0ad2411463f69f882db4a5b232229226d6782cd049f7` |
 | `icon-project-greenhouse-ring.png`  | `ba3f3a641b967036222e6b50524be3565e5d62abe5e3d7244bf5662148436542` |

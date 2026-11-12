@@ -67,6 +67,30 @@
       "once": []
     },
     {
+      "key": "icon-job-delivery",
+      "png": "sprites/icon-job-delivery.png",
+      "json": "sprites/icon-job-delivery.json",
+      "once": []
+    },
+    {
+      "key": "icon-job-hunt",
+      "png": "sprites/icon-job-hunt.png",
+      "json": "sprites/icon-job-hunt.json",
+      "once": []
+    },
+    {
+      "key": "icon-job-rescue",
+      "png": "sprites/icon-job-rescue.png",
+      "json": "sprites/icon-job-rescue.json",
+      "once": []
+    },
+    {
+      "key": "icon-job-survey",
+      "png": "sprites/icon-job-survey.png",
+      "json": "sprites/icon-job-survey.json",
+      "once": []
+    },
+    {
       "key": "icon-move-controls",
       "png": "sprites/icon-move-controls.png",
       "json": "sprites/icon-move-controls.json",

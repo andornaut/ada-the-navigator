@@ -406,8 +406,9 @@ token above; strings are Gameplay's.
 | Cheats        | Header, close. Per scope a section group: heading (`TYPE.label`), persistence (supporting prose), `SPACING.rowGap`, then items `SPACING.gap` apart, each an action stack of one with its description (supporting prose) `SPACING.rowGap` below | Sections     |
 | Paused        | Header, close. Action stack: Resume (primary), Map, Settings, Back to title                                                                                                                                                                    | None         |
 | Paused (room) | Header, close. Action stack: Settings, Back to title                                                                                                                                                                                           | None         |
-| Station card  | Header, close. Balance. Welcome (supporting prose, centred). Action row: Undock, Shop                                                                                                                                                          | None         |
+| Station card  | Header, close. Balance. Welcome (supporting prose, centred). Action row: Undock, Jobs, Shop                                                                                                                                                    | None         |
 | Shop          | Header, close. Balance. Tabs (action row). Item list (control grid)                                                                                                                                                                            | Item list    |
+| Job board     | Header, close. Balance. Intro (supporting prose, centred). Refusal line (supporting prose, when shown). Job list (one column of job rows)                                                                                                      | Job list     |
 | Buy confirm   | Header, close. Item well. Description (weapons). Price. Remaining (supporting). Action row: Cancel, Buy                                                                                                                                        | None         |
 
 The Paused card shows no objective or job lines. At 720x360 with phone insets
@@ -528,6 +529,28 @@ face. Constants: `SHOP_ROW`, `shopCard.ts`, to implement.
 | Paint heading | `icon-shop-ship-paint` (20), `SPACING.markGap`, `TYPE.label`, on a 20 line, `SPACING.gap` above the paint rows |
 | Confirm well  | 56x56; glyph at 2x by nearest neighbour (40, or 48 for the upgrade composite), swatch 48, centred              |
 | Confirm price | `icon-stardust-20`, `SPACING.markGap`, the price in `TYPE.heading`                                             |
+
+### Job board row
+
+A `ui-button-tile` at `TEXT_BUTTON.height`, the item row's parts with a
+[compact row action](controls.md#compact-row-action) in the trailing slot.
+Constants: `SHOP_ROW` and the job list's style in `src/ui/station.ts`.
+
+| Part           | Geometry                                                                                             |
+| -------------- | ---------------------------------------------------------------------------------------------------- |
+| Row inset      | `SPACING.gap` from both row ends                                                                     |
+| Well           | 36x36 at the left inset, the 20 job glyph at 8                                                       |
+| Text block     | `SPACING.gap` right of the well: the title over the detail, two 20 lines                             |
+| Trailing slot  | Right inset, centred vertically: the reward pill (or Active), `SPACING.gap`, then the compact action |
+| Compact action | 72 x 28, or the label plus 8 px insets when wider; every row's action one width                      |
+| Row width      | inset + well + gap + widest title or detail + gap + slot + inset; one width for every row            |
+| List           | One column, rows `STACK_BUTTON_GAP` apart, the focus outset around it and the scroll reserve kept    |
+
+At 720x360 the widest Sunflower row, "Deliver spare parts to the salvagers'
+yard" with a two-digit reward, is about 495 wide and the card about 550, inside
+the 688 available; three offers fit without scrolling. At 844x390 with phone
+insets a held job, three busy offers and the refusal line exceed the 325
+available, and the job list scrolls.
 
 ### Storybook page
 
