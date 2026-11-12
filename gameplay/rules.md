@@ -187,8 +187,8 @@ route guards, since Cartwheel's danger is at the ore fields. Each scene plays
 first, and its dialogue line follows when the scene ends. A scene cut short by
 the end of a flight replays with its line when Ada next reaches the hub. The hub looks worn but working until its Hub repairs project is funded.
 
-Resource rocks come in medium and large classes, colliding on Art's footprints
-like asteroids. A medium rock has 3 HP and releases 3 pieces, a large rock 5 HP
+Resource rocks come in medium and large classes, colliding and taking hits like
+asteroids. A medium rock has 3 HP and releases 3 pieces, a large rock 5 HP
 and 5 pieces; two of every three are medium. Cartwheel has no damaging hazards.
 
 Cartwheel's space is an industrial ring of mining platforms in rust and ember
@@ -566,7 +566,10 @@ deposits. Sound effects remain restrained. Reduced motion skips screen shakes.
 Asteroids come in more sizes, including much larger ones, with irregular shapes
 and variety; about a quarter of small and medium asteroids drift in slow closed
 loops around their starting point. Every asteroid can be destroyed; bigger ones take more shots and release more
-Stardust. Drifting asteroids follow fixed loops that never overlap other rocks,
+Stardust. Shots, Ada's, enemies' and the phaser's alike, strike an asteroid or
+resource rock where it is drawn, on its current frame's silhouette, so a shot
+that crosses the drawn rock on screen hits it; ship contact and placement use
+Art's footprint. Drifting asteroids follow fixed loops that never overlap other rocks,
 stations or destinations; ships bounce off them, and they deal no damage. Large
 and huge asteroids stay out of passages and clear of stations, destinations and
 launch points. Background objects stay muted
