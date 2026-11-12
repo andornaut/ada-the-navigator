@@ -440,15 +440,15 @@ Every part except the field and the nav discs is placed in play-view px, from
 `playView(view)`'s top-left (`x0`, 0), so it stays centred on the game area at
 every aspect.
 
-| Token             | Value                                               | Rule                                                                                                                | Constant                                                |
-| ----------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| Field             | `title-field`, 960x540, top-left (-120, 0)          | Under everything; the space background fills beyond it                                                              | `titleScreen.field.at`, `title-screen.json`             |
-| Ship              | 280 square frame centred on (378, 84)               | The selected paint's `ship-26` with speed jets at `titleScreen.ship.jetSpeed` (0.8)                                 | `START_SCREEN.ship`, `startScreen.ts`, to implement     |
-| Wordmark          | `title-wordmark`, 270x102, top-left (225, 148)      | Centred on the play view (`360 - 270 / 2`); Chibi's logo top is 60 under its nav bar                                | `START_SCREEN.wordmark`, `startScreen.ts`, to implement |
-| Action row        | Top 264, buttons 192 wide, `TEXT_BUTTON.height`     | 14 below the wordmark (Chibi's 15 from logo to actions); Chibi's row is at 268                                      | `START_SCREEN.actions`, `startScreen.ts`, to implement  |
-| Start             | x 264 (`360 - 192 / 2`)                             | Primary, `ui-button-primary`; first run only                                                                        | `START_SCREEN.actions`                                  |
-| Restart, Continue | x 160 and 368 (`360 - 192 - 8`, `360 + 8`)          | With saved progress: Restart secondary (`ui-button`) on the left, Continue primary on the right, `BUTTON_GAP` apart | `START_SCREEN.actions`                                  |
-| Note              | One `TYPE.body` line box, top 320, centred on x 360 | Cream `#ead4aa`, no panel or shadow; `SPACING.gap` below the action row                                             | `START_SCREEN.note`, `startScreen.ts`, to implement     |
+| Token             | Value                                               | Rule                                                                                                                | Constant                                    |
+| ----------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Field             | `title-field`, 960x540, top-left (-120, 0)          | Under everything; the space background fills beyond it                                                              | `titleScreen.field.at`, `title-screen.json` |
+| Ship              | 280 square frame centred on (378, 84)               | The selected paint's `ship-26` with speed jets at `titleScreen.ship.jetSpeed` (0.8)                                 | `START_SCREEN.ship`, `startScreen.ts`       |
+| Wordmark          | `title-wordmark`, 270x102, top-left (225, 148)      | Centred on the play view (`360 - 270 / 2`); Chibi's logo top is 60 under its nav bar                                | `START_SCREEN.wordmark`, `startScreen.ts`   |
+| Action row        | Top 264, buttons 192 wide, `TEXT_BUTTON.height`     | 14 below the wordmark (Chibi's 15 from logo to actions); Chibi's row is at 268                                      | `START_SCREEN.actions`, `startScreen.ts`    |
+| Start             | x 264 (`360 - 192 / 2`)                             | Primary, `ui-button-primary`; first run only                                                                        | `START_SCREEN.actions`                      |
+| Restart, Continue | x 160 and 368 (`360 - 192 - 8`, `360 + 8`)          | With saved progress: Restart secondary (`ui-button`) on the left, Continue primary on the right, `BUTTON_GAP` apart | `START_SCREEN.actions`                      |
+| Note              | One `TYPE.body` line box, top 320, centred on x 360 | Cream `#ead4aa`, no panel or shadow; `SPACING.gap` below the action row                                             | `START_SCREEN.note`, `startScreen.ts`       |
 
 - Labels and actions are Gameplay's: Start, Continue, Restart and the
   `deferred` note; the wordmark's accessible name is the `home` string.
@@ -462,6 +462,9 @@ every aspect.
 
 Rects in logical px. Insets are left and right 43, bottom 19, top 0; at 844x390
 the logical view is 779.08x360 and `x0` is 29.
+Restart, Continue and Achievements use the button gaps, to implement: the
+code still sets Restart and Continue `SPACING.gap` apart (164 and 364 at 720) and the nav discs at a 56 pitch (Achievements 611.5 at 720, 580.5 with
+insets). The HUD rect, Settings and every other rect match the code.
 
 | Part           | 720x360                     | 720x360, insets             | 844x390                       | 844x390, insets               |
 | -------------- | --------------------------- | --------------------------- | ----------------------------- | ----------------------------- |
