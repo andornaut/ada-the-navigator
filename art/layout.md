@@ -255,16 +255,21 @@ Overlap rules:
 - The top-left cluster is the pause button and the status pill; the top-right
   cluster is the weapons only. The pill's drawn rect and the pause press area
   keep at least `SPACING.pageInset` from the weapon press areas at the smallest
-  view (720 logical, with phone insets 43/43/19): the leftmost of four weapon
-  targets starts at `677 + 7.5 - 48 - 171` = 465.5 and the pill at 93.75. The
+  view (720 logical, with phone insets 43/43/19). The pill starts at 93.75; the
   `+N` label rides the pill's row 6 beyond it, so the pill keeps room for a
-  `+9,999` label (51.38 with its outline): the pill may reach
-  `465.5 - 16 - 51.38 - 6 - 93.75` = 298.37 wide, a count up to 109.37 wide
-  ("999,999,999" is 88.98, "1,234,567" 71.18). With the pause button hidden
-  the pill starts at 43 and may reach 349.12, a count up to 160.12. The ore
-  and cargo segments do not fit that room: with "12,500", 30 ore and a tow the
-  pill is 351.74 wide, 53.37 past the 298.37 the four weapon targets leave
-  with the `+N` room.
+  `+9,999` label (51.38 with its outline); the leftmost of `n` weapon targets
+  starts at `677 + 7.5 - 48 - 57 (n - 1)`. The pill's widths are fixed by its
+  segments ([Status pill](#status-pill)):
+
+  | Weapons | Leftmost target | Pill may reach | Shield and Stardust, 229.92 | With ore, 321.84 | With ore and cargo, 366.84 |
+  | ------: | --------------: | -------------: | --------------------------- | ---------------- | -------------------------- |
+  |       4 |           465.5 |         298.37 | Clears by 68.45             | 23.47 over       | 68.47 over                 |
+  |       5 |           408.5 |         241.37 | Clears by 11.45             | 80.47 over       | 125.47 over                |
+  |       6 |           351.5 |         184.37 | 45.55 over                  | 137.47 over      | 182.47 over                |
+
+  Without the `+N` room the pill may reach 57.38 more. With the pause button
+  hidden the pill starts at 43, 50.75 further left.
+
 - The weapon count pills end at HUD rect top + 46.5 (58.5), 5 above the
   conversation box top; they stay inside their targets' columns (the widest,
   "999m", is 38.69 of 48), so they add nothing to the clusters' horizontal
@@ -291,19 +296,19 @@ Constants: `STATUS_PILL`, `playView.ts`, to implement. Colours and contrast
 are in [Controls](controls.md#status-pill). Parts, left to right, each centred
 on the pill's row:
 
-| Part          | Geometry                                                                                                                                                                                                       |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Panel         | `PILL`: 28 high, radius 4, `PILL.padding` 8 at each end; ink at 0.65, as the conversation panel                                                                                                                |
-| Shield icon   | `public/art/ui/icons/shield.svg`, 20 (`HUD_BUTTON.glyph`), a mask in the state's icon colour                                                                                                                   |
-| Mark gap      | `SPACING.markGap`                                                                                                                                                                                              |
-| Shield bar    | `STATUS_PILL.bar` 96x12: 1 rim around the track (ink at 0.65 over the panel), fill area 92x8 at inset 2                                                                                                        |
-| Divider       | `STATUS_PILL.dividerGap` 12, a 1x16 divider, 12                                                                                                                                                                |
-| Stardust icon | `icon-stardust-20`, nearest neighbour                                                                                                                                                                          |
-| Mark gap      | `SPACING.markGap`                                                                                                                                                                                              |
-| Count         | Gameplay's count string in `TYPE.label`, on its 20 line                                                                                                                                                        |
-| Ore segment   | While Ada carries ore: a divider, `icon-ore-20`, `SPACING.markGap`, the ore count in `TYPE.label`                                                                                                              |
-| Cargo segment | While she carries a job item or tows a craft, last: a divider and `icon-cargo-20` or `icon-tow-20`                                                                                                             |
-| Width         | 189 plus the Stardust count; the ore segment adds 51 plus its count, the cargo segment 45: 215.70 at "125", 237.94 at "12,500", 306.74 with 30 ore, 351.74 with a tow too; grows rightward, never shrinks text |
+| Part          | Geometry                                                                                                                                                                                              |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Panel         | `PILL`: 28 high, radius 4, `PILL.padding` 8 at each end; ink at 0.65, as the conversation panel                                                                                                       |
+| Shield icon   | `public/art/ui/icons/shield.svg`, 20 (`HUD_BUTTON.glyph`), a mask in the state's icon colour                                                                                                          |
+| Mark gap      | `SPACING.markGap`                                                                                                                                                                                     |
+| Shield bar    | `STATUS_PILL.bar` 96x12: 1 rim around the track (ink at 0.65 over the panel), fill area 92x8 at inset 2                                                                                               |
+| Divider       | `STATUS_PILL.dividerGap` 12, a 1x16 divider, 12                                                                                                                                                       |
+| Stardust icon | `icon-stardust-20`, nearest neighbour                                                                                                                                                                 |
+| Mark gap      | `SPACING.markGap`                                                                                                                                                                                     |
+| Count         | Gameplay's count, at most four characters ("9999", "10k" to "999k", "1m" to "999m"), in `TYPE.label` on its 20 line, left-aligned in a fixed `STATUS_PILL.count` slot of 40.92 ("999m", the widest)   |
+| Ore segment   | While Ada carries ore: a divider, `icon-ore-20`, `SPACING.markGap`, the ore count in its 40.92 slot                                                                                                   |
+| Cargo segment | While she carries a job item or tows a craft, last: a divider and `icon-cargo-20` or `icon-tow-20`                                                                                                    |
+| Width         | Fixed by the segments shown: 229.92 (shield and Stardust), 321.84 with ore (adds 91.92), 366.84 with ore and cargo (cargo adds 45), 274.92 with cargo and no ore; a count never moves the pill's edge |
 
 The fill area maps the current capacity (Gameplay: 100 plus 20% per level) to
 92, so a full bar has one length at every level. Fill width is
@@ -332,7 +337,7 @@ with fractional widths.
   the pill is the leftmost art and moves to the HUD rect's left edge, so the
   left side keeps `HUD_EDGE` in both input modes.
 - A segment shows while it has something to show and leaves when empty, at
-  once; the pill's right edge moves with it. The ore segment holds ore
+  once; the pill's right edge moves only then. The ore segment holds ore
   carried this flight; the cargo segment the carried job item or the towed
   craft, one at a time.
 - The pill takes no input. The shield bar is a meter (Gameplay's shield label,
@@ -1074,9 +1079,9 @@ Tests:
 - `STATUS_PILL`'s left edge equals the pause press area's right plus
   `SPACING.gap` while the pause button shows and the HUD rect's left while it
   is hidden; its centre is the HUD row's centre line; with four weapons at
-  720x360 and phone insets, the pill at a 109.37-wide count, with a `+9,999`
-  label 6 beyond it, keeps
-  `SPACING.pageInset` from the leftmost weapon target.
+  720x360 and phone insets, the shield and Stardust pill (229.92), with a
+  `+9,999` label 6 beyond it, keeps `SPACING.pageInset` from the leftmost
+  weapon target.
 - The conversation box top equals `HUD_AMMO_COUNT`'s bottom plus
   `HUD_AMMO_COUNT.clearance` (5) at every HUD rect top, and the name tab top
   is 10 above it; the "999m" pill is narrower than the target and centred on
