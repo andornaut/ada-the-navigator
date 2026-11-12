@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import { GALAXY_ID, SECTORS } from "../data/galaxies.ts";
 import { ART_MANIFEST, CORE_MANIFEST, GALAXY_MANIFESTS } from "../testing/public-art.ts";
-import { galaxyManifestKey, galaxyManifestPaths, readGalaxyManifest } from "./art-manifest.ts";
+import {
+  galaxyManifestKey,
+  galaxyManifestPaths,
+  galaxyTowKey,
+  readGalaxyManifest,
+} from "./art-manifest.ts";
 
 describe("split art manifest", () => {
   it("maps each galaxy to its manifest from the core manifest, keyed by stable galaxy id", () => {
@@ -68,6 +73,21 @@ describe("split art manifest", () => {
     expect(readGalaxyManifest({ assets: [], version: 2 })).toBeUndefined();
     expect(readGalaxyManifest({ version: 1 })).toBeUndefined();
     expect(readGalaxyManifest(null)).toBeUndefined();
+  });
+
+  it("reads each galaxy's stranded craft data apart from its links", () => {
+    for (const [sector, galaxy] of GALAXY_MANIFESTS) {
+      expect(galaxy.tow, GALAXY_ID[sector]).toBe(`/art/${GALAXY_ID[sector]}/tow.json`);
+      expect(galaxy.links).not.toHaveProperty("tow");
+    }
+    // Core's tow, which holds the tow line, keeps its name once the galaxies' links merge.
+    expect(ART_MANIFEST.tow).toBe(CORE_MANIFEST.tow);
+    expect(readGalaxyManifest({ assets: [], tow: "/art/x/tow.json", version: 1 })).toEqual({
+      assets: [],
+      links: {},
+      tow: "/art/x/tow.json",
+    });
+    expect(galaxyTowKey(4)).toBe("tow-galaxy-4");
   });
 
   it("keeps every id in exactly one manifest", () => {

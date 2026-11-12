@@ -1,16 +1,32 @@
+import type { SectorId } from "../data/types.ts";
 import type { Vec } from "../model/types.ts";
 import { ENEMY_HEADINGS } from "./enemy-art.ts";
 import { shipDirection } from "./ship-art.ts";
 import type { StationFrame } from "./station-art.ts";
 
-// Art's stranded craft and tow line (art/cartwheel-props.md "Stranded craft", "Tow line"): a
-// craft drawn at the 16 enemy headings, facing Ada, and a steel cable Tech draws from tow.json.
+// Art's stranded craft and tow line (art/cartwheel-props.md "Stranded craft", "Tow line"): each
+// galaxy's craft drawn at the 16 enemy headings, facing Ada, from that galaxy's tow.json, and a
+// steel cable Tech draws from core's tow.json.
 
-/** A rescue's pool item (gameplay/quests.md "Job pool") to Art's stranded craft id. */
-export const STRANDED_CRAFT: Readonly<Record<string, string>> = {
-  "a stuck hauler": "stranded-hauler",
-  "an ore pod": "stranded-ore-pod",
-};
+/**
+ * Each galaxy's rescue pool items (gameplay/quests.md "Job pool") to Art's stranded craft ids,
+ * by galaxy since one item names a different craft in each ("a pod").
+ */
+export const STRANDED_CRAFT: Readonly<Partial<Record<SectorId, Readonly<Record<string, string>>>>> =
+  {
+    1: { "a scrap barge": "stranded-scrap-barge", "a seed pod": "stranded-seed-pod" },
+    2: { "a stuck hauler": "stranded-hauler", "an ore pod": "stranded-ore-pod" },
+    3: { "a current skimmer": "stranded-current-skimmer", "a pod": "stranded-whirlpool-pod" },
+    4: { "a pod": "stranded-needle-pod", "a stuck glider": "stranded-glider" },
+    5: { "a drifting lamp buoy": "stranded-lamp-buoy", "a lost courier": "stranded-courier" },
+    6: { "a traveler's pod": "stranded-traveler-pod" },
+  };
+
+/** The stranded craft id for a galaxy's rescue item, or undefined. */
+export function strandedCraftId(sector: SectorId, item: string): string | undefined {
+  const craft = STRANDED_CRAFT[sector];
+  return craft && Object.hasOwn(craft, item) ? craft[item] : undefined;
+}
 
 export interface TowFrame extends StationFrame {
   readonly blink?: string;

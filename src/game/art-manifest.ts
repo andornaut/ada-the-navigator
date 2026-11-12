@@ -45,6 +45,11 @@ export interface GalaxyLinks {
 export interface GalaxyManifest<T> {
   readonly assets: readonly T[];
   readonly links: GalaxyLinks;
+  /**
+   * The galaxy's stranded craft data (its tow.json), kept apart from the links so core's `tow`,
+   * which also holds the tow line, keeps its name when a galaxy's links merge.
+   */
+  readonly tow?: string;
 }
 
 const LINKS: readonly (keyof GalaxyLinks)[] = [
@@ -88,7 +93,15 @@ export function galaxyManifestPaths(value: unknown): Partial<Record<SectorId, st
   return paths;
 }
 
-/** A galaxy manifest, version 1, with its assets and string data links; undefined if invalid. */
+/** The loader's cache key for a galaxy's stranded craft data. */
+export function galaxyTowKey(sector: SectorId): string {
+  return `tow-galaxy-${sector}`;
+}
+
+/**
+ * A galaxy manifest, version 1, with its assets, string data links and string `tow` path;
+ * undefined if invalid.
+ */
 export function readGalaxyManifest<T>(value: unknown): GalaxyManifest<T> | undefined {
   const data = value as { assets?: unknown; version?: unknown } | null | undefined;
   if (!data || data.version !== 1 || !Array.isArray(data.assets)) {
@@ -101,5 +114,6 @@ export function readGalaxyManifest<T>(value: unknown): GalaxyManifest<T> | undef
       links[name] = record[name];
     }
   }
-  return { assets: data.assets as T[], links };
+  const tow = record.tow;
+  return { assets: data.assets as T[], links, ...(typeof tow === "string" ? { tow } : {}) };
 }

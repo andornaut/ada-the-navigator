@@ -94,6 +94,7 @@ import {
   type GalaxyManifest,
   galaxyManifestKey,
   galaxyManifestPaths,
+  galaxyTowKey,
   readGalaxyManifest,
 } from "./art-manifest.ts";
 import {
@@ -296,8 +297,8 @@ import {
   craftHeading,
   readStrandedCraft,
   readTowLine,
-  STRANDED_CRAFT,
   type StrandedCraftArt,
+  strandedCraftId,
   towBeads,
   towCurve,
   type TowLine,
@@ -504,10 +505,10 @@ export class PrototypeScene extends Scene {
   private craftArt: ReadonlyMap<string, EnemyArt<Asset>> = new Map();
   /** Each story craft's nose distance by heading, for its docked spot (art/cartwheel.md). */
   private storyNoses: StoryNoses = {};
-  // Every galaxy's tow line, and Cartwheel's stranded craft; a rescue keeps its placeholder
-  // craft or line until its art loads.
+  // Every galaxy's tow line, and each galaxy's stranded craft by id; a rescue keeps its
+  // placeholder craft or line until its art loads.
   private towLine: TowLine | undefined;
-  private strandedCraft: ReadonlyMap<string, StrandedCraftArt<Asset>> = new Map();
+  private strandedCraft = new Map<SectorId, ReadonlyMap<string, StrandedCraftArt<Asset>>>();
   private towInk!: GameObjects.Graphics;
   private towSprite!: GameObjects.Image;
   // The guided calf's heading, kept while it rests.
@@ -1478,8 +1479,9 @@ export class PrototypeScene extends Scene {
       }
     }
     this.queueBackdrop(sector, galaxy);
-    // The galaxy's own data files, named by its manifest's links.
+    // The galaxy's own data files, named by its manifest's links, and its stranded craft data.
     for (const [key, path] of [
+      [galaxyTowKey(sector), galaxy.tow],
       ["cartwheel-debris", galaxy.links.cartwheelDebris],
       ["whales", galaxy.links.whales],
       ["whirlpool-currents", galaxy.links.whirlpoolCurrents],
@@ -1618,16 +1620,18 @@ export class PrototypeScene extends Scene {
     }
     const loaded = this.manifest.assets.filter((asset) => this.textures.exists(asset.id));
     for (const [sector, galaxy] of this.galaxyManifests) {
-      const stations = readGalaxyStationArt(
-        galaxy.assets.filter((asset) => this.textures.exists(asset.id)),
-      );
+      const own = galaxy.assets.filter((asset) => this.textures.exists(asset.id));
+      const stations = readGalaxyStationArt(own);
       if (stations) {
         this.galaxyStations.set(sector, stations);
       }
+      this.strandedCraft.set(
+        sector,
+        readStrandedCraft(this.cache.json.get(galaxyTowKey(sector)), own),
+      );
     }
     this.towLine = readTowLine(this.cache.json.get("tow"));
     this.jobArt = readJobArt(this.shipAssets, this.cache.json.get("jobs"));
-    this.strandedCraft = readStrandedCraft(this.cache.json.get("tow"), loaded);
     this.hubArt = readHubArt(loaded);
     this.buoyArt = readBuoyArt(loaded);
     // Each craft's frames from a galaxy manifest, else core's shared craft.
@@ -3531,14 +3535,14 @@ export class PrototypeScene extends Scene {
   }
 
   /**
-   * A rescue's craft facing Ada, and its tow line while attached: Art's stranded craft and
-   * cable, else the placeholder ellipse and line.
+   * A rescue's craft facing Ada, and its tow line while attached: the flight's galaxy's stranded
+   * craft, keylined on a light field, and Art's cable, else the placeholder ellipse and line.
    */
   private drawTow(craft: Vec & { readonly item: string }, towing: boolean): void {
     const flight = this.model.state.flight!;
     const point = this.project(craft);
-    const id = STRANDED_CRAFT[craft.item];
-    const art = id === undefined ? undefined : this.strandedCraft.get(id);
+    const id = strandedCraftId(flight.sector, craft.item);
+    const art = id === undefined ? undefined : this.strandedCraft.get(flight.sector)?.get(id);
     const heading = craftHeading(craft, flight.player);
     const frame = art && craftFrame(art, heading, this.reducedMotion, this.time.now);
     const offset = art && frame ? towOffset(art, frame, heading) : { x: 0, y: 0 };
@@ -3562,6 +3566,7 @@ export class PrototypeScene extends Scene {
         .setDepth(playDepth(point.y))
         .setVisible(true);
       this.passes(this.towSprite);
+      this.keyline("strandedCraft", "tow-craft", this.towSprite);
       return;
     }
     this.ink.fillStyle(this.palette.environmentDetail, 1);
