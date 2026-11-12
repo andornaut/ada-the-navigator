@@ -294,6 +294,15 @@ try {
     await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
   }
   async function contextControlProof(expected, phase) {
+    // The disc shows or hides on the scene's next frame, as the sticks do.
+    await page
+      .waitForFunction(
+        (count) =>
+          [...document.querySelectorAll(".ada-use")].filter((use) => !use.hidden).length === count,
+        expected,
+        { timeout: 5000 },
+      )
+      .catch(() => undefined);
     assert.equal(
       await page.locator(".ada-use:visible").count(),
       expected,
