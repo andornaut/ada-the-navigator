@@ -139,9 +139,12 @@ voluntary Return to Earth has no sleep scene. The holodisk
 drive looks like a CD or cassette player.
 
 Every boarding (picking up the rock or Continue from the start screen),
-including for a replay of a resolved galaxy, shows the cockpit's galaxy
-selection before the flight. The app itself always opens on the start screen. Galaxy selection is a route map, like Chibi's zone map,
-drawn over a galaxy or space scene, not over the ship. All six galaxies sit
+including for a replay of a resolved galaxy, shows galaxy selection before the
+flight. The app itself always opens on the start screen. Galaxy selection is a route map, like Chibi's zone map,
+drawn over a night sky full of stars, galaxies and nebulae above an evening
+grass strip about 50 pixels tall along the bottom, where Ada and Penny stand
+seen from behind, looking up. The panel sits above the grass, with Earth and
+Jump over it. All six galaxies sit
 in route order on two rows of three, as on Chibi's map: 1 to 3 along the top,
 down to 4, and 5 and 6 back along the bottom, with names under the markers, each a marker in its galaxy's own main hue, as
 Chibi's zones have, with Ada's ship, drawn as her current ship sprite, on the selected galaxy. Right moves the ship to the next
