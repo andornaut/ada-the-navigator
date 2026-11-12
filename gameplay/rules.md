@@ -878,10 +878,12 @@ undiscovered station within range. Optional discovery caches and ordinary
 resource rocks get none; Penny senses those instead. A discovery
 cache lights when Ada comes within 160 world units. The holodisk is collected on
 contact, like other pickups. The pause menu's Map (the local map) is the only map of a galaxy; there is no minimap.
-Edge markers show where off-screen objects Ada has already seen are. Three kinds
+Edge markers show where off-screen objects Ada has already seen are. Four kinds
 each have their own look: enemy (swarms, fighters, interceptors and
-retaliators), heavy (frigates, capital ships, platforms and General Gadget) and
-station (stations and outposts). Friendly objects she flies through (story ships,
+retaliators), heavy (frigates, capital ships, platforms and General Gadget),
+guard and station (stations and outposts). A guard is a heavy that still blocks
+a route: it shows the guard marker, its own image, in place of the heavy marker,
+and switches to the heavy marker once it is disabled. Friendly objects she flies through (story ships,
 whales, wrecks and landmarks) get none. An object gets a marker only after it
 has been on Ada's screen and then left it. The marker stays while the object is
 within 1400 world units of Ada, one range for every kind; past 1400 the object is
@@ -935,7 +937,7 @@ Enemy speeds are fixed in world units and the same in every galaxy (see
 block required quest routes in the first five galaxies. A guard stops blocking
 its route once it is disabled or destroyed. The first time each flight that Ada
 comes within Talk range of a destination its guard still blocks, Astra says a
-guard line, the guard gets a heavy edge marker even if Ada has not seen it yet,
+guard line, the guard gets its guard edge marker even if Ada has not seen it yet,
 and the guard wakes and flies toward Ada until it is on screen, then fights as
 usual. This encounter expansion
 does not define galaxy six's story or conclusion.
