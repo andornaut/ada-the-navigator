@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { PROTOTYPE } from "../../data/prototype.ts";
 import { type Background, BACKGROUND_ART } from "../../data/storybook.ts";
 import { GameModel } from "../../model/game.ts";
+import { lineCount, measure } from "../../testing/text-measure.ts";
 import {
   boardingScene,
   jumpHomeScene,

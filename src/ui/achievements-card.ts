@@ -1,6 +1,6 @@
 import { units } from "./layout/css.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
+import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import { createButton, createCard, isTap, TEXT_TOKENS, UI_SCOPE } from "./modal.ts";
 
 // The Achievements card (gameplay/quests.md "Achievements"), in Chibi's shape and spacing: every
@@ -29,7 +29,7 @@ export interface AchievementsLabels {
 }
 
 /**
- * The entry list's geometry, as Chibi's Achievements card spaces it: two columns 312 wide,
+ * The entry list's geometry, as Chibi's Achievements card spaces it: two columns up to 312 wide,
  * icon included, a panel padding apart; each entry a 16 badge a gap from its text, centred on
  * its name's line, the name and a counted entry's count a gap apart, and the condition below
  * in at most two body lines, so every entry is three body lines tall; entries a gap apart.
@@ -49,6 +49,16 @@ export const ACHIEVEMENTS_CARD = {
 export const ACHIEVEMENTS_PER_PAGE = ACHIEVEMENTS_CARD.columns * ACHIEVEMENTS_CARD.rows;
 const { badge, badgeGap, columnGap, columnWidth, columns, conditionLines, rowGap, rows } =
   ACHIEVEMENTS_CARD;
+
+/**
+ * Each column's width for a card in `available` logical px, the page safe rect's width: 312,
+ * narrowed where two such columns and the card's padding do not fit, so the card fits instead of
+ * scaling and its labels keep their size.
+ */
+export function achievementColumnWidth(available: number): number {
+  const room = available - 2 * SPACING.panelPadding - (columns - 1) * columnGap;
+  return Math.min(columnWidth, room / columns);
+}
 
 export function achievementPages(count: number): number {
   return Math.max(1, Math.ceil(count / ACHIEVEMENTS_PER_PAGE));
@@ -71,7 +81,7 @@ export function fillPage(template: string, page: number, pages: number): string 
 export const ACHIEVEMENTS_STYLE = `
 ${UI_SCOPE} .ada-achievement-list{
   display:grid;
-  grid-template-columns:repeat(${columns},${units(columnWidth)});
+  grid-template-columns:repeat(${columns},var(--ada-achievement-column,${units(columnWidth)}));
   grid-template-rows:repeat(${rows},${units((1 + conditionLines) * TYPE.body.lineHeight)});
   grid-auto-flow:column;
   column-gap:${units(columnGap)};
@@ -186,6 +196,25 @@ export function createAchievementsCard(
   root.append(modal);
   let entries: readonly AchievementEntry[] = [];
   let page = 0;
+  // The columns narrow to the page safe rect's width, measured as the card measures it.
+  const fitColumns = () => {
+    if (modal.hidden) {
+      return;
+    }
+    const unit = readViewUnit(modal);
+    const styles = getComputedStyle(modal);
+    const available =
+      (modal.clientWidth - parseFloat(styles.paddingLeft) - parseFloat(styles.paddingRight)) /
+      unit;
+    list.style.setProperty("--ada-achievement-column", units(achievementColumnWidth(available)));
+  };
+  const refit = () => {
+    fitColumns();
+    if (!modal.hidden) {
+      card.fit();
+    }
+  };
+  window.addEventListener(VIEW_SCALE_EVENT, refit);
   const render = () => {
     const pages = achievementPages(entries.length);
     page = Math.min(page, pages - 1);
@@ -206,9 +235,7 @@ export function createAchievementsCard(
         button.removeAttribute("aria-disabled");
       }
     }
-    if (!modal.hidden) {
-      card.fit();
-    }
+    refit();
   };
   const setOpen = (open: boolean) => {
     if (open === !modal.hidden) {
@@ -248,6 +275,7 @@ export function createAchievementsCard(
   return {
     close: () => setOpen(false),
     dispose(): void {
+      window.removeEventListener(VIEW_SCALE_EVENT, refit);
       card.dispose();
       modal.remove();
     },
