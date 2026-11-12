@@ -126,7 +126,7 @@ space nor a gap.
   48 (`TEXT_BUTTON.height`, face and lip). Small: the 33 HUD and Map discs
   (weapons, pause, Settings, Achievements, the Map tools), compact buttons
   (28: Skip, the Install row action) and the close X (24). Standard: every 48
-  text button and control row, including Quests and Return to Earth.
+  text button and control row, including Quests and Galaxies.
 - Prose groups (wrapping body or supporting text) never widen a card: they
   wrap to the inner width that the other groups and the 50% floor set.
   Single-line labels inside rows and buttons count at their full width.

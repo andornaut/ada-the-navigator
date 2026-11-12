@@ -86,8 +86,8 @@ underneath.
   space background `#292734`; pressed white bars 9.55:1 on `#3a4466`.
 - Pause card: Resume (primary), Map, Settings, Back to title, stacked full
   width; its groups are in [Layout screens](layout.md#cards). Every action stays
-  available in danger. Map always opens the [map](map.md), which holds Return
-  to Earth; in danger Travel here and Return to Earth are unavailable there.
+  available in danger. Map always opens the [map](map.md), which holds
+  Galaxies; in danger Travel here and Galaxies are unavailable there.
   Settings opens over the same dim; one card or the map shows at a time.
 - Ada's room page has the same pause button at the top left, also touch only
   (on desktop Escape opens the room's Paused card); its Paused card holds

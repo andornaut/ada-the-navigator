@@ -22,12 +22,12 @@ modal it takes input exclusively; nothing of the flight HUD shows.
 | Field  | The whole logical view, in the galaxy's `background` with the fog over it                                                                       |
 | Header | Left on the HUD rect's left (`hudRect`), top on the Map's HUD row (`mapRowTop`)                                                                 |
 | Tools  | One column of `HUD_BUTTON` targets, `pitch` apart, the discs' drawn right edges and the top disc's drawn top on the HUD rect's top-right corner |
-| Row    | Quests, then Return to Earth, on the Map's HUD row, ending `SPACING.pageInset` left of the tools                                                |
+| Row    | Quests, then Galaxies, on the Map's HUD row, ending `SPACING.pageInset` left of the tools                                                       |
 
 The Map's HUD row (`mapRowTop`) is the tool targets' row box: HUD rect top -
 7.5 (`HUD_ROW.reach`), so 4.5 at a top of 12, 48 high, centred on the tool
-discs' centre line (HUD rect top + 16.5). The header, Quests and Return to
-Earth draw their 48 boxes on it, so their drawn tops are at 4.5, 7.5 above
+discs' centre line (HUD rect top + 16.5). The header, Quests and Galaxies
+draw their 48 boxes on it, so their drawn tops are at 4.5, 7.5 above
 `HUD_EDGE`; the tool discs' drawn tops are at 12.
 | Panel | Centred in `safeRect(insets, SPACING.pageInset, view)`, bottom on that rect's bottom |
 | Fit | The region left for the map: see [Projection and fit](#projection-and-fit) |
@@ -63,9 +63,9 @@ names and "{percent}% mapped" (`gameplay/player-copy.md`).
 - A charted landmark's pip is a filled cream `#ead4aa` disc. An uncharted
   landmark's pip is a 1 px `#b8b3c9` ring of the same diameter, hollow, so the
   two read apart by shape as well as colour.
-- The header may reach Quests less `SPACING.gap` (`mapHeaderCap`): 318.25
-  wide at the smallest view (720 logical, phone insets 43), 380.25 at the 720
-  base. At 318.25 the column may be 145.25 wide, room for 18 pips; each galaxy
+- The header may reach Quests less `SPACING.gap` (`mapHeaderCap`): 368.75
+  wide at the smallest view (720 logical, phone insets 43), 430.75 at the 720
+  base. At 368.75 the column may be 195.75 wide, room for 24 pips; each galaxy
   has 12 landmarks, 4 of each kind.
 - The header keeps the 48 row, so the fit region's top, `maxScale` and the
   1020 separation are unchanged.
@@ -113,36 +113,37 @@ drawn top is the HUD rect's top. The column's left (`toolColumnLeft`) is
   column.
 - Accessible labels (Gameplay's): Zoom in, Zoom out and Center on Ada.
 
-### Quests and Return to Earth
+### Quests and Galaxies
 
 Two secondary `TEXT_BUTTON`s on the HUD row of every galaxy's Map, left to
-right: "Quests", then "Return to Earth" (Gameplay). Constant:
+right: "Quests", then "Galaxies" (Gameplay). Constant:
 `MAP_SCREEN.hudRow`, to implement.
 
 - Geometry: 48 high, top on the Map's HUD row (`mapRowTop`, HUD rect top -
   7.5). Each is its own label plus
-  `2 * TEXT_BUTTON.inset` wide: Quests 54.25 + 32 = 86.25, Return to Earth
-  116.5 + 32 = 148.5. They are separate controls, not an action row: one
-  shared width (148.5 each) would reach 600.8 (with the widest header) of the
-  577 available with phone insets.
-- Return to Earth's right edge is `SMALL_BUTTON_GAP` (24) left of the close
-  tool's disc, which is small: `hudRect.right - 33 - 24`. Quests ends
-  `BUTTON_GAP` (16) left of Return to Earth. Neither moves with the header's
-  width.
+  `2 * TEXT_BUTTON.inset` wide: Quests 54.25 + 32 = 86.25, Galaxies
+  66 + 32 = 98 (`TYPE.label` widths 54.24 and 65.83, up to the quarter
+  pixel). They are separate controls, not an action row, each sized to its
+  own label.
+- Galaxies' right edge is `SMALL_BUTTON_GAP` (24) left of the close tool's
+  disc, which is small: `hudRect.right - 33 - 24`. Quests ends `BUTTON_GAP`
+  (16) left of Galaxies. Neither moves with the header's width.
 
-| View, logical            | Header, up to | Quests          | Return to Earth | Tool column left |
-| ------------------------ | ------------- | --------------- | --------------- | ---------------- |
-| 720x360                  | 12 to 392.25  | 400.25 to 486.5 | 502.5 to 651    | 667.5            |
-| 720x360, phone insets 43 | 43 to 361.25  | 369.25 to 455.5 | 471.5 to 620    | 636.5            |
+| View, logical            | Header, up to | Quests        | Galaxies   | Tool column left |
+| ------------------------ | ------------- | ------------- | ---------- | ---------------- |
+| 720x360                  | 12 to 442.75  | 450.75 to 537 | 553 to 651 | 667.5            |
+| 720x360, phone insets 43 | 43 to 411.75  | 419.75 to 506 | 522 to 620 | 636.5            |
 
 - Each button is its press area (48, `HIT_RULE.minTarget`). The fit region,
   the tool column and the place panel are unchanged: the row sits above the
   fit region's top.
 - Quests opens the [Quests modal](#quests-modal). It is always available, in
   danger and while towing too.
-- Return to Earth: Gameplay's action, with no confirm. It ends the flight and
-  takes Ada to her room. It stays available while towing; the towed craft
-  returns to where it was stranded. In danger it shows the unavailable face
+- Galaxies: Gameplay's action, with no confirm. It opens the
+  [galaxy selector](layout.md#galaxy-selector), from which Earth returns Ada
+  to her room and Jump leaves for another galaxy. It stays available while
+  towing; leaving the galaxy returns the towed craft to where it was
+  stranded. In danger it shows the unavailable face
   (disabled face, focusable), activation plays the
   [refusal cue](controls.md#refusal-cue), and the panel shows the danger
   reason (below).
@@ -178,7 +179,7 @@ The row, left to right, every part centred on it:
    a job's own spot shows the chip and text block only.
 
 Below the row, `reasonGap` apart, one reason line (`TYPE.body`, supporting,
-left-aligned at the inner left) shows while Travel here or Return to Earth is
+left-aligned at the inner left) shows while Travel here or Galaxies is
 unavailable.
 
 - Row height: `max(row, 2 * textTop + 20 * lines)` for `lines` counting the
@@ -207,7 +208,7 @@ unavailable.
   while you are in danger." or "Unavailable while towing." (Gameplay). One
   reason shows at a time; danger wins over towing.
 - In danger the danger line shows with every selection, whether or not the
-  place offers Travel here, because Return to Earth is unavailable too. The
+  place offers Travel here, because Galaxies is unavailable too. The
   towing line shows only while a place offering Travel here is selected.
 - The panel's chip and text are decorative to the pointer: a press on the panel
   outside Travel here does nothing and never reaches the field.
@@ -571,13 +572,12 @@ presses first; a chip under them takes no press there.
 - Every zoom clamps to `minScale`..`maxScale`; every pan clamps to the pan
   limit.
 - Keyboard: Tab moves through the tools (close, zoom in, zoom out, recentre),
-  then Quests and Return to Earth, then the places in reading order (drawn centre top to
+  then Quests and Galaxies, then the places in reading order (drawn centre top to
   bottom, then left to right), then Travel here. Enter or Space on a place selects it; focusing a
   place pans it clear by the keep-clear rule. Focus starts on close.
 - Travel here: Gameplay's teleport. While Ada is in danger or towing it is
   unavailable, with the reason line; activation plays the refusal cue.
-- Quests and Return to Earth: see
-  [Quests and Return to Earth](#quests-and-return-to-earth).
+- Quests and Galaxies: see [Quests and Galaxies](#quests-and-galaxies).
 
 ## States
 
@@ -589,8 +589,8 @@ presses first; a chip under them takes no press there.
 | Other place selected  | Selection ring on the landmark or holodisk chip | Chip, name, type line; no action                                                |
 | Job target selected   | Selection ring on the orange-faced chip         | Row grows to 68: name, type line, "Job: {objective}"; Travel here where offered |
 | Job spot selected     | Selection ring on the orange job chip           | Job chip and the job's name; no action                                          |
-| In danger             | Return to Earth unavailable                     | Travel here unavailable, "Unavailable while you are in danger."                 |
-| Towing                | Return to Earth available                       | Travel here unavailable, "Unavailable while towing."                            |
+| In danger             | Galaxies unavailable                            | Travel here unavailable, "Unavailable while you are in danger."                 |
+| Towing                | Galaxies available                              | Travel here unavailable, "Unavailable while towing."                            |
 | Quests open           | Under the modal dim                             | Under the modal dim                                                             |
 | Light field           | Ink parts carry every mark (keyline rule)       | Unchanged                                                                       |
 | No explored record    | Plain field, no fog                             | Unchanged                                                                       |
@@ -599,13 +599,13 @@ presses first; a chip under them takes no press there.
 
 The Paused card's action stack is Resume (primary), Map, Settings and Back to
 title ([Layout screens](layout.md#cards)). Map always opens, in danger too.
-Return to Earth is on the map, not on the card; in danger it and Travel here
+Galaxies is on the map, not on the card; in danger it and Travel here
 are unavailable on the map.
 
 ## Strings
 
 Gameplay's, from `gameplay/player-copy.md`: Map; "{percent}% mapped"; Travel
-here; Return to Earth; Quests; "No destinations mapped yet."; "Unavailable
+here; Galaxies; Quests; "No destinations mapped yet."; "Unavailable
 while you are in danger.";
 the galaxy names; "Unavailable while towing."; the tools' accessible labels;
 "Job: {objective}" (`jobObjective`, also in `gameplay/quests.md`), under the
