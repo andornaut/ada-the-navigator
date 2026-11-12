@@ -2,6 +2,134 @@
   "version": 1,
   "assets": [
     {
+      "id": "black-eye-station-0",
+      "path": "/art/black-eye/station-0.svg",
+      "width": 288,
+      "height": 112,
+      "displayWidth": 189,
+      "displayHeight": 73.5,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.8125
+      },
+      "frameMs": 150,
+      "destination": "station",
+      "rotationIndex": 0
+    },
+    {
+      "id": "black-eye-station-1",
+      "path": "/art/black-eye/station-1.svg",
+      "width": 288,
+      "height": 112,
+      "displayWidth": 189,
+      "displayHeight": 73.5,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.8125
+      },
+      "frameMs": 150,
+      "destination": "station",
+      "rotationIndex": 1
+    },
+    {
+      "id": "black-eye-station-2",
+      "path": "/art/black-eye/station-2.svg",
+      "width": 288,
+      "height": 112,
+      "displayWidth": 189,
+      "displayHeight": 73.5,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.8125
+      },
+      "frameMs": 150,
+      "destination": "station",
+      "rotationIndex": 2
+    },
+    {
+      "id": "black-eye-station-3",
+      "path": "/art/black-eye/station-3.svg",
+      "width": 288,
+      "height": 112,
+      "displayWidth": 189,
+      "displayHeight": 73.5,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.8125
+      },
+      "frameMs": 150,
+      "destination": "station",
+      "rotationIndex": 3
+    },
+    {
+      "id": "black-eye-station-4",
+      "path": "/art/black-eye/station-4.svg",
+      "width": 288,
+      "height": 112,
+      "displayWidth": 189,
+      "displayHeight": 73.5,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.8125
+      },
+      "frameMs": 150,
+      "destination": "station",
+      "rotationIndex": 4
+    },
+    {
+      "id": "black-eye-station-5",
+      "path": "/art/black-eye/station-5.svg",
+      "width": 288,
+      "height": 112,
+      "displayWidth": 189,
+      "displayHeight": 73.5,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.8125
+      },
+      "frameMs": 150,
+      "destination": "station",
+      "rotationIndex": 5
+    },
+    {
+      "id": "black-eye-station-6",
+      "path": "/art/black-eye/station-6.svg",
+      "width": 288,
+      "height": 112,
+      "displayWidth": 189,
+      "displayHeight": 73.5,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.8125
+      },
+      "frameMs": 150,
+      "destination": "station",
+      "rotationIndex": 6
+    },
+    {
+      "id": "black-eye-station-7",
+      "path": "/art/black-eye/station-7.svg",
+      "width": 288,
+      "height": 112,
+      "displayWidth": 189,
+      "displayHeight": 73.5,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.8125
+      },
+      "frameMs": 150,
+      "destination": "station",
+      "rotationIndex": 7
+    },
+    {
       "id": "outpost-homes-cracked-a",
       "path": "/art/black-eye/homes-cracked-a.svg",
       "width": 96,

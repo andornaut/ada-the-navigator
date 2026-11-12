@@ -1,11 +1,13 @@
 # Black Eye
 
-Black Eye's art: a smoke-and-violet field and the three Blurb settlements.
+Black Eye's art: a smoke-and-violet field, Black Eye's own station and the
+three Blurb settlements.
 Blurbs are goo folk, so their settlements are lilac goo domes on set-goo
 floats. Gadget's home guard is the shared [coral family](enemies.md) and his
 flagship the [Gadget capital](heavies.md#gadget), both in core.
 
-- Rebuild with `node art/tools/black-eye.ts`. It writes
+- Rebuild the settlements with `node art/tools/black-eye.ts` and the station
+  with `node art/tools/black-eye-station.ts`. Each writes its files to
   `public/art/black-eye/` and replaces its own entries in place in
   [Black Eye's manifest](../public/art/black-eye/manifest.json).
 - [art/tools/black-eye-models.ts](tools/black-eye-models.ts) holds the solid
@@ -25,6 +27,64 @@ hull tone `#9AABBF` is 7.25:1. Backdrop rocks tint to `#49344E` lit and
 `#3A2A3E` side. Its [backdrop](galaxies.md#backdrop-layers) is smoke:
 plates toned by drifting bands, one dim crescent and violet smoke-bank
 nebulae (`nebula-black-eye-1`, `-2`).
+
+## Station
+
+Black Eye's own station, the Bobbin, in place of the shared
+[trading station](station.md) at every Black Eye station. Ada enters it by
+Use, the Dock action; it has no dock, mouth or approach lights.
+
+- A long habitat cylinder of lilac goo, 112 units long and 40 across, wound
+  with a helical band of set goo, two turns round, and a line of warm windows.
+  The whole hull turns under its winding.
+- Forward: a blunt stepped command section with a band of lit windows, and a
+  lamp stalk ending in a round lamp. Aft: a goo dome with a set-goo rim, as the
+  Blurbs build their homes, then a short truss with two flat solar wings across
+  the axis, three cells of set goo each in lilac goo frames.
+- Built as a lathe and block mesh in the [station](station.md) projection,
+  each face shaded from the world light into its ramp, as the
+  [debris](whirlpool.md#river-debris) is. Fixed orientation: no headings and
+  no screen rotation. 4.8 Ada wingspans from the solar wings to the lamp.
+
+### Rotation and manifest
+
+| Field         | Value                                                                                      |
+| ------------- | ------------------------------------------------------------------------------------------ |
+| Ids           | `black-eye-station-{k}`, `k` 0 to 7, files `/art/black-eye/station-{k}.svg`                |
+| Frame         | 288 by 112 frame px; display 189 by 73.5 at the [destination scale](destinations.md#scale) |
+| Pivot         | `(0.5, 0.8125)`: the world plane under the hull's middle                                   |
+| `facing`      | `fixed`                                                                                    |
+| `frameMs`     | 150                                                                                        |
+| `destination` | `station`; `rotationIndex` `k`                                                             |
+
+- Rotation: show frame `k` for 150 ms, 0 to 7 in order, and loop (1.2 s).
+  Each frame turns the band and the window line one facet of the hull's 16, so
+  the loop is seamless. The lamp is lit in frames 0 to 3 and dim in 4 to 7.
+- Reduced motion holds frame 0.
+- Every frame shares one frame size and pivot, so the station turns in place.
+  Silhouette radius 90.2 and top 52.5 above the pivot over all eight frames, at
+  1.5x; the Dock callout's centre sits 72.5 above the pivot
+  ([Destinations](destinations.md#collision-silhouette-dock-and-clearance)).
+  Pass-through, with no `collision`, as every destination.
+
+### Palette
+
+| Role           | Colour    | On the field |
+| -------------- | --------- | -----------: |
+| Gloss          | `#f4eafc` |      14.59:1 |
+| Goo            | `#d4b8ee` |       9.63:1 |
+| Goo mid        | `#bba0d8` |       7.40:1 |
+| Goo side       | `#a283c2` |       5.31:1 |
+| Set goo, lit   | `#a58bc3` |       5.73:1 |
+| Set goo        | `#9c82ba` |       5.11:1 |
+| Set goo shadow | `#8a6fa8` |       3.98:1 |
+| Set goo deep   | `#715a94` |       2.91:1 |
+| Windows, lamp  | `#ffe9b8` |      14.25:1 |
+| Lamp dim       | `#8a7a5c` |       4.06:1 |
+
+The goo and set goo stay in the field's own hue, lighter, as the settlements'
+do, and take no signal band. The silhouette's edge median is 3.49:1, with 63%
+of edge pixels at 3:1 or more.
 
 ## Settlements
 
