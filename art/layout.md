@@ -702,6 +702,7 @@ token above; strings are Gameplay's.
 | Shop          | Header, close. Balance. Tabs (action row). Item list (control grid)                                                                                                                                                                            | Item list    |
 | Job board     | Header, close. Balance. Intro (supporting prose, centred). Refusal line (supporting prose, when shown). Job list (one column of job rows)                                                                                                      | Job list     |
 | Buy confirm   | Header, close. Item well. Description (weapons). Price. Remaining (supporting). Action row: Cancel, Buy                                                                                                                                        | None         |
+| Achievements  | Header, close. Entry list, two columns ([Achievements card](#achievements-card)). Pager: Previous, the page count, Next                                                                                                                        | None         |
 
 The Paused card shows no objective or job lines. Its flight card puts Resume
 across the inner width, then the other four actions as a two-column control
@@ -762,6 +763,47 @@ Docking states:
   wraps to two), and every later line two lines in 408.
 - Contrast: cream lines 10.80:1 on the block over the card face (`#242134`),
   the coming-line rings 7.70:1; tab labels 7.71:1 or more on every keeper's tab.
+
+### Achievements card
+
+The start screen's Achievements opens a content-fitted card titled
+"Achievements" with the close X, spaced as Chibi's (`chibis-way-home`
+`src/data/layout.ts` `ACHIEVEMENTS_CARD`, `src/ui/layout/achievementsCard.ts`).
+Constants: `ACHIEVEMENTS_CARD`, `achievements-card.ts`.
+
+| Part       | Geometry                                                                                                                                                                                                                                        |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Card       | `min(availableWidth, 2 * column + columnGap + 2 * CARD_CONTENT.padding)`, centred in the available rect; 672 where 688 is available                                                                                                             |
+| Header     | The list's top 50 below the card's top: the close X's press area bottom (42) plus `SPACING.gap`. The title's cap height sits midway between the frame's inner top (2) and the first name's cap top (54.54), so its 28 line box starts 14.2 down |
+| Columns    | Two, filled down each column then across; each `min(312, (availableWidth - 2 * CARD_CONTENT.padding - columnGap) / 2)` wide, badge included                                                                                                     |
+| Column gap | `SPACING.panelPadding` 16                                                                                                                                                                                                                       |
+| Entry      | 60 high, fixed: three 20 body lines, the name's and two condition lines                                                                                                                                                                         |
+| Badge      | 16, centred on the name's 20 line (2 above and below), `SPACING.gap` 8 from the text column                                                                                                                                                     |
+| Name       | `TYPE.label`, one line; a locked counted entry's `{have}/{need}` in `TYPE.body` at the line's right end, `SPACING.gap` 8 from the name                                                                                                          |
+| Condition  | `TYPE.body`, in the text column under the name, at most two lines                                                                                                                                                                               |
+| Row gap    | `SPACING.gap` 8                                                                                                                                                                                                                                 |
+| Rows       | As many as fit, as in Chibi: `floor((room + 8) / 68)`, room = available height - 50 - `SPACING.gap` - `TEXT_BUTTON.height` - 16; every page keeps the first page's rows                                                                         |
+| Pager      | `SPACING.gap` below the list: Previous and Next `TEXT_BUTTON` faces at the inner width's ends, the page count centred between them                                                                                                              |
+
+| View                  | Available  | Card          | Column | Rows | Card top |
+| --------------------- | ---------- | ------------- | -----: | ---: | -------: |
+| 720x360               | 688x328    | 672x318, x 24 |    312 |    3 |       21 |
+| 720x360, phone insets | 634x325    | 634x318, x 43 |    293 |    3 |     19.5 |
+| 844x390, insets 43    | 693.08x325 | 672x318       |    312 |    3 |     19.5 |
+| 1280x720 (720x405)    | 688x373    | 672x318, x 24 |    312 |    3 |     43.5 |
+
+Card height at three rows: `50 + 3 * 60 + 2 * 8 + 8 + 48 + 16` = 318, inside
+every available height, so the card never scrolls.
+
+- Where the available rect is narrower than 688, the columns narrow; the card
+  never scales, as a label never shrinks to fit (Chibi's view is a fixed
+  720x360 with no card insets, so its card is always 672). At 634 each column
+  is 293 and its text column 269: the widest name with a count, "Friends
+  Everywhere" with "99/99", is 200.11, and the longest condition, "Make every
+  optional ally: quest and project allies." (348.60), wraps to two lines, so
+  every entry keeps its three lines.
+- Every condition fits two lines at both column widths; a condition that
+  needed a third would be a copy change for Gameplay, not a taller entry.
 
 ### Ship card
 
