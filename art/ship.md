@@ -173,6 +173,31 @@ renderer draws them behind the idle `ship-{index}` frame; there are no jet frame
 - Colour is `color`, or `colors` interpolated linearly in sRGB by `f`. The halo
   alpha is `max(0, (f - from) / (to - from)) * max`, skipped at zero; other layers
   are opaque.
+- `engineLevels` holds the layers for each engine level, `level` 1 to 3: draw
+  Ada's jets in her level's `layers`. Only the colours change; widths, lengths
+  and the halo's alpha ramp are the same at every level, on every paint scheme.
+  The top-level `layers` repeats level 1 until the runtime reads
+  `engineLevels`.
+
+| Engine level | `halo.color` | `outer.colors`       | `core.colors`        |
+| -----------: | ------------ | -------------------- | -------------------- |
+|      1, base | `#70ace8`    | `#5b93cc`, `#b9ecff` | `#8cc4f0`, `#ffffff` |
+|    2, orange | `#ff8f1f`    | `#ea6a00`, `#ffd59a` | `#ffb24d`, `#ffffff` |
+|    3, purple | `#a66bff`    | `#8652e7`, `#e6ccff` | `#b98cff`, `#ffffff` |
+
+On a light field the jets take `lightField.jets.shipLevels` in
+[galaxies.json](../public/art/galaxies.json) for the same level
+([Light fields](galaxies.md#light-fields)).
+
+Every colour that carries a jet holds 3:1 or better on every dark galaxy
+(Whirlpool lowest): orange halo 6.34:1, outer start 4.52:1, core start 8.08:1;
+purple halo 4.25:1, outer start 3.02:1, core start 5.69:1; on Black Eye's
+`#241827` purple is 4.99:1, 3.54:1 and 6.69:1. Each tier is 0.08 or more in
+Oklab from the warm signals beside it: the orange halo is 0.098 from coral
+`#d68b72`, 0.104 from amber `#f0bd68`, 0.148 from the low red `#e4574e` and
+0.091 from its pulse peak `#ff8a80`; orange jets are 0.082 to 0.131 from the
+coral enemy jets at the same speed; purple is 0.25 or more from every warm
+signal and 0.092 from the Iris scheme's rear sides `#8f7cd0`.
 
 ## Nose
 

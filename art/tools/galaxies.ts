@@ -111,9 +111,35 @@ const LIGHT_FIELD = {
   // Edge markers' ink outline, as the Scattershot dot's (space-palette.md, Edge markers).
   markerOutline: 1,
   jets: {
+    // CLEANUP (added 2026-11-12): engine level 1's light layers for the runtime that predates
+    // shipLevels. Remove once Tech reads shipLevels for Ada's jets.
     ship: [
       { name: "outer", colors: ["#1767b3", "#1767b3"], width: 1.6, length: 1 },
       { name: "core", colors: ["#2585d0", "#64caff"], width: 0.8, length: 0.55 },
+    ],
+    // Ada's light-field jets by engine level: a flat dark outer and a core gradient, no halo.
+    shipLevels: [
+      {
+        level: 1,
+        layers: [
+          { name: "outer", colors: ["#1767b3", "#1767b3"], width: 1.6, length: 1 },
+          { name: "core", colors: ["#2585d0", "#64caff"], width: 0.8, length: 0.55 },
+        ],
+      },
+      {
+        level: 2,
+        layers: [
+          { name: "outer", colors: ["#a84400", "#a84400"], width: 1.6, length: 1 },
+          { name: "core", colors: ["#ea6a00", "#ffb24d"], width: 0.8, length: 0.55 },
+        ],
+      },
+      {
+        level: 3,
+        layers: [
+          { name: "outer", colors: ["#7a3fd6", "#7a3fd6"], width: 1.6, length: 1 },
+          { name: "core", colors: ["#8652e7", "#b98cff"], width: 0.8, length: 0.55 },
+        ],
+      },
     ],
     enemy: [
       { name: "outer", colors: ["#7f4b3d", "#7f4b3d"], width: 1.6, length: 1 },

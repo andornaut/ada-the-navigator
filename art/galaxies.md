@@ -81,7 +81,7 @@ it. Widths are logical px, scaled by `s` like every other space stroke; ink is
 | Enemy weapons        | The enemy Phaser and the enemy-only weapons take ink edges and an ink beam glow ([enemy-only conventions](weapons.md#enemy-only-conventions))                                                                                                                                                                                                                                                                                                                                                                                            |
 | Direction indicators | The arrow and circle's 2 px stroke at alpha 0.8 draws over a 4 px ink stroke (`indicatorStroke`) at alpha 0.8 on the same path, round joins                                                                                                                                                                                                                                                                                                                                                                                              |
 | Edge markers         | Each disc draws over an ink disc 1 larger in radius; the station diamond over a 4 ink stroke on the same path (`markerOutline` 1); see [Edge markers](space-palette.md#edge-markers)                                                                                                                                                                                                                                                                                                                                                     |
-| Jets                 | `jets.ship` replaces the layers in `ship-jets.json`, dropping the halo; `jets.enemy` replaces every enemy's jet layers. Each set is a flat dark outer layer and a core gradient. Mouths, widths and the length rule are unchanged                                                                                                                                                                                                                                                                                                        |
+| Jets                 | `jets.shipLevels` replaces Ada's engine level's layers in `ship-jets.json` (`jets.ship` repeats level 1 until the runtime reads `shipLevels`), dropping the halo: outer `#1767b3`, `#a84400` and `#7a3fd6` at levels 1 to 3, cores `#2585d0` to `#64caff`, `#ea6a00` to `#ffb24d` and `#8652e7` to `#b98cff`; `jets.enemy` replaces every enemy's jet layers. Each set is a flat dark outer layer and a core gradient. Mouths, widths and the length rule are unchanged                                                                  |
 | Holodisk beacon      | Holds its `base` frame `#a83a96` (`holodiskBeacon`), with no pulse                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | Effects              | The amber and coral effects draw over a 1 px ink edge with the same square kernel (`effects`): the missile dart and fins, blast ring strokes and flash outlines (never a blast's tint fill), hit sparks (rays, core and flecks), destruction shards and the feedback pulses (pickup diamonds and damage rings). A stroke draws over an ink stroke 2 wider on the same path; a filled shape over its silhouette grown by 1 px. The edge takes the effect's alpha. Corners rounded by less than a pixel off the square kernel are accepted |
 | Status pill          | A 1 px ink outline around the shield icon and around the shield bar's rim (`hudOutline`), as on the `+N` tick; see [Controls](controls.md#status-pill)                                                                                                                                                                                                                                                                                                                                                                                   |
@@ -89,19 +89,19 @@ it. Widths are logical px, scaled by `s` like every other space stroke; ink is
 
 Contrast on Sunflower's `#D8C994` (WCAG):
 
-| Item                             | Bare             | With the rule        |
-| -------------------------------- | ---------------- | -------------------- |
-| Silhouette edge, median          | 1.22 to 1.85:1   | Ink keyline, 10.90:1 |
-| Ship jet outer                   | `#8ac0e6` 1.18:1 | `#1767b3` 3.50:1     |
-| Enemy jet outer                  | `#d4826a` 1.76:1 | `#7f4b3d` 4.27:1     |
-| Bolts and dot                    | 1.04 to 1.63:1   | Ink edge, 10.90:1    |
-| Upgrade pickup, blasts, sparks   | Amber 1.04:1     | Ink edge, 10.90:1    |
-| Destruction shards               | Coral 1.63:1     | Ink edge, 10.90:1    |
-| Phaser glow                      | 1.02:1           | Ink at 0.9, 8.93:1   |
-| Direction indicators             | 1.18 to 1.61:1   | Ink at 0.8, 6.93:1   |
-| Holodisk beacon                  | Bright 1.75:1    | Base held, 3.42:1    |
-| Lit play stone (`#8A8279`)       | 2.29:1           | Ink keyline, 10.90:1 |
-| `+N` tick, mint with ink outline | Outline 10.90:1  | Unchanged            |
+| Item                             | Bare             | With the rule                                        |
+| -------------------------------- | ---------------- | ---------------------------------------------------- |
+| Silhouette edge, median          | 1.22 to 1.85:1   | Ink keyline, 10.90:1                                 |
+| Ship jet outer, levels 1 to 3    | `#8ac0e6` 1.18:1 | `#1767b3` 3.50:1, `#a84400` 3.64:1, `#7a3fd6` 3.62:1 |
+| Enemy jet outer                  | `#d4826a` 1.76:1 | `#7f4b3d` 4.27:1                                     |
+| Bolts and dot                    | 1.04 to 1.63:1   | Ink edge, 10.90:1                                    |
+| Upgrade pickup, blasts, sparks   | Amber 1.04:1     | Ink edge, 10.90:1                                    |
+| Destruction shards               | Coral 1.63:1     | Ink edge, 10.90:1                                    |
+| Phaser glow                      | 1.02:1           | Ink at 0.9, 8.93:1                                   |
+| Direction indicators             | 1.18 to 1.61:1   | Ink at 0.8, 6.93:1                                   |
+| Holodisk beacon                  | Bright 1.75:1    | Base held, 3.42:1                                    |
+| Lit play stone (`#8A8279`)       | 2.29:1           | Ink keyline, 10.90:1                                 |
+| `+N` tick, mint with ink outline | Outline 10.90:1  | Unchanged                                            |
 
 The HUD panels are the same on every field, and only the status pill gains
 its ink outlines on a light field; panel numbers are in

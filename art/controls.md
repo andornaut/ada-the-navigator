@@ -487,6 +487,48 @@ and white on `#3a4466` while pressed.
   label until ammunition is bought. The empty glyph is the idle lavender mixed
   toward the navy face, so it reads as spent beside idle discs and holds 3:1.
 
+### Weapon level
+
+Each disc shows its weapon's level with the upgrade tier colours, orange at
+level 2 and purple at level 3 as on the [speed jets](ship.md#speed-jets), and
+one to three pips, so the level never relies on colour alone.
+
+| Level | Edge                    | Halo               | Pips                    |
+| ----: | ----------------------- | ------------------ | ----------------------- |
+|     1 | Ink `#181425`, as today | None               | One, lavender `#b8b3c9` |
+|     2 | Orange `#ff8f1f`        | Orange, alpha 0.45 | Two, orange `#ff8f1f`   |
+|     3 | Purple `#a66bff`        | Purple, alpha 0.45 | Three, purple `#a66bff` |
+
+- Edge: the disc's existing 1 px edge, radius 15.5 to 16.5, takes the level's
+  colour in every state. On the selected disc it is the annulus's outer 1 px;
+  the inner 3 px (radius 12.5 to 15.5) stay ink, so selection reads as before.
+  Disc, face, glyph and annulus sizes are unchanged.
+- Halo: a soft glow of the edge colour just outside the disc, 1 px spread and
+  2 px blur (to about radius 19.5), inside the 48 target and under the focus
+  ring (radius 20.5), which may overlap it. It is decorative and carries no
+  contrast.
+- Pips: discs of radius 2 in the level's pip colour, each inside a 1 px ink
+  outline (6 across), centres 7 apart (1 px between outlines), the row centred
+  on the disc and 12 below its centre. They clear the lowest glyph ink (8
+  below the centre) by 1, the edge by 0.5 and the count pill (16 below the
+  centre) by 1. On the selected disc they overlap the annulus, and their
+  outlines join it. Pips are the same in every disc state and never tint.
+- Light field: at levels 2 and 3, as the shield pill's `hudOutline`, a 1 px ink
+  line just outside the disc (radius 16.5 to 17.5), under the halo; level 1's
+  edge is already ink.
+- Reduced motion: nothing animates.
+
+| Mark                | Against                  | Orange | Purple | Lavender pip |
+| ------------------- | ------------------------ | -----: | -----: | -----------: |
+| Edge                | Navy face `#262b44`      | 6.09:1 | 4.08:1 |            - |
+| Edge, selected disc | Ink annulus              | 7.89:1 | 5.29:1 |            - |
+| Edge                | Darkest field, Whirlpool | 6.34:1 | 4.25:1 |            - |
+| Edge                | Black Eye `#241827`      | 7.45:1 | 4.99:1 |            - |
+| Pip                 | Its ink outline          | 7.89:1 | 5.29:1 |       8.86:1 |
+
+The lavender pip is the idle glyph colour, 6.83:1 on the navy face, where an
+ink pip would be 1.23:1.
+
 ### Ammunition count
 
 Each owned non-Laser weapon shows its ammunition count in an opaque ink pill
@@ -522,12 +564,14 @@ on the disc's lower edge; Laser shows none. Geometry is `HUD_AMMO_COUNT` in
 Draw the chrome in CSS at logical units so it stays sharp at any scale
 (`u` is `var(--ada-unit)`):
 
-| Part          | CSS                                                                                                                                                                                                                                                                                                 |
-| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Disc          | `width` and `height` `calc(u * 33)`, `border-radius: 50%`, `background` the face, `box-shadow: inset 0 0 0 calc(u * 1)` ink                                                                                                                                                                         |
-| Selected disc | `box-shadow: inset 0 0 0 calc(u * 4)` ink                                                                                                                                                                                                                                                           |
-| Glyph         | `calc(u * 20)` square, `background` the glyph colour, `mask: url(<glyph>.svg) center / 100% 100% no-repeat`                                                                                                                                                                                         |
-| Count pill    | A child of the button: `position: absolute`, `top: calc(u * 40)`, `left: 50%`, `transform: translateX(-50%)`, `height` and `line-height` `calc(u * 14)`, `padding: 0 calc(u * 4)`, `border-radius: calc(u * 4)`, `background` ink, `TYPE.count` text, `white-space: nowrap`, `pointer-events: none` |
+| Part          | CSS                                                                                                                                                                                                                                                                                                                                   |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Disc          | `width` and `height` `calc(u * 33)`, `border-radius: 50%`, `background` the face, `box-shadow: inset 0 0 0 calc(u * 1)` ink                                                                                                                                                                                                           |
+| Selected disc | `box-shadow: inset 0 0 0 calc(u * 4)` ink                                                                                                                                                                                                                                                                                             |
+| Level edge    | Levels 2 and 3: the disc's inset shadows become `inset 0 0 0 calc(u * 1)` in the level colour, then `inset 0 0 0 calc(u * 4)` ink on the selected disc (or `calc(u * 1)` ink at level 1); the halo is `0 0 calc(u * 2) calc(u * 1)` in the level colour at alpha 0.45; on a light field `0 0 0 calc(u * 1)` ink comes before the halo |
+| Pips          | A child of the button: `position: absolute`, centred at `top: calc(u * 36)` (12 below the disc centre at 24), `left: 50%`; each pip `calc(u * 4)` round in the pip colour with `box-shadow: 0 0 0 calc(u * 1)` ink, `gap: calc(u * 3)`, `pointer-events: none`                                                                        |
+| Glyph         | `calc(u * 20)` square, `background` the glyph colour, `mask: url(<glyph>.svg) center / 100% 100% no-repeat`                                                                                                                                                                                                                           |
+| Count pill    | A child of the button: `position: absolute`, `top: calc(u * 40)`, `left: 50%`, `transform: translateX(-50%)`, `height` and `line-height` `calc(u * 14)`, `padding: 0 calc(u * 4)`, `border-radius: calc(u * 4)`, `background` ink, `TYPE.count` text, `white-space: nowrap`, `pointer-events: none`                                   |
 
 Weapon glyphs and the Settings gear are single-colour SVGs
 (`weapon-<id>.svg`, `settings.svg`), so the mask takes each state's colour and

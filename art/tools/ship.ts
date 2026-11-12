@@ -554,7 +554,24 @@ function svg(yaw: number, thrust: boolean, scheme: Scheme = classic!): string {
   ].join("\n");
 }
 
-// Speed jets: Tech draws halo, outer and core triangles per mouth behind the idle frame.
+// Speed jet colours by engine level: pale blue at base, orange at level 2, purple at level 3, on
+// every paint scheme. Widths, lengths and the halo's alpha ramp are the same at every level.
+const JET_LEVELS = [
+  { level: 1, halo: "#70ace8", outer: ["#5b93cc", "#b9ecff"], core: ["#8cc4f0", "#ffffff"] },
+  { level: 2, halo: "#ff8f1f", outer: ["#ea6a00", "#ffd59a"], core: ["#ffb24d", "#ffffff"] },
+  { level: 3, halo: "#a66bff", outer: ["#8652e7", "#e6ccff"], core: ["#b98cff", "#ffffff"] },
+] as const;
+
+function jetLayers({ halo, outer, core }: (typeof JET_LEVELS)[number]) {
+  return [
+    { name: "halo", color: halo, width: 2.4, length: 1.1, alpha: { from: 0.6, to: 1, max: 0.5 } },
+    { name: "outer", colors: outer, width: 1.6, length: 1 },
+    { name: "core", colors: core, width: 0.8, length: 0.55 },
+  ];
+}
+
+// Speed jets: Tech draws halo, outer and core triangles per mouth behind the idle frame, in the
+// layers of Ada's engine level.
 function jets(): string {
   const headings = Array.from({ length: SHIP_HEADINGS }, (_, yaw) => ({
     index: yaw,
@@ -571,17 +588,10 @@ function jets(): string {
     version: 1,
     frame: 96,
     length: { base: 6, scale: 24, exponent: 2 },
-    layers: [
-      {
-        name: "halo",
-        color: "#70ace8",
-        width: 2.4,
-        length: 1.1,
-        alpha: { from: 0.6, to: 1, max: 0.5 },
-      },
-      { name: "outer", colors: ["#5b93cc", "#b9ecff"], width: 1.6, length: 1 },
-      { name: "core", colors: ["#8cc4f0", "#ffffff"], width: 0.8, length: 0.55 },
-    ],
+    // CLEANUP (added 2026-11-12): the base level's layers for the runtime that predates
+    // engineLevels. Remove once Tech reads engineLevels for Ada's jets.
+    layers: jetLayers(JET_LEVELS[0]),
+    engineLevels: JET_LEVELS.map((entry) => ({ level: entry.level, layers: jetLayers(entry) })),
     headings,
   };
   return json(contract);
