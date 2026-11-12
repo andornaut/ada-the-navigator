@@ -26,22 +26,23 @@
   and the buoy; window panes, lamps, beacons, dock collar depth, corner lights
   and approach lights keep the outposts' sizes.
 - Frames are multiples of 16 px. Each SVG's intrinsic `width` and `height` are
-  its display size (`frame * 0.4375`, whole px) and its `viewBox` is the frame
+  its display size (`frame * 0.4375`, times 1.25 for the hub and its changes,
+  the hub scale in [Destinations](destinations.md#scale)) and its `viewBox` is the frame
   in frame px. Tech rasterizes at the on-screen device size
   ([Layout](layout.md#coordinates-and-scale)).
 - Manifest `width` and `height` are the frame (the `viewBox`), so pivots, docks,
   berths, moorings and jets are frame px, as for the station and the outposts.
   `displayWidth` and `displayHeight` equal the SVG's intrinsic size.
 
-| Asset       | Ids                                                | Frame px | Display    | Pivot           |
-| ----------- | -------------------------------------------------- | -------- | ---------- | --------------- |
-| Hub, worn   | `outpost-hub-a`, `outpost-hub-b`                   | 240, 240 | 105 by 105 | `(0.5, 0.5625)` |
-| Hub repairs | `outpost-hub-repaired-a`, `-b`                     | 240, 240 | 105 by 105 | `(0.5, 0.5625)` |
-| Second bay  | `outpost-hub-bay-a`, `-b` (overlay)                | 240, 240 | 105 by 105 | `(0.5, 0.5625)` |
-| Buoy        | `mooring-buoy-a`, `mooring-buoy-b`                 | 96, 80   | 42 by 35   | `(0.5, 0.5625)` |
-| Miner       | `craft-miner-{0..15}`                              | 128      | 56         | `(0.5, 0.5)`    |
-| Visitors    | `craft-visitor1-{0..15}`, `craft-visitor2-{0..15}` | 80       | 35         | `(0.5, 0.5)`    |
-| Blocker     | `craft-blocker-{0..15}`                            | 96       | 42         | `(0.5, 0.5)`    |
+| Asset       | Ids                                                | Frame px | Display          | Pivot           |
+| ----------- | -------------------------------------------------- | -------- | ---------------- | --------------- |
+| Hub, worn   | `outpost-hub-a`, `outpost-hub-b`                   | 240, 240 | 131.25 by 131.25 | `(0.5, 0.5625)` |
+| Hub repairs | `outpost-hub-repaired-a`, `-b`                     | 240, 240 | 131.25 by 131.25 | `(0.5, 0.5625)` |
+| Second bay  | `outpost-hub-bay-a`, `-b` (overlay)                | 240, 240 | 131.25 by 131.25 | `(0.5, 0.5625)` |
+| Buoy        | `mooring-buoy-a`, `mooring-buoy-b`                 | 96, 80   | 42 by 35         | `(0.5, 0.5625)` |
+| Miner       | `craft-miner-{0..15}`                              | 128      | 56               | `(0.5, 0.5)`    |
+| Visitors    | `craft-visitor1-{0..15}`, `craft-visitor2-{0..15}` | 80       | 35               | `(0.5, 0.5)`    |
+| Blocker     | `craft-blocker-{0..15}`                            | 96       | 42               | `(0.5, 0.5)`    |
 
 ## Hub
 

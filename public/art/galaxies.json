@@ -45,6 +45,10 @@
       "huntGlint"
     ],
     "effects": ["missile", "blastRing", "blastFlash", "hitSpark", "destructionShards"],
+    "destinationKeyline": {
+      "width": 2,
+      "kinds": ["station", "outpost", "storyPlace"]
+    },
     "hudOutline": {
       "width": 1,
       "parts": ["shieldIcon", "shieldBar"]

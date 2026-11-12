@@ -36,6 +36,7 @@ import {
   blue,
   blueDim,
   box,
+  DESTINATION_SCALE,
   DISPLAY_SCALE,
   DOCK,
   dockCollar,
@@ -302,15 +303,21 @@ const entries = Object.entries(variants).flatMap(([variant, hall]) => {
     const title = `Weavers' station${hall ? ", Loom hall" : ""} ${letter.toUpperCase()}`;
     writeFileSync(
       `${OUT}${name}-${letter}.svg`,
-      svgFile(title, frame.width, frame.height, placed(frame.halfWidth, frame.above, faces)),
+      svgFile(
+        title,
+        frame.width,
+        frame.height,
+        placed(frame.halfWidth, frame.above, faces),
+        DESTINATION_SCALE,
+      ),
     );
     return {
       id: `needle-${name}-${letter}`,
       path: `${PUBLIC}${name}-${letter}.svg`,
       width: frame.width,
       height: frame.height,
-      displayWidth: round(frame.width * DISPLAY_SCALE),
-      displayHeight: round(frame.height * DISPLAY_SCALE),
+      displayWidth: round(frame.width * DISPLAY_SCALE * DESTINATION_SCALE),
+      displayHeight: round(frame.height * DISPLAY_SCALE * DESTINATION_SCALE),
       facing: "fixed",
       pivot: { x: 0.5, y: frame.above / frame.height },
       frameMs: BLINK_MS,

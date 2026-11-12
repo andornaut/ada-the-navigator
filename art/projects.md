@@ -124,7 +124,8 @@ unchanged.
 - `kind` `replace`: `frames` (A, B) replace `replaces` (A, B).
 - `kind` `overlay`: `frames` (A, B) and `anchors`. Each anchor places one copy
   of the sprite with its pivot at the base's pivot plus (`x`, `y`) frame px;
-  scale by the display size like the dock (`* 0.4375` to display px), then
+  scale by the base's display size like the dock (`displayWidth / width`, 0.65625
+  at the [destination scale](destinations.md#scale)), then
   convert screen to world as for the dock. `layer` `behind` draws before the
   base, `front` after it, all in the base's depth slot. `phase` 0 shows
   frame A while the base shows A; `phase` 1 shows the other frame.
@@ -143,9 +144,9 @@ unchanged.
 
 `greenhouseRing` at the growers: replacement frames.
 
-| Ids                                                | Frame px | Display        | Pivot         | Dock `(x, y)`   | Dock width |
-| -------------------------------------------------- | -------- | -------------- | ------------- | --------------- | ---------- |
-| `outpost-growers-ring-a`, `outpost-growers-ring-b` | 180, 140 | 78.75 by 61.25 | `(0.5, 0.45)` | `(90, 106.841)` | 31.843     |
+| Ids                                                | Frame px | Display           | Pivot         | Dock `(x, y)`   | Dock width |
+| -------------------------------------------------- | -------- | ----------------- | ------------- | --------------- | ---------- |
+| `outpost-growers-ring-a`, `outpost-growers-ring-b` | 180, 140 | 118.125 by 91.875 | `(0.5, 0.45)` | `(90, 106.841)` | 31.843     |
 
 - The growers' model unchanged (the same polygons, offset by (18, 15) frame px)
   with the ring around the deck centre. The pivot and dock entrance are the same
@@ -164,9 +165,9 @@ unchanged.
 
 `workshopCrane` at the workshop: one front overlay at the workshop's pivot.
 
-| Ids                                                    | Frame px | Display      | Pivot           | Anchor `(x, y)` | Layer   | Phase |
-| ------------------------------------------------------ | -------- | ------------ | --------------- | --------------- | ------- | ----- |
-| `outpost-workshop-crane-a`, `outpost-workshop-crane-b` | 134, 80  | 58.625 by 35 | `(0.5, 0.7625)` | `(0, 0)`        | `front` | 0     |
+| Ids                                                    | Frame px | Display        | Pivot           | Anchor `(x, y)` | Layer   | Phase |
+| ------------------------------------------------------ | -------- | -------------- | --------------- | --------------- | ------- | ----- |
+| `outpost-workshop-crane-a`, `outpost-workshop-crane-b` | 134, 80  | 87.938 by 52.5 | `(0.5, 0.7625)` | `(0, 0)`        | `front` | 0     |
 
 - A yellow `#f2d15a` gantry (sides `#b99a36`, dark `#8c7428`) straddling the
   hall 6 units behind its centre: two legs 44 tall beside the hall's ends and a
@@ -179,9 +180,9 @@ unchanged.
 
 `salvageBeacons` at the salvagers: one beacon sprite at three anchors.
 
-| Ids                                                        | Frame px | Display      | Pivot          |
-| ---------------------------------------------------------- | -------- | ------------ | -------------- |
-| `outpost-salvagers-beacon-a`, `outpost-salvagers-beacon-b` | 20, 40   | 8.75 by 17.5 | `(0.5, 0.625)` |
+| Ids                                                        | Frame px | Display         | Pivot          |
+| ---------------------------------------------------------- | -------- | --------------- | -------------- |
+| `outpost-salvagers-beacon-a`, `outpost-salvagers-beacon-b` | 20, 40   | 13.125 by 26.25 | `(0.5, 0.625)` |
 
 | Anchor | Plan (degrees, r) | `(x, y)` frame px   | Layer    | Phase |
 | ------ | ----------------- | ------------------- | -------- | ----- |

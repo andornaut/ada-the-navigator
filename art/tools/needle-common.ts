@@ -80,12 +80,13 @@ export type Polygon = {
   opacity?: number;
 };
 
-// SVG at display size (frame times 0.4375) with the viewBox in frame px.
+// SVG at display size (frame times 0.4375 times `scale`) with the viewBox in frame px.
 export function svgFile(
   title: string,
   width: number,
   height: number,
   polygons: readonly Polygon[],
+  scale = 1,
 ) {
   const shapes = polygons.map(({ color, opacity, points }) => {
     const pts = points.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
@@ -93,7 +94,7 @@ export function svgFile(
     return `  <polygon fill="${color}"${alpha} points="${pts}"/>`;
   });
   return [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${round(width * DISPLAY_SCALE)}" height="${round(height * DISPLAY_SCALE)}" viewBox="0 0 ${width} ${height}">`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${round(width * DISPLAY_SCALE * scale)}" height="${round(height * DISPLAY_SCALE * scale)}" viewBox="0 0 ${width} ${height}">`,
     `  <title>${title}</title>`,
     ...shapes,
     "</svg>",

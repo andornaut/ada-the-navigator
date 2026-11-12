@@ -14,9 +14,11 @@ stitched edges, harmless debris and the Eye's layout, the
 palette are in [art/tools/needle-common.ts](tools/needle-common.ts).
 
 - Every SVG keeps its `viewBox` in frame px and declares its display size
-  (frame times 0.4375) as `width` and `height`. Manifest `width` and `height`
+  (frame times 0.4375, and times 1.5 for the station and its Loom hall, the
+  [destination scale](destinations.md#scale)) as `width` and `height`. Manifest `width` and `height`
   are frame px; `displayWidth` and `displayHeight` are the drawn size. Frame-px
-  values (pivots, docks, berths, anchors) scale by 0.4375 to display px.
+  values (pivots, docks, berths, anchors) scale by `displayWidth / width` to
+  display px.
 - Nothing is labelled: no text, signs or letters on or beside any asset.
 - Contrast is WCAG against Needle's background `#26221F`. Needle is a dark
   field: no light-field keyline applies.
@@ -42,7 +44,7 @@ writes `station-{a,b}.svg` and `station-hall-{a,b}.svg` and replaces its
 | Field               | Value                                                                     |
 | ------------------- | ------------------------------------------------------------------------- |
 | Ids                 | `needle-station-a`, `-b`; Loom hall `needle-station-hall-a`, `-b`         |
-| Frame               | 320 by 144 frame px; display 140 by 63                                    |
+| Frame               | 320 by 144 frame px; display 210 by 94.5                                  |
 | Pivot               | `(0.5, 0.5)`: the hub base on the world plane                             |
 | `facing`            | `fixed`                                                                   |
 | `frameMs`           | 700                                                                       |

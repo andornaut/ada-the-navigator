@@ -4219,8 +4219,8 @@
       "path": "/art/station-a.svg",
       "width": 180,
       "height": 160,
-      "displayWidth": 78.75,
-      "displayHeight": 70,
+      "displayWidth": 118.125,
+      "displayHeight": 105,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
@@ -4239,8 +4239,8 @@
       "path": "/art/station-b.svg",
       "width": 180,
       "height": 160,
-      "displayWidth": 78.75,
-      "displayHeight": 70,
+      "displayWidth": 118.125,
+      "displayHeight": 105,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,

@@ -99,6 +99,9 @@ const LIGHT_FIELD = {
     "huntGlint",
   ],
   effects: ["missile", "blastRing", "blastFlash", "hitSpark", "destructionShards"],
+  // Places Ada visits take a wider keyline, so they read at a glance on a light field
+  // (art/destinations.md): every station, outpost, settlement and story place.
+  destinationKeyline: { width: 2, kinds: ["station", "outpost", "storyPlace"] },
   // The status pill's 1 px ink outlines, as on the +N tick.
   hudOutline: { width: 1, parts: ["shieldIcon", "shieldBar"] },
   shotEdge: 1,

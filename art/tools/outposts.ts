@@ -10,8 +10,10 @@ type Part = { plan: Plan; z0: number; z1: number; top: string; side: string };
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const output = `${art}outposts/`;
-// Frame px to logical display px, shared with Ada, the enemies and the station.
+// Frame px to logical display px, shared with Ada, the enemies and the station; outposts and their
+// project frames draw at the destination scale (art/destinations.md).
 const DISPLAY_SCALE = 0.4375;
+const DESTINATION_SCALE = 1.5;
 const BLINK_MS = 700;
 const PAD = 4;
 
@@ -818,8 +820,8 @@ function frameEntries(name: string, width: number, height: number, above: number
     path: `/art/outposts/${name}-${frame}.svg`,
     width,
     height,
-    displayWidth: round(width * DISPLAY_SCALE),
-    displayHeight: round(height * DISPLAY_SCALE),
+    displayWidth: round(width * DISPLAY_SCALE * DESTINATION_SCALE),
+    displayHeight: round(height * DISPLAY_SCALE * DESTINATION_SCALE),
     facing: "fixed",
     pivot: { x: 0.5, y: above / height },
     frameMs: BLINK_MS,

@@ -11,6 +11,12 @@ export type View = (point: Point) => Point;
 
 // Frame px to logical display px, shared with Ada, the enemies and the station.
 export const DISPLAY_SCALE = 0.4375;
+// Places Ada visits draw larger than the ships, so they read at a glance (art/destinations.md):
+// stations, outposts, settlements and quest points by DESTINATION_SCALE, and the Cartwheel hub,
+// already built at about 1.55 times the outposts' proportions, by HUB_SCALE. Their display size is
+// frame * DISPLAY_SCALE * scale; frame px values (pivots, docks, berths) are unchanged.
+export const DESTINATION_SCALE = 1.5;
+export const HUB_SCALE = 1.25;
 export const BLINK_MS = 700;
 
 // Station family.

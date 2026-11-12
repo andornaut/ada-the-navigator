@@ -22,6 +22,7 @@ import {
 import {
   along,
   BLINK_MS,
+  DESTINATION_SCALE,
   DISPLAY_SCALE,
   DOCK,
   type Face,
@@ -60,8 +61,9 @@ function layout(faces: readonly Face[]): Layout {
 
 const frameXY = ({ halfWidth, above }: Layout, point: Point) => projectAt(halfWidth, above, point);
 
-// SVG at its display size with the viewBox in frame px, as Cartwheel's art.
-function svgFile(title: string, frame: Layout, faces: readonly Face[]): string {
+// SVG at its display size (frame * DISPLAY_SCALE * scale) with the viewBox in frame px, as
+// Cartwheel's art.
+function svgFile(title: string, frame: Layout, faces: readonly Face[], scale = 1): string {
   const shapes = faces.map(({ color, points }) => {
     const projected = points.map((point) => {
       const [x, y] = frameXY(frame, point);
@@ -70,7 +72,7 @@ function svgFile(title: string, frame: Layout, faces: readonly Face[]): string {
     return `  <polygon fill="${color}" points="${projected.join(" ")}"/>`;
   });
   return [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${round(frame.width * DISPLAY_SCALE)}" height="${round(frame.height * DISPLAY_SCALE)}" viewBox="0 0 ${frame.width} ${frame.height}">`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${round(frame.width * DISPLAY_SCALE * scale)}" height="${round(frame.height * DISPLAY_SCALE * scale)}" viewBox="0 0 ${frame.width} ${frame.height}">`,
     `  <title>${title}</title>`,
     ...shapes,
     "</svg>",
@@ -99,8 +101,12 @@ function dockAt(frame: Layout, face: number, mouthWidth: number, across = 0, ang
 
 type Fixed = { id: string; file: string; title: string; faces: readonly Face[] };
 
+// Every fixed asset here is a destination or a change to one, drawn at the destination scale.
 function writeFixed(frame: Layout, item: Fixed) {
-  writeFileSync(`${output}${item.file}.svg`, svgFile(item.title, frame, item.faces));
+  writeFileSync(
+    `${output}${item.file}.svg`,
+    svgFile(item.title, frame, item.faces, DESTINATION_SCALE),
+  );
 }
 
 function fixedEntry(frame: Layout, item: Fixed, extra: Record<string, unknown>, blink = true) {
@@ -109,8 +115,8 @@ function fixedEntry(frame: Layout, item: Fixed, extra: Record<string, unknown>, 
     path: `${PATH}${item.file}.svg`,
     width: frame.width,
     height: frame.height,
-    displayWidth: round(frame.width * DISPLAY_SCALE),
-    displayHeight: round(frame.height * DISPLAY_SCALE),
+    displayWidth: round(frame.width * DISPLAY_SCALE * DESTINATION_SCALE),
+    displayHeight: round(frame.height * DISPLAY_SCALE * DESTINATION_SCALE),
     facing: "fixed",
     pivot: { x: 0.5, y: frame.above / frame.height },
     ...(blink ? { frameMs: BLINK_MS } : {}),

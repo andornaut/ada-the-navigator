@@ -6,8 +6,8 @@
       "path": "/art/needle/station-a.svg",
       "width": 320,
       "height": 144,
-      "displayWidth": 140,
-      "displayHeight": 63,
+      "displayWidth": 210,
+      "displayHeight": 94.5,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
@@ -42,8 +42,8 @@
       "path": "/art/needle/station-b.svg",
       "width": 320,
       "height": 144,
-      "displayWidth": 140,
-      "displayHeight": 63,
+      "displayWidth": 210,
+      "displayHeight": 94.5,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
@@ -78,8 +78,8 @@
       "path": "/art/needle/station-hall-a.svg",
       "width": 320,
       "height": 144,
-      "displayWidth": 140,
-      "displayHeight": 63,
+      "displayWidth": 210,
+      "displayHeight": 94.5,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
@@ -115,8 +115,8 @@
       "path": "/art/needle/station-hall-b.svg",
       "width": 320,
       "height": 144,
-      "displayWidth": 140,
-      "displayHeight": 63,
+      "displayWidth": 210,
+      "displayHeight": 94.5,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,

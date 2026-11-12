@@ -26,23 +26,23 @@ A sector one cooperating outpost:
 
 ## Frames and manifest
 
-| Field              | Value                                                 |
-| ------------------ | ----------------------------------------------------- |
-| Ids                | `station-a`, `station-b`                              |
-| Frame              | 180 by 160 frame px, transparent                      |
-| Display            | 78.75 by 70 logical px (`frame * 0.4375`, as for Ada) |
-| Pivot              | `(0.5, 0.43125)`: the hub base on the world plane     |
-| `facing`           | `fixed`                                               |
-| `frameMs`          | 700                                                   |
-| `dock.x`, `dock.y` | Dock entrance in frame px: `(90, 131.225)`            |
-| `dock.outward`     | `[0, 1]`: the dock opens toward screen-down           |
-| `dock.width`       | Mouth width in frame px: 37.967                       |
+| Field              | Value                                                                                              |
+| ------------------ | -------------------------------------------------------------------------------------------------- |
+| Ids                | `station-a`, `station-b`                                                                           |
+| Frame              | 180 by 160 frame px, transparent                                                                   |
+| Display            | 118.125 by 105 logical px (`frame * 0.4375 * 1.5`, the [destination scale](destinations.md#scale)) |
+| Pivot              | `(0.5, 0.43125)`: the hub base on the world plane                                                  |
+| `facing`           | `fixed`                                                                                            |
+| `frameMs`          | 700                                                                                                |
+| `dock.x`, `dock.y` | Dock entrance in frame px: `(90, 131.225)`                                                         |
+| `dock.outward`     | `[0, 1]`: the dock opens toward screen-down                                                        |
+| `dock.width`       | Mouth width in frame px: 37.967                                                                    |
 
 - Idle blink alternates frame A and frame B, 700 ms each. A lights the dock
   corner lights and the mast beacon `#70ace8`; B lights the two approach-light
   pairs. Unlit lights use `#3f5878`.
 - Reduced motion shows frame A only.
 - The dock entrance is the mouth's centre on the world plane (z = 0), 62.225
-  frame px (27.2 display px) below the pivot. Ada enters moving screen-up,
+  frame px (40.8 display px) below the pivot. Ada enters moving screen-up,
   opposite `dock.outward`. Scale frame px by the display size like any other
   manifest value.

@@ -31,19 +31,20 @@ portraits of Pip and the settlers.
 As for [Cartwheel](cartwheel.md#sizes-and-frames): frames are multiples of
 16 px with the pivot on the vertical centre line at an exact five-decimal
 fraction; each SVG's intrinsic `width` and `height` are its display size
-(`frame * 0.4375`) and its `viewBox` is the frame in frame px. Manifest `width`
+(`frame * 0.4375 * 1.5`, the [destination scale](destinations.md#scale), for every asset here but Pip's
+scooter) and its `viewBox` is the frame in frame px. Manifest `width`
 and `height` are the frame, so pivots and docks are frame px; `displayWidth`
 and `displayHeight` equal the SVG's intrinsic size.
 
-| Asset              | Ids                                                                         | Frame px | Display  | Pivot           |
-| ------------------ | --------------------------------------------------------------------------- | -------- | -------- | --------------- |
-| Settlers' station  | `station-settlers-a`, `station-settlers-b`                                  | 144, 176 | 63 by 77 | `(0.5, 0.5)`    |
-| Hamlet             | `outpost-hamlet-a`, `outpost-hamlet-b`                                      | 80, 80   | 35 by 35 | `(0.5, 0.4375)` |
-| Lamp house         | `outpost-lamphouse-a`, `outpost-lamphouse-b`                                | 64, 80   | 28 by 35 | `(0.5, 0.6)`    |
-| Guide beacon       | `beacon-guide-lit-{a,b}`, `beacon-guide-dented`, `beacon-guide-relit-{a,b}` | 48, 64   | 21 by 28 | `(0.5, 0.75)`   |
-| Pip's mail scooter | `craft-pip-{0..15}`                                                         | 80       | 35       | `(0.5, 0.5)`    |
-| Courier school     | `station-settlers-school-a`, `-b`                                           | 64, 96   | 28 by 42 | `(0.5, 0.3125)` |
-| Spare beacon       | `beacon-guide-spare-a`, `-b`                                                | 48, 64   | 21 by 28 | `(0.5, 0.625)`  |
+| Asset              | Ids                                                                         | Frame px | Display       | Pivot           |
+| ------------------ | --------------------------------------------------------------------------- | -------- | ------------- | --------------- |
+| Settlers' station  | `station-settlers-a`, `station-settlers-b`                                  | 144, 176 | 94.5 by 115.5 | `(0.5, 0.5)`    |
+| Hamlet             | `outpost-hamlet-a`, `outpost-hamlet-b`                                      | 80, 80   | 52.5 by 52.5  | `(0.5, 0.4375)` |
+| Lamp house         | `outpost-lamphouse-a`, `outpost-lamphouse-b`                                | 64, 80   | 42 by 52.5    | `(0.5, 0.6)`    |
+| Guide beacon       | `beacon-guide-lit-{a,b}`, `beacon-guide-dented`, `beacon-guide-relit-{a,b}` | 48, 64   | 31.5 by 42    | `(0.5, 0.75)`   |
+| Pip's mail scooter | `craft-pip-{0..15}`                                                         | 80       | 35            | `(0.5, 0.5)`    |
+| Courier school     | `station-settlers-school-a`, `-b`                                           | 64, 96   | 42 by 63      | `(0.5, 0.3125)` |
+| Spare beacon       | `beacon-guide-spare-a`, `-b`                                                | 48, 64   | 31.5 by 42    | `(0.5, 0.625)`  |
 
 ## Settlers' station
 
@@ -78,7 +79,7 @@ A lantern station on a pearl deck 104 units across (2.4 Ada wingspans):
 | `dock.width`       | Mouth width in frame px: 36.742             |
 
 - The dock is live, in the trading station's schema: the mouth's centre on
-  the world plane, 90 units along the dock axis, 63.64 frame px (27.84
+  the world plane, 90 units along the dock axis, 63.64 frame px (41.76
   display px) below the pivot. Ada enters moving screen-up, opposite
   `dock.outward`. Scale frame px by the display size like any other manifest
   value.
@@ -124,7 +125,7 @@ swaps the sprite in place.
 - A pearl float with three fins, a banded pearl tower (marker-dark band
   `#6f78b8`), a cream gallery, an eight-sided lantern and a slate-blue cap.
   About 33 units across the fins and 41 tall: larger than Sunflower's salvage
-  beacons (8.75 by 17.5 display px).
+  beacons (13.125 by 26.25 display px).
 - `lit` (`beacon-guide-lit-a`, `-b`): the chain. Frame A shows the lantern
   `#b8c1ff` with a white core, frame B `#8f9cf0`. Neighbouring beacons in a
   chain blink opposite: the n-th beacon along the chain shows frame A while

@@ -25,7 +25,8 @@ Loom's glider and portrait and the crimson drones, Black Eye's
 [storybook](storybook.md) Earth backgrounds with Ada's and her family's storybook sprites.
 The station jobs have [job art in space](jobs.md) (landmarks, the search area
 and the lost item's glint), the job board's row icons and Map marks.
-[Community projects](projects.md) add the Projects shop tab and the world
+[Destinations](destinations.md) set the scale, light-field keyline and Use
+callout of every place Ada visits. [Community projects](projects.md) add the Projects shop tab and the world
 changes that funding them shows. [Galaxies](galaxies.md) retint the space field per galaxy,
 and the [backdrop layers](backdrop.md) give every galaxy a parallax sky in its own field tones. Other space objects
 use simple runtime shapes with the [space palette](space-palette.md): muted

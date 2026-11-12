@@ -31,6 +31,7 @@ import {
   cream,
   creamSide,
   DISPLAY_SCALE,
+  HUB_SCALE,
   DOCK,
   dockCollar,
   type Face,
@@ -376,6 +377,8 @@ type Fixed = {
   path: string;
   title: string;
   frames: { a: Face[]; b: Face[] };
+  // Display size is frame * DISPLAY_SCALE * scale: HUB_SCALE for the hub and its changes.
+  scale: number;
 };
 
 // Frame px of a model point on a fixed frame with the pivot at (halfWidth, above).
@@ -402,13 +405,14 @@ function layout(faces: readonly Face[]): Layout {
 
 const frameXY = ({ halfWidth, above }: Layout, point: Point) => projectAt(halfWidth, above, point);
 
-// SVG at display size with the viewBox in frame px.
+// SVG at display size (frame * DISPLAY_SCALE * scale) with the viewBox in frame px.
 function svgFile(
   title: string,
   width: number,
   height: number,
   faces: readonly Face[],
   place: (p: Point) => [number, number],
+  scale = 1,
 ) {
   const shapes = faces.map(({ color, points }) => {
     const projected = points.map((point) => {
@@ -418,7 +422,7 @@ function svgFile(
     return `  <polygon fill="${color}" points="${projected.join(" ")}"/>`;
   });
   return [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${round(width * DISPLAY_SCALE)}" height="${round(height * DISPLAY_SCALE)}" viewBox="0 0 ${width} ${height}">`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${round(width * DISPLAY_SCALE * scale)}" height="${round(height * DISPLAY_SCALE * scale)}" viewBox="0 0 ${width} ${height}">`,
     `  <title>${title}</title>`,
     ...shapes,
     "</svg>",
@@ -451,8 +455,8 @@ function fixedEntry(frame: Layout, item: Fixed, letter: "a" | "b", extra: Record
     path: `/art/cartwheel/${item.path}-${letter}.svg`,
     width: frame.width,
     height: frame.height,
-    displayWidth: round(frame.width * DISPLAY_SCALE),
-    displayHeight: round(frame.height * DISPLAY_SCALE),
+    displayWidth: round(frame.width * DISPLAY_SCALE * item.scale),
+    displayHeight: round(frame.height * DISPLAY_SCALE * item.scale),
     facing: "fixed",
     pivot: { x: 0.5, y: frame.above / frame.height },
     frameMs: BLINK_MS,
@@ -470,6 +474,7 @@ function writeFixed(dir: string, frame: Layout, item: Fixed) {
         frame.height,
         item.frames[letter],
         (point) => frameXY(frame, point),
+        item.scale,
       ),
     );
   }
@@ -485,24 +490,28 @@ const hubWorn: Fixed = {
   path: "hub",
   title: "Cartwheel hub, worn",
   frames: blink((lit) => hubParts(lit, { repaired: false })),
+  scale: HUB_SCALE,
 };
 const hubRepaired: Fixed = {
   id: "outpost-hub-repaired",
   path: "hub-repaired",
   title: "Cartwheel hub, repaired",
   frames: blink((lit) => hubParts(lit, { repaired: true })),
+  scale: HUB_SCALE,
 };
 const hubBay: Fixed = {
   id: "outpost-hub-bay",
   path: "hub-bay",
   title: "Cartwheel hub, second docking bay",
   frames: blink(bayParts),
+  scale: HUB_SCALE,
 };
 const buoy: Fixed = {
   id: "mooring-buoy",
   path: "mooring-buoy",
   title: "Cartwheel mooring buoy",
   frames: blink(buoyParts),
+  scale: 1,
 };
 
 // Screen outlines of two convex faces overlap with positive area (separating axis test).

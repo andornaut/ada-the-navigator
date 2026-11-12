@@ -38,13 +38,14 @@ Growers' leaf green stays clearly yellower and darker than the
 Every entry has the station schema plus `outpost`, the outpost role
 (`growers`, `workshop` or `salvagers`).
 
-| Outpost   | Ids                                          | Frame px | Display        | Pivot          | Dock `(x, y)`  | Dock width |
-| --------- | -------------------------------------------- | -------- | -------------- | -------------- | -------------- | ---------- |
-| Growers   | `outpost-growers-a`, `outpost-growers-b`     | 144, 120 | 63 by 52.5     | `(0.5, 0.4)`   | `(72, 91.841)` | 31.843     |
-| Workshop  | `outpost-workshop-a`, `outpost-workshop-b`   | 170, 120 | 74.375 by 52.5 | `(0.5, 0.675)` | `(85, 97.971)` | 29.394     |
-| Salvagers | `outpost-salvagers-a`, `outpost-salvagers-b` | 168, 110 | 73.5 by 48.125 | `(0.5, 0.4)`   | `(84, 82.184)` | 31.843     |
+| Outpost   | Ids                                          | Frame px | Display          | Pivot          | Dock `(x, y)`  | Dock width |
+| --------- | -------------------------------------------- | -------- | ---------------- | -------------- | -------------- | ---------- |
+| Growers   | `outpost-growers-a`, `outpost-growers-b`     | 144, 120 | 94.5 by 78.75    | `(0.5, 0.4)`   | `(72, 91.841)` | 31.843     |
+| Workshop  | `outpost-workshop-a`, `outpost-workshop-b`   | 170, 120 | 111.563 by 78.75 | `(0.5, 0.675)` | `(85, 97.971)` | 29.394     |
+| Salvagers | `outpost-salvagers-a`, `outpost-salvagers-b` | 168, 110 | 110.25 by 72.188 | `(0.5, 0.4)`   | `(84, 82.184)` | 31.843     |
 
-- Display size is `frame * 0.4375`, as for Ada and the station. `facing` is
+- Display size is `frame * 0.4375 * 1.5`, the [destination scale](destinations.md#scale), as for the
+  station. `facing` is
   `fixed`; `dock.outward` is `[0, 1]`.
 - Pivots lie on the world plane: the growers' deck centre, the workshop hall's
   base centre and the model origin between the salvagers' hull and tank.
