@@ -933,7 +933,11 @@ from ordinary shots. Homing is not part of this combat pass.
 Enemy speeds are fixed in world units and the same in every galaxy (see
 [Ships](ships.md#values)); pursuit range is finite. Frigates and capital ships can
 block required quest routes in the first five galaxies. A guard stops blocking
-its route once it is disabled or destroyed. This encounter expansion
+its route once it is disabled or destroyed. The first time each flight that Ada
+comes within Talk range of a destination its guard still blocks, Astra says a
+guard line, the guard gets a heavy edge marker even if Ada has not seen it yet,
+and the guard wakes and flies toward Ada until it is on screen, then fights as
+usual. This encounter expansion
 does not define galaxy six's story or conclusion.
 
 ## Verification priorities

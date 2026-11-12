@@ -548,6 +548,13 @@ Reactions:
   the glowing parts."
 - A heavy disabled, first time each flight: Astra: "Its weapons are down. We
   could salvage parts and let it go." Ada: "No need to wreck it." (happy)
+- A guard still blocks the destination Ada reached, one variant in turn:
+  - Astra: "Something's guarding this place. Here it comes!" Ada: "Get ready,
+    Penny."
+  - Astra: "We can't visit yet. A guard ship is watching." Ada: "Then let's deal
+    with it."
+  - Astra: "A guard is blocking the way in. Stop its weapons first." Ada: "Okay.
+    I'm ready."
 
 Sunflower:
 
