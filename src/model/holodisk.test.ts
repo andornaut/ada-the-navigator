@@ -331,7 +331,7 @@ describe("galaxy three's holodisk", () => {
     expect(f.objects.some((o) => o.id === "holodisk")).toBe(false);
   });
 
-  it("is recovered on contact within pickup reach, not on entering its safe area", () => {
+  it("is recovered within 20 world units of Ada's drawn ship, not on entering its safe area", () => {
     const model = questDone(3, ["whale", "family"]);
     model.step(0.01, idle);
     const f = model.state.flight!;
@@ -340,6 +340,7 @@ describe("galaxy three's holodisk", () => {
     const disk = f.objects.find((o) => o.id === "holodisk")!;
     const at = { x: disk.x, y: disk.y };
     const { pickupMargins, pickupRadius } = PROTOTYPE.tuning.flight;
+    expect(pickupMargins.holodisk).toBe(20);
     // How far east of the disk Ada's drawn ship last reaches it, to 0.001.
     let low = 0;
     let high = 200;

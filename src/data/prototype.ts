@@ -576,10 +576,9 @@ export const PROTOTYPE: PrototypeContent = {
       enemyRadius: 14,
       engagementChunks: 1,
       objectsPerChunk: 5,
-      // Stardust keeps the tight 4, since the tractor beam gathers it; every other pickup
-      // reaches 20, about half the ship's length. The holodisk is no pickup in Gameplay's list
-      // and keeps its 4.
-      pickupMargins: { cache: 20, holodisk: 4, lostItem: 20, ore: 20, stardust: 4, weapon: 20 },
+      // Stardust keeps the tight 4, since the tractor beam gathers it; every other pickup,
+      // the floating holodisk included, reaches 20, about half the ship's length.
+      pickupMargins: { cache: 20, holodisk: 20, lostItem: 20, ore: 20, stardust: 4, weapon: 20 },
       pickupRadius: 10,
       pickupZip: 0.15,
       pieceRadius: 7,

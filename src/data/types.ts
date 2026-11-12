@@ -99,7 +99,7 @@ export interface PremiseContent {
 
 /**
  * What Ada collects on contact: a discovery cache, Stardust, an ore nugget, a weapon pickup, a
- * hunt's lost item, and the holodisk she reaches like one.
+ * hunt's lost item, and a floating holodisk.
  */
 export type PickupKind = "cache" | "holodisk" | "lostItem" | "ore" | "stardust" | "weapon";
 

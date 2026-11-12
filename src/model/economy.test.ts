@@ -618,7 +618,7 @@ describe("tractor beam and pickup reach", () => {
   it("collects a hunt's lost item within 20 world units of Ada's drawn ship, as its glint", () => {
     expect(PROTOTYPE.tuning.flight.pickupMargins).toEqual({
       cache: 20,
-      holodisk: 4,
+      holodisk: 20,
       lostItem: 20,
       ore: 20,
       stardust: 4,
