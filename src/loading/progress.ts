@@ -46,13 +46,16 @@ const FRAME = { height: LOADING_BAR.fillHeight, width: SCREEN.width, x: 0, y: 0 
 
 let install: ProgressHandle | undefined;
 
-/** offlinePlay's activity: installing or registering is precache work until it is idle again. */
+/**
+ * offlinePlay's activity: only the first visit's precache shows, until it ends; an update installs
+ * silently.
+ */
 export function offlineActivity(activity: OfflineActivity): void {
-  if (activity === "idle") {
+  if (activity === "precaching") {
+    install ??= installProgress.begin();
+  } else {
     install?.finish();
     install = undefined;
-  } else {
-    install ??= installProgress.begin();
   }
 }
 

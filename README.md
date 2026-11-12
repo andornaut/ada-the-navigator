@@ -122,8 +122,9 @@ has closed. The landing page at `/` is not precached.
 A loading bar along the view's top edge, above every other layer, shows the loads
 the player waits for. The boot preload and a galaxy's art as its first flight
 starts fill it left to right; it holds full for 250 ms and fades out over 150 ms,
-then its element is removed. While the worker installs or registers, a segment
-30% of the width travels across it until that work ends. Art loaded on demand
+then its element is removed. While a first visit precaches the game, a segment
+30% of the width travels across it until that work ends; an update installs
+silently and resumes from the files it already stored. Art loaded on demand
 during play (scenery, rocks, ship parts, paint) shows nothing, and with nothing
 waited for there is no bar. Its cream fill and ink track sit on a 1 px ink rule,
 so it reads on every galaxy's field.

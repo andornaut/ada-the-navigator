@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 
 import { LOADING_BAR } from "../ui/loading-bar.ts";
 import { followLoading, type LoaderLike, trackLoader } from "./loadingBar.ts";
-import { BAR_STYLE, BAR_TIMING } from "./progress.ts";
+import { BAR_STYLE, BAR_TIMING, installProgress, offlineActivity } from "./progress.ts";
 
 const { fadeMs: FADE_MS, fullMs: FULL_MS } = LOADING_BAR;
 
@@ -259,5 +259,20 @@ describe("tracking the loader", () => {
     const { emit, seen } = tracked();
     emit("complete");
     expect(seen).toEqual([[false, undefined]]);
+  });
+});
+
+describe("the precache's activity", () => {
+  it("shows only a first visit's precaching, and an update installs silently", () => {
+    const seen: boolean[] = [];
+    const stop = installProgress.subscribe(({ active }) => seen.push(active));
+    offlineActivity("updating");
+    offlineActivity("idle");
+    offlineActivity("precaching");
+    offlineActivity("precaching");
+    offlineActivity("idle");
+    offlineActivity("updating");
+    stop();
+    expect(seen).toEqual([false, true, false]);
   });
 });
