@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { CONVERSATION_TUNING, lineDuration } from "../data/conversations.ts";
+import { playOpening, seedLaunches } from "../testing/launch.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { BUMP_DAMAGE, createFlight, inDanger, stepFlight } from "./flight.ts";
+import { GameModel } from "./game.ts";
 import type { FlightState } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -45,6 +47,53 @@ describe("reviewed rules", () => {
       stepFlight(CONTENT, 1 / 30, push, flight);
     }
     expect(flight.shield).toBe(shield - 1);
+  });
+
+  it("deals bump damage from generated play rocks of every kind, 1 a bump, at most every 0.5 s", () => {
+    // Launch seeds whose nearest generated scenery is a small rock, a large irregular rock, a
+    // resource rock and traveling debris.
+    const kinds = new Set<string>();
+    for (const [seed, pick] of [
+      [173, 0],
+      [174, 1],
+      [176, 3],
+      [177, 4],
+    ] as const) {
+      seedLaunches(seed);
+      const model = new GameModel(CONTENT);
+      model.startGalaxy(1);
+      playOpening(model);
+      const flight = model.state.flight!;
+      model.step(1 / 60, idle);
+      const target = flight.objects
+        .filter((object) => ["debris", "resource", "rock"].includes(object.kind) && object.hp > 0)
+        .sort(
+          (a, b) =>
+            Math.hypot(a.x - flight.player.x, a.y - flight.player.y) -
+            Math.hypot(b.x - flight.player.x, b.y - flight.player.y),
+        )[pick]!;
+      const size = target.asteroid ? ASTEROID_SHAPES.get(target.asteroid)?.size : undefined;
+      kinds.add(target.velocity ? "drifting" : `${target.kind}:${size}`);
+      const drops: number[] = [];
+      for (let frame = 0; frame < 600 && model.state.mode === "space"; frame++) {
+        const dx = target.x - flight.player.x;
+        const dy = target.y - flight.player.y;
+        const d = Math.hypot(dx, dy) || 1;
+        const before = flight.shield;
+        model.step(1 / 60, { ...idle, move: { x: dx / d, y: dy / d } });
+        if (flight.shield < before && flight.lastBump === flight.time) {
+          expect(before - flight.shield).toBe(BUMP_DAMAGE.amount);
+          drops.push(flight.time);
+        }
+      }
+      expect(drops.length).toBeGreaterThan(0);
+      for (let index = 1; index < drops.length; index++) {
+        expect(drops[index]! - drops[index - 1]!).toBeGreaterThanOrEqual(
+          BUMP_DAMAGE.seconds - 1e-9,
+        );
+      }
+    }
+    expect(kinds).toEqual(new Set(["drifting", "resource:medium", "rock:large", "rock:small"]));
   });
 
   it("shows each line for 5 s plus 50 ms per character", () => {

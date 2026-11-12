@@ -244,10 +244,8 @@ function adaSceneryContact(
 ): (normal: Vec, surface: Vec) => void {
   const { sceneryRecoil, sceneryRestitution } = content.tuning.flight;
   return (normal, surface) => {
-    if (bumps && flight.time - (flight.lastBump ?? -Infinity) >= BUMP_DAMAGE.seconds - 1e-9) {
-      flight.lastBump = flight.time;
-      flight.shield = Math.max(0, flight.shield - BUMP_DAMAGE.amount);
-      flight.sinceDamage = 0;
+    if (bumps) {
+      bumpAda(flight);
     }
     flight.velocity = bounce(sceneryRestitution, sceneryRecoil, normal, surface, flight.velocity);
     const heading = movementHeadings.get(flight);
@@ -255,6 +253,15 @@ function adaSceneryContact(
       movementHeadings.set(flight, reflectDirection(normal, heading));
     }
   };
+}
+
+/** A scenery bump's damage: 1, unless another bump dealt it within BUMP_DAMAGE.seconds. */
+function bumpAda(flight: FlightState): void {
+  if (flight.time - (flight.lastBump ?? -Infinity) >= BUMP_DAMAGE.seconds - 1e-9) {
+    flight.lastBump = flight.time;
+    flight.shield = Math.max(0, flight.shield - BUMP_DAMAGE.amount);
+    flight.sinceDamage = 0;
+  }
 }
 
 /**
@@ -2152,17 +2159,15 @@ function debrisTouchesAda(flight: FlightState, object: SpaceObject, from: Vec, t
   return false;
 }
 
-/** Ballistic debris keeps constant velocity and damages; drifting asteroids follow their path. */
+/** Ballistic debris keeps constant velocity and bumps Ada; drifting asteroids follow their path. */
 function moveDebris(content: GameContent, dt: number, flight: FlightState): void {
   for (const object of flight.objects) {
     if (object.river) {
-      // River debris follows its current and harms Ada on contact like other traveling debris.
+      // River debris follows its current and bumps Ada on contact like other traveling debris.
       const from = { x: object.x, y: object.y };
       placeRiverRock(flight, object);
-      object.cooldown = Math.max(0, (object.cooldown ?? 0) - dt);
-      if (debrisTouchesAda(flight, object, from, object) && !object.cooldown) {
-        damage(content, content.tuning.hazardDamage, flight);
-        object.cooldown = content.tuning.flight.damageInterval;
+      if (debrisTouchesAda(flight, object, from, object)) {
+        bumpAda(flight);
       }
       continue;
     }
@@ -2176,7 +2181,6 @@ function moveDebris(content: GameContent, dt: number, flight: FlightState): void
     if (object.kind !== "debris" || !object.velocity) {
       continue;
     }
-    object.cooldown = Math.max(0, (object.cooldown ?? 0) - dt);
     const next = stepDebris(dt, { id: object.id, position: object, velocity: object.velocity });
     // Protected regions absorb traveling debris without changing its ballistic heading.
     if (
@@ -2190,11 +2194,9 @@ function moveDebris(content: GameContent, dt: number, flight: FlightState): void
       object.hp = 0;
       continue;
     }
+    // A bump, though the debris may pass through her between frames (rules.md: 1 a bump).
     if (debrisTouchesAda(flight, object, object, next.position)) {
-      if (!object.cooldown) {
-        damage(content, content.tuning.hazardDamage, flight);
-        object.cooldown = content.tuning.flight.damageInterval;
-      }
+      bumpAda(flight);
     }
     object.x = next.position.x;
     object.y = next.position.y;
