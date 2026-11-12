@@ -400,28 +400,52 @@ and vanishes. Geometry, motion and timing are `ITEM_NOTICE` in
 [Layout](layout.md#item-notice).
 
 The chip is opaque ink with a 1 px rim in the gain's accent colour, its icon
-and Gameplay's label: "+ {item}", "+ {weapon}", "+ {weapon} ammo" or
-"+ Holodisk", with "×N" after a merged label. The label is `TYPE.label`,
+and Gameplay's label: "+ {item}", "+ {weapon}", "+ {weapon} ammo",
+"+ {weapon} level {n}", "+ Shield level {n}", "+ Engine level {n}",
+"+ Tractor beam level {n}", "+ {paint} paint" or "+ Holodisk", with "×N"
+after a merged label. The label is `TYPE.label`,
 cream, with the "+" in the rim's accent colour.
 
-| Gain                           | Icon                                      | Rim and "+" | Lands on                   |
-| ------------------------------ | ----------------------------------------- | ----------- | -------------------------- |
-| Job, story or lost item        | `icon-cargo-20`                           | `#feae34`   | The pill's cargo segment   |
-| Towed craft                    | `icon-tow-20`                             | `#b8bfc9`   | The pill's cargo segment   |
-| New weapon, or a weapon's ammo | `weapon-<id>.svg`, a cream `#ead4aa` mask | `#bfa06f`   | That weapon's disc         |
-| Holodisk                       | `icon-holodisk-20`                        | `#e868c8`   | Nothing: it fades in place |
+| Gain                           | Icon                                                                      | Rim and "+"                                      | Lands on                      |
+| ------------------------------ | ------------------------------------------------------------------------- | ------------------------------------------------ | ----------------------------- |
+| Job, story or lost item        | `icon-cargo-20`                                                           | `#feae34`                                        | The pill's cargo segment      |
+| Towed craft                    | `icon-tow-20`                                                             | `#b8bfc9`                                        | The pill's cargo segment      |
+| New weapon, or a weapon's ammo | `weapon-<id>.svg`, a cream `#ead4aa` mask                                 | `#bfa06f`                                        | That weapon's disc            |
+| Holodisk                       | `icon-holodisk-20`                                                        | `#e868c8`                                        | Nothing: it fades in place    |
+| Weapon level                   | `icon-shop-weapon-<id>` (Laser: `icon-shop-weapon-basic`), frame `normal` | The level's tier: `#ff8f1f` at 2, `#a66bff` at 3 | That weapon's disc            |
+| Shield level                   | `icon-shop-shield`, frame `normal`                                        | The level's tier                                 | The shield pill's shield icon |
+| Engine level                   | `icon-shop-engine-tuning`, frame `normal`                                 | The level's tier                                 | Nothing: it fades in place    |
+| Tractor beam level             | `icon-shop-tractor-beam`, frame `normal`                                  | The level's tier                                 | Nothing: it fades in place    |
+| Paint scheme                   | `icon-shop-ship-paint`, frame `normal`                                    | The scheme's `top` (`ship-paint.json`)           | Nothing: it fades in place    |
 
 The accents are the job orange and tow steel of the cargo icons, the selected
-weapon disc's gold and the holodisk's pink. Pixel icons draw nearest
+weapon disc's gold and the holodisk's pink. A level reached by an upgrade drop
+takes its upgrade tier's colour, the one the weapon disc's edge and Ada's jets
+show at that level: orange `#ff8f1f` at level 2 and
+purple `#a66bff` at level 3, for a weapon, the Shield, the Engine or the
+Tractor beam alike, so a level always reads in one colour. A newly gained
+weapon keeps the gold; its ammunition is unchanged. A paint scheme takes its
+own top colour; every scheme's passes, so none is substituted. The shop icons
+are 20 by 20, the chip's icon size, and draw nearest neighbour at 1x; the
+shop's 24 by 24 upgrade composite (glyph plus badge) does not fit the chip's
+20 slot, so a weapon level shows the plain weapon icon and the rim carries the
+level. Pixel icons draw nearest
 neighbour; the weapon glyph is the HUD disc's mask with smooth sampling.
 
-| Part         | Colour    |   Base | Sunflower | Cartwheel | Whirlpool | Black Eye | `#ffffff` |
-| ------------ | --------- | -----: | --------: | --------: | --------: | --------: | --------: |
-| Panel        | `#181425` | 1.23:1 |   10.90:1 |    1.22:1 |    1.24:1 |    1.04:1 |   18.02:1 |
-| Cargo rim    | `#feae34` | 7.89:1 |    1.12:1 |    7.96:1 |    7.80:1 |    9.35:1 |    1.86:1 |
-| Tow rim      | `#b8bfc9` | 7.90:1 |    1.12:1 |    7.97:1 |    7.81:1 |    9.36:1 |    1.85:1 |
-| Weapon rim   | `#bfa06f` | 5.91:1 |    1.50:1 |    5.96:1 |    5.84:1 |    7.00:1 |    2.48:1 |
-| Holodisk rim | `#e868c8` | 5.05:1 |    1.75:1 |    5.10:1 |    4.99:1 |    5.98:1 |    2.90:1 |
+| Part         | Colour    |    Base | Sunflower | Cartwheel | Whirlpool | Black Eye | `#ffffff` |
+| ------------ | --------- | ------: | --------: | --------: | --------: | --------: | --------: |
+| Panel        | `#181425` |  1.23:1 |   10.90:1 |    1.22:1 |    1.24:1 |    1.04:1 |   18.02:1 |
+| Cargo rim    | `#feae34` |  7.89:1 |    1.12:1 |    7.96:1 |    7.80:1 |    9.35:1 |    1.86:1 |
+| Tow rim      | `#b8bfc9` |  7.90:1 |    1.12:1 |    7.97:1 |    7.81:1 |    9.36:1 |    1.85:1 |
+| Weapon rim   | `#bfa06f` |  5.91:1 |    1.50:1 |    5.96:1 |    5.84:1 |    7.00:1 |    2.48:1 |
+| Holodisk rim | `#e868c8` |  5.05:1 |    1.75:1 |    5.10:1 |    4.99:1 |    5.98:1 |    2.90:1 |
+| Level 2 rim  | `#ff8f1f` |  6.42:1 |    1.38:1 |    6.47:1 |    6.34:1 |    7.60:1 |    2.28:1 |
+| Level 3 rim  | `#a66bff` |  4.30:1 |    2.06:1 |    4.34:1 |    4.25:1 |    5.10:1 |    3.40:1 |
+| Cobalt rim   | `#6f9ff0` |  5.50:1 |    1.61:1 |    5.55:1 |    5.44:1 |    6.52:1 |    2.66:1 |
+| Seafoam rim  | `#d4f6ea` | 12.67:1 |    1.43:1 |   12.78:1 |   12.52:1 |   15.01:1 |    1.16:1 |
+| Graphite rim | `#aab2c4` |  6.89:1 |    1.29:1 |    6.95:1 |    6.81:1 |    8.16:1 |    2.13:1 |
+| Iris rim     | `#d9ccff` |  9.78:1 |    1.10:1 |    9.87:1 |    9.67:1 |   11.59:1 |    1.50:1 |
+| Classic rim  | `#ffffff` | 14.64:1 |    1.65:1 |   14.77:1 |   14.47:1 |   17.35:1 |    1.00:1 |
 
 Parts against the field under the chip.
 
@@ -432,10 +456,18 @@ Parts against the field under the chip.
 | Tow "+"           | `#b8bfc9` |   9.72:1 |
 | Weapon "+"        | `#bfa06f` |   7.27:1 |
 | Holodisk "+"      | `#e868c8` |   6.22:1 |
+| Level 2 "+"       | `#ff8f1f` |   7.89:1 |
+| Level 3 "+"       | `#a66bff` |   5.29:1 |
+| Cobalt "+"        | `#6f9ff0` |   6.77:1 |
+| Seafoam "+"       | `#d4f6ea` |  15.59:1 |
+| Graphite "+"      | `#aab2c4` |   8.47:1 |
+| Iris "+"          | `#d9ccff` |  12.04:1 |
+| Classic "+"       | `#ffffff` |  18.02:1 |
 
 - The panel is opaque, so the label reads the same on every field and over
-  bright objects. On the dark fields the rim outlines the chip (4.99:1 or
-  more); on Sunflower the ink panel outlines it (10.90:1) and the rim is an
+  bright objects. On the dark fields the rim outlines the chip (4.25:1 or
+  more, the level 3 purple on Whirlpool, above the 3:1 a graphic needs; every
+  "+" holds 4.5:1 on the ink); on Sunflower the ink panel outlines it (10.90:1) and the rim is an
   accent only.
 - The "+" colour repeats the rim's; the label and icon carry the meaning, so
   the accent never stands alone.

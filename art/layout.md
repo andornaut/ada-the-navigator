@@ -516,11 +516,19 @@ gain but Stardust and ore shows one, queued one at a time.
 
 Destinations, at HUD rect top + 16.5 (the HUD row's centre line) on the y axis:
 
-| Gain                           | Destination centre x                                  |
-| ------------------------------ | ----------------------------------------------------- |
-| Job, story or lost item, a tow | The cargo segment's icon: pill left + pill width - 18 |
-| New weapon, a weapon's ammo    | That weapon's disc: its target's left + 24            |
-| Holodisk                       | None; the chip centres on the pill and fades in place |
+| Gain                                           | Destination centre x                                                                                                                                                   |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Job, story or lost item, a tow                 | The cargo segment's icon: pill left + pill width - 18                                                                                                                  |
+| New weapon, a weapon's ammo                    | That weapon's disc: its target's left + 24                                                                                                                             |
+| Holodisk                                       | None; the chip centres on the pill and fades in place                                                                                                                  |
+| Weapon level                                   | That weapon's disc: its target's left + 24                                                                                                                             |
+| Shield level                                   | The shield pill's shield icon: the shield pill's left + 18, on the pill's centre line (y 306 at the 720 base, 287 with phone insets, 338 at 1280x720), not the HUD row |
+| Engine level, Tractor beam level, paint scheme | None; the chip centres on the pill and fades in place, as a holodisk's                                                                                                 |
+
+A Shield level's fly runs the same curve to the bottom centre: across under
+the HUD row, then down to the shield pill, under the pill's icon as it lands;
+the pill's icon bumps on arrival. The widest upgrade label, "+ Heavy Missile
+level 3" (172.12), fits the 199.75 room of six weapons at 720x360 with phone insets.
 
 The cargo segment and a new weapon's disc appear at pickup (Gameplay), so the
 row may already have shifted; the fly reads the destination each frame and
