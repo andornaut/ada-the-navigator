@@ -855,6 +855,7 @@ export class PrototypeScene extends Scene {
       labels: {
         aimControls: PROTOTYPE.labels.aimControls ?? "",
         close: PROTOTYPE.labels.close ?? "",
+        controlsNote: PROTOTYPE.labels.controlsNote ?? "",
         install: PROTOTYPE.labels.install ?? "",
         installButton: PROTOTYPE.labels.installButton ?? "",
         installNote: PROTOTYPE.labels.installNote ?? "",

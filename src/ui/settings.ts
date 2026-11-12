@@ -36,6 +36,8 @@ export const FONT_ROLES = { body: "font-body", heading: "font-title" } as const;
 export interface SettingsLabels {
   readonly aimControls: string;
   readonly close: string;
+  /** The Move and Aim controls rows' note: hiding a stick hides only its drawing. */
+  readonly controlsNote: string;
   readonly install: string;
   readonly installButton: string;
   readonly installNote: string;
@@ -306,8 +308,8 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   // The first row's label line sits centred in its row.
   rows.dataset.inkTop = String((CONTROL_ROW.height - TYPE.body.lineHeight) / 2);
   rows.append(
-    switchRow("move", options.labels.moveControls),
-    switchRow("aim", options.labels.aimControls),
+    switchRow("move", options.labels.moveControls, options.labels.controlsNote),
+    switchRow("aim", options.labels.aimControls, options.labels.controlsNote),
     switchRow("sound", options.labels.sound, options.labels.soundNote),
     switchRow("reducedMotion", options.labels.reducedMotion, options.labels.motionNote),
   );

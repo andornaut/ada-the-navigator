@@ -354,6 +354,7 @@ export const PROTOTYPE: PrototypeContent = {
     continue: "Continue",
     contractGoal: "Deposit 30 ore at the hub.",
     contractObjective: "Deposit ore at the hub: {have} of 30.",
+    controlsNote: "Touch still works when hidden",
     deliver: "Deliver",
     deliveryAbout: "They're waiting for it.",
     deliveryTitle: "Deliver {item} to {place}",

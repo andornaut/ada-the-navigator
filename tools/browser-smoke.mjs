@@ -3548,6 +3548,49 @@ try {
       "captures for review",
   );
 
+  // At 844x390 the Settings card fits the view with every row's note: the Move and Aim controls
+  // rows carry the same note element as Sound's.
+  const settingsViewport = page.viewportSize();
+  await page.setViewportSize({ width: 844, height: 390 });
+  await openSettings();
+  const notes = await page
+    .locator(".ada-row[data-setting]")
+    .evaluateAll((rows) =>
+      rows.map((row) => [row.dataset.setting, row.querySelector(".ada-setting-note")?.textContent]),
+    );
+  for (const setting of ["move", "aim"]) {
+    assert.deepEqual(
+      notes.find(([key]) => key === setting),
+      [setting, PROTOTYPE.labels.controlsNote],
+      `${setting} controls row notes that touch still works when hidden`,
+    );
+  }
+  assert.deepEqual(
+    notes.find(([key]) => key === "sound"),
+    ["sound", PROTOTYPE.labels.soundNote],
+    "Sound keeps its note in the same element",
+  );
+  const settingsFit = await page.locator('[data-action="close-settings"]').evaluate((close) => {
+    const card = close.closest(".ada-card-frame") ?? close.parentElement;
+    const box = card.getBoundingClientRect();
+    const body = card.querySelector(".ada-card-body");
+    return {
+      inside:
+        box.top >= -0.5 &&
+        box.left >= -0.5 &&
+        box.bottom <= window.innerHeight + 0.5 &&
+        box.right <= window.innerWidth + 0.5,
+      overflow: body ? body.scrollHeight - body.clientHeight : 0,
+    };
+  });
+  assert.ok(
+    settingsFit.inside && settingsFit.overflow <= 1,
+    `The Settings card fits 844x390 with the controls notes: ${JSON.stringify(settingsFit)}`,
+  );
+  await closeSettings();
+  if (settingsViewport) {
+    await page.setViewportSize(settingsViewport);
+  }
   await openSettings();
   const toggles = [];
   async function toggleSetting(key) {

@@ -35,6 +35,11 @@ describe("player text", () => {
     expect(PROTOTYPE.premise.prologue[0]?.text).toMatch(/^On the way home, Penny tugs Ada /);
   });
 
+  it("notes on the Move and Aim controls rows that hiding a stick keeps its touch input", () => {
+    expect(PROTOTYPE.labels.controlsNote).toBe("Touch still works when hidden");
+    expect(PROTOTYPE.labels.soundNote).toBe("Mutes sound effects");
+  });
+
   it("names the ship's mind Astra", () => {
     expect(PROTOTYPE.labels.jumpHome).toBe(
       "Astra jumped you back to Earth to recharge. Your story progress is saved.",
