@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { GALAXIES } from "../data/storybook.ts";
+import { ART_MANIFEST, CORE_MANIFEST, publicJson } from "../testing/public-art.ts";
 import {
   markerHue,
   readRouteArt,
@@ -8,7 +9,6 @@ import {
   routePreviews,
   routeShipFrames,
 } from "./route-art.ts";
-import { ART_MANIFEST, CORE_MANIFEST, publicJson } from "./test-art-manifest.ts";
 
 const markers = readRouteMarkers(publicJson(ART_MANIFEST.galaxyFields));
 
