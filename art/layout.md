@@ -312,17 +312,17 @@ Overlap rules:
   keep at least `SPACING.pageInset` from the weapon press areas. The `+N`
   labels sit under their counts ([Status pill](#status-pill)), so they add
   nothing across. The pill's width follows its counts and segments
-  ([Status pill](#status-pill)), from 50.90 ("0" alone) to 219.84 ("999m"
+  ([Status pill](#status-pill)), from 44.90 ("0" alone) to 205.64 ("9999m"
   Stardust and ore, and cargo), the widest. The leftmost of six weapon targets
   starts at
   `hudRect.right + 7.5 - 48 - 57 * 5`:
 
-  | View                        | Pill left | Leftmost of six targets | Pill may reach | Clearance at 219.84 |
+  | View                        | Pill left | Leftmost of six targets | Pill may reach | Clearance at 205.64 |
   | --------------------------- | --------: | ----------------------: | -------------: | ------------------: |
-  | 720x360, 1280x720           |     62.75 |                   382.5 |         303.75 |               83.91 |
-  | 720x360, phone insets       |     93.75 |                   351.5 |         241.75 |               21.91 |
-  | 844x390, phone insets       |     93.75 |                  410.58 |         300.83 |               80.99 |
-  | Desktop, no pause, 720 wide |        12 |                   382.5 |          354.5 |              134.66 |
+  | 720x360, 1280x720           |     62.75 |                   382.5 |         303.75 |               98.11 |
+  | 720x360, phone insets       |     93.75 |                   351.5 |         241.75 |               36.11 |
+  | 844x390, phone insets       |     93.75 |                  410.58 |         300.83 |               95.19 |
+  | Desktop, no pause, 720 wide |        12 |                   382.5 |          354.5 |              148.86 |
 
   "Pill may reach" is the leftmost target less `SPACING.pageInset` less the
   pill's left; the widest pill clears at every view with six weapons, so every
@@ -363,15 +363,15 @@ Constants: `STATUS_PILL`, `playView.ts`, to implement. Colours and contrast
 are in [Controls](controls.md#status-pill). Parts, left to right, each centred
 on the pill's row:
 
-| Part          | Geometry                                                                                                                                                                                                                                        |
-| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Panel         | `PILL`: 28 high, radius 4, `PILL.padding` 8 at each end; ink at 0.65, as the conversation panel                                                                                                                                                 |
-| Stardust icon | `icon-stardust-20`, nearest neighbour                                                                                                                                                                                                           |
-| Mark gap      | `SPACING.markGap`                                                                                                                                                                                                                               |
-| Count         | Gameplay's count, at most four characters ("9999", "10k" to "999k", "1m" to "999m"), in `TYPE.label` on its 20 line with tabular figures, in a slot as wide as the count's own rendered width, at least one digit (`STATUS_PILL.minCount` 8.90) |
-| Ore segment   | While Ada carries ore: a divider (`STATUS_PILL.dividerGap` 12, a 1x16 divider, 12), `icon-ore-20`, `SPACING.markGap`, the ore count in its own slot                                                                                             |
-| Cargo segment | While she carries a job or story item or tows a craft, last: a divider and `icon-cargo-20` or `icon-tow-20`                                                                                                                                     |
-| Width         | 42 plus the Stardust slot; the ore segment adds 51 plus its slot, the cargo segment 45. The left edge stays put and the right edge moves with the content                                                                                       |
+| Part          | Geometry                                                                                                                                                                                                                                                 |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Panel         | `PILL`'s 28 height and radius 4, with `STATUS_PILL.padding` 6 at each end, tighter than `PILL.padding`; ink at 0.65, as the conversation panel                                                                                                           |
+| Stardust icon | `icon-stardust-20`, nearest neighbour                                                                                                                                                                                                                    |
+| Icon gap      | `STATUS_PILL.iconGap` 4 (`SPACING.rowGap`), from each icon to its count                                                                                                                                                                                  |
+| Count         | Gameplay's count, at most five characters ("9999", "44.4k", "100k" to "9999k", "10m" and up), in `TYPE.label` on its 20 line with tabular figures, in a slot as wide as the count's own rendered width, at least one digit (`STATUS_PILL.minCount` 8.90) |
+| Ore segment   | While Ada carries ore: a divider (`STATUS_PILL.dividerGap` 6, a 1x16 divider, 6), `icon-ore-20`, `STATUS_PILL.iconGap`, the ore count in its own slot                                                                                                    |
+| Cargo segment | While she carries a job or story item or tows a craft, last: a divider and `icon-cargo-20` or `icon-tow-20`                                                                                                                                              |
+| Width         | 36 plus the Stardust slot (6 + 20 + 4, the slot, 6); the ore segment adds 37 plus its slot (13 + 20 + 4), the cargo segment 33 (13 + 20). The left edge stays put and the right edge moves with the content                                              |
 
 | State  | Trigger                      | Draw                                                                                                           | Timing                                                                                                                                                                            |
 | ------ | ---------------------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -380,12 +380,13 @@ on the pill's row:
 
 - Each `+N` label sits under its own count: its 20 line box top HUD rect top +
   36.5 (48.5), centred on the item notice's 24 row (+ 34.5 to + 58.5), and
-  centred across on its count's slot as it is in that frame: pill left + 34 +
-  half the Stardust slot, and pill left + 85 + the Stardust slot + half the ore
+  centred across on its count's slot as it is in that frame: pill left + 30 +
+  half the Stardust slot, and pill left + 67 + the Stardust slot + half the ore
   slot. It holds, rises 4 and fades as above, and follows its slot's centre
-  when the slot changes. The two labels' centres are at least 59.90 apart (51
-  plus half of each slot, both at the one-digit minimum) and each is at most
-  51.38 wide ("+9,999" with its outline), so they never meet. The bump is a
+  when the slot changes. The two labels' centres are at least 45.90 apart (37
+  plus half of each slot, both at the one-digit minimum). A label is never
+  wider than "+" and its own count with the outline (11.34 plus the slot, as N
+  is at most the count), so the two stay at least 25.66 apart. The bump is a
   transform: it never reflows the pill.
 - The labels draw in the [item notice](#item-notice)'s layer, above its chip,
   over the field, the conversation box and its name tab, and under the pause
@@ -410,25 +411,25 @@ on the pill's row:
   keeps fallback fonts tabular too.
 - The minimum slot is one digit wide, so "0" keeps its icon and gap.
 
-| Stardust | Ore    | Cargo or tow |  Width |
-| -------- | ------ | ------------ | -----: |
-| "0"      | None   | None         |  50.90 |
-| "42"     | None   | None         |  59.80 |
-| "999"    | None   | None         |  68.70 |
-| "1200"   | None   | None         |  77.59 |
-| "1.2k"   | None   | None         |  73.14 |
-| "999m"   | None   | None         |  82.92 |
-| "42"     | "18"   | None         | 128.59 |
-| "999"    | "18"   | Cargo        | 182.49 |
-| "42"     | None   | Tow          | 104.80 |
-| "999m"   | "999m" | None         | 174.84 |
-| "999m"   | "999m" | Cargo or tow | 219.84 |
+| Stardust | Ore     | Cargo or tow |  Width |
+| -------- | ------- | ------------ | -----: |
+| "0"      | None    | None         |  44.90 |
+| "42"     | None    | None         |  53.80 |
+| "9999"   | None    | None         |  71.59 |
+| "44.4k"  | None    | None         |  76.04 |
+| "100k"   | None    | None         |  71.59 |
+| "9999m"  | None    | None         |  85.82 |
+| "42"     | "18"    | None         | 108.59 |
+| "9999"   | "18"    | Cargo        | 159.39 |
+| "42"     | None    | Tow          |  86.80 |
+| "44.4k"  | "100k"  | Cargo        | 181.63 |
+| "9999m"  | "9999m" | None         | 172.64 |
+| "9999m"  | "9999m" | Cargo or tow | 205.64 |
 
-Gameplay's rule writes 1200 as "1200" (exact to 9999); "1.2k" is shown for
-comparison. Slot widths: one digit 8.90, "m" 14.23, "." 4.45. The widest pill,
-219.84, keeps 21.91 to the leftmost of six weapon targets less
-`SPACING.pageInset` at 720x360 with phone insets (it may reach 241.75), the
-tightest view. The ore segment holds ore
+Slot widths: one digit 8.90, "k" 8.90, "m" 14.23, "." 4.45; the widest
+count is "9999m" (49.82). The widest pill, 205.64, keeps 36.11 to the leftmost
+of six weapon targets less `SPACING.pageInset` at 720x360 with phone insets
+(it may reach 241.75), the tightest view. The ore segment holds ore
 carried this flight; the cargo segment the carried job or story item or the
 towed craft, one at a time.
 
@@ -510,7 +511,7 @@ Destinations, at HUD rect top + 16.5 (the HUD row's centre line) on the y axis:
 
 | Gain                                           | Destination centre x                                                                                                                                                   |
 | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Job, story or lost item, a tow                 | The cargo segment's icon: pill left + pill width - 18                                                                                                                  |
+| Job, story or lost item, a tow                 | The cargo segment's icon: pill left + pill width - 16                                                                                                                  |
 | New weapon, a weapon's ammo                    | That weapon's disc: its target's left + 24                                                                                                                             |
 | Holodisk                                       | None; the chip centres on the pill and fades in place                                                                                                                  |
 | Weapon level                                   | That weapon's disc: its target's left + 24                                                                                                                             |
@@ -584,10 +585,10 @@ Holds at the 720 base, with the pause button showing:
 
 | Case                                                  | Chip           |     Destination centre | Clearance to the leftmost target |
 | ----------------------------------------------------- | -------------- | ---------------------: | -------------------------------: |
-| "+ Spare parts", "1200" and "18", cargo, four weapons | 164.23, 308.05 |         236.14 (cargo) |                           188.45 |
-| "+ Scrap barge", "1200", tow, four weapons            | 93.21, 241.48  |           167.34 (tow) |                           255.02 |
+| "+ Spare parts", "1200" and "18", cargo, four weapons | 134.23, 278.05 |         206.14 (cargo) |                           218.45 |
+| "+ Scrap barge", "1200", tow, four weapons            | 77.21, 225.48  |           151.34 (tow) |                           271.02 |
 | "+ Phaser", the fifth weapon                          | 314.34, 423.50 |        691.50 (Phaser) |                     16 (clamped) |
-| "+ Holodisk", "1200" and "18", four weapons           | 74.27, 197.62  |          135.95 (pill) |                           298.88 |
+| "+ Holodisk", "1200" and "18", four weapons           | 64.27, 187.62  |          125.95 (pill) |                           308.88 |
 | "+ Heavy Missile ammo ×9", insets, six                | 100.50, 335.50 | 546.50 (Heavy Missile) |                     16 (clamped) |
 
 ### Weapon count pill
@@ -1482,7 +1483,7 @@ Tests:
 - `STATUS_PILL`'s left edge equals the pause press area's right plus
   `SPACING.gap` while the pause button shows and the HUD rect's left while it
   is hidden; its centre is the HUD row's centre line; with six weapons at
-  720x360 and phone insets, the widest pill (219.84) keeps `SPACING.pageInset`
+  720x360 and phone insets, the widest pill (205.64) keeps `SPACING.pageInset`
   from the leftmost weapon target.
 - `SHIELD_PILL` is 162, 222 or 282 wide by Shield level, centred on the HUD
   rect, its bottom level with the sticks' drawn bottom, at least 42 from both
