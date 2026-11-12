@@ -3336,11 +3336,13 @@ try {
   const dots = scatter.flight.shots.filter((shot) => !shot.enemy && shot.projectile === "dot");
   const fading = dots.filter((shot) => shot.life / shot.fade.initialLife < 0.35);
   // Pellets leave the nose of the heading they fired at, so from Ada's centre each lies within
-  // the range plus the farthest nose offset of the 16 headings.
-  const { noseScreenOffset } = await import(new URL("../src/model/nose.ts", import.meta.url));
+  // Scattershot's 360 world-unit range plus the farthest world nose offset of any facing.
+  const scatterRange = 360;
+  const { noseOffset } = await import(new URL("../src/model/nose.ts", import.meta.url));
   const noseReach = Math.max(
-    ...Array.from({ length: 16 }, (_, heading) => {
-      const { x, y } = noseScreenOffset(heading);
+    ...Array.from({ length: 360 }, (_, degrees) => {
+      const angle = (degrees * Math.PI) / 180;
+      const { x, y } = noseOffset({ x: Math.cos(angle), y: Math.sin(angle) });
       return Math.hypot(x, y);
     }),
   );
@@ -3348,15 +3350,15 @@ try {
   for (const shot of dots) {
     assert.equal(
       shot.fade.projectedRange,
-      SCREEN.width * 0.5,
-      "Range must use the fixed main camera's logical width at zoom one, not CSS width or DPR",
+      scatterRange,
+      "Range must be Scattershot's fixed world range, not the camera, CSS width or DPR",
     );
     assert.equal(shot.fade.fadeStartFraction, 0.65);
     const dx = shot.x - scatter.flight.player.x;
     const dy = shot.y - scatter.flight.player.y;
     assert.ok(
-      Math.hypot(dx - dy, (dx + dy) / 2) <= SCREEN.width * 0.5 + noseReach + 0.001,
-      "Actual scatter particles must remain inside the half-camera projected range from the nose",
+      Math.hypot(dx, dy) <= scatterRange + noseReach + 0.001,
+      "Actual scatter particles must remain inside the 360 world-unit range from the nose",
     );
     assert.ok(shot.damage > 0 && shot.damage < PROTOTYPE.tuning.flight.playerShotDamage);
   }
@@ -3377,7 +3379,7 @@ try {
   });
   events.checks.push(
     "Actual held aim emits automatic straight missiles, triple ±20 degree bolts " +
-      "and fading half-camera scatter particles",
+      "and fading 360 world-unit scatter particles",
   );
 
   const cargoModel = new GameModel(PROTOTYPE);
