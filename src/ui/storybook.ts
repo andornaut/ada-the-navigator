@@ -63,6 +63,8 @@ export interface StoryPageView {
    * sequence plays over it, or its reduced-motion steps when motion is reduced.
    */
   readonly sleep?: boolean;
+  /** The holodisk's insertion aboard, where Art's holodisk moment plays over the background. */
+  readonly holodisk?: boolean;
   /** The story run the page belongs to: its pages anchor each background for the whole run. */
   readonly run?: { readonly id: string; readonly pages: readonly StoryPage[] };
 }
@@ -85,6 +87,7 @@ export function storyPageView(
     ...(page.action ? { action: page.action } : {}),
     ...(page.id === "room" ? { room: true } : {}),
     ...(page.sleep ? { sleep: true } : {}),
+    ...(page.holodisk ? { holodisk: true } : {}),
     next: !page.choices,
   };
 }
@@ -527,6 +530,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     backgrounds: {},
     bases: {},
     composites: {},
+    holodisk: null,
     overnight: null,
     subjects: {},
     transitions: [],
@@ -820,6 +824,45 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     showOverlays(overnight.overlays, 0);
     playNight(overnightSteps(overnight, options.reducedMotion()));
   };
+  // The holodisk page plays Art's holodisk frames over aboard, each fading in over the last; on
+  // the next page the frame last shown fades out over exitFadeMs.
+  const startHolodisk = (page: StoryPageView | null, exit: StoryOverlay | null) => {
+    const holodisk = art.holodisk;
+    if (!holodisk) {
+      return;
+    }
+    if (page?.holodisk) {
+      for (const overlay of holodisk.overlays) {
+        const node = overlayFor(overlay);
+        node.hidden = false;
+        node.style.opacity = "0";
+      }
+      playNight(overnightSteps(holodisk, options.reducedMotion()));
+      return;
+    }
+    if (!exit || holodisk.exitFadeMs <= 0) {
+      return;
+    }
+    const node = overlayFor(exit);
+    node.hidden = false;
+    node.style.opacity = "0";
+    nightAnimations.push(
+      node.animate([{ opacity: 1 }, { opacity: 0 }], {
+        duration: holodisk.exitFadeMs,
+        easing: "linear",
+      }),
+    );
+    nightTimer = setTimeout(() => {
+      node.hidden = true;
+      stopNight();
+    }, holodisk.exitFadeMs);
+  };
+  // The holodisk frame on top as the holodisk page leaves, for its exit fade.
+  const holodiskFrame = (): StoryOverlay | null =>
+    art.holodisk?.overlays.findLast((overlay) => {
+      const node = overlays.get(overlay.id);
+      return node !== undefined && !node.hidden && node.style.opacity === "1";
+    }) ?? null;
   // Ends a running transition step, leaving the base image as it stands.
   const stop = () => {
     clearTimeout(timer);
@@ -851,7 +894,12 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       play(steps, done, index + 1);
     }, step.fadeMs + step.holdMs);
   };
-  const render = (page: StoryPageView | null, backdrop: Background | null, focusFirst: boolean) => {
+  const render = (
+    page: StoryPageView | null,
+    backdrop: Background | null,
+    focusFirst: boolean,
+    exit: StoryOverlay | null = null,
+  ) => {
     rendered = page;
     backdropShown = backdrop;
     layer.hidden = page === null && backdrop === null;
@@ -871,6 +919,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     const buttons = fill(page);
     setBackground(page.background, true);
     startNight(page);
+    startHolodisk(page, exit);
     playPortrait(page);
     // Focus starts on the first choice, the default; otherwise on Next or the named action.
     if (focusFirst || buttons.length > 0) {
@@ -907,10 +956,11 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     }
     const focusFirst = shown !== "" && page !== null;
     shown = signature;
+    const from = lastPage;
+    const exit = from?.holodisk && !page?.holodisk ? holodiskFrame() : null;
     stop();
     stopNight();
     stopPortrait();
-    const from = lastPage;
     lastPage = page;
     const steps =
       from && page
@@ -922,12 +972,12 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
           )
         : null;
     if (!steps) {
-      render(page, backdrop, focusFirst);
+      render(page, backdrop, focusFirst, exit);
       return;
     }
     panel.hidden = true;
     skip.hidden = true;
-    play(steps, () => render(page, backdrop, focusFirst));
+    play(steps, () => render(page, backdrop, focusFirst, exit));
   };
   void loadStoryArt().then((loaded) => {
     art = loaded;
@@ -936,6 +986,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       ...Object.values(art.backgrounds),
       ...Object.values(art.composites).flatMap((shown) => shown.map((overlay) => overlay.url)),
       ...(art.overnight?.overlays.map((overlay) => overlay.url) ?? []),
+      ...(art.holodisk?.overlays.map((overlay) => overlay.url) ?? []),
       ...art.transitions.flatMap(({ steps }) => steps.map((step) => step.url)),
     ])) {
       new Image().src = url;

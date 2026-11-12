@@ -1,9 +1,9 @@
 import { type Background, BACKGROUND_ART } from "../data/storybook.ts";
 import { STORY_BACKGROUND, type SubjectBand } from "./layout/storyPage.ts";
 
-// Art's storybook backgrounds, their composite overlays, the rock glow transitions and the
-// overnight sequence (art/storybook.md), read from the root manifest and the story transition and
-// overnight files it links as storyTransition and storyOvernight.
+// Art's storybook backgrounds, their composite overlays, the rock glow transitions, the overnight
+// sequence (art/storybook.md) and the holodisk moment aboard (art/aboard.md), read from the root
+// manifest and the files it links as storyTransition, storyOvernight and aboardHolodisk.
 
 export const ART_MANIFEST_URL = "/art/manifest.json";
 
@@ -24,6 +24,7 @@ export interface ArtAsset {
 }
 
 export interface StoryArtManifest {
+  readonly aboardHolodisk?: string;
   readonly assets?: readonly ArtAsset[];
   readonly storyOvernight?: string;
   readonly storyTransition?: string;
@@ -78,6 +79,20 @@ export interface Overnight {
   readonly to: string;
 }
 
+/**
+ * The holodisk moment aboard, in the overnight sequence's step schema: overlay steps only, each
+ * fading its frame in over the last; the last frame holds until the next page, then fades out
+ * over exitFadeMs.
+ */
+export interface Holodisk {
+  readonly durationMs: number;
+  readonly exitFadeMs: number;
+  readonly overlays: readonly StoryOverlay[];
+  readonly reducedMotion: readonly OvernightStep[];
+  readonly reducedMotionMs: number;
+  readonly steps: readonly OvernightStep[];
+}
+
 /** One cross-fade to an image over fadeMs (0 cuts), then a hold of holdMs. */
 export interface TransitionStep {
   readonly fadeMs: number;
@@ -99,6 +114,7 @@ export interface StoryArt {
   readonly bases: Partial<Record<Background, Background>>;
   /** Each composite background's overlays, drawn over its image. */
   readonly composites: Partial<Record<Background, readonly StoryOverlay[]>>;
+  readonly holodisk: Holodisk | null;
   readonly overnight: Overnight | null;
   /** Each background's subject band, for the keys whose entry gives one. */
   readonly subjects: Partial<Record<Background, SubjectBand>>;
@@ -310,6 +326,17 @@ export function overnightMs(steps: readonly OvernightStep[]): number {
   );
 }
 
+// A sequence's overlays, each at its manifest `at`; null if any is missing or misplaced, or none.
+function readPlaced(assets: readonly ArtAsset[], value: unknown): StoryOverlay[] | null {
+  const placed = Object.entries((value ?? {}) as Record<string, unknown>).map(([id, entry]) => {
+    const at = (entry as { at?: { x?: unknown; y?: unknown } } | null)?.at;
+    const manifest = assets.find((asset) => asset.id === id)?.at;
+    const overlay = readOverlay(assets, id);
+    return overlay && manifest && at?.x === manifest.x && at.y === manifest.y ? overlay : null;
+  });
+  return placed.length > 0 && placed.every((overlay) => overlay !== null) ? placed : null;
+}
+
 /**
  * Art's overnight sequence (story-overnight.json), or null if any part is missing: each named
  * background and overlay in the manifest, each overlay at its manifest `at`, both step lists
@@ -326,21 +353,8 @@ export function readOvernight(assets: readonly ArtAsset[], data: unknown): Overn
   const from = image(value.from);
   const sleep = image(value.sleep);
   const to = image(value.to);
-  const placed = Object.entries((value.overlays ?? {}) as Record<string, unknown>).map(
-    ([id, entry]) => {
-      const at = (entry as { at?: { x?: unknown; y?: unknown } } | null)?.at;
-      const manifest = assets.find((asset) => asset.id === id)?.at;
-      const overlay = readOverlay(assets, id);
-      return overlay && manifest && at?.x === manifest.x && at.y === manifest.y ? overlay : null;
-    },
-  );
-  if (
-    !from ||
-    !sleep ||
-    !to ||
-    placed.length === 0 ||
-    !placed.every((overlay) => overlay !== null)
-  ) {
+  const placed = readPlaced(assets, value.overlays);
+  if (!from || !sleep || !to || !placed) {
     return null;
   }
   const overlays = new Map(placed.map((overlay) => [overlay.id, overlay]));
@@ -372,9 +386,48 @@ export function readOvernight(assets: readonly ArtAsset[], data: unknown): Overn
   };
 }
 
+/**
+ * Art's holodisk moment (aboard-holodisk.json), or null if any part is missing: its background
+ * the aboard one, each overlay at its manifest `at`, both step lists overlay steps only and each
+ * matching its stated total.
+ */
+export function readHolodisk(assets: readonly ArtAsset[], data: unknown): Holodisk | null {
+  const record = (data as { holodisk?: unknown } | null)?.holodisk;
+  if (!record || typeof record !== "object") {
+    return null;
+  }
+  const value = record as Record<string, unknown>;
+  const placed = readPlaced(assets, value.overlays);
+  if (value.background !== BACKGROUND_ART.aboard || !placed || !nonnegative(value.exitFadeMs)) {
+    return null;
+  }
+  const overlays = new Map(placed.map((overlay) => [overlay.id, overlay]));
+  const byId = urls(assets);
+  const steps = readOvernightSteps(assets, overlays, byId, value.steps);
+  const reducedMotion = readOvernightSteps(assets, overlays, byId, value.reducedMotion);
+  const frames = (list: readonly OvernightStep[] | null) =>
+    list?.every((step) => step.kind === "overlay") === true;
+  if (
+    !frames(steps) ||
+    !frames(reducedMotion) ||
+    overnightMs(steps!) !== value.durationMs ||
+    overnightMs(reducedMotion!) !== value.reducedMotionMs
+  ) {
+    return null;
+  }
+  return {
+    durationMs: overnightMs(steps!),
+    exitFadeMs: value.exitFadeMs,
+    overlays: placed,
+    reducedMotion: reducedMotion!,
+    reducedMotionMs: overnightMs(reducedMotion!),
+    steps: steps!,
+  };
+}
+
 /** The overnight steps that play, the reduced-motion ones when motion is reduced. */
 export function overnightSteps(
-  overnight: Overnight,
+  overnight: Pick<Overnight, "reducedMotion" | "steps">,
   reducedMotion: boolean,
 ): readonly OvernightStep[] {
   return reducedMotion ? overnight.reducedMotion : overnight.steps;
@@ -407,22 +460,24 @@ const fetchJson = async (url: string): Promise<unknown> => {
 };
 
 /**
- * Fetches the manifest and its story transition and overnight files; no art, no transitions or
- * no overnight sequence past a failure.
+ * Fetches the manifest and its story transition, overnight and holodisk files; no art, no
+ * transitions, no overnight sequence or no holodisk moment past a failure.
  */
 export async function loadStoryArt(): Promise<StoryArt> {
   const manifest = (await fetchJson(ART_MANIFEST_URL).catch(() => ({}))) as StoryArtManifest;
   const assets = manifest.assets ?? [];
   const linked = (url: string | undefined) =>
     url ? fetchJson(url).catch(() => ({})) : Promise.resolve({});
-  const [transition, overnight] = await Promise.all([
+  const [transition, overnight, holodisk] = await Promise.all([
     linked(manifest.storyTransition),
     linked(manifest.storyOvernight),
+    linked(manifest.aboardHolodisk),
   ]);
   return {
     backgrounds: storyBackgrounds(assets),
     bases: storyBases(assets),
     composites: storyComposites(assets),
+    holodisk: readHolodisk(assets, holodisk),
     overnight: readOvernight(assets, overnight),
     subjects: storySubjects(assets),
     transitions: readStoryTransitions(assets, transition),
