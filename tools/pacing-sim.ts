@@ -381,9 +381,9 @@ export interface WorldOptions {
  */
 const TYPICAL_INCOME: Readonly<Partial<Record<RoutePosition, number>>> = {
   1: 8,
-  2: 8.5,
+  2: 10,
   3: 9,
-  5: 17,
+  5: 15,
 };
 
 /** A galaxy's typical income, or null for a position Gameplay has not measured. */

@@ -291,9 +291,9 @@ describe("pacing simulation runs", () => {
       (base.packsPerHour / 60) * ECONOMY.ammo.packPrice,
       6,
     );
-    // Typical use of the stronger weapons costs a modest share of income (gameplay/economy.md).
-    expect(base.ammoShareOfIncome).toBeGreaterThan(0.1);
-    expect(base.ammoShareOfIncome).toBeLessThan(0.3);
+    // Typical use of the stronger weapons costs about a quarter of income.
+    expect(base.ammoShareOfIncome).toBeGreaterThan(0.18);
+    expect(base.ammoShareOfIncome).toBeLessThan(0.32);
     expect(armed(ECONOMY.ammo.packPrice * 2).ammoSpentPerMinute).toBeGreaterThan(
       base.ammoSpentPerMinute * 1.5,
     );

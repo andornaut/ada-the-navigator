@@ -9,14 +9,14 @@ without jobs as the pacing simulation measures it:
 | Position | Galaxy    |      Typical income |
 | -------: | --------- | ------------------: |
 |        1 | Sunflower |             about 8 |
-|        2 | Whirlpool |           about 8.5 |
+|        2 | Whirlpool |            about 10 |
 |        3 | Needle    |             about 9 |
 |        4 | Andromeda | measured once built |
-|        5 | Cartwheel |            about 17 |
+|        5 | Cartwheel |            about 15 |
 |        6 | Black Eye | measured once built |
 
 Every pacing target is a price divided by that income: the first weapon (225)
-takes about 28 minutes of Sunflower play, saving 500 for Cartwheel's holodisk
+takes about 25 minutes of Sunflower play, saving 500 for Cartwheel's holodisk
 about 30 minutes of Cartwheel play, and a galaxy's projects the time their total
 takes at its income after its story ends. Exploring finds a station every few
 minutes.
@@ -169,7 +169,7 @@ upgrade drop gives one pack only once every upgrade and paint scheme is owned. T
 are no separate ammunition pickups. A pack's shop row shows its name, such as "Rapid Missile
 ammo", with the pack size, such as "×200", on a second line, as levelled rows
 show their level. Prices are light: typical use of the stronger
-weapons costs about a sixth of Stardust income, provisionally 9 Stardust per
+weapons costs about a quarter of Stardust income, provisionally 9 Stardust per
 pack, tuned by the pacing simulation. Ammunition persists across flights and the
 jump home.
 
@@ -200,9 +200,9 @@ counts toward achievements and makes one ally who joins the Black Eye finale.
 Projects give no combat power outside the finale. Prices follow route position: the first galaxy's three projects are 300, 265 and
 225; the second's two are 450 and 375, the third's 525 and 375, the fourth's 525
 and 450, and the fifth's 600 and 450. At the typical income above, funding all
-of a galaxy's projects takes about 100 minutes after its story in Sunflower and
-Whirlpool, about 100 in Needle and about 60 in Cartwheel, purchases not
-subtracted.
+of a galaxy's projects takes about 95 minutes after its story in Sunflower,
+about 85 in Whirlpool, about 100 in Needle and about 70 in Cartwheel, purchases
+not subtracted.
 
 | Project            | Galaxy    | Price | Speaker      | Thank-you line                                                             | World change                                                 | Ally in the finale                                  |
 | ------------------ | --------- | ----: | ------------ | -------------------------------------------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------- |

@@ -119,7 +119,7 @@ export const ECONOMY: EconomyCatalog = {
     duplicatePacks: 1,
     grantPacks: 3,
     pack: { heavyMissile: 50, multiLaser: 200, phaser: 55, rapidMissile: 200, scattershot: 130 },
-    // The pacing sim's armed scenario: typical use of the stronger weapons costs about a sixth
+    // The pacing sim's armed scenario: typical use of the stronger weapons costs about a quarter
     // of Stardust income at 9.
     packPrice: 9,
   },

@@ -98,7 +98,7 @@ or Back to title keeps the tow, and Continue resumes it exactly.
 A job pays Stardust and a lore line. Rewards sit on top of ordinary earnings from
 asteroids and drones met on the way. The pacing target: a player who takes Sunflower
 jobs back to back affords the first weapon (225) in about 20 minutes instead of
-about 28, against the typical income in [Economy](economy.md). Rewards follow route position: the second galaxy multiplies them by 1.5 and the
+about 25, against the typical income in [Economy](economy.md). Rewards follow route position: the second galaxy multiplies them by 1.5 and the
 third to sixth by 2, rounded down to a multiple of 5.
 
 | Job             | Typical minutes | Position 1 | Position 2 | Positions 3 to 5 | Position 6 |
