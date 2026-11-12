@@ -47,11 +47,11 @@ export const SHARED_SHIP_PHYSICS: SharedShipPhysics = {
 export const SHIP_PHYSICS = {
   ada: physics(160, 0.36, 0.55, 0.22, 0.07),
   capital: physics(40, 2.5, 3, 2, 0.5),
-  fighter: physics(160, 0.4, 0.5, 0.3, 0.15),
+  fighter: physics(140, 0.4, 0.5, 0.3, 0.15),
   frigate: physics(80, 1.5, 2, 1.2, 0.4),
-  interceptor: physics(220, 0.9, 1.2, 0.6, 0.12),
+  interceptor: physics(200, 0.9, 1.2, 0.6, 0.12),
   // Fixed in place: only its turrets turn. The movement constants never act at speed 0.
   platform: physics(0, 1, 1, 1, 0.3),
   retaliator: physics(90, 1.2, 1.5, 0.9, 0.35),
-  swarm: physics(180, 0.2, 0.25, 0.12, 0.1),
+  swarm: physics(160, 0.2, 0.25, 0.12, 0.1),
 } satisfies Record<string, ShipPhysics>;
