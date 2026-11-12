@@ -59,7 +59,7 @@ export const PROTOTYPE: PrototypeContent = {
         "Take the workshop's tool kit to the salvagers.",
         "Bring spare parts from the salvagers to the workshop.",
         "Collect the holodisk from the outposts.",
-        "Return to Earth when ready.",
+        "Go home to Earth when ready.",
       ],
       opening: [
         "Ada has gardened with her grandmother since she was little. Today, ",
@@ -146,7 +146,7 @@ export const PROTOTYPE: PrototypeContent = {
         "Speak with regular visitors about approaching together.",
         "Join the miner's approach at the hub.",
         "Buy the holodisk at the hub.",
-        "Return to Earth when ready.",
+        "Go home to Earth when ready.",
       ],
       opening: [
         "At school, Ada sees Sam, a child in her class, being pushed out of a ",
@@ -245,7 +245,7 @@ export const PROTOTYPE: PrototypeContent = {
         "Explore to find the whale's family.",
         "Return to the whale and share the coordinates.",
         "Fight your way to the holodisk.",
-        "Return to Earth when ready.",
+        "Go home to Earth when ready.",
       ],
       opening: [
         "Penny waits by the door. It's time for a walk, but Ada would rather keep ",

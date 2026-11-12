@@ -52,7 +52,7 @@ describe("Paused card", () => {
       "Astra jumped you back to Earth to recharge. Your story progress is saved.",
     );
     for (const chapter of Object.values(PROTOTYPE.chapters)) {
-      expect(chapter.objectives.at(-1)).toBe("Return to Earth when ready.");
+      expect(chapter.objectives.at(-1)).toBe("Go home to Earth when ready.");
     }
     expect(PROTOTYPE.labels.travelUnavailable).toBe("Unavailable while you are in danger.");
     expect(PROTOTYPE.labels.toronto).toBeUndefined();

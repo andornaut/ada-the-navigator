@@ -257,7 +257,7 @@ describe("galaxy map", () => {
   it("says the story is complete once resolved, hints at job boards and lists nothing else", () => {
     const model = flying();
     const station = [inside[0]!.id];
-    const done = { job: null, story: "Return to Earth when ready.", storyComplete: true };
+    const done = { job: null, story: "Go home to Earth when ready.", storyComplete: true };
     expect(
       galaxyMap(context(model, { known: [], stations: station }, NO_LANDMARKS, null, null, done))
         .quests,
