@@ -22,7 +22,7 @@ function launch(model: GameModel, sector: SectorId = 1) {
   model.startSector(sector);
 }
 
-it("talks within the 160 Talk range, whatever the safe radius", () => {
+it("talks and salvages within the 160 Talk range, whatever the safe radius", () => {
   expect(PROTOTYPE.tuning.talkRange).toBe(160);
   // A smaller safe radius leaves the interaction range alone.
   const content = { ...PROTOTYPE, tuning: { ...PROTOTYPE.tuning, safeRadius: 40 } };
@@ -40,6 +40,15 @@ it("talks within the 160 Talk range, whatever the safe radius", () => {
   expect(model.contextLabel).toBe("Talk");
   flight.player = { x: growers.x + 170, y: growers.y };
   expect(model.contextLabel).toBeUndefined();
+  const at = { x: flight.player.x + 150, y: flight.player.y };
+  const enemy = createEnemy(
+    enemyDefinition(1, "frigate"),
+    { archetype: "frigate", id: "spared", packId: null, phase: 0 },
+    at,
+  );
+  enemy.disabled = true;
+  flight.objects.push({ ...at, enemy, hp: enemy.hp, id: enemy.id, kind: "enemy", radius: 40 });
+  expect(model.contextLabel).toBe("Salvage");
 });
 
 it("offers Salvage beside a disabled heavy and salvages it on Use", () => {

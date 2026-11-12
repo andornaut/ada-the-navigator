@@ -2893,7 +2893,7 @@ export function salvageTarget(
         object.hp > 0 &&
         object.enemy?.disabled === true &&
         !object.enemy.salvaged &&
-        distance(object, flight.player) <= content.tuning.safeRadius,
+        distance(object, flight.player) <= content.tuning.talkRange,
     )
     .sort((a, b) => distance(a, flight.player) - distance(b, flight.player))[0];
 }
