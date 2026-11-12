@@ -161,7 +161,8 @@ generic space, enemies and rocks, its position's difficulty and its roster, but 
 story, holodisk or story destinations. Its panel shows its number, name and flavor
 line, then "Story in development.", and Jump works. Its marker is open, in its
 galaxy's hue, and its screenshot is a generic space view until its own art lands. At first only the first galaxy
-is unlocked. Recovering a galaxy's holodisk unlocks the next position, every
+is unlocked. Completing a galaxy (its holodisk, space quest and home resolution, as above)
+unlocks the next position, every
 placeholder after it and the next built galaxy, so placeholders never block the
 route: finishing Whirlpool opens Needle, Andromeda and Cartwheel while Needle and
 Andromeda are placeholders. Saves keep every unlock. The first boarding after an
