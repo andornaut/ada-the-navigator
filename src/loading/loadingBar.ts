@@ -6,15 +6,14 @@ import type { ProgressSnapshot } from "@andornaut/game-kit/progressState";
 // Foreground loads (the game's own) show over background work (the offline precache), which
 // shows again once a foreground load has gone.
 
-/** A mounted bar: the kit's DOM progress bar (web/progress/dom/progressBar). */
+/** A mounted bar: the kit's DOM progress bar (web/progress/dom/progressBar), which shows a
+ * finished measured load full for fullMs, then fades it out over fadeMs. */
 export interface LoadingBar {
-  /** Starts or cancels the fade out after a full hold. */
-  fade(fading: boolean): void;
   remove(): void;
   report(snapshot: ProgressSnapshot): void;
 }
 
-/** What the schedule needs from the page: mounting a bar and a timer for the hold and fade. */
+/** What the schedule needs from the page: mounting a bar and a timer for its hold and fade. */
 export interface LoadingBarPort {
   clearTimeout(handle: unknown): void;
   create(): LoadingBar;
@@ -43,9 +42,8 @@ export function followLoading(
   let bar: LoadingBar | undefined;
   // Whether the bar shows a measured share, which only a foreground load reports.
   let measured = false;
-  // The full hold's or the fade's timer, while a finished measured load ends.
+  // The hold and fade's timer, while a finished measured load ends.
   let hold: unknown;
-  let fading = false;
   const drop = () => {
     bar?.remove();
     bar = undefined;
@@ -60,24 +58,15 @@ export function followLoading(
       }
       port.clearTimeout(hold);
       hold = undefined;
-      if (fading) {
-        fading = false;
-        bar?.fade(false);
-      }
     }
     if (bar !== undefined && measured && !foreground.active) {
-      const ending = bar;
-      ending.report(IDLE);
+      // The kit's complete state: full for the hold, then fading; removed once the fade ends.
+      bar.report(IDLE);
       hold = port.setTimeout(() => {
-        fading = true;
-        ending.fade(true);
-        hold = port.setTimeout(() => {
-          hold = undefined;
-          fading = false;
-          drop();
-          render();
-        }, port.fadeMs);
-      }, port.fullMs);
+        hold = undefined;
+        drop();
+        render();
+      }, port.fullMs + port.fadeMs);
       return;
     }
     const shown = foreground.active ? foreground : background;

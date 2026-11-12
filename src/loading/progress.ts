@@ -24,18 +24,21 @@ export const loadingProgress = createProgressState();
 export const installProgress = createProgressState();
 
 const colour = (hex: string) => Number.parseInt(hex.slice(1), 16);
-const STYLE: ProgressBarStyle = {
+/** The kit's bar style: the frame never shows; the track at its alpha under the cream fill. */
+export const BAR_STYLE: ProgressBarStyle = {
   border: 0,
   fills: [colour(LOADING_BAR.fill)],
   frame: colour(LOADING_BAR.track),
+  frameAlpha: 0,
   track: colour(LOADING_BAR.track),
+  trackAlpha: LOADING_BAR.trackAlpha,
 };
-// The kit's complete state hides the bar after its full hold; here that is the hold and the fade,
-// so the bar stays visible while it fades and is removed as it hides. The pending segment crosses
-// the track every 1.5 s, as in Chibi.
-const TIMING: DomProgressTiming = {
+/** The kit's bar timing: the hold and fade it draws, and the pending segment crossing every
+ * 1.5 s, as in Chibi. */
+export const BAR_TIMING: DomProgressTiming = {
   cycleMs: 1500,
-  fullMs: LOADING_BAR.fullMs + LOADING_BAR.fadeMs,
+  fadeMs: LOADING_BAR.fadeMs,
+  fullMs: LOADING_BAR.fullMs,
   segment: LOADING_BAR.segment,
 };
 const FRAME = { height: LOADING_BAR.height, width: SCREEN.width, x: 0, y: 0 };
@@ -84,22 +87,16 @@ export function mountLoading(parent: HTMLElement): () => void {
     {
       clearTimeout: (handle) => window.clearTimeout(handle as number),
       create: () => {
-        const bar = createDomProgressBar(host, STYLE, FRAME, TIMING);
+        const bar = createDomProgressBar(host, BAR_STYLE, FRAME, BAR_TIMING);
         // Named for the game, as Chibi's is, with no string of its own.
         const name = parent.getAttribute("aria-label");
         if (name) {
           bar.element.setAttribute("aria-label", name);
         }
-        return {
-          fade: (fading) => {
-            bar.element.toggleAttribute("data-fading", fading);
-          },
-          remove: bar.remove,
-          report: bar.report,
-        };
+        return bar;
       },
-      fadeMs: LOADING_BAR.fadeMs,
-      fullMs: LOADING_BAR.fullMs,
+      fadeMs: BAR_TIMING.fadeMs ?? 0,
+      fullMs: BAR_TIMING.fullMs,
       setTimeout: (handler, ms) => window.setTimeout(handler, ms),
     },
     { background: installProgress, foreground: loadingProgress },

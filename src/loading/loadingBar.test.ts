@@ -1,24 +1,28 @@
-import { createProgressState, type ProgressSnapshot } from "@andornaut/game-kit/progressState";
+import {
+  createProgressDisplay,
+  createProgressState,
+  type ProgressSnapshot,
+} from "@andornaut/game-kit/progressState";
 import { describe, expect, it } from "vitest";
 
 import { LOADING_BAR } from "../ui/loading-bar.ts";
 import { followLoading, type LoaderLike, trackLoader } from "./loadingBar.ts";
+import { BAR_STYLE, BAR_TIMING } from "./progress.ts";
 
 const { fadeMs: FADE_MS, fullMs: FULL_MS } = LOADING_BAR;
 
 /** A page whose bars record what they show, with a clock the test advances. */
 function page() {
-  const bars: { fading: boolean; removed: boolean; shown: ProgressSnapshot[] }[] = [];
+  const bars: { removed: boolean; shown: ProgressSnapshot[] }[] = [];
   let now = 0;
   const timers = new Map<number, { at: number; handler: () => void }>();
   let next = 0;
   const port = {
     clearTimeout: (handle: unknown) => timers.delete(handle as number),
     create: () => {
-      const bar = { fading: false, removed: false, shown: [] as ProgressSnapshot[] };
+      const bar = { removed: false, shown: [] as ProgressSnapshot[] };
       bars.push(bar);
       return {
-        fade: (fading: boolean) => (bar.fading = fading),
         remove: () => (bar.removed = true),
         report: (s: ProgressSnapshot) => bar.shown.push(s),
       };
@@ -67,16 +71,24 @@ describe("the loading bar", () => {
     expect(mounted()).toHaveLength(1);
     expect(bars[0]!.shown.at(-1)).toEqual({ active: true, value: 1 });
     load.finish();
-    // The kit's bar shows complete, full, for the hold.
+    // The kit's bar shows complete: full for the hold, then fading.
     expect(bars[0]!.shown.at(-1)).toEqual({ active: false, value: undefined });
-    advance(FULL_MS - 1);
-    expect(bars[0]!.fading).toBe(false);
-    advance(1);
-    expect(bars[0]!.fading).toBe(true);
-    advance(FADE_MS - 1);
+    advance(FULL_MS + FADE_MS - 1);
     expect(mounted()).toHaveLength(1);
     advance(1);
     expect(mounted()).toHaveLength(0);
+  });
+
+  it("has the kit draw a finished load full for 250 ms, then fade it out over 150 ms", () => {
+    expect(BAR_TIMING).toEqual({ cycleMs: 1500, fadeMs: 150, fullMs: 250, segment: 0.3 });
+    // The kit's own timeline for that timing, which progressBar.css draws.
+    const display = createProgressDisplay(BAR_TIMING.fullMs, BAR_TIMING.fadeMs);
+    display.report({ active: true, value: 1 });
+    display.report({ active: false, value: undefined });
+    expect(display.at(0)).toEqual({ kind: "measured", value: 1 });
+    expect(display.at(FULL_MS - 1)).toEqual({ kind: "measured", value: 1 });
+    expect(display.at(FULL_MS + FADE_MS / 2)).toEqual({ kind: "measured", opacity: 0.5, value: 1 });
+    expect(display.at(FULL_MS + FADE_MS)).toEqual({ kind: "hidden" });
   });
 
   it("sets Art's look: 3 high, cream on ink at 0.6, a 250 ms hold, a 150 ms fade, a 30% segment", () => {
@@ -87,7 +99,16 @@ describe("the loading bar", () => {
       height: 3,
       segment: 0.3,
       track: "#181425",
-      trackOpacity: 0.6,
+      trackAlpha: 0.6,
+    });
+    // The kit draws the alphas: no frame, the ink track at 0.6 under the cream fill.
+    expect(BAR_STYLE).toEqual({
+      border: 0,
+      fills: [0xead4aa],
+      frame: 0x181425,
+      frameAlpha: 0,
+      track: 0x181425,
+      trackAlpha: 0.6,
     });
   });
 
@@ -108,9 +129,7 @@ describe("the loading bar", () => {
     load.progress(0.5);
     expect(bars[0]!.shown.at(-1)).toEqual({ active: true, value: 0.5 });
     load.finish();
-    // The fade starts when the hold ends.
-    advance(FULL_MS);
-    advance(FADE_MS);
+    advance(FULL_MS + FADE_MS);
     expect(mounted()).toHaveLength(1);
     expect(mounted()[0]!.shown).toEqual([{ active: true, value: undefined }]);
     install.finish();
@@ -122,10 +141,9 @@ describe("the loading bar", () => {
     const first = foreground.begin();
     first.progress(1);
     first.finish();
-    advance(FULL_MS);
-    expect(bars[0]!.fading).toBe(true);
+    // Midway through the fade.
+    advance(FULL_MS + FADE_MS / 2);
     const second = foreground.begin();
-    expect(bars[0]!.fading).toBe(false);
     second.progress(0.2);
     advance(FULL_MS + FADE_MS);
     expect(mounted()).toHaveLength(1);
