@@ -176,9 +176,8 @@ Multi-Laser 200 (60 seconds), Rapid Missile 165 (50), Heavy Missile 33 (40),
 Scattershot 67 (30) and Phaser 18 (20). Buying or finding a weapon includes
 three packs. A pack's shop row shows its name, such as "Rapid Missile
 ammo", with the pack size, such as "×200", on a second line, as levelled rows
-show their level. Prices are light: typical use of the stronger
-weapons costs about a quarter of Stardust income, checked by the pacing
-simulation. Ammunition persists across flights and the
+show their level. Typical use of the stronger weapons costs about 15 to 35% of Stardust income,
+depending on the galaxy's fighting, checked by the pacing simulation. Ammunition persists across flights and the
 jump home.
 
 When the selected weapon runs out, Ada switches to Laser at once, ignoring the
