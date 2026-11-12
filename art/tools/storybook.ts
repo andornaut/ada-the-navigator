@@ -1768,8 +1768,8 @@ export const BACKGROUNDS: readonly Background[] = [
   ...GLOW.map((glow, i) => ({
     id: `story-ada-room-recorder-glow-${i + 1}`,
     palette: ROOM,
-    build: (P: Palette) => room(P, { glow: glowAmount(glow), recorder: true }),
-    subject: band(255, 300),
+    build: (P: Palette) => room(P, { glow: glowAmount(glow), lift: NEEDLE_LIFT, recorder: true }),
+    subject: band(248, 293),
   })),
   // Needle's closing: the stage, and Ada playing in the spotlight.
   {
