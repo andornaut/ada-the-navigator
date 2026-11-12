@@ -490,9 +490,9 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   "Settings" and "Back to title". Ship opens a card titled "Ship" with a close
   X, back to the pause card, in two sections. "Cargo" lists Stardust, ore
   carried this flight, "Holodisks: {n} of 6", and the carried job item or towed
-  craft when there is one. "Equipment" lists the shield, shield recharge, engine
-  and tractor beam, each with its level ("Level {n} of 3"); every owned weapon in
-  the weapon icons' order with its level and, apart from Basic, its ammunition;
+  craft when there is one. "Equipment" lists the shield, engine and tractor
+  beam, each with its level ("Level {n} of 3"); every owned weapon in
+  the weapon icons' order with its level and, apart from Laser, its ammunition;
   and the ship paint. The pause card shows no objective text, and neither does space;
   in flight the direction indicator is the objective cue.
   The Map's header shows the galaxy name with its landmark pips and
@@ -572,9 +572,9 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   progression remain part of the game.
 - With no aim input, the ship turns toward its movement direction with the same aim
   damping. Centered aim does not fire.
-- Basic fire has unlimited ammunition; every other weapon has its own ammunition,
+- Laser fire has unlimited ammunition; every other weapon has its own ammunition,
   bought at shops (see [Economy](economy.md#ammunition)).
-- Basic is the starter weapon. The other weapons are Heavy Missile, Rapid Missile,
+- Laser is the starter weapon. The other weapons are Heavy Missile, Rapid Missile,
   Multi-Laser, Scattershot and Phaser, bought at station shops or found as rare drops; see
   [Economy](economy.md). Icon pickups, presented like Chibi's power-ups,
   equip their weapon at any time unless the switch wait is running, and retain
@@ -584,12 +584,12 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   is about 2.25 times level 1. Single-target output meets those steps on its own;
   range, blast and spread growth add to them. Each weapon grows along its own
   dimensions:
-  - Basic: damage and fire rate.
+  - Laser: damage and fire rate.
   - Heavy Missile: one slow straight missile (every 1.2 s, speed x0.6, 8 times
-    basic damage) with a large blast; levels shorten its interval (1.2, 1.0, 0.8 s) and grow its
+    Laser damage) with a large blast; levels shorten its interval (1.2, 1.0, 0.8 s) and grow its
     blast radius (60, 72, 85).
   - Rapid Missile: quicker straight missiles (every 0.30 s, speed x1.3, 1.5 times
-    basic damage) with a small blast (25); levels grow its fire rate and damage.
+    Laser damage) with a small blast (25); levels grow its fire rate and damage.
   - Multi-Laser: a fan of bolts evenly spaced across a fixed 40 degrees, 3 at
     level 1 (-20, 0 and 20 degrees), then 4, then 5, with a small damage rise to reach the level step.
   - Scattershot: a shotgun of visual dots across -30 to 30 degrees, 7 at level 1,
@@ -599,12 +599,12 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   - Phaser: a hitscan beam. Each shot hits instantly along the aim from the ship
     out to a set range (provisionally 320 world units), stopping at the first enemy
     or obstacle it meets, then shows briefly as a visible beam. It fires
-    intermittently, 4 times slower than basic fire, and deals 4 times basic damage
+    intermittently, 4 times slower than Laser fire, and deals 4 times Laser damage
     to the enemy it hits; levels grow its range and damage.
 - A missile's blast damages every enemy within its radius, never Ada. An enemy
   missile's blast damages Ada, never enemies.
 - Damage and hit points share one unit: 1 damage removes 1 HP, and a level 1
-  Basic shot deals 1 damage. Enemies fire the same weapons, with the same damage,
+  Laser shot deals 1 damage. Enemies fire the same weapons, with the same damage,
   blast and spread at the same level, plus three enemy-only weapons; each enemy
   keeps its own cadence and projectile speed (see
   [Ships](ships.md#enemy-weapons)).
@@ -617,7 +617,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - Weapon intervals, speed and damage ratios, angles, range and fade are provisional
   catalog tuning. Speed ratios multiply the existing base projectile speed; damage
   ratios multiply base shot damage. No homing, piercing or reloading is added.
-- Top-right weapon icons select basic fire or an owned weapon, in the order Basic,
+- Top-right weapon icons select Laser fire or an owned weapon, in the order Laser,
   Rapid Missile, Multi-Laser, Heavy Missile, Scattershot, Phaser; only owned
   weapons show an icon. Switching preserves
   ownership of the other weapons. Ada can switch at any time, including in combat;
@@ -636,7 +636,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   720-wide view). Idle enemies, retaliators not yet hit, fleeing or returning
   enemies and disabled heavies do not count. Recharge starts 15 seconds after
   Ada was last in battle or last hit, and refills from empty to full in 60
-  seconds, whatever the capacity. Shield recharge levels 2 and 3 shorten the
+  seconds, whatever the capacity. Shield levels 2 and 3 also shorten the
   delay to 10 seconds and the refill to 45, then 30 seconds. Pursuit is finite,
   so Ada can always escape to recharge, but it is slow, and enemies keep their
   damage.

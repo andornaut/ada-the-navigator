@@ -73,19 +73,18 @@ not yet designed, so the station card shows no quest board until it is.
 
 ## Shop
 
-| Item            | Effect                                                                              | Prices   |
-| --------------- | ----------------------------------------------------------------------------------- | -------- |
-| Rapid Missile   | Owned weapon                                                                        | 150      |
-| Multi-Laser     | Owned weapon                                                                        | 250      |
-| Heavy Missile   | Owned weapon                                                                        | 300      |
-| Scattershot     | Owned weapon                                                                        | 350      |
-| Phaser          | Owned weapon                                                                        | 400      |
-| Weapon upgrade  | Per weapon, Basic included: levels 2 and 3, each about ×1.5 effective output        | 150, 300 |
-| Shield          | Levels 2 and 3: capacity 15, then 22                                                | 150, 300 |
-| Shield recharge | Levels 2 and 3: delay 10 s; empty to full 45, then 30 s                             | 150, 300 |
-| Engine tuning   | Levels 2 and 3: top speed 190, then 220; each −10% acceleration and braking seconds | 120, 240 |
-| Tractor beam    | Levels 2 and 3: pull radius 100, then 135; pull speed 220, then 300                 | 80, 160  |
-| Ship paint      | Cosmetic colour schemes for Ada's ship; the white and blue scheme stays free        | 50 each  |
+| Item           | Effect                                                                                 | Prices   |
+| -------------- | -------------------------------------------------------------------------------------- | -------- |
+| Rapid Missile  | Owned weapon                                                                           | 150      |
+| Multi-Laser    | Owned weapon                                                                           | 250      |
+| Heavy Missile  | Owned weapon                                                                           | 300      |
+| Scattershot    | Owned weapon                                                                           | 350      |
+| Phaser         | Owned weapon                                                                           | 400      |
+| Weapon upgrade | Per weapon, Laser included: levels 2 and 3, each about ×1.5 effective output           | 150, 300 |
+| Shield         | Levels 2 and 3: capacity 15, then 22; recharge delay 10 s; empty to full 45, then 30 s | 300, 600 |
+| Engine tuning  | Levels 2 and 3: top speed 190, then 220; each −10% acceleration and braking seconds    | 120, 240 |
+| Tractor beam   | Levels 2 and 3: pull radius 100, then 135; pull speed 220, then 300                    | 80, 160  |
+| Ship paint     | Cosmetic colour schemes for Ada's ship; the white and blue scheme stays free           | 50 each  |
 
 Enemy speeds are fixed, so engine tuning lets Ada outrun the swarm at level 2 and
 match the interceptor at level 3. The shop follows Archie's Pet shop pattern: tabs, owned
@@ -105,7 +104,7 @@ Owned.
 
 ## Ammunition
 
-Basic fire is unlimited. Every other weapon has its own ammunition count with no
+Laser fire is unlimited. Every other weapon has its own ammunition count with no
 capacity limit: Rapid Missile and Heavy Missile use missiles, Multi-Laser and
 Phaser use energy packs, and Scattershot uses shells. Each weapon tracks its own
 count, so Phaser energy is separate from Multi-Laser energy. Each volley uses
@@ -122,22 +121,22 @@ weapons costs about a sixth of Stardust income, provisionally 6 Stardust per
 pack, tuned by the pacing simulation. Ammunition persists across flights and the
 jump home.
 
-When the selected weapon runs out, Ada switches to Basic at once, ignoring the
+When the selected weapon runs out, Ada switches to Laser at once, ignoring the
 switch wait, and Astra's notice says "Out of ammo." An empty weapon's icon shows
 its empty state and refuses selection until ammunition is bought.
 
 Each weapon icon shows its remaining count below it in at most four characters:
 the exact number up to 9,999 without a separator, then whole thousands as "10k" to
-"999k", then whole millions as "1m" to "999m". Basic shows no count. A weapon
+"999k", then whole millions as "1m" to "999m". Laser shows no count. A weapon
 button's accessible label is `weaponAmmoLabel` with the exact count, en-US
-grouped; Basic's label is its name.
+grouped; Laser's label is its name.
 
 ## Weapon switching
 
 Ada can switch weapons at any time, including in combat. After a switch, the next
 switch waits 1 second (provisional); during that wait the other weapon icons
 refuse with the shared refusal feedback. Equipping a picked-up weapon counts as a
-switch and starts the wait; the out-of-ammo switch to Basic does not. The selected weapon's icon has a treatment
+switch and starts the wait; the out-of-ammo switch to Laser does not. The selected weapon's icon has a treatment
 like Chibi's power-ups.
 
 ## Donations
@@ -262,7 +261,6 @@ The shield shop row reuses the existing `shield` label.
 | `aboutScattershot`  | A shotgun spread, strongest up close.                                     |
 | `aboutPhaser`       | An instant beam that strikes the first thing in its path.                 |
 | `jumpHome`          | Astra jumped you back to Earth to recharge. Your story progress is saved. |
-| `shieldRecharge`    | Shield recharge                                                           |
 | `engineTuning`      | Engine tuning                                                             |
 | `tractorBeam`       | Tractor beam                                                              |
 | `weaponUpgrade`     | {weapon} upgrade                                                          |

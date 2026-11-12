@@ -100,7 +100,7 @@ One tuning value, `difficultyScale` (1), multiplies every enemy hit point, the
 fire rate and the encounter rate at every position, so the whole curve can be
 tuned at once. It is not a player setting: there is one forgiving difficulty.
 
-Damage and hit points share one unit: 1 damage removes 1 HP. A level 1 Basic shot
+Damage and hit points share one unit: 1 damage removes 1 HP. A level 1 Laser shot
 deals 1 damage.
 
 Small craft:
@@ -142,13 +142,13 @@ carry no ammunition. Weapon levels rise with position:
 
 | Archetype     | Positions 1–2                  | Positions 3–4                                                    | Positions 5–6                                                                       |
 | ------------- | ------------------------------ | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `swarm`       | Basic 1                        | Basic 2                                                          | Basic 3                                                                             |
-| `fighter`     | Basic 1                        | Rapid Missile 2                                                  | Rapid Missile 3                                                                     |
-| `interceptor` | Basic 1                        | Scattershot 2                                                    | Scattershot 3                                                                       |
+| `swarm`       | Laser 1                        | Laser 2                                                          | Laser 3                                                                             |
+| `fighter`     | Laser 1                        | Rapid Missile 2                                                  | Rapid Missile 3                                                                     |
+| `interceptor` | Laser 1                        | Scattershot 2                                                    | Scattershot 3                                                                       |
 | `retaliator`  | Multi-Laser 1                  | Multi-Laser 2                                                    | Multi-Laser 3                                                                       |
-| `frigate`     | 2 × Basic 1                    | 2 × Basic 2, Rapid Missile 2                                     | 2 × Basic 3, Rapid Missile 3, charged lance                                         |
-| `capital`     | 2 × Basic 1, 2 × Multi-Laser 1 | 2 × Basic 2, 2 × Multi-Laser 2, Rapid Missile 2, Heavy Missile 1 | 2 × Basic 3, 2 × Rapid Missile 3, Heavy Missile 1, Phaser 1, ring burst, mine layer |
-| `platform`    | 2 × Basic 1                    | 2 × Basic 2                                                      | 2 × Basic 3                                                                         |
+| `frigate`     | 2 × Laser 1                    | 2 × Laser 2, Rapid Missile 2                                     | 2 × Laser 3, Rapid Missile 3, charged lance                                         |
+| `capital`     | 2 × Laser 1, 2 × Multi-Laser 1 | 2 × Laser 2, 2 × Multi-Laser 2, Rapid Missile 2, Heavy Missile 1 | 2 × Laser 3, 2 × Rapid Missile 3, Heavy Missile 1, Phaser 1, ring burst, mine layer |
+| `platform`    | 2 × Laser 1                    | 2 × Laser 2                                                      | 2 × Laser 3                                                                         |
 
 Enemy Heavy Missile and Phaser stay at level 1: their single hits are large, so a
 capital's Heavy Missile flies slowly and its Phaser shows a thin aim line for 0.4
@@ -157,7 +157,7 @@ move off it.
 
 | Enemy weapon  | Interval | Projectile speed | Notes                                                         |
 | ------------- | -------: | ---------------: | ------------------------------------------------------------- |
-| Basic         |    1.4 s |             ×1.7 | `swarm` 1.8 s and ×1.5; platform two-shot bursts 0.15 s apart |
+| Laser         |    1.4 s |             ×1.7 | `swarm` 1.8 s and ×1.5; platform two-shot bursts 0.15 s apart |
 | Multi-Laser   |    2.2 s |             ×1.7 | The level's fan                                               |
 | Rapid Missile |    2.0 s |             ×1.3 | Its blast damages Ada                                         |
 | Scattershot   |    2.4 s |             ×1.7 | Ada's dot count, range and fade                               |
@@ -308,7 +308,7 @@ turrets fire while it advances, with no speed to advance.
   Hit areas, turret mounts and muzzles come from Art's drawn hardpoints, as for
   the frigate and capital, and the hull's hit circle follows the size column.
 - **Fire:** each live turret aims independently with `aimTurnSeconds` and fires
-  a two-shot burst of the position's Basic, 0.15 seconds between shots, every 1.4
+  a two-shot burst of the position's Laser, 0.15 seconds between shots, every 1.4
   seconds before the galaxy's fire multiplier while Ada is within 520 world units.
   It stops firing beyond 520 and never pursues.
 - **State:** retained like a frigate, so destroyed turrets and a disabled,

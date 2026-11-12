@@ -678,8 +678,7 @@ beacon light. Welcome!"
 - Disabled heavy banner: Disabled.
 - Status labels: Objective, Nearby discovery, Shield, Cargo, Stardust, Ore.
 - Ship card: Ship; Cargo: Stardust, Ore, Holodisks: {n} of 6, Carrying:
-  {item}, Towing: {craft}; Equipment: Shield, Shield recharge, Engine, Tractor
-  beam and each owned weapon's name with Level {n} of 3, a weapon's ammunition
+  {item}, Towing: {craft}; Equipment: Shield, Engine, Tractor beam and each owned weapon's name with Level {n} of 3, a weapon's ammunition
   as {count} left, and Paint: {paint}.
 - Pause: Pause (button label), Paused, Resume, Map, Ship, Settings, Back to title. On Ada's room page: Settings, Back to title.
 - Start screen top right: Achievements, Settings, Exit (label and accessible
