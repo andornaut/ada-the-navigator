@@ -36,7 +36,11 @@ function near(first: Vec, second: Vec): boolean {
     Math.abs(first.y - second.y) <= ACTIVE_CHUNK_RADIUS
   );
 }
-function liveEnemy(object: SpaceObject): boolean {
+/**
+ * An enemy still in the fight: alive and not defeated. A disabled heavy (every required
+ * hardpoint destroyed) is defeated whatever its hull HP, so it no longer guards a route.
+ */
+export function liveEnemy(object: SpaceObject): boolean {
   return (
     object.kind === "enemy" &&
     object.hp > 0 &&

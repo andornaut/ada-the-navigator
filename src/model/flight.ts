@@ -50,6 +50,7 @@ import {
   ACTIVE_CHUNK_RADIUS,
   beginFlightStep,
   escortPackId,
+  liveEnemy,
   persistentObject,
   prunePackState,
   recordObjectRemoval,
@@ -1082,11 +1083,10 @@ function placeGuards(content: PrototypeContent, guards: SpaceObject[], flight: F
 export { relocateRouteGuards as settleRouteEncounters };
 
 export function routeBlocked(id: string, flight: FlightState): boolean {
+  // A guard loaded or dormant alike: a disabled one has stopped counting, as when retained.
   return (
     retainedRouteBlocked(id, flight) ||
-    flight.objects.some(
-      (object) => object.kind === "enemy" && object.routeId === id && object.hp > 0,
-    )
+    flight.objects.some((object) => object.routeId === id && liveEnemy(object))
   );
 }
 

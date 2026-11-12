@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
@@ -499,4 +500,51 @@ it("marks an interacted destination persistent before ordinary eviction", () => 
   syncFlightRegion(PROTOTYPE, flight);
   expect(flight.objects).toContain(npc);
   expect(model.state.progress[1].known).toContain("growers");
+});
+
+describe("Use at an outpost", () => {
+  const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
+
+  // Sunflower's first flight with Ada 100 world units from the growers, inside Talk range.
+  function besideGrowers() {
+    const model = new GameModel(PROTOTYPE);
+    Object.assign(model.state, { prologueSeen: true, started: true });
+    model.startSector(1);
+    readStory(model);
+    model.state.dialogue = null;
+    const flight = model.state.flight!;
+    flight.objects = flight.objects.filter((object) => object.kind !== "enemy");
+    const growers = ensureDestination(PROTOTYPE, "growers", flight);
+    flight.player = { x: growers.x + 100, y: growers.y };
+    flight.velocity = { x: 0, y: 0 };
+    return { flight, model };
+  }
+
+  it("waits on the growers' guard while it fights", () => {
+    const { flight, model } = besideGrowers();
+    const guard = ensureRouteEncounter(PROTOTYPE, "growers", flight)!;
+    expect(guard.enemy?.archetype).toBe("frigate");
+    model.step(0.05, idle);
+    expect(routeBlocked("growers", flight)).toBe(true);
+    expect(model.contextAction).toBeUndefined();
+  });
+
+  it("offers Talk once the guard is disabled, its hull still standing nearby", () => {
+    const { flight, model } = besideGrowers();
+    const guard = ensureRouteEncounter(PROTOTYPE, "growers", flight)!;
+    const required = new Set(
+      enemyCatalog.frigate.hardpoints.filter((part) => part.required).map(({ id }) => id),
+    );
+    for (const hardpoint of guard.enemy!.hardpoints) {
+      if (required.has(hardpoint.id)) {
+        hardpoint.hp = 0;
+      }
+    }
+    expect(guard.hp).toBeGreaterThan(0);
+    model.step(0.05, idle);
+    model.state.dialogue = null;
+    expect(model.state.progress[1].known).toContain("growers");
+    expect(model.contextAction).toBe("talk");
+    expect(model.contextLabel).toBe(PROTOTYPE.labels.talk);
+  });
 });

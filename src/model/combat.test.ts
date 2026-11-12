@@ -245,6 +245,32 @@ describe("integrated combat", () => {
   });
 
   it.each([1, 2, 3] as const)(
+    "opens a sector %i route once its guard is disabled, though its hull still stands",
+    (sector) => {
+      const flight = empty();
+      flight.sector = sector;
+      const destination = ensureDestination(PROTOTYPE, "quest", flight);
+      const guard = ensureRouteEncounter(PROTOTYPE, "quest", flight)!;
+      const required = enemyCatalog[guard.enemy!.archetype].hardpoints.filter(
+        ({ required: part }) => part,
+      );
+      expect(required.length).toBeGreaterThan(0);
+      for (const hardpoint of guard.enemy!.hardpoints) {
+        if (required.some(({ id }) => id === hardpoint.id)) {
+          hardpoint.hp = 0;
+        }
+      }
+      expect(guard.hp).toBeGreaterThan(0);
+      expect(routeBlocked("quest", flight)).toBe(false);
+      flight.player = { x: destination.x, y: destination.y };
+      expect(stepFlight(PROTOTYPE, 0.01, idle, flight)).toContainEqual({
+        id: "quest",
+        type: "discovered",
+      });
+    },
+  );
+
+  it.each([1, 2, 3] as const)(
     "guards a sector %i route outside the safezone without respawn after defeat",
     (sector) => {
       const flight = empty();
