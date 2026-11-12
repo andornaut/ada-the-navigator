@@ -7,6 +7,11 @@ import { ASTEROID_ART, type AsteroidArt, readResourceRocks } from "../data/aster
 import { CHEAT_COPY } from "../data/cheat-copy.ts";
 import { destinationDrawn } from "../data/destinations.ts";
 import { ECONOMY } from "../data/economy.ts";
+import {
+  EDGE_MARKER_GLYPHS,
+  EDGE_MARKER_OUTLINE_PLACEHOLDER,
+  EDGE_MARKER_THREAT_PLACEHOLDER,
+} from "../data/edge-markers.ts";
 import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import { CURRENTS } from "../data/galaxy-features.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
@@ -25,6 +30,7 @@ import { rockFrame, scenerySilhouette } from "../model/asteroids.ts";
 import { grantAllWeapons } from "../model/cheats.ts";
 import { currentsNear, flowFraction } from "../model/currents.ts";
 import { carriesStardust } from "../model/drops.ts";
+import { createEdgeMarkerTracker, edgePoint } from "../model/edge-markers.ts";
 import { enemySpeedFraction } from "../model/enemy-ai.ts";
 import {
   activeBeamFlashes,
@@ -339,6 +345,8 @@ export class PrototypeScene extends Phaser.Scene {
   // A light field (art/galaxies.md "Light fields"): this frame's keylined sprites, each keyline's
   // eight ink copies by key, the ship jets' ink edge and the indicators' ink stroke layer.
   private light = false;
+  // Which seen enemies, heavies and stations are off screen and marked (model/edge-markers.ts).
+  private readonly edgeMarkers = createEdgeMarkerTracker();
   private keyed: { depth: number | undefined; key: string; sprite: Phaser.GameObjects.Image }[] =
     [];
   private keylines = new Map<string, Phaser.GameObjects.Image[]>();
@@ -1809,6 +1817,8 @@ export class PrototypeScene extends Phaser.Scene {
     }
     this.ship.setVisible(Boolean(flight) && this.model.state.mode === "space");
     if (!flight || this.model.state.mode !== "space") {
+      // Leaving the flight forgets every seen object.
+      this.edgeMarkers.update(null, new Set());
       this.drawKeylines();
       return;
     }
@@ -1944,6 +1954,7 @@ export class PrototypeScene extends Phaser.Scene {
         this.overlay.lineBetween(tail.x, tail.y, point.x, point.y);
       }
     }
+    this.drawEdgeMarkers(flight);
     this.drawIndicators();
     this.drawFeedback();
     this.ship.setPosition(SCREEN.width / 2, SCREEN.height / 2);
@@ -2480,6 +2491,46 @@ export class PrototypeScene extends Phaser.Scene {
           false,
         );
       }
+    }
+  }
+
+  /**
+   * A marker at the game area's edge toward each seen enemy, heavy and station off screen and
+   * within range (model/edge-markers.ts), under the direction indicators, which win on the same
+   * object. Discs in the threat red, the station diamond in pointOfInterest; a light field adds an
+   * ink outline under each, as the indicators' ink does.
+   */
+  private drawEdgeMarkers(flight: FlightState): void {
+    const indicated = new Set(this.model.indicatorTargets.map(({ id }) => id));
+    const centre = this.project(flight.player);
+    const outline = EDGE_MARKER_OUTLINE_PLACEHOLDER;
+    for (const marker of this.edgeMarkers.update(flight, indicated)) {
+      const at = edgePoint(centre, this.project(marker));
+      if (marker.kind === "station") {
+        const { diamond, stroke } = EDGE_MARKER_GLYPHS.station;
+        // The stroke sits inside the diamond's extent.
+        const half = (diamond - stroke) / 2;
+        const points = [
+          new Phaser.Math.Vector2(at.x, at.y - half),
+          new Phaser.Math.Vector2(at.x + half, at.y),
+          new Phaser.Math.Vector2(at.x, at.y + half),
+          new Phaser.Math.Vector2(at.x - half, at.y),
+        ];
+        if (this.light) {
+          this.overlay.lineStyle(stroke + 2 * outline, LIGHT_FIELD.ink, 1);
+          this.overlay.strokePoints(points, true, true);
+        }
+        this.overlay.lineStyle(stroke, this.palette.pointOfInterest, 1);
+        this.overlay.strokePoints(points, true, true);
+        continue;
+      }
+      const radius = EDGE_MARKER_GLYPHS[marker.kind].disc / 2;
+      if (this.light) {
+        this.overlay.fillStyle(LIGHT_FIELD.ink, 1);
+        this.overlay.fillCircle(at.x, at.y, radius + outline);
+      }
+      this.overlay.fillStyle(EDGE_MARKER_THREAT_PLACEHOLDER, 1);
+      this.overlay.fillCircle(at.x, at.y, radius);
     }
   }
 
