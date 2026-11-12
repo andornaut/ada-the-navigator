@@ -3168,19 +3168,23 @@ try {
     [636.5, 579.5, 522.5],
     "Exit, Settings and Achievements clear the right inset",
   );
-  // Tab order: Continue, Restart, Achievements, Settings, Exit.
+  // Tab order follows the DOM: Restart, Continue, Achievements, Settings, Exit. Focus opens on
+  // Continue, so Tab reaches the nav discs and Shift+Tab reaches Restart.
   const order = [];
   await page.setViewportSize({ height: 360, width: 720 });
   await seedOnce(saved.save(), "ada-browser.start-screen-tabs.v1");
   await page.locator('.ada-start-actions > [data-action="continue"]').waitFor({ state: "visible" });
-  await inTurn([0, 1, 2, 3], async () => {
+  await inTurn([0, 1, 2], async () => {
     await page.keyboard.press("Tab");
     order.push(await page.evaluate(() => document.activeElement?.dataset.action ?? null));
   });
+  await page.locator('.ada-start-actions > [data-action="continue"]').focus();
+  await page.keyboard.press("Shift+Tab");
+  order.push(await page.evaluate(() => document.activeElement?.dataset.action ?? null));
   await page.setViewportSize({ height: 720, width: 1280 });
   assert.deepEqual(
     order,
-    ["restart", "achievements", "settings", "exit"],
+    ["achievements", "settings", "exit", "restart"],
     "Tab follows Continue's lead",
   );
   // An open modal is the topmost layer: over Achievements' own disc, Achievements' card shows.
