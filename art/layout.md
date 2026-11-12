@@ -541,7 +541,7 @@ Constants: `STORY_PANEL` and `STORY_BACKGROUND`, `storyPage.ts`;
 | Name tab       | `CONVERSATION_BOX.tab`: 20 high, label width + `2 * SPACING.markGap`, 1 ink edge, radius 2, `TYPE.label` in ink                                                                                                                                                                              | The speaker's tab colour ([Controls](controls.md#conversation-box)); the column's first line, `SPACING.gap` above the paragraph                                                                                                                                                                                |
 | Portrait       | `STORY_PANEL.portrait`: the 32 storybook frame at 2x (64), nearest neighbour, in a 68 frame (2 ink edge, navy `#262b44` face)                                                                                                                                                                | Floated on the column top: at the inner right for every speaker but Ada, at the inner left for Ada; never mirrored                                                                                                                                                                                             |
 | Portrait gap   | `SPACING.gap` to the text, `SPACING.rowGap` below                                                                                                                                                                                                                                            | The name tab and the paragraph wrap beside the frame, then take the full measure below it                                                                                                                                                                                                                      |
-| Choices        | `STORY_BUTTON` secondary, filling the choice column, stacked from its top, faces `SMALL_BUTTON_GAP` 24 apart (a 60 pitch)                                                                                                                                                                    | `hitAround` grows a 36 face 9 per side (54), so neighbouring press areas stay 6 apart                                                                                                                                                                                                                          |
+| Choices        | `STORY_BUTTON` secondary, filling the choice column, stacked from its top, faces `SMALL_BUTTON_GAP` 24 apart (a 60 pitch)                                                                                                                                                                    | `hitAround` grows a 36 face 9 per side (54), so neighbouring press areas stay 6 apart, each at least `HIT_RULE.minTarget` 48                                                                                                                                                                                   |
 | Page controls  | One row on the choice column's bottom: Previous (secondary) at the left, Next (primary) at the right, each `(choice column - 24) / 2` wide, `SMALL_BUTTON_GAP` 24 apart                                                                                                                      | 102 to 119 wide; Next, Continue and Previous fit on one line                                                                                                                                                                                                                                                   |
 | Named action   | A page's named action ("Pick up the rock.") in Next's place; when its label + 32 exceeds the half width it fills the choice column on its own row, `SMALL_BUTTON_GAP` 24 above the Previous row                                                                                              | "Touch the glow.", "Pick up the rock." and "Let's find your holodisk." take the full row                                                                                                                                                                                                                       |
 | Scroll         | Only the text column scrolls, when the panel reaches its top cap; it reserves `SCROLL` 14 on its right (6 gap, 8 track, thumb inset 1)                                                                                                                                                       | Text never shrinks and never paginates; the choices and page controls stay fixed                                                                                                                                                                                                                               |
@@ -577,18 +577,20 @@ Panel height and top by page:
 | Gameplay's longest page (218) with heading and choices | 228, top 113    | 228, top 113    | 208, 136 | 228, 161 |
 | Astra's three questions with Continue (the tallest)    | 248, top 93     | 248, top 93     | 248, 96  | 248, 141 |
 
-The 36 story buttons are smaller than the 48 standard, so their faces keep
-`SMALL_BUTTON_GAP` 24 apart (`BUTTON_GAP` 16 is the standard faces' gap; both
-are the button gap rule, to implement). The garden opening's choice column is
-56 + 24 + 56 + 24 + 36 = 196 (both labels wrap) beside its text column (36
-heading, then six lines in the 349 column, 192, or five in the wider ones,
-166); at 844x390 without insets the first label fits one line (176). The
-218-character page is six lines in the 349 column and five in the wider ones.
-Astra's three questions with Continue need 3 * 36 + 2 * 24 + 24 + 36 = 216, so
-248 with the padding, under the 280.5 cap at 360-high views. All 55 pages of
-Gameplay's copy fit under the top cap at every screen above, so no shipped page
-scrolls; Gameplay's limits (220 characters, three choices of at most 36) hold
-it there.
+Story buttons follow the button gap rule (to implement): buttons smaller than
+the 48 standard keep `SMALL_BUTTON_GAP` 24 between faces in any direction,
+standard buttons `BUTTON_GAP` 16 side by side and `STACK_BUTTON_GAP` 8 stacked.
+The 36 story buttons are small, so the choices, a full-row named action and the
+page-control row stack 24 apart, and Previous and Next sit 24 apart. The garden
+opening's choice column is 56 + 24 + 56 + 24 + 36 = 196 (both labels wrap; 176
+at 844x390 without insets, where the first fits one line) beside its text
+column: the 36 heading and six lines in the 349 column (192), or five in the
+wider ones (166). The 218-character page is six lines in the 349 column and
+five in the wider ones. Astra's three questions with Continue need 3 * 36 + 2 *
+24 + 24 + 36 = 216, so 248 with the padding, the tallest page, under the 280.5
+cap at 360-high views: all 55 pages of Gameplay's copy fit without scrolling,
+and Gameplay's limits (220 characters, three choices of at most 36) hold it
+there.
 
 Page structure:
 
@@ -861,5 +863,5 @@ Tests:
   column scrolls only the text column, with the choices and page controls in
   place.
 - Every story choice and page control is 36 drawn on one line (56 on two),
-  `SMALL_BUTTON_GAP` 24 from its neighbours, with
+  `SMALL_BUTTON_GAP` 24 from its neighbours in every direction, with
   a press area of at least 48 per axis; the story text is 18 on 26.

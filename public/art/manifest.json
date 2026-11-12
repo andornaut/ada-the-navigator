@@ -3413,8 +3413,8 @@
         "y": 0.5
       },
       "subject": {
-        "top": 255,
-        "bottom": 300
+        "top": 248,
+        "bottom": 293
       }
     },
     {
@@ -3481,8 +3481,8 @@
         "y": 0.5
       },
       "subject": {
-        "top": 195,
-        "bottom": 300
+        "top": 188,
+        "bottom": 293
       },
       "overlays": ["story-ada-playing"]
     },
@@ -3500,7 +3500,7 @@
       },
       "at": {
         "x": 480,
-        "y": 228
+        "y": 221
       },
       "scale": 1,
       "sampling": "nearest"
@@ -3621,8 +3621,8 @@
         "y": 0.5
       },
       "subject": {
-        "top": 245,
-        "bottom": 350
+        "top": 255,
+        "bottom": 348
       },
       "overlays": ["story-ada-waking"]
     },

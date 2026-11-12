@@ -78,7 +78,9 @@ Full palettes are in the generator. Colours are before treatment d.
 - Needle opens and resolves in `story-ada-room-recorder`: the recorder lies on
   its song sheet at the desk's free left end, left of the rock, so the rock
   stays the brightest point. It closes in `story-concert-hall`, the stage seen
-  from the hall, with Ada playing in the spotlight.
+  from the hall, with Ada playing in the spotlight. The recorder room draws Ada's
+  room 7 rows higher and the concert hall rises 7 rows too, so both subjects end
+  by row 293.
 - Andromeda opens, resolves and closes in Grandma's garden with a potting table
   on the lawn by the house and a green tray of eight terracotta pots on it.
   `story-grandma-garden-spilled` (the opening, its branch pages and the
@@ -154,11 +156,11 @@ at most the panel top + 180; at 720x405 the limit is the panel top + 135.
 | `story-school-hallway`           | 184..290 | The notice board beside the near door                  |
 | `story-front-door`               | 175..280 | The coats and Penny's lead on their hooks by the door  |
 | `story-ada-room-night`           | 250..300 | The rock's glow on the desk; the sleep scene shares it |
-| `story-ada-room-morning`         | 245..350 | Ada stretching on the bed, the rock on the desk        |
+| `story-ada-room-morning`         | 255..348 | Ada's waking sprite on the bed, the rock on the desk   |
 | `cockpit`                        | 175..298 | The canopy dome                                        |
 | `cockpit-seated`                 | 175..298 | The canopy dome                                        |
-| `story-ada-room-recorder`        | 255..300 | The rock and the recorder on the desk                  |
-| `story-concert-hall`             | 195..300 | The stage, the piano and Ada in the spotlight          |
+| `story-ada-room-recorder`        | 248..293 | The rock and the recorder on the desk                  |
+| `story-concert-hall`             | 188..293 | The stage, the piano and Ada in the spotlight          |
 | `story-grandma-garden-spilled`   | 176..285 | The seedling tray on the potting table and the beds    |
 | `story-grandma-garden-replanted` | 176..285 | The seedling tray on the potting table and the beds    |
 
@@ -167,11 +169,13 @@ rows and the tallest panel's top, at 720x360 with insets 43/43/0/19, 844x390
 with the same insets, and 1280x720 (720x405). A star marks a clamped
 placement. Runs: the first launch (chapter one's opening, then the prologue),
 a visit (a waiting chapter scene, Ada's room, boarding), the empty visit and
-the jump home (night, morning, then the visit).
+the jump home (night, morning, then the visit). The four new backgrounds have
+no pages yet; their rows assume a chapter page at Gameplay's limit (218
+characters, the heading and two choices).
 
 | Background, runs                                                    | 720x360, insets                 | 844x390, insets                 | 1280x720                        |
 | ------------------------------------------------------------------- | ------------------------------- | ------------------------------- | ------------------------------- |
-| `story-grandma-garden`, first launch                                | y -180*: 15..110, top 113       | y -180*: 15..110, top 113       | y -135*: 60..155, top 161       |
+| `story-grandma-garden`, first launch                                | y -180*: 19..105, top 113       | y -180*: 19..105, top 113       | y -135*: 64..150, top 161       |
 | `story-park`, first launch                                          | y -138: 82..147, top 229        | y -134: 86..151, top 237        | y -110: 110..175, top 285       |
 | `story-ada-room-unpolished`, first launch                           | y -162: 93..138, top 231        | y -162: 93..138, top 231        | y -135*: 120..165, top 279      |
 | `story-ada-room`, every visit, first launch, empty visit, jump home | y -171: 84..129, top 213        | y -171: 84..129, top 213        | y -135*: 120..165, top 261      |
@@ -184,14 +188,20 @@ the jump home (night, morning, then the visit).
 | `story-front-door`, visit, chapter 3 opening                        | y -171: 4..109, top 113         | y -171: 4..109, top 113         | y -135*: 40..145, top 161       |
 | `story-park`, visit, chapter 3 resolution                           | y -180*: 40..105, top 143       | y -176: 44..109, top 153        | y -135*: 85..150, top 201       |
 | `story-ada-room-night`, jump home                                   | y -146.5: 103.5..153.5, top 257 | y -146.5: 103.5..153.5, top 257 | y -122.5: 127.5..177.5, top 305 |
-| `story-ada-room-morning`, jump home                                 | y -169: 76..181, top 257        | y -169: 76..181, top 257        | y -135*: 110..215, top 305      |
+| `story-ada-room-morning`, jump home                                 | y -173: 82..175, top 257        | y -173: 82..175, top 257        | y -135*: 120..213, top 305      |
+| `story-ada-room-recorder`, new chapter at the limit                 | y -180*: 68..113, top 113       | y -180*: 68..113, top 113       | y -135*: 113..158, top 161      |
+| `story-concert-hall`, new chapter at the limit                      | y -180*: 8..113, top 113        | y -180*: 8..113, top 113        | y -135*: 53..158, top 161       |
+| `story-grandma-garden-spilled`, new chapter at the limit            | y -174: 2..111, top 113         | y -174: 2..111, top 113         | y -135*: 41..150, top 161       |
+| `story-grandma-garden-replanted`, new chapter at the limit          | y -174: 2..111, top 113         | y -174: 2..111, top 113         | y -135*: 41..150, top 161       |
 
-Every band clears its panel at these views except the cockpit's: under
-Astra's three questions (panel top 93 at 360-high views, 141 at 720x405) the
-123-row canopy is taller than the 93 strip, and the clamp holds the canvas
-at its lowest, so 25 rows of the dome's underside go under the panel and 5
-above the view, and 22 under the panel at 720x405. At 0.6 with the canopy
-focus 15 rows higher the dome spans about 175..262 and clears both.
+Every band in the current runs clears its panel at these views except the
+cockpit's under Astra's three questions, a crop kept by design: the ship stays
+at 0.85, and with the panel top at 93 at 360-high views (141 at 720x405) the
+123-row dome loses 25 rows under the panel and 5 above the view, and 22 under
+the panel at 720x405. Every other cockpit page shows the whole dome. At
+Gameplay's limit the four new backgrounds clear too: Needle's recorder room
+and concert hall rise 7 rows so their bands end by row 293, the lowest visible
+row under a 218-character page at 360-high views.
 
 ## Ada's sprites
 
@@ -205,7 +215,7 @@ and `sampling: "nearest"`.
 
 | Id                  | Size (px) | `scale` | `at`       | Background               | Pose                                        |
 | ------------------- | --------- | ------- | ---------- | ------------------------ | ------------------------------------------- |
-| `story-ada-playing` | 44 x 56   | 1       | (480, 228) | `story-concert-hall`     | Playing the recorder, feet on the spotlight |
+| `story-ada-playing` | 44 x 56   | 1       | (480, 221) | `story-concert-hall`     | Playing the recorder, feet on the spotlight |
 | `story-ada-waking`  | 48 x 42   | 2       | (249, 264) | `story-ada-room-morning` | Stretching and yawning, kneeling in bed     |
 
 - Scale: one sprite px is 1 logical px in the concert hall and 2 in Ada's room,
@@ -317,8 +327,8 @@ night haze (coat `#b57100` before treatment), and morning
   stretching, the `story-ada-waking` sprite.
 
 On the 844 by 390 phone with insets the morning page's panel top is at logical
-y 257 and its background at canvas top -169: the rock's top (109), Ada's sprite
-(top 95, chin 139) and Penny's head (194) all clear the panel. The sleep scene
+y 257 and its background at canvas top -173: the rock's top (105), Ada's sprite
+(top 91, chin 135) and Penny's head (190) all clear the panel. The sleep scene
 shows no panel and keeps the night page's placement (-146.5), so both figures
 stay in view (Ada 206.5, Penny 261.5).
 

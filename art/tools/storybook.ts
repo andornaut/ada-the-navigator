@@ -440,7 +440,15 @@ interface RoomOptions {
   figures?: { colours: Colours; pose: Pose };
   // Needle's recorder on its song sheet at the desk's left end.
   recorder?: boolean;
+  // Canvas rows to raise the whole room by, so its subject band ends by row 293.
+  lift?: number;
 }
+
+// Design px per logical canvas px (the canvas is the design frame at 360 / 390).
+const DESIGN_PER_LOGICAL = DESIGN.height / 360;
+// Needle's scenes rise 7 rows, so the desk's recorder and rock and the stage end by row 293 and
+// clear the strip above a story panel at Gameplay's longest page.
+const NEEDLE_LIFT = 7;
 
 // The recorder lying on the desk, mouthpiece to the left, along screen-horizontal (x - y).
 function recorder(
@@ -463,10 +471,10 @@ function recorder(
 
 function room(
   P: Palette,
-  { figures, glow, moon, recorder: withRecorder }: RoomOptions = {},
+  { figures, glow, moon, recorder: withRecorder, lift = 0 }: RoomOptions = {},
 ): Scene {
   const [nx, ny, wall] = [16, 12, 7];
-  const s = fitted(nx, ny, wall);
+  const s = fitted(nx, ny, wall, 12 - lift * DESIGN_PER_LOGICAL);
   s.solid(box(0, nx, 0, ny, -0.8, 0), P.slab!, 0, 0);
   const planks: Decal[] = [1, 2, 3, 4, 5, 6, 7].map((j) => [
     onZ(0.001, 0, nx, j * 1.5, j * 1.5 + 0.08),
@@ -1286,7 +1294,10 @@ function piano(s: Scene, P: Palette, x0: number, y0: number, z: number, key: num
 function concertHall(P: Palette): Scene {
   const [nx, ny, wall] = [22, 18, 8];
   const k = CONCERT_K;
-  const s = new Scene(k, [W / 2 - ((nx - ny) * R3 * k) / 2 + 30, 6 + wall * k]);
+  const s = new Scene(k, [
+    W / 2 - ((nx - ny) * R3 * k) / 2 + 30,
+    6 - NEEDLE_LIFT * DESIGN_PER_LOGICAL + wall * k,
+  ]);
   s.solid(box(0, nx, 0, ny, -0.8, 0), P.slab!, 0, 0);
   const boards: Decal[] = [];
   for (let j = 1; j < ny / 1.5; j++)
@@ -1475,8 +1486,8 @@ export const BACKGROUNDS: readonly Background[] = [
   {
     id: "story-ada-room-recorder",
     palette: ROOM,
-    build: (P) => room(P, { glow: glowAmount(0), recorder: true }),
-    subject: band(255, 300),
+    build: (P) => room(P, { glow: glowAmount(0), lift: NEEDLE_LIFT, recorder: true }),
+    subject: band(248, 293),
   },
   ...GLOW.map((glow, i) => ({
     id: `story-ada-room-recorder-glow-${i + 1}`,
@@ -1489,7 +1500,7 @@ export const BACKGROUNDS: readonly Background[] = [
     id: "story-concert-hall",
     palette: CONCERT,
     build: concertHall,
-    subject: band(195, 300),
+    subject: band(188, 293),
     overlays: [PLAYING_ID],
   },
   // Andromeda: the seedling tray on the potting table, spilled, then replanted.
@@ -1512,12 +1523,12 @@ export const BACKGROUNDS: readonly Background[] = [
     build: (P) => night(P, NIGHT_GLOW),
     subject: band(250, 300),
   },
-  // Ada stretching on the bed and the rock on the desk.
+  // Ada's waking sprite on the bed (rows 264 to 348) and the rock on the desk.
   {
     id: "story-ada-room-morning",
     palette: MORNING,
     build: morning,
-    subject: band(245, 350),
+    subject: band(255, 348),
     overlays: [WAKING_ID],
   },
 ];
