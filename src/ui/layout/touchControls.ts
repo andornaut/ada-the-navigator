@@ -2,20 +2,20 @@ import type { Point, Rect } from "@andornaut/game-kit/rect";
 
 import type { StickSide } from "../../input/state.ts";
 import { TOUCH_CHROME_FRAME } from "../touch-chrome.ts";
-import { type Insets, mirroredSide, playView, type Size } from "./playView.ts";
+import { CONTROLS_BOTTOM, type Insets, mirroredSide, playView, type Size } from "./playView.ts";
 
 // The on-screen joysticks (art/layout.md "HUD and overlays", Sticks), in logical canvas px: 75
-// frames, each ring's drawn edge side in from the game area's left (move) or right (aim)
-// edge and bottom above its bottom, each clamped by the safe insets; the drawn knob
-// moves at most knobReach from the ring's centre. Move input reaches full speed moveReach from
-// the touch-down point, past a moveDeadZone.
+// frames, each ring's drawn edge side (40) in from the game area's left (move) or right (aim)
+// edge and bottom (40, level with the shield pill) above its bottom, each clamped by the safe
+// insets; the drawn knob moves at most knobReach from the ring's centre. Move input reaches full
+// speed moveReach from the touch-down point, past a moveDeadZone.
 export const TOUCH_STICK = {
-  bottom: 32,
+  bottom: CONTROLS_BOTTOM,
   frame: TOUCH_CHROME_FRAME,
   knobReach: 12,
   moveDeadZone: 2.4,
   moveReach: 40,
-  side: 32,
+  side: 40,
 } as const;
 
 // Art draws each ring 1 inside its frame, so a frame's centre pixel is this far from the drawn

@@ -242,15 +242,19 @@ export function statusPillWidth(ore: boolean, aboard: boolean): number {
   );
 }
 
+// The bottom controls' drawn bottom above the game area's bottom, which a bottom safe inset
+// raises: the joysticks' rings (TOUCH_STICK.bottom) and the shield pill sit level on it.
+export const CONTROLS_BOTTOM = 40;
+
 // The shield pill (art/layout.md "Shield pill"): one PILL at the bottom centre holding the 20
 // shield icon, a mark gap and the 160x12 bar (a 1 rim, 1 ink, then the 156x8 fill area at inset
 // 2), 202 wide. It centres across on the HUD rect (the view's centre, as the rect mirrors); its
-// bottom sits level with the sticks' drawn bottom, bottom above the game area's bottom, which a
-// bottom safe inset raises (TOUCH_STICK.bottom). The same place on touch and desktop.
+// bottom sits level with the sticks' drawn bottom, CONTROLS_BOTTOM above the game area's bottom.
+// The same place on touch and desktop.
 const SHIELD_BAR = { fill: { height: 8, width: 156 }, height: 12, inset: 2, rim: 1, width: 160 };
 export const SHIELD_PILL = {
   bar: SHIELD_BAR,
-  bottom: 32,
+  bottom: CONTROLS_BOTTOM,
   // The leading edge inside the fill's right end while the shield regenerates.
   edge: 2,
   icon: HUD_BUTTON.glyph,

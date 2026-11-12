@@ -1064,6 +1064,59 @@ try {
     }
     return page.locator(selector).boundingBox();
   }
+  // The touch HUD's bottom controls, in logical px from the game area's edges: each joystick
+  // ring's drawn outer side and bottom, 40 in (the rings draw 1 inside their 75 frame targets),
+  // and the shield pill's bottom level with them. The rings mirror, so the aim ring's side is
+  // measured from the left gap in from the view's whole-pixel right edge. Saves the proof and
+  // captures the HUD as name.
+  async function touchHudProof(name) {
+    await settledBox('[data-control="aim-joystick"]');
+    await page.locator(".ada-shield").waitFor({ state: "visible" });
+    const hud = await page.evaluate(() => {
+      const app = document.getElementById("app");
+      const unit = Number(getComputedStyle(app).getPropertyValue("--ada-unit"));
+      const origin = app.getBoundingClientRect();
+      const box = (selector) => {
+        const rect = document.querySelector(selector).getBoundingClientRect();
+        return {
+          bottom: (rect.bottom - origin.top) / unit,
+          left: (rect.left - origin.left) / unit,
+          right: (rect.right - origin.left) / unit,
+        };
+      };
+      // The 720x360 game area, from the view properties the play area is laid out by.
+      const property = (name) => parseFloat(getComputedStyle(app).getPropertyValue(name)) / unit;
+      const left = property("--ada-area-left");
+      const bottom = origin.height / unit - property("--ada-area-bottom");
+      return {
+        aim: box('[data-control="aim-joystick"]'),
+        area: { bottom, left, right: left + 720 },
+        dpr: devicePixelRatio,
+        move: box('[data-control="move-joystick"]'),
+        shield: box(".ada-shield"),
+        unit,
+        view: { height: origin.height / unit, width: origin.width / unit },
+      };
+    });
+    const { area } = hud;
+    const areaBottom = area.bottom;
+    const proof = {
+      ...hud,
+      aimSide: Math.floor(hud.view.width) - area.left - (hud.aim.right - 1),
+      moveSide: hud.move.left + 1 - area.left,
+      ringBottoms: [areaBottom - (hud.move.bottom - 1), areaBottom - (hud.aim.bottom - 1)],
+      shieldBottom: areaBottom - hud.shield.bottom,
+    };
+    save(`touch-hud-${name}.json`, proof);
+    const detail = `${name}: ${JSON.stringify(proof)}`;
+    // Whole-pixel ring centres put a drawn edge within a logical px of its place.
+    for (const inset of [proof.moveSide, proof.aimSide, ...proof.ringBottoms]) {
+      assert.ok(Math.abs(inset - 40) < 1, `Each ring's drawn edge sits 40 in: ${detail}`);
+    }
+    assert.ok(Math.abs(proof.shieldBottom - 40) < 0.01, `The shield pill sits 40 up: ${detail}`);
+    await page.screenshot({ path: `${output}/touch-hud-${name}.png` });
+    return proof;
+  }
   // Each fixture loads in a fresh context at the same URL and viewport, carrying the stored
   // settings over: a reloaded tab keeps every earlier load's images alive until the context
   // closes, which the container's memory ceiling cannot hold across the run. A mid-flight
@@ -1989,6 +2042,8 @@ try {
   await seedOnce(safeSerialized, "ada-browser.after-save-proof.v1");
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   await page.setViewportSize({ width: 844, height: 390 });
+  await touchHudProof("844x390");
+  events.checks.push("At 844x390 the sticks' rings sit 40 in from the game area, the pill level");
   // Compare observable flight response, not the implementation's stick sampling formula. Travel is
   // in logical px, --ada-unit CSS px each.
   const stickUnit = await page
@@ -4002,6 +4057,29 @@ try {
   await page.screenshot({ path: `${output}/newer-save.png` });
   events.checks.push("A newer save keeps Start closed and its save, and requires the update");
   await newerContext.close();
+  // A 2404x1080 phone at device pixel ratio 2.5, in whole CSS px (962x432 is 2405x1080), on touch.
+  const phoneContext = await browser.newContext({
+    deviceScaleFactor: 2.5,
+    hasTouch: true,
+    isMobile: true,
+    viewport: { height: 432, width: 962 },
+  });
+  await phoneContext.addInitScript(reportViolations);
+  await phoneContext.route("**/*", previewOnly);
+  await phoneContext.addInitScript(({ key, value }) => localStorage.setItem(key, value), {
+    key: storageKey,
+    value: safeSerialized,
+  });
+  page = await phoneContext.newPage();
+  page.setDefaultTimeout(10000);
+  page.setDefaultNavigationTimeout(15000);
+  observe(page);
+  assert.equal((await page.goto("http://ada-preview:4173/play/")).status(), 200);
+  await continueFlight();
+  const phoneHud = await touchHudProof("2404x1080");
+  assert.equal(phoneHud.dpr, 2.5, "The phone context renders at device pixel ratio 2.5");
+  events.checks.push("At 2404x1080 dpr 2.5 the sticks' rings sit 40 in, the pill level");
+  await phoneContext.close();
   // A crash: the kit's crash screen over the game, in the game's words, with the build label in
   // the dev details, and the last save kept through the page hiding. The thrown error is the point
   // here, so only this page's CSP violations count as errors.
