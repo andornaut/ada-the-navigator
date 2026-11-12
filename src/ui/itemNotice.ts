@@ -5,6 +5,7 @@ import type { ItemGain } from "../model/itemGains.ts";
 import { fill, weaponName } from "../model/shop.ts";
 import { font, fromHudEdge, units } from "./layout/css.ts";
 import { chipLeft, chipWidth, flyPoint, ITEM_NOTICE } from "./layout/itemNotice.ts";
+import { STATUS_CARGO_INSET } from "./layout/playView.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { STATUS_COLOURS } from "./statusPill.ts";
@@ -410,7 +411,7 @@ export interface NoticePlaces {
 export function noticeDestination(places: NoticePlaces, target: NoticeTarget): number {
   const pillCentre = places.pill.left + places.pill.width / 2;
   if (target.kind === "cargo") {
-    return places.cargo ?? places.pill.left + places.pill.width - 18;
+    return places.cargo ?? places.pill.left + places.pill.width - STATUS_CARGO_INSET;
   }
   if (target.kind === "weapon") {
     return places.weapons.get(target.weapon) ?? pillCentre;

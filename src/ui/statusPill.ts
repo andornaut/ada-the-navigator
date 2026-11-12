@@ -11,7 +11,6 @@ import {
 } from "./layout/playView.ts";
 import { TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
-import { ammoCount } from "./weapons.ts";
 
 // The HUD status pill (art/layout.md "Status pill", art/controls.md "Status pill"): one ink pill
 // beside pause holding the Stardust count, then, while Ada carries them, her ore count and the job
@@ -161,10 +160,32 @@ export function shieldMarkColour(tone: ShieldTone, pulse: number): string {
 }
 
 // An exact count, en-US grouped: the counts' accessible labels, the +N ticks and the Ship card
-// (gameplay/economy.md). The pill draws its counts in four characters with ammoCount.
+// (gameplay/economy.md). The pill draws its counts with pillCount.
 const COUNT_FORMAT = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 export function stardustCount(amount: number): string {
   return COUNT_FORMAT.format(Math.max(0, Math.floor(amount)));
+}
+
+/**
+ * A pill count in at most five characters (gameplay/economy.md "Player strings"): the integer
+ * below 10,000; thousands to the nearest tenth to 99,999 ("44.4k"), a value that rounds to 100.0k
+ * showing "100k"; whole thousands, rounded, to "9999k"; then whole millions, rounded, at most
+ * "9999m".
+ */
+export function pillCount(amount: number): string {
+  const whole = Number.isFinite(amount) ? Math.max(0, Math.floor(amount)) : 0;
+  if (whole < 10_000) {
+    return String(whole);
+  }
+  const tenths = Math.round(whole / 100);
+  if (tenths < 1000) {
+    return `${Math.floor(tenths / 10)}.${tenths % 10}k`;
+  }
+  const thousands = Math.round(whole / 1000);
+  if (thousands < 10_000) {
+    return `${thousands}k`;
+  }
+  return `${Math.min(9999, Math.round(whole / 1_000_000))}m`;
 }
 
 const { bar } = SHIELD_PILL;
@@ -214,7 +235,7 @@ export const STATUS_PILL_STYLE = `
   top:${fromHudEdge("top", STATUS_PILL.y)};
   box-sizing:border-box;
   height:${units(STATUS_PILL.pill.height)};
-  padding:0 ${units(STATUS_PILL.pill.padding)};
+  padding:0 ${units(STATUS_PILL.padding)};
   display:flex;
   align-items:center;
   border-radius:${units(STATUS_PILL.pill.radius)};
@@ -315,7 +336,7 @@ ${SHIELD_PILL.bars
   flex:none;
   width:${units(STATUS_PILL.stardustIcon)};
   height:${units(STATUS_PILL.stardustIcon)};
-  margin-right:${units(STATUS_PILL.markGap)};
+  margin-right:${units(STATUS_PILL.iconGap)};
   background:url('/art/ui/sprites/icon-stardust-20.png') 0 0 / 100% 100% no-repeat;
   image-rendering:pixelated
 }
@@ -325,7 +346,7 @@ ${SHIELD_PILL.bars
   height:${units(STATUS_PILL.cargoIcon)}
 }
 .ada-controls .ada-status-ore{
-  margin-right:${units(STATUS_PILL.markGap)};
+  margin-right:${units(STATUS_PILL.iconGap)};
   ${cargoIcon(CARGO_ICONS.ore)}
 }
 .ada-controls .ada-status-cargo[data-kind=carrying]{
@@ -454,7 +475,7 @@ function createCounter(
   return {
     count,
     set(value, label, nowMs) {
-      const next = ammoCount(value);
+      const next = pillCount(value);
       if (text.data !== next) {
         text.data = next;
         slot.style.width = units(countSlot(next));

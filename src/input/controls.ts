@@ -40,6 +40,7 @@ import {
   hudButtonTarget,
   hudRect,
   shieldIconCentre,
+  STATUS_CARGO_INSET,
   STATUS_PILL,
   statusPillWidth,
 } from "../ui/layout/playView.ts";
@@ -55,16 +56,11 @@ import {
   type SettingsLabels,
   type SettingsOptions,
 } from "../ui/settings.ts";
-import { createStatusPill, type StatusView } from "../ui/statusPill.ts";
+import { createStatusPill, pillCount, type StatusView } from "../ui/statusPill.ts";
 import { STICK_DEPTHS, stickViews } from "../ui/sticks.ts";
 import { USE_PRESS_MS } from "../ui/touchChrome.ts";
 import { createUpdateDialog, type UpdateLabels } from "../ui/updateDialog.ts";
-import {
-  ammoCount,
-  createWeaponSelector,
-  type WeaponChoice,
-  type WeaponLabels,
-} from "../ui/weapons.ts";
+import { createWeaponSelector, type WeaponChoice, type WeaponLabels } from "../ui/weapons.ts";
 import { FRAME_TURN } from "../view/frameTurn.ts";
 import { coarsePointer, touchControlsActive, useDiscShown } from "./coarsePointer.ts";
 import { type ControlSample, ControlState } from "./state.ts";
@@ -430,13 +426,13 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     const aboard = Boolean(statusView?.aboard);
     // The pill's width as it draws now, from the counts it shows.
     const width = statusPillWidth(
-      { ore: ore > 0 ? ammoCount(ore) : null, stardust: ammoCount(statusView?.stardust ?? 0) },
+      { ore: ore > 0 ? pillCount(ore) : null, stardust: pillCount(statusView?.stardust ?? 0) },
       aboard,
     );
     const count = weaponIds.length;
     const target = (index: number) => hud.width + hudButtonTarget(count - 1 - index).x;
     return {
-      cargo: aboard ? left + width - 18 : null,
+      cargo: aboard ? left + width - STATUS_CARGO_INSET : null,
       leftmostTarget: count > 0 ? target(0) : null,
       pill: { left, width },
       right: hud.width,

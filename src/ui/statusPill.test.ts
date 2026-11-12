@@ -8,6 +8,7 @@ import {
   blendHex,
   CARGO_ICONS,
   createStatusPill,
+  pillCount,
   ShieldBar,
   shieldMarkColour,
   stardustCount,
@@ -186,6 +187,32 @@ describe("status pill count", () => {
     expect(stardustCount(1234567)).toBe("1,234,567");
   });
 
+  it.each([
+    [0, "0"],
+    [9999, "9999"],
+    [10_000, "10.0k"],
+    [44_449, "44.4k"],
+    [44_450, "44.5k"],
+    [99_949, "99.9k"],
+    [99_950, "100k"],
+    [100_000, "100k"],
+    [999_999, "1000k"],
+    [9_999_499, "9999k"],
+    [9_999_500, "10m"],
+    [10_000_000, "10m"],
+    [9_999_499_999, "9999m"],
+    [1e12, "9999m"],
+  ])("draws a pill count of %d as %s, in at most five characters", (amount, text) => {
+    expect(pillCount(amount)).toBe(text);
+    expect(text.length).toBeLessThanOrEqual(5);
+  });
+
+  it("draws a fractional count by its whole part and a negative or non-finite one as 0", () => {
+    expect(pillCount(9999.9)).toBe("9999");
+    expect(pillCount(-5)).toBe("0");
+    expect(pillCount(Number.NaN)).toBe("0");
+  });
+
   // A stand-in for the DOM members the pill uses.
   class FakeNode {
     readonly attributes = new Map<string, string>();
@@ -231,12 +258,11 @@ describe("status pill count", () => {
 
   it.each([
     [9999, "9999", "9,999"],
-    [10_000, "10k", "10,000"],
-    [999_999, "999k", "999,999"],
-    [1_000_000, "1m", "1,000,000"],
-    [999_999_999, "999m", "999,999,999"],
-    [1_234_567_890, "999m", "1,234,567,890"],
-  ] as const)("draws %d as %s in four characters, its label exact", (amount, shown, exact) => {
+    [44_449, "44.4k", "44,449"],
+    [999_999, "1000k", "999,999"],
+    [10_000_000, "10m", "10,000,000"],
+    [1_234_567_890, "1235m", "1,234,567,890"],
+  ] as const)("draws %d as %s in five characters, its label exact", (amount, shown, exact) => {
     const { count, status } = pill();
     const view = {
       aboard: null,
@@ -253,10 +279,19 @@ describe("status pill count", () => {
     status.setStatus(view, 0);
     for (const kind of ["stardust", "ore"]) {
       expect(count(kind).children[0]!.data).toBe(shown);
-      expect(shown.length).toBeLessThanOrEqual(4);
+      expect(shown.length).toBeLessThanOrEqual(5);
     }
     expect(count("stardust").getAttribute("aria-label")).toBe(`${exact} Stardust`);
     expect(count("ore").getAttribute("aria-label")).toBe(exact);
+  });
+
+  it("pads the pill 6 at each end, sets each count 4 from its icon and each divider 6 apart", () => {
+    const style = (selector: string) =>
+      STATUS_PILL_STYLE.split("}").find((part) => part.includes(`${selector}{`));
+    expect(style(".ada-controls .ada-status")).toContain(`padding:0 ${units(6)}`);
+    expect(style(".ada-status-stardust")).toContain(`margin-right:${units(4)}`);
+    expect(style(".ada-status-ore")).toContain(`margin-right:${units(4)}`);
+    expect(style(".ada-status-divider")).toContain(`margin:0 ${units(6)}`);
   });
 
   it("sizes each count's slot to the count, at least one digit, in tabular figures", () => {
@@ -280,7 +315,8 @@ describe("status pill count", () => {
     for (const [stardust, shown] of [
       [0, "0"],
       [42, "42"],
-      [999_999_999, "999m"],
+      [44_449, "44.4k"],
+      [9_999_499, "9999k"],
     ] as const) {
       // A fresh pill each time, so no gain animates.
       const { slot, status } = pill();

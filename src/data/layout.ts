@@ -312,19 +312,22 @@ export const STORY_SKIP = {
 export const STORY_PANEL_TOP = HUD_ROW.bottom + SPACING.gap;
 
 // TYPE.label's advance, in font units, for each character a count holds (Liberation Sans Bold,
-// 2048 units per em): its digits are tabular, every one 1139, as is k; m is 1821.
-export const COUNT_ADVANCE = { digit: 1139, k: 1139, m: 1821 } as const;
+// 2048 units per em): its digits are tabular, every one 1139, as is k; m is 1821 and the point 569.
+export const COUNT_ADVANCE = { ".": 569, digit: 1139, k: 1139, m: 1821 } as const;
 
 export const COUNT_EM = TYPE.label.size / 2048;
 
-// The status pill's authored parts (src/ui/layout/playView.ts STATUS_PILL adds its x).
+// The status pill's authored parts (src/ui/layout/playView.ts STATUS_PILL adds its x): PILL's
+// height and radius, padded `padding` at each end, tighter than PILL.padding; each count iconGap
+// from its icon, each divider dividerGap from its neighbours.
 export const STATUS_PILL_LAYOUT = {
   cargoIcon: 20,
   divider: { height: 16, width: 1 },
-  dividerGap: 12,
-  markGap: SPACING.markGap,
+  dividerGap: 6,
+  iconGap: SPACING.rowGap,
   // The narrowest slot: one digit, so "0" keeps its icon and gap.
   minCount: COUNT_ADVANCE.digit * COUNT_EM,
+  padding: 6,
   pill: PILL,
   stardustIcon: 20,
   tick: {

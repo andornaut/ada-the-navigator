@@ -34,6 +34,7 @@ import {
   shieldPillWidth,
   type Size,
   startNavOrder,
+  STATUS_CARGO_INSET,
   STATUS_PILL,
   statusPillWidth,
   statusTickCentres,
@@ -304,12 +305,16 @@ describe("HUD anchors", () => {
   });
 
   it("measure each count in TYPE.label's tabular digits, at least one digit wide", () => {
-    // Liberation Sans Bold at 16 px: a digit or k is 1139/2048 em, 8.90; m is 1821/2048, 14.23.
+    // Liberation Sans Bold at 16 px: a digit or k is 1139/2048 em, 8.90; m is 1821/2048, 14.23;
+    // the point is 569/2048, 4.45.
     expect(STATUS_PILL.minCount).toBeCloseTo(8.9, 2);
     expect(countWidth("0")).toBe(STATUS_PILL.minCount);
     expect(countWidth("42")).toBeCloseTo(17.8, 2);
     expect(countWidth("999m")).toBeCloseTo(40.92, 2);
     expect(countWidth("999k")).toBeCloseTo(35.59, 2);
+    expect(countWidth("44.4k")).toBeCloseTo(40.04, 2);
+    expect(countWidth("9999k")).toBeCloseTo(44.49, 2);
+    expect(countWidth("9999m")).toBeCloseTo(49.82, 2);
     expect(countWidth("9999")).toBe(countWidth("1000"));
     expect(countSlot("")).toBe(STATUS_PILL.minCount);
     expect(() => countWidth("1,000")).toThrow(/,/u);
@@ -317,19 +322,20 @@ describe("HUD anchors", () => {
   });
 
   it.each([
-    // Art's widths (art/layout.md "Status pill"): 42 plus the Stardust slot, ore 51 plus its slot,
-    // cargo or tow 45.
-    ["0", null, false, 50.9],
-    ["42", null, false, 59.8],
-    ["999", null, false, 68.7],
-    ["999m", null, false, 82.92],
-    ["0", "0", false, 110.8],
-    ["42", "7", false, 119.7],
-    ["999m", "999m", false, 174.84],
-    ["0", null, true, 95.9],
-    ["999m", null, true, 127.92],
-    ["0", "0", true, 155.8],
-    ["999m", "999m", true, 219.84],
+    // Art's widths (art/layout.md "Status pill"): 36 plus the Stardust slot, ore 37 plus its slot,
+    // cargo or tow 33.
+    ["0", null, false, 44.9],
+    ["42", null, false, 53.8],
+    ["9999", null, false, 71.59],
+    ["44.4k", null, false, 76.04],
+    ["100k", null, false, 71.59],
+    ["9999m", null, false, 85.82],
+    ["42", "18", false, 108.59],
+    ["9999", "18", true, 159.39],
+    ["42", null, true, 86.8],
+    ["44.4k", "100k", true, 181.63],
+    ["9999m", "9999m", false, 172.64],
+    ["9999m", "9999m", true, 205.64],
   ] as const)(
     "size the pill to Stardust %s, ore %s, cargo %s: %d",
     (stardust, ore, aboard, width) => {
@@ -339,21 +345,30 @@ describe("HUD anchors", () => {
 
   it("move only the right edge as a count grows: the left stays and the ore slot shifts", () => {
     const small = statusTickCentres({ ore: "3", stardust: "7" });
-    const large = statusTickCentres({ ore: "3", stardust: "999m" });
-    expect(small.stardust).toBeCloseTo(34 + STATUS_PILL.minCount / 2, 9);
-    expect(large.stardust).toBeCloseTo(34 + countWidth("999m") / 2, 9);
+    const large = statusTickCentres({ ore: "3", stardust: "9999m" });
+    expect(small.stardust).toBeCloseTo(30 + STATUS_PILL.minCount / 2, 9);
+    expect(large.stardust).toBeCloseTo(30 + countWidth("9999m") / 2, 9);
     // The ore tick follows the Stardust slot's growth.
-    expect(large.ore! - small.ore!).toBeCloseTo(countWidth("999m") - STATUS_PILL.minCount, 9);
+    expect(large.ore! - small.ore!).toBeCloseTo(countWidth("9999m") - STATUS_PILL.minCount, 9);
     expect(statusTickCentres({ ore: null, stardust: "0" }).ore).toBeNull();
   });
 
   it("centre each +N tick on its count slot, far enough apart that two labels never meet", () => {
     const { ore, stardust } = statusTickCentres({ ore: "0", stardust: "0" });
-    expect(stardust).toBeCloseTo(34 + STATUS_PILL.minCount / 2, 9);
-    expect(ore).toBeCloseTo(85 + STATUS_PILL.minCount + STATUS_PILL.minCount / 2, 9);
-    // Closest at the one-digit minimum, 59.90; the widest label, "+9,999" with its outline, 51.38.
-    expect(ore! - stardust).toBeCloseTo(59.9, 1);
-    expect(ore! - stardust - 51.38).toBeGreaterThan(0);
+    expect(stardust).toBeCloseTo(30 + STATUS_PILL.minCount / 2, 9);
+    expect(ore).toBeCloseTo(67 + STATUS_PILL.minCount + STATUS_PILL.minCount / 2, 9);
+    // Closest at the one-digit minimum, 45.90. A label is at most "+" and its count with the
+    // outline, 11.34 plus the slot, so the two keep 37 - 11.34 = 25.66 between them.
+    expect(ore! - stardust).toBeCloseTo(45.9, 1);
+    for (const [stardustCount, oreCount] of [
+      ["0", "0"],
+      ["9999", "999"],
+      ["9999m", "9999m"],
+    ] as const) {
+      const centres = statusTickCentres({ ore: oreCount, stardust: stardustCount });
+      const halves = 11.34 + (countSlot(stardustCount) + countSlot(oreCount)) / 2;
+      expect(centres.ore! - centres.stardust - halves).toBeCloseTo(25.66, 2);
+    }
   });
 
   it("make the shield bar 120, 180 or 240 by 12 by Shield level, the pill the bar plus 42", () => {
@@ -422,26 +437,28 @@ describe("HUD anchors", () => {
     }
   });
 
-  it("add 45 for the cargo segment and 51 plus its slot for the ore segment", () => {
+  it("add 33 for the cargo segment and 37 plus its slot for the ore segment", () => {
     expect(STATUS_PILL.cargoIcon).toBe(20);
     const alone = statusPillWidth({ ore: null, stardust: "42" }, false);
-    expect(statusPillWidth({ ore: null, stardust: "42" }, true) - alone).toBeCloseTo(45, 9);
-    expect(statusPillWidth({ ore: "999m", stardust: "42" }, false) - alone).toBeCloseTo(
-      51 + countWidth("999m"),
+    expect(statusPillWidth({ ore: null, stardust: "42" }, true) - alone).toBeCloseTo(33, 9);
+    // An item notice for cargo lands on its icon's centre, 16 in from the pill's right edge.
+    expect(STATUS_CARGO_INSET).toBe(16);
+    expect(statusPillWidth({ ore: "9999m", stardust: "42" }, false) - alone).toBeCloseTo(
+      37 + countWidth("9999m"),
       9,
     );
   });
 
   it.each([
-    ["720x360", { height: 360, width: 720 }, NO_INSETS, 62.75, 382.5, 83.91],
-    ["720x360 with phone insets", { height: 360, width: 720 }, PHONE, 93.75, 351.5, 21.91],
+    ["720x360", { height: 360, width: 720 }, NO_INSETS, 62.75, 382.5, 98.11],
+    ["720x360 with phone insets", { height: 360, width: 720 }, PHONE, 93.75, 351.5, 36.11],
     [
       "844x390 with phone insets",
       logicalView({ height: 390, width: 844 }),
       PHONE,
       93.75,
       410.58,
-      80.98,
+      95.19,
     ],
   ] as const)(
     "keep the widest pill a page inset clear of six weapons at %s",
@@ -451,8 +468,8 @@ describe("HUD anchors", () => {
       const first = hud.x + hud.width + hudButtonTarget(5).x;
       expect(pillLeft).toBeCloseTo(left, 2);
       expect(first).toBeCloseTo(leftmost, 2);
-      const widest = statusPillWidth({ ore: "999m", stardust: "999m" }, true);
-      expect(widest).toBeCloseTo(219.84, 2);
+      const widest = statusPillWidth({ ore: "9999m", stardust: "9999m" }, true);
+      expect(widest).toBeCloseTo(205.64, 2);
       expect(first - SPACING.pageInset - pillLeft - widest).toBeCloseTo(clearance, 2);
     },
   );
@@ -516,7 +533,7 @@ describe.each(SCREENS)("every control inside the game area at %o", (screen) => {
       expect(inside(fromLeft({ height: 33, width: 33, x: 0, y: 0 }))).toBe(true);
       const pill = {
         height: 28,
-        width: statusPillWidth({ ore: "999m", stardust: "999m" }, true),
+        width: statusPillWidth({ ore: "9999m", stardust: "9999m" }, true),
         x: STATUS_PILL.x,
         y: STATUS_PILL.y,
       };
