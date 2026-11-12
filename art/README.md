@@ -16,7 +16,9 @@ the [title screen art](title-screen.md),
 the [holodisk](holodisk.md), the
 [quantum jump](quantum-jump.md), the [weapon effects](weapons.md), the
 [Whirlpool whales](whales.md), the
-[Whirlpool current streaks, river debris and project world changes](whirlpool.md), character portraits, and the
+[Whirlpool current streaks, river debris and project world changes](whirlpool.md),
+Andromeda's [settlers' station, settlements, guide beacons, Pip's mail scooter, project world changes and Munix portraits](andromeda.md),
+its [garnet drones](andromeda.md#garnet-drones) and [backdrop haze](galaxies.md#backdrop-haze), character portraits, and the
 [storybook](storybook.md) Earth backgrounds with Ada's and her family's storybook sprites.
 [Community projects](projects.md) add the Projects shop tab and the world
 changes that funding them shows. [Galaxies](galaxies.md) retint the space field per galaxy. Other space objects
