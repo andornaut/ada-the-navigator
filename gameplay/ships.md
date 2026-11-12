@@ -167,15 +167,20 @@ weapon's damage, blast and spread are the same whoever fires it, at the same lev
 and projectile speed stay its own, so attacks stay readable and dodgeable. Enemies
 carry no ammunition. Weapon levels rise with position:
 
-| Archetype     | Positions 1–2                  | Positions 3–4                                                    | Positions 5–6                                                                       |
-| ------------- | ------------------------------ | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `swarm`       | Laser 1                        | Laser 2                                                          | Laser 3                                                                             |
-| `fighter`     | Laser 1                        | Rapid Missile 2                                                  | Rapid Missile 3                                                                     |
-| `interceptor` | Laser 1                        | Scattershot 2                                                    | Scattershot 3                                                                       |
-| `retaliator`  | Multi-Laser 1                  | Multi-Laser 2                                                    | Multi-Laser 3                                                                       |
-| `frigate`     | 2 × Laser 1                    | 2 × Laser 2, Rapid Missile 2                                     | 2 × Laser 3, Rapid Missile 3, charged lance                                         |
-| `capital`     | 2 × Laser 1, 2 × Multi-Laser 1 | 2 × Laser 2, 2 × Multi-Laser 2, Rapid Missile 2, Heavy Missile 1 | 2 × Laser 3, 2 × Rapid Missile 3, Heavy Missile 1, Phaser 1, ring burst, mine layer |
-| `platform`    | 2 × Laser 1                    | 2 × Laser 2                                                      | 2 × Laser 3                                                                         |
+| Archetype     | Positions 1–2                  | Positions 3–4                                                                   | Positions 5–6                                                                                      |
+| ------------- | ------------------------------ | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `swarm`       | Laser 1                        | Laser 2                                                                         | Laser 3                                                                                            |
+| `fighter`     | Laser 1                        | Rapid Missile 2                                                                 | Rapid Missile 3                                                                                    |
+| `interceptor` | Laser 1                        | Multi-Laser 2                                                                   | Multi-Laser 3                                                                                      |
+| `retaliator`  | Multi-Laser 1                  | Multi-Laser 2                                                                   | Multi-Laser 3                                                                                      |
+| `frigate`     | 2 × Laser 1                    | 2 × Laser 2, Rapid Missile 2                                                    | 2 × Laser 3, Rapid Missile 3, charged lance                                                        |
+| `capital`     | 2 × Laser 1, 2 × Multi-Laser 1 | 2 × Laser 2, 2 × Multi-Laser 2, Rapid Missile 2, Heavy Missile 1, Scattershot 1 | 2 × Laser 3, 2 × Rapid Missile 3, Heavy Missile 1, Phaser 1, Scattershot 1, ring burst, mine layer |
+| `platform`    | 2 × Laser 1                    | 2 × Laser 2                                                                     | 2 × Laser 3                                                                                        |
+
+Small craft carry only Laser, Multi-Laser and Rapid Missile. Heavy Missile,
+Phaser and Scattershot are reserved for frigates and capitals; a capital's
+Scattershot is point defense against craft that come close, and Ada avoids it
+by keeping her distance.
 
 Enemy Heavy Missile and Phaser stay at level 1: their single hits are large, so a
 capital's Heavy Missile flies slowly and its Phaser shows a thin aim line for 0.4
@@ -193,8 +198,8 @@ move off it.
 
 Intervals are before the position's fire rate. Projectile speeds multiply the
 base enemy projectile speed, a fixed 200 world units per second. Damage at each
-level is the shared per-level damage of Ada's weapon, except that enemy Phaser
-deals 4 and an enemy Scattershot dot 0.35 at level 1 (levels 2 and 3 share 1.5
+level is the shared per-level damage of Ada's weapon, except that enemy Heavy
+Missile deals 8, enemy Phaser 4 and an enemy Scattershot dot 0.35 at level 1 (levels 2 and 3 share 1.5
 and 2.25 times that level 1 volley across their dots). The three enemy-only weapons:
 
 - **Ring burst:** 8 bolts outward in a ring, 1.5 damage each, every 3.5 seconds,

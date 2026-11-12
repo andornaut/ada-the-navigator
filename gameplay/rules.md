@@ -656,10 +656,13 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   [Economy](economy.md#ammunition)).
 - Weapon order (Laser, Multi-Laser, Rapid Missile, Heavy Missile, Scattershot,
   Phaser) is also the order of power and rarity: each later weapon costs more,
-  drops less often, gets fewer seconds of fire per ammo pack and deals more
-  single-target damage per second at level 1 (Laser 3.6, Multi-Laser 3.3 per
-  bolt with 3 bolts, Rapid Missile 5, Heavy Missile 6.7, Scattershot 7.2 with
-  every dot hitting, Phaser 8.0).
+  drops less often, gets fewer seconds of fire per ammo pack and deals somewhat
+  more single-target damage per second at level 1 (Laser 3.6, Multi-Laser 3.3
+  per bolt with 3 bolts, Rapid Missile 5, Heavy Missile 5.5, Scattershot 6.0 with
+  every dot hitting, Phaser 6.5). Slower weapons deal more damage per hit. The
+  later weapons are situational, each with a limit that offsets its damage:
+  Heavy Missile fires slowly, Scattershot works only up close and Phaser fires
+  slowly. Every weapon stays worth using.
 - Laser is the starter weapon. The other weapons are Multi-Laser, Rapid
   Missile, Heavy Missile, Scattershot and Phaser, bought at station shops or found as rare drops; see
   [Economy](economy.md). The shared upgrade pickup, presented like Chibi's
@@ -669,8 +672,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   other owned weapons are kept.
 - Every weapon and the shield have three levels. For most weapons each level
   multiplies effective output (damage times fire rate times how often it hits)
-  by about 1.5, so level 3 is about 2.25 times level 1; Rapid Missile and
-  Scattershot gain about 1.2 to 1.3 times per level. Single-target output meets
+  by about 1.5, so level 3 is about 2.25 times level 1; Rapid Missile gains
+  about 1.2 to 1.3 times per level. Single-target output meets
   those steps on its own; range, blast and spread growth add to them. The
   shield's capacity is 10, 15 and 20, so level 3 holds 2 times level 1. Each
   weapon grows along its own dimensions:
@@ -681,21 +684,23 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
     1.5 times Laser damage; levels grow its fire rate (every 0.30, 0.25, 0.20 s)
     and missile speed.
   - Heavy Missile: one slow straight missile with a large blast; levels shorten
-    its interval (1.2, 1.0, 0.8 s) and grow its damage (8, 10, 12 times Laser
-    damage) and blast radius (60, 72, 85). Rapid Missile is faster at every
+    its interval (2.0, 1.67, 1.33 s) and grow its damage (11, 13.75, 16.5 times
+    Laser damage) and blast radius (60, 72, 85). Rapid Missile is faster at every
     level, in missile speed and fire rate; Heavy Missile deals more damage at
     every level, per hit and per second.
-  - Scattershot: a shotgun of visual dots across -30 to 30 degrees, 7 at level 1,
-    then 9, then 11. Its range is a fixed 360 world units on every device, and
-    levels add only dots. Up close every dot hits;
-    at range the spread covers more area but fewer dots hit. A level 1 dot deals
-    0.46 times Laser damage, every 0.45 s; levels 2 and 3 share 1.5 and 2.25 times
-    the level 1 volley across their dots. Dots do not apply damage over time.
-  - Phaser: a hitscan beam. Each shot hits instantly along the aim from the ship
-    out to a set range (provisionally 320 world units), stopping at the first enemy
-    or obstacle it meets, then shows briefly as a visible beam. It fires
-    intermittently, 4 times slower than Laser fire, and deals 9 times Laser damage
-    to the enemy it hits; levels grow its range and damage.
+  - Scattershot: the close-range weapon, a shotgun of visual dots across -30 to
+    30 degrees, 7 at level 1, then 9, then 11, one volley every 1.0 s. Its range
+    is a fixed 100 world units on every device, and levels add only dots. Up
+    close every dot hits; toward its range the spread covers more area but fewer
+    dots hit. A level 1 volley deals 6 times Laser damage when every dot hits
+    (about 0.86 per dot); levels 2 and 3 share 1.5 and 2.25 times that volley
+    across their dots. Dots do not apply damage over time.
+  - Phaser: the long-range weapon, a hitscan beam. Each shot hits instantly
+    along the aim from the ship out to a fixed 370 world units at every level,
+    enough to cover the whole play view in any direction, stopping at the first
+    enemy or obstacle it meets, then shows briefly as a visible beam. It fires
+    once every 1.0 s and deals 6.5 times Laser damage to the enemy it hits;
+    levels grow only its damage (6.5, 9.75, 14.625).
 - A missile, Ada's or an enemy's, explodes when it touches a ship it can hit or
   an obstacle, or at the end of its reach. Its blast damages every enemy within its radius, never Ada. An enemy
   missile's blast damages Ada, never enemies.
@@ -703,8 +708,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   Laser shot deals 1 damage. Enemies fire the same weapons, with the same damage,
   blast, spread and reach at the same level, plus three enemy-only weapons; each enemy
   keeps its own cadence and projectile speed (see
-  [Ships](ships.md#enemy-weapons)). Enemy Phaser and Scattershot keep their own
-  lower damage, so a single enemy hit never empties a base shield.
+  [Ships](ships.md#enemy-weapons)). Enemy Heavy Missile, Phaser and Scattershot keep
+  their own lower damage, so a single enemy hit never empties a base shield.
 - Laser bolts travel at 500, 600 and 700 world units per second at weapon
   levels 1, 2 and 3; Multi-Laser bolts at 400, 500 and 600. Both reach a fixed 1200 world units at
   every level, so flight time follows speed. Rapid Missile flies at 500, 600 and
@@ -717,7 +722,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   measured from there.
 - Fan angles are measured in the projected aim plane. Rotate there before
   unprojecting each shot direction; preserve the weapon's world-speed ratio.
-- Each scattershot dot travels 360 world units along its own rotated heading on
+- Each scattershot dot travels 100 world units along its own rotated heading on
   every device, fades after 65% of that range and vanishes at the limit.
 - Weapon intervals, speed and damage ratios, angles, range and fade are provisional
   catalog tuning. Speed ratios multiply the existing base projectile speed; damage
