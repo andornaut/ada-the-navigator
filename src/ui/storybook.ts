@@ -326,6 +326,7 @@ ${STORY_PORTRAIT_RULES}
    the card rim runs the full inner height in the middle of the column gap. */
 .ada-controls .ada-story-choice-column{
   flex:0 0 ${CHOICE_WIDTH};
+  min-height:0;
   position:relative;
   display:flex;
   flex-direction:column;
@@ -341,18 +342,32 @@ ${STORY_PORTRAIT_RULES}
   background:${rule.colour}
 }
 
+/* The choices stack from the column's top. A page past Gameplay's limits, whose page controls
+   would fall below the panel at its top cap, scrolls its choices in their own region, reserving
+   the scroll track, with the page controls fixed below. Other pages never scroll them, so the
+   press areas past their faces stay unclipped. */
 .ada-controls .ada-story-choices{
   display:flex;
   flex-direction:column;
   gap:${units(SMALL_BUTTON_GAP)}
 }
+.ada-controls .ada-story-choices.ada-story-scrolls{
+  flex:0 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-color:#9690b4 #2f2d3d;
+  padding-right:${units(SCROLL.gap + SCROLL.track)}
+}
 .ada-controls .ada-story-choices > .ada-button{
+  flex:none;
   width:100%
 }
 
 /* Previous at the left and Next at the right, each half the column less the gap; a named action
    too wide for its half fills the column on its own row above Previous. */
 .ada-controls .ada-story-controls{
+  flex:none;
   margin-top:auto;
   display:grid;
   grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);
@@ -568,6 +583,12 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     next.style.width = "";
     controls.classList.toggle("ada-story-wide", wide);
     controls.replaceChildren(...(wide ? [next, previous] : [previous, next]));
+    // A page past Gameplay's limits scrolls its choices, the page controls fixed below: one whose
+    // page controls fall below the choice column at the panel's top cap.
+    choices.classList.remove("ada-story-scrolls");
+    const overflows =
+      controls.getBoundingClientRect().bottom > column.getBoundingClientRect().bottom + 0.5;
+    choices.classList.toggle("ada-story-scrolls", overflows);
     // Only the text column scrolls, focusable while it does, past the panel's top cap.
     copy.classList.remove("ada-story-scrolls");
     const scrolls = copy.scrollHeight > copy.clientHeight + 1;

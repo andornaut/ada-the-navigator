@@ -333,6 +333,9 @@ try {
           ),
           heading: node.querySelector(".ada-story-heading:not([hidden])")?.textContent ?? "",
           scrolls: node.querySelector(".ada-story-copy").classList.contains("ada-story-scrolls"),
+          choicesScroll: node
+            .querySelector(".ada-story-choices")
+            .classList.contains("ada-story-scrolls"),
           // The choice column never overflows its panel: every choice and page control shows.
           clipped: [...node.querySelector(".ada-story-choice-column").querySelectorAll("button")]
             .filter((button) => button.offsetParent !== null)
@@ -615,7 +618,7 @@ try {
   // pages carry the chapter heading, and each background keeps one placement through the run.
   for (const { spread, text } of launchPages) {
     assert.ok(
-      !spread.scrolls && !spread.clipped && spread.top >= 60.5 - 0.01,
+      !spread.scrolls && !spread.choicesScroll && !spread.clipped && spread.top >= 60.5 - 0.01,
       `"${text}" fits: ${JSON.stringify(spread)}`,
     );
   }

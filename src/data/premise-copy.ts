@@ -76,6 +76,10 @@ export const PREMISE: PremiseContent = {
       ].join(""),
     },
     {
+      background: "adaRoomUnpolished",
+      text: "Miso and Pepper watch from the bed, tails twitching.",
+    },
+    {
       background: "adaRoom",
       choice: "Touch the glow.",
       text: "The lines begin to glow. The pattern pulses softly, as if it is waiting for her.",

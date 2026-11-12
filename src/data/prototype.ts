@@ -438,7 +438,9 @@ export const PROTOTYPE: PrototypeContent = {
     mapTypeLine: "{type} · {distance}",
     mapZoomIn: "Zoom in",
     mapZoomOut: "Zoom out",
-    morningRecharge: "Astra recharges overnight. In the morning, the rock is warm again.",
+    morningRecharge:
+      "Astra recharges overnight. In the morning, the rock is warm again, and Miso and Pepper are " +
+      "curled at her feet.",
     motionNote: "Skips screen shakes",
     moveControls: "Move controls",
     nearbyDiscovery: "Nearby discovery",

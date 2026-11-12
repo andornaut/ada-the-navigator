@@ -330,14 +330,36 @@ describe("story panel layout", () => {
 });
 
 describe("story text fit", () => {
+  it("counts each distinct page once: the scene pages and the overnight recharge's three", () => {
+    // A page is its scene slot: a room or boarding page with two texts (the empty visit's
+    // room, a new galaxy's welcome) counts each text, and chapter one's opening counts once.
+    const distinct = (scenes: readonly { pages: readonly StoryPage[] }[]) =>
+      new Set(
+        scenes
+          .flatMap(({ pages }) => pages)
+          .map((page) => `${page.background}|${page.speaker ?? ""}|${page.text}`),
+      ).size;
+    const chapters = galaxies.flatMap((galaxy) => [
+      openingScene(PROTOTYPE, galaxy, galaxy === 1),
+      ...(galaxy === 1 ? [openingScene(PROTOTYPE, galaxy)] : []),
+      resolutionScene(PROTOTYPE, galaxy),
+    ]);
+    const counts = {
+      boarding: distinct([boardingScene(PROTOTYPE, false), boardingScene(PROTOTYPE, true)]),
+      chapters: distinct(chapters),
+      overnight: jumpHomeScene("night", "morning").pages.length,
+      prologue: distinct([prologueScene(PROTOTYPE, labels)]),
+      room: distinct([roomScene(PROTOTYPE, labels, false), roomScene(PROTOTYPE, labels, true)]),
+    };
+    // Chapters: Grandma's garden framing (4 arrival pages and her farewell) round chapter one's
+    // opening, each opening and resolution with its two branches, and each closing. The prologue:
+    // 23 lines with Miso and Pepper, and Astra's 3 answers.
+    expect(counts).toEqual({ boarding: 3, chapters: 26, overnight: 3, prologue: 26, room: 2 });
+    // 57 scene pages and the overnight 3, of which the sleep scene has no text.
+    expect(PAGES).toHaveLength(57 + 2);
+  });
+
   it("fits every page under the top cap at every screen, so none scrolls", () => {
-    // Gameplay's copy holds 56 of them; Ada's room line and the jump home's two are rules text.
-    const copy = readFileSync(
-      new URL("../../../gameplay/player-copy.md", import.meta.url),
-      "utf8",
-    ).replace(/\s+/gu, " ");
-    expect(PAGES.filter(({ text }) => copy.includes(`"${text}"`))).toHaveLength(56);
-    expect(PAGES).toHaveLength(58);
     for (const screen of SCREENS) {
       for (const page of PAGES) {
         const { cap, top } = panelFor(page, screen);
@@ -362,6 +384,41 @@ describe("story text fit", () => {
 });
 
 describe("Gameplay's limits", () => {
+  it("keep every label of a three-choice page on one line at the narrowest choice column", () => {
+    const narrowest = STORY_PANEL.choiceColumn.min;
+    const three = PAGES.filter((page) => (page.choices ?? page.questions ?? []).length === 3);
+    expect(three.length).toBeGreaterThan(0);
+    for (const page of three) {
+      for (const { label } of page.choices ?? page.questions ?? []) {
+        expect(buttonHeight(label, narrowest), label).toBe(STORY_BUTTON.height);
+      }
+    }
+  });
+
+  it("fit a page at the three-choice limit: 220 characters, the heading and three 23s", () => {
+    const words = "Ada and Penny take the long way home past the garden gate".split(" ");
+    let text = "";
+    for (let index = 0; text.length < 220; index++) {
+      text = `${text} ${words[index % words.length]}`.trim();
+    }
+    const page: StoryPage = {
+      background: "grandmaGarden",
+      choices: ["Ask what each one needs", "Help Grandma plant seed", "Meet the new organizer"].map(
+        (label) => {
+          expect(label.length).toBeLessThanOrEqual(23);
+          return { label, next: "x" };
+        },
+      ),
+      heading: "The Glowing Rock.",
+      id: "opening",
+      text: text.slice(0, 220),
+    };
+    for (const screen of SCREENS) {
+      const { cap, top } = panelFor(page, screen);
+      expect(top, screen.name).toBeGreaterThanOrEqual(cap);
+    }
+  });
+
   it("fit a chapter page at the limit: 220 characters, the heading and two 36 choices", () => {
     const words = "Ada and Penny take the long way home past the garden gate".split(" ");
     let text = "";

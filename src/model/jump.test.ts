@@ -248,7 +248,9 @@ describe("quantum jump home", () => {
     expect(model.storyView?.page).toMatchObject({
       background: "adaRoomMorning",
       id: "morning",
-      text: "Astra recharges overnight. In the morning, the rock is warm again.",
+      text:
+        "Astra recharges overnight. In the morning, the rock is warm again, and Miso and Pepper " +
+        "are curled at her feet.",
     });
     model.storyNext();
     expect(model.storyView?.page).toMatchObject({

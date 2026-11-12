@@ -91,6 +91,22 @@ describe("storybook page", () => {
     expect(heading).toContain(`margin:0 0 ${units(SPACING.gap)}`);
   });
 
+  it("scrolls the choices of a page past the limits, with the page controls fixed", () => {
+    expect(rule(".ada-controls .ada-story-choice-column")).toContain("min-height:0");
+    // Only an overflowing page's choices scroll; others keep their press areas unclipped.
+    expect(rule(".ada-controls .ada-story-choices")).not.toContain("overflow");
+    const choices = rule(".ada-controls .ada-story-choices.ada-story-scrolls");
+    expect(choices).toContain("overflow-y:auto");
+    expect(choices).toContain("min-height:0");
+    expect(choices).toContain("flex:0 1 auto");
+    expect(choices).toContain(`padding-right:${units(14)}`);
+    // The choices keep their faces; the page controls never shrink or scroll.
+    expect(rule(".ada-controls .ada-story-choices > .ada-button")).toContain("flex:none");
+    const controls = rule(".ada-controls .ada-story-controls");
+    expect(controls).toContain("flex:none");
+    expect(controls).not.toContain("overflow");
+  });
+
   it("keeps small story buttons SMALL_BUTTON_GAP apart in every direction", () => {
     expect(SMALL_BUTTON_GAP).toBe(24);
     for (const selector of [

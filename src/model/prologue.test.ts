@@ -118,6 +118,7 @@ describe("prologue", () => {
           "a map of somewhere far away.",
         "Next",
       ],
+      ["adaRoomUnpolished", "", "Miso and Pepper watch from the bed, tails twitching.", "Next"],
       [
         "adaRoom",
         "",
@@ -225,6 +226,7 @@ describe("prologue", () => {
       ["park", "Next"],
       ["park", "Next"],
       ["park", "Next"],
+      ["adaRoomUnpolished", "Next"],
       ["adaRoomUnpolished", "Next"],
       ["adaRoom", "Touch the glow."],
     ]);

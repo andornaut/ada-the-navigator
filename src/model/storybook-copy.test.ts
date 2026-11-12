@@ -81,8 +81,9 @@ describe("storybook text", () => {
     const section = (heading: string, steps: readonly { speaker?: string; text: string }[]) =>
       `${heading} ${steps.map(line).join(" ")}`;
     const park = prologue.slice(0, 3);
-    const polish = prologue[3]!;
-    const glow = prologue[4]!;
+    // Ada polishes the rock, and Miso and Pepper watch from the bed.
+    const polish = prologue.slice(3, 5);
+    const glow = prologue[5]!;
     const standing = prologue.filter((step) => !step.background);
     const seated = prologue.filter((step) => step.background === "cockpitSeated");
     expect(COPY).toContain(
@@ -93,7 +94,7 @@ describe("storybook text", () => {
     );
     expect(COPY).toContain(`garden: ${line(gardenFarewell)}`);
     expect(COPY).toContain(section("In the park:", park));
-    expect(COPY).toContain(section("Ada's room, rock unpolished:", [polish]));
+    expect(COPY).toContain(section("Ada's room, rock unpolished:", polish));
     expect(COPY).toContain(`Ada's room, rock glowing: ${line(glow)} Action: "${glow.choice}"`);
     expect(COPY).toContain(section("The cockpit, standing:", standing));
     expect(COPY).toContain(section("The cockpit, seated:", seated.slice(0, 2)));
@@ -101,10 +102,11 @@ describe("storybook text", () => {
     expect([...gardenArrival, gardenFarewell].map((step) => step.background)).toEqual(
       Array<string>(5).fill("grandmaGarden"),
     );
-    expect([...park, polish, glow].map((step) => step.background)).toEqual([
+    expect([...park, ...polish, glow].map((step) => step.background)).toEqual([
       "park",
       "park",
       "park",
+      "adaRoomUnpolished",
       "adaRoomUnpolished",
       "adaRoom",
     ]);
@@ -153,18 +155,22 @@ describe("storybook text", () => {
       `Earth with nothing new: Narration: "${PROTOTYPE.premise.emptyHome}" then ${labels.pickUpRock}`,
     );
   });
-  it("keeps every page within Gameplay's limits: 220 characters, 3 choices of at most 36", () => {
+  it("keeps every page within Gameplay's limits: 220 characters and three choices", () => {
     expect(COPY).toContain(
-      "A story page's text is at most 220 characters, a choice label at most 36, and a page " +
-        "offers at most three choices",
+      "A story page's text is at most 220 characters and a page offers at most three choices. " +
+        "On a page with three choices every label fits one line, at most 23 characters; labels " +
+        "up to 36 characters, which wrap to two lines, appear only on pages with two choices or " +
+        "fewer.",
     );
     for (const { pages } of scenes) {
       for (const { choices, questions, text } of pages) {
         const offered = choices ?? questions ?? [];
         expect(text.length, text).toBeLessThanOrEqual(220);
         expect(offered.length, text).toBeLessThanOrEqual(3);
+        // Three choices keep one line each; two or fewer may wrap to two.
+        const longest = offered.length === 3 ? 23 : 36;
         for (const { label } of offered) {
-          expect(label.length, label).toBeLessThanOrEqual(36);
+          expect(label.length, label).toBeLessThanOrEqual(longest);
         }
       }
     }
