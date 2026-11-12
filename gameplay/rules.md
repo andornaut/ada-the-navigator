@@ -789,8 +789,8 @@ has been on Ada's screen and then left it. The marker stays while the object is
 within 1400 world units of Ada, one range for every kind; past 1400 the object is
 forgotten until it is on screen again. Destroying the object, leaving the zone
 or galaxy, and saving and reloading clear markers. A marker sits where the line
-from Ada to the object meets the game area's edge, flush on the border with its
-centre 8 logical pixels in, and may sit under the HUD. Where a direction
+from Ada to the object meets the game area's edge, its outermost drawn pixel 1 logical pixel in
+from the edge, and may sit under the HUD. Where a direction
 indicator marks the same object, only the indicator shows.
 Discovery rewards use cargo and Stardust pickups; a discovery cache holds 5
 Stardust. Weapons come only from shops and rare enemy drops. Stations are rare
