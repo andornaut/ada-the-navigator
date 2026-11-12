@@ -231,7 +231,9 @@ Frigates, capitals and platforms have hull HP and hardpoints.
   carry. A mount the position leaves unused is drawn as a capped plate with no
   hardpoint. Black Eye's capital is General Gadget's own, more threatening design.
 - **State:** hull HP, hardpoints, disabled and salvaged states are retained like
-  other heavy state until the galaxy regenerates.
+  other heavy state until the galaxy regenerates. A salvaged heavy stays where
+  Ada left it: like a destroyed one, it no longer holds the spacing kept between
+  capital ships, and nothing moves it.
 
 ## Sunflower roster
 
