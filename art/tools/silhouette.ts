@@ -291,9 +291,23 @@ export function convexParts(poly: V2[]): V2[][] {
   return parts.map((r) => r.map((i) => P[i]!));
 }
 
-// An outline's convex parts, rounded to 0.01 frame px.
+// An outline's convex parts, rounded to 0.01 frame px. Rounding can tip a vertex that lies
+// almost on the line between its neighbours inward; such vertices are dropped until the part is
+// strictly convex again.
 export function parts(closed: V2[]): V2[][] {
-  return convexParts(closed).map((part) => part.map(([x, y]) => [r2(x), r2(y)] as V2));
+  return convexParts(closed).map((part) => {
+    const ring = part.map(([x, y]) => [r2(x), r2(y)] as V2);
+    const sign = Math.sign(area(ring));
+    while (ring.length > 3 && !strictlyConvex(ring)) {
+      const turn = (i: number) =>
+        cross(ring[(i + ring.length - 1) % ring.length]!, ring[i]!, ring[(i + 1) % ring.length]!) *
+        sign;
+      let worst = 0;
+      for (let i = 1; i < ring.length; i++) if (turn(i) < turn(worst)) worst = i;
+      ring.splice(worst, 1);
+    }
+    return ring;
+  });
 }
 
 // A mask's outline with notch tips cut and its convex parts. The caller draws `tips` into the

@@ -233,7 +233,8 @@ the open. Sunflower keeps the coral originals and Cartwheel the
   per-heading [collision](enemies.md#collision), and the frames draw the coral
   notch tips. Hardpoints files are the coral
   family's, byte-identical, with the [weapon mounts](heavies.md#mounts): every
-  mount, its capped plate and the tops of each position tier (`fill`, `tiers`),
+  mount, its capped plate, the armed mounts of each position tier and the top
+  of every weapon a mount can hold (`fill`, `tiers`, `weaponTops`),
   the [Disabled banner](heavies.md#disabled-banner) centres and the collision.
   Destruction uses the shared `destruction.json` timing and flash with the
   garnet shards.

@@ -26,9 +26,9 @@ craft in Ada widths of 42.88 model units.
 
 | Archetype | Frame | Display | `sizeRatio` | Span x length | Weapon mounts | Files |
 | --------- | ----: | ------: | ----------: | ------------- | ------------: | ----: |
-| `frigate` |   384 |     168 |           4 | 3.27 x 4.26   |             4 |   258 |
-| `capital` |   480 |     210 |           5 | 5.04 x 5.50   |             8 |   530 |
-| `gadget`  |   560 |     245 |           5 | 5.78 x 5.74   |             8 |   530 |
+| `frigate` |   384 |     168 |           4 | 3.27 x 4.26   |             4 |   306 |
+| `capital` |   480 |     210 |           5 | 5.04 x 5.50   |             8 |   562 |
+| `gadget`  |   560 |     245 |           5 | 5.78 x 5.74   |             8 |   562 |
 
 - Frigate: long hunter with twin prow tines, a raised `engine` block that caps
   the stern with two jet mouths, and four weapon mounts: one on each sponson
@@ -67,44 +67,45 @@ copying Art's offsets.
 
 ## Mounts
 
-Weapons fill mounts pairs first, so the loadout stays symmetric; an odd count
-adds a centreline mount. The fill order and each position tier's weapons are
-in the hardpoints file (`fill`, `tiers`), from Gameplay's
-[enemy weapons](../gameplay/ships.md#enemy-weapons).
+Each frigate and capital carries up to three weapon types from its position's
+pool, picked per ship ([enemy weapons](../gameplay/ships.md#enemy-weapons)), so
+a mount's weapon is the ship's, not the art's. Art fixes which mounts are armed
+at each position band: weapons fill mounts pairs first, and an odd count adds a
+centreline mount. Every armed mount can carry any weapon its class holds.
 
-| Frigate mount        | Offset       | Positions 1 to 2 | 3 to 4        | 5 to 6        |
-| -------------------- | ------------ | ---------------- | ------------- | ------------- |
-| `port`, `starboard`  | `[∓0.3, 0]`  | Laser            | Laser         | Laser         |
-| `spine` (centreline) | `[0, 0.025]` | capped           | Rapid Missile | Rapid Missile |
-| `bow` (centreline)   | `[0, -0.22]` | capped           | capped        | Charged lance |
+| Frigate mount        | Offset       | Positions 1 to 2 | 3 to 4 | 5 to 6 |
+| -------------------- | ------------ | ---------------- | ------ | ------ |
+| `port`, `starboard`  | `[∓0.3, 0]`  | armed            | armed  | armed  |
+| `spine` (centreline) | `[0, 0.025]` | capped           | armed  | armed  |
+| `bow` (centreline)   | `[0, -0.22]` | capped           | capped | armed  |
 
-| Capital and Gadget mounts         | Capital offset   | Gadget offset    | Positions 1 to 2 | 3 to 4                       | 5 to 6                 |
-| --------------------------------- | ---------------- | ---------------- | ---------------- | ---------------------------- | ---------------------- |
-| `weapon-left`, `weapon-right`     | `[∓0.35, -0.3]`  | `[∓0.36, -0.3]`  | Laser            | Laser                        | Laser                  |
-| `weapon-rear-left`, `-rear-right` | `[∓0.42, 0.08]`  | `[∓0.44, 0.1]`   | Multi-Laser      | Multi-Laser                  | Rapid Missile          |
-| `claw-left`, `claw-right`         | `[∓0.15, -0.45]` | `[∓0.16, -0.48]` | capped           | Rapid Missile, Heavy Missile | Phaser, Heavy Missile  |
-| `stern-left`, `stern-right`       | `[∓0.1, 0.31]`   | `[∓0.11, 0.33]`  | capped           | capped                       | Ring burst, Mine layer |
+| Capital and Gadget mounts         | Capital offset   | Gadget offset    | Positions 1 to 2 | 3 to 4 | 5 to 6 |
+| --------------------------------- | ---------------- | ---------------- | ---------------- | ------ | ------ |
+| `weapon-left`, `weapon-right`     | `[∓0.35, -0.3]`  | `[∓0.36, -0.3]`  | armed            | armed  | armed  |
+| `weapon-rear-left`, `-rear-right` | `[∓0.42, 0.08]`  | `[∓0.44, 0.1]`   | armed            | armed  | armed  |
+| `claw-left`, `claw-right`         | `[∓0.15, -0.45]` | `[∓0.16, -0.48]` | capped           | armed  | armed  |
+| `stern-left`, `stern-right`       | `[∓0.1, 0.31]`   | `[∓0.11, 0.33]`  | capped           | capped | armed  |
 
-A pair cell with two weapons lists the left mount's first. Heavy Missile stays
-on `claw-right` from positions 3 to 6; the mine layer sits at the stern because
-its mines drop behind the ship.
+The armed counts are the Heavies table's weapon counts: frigate 2, 3 and 4,
+capital and Gadget 4, 6 and 8.
 
 ### Weapon tops
 
-Each weapon kind has one top design per class (`{a}-{t}-top-{i}`). Laser and
-Multi-Laser keep the barrel tops; the other kinds have their own, so the threat
-reads before it fires.
+One top per weapon, the same design on every mount and class, so a turret reads
+its weapon and echoes the player weapon's glyph (`{a}-{t}-top-{i}`). Each class
+draws the tops of the weapons it can hold.
 
-| Weapon (`weapon`) | Top (`t`)                            | Look                                             | Aim      |
-| ----------------- | ------------------------------------ | ------------------------------------------------ | -------- |
-| `laser`           | `gun` (frigate), `turret` (capitals) | One or two amber barrels on the turret head      | `target` |
-| `multiLaser`      | `turret`                             | Two amber barrels                                | `target` |
-| `rapidMissile`    | `pod`                                | A squared pod with four amber missile caps       | `target` |
-| `heavyMissile`    | `rail`                               | One plate missile on a rail, amber warhead, band | `target` |
-| `phaser`          | `dish`                               | Round dish, dark lens, one long thin emitter     | `target` |
-| `chargedLance`    | `lance`                              | Twin plate rails, amber charge crystal between   | `target` |
-| `ringBurst`       | `dome`                               | Twelve-sided dome with eight amber rim studs     | `target` |
-| `mineLayer`       | `hopper`                             | Hopper with two amber mines and a dark aft chute | `aft`    |
+| Weapon (`weapon`) | Top (`t`) | Look                                               | Aim      | Frigate | Capital, Gadget |
+| ----------------- | --------- | -------------------------------------------------- | -------- | :-----: | :-------------: |
+| `laser`           | `gun`     | One amber barrel on the turret head                | `target` |   yes   |       yes       |
+| `multiLaser`      | `triple`  | Three long thin barrels fanned from one origin     | `target` |   yes   |       yes       |
+| `rapidMissile`    | `pod`     | A squared pod with four amber missile caps         | `target` |   yes   |       yes       |
+| `heavyMissile`    | `rail`    | One plate missile on a rail, amber warhead, band   | `target` |   yes   |       yes       |
+| `scattershot`     | `spread`  | Wedge head, dark breech, five short fanned barrels | `target` |   yes   |       yes       |
+| `phaser`          | `dish`    | Round dish, dark lens, one long thin emitter       | `target` |         |       yes       |
+| `chargedLance`    | `lance`   | Twin plate rails, amber charge crystal between     | `target` |   yes   |                 |
+| `ringBurst`       | `dome`    | Twelve-sided dome with eight amber rim studs       | `target` |         |       yes       |
+| `mineLayer`       | `hopper`  | Hopper with two amber mines and a dark aft chute   | `aft`    |         |       yes       |
 
 `aim` `target` turns with the turret's world aim; `aft` holds aim index
 `(k + 8) mod 16` for hull heading `k`. Every top's pivot sits on the collar,
@@ -148,8 +149,9 @@ and jets stay in frame px. The sector one enemy SVGs declare their frame size.
 | Capital engine; Gadget engine     |        88; 96 |      38.5; 42 |
 | Top `pod`                         |            40 |          17.5 |
 | Tops `dome`, `hopper`             |            48 |            21 |
-| Tops `turret`, `rail`             |            80 |            35 |
-| Top `gun`                         |            88 |          38.5 |
+| Top `spread`                      |            56 |          24.5 |
+| Top `rail`                        |            80 |            35 |
+| Tops `gun`, `triple`              |            88 |          38.5 |
 | Top `dish`                        |            96 |            42 |
 | Top `lance`                       |           104 |          45.5 |
 
@@ -178,14 +180,17 @@ like the hull frame.
 - `archetype`, `frame`: the hull archetype and frame size.
 - `hardpoints[]`, in Art's order: `id`, `role`, `states`
   (`["intact", "destroyed"]`) and `top`: the one top design the hardpoint
-  carries at every position tier, or `null` when it has none or its tier
-  decides. A mount heavy (frigate, capital, Gadget) adds `capped`, whether the
+  always carries, or `null`. Weapon mounts are `null`: their top is the ship's
+  weapon's. A mount heavy (frigate, capital, Gadget) adds `capped`, whether the
   mount has capped plate sprites.
 - `fill` (mount heavies): the weapon mount ids in fill order.
+- `weaponTops` (mount heavies): every weapon the class can hold mapped to
+  `{ "top", "aim" }`, `aim` being `target` or `aft`. Gadget's equals the
+  capital's.
 - `tiers[]` (mount heavies): `positions` (`[1, 2]`, `[3, 4]`, `[5, 6]`) and
-  `mounts`, every mount id in fill order mapped to `{ "weapon", "top", "aim" }`
-  or `null` for a capped plate. Pick the tier whose `positions` holds the
-  galaxy's route position.
+  `mounts`, every mount id in fill order mapped to `{ "armed": true }` or `null`
+  for a capped plate. Pick the tier whose `positions` holds the galaxy's route
+  position; the ship's own assignment gives each armed mount its weapon.
 - `headings[k]`: `index`; `order`, the layer ids for hull heading `k` far to
   near, with `hull` among them; `hardpoints[]` with `id`, `anchor` (the
   projected hardpoint origin at its anchor height, where that hardpoint's base
@@ -193,33 +198,29 @@ like the hull frame.
   (the projected top pivot, where the top sprite centre goes); `banner`, the
   [Disabled banner](#disabled-banner)'s centre.
 - `tops[t][i]`: `index` (aim `i`) and `muzzles`, one `[x, y]` per barrel tip in
-  frame px relative to the pivot.
+  frame px relative to the pivot, for every top in `weaponTops` (or a
+  hardpoint's `top`).
 
-The platform has no `fill` or `tiers`: its two turrets carry their `top` at
-every position.
+The platform has no `fill`, `weaponTops` or `tiers`: its two turrets carry
+their `top` at every position.
 
-Sample (capital, positions 3 to 4, abridged):
+`art/tools/heavies.ts` fails unless `weaponTops` covers the class's weapons,
+every top has 16 aims each with a muzzle and collision, each band arms the
+catalog's mounts in fill order, every armed mount has a pivot at every heading,
+and Gadget's `weaponTops` and `tiers` equal the capital's.
+
+Sample (capital, abridged):
 
 ```json
 {
-  "fill": [
-    "weapon-left",
-    "weapon-right",
-    "weapon-rear-left",
-    "weapon-rear-right",
-    "claw-left",
-    "claw-right",
-    "stern-left",
-    "stern-right"
-  ],
+  "weaponTops": {
+    "laser": { "top": "gun", "aim": "target" },
+    "mineLayer": { "top": "hopper", "aim": "aft" }
+  },
   "tiers": [
     {
       "positions": [3, 4],
-      "mounts": {
-        "weapon-left": { "weapon": "laser", "top": "turret", "aim": "target" },
-        "claw-right": { "weapon": "heavyMissile", "top": "rail", "aim": "target" },
-        "stern-left": null
-      }
+      "mounts": { "weapon-left": { "armed": true }, "stern-left": null }
     }
   ]
 }
@@ -231,12 +232,13 @@ Sample (capital, positions 3 to 4, abridged):
 2. For each id in `headings[k].order`: `hull` draws `{a}-{k}`; a hardpoint
    draws its base for its current state with the sprite centre at `anchor`. A
    mount its tier leaves `null` draws `{a}-{h}-capped-{k}` there instead.
-   An intact turret then draws its top `{a}-{t}-top-{i}` at `pivot`, `t` being
-   its tier's `top` (or the hardpoint's `top` without tiers).
+   An intact armed mount then draws its top `{a}-{t}-top-{i}` at `pivot`, `t`
+   being `weaponTops[w].top` for the weapon `w` the ship assigns it (or the
+   hardpoint's `top` without tiers).
 3. Pick each top's aim index `i` from that turret's world aim angle with the
    same rule as hull headings: index `i` faces world angle `i * 22.5` degrees,
    whatever the hull heading. Tech turns each aim with the ship's
-   `aimTurnSeconds`. An `aft` top holds `(k + 8) mod 16`. `pivot` plus a
+   `aimTurnSeconds`. A weapon whose `aim` is `aft` holds `(k + 8) mod 16`. `pivot` plus a
    muzzle is that barrel tip in hull frame px.
 4. Draw speed jets behind the composed frame.
 
@@ -312,21 +314,22 @@ Checked against the fills plus the tips: every part strictly convex and every
 boundary within 0.36 frame px of the drawing. librsvg renders at 4 px per frame
 px agree within 0.002.
 
-| Sprite                                 | Parts    | Intersection over union |
-| -------------------------------------- | -------- | ----------------------- |
-| Frigate hull                           | 12 to 15 | 0.996 to 0.997          |
-| Capital hull                           | 15 to 21 | 0.998                   |
-| Gadget hull                            | 17 to 24 | 0.998 to 0.999          |
-| Platform hull                          | 26       | 0.997                   |
-| Engines and command, intact            | 1 to 18  | 0.992 to 0.999          |
-| Engines and command, destroyed         | 1 to 10  | 0.991 to 0.998          |
-| Weapon mount bases, intact             | 1        | 0.980 to 0.992          |
-| Weapon mount bases, destroyed          | 4 to 7   | 0.982 to 0.989          |
-| Capped plates                          | 1        | 0.980 to 0.987          |
-| Platform turret bases                  | 1 to 12  | 0.988 to 0.995          |
-| Tops `gun`, `turret`, `pod`, `rail`    | 1 to 8   | 0.983 to 0.998          |
-| Tops `dish`, `lance`, `dome`, `hopper` | 2 to 22  | 0.980 to 0.999          |
-| Platform turret top                    | 3 to 9   | 0.988 to 0.997          |
+| Sprite                              | Parts    | Intersection over union |
+| ----------------------------------- | -------- | ----------------------- |
+| Frigate hull                        | 12 to 15 | 0.996 to 0.997          |
+| Capital hull                        | 15 to 21 | 0.998                   |
+| Gadget hull                         | 17 to 24 | 0.998 to 0.999          |
+| Platform hull                       | 26       | 0.997                   |
+| Engines and command, intact         | 1 to 18  | 0.992 to 0.999          |
+| Engines and command, destroyed      | 1 to 10  | 0.991 to 0.998          |
+| Weapon mount bases, intact          | 1        | 0.980 to 0.992          |
+| Weapon mount bases, destroyed       | 4 to 7   | 0.982 to 0.989          |
+| Capped plates                       | 1        | 0.980 to 0.987          |
+| Platform turret bases               | 1 to 12  | 0.988 to 0.995          |
+| Tops `gun`, `triple`, `pod`, `rail` | 1 to 10  | 0.982 to 0.996          |
+| Tops `spread`, `dish`, `lance`      | 2 to 20  | 0.980 to 0.992          |
+| Tops `dome`, `hopper`               | 2 to 22  | 0.983 to 0.999          |
+| Platform turret top                 | 3 to 9   | 0.988 to 0.997          |
 
 ## Speed jets
 

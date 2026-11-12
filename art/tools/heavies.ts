@@ -71,14 +71,15 @@ export type WeaponKind =
   | "heavyMissile"
   | "phaser"
   | "chargedLance"
+  | "scattershot"
   | "ringBurst"
   | "mineLayer";
 export type Top = { name: string; z: number; parts: HeavyPart[]; muzzles: Point[] };
 // A weapon's top design on one heavy class, and how it aims: at its target, or fixed aft of
 // the hull heading.
 export type Weapon = { top: Top; aim: "target" | "aft" };
-// One position tier: the weapon on every mount, or null for a capped plate.
-export type Tier = { positions: [number, number]; mounts: Record<string, WeaponKind | null> };
+// One position tier: the first `armed` mounts in fill order carry weapons; the rest are capped.
+export type Tier = { positions: [number, number]; armed: number };
 // `key` names a host part; a part with `on` draws straight after its host.
 export type HeavyPart = Part & { key?: string; on?: string };
 
@@ -116,7 +117,8 @@ export type HeavyCraft = {
   hardpoints: { id: string; offset: [number, number]; model: Model }[];
   // The hull never turns: frame 0 is the hull layer for every heading.
   fixed?: true;
-  // Weapon mounts filled by position tier: the fill order, the tiers and each weapon's top.
+  // Weapon mounts filled by position tier: the fill order, the tiers, and each weapon a mount
+  // can hold with its top. Every mount carries every weapon's top.
   mounts?: { fill: string[]; tiers: Tier[]; weapons: Partial<Record<WeaponKind, Weapon>> };
 };
 
@@ -461,31 +463,129 @@ function hopper(r: number, deck: number): Top {
   };
 }
 
-// The weapon table for a class whose Laser top is `laser`.
-function weapons(deck: number, laser: Top): Partial<Record<WeaponKind, Weapon>> {
-  const aimed = (top: Top): Weapon => ({ aim: "target", top });
+// Scattershot point defense: a squat wedge head, wide at the front, carrying a dark fan-shaped
+// breech with five short amber barrels across the forward arc, so the close spread reads before
+// it fires.
+function spread(r: number, deck: number): Top {
+  const [mount, crown] = [deck + 1.5, deck + 4];
+  const angles = [-0.6, -0.3, 0, 0.3, 0.6].map((d) => -Math.PI / 2 + d);
+  const reach = r * 1.75;
+  const arc = (radius: number) =>
+    Array.from({ length: 7 }, (_, i) => {
+      const a = -Math.PI / 2 - 0.75 + (i * 1.5) / 6;
+      return [Math.cos(a) * radius, Math.sin(a) * radius] as const;
+    });
   return {
-    laser: aimed(laser),
-    multiLaser: aimed(barrelTop("turret", 12, deck, 2)),
-    rapidMissile: aimed(pod(12, deck)),
-    heavyMissile: aimed(rail(12, deck)),
-    phaser: aimed(dish(12, deck)),
-    chargedLance: aimed(lance(12, deck)),
-    ringBurst: aimed(dome(12, deck)),
-    mineLayer: { aim: "aft", top: hopper(12, deck) },
+    name: "spread",
+    z: mount,
+    parts: [
+      head(
+        [
+          [-r * 0.55, r * 0.7],
+          [-r * 0.9, -r * 0.45],
+          [r * 0.9, -r * 0.45],
+          [r * 0.55, r * 0.7],
+        ],
+        mount,
+        crown,
+      ),
+      {
+        plan: [...arc(r * 0.45), ...arc(r * 1.45).toReversed()],
+        z0: crown - 2,
+        z1: crown - 0.5,
+        top: coralRear,
+        side: coralRear,
+      },
+      ...angles.map((a): HeavyPart => ({
+        plan: spoke(a, r * 0.62, reach, r * 0.12),
+        z0: crown - 1.5,
+        z1: crown + 0.3,
+        top: amber,
+        side: amberSide,
+      })),
+      hatch(r, crown, box(-r * 0.3, r * 0.1, r * 0.3, r * 0.5)),
+    ],
+    muzzles: angles.map((a): Point => [Math.cos(a) * reach, Math.sin(a) * reach, crown - 0.6]),
   };
 }
 
-// Position tiers 1-2, 3-4 and 5-6 (gameplay/ships.md "Enemy weapons").
-const tier = (positions: [number, number], mounts: Tier["mounts"]): Tier => ({
-  mounts,
-  positions,
-});
-const FRIGATE_TIERS: Tier[] = [
-  tier([1, 2], { port: "laser", starboard: "laser", spine: null, bow: null }),
-  tier([3, 4], { port: "laser", starboard: "laser", spine: "rapidMissile", bow: null }),
-  tier([5, 6], { port: "laser", starboard: "laser", spine: "rapidMissile", bow: "chargedLance" }),
+// Multi-Laser: three long thin amber barrels fanned from one origin on the turret head, as the
+// player glyph's three bolts fan from one point.
+function triple(r: number, deck: number): Top {
+  const [mount, crown] = [deck + 1.5, deck + 4];
+  const angles = [-0.22, 0, 0.22].map((d) => -Math.PI / 2 + d);
+  const reach = r * 2.7;
+  return {
+    name: "triple",
+    z: mount,
+    parts: [
+      head(turretHead(r), mount, crown),
+      ...angles.map((a): HeavyPart => ({
+        plan: spoke(a, r * 0.3, reach, r * 0.12),
+        z0: crown - 2,
+        z1: crown + 0.6,
+        top: amber,
+        side: amberSide,
+      })),
+      hatch(r, crown),
+    ],
+    muzzles: angles.map((a): Point => [Math.cos(a) * reach, Math.sin(a) * reach, crown - 0.7]),
+  };
+}
+
+// The weapons a heavy's mounts can hold (gameplay/ships.md "Enemy weapons"): one top per
+// weapon, the same design on every mount and class, so the weapon reads from its turret.
+const FRIGATE_POOL: WeaponKind[] = [
+  "laser",
+  "multiLaser",
+  "rapidMissile",
+  "scattershot",
+  "heavyMissile",
+  "chargedLance",
 ];
+const CAPITAL_POOL: WeaponKind[] = [
+  "laser",
+  "multiLaser",
+  "rapidMissile",
+  "heavyMissile",
+  "scattershot",
+  "phaser",
+  "ringBurst",
+  "mineLayer",
+];
+
+// The weapon table for a class: each weapon in its pool with its top and aim.
+function weapons(deck: number, pool: readonly WeaponKind[]): Partial<Record<WeaponKind, Weapon>> {
+  const aimed = (top: Top): Weapon => ({ aim: "target", top });
+  const all: Record<WeaponKind, () => Weapon> = {
+    laser: () => aimed(barrelTop("gun", 12, deck, 1)),
+    multiLaser: () => aimed(triple(12, deck)),
+    rapidMissile: () => aimed(pod(12, deck)),
+    heavyMissile: () => aimed(rail(12, deck)),
+    scattershot: () => aimed(spread(12, deck)),
+    phaser: () => aimed(dish(12, deck)),
+    chargedLance: () => aimed(lance(12, deck)),
+    ringBurst: () => aimed(dome(12, deck)),
+    mineLayer: () => ({ aim: "aft", top: hopper(12, deck) }),
+  };
+  return Object.fromEntries(pool.map((kind) => [kind, all[kind]()]));
+}
+
+// Position tiers 1-2, 3-4 and 5-6: the Heavies table's weapon count per position
+// (gameplay/ships.md "Difficulty"). Which weapon each armed mount carries is the ship's own.
+const tiers = (counts: readonly [number, number, number]): Tier[] =>
+  (
+    [
+      [1, 2],
+      [3, 4],
+      [5, 6],
+    ] as const
+  ).map((positions, i) => ({
+    armed: counts[i]!,
+    positions: [...positions],
+  }));
+const FRIGATE_FILL = ["port", "starboard", "spine", "bow"];
+const FRIGATE_TIERS = tiers([2, 3, 4]);
 const CAPITAL_FILL = [
   "weapon-left",
   "weapon-right",
@@ -496,31 +596,10 @@ const CAPITAL_FILL = [
   "stern-left",
   "stern-right",
 ];
-const capitalTier = (positions: [number, number], kinds: (WeaponKind | null)[]): Tier =>
-  tier(positions, Object.fromEntries(CAPITAL_FILL.map((id, i) => [id, kinds[i] ?? null])));
-const CAPITAL_TIERS: Tier[] = [
-  capitalTier([1, 2], ["laser", "laser", "multiLaser", "multiLaser"]),
-  capitalTier(
-    [3, 4],
-    ["laser", "laser", "multiLaser", "multiLaser", "rapidMissile", "heavyMissile"],
-  ),
-  capitalTier(
-    [5, 6],
-    [
-      "laser",
-      "laser",
-      "rapidMissile",
-      "rapidMissile",
-      "phaser",
-      "heavyMissile",
-      "ringBurst",
-      "mineLayer",
-    ],
-  ),
-];
-// Mounts that some tier leaves unused carry a capped plate.
-const cappable = (tiers: readonly Tier[], id: string) =>
-  tiers.some((t) => (t.mounts[id] ?? null) === null);
+const CAPITAL_TIERS = tiers([4, 6, 8]);
+// A mount some tier leaves unarmed carries a capped plate.
+const cappable = (fill: readonly string[], tiers: readonly Tier[], id: string) =>
+  tiers.some(({ armed }) => fill.indexOf(id) >= armed);
 
 // Frigate: a long hunter with twin prow tines, broadside guns and a stern engine block.
 const FRIGATE_Z = 8;
@@ -632,13 +711,13 @@ export const frigate: HeavyCraft = {
     ).map(([id, offset]) => ({
       id,
       offset: [...offset] as [number, number],
-      model: mountBase(12, FRIGATE_Z, cappable(FRIGATE_TIERS, id)),
+      model: mountBase(12, FRIGATE_Z, cappable(FRIGATE_FILL, FRIGATE_TIERS, id)),
     })),
   ],
   mounts: {
-    fill: ["port", "starboard", "spine", "bow"],
+    fill: FRIGATE_FILL,
     tiers: FRIGATE_TIERS,
-    weapons: weapons(FRIGATE_Z, barrelTop("gun", 12, FRIGATE_Z, 1)),
+    weapons: weapons(FRIGATE_Z, FRIGATE_POOL),
   },
 };
 
@@ -821,7 +900,7 @@ export const capital: HeavyCraft = {
   mounts: {
     fill: CAPITAL_FILL,
     tiers: CAPITAL_TIERS,
-    weapons: weapons(CAPITAL_Z, barrelTop("turret", 12, CAPITAL_Z, 2)),
+    weapons: weapons(CAPITAL_Z, CAPITAL_POOL),
   },
 };
 
@@ -832,7 +911,7 @@ function mounts(deck: number, pairs: readonly (readonly [number, number])[]) {
     return {
       id,
       offset: [i % 2 === 0 ? x : -x, y] as [number, number],
-      model: mountBase(12, deck, cappable(CAPITAL_TIERS, id)),
+      model: mountBase(12, deck, cappable(CAPITAL_FILL, CAPITAL_TIERS, id)),
     };
   });
 }
@@ -986,7 +1065,7 @@ export const gadget: HeavyCraft = {
   mounts: {
     fill: CAPITAL_FILL,
     tiers: CAPITAL_TIERS,
-    weapons: weapons(GADGET_Z, barrelTop("turret", 12, GADGET_Z, 2)),
+    weapons: weapons(GADGET_Z, CAPITAL_POOL),
   },
 };
 
@@ -1133,8 +1212,8 @@ const stateParts = (model: Model, state: SpriteState): HeavyPart[] =>
 // The top designs a hardpoint can carry: its own, or its tiers' weapons'.
 function topsOf(craft: HeavyCraft, id: string, model: Model): Top[] {
   if (model.top) return [model.top];
-  const kinds = (craft.mounts?.tiers ?? []).map((tier) => tier.mounts[id] ?? null);
-  return kinds.flatMap((kind) => (kind ? [craft.mounts!.weapons[kind]!.top] : []));
+  if (!craft.mounts?.fill.includes(id)) return [];
+  return Object.values(craft.mounts.weapons).map((weapon) => weapon!.top);
 }
 
 // The pivot height of a hardpoint's tops; every top a mount carries shares it.
@@ -1144,12 +1223,9 @@ function topZ(craft: HeavyCraft, id: string, model: Model): number | undefined {
   return [...zs][0];
 }
 
-// The one top a hardpoint carries at every tier, or null when it varies or can be capped.
-function fixedTop(craft: HeavyCraft, id: string, model: Model): string | null {
-  if (model.top) return model.top.name;
-  const kinds = (craft.mounts?.tiers ?? []).map((tier) => tier.mounts[id] ?? null);
-  const names = new Set(kinds.map((kind) => (kind ? craft.mounts!.weapons[kind]!.top.name : null)));
-  return names.size === 1 && !names.has(null) ? [...names][0]! : null;
+// The one top a hardpoint always carries, or null: a weapon mount's top is its ship's weapon.
+function fixedTop(model: Model): string | null {
+  return model.top?.name ?? null;
 }
 
 // Layer order for one heading: hardpoints whose intact base rests on the hull top draw after the
@@ -1377,11 +1453,80 @@ export function build(
     collision.tops.set(top.name, traced);
   }
 
-  files.set(`${name}-hardpoints.json`, hardpointsFile(craft, placed, collision));
+  const layout = hardpointsFile(craft, placed, collision);
+  checkMounts(craft, JSON.parse(layout) as MountLayout);
+  files.set(`${name}-hardpoints.json`, layout);
   return { files, entries };
 }
 
 const minus = ([x, y, z]: Point, [px, py, pz]: Point): Point => [x - px, y - py, z - pz];
+
+// The catalog's armed mounts per position band, in fill order (gameplay/ships.md "Difficulty").
+const ARMED: Readonly<Record<string, { fill: readonly string[]; counts: readonly number[] }>> = {
+  frigate: { fill: FRIGATE_FILL, counts: [2, 3, 4] },
+  capital: { fill: CAPITAL_FILL, counts: [4, 6, 8] },
+  gadget: { fill: CAPITAL_FILL, counts: [4, 6, 8] },
+};
+
+type MountLayout = {
+  weaponTops?: Record<string, { top: string; aim: string }>;
+  tiers?: { positions: number[]; mounts: Record<string, { armed: true } | null> }[];
+  headings: { hardpoints: { id: string; pivot?: number[] }[] }[];
+  tops: Record<string, { index: number; muzzles: unknown[]; collision?: unknown[] }[]>;
+};
+
+// Fails unless a mount heavy's hardpoints file gives every pooled weapon a top with all 16 aims,
+// each with a muzzle and collision; arms the catalog's mounts in fill order in each position
+// band; and pivots every armed mount at every heading.
+function checkMounts(craft: HeavyCraft, layout: MountLayout): void {
+  if (!craft.mounts) return;
+  const fail = (why: string) => {
+    throw new Error(`${craft.name} hardpoints: ${why}`);
+  };
+  const expected = ARMED[craft.name];
+  if (!expected) fail("no catalog mount counts");
+  const pool = Object.keys(craft.mounts.weapons);
+  const weaponTops = layout.weaponTops ?? {};
+  if (JSON.stringify(Object.keys(weaponTops)) !== JSON.stringify(pool)) fail("weaponTops != pool");
+  for (const [kind, { aim, top }] of Object.entries(weaponTops)) {
+    if (aim !== "target" && aim !== "aft") fail(`${kind} aim ${aim}`);
+    const aims = layout.tops[top];
+    if (!aims || aims.length !== ENEMY_HEADINGS) fail(`${kind} top ${top} lacks 16 aims`);
+    aims!.forEach(({ collision, index, muzzles }, i) => {
+      if (index !== i || !muzzles.length || !collision?.length) fail(`${top} aim ${i} incomplete`);
+    });
+  }
+  const bands = (layout.tiers ?? []).map(({ positions }) => positions.join("-"));
+  if (bands.join() !== "1-2,3-4,5-6") fail(`position bands ${bands.join()}`);
+  if (JSON.stringify(craft.mounts.fill) !== JSON.stringify(expected!.fill)) fail("fill order");
+  const armedIds = new Set<string>();
+  layout.tiers!.forEach(({ mounts }, i) => {
+    const armed = Object.entries(mounts)
+      .filter(([, mount]) => mount?.armed === true)
+      .map(([id]) => id);
+    if (armed.join() !== expected!.fill.slice(0, expected!.counts[i]).join()) {
+      fail(`band ${bands[i]} arms ${armed.join()}`);
+    }
+    armed.forEach((id) => armedIds.add(id));
+  });
+  for (const [k, heading] of layout.headings.entries()) {
+    for (const id of armedIds) {
+      const pivot = heading.hardpoints.find((part) => part.id === id)?.pivot;
+      if (!pivot || pivot.length !== 2) fail(`${id} has no pivot at heading ${k}`);
+    }
+  }
+}
+
+// Gadget's weapons and tiers are the capital's.
+export function checkGadget(capitalFile: string, gadgetFile: string): void {
+  const [c, g] = [capitalFile, gadgetFile].map((text) => JSON.parse(text) as MountLayout);
+  if (JSON.stringify(c.weaponTops) !== JSON.stringify(g.weaponTops)) {
+    throw new Error("gadget hardpoints: weaponTops differ from the capital's");
+  }
+  if (JSON.stringify(c.tiers) !== JSON.stringify(g.tiers)) {
+    throw new Error("gadget hardpoints: tiers differ from the capital's");
+  }
+}
 
 // One entry per top design, in first-use order (hardpoints, then tiers); designs sharing a name
 // must be identical.
@@ -1435,23 +1580,22 @@ export function hardpointsFile(
       id,
       role: model.role,
       states: states(model),
-      top: fixedTop(craft, id, model),
+      top: fixedTop(model),
       ...(craft.mounts ? { capped: model.capped !== undefined } : {}),
     })),
     ...(craft.mounts
       ? {
           fill: craft.mounts.fill,
-          tiers: craft.mounts.tiers.map(({ mounts, positions }) => ({
+          weaponTops: Object.fromEntries(
+            Object.entries(craft.mounts.weapons).map(([kind, weapon]) => [
+              kind,
+              { top: weapon!.top.name, aim: weapon!.aim },
+            ]),
+          ),
+          tiers: craft.mounts.tiers.map(({ armed, positions }) => ({
             positions,
             mounts: Object.fromEntries(
-              craft.mounts!.fill.map((id) => {
-                const kind = mounts[id] ?? null;
-                const weapon = kind ? craft.mounts!.weapons[kind]! : undefined;
-                return [
-                  id,
-                  weapon ? { weapon: kind, top: weapon.top.name, aim: weapon.aim } : null,
-                ];
-              }),
+              craft.mounts!.fill.map((id, i) => [id, i < armed ? { armed: true } : null]),
             ),
           })),
         }
@@ -1512,6 +1656,9 @@ async function main() {
   const dir = out === undefined ? `${root}public/art/enemies/` : `${out}/`;
   // Every craft is placed before anything is written, so a mismatch writes nothing.
   const results = drawn.map((craft) => build(craft, place(offsets, craft)));
+  const layoutOf = (name: string) =>
+    results[drawn.findIndex((craft) => craft.name === name)]!.files.get(`${name}-hardpoints.json`)!;
+  checkGadget(layoutOf("capital"), layoutOf("gadget"));
   mkdirSync(dir, { recursive: true });
   const entries: Entry[] = [];
   for (const result of results) {

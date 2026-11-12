@@ -364,7 +364,8 @@ platform.
 - Hardpoints files are the coral family's, byte-identical: the same `order`,
   `anchor`, `pivot`, `muzzles`, `banner` and `collision` per heading and aim,
   and the same [weapon mounts](heavies.md#mounts), with every mount, its capped
-  plate and the tops of each position tier (`fill`, `tiers`). Jets files keep
+  plate, the armed mounts of each position tier and the top of every weapon a
+  mount can hold (`fill`, `tiers`, `weaponTops`). Jets files keep
   the coral shape, lengths, layers, mouth data and per-heading
   [collision](enemies.md#collision), and the frames draw the coral notch tips. Destruction uses the shared `destruction.json` timing and flash
   with the Needle shards.

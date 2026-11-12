@@ -4343,38 +4343,6 @@
       "frameMs": 700
     },
     {
-      "id": "discovery-cache",
-      "path": "/art/discovery-cache.png",
-      "width": 63,
-      "height": 21,
-      "displayWidth": 21,
-      "displayHeight": 21,
-      "facing": "front",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "frameWidth": 21,
-      "frameHeight": 21,
-      "frames": {
-        "hidden": 0,
-        "litA": 1,
-        "litB": 2
-      },
-      "loop": [
-        {
-          "frame": 1,
-          "name": "litA",
-          "ms": 500
-        },
-        {
-          "frame": 2,
-          "name": "litB",
-          "ms": 500
-        }
-      ]
-    },
-    {
       "id": "landmark-nebula-outer",
       "path": "/art/landmarks/nebula-outer.svg",
       "width": 380,
@@ -4493,6 +4461,38 @@
           "frame": 3,
           "name": "glint1",
           "ms": 60
+        }
+      ]
+    },
+    {
+      "id": "discovery-cache",
+      "path": "/art/discovery-cache.png",
+      "width": 63,
+      "height": 21,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 21,
+      "frameHeight": 21,
+      "frames": {
+        "hidden": 0,
+        "litA": 1,
+        "litB": 2
+      },
+      "loop": [
+        {
+          "frame": 1,
+          "name": "litA",
+          "ms": 500
+        },
+        {
+          "frame": 2,
+          "name": "litB",
+          "ms": 500
         }
       ]
     },
@@ -9217,6 +9217,262 @@
       "archetype": "frigate"
     },
     {
+      "id": "enemy-frigate-triple-top-0",
+      "path": "/art/enemies/frigate-triple-top-0.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-0",
+      "aimIndex": 0,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-triple-top-1",
+      "path": "/art/enemies/frigate-triple-top-1.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-1",
+      "aimIndex": 1,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-triple-top-2",
+      "path": "/art/enemies/frigate-triple-top-2.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-2",
+      "aimIndex": 2,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-triple-top-3",
+      "path": "/art/enemies/frigate-triple-top-3.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-3",
+      "aimIndex": 3,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-triple-top-4",
+      "path": "/art/enemies/frigate-triple-top-4.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-4",
+      "aimIndex": 4,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-triple-top-5",
+      "path": "/art/enemies/frigate-triple-top-5.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-5",
+      "aimIndex": 5,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-triple-top-6",
+      "path": "/art/enemies/frigate-triple-top-6.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-6",
+      "aimIndex": 6,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-triple-top-7",
+      "path": "/art/enemies/frigate-triple-top-7.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-7",
+      "aimIndex": 7,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-triple-top-8",
+      "path": "/art/enemies/frigate-triple-top-8.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-8",
+      "aimIndex": 8,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-triple-top-9",
+      "path": "/art/enemies/frigate-triple-top-9.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-9",
+      "aimIndex": 9,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-triple-top-10",
+      "path": "/art/enemies/frigate-triple-top-10.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-10",
+      "aimIndex": 10,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-triple-top-11",
+      "path": "/art/enemies/frigate-triple-top-11.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-11",
+      "aimIndex": 11,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-triple-top-12",
+      "path": "/art/enemies/frigate-triple-top-12.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-12",
+      "aimIndex": 12,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-triple-top-13",
+      "path": "/art/enemies/frigate-triple-top-13.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-13",
+      "aimIndex": 13,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-triple-top-14",
+      "path": "/art/enemies/frigate-triple-top-14.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-14",
+      "aimIndex": 14,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-triple-top-15",
+      "path": "/art/enemies/frigate-triple-top-15.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-15",
+      "aimIndex": 15,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
       "id": "enemy-frigate-pod-top-0",
       "path": "/art/enemies/frigate-pod-top-0.svg",
       "width": 40,
@@ -9466,6 +9722,518 @@
       "facing": "world-15",
       "aimIndex": 15,
       "top": "pod",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-spread-top-0",
+      "path": "/art/enemies/frigate-spread-top-0.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-0",
+      "aimIndex": 0,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-spread-top-1",
+      "path": "/art/enemies/frigate-spread-top-1.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-1",
+      "aimIndex": 1,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-spread-top-2",
+      "path": "/art/enemies/frigate-spread-top-2.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-2",
+      "aimIndex": 2,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-spread-top-3",
+      "path": "/art/enemies/frigate-spread-top-3.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-3",
+      "aimIndex": 3,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-spread-top-4",
+      "path": "/art/enemies/frigate-spread-top-4.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-4",
+      "aimIndex": 4,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-spread-top-5",
+      "path": "/art/enemies/frigate-spread-top-5.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-5",
+      "aimIndex": 5,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-spread-top-6",
+      "path": "/art/enemies/frigate-spread-top-6.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-6",
+      "aimIndex": 6,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-spread-top-7",
+      "path": "/art/enemies/frigate-spread-top-7.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-7",
+      "aimIndex": 7,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-spread-top-8",
+      "path": "/art/enemies/frigate-spread-top-8.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-8",
+      "aimIndex": 8,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-spread-top-9",
+      "path": "/art/enemies/frigate-spread-top-9.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-9",
+      "aimIndex": 9,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-spread-top-10",
+      "path": "/art/enemies/frigate-spread-top-10.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-10",
+      "aimIndex": 10,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-spread-top-11",
+      "path": "/art/enemies/frigate-spread-top-11.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-11",
+      "aimIndex": 11,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-spread-top-12",
+      "path": "/art/enemies/frigate-spread-top-12.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-12",
+      "aimIndex": 12,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-spread-top-13",
+      "path": "/art/enemies/frigate-spread-top-13.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-13",
+      "aimIndex": 13,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-spread-top-14",
+      "path": "/art/enemies/frigate-spread-top-14.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-14",
+      "aimIndex": 14,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-spread-top-15",
+      "path": "/art/enemies/frigate-spread-top-15.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-15",
+      "aimIndex": 15,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-rail-top-0",
+      "path": "/art/enemies/frigate-rail-top-0.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-0",
+      "aimIndex": 0,
+      "top": "rail",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-rail-top-1",
+      "path": "/art/enemies/frigate-rail-top-1.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-1",
+      "aimIndex": 1,
+      "top": "rail",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-rail-top-2",
+      "path": "/art/enemies/frigate-rail-top-2.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-2",
+      "aimIndex": 2,
+      "top": "rail",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-rail-top-3",
+      "path": "/art/enemies/frigate-rail-top-3.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-3",
+      "aimIndex": 3,
+      "top": "rail",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-rail-top-4",
+      "path": "/art/enemies/frigate-rail-top-4.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-4",
+      "aimIndex": 4,
+      "top": "rail",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-rail-top-5",
+      "path": "/art/enemies/frigate-rail-top-5.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-5",
+      "aimIndex": 5,
+      "top": "rail",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-rail-top-6",
+      "path": "/art/enemies/frigate-rail-top-6.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-6",
+      "aimIndex": 6,
+      "top": "rail",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-rail-top-7",
+      "path": "/art/enemies/frigate-rail-top-7.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-7",
+      "aimIndex": 7,
+      "top": "rail",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-rail-top-8",
+      "path": "/art/enemies/frigate-rail-top-8.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-8",
+      "aimIndex": 8,
+      "top": "rail",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-rail-top-9",
+      "path": "/art/enemies/frigate-rail-top-9.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-9",
+      "aimIndex": 9,
+      "top": "rail",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-rail-top-10",
+      "path": "/art/enemies/frigate-rail-top-10.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-10",
+      "aimIndex": 10,
+      "top": "rail",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-rail-top-11",
+      "path": "/art/enemies/frigate-rail-top-11.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-11",
+      "aimIndex": 11,
+      "top": "rail",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-rail-top-12",
+      "path": "/art/enemies/frigate-rail-top-12.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-12",
+      "aimIndex": 12,
+      "top": "rail",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-rail-top-13",
+      "path": "/art/enemies/frigate-rail-top-13.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-13",
+      "aimIndex": 13,
+      "top": "rail",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-rail-top-14",
+      "path": "/art/enemies/frigate-rail-top-14.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-14",
+      "aimIndex": 14,
+      "top": "rail",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-rail-top-15",
+      "path": "/art/enemies/frigate-rail-top-15.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-15",
+      "aimIndex": 15,
+      "top": "rail",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17041,15 +17809,15 @@
       "archetype": "capital"
     },
     {
-      "id": "enemy-capital-turret-top-0",
-      "path": "/art/enemies/capital-turret-top-0.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-capital-gun-top-0",
+      "path": "/art/enemies/capital-gun-top-0.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-0",
       "aimIndex": 0,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17057,15 +17825,15 @@
       "archetype": "capital"
     },
     {
-      "id": "enemy-capital-turret-top-1",
-      "path": "/art/enemies/capital-turret-top-1.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-capital-gun-top-1",
+      "path": "/art/enemies/capital-gun-top-1.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-1",
       "aimIndex": 1,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17073,15 +17841,15 @@
       "archetype": "capital"
     },
     {
-      "id": "enemy-capital-turret-top-2",
-      "path": "/art/enemies/capital-turret-top-2.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-capital-gun-top-2",
+      "path": "/art/enemies/capital-gun-top-2.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-2",
       "aimIndex": 2,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17089,15 +17857,15 @@
       "archetype": "capital"
     },
     {
-      "id": "enemy-capital-turret-top-3",
-      "path": "/art/enemies/capital-turret-top-3.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-capital-gun-top-3",
+      "path": "/art/enemies/capital-gun-top-3.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-3",
       "aimIndex": 3,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17105,15 +17873,15 @@
       "archetype": "capital"
     },
     {
-      "id": "enemy-capital-turret-top-4",
-      "path": "/art/enemies/capital-turret-top-4.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-capital-gun-top-4",
+      "path": "/art/enemies/capital-gun-top-4.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-4",
       "aimIndex": 4,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17121,15 +17889,15 @@
       "archetype": "capital"
     },
     {
-      "id": "enemy-capital-turret-top-5",
-      "path": "/art/enemies/capital-turret-top-5.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-capital-gun-top-5",
+      "path": "/art/enemies/capital-gun-top-5.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-5",
       "aimIndex": 5,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17137,15 +17905,15 @@
       "archetype": "capital"
     },
     {
-      "id": "enemy-capital-turret-top-6",
-      "path": "/art/enemies/capital-turret-top-6.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-capital-gun-top-6",
+      "path": "/art/enemies/capital-gun-top-6.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-6",
       "aimIndex": 6,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17153,15 +17921,15 @@
       "archetype": "capital"
     },
     {
-      "id": "enemy-capital-turret-top-7",
-      "path": "/art/enemies/capital-turret-top-7.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-capital-gun-top-7",
+      "path": "/art/enemies/capital-gun-top-7.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-7",
       "aimIndex": 7,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17169,15 +17937,15 @@
       "archetype": "capital"
     },
     {
-      "id": "enemy-capital-turret-top-8",
-      "path": "/art/enemies/capital-turret-top-8.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-capital-gun-top-8",
+      "path": "/art/enemies/capital-gun-top-8.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-8",
       "aimIndex": 8,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17185,15 +17953,15 @@
       "archetype": "capital"
     },
     {
-      "id": "enemy-capital-turret-top-9",
-      "path": "/art/enemies/capital-turret-top-9.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-capital-gun-top-9",
+      "path": "/art/enemies/capital-gun-top-9.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-9",
       "aimIndex": 9,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17201,15 +17969,15 @@
       "archetype": "capital"
     },
     {
-      "id": "enemy-capital-turret-top-10",
-      "path": "/art/enemies/capital-turret-top-10.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-capital-gun-top-10",
+      "path": "/art/enemies/capital-gun-top-10.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-10",
       "aimIndex": 10,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17217,15 +17985,15 @@
       "archetype": "capital"
     },
     {
-      "id": "enemy-capital-turret-top-11",
-      "path": "/art/enemies/capital-turret-top-11.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-capital-gun-top-11",
+      "path": "/art/enemies/capital-gun-top-11.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-11",
       "aimIndex": 11,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17233,15 +18001,15 @@
       "archetype": "capital"
     },
     {
-      "id": "enemy-capital-turret-top-12",
-      "path": "/art/enemies/capital-turret-top-12.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-capital-gun-top-12",
+      "path": "/art/enemies/capital-gun-top-12.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-12",
       "aimIndex": 12,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17249,15 +18017,15 @@
       "archetype": "capital"
     },
     {
-      "id": "enemy-capital-turret-top-13",
-      "path": "/art/enemies/capital-turret-top-13.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-capital-gun-top-13",
+      "path": "/art/enemies/capital-gun-top-13.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-13",
       "aimIndex": 13,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17265,15 +18033,15 @@
       "archetype": "capital"
     },
     {
-      "id": "enemy-capital-turret-top-14",
-      "path": "/art/enemies/capital-turret-top-14.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-capital-gun-top-14",
+      "path": "/art/enemies/capital-gun-top-14.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-14",
       "aimIndex": 14,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17281,15 +18049,271 @@
       "archetype": "capital"
     },
     {
-      "id": "enemy-capital-turret-top-15",
-      "path": "/art/enemies/capital-turret-top-15.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-capital-gun-top-15",
+      "path": "/art/enemies/capital-gun-top-15.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-15",
       "aimIndex": 15,
-      "top": "turret",
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-triple-top-0",
+      "path": "/art/enemies/capital-triple-top-0.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-0",
+      "aimIndex": 0,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-triple-top-1",
+      "path": "/art/enemies/capital-triple-top-1.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-1",
+      "aimIndex": 1,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-triple-top-2",
+      "path": "/art/enemies/capital-triple-top-2.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-2",
+      "aimIndex": 2,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-triple-top-3",
+      "path": "/art/enemies/capital-triple-top-3.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-3",
+      "aimIndex": 3,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-triple-top-4",
+      "path": "/art/enemies/capital-triple-top-4.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-4",
+      "aimIndex": 4,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-triple-top-5",
+      "path": "/art/enemies/capital-triple-top-5.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-5",
+      "aimIndex": 5,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-triple-top-6",
+      "path": "/art/enemies/capital-triple-top-6.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-6",
+      "aimIndex": 6,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-triple-top-7",
+      "path": "/art/enemies/capital-triple-top-7.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-7",
+      "aimIndex": 7,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-triple-top-8",
+      "path": "/art/enemies/capital-triple-top-8.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-8",
+      "aimIndex": 8,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-triple-top-9",
+      "path": "/art/enemies/capital-triple-top-9.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-9",
+      "aimIndex": 9,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-triple-top-10",
+      "path": "/art/enemies/capital-triple-top-10.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-10",
+      "aimIndex": 10,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-triple-top-11",
+      "path": "/art/enemies/capital-triple-top-11.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-11",
+      "aimIndex": 11,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-triple-top-12",
+      "path": "/art/enemies/capital-triple-top-12.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-12",
+      "aimIndex": 12,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-triple-top-13",
+      "path": "/art/enemies/capital-triple-top-13.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-13",
+      "aimIndex": 13,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-triple-top-14",
+      "path": "/art/enemies/capital-triple-top-14.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-14",
+      "aimIndex": 14,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-triple-top-15",
+      "path": "/art/enemies/capital-triple-top-15.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-15",
+      "aimIndex": 15,
+      "top": "triple",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17553,262 +18577,6 @@
       "archetype": "capital"
     },
     {
-      "id": "enemy-capital-dish-top-0",
-      "path": "/art/enemies/capital-dish-top-0.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-0",
-      "aimIndex": 0,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "capital"
-    },
-    {
-      "id": "enemy-capital-dish-top-1",
-      "path": "/art/enemies/capital-dish-top-1.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-1",
-      "aimIndex": 1,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "capital"
-    },
-    {
-      "id": "enemy-capital-dish-top-2",
-      "path": "/art/enemies/capital-dish-top-2.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-2",
-      "aimIndex": 2,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "capital"
-    },
-    {
-      "id": "enemy-capital-dish-top-3",
-      "path": "/art/enemies/capital-dish-top-3.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-3",
-      "aimIndex": 3,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "capital"
-    },
-    {
-      "id": "enemy-capital-dish-top-4",
-      "path": "/art/enemies/capital-dish-top-4.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-4",
-      "aimIndex": 4,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "capital"
-    },
-    {
-      "id": "enemy-capital-dish-top-5",
-      "path": "/art/enemies/capital-dish-top-5.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-5",
-      "aimIndex": 5,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "capital"
-    },
-    {
-      "id": "enemy-capital-dish-top-6",
-      "path": "/art/enemies/capital-dish-top-6.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-6",
-      "aimIndex": 6,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "capital"
-    },
-    {
-      "id": "enemy-capital-dish-top-7",
-      "path": "/art/enemies/capital-dish-top-7.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-7",
-      "aimIndex": 7,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "capital"
-    },
-    {
-      "id": "enemy-capital-dish-top-8",
-      "path": "/art/enemies/capital-dish-top-8.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-8",
-      "aimIndex": 8,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "capital"
-    },
-    {
-      "id": "enemy-capital-dish-top-9",
-      "path": "/art/enemies/capital-dish-top-9.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-9",
-      "aimIndex": 9,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "capital"
-    },
-    {
-      "id": "enemy-capital-dish-top-10",
-      "path": "/art/enemies/capital-dish-top-10.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-10",
-      "aimIndex": 10,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "capital"
-    },
-    {
-      "id": "enemy-capital-dish-top-11",
-      "path": "/art/enemies/capital-dish-top-11.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-11",
-      "aimIndex": 11,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "capital"
-    },
-    {
-      "id": "enemy-capital-dish-top-12",
-      "path": "/art/enemies/capital-dish-top-12.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-12",
-      "aimIndex": 12,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "capital"
-    },
-    {
-      "id": "enemy-capital-dish-top-13",
-      "path": "/art/enemies/capital-dish-top-13.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-13",
-      "aimIndex": 13,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "capital"
-    },
-    {
-      "id": "enemy-capital-dish-top-14",
-      "path": "/art/enemies/capital-dish-top-14.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-14",
-      "aimIndex": 14,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "capital"
-    },
-    {
-      "id": "enemy-capital-dish-top-15",
-      "path": "/art/enemies/capital-dish-top-15.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-15",
-      "aimIndex": 15,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "capital"
-    },
-    {
       "id": "enemy-capital-rail-top-0",
       "path": "/art/enemies/capital-rail-top-0.svg",
       "width": 80,
@@ -18058,6 +18826,518 @@
       "facing": "world-15",
       "aimIndex": 15,
       "top": "rail",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-spread-top-0",
+      "path": "/art/enemies/capital-spread-top-0.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-0",
+      "aimIndex": 0,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-spread-top-1",
+      "path": "/art/enemies/capital-spread-top-1.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-1",
+      "aimIndex": 1,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-spread-top-2",
+      "path": "/art/enemies/capital-spread-top-2.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-2",
+      "aimIndex": 2,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-spread-top-3",
+      "path": "/art/enemies/capital-spread-top-3.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-3",
+      "aimIndex": 3,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-spread-top-4",
+      "path": "/art/enemies/capital-spread-top-4.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-4",
+      "aimIndex": 4,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-spread-top-5",
+      "path": "/art/enemies/capital-spread-top-5.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-5",
+      "aimIndex": 5,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-spread-top-6",
+      "path": "/art/enemies/capital-spread-top-6.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-6",
+      "aimIndex": 6,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-spread-top-7",
+      "path": "/art/enemies/capital-spread-top-7.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-7",
+      "aimIndex": 7,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-spread-top-8",
+      "path": "/art/enemies/capital-spread-top-8.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-8",
+      "aimIndex": 8,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-spread-top-9",
+      "path": "/art/enemies/capital-spread-top-9.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-9",
+      "aimIndex": 9,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-spread-top-10",
+      "path": "/art/enemies/capital-spread-top-10.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-10",
+      "aimIndex": 10,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-spread-top-11",
+      "path": "/art/enemies/capital-spread-top-11.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-11",
+      "aimIndex": 11,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-spread-top-12",
+      "path": "/art/enemies/capital-spread-top-12.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-12",
+      "aimIndex": 12,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-spread-top-13",
+      "path": "/art/enemies/capital-spread-top-13.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-13",
+      "aimIndex": 13,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-spread-top-14",
+      "path": "/art/enemies/capital-spread-top-14.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-14",
+      "aimIndex": 14,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-spread-top-15",
+      "path": "/art/enemies/capital-spread-top-15.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-15",
+      "aimIndex": 15,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-dish-top-0",
+      "path": "/art/enemies/capital-dish-top-0.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-0",
+      "aimIndex": 0,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-dish-top-1",
+      "path": "/art/enemies/capital-dish-top-1.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-1",
+      "aimIndex": 1,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-dish-top-2",
+      "path": "/art/enemies/capital-dish-top-2.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-2",
+      "aimIndex": 2,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-dish-top-3",
+      "path": "/art/enemies/capital-dish-top-3.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-3",
+      "aimIndex": 3,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-dish-top-4",
+      "path": "/art/enemies/capital-dish-top-4.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-4",
+      "aimIndex": 4,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-dish-top-5",
+      "path": "/art/enemies/capital-dish-top-5.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-5",
+      "aimIndex": 5,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-dish-top-6",
+      "path": "/art/enemies/capital-dish-top-6.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-6",
+      "aimIndex": 6,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-dish-top-7",
+      "path": "/art/enemies/capital-dish-top-7.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-7",
+      "aimIndex": 7,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-dish-top-8",
+      "path": "/art/enemies/capital-dish-top-8.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-8",
+      "aimIndex": 8,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-dish-top-9",
+      "path": "/art/enemies/capital-dish-top-9.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-9",
+      "aimIndex": 9,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-dish-top-10",
+      "path": "/art/enemies/capital-dish-top-10.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-10",
+      "aimIndex": 10,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-dish-top-11",
+      "path": "/art/enemies/capital-dish-top-11.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-11",
+      "aimIndex": 11,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-dish-top-12",
+      "path": "/art/enemies/capital-dish-top-12.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-12",
+      "aimIndex": 12,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-dish-top-13",
+      "path": "/art/enemies/capital-dish-top-13.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-13",
+      "aimIndex": 13,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-dish-top-14",
+      "path": "/art/enemies/capital-dish-top-14.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-14",
+      "aimIndex": 14,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-dish-top-15",
+      "path": "/art/enemies/capital-dish-top-15.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-15",
+      "aimIndex": 15,
+      "top": "dish",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -25889,15 +27169,15 @@
       "archetype": "gadget"
     },
     {
-      "id": "enemy-gadget-turret-top-0",
-      "path": "/art/enemies/gadget-turret-top-0.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-gadget-gun-top-0",
+      "path": "/art/enemies/gadget-gun-top-0.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-0",
       "aimIndex": 0,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -25905,15 +27185,15 @@
       "archetype": "gadget"
     },
     {
-      "id": "enemy-gadget-turret-top-1",
-      "path": "/art/enemies/gadget-turret-top-1.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-gadget-gun-top-1",
+      "path": "/art/enemies/gadget-gun-top-1.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-1",
       "aimIndex": 1,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -25921,15 +27201,15 @@
       "archetype": "gadget"
     },
     {
-      "id": "enemy-gadget-turret-top-2",
-      "path": "/art/enemies/gadget-turret-top-2.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-gadget-gun-top-2",
+      "path": "/art/enemies/gadget-gun-top-2.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-2",
       "aimIndex": 2,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -25937,15 +27217,15 @@
       "archetype": "gadget"
     },
     {
-      "id": "enemy-gadget-turret-top-3",
-      "path": "/art/enemies/gadget-turret-top-3.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-gadget-gun-top-3",
+      "path": "/art/enemies/gadget-gun-top-3.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-3",
       "aimIndex": 3,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -25953,15 +27233,15 @@
       "archetype": "gadget"
     },
     {
-      "id": "enemy-gadget-turret-top-4",
-      "path": "/art/enemies/gadget-turret-top-4.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-gadget-gun-top-4",
+      "path": "/art/enemies/gadget-gun-top-4.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-4",
       "aimIndex": 4,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -25969,15 +27249,15 @@
       "archetype": "gadget"
     },
     {
-      "id": "enemy-gadget-turret-top-5",
-      "path": "/art/enemies/gadget-turret-top-5.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-gadget-gun-top-5",
+      "path": "/art/enemies/gadget-gun-top-5.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-5",
       "aimIndex": 5,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -25985,15 +27265,15 @@
       "archetype": "gadget"
     },
     {
-      "id": "enemy-gadget-turret-top-6",
-      "path": "/art/enemies/gadget-turret-top-6.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-gadget-gun-top-6",
+      "path": "/art/enemies/gadget-gun-top-6.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-6",
       "aimIndex": 6,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -26001,15 +27281,15 @@
       "archetype": "gadget"
     },
     {
-      "id": "enemy-gadget-turret-top-7",
-      "path": "/art/enemies/gadget-turret-top-7.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-gadget-gun-top-7",
+      "path": "/art/enemies/gadget-gun-top-7.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-7",
       "aimIndex": 7,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -26017,15 +27297,15 @@
       "archetype": "gadget"
     },
     {
-      "id": "enemy-gadget-turret-top-8",
-      "path": "/art/enemies/gadget-turret-top-8.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-gadget-gun-top-8",
+      "path": "/art/enemies/gadget-gun-top-8.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-8",
       "aimIndex": 8,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -26033,15 +27313,15 @@
       "archetype": "gadget"
     },
     {
-      "id": "enemy-gadget-turret-top-9",
-      "path": "/art/enemies/gadget-turret-top-9.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-gadget-gun-top-9",
+      "path": "/art/enemies/gadget-gun-top-9.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-9",
       "aimIndex": 9,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -26049,15 +27329,15 @@
       "archetype": "gadget"
     },
     {
-      "id": "enemy-gadget-turret-top-10",
-      "path": "/art/enemies/gadget-turret-top-10.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-gadget-gun-top-10",
+      "path": "/art/enemies/gadget-gun-top-10.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-10",
       "aimIndex": 10,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -26065,15 +27345,15 @@
       "archetype": "gadget"
     },
     {
-      "id": "enemy-gadget-turret-top-11",
-      "path": "/art/enemies/gadget-turret-top-11.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-gadget-gun-top-11",
+      "path": "/art/enemies/gadget-gun-top-11.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-11",
       "aimIndex": 11,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -26081,15 +27361,15 @@
       "archetype": "gadget"
     },
     {
-      "id": "enemy-gadget-turret-top-12",
-      "path": "/art/enemies/gadget-turret-top-12.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-gadget-gun-top-12",
+      "path": "/art/enemies/gadget-gun-top-12.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-12",
       "aimIndex": 12,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -26097,15 +27377,15 @@
       "archetype": "gadget"
     },
     {
-      "id": "enemy-gadget-turret-top-13",
-      "path": "/art/enemies/gadget-turret-top-13.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-gadget-gun-top-13",
+      "path": "/art/enemies/gadget-gun-top-13.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-13",
       "aimIndex": 13,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -26113,15 +27393,15 @@
       "archetype": "gadget"
     },
     {
-      "id": "enemy-gadget-turret-top-14",
-      "path": "/art/enemies/gadget-turret-top-14.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-gadget-gun-top-14",
+      "path": "/art/enemies/gadget-gun-top-14.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-14",
       "aimIndex": 14,
-      "top": "turret",
+      "top": "gun",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -26129,15 +27409,271 @@
       "archetype": "gadget"
     },
     {
-      "id": "enemy-gadget-turret-top-15",
-      "path": "/art/enemies/gadget-turret-top-15.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "id": "enemy-gadget-gun-top-15",
+      "path": "/art/enemies/gadget-gun-top-15.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
       "facing": "world-15",
       "aimIndex": 15,
-      "top": "turret",
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-triple-top-0",
+      "path": "/art/enemies/gadget-triple-top-0.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-0",
+      "aimIndex": 0,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-triple-top-1",
+      "path": "/art/enemies/gadget-triple-top-1.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-1",
+      "aimIndex": 1,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-triple-top-2",
+      "path": "/art/enemies/gadget-triple-top-2.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-2",
+      "aimIndex": 2,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-triple-top-3",
+      "path": "/art/enemies/gadget-triple-top-3.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-3",
+      "aimIndex": 3,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-triple-top-4",
+      "path": "/art/enemies/gadget-triple-top-4.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-4",
+      "aimIndex": 4,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-triple-top-5",
+      "path": "/art/enemies/gadget-triple-top-5.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-5",
+      "aimIndex": 5,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-triple-top-6",
+      "path": "/art/enemies/gadget-triple-top-6.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-6",
+      "aimIndex": 6,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-triple-top-7",
+      "path": "/art/enemies/gadget-triple-top-7.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-7",
+      "aimIndex": 7,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-triple-top-8",
+      "path": "/art/enemies/gadget-triple-top-8.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-8",
+      "aimIndex": 8,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-triple-top-9",
+      "path": "/art/enemies/gadget-triple-top-9.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-9",
+      "aimIndex": 9,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-triple-top-10",
+      "path": "/art/enemies/gadget-triple-top-10.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-10",
+      "aimIndex": 10,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-triple-top-11",
+      "path": "/art/enemies/gadget-triple-top-11.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-11",
+      "aimIndex": 11,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-triple-top-12",
+      "path": "/art/enemies/gadget-triple-top-12.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-12",
+      "aimIndex": 12,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-triple-top-13",
+      "path": "/art/enemies/gadget-triple-top-13.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-13",
+      "aimIndex": 13,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-triple-top-14",
+      "path": "/art/enemies/gadget-triple-top-14.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-14",
+      "aimIndex": 14,
+      "top": "triple",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-triple-top-15",
+      "path": "/art/enemies/gadget-triple-top-15.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-15",
+      "aimIndex": 15,
+      "top": "triple",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -26401,262 +27937,6 @@
       "archetype": "gadget"
     },
     {
-      "id": "enemy-gadget-dish-top-0",
-      "path": "/art/enemies/gadget-dish-top-0.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-0",
-      "aimIndex": 0,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "gadget"
-    },
-    {
-      "id": "enemy-gadget-dish-top-1",
-      "path": "/art/enemies/gadget-dish-top-1.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-1",
-      "aimIndex": 1,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "gadget"
-    },
-    {
-      "id": "enemy-gadget-dish-top-2",
-      "path": "/art/enemies/gadget-dish-top-2.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-2",
-      "aimIndex": 2,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "gadget"
-    },
-    {
-      "id": "enemy-gadget-dish-top-3",
-      "path": "/art/enemies/gadget-dish-top-3.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-3",
-      "aimIndex": 3,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "gadget"
-    },
-    {
-      "id": "enemy-gadget-dish-top-4",
-      "path": "/art/enemies/gadget-dish-top-4.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-4",
-      "aimIndex": 4,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "gadget"
-    },
-    {
-      "id": "enemy-gadget-dish-top-5",
-      "path": "/art/enemies/gadget-dish-top-5.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-5",
-      "aimIndex": 5,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "gadget"
-    },
-    {
-      "id": "enemy-gadget-dish-top-6",
-      "path": "/art/enemies/gadget-dish-top-6.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-6",
-      "aimIndex": 6,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "gadget"
-    },
-    {
-      "id": "enemy-gadget-dish-top-7",
-      "path": "/art/enemies/gadget-dish-top-7.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-7",
-      "aimIndex": 7,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "gadget"
-    },
-    {
-      "id": "enemy-gadget-dish-top-8",
-      "path": "/art/enemies/gadget-dish-top-8.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-8",
-      "aimIndex": 8,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "gadget"
-    },
-    {
-      "id": "enemy-gadget-dish-top-9",
-      "path": "/art/enemies/gadget-dish-top-9.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-9",
-      "aimIndex": 9,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "gadget"
-    },
-    {
-      "id": "enemy-gadget-dish-top-10",
-      "path": "/art/enemies/gadget-dish-top-10.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-10",
-      "aimIndex": 10,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "gadget"
-    },
-    {
-      "id": "enemy-gadget-dish-top-11",
-      "path": "/art/enemies/gadget-dish-top-11.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-11",
-      "aimIndex": 11,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "gadget"
-    },
-    {
-      "id": "enemy-gadget-dish-top-12",
-      "path": "/art/enemies/gadget-dish-top-12.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-12",
-      "aimIndex": 12,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "gadget"
-    },
-    {
-      "id": "enemy-gadget-dish-top-13",
-      "path": "/art/enemies/gadget-dish-top-13.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-13",
-      "aimIndex": 13,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "gadget"
-    },
-    {
-      "id": "enemy-gadget-dish-top-14",
-      "path": "/art/enemies/gadget-dish-top-14.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-14",
-      "aimIndex": 14,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "gadget"
-    },
-    {
-      "id": "enemy-gadget-dish-top-15",
-      "path": "/art/enemies/gadget-dish-top-15.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-15",
-      "aimIndex": 15,
-      "top": "dish",
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "gadget"
-    },
-    {
       "id": "enemy-gadget-rail-top-0",
       "path": "/art/enemies/gadget-rail-top-0.svg",
       "width": 80,
@@ -26906,6 +28186,518 @@
       "facing": "world-15",
       "aimIndex": 15,
       "top": "rail",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-spread-top-0",
+      "path": "/art/enemies/gadget-spread-top-0.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-0",
+      "aimIndex": 0,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-spread-top-1",
+      "path": "/art/enemies/gadget-spread-top-1.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-1",
+      "aimIndex": 1,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-spread-top-2",
+      "path": "/art/enemies/gadget-spread-top-2.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-2",
+      "aimIndex": 2,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-spread-top-3",
+      "path": "/art/enemies/gadget-spread-top-3.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-3",
+      "aimIndex": 3,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-spread-top-4",
+      "path": "/art/enemies/gadget-spread-top-4.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-4",
+      "aimIndex": 4,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-spread-top-5",
+      "path": "/art/enemies/gadget-spread-top-5.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-5",
+      "aimIndex": 5,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-spread-top-6",
+      "path": "/art/enemies/gadget-spread-top-6.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-6",
+      "aimIndex": 6,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-spread-top-7",
+      "path": "/art/enemies/gadget-spread-top-7.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-7",
+      "aimIndex": 7,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-spread-top-8",
+      "path": "/art/enemies/gadget-spread-top-8.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-8",
+      "aimIndex": 8,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-spread-top-9",
+      "path": "/art/enemies/gadget-spread-top-9.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-9",
+      "aimIndex": 9,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-spread-top-10",
+      "path": "/art/enemies/gadget-spread-top-10.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-10",
+      "aimIndex": 10,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-spread-top-11",
+      "path": "/art/enemies/gadget-spread-top-11.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-11",
+      "aimIndex": 11,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-spread-top-12",
+      "path": "/art/enemies/gadget-spread-top-12.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-12",
+      "aimIndex": 12,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-spread-top-13",
+      "path": "/art/enemies/gadget-spread-top-13.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-13",
+      "aimIndex": 13,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-spread-top-14",
+      "path": "/art/enemies/gadget-spread-top-14.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-14",
+      "aimIndex": 14,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-spread-top-15",
+      "path": "/art/enemies/gadget-spread-top-15.svg",
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-15",
+      "aimIndex": 15,
+      "top": "spread",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-dish-top-0",
+      "path": "/art/enemies/gadget-dish-top-0.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-0",
+      "aimIndex": 0,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-dish-top-1",
+      "path": "/art/enemies/gadget-dish-top-1.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-1",
+      "aimIndex": 1,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-dish-top-2",
+      "path": "/art/enemies/gadget-dish-top-2.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-2",
+      "aimIndex": 2,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-dish-top-3",
+      "path": "/art/enemies/gadget-dish-top-3.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-3",
+      "aimIndex": 3,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-dish-top-4",
+      "path": "/art/enemies/gadget-dish-top-4.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-4",
+      "aimIndex": 4,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-dish-top-5",
+      "path": "/art/enemies/gadget-dish-top-5.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-5",
+      "aimIndex": 5,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-dish-top-6",
+      "path": "/art/enemies/gadget-dish-top-6.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-6",
+      "aimIndex": 6,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-dish-top-7",
+      "path": "/art/enemies/gadget-dish-top-7.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-7",
+      "aimIndex": 7,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-dish-top-8",
+      "path": "/art/enemies/gadget-dish-top-8.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-8",
+      "aimIndex": 8,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-dish-top-9",
+      "path": "/art/enemies/gadget-dish-top-9.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-9",
+      "aimIndex": 9,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-dish-top-10",
+      "path": "/art/enemies/gadget-dish-top-10.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-10",
+      "aimIndex": 10,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-dish-top-11",
+      "path": "/art/enemies/gadget-dish-top-11.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-11",
+      "aimIndex": 11,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-dish-top-12",
+      "path": "/art/enemies/gadget-dish-top-12.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-12",
+      "aimIndex": 12,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-dish-top-13",
+      "path": "/art/enemies/gadget-dish-top-13.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-13",
+      "aimIndex": 13,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-dish-top-14",
+      "path": "/art/enemies/gadget-dish-top-14.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-14",
+      "aimIndex": 14,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "gadget"
+    },
+    {
+      "id": "enemy-gadget-dish-top-15",
+      "path": "/art/enemies/gadget-dish-top-15.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-15",
+      "aimIndex": 15,
+      "top": "dish",
       "pivot": {
         "x": 0.5,
         "y": 0.5
