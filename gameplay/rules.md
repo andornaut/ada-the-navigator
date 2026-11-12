@@ -47,9 +47,10 @@ launches show Continue and Restart.
 
 Every launch opens on the start screen; Continue resumes where the save left off.
 With a saved flight, Continue resumes it exactly: galaxy, position, tow and danger
-(see the exact-resume rule below). After Back to title from Ada's room page,
-Continue returns to her room page. Otherwise Continue opens the galaxy map on the
-farthest unlocked galaxy. A home scene that is waiting, such as a chapter's resolution or the next
+(see the exact-resume rule below). Without a saved flight, Continue opens Ada's
+room page, after any waiting home scene; picking up the rock then shows the glow,
+"Welcome back, Navigator." and the galaxy map, with the farthest unlocked galaxy
+selected. A home scene that is waiting, such as a chapter's resolution or the next
 chapter's opening, plays first. When Ada goes home with no new scene, her room
 shows one short repeatable line and "Pick up the rock."; old scenes never replay,
 and new ones unlock with progress.
@@ -96,9 +97,9 @@ room page with its named action. Next
 turns one page. Previous returns to the page shown before, across scene
 boundaries within the run, and is disabled only on the run's first page. The
 run that starts with Ada's room page's named action counts that room page as
-its first, so Previous on the boarding page that follows returns to it. On the
-"Welcome back, Navigator." page, Previous returns to where boarding began: Ada's
-room page after picking up the rock, or the start screen after Continue. A page
+its first, so Previous on the boarding page that follows returns to it. The
+"Welcome back, Navigator." page always follows the rock, so its Previous always
+returns to Ada's room page. A page
 that ends in a named action, such as "Pick up the rock.", shows that action in
 place of Next. Skip passes every remaining page and scene of the run, taking the
 default path through choices and leaving optional questions unasked, and stops
@@ -154,8 +155,8 @@ voluntary Earth from the galaxy map has no sleep scene. The holodisk
 drive looks like a CD or cassette player.
 
 Every boarding from Ada's room (picking up the rock), including for a replay of
-a resolved galaxy, shows the galaxy map before the flight, as does Continue
-without a saved flight. The app itself always opens on the start screen. The design names two
+a resolved galaxy, shows the galaxy map before the flight; Continue without a
+saved flight opens her room page first. The app itself always opens on the start screen. The design names two
 maps: the local map (the pause card's Map) charts the current galaxy, and the
 galaxy map moves Ada between galaxies; neither name appears in the interface. The galaxy map is a route map, like Chibi's zone map,
 drawn over a night sky full of stars, galaxies and nebulae above an evening
