@@ -71,7 +71,7 @@ import {
   rollEnemyDrop,
   splitStardust,
 } from "./drops.ts";
-import { enemyHull } from "./enemy-body.ts";
+import { enemyHull, enemyPartOutline } from "./enemy-body.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { nosePoint } from "./nose.ts";
 import { clearOfOreFields, oreFieldsNear } from "./ore-fields.ts";
@@ -1885,7 +1885,7 @@ function strike(
       continue;
     }
     shot.hitIds.push(object.id);
-    const part = hitPart(content, partReach(content), shot, object);
+    const part = hitPart(content, partReach(content), 3, shot, object);
     // Large hulls only consume a shot at a live hardpoint; this keeps interior parts reachable.
     if (part === undefined) {
       shot.hitIds.pop();
@@ -1929,36 +1929,51 @@ function liveParts(
 }
 
 /**
- * Whether a strike of `reach` at `point` touches an enemy where it is drawn, its hull; its hull
- * circle without Art's outline.
+ * Whether a strike of `reach` at `point` touches an enemy where it is drawn: its hull or, on a
+ * heavy, a hardpoint's base or top; its hull circle without Art's outline.
  */
 function enemyTouched(object: SpaceObject, point: Vec, reach: number): boolean {
-  const hull = object.enemy && enemyHull(object.enemy);
-  return hull
-    ? outlineContact(hull, object, point, reach) !== null
-    : distance(point, object) <= object.radius + reach;
+  const enemy = object.enemy;
+  const hull = enemy && enemyHull(enemy);
+  if (!enemy || !hull) {
+    return distance(point, object) <= object.radius + reach;
+  }
+  return (
+    outlineContact(hull, object, point, reach) !== null ||
+    enemy.hardpoints.some((part) => {
+      const outline = enemyPartOutline(enemy, part.id);
+      return outline !== null && outlineContact(outline, object, point, reach) !== null;
+    })
+  );
 }
 
 /**
  * The hardpoint a strike at `point` lands on: null for the hull of a ship without hardpoints
- * and for scenery, undefined when a multipart ship has no live hardpoint within `reach`.
+ * and for scenery, undefined when a multipart ship has no live hardpoint in reach. A drawn
+ * hardpoint is in reach when the strike's `tolerance` touches its base or top; one without Art's
+ * outline when its anchor is within `reach`.
  */
 function hitPart(
   content: PrototypeContent,
   reach: number,
+  tolerance: number,
   point: Vec,
   object: SpaceObject,
 ): string | null | undefined {
-  if (object.kind !== "enemy" || !object.enemy) {
+  const enemy = object.enemy;
+  if (object.kind !== "enemy" || !enemy) {
     return null;
   }
-  if (!enemyCatalog[object.enemy.archetype].hardpoints.length) {
+  if (!enemyCatalog[enemy.archetype].hardpoints.length) {
     return null;
   }
   let nearest: { id: string; gap: number } | undefined;
   for (const part of liveParts(content, object)) {
-    const gap = distance(point, part);
-    if (gap <= reach && (!nearest || gap < nearest.gap)) {
+    const outline = enemyPartOutline(enemy, part.id);
+    const contact = outline && outlineContact(outline, object, point, tolerance);
+    // A drawn part ranks by overlap depth, deepest first; an undrawn one by its anchor gap.
+    const gap = outline ? (contact ? -contact.depth : Infinity) : distance(point, part);
+    if ((outline ? contact !== null : gap <= reach) && (!nearest || gap < nearest.gap)) {
       nearest = { gap, id: part.id };
     }
   }
@@ -2049,7 +2064,7 @@ function blast(
     if (object === struck || object.kind !== "enemy" || object.hp <= 0) {
       continue;
     }
-    const part = hitPart(content, radius + partReach(content), at, object);
+    const part = hitPart(content, radius + partReach(content), radius, at, object);
     if (part === undefined || (part === null && !enemyTouched(object, at, radius))) {
       continue;
     }
@@ -2220,7 +2235,12 @@ function fireBeam(
       const hull = enemyHull(object.enemy);
       if (enemyCatalog[object.enemy.archetype].hardpoints.length) {
         for (const part of liveParts(content, object)) {
-          consider(object, part.id, part, partReach(content));
+          const outline = enemyPartOutline(object.enemy, part.id);
+          if (outline) {
+            drawn(object, part.id, outline);
+          } else {
+            consider(object, part.id, part, partReach(content));
+          }
         }
       } else if (hull) {
         drawn(object, null, hull);

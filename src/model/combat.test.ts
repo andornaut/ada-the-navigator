@@ -9,9 +9,9 @@ import {
 } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
-import { outlinesContact, type Parts } from "./convex.ts";
-import { createEnemy, hardpointOffset } from "./enemy-ai.ts";
-import { enemyHull } from "./enemy-body.ts";
+import { fromScreen, outlineContact, outlinesContact, type Parts } from "./convex.ts";
+import { createEnemy } from "./enemy-ai.ts";
+import { enemyHull, enemyPartOutline } from "./enemy-body.ts";
 import {
   bounceShips,
   createFlight,
@@ -77,12 +77,35 @@ function hit(flight: FlightState, point: Vec, count = 1): void {
     });
   }
 }
+/**
+ * A point inside a hardpoint as drawn and clear of every other drawn hardpoint by a shot's
+ * reach: the centre of one of its parts, largest first, on the world plane.
+ */
 function partPosition(object: SpaceObject, id: string): Vec {
-  const definition = enemyCatalog[object.enemy!.archetype];
-  const part = definition.hardpoints.find((part) => part.id === id)!;
-  const adaWidth = PROTOTYPE.tuning.flight.shipRadius * 2;
-  const offset = hardpointOffset(definition, adaWidth, object.enemy!.facing, part);
-  return { x: object.x + offset.x, y: object.y + offset.y };
+  const enemy = object.enemy!;
+  const area = (part: readonly Vec[]) =>
+    Math.abs(
+      part.reduce((sum, at, index) => {
+        const next = part[(index + 1) % part.length]!;
+        return sum + at.x * next.y - next.x * at.y;
+      }, 0),
+    );
+  const centres = [...enemyPartOutline(enemy, id)!]
+    .sort((a, b) => area(b) - area(a))
+    .map((part) => {
+      const centre = fromScreen({
+        x: part.reduce((sum, at) => sum + at.x, 0) / part.length,
+        y: part.reduce((sum, at) => sum + at.y, 0) / part.length,
+      });
+      return { x: object.x + centre.x, y: object.y + centre.y };
+    });
+  const others = enemy.hardpoints
+    .filter((part) => part.id !== id)
+    .map((part) => enemyPartOutline(enemy, part.id)!);
+  return (
+    centres.find((at) => others.every((outline) => !outlineContact(outline, object, at, 3))) ??
+    centres[0]!
+  );
 }
 
 describe("integrated combat", () => {
@@ -310,23 +333,24 @@ describe("integrated combat", () => {
 });
 
 describe("rotating hulls", () => {
-  it("hits hardpoints where the rotated hull carries them", () => {
+  it("hits hardpoints where the rotated hull draws them", () => {
     const flight = empty();
     const target = ship("capital", { x: 400, y: 0 });
-    target.enemy!.facing = { x: 1, y: 0 };
     target.enemy!.hardpoints.forEach((part) => (part.cooldown = 999));
     flight.objects.push(target);
-    const width = enemyCatalog.capital.sizeRatio * PROTOTYPE.tuning.flight.shipRadius * 2;
     const hp = (id: string) => target.enemy!.hardpoints.find((part) => part.id === id)!.hp;
-    // weapon-rear-right's unrotated world-axis spot is empty hull once the capital faces east.
-    hit(flight, { x: target.x + 0.42 * width, y: target.y + 0.08 * width });
+    target.enemy!.facing = { x: 1, y: 0 };
+    const east = partPosition(target, "weapon-rear-right");
+    target.enemy!.facing = { x: 0, y: 1 };
+    const south = partPosition(target, "weapon-rear-right");
+    expect(Math.hypot(east.x - south.x, east.y - south.y)).toBeGreaterThan(20);
+    // Facing south, the part is no longer drawn where it was facing east.
+    hit(flight, east);
     stepFlight(PROTOTYPE, 0.001, idle, flight);
-    expect(target.enemy!.hardpoints.map((part) => part.hp)).toEqual([5, 4, 4, 3, 3, 3, 3]);
-    // Facing east, its aft-starboard offset lies behind (-x) and to starboard (+y).
-    hit(flight, { x: target.x - 0.08 * width, y: target.y + 0.42 * width });
+    expect(hp("weapon-rear-right")).toBe(3);
+    hit(flight, south);
     stepFlight(PROTOTYPE, 0.001, idle, flight);
     expect(hp("weapon-rear-right")).toBe(2);
-    expect(partPosition(target, "weapon-rear-right").y).toBeCloseTo(target.y + 0.42 * width, 0);
   });
 });
 
