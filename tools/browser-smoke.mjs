@@ -3900,6 +3900,162 @@ try {
       "and missile with Art's composed frames in renderer screenshots",
   );
 
+  // Art review captures (art/heavies.md, art/weapons.md): heavies by mount tier, a disabled
+  // heavy's banner, a salvaged heavy, and each enemy-only weapon and the enemy Phaser in play,
+  // at full and reduced motion. Each fixture is a canonical save; the scene runs the real AI.
+  const [{ enemyDefinition }] = await Promise.all([
+    import(new URL("../src/data/enemy-catalog.ts", import.meta.url)),
+  ]);
+  const heavyWorld = (screen) => ({ x: screen.x / 2 + screen.y, y: screen.y - screen.x / 2 });
+  /** A flight in `sector` with each heavy at its screen offset from Ada, holding its fire. */
+  function heavyFixture(sector, heavies) {
+    const model = new GameModel(PROTOTYPE);
+    model.state.unlocked = [1, 2, 3, 4, 5, 6];
+    model.startSector(sector);
+    playOpening(model);
+    assert.ok(model.state.flight, `Heavy fixture requires galaxy ${sector}'s flight`);
+    const flight = model.state.flight;
+    model.state.progress[sector].introduced = true;
+    model.state.dialogue = null;
+    flight.objects = [];
+    flight.shots = [];
+    flight.mines = [];
+    const origin = { ...flight.player };
+    for (const { archetype, fire = [], screen, setup } of heavies) {
+      const definition = enemyDefinition(sector, archetype);
+      const offset = heavyWorld(screen);
+      const at = { x: origin.x + offset.x, y: origin.y + offset.y };
+      const enemy = createEnemy(
+        definition,
+        { archetype, id: `browser-art:${archetype}:${screen.x}`, packId: null, phase: 0 },
+        at,
+      );
+      enemy.engaged = true;
+      for (const part of enemy.hardpoints) {
+        part.cooldown = fire.includes(part.id) ? 0.6 : 999;
+      }
+      setup?.(enemy);
+      flight.objects.push({
+        ...at,
+        enemy,
+        hp: enemy.hp,
+        id: enemy.id,
+        kind: "enemy",
+        persistent: false,
+        radius: PROTOTYPE.tuning.flight.shipRadius * definition.sizeRatio,
+      });
+    }
+    const serialized = model.save();
+    assert.deepEqual(restoreSave(serialized), model.state, "Canonical restore accepts heavies");
+    return serialized;
+  }
+  const destroyWeapons = (enemy) => {
+    for (const part of enemy.hardpoints) {
+      if (!["command", "engine", "engine-left", "engine-right"].includes(part.id)) {
+        part.hp = 0;
+      }
+    }
+    enemy.disabled = true;
+  };
+  const heavyCaptures = [];
+  /** Seeds a fixture and saves `shots` canvas screenshots `every` ms apart from `after` ms. */
+  async function captureHeavies(name, serialized, { after = 1500, every = 250, shots = 1 } = {}) {
+    save(`art-fixture-${name}.json`, {
+      scope: "Canonical heavy and enemy weapon fixture for Art review",
+      state: JSON.parse(serialized),
+    });
+    await seedOnce(serialized, `ada-browser.art-${name}.v1`);
+    await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+    const canvas = page.locator("#game-canvas > canvas");
+    await canvas.waitFor({ state: "visible" });
+    await page.waitForTimeout(after);
+    // Frames follow one another, each `every` ms after the last.
+    async function frame(index) {
+      const showOverCanvas = await hideOverCanvas(page);
+      const file = shots === 1 ? `art-${name}.png` : `art-${name}-${index + 1}.png`;
+      await canvas.screenshot({ path: `${output}/${file}` });
+      await showOverCanvas();
+      heavyCaptures.push(file);
+      if (index + 1 < shots) {
+        await page.waitForTimeout(every);
+        await frame(index + 1);
+      }
+    }
+    await frame(0);
+  }
+  /** Captures each weapon fixture in turn, its frame names ending in `suffix`. */
+  const captureWeapons = (suffix) =>
+    weaponFixtures().reduce(
+      (done, [name, serialized]) =>
+        done.then(() =>
+          captureHeavies(`weapon-${name}${suffix}`, serialized, {
+            after: 500,
+            every: 150,
+            shots: 8,
+          }),
+        ),
+      Promise.resolve(),
+    );
+  const pair = (fire = [], setup) => [
+    { archetype: "frigate", fire, screen: { x: -170, y: -20 }, setup },
+    { archetype: "capital", fire, screen: { x: 150, y: -40 }, setup },
+  ];
+  // Sunflower (tier 1), Needle (tier 2) and Cartwheel (tier 3) heavies, every mount drawn.
+  await captureHeavies("heavies-tier-1", heavyFixture(1, pair()));
+  await captureHeavies("heavies-tier-2", heavyFixture(4, pair()));
+  await captureHeavies("heavies-tier-3", heavyFixture(2, pair()));
+  await captureHeavies("heavies-disabled", heavyFixture(1, pair([], destroyWeapons)));
+  await captureHeavies(
+    "heavies-salvaged",
+    heavyFixture(
+      1,
+      pair([], (enemy) => {
+        destroyWeapons(enemy);
+        enemy.salvaged = true;
+      }),
+    ),
+  );
+  // Black Eye's capital carries the Phaser, ring burst and mine layer; Cartwheel's frigate the
+  // lance. Each fires 0.6 s into the flight; the frames run from its tell to its end.
+  const weaponFixtures = () => [
+    [
+      "phaser",
+      heavyFixture(6, [{ archetype: "capital", fire: ["claw-left"], screen: { x: 150, y: -40 } }]),
+    ],
+    [
+      "ring-burst",
+      heavyFixture(6, [{ archetype: "capital", fire: ["stern-left"], screen: { x: 150, y: -40 } }]),
+    ],
+    [
+      "mines",
+      heavyFixture(6, [
+        { archetype: "capital", fire: ["stern-right"], screen: { x: 150, y: -40 } },
+      ]),
+    ],
+    [
+      "lance",
+      heavyFixture(2, [{ archetype: "frigate", fire: ["bow"], screen: { x: 170, y: -30 } }]),
+    ],
+  ];
+  await captureWeapons("");
+  const motionKey = DEVICE_STORAGE_KEYS.reducedMotion;
+  const motionBefore = await page.evaluate((key) => localStorage.getItem(key), motionKey);
+  await page.evaluate((key) => localStorage.setItem(key, "on"), motionKey);
+  await captureWeapons("-reduced");
+  await page.evaluate(
+    ({ key, value }) =>
+      value === null ? localStorage.removeItem(key) : localStorage.setItem(key, value),
+    { key: motionKey, value: motionBefore },
+  );
+  save("art-heavy-captures.json", {
+    scope: "Rendered canonical heavy and enemy weapon fixtures; screenshot review by Art required",
+    captures: heavyCaptures,
+  });
+  events.checks.push(
+    "Art review captures heavies by mount tier, a disabled heavy's banner, a salvaged heavy, " +
+      "and the enemy Phaser, ring burst, mines and charged lance at full and reduced motion",
+  );
+
   // Art review captures (art/asteroids.md): one rock of each size and a drifting rock around
   // Ada in each galaxy, with a backdrop rock in view, and galaxy one's spin over four seconds.
   // Pivots sit at rock bases, so each rock rises above its point; the top centre stays open.
