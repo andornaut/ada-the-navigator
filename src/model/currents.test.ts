@@ -184,7 +184,7 @@ describe("space currents", () => {
     // A current without a river, so no river rock on the centre line meets the ship.
     const current = currents.find((entry) => entry.length > 3500 && !entry.debris)!;
     const { point, tangent } = middle(current);
-    const top = PROTOTYPE.tuning.maxSpeed;
+    const top = PROTOTYPE.tuning.physics.maxSpeed;
     for (const sense of [0, 1, -1]) {
       const flight = emptyFlight(point);
       flight.velocity = { x: tangent.x * top * sense, y: tangent.y * top * sense };

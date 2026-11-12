@@ -728,7 +728,7 @@ describe("upgrade effects", () => {
       expect(tuning.shieldRechargeRate).toBeCloseTo(base.shieldRechargeRate * rate, 9);
       // Recharge output (rate over delay) grows about 1.5 times per level.
       expect(rate / delay).toBeCloseTo(1.5 ** (level - 1), 9);
-      expect(tuning.physics.speedRatio).toBeCloseTo(base.physics.speedRatio * speed, 9);
+      expect(tuning.physics.maxSpeed).toBeCloseTo(base.physics.maxSpeed * speed, 9);
       expect(tuning.physics.accelerationSeconds).toBeCloseTo(
         base.physics.accelerationSeconds * seconds,
         9,
@@ -781,7 +781,7 @@ describe("upgrade effects", () => {
       value.levels.engine = level;
       stepFlight(PROTOTYPE, 0.2, right, value);
       const physics = shipTuning(ECONOMY, PROTOTYPE, value.levels).physics;
-      const top = PROTOTYPE.tuning.maxSpeed * physics.speedRatio;
+      const top = physics.maxSpeed;
       expect(length(value.velocity)).toBeCloseTo(
         top * (1 - Math.exp(-0.2 / physics.accelerationSeconds)),
         6,

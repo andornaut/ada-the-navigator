@@ -76,7 +76,6 @@ export interface EnemyState {
 }
 export interface EnemyContext {
   dormantPackMembers?: Readonly<Record<string, number>>;
-  adaSpeed: number;
   adaWidth: number;
   dt: number;
   initialPackSizes: Readonly<Record<string, number>>;
@@ -84,7 +83,6 @@ export interface EnemyContext {
   player: Point;
   /** Base enemy projectile speed; each fire profile's projectileSpeedRatio multiplies it. */
   projectileSpeed: number;
-  speedCapRatio: number;
   targetable: boolean;
   visibility: "visible" | "occluded" | "unknown";
 }
@@ -117,23 +115,12 @@ const magnitude = (point: Point): number => Math.hypot(point.x, point.y);
 const unit = direction;
 const UP: Point = { x: 0, y: -1 };
 
-/** Maximum speed after the shared speed cap. */
-export function enemyMaxSpeed(
-  definition: EnemyDefinition,
-  adaSpeed: number,
-  speedCapRatio: number,
-): number {
-  return adaSpeed * Math.max(0, Math.min(speedCapRatio, definition.physics.speedRatio));
-}
-
 /** Current speed as a fraction of the enemy's maximum speed, clamped to [0, 1], for jets. */
 export function enemySpeedFraction(
   definition: EnemyDefinition,
-  adaSpeed: number,
-  speedCapRatio: number,
   state: Pick<EnemyState, "velocity">,
 ): number {
-  return speedFraction(enemyMaxSpeed(definition, adaSpeed, speedCapRatio), state.velocity);
+  return speedFraction(definition.physics.maxSpeed, state.velocity);
 }
 
 /** World-axis offset of a hardpoint from the hull centre for the given hull facing. */
@@ -481,8 +468,8 @@ export function stepEnemy(
   }
   next.tactic = nextTactic(definition, next, magnitude(delta), state);
   // Each working engine gives an equal share of top speed; losing one slows the ship through
-  // its own physics, while the shared cap still bounds saved momentum.
-  const fullSpeed = enemyMaxSpeed(definition, context.adaSpeed, context.speedCapRatio);
+  // its own physics, while its maximum speed still bounds saved momentum.
+  const fullSpeed = definition.physics.maxSpeed;
   const speed = fullSpeed * effects.thrust;
   const request = steering(definition, context, speed, aim, next);
   const physics = definition.physics;

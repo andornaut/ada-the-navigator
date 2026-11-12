@@ -2022,16 +2022,7 @@ export class GameModel {
         f,
       );
     }
-    stepCalf(
-      f.sector,
-      {
-        accelerationSeconds: this.content.tuning.physics.accelerationSeconds,
-        maxSpeed: this.content.tuning.maxSpeed,
-      },
-      dt,
-      f.player,
-      f.calf,
-    );
+    stepCalf(f.sector, this.content.tuning.physics, dt, f.player, f.calf);
     if (calfHome(family, f.calf)) {
       delete f.calf;
       this.finishActivity(f.sector);

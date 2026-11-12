@@ -1519,23 +1519,16 @@ export function movementSpeedFraction(
   }
   return tuning.minSpeedFraction + (1 - tuning.minSpeedFraction) * m ** tuning.speedCurveExponent;
 }
-/** Ada's maximum speed: the base maximum scaled by her physics speedRatio. */
-function adaMaxSpeed(tuning: Pick<PrototypeContent["tuning"], "maxSpeed" | "physics">): number {
-  return tuning.maxSpeed * tuning.physics.speedRatio;
-}
 /**
- * Current ship speed as a fraction of Ada's tuned maximum speed (base times her engine
- * tuning), clamped to [0, 1], for jets. Flights without levels use the base speed.
+ * Current ship speed as a fraction of Ada's maximum speed at her engine level, clamped to
+ * [0, 1], for jets. Flights without levels use the base engine.
  */
 export function shipSpeedFraction(
   content: PrototypeContent,
   flight: Pick<FlightState, "velocity"> & Partial<Pick<FlightState, "levels">>,
 ): number {
   const physics = shipTuning(ECONOMY, content, flight.levels ?? noLevels()).physics;
-  return speedFraction(
-    adaMaxSpeed({ maxSpeed: content.tuning.maxSpeed, physics }),
-    flight.velocity,
-  );
+  return speedFraction(physics.maxSpeed, flight.velocity);
 }
 /**
  * Whether Ada's drawn ship reaches a pickup at `center`, by the one pickup rule: within the
@@ -1584,7 +1577,7 @@ export function towing<
   T extends {
     accelerationSeconds: number;
     brakingSeconds: number;
-    speedRatio: number;
+    maxSpeed: number;
     turnSeconds: number;
   },
 >(flight: Pick<FlightState, "tow">, physics: T): T {
@@ -1596,7 +1589,7 @@ export function towing<
     ...physics,
     accelerationSeconds: physics.accelerationSeconds * responseScale,
     brakingSeconds: physics.brakingSeconds * responseScale,
-    speedRatio: physics.speedRatio * topSpeedScale,
+    maxSpeed: physics.maxSpeed * topSpeedScale,
     turnSeconds: physics.turnSeconds * turnScale,
   };
 }
@@ -1607,9 +1600,8 @@ function move(
   flight: FlightState,
 ): void {
   const magnitude = Math.min(1, length(input.move));
-  // Engine tuning changes only Ada's physics; enemies keep reading the base maxSpeed.
   const physics = towing(flight, shipTuning(ECONOMY, content, flight.levels).physics);
-  const top = adaMaxSpeed({ maxSpeed: content.tuning.maxSpeed, physics });
+  const top = physics.maxSpeed;
   const motion = stepShipMotion(
     physics,
     dt,
@@ -1740,7 +1732,6 @@ function enemies(
     const intent = stepEnemy(
       definition,
       {
-        adaSpeed: content.tuning.maxSpeed,
         adaWidth: content.tuning.flight.shipRadius * 2,
         dormantPackMembers: retainedPackMembers(content, flight),
         dt,
@@ -1748,7 +1739,6 @@ function enemies(
         peers,
         player: flight.player,
         projectileSpeed: content.tuning.enemyProjectileSpeed,
-        speedCapRatio: enemyEncounterTuning.speedCapRatio,
         targetable,
         visibility: visible ? "visible" : "occluded",
       },

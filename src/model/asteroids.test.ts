@@ -352,8 +352,8 @@ describe("rock silhouettes", () => {
           flight.player = { ...start };
           flight.facing = facing;
           flight.velocity = {
-            x: move.x * PROTOTYPE.tuning.maxSpeed,
-            y: move.y * PROTOTYPE.tuning.maxSpeed,
+            x: move.x * PROTOTYPE.tuning.physics.maxSpeed,
+            y: move.y * PROTOTYPE.tuning.physics.maxSpeed,
           };
           let reached = false;
           for (let step = 0; step < 16; step++) {

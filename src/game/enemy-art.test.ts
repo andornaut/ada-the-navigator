@@ -10,8 +10,7 @@ import frigateJets from "../../public/art/enemies/frigate-jets.json";
 import interceptorJets from "../../public/art/enemies/interceptor-jets.json";
 import retaliatorJets from "../../public/art/enemies/retaliator-jets.json";
 import swarmJets from "../../public/art/enemies/swarm-jets.json";
-import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
-import { PROTOTYPE } from "../data/prototype.ts";
+import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { enemySpeedFraction } from "../model/enemy-ai.ts";
 import { ART_MANIFEST as manifest } from "../testing/public-art.ts";
 import {
@@ -227,16 +226,11 @@ describe("enemy jets", () => {
     const set = sector("fighter");
     const frame = set.frames[0]!;
     const definition = enemyCatalog.fighter;
-    const maxSpeed = PROTOTYPE.tuning.maxSpeed * definition.physics.speedRatio;
+    const maxSpeed = definition.physics.maxSpeed;
     const fraction = (speed: number) =>
-      enemySpeedFraction(
-        definition,
-        PROTOTYPE.tuning.maxSpeed,
-        enemyEncounterTuning.speedCapRatio,
-        {
-          velocity: { x: 0, y: speed },
-        },
-      );
+      enemySpeedFraction(definition, {
+        velocity: { x: 0, y: speed },
+      });
     const reach = (f: number) => {
       const [, point] = enemyJetTriangles(set, frame, f)[0]!.points;
       const [left, , right] = enemyJetTriangles(set, frame, f)[0]!.points;

@@ -403,7 +403,7 @@ describe("tow handling", () => {
       ...physics,
       accelerationSeconds: physics.accelerationSeconds * 2,
       brakingSeconds: physics.brakingSeconds * 2,
-      speedRatio: physics.speedRatio * 0.65,
+      maxSpeed: physics.maxSpeed * 0.65,
       turnSeconds: physics.turnSeconds * 1.5,
     });
   });

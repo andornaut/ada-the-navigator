@@ -71,7 +71,7 @@ export const CALF = {
   /** The calf within this of the family completes the guide. */
   home: 400,
   release: 340,
-  /** At most this fraction of Ada's base maxSpeed, with no upgrades. */
+  /** At most this fraction of Ada's maximum speed at her base engine. */
   speedFraction: 0.8,
   /** It stops this far short of Ada. */
   stop: 120,

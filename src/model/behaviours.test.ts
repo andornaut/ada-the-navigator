@@ -30,14 +30,12 @@ const spawn = (archetype: EnemyArchetype, position: { x: number; y: number }, en
   engaged,
 });
 const context = (peers: readonly EnemyState[], player = ada): EnemyContext => ({
-  adaSpeed: PROTOTYPE.tuning.maxSpeed,
   adaWidth: PROTOTYPE.tuning.flight.shipRadius * 2,
   dt,
   initialPackSizes: {},
   peers,
   player,
   projectileSpeed: PROTOTYPE.tuning.enemyProjectileSpeed,
-  speedCapRatio: 1.1,
   targetable: true,
   visibility: "visible",
 });
@@ -262,7 +260,7 @@ describe("siege", () => {
     if (behaviour.kind !== "siege") {
       return;
     }
-    const maxSpeed = PROTOTYPE.tuning.maxSpeed * enemyCatalog.frigate.physics.speedRatio;
+    const maxSpeed = enemyCatalog.frigate.physics.maxSpeed;
     const ships = [spawn("frigate", { x: 450, y: 0 })];
     let fastest = 0;
     const { shots } = run(ships, 180, {
@@ -397,12 +395,12 @@ describe("engine thrust", () => {
     expect(effects.thrust).toBe(share);
     expect(effects.movementStopped).toBe(share === 0);
     expect(effects.defeated).toBe(false);
-    const full = PROTOTYPE.tuning.maxSpeed * enemyCatalog.capital.physics.speedRatio;
+    const full = enemyCatalog.capital.physics.maxSpeed;
     expect(cruise(state)).toBeCloseTo(full * share, 0);
   });
 
   it("slows a capital that loses an engine through its own physics", () => {
-    const full = PROTOTYPE.tuning.maxSpeed * enemyCatalog.capital.physics.speedRatio;
+    const full = enemyCatalog.capital.physics.maxSpeed;
     const moving = { ...capital(), velocity: { x: full, y: 0 } };
     const damaged = disable(["engine-left"], moving);
     const ships = [{ ...damaged, home: { x: 100000, y: 0 }, returning: true }];

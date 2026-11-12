@@ -114,13 +114,11 @@ export interface PrototypeContent {
   update: { accept: string; cancel: string; title: string };
   tuning: {
     chunkSize: number;
-    /** Base maximum speed; every ship's physics speedRatio scales it. */
-    maxSpeed: number;
     /** Fraction of Ada's maximum speed requested by the smallest movement input past the dead zone. */
     minSpeedFraction: number;
     /** Exponent applied to movement deflection before scaling toward Ada's maximum speed. */
     speedCurveExponent: number;
-    /** Ada's ship physics. */
+    /** Ada's ship physics at her base engine. */
     physics: ShipPhysics;
     shieldMax: number;
     shieldRechargeDelay: number;

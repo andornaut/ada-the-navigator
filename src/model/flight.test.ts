@@ -67,7 +67,7 @@ describe("flight boundaries", () => {
     flight.player = { x: 100, y: 100 };
     const right = { ...idle, move: { x: 1, y: 0 } };
     stepFlight(PROTOTYPE, 1, right, flight);
-    expect(flight.freshDistance).toBeGreaterThan(PROTOTYPE.tuning.maxSpeed * 0.6);
+    expect(flight.freshDistance).toBeGreaterThan(PROTOTYPE.tuning.physics.maxSpeed * 0.6);
     const target = ensureDestination(PROTOTYPE, "hub", flight);
     target.x = 100;
     target.y = 100;
@@ -319,7 +319,7 @@ describe("drones near", () => {
 });
 
 describe("directional handling", () => {
-  const maxSpeed = PROTOTYPE.tuning.maxSpeed;
+  const maxSpeed = PROTOTYPE.tuning.physics.maxSpeed;
   const physics = PROTOTYPE.tuning.physics;
   const vectorOnly: PrototypeContent = {
     ...PROTOTYPE,
@@ -548,7 +548,7 @@ describe("directional handling", () => {
 });
 
 describe("analog movement speed", () => {
-  const maxSpeed = PROTOTYPE.tuning.maxSpeed;
+  const maxSpeed = PROTOTYPE.tuning.physics.maxSpeed;
   const speed = (flight: FlightState) => Math.hypot(flight.velocity.x, flight.velocity.y);
   function cruise(move: Vec): FlightState {
     const flight = empty();
@@ -642,7 +642,10 @@ describe("ship speed fraction", () => {
   it("is zero for a non-positive maxSpeed", () => {
     expect(
       shipSpeedFraction(
-        { ...PROTOTYPE, tuning: { ...PROTOTYPE.tuning, maxSpeed: 0 } },
+        {
+          ...PROTOTYPE,
+          tuning: { ...PROTOTYPE.tuning, physics: { ...PROTOTYPE.tuning.physics, maxSpeed: 0 } },
+        },
         { velocity: { x: 1, y: 0 } },
       ),
     ).toBe(0);

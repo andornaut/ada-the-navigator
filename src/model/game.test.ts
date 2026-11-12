@@ -427,7 +427,7 @@ it("keeps remaining whale debris aligned when an unknown encounter is placed ahe
   const debris = f.objects.filter((o) => o.id.startsWith("whale-debris:"));
   const offsets = debris.map((o) => ({ x: o.x - whale.x, y: o.y - whale.y }));
   f.player = { x: whale.x + PROTOTYPE.tuning.chunkSize * 4, y: whale.y };
-  f.velocity = { x: PROTOTYPE.tuning.maxSpeed, y: 0 };
+  f.velocity = { x: PROTOTYPE.tuning.physics.maxSpeed, y: 0 };
   const chunkSize = PROTOTYPE.tuning.chunkSize;
   f.freshChunk = `${Math.floor(f.player.x / chunkSize)},${Math.floor(f.player.y / chunkSize)}`;
   model.step(0.01, { ...idle, move: { x: 1, y: 0 } });

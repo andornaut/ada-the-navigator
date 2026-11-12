@@ -20,7 +20,7 @@ describe("ship physics data", () => {
         Object.entries(SHIP_PHYSICS).map(([ship, value]) => [
           ship,
           [
-            value.speedRatio,
+            value.maxSpeed,
             value.accelerationSeconds,
             value.brakingSeconds,
             value.turnSeconds,
@@ -29,14 +29,14 @@ describe("ship physics data", () => {
         ]),
       ),
     ).toEqual({
-      ada: [1, 0.36, 0.55, 0.22, 0.07],
-      capital: [0.2, 2.5, 3, 2, 0.5],
-      fighter: [0.8, 0.4, 0.5, 0.3, 0.15],
-      frigate: [0.4, 1.5, 2, 1.2, 0.4],
-      interceptor: [1.1, 0.9, 1.2, 0.6, 0.12],
+      ada: [160, 0.36, 0.55, 0.22, 0.07],
+      capital: [40, 2.5, 3, 2, 0.5],
+      fighter: [160, 0.4, 0.5, 0.3, 0.15],
+      frigate: [80, 1.5, 2, 1.2, 0.4],
+      interceptor: [220, 0.9, 1.2, 0.6, 0.12],
       platform: [0, 1, 1, 1, 0.3],
-      retaliator: [0.45, 1.2, 1.5, 0.9, 0.35],
-      swarm: [0.9, 0.2, 0.25, 0.12, 0.1],
+      retaliator: [90, 1.2, 1.5, 0.9, 0.35],
+      swarm: [180, 0.2, 0.25, 0.12, 0.1],
     });
   });
 

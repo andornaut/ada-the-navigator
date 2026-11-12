@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { ECONOMY } from "../data/economy.ts";
-import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
+import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { ORE_FIELDS } from "../data/galaxy-features.ts";
 import { ORE_FIELD_LAYOUTS, oreFieldLayout } from "../data/ore-field-layouts.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
@@ -176,14 +176,12 @@ describe("platform", () => {
     facing: { ...PLATFORM_FACING },
   });
   const context = (state: EnemyState, away: number): EnemyContext => ({
-    adaSpeed: 100,
     adaWidth: 20,
     dt: 1 / 60,
     initialPackSizes: {},
     peers: [state],
     player: { x: away, y: 0 },
     projectileSpeed: 100,
-    speedCapRatio: enemyEncounterTuning.speedCapRatio,
     targetable: true,
     visibility: "visible",
   });

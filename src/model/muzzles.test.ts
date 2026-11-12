@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import capitalFile from "../../public/art/enemies/capital-hardpoints.json";
 import frigateFile from "../../public/art/enemies/frigate-hardpoints.json";
-import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
+import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { ENEMY_DISPLAY_SCALE, MUZZLE_LAYOUTS } from "../data/enemy-muzzles.ts";
 import { aimIndex } from "../game/enemy-art.ts";
 import { ART_MANIFEST } from "../testing/public-art.ts";
@@ -28,14 +28,12 @@ const spawn = (archetype: "capital" | "fighter" | "frigate" | "retaliator"): Ene
     { x: 0, y: 0 },
   );
 const context = (state: EnemyState, player = { x: 300, y: 40 }): EnemyContext => ({
-  adaSpeed: 100,
   adaWidth: 20,
   dt: 1 / 60,
   initialPackSizes: {},
   peers: [state],
   player,
   projectileSpeed: 100,
-  speedCapRatio: enemyEncounterTuning.speedCapRatio,
   targetable: true,
   visibility: "visible",
 });

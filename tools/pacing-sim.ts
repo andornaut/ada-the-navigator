@@ -627,7 +627,7 @@ export function simulate(input: SimulationInput): RunResult {
   };
   const end = input.minutes * 60;
   const dt = 0.25;
-  const speed = tuning.maxSpeed * tuning.physics.speedRatio * behaviour.speedFraction;
+  const speed = tuning.physics.maxSpeed * behaviour.speedFraction;
   // Every pickup collects its margin past the drawn ship, approximated by the ship's circle,
   // once the tractor beam has drawn it in from its pull radius.
   const tractor =

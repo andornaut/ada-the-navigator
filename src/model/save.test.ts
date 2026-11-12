@@ -181,14 +181,12 @@ describe("combat save boundary", () => {
     const before = snapshot.flight.objects[0]!.enemy!;
     const after = resumed.flight.objects[0]!.enemy!;
     const context = {
-      adaSpeed: 200,
       adaWidth: 20,
       dt: 0.5,
       initialPackSizes: snapshot.flight.combat.initialPackSizes,
       peers: [before],
       player: { x: 50, y: -10 },
       projectileSpeed: 200,
-      speedCapRatio: 1.1,
       targetable: true,
       visibility: "visible" as const,
     };

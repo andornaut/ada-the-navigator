@@ -446,7 +446,6 @@ export const enemyEncounterTuning = {
   debris: { count: [3, 7], speed: [16, 50] },
   quietDistance: 1800,
   quietSeconds: 12,
-  speedCapRatio: 1.1,
 } as const;
 
 /** Difficulty by route position: perception reach, fire rate and encounter frequency multipliers. */

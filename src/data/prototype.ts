@@ -599,7 +599,6 @@ export const PROTOTYPE: PrototypeContent = {
       spawnWeights: { enemy: 0.2064, pickup: 0.0136, resource: 0.4, rock: 0.38 },
     },
     introFreshDistance: 10800,
-    maxSpeed: 200,
     minSpeedFraction: 0.04,
     miningMilestones: [12, 24, 36],
     physics: SHIP_PHYSICS.ada,

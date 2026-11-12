@@ -7,7 +7,7 @@ import type { GuidedCalf } from "./types.ts";
 
 const ship = {
   accelerationSeconds: PROTOTYPE.tuning.physics.accelerationSeconds,
-  maxSpeed: PROTOTYPE.tuning.maxSpeed,
+  maxSpeed: PROTOTYPE.tuning.physics.maxSpeed,
 };
 // Sunflower has no currents, so these steps have no drift.
 const step = (calf: GuidedCalf, player: { x: number; y: number }, seconds = 1 / 60) =>
@@ -35,7 +35,9 @@ describe("the guided calf", () => {
       step(calf, player);
       fastest = Math.max(fastest, Math.hypot(calf.velocity.x, calf.velocity.y));
     }
-    expect(fastest).toBeLessThanOrEqual(CALF.speedFraction * PROTOTYPE.tuning.maxSpeed + 1e-9);
+    expect(fastest).toBeLessThanOrEqual(
+      CALF.speedFraction * PROTOTYPE.tuning.physics.maxSpeed + 1e-9,
+    );
     expect(player.x - calf.x).toBeGreaterThanOrEqual(CALF.stop - 1);
     expect(player.x - calf.x).toBeLessThanOrEqual(CALF.stop + 1);
   });

@@ -20,7 +20,7 @@ import { CHEAT_COPY } from "../data/cheat-copy.ts";
 import { destinationDrawn } from "../data/destinations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { EDGE_MARKER_GLYPHS, edgeMarkerInset } from "../data/edge-markers.ts";
-import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
+import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { BUILT, GALAXY_ID, ROUTE } from "../data/galaxies.ts";
 import { CURRENTS } from "../data/galaxy-features.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
@@ -2960,12 +2960,7 @@ export class PrototypeScene extends Scene {
         sprite.setTint(0xffffff).setTintMode(TintModes.FILL);
       }
     });
-    const speed = enemySpeedFraction(
-      enemyCatalog[enemy.archetype],
-      PROTOTYPE.tuning.maxSpeed,
-      enemyEncounterTuning.speedCapRatio,
-      enemy,
-    );
+    const speed = enemySpeedFraction(enemyCatalog[enemy.archetype], enemy);
     // A light field swaps in Art's dark enemy jet layers.
     const jets =
       this.light && art.jets

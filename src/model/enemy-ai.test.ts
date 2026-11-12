@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { type EnemyArchetype, enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
-import { SHARED_SHIP_PHYSICS } from "../data/ship-physics.ts";
+import { type EnemyArchetype, enemyCatalog } from "../data/enemy-catalog.ts";
+import { SHARED_SHIP_PHYSICS, SHIP_PHYSICS } from "../data/ship-physics.ts";
 import {
   createEnemy,
   damageEnemy,
@@ -22,14 +22,12 @@ const spawn = (archetype: EnemyArchetype): EnemyState =>
     { x: 0, y: 0 },
   );
 const observation = (state: EnemyState): EnemyContext => ({
-  adaSpeed: 100,
   adaWidth: 20,
   dt: 1 / 60,
   initialPackSizes: {},
   peers: [state],
   player: { x: 300, y: 0 },
   projectileSpeed: 100,
-  speedCapRatio: enemyEncounterTuning.speedCapRatio,
   targetable: true,
   visibility: "visible",
 });
@@ -45,7 +43,7 @@ describe("enemy rules", () => {
       // Keep the target in sight and ahead so distance loss cannot end this chase.
       context.player = { x: state.position.x + 400, y: 0 };
       const result = stepEnemy(definition, context, state);
-      reachedFasterSpeed ||= result.velocity.x > context.adaSpeed;
+      reachedFasterSpeed ||= result.velocity.x > SHIP_PHYSICS.ada.maxSpeed;
       state = {
         ...result.state,
         position: { x: state.position.x + result.velocity.x * context.dt, y: 0 },
@@ -176,7 +174,7 @@ describe("enemy rules", () => {
   it("fires at the base enemy projectile speed times each profile's ratio, not Ada's speed", () => {
     const definition = enemyCatalog.capital;
     const state = spawn("capital");
-    const context = { ...observation(state), adaSpeed: 37, projectileSpeed: 200 };
+    const context = { ...observation(state), projectileSpeed: 200 };
     const ratios = new Map(
       definition.hardpoints.flatMap((part) =>
         part.kind === "weapon" ? [[part.id, part.fire.projectileSpeedRatio] as const] : [],
@@ -310,20 +308,16 @@ describe("enemy rules", () => {
     expect(debris.position).toEqual({ x: 10, y: 20 });
   });
 
-  it("caps saved momentum and allows only the selected archetype to exceed Ada's speed", () => {
-    const state = { ...spawn("interceptor"), velocity: { x: 500, y: 500 } };
-    const capped = stepEnemy(
-      enemyCatalog.interceptor,
-      { ...observation(state), speedCapRatio: 1 },
-      state,
-    );
-    expect(Math.hypot(capped.velocity.x, capped.velocity.y)).toBeLessThanOrEqual(100.000001);
-    const allowed = stepEnemy(enemyCatalog.interceptor, observation(state), state);
-    expect(Math.hypot(allowed.velocity.x, allowed.velocity.y)).toBeCloseTo(110);
-    const fighter = { ...spawn("fighter"), velocity: { x: 500, y: 500 } };
-    const ordinary = stepEnemy(enemyCatalog.fighter, observation(fighter), fighter);
-    expect(Math.hypot(ordinary.velocity.x, ordinary.velocity.y)).toBeCloseTo(80);
-  });
+  it.each(["interceptor", "fighter"] as const)(
+    "caps a %s's saved momentum at its own maximum speed",
+    (archetype) => {
+      const state = { ...spawn(archetype), velocity: { x: 500, y: 500 } };
+      const result = stepEnemy(enemyCatalog[archetype], observation(state), state);
+      expect(Math.hypot(result.velocity.x, result.velocity.y)).toBeCloseTo(
+        enemyCatalog[archetype].physics.maxSpeed,
+      );
+    },
+  );
 });
 
 it("counts dormant pack survivors for morale without exposing hidden positions to steering or fire", () => {
@@ -351,7 +345,7 @@ it("counts dormant pack survivors for morale without exposing hidden positions t
 describe("enemy ship physics and hull rotation", () => {
   // The fixed platform never moves; its own tests cover it.
   const archetypes = (Object.keys(enemyCatalog) as EnemyArchetype[]).filter(
-    (archetype) => enemyCatalog[archetype].physics.speedRatio > 0,
+    (archetype) => enemyCatalog[archetype].physics.maxSpeed > 0,
   );
   const degreesBetween = (a: { x: number; y: number }, b: { x: number; y: number }) =>
     (Math.abs(Math.atan2(a.x * b.y - a.y * b.x, a.x * b.x + a.y * b.y)) * 180) / Math.PI;
@@ -425,7 +419,7 @@ describe("enemy ship physics and hull rotation", () => {
       velocity: { x: 0, y: 10 },
     };
     const context = { ...observation(state), visibility: "unknown" as const };
-    const speed = context.adaSpeed * Math.min(1.1, definition.physics.speedRatio);
+    const speed = definition.physics.maxSpeed;
     const expected = stepShipMotion(
       definition.physics,
       context.dt,
@@ -482,7 +476,7 @@ describe("enemy ship physics and hull rotation", () => {
 
   it("keeps a moving hull pointed along its velocity through a sharp turn", () => {
     const definition = enemyCatalog.frigate;
-    const speed = 100 * definition.physics.speedRatio;
+    const speed = definition.physics.maxSpeed;
     let state: EnemyState = {
       ...spawn("frigate"),
       facing: { x: 0, y: -1 },
@@ -504,7 +498,7 @@ describe("enemy ship physics and hull rotation", () => {
 
   it("turns the hull by at most about 25 degrees in one slice when a collision redirects it", () => {
     const definition = enemyCatalog.fighter;
-    const speed = 100 * definition.physics.speedRatio;
+    const speed = definition.physics.maxSpeed;
     const diagonal = { x: Math.SQRT1_2, y: -Math.SQRT1_2 };
     // Moving north-east into a wall that the adapter resolves by zeroing x velocity.
     const sliding: EnemyState = {
@@ -529,7 +523,7 @@ describe("enemy ship physics and hull rotation", () => {
 
   it("brings a heavy archetype to rest below 1% of its maximum speed without creeping", () => {
     const definition = enemyCatalog.capital;
-    const maxSpeed = 100 * definition.physics.speedRatio;
+    const maxSpeed = definition.physics.maxSpeed;
     let state: EnemyState = { ...spawn("capital"), velocity: { x: maxSpeed, y: 0 } };
     const context = { ...observation(state), visibility: "unknown" as const };
     let elapsed = 0;
@@ -627,17 +621,17 @@ describe("enemy ship physics and hull rotation", () => {
     );
   });
 
-  it("reports speed as a fraction of the archetype's capped maximum", () => {
-    const state = { ...spawn("interceptor"), velocity: { x: 0, y: 55 } };
-    expect(enemySpeedFraction(enemyCatalog.interceptor, 100, 1.1, state)).toBeCloseTo(0.5, 12);
-    expect(enemySpeedFraction(enemyCatalog.interceptor, 100, 1, state)).toBeCloseTo(0.55, 12);
-    expect(enemySpeedFraction(enemyCatalog.capital, 100, 1.1, state)).toBe(1);
-    expect(enemySpeedFraction(enemyCatalog.fighter, 0, 1.1, state)).toBe(0);
+  it("reports speed as a fraction of the archetype's maximum", () => {
+    const half = enemyCatalog.interceptor.physics.maxSpeed / 2;
+    const state = { ...spawn("interceptor"), velocity: { x: 0, y: half } };
+    expect(enemySpeedFraction(enemyCatalog.interceptor, state)).toBeCloseTo(0.5, 12);
+    expect(enemySpeedFraction(enemyCatalog.capital, state)).toBe(1);
+    expect(enemySpeedFraction(enemyCatalog.platform, state)).toBe(0);
   });
 
   it.each(archetypes)("returns %s home through its momentum and stops there", (archetype) => {
     const definition = enemyCatalog[archetype];
-    const speed = 200 * Math.min(1.1, definition.physics.speedRatio);
+    const speed = definition.physics.maxSpeed;
     let state: EnemyState = {
       ...spawn(archetype),
       heading: { x: 0, y: 1 },
@@ -645,7 +639,7 @@ describe("enemy ship physics and hull rotation", () => {
       returning: true,
       velocity: { x: 0, y: speed },
     };
-    const context = { ...observation(state), adaSpeed: 200, visibility: "unknown" as const };
+    const context = { ...observation(state), visibility: "unknown" as const };
     let elapsed = 0;
     while (elapsed < 150 && Math.hypot(state.velocity.x, state.velocity.y) > 0) {
       const result = stepEnemy(definition, context, state);
