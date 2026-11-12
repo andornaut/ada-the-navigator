@@ -1,6 +1,7 @@
 // Storybook backgrounds: isometric Earth dioramas with treatment d, on the shared 960 by 540
-// logical canvas at 2x, Ada's room overnight with its sleep scene overlays, and Ada's pixel
-// sprites (art/tools/ada-sprites.ts) placed over their backgrounds.
+// logical canvas at 2x, Ada's room overnight with its sleep scene overlays, and the pixel sprites
+// of Ada (art/tools/ada-sprites.ts) and her family (art/tools/family-sprites.ts) placed over their
+// backgrounds.
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -14,6 +15,15 @@ import {
   WAKING_CENTRE,
   WAKING_HEIGHT,
 } from "./ada-sprites.ts";
+import {
+  type Cat,
+  catCurled,
+  catSitting,
+  dadAtDinner,
+  dadAtDoor,
+  momAtDoor,
+  type Sprite,
+} from "./family-sprites.ts";
 
 import {
   box,
@@ -450,6 +460,10 @@ const DESIGN_PER_LOGICAL = DESIGN.height / 360;
 // clear the strip above a story panel at Gameplay's longest page.
 const NEEDLE_LIFT = 7;
 
+// The doorway in the left wall of Ada's room, beside the bed's head, in model units: Dad looks
+// in through it on Needle's practice page.
+const DOORWAY = { y0: 4.05, y1: 6.25, z1: 6.0 };
+
 // The recorder lying on the desk, mouthpiece to the left, along screen-horizontal (x - y).
 function recorder(
   s: Scene,
@@ -507,10 +521,17 @@ function room(
   }
   s.solid(box(-0.6, nx, -0.6, 0, 0, wall), P.wall!, 1, 0, right);
   s.solid(box(-0.6, 0, 0, ny, 0, wall), P.wall!, 1, 0.5);
-  // Shelf of collected rocks on the left wall.
-  s.solid(box(0, 0.9, 2.2, 6.2, 4.2, 4.4), P.shelf!, 2, 2);
+  // The doorway beside the bed's head, open onto the landing: its frame in the desk's wood, the
+  // landing in the lamp shade's colour (lit by day, dark at night), its floor in drawer wood.
+  const { y0, y1, z1 } = DOORWAY;
+  s.solid(box(-0.02, 0.012, y0 - 0.22, y1 + 0.22, 0, z1 + 0.22), P.desk!, 1, 0.6);
+  s.solid(box(-0.03, 0.02, y0, y1, 0, z1), P.shade!, 1, 0.61, [
+    [onX(0.021, y0, y1, 0, 0.8), P.drawer!],
+  ]);
+  // Shelf of collected rocks on the left wall, between the corner and the doorway.
+  s.solid(box(0, 0.9, 1.0, 5.0, 4.2, 4.4), P.shelf!, 2, 2);
   ["pebble1", "pebble2", "pebble3", "pebble1"].forEach((c, i) => {
-    s.solid(frustum(0.45, 2.8 + i * 0.95, 0.32, 0.22, 6, 4.4, 4.75), P[c]!, 2, 2.1 + i * 0.01);
+    s.solid(frustum(0.45, 1.6 + i * 0.95, 0.32, 0.22, 6, 4.4, 4.75), P[c]!, 2, 2.1 + i * 0.01);
   });
   // Bed along the left wall.
   s.solid(box(0, 3.6, 6.6, 7.0, 0, 2.8), P.bed!, 2, 6.8);
@@ -1111,6 +1132,225 @@ function frontDoor(P: Palette): Scene {
   return s;
 }
 
+/* The kitchen at home: Cartwheel's dinner, Dad at the table */
+
+const KITCHEN: Palette = {
+  back: ["#e9dccb", "#e1d2c2"],
+  floor: "#e6c69c",
+  tile: "#d9b487",
+  slab: "#bc9a72",
+  wall: "#f6e2b8",
+  trim: "#fbf1dc",
+  splash: "#e3efe9",
+  cabinet: "#93c2b0",
+  cabdoor: "#a9d2c2",
+  knob: "#f2cf74",
+  counter: "#d8b086",
+  oven: "#6f7f9a",
+  hob: "#4a5470",
+  pot: "#d0605a",
+  lid: "#e88a7c",
+  sink: "#c7d0dc",
+  tap: "#9aa6b4",
+  glass: "#b8c6ec",
+  dusk: "#f3c7a0",
+  curtain: "#f1ad7f",
+  fridge: "#f4efe6",
+  handle: "#b8c2d2",
+  drawing: "#fee761",
+  drawing2: "#53d1c2",
+  shelf: "#c99a6a",
+  jar1: "#f2cf74",
+  jar2: "#e7a08c",
+  jar3: "#9cc98b",
+  clock: "#fbf7ee",
+  hands: "#5a6988",
+  cloth: "#ef9b84",
+  hem: "#f7c6b4",
+  plate: "#fbf7ee",
+  rim: "#d9dfe8",
+  pasta: "#f2cf74",
+  sauce: "#d0605a",
+  salad: "#8cc47a",
+  bowl: "#8fb2dc",
+  jug: "#a9c8ec",
+  cup: "#f6d06e",
+  chair: "#c48a5a",
+  seat: "#d9a06e",
+  catbowl: "#b48ad0",
+  lamp: "#ffe2a0",
+};
+
+// The round table near the back corner, its top's far and near points, and Dad's seat behind it.
+const DINNER_TABLE = { cx: 4.3, cy: 4.3, r: 1.75, z: 2.4 };
+const DINNER_FAR: Point = [
+  DINNER_TABLE.cx - DINNER_TABLE.r * Math.SQRT1_2,
+  DINNER_TABLE.cy - DINNER_TABLE.r * Math.SQRT1_2,
+  DINNER_TABLE.z,
+];
+const DINNER_NEAR: Point = [
+  DINNER_TABLE.cx + DINNER_TABLE.r * Math.SQRT1_2,
+  DINNER_TABLE.cy + DINNER_TABLE.r * Math.SQRT1_2,
+  DINNER_TABLE.z,
+];
+const DAD_SEAT: Point = [
+  DINNER_TABLE.cx - 2.35 * Math.SQRT1_2,
+  DINNER_TABLE.cy - 2.35 * Math.SQRT1_2,
+  DINNER_TABLE.z,
+];
+// The kitchen rises 88 rows, so the table's near edge ends on row 293 and the table and Dad clear
+// the strip above a story panel at Gameplay's longest page.
+const KITCHEN_LIFT = 88;
+// Dad's chair behind the table, the table and everything on it, in painter's keys: Dad's sprite
+// sits between the two.
+const KITCHEN_DAD_KEY = 5.5;
+
+function kitchenChair(
+  s: Scene,
+  P: Palette,
+  x: number,
+  y: number,
+  back: "-x" | "+x" | "+y",
+  key: number,
+) {
+  s.solid(box(x - 0.6, x + 0.6, y - 0.6, y + 0.6, 1.25, 1.45), P.seat!, 2, key);
+  for (const [dx, dy] of [
+    [-0.5, -0.5],
+    [0.38, -0.5],
+    [-0.5, 0.38],
+    [0.38, 0.38],
+  ] as const) {
+    s.solid(box(x + dx, x + dx + 0.12, y + dy, y + dy + 0.12, 0, 1.25), P.chair!, 2, key - 0.01);
+  }
+  const panel =
+    back === "-x"
+      ? box(x - 0.6, x - 0.45, y - 0.6, y + 0.6, 1.45, 3.1)
+      : back === "+x"
+        ? box(x + 0.45, x + 0.6, y - 0.6, y + 0.6, 1.45, 3.1)
+        : box(x - 0.6, x + 0.6, y + 0.45, y + 0.6, 1.45, 3.1);
+  s.solid(panel, P.chair!, 2, back === "-x" ? key - 0.02 : key + 0.02);
+}
+
+function plate(s: Scene, P: Palette, x: number, y: number, key: number, food = true) {
+  const z = DINNER_TABLE.z;
+  s.solid(frustum(x, y, 0.42, 0.5, 12, z, z + 0.06), P.plate!, 2, key, [
+    [flat(octagon(x, y, 0.36, 0, 12), z + 0.061), P.rim!],
+    [flat(octagon(x, y, 0.33, 0, 12), z + 0.062), P.plate!],
+    ...(food
+      ? ([
+          [flat(octagon(x, y, 0.22, 0, 10, 0.2, 0.8), z + 0.063), P.pasta!],
+          [flat(octagon(x + 0.03, y - 0.02, 0.1, 0, 8), z + 0.064), P.sauce!],
+        ] as Decal[])
+      : []),
+  ]);
+}
+
+// A disc on a wall facing +x (the clock).
+const discOnX = (x: number, cy: number, cz: number, r: number, n = 14): Face =>
+  Array.from({ length: n }, (_, i): Point => {
+    const a = (2 * Math.PI * i) / n;
+    return [x, cy + r * Math.cos(a), cz + r * Math.sin(a)];
+  });
+
+// A cozy kitchen: sage cabinets, the hob with a pot on it and the sink under a dusk window along
+// the right wall; a round clock, a shelf of jars and the fridge with Ada's drawing on the left;
+// checked tiles, two cat bowls, and supper on a cloth-covered round table under a warm lamp glow.
+function kitchen(P: Palette): Scene {
+  const [nx, ny, wall] = [16, 12, 7];
+  const s = fitted(nx, ny, wall, 12 - KITCHEN_LIFT * DESIGN_PER_LOGICAL);
+  s.solid(box(0, nx, 0, ny, -0.8, 0), P.slab!, 0, 0);
+  const tiles: Decal[] = [];
+  for (let i = 0; i < nx; i++) {
+    for (let j = 0; j < ny; j++) {
+      if ((i + j) % 2 === 0) {
+        tiles.push([onZ(0.001, i + 0.03, i + 0.97, j + 0.03, j + 0.97), P.tile!]);
+      }
+    }
+  }
+  s.solid([onZ(0, 0, nx, 0, ny)], P.floor!, 0, 1, tiles);
+  s.solid(box(-0.6, nx, -0.6, 0, 0, wall), P.wall!, 1, 0, [
+    [onY(0.001, 6.8, 13.9, 2.8, 3.9), P.splash!],
+    [onY(0.002, 9.9, 13.3, 3.9, 6.0), P.trim!],
+    [onY(0.003, 10.15, 13.05, 4.15, 5.75), P.glass!],
+    [onY(0.0035, 10.15, 13.05, 4.15, 4.7), P.dusk!],
+    [onY(0.004, 11.55, 11.65, 4.15, 5.75), P.trim!],
+    [onY(0.005, 9.5, 10.2, 3.9, 6.2), P.curtain!],
+    [onY(0.005, 13.0, 13.7, 3.9, 6.2), P.curtain!],
+  ]);
+  s.solid(box(-0.6, 0, 0, ny, 0, wall), P.wall!, 1, 0.5, [
+    [discOnX(0.001, 6.1, 5.2, 0.62), P.shelf!],
+    [discOnX(0.002, 6.1, 5.2, 0.5), P.clock!],
+    [onX(0.003, 6.06, 6.14, 5.2, 5.58), P.hands!],
+    [onX(0.003, 6.06, 6.4, 5.16, 5.24), P.hands!],
+  ]);
+  s.solid(box(0, 0.8, 1.2, 4.4, 4.5, 4.7), P.shelf!, 2, 1.5);
+  ["jar1", "jar2", "jar3"].forEach((c, i) => {
+    s.solid(frustum(0.4, 1.8 + i * 1.0, 0.3, 0.26, 8, 4.7, 5.3), P[c]!, 2, 1.6 + i * 0.01);
+    s.solid(frustum(0.4, 1.8 + i * 1.0, 0.3, 0.3, 8, 5.3, 5.42), P.shelf!, 2, 1.65 + i * 0.01);
+  });
+  s.solid(box(0, 2.3, 8.8, 11.2, 0, 5.7), P.fridge!, 2, 10.5, [
+    [onX(2.301, 9.0, 11.0, 3.65, 3.72), P.handle!],
+    [onX(2.302, 10.5, 10.62, 2.2, 3.4), P.handle!],
+    [onX(2.302, 10.5, 10.62, 4.0, 5.2), P.handle!],
+    [onX(2.303, 9.3, 10.2, 4.1, 5.1), P.drawing!],
+    [onX(2.304, 9.5, 9.8, 4.4, 4.7), P.drawing2!],
+    [onY(11.201, 0.2, 2.1, 0.2, 5.5), P.fridge!],
+  ]);
+  // The counter run: cabinets, the oven and hob, the sink and its tap, a pot on the hob.
+  const fronts: Decal[] = [];
+  for (const [x0, x1] of [
+    [7.0, 8.4],
+    [10.6, 12.0],
+    [12.2, 13.6],
+  ] as const) {
+    fronts.push([onY(2.201, x0 + 0.12, x1 - 0.12, 0.25, 2.2), P.cabdoor!]);
+    fronts.push([onY(2.202, x1 - 0.42, x1 - 0.3, 1.7, 2.0), P.knob!]);
+  }
+  fronts.push([onY(2.201, 8.6, 10.4, 0.25, 1.9), P.oven!]);
+  fronts.push([onY(2.202, 8.8, 10.2, 1.95, 2.05), P.handle!]);
+  s.solid(box(6.8, 13.8, 0, 2.2, 0, 2.5), P.cabinet!, 2, 4.0, fronts);
+  s.solid(box(6.7, 13.9, 0, 2.35, 2.5, 2.75), P.counter!, 2, 4.1, [
+    [flat(octagon(9.0, 1.1, 0.42, 0, 10), 2.751), P.hob!],
+    [flat(octagon(10.0, 1.4, 0.36, 0, 10), 2.751), P.hob!],
+    [onZ(2.751, 11.0, 13.0, 0.4, 1.8), P.sink!],
+  ]);
+  s.solid(box(11.85, 12.05, 0.2, 0.4, 2.75, 3.5), P.tap!, 2, 4.2);
+  s.solid(box(11.85, 12.05, 0.2, 0.95, 3.4, 3.55), P.tap!, 2, 4.21);
+  s.solid(frustum(9.0, 1.1, 0.48, 0.48, 10, 2.75, 3.35), P.pot!, 2, 4.3);
+  s.solid(frustum(9.0, 1.1, 0.5, 0.22, 10, 3.35, 3.55), P.lid!, 2, 4.31);
+  s.solid(box(6.8, 9.4, 0, 1.1, 4.3, 6.2), P.cabinet!, 2, 3.0, [
+    [onY(1.101, 6.95, 8.05, 4.45, 6.05), P.cabdoor!],
+    [onY(1.101, 8.15, 9.25, 4.45, 6.05), P.cabdoor!],
+  ]);
+  for (const [x, y] of [
+    [14.6, 2.9],
+    [15.4, 3.5],
+  ] as const) {
+    s.solid(frustum(x, y, 0.3, 0.38, 10, 0, 0.22), P.catbowl!, 2, 4.5);
+  }
+  // Dad's chair (key 5.0) before his sprite's slot, the table and supper after it.
+  kitchenChair(s, P, DAD_SEAT[0] - 0.15, DAD_SEAT[1] - 0.15, "-x", 5.0);
+  const { cx, cy, r, z } = DINNER_TABLE;
+  s.solid(frustum(cx, cy, r * 1.12, r * 1.02, 16, 0.9, z), P.cloth!, 2, 6.0);
+  s.solid(frustum(cx, cy, r * 1.02, r * 1.02, 16, z - 0.02, z), P.cloth!, 2, 6.01, [
+    [flat(octagon(cx, cy, r * 0.82, 0, 16), z + 0.001), P.hem!],
+    [flat(octagon(cx, cy, r * 0.78, 0, 16), z + 0.002), P.cloth!],
+  ]);
+  plate(s, P, DINNER_FAR[0] + 0.55, DINNER_FAR[1] + 0.55, 6.1);
+  plate(s, P, cx - 0.1, cy + 1.05, 6.11);
+  plate(s, P, cx + 1.05, cy - 0.1, 6.115, false);
+  s.solid(frustum(cx + 0.2, cy + 0.2, 0.35, 0.55, 12, z, z + 0.35), P.bowl!, 2, 6.12, [
+    [flat(octagon(cx + 0.2, cy + 0.2, 0.46, 0, 12, 0.3, 1), z + 0.351), P.salad!],
+  ]);
+  s.solid(frustum(cx + 0.9, cy - 0.85, 0.22, 0.18, 10, z, z + 0.7), P.jug!, 2, 6.13);
+  s.solid(frustum(cx - 0.95, cy + 0.35, 0.13, 0.15, 8, z, z + 0.3), P.cup!, 2, 6.14);
+  s.solid(frustum(cx + 0.4, cy + 1.15, 0.13, 0.15, 8, z, z + 0.3), P.cup!, 2, 6.15);
+  kitchenChair(s, P, cx, cy + 2.35, "+y", 7.0);
+  kitchenChair(s, P, cx + 2.35, cy, "+x", 7.1);
+  s.glows.push({ at: [cx, cy, 5.6], colour: rgb(P.lamp!), peak: 70, radius: 3.4 });
+  return s;
+}
+
 /* Park with the dig spot */
 
 const PARK: Palette = {
@@ -1454,6 +1694,34 @@ const DESK_ROCK = band(255, 300);
 // Ada's pixel sprites (art/tools/ada-sprites.ts), each placed over one background.
 const PLAYING_ID = "story-ada-playing";
 const WAKING_ID = "story-ada-waking";
+// The family's pixel sprites (art/tools/family-sprites.ts).
+const MOM_DOOR_ID = "story-mom-door";
+const DAD_DOOR_ID = "story-dad-door";
+const DAD_DINNER_ID = "story-dad-dinner";
+const CAT_BED_IDS = { archie: "story-archie-bed", kiwi: "story-kiwi-bed" } as const;
+const CAT_CURLED_IDS = { archie: "story-archie-curled", kiwi: "story-kiwi-curled" } as const;
+
+// Story figure pages: each composite draws its base background's image with the page's sprites
+// over it, and is placed as its base in the story run (art/storybook.md "Story figures").
+interface Composite {
+  id: string;
+  base: string;
+  overlays: readonly string[];
+}
+const COMPOSITES: readonly Composite[] = [
+  { id: "story-front-door-mom", base: "story-front-door", overlays: [MOM_DOOR_ID] },
+  { id: "story-ada-room-recorder-dad", base: "story-ada-room-recorder", overlays: [DAD_DOOR_ID] },
+  {
+    id: "story-ada-room-unpolished-cats",
+    base: "story-ada-room-unpolished",
+    overlays: [CAT_BED_IDS.archie, CAT_BED_IDS.kiwi],
+  },
+  {
+    id: "story-ada-room-morning-cats",
+    base: "story-ada-room-morning",
+    overlays: [WAKING_ID, CAT_CURLED_IDS.archie, CAT_CURLED_IDS.kiwi],
+  },
+];
 
 // Scene order follows the story; the overnight recharge follows the chapters' scenes.
 export const BACKGROUNDS: readonly Background[] = [
@@ -1480,6 +1748,14 @@ export const BACKGROUNDS: readonly Background[] = [
   { id: "story-schoolyard", palette: YARD, build: schoolyard, subject: band(168, 278) },
   // The notice board beside the near door.
   { id: "story-school-hallway", palette: HALL, build: hallway, subject: band(184, 290) },
+  // Cartwheel's dinner: Dad at the table, his head (row 146) to the table's near edge (293).
+  {
+    id: "story-kitchen",
+    palette: KITCHEN,
+    build: kitchen,
+    subject: band(146, 293),
+    overlays: [DAD_DINNER_ID],
+  },
   // The coats and Penny's lead on their hooks by the door.
   { id: "story-front-door", palette: DOOR, build: frontDoor, subject: band(175, 280) },
   // Needle: the recorder and the rock on Ada's desk.
@@ -1612,6 +1888,153 @@ const spriteEntry = (
   sampling: "nearest",
 });
 
+/* The family's pixel sprites over their backgrounds */
+
+interface Placed {
+  image: RgbaImage;
+  at: { x: number; y: number };
+  scale: number;
+}
+
+// Top-left, in whole logical px, for a sprite at `scale` whose foot centre (its centre line, on
+// its bottom row) stands on the canvas point `p`.
+const standing = ({ image, centre }: Sprite, p: { x: number; y: number }, scale = 2) => ({
+  x: Math.round(p.x - centre * scale),
+  y: Math.round(p.y) - image.height * scale,
+});
+
+// The vertical quad facing the viewer whose projection is the canvas rect (logical px) of a
+// sprite, through the model point `through`: a stand-in for the sprite in the painter's order.
+function billboard(scene: Scene, through: Point, { image, at, scale }: Placed): Face {
+  const c = canvasAt(scene, through);
+  const unit = 1 / (scene.k * (360 / DESIGN.height));
+  const u: Point = [1 / (2 * R3), -1 / (2 * R3), 0];
+  const v: Point = [1 / 3, 1 / 3, -2 / 3];
+  const p = (sx: number, sy: number): Point => {
+    const [a, b] = [(sx - c.x) * unit, (sy - c.y) * unit];
+    return [0, 1, 2].map((i) => through[i]! + a * u[i]! + b * v[i]!) as unknown as Point;
+  };
+  const [x0, y0] = [at.x, at.y];
+  const [x1, y1] = [at.x + image.width * scale, at.y + image.height * scale];
+  return [p(x0, y0), p(x1, y0), p(x1, y1), p(x0, y1)];
+}
+
+const STAND_IN = "#ff00ff";
+
+// The sprite less the px a scene's nearer solids hide: the scene renders with a stand-in quad in
+// the sprite's painter slot (`key`), and a sprite px stays where the stand-in shows over at
+// least half its canvas block. `keep` px (the seated Dad's arms on the table) always stay.
+function occluded(
+  scene: Scene,
+  back: Palette["back"],
+  through: Point,
+  key: number,
+  sprite: Placed,
+  keep?: RgbaImage,
+) {
+  const quad = billboard(scene, through, sprite);
+  scene.solid([quad], STAND_IN, 2, key, [[quad, STAND_IN]]);
+  scene.glows.length = 0;
+  scene.lights.length = 0;
+  const mask = render(CANVAS, back, scene);
+  const { image, at, scale } = sprite;
+  const out = blankImage(image.width, image.height);
+  const d = CANVAS.density * scale;
+  for (let sy = 0; sy < image.height; sy++) {
+    for (let sx = 0; sx < image.width; sx++) {
+      const i = (sy * image.width + sx) * 4;
+      if (image.data[i + 3] === 0) continue;
+      let shown = 0;
+      for (let y = 0; y < d; y++) {
+        for (let x = 0; x < d; x++) {
+          const j =
+            (((at.y + sy * scale) * CANVAS.density + y) * mask.width +
+              (at.x + sx * scale) * CANVAS.density +
+              x) *
+            4;
+          if (mask.data[j]! > 200 && mask.data[j + 1]! < 80 && mask.data[j + 2]! > 200) shown++;
+        }
+      }
+      if (shown * 2 >= d * d || (keep && keep.data[i + 3]! > 0)) {
+        out.data.set(image.data.subarray(i, i + 4), i);
+      }
+    }
+  }
+  return { ...sprite, image: out };
+}
+
+// Mom beside the front door, Dad in the doorway of Ada's room (behind the bed's headboard,
+// painter's key 6.8) and at the kitchen table (cut at its far edge, his forearms on it), and the
+// cats on the bed and curled at Ada's feet: all at scale 2, each scene's furniture scale.
+const MOM_FEET: Point = [1.25, 4.25, 0];
+const DAD_DOOR_FEET: Point = [0.4, (DOORWAY.y0 + DOORWAY.y1) / 2, 0];
+// The table's far edge meets the seated sprite on this row; his forearms rest in front of it.
+const DAD_CUT_ROW = 39;
+const CAT_BED: Record<Cat, Point> = { archie: [0.95, 9.85, 1.8], kiwi: [2.7, 9.0, 1.8] };
+const CAT_FEET: Record<Cat, Point> = { archie: [3.0, 8.75, 1.8], kiwi: [1.95, 9.25, 2.25] };
+
+function familySprites(): Record<string, Placed> {
+  const placed: Record<string, Placed> = {};
+  const mom = momAtDoor();
+  placed[MOM_DOOR_ID] = {
+    image: mom.image,
+    at: standing(mom, canvasAt(frontDoor(DOOR), MOM_FEET)),
+    scale: 2,
+  };
+  const recorderRoom = () => room(ROOM, { glow: glowAmount(0), lift: NEEDLE_LIFT, recorder: true });
+  const dadDoor = dadAtDoor();
+  placed[DAD_DOOR_ID] = occluded(recorderRoom(), ROOM.back, DAD_DOOR_FEET, 6.7, {
+    image: dadDoor.image,
+    at: standing(dadDoor, canvasAt(recorderRoom(), DAD_DOOR_FEET)),
+    scale: 2,
+  });
+  const dinner = dadAtDinner();
+  const seat = canvasAt(kitchen(KITCHEN), DAD_SEAT);
+  const far = canvasAt(kitchen(KITCHEN), DINNER_FAR);
+  const near = canvasAt(kitchen(KITCHEN), DINNER_NEAR);
+  const dinnerAt = {
+    x: Math.round(seat.x - dinner.figure.centre * 2),
+    y: Math.round(far.y) - DAD_CUT_ROW * 2,
+  };
+  const kitchenBand = subjectOf("story-kitchen");
+  if (dinnerAt.y !== kitchenBand.top || Math.ceil(near.y) !== kitchenBand.bottom) {
+    throw new Error(`story-kitchen's band is ${dinnerAt.y}..${Math.ceil(near.y)}`);
+  }
+  placed[DAD_DINNER_ID] = occluded(
+    kitchen(KITCHEN),
+    KITCHEN.back,
+    DAD_SEAT,
+    KITCHEN_DAD_KEY,
+    { image: dinner.figure.image, at: dinnerAt, scale: 2 },
+    dinner.arms,
+  );
+  const bedroom = room(ROOM);
+  for (const cat of ["archie", "kiwi"] as const) {
+    const sitting = catSitting(cat);
+    placed[CAT_BED_IDS[cat]] = {
+      image: sitting.image,
+      at: standing(sitting, canvasAt(bedroom, CAT_BED[cat])),
+      scale: 2,
+    };
+    const curled = catCurled(cat);
+    placed[CAT_CURLED_IDS[cat]] = {
+      image: curled.image,
+      at: standing(curled, canvasAt(bedroom, CAT_FEET[cat])),
+      scale: 2,
+    };
+  }
+  return placed;
+}
+
+// A story figure page's background: its base's image, subject band and run placement (`base`),
+// with the page's sprites drawn over it.
+const compositeEntry = ({ id, base, overlays }: Composite) => ({
+  ...entry(id, subjectOf(base)),
+  path: storyPath(base),
+  base,
+  overlays,
+});
+
 /* Overnight overlays: the sleep scene is the night background with Ada and Penny over it, and
    the rock's breath is a glow patch over that */
 
@@ -1687,6 +2110,7 @@ const overlayEntry = (id: string, { at, image }: Overlay) => ({
 const sleepEntry = () => ({
   ...entry(SLEEP, subjectOf("story-ada-room-night")),
   path: storyPath("story-ada-room-night"),
+  base: "story-ada-room-night",
   overlays: [SLEEP_FIGURES],
 });
 
@@ -1757,12 +2181,27 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const blanket = blanketOf(
     morningImage ?? decodePng(readFileSync(file("story-ada-room-morning"))),
   );
-  const sprites = { [PLAYING_ID]: playingSprite(), [WAKING_ID]: wakingSprite(blanket) };
-  for (const [id, image] of Object.entries(sprites)) writePng(file(id), image);
-  const spriteOf = (id: string) =>
-    (overlaysOf(id) ?? []).map((sprite) =>
-      spriteEntry(sprite, sprites[sprite]!, places[sprite as keyof typeof places]),
-    );
+  // The family's sprites rebuild every run too, with their placements.
+  const family = familySprites();
+  const placedSprites: Record<string, Placed> = {
+    [PLAYING_ID]: { image: playingSprite(), ...places[PLAYING_ID] },
+    [WAKING_ID]: { image: wakingSprite(blanket), ...places[WAKING_ID] },
+    ...family,
+  };
+  for (const [id, { image }] of Object.entries(placedSprites)) writePng(file(id), image);
+  // Each sprite's entry follows the first background or composite that draws it.
+  const listed = new Set<string>();
+  const spritesOf = (overlays: readonly string[] = []) =>
+    overlays
+      .filter((sprite) => !listed.has(sprite) && listed.add(sprite))
+      .map((sprite) => spriteEntry(sprite, placedSprites[sprite]!.image, placedSprites[sprite]!));
+  const spriteOf = (id: string) => [
+    ...spritesOf(overlaysOf(id)),
+    ...COMPOSITES.filter(({ base }) => base === id).flatMap((composite) => [
+      compositeEntry(composite),
+      ...spritesOf(composite.overlays),
+    ]),
+  ];
   // The overlays rebuild with the night background; other single-id runs keep their entries.
   const rebuild = !only || only === "story-ada-room-night" || OVERLAYS.some((id) => id === only);
   let overlays: { at: Overlay["at"]; id: string }[];

@@ -652,9 +652,11 @@ Behaviour:
   the run's start). Ada's room keeps one placement from the room page through
   boarding. A rock glow
   transition draws its frames at the outgoing page's placement and cuts to the
-  incoming page's; the overnight sleep scene uses the night page's placement,
-  and its cross-fade to the morning draws each image at its own page's
-  placement. A backdrop without a panel (galaxy selection) keeps the centred
+  incoming page's. A composite background with a `base` (a
+  [story figure](storybook.md#story-figures) page or the overnight sleep
+  scene) is placed as its base: the run anchor counts its pages as pages on
+  the base. The sleep scene's cross-fade to the morning draws each image at
+  its own page's placement. A backdrop without a panel (galaxy selection) keeps the centred
   placement.
 - Speaker portraits follow [Conversation portraits](conversation.md): Astra
   plays her speaking loop while her page shows; Ada and Penny show the mood

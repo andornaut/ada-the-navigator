@@ -3248,6 +3248,63 @@
       }
     },
     {
+      "id": "story-ada-room-unpolished-cats",
+      "path": "/art/story/ada-room-unpolished.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      },
+      "base": "story-ada-room-unpolished",
+      "overlays": ["story-archie-bed", "story-kiwi-bed"]
+    },
+    {
+      "id": "story-archie-bed",
+      "path": "/art/story/archie-bed.png",
+      "width": 17,
+      "height": 20,
+      "displayWidth": 34,
+      "displayHeight": 40,
+      "facing": "front",
+      "pivot": {
+        "x": 0,
+        "y": 0
+      },
+      "at": {
+        "x": 207,
+        "y": 353
+      },
+      "scale": 2,
+      "sampling": "nearest"
+    },
+    {
+      "id": "story-kiwi-bed",
+      "path": "/art/story/kiwi-bed.png",
+      "width": 16,
+      "height": 22,
+      "displayWidth": 32,
+      "displayHeight": 44,
+      "facing": "front",
+      "pivot": {
+        "x": 0,
+        "y": 0
+      },
+      "at": {
+        "x": 273,
+        "y": 362
+      },
+      "scale": 2,
+      "sampling": "nearest"
+    },
+    {
       "id": "story-ada-room",
       "path": "/art/story/ada-room.png",
       "width": 1920,
@@ -3384,6 +3441,43 @@
       }
     },
     {
+      "id": "story-kitchen",
+      "path": "/art/story/kitchen.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "subject": {
+        "top": 146,
+        "bottom": 293
+      },
+      "overlays": ["story-dad-dinner"]
+    },
+    {
+      "id": "story-dad-dinner",
+      "path": "/art/story/dad-dinner.png",
+      "width": 30,
+      "height": 47,
+      "displayWidth": 60,
+      "displayHeight": 94,
+      "facing": "front",
+      "pivot": {
+        "x": 0,
+        "y": 0
+      },
+      "at": {
+        "x": 403,
+        "y": 146
+      },
+      "scale": 2,
+      "sampling": "nearest"
+    },
+    {
       "id": "story-front-door",
       "path": "/art/story/front-door.png",
       "width": 1920,
@@ -3401,6 +3495,44 @@
       }
     },
     {
+      "id": "story-front-door-mom",
+      "path": "/art/story/front-door.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "subject": {
+        "top": 175,
+        "bottom": 280
+      },
+      "base": "story-front-door",
+      "overlays": ["story-mom-door"]
+    },
+    {
+      "id": "story-mom-door",
+      "path": "/art/story/mom-door.png",
+      "width": 33,
+      "height": 71,
+      "displayWidth": 66,
+      "displayHeight": 142,
+      "facing": "front",
+      "pivot": {
+        "x": 0,
+        "y": 0
+      },
+      "at": {
+        "x": 324,
+        "y": 228
+      },
+      "scale": 2,
+      "sampling": "nearest"
+    },
+    {
       "id": "story-ada-room-recorder",
       "path": "/art/story/ada-room-recorder.png",
       "width": 1920,
@@ -3416,6 +3548,44 @@
         "top": 248,
         "bottom": 293
       }
+    },
+    {
+      "id": "story-ada-room-recorder-dad",
+      "path": "/art/story/ada-room-recorder.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "subject": {
+        "top": 248,
+        "bottom": 293
+      },
+      "base": "story-ada-room-recorder",
+      "overlays": ["story-dad-door"]
+    },
+    {
+      "id": "story-dad-door",
+      "path": "/art/story/dad-door.png",
+      "width": 28,
+      "height": 76,
+      "displayWidth": 56,
+      "displayHeight": 152,
+      "facing": "front",
+      "pivot": {
+        "x": 0,
+        "y": 0
+      },
+      "at": {
+        "x": 292,
+        "y": 211
+      },
+      "scale": 2,
+      "sampling": "nearest"
     },
     {
       "id": "story-ada-room-recorder-glow-1",
@@ -3572,6 +3742,7 @@
         "top": 250,
         "bottom": 300
       },
+      "base": "story-ada-room-night",
       "overlays": ["story-ada-room-sleep-figures"]
     },
     {
@@ -3641,6 +3812,63 @@
       "at": {
         "x": 249,
         "y": 264
+      },
+      "scale": 2,
+      "sampling": "nearest"
+    },
+    {
+      "id": "story-ada-room-morning-cats",
+      "path": "/art/story/ada-room-morning.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "subject": {
+        "top": 255,
+        "bottom": 348
+      },
+      "base": "story-ada-room-morning",
+      "overlays": ["story-ada-waking", "story-archie-curled", "story-kiwi-curled"]
+    },
+    {
+      "id": "story-archie-curled",
+      "path": "/art/story/archie-curled.png",
+      "width": 22,
+      "height": 13,
+      "displayWidth": 44,
+      "displayHeight": 26,
+      "facing": "front",
+      "pivot": {
+        "x": 0,
+        "y": 0
+      },
+      "at": {
+        "x": 275,
+        "y": 380
+      },
+      "scale": 2,
+      "sampling": "nearest"
+    },
+    {
+      "id": "story-kiwi-curled",
+      "path": "/art/story/kiwi-curled.png",
+      "width": 22,
+      "height": 13,
+      "displayWidth": 44,
+      "displayHeight": 26,
+      "facing": "front",
+      "pivot": {
+        "x": 0,
+        "y": 0
+      },
+      "at": {
+        "x": 238,
+        "y": 360
       },
       "scale": 2,
       "sampling": "nearest"

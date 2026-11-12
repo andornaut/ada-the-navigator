@@ -152,6 +152,8 @@ HUD visible and live. Geometry is `CONVERSATION_BOX` in
 | Penny tab          | `#feae34` | Her golden coat                              |
 | Unknown voice tab  | `#b8b3c9` | General Gadget before he is named            |
 | General Gadget tab | `#d68b72` | The drones' coral hull                       |
+| Mom tab            | `#9fd98a` | Her green cardigan                           |
+| Dad tab            | `#c4a6ec` | His purple T-shirt                           |
 
 Tabs, labels, lines and portraits are fully opaque; only the panel is
 translucent. Tab labels are `TYPE.label` in ink; lines are `TYPE.body` in

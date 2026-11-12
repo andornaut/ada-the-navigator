@@ -16,7 +16,7 @@ the [holodisk](holodisk.md), the
 [quantum jump](quantum-jump.md), the [weapon effects](weapons.md), the
 [Whirlpool whales](whales.md), the
 [Whirlpool current streaks and river debris](whirlpool.md), character portraits, and the
-[storybook](storybook.md) Earth backgrounds with Ada's storybook sprites.
+[storybook](storybook.md) Earth backgrounds with Ada's and her family's storybook sprites.
 [Community projects](projects.md) add the Projects shop tab and the world
 changes that funding them shows. [Galaxies](galaxies.md) retint the space field per galaxy. Other space objects
 use simple runtime shapes with the [space palette](space-palette.md): muted

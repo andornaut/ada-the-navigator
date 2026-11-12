@@ -9,7 +9,7 @@ unchanged; JSON metadata uses local image filenames and normalized formatting.
 
 Ada is the brown/dark-skinned girl depicted in the source art. Penny is the golden dog portrait (`face-dog-penny`).
 
-The `casey`, `trista` and `mr-b` assets are reusable community portraits from Archie. These filenames and preserved source frame keys identify asset provenance only; they assign no Archie identity, story, age or NPC role in Ada. Tech selects the frame for each character. Each portrait includes a neutral expression at frame 1.
+The `casey`, `trista` and `mr-b` assets are reusable community portraits from Archie. `trista` is Ada's mom and `mr-b` is her dad, Bin; `casey` assigns no role. These filenames and preserved source frame keys identify asset provenance. Tech selects the frame for each character. Each portrait includes a neutral expression at frame 1.
 
 ## Geometry and tags
 
@@ -83,6 +83,18 @@ bytes as `public/art/portraits/ada.png`), under the same licence.
 `art/tools/ada-sprites.ts` reads its neutral frame for the head of Ada's
 storybook sprites ([storybook](storybook.md#adas-sprites)) and adapts it there;
 the portrait files above stay unchanged.
+
+`art/sources/face-walker-trista.png` (SHA-256
+`bf8f6344b56ee5bcca4f66bfa01c188e4d3a8481a3f87b385936f4f1d8b361d0`) and
+`art/sources/face-walker-mr-b.png` (SHA-256
+`3f2d78aac50e5dac51077a9069c85bf95a0bb6705437d8528098401b9b94f51c`) are
+byte-identical copies of the Archie sources `public/art/sprites/face-walker-trista.png`
+and `public/art/sprites/face-walker-mr-b.png` at the pinned commit above (the
+same bytes as `public/art/portraits/trista.png` and `mr-b.png`), under the same
+licence. `art/tools/family-sprites.ts` reads their neutral frames, unchanged,
+for the heads of Mom's and Dad's storybook sprites
+([storybook](storybook.md#story-figures)); their outfit colours follow the
+Archie walker sprites `walker-trista` and `walker-mr-b`.
 
 ## Verification
 
