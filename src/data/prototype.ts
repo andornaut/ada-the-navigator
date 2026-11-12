@@ -408,6 +408,8 @@ export const PROTOTYPE: PrototypeContent = {
     jobs: "Jobs",
     jump: "Jump",
     jumpHome: "Astra jumped you back to Earth to recharge. Your story progress is saved.",
+    jumpHomeOreLost:
+      "Astra: \"We're safe, and that matters most. The ore we carried didn't make the jump.\"",
     landmark1Beacon1: "Daisy Beacon",
     landmark1Beacon2: "Bee Light",
     landmark1Beacon3: "Sunrise Buoy",

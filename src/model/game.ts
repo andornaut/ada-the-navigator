@@ -392,14 +392,21 @@ export class GameModel {
       this.state.seenConversations,
     );
     if (this.state.mode === "space") {
-      const { dialogue, docked, flight, mode, notice } = this.state;
-      this.heldFlight = { dialogue, docked, flight, mode, notice };
-      this.state.mode = "home";
-      this.state.flight = null;
-      this.state.dialogue = null;
-      this.state.docked = null;
-      this.state.notice = "";
+      this.holdFlight();
     }
+  }
+  /**
+   * Sets the flight aside for Continue (rules.md "What each event keeps"): opening the app and
+   * Back to title resume it exactly, its tow, calf and carried items included.
+   */
+  private holdFlight(): void {
+    const { dialogue, docked, flight, mode, notice } = this.state;
+    this.heldFlight = { dialogue, docked, flight, mode, notice };
+    this.state.mode = "home";
+    this.state.flight = null;
+    this.state.dialogue = null;
+    this.state.docked = null;
+    this.state.notice = "";
   }
   /**
    * A notice shows at once in the conversation box's slot, ahead of every line but a warning's
@@ -1065,7 +1072,6 @@ export class GameModel {
     }
   }
   private launch(): void {
-    this.current.questItem = null;
     const randomSeed = crypto.getRandomValues(new Uint32Array(1))[0] ?? 1;
     const seed = randomSeed === this.previousSeed ? (randomSeed + 1) >>> 0 : randomSeed;
     this.previousSeed = seed;
@@ -1112,23 +1118,14 @@ export class GameModel {
     this.beginVisit();
   }
   /**
-   * Ends the flight with story progress saved: a carried story or delivery item is lost, a towed
-   * craft, a guided calf and Pip return to their starts, and a scene still due its line replays
-   * at the hub next time.
+   * Ends the flight for Earth, Jump or the shield-failure jump (rules.md "What each event
+   * keeps"): the held job keeps its carried item and the story its item, while undeposited ore
+   * and pickups go with the flight, a towed craft returns to where it was stranded, a guided calf
+   * and Pip return to their starts with the activity still held, and a scene still due its line
+   * replays at the hub next time.
    */
   private endFlight(): void {
     this.closeGalaxyMapInFlight();
-    this.current.questItem = null;
-    // A delivery's item is lost like a story item, and a towed craft returns to where it was
-    // stranded with the flight.
-    const held = heldJob(this.state.selectedSector, this.state);
-    if (held?.type === "delivery") {
-      held.carrying = false;
-    }
-    const activity = this.activity;
-    if (activity?.id === "supplyRun") {
-      activity.carrying = false;
-    }
     this.resetActivity(this.state.selectedSector);
     // A story scene still due its line replays at the hub on the next flight.
     const scene = this.state.flight?.storyScene;
@@ -1153,7 +1150,8 @@ export class GameModel {
    */
   backToTitle(): void {
     if (this.state.mode === "space" && this.state.flight) {
-      this.home(true);
+      this.closeGalaxyMapInFlight();
+      this.holdFlight();
     } else if (!this.roomPage) {
       return;
     }
@@ -1206,9 +1204,13 @@ export class GameModel {
     if (!this.state.flight) {
       return;
     }
+    const oreLost = this.state.flight.cargo > 0;
     this.home(true);
     this.notify(this.label("jumpHome"));
-    this.showScene(jumpHomeScene(this.state.notice, this.label("morningRecharge")));
+    const page = oreLost
+      ? `${this.state.notice}\n${this.label("jumpHomeOreLost")}`
+      : this.state.notice;
+    this.showScene(jumpHomeScene(page, this.label("morningRecharge")));
   }
   private complete(): void {
     this.current.questComplete = true;

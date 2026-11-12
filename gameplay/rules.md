@@ -46,8 +46,10 @@ and then the prologue. Start stays alone until the first flight begins. Later
 launches show Continue and Restart.
 
 Every launch opens on the start screen; Continue resumes where the save left off.
-A flight closed mid-flight resumes exactly: galaxy, position, tow and danger (see
-the exact-resume rule below). Otherwise Continue goes to the galaxy map, open on the farthest unlocked galaxy. A home scene that is waiting, such as a chapter's resolution or the next
+With a saved flight, Continue resumes it exactly: galaxy, position, tow and danger
+(see the exact-resume rule below). After Back to title from Ada's room page,
+Continue returns to her room page. Otherwise Continue opens the galaxy map on the
+farthest unlocked galaxy. A home scene that is waiting, such as a chapter's resolution or the next
 chapter's opening, plays first. When Ada goes home with no new scene, her room
 shows one short repeatable line and "Pick up the rock."; old scenes never replay,
 and new ones unlock with progress.
@@ -60,9 +62,10 @@ X, an outside tap, back and Escape close it. Back to title opens the start
 screen, where Continue resumes as above.
 
 Restart asks first on a card with Restart and Cancel, as in Chibi; back and Escape
-cancel. Confirming clears all story progress, galaxies, holodisks, Stardust,
-purchases, seen conversations and any saved flight, keeps device settings and achievements, and
-replays from Start.
+cancel. Confirming clears all story progress, unlocked galaxies, holodisks, seen
+conversations and greetings, and everything else in
+[What each event keeps](#what-each-event-keeps) except device settings and
+achievements, then replays from Start.
 
 ## Story progression
 
@@ -148,9 +151,9 @@ moment, then morning, when any waiting home scene plays as on any arrival home. 
 voluntary Earth from the galaxy map has no sleep scene. The holodisk
 drive looks like a CD or cassette player.
 
-Every boarding (picking up the rock or Continue from the start screen),
-including for a replay of a resolved galaxy, shows the galaxy map before the
-flight. The app itself always opens on the start screen. The design names two
+Every boarding from Ada's room (picking up the rock), including for a replay of
+a resolved galaxy, shows the galaxy map before the flight, as does Continue
+without a saved flight. The app itself always opens on the start screen. The design names two
 maps: the local map (the pause card's Map) charts the current galaxy, and the
 galaxy map moves Ada between galaxies; neither name appears in the interface. The galaxy map is a route map, like Chibi's zone map,
 drawn over a night sky full of stars, galaxies and nebulae above an evening
@@ -178,8 +181,8 @@ galaxy's hue, and its screenshot is a generic space view until its own art lands
 is unlocked. Completing a galaxy (its holodisk, space quest and home resolution, as above)
 unlocks the next position, every
 placeholder after it and the next built galaxy, so placeholders never block the
-route: finishing Whirlpool opens Needle, Andromeda and Cartwheel while Needle and
-Andromeda are placeholders. Saves keep every unlock. The first boarding after an
+route: when the next positions are placeholders, completing a galaxy opens them
+and the next built galaxy together. Saves keep every unlock. The first boarding after an
 unlock shows the ship flying along the route to the farthest newly unlocked
 galaxy. When one unlock opens several galaxies, their markers open together and the
 ship flies once along the route to the farthest, passing the markers between,
@@ -201,10 +204,14 @@ resolved, and its stations, shops, jobs, activities and any unfinished quests
 stay available. Completing a quest invites a return to Earth without forcing
 immediate exit from space.
 
-Space conversations pause action and use brief essential exchanges with optional
-questions about character and culture. The first mandatory introductory encounter
-occurs after roughly a minute of exploration, with precise pacing tunable. It
-happens only once per galaxy; repeat visits resume progress.
+Talk conversations in space (with Continue and Ask more) pause play, as cards
+do (the station card, shop, pause card and the rest). They use brief essential
+exchanges with optional questions about character and culture. The in-flight
+speech box and notices never pause play (see
+[Astra and Penny in flight](#astra-and-penny-in-flight)). The first mandatory
+introductory encounter occurs after a set distance of fresh exploration,
+measured in fresh chunks, with the distance tunable. It happens only once per
+galaxy; repeat visits resume progress.
 
 ### Galaxy one, Sunflower: cooperating outposts
 
@@ -249,8 +256,9 @@ them. All values are provisional tuning:
   wide. Its flow is strongest at the centre line, a peak of 70 world units per
   second, falls to zero at its edges and fades
   out over the last 600 world units at each end.
-- Currents and their debris rivers are placed by the galaxy's seed, so they stay
-  in the same places on every flight, like stations. They cover about a tenth of
+- Currents and their debris rivers are placed by the galaxy's fixed seed, so they
+  stay in the same places on every flight, like stations (see
+  [Persistence and regeneration](#persistence-and-regeneration)). They cover about a tenth of
   open space, never overlap or close into loops, and keep 800 world units clear
   of stations, story destinations, landmarks and quantum jump arrivals. Asteroids
   are not placed in currents, and chunk generation keeps them clear.
@@ -269,9 +277,9 @@ them. All values are provisional tuning:
 - Pickups drift with the flow until they leave the current; the tractor beam
   pulls them as usual.
 - A debris river is traveling debris that follows its current's centre line at
-  the peak flow speed, entering at one end and leaving at the other. This is Whirlpool's one
-  exception to constant-velocity moving obstacles; debris still never chases Ada.
-  About a third of currents carry one.
+  the peak flow speed, entering at one end and leaving at the other. Its path is
+  fixed, like every moving obstacle's, and never steers toward Ada. About a
+  third of currents carry one.
 - Currents show as flowing teal streaks whose direction reads at a glance,
   drawn as a placeholder until Art's streak art lands.
 
@@ -294,10 +302,11 @@ tunic and pilot goggles, and has no pronoun: player text and these documents
 always use the name.
 
 A gate run is a chain of ring gates along a narrow channel. A gate lights only
-when Ada passes through it below 40% of her top speed; a gate passed too fast
-stays dark, and Elder Loom calls her back to the first gate of that run. Debris
-in the channel drifts slowly and bumps the ship aside without damage, as
-scenery does. The practice run has 3 gates; the Eye has 8, with the holodisk
+when Ada passes through it below 40% of her top speed, and each gate glows while
+her speed is slow enough to light it. A gate passed too fast stays dark, and
+Elder Loom calls her back to the last gate she lit, or to the first gate when
+she has lit none. Debris in the channel drifts slowly and bumps the ship aside,
+dealing bump damage like all scenery. The practice run has 3 gates; the Eye has 8, with the holodisk
 beyond the last. No enemies enter a gate run. Gadget's drones wait outside the
 Eye's exit, so Ada leaves with the holodisk and fights her way clear.
 
@@ -306,7 +315,7 @@ gates; collect the holodisk; return to Earth.
 
 Channels are 210 world units wide, 150 in the Eye, and each ring gate's opening
 is 66. A gate counts as passed when Ada's centre crosses it inside the opening;
-its rim bumps the ship aside like scenery. Every gate stands at least 30 degrees
+its rim bumps the ship aside like scenery but deals no damage. Every gate stands at least 30 degrees
 off screen horizontal, so the upright hoop never reads edge-on. The Eye is an
 almond of drifting debris around its channel, with the 8 gates along it and the
 holodisk past the last. The drone pack waits beyond the exit, outside the
@@ -333,14 +342,16 @@ settlers. He owns up, the settlers' fear eases, and Ada and Pip gather the
 parts to relight the beacon. Pip then hands Ada the holodisk himself.
 
 Objectives: explore; find out why ships are getting lost; talk with Pip; go with
-Pip to the settlers; bring beacon parts to the dark beacon; take the holodisk
+Pip to the settlers; get beacon parts at the settlement with Pip; bring beacon parts to the dark beacon; take the holodisk
 from Pip; return to Earth. Gadget's drones are hunting here openly. Andromeda's drones patrol in larger
 groups with more frigates than Needle's; its roster is tuned like the others.
 
 Andromeda's stations are settlers' stations, drawn with the settlers' art, as
 Cartwheel's station is the mining hub: each is a full station with dock, shop,
 Jobs and, once the chapter is complete, projects, and the local map calls it Station.
-Going with Pip to the settlers ends at the nearest settlers' station. The
+Going with Pip to the settlers ends at the nearest settlers' station. Getting the beacon parts with Pip ends at the
+nearest settlement, where Pip collects them and Ada carries them to the dark
+beacon. The
 settlements are Andromeda's outposts: the local map calls them Outpost, Ada uses one
 like Sunflower's outposts rather than docking, and the courier run, deliveries
 and tows can end at one. Their sentence names are "the settlers' station" and
@@ -356,9 +367,8 @@ support and refusal to normalize bullying. Do not resolve this by a duel.
 
 The space station is a busy mining collection hub with adequate docking capacity.
 Ada shoots resource-bearing rocks, collects pieces on contact into the
-cargo hold, returns and deposits them. Cumulative deposited resource targets
-advance story milestones; partial loads count. The resource identity and exact
-quantities remain open.
+cargo hold, returns and deposits them. Three story milestones fall at cumulative
+deposits of 10, 20 and 30 ore (provisional); partial loads count.
 
 During returns, Ada observes a pilot deliberately blocking another miner's docking
 approach. She speaks with that miner and other regular visitors, establishes that
@@ -373,8 +383,9 @@ Cartwheel's story ships are the miner, two regular visitors and the blocking
 pilot: non-hostile small craft drawn with 16 headings and thrust jets, which
 shots pass through and which never fight. Each scene is a short scripted path
 near the hub that plays without Ada steering it. At the first deposit milestone
-the blocking pilot cuts across the miner's approach and the miner turns away. At
-the final milestone the miner and the visitors fly in together and the
+(10 ore) the blocking pilot cuts across the miner's approach and the miner turns
+away. After the second (20 ore) the miner talks with Ada. At the final milestone
+(30 ore) the miner and the visitors fly in together and the
 blocking pilot flies off. The hub has two berths: the miner docks at the left
 and the first visitor at the right, while the second visitor holds at its
 holding point beside the hub. Once the Second docking bay project is funded,
@@ -420,7 +431,8 @@ copy uses:
 | Sunflower | Workshop                      | Rivet             |
 | Sunflower | Salvager                      | Patch             |
 | Whirlpool | Whale (the trapped whale)     | Marlo             |
-| Needle    | Avi                           | Reed              |
+| Needle    | Avi (the elder)               | Elder Loom        |
+| Needle    | Avi (a young pilot)           | Reed              |
 | Andromeda | Settler (the story's settler) | Wick              |
 | Cartwheel | Station (the hub's voice)     | Quartz            |
 | Cartwheel | Miner                         | Mica              |
@@ -445,8 +457,9 @@ Quartz's, and its other stations cycle through Slate and Garnet.
 | Andromeda | Lumen, Dial, Cog         |
 | Cartwheel | Quartz, Slate, Garnet    |
 
-A galaxy's keepers share its greeting lines; the name tab shows the keeper's
-name. Story destinations keep their
+The mining hub's keeper has greeting lines of its own that mention the hub;
+every other station's keeper uses its species' shared keeper lines. The name
+tab shows the keeper's name. Story destinations keep their
 story characters' arrival lines; landmarks have no greeter. The first time Ada
 docks at a station, its keeper's portrait and full greeting (three lines) show
 in the station card's welcome line, a tap on the line advancing it while Undock,
@@ -550,18 +563,23 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   galaxy is mapped. Undiscovered places never appear. Map places keep at least
   1020 world units apart, so each stays separate at full zoom; placement
   enforces this for every mapped place, outposts and the waypoint included, and
-  a relaunch spaces story destinations at least 1200 apart. Story characters
+  story destinations keep at least 1200 apart. Story characters
   waiting at a station, such as Cartwheel's miner and visitors, are not map
   places; the station stands for them. Only chunks inside the charting circle
   enter the explored record. The
-  explored area persists per galaxy across flights and clears on Restart. Choosing
-  a discovered destination or station offers "Travel here", which teleports there. The local
+  explored area persists per galaxy (see
+  [What each event keeps](#what-each-event-keeps)). Choosing
+  a discovered destination or station offers "Travel here", which teleports there.
+  Travel here is unavailable while Ada tows a craft or carries a job or activity
+  item, and refuses with the shared refusal feedback. The local
   map also has "Galaxies", a labelled secondary button on its top row beside
   the header, on every galaxy's local map, which opens the galaxy map with no
   confirm, as for Travel here. Unlike Travel here it stays available while
-  towing; leaving the galaxy returns the towed craft to where it was stranded.
-  Leaving by Earth or Jump costs nothing. Back to title ends the flight the same way and opens
-  the start screen; it stays available in danger. While Ada is in danger, Travel
+  towing or carrying a job or activity item; leaving the galaxy returns the
+  towed craft to where it was stranded. Leaving by Earth or Jump costs nothing.
+  Back to title keeps the flight and opens the start screen; Continue resumes it
+  exactly, danger and tow included, as after closing the app. It stays
+  available in danger. While Ada is in danger, Travel
   here and Galaxies stay visible but disabled, refuse with the shared refusal feedback, and the local map
   shows "Unavailable while you are in danger." The close X, an outside tap, back
   and Escape resume. Settings opened from the pause card returns to it when closed.
@@ -637,11 +655,13 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   [Economy](economy.md#earning-stardust)). A new weapon from it is equipped at
   once unless the switch wait is running, when it is added without equipping;
   other owned weapons are kept.
-- Every weapon and the shield have three levels. Each level multiplies effective
-  output (damage times fire rate times how often it hits) by about 1.5, so level 3
-  is about 2.25 times level 1. Single-target output meets those steps on its own;
-  range, blast and spread growth add to them. Each weapon grows along its own
-  dimensions:
+- Every weapon and the shield have three levels. For most weapons each level
+  multiplies effective output (damage times fire rate times how often it hits)
+  by about 1.5, so level 3 is about 2.25 times level 1; Heavy Missile and
+  Scattershot gain about 1.2 to 1.3 times per level. Single-target output meets
+  those steps on its own; range, blast and spread growth add to them. The
+  shield's capacity is 10, 15 and 20, so level 3 holds 2 times level 1. Each
+  weapon grows along its own dimensions:
   - Laser: damage and fire rate.
   - Multi-Laser: a fan of bolts evenly spaced across a fixed 40 degrees, 3 at
     level 1 (-20, 0 and 20 degrees), then 4, then 5, with a small damage rise to reach the level step.
@@ -651,7 +671,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
     Laser damage) with a large blast; levels shorten its interval (1.2, 1.0, 0.8 s) and grow its
     blast radius (60, 72, 85).
   - Scattershot: a shotgun of visual dots across -30 to 30 degrees, 7 at level 1,
-    then 9, then 11, each level reaching a little farther. Up close every dot hits;
+    then 9, then 11. Its range is a fixed 360 world units on every device, and
+    levels add only dots. Up close every dot hits;
     at range the spread covers more area but fewer dots hit. Dots do not apply
     damage over time.
   - Phaser: a hitscan beam. Each shot hits instantly along the aim from the ship
@@ -672,8 +693,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   measured from there.
 - Fan angles are measured in the projected aim plane. Rotate there before
   unprojecting each shot direction; preserve the weapon's world-speed ratio.
-- Each scattershot dot travels half the current projected viewport width along its
-  own rotated heading, fades after 65% of that range and vanishes at the limit.
+- Each scattershot dot travels 360 world units along its own rotated heading on
+  every device, fades after 65% of that range and vanishes at the limit.
 - Weapon intervals, speed and damage ratios, angles, range and fade are provisional
   catalog tuning. Speed ratios multiply the existing base projectile speed; damage
   ratios multiply base shot damage. No homing, piercing or reloading is added.
@@ -698,14 +719,19 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   720-wide view). Idle enemies, retaliators not yet hit, fleeing or returning
   enemies and disabled heavies do not count. Recharge starts 20 seconds after
   Ada was last in battle or last hit, and refills from empty to full in 60
-  seconds, whatever the capacity. Shield levels 2 and 3 also shorten the
-  delay to 15, then 10 seconds and the refill to 45, then 30 seconds. Pursuit is finite,
+  seconds at base. Shield levels 2 and 3 shorten the delay to 15, then 10
+  seconds and the full refill to 45, then 30 seconds. Pursuit is finite,
   so Ada can always escape to recharge, but it is slow, and enemies keep their
   damage.
+- Ada is in danger while she is in battle, as the shield-recharge rule above
+  defines it, or while an enemy shot is in flight inside the battle square.
+  Danger disables Travel here and Galaxies; Back to title stays available.
 - No post-hit invulnerability or protection window.
 - Shield depletion makes Astra quantum jump Ada home to recharge overnight. Only the
-  flight is lost; weapons, levels, Stardust, purchases and story progress persist,
-  and the next flight generates a new layout. See [Economy](economy.md).
+  flight and its undeposited ore are lost, and the jump-home page says so;
+  weapons, levels, Stardust, purchases and story progress persist, and the next
+  flight generates a new layout. See [Economy](economy.md) and
+  [What each event keeps](#what-each-event-keeps).
 - The shield is a 160 logical pixel bar at the bottom centre, between the sticks,
   with a shield icon. The bar is blue, turning red when the shield is low (below
   25%) or empty, and shows hits, the recharge delay and regeneration. Low shield
@@ -742,7 +768,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   silhouette: every hit, bounce, pickup and tow contact between Ada's
   ship, enemies and their heavy parts, stations, outposts, asteroids
   and resource rocks, debris, hazards, wrecks, story ships, towed craft, pickups
-  and shots. Which objects interact is unchanged. Objects Ada flies through today stay passable:
+  and shots. These objects are passable to Ada:
   stations, outposts and destinations, story ships and buoys, towed
   craft, whales and the calf, wrecks, the holodisk and landmarks; Ada is drawn in
   front of any of them while she overlaps it, so she is never hidden. Nothing
@@ -758,9 +784,11 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   ship over 0.15 seconds as it collects. The tractor beam pulls every pickup the
   same way (see [Economy](economy.md#earning-stardust)).
 - Ada's ship bounces off asteroids and other ordinary scenery with a little recoil
-  and keeps moving; it never sticks. Scenery deals no damage. Attacks and marked
-  hazards damage the shield; traveling debris and hazards deal 1 damage per
-  hit, at most once per second.
+  and keeps moving; it never sticks. Every bump against scenery (asteroids,
+  resource rocks, debris and traveling debris) deals 1 damage, at most once per
+  0.5 seconds, and counts as a hit for the shield's recharge delay. A gate rim in
+  Needle is the one bump without damage. Attacks and marked hazards also damage
+  the shield.
 - Friendly destinations, dialogue locations and teleport arrivals are always safe. No
   encounter is placed within 2000 world units of a flight's start or any quantum
   jump arrival, so every launch begins calm.
@@ -772,7 +800,6 @@ only when an interaction is available. It shows the action's symbol with no text
 the action's name is its accessible name. On desktop the disc is hidden, as in
 Chibi, and the Use key still acts. Where the disc's press area overlaps the
 conversation box, the box takes the press. Resources collect on contact. Mining cargo has no capacity limit.
-No map or minimap.
 
 Required events and undiscovered quest destinations spawn ahead of Ada in chunks
 she approaches. Tune fresh-chunk exploration distance between encounters so continued
@@ -781,7 +808,8 @@ still, teleporting and revisiting chunks do not advance fresh-exploration pacing
 content ahead of arrival, not visibly spawn it on top of the player.
 
 Discovered destinations become teleport options, including the whale. Travel is
-available only outside immediate danger. Ada can return to Earth or jump to another unlocked galaxy voluntarily through
+available only outside danger (defined under [Flight and combat](#flight-and-combat))
+and while Ada tows nothing and carries no job or activity item. Ada can return to Earth or jump to another unlocked galaxy voluntarily through
 the local map's Galaxies.
 Teleporting cargo to the mining hub is allowed outside danger: mining's challenge
 is finding and extracting resources, not a mandatory return flight.
@@ -792,14 +820,43 @@ Completed deliveries remain completed.
 
 ## Persistence and regeneration
 
-Leaving a galaxy and re-entering generates a new layout seed. Story progress,
-known destinations, deposited resources and achievements persist. Carried cargo
-and upgrade pickups reset. Known destinations remain usable despite regeneration.
+Each galaxy's fixed seed places its stations, outposts, currents, ore fields and
+landmarks, so they stay in the same places on every flight. Each flight
+generates a new layout seed that regenerates rocks, enemies and pickups. Story
+progress, known destinations, deposited resources and achievements persist.
+Known destinations remain usable despite regeneration.
 
-Closing the game is not leaving the galaxy: resume the same flight with exact
-important state and current nearby space, cargo, owned and selected weapons and
-shield. Disposed ordinary history is not part of that exact-resume guarantee.
-Save durable milestones as they occur.
+Closing the game or Back to title is not leaving the galaxy: resume the same
+flight with exact important state and current nearby space, cargo, owned and
+selected weapons and shield. Disposed ordinary history is not part of that
+exact-resume guarantee. Save durable milestones as they occur.
+
+### What each event keeps
+
+Earth means going home by choice from the galaxy map; Jump means jumping to
+another galaxy from it. Restart also clears story progress, unlocked galaxies,
+holodisks, seen conversations and greetings.
+
+| State                               | Closing the app | Back to title | Earth                           | Shield-failure jump             | Jump                            | Restart |
+| ----------------------------------- | --------------- | ------------- | ------------------------------- | ------------------------------- | ------------------------------- | ------- |
+| Flight layout                       | Resumes         | Resumes       | New next flight                 | New next flight                 | New next flight                 | Cleared |
+| Stardust                            | Kept            | Kept          | Kept                            | Kept                            | Kept                            | Cleared |
+| Owned weapons, upgrades, ammunition | Kept            | Kept          | Kept                            | Kept                            | Kept                            | Cleared |
+| Held job and its carried item       | Resumes         | Resumes       | Kept with the job in its galaxy | Kept with the job in its galaxy | Kept with the job in its galaxy | Cleared |
+| Carried story item                  | Resumes         | Resumes       | Kept with the story             | Kept with the story             | Kept with the story             | Cleared |
+| Undeposited ore                     | Resumes         | Resumes       | Lost                            | Lost                            | Lost                            | Cleared |
+| Uncollected pickups                 | Resumes         | Resumes       | Lost                            | Lost                            | Lost                            | Cleared |
+| A tow                               | Resumes         | Resumes       | Craft returns to its start      | Craft returns to its start      | Craft returns to its start      | Cleared |
+| The calf guide                      | Resumes         | Resumes       | Calf returns to its start       | Calf returns to its start       | Calf returns to its start       | Cleared |
+| Pip's courier run                   | Resumes         | Resumes       | Pip returns to his start        | Pip returns to his start        | Pip returns to his start        | Cleared |
+| Explored area and charted landmarks | Kept            | Kept          | Kept                            | Kept                            | Kept                            | Cleared |
+| Project funding                     | Kept            | Kept          | Kept                            | Kept                            | Kept                            | Cleared |
+| Achievements and lifetime progress  | Kept            | Kept          | Kept                            | Kept                            | Kept                            | Kept    |
+| Device settings                     | Kept            | Kept          | Kept                            | Kept                            | Kept                            | Kept    |
+
+A tow's craft returns to where it was stranded, still marked; the calf and Pip
+return to their starts with the activity still held. Undeposited ore is cargo
+carried this flight; the jump-home page tells the player it was lost.
 
 Preauthored chunk shapes, contents and points of interest assemble near Ada.
 They provide the existing galaxy variety of open areas, asteroid clusters and
@@ -845,11 +902,13 @@ do. A conversation shows in a compact box shared with Chibi, below the HUD row,
 leaving at least 24 logical pixels clear above Ada's ship. The speaker's name sits
 in a tab above the box, with one portrait per line for its speaker: Ada's on the
 left, Astra's, Penny's and the General's on the right. Each line wraps to at most
-two lines. The box never pauses play, and the pause button and weapon icons stay
-live while it shows. Its background is an ink #181425 panel at 0.65 alpha, the opacity of every panel, so it
+two lines. This speech box and notices never pause play, and the pause button
+and weapon icons stay live while it shows; Talk conversations and cards do
+pause play. Its background is an ink #181425 panel at 0.65 alpha, the opacity of every panel, so it
 stays readable over the brightest space signals; text, tab and portrait stay
-opaque. Each line shows for 5 seconds or until the box (tab included) is tapped; a
-tap moves to the next line, and the last tap closes the conversation. Tapping a
+opaque. Each line shows for 5 seconds plus 50 ms per character of the line, or
+until the box (tab included) is tapped; a tap moves to the next line, and the
+last tap closes the conversation. First-flight lessons follow the same timing. Tapping a
 notice dismisses it. A conversation has one to three lines, and only one shows at
 a time, with a cooldown between ordinary conversations. Hints are always on.
 
@@ -862,8 +921,8 @@ line once Ada has left the item's range. Triggers include the first flight's
 lessons (each shown once, skipped when the player has already done the action),
 a first arrival in a galaxy, meeting each alien group, a newly mapped destination
 or station, a capital ship sighting, a low shield (once per fight), drones
-arriving (only when drones are near; damage from debris or hazards alone never
-plays the drone warning), and quiet stretches without combat, which draw unseen lore from the
+arriving (only when drones are near; damage from scenery bumps or hazards alone
+never plays the drone warning), and quiet stretches without combat, which draw unseen lore from the
 galaxy's pool. Astra shares lore and flavor about places and alien species; Ada
 asks questions and reacts. Seen conversations are saved so they do not repeat.
 
@@ -876,7 +935,8 @@ once per point of interest, at most once per 60 seconds (provisional). Exact lin
 ## Space encounters and feedback
 
 Combat occurs in small groups separated by quiet stretches. Terrain mixes open
-areas, asteroid clusters and narrow passages. There is no enemy-entry warning.
+areas, asteroid clusters and narrow passages. There is no spawn warning;
+Astra's drone-arrival line is the only cue.
 Direction indicators are rare. They mark only the current objective's
 destination, a quest item or quest event, the holodisk waypoint and an
 undiscovered station within range. Optional discovery caches and ordinary
@@ -907,13 +967,14 @@ Asteroids come in more sizes, including much larger ones, with irregular shapes
 and variety; about a quarter of small and medium asteroids drift in slow closed
 loops around their starting point. Every asteroid can be destroyed; bigger ones take more shots and release more
 Stardust. Drifting asteroids follow fixed loops that never overlap other rocks,
-stations or destinations; ships bounce off them, and they deal no damage. Large
+stations or destinations; ships bounce off them, with bump damage as for any
+asteroid. Large
 and huge asteroids stay out of passages and clear of stations, destinations and
 launch points. Background objects stay muted
 but carry a light tint of color; asteroids are play objects, not background.
-Moving inanimate obstacles have constant velocity and direction. Regions of
-traveling debris create navigation challenges along exploration and quest routes.
-They do not chase Ada or change direction to intercept her.
+Moving obstacles follow fixed paths (straight lines, closed loops or debris
+rivers) and never steer toward Ada. Regions of traveling debris create
+navigation challenges along exploration and quest routes.
 
 Small enemy ships have independent movement, aiming and firing, with solo,
 erratic circling, swarming and pack behaviors. Aggression can begin on sight or
@@ -931,11 +992,12 @@ weapon hardpoints disables it instead: it stops attacking, shows a red "Disabled
 banner, and Ada can salvage it and spare it, or keep firing to destroy it (see
 [Ships](ships.md#heavy-hull-and-disabling)). A destroyed weapon hardpoint stops
 firing. Each engine provides an equal share of thrust, so losing one of two engines
-halves a ship's speed and losing all of them stops it. Large-ship weapons and command areas
+halves a ship's speed, and a heavy that loses all its engines coasts to rest,
+keeping its momentum and slowing to a stop like a disabled heavy. Large-ship weapons and command areas
 must be visually distinguishable from the rest of the hull.
 
-Missile launchers initially fire straight-flying missiles, visually distinct
-from ordinary shots. Homing is not part of this combat pass.
+Missile launchers fire straight-flying missiles, visually distinct from ordinary
+shots. No missile homes.
 
 Enemy speeds are fixed in world units and the same in every galaxy (see
 [Ships](ships.md#values)); pursuit range is finite. Frigates and capital ships can
@@ -944,15 +1006,15 @@ its route once it is disabled or destroyed. The first time each flight that Ada
 comes within Talk range of a destination its guard still blocks, Astra says a
 guard line, the guard gets its guard edge marker even if Ada has not seen it yet,
 and the guard wakes and flies toward Ada until it is on screen, then fights as
-usual. This encounter expansion
-does not define galaxy six's story or conclusion.
+usual. Black Eye's story and conclusion remain to be designed.
 
 ## Verification priorities
 
 Check independent move/aim controls, shield recharge, the shield-depletion jump home,
 safe dialogue and arrivals, unlimited mining cargo and deposits, recoverable deliveries,
 fresh-chunk quest encounters, saved story progression, regeneration and exact
-interrupted-flight resume. Verify the three home resolutions unlock galaxies
+interrupted-flight resume. Verify the five home resolutions unlock galaxies
 in order and completed stories remain resolved on replay.
 
-Use rudimentary visuals to evaluate these behaviors before polishing graphics.
+Evaluate these behaviors with the authored sprites, and with placeholders where
+art has not landed.

@@ -183,7 +183,7 @@ describe("quantum jump home", () => {
     expect(model.state.flight!.levels.weapons.rapidMissile).toBe(3);
   });
 
-  it("loses the flight's layout, enemies, pickups and carried cargo, keeping quests open", () => {
+  it("loses the flight's layout, enemies, pickups and ore, keeping quests and the story's item", () => {
     const model = launched();
     const flight = model.state.flight!;
     const seed = flight.seed;
@@ -206,12 +206,12 @@ describe("quantum jump home", () => {
     progress.deposited = 4;
     seenHome(model);
     depleteHere(model);
-    // The carried quest item goes with the flight; the quest stays open at its stage.
+    // The carried story item stays with the story, and the quest stays open at its stage.
     expect(progress).toMatchObject({
       deposited: 4,
       known: ["growers", "workshop"],
       questComplete: false,
-      questItem: null,
+      questItem: "toolkit",
       stage: 2,
     });
     expect(model.state.flight).toBeNull();
@@ -360,7 +360,7 @@ describe("quantum jump home", () => {
     expect(model.state.notice).not.toBe(PROTOTYPE.labels.jumpHome);
   });
 
-  it("goes Back to title from flight even in danger, saving progress with no sleep scene", () => {
+  it("goes Back to title from flight even in danger, keeping the flight with no sleep scene", () => {
     const model = launched();
     seenHome(model);
     model.state.economy.stardust = 123;
@@ -369,31 +369,35 @@ describe("quantum jump home", () => {
     expect(model.inDanger).toBe(true);
     model.returnHome();
     expect(model.state.mode).toBe("space");
+    const flight = model.state.flight!;
     model.backToTitle();
-    expect(model.state.mode).toBe("home");
-    expect(model.state.flight).toBeNull();
     expect(model.screen).toBe("start");
     expect(model.storyView).toBeNull();
     expect(model.state.notice).not.toBe(PROTOTYPE.labels.jumpHome);
-    const reloaded = relaunch(PROTOTYPE, model.save());
+    // The save keeps the flight, as closing the app does.
+    const saved = JSON.parse(model.save()) as { flight: { seed: number }; mode: string };
+    expect(saved).toMatchObject({ flight: { seed: flight.seed }, mode: "space" });
+    const reloaded = new GameModel(PROTOTYPE, model.save());
     expect(reloaded.screen).toBe("start");
     expect(reloaded.state.economy.stardust).toBe(123);
     expect(reloaded.state.progress[1].known).toEqual(["growers"]);
   });
 
-  it("resumes on Continue after Back to title: the cockpit, or a waiting home scene first", () => {
+  it("resumes the same flight on Continue after Back to title, even with a home scene waiting", () => {
     const model = launched();
     seenHome(model);
+    const flight = model.state.flight!;
     model.backToTitle();
     model.continueGame();
-    expect(model.screen).toBe("story");
-    expect(model.storyView?.page.id).toMatch(/^boarding:/);
+    expect(model.state.mode).toBe("space");
+    expect(model.state.flight).toBe(flight);
+    expect(model.storyView).toBeNull();
     const waiting = launched();
     seenHome(waiting);
     waiting.state.progress[1].questComplete = true;
     waiting.backToTitle();
     waiting.continueGame();
-    expect(waiting.storyView?.page.background).toBe("gardenLot");
+    expect(waiting.state.mode).toBe("space");
   });
 
   it("goes Back to title from Ada's room page only, never from another storybook page", () => {

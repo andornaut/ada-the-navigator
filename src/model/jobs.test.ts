@@ -685,14 +685,17 @@ describe("jobs in play", () => {
     expect(model.jobObjective).toBe("Deliver seeds to the station");
     model.state.flight!.dangerFor = 0;
     model.returnHome();
-    expect(model.state.tasks[1]?.carrying).toBe(false);
+    // The item stays aboard with the job (rules.md "What each event keeps"), so the indicator
+    // marks the destination.
+    expect(model.state.tasks[1]?.carrying).toBe(true);
     model.startSector(1);
     expect(model.indicatorTargets).toContainEqual({
-      id: station.id,
+      id: target.id,
       kind: "job",
-      x: station.x,
-      y: station.y,
+      x: target.x,
+      y: target.y,
     });
+    (model.state.tasks[1] as HeldJob).carrying = false;
     const reach = (site: Vec & { id: string }) => {
       ensureStation(PROTOTYPE, site.id, model.state.flight!);
       flyTo(model, { x: site.x + 100, y: site.y });

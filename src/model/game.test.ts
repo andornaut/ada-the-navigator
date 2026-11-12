@@ -159,10 +159,9 @@ describe("prototype story and persistence", () => {
     expect(resumed.state.flight!.weapon).toBe("rapidMissile");
     expect(resumed.state.flight!.shield).toBe(PROTOTYPE.tuning.shieldMax);
     expect(resumed.state.progress[1].introduced).toBe(true);
-    expect(resumed.state.progress[1].questItem).toBeNull();
-    expect(resumed.state.dialogue).toBeNull();
-    talk(resumed, "growers");
+    // The carried story item stays with the story across flights (rules.md "What each event keeps").
     expect(resumed.state.progress[1].questItem).toBe("food");
+    expect(resumed.state.dialogue).toBeNull();
   });
   it("completes the delivery chain at the workshop and converges both responses at home", () => {
     for (const choice of [0, 1]) {
