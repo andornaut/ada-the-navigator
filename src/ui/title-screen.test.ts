@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { readShipJets } from "../game/ship-jets.ts";
+import { engineJets, readEngineJets } from "../game/ship-jets.ts";
 import { fromAreaLeft, units } from "./layout/css.ts";
 import { START_SCREEN } from "./layout/startScreen.ts";
 import { START_SCREEN_CLASS, START_SCREEN_STYLE } from "./start-screen.ts";
@@ -12,7 +12,8 @@ const publicJson = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public${path}`, import.meta.url), "utf8"));
 const manifest = publicJson("/art/manifest.json") as { assets: TitleAsset[]; titleScreen: string };
 const data = publicJson(manifest.titleScreen) as Record<string, unknown>;
-const jets = readShipJets(publicJson("/art/ship-jets.json"));
+// The title ship's jets draw at Engine level 1.
+const jets = engineJets(readEngineJets(publicJson("/art/ship-jets.json"))!, 1);
 const art = readTitleScreen(manifest.assets, jets, data)!;
 
 describe("title screen art", () => {

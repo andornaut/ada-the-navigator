@@ -273,11 +273,11 @@ import {
   thrustFrames,
 } from "./ship-art.ts";
 import {
-  engineJetLayers,
+  type EngineJets,
+  engineJets,
   jetTriangles,
   levelLayers,
-  readShipJets,
-  type ShipJets,
+  readEngineJets,
 } from "./ship-jets.ts";
 import { stationRow } from "./shop-view.ts";
 import { Silhouettes } from "./silhouettes.ts";
@@ -448,7 +448,7 @@ export class PrototypeScene extends Scene {
   // What Ada held last frame in this flight, for the item notices' gains.
   private held: { readonly flight: object; readonly snapshot: GainSnapshot } | undefined;
   private jets!: GameObjects.Graphics;
-  private shipJets: ShipJets | undefined;
+  private shipJets: EngineJets | undefined;
   /** Shots and feedback draw above enemy sprites. */
   private overlay!: GameObjects.Graphics;
   private edgeMarkerInk!: GameObjects.Graphics;
@@ -844,7 +844,7 @@ export class PrototypeScene extends Scene {
     this.shipAssets = bootAssets.filter((asset) => this.textures.exists(asset.id));
     // Jets render behind the ship sprite. Missing, invalid or heading-mismatched metadata keeps
     // the authored thrust frames, which load only then; until they do, the idle frames draw.
-    const jets = readShipJets(this.cache.json.get("ship-jets"));
+    const jets = readEngineJets(this.cache.json.get("ship-jets"));
     this.shipJets =
       jets?.headings.length === SHIP_HEADINGS && hasShipHeadings(this.shipAssets)
         ? jets
@@ -955,9 +955,14 @@ export class PrototypeScene extends Scene {
       restart: () => this.restartCard.open(),
       start: () => apply(() => this.model.start()),
     });
-    // The start screen's art: its field, wordmark, each paint's ship frame and the speed jets.
+    // The start screen's art: its field, wordmark, each paint's ship frame and the speed jets at
+    // Engine level 1.
     this.shell.setTitleArt(
-      readTitleScreen(manifest?.assets ?? [], this.shipJets, this.cache.json.get(TITLE_SCREEN_KEY)),
+      readTitleScreen(
+        manifest?.assets ?? [],
+        this.shipJets && engineJets(this.shipJets, 1),
+        this.cache.json.get(TITLE_SCREEN_KEY),
+      ),
     );
     this.controls = createControls(this, {
       achievements: {
@@ -2567,12 +2572,10 @@ export class PrototypeScene extends Scene {
       // Ada's jets take her Engine level's layers; a light field swaps in Art's dark layers for
       // that level, with no halo, keylined with the hull.
       const engine = flight.levels.engine;
-      const jets = {
-        ...this.shipJets,
-        layers: this.light
-          ? (levelLayers(LIGHT_FIELD.jets.shipLevels, engine) ?? LIGHT_FIELD.jets.ship)
-          : engineJetLayers(this.shipJets, engine),
-      };
+      const level = engineJets(this.shipJets, engine);
+      const jets = this.light
+        ? { ...level, layers: levelLayers(LIGHT_FIELD.jets.shipLevels, engine) }
+        : level;
       const keyline = this.light && LIGHT_FIELD.keylined.includes("ship");
       for (const { alpha, color, points } of jetTriangles(
         jets,

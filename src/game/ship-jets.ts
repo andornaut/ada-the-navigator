@@ -23,21 +23,26 @@ export interface JetLayer {
   width: number;
 }
 
-/** Art's ship-jets.json, version 1. */
-export interface ShipJets {
-  /**
-   * Ada's layers by Engine level, index 0 for level 1 (`engineLevels`); absent on a craft whose
-   * file has none, which draws `layers` at every level.
-   */
-  engineLevels?: readonly (readonly JetLayer[])[];
+/** A jet file's mouths and length rule, version 1, which every craft's jets share. */
+export interface JetGeometry {
   /** Square heading frame size in pixels. */
   frame: number;
   /** Mouths indexed by ship direction; the count must match the directional ship frames. */
   headings: readonly (readonly JetMouth[])[];
   /** Jet length in ship units: base + scale * f ^ exponent. */
   length: { base: number; exponent: number; scale: number };
+}
+
+/** A craft's jets: the geometry and one set of layers, as an enemy's or composed craft's file. */
+export interface ShipJets extends JetGeometry {
   /** Triangles per mouth in draw order. */
   layers: readonly JetLayer[];
+}
+
+/** Art's ship-jets.json for Ada: the geometry and her layers by Engine level. */
+export interface EngineJets extends JetGeometry {
+  /** Layers by Engine level, index 0 for level 1 (`engineLevels`), never empty. */
+  engineLevels: readonly (readonly JetLayer[])[];
 }
 
 /** Maps heading-frame pixels to display pixels relative to the ship sprite origin. */
@@ -141,20 +146,22 @@ export function readLevelLayers(value: unknown): JetLayer[][] | undefined {
   return levels;
 }
 
-/** The layers for upgrade level `level` (outside 1 to n, the nearest), or undefined for none. */
+/** The layers for upgrade level `level` of a non-empty level list (outside 1 to n, the nearest). */
 export function levelLayers(
-  levels: readonly (readonly JetLayer[])[] | undefined,
+  levels: readonly (readonly JetLayer[])[],
   level: number,
-): readonly JetLayer[] | undefined {
-  if (!levels || levels.length === 0) {
-    return undefined;
-  }
-  return levels[Math.min(levels.length, Math.max(1, Math.round(level))) - 1];
+): readonly JetLayer[] {
+  return levels[Math.min(levels.length, Math.max(1, Math.round(level))) - 1]!;
 }
 
-/** Ada's jets at Engine level `level`: that level's layers, or `layers` without any. */
-export function engineJetLayers(jets: ShipJets, level: number): readonly JetLayer[] {
-  return levelLayers(jets.engineLevels, level) ?? jets.layers;
+/** Ada's jets at Engine level `level`: the geometry with that level's layers. */
+export function engineJets(jets: EngineJets, level: number): ShipJets {
+  return {
+    frame: jets.frame,
+    headings: jets.headings,
+    layers: levelLayers(jets.engineLevels, level),
+    length: jets.length,
+  };
 }
 
 function readMouths(value: unknown): JetMouth[] | undefined {
@@ -184,9 +191,8 @@ function readMouths(value: unknown): JetMouth[] | undefined {
   return mouths;
 }
 
-/** Validate Art's ship-jets.json; any malformed entry disables the jet layer. */
-export function readShipJets(value: unknown): ShipJets | undefined {
-  const root = fields(value);
+/** Validates a jet file's version, frame, length rule and headings. */
+function readJetGeometry(root: Fields | undefined): JetGeometry | undefined {
   const length = fields(root?.length);
   if (
     !root ||
@@ -200,12 +206,6 @@ export function readShipJets(value: unknown): ShipJets | undefined {
     !Array.isArray(root.headings) ||
     root.headings.length === 0
   ) {
-    return undefined;
-  }
-  const layers = readJetLayers(root.layers);
-  const engineLevels =
-    root.engineLevels === undefined ? undefined : readLevelLayers(root.engineLevels);
-  if (!layers || (root.engineLevels !== undefined && !engineLevels)) {
     return undefined;
   }
   const headings: JetMouth[][] = [];
@@ -224,16 +224,30 @@ export function readShipJets(value: unknown): ShipJets | undefined {
     }
   }
   return {
-    ...(engineLevels ? { engineLevels } : {}),
     frame: root.frame,
     headings,
-    layers,
     length: { base: length.base, exponent: length.exponent, scale: length.scale },
   };
 }
 
+/** Validates a craft's jet file with one set of `layers`; any malformed entry disables its jets. */
+export function readShipJets(value: unknown): ShipJets | undefined {
+  const root = fields(value);
+  const geometry = readJetGeometry(root);
+  const layers = readJetLayers(root?.layers);
+  return geometry && layers ? { ...geometry, layers } : undefined;
+}
+
+/** Validates Art's ship-jets.json, Ada's `engineLevels`; any malformed entry disables her jets. */
+export function readEngineJets(value: unknown): EngineJets | undefined {
+  const root = fields(value);
+  const geometry = readJetGeometry(root);
+  const engineLevels = readLevelLayers(root?.engineLevels);
+  return geometry && engineLevels ? { ...geometry, engineLevels } : undefined;
+}
+
 /** Jet length in ship units at speed fraction f. */
-export function jetLength(jets: ShipJets, f: number): number {
+export function jetLength(jets: JetGeometry, f: number): number {
   return jets.length.base + jets.length.scale * f ** jets.length.exponent;
 }
 

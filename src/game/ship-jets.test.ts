@@ -5,19 +5,22 @@ import art from "../../public/art/ship-jets.json";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 import { hasShipHeadings } from "./ship-art.ts";
 import {
-  engineJetLayers,
+  engineJets,
   type JetDisplay,
   jetLength,
   jetTriangles,
   layerAlpha,
   layerColor,
   levelLayers,
+  readEngineJets,
   readLevelLayers,
   readShipJets,
   type ShipJets,
 } from "./ship-jets.ts";
 
-const jets = readShipJets(art)!;
+const ada = readEngineJets(art)!;
+// Engine level 1, the base style the style and triangle tests check.
+const jets = engineJets(ada, 1);
 const [halo, outer, core] = jets.layers;
 // Identity mapping keeps triangle coordinates in heading-frame pixels.
 const framePixels: JetDisplay = { displayHeight: 96, displayWidth: 96, pivot: { x: 0, y: 0 } };
@@ -33,6 +36,20 @@ const withHeading = (heading: unknown) => ({
   ...art,
   headings: [heading, ...art.headings.slice(1)],
 });
+// Ada's file with level 1's halo changed by `change`.
+const withHalo = (change: Record<string, unknown>) => ({
+  ...art,
+  engineLevels: [
+    {
+      ...art.engineLevels[0]!,
+      layers: [
+        { ...art.engineLevels[0]!.layers[0]!, ...change },
+        ...art.engineLevels[0]!.layers.slice(1),
+      ],
+    },
+    ...art.engineLevels.slice(1),
+  ],
+});
 
 describe("ship jet metadata", () => {
   it("reads 32 headings of two mouths and three layers from Art's file", () => {
@@ -47,8 +64,8 @@ describe("ship jet metadata", () => {
     const sixteen = art.headings
       .filter((heading) => heading.index % 2 === 0)
       .map((heading) => ({ ...heading, index: heading.index / 2 }));
-    expect(readShipJets({ ...art, headings: sixteen })?.headings).toHaveLength(16);
-    expect(readShipJets({ ...art, headings: [] })).toBeUndefined();
+    expect(readEngineJets({ ...art, headings: sixteen })?.headings).toHaveLength(16);
+    expect(readEngineJets({ ...art, headings: [] })).toBeUndefined();
   });
 
   it("covers every ship heading the manifest's frames provide", () => {
@@ -57,7 +74,7 @@ describe("ship jet metadata", () => {
   });
 
   it("places headings by their declared index", () => {
-    const reversed = readShipJets({ ...art, headings: [...art.headings].reverse() })!;
+    const reversed = readEngineJets({ ...art, headings: [...art.headings].reverse() })!;
     expect(reversed.headings).toEqual(jets.headings);
   });
 
@@ -70,15 +87,20 @@ describe("ship jet metadata", () => {
       withHeading({ index: 0, mouths: [{ anchor: ["1", 2], axis: [0, 1], half: [1, 0] }] }),
     ],
     ["a heading without mouths", withHeading({ index: 0, mouths: [] })],
-    ["a malformed colour", { ...art, layers: [{ ...art.layers[0], color: "blue" }] }],
-    [
-      "an empty alpha ramp",
-      { ...art, layers: [{ ...art.layers[0], alpha: { from: 1, max: 1, to: 1 } }] },
-    ],
+    ["a malformed colour", withHalo({ color: "blue" })],
+    ["an empty alpha ramp", withHalo({ alpha: { from: 1, max: 1, to: 1 } })],
     ["a missing length curve", { ...art, length: undefined }],
+    ["no engine levels", { ...art, engineLevels: undefined }],
     ["no data", undefined],
   ])("rejects %s", (_, value) => {
-    expect(readShipJets(value)).toBeUndefined();
+    expect(readEngineJets(value)).toBeUndefined();
+  });
+
+  it("reads a craft's file by its one set of layers, which Ada's file has none of", () => {
+    const craft = { ...art, engineLevels: undefined, layers: art.engineLevels[1]!.layers };
+    expect(readShipJets(craft)?.layers).toEqual(engineJets(ada, 2).layers);
+    expect(readShipJets(art)).toBeUndefined();
+    expect("layers" in art).toBe(false);
   });
 });
 
@@ -120,7 +142,7 @@ describe("jets by Engine level", () => {
     [2, 0xff8f1f, 0xffd59a, 0xffffff],
     [3, 0xa66bff, 0xe6ccff, 0xffffff],
   ])("draws level %s in Art's colours, widths and lengths unchanged", (level, h, o, c) => {
-    const layers = engineJetLayers(jets, level);
+    const { layers } = engineJets(ada, level);
     expect(layers.map((layer) => layerColor(layer, 1))).toEqual([h, o, c]);
     expect(layers.map(({ length, width }) => [length, width])).toEqual(
       jets.layers.map(({ length, width }) => [length, width]),
@@ -128,14 +150,17 @@ describe("jets by Engine level", () => {
     expect(layers[0]!.alpha).toEqual(halo!.alpha);
   });
 
-  it("repeats level 1 in the top-level layers and clamps outside 1 to 3", () => {
-    expect(engineJetLayers(jets, 1)).toEqual(jets.layers);
-    expect(engineJetLayers(jets, 0)).toEqual(engineJetLayers(jets, 1));
-    expect(engineJetLayers(jets, 5)).toEqual(engineJetLayers(jets, 3));
-    const plain: ShipJets = { ...jets };
-    delete plain.engineLevels;
-    expect(engineJetLayers(plain, 3)).toBe(jets.layers);
-    expect(levelLayers(undefined, 2)).toBeUndefined();
+  it("reads only the level list, clamping outside 1 to 3, with the geometry unchanged", () => {
+    expect(ada.engineLevels).toHaveLength(3);
+    expect(engineJets(ada, 0).layers).toBe(ada.engineLevels[0]);
+    expect(engineJets(ada, 5).layers).toBe(ada.engineLevels[2]);
+    expect(levelLayers(ada.engineLevels, 2.4)).toBe(ada.engineLevels[1]);
+    const { frame, headings, length } = engineJets(ada, 3);
+    expect({ frame, headings, length }).toEqual({
+      frame: ada.frame,
+      headings: ada.headings,
+      length: ada.length,
+    });
   });
 
   it.each([
@@ -145,13 +170,7 @@ describe("jets by Engine level", () => {
     ["no levels", []],
   ])("rejects %s", (_, value) => {
     expect(readLevelLayers(value)).toBeUndefined();
-    expect(readShipJets({ ...art, engineLevels: value })).toBeUndefined();
-  });
-
-  it("reads a craft without engine levels", () => {
-    const plain: Record<string, unknown> = { ...art };
-    delete plain.engineLevels;
-    expect(readShipJets(plain)?.engineLevels).toBeUndefined();
+    expect(readEngineJets({ ...art, engineLevels: value })).toBeUndefined();
   });
 });
 

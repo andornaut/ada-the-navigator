@@ -19,7 +19,6 @@ export interface LightField {
   readonly ink: number;
   readonly jets: {
     readonly enemy: readonly JetLayer[];
-    readonly ship: readonly JetLayer[];
     /** Ada's layers by Engine level, index 0 for level 1 (`shipLevels`). */
     readonly shipLevels: readonly (readonly JetLayer[])[];
   };
@@ -55,14 +54,12 @@ export function readLightField(value: unknown): LightField | undefined {
   const outline = fields(rule?.hudOutline);
   const destination = fields(rule?.destinationKeyline);
   const ink = colour(rule?.ink);
-  const ship = readJetLayers(jets?.ship);
   const enemy = readJetLayers(jets?.enemy);
   const shipLevels = readLevelLayers(jets?.shipLevels);
   const widths = glow?.width;
   if (
     !rule ||
     ink === undefined ||
-    !ship ||
     !enemy ||
     !shipLevels ||
     !positive(rule.keyline) ||
@@ -91,7 +88,7 @@ export function readLightField(value: unknown): LightField | undefined {
     hudOutline: outline.width,
     indicatorStroke: rule.indicatorStroke,
     ink,
-    jets: { enemy, ship, shipLevels },
+    jets: { enemy, shipLevels },
     keyline: rule.keyline,
     keylined: rule.keylined,
     markerOutline: rule.markerOutline,
