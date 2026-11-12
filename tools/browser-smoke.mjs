@@ -2656,6 +2656,7 @@ try {
   damaged.state.flight.shield = PROTOTYPE.tuning.hazardDamage;
   damaged.state.flight.shots.push({
     ...damaged.state.flight.player,
+    damage: PROTOTYPE.tuning.hazardDamage,
     enemy: true,
     hitIds: [],
     id: "browser-shield-break",
@@ -3625,6 +3626,7 @@ try {
     });
     if (missile) {
       flight.shots.push({
+        damage: PROTOTYPE.tuning.flight.playerShotDamage,
         enemy: true,
         hitIds: [],
         id: "browser-combat:missile",
