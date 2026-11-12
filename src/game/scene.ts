@@ -118,6 +118,14 @@ import {
   wreckFlashAt,
 } from "./destruction-art.ts";
 import {
+  ADA_LAYERS,
+  adaDepth,
+  boxWith,
+  drawnBox,
+  type PassableDraw,
+  type Placed,
+} from "./draw-order.ts";
+import {
   CLAIM,
   CLAIM_WIRED,
   composedArchetypes,
@@ -334,6 +342,10 @@ export class PrototypeScene extends Phaser.Scene {
   private keyed: { depth: number | undefined; key: string; sprite: Phaser.GameObjects.Image }[] =
     [];
   private keylines = new Map<string, Phaser.GameObjects.Image[]>();
+  // This frame's fly-through objects as drawn, which Ada draws above while she overlaps them
+  // (draw-order.ts), and the tow craft's pivot depth while its line is drawn.
+  private passable: PassableDraw[] = [];
+  private towDepth: number | undefined;
   private silhouettes = new Silhouettes();
   // Every SVG's raster scale (svg-rasters.ts), from the canvas's fit when preload starts.
   private rasters!: SvgRasters;
@@ -1781,6 +1793,8 @@ export class PrototypeScene extends Phaser.Scene {
     this.towInk.clear();
     this.towSprite.setVisible(false);
     this.keyed = [];
+    this.passable = [];
+    this.towDepth = undefined;
     for (const sprite of this.enemySprites.values()) {
       sprite.setVisible(false);
     }
@@ -1933,9 +1947,6 @@ export class PrototypeScene extends Phaser.Scene {
     this.drawIndicators();
     this.drawFeedback();
     this.ship.setPosition(SCREEN.width / 2, SCREEN.height / 2);
-    // Ada sorts with the rocks by pivot screen y; her jets sit just behind her.
-    this.ship.setDepth(playDepth(this.ship.y));
-    this.jets.setDepth(playDepth(this.ship.y) - 1e-6);
     // Jets and thrust frames share the 1 unit/s thrust threshold.
     const thrusting = Math.hypot(flight.velocity.x, flight.velocity.y) > 1;
     const speed = thrusting ? shipSpeedFraction(PROTOTYPE, flight) : 0;
@@ -1951,9 +1962,10 @@ export class PrototypeScene extends Phaser.Scene {
     // Authored direction frames already include perspective and must not rotate in screen space.
     this.ship.setRotation(0);
     this.keyline("ship", "player-ship", this.ship);
+    const flames: Vec[] = [];
     if (this.shipJets && ship?.directionIndex !== undefined) {
       this.jets.setPosition(this.ship.x, this.ship.y);
-      this.jetKeyline.setPosition(this.ship.x, this.ship.y).setDepth(this.ship.depth - 2e-6);
+      this.jetKeyline.setPosition(this.ship.x, this.ship.y);
       const display = {
         displayHeight: ship.displayHeight ?? 42,
         displayWidth: ship.displayWidth ?? 42,
@@ -1997,8 +2009,12 @@ export class PrototypeScene extends Phaser.Scene {
           points[2].x,
           points[2].y,
         );
+        for (const corner of points) {
+          flames.push({ x: this.ship.x + corner.x, y: this.ship.y + corner.y });
+        }
       }
     }
+    this.placeAda(flames);
     const activeIds = new Set(flight.objects.map((object) => object.id));
     this.hitFlashes.retain(activeIds, spriteOwner);
     for (const id of staleSpriteKeys(activeIds, this.enemySprites.keys())) {
@@ -2006,6 +2022,29 @@ export class PrototypeScene extends Phaser.Scene {
       this.enemySprites.delete(id);
     }
     this.drawKeylines();
+  }
+
+  /** Records a drawn fly-through object, which Ada draws above while she overlaps it. */
+  private passes(sprite: Placed & { readonly depth: number }): void {
+    this.passable.push({ box: drawnBox(sprite), depth: sprite.depth });
+  }
+
+  /**
+   * Ada's depth: her pivot's, raised above any fly-through object her hull and jet flames
+   * overlap, with her jets, their keyline and her tow line just beneath her.
+   */
+  private placeAda(flames: readonly Vec[]): void {
+    const pivot = playDepth(this.ship.y);
+    const depth = adaDepth(this.passable, boxWith(drawnBox(this.ship), flames), pivot);
+    this.ship.setDepth(depth);
+    this.jets.setDepth(depth + ADA_LAYERS.jets);
+    this.jetKeyline.setDepth(depth + ADA_LAYERS.jetKeyline);
+    if (this.towDepth !== undefined) {
+      // Lifted, the line rides above what Ada overlaps; otherwise behind both of its ends.
+      this.towInk.setDepth(
+        depth > pivot ? depth + ADA_LAYERS.towLine : Math.min(depth, this.towDepth) - 1e-6,
+      );
+    }
   }
 
   /**
@@ -2341,11 +2380,13 @@ export class PrototypeScene extends Phaser.Scene {
         const at = { x: hub.x + offset.x, y: hub.y + offset.y };
         const point = this.project(at);
         const frame = stationFrame(this.buoyArt, this.reducedMotion, this.time.now);
-        this.objectSprite(hubBuoyKey(hub.id, group), frame.id)
-          .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
-          .setOrigin(frame.pivot.x, frame.pivot.y)
-          .setPosition(point.x, point.y)
-          .setDepth(playDepth(point.y));
+        this.passes(
+          this.objectSprite(hubBuoyKey(hub.id, group), frame.id)
+            .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
+            .setOrigin(frame.pivot.x, frame.pivot.y)
+            .setPosition(point.x, point.y)
+            .setDepth(playDepth(point.y)),
+        );
       }
     }
     const progress = this.model.state.progress[flight.sector];
@@ -2360,11 +2401,13 @@ export class PrototypeScene extends Phaser.Scene {
       const art = this.craftArt.get(STORY_SHIP_CRAFT[ship.id]);
       if (art) {
         const frame = selectEnemyFrame(art, ship.heading);
-        this.objectSprite(hubStoryKey(hub.id, ship.id), frame.id)
-          .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
-          .setOrigin(frame.pivot.x, frame.pivot.y)
-          .setPosition(point.x, point.y)
-          .setDepth(playDepth(point.y));
+        this.passes(
+          this.objectSprite(hubStoryKey(hub.id, ship.id), frame.id)
+            .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
+            .setOrigin(frame.pivot.x, frame.pivot.y)
+            .setPosition(point.x, point.y)
+            .setDepth(playDepth(point.y)),
+        );
         for (const { alpha, color, points } of enemyJetTriangles(art, frame, ship.thrust ? 1 : 0)) {
           this.enemyJets.fillStyle(color, alpha);
           this.enemyJets.fillTriangle(
@@ -2589,7 +2632,8 @@ export class PrototypeScene extends Phaser.Scene {
       const ship = this.project(flight.player);
       if (this.towLine) {
         this.drawTowLine(this.towLine, flight, craft, offset);
-        this.towInk.setDepth(Math.min(playDepth(ship.y), playDepth(point.y)) - 1e-6);
+        // placeAda sets the line's depth once Ada's is known.
+        this.towDepth = playDepth(point.y);
       } else {
         this.ink.lineStyle(1, this.palette.pointOfInterest, 0.8);
         this.ink.lineBetween(ship.x, ship.y, point.x, point.y);
@@ -2603,6 +2647,7 @@ export class PrototypeScene extends Phaser.Scene {
         .setPosition(point.x, point.y)
         .setDepth(playDepth(point.y))
         .setVisible(true);
+      this.passes(this.towSprite);
       return;
     }
     this.ink.fillStyle(this.palette.environmentDetail, 1);
@@ -2789,20 +2834,26 @@ export class PrototypeScene extends Phaser.Scene {
     this.drawBlink(this.stationArt, "station", object, point);
   }
 
-  /** A fixed-facing station or outpost frame at its pivot, blinking A and B. */
+  /**
+   * A fixed-facing station or outpost frame at its pivot, blinking A and B, sorted by its pivot;
+   * `layer` orders a layered outpost's frames within that slot.
+   */
   private drawBlink(
     art: StationArt<Asset>,
     kind: "outpost" | "station",
     object: SpaceObject,
     point: Vec,
     key = object.id,
+    layer = 0,
   ): void {
     const frame = stationFrame(art, this.reducedMotion, this.time.now);
     const sprite = this.objectSprite(key, frame.id)
       .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
       .setOrigin(frame.pivot.x, frame.pivot.y)
-      .setPosition(point.x, point.y);
+      .setPosition(point.x, point.y)
+      .setDepth(playDepth(point.y) + layer * 1e-7);
     this.keyline(kind, key, sprite);
+    this.passes(sprite);
   }
 
   /**
@@ -2863,7 +2914,7 @@ export class PrototypeScene extends Phaser.Scene {
    * silhouette beneath them all.
    */
   private drawOutpostParts(id: string, parts: readonly OutpostPart<Asset>[], point: Vec): void {
-    const depth = 2;
+    const depth = playDepth(point.y);
     const keylineDepth = depth + parts[0]!.order * 1e-7 - 2e-6;
     for (const part of parts) {
       // Under the outpost's id (spriteOwner), so each part lives as long as its outpost.
@@ -2874,6 +2925,7 @@ export class PrototypeScene extends Phaser.Scene {
         .setPosition(point.x + part.offset.x, point.y + part.offset.y)
         .setDepth(depth + part.order * 1e-7);
       this.keyline("outpost", key, sprite, keylineDepth);
+      this.passes(sprite);
     }
   }
 
@@ -2932,9 +2984,10 @@ export class PrototypeScene extends Phaser.Scene {
     group
       .setDisplaySize(width, height)
       .setPosition(left, top)
-      .setDepth(2 + parts[parts.length - 1]!.order * 1e-7 + 1e-7)
+      .setDepth(playDepth(point.y) + parts[parts.length - 1]!.order * 1e-7 + 1e-7)
       .setAlpha(alpha)
       .setVisible(true);
+    this.passes(group);
   }
 
   /**
@@ -2948,7 +3001,14 @@ export class PrototypeScene extends Phaser.Scene {
     if (object.id === "hub" && this.hubArt) {
       const progress = this.model.state.progress[this.model.state.flight!.sector];
       hubLayers(this.hubArt, hubWorn(progress), hubBay(progress)).forEach((layer, index) => {
-        this.drawBlink(layer, "outpost", object, point, index ? hubBayKey(object.id) : object.id);
+        this.drawBlink(
+          layer,
+          "outpost",
+          object,
+          point,
+          index ? hubBayKey(object.id) : object.id,
+          index,
+        );
       });
       return;
     }
@@ -3037,11 +3097,13 @@ export class PrototypeScene extends Phaser.Scene {
     }
     const point = this.project(at);
     const key = id.includes("#") || !id.includes(":") ? id : `${id.split(":")[0]}#${kind}`;
-    this.objectSprite(key, frame.id)
-      .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
-      .setOrigin(frame.pivot.x, frame.pivot.y)
-      .setPosition(point.x, point.y)
-      .setDepth(playDepth(point.y));
+    this.passes(
+      this.objectSprite(key, frame.id)
+        .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
+        .setOrigin(frame.pivot.x, frame.pivot.y)
+        .setPosition(point.x, point.y)
+        .setDepth(playDepth(point.y)),
+    );
     return true;
   }
 
@@ -3094,8 +3156,9 @@ export class PrototypeScene extends Phaser.Scene {
       .setDisplaySize(art.asset.displayWidth!, art.asset.displayHeight!)
       .setOrigin(art.asset.pivot.x, art.asset.pivot.y)
       .setPosition(point.x, point.y)
-      .setDepth(2);
+      .setDepth(playDepth(point.y));
     this.keyline("holodisk", object.id, sprite);
+    this.passes(sprite);
   }
 
   /** A discovery cache stays hidden until Ada first approaches it, then loops its lights. */
@@ -3202,9 +3265,11 @@ export class PrototypeScene extends Phaser.Scene {
           )
           .setOrigin(frame.pivot.x, frame.pivot.y)
           .setPosition(point.x, point.y)
+          .setDepth(playDepth(point.y))
           .setAlpha(state.alpha)
           .setTint(state.tint);
         this.keyline(wreck.archetype, object.id, sprite);
+        this.passes(sprite);
       }
       return;
     }
