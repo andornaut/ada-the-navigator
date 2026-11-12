@@ -62,7 +62,7 @@ layout regeneration like stations. Restart clears jobs and boards.
   hides while she is inside. Penny's sense helps: when the item is within 350 world units, Penny's
   "Woof! Woof!" conversation plays once for that item, ignoring its usual 60 second
   limit. The item glints within 160 world units, like a discovery cache, and is
-  collected on contact.
+  collected on contact as a pickup, within 4 world units of Ada's drawn ship.
 
 ### Tow handling
 
