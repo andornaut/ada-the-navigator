@@ -59,7 +59,14 @@ function artifactHash(directory) {
   return hash.digest("hex");
 }
 
-function start(argument) {
+// The gating smoke, or Art's review captures (`--captures`): each runs against the gate's built
+// artifact in the same isolated containers and is collected the same way.
+const RUNS = {
+  browser: { prefix: "ada-browser", script: "/source/tools/browser-smoke.mjs" },
+  captures: { prefix: "ada-captures", script: "/source/tools/browser-captures.mjs" },
+};
+
+function start(argument, mode = "browser") {
   guard(false);
   const gate = realpathSync(resolve(root, argument ?? ""));
   if (!gate.startsWith(`${realpathSync(evidenceRoot)}${sep}`)) {
@@ -77,7 +84,7 @@ function start(argument) {
   if (!lstatSync(resolve(dist, "index.html")).isFile()) {
     throw new Error("Missing built index.html");
   }
-  const name = `ada-browser-${randomUUID()}`;
+  const name = `${RUNS[mode].prefix}-${randomUUID()}`;
   const directory = resolve(evidenceRoot, name);
   mkdirSync(directory, { recursive: true });
   save(resolve(directory, "source.json"), { ...source, gate, artifact: artifactHash(dist) });
@@ -137,7 +144,7 @@ function start(argument) {
       "--env",
       `CHECK_REVISION=${source.head}`,
       "mcr.microsoft.com/playwright/mcp:v0.0.83",
-      "/source/tools/browser-smoke.mjs",
+      RUNS[mode].script,
     ]);
     created.push(name);
     guard(false);
@@ -179,7 +186,7 @@ function logs(name, path) {
 }
 
 function collect(name) {
-  if (!/^ada-browser-[a-f0-9-]{36}$/.test(name ?? "")) {
+  if (!/^ada-(?:browser|captures)-[a-f0-9-]{36}$/.test(name ?? "")) {
     throw new Error("Invalid browser run name");
   }
   const directory = resolve(evidenceRoot, name);
@@ -323,16 +330,19 @@ function serve() {
 }
 
 try {
-  const [command, argument] = process.argv.slice(2);
+  const [command, ...rest] = process.argv.slice(2);
+  const captures = rest[0] === "--captures";
+  const argument = captures ? rest[1] : rest[0];
   if (command === "start") {
-    start(argument);
+    start(argument, captures ? "captures" : "browser");
   } else if (command === "collect") {
     collect(argument);
   } else if (command === "serve") {
     serve();
   } else {
     throw new Error(
-      "Usage: node tools/browser-check.mjs start <gate-evidence-directory> | collect <run-name>",
+      "Usage: node tools/browser-check.mjs start [--captures] <gate-evidence-directory> | " +
+        "collect <run-name>",
     );
   }
 } catch (error) {
