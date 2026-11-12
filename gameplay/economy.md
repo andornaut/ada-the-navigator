@@ -193,10 +193,10 @@ one, so a Multi-Laser fan or a Scattershot spread costs one.
 
 Ammunition is sold per weapon in the shop. Every pack costs 10 Stardust, and
 later weapons in weapon order get fewer seconds of level 1 fire per pack:
-Multi-Laser 300 (90 seconds), Rapid Missile 160 (80), Heavy Missile 35 (70),
+Multi-Laser 300 (90 seconds), Rapid Missile 265 (80), Heavy Missile 35 (70),
 Scattershot 60 (60) and Phaser 50 (50). Buying or finding a weapon includes
 three packs. A pack's shop row shows its name, such as "Rapid Missile
-ammo", with the pack size, such as "×200", on a second line, as levelled rows
+ammo", with the pack size, such as "×300", on a second line, as levelled rows
 show their level. Typical use of the stronger weapons costs about 15 to 35% of Stardust income,
 depending on the galaxy's fighting, checked by the pacing simulation. Ammunition persists across flights and the
 jump home.

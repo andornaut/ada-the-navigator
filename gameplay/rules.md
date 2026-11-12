@@ -675,7 +675,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   multiplies effective output (damage times fire rate times how often it hits)
   by about 1.5, so level 3 is about 2.25 times level 1; Rapid Missile and
   Multi-Laser gain about 1.2 to 1.33 times per level. Single-target output meets
-  those steps on its own; range, blast and spread growth add to them. The
+  those steps on its own; reach and blast stay fixed at every level. The
   shield's capacity is 10, 15 and 20, so level 3 holds 2 times level 1. Each
   weapon grows along its own dimensions:
   - Laser: damage, fire rate and bolt speed: every 0.30, 0.25, 0.20 s, dealing 1,
@@ -684,7 +684,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
     level 1 (-20, 0 and 20 degrees), then 4, then 5, every 0.30 s. Each bolt deals a fixed 0.75 times Laser damage;
     levels add only bolts. Its bolts are slower than Laser's at the same level.
   - Rapid Missile: quick straight missiles with a small blast (25) and a fixed
-    2.5 times Laser damage; levels grow its fire rate (every 0.50, 0.42, 0.33 s)
+    2.5 times Laser damage; levels grow its fire rate (every 0.30, 0.25, 0.20 s)
     and missile speed.
   - Heavy Missile: one slow straight missile with a large blast (radius 70),
     every 2.0 s at every level; levels grow only its damage (10, 15, 22.5 times
@@ -694,7 +694,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
     exceeds it after (7.5 against 6, 11.25 against 7.5).
   - Scattershot: the close-range weapon, a shotgun of visual dots across -30 to
     30 degrees, 7 at level 1, then 9, then 11, one volley every 1.0 s. Its range
-    is a fixed 100 world units on every device, and levels add only dots. Up
+    is a fixed 100 world units on every device, and levels add dots. Up
     close every dot hits; toward its range the spread covers more area but fewer
     dots hit. A level 1 volley deals 6 times Laser damage when every dot hits
     (about 0.86 per dot); levels 2 and 3 share 1.5 and 2.25 times that volley
@@ -722,18 +722,16 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   follows speed. Rapid Missile flies at 500, 600 and
   700, and Heavy Missile at a fixed 400; both missiles reach a fixed 220 at every
   level, so a missile that hits nothing explodes on screen. Enemy missiles share
-  this reach. Scattershot dots use a fixed base
-  projectile speed of 600, multiplied by their speed ratio.
+  this reach. Scattershot dots fly at 600.
   None depends on her engine level.
 - Ada's shots and Phaser beams leave from her ship's nose, and weapon ranges are
   measured from there.
 - Fan angles are measured in the projected aim plane. Rotate there before
-  unprojecting each shot direction; preserve the weapon's world-speed ratio.
+  unprojecting each shot direction; preserve the weapon's world speed.
 - Each scattershot dot travels 100 world units along its own rotated heading on
   every device, fades after 65% of that range and vanishes at the limit.
-- Weapon intervals, speed and damage ratios, angles, range and fade are provisional
-  catalog tuning. Speed ratios multiply the existing base projectile speed; damage
-  ratios multiply base shot damage. No homing, piercing or reloading is added.
+- Weapon intervals, speeds, damage, angles, reach and fade are provisional
+  catalog tuning; damage is in multiples of a level 1 Laser shot. No homing, piercing or reloading is added.
 - Top-right weapon icons select Laser fire or an owned weapon, in the order Laser,
   Multi-Laser, Rapid Missile, Heavy Missile, Scattershot, Phaser, the order
   weapons take everywhere they are listed (shop weapon and ammunition rows and
