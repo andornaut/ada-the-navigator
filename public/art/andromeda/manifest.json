@@ -8360,5 +8360,6 @@
       }
     }
   ],
-  "backdropHaze": "/art/andromeda/haze.json"
+  "backdropHaze": "/art/andromeda/haze.json",
+  "backdrop": "/art/andromeda/backdrop.json"
 }

@@ -9,7 +9,8 @@
     "cartwheel": "/art/cartwheel/manifest.json",
     "whirlpool": "/art/whirlpool/manifest.json",
     "andromeda": "/art/andromeda/manifest.json",
-    "needle": "/art/needle/manifest.json"
+    "needle": "/art/needle/manifest.json",
+    "black-eye": "/art/black-eye/manifest.json"
   },
   "assets": [
     {
@@ -16460,5 +16461,6 @@
   "resourceRocks": "/art/resource-rocks.json",
   "tow": "/art/cartwheel/tow.json",
   "titleScreen": "/art/title-screen.json",
-  "jobs": "/art/jobs.json"
+  "jobs": "/art/jobs.json",
+  "backdropLayers": "/art/backdrop.json"
 }

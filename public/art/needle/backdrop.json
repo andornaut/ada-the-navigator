@@ -1,0 +1,108 @@
+{
+  "version": 1,
+  "galaxy": "needle",
+  "placeholder": true,
+  "light": false,
+  "seed": 4216128235,
+  "background": "#292734",
+  "sky": {
+    "from": "#292734",
+    "to": "#23212E",
+    "weights": [0.45, 0.75],
+    "offset": -0.1,
+    "flip": false
+  },
+  "plates": {
+    "lattice": [
+      [420, 0],
+      [210, 365]
+    ],
+    "split": true,
+    "jitter": 0.3,
+    "lighter": true,
+    "pattern": {
+      "noise": [
+        {
+          "scale": 1100,
+          "weight": 0.65,
+          "salt": "plate-n1"
+        },
+        {
+          "scale": 478,
+          "weight": 0.35,
+          "salt": "plate-n2"
+        }
+      ]
+    },
+    "steps": [
+      {
+        "step": -2,
+        "color": "#1D1B24",
+        "multiply": 0.699
+      },
+      {
+        "step": -1,
+        "color": "#23212C",
+        "multiply": 0.852
+      },
+      {
+        "step": 1,
+        "color": "#302D3B",
+        "screen": "#080709"
+      },
+      {
+        "step": 2,
+        "color": "#383643",
+        "screen": "#121213"
+      }
+    ]
+  },
+  "planets": [
+    {
+      "look": "gibbous",
+      "hue": 0,
+      "size": 0.8,
+      "colors": {
+        "night": "#2D2A38",
+        "body": "#3B3947",
+        "lit": "#3C3947",
+        "ring": "#3B3947"
+      }
+    }
+  ],
+  "far": [],
+  "fixed": [],
+  "stars": {
+    "color": "#C7C5D6",
+    "alpha": {
+      "far": 0.246,
+      "near": 0.458
+    }
+  },
+  "streaks": {
+    "color": "#49475D",
+    "alpha": 0.628,
+    "angle": -18
+  },
+  "check": {
+    "cameras": 7,
+    "today": "#49475D",
+    "todayContrast": 1.634,
+    "extreme": "#4A4755",
+    "extremeContrast": 1.618,
+    "signals": {
+      "obstacle": {
+        "today": 3.328,
+        "after": 3.36
+      },
+      "shipWhite": {
+        "today": 8.964,
+        "after": 9.051
+      },
+      "shipHullDark": {
+        "today": 3.821,
+        "after": 3.858
+      }
+    }
+  }
+}

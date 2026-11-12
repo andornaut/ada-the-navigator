@@ -1,0 +1,162 @@
+{
+  "version": 1,
+  "view": [720, 360],
+  "order": ["sky", "phenomena", "plates", "stars", "debris"],
+  "sky": {
+    "parallax": 0,
+    "anchor": "view"
+  },
+  "phenomena": {
+    "fixed": {
+      "parallax": 0,
+      "anchor": "view"
+    },
+    "far": {
+      "parallax": 0.05,
+      "chunk": [2400, 1500],
+      "chance": 0.5,
+      "salt": "far"
+    },
+    "planets": {
+      "parallax": 0.12,
+      "chunk": [1500, 1000],
+      "chance": 0.55,
+      "salt": "planet",
+      "radius": [28, 98],
+      "light": [-0.62, -0.78],
+      "facets": 14,
+      "push": {
+        "crescent": 0.42,
+        "gibbous": 0.7
+      },
+      "lit": {
+        "push": 1.9,
+        "inset": 1.02
+      },
+      "moonLitAlpha": 0.9,
+      "ring": {
+        "radii": [2, 0.42],
+        "tilt": [-14, 6],
+        "bands": [
+          {
+            "from": 0.66,
+            "to": 0.74,
+            "alpha": 0.5
+          },
+          {
+            "from": 0.78,
+            "to": 0.98,
+            "alpha": 0.85
+          }
+        ]
+      }
+    },
+    "nebula": {
+      "display": [768, 320],
+      "scale": 4,
+      "filter": "linear"
+    },
+    "cluster": {
+      "glow": {
+        "sigma": [64, 42],
+        "alpha": 0.7
+      },
+      "stars": {
+        "count": 90,
+        "spread": [47.6, 34],
+        "radius": [0.5, 0.8],
+        "largeShare": 0.2
+      }
+    }
+  },
+  "plates": {
+    "parallax": 0.15,
+    "patternWeight": 0.75,
+    "jitterWeight": 1,
+    "edges": [-0.55, -0.22, 0.3, 0.62],
+    "blend": {
+      "darker": "multiply",
+      "lighter": "screen"
+    }
+  },
+  "stars": {
+    "chunk": 240,
+    "salt": "star",
+    "layers": [
+      {
+        "name": "far",
+        "parallax": 0.3,
+        "perChunk": 10,
+        "radius": 0.55
+      },
+      {
+        "name": "near",
+        "parallax": 0.5,
+        "perChunk": 3,
+        "radius": 0.85
+      }
+    ],
+    "large": {
+      "share": 0.15,
+      "scale": 1.25
+    },
+    "brightness": [0.55, 1],
+    "twinkle": {
+      "period": [3, 6],
+      "range": [0.7, 1],
+      "reducedMotion": 0.85
+    }
+  },
+  "debris": {
+    "streaks": {
+      "parallax": 0.6,
+      "chunk": [260, 260],
+      "chance": 0.45,
+      "salt": "streak",
+      "length": [26, 72],
+      "width": 1,
+      "spread": 11.5
+    },
+    "specks": {
+      "parallax": 0.7
+    },
+    "rocks": {
+      "parallax": 0.8
+    }
+  },
+  "caps": {
+    "sky": {
+      "dark": 1.08,
+      "light": 1.05
+    },
+    "plates": {
+      "dark": {
+        "lighter": 1.24,
+        "darker": 1.16
+      },
+      "light": {
+        "lighter": 1.1,
+        "darker": 1.24
+      }
+    },
+    "phenomena": {
+      "body": 1.3
+    },
+    "stars": {
+      "dark": {
+        "far": 1.8,
+        "near": 3
+      },
+      "light": {
+        "far": 1.06,
+        "near": 1.1
+      }
+    },
+    "streaks": 1.35,
+    "rocks": 1.8
+  },
+  "check": {
+    "cameras": 6,
+    "opening": 5
+  }
+}

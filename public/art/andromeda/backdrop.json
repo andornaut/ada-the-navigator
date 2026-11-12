@@ -1,0 +1,107 @@
+{
+  "version": 1,
+  "galaxy": "andromeda",
+  "placeholder": false,
+  "light": false,
+  "seed": 3962480382,
+  "background": "#232641",
+  "sky": {
+    "from": "#232641",
+    "to": "#18213D",
+    "weights": [0.45, 0.75],
+    "offset": -0.1,
+    "flip": true
+  },
+  "plates": {
+    "lattice": [
+      [460, 0],
+      [230, 400]
+    ],
+    "split": true,
+    "jitter": 0.34,
+    "lighter": false,
+    "pattern": {
+      "noise": [
+        {
+          "scale": 1100,
+          "weight": 0.683,
+          "salt": "plate-n1"
+        },
+        {
+          "scale": 478,
+          "weight": 0.368,
+          "salt": "plate-n2"
+        }
+      ]
+    },
+    "steps": [
+      {
+        "step": -2,
+        "color": "#181A2D",
+        "multiply": 0.694
+      },
+      {
+        "step": -1,
+        "color": "#1E2037",
+        "multiply": 0.85
+      }
+    ]
+  },
+  "planets": [
+    {
+      "look": "crescent",
+      "hue": 10,
+      "size": 0.7,
+      "colors": {
+        "night": "#2B274B",
+        "body": "#3B3366",
+        "lit": "#47416E",
+        "ring": "#41325E"
+      }
+    }
+  ],
+  "far": [
+    {
+      "look": "cluster",
+      "colors": {
+        "glow": "#312A55",
+        "star": "#B8C1FF"
+      },
+      "alpha": 0.249
+    }
+  ],
+  "fixed": ["backdropHaze"],
+  "stars": {
+    "color": "#B8C1FF",
+    "alpha": {
+      "far": 0.249,
+      "near": 0.464
+    }
+  },
+  "streaks": {
+    "color": "#414572",
+    "alpha": 0.633,
+    "angle": -30
+  },
+  "check": {
+    "cameras": 8,
+    "today": "#6970A0",
+    "todayContrast": 3.124,
+    "extreme": "#69709F",
+    "extremeContrast": 3.096,
+    "signals": {
+      "obstacle": {
+        "today": 1.751,
+        "after": 1.767
+      },
+      "shipWhite": {
+        "today": 4.718,
+        "after": 4.76
+      },
+      "shipHullDark": {
+        "today": 2.011,
+        "after": 2.029
+      }
+    }
+  }
+}

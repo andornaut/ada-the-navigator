@@ -4564,10 +4564,37 @@
       "frames": {
         "neutral": 0
       }
+    },
+    {
+      "id": "nebula-whirlpool-1",
+      "path": "/art/whirlpool/nebula-1.png",
+      "width": 192,
+      "height": 80,
+      "displayWidth": 768,
+      "displayHeight": 320,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "id": "nebula-whirlpool-2",
+      "path": "/art/whirlpool/nebula-2.png",
+      "width": 192,
+      "height": 80,
+      "displayWidth": 768,
+      "displayHeight": 320,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
     }
   ],
   "whales": "/art/whales.json",
   "whirlpoolCurrents": "/art/whirlpool/currents.json",
   "whirlpoolDebris": "/art/whirlpool/debris.json",
-  "whirlpoolProjects": "/art/whirlpool/projects.json"
+  "whirlpoolProjects": "/art/whirlpool/projects.json",
+  "backdrop": "/art/whirlpool/backdrop.json"
 }

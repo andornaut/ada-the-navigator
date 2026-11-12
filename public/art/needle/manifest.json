@@ -8993,5 +8993,6 @@
   "needleGates": "/art/needle/gates.json",
   "needleChannels": "/art/needle/channels.json",
   "needleEye": "/art/needle/eye.json",
-  "needleBand": "/art/needle/band.json"
+  "needleBand": "/art/needle/band.json",
+  "backdrop": "/art/needle/backdrop.json"
 }

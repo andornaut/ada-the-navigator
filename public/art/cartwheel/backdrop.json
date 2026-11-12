@@ -1,0 +1,136 @@
+{
+  "version": 1,
+  "galaxy": "cartwheel",
+  "placeholder": false,
+  "light": false,
+  "seed": 1760754722,
+  "background": "#39221E",
+  "sky": {
+    "from": "#39221E",
+    "to": "#341B1A",
+    "weights": [0.45, 0.75],
+    "offset": -0.1,
+    "flip": false
+  },
+  "plates": {
+    "lattice": [
+      [380, 0],
+      [190, 330]
+    ],
+    "split": true,
+    "jitter": 0.28,
+    "lighter": true,
+    "pattern": {
+      "noise": [
+        {
+          "scale": 1100,
+          "weight": 0.293,
+          "salt": "plate-n1"
+        },
+        {
+          "scale": 478,
+          "weight": 0.158,
+          "salt": "plate-n2"
+        }
+      ],
+      "spokes": {
+        "weight": 0.8,
+        "cell": [2600, 2000],
+        "count": 5,
+        "twist": 520,
+        "squash": 1.4,
+        "fade": 900
+      }
+    },
+    "steps": [
+      {
+        "step": -2,
+        "color": "#271815",
+        "multiply": 0.692
+      },
+      {
+        "step": -1,
+        "color": "#301D19",
+        "multiply": 0.849
+      },
+      {
+        "step": 1,
+        "color": "#44271F",
+        "screen": "#0E0601"
+      },
+      {
+        "step": 2,
+        "color": "#4F2F21",
+        "screen": "#1C0F03"
+      }
+    ]
+  },
+  "planets": [
+    {
+      "look": "crescent",
+      "hue": -25,
+      "size": 1,
+      "colors": {
+        "night": "#41222A",
+        "body": "#572D38",
+        "lit": "#553039",
+        "ring": "#552F32"
+      }
+    },
+    {
+      "look": "ringed",
+      "hue": 20,
+      "size": 0.8,
+      "colors": {
+        "night": "#3F2516",
+        "body": "#55311C",
+        "lit": "#533321",
+        "ring": "#4F341B"
+      }
+    }
+  ],
+  "far": [
+    {
+      "look": "cluster",
+      "colors": {
+        "glow": "#49271B",
+        "star": "#F3B6AC"
+      },
+      "alpha": 0.25
+    }
+  ],
+  "fixed": [],
+  "stars": {
+    "color": "#F3B6AC",
+    "alpha": {
+      "far": 0.25,
+      "near": 0.464
+    }
+  },
+  "streaks": {
+    "color": "#643F39",
+    "alpha": 0.634,
+    "angle": 22
+  },
+  "check": {
+    "cameras": 9,
+    "today": "#643F39",
+    "todayContrast": 1.626,
+    "extreme": "#5E353A",
+    "extremeContrast": 1.44,
+    "signals": {
+      "obstacle": {
+        "today": 3.372,
+        "after": 3.808
+      },
+      "shipWhite": {
+        "today": 9.083,
+        "after": 10.259
+      },
+      "shipHullDark": {
+        "today": 3.872,
+        "after": 4.373
+      }
+    }
+  }
+}

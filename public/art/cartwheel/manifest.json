@@ -11368,5 +11368,6 @@
     }
   ],
   "cartwheelDebris": "/art/cartwheel/debris.json",
-  "oreField": "/art/cartwheel/ore-field.json"
+  "oreField": "/art/cartwheel/ore-field.json",
+  "backdrop": "/art/cartwheel/backdrop.json"
 }

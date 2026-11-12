@@ -439,5 +439,6 @@
         "neutral": 0
       }
     }
-  ]
+  ],
+  "backdrop": "/art/sunflower/backdrop.json"
 }

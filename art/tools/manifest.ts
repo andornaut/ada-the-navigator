@@ -5,8 +5,16 @@ import { json } from "./projection.ts";
 
 // The galaxies with art, by their stable galaxy id. Each galaxy's manifest holds the entries and
 // data links that only that galaxy uses; the core manifest holds the rest and maps each galaxy id
-// to its galaxy's manifest under `galaxies`. Route order is the game's, not the manifest's.
-export const GALAXIES = ["sunflower", "cartwheel", "whirlpool", "andromeda", "needle"] as const;
+// to its galaxy's manifest under `galaxies`. Route order is the game's, not the manifest's. A
+// placeholder galaxy's manifest holds only its placeholder backdrop until its art is built.
+export const GALAXIES = [
+  "sunflower",
+  "cartwheel",
+  "whirlpool",
+  "andromeda",
+  "needle",
+  "black-eye",
+] as const;
 
 export type ManifestFile = "core" | (typeof GALAXIES)[number];
 
