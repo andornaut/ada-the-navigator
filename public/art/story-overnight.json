@@ -3,7 +3,7 @@
   "overnight": {
     "from": "story-ada-room-night",
     "sleep": "story-ada-room-sleep",
-    "to": "story-ada-room-morning",
+    "to": "story-ada-room-morning-cats",
     "overlays": {
       "story-ada-room-sleep-figures": {
         "at": {
@@ -29,7 +29,7 @@
         "ms": 1500
       },
       {
-        "background": "story-ada-room-morning",
+        "background": "story-ada-room-morning-cats",
         "fadeMs": 600,
         "holdMs": 0
       }
@@ -42,7 +42,7 @@
         "holdMs": 2000
       },
       {
-        "background": "story-ada-room-morning",
+        "background": "story-ada-room-morning-cats",
         "fadeMs": 400,
         "holdMs": 0
       }

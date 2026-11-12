@@ -360,11 +360,10 @@ above do. Every figure clears its panel.
 | `story-ada-room-morning-cats`    | Morning, the cats at her feet | y -180*, top 231, figures 84..226 | y -180*, top 231, figures 84..226 | y -135*, top 279, figures 129..271 |
 
 To wire, in Tech's code: add the background keys above; point Mom's line, Dad's
-looking-in page, the cats page and the morning page at their composites; place
-a composite as its `base` in the run anchor; and end the overnight sequence on
-`story-ada-room-morning-cats` (its `to` and the final cross-fade), so the cats
-fade in with Ada. `story-overnight.json` still ends on `story-ada-room-morning`
-until that change lands.
+looking-in page, the cats page and the morning page at their composites; and
+place a composite as its `base` in the run anchor. The overnight sequence ends
+on `story-ada-room-morning-cats` ([sequence](#sequence)), so the cats fade in
+with Ada.
 
 ## Rock glow transition
 
@@ -472,7 +471,8 @@ Data: [story-overnight.json](../public/art/story-overnight.json), linked from
 the root manifest as `storyOvernight`. Key `overnight`:
 
 - `from` (`story-ada-room-night`), `sleep` (`story-ada-room-sleep`) and `to`
-  (`story-ada-room-morning`) name the three pages' backgrounds.
+  (`story-ada-room-morning-cats`, the morning with Ada waking and the cats at
+  her feet) name the three pages' backgrounds.
 - `overlays` maps each overlay id to its `at`, as in its manifest entry.
 - `steps` play in order when the sleep page starts (the night page's panel
   has hidden); `durationMs` is their total:
@@ -488,8 +488,8 @@ the root manifest as `storyOvernight`. Key `overnight`:
 | ------------ | -------------------------------------------------------------------------- |
 | 0 to 400     | Figures fade in: night to sleep                                            |
 | 400 to 1900  | One breath: the rock's glow from radius 3.0, peak 170 to 3.8, 215 and back |
-| 1900 to 2500 | Cross-fade to the morning background; the morning page follows             |
+| 1900 to 2500 | Cross-fade to the morning page's background; the morning page follows      |
 
 Reduced motion (2400 ms): the figures show at once and hold 2000 ms with the
-glow steady, then one 400 ms cross-fade to the morning background. In the
+glow steady, then one 400 ms cross-fade to the morning page's background. In the
 breath only the glow patch changes, once per 1.5 s.

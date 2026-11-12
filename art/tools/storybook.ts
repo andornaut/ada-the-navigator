@@ -2126,22 +2126,26 @@ type Step =
 const stepMs = (steps: readonly Step[]) =>
   steps.reduce((sum, step) => sum + ("ms" in step ? step.ms : step.fadeMs + step.holdMs), 0);
 
+// The morning page's background: the morning with Ada waking and the cats curled at her feet,
+// so the cats fade in with her.
+const MORNING_PAGE = "story-ada-room-morning-cats";
+
 function overnight(at: (id: string) => Overlay["at"]) {
   const steps: Step[] = [
     { overlay: SLEEP_FIGURES, fadeMs: 400, holdMs: 0 },
     { breath: SLEEP_GLOW, ms: 1500 },
-    { background: "story-ada-room-morning", fadeMs: 600, holdMs: 0 },
+    { background: MORNING_PAGE, fadeMs: 600, holdMs: 0 },
   ];
   const reducedMotion: Step[] = [
     { overlay: SLEEP_FIGURES, fadeMs: 0, holdMs: 2000 },
-    { background: "story-ada-room-morning", fadeMs: 400, holdMs: 0 },
+    { background: MORNING_PAGE, fadeMs: 400, holdMs: 0 },
   ];
   return {
     version: 1,
     overnight: {
       from: "story-ada-room-night",
       sleep: SLEEP,
-      to: "story-ada-room-morning",
+      to: MORNING_PAGE,
       overlays: Object.fromEntries(OVERLAYS.map((id) => [id, { at: at(id) }])),
       steps,
       durationMs: stepMs(steps),
