@@ -378,6 +378,7 @@
           "rim": 1,
           "width": 96
         },
+        "cargoIcon": 20,
         "divider": {
           "height": 16,
           "width": 1

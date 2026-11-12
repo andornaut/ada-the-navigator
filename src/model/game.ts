@@ -157,6 +157,7 @@ import {
   type StoryStep,
 } from "./storybook.ts";
 import type {
+  Aboard,
   FlightEvent,
   FlightInput,
   FlightState,
@@ -167,6 +168,7 @@ import type {
   JobOffer,
   JobTarget,
   SectorProgress,
+  ShipState,
   Vec,
 } from "./types.ts";
 import { newEconomy, shipTuning } from "./upgrades.ts";
@@ -1681,6 +1683,47 @@ export class GameModel {
   /** The guided calf in this flight, for the scene. */
   get guidedCalf(): Readonly<GuidedCalf> | null {
     return this.state.mode === "space" ? (this.state.flight?.calf ?? null) : null;
+  }
+  /**
+   * What Ada carries in flight: a rescue's towed craft, a delivery's item or a supply run's
+   * cargo; null with nothing aboard.
+   */
+  get aboard(): Aboard | null {
+    if (this.state.mode !== "space" || !this.state.flight) {
+      return null;
+    }
+    const held = this.held;
+    if (this.towing && held) {
+      return { kind: "towing", name: held.item };
+    }
+    if (held?.carrying) {
+      return { kind: "carrying", name: held.item };
+    }
+    const activity = this.activity;
+    if (activity?.id === "supplyRun" && activity.carrying) {
+      return { kind: "carrying", name: SUPPLY_ITEMS[activity.place] ?? "" };
+    }
+    return null;
+  }
+  /** The Ship card's facts: what Ada carries this flight and her ship's levels and weapons. */
+  get ship(): ShipState {
+    const { economy, flight } = this.state;
+    const levels = (this.state.mode === "space" && flight?.levels) || economy.levels;
+    return {
+      aboard: this.aboard,
+      engine: levels.engine,
+      holodisks: Object.values(this.state.progress).filter((progress) => progress.holodisk).length,
+      ore: this.state.mode === "space" ? (flight?.cargo ?? 0) : 0,
+      paint: economy.paint,
+      shield: levels.shield,
+      stardust: economy.stardust,
+      tractor: levels.tractor,
+      weapons: this.weapons().map((choice) => ({
+        ammo: choice.ammo,
+        id: choice.id,
+        level: levels.weapons[choice.id],
+      })),
+    };
   }
   /** Whether a rescue's tow line is attached, which refuses Travel. */
   get towing(): boolean {

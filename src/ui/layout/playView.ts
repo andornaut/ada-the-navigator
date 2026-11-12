@@ -202,10 +202,13 @@ export function hudRowWidth(count: number): number {
 // HUD_EDGE in; it centres on the HUD row's centre line, relative to the HUD rect's top-left
 // corner, and grows rightward with the count. Parts, left to right: the 20 shield icon, a mark gap, the 96x12 bar
 // (a 1 rim, 1 ink, then the 92x8 fill area), the divider (12, 1x16, 12), the 20 Stardust icon, a
-// mark gap and the count. The +N tick rides the pill's row: its left edge, the outline included,
+// mark gap and the count; while Ada carries ore, another divider, the 20 ore icon, a mark gap and
+// its count; while she carries a job item or tows a craft, a divider and its 20 icon last. The +N
+// tick rides the pill's row: its left edge, the outline included, a mark
 // gap right of the pill, its line box centred on the row (top inside the pill's top).
 export const STATUS_PILL = {
   bar: { fill: { height: 8, width: 92 }, height: 12, inset: 2, rim: 1, width: 96 },
+  cargoIcon: 20,
   divider: { height: 16, width: 1 },
   dividerGap: 12,
   // The leading edge inside the fill's right end while the shield regenerates.
@@ -228,9 +231,12 @@ export const STATUS_PILL = {
 } as const;
 
 // The pill's width for a countWidth count: the padding, both icons and mark gaps, the bar and the
-// divider with its gaps, plus the count.
-export function statusPillWidth(countWidth: number): number {
-  const { bar, divider, dividerGap, icon, markGap, pill, stardustIcon } = STATUS_PILL;
+// divider with its gaps, plus the count; an ore count of oreWidth adds a divider, the ore icon, a
+// mark gap and the count, and something aboard a divider and its icon.
+export function statusPillWidth(countWidth: number, oreWidth?: number, aboard = false): number {
+  const { bar, cargoIcon, divider, dividerGap, icon, markGap, pill, stardustIcon } = STATUS_PILL;
   const fixed = 2 * pill.padding + icon + markGap + bar.width + 2 * dividerGap + divider.width;
-  return fixed + stardustIcon + markGap + countWidth;
+  const segment = 2 * dividerGap + divider.width + cargoIcon;
+  const ore = oreWidth === undefined ? 0 : segment + markGap + oreWidth;
+  return fixed + stardustIcon + markGap + countWidth + ore + (aboard ? segment : 0);
 }

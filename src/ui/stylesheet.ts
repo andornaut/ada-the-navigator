@@ -3,9 +3,11 @@ import { CONVERSATION_STYLE } from "./conversation.ts";
 import { LOADING_STYLE } from "./loading-bar.ts";
 import { MAP_SCREEN_STYLE } from "./map-screen.ts";
 import { NOTICE_STYLE } from "./notice.ts";
+import { PAUSE_GRID_STYLE } from "./pause-card.ts";
 import { RESTART_STYLE } from "./restart-card.ts";
 import { ROUTE_MAP_STYLE } from "./route-map.ts";
 import { SETTINGS_STYLE } from "./settings.ts";
+import { SHIP_CARD_STYLE } from "./ship-card.ts";
 import { START_SCREEN_STYLE } from "./start-screen.ts";
 import { STATION_STYLE } from "./station.ts";
 import { STATUS_PILL_STYLE } from "./status-pill.ts";
@@ -27,6 +29,8 @@ export const UI_STYLESHEET = [
   WEAPON_STYLE,
   STATUS_PILL_STYLE,
   MAP_SCREEN_STYLE,
+  PAUSE_GRID_STYLE,
+  SHIP_CARD_STYLE,
   ACHIEVEMENTS_STYLE,
   STORYBOOK_STYLE,
   ROUTE_MAP_STYLE,

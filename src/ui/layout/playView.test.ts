@@ -296,6 +296,19 @@ describe("HUD anchors", () => {
     expect(STATUS_PILL.bar.width - 2 * STATUS_PILL.bar.inset).toBe(STATUS_PILL.bar.fill.width);
   });
 
+  it("add 45 per cargo segment (a divider with its gaps and a 20 icon), and the ore count after a mark gap", () => {
+    expect(STATUS_PILL.cargoIcon).toBe(20);
+    expect(statusPillWidth(26.7, undefined, true) - statusPillWidth(26.7)).toBeCloseTo(45, 9);
+    expect(statusPillWidth(26.7, 17.8) - statusPillWidth(26.7)).toBeCloseTo(
+      45 + SPACING.markGap + 17.8,
+      9,
+    );
+    expect(statusPillWidth(26.7, 17.8, true) - statusPillWidth(26.7)).toBeCloseTo(
+      90 + SPACING.markGap + 17.8,
+      9,
+    );
+  });
+
   it("keep the pill at a 109.37 count and a +9,999 label a page inset from four weapons", () => {
     // 720 with phone insets; "+9,999" is 51.38 wide with its outline, a mark gap beyond the pill.
     const view = { height: 360, width: 720 };

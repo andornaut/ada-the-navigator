@@ -1,10 +1,10 @@
 // Pause, as in Chibi (art/controls.md "Pause"): a touch pause button in the view's top-left
-// corner (PAUSE_BUTTON, src/ui/layout/playView.ts), and a Paused card with its actions stacked
-// full width. In flight they are Resume, Map, Settings and Back to title; on Ada's room page,
-// Settings and Back to title (gameplay/rules.md). Return to Earth is on the Map, and
-// Achievements on the start screen.
+// corner (PAUSE_BUTTON, src/ui/layout/playView.ts), and a Paused card: Resume full width over a
+// two-column grid of the other actions. In flight they are Resume, then Map, Ship, Settings and
+// Back to title; on Ada's room page, Settings and Back to title (gameplay/rules.md). Return to
+// Earth is on the Map, and Achievements on the start screen.
 
-export type PauseAction = "backToTitle" | "map" | "resume" | "settings";
+export type PauseAction = "backToTitle" | "map" | "resume" | "settings" | "ship";
 
 /** Where the Paused card opens: in flight, or on Ada's room page. */
 export type PausePlace = "flight" | "room";
@@ -36,6 +36,7 @@ export function pauseActions(place: PausePlace): readonly PauseActionView[] {
   return [
     { available: true, id: "resume", role: "primary" },
     { available: true, id: "map", role: "secondary" },
+    { available: true, id: "ship", role: "secondary" },
     { available: true, id: "settings", role: "secondary" },
     { available: true, id: "backToTitle", role: "secondary" },
   ];

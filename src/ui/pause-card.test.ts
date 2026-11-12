@@ -4,6 +4,11 @@ import { PROTOTYPE } from "../data/prototype.ts";
 import type { GalaxyMap } from "../model/map.ts";
 import { mapScreenLabels } from "./map-screen.ts";
 import { createPauseCards, type PauseLabels, type PauseState } from "./pause-card.ts";
+import type { ShipView } from "./ship-card.ts";
+
+// Every focus() call, latest last.
+const focusLog: FakeElement[] = [];
+const focused = () => focusLog.at(-1);
 
 // A stand-in for the few DOM members the pause cards and the map screen's construction use.
 class FakeElement {
@@ -34,7 +39,12 @@ class FakeElement {
       listener();
     }
   }
-  focus(): void {}
+  closest(): null {
+    return null;
+  }
+  focus(): void {
+    focusLog.push(this);
+  }
   getAttribute(name: string): string | null {
     return this.attributes.get(name) ?? null;
   }
@@ -70,7 +80,22 @@ const LABELS: PauseLabels = {
   mapScreen: mapScreenLabels(PROTOTYPE.labels),
   resume: "Resume",
   settings: "Settings",
+  ship: "Ship",
+  shipHeadings: { cargo: "Cargo", equipment: "Equipment" },
+  shipRows: PROTOTYPE.labels,
   title: "Paused",
+};
+
+const SHIP: ShipView = {
+  aboard: null,
+  engine: 1,
+  holodisks: 2,
+  ore: 12,
+  paint: "Sky blue",
+  shield: 2,
+  stardust: 1234,
+  tractor: 1,
+  weapons: [{ ammo: null, id: "basic", level: 1 }],
 };
 
 beforeEach(() => {
@@ -101,6 +126,7 @@ const state = (change: Partial<PauseState> = {}): PauseState => ({
   job: null,
   map: MAP,
   place: "flight",
+  ship: SHIP,
   towing: false,
   ...change,
 });
@@ -117,29 +143,50 @@ function cards() {
     reducedMotion: () => true,
   };
   const pause = createPauseCards(root as unknown as HTMLElement, options);
-  const body = root.children[0]!.children[0]!.children[0]!.children[1]!;
-  return { body, options, pause, root };
+  const modal = root.children[0]!;
+  const body = modal.children[0]!.children[0]!.children[1]!;
+  const ship = modal.children[1]!;
+  return { body, modal, options, pause, root, ship };
 }
 
+// Resume, then the grid's buttons in order.
+const buttonsOf = (actions: FakeElement) =>
+  actions.children.flatMap((node) => (node.dataset.action ? [node] : node.children));
+
 const shownActions = (actions: FakeElement) =>
-  actions.children.filter((button) => !button.hidden).map((button) => button.dataset.action);
+  buttonsOf(actions)
+    .filter((button) => !button.hidden)
+    .map((button) => button.dataset.action);
+
+const button = (actions: FakeElement, action: string) =>
+  buttonsOf(actions).find((node) => node.dataset.action === action)!;
+
+// Every text node under a node, depth first.
+const texts = (node: FakeElement): string[] => [
+  ...(node.textContent ? [node.textContent] : []),
+  ...node.children.flatMap(texts),
+];
 
 describe("Paused card", () => {
-  it("is the action stack alone: Resume, Map, Settings and Back to title, with no objective", () => {
+  it("is Resume over a two-column grid of Map, Ship, Settings and Back to title, with no objective", () => {
     const { body, pause } = cards();
     pause.setState(state({ job: "Chart the Sleepy Tug" }));
     expect(body.children).toHaveLength(1);
     const actions = body.children[0]!;
     expect(actions.className).toContain("ada-stack");
+    expect(actions.children[0]!.dataset.action).toBe("pause-resume");
+    expect(actions.children[1]!.className).toContain("ada-pause-grid");
     expect(shownActions(actions)).toEqual([
       "pause-resume",
       "pause-map",
+      "pause-ship",
       "pause-settings",
       "pause-backToTitle",
     ]);
-    expect(actions.children.map((button) => button.textContent)).toEqual([
+    expect(buttonsOf(actions).map((node) => node.textContent)).toEqual([
       "Resume",
       "Map",
+      "Ship",
       "Settings",
       "Back to title",
     ]);
@@ -148,14 +195,15 @@ describe("Paused card", () => {
   it("keeps every action, Back to title included, available in danger", () => {
     const { body, options, pause } = cards();
     pause.setState(state({ inDanger: true }));
-    const actions = body.children[0]!.children;
-    expect(actions.map((button) => button.getAttribute("aria-disabled"))).toEqual([
+    const actions = buttonsOf(body.children[0]!);
+    expect(actions.map((node) => node.getAttribute("aria-disabled"))).toEqual([
+      null,
       null,
       null,
       null,
       null,
     ]);
-    actions[3]!.click();
+    actions[4]!.click();
     expect(options.onBackToTitle).toHaveBeenCalledOnce();
   });
 
@@ -164,7 +212,7 @@ describe("Paused card", () => {
     const actions = body.children[0]!;
     pause.setState(state({ place: "room" }));
     expect(shownActions(actions)).toEqual(["pause-settings", "pause-backToTitle"]);
-    actions.children.find((button) => button.dataset.action === "pause-backToTitle")!.click();
+    button(actions, "pause-backToTitle").click();
     expect(options.onBackToTitle).toHaveBeenCalledOnce();
   });
 
@@ -173,5 +221,55 @@ describe("Paused card", () => {
     const screen = root.children.find((node) => node.className === "ada-map-screen");
     expect(screen?.dataset.dialog).toBe("map");
     expect(screen?.hidden).toBe(true);
+  });
+});
+
+describe("Ship card", () => {
+  it("opens from Ship in the Paused card's place, titled Ship, its rows built and focus on the X", () => {
+    const { body, modal, pause, ship } = cards();
+    pause.setState(state());
+    pause.open();
+    expect(ship.hidden).toBe(true);
+    button(body.children[0]!, "pause-ship").click();
+    expect(pause.shipOpen()).toBe(true);
+    expect(ship.hidden).toBe(false);
+    expect(modal.children[0]!.hidden).toBe(true);
+    expect(ship.getAttribute("aria-label")).toBe("Ship");
+    const close = ship.children[1]!;
+    expect(close.dataset.action).toBe("close-ship");
+    expect(focused()).toBe(close);
+    const shown = texts(ship.children[0]!);
+    expect(shown).toEqual(
+      expect.arrayContaining(["Ship", "Cargo", "Equipment", "1,234", "Level 2 of 3"]),
+    );
+  });
+
+  it("returns to the Paused card on its Ship button from the X and from back", () => {
+    const { body, pause, ship } = cards();
+    pause.setState(state());
+    pause.open();
+    const shipButton = button(body.children[0]!, "pause-ship");
+    shipButton.click();
+    ship.children[1]!.click();
+    expect(pause.shipOpen()).toBe(false);
+    expect(pause.isOpen()).toBe(true);
+    expect(ship.hidden).toBe(true);
+    expect(focused()).toBe(shipButton);
+    shipButton.click();
+    focusLog.length = 0;
+    pause.closeShip();
+    expect(pause.shipOpen()).toBe(false);
+    expect(pause.isOpen()).toBe(true);
+    expect(focused()).toBe(shipButton);
+  });
+
+  it("rebuilds its rows when the ship changes while it shows", () => {
+    const { body, pause, ship } = cards();
+    pause.setState(state());
+    pause.open();
+    button(body.children[0]!, "pause-ship").click();
+    pause.setState(state({ ship: { ...SHIP, stardust: 5 } }));
+    expect(texts(ship.children[0]!)).toContain("5");
+    expect(texts(ship.children[0]!)).not.toContain("1,234");
   });
 });

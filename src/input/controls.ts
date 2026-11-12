@@ -377,9 +377,10 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const leaveBack = [
     backStack.register({
       back: () => pause.close(),
-      isOpen: () => pause.isOpen() && !pause.mapOpen(),
+      isOpen: () => pause.isOpen() && !pause.mapOpen() && !pause.shipOpen(),
     }),
     backStack.register({ back: () => pause.closeMap(), isOpen: () => pause.mapOpen() }),
+    backStack.register({ back: () => pause.closeShip(), isOpen: () => pause.shipOpen() }),
     backStack.register({ back: () => cheats.close(), isOpen: () => cheats.isOpen() }),
     backStack.register({ back: () => achievements.close(), isOpen: () => achievements.isOpen() }),
     backStack.register({

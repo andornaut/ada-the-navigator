@@ -5,10 +5,11 @@ import { TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 
 // The HUD status pill (art/layout.md "Status pill", art/controls.md "Status pill"): one ink pill
-// beside pause holding the shield bar and the Stardust count. The bar draws in CSS at logical
-// units with fractional widths; the shield's states are a pure function of what the model shows
-// each frame, so they are tested without a browser. On a light field the shield icon and bar
-// each draw inside an ink outline (art/galaxies.md "Light fields").
+// beside pause holding the shield bar and the Stardust count, then, while Ada carries them, her
+// ore count and the job item or towed craft (gameplay/rules.md), each after its own divider. The
+// bar draws in CSS at logical units with fractional widths; the shield's states are a pure
+// function of what the model shows each frame, so they are tested without a browser. On a light
+// field the shield icon and bar each draw inside an ink outline (art/galaxies.md "Light fields").
 
 export const STATUS_COLOURS = {
   count: "#ead4aa",
@@ -20,7 +21,7 @@ export const STATUS_COLOURS = {
   rim: "#9a96ad",
   shield: "#70ace8",
   shieldDelay: "#4f7aa6",
-  tick: "#8ee8a8",
+  tick: "#f4d98a",
   // Its own ink layer at 0.65 over the panel, not a hole in it.
   track: "rgb(24 20 37 / 0.65)",
 } as const;
@@ -172,6 +173,24 @@ const ICON_OUTLINE = [
   .map((offset) => `drop-shadow(${offset} 0 ${LIGHT_OUTLINE.ink})`)
   .join(" ");
 
+/** The pill's cargo segment icons (art/controls.md "Cargo icons"), 20 px sprites. */
+export const CARGO_ICONS = {
+  carrying: "/art/ui/sprites/icon-cargo-20.png",
+  ore: "/art/ui/sprites/icon-ore-20.png",
+  towing: "/art/ui/sprites/icon-tow-20.png",
+} as const;
+
+const cargoIcon = (url: string) => `background:url('${url}') 0 0 / 100% 100% no-repeat;
+  image-rendering:pixelated`;
+
+/** The pill's segments after the Stardust count, in order: ore, then what Ada carries or tows. */
+export function statusSegments(view: Pick<StatusView, "aboard" | "ore">): ("aboard" | "ore")[] {
+  return [
+    ...(view.ore > 0 ? (["ore"] as const) : []),
+    ...(view.aboard ? (["aboard"] as const) : []),
+  ];
+}
+
 export const STATUS_PILL_STYLE = `
 .ada-controls .ada-status{
   position:absolute;
@@ -257,6 +276,21 @@ export const STATUS_PILL_STYLE = `
   background:url('/art/ui/sprites/icon-stardust-20.png') 0 0 / 100% 100% no-repeat;
   image-rendering:pixelated
 }
+.ada-controls .ada-status-cargo{
+  flex:none;
+  width:${units(STATUS_PILL.cargoIcon)};
+  height:${units(STATUS_PILL.cargoIcon)}
+}
+.ada-controls .ada-status-ore{
+  margin-right:${units(STATUS_PILL.markGap)};
+  ${cargoIcon(CARGO_ICONS.ore)}
+}
+.ada-controls .ada-status-cargo[data-kind=carrying]{
+  ${cargoIcon(CARGO_ICONS.carrying)}
+}
+.ada-controls .ada-status-cargo[data-kind=towing]{
+  ${cargoIcon(CARGO_ICONS.towing)}
+}
 .ada-controls .ada-status-count{
   position:relative;
   display:inline-block;
@@ -276,9 +310,14 @@ export const STATUS_PILL_STYLE = `
 `;
 
 export interface StatusView {
+  /** What Ada carries or tows and its spoken label, such as "Carrying: a crate", or null. */
+  readonly aboard: { readonly kind: "carrying" | "towing"; readonly label: string } | null;
   readonly capacity: number;
   // Whether the field under the HUD is light, which outlines the shield icon and bar.
   readonly lightField: boolean;
+  /** Ore carried this flight, and its icon's spoken label, "Ore". */
+  readonly ore: number;
+  readonly oreLabel: string;
   readonly recharging: boolean;
   readonly shield: number;
   readonly stardust: number;
@@ -323,7 +362,35 @@ export function createStatusPill(
   count.setAttribute("role", "status");
   const countText = document.createTextNode("");
   count.append(countText);
-  root.append(shieldMark, meter, divider, sparkle, count);
+  const part = (className: string, hidden = true) => {
+    const node = document.createElement("span");
+    node.className = className;
+    node.setAttribute("aria-hidden", "true");
+    node.hidden = hidden;
+    return node;
+  };
+  const oreDivider = part("ada-status-divider");
+  const oreIcon = part("ada-status-cargo ada-status-ore");
+  oreIcon.removeAttribute("aria-hidden");
+  oreIcon.setAttribute("role", "img");
+  const oreCount = part("ada-status-count ada-status-ore-count");
+  oreCount.removeAttribute("aria-hidden");
+  const aboardDivider = part("ada-status-divider");
+  const aboardIcon = part("ada-status-cargo ada-status-aboard");
+  aboardIcon.removeAttribute("aria-hidden");
+  aboardIcon.setAttribute("role", "img");
+  root.append(
+    shieldMark,
+    meter,
+    divider,
+    sparkle,
+    count,
+    oreDivider,
+    oreIcon,
+    oreCount,
+    aboardDivider,
+    aboardIcon,
+  );
   parent.append(root);
 
   const shieldBar = new ShieldBar();
@@ -418,6 +485,29 @@ export function createStatusPill(
         pickup(view.stardust - stardust, nowMs);
       }
       stardust = view.stardust;
+      const segments = statusSegments(view);
+      const ore = segments.includes("ore");
+      oreDivider.hidden = !ore;
+      oreIcon.hidden = !ore;
+      oreCount.hidden = !ore;
+      const oreText = stardustCount(view.ore);
+      if (oreCount.textContent !== oreText) {
+        oreCount.textContent = oreText;
+      }
+      if (oreIcon.getAttribute("aria-label") !== view.oreLabel) {
+        oreIcon.setAttribute("aria-label", view.oreLabel);
+      }
+      const aboard = view.aboard;
+      aboardDivider.hidden = !aboard;
+      aboardIcon.hidden = !aboard;
+      if (aboard) {
+        if (aboardIcon.dataset.kind !== aboard.kind) {
+          aboardIcon.dataset.kind = aboard.kind;
+        }
+        if (aboardIcon.getAttribute("aria-label") !== aboard.label) {
+          aboardIcon.setAttribute("aria-label", aboard.label);
+        }
+      }
     },
     /** The pill's drawn width in logical px, 0 while hidden. */
     width(): number {

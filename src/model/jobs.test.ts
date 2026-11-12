@@ -673,6 +673,37 @@ describe("jobs in play", () => {
     expect(model.state.economy.stardust).toBe(stardust + 15);
   });
 
+  it("report the towed craft, then a carried item, as what Ada has aboard", () => {
+    const { model } = docked();
+    const held = take(model, "rescue");
+    expect(model.aboard).toBeNull();
+    model.state.flight!.tow = { x: 1, y: 2 };
+    expect(model.aboard).toEqual({ kind: "towing", name: held.item });
+    expect(model.ship.aboard).toEqual(model.aboard);
+    delete model.state.flight!.tow;
+    (model.state.tasks[1] as HeldJob).carrying = true;
+    expect(model.aboard).toEqual({ kind: "carrying", name: held.item });
+    model.returnHome();
+    expect(model.aboard).toBeNull();
+  });
+
+  it("give the Ship card the flight's ore, the levels, holodisks and owned weapons in HUD order", () => {
+    const { model } = docked();
+    model.state.flight!.cargo = 7;
+    model.state.progress[1].holodisk = true;
+    const ship = model.ship;
+    expect(ship).toMatchObject({
+      engine: 1,
+      holodisks: 1,
+      ore: 7,
+      shield: 1,
+      stardust: model.state.economy.stardust,
+      tractor: 1,
+    });
+    expect(ship.weapons.map(({ id }) => id)).toEqual(model.weapons().map(({ id }) => id));
+    expect(ship.weapons[0]).toEqual({ ammo: null, id: "basic", level: 1 });
+  });
+
   it("restore saved jobs, charted landmarks and the tow, and reject invalid ones", () => {
     const { model } = docked();
     take(model, "rescue");

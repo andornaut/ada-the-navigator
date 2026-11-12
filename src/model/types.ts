@@ -196,6 +196,27 @@ export interface JobOffer {
   /** A lost item's spot inside its search area. */
   spot?: Vec;
 }
+/** What Ada carries for a job or an activity, or tows for a rescue: its kind and its name. */
+export interface Aboard {
+  kind: "carrying" | "towing";
+  name: string;
+}
+/** The Ship card's facts (gameplay/rules.md "Pause"): what Ada carries and how she is fitted. */
+export interface ShipState {
+  aboard: Aboard | null;
+  engine: number;
+  /** Holodisks recovered across the galaxies. */
+  holodisks: number;
+  /** Ore carried this flight. */
+  ore: number;
+  /** The ship paint's id. */
+  paint: string;
+  shield: number;
+  stardust: number;
+  tractor: number;
+  /** Owned weapons in the HUD weapon icons' order, with levels and shots left (null: unlimited). */
+  weapons: { id: Weapon; level: number; ammo: number | null }[];
+}
 /** The held job and how far it has come. */
 export interface HeldJob extends JobOffer {
   kind: "job";

@@ -85,6 +85,7 @@ import { BOX_OCCUPANT, type BoxOccupant, boxOccupant } from "../ui/notice.ts";
 import { returnToEarthAvailable } from "../ui/pause.ts";
 import { createRestartCard } from "../ui/restart-card.ts";
 import { createRouteMap, type RouteMapView } from "../ui/route-map.ts";
+import { aboardLabel, type ShipView } from "../ui/ship-card.ts";
 import { createStationView } from "../ui/station.ts";
 import { createStorybook, storyPageView } from "../ui/storybook.ts";
 import { readTitleScreen } from "../ui/title-screen.ts";
@@ -895,6 +896,12 @@ export class PrototypeScene extends Scene {
           mapScreen: mapScreenLabels(PROTOTYPE.labels),
           resume: PROTOTYPE.labels.resume ?? "",
           settings: PROTOTYPE.labels.settings ?? "",
+          ship: PROTOTYPE.labels.ship ?? "",
+          shipHeadings: {
+            cargo: PROTOTYPE.labels.cargo ?? "",
+            equipment: PROTOTYPE.labels.equipment ?? "",
+          },
+          shipRows: PROTOTYPE.labels,
           title: PROTOTYPE.labels.pauseTitle ?? "",
         },
         // The start screen needs no quantum jump; it covers the flight at once.
@@ -1707,6 +1714,13 @@ export class PrototypeScene extends Scene {
     }
   }
 
+  /** The Ship card's facts with the paint named. */
+  private shipView(): ShipView {
+    const ship = this.model.ship;
+    const paint = ECONOMY.paints[ship.paint]?.label;
+    return { ...ship, paint: (paint && PROTOTYPE.labels[paint]) ?? "" };
+  }
+
   private refresh(): void {
     const state = this.model.state;
     const enabled = state.mode === "space" && !state.dialogue && !state.docked;
@@ -1717,12 +1731,16 @@ export class PrototypeScene extends Scene {
     }
     this.controls.setContext(enabled ? this.model.contextLabel : undefined);
     this.controls.setWeapons(this.model.weapons());
+    const aboard = this.model.aboard;
     this.controls.setStatus({
+      aboard: aboard && { kind: aboard.kind, label: aboardLabel(PROTOTYPE.labels, aboard) },
       capacity: this.model.shieldMax,
       lightField: lightGalaxy(
         this.lightGalaxies,
         state.mode === "space" ? state.flight?.sector : undefined,
       ),
+      ore: this.model.ship.ore,
+      oreLabel: PROTOTYPE.labels.ore ?? "",
       recharging: this.model.shieldRecharging,
       shield: state.flight?.shield ?? 0,
       stardust: state.economy.stardust,
@@ -1757,6 +1775,7 @@ export class PrototypeScene extends Scene {
       job: this.model.jobObjective,
       map: this.model.map,
       place: enabled ? "flight" : this.model.roomPage ? "room" : null,
+      ship: enabled ? this.shipView() : null,
       towing: this.model.towing,
     });
     this.controls.setAchievements(this.model.achievements);

@@ -69,7 +69,7 @@ const OFFERS = [
   [1, "growers", "Fresh food for the station traders. Would you carry it?", "Grower"],
   [1, "workshop", "A station ordered these repaired tools. Could you take them?", "Workshop"],
   [1, "salvagers", "A station shop needs these spare parts. Will you bring them?", "Salvager"],
-  [2, "hub", "Contract open: deposit 30 resources here. Partial loads count.", "Station"],
+  [2, "hub", "Contract open: deposit 30 ore here. Partial loads count.", "Station"],
   [
     3,
     "family",
@@ -151,7 +151,7 @@ describe("repeatable activities", () => {
     expect(model.state.dialogue).toMatchObject({
       choices: [{ id: "take", refused: true }, { id: "skip" }],
       context: "activity:hub",
-      text: "Contract open: deposit 30 resources here. Partial loads count.",
+      text: "Contract open: deposit 30 ore here. Partial loads count.",
     });
     model.choose("take");
     expect(model.state.notice).toBe("Finish or drop your current job first.");
@@ -184,7 +184,7 @@ describe("repeatable activities", () => {
     model.state.docked = stationsNear(ECONOMY, 2, 100000, { x: 0, y: 0 })[0]!.id;
     const rows = model.jobBoard();
     expect(rows[0]).toMatchObject({
-      detail: "Deposit 30 resources at the hub.",
+      detail: "Deposit 30 ore at the hub.",
       kind: "activity",
       reward: 35,
       state: "held",
@@ -205,7 +205,7 @@ describe("repeatable activities", () => {
     expect(model.state.dialogue).toMatchObject({
       choices: [{ id: "drop", label: "Drop" }, { id: "continue" }],
       context: "activityActive:hub",
-      text: "Deposit resources at the hub: 9 of 30.",
+      text: "Deposit ore at the hub: 9 of 30.",
     });
     model.choose("drop");
     expect(model.state.dialogue).toMatchObject({
@@ -226,7 +226,7 @@ describe("repeatable activities", () => {
     expect(model.state.dialogue?.context).toBe("activity:hub");
     model.choose("take");
     expect(heldActivity(2, model.state)?.deposited).toBe(0);
-    expect(model.jobObjective).toBe("Deposit resources at the hub: 0 of 30.");
+    expect(model.jobObjective).toBe("Deposit ore at the hub: 0 of 30.");
     const before = model.state.economy.stardust;
     const story = model.state.progress[2].deposited;
     const count = model.state.achievements.activities;

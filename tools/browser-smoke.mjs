@@ -1322,8 +1322,8 @@ try {
   dangerInput.state.flight.shots = [];
   await seedOnce(dangerInput.save(), "ada-browser.danger-context.v1");
   await openPause();
-  // In flight the card stacks Resume, Map, Settings and Back to title, every one available in
-  // danger.
+  // In flight the card shows Resume over Map, Ship, Settings and Back to title, every one
+  // available in danger.
   const pauseActions = () => page.locator('[data-dialog="pause"] .ada-stack button:not([hidden])');
   assert.deepEqual(
     await pauseActions().evaluateAll((buttons) =>
@@ -1336,13 +1336,52 @@ try {
     [
       ["pause-resume", PROTOTYPE.labels.resume, null],
       ["pause-map", PROTOTYPE.labels.map, null],
+      ["pause-ship", PROTOTYPE.labels.ship, null],
       ["pause-settings", PROTOTYPE.labels.settings, null],
       ["pause-backToTitle", PROTOTYPE.labels.backToTitle, null],
     ],
-    "The in-flight Paused card stacks Resume, Map, Settings and Back to title, all available " +
-      "in danger",
+    "The in-flight Paused card shows Resume, Map, Ship, Settings and Back to title, all " +
+      "available in danger",
   );
   await page.screenshot({ path: `${output}/pause-flight-danger.png` });
+  // Ship opens its card in the Paused card's place, focus on its X; Escape and the X return to
+  // the Paused card on its Ship button.
+  const shipCard = page.locator('[data-dialog="ship"]');
+  const focusedAction = () =>
+    page.evaluate(() => document.activeElement?.getAttribute("data-action"));
+  const openAndCloseShip = async (close) => {
+    await page.locator('[data-action="pause-ship"]').click();
+    await shipCard.waitFor({ state: "visible" });
+    assert.equal(
+      await page.locator('[data-dialog="pause"]').isVisible(),
+      false,
+      "The Ship card hides the Paused card",
+    );
+    assert.equal(
+      await shipCard.locator("h2").textContent(),
+      PROTOTYPE.labels.ship,
+      "The Ship card is titled Ship",
+    );
+    assert.deepEqual(
+      await shipCard
+        .locator(".ada-ship-section h3")
+        .evaluateAll((headings) => headings.map((heading) => heading.textContent)),
+      [PROTOTYPE.labels.cargo, PROTOTYPE.labels.equipment],
+      "The Ship card shows Cargo, then Equipment",
+    );
+    assert.equal(await focusedAction(), "close-ship", "Focus starts on the Ship card's X");
+    if (close === "Escape") {
+      await page.screenshot({ path: `${output}/pause-ship.png` });
+      await page.keyboard.press("Escape");
+    } else {
+      await page.locator('[data-action="close-ship"]').click();
+    }
+    await page.locator('[data-dialog="pause"]').waitFor({ state: "visible" });
+    assert.equal(await shipCard.isVisible(), false, `${close} closes the Ship card`);
+    assert.equal(await focusedAction(), "pause-ship", `${close} returns to the Ship button`);
+  };
+  await openAndCloseShip("Escape");
+  await openAndCloseShip("x");
   // Map opens in danger as a full-screen map in the Paused card's place, with the galaxy's
   // name and how much is mapped in its header; nothing undiscovered appears.
   await page.locator('[data-action="pause-map"]').click();

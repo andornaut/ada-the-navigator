@@ -1,14 +1,18 @@
+import { existsSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 import { units } from "./layout/css.ts";
 import {
   blendHex,
+  CARGO_ICONS,
   ShieldBar,
   shieldMarkColour,
   stardustCount,
   STATUS_COLOURS,
   STATUS_PILL_STYLE,
   STATUS_TIMING,
+  statusSegments,
 } from "./status-pill.ts";
 
 const full = { capacity: 100, recharging: false, shield: 100 };
@@ -103,7 +107,7 @@ describe("status pill shield bar", () => {
       rim: "#9a96ad",
       shield: "#70ace8",
       shieldDelay: "#4f7aa6",
-      tick: "#8ee8a8",
+      tick: "#f4d98a",
     });
     expect(blendHex("#000000", "#ffffff", 0.5)).toBe("#808080");
   });
@@ -142,5 +146,23 @@ describe("status pill count", () => {
     expect(stardustCount(125)).toBe("125");
     expect(stardustCount(12500)).toBe("12,500");
     expect(stardustCount(1234567)).toBe("1,234,567");
+  });
+});
+
+describe("status pill cargo segments", () => {
+  const carrying = { kind: "carrying", label: "Carrying: Spare parts" } as const;
+
+  it("show ore while Ada holds some, then what she carries or tows, ore first", () => {
+    expect(statusSegments({ aboard: null, ore: 0 })).toEqual([]);
+    expect(statusSegments({ aboard: null, ore: 3 })).toEqual(["ore"]);
+    expect(statusSegments({ aboard: carrying, ore: 0 })).toEqual(["aboard"]);
+    expect(statusSegments({ aboard: carrying, ore: 3 })).toEqual(["ore", "aboard"]);
+  });
+
+  it("draw Art's 20 px cargo, ore and tow sprites", () => {
+    for (const url of Object.values(CARGO_ICONS)) {
+      expect(url).toMatch(/^\/art\/ui\/sprites\/icon-(cargo|ore|tow)-20\.png$/);
+      expect(existsSync(new URL(`../../public${url}`, import.meta.url))).toBe(true);
+    }
   });
 });
