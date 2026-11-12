@@ -4044,10 +4044,10 @@ try {
     );
   const frames = { after: 500, every: 200, shots: 7 };
   await captureHeavies("weapons", weapons(), frames);
-  // Ten back-to-back frames span about three loops of the 1140 ms climb, so some land in its
-  // 240 ms lit span.
+  // Ten back-to-back frames, about 100 ms apart, run from the still frame through the climb's
+  // lower and upper chevrons, lit 900 to 1140 ms after the pickup first draws.
   await captureHeavies("upgrade-pickup", heavyFixture(1, [], [upgradePickup]), {
-    after: 300,
+    after: 500,
     every: 0,
     shots: 10,
   });

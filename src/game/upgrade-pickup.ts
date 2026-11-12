@@ -3,8 +3,9 @@ import type { Vec } from "../model/types.ts";
 /** The core manifest's upgrade chevron mask (art/weapons.md "Pickups"). */
 export const UPGRADE_CHEVRON = "upgrade-chevron";
 
-/** The upgrade pickup's two chevrons and the climb that lights them in turn. */
+/** The upgrade pickup's two chevrons, their display size and the climb that lights them. */
 export interface UpgradePickupArt {
+  readonly size: { readonly height: number; readonly width: number };
   readonly chevrons: readonly { readonly name: string; readonly offset: Vec }[];
   /** Keys in order from the still frame, each lighting the named chevron or none. */
   readonly climb: readonly { readonly lit: string | null; readonly ms: number }[];
@@ -15,10 +16,18 @@ const record = (value: unknown): value is Record<string, unknown> =>
 const finite = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
 
-/** The chevron entry's offsets and climb from the core manifest's assets, or undefined. */
+/** The chevron entry's offsets, display size and climb from the core manifest's assets, or undefined. */
 export function readUpgradePickup(assets: readonly unknown[]): UpgradePickupArt | undefined {
   const entry = assets.find((asset) => record(asset) && asset.id === UPGRADE_CHEVRON);
-  if (!record(entry) || !Array.isArray(entry.chevrons) || !Array.isArray(entry.climb)) {
+  if (
+    !record(entry) ||
+    !Array.isArray(entry.chevrons) ||
+    !Array.isArray(entry.climb) ||
+    !finite(entry.displayWidth) ||
+    !finite(entry.displayHeight) ||
+    entry.displayWidth <= 0 ||
+    entry.displayHeight <= 0
+  ) {
     return undefined;
   }
   const chevrons = (entry.chevrons as unknown[]).map((chevron) =>
@@ -48,6 +57,7 @@ export function readUpgradePickup(assets: readonly unknown[]): UpgradePickupArt 
   return {
     chevrons: chevrons as UpgradePickupArt["chevrons"],
     climb: climb as UpgradePickupArt["climb"],
+    size: { height: entry.displayHeight, width: entry.displayWidth },
   };
 }
 

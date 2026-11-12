@@ -6,7 +6,8 @@ import { litChevron, readUpgradePickup } from "./upgrade-pickup.ts";
 describe("upgrade pickup art", () => {
   const art = readUpgradePickup(manifest.assets)!;
 
-  it("reads the two chevrons at (0, 2.4) and (0, -2.4) and the climb from the manifest", () => {
+  it("reads the two 12 by 8 chevrons at (0, 2.4) and (0, -2.4) and the climb from the manifest", () => {
+    expect(art.size).toEqual({ height: 8, width: 12 });
     expect(art.chevrons).toEqual([
       { name: "lower", offset: { x: 0, y: 2.4 } },
       { name: "upper", offset: { x: 0, y: -2.4 } },
@@ -36,9 +37,10 @@ describe("upgrade pickup art", () => {
     expect(litChevron(art, true, 1050)).toBeNull();
   });
 
-  it("refuses an entry without chevrons, or a climb lighting an unknown chevron", () => {
+  it("refuses an entry without chevrons or a display size, or a climb lighting an unknown chevron", () => {
     expect(readUpgradePickup([])).toBeUndefined();
     const entry = manifest.assets.find((asset) => asset.id === "upgrade-chevron")!;
     expect(readUpgradePickup([{ ...entry, climb: [{ lit: "middle", ms: 100 }] }])).toBeUndefined();
+    expect(readUpgradePickup([{ ...entry, displayWidth: 0 }])).toBeUndefined();
   });
 });

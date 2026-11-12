@@ -3886,6 +3886,7 @@ export class PrototypeScene extends Scene {
       const key = partKey(object.id, `chevron:${chevron.name}`);
       const sprite = this.objectSprite(key, UPGRADE_CHEVRON)
         .setOrigin(0.5)
+        .setDisplaySize(art.size.width, art.size.height)
         .setPosition(point.x + chevron.offset.x, point.y + chevron.offset.y)
         .setDepth(playDepth(point.y))
         .setTint(chevron.name === lit ? 0xffffff : color)
