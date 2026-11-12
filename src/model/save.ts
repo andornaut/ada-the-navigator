@@ -753,10 +753,9 @@ export function restoreSave(saved: unknown): GameState | null {
             finite(s.damage) &&
             s.damage > 0 &&
             (s.blast === undefined ||
-              (!s.enemy && s.projectile === "missile" && finite(s.blast) && s.blast > 0)) &&
+              (s.projectile === "missile" && finite(s.blast) && s.blast > 0)) &&
             (s.fade === undefined ||
-              (!s.enemy &&
-                s.projectile === "dot" &&
+              (s.projectile === "dot" &&
                 record(s.fade) &&
                 finite(s.fade.initialLife) &&
                 s.fade.initialLife > 0 &&

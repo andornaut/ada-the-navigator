@@ -40,7 +40,12 @@ import { type Current, currentsNear, flowFraction } from "../model/currents.ts";
 import { carriesStardust } from "../model/drops.ts";
 import { createEdgeMarkerTracker, edgePoint } from "../model/edge-markers.ts";
 import { enemySpeedFraction } from "../model/enemy-ai.ts";
-import { activeBeamFlashes, activeBlastFlashes, shipSpeedFraction } from "../model/flight.ts";
+import {
+  activeBeamFlashes,
+  activeBlastFlashes,
+  activeEnemyBeams,
+  shipSpeedFraction,
+} from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { type GainSnapshot, itemGains } from "../model/item-gains.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
@@ -4878,13 +4883,20 @@ export class PrototypeScene extends Scene {
   }
 
   /**
-   * The model's enemy-only weapon state for this frame.
-   * CLEANUP (added 2026-11-12): draws nothing until the model carries ring bursts, mines, lances
-   * and enemy Phaser tells; then this reads them from the flight state.
+   * The model's enemy Phaser shots and enemy-only weapon state for this frame.
+   * CLEANUP (added 2026-11-12): ring bursts, mines and lances stay empty until the model carries
+   * them; then this reads them from the flight state too.
    */
   private enemyWeaponsView(flight: FlightState): EnemyWeaponsView {
-    void flight;
-    return NO_ENEMY_WEAPONS;
+    return {
+      ...NO_ENEMY_WEAPONS,
+      phasers: activeEnemyBeams(flight).map((beam) => ({
+        ageMs: beam.age * 1000,
+        end: beam.end,
+        muzzle: beam.muzzle,
+        stopped: beam.stopped,
+      })),
+    };
   }
 
   /**

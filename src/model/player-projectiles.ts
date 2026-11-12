@@ -93,34 +93,47 @@ export function planPlayerVolley(
   const damage = context.baseDamage * definition.damageRatio;
   const projectiles = definition.anglesDegrees.map((degrees): PlayerProjectile => {
     const heading = fanHeading(context.aim, degrees);
-    const projectedSpeed = speed * Math.hypot(heading.x - heading.y, (heading.x + heading.y) / 2);
-    const projectedRange =
-      definition.rangeScreenWidths === null
-        ? null
-        : context.viewportWidth * definition.rangeScreenWidths;
-    const life = projectedRange === null ? context.baseLifetime : projectedRange / projectedSpeed;
-    const projectile: PlayerProjectile = {
+    return {
       ...(definition.blastRadius === null ? {} : { blast: definition.blastRadius }),
       damage,
-      life,
+      ...projectileReach(definition, heading, speed, context.viewportWidth, context.baseLifetime),
       projectile: definition.projectileKind as PlayerProjectile["projectile"],
       velocity: { x: heading.x * speed, y: heading.y * speed },
       x: context.origin.x,
       y: context.origin.y,
     };
-    if (projectedRange !== null && definition.fadeStartFraction !== null) {
-      return {
-        ...projectile,
+  });
+  return { interval, projectiles };
+}
+
+/**
+ * A projectile's life, and its fade when the weapon fades, along a unit `heading` at `speed`:
+ * a ranged weapon flies its range as projected screen distance, whoever fires it; any other
+ * flies `baseLifetime`.
+ */
+export function projectileReach(
+  definition: Pick<WeaponDefinition, "fadeStartFraction" | "rangeScreenWidths">,
+  heading: Vec,
+  speed: number,
+  viewportWidth: number,
+  baseLifetime: number,
+): { fade?: ProjectileFade; life: number } {
+  if (definition.rangeScreenWidths === null) {
+    return { life: baseLifetime };
+  }
+  const projectedSpeed = speed * Math.hypot(heading.x - heading.y, (heading.x + heading.y) / 2);
+  const projectedRange = viewportWidth * definition.rangeScreenWidths;
+  const life = projectedRange / projectedSpeed;
+  return definition.fadeStartFraction === null
+    ? { life }
+    : {
         fade: {
           fadeStartFraction: definition.fadeStartFraction,
           initialLife: life,
           projectedRange,
         },
+        life,
       };
-    }
-    return projectile;
-  });
-  return { interval, projectiles };
 }
 
 /** Constant-speed flight makes remaining lifetime equivalent to remaining projected distance. */

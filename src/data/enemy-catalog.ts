@@ -121,6 +121,8 @@ export const ENEMY_FIRE: Readonly<Record<EnemyWeapon, Cadence>> = {
   ringBurst: { interval: 3.5, projectileSpeedRatio: 1.2 },
   scattershot: { interval: 2.4, projectileSpeedRatio: 1.7 },
 };
+/** Seconds an enemy Phaser's fixed aim line shows before its beam fires along it. */
+export const PHASER_AIM_SECONDS = 0.4;
 /** The swarm's slower, lighter Laser and the platform's two-shot Laser bursts. */
 const ARCHETYPE_FIRE: Readonly<Partial<Record<string, Partial<Record<EnemyWeapon, Cadence>>>>> = {
   platform: { laser: { ...ENEMY_FIRE.laser, burst: { count: 2, gap: 0.15 } } },

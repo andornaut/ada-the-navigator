@@ -102,12 +102,11 @@ export interface FireIntent {
   hardpointId: string | null;
   level: FireProfile["level"];
   origin: Point;
-  projectile: FlyingProjectile;
+  /** A beam is the enemy Phaser's hitscan shot, fired after its aim line. */
+  projectile: Exclude<FireProfile["projectile"], "mine">;
   speed: number;
   weapon: FireProfile["weapon"];
 }
-/** The projectiles a fire intent launches; beams and mines resolve elsewhere. */
-export type FlyingProjectile = Exclude<FireProfile["projectile"], "beam" | "mine">;
 export interface EnemyEffects {
   defeated: boolean;
   disabledHardpoints: string[];
@@ -726,8 +725,8 @@ export function stepEnemy(
     const count = Math.max(1, profile.burst?.count ?? 1);
     const gap = Math.min(interval / count, Math.max(0, profile.burst?.gap ?? 0));
     const projectile = profile.projectile;
-    // The Phaser and the enemy-only weapons are not fired yet; their cooldowns still run.
-    if (!canFire || projectile === "beam" || projectile === "mine" || enemyOnly(profile.weapon)) {
+    // The enemy-only weapons are not fired yet; their cooldowns still run.
+    if (!canFire || projectile === "mine" || enemyOnly(profile.weapon)) {
       return { burst: 0, cooldown: Math.max(0, cooldown - context.dt) };
     }
     let delay = Math.max(0, cooldown);

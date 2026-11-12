@@ -17,6 +17,7 @@ import { fromScreen, outlineContact, outlinesContact, type Parts } from "./conve
 import { createEnemy } from "./enemy-ai.ts";
 import { enemyHull, enemyPartOutline } from "./enemy-body.ts";
 import {
+  activeEnemyBeams,
   bounceShips,
   createFlight,
   ensureDestination,
@@ -218,6 +219,118 @@ describe("integrated combat", () => {
     stepFlight(PROTOTYPE, 0.8, idle, flight);
     expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax);
     expect(flight.shots.some((shot) => shot.id === "incoming")).toBe(false);
+  });
+
+  it("fires an interceptor's Scattershot dots with Ada's range and fade", () => {
+    // Needle (position 3): a level 2 Scattershot's nine dots reach 0.55 of the screen's width.
+    const flight = createFlight(PROTOTYPE, 4, 173, progress);
+    flight.objects = [];
+    const target = ship("interceptor", { x: 200, y: 0 }, enemyDefinition(4, "interceptor"));
+    target.enemy!.engaged = true;
+    flight.objects.push(target);
+    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    const dots = flight.shots.filter((shot) => shot.enemy);
+    expect(dots).toHaveLength(9);
+    for (const dot of dots) {
+      expect(dot.projectile).toBe("dot");
+      const speed = Math.hypot(dot.velocity.x, dot.velocity.y);
+      const heading = { x: dot.velocity.x / speed, y: dot.velocity.y / speed };
+      const projected = speed * Math.hypot(heading.x - heading.y, (heading.x + heading.y) / 2);
+      expect(dot.fade).toMatchObject({
+        fadeStartFraction: 0.65,
+        projectedRange: SCREEN.width * 0.55,
+      });
+      expect(dot.fade!.initialLife).toBeCloseTo((SCREEN.width * 0.55) / projected, 9);
+      expect(dot.life).toBeLessThanOrEqual(dot.fade!.initialLife);
+    }
+  });
+
+  it("bursts an enemy missile on scenery and damages Ada within its blast, once on a direct hit", () => {
+    const flight = empty();
+    // The rock's face is 50 from Ada, inside a 60 blast.
+    flight.objects.push({ hp: 99, id: "wall", kind: "rock", radius: 10, x: 40, y: 0 });
+    const missile = (id: string, blast: number, y: number) => ({
+      blast,
+      damage: 3,
+      enemy: true,
+      hitIds: [],
+      id,
+      life: 5,
+      piercing: false,
+      projectile: "missile" as const,
+      velocity: { x: -150, y: 0 },
+      x: 200,
+      y,
+    });
+    flight.shots.push(missile("heavy", 60, 0));
+    stepFlight(PROTOTYPE, 1.5, idle, flight);
+    expect(flight.shots).toEqual([]);
+    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax - 3);
+    // A small blast at the same rock falls short of Ada.
+    flight.shots.push(missile("rapid", 4, 0));
+    stepFlight(PROTOTYPE, 1.5, idle, flight);
+    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax - 3);
+    // Past the rock, a missile striking Ada deals its damage once, blast included.
+    flight.shots.push(missile("direct", 60, -40));
+    flight.player = { x: 0, y: -40 };
+    stepFlight(PROTOTYPE, 1.5, idle, flight);
+    expect(flight.shots).toEqual([]);
+    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax - 6);
+  });
+
+  it("fires an enemy Phaser along its fixed aim line 0.4 s after it appears", () => {
+    // Black Eye (position 6): the capital's claw carries a level 1 Phaser, 4 damage.
+    const fixture = () => {
+      const flight = createFlight(PROTOTYPE, 6, 173, progress);
+      flight.objects = [];
+      flight.player = { x: 0, y: 0 };
+      const target = ship("capital", { x: 220, y: 0 }, enemyDefinition(6, "capital"));
+      for (const part of target.enemy!.hardpoints) {
+        part.cooldown = part.id === "claw-left" ? 0 : 999;
+      }
+      flight.objects.push(target);
+      stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+      return flight;
+    };
+    const flight = fixture();
+    const [beam] = activeEnemyBeams(flight);
+    expect(beam).toMatchObject({ fired: false, stopped: false });
+    expect(flight.shots).toEqual([]);
+    const shield = flight.shield;
+    stepFlight(PROTOTYPE, 0.3, idle, flight);
+    expect(beam!.fired).toBe(false);
+    expect(flight.shield).toBe(shield);
+    stepFlight(PROTOTYPE, 0.15, idle, flight);
+    expect(beam).toMatchObject({ fired: true, stopped: true });
+    expect(flight.shield).toBeCloseTo(shield - 4, 9);
+    // The beam shows for its flash and spark, then goes.
+    stepFlight(PROTOTYPE, 0.2, idle, flight);
+    expect(activeEnemyBeams(flight)).not.toContain(beam);
+    // Ada moving off the line before it fires takes no damage.
+    const dodged = fixture();
+    dodged.player = { x: 0, y: 120 };
+    stepFlight(PROTOTYPE, 0.45, idle, dodged);
+    expect(activeEnemyBeams(dodged)[0]).toMatchObject({ fired: true, stopped: false });
+    expect(dodged.shield).toBe(PROTOTYPE.tuning.shieldMax);
+  });
+
+  it("stops an enemy Phaser's aim line and beam at the first obstacle", () => {
+    const flight = createFlight(PROTOTYPE, 6, 173, progress);
+    flight.objects = [];
+    flight.player = { x: 0, y: 0 };
+    const target = ship("capital", { x: 220, y: 0 }, enemyDefinition(6, "capital"));
+    for (const part of target.enemy!.hardpoints) {
+      part.cooldown = part.id === "claw-left" ? 0 : 999;
+    }
+    flight.objects.push(target);
+    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    // A rock rolls between them after the line appears: the line and beam stop at it.
+    flight.objects.push({ hp: 99, id: "wall", kind: "rock", radius: 25, x: 80, y: 0 });
+    stepFlight(PROTOTYPE, 0.45, idle, flight);
+    const [beam] = activeEnemyBeams(flight);
+    expect(beam).toMatchObject({ fired: true, stopped: true });
+    expect(beam!.end.x).toBeGreaterThan(80);
+    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax);
   });
 
   it("keeps ballistic debris velocity constant, damages on crossing, and absorbs it at safe regions", () => {
