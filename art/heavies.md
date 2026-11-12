@@ -407,7 +407,10 @@ platform. Sunflower keeps the coral originals. Andromeda's
 - Jets files keep the coral shape, lengths, layers, mouth data and
   [collision](enemies.md#collision); hardpoints files, mounts, tiers and
   collision included, are the coral family's, unchanged. Claim frames draw the
-  coral notch tips, capped plates and tops. Gadget has no claim version. Destruction uses the shared
+  coral notch tips, capped plates and tops. Gadget has no claim version.
+  Andromeda's [garnet](andromeda.md#garnet-drones) and Needle's
+  [crimson](needle.md#needle-drones) families recolour the frigate and capital
+  the same way, mounts and tiers included. Destruction uses the shared
   `destruction.json` timing and flash with the claim shards.
 
 ### Claim files and entries

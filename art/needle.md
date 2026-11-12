@@ -362,9 +362,10 @@ platform.
   file goes through the colour swap below and every jets file through the
   Needle jet colours; the tool stops on any colour outside the family.
 - Hardpoints files are the coral family's, byte-identical: the same `order`,
-  `anchor`, `pivot` and `muzzles` per heading and aim, and the same hit areas
-  from Gameplay's catalog. Jets files keep the coral shape, lengths, layers and
-  mouth data. Destruction uses the shared `destruction.json` timing and flash
+  `anchor`, `pivot`, `muzzles`, `banner` and `collision` per heading and aim,
+  and the same [weapon mounts](heavies.md#mounts), with every mount, its capped
+  plate and the tops of each position tier (`fill`, `tiers`). Jets files keep
+  the coral shape, lengths, layers and mouth data. Destruction uses the shared `destruction.json` timing and flash
   with the Needle shards.
 - File names are the coral names in `public/art/needle/enemies/`. Ids are the
   coral ids with `enemy-needle-` in place of `enemy-`, such as
