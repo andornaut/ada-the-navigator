@@ -365,7 +365,8 @@ platform.
   `anchor`, `pivot`, `muzzles`, `banner` and `collision` per heading and aim,
   and the same [weapon mounts](heavies.md#mounts), with every mount, its capped
   plate and the tops of each position tier (`fill`, `tiers`). Jets files keep
-  the coral shape, lengths, layers and mouth data. Destruction uses the shared `destruction.json` timing and flash
+  the coral shape, lengths, layers, mouth data and per-heading
+  [collision](enemies.md#collision), and the frames draw the coral notch tips. Destruction uses the shared `destruction.json` timing and flash
   with the Needle shards.
 - File names are the coral names in `public/art/needle/enemies/`. Ids are the
   coral ids with `enemy-needle-` in place of `enemy-`, such as
