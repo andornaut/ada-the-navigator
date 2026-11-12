@@ -221,6 +221,9 @@ function stateCases(call: ReturnType<typeof recorder>): void {
     call("playView.ts", "hudButtonTarget", playView.hudButtonTarget, count);
     call("playView.ts", "hudRowWidth", playView.hudRowWidth, count);
   }
+  for (const exit of [false, true]) {
+    call("playView.ts", "startNavOrder", playView.startNavOrder, exit);
+  }
   const arts: readonly Rect[] = [
     { height: 8, width: 12, x: 0, y: 0 },
     { height: 24, width: 24, x: 6, y: 6 },

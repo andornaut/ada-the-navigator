@@ -5,11 +5,11 @@
 //
 // Waiting updates activate only through the start screen's update offer, never automatically
 // before input or during play.
+import { appCannotClose } from "@andornaut/game-kit/web/pwa/appWindow";
 import {
   backCloseWatcher,
   backGuardState,
   isBackGuardState,
-  isFirefoxAndroidApp,
 } from "@andornaut/game-kit/web/pwa/backNavigation";
 import {
   browserCloseWatcher,
@@ -109,6 +109,8 @@ function setupOfflinePlay(): void {
 // open card arms it again (setBackArmed).
 let backArmed = true;
 let backGuardInUse = () => false;
+// Whether the game offers to leave, read once at load (exitShown).
+let leaveOffered = false;
 
 // The page's history as the back guard sees it: while released the guard adds no entry.
 const guardHistory: HistoryLike = {
@@ -132,7 +134,7 @@ function releasedBack(): void {
   if (backGuardInUse()) {
     history.back();
   } else if (pageRunsAsApp(window)) {
-    exitApp(browserExitPage());
+    exitGame();
   } else {
     history.back();
   }
@@ -140,17 +142,18 @@ function releasedBack(): void {
 
 // Keeps back on the game, as in Chibi: each back dispatches PHONE_EVENTS.backPressed on window.
 // Before the player's first input, while released, and where the browser cannot hand back to the
-// game, back is the browser's own.
+// game, back is the browser's own. Read before the guard pushes any entry: an installed app that
+// cannot close its window (exitShown false) keeps its own back, as in Archie, so back never leaves
+// it on a blank page.
 function guardBack(): void {
-  // Firefox for Android's installed app keeps its own back.
-  // WORKAROUND: https://bugzilla.mozilla.org/show_bug.cgi?id=2079243 (see isFirefoxAndroidApp).
-  if (isFirefoxAndroidApp(navigator.userAgent, (query) => window.matchMedia(query).matches)) {
-    return;
-  }
   const createCloseWatcher: CloseWatcherFactory | undefined = backCloseWatcher(
     navigator.userAgent,
     browserCloseWatcher(),
   );
+  leaveOffered = !appCannotClose(createCloseWatcher, window);
+  if (!leaveOffered) {
+    return;
+  }
   backGuardInUse = () => createCloseWatcher === undefined || history.length > 1;
   guardBackNavigation(
     {
@@ -214,6 +217,19 @@ export function keepScreenOn(on: boolean): void {
   } else {
     screenWakeLock?.stop();
   }
+}
+
+// Whether the game offers to leave (the start screen's Exit, Q and released back), as read at
+// load: in a browser tab, which goes to the site's home page, and in an installed app that can
+// close its window, which closes; never in another installed app (the kit's appCannotClose: an
+// app whose platform never closes, or whose history holds more than the game's entry).
+export function exitShown(): boolean {
+  return leaveOffered;
+}
+
+// Leaves the game: an installed app's window closes, a browser tab goes to the site's home page.
+export function exitGame(): void {
+  exitApp(browserExitPage());
 }
 
 // Resolves once the game may show its first screen and read or write its save: at once, or after

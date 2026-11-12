@@ -37,7 +37,11 @@ vi.mock("@andornaut/game-kit/web/pwa/storagePersistence", () => ({
 
 interface Device {
   readonly app?: boolean;
+  // Whether the browser has CloseWatcher, as Chrome 120 and later do.
+  readonly closeWatcher?: boolean;
   readonly maxTouchPoints?: number;
+  // iOS only: opened from the Home Screen.
+  readonly standalone?: boolean;
   readonly userAgent?: string;
 }
 
@@ -55,12 +59,23 @@ const SAMSUNG =
 const OPERA = "Mozilla/5.0 (X11; Linux x86_64) Chrome/142.0 Safari/537.36 OPR/120.0";
 
 // The browser's window as the kit's install flow and back guard read it.
-function stubDevice({ app = false, maxTouchPoints = 0, userAgent = CHROME }: Device): EventTarget {
-  const navigator = { maxTouchPoints, standalone: false, userAgent };
+function stubDevice({
+  app = false,
+  closeWatcher = false,
+  maxTouchPoints = 0,
+  standalone = false,
+  userAgent = CHROME,
+}: Device): EventTarget {
+  const navigator = { maxTouchPoints, standalone, userAgent };
   const page = Object.assign(new EventTarget(), {
+    close: vi.fn(),
+    location: { assign: vi.fn() },
     matchMedia: () => ({ addEventListener: () => undefined, matches: app }),
     navigator,
   });
+  // The history stubbed now or later in the test, as window.history reads the global.
+  Object.defineProperty(page, "history", { get: () => history });
+  vi.stubGlobal("CloseWatcher", closeWatcher ? EventTarget : undefined);
   vi.stubGlobal("window", page);
   vi.stubGlobal("navigator", navigator);
   vi.stubGlobal("document", { visibilityState: "visible" });
@@ -181,6 +196,77 @@ describe("screen wake lock", () => {
   });
 });
 
+const IPAD =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) " +
+  "Version/18.0 Safari/605.1.15";
+const EDGE_ANDROID =
+  "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) " +
+  "Chrome/142.0 Mobile Safari/537.36 EdgA/142.0";
+const EDGE_DESKTOP =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/142.0 Safari/537.36 Edg/142.0";
+
+describe("exit", () => {
+  // Each platform the kit's appPlatform names, as a browser tab and as an installed app: Exit
+  // shows in every tab and in the installed apps whose window a script can close.
+  const devices: readonly [string, Device, boolean][] = [
+    ["a desktop Chrome tab", {}, true],
+    ["an Android Chrome tab", { closeWatcher: true, userAgent: CHROME_ANDROID }, true],
+    ["an iPhone Safari tab", { maxTouchPoints: 5, userAgent: IPHONE }, true],
+    ["Chrome's Android app", { app: true, closeWatcher: true, userAgent: CHROME_ANDROID }, true],
+    ["a Chrome desktop app window", { app: true, closeWatcher: true }, true],
+    [
+      "an Edge desktop app window",
+      { app: true, closeWatcher: true, userAgent: EDGE_DESKTOP },
+      true,
+    ],
+    [
+      "an iPhone Home Screen app",
+      { app: true, maxTouchPoints: 5, standalone: true, userAgent: IPHONE },
+      false,
+    ],
+    ["an iPad Home Screen app", { app: true, maxTouchPoints: 5, userAgent: IPAD }, false],
+    ["Firefox for Android's app", { app: true, userAgent: FIREFOX_ANDROID }, false],
+    ["Samsung Internet's app", { app: true, closeWatcher: true, userAgent: SAMSUNG }, false],
+    ["Edge for Android's app", { app: true, closeWatcher: true, userAgent: EDGE_ANDROID }, false],
+    ["a macOS Safari Dock app", { app: true, userAgent: SAFARI_MAC }, false],
+    ["a Chrome app window without CloseWatcher", { app: true }, false],
+  ];
+
+  it.each(devices)("shows Exit in %s: %s", async (_name, device, shown) => {
+    stubDevice(device);
+    const pwa = await import("./index.ts");
+    pwa.setupPhoneApp();
+    expect(pwa.exitShown()).toBe(shown);
+  });
+
+  it("reads Exit once at load, before the back guard adds an entry", async () => {
+    const page = stubDevice({ app: true, closeWatcher: true, userAgent: CHROME_ANDROID });
+    const history = stubHistory();
+    const pwa = await import("./index.ts");
+    pwa.setupPhoneApp();
+    page.dispatchEvent(new Event("pointerup"));
+    history.length = 3;
+    expect(pwa.exitShown()).toBe(true);
+  });
+
+  it("closes an installed app's window and sends a browser tab to the site's home page", async () => {
+    const app = stubDevice({ app: true, closeWatcher: true }) as unknown as {
+      close: () => void;
+      location: { assign: (url: string) => void };
+    };
+    let pwa = await import("./index.ts");
+    pwa.exitGame();
+    expect(app.close).toHaveBeenCalledOnce();
+    expect(app.location.assign).not.toHaveBeenCalled();
+    vi.resetModules();
+    const tab = stubDevice({}) as unknown as typeof app;
+    pwa = await import("./index.ts");
+    pwa.exitGame();
+    expect(tab.close).not.toHaveBeenCalled();
+    expect(tab.location.assign).toHaveBeenCalledExactlyOnceWith("/");
+  });
+});
+
 describe("back gesture", () => {
   it("leaves back to the browser until the player's first input", async () => {
     const page = stubDevice({});
@@ -261,6 +347,28 @@ describe("back gesture", () => {
     page.dispatchEvent(new Event("pointerup"));
     expect(history.pushState).toHaveBeenCalledOnce();
   });
+
+  it.each([
+    ["Samsung Internet", { app: true, closeWatcher: true, userAgent: SAMSUNG }],
+    [
+      "an iPhone Home Screen",
+      { app: true, maxTouchPoints: 5, standalone: true, userAgent: IPHONE },
+    ],
+  ] satisfies [string, Device][])(
+    "keeps %s app's own back, since its window cannot close",
+    async (_name, device) => {
+      const page = stubDevice(device);
+      const history = stubHistory();
+      const pwa = await import("./index.ts");
+      pwa.setupPhoneApp();
+      const backs = vi.fn();
+      page.addEventListener(pwa.PHONE_EVENTS.backPressed, backs);
+      page.dispatchEvent(new Event("pointerup"));
+      page.dispatchEvent(new Event("popstate"));
+      expect(history.pushState).not.toHaveBeenCalled();
+      expect(backs).not.toHaveBeenCalled();
+    },
+  );
 
   it("keeps the browser's back in Firefox for Android's installed app", async () => {
     const page = stubDevice({ app: true, userAgent: FIREFOX_ANDROID });

@@ -61,6 +61,8 @@ import type { FlightInput, FlightState, SpaceObject, Vec } from "../model/types.
 import {
   beginStartUpdateVisit,
   coverStartScreen,
+  exitGame,
+  exitShown,
   installApp,
   installState,
   keepScreenOn,
@@ -798,6 +800,7 @@ export class PrototypeScene extends Scene {
         onSave: () => apply(() => {}),
         run: () => (this.model.state.mode === "space" ? this.model.state.flight : null),
       },
+      exit: exitShown() ? { label: PROTOTYPE.labels.exit ?? "", onExit: exitGame } : undefined,
       install: {
         port: {
           install: installApp,
@@ -1620,6 +1623,7 @@ export class PrototypeScene extends Scene {
     this.armBack();
     this.controls.setSettingsButton(state.mode !== "space");
     this.controls.setAchievementsButton(start);
+    this.controls.setExitButton(start);
     this.controls.setPause({
       field: this.mapField(),
       inDanger: this.model.inDanger,

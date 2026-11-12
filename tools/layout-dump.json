@@ -18519,6 +18519,27 @@
           }
         }
       ],
+      "startNavOrder": [
+        {
+          "args": [
+            false
+          ],
+          "result": [
+            "settings",
+            "achievements"
+          ]
+        },
+        {
+          "args": [
+            true
+          ],
+          "result": [
+            "exit",
+            "settings",
+            "achievements"
+          ]
+        }
+      ],
       "statusPillWidth": [
         {
           "args": [

@@ -183,6 +183,14 @@ export function hudButtonTarget(index: number): Rect {
   };
 }
 
+export type StartNavButton = "achievements" | "exit" | "settings";
+
+// The start screen's HUD discs from the right (hudButtonTarget's index): Exit at the far top right
+// where it shows (exitShown), then Settings, then Achievements, which close up without it.
+export function startNavOrder(exit: boolean): readonly StartNavButton[] {
+  return exit ? ["exit", "settings", "achievements"] : ["settings", "achievements"];
+}
+
 // A HUD row of count buttons' width.
 export function hudRowWidth(count: number): number {
   return count > 0 ? count * HUD_BUTTON.target + (count - 1) * HUD_BUTTON.gap : 0;

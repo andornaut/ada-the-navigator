@@ -8,6 +8,8 @@ export interface BackLayer {
 }
 
 export interface BackStack {
+  // Whether any layer is open.
+  anyOpen(): boolean;
   // Closes the innermost open layer, if any, and says whether one was.
   back(): boolean;
   register(layer: BackLayer): () => void;
@@ -16,6 +18,7 @@ export interface BackStack {
 export function createBackStack(): BackStack {
   const layers: BackLayer[] = [];
   return {
+    anyOpen: () => layers.some((layer) => layer.isOpen()),
     back() {
       for (let index = layers.length - 1; index >= 0; index--) {
         const layer = layers[index]!;

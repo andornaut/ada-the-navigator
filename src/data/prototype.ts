@@ -362,6 +362,7 @@ export const PROTOTYPE: PrototypeContent = {
     donateStillNeeded: "{amount} still needed after",
     donateTitle: "Donate to {name}?",
     engineTuning: "Engine tuning",
+    exit: "Exit",
     galaxyInDevelopment: "Story in development.",
     galaxyLocked: "...",
     galaxyNumber: "Galaxy {number}",

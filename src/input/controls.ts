@@ -36,6 +36,7 @@ import { createPauseButton } from "../ui/pause-button.ts";
 import { createPauseCards, type PauseLabels, type PauseState } from "../ui/pause-card.ts";
 import {
   createSettings,
+  EXIT_SHOWN_ATTRIBUTE,
   type FeedbackSettings,
   type SettingsLabels,
   type SettingsOptions,
@@ -57,6 +58,9 @@ export interface ControlsOptions {
     readonly onSave: () => void;
     readonly run: () => object | null;
   };
+  // The start screen's Exit where the game offers to leave (exitShown), or undefined where it
+  // does not, which makes no Exit at all.
+  readonly exit?: { readonly label: string; readonly onExit: () => void } | undefined;
   readonly install?: SettingsOptions["install"];
   readonly labels: SettingsLabels;
   readonly onFeedbackChange?: (settings: FeedbackSettings) => void;
@@ -108,6 +112,8 @@ export interface Controls {
   setSettingsButton(shown: boolean): void;
   // Shows the start screen's Achievements button, immediately left of Settings.
   setAchievementsButton(shown: boolean): void;
+  // Shows the start screen's Exit, right of Settings, where the game offers to leave.
+  setExitButton(shown: boolean): void;
   setPause(state: PauseState): void;
   // The status pill's shield and Stardust count.
   setStatus(view: StatusView): void;
@@ -229,6 +235,24 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     settingsDisc.before(achievementsButton);
   } else {
     settings.root.append(achievementsButton);
+  }
+  // The start screen's Exit, after Settings in the tab order and at the far top right; made only
+  // where the game offers to leave.
+  const exitButton = options.exit ? document.createElement("button") : undefined;
+  if (exitButton && options.exit) {
+    const { label, onExit } = options.exit;
+    exitButton.type = "button";
+    exitButton.className = "ada-exit-open";
+    exitButton.dataset.action = "exit";
+    exitButton.setAttribute("aria-label", label);
+    exitButton.title = label;
+    exitButton.hidden = true;
+    const exitDisc = document.createElement("span");
+    exitDisc.className = "ada-disc";
+    exitDisc.setAttribute("aria-hidden", "true");
+    exitButton.append(exitDisc);
+    exitButton.addEventListener("click", onExit);
+    (settingsDisc ?? achievementsButton).after(exitButton);
   }
   const pauseButton = createPauseButton(settings.root, options.pause.buttonLabel, () =>
     pause.open(),
@@ -373,6 +397,19 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   };
   const reset = () => state.reset();
   const keyDown = (event: KeyboardEvent) => {
+    // Q exits from the bare start screen, wherever Exit shows.
+    if (
+      event.code === "KeyQ" &&
+      !event.repeat &&
+      exitButton &&
+      !exitButton.hidden &&
+      !backStack.anyOpen() &&
+      !(event.target instanceof Element && event.target.closest("input,textarea,select"))
+    ) {
+      event.preventDefault();
+      options.exit?.onExit();
+      return;
+    }
     if (event.code === "Escape") {
       event.preventDefault();
       if (!event.repeat) {
@@ -528,6 +565,12 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       weapons.setEnabled(value && !modalOpen());
 
       settings.useButton.hidden = !value || contextLabel === undefined;
+    },
+    setExitButton(shown) {
+      if (exitButton) {
+        exitButton.hidden = !shown;
+        settings.root.toggleAttribute(EXIT_SHOWN_ATTRIBUTE, shown);
+      }
     },
     setPause(view) {
       pausable = view.place !== null;

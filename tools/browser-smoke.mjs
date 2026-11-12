@@ -3660,6 +3660,42 @@ try {
       events.errors.push(message.text());
     }
   });
+  // Exit: a browser tab offers it, at the far top right of the start screen after Achievements
+  // and Settings, a small button's gap from Settings; Q leaves for the site's home page.
+  await page.goto("http://ada-preview:4173/play/");
+  await page.locator('[data-action="exit"]').waitFor({ state: "visible" });
+  const navDiscs = await page.evaluate(() =>
+    ["achievements", "settings", "exit"].map((action) => {
+      const button = document.querySelector(`[data-action="${action}"]`);
+      const disc = button?.querySelector(".ada-disc")?.getBoundingClientRect();
+      return {
+        label: button?.getAttribute("aria-label"),
+        left: disc?.left ?? 0,
+        right: disc?.right ?? 0,
+        tab: [...document.querySelectorAll("button")].indexOf(button),
+      };
+    }),
+  );
+  const navUnit = await page
+    .locator("#app")
+    .evaluate((app) => Number(getComputedStyle(app).getPropertyValue("--ada-unit")));
+  assert.equal(navDiscs[2].label, PROTOTYPE.labels.exit, "Exit is named from Gameplay's string");
+  assert.ok(
+    navDiscs[0].tab < navDiscs[1].tab && navDiscs[1].tab < navDiscs[2].tab,
+    "The start screen tabs Achievements, Settings, then Exit",
+  );
+  for (const [left, right] of [
+    [navDiscs[0], navDiscs[1]],
+    [navDiscs[1], navDiscs[2]],
+  ]) {
+    assert.ok(
+      Math.abs((right.left - left.right) / navUnit - 24) < 0.1,
+      "The start screen's discs sit a small button's gap apart, Exit rightmost",
+    );
+  }
+  await page.keyboard.press("KeyQ");
+  await page.waitForURL("http://ada-preview:4173/");
+  events.checks.push("A Chromium tab shows Exit at the start screen's far top right; Q goes home");
   await page.goto("http://ada-preview:4173/play/?dev=1");
   await page.locator('[data-action="start"]').waitFor({ state: "visible" });
   const savedBeforeCrash = await page.evaluate((key) => localStorage.getItem(key), storageKey);

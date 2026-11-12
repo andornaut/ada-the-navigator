@@ -90,6 +90,24 @@ describe("back", () => {
   });
 });
 
+describe("open layers", () => {
+  it("tells whether any layer is open, closed or not yet", () => {
+    const stack = createBackStack();
+    let open = false;
+    expect(stack.anyOpen()).toBe(false);
+    const leave = stack.register({ back: () => (open = false), isOpen: () => open });
+    stack.register({ back: () => undefined, isOpen: () => false });
+    expect(stack.anyOpen()).toBe(false);
+    open = true;
+    expect(stack.anyOpen()).toBe(true);
+    stack.back();
+    expect(stack.anyOpen()).toBe(false);
+    open = true;
+    leave();
+    expect(stack.anyOpen()).toBe(false);
+  });
+});
+
 describe("back release", () => {
   it.each([
     [true, false, true],

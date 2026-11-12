@@ -10,7 +10,7 @@ import {
 import { type InstallPort, startInstall, watchInstallRow } from "./install-row.ts";
 import { CONTROL_ROW, WHOLE_PX_EDGES } from "./layout/controls.ts";
 import { font, fromAreaBottom, fromHudEdge, hudCentreX, units, viewStyle } from "./layout/css.ts";
-import { hudButtonTarget } from "./layout/playView.ts";
+import { hudButtonTarget, type StartNavButton, startNavOrder } from "./layout/playView.ts";
 import { TYPE } from "./layout/tokens.ts";
 import { TOUCH_STICK, USE_BUTTON } from "./layout/touchControls.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -75,13 +75,25 @@ export const SETTINGS_GLYPH = "/art/ui/icons/settings.svg";
 // drawn with smooth sampling.
 export const ACHIEVEMENTS_GLYPH = "/art/ui/icons/achievements.svg";
 
-// Both start-screen discs while a press holds: the pause disc's held face and a white glyph.
+// The start screen's Exit glyph. CLEANUP (added 2026-11-12): a placeholder door with an arrow
+// out, drawn as a data: SVG mask, until Art's icon-exit lands; then point it at Art's file as the
+// other glyphs are.
+const EXIT_PLACEHOLDER_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">' +
+  '<path d="M3 2h9v4h-2V4H5v12h5v-2h2v4H3z"/><path d="M11 9h4V6l4 4-4 4v-3h-4z"/></svg>';
+export const EXIT_GLYPH = `data:image/svg+xml,${encodeURIComponent(EXIT_PLACEHOLDER_SVG)}`;
+
+// Every start-screen disc while a press holds: the pause disc's held face and a white glyph.
 export const NAV_DISC_PRESSED = { face: "#3a4466", glyph: "#ffffff" } as const;
 
-// A start-screen nav disc's right offset from the HUD rect's right: hudButtonTarget(index).
-const navRight = (index: number): string => {
-  const target = hudButtonTarget(index);
-  return fromHudEdge("right", -(target.x + target.width));
+// The start screen's discs where Exit shows: .ada-controls carries this attribute while it does.
+export const EXIT_SHOWN_ATTRIBUTE = "data-exit-shown";
+
+// A start-screen nav disc's place: its offsets from the HUD rect's right and top, at its index in
+// startNavOrder(exit) (hudButtonTarget's index).
+const navPlace = (button: StartNavButton, exit: boolean): string => {
+  const target = hudButtonTarget(startNavOrder(exit).indexOf(button));
+  return `right:${fromHudEdge("right", -(target.x + target.width))};top:${fromHudEdge("top", target.y)}`;
 };
 
 export const SETTINGS_STYLE = `
@@ -135,32 +147,48 @@ ${viewStyle(WHOLE_PX_EDGES)}
 }
 
 /* The start screen's Settings: an idle HUD disc button on the HUD rect's top-right corner
-   (hudButtonTarget(0)), its 20 gear a mask in the idle glyph colour. */
+   (startNavOrder), its 20 gear a mask in the idle glyph colour. */
 .ada-controls .ada-settings-open{
   position:absolute;
-  right:${navRight(0)};
-  top:${fromHudEdge("top", hudButtonTarget(0).y)};
+  ${navPlace("settings", false)};
   --glyph:url('${SETTINGS_GLYPH}')
 }
 ${hudDiscStyle(".ada-controls .ada-settings-open", ".ada-disc")}
 
-/* The start screen's Achievements: the same HUD disc button one pitch left of Settings
-   (hudButtonTarget(1)), its 20 trophy a mask in the idle glyph colour. */
+/* The start screen's Achievements: the same HUD disc button one pitch left of Settings, its 20
+   trophy a mask in the idle glyph colour. */
 .ada-controls .ada-achievements-open{
   position:absolute;
-  right:${navRight(1)};
-  top:${fromHudEdge("top", hudButtonTarget(1).y)};
+  ${navPlace("achievements", false)};
   --glyph:url('${ACHIEVEMENTS_GLYPH}')
 }
 ${hudDiscStyle(".ada-controls .ada-achievements-open", ".ada-disc")}
 
-/* Pressed, on both start-screen discs: the pause disc's held face and a white glyph. */
+/* The start screen's Exit, where it shows: the same HUD disc button at the far top right, Settings
+   and Achievements one pitch further left each. Where it does not show it is never made, so it
+   has no press area and the others keep their places. */
+.ada-controls .ada-exit-open{
+  position:absolute;
+  ${navPlace("exit", true)};
+  --glyph:url("${EXIT_GLYPH}")
+}
+${hudDiscStyle(".ada-controls .ada-exit-open", ".ada-disc")}
+.ada-controls[${EXIT_SHOWN_ATTRIBUTE}] .ada-settings-open{
+  ${navPlace("settings", true)}
+}
+.ada-controls[${EXIT_SHOWN_ATTRIBUTE}] .ada-achievements-open{
+  ${navPlace("achievements", true)}
+}
+
+/* Pressed, on every start-screen disc: the pause disc's held face and a white glyph. */
 .ada-controls .ada-settings-open:active,
-.ada-controls .ada-achievements-open:active{
+.ada-controls .ada-achievements-open:active,
+.ada-controls .ada-exit-open:active{
   color:${NAV_DISC_PRESSED.glyph}
 }
 .ada-controls .ada-settings-open:active .ada-disc,
-.ada-controls .ada-achievements-open:active .ada-disc{
+.ada-controls .ada-achievements-open:active .ada-disc,
+.ada-controls .ada-exit-open:active .ada-disc{
   background:${NAV_DISC_PRESSED.face}
 }
 
