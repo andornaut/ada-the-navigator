@@ -1012,7 +1012,7 @@ export class PrototypeScene extends Scene {
         },
         onGalaxies: () => this.openGalaxies(),
         onTravel: (id) => {
-          if (!this.model.inDanger && !this.model.towing) {
+          if (!this.model.inDanger && !this.model.towing && !this.model.carrying) {
             jumpThen(() => this.model.teleport(id));
           }
         },
@@ -2020,6 +2020,7 @@ export class PrototypeScene extends Scene {
     this.controls.setAchievementsButton(start);
     this.controls.setExitButton(start);
     this.controls.setPause({
+      carrying: this.model.carrying,
       field: this.mapField(),
       inDanger: this.model.inDanger,
       job: this.model.jobObjective,

@@ -102,7 +102,7 @@ describe("Stardust drops", () => {
       fighter: 2,
       frigate: 5,
       interceptor: 1,
-      platform: 6,
+      platform: 4,
       retaliator: 4,
       swarm: 1,
     };
@@ -116,7 +116,10 @@ describe("Stardust drops", () => {
   });
 
   it("pays each enemy half its hit points, rounded down, and at least 1", () => {
-    for (const [archetype, definition] of Object.entries(enemyCatalog)) {
+    // The turret platform pays Gameplay's listed 4 (economy.md), not half its hit points.
+    for (const [archetype, definition] of Object.entries(enemyCatalog).filter(
+      ([archetype]) => archetype !== "platform",
+    )) {
       // Multipart ships are defeated through their hardpoints, so those carry their hit points.
       const hp = definition.hardpoints.length
         ? definition.hardpoints.reduce((sum, part) => sum + part.hp, 0)

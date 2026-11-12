@@ -96,6 +96,7 @@ import {
   jobHostiles,
   nearestSafePlace,
   pullTow,
+  rerollBoards,
   stationBoard,
 } from "./jobs.ts";
 import {
@@ -1002,6 +1003,7 @@ export class GameModel {
     this.state.mode = "space";
     this.state.dialogue = null;
     this.state.docked = null;
+    rerollBoards(this.state.selectedSector, this.state);
     for (const id of this.current.known) {
       ensureDestination(this.content, id, this.state.flight);
     }
@@ -1101,6 +1103,10 @@ export class GameModel {
     }
     if (f.tow) {
       this.notify(this.label("towTravel"));
+      return;
+    }
+    if (this.carrying) {
+      this.notify(this.label("carryTravel"));
       return;
     }
     if (station) {
@@ -1683,6 +1689,19 @@ export class GameModel {
       )
       .map(({ id, x, y }) => ({ id, x, y }));
   }
+  /**
+   * Where a towed craft is safe (quests.md "Rescue and tow"): any known station or outpost in
+   * the galaxy, the issuing station among them, the hub listed once as the outpost it also is.
+   */
+  private towPlaces(flight: FlightState): JobTarget[] {
+    const outposts = this.outposts(flight);
+    const held = this.held;
+    const ids = [...this.current.stations, ...(held ? [held.station] : [])];
+    const stations = [...new Set(ids)]
+      .filter((id) => !outposts.some((outpost) => outpost.id === id))
+      .flatMap((id) => this.stationSite(flight, id) ?? []);
+    return [...outposts, ...stations.map(({ id, x, y }) => ({ id, x, y }))];
+  }
   private jobContext(flight: FlightState): BoardContext {
     return {
       hostiles: jobHostiles(flight),
@@ -1913,6 +1932,17 @@ export class GameModel {
   get towing(): boolean {
     return this.state.mode === "space" && Boolean(this.state.flight?.tow);
   }
+  /** A delivery's or a supply run's item is aboard in flight: Travel here refuses, as towing. */
+  get carrying(): boolean {
+    if (this.state.mode !== "space" || !this.state.flight) {
+      return false;
+    }
+    const activity = this.activity;
+    return Boolean(
+      (this.held?.type === "delivery" && this.held.carrying) ||
+      (activity?.id === "supplyRun" && activity.carrying),
+    );
+  }
   /** What the Use button does for the held job here, if anything: Tow or Deliver. */
   private jobUse(): "tow" | "deliver" | null {
     const f = this.state.flight;
@@ -1975,7 +2005,7 @@ export class GameModel {
       this.finishJob(f);
     } else if (held.type === "rescue" && f.tow) {
       pullTow(f.player, f.tow);
-      const place = nearestSafePlace(this.outposts(f), this.jobStation(held), f.tow);
+      const place = nearestSafePlace(this.towPlaces(f), null, f.tow);
       if (place && distance(place, f.tow) <= JOB_TUNING.tow.complete) {
         this.finishJob(f);
       }
@@ -2101,9 +2131,7 @@ export class GameModel {
       return mark({ id: station, x: place.x, y: place.y });
     }
     if (held.type === "rescue") {
-      const place = f.tow
-        ? nearestSafePlace(this.outposts(f), this.jobStation(held), f.tow)
-        : held.target;
+      const place = f.tow ? nearestSafePlace(this.towPlaces(f), null, f.tow) : held.target;
       return place ? mark(place) : null;
     }
     return mark(held.target);

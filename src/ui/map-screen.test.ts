@@ -129,21 +129,46 @@ describe("map place type lines", () => {
 });
 
 describe("map screen place panel", () => {
-  it("offers Travel here only for destinations and stations, refused in danger then towing", () => {
-    expect(travelState(false, false, null)).toEqual({ offered: false, reason: null });
-    expect(travelState(false, false, { travel: true })).toEqual({ offered: true, reason: null });
-    expect(travelState(true, true, { travel: true })).toEqual({ offered: true, reason: "danger" });
-    expect(travelState(false, true, { travel: true })).toEqual({ offered: true, reason: "towing" });
+  it("offers Travel here only for destinations and stations, refused in danger, towing, then carrying", () => {
+    expect(travelState(false, false, false, null)).toEqual({ offered: false, reason: null });
+    expect(travelState(false, false, false, { travel: true })).toEqual({
+      offered: true,
+      reason: null,
+    });
+    expect(travelState(true, true, false, { travel: true })).toEqual({
+      offered: true,
+      reason: "danger",
+    });
+    expect(travelState(false, true, false, { travel: true })).toEqual({
+      offered: true,
+      reason: "towing",
+    });
+    // Carrying a job item refuses as towing does, after danger and towing.
+    expect(travelState(false, false, true, { travel: true })).toEqual({
+      offered: true,
+      reason: "carrying",
+    });
+    expect(travelState(false, true, true, { travel: true })).toEqual({
+      offered: true,
+      reason: "towing",
+    });
+    expect(travelState(false, false, true, { travel: false })).toEqual({
+      offered: false,
+      reason: null,
+    });
   });
 
   it("gives the danger reason for every selection and none, and towing only beside Travel here", () => {
-    expect(travelState(true, false, null)).toEqual({ offered: false, reason: "danger" });
-    expect(travelState(true, true, { travel: false })).toEqual({
+    expect(travelState(true, false, false, null)).toEqual({ offered: false, reason: "danger" });
+    expect(travelState(true, true, false, { travel: false })).toEqual({
       offered: false,
       reason: "danger",
     });
-    expect(travelState(false, true, { travel: false })).toEqual({ offered: false, reason: null });
-    expect(travelState(false, true, null)).toEqual({ offered: false, reason: null });
+    expect(travelState(false, true, false, { travel: false })).toEqual({
+      offered: false,
+      reason: null,
+    });
+    expect(travelState(false, true, false, null)).toEqual({ offered: false, reason: null });
   });
 
   it("holds the reason alone in 52, or after the empty note in 80", () => {

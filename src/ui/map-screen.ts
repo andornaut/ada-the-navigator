@@ -74,6 +74,7 @@ export interface MapScreenLabels {
   readonly questsJobBoards: string;
   readonly questsStoryComplete: string;
   readonly towTravel: string;
+  readonly carryTravel: string;
   readonly travelEmpty: string;
   readonly travelHere: string;
   readonly travelUnavailable: string;
@@ -89,6 +90,7 @@ export interface MapScreenLabels {
 export function mapScreenLabels(strings: Readonly<Record<string, string>>): MapScreenLabels {
   const label = (key: string) => strings[key] ?? "";
   return {
+    carryTravel: label("carryTravel"),
     centerOnAda: label("mapCenterOnAda"),
     close: label("close"),
     distance: label("mapDistance"),
@@ -134,6 +136,8 @@ export interface MapScreenState {
   readonly job: string | null;
   readonly map: GalaxyMap;
   readonly towing: boolean;
+  /** A job item is aboard, which refuses Travel here as towing does. */
+  readonly carrying: boolean;
 }
 
 export interface MapScreenOptions {
@@ -146,17 +150,27 @@ export interface MapScreenOptions {
 }
 
 /**
- * Travel here for a place: offered only by destinations and stations, refused in danger and while
- * towing, with the one reason line that shows. The danger reason shows in every state, since
- * Galaxies refuses in danger too; the towing reason only beside Travel here.
+ * Travel here for a place: offered only by destinations and stations, refused in danger, while
+ * towing and while carrying a job item, with the one reason line that shows. The danger reason
+ * shows in every state, since Galaxies refuses in danger too; the others only beside Travel here.
  */
 export function travelState(
   inDanger: boolean,
   towing: boolean,
+  carrying: boolean,
   place: Pick<MapPlace, "travel"> | null,
-): { readonly offered: boolean; readonly reason: "danger" | "towing" | null } {
+): { readonly offered: boolean; readonly reason: "carrying" | "danger" | "towing" | null } {
   const offered = Boolean(place?.travel);
-  return { offered, reason: inDanger ? "danger" : offered && towing ? "towing" : null };
+  return {
+    offered,
+    reason: inDanger
+      ? "danger"
+      : offered && towing
+        ? "towing"
+        : offered && carrying
+          ? "carrying"
+          : null,
+  };
 }
 
 /**
@@ -791,12 +805,14 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   const reason = document.createElement("div");
   reason.className = "ada-map-reason";
   const reasons = {
+    carrying: document.createElement("span"),
     danger: document.createElement("span"),
     towing: document.createElement("span"),
   };
   reasons.danger.textContent = labels.travelUnavailable;
   reasons.towing.textContent = labels.towTravel;
-  reason.append(reasons.danger, reasons.towing);
+  reasons.carrying.textContent = labels.carryTravel;
+  reason.append(reasons.danger, reasons.towing, reasons.carrying);
   const empty = document.createElement("p");
   empty.className = "ada-map-empty";
   empty.textContent = labels.travelEmpty;
@@ -855,7 +871,12 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   const places = () => state?.map.places ?? [];
   const selectedPlace = () => places().find(({ id }) => id === selected) ?? null;
   const travelNow = () =>
-    travelState(state?.inDanger ?? false, state?.towing ?? false, selectedPlace());
+    travelState(
+      state?.inDanger ?? false,
+      state?.towing ?? false,
+      state?.carrying ?? false,
+      selectedPlace(),
+    );
   const detailLines = (place: MapPlace) =>
     state ? placeLines(labels, state.map.player, state.job, place) : [];
   // The panel shows for a selected place, with nothing mapped, or for a reason alone.
@@ -1042,6 +1063,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     }
     reasons.danger.toggleAttribute("data-shown", travelling.reason === "danger");
     reasons.towing.toggleAttribute("data-shown", travelling.reason === "towing");
+    reasons.carrying.toggleAttribute("data-shown", travelling.reason === "carrying");
     const galaxiesShown = galaxiesAvailable(state?.inDanger ?? false);
     galaxies.classList.toggle("ada-unavailable", !galaxiesShown);
     if (galaxiesShown) {

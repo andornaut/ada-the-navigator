@@ -344,6 +344,7 @@ export const PROTOTYPE: PrototypeContent = {
     calfGoal: "Guide a whale calf home.",
     calfGuide: "Guide the calf home.",
     cargo: "Cargo",
+    carryTravel: "Unavailable while carrying a delivery.",
     chapterComplete: "Chapter complete. You can keep exploring.",
     close: "Close",
     confirmBuy: "Buy",

@@ -51,6 +51,8 @@ export interface PauseState {
   readonly ship: ShipView | null;
   /** A rescue's tow line is attached: Travel here refuses. */
   readonly towing: boolean;
+  /** A delivery's or a supply run's item is aboard: Travel here refuses. */
+  readonly carrying: boolean;
 }
 
 const NO_MAP: GalaxyMap = {
@@ -158,6 +160,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   });
   let open = false;
   let state: PauseState = {
+    carrying: false,
     field: null,
     inDanger: false,
     job: null,
@@ -221,6 +224,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   let shown: string | undefined;
   const render = () => {
     mapScreen.setState({
+      carrying: state.carrying,
       field: state.field,
       inDanger: state.inDanger,
       job: state.job,

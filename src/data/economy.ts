@@ -186,7 +186,7 @@ export const ECONOMY: EconomyCatalog = {
     fighter: 2,
     frigate: 5,
     interceptor: 1,
-    platform: 6,
+    platform: 4,
     retaliator: 4,
     swarm: 1,
   },

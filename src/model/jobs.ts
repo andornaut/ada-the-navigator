@@ -214,11 +214,7 @@ export function stationBoard(
   const held = heldJob(context.sector, book);
   for (let slot = 0; slot < board.length; slot++) {
     const offer = board[slot]!;
-    if (
-      offer.type === "survey" &&
-      offer.id !== held?.id &&
-      context.progress.charted.includes(offer.target.id)
-    ) {
+    if (offer.id !== held?.id && !offerValid(context, book, station.id, slot, offer)) {
       const replacement = makeOffer(context, book, without(board, slot), station);
       if (replacement) {
         board[slot] = replacement;
@@ -235,6 +231,54 @@ export function stationBoard(
     board.push(offer);
   }
   return board;
+}
+
+/**
+ * Whether a board's offer still stands (quests.md "Job boards"): a survey whose landmark is now
+ * charted is not, nor one whose target the held job or an earlier offer in the galaxy already
+ * uses, the boards read in station order.
+ */
+function offerValid(
+  context: BoardContext,
+  book: JobBook,
+  station: string,
+  slot: number,
+  offer: JobOffer,
+): boolean {
+  if (offer.type === "survey" && context.progress.charted.includes(offer.target.id)) {
+    return false;
+  }
+  if (offer.target.id === "") {
+    return true;
+  }
+  const same = (other: JobOffer) =>
+    other.type === offer.type && other.target.id === offer.target.id;
+  const held = heldJob(context.sector, book);
+  if (held && held.id !== offer.id && same(held)) {
+    return false;
+  }
+  for (const [id, board] of Object.entries(book.jobs.boards[context.sector] ?? {})) {
+    const earlier = id === station ? board.slice(0, slot) : id < station ? board : [];
+    if (earlier.some((other) => other.id !== held?.id && same(other))) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * A new flight re-rolls the galaxy's untaken offers (quests.md "Job boards"): every board keeps
+ * only the held job, and refills when it next shows.
+ */
+export function rerollBoards(sector: SectorId, book: JobBook): void {
+  const boards = book.jobs.boards[sector];
+  if (!boards) {
+    return;
+  }
+  const held = heldJob(sector, book);
+  for (const [station, board] of Object.entries(boards)) {
+    boards[station] = board.filter((offer) => offer.id === held?.id);
+  }
 }
 
 /** Takes an offer from a station's board into the galaxy's empty optional task slot. */
