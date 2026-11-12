@@ -628,16 +628,16 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - General Gadget's uncrewed drone fleet is the recurring hostile faction in every
   galaxy, searching for the same holodisks.
 - Defeated enemy ships are destroyed and drop Stardust, the game's currency.
-- One rechargeable shield of 10 HP, 15 and 22 at shield levels 2 and 3. No hull
+- One rechargeable shield of 10 HP, 15 and 20 at shield levels 2 and 3. No hull
   resource.
 - The shield never recharges in battle. Ada is in battle while an enemy that is
   chasing or attacking her is inside the battle square: centred on Ada, reaching
   half the game area's width plus 64 world units along each axis (424 on the
   720-wide view). Idle enemies, retaliators not yet hit, fleeing or returning
-  enemies and disabled heavies do not count. Recharge starts 15 seconds after
+  enemies and disabled heavies do not count. Recharge starts 20 seconds after
   Ada was last in battle or last hit, and refills from empty to full in 60
   seconds, whatever the capacity. Shield levels 2 and 3 also shorten the
-  delay to 10 seconds and the refill to 45, then 30 seconds. Pursuit is finite,
+  delay to 15, then 10 seconds and the refill to 45, then 30 seconds. Pursuit is finite,
   so Ada can always escape to recharge, but it is slow, and enemies keep their
   damage.
 - No post-hit invulnerability or protection window.
