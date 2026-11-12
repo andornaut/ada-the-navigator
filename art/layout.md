@@ -133,8 +133,9 @@ space nor a gap.
   wrap to the inner width that the other groups and the 50% floor set.
   Single-line labels inside rows and buttons count at their full width.
 - Action row: buttons share one width, the widest label plus
-  `2 * TEXT_BUTTON.inset`, `BUTTON_GAP` apart; the group centres.
-  Paired actions put the secondary left and the primary right.
+  `2 * TEXT_BUTTON.inset`, `BUTTON_GAP` apart; the group centres. Every
+  group places its primary down and to the right
+  ([Controls](controls.md#buttons)).
 - Action stack: buttons fill the inner width, `STACK_BUTTON_GAP` apart.
 - Control grid: equal-width tiles in up to two columns `BUTTON_GAP` apart and
   rows `STACK_BUTTON_GAP` apart; one column when two plus the panel
@@ -717,7 +718,7 @@ token above; strings are Gameplay's.
 | Install steps | Header, close. Step rows: row icon, `SPACING.gap`, wrapped body text, rows `SPACING.rowGap` apart (not buttons), height fits text (not controls)                                                                                               | Steps        |
 | Update offer  | Header, close. Action row: decline (secondary), accept (primary)                                                                                                                                                                               | None         |
 | Cheats        | Header, close. Per scope a section group: heading (`TYPE.label`), persistence (supporting prose), `SPACING.rowGap`, then items `SPACING.gap` apart, each an action stack of one with its description (supporting prose) `SPACING.rowGap` below | Sections     |
-| Paused        | Header, close. Resume (primary, full width). Control grid, two columns: Map and Ship, then Settings and Back to title                                                                                                                          | None         |
+| Paused        | Header, close. Control grid, two columns: Map and Ship, then Settings and Back to title. Resume (primary, full width)                                                                                                                          | None         |
 | Paused (room) | Header, close. Action stack: Settings, Back to title                                                                                                                                                                                           | None         |
 | Ship          | Header, close. Cargo section. Equipment section ([Ship card](#ship-card))                                                                                                                                                                      | None         |
 | Station card  | Header, close. Balance. Keeper block ([Station card](#station-card)). Action row: Undock, Jobs, Shop                                                                                                                                           | None         |
@@ -726,9 +727,9 @@ token above; strings are Gameplay's.
 | Buy confirm   | Header, close. Item well. Description (weapons). Price. Remaining (supporting). Action row: Cancel, Buy                                                                                                                                        | None         |
 | Achievements  | Header, close. Entry list, two columns ([Achievements card](#achievements-card)). Pager: Previous, the page count, Next                                                                                                                        | None         |
 
-The Paused card shows no objective or job lines. Its flight card puts Resume
-across the inner width, then the other four actions as a two-column control
-grid: tiles `(360 - 32 - BUTTON_GAP) / 2` = 156 wide ("Back to title" needs
+The Paused card shows no objective or job lines. Its flight card puts the
+four other actions in a two-column control grid, then Resume across the inner
+width below it, the primary at the bottom: tiles `(360 - 32 - BUTTON_GAP) / 2` = 156 wide ("Back to title" needs
 122.69), `BUTTON_GAP` across and `STACK_BUTTON_GAP` down. Five stacked
 actions would be `58 + 272 + 16` = 346 high, past the 325 available. At
 720x360 with phone insets the flight card is `58 + 48 + 8 + 48 + 8 + 48 + 16`
@@ -1036,18 +1037,18 @@ Constants: `STORY_PANEL` and `STORY_BACKGROUND`, `storyPage.ts`;
 | Panel top cap  | `STORY_PANEL_TOP`: the HUD row's lowest press area plus `SPACING.gap`: y 60.5 (Skip and Settings end at 52.5), y 62.75 on Ada's room page (the pause press area ends at 54.75)                                                                                                                                                                                                        | Past it the panel stops growing and only the text column scrolls                                                                                                                                                                                                                                               |
 | Padding        | `STORY_PANEL.padding` = `SPACING.panelPadding` 16, including the 2 frame                                                                                                                                                                                                                                                                                                              | Inner width = panel width - 32                                                                                                                                                                                                                                                                                 |
 | Columns        | Text column, `STORY_PANEL.columnGap` 25, choice column                                                                                                                                                                                                                                                                                                                                | The gap holds a 1 rule in card rim `#6b6685`, 12 from each column, over the full inner height                                                                                                                                                                                                                  |
-| Choice column  | `clamp(228, 0.38 * (inner width - 25), 300)` (`STORY_PANEL.choiceColumn` share, min, max)                                                                                                                                                                                                                                                                                             | The text column takes the rest: 349 to 428, about 43 to 53 characters of `TYPE.story` per line; the 228 floor seats Previous and Continue side by side                                                                                                                                                         |
+| Choice column  | `clamp(228, 0.38 * (inner width - 25), 300)` (`STORY_PANEL.choiceColumn` share, min, max)                                                                                                                                                                                                                                                                                             | The text column takes the rest: 349 to 428, about 43 to 53 characters of `TYPE.story` per line; the 228 floor keeps Previous and a half-width primary 102 wide                                                                                                                                                 |
 | Text content   | The heading if present, the name tab and portrait if present, then the paragraph                                                                                                                                                                                                                                                                                                      | Its height includes the portrait frame where the frame is taller                                                                                                                                                                                                                                               |
-| Choice content | The choices, `SMALL_BUTTON_GAP` 24, then the page-control row; a page without choices holds the page-control row alone                                                                                                                                                                                                                                                                | A named action on its own row adds 36 + 24                                                                                                                                                                                                                                                                     |
+| Choice content | The choices, `SMALL_BUTTON_GAP` 24, then the page controls; a page without choices holds the page controls alone                                                                                                                                                                                                                                                                      | The page controls are Previous, then 24 and the page's primary below it: 36 + 24 + 36 = 96, or Previous alone (36) on a choice page                                                                                                                                                                            |
 | Story text     | `TYPE.story` 18 regular on 26, cream `#ead4aa` on the card `#3b3850` (7.76:1), left-aligned, top of the column                                                                                                                                                                                                                                                                        | Liberation Sans averages 8.02 per character at 18; never shrinks                                                                                                                                                                                                                                               |
 | Heading        | The chapter's panel title (Gameplay's copy) on opening, resolution and closing pages: `TYPE.heading` 24 bold on 28, white `#ffffff` on the card (11.25:1), left-aligned, the column's first line                                                                                                                                                                                      | `SPACING.gap` above the paragraph, so it adds 36 to the text column; the widest title ("The Glowing Rock.", 216) fits every measure on one line                                                                                                                                                                |
 | Name tab       | `CONVERSATION_BOX.tab`: 20 high, label width + `2 * SPACING.markGap`, 1 ink edge, radius 2, `TYPE.label` in ink                                                                                                                                                                                                                                                                       | The speaker's tab colour ([Controls](controls.md#conversation-box)); the column's first line, `SPACING.gap` above the paragraph                                                                                                                                                                                |
 | Portrait       | `STORY_PANEL.portrait`: the 32 storybook frame at 2x (64), nearest neighbour, in a 68 frame (2 ink edge, navy `#262b44` face)                                                                                                                                                                                                                                                         | Floated on the column top: at the inner right for every speaker but Ada, at the inner left for Ada; never mirrored                                                                                                                                                                                             |
 | Portrait gap   | `SPACING.gap` to the text, `SPACING.rowGap` below                                                                                                                                                                                                                                                                                                                                     | The name tab and the paragraph wrap beside the frame, then take the full measure below it                                                                                                                                                                                                                      |
 | Choices        | `STORY_BUTTON` secondary, filling the choice column, stacked from its top, faces `SMALL_BUTTON_GAP` 24 apart (a 60 pitch)                                                                                                                                                                                                                                                             | `hitAround` grows a 36 face 9 per side (54), so neighbouring press areas stay 6 apart, each at least `HIT_RULE.minTarget` 48                                                                                                                                                                                   |
-| Page controls  | One row on the choice column's bottom: Previous (secondary) at the left, Next (primary) at the right, each `(choice column - 24) / 2` wide, `SMALL_BUTTON_GAP` 24 apart                                                                                                                                                                                                               | 102 to 119 wide; Next, Continue and Previous fit on one line                                                                                                                                                                                                                                                   |
-| Named action   | A page's named action ("Pick up the rock.") in Next's place; when its label + 32 exceeds the half width it fills the choice column on its own row, `SMALL_BUTTON_GAP` 24 above the Previous row                                                                                                                                                                                       | "Touch the glow.", "Pick up the rock." and "Let's find your holodisk." take the full row                                                                                                                                                                                                                       |
-| Scroll         | The text column scrolls when the panel reaches its top cap; the choices scroll only past the choice limits below. Each scrolling region reserves `SCROLL` 14 on its right (6 gap, 8 track, thumb inset 1)                                                                                                                                                                             | Text never shrinks and never paginates; the page-control row stays fixed                                                                                                                                                                                                                                       |
+| Page controls  | At the choice column's bottom, as a column: Previous (secondary) at the column's left, then `SMALL_BUTTON_GAP` 24 below it the page's primary (Next, Continue or a named action) at the column's bottom right ([Controls](controls.md#buttons)); Previous, Next and Continue each `(choice column - 24) / 2` wide                                                                     | 102 to 119 wide; Next, Continue and Previous fit on one line                                                                                                                                                                                                                                                   |
+| Named action   | A page's named action ("Pick up the rock.") in Next's place, below Previous at the column's bottom right; when its label + 32 exceeds the half width it fills the choice column                                                                                                                                                                                                       | "Touch the glow.", "Pick up the rock." and "Let's find your holodisk." take the full width                                                                                                                                                                                                                     |
+| Scroll         | The text column scrolls when the panel reaches its top cap; the choices scroll only past the choice limits below. Each scrolling region reserves `SCROLL` 14 on its right (6 gap, 8 track, thumb inset 1)                                                                                                                                                                             | Text never shrinks and never paginates; the page controls stay fixed                                                                                                                                                                                                                                           |
 | Skip           | `STORY_SKIP`, `playView.ts`: a compact secondary button (`TEXT_BUTTON.compactHeight`) in the top-right HUD row, centred on the row's centre line (top HUD rect top + 2.5, so 14.5 to 42.5); its right edge `SMALL_BUTTON_GAP` (24) left of the Settings disc (57 in from the HUD rect's right) when Settings shows, otherwise its drawn right edge on the HUD rect's top-right corner | Always visible on story pages; not one of the page controls                                                                                                                                                                                                                                                    |
 | Settings       | The `HUD_BUTTON` disc with its drawn edges on the top-right corner of the edge rect; the 48 target centred on it (7.5 outside the disc)                                                                                                                                                                                                                                               | The start screen's Settings disc, at the same place on every story page                                                                                                                                                                                                                                        |
 | Pause          | Ada's room page only: `PAUSE_BUTTON`, its disc's drawn edges on the top-left corner of the edge rect (frame 1 outside), press `hitAround(frame)` 52.5; it opens the room's Paused card (Settings, Back to title)                                                                                                                                                                      | The top-left of the HUD row; Skip and Settings keep the top-right                                                                                                                                                                                                                                              |
@@ -1071,25 +1072,27 @@ top is its bottom minus its height.
 
 Panel height and top by page:
 
-| Page                                                           | 720x360, insets | 844x390, insets | 844x390  | 1280x720 |
-| -------------------------------------------------------------- | --------------- | --------------- | -------- | -------- |
-| One line, Next only                                            | 68, top 273     | 68, top 273     | 68, 276  | 68, 321  |
-| Three-line narration (78 text over a 36 control row)           | 110, top 231    | 110, top 231    | 110, 234 | 110, 279 |
-| The longest: chapter one's resolution (206)                    | 228, top 113    | 228, top 113    | 228, 116 | 228, 161 |
-| Gameplay's limit case: 220 characters, heading and two choices | 228, top 113    | 228, top 113    | 208, 136 | 228, 161 |
-| Astra's three questions with Continue (the tallest)            | 248, top 93     | 248, top 93     | 248, 96  | 248, 141 |
+| Page                                                           | 720x360, insets                            | 844x390, insets                            | 844x390                                | 1280x720 |
+| -------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------ | -------------------------------------- | -------- |
+| One line, Next only                                            | 128, top 213                               | 128, top 213                               | 128, 216                               | 128, 261 |
+| Three-line narration (78 text beside the 96 page controls)     | 128, top 213                               | 128, top 213                               | 128, 216                               | 128, 261 |
+| The longest: chapter one's resolution (206)                    | 228, top 113                               | 228, top 113                               | 228, 116                               | 228, 161 |
+| Gameplay's limit case: 220 characters, heading and two choices | 228, top 113                               | 228, top 113                               | 208, 136                               | 228, 161 |
+| Astra's three questions with Continue (the tallest)            | 280.5 at its cap, top 60.5, choices scroll | 280.5 at its cap, top 60.5, choices scroll | 283.5 at its cap, 60.5, choices scroll | 308, 81  |
 
 Story buttons follow the button gap rule (to implement): buttons smaller than
 the 48 standard keep `SMALL_BUTTON_GAP` 24 between faces in any direction,
 standard buttons `BUTTON_GAP` 16 side by side and `STACK_BUTTON_GAP` 8 stacked.
-The 36 story buttons are small, so the choices, a full-row named action and the
-page-control row stack 24 apart, and Previous and Next sit 24 apart. The garden
+The 36 story buttons are small, so the choices, Previous and the primary below
+it stack 24 apart. The garden
 opening's choice column is 56 + 24 + 56 + 24 + 36 = 196 (both labels wrap; 176
 at 844x390 without insets, where the first fits one line) beside its text
 column: the 36 heading and six lines in the 349 column (192), or five in the
 wider ones (166). Astra's three questions with Continue need 3 * 36 + 2 * 24 +
-24 + 36 = 216, so 248 with the padding, the tallest page, under the 280.5 cap at
-360-high views: every page fits without scrolling.
+24 + 36 + 24 + 36 = 276, so 308 with the padding, the tallest page: past the
+280.5 cap at 360-high views with insets and 283.5 without, where the panel stops
+at its cap and the choices scroll (27.5 and 24.5 of them out of view), and under
+the 328.5 cap at 1280x720. Every other page fits without scrolling.
 
 Gameplay's copy, by group:
 
@@ -1124,8 +1127,7 @@ So a page with three choices keeps every label on one line: at most 196 of
 `TYPE.label` in the 228 column (its width less the 2 * 16 label inset), about
 23 characters. Labels wrap to two lines only on pages with at most two choices.
 If copy ever exceeds this, the choices scroll as the text column does, in their
-own region reserving `SCROLL` 14, with the page-control row (and a named
-action's row) fixed below.
+own region reserving `SCROLL` 14, with the page controls fixed below.
 
 Page structure:
 
@@ -1134,11 +1136,13 @@ Page structure:
    shows no tab and no portrait; the paragraph fills the measure. Other pages
    show no heading.
 2. Choice column: the choices (choice page only, two or three), then 24, then
-   the page controls. A choice page has no Next; Previous keeps its left half.
+   the page controls: Previous, and 24 below it the page's primary at the
+   column's bottom right. A choice page has no primary; Previous keeps its
+   left half at the column's bottom.
    Previous uses the disabled face on the story run's first page. A question
    page shows its remaining questions as choices with Continue in Next's
-   place. Narration pages leave the choice column empty apart from Previous
-   and Next.
+   place, below Previous. Narration pages leave the choice column empty apart
+   from Previous and Next below it.
 
 Behaviour:
 
@@ -1157,8 +1161,8 @@ Behaviour:
   plays her speaking loop while her page shows; Ada and Penny show the mood
   Gameplay marks. The tab and portrait carry the speaker.
 - Focus order: the text column (focusable only while it scrolls; arrow keys
-  scroll it), the choices top to bottom, a full-row named action, Previous,
-  then Next or Continue in the row, then the HUD row (the room's pause button,
+  scroll it), the choices top to bottom, Previous, then the primary below it
+  (Next, Continue or the named action), then the HUD row (the room's pause button,
   Skip, Settings). Disabled Previous is skipped. Initial focus is the first
   choice, the default, or else Next or the named action. Every control is
   always in view.

@@ -595,8 +595,8 @@ presses first; a chip under them takes no press there.
 
 ## Pause card
 
-The Paused card's action stack is Resume (primary), Map, Settings and Back to
-title ([Layout screens](layout.md#cards)). Map always opens, in danger too.
+The Paused card's actions are Map and Ship, Settings and Back to title in a
+two-column grid, then Resume (primary) at the bottom ([Layout screens](layout.md#cards)). Map always opens, in danger too.
 Galaxies is on the map, not on the card; in danger it and Travel here
 are unavailable on the map.
 

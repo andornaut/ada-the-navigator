@@ -7,20 +7,20 @@ sprites and their provenance are in [UI assets](ui.md).
 
 ## Buttons
 
-| Rule           | Value                                                                        |
-| -------------- | ---------------------------------------------------------------------------- |
-| Geometry       | `TEXT_BUTTON` and `FOCUS_RING` in [Layout](layout.md#controls-and-targets)   |
-| Pressed        | Face, label and icon sink by `TEXT_BUTTON.pressedSink`; the lip disappears   |
-| Disabled       | Flat face over the full height, no lip, no press displacement                |
-| Unavailable    | The disabled face, but focusable; activation plays the refusal cue           |
-| Width          | Shared within an action group; grows to fit the widest label                 |
-| Label          | `TYPE.label`, centred by visible ink in each state's face                    |
-| Leading icon   | Centred with the label as one group, `SPACING.markGap` apart                 |
-| Focus          | `ui-focus` outside the face, independent of pressed, selected or checked     |
-| Paired actions | Secondary on the left, primary on the right                                  |
-| Hover          | No hover-only styling; hover never changes size or role colour               |
-| Sheets         | `ui-button` (secondary), `ui-button-primary`; tags normal, pressed, disabled |
-| Nine-slice     | 16x28 frames, margins left/top/right/bottom 2/4/2/6                          |
+| Rule         | Value                                                                                                                                                                                                |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Geometry     | `TEXT_BUTTON` and `FOCUS_RING` in [Layout](layout.md#controls-and-targets)                                                                                                                           |
+| Pressed      | Face, label and icon sink by `TEXT_BUTTON.pressedSink`; the lip disappears                                                                                                                           |
+| Disabled     | Flat face over the full height, no lip, no press displacement                                                                                                                                        |
+| Unavailable  | The disabled face, but focusable; activation plays the refusal cue                                                                                                                                   |
+| Width        | Shared within an action group; grows to fit the widest label                                                                                                                                         |
+| Label        | `TYPE.label`, centred by visible ink in each state's face                                                                                                                                            |
+| Leading icon | Centred with the label as one group, `SPACING.markGap` apart                                                                                                                                         |
+| Focus        | `ui-focus` outside the face, independent of pressed, selected or checked                                                                                                                             |
+| Primary      | The primary sits down and to the right of the rest of its group: rightmost in a row, at the bottom of a column (full width, or at the column's right when narrower), so a grid or stack ends with it |
+| Hover        | No hover-only styling; hover never changes size or role colour                                                                                                                                       |
+| Sheets       | `ui-button` (secondary), `ui-button-primary`; tags normal, pressed, disabled                                                                                                                         |
+| Nine-slice   | 16x28 frames, margins left/top/right/bottom 2/4/2/6                                                                                                                                                  |
 
 The normal face is the drawn rectangle minus the lip, the pressed face has the
 same height moved down by the sink, and the disabled face is the whole
@@ -84,8 +84,9 @@ underneath.
   frames 2 and 3 `pause-held.svg`. The sheet's PNG is no longer drawn.
 - Contrast: cream bars and ring 9.59:1 on the navy face and 10.11:1 on the
   space background `#292734`; pressed white bars 9.55:1 on `#3a4466`.
-- Pause card: Resume (primary), Map, Settings, Back to title, stacked full
-  width; its groups are in [Layout screens](layout.md#cards). Every action stays
+- Pause card: Map and Ship, then Settings and Back to title, as a two-column
+  grid, then Resume (primary) full width at the bottom; its groups are in
+  [Layout screens](layout.md#cards). Every action stays
   available in danger. Map always opens the [map](map.md), which holds
   Galaxies; in danger Travel here and Galaxies are unavailable there.
   Settings opens over the same dim; one card or the map shows at a time.
