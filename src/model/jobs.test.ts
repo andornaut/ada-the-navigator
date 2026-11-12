@@ -633,6 +633,14 @@ describe("jobs in play", () => {
     const stardust = model.state.economy.stardust;
     flyTo(model, spot);
     expect(model.state.tasks[1]).toBeUndefined();
+    // Collected at contact, with the event the view zips its glint into the ship from.
+    expect(model.flightEvents).toContainEqual({
+      id: "hunt-glint",
+      kind: "lostItem",
+      type: "collected",
+      x: spot.x,
+      y: spot.y,
+    });
     expect(model.state.economy.stardust).toBe(stardust + held.reward);
   });
 

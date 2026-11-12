@@ -339,14 +339,14 @@ describe("galaxy three's holodisk", () => {
     f.dangerFor = 0;
     const disk = f.objects.find((o) => o.id === "holodisk")!;
     const at = { x: disk.x, y: disk.y };
-    const { pickupRadius, pickupReach, shipRadius } = PROTOTYPE.tuning.flight;
+    const { pickupMargins, pickupRadius } = PROTOTYPE.tuning.flight;
     // How far east of the disk Ada's drawn ship last reaches it, to 0.001.
     let low = 0;
     let high = 200;
     while (high - low > 1e-3) {
       const middle = (low + high) / 2;
       const player = { x: disk.x + middle, y: disk.y };
-      if (shipTouches(f.facing, player, disk, pickupRadius + pickupReach - shipRadius)) {
+      if (shipTouches(f.facing, player, disk, pickupRadius + pickupMargins.holodisk)) {
         low = middle;
       } else {
         high = middle;

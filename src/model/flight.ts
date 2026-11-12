@@ -17,7 +17,7 @@ import { JOB_TUNING, LANDMARK_TUNING } from "../data/jobs.ts";
 import { RESOURCE_ROCKS, resourceRock } from "../data/resource-rocks.ts";
 import { SCREEN } from "../data/screen.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
-import type { PrototypeContent, SectorId } from "../data/types.ts";
+import type { PickupKind, PrototypeContent, SectorId } from "../data/types.ts";
 import { BEAM, weaponAt, type WeaponDefinition } from "../data/weapon-catalog.ts";
 import {
   ASTEROID_SHAPES,
@@ -1502,19 +1502,30 @@ export function stationMouthRadius(): number {
 export function stationDockClear(): number {
   return stationMouthRadius() + SHIP_REACH;
 }
+/** A flight pickup's kind, which sets its reach: cache, Stardust, ore nugget or weapon. */
+export function pickupKind(object: SpaceObject): PickupKind {
+  if (object.role === "cargo") {
+    return "ore";
+  }
+  if (object.weapon) {
+    return "weapon";
+  }
+  return object.role === "discovery" ? "cache" : "stardust";
+}
 /**
- * Whether Ada's drawn ship reaches a pickup at `center` within the pickup reach's margin past
- * the hull circle it was measured from: its drawn `outline`, or its circle of `radius`.
+ * Whether Ada's drawn ship reaches a pickup of `kind` at `center`: within its margin, in world
+ * units on the world plane, between the ship's drawn body and the pickup's drawn `outline`, or
+ * its circle of `radius`.
  */
 export function pickupTouched(
   content: PrototypeContent,
   flight: FlightState,
+  kind: PickupKind,
   center: Vec,
   radius: number,
   outline: Parts | null = null,
 ): boolean {
-  const { pickupReach, shipRadius } = content.tuning.flight;
-  const margin = pickupReach - shipRadius;
+  const margin = content.tuning.flight.pickupMargins[kind];
   return outline
     ? outlinesContact(outline, center, shipBody(flight.facing), flight.player, margin) !== null
     : shipTouches(flight.facing, flight.player, center, radius + margin);
@@ -2537,9 +2548,12 @@ export function stepFlight(
       object.x += drift.x * slice;
       object.y += drift.y * slice;
       pullStardust(ship.tractorRadius, ship.tractorSpeed, slice, object, flight);
-      if (!pickupTouched(content, flight, object, object.radius, pickupOutline(object))) {
+      const kind = pickupKind(object);
+      if (!pickupTouched(content, flight, kind, object, object.radius, pickupOutline(object))) {
         continue;
       }
+      // Collected at contact; the zip into the ship is the view's.
+      events.push({ id: object.id, kind, type: "collected", x: object.x, y: object.y });
       if (object.role === "cargo") {
         flight.cargo++;
         object.hp = 0;

@@ -336,7 +336,7 @@ export interface AchievementView {
 export class GameModel {
   state: GameState;
   /** The last flight step's events, for view effects; empty when no step ran. */
-  flightEvents: readonly FlightEvent[] = [];
+  flightEvents: FlightEvent[] = [];
   private readonly content: PrototypeContent;
   private readonly talk: ConversationDirector;
   private noticeShownFor = 0;
@@ -1362,7 +1362,7 @@ export class GameModel {
     const disk = f.objects.find((o) => o.kind === "destination" && o.id === "holodisk");
     return (
       disk !== undefined &&
-      pickupTouched(this.content, f, disk, this.content.tuning.flight.pickupRadius)
+      pickupTouched(this.content, f, "holodisk", disk, this.content.tuning.flight.pickupRadius)
     );
   }
   private ensureRequiredApproaches(): void {
@@ -1833,8 +1833,14 @@ export class GameModel {
       // The lost item is touched as its glint is drawn, with the pickups' shared reach.
       if (
         held.spot &&
-        pickupTouched(this.content, f, held.spot, pickupRadius, HUNT_GLINT ?? null)
+        pickupTouched(this.content, f, "lostItem", held.spot, pickupRadius, HUNT_GLINT ?? null)
       ) {
+        this.flightEvents.push({
+          id: "hunt-glint",
+          kind: "lostItem",
+          type: "collected",
+          ...held.spot,
+        });
         this.finishJob(f);
       }
     }

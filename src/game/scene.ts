@@ -191,6 +191,7 @@ import {
   thresholdSilhouette,
 } from "./light-field.ts";
 import { readSave, writeSave } from "./persistence.ts";
+import { zipAt } from "./pickup-zip.ts";
 import {
   canvasSize,
   fitPlayCamera,
@@ -496,6 +497,14 @@ export class PrototypeScene extends Scene {
   private whaleArt: WhaleArt<Asset> | undefined;
   private whaleRequests = new Set<string>();
   // Destroyed rocks breaking at their pivot: the rock, its last frame, world position and start.
+  // Collected pickups zipping into the ship: a copy of each one's sprite as last drawn.
+  private zips: {
+    readonly from: Vec;
+    readonly height: number;
+    readonly sprite: GameObjects.Image;
+    readonly startedMs: number;
+    readonly width: number;
+  }[] = [];
   private rockBreaks: {
     art: AsteroidArt;
     at: Vec;
@@ -1572,6 +1581,7 @@ export class PrototypeScene extends Scene {
       this.model.step(Math.min(milliseconds / 1000, 0.05), input);
       this.observeFeedback();
       this.startRockBreaks(time);
+      this.startZips(time);
     }
     // The overnight sleep scene plays on while the page shows, as flight does.
     if (!this.jumping && !this.settingsOpen && !document.hidden) {
@@ -1655,6 +1665,65 @@ export class PrototypeScene extends Scene {
       .setPosition(point.x, point.y)
       .setDepth(playDepth(point.y));
     return true;
+  }
+
+  /**
+   * Each pickup collected this step zips into the ship as it last showed (its sprite copied);
+   * reduced motion, or a pickup drawn without a sprite, shows none.
+   */
+  private startZips(nowMs: number): void {
+    if (this.reducedMotion) {
+      return;
+    }
+    for (const event of this.model.flightEvents) {
+      if (event.type !== "collected") {
+        continue;
+      }
+      const source = event.kind === "lostItem" ? this.glintSprite : this.enemySprites.get(event.id);
+      if (!source?.visible) {
+        continue;
+      }
+      const sprite = this.add
+        .image(source.x, source.y, source.texture.key, source.frame.name)
+        .setOrigin(source.originX, source.originY)
+        .setDisplaySize(source.displayWidth, source.displayHeight)
+        .setDepth(source.depth);
+      if (source.isTinted) {
+        sprite.setTint(source.tintTopLeft).setTintMode(source.tintMode);
+      }
+      this.zips.push({
+        from: { x: event.x, y: event.y },
+        height: source.displayHeight,
+        sprite,
+        startedMs: nowMs,
+        width: source.displayWidth,
+      });
+    }
+  }
+
+  /** Moves each zipping pickup toward Ada for PROTOTYPE's pickupZip, then removes it. */
+  private drawZips(): void {
+    const flight = this.model.state.flight;
+    this.zips = this.zips.filter((zip) => {
+      const state =
+        flight &&
+        zipAt(
+          PROTOTYPE.tuning.flight.pickupZip,
+          (this.time.now - zip.startedMs) / 1000,
+          zip.from,
+          flight.player,
+        );
+      if (!state) {
+        zip.sprite.destroy();
+        return false;
+      }
+      const point = this.project(state.at);
+      zip.sprite
+        .setPosition(point.x, point.y)
+        .setDisplaySize(zip.width * state.scale, zip.height * state.scale)
+        .setVisible(true);
+      return true;
+    });
   }
 
   /** Each rock destroyed this step breaks where it stood, in the frame it last showed. */
@@ -2145,6 +2214,7 @@ export class PrototypeScene extends Scene {
     this.drawStoryShips(flight);
     this.drawGuidedCalf();
     this.drawRockBreaks();
+    this.drawZips();
     this.startRockLoads();
     // Art's missile blasts, each with its one flash (art/weapons.md "Missile blasts").
     for (const flash of activeBlastFlashes(flight)) {

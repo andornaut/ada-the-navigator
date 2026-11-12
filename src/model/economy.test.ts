@@ -14,8 +14,8 @@ import { planChunk } from "./chunk-templates.ts";
 import { type Parts, worldParts } from "./convex.ts";
 import { dropRandom, rollAsteroidStardust, rollEnemyDrop, splitStardust } from "./drops.ts";
 import { createEnemy } from "./enemy-ai.ts";
-import { createFlight, stepFlight } from "./flight.ts";
-import { pickupOutline } from "./pickup-body.ts";
+import { createFlight, pickupTouched, stepFlight } from "./flight.ts";
+import { HUNT_GLINT, pickupOutline } from "./pickup-body.ts";
 import { shipBody } from "./ship-body.ts";
 import {
   buy,
@@ -560,14 +560,13 @@ describe("tractor beam and pickup reach", () => {
   }
 
   it.each([
-    ["cache", { amount: 3, radius: 10, role: "discovery" }],
-    ["Stardust gem", { amount: 3, radius: ECONOMY.stardustPickupRadius, role: "stardust" }],
-    ["ore nugget", { radius: 7, role: "cargo" }],
-    ["weapon pickup", { radius: 10, weapon: "rapidMissile" }],
+    ["cache", 20, { amount: 3, radius: 10, role: "discovery" }],
+    ["Stardust gem", 4, { amount: 3, radius: ECONOMY.stardustPickupRadius, role: "stardust" }],
+    ["ore nugget", 20, { radius: 7, role: "cargo" }],
+    ["weapon pickup", 20, { radius: 10, weapon: "rapidMissile" }],
   ] as const)(
-    "collects the %s within 4 world units of Ada's drawn ship, not beyond",
-    (_, extra) => {
-      expect(PROTOTYPE.tuning.flight.pickupReach - PROTOTYPE.tuning.flight.shipRadius).toBe(4);
+    "collects the %s within %i world units of Ada's drawn ship, not beyond",
+    (_, margin, extra) => {
       const pickup = (id: string, x: number, y: number): SpaceObject => ({
         hp: 1,
         id,
@@ -587,7 +586,7 @@ describe("tractor beam and pickup reach", () => {
         while (high - low > 1e-3) {
           const middle = (low + high) / 2;
           const at = { x: value.player.x + axis.x * middle, y: value.player.y + axis.y * middle };
-          if (outlineGap(outline, at, body, value.player) <= 4) {
+          if (outlineGap(outline, at, body, value.player) <= margin) {
             low = middle;
           } else {
             high = middle;
@@ -602,8 +601,12 @@ describe("tractor beam and pickup reach", () => {
         pickup("outside", value.player.x, value.player.y + south + 1),
       );
       const before = value.cargo;
-      stepFlight(PROTOTYPE, 0.001, idle, value);
+      const events = stepFlight(PROTOTYPE, 0.001, idle, value);
       expect(value.objects.map((object) => object.id)).toEqual(["outside"]);
+      // Collected at contact, with the event the view zips it into the ship from.
+      expect(events.filter(({ type }) => type === "collected")).toEqual([
+        expect.objectContaining({ id: "inside", type: "collected" }),
+      ]);
       if ("weapon" in extra) {
         expect(value.ownedWeapons).toContain("rapidMissile");
       } else if (extra.role === "cargo") {
@@ -611,6 +614,38 @@ describe("tractor beam and pickup reach", () => {
       }
     },
   );
+
+  it("collects a hunt's lost item within 20 world units of Ada's drawn ship, as its glint", () => {
+    expect(PROTOTYPE.tuning.flight.pickupMargins).toEqual({
+      cache: 20,
+      holodisk: 4,
+      lostItem: 20,
+      ore: 20,
+      stardust: 4,
+      weapon: 20,
+    });
+    const value = flight();
+    const body = shipBody(value.facing);
+    let low = 0;
+    let high = 200;
+    while (high - low > 1e-3) {
+      const middle = (low + high) / 2;
+      const at = { x: value.player.x + middle, y: value.player.y };
+      if (outlineGap(HUNT_GLINT!, at, body, value.player) <= 20) {
+        low = middle;
+      } else {
+        high = middle;
+      }
+    }
+    const at = (x: number) => ({ x: value.player.x + x, y: value.player.y });
+    const { pickupRadius } = PROTOTYPE.tuning.flight;
+    expect(
+      pickupTouched(PROTOTYPE, value, "lostItem", at(high - 0.3), pickupRadius, HUNT_GLINT),
+    ).toBe(true);
+    expect(
+      pickupTouched(PROTOTYPE, value, "lostItem", at(high + 1), pickupRadius, HUNT_GLINT),
+    ).toBe(false);
+  });
 
   it.each([
     [1, 65, 150],
@@ -642,7 +677,8 @@ describe("tractor beam and pickup reach", () => {
       kind: "pickup",
       radius: 10,
       weapon: "rapidMissile",
-      x: 25,
+      // Past its 20 reach, within the level 3 tractor's 135, which pulls only Stardust.
+      x: 70,
       y: 0,
     });
     stepFlight(PROTOTYPE, 0.001, idle, value);

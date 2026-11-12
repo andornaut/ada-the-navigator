@@ -628,7 +628,9 @@ export function simulate(input: SimulationInput): RunResult {
   const end = input.minutes * 60;
   const dt = 0.25;
   const speed = tuning.maxSpeed * tuning.physics.speedRatio * behaviour.speedFraction;
-  const tractor = catalog.tractorRadius.base + tuning.flight.pickupReach;
+  // Stardust collects its margin past the drawn ship, approximated by the ship's circle.
+  const tractor =
+    catalog.tractorRadius.base + tuning.flight.shipRadius + tuning.flight.pickupMargins.stardust;
   let balance = 0;
   let time = 0;
   let flightSeed = 0;
@@ -937,7 +939,7 @@ export function simulate(input: SimulationInput): RunResult {
       }
       return;
     }
-    const { pickupRadius, pickupReach } = tuning.flight;
+    const { pickupMargins, pickupRadius, shipRadius } = tuning.flight;
     if (held.type === "survey" && progress.charted.includes(held.target.id)) {
       finishJob();
     } else if (held.type === "delivery") {
@@ -971,7 +973,7 @@ export function simulate(input: SimulationInput): RunResult {
       if (distance(held.target, position) <= JOB_TUNING.hunt.radius) {
         held.entered = true;
       }
-      if (distance(held.spot!, position) <= pickupRadius + pickupReach) {
+      if (distance(held.spot!, position) <= pickupRadius + shipRadius + pickupMargins.lostItem) {
         finishJob();
       }
     }
