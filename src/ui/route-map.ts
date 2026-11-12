@@ -103,6 +103,12 @@ export interface RouteMapOptions {
 const { colors, label, marker, path, ship: SHIP } = ROUTE_MAP;
 const POSITIONS = Array.from({ length: GALAXY_COUNT }, (_, i) => (i + 1) as RoutePosition);
 
+// Ink at an alpha, as a colour rather than opacity, so the backing stays under the disc it backs.
+const inkAt = (alpha: number) =>
+  `${colors.ink}${Math.round(alpha * 255)
+    .toString(16)
+    .padStart(2, "0")}`;
+
 export const ROUTE_MAP_STYLE = `
 .ada-controls .ada-route{
   position:absolute;
@@ -186,8 +192,7 @@ export const ROUTE_MAP_STYLE = `
 .ada-controls .ada-route-backing{
   width:${units(2 * marker.backing.radius)};
   height:${units(2 * marker.backing.radius)};
-  background:${colors.ink};
-  opacity:${marker.backing.alpha}
+  background:${inkAt(marker.backing.alpha)}
 }
 .ada-controls .ada-route-frame{
   width:${units(marker.frame)};
@@ -234,7 +239,7 @@ export const ROUTE_MAP_STYLE = `
   padding:0 ${units(label.padding)};
   transform:translateX(-50%);
   border-radius:${units(label.radius)};
-  background:${colors.ink}d9;
+  background:${inkAt(label.alpha)};
   font:${font(TYPE.label)};
   color:${colors.cream};
   white-space:nowrap
