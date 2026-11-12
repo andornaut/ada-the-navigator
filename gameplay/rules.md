@@ -698,7 +698,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - Laser bolts travel at 500, 600 and 700 world units per second at weapon
   levels 1, 2 and 3; Multi-Laser bolts at 400, 500 and 600. Both reach a fixed 1200 world units at
   every level, so flight time follows speed. Rapid Missile flies at 500, 600 and
-  700, and Heavy Missile at a fixed 400. Scattershot dots use a fixed base
+  700, and Heavy Missile at a fixed 400; both missiles reach a fixed 800 at every
+  level. Scattershot dots use a fixed base
   projectile speed of 600, multiplied by their speed ratio.
   None depends on her engine level.
 - Ada's shots and Phaser beams leave from her ship's nose, and weapon ranges are
