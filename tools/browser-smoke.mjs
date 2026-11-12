@@ -2429,6 +2429,7 @@ try {
           button.classList.contains("ada-primary") ? "primary" : "secondary",
         ]),
         achievements: box('[data-action="achievements"]'),
+        exit: box('[data-action="exit"]'),
         focused: document.activeElement?.dataset.action ?? null,
         note: document.querySelectorAll(".ada-start-note").length,
         settings: box('[data-action="settings"]'),
@@ -2507,12 +2508,11 @@ try {
         `${name}: ${action}'s role`,
       );
     }
-    // The HUD row's nav discs, Achievements one pitch left of Settings, inside the game area.
+    // The HUD row's nav discs, a browser tab's Exit rightmost, Settings one pitch left of it and
+    // Achievements one more, inside the game area.
     assert.ok(Math.abs(shot.settings[0] - shot.achievements[0] - 57) < 0.1, `${name}: nav pitch`);
-    assert.ok(
-      shot.settings[0] + shot.settings[2] <= 720 + 0.1,
-      `${name}: Settings in the game area`,
-    );
+    assert.ok(Math.abs(shot.exit[0] - shot.settings[0] - 57) < 0.1, `${name}: Exit's pitch`);
+    assert.ok(shot.exit[0] + shot.exit[2] <= 720 + 0.1, `${name}: Exit in the game area`);
   }
   assert.deepEqual(
     startScreens["new-720"].actions.map(([action]) => action),
@@ -2528,27 +2528,31 @@ try {
   assert.equal(startScreens["saved-720"].focused, "continue", "Continue is the default");
   assert.equal(startScreens["new-844"].x0, 29, "The 844x390 phone's game area starts at 29");
   // Insets move the nav discs, never the start screen's parts (Art's table).
-  // The HUD rect's right is 720 - 43 = 677; Achievements' target is one pitch left of Settings,
-  // whose target reaches HUD_ROW.reach (7.5) past it: 677 + 7.5 - 48 - 57.
-  assert.ok(
-    Math.abs(
-      startScreens["saved-720-insets"].achievements[0] +
-        startScreens["saved-720-insets"].x0 -
-        579.5,
-    ) < 0.1,
-    "Achievements clears the right inset",
+  // The HUD rect's right is 720 - 43 = 677; Exit's target reaches HUD_ROW.reach (7.5) past it, at
+  // 677 + 7.5 - 48, and Settings and Achievements sit one and two pitches (57) left of it.
+  const insetDiscs = startScreens["saved-720-insets"];
+  assert.deepEqual(
+    [insetDiscs.exit[0], insetDiscs.settings[0], insetDiscs.achievements[0]].map(
+      (x) => Math.round((x + insetDiscs.x0) * 10) / 10,
+    ),
+    [636.5, 579.5, 522.5],
+    "Exit, Settings and Achievements clear the right inset",
   );
-  // Tab order: Continue, Restart, Achievements, Settings.
+  // Tab order: Continue, Restart, Achievements, Settings, Exit.
   const order = [];
   await page.setViewportSize({ height: 360, width: 720 });
   await seedOnce(saved.save(), "ada-browser.start-screen-tabs.v1");
   await page.locator('.ada-start-actions > [data-action="continue"]').waitFor({ state: "visible" });
-  await inTurn([0, 1, 2], async () => {
+  await inTurn([0, 1, 2, 3], async () => {
     await page.keyboard.press("Tab");
     order.push(await page.evaluate(() => document.activeElement?.dataset.action ?? null));
   });
   await page.setViewportSize({ height: 720, width: 1280 });
-  assert.deepEqual(order, ["restart", "achievements", "settings"], "Tab follows Continue's lead");
+  assert.deepEqual(
+    order,
+    ["restart", "achievements", "settings", "exit"],
+    "Tab follows Continue's lead",
+  );
   // An open modal is the topmost layer: over Achievements' own disc, Achievements' card shows.
   await page.locator('[data-action="achievements"]').click();
   await page.locator('[data-dialog="achievements"]').waitFor({ state: "visible" });
@@ -3680,6 +3684,15 @@ try {
     .locator("#app")
     .evaluate((app) => Number(getComputedStyle(app).getPropertyValue("--ada-unit")));
   assert.equal(navDiscs[2].label, PROTOTYPE.labels.exit, "Exit is named from Gameplay's string");
+  assert.equal(
+    glyphUrl(
+      await page
+        .locator('[data-action="exit"]')
+        .evaluate((button) => getComputedStyle(button).getPropertyValue("--glyph").trim()),
+    ),
+    "url(/art/ui/icons/exit.svg)",
+    "Exit draws Art's vector door, the same mask mechanism as Settings",
+  );
   assert.ok(
     navDiscs[0].tab < navDiscs[1].tab && navDiscs[1].tab < navDiscs[2].tab,
     "The start screen tabs Achievements, Settings, then Exit",

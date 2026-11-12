@@ -75,13 +75,9 @@ export const SETTINGS_GLYPH = "/art/ui/icons/settings.svg";
 // drawn with smooth sampling.
 export const ACHIEVEMENTS_GLYPH = "/art/ui/icons/achievements.svg";
 
-// The start screen's Exit glyph. CLEANUP (added 2026-11-12): a placeholder door with an arrow
-// out, drawn as a data: SVG mask, until Art's icon-exit lands; then point it at Art's file as the
-// other glyphs are.
-const EXIT_PLACEHOLDER_SVG =
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">' +
-  '<path d="M3 2h9v4h-2V4H5v12h5v-2h2v4H3z"/><path d="M11 9h4V6l4 4-4 4v-3h-4z"/></svg>';
-export const EXIT_GLYPH = `data:image/svg+xml,${encodeURIComponent(EXIT_PLACEHOLDER_SVG)}`;
+// The start screen's Exit glyph (art/exit-icon.md): the 20 vector door with an arrow leaving it,
+// a mask drawn with smooth sampling, as the Settings gear is.
+export const EXIT_GLYPH = "/art/ui/icons/exit.svg";
 
 // Every start-screen disc while a press holds: the pause disc's held face and a white glyph.
 export const NAV_DISC_PRESSED = { face: "#3a4466", glyph: "#ffffff" } as const;
@@ -170,7 +166,7 @@ ${hudDiscStyle(".ada-controls .ada-achievements-open", ".ada-disc")}
 .ada-controls .ada-exit-open{
   position:absolute;
   ${navPlace("exit", true)};
-  --glyph:url("${EXIT_GLYPH}")
+  --glyph:url('${EXIT_GLYPH}')
 }
 ${hudDiscStyle(".ada-controls .ada-exit-open", ".ada-disc")}
 .ada-controls[${EXIT_SHOWN_ATTRIBUTE}] .ada-settings-open{
