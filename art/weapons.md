@@ -424,6 +424,50 @@ chevrons: one square part, half-size `pickupRadius` plus half the 1.5 px outline
 screen. The chevrons and the climb do not change it, and the square has no frame
 data.
 
+## Ammo pack
+
+The ammo pack is one shared pickup for every ammunition drop: what it gives is
+chosen when Ada collects it (Gameplay), so it shows no weapon. It is a cartridge
+clip in ammo green (`ammo`), apart from the amber upgrade pickup, gold Stardust,
+the rust ore nugget, the lavender hunt glint and the red edge markers.
+
+- Rebuild with `node art/tools/ammo-pack.ts`. It writes
+  `public/art/pickups/ammo-pack.png`, a 64 by 16 sheet of four 16 by 16
+  frames, its Aseprite data `ammo-pack.json` with each frame's `collision`, and
+  the core manifest entry `ammo-pack`, displayed at 16 by 16 logical px with
+  the pivot at the centre, nearest-neighbour filtered. Reruns are
+  byte-identical.
+- Drawing: three rounds 4 px wide at columns 1, 6 and 11, rows 1 to 14: a
+  cream tip (rows 1 to 3, shaded on the right), a casing lit on its left and
+  shaded on its right, and a shade base row; a 2-row ink clip across the full
+  16 px at rows 10 and 11. Every pixel is opaque or clear.
+
+| Part  | Colour    | Contrast                                                    |
+| ----- | --------- | ----------------------------------------------------------- |
+| Body  | `#8fd14f` | 7.86:1 (Whirlpool) to 9.23:1 (Phantom) on the dark galaxies |
+| Light | `#d2f3a6` | 11.79:1 or more on the dark galaxies                        |
+| Shade | `#5e8f2a` | 2.10:1 against the body                                     |
+| Tip   | `#f2edd5` | Tip shade `#b9b095`                                         |
+| Clip  | `#181425` | 9.78:1 against the body                                     |
+| Glint | `#ffffff` |                                                             |
+
+In Oklab the body is 0.142 from Stardust's shade `#c8a24e`, 0.144 from
+`active`, 0.146 from the amber `weapon`, 0.155 from Stardust's body, 0.188
+from the ore rim, 0.221 from `obstacle`, 0.222 from `pointOfInterest`, 0.252
+from `shipHardpoint` and 0.301 from `threat`.
+
+- Glint (`loop`, the sheet's `glint` tag): rest 1100 ms, then `glint1`,
+  `glint2` and `glint3` for 70 ms each, 1310 ms in all; glint `k` whitens round
+  `k`'s tip and lit edge, left to right.
+- Reduced motion: the `rest` frame only.
+- Light field: keylined, kind `ammoPickup`: the frame's silhouette grown by
+  1 px in ink. The bare body is 1.11:1 on Sunflower; the keyline is 10.90:1.
+- Collision: one convex part, the 16 by 14 hull of the rounds and clip,
+  `[0, 1] [16, 1] [16, 15] [0, 15]` in frame px (one frame px is one display px),
+  the same on every frame. Its farthest point is 9.90 from the centre, inside
+  the upgrade pickup's 10.75 square, so `pickupRadius`, the pickup reach and
+  the tractor rules are unchanged.
+
 ## Reduced motion summary
 
 | Effect   | Full                              | Reduced                             |
@@ -436,3 +480,4 @@ data.
 | Ring     | Emission ring and muzzle discs    | Emission ring only                  |
 | Mine     | Spin, blink, fizzle, pop flash    | Still, amber, fade, static ring     |
 | Pickup   | Chevron climb                     | Still frame, both chevrons amber    |
+| Ammo     | Glint across the rounds           | `rest` frame                        |

@@ -32109,6 +32109,49 @@
           "lit": "upper"
         }
       ]
+    },
+    {
+      "id": "ammo-pack",
+      "path": "/art/pickups/ammo-pack.png",
+      "width": 64,
+      "height": 16,
+      "displayWidth": 16,
+      "displayHeight": 16,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "frames": {
+        "rest": 0,
+        "glint1": 1,
+        "glint2": 2,
+        "glint3": 3
+      },
+      "loop": [
+        {
+          "frame": 0,
+          "name": "rest",
+          "ms": 1100
+        },
+        {
+          "frame": 1,
+          "name": "glint1",
+          "ms": 70
+        },
+        {
+          "frame": 2,
+          "name": "glint2",
+          "ms": 70
+        },
+        {
+          "frame": 3,
+          "name": "glint3",
+          "ms": 70
+        }
+      ]
     }
   ],
   "spacePalette": "/art/space-palette.json",

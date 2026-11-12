@@ -27,7 +27,14 @@ import { json } from "./projection.ts";
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 
 const FIELD = ["background", "environment", "environmentDetail"] as const;
-const SIGNALS = ["pointOfInterest", "obstacle", "active", "weapon", "shipHardpoint"] as const;
+const SIGNALS = [
+  "pointOfInterest",
+  "obstacle",
+  "active",
+  "weapon",
+  "shipHardpoint",
+  "ammo",
+] as const;
 const MIN_CONTRAST = 5;
 const INK = "#181425";
 
@@ -93,6 +100,7 @@ const LIGHT_FIELD = {
     "station",
     "holodisk",
     "upgradePickup",
+    "ammoPickup",
     "wreck",
     "beacon",
     "nebulaStars",

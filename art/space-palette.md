@@ -17,6 +17,7 @@ and contrast for points of interest, obstacles and active elements.
 | `weapon`            | `#F0BD68` | Bright warm amber for existing weapon signals.                                |
 | `shipHardpoint`     | `#70ACE8` | Bright cool blue accents for existing ship hardpoints.                        |
 | `threat`            | `#FF6B6B` | Red for off-screen enemy edge markers only.                                   |
+| `ammo`              | `#8FD14F` | Leaf green for the [ammo pack](weapons.md#ammo-pack) pickup only.             |
 
 In a galaxy, `background`, `environment` and `environmentDetail` come from that
 galaxy's [field hues](galaxies.md); the values above are the tint origin and the
@@ -25,6 +26,12 @@ Chibi's farm yellow `#D8C994`, a light field. Signal roles are the same in every
 galaxy and stay at 5:1 or better on each dark galaxy's background; on a light
 field every play object and pickup draws over an ink keyline
 ([Light fields](galaxies.md#light-fields)).
+
+`ammo` is the one green in space: 0.142 or more in Oklab from every other
+signal and pickup colour (Stardust's shade `#C8A24E` 0.142, `active` 0.144,
+`weapon` 0.146), so the ammo pack never reads as the amber upgrade pickup,
+Stardust or an active element. It is 7.86:1 or more on every dark galaxy's
+background (Whirlpool lowest).
 
 Keep environmental detail sparse so its combined coverage does not compete with
 signals. Warm coral and amber balance cool lavender, mint and blue. Use signal

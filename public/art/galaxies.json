@@ -39,6 +39,7 @@
       "station",
       "holodisk",
       "upgradePickup",
+      "ammoPickup",
       "wreck",
       "beacon",
       "nebulaStars",
