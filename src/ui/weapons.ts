@@ -3,7 +3,7 @@ import { UPGRADE_TIER_COLOURS } from "../data/upgrade-tiers.ts";
 import { weaponGlyphPath } from "../data/weapon-glyphs.ts";
 import { FOCUS_RING } from "./layout/controls.ts";
 import { font, fromHudEdge, units } from "./layout/css.ts";
-import { HUD_AMMO_COUNT, HUD_BUTTON, HUD_ROW } from "./layout/playView.ts";
+import { HUD_AMMO_COUNT, HUD_BUTTON, HUD_ROW, HUD_WEAPON_LEVEL } from "./layout/playView.ts";
 import { TYPE } from "./layout/tokens.ts";
 import { refuse } from "./refusal.ts";
 
@@ -94,10 +94,11 @@ const INK = "#181425";
 // A disc's ink edge, its level's tier edge, halo and light-field outline (transparent at level 1
 // and on discs without a level), and with focus the shared focus ring outside it, round with the
 // disc.
-const LEVEL_SHADOWS = `inset 0 0 0 ${units(1)} var(--level-edge, transparent)`;
-const LEVEL_HALO = `0 0 0 ${units(1)} var(--level-outline, transparent),0 0 ${units(2)} ${units(
-  1,
-)} var(--level-halo, transparent)`;
+const { pip } = HUD_WEAPON_LEVEL;
+const LEVEL_SHADOWS = `inset 0 0 0 ${units(HUD_BUTTON.edge)} var(--level-edge, transparent)`;
+const LEVEL_HALO = `0 0 0 ${units(HUD_WEAPON_LEVEL.outline)} var(--level-outline, transparent),0 0 ${units(
+  HUD_WEAPON_LEVEL.halo.blur,
+)} ${units(HUD_WEAPON_LEVEL.halo.spread)} var(--level-halo, transparent)`;
 const discShadow = (focused: boolean) =>
   focused
     ? `${LEVEL_SHADOWS},inset 0 0 0 var(--disc-edge) ${INK},0 0 0 ${units(FOCUS_RING.fringe)} ${INK},0 0 0 ${units(
@@ -237,17 +238,17 @@ ${([2, 3] as const)
 .ada-controls .ada-pips{
   position:absolute;
   left:50%;
-  top:${units(HUD_BUTTON.target / 2 + 12)};
+  top:${units(HUD_BUTTON.target / 2 + HUD_WEAPON_LEVEL.below)};
   transform:translate(-50%,-50%);
   display:flex;
-  gap:${units(3)};
+  gap:${units(pip.pitch - pip.size)};
   pointer-events:none
 }
 .ada-controls .ada-pips > span{
-  width:${units(4)};
-  height:${units(4)};
+  width:${units(pip.size)};
+  height:${units(pip.size)};
   border-radius:50%;
-  box-shadow:0 0 0 ${units(1)} ${INK}
+  box-shadow:0 0 0 ${units(pip.outline)} ${INK}
 }
 ${([1, 2, 3] as const)
   .map(

@@ -153,6 +153,18 @@ export const HUD_BUTTON = {
 // lower edge; the conversation box's top sits clearance below its bottom.
 export const HUD_AMMO_COUNT = { clearance: 5, height: 14, padding: 4, radius: 4, top: 40 } as const;
 
+// A weapon disc's level marks (art/controls.md "Weapon level"): at levels 2 and 3 the disc's
+// HUD_BUTTON.edge takes the tier colour, with a halo `halo.spread` wide and `halo.blur` soft just
+// outside it and, on a light field, an `outline` ink line under the halo. One to three pips, each
+// `pip.size` across in a `pip.outline` ink outline, centres `pip.pitch` apart, the row centred
+// across and `below` the disc's centre.
+export const HUD_WEAPON_LEVEL = {
+  below: 12,
+  halo: { blur: 2, spread: 1 },
+  outline: 1,
+  pip: { outline: 1, pitch: 7, size: 4 },
+} as const;
+
 // Where a disc and a glyph sit inside their target.
 export const HUD_BUTTON_INSET = {
   disc: (HUD_BUTTON.target - HUD_BUTTON.disc) / 2,

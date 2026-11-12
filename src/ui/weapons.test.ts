@@ -13,6 +13,7 @@ import {
   HUD_BUTTON_INSET,
   hudButtonTarget,
   hudRect,
+  HUD_WEAPON_LEVEL,
   type Insets,
   logicalView,
   NO_INSETS,
@@ -41,8 +42,14 @@ describe("HUD weapon levels", () => {
         `background:${LEVEL_PIPS[level]}`,
       );
     }
-    expect(rule(".ada-controls .ada-pips > span")).toContain(`width:${units(4)}`);
-    expect(rule(".ada-controls .ada-pips")).toContain(`gap:${units(3)}`);
+    expect(HUD_WEAPON_LEVEL).toEqual({
+      below: 12,
+      halo: { blur: 2, spread: 1 },
+      outline: 1,
+      pip: { outline: 1, pitch: 7, size: 4 },
+    });
+    expect(rule(".ada-controls .ada-pips > span")).toContain(`width:${units(HUD_WEAPON_LEVEL.pip.size)}`);
+    expect(rule(".ada-controls .ada-pips")).toContain(`gap:${units(HUD_WEAPON_LEVEL.pip.pitch - HUD_WEAPON_LEVEL.pip.size)}`);
   });
 
   it("edges and haloes a level 2 or 3 disc in its tier, outlined in ink on a light field", () => {
