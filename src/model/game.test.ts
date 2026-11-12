@@ -154,6 +154,21 @@ describe("prototype story and persistence", () => {
     expect(model.contextAction).toBeUndefined();
     expect(model.contextLabel).toBeUndefined();
   });
+  it("reports a carried story item by its display name, and nothing outside flight", () => {
+    const model = new GameModel(PROTOTYPE);
+    launch(model);
+    expect(model.aboard).toBeNull();
+    for (const [id, name] of [
+      ["food", "Food"],
+      ["toolkit", "Tool kit"],
+      ["parts", "Spare parts"],
+    ] as const) {
+      model.state.progress[1].questItem = id;
+      expect(model.aboard).toEqual({ kind: "carrying", name });
+    }
+    model.returnHome();
+    expect(model.aboard).toBeNull();
+  });
   it("pauses flight during dialogue and does not advance exploration while standing still", () => {
     const model = new GameModel(PROTOTYPE);
     launch(model);

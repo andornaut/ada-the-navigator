@@ -63,12 +63,6 @@ export interface Notice {
 
 type Labels = Readonly<Record<string, string>>;
 
-/** An item's notice name: its article dropped and its first letter a capital. */
-export function noticeName(name: string): string {
-  const bare = name.replace(/^(?:a|an|the)\s+/iu, "");
-  return bare.charAt(0).toUpperCase() + bare.slice(1);
-}
-
 /** A gain's notice: its label, icon, accent and landing place. */
 export function gainNotice(labels: Labels, gain: ItemGain): Notice {
   const label = (item: string) => fill(labels.itemNotice ?? "", { item });
@@ -87,7 +81,8 @@ export function gainNotice(labels: Labels, gain: ItemGain): Notice {
       icon: { sprite: towing ? "icon-tow-20" : "icon-cargo-20" },
       key: `${gain.aboard.kind}:${gain.aboard.name}`,
       kind: towing ? "tow" : "cargo",
-      label: label(noticeName(gain.aboard.name)),
+      // The model names what Ada carries by its display name (src/data/item-names.ts).
+      label: label(gain.aboard.name),
       target: { kind: "cargo" },
     };
   }

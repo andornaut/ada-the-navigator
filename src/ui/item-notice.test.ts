@@ -8,7 +8,6 @@ import {
   gainNotice,
   NOTICE_ACCENTS,
   noticeDestination,
-  noticeName,
   NoticeQueue,
 } from "./item-notice.ts";
 import { chipLeft, chipWidth, flyPoint, ITEM_NOTICE } from "./layout/itemNotice.ts";
@@ -17,7 +16,7 @@ const LABELS = PROTOTYPE.labels;
 const notice = (gain: Parameters<typeof gainNotice>[1]) => gainNotice(LABELS, gain);
 const ammo = notice({ kind: "ammo", weapon: "rapidMissile" });
 const holodisk = notice({ kind: "holodisk" });
-const parts = notice({ aboard: { kind: "carrying", name: "spare parts" }, kind: "aboard" });
+const parts = notice({ aboard: { kind: "carrying", name: "Spare parts" }, kind: "aboard" });
 
 // Steps a queue in 10 ms frames and records each phase's first frame time.
 function timeline(queue: NoticeQueue, until: number) {
@@ -37,17 +36,14 @@ function timeline(queue: NoticeQueue, until: number) {
 }
 
 describe("item notice wording", () => {
-  it("reads every gain as + {item}, the article dropped and the first letter a capital", () => {
-    expect(noticeName("a message")).toBe("Message");
-    expect(noticeName("an ore pod")).toBe("Ore pod");
-    expect(noticeName("spare parts")).toBe("Spare parts");
+  it("reads every gain as + {item}, the item by its display name", () => {
     expect(holodisk.label).toBe("+ Holodisk");
     expect(parts.label).toBe("+ Spare parts");
     expect(notice({ kind: "weapon", weapon: "phaser" }).label).toBe("+ Phaser");
     expect(ammo.label).toBe("+ Rapid Missile ammo");
-    expect(
-      notice({ aboard: { kind: "towing", name: "a scrap barge" }, kind: "aboard" }).label,
-    ).toBe("+ Scrap barge");
+    expect(notice({ aboard: { kind: "towing", name: "Scrap barge" }, kind: "aboard" }).label).toBe(
+      "+ Scrap barge",
+    );
   });
 
   it("adds ×{n} to a merged label", () => {
@@ -72,7 +68,7 @@ describe("item notice wording", () => {
       { sprite: "icon-cargo-20" },
       { kind: "cargo" },
     ]);
-    const tow = notice({ aboard: { kind: "towing", name: "a pod" }, kind: "aboard" });
+    const tow = notice({ aboard: { kind: "towing", name: "Pod" }, kind: "aboard" });
     expect([tow.kind, tow.icon]).toEqual(["tow", { sprite: "icon-tow-20" }]);
     expect(ammo.kind).toBe("weapon");
     expect("mask" in ammo.icon && ammo.icon.mask).toContain("rapidMissile");

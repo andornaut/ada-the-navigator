@@ -22,6 +22,7 @@ import {
 } from "../data/galaxies.ts";
 import { HUNTING_PACKS } from "../data/galaxy-features.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
+import { carriedItemName, STORY_ITEM_NAMES } from "../data/item-names.ts";
 import { JOB_TUNING, type JobType } from "../data/jobs.ts";
 import { galaxyProjects, PROJECT_THANKS } from "../data/projects.ts";
 import { SCREEN } from "../data/screen.ts";
@@ -1701,14 +1702,18 @@ export class GameModel {
     }
     const held = this.held;
     if (this.towing && held) {
-      return { kind: "towing", name: held.item };
+      return { kind: "towing", name: carriedItemName(held.item) };
     }
     if (held?.carrying) {
-      return { kind: "carrying", name: held.item };
+      return { kind: "carrying", name: carriedItemName(held.item) };
     }
     const activity = this.activity;
     if (activity?.id === "supplyRun" && activity.carrying) {
-      return { kind: "carrying", name: SUPPLY_ITEMS[activity.place] ?? "" };
+      return { kind: "carrying", name: carriedItemName(SUPPLY_ITEMS[activity.place] ?? "") };
+    }
+    const story = this.current.questItem;
+    if (story !== null && STORY_ITEM_NAMES[story] !== undefined) {
+      return { kind: "carrying", name: STORY_ITEM_NAMES[story] };
     }
     return null;
   }

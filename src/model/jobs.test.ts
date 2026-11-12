@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { ROUTE } from "../data/galaxies.ts";
+import { carriedItemName } from "../data/item-names.ts";
 import {
   JOB_REWARDS,
   JOB_TUNING,
@@ -679,11 +680,12 @@ describe("jobs in play", () => {
     const held = take(model, "rescue");
     expect(model.aboard).toBeNull();
     model.state.flight!.tow = { x: 1, y: 2 };
-    expect(model.aboard).toEqual({ kind: "towing", name: held.item });
+    expect(model.aboard).toEqual({ kind: "towing", name: carriedItemName(held.item) });
     expect(model.ship.aboard).toEqual(model.aboard);
     delete model.state.flight!.tow;
     (model.state.tasks[1] as HeldJob).carrying = true;
-    expect(model.aboard).toEqual({ kind: "carrying", name: held.item });
+    expect(model.aboard).toEqual({ kind: "carrying", name: carriedItemName(held.item) });
+    expect(model.aboard?.name).toMatch(/^[A-Z]/u);
     model.returnHome();
     expect(model.aboard).toBeNull();
   });
