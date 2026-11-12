@@ -532,7 +532,7 @@ the refusal cue's red, and stays sharp at fractional scales such as 1.78.
 ## Touch sticks
 
 Placement is `TOUCH_STICK` in [Layout](layout.md#hud-and-overlays): each ring's
-drawn edge sits 32 in from the game area's side and 32 above its bottom,
+drawn edge sits 40 in from the game area's side and 40 above its bottom,
 clamped by the safe insets and mirrored. The sticks and the
 [Use disc](#use-disc) show only on a touch screen (a coarse primary pointer)
 and outside modals, as in Chibi; desktop hides them.
