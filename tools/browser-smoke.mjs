@@ -3901,14 +3901,18 @@ try {
   );
 
   // Art review captures (art/heavies.md, art/weapons.md): heavies by mount tier, a disabled
-  // heavy's banner, a salvaged heavy, and each enemy-only weapon and the enemy Phaser in play,
-  // at full and reduced motion. Each fixture is a canonical save; the scene runs the real AI.
+  // heavy's banner, a salvaged heavy, each enemy-only weapon and the enemy Phaser in play, and
+  // the upgrade pickup, at full and reduced motion. Each fixture is a canonical save; the scene
+  // runs the real AI.
   const [{ enemyDefinition }] = await Promise.all([
     import(new URL("../src/data/enemy-catalog.ts", import.meta.url)),
   ]);
   const heavyWorld = (screen) => ({ x: screen.x / 2 + screen.y, y: screen.y - screen.x / 2 });
-  /** A flight in `sector` with each heavy at its screen offset from Ada, holding its fire. */
-  function heavyFixture(sector, heavies) {
+  /**
+   * A flight in `sector` with each heavy at its screen offset from Ada, holding its fire, and an
+   * upgrade pickup at each of `pickups`' screen offsets.
+   */
+  function heavyFixture(sector, heavies, pickups = []) {
     const model = new GameModel(PROTOTYPE);
     model.state.unlocked = [1, 2, 3, 4, 5, 6];
     // The highest shield outlasts every capture's hits on Ada.
@@ -3945,6 +3949,19 @@ try {
         kind: "enemy",
         persistent: false,
         radius: PROTOTYPE.tuning.flight.shipRadius * definition.sizeRatio,
+      });
+    }
+    for (const screen of pickups) {
+      const offset = heavyWorld(screen);
+      flight.objects.push({
+        hp: 1,
+        id: `browser-art:upgrade:${screen.x}`,
+        kind: "pickup",
+        radius: PROTOTYPE.tuning.flight.pickupRadius,
+        role: "drop",
+        upgrade: true,
+        x: origin.x + offset.x,
+        y: origin.y + offset.y,
       });
     }
     const serialized = model.save();
@@ -4010,17 +4027,30 @@ try {
   );
   // Black Eye's capital fires its Phaser, ring burst and mine layer, and its frigate the
   // charged lance, each 0.6 s into the flight; the frames run from the tells to the beams' end.
+  // An upgrade pickup lies below Ada, still under reduced motion.
+  const upgradePickup = { x: 0, y: 70 };
   const weapons = () =>
-    heavyFixture(6, [
-      { archetype: "frigate", fire: ["bow"], screen: { x: -170, y: -60 } },
-      {
-        archetype: "capital",
-        fire: ["claw-left", "stern-left", "stern-right"],
-        screen: { x: 150, y: -40 },
-      },
-    ]);
+    heavyFixture(
+      6,
+      [
+        { archetype: "frigate", fire: ["bow"], screen: { x: -170, y: -60 } },
+        {
+          archetype: "capital",
+          fire: ["claw-left", "stern-left", "stern-right"],
+          screen: { x: 150, y: -40 },
+        },
+      ],
+      [upgradePickup],
+    );
   const frames = { after: 500, every: 200, shots: 7 };
   await captureHeavies("weapons", weapons(), frames);
+  // Ten back-to-back frames span about three loops of the 1140 ms climb, so some land in its
+  // 240 ms lit span.
+  await captureHeavies("upgrade-pickup", heavyFixture(1, [], [upgradePickup]), {
+    after: 300,
+    every: 0,
+    shots: 10,
+  });
   const motionKey = DEVICE_STORAGE_KEYS.reducedMotion;
   const motionBefore = await page.evaluate((key) => localStorage.getItem(key), motionKey);
   await page.evaluate((key) => localStorage.setItem(key, "on"), motionKey);
@@ -4036,7 +4066,8 @@ try {
   });
   events.checks.push(
     "Art review captures heavies by mount tier, a disabled heavy's banner, a salvaged heavy, " +
-      "and the enemy Phaser, ring burst, mines and charged lance at full and reduced motion",
+      "the enemy Phaser, ring burst, mines and charged lance, and the upgrade pickup's climb, " +
+      "at full and reduced motion",
   );
 
   // Art review captures (art/asteroids.md): one rock of each size and a drifting rock around
