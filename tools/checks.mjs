@@ -194,7 +194,7 @@ function prepareImage() {
         "--resource",
         "memory=4g",
         "--ulimit",
-        "nofile=256:256",
+        "nofile=4096:4096",
         "--tag",
         tag,
         "--iidfile",
