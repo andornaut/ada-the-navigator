@@ -63,11 +63,54 @@ export function vector(headings: number, yaw: number, point: Point): [number, nu
   return [round(((x - y) * Math.sqrt(3)) / 2), round((x + y) / 2)];
 }
 
-// Prettier keeps arrays of scalars on one line.
+// The project's Prettier print width (.prettierrc).
+const PRINT_WIDTH = 100;
+
+// JSON in Prettier's layout, so generated files pass the lint gate as written. Prettier keeps an
+// array of scalars on one line when the line fits the print width. A longer array of numbers fills
+// each line with as many items as fit; any other longer array puts one item per line, as
+// JSON.stringify does.
 export function json(value: unknown): string {
   const text = JSON.stringify(value, null, 2).replace(
-    /\[\s+([^[\]{}]*?)\s+\]/g,
-    (_, items: string) => `[${items.split(/,\s+/).join(", ")}]`,
+    /^( *)(.*)\[\n([^[\]{}]*?)\n *\](,?)$/gm,
+    (whole, indent: string, prefix: string, body: string, comma: string) => {
+      const items = body.trim().split(/,\s+/);
+      const line = `${indent}${prefix}[${items.join(", ")}]${comma}`;
+      if (line.length <= PRINT_WIDTH) {
+        return line;
+      }
+      if (!items.every((item) => /^-?\d/.test(item))) {
+        return whole;
+      }
+      const inner = `${indent}  `;
+      const lines: string[] = [];
+      let current = "";
+      for (const [i, item] of items.entries()) {
+        const last = i === items.length - 1;
+        const next = current === "" ? item : `${current}, ${item}`;
+        if (current !== "" && inner.length + next.length + (last ? 0 : 1) > PRINT_WIDTH) {
+          lines.push(`${inner}${current},`);
+          current = item;
+        } else {
+          current = next;
+        }
+      }
+      lines.push(`${inner}${current}`);
+      return `${indent}${prefix}[\n${lines.join("\n")}\n${indent}]${comma}`;
+    },
   );
-  return `${text}\n`;
+  // An array holding one one-line array also goes on one line when it fits; Prettier breaks an
+  // array of arrays only when it has several.
+  let out = text;
+  for (let previous = ""; previous !== out;) {
+    previous = out;
+    out = out.replace(
+      /^( *)(.*)\[\n *(\[[^\n]*\])\n *\](,?)$/gm,
+      (whole, indent: string, prefix: string, item: string, comma: string) => {
+        const line = `${indent}${prefix}[${item}]${comma}`;
+        return line.length <= PRINT_WIDTH ? line : whole;
+      },
+    );
+  }
+  return `${out}\n`;
 }
