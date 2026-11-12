@@ -12,5 +12,5 @@ export const HOLODISKS: {
   };
 } = {
   guard: { leader: "frigate", pack: "swarm", packSize: 4 },
-  hubPrice: 300,
+  hubPrice: 500,
 };

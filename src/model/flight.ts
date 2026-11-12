@@ -85,7 +85,7 @@ import { pickupOutline } from "./pickup-body.ts";
 import { planPlayerVolley } from "./player-projectiles.ts";
 import { shipBody, shipCircleContact, shipNearSegment, shipTouches } from "./ship-body.ts";
 import { direction, speedFraction, stepShipMotion, turnToward } from "./ship-physics.ts";
-import { stationById, stationsNear } from "./stations.ts";
+import { HUB_STATION, stationById, stationsNear } from "./stations.ts";
 import type {
   EconomyState,
   FlightEvent,
@@ -1559,7 +1559,11 @@ export function pickupTouched(
  * false unless that station is in this flight and in range.
  */
 export function dockFlight(content: PrototypeContent, id: string, flight: FlightState): boolean {
-  const station = flight.objects.find((object) => object.kind === "station" && object.id === id);
+  const station = flight.objects.find(
+    (object) =>
+      object.id === id &&
+      (object.kind === "station" || (object.kind === "destination" && id === HUB_STATION)),
+  );
   if (!station || distance(station, flight.player) > content.tuning.talkRange) {
     return false;
   }

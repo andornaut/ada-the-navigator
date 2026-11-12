@@ -33,8 +33,9 @@ export const ACTIVITIES: Readonly<Partial<Record<SectorId, ActivityDefinition>>>
     goal: "contractGoal",
     id: "miningContract",
     name: "Mining contract",
-    places: { hub: "activityStation" },
-    reward: 35,
+    // The hub is a station: its board offers the contract, with no Talk line.
+    places: { hub: "" },
+    reward: 60,
   },
   3: {
     goal: "calfGoal",

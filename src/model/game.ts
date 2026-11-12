@@ -134,7 +134,7 @@ import {
   shopRows,
   type ShopTab,
 } from "./shop.ts";
-import { stationById, type StationSite } from "./stations.ts";
+import { HUB_STATION, stationById, type StationSite } from "./stations.ts";
 import {
   advance,
   atRunEnd,
@@ -567,8 +567,11 @@ export class GameModel {
     if (this.current.stations.includes(id)) {
       return this.supplyDue(id) ? "deliver" : "dock";
     }
-    if (id === "hub" && (this.state.flight?.cargo ?? 0) > 0) {
-      return "deposit";
+    if (id === HUB_STATION) {
+      if ((this.state.flight?.cargo ?? 0) > 0) {
+        return "deposit";
+      }
+      return this.hubSceneDue ? undefined : "dock";
     }
     if ((id === "workshop" || id === "salvagers") && this.current.questItem) {
       return "deliver";
@@ -685,16 +688,61 @@ export class GameModel {
   }
   shopRows(tab: ShopTab): ShopRow[] {
     this.pullLoadout();
-    return shopRows(ECONOMY, this.state.economy, tab);
+    const holodisk = tab === "ship" ? this.holodiskRow() : null;
+    return [...(holodisk ? [holodisk] : []), ...shopRows(ECONOMY, this.state.economy, tab)];
+  }
+  /**
+   * The hub's holodisk row, first on its Ship tab once Cartwheel's space quest is complete:
+   * Owned once bought (gameplay/economy.md). Null at any other station or before then.
+   */
+  private holodiskRow(): ShopRow | null {
+    const sector = this.state.flight?.sector;
+    if (this.state.docked !== HUB_STATION || sector !== 2) {
+      return null;
+    }
+    const progress = this.state.progress[sector];
+    if (!progress.questComplete) {
+      return null;
+    }
+    return {
+      inUse: false,
+      item: { kind: "holodisk" },
+      level: null,
+      owned: progress.holodisk,
+      price: progress.holodisk ? null : HOLODISKS.hubPrice,
+    };
   }
   requestPurchase(item: ShopItem): PurchaseRequest {
     this.pullLoadout();
+    if (item.kind === "holodisk") {
+      const row = this.holodiskRow();
+      const stardust = this.state.economy.stardust;
+      return row?.price == null
+        ? { kind: "refused", reason: "notForSale" }
+        : row.price > stardust
+          ? { kind: "refused", reason: "cantAfford" }
+          : { kind: "confirm", left: stardust - row.price, price: row.price };
+    }
     return requestPurchase(ECONOMY, this.state.economy, item);
   }
-  /** Purchases happen only while docked. */
+  /**
+   * Purchases happen only while docked. Buying the hub's holodisk closes the station card and
+   * plays its insertion, as funding a project closes it for the thank-you line.
+   */
   buy(item: ShopItem): PurchaseResult {
     if (!this.state.docked) {
       return { kind: "refused", reason: "notForSale" };
+    }
+    if (item.kind === "holodisk") {
+      const request = this.requestPurchase(item);
+      if (request.kind === "refused") {
+        return request;
+      }
+      this.state.economy.stardust -= request.price;
+      this.undock();
+      this.recoverHolodisk();
+      this.syncAchievements();
+      return { kind: "bought", price: request.price };
     }
     this.pullLoadout();
     const result = buy(ECONOMY, item, this.state.economy);
@@ -788,6 +836,13 @@ export class GameModel {
     if (held?.type === "delivery" && held.station === id) {
       held.carrying = true;
     }
+  }
+  /**
+   * Whether a Cartwheel story scene near the hub or its line is still to play: Dock waits until
+   * both have ended (gameplay/rules.md).
+   */
+  private get hubSceneDue(): boolean {
+    return Boolean(this.state.flight?.storyScene?.lineDue);
   }
   /** Whether a carried supply run is bound for this station, so Use delivers it there. */
   private supplyDue(id: string): boolean {
@@ -1138,39 +1193,6 @@ export class GameModel {
     } else {
       this.state.dialogue = null;
     }
-  }
-  /** The hub's holodisk confirm; while Ada is short of Stardust, Buy refuses. */
-  private offerHolodisk(): void {
-    const price = HOLODISKS.hubPrice;
-    const left = this.state.economy.stardust - price;
-    this.state.dialogue = {
-      choices: [
-        { id: "buy", label: this.label("confirmBuy"), ...(left < 0 ? { refused: true } : {}) },
-        { id: "cancel", label: this.label("confirmCancel") },
-      ],
-      context: "holodiskOffer",
-      text: [
-        fill(this.label("stardustAmount"), { amount: price }),
-        left < 0 ? "" : fill(this.label("confirmLeft"), { amount: left }),
-      ]
-        .filter(Boolean)
-        .join("\n"),
-      title: fill(this.label("confirmTitle"), { name: this.content.premise.holodisk.name }),
-    };
-  }
-  /** Buys the hub's holodisk; a balance short of the price refuses and keeps the confirm. */
-  buyHolodisk(): boolean {
-    const economy = this.state.economy;
-    if (
-      this.state.dialogue?.context !== "holodiskOffer" ||
-      this.current.holodisk ||
-      economy.stardust < HOLODISKS.hubPrice
-    ) {
-      return false;
-    }
-    economy.stardust -= HOLODISKS.hubPrice;
-    this.recoverHolodisk();
-    return true;
   }
   step(dt: number, input: FlightInput): void {
     this.flightEvents = [];
@@ -1584,11 +1606,11 @@ export class GameModel {
         this.talkAt(id, dialogueKeys[id] ?? id);
       }
     } else if (f.sector === 2) {
-      if (id === "hub" && p.questComplete && !p.holodisk) {
-        p.deposited += f.cargo;
-        f.cargo = 0;
-        this.offerHolodisk();
-      } else if (id === "hub") {
+      if (id === HUB_STATION && f.cargo === 0) {
+        if (!this.hubSceneDue) {
+          this.dock(id, f);
+        }
+      } else if (id === HUB_STATION) {
         const load = f.cargo;
         p.deposited += load;
         f.cargo = 0;
@@ -1603,8 +1625,6 @@ export class GameModel {
           p.stage = 5;
           f.storyScene = { at: f.time, id: "docking", lineDue: true };
           this.complete();
-        } else {
-          this.talkAt("hub", "hub");
         }
         if (p.stage === 2 && p.deposited >= b) {
           ensureDestination(this.content, "miner", f);
@@ -1662,7 +1682,10 @@ export class GameModel {
     };
   }
   private jobStation(job: HeldJob): StationSite | null {
-    return stationById(ECONOMY, this.state.selectedSector, job.station);
+    const f = this.state.flight;
+    return f && f.sector === this.state.selectedSector
+      ? this.stationSite(f, job.station)
+      : stationById(ECONOMY, this.state.selectedSector, job.station);
   }
   /**
    * A place's name inside a sentence, as job titles and objectives use it, with its article: a
@@ -1700,7 +1723,7 @@ export class GameModel {
    */
   jobBoard(): JobRow[] {
     const f = this.state.flight;
-    const site = f && this.state.docked && stationById(ECONOMY, f.sector, this.state.docked);
+    const site = f && this.state.docked && this.stationSite(f, this.state.docked);
     if (!f || !site) {
       return [];
     }
@@ -1715,21 +1738,25 @@ export class GameModel {
       state,
       type: job.type,
     });
-    // An active activity heads the board, marked Active with Drop, as a held job does.
+    // An active activity heads the board, marked Active with Drop, as a held job does; a
+    // station that offers the galaxy's activity (the hub's mining contract) heads its board with
+    // the offer instead.
     const activity = this.activity;
-    const activityRow: JobRow[] = activity
-      ? [
-          {
-            detail: this.label(ACTIVITIES[f.sector]?.goal ?? ""),
-            id: activity.id,
-            kind: "activity",
-            reward: activity.reward,
-            state: "held",
-            title: ACTIVITIES[f.sector]?.name ?? "",
-            type: "activity",
-          },
-        ]
-      : [];
+    const offered = activity ? null : this.boardActivity(f, site.id);
+    const activityRow: JobRow[] =
+      activity || offered
+        ? [
+            {
+              detail: this.label(ACTIVITIES[f.sector]?.goal ?? ""),
+              id: activity?.id ?? offered!.id,
+              kind: "activity",
+              reward: activity?.reward ?? offered!.reward,
+              state: activity ? "held" : busy ? "busy" : "offer",
+              title: ACTIVITIES[f.sector]?.name ?? "",
+              type: "activity",
+            },
+          ]
+        : [];
     return [
       ...activityRow,
       ...(held ? [row(held, "held")] : []),
@@ -1745,9 +1772,40 @@ export class GameModel {
   /** Accepts an offer on the docked station's board, with no confirm. */
   acceptJob(id: string): "accepted" | "busy" | "missing" {
     const station = this.state.docked;
-    return station && this.state.flight
-      ? acceptJob(this.state.flight.sector, station, id, this.state)
-      : "missing";
+    const f = this.state.flight;
+    if (!station || !f) {
+      return "missing";
+    }
+    const offered = this.boardActivity(f, station);
+    if (offered?.id === id) {
+      if (this.state.tasks[f.sector]) {
+        return "busy";
+      }
+      this.takeActivity(station);
+      return heldActivity(f.sector, this.state) ? "accepted" : "missing";
+    }
+    return acceptJob(f.sector, station, id, this.state);
+  }
+  /**
+   * The galaxy's activity a docked station offers on its board, with its reward: the hub's
+   * mining contract once the chapter is resolved. Null at any other station.
+   */
+  private boardActivity(f: FlightState, station: string): { id: string; reward: number } | null {
+    const activity = placeActivity(f.sector, this.current, station);
+    const terms = activity && this.activityTerms(f, station);
+    return activity && terms ? { id: activity.id, reward: terms.reward } : null;
+  }
+  /**
+   * A station's site: a seeded station's, or the hub's where it stands in this flight, since the
+   * hub is Cartwheel's station (gameplay/rules.md).
+   */
+  private stationSite(f: FlightState, id: string): StationSite | null {
+    const seeded = stationById(ECONOMY, f.sector, id);
+    if (seeded || id !== HUB_STATION || f.sector !== 2) {
+      return seeded;
+    }
+    const hub = f.objects.find((object) => object.kind === "destination" && object.id === id);
+    return hub ? { id, x: hub.x, y: hub.y } : null;
   }
   /**
    * Drops the task in the galaxy's slot: an activity, losing its progress, or the held job, whose
@@ -2123,10 +2181,6 @@ export class GameModel {
     if (dialogue.context === "activityDrop" && id === "confirmDrop") {
       this.dropHeldActivity(this.state.selectedSector);
       this.state.dialogue = null;
-      return;
-    }
-    if (dialogue.context === "holodiskOffer" && id === "buy") {
-      this.buyHolodisk();
       return;
     }
     if (dialogue.context === "holodiskHandover") {

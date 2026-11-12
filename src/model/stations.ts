@@ -52,6 +52,14 @@ export function stationInCell(
   return { id: stationId(cell), x, y };
 }
 
+/** Cartwheel's mining hub is its galaxy's station by this id (gameplay/rules.md). */
+export const HUB_STATION = "hub";
+
+/** Whether an id names one of a galaxy's stations: a seeded site, or Cartwheel's hub. */
+export function namesStation(catalog: EconomyCatalog, sector: SectorId, id: string): boolean {
+  return (sector === 2 && id === HUB_STATION) || stationById(catalog, sector, id) !== null;
+}
+
 export function stationById(
   catalog: EconomyCatalog,
   sector: SectorId,

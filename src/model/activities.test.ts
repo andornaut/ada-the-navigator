@@ -18,6 +18,14 @@ import type { GameState, HeldActivity, Vec } from "./types.ts";
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
 // A flight in a galaxy whose chapter is complete, with Ada at one of its story places.
+/** Docks at the hub and takes the mining contract from the head of its board, then undocks. */
+function takeContract(model: GameModel): void {
+  model.interact();
+  expect(model.state.docked).toBe("hub");
+  expect(model.acceptJob("miningContract")).toBe("accepted");
+  model.undock();
+}
+
 function atPlace(sector: SectorId, place: string, resolved = true) {
   const model = new GameModel(PROTOTYPE);
   model.state.unlocked = [1, 2, 3];
@@ -69,7 +77,6 @@ const OFFERS = [
   [1, "growers", "Fresh food for the station traders. Would you carry it?", "Grower"],
   [1, "workshop", "A station ordered these repaired tools. Could you take them?", "Workshop"],
   [1, "salvagers", "A station shop needs these spare parts. Will you bring them?", "Salvager"],
-  [2, "hub", "Contract open: deposit 30 ore here. Partial loads count.", "Station"],
   [
     3,
     "family",
@@ -135,7 +142,7 @@ describe("repeatable activities", () => {
     expect(model.state.tasks[1]).toBeUndefined();
   });
 
-  it("refuses Accept at Talk while a job holds the slot, and the board's Accept while an activity does", () => {
+  it("refuses the hub board's contract while a job holds the slot, and job offers while an activity does", () => {
     const model = atPlace(2, "hub");
     model.state.tasks[2] = {
       id: "job:0",
@@ -148,13 +155,9 @@ describe("repeatable activities", () => {
     };
     expect(activityOffer(2, model.state.progress[2], model.state, "hub")).toBeUndefined();
     model.interact();
-    expect(model.state.dialogue).toMatchObject({
-      choices: [{ id: "take", refused: true }, { id: "skip" }],
-      context: "activity:hub",
-      text: "Contract open: deposit 30 ore here. Partial loads count.",
-    });
-    model.choose("take");
-    expect(model.state.notice).toBe("Finish or drop your current job first.");
+    expect(model.state.docked).toBe("hub");
+    expect(model.jobBoard()[0]).toMatchObject({ id: "miningContract", state: "busy" });
+    expect(model.acceptJob("miningContract")).toBe("busy");
     expect(model.state.tasks[2]).toMatchObject({ kind: "job" });
     expect(model.jobBusyLine).toBe("Finish or drop your current job first.");
     // An activity in the slot: the board keeps its jobs, and Accept refuses with its own line.
@@ -163,7 +166,7 @@ describe("repeatable activities", () => {
       id: "miningContract",
       kind: "activity",
       place: "hub",
-      reward: 35,
+      reward: 60,
     };
     expect(model.jobBusyLine).toBe("Finish your activity first.");
     model.state.dialogue = null;
@@ -179,14 +182,13 @@ describe("repeatable activities", () => {
 
   it("heads every board in its galaxy with the active activity, marked Active with Drop", () => {
     const model = atPlace(2, "hub");
-    model.interact();
-    model.choose("take");
+    takeContract(model);
     model.state.docked = stationsNear(ECONOMY, 2, 100000, { x: 0, y: 0 })[0]!.id;
     const rows = model.jobBoard();
     expect(rows[0]).toMatchObject({
       detail: "Deposit 30 ore at the hub.",
       kind: "activity",
-      reward: 35,
+      reward: 60,
       state: "held",
       title: "Mining contract",
     });
@@ -196,25 +198,16 @@ describe("repeatable activities", () => {
     expect(model.state.tasks[2]).toBeUndefined();
   });
 
-  it("offers Drop at the offering place, asking first and losing the progress", () => {
+  it("drops the mining contract from the hub's board, losing its progress", () => {
     const model = atPlace(2, "hub");
-    model.interact();
-    model.choose("take");
+    takeContract(model);
     heldActivity(2, model.state)!.deposited = 9;
+    expect(model.jobObjective).toBe("Deposit ore at the hub: 9 of 30.");
     model.interact();
-    expect(model.state.dialogue).toMatchObject({
-      choices: [{ id: "drop", label: "Drop" }, { id: "continue" }],
-      context: "activityActive:hub",
-      text: "Deposit ore at the hub: 9 of 30.",
-    });
-    model.choose("drop");
-    expect(model.state.dialogue).toMatchObject({
-      choices: [{ id: "confirmDrop" }, { id: "cancel" }],
-      title: "Drop this activity?",
-    });
-    model.choose("confirmDrop");
+    expect(model.jobBoard()[0]).toMatchObject({ id: "miningContract", state: "held" });
+    expect(model.dropJob()).toBe(true);
     expect(model.state.tasks[2]).toBeUndefined();
-    expect(model.state.dialogue).toBeNull();
+    expect(model.jobBoard()[0]).toMatchObject({ id: "miningContract", state: "offer" });
   });
 
   it("counts only hub deposits made after accepting the mining contract, and pays at 30", () => {
@@ -223,8 +216,8 @@ describe("repeatable activities", () => {
     flight.cargo = 12;
     model.interact();
     // The deposit before accepting is the story's, not the contract's.
-    expect(model.state.dialogue?.context).toBe("activity:hub");
-    model.choose("take");
+    expect(model.state.dialogue).toBeNull();
+    takeContract(model);
     expect(heldActivity(2, model.state)?.deposited).toBe(0);
     expect(model.jobObjective).toBe("Deposit ore at the hub: 0 of 30.");
     const before = model.state.economy.stardust;
@@ -242,11 +235,12 @@ describe("repeatable activities", () => {
     flight.cargo = MINING_CONTRACT_DEPOSITS - 24;
     model.interact();
     expect(model.state.tasks[2]).toBeUndefined();
-    expect(model.state.economy.stardust).toBe(before + 35);
-    expect(model.state.notice).toBe("Job complete: +35 Stardust");
+    expect(model.state.economy.stardust).toBe(before + 60);
+    expect(model.state.notice).toBe("Job complete: +60 Stardust");
     expect(model.state.achievements.activities).toBe(count + 1);
-    // Offered again on the next Talk.
-    expect(model.state.dialogue?.context).toBe("activity:hub");
+    // Offered again at the head of the hub's board.
+    model.interact();
+    expect(model.jobBoard()[0]).toMatchObject({ id: "miningContract", state: "offer" });
   });
 
   it("sends a supply run to the nearest known station 3000 away, paying the delivery reward", () => {

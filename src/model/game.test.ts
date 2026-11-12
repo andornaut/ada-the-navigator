@@ -68,10 +68,21 @@ function recoverHolodisk(model: GameModel) {
     arrive(model, "workshop");
     model.interact();
   } else {
+    // Dock waits for the docking scene and its line, then the hub's shop sells the holodisk.
+    const flight = model.state.flight!;
+    if (flight.storyScene?.lineDue) {
+      flight.storyScene.at =
+        flight.time - CARTWHEEL_STORY_SHIPS.scenes[flight.storyScene.id].duration;
+      model.step(0.01, idle);
+      for (let line = 0; line < 10 && model.state.dialogue; line++) {
+        model.choose("continue");
+      }
+    }
     model.state.economy.stardust += HOLODISKS.hubPrice;
     arrive(model, "hub");
     model.interact();
-    model.choose("buy");
+    expect(model.state.docked).toBe("hub");
+    expect(model.buy({ kind: "holodisk" })).toEqual({ kind: "bought", price: HOLODISKS.hubPrice });
   }
   while (model.state.dialogue?.context.startsWith("holodisk")) {
     model.choose("continue");
@@ -162,13 +173,13 @@ describe("prototype story and persistence", () => {
     expect(model.state.unlocked).toEqual([1, 2, 6]);
     expect(relaunch(PROTOTYPE, model.save()).state).toEqual(model.state);
   });
-  it("offers Use as Talk at a known place and Deposit at the hub with ore", () => {
+  it("offers Use as Dock at the hub and Deposit with ore", () => {
     const model = new GameModel(PROTOTYPE);
     model.state.unlocked.push(2);
     launch(model, 2);
     introduce(model, "hub");
     arrive(model, "hub");
-    expect([model.contextAction, model.contextLabel]).toEqual(["talk", "Talk"]);
+    expect([model.contextAction, model.contextLabel]).toEqual(["dock", "Dock"]);
     model.state.flight!.cargo = 4;
     expect([model.contextAction, model.contextLabel]).toEqual(["deposit", "Deposit"]);
     model.state.dialogue = { context: "test" } as unknown as typeof model.state.dialogue;

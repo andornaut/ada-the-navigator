@@ -9,7 +9,9 @@ export type ShopItem =
   /** One pack of an owned upgrade weapon's ammunition. */
   | { kind: "ammo"; weapon: UpgradeWeapon }
   | { kind: "track"; track: UpgradeTrack }
-  | { kind: "paint"; scheme: string };
+  | { kind: "paint"; scheme: string }
+  /** The galaxy's holodisk in the mining hub's shop (gameplay/economy.md). */
+  | { kind: "holodisk" };
 export type ShopTab = "weapons" | "ship";
 export const SHOP_TABS: readonly ShopTab[] = ["weapons", "ship"];
 export const SHIP_TRACKS: readonly UpgradeTrack[] = [
@@ -278,6 +280,8 @@ export function itemAbout(
       return labels[ABOUT_LABELS[item.weapon]] ?? "";
     case "ammo":
       return packCount(catalog, labels, item.weapon);
+    case "holodisk":
+      return labels.holodiskAbout ?? "";
     default:
       return "";
   }
@@ -298,6 +302,8 @@ export function itemName(
       return fill(labels.ammoPack ?? "", { weapon: weaponName(labels, item.weapon) });
     case "track":
       return labels[TRACK_LABELS[item.track]] ?? "";
+    case "holodisk":
+      return labels.holodisk ?? "";
     default:
       return labels[catalog.paints[item.scheme]?.label ?? "shipPaint"] ?? "";
   }

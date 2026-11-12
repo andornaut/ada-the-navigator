@@ -35,6 +35,8 @@ export function itemGlyph(catalog: EconomyCatalog, item: ShopItem): ItemGlyph {
       return { key: ammoShopSheet(item.weapon), kind: "sprite" };
     case "track":
       return { key: TRACK_ICONS[item.track], kind: "sprite" };
+    case "holodisk":
+      return { key: "icon-holodisk", kind: "sprite" };
     default:
       return { kind: "swatch", path: paintSwatchPath(item.scheme, catalog.defaultPaint) };
   }
@@ -55,7 +57,9 @@ export function stationRow(
       ? fill(labels.level ?? "", { level: row.level.current, max: row.level.max })
       : row.item.kind === "ammo"
         ? packCount(catalog, labels, row.item.weapon)
-        : "",
+        : row.item.kind === "holodisk"
+          ? (labels.holodiskAbout ?? "")
+          : "",
     name: itemName(catalog, labels, row.item),
     price: row.price,
     state: shopRowState(stardust, row),

@@ -238,44 +238,60 @@ describe("unlocking the next galaxy", () => {
 });
 
 describe("galaxy two's holodisk", () => {
-  it("refuses Buy while Ada is short of the price and keeps the confirm", () => {
+  const ship = (model: GameModel) => model.shopRows("ship");
+
+  it("is the first row of the hub shop's Ship tab once the space quest is complete", () => {
+    expect(HOLODISKS.hubPrice).toBe(500);
     const model = questDone(2, ["hub", "miner", "visitors"]);
     expect(model.objective).toBe("Buy the holodisk at the hub.");
+    arrive(model, "hub");
+    // Depositing no longer opens a purchase, and Use then docks.
+    model.state.flight!.cargo = 5;
+    expect(model.contextAction).toBe("deposit");
+    model.interact();
+    expect(model.state.dialogue).toBeNull();
+    expect(model.contextAction).toBe("dock");
+    model.interact();
+    expect(model.state.docked).toBe("hub");
+    expect(ship(model)[0]).toEqual({
+      inUse: false,
+      item: { kind: "holodisk" },
+      level: null,
+      owned: false,
+      price: 500,
+    });
+    // Other stations' Ship tabs, and the Weapons tab, list no holodisk.
+    expect(model.shopRows("weapons").some(({ item }) => item.kind === "holodisk")).toBe(false);
+  });
+
+  it("refuses while Ada is short of the price", () => {
+    const model = questDone(2, ["hub", "miner", "visitors"]);
     model.state.economy.stardust = HOLODISKS.hubPrice - 1;
     arrive(model, "hub");
     model.interact();
-    const offer = model.state.dialogue!;
-    expect(offer).toEqual({
-      choices: [
-        { id: "buy", label: "Buy", refused: true },
-        { id: "cancel", label: "Cancel" },
-      ],
-      context: "holodiskOffer",
-      text: "300 Stardust",
-      title: "Buy Holodisk?",
+    expect(model.requestPurchase({ kind: "holodisk" })).toEqual({
+      kind: "refused",
+      reason: "cantAfford",
     });
-    expect(model.buyHolodisk()).toBe(false);
-    model.choose("buy");
-    expect(model.state.dialogue).toEqual(offer);
-    expect(model.state.economy.stardust).toBe(HOLODISKS.hubPrice - 1);
+    expect(model.buy({ kind: "holodisk" })).toEqual({ kind: "refused", reason: "cantAfford" });
     expect(model.state.progress[2].holodisk).toBe(false);
-    model.choose("cancel");
-    expect(model.state.dialogue).toBeNull();
+    expect(model.state.docked).toBe("hub");
   });
 
-  it("sells it for 300 Stardust at the hub after depositing cargo", () => {
+  it("sells it for 500 Stardust, closing the card for its insertion, then shows Owned", () => {
     // Cartwheel's holodisk is the third on the route, after Sunflower's and Whirlpool's.
     const model = questDone(2, ["hub", "miner", "visitors"], [1, 3]);
-    model.state.economy.stardust = 350;
-    const deposited = model.state.progress[2].deposited;
+    model.state.economy.stardust = 550;
     arrive(model, "hub");
-    model.state.flight!.cargo = 5;
     model.interact();
-    expect(model.state.progress[2].deposited).toBe(deposited + 5);
-    expect(model.state.dialogue?.text).toBe("300 Stardust\n50 left after");
-    expect(model.state.dialogue?.choices[0]).toEqual({ id: "buy", label: "Buy" });
-    model.choose("buy");
+    expect(model.requestPurchase({ kind: "holodisk" })).toEqual({
+      kind: "confirm",
+      left: 50,
+      price: 500,
+    });
+    expect(model.buy({ kind: "holodisk" })).toEqual({ kind: "bought", price: 500 });
     expect(model.state.economy.stardust).toBe(50);
+    expect(model.state.docked).toBeNull();
     expect(insertion(model)).toEqual([
       ["The Mining Hub", inserted[0]],
       ["Astra", inserted[1]],
@@ -284,7 +300,9 @@ describe("galaxy two's holodisk", () => {
     expect(model.state.progress[2].holodisk).toBe(true);
     expect(model.objective).toBe("Return to Earth when ready.");
     model.interact();
-    expect(model.state.dialogue?.context).toBe("hub");
+    expect(ship(model)[0]).toMatchObject({ item: { kind: "holodisk" }, owned: true, price: null });
+    expect(model.buy({ kind: "holodisk" })).toEqual({ kind: "refused", reason: "notForSale" });
+    model.undock();
     resolveAtHome(model);
     // Cartwheel, fifth on the route, unlocks Black Eye.
     expect(model.state.unlocked).toEqual([1, 2, 6]);

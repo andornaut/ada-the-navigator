@@ -21,7 +21,7 @@ import { isLandmark } from "./landmarks.ts";
 import { validExplored } from "./map.ts";
 import { newProgress } from "./progress.ts";
 import { fundedProjects } from "./projects.ts";
-import { stationById } from "./stations.ts";
+import { namesStation, stationById } from "./stations.ts";
 import type {
   AmmoCounts,
   EconomyState,
@@ -749,7 +749,7 @@ function jobOffer(sector: SectorId, value: unknown): boolean {
     typeof value.id !== "string" ||
     !JOB_TYPES.includes(value.type as (typeof JOB_TYPES)[number]) ||
     typeof value.station !== "string" ||
-    stationById(ECONOMY, sector, value.station) === null ||
+    !namesStation(ECONOMY, sector, value.station) ||
     !nonnegative(value.reward) ||
     typeof value.item !== "string" ||
     !record(value.target) ||
@@ -790,7 +790,7 @@ function jobsState(value: unknown): boolean {
       record(stations) &&
       Object.entries(stations).every(
         ([station, offers]) =>
-          stationById(ECONOMY, Number(sector) as SectorId, station) !== null &&
+          namesStation(ECONOMY, Number(sector) as SectorId, station) &&
           Array.isArray(offers) &&
           offers.every(
             (offer) =>
