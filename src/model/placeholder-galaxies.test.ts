@@ -115,6 +115,9 @@ describe("unlocking along the route", () => {
     model.returnHome();
     readStory(model, 1);
     expect(model.state.unlocked).toEqual([1, 3]);
+    // The route map flies the ship from Sunflower to Whirlpool, then rests there.
+    expect(model.routeFlight).toEqual({ from: 1, opened: [2], to: 2 });
+    model.finishRouteFlight();
     expect(model.selectedGalaxy).toBe(3);
     expect(model.selectedPosition).toBe(2);
   });
@@ -124,11 +127,15 @@ describe("unlocking along the route", () => {
     model.returnHome();
     readStory(model, 1);
     expect(model.state.unlocked).toEqual([1, 3, 4, 5, 2]);
+    // The ship flies from Whirlpool to Cartwheel, past both placeholders, opened together.
+    expect(model.routeFlight).toEqual({ from: 2, opened: [3, 4, 5], to: 5 });
+    expect(model.selectedGalaxy).toBe(3);
+    model.finishRouteFlight();
     // Cartwheel's story is built, so Astra announced it at boarding.
     expect(model.selectedGalaxy).toBe(2);
     expect(model.selectedPosition).toBe(5);
-    // Paging back reaches each placeholder, and Jump flies to one.
-    model.pageGalaxy(-1);
+    // Left reaches each placeholder, and Jump flies to one.
+    model.stepGalaxy(-1);
     expect(model.selectedGalaxy).toBe(5);
     expect(model.jump()).toBe(true);
     expect(model.state.flight?.sector).toBe(5);
@@ -148,6 +155,7 @@ describe("unlocking along the route", () => {
     expect(cartwheel.state.unlocked).toEqual([1, 3, 4, 5, 2, 6]);
     expect(cartwheel.state.announceGalaxy).toBe(false);
     readStory(cartwheel, 1);
+    cartwheel.finishRouteFlight();
     expect(cartwheel.selectedGalaxy).toBe(6);
     expect(cartwheel.selectedPosition).toBe(6);
   });

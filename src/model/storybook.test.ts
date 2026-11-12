@@ -173,6 +173,7 @@ describe("home visits", () => {
     expect(model.state.progress[1].resolved).toBe(true);
     expect(model.state.progress[3].opened).toBe(true);
     expect(model.screen).toBe("selector");
+    model.finishRouteFlight();
     expect(model.selectedGalaxy).toBe(3);
   });
 
@@ -344,18 +345,30 @@ describe("story runs", () => {
 });
 
 describe("galaxy selection", () => {
-  it("pages one route position at a time within the six galaxies", () => {
+  it("walks the ship one open galaxy at a time in route order, stopping at either end", () => {
     const model = questDone(2);
     model.returnHome();
     readStory(model);
-    // Cartwheel unlocks Black Eye, the farthest position, where selection opens.
+    // Cartwheel unlocks Black Eye, the farthest position: the ship flies there from Cartwheel.
+    expect(model.routeFlight).toEqual({ from: 5, opened: [6], to: 6 });
+    expect([model.shipPosition, model.selectedGalaxy]).toEqual([5, 2]);
+    model.finishRouteFlight();
+    expect(model.routeFlight).toBeNull();
     expect([model.selectedPosition, model.selectedGalaxy]).toEqual([6, 6]);
-    model.pageGalaxy(1);
+    model.stepGalaxy(1);
     expect([model.selectedPosition, model.selectedGalaxy]).toEqual([6, 6]);
-    model.pageGalaxy(-1);
+    model.stepGalaxy(-1);
     expect([model.selectedPosition, model.selectedGalaxy]).toEqual([5, 2]);
-    model.pageGalaxy(-9);
+    for (let step = 0; step < 9; step++) {
+      model.stepGalaxy(-1);
+    }
     expect([model.selectedPosition, model.selectedGalaxy]).toEqual([1, 1]);
+    // The flight plays once: the next boarding opens with the ship at rest on the farthest.
+    model.leaveCockpit();
+    readStory(model);
+    expect(model.screen).toBe("selector");
+    expect(model.routeFlight).toBeNull();
+    expect(model.shipPosition).toBe(6);
     expect(GALAXIES.map(({ id, name }) => [name, id])).toEqual([
       ["Sunflower", "sunflower"],
       ["Whirlpool", "whirlpool"],
@@ -370,13 +383,19 @@ describe("galaxy selection", () => {
     const model = questDone(1);
     model.returnHome();
     readStory(model);
-    // From Whirlpool, the farthest open, to Needle, still locked.
-    model.pageGalaxy(1);
-    expect(model.selectedGalaxy).toBe(4);
+    model.finishRouteFlight();
+    // Right from Whirlpool, the farthest open, skips the locked galaxies and stays.
+    model.stepGalaxy(1);
+    expect(model.shipPosition).toBe(2);
+    // A tap on Needle, still locked, shows its panel while the ship stays on Whirlpool.
+    model.viewGalaxy(3);
+    expect([model.selectedGalaxy, model.shipPosition]).toEqual([4, 2]);
     expect(model.isUnlocked(4)).toBe(false);
     expect(model.jump()).toBe(false);
     expect(model.screen).toBe("selector");
-    model.pageGalaxy(-2);
+    // Left returns the panel to the ship's galaxy and walks on to Sunflower.
+    model.stepGalaxy(-1);
+    expect([model.selectedGalaxy, model.shipPosition]).toEqual([1, 1]);
     expect(model.jump()).toBe(true);
     expect(model.state.mode).toBe("space");
     expect(model.state.flight?.sector).toBe(1);
@@ -456,6 +475,7 @@ describe("start flow", () => {
     home.continueGame();
     expect(home.storyView?.page.id).toBe("resolution");
     readStory(home);
+    home.finishRouteFlight();
     expect(home.selectedGalaxy).toBe(3);
   });
 

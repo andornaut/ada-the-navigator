@@ -1,4 +1,3 @@
-import { GALAXY_CARD } from "./galaxySelectCard.ts";
 import { HIT_RULE } from "./hitAreas.ts";
 import { SPACING, TYPE } from "./tokens.ts";
 
@@ -46,17 +45,14 @@ export const BUTTON_SLICE = { bottom: 6, left: 2, right: 2, top: 4 } as const;
 // The card frame's nine-slice edge (ui-settings-card).
 export const CARD_SLICE = 2;
 
-// Every drawn edge the DOM keeps sharp: the nine-slice edges and the galaxy preview's frame. Each
+// A 1 px drawn line: the route map's inset rules and the galaxy preview's frame.
+export const FRAME_LINE = 1;
+
+// Every drawn edge the DOM keeps sharp: the nine-slice edges and the 1 px lines. Each
 // is set as whole CSS px, round(edge * s) and at least 1, so edges never blur while the body
 // scales (viewScale.ts).
 export const WHOLE_PX_EDGES = [
-  ...new Set([
-    CARD_SLICE,
-    BUTTON_SLICE.bottom,
-    BUTTON_SLICE.left,
-    BUTTON_SLICE.top,
-    GALAXY_CARD.screenshot.frame,
-  ]),
+  ...new Set([CARD_SLICE, BUTTON_SLICE.bottom, BUTTON_SLICE.left, BUTTON_SLICE.top, FRAME_LINE]),
 ].sort((a, b) => a - b);
 
 // Art's focus ring outside the drawn face in every state: a 1 ink fringe, a 2 cream band, then

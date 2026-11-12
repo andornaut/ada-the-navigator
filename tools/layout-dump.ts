@@ -15,10 +15,10 @@ import * as contentCard from "../src/ui/layout/contentCard.ts";
 import * as controls from "../src/ui/layout/controls.ts";
 import * as conversationBox from "../src/ui/layout/conversationBox.ts";
 import * as css from "../src/ui/layout/css.ts";
-import * as galaxySelectCard from "../src/ui/layout/galaxySelectCard.ts";
 import * as hitAreas from "../src/ui/layout/hitAreas.ts";
 import * as mapScreen from "../src/ui/layout/mapScreen.ts";
 import * as playView from "../src/ui/layout/playView.ts";
+import * as routeMap from "../src/ui/layout/routeMap.ts";
 import * as shopCard from "../src/ui/layout/shopCard.ts";
 import * as startScreen from "../src/ui/layout/startScreen.ts";
 import * as storyPage from "../src/ui/layout/storyPage.ts";
@@ -33,10 +33,10 @@ export const LAYOUT_MODULES: Readonly<Record<string, Readonly<Record<string, unk
   "controls.ts": controls,
   "conversationBox.ts": conversationBox,
   "css.ts": css,
-  "galaxySelectCard.ts": galaxySelectCard,
   "hitAreas.ts": hitAreas,
   "mapScreen.ts": mapScreen,
   "playView.ts": playView,
+  "routeMap.ts": routeMap,
   "shopCard.ts": shopCard,
   "startScreen.ts": startScreen,
   "storyPage.ts": storyPage,
@@ -170,6 +170,8 @@ function viewportCases(call: ReturnType<typeof recorder>): void {
       );
       call("conversationBox.ts", "shipHullTop", conversationBox.shipHullTop, view);
       call("startScreen.ts", "startScreenRects", startScreen.startScreenRects, view);
+      call("routeMap.ts", "routeMapRects", routeMap.routeMapRects, logical, view);
+      call("routeMap.ts", "markerCentre", routeMap.markerCentre, view, 1);
       call("storyPage.ts", "storyPanelLayout", storyPage.storyPanelLayout, logical, view);
       call("storyPage.ts", "storyBackgroundScale", storyPage.storyBackgroundScale, view);
       // Grandma's garden band under its tallest first-launch panel, and the centred backdrop.
@@ -442,6 +444,46 @@ function cssCases(call: ReturnType<typeof recorder>): void {
   call("mapScreen.ts", "adaAngle", mapScreen.adaAngle, { x: 0, y: -1 });
 }
 
+/** The route map's legs, travel and timings, which no view changes. */
+function routeCases(call: ReturnType<typeof recorder>): void {
+  const [first, second] = routeMap.ROUTE_MAP.centres;
+  call("routeMap.ts", "bentCurve", routeMap.bentCurve, 0.08, first, second, 0);
+  call("routeMap.ts", "bentCurve", routeMap.bentCurve, 0.08, first, second, 1);
+  const leg = routeMap.ROUTE_LEGS[2]!;
+  call(
+    "routeMap.ts",
+    "pathStamps",
+    routeMap.pathStamps,
+    0.5,
+    routeMap.ROUTE_MAP.path.locked,
+    15,
+    leg,
+  );
+  for (const position of [1, 2, 3, 4, 5, 6] as const) {
+    call("routeMap.ts", "routeDistance", routeMap.routeDistance, position);
+    call("routeMap.ts", "restingTangent", routeMap.restingTangent, position);
+  }
+  for (const distance of [0, 100, 300, 600, 2000]) {
+    call("routeMap.ts", "routePoint", routeMap.routePoint, distance);
+  }
+  for (const t of [0, 0.25, 0.5, 1]) {
+    call("routeMap.ts", "easeInOutSine", routeMap.easeInOutSine, t);
+  }
+  for (const length of [50, 229, 530]) {
+    call("routeMap.ts", "selectionSeconds", routeMap.selectionSeconds, length);
+    call("routeMap.ts", "unlockFlightSeconds", routeMap.unlockFlightSeconds, length);
+  }
+  call("routeMap.ts", "unlockSeconds", routeMap.unlockSeconds, 1, 2);
+  call("routeMap.ts", "unlockSeconds", routeMap.unlockSeconds, 2, 5);
+  for (const direction of [
+    { x: 1, y: 0 },
+    { x: 0, y: 1 },
+    { x: -1, y: 0 },
+  ]) {
+    call("routeMap.ts", "routeHeading", routeMap.routeHeading, direction);
+  }
+}
+
 /** The dump: each module's constants, and every function case's arguments and result. */
 export function layoutDump(): unknown {
   const cases: Cases = {};
@@ -449,6 +491,7 @@ export function layoutDump(): unknown {
   viewportCases(call);
   stateCases(call);
   cssCases(call);
+  routeCases(call);
   const constants = Object.fromEntries(
     Object.entries(LAYOUT_MODULES).map(([module, exports]) => [
       module,

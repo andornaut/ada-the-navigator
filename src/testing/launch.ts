@@ -55,7 +55,7 @@ export function readStory(model: GameModel, choice = 0): StoryPage[] {
 export function boardAndJump(model: GameModel, galaxy: SectorId, choice = 0): StoryPage[] {
   const pages = readStory(model, choice);
   const position = ROUTE_POSITION[galaxy];
-  model.pageGalaxy(position - (model.selectedPosition ?? position));
+  model.viewGalaxy(position);
   model.jump();
   return pages;
 }

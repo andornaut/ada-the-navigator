@@ -299,7 +299,7 @@ try {
       () =>
         document.querySelector("#game-status")?.dataset.mode === "space" ||
         document.querySelector('.ada-story-panel:not([hidden]) [data-action="story-next"]') ||
-        document.querySelector('[data-dialog="galaxies"]')?.closest(".ada-modal:not([hidden])"),
+        document.querySelector('.ada-route[data-dialog="galaxies"]:not([hidden])'),
     );
     const panel = page.locator(".ada-story-panel:not([hidden])");
     if (!(await panel.count())) {
@@ -695,18 +695,16 @@ try {
     );
   }
   await selector().waitFor({ state: "visible" });
+  // The route map draws over the route sky, Ada and Penny watching it from the ground.
   assert.equal(
-    await page.locator(".ada-story-background").getAttribute("data-background"),
-    "cockpitSeated",
-    "Galaxy selection shows Ada and Penny seated",
+    await selector()
+      .locator(".ada-route-sky")
+      .evaluate((sky) => sky.style.backgroundImage),
+    'url("/art/route-sky.png")',
+    "Galaxy selection is the route map over the route sky",
   );
-  assert.equal(
-    await page
-      .locator(".ada-story-art")
-      .first()
-      .evaluate((art) => art.style.backgroundImage),
-    artUrl("cockpit-seated"),
-  );
+  assert.equal(await selector().locator(".ada-route-figure").count(), 2);
+  assert.equal(await selector().locator(".ada-route-marker").count(), 6);
   // Galaxy one is unlocked, so its preview is the tinted capture; it must be served.
   const preview = await selector()
     .locator(".ada-galaxy-shot")
@@ -2712,6 +2710,13 @@ try {
     "Whirlpool's opening follows, second on the route",
   );
   await selector().waitFor({ state: "visible" });
+  // The first boarding after the unlock flies the ship from Sunflower to Whirlpool.
+  assert.equal(
+    (await selector().locator("h2").textContent())?.trim(),
+    PROTOTYPE.labels.galaxyNumber.replace("{number}", "1"),
+    "The unlock flight starts on Sunflower",
+  );
+  await page.locator('.ada-route[data-dialog="galaxies"]:not([data-flight])').waitFor();
   assert.equal(
     (await selector().locator("h2").textContent())?.trim(),
     PROTOTYPE.labels.galaxyNumber.replace("{number}", "2"),

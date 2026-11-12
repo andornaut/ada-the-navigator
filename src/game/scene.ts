@@ -9,20 +9,14 @@ import { destinationDrawn } from "../data/destinations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { EDGE_MARKER_GLYPHS } from "../data/edge-markers.ts";
 import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
-import { BUILT, GALAXY_COUNT } from "../data/galaxies.ts";
+import { BUILT, ROUTE } from "../data/galaxies.ts";
 import { CURRENTS } from "../data/galaxy-features.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { resourceArtId } from "../data/resource-rocks.ts";
 import { SCREEN } from "../data/screen.ts";
 import { CARTWHEEL_STORY_SHIPS, STORY_SHIP_CRAFT } from "../data/story-ships.ts";
-import {
-  GALAXIES,
-  galaxyCard,
-  galaxyPreview,
-  OVERNIGHT_SLEEP,
-  SELECTOR_BACKDROP,
-} from "../data/storybook.ts";
+import { galaxyCard, OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import type { SectorId } from "../data/types.ts";
 import { PICKUP_GLYPH, pickupGlyphKey, weaponGlyphPath } from "../data/weapon-glyphs.ts";
 import { coarsePointer } from "../input/coarse-pointer.ts";
@@ -70,7 +64,6 @@ import {
 import { backReleased } from "../ui/back-stack.ts";
 import { type ConversationBox, createConversationBox } from "../ui/conversation.ts";
 import { screenShakes } from "../ui/device-settings.ts";
-import { createGalaxySelect } from "../ui/galaxy-select.ts";
 import { createJumpOverlay, type JumpScene, type SheetArt } from "../ui/jump-overlay.ts";
 import { VIEW_HOST_ID } from "../ui/layout/css.ts";
 import { fogColor } from "../ui/layout/mapScreen.ts";
@@ -78,6 +71,7 @@ import { type MapField, mapScreenLabels } from "../ui/map-screen.ts";
 import { BOX_OCCUPANT, type BoxOccupant, boxOccupant } from "../ui/notice.ts";
 import { returnToEarthAvailable } from "../ui/pause.ts";
 import { createRestartCard } from "../ui/restart-card.ts";
+import { createRouteMap, type RouteMapView } from "../ui/route-map.ts";
 import { createStationView } from "../ui/station.ts";
 import { createStorybook, storyPageView } from "../ui/storybook.ts";
 import { readTitleScreen } from "../ui/title-screen.ts";
@@ -184,6 +178,13 @@ import {
   revealAlpha,
 } from "./project-art.ts";
 import { cockpitFocus, readQuantumJump } from "./quantum-jump.ts";
+import {
+  markerHue,
+  readRouteArt,
+  readRouteMarkers,
+  routePreviews,
+  routeShipFrames,
+} from "./route-art.ts";
 import { sceneryDetail } from "./scenery.ts";
 import { StoryShell } from "./shell.ts";
 import {
@@ -474,7 +475,9 @@ export class PrototypeScene extends Phaser.Scene {
   private spaceBackground = FALLBACK_SPACE_PALETTE.background;
   private station!: ReturnType<typeof createStationView>;
   private storybook!: ReturnType<typeof createStorybook>;
-  private galaxies!: ReturnType<typeof createGalaxySelect>;
+  private galaxies!: ReturnType<typeof createRouteMap>;
+  // Each galaxy's route map marker hue and previews, from Art's galaxies.json and manifest.
+  private routeGalaxies: () => RouteMapView["galaxies"] = () => [];
   private restartCard!: ReturnType<typeof createRestartCard>;
   private conversationBox!: ConversationBox;
   // The loader runs the player waits for show the loading bar; on-demand art loads silently.
@@ -1038,19 +1041,17 @@ export class PrototypeScene extends Phaser.Scene {
       onSkip: () => apply(() => this.model.storySkip()),
       reducedMotion: () => this.controls.reducedMotion(),
     });
-    this.galaxies = createGalaxySelect(this.controls.overlay, {
-      flavors: GALAXIES.map(({ flavor }) => flavor),
+    this.galaxies = createRouteMap(this.controls.overlay, {
       labels: {
         close: label("close"),
         development: label("galaxyInDevelopment"),
         home: label("homeButton"),
         jump: label("jump"),
         locked: label("galaxyLocked"),
-        next: label("next"),
         number: label("galaxyNumber"),
-        previous: label("previous"),
       },
-      onHome: () => apply(() => this.model.leaveCockpit()),
+      onEarth: () => apply(() => this.model.leaveCockpit()),
+      onFlightEnd: () => apply(() => this.model.finishRouteFlight()),
       onJump: () => {
         const selected = this.model.selectedGalaxy;
         if (selected !== null && this.model.isUnlocked(selected)) {
@@ -1064,9 +1065,31 @@ export class PrototypeScene extends Phaser.Scene {
           apply(() => this.model.jump());
         }
       },
-      onPage: (delta) => apply(() => this.model.pageGalaxy(delta)),
+      onStep: (delta) => apply(() => this.model.stepGalaxy(delta)),
+      onView: (position) => apply(() => this.model.viewGalaxy(position)),
       reducedMotion: () => this.controls.reducedMotion(),
     });
+    // The route map's art: the sky, ground and figures, the marker hues and Ada's frames.
+    const routeAssets = manifest?.assets ?? [];
+    const markers = readRouteMarkers(this.cache.json.get("galaxy-fields"));
+    const routeArt = readRouteArt(routeAssets, markers, (thrust) =>
+      routeShipFrames(routeAssets, this.paintInUse(), thrust),
+    );
+    if (routeArt) {
+      this.galaxies.setArt(routeArt);
+    }
+    this.routeGalaxies = () =>
+      ROUTE.map((galaxy) => {
+        const card = galaxyCard(galaxy);
+        return {
+          flavor: card.flavor,
+          hue: markerHue(markers, galaxy),
+          name: card.name,
+          placeholder: !BUILT.has(galaxy),
+          preview: routePreviews(routeAssets, card),
+          unlocked: this.model.isUnlocked(galaxy),
+        };
+      });
     this.restartCard = createRestartCard(this.controls.overlay, {
       labels: {
         cancel: label("confirmCancel"),
@@ -1571,21 +1594,17 @@ export class PrototypeScene extends Phaser.Scene {
         ...storyPageView(story.page, story.choices, story.canGoBack, story.canSkip),
         run: story.run,
       },
-      selected === null ? null : SELECTOR_BACKDROP,
+      null,
     );
-    const position = this.model.selectedPosition;
-    const galaxy = selected === null || this.hideSelector ? undefined : galaxyCard(selected);
+    const panel = this.model.selectedPosition;
+    const ship = this.model.shipPosition;
     this.galaxies.show(
-      galaxy && selected !== null && position !== null
+      selected !== null && panel !== null && ship !== null && !this.hideSelector
         ? {
-            first: position === 1,
-            flavor: galaxy.flavor,
-            last: position === GALAXY_COUNT,
-            name: galaxy.name,
-            number: position,
-            placeholder: !BUILT.has(selected),
-            preview: galaxyPreview(galaxy, !this.model.isUnlocked(selected)),
-            unlocked: this.model.isUnlocked(selected),
+            flight: this.model.routeFlight,
+            galaxies: this.routeGalaxies(),
+            panel,
+            ship,
           }
         : null,
     );

@@ -206,6 +206,16 @@ export function newGameState(): GameState {
 }
 /** What the home half shows: the start screen, a storybook page or galaxy selection. */
 export type Screen = "selector" | "space" | "start" | "story";
+
+/**
+ * An unlock on the route map: the ship flies from the completed galaxy's route position to the
+ * farthest it opened, past the others it opened, which show locked until then.
+ */
+export interface RouteFlight {
+  readonly from: RoutePosition;
+  readonly opened: readonly RoutePosition[];
+  readonly to: RoutePosition;
+}
 /**
  * A story run's pages: every page of each scene it chains by the default path from its start,
  * the run's first page through its end, fixed when the run starts. `id` changes with each run.
@@ -335,7 +345,13 @@ export class GameModel {
   private heldFlight: Pick<GameState, "dialogue" | "docked" | "flight" | "mode" | "notice"> | null =
     null;
   private story: StoryPosition | null = null;
+  // Galaxy selection's ship, always on an open galaxy, and the locked galaxy whose panel shows
+  // in its place after a tap or focus (null for the ship's own).
   private selection: RoutePosition | null = null;
+  private viewing: RoutePosition | null = null;
+  // The last unlock, flown on the route map at the next boarding: from the galaxy completed to
+  // the farthest it opened, the opened positions still showing locked until then.
+  private unlockFlight: RouteFlight | null = null;
   constructor(content: PrototypeContent, saved?: unknown) {
     this.content = content;
     this.state = restoreSave(saved) ?? newGameState();
@@ -434,13 +450,22 @@ export class GameModel {
   get roomPage(): boolean {
     return this.story !== null && this.screen === "story" && currentPage(this.story).id === "room";
   }
-  /** The galaxy on show in galaxy selection. */
+  /** The galaxy on show in galaxy selection's panel: the ship's, or a locked one viewed. */
   get selectedGalaxy(): SectorId | null {
-    return this.screen === "selector" && this.selection !== null ? galaxyAt(this.selection) : null;
+    const position = this.selectedPosition;
+    return position === null ? null : galaxyAt(position);
   }
-  /** The route position on show in galaxy selection, 1 to 6. */
+  /** The route position on show in galaxy selection's panel, 1 to 6. */
   get selectedPosition(): RoutePosition | null {
+    return this.screen === "selector" ? (this.viewing ?? this.selection) : null;
+  }
+  /** The route position the route map's ship is on, always an open galaxy. */
+  get shipPosition(): RoutePosition | null {
     return this.screen === "selector" ? this.selection : null;
+  }
+  /** The unlock the route map flies as galaxy selection opens, until it ends or is skipped. */
+  get routeFlight(): RouteFlight | null {
+    return this.screen === "selector" ? this.unlockFlight : null;
   }
   isUnlocked(galaxy: number): boolean {
     return this.state.unlocked.some((id) => id === galaxy);
@@ -860,7 +885,7 @@ export class GameModel {
     this.state.started = true;
     this.startShown = false;
     this.story = null;
-    this.selection = null;
+    this.closeSelection();
     this.launch();
   }
   private home(forced: boolean): void {
@@ -909,7 +934,7 @@ export class GameModel {
       return;
     }
     this.story = null;
-    this.selection = null;
+    this.closeSelection();
     this.startShown = true;
   }
   teleport(id: string): void {
@@ -977,6 +1002,12 @@ export class GameModel {
       return;
     }
     this.state.unlocked.push(...fresh);
+    const opened = fresh.map((id) => ROUTE_POSITION[id]);
+    this.unlockFlight = {
+      from: ROUTE_POSITION[galaxy],
+      opened,
+      to: Math.max(...opened) as RoutePosition,
+    };
     // Astra announces it only when a newly unlocked galaxy has a built story.
     this.state.announceGalaxy = fresh.some((id) => Object.hasOwn(this.content.chapters, id));
   }
@@ -1998,8 +2029,9 @@ export class GameModel {
     const achievements = { ...this.state.achievements, found: [], sensed: [] };
     this.state = { ...newGameState(), achievements };
     this.heldFlight = null;
+    this.unlockFlight = null;
     this.story = null;
-    this.selection = null;
+    this.closeSelection();
     this.startShown = true;
   }
   /** Next, or the page's named action; on the sleep scene, a tap once its skip delay passes. */
@@ -2051,10 +2083,53 @@ export class GameModel {
       this.moveStory(null);
     }
   }
-  /** Pages galaxy selection by delta, within galaxies one to four. */
-  pageGalaxy(delta: number): void {
-    if (this.selection !== null && this.screen === "selector") {
-      this.selection = Math.min(GALAXY_COUNT, Math.max(1, this.selection + delta)) as RoutePosition;
+  /**
+   * Right (1) and Left (-1): the ship to the next or previous open galaxy in route order,
+   * skipping locked ones; at either end it stays. The panel returns to the ship's galaxy.
+   */
+  stepGalaxy(delta: 1 | -1): void {
+    if (this.selection === null || this.screen !== "selector") {
+      return;
+    }
+    this.finishRouteFlight();
+    this.viewing = null;
+    for (let at = this.selection + delta; at >= 1 && at <= GALAXY_COUNT; at += delta) {
+      if (this.isUnlocked(galaxyAt(at as RoutePosition))) {
+        this.selection = at as RoutePosition;
+        return;
+      }
+    }
+  }
+  /**
+   * A tap or focus on a route position's marker: an open galaxy takes the ship there; a locked
+   * one shows its panel while the ship stays.
+   */
+  viewGalaxy(position: RoutePosition): void {
+    if (this.selection === null || this.screen !== "selector") {
+      return;
+    }
+    this.finishRouteFlight();
+    if (this.isUnlocked(galaxyAt(position))) {
+      this.selection = position;
+      this.viewing = null;
+    } else {
+      this.viewing = position;
+    }
+  }
+  /** Leaves galaxy selection; an unlock flight it showed is done. */
+  private closeSelection(): void {
+    if (this.selection !== null) {
+      this.unlockFlight = null;
+    }
+    this.selection = null;
+    this.viewing = null;
+  }
+  /** Ends the unlock flight, or skips it: the ship on the farthest galaxy it opened. */
+  finishRouteFlight(): void {
+    if (this.unlockFlight && this.screen === "selector") {
+      this.selection = this.unlockFlight.to;
+      this.viewing = null;
+      this.unlockFlight = null;
     }
   }
   /** Jump: the selected galaxy's flight; a locked galaxy refuses. */
@@ -2069,7 +2144,7 @@ export class GameModel {
   /** Earth, the close X, an outside tap, back and Escape: Ada's room, without a jump. */
   leaveCockpit(): void {
     if (this.screen === "selector") {
-      this.selection = null;
+      this.closeSelection();
       this.beginVisit();
     }
   }
@@ -2104,7 +2179,7 @@ export class GameModel {
    * selection starts one.
    */
   private beginVisit(trail: readonly StoryStep[] = []): void {
-    this.selection = null;
+    this.closeSelection();
     const waiting = this.waitingScene();
     this.showScene(waiting ?? this.roomScene(true), trail);
   }
@@ -2236,12 +2311,16 @@ export class GameModel {
       };
     });
   }
-  /** Galaxy selection in the cockpit, open on the farthest unlocked position on the route. */
+  /**
+   * Galaxy selection, the ship on the farthest unlocked position on the route; after an unlock,
+   * on the galaxy it flew from until the unlock flight ends.
+   */
   private openSelection(): void {
     this.story = null;
-    this.selection = Math.max(
-      ...this.state.unlocked.map((id) => ROUTE_POSITION[id]),
-    ) as RoutePosition;
+    this.viewing = null;
+    this.selection =
+      this.unlockFlight?.from ??
+      (Math.max(...this.state.unlocked.map((id) => ROUTE_POSITION[id])) as RoutePosition);
   }
   save(): string {
     this.pullLoadout();
