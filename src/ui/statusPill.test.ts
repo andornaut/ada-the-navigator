@@ -224,7 +224,7 @@ describe("status pill count", () => {
     readonly style = { setProperty: vi.fn() } as Record<string, unknown>;
     textContent = "";
     animate(): { cancel: () => void; finished: Promise<void> } {
-      return { cancel: vi.fn(), finished: new Promise(() => undefined) };
+      return { cancel: vi.fn(), finished: new Promise<void>(() => {}) };
     }
     append(...nodes: FakeNode[]): void {
       this.children.push(...nodes);
