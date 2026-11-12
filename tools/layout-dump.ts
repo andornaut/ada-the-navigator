@@ -148,6 +148,7 @@ function viewportCases(call: ReturnType<typeof recorder>): void {
       call("playView.ts", "mirroredSide", playView.mirroredSide, logical, playView.HUD_EDGE, view);
       call("playView.ts", "hudRect", playView.hudRect, logical, view);
       call("playView.ts", "shieldPillRect", playView.shieldPillRect, logical, view);
+      call("playView.ts", "controlsBottom", playView.controlsBottom, logical, view);
       call(
         "conversationBox.ts",
         "conversationBoxRect",
@@ -329,8 +330,8 @@ function cssCases(call: ReturnType<typeof recorder>): void {
     }
   }
   call("css.ts", "hudCentreX", css.hudCentreX);
-  for (const offset of [0, 20, -4]) {
-    call("css.ts", "fromAreaBottom", css.fromAreaBottom, offset);
+  for (const offset of [0, 20, 40]) {
+    call("css.ts", "controlsLine", css.controlsLine, offset, playView.STICK_AREA_MARGIN);
   }
   for (const offset of [0, 225, -120]) {
     call("css.ts", "fromAreaLeft", css.fromAreaLeft, offset);

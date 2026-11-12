@@ -246,11 +246,29 @@ export function statusPillWidth(ore: boolean, aboard: boolean): number {
 // raises: the joysticks' rings (TOUCH_STICK.bottom) and the shield pill sit level on it.
 export const CONTROLS_BOTTOM = 40;
 
+// The least gap from each stick's drawn ring, and the shield pill level with them, to the game
+// area's edge (art/layout.md "Stick area margin"). Here rather than touchControls.ts, which
+// imports this module, so the shield pill can read it.
+export const STICK_AREA_MARGIN = 8;
+
+/**
+ * The bottom controls' drawn bottom in a logical view view big with insets: CONTROLS_BOTTOM above
+ * the view's bottom inside the bottom safe inset, as in Chibi, clamped STICK_AREA_MARGIN above the
+ * game area's bottom.
+ */
+export function controlsBottom(insets: Insets, view: Size): number {
+  const area = playView(view);
+  return Math.min(
+    view.height - insets.bottom - CONTROLS_BOTTOM,
+    area.y + area.height - STICK_AREA_MARGIN,
+  );
+}
+
 // The shield pill (art/layout.md "Shield pill"): one PILL at the bottom centre holding the 20
 // shield icon, a mark gap and the 160x12 bar (a 1 rim, 1 ink, then the 156x8 fill area at inset
 // 2), 202 wide. It centres across on the HUD rect (the view's centre, as the rect mirrors); its
-// bottom sits level with the sticks' drawn bottom, CONTROLS_BOTTOM above the game area's bottom.
-// The same place on touch and desktop.
+// bottom sits level with the sticks' drawn bottom (controlsBottom). The same place on touch and
+// desktop.
 const SHIELD_BAR = { fill: { height: 8, width: 156 }, height: 12, inset: 2, rim: 1, width: 160 };
 export const SHIELD_PILL = {
   bar: SHIELD_BAR,
@@ -267,9 +285,8 @@ export const SHIELD_PILL = {
 
 /** The shield pill's rect in a logical view view big with insets. */
 export function shieldPillRect(insets: Insets, view: Size): Rect {
-  const area = playView(view);
   const hud = hudRect(insets, view);
-  const bottom = Math.min(area.y + area.height, view.height - insets.bottom) - SHIELD_PILL.bottom;
+  const bottom = controlsBottom(insets, view);
   return {
     height: PILL.height,
     width: SHIELD_PILL.width,

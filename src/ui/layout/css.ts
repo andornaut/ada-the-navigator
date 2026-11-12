@@ -61,12 +61,13 @@ export function fromAreaLeft(offset: number): string {
     : `calc(var(${VIEW_PROPERTIES.areaLeft}) + ${scaled(offset)})`;
 }
 
-// A logical offset above the game area's bottom, which a bottom safe inset raises: the bottom
-// controls' line (touchControls.ts stickRestCentres), as a bottom offset in the view.
-export function fromAreaBottom(offset: number): string {
-  return `calc(max(var(${VIEW_PROPERTIES.areaBottom}), var(${VIEW_PROPERTIES.safe(
-    "bottom",
-  )})) + ${scaled(offset)})`;
+// The bottom controls' line (playView.ts controlsBottom) as a bottom offset in the view: offset
+// above the view's bottom inside the bottom safe inset, at least areaMargin above the game
+// area's bottom.
+export function controlsLine(offset: number, areaMargin: number): string {
+  return `max(calc(var(${VIEW_PROPERTIES.safe("bottom")}) + ${scaled(offset)}), calc(var(${
+    VIEW_PROPERTIES.areaBottom
+  }) + ${scaled(areaMargin)}))`;
 }
 
 // A type role (tokens.ts TYPE) as the CSS font shorthand, in the UI face.

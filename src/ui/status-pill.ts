@@ -1,6 +1,6 @@
 import { LIGHT_FIELD } from "../game/light-field.ts";
-import { font, fromAreaBottom, fromHudEdge, hudCentreX, units } from "./layout/css.ts";
-import { SHIELD_PILL, STATUS_PILL } from "./layout/playView.ts";
+import { controlsLine, font, fromHudEdge, hudCentreX, units } from "./layout/css.ts";
+import { SHIELD_PILL, STATUS_PILL, STICK_AREA_MARGIN } from "./layout/playView.ts";
 import { TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { ammoCount } from "./weapons.ts";
@@ -223,7 +223,7 @@ export const STATUS_PILL_STYLE = `
 .ada-controls .ada-shield{
   position:absolute;
   left:${hudCentreX()};
-  bottom:${fromAreaBottom(SHIELD_PILL.bottom)};
+  bottom:${controlsLine(SHIELD_PILL.bottom, STICK_AREA_MARGIN)};
   margin-left:${units(-SHIELD_PILL.width / 2)};
   box-sizing:border-box;
   width:${units(SHIELD_PILL.width)};

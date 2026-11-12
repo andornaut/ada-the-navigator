@@ -1064,11 +1064,12 @@ try {
     }
     return page.locator(selector).boundingBox();
   }
-  // The touch HUD's bottom controls, in logical px from the game area's edges: each joystick
-  // ring's drawn outer side and bottom, 40 in (the rings draw 1 inside their 75 frame targets),
-  // and the shield pill's bottom level with them. The rings mirror, so the aim ring's side is
-  // measured from the left gap in from the view's whole-pixel right edge. Saves the proof and
-  // captures the HUD as name.
+  // The touch HUD's bottom controls, in logical px: each joystick ring's drawn outer side and
+  // bottom (the rings draw 1 inside their 75 frame targets) 40 in from the screen's edges, the aim
+  // ring's from the view's whole-pixel width, unless that would leave less than the stick area
+  // margin (8) to the game area's edge, where the ring clamps to it; and the shield pill's bottom
+  // level with the rings. The smoke's pages have no safe insets. Saves the proof, with the edges
+  // the clamp moved, and captures the HUD as name.
   async function touchHudProof(name) {
     await settledBox('[data-control="aim-joystick"]');
     await page.locator(".ada-shield").waitFor({ state: "visible" });
@@ -1098,22 +1099,56 @@ try {
         view: { height: origin.height / unit, width: origin.width / unit },
       };
     });
-    const { area } = hud;
-    const areaBottom = area.bottom;
+    const { area, view } = hud;
+    const margin = 8;
+    const width = Math.floor(view.width);
+    const expected = {
+      aimRight: Math.min(width - 40, area.right - margin),
+      bottom: Math.min(view.height - 40, area.bottom - margin),
+      moveLeft: Math.max(40, area.left + margin),
+    };
+    const drawn = {
+      aimRight: hud.aim.right - 1,
+      bottoms: [hud.move.bottom - 1, hud.aim.bottom - 1],
+      moveLeft: hud.move.left + 1,
+    };
     const proof = {
       ...hud,
-      aimSide: Math.floor(hud.view.width) - area.left - (hud.aim.right - 1),
-      moveSide: hud.move.left + 1 - area.left,
-      ringBottoms: [areaBottom - (hud.move.bottom - 1), areaBottom - (hud.aim.bottom - 1)],
-      shieldBottom: areaBottom - hud.shield.bottom,
+      clamped: {
+        aim: width - 40 > area.right - margin,
+        bottom: view.height - 40 > area.bottom - margin,
+        move: area.left + margin > 40,
+      },
+      drawn,
+      expected,
+      fromScreen: {
+        aim: width - drawn.aimRight,
+        bottom: view.height - drawn.bottoms[0],
+        move: drawn.moveLeft,
+      },
+      insideArea: {
+        aim: area.right - drawn.aimRight,
+        bottom: area.bottom - drawn.bottoms[0],
+        move: drawn.moveLeft - area.left,
+      },
+      shieldBottom: view.height - hud.shield.bottom,
     };
     save(`touch-hud-${name}.json`, proof);
     const detail = `${name}: ${JSON.stringify(proof)}`;
     // Whole-pixel ring centres put a drawn edge within a logical px of its place.
-    for (const inset of [proof.moveSide, proof.aimSide, ...proof.ringBottoms]) {
-      assert.ok(Math.abs(inset - 40) < 1, `Each ring's drawn edge sits 40 in: ${detail}`);
+    const near = (value, target) => Math.abs(value - target) < 1;
+    assert.ok(near(drawn.moveLeft, expected.moveLeft), `The move ring's left edge: ${detail}`);
+    assert.ok(near(drawn.aimRight, expected.aimRight), `The aim ring's right edge: ${detail}`);
+    for (const bottom of drawn.bottoms) {
+      assert.ok(near(bottom, expected.bottom), `Each ring's drawn bottom: ${detail}`);
     }
-    assert.ok(Math.abs(proof.shieldBottom - 40) < 0.01, `The shield pill sits 40 up: ${detail}`);
+    for (const gap of Object.values(proof.insideArea)) {
+      assert.ok(gap > margin - 1, `Each ring stays the margin inside the game area: ${detail}`);
+    }
+    assert.ok(
+      Math.abs(view.height - hud.shield.bottom - (view.height - expected.bottom)) < 1,
+      `The shield pill sits level with the rings: ${detail}`,
+    );
     await page.screenshot({ path: `${output}/touch-hud-${name}.png` });
     return proof;
   }
@@ -2134,8 +2169,13 @@ try {
   await seedOnce(safeSerialized, "ada-browser.after-save-proof.v1");
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   await page.setViewportSize({ width: 844, height: 390 });
-  await touchHudProof("844x390");
-  events.checks.push("At 844x390 the sticks' rings sit 40 in from the game area, the pill level");
+  const narrowHud = await touchHudProof("844x390");
+  assert.deepEqual(
+    narrowHud.clamped,
+    { aim: false, bottom: false, move: false },
+    "At 844x390 the rings sit 40 from the screen, unclamped",
+  );
+  events.checks.push("At 844x390 the sticks' rings sit 40 in from the screen, the pill level");
   // Compare observable flight response, not the implementation's stick sampling formula. Travel is
   // in logical px, --ada-unit CSS px each.
   const stickUnit = await page
@@ -4281,7 +4321,12 @@ try {
   await continueFlight();
   const phoneHud = await touchHudProof("2404x1080");
   assert.equal(phoneHud.dpr, 2.5, "The phone context renders at device pixel ratio 2.5");
-  events.checks.push("At 2404x1080 dpr 2.5 the sticks' rings sit 40 in, the pill level");
+  assert.deepEqual(
+    phoneHud.clamped,
+    { aim: true, bottom: false, move: true },
+    "At 2404x1080 both rings clamp 8 inside the game area",
+  );
+  events.checks.push("At 2404x1080 dpr 2.5 the rings clamp 8 inside the game area, the pill level");
   await phoneContext.close();
   // A crash: the kit's crash screen over the game, in the game's words, with the build label in
   // the dev details, and the last save kept through the page hiding. The thrown error is the point

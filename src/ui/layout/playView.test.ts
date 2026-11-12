@@ -30,6 +30,7 @@ import {
   startNavOrder,
   STATUS_PILL,
   statusPillWidth,
+  STICK_AREA_MARGIN,
   viewScale,
 } from "./playView.ts";
 import { SMALL_BUTTON_GAP, SPACING, TYPE } from "./tokens.ts";
@@ -334,7 +335,7 @@ describe("HUD anchors", () => {
 
   it.each([
     ["the 720 base", { height: 360, width: 720 }, NO_INSETS, { x: 259, y: 292 }],
-    ["1280x720", logicalView({ height: 720, width: 1280 }), NO_INSETS, { x: 259, y: 292 }],
+    ["1280x720", logicalView({ height: 720, width: 1280 }), NO_INSETS, { x: 259, y: 324 }],
     [
       "the 720 base with phone insets",
       { height: 360, width: 720 },
@@ -352,11 +353,11 @@ describe("HUD anchors", () => {
     expect(rect.x).toBeCloseTo(at.x, 2);
     expect(rect.y).toBe(at.y);
     expect(rect).toMatchObject({ height: 28, width: 202 });
-    // Its bottom sits level with the sticks' drawn bottom, clear of both rings across.
+    // Its bottom sits level with the sticks' drawn bottom, clear of both rings' frames across.
     const { aim, move } = stickRestCentres(view, insets);
     expect(rect.y + rect.height).toBe(move.y + 37);
-    expect(rect.x - (move.x + 37)).toBeGreaterThanOrEqual(142);
-    expect(aim.x - 36 - (rect.x + rect.width)).toBeGreaterThanOrEqual(142);
+    expect(rect.x - (move.x + 38)).toBeGreaterThanOrEqual(102);
+    expect(aim.x - 37 - (rect.x + rect.width)).toBeGreaterThanOrEqual(102);
   });
 
   it("add 45 for the cargo segment and 91.92 for the ore segment", () => {
@@ -431,10 +432,12 @@ describe.each(SCREENS)("every control inside the game area at %o", (screen) => {
       x: centre.x - 36,
       y: centre.y - 36,
     });
+    // 40 in from the screen's edges inside the safe insets, then STICK_AREA_MARGIN inside the area.
+    const side = Math.ceil(Math.max(insets.left, insets.right) + TOUCH_STICK.side);
     const sticksBottom = Math.floor(
       Math.min(
-        area.y + area.height - TOUCH_STICK.bottom,
         view.height - insets.bottom - TOUCH_STICK.bottom,
+        area.y + area.height - STICK_AREA_MARGIN,
       ),
     );
 
@@ -460,20 +463,21 @@ describe.each(SCREENS)("every control inside the game area at %o", (screen) => {
       }
     });
 
-    it(`with ${name}, rests the sticks 40 from the game area's sides and 40 above its bottom`, () => {
+    it(`with ${name}, rests the sticks 40 from the screen's edges, ${STICK_AREA_MARGIN} inside the area`, () => {
       const { aim, move } = stickRestCentres(view, insets);
       const width = Math.floor(view.width);
-      // max(the left gap + 40, the larger side inset) from each side: an inset replaces the 40.
-      const side = Math.ceil(
-        Math.max(area.x + TOUCH_STICK.side, Math.max(insets.left, insets.right)),
-      );
-      expect(ring(move).x).toBe(side);
-      expect(width - (ring(aim).x + 73)).toBe(side);
-      // min(playView bottom - 40, view bottom - inset - 40): a bottom inset adds to the 40.
+      expect(ring(move).x).toBe(Math.max(side, area.x + STICK_AREA_MARGIN));
+      expect(ring(aim).x + 73).toBe(Math.min(width - side, area.x + 720 - STICK_AREA_MARGIN));
       expect(ring(move).y + 73).toBe(sticksBottom);
       expect(aim.y).toBe(move.y);
+      const inner: Rect = {
+        height: area.height - 2 * STICK_AREA_MARGIN,
+        width: area.width - 2 * STICK_AREA_MARGIN,
+        x: area.x + STICK_AREA_MARGIN,
+        y: area.y + STICK_AREA_MARGIN,
+      };
       for (const stick of [move, aim]) {
-        expect(contains(area, ring(stick))).toBe(true);
+        expect(contains(inner, ring(stick))).toBe(true);
         expect(contains(safeRect(insets, SAFE_MARGIN.edge, view), ring(stick))).toBe(true);
       }
     });
@@ -494,21 +498,147 @@ describe.each(SCREENS)("every control inside the game area at %o", (screen) => {
 describe("stick insets", () => {
   const view = { height: 360, width: 720 };
 
-  it("let the larger side inset replace the 40 on both sides and a bottom inset add to the 40", () => {
+  it("add 40 to the larger side inset on both sides, and to the bottom inset", () => {
     // The larger side inset clears both sides, so a one-sided notch keeps the mirror.
     const { aim, move } = stickRestCentres(view, { bottom: 19, left: 47, right: 10, top: 0 });
-    expect(move.x - 36).toBe(47);
-    expect(720 - (aim.x + 37)).toBe(47);
+    expect(move.x - 36).toBe(47 + 40);
+    expect(720 - (aim.x + 37)).toBe(47 + 40);
     expect(move.y + 37).toBe(360 - 19 - 40);
   });
 
-  it("keep 40 from a wide view's game area, which a phone's 43 inset does not reach", () => {
-    // 844x390 CSS is 779.08x360 logical: the game area's left gap is 29, used on both sides.
+  it("measure 40 from the screen, not the game area, on a view wider than the area", () => {
+    // 844x390 CSS is 779.08x360 logical: the game area runs 29 to 749, so the rings sit 11 and 10
+    // inside it, unclamped.
     const wide = logicalView({ height: 390, width: 844 });
-    const { aim, move } = stickRestCentres(wide, { bottom: 0, left: 43, right: 43, top: 0 });
-    expect(move.x - 36).toBe(29 + 40);
-    expect(779 - (aim.x + 37)).toBe(29 + 40);
+    const { aim, move } = stickRestCentres(wide, NO_INSETS);
+    expect(move.x - 36).toBe(40);
+    expect(779 - (aim.x + 37)).toBe(40);
+    expect(move.x - 36 - 29).toBe(11);
+    expect(29 + 720 - (aim.x + 37)).toBe(10);
   });
+
+  it(`clamp a ring ${STICK_AREA_MARGIN} inside the game area where the screen edge lies in a band`, () => {
+    // 2400x1080 is 800x360 logical, the area 40 to 760: both sides clamp to 48 and 752.
+    const wide = stickRestCentres(logicalView({ height: 1080, width: 2400 }), NO_INSETS);
+    expect([wide.move.x - 36, wide.aim.x + 37]).toEqual([48, 752]);
+    // 1280x720 is 720x405: the screen-edge bottom 365 lies in the band, so the rings clamp to 352.
+    const tall = stickRestCentres(logicalView({ height: 720, width: 1280 }), NO_INSETS);
+    expect(tall.move.y + 37).toBe(360 - STICK_AREA_MARGIN);
+    expect(STICK_AREA_MARGIN).toBe(8);
+  });
+});
+
+// Art's touch controls by view (art/layout.md "Touch controls by view"), insets in logical px:
+// rest centres, the shield pill's left, top and bottom, and Use's centre.
+type Pair = readonly [number, number];
+const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, Pair, Pair])[] = [
+  [
+    "720x360",
+    { height: 360, width: 720 },
+    NO_INSETS,
+    [76, 283],
+    [643, 283],
+    259,
+    [292, 320],
+    [566, 183],
+  ],
+  [
+    "720x360, phone insets",
+    { height: 360, width: 720 },
+    PHONE,
+    [119, 264],
+    [600, 264],
+    259,
+    [273, 301],
+    [523, 164],
+  ],
+  [
+    "844x390",
+    { height: 390, width: 844 },
+    NO_INSETS,
+    [76, 283],
+    [702, 283],
+    288.54,
+    [292, 320],
+    [625, 183],
+  ],
+  [
+    "844x390, phone insets",
+    { height: 390, width: 844 },
+    PHONE,
+    [119, 264],
+    [659, 264],
+    288.54,
+    [273, 301],
+    [582, 164],
+  ],
+  [
+    "720x360, left 43, bottom 19",
+    { height: 360, width: 720 },
+    { ...NO_INSETS, bottom: 19, left: 43 },
+    [119, 264],
+    [600, 264],
+    259,
+    [273, 301],
+    [523, 164],
+  ],
+  [
+    "844x390, left 47",
+    { height: 390, width: 844 },
+    { ...NO_INSETS, left: 47 },
+    [123, 283],
+    [655, 283],
+    288.54,
+    [292, 320],
+    [578, 183],
+  ],
+  [
+    "1280x720",
+    { height: 720, width: 1280 },
+    NO_INSETS,
+    [76, 315],
+    [643, 315],
+    259,
+    [324, 352],
+    [566, 215],
+  ],
+  [
+    "2400x1080",
+    { height: 1080, width: 2400 },
+    NO_INSETS,
+    [84, 283],
+    [715, 283],
+    299,
+    [292, 320],
+    [638, 183],
+  ],
+  [
+    "2560x1080",
+    { height: 1080, width: 2560 },
+    NO_INSETS,
+    [110, 283],
+    [741, 283],
+    325.67,
+    [292, 320],
+    [664, 183],
+  ],
+];
+
+describe("touch controls by view", () => {
+  it.each(ART_VIEWS)(
+    "at %s match Art's rest centres, shield pill and Use",
+    (_, screen, insets, move, aim, pillX, pillY, use) => {
+      const view = logicalView(screen);
+      const centres = stickRestCentres(view, insets);
+      expect([centres.move.x, centres.move.y]).toEqual(move);
+      expect([centres.aim.x, centres.aim.y]).toEqual(aim);
+      const pill = shieldPillRect(insets, view);
+      expect(pill.x).toBeCloseTo(pillX, 2);
+      expect([pill.y, pill.y + pill.height]).toEqual(pillY);
+      const disc = useDiscLayout(view, insets);
+      expect([disc.centre.x, disc.centre.y]).toEqual(use);
+    },
+  );
 });
 
 describe("touch controls", () => {
@@ -527,14 +657,14 @@ describe("touch controls", () => {
       aim: { x: 643, y: 283 },
       move: { x: 76, y: 283 },
     });
-    // A wider, deeper view keeps them in its centred 720x360 game area, not in the bands.
+    // A wider, deeper view keeps them 8 inside its centred 720x360 game area, out of the bands.
     expect(stickRestCentres({ height: 400, width: 900 }, NO_INSETS)).toEqual({
-      aim: { x: 733, y: 283 },
-      move: { x: 166, y: 283 },
+      aim: { x: 765, y: 315 },
+      move: { x: 134, y: 315 },
     });
     const clear = stickRestCentres(view, { bottom: 30, left: 90, right: 100, top: 0 });
-    expect(ringEdges(clear.move).left).toBe(100);
-    expect(720 - ringEdges(clear.aim).right).toBe(100);
+    expect(ringEdges(clear.move).left).toBe(140);
+    expect(720 - ringEdges(clear.aim).right).toBe(140);
     expect(360 - 30 - ringEdges(clear.move).bottom).toBe(TOUCH_STICK.bottom);
     expect(TOUCH_STICK).toMatchObject({
       bottom: 40,
@@ -571,13 +701,13 @@ describe("touch controls", () => {
 
   it.each([
     ["the 720 base", view, NO_INSETS, { x: 566, y: 183 }],
-    ["1280x720", logicalView({ height: 720, width: 1280 }), NO_INSETS, { x: 566, y: 183 }],
-    ["the 720 base with phone insets", view, phone, { x: 563, y: 164 }],
+    ["1280x720", logicalView({ height: 720, width: 1280 }), NO_INSETS, { x: 566, y: 215 }],
+    ["the 720 base with phone insets", view, phone, { x: 523, y: 164 }],
     [
       "844x390 with phone insets",
       logicalView({ height: 390, width: 844 }),
       phone,
-      { x: 596, y: 164 },
+      { x: 582, y: 164 },
     ],
   ] as const)(
     "centre the Use disc (-77, -100) from the aim ring's centre at %s",
@@ -689,12 +819,18 @@ describe("symmetric HUD on every view", () => {
           expect(hud.x - gap, label).toBe(HUD_EDGE);
           expect(hud.y, label).toBe(HUD_EDGE);
         }
-        // The sticks mirror across the view's whole-pixel width at one height.
+        // The sticks sit 40 inside the larger side inset from the screen's sides, mirrored across
+        // the view's whole-pixel width at one height, unless the clamp holds a ring
+        // STICK_AREA_MARGIN inside the game area.
         const { aim, move } = stickRestCentres(view, insets);
-        expect(Math.floor(view.width) - ringEdges(aim).right, label).toBe(ringEdges(move).left);
-        expect(ringEdges(move).left, label).toBe(
-          Math.ceil(Math.max(gap + TOUCH_STICK.side, insets.left, insets.right)),
+        const stickSide = Math.ceil(Math.max(insets.left, insets.right) + TOUCH_STICK.side);
+        expect(ringEdges(move).left, label).toBe(Math.max(stickSide, gap + STICK_AREA_MARGIN));
+        expect(ringEdges(aim).right, label).toBe(
+          Math.min(Math.floor(view.width) - stickSide, gap + 720 - STICK_AREA_MARGIN),
         );
+        if (stickSide >= gap + STICK_AREA_MARGIN + 1) {
+          expect(Math.floor(view.width) - ringEdges(aim).right, label).toBe(ringEdges(move).left);
+        }
         expect(aim.y, label).toBe(move.y);
       }
     }
