@@ -1243,6 +1243,53 @@ describe("capital local-area separation", () => {
     },
   );
 
+  it("leaves a salvaged capital where Ada left it, out of the spacing between capitals", () => {
+    const flight = empty();
+    const live = ship("capital", { x: 300, y: 0 });
+    const hulk = ship("capital", { x: 500, y: 0 });
+    live.id = live.enemy!.id = "live";
+    hulk.id = hulk.enemy!.id = "hulk";
+    for (const object of [live, hulk]) {
+      stopEngines(object);
+      silence(object);
+    }
+    hulk.enemy!.disabled = true;
+    hulk.enemy!.salvaged = true;
+    // The hulk comes first, so as a live capital it would be the one kept.
+    flight.objects.push(hulk, live);
+    for (let step = 0; step < 3; step++) {
+      stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    }
+    expect([hulk, live].map(({ x, y }) => ({ x, y }))).toEqual([
+      { x: 500, y: 0 },
+      { x: 300, y: 0 },
+    ]);
+  });
+
+  it("settles a guard off a salvaged hulk's drawn hull, leaving the hulk in place", () => {
+    const flight = empty();
+    const hulk = ship("capital", { x: 3000, y: 0 });
+    const guard = ship("capital", { x: 3010, y: 0 });
+    hulk.id = hulk.enemy!.id = "hulk";
+    guard.id = guard.enemy!.id = "guard";
+    hulk.routeId = "first";
+    guard.routeId = "second";
+    hulk.enemy!.disabled = true;
+    hulk.enemy!.salvaged = true;
+    flight.objects.push(hulk, guard);
+    settleRouteEncounters(PROTOTYPE, flight);
+    expect({ x: hulk.x, y: hulk.y }).toEqual({ x: 3000, y: 0 });
+    expect({ x: guard.x, y: guard.y }).not.toEqual({ x: 3010, y: 0 });
+    // At any heading the guard turns to, its hull clears the hulk's on screen.
+    const hull = enemyHull(hulk.enemy!)!;
+    for (let index = 0; index < 16; index++) {
+      const facing = { x: Math.cos((index * Math.PI) / 8), y: Math.sin((index * Math.PI) / 8) };
+      expect(
+        outlinesContact(hull, hulk, enemyHull({ archetype: "capital", facing })!, guard),
+      ).toBeNull();
+    }
+  });
+
   it("repairs close capitals in a resumed flight deterministically while retaining damage and route markers", () => {
     const flight = empty();
     const first = ship("capital", { x: 300, y: 0 });

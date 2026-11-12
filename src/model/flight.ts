@@ -986,13 +986,52 @@ function clearLayoutObjects(keep: (object: SpaceObject) => boolean, flight: Flig
   prunePackState(flight);
 }
 
+/**
+ * A capital that holds the spacing between capitals: live, not destroyed and not salvaged. A
+ * salvaged hulk stays where Ada left it (gameplay/ships.md "State").
+ */
 function capital(object: SpaceObject): boolean {
   return (
     object.kind === "enemy" &&
     object.hp > 0 &&
     object.enemy?.archetype === "capital" &&
-    !enemyDefeated(object.enemy)
+    !enemyDefeated(object.enemy) &&
+    !object.enemy.salvaged
   );
+}
+
+/**
+ * How far a ship's drawn hull reaches from its position on screen: at its own heading, or at
+ * any heading for a ship that may turn. Without Art's outline, twice its hit radius.
+ */
+function hullReach(object: SpaceObject, anyHeading: boolean): number {
+  const enemy = object.enemy;
+  const facings = anyHeading
+    ? Array.from({ length: 16 }, (_, index) => ({
+        x: Math.cos((index * Math.PI) / 8),
+        y: Math.sin((index * Math.PI) / 8),
+      }))
+    : [enemy?.facing ?? { x: 1, y: 0 }];
+  let reach = 0;
+  for (const facing of facings) {
+    const hull = enemy ? enemyHull({ archetype: enemy.archetype, facing }) : null;
+    if (!hull) {
+      return object.radius * 2;
+    }
+    for (const point of hull.flat()) {
+      reach = Math.max(reach, Math.hypot(point.x, point.y));
+    }
+  }
+  return reach;
+}
+
+/** Whether a ship placed at `point` would overlap a salvaged hulk's drawn hull on screen. */
+function overlapsHulk(guard: SpaceObject, point: Vec, hulk: SpaceObject): boolean {
+  const dx = point.x - hulk.x;
+  const dy = point.y - hulk.y;
+  // The play view's isometric projection of the world offset, in screen px.
+  const apart = Math.hypot(dx - dy, (dx + dy) / 2);
+  return apart < hullReach(guard, true) + hullReach(hulk, false);
 }
 
 function capitalGap(): number {
@@ -1036,7 +1075,7 @@ function relocateRouteGuards(content: PrototypeContent, flight: FlightState): vo
         object.kind === "enemy" &&
         persistentObject(object) &&
         object.hp > 0 &&
-        (!object.enemy || !enemyDefeated(object.enemy)),
+        (!object.enemy || (!enemyDefeated(object.enemy) && !object.enemy.salvaged)),
     ),
     flight,
   );
@@ -1063,8 +1102,11 @@ function placeGuards(content: PrototypeContent, guards: SpaceObject[], flight: F
         !(capital(guard) && capital(object) && guardSet.has(object) && !positions.has(object)) &&
         ["enemy", "rock", "resource", "debris"].includes(object.kind) &&
         object.hp > 0 &&
-        distance(positions.get(object) ?? object, point) <
-          Math.max(object.radius + guard.radius + 20, enemySpacing(guard, object)),
+        // A salvaged hulk keeps no spacing, but nothing settles onto its drawn hull.
+        (object.enemy?.salvaged
+          ? overlapsHulk(guard, point, object)
+          : distance(positions.get(object) ?? object, point) <
+            Math.max(object.radius + guard.radius + 20, enemySpacing(guard, object))),
     );
   // Reserve valid existing capital positions before searching for displaced or newly added guards.
   for (const guard of guards) {
