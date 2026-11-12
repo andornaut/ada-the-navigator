@@ -17,6 +17,7 @@ import {
 } from "./galaxies.ts";
 import { JOB_REWARDS } from "./jobs.ts";
 import { GALAXIES, galaxyCard } from "./storybook.ts";
+import type { SectorId } from "./types.ts";
 
 const named = (ids: readonly number[]) => ids.map((id) => galaxyCard(id as 1).name);
 
@@ -70,6 +71,39 @@ describe("tuning by route position", () => {
     expect(byPosition(sectorArchetypes, 2).interceptor?.behaviour.kind).toBe("hitAndRun");
   });
 
+  it("gives Needle and Andromeda their own rosters and Black Eye Cartwheel's", () => {
+    // Galaxies: Needle 4, Andromeda 5, Black Eye 6, Cartwheel 2 (gameplay/ships.md rosters).
+    const roster = (sector: SectorId) =>
+      byPosition(sectorEncounters, sector).map(({ archetype, groupSize, weight }) => [
+        archetype,
+        groupSize,
+        weight,
+      ]);
+    expect(roster(4)).toEqual([
+      ["swarm", [6, 8], 0.2],
+      ["fighter", [3, 4], 0.25],
+      ["interceptor", [2, 2], 0.25],
+      ["retaliator", [1, 1], 0.08],
+      ["frigate", [1, 1], 0.15],
+      ["capital", [1, 1], 0.07],
+    ]);
+    expect(roster(5)).toEqual([
+      ["swarm", [6, 8], 0.2],
+      ["fighter", [3, 4], 0.3],
+      ["interceptor", [2, 2], 0.15],
+      ["retaliator", [1, 1], 0.1],
+      ["frigate", [1, 2], 0.18],
+      ["capital", [1, 1], 0.07],
+    ]);
+    expect(byPosition(sectorEncounters, 4).at(-1)!.escorts).toEqual({
+      archetype: "fighter",
+      count: 5,
+    });
+    expect(byPosition(sectorArchetypes, 4)).toEqual({ fighter: { behaviour: { kind: "chase" } } });
+    expect(byPosition(sectorArchetypes, 5)).toEqual({});
+    expect(byPosition(sectorEncounters, 6)).toBe(byPosition(sectorEncounters, 2));
+  });
+
   it("gives each placeholder the tuning of the built galaxy before it on the route", () => {
     expect([3, 4, 6].map((position) => tuningPosition(position as RoutePosition))).toEqual([
       2, 2, 5,
@@ -79,8 +113,6 @@ describe("tuning by route position", () => {
       CHUNK_CATALOG,
       ECONOMY.weaponDropChance,
       JOB_REWARDS,
-      sectorArchetypes,
-      sectorEncounters,
     ];
     for (const table of tables) {
       // Needle and Andromeda read Whirlpool's, Black Eye Cartwheel's.

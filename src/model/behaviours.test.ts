@@ -261,19 +261,22 @@ describe("escort", () => {
     expect(range(ships[1]!, near)).toBeGreaterThan(enemyCatalog.fighter.standoff.near - 60);
   });
 
-  it("falls back to its own attack behaviour without a loaded capital", () => {
-    const ships = [battle()[1]!];
-    const before = range(ships[0]!, { x: 500, y: 0 });
-    run(ships, 60, { context: (peers) => context(peers, { x: 500, y: 0 }) });
-    expect(range(ships[0]!, { x: 500, y: 0 })).toBeLessThan(before - 50);
-  });
-
-  it("falls back to its own attack behaviour when its capital is disabled", () => {
-    const ships = battle();
-    ships[0] = { ...ships[0]!, disabled: true };
-    const before = range(ships[1]!, { x: 500, y: 0 });
-    run(ships, 60, { context: (peers) => context(peers, { x: 500, y: 0 }) });
-    expect(range(ships[1]!, { x: 500, y: 0 })).toBeLessThan(before - 50);
+  it.each([
+    ["without a loaded capital", false],
+    ["when its capital is disabled", true],
+  ] as const)("falls back to hitAndRun %s", (_, disabled) => {
+    const [capital, escort] = battle();
+    const ships = disabled ? [{ ...capital!, disabled: true }, escort!] : [escort!];
+    const index = ships.length - 1;
+    const before = range(ships[index]!, { x: 500, y: 0 });
+    let retreated = false;
+    for (let step = 0; step < 600 && !retreated; step++) {
+      run(ships, 1, { context: (peers) => context(peers, { x: 500, y: 0 }) });
+      retreated = ships[index]!.tactic.phase === "retreat";
+    }
+    // It closes on Ada, fires its volleys, then pulls away as hitAndRun does.
+    expect(retreated).toBe(true);
+    expect(range(ships[index]!, { x: 500, y: 0 })).toBeLessThan(before - 50);
   });
 });
 

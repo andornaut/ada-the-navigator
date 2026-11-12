@@ -24,11 +24,9 @@ describe("hardpoint export for Art", () => {
     expect(exported).toEqual(exportHardpoints());
   });
 
-  it("gives the retaliator's aimed gun an unrequired turret mount the model does not track", () => {
+  it("gives the retaliator's aimed gun a turret mount the model does not track", () => {
     expect(exportHardpoints().archetypes.retaliator).toEqual({
-      hardpoints: [
-        { fire: "bolt", id: "turret", offset: [0, 0], order: 0, required: false, role: "turret" },
-      ],
+      hardpoints: [{ fire: "bolt", id: "turret", offset: [0, 0], order: 0, role: "turret" }],
       sizeRatio: enemyCatalog.retaliator.sizeRatio,
     });
     expect(enemyCatalog.retaliator.hardpoints).toEqual([]);

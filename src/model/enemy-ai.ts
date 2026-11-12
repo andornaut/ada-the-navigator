@@ -630,7 +630,12 @@ export function stepEnemy(
       next.pursuitSeconds = 0;
     }
   }
-  next.tactic = nextTactic(definition, next, magnitude(delta), state);
+  // An escort without a live capital fights by hitAndRun.
+  const acting =
+    state.escortOf !== null && !escorted(context, state)
+      ? { ...definition, behaviour: definition.escortFallback }
+      : definition;
+  next.tactic = nextTactic(acting, next, magnitude(delta), state);
   // Each working engine gives an equal share of top speed; losing one slows the ship through
   // its own physics, while its maximum speed still bounds saved momentum.
   const fullSpeed = definition.physics.maxSpeed;
@@ -638,7 +643,7 @@ export function stepEnemy(
   // A disabled heavy stops steering and coasts to rest.
   const request = effects.disabled
     ? { x: 0, y: 0 }
-    : steering(definition, context, speed, aim, magnitude(delta), next);
+    : steering(acting, context, speed, aim, magnitude(delta), next);
   const physics = definition.physics;
   if (effects.defeated || effects.movementStopped || (next.returning && homeDistance <= 5)) {
     next.velocity = { x: 0, y: 0 };

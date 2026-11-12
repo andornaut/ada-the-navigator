@@ -12,7 +12,6 @@ export interface ExportedHardpoint {
   /** Fraction of hull width in the hull's local frame: `-y` forward, `+x` starboard. */
   offset: [number, number];
   order: number;
-  required: boolean;
   role: "command" | "engine" | "turret";
 }
 
@@ -52,7 +51,6 @@ export function exportHardpoints(): {
           id: part.id,
           offset: [part.offset.x, part.offset.y],
           order,
-          required: part.required,
           role: part.kind === "weapon" ? "turret" : part.kind,
         }));
         const unlisted = (definition.mounts?.fill ?? []).filter(
@@ -66,7 +64,6 @@ export function exportHardpoints(): {
               id,
               offset: [offset.x, offset.y] as [number, number],
               order: hardpoints.length + index,
-              required: false,
               role: "turret" as const,
             };
           }),
@@ -76,7 +73,6 @@ export function exportHardpoints(): {
           id: mount.id,
           offset: [...mount.offset],
           order: parts.length + index,
-          required: false,
           role: "turret",
         }));
         return [archetype, { hardpoints: [...parts, ...mounts], sizeRatio: definition.sizeRatio }];

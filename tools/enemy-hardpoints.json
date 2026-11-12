@@ -6,7 +6,6 @@
           "id": "engine",
           "offset": [0, 0.3],
           "order": 0,
-          "required": true,
           "role": "engine"
         },
         {
@@ -14,7 +13,6 @@
           "id": "port",
           "offset": [-0.3, 0],
           "order": 1,
-          "required": true,
           "role": "turret"
         },
         {
@@ -22,21 +20,18 @@
           "id": "starboard",
           "offset": [0.3, 0],
           "order": 2,
-          "required": true,
           "role": "turret"
         },
         {
           "id": "spine",
           "offset": [0, 0.025],
           "order": 3,
-          "required": false,
           "role": "turret"
         },
         {
           "id": "bow",
           "offset": [0, -0.22],
           "order": 4,
-          "required": false,
           "role": "turret"
         }
       ],
@@ -48,21 +43,18 @@
           "id": "command",
           "offset": [0, 0],
           "order": 0,
-          "required": true,
           "role": "command"
         },
         {
           "id": "engine-left",
           "offset": [-0.25, 0.4],
           "order": 1,
-          "required": true,
           "role": "engine"
         },
         {
           "id": "engine-right",
           "offset": [0.25, 0.4],
           "order": 2,
-          "required": true,
           "role": "engine"
         },
         {
@@ -70,7 +62,6 @@
           "id": "weapon-left",
           "offset": [-0.35, -0.3],
           "order": 3,
-          "required": true,
           "role": "turret"
         },
         {
@@ -78,7 +69,6 @@
           "id": "weapon-right",
           "offset": [0.35, -0.3],
           "order": 4,
-          "required": true,
           "role": "turret"
         },
         {
@@ -86,7 +76,6 @@
           "id": "weapon-rear-left",
           "offset": [-0.42, 0.08],
           "order": 5,
-          "required": true,
           "role": "turret"
         },
         {
@@ -94,35 +83,30 @@
           "id": "weapon-rear-right",
           "offset": [0.42, 0.08],
           "order": 6,
-          "required": true,
           "role": "turret"
         },
         {
           "id": "claw-left",
           "offset": [-0.15, -0.45],
           "order": 7,
-          "required": false,
           "role": "turret"
         },
         {
           "id": "claw-right",
           "offset": [0.15, -0.45],
           "order": 8,
-          "required": false,
           "role": "turret"
         },
         {
           "id": "stern-left",
           "offset": [-0.1, 0.31],
           "order": 9,
-          "required": false,
           "role": "turret"
         },
         {
           "id": "stern-right",
           "offset": [0.1, 0.31],
           "order": 10,
-          "required": false,
           "role": "turret"
         }
       ],
@@ -135,7 +119,6 @@
           "id": "turret",
           "offset": [0, 0],
           "order": 0,
-          "required": false,
           "role": "turret"
         }
       ],
@@ -148,7 +131,6 @@
           "id": "port",
           "offset": [-0.29, 0],
           "order": 0,
-          "required": true,
           "role": "turret"
         },
         {
@@ -156,7 +138,6 @@
           "id": "starboard",
           "offset": [0.29, 0],
           "order": 1,
-          "required": true,
           "role": "turret"
         }
       ],

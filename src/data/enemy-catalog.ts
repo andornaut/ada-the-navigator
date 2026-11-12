@@ -47,7 +47,6 @@ interface HardpointBase {
   id: string;
   /** Fraction of hull width in the hull's local frame: `-y` forward, `+x` starboard. */
   offset: Point;
-  required: boolean;
 }
 export type HardpointDefinition = HardpointBase &
   ({ kind: "engine" | "command" } | { fire: FireProfile; kind: "weapon" });
@@ -82,6 +81,8 @@ export interface EscortTuning {
 export interface EnemyDefinition {
   aggression: "sight" | "retaliate";
   behaviour: Behaviour;
+  /** An escort's behaviour once its capital is gone or disabled (gameplay/ships.md "Behaviours"). */
+  escortFallback: Extract<Behaviour, { kind: "hitAndRun" }>;
   engagement: number;
   fire: FireProfile;
   hardpoints: HardpointDefinition[];
@@ -103,7 +104,6 @@ const engine = (id: string, x: number, y: number): HardpointDefinition => ({
   id,
   kind: "engine",
   offset: { x, y },
-  required: true,
 });
 type Cadence = Pick<FireProfile, "burst" | "interval" | "projectileSpeedRatio">;
 /**
@@ -166,7 +166,6 @@ const command: HardpointDefinition = {
   id: "command",
   kind: "command",
   offset: { x: 0, y: 0 },
-  required: true,
 };
 const armed = (weapon: EnemyWeapon, level: WeaponLevel = 1): MountedWeapon => ({ level, weapon });
 /**
@@ -311,7 +310,6 @@ function mountedHardpoints(
             id,
             kind: "weapon",
             offset: { ...mounts.offsets[id]! },
-            required: true,
           },
         ]
       : [];
@@ -336,6 +334,7 @@ const base: Omit<EnemyDefinition, "physics"> = {
   aggression: "sight",
   behaviour: { kind: "chase" },
   engagement: 360,
+  escortFallback: { burstVolleys: 3, kind: "hitAndRun", retreatSeconds: 1.6 },
   fire: enemyFire("fighter", armed("laser")),
   hardpoints: [],
   hp: 4,
@@ -477,6 +476,32 @@ export const sectorEncounters: Readonly<Partial<Record<RoutePosition, readonly E
         weight: 0.05,
       },
     ],
+    3: [
+      { archetype: "swarm", groupSize: [6, 8], weight: 0.2 },
+      { archetype: "fighter", groupSize: [3, 4], weight: 0.25 },
+      { archetype: "interceptor", groupSize: [2, 2], weight: 0.25 },
+      { archetype: "retaliator", groupSize: [1, 1], weight: 0.08 },
+      { archetype: "frigate", groupSize: [1, 1], weight: 0.15 },
+      {
+        archetype: "capital",
+        escorts: { archetype: "fighter", count: 5 },
+        groupSize: [1, 1],
+        weight: 0.07,
+      },
+    ],
+    4: [
+      { archetype: "swarm", groupSize: [6, 8], weight: 0.2 },
+      { archetype: "fighter", groupSize: [3, 4], weight: 0.3 },
+      { archetype: "interceptor", groupSize: [2, 2], weight: 0.15 },
+      { archetype: "retaliator", groupSize: [1, 1], weight: 0.1 },
+      { archetype: "frigate", groupSize: [1, 2], weight: 0.18 },
+      {
+        archetype: "capital",
+        escorts: { archetype: "fighter", count: 4 },
+        groupSize: [1, 1],
+        weight: 0.07,
+      },
+    ],
     5: [
       { archetype: "swarm", groupSize: [5, 7], weight: 0.25 },
       { archetype: "fighter", groupSize: [2, 4], weight: 0.4 },
@@ -506,6 +531,9 @@ export const sectorArchetypes: Readonly<
     fighter: { behaviour: { kind: "chase" } },
     interceptor: { behaviour: { kind: "chase" } },
   },
+  // Needle's patrols chase; its interceptors strafe.
+  3: { fighter: { behaviour: { kind: "chase" } } },
+  4: {},
   5: {
     interceptor: { behaviour: { burstVolleys: 3, kind: "hitAndRun", retreatSeconds: 1.6 } },
   },
@@ -730,6 +758,7 @@ export function enemyDefinition(sector: SectorId, archetype: EnemyArchetype): En
     definition = {
       ...catalog,
       behaviour,
+      escortFallback: { ...catalog.escortFallback, retreatSeconds: difficulty.retreatSeconds },
       fire: faster(catalog.fire),
       hardpoints: catalog.hardpoints.map((part) =>
         part.kind === "weapon"

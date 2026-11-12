@@ -59,7 +59,6 @@ const armed = (weapons: Record<string, string>): EnemyDefinition => ({
     id,
     kind: "weapon",
     offset: { x: 0, y: 0 },
-    required: true,
   })),
 });
 
