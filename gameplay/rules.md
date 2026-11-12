@@ -90,7 +90,9 @@ A story run is every Earth and aboard page shown in a row between two points of
 play: it starts when Ada leaves the start screen, a flight or the galaxy map,
 and ends at the galaxy map or on Ada's room page with its named action. Next
 turns one page. Previous returns to the page shown before, across scene
-boundaries within the run, and is disabled only on the run's first page. A page
+boundaries within the run, and is disabled only on the run's first page. The
+run that starts with Ada's room page's named action counts that room page as
+its first, so Previous on the boarding page that follows returns to it. A page
 that ends in a named action, such as "Pick up the rock.", shows that action in
 place of Next. Skip passes every remaining page and scene of the run, taking the
 default path through choices and leaving optional questions unasked, and stops
