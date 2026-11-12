@@ -920,11 +920,16 @@ comes and is dropped if the trigger no longer holds, such as Penny's lost-item
 line once Ada has left the item's range. Triggers include the first flight's
 lessons (each shown once, skipped when the player has already done the action),
 a first arrival in a galaxy, meeting each alien group, a newly mapped destination
-or station, a capital ship sighting, a low shield (once per fight), drones
-arriving (only when drones are near; damage from scenery bumps or hazards alone
-never plays the drone warning), and quiet stretches without combat, which draw unseen lore from the
+or station, a return to a mapped station (once per station each flight), a
+frigate or capital ship sighting, a low shield (once per fight), drones
+arriving (only when drones are near; damage from scenery bumps or hazards alone never
+plays the drone warning), and quiet stretches without combat, which draw unseen lore from the
 galaxy's pool. Astra shares lore and flavor about places and alien species; Ada
-asks questions and reacts. Seen conversations are saved so they do not repeat.
+asks questions and reacts. Seen conversations are saved so they do not repeat. A repeating
+trigger (warnings, sightings, Penny's sense, a newly mapped place, a station
+return and the first disabled heavy each flight) has a pool of variants on one
+theme and draws them in a shuffled order, never the same variant twice in a row,
+starting a new shuffle once all have played.
 
 Penny rides in the second seat and never barks aloud. When an undiscovered point
 of interest comes within a provisional 900 world units of Ada, even off screen,

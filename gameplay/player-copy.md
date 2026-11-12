@@ -545,29 +545,92 @@ done: (on touch, each named stick's control icon follows its name, per the rules
 - Astra: "A station! Come close and tap Use to dock." (desktop: "A station! Come
   close and press Space to dock.") Ada: "Shopping in space!" (happy)
 
-Warnings:
+Repeating triggers draw one variant from their pool, as the rules describe.
 
-- Shield low, once per fight: Astra: "Shield low!" Penny: "Whimper..." (upset)
-- Drones arrive: Astra: "Drones ahead." Ada: "I see them."
+Shield low, once per fight (every variant opens with "Shield low!"):
 
-Penny senses a point of interest: Penny: "Woof! Woof!" (happy) Ada: "Penny, did you sense
-something, girl?" (happy)
+- Astra: "Shield low!" Penny: "Whimper..." (upset)
+- Astra: "Shield low! Pull back." Penny: "Whimper..." (upset)
+- Astra: "Shield low! Let's get clear." Ada: "Hang on, Penny."
+- Astra: "Shield low! Find somewhere quiet to recharge." Penny: "Whimper..."
+  (upset)
 
-Reactions:
+Drones arrive:
 
-- New destination or station mapped: Astra: "New place mapped." Ada: "Our map is
-  growing!" (happy)
-- Capital ship sighted: Ada: "That ship is huge!" Astra: "No crew aboard. Aim for
-  the glowing parts."
-- A heavy disabled, first time each flight: Astra: "Its weapons are down. We
-  could salvage parts and let it go." Ada: "No need to wreck it." (happy)
-- A guard still blocks the destination Ada reached, one variant in turn:
-  - Astra: "Something's guarding this place. Here it comes!" Ada: "Get ready,
-    Penny."
-  - Astra: "We can't visit yet. A guard ship is watching." Ada: "Then let's deal
-    with it."
-  - Astra: "A guard is blocking the way in. Stop its weapons first." Ada: "Okay.
-    I'm ready."
+- Astra: "Drones ahead." Ada: "I see them."
+- Astra: "Drones, coming our way." Ada: "Stay close, Penny."
+- Ada: "Drones!" Astra: "Shield's ready. Steady aim."
+- Astra: "Incoming drones." Penny: "Grr..." (upset)
+- Astra: "Here they come." Ada: "We can handle this."
+
+Frigate sighted:
+
+- Astra: "A frigate. Its guns are the glowing parts." Ada: "Then that's where
+  I'll aim."
+- Ada: "That one's bigger than a drone." Astra: "A frigate. Knock out its guns
+  to stop it."
+- Astra: "Frigate ahead. Take out its weapons first." Ada: "Got it."
+
+Capital ship sighted:
+
+- Ada: "That ship is huge!" Astra: "No crew aboard. Aim for the glowing parts."
+- Ada: "Look at the size of that!" Astra: "Big, but empty. Hit the glowing
+  parts."
+- Astra: "A capital ship. Nobody aboard, just machines." Ada: "Then let's find
+  its glowing parts."
+
+A heavy disabled, first time each flight:
+
+- Astra: "Its weapons are down. We could salvage parts and let it go." Ada: "No
+  need to wreck it." (happy)
+- Astra: "Its guns are out. We can salvage it, or finish it." Ada: "Salvage.
+  It can't hurt anyone now." (happy)
+- Astra: "Disabled. Come close and I can salvage parts." Ada: "Let's take what
+  we need and go."
+
+Penny senses a point of interest (Penny's line is always the same, so players
+learn it):
+
+- Penny: "Woof! Woof!" (happy) Ada: "Penny, did you sense something, girl?"
+  (happy)
+- Penny: "Woof! Woof!" (happy) Ada: "What is it, Penny? Something out there?"
+- Penny: "Woof! Woof!" (happy) Ada: "Your nose is never wrong. Let's look
+  around." (happy)
+- Penny: "Woof! Woof!" (happy) Ada: "Okay, okay! I'll find it." (happy)
+- Penny: "Woof! Woof!" (happy) Ada: "Ears up! Astra, Penny found something."
+
+New destination mapped:
+
+- Astra: "New place mapped." Ada: "Our map is growing!" (happy)
+- Astra: "Marking it on the map." Ada: "We're real explorers." (happy)
+- Ada: "Astra, put that on the map!" (happy) Astra: "Already done, Navigator."
+- Astra: "Saved to the map. We can come back any time." Ada: "Good. I want to
+  visit again." (happy)
+
+New station mapped:
+
+- Astra: "A station. Shops, jobs and friendly faces." Ada: "Let's say hello."
+  (happy)
+- Astra: "Station on the map. A good place to rest." Ada: "And to shop!" (happy)
+- Ada: "Look, a station!" (happy) Astra: "Mapped. Come close and we can dock."
+- Astra: "Another station. Someone always has a job for us." Ada: "I like
+  helping." (happy)
+
+Back at a mapped station, once per station each flight:
+
+- Astra: "Our station again." Ada: "It feels like a second home." (happy)
+- Ada: "I wonder what jobs they have today." Astra: "Let's dock and see."
+- Astra: "Welcome back, Navigator. The dock is waiting." Ada: "Thanks, Astra."
+  (happy)
+
+A guard still blocks the destination Ada reached, one variant in turn:
+
+- Astra: "Something's guarding this place. Here it comes!" Ada: "Get ready,
+  Penny."
+- Astra: "We can't visit yet. A guard ship is watching." Ada: "Then let's deal
+  with it."
+- Astra: "A guard is blocking the way in. Stop its weapons first." Ada: "Okay.
+  I'm ready."
 
 Sunflower:
 
