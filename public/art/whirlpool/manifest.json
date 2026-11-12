@@ -8432,9 +8432,68 @@
         "y": 0.48421
       },
       "debris": "whirlpool-debris-girder"
+    },
+    {
+      "id": "whirlpool-nursery-beacon-a",
+      "path": "/art/whirlpool/whirlpool-nursery-beacon-a.svg",
+      "width": 80,
+      "height": 112,
+      "displayWidth": 35,
+      "displayHeight": 49,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.8
+      },
+      "frameMs": 1400,
+      "project": "nurseryBeacon"
+    },
+    {
+      "id": "whirlpool-nursery-beacon-b",
+      "path": "/art/whirlpool/whirlpool-nursery-beacon-b.svg",
+      "width": 80,
+      "height": 112,
+      "displayWidth": 35,
+      "displayHeight": 49,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.8
+      },
+      "frameMs": 1400,
+      "project": "nurseryBeacon"
+    },
+    {
+      "id": "whirlpool-current-buoy-a",
+      "path": "/art/whirlpool/whirlpool-current-buoy-a.svg",
+      "width": 48,
+      "height": 64,
+      "displayWidth": 21,
+      "displayHeight": 28,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.8
+      },
+      "project": "currentBuoys"
+    },
+    {
+      "id": "whirlpool-current-buoy-b",
+      "path": "/art/whirlpool/whirlpool-current-buoy-b.svg",
+      "width": 48,
+      "height": 64,
+      "displayWidth": 21,
+      "displayHeight": 28,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.8
+      },
+      "project": "currentBuoys"
     }
   ],
   "whales": "/art/whales.json",
   "whirlpoolCurrents": "/art/whirlpool/currents.json",
-  "whirlpoolDebris": "/art/whirlpool/debris.json"
+  "whirlpoolDebris": "/art/whirlpool/debris.json",
+  "whirlpoolProjects": "/art/whirlpool/projects.json"
 }

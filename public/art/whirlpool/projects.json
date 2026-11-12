@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "displayScale": 0.4375,
+  "reducedMotion": {
+    "frame": 0
+  },
+  "projects": {
+    "nurseryBeacon": {
+      "site": "family",
+      "frames": ["whirlpool-nursery-beacon-a", "whirlpool-nursery-beacon-b"],
+      "frameMs": 1400,
+      "offset": [-54, 58],
+      "pool": {
+        "color": "#ffe9b8",
+        "centre": [-6, 54],
+        "radii": [72, 56, 40, 24],
+        "alpha": [0.07, 0.05]
+      }
+    },
+    "currentBuoys": {
+      "site": "whalesCurrent",
+      "frames": ["whirlpool-current-buoy-a", "whirlpool-current-buoy-b"],
+      "spacing": 128,
+      "start": 64,
+      "edge": 20,
+      "sides": [1, -1],
+      "chase": {
+        "stepMs": 300,
+        "steps": 4
+      }
+    }
+  }
+}

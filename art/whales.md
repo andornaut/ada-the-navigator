@@ -89,8 +89,8 @@ after the body.
   any cue uses the existing UI.
 - The debris trapping the whale is ordinary stone rocks from the
   [asteroid set](asteroids.md), with no separate art.
-- The nursery beacon and the current-map buoys are drawn with the Whirlpool
-  donation world changes, not with the whales.
+- The nursery beacon and the current-map buoys are Whirlpool's
+  [project world changes](whirlpool.md#project-world-changes), not whale art.
 
 ## Data
 

@@ -1,6 +1,7 @@
-// Whirlpool's currents and debris rivers (art/whirlpool.md): the current streak spec Tech draws
-// at runtime (currents.json) and the river debris, a bent plate and a broken girder in the
-// Whirlpool field hue inside the coral hazard contour (SVG frames and debris.json), written to
+// Whirlpool's currents, debris rivers and project world changes (art/whirlpool.md): the current
+// streak spec Tech draws at runtime (currents.json), the river debris, a bent plate and a broken
+// girder in the Whirlpool field hue inside the coral hazard contour (SVG frames and debris.json),
+// and the nursery beacon and current-map buoys (SVG frames and projects.json), written to
 // public/art/whirlpool/ with their entries and links in Whirlpool's manifest.
 // Usage: node art/tools/whirlpool.ts
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -24,6 +25,17 @@ import {
 } from "./debris.ts";
 import { linkData, placeEntries } from "./manifest.ts";
 import { json } from "./projection.ts";
+import {
+  BUOY,
+  CREAM,
+  exportProject,
+  GLASS,
+  LAMP,
+  NURSERY,
+  NURSERY_FRAME_MS,
+  POOL_COLOR,
+  PROJECTS,
+} from "./whirlpool-projects.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const dir = `${art}whirlpool/`;
@@ -109,6 +121,40 @@ const pieces = [
   },
 ].map((spec) => exportDebris(dir, PUBLIC_DIR, BODY, CORAL, spec));
 
+// ------------------------------------------------------------------ project world changes
+
+const projectEntries = [
+  ...exportProject(dir, PUBLIC_DIR, "nurseryBeacon", NURSERY, NURSERY_FRAME_MS),
+  ...exportProject(dir, PUBLIC_DIR, "currentBuoys", BUOY),
+];
+
+// The lit beacon glass and buoy lamp read as signals on the field; the cream body stays clear.
+const MIN_LIGHT_ON_FIELD = 5;
+for (const [name, colour] of [
+  ["beacon glass A", GLASS.a[2]!],
+  ["beacon glass B", GLASS.b[2]!],
+  ["buoy lamp A", LAMP.a[3]!],
+  ["cream body", CREAM[1]!],
+] as const) {
+  const value = ratio(colour, BACKGROUND);
+  if (value < MIN_LIGHT_ON_FIELD) {
+    throw new Error(
+      `${name} ${colour} on field is ${value.toFixed(2)}:1, below ${MIN_LIGHT_ON_FIELD}:1`,
+    );
+  }
+}
+
+// The light pool's innermost composite: every ring at frame A's alpha over the field.
+function poolComposite(alpha: number): string {
+  const channels = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const top = channels(POOL_COLOR);
+  const base = PROJECTS.nurseryBeacon.pool.radii.reduce(
+    (under) => under.map((c, i) => c + (top[i]! - c) * alpha),
+    channels(BACKGROUND),
+  );
+  return `#${base.map((c) => Math.round(c).toString(16).padStart(2, "0")).join("")}`;
+}
+
 // ------------------------------------------------------------------ output
 
 // JSON goes through the project's Prettier settings so the files stay Prettier-clean.
@@ -129,17 +175,23 @@ await writeJson(`${dir}debris.json`, {
   marks: { color: CORAL, width: MARK_WIDTH, dashes: MARK_DASHES },
   debris: pieces.map(({ data }) => data),
 });
+await writeJson(`${dir}projects.json`, {
+  version: 1,
+  displayScale: DISPLAY_SCALE,
+  reducedMotion: { frame: 0 },
+  projects: PROJECTS,
+});
 
-placeEntries(
-  "whirlpool",
-  "whirlpool-",
-  pieces.flatMap(({ entries }) => entries),
-);
+placeEntries("whirlpool", "whirlpool-", [
+  ...pieces.flatMap(({ entries }) => entries),
+  ...projectEntries,
+]);
 
 // Whirlpool's manifest names the streak and debris data after the whale data.
 linkData("whirlpool", {
   whirlpoolCurrents: "/art/whirlpool/currents.json",
   whirlpoolDebris: "/art/whirlpool/debris.json",
+  whirlpoolProjects: "/art/whirlpool/projects.json",
 });
 
 const report = {
@@ -150,6 +202,10 @@ const report = {
   contourOnStreak: ratio(CORAL, STREAKS.color),
   contourOnBody: BODY.map((tone) => ratio(CORAL, tone)),
   bodyOnField: BODY.map((tone) => ratio(tone, BACKGROUND)),
+  creamOnField: CREAM.map((tone) => ratio(tone, BACKGROUND)),
+  glassOnField: [GLASS.a[2]!, GLASS.b[2]!].map((tone) => ratio(tone, BACKGROUND)),
+  lampOnField: [LAMP.a[3]!, LAMP.b[2]!].map((tone) => ratio(tone, BACKGROUND)),
+  poolInnerOnField: [ratio(poolComposite(PROJECTS.nurseryBeacon.pool.alpha[0]), BACKGROUND)],
 };
 console.log(
   JSON.stringify(

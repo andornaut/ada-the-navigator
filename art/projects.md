@@ -77,9 +77,11 @@ plays.
 
 ## World changes
 
-`node art/tools/outposts.ts` writes every world change with the
+`node art/tools/outposts.ts` writes Sunflower's world changes with the
 [outposts](outposts.md), and `public/art/projects.json` places them, keyed by
-project id. A project absent from `projects.json` has no world art yet, so
+project id. Cartwheel's are [hub frames](cartwheel.md#world-changes) and
+Whirlpool's are in [whirlpool.md](whirlpool.md#project-world-changes), placed by
+`public/art/whirlpool/projects.json`. A project absent from `projects.json` has no world art yet, so
 funding it changes nothing in the world.
 
 A change is one of two kinds:

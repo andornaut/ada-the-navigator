@@ -16,7 +16,7 @@ the [title screen art](title-screen.md),
 the [holodisk](holodisk.md), the
 [quantum jump](quantum-jump.md), the [weapon effects](weapons.md), the
 [Whirlpool whales](whales.md), the
-[Whirlpool current streaks and river debris](whirlpool.md), character portraits, and the
+[Whirlpool current streaks, river debris and project world changes](whirlpool.md), character portraits, and the
 [storybook](storybook.md) Earth backgrounds with Ada's and her family's storybook sprites.
 [Community projects](projects.md) add the Projects shop tab and the world
 changes that funding them shows. [Galaxies](galaxies.md) retint the space field per galaxy. Other space objects
@@ -58,8 +58,8 @@ generic art included; one that several galaxies or none use (boot, HUD, UI,
 Ada, story) is in core. Usage follows the game's content data: Sunflower holds
 its outposts and their project frames; Cartwheel the hub, mooring buoy, claim
 jumpers, story and stranded craft, traveling debris and the `cartwheelDebris`
-and `oreField` links; Whirlpool the whales, river debris and the `whales`,
-`whirlpoolCurrents` and `whirlpoolDebris` links. The station, discovery cache,
+and `oreField` links; Whirlpool the whales, river debris, project frames and the
+`whales`, `whirlpoolCurrents`, `whirlpoolDebris` and `whirlpoolProjects` links. The station, discovery cache,
 coral family, ore nugget and `tow` serve every galaxy and stay in core.
 Tech loads core at boot and a galaxy's manifest with its set.
 
@@ -92,7 +92,7 @@ the jets file is unavailable. [Ship geometry](ship.md),
 the authored and reused assets.
 
 Ship, enemy, station, outpost, Cartwheel, Cartwheel prop, asteroid, whale and Whirlpool
-debris SVGs are deterministic exports from `art/tools/ship.ts`, `art/tools/enemies.ts`,
+debris and project SVGs are deterministic exports from `art/tools/ship.ts`, `art/tools/enemies.ts`,
 `art/tools/station.ts`, `art/tools/outposts.ts`, `art/tools/cartwheel.ts`,
 `art/tools/cartwheel-props.ts`, `art/tools/asteroids.ts`, `art/tools/whales.ts` and
 `art/tools/whirlpool.ts`, with the heavies' layered

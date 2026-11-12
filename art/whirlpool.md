@@ -1,13 +1,16 @@
-# Whirlpool currents and debris rivers
+# Whirlpool currents, debris rivers and project world changes
 
 - Rebuild with `node art/tools/whirlpool.ts`. It writes `public/art/whirlpool/`:
   `currents.json` (the streak spec), the river debris frames and `debris.json`,
-  and its own `whirlpool-` entries in
-  [Whirlpool's manifest](../public/art/whirlpool/manifest.json), which names the
-  data files as `whirlpoolCurrents` and `whirlpoolDebris`.
+  the project world change frames and `projects.json`, and its own `whirlpool-`
+  entries in [Whirlpool's manifest](../public/art/whirlpool/manifest.json),
+  which names the data files as `whirlpoolCurrents`, `whirlpoolDebris` and
+  `whirlpoolProjects`.
 - The build fails if the whale's lit hull (`hull[0]` in `whales.json`) falls
-  below 3:1 over the streak colour.
-- The debris model is shared in [art/tools/debris.ts](tools/debris.ts).
+  below 3:1 over the streak colour, or if the beacon glass, the lit buoy lamp
+  or the cream body falls below 5:1 on the field.
+- The debris model is shared in [art/tools/debris.ts](tools/debris.ts); the
+  project models are in [art/tools/whirlpool-projects.ts](tools/whirlpool-projects.ts).
 
 ## Current streaks
 
@@ -122,6 +125,72 @@ from the pivot by `displayScale` for display px.
 Against librsvg renders at 4 px per frame px: 0.981 or more, every boundary
 within 1 frame px.
 
+## Project world changes
+
+Whirlpool's two [community projects](projects.md) change the world at the whale
+family and along the whales' current: the current passing nearest the family
+destination. Both are passable decoration with no collision: they block neither
+Ada nor shots, and Ada draws in front of them while overlapping. Neither appears
+on the Map. The calves keep their idle loop and offsets in the beacon's light.
+
+Both are fixed flat-shaded solids in the whale convention: world light
+`(-0.25, 0.45, 1)`, five-tone ramps (thresholds 0.9, 0.78, 0.6 and 0.3), the
+frame projection, 1 frame px own-fill seams on body faces and unstroked decals.
+Frames are multiples of 16 px; each SVG's intrinsic size is its display size
+(`frame * 0.4375`) and its `viewBox` the frame. The pivot is the float's centre
+on the world plane: place it at the world position and sort by its screen y.
+Whirlpool is a dark field, so no keyline applies.
+
+| Change            | Ids                                                        | Frame px | Display  | Pivot        |
+| ----------------- | ---------------------------------------------------------- | -------- | -------- | ------------ |
+| Nursery beacon    | `whirlpool-nursery-beacon-a`, `whirlpool-nursery-beacon-b` | 80, 112  | 35 by 49 | `(0.5, 0.8)` |
+| Current-map buoys | `whirlpool-current-buoy-a`, `whirlpool-current-buoy-b`     | 48, 64   | 21 by 28 | `(0.5, 0.8)` |
+
+| Part            | Colour                                                      | On `#132D33`  |
+| --------------- | ----------------------------------------------------------- | ------------- |
+| Cream body      | `#f7f0e2` to `#9f8f78`, the station family's cream and side | 12.76 to 4.60 |
+| Beacon glass    | `#ffe9b8` (A, white core), `#ecc98a` (B, core `#fff6dc`)    | 12.13, 9.16   |
+| Buoy lamp, band | Whale glow `#cbb8ee`, core `#f7f2ff` (A); `#4c4585` (B)     | 8.02, 1.72    |
+| Light pool      | `#ffe9b8`, four rings                                       | 1.20 to 2.06  |
+
+### Nursery beacon
+
+`nurseryBeacon` at the family: a six-sided lantern with a cream stepped cap on
+a mast over a cream cradle float, as its shop icon's lantern over a cradle.
+
+- Anchor: the family destination (the smaller adult's position) plus world
+  `(-54, 58)` (`offset`), screen `(-112, 2)`: ahead of the family's heads and
+  clear of every member's frame, so the pivot sort needs no layers.
+- A slow breathe, `frameMs` 1400: A lights the glass and a tall white core; B
+  softens both. The light never goes out.
+- Light pool (`pool`): four filled world circles, radii 72, 56, 40 and 24,
+  centred at world `(-6, 54)` from the family destination, in `#ffe9b8` at
+  alpha 0.07 each with frame A and 0.05 with B. Tech draws them on the world
+  plane at field level, above the specks and backdrop rocks and below every
+  play object, as for the current streaks. The calves lie inside it.
+
+### Current-map buoys
+
+`currentBuoys` along the whales' current: a cream spindle float with a song
+band at its waist and a lamp on a short mast. A lights the band and lamp in
+the whale glow; B dims both to the whale fin shadows.
+
+- Placement: buoy `k` at arc `s = 64 + 128 k` (`start`, `spacing`) while
+  `s <= length - 64`, on both edges at `d = +/-(w / 2 + 20)` (`edge`, `sides`):
+  20 outside the edge, where the flow is zero, so buoys sit off the streaks and
+  the debris river. A 3000 to 8000 current carries 23 to 62 buoys per edge.
+- Chase: at step `floor(t / 300 ms)` (`chase.stepMs`), buoy `k` on either edge
+  shows A when `(step - k) mod 4 = 0` (`chase.steps`), otherwise B. One lit
+  pair runs downstream per 1.2 s, the whale swim loop, as the song ripple
+  lights spot pairs head to tail.
+
+### Reveal and reduced motion
+
+- The reveal follows [projects.md](projects.md#reveal): the after state fades
+  in once, as one group, on the first frame its site is on screen; for the
+  buoys, every buoy then on screen.
+- Reduced motion shows frame A on the beacon, the pool and every buoy.
+
 ## Data
 
 `currents.json`, version 1: `streaks` holds the values in the streak table
@@ -133,3 +202,12 @@ under the names given there.
 `id`, `frame`, `display`, `pivot`, `radius` and `frames[k]` (`file`,
 `bounds`, `collision`). Manifest entries carry `tumbleIndex`, `pivot`, `debris` (the piece
 id) and the display size as `displayWidth` and `displayHeight`.
+
+`projects.json`, version 1: `displayScale` (0.4375), `reducedMotion.frame` (0)
+and `projects`, keyed by project id. `nurseryBeacon`: `site` (`family`),
+`frames` (A, B), `frameMs`, `offset` and `pool` (`color`, `centre`, `radii`,
+`alpha` per ring for A and B). `currentBuoys`: `site` (`whalesCurrent`),
+`frames` (A, B), `spacing`, `start`, `edge`, `sides` and `chase` (`stepMs`,
+`steps`). Offsets and lengths are world units. Manifest entries carry `facing`
+`fixed`, `pivot`, `project` and the display size as `displayWidth` and
+`displayHeight`; the beacon's also carry `frameMs`.
