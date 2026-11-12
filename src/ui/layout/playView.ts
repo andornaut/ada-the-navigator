@@ -82,6 +82,19 @@ export function playView(view: Size): Rect {
   };
 }
 
+// The safe game area in game-area px: the play view clamped by safeRect(insets, SAFE_MARGIN.edge,
+// view), each edge moved in by its own inset, then measured from the play view's corner. Edge
+// markers sit inside it (art/layout.md "Edge markers").
+export function safeGameArea(insets: Insets, view: Size): Rect {
+  const area = playView(view);
+  const safe = safeRect(insets, SAFE_MARGIN.edge, view);
+  const left = Math.max(area.x, safe.x);
+  const top = Math.max(area.y, safe.y);
+  const right = Math.min(area.x + area.width, safe.x + safe.width);
+  const bottom = Math.min(area.y + area.height, safe.y + safe.height);
+  return { height: bottom - top, width: right - left, x: left - area.x, y: top - area.y };
+}
+
 // The game area's gap from each side of the view: the left one, used for the right side too, so
 // sides mirror even when the bands differ by a pixel.
 export function gameAreaGap(view: Size): number {

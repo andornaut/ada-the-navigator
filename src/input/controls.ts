@@ -43,7 +43,7 @@ import {
   statusPillWidth,
 } from "../ui/layout/playView.ts";
 import { stickTargets, useDiscLayout, usePressed } from "../ui/layout/touchControls.ts";
-import { createViewScaleBridge } from "../ui/layout/viewScale.ts";
+import { createViewScaleBridge, type PlayLayout } from "../ui/layout/viewScale.ts";
 import { escapeTarget, pauseButtonShown } from "../ui/pause.ts";
 import { createPauseButton } from "../ui/pause-button.ts";
 import { createPauseCards, type PauseLabels, type PauseState } from "../ui/pause-card.ts";
@@ -131,6 +131,8 @@ export interface Controls {
   openSettings(): void;
   /** The DOM layer that holds the controls and modal cards. */
   readonly overlay: HTMLElement;
+  // The play layout in effect: the logical view and its safe insets.
+  layout(): PlayLayout;
   // Whether Reduced motion is on, for the refusal cue.
   reducedMotion(): boolean;
   reset(): void;
@@ -664,6 +666,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       }
     },
     focusGalaxies: () => pause.focusGalaxies(),
+    layout: () => layout,
     openAchievements: () => achievements.open(),
     openSettings: () => {
       cheats.close();

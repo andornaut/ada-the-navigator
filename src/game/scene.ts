@@ -84,6 +84,7 @@ import { createBannerLayer, type PlacedBanner } from "../ui/disabled-banner.ts";
 import { createJumpOverlay, type JumpScene, type SheetArt } from "../ui/jump-overlay.ts";
 import { VIEW_HOST_ID } from "../ui/layout/css.ts";
 import { fogColor } from "../ui/layout/mapScreen.ts";
+import { safeGameArea } from "../ui/layout/playView.ts";
 import { type MapField, mapScreenLabels } from "../ui/map-screen.ts";
 import { BOX_OCCUPANT, type BoxOccupant, boxOccupant } from "../ui/notice.ts";
 import { galaxiesAvailable } from "../ui/pause.ts";
@@ -3396,9 +3397,13 @@ export class PrototypeScene extends Scene {
     const indicated = new Set(this.model.indicatorTargets.map(({ id }) => id));
     const centre = this.project(flight.player);
     const outline = LIGHT_FIELD.markerOutline;
-    for (const marker of this.edgeMarkers.update(flight, indicated)) {
+    const { insets, view } = this.controls.layout();
+    // Inside the safe game area: never under a notch, a curved corner or the home bar.
+    const area = safeGameArea(insets, view);
+    for (const marker of this.edgeMarkers.update(flight, indicated, this.time.now)) {
       // The outermost drawn pixel, the ink outline included on a light field, sits 1 in.
       const at = edgePoint(
+        area,
         edgeMarkerInset(this.light ? outline : 0, marker.kind),
         centre,
         this.project(marker),
@@ -3428,6 +3433,13 @@ export class PrototypeScene extends Scene {
       }
       this.edgeMarkerInk.fillStyle(this.palette.threat, 1);
       this.edgeMarkerInk.fillCircle(at.x, at.y, radius);
+      // A guard's ink bar; a guard just disabled fades it out, or drops it under reduced motion.
+      const bar = marker.kind === "guard" || !this.reducedMotion ? (marker.bar ?? 0) : 0;
+      if (bar > 0) {
+        const { height, width } = EDGE_MARKER_GLYPHS.guard.bar;
+        this.edgeMarkerInk.fillStyle(LIGHT_FIELD.ink, bar);
+        this.edgeMarkerInk.fillRect(at.x - width / 2, at.y - height / 2, width, height);
+      }
     }
   }
 

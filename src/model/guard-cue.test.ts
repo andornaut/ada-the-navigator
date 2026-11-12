@@ -65,7 +65,7 @@ describe("a blocking guard's cue", () => {
     expect(flight.summonedGuards).toEqual([guard.id]);
     // Its guard marker shows though Ada has never seen it.
     expect(createEdgeMarkerTracker().update(flight, new Set())).toEqual([
-      { id: guard.id, kind: "guard", x: guard.x, y: guard.y },
+      { bar: 1, id: guard.id, kind: "guard", x: guard.x, y: guard.y },
     ]);
     // It flies in until it is on screen, firing nothing on the way, then fights as usual.
     let seconds = 0;
