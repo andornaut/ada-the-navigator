@@ -42,11 +42,11 @@ flush, its centre 8 logical px in from the edge, on the line from the view's
 centre to the object. Markers draw on the canvas above every play object and
 under the HTML HUD, at alpha 1. Sizes are logical px, scaled by `s`.
 
-| Kind                                             | Glyph                                               | Colour            |
-| ------------------------------------------------ | --------------------------------------------------- | ----------------- |
-| Enemy (swarm, fighter, interceptor, retaliator)  | Filled disc, 6 across                               | `threat`          |
-| Heavy (frigate, capital, platform, General Gadget) | Filled disc, 10 across                            | `threat`          |
-| Station (seen stations and outposts)             | Unfilled square diamond, 10 tall and 10 wide, 2 stroke inside that extent, miter joins | `pointOfInterest` |
+| Kind                                               | Glyph                                                                                  | Colour            |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------- | ----------------- |
+| Enemy (swarm, fighter, interceptor, retaliator)    | Filled disc, 6 across                                                                  | `threat`          |
+| Heavy (frigate, capital, platform, General Gadget) | Filled disc, 10 across                                                                 | `threat`          |
+| Station (seen stations and outposts)               | Unfilled square diamond, 10 tall and 10 wide, 2 stroke inside that extent, miter joins | `pointOfInterest` |
 
 `threat` is the one red in space, used only for these markers. It is at least
 5.2:1 on every dark galaxy's background (Whirlpool 5.22:1, the default 5.28:1,
