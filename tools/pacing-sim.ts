@@ -1579,7 +1579,8 @@ export function formatSummary(summary: Summary): string {
       `ammunition pack ${summary.packPrice}`,
     `Minutes to first weapon: ${formatDistribution(summary.firstWeaponMinutes)}; ` +
       `unreached ${summary.firstWeaponUnreached}`,
-    `Minutes to holodisk: ${formatDistribution(summary.holodiskMinutes)}; ` +
+    `Minutes to save ${summary.prices.holodisk} (Cartwheel's holodisk): ` +
+      `${formatDistribution(summary.holodiskMinutes)}; ` +
       `unreached ${summary.holodiskUnreached}`,
     ...summary.projectsMinutes.map(
       (minutes, index) =>
