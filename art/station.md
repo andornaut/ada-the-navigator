@@ -44,3 +44,35 @@ A sector one cooperating outpost:
   beacon `#70ace8` and the collar windows; B shows the beacon unlit `#3f5878`
   and the windows dim `#a08f78`.
 - Reduced motion shows frame A only.
+
+## Keepers
+
+Each galaxy's stations are kept by three keepers of its people (Gameplay
+`gameplay/rules.md`): a station's keeper follows its rank by distance from
+the galaxy's origin, cycling through the three, and Cartwheel's mining hub is
+always Quartz's, its other stations cycling through Slate and Garnet. The
+station card shows the keeper in its [keeper block](layout.md#station-card).
+Black Eye's stations have no keeper and keep the generic welcome.
+
+Portraits are the [conversation portraits](conversation.md)' compact sheets,
+`public/art/{galaxy}/portraits/{key}-compact.png`, manifest id
+`{key}-portrait-compact`, frame `neutral` 0. Tab colours are in
+[Controls](controls.md#conversation-box).
+
+| Galaxy    | Keeper  | Key       | Tab       | Ink on tab |
+| --------- | ------- | --------- | --------- | ---------: |
+| Sunflower | Saffron | `saffron` | `#ffcf8f` |    12.50:1 |
+| Sunflower | Bramble | `bramble` | `#d6e88a` |    13.53:1 |
+| Sunflower | Nectar  | `nectar`  | `#ffc2d6` |    11.96:1 |
+| Whirlpool | Ripple  | `ripple`  | `#a8f0c8` |    13.69:1 |
+| Whirlpool | Coral   | `coral`   | `#f7b0c4` |    10.26:1 |
+| Whirlpool | Brine   | `brine`   | `#7fc0f0` |     9.18:1 |
+| Needle    | Sedge   | `sedge`   | `#9fcf9f` |    10.21:1 |
+| Needle    | Willow  | `willow`  | `#d0a8e8` |     8.96:1 |
+| Needle    | Marsh   | `marsh`   | `#e0c79a` |    10.99:1 |
+| Andromeda | Lumen   | `lumen`   | `#fde58a` |    14.37:1 |
+| Andromeda | Dial    | `dial`    | `#d0d8ff` |    12.82:1 |
+| Andromeda | Cog     | `cog`     | `#a8f0c0` |    13.63:1 |
+| Cartwheel | Quartz  | `quartz`  | `#d8ccf4` |    11.89:1 |
+| Cartwheel | Slate   | `slate`   | `#a8c8b8` |     9.97:1 |
+| Cartwheel | Garnet  | `garnet`  | `#ec8f9e` |     7.71:1 |
