@@ -542,9 +542,10 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   on a blocked route is excluded. Other ranges are their own values: tow attach
   120, and station discovery uses its own 320.
 - Pause, as in Chibi: the pause button at the top left opens a card titled
-  "Paused" over the dimmed game, which pauses play, with a close X. Its buttons,
-  one shape, in a full-width stack: "Resume" (primary), "Map", "Ship",
-  "Settings" and "Back to title". Ship opens a card titled "Ship" with a close
+  "Paused" over the dimmed game, which pauses play, with a close X. Its buttons
+  share one shape. "Map", "Ship", "Settings" and "Back to title" sit above, and
+  "Resume" (primary) spans the full width at the bottom, focused when the card
+  opens, since primary buttons sit down and to the right. Ship opens a card titled "Ship" with a close
   X, back to the pause card, in two sections. "Cargo" lists Stardust, ore
   carried this flight, "Holodisks: {n} of 6", and the carried job or story item or towed
   craft when there is one. "Equipment" lists the shield, engine and tractor
