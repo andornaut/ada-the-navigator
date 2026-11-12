@@ -180,8 +180,8 @@ tuned for Cartwheel. Sunflower's gameplay still has stations, caches, frigates a
 its capital battle, drawn with pastel-tuned versions that read on its yellow field,
 and reusing the shared Cartwheel-tuned assets until those exist. Asteroid sprites
 match the collision radii: small 12 to 18, medium 24 to 34, large 52 to 70 and huge
-84 to 104 world units; large and huge rocks keep their radius plus 160 clear of
-stations, destinations and launch points. Shapes stay simple and
+84 to 104 world units; large and huge rocks keep their silhouette radius plus 160 clear
+of stations, destinations and launch points. Shapes stay simple and
 readable at display size, with distinct silhouettes by role: a small darting
 swarm craft, a baseline fighter, a long narrow interceptor and a broad heavy
 retaliator. Enemy ships read as hostile and stay distinct from Ada's white and

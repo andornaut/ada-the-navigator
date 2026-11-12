@@ -442,7 +442,10 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   and resource rocks, debris, hazards, wrecks, story ships, towed craft, pickups
   and shots. Which objects interact is unchanged. Nothing passes behind another
   object on screen, and placement and spawning keep drawn objects from
-  overlapping on screen.
+  overlapping on screen. A clearance stated as an object's radius plus a margin
+  uses its silhouette radius, the greatest distance from its pivot to its drawn
+  silhouette over all its frames, so a turning or spinning object stays clear
+  on every frame; margins and centre-to-centre spacings stay as stated.
 - Ada's ship bounces off asteroids and other ordinary scenery with a little recoil
   and keeps moving; it never sticks. Scenery deals no damage. Attacks and marked
   hazards damage the shield.
