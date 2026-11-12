@@ -79,9 +79,9 @@ a clear background. Both are UI subset sprites with a single `rest` frame.
 
 ## HUD count
 
-The count shares the HUD status pill with the shield bar, beside the pause
-button: `icon-stardust-20` and the count in bold cream `#ead4aa`, in at most four
-characters ("9999", "10k" to "999k", "1m" to "999m"), with a gold
+The count leads the HUD status pill beside the pause button:
+`icon-stardust-20` and the count in bold cream `#ead4aa`, as wide as it renders,
+in at most four characters ("9999", "10k" to "999k", "1m" to "999m"), with a gold
 `+N` tick (`#f4d98a`, the body) on pickup. Geometry and timing are `STATUS_PILL` in
 [Layout](layout.md#status-pill); colours are in
 [Controls](controls.md#status-pill).
