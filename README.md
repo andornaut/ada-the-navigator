@@ -119,6 +119,12 @@ switches to it and reloads, and Cancel keeps the current version for that visit.
 Otherwise it takes over on a later launch, after every page the old one controls
 has closed. The landing page at `/` is not precached.
 
+A loading bar along the top edge of the play area shows loading. The game's own
+loads (the boot preload, a galaxy's art and any later art) fill it left to right;
+it holds full for 250 ms, then its element is removed. While the worker installs
+or registers, a segment travels across it until that work ends. With nothing
+loading there is no bar.
+
 Both pages link `/manifest.webmanifest`, which installs the game at `/play/`.
 The build writes each icon in `src/pwa/icons.ts` again under a content-hashed
 name in `/assets/` and points the built pages and manifest there, so a redrawn

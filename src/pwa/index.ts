@@ -33,6 +33,7 @@ import type { InstallState, InstallStepsKind } from "@andornaut/game-kit/web/pwa
 import { serviceWorkerUrl } from "@andornaut/game-kit/web/pwa/serviceWorkerUrl";
 import { requestPersistentStorage } from "@andornaut/game-kit/web/pwa/storagePersistence";
 
+import { offlineActivity } from "../loading/progress.ts";
 import { dispatchPhoneEvent, PHONE_EVENTS } from "./events.ts";
 import {
   createUpdateOffer,
@@ -88,6 +89,7 @@ function setupOfflinePlay(): void {
     {
       activationPolicy: "manual",
       bootWaitMs: BOOT_WAIT_MS,
+      onOfflineActivity: offlineActivity,
       onUpdateShown: updateOffer.setVisible,
       serviceWorkerUrl: serviceWorkerUrl(SERVICE_WORKER_URL, undefined),
     },

@@ -19,6 +19,8 @@ import type { SectorId } from "../data/types.ts";
 import { PICKUP_GLYPH, pickupGlyphKey, weaponGlyphPath } from "../data/weapon-glyphs.ts";
 import { coarsePointer } from "../input/coarse-pointer.ts";
 import { createControls } from "../input/controls.ts";
+import { trackLoader } from "../loading/loadingBar.ts";
+import { loadingProgress } from "../loading/progress.ts";
 import { rockFrame } from "../model/asteroids.ts";
 import { grantAllWeapons } from "../model/cheats.ts";
 import { currentsNear, flowFraction } from "../model/currents.ts";
@@ -450,12 +452,19 @@ export class PrototypeScene extends Phaser.Scene {
   private galaxies!: ReturnType<typeof createGalaxySelect>;
   private restartCard!: ReturnType<typeof createRestartCard>;
   private conversationBox!: ConversationBox;
+  private loadingTracked = false;
 
   constructor() {
     super("prototype");
   }
 
   preload(): void {
+    // Every run of the loader, the boot preload, a galaxy's art and any later art, fills the
+    // loading bar to full and then hides it.
+    if (!this.loadingTracked) {
+      this.loadingTracked = true;
+      trackLoader(loadingProgress, this.load);
+    }
     // Preload runs before followFrameTurn sizes the canvas, so the raster scale starts from the
     // fit the canvas's parent will give.
     const parent = this.game.canvas.parentElement;

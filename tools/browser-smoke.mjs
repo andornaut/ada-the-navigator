@@ -2226,6 +2226,16 @@ try {
       await seedOnce(model.save(), `ada-browser.start-screen-${kind}.v1`);
       await page.locator(".ada-start-actions > button").first().waitFor({ state: "visible" });
       await page.waitForFunction(() => document.querySelector(".ada-start-ship")?.complete);
+      // Once loading ends the loading bar's element is removed: an idle start screen has none.
+      const idle = await page
+        .waitForFunction(() => document.querySelector(".progress-bar") === null, null, {
+          timeout: 10000,
+        })
+        .then(
+          () => true,
+          () => false,
+        );
+      assert.ok(idle, `The ${kind} start screen keeps no loading bar once loading ends`);
       await inTurn(sizes, async ([name, size, insets]) => {
         startScreens[`${kind}-${name}`] = await startScreenAt(`${kind}-${name}`, size, insets);
       });

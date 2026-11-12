@@ -9,6 +9,7 @@ import Phaser from "phaser";
 import { SCREEN } from "./data/screen.ts";
 import { PrototypeScene } from "./game/scene.ts";
 import { followPageVisibility } from "./lifecycle.ts";
+import { mountLoading } from "./loading/progress.ts";
 import { gameShown, setupPhoneApp } from "./pwa/index.ts";
 import { FRAME_TURN } from "./view/frame-turn.ts";
 
@@ -18,6 +19,11 @@ if (!parent) {
 }
 
 lockGameOrientation("landscape", screen);
+// Before the game boots, so the boot preload's progress shows.
+const app = parent.closest<HTMLElement>("#app");
+if (app) {
+  mountLoading(app);
+}
 // At once: the browser's install prompt can come before the game has drawn anything.
 setupPhoneApp();
 

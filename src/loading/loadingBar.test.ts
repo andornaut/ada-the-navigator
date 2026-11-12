@@ -1,0 +1,153 @@
+import { createProgressState, type ProgressSnapshot } from "@andornaut/game-kit/progressState";
+import { describe, expect, it } from "vitest";
+
+import { followLoading, type LoaderLike, trackLoader } from "./loadingBar.ts";
+
+const FULL_MS = 250;
+
+/** A page whose bars record what they show, with a clock the test advances. */
+function page() {
+  const bars: { removed: boolean; shown: ProgressSnapshot[] }[] = [];
+  let now = 0;
+  const timers = new Map<number, { at: number; handler: () => void }>();
+  let next = 0;
+  const port = {
+    clearTimeout: (handle: unknown) => timers.delete(handle as number),
+    create: () => {
+      const bar = { removed: false, shown: [] as ProgressSnapshot[] };
+      bars.push(bar);
+      return {
+        remove: () => (bar.removed = true),
+        report: (s: ProgressSnapshot) => bar.shown.push(s),
+      };
+    },
+    fullMs: FULL_MS,
+    setTimeout: (handler: () => void, ms: number) => {
+      next += 1;
+      timers.set(next, { at: now + ms, handler });
+      return next;
+    },
+  };
+  const advance = (ms: number) => {
+    now += ms;
+    for (const [handle, timer] of [...timers]) {
+      if (timer.at <= now) {
+        timers.delete(handle);
+        timer.handler();
+      }
+    }
+  };
+  // The bars still mounted.
+  const mounted = () => bars.filter((bar) => !bar.removed);
+  return { advance, bars, mounted, port };
+}
+
+function loading() {
+  const view = page();
+  const foreground = createProgressState();
+  const background = createProgressState();
+  followLoading(view.port, { background, foreground });
+  return { background, foreground, ...view };
+}
+
+describe("the loading bar", () => {
+  it("mounts no bar element while nothing loads", () => {
+    const { bars } = loading();
+    expect(bars).toHaveLength(0);
+  });
+
+  it("fills a measured load to full, holds it, then removes the element", () => {
+    const { advance, bars, foreground, mounted } = loading();
+    const load = foreground.begin();
+    load.progress(0.4);
+    load.progress(1);
+    expect(mounted()).toHaveLength(1);
+    expect(bars[0]!.shown.at(-1)).toEqual({ active: true, value: 1 });
+    load.finish();
+    // The kit's bar shows complete, full, for the hold.
+    expect(bars[0]!.shown.at(-1)).toEqual({ active: false, value: undefined });
+    advance(FULL_MS - 1);
+    expect(mounted()).toHaveLength(1);
+    advance(1);
+    expect(mounted()).toHaveLength(0);
+  });
+
+  it("shows work of unknown total as the travelling segment, removed as soon as it ends", () => {
+    const { background, bars, mounted } = loading();
+    const install = background.begin();
+    expect(mounted()).toHaveLength(1);
+    // An active report with no share is the kit's pending state, whose segment travels.
+    expect(bars[0]!.shown).toEqual([{ active: true, value: undefined }]);
+    install.finish();
+    expect(mounted()).toHaveLength(0);
+  });
+
+  it("shows a game load over the precache, holds it full, then the precache again", () => {
+    const { advance, background, bars, foreground, mounted } = loading();
+    const install = background.begin();
+    const load = foreground.begin();
+    load.progress(0.5);
+    expect(bars[0]!.shown.at(-1)).toEqual({ active: true, value: 0.5 });
+    load.finish();
+    advance(FULL_MS);
+    expect(mounted()).toHaveLength(1);
+    expect(mounted()[0]!.shown).toEqual([{ active: true, value: undefined }]);
+    install.finish();
+    expect(mounted()).toHaveLength(0);
+  });
+
+  it("lets a new load cut a full hold short and fill the same bar again", () => {
+    const { advance, bars, foreground, mounted } = loading();
+    const first = foreground.begin();
+    first.progress(1);
+    first.finish();
+    const second = foreground.begin();
+    second.progress(0.2);
+    advance(FULL_MS);
+    expect(mounted()).toHaveLength(1);
+    expect(bars).toHaveLength(1);
+    expect(bars[0]!.shown.at(-1)).toEqual({ active: true, value: 0.2 });
+  });
+});
+
+describe("tracking the loader", () => {
+  function loader() {
+    const listeners = new Map<string, (value?: unknown) => void>();
+    const fake: LoaderLike = {
+      on: (event, listener) => listeners.set(event, listener),
+    };
+    const emit = (event: string, value?: unknown) => listeners.get(event)?.(value);
+    return { emit, fake };
+  }
+
+  it("reports each run from its start to full, never moving back as files queue", () => {
+    const state = createProgressState();
+    const seen: ProgressSnapshot[] = [];
+    state.subscribe((snapshot) => seen.push(snapshot));
+    const { emit, fake } = loader();
+    trackLoader(state, fake);
+    emit("start");
+    emit("progress", 0.6);
+    // A galaxy manifest queues its art mid-run, so the share of files loaded drops.
+    emit("progress", 0.3);
+    emit("complete");
+    expect(seen.map(({ active, value }) => [active, value])).toEqual([
+      [false, undefined],
+      [true, undefined],
+      [true, 0],
+      [true, 0.6],
+      [true, 1],
+      [false, undefined],
+    ]);
+  });
+
+  it("ignores a complete with no run, as for an empty queue", () => {
+    const state = createProgressState();
+    const seen: ProgressSnapshot[] = [];
+    state.subscribe((snapshot) => seen.push(snapshot));
+    const { emit, fake } = loader();
+    trackLoader(state, fake);
+    emit("complete");
+    expect(seen).toEqual([{ active: false, value: undefined }]);
+  });
+});
