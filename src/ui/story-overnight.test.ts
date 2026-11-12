@@ -164,10 +164,10 @@ describe("Art's overnight room", () => {
     }
   });
 
-  it("plays over the jump-home scene's sleep page, between its night and morning pages", () => {
+  it("plays over the jump-home scene's sleep page, between its red aboard and morning pages", () => {
     const pages = jumpHomeScene("", "").pages;
     expect(pages.map(({ background, sleep }) => [background, sleep ?? false])).toEqual([
-      ["adaRoomNight", false],
+      ["aboardEmergency", false],
       ["adaRoomSleep", true],
       ["adaRoomMorningCats", false],
     ]);

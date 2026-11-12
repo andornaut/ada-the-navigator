@@ -44,9 +44,12 @@ export interface PremiseLine {
 /**
  * A storybook location with Art's background: the Earth scenes (Ada's room also before the rock
  * is polished and with the recorder, Grandma's garden also with the tray spilled and replanted)
- * and the cockpit, empty while Ada and Penny stand and seated once they sit.
+ * and aboard: Ada's ship from outside on every page set on the ship, and in the emergency jump's
+ * red on the jump-home page.
  */
 export type ArtBackground =
+  | "aboard"
+  | "aboardEmergency"
   | "adaRoom"
   | "adaRoomMorning"
   | "adaRoomMorningCats"
@@ -56,8 +59,6 @@ export type ArtBackground =
   | "adaRoomSleep"
   | "adaRoomUnpolished"
   | "adaRoomUnpolishedCats"
-  | "cockpit"
-  | "cockpitSeated"
   | "concertHall"
   | "frontDoor"
   | "frontDoorMom"
@@ -73,7 +74,7 @@ export type ArtBackground =
 export type Background = ArtBackground;
 
 export interface PrologueStep extends PremiseLine {
-  /** Where the page is; the cockpit unless given. */
+  /** Where the page is; aboard unless given. */
   background?: Background;
   choice?: string;
   questions?: readonly { question: string; answer: string }[];
@@ -102,7 +103,7 @@ export interface PremiseContent {
   };
   /**
    * Plays once, after galaxy one's home opening and before the first flight: the park, Ada's
-   * room, the cockpit standing with Astra's optional questions, then seated.
+   * room, then aboard with Astra's optional questions.
    */
   prologue: readonly PrologueStep[];
   /** Ada's room before a named action that takes her aboard. */

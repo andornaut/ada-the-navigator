@@ -493,12 +493,10 @@ try {
         };
       }),
     });
-    // The cockpit's first Astra page standing and seated, and her loop on the standing one.
+    // The first page aboard where Astra speaks, with her portrait's loop: the aboard capture.
     const current = pages.at(-1);
     const shot =
-      current.speaker === "Astra" && current.background.startsWith("cockpit")
-        ? `story-astra-${current.background === "cockpit" ? "standing" : "seated"}`
-        : null;
+      current.speaker === "Astra" && current.background === "aboard" ? "story-astra-aboard" : null;
     if (shot && !storyShots.has(shot)) {
       storyShots.add(shot);
       await page.screenshot({ path: `${output}/${shot}.png` });
@@ -678,7 +676,7 @@ try {
   await page.locator('[data-action="close-settings"]').click();
   await page.locator('[data-action="close-settings"]').waitFor({ state: "hidden" });
   await page.locator('[data-action="start"]').waitFor({ state: "visible" });
-  // A first launch: Start, galaxy one's opening, the prologue in Ada's room and the cockpit, then
+  // A first launch: Start, galaxy one's opening, the prologue in Ada's room and aboard, then
   // galaxy selection on galaxy one.
   assert.equal(
     await page.evaluate(() => window.adaWakeLock.held),
@@ -706,7 +704,7 @@ try {
   // The prologue begins in the park, then Ada polishes the rock and it glows in her room.
   const prologueAt = openingAt + 3;
   const earthSteps = prologueSteps.filter(
-    ({ background }) => background && !background.startsWith("cockpit"),
+    ({ background }) => background && background !== "aboard",
   );
   assert.deepEqual(
     launchPages
@@ -715,20 +713,15 @@ try {
     earthSteps.map(({ background, text }) => [background, text]),
     "The prologue's Earth pages: the park, the unpolished room, the glowing room",
   );
-  // The rest plays in the cockpit: empty while Ada and Penny stand, seated once Ada sits.
-  const cockpitAt = prologueAt + earthSteps.length;
-  const seatedText = prologueSteps.find(({ background }) => background === "cockpitSeated")?.text;
-  const seatedAt = launchPages.findIndex(({ text }) => text === seatedText);
-  assert.ok(seatedAt > cockpitAt, "Ada sits after the cockpit's first pages");
+  // The rest plays aboard, Ada's ship from outside, standing and seated alike.
+  const aboardAt = prologueAt + earthSteps.length;
   assert.deepEqual(
-    launchPages.slice(cockpitAt).map(({ background }) => background),
-    launchPages
-      .slice(cockpitAt)
-      .map((_, index) => (index + cockpitAt < seatedAt ? "cockpit" : "cockpitSeated")),
-    "The prologue's cockpit is empty until Ada sits, then seated",
+    [...new Set(launchPages.slice(aboardAt).map(({ background }) => background))],
+    ["aboard"],
+    "Every prologue page from Ada's arrival shows aboard",
   );
-  // Every page shows its location's image from Art's manifest; only the glowing room's press into
-  // the cockpit plays the rock glow, hiding the panel as its first frame fades in.
+  // Every page shows its location's image from Art's manifest; only the glowing room's press
+  // aboard plays the rock glow, hiding the panel as its first frame fades in.
   const { BACKGROUND_ART } = await import(new URL("../src/data/storybook.ts", import.meta.url));
   const artManifest = await (
     await page.request.get("http://ada-preview:4173/art/manifest.json")
@@ -739,9 +732,9 @@ try {
   }
   const glow = launchPages.findIndex(
     ({ background }, index) =>
-      background === "adaRoom" && launchPages[index + 1]?.background === "cockpit",
+      background === "adaRoom" && launchPages[index + 1]?.background === "aboard",
   );
-  assert.ok(glow >= 0, "The prologue leaves Ada's room for the cockpit");
+  assert.ok(glow >= 0, "The prologue leaves Ada's room for aboard");
   assert.deepEqual(launchPages[glow].after, {
     incoming: artUrl("story-ada-room-glow-1"),
     panelHidden: true,
@@ -752,10 +745,8 @@ try {
     "Every other page change cuts",
   );
   assert.ok(
-    launchPages.some(
-      ({ background, speaker }) => speaker === "Astra" && background.startsWith("cockpit"),
-    ),
-    "Astra speaks in the prologue's cockpit",
+    launchPages.some(({ background, speaker }) => speaker === "Astra" && background === "aboard"),
+    "Astra speaks aboard in the prologue",
   );
   // Each dialogue page shows its speaker's 32 portrait in the 68 frame: Ada at the inner left,
   // Astra and Grandma at the inner right; narration and a speaker Art has not drawn show none.
@@ -783,14 +774,10 @@ try {
       astraPages.every(({ portrait }) => Math.abs(portrait.right) < 0.2),
     "Ada's frame sits on the text column's left edge and Astra's on its right",
   );
-  assert.deepEqual(
-    [...storyShots].sort(),
-    ["story-astra-seated", "story-astra-standing"],
-    "Astra speaks standing and seated in the cockpit",
-  );
+  assert.deepEqual([...storyShots], ["story-astra-aboard"], "Astra speaks aboard");
   assert.ok(
-    launchPages.filter(({ looped }) => looped).length === 2,
-    "Astra's speaking loop runs on the cockpit pages",
+    launchPages.filter(({ looped }) => looped).length === 1,
+    "Astra's portrait loop runs on her page aboard",
   );
   // The light spread: no page scrolls or rises past the top cap, opening, resolution and closing
   // pages carry the chapter heading, and each background keeps one placement through the run.
@@ -820,11 +807,10 @@ try {
   );
   events.checks.push(
     "Story pages show the speaker's 32 portrait in the 68 frame, Ada left and Astra right, " +
-      "Astra's speaking loop running standing and seated in the cockpit",
+      "Astra's portrait loop running aboard",
   );
   events.checks.push(
-    "Storybook pages show Art's backgrounds and the glowing room plays the rock glow into the " +
-      "cockpit",
+    "Storybook pages show Art's backgrounds and the glowing room plays the rock glow aboard",
   );
   // Each optional question's answer returns to the list until Continue.
   for (const { answer } of PROTOTYPE.premise.prologue.find(({ questions }) => questions)
@@ -2946,7 +2932,7 @@ try {
   );
 
   // A story run (gameplay/rules.md "Earth scenes"): from Start, Previous on the prologue's first
-  // page returns across Grandma's garden into chapter one's opening, Skip from a mid-cockpit page
+  // page returns across Grandma's garden into chapter one's opening, Skip from a mid-prologue page aboard
   // passes the rest of the run to galaxy selection, and Home's run is Ada's room page alone, with
   // Skip hidden.
   await seedOnce(new GameModel(PROTOTYPE).save(), "ada-browser.story-run.v1");
@@ -2998,13 +2984,13 @@ try {
   await storyButton("previous").click();
   await showsText(PROTOTYPE.chapters[1].openingBranches[0]);
   const back = await storyPage();
-  // On to a mid-cockpit page, Astra asking Ada's name, then Skip.
+  // On to a page aboard, Astra asking Ada's name, then Skip.
   const named = PROTOTYPE.premise.prologue.find(
     ({ text }) => text === "What is your name, explorer?",
   );
-  assert.ok(named, "The prologue's cockpit has Astra ask Ada's name");
+  assert.ok(named, "Astra asks Ada's name aboard in the prologue");
   await nextTo(named.text);
-  const cockpit = await storyPage();
+  const aboard = await storyPage();
   await page.locator('[data-action="story-skip"]').click();
   await selector().waitFor({ state: "visible" });
   await page.locator('[data-action="galaxy-home"]').click();
@@ -3012,7 +2998,7 @@ try {
   const room = await storyPage();
   const roomAction = ((await storyButton("next").textContent()) ?? "").trim();
   await page.screenshot({ path: `${output}/story-run-room.png` });
-  save("story-run-proof.json", { back, cockpit, garden, opening, prologue, room, roomAction });
+  save("story-run-proof.json", { aboard, back, garden, opening, prologue, room, roomAction });
   assert.ok(opening.previousDisabled, "Previous is disabled on the run's first page");
   assert.equal(opening.background, "grandmaGarden", "The run opens in Grandma's garden");
   assert.ok(opening.skipShown, "Skip shows inside the run");
@@ -3020,14 +3006,14 @@ try {
   assert.equal(garden.background, "grandmaGarden", "Previous returns to Grandma's farewell");
   assert.equal(back.text, PROTOTYPE.chapters[1].openingBranches[0]);
   assert.ok(!back.previousDisabled, "Previous goes on within chapter one's opening");
-  assert.equal(cockpit.background, "cockpit", "Skip is pressed on a standing cockpit page");
+  assert.equal(aboard.background, "aboard", "Skip is pressed on a page aboard");
   assert.equal(room.background, "adaRoom", "Home from galaxy selection shows Ada's room");
   assert.equal(roomAction, PROTOTYPE.labels.pickUpRock);
   assert.ok(!room.skipShown, "Skip is hidden on the run's end, Ada's room page");
   assert.ok(room.previousDisabled, "Ada's room page from galaxy selection starts its run");
   events.checks.push(
     "A story run's Previous crosses from the prologue across Grandma's garden into chapter one, " +
-      "Skip from the cockpit passes the run to galaxy selection, and Ada's room page ends a run " +
+      "Skip from aboard passes the run to galaxy selection, and Ada's room page ends a run " +
       "with Skip hidden",
   );
 

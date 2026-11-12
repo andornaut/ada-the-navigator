@@ -224,13 +224,13 @@ describe("quantum jump home", () => {
     expect(next.objects.some(({ id }) => id.startsWith("lost:"))).toBe(false);
   });
 
-  it("lands at night, sleeps while Astra recharges, then wakes to morning and the room", () => {
+  it("lands aboard in the emergency red, sleeps while Astra recharges, then wakes to morning", () => {
     const model = launched();
     seenHome(model);
     deplete(model);
     expect(model.storyView).toMatchObject({
       canGoBack: false,
-      page: { background: "adaRoomNight", id: "jumpHome", text: PROTOTYPE.labels.jumpHome },
+      page: { background: "aboardEmergency", id: "jumpHome", text: PROTOTYPE.labels.jumpHome },
     });
     model.storyNext();
     expect(model.storyView?.page).toMatchObject({

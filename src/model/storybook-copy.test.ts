@@ -91,7 +91,7 @@ describe("storybook text", () => {
     const polish = prologue.slice(3, 5);
     const glow = prologue[5]!;
     const standing = prologue.filter((step) => !step.background);
-    const seated = prologue.filter((step) => step.background === "cockpitSeated");
+    const seated = prologue.filter((step) => step.background === "aboard");
     expect(COPY).toContain(
       section(
         "First launch only, before chapter one's opening, in Grandma's garden:",

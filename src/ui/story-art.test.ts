@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { PROTOTYPE } from "../data/prototype.ts";
-import { BACKGROUND_ART, SELECTOR_BACKDROP } from "../data/storybook.ts";
+import { BACKGROUND_ART } from "../data/storybook.ts";
 import type { ArtBackground } from "../data/types.ts";
 import { boardingScene, prologueScene } from "../model/storybook.ts";
 import { STORY_BACKGROUND } from "./layout/storyPage.ts";
@@ -77,32 +77,28 @@ describe("storybook art", () => {
     expect(storySubjects(broken)).not.toHaveProperty("park");
   });
 
-  // Each cockpit Ada's room leads into: the empty one in the prologue, the seated one at boarding.
-  const COCKPITS = ["cockpit", "cockpitSeated"] as const;
-  // Each rock glow: Ada's room into either cockpit, and Needle's recorder room into the seated
-  // one at boarding, each through its own room's three glow frames.
-  const GLOWS: readonly { cockpit: ArtBackground; frames: string; room: ArtBackground }[] = [
-    ...COCKPITS.map(
-      (cockpit) => ({ cockpit, frames: "story-ada-room-glow", room: "adaRoom" }) as const,
-    ),
-    { cockpit: "cockpitSeated", frames: "story-ada-room-recorder-glow", room: "adaRoomRecorder" },
+  // Each rock glow: Ada's room, and Needle's recorder room at boarding, into aboard, each through
+  // its own room's three glow frames.
+  const GLOWS: readonly { aboard: ArtBackground; frames: string; room: ArtBackground }[] = [
+    { aboard: "aboard", frames: "story-ada-room-glow", room: "adaRoom" },
+    { aboard: "aboard", frames: "story-ada-room-recorder-glow", room: "adaRoomRecorder" },
   ] as const;
   // A composite shares its base's image, so a page on Dad's recorder room glows as the room does.
   const bases = storyBases(manifest.assets);
   const glows = (from: ArtBackground, to: ArtBackground) =>
-    GLOWS.some(({ cockpit, room }) => room === (bases[from] ?? from) && cockpit === to);
+    GLOWS.some(({ aboard, room }) => room === (bases[from] ?? from) && aboard === to);
 
-  it("joins each glowing room to its cockpits with its rock glow frames", () => {
-    for (const { cockpit, frames, room } of GLOWS) {
-      const steps = transitionSteps(transitions, backgrounds[room], backgrounds[cockpit], false);
+  it("joins each glowing room to aboard with its rock glow frames", () => {
+    for (const { aboard, frames, room } of GLOWS) {
+      const steps = transitionSteps(transitions, backgrounds[room], backgrounds[aboard], false);
       expect(
         steps?.map(({ url }) => url),
-        `${room} to ${cockpit}`,
+        `${room} to ${aboard}`,
       ).toEqual([
         asset(`${frames}-1`)?.path,
         asset(`${frames}-2`)?.path,
         asset(`${frames}-3`)?.path,
-        backgrounds[cockpit],
+        backgrounds[aboard],
       ]);
       expect(steps?.map(({ fadeMs, holdMs }) => [fadeMs, holdMs])).toEqual([
         [160, 0],
@@ -114,14 +110,14 @@ describe("storybook art", () => {
   });
 
   it("replaces the glow frames with one cross-fade under reduced motion", () => {
-    for (const { cockpit, room } of GLOWS) {
-      expect(transitionSteps(transitions, backgrounds[room], backgrounds[cockpit], true)).toEqual([
-        { fadeMs: 400, holdMs: 0, url: backgrounds[cockpit] },
+    for (const { aboard, room } of GLOWS) {
+      expect(transitionSteps(transitions, backgrounds[room], backgrounds[aboard], true)).toEqual([
+        { fadeMs: 400, holdMs: 0, url: backgrounds[aboard] },
       ]);
     }
   });
 
-  it("cuts between every other pair of pages, and back from the cockpit", () => {
+  it("cuts between every other pair of pages, and back from aboard", () => {
     for (const from of KEYS) {
       for (const to of KEYS) {
         if (!glows(from, to)) {
@@ -141,20 +137,20 @@ describe("storybook art", () => {
       steps: [{ background: to, fadeMs: 0, holdMs: 0 }],
     });
     const joined = readStoryTransitions(manifest.assets, {
-      anyName: entry("cockpit-seated"),
+      anyName: entry("aboard-emergency"),
       version: 1,
     });
-    expect(transitionSteps(joined, backgrounds.adaRoom, backgrounds.cockpitSeated, false)).toEqual([
-      { fadeMs: 0, holdMs: 0, url: backgrounds.cockpitSeated },
-    ]);
-    expect(transitionSteps(joined, backgrounds.adaRoom, backgrounds.cockpit, false)).toBeNull();
+    expect(
+      transitionSteps(joined, backgrounds.adaRoom, backgrounds.aboardEmergency, false),
+    ).toEqual([{ fadeMs: 0, holdMs: 0, url: backgrounds.aboardEmergency }]);
+    expect(transitionSteps(joined, backgrounds.adaRoom, backgrounds.aboard, false)).toBeNull();
   });
 
   it("leaves out a transition that names an image the manifest lacks", () => {
     const data = {
       rockGlow: {
         from: "story-ada-room",
-        reducedMotion: [{ background: "cockpit", fadeMs: 400, holdMs: 0 }],
+        reducedMotion: [{ background: "aboard", fadeMs: 400, holdMs: 0 }],
         steps: [{ background: "story-missing", fadeMs: 160, holdMs: 0 }],
       },
       version: 1,
@@ -176,29 +172,25 @@ describe("storybook art", () => {
     expect(art).toContain("image-rendering:pixelated");
   });
 
-  it("uses the empty cockpit until Ada sits, then the seated one, and seats boarding at once", () => {
+  it("shows aboard on every page from Ada's arrival, standing or seated, and at every boarding", () => {
     const prologue = prologueScene(PROTOTYPE, LABELS).pages;
-    const sits = prologue.findIndex(({ text }) => text.startsWith("Ada sits in the pilot's chair"));
-    const hub = prologue.findIndex(({ questions }) => questions);
-    expect(sits).toBeGreaterThan(hub);
-    const arrival = prologue.findIndex(({ background }) => background === "cockpit");
+    const arrival = prologue.findIndex(({ background }) => background === "aboard");
     expect(prologue[arrival]?.text).toMatch(/^Light swirls around Ada and Penny/u);
-    // The question hub's answer pages follow it in the list, so they stand too.
-    for (const [index, page] of prologue.entries()) {
-      if (index >= arrival) {
-        expect(page.background, page.id).toBe(index < sits ? "cockpit" : "cockpitSeated");
-      }
+    // Astra's questions, their answers and the seated pages after them share the one image.
+    for (const page of prologue.slice(arrival)) {
+      expect(page.background, page.id).toBe("aboard");
     }
-    expect(prologue.slice(arrival, sits).some(({ id }) => id.includes(":answer:"))).toBe(true);
+    expect(prologue.slice(arrival).some(({ id }) => id.includes(":answer:"))).toBe(true);
     for (const fromRoom of [true, false]) {
       for (const announce of [false, true]) {
-        const cockpit = boardingScene(PROTOTYPE, announce, fromRoom)
+        const aboard = boardingScene(PROTOTYPE, announce, fromRoom)
           .pages.filter(({ speaker }) => speaker)
           .map(({ background }) => background);
-        expect(cockpit.length).toBeGreaterThan(0);
-        expect(new Set(cockpit)).toEqual(new Set(["cockpitSeated"]));
+        expect(aboard.length).toBeGreaterThan(0);
+        expect(new Set(aboard)).toEqual(new Set(["aboard"]));
       }
     }
-    expect(SELECTOR_BACKDROP).toBe("cockpitSeated");
+    expect(BACKGROUND_ART.aboard).toBe("aboard");
+    expect(BACKGROUND_ART.aboardEmergency).toBe("aboard-emergency");
   });
 });

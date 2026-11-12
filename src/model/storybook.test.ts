@@ -50,7 +50,7 @@ const asking: Scene = {
   pages: [
     {
       action: "Continue",
-      background: "cockpit",
+      background: "aboard",
       id: "ask",
       next: "end",
       questions: [
@@ -59,9 +59,9 @@ const asking: Scene = {
       ],
       text: "Ask?",
     },
-    { background: "cockpit", id: "one", next: "ask", text: "One." },
-    { background: "cockpit", id: "two", next: "ask", text: "Two." },
-    { background: "cockpit", id: "end", text: "End." },
+    { background: "aboard", id: "one", next: "ask", text: "One." },
+    { background: "aboard", id: "two", next: "ask", text: "Two." },
+    { background: "aboard", id: "end", text: "End." },
   ],
 };
 
@@ -147,7 +147,7 @@ describe("home visits", () => {
       "opening:rejoin:0@frontDoorMom",
       "room@adaRoom",
       "boarding:0@adaRoom",
-      "boarding:1@cockpitSeated",
+      "boarding:1@aboard",
     ]);
     expect(pages[1]?.text).toBe(PROTOTYPE.chapters[1]!.resolutionBranches[1]);
     expect(pages[4]?.text).toBe(PROTOTYPE.chapters[3]!.openingBranches[1]);
@@ -405,7 +405,7 @@ describe("story runs", () => {
     expect(model.storyView?.page.id).toBe("closing");
   });
 
-  it("starts on Continue from the start screen in the cockpit, with Previous disabled", () => {
+  it("starts on Continue from the start screen aboard, with Previous disabled", () => {
     const model = questDone(2);
     model.state.progress[2].questComplete = false;
     model.returnHome();
@@ -513,7 +513,7 @@ describe("start flow", () => {
     expect(relaunch(PROTOTYPE, reloaded.save()).state.started).toBe(true);
   });
 
-  it("continues in the cockpit with Astra's line, then the farthest unlocked galaxy", () => {
+  it("continues aboard with Astra's line, then the farthest unlocked galaxy", () => {
     const model = questDone(2);
     model.state.progress[2].questComplete = false;
     model.returnHome();
@@ -525,7 +525,7 @@ describe("start flow", () => {
     // The room and rock are skipped, never Astra's boarding line.
     expect(
       readStory(reloaded).map(({ background, speaker, text }) => [background, speaker, text]),
-    ).toEqual([["cockpitSeated", "Astra", "Welcome back, Navigator."]]);
+    ).toEqual([["aboard", "Astra", "Welcome back, Navigator."]]);
     expect(reloaded.screen).toBe("selector");
     expect(reloaded.selectedGalaxy).toBe(2);
   });

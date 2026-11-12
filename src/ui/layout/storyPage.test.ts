@@ -426,8 +426,11 @@ describe("story background placement", () => {
     expect(top(phone!, "park", 229)).toBe(-138);
     expect(top(SCREENS[1]!, "park", 237)).toBe(-134);
     expect(top(desktop!, "park", 285)).toBe(-110);
-    expect(top(phone!, "cockpitSeated", 203)).toBe(-135);
-    expect(top(desktop!, "cockpitSeated", 251)).toBe(-111);
+    // Art's aboard rows: boarding, and the emergency jump home.
+    expect(top(phone!, "aboard", 237)).toBe(-95.5);
+    expect(top(desktop!, "aboard", 285)).toBe(-71.5);
+    expect(top(phone!, "aboardEmergency", 257)).toBe(-85.5);
+    expect(top(desktop!, "aboardEmergency", 305)).toBe(-61.5);
     expect(top(phone!, "adaRoomNight", 257)).toBe(-146.5);
     expect(top(desktop!, "adaRoomNight", 305)).toBe(-122.5);
     // A backdrop without a panel centres.
@@ -452,16 +455,14 @@ describe("story background placement", () => {
     expect(tops(SCREENS[0]!)).toEqual({
       adaRoom: 213,
       adaRoomUnpolished: 231,
-      cockpit: 93,
-      cockpitSeated: 203,
+      aboard: 93,
       grandmaGarden: 113,
       park: 229,
     });
     expect(tops(SCREENS[3]!)).toEqual({
       adaRoom: 261,
       adaRoomUnpolished: 279,
-      cockpit: 141,
-      cockpitSeated: 251,
+      aboard: 141,
       grandmaGarden: 161,
       park: 285,
     });

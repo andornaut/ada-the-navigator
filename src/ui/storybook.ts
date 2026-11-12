@@ -451,7 +451,7 @@ ${STORY_PORTRAIT_RULES}
  * its slot or on its own row when the action is too wide. A question page shows its remaining
  * questions with Continue in Next's place. Each background keeps one placement for the story run,
  * anchored on the run's tallest page on it. Between two pages whose images Art's story
- * transition joins (Ada's room to the cockpit), the panel hides while its frames play.
+ * transition joins (Ada's room to aboard), the panel hides while its frames play.
  */
 export function createStorybook(root: HTMLElement, options: StoryOptions) {
   const { labels } = options;
@@ -898,7 +898,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   };
   window.addEventListener(VIEW_SCALE_EVENT, relayout);
   void document.fonts.ready.then(relayout);
-  // Shows a page, or only a background (the cockpit behind galaxy selection), or nothing. A new
+  // Shows a page, or only a background (aboard behind the holodisk lines), or nothing. A new
   // state ends any transition still playing and shows at once.
   const show = (page: StoryPageView | null, backdrop: Background | null = null): void => {
     const signature = JSON.stringify([page && { ...page, run: page.run?.id }, backdrop]);

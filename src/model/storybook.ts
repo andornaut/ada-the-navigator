@@ -39,7 +39,7 @@ export type SceneEffect =
   | { readonly kind: "opened"; readonly galaxy: SectorId }
   | { readonly kind: "prologue" }
   | { readonly kind: "resolved"; readonly galaxy: SectorId };
-/** What follows a scene: more Earth scenes, the cockpit's boarding, or galaxy selection. */
+/** What follows a scene: more Earth scenes, boarding aboard, or galaxy selection. */
 /** What follows a scene; `visit` arrives home as any visit does, waiting scenes first. */
 export type SceneLead = "home" | "board" | "select" | "visit";
 export interface Scene {
@@ -328,7 +328,7 @@ export function resolutionScene(content: PrototypeContent, galaxy: SectorId): Sc
 
 /**
  * The prologue: the park where Ada finds the rock, her room as she polishes it and as it glows,
- * then the cockpit, where Astra's optional questions return to their list until Continue.
+ * then aboard, where Astra's optional questions return to their list until Continue.
  */
 export function prologueScene(content: PrototypeContent, labels: StoryLabels): Scene {
   const { prologue } = content.premise;
@@ -337,7 +337,7 @@ export function prologueScene(content: PrototypeContent, labels: StoryLabels): S
     const id = `prologue:${index}`;
     const following = index + 1 < prologue.length ? `prologue:${index + 1}` : undefined;
     const line = {
-      background: step.background ?? "cockpit",
+      background: step.background ?? "aboard",
       ...(step.speaker ? { speaker: step.speaker } : {}),
     };
     if (step.questions) {
@@ -375,8 +375,9 @@ export function prologueScene(content: PrototypeContent, labels: StoryLabels): S
 }
 
 /**
- * The emergency jump's overnight recharge in Ada's room: night with the jump-home line, the sleep
- * scene, then morning with its narration; the visit's waiting scenes follow.
+ * The emergency jump's overnight recharge: the jump-home line aboard in the emergency jump's red,
+ * the sleep scene in Ada's room, then morning with its narration; the visit's waiting scenes
+ * follow.
  */
 export function jumpHomeScene(jumpHome: string, morning: string): Scene {
   return {
@@ -384,7 +385,7 @@ export function jumpHomeScene(jumpHome: string, morning: string): Scene {
     last: "morning",
     lead: "visit",
     pages: [
-      { background: "adaRoomNight", id: "jumpHome", next: "sleep", text: jumpHome },
+      { background: "aboardEmergency", id: "jumpHome", next: "sleep", text: jumpHome },
       { background: "adaRoomSleep", id: "sleep", next: "morning", sleep: true, text: "" },
       { background: "adaRoomMorningCats", id: "morning", text: morning },
     ],
@@ -410,10 +411,9 @@ export function roomScene(content: PrototypeContent, labels: StoryLabels, empty:
 }
 
 /**
- * Boarding: the narration in Ada's room as she touches the glow, then Astra's line in the cockpit
- * with Ada and Penny seated;
- * once after a galaxy unlocks, Astra announces it instead. Continue from the start screen lands in
- * the cockpit and plays only Astra's line.
+ * Boarding: the narration in Ada's room as she touches the glow, then Astra's line aboard; once
+ * after a galaxy unlocks, Astra announces it instead. Continue from the start screen lands aboard
+ * and plays only Astra's line.
  */
 export function boardingScene(
   content: PrototypeContent,
@@ -427,7 +427,7 @@ export function boardingScene(
   const shown = fromRoom ? lines : lines.filter(({ speaker }) => speaker !== undefined);
   const pages = shown.map((line, index): StoryPage => ({
     ...("announces" in line ? { announces: true } : {}),
-    background: line.speaker === undefined ? "adaRoom" : "cockpitSeated",
+    background: line.speaker === undefined ? "adaRoom" : "aboard",
     id: `boarding:${index}`,
     ...(index + 1 < shown.length ? { next: `boarding:${index + 1}` } : {}),
     ...(line.speaker ? { speaker: line.speaker } : {}),

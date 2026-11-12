@@ -2389,7 +2389,7 @@ export class GameModel {
   }
   /**
    * Continue: a flight saved mid-flight resumes exactly as saved; otherwise any waiting home
-   * scene, else the cockpit and Astra's line, then galaxy selection.
+   * scene, else Astra's line aboard, then galaxy selection.
    */
   continueGame(): void {
     if (this.screen !== "start" || !this.state.started) {
@@ -2405,7 +2405,7 @@ export class GameModel {
     if (this.waitingScene() || !this.state.prologueSeen) {
       this.beginVisit();
     } else {
-      // Nothing waiting: the cockpit, Astra's boarding line, then galaxy selection.
+      // Nothing waiting: Astra's boarding line aboard, then galaxy selection.
       this.showScene(boardingScene(this.content, this.state.announceGalaxy, false));
     }
   }

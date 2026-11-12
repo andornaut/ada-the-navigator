@@ -28,6 +28,8 @@ export const CHAPTER_BACKGROUNDS: Readonly<
  * composite with Ada's playing sprite.
  */
 export const BACKGROUND_ART: Readonly<Record<ArtBackground, string>> = {
+  aboard: "aboard",
+  aboardEmergency: "aboard-emergency",
   adaRoom: "story-ada-room",
   adaRoomMorning: "story-ada-room-morning",
   adaRoomMorningCats: "story-ada-room-morning-cats",
@@ -37,8 +39,6 @@ export const BACKGROUND_ART: Readonly<Record<ArtBackground, string>> = {
   adaRoomSleep: "story-ada-room-sleep",
   adaRoomUnpolished: "story-ada-room-unpolished",
   adaRoomUnpolishedCats: "story-ada-room-unpolished-cats",
-  cockpit: "cockpit",
-  cockpitSeated: "cockpit-seated",
   concertHall: "story-concert-hall",
   frontDoor: "story-front-door",
   frontDoorMom: "story-front-door-mom",
@@ -59,10 +59,7 @@ export const BACKGROUND_ART: Readonly<Record<ArtBackground, string>> = {
  */
 export const OVERNIGHT_SLEEP = { seconds: 2.5, skipAfterSeconds: 0.5 } as const;
 
-/** Galaxy selection's backdrop: Ada and Penny in their seats. */
-export const SELECTOR_BACKDROP: Background = "cockpitSeated";
-
-/** Astra's speaker name; her lens animates on cockpit pages she speaks. */
+/** Astra's speaker name. */
 export const ASTRA = "Astra";
 
 /** One galaxy in galaxy selection, after Chibi's stage cards. */

@@ -159,11 +159,11 @@ export const PREMISE: PremiseContent = {
       text: "In space. I'll fly where you steer. You choose where we go, and tell me what you see.",
     },
     {
-      background: "cockpitSeated",
+      background: "aboard",
       text: "Ada sits in the pilot's chair and buckles Penny in beside her.",
     },
     {
-      background: "cockpitSeated",
+      background: "aboard",
       speaker: "Astra",
       text: [
         "You steer, and you aim. My shield will protect us. If it ever fails, I'll jump ",
@@ -171,7 +171,7 @@ export const PREMISE: PremiseContent = {
       ].join(""),
     },
     {
-      background: "cockpitSeated",
+      background: "aboard",
       choice: "Let's find your holodisk.",
       speaker: "Astra",
       text: [

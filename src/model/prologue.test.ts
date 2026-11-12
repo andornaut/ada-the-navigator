@@ -93,7 +93,7 @@ describe("prologue", () => {
     expect(model.storyView?.page.background).toBe("park");
   });
 
-  it("moves from the park to Ada's room, then the cockpit, then galaxy selection", () => {
+  it("moves from the park to Ada's room, then aboard, then galaxy selection", () => {
     const model = started();
     const pages = readStory(model);
     expect(pages.map(summary)).toEqual([
@@ -126,87 +126,81 @@ describe("prologue", () => {
         "Touch the glow.",
       ],
       [
-        "cockpit",
+        "aboard",
         "",
         "Light swirls around Ada and Penny. When it fades, they are standing in a tiny cockpit " +
           "under a blue dome. Through it, colors shimmer like nowhere at all.",
         "Next",
       ],
       [
-        "cockpit",
+        "aboard",
         "",
         "Penny's tail thumps. She sniffs the two seats as if she has been here before.",
         "Next",
       ],
-      ["cockpit", "Astra", "Hello. Please don't be afraid. I'm Astra.", "Next"],
-      ["cockpit", "Ada", "Who said that? Where are you?", "Next"],
+      ["aboard", "Astra", "Hello. Please don't be afraid. I'm Astra.", "Next"],
+      ["aboard", "Ada", "Who said that? Where are you?", "Next"],
       [
-        "cockpit",
+        "aboard",
         "Astra",
         "All around you. I'm an AI, the mind of this ship. You're standing inside me, in a way.",
         "Next",
       ],
-      ["cockpit", "Astra", "What is your name, explorer?", "Next"],
-      ["cockpit", "Ada", "Ada. And this is Penny.", "Next"],
+      ["aboard", "Astra", "What is your name, explorer?", "Next"],
+      ["aboard", "Ada", "Ada. And this is Penny.", "Next"],
       [
-        "cockpit",
+        "aboard",
         "Astra",
         "Hello, Ada. Hello, Penny. The rock you found is my beacon. It waits for someone who " +
           "loves to find the way.",
         "Next",
       ],
-      ["cockpit", "Ada", "Where are we?", "Next"],
+      ["aboard", "Ada", "Where are we?", "Next"],
       [
-        "cockpit",
+        "aboard",
         "Astra",
         "Between dimensions. While you are aboard, no time passes on Earth. Your family won't " +
           "even know you left.",
         "Next",
       ],
       [
-        "cockpit",
+        "aboard",
         "Astra",
         "I was made to explore and map new places. But my memory is damaged. Pieces of it are " +
           "stored on holodisks, and they were scattered across the galaxies.",
         "Next",
       ],
       [
-        "cockpit",
+        "aboard",
         "Astra",
         "I can still jump, but I can't find my way alone. I need a navigator. Will you be mine?",
         "Next",
       ],
-      ["cockpit", "Ada", "A real navigator? In space?", "Next"],
+      ["aboard", "Ada", "A real navigator? In space?", "Next"],
       [
-        "cockpit",
+        "aboard",
         "Astra",
         "In space. I'll fly where you steer. You choose where we go, and tell me what you see.",
         "Continue",
         questions,
       ],
+      ["aboard", "", "Ada sits in the pilot's chair and buckles Penny in beside her.", "Next"],
       [
-        "cockpitSeated",
-        "",
-        "Ada sits in the pilot's chair and buckles Penny in beside her.",
-        "Next",
-      ],
-      [
-        "cockpitSeated",
+        "aboard",
         "Astra",
         "You steer, and you aim. My shield will protect us. If it ever fails, I'll jump us " +
           "straight back to Earth.",
         "Next",
       ],
       [
-        "cockpitSeated",
+        "aboard",
         "Astra",
         "I remember one galaxy: Sunflower. Its holodisk is somewhere there. Quantum jump ready.",
         "Let's find your holodisk.",
       ],
     ]);
-    // Fourteen standing cockpit pages, then three seated.
-    expect(pages.filter(({ background }) => background === "cockpit")).toHaveLength(14);
-    expect(pages.filter(({ background }) => background === "cockpitSeated")).toHaveLength(3);
+    // Seventeen pages aboard, standing and seated alike.
+    expect(pages.filter(({ background }) => background === "aboard")).toHaveLength(17);
     expect(model.screen).toBe("selector");
     expect(model.selectedGalaxy).toBe(1);
     expect(model.state.prologueSeen).toBe(true);
@@ -220,7 +214,7 @@ describe("prologue", () => {
   it("splits its opening across the park, the unpolished room and the glowing room", () => {
     const model = started();
     const earth = readStory(model)
-      .filter(({ background }) => !background.startsWith("cockpit"))
+      .filter(({ background }) => !background.startsWith("aboard"))
       .map(({ action, background }) => [background, action ?? "Next"]);
     expect(earth).toEqual([
       ["park", "Next"],
@@ -235,7 +229,7 @@ describe("prologue", () => {
     expect(readStory(model).map(({ background }) => background)).toEqual([
       "adaRoom",
       "adaRoom",
-      "cockpitSeated",
+      "aboard",
     ]);
   });
 
@@ -248,7 +242,7 @@ describe("prologue", () => {
     expect(model.storyView.choices[0]?.label).toBe("What's a holodisk?");
     model.storyChoose(0);
     expect(model.storyView?.page).toMatchObject({
-      background: "cockpit",
+      background: "aboard",
       speaker: "Astra",
       text:
         "A disk that holds part of my memory. Each one you find helps me remember, maybe even how " +
@@ -271,7 +265,7 @@ describe("prologue", () => {
       model.storyChoose(index);
       answers.push(`${remaining[index]} ${model.storyView!.page.text}`);
       // Ada and Penny still stand while Astra answers.
-      expect(model.storyView?.page.background).toBe("cockpit");
+      expect(model.storyView?.page.background).toBe("aboard");
       model.storyNext();
       expect(model.storyView?.page.id).toBe(hub);
       expect(model.storyView?.choices.map(({ label }) => label)).not.toContain(remaining[index]);
@@ -328,7 +322,7 @@ describe("prologue", () => {
     expect(pages.map(summary)).toEqual([
       ["adaRoom", "", "Penny thumps her tail. Time for another adventure?", "Pick up the rock."],
       ["adaRoom", "", "Ada holds Penny close and touches the rock's glow.", "Next"],
-      ["cockpitSeated", "Astra", "Welcome back, Navigator.", "Next"],
+      ["aboard", "Astra", "Welcome back, Navigator.", "Next"],
     ]);
     expect(model.screen).toBe("selector");
   });
