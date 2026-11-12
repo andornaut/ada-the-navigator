@@ -14,8 +14,8 @@ const context: VolleyContext = {
 
 describe("pure player projectile volleys", () => {
   it.each([
-    ["rapidMissile", 0.3, 500 / 600, 1.5, 25],
-    ["heavyMissile", 1.2, 400 / 600, 8, 60],
+    ["rapidMissile", 0.5, 500 / 600, 2.5, 25],
+    ["heavyMissile", 2, 400 / 600, 10, 70],
   ] as const)(
     "plans one straight %s at interval %f, speed x%f, damage x%f and blast %i",
     (weapon, interval, speed, damage, blast) => {
@@ -56,8 +56,8 @@ describe("pure player projectile volleys", () => {
     multi.anglesDegrees.forEach((angle, index) => expect(angle).toBeCloseTo(bolts[index]!, 9));
     expect(scatter.anglesDegrees).toHaveLength(dots.length);
     scatter.anglesDegrees.forEach((angle, index) => expect(angle).toBeCloseTo(dots[index]!, 9));
-    // Every level reaches the same 360 world units; levels add only dots.
-    expect(scatter.rangeWorld).toBe(360);
+    // Every level reaches the same 100 world units; levels add only dots.
+    expect(scatter.rangeWorld).toBe(100);
   });
 
   it("keeps laser and scatter fans at their visible offsets for cardinal and diagonal world headings", () => {
@@ -98,7 +98,7 @@ describe("pure player projectile volleys", () => {
     }
   });
 
-  it("expires every scatter dot 360 world units along its heading, whatever the view", () => {
+  it("expires every scatter dot 100 world units along its heading, whatever the view", () => {
     for (const viewportWidth of [720, 1080]) {
       for (const aim of [
         { x: 1, y: 0 },
@@ -114,10 +114,10 @@ describe("pure player projectile volleys", () => {
         for (const shot of volley.projectiles) {
           const dx = shot.velocity.x * shot.life;
           const dy = shot.velocity.y * shot.life;
-          expect(Math.hypot(dx, dy)).toBeCloseTo(360);
-          expect(shot.damage).toBeCloseTo(context.baseDamage * 0.46);
+          expect(Math.hypot(dx, dy)).toBeCloseTo(100);
+          expect(shot.damage).toBeCloseTo((context.baseDamage * 6) / 7);
           expect(shot.projectile).toBe("dot");
-          expect(shot.fade?.projectedRange).toBe(360);
+          expect(shot.fade?.projectedRange).toBe(100);
         }
       }
     }

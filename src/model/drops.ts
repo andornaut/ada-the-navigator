@@ -1,6 +1,7 @@
 import type { AsteroidSize } from "../data/asteroidCatalog.ts";
-import type { EconomyCatalog } from "../data/economy.ts";
+import { type EconomyCatalog, unlockedWeapons } from "../data/economy.ts";
 import { type EnemyArchetype, enemyStardust, HEAVIES } from "../data/enemyCatalog.ts";
+import type { RoutePosition } from "../data/galaxies.ts";
 import type { GalaxyNumber, Weapon } from "../data/types.ts";
 import type { SpaceObject } from "./types.ts";
 
@@ -47,18 +48,21 @@ export function rollEnemyDrop(
 }
 
 /**
- * Whether a destroyed small craft drops an ammo pack pickup: at the ammo drop chance, apart from
- * its upgrade roll, once Ada owns a weapon other than Laser; a destroyed heavy never does.
+ * Whether a destroyed small craft in the galaxy at route `position` drops an ammo pack pickup: at
+ * the ammo drop chance, apart from its upgrade roll, while Ada owns a weapon other than Laser
+ * that the galaxy unlocks; a destroyed heavy never does.
  */
 export function rollAmmoDrop(
   catalog: EconomyCatalog,
+  position: RoutePosition,
   owned: readonly Weapon[],
   archetype: EnemyArchetype,
   next: () => number,
 ): boolean {
+  const unlocked: readonly Weapon[] = unlockedWeapons(position);
   return (
     !HEAVIES.includes(archetype) &&
-    owned.some((weapon) => weapon !== "laser") &&
+    owned.some((weapon) => unlocked.includes(weapon)) &&
     next() < catalog.ammo.dropChance
   );
 }

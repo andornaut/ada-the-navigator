@@ -47,7 +47,6 @@ const context = (peers: readonly EnemyState[], player = ada): EnemyContext => ({
   peers,
   player,
   playerVelocity: { x: 0, y: 0 },
-  projectileSpeed: CONTENT.tuning.enemyProjectileSpeed,
   targetable: true,
   visibility: "visible",
 });

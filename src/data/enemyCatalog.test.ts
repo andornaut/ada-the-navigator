@@ -1,18 +1,23 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  ENEMY_DAMAGE,
   ENEMY_FIRE,
+  ENEMY_SPEED_SHARE,
   type EnemyArchetype,
   enemyCatalog,
   enemyDefinition,
+  enemyFire,
   fireDamageRatio,
   type FireProfile,
+  HEAVY_POOLS,
+  HEAVY_TYPES,
+  heavyLoadout,
+  SINGLE_MOUNT_WEAPONS,
   type WeaponMounts,
 } from "./enemyCatalog.ts";
 import type { RoutePosition } from "./galaxies.ts";
-import type { GalaxyNumber, Weapon } from "./types.ts";
-import { WEAPON_CATALOG, weaponAt } from "./weaponCatalog.ts";
+import type { EnemyWeapon, GalaxyNumber, Weapon } from "./types.ts";
+import { WEAPON_CATALOG, weaponAt, weaponSpeed } from "./weaponCatalog.ts";
 
 const ROUTE_POSITIONS: readonly RoutePosition[] = [1, 2, 3, 4, 5, 6];
 const GALAXY_NUMBERS: readonly GalaxyNumber[] = [1, 2, 3, 4, 5, 6];
@@ -81,21 +86,15 @@ describe("heavy weapon mounts", () => {
 });
 
 describe("enemy weapon damage", () => {
-  it("keeps enemy Phaser and Scattershot below Ada's, the other shared weapons as hers", () => {
-    expect(fireDamageRatio({ level: 1, weapon: "phaser" })).toBe(4);
-    expect(weaponAt("phaser", 1).damageRatio).toBe(9);
-    expect(fireDamageRatio({ level: 1, weapon: "scattershot" })).toBe(0.35);
-    expect(weaponAt("scattershot", 1).damageRatio).toBe(0.46);
-    // Levels 2 and 3 share 1.5 and 2.25 times the level 1 volley across their dots.
-    const volley = (level: 1 | 2 | 3) =>
-      fireDamageRatio({ level, weapon: "scattershot" }) *
-      weaponAt("scattershot", level).anglesDegrees.length;
-    expect(volley(2) / volley(1)).toBeCloseTo(1.5, 9);
-    expect(volley(3) / volley(1)).toBeCloseTo(2.25, 9);
-    expect(Object.keys(ENEMY_DAMAGE).sort()).toEqual(["phaser", "scattershot"]);
-    for (const weapon of ["laser", "multiLaser", "rapidMissile", "heavyMissile"] as const) {
-      expect(fireDamageRatio({ level: 2, weapon })).toBe(weaponAt(weapon, 2).damageRatio);
+  it("deals Ada's level 1 damage with every shared weapon, no exceptions", () => {
+    for (const weapon of Object.keys(WEAPON_CATALOG) as Weapon[]) {
+      expect(fireDamageRatio({ level: 1, weapon }), weapon).toBe(weaponAt(weapon, 1).damageRatio);
     }
+    expect(fireDamageRatio({ level: 1, weapon: "heavyMissile" })).toBe(10);
+    expect(fireDamageRatio({ level: 1, weapon: "phaser" })).toBe(6.5);
+    expect(fireDamageRatio({ level: 1, weapon: "rapidMissile" })).toBe(2.5);
+    // A Scattershot volley of 6 across its 7 dots.
+    expect(fireDamageRatio({ level: 1, weapon: "scattershot" }) * 7).toBeCloseTo(6, 9);
   });
 });
 
@@ -121,54 +120,63 @@ describe("enemy fire profiles", () => {
     }
   });
 
-  it("arms each heavy at every position with its tier's mounted weapons, capped mounts left out", () => {
-    // Weapons and levels in fill order (gameplay/ships.md "Enemy weapons").
-    const loadout = (galaxy: GalaxyNumber, archetype: EnemyArchetype) =>
-      enemyDefinition(galaxy, archetype).hardpoints.flatMap((part) =>
-        part.kind === "weapon" ? [`${part.id} ${part.fire.weapon} ${part.fire.level}`] : [],
-      );
-    // Galaxy (route position): Sunflower 1 (1), Whirlpool 3 (2), Needle 4 (3), Andromeda 5 (4),
-    // Cartwheel 2 (5), Phantom 6 (6).
-    expect(loadout(1, "frigate")).toEqual(["port laser 1", "starboard laser 1"]);
-    expect(loadout(3, "frigate")).toEqual(["port laser 1", "starboard laser 1"]);
-    expect(loadout(4, "frigate")).toEqual([
-      "port laser 2",
-      "starboard laser 2",
-      "spine rapidMissile 2",
-    ]);
-    expect(loadout(2, "frigate")).toEqual([
-      "port laser 3",
-      "starboard laser 3",
-      "spine rapidMissile 3",
-      "bow chargedLance 1",
-    ]);
-    expect(loadout(1, "capital")).toEqual([
-      "weapon-left laser 1",
-      "weapon-right laser 1",
-      "weapon-rear-left multiLaser 1",
-      "weapon-rear-right multiLaser 1",
-    ]);
-    expect(loadout(5, "capital")).toEqual([
-      "weapon-left laser 2",
-      "weapon-right laser 2",
-      "weapon-rear-left multiLaser 2",
-      "weapon-rear-right multiLaser 2",
-      "claw-left rapidMissile 2",
-      "claw-right heavyMissile 1",
-    ]);
-    expect(loadout(6, "capital")).toEqual([
-      "weapon-left laser 3",
-      "weapon-right laser 3",
-      "weapon-rear-left rapidMissile 3",
-      "weapon-rear-right rapidMissile 3",
-      "claw-left phaser 1",
-      "claw-right heavyMissile 1",
-      "stern-left ringBurst 1",
-      "stern-right mineLayer 1",
-    ]);
-    expect(loadout(1, "platform")).toEqual(["port laser 1", "starboard laser 1"]);
-    expect(loadout(5, "platform")).toEqual(["port laser 2", "starboard laser 2"]);
-    expect(loadout(6, "platform")).toEqual(["port laser 3", "starboard laser 3"]);
+  it("arms each heavy's mounts with up to three of its position's pool, seeded by the ship", () => {
+    const ids = Array.from({ length: 200 }, (_, index) => `ship:${index}`);
+    const counts = { capital: [4, 6, 8], frigate: [2, 3, 4] } as const;
+    for (const archetype of ["capital", "frigate"] as const) {
+      for (const position of ROUTE_POSITIONS) {
+        const band = Math.ceil(position / 2) - 1;
+        const pool = HEAVY_POOLS[archetype][band]!;
+        const seen = new Set<string>();
+        for (const id of ids) {
+          const loadout = heavyLoadout(archetype, position, id)!;
+          const weapons = [...loadout.values()];
+          // Its tier's armed mounts, every one armed, each from the pool.
+          expect(loadout.size).toBe(counts[archetype][band]);
+          expect(weapons.every((weapon) => pool.includes(weapon))).toBe(true);
+          expect(new Set(weapons).size).toBeLessThanOrEqual(Math.min(HEAVY_TYPES, pool.length));
+          for (const single of SINGLE_MOUNT_WEAPONS) {
+            expect(weapons.filter((weapon) => weapon === single).length).toBeLessThanOrEqual(1);
+          }
+          // The same ship draws the same loadout on every call, so after save and resume.
+          expect([...heavyLoadout(archetype, position, id)!]).toEqual([...loadout]);
+          weapons.forEach((weapon) => seen.add(weapon));
+        }
+        // Over many ships the whole pool shows.
+        expect([...seen].sort(), `${archetype} ${position}`).toEqual([...pool].sort());
+      }
+    }
+    expect(heavyLoadout("fighter", 3, "ship:0")).toBeNull();
+  });
+
+  it("deals a heavy's mounts in turn among its types, a single-mount weapon on one at most", () => {
+    // A capital at position 5 whose types include a single-mount weapon.
+    const id = Array.from({ length: 200 }, (_, index) => `ship:${index}`).find((ship) =>
+      [...heavyLoadout("capital", 5, ship)!.values()].includes("phaser"),
+    )!;
+    const loadout = [...heavyLoadout("capital", 5, id)!.values()];
+    const types = [...new Set(loadout)];
+    expect(types.length).toBe(3);
+    expect(loadout.filter((weapon) => weapon === "phaser")).toHaveLength(1);
+    // Each repeatable type takes a fair share of the rest.
+    const repeatable = types.filter((weapon) => !SINGLE_MOUNT_WEAPONS.has(weapon));
+    const shares = repeatable.map((weapon) => loadout.filter((at) => at === weapon).length);
+    expect(Math.max(...shares) - Math.min(...shares)).toBeLessThanOrEqual(1);
+  });
+
+  it("arms a heavy's definition with the ship's loadout, every weapon at level 1", () => {
+    const loadout = heavyLoadout("capital", 6, "ship:7")!;
+    const armed = enemyDefinition(6, "capital", "ship:7").hardpoints.flatMap((part) =>
+      part.kind === "weapon" ? [[part.id, part.fire.weapon, part.fire.level]] : [],
+    );
+    expect(armed).toEqual([...loadout].map(([id, weapon]) => [id, weapon, 1]));
+    for (const galaxy of [1, 5, 6] as const) {
+      expect(
+        enemyDefinition(galaxy, "platform").hardpoints.map((part) =>
+          part.kind === "weapon" ? `${part.id} ${part.fire.weapon} ${part.fire.level}` : part.id,
+        ),
+      ).toEqual(["port laser 1", "starboard laser 1"]);
+    }
     // Engines and command stay; every hardpoint takes the position's HP.
     const capital = enemyDefinition(6, "capital").hardpoints;
     expect(capital.filter((part) => part.kind !== "weapon").map((part) => part.id)).toEqual([
@@ -182,20 +190,40 @@ describe("enemy fire profiles", () => {
   it("arms small craft by position and fires at the enemy cadence over the position's fire rate", () => {
     const fire = (galaxy: GalaxyNumber, archetype: EnemyArchetype) => {
       const profile = enemyDefinition(galaxy, archetype).fire;
-      return [profile.weapon, profile.level, profile.interval, profile.projectileSpeedRatio];
+      return [profile.weapon, profile.level, profile.interval, profile.projectileSpeed];
     };
     // Sunflower (position 1, fire +44%), Needle (3, +81%) and Phantom (6, +100%).
-    expect(fire(1, "swarm")).toEqual(["laser", 1, 1.8 / 1.44, 1.5]);
-    expect(fire(1, "fighter")).toEqual(["laser", 1, 1.4 / 1.44, 1.7]);
-    expect(fire(1, "interceptor")).toEqual(["laser", 1, 1.4 / 1.44, 1.7]);
-    expect(fire(1, "retaliator")).toEqual(["multiLaser", 1, 2.2 / 1.44, 1.7]);
-    expect(fire(4, "swarm")).toEqual(["laser", 2, 1.8 / 1.81, 1.5]);
-    expect(fire(4, "fighter")).toEqual(["rapidMissile", 2, 2 / 1.81, 1.3]);
-    expect(fire(4, "interceptor")).toEqual(["scattershot", 2, 2.4 / 1.81, 1.7]);
-    expect(fire(4, "retaliator")).toEqual(["multiLaser", 2, 2.2 / 1.81, 1.7]);
-    expect(fire(6, "fighter")).toEqual(["rapidMissile", 3, 2 / 2, 1.3]);
-    expect(fire(6, "interceptor")).toEqual(["scattershot", 3, 2.4 / 2, 1.7]);
-    expect(ENEMY_FIRE.heavyMissile).toEqual({ interval: 4, projectileSpeedRatio: 0.6 });
+    expect(fire(1, "swarm")).toEqual(["laser", 1, 1.8 / 1.44, 300]);
+    expect(fire(1, "fighter")).toEqual(["laser", 1, 1.4 / 1.44, 300]);
+    expect(fire(1, "interceptor")).toEqual(["laser", 1, 1.4 / 1.44, 300]);
+    expect(fire(1, "retaliator")).toEqual(["multiLaser", 1, 2.2 / 1.44, 240]);
+    expect(fire(4, "swarm")).toEqual(["laser", 1, 1.8 / 1.81, 300]);
+    expect(fire(4, "fighter")).toEqual(["rapidMissile", 1, 2 / 1.81, 300]);
+    expect(fire(4, "interceptor")).toEqual(["multiLaser", 1, 2.2 / 1.81, 240]);
+    expect(fire(4, "retaliator")).toEqual(["multiLaser", 1, 2.2 / 1.81, 240]);
+    expect(fire(6, "fighter")).toEqual(["rapidMissile", 1, 2 / 2, 300]);
+    expect(fire(6, "interceptor")).toEqual(["multiLaser", 1, 2.2 / 2, 240]);
+    expect(ENEMY_FIRE.heavyMissile).toEqual({ interval: 4 });
+    // Every enemy projectile flies 0.6 of Ada's level 1 speed for its weapon, the ring burst a
+    // fixed 240; the Phaser and the lance are hitscan and mines lie still.
+    const speed = (weapon: EnemyWeapon) =>
+      enemyFire("frigate", { level: 1, weapon }).projectileSpeed;
+    expect(
+      (
+        [
+          "laser",
+          "multiLaser",
+          "rapidMissile",
+          "heavyMissile",
+          "scattershot",
+          "phaser",
+          "ringBurst",
+          "chargedLance",
+          "mineLayer",
+        ] as const
+      ).map((weapon) => Math.round(speed(weapon) * 1e9) / 1e9),
+    ).toEqual([300, 240, 300, 240, 360, 0, 240, 0, 0]);
+    expect(speed("laser")).toBeCloseTo(ENEMY_SPEED_SHARE * weaponSpeed("laser", 1), 9);
     expect(ENEMY_FIRE.phaser.interval).toBe(3);
     // The platform's Laser fires two-shot bursts 0.15 s apart.
     const turret = enemyDefinition(2, "platform").hardpoints[0]!;

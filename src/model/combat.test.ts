@@ -11,9 +11,12 @@ import {
   enemyStardust,
   escortTuning,
   galaxyEncounters,
+  heavyLoadout,
 } from "../data/enemyCatalog.ts";
-import { byPosition } from "../data/galaxies.ts";
+import { byPosition, ROUTE_POSITION } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
+import type { EnemyWeapon, GalaxyNumber, Weapon } from "../data/types.ts";
+import { weaponAt } from "../data/weaponCatalog.ts";
 import { fromScreen, outlineContact, outlinesContact, type Parts } from "./convex.ts";
 import { carriesStardust } from "./drops.ts";
 import { createEnemy } from "./enemyAi.ts";
@@ -67,15 +70,48 @@ function ship(
   archetype: EnemyArchetype,
   point: Vec,
   definition: EnemyDefinition = enemyCatalog[archetype],
+  id = "target",
 ): SpaceObject {
   return {
     ...point,
-    enemy: createEnemy(definition, { archetype, id: "target", packId: null, phase: 0 }, point),
+    enemy: createEnemy(definition, { archetype, id, packId: null, phase: 0 }, point),
     hp: definition.hp,
-    id: "target",
+    id,
     kind: "enemy",
     radius: definition.sizeRatio * CONTENT.tuning.flight.shipRadius,
   };
+}
+/** The first ship id `target:n` whose heavy loadout in `galaxy` passes `accepts`. */
+function loadoutId(
+  archetype: "capital" | "frigate",
+  galaxy: GalaxyNumber,
+  accepts: (loadout: ReadonlyMap<string, EnemyWeapon>) => boolean,
+): string {
+  for (let index = 0; ; index++) {
+    const id = `target:${index}`;
+    if (accepts(heavyLoadout(archetype, ROUTE_POSITION[galaxy], id)!)) {
+      return id;
+    }
+  }
+}
+/** A heavy whose loadout carries `weapon`, every hardpoint's fire held but that mount's. */
+function armedWith(
+  archetype: "capital" | "frigate",
+  galaxy: GalaxyNumber,
+  weapon: EnemyWeapon,
+  point: Vec,
+): { mount: string; target: SpaceObject } {
+  const id = loadoutId(archetype, galaxy, (loadout) => [...loadout.values()].includes(weapon));
+  const mount = [...heavyLoadout(archetype, ROUTE_POSITION[galaxy], id)!].find(
+    ([, carried]) => carried === weapon,
+  )![0];
+  const target = ship(archetype, point, enemyDefinition(galaxy, archetype, id), id);
+  return { mount, target: only(target, mount) };
+}
+/** A shared weapon's level 1 volley, one projectile kind per bolt, missile or dot. */
+function volley(weapon: EnemyWeapon | undefined): string[] {
+  const shared = weapon && weaponAt(weapon as Weapon, 1);
+  return shared ? shared.anglesDegrees.map(() => shared.projectileKind) : [];
 }
 /** Holds every hardpoint's fire but `id`'s, which fires at once. */
 function only(object: SpaceObject, id: string): SpaceObject {
@@ -139,15 +175,25 @@ function partPosition(object: SpaceObject, id: string): Vec {
 
 describe("integrated combat", () => {
   it("fires bolts and missiles from independent capital hardpoints and preserves saved futures", () => {
-    // Needle (position 3): two Lasers, two four-bolt Multi-Lasers, a Rapid and a Heavy Missile.
+    // Needle (position 3): a capital with missiles and no Scattershot, whose dots fall short of
+    // Ada here; every mount fires its weapon's level 1 volley at once.
     const flight = createFlight(CONTENT, 4, 173, progress);
     flight.objects = [];
-    const target = ship("capital", { x: 400, y: 0 }, enemyDefinition(4, "capital"));
+    const id = loadoutId("capital", 4, (loadout) => {
+      const weapons = [...loadout.values()];
+      return weapons.includes("rapidMissile") && !weapons.includes("scattershot");
+    });
+    const target = ship("capital", { x: 400, y: 0 }, enemyDefinition(4, "capital", id), id);
     flight.objects.push(target);
     stepFlight(CONTENT, 0.01, idle, flight);
     const kinds = flight.shots.map((shot) => shot.projectile);
-    expect(kinds.filter((kind) => kind === "bolt")).toHaveLength(10);
-    expect(kinds.filter((kind) => kind === "missile")).toHaveLength(2);
+    const expected = [...heavyLoadout("capital", 3, id)!.values()].flatMap(volley);
+    expect(kinds.filter((kind) => kind === "bolt")).toHaveLength(
+      expected.filter((kind) => kind === "bolt").length,
+    );
+    expect(kinds.filter((kind) => kind === "missile")).toHaveLength(
+      expected.filter((kind) => kind === "missile").length,
+    );
     const missile = flight.shots.find((shot) => shot.projectile === "missile")!;
     const velocity = { ...missile.velocity };
     const position = { x: missile.x, y: missile.y };
@@ -164,7 +210,7 @@ describe("integrated combat", () => {
   it("lowers the hull on every hit, disables a heavy without weapons and destroys it at 0 hull", () => {
     // Sunflower's capital: a 40 HP hull and 4 HP hardpoints.
     const flight = empty();
-    const target = ship("capital", { x: 400, y: 0 }, enemyDefinition(1, "capital"));
+    const target = ship("capital", { x: 400, y: 0 }, enemyDefinition(1, "capital", "target"));
     flight.objects.push(target);
     target.enemy!.velocity = { x: 20, y: 10 };
     // A moving hull faces its velocity.
@@ -179,10 +225,14 @@ describe("integrated combat", () => {
       part.cooldown = 0;
     }
     stepFlight(CONTENT, 0.01, idle, flight);
-    // One working engine of two still drives the hull at half its top speed, and the other
-    // Laser and both three-bolt Multi-Lasers still fire.
+    // One working engine of two still drives the hull at half its top speed, and the other three
+    // mounts still fire their loadout's volleys.
     expect({ x: target.x, y: target.y }).not.toEqual(before);
-    expect(flight.shots.map((shot) => shot.projectile)).toEqual(Array(7).fill("bolt"));
+    const loadout = heavyLoadout("capital", 1, "target")!;
+    const standing = ["weapon-right", "weapon-rear-left", "weapon-rear-right"].flatMap((mount) =>
+      volley(loadout.get(mount)),
+    );
+    expect(flight.shots.map((shot) => shot.projectile).sort()).toEqual(standing.sort());
     flight.shots = [];
     // Destroying the last weapons disables it, once, with 20 hull left.
     for (const id of ["weapon-right", "weapon-rear-left", "weapon-rear-right"]) {
@@ -304,25 +354,6 @@ describe("integrated combat", () => {
     expect(flight.shots.some((shot) => shot.id === "incoming")).toBe(false);
   });
 
-  it("fires an interceptor's Scattershot dots with Ada's range and fade", () => {
-    // Needle (position 3): a level 2 Scattershot's nine dots reach 360 world units.
-    const flight = createFlight(CONTENT, 4, 173, progress);
-    flight.objects = [];
-    const target = ship("interceptor", { x: 200, y: 0 }, enemyDefinition(4, "interceptor"));
-    target.enemy!.engaged = true;
-    flight.objects.push(target);
-    stepFlight(CONTENT, 1 / 60, idle, flight);
-    const dots = flight.shots.filter((shot) => shot.enemy);
-    expect(dots).toHaveLength(9);
-    for (const dot of dots) {
-      expect(dot.projectile).toBe("dot");
-      const speed = Math.hypot(dot.velocity.x, dot.velocity.y);
-      expect(dot.fade).toMatchObject({ fadeStartFraction: 0.65, projectedRange: 360 });
-      expect(dot.fade!.initialLife).toBeCloseTo(360 / speed, 9);
-      expect(dot.life).toBeLessThanOrEqual(dot.fade!.initialLife);
-    }
-  });
-
   it("bursts an enemy missile on scenery and damages Ada within its blast, once on a direct hit", () => {
     const flight = empty();
     // The rock's face is 50 from Ada, inside a 60 blast.
@@ -428,15 +459,12 @@ describe("integrated combat", () => {
   });
 
   it("fires an enemy Phaser along its fixed aim line 0.4 s after it appears", () => {
-    // Phantom (position 6): the capital's claw carries a level 1 Phaser, 4 damage.
+    // Phantom (position 6): a capital whose loadout carries the Phaser, 6.5 damage.
     const fixture = () => {
       const flight = createFlight(CONTENT, 6, 173, progress);
       flight.objects = [];
       flight.player = { x: 0, y: 0 };
-      const target = ship("capital", { x: 220, y: 0 }, enemyDefinition(6, "capital"));
-      for (const part of target.enemy!.hardpoints) {
-        part.cooldown = part.id === "claw-left" ? 0 : 999;
-      }
+      const { target } = armedWith("capital", 6, "phaser", { x: 220, y: 0 });
       flight.objects.push(target);
       stepFlight(CONTENT, 1 / 60, idle, flight);
       return flight;
@@ -451,7 +479,7 @@ describe("integrated combat", () => {
     expect(flight.shield).toBe(shield);
     stepFlight(CONTENT, 0.15, idle, flight);
     expect(beam).toMatchObject({ fired: true, stopped: true });
-    expect(flight.shield).toBeCloseTo(shield - 4, 9);
+    expect(flight.shield).toBeCloseTo(shield - 6.5, 9);
     // The beam shows for its flash and spark, then goes.
     stepFlight(CONTENT, 0.2, idle, flight);
     expect(activeEnemyBeams(flight)).not.toContain(beam);
@@ -467,10 +495,7 @@ describe("integrated combat", () => {
     const flight = createFlight(CONTENT, 6, 173, progress);
     flight.objects = [];
     flight.player = { x: 0, y: 0 };
-    const target = ship("capital", { x: 220, y: 0 }, enemyDefinition(6, "capital"));
-    for (const part of target.enemy!.hardpoints) {
-      part.cooldown = part.id === "claw-left" ? 0 : 999;
-    }
+    const { target } = armedWith("capital", 6, "phaser", { x: 220, y: 0 });
     flight.objects.push(target);
     stepFlight(CONTENT, 1 / 60, idle, flight);
     // A rock rolls between them after the line appears: the line and beam stop at it.
@@ -483,12 +508,9 @@ describe("integrated combat", () => {
   });
 
   it("fires a ring burst's eight bolts outward from the hull's edge, evenly around it", () => {
-    // Phantom (position 6): the capital's stern carries the ring burst, 1.5 damage a bolt.
+    // Phantom (position 6): a capital whose loadout carries the ring burst, 1.5 damage a bolt.
     const flight = emptyIn(6);
-    const target = only(
-      ship("capital", { x: 220, y: 0 }, enemyDefinition(6, "capital")),
-      "stern-left",
-    );
+    const { target } = armedWith("capital", 6, "ringBurst", { x: 220, y: 0 });
     flight.objects.push(target);
     stepFlight(CONTENT, 1 / 60, idle, flight);
     const bolts = flight.shots.filter((shot) => shot.enemyWeapon === "ringBurst");
@@ -496,7 +518,7 @@ describe("integrated combat", () => {
     for (const [index, bolt] of bolts.entries()) {
       expect(bolt).toMatchObject({ damage: 1.5, enemy: true, projectile: "bolt" });
       const speed = Math.hypot(bolt.velocity.x, bolt.velocity.y);
-      expect(speed).toBeCloseTo(CONTENT.tuning.enemyProjectileSpeed * 1.2, 9);
+      expect(speed).toBeCloseTo(240, 9);
       const turn = Math.atan2(bolt.velocity.y, bolt.velocity.x);
       expect(Math.cos(turn - (index * Math.PI) / 4)).toBeCloseTo(1, 9);
     }
@@ -517,13 +539,10 @@ describe("integrated combat", () => {
 
   it("lays at most four mines, each bursting on Ada for 3 or fading after 20 seconds", () => {
     const flight = emptyIn(6);
-    const target = only(
-      ship("capital", { x: 220, y: 0 }, enemyDefinition(6, "capital")),
-      "stern-right",
-    );
+    const { mount, target } = armedWith("capital", 6, "mineLayer", { x: 220, y: 0 });
     flight.objects.push(target);
     for (let volley = 0; volley < 6; volley++) {
-      target.enemy!.hardpoints.find((part) => part.id === "stern-right")!.cooldown = 0;
+      target.enemy!.hardpoints.find((part) => part.id === mount)!.cooldown = 0;
       stepFlight(CONTENT, 1 / 60, idle, flight);
     }
     expect(flight.mines).toHaveLength(4);
@@ -556,10 +575,10 @@ describe("integrated combat", () => {
   });
 
   it("tracks Ada with a frigate's charged lance, holds still, then fires across the game area", () => {
-    // Cartwheel (position 5): the frigate's bow carries the lance, 3 damage.
+    // Cartwheel (position 5): a frigate whose loadout carries the lance, 3 damage.
     const fixture = () => {
       const flight = emptyIn(2);
-      const target = only(ship("frigate", { x: 200, y: 0 }, enemyDefinition(2, "frigate")), "bow");
+      const { target } = armedWith("frigate", 2, "chargedLance", { x: 200, y: 0 });
       flight.objects.push(target);
       stepFlight(CONTENT, 1 / 60, idle, flight);
       return { flight, target };
@@ -596,7 +615,7 @@ describe("integrated combat", () => {
 
   it("puts out a charged lance whose frigate is disabled before it fires", () => {
     const flight = emptyIn(2);
-    const target = only(ship("frigate", { x: 200, y: 0 }, enemyDefinition(2, "frigate")), "bow");
+    const { target } = armedWith("frigate", 2, "chargedLance", { x: 200, y: 0 });
     flight.objects.push(target);
     stepFlight(CONTENT, 1 / 60, idle, flight);
     expect(activeEnemyBeams(flight)).toHaveLength(1);
@@ -1080,11 +1099,8 @@ describe("combat admission and subframe firing", () => {
     expect(shot).toBeDefined();
     expect(shot.x).toBeCloseTo(300 + shot.velocity.x * elapsed, 10);
     expect(shot.y).toBeCloseTo(shot.velocity.y * elapsed, 10);
-    // A Laser bolt reaches 1200 whoever fires it: its lifetime is that over its speed.
-    expect(shot.life).toBeCloseTo(
-      1200 / Math.hypot(shot.velocity.x, shot.velocity.y) - elapsed,
-      10,
-    );
+    // A Laser bolt reaches 370 whoever fires it: its lifetime is that over its speed.
+    expect(shot.life).toBeCloseTo(370 / Math.hypot(shot.velocity.x, shot.velocity.y) - elapsed, 10);
     const before = { life: shot.life, x: shot.x, y: shot.y };
     stepFlight(CONTENT, dt, idle, flight);
     expect(shot.x).toBeCloseTo(before.x + shot.velocity.x * dt, 10);

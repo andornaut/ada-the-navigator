@@ -47,7 +47,7 @@ describe("weapon effect conventions", () => {
 
   it("tells Rapid blasts from Heavy ones by radius", () => {
     expect(missileKind(25)).toBe("rapid");
-    for (const radius of [60, 72, 85]) {
+    for (const radius of [70]) {
       expect(missileKind(radius)).toBe("heavy");
     }
   });

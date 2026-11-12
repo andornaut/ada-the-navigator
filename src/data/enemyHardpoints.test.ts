@@ -4,14 +4,15 @@ import capitalFile from "../../public/art/enemies/capital-hardpoints.json";
 import frigateFile from "../../public/art/enemies/frigate-hardpoints.json";
 import gadgetFile from "../../public/art/enemies/gadget-hardpoints.json";
 import exported from "../../tools/enemy-hardpoints.json";
-import { enemyCatalog, type EnemyDefinition } from "./enemyCatalog.ts";
+import { enemyCatalog, type EnemyDefinition, HEAVY_POOLS } from "./enemyCatalog.ts";
 import { exportHardpoints } from "./enemyHardpoints.ts";
 
 interface ArtFile {
   fill: string[];
   frame: number;
   hardpoints: { id: string; role: string }[];
-  tiers: { mounts: Record<string, { weapon: string } | null>; positions: number[] }[];
+  tiers: { mounts: Record<string, { armed: true } | null>; positions: number[] }[];
+  weaponTops: Record<string, { aim: string; top: string }>;
 }
 const art: Record<"capital" | "frigate", ArtFile> = {
   capital: capitalFile as ArtFile,
@@ -77,7 +78,7 @@ describe("hardpoint export for Art", () => {
   );
 
   it.each(["frigate", "capital"] as const)(
-    "arms each %s mount with Art's weapon at every tier, null where Art caps it",
+    "arms each %s mount where Art arms it at every tier, and Art draws a top for each weapon",
     (archetype) => {
       const file = art[archetype];
       const mounts = (enemyCatalog[archetype] as EnemyDefinition).mounts!;
@@ -88,11 +89,15 @@ describe("hardpoint export for Art", () => {
       file.tiers.forEach((tier, index) => {
         const catalog = mounts.tiers[index]!.mounts;
         for (const id of file.fill) {
-          expect(catalog[id]?.weapon ?? null, `${id} ${tier.positions.join("-")}`).toBe(
-            tier.mounts[id]?.weapon ?? null,
+          expect(catalog[id] !== null, `${id} ${tier.positions.join("-")}`).toBe(
+            tier.mounts[id] !== null,
           );
         }
       });
+      // A heavy's loadout may put any weapon of its position's pool on any armed mount.
+      expect(Object.keys(file.weaponTops).sort()).toEqual(
+        [...new Set(HEAVY_POOLS[archetype].flat())].sort(),
+      );
     },
   );
 
@@ -100,5 +105,6 @@ describe("hardpoint export for Art", () => {
     const gadget = gadgetFile as ArtFile;
     expect(gadget.fill).toEqual(art.capital.fill);
     expect(gadget.tiers).toEqual(art.capital.tiers);
+    expect(gadget.weaponTops).toEqual(art.capital.weaponTops);
   });
 });

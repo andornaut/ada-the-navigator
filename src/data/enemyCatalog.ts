@@ -1,7 +1,7 @@
 import { byPosition, ROUTE_POSITION, type RoutePosition } from "./galaxies.ts";
 import { SHIP_PHYSICS, type ShipPhysics } from "./shipPhysics.ts";
-import type { EnemyOnlyWeapon, EnemyWeapon, GalaxyNumber, Weapon, WeaponLevel } from "./types.ts";
-import { weaponAt } from "./weaponCatalog.ts";
+import type { EnemyOnlyWeapon, EnemyWeapon, GalaxyNumber, WeaponLevel } from "./types.ts";
+import { weaponAt, weaponSpeed } from "./weaponCatalog.ts";
 
 export interface Point {
   x: number;
@@ -17,8 +17,8 @@ export interface FireProfile {
   level: WeaponLevel;
   /** A beam is hitscan and a mine is laid in place: neither flies. */
   projectile: "beam" | "bolt" | "dot" | "mine" | "missile";
-  /** Multiplies the base enemy projectile speed; 0 for a weapon without projectile flight. */
-  projectileSpeedRatio: number;
+  /** World units per second its projectiles fly; 0 for a weapon without projectile flight. */
+  projectileSpeed: number;
   /** The weapon this profile fires (gameplay/ships.md "Enemy weapons"). */
   weapon: EnemyWeapon;
 }
@@ -105,21 +105,29 @@ const engine = (id: string, x: number, y: number): HardpointDefinition => ({
   kind: "engine",
   offset: { x, y },
 });
-type Cadence = Pick<FireProfile, "burst" | "interval" | "projectileSpeedRatio">;
+type Cadence = Pick<FireProfile, "burst" | "interval">;
 /**
- * Each weapon's enemy cadence and projectile speed (gameplay/ships.md "Enemy weapons"), before
- * the position's fire rate. The Phaser and the lance are hitscan and mines are laid in place.
+ * Each weapon's enemy cadence (gameplay/ships.md "Enemy weapons"), before the position's fire
+ * rate. The Phaser and the lance are hitscan and mines are laid in place.
  */
 export const ENEMY_FIRE: Readonly<Record<EnemyWeapon, Cadence>> = {
-  chargedLance: { interval: 6, projectileSpeedRatio: 0 },
-  heavyMissile: { interval: 4, projectileSpeedRatio: 0.6 },
-  laser: { interval: 1.4, projectileSpeedRatio: 1.7 },
-  mineLayer: { interval: 5, projectileSpeedRatio: 0 },
-  multiLaser: { interval: 2.2, projectileSpeedRatio: 1.7 },
-  phaser: { interval: 3, projectileSpeedRatio: 0 },
-  rapidMissile: { interval: 2, projectileSpeedRatio: 1.3 },
-  ringBurst: { interval: 3.5, projectileSpeedRatio: 1.2 },
-  scattershot: { interval: 2.4, projectileSpeedRatio: 1.7 },
+  chargedLance: { interval: 6 },
+  heavyMissile: { interval: 4 },
+  laser: { interval: 1.4 },
+  mineLayer: { interval: 5 },
+  multiLaser: { interval: 2.2 },
+  phaser: { interval: 3 },
+  rapidMissile: { interval: 2 },
+  ringBurst: { interval: 3.5 },
+  scattershot: { interval: 2.4 },
+};
+/** An enemy projectile flies this share of Ada's level 1 speed for the same weapon. */
+export const ENEMY_SPEED_SHARE = 0.6;
+/** World units per second the enemy-only weapons' projectiles fly: the ring burst's bolts. */
+const ENEMY_ONLY_SPEED: Readonly<Record<EnemyOnlyWeapon, number>> = {
+  chargedLance: 0,
+  mineLayer: 0,
+  ringBurst: 240,
 };
 /** Seconds an enemy Phaser's fixed aim line shows before its beam fires along it. */
 export const PHASER_AIM_SECONDS = 0.4;
@@ -132,7 +140,7 @@ export const MINE_LAYER = { count: 4, lifeSeconds: 20 } as const;
 /** The swarm's slower, lighter Laser and the platform's two-shot Laser bursts. */
 const ARCHETYPE_FIRE: Readonly<Partial<Record<string, Partial<Record<EnemyWeapon, Cadence>>>>> = {
   platform: { laser: { ...ENEMY_FIRE.laser, burst: { count: 2, gap: 0.15 } } },
-  swarm: { laser: { interval: 1.8, projectileSpeedRatio: 1.5 } },
+  swarm: { laser: { interval: 1.8 } },
 };
 const ENEMY_ONLY_PROJECTILE: Readonly<Record<EnemyOnlyWeapon, FireProfile["projectile"]>> = {
   chargedLance: "beam",
@@ -147,7 +155,8 @@ export function enemyOnly(weapon: EnemyWeapon): weapon is EnemyOnlyWeapon {
 
 /**
  * An archetype's fire profile for a weapon at a level: the weapon's fan and projectile at that
- * level, the same whoever fires it, at the enemy's own cadence and speed.
+ * level, the same whoever fires it, at the enemy's own cadence, its projectiles at
+ * ENEMY_SPEED_SHARE of Ada's level 1 speed for the weapon.
  */
 export function enemyFire(archetype: string, mounted: MountedWeapon): FireProfile {
   const { level, weapon } = mounted;
@@ -158,6 +167,9 @@ export function enemyFire(archetype: string, mounted: MountedWeapon): FireProfil
     angles: shared?.anglesDegrees ?? [0],
     level,
     projectile: shared?.projectileKind ?? ENEMY_ONLY_PROJECTILE[weapon as EnemyOnlyWeapon],
+    projectileSpeed: enemyOnly(weapon)
+      ? ENEMY_ONLY_SPEED[weapon]
+      : ENEMY_SPEED_SHARE * weaponSpeed(weapon, 1),
     weapon,
   };
 }
@@ -188,18 +200,18 @@ const frigateMounts = {
     {
       mounts: {
         bow: null,
-        port: armed("laser", 2),
-        spine: armed("rapidMissile", 2),
-        starboard: armed("laser", 2),
+        port: armed("laser"),
+        spine: armed("rapidMissile"),
+        starboard: armed("laser"),
       },
       positions: [3, 4],
     },
     {
       mounts: {
         bow: armed("chargedLance"),
-        port: armed("laser", 3),
-        spine: armed("rapidMissile", 3),
-        starboard: armed("laser", 3),
+        port: armed("laser"),
+        spine: armed("rapidMissile"),
+        starboard: armed("laser"),
       },
       positions: [5, 6],
     },
@@ -246,14 +258,14 @@ const capitalMounts = {
     },
     {
       mounts: {
-        "claw-left": armed("rapidMissile", 2),
+        "claw-left": armed("rapidMissile"),
         "claw-right": armed("heavyMissile"),
         "stern-left": null,
         "stern-right": null,
-        "weapon-left": armed("laser", 2),
-        "weapon-rear-left": armed("multiLaser", 2),
-        "weapon-rear-right": armed("multiLaser", 2),
-        "weapon-right": armed("laser", 2),
+        "weapon-left": armed("laser"),
+        "weapon-rear-left": armed("multiLaser"),
+        "weapon-rear-right": armed("multiLaser"),
+        "weapon-right": armed("laser"),
       },
       positions: [3, 4],
     },
@@ -263,10 +275,10 @@ const capitalMounts = {
         "claw-right": armed("heavyMissile"),
         "stern-left": armed("ringBurst"),
         "stern-right": armed("mineLayer"),
-        "weapon-left": armed("laser", 3),
-        "weapon-rear-left": armed("rapidMissile", 3),
-        "weapon-rear-right": armed("rapidMissile", 3),
-        "weapon-right": armed("laser", 3),
+        "weapon-left": armed("laser"),
+        "weapon-rear-left": armed("rapidMissile"),
+        "weapon-rear-right": armed("rapidMissile"),
+        "weapon-right": armed("laser"),
       },
       positions: [5, 6],
     },
@@ -281,8 +293,8 @@ const platformMounts = {
   offsets: { port: { x: -0.29, y: 0 }, starboard: { x: 0.29, y: 0 } },
   tiers: [
     { mounts: { port: armed("laser"), starboard: armed("laser") }, positions: [1, 2] },
-    { mounts: { port: armed("laser", 2), starboard: armed("laser", 2) }, positions: [3, 4] },
-    { mounts: { port: armed("laser", 3), starboard: armed("laser", 3) }, positions: [5, 6] },
+    { mounts: { port: armed("laser"), starboard: armed("laser") }, positions: [3, 4] },
+    { mounts: { port: armed("laser"), starboard: armed("laser") }, positions: [5, 6] },
   ],
 } as const satisfies WeaponMounts;
 
@@ -293,15 +305,20 @@ export function mountTier(mounts: WeaponMounts, position: RoutePosition): MountT
   )!;
 }
 
-/** A heavy's weapon hardpoints at a tier: each armed mount, in fill order, at Art's offset. */
+/**
+ * A heavy's weapon hardpoints at a tier: each armed mount, in fill order, at Art's offset, with
+ * the ship's loadout weapon on it where it has one.
+ */
 function mountedHardpoints(
   archetype: string,
   mounts: WeaponMounts,
   tier: MountTier,
   hp: number,
+  loadout: ReadonlyMap<string, EnemyWeapon> | null = null,
 ): HardpointDefinition[] {
   return mounts.fill.flatMap((id): HardpointDefinition[] => {
-    const mounted = tier.mounts[id];
+    const weapon = tier.mounts[id] && loadout?.get(id);
+    const mounted = weapon ? armed(weapon) : tier.mounts[id];
     return mounted
       ? [
           {
@@ -317,16 +334,107 @@ function mountedHardpoints(
 }
 
 /**
- * Small craft weapons at positions 1-2, 3-4 and 5-6 (gameplay/ships.md "Enemy weapons"); the
- * base catalog carries the first.
+ * Each heavy's weapon pool at positions 1-2, 3-4 and 5-6 (gameplay/ships.md "Enemy weapons"),
+ * enemy-only weapons among them; a ship carries at most HEAVY_TYPES of its pool's types.
+ */
+export const HEAVY_POOLS: Readonly<
+  Record<"capital" | "frigate", readonly [EnemyWeapon[], EnemyWeapon[], EnemyWeapon[]]>
+> = {
+  capital: [
+    ["laser", "multiLaser", "rapidMissile"],
+    ["laser", "multiLaser", "rapidMissile", "heavyMissile", "scattershot"],
+    ["laser", "rapidMissile", "heavyMissile", "phaser", "scattershot", "ringBurst", "mineLayer"],
+  ],
+  frigate: [
+    ["laser", "multiLaser", "rapidMissile"],
+    ["laser", "multiLaser", "rapidMissile", "scattershot"],
+    ["laser", "rapidMissile", "scattershot", "heavyMissile", "chargedLance"],
+  ],
+};
+/** The most weapon types one heavy carries. */
+export const HEAVY_TYPES = 3;
+/** Weapons a heavy mounts at most once; its other types take the remaining mounts. */
+export const SINGLE_MOUNT_WEAPONS: ReadonlySet<EnemyWeapon> = new Set<EnemyWeapon>([
+  "chargedLance",
+  "heavyMissile",
+  "mineLayer",
+  "phaser",
+  "ringBurst",
+]);
+
+/** A stable random stream for a key: FNV-1a over its characters, then mulberry32. */
+function keyRandom(key: string): () => number {
+  let state = 2166136261;
+  for (let index = 0; index < key.length; index++) {
+    state = Math.imul(state ^ key.charCodeAt(index), 16777619);
+  }
+  return () => {
+    state = (state + 0x6d2b79f5) | 0;
+    let mix = Math.imul(state ^ (state >>> 15), 1 | state);
+    mix = (mix + Math.imul(mix ^ (mix >>> 7), 61 | mix)) ^ mix;
+    return ((mix ^ (mix >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * A frigate's or capital's weapon on each of its tier's armed mounts, or null for any other
+ * archetype (gameplay/ships.md "Enemy weapons"). The ship draws at most HEAVY_TYPES types from
+ * its position's pool, seeded by its id so it keeps them across save and resume; a pool smaller
+ * than that gives every type. The mounts, in fill order, are dealt in turn among its types, each
+ * of SINGLE_MOUNT_WEAPONS on one mount at most. A draw of single-mount types only swaps its last
+ * for the pool's first repeatable type in draw order, so every mount is armed.
+ */
+export function heavyLoadout(
+  archetype: EnemyArchetype,
+  position: RoutePosition,
+  shipId: string,
+): ReadonlyMap<string, EnemyWeapon> | null {
+  const mounts = enemyCatalog[archetype].mounts;
+  if (!(archetype === "capital" || archetype === "frigate") || !mounts) {
+    return null;
+  }
+  const pool = HEAVY_POOLS[archetype][Math.ceil(position / 2) - 1]!;
+  const random = keyRandom(`${archetype}:${position}:${shipId}`);
+  const order = [...pool];
+  for (let index = order.length - 1; index > 0; index--) {
+    const swap = Math.floor(random() * (index + 1));
+    [order[index], order[swap]] = [order[swap]!, order[index]!];
+  }
+  let types = order.slice(0, HEAVY_TYPES);
+  if (types.every((weapon) => SINGLE_MOUNT_WEAPONS.has(weapon))) {
+    const repeatable = order.find((weapon) => !SINGLE_MOUNT_WEAPONS.has(weapon));
+    if (repeatable) {
+      types = [...types.slice(0, -1), repeatable];
+    }
+  }
+  const tier = mountTier(mounts, position);
+  const loadout = new Map<string, EnemyWeapon>();
+  let turn = 0;
+  for (const id of mounts.fill.filter((mount) => tier.mounts[mount])) {
+    for (let tries = 0; tries < types.length; tries++) {
+      const weapon = types[(turn + tries) % types.length]!;
+      if (SINGLE_MOUNT_WEAPONS.has(weapon) && [...loadout.values()].includes(weapon)) {
+        continue;
+      }
+      loadout.set(id, weapon);
+      turn = (turn + tries + 1) % types.length;
+      break;
+    }
+  }
+  return loadout;
+}
+
+/**
+ * Small craft weapons at positions 1-2, 3-4 and 5-6 (gameplay/ships.md "Enemy weapons"), every
+ * one level 1; the base catalog carries the first.
  */
 export const SMALL_CRAFT_WEAPONS: Readonly<
   Record<"fighter" | "interceptor" | "retaliator" | "swarm", readonly MountedWeapon[]>
 > = {
-  fighter: [armed("laser"), armed("rapidMissile", 2), armed("rapidMissile", 3)],
-  interceptor: [armed("laser"), armed("scattershot", 2), armed("scattershot", 3)],
-  retaliator: [armed("multiLaser"), armed("multiLaser", 2), armed("multiLaser", 3)],
-  swarm: [armed("laser"), armed("laser", 2), armed("laser", 3)],
+  fighter: [armed("laser"), armed("rapidMissile"), armed("rapidMissile")],
+  interceptor: [armed("laser"), armed("multiLaser"), armed("multiLaser")],
+  retaliator: [armed("multiLaser"), armed("multiLaser"), armed("multiLaser")],
+  swarm: [armed("laser"), armed("laser"), armed("laser")],
 };
 
 /** Shared ship-sized defaults; each archetype states its own physics. */
@@ -662,25 +770,15 @@ export const ENEMY_ONLY_DAMAGE: Readonly<Record<EnemyOnlyWeapon, number>> = {
 };
 
 /**
- * Enemy Phaser and Scattershot damage per hit at levels 1, 2 and 3, lower than Ada's so one
- * enemy hit never empties a base shield (gameplay/ships.md "Enemy weapons"): Phaser 4, and a
- * Scattershot dot 0.35 at level 1, levels 2 and 3 sharing 1.5 and 2.25 times that volley.
- */
-export const ENEMY_DAMAGE: Readonly<Partial<Record<Weapon, readonly [number, number, number]>>> = {
-  phaser: [4, 6, 9],
-  scattershot: [0.35, (0.35 * 1.5 * 7) / 9, (0.35 * 2.25 * 7) / 11],
-};
-
-/**
  * A profile's damage per hit as a multiple of base shot damage: a shared weapon's at its level,
- * the same whoever fires it unless ENEMY_DAMAGE lowers it, or an enemy-only weapon's own.
+ * the same whoever fires it (every enemy weapon is level 1), or an enemy-only weapon's own.
  */
 export function fireDamageRatio(profile: Pick<FireProfile, "level" | "weapon">): number {
   const weapon = profile.weapon;
   if (enemyOnly(weapon)) {
     return ENEMY_ONLY_DAMAGE[weapon];
   }
-  return ENEMY_DAMAGE[weapon]?.[profile.level - 1] ?? weaponAt(weapon, profile.level).damageRatio;
+  return weaponAt(weapon, profile.level).damageRatio;
 }
 
 /** Natural enemy aim for every aimed enemy weapon (gameplay/ships.md "Enemy aim"). */
@@ -733,14 +831,20 @@ const scaled = new Map<string, EnemyDefinition>();
 /**
  * The catalog definition at a galaxy's route position: its roster behaviour, its position's
  * weapons, hull and hardpoint HP, hitAndRun retreat and perception, and its fire rate, with
- * difficultyScale on HP and fire rate. A heavy's weapon hardpoints are its tier's armed mounts.
+ * difficultyScale on HP and fire rate. A heavy's weapon hardpoints are its tier's armed mounts,
+ * armed with the loadout ship `shipId` draws (heavyLoadout).
  */
-export function enemyDefinition(galaxy: GalaxyNumber, archetype: EnemyArchetype): EnemyDefinition {
-  const key = `${galaxy}:${archetype}`;
+export function enemyDefinition(
+  galaxy: GalaxyNumber,
+  archetype: EnemyArchetype,
+  shipId = "",
+): EnemyDefinition {
+  const route = ROUTE_POSITION[galaxy];
+  const loadout = heavyLoadout(archetype, route, shipId);
+  const key = `${galaxy}:${archetype}:${loadout ? [...loadout.values()].join(",") : ""}`;
   let definition = scaled.get(key);
   if (!definition) {
     const difficulty = difficultyOf(galaxy);
-    const route = ROUTE_POSITION[galaxy];
     const entry: EnemyDefinition = enemyCatalog[archetype];
     const small = Object.hasOwn(SMALL_CRAFT_WEAPONS, archetype)
       ? SMALL_CRAFT_WEAPONS[archetype as SmallCraft][Math.ceil(route / 2) - 1]!
@@ -752,7 +856,13 @@ export function enemyDefinition(galaxy: GalaxyNumber, archetype: EnemyArchetype)
       hardpoints: entry.mounts
         ? [
             ...entry.hardpoints.filter((part) => part.kind !== "weapon"),
-            ...mountedHardpoints(archetype, entry.mounts, mountTier(entry.mounts, route), 0),
+            ...mountedHardpoints(
+              archetype,
+              entry.mounts,
+              mountTier(entry.mounts, route),
+              0,
+              loadout,
+            ),
           ]
         : entry.hardpoints,
     };

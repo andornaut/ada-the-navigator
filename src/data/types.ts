@@ -140,8 +140,6 @@ export interface GameContent {
      * Ada along each axis; the shield never recharges while an attacker is inside it.
      */
     battleMargin: number;
-    /** Base enemy projectile speed; each fire profile's projectileSpeedRatio multiplies it. */
-    enemyProjectileSpeed: number;
     miningMilestones: readonly [number, number, number];
     introFreshDistance: number;
     encounterFreshDistance: number;

@@ -4,7 +4,7 @@ import { densityTexels } from "@andornaut/game-kit/view/renderScale";
 import { Math as PhaserMath, type Scene, TintModes } from "phaser";
 
 import { CONTENT } from "../data/content.ts";
-import { enemyCatalog, enemyDefinition, MINE_LAYER } from "../data/enemyCatalog.ts";
+import { enemyCatalog, enemyDefinition, heavyLoadout, MINE_LAYER } from "../data/enemyCatalog.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { enemySpeedFraction } from "../model/enemyAi.ts";
 import { activeEnemyBeams, activeRingEmissions, type EnemyBeam } from "../model/flight.ts";
@@ -134,7 +134,7 @@ export function drawEnemy(scene: EnemiesContext, point: Vec, object: SpaceObject
     );
     return;
   }
-  const definition = enemyDefinition(scene.model.state.flight!.galaxy, enemy.archetype);
+  const definition = enemyDefinition(scene.model.state.flight!.galaxy, enemy.archetype, enemy.id);
   const art = familyArt(scene, enemy.archetype);
   if (art) {
     drawEnemySprite(scene, art, point, object.id, enemy);
@@ -272,10 +272,14 @@ export function drawEnemySprite(
   // A turret mount without hardpoint state, such as the retaliator's, aims with the hull
   // weapon and stands while the hull does. The galaxy's route position picks the mount tier.
   const galaxy = scene.model.state.flight?.galaxy;
+  const position = galaxy === undefined ? 1 : ROUTE_POSITION[galaxy];
+  // A heavy's loadout picks each mount's weapon, so its top (heavyLoadout).
+  const loadout = heavyLoadout(enemy.archetype, position, enemy.id);
   const pose: PartPose = {
     aim: (hardpoint) => state(hardpoint)?.aim ?? enemy.aim ?? enemy.facing,
     intact: (hardpoint) => (state(hardpoint)?.hp ?? 1) > 0,
-    position: galaxy === undefined ? 1 : ROUTE_POSITION[galaxy],
+    position,
+    weapon: (hardpoint) => loadout?.get(hardpoint),
   };
   const sprites = composeEnemy(art, pose, frame);
   if (enemy.salvaged) {

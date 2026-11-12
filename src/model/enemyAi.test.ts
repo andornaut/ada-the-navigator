@@ -7,6 +7,7 @@ import {
   type EnemyDefinition,
   enemyDefinition,
   fireDamageRatio,
+  heavyLoadout,
 } from "../data/enemyCatalog.ts";
 import { SHARED_SHIP_PHYSICS, SHIP_PHYSICS } from "../data/shipPhysics.ts";
 import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
@@ -34,6 +35,16 @@ const rotate = (vector: { x: number; y: number }, angle: number) => ({
   y: vector.x * Math.sin(angle) + vector.y * Math.cos(angle),
 });
 
+/** The first ship id `ship:n` whose capital loadout at `position` carries every one of `weapons`. */
+function loadoutId(position: 4, weapons: readonly string[]): string {
+  for (let index = 0; ; index++) {
+    const id = `ship:${index}`;
+    const carried = new Set(heavyLoadout("capital", position, id)!.values());
+    if (weapons.every((weapon) => carried.has(weapon as never)) && !carried.has("scattershot")) {
+      return id;
+    }
+  }
+}
 const spawn = (
   archetype: EnemyArchetype,
   definition: EnemyDefinition = enemyCatalog[archetype],
@@ -47,7 +58,6 @@ const observation = (state: EnemyState): EnemyContext => ({
   peers: [state],
   player: { x: 300, y: 0 },
   playerVelocity: { x: 0, y: 0 },
-  projectileSpeed: 100,
   targetable: true,
   visibility: "visible",
 });
@@ -242,60 +252,58 @@ describe("enemy rules", () => {
     expect(result.fire.map((shot) => shot.hardpointId)).toEqual(["starboard"]);
   });
 
-  it("fires at the base enemy projectile speed times each profile's ratio, not Ada's speed", () => {
+  it("fires each hardpoint's projectiles at its profile's speed", () => {
     const definition = enemyCatalog.capital;
     const state = spawn("capital");
-    const context = { ...observation(state), projectileSpeed: 200 };
-    const ratios = new Map(
+    const speeds = new Map(
       definition.hardpoints.flatMap((part) =>
-        part.kind === "weapon" ? [[part.id, part.fire.projectileSpeedRatio] as const] : [],
+        part.kind === "weapon" ? [[part.id, part.fire.projectileSpeed] as const] : [],
       ),
     );
-    const fire = stepEnemy(definition, context, state).fire;
+    const fire = stepEnemy(definition, observation(state), state).fire;
     expect(fire.length).toBeGreaterThan(0);
     for (const shot of fire) {
-      expect(shot.speed).toBeCloseTo(200 * ratios.get(shot.hardpointId!)!, 9);
+      expect(shot.speed).toBeCloseTo(speeds.get(shot.hardpointId!)!, 9);
     }
   });
 
   it("fires each hardpoint's own weapon and level with independent cooldowns", () => {
-    // Andromeda (position 4): Lasers and Multi-Lasers at level 2, a Rapid and a Heavy Missile.
-    const definition = enemyDefinition(5, "capital");
+    // Andromeda (position 4): a capital with Lasers, Multi-Lasers and a Heavy Missile, level 1.
+    const id = loadoutId(4, ["laser", "multiLaser", "heavyMissile"]);
+    const loadout = heavyLoadout("capital", 4, id)!;
+    const mountOf = (weapon: string) => [...loadout].find(([, carried]) => carried === weapon)![0];
+    const definition = enemyDefinition(5, "capital", id);
     const state = spawn("capital", definition);
     const first = stepEnemy(definition, observation(state), state);
     const fired = first.fire.map((shot) => `${shot.hardpointId} ${shot.weapon} ${shot.level}`);
-    expect([...new Set(fired)]).toEqual([
-      "weapon-left laser 2",
-      "weapon-right laser 2",
-      "weapon-rear-left multiLaser 2",
-      "weapon-rear-right multiLaser 2",
-      "claw-left rapidMissile 2",
-      "claw-right heavyMissile 1",
-    ]);
-    // A level 2 Multi-Laser fires its level's four-bolt fan.
-    expect(fired.filter((shot) => shot === "weapon-rear-left multiLaser 2")).toHaveLength(4);
+    expect([...new Set(fired)]).toEqual(
+      [...loadout].map(([mount, weapon]) => `${mount} ${weapon} 1`),
+    );
+    // A level 1 Multi-Laser fires its three-bolt fan.
+    const multi = `${mountOf("multiLaser")} multiLaser 1`;
+    expect(fired.filter((shot) => shot === multi)).toHaveLength(3);
     expect(first.fire.find((shot) => shot.weapon === "heavyMissile")?.projectile).toBe("missile");
-    const cooldown = (id: string) =>
-      first.state.hardpoints.find((part) => part.id === id)?.cooldown;
-    expect(cooldown("weapon-left")).toBeCloseTo(1.4 / 1.88 - 1 / 60);
-    expect(cooldown("claw-right")).toBeCloseTo(4 / 1.88 - 1 / 60);
+    const cooldown = (mount: string) =>
+      first.state.hardpoints.find((part) => part.id === mount)?.cooldown;
+    expect(cooldown(mountOf("laser"))).toBeCloseTo(1.4 / 1.88 - 1 / 60);
+    expect(cooldown(mountOf("heavyMissile"))).toBeCloseTo(4 / 1.88 - 1 / 60);
     const ready = {
       ...first.state,
       hardpoints: first.state.hardpoints.map((part) => ({
         ...part,
-        cooldown: part.id === "weapon-left" ? 0 : part.cooldown,
+        cooldown: part.id === mountOf("laser") ? 0 : part.cooldown,
       })),
     };
     const second = stepEnemy(definition, observation(ready), ready);
-    expect(second.fire.map((shot) => shot.hardpointId)).toEqual(["weapon-left"]);
+    expect(second.fire.map((shot) => shot.hardpointId)).toEqual([mountOf("laser")]);
     expect(first.fire[0]?.speed).not.toBe(first.fire.at(-1)?.speed);
   });
 
   it.each(["capital"] as const)(
     "aims every %s bolt and missile from its own muzzle before applying spread",
     (archetype) => {
-      // Andromeda's capital fires bolts and missiles.
-      const positioned = enemyDefinition(5, archetype);
+      // An Andromeda capital that fires bolts and missiles and no dots.
+      const positioned = enemyDefinition(5, archetype, loadoutId(4, ["laser", "rapidMissile"]));
       const state = { ...spawn(archetype, positioned), position: { x: 110, y: -75 } };
       const context = { ...observation(state), player: { x: 390, y: 145 } };
       const angles = [-20, 0, 35];

@@ -103,12 +103,12 @@ describe("Phaser hitscan beam", () => {
   const STURDY = 30;
   const sturdy = (id: string, x: number, y: number) => retaliator(id, x, y, STURDY);
 
-  it("strikes only the nearest enemy along its line, for 9x Laser damage", () => {
+  it("strikes only the nearest enemy along its line, for 6.5x Laser damage", () => {
     const flight = beam([sturdy("far", 200, nose.y), sturdy("near", 100, nose.y)]);
-    expect(hp(flight, "near")).toBe(STURDY - 9);
+    expect(hp(flight, "near")).toBe(STURDY - 6.5);
     expect(hp(flight, "far")).toBe(STURDY);
     expect(flight.shots.filter((shot) => !shot.enemy)).toHaveLength(0);
-    expect(flight.fireCooldown).toBeCloseTo(0.28 * 4, 9);
+    expect(flight.fireCooldown).toBeCloseTo(1, 9);
   });
 
   it("stops at a rock in front, sparing the enemy behind it", () => {
@@ -117,7 +117,7 @@ describe("Phaser hitscan beam", () => {
       { hp: 10, id: "rock", kind: "rock", radius: 20, x: 80, y: nose.y },
     ]);
     expect(hp(flight, "behind")).toBe(STURDY);
-    expect(hp(flight, "rock")).toBe(10 - 9);
+    expect(hp(flight, "rock")).toBe(10 - 6.5);
     expect(activeBeamFlashes(flight)[0]!.to.x).toBeCloseTo(80 - reach(20), 9);
   });
 
@@ -130,15 +130,15 @@ describe("Phaser hitscan beam", () => {
     );
     const edge = nose.y - top + BEAM.halfWidth;
     const grazed = beam([sturdy("enemy", 150, edge - 0.5)]);
-    expect(hp(grazed, "enemy")).toBe(STURDY - 9);
+    expect(hp(grazed, "enemy")).toBe(STURDY - 6.5);
     const missed = beam([sturdy("enemy", 150, edge + 0.5)]);
     expect(hp(missed, "enemy")).toBe(STURDY);
   });
 
   it.each([
-    [1, 320, 9],
-    [2, 384, 13.5],
-    [3, 460.8, 20.25],
+    [1, 370, 6.5],
+    [2, 370, 9.75],
+    [3, 370, 14.625],
   ])("reaches %i: range %f from the nose, damage %f", (level, range, damage) => {
     // The farthest hull the beam's end still reaches within its half-width.
     const end = { x: ahead(range), y: nose.y };
@@ -147,8 +147,8 @@ describe("Phaser hitscan beam", () => {
     const struck = beam([sturdy("enemy", edge, nose.y)], level);
     expect(hp(struck, "enemy")).toBe(STURDY - damage);
     expect(hp(beam([sturdy("enemy", edge + 1, nose.y)], level), "enemy")).toBe(STURDY);
-    // One shot at any level destroys a retaliator's own 8 hit points.
-    expect(alive(beam([retaliator("enemy", edge, nose.y)], level), "enemy")).toBe(false);
+    // From level 2 one shot destroys a retaliator's own 8 hit points; level 1's 6.5 does not.
+    expect(alive(beam([retaliator("enemy", edge, nose.y)], level), "enemy")).toBe(level === 1);
   });
 
   it("flashes from the nose to the hit point, or to full range on a miss, spark included", () => {
@@ -165,7 +165,7 @@ describe("Phaser hitscan beam", () => {
     expect(flash.to.y).toBeCloseTo(nose.y, 9);
     expect(flash.hit).toBe(true);
     const miss = beam([]);
-    expect(activeBeamFlashes(miss)[0]!.to.x).toBeCloseTo(ahead(320), 9);
+    expect(activeBeamFlashes(miss)[0]!.to.x).toBeCloseTo(ahead(370), 9);
     expect(activeBeamFlashes(miss)[0]!.hit).toBe(false);
     // The flash shows 0.15 s and a hit's spark 0.16 s, so both last until the spark ends.
     miss.fireCooldown = 100;
@@ -178,7 +178,7 @@ describe("Phaser hitscan beam", () => {
   it("strikes an obstacle at the nose at once", () => {
     // A rock over Ada's drawn nose: she is pushed off it and the beam meets it where it leaves.
     const flight = beam([{ hp: 10, id: "rock", kind: "rock", radius: 2, x: 12, y: nose.y }]);
-    expect(hp(flight, "rock")).toBe(10 - 9);
+    expect(hp(flight, "rock")).toBe(10 - 6.5);
     const flash = activeBeamFlashes(flight)[0]!;
     const from = nosePoint({ x: 1, y: 0 }, flight.player);
     expect(flash.from).toEqual(from);
@@ -194,7 +194,7 @@ describe("Phaser hitscan beam", () => {
     for (let slice = 0; slice < 60; slice++) {
       stepFlight(CONTENT, 1 / 60, right, flight);
     }
-    expect(hp(flight, "enemy")).toBe(STURDY - 9);
+    expect(hp(flight, "enemy")).toBe(STURDY - 6.5);
     expect(flight.shots.filter((shot) => !shot.enemy)).toHaveLength(0);
     expect(model.save()).not.toContain("flash");
   });
@@ -244,7 +244,7 @@ describe("integrated weapon projectiles", () => {
     ];
     flight.facing = { x: 1, y: 0 };
     stepFlight(CONTENT, 0.1, right, flight);
-    expect(hp(flight, "direct")).toBe(10 - 1.5);
+    expect(hp(flight, "direct")).toBe(10 - 2.5);
     expect(hp(flight, "nearby")).toBe(10);
     expect(flight.fireCooldown).toBeGreaterThan(
       WEAPON_CATALOG.rapidMissile[0].intervalSeconds - 0.11,
@@ -321,11 +321,11 @@ describe("integrated weapon projectiles", () => {
     flight.fireCooldown = 100;
     flight.objects = [{ hp: 3, id: "target", kind: "rock", radius: 4, x: 30, y: 0 }];
     stepFlight(CONTENT, 0.1, idle, flight);
-    expect(flight.objects[0]!.hp).toBeCloseTo(3 - 0.46);
+    expect(flight.objects[0]!.hp).toBeCloseTo(3 - 6 / 7);
     expect(flight.shots).toHaveLength(0);
   });
 
-  it("stops scatter pellets 360 world units from the nose within a step", () => {
+  it("stops scatter pellets 100 world units from the nose within a step", () => {
     const { flight } = launched("scattershot");
     stepFlight(CONTENT, 0.001, { ...idle, aim: { x: 1, y: 1 }, viewportWidth: 960 }, flight);
     // The pellets left the nose of the facing they fired along.
@@ -338,7 +338,7 @@ describe("integrated weapon projectiles", () => {
     for (const shot of pellets) {
       const dx = shot.x - start.x;
       const dy = shot.y - start.y;
-      expect(Math.hypot(dx, dy)).toBeCloseTo(360);
+      expect(Math.hypot(dx, dy)).toBeCloseTo(100);
       expect(shot.life).toBe(0);
       expect(projectileOpacity(shot.fade!, shot.life)).toBe(0);
     }
@@ -355,7 +355,7 @@ describe("integrated weapon projectiles", () => {
     stepFlight(CONTENT, 0.1, { ...idle, viewportWidth: 1200 }, flight);
     stepFlight(CONTENT, 0.1, { ...idle, viewportWidth: 1200 }, restored.state.flight!);
     expect(restored.state).toEqual(model.state);
-    expect(flight.shots.every((shot) => shot.fade?.projectedRange === 360)).toBe(true);
+    expect(flight.shots.every((shot) => shot.fade?.projectedRange === 100)).toBe(true);
     for (const change of [{ initialLife: 0 }, { projectedRange: -1 }, { fadeStartFraction: 1 }]) {
       const invalid = JSON.parse(saved);
       Object.assign(invalid.flight.shots[0].fade, change);

@@ -189,7 +189,6 @@ describe("combat save boundary", () => {
       peers: [before],
       player: { x: 50, y: -10 },
       playerVelocity: { x: 0, y: 0 },
-      projectileSpeed: 200,
       targetable: true,
       visibility: "visible" as const,
     };

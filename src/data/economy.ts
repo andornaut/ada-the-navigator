@@ -1,5 +1,6 @@
 import type { AsteroidSize } from "./asteroidCatalog.ts";
 import type { EnemyArchetype } from "./enemyCatalog.ts";
+import type { RoutePosition } from "./galaxies.ts";
 import type { Weapon } from "./types.ts";
 
 export type UpgradeWeapon = Exclude<Weapon, "laser">;
@@ -120,17 +121,37 @@ export interface EconomyCatalog {
   };
 }
 
+/**
+ * The weapon each route position unlocks (gameplay/economy.md "Weapon unlocks"), cumulative along
+ * the route; Phantom adds nothing new.
+ */
+export const WEAPON_UNLOCKS: Readonly<Record<RoutePosition, UpgradeWeapon | null>> = {
+  1: "multiLaser",
+  2: "rapidMissile",
+  3: "heavyMissile",
+  4: "scattershot",
+  5: "phaser",
+  6: null,
+};
+
+/** The upgrade weapons the galaxy at route `position` sells and drops, in route order. */
+export function unlockedWeapons(position: RoutePosition): UpgradeWeapon[] {
+  return ([1, 2, 3, 4, 5, 6] as const)
+    .filter((at) => at <= position)
+    .flatMap((at) => WEAPON_UNLOCKS[at] ?? []);
+}
+
 // Provisional tuning from gameplay/economy.md; station geometry is Tech's provisional layout.
 export const ECONOMY: EconomyCatalog = {
   ammo: {
-    dropChance: 0.05,
-    // Each weapon half as likely as the one before it in weapon order.
-    dropWeights: { heavyMissile: 4, multiLaser: 16, phaser: 1, rapidMissile: 8, scattershot: 2 },
+    dropChance: 0.075,
+    // Each weapon about three quarters as likely as the one before it in weapon order.
+    dropWeights: { heavyMissile: 9, multiLaser: 16, phaser: 5, rapidMissile: 12, scattershot: 7 },
     duplicatePacks: 1,
     grantPacks: 3,
-    // Level 1 fire per pack: Multi-Laser 60 s, Rapid Missile 50, Heavy Missile 40, Scattershot 30
-    // and Phaser 20.
-    pack: { heavyMissile: 33, multiLaser: 200, phaser: 18, rapidMissile: 165, scattershot: 67 },
+    // Level 1 fire per pack: Multi-Laser 90 s, Rapid Missile 80, Heavy Missile 70, Scattershot 60
+    // and Phaser 50.
+    pack: { heavyMissile: 35, multiLaser: 300, phaser: 50, rapidMissile: 265, scattershot: 60 },
     packPrice: 10,
   },
   asteroidStardust: { huge: [3, 3], large: [2, 2], medium: [1, 1], small: [0, 1] },
@@ -250,5 +271,5 @@ export const ECONOMY: EconomyCatalog = {
     scattershot: 525,
   },
   weaponSwitchSeconds: 1,
-  weaponUpgradePrices: [225, 450],
+  weaponUpgradePrices: [300, 600],
 };

@@ -135,6 +135,7 @@ import { restoreSave, SAVE_VERSION } from "./save.ts";
 import {
   buy,
   fill,
+  onSale,
   type PurchaseRequest,
   type PurchaseResult,
   requestPurchase,
@@ -709,8 +710,12 @@ export class GameModel {
     const gift = chooseUpgrade(
       ECONOMY,
       this.state.economy,
+      ROUTE_POSITION[flight.galaxy],
       dropRandom(flight.seed, `upgrade:${id}`),
     );
+    if (!gift) {
+      return;
+    }
     if (gift.kind === "weapon") {
       collectWeapon(gift.weapon, flight);
       this.pullLoadout();
@@ -721,13 +726,15 @@ export class GameModel {
     this.syncAchievements();
   }
   /**
-   * Gives an ammo pack pickup's pack, for an owned weapon other than Laser chosen by the ammo pack
-   * weights as Ada collects it and seeded by the pickup; the item notice names it.
+   * Gives an ammo pack pickup's pack, for an owned weapon other than Laser that the galaxy
+   * unlocks, chosen by the ammo pack weights as Ada collects it and seeded by the pickup; the
+   * item notice names it.
    */
   private collectAmmoPack(id: string, flight: FlightState): void {
     this.pullLoadout();
     const weapon = chooseAmmoPack(
       ECONOMY,
+      ROUTE_POSITION[flight.galaxy],
       this.state.economy.ownedWeapons,
       dropRandom(flight.seed, `ammo:${id}`),
     );
@@ -767,7 +774,14 @@ export class GameModel {
   shopRows(tab: ShopTab): ShopRow[] {
     this.pullLoadout();
     const holodisk = tab === "ship" ? this.holodiskRow() : null;
-    return [...(holodisk ? [holodisk] : []), ...shopRows(ECONOMY, this.state.economy, tab)];
+    return [
+      ...(holodisk ? [holodisk] : []),
+      ...shopRows(ECONOMY, this.state.economy, this.shopPosition, tab),
+    ];
+  }
+  /** The route position of the galaxy whose shop Ada is at, which sets what it sells. */
+  private get shopPosition(): RoutePosition {
+    return ROUTE_POSITION[this.state.flight?.galaxy ?? this.state.selectedGalaxy];
   }
   /**
    * The hub's holodisk row, first on its Ship tab once Cartwheel's space quest is complete:
@@ -801,6 +815,9 @@ export class GameModel {
           ? { kind: "refused", reason: "cantAfford" }
           : { kind: "confirm", left: stardust - row.price, price: row.price };
     }
+    if (!onSale(this.shopPosition, item)) {
+      return { kind: "refused", reason: "notForSale" };
+    }
     return requestPurchase(ECONOMY, this.state.economy, item);
   }
   /**
@@ -823,6 +840,9 @@ export class GameModel {
       return { kind: "bought", price: request.price };
     }
     this.pullLoadout();
+    if (!onSale(this.shopPosition, item)) {
+      return { kind: "refused", reason: "notForSale" };
+    }
     const result = buy(ECONOMY, item, this.state.economy);
     this.pushLoadout();
     this.syncAchievements();

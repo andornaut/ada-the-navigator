@@ -26,17 +26,19 @@ export interface HeadingPart {
   pivot?: Vec;
 }
 
-/** A filled weapon mount at one position tier: its weapon, top design and aim rule. */
-export interface TierMount {
+/** The top a weapon draws on whichever mount holds it, and its aim rule. */
+export interface WeaponTop {
   /** `target` turns with the turret's world aim; `aft` holds aim `(k + 8) mod 16` at heading k. */
   aim: "aft" | "target";
   top: string;
-  weapon: string;
 }
 
-/** One route-position tier of a mount heavy; a mount it leaves null draws its capped plate. */
+/**
+ * One route-position tier of a mount heavy: whether each fill mount is armed. An armed mount
+ * draws its weapon's top; an unarmed one draws its capped plate.
+ */
 export interface LayoutTier {
-  mounts: ReadonlyMap<string, TierMount | null>;
+  mounts: ReadonlyMap<string, boolean>;
   positions: readonly [number, number];
 }
 
@@ -63,10 +65,12 @@ export interface HardpointLayout {
     order: readonly string[];
     parts: ReadonlyMap<string, HeadingPart>;
   }[];
-  /** Mount loadouts by route position; empty when every hardpoint carries its own top. */
+  /** Armed mounts by route position; empty when every hardpoint carries its own top. */
   tiers: readonly LayoutTier[];
   /** Per top design and aim index: barrel tips in frame px relative to the pivot. */
   tops: ReadonlyMap<string, readonly (readonly Vec[])[]>;
+  /** The top each weapon draws on an armed mount; empty for a craft without tiers. */
+  weaponTops: ReadonlyMap<string, WeaponTop>;
 }
 
 /** A composed craft's part frames: bases by hardpoint and state (with `capped`), tops by design. */
@@ -333,12 +337,12 @@ export function readHardpointLayout(
       top: part.top,
     });
   }
-  const mounts = readMounts(hardpoints, root.fill, root.tiers);
+  const mounts = readMounts(hardpoints, root.fill, root.tiers, root.weaponTops);
   if (!mounts) {
     return undefined;
   }
-  const { fill, tiers } = mounts;
-  // A hardpoint carries a top when it has its own or any tier gives it one.
+  const { fill, tiers, weaponTops } = mounts;
+  // A hardpoint carries a top when it has its own or any tier arms it.
   const tiered = (id: string) => tiers.some((tier) => tier.mounts.get(id));
   const ids = ["hull", ...hardpoints.map((part) => part.id)].sort();
   const headings = readIndexed(root.headings, (heading) => {
@@ -378,7 +382,7 @@ export function readHardpointLayout(
   const tops = new Map<string, Vec[][]>();
   const designs = [
     ...hardpoints.flatMap((part) => part.top ?? []),
-    ...tiers.flatMap((tier) => [...tier.mounts.values()].flatMap((mount) => mount?.top ?? [])),
+    ...[...weaponTops.values()].map((drawn) => drawn.top),
   ];
   for (const design of new Set(designs)) {
     const aims = readIndexed(topsRoot?.[design], (aim) => {
@@ -390,23 +394,36 @@ export function readHardpointLayout(
     }
     tops.set(design, aims);
   }
-  return headings ? { fill, frame: root.frame, hardpoints, headings, tiers, tops } : undefined;
+  return headings
+    ? { fill, frame: root.frame, hardpoints, headings, tiers, tops, weaponTops }
+    : undefined;
 }
 
 /**
- * A mount heavy's `fill` and `tiers`, or empty ones for a craft without either. Every tier maps
- * exactly the fill's mounts, each to a weapon with a top and aim or to null for a mount with
- * capped plates.
+ * A mount heavy's `fill`, `tiers` and `weaponTops`, or empty ones for a craft without them. Every
+ * tier maps exactly the fill's mounts, each to `{ armed: true }` or to null for a mount with
+ * capped plates; each weapon top names a design and an aim rule.
  */
 function readMounts(
   hardpoints: HardpointLayout["hardpoints"],
   fillValue: unknown,
   tiersValue: unknown,
-): Pick<HardpointLayout, "fill" | "tiers"> | undefined {
-  if (fillValue === undefined && tiersValue === undefined) {
-    return { fill: [], tiers: [] };
+  weaponTopsValue: unknown,
+): Pick<HardpointLayout, "fill" | "tiers" | "weaponTops"> | undefined {
+  if (fillValue === undefined && tiersValue === undefined && weaponTopsValue === undefined) {
+    return { fill: [], tiers: [], weaponTops: new Map() };
+  }
+  const listedTops = fields(weaponTopsValue);
+  const weaponTops = new Map<string, WeaponTop>();
+  for (const [weapon, value] of Object.entries(listedTops ?? {})) {
+    const drawn = fields(value);
+    if (typeof drawn?.top !== "string" || (drawn.aim !== "target" && drawn.aim !== "aft")) {
+      return undefined;
+    }
+    weaponTops.set(weapon, { aim: drawn.aim, top: drawn.top });
   }
   if (
+    !weaponTops.size ||
     !Array.isArray(fillValue) ||
     !Array.isArray(tiersValue) ||
     !fillValue.every((id) => hardpoints.some((part) => part.id === id)) ||
@@ -430,29 +447,24 @@ function readMounts(
     ) {
       return undefined;
     }
-    const mounts = new Map<string, TierMount | null>();
+    const mounts = new Map<string, boolean>();
     for (const id of fill) {
       const mount = listed[id];
       if (mount === null) {
         if (!hardpoints.find((part) => part.id === id)!.capped) {
           return undefined;
         }
-        mounts.set(id, null);
+        mounts.set(id, false);
         continue;
       }
-      const armed = fields(mount);
-      if (
-        typeof armed?.weapon !== "string" ||
-        typeof armed.top !== "string" ||
-        (armed.aim !== "target" && armed.aim !== "aft")
-      ) {
+      if (fields(mount)?.armed !== true) {
         return undefined;
       }
-      mounts.set(id, { aim: armed.aim, top: armed.top, weapon: armed.weapon });
+      mounts.set(id, true);
     }
     tiers.push({ mounts, positions: [positions[0] as number, positions[1] as number] });
   }
-  return tiers.length ? { fill, tiers } : undefined;
+  return tiers.length ? { fill, tiers, weaponTops } : undefined;
 }
 
 /**
@@ -472,18 +484,24 @@ export function layoutTier(
 }
 
 /**
- * What a hardpoint carries at route `position`: `capped` for a mount the tier leaves null, else
- * its top design (null for none) and whether that top holds the aft aim.
+ * What a hardpoint carries at route `position`: `capped` for a mount the tier leaves unarmed, else
+ * its top design (null for none) and whether that top holds the aft aim. An armed mount draws the
+ * top of `weapon`, the one the ship's loadout puts on it (art/heavies.md "Weapon tops"), and none
+ * without a weapon or when Art draws no top for it; any other hardpoint draws its own top.
  */
 export function mountedTop(
   layout: HardpointLayout,
   position: number,
   hardpoint: string,
+  weapon?: string,
 ): "capped" | { aft: boolean; top: string | null } {
   const tier = layoutTier(layout, position);
   if (tier?.mounts.has(hardpoint)) {
-    const mount = tier.mounts.get(hardpoint);
-    return mount ? { aft: mount.aim === "aft", top: mount.top } : "capped";
+    if (!tier.mounts.get(hardpoint)) {
+      return "capped";
+    }
+    const drawn = weapon === undefined ? undefined : layout.weaponTops.get(weapon);
+    return { aft: drawn?.aim === "aft", top: drawn?.top ?? null };
   }
   return { aft: false, top: layout.hardpoints.find((part) => part.id === hardpoint)?.top ?? null };
 }
@@ -616,6 +634,8 @@ export interface PartPose {
   intact: (hardpoint: string) => boolean;
   /** The galaxy's route position, which picks a mount heavy's tier. */
   position: number;
+  /** The weapon the ship's loadout puts on a mount, which picks its top; undefined for none. */
+  weapon?: (hardpoint: string) => string | undefined;
 }
 
 /** Hull frame px to display px about the hull sprite's pivot. */
@@ -648,7 +668,7 @@ export function composeEnemy<T extends EnemyFrame>(
       continue;
     }
     const placed = heading.parts.get(id)!;
-    const mount = mountedTop(parts.layout, pose.position, id);
+    const mount = mountedTop(parts.layout, pose.position, id, pose.weapon?.(id));
     const intact = mount !== "capped" && pose.intact(id);
     const state = mount === "capped" ? "capped" : intact ? "intact" : "destroyed";
     const base = parts.bases.get(id)?.get(state)?.[index];
@@ -686,7 +706,8 @@ export function turretMuzzles(
   const parts = art.parts;
   const heading = hullHeading(art, hull) ?? -1;
   const pivot = parts?.layout.headings[heading]?.parts.get(hardpoint)?.pivot;
-  const mount = parts && mountedTop(parts.layout, pose.position, hardpoint);
+  const mount =
+    parts && mountedTop(parts.layout, pose.position, hardpoint, pose.weapon?.(hardpoint));
   if (!parts || !mount || mount === "capped" || !mount.top || !pivot || !pose.intact(hardpoint)) {
     return [];
   }

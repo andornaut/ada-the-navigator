@@ -28,47 +28,47 @@ interface CarriedTop {
 
 /**
  * An archetype's drawn mounts from Art's hardpoints file: each turret's pivots, each top design's
- * tips, and the top each mount carries by weapon, the null key for a hardpoint's own top.
+ * tips, each hardpoint's own top and the top each weapon draws on an armed mount.
  */
 export interface MuzzleArt {
-  carries: ReadonlyMap<string, ReadonlyMap<string | null, CarriedTop>>;
   frame: number;
+  own: ReadonlyMap<string, CarriedTop>;
   pivots: ReadonlyMap<string, readonly Point[]>;
   tops: ReadonlyMap<string, readonly (readonly Point[])[]>;
+  weaponTops: ReadonlyMap<string, CarriedTop>;
 }
 
 /** Art draws every enemy frame at this many display px per frame px (art/enemies.md). */
 export const ENEMY_DISPLAY_SCALE = 0.4375;
 
 interface HardpointsFile {
+  fill?: string[];
   frame: number;
   headings: { hardpoints: { id: string; pivot?: number[] }[]; index: number }[];
   hardpoints: { id: string; top: string | null }[];
-  tiers?: { mounts: Record<string, { aim: string; top: string; weapon: string } | null> }[];
   tops: Record<string, { index: number; muzzles: number[][] }[]>;
+  weaponTops?: Record<string, { aim: string; top: string }>;
 }
 
 const point = ([x, y]: readonly number[]): Point => ({ x: x!, y: y! });
 
-/** Each turret's pivots, each top's barrel tips and each mount's top by weapon. */
+/** Each turret's pivots, each top's barrel tips, each hardpoint's own top and each weapon's. */
 export function readMuzzleArt(file: HardpointsFile): MuzzleArt {
   const half = file.frame / 2;
-  const carries = new Map<string, Map<string | null, CarriedTop>>();
-  const carry = (id: string) => carries.get(id) ?? carries.set(id, new Map()).get(id)!;
+  const own = new Map<string, CarriedTop>();
   for (const part of file.hardpoints) {
     if (part.top) {
-      carry(part.id).set(null, { aft: false, top: part.top });
+      own.set(part.id, { aft: false, top: part.top });
     }
   }
-  for (const tier of file.tiers ?? []) {
-    for (const [id, mount] of Object.entries(tier.mounts)) {
-      if (mount) {
-        carry(id).set(mount.weapon, { aft: mount.aim === "aft", top: mount.top });
-      }
-    }
-  }
+  const weaponTops = new Map(
+    Object.entries(file.weaponTops ?? {}).map(([weapon, { aim, top }]) => [
+      weapon,
+      { aft: aim === "aft", top },
+    ]),
+  );
   const pivots = new Map<string, Point[]>();
-  for (const id of carries.keys()) {
+  for (const id of new Set([...own.keys(), ...(file.fill ?? [])])) {
     const placed: Point[] = [];
     for (const heading of file.headings) {
       const pivot = heading.hardpoints.find((entry) => entry.id === id)?.pivot;
@@ -86,7 +86,7 @@ export function readMuzzleArt(file: HardpointsFile): MuzzleArt {
     }
     tops.set(design, tips);
   }
-  return { carries, frame: file.frame, pivots, tops };
+  return { frame: file.frame, own, pivots, tops, weaponTops };
 }
 
 /** Art's drawn mounts for every archetype with a hardpoints file, Gadget's capital included. */
@@ -99,9 +99,9 @@ export const MUZZLE_ART: Partial<Record<EnemyArchetype | "gadget", MuzzleArt>> =
 
 const LAYOUTS = new WeakMap<object, Map<MuzzleArt, MuzzleLayout>>();
 /**
- * The definition's turrets as drawn: each weapon hardpoint fires from the top its weapon draws on
- * that mount (art/heavies.md "Weapon tops"), or the hardpoint's own top. Undefined without Art's
- * mounts, which keeps every shot at the model origin.
+ * The definition's turrets as drawn: each weapon hardpoint fires from its weapon's top
+ * (art/heavies.md "Weapon tops"), or the hardpoint's own top. Undefined without Art's mounts,
+ * which keeps every shot at the model origin.
  */
 export function muzzleLayout(
   definition: Pick<EnemyDefinition, "hardpoints">,
@@ -116,11 +116,9 @@ export function muzzleLayout(
   }
   const turrets = new Map<string, MuzzleTurret>();
   for (const part of definition.hardpoints) {
-    const carries = art.carries.get(part.id);
     const carried =
-      part.kind === "weapon"
-        ? (carries?.get(part.fire.weapon) ?? carries?.get(null))
-        : carries?.get(null);
+      (part.kind === "weapon" ? art.weaponTops.get(part.fire.weapon) : undefined) ??
+      art.own.get(part.id);
     const tips = carried && art.tops.get(carried.top);
     if (carried && tips) {
       turrets.set(part.id, { aft: carried.aft, pivots: art.pivots.get(part.id)!, tips });

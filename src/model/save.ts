@@ -133,7 +133,11 @@ function enemyState(galaxy: GalaxyNumber, value: unknown): boolean {
   ) {
     return false;
   }
-  const definition = enemyDefinition(galaxy, value.archetype as keyof typeof enemyCatalog);
+  const definition = enemyDefinition(
+    galaxy,
+    value.archetype as keyof typeof enemyCatalog,
+    value.id as string,
+  );
   const hardpoints: unknown[] = value.hardpoints;
   return (
     hardpoints.length === definition.hardpoints.length &&

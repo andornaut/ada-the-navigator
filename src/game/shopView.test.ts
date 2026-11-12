@@ -66,7 +66,7 @@ describe("shop rows on the station view", () => {
 
   it("puts paint rows in their own group with levels and prices for the rest", () => {
     const economy = { ...newEconomy(ECONOMY), stardust: 130 };
-    const rows = shopRows(ECONOMY, economy, "ship").map((row) =>
+    const rows = shopRows(ECONOMY, economy, 1, "ship").map((row) =>
       stationRow(ECONOMY, CONTENT.labels, economy.stardust, row),
     );
     expect(rows[0]).toMatchObject({

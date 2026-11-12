@@ -1,4 +1,10 @@
-import type { EconomyCatalog, UpgradeTrack, UpgradeWeapon } from "../data/economy.ts";
+import {
+  type EconomyCatalog,
+  unlockedWeapons,
+  type UpgradeTrack,
+  type UpgradeWeapon,
+} from "../data/economy.ts";
+import type { RoutePosition } from "../data/galaxies.ts";
 import type { Weapon } from "../data/types.ts";
 import type { EconomyState } from "./types.ts";
 import { addPacks, UPGRADE_WEAPONS } from "./weapons.ts";
@@ -132,21 +138,42 @@ export function shopRowState(stardust: number, row: ShopRow): ShopRowState {
 }
 
 /**
- * A tab's rows. Weapons lists an ammunition row for each owned upgrade weapon, then the
- * upgrade weapons, then an upgrade row for Laser and each owned upgrade weapon. Ship lists the
- * upgrade tracks, then the paint schemes.
+ * Whether the galaxy at route `position` sells an item (gameplay/economy.md "Weapon unlocks"): a
+ * weapon, its levels or its ammunition once the route unlocks it there, Laser's levels
+ * everywhere, and the Ship tab's items in every shop.
  */
-export function shopRows(catalog: EconomyCatalog, economy: EconomyState, tab: ShopTab): ShopRow[] {
+export function onSale(position: RoutePosition, item: ShopItem): boolean {
+  if (item.kind !== "ammo" && item.kind !== "weapon" && item.kind !== "weaponUpgrade") {
+    return true;
+  }
+  return item.weapon === "laser" || unlockedWeapons(position).includes(item.weapon);
+}
+
+/**
+ * A tab's rows in the galaxy at route `position`. Weapons lists an ammunition row for each owned
+ * upgrade weapon the galaxy has unlocked, then the upgrade weapons unlocked there, then an
+ * upgrade row for Laser and each owned weapon unlocked there. Ship lists the upgrade tracks, then
+ * the paint schemes.
+ */
+export function shopRows(
+  catalog: EconomyCatalog,
+  economy: EconomyState,
+  position: RoutePosition,
+  tab: ShopTab,
+): ShopRow[] {
   const items: ShopItem[] =
     tab === "weapons"
       ? [
-          ...UPGRADE_WEAPONS.filter((weapon) => weaponOwned(economy, weapon)).map(
-            (weapon): ShopItem => ({ kind: "ammo", weapon }),
+          ...UPGRADE_WEAPONS.filter((weapon) => weaponOwned(economy, weapon))
+            .map((weapon): ShopItem => ({ kind: "ammo", weapon }))
+            .filter((item) => onSale(position, item)),
+          ...UPGRADE_WEAPONS.map((weapon): ShopItem => ({ kind: "weapon", weapon })).filter(
+            (item) => onSale(position, item),
           ),
-          ...UPGRADE_WEAPONS.map((weapon): ShopItem => ({ kind: "weapon", weapon })),
           ...(["laser", ...UPGRADE_WEAPONS] as const)
             .filter((weapon) => weaponOwned(economy, weapon))
-            .map((weapon): ShopItem => ({ kind: "weaponUpgrade", weapon })),
+            .map((weapon): ShopItem => ({ kind: "weaponUpgrade", weapon }))
+            .filter((item) => onSale(position, item)),
         ]
       : [
           ...SHIP_TRACKS.map((track): ShopItem => ({ kind: "track", track })),

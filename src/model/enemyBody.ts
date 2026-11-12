@@ -6,7 +6,7 @@ import gadget from "../../public/art/enemies/gadget-hardpoints.json" with { type
 import interceptor from "../../public/art/enemies/interceptor-jets.json" with { type: "json" };
 import retaliator from "../../public/art/enemies/retaliator-jets.json" with { type: "json" };
 import swarm from "../../public/art/enemies/swarm-jets.json" with { type: "json" };
-import type { EnemyArchetype } from "../data/enemyCatalog.ts";
+import { type EnemyArchetype, heavyLoadout } from "../data/enemyCatalog.ts";
 import { ENEMY_DISPLAY_SCALE } from "../data/enemyMuzzles.ts";
 import type { RoutePosition } from "../data/galaxies.ts";
 import type { Parts } from "./convex.ts";
@@ -32,15 +32,15 @@ interface HardpointOutline {
   readonly top: string | null;
 }
 
-/** A tier-filled mount's top and whether it holds the aft aim. */
+/** A drawn top and whether it holds the aft aim. */
 interface MountTop {
   readonly aft: boolean;
   readonly top: string;
 }
 
-/** One position tier: each mount's top, or null for its capped plate. */
+/** One position tier: whether each mount is armed; an unarmed one draws its capped plate. */
 interface OutlineTier {
-  readonly mounts: ReadonlyMap<string, MountTop | null>;
+  readonly mounts: ReadonlyMap<string, boolean>;
   readonly positions: readonly [number, number];
 }
 
@@ -53,6 +53,8 @@ interface EnemyOutline {
   readonly hardpoints: ReadonlyMap<string, HardpointOutline>;
   /** A mount heavy's loadouts by route position; empty when every hardpoint keeps its top. */
   readonly tiers: readonly OutlineTier[];
+  /** The top each weapon draws on an armed mount. */
+  readonly weaponTops: ReadonlyMap<string, MountTop>;
   /** Turret top parts per aim index, display px from the top's pivot. */
   readonly tops: ReadonlyMap<string, readonly Parts[]>;
 }
@@ -84,8 +86,12 @@ interface HardpointsFile {
       collision?: { capped?: RawParts; intact?: RawParts; destroyed?: RawParts };
     }[];
   }[];
-  tiers?: { mounts: Record<string, { aim: string; top: string } | null>; positions: number[] }[];
+  tiers?: {
+    mounts: Record<string, { armed: boolean } | null>;
+    positions: number[];
+  }[];
   tops: Record<string, { index: number; collision?: RawParts }[]>;
+  weaponTops?: Record<string, { aim: string; top: string }>;
 }
 
 /** The hull per heading, or undefined unless all 16 headings carry collision parts. */
@@ -105,7 +111,15 @@ function hulls(
 
 function smallOutline(file: JetsFile): EnemyOutline | undefined {
   const hull = hulls(file.frame, file.headings);
-  return hull && { hardpoints: new Map(), hulls: hull, tiers: [], tops: new Map() };
+  return (
+    hull && {
+      hardpoints: new Map(),
+      hulls: hull,
+      tiers: [],
+      tops: new Map(),
+      weaponTops: new Map(),
+    }
+  );
 }
 
 function heavyOutline(file: HardpointsFile): EnemyOutline | undefined {
@@ -116,16 +130,11 @@ function heavyOutline(file: HardpointsFile): EnemyOutline | undefined {
   const centre = file.frame / 2;
   const hardpoints = new Map<string, HardpointOutline>();
   const tiers: OutlineTier[] = (file.tiers ?? []).map((tier) => ({
-    mounts: new Map(
-      Object.entries(tier.mounts).map(([id, mount]) => [
-        id,
-        mount && { aft: mount.aim === "aft", top: mount.top },
-      ]),
-    ),
+    mounts: new Map(Object.entries(tier.mounts).map(([id, mount]) => [id, mount?.armed === true])),
     positions: [tier.positions[0]!, tier.positions[1]!],
   }));
   const cappable = new Set(
-    tiers.flatMap((tier) => [...tier.mounts].flatMap(([id, top]) => (top === null ? [id] : []))),
+    tiers.flatMap((tier) => [...tier.mounts].flatMap(([id, armed]) => (armed ? [] : [id]))),
   );
   for (const { id, top } of file.hardpoints) {
     const bases: { capped?: Parts; destroyed: Parts; intact: Parts }[] = [];
@@ -161,18 +170,26 @@ function heavyOutline(file: HardpointsFile): EnemyOutline | undefined {
     }
     tops.set(name, parts);
   }
-  return { hardpoints, hulls: hull, tiers, tops };
+  const weaponTops = new Map<string, MountTop>(
+    Object.entries(file.weaponTops ?? {}).map(([weapon, { aim, top }]) => [
+      weapon,
+      { aft: aim === "aft", top },
+    ]),
+  );
+  return { hardpoints, hulls: hull, tiers, tops, weaponTops };
 }
 
 /**
  * The top a hardpoint carries at route `position`, from the tier holding it (a position past the
- * last tier reads the last one): `capped` for a mount the tier leaves null.
+ * last tier reads the last one): `capped` for a mount the tier leaves unarmed, else the top of the
+ * weapon the ship's loadout puts on it, or none when Art draws no top for that weapon.
  */
 function carriedTop(
   outline: EnemyOutline,
   position: number,
   id: string,
   own: string | null,
+  weapon: string | undefined,
 ): MountTop | null | "capped" {
   const tiers = [...outline.tiers].sort((a, b) => a.positions[0] - b.positions[0]);
   const last = tiers.at(-1);
@@ -182,7 +199,10 @@ function carriedTop(
   if (!tier?.mounts.has(id)) {
     return own === null ? null : { aft: false, top: own };
   }
-  return tier.mounts.get(id) ?? "capped";
+  if (!tier.mounts.get(id)) {
+    return "capped";
+  }
+  return (weapon && outline.weaponTops.get(weapon)) || null;
 }
 
 const OUTLINES: Partial<Record<EnemyArchetype | "gadget", EnemyOutline>> = {};
@@ -223,7 +243,7 @@ const PART_OUTLINES = new Map<string, Parts>();
  */
 export function enemyPartOutline(
   position: RoutePosition,
-  enemy: Pick<EnemyState, "aim" | "archetype" | "facing" | "hardpoints">,
+  enemy: Pick<EnemyState, "aim" | "archetype" | "facing" | "hardpoints" | "id">,
   id: string,
 ): Parts | null {
   const outline = OUTLINES[enemy.archetype];
@@ -232,7 +252,8 @@ export function enemyPartOutline(
     return null;
   }
   const heading = index16(enemy.facing);
-  const carried = carriedTop(outline, position, id, hardpoint.top);
+  const weapon = heavyLoadout(enemy.archetype, position, enemy.id)?.get(id);
+  const carried = carriedTop(outline, position, id, hardpoint.top, weapon);
   if (carried === "capped") {
     return hardpoint.bases[heading]!.capped!;
   }

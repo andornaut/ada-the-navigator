@@ -183,7 +183,6 @@ describe("platform", () => {
     peers: [state],
     player: { x: away, y: 0 },
     playerVelocity: { x: 0, y: 0 },
-    projectileSpeed: 100,
     targetable: true,
     visibility: "visible",
   });

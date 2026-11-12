@@ -13,9 +13,13 @@ import { newEconomy } from "./upgrades.ts";
 import { UPGRADE_WEAPONS } from "./weapons.ts";
 
 const ALL_WEAPONS: readonly Weapon[] = ["laser", ...UPGRADE_WEAPONS];
+/** Phantom's route position, where every weapon is unlocked. */
+const PHANTOM = 6;
 /** The gift a draw gives, as `kind:item`. */
-const label = (gift: UpgradeGift): string => {
-  switch (gift.kind) {
+const label = (gift: UpgradeGift | null): string => {
+  switch (gift?.kind) {
+    case undefined:
+      return "none";
     case "track":
       return `track:${gift.track}`;
     case "paint":
@@ -28,7 +32,7 @@ const label = (gift: UpgradeGift): string => {
 function shares(economy: EconomyState, draws = 60000): Map<string, number> {
   const counts = new Map<string, number>();
   for (let index = 0; index < draws; index++) {
-    const key = label(chooseUpgrade(ECONOMY, economy, dropRandom(7, `upgrade:${index}`)));
+    const key = label(chooseUpgrade(ECONOMY, economy, PHANTOM, dropRandom(7, `upgrade:${index}`)));
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
   return new Map([...counts].map(([key, count]) => [key, count / draws]));
@@ -70,13 +74,32 @@ describe("upgrade drop selection", () => {
     });
     // An unowned weapon comes itself with its packs; Laser, always owned, its next level.
     const gifts = Array.from({ length: 400 }, (_, index) =>
-      chooseUpgrade(ECONOMY, newEconomy(ECONOMY), dropRandom(3, `w:${index}`)),
+      chooseUpgrade(ECONOMY, newEconomy(ECONOMY), PHANTOM, dropRandom(3, `w:${index}`)),
     );
-    expect(gifts.find((gift) => gift.kind === "weaponLevel")).toMatchObject({
+    expect(gifts.find((gift) => gift?.kind === "weaponLevel")).toMatchObject({
       level: 2,
       weapon: "laser",
     });
-    expect(gifts.some((gift) => gift.kind === "weapon" && gift.weapon === "multiLaser")).toBe(true);
+    expect(gifts.some((gift) => gift?.kind === "weapon" && gift.weapon === "multiLaser")).toBe(
+      true,
+    );
+  });
+
+  it("gives Weapons steps only for Laser and the weapons the galaxy unlocks", () => {
+    const economy = newEconomy(ECONOMY);
+    economy.ownedWeapons = ["phaser"];
+    const weapons = (position: 1 | 3) =>
+      new Set(
+        Array.from({ length: 4000 }, (_, index) =>
+          chooseUpgrade(ECONOMY, economy, position, dropRandom(8, `g:${index}`)),
+        ).flatMap((gift) =>
+          gift?.kind === "weapon" || gift?.kind === "weaponLevel" ? [gift.weapon] : [],
+        ),
+      );
+    // Sunflower unlocks Multi-Laser; Cartwheel adds Rapid and Heavy Missile. The owned Phaser
+    // levels only where it is unlocked.
+    expect([...weapons(1)].sort()).toEqual(["laser", "multiLaser"]);
+    expect([...weapons(3)].sort()).toEqual(["heavyMissile", "laser", "multiLaser", "rapidMissile"]);
   });
 
   it("drops what has nothing left from the pool and keeps the others' relative weights", () => {
@@ -108,7 +131,7 @@ describe("upgrade drop selection", () => {
     economy.levels.tractor = 3;
     economy.paints.push("cobalt");
     for (let index = 0; index < 4000; index++) {
-      const gift = chooseUpgrade(ECONOMY, economy, dropRandom(9, `u:${index}`));
+      const gift = chooseUpgrade(ECONOMY, economy, PHANTOM, dropRandom(9, `u:${index}`));
       expect(gift).not.toMatchObject({ kind: "weapon", weapon: "rapidMissile" });
       expect(gift).not.toMatchObject({ kind: "weaponLevel", weapon: "rapidMissile" });
       expect(gift).not.toMatchObject({ kind: "track", track: "tractor" });
@@ -120,10 +143,10 @@ describe("upgrade drop selection", () => {
   it("gives an unowned paint scheme once only Paint is left, owned but not put in use", () => {
     const economy = maxed();
     for (let index = 0; index < 200; index++) {
-      const gift = chooseUpgrade(ECONOMY, economy, dropRandom(2, `p:${index}`));
-      expect(gift.kind).toBe("paint");
+      const gift = chooseUpgrade(ECONOMY, economy, PHANTOM, dropRandom(2, `p:${index}`));
+      expect(gift?.kind).toBe("paint");
     }
-    const gift = chooseUpgrade(ECONOMY, economy, dropRandom(2, "p:0"));
+    const gift = chooseUpgrade(ECONOMY, economy, PHANTOM, dropRandom(2, "p:0"))!;
     applyUpgrade(ECONOMY, gift, economy);
     expect(economy.paints).toHaveLength(2);
     expect(economy.paint).toBe(ECONOMY.defaultPaint);
@@ -133,23 +156,28 @@ describe("upgrade drop selection", () => {
     const economy = maxed();
     economy.paints = [...ECONOMY.paintOrder];
     const counts = new Map<string, number>();
-    const draws = 31000;
+    const draws = 49000;
     for (let index = 0; index < draws; index++) {
-      const gift = chooseUpgrade(ECONOMY, economy, dropRandom(4, `a:${index}`));
-      expect(gift.kind).toBe("ammo");
-      const weapon = gift.kind === "ammo" ? gift.weapon : "";
+      const gift = chooseUpgrade(ECONOMY, economy, PHANTOM, dropRandom(4, `a:${index}`));
+      expect(gift?.kind).toBe("ammo");
+      const weapon = gift?.kind === "ammo" ? gift.weapon : "";
       counts.set(weapon, (counts.get(weapon) ?? 0) + 1);
     }
-    // Multi-Laser 16, Rapid Missile 8, Heavy Missile 4, Scattershot 2 and Phaser 1, of 31.
+    // Multi-Laser 16, Rapid Missile 12, Heavy Missile 9, Scattershot 7 and Phaser 5, of 49.
     for (const [weapon, weight] of [
       ["multiLaser", 16],
-      ["rapidMissile", 8],
-      ["heavyMissile", 4],
-      ["scattershot", 2],
-      ["phaser", 1],
+      ["rapidMissile", 12],
+      ["heavyMissile", 9],
+      ["scattershot", 7],
+      ["phaser", 5],
     ] as const) {
-      expect((counts.get(weapon) ?? 0) / draws).toBeCloseTo(weight / 31, 2);
+      expect((counts.get(weapon) ?? 0) / draws).toBeCloseTo(weight / 49, 2);
     }
+    // With everything maxed, Sunflower gives only Multi-Laser's ammunition, the one unlocked there.
+    expect(chooseUpgrade(ECONOMY, economy, 1, dropRandom(4, "a:0"))).toEqual({
+      kind: "ammo",
+      weapon: "multiLaser",
+    });
     const before = economy.ammo.phaser;
     applyUpgrade(ECONOMY, { kind: "ammo", weapon: "phaser" }, economy);
     expect(economy.ammo.phaser).toBe(before + ECONOMY.ammo.pack.phaser);
@@ -157,8 +185,8 @@ describe("upgrade drop selection", () => {
 
   it("gives the same gift for the same seed", () => {
     const economy = newEconomy(ECONOMY);
-    expect(chooseUpgrade(ECONOMY, economy, dropRandom(5, "upgrade:drop:3"))).toEqual(
-      chooseUpgrade(ECONOMY, economy, dropRandom(5, "upgrade:drop:3")),
+    expect(chooseUpgrade(ECONOMY, economy, PHANTOM, dropRandom(5, "upgrade:drop:3"))).toEqual(
+      chooseUpgrade(ECONOMY, economy, PHANTOM, dropRandom(5, "upgrade:drop:3")),
     );
   });
 
@@ -181,29 +209,39 @@ describe("upgrade drop selection", () => {
 describe("ammo pack drops", () => {
   const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
-  it("drops from a destroyed small craft at 5% once Ada owns a weapon other than Laser", () => {
-    const rolls = (owned: readonly Weapon[], archetype: "fighter" | "frigate") =>
+  it("drops from a destroyed small craft at 7.5% while Ada owns a weapon unlocked there", () => {
+    const rolls = (
+      owned: readonly Weapon[],
+      archetype: "fighter" | "frigate",
+      position: 1 | 6 = PHANTOM,
+    ) =>
       Array.from({ length: 20000 }, (_, index) =>
-        rollAmmoDrop(ECONOMY, owned, archetype, dropRandom(9, `ammo:${index}`)),
+        rollAmmoDrop(ECONOMY, position, owned, archetype, dropRandom(9, `ammo:${index}`)),
       ).filter(Boolean).length / 20000;
-    expect(ECONOMY.ammo.dropChance).toBe(0.05);
-    expect(rolls(["scattershot"], "fighter")).toBeCloseTo(0.05, 2);
+    expect(ECONOMY.ammo.dropChance).toBe(0.075);
+    expect(rolls(["scattershot"], "fighter")).toBeCloseTo(0.075, 2);
     expect(rolls([], "fighter")).toBe(0);
     expect(rolls(["laser"], "fighter")).toBe(0);
     expect(rolls(["scattershot"], "frigate")).toBe(0);
+    // Sunflower unlocks only Multi-Laser: a later weapon's ammunition does not drop there.
+    expect(rolls(["scattershot"], "fighter", 1)).toBe(0);
+    expect(rolls(["multiLaser", "scattershot"], "fighter", 1)).toBeCloseTo(0.075, 2);
   });
 
-  it("holds a pack for an owned weapon other than Laser, by the weights among those owned", () => {
-    const pick = (owned: readonly Weapon[], index: number) =>
-      chooseAmmoPack(ECONOMY, owned, dropRandom(3, `p:${index}`));
+  it("holds a pack for an owned weapon unlocked there, by the weights among those", () => {
+    const pick = (owned: readonly Weapon[], index: number, position: 2 | 6 = PHANTOM) =>
+      chooseAmmoPack(ECONOMY, position, owned, dropRandom(3, `p:${index}`));
     expect(pick([], 0)).toBeNull();
     expect(pick(["laser"], 0)).toBeNull();
-    // Rapid Missile 8 to Phaser 1 when only those two are owned.
-    const draws = 9000;
+    // Rapid Missile 12 to Phaser 5 when only those two are owned.
+    const draws = 17000;
     const rapid = Array.from({ length: draws }, (_, index) =>
       pick(["phaser", "rapidMissile"], index),
     ).filter((weapon) => weapon === "rapidMissile").length;
-    expect(rapid / draws).toBeCloseTo(8 / 9, 2);
+    expect(rapid / draws).toBeCloseTo(12 / 17, 2);
+    // Whirlpool unlocks Rapid Missile but not Phaser.
+    expect(pick(["phaser", "rapidMissile"], 0, 2)).toBe("rapidMissile");
+    expect(pick(["phaser"], 0, 2)).toBeNull();
   });
 
   it("gives its pack as Ada collects it, an item notice's ammo gain", () => {
@@ -211,10 +249,10 @@ describe("ammo pack drops", () => {
     model.startGalaxy(1);
     playOpening(model);
     const flight = model.state.flight!;
-    model.state.economy.ownedWeapons = ["scattershot"];
-    flight.ownedWeapons = ["scattershot"];
-    flight.ammo.scattershot = 5;
-    model.state.economy.ammo.scattershot = 5;
+    model.state.economy.ownedWeapons = ["multiLaser"];
+    flight.ownedWeapons = ["multiLaser"];
+    flight.ammo.multiLaser = 5;
+    model.state.economy.ammo.multiLaser = 5;
     flight.objects = [
       { ...flight.player, ammoPack: true, hp: 1, id: "drop:1", kind: "pickup", radius: 10 },
     ];
@@ -222,16 +260,16 @@ describe("ammo pack drops", () => {
     model.step(0.01, idle);
     const gains = itemGains(false, before, gainSnapshot(model.state.economy.paints, model.ship));
     expect(model.state.flight!.objects).toHaveLength(0);
-    expect(model.state.flight!.ammo.scattershot).toBe(5 + ECONOMY.ammo.pack.scattershot);
-    expect(model.state.economy.ammo.scattershot).toBe(5 + ECONOMY.ammo.pack.scattershot);
-    expect(gains).toEqual([{ kind: "ammo", weapon: "scattershot" }]);
+    expect(model.state.flight!.ammo.multiLaser).toBe(5 + ECONOMY.ammo.pack.multiLaser);
+    expect(model.state.economy.ammo.multiLaser).toBe(5 + ECONOMY.ammo.pack.multiLaser);
+    expect(gains).toEqual([{ kind: "ammo", weapon: "multiLaser" }]);
   });
 });
 
 describe("collecting an upgrade pickup", () => {
   const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
-  /** A flight with only `gift` left to give, and an upgrade pickup on Ada. */
-  function onlyLeft(gift: "shield" | "rapidMissile"): {
+  /** A Sunflower flight with only `gift` left to give, and an upgrade pickup on Ada. */
+  function onlyLeft(gift: "shield" | "multiLaser"): {
     gains: readonly ItemGain[];
     model: GameModel;
   } {
@@ -243,8 +281,8 @@ describe("collecting an upgrade pickup", () => {
     if (gift === "shield") {
       full.levels.shield = 1;
     } else {
-      full.ownedWeapons = full.ownedWeapons.filter((weapon) => weapon !== "rapidMissile");
-      full.levels.weapons.rapidMissile = 1;
+      full.ownedWeapons = full.ownedWeapons.filter((weapon) => weapon !== "multiLaser");
+      full.levels.weapons.multiLaser = 1;
     }
     flight.ownedWeapons = [...full.ownedWeapons];
     flight.levels = structuredClone(full.levels);
@@ -268,11 +306,11 @@ describe("collecting an upgrade pickup", () => {
   });
 
   it("gives a new weapon as a find: owned, with its packs, and equipped", () => {
-    const { gains, model } = onlyLeft("rapidMissile");
+    const { gains, model } = onlyLeft("multiLaser");
     const flight = model.state.flight!;
-    expect(model.state.economy.ownedWeapons).toContain("rapidMissile");
-    expect(flight.weapon).toBe("rapidMissile");
-    expect(flight.ammo.rapidMissile).toBeGreaterThanOrEqual(3 * ECONOMY.ammo.pack.rapidMissile);
-    expect(gains).toEqual([{ kind: "weapon", weapon: "rapidMissile" }]);
+    expect(model.state.economy.ownedWeapons).toContain("multiLaser");
+    expect(flight.weapon).toBe("multiLaser");
+    expect(flight.ammo.multiLaser).toBeGreaterThanOrEqual(3 * ECONOMY.ammo.pack.multiLaser);
+    expect(gains).toEqual([{ kind: "weapon", weapon: "multiLaser" }]);
   });
 });

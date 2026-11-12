@@ -3260,7 +3260,8 @@ try {
       await page.keyboard.up("ArrowRight");
     }
   }
-  // Rapid missiles reach 220, so at most two are in flight between shots.
+  // A level 1 Rapid Missile lives 0.44 s (220 at 500) against its 0.30 s interval, so at most
+  // two are in flight between shots.
   const missiles = await heldVolley("rapidMissile", "missile", 2);
   // Remaining life counts down, so ascending life is firing order (oldest first).
   const missileShots = missiles.flight.shots
@@ -3315,8 +3316,8 @@ try {
   const dots = scatter.flight.shots.filter((shot) => !shot.enemy && shot.projectile === "dot");
   const fading = dots.filter((shot) => shot.life / shot.fade.initialLife < 0.35);
   // Pellets leave the nose of the heading they fired at, so from Ada's centre each lies within
-  // Scattershot's 360 world-unit range plus the farthest world nose offset of any facing.
-  const scatterRange = 360;
+  // Scattershot's 100 world-unit range plus the farthest world nose offset of any facing.
+  const scatterRange = 100;
   const { noseOffset } = await import(new URL("../src/model/nose.ts", import.meta.url));
   const noseReach = Math.max(
     ...Array.from({ length: 360 }, (_, degrees) => {
@@ -3337,7 +3338,7 @@ try {
     const dy = shot.y - scatter.flight.player.y;
     assert.ok(
       Math.hypot(dx, dy) <= scatterRange + noseReach + 0.001,
-      "Actual scatter particles must remain inside the 360 world-unit range from the nose",
+      "Actual scatter particles must remain inside the 100 world-unit range from the nose",
     );
     assert.ok(shot.damage > 0 && shot.damage < CONTENT.tuning.flight.playerShotDamage);
   }
@@ -3358,7 +3359,7 @@ try {
   });
   events.checks.push(
     "Actual held aim emits automatic straight missiles, triple ±20 degree bolts " +
-      "and fading 360 world-unit scatter particles",
+      "and fading 100 world-unit scatter particles",
   );
 
   const cargoModel = new GameModel(CONTENT);

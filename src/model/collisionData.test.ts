@@ -3,7 +3,12 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { ASTEROID_ART, RESOURCE_ART } from "../data/asteroidCatalog.ts";
-import { type EnemyArchetype, enemyCatalog, type EnemyDefinition } from "../data/enemyCatalog.ts";
+import {
+  type EnemyArchetype,
+  enemyCatalog,
+  type EnemyDefinition,
+  heavyLoadout,
+} from "../data/enemyCatalog.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { debrisSilhouette } from "./debrisBody.ts";
@@ -129,9 +134,21 @@ describe("Art's collision data", () => {
       }[];
       tops: Record<string, { collision: Raw }[]>;
     };
+    // A capital whose loadout puts the mine layer on stern-right at positions 5 and 6.
+    let id = "capital:0";
+    for (let index = 0; ; index++) {
+      id = `capital:${index}`;
+      if (
+        [5, 6].every(
+          (at) => heavyLoadout("capital", at as 5 | 6, id)!.get("stern-right") === "mineLayer",
+        )
+      ) {
+        break;
+      }
+    }
     const enemy = createEnemy(
       enemyCatalog.capital,
-      { archetype: "capital", id: "capital", packId: null, phase: 0 },
+      { archetype: "capital", id, packId: null, phase: 0 },
       { x: 0, y: 0 },
     );
     enemy.facing = facing(3);

@@ -72,7 +72,7 @@ describe("owned upgrade weapons", () => {
     expect(model.weapons()).toEqual([
       { ammo: null, id: "laser", level: 1, selected: false },
       { ammo: 600, id: "multiLaser", level: 1, selected: true },
-      { ammo: 495, id: "rapidMissile", level: 1, selected: false },
+      { ammo: 300, id: "rapidMissile", level: 1, selected: false },
     ]);
     const before = model.save();
     expect(model.selectWeapon("scattershot")).toBe(false);
@@ -85,10 +85,15 @@ describe("owned upgrade weapons", () => {
       const model = launched();
       pickup(model, weapon);
       const flight = model.state.flight!;
-      stepFlight(CONTENT, 1, { ...idle, aim: { x: 1, y: 0 } }, flight);
+      // Over a second of held fire, counting every shot fired, short-lived ones included.
+      const fired = new Set<string>();
+      for (let slice = 0; slice < 60; slice++) {
+        stepFlight(CONTENT, 1 / 60, { ...idle, aim: { x: 1, y: 0 } }, flight);
+        flight.shots.forEach((shot) => fired.add(shot.id));
+      }
       expect(flight.weapon).toBe(weapon);
       expect(flight.ownedWeapons).toEqual([weapon]);
-      expect(flight.shots.length).toBeGreaterThan(1);
+      expect(fired.size).toBeGreaterThan(1);
     },
   );
 
@@ -281,7 +286,7 @@ describe("ammunition", () => {
     model.state.docked = "station";
     model.state.economy.stardust = 10;
     expect(model.buy({ kind: "ammo", weapon: "phaser" })).toEqual({ kind: "bought", price: 10 });
-    expect(flight.ammo.phaser).toBe(18);
+    expect(flight.ammo.phaser).toBe(20);
     expect(model.state.economy.stardust).toBe(0);
     model.state.docked = null;
     expect(model.selectWeapon("phaser")).toBe(true);
@@ -315,11 +320,11 @@ describe("ammunition", () => {
     expect(grantAllWeapons(model.state)).toBe(true);
     const flight = model.state.flight!;
     expect(flight.ammo).toEqual({
-      heavyMissile: 99,
+      heavyMissile: 60,
       multiLaser: 600,
-      phaser: 54,
-      rapidMissile: 495,
-      scattershot: 201,
+      phaser: 60,
+      rapidMissile: 300,
+      scattershot: 90,
     });
     model.step(0.01, idle);
     expect(model.state.economy.ammo).toEqual(noAmmo());

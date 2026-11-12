@@ -614,7 +614,6 @@ export const CONTENT: GameContent = {
     battleMargin: 64,
     chunkSize: 512,
     encounterFreshDistance: 600,
-    enemyProjectileSpeed: 200,
     flight: {
       arrivalCalm: 2000,
       damageInterval: 1,

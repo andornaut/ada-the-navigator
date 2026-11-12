@@ -39,7 +39,6 @@ const context = (state: EnemyState, player = { x: 300, y: 40 }): EnemyContext =>
   peers: [state],
   player,
   playerVelocity: { x: 0, y: 0 },
-  projectileSpeed: 100,
   targetable: true,
   visibility: "visible",
 });
@@ -136,12 +135,10 @@ describe("drawn muzzles", () => {
       expect(offset.x).toBeCloseTo(expected.x, 9);
       expect(offset.y).toBeCloseTo(expected.y, 9);
     }
-    // A weapon a mount never carries has no drawn top there.
-    expect(
-      muzzleLayout(armed({ "claw-left": "mineLayer" }), MUZZLE_ART.capital)!.turrets.has(
-        "claw-left",
-      ),
-    ).toBe(false);
+    // A loadout's weapon on a mount Art's tiers give another fires from its own top there.
+    const moved = muzzleLayout(armed({ "claw-left": "mineLayer" }), MUZZLE_ART.capital)!;
+    expect(moved.turrets.get("claw-left")!.aft).toBe(true);
+    expect(moved.turrets.get("claw-left")!.tips[4]).toHaveLength(tips("hopper", 4));
   });
 
   it("fires a heavy turret from its drawn muzzle along the continuous smoothed aim", () => {

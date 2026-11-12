@@ -1,4 +1,10 @@
-import type { EconomyCatalog, UpgradeTrack, UpgradeWeapon } from "../data/economy.ts";
+import {
+  type EconomyCatalog,
+  unlockedWeapons,
+  type UpgradeTrack,
+  type UpgradeWeapon,
+} from "../data/economy.ts";
+import type { RoutePosition } from "../data/galaxies.ts";
 import type { Weapon } from "../data/types.ts";
 import { SHIP_TRACKS } from "./shop.ts";
 import type { EconomyState } from "./types.ts";
@@ -31,22 +37,26 @@ function weighted<T>(next: () => number, entries: readonly (readonly [T, number]
 }
 
 /**
- * The gift an upgrade drop gives (gameplay/economy.md "Earning Stardust"): a category by its
- * weight (Weapons, Shield, Engine tuning, Tractor beam and Paint), then an item within it.
+ * The gift an upgrade drop gives in the galaxy at route `position` (gameplay/economy.md "Earning
+ * Stardust", "Weapon unlocks"): a category by its weight (Weapons, Shield, Engine tuning, Tractor
+ * beam and Paint), then an item within it, Weapons among Laser and the galaxy's unlocked weapons.
  * Weapons gives one weapon's next step by the weapon's weight: the weapon itself if Ada does not
  * own it, else its next level. A category or weapon with nothing left leaves the pool and the
- * rest keep their relative weights; with nothing left, one pack for an owned weapon other than
- * Laser, as an ammo pack pickup gives (chooseAmmoPack).
+ * rest keep their relative weights; with nothing left, one pack as an ammo pack pickup gives
+ * there (chooseAmmoPack), or null when none is eligible.
  */
 export function chooseUpgrade(
   catalog: EconomyCatalog,
   economy: EconomyState,
+  position: RoutePosition,
   next: () => number,
-): UpgradeGift {
+): UpgradeGift | null {
   const { categories, weapons } = catalog.upgradeDropWeights;
   const owned = (weapon: Weapon) => weapon === "laser" || economy.ownedWeapons.includes(weapon);
   const maxLevel = catalog.weaponUpgradePrices.length + 1;
-  const steps = (["laser", ...UPGRADE_WEAPONS] as const).filter(
+  // Only Laser and the weapons the galaxy unlocks drop, at their weights among themselves.
+  const unlocked = unlockedWeapons(position);
+  const steps = (["laser", ...unlocked] as const).filter(
     (weapon) => !owned(weapon) || economy.levels.weapons[weapon] < maxLevel,
   );
   const tracks = SHIP_TRACKS.filter(
@@ -95,19 +105,25 @@ export function chooseUpgrade(
   if (pool.length) {
     return weighted(next, pool)();
   }
-  return { kind: "ammo", weapon: chooseAmmoPack(catalog, economy.ownedWeapons, next)! };
+  const weapon = chooseAmmoPack(catalog, position, economy.ownedWeapons, next);
+  return weapon && { kind: "ammo", weapon };
 }
 
 /**
- * The weapon an ammo pack is for, chosen as Ada collects it: an owned weapon other than Laser by
- * the ammo pack weights; null while she owns none.
+ * The weapon an ammo pack is for, chosen as Ada collects it in the galaxy at route `position`
+ * (gameplay/economy.md "Weapon unlocks"): an owned weapon other than Laser that the galaxy
+ * unlocks, by the ammo pack weights; null while she owns none.
  */
 export function chooseAmmoPack(
   catalog: EconomyCatalog,
+  position: RoutePosition,
   owned: readonly Weapon[],
   next: () => number,
 ): UpgradeWeapon | null {
-  const weapons = UPGRADE_WEAPONS.filter((weapon) => owned.includes(weapon));
+  const unlocked = unlockedWeapons(position);
+  const weapons = UPGRADE_WEAPONS.filter(
+    (weapon) => owned.includes(weapon) && unlocked.includes(weapon),
+  );
   return weapons.length
     ? weighted(
         next,

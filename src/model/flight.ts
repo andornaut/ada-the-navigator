@@ -743,7 +743,7 @@ function spawnEnemy(
   phase = 0,
   escortOf: string | null = null,
 ): SpaceObject {
-  const definition = enemyDefinition(galaxy, archetype);
+  const definition = enemyDefinition(galaxy, archetype, id);
   return {
     ...point,
     enemy: createEnemy(definition, { archetype, escortOf, id, packId, phase }, point),
@@ -1851,7 +1851,8 @@ function presses(targetable: boolean, flight: FlightState, object: SpaceObject):
     !state.returning &&
     !state.fleeing &&
     !state.disabled &&
-    distance(object, flight.player) <= enemyDefinition(flight.galaxy, state.archetype).perception
+    distance(object, flight.player) <=
+      enemyDefinition(flight.galaxy, state.archetype, state.id).perception
   );
 }
 
@@ -1895,7 +1896,7 @@ function enemies(
   const peers = objects.flatMap((object) => (object.enemy ? [object.enemy] : []));
   for (const object of objects) {
     const state = object.enemy!;
-    const definition = enemyDefinition(flight.galaxy, state.archetype);
+    const definition = enemyDefinition(flight.galaxy, state.archetype, state.id);
     const targetable = !safe(content, flight.player, flight) && !safe(content, object, flight);
     const visible = !flight.objects.some(
       (obstacle) =>
@@ -1922,7 +1923,6 @@ function enemies(
         peers,
         player: flight.player,
         playerVelocity: aimVelocity,
-        projectileSpeed: content.tuning.enemyProjectileSpeed,
         summoned: flight.summonedGuards?.includes(object.id) ?? false,
         targetable,
         visibility: visible ? "visible" : "occluded",
@@ -2342,7 +2342,7 @@ function liveParts(
   if (!enemy) {
     return [];
   }
-  const definition = enemyDefinition(galaxy, enemy.archetype);
+  const definition = enemyDefinition(galaxy, enemy.archetype, enemy.id);
   const adaWidth = content.tuning.flight.shipRadius * 2;
   return definition.hardpoints
     .filter((part) => enemy.hardpoints.some((value) => value.id === part.id && value.hp > 0))
@@ -2422,7 +2422,7 @@ function hit(
     return;
   }
   if (object.kind === "enemy" && object.enemy) {
-    const definition = enemyDefinition(flight.galaxy, object.enemy.archetype);
+    const definition = enemyDefinition(flight.galaxy, object.enemy.archetype, object.enemy.id);
     const disabled = object.enemy.disabled;
     object.enemy = damageEnemy(definition, { amount, hardpointId: part }, object.enemy);
     object.hp = enemyDefeated(object.enemy) ? 0 : Math.max(1, object.enemy.hp);
@@ -3110,7 +3110,7 @@ function stepWrecks(
       (weapon) => !flight.grantedWeapons?.includes(weapon),
     );
     const ammo = dropRandom(flight.seed, `ammo:${object.id}`);
-    if (rollAmmoDrop(ECONOMY, owned, object.wreck.archetype, ammo)) {
+    if (rollAmmoDrop(ECONOMY, ROUTE_POSITION[flight.galaxy], owned, object.wreck.archetype, ammo)) {
       flight.objects.push({
         ammoPack: true,
         hp: 1,

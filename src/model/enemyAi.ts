@@ -83,8 +83,6 @@ export interface EnemyContext {
   player: Point;
   /** Ada's velocity averaged for aim (ENEMY_AIM.velocitySeconds). */
   playerVelocity: Point;
-  /** Base enemy projectile speed; each fire profile's projectileSpeedRatio multiplies it. */
-  projectileSpeed: number;
   /**
    * A cued route guard (flight.ts cueGuards): it flies straight at Ada at full speed, past its
    * pursuit limits and holding its fire, until she sees it.
@@ -707,7 +705,7 @@ export function stepEnemy(
   const track = (origin: Point, current: Point | null, profile: FireProfile): Point | null => {
     // A hitscan beam aims at Ada directly.
     const direct = profile.projectile === "beam";
-    const speed = context.projectileSpeed * profile.projectileSpeedRatio;
+    const speed = profile.projectileSpeed;
     const velocity = observed && !direct ? context.playerVelocity : { x: 0, y: 0 };
     const point = leadPoint(origin, target, velocity, speed, skill);
     const line = unit({ x: point.x - origin.x, y: point.y - origin.y });
@@ -759,7 +757,7 @@ export function stepEnemy(
         hardpointId,
         level: profile.level,
         projectile: profile.projectile,
-        speed: context.projectileSpeed * profile.projectileSpeedRatio,
+        speed: profile.projectileSpeed,
         weapon: profile.weapon,
       };
       if (profile.weapon === "ringBurst") {

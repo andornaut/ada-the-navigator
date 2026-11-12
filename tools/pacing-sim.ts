@@ -817,28 +817,40 @@ export function simulate(input: SimulationInput): RunResult {
       add(result.enemyStardust, archetype, collected);
     }
     if (drop.upgrade && rng() < behaviour.dropCollection) {
-      const gift = chooseUpgrade(catalog, gear, dropRandom(flightSeed, `upgrade:${id}`));
-      result.upgrades[gift.kind] = (result.upgrades[gift.kind] ?? 0) + 1;
-      if (gift.kind === "weapon") {
+      const gift = chooseUpgrade(
+        catalog,
+        gear,
+        ROUTE_POSITION[input.galaxy],
+        dropRandom(flightSeed, `upgrade:${id}`),
+      );
+      if (gift) {
+        result.upgrades[gift.kind] = (result.upgrades[gift.kind] ?? 0) + 1;
+      }
+      if (gift?.kind === "weapon") {
         owned.push(gift.weapon);
         addPacks(catalog, gift.weapon, catalog.ammo.grantPacks, ammo);
         result.weaponsFound.push(gift.weapon);
         result.weaponFoundSeconds ??= time;
         weapon = gift.weapon;
-      } else if (gift.kind === "ammo") {
+      } else if (gift?.kind === "ammo") {
         addPacks(catalog, gift.weapon, 1, ammo);
         result.duplicatePacks++;
-      } else {
+      } else if (gift) {
         applyUpgrade(catalog, gift, gear);
       }
     }
     const ammoRoll = dropRandom(flightSeed, `ammo:${wreckId(id)}`);
     if (
       !salvaged &&
-      rollAmmoDrop(catalog, owned, archetype, ammoRoll) &&
+      rollAmmoDrop(catalog, ROUTE_POSITION[input.galaxy], owned, archetype, ammoRoll) &&
       rng() < behaviour.dropCollection
     ) {
-      const pack = chooseAmmoPack(catalog, owned, dropRandom(flightSeed, `ammo:${id}`));
+      const pack = chooseAmmoPack(
+        catalog,
+        ROUTE_POSITION[input.galaxy],
+        owned,
+        dropRandom(flightSeed, `ammo:${id}`),
+      );
       if (pack) {
         addPacks(catalog, pack, 1, ammo);
         result.ammoDrops++;
@@ -1465,7 +1477,8 @@ export function runScenario(options: RunOptions): { runs: RunResult[]; summary: 
   const { scenario } = options;
   const catalog = scenarioEconomy(scenario.economy);
   const prices: Prices = {
-    firstWeapon: Math.min(...Object.values(ECONOMY.weaponPrices)),
+    // The first weapon is Sunflower's unlock, a Multi-Laser purchase.
+    firstWeapon: ECONOMY.weaponPrices.multiLaser,
     holodisk: HOLODISKS.hubPrice,
     projects: galaxyProjects(options.galaxy).map((_, index, projects) =>
       projects.slice(0, index + 1).reduce((sum, { cost }) => sum + cost, 0),

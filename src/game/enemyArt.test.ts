@@ -137,13 +137,11 @@ describe("enemy frame sets", () => {
       const [dir, archetype] = key.split("|") as [string, string];
       const file = json(`${dir}${archetype}-hardpoints.json`) as {
         hardpoints: { capped?: boolean; states: string[]; top: string | null }[];
-        tiers?: { mounts: Record<string, { top: string } | null> }[];
+        weaponTops?: Record<string, { top: string }>;
       };
       const tops = new Set([
         ...file.hardpoints.flatMap((part) => part.top ?? []),
-        ...(file.tiers ?? []).flatMap((tier) =>
-          Object.values(tier.mounts).flatMap((mount) => mount?.top ?? []),
-        ),
+        ...Object.values(file.weaponTops ?? {}).map(({ top }) => top),
       ]);
       const bases = file.hardpoints.reduce(
         (n, part) => n + part.states.length + (part.capped ? 1 : 0),
@@ -356,12 +354,9 @@ describe("enemy art fallback", () => {
       [3, 4],
       [5, 6],
     ]);
-    expect(layout.tiers[0]!.mounts.get("spine")).toBeNull();
-    expect(layout.tiers[2]!.mounts.get("bow")).toEqual({
-      aim: "target",
-      top: "lance",
-      weapon: "chargedLance",
-    });
+    expect(layout.tiers[0]!.mounts.get("spine")).toBe(false);
+    expect(layout.tiers[2]!.mounts.get("bow")).toBe(true);
+    expect(layout.weaponTops.get("chargedLance")).toEqual({ aim: "target", top: "lance" });
     expect(layout.hardpoints.filter((part) => part.capped).map((part) => part.id)).toEqual([
       "spine",
       "bow",
@@ -370,10 +365,17 @@ describe("enemy art fallback", () => {
       x: frigateHardpoints.headings[5]!.banner[0],
       y: frigateHardpoints.headings[5]!.banner[1],
     });
-    expect([...layout.tops.keys()].sort()).toEqual(["gun", "lance", "pod"]);
+    expect([...layout.tops.keys()].sort()).toEqual([
+      "gun",
+      "lance",
+      "pod",
+      "rail",
+      "spread",
+      "triple",
+    ]);
   });
 
-  it("rejects tiers that miss a mount, cap a mount without plates or name an unknown aim", () => {
+  it("rejects tiers that miss a mount or cap one without plates, and an unknown top aim", () => {
     const copy = () => JSON.parse(JSON.stringify(frigateHardpoints)) as typeof frigateHardpoints;
     const missing = copy();
     delete (missing.tiers[1]!.mounts as Record<string, unknown>).bow;
@@ -382,8 +384,14 @@ describe("enemy art fallback", () => {
     (uncapped.tiers[0]!.mounts as Record<string, unknown>).port = null;
     expect(readHardpointLayout("frigate", uncapped)).toBeUndefined();
     const aim = copy();
-    aim.tiers[2]!.mounts.bow = { ...aim.tiers[2]!.mounts.bow!, aim: "up" };
+    aim.weaponTops.chargedLance = { ...aim.weaponTops.chargedLance, aim: "up" };
     expect(readHardpointLayout("frigate", aim)).toBeUndefined();
+    const unarmed = copy();
+    (unarmed.tiers[2]!.mounts as Record<string, unknown>).bow = { armed: false };
+    expect(readHardpointLayout("frigate", unarmed)).toBeUndefined();
+    const untopped = copy();
+    delete (untopped as { weaponTops?: unknown }).weaponTops;
+    expect(readHardpointLayout("frigate", untopped)).toBeUndefined();
     const fillOnly = copy();
     delete (fillOnly as { tiers?: unknown }).tiers;
     expect(readHardpointLayout("frigate", fillOnly)).toBeUndefined();
