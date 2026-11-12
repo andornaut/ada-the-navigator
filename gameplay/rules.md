@@ -562,11 +562,13 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
     "Install steps" in [the player copy](player-copy.md#install-steps).
 - Every setting persists on that device. Settings shows no keyboard binding text,
   and keyboard input is unchanged.
-- Updates, as in Archie and Chibi: when a new version is waiting, the start screen
-  offers it in a compact modal titled "Update available", with secondary "Cancel"
+- Updates, as in Archie and Chibi: the game checks for a new version every time
+  the start screen shows, on first startup and on every return to it for any
+  reason, such as Back to title from the pause card or Ada's room page. When a new version is
+  waiting, the start screen offers it in a compact modal titled "Update available", with secondary "Cancel"
   on the left, primary "Update now" on the right, the ordinary close X and no body
   text. Only Update now reloads into the new version. Cancel, the close X, an
-  outside tap, Escape and back defer it for that start-screen visit. Settings and
+  outside tap, Escape and back defer it for that start-screen visit; the next return checks and offers it again. Settings and
   install steps covering the start screen suppress the offer.
 - Back, as in Chibi: it closes the innermost open card (install steps, Settings,
   the cheats card, the station card or shop) or defers the update offer; during
