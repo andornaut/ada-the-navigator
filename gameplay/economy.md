@@ -11,8 +11,8 @@ and exploring finds a station every few minutes.
 
 Destroyed enemy ships and asteroids release Stardust as small glinting pickups.
 Ada's ship has a tractor beam, with no visual of its own, that draws Stardust
-within its pull radius toward her at its pull speed; Stardust collects on contact
-within the existing pickup reach. The beam pulls only Stardust. Base pull radius
+within its pull radius toward her at its pull speed; Stardust collects within 4 world
+units of Ada's drawn ship, like every pickup. The beam pulls only Stardust. Base pull radius
 is 65 world units and base pull speed is 150 world units per second. Enemy ships are
 destroyed, not teleported: a defeated ship breaks apart in a short effect and drops
 its Stardust. A multipart ship is defeated when all its required parts are disabled.
