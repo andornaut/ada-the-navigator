@@ -15,8 +15,8 @@ pickup (Stardust, ore nuggets, discovery caches, weapons, a floating holodisk an
 a hunt job's lost item) within its pull radius toward her at its pull speed,
 all kinds alike. A pickup collects within 20 world units of Ada's drawn ship, the
 one pickup rule (see [Rules](rules.md)). Base pull radius is 65 world units and
-base pull speed is 150 world units per second; levels 2 and 3 raise them to 100
-and 220, then 135 and 300. Enemy ships are
+base pull speed is 150 world units per second; levels 2 and 3 raise them to 85
+and 185, then 100 and 220. Enemy ships are
 destroyed, not teleported: a defeated ship breaks apart in a short effect and drops
 its Stardust. A heavy is destroyed when its hull HP reaches 0; a disabled heavy
 drops the same Stardust when salvaged (see [Ships](ships.md#heavy-hull-and-disabling)).
@@ -86,7 +86,7 @@ not yet designed, so the station card shows no quest board until it is.
 | Weapon upgrade | Per weapon, Laser included: levels 2 and 3, each about ×1.5 effective output                    | 150, 300 |
 | Shield         | Levels 2 and 3: capacity 15, then 20; recharge delay 15, then 10 s; empty to full 45, then 30 s | 300, 600 |
 | Engine tuning  | Levels 2 and 3: top speed 190, then 220; each −10% acceleration and braking seconds             | 120, 240 |
-| Tractor beam   | Levels 2 and 3: pull radius 100, then 135; pull speed 220, then 300                             | 80, 160  |
+| Tractor beam   | Levels 2 and 3: pull radius 85, then 100; pull speed 185, then 220                              | 80, 160  |
 | Ship paint     | Cosmetic colour schemes for Ada's ship; the white and blue scheme stays free                    | 50 each  |
 
 Enemy speeds are fixed, so engine tuning lets Ada outrun the swarm at level 2 and
