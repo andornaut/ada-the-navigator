@@ -35,41 +35,49 @@ function passage(start: string, until = " ## "): string {
 // follows its line as (desktop: "...") and has no speaker of its own.
 function spokenLines(text: string): { mood?: string; name: string; text: string }[] {
   return Array.from(
-    text.matchAll(/(Astra|Ada|Penny|Unknown voice): "([^"]+)"(?: \((happy|neutral|upset)\))?/gu),
+    text.matchAll(
+      /(Astra|Ada|Penny|Unknown voice|General Gadget): "([^"]+)"(?: \((happy|neutral|upset)\))?/gu,
+    ),
     ([, name = "", line = "", mood]) => (mood ? { mood, name, text: line } : { name, text: line }),
   );
 }
 
 // Black Eye's pool waits for a Black Eye flight: no galaxy past Whirlpool can be flown yet.
-// Needle's and Andromeda's pools wait for their chapters, the heavy-disabled reaction for
-// disabling and salvage, and the fourth and fifth broadcasts for broadcasts by route position.
+// Needle's and Andromeda's pools wait for their chapters, and the heavy-disabled reaction for
+// disabling and salvage.
 const UNBUILT_LINES = [
   "Its weapons are down. We could salvage parts and let it go.",
   "No need to wreck it.",
-  "Little navigator, you can't hide from me. My drones will wait at every exit.",
-  "Then we'll take our time.",
-  "Astra. I know you can hear me. Come back, and bring my disks.",
-  "I'm not yours, General. I never was.",
 ];
 const IN_FLIGHT = passage("## In-flight conversations", " Needle: - First arrival");
 const BLACK_EYE = passage("Black Eye: - First arrival");
-const BROADCASTS = passage("General's broadcasts", "Outposts handing over");
+const BROADCASTS = passage("Memory lines and broadcasts follow", "Outposts handing over");
+
+type Conversation = (typeof CONVERSATIONS)[number];
+
+// A speaker's tab as the documents name it: the General's broadcasts from the third holodisk on
+// play under his name.
+const nameOf = ({ trigger }: Conversation, speaker: keyof typeof SPEAKERS) =>
+  speaker === "general" && trigger.kind === "general" && trigger.held >= GENERAL_NAMED.holodisks
+    ? GENERAL_NAMED.name
+    : SPEAKERS[speaker].name;
 
 // Conversations' lines as the documents name their speakers, with any mood.
-const spoken = (conversations: typeof CONVERSATIONS) =>
-  conversations.flatMap(({ lines }) =>
-    lines.map(({ mood, speaker, text }) =>
-      mood ? { mood, name: SPEAKERS[speaker].name, text } : { name: SPEAKERS[speaker].name, text },
-    ),
+const spoken = (conversations: readonly Conversation[]) =>
+  conversations.flatMap((conversation) =>
+    conversation.lines.map(({ mood, speaker, text }) => {
+      const name = nameOf(conversation, speaker);
+      return mood ? { mood, name, text } : { name, text };
+    }),
   );
 // Job lines are the quests document's; every other line is the player copy's.
-const isJob = ({ trigger }: (typeof CONVERSATIONS)[number]) =>
-  trigger.kind === "job" || trigger.kind === "jobLore";
+const isJob = ({ trigger }: Conversation) => trigger.kind === "job" || trigger.kind === "jobLore";
 const DATA_LINES = spoken(CONVERSATIONS.filter((conversation) => !isJob(conversation)));
 
 describe("in-flight conversations", () => {
   it("speak every line as the player copy has it, with its speaker", () => {
-    for (const { lines, trigger } of CONVERSATIONS) {
+    for (const conversation of CONVERSATIONS) {
+      const { lines, trigger } = conversation;
       for (const { desktop, speaker, text } of lines) {
         if (trigger.kind === "jobLore") {
           // The quests document lists Astra's job lore lines by galaxy.
@@ -78,7 +86,7 @@ describe("in-flight conversations", () => {
           continue;
         }
         const source = trigger.kind === "job" ? QUESTS : COPY;
-        expect(source).toContain(`${SPEAKERS[speaker].name}: "${text}"`);
+        expect(source).toContain(`${nameOf(conversation, speaker)}: "${text}"`);
         if (desktop !== undefined) {
           expect(COPY).toContain(`${text}" (desktop: "${desktop}")`);
         }
@@ -193,7 +201,7 @@ describe("in-flight conversations", () => {
     );
     expect(
       CONVERSATIONS.filter(({ id }) => id.startsWith("general:")).map((c) => c.priority),
-    ).toEqual(["warning", "warning"]);
+    ).toEqual(Array(4).fill("warning"));
   });
 
   it("warn of a low shield at the same share that turns the status pill low", () => {

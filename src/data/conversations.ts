@@ -40,7 +40,8 @@ export type ConversationTrigger =
   | { readonly kind: "current" }
   | { readonly kind: "shieldLow" }
   | { readonly kind: "drones" }
-  | { readonly kind: "general"; readonly sector: SectorId }
+  /** The General's broadcast while Ada holds `held` holodisks. */
+  | { readonly kind: "general"; readonly held: number }
   | { readonly kind: "quiet"; readonly sector: SectorId }
   | { readonly kind: "funded"; readonly project: string }
   | { readonly kind: "penny" }
@@ -81,7 +82,7 @@ export const SPEAKERS: Readonly<
 > = {
   ada: { name: "Ada", side: "left" },
   astra: { name: "Astra", side: "right" },
-  // Until the Whirlpool holodisk is inserted; see GENERAL_NAMED.
+  // Until the third holodisk is inserted; see GENERAL_NAMED.
   general: { name: "Unknown voice", side: "right" },
   // The community projects' thank-you speakers (gameplay/economy.md "Donations").
   grower: { name: "Grower", side: "right" },
@@ -93,8 +94,8 @@ export const SPEAKERS: Readonly<
   workshop: { name: "Workshop", side: "right" },
 };
 
-/** The General's name tab once the Whirlpool holodisk is inserted. */
-export const GENERAL_NAMED = { name: "General Gadget", sector: 3 } as const;
+/** The General's name tab once the third holodisk is inserted, from whichever galaxy. */
+export const GENERAL_NAMED = { holodisks: 3, name: "General Gadget" } as const;
 
 /** Provisional timing and ranges, to be tuned through playtesting. */
 export const CONVERSATION_TUNING = {
@@ -333,25 +334,50 @@ export const CONVERSATIONS: readonly Conversation[] = [
     repeat: "never",
     trigger: { kind: "quiet", sector: 3 },
   },
+  // The General's broadcasts, one after the number of holodisks Ada holds. Each built galaxy
+  // plays its one, seen as general:<galaxy> (the director's instance), so none replays there.
   {
-    id: "general:2",
+    id: "general:held:1",
     lines: [
       line("general", "All drones: find the holodisks. Bring them to me."),
       line("astra", "That voice... I don't know why it scares me."),
     ],
     priority: "warning",
     repeat: "never",
-    trigger: { kind: "general", sector: 2 },
+    trigger: { held: 1, kind: "general" },
   },
   {
-    id: "general:3",
+    id: "general:held:2",
     lines: [
       line("general", "Someone is collecting my holodisks. Stop them."),
       line("ada", "Your holodisks? They're Astra's!"),
     ],
     priority: "warning",
     repeat: "never",
-    trigger: { kind: "general", sector: 3 },
+    trigger: { held: 2, kind: "general" },
+  },
+  {
+    id: "general:held:3",
+    lines: [
+      line(
+        "general",
+        "Little navigator, you can't hide from me. My drones will wait at every exit.",
+      ),
+      line("ada", "Then we'll take our time."),
+    ],
+    priority: "warning",
+    repeat: "never",
+    trigger: { held: 3, kind: "general" },
+  },
+  {
+    id: "general:held:4",
+    lines: [
+      line("general", "Astra. I know you can hear me. Come back, and bring my disks."),
+      line("astra", "I'm not yours, General. I never was."),
+    ],
+    priority: "warning",
+    repeat: "never",
+    trigger: { held: 4, kind: "general" },
   },
   {
     id: "job:towAttached",

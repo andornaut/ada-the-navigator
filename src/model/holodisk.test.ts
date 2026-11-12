@@ -15,18 +15,28 @@ const inserted = [
   "Ada slides the holodisk into Astra's drive.",
   "Memory restored. I've found new coordinates.",
 ];
-/** Astra's memory line after each galaxy's insertion. */
-const memories = {
-  1: "I remember a fleet... and someone giving orders.",
-  2: "I carried that fleet from galaxy to galaxy. But whose fleet?",
-  3: "General Gadget. I was his navigator. I scattered my holodisks to keep them from him.",
-};
+/** Astra's first three memory lines: the Nth holodisk inserted plays the Nth. */
+const memories = [
+  "I remember a fleet... and someone giving orders.",
+  "I carried that fleet from galaxy to galaxy. But whose fleet?",
+  "General Gadget. I was his navigator. I scattered my holodisks to keep them from him.",
+];
 
-/** A flight in `galaxy` whose space quest is complete and holodisk not yet recovered. */
-function questDone(galaxy: SectorId, known: string[]): GameModel {
+/**
+ * A flight in `galaxy` whose space quest is complete and holodisk not yet recovered, with the
+ * `recovered` galaxies' holodisks already held.
+ */
+function questDone(
+  galaxy: SectorId,
+  known: string[],
+  recovered: readonly SectorId[] = [],
+): GameModel {
   const model = new GameModel(PROTOTYPE);
   model.state.prologueSeen = true;
   model.state.unlocked = [1, 2, 3].filter((id) => id <= galaxy) as SectorId[];
+  for (const held of recovered) {
+    model.state.progress[held].holodisk = true;
+  }
   model.startSector(galaxy);
   playOpening(model);
   Object.assign(model.state.progress[galaxy], {
@@ -91,7 +101,7 @@ describe("galaxy one's holodisk", () => {
       ["Salvager", handover],
       ["The Outposts", inserted[0]],
       ["Astra", inserted[1]],
-      ["Astra", memories[1]],
+      ["Astra", memories[0]],
     ]);
     expect(model.state.dialogue).toBeNull();
     expect(model.state.progress[1].holodisk).toBe(true);
@@ -252,7 +262,8 @@ describe("galaxy two's holodisk", () => {
   });
 
   it("sells it for 300 Stardust at the hub after depositing cargo", () => {
-    const model = questDone(2, ["hub", "miner", "visitors"]);
+    // Cartwheel's holodisk is the third on the route, after Sunflower's and Whirlpool's.
+    const model = questDone(2, ["hub", "miner", "visitors"], [1, 3]);
     model.state.economy.stardust = 350;
     const deposited = model.state.progress[2].deposited;
     arrive(model, "hub");
@@ -280,7 +291,8 @@ describe("galaxy two's holodisk", () => {
 
 describe("galaxy three's holodisk", () => {
   it("waits behind a frigate and its pack after the reunion", () => {
-    const model = questDone(3, ["whale", "family"]);
+    // Whirlpool's holodisk is the second on the route, after Sunflower's.
+    const model = questDone(3, ["whale", "family"], [1]);
     expect(model.objective).toBe("Fight your way to the holodisk.");
     model.step(0.01, idle);
     const f = model.state.flight!;
@@ -309,7 +321,7 @@ describe("galaxy three's holodisk", () => {
     expect(insertion(model)).toEqual([
       ["The Whale Family", inserted[0]],
       ["Astra", inserted[1]],
-      ["Astra", memories[3]],
+      ["Astra", memories[1]],
     ]);
     expect(model.state.progress[3].holodisk).toBe(true);
     expect(model.state.progress[3].known).not.toContain("holodisk");

@@ -45,11 +45,19 @@ export const PREMISE: PremiseContent = {
       { text: "Ada slides the holodisk into Astra's drive." },
       { speaker: "Astra", text: "Memory restored. I've found new coordinates." },
     ],
-    memories: {
-      1: "I remember a fleet... and someone giving orders.",
-      2: "I carried that fleet from galaxy to galaxy. But whose fleet?",
-      3: "General Gadget. I was his navigator. I scattered my holodisks to keep them from him.",
-    },
+    memories: [
+      "I remember a fleet... and someone giving orders.",
+      "I carried that fleet from galaxy to galaxy. But whose fleet?",
+      "General Gadget. I was his navigator. I scattered my holodisks to keep them from him.",
+      [
+        "I remember running from him. I scattered the disks in one wild jump, and it broke ",
+        "something in me. That's how I ended up near Earth.",
+      ].join(""),
+      [
+        "Now I remember what he wants: copies of my mind that always obey. If I'm whole again, ",
+        "he'll want me even more.",
+      ].join(""),
+    ],
     name: "Holodisk",
   },
   prologue: [

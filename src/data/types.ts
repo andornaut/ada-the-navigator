@@ -83,8 +83,8 @@ export interface PremiseContent {
     handover: string;
     /** Plays as each recovered holodisk is inserted into Astra's drive. */
     inserted: readonly PremiseLine[];
-    /** Astra's memory line after each built galaxy's insertion. */
-    memories: Readonly<Partial<Record<SectorId, string>>>;
+    /** Astra's memory lines in the order holodisks are inserted: the Nth plays the Nth. */
+    memories: readonly string[];
     /** The holodisk's name in the hub's purchase confirm. */
     name: string;
   };

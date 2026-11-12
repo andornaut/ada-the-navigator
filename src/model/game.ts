@@ -50,7 +50,13 @@ import {
 } from "./activities.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { calfHome, calfRouteMidpoint, calfStart, placedCalf, stepCalf } from "./calf.ts";
-import { capitalInSight, ConversationDirector, pennyPoints, speakerName } from "./conversations.ts";
+import {
+  capitalInSight,
+  ConversationDirector,
+  holodisksHeld,
+  pennyPoints,
+  speakerName,
+} from "./conversations.ts";
 import { inCurrent } from "./currents.ts";
 import { carriesStardust, dropRandom } from "./drops.ts";
 import {
@@ -997,13 +1003,13 @@ export class GameModel {
       this.insertion(0);
     }
   }
-  /** The insertion panels, then Astra's memory line for the current galaxy. */
+  /** The insertion panels, then Astra's memory line for how many holodisks she now holds. */
   private insertion(index: number): void {
     const { inserted, memories } = this.content.premise.holodisk;
     // Astra, who speaks the last insertion line, continues with the memory.
     const memory = {
       speaker: inserted.at(-1)?.speaker,
-      text: memories[this.state.selectedSector] ?? "",
+      text: memories[holodisksHeld(this.state.progress) - 1] ?? "",
     };
     const lines = [...inserted, memory];
     const line = lines[index];
@@ -1138,6 +1144,7 @@ export class GameModel {
       collectedStardust: events.some((event) => event.type === "stardust"),
       docked: events.some((event) => event.type === "docked"),
       dronesNear: dronesNear(this.content, f),
+      holodisks: holodisksHeld(this.state.progress),
       inCurrent: inCurrent(f.sector, 0, f.player),
       inDanger: this.inDanger,
       jobMoments,

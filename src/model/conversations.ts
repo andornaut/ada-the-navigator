@@ -9,6 +9,7 @@ import {
   type Speaker,
   SPEAKERS,
 } from "../data/conversations.ts";
+import { BUILT } from "../data/galaxies.ts";
 import type { SectorId } from "../data/types.ts";
 import type { FlightState, SectorProgress, SpaceObject, Vec } from "./types.ts";
 
@@ -29,6 +30,8 @@ export interface ConversationFacts {
   readonly docked: boolean;
   /** A live enemy presses Ada (flight.ts dronesNear); damage from debris or hazards is not one. */
   readonly dronesNear: boolean;
+  /** Holodisks Ada holds: every galaxy's recovered one. */
+  readonly holodisks: number;
   /** Ada is inside a space current. */
   readonly inCurrent: boolean;
   readonly inDanger: boolean;
@@ -94,12 +97,19 @@ export function pennyInstance(sector: SectorId, point: string): string {
   return `penny:${sector}:${point}`;
 }
 
-/** The name on a speaker's tab: the General's is unknown until the Whirlpool holodisk is in. */
+/** Holodisks recovered across every galaxy, the count memory lines and broadcasts follow. */
+export function holodisksHeld(
+  progress: Readonly<Partial<Record<SectorId, Pick<SectorProgress, "holodisk">>>>,
+): number {
+  return Object.values(progress).filter((p) => p?.holodisk).length;
+}
+
+/** The name on a speaker's tab: the General's is unknown until the third holodisk is in. */
 export function speakerName(
   progress: Readonly<Partial<Record<SectorId, Pick<SectorProgress, "holodisk">>>>,
   speaker: Speaker,
 ): string {
-  return speaker === "general" && progress[GENERAL_NAMED.sector]?.holodisk
+  return speaker === "general" && holodisksHeld(progress) >= GENERAL_NAMED.holodisks
     ? GENERAL_NAMED.name
     : SPEAKERS[speaker].name;
 }
@@ -330,15 +340,17 @@ export class ConversationDirector {
     // Only drones pressing Ada call them out; damage from debris or hazards alone sets danger.
     if (this.inFight && !this.dronesCalled && dronesPress(facts)) {
       this.dronesCalled = true;
-      const general = this.conversations.find(
-        (conversation) =>
-          conversation.trigger.kind === "general" &&
-          conversation.trigger.sector === sector &&
-          !this.seen.includes(conversation.id),
-      );
-      // The General's first broadcast in a galaxy speaks for that engagement's drones.
+      // A built galaxy's one broadcast, the line after the holodisks Ada holds (none while she
+      // holds none), speaks for its first engagement's drones; a placeholder plays none.
+      const instance = `general:${sector}`;
+      const general =
+        BUILT.has(sector) && !this.seen.includes(instance)
+          ? this.conversations.find(
+              ({ trigger }) => trigger.kind === "general" && trigger.held === facts.holodisks,
+            )
+          : undefined;
       if (general) {
-        this.enqueue({ conversation: general, holds: dronesPress, instance: general.id });
+        this.enqueue({ conversation: general, holds: dronesPress, instance });
       } else {
         this.request((trigger) => trigger.kind === "drones", dronesPress);
       }

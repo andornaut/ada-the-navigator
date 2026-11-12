@@ -28,6 +28,7 @@ const calm: ConversationFacts = {
   collectedStardust: false,
   docked: false,
   dronesNear: false,
+  holodisks: 0,
   inCurrent: false,
   inDanger: false,
   jobMoments: [],
@@ -309,19 +310,29 @@ describe("conversation triggers", () => {
     expect(showing(talk)).toBe("warning:drones:0");
   });
 
-  it("broadcast the General when his drones first engage Ada from Cartwheel on", () => {
+  it("broadcast the General once per built galaxy, the line after the holodisks Ada holds", () => {
+    // Holding none, no broadcast plays: the drones' own warning does.
     const sunflower = director(1, [...lessonsHeard, "arrival:1"]);
     run(sunflower.talk, 0.05, drones);
     expect(showing(sunflower.talk)).toBe("warning:drones:0");
-    for (const sector of [2, 3] as const) {
+    for (const [sector, holodisks, line] of [
+      [3, 1, "general:held:1"],
+      [2, 2, "general:held:2"],
+    ] as const) {
       const { heard, talk } = director(sector, lessonsHeard);
-      run(talk, 0.05, drones);
+      run(talk, 0.05, { ...drones, holodisks });
+      expect(talk.showing?.conversation.id).toBe(line);
       expect(tapThrough(talk)).toEqual([`general:${sector}:0`, `general:${sector}:1`]);
       expect(heard).toContain(`general:${sector}`);
+      // Once per galaxy: later engagements there call out the drones.
       run(talk, 0.05);
-      run(talk, 0.05, drones);
+      run(talk, 0.05, { ...drones, holodisks: holodisks + 1 });
       expect(showing(talk)).toBe("warning:drones:0");
     }
+    // A placeholder galaxy plays no broadcast.
+    const needle = director(4, lessonsHeard);
+    run(needle.talk, 0.05, { ...drones, holodisks: 2 });
+    expect(showing(needle.talk)).toBe("warning:drones:0");
   });
 
   it.each([
@@ -512,10 +523,18 @@ describe("capital sightings", () => {
 describe("drone engagements in flight", () => {
   const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
   /** A flight in sector far from any friendly place, with a pack of drones near Ada. */
-  function engaged(sector: SectorId, archetype: EnemyArchetype, count: number): GameModel {
+  function engaged(
+    sector: SectorId,
+    archetype: EnemyArchetype,
+    count: number,
+    recovered: readonly SectorId[] = [],
+  ): GameModel {
     const model = new GameModel(PROTOTYPE);
     model.state.prologueSeen = true;
     model.state.unlocked = [1, 2, 3];
+    for (const galaxy of recovered) {
+      model.state.progress[galaxy].holodisk = true;
+    }
     model.startSector(sector);
     const flight = model.state.flight!;
     flight.player = { x: flight.player.x + 6000, y: flight.player.y };
@@ -548,26 +567,43 @@ describe("drone engagements in flight", () => {
     expect(model.conversation?.key).toBe("warning:drones:0");
   });
 
-  it("broadcast the General when his drones first engage Ada in Cartwheel and Whirlpool", () => {
-    expect(engaged(2, "swarm", 6).conversation?.key).toBe("general:2:0");
-    const whirlpool = engaged(3, "fighter", 4).conversation;
-    expect(whirlpool?.key).toBe("general:3:0");
-    expect(whirlpool?.name).toBe("Unknown voice");
-    expect(whirlpool?.named).toBe(false);
+  it("play no broadcast in Sunflower before any holodisk", () => {
+    expect(engaged(1, "swarm", 6).conversation?.key).toBe("warning:drones:0");
   });
 
-  it("switch the General to his named frames once the Whirlpool holodisk is in", () => {
-    const model = engaged(3, "fighter", 4);
-    model.state.progress[3].holodisk = true;
+  it("broadcast the second line in Whirlpool with Sunflower's holodisk held", () => {
+    const whirlpool = engaged(3, "fighter", 4, [1]).conversation;
+    expect(whirlpool).toMatchObject({
+      key: "general:3:0",
+      name: "Unknown voice",
+      named: false,
+      text: "All drones: find the holodisks. Bring them to me.",
+    });
+  });
+
+  it("broadcast the third line in Cartwheel with two holodisks held, still unnamed", () => {
+    const cartwheel = engaged(2, "swarm", 6, [1, 3]).conversation;
+    expect(cartwheel).toMatchObject({
+      key: "general:2:0",
+      name: "Unknown voice",
+      named: false,
+      text: "Someone is collecting my holodisks. Stop them.",
+    });
+  });
+
+  it("switch the General to his named frames once the third holodisk is in", () => {
+    const model = engaged(2, "swarm", 6, [1, 3]);
+    model.state.progress[2].holodisk = true;
     expect(model.conversation).toMatchObject({ name: "General Gadget", named: true });
   });
 });
 
 describe("the General's name tab", () => {
-  it("reads Unknown voice until the Whirlpool holodisk is inserted", () => {
-    const progress = { 1: { holodisk: true }, 2: { holodisk: true }, 3: { holodisk: false } };
+  it("reads Unknown voice until the third holodisk is inserted, from whichever galaxy", () => {
+    const progress = { 1: { holodisk: true }, 2: { holodisk: false }, 3: { holodisk: true } };
     expect(speakerName(progress, "general")).toBe("Unknown voice");
-    expect(speakerName({ ...progress, 3: { holodisk: true } }, "general")).toBe("General Gadget");
+    expect(speakerName({ ...progress, 2: { holodisk: true } }, "general")).toBe("General Gadget");
+    expect(speakerName({ ...progress, 5: { holodisk: true } }, "general")).toBe("General Gadget");
     expect(speakerName(progress, "astra")).toBe("Astra");
   });
 });
