@@ -198,10 +198,10 @@ describe("status pill shield bar", () => {
     const rule = (selector: string) =>
       STATUS_PILL_STYLE.split("}").find((part) => part.includes(`${selector}{`));
     const tick = rule(".ada-status-tick");
-    // 30 below the count's line box top: HUD rect top + 36.5.
+    // 27 below the count's line box top: HUD rect top + 33.5.
     expect(tick).toContain("left:50%");
     expect(tick).toContain("transform:translateX(-50%)");
-    expect(tick).toContain(`top:${units(30)}`);
+    expect(tick).toContain(`top:${units(27)}`);
     expect(rule(".ada-status-tick[data-kind=ore]")).toContain("color:#eaa676");
   });
 

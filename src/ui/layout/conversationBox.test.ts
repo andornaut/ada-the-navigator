@@ -99,7 +99,7 @@ describe("conversation box", () => {
     expect(tabTop - (STATUS_PILL.y + STATUS_PILL.pill.height)).toBe(11);
     // The +N labels sit under their counts and draw over the tab and the box.
     expect(STATUS_PILL.y + (PILL.height - TYPE.label.lineHeight) / 2 + STATUS_PILL.tick.top).toBe(
-      36.5,
+      33.5,
     );
     const target = hudButtonTarget(0);
     expect(tabTop - (target.y + HUD_BUTTON_INSET.disc + HUD_BUTTON.disc)).toBe(8.5);

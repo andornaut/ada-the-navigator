@@ -296,12 +296,15 @@ describe("HUD anchors", () => {
     expect(STATUS_PILL.y + STATUS_PILL.pill.height / 2).toBe(discCentre);
     expect(STATUS_PILL.y).toBe(2.5);
     expect(STATUS_PILL.pill).toEqual(PILL);
-    // A +N tick sits under its count: its 20 line box from HUD rect top + 36.5, centred on the
-    // item notice's 24 row from + 34.5, a mark gap below the pill.
+    // A +N tick sits just under its count: its 20 line box from HUD rect top + 33.5, 27 below
+    // the count's line box top and the 3 gap below the pill, over the item notice's row.
     const countTop = STATUS_PILL.y + (PILL.height - TYPE.label.lineHeight) / 2;
-    expect(countTop + STATUS_PILL.tick.top).toBe(36.5);
-    expect(countTop + STATUS_PILL.tick.top + TYPE.label.lineHeight / 2).toBe(34.5 + 24 / 2);
-    expect(countTop + STATUS_PILL.tick.top - (STATUS_PILL.y + PILL.height)).toBe(SPACING.markGap);
+    expect(STATUS_PILL.tick.gap).toBe(3);
+    expect(STATUS_PILL.tick.top).toBe(27);
+    expect(countTop + STATUS_PILL.tick.top).toBe(33.5);
+    expect(countTop + STATUS_PILL.tick.top - (STATUS_PILL.y + PILL.height)).toBe(
+      STATUS_PILL.tick.gap,
+    );
   });
 
   it("measure each count in TYPE.label's tabular digits, at least one digit wide", () => {

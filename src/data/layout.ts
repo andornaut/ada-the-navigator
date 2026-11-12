@@ -317,6 +317,9 @@ export const COUNT_ADVANCE = { ".": 569, digit: 1139, k: 1139, m: 1821 } as cons
 
 export const COUNT_EM = TYPE.label.size / 2048;
 
+// From the status pill's bottom edge to a +N tick's line box top.
+const TICK_GAP = 3;
+
 // The status pill's authored parts (src/ui/layout/playView.ts STATUS_PILL adds its x): PILL's
 // height and radius, padded `padding` at each end, tighter than PILL.padding; each count iconGap
 // from its icon, each divider dividerGap from its neighbours.
@@ -331,10 +334,11 @@ export const STATUS_PILL_LAYOUT = {
   pill: PILL,
   stardustIcon: 20,
   tick: {
+    gap: TICK_GAP,
     outline: 1,
     rise: 4,
-    // From the count's line box top: the count's line, the pill's padding below it and a mark gap.
-    top: (PILL.height + TYPE.label.lineHeight) / 2 + SPACING.markGap,
+    // From the count's line box top: the count's line, the pill's padding below it and the gap.
+    top: (PILL.height + TYPE.label.lineHeight) / 2 + TICK_GAP,
   },
   xAlone: 0,
   y: HUD_ROW.centre - PILL.height / 2,

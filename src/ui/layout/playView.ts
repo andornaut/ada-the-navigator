@@ -185,7 +185,7 @@ export function hudRowWidth(count: number): number {
 // count's rendered width (countSlot), so the left edge stays put and the right edge follows the
 // counts and the segments shown, snapping in the frame they change. A +N tick sits under its
 // count, centred across on its slot, its 20 line box top tick.top below the count's (HUD rect top
-// + 36.5, on the item notice's row).
+// + 33.5, over the item notice's row).
 export const STATUS_PILL = {
   ...STATUS_PILL_LAYOUT,
   x: PAUSE_BUTTON.hit.x + PAUSE_BUTTON.hit.width + SPACING.gap,
