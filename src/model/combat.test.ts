@@ -22,6 +22,7 @@ import {
   stepFlight,
   teleport,
 } from "./flight.ts";
+import { shipCircleContact } from "./ship-body.ts";
 import type { FlightInput, FlightState, SectorProgress, SpaceObject, Vec } from "./types.ts";
 
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -1053,57 +1054,93 @@ describe("capital local-area separation", () => {
 });
 
 describe("ship contact", () => {
-  const { sceneryRecoil, sceneryRestitution, shipRadius } = PROTOTYPE.tuning.flight;
-  /** An enemy just touching Ada from +x, both moving along x. */
+  const { sceneryRecoil, sceneryRestitution } = PROTOTYPE.tuning.flight;
+  const dot = (a: Vec, b: Vec) => a.x * b.x + a.y * b.y;
+  const overlapOf = (flight: FlightState, object: SpaceObject) =>
+    shipCircleContact(flight.facing, flight.player, object, object.radius);
+  /** An enemy overlapping Ada's drawn ship by 4 from +x, both moving along x. */
   function contact(archetype: EnemyArchetype, ada: number, enemy: number) {
     const flight = empty();
     flight.velocity = { x: ada, y: 0 };
-    const object = ship(archetype, {
-      x:
-        flight.player.x +
-        shipRadius +
-        PROTOTYPE.tuning.flight.shipRadius * enemyCatalog[archetype].sizeRatio -
-        4,
-      y: flight.player.y,
-    });
+    const object = ship(archetype, { ...flight.player });
+    // The nearest +x offset at which the hull circle clears Ada's drawn ship, to 0.001.
+    let low = 0;
+    let high = 200;
+    while (high - low > 1e-3) {
+      const middle = (low + high) / 2;
+      object.x = flight.player.x + middle;
+      if (overlapOf(flight, object)) {
+        low = middle;
+      } else {
+        high = middle;
+      }
+    }
+    object.x = flight.player.x + high - 4;
+    object.enemy!.position = { x: object.x, y: object.y };
     object.enemy!.velocity = { x: enemy, y: 0 };
     flight.objects.push(object);
-    return { flight, object };
+    const normal = overlapOf(flight, object)!.normal;
+    return { flight, normal, object };
   }
+  /** Ada's velocity relative to the enemy's along the contact normal: positive separates. */
+  const separating = (flight: FlightState, normal: Vec, object: SpaceObject) =>
+    dot(
+      {
+        x: flight.velocity.x - object.enemy!.velocity.x,
+        y: flight.velocity.y - object.enemy!.velocity.y,
+      },
+      normal,
+    );
 
-  it("bounces equal ships symmetrically by the scenery rule", () => {
-    const { flight, object } = contact("fighter", 50, -50);
+  it("bounces equal ships symmetrically by the scenery rule, along the drawn contact", () => {
+    const { flight, normal, object } = contact("fighter", 50, -50);
+    const closing = -separating(flight, normal, object);
+    expect(closing).toBeGreaterThan(0);
+    const before = { ada: { ...flight.velocity }, enemy: { ...object.enemy!.velocity } };
     bounceShips(PROTOTYPE, flight, object);
-    // Closing at 100, they separate at restitution 0.4: 40, shared evenly.
-    expect(flight.velocity.x).toBeCloseTo(50 - (100 + 100 * sceneryRestitution) / 2, 9);
-    expect(object.enemy!.velocity.x).toBeCloseTo(-50 + (100 + 100 * sceneryRestitution) / 2, 9);
-    expect(object.enemy!.velocity.x - flight.velocity.x).toBeCloseTo(100 * sceneryRestitution, 9);
-    expect(object.x - flight.player.x).toBeCloseTo(object.radius + shipRadius + 0.01, 9);
+    // Equal masses share the change evenly; they separate at restitution 0.4 along the normal.
+    expect(flight.velocity.x - before.ada.x).toBeCloseTo(
+      -(object.enemy!.velocity.x - before.enemy.x),
+      9,
+    );
+    expect(flight.velocity.y - before.ada.y).toBeCloseTo(
+      -(object.enemy!.velocity.y - before.enemy.y),
+      9,
+    );
+    expect(separating(flight, normal, object)).toBeCloseTo(
+      Math.max(closing * sceneryRestitution, sceneryRecoil),
+      9,
+    );
+    expect(overlapOf(flight, object)).toBeNull();
   });
 
   it("splits the bounce by size ratio squared, so a capital barely moves", () => {
-    const { flight, object } = contact("capital", 60, 0);
+    const { flight, normal, object } = contact("capital", 60, 0);
+    const closing = -separating(flight, normal, object);
     const before = { ada: { ...flight.player }, capital: { x: object.x, y: object.y } };
     bounceShips(PROTOTYPE, flight, object);
     const mass = enemyCatalog.capital.sizeRatio ** 2;
     const adaChange = flight.velocity.x - 60;
     const capitalChange = object.enemy!.velocity.x;
-    expect(adaChange).toBeLessThan(0);
+    expect(Math.sign(adaChange)).toBe(Math.sign(normal.x));
     expect(capitalChange / -adaChange).toBeCloseTo(1 / mass, 9);
-    expect(object.enemy!.velocity.x - flight.velocity.x).toBeCloseTo(60 * sceneryRestitution, 9);
-    const adaPush = before.ada.x - flight.player.x;
-    const capitalPush = object.x - before.capital.x;
+    expect(separating(flight, normal, object)).toBeCloseTo(
+      Math.max(closing * sceneryRestitution, sceneryRecoil),
+      9,
+    );
+    const adaPush = Math.hypot(flight.player.x - before.ada.x, flight.player.y - before.ada.y);
+    const capitalPush = Math.hypot(object.x - before.capital.x, object.y - before.capital.y);
     expect(capitalPush / adaPush).toBeCloseTo(1 / mass, 9);
   });
 
   it("separates slow contacts at least at the scenery recoil", () => {
-    const { flight, object } = contact("swarm", 5, 0);
+    const { flight, normal, object } = contact("swarm", 5, 0);
     bounceShips(PROTOTYPE, flight, object);
-    expect(object.enemy!.velocity.x - flight.velocity.x).toBeCloseTo(sceneryRecoil, 9);
+    expect(separating(flight, normal, object)).toBeCloseTo(sceneryRecoil, 9);
   });
 
   it.each(["swarm", "fighter"] as const)(
-    "keeps a chasing %s bouncing off Ada's hull without overlap, sticking or damage",
+    "keeps a chasing %s bouncing off Ada's drawn ship without overlap, sticking or damage",
     (archetype) => {
       const flight = empty();
       const chaser = ship(archetype, { x: flight.player.x + 200, y: flight.player.y });
@@ -1115,9 +1152,10 @@ describe("ship contact", () => {
         chaser.enemy!.primaryCooldown = 999;
         silence(chaser);
         stepFlight(PROTOTYPE, 1 / 60, idle, flight);
-        const gap = Math.hypot(chaser.x - flight.player.x, chaser.y - flight.player.y);
-        overlap = Math.max(overlap, chaser.radius + shipRadius - gap);
-        touches += gap < chaser.radius + shipRadius + 0.5 ? 1 : 0;
+        overlap = Math.max(overlap, overlapOf(flight, chaser)?.depth ?? 0);
+        touches += shipCircleContact(flight.facing, flight.player, chaser, chaser.radius + 0.5)
+          ? 1
+          : 0;
       }
       expect(touches).toBeGreaterThan(0);
       expect(overlap).toBeLessThan(0.5);

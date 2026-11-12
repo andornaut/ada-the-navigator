@@ -6,6 +6,7 @@ import type { SectorId } from "../data/types.ts";
 import { ensureDestination, routeBlocked } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
+import { shipTouches } from "./ship-body.ts";
 import { playOpening, readStory, relaunch } from "./test-launch.ts";
 import type { GameState, SectorProgress } from "./types.ts";
 
@@ -323,8 +324,20 @@ describe("galaxy three's holodisk", () => {
     f.dangerFor = 0;
     const disk = f.objects.find((o) => o.id === "holodisk")!;
     const at = { x: disk.x, y: disk.y };
-    const { pickupRadius, pickupReach } = PROTOTYPE.tuning.flight;
-    const contact = pickupRadius + pickupReach;
+    const { pickupRadius, pickupReach, shipRadius } = PROTOTYPE.tuning.flight;
+    // How far east of the disk Ada's drawn ship last reaches it, to 0.001.
+    let low = 0;
+    let high = 200;
+    while (high - low > 1e-3) {
+      const middle = (low + high) / 2;
+      const player = { x: disk.x + middle, y: disk.y };
+      if (shipTouches(f.facing, player, disk, pickupRadius + pickupReach - shipRadius)) {
+        low = middle;
+      } else {
+        high = middle;
+      }
+    }
+    const contact = high;
     f.player = { x: disk.x + contact + 1, y: disk.y };
     f.velocity = { x: 0, y: 0 };
     model.step(0.01, idle);

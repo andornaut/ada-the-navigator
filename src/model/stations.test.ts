@@ -9,11 +9,13 @@ import {
   createFlight,
   ensureDestination,
   stationDock,
-  stationDockRadius,
+  stationDockClear,
+  stationMouthRadius,
   stepFlight,
 } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
+import { SHIP_REACH, shipTouches } from "./ship-body.ts";
 import {
   stationById,
   stationInCell,
@@ -27,7 +29,7 @@ import type { FlightInput, FlightState, Vec } from "./types.ts";
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
 const { safeRadius } = ECONOMY.station;
-const dockRadius = stationDockRadius(PROTOTYPE);
+const dockClear = stationDockClear();
 
 function sites(sector: SectorId, span = 15): StationSite[] {
   const found: StationSite[] = [];
@@ -231,7 +233,7 @@ describe("station discovery and docking", () => {
     model.step(1 / 60, idle);
     flight.dangerFor = 0;
     model.teleport(site.id);
-    expect(distance(flight.player, dock)).toBeCloseTo(dockRadius + 40, 9);
+    expect(distance(flight.player, dock)).toBeCloseTo(dockClear + 40, 9);
     model.step(0.1, idle);
     expect(model.state.docked).toBeNull();
   });
@@ -244,7 +246,7 @@ describe("station discovery and docking", () => {
     }
     expect(model.state.docked).toBe(site.id);
     const flight = model.state.flight!;
-    expect(distance(flight.player, dock)).toBeLessThanOrEqual(dockRadius);
+    expect(shipTouches(flight.facing, flight.player, dock, stationMouthRadius())).toBe(true);
     expect(flight.velocity).toEqual({ x: 0, y: 0 });
     const time = flight.time;
     const position = { ...flight.player };
@@ -258,7 +260,7 @@ describe("station discovery and docking", () => {
     expect(model.state.docked).toBeNull();
     // Undocking places Ada at rest just outside the dock, along its outward direction.
     expect(flight.velocity).toEqual({ x: 0, y: 0 });
-    expect(distance(flight.player, dock)).toBeCloseTo(dockRadius + 1, 9);
+    expect(distance(flight.player, dock)).toBeCloseTo(dockClear + 1, 9);
     expect(flight.player.y).toBeGreaterThan(dock.y);
     model.step(1 / 30, idle);
     expect(model.state.docked).toBeNull();
@@ -269,21 +271,44 @@ describe("station discovery and docking", () => {
     expect(model.state.docked).toBe(site.id);
   });
 
-  it("docks when Ada's hull circle overlaps the forgiving mouth circle", () => {
+  it("docks when Ada's drawn ship overlaps the forgiving mouth circle", () => {
     const { dockForgiveness, dockMouthRadius } = ECONOMY.station;
-    expect(dockRadius).toBe(dockMouthRadius * dockForgiveness + PROTOTYPE.tuning.flight.shipRadius);
-    // Three times the 5.87 mouth radius plus Ada's 10.
-    expect(dockRadius).toBeCloseTo(27.62, 2);
-    const at = (reach: number) => {
+    // Three times the 5.87 mouth radius.
+    expect(stationMouthRadius()).toBe(dockMouthRadius * dockForgiveness);
+    expect(stationMouthRadius()).toBeCloseTo(17.62, 2);
+    // No heading of her ship reaches the mouth from the clear distance.
+    expect(dockClear).toBeCloseTo(stationMouthRadius() + SHIP_REACH, 9);
+    const at = (reach: number, facing: Vec) => {
       const model = launched();
       const flight = model.state.flight!;
       flight.player = { x: dock.x + dockOutward.x * reach, y: dock.y + dockOutward.y * reach };
+      flight.facing = facing;
       flight.velocity = { x: 0, y: 0 };
       model.step(1 / 60, idle);
       return model.state.docked;
     };
-    expect(at(dockRadius - 0.05)).toBe(site.id);
-    expect(at(dockRadius + 0.05)).toBeNull();
+    // For each of four headings, the nearest outward distance at which the drawn ship clears the
+    // mouth: just inside it docks, just outside it does not.
+    for (const facing of [
+      { x: 1, y: 0 },
+      { x: 0, y: 1 },
+      { x: -1, y: 0 },
+      { x: 0, y: -1 },
+    ]) {
+      let low = 0;
+      let high = dockClear;
+      while (high - low > 1e-3) {
+        const middle = (low + high) / 2;
+        const player = { x: dock.x + dockOutward.x * middle, y: dock.y + dockOutward.y * middle };
+        if (shipTouches(facing, player, dock, stationMouthRadius())) {
+          low = middle;
+        } else {
+          high = middle;
+        }
+      }
+      expect(at(low - 0.05, facing)).toBe(site.id);
+      expect(at(high + 0.05, facing)).toBeNull();
+    }
   });
 
   it("refuses travel and purchases outside a dock", () => {

@@ -51,6 +51,7 @@ import {
   ensureHuntingPacks,
   ensureRouteEncounter,
   ensureStation,
+  pickupTouched,
   placeDestinationAhead,
   placeHuntingPack,
   routeBlocked,
@@ -657,7 +658,7 @@ export class GameModel {
   undock(): void {
     const id = this.state.docked;
     if (id && this.state.flight) {
-      undockFlight(this.content, id, this.state.flight);
+      undockFlight(id, this.state.flight);
     }
     this.state.docked = null;
   }
@@ -1277,10 +1278,9 @@ export class GameModel {
   /** Ada is within pickup reach of the holodisk, a pickup-sized object; the tractor never pulls it. */
   private holodiskTouched(f: NonNullable<GameState["flight"]>): boolean {
     const disk = f.objects.find((o) => o.kind === "destination" && o.id === "holodisk");
-    const { pickupRadius, pickupReach } = this.content.tuning.flight;
     return (
       disk !== undefined &&
-      Math.hypot(disk.x - f.player.x, disk.y - f.player.y) <= pickupRadius + pickupReach
+      pickupTouched(this.content, f, disk, this.content.tuning.flight.pickupRadius)
     );
   }
   private ensureRequiredApproaches(): void {
@@ -1702,8 +1702,8 @@ export class GameModel {
         held.entered = true;
         this.jobMoments.push("searchEntered");
       }
-      const { pickupRadius, pickupReach } = this.content.tuning.flight;
-      if (held.spot && distance(held.spot, f.player) <= pickupRadius + pickupReach) {
+      const { pickupRadius } = this.content.tuning.flight;
+      if (held.spot && pickupTouched(this.content, f, held.spot, pickupRadius)) {
         this.finishJob(f);
       }
     }

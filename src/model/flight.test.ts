@@ -17,6 +17,7 @@ import {
   syncFlightRegion,
   teleport,
 } from "./flight.ts";
+import { shipCircleContact } from "./ship-body.ts";
 import type { FlightInput, FlightState, SectorProgress, Vec } from "./types.ts";
 import { noLevels } from "./upgrades.ts";
 
@@ -524,7 +525,8 @@ describe("directional handling", () => {
     for (let i = 0; i < 12; i++) {
       stepFlight(PROTOTYPE, 1 / 60, { ...idle, move: east }, flight);
       expect(speed(flight)).toBeLessThanOrEqual(maxSpeed + 1e-9);
-      expect(Math.hypot(flight.player.x - 140, flight.player.y - 80)).toBeGreaterThanOrEqual(40);
+      // Ada's drawn ship stays off the rock's circle at every heading she turns through.
+      expect(shipCircleContact(flight.facing, flight.player, { x: 140, y: 80 }, 30)).toBeNull();
     }
     expect(flight.player.y).toBeLessThan(100);
     expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax);

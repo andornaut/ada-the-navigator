@@ -13,6 +13,7 @@ import { planChunk } from "./chunk-templates.ts";
 import { dropRandom, rollAsteroidStardust, rollEnemyDrop, splitStardust } from "./drops.ts";
 import { createEnemy } from "./enemy-ai.ts";
 import { createFlight, stepFlight } from "./flight.ts";
+import { shipTouches } from "./ship-body.ts";
 import {
   buy,
   fill,
@@ -26,7 +27,14 @@ import {
   shopRowState,
   weaponName,
 } from "./shop.ts";
-import type { EconomyState, FlightEvent, FlightInput, FlightState, SpaceObject } from "./types.ts";
+import type {
+  EconomyState,
+  FlightEvent,
+  FlightInput,
+  FlightState,
+  SpaceObject,
+  Vec,
+} from "./types.ts";
 import { newEconomy, noLevels, shipTuning } from "./upgrades.ts";
 import { noAmmo, UPGRADE_WEAPONS } from "./weapons.ts";
 
@@ -514,16 +522,44 @@ describe("tractor beam and pickup reach", () => {
 
   it("collects pickups on contact within the pickup reach of 14", () => {
     expect(PROTOTYPE.tuning.flight.pickupReach).toBe(14);
-    const reach = ECONOMY.stardustPickupRadius + 14;
+    // The reach was measured from the 10-unit hull circle: 4 past the drawn ship.
+    const margin = 14 - PROTOTYPE.tuning.flight.shipRadius;
+    // How far along `axis` a pickup of `radius` first leaves Ada's reach, to 0.001.
+    const edge = (value: FlightState, axis: Vec, radius: number) => {
+      let low = 0;
+      let high = 200;
+      while (high - low > 1e-3) {
+        const middle = (low + high) / 2;
+        const at = { x: value.player.x + axis.x * middle, y: value.player.y + axis.y * middle };
+        if (shipTouches(value.facing, value.player, at, radius + margin)) {
+          low = middle;
+        } else {
+          high = middle;
+        }
+      }
+      return high;
+    };
     const value = flight();
-    value.objects.push(stardust("inside", reach - 0.1, 0, 3), stardust("outside", 0, reach + 1));
+    const east = edge(value, { x: 1, y: 0 }, ECONOMY.stardustPickupRadius);
+    const south = edge(value, { x: 0, y: 1 }, ECONOMY.stardustPickupRadius);
+    value.objects.push(stardust("inside", east - 0.1, 0, 3), stardust("outside", 0, south + 1));
     const events = stepFlight(PROTOTYPE, 0.001, idle, value);
     expect(gained(events)).toBe(3);
     expect(value.objects.map((object) => object.id)).toEqual(["outside"]);
     const weapon = flight();
+    const near = edge(weapon, { x: 1, y: 0 }, 10);
+    const far = edge(weapon, { x: 0, y: 1 }, 10);
     weapon.objects.push(
-      { hp: 1, id: "edge", kind: "pickup", radius: 10, weapon: "rapidMissile", x: 23.9, y: 0 },
-      { hp: 1, id: "beyond", kind: "pickup", radius: 10, weapon: "multiLaser", x: 0, y: 24.1 },
+      {
+        hp: 1,
+        id: "edge",
+        kind: "pickup",
+        radius: 10,
+        weapon: "rapidMissile",
+        x: near - 0.1,
+        y: 0,
+      },
+      { hp: 1, id: "beyond", kind: "pickup", radius: 10, weapon: "multiLaser", x: 0, y: far + 0.1 },
     );
     stepFlight(PROTOTYPE, 0.001, idle, weapon);
     expect(weapon.ownedWeapons).toEqual(["rapidMissile"]);

@@ -6,23 +6,54 @@ export const SHIP_HEADINGS = 32;
 
 /**
  * Art's ship-nose.json, version 1 (art/ship.md): the hull top's forward tip in frame px for
- * each heading, projected like the frames, and the display px per frame px.
+ * each heading, projected like the frames, each idle heading's drawn silhouette as convex parts
+ * in frame px, and the display px per frame px.
  */
 export interface ShipNose {
   readonly displayScale: number;
   readonly frame: number;
   readonly noses: readonly Vec[];
+  readonly collision: readonly (readonly (readonly Vec[])[])[];
 }
 
 const finite = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
 
-/** A version 1 nose file with a point inside the frame for each of the 32 headings. */
+function readPoint(frame: number, value: unknown): Vec | undefined {
+  if (!Array.isArray(value) || value.length !== 2) {
+    return undefined;
+  }
+  const [x, y] = value as unknown[];
+  return finite(x) && finite(y) && x >= 0 && y >= 0 && x <= frame && y <= frame
+    ? { x, y }
+    : undefined;
+}
+
+/** A heading's silhouette: one or more parts of at least three points inside the frame. */
+function readParts(frame: number, value: unknown): Vec[][] | undefined {
+  if (!Array.isArray(value) || !value.length) {
+    return undefined;
+  }
+  const parts: Vec[][] = [];
+  for (const part of value as unknown[]) {
+    const points = Array.isArray(part) ? part.map((point) => readPoint(frame, point)) : [];
+    if (points.length < 3 || points.some((point) => !point)) {
+      return undefined;
+    }
+    parts.push(points as Vec[]);
+  }
+  return parts;
+}
+
+/**
+ * A version 1 nose file with a point inside the frame and a silhouette for each of the 32
+ * headings.
+ */
 export function readShipNose(value: unknown): ShipNose | undefined {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return undefined;
   }
-  const { displayScale, frame, noses, version } = value as Record<string, unknown>;
+  const { collision, displayScale, frame, noses, version } = value as Record<string, unknown>;
   if (
     version !== 1 ||
     !finite(frame) ||
@@ -30,27 +61,25 @@ export function readShipNose(value: unknown): ShipNose | undefined {
     !finite(displayScale) ||
     !(displayScale > 0) ||
     !Array.isArray(noses) ||
-    noses.length !== SHIP_HEADINGS
+    noses.length !== SHIP_HEADINGS ||
+    !Array.isArray(collision) ||
+    collision.length !== SHIP_HEADINGS
   ) {
     return undefined;
   }
-  const points: Vec[] = [];
-  for (const point of noses as unknown[]) {
-    if (!Array.isArray(point) || point.length !== 2) {
-      return undefined;
-    }
-    const [x, y] = point as unknown[];
-    if (!finite(x) || !finite(y) || x < 0 || y < 0 || x > frame || y > frame) {
-      return undefined;
-    }
-    points.push({ x, y });
+  const points = (noses as unknown[]).map((point) => readPoint(frame, point));
+  const outlines = (collision as unknown[]).map((parts) => readParts(frame, parts));
+  if (points.some((point) => !point) || outlines.some((parts) => !parts)) {
+    return undefined;
   }
-  return { displayScale, frame, noses: points };
+  return { collision: outlines as Vec[][][], displayScale, frame, noses: points as Vec[] };
 }
 
 const shipped = readShipNose(art);
 if (!shipped) {
-  throw new Error("public/art/ship-nose.json must be version 1 with 32 noses inside the frame");
+  throw new Error(
+    "public/art/ship-nose.json must be version 1 with 32 noses and silhouettes inside the frame",
+  );
 }
 export const SHIP_NOSE: ShipNose = shipped;
 
@@ -82,3 +111,21 @@ export function nosePoint(facing: Vec, player: Vec): Vec {
   const offset = noseOffset(facing);
   return { x: player.x + offset.x, y: player.y + offset.y };
 }
+
+/**
+ * Ada's drawn silhouette for a heading: its collision parts in display px from the ship's
+ * position, the frame's pivot.
+ */
+export function shipSilhouette(heading: number): readonly (readonly Vec[])[] {
+  let parts = SILHOUETTES[heading];
+  if (!parts) {
+    const { collision, displayScale, frame } = SHIP_NOSE;
+    const pivot = frame / 2;
+    parts = (collision[heading] ?? collision[0]!).map((part) =>
+      part.map((at) => ({ x: (at.x - pivot) * displayScale, y: (at.y - pivot) * displayScale })),
+    );
+    SILHOUETTES[heading] = parts;
+  }
+  return parts;
+}
+const SILHOUETTES: (readonly (readonly Vec[])[])[] = [];

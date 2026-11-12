@@ -17,6 +17,7 @@ import {
   reflectDirection,
   rockFrame,
   sceneryBlocksSegment,
+  sceneryBodyContact,
   sceneryContact,
   scenerySilhouette,
   silhouette,
@@ -25,7 +26,9 @@ import { type ChunkPlanOptions, planChunk } from "./chunk-templates.ts";
 import { createEnemy } from "./enemy-ai.ts";
 import { createFlight, ensureDestination, ensureStation, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
+import { SHIP_HEADINGS } from "./nose.ts";
 import { restoreSave } from "./save.ts";
+import { shipBody } from "./ship-body.ts";
 import { stationsNear } from "./stations.ts";
 import { playOpening, relaunch, seedLaunches } from "./test-launch.ts";
 import type { SectorProgress, SpaceObject, Vec } from "./types.ts";
@@ -77,7 +80,6 @@ const huge = shapes.find((shape) => shape.size === "huge")!;
 // A screen offset from a rock's pivot as the world offset that projects to it.
 const world = (screen: Vec): Vec => ({ x: screen.y + screen.x / 2, y: screen.y - screen.x / 2 });
 const idleInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
-const screenOf = (offset: Vec): Vec => ({ x: offset.x - offset.y, y: (offset.x + offset.y) / 2 });
 // Every Art rock as the flight object that draws it: plain rocks as rocks, resource rocks on the
 // plain shape they collide on.
 const drawnRocks: { art: AsteroidArt; object: SpaceObject }[] = [
@@ -310,45 +312,76 @@ describe("rock silhouettes", () => {
     expect(fire(top - 4)).toBe(false);
   });
 
-  // It sweeps every rock, spin frame and 16 approaches, and runs about 11 s on the CI runner.
-  it("never draw Ada overlapping a rock after contact, in any frame or approach", () => {
-    const { shipRadius } = PROTOTYPE.tuning.flight;
+  it("never draw Ada's ship overlapping a rock after contact, at any frame, heading or approach", () => {
     const flight = createFlight(PROTOTYPE, 1, 7, { known: [] });
     let approaches = 0;
+    let touched = 0;
     for (const { art, object } of drawnRocks) {
       const drawn = scenerySilhouette(object)!;
-      for (let frame = 0; frame < drawn.frames.length; frame++) {
-        for (let turn = 0; turn < 16; turn++) {
-          const angle = (turn / 16) * Math.PI * 2;
-          const gap = drawn.reach + shipRadius + 4;
-          const start = world({ x: Math.cos(angle) * gap, y: Math.sin(angle) * gap });
-          const toward = { x: -start.x, y: -start.y };
-          const span = Math.hypot(toward.x, toward.y);
-          const move = { x: toward.x / span, y: toward.y / span };
+      // Every heading against frame 0, and every later spin frame at a heading that walks round.
+      const cases: [number, number][] = [];
+      for (let heading = 0; heading < SHIP_HEADINGS; heading++) {
+        cases.push([0, heading]);
+      }
+      for (let frame = 1; frame < drawn.frames.length; frame++) {
+        cases.push([frame, (frame * 5) % SHIP_HEADINGS]);
+      }
+      for (const [frame, heading] of cases) {
+        const facing = {
+          x: Math.cos((heading * Math.PI * 2) / SHIP_HEADINGS),
+          y: Math.sin((heading * Math.PI * 2) / SHIP_HEADINGS),
+        };
+        // Four approaches, turned by the heading and frame so the cases cover every angle.
+        for (let turn = 0; turn < 4; turn++) {
+          const angle =
+            ((turn + ((heading + frame * 7) % SHIP_HEADINGS) / SHIP_HEADINGS) / 4) * Math.PI * 2;
           const held = { ...object, hp: 999, persistent: true, spinStart: frame };
+          // Start 32 px out from where the drawn rock ends along this screen direction, beyond
+          // the ship's 21 px half-width, and fly at its pivot.
+          const along = (t: number) => world({ x: Math.cos(angle) * t, y: Math.sin(angle) * t });
+          let edge = drawn.reach;
+          while (edge > 0 && !sceneryContact(held, along(edge), 0.5, frame)) {
+            edge -= 1;
+          }
+          const start = along(edge + 32);
+          const span = Math.hypot(start.x, start.y);
+          const move = { x: -start.x / span, y: -start.y / span };
           flight.objects = [held];
           flight.shots = [];
           flight.player = { ...start };
+          flight.facing = facing;
           flight.velocity = {
             x: move.x * PROTOTYPE.tuning.maxSpeed,
             y: move.y * PROTOTYPE.tuning.maxSpeed,
           };
-          for (let step = 0; step < 30; step++) {
-            stepFlight(PROTOTYPE, 1 / 60, { ...idleInput, move, reducedMotion: true }, flight);
+          let reached = false;
+          for (let step = 0; step < 20; step++) {
+            // Aiming holds the heading while she flies in.
+            stepFlight(
+              PROTOTYPE,
+              1 / 60,
+              { ...idleInput, aim: facing, move, reducedMotion: true },
+              flight,
+            );
             flight.objects = flight.objects.filter((entry) => entry.id === object.id);
-            // Ada's drawn circle stays off the silhouette, to the push-out's 0.01 margin.
-            const overlap = sceneryContact(held, flight.player, shipRadius - 0.01, frame);
-            const at = screenOf({ x: flight.player.x - held.x, y: flight.player.y - held.y });
+            flight.shots = [];
+            const overlap = sceneryBodyContact(held, flight.player, shipBody(flight.facing), frame);
+            // To the push-out's 0.01 margin.
             expect(
-              overlap,
-              `${art.id} frame ${frame} angle ${turn} at ${at.x}, ${at.y}`,
-            ).toBeNull();
+              overlap?.depth ?? 0,
+              `${art.id} frame ${frame} heading ${heading} angle ${turn}`,
+            ).toBeLessThan(0.02);
+            reached ||=
+              sceneryBodyContact(held, flight.player, shipBody(flight.facing), frame, 2) !== null;
           }
           approaches++;
+          touched += reached ? 1 : 0;
         }
       }
     }
-    expect(approaches).toBeGreaterThan(16 * drawnRocks.length);
+    expect(approaches).toBeGreaterThan(4 * SHIP_HEADINGS * drawnRocks.length);
+    // Nearly every approach reaches the rock, so the check above is not vacuous.
+    expect(touched / approaches).toBeGreaterThan(0.9);
   }, 60_000);
 });
 
@@ -598,8 +631,10 @@ describe("asteroids in flight", () => {
         );
         const before = { ...flight.velocity };
         model.step(1 / 60, { ...idle, move: step < 90 ? move : { x: 0, y: 0 } });
-        expect(sceneryContact(wall, flight.player, tuning.shipRadius)).toBeNull();
-        const contact = sceneryContact(wall, flight.player, tuning.shipRadius + 1);
+        const body = shipBody(flight.facing);
+        expect(sceneryBodyContact(wall, flight.player, body)).toBeNull();
+        // Within 4 px of the drawn rock: a bounce moves her up to about 1.5 px away in its step.
+        const contact = sceneryBodyContact(wall, flight.player, body, 0, 4);
         if (contact) {
           const into = before.x * contact.normal.x + before.y * contact.normal.y;
           const out = flight.velocity.x * contact.normal.x + flight.velocity.y * contact.normal.y;
@@ -615,14 +650,28 @@ describe("asteroids in flight", () => {
       // Every bounce leaves her moving.
       expect(kept, label).toBeGreaterThanOrEqual(tuning.sceneryRecoil - 1e-6);
       // After release she coasts away from the rock instead of resting against it.
-      expect(sceneryContact(wall, flight.player, tuning.shipRadius + 2)).toBeNull();
+      expect(sceneryBodyContact(wall, flight.player, shipBody(flight.facing), 0, 2)).toBeNull();
       expect(flight.shield).toBe(shield);
     }
   });
 
   it("returns the restitution share of a head-on approach as recoil", () => {
     const { flight, model } = launched();
-    const wall = rock("wall", { x: flight.player.x + 52, y: flight.player.y });
+    flight.facing = { x: 1, y: 0 };
+    const wall = rock("wall", { x: flight.player.x, y: flight.player.y });
+    // One unit past where the circle first meets Ada's drawn ship, to 0.001.
+    let low = 0;
+    let high = 200;
+    while (high - low > 1e-3) {
+      const middle = (low + high) / 2;
+      wall.x = flight.player.x + middle;
+      if (sceneryBodyContact(wall, flight.player, shipBody(flight.facing))) {
+        low = middle;
+      } else {
+        high = middle;
+      }
+    }
+    wall.x = flight.player.x + high + 1;
     flight.objects.push(wall);
     flight.velocity = { x: 150, y: 0 };
     model.step(1 / 60, idle);

@@ -7,11 +7,21 @@ import {
   type ResourceRockCatalog,
 } from "../data/asteroid-catalog.ts";
 import { resourceArtId, type ResourceClass } from "../data/resource-rocks.ts";
+import {
+  closestOnSegment,
+  type Contact,
+  grownParts,
+  type Parts,
+  partsReach,
+  segmentNearParts,
+  toScreen,
+  unionContact,
+  worldContact,
+  worldParts,
+} from "./convex.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 
-type Parts = readonly (readonly Vec[])[];
-/** Screen px past an edge that tells a seam from the outline, where the next part continues. */
-const SEAM_STEP = 1.5;
+export type { Contact } from "./convex.ts";
 
 /**
  * A rock as drawn: one silhouette per frame, convex parts in screen px from the object's
@@ -35,13 +45,6 @@ export interface AsteroidShape {
   readonly drift: AsteroidArt["drift"];
   readonly spin: AsteroidArt["spin"];
 }
-export interface Contact {
-  /** Unit vector from the obstacle surface toward the circle center. */
-  readonly normal: Vec;
-  /** Overlap depth along the normal. */
-  readonly depth: number;
-}
-
 /**
  * A rock's drawn silhouette: each frame's `collision` parts moved from frame px to display px
  * from the pivot, where the sprite's origin sits on the object's projected position.
@@ -56,10 +59,7 @@ export function silhouette(art: AsteroidArt): Silhouette {
       part.map((at) => ({ x: (at.x - originX) * scaleX, y: (at.y - originY) * scaleY })),
     ),
   );
-  const reach = Math.max(
-    ...frames.flatMap((parts) => parts.flatMap((part) => part.map((at) => Math.hypot(at.x, at.y)))),
-  );
-  return { frames, reach };
+  return { frames, reach: Math.max(...frames.map(partsReach)) };
 }
 
 export function asteroidShape(art: AsteroidArt): AsteroidShape {
@@ -147,70 +147,6 @@ export function rockFrame(
   return Math.floor(turned / (360 / shape.frames.length)) % shape.frames.length;
 }
 
-function closestOnSegment(point: Vec, a: Vec, b: Vec): Vec {
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  const square = dx * dx + dy * dy;
-  const t = square
-    ? Math.max(0, Math.min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / square))
-    : 0;
-  return { x: a.x + dx * t, y: a.y + dy * t };
-}
-
-function inside(part: readonly Vec[], point: Vec): boolean {
-  let sign = 0;
-  for (let index = 0; index < part.length; index++) {
-    const a = part[index]!;
-    const b = part[(index + 1) % part.length]!;
-    const cross = (b.x - a.x) * (point.y - a.y) - (b.y - a.y) * (point.x - a.x);
-    if (cross === 0) {
-      continue;
-    }
-    if (sign && Math.sign(cross) !== sign) {
-      return false;
-    }
-    sign = Math.sign(cross);
-  }
-  return true;
-}
-
-/** Circle against one convex part, in the part's local frame. */
-function partContact(part: readonly Vec[], center: Vec, radius: number): Contact | null {
-  let nearest: Vec | null = null;
-  let best = Infinity;
-  for (let index = 0; index < part.length; index++) {
-    const at = closestOnSegment(center, part[index]!, part[(index + 1) % part.length]!);
-    const gap = Math.hypot(center.x - at.x, center.y - at.y);
-    if (gap < best) {
-      best = gap;
-      nearest = at;
-    }
-  }
-  if (!nearest) {
-    return null;
-  }
-  const centroid = {
-    x: part.reduce((sum, at) => sum + at.x, 0) / part.length,
-    y: part.reduce((sum, at) => sum + at.y, 0) / part.length,
-  };
-  if (inside(part, center)) {
-    // A center inside the part leaves through the nearest edge.
-    const out =
-      best > 1e-9
-        ? { x: nearest.x - center.x, y: nearest.y - center.y }
-        : { x: center.x - centroid.x, y: center.y - centroid.y };
-    const scale = Math.hypot(out.x, out.y) || 1;
-    return { depth: best + radius, normal: { x: out.x / scale, y: out.y / scale } };
-  }
-  if (best >= radius) {
-    return null;
-  }
-  return {
-    depth: radius - best,
-    normal: { x: (center.x - nearest.x) / best, y: (center.y - nearest.y) / best },
-  };
-}
-
 /** The plain shapes of a resource class's size, the footprints its rocks collide on. */
 export function resourceShapes(
   shapes: readonly AsteroidShape[],
@@ -241,23 +177,6 @@ export function scenerySilhouette(object: SpaceObject): Silhouette | null {
     sceneryShape(object)?.silhouette ??
     null
   );
-}
-
-/** A world offset on the screen: the play view's projection (x - y, (x + y) / 2). */
-function toScreen(offset: Vec): Vec {
-  return { x: offset.x - offset.y, y: (offset.x + offset.y) / 2 };
-}
-
-/**
- * A screen contact in world units. A screen edge with normal n is the world line with normal
- * P^T n, where P is the projection, and moving 1 world unit along that unit normal moves the
- * point |P^T n| screen px off the edge.
- */
-function worldContact(screen: Contact): Contact {
-  const { x, y } = screen.normal;
-  const normal = { x: x + y / 2, y: y / 2 - x };
-  const scale = Math.hypot(normal.x, normal.y);
-  return { depth: screen.depth / scale, normal: { x: normal.x / scale, y: normal.y / scale } };
 }
 
 /**
@@ -292,53 +211,57 @@ export function sceneryContact(
   return contact && worldContact(contact);
 }
 
+const GROWN = new WeakMap<Parts, WeakMap<Parts, Parts>>();
+/** A rock frame's silhouette grown by a body's outline, built once per pair. */
+function grown(rock: Parts, body: Parts): Parts {
+  let byBody = GROWN.get(rock);
+  if (!byBody) {
+    byBody = new WeakMap();
+    GROWN.set(rock, byBody);
+  }
+  let parts = byBody.get(body);
+  if (!parts) {
+    parts = grownParts(rock, body);
+    byBody.set(body, parts);
+  }
+  return parts;
+}
+
 /**
- * A circle against the union of convex parts that overlap at their seams. Outside the union the
- * nearest part decides. Inside it, the circle leaves through the nearest outer edge: an edge
- * point whose outward step lands in another part is a seam, not the outline.
+ * Deepest overlap of a drawn body, its outline in screen px from `center`, with a scenery object,
+ * or null when they do not touch. Against a rock the outlines meet on the screen, as the body's
+ * position against the rock frame's silhouette grown by the body; against a circle obstacle the
+ * body's outline meets the world circle. A `margin` grows the contact, in screen px against a
+ * rock and world units against a circle. The contact pushes the body, in world units.
  */
-function unionContact(parts: Parts, center: Vec, radius: number): Contact | null {
-  const container = parts.find((part) => inside(part, center));
-  if (!container) {
-    let deepest: Contact | null = null;
-    for (const part of parts) {
-      const contact = partContact(part, center, radius);
-      if (contact && (!deepest || contact.depth > deepest.depth)) {
-        deepest = contact;
-      }
-    }
-    return deepest;
+export function sceneryBodyContact(
+  object: SpaceObject,
+  center: Vec,
+  body: Parts,
+  frame = 0,
+  margin = 0,
+): Contact | null {
+  const drawn = scenerySilhouette(object);
+  if (!drawn) {
+    const contact = unionContact(
+      worldParts(body),
+      { x: object.x - center.x, y: object.y - center.y },
+      object.radius + margin,
+    );
+    return (
+      contact && { depth: contact.depth, normal: { x: -contact.normal.x, y: -contact.normal.y } }
+    );
   }
-  let best = Infinity;
-  let exit: Vec | null = null;
-  for (const part of parts) {
-    const centroid = {
-      x: part.reduce((sum, at) => sum + at.x, 0) / part.length,
-      y: part.reduce((sum, at) => sum + at.y, 0) / part.length,
-    };
-    for (let index = 0; index < part.length; index++) {
-      const a = part[index]!;
-      const b = part[(index + 1) % part.length]!;
-      const at = closestOnSegment(center, a, b);
-      const gap = Math.hypot(at.x - center.x, at.y - center.y);
-      if (gap >= best) {
-        continue;
-      }
-      // The edge's outward unit normal, away from its part's centroid.
-      const length = Math.hypot(b.x - a.x, b.y - a.y) || 1;
-      let normal = { x: (b.y - a.y) / length, y: (a.x - b.x) / length };
-      if (normal.x * (at.x - centroid.x) + normal.y * (at.y - centroid.y) < 0) {
-        normal = { x: -normal.x, y: -normal.y };
-      }
-      const step = { x: at.x + normal.x * SEAM_STEP, y: at.y + normal.y * SEAM_STEP };
-      if (parts.some((other) => other !== part && inside(other, step))) {
-        continue;
-      }
-      best = gap;
-      exit = gap > 1e-9 ? { x: (at.x - center.x) / gap, y: (at.y - center.y) / gap } : normal;
-    }
+  const screen = toScreen({ x: center.x - object.x, y: center.y - object.y });
+  if (Math.hypot(screen.x, screen.y) >= drawn.reach + partsReach(body) + margin) {
+    return null;
   }
-  return exit ? { depth: best + radius, normal: exit } : partContact(container, center, radius);
+  const contact = unionContact(
+    grown(drawn.frames[frame] ?? drawn.frames[0]!, body),
+    screen,
+    margin,
+  );
+  return contact && worldContact(contact);
 }
 
 /**
@@ -348,12 +271,6 @@ function unionContact(parts: Parts, center: Vec, radius: number): Contact | null
 export function sceneryBound(object: SpaceObject, radius: number): number {
   const drawn = scenerySilhouette(object);
   return drawn ? (drawn.reach + radius) * Math.SQRT2 : object.radius + radius;
-}
-
-/** Whether screen segments ab and cd cross. */
-function crosses(a: Vec, b: Vec, c: Vec, d: Vec): boolean {
-  const side = (p: Vec, q: Vec, r: Vec) => (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
-  return side(a, b, c) * side(a, b, d) < 0 && side(c, d, a) * side(c, d, b) < 0;
 }
 
 /**
@@ -377,26 +294,7 @@ export function sceneryBlocksSegment(
   }
   const a = toScreen({ x: start.x - object.x, y: start.y - object.y });
   const b = toScreen({ x: end.x - object.x, y: end.y - object.y });
-  return (drawn.frames[frame] ?? drawn.frames[0]!).some(
-    (part) =>
-      inside(part, a) ||
-      part.some((corner, index) => {
-        const next = part[(index + 1) % part.length]!;
-        if (crosses(a, b, corner, next)) {
-          return true;
-        }
-        const gaps = [
-          Math.hypot(...delta(corner, closestOnSegment(corner, a, b))),
-          Math.hypot(...delta(a, closestOnSegment(a, corner, next))),
-          Math.hypot(...delta(b, closestOnSegment(b, corner, next))),
-        ];
-        return Math.min(...gaps) < inflate;
-      }),
-  );
-}
-
-function delta(a: Vec, b: Vec): [number, number] {
-  return [a.x - b.x, a.y - b.y];
+  return segmentNearParts(drawn.frames[frame] ?? drawn.frames[0]!, a, b, inflate);
 }
 
 /**

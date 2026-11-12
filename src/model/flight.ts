@@ -26,6 +26,7 @@ import {
   reflectDirection,
   rockFrame,
   sceneryBlocksSegment,
+  sceneryBodyContact,
   sceneryBound,
   sceneryContact,
   sceneryShape,
@@ -55,6 +56,7 @@ import {
 } from "./geography.ts";
 
 export { activateRouteEncounter, syncFlightRegion } from "./geography.ts";
+import type { Contact } from "./convex.ts";
 import {
   carriesStardust,
   dropRandom,
@@ -66,6 +68,13 @@ import { landmarkSites } from "./landmarks.ts";
 import { nosePoint } from "./nose.ts";
 import { clearOfOreFields, oreFieldsNear } from "./ore-fields.ts";
 import { planPlayerVolley } from "./player-projectiles.ts";
+import {
+  SHIP_REACH,
+  shipBody,
+  shipCircleContact,
+  shipNearSegment,
+  shipTouches,
+} from "./ship-body.ts";
 import { direction, speedFraction, stepShipMotion, turnToward } from "./ship-physics.ts";
 import { stationById, stationsNear } from "./stations.ts";
 import type {
@@ -198,15 +207,13 @@ export function bounceShips(
   object: SpaceObject,
 ): void {
   const enemy = object.enemy;
-  const { sceneryRecoil, sceneryRestitution, shipRadius } = content.tuning.flight;
-  const offset = { x: flight.player.x - object.x, y: flight.player.y - object.y };
-  const gap = length(offset);
-  const reach = object.radius + shipRadius;
-  if (!enemy || gap >= reach) {
+  const { sceneryRecoil, sceneryRestitution } = content.tuning.flight;
+  // The enemy's hull circle against Ada's drawn ship.
+  const contact = enemy && shipCircleContact(flight.facing, flight.player, object, object.radius);
+  if (!enemy || !contact) {
     return;
   }
-  // Coincident centres separate along the enemy's facing.
-  const normal = gap > 0 ? { x: offset.x / gap, y: offset.y / gap } : direction(enemy.facing);
+  const { normal } = contact;
   const inward = { x: -normal.x, y: -normal.y };
   const mass = enemyCatalog[enemy.archetype].sizeRatio ** 2;
   const adaShare = mass / (1 + mass);
@@ -221,7 +228,7 @@ export function bounceShips(
     x: enemy.velocity.x + (hull.x - enemy.velocity.x) * enemyShare,
     y: enemy.velocity.y + (hull.y - enemy.velocity.y) * enemyShare,
   };
-  const depth = reach - gap + 0.01;
+  const depth = contact.depth + 0.01;
   flight.player.x += normal.x * depth * adaShare;
   flight.player.y += normal.y * depth * adaShare;
   object.x += inward.x * depth * enemyShare;
@@ -235,12 +242,26 @@ export function bounceShips(
     enemy.heading = reflectDirection(inward, enemy.heading);
   }
   // Ada's push-out may meet scenery, which bounces her by its own rule.
-  resolveScenery(flight, shipRadius, adaSceneryContact(content, flight), flight.player);
+  settleAda(content, flight);
 }
+
+/** Ada's drawn ship against scenery at her current facing. */
+function adaContact(flight: FlightState): SceneryContactOf {
+  return (object, position, frame) =>
+    sceneryBodyContact(object, position, shipBody(flight.facing), frame);
+}
+
+/** Pushes Ada's drawn ship out of scenery and bounces her off what she touched. */
+function settleAda(content: PrototypeContent, flight: FlightState): void {
+  resolveScenery(flight, adaContact(flight), adaSceneryContact(content, flight), flight.player);
+}
+
+/** A body's overlap with a scenery object from `position`, at the object's current frame. */
+type SceneryContactOf = (object: SpaceObject, position: Vec, frame: number) => Contact | null;
 
 function resolveScenery(
   flight: FlightState,
-  radius: number,
+  contactOf: SceneryContactOf,
   onContact: (normal: Vec, surface: Vec) => void,
   position: Vec,
 ): void {
@@ -252,7 +273,7 @@ function resolveScenery(
       if (!SCENERY.includes(object.kind) || object.hp <= 0) {
         continue;
       }
-      const contact = sceneryContact(object, position, radius, frameOf(flight, object));
+      const contact = contactOf(object, position, frameOf(flight, object));
       if (contact && (!deepest || contact.depth > deepest.contact.depth)) {
         deepest = { contact, object };
       }
@@ -1312,7 +1333,7 @@ export function teleport(content: PrototypeContent, id: string, flight: FlightSt
   // Station arrivals stop inside the safe area, outside the dock, so travel never docks.
   const arrival =
     object.kind === "station"
-      ? outsideDock(stationDockRadius(content) + 40, object)
+      ? outsideDock(stationDockClear() + 40, object)
       : { x: object.x, y: object.y };
   // A jump arrival begins calm: no new encounter is placed near it, and ordinary encounter
   // ships already near it leave without counting as casualties. Guards keep their posts.
@@ -1429,12 +1450,29 @@ export function stationDock(station: Vec): Vec {
   };
 }
 /**
- * How near the dock Ada's centre must be to dock: her hull circle overlaps the dock's mouth
- * circle scaled by the dock forgiveness (gameplay/economy.md).
+ * The dock's mouth circle scaled by the dock forgiveness: Ada docks when her drawn ship overlaps
+ * it (gameplay/economy.md).
  */
-export function stationDockRadius(content: PrototypeContent): number {
+export function stationMouthRadius(): number {
   const { dockForgiveness, dockMouthRadius } = ECONOMY.station;
-  return dockMouthRadius * dockForgiveness + content.tuning.flight.shipRadius;
+  return dockMouthRadius * dockForgiveness;
+}
+/** How far from the dock Ada's position must be for no heading of her ship to reach its mouth. */
+export function stationDockClear(): number {
+  return stationMouthRadius() + SHIP_REACH;
+}
+/**
+ * Whether Ada's drawn ship reaches a pickup-sized object of `radius` at `center`: within the
+ * pickup reach's margin past the hull circle it was measured from.
+ */
+export function pickupTouched(
+  content: PrototypeContent,
+  flight: FlightState,
+  center: Vec,
+  radius: number,
+): boolean {
+  const { pickupReach, shipRadius } = content.tuning.flight;
+  return shipTouches(flight.facing, flight.player, center, radius + pickupReach - shipRadius);
 }
 /** The point `distance` from a station's dock along its outward direction. */
 function outsideDock(distance: number, station: Vec): Vec {
@@ -1446,12 +1484,12 @@ function outsideDock(distance: number, station: Vec): Vec {
  * Undocking places Ada at rest just outside the dock, so flying back in docks again.
  * Returns false without a flight at that station.
  */
-export function undockFlight(content: PrototypeContent, id: string, flight: FlightState): boolean {
+export function undockFlight(id: string, flight: FlightState): boolean {
   const station = flight.objects.find((object) => object.kind === "station" && object.id === id);
   if (!station) {
     return false;
   }
-  flight.player = outsideDock(stationDockRadius(content) + 1, station);
+  flight.player = outsideDock(stationDockClear() + 1, station);
   flight.velocity = { x: 0, y: 0 };
   flight.dockId = null;
   movementHeadings.delete(flight);
@@ -1508,10 +1546,10 @@ function move(
   }
   flight.velocity = motion.velocity;
   const start = { ...flight.player };
-  const { shipRadius } = content.tuning.flight;
+  const contactOf = adaContact(flight);
   const onContact = adaSceneryContact(content, flight);
   // Drifting scenery can reach a resting ship, so contacts resolve before any travel.
-  resolveScenery(flight, shipRadius, onContact, flight.player);
+  resolveScenery(flight, contactOf, onContact, flight.player);
   // A current's flow adds drift outside Ada's physics and speed cap.
   const drift = flowAt(flight.sector, flight.player);
   const travel = { x: flight.velocity.x + drift.x, y: flight.velocity.y + drift.y };
@@ -1521,7 +1559,7 @@ function move(
     const key = chunk(content, before);
     flight.player.x += (travel.x * dt) / steps;
     flight.player.y += (travel.y * dt) / steps;
-    resolveScenery(flight, shipRadius, onContact, flight.player);
+    resolveScenery(flight, contactOf, onContact, flight.player);
     const afterKey = chunk(content, flight.player);
     if (flight.freshChunk === key) {
       flight.freshDistance += distance(before, flight.player);
@@ -1537,6 +1575,8 @@ function move(
     length(flight.velocity)
   ) {
     flight.facing = turnToward(dt, physics.aimTurnSeconds, flight.velocity, flight.facing);
+    // A new heading draws a new outline, which may reach scenery.
+    resolveScenery(flight, contactOf, onContact, flight.player);
   }
 }
 /**
@@ -1658,7 +1698,12 @@ function enemies(
         }
       }
       const point = { x: object.x, y: object.y };
-      resolveScenery(flight, object.radius, onContact, point);
+      resolveScenery(
+        flight,
+        (obstacle, position, frame) => sceneryContact(obstacle, position, object.radius, frame),
+        onContact,
+        point,
+      );
       object.x = point.x;
       object.y = point.y;
     }
@@ -1702,8 +1747,7 @@ function moveDebris(content: PrototypeContent, dt: number, flight: FlightState):
       placeRiverRock(flight, object);
       object.cooldown = Math.max(0, (object.cooldown ?? 0) - dt);
       if (
-        segmentDistance(flight.player, from, object) <
-          object.radius + content.tuning.flight.shipRadius &&
+        shipNearSegment(flight.facing, flight.player, from, object, object.radius) &&
         !object.cooldown
       ) {
         damage(content, flight);
@@ -1735,10 +1779,7 @@ function moveDebris(content: PrototypeContent, dt: number, flight: FlightState):
       object.hp = 0;
       continue;
     }
-    if (
-      segmentDistance(flight.player, object, next.position) <
-      object.radius + content.tuning.flight.shipRadius
-    ) {
+    if (shipNearSegment(flight.facing, flight.player, object, next.position, object.radius)) {
       if (!object.cooldown) {
         damage(content, flight);
         object.cooldown = content.tuning.flight.damageInterval;
@@ -1769,7 +1810,7 @@ function shots(
       if (shot.enemy) {
         if (safe(content, shot, flight)) {
           shot.life = 0;
-        } else if (distance(shot, flight.player) < content.tuning.flight.shipRadius + 3) {
+        } else if (shipTouches(flight.facing, flight.player, shot, 3)) {
           damage(content, flight);
           shot.life = 0;
         }
@@ -2329,6 +2370,7 @@ export function stepFlight(
         input.aim,
         flight.facing,
       );
+      settleAda(content, flight);
     }
     ageFlashes(slice, flight);
     flight.fireCooldown = Math.max(0, flight.fireCooldown - slice);
@@ -2342,7 +2384,7 @@ export function stepFlight(
     for (const object of flight.objects) {
       if (
         object.kind === "hazard" &&
-        distance(object, flight.player) < object.radius + content.tuning.flight.shipRadius
+        shipTouches(flight.facing, flight.player, object, object.radius)
       ) {
         object.cooldown = Math.max(0, (object.cooldown ?? 0) - slice);
         if (!object.cooldown) {
@@ -2358,7 +2400,7 @@ export function stepFlight(
       object.x += drift.x * slice;
       object.y += drift.y * slice;
       pullStardust(ship.tractorRadius, ship.tractorSpeed, slice, object, flight);
-      if (distance(object, flight.player) > object.radius + content.tuning.flight.pickupReach) {
+      if (!pickupTouched(content, flight, object, object.radius)) {
         continue;
       }
       if (object.role === "cargo") {
@@ -2417,7 +2459,7 @@ export function stepFlight(
   const dock = flight.objects.find(
     (object) =>
       object.kind === "station" &&
-      distance(stationDock(object), flight.player) <= stationDockRadius(content),
+      shipTouches(flight.facing, flight.player, stationDock(object), stationMouthRadius()),
   );
   if (!dock) {
     flight.dockId = null;

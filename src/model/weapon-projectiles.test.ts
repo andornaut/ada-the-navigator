@@ -126,13 +126,14 @@ describe("Phaser hitscan beam", () => {
     expect(activeBeamFlashes(miss)).toHaveLength(0);
   });
 
-  it("strikes an obstacle the nose starts inside at once", () => {
-    // A rock just touching Ada's 10-unit hull, the nose inside it.
+  it("strikes an obstacle at the nose at once", () => {
+    // A rock over Ada's drawn nose: she is pushed off it and the beam meets it where it leaves.
     const flight = beam([{ hp: 10, id: "rock", kind: "rock", radius: 2, x: 12, y: nose.y }]);
     expect(hp(flight, "rock")).toBe(10 - 4);
     const flash = activeBeamFlashes(flight)[0]!;
-    expect(flash.from).toEqual(nose);
-    expect(flash.to).toEqual(nose);
+    const from = nosePoint({ x: 1, y: 0 }, flight.player);
+    expect(flash.from).toEqual(from);
+    expect(flash.to).toEqual(from);
   });
 
   it("hits once per shot and keeps no projectile or save state", () => {
