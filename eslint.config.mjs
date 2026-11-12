@@ -10,9 +10,25 @@ import ts from "typescript-eslint";
 import { plugins, sourceRules, toolingRules } from "./eslint.config.base.mjs";
 
 const SOURCE_FILES = ["src/**/*.ts"];
-// The modules that draw with Phaser, under src/. src/input/controls.ts builds the touch chrome as
-// Phaser objects beside its input handling.
-const PHASER_MODULES = ["game/playCamera", "game/scene", "game/touchChrome", "input/controls"];
+// The modules that draw with Phaser, under src/: the scene and the modules it delegates to.
+// src/input/controls.ts builds the touch chrome as Phaser objects beside its input handling.
+const PHASER_MODULES = [
+  "game/playCamera",
+  "game/scene",
+  "game/sceneAssets",
+  "game/sceneBackdrop",
+  "game/sceneEffects",
+  "game/sceneEnemies",
+  "game/sceneHud",
+  "game/sceneJump",
+  "game/sceneObjects",
+  "game/sceneShared",
+  "game/sceneSprites",
+  "game/sceneUi",
+  "game/sceneWorld",
+  "game/touchChrome",
+  "input/controls",
+];
 const PHASER_FILES = [
   "src/main.ts",
   ...PHASER_MODULES.flatMap((module) => [`src/${module}.ts`, `src/${module}.test.ts`]),

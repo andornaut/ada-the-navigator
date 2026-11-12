@@ -15,7 +15,7 @@ import {
 } from "./enemyArt.ts";
 
 // Cartwheel's claim jumpers: their hulls and part frames are in Cartwheel's manifest, which loads
-// with the galaxy's first flight (scene.ts loadGalaxyArt).
+// with the galaxy's first flight (sceneAssets.ts loadGalaxyArt).
 const cartwheel = GALAXY_MANIFESTS.get(2)!.assets as unknown as (EnemyFrame & {
   family?: string;
   path: string;

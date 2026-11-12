@@ -30,9 +30,11 @@ describes their implementation.
   combat, economy, stories, saves and their migrations, Phaser-free.
 - **Data:** [`src/data/`](data/) holds the authored content: galaxies, ships,
   weapons, enemies, story pages, conversations and the base view (`screen.ts`).
-- **Game:** [`src/game/`](game/) holds the play scene (`scene.ts`), its cameras
-  and touch chrome, and the Phaser-free art adapters, draw order, palettes and
-  persistence the scene reads.
+- **Game:** [`src/game/`](game/) holds the play scene (`scene.ts`), the
+  `scene*.ts` modules it delegates to (assets, interface, backdrop, objects,
+  enemies, world, HUD, effects, jump and sprites), its cameras and touch chrome,
+  and the Phaser-free art adapters, draw order, palettes and persistence the
+  scene reads.
 - **Input:** [`src/input/`](input/) holds keyboard and stick state (`state.ts`)
   and the controls that wire them to the scene and the interface (`controls.ts`).
 - **UI:** [`src/ui/`](ui/) holds the HTML interface drawn over the canvas: the
