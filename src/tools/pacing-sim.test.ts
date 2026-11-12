@@ -221,7 +221,8 @@ describe("pacing simulation runs", () => {
       behaviour: { ...DEFAULT_BEHAVIOUR, jobs: true },
       minutes: 40,
       scenario,
-      seeds: 4,
+      // Deliveries are the rarest job; six runs take at least one.
+      seeds: 6,
     });
     const completed = (type: "survey" | "delivery" | "rescue" | "hunt") =>
       withJobs.runs.reduce((sum, run) => sum + (run.jobs[type] ?? 0), 0);

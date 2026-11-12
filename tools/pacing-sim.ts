@@ -511,8 +511,11 @@ export interface WeaponStanding {
   killSeconds: Partial<Record<EnemyArchetype, number>>;
 }
 
-/** Every weapon at every level against one target: the check that no level 3 dominates. */
-export function weaponStandings(behaviour: Behaviour): WeaponStanding[] {
+/**
+ * Every weapon at every level against one target in a galaxy (Sunflower by default): the check
+ * that no level 3 dominates.
+ */
+export function weaponStandings(behaviour: Behaviour, sector: SectorId = 1): WeaponStanding[] {
   const archetypes = [...SMALL, "frigate", "capital"] as const;
   return (Object.keys(ON_TARGET) as Weapon[]).flatMap((weapon) =>
     [1, 2, 3].map((level) => {
@@ -521,7 +524,7 @@ export function weaponStandings(behaviour: Behaviour): WeaponStanding[] {
         killSeconds: Object.fromEntries(
           archetypes.map((archetype) => [
             archetype,
-            killSeconds(behaviour, weapon, archetype, level),
+            killSeconds(behaviour, sector, weapon, archetype, level),
           ]),
         ),
         level,
@@ -533,22 +536,17 @@ export function weaponStandings(behaviour: Behaviour): WeaponStanding[] {
   );
 }
 /**
- * Seconds of firing to destroy one ship: a multipart ship's hardpoints are shot down one at a
- * time, so surplus damage on one part never carries to the next.
+ * Seconds of firing to destroy one ship in a galaxy: its position's hull, which every hit
+ * lowers, a heavy's hardpoint hits included.
  */
 function killSeconds(
   behaviour: Behaviour,
+  sector: SectorId,
   weapon: Weapon,
   archetype: EnemyArchetype,
   level = 1,
 ): number {
-  const definition = enemyCatalog[archetype];
-  return definition.hardpoints.length
-    ? definition.hardpoints.reduce(
-        (sum, part) => sum + volleySeconds(behaviour, weapon, part.hp, level),
-        0,
-      )
-    : volleySeconds(behaviour, weapon, definition.hp, level);
+  return volleySeconds(behaviour, weapon, enemyDefinition(sector, archetype).hp, level);
 }
 /**
  * Seconds of firing to destroy one asteroid: bigger sizes hold more hit points and so cost
@@ -562,9 +560,9 @@ export function asteroidKillSeconds(
 ): number {
   return volleySeconds(behaviour, weapon, byPosition(ASTEROID_FIELDS, sector).hp[size]);
 }
-/** Hull damage after which a ship flees on its own, or null when it never does. */
-function fleeAfter(archetype: EnemyArchetype): number | null {
-  const { hp, morale } = enemyCatalog[archetype];
+/** Hull damage after which a ship in a galaxy flees on its own, or null when it never does. */
+function fleeAfter(sector: SectorId, archetype: EnemyArchetype): number | null {
+  const { hp, morale } = enemyDefinition(sector, archetype);
   for (let taken = 1; taken < hp; taken++) {
     if (morale.individualHpRatio > 0 && (hp - taken) / hp <= morale.individualHpRatio) {
       return taken;
@@ -785,9 +783,8 @@ export function simulate(input: SimulationInput): RunResult {
   };
   /** Fights one pack, destroying members as morale allows and advancing time as it goes. */
   const fightGroup = (archetype: EnemyArchetype, count: number, id: string) => {
-    const definition = enemyCatalog[archetype];
-    // Multipart ships fall to their hardpoints and never flee on hull damage.
-    const flee = definition.hardpoints.length ? null : fleeAfter(archetype);
+    const definition = enemyDefinition(sector, archetype);
+    const flee = fleeAfter(sector, archetype);
     let lost = 0;
     for (let member = 0; member < count; member++) {
       const packFlees = count > 1 && lost / count >= definition.morale.packLossRatio;
@@ -796,7 +793,7 @@ export function simulate(input: SimulationInput): RunResult {
         shoot(packFlees ? 0 : volleySeconds(behaviour, weapon, flee ?? 0));
         continue;
       }
-      shoot(killSeconds(behaviour, weapon, archetype));
+      shoot(killSeconds(behaviour, sector, weapon, archetype));
       advance(fleeing ? behaviour.fleeChaseSeconds : 0);
       lost++;
       add(result.destroyed, archetype);
@@ -989,7 +986,7 @@ export function simulate(input: SimulationInput): RunResult {
     ) {
       advance(behaviour.guardSeconds);
       guards.forEach((archetype, index) => {
-        shoot(killSeconds(behaviour, weapon, archetype));
+        shoot(killSeconds(behaviour, sector, weapon, archetype));
         add(result.destroyed, archetype);
         loot(archetype, `route:guard-${guard}:${index}`, "guards");
       });
