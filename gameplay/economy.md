@@ -75,7 +75,8 @@ tuning and Tractor beam have equal weight, and Paint 1/20 of that weight:
 - Weapons: one weapon's next step, the weapon itself with three packs of its
   ammunition if Ada does not own it, otherwise its next level. Each weapon is
   half as likely as the one before it: Laser 64, Multi-Laser 32, Rapid Missile
-  16, Heavy Missile 8, Scattershot 4 and Phaser 2.
+  16, Heavy Missile 8, Scattershot 4 and Phaser 2. Only the weapons unlocked in
+  the galaxy Ada is in take part (see [Weapon unlocks](#weapon-unlocks)).
 - Shield: its next level.
 - Engine tuning: its next level.
 - Tractor beam: its next level.
@@ -127,6 +128,26 @@ Like Archie's modals it has a close X; the X, an outside tap, back and Escape al
 undock.
 
 ## Shop
+
+### Weapon unlocks
+
+Weapons unlock along the route, one per galaxy. The galaxy Ada is in sets what
+its shops sell and what its upgrade drops give: the weapons unlocked there and
+their levels. Laser and its levels are available everywhere. Back in an earlier
+galaxy, only that galaxy's weapons drop or are sold; ammunition for every owned
+weapon stays on sale, and ammo pack drops cover every owned weapon wherever Ada
+is.
+
+| Position | Galaxy    | Unlocks       |
+| -------: | --------- | ------------- |
+|        1 | Sunflower | Multi-Laser   |
+|        2 | Whirlpool | Rapid Missile |
+|        3 | Needle    | Heavy Missile |
+|        4 | Andromeda | Scattershot   |
+|        5 | Cartwheel | Phaser        |
+|        6 | Phantom   | Nothing new   |
+
+### Prices
 
 | Item           | Effect                                                                                          | Prices   |
 | -------------- | ----------------------------------------------------------------------------------------------- | -------- |

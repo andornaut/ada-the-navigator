@@ -664,8 +664,9 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   Heavy Missile fires slowly, Scattershot works only up close and Phaser fires
   slowly. Every weapon stays worth using.
 - Laser is the starter weapon. The other weapons are Multi-Laser, Rapid
-  Missile, Heavy Missile, Scattershot and Phaser, bought at station shops or found as rare drops; see
-  [Economy](economy.md). The shared upgrade pickup, presented like Chibi's
+  Missile, Heavy Missile, Scattershot and Phaser, bought at station shops or found as rare drops, one
+  more unlocked in each galaxy along the route; see
+  [Economy](economy.md#weapon-unlocks). The shared upgrade pickup, presented like Chibi's
   power-ups, gives its upgrade on collection (see
   [Economy](economy.md#earning-stardust)). A new weapon from it is equipped at
   once unless the switch wait is running, when it is added without equipping;
