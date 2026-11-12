@@ -163,14 +163,14 @@ count, so Phaser energy is separate from Multi-Laser energy. Each volley uses
 one, so a Multi-Laser fan or a Scattershot spread costs one.
 
 Ammunition comes from the shop, sold per weapon in packs of about a minute of
-steady fire at level 1: Rapid Missile 200, Heavy Missile 50, Multi-Laser 200,
-Scattershot 130 and Phaser 55. Buying or finding a weapon includes three packs. An
+steady fire at level 1: Rapid Missile 200, Multi-Laser 200, Scattershot 130 and
+Phaser 55. Heavy Missile ammo is rarer: 25 per pack, about 30 seconds. Buying or finding a weapon includes three packs. An
 upgrade drop gives one pack only once every upgrade and paint scheme is owned. There
 are no separate ammunition pickups. A pack's shop row shows its name, such as "Rapid Missile
 ammo", with the pack size, such as "×200", on a second line, as levelled rows
 show their level. Prices are light: typical use of the stronger
 weapons costs about a quarter of Stardust income, provisionally 9 Stardust per
-pack, tuned by the pacing simulation. Ammunition persists across flights and the
+pack and 18 for Heavy Missile, tuned by the pacing simulation. Ammunition persists across flights and the
 jump home.
 
 When the selected weapon runs out, Ada switches to Laser at once, ignoring the
