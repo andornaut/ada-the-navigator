@@ -393,7 +393,7 @@ hunt's own chip, from `mapArea` in [jobs.json](../public/art/jobs.json).
 | `map-beacon.svg`       | Mast with a lamp and two pairs of signal arcs  | `3666df581a95d05be737af27b8b327fd9a8b386af3c1e0591bce9b21b4e04810` |
 | `map-job-survey.svg`   | Folded chart, middle panel raised, X knockout  | `96af3a92c85b64992f8366d56ac8acd62c95aa6c99748b29111f67aa7f8518d8` |
 | `map-job-delivery.svg` | Parcel: lid over the box, knocked-out label    | `87af099b17421f9bfc05899288bab445c7eae71f86add2a46e087254f070431e` |
-| `map-job-rescue.svg`   | Tow hook hanging from its eye                  | `e5806879887e1ecd1c974f45a1f13de756548e4c43e50aadbc69340f8a9a5910` |
+| `map-job-rescue.svg`   | Tow hook hanging from its eye                  | `8d0f32e66855226136d6f518613755b480fb34b1d3706dd13e7755def0f09903` |
 | `map-job-hunt.svg`     | Magnifier with a glint in the lens             | `87b6a33ba4f42714c233f7e7eeaf67ba924a7de70c44ce024a1b3fd8e83d22d0` |
 | `map-close.svg`        | X, 2 to 3 px strokes                           | `dfa06d6c874628b4d8234d834349f9d084329bf797483a8941cb8743a3858835` |
 | `map-zoom-in.svg`      | Plus, 14 long, 2 thick                         | `2941643dfb9821cddf4f9211799ce06a831d4f734dee00b761525faed2185d49` |

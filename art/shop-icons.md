@@ -42,20 +42,26 @@ a weapon.
 
 ## Job icons
 
-The [job board](shop.md#job-board) rows' glyphs, one per Gameplay job type,
-cream on the navy well and `#9a96ad` in busy rows. Each grid is also the Map's
-job glyph, `map-job-<type>.svg`, ink on the job-orange chip
-([Map](map.md#symbols)), as each weapon glyph serves the HUD and the shop.
+The [job board](shop.md#job-board) rows' glyphs, one per Gameplay job type and
+one shared by every repeatable activity, cream on the navy well and `#9a96ad`
+in busy rows. Each job type's grid is also the Map's job glyph,
+`map-job-<type>.svg`, ink on the job-orange chip ([Map](map.md#symbols)), as
+each weapon glyph serves the HUD and the shop. The activity glyph has no Map
+mask: Gameplay shows an active activity on the Map only as the Quests modal's
+"Job:" line, with its target's own chip.
 
-| Job type       | Sheet               | Glyph                                                     |
-| -------------- | ------------------- | --------------------------------------------------------- |
-| Survey         | `icon-job-survey`   | A folded chart, its middle panel raised, an X knocked out |
-| Delivery       | `icon-job-delivery` | A parcel: a lid over the box with a knocked-out label     |
-| Rescue and tow | `icon-job-rescue`   | A tow hook hanging from its eye                           |
-| Lost-item hunt | `icon-job-hunt`     | A magnifier with a glint in the lens                      |
+| Job type       | Sheet               | Glyph                                                                        |
+| -------------- | ------------------- | ---------------------------------------------------------------------------- |
+| Survey         | `icon-job-survey`   | A folded chart, its middle panel raised, an X knocked out                    |
+| Delivery       | `icon-job-delivery` | A parcel: a lid over the box with a knocked-out label                        |
+| Rescue and tow | `icon-job-rescue`   | A tow hook hanging from its eye                                              |
+| Lost-item hunt | `icon-job-hunt`     | A magnifier with a glint in the lens                                         |
+| Activity       | `icon-job-activity` | A circular repeat arrow, its head at the top pointing clockwise into the gap |
 
 The grids are in `art/tools/job-glyphs.ts`, every pixel inside the Map chip's
-13 px face (reach 9.49 to 11.40). `art/tools/job-icons.ts` writes the sheets
+13 px face (reach 8.60 to 11.40). Each glyph's drawn bounds are centred on its
+20 x 20 frame within 0.5 px on both axes, so it sits centred in the row well:
+the rescue hook is half a pixel left of centre, the others exact. `art/tools/job-icons.ts` writes the sheets
 with tags `normal` (frame 0, cream) and `disabled` (frame 1, `#9a96ad`) and
 registers them in the UI subset manifest; rebuild with
 `node art/tools/job-icons.ts`, and the Map masks with
@@ -99,9 +105,10 @@ run Prettier on the written JSON.
 | `icon-shop-ammo-energy.png`         | `3d1cda8ba36de4069bf310b662b9276880372f287b165cc741215089f19fff9a` |
 | `icon-shop-ammo-missile.png`        | `b2830979f4bec10fe08e2df534ed3fd5097242e72f84ce4989cb1f4fdfcb15d4` |
 | `icon-shop-ammo-shell.png`          | `b6e9725afc78907e5a68e4e22f9c44e326aaa927f90ab8ca1c48b45750bdf93a` |
+| `icon-job-activity.png`             | `64e6b771c89b4df177cf40c8e348b22c901c5ffdb59ca649d2b818e6eb145ec5` |
 | `icon-job-delivery.png`             | `ecc66fad164c64485072eec6f73603bd57f48740d3f61b1a0db71dc4928d3d2d` |
 | `icon-job-hunt.png`                 | `d9cbae46f8cfff4f8c5e9740e6b3a4c0166eff8eb93d7d26f5e06ba0238bfe5c` |
-| `icon-job-rescue.png`               | `25dfc9bd8ddb14ef307f0deef93e2f234e9373f5ffbcfa77b5c8d4dbada00404` |
+| `icon-job-rescue.png`               | `6f5a309c8df514e7b7a74e334e8a8c0f512df1348d310690fc0921f02d2658f5` |
 | `icon-job-survey.png`               | `a64d28393eeaf585a2713663f4e5b51ef298224eda159b6d7566152acc3af334` |
 | `icon-project-current-buoys.png`    | `5506bbcad2512bfde4a81aff6de192c0323362489c7328d38a94affbbf60f5ef` |
 | `icon-project-docking-bay.png`      | `e095d8686977f4106b3c0ad2411463f69f882db4a5b232229226d6782cd049f7` |

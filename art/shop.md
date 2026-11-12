@@ -178,7 +178,7 @@ A `ui-button-tile`, the whole row one control, as the item row.
 
 | Part   | Art                                                                                                                |
 | ------ | ------------------------------------------------------------------------------------------------------------------ |
-| Well   | The item well, with the job type's `icon-job-<type>` glyph at 8                                                    |
+| Well   | The item well, with the job type's `icon-job-<type>` glyph at 8; an activity row shows `icon-job-activity`         |
 | Title  | Gameplay's title (`surveyTitle`, `deliveryTitle`, `rescueTitle`, `huntTitle`), cream                               |
 | Detail | Its one line (`surveyAbout` and the others), row supporting `#c0bbd0`                                              |
 | Reward | The price pill with the reward amount, as every pill                                                               |
@@ -206,8 +206,9 @@ Contrast: titles 6.58:1 and details 5.11:1 on the `#46425e` face, busy text
 7.26:1 on the primary face and Drop ink 5.95:1 on the secondary face. The
 primary and secondary faces are 3.84:1 and 3.15:1 against the tile.
 
-The Active activity row (supply run, mining contract, guide a calf) has no
-glyph of its own yet: Gameplay names no activity icon.
+The Active activity row (`gameplay/quests.md` "Repeatable activities") shows
+the shared activity glyph, `icon-job-activity`'s normal frame, for every
+activity; its title is the activity's name and its detail line the goal.
 
 ## Buy confirm
 

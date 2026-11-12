@@ -73,6 +73,12 @@
       "once": []
     },
     {
+      "key": "icon-job-activity",
+      "png": "sprites/icon-job-activity.png",
+      "json": "sprites/icon-job-activity.json",
+      "once": []
+    },
+    {
       "key": "icon-job-delivery",
       "png": "sprites/icon-job-delivery.png",
       "json": "sprites/icon-job-delivery.json",

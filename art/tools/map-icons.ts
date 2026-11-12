@@ -340,9 +340,12 @@ function check(id: string, rows: readonly string[]): void {
 }
 
 // A held job's own spot (a rescue's craft, a hunt's search area) carries its job type's glyph,
-// the board row's grid (art/tools/job-glyphs.ts), as map-job-<type>.
+// the board row's grid (art/tools/job-glyphs.ts), as map-job-<type>. Activities have no Map
+// mark of their own: the Quests modal shows an activity's target chip.
 const JOB_SYMBOLS = Object.fromEntries(
-  Object.entries(JOB_GLYPHS).map(([type, rows]) => [`job-${type}`, rows]),
+  Object.entries(JOB_GLYPHS)
+    .filter(([type]) => type !== "activity")
+    .map(([type, rows]) => [`job-${type}`, rows]),
 );
 
 for (const [id, rows] of Object.entries({ ...SYMBOLS, ...JOB_SYMBOLS })) {
