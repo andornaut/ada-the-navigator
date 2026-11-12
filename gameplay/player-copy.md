@@ -724,6 +724,9 @@ beacon light. Welcome!"
 - Station welcome: Welcome aboard. Trade your Stardust, or take a job.
 - Crash screen: title "Something went wrong", text "The game stopped. Reload to
   play again.", button "Reload".
+- Update required (a save from a newer version, shown while offline or until
+  the newer version is available; it retries on its own): Connect to the
+  internet to update Ada the Navigator.
 - Saving failure: Couldn't save progress. You can keep playing, but recent
   progress may be lost if you close the game.
 - Completed story: Chapter complete. You can keep exploring.
