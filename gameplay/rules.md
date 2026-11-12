@@ -488,9 +488,12 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   "Paused" over the dimmed game, which pauses play, with a close X. Its buttons,
   one shape, in a full-width stack: "Resume" (primary), "Map", "Cargo",
   "Settings" and "Back to title". Cargo opens a card titled "Cargo" with a close
-  X, back to the pause card, listing what Ada has: Stardust; ore carried this
-  flight; "Holodisks: {n} of 6"; then, only when present, the carried job item or
-  towed craft and each owned weapon's ammunition. The card shows no objective text, and neither does space;
+  X, back to the pause card, in two sections. "Carried" lists Stardust, ore
+  carried this flight, "Holodisks: {n} of 6", and the carried job item or towed
+  craft when there is one. "Equipment" lists the shield, shield recharge, engine
+  and tractor beam, each with its level ("Level {n} of 3"); every owned weapon in
+  the weapon icons' order with its level and, apart from Basic, its ammunition;
+  and the ship paint. The pause card shows no objective text, and neither does space;
   in flight the direction indicator is the objective cue.
   The Map's header shows the galaxy name with its landmark pips and
   "{percent}% mapped" below them, then a "Quests" button and "Return to Earth".

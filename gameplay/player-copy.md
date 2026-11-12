@@ -677,8 +677,10 @@ beacon light. Welcome!"
 - Actions: Talk, Deliver, Deposit, Continue, Ask more, Use, Salvage.
 - Disabled heavy banner: Disabled.
 - Status labels: Objective, Nearby discovery, Shield, Cargo, Stardust, Ore.
-- Cargo card: Cargo; Stardust; Ore; Holodisks: {n} of 6; Carrying: {item};
-  Towing: {craft}; {weapon} ammunition: {count}.
+- Cargo card: Cargo; Carried: Stardust, Ore, Holodisks: {n} of 6, Carrying:
+  {item}, Towing: {craft}; Equipment: Shield, Shield recharge, Engine, Tractor
+  beam and each owned weapon's name with Level {n} of 3, a weapon's ammunition
+  as {count} left, and Paint: {paint}.
 - Pause: Pause (button label), Paused, Resume, Map, Cargo, Settings, Back to title. On Ada's room page: Settings, Back to title.
 - Start screen top right: Achievements, Settings, Exit (label and accessible
   name Exit).
