@@ -1044,7 +1044,9 @@ export function lance(
     return { edged, shapes };
   }
   const beamMs = t - tell;
-  const shapes = enemyBeam(art, spec, muzzle, end, 0, light, reducedMotion, beamMs);
+  // A full-length beam fades out over its end as a Phaser miss does; a stopped one ends hard.
+  const fade = view.stopped ? 0 : art.phaser.missFade;
+  const shapes = enemyBeam(art, spec, muzzle, end, fade, light, reducedMotion, beamMs);
   if (!view.stopped) {
     return { edged: [], shapes };
   }

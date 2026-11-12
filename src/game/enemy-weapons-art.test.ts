@@ -177,12 +177,21 @@ describe("charged lance", () => {
     expect(locked(730, true)[0]!.colour).toBe(PLATE);
   });
 
-  it("fires its beam for 300 ms, with the spark only where an obstacle stops it", () => {
+  it("fires its beam for 300 ms, fading at full length and sparking where it is stopped", () => {
     expect(beamAt(art.lance, 30)).toEqual({ a: 1, w: 1.2 });
     const beam = lance(art, view(1030), false, false).shapes;
     expect(beam.some((shape) => shape.kind === "taper")).toBe(true);
+    // At full length every layer fades to alpha 0 over the last 28 px.
+    const faded = beam.filter((shape) => shape.kind === "taper" && shape.head.alpha === 0);
+    expect(faded).toHaveLength(3);
+    for (const shape of faded) {
+      expect(shape.kind === "taper" && shape.tail.at.x).toBeCloseTo(200 - 28, 9);
+    }
     const stopped = lance(art, view(1030, true), false, false);
-    expect(stopped.shapes.length).toBeGreaterThan(beam.length);
+    expect(
+      stopped.shapes.filter((shape) => shape.kind === "taper" && shape.head.alpha === 0),
+    ).toEqual([]);
+    expect(stopped.shapes.length).toBeGreaterThan(beam.length - faded.length);
     expect(lance(art, view(1300), false, false).shapes).toEqual([]);
   });
 
