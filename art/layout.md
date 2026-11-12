@@ -600,7 +600,7 @@ Gameplay's copy, by group:
 | Group      | Pages | Pages in it                                                                                    |
 | ---------- | ----- | ---------------------------------------------------------------------------------------------- |
 | Chapters   | 26    | Chapter one 12 (with the first launch's garden arrival and farewell), chapters two and three 7 |
-| Prologue   | 26    | 23 lines, the Miso and Pepper page among them, and Astra's 3 answers                           |
+| Prologue   | 26    | 23 lines, the Archie and Kiwi page among them, and Astra's 3 answers                           |
 | Ada's room | 2     | The room page and the empty visit's                                                            |
 | Boarding   | 3     | The room narration, Astra's line and her new-galaxy line                                       |
 | Overnight  | 3     | Night, the sleep scene and morning                                                             |
