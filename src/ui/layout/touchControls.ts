@@ -13,7 +13,7 @@ import {
 } from "./playView.ts";
 
 // The on-screen joysticks (art/layout.md "HUD and overlays", Sticks), in logical canvas px: 75
-// frames, each ring's drawn edge side (40) in from the screen's left (move) or right (aim) edge
+// frames, each ring's drawn edge side (60) in from the screen's left (move) or right (aim) edge
 // and bottom (40, level with the shield pill) above its bottom, inside the safe insets, then
 // clamped STICK_AREA_MARGIN inside the game area; the drawn knob moves at most knobReach from the
 // ring's centre. Move input reaches full speed moveReach from the touch-down point, past a
@@ -24,7 +24,7 @@ export const TOUCH_STICK = {
   knobReach: 12,
   moveDeadZone: 2.4,
   moveReach: 40,
-  side: 40,
+  side: 60,
 } as const;
 
 // Art draws each ring 1 inside its frame, so a frame's centre pixel is this far from the drawn

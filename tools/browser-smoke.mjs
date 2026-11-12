@@ -1065,8 +1065,9 @@ try {
     return page.locator(selector).boundingBox();
   }
   // The touch HUD's bottom controls, in logical px: each joystick ring's drawn outer side and
-  // bottom (the rings draw 1 inside their 75 frame targets) 40 in from the screen's edges, the aim
-  // ring's from the view's whole-pixel width, unless that would leave less than the stick area
+  // bottom (the rings draw 1 inside their 75 frame targets) 60 in from the screen's sides and 40
+  // above its bottom, the aim ring's from the view's whole-pixel width, unless that would leave less
+  // than the stick area
   // margin (8) to the game area's edge, where the ring clamps to it; and the shield pill's bottom
   // level with the rings. The smoke's pages have no safe insets. Saves the proof, with the edges
   // the clamp moved, and captures the HUD as name.
@@ -1101,11 +1102,13 @@ try {
     });
     const { area, view } = hud;
     const margin = 8;
+    const side = 60;
+    const below = 40;
     const width = Math.floor(view.width);
     const expected = {
-      aimRight: Math.min(width - 40, area.right - margin),
-      bottom: Math.min(view.height - 40, area.bottom - margin),
-      moveLeft: Math.max(40, area.left + margin),
+      aimRight: Math.min(width - side, area.right - margin),
+      bottom: Math.min(view.height - below, area.bottom - margin),
+      moveLeft: Math.max(side, area.left + margin),
     };
     const drawn = {
       aimRight: hud.aim.right - 1,
@@ -1115,9 +1118,9 @@ try {
     const proof = {
       ...hud,
       clamped: {
-        aim: width - 40 > area.right - margin,
-        bottom: view.height - 40 > area.bottom - margin,
-        move: area.left + margin > 40,
+        aim: width - side > area.right - margin,
+        bottom: view.height - below > area.bottom - margin,
+        move: area.left + margin > side,
       },
       drawn,
       expected,
@@ -2265,9 +2268,11 @@ try {
   assert.deepEqual(
     narrowHud.clamped,
     { aim: false, bottom: false, move: false },
-    "At 844x390 the rings sit 40 from the screen, unclamped",
+    "At 844x390 the rings sit 60 from the screen's sides and 40 from its bottom, unclamped",
   );
-  events.checks.push("At 844x390 the sticks' rings sit 40 in from the screen, the pill level");
+  events.checks.push(
+    "At 844x390 the sticks' rings sit 60 in from the screen's sides and 40 from its bottom, the pill level",
+  );
   // Compare observable flight response, not the implementation's stick sampling formula. Travel is
   // in logical px, --ada-unit CSS px each.
   const stickUnit = await page
@@ -4482,12 +4487,15 @@ try {
   await continueFlight();
   const phoneHud = await touchHudProof("2404x1080");
   assert.equal(phoneHud.dpr, 2.5, "The phone context renders at device pixel ratio 2.5");
+  // 2404x1080 at dpr 2.5 is 801x360 logical, the area 40 to 760: 60 from the sides lies 20 inside it.
   assert.deepEqual(
     phoneHud.clamped,
-    { aim: true, bottom: false, move: true },
-    "At 2404x1080 both rings clamp 8 inside the game area",
+    { aim: false, bottom: false, move: false },
+    "At 2404x1080 the rings sit 60 from the screen's sides, unclamped",
   );
-  events.checks.push("At 2404x1080 dpr 2.5 the rings clamp 8 inside the game area, the pill level");
+  events.checks.push(
+    "At 2404x1080 dpr 2.5 the rings sit 60 from the screen's sides and 40 from its bottom, the pill level",
+  );
   await phoneContext.close();
   // A crash: the kit's crash screen over the game, in the game's words, with the build label in
   // the dev details, and the last save kept through the page hiding. The thrown error is the point
