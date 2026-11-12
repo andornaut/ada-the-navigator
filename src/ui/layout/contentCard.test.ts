@@ -85,6 +85,9 @@ describe("card groups", () => {
 describe("card header", () => {
   it("starts the first group at 58 below a 28 title line box", () => {
     expect(cardHeaderLayout(true, 0, 28)).toEqual({ bodyTop: 58, titleTop: 16 });
+    // A measured line box a layout unit over 28 still starts the group at 58.
+    expect(cardHeaderLayout(true, 0, 28.002).bodyTop).toBe(58);
+    expect(cardHeaderLayout(true, 0, 28.5).bodyTop).toBe(59);
   });
 
   it("balances the gaps above and below the title", () => {

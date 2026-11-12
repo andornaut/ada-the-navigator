@@ -68,6 +68,10 @@ export function listCardHeader(first: { readonly lineHeight: number; readonly si
   };
 }
 
+// Logical px a DOM measurement may read over its true size: layout snaps to 1/64 CSS px, well
+// under this at every scale the game runs.
+const MEASURE_SLACK = 0.05;
+
 // Where the title and the first group start below the card's top: the gap from the title to the
 // first group equals the gap from the frame's inner top edge to the title, unless the close
 // target's clearance pushes the first group lower. DOM measures line boxes, so firstInkTop is
@@ -89,6 +93,8 @@ export function cardHeaderLayout(
     };
   }
   const balanced = 2 * padding - frameBorder + titleHeight - firstInkTop;
-  const bodyTop = Math.ceil(Math.max(balanced, closeClearance));
+  // A 28 line box can measure a hair over 28; that much never rounds the first group a whole px
+  // lower.
+  const bodyTop = Math.ceil(Math.max(balanced, closeClearance) - MEASURE_SLACK);
   return { bodyTop, titleTop: (bodyTop + firstInkTop + frameBorder - titleHeight) / 2 };
 }
