@@ -67,7 +67,7 @@ describe("flight boundaries", () => {
     flight.player = { x: 100, y: 100 };
     const right = { ...idle, move: { x: 1, y: 0 } };
     stepFlight(PROTOTYPE, 1, right, flight);
-    expect(flight.freshDistance).toBeGreaterThan(PROTOTYPE.tuning.maxSpeed * 0.7);
+    expect(flight.freshDistance).toBeGreaterThan(PROTOTYPE.tuning.maxSpeed * 0.6);
     const target = ensureDestination(PROTOTYPE, "hub", flight);
     target.x = 100;
     target.y = 100;
@@ -231,7 +231,7 @@ it("stops movement and fresh exploration after released controls finish braking"
   const flight = empty();
   flight.player = { x: 100, y: 100 };
   stepFlight(PROTOTYPE, 0.2, { ...idle, move: { x: 1, y: 0 } }, flight);
-  stepFlight(PROTOTYPE, 2, idle, flight);
+  stepFlight(PROTOTYPE, 3, idle, flight);
   const position = { ...flight.player };
   const explored = flight.freshDistance;
   stepFlight(PROTOTYPE, 1, idle, flight);
@@ -245,7 +245,7 @@ it("retains nonzero movement-facing through released coasting and rest before pl
   stepFlight(PROTOTYPE, 0.1, idle, flight);
   expect(flight.velocity.x).toBeGreaterThan(0);
   expect(flight.facing).toEqual({ x: 1, y: 0 });
-  stepFlight(PROTOTYPE, 2, idle, flight);
+  stepFlight(PROTOTYPE, 3, idle, flight);
   expect(flight.velocity).toEqual({ x: 0, y: 0 });
   expect(flight.facing).toEqual({ x: 1, y: 0 });
   const before = { ...flight.player };
@@ -357,13 +357,13 @@ describe("directional handling", () => {
     stepFlight(vectorOnly, 0.1, request, reference);
     const turned = degrees(damped.velocity, east);
     const referenceTurned = degrees(reference.velocity, east);
-    expect(referenceTurned).toBeCloseTo(21.6, 0);
+    expect(referenceTurned).toBeCloseTo(17.8, 0);
     expect(turned).toBeLessThanOrEqual(referenceTurned);
     expect(turned).toBeGreaterThan(4);
     expect(turned).toBeLessThan(9);
     stepFlight(PROTOTYPE, 0.1, request, damped);
     expect(speed(damped)).toBeLessThan(0.95 * maxSpeed);
-    stepFlight(PROTOTYPE, 1.8, request, damped);
+    stepFlight(PROTOTYPE, 2, request, damped);
     expect(degrees(damped.velocity, request.move)).toBeLessThan(1);
     expect(degrees(damped.facing, request.move)).toBeLessThan(1);
     expect(speed(damped)).toBeGreaterThan(0.95 * maxSpeed);
@@ -597,13 +597,13 @@ describe("analog movement speed", () => {
   it("requests no speed without input and brakes to a stop", () => {
     expect(movementSpeedFraction(PROTOTYPE.tuning, 0)).toBe(0);
     const flight = cruise({ x: 1, y: 0 });
-    for (let frame = 0; frame < 130; frame++) {
+    for (let frame = 0; frame < 160; frame++) {
       stepFlight(PROTOTYPE, 1 / 60, idle, flight);
     }
     expect(flight.velocity).toEqual({ x: 0, y: 0 });
   });
 
-  it("comes to rest about 2.1 s after release from full speed, below 1% of maximum speed", () => {
+  it("comes to rest about 2.5 s after release from full speed, below 1% of maximum speed", () => {
     const flight = cruise({ x: 1, y: 0 });
     const brakingSeconds = PROTOTYPE.tuning.physics.brakingSeconds;
     let elapsed = 0;
@@ -614,8 +614,8 @@ describe("analog movement speed", () => {
       elapsed += 1 / 60;
     }
     expect(elapsed).toBeCloseTo(brakingSeconds * Math.log(100), 1);
-    expect(elapsed).toBeGreaterThan(2);
-    expect(elapsed).toBeLessThan(2.15);
+    expect(elapsed).toBeGreaterThan(2.45);
+    expect(elapsed).toBeLessThan(2.6);
     // The last moving frame is at Ada's 2 u/s rest threshold, not a sub-pixel crawl.
     expect(slowest).toBeGreaterThanOrEqual(0.01 * maxSpeed);
     const position = { ...flight.player };

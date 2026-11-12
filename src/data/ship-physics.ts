@@ -42,7 +42,7 @@ export const SHARED_SHIP_PHYSICS: SharedShipPhysics = {
 
 /** Provisional tuning for Ada's ship and every enemy archetype. */
 export const SHIP_PHYSICS = {
-  ada: physics(1, 0.3, 0.45, 0.18, 0.07),
+  ada: physics(1, 0.36, 0.55, 0.22, 0.07),
   capital: physics(0.2, 2.5, 3, 2, 0.5),
   fighter: physics(0.8, 0.4, 0.5, 0.3, 0.15),
   frigate: physics(0.4, 1.5, 2, 1.2, 0.4),
