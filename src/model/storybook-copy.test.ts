@@ -102,8 +102,8 @@ describe("storybook text", () => {
     expect(COPY).toContain(section("In the park:", park));
     expect(COPY).toContain(section("Ada's room, rock unpolished:", polish));
     expect(COPY).toContain(`Ada's room, rock glowing: ${line(glow)} Action: "${glow.choice}"`);
-    expect(COPY).toContain(section("The cockpit, standing:", standing));
-    expect(COPY).toContain(section("The cockpit, seated:", seated.slice(0, 2)));
+    expect(COPY).toContain(section("Aboard, standing:", standing));
+    expect(COPY).toContain(section("Aboard, seated:", seated.slice(0, 2)));
     expect(COPY).toContain(`${line(seated[2]!)} Action: "${seated[2]!.choice}"`);
     expect([...gardenArrival, gardenFarewell].map((step) => step.background)).toEqual(
       Array<string>(5).fill("grandmaGarden"),
