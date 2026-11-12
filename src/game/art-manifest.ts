@@ -27,6 +27,8 @@ export interface GalaxyLinks {
   /** The galaxy's backdrop haze placement (haze.json). */
   readonly backdropHaze?: string;
   readonly cartwheelDebris?: string;
+  /** Needle's edge-on band (band.json), drawn on the backdrop layer like a haze. */
+  readonly needleBand?: string;
   readonly oreField?: string;
   readonly whales?: string;
   readonly whirlpoolCurrents?: string;
@@ -42,6 +44,7 @@ export interface GalaxyManifest<T> {
 const LINKS: readonly (keyof GalaxyLinks)[] = [
   "backdropHaze",
   "cartwheelDebris",
+  "needleBand",
   "oreField",
   "whales",
   "whirlpoolCurrents",

@@ -1,5 +1,5 @@
 import { setTextureFilters } from "@andornaut/game-kit/view/phaser/textureFilter";
-import { densityTexels } from "@andornaut/game-kit/view/renderScale";
+import { densityTexels, MAX_RENDER_SCALE } from "@andornaut/game-kit/view/renderScale";
 import {
   GameObjects,
   Loader,
@@ -107,6 +107,7 @@ import {
   playDepth,
   rockArt,
 } from "./asteroid-art.ts";
+import { BAND_AREA, paintBand, readBackdropBand } from "./backdrop-band.ts";
 import { type BackdropHaze, readBackdropHaze } from "./backdrop-haze.ts";
 import {
   craftArt,
@@ -459,9 +460,10 @@ export class PrototypeScene extends Scene {
   // Art's rocks and backdrop; their frames load on demand.
   private readonly asteroidArt = ASTEROID_ART;
   private backdropSprites = new Map<string, GameObjects.Image>();
-  // Each galaxy's loaded backdrop haze, and the one image that draws it.
-  private hazes = new Map<SectorId, BackdropHaze>();
-  private hazeImage: GameObjects.Image | null = null;
+  // Each galaxy's backdrop layer once loaded (its haze texture or its painted band) and the one
+  // image that draws it.
+  private backdrops = new Map<SectorId, Pick<BackdropHaze, "asset" | "height" | "width">>();
+  private backdropImage: GameObjects.Image | null = null;
   // Rock SVGs requested from the loader, and whether new ones wait for a start.
   private rockRequests = new Set<string>();
   private rockQueued = false;
@@ -1322,6 +1324,7 @@ export class PrototypeScene extends Scene {
       }
     }
     this.queueHaze(sector, galaxy);
+    this.queueBand(sector, galaxy);
     // The galaxy's own data files, named by its manifest's links.
     for (const [key, path] of [
       ["cartwheel-debris", galaxy.links.cartwheelDebris],
@@ -1343,7 +1346,7 @@ export class PrototypeScene extends Scene {
   private queueHaze(sector: SectorId, galaxy: GalaxyManifest<Asset>): void {
     const path = galaxy.links.backdropHaze;
     const key = `backdrop-haze-${sector}`;
-    if (!path || this.hazes.has(sector) || this.cache.json.exists(key)) {
+    if (!path || this.backdrops.has(sector) || this.cache.json.exists(key)) {
       return;
     }
     this.load.once(`filecomplete-json-${key}`, () => {
@@ -1353,7 +1356,7 @@ export class PrototypeScene extends Scene {
       }
       const ready = () => {
         this.filterTexture(haze.asset, "linear");
-        this.hazes.set(sector, haze);
+        this.backdrops.set(sector, haze);
       };
       if (this.textures.exists(haze.asset)) {
         ready();
@@ -1365,19 +1368,50 @@ export class PrototypeScene extends Scene {
     this.load.json(key, path);
   }
 
-  /** The flight's galaxy's backdrop haze, fixed on the play view's centre, or none. */
-  private drawHaze(sector: SectorId | null): void {
-    const haze = sector === null ? undefined : this.hazes.get(sector);
-    if (!haze) {
-      this.hazeImage?.setVisible(false);
+  /**
+   * Needle's edge-on band: its band.json, painted once into a canvas texture over the haze's area
+   * at the maximum render scale, so its 1.2 px core and point stars stay sharp.
+   */
+  private queueBand(sector: SectorId, galaxy: GalaxyManifest<Asset>): void {
+    const path = galaxy.links.needleBand;
+    const key = `backdrop-band-${sector}`;
+    if (!path || this.backdrops.has(sector) || this.cache.json.exists(key)) {
       return;
     }
-    this.hazeImage ??= this.add.image(0, 0, haze.asset).setDepth(HAZE_DEPTH);
-    this.hazeImage
-      .setTexture(haze.asset)
+    this.load.once(`filecomplete-json-${key}`, () => {
+      const band = readBackdropBand(this.cache.json.get(key));
+      if (!band || this.textures.exists(key)) {
+        return;
+      }
+      const texture = this.textures.createCanvas(
+        key,
+        BAND_AREA.width * MAX_RENDER_SCALE,
+        BAND_AREA.height * MAX_RENDER_SCALE,
+      );
+      if (!texture) {
+        return;
+      }
+      paintBand(band, texture.getContext(), MAX_RENDER_SCALE);
+      texture.refresh();
+      this.filterTexture(key, "linear");
+      this.backdrops.set(sector, { asset: key, height: BAND_AREA.height, width: BAND_AREA.width });
+    });
+    this.load.json(key, path);
+  }
+
+  /** The flight's galaxy's backdrop layer, fixed on the play view's centre, or none. */
+  private drawBackdropLayer(sector: SectorId | null): void {
+    const layer = sector === null ? undefined : this.backdrops.get(sector);
+    if (!layer) {
+      this.backdropImage?.setVisible(false);
+      return;
+    }
+    this.backdropImage ??= this.add.image(0, 0, layer.asset).setDepth(HAZE_DEPTH);
+    this.backdropImage
+      .setTexture(layer.asset)
       .setOrigin(0.5, 0.5)
       .setPosition(SCREEN.width / 2, SCREEN.height / 2)
-      .setDisplaySize(haze.width, haze.height)
+      .setDisplaySize(layer.width, layer.height)
       .setVisible(true);
   }
 
@@ -1981,7 +2015,7 @@ export class PrototypeScene extends Scene {
       rock.sprite?.setVisible(false);
     }
     this.ship.setVisible(Boolean(flight) && this.model.state.mode === "space");
-    this.drawHaze(flight && this.model.state.mode === "space" ? flight.sector : null);
+    this.drawBackdropLayer(flight && this.model.state.mode === "space" ? flight.sector : null);
     if (!flight || this.model.state.mode !== "space") {
       // Leaving the flight forgets every seen object.
       this.edgeMarkers.update(null, new Set());
