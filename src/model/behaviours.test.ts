@@ -9,6 +9,7 @@ import {
 } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import {
+  aimDrift,
   createEnemy,
   damageEnemy,
   type EnemyContext,
@@ -20,6 +21,11 @@ import {
 import { encounterSpacing, hostsEncounterCell } from "./flight.ts";
 
 const dt = 1 / 60;
+/** `vector` turned by `angle` radians, as a ship's aim drift turns its line of fire. */
+const rotate = (vector: { x: number; y: number }, angle: number) => ({
+  x: vector.x * Math.cos(angle) - vector.y * Math.sin(angle),
+  y: vector.x * Math.sin(angle) + vector.y * Math.cos(angle),
+});
 const ada = { x: 0, y: 0 };
 const spawn = (archetype: EnemyArchetype, position: { x: number; y: number }, engaged = true) => ({
   ...createEnemy(
@@ -33,8 +39,10 @@ const context = (peers: readonly EnemyState[], player = ada): EnemyContext => ({
   adaWidth: PROTOTYPE.tuning.flight.shipRadius * 2,
   dt,
   initialPackSizes: {},
+  lead: 1,
   peers,
   player,
+  playerVelocity: { x: 0, y: 0 },
   projectileSpeed: PROTOTYPE.tuning.enemyProjectileSpeed,
   targetable: true,
   visibility: "visible",
@@ -539,7 +547,10 @@ describe("independent weapon aim", () => {
         const decay = Math.exp(-dt / definition.physics.aimTurnSeconds);
         for (const part of definition.hardpoints.filter((entry) => entry.kind === "weapon")) {
           const offset = hardpointOffset(definition, 20, facing, part);
-          const wanted = { x: target.x - offset.x, y: target.y - offset.y };
+          const wanted = rotate(
+            { x: target.x - offset.x, y: target.y - offset.y },
+            aimDrift(state.id, state.age),
+          );
           const aim = next.hardpoints.find((entry) => entry.id === part.id)!.aim!;
           expect(between(aim, wanted)).toBeCloseTo(between({ x: 1, y: 0 }, wanted) * decay, 9);
         }
@@ -559,8 +570,9 @@ describe("independent weapon aim", () => {
       { x: -1, y: 0 },
     ].map((facing) => stepEnemy(definition, unseen([base]), { ...base, facing }).state.aim!);
     expect(aims[0]).toEqual(aims[1]);
-    expect(between(aims[0]!, target)).toBeCloseTo(
-      (Math.PI / 2) * Math.exp(-dt / definition.physics.aimTurnSeconds),
+    const wanted = rotate(target, aimDrift(base.id, base.age));
+    expect(between(aims[0]!, wanted)).toBeCloseTo(
+      between({ x: 1, y: 0 }, wanted) * Math.exp(-dt / definition.physics.aimTurnSeconds),
       9,
     );
   });

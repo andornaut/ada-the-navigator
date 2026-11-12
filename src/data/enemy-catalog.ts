@@ -451,6 +451,32 @@ export const sectorArchetypes: Readonly<
   },
 };
 
+/** Natural enemy aim for every aimed enemy weapon (gameplay/ships.md "Enemy aim"). */
+export const ENEMY_AIM = {
+  /** Seconds for the drift to swing through one cycle. */
+  driftPeriod: 1.5,
+  /** Peak sideways drift either side of the line of fire, in radians (4 degrees). */
+  driftRadians: (4 * Math.PI) / 180,
+  /** Lead by route position: the share of Ada's predicted movement a shot allows for. */
+  lead: { 1: 0.2, 2: 0.4, 3: 0.6, 4: 0.8, 5: 0.9, 6: 1 },
+  /** A shot leads Ada by at most this many seconds of her movement. */
+  maxLeadSeconds: 1,
+  /** Each ship's lead skill is the position's lead times 1 plus up to this much either way. */
+  skillSpread: 0.1,
+  /**
+   * Time constant, in seconds, of the average of Ada's velocity that aim predicts from; it
+   * settles on a new velocity within about 0.3 seconds.
+   */
+  velocitySeconds: 0.1,
+} as const satisfies {
+  driftPeriod: number;
+  driftRadians: number;
+  lead: Readonly<Record<RoutePosition, number>>;
+  maxLeadSeconds: number;
+  skillSpread: number;
+  velocitySeconds: number;
+};
+
 /** Capital battle escorts, in world units. */
 export const escortTuning: EscortTuning = { interceptRadius: 600, stationGap: 60 };
 

@@ -1,4 +1,5 @@
 import {
+  ENEMY_AIM,
   type EnemyArchetype,
   enemyCatalog,
   type EnemyDefinition,
@@ -79,8 +80,12 @@ export interface EnemyContext {
   adaWidth: number;
   dt: number;
   initialPackSizes: Readonly<Record<string, number>>;
+  /** The route position's lead (ENEMY_AIM.lead). */
+  lead: number;
   peers: readonly EnemyState[];
   player: Point;
+  /** Ada's velocity averaged for aim (ENEMY_AIM.velocitySeconds). */
+  playerVelocity: Point;
   /** Base enemy projectile speed; each fire profile's projectileSpeedRatio multiplies it. */
   projectileSpeed: number;
   targetable: boolean;
@@ -114,6 +119,81 @@ export interface EnemyIntent {
 const magnitude = (point: Point): number => Math.hypot(point.x, point.y);
 const unit = direction;
 const UP: Point = { x: 0, y: -1 };
+
+/** A ship's seeded value in [0, 1) from its id, fixed for its life. */
+function seeded(id: string, salt: number): number {
+  let value = 2166136261 ^ salt;
+  for (let index = 0; index < id.length; index++) {
+    value = Math.imul(value ^ id.charCodeAt(index), 16777619);
+  }
+  return (value >>> 0) / 2 ** 32;
+}
+
+const rotate = (vector: Point, angle: number): Point => ({
+  x: vector.x * Math.cos(angle) - vector.y * Math.sin(angle),
+  y: vector.x * Math.sin(angle) + vector.y * Math.cos(angle),
+});
+
+/**
+ * Ada's averaged velocity for aim after `dt` more seconds at `current`: an exponential average
+ * with time constant ENEMY_AIM.velocitySeconds.
+ */
+export function averageVelocity(dt: number, previous: Point, current: Point): Point {
+  const blend = 1 - Math.exp(-dt / ENEMY_AIM.velocitySeconds);
+  return {
+    x: previous.x + (current.x - previous.x) * blend,
+    y: previous.y + (current.y - previous.y) * blend,
+  };
+}
+
+/**
+ * A ship's lead skill for its life: the position's `lead` times 1 plus a seeded share up to
+ * ENEMY_AIM.skillSpread either way, within [0, 1].
+ */
+export function leadSkill(lead: number, id: string): number {
+  const spread = (seeded(id, 1) * 2 - 1) * ENEMY_AIM.skillSpread;
+  return Math.max(0, Math.min(1, lead * (1 + spread)));
+}
+
+/**
+ * The sideways aim drift at `age` seconds, in radians: a smooth seeded swing of up to
+ * ENEMY_AIM.driftRadians either way with period ENEMY_AIM.driftPeriod, never random per shot.
+ */
+export function aimDrift(id: string, age: number): number {
+  const phase = seeded(id, 2) * Math.PI * 2;
+  return ENEMY_AIM.driftRadians * Math.sin((age * Math.PI * 2) / ENEMY_AIM.driftPeriod + phase);
+}
+
+/**
+ * Where a shot from `origin` at `speed` aims to meet a target moving at `velocity`: the target
+ * led by `skill` of its movement until the shot arrives, never behind it and never more than
+ * ENEMY_AIM.maxLeadSeconds of its movement. A shot that cannot catch the target takes the cap.
+ */
+export function leadPoint(
+  origin: Point,
+  target: Point,
+  velocity: Point,
+  speed: number,
+  skill: number,
+): Point {
+  const offset = { x: target.x - origin.x, y: target.y - origin.y };
+  // The arrival time t solves |offset + velocity t| = speed t.
+  const a = velocity.x ** 2 + velocity.y ** 2 - speed ** 2;
+  const b = 2 * (offset.x * velocity.x + offset.y * velocity.y);
+  const c = offset.x ** 2 + offset.y ** 2;
+  let arrival: number = ENEMY_AIM.maxLeadSeconds;
+  if (Math.abs(a) < 1e-9) {
+    arrival = b < 0 ? -c / b : arrival;
+  } else {
+    const root = b * b - 4 * a * c;
+    if (root >= 0) {
+      const times = [(-b - Math.sqrt(root)) / (2 * a), (-b + Math.sqrt(root)) / (2 * a)];
+      arrival = Math.min(...times.filter((time) => time >= 0), arrival);
+    }
+  }
+  const lead = Math.min(Math.max(0, Math.min(1, skill)) * arrival, ENEMY_AIM.maxLeadSeconds);
+  return { x: target.x + velocity.x * lead, y: target.y + velocity.y * lead };
+}
 
 /** Current speed as a fraction of the enemy's maximum speed, clamped to [0, 1], for jets. */
 export function enemySpeedFraction(
@@ -585,12 +665,21 @@ export function stepEnemy(
     context.targetable &&
     context.visibility === "visible" &&
     magnitude(delta) <= definition.engagement;
-  /** Weapons track the target independently of the hull, turning with aimTurnSeconds. */
-  const track = (origin: Point, current: Point | null): Point | null => {
-    const wanted = unit({ x: target.x - origin.x, y: target.y - origin.y });
-    if (!magnitude(wanted)) {
+  const skill = leadSkill(context.lead, state.id);
+  const drift = aimDrift(state.id, state.age);
+  /**
+   * Weapons track the target independently of the hull, turning with aimTurnSeconds. An aimed
+   * weapon leads a seen Ada by the ship's skill at its shot's speed, then drifts sideways.
+   */
+  const track = (origin: Point, current: Point | null, profile: FireProfile): Point | null => {
+    const speed = context.projectileSpeed * profile.projectileSpeedRatio;
+    const velocity = observed ? context.playerVelocity : { x: 0, y: 0 };
+    const point = leadPoint(origin, target, velocity, speed, skill);
+    const line = unit({ x: point.x - origin.x, y: point.y - origin.y });
+    if (!magnitude(line)) {
       return current;
     }
+    const wanted = rotate(line, drift);
     return current ? turnToward(context.dt, physics.aimTurnSeconds, wanted, current) : wanted;
   };
   let volleys = 0;
@@ -653,7 +742,7 @@ export function stepEnemy(
     }
     return { burst: bolt, cooldown: delay - context.dt };
   };
-  next.aim = track(state.position, state.aim);
+  next.aim = track(state.position, state.aim, definition.fire);
   const hullAim = next.aim ?? { x: 0, y: 0 };
   next.primaryCooldown = definition.hardpoints.length
     ? 0
@@ -664,7 +753,7 @@ export function stepEnemy(
       // Muzzles sit on the hull as it faced at the start of the step.
       const offset = hardpointOffset(definition, context.adaWidth, state.facing, part);
       const origin = { x: state.position.x + offset.x, y: state.position.y + offset.y };
-      value.aim = track(origin, value.aim);
+      value.aim = track(origin, value.aim, part.fire);
       const fired = cycle(
         part.fire,
         origin,

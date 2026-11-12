@@ -2,6 +2,7 @@ import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunk-catalog.ts";
 import { ECONOMY } from "../data/economy.ts";
 import {
   type EncounterEntry,
+  ENEMY_AIM,
   type EnemyArchetype,
   enemyCatalog,
   enemyDefinition,
@@ -10,7 +11,7 @@ import {
   sectorEncounters,
   sectorEnemyTuning,
 } from "../data/enemy-catalog.ts";
-import { byPosition } from "../data/galaxies.ts";
+import { byPosition, ROUTE_POSITION } from "../data/galaxies.ts";
 import { CURRENTS, HUNTING_PACKS, ORE_FIELDS } from "../data/galaxy-features.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { JOB_TUNING, LANDMARK_TUNING } from "../data/jobs.ts";
@@ -38,6 +39,7 @@ import {
 import { planChunk } from "./chunk-templates.ts";
 import { currentInCell, currentsNear, flowAt, inCurrent, pointOnCurrent } from "./currents.ts";
 import {
+  averageVelocity,
   createEnemy,
   damageEnemy,
   enemyEffects,
@@ -108,6 +110,17 @@ const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
  * no field; a restored or newly pressed stick starts from the velocity heading.
  */
 const movementHeadings = new WeakMap<FlightState, Vec>();
+/**
+ * Ada's velocity averaged for enemy aim per flight (ENEMY_AIM.velocitySeconds). It is transient
+ * like the movement heading: a restored or new flight starts it at her current velocity.
+ */
+const aimVelocities = new WeakMap<FlightState, Vec>();
+/** Ada's averaged velocity for enemy aim after `dt` more seconds at her current velocity. */
+function averageAimVelocity(dt: number, flight: FlightState): Vec {
+  const next = averageVelocity(dt, aimVelocities.get(flight) ?? flight.velocity, flight.velocity);
+  aimVelocities.set(flight, next);
+  return next;
+}
 // Whether the current step runs under reduced motion, which holds every rock on frame 0.
 const reducedMotions = new WeakMap<FlightState, boolean>();
 /**
@@ -1696,6 +1709,7 @@ function enemies(
   shotDelays: Map<string, number>,
 ): boolean {
   let threatening = false;
+  const aimVelocity = averageAimVelocity(dt, flight);
   const objects = flight.objects.filter((object) => object.kind === "enemy" && object.hp > 0);
   for (const object of objects) {
     // Legacy saved ships gain canonical state without resetting their damage or identity.
@@ -1736,8 +1750,10 @@ function enemies(
         dormantPackMembers: retainedPackMembers(content, flight),
         dt,
         initialPackSizes: combat(flight).initialPackSizes,
+        lead: ENEMY_AIM.lead[ROUTE_POSITION[flight.sector]],
         peers,
         player: flight.player,
+        playerVelocity: aimVelocity,
         projectileSpeed: content.tuning.enemyProjectileSpeed,
         targetable,
         visibility: visible ? "visible" : "occluded",

@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { type EnemyArchetype, enemyCatalog } from "../data/enemy-catalog.ts";
+import { ENEMY_AIM, type EnemyArchetype, enemyCatalog } from "../data/enemy-catalog.ts";
 import { SHARED_SHIP_PHYSICS, SHIP_PHYSICS } from "../data/ship-physics.ts";
 import {
+  aimDrift,
+  averageVelocity,
   createEnemy,
   damageEnemy,
   type EnemyContext,
@@ -10,10 +12,18 @@ import {
   enemySpeedFraction,
   type EnemyState,
   hardpointOffset,
+  leadPoint,
+  leadSkill,
   stepDebris,
   stepEnemy,
 } from "./enemy-ai.ts";
 import { stepShipMotion } from "./ship-physics.ts";
+
+/** `vector` turned by `angle` radians, as a ship's aim drift turns its line of fire. */
+const rotate = (vector: { x: number; y: number }, angle: number) => ({
+  x: vector.x * Math.cos(angle) - vector.y * Math.sin(angle),
+  y: vector.x * Math.sin(angle) + vector.y * Math.cos(angle),
+});
 
 const spawn = (archetype: EnemyArchetype): EnemyState =>
   createEnemy(
@@ -25,8 +35,10 @@ const observation = (state: EnemyState): EnemyContext => ({
   adaWidth: 20,
   dt: 1 / 60,
   initialPackSizes: {},
+  lead: 1,
   peers: [state],
   player: { x: 300, y: 0 },
+  playerVelocity: { x: 0, y: 0 },
   projectileSpeed: 100,
   targetable: true,
   visibility: "visible",
@@ -107,7 +119,10 @@ describe("enemy rules", () => {
     const result = stepEnemy(definition, context, state);
     expect(result.state.returning).toBe(true);
     expect(result.state.lastSeen).toEqual({ x: 300, y: 0 });
-    expect(result.aim).toEqual({ x: 1, y: 0 });
+    // The aim takes the last-seen line, turned by the ship's slow drift.
+    const drift = rotate({ x: 1, y: 0 }, aimDrift(state.id, state.age));
+    expect(result.aim.x).toBeCloseTo(drift.x, 12);
+    expect(result.aim.y).toBeCloseTo(drift.y, 12);
     expect(result.fire).toEqual([]);
   });
 
@@ -248,11 +263,10 @@ describe("enemy rules", () => {
           const cross = dx * shot.aim.y - dy * shot.aim.x;
           const dot = dx * shot.aim.x + dy * shot.aim.y;
           expect(Math.hypot(shot.aim.x, shot.aim.y)).toBeCloseTo(1, 12);
-          expect(Math.atan2(cross, dot)).toBeCloseTo(angles[index]!, 12);
-          if (angles[index] === 0) {
-            expect(cross).toBeCloseTo(0, 10);
-            expect(dot).toBeGreaterThan(0);
-          }
+          // Each spread angle is taken from the drifted line of fire.
+          const drift = aimDrift(state.id, state.age);
+          expect(Math.atan2(cross, dot)).toBeCloseTo(angles[index]! + drift, 12);
+          expect(dot).toBeGreaterThan(0);
         }
       }
     },
@@ -591,18 +605,22 @@ describe("enemy ship physics and hull rotation", () => {
     const part = (state: EnemyState, id: string) =>
       state.hardpoints.find((value) => value.id === id)!.aim!;
     const turned = stepEnemy(definition, context, aimed).state;
+    const drift = aimDrift(aimed.id, aimed.age);
     // Facing up, starboard sits at (24, 0) and port at (-24, 0).
-    const wanted = { x: -24, y: 3000 };
+    const wanted = rotate({ x: -24, y: 3000 }, drift);
     expect(degreesBetween(part(turned, "starboard"), wanted)).toBeCloseTo(
       degreesBetween({ x: 1, y: 0 }, wanted) * Math.exp(-context.dt / response),
       6,
     );
-    // A weapon with no previous aim acquires its target directly.
-    expect(degreesBetween(part(turned, "port"), { x: 24, y: 3000 })).toBeLessThan(1e-9);
+    // A weapon with no previous aim acquires its drifted target line directly.
+    expect(degreesBetween(part(turned, "port"), rotate({ x: 24, y: 3000 }, drift))).toBeLessThan(
+      1e-9,
+    );
     // Facing east moves the starboard muzzle to (0, 24); its aim still turns from east.
     const rotated = stepEnemy(definition, context, { ...aimed, facing: { x: 1, y: 0 } }).state;
-    expect(degreesBetween(part(rotated, "starboard"), { x: 0, y: 1 })).toBeCloseTo(
-      90 * Math.exp(-context.dt / response),
+    const south = rotate({ x: 0, y: 1 }, drift);
+    expect(degreesBetween(part(rotated, "starboard"), south)).toBeCloseTo(
+      degreesBetween({ x: 1, y: 0 }, south) * Math.exp(-context.dt / response),
       6,
     );
     expect(rotated.facing).toEqual({ x: 1, y: 0 });
@@ -615,8 +633,10 @@ describe("enemy ship physics and hull rotation", () => {
     const result = stepEnemy(definition, context, state);
     expect(result.fire).toHaveLength(1);
     expect(result.fire[0]!.aim).toEqual(result.state.aim);
-    expect(degreesBetween(result.fire[0]!.aim, { x: 1, y: 0 })).toBeCloseTo(
-      90 * Math.exp(-context.dt / definition.physics.aimTurnSeconds),
+    const wanted = rotate({ x: 1, y: 0 }, aimDrift(state.id, state.age));
+    expect(degreesBetween(result.fire[0]!.aim, wanted)).toBeCloseTo(
+      degreesBetween({ x: 0, y: 1 }, wanted) *
+        Math.exp(-context.dt / definition.physics.aimTurnSeconds),
       6,
     );
   });
@@ -654,5 +674,155 @@ describe("enemy ship physics and hull rotation", () => {
     }
     expect(Math.hypot(state.position.x, state.position.y)).toBeLessThanOrEqual(5);
     expect(state.velocity).toEqual({ x: 0, y: 0 });
+  });
+});
+
+describe("enemy aim", () => {
+  const angleOf = (vector: { x: number; y: number }) => Math.atan2(vector.y, vector.x);
+  /**
+   * A platform's shots after the first second while Ada circles it 300 units out at 100 units
+   * per second, so every shot meets the same geometry: each shot's turret, aim angle, angle
+   * ahead of the line to Ada and firing time.
+   */
+  function platformShots(
+    seconds: number,
+    lead = 1,
+  ): { ahead: number; angle: number; part: string; time: number }[] {
+    let state = { ...spawn("platform"), engaged: true, id: "platform:aim" };
+    const radius = 300;
+    const rate = 100 / radius;
+    const shots: { ahead: number; angle: number; part: string; time: number }[] = [];
+    const dt = 1 / 60;
+    for (let frame = 0; frame < seconds / dt; frame++) {
+      const time = frame * dt;
+      const bearing = time * rate;
+      const player = { x: Math.cos(bearing) * radius, y: Math.sin(bearing) * radius };
+      const playerVelocity = { x: -Math.sin(bearing) * 100, y: Math.cos(bearing) * 100 };
+      const result = stepEnemy(
+        enemyCatalog.platform,
+        { ...observation(state), dt, lead, player, playerVelocity },
+        state,
+      );
+      for (const shot of result.fire) {
+        const angle = angleOf(shot.aim);
+        const line = angleOf({ x: player.x - shot.origin.x, y: player.y - shot.origin.y });
+        shots.push({ ahead: angle - line, angle, part: shot.hardpointId!, time });
+      }
+      state = result.state;
+    }
+    return shots.filter((shot) => shot.time > 1);
+  }
+  const parts = (shots: { part: string }[]) => [...new Set(shots.map((shot) => shot.part))];
+  const mean = (values: number[]) => values.reduce((sum, value) => sum + value, 0) / values.length;
+
+  it("gives each ship one lead skill for its life, within 10% of its position's lead", () => {
+    const skills = Array.from({ length: 200 }, (_, index) => leadSkill(0.6, `ship:${index}`));
+    expect(leadSkill(0.6, "ship:7")).toBe(skills[7]);
+    expect(Math.min(...skills)).toBeGreaterThanOrEqual(0.6 * 0.9);
+    expect(Math.max(...skills)).toBeLessThanOrEqual(0.6 * 1.1);
+    expect(new Set(skills).size).toBeGreaterThan(150);
+    // Full lead never rises past aiming where Ada will be.
+    const full = Array.from({ length: 50 }, (_, index) => leadSkill(1, `ship:${index}`));
+    expect(Math.max(...full)).toBe(1);
+    expect(ENEMY_AIM.lead).toEqual({ 1: 0.2, 2: 0.4, 3: 0.6, 4: 0.8, 5: 0.9, 6: 1 });
+  });
+
+  it("drifts sideways smoothly up to 4 degrees, never jumping between shots", () => {
+    const samples = Array.from({ length: 600 }, (_, index) => aimDrift("ship:1", index / 60));
+    const peak = Math.max(...samples.map(Math.abs));
+    expect(peak).toBeLessThanOrEqual((4 * Math.PI) / 180 + 1e-12);
+    expect(peak).toBeGreaterThan((3.9 * Math.PI) / 180);
+    for (let index = 1; index < samples.length; index++) {
+      expect(Math.abs(samples[index]! - samples[index - 1]!)).toBeLessThan((0.3 * Math.PI) / 180);
+    }
+    expect(aimDrift("ship:2", 0)).not.toBe(aimDrift("ship:1", 0));
+  });
+
+  it("leads a moving Ada by the same share shot to shot, ahead of where she is", () => {
+    const shots = platformShots(8);
+    expect(shots.length).toBeGreaterThan(8);
+    for (const part of parts(shots)) {
+      // Each shot's angle ahead of the line to Ada is the ship's lead plus its slow drift.
+      const ahead = shots.filter((shot) => shot.part === part).map((shot) => shot.ahead);
+      for (const value of ahead) {
+        expect(value).toBeGreaterThan(0);
+      }
+      expect(Math.max(...ahead) - Math.min(...ahead)).toBeLessThan(
+        2 * ENEMY_AIM.driftRadians + 0.01,
+      );
+    }
+    // Without lead the same turrets aim at Ada, give or take the drift and their turning lag.
+    const direct = platformShots(8, 0).map((shot) => shot.ahead);
+    expect(mean(shots.map((shot) => shot.ahead))).toBeGreaterThan(mean(direct) + 0.1);
+  });
+
+  it("sweeps a burst's shots during steady motion rather than scattering them", () => {
+    const shots = platformShots(8);
+    // The platform fires two-shot bursts 0.15 s apart. Each pair turns forward with Ada, by no
+    // more than her bearing's turn plus the drift's fastest swing over that gap.
+    const gap = 0.15;
+    const most =
+      (100 / 300) * gap + ((ENEMY_AIM.driftRadians * 2 * Math.PI) / ENEMY_AIM.driftPeriod) * gap;
+    const steps: number[] = [];
+    for (const part of parts(shots)) {
+      const own = shots.filter((shot) => shot.part === part);
+      for (let index = 1; index < own.length; index++) {
+        if (own[index]!.time - own[index - 1]!.time < 0.2) {
+          steps.push(own[index]!.angle - own[index - 1]!.angle);
+        }
+      }
+    }
+    expect(steps.length).toBeGreaterThan(4);
+    for (const step of steps) {
+      expect(step).toBeGreaterThan(0);
+      expect(step).toBeLessThan(most + 0.01);
+    }
+    // Nothing is random per shot: the same flight fires the same shots.
+    expect(platformShots(8)).toEqual(shots);
+  });
+
+  it("trails a sudden turn, then converges on the new velocity within about 0.3 s", () => {
+    let average = { x: 100, y: 0 };
+    const turned = { x: -100, y: 0 };
+    const after = (seconds: number) => {
+      for (let step = 0; step < Math.round(seconds * 60); step++) {
+        average = averageVelocity(1 / 60, average, turned);
+      }
+      return average;
+    };
+    // Still trailing the old heading just after the turn.
+    expect(after(0.05).x).toBeGreaterThan(0);
+    // Within 5% of the change by 0.3 s.
+    expect(Math.abs(after(0.25).x - turned.x)).toBeLessThan(0.05 * 200);
+  });
+
+  it("never aims behind Ada and never leads by more than a second of her movement", () => {
+    const velocity = { x: 80, y: -60 };
+    for (const skill of [-0.5, 0, 0.3, 1, 2]) {
+      for (const speed of [20, 200, 1000]) {
+        for (const target of [
+          { x: 300, y: 0 },
+          { x: -50, y: 900 },
+          { x: 0, y: 0.5 },
+        ]) {
+          const point = leadPoint({ x: 0, y: 0 }, target, velocity, speed, skill);
+          const offset = { x: point.x - target.x, y: point.y - target.y };
+          // Along her velocity only, from none to one second of it.
+          expect(offset.x * velocity.x + offset.y * velocity.y).toBeGreaterThanOrEqual(0);
+          expect(offset.x * velocity.y - offset.y * velocity.x).toBeCloseTo(0, 9);
+          expect(Math.hypot(offset.x, offset.y)).toBeLessThanOrEqual(
+            Math.hypot(velocity.x, velocity.y) * ENEMY_AIM.maxLeadSeconds + 1e-9,
+          );
+        }
+      }
+    }
+    expect(leadPoint({ x: 0, y: 0 }, { x: 300, y: 0 }, velocity, 200, 0)).toEqual({ x: 300, y: 0 });
+  });
+
+  it("meets a target that keeps its velocity at full lead", () => {
+    const velocity = { x: 0, y: 100 };
+    const point = leadPoint({ x: 0, y: 0 }, { x: 300, y: 0 }, velocity, 340, 1);
+    const time = Math.hypot(point.x, point.y) / 340;
+    expect(point.y).toBeCloseTo(velocity.y * time, 9);
   });
 });
