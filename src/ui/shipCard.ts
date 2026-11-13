@@ -1,28 +1,19 @@
+import { ECONOMY } from "../data/economy.ts";
+import { GALAXY_COUNT } from "../data/galaxies.ts";
 import type { Weapon } from "../data/types.ts";
+import { WEAPON_LEVEL_COUNT } from "../data/weaponCatalog.ts";
 import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import { fill, weaponName } from "../model/shop.ts";
 import type { Aboard } from "../model/types.ts";
 import { font, units } from "./layout/css.ts";
-import { BUTTON_GAP, SPACING, TYPE } from "./layout/tokens.ts";
+import { SHIP_CARD } from "./layout/shipCard.ts";
+import { SPACING, TYPE } from "./layout/tokens.ts";
 import { TEXT_TOKENS, UI_SCOPE } from "./modal.ts";
 import { stardustCount } from "./statusPill.ts";
 
-// The Ship card (gameplay/rules.md "Pause", art/layout.md "Ship card"): opened from the Paused
-// card, it lists what Ada carries under Cargo and her equipment under Equipment, each section
-// in two columns.
+export { SHIP_CARD } from "./layout/shipCard.ts";
 
-/** The Ship card's geometry in logical px (art/layout.md "Ship card"). */
-export const SHIP_CARD = {
-  /** The ammunition column: "999 left" in TYPE.label, right-aligned at the column's right. */
-  ammo: 55.14,
-  /** Each column: the widest row, a weapon's. */
-  column: 279,
-  columnGap: BUTTON_GAP,
-  icon: 20,
-  row: 20,
-  /** Between a label and its value, and between a level and the ammunition. */
-  valueGap: SPACING.gap,
-} as const;
+// Equipment and Cargo remain separate columns at every width; the card body owns scrolling.
 
 const SPRITES = "/art/ui/sprites/";
 
@@ -63,9 +54,9 @@ export interface ShipRow {
 }
 
 export interface ShipSections {
-  /** Left to right, then down. */
+  /** Cargo rows in reading order. */
   readonly cargo: readonly ShipRow[];
-  /** The left column, then the right. */
+  /** Systems and paint, then weapons. Rendered as one list with a subgroup gap. */
   readonly equipment: readonly [readonly ShipRow[], readonly ShipRow[]];
 }
 
@@ -83,11 +74,11 @@ export function aboardLabel(labels: Labels, aboard: Aboard): string {
 /**
  * The card's sections from player copy. Cargo: Stardust and ore with exact counts, the
  * holodisks, and what Ada carries or tows. Equipment: the shield, engine and tractor beam with
- * their levels and the paint on the left; each owned weapon in the HUD order on the right, with
+ * their levels and the paint, followed by each owned weapon in the HUD order, with
  * its level and, apart from the unlimited one, its shots left.
  */
 export function shipSections(labels: Labels, view: ShipView): ShipSections {
-  const level = (value: number) => fill(labels.shipLevel ?? "", { n: value });
+  const level = (value: number, max: number) => fill(labels.shipLevel ?? "", { max, n: value });
   const cargo: ShipRow[] = [
     {
       count: stardustCount(view.stardust),
@@ -97,7 +88,7 @@ export function shipSections(labels: Labels, view: ShipView): ShipSections {
     { count: stardustCount(view.ore), icon: sprite("icon-ore-20"), label: labels.ore ?? "" },
     {
       icon: sprite("icon-holodisk-20"),
-      label: fill(labels.shipHolodisks ?? "", { n: view.holodisks }),
+      label: fill(labels.shipHolodisks ?? "", { n: view.holodisks, total: GALAXY_COUNT }),
     },
   ];
   if (view.aboard) {
@@ -107,16 +98,20 @@ export function shipSections(labels: Labels, view: ShipView): ShipSections {
     });
   }
   const left: ShipRow[] = [
-    { icon: sprite("icon-shop-shield", 2), label: labels.shield ?? "", level: level(view.shield) },
+    {
+      icon: sprite("icon-shop-shield", 2),
+      label: labels.shield ?? "",
+      level: level(view.shield, ECONOMY.trackPrices.shield.length + 1),
+    },
     {
       icon: sprite("icon-shop-engine-tuning", 2),
       label: labels.engine ?? "",
-      level: level(view.engine),
+      level: level(view.engine, ECONOMY.trackPrices.engine.length + 1),
     },
     {
       icon: sprite("icon-shop-tractor-beam", 2),
       label: labels.tractorBeam ?? "",
-      level: level(view.tractor),
+      level: level(view.tractor, ECONOMY.trackPrices.tractor.length + 1),
     },
     {
       icon: sprite("icon-shop-ship-paint", 2),
@@ -127,40 +122,58 @@ export function shipSections(labels: Labels, view: ShipView): ShipSections {
     ammo: weapon.ammo === null ? "" : fill(labels.shipAmmoLeft ?? "", { count: weapon.ammo }),
     icon: { mask: weaponGlyphPath(weapon.id) },
     label: weaponName(labels, weapon.id),
-    level: level(weapon.level),
+    level: level(weapon.level, WEAPON_LEVEL_COUNT),
   }));
   return { cargo, equipment: [left, right] };
 }
 
 export const SHIP_CARD_STYLE = `
-${UI_SCOPE} .ada-ship-section{
+${UI_SCOPE} .ada-ship-sections{
   display:grid;
-  row-gap:${units(SPACING.rowGap)};
+  grid-template-columns:repeat(2,minmax(min-content,max-content));
+  width:max-content;
+  max-width:100%;
+  flex:none;
+  align-items:stretch
+}
+${UI_SCOPE} .ada-ship-section{
+  display:flex;
+  flex-direction:column;
+  gap:${units(SPACING.gap)};
+  min-width:0;
   margin:0
 }
-${UI_SCOPE} .ada-ship-section + .ada-ship-section{
-  margin-top:${units(SPACING.gap)}
+${UI_SCOPE} .ada-ship-section[data-section="equipment"]{
+  padding-right:${units(SHIP_CARD.sectionPadding)}
+}
+${UI_SCOPE} .ada-ship-section[data-section="cargo"]{
+  border-left:${units(SHIP_CARD.divider)} solid ${TEXT_TOKENS.supporting};
+  padding-left:${units(SHIP_CARD.sectionPadding)}
 }
 ${UI_SCOPE} .ada-ship-section h3{
   margin:0;
+  overflow-wrap:anywhere;
   font:${font(TYPE.label)};
   line-height:${units(SHIP_CARD.row)};
   color:${TEXT_TOKENS.supporting}
 }
-${UI_SCOPE} .ada-ship-grid{
-  display:grid;
-  grid-template-columns:${units(SHIP_CARD.column)} ${units(SHIP_CARD.column)};
-  column-gap:${units(SHIP_CARD.columnGap)};
-  row-gap:${units(SPACING.rowGap)};
-  align-items:start
-}
+${UI_SCOPE} .ada-ship-grid,
 ${UI_SCOPE} .ada-ship-column{
   display:grid;
-  row-gap:${units(SPACING.rowGap)}
+  grid-template-columns:minmax(0,1fr);
+  row-gap:${units(SPACING.rowGap)};
+  min-width:0;
+  align-items:start
+}
+${UI_SCOPE} .ada-ship-grid[data-equipment]{
+  grid-template-columns:${units(SHIP_CARD.icon)} minmax(0,max-content) max-content max-content;
+  column-gap:0;
+  row-gap:${units(SHIP_CARD.subgroupGap)}
 }
 ${UI_SCOPE} .ada-ship-row{
   display:flex;
   align-items:flex-start;
+  min-width:0;
   min-height:${units(SHIP_CARD.row)};
   margin:0;
   font:${font(TYPE.body)};
@@ -174,28 +187,52 @@ ${UI_SCOPE} .ada-ship-icon{
   margin-right:${units(SPACING.markGap)};
   image-rendering:pixelated
 }
-${UI_SCOPE} .ada-ship-label{
-  flex:1 1 auto;
+${UI_SCOPE} [data-equipment] .ada-ship-column,
+${UI_SCOPE} [data-equipment] .ada-ship-row{
+  display:grid;
+  grid-template-columns:subgrid;
+  grid-column:1 / -1
+}
+${UI_SCOPE} [data-equipment] .ada-ship-label{
+  padding-left:${units(SPACING.markGap)}
+}
+${UI_SCOPE} [data-equipment] .ada-ship-level,
+${UI_SCOPE} [data-equipment] .ada-ship-ammo{
+  padding-left:${units(SHIP_CARD.valueGap)}
+}
+${UI_SCOPE} [data-equipment] .ada-ship-icon{
+  margin-right:0
+}
+${UI_SCOPE} [data-equipment] .ada-ship-text{
+  display:contents
+}
+${UI_SCOPE} .ada-ship-text{
+  display:flex;
+  flex:1;
+  flex-wrap:wrap;
+  gap:0 ${units(SHIP_CARD.valueGap)};
   min-width:0
 }
-${UI_SCOPE} .ada-ship-count{
-  flex:none;
-  margin-left:${units(SHIP_CARD.valueGap)};
+${UI_SCOPE} .ada-ship-label{
+  flex:1 1 auto;
+  min-width:0;
+  overflow-wrap:anywhere
+}
+${UI_SCOPE} .ada-ship-count,
+${UI_SCOPE} .ada-ship-level,
+${UI_SCOPE} .ada-ship-ammo{
+  min-width:0;
+  max-width:100%;
+  overflow-wrap:anywhere;
+  text-align:right
+}
+${UI_SCOPE} .ada-ship-count,
+${UI_SCOPE} .ada-ship-ammo{
   font:${font(TYPE.label)};
   line-height:${units(SHIP_CARD.row)}
 }
 ${UI_SCOPE} .ada-ship-level{
-  flex:none;
-  margin-left:${units(SHIP_CARD.valueGap)};
   color:${TEXT_TOKENS.supporting}
-}
-${UI_SCOPE} .ada-ship-ammo{
-  flex:none;
-  width:${units(SHIP_CARD.ammo)};
-  margin-left:${units(SHIP_CARD.valueGap)};
-  text-align:right;
-  font:${font(TYPE.label)};
-  line-height:${units(SHIP_CARD.row)}
 }
 `;
 
@@ -219,7 +256,10 @@ function rowNode(row: ShipRow): HTMLDivElement {
   const label = document.createElement("span");
   label.className = "ada-ship-label";
   label.textContent = row.label;
-  line.append(iconNode(row.icon), label);
+  const content = document.createElement("span");
+  content.className = "ada-ship-text";
+  content.append(label);
+  line.append(iconNode(row.icon), content);
   for (const [part, text] of [
     ["count", row.count],
     ["level", row.level],
@@ -229,7 +269,7 @@ function rowNode(row: ShipRow): HTMLDivElement {
       const value = document.createElement("span");
       value.className = `ada-ship-${part}`;
       value.textContent = text;
-      line.append(value);
+      content.append(value);
     }
   }
   return line;
@@ -255,15 +295,18 @@ export function renderShipSections(
   const cargo = document.createElement("div");
   cargo.className = "ada-ship-grid";
   cargo.append(...sections.cargo.map(rowNode));
-  section("cargo", cargo);
   const equipment = document.createElement("div");
   equipment.className = "ada-ship-grid";
+  equipment.dataset.equipment = "";
   for (const rows of sections.equipment) {
     const column = document.createElement("div");
     column.className = "ada-ship-column";
     column.append(...rows.map(rowNode));
-    equipment.append(column);
+    if (rows.length > 0) {
+      equipment.append(column);
+    }
   }
   section("equipment", equipment);
+  section("cargo", cargo);
   return root;
 }
