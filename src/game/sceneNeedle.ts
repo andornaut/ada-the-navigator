@@ -1,11 +1,15 @@
 import { NEEDLE } from "../data/needle.ts";
 import { toScreen } from "../model/convex.ts";
 import {
+  activeNeedleCourses,
   type NeedleCourse,
+  needleDebris,
   type NeedleDebrisDescriptor,
   needleGateOrientation,
+  type NeedleProgress,
+  needleSlow,
 } from "../model/needle.ts";
-import type { SpaceObject, Vec } from "../model/types.ts";
+import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
 import { driftChipsFromBounds, playDepth } from "./asteroidArt.ts";
 
 export interface NeedleStitch {
@@ -98,6 +102,68 @@ export interface NeedleRenderFrame {
   readonly slow: boolean;
   /** Paused flight time, not wall time, in milliseconds. */
   readonly timeMs: number;
+}
+
+const debrisByCourse = new WeakMap<
+  NeedleCourse,
+  { readonly seed: number; readonly descriptors: ReadonlyMap<string, NeedleDebrisDescriptor> }
+>();
+
+/** Join authored descriptors to live bodies without reviving destroyed or unloaded debris. */
+export function needleRenderFrame(
+  context: {
+    readonly activityLit: number;
+    readonly playerDepth: number;
+    readonly progress: Readonly<NeedleProgress> | undefined;
+    readonly reducedMotion: boolean;
+    readonly topSpeed: number;
+  },
+  flight: FlightState,
+): NeedleRenderFrame | null {
+  const courses = flight.galaxy === 4 ? activeNeedleCourses(flight) : [];
+  if (!courses.length) {
+    return null;
+  }
+  const rosters = courses.map((course) => {
+    let held = debrisByCourse.get(course);
+    if (!held || held.seed !== flight.seed) {
+      held = {
+        descriptors: new Map(needleDebris(course, flight.seed).map((entry) => [entry.id, entry])),
+        seed: flight.seed,
+      };
+      debrisByCourse.set(course, held);
+    }
+    return held.descriptors;
+  });
+  const debris: NeedleRenderFrame["debris"][number][] = [];
+  for (const object of flight.objects) {
+    if (object.kind !== "debris") {
+      continue;
+    }
+    for (const roster of rosters) {
+      const descriptor = roster.get(object.id);
+      if (descriptor) {
+        debris.push({ descriptor, object });
+        break;
+      }
+    }
+  }
+  return {
+    courses,
+    debris,
+    lit: (course) =>
+      course.kind === "practice"
+        ? (context.progress?.practiceLit ?? 0)
+        : course.kind === "eye"
+          ? (context.progress?.eyeLit ?? 0)
+          : context.activityLit,
+    player: flight.player,
+    playerDepth: context.playerDepth,
+    reducedMotion: context.reducedMotion,
+    seed: flight.seed,
+    slow: needleSlow({ topSpeed: context.topSpeed, velocity: flight.velocity }),
+    timeMs: flight.time * 1000,
+  };
 }
 
 interface GateFade {

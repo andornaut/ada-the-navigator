@@ -1,15 +1,17 @@
 import { type LoaderWatch, watchLoader } from "@andornaut/game-kit/load/phaser/watchLoader";
 import type { StoreLoadResult } from "@andornaut/game-kit/save/saveStore";
-import { GameObjects, Loader, Scene } from "phaser";
+import { GameObjects, Loader, Scene, Scenes } from "phaser";
 
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { CONTENT } from "../data/content.ts";
+import { ECONOMY } from "../data/economy.ts";
 import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import { SCREEN } from "../data/screen.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { createControls } from "../input/controls.ts";
 import { loadingProgress, type WaitedLoad } from "../loading/progress.ts";
+import { heldActivity } from "../model/activities.ts";
 import { type Current } from "../model/currents.ts";
 import { createEdgeMarkerTracker } from "../model/edgeMarkers.ts";
 import { activeBeamFlashes, activeBlastFlashes, shipSpeedFraction } from "../model/flight.ts";
@@ -19,7 +21,8 @@ import { shipHeading } from "../model/nose.ts";
 import { projectileOpacity } from "../model/playerProjectiles.ts";
 import { direction } from "../model/shipPhysics.ts";
 import { type StoryNoses } from "../model/storyShips.ts";
-import type { FlightInput, GameSave, Vec } from "../model/types.ts";
+import type { FlightInput, FlightState, GameSave, Vec } from "../model/types.ts";
+import { shipTuning } from "../model/upgrades.ts";
 import { type ConversationBox } from "../ui/conversation.ts";
 import { createBannerLayer, type PlacedBanner } from "../ui/disabledBanner.ts";
 import { createGalaxyMap, type GalaxyMapView } from "../ui/galaxyMap.ts";
@@ -96,6 +99,7 @@ import {
   keylineSprite,
 } from "./sceneHud.ts";
 import { coverShip, endJump, jumpScene, spaceJumpScene } from "./sceneJump.ts";
+import { createNeedleRenderer, needleRenderFrame } from "./sceneNeedle.ts";
 import { drawGuidedCalf, drawObject } from "./sceneObjects.ts";
 import { drawPhantomAllies, drawPhantomFlagship, drawPhantomSettlement } from "./scenePhantom.ts";
 import { type Asset, DESTRUCTION_PATH, screenToWorld, TITLE_SCREEN_KEY } from "./sceneShared.ts";
@@ -329,6 +333,8 @@ export class GameScene extends Scene {
   jumping = false;
   readonly emergencyReturn = new EmergencyReturn();
   private holdSource = false;
+  private needleFlight: FlightState | undefined;
+  private needleRenderer: ReturnType<typeof createNeedleRenderer> | undefined;
   warpCover = false;
   specks: Vec[] = [];
   warpPaint: (() => WarpPaint) | null = null;
@@ -484,6 +490,26 @@ export class GameScene extends Scene {
     this.holdSource = false;
     this.emergencyReturn.cancel();
     buildScene(this);
+    const chipColor = () => {
+      const color = this.asteroidArt?.stone[1];
+      return color ? hexNumber(color) : this.palette.obstacle;
+    };
+    const renderer = createNeedleRenderer({
+      add: this.add,
+      get chipColor() {
+        return chipColor();
+      },
+      ink: this.ink,
+      project: (point) => this.project(point),
+      textures: this.textures,
+      viewport: SCREEN,
+    });
+    this.needleRenderer = renderer;
+    this.events.once(Scenes.Events.SHUTDOWN, () => {
+      renderer.dispose();
+      this.needleFlight = undefined;
+      this.needleRenderer = undefined;
+    });
   }
 
   override update(time: number, milliseconds: number): void {
@@ -624,6 +650,10 @@ export class GameScene extends Scene {
 
   private draw(): void {
     const flight = this.model.state.flight;
+    if (flight !== this.needleFlight) {
+      this.needleRenderer?.clear();
+      this.needleFlight = flight ?? undefined;
+    }
     this.ink.clear();
     this.jets.clear();
     this.overlay.clear();
@@ -665,6 +695,7 @@ export class GameScene extends Scene {
     drawBackdropLayer(this, flight && this.model.state.mode === "space" ? flight.galaxy : null);
     drawBackdropLayers(this, flight && this.model.state.mode === "space" ? flight : null);
     if (!flight || this.model.state.mode !== "space") {
+      this.needleRenderer?.clear();
       // Leaving the flight forgets every seen object.
       this.edgeMarkers.update(null, new Set());
       drawKeylines(this);
@@ -706,7 +737,28 @@ export class GameScene extends Scene {
       }
     }
     this.enemyPlaceholders = 0;
+    const activity = heldActivity(flight.galaxy, this.model.state);
+    const needleFrame =
+      flight.galaxy === 4 && flight.needle
+        ? needleRenderFrame(
+            {
+              activityLit: activity?.id === "threadNeedle" ? (activity.lit ?? 0) : 0,
+              playerDepth: this.ship.depth,
+              progress: this.model.state.progress[4].needle,
+              reducedMotion: this.reducedMotion,
+              topSpeed: shipTuning(ECONOMY, CONTENT, flight.levels).physics.maxSpeed,
+            },
+            flight,
+          )
+        : null;
+    const needleHandled = needleFrame ? this.needleRenderer?.draw(needleFrame) : undefined;
+    if (!needleFrame) {
+      this.needleRenderer?.clear();
+    }
     for (const object of flight.objects) {
+      if (needleHandled?.has(object.id)) {
+        continue;
+      }
       if (object.id === PHANTOM_FLAGSHIP && object.enemy) {
         drawPhantomFlagship(this, object);
       } else if (!drawAndromeda(this, object) && !drawPhantomSettlement(this, object)) {

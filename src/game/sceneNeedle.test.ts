@@ -1,16 +1,100 @@
 import { describe, expect, it } from "vitest";
 
 import MANIFEST from "../../public/art/needle/manifest.json" with { type: "json" };
+import { CONTENT } from "../data/content.ts";
 import { NEEDLE } from "../data/needle.ts";
-import { createNeedleCourse, type NeedleCourse, needleDebris } from "../model/needle.ts";
+import { chapterRuntime } from "../model/chapters.ts";
+import { GameModel } from "../model/game.ts";
+import {
+  activeNeedleCourses,
+  createNeedleCourse,
+  type NeedleCourse,
+  needleDebris,
+  setNeedleActivity,
+} from "../model/needle.ts";
 import type { SpaceObject } from "../model/types.ts";
 import { driftChipsFromBounds } from "./asteroidArt.ts";
 import {
   createNeedleRenderer,
   type NeedleImage,
   type NeedleRenderFrame,
+  needleRenderFrame,
   needleStitches,
 } from "./sceneNeedle.ts";
+
+describe("production Needle frame", () => {
+  const context = {
+    activityLit: 4,
+    playerDepth: 2.002,
+    progress: { approach: "independent" as const, eyeLit: 2, practiceLit: 3 },
+    reducedMotion: false,
+    topSpeed: 100,
+  };
+  const flight = () => {
+    const model = new GameModel(CONTENT);
+    model.state.unlocked.push(4);
+    model.startGalaxy(4);
+    return model.state.flight!;
+  };
+
+  it("follows the actual chapter mount and leaves other galaxies alone", () => {
+    const f = flight();
+    expect(needleRenderFrame(context, f) !== null).toBe(chapterRuntime(4) !== undefined);
+    f.needle = { anchor: { x: 0, y: 0 }, chatter: [], exitPackPlaced: false };
+    f.galaxy = 1;
+    expect(needleRenderFrame(context, f)).toBeNull();
+  });
+
+  it("uses canonical active courses, progress, strict speed and paused flight time", () => {
+    const f = flight();
+    f.needle = { anchor: { x: 0, y: 0 }, chatter: [], exitPackPlaced: false };
+    f.time = 1.25;
+    f.velocity = { x: 39, y: 0 };
+    let frame = needleRenderFrame(context, f)!;
+    expect(frame.courses.map((course) => course.kind)).toEqual(["practice", "eye"]);
+    expect(frame.courses.map(frame.lit)).toEqual([3, 2]);
+    expect(frame.timeMs).toBe(1250);
+    expect(frame.playerDepth).toBe(context.playerDepth);
+    expect(frame.slow).toBe(true);
+    f.velocity.x = 40;
+    setNeedleActivity(f, true);
+    frame = needleRenderFrame(context, f)!;
+    expect(frame.slow).toBe(false);
+    expect(frame.courses.map((course) => course.kind)).toEqual(["practice", "eye", "activity"]);
+    expect(frame.courses.map(frame.lit)).toEqual([3, 2, 4]);
+    expect(frame.timeMs).toBe(1250);
+    setNeedleActivity(f, false);
+    expect(needleRenderFrame(context, f)!.courses).toHaveLength(2);
+  });
+
+  it("joins only live authored debris and retains descriptor identity while bodies drift", () => {
+    const f = flight();
+    f.needle = { anchor: { x: 0, y: 0 }, chatter: [], exitPackPlaced: false };
+    const descriptor = needleDebris(activeNeedleCourses(f)[0]!, f.seed)[0]!;
+    const object: SpaceObject = {
+      hp: 1,
+      id: descriptor.id,
+      kind: "debris",
+      radius: descriptor.radius,
+      velocity: { ...descriptor.velocity },
+      x: descriptor.x,
+      y: descriptor.y,
+    };
+    f.objects = [object, { ...object, id: "ordinary-debris" }];
+    const first = needleRenderFrame(context, f)!;
+    expect(first.debris).toHaveLength(1);
+    expect(first.debris[0]!.object).toBe(object);
+    object.x += 5;
+    const moved = needleRenderFrame(context, f)!;
+    expect(moved.debris[0]!.object.x).toBe(descriptor.x + 5);
+    expect(moved.debris[0]!.descriptor).toBe(first.debris[0]!.descriptor);
+    expect(moved.debris[0]!.descriptor).toEqual(descriptor);
+    f.objects = [];
+    expect(needleRenderFrame(context, f)!.debris).toEqual([]);
+    f.objects = [{ ...object, kind: "rock" }];
+    expect(needleRenderFrame(context, f)!.debris).toEqual([]);
+  });
+});
 
 const straight = (
   path = [
