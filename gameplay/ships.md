@@ -413,18 +413,25 @@ completing a galaxy's repeatable activity at least once makes its quest ally:
 | Andromeda | Pip's courier ship | `escort`                |
 | Cartwheel | Mica's mining ship | `chase` against turrets |
 
-- **Arrival:** every ally Ada has made jumps in beside her when the battle begins
-  and leaves with her when the flagship is salvaged or the flight ends. At most 8
-  allies are on screen at once; the rest arrive as reinforcements as others leave.
+- **Arrival:** the allies Ada has made jump in beside her with the usual jump
+  effect when the battle begins, and jump out when the flagship is salvaged or
+  the flight ends. At most 8 allies are on screen at once; the rest arrive as
+  reinforcements as others leave.
+- **Look:** allies show thrust jets like every ship and get no edge markers,
+  like other friendly objects Ada flies through.
 - **Safety:** drones never target allies, allies take no damage, and Ada and shots
   pass through them, with Ada drawn in front.
 - **Fire:** an ally that fires uses level 2 Laser every 1.4 seconds at the drone
   its behaviour picks.
-- **`escort`:** holds station 60 beyond Ada's ship and intercepts drones within
-  600 of her.
+- **`escort`:** escorts share a ring around Ada, at least 60 world units beyond
+  her drawn ship and wider as more escorts join, so neighbouring escorts' drawn
+  ships stay at least 16 world units apart. Their slots sit at equal angles
+  starting behind her and turn with her heading. Each escort leaves its slot to
+  intercept a drone within 600 of her and returns to it.
 - **`chase` against turrets:** chases the nearest heavy and aims at its weapon
   hardpoints.
-- **Whale:** a whale never fires.
+- **Whale:** a whale never fires and follows 250 world units behind Ada, side by
+  side with any other whale, moving like the calf.
 
 ## Presentation
 
