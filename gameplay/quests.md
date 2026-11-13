@@ -327,7 +327,7 @@ count and starts a new list of found points.
 | Steady Hands       | Complete the Needle chapter.                        |
 | Truth Teller       | Complete the Andromeda chapter.                     |
 | Room for Everyone  | Complete the Cartwheel chapter.                     |
-| Blockade Breaker   | Break General Gadget's blockade in Phantom.         |
+| Blockade Breaker   | Break Admiral Archie's blockade in Phantom.         |
 | Cartographer       | Chart every landmark in one galaxy.                 |
 | Astra's Atlas      | Chart every landmark in all six galaxies.           |
 | Helping Hand       | Complete a station job.                             |
