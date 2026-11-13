@@ -686,7 +686,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   - Rapid Missile: quick straight missiles with a small blast (25) and a fixed
     2 times Laser damage; levels grow its fire rate (every 0.30, 0.25, 0.20 s)
     and missile speed.
-  - Heavy Missile: one slow straight missile with a large blast (radius 70),
+  - Heavy Missile: one slow straight missile with a large blast (radius 50),
     every 2.0 s at every level; levels grow only its damage (10, 15, 22.5 times
     Laser damage). Rapid Missile is faster at every
     level, in missile speed and fire rate, and deals more damage per second at
