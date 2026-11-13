@@ -32,7 +32,12 @@ describe("carried item names", () => {
     for (const id of ["food", "toolkit", "parts"]) {
       expect(LISTED.has(STORY_ITEM_NAMES[id]!), id).toBe(true);
     }
-    expect(STORY_ITEM_NAMES).toEqual({ food: "Food", parts: "Spare parts", toolkit: "Tool kit" });
+    expect(STORY_ITEM_NAMES).toEqual({
+      beaconParts: "Beacon parts",
+      food: "Food",
+      parts: "Spare parts",
+      toolkit: "Tool kit",
+    });
   });
 
   it("drop the article and start with a capital", () => {
