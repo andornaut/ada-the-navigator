@@ -37,13 +37,13 @@ import {
   placementRadius,
   reflectDirection,
   rockFrame,
-  sceneryBlocksSegment,
-  sceneryBodyContact,
   sceneryBound,
-  sceneryContact,
   sceneryShape,
   scenerySilhouette,
   type Silhouette,
+  worldSceneryBlocksSegment,
+  worldSceneryBodyContact,
+  worldSceneryContact,
 } from "./asteroids.ts";
 import { planChunk } from "./chunkTemplates.ts";
 import { onScreen } from "./conversations.ts";
@@ -66,21 +66,24 @@ import {
 } from "./enemyAi.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import {
-  activateFlightRegion,
-  activateRouteEncounter,
   ACTIVE_CHUNK_RADIUS,
   beginFlightStep,
   escortPackId,
   liveEnemy,
   persistentObject,
-  prunePackState,
-  recordObjectRemoval,
   recordUnloadedPackMember,
-  retainedPackMembers,
   retainedRouteBlocked,
-  syncFlightRegion,
+  worldActivateFlightRegion,
+  worldActivateRouteEncounter,
+  worldPrunePackState,
+  worldRecordObjectRemoval,
+  worldRetainedPackMembers,
+  worldSyncFlightRegion,
 } from "./geography.ts";
 import { phantomSongSpeed, stepPhantomAllies } from "./phantomAllies.ts";
+import { worldCellAt, worldCellKey, worldCellsNear, worldGrid } from "./worldCells.ts";
+import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
+import { wrapPoint } from "./worldGeometry.ts";
 
 export { activateRouteEncounter, syncFlightRegion } from "./geography.ts";
 import {
@@ -105,7 +108,7 @@ import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { MINE_REACH, mineSpin, mineTouches } from "./mineShape.ts";
 import { nosePoint } from "./nose.ts";
-import { clearOfOreFields, worldOreFieldsNear } from "./oreFields.ts";
+import { worldClearOfOreFields, worldOreFieldsNear } from "./oreFields.ts";
 import { pickupOutline } from "./pickupBody.ts";
 import { planPlayerVolley, projectileReach } from "./playerProjectiles.ts";
 import { sceneryImpact } from "./sceneryImpact.ts";
@@ -195,8 +198,9 @@ function random(seed: number): () => number {
     return n / 4294967296;
   };
 }
-function chunk(content: GameContent, point: Vec): string {
-  return `${Math.floor(point.x / content.tuning.chunkSize)},${Math.floor(point.y / content.tuning.chunkSize)}`;
+function chunk(flight: FlightState, content: GameContent, point: Vec): string {
+  const grid = worldGrid(flightWorldContext(flight), content.tuning.chunkSize);
+  return worldCellKey(grid, worldCellAt(grid, point));
 }
 /** Destinations and stations are safe areas; other objects protect nothing. */
 function protectedRadius(content: GameContent, object: SpaceObject): number | null {
@@ -209,7 +213,7 @@ function protectedRadius(content: GameContent, object: SpaceObject): number | nu
 function safe(content: GameContent, point: Vec, flight: FlightState): boolean {
   return flight.objects.some((o) => {
     const radius = protectedRadius(content, o);
-    return radius !== null && distance(point, o) <= radius;
+    return radius !== null && worldDistance(flightWorldContext(flight), point, o) <= radius;
   });
 }
 /**
@@ -223,9 +227,9 @@ function footprint(object: SpaceObject): Vec & { radius: number } {
     : { radius, x: object.x, y: object.y };
 }
 /** Whether an object's footprint stays more than `clearance` from `point`. */
-function clearOf(clearance: number, point: Vec, object: SpaceObject): boolean {
+function clearOf(flight: FlightState, clearance: number, point: Vec, object: SpaceObject): boolean {
   const reach = footprint(object);
-  return distance(reach, point) > clearance + reach.radius;
+  return worldDistance(flightWorldContext(flight), reach, point) > clearance + reach.radius;
 }
 /**
  * Whether an object's whole footprint stays outside every safe area and the safe radius of
@@ -235,8 +239,11 @@ function clearOfSafeAreas(content: GameContent, object: SpaceObject, flight: Fli
   return (
     flight.objects.every((o) => {
       const radius = protectedRadius(content, o);
-      return radius === null || clearOf(radius, o, object);
-    }) && arrivalPoints(flight).every((point) => clearOf(content.tuning.safeRadius, point, object))
+      return radius === null || clearOf(flight, radius, o, object);
+    }) &&
+    arrivalPoints(flight).every((point) =>
+      clearOf(flight, content.tuning.safeRadius, point, object),
+    )
   );
 }
 /**
@@ -244,7 +251,9 @@ function clearOfSafeAreas(content: GameContent, object: SpaceObject, flight: Fli
  * generation leaves the space around landmarks open (gameplay/quests.md "Landmarks").
  */
 function clearOfLandmarks(object: SpaceObject, flight: FlightState): boolean {
-  return landmarkSites(flight.galaxy).every((site) => clearOf(LANDMARK_TUNING.chart, site, object));
+  return landmarkSites(flight.galaxy).every((site) =>
+    clearOf(flight, LANDMARK_TUNING.chart, site, object),
+  );
 }
 const SCENERY = ["rock", "resource", "debris"];
 const ASTEROID_SHAPE_LIST = [...ASTEROID_SHAPES.values()];
@@ -314,8 +323,18 @@ export function bounceShips(content: GameContent, flight: FlightState, object: S
   const contact =
     enemy &&
     (outline
-      ? outlinesContact(outline, object, shipBody(flight.facing), flight.player)
-      : shipCircleContact(flight.facing, flight.player, object, object.radius));
+      ? outlinesContact(
+          outline,
+          worldPoint(flightWorldContext(flight), flight.player, object),
+          shipBody(flight.facing),
+          flight.player,
+        )
+      : shipCircleContact(
+          flight.facing,
+          flight.player,
+          worldPoint(flightWorldContext(flight), flight.player, object),
+          object.radius,
+        ));
   if (!enemy || !contact) {
     return;
   }
@@ -351,10 +370,44 @@ export function bounceShips(content: GameContent, flight: FlightState, object: S
   settleAda(content, flight);
 }
 
+function touchesAda(flight: FlightState, point: Vec, radius: number): boolean {
+  return shipTouches(
+    flight.facing,
+    flight.player,
+    worldPoint(flightWorldContext(flight), flight.player, point),
+    radius,
+  );
+}
+function canonicalPosition(flight: FlightState, point: Vec): void {
+  if (flight.topology) {
+    Object.assign(point, wrapPoint(flight.topology.side, point));
+  }
+}
+function canonicalObject(flight: FlightState, object: SpaceObject): void {
+  canonicalPosition(flight, object);
+  if (object.enemy) {
+    canonicalPosition(flight, object.enemy.position);
+    canonicalPosition(flight, object.enemy.home);
+    if (object.enemy.lastSeen) {
+      canonicalPosition(flight, object.enemy.lastSeen);
+    }
+    if (object.enemy.retreat) {
+      canonicalPosition(flight, object.enemy.retreat.origin);
+    }
+  }
+}
 /** Ada's drawn ship against scenery at her current facing. */
 function adaContact(flight: FlightState): SceneryContactOf {
   return (object, position, frame, drawn) =>
-    sceneryBodyContact(object, position, shipBody(flight.facing), frame, 0, drawn);
+    worldSceneryBodyContact(
+      flightWorldContext(flight),
+      object,
+      position,
+      shipBody(flight.facing),
+      frame,
+      0,
+      drawn,
+    );
 }
 
 /** Pushes Ada's drawn ship out of scenery and bounces her off what she touched. */
@@ -511,6 +564,7 @@ function ensureDebrisRivers(content: GameContent, point: Vec, flight: FlightStat
         y: 0,
       };
       placeRiverRock(flight, object);
+      canonicalObject(flight, object);
       flight.objects.push(object);
       ids.add(id);
     }
@@ -580,7 +634,7 @@ function placeStation(site: Vec & { id: string }, flight: FlightState): SpaceObj
     (object) =>
       object === station ||
       object.kind === "destination" ||
-      clearOf(ECONOMY.station.safeRadius, station, object),
+      clearOf(flight, ECONOMY.station.safeRadius, station, object),
     flight,
   );
   return station;
@@ -599,7 +653,7 @@ export function ensureStation(
   if (!site) {
     return null;
   }
-  activateFlightRegion(content, site, flight);
+  worldActivateFlightRegion(flightWorldContext(flight), content, site, flight);
   return (
     flight.objects.find((o) => o.id === id && o.kind === "station") ?? placeStation(site, flight)
   );
@@ -618,94 +672,93 @@ function generatedChunks(flight: FlightState): Set<string> {
 }
 
 function generate(content: GameContent, point: Vec, flight: FlightState): void {
-  activateFlightRegion(content, point, flight);
+  worldActivateFlightRegion(flightWorldContext(flight), content, point, flight);
   ensureStations(content, point, flight);
   ensureDebrisRivers(content, point, flight);
   const size = content.tuning.chunkSize;
   const tuning = content.tuning.flight;
   const generated = generatedChunks(flight);
   const existing = new Set(flight.objects.map((object) => object.id));
-  const cx = Math.floor(point.x / size);
-  const cy = Math.floor(point.y / size);
-  for (let x = cx - 2; x <= cx + 2; x++) {
-    for (let y = cy - 2; y <= cy + 2; y++) {
-      const key = `${x},${y}`;
-      if (generated.has(key)) {
-        continue;
-      }
-      flight.chunks.push(key);
-      generated.add(key);
-      chunkIndexes.get(flight)!.length = flight.chunks.length;
-      const field = byPosition(ASTEROID_FIELDS, flight.galaxy);
-      const plan = planChunk(CHUNK_CATALOG, {
-        asteroids: { field, shapes: ASTEROID_SHAPE_LIST },
-        clearance: content.tuning.flight.shipRadius,
-        galaxy: flight.galaxy,
-        objectsPerChunk: tuning.objectsPerChunk,
-        rockRadius: tuning.rockRadius,
-        seed: flight.seed,
-        shipRadius: tuning.shipRadius,
-        size,
-        spawnWeights: tuning.spawnWeights,
-        x,
-        y,
-      });
-      generateRegion(content, x, y, flight);
-      for (const placement of plan.placements) {
-        const shape = placement.asteroid ? ASTEROID_SHAPES.get(placement.asteroid) : undefined;
-        const object: SpaceObject = {
-          hp:
-            placement.kind === "pickup"
-              ? 1
-              : placement.resource
-                ? RESOURCE_ROCKS.classes[placement.resource].hp
-                : shape
-                  ? field.hp[shape.size]
-                  : tuning.rockHp,
-          id: placement.id,
-          kind: placement.kind,
-          radius: placement.kind === "pickup" ? tuning.pickupRadius : placement.radius,
-          x: placement.x,
-          y: placement.y,
-          ...(shape ? { asteroid: shape.id } : {}),
-          ...(placement.resource ? { resource: placement.resource } : {}),
-        };
-        // A drifting asteroid's place on its seeded path follows flight time, so paging and
-        // saves resume it where it would be.
-        if (placement.orbit) {
-          object.orbit = { ...placement.orbit, x: placement.x, y: placement.y };
-          const motion = orbitMotion(flight.time, object.orbit);
-          object.x = motion.position.x;
-          object.y = motion.position.y;
-          object.velocity = motion.velocity;
-        }
-        if (object.kind !== "rock") {
-          object.role = "discovery";
-        }
-        // A discovery cache holds Stardust; weapons come only from shops and enemy drops.
-        if (object.kind === "pickup") {
-          object.amount = ECONOMY.discoveryStardust;
-        }
-        // Asteroids and resource rocks are not placed in currents or ore fields, drift loops
-        // included; an ore field holds only its own rocks.
-        const footprint = placementRadius(object) + (object.orbit?.radius ?? 0);
-        const at = object.orbit ?? object;
-        if (
-          !existing.has(object.id) &&
-          !Object.hasOwn(flight.world.notables, object.id) &&
-          clearOf(content.tuning.safeRadius, flight.player, object) &&
-          clearOfSafeAreas(content, object, flight) &&
-          clearOfLandmarks(object, flight) &&
-          (object.kind === "pickup" ||
-            (!worldInCurrent(flightWorldContext(flight), flight.galaxy, footprint, object) &&
-              clearOfOreFields(flight.galaxy, footprint, at)))
-        ) {
-          flight.objects.push(object);
-          existing.add(object.id);
-        }
-      }
-      placeOreFields(content, x, y, existing, flight);
+  const grid = worldGrid(flightWorldContext(flight), size);
+  for (const { x, y } of worldCellsNear(grid, size * 2, point)) {
+    const key = `${x},${y}`;
+    if (generated.has(key)) {
+      continue;
     }
+    flight.chunks.push(key);
+    generated.add(key);
+    chunkIndexes.get(flight)!.length = flight.chunks.length;
+    const field = byPosition(ASTEROID_FIELDS, flight.galaxy);
+    const plan = planChunk(CHUNK_CATALOG, {
+      ...flightWorldContext(flight),
+      asteroids: { field, shapes: ASTEROID_SHAPE_LIST },
+      clearance: content.tuning.flight.shipRadius,
+      galaxy: flight.galaxy,
+      objectsPerChunk: tuning.objectsPerChunk,
+      rockRadius: tuning.rockRadius,
+      seed: flight.seed,
+      shipRadius: tuning.shipRadius,
+      size,
+      spawnWeights: tuning.spawnWeights,
+      x,
+      y,
+    });
+    generateRegion(content, x, y, flight);
+    for (const placement of plan.placements) {
+      const shape = placement.asteroid ? ASTEROID_SHAPES.get(placement.asteroid) : undefined;
+      const object: SpaceObject = {
+        hp:
+          placement.kind === "pickup"
+            ? 1
+            : placement.resource
+              ? RESOURCE_ROCKS.classes[placement.resource].hp
+              : shape
+                ? field.hp[shape.size]
+                : tuning.rockHp,
+        id: placement.id,
+        kind: placement.kind,
+        radius: placement.kind === "pickup" ? tuning.pickupRadius : placement.radius,
+        x: placement.x,
+        y: placement.y,
+        ...(shape ? { asteroid: shape.id } : {}),
+        ...(placement.resource ? { resource: placement.resource } : {}),
+      };
+      // A drifting asteroid's place on its seeded path follows flight time, so paging and
+      // saves resume it where it would be.
+      if (placement.orbit) {
+        object.orbit = { ...placement.orbit, x: placement.x, y: placement.y };
+        const motion = orbitMotion(flight.time, object.orbit);
+        object.x = motion.position.x;
+        object.y = motion.position.y;
+        object.velocity = motion.velocity;
+      }
+      if (object.kind !== "rock") {
+        object.role = "discovery";
+      }
+      // A discovery cache holds Stardust; weapons come only from shops and enemy drops.
+      if (object.kind === "pickup") {
+        object.amount = ECONOMY.discoveryStardust;
+      }
+      // Asteroids and resource rocks are not placed in currents or ore fields, drift loops
+      // included; an ore field holds only its own rocks.
+      const footprint = placementRadius(object) + (object.orbit?.radius ?? 0);
+      const at = object.orbit ?? object;
+      if (
+        !existing.has(object.id) &&
+        !Object.hasOwn(flight.world.notables, object.id) &&
+        clearOf(flight, content.tuning.safeRadius, flight.player, object) &&
+        clearOfSafeAreas(content, object, flight) &&
+        clearOfLandmarks(object, flight) &&
+        (object.kind === "pickup" ||
+          (!worldInCurrent(flightWorldContext(flight), flight.galaxy, footprint, object) &&
+            worldClearOfOreFields(flightWorldContext(flight), flight.galaxy, footprint, at)))
+      ) {
+        canonicalObject(flight, object);
+        flight.objects.push(object);
+        existing.add(object.id);
+      }
+    }
+    placeOreFields(content, x, y, existing, flight);
   }
 }
 
@@ -739,8 +792,10 @@ function placeOreFields(
     );
     if (
       worldStationsNear(flightWorldContext(flight), ECONOMY, flight.galaxy, reach, field).length ||
-      (hub && distance(hub, field) < reach) ||
-      (flight.arrivals ?? []).some((arrival) => distance(arrival, field) < reach)
+      (hub && worldDistance(flightWorldContext(flight), hub, field) < reach) ||
+      (flight.arrivals ?? []).some(
+        (arrival) => worldDistance(flightWorldContext(flight), arrival, field) < reach,
+      )
     ) {
       continue;
     }
@@ -756,13 +811,15 @@ function placeOreFields(
       if (
         !existing.has(object.id) &&
         !Object.hasOwn(flight.world.notables, object.id) &&
-        clearOf(content.tuning.safeRadius, flight.player, object) &&
+        clearOf(flight, content.tuning.safeRadius, flight.player, object) &&
         clearOfSafeAreas(content, object, flight) &&
         flight.objects.every(
           (other) =>
-            other.kind !== "rock" || distance(other, object) > other.radius + object.radius,
+            other.kind !== "rock" ||
+            worldDistance(flightWorldContext(flight), other, object) > other.radius + object.radius,
         )
       ) {
+        canonicalObject(flight, object);
         flight.objects.push(object);
         existing.add(object.id);
       }
@@ -817,9 +874,9 @@ export function spawnChapterEnemy(
     if (!retained) {
       return null;
     }
-    activateFlightRegion(content, retained, flight);
+    worldActivateFlightRegion(flightWorldContext(flight), content, retained, flight);
   }
-  activateFlightRegion(content, point, flight);
+  worldActivateFlightRegion(flightWorldContext(flight), content, point, flight);
   const existing = flight.objects.find((object) => object.id === id);
   if (existing) {
     return existing.kind === "enemy" ? existing : null;
@@ -842,9 +899,10 @@ export function spawnChapterEnemy(
     object.enemy!.home = { ...options.home };
   }
   clearLayoutObjects(
-    (other) => other.kind === "destination" || clearOf(object.radius, object, other),
+    (other) => other.kind === "destination" || clearOf(flight, object.radius, object, other),
     flight,
   );
+  canonicalObject(flight, object);
   flight.objects.push(object);
   if (options.packId) {
     const sizes = combat(flight).initialPackSizes;
@@ -934,7 +992,9 @@ function nearArrival(
   point: Vec,
 ): boolean {
   return arrivalPoints(flight).some(
-    (arrival) => distance(arrival, point) < content.tuning.flight.arrivalCalm + reach,
+    (arrival) =>
+      worldDistance(flightWorldContext(flight), arrival, point) <
+      content.tuning.flight.arrivalCalm + reach,
   );
 }
 
@@ -948,7 +1008,8 @@ function generateRegion(content: GameContent, x: number, y: number, flight: Flig
   const next = random(hash(flight.seed ^ 9173, x, y));
   const center = { x: (x + 0.5) * size, y: (y + 0.5) * size };
   if (
-    distance(center, flight.player) < content.tuning.safeRadius * 2 ||
+    worldDistance(flightWorldContext(flight), center, flight.player) <
+      content.tuning.safeRadius * 2 ||
     safe(content, center, flight)
   ) {
     return;
@@ -1021,7 +1082,9 @@ function generateRegion(content: GameContent, x: number, y: number, flight: Flig
   if (ORE_FIELDS.galaxies.includes(flight.galaxy) && archetype === "fighter") {
     const reach = (spacing * size) / 2;
     const field = worldOreFieldsNear(flightWorldContext(flight), flight.galaxy, reach, center).sort(
-      (a, b) => distance(a, center) - distance(b, center),
+      (a, b) =>
+        worldDistance(flightWorldContext(flight), a, center) -
+        worldDistance(flightWorldContext(flight), b, center),
     )[0];
     const angle = next() * Math.PI * 2;
     if (field && next() < ORE_FIELDS.jumperShare) {
@@ -1118,6 +1181,7 @@ function admitGroup(
       !flight.objects.some((other) => other.id === object.id) &&
       !Object.hasOwn(flight.world.notables, object.id)
     ) {
+      canonicalObject(flight, object);
       flight.objects.push(object);
       admitted++;
       budget--;
@@ -1146,7 +1210,7 @@ function clearLayoutObjects(keep: (object: SpaceObject) => boolean, flight: Flig
     recordUnloadedPackMember(object, flight);
     return false;
   });
-  prunePackState(flight);
+  worldPrunePackState(flightWorldContext(flight), flight);
 }
 
 /**
@@ -1189,9 +1253,13 @@ function hullReach(object: SpaceObject, anyHeading: boolean): number {
 }
 
 /** Whether a ship placed at `point` would overlap a salvaged hulk's drawn hull on screen. */
-function overlapsHulk(guard: SpaceObject, point: Vec, hulk: SpaceObject): boolean {
-  const dx = point.x - hulk.x;
-  const dy = point.y - hulk.y;
+function overlapsHulk(
+  flight: FlightState,
+  guard: SpaceObject,
+  point: Vec,
+  hulk: SpaceObject,
+): boolean {
+  const { x: dx, y: dy } = worldDelta(flightWorldContext(flight), hulk, point);
   // The play view's isometric projection of the world offset, in screen px.
   const apart = Math.hypot(dx - dy, (dx + dy) / 2);
   return apart < hullReach(guard, true) + hullReach(hulk, false);
@@ -1221,7 +1289,10 @@ function settleResumedCapitals(content: GameContent, flight: FlightState): void 
   const kept: SpaceObject[] = [];
   const displaced: SpaceObject[] = [];
   for (const object of flight.objects.filter(capital)) {
-    const crowded = kept.some((other) => distance(object, other) < enemySpacing(object, other));
+    const crowded = kept.some(
+      (other) =>
+        worldDistance(flightWorldContext(flight), object, other) < enemySpacing(object, other),
+    );
     (crowded ? displaced : kept).push(object);
   }
   // Kept capitals are fixed obstacles, so each displaced capital fails reservation and searches.
@@ -1257,7 +1328,8 @@ function placeGuards(content: GameContent, guards: SpaceObject[], flight: Flight
   const blocked = (guard: SpaceObject, point: Vec): boolean =>
     destinations.some(
       (object) =>
-        distance(object, point) < (protectedRadius(content, object) ?? 0) + guard.radius + 120,
+        worldDistance(flightWorldContext(flight), object, point) <
+        (protectedRadius(content, object) ?? 0) + guard.radius + 120,
     ) ||
     flight.objects.some(
       (object) =>
@@ -1267,8 +1339,8 @@ function placeGuards(content: GameContent, guards: SpaceObject[], flight: Flight
         object.hp > 0 &&
         // A salvaged hulk keeps no spacing, but nothing settles onto its drawn hull.
         (object.enemy?.salvaged
-          ? overlapsHulk(guard, point, object)
-          : distance(positions.get(object) ?? object, point) <
+          ? overlapsHulk(flight, guard, point, object)
+          : worldDistance(flightWorldContext(flight), positions.get(object) ?? object, point) <
             Math.max(object.radius + guard.radius + 20, enemySpacing(guard, object))),
     );
   // Reserve valid existing capital positions before searching for displaced or newly added guards.
@@ -1321,12 +1393,13 @@ function cueGuards(content: GameContent, flight: FlightState, events: FlightEven
     (object) =>
       object.kind === "destination" &&
       !flight.guardCues?.includes(object.id) &&
-      distance(object, flight.player) <= content.tuning.talkRange &&
+      worldDistance(flightWorldContext(flight), object, flight.player) <=
+        content.tuning.talkRange &&
       routeBlocked(object.id, flight),
   );
   for (const destination of cued) {
     (flight.guardCues ??= []).push(destination.id);
-    activateRouteEncounter(content, destination.id, flight);
+    worldActivateRouteEncounter(flightWorldContext(flight), content, destination.id, flight);
     for (const guard of flight.objects) {
       if (
         guard.kind === "enemy" &&
@@ -1358,7 +1431,10 @@ function releaseSummonedGuards(viewportWidth: number, flight: FlightState): void
       guard !== undefined &&
       guard.hp > 0 &&
       !guard.enemy?.disabled &&
-      !onScreen(view, flight.player, { radius: 0, x: guard.x, y: guard.y })
+      !onScreen(view, flight.player, {
+        radius: 0,
+        ...worldPoint(flightWorldContext(flight), flight.player, guard),
+      })
     );
   });
   if (!flight.summonedGuards.length) {
@@ -1420,7 +1496,7 @@ export function placeHuntingPack(
   flight.objects = flight.objects.filter(
     (object) => object.kind !== "enemy" || object.enemy?.packId !== packId,
   );
-  activateFlightRegion(content, centre, flight);
+  worldActivateFlightRegion(flightWorldContext(flight), content, centre, flight);
   for (let i = 0; i < count; i++) {
     const phase = (i * Math.PI * 2) / count;
     const member = spawnEnemy(
@@ -1451,7 +1527,7 @@ export function ensureHuntingPacks(content: GameContent, flight: FlightState): v
       object.kind === "destination" &&
       HUNTING_PACKS.destinations.includes(object.id) &&
       !placed.includes(object.id) &&
-      distance(object, flight.player) <= HUNTING_PACKS.placeRange,
+      worldDistance(flightWorldContext(flight), object, flight.player) <= HUNTING_PACKS.placeRange,
   )) {
     const next = random(
       hash(flight.seed ^ 0x4a7e, destination.id.length, destination.id.charCodeAt(0)),
@@ -1466,7 +1542,10 @@ export function ensureHuntingPacks(content: GameContent, flight: FlightState): v
     const guard = flight.objects.find(
       (object) => object.kind === "enemy" && object.routeId === destination.id,
     );
-    if (guard && distance(guard, at(angle)) < HUNTING_PACKS.guardGap) {
+    if (
+      guard &&
+      worldDistance(flightWorldContext(flight), guard, at(angle)) < HUNTING_PACKS.guardGap
+    ) {
       angle += Math.PI;
     }
     placeHuntingPack(content, `hunt:${destination.id}`, at(angle), count, flight);
@@ -1504,12 +1583,9 @@ export function ensureRouteEncounter(
     : flight.galaxy === 1
       ? "frigate"
       : "capital";
-  activateFlightRegion(content, destination, flight);
+  worldActivateFlightRegion(flightWorldContext(flight), content, destination, flight);
   const radius = enemyCatalog[archetype].sizeRatio * content.tuning.flight.shipRadius;
-  const heading = direction({
-    x: flight.player.x - destination.x,
-    y: flight.player.y - destination.y,
-  });
+  const heading = direction(worldDelta(flightWorldContext(flight), destination, flight.player));
   const approach = length(heading) ? heading : { x: 0, y: 1 };
   const offset = content.tuning.safeRadius + radius + 120;
   const point = { x: destination.x + approach.x * offset, y: destination.y + approach.y * offset };
@@ -1517,9 +1593,12 @@ export function ensureRouteEncounter(
   object.routeId = id;
   // Clear the guard footprint and leave the protected destination untouched.
   clearLayoutObjects(
-    (other) => other.kind === "destination" || distance(other, point) > other.radius + radius + 20,
+    (other) =>
+      other.kind === "destination" ||
+      worldDistance(flightWorldContext(flight), other, point) > other.radius + radius + 20,
     flight,
   );
+  canonicalObject(flight, object);
   flight.objects.push(object);
   if (holodisk) {
     guardPack(content, point, flight);
@@ -1560,7 +1639,10 @@ export function ensureDestination(
   // Story destinations keep storySpacing from each other and clear of the galaxy's fixed
   // stations and landmarks.
   const crowded = (point: Vec) =>
-    flight.objects.some((o) => o.kind === "destination" && distance(o, point) < spacing) ||
+    flight.objects.some(
+      (o) =>
+        o.kind === "destination" && worldDistance(flightWorldContext(flight), o, point) < spacing,
+    ) ||
     worldStationsNear(
       flightWorldContext(flight),
       ECONOMY,
@@ -1569,7 +1651,8 @@ export function ensureDestination(
       point,
     ).length > 0 ||
     landmarkSites(flight.galaxy).some(
-      (site) => distance(site, point) < LANDMARK_TUNING.placeClearance,
+      (site) =>
+        worldDistance(flightWorldContext(flight), site, point) < LANDMARK_TUNING.placeClearance,
     );
   while (crowded(target)) {
     target.x -= heading.y * spacing;
@@ -1615,15 +1698,17 @@ export function ensureDestinationAt(
   }
   generate(content, point, flight);
   const object: SpaceObject = { ...point, hp: 1, id, kind: "destination", radius: 30, role: id };
+  canonicalObject(flight, object);
   flight.objects.push(object);
   // A destination's safe area holds no layout object or drift path from earlier chunks.
   clearLayoutObjects(
-    (o) => o.kind === "destination" || clearOf(content.tuning.safeRadius, object, o),
+    (o) => o.kind === "destination" || clearOf(flight, content.tuning.safeRadius, object, o),
     flight,
   );
   relocateRouteGuards(content, flight);
   flight.shots = flight.shots.filter(
-    (s) => !s.enemy || distance(s, object) > content.tuning.safeRadius,
+    (s) =>
+      !s.enemy || worldDistance(flightWorldContext(flight), s, object) > content.tuning.safeRadius,
   );
   return object;
 }
@@ -1649,13 +1734,15 @@ function heldDestination(
   const target = { x: hub.x + offset.x, y: hub.y + offset.y };
   generate(content, target, flight);
   const object: SpaceObject = { ...target, hp: 1, id, kind: "destination", radius: 30, role: id };
+  canonicalObject(flight, object);
   flight.objects.push(object);
   clearLayoutObjects(
-    (o) => o.kind === "destination" || clearOf(content.tuning.safeRadius, object, o),
+    (o) => o.kind === "destination" || clearOf(flight, content.tuning.safeRadius, object, o),
     flight,
   );
   flight.shots = flight.shots.filter(
-    (s) => !s.enemy || distance(s, object) > content.tuning.safeRadius,
+    (s) =>
+      !s.enemy || worldDistance(flightWorldContext(flight), s, object) > content.tuning.safeRadius,
   );
   return object;
 }
@@ -1678,7 +1765,11 @@ export function placeDestinationAhead(
   if (existing && isHeld(id, flight)) {
     return existing;
   }
-  if (!existing || distance(existing, flight.player) > content.tuning.chunkSize * 2.5) {
+  if (
+    !existing ||
+    worldDistance(flightWorldContext(flight), existing, flight.player) >
+      content.tuning.chunkSize * 2.5
+  ) {
     flight.objects = flight.objects.filter((o) => o !== existing);
     return ensureDestination(content, id, flight);
   }
@@ -1746,7 +1837,7 @@ export function createFlight(
   for (const id of progress.known) {
     ensureDestination(content, id, flight);
   }
-  syncFlightRegion(content, flight);
+  worldSyncFlightRegion(flightWorldContext(flight), content, flight);
   return flight;
 }
 
@@ -1770,19 +1861,21 @@ export function teleport(content: GameContent, id: string, flight: FlightState):
   clearLayoutObjects(
     (other) =>
       other.kind !== "enemy" ||
-      distance(other, arrival) >= content.tuning.flight.arrivalCalm + other.radius,
+      worldDistance(flightWorldContext(flight), other, arrival) >=
+        content.tuning.flight.arrivalCalm + other.radius,
     flight,
   );
   generate(content, object, flight);
   flight.player = arrival;
   flight.velocity = { x: 0, y: 0 };
   flight.freshChunk = null;
-  const key = chunk(content, object);
+  const key = chunk(flight, content, object);
   markVisited(flight.visited, key);
   flight.shots = flight.shots.filter(
-    (s) => !s.enemy || distance(s, object) > content.tuning.safeRadius,
+    (s) =>
+      !s.enemy || worldDistance(flightWorldContext(flight), s, object) > content.tuning.safeRadius,
   );
-  syncFlightRegion(content, flight);
+  worldSyncFlightRegion(flightWorldContext(flight), content, flight);
   return true;
 }
 
@@ -1859,11 +1952,12 @@ function releaseFriendlyVolley(
 export function inBattle(
   content: GameContent,
   viewportWidth: number,
-  flight: Pick<FlightState, "objects" | "player">,
+  flight: Pick<FlightState, "objects" | "player" | "topology">,
 ): boolean {
   const reach = viewportWidth / 2 + content.tuning.battleMargin;
   return flight.objects.some((object) => {
     const enemy = object.enemy;
+    const offset = worldDelta(flightWorldContext(flight), flight.player, object);
     return (
       object.kind === "enemy" &&
       object.hp > 0 &&
@@ -1872,8 +1966,8 @@ export function inBattle(
       !enemy.returning &&
       !enemy.fleeing &&
       !enemy.disabled &&
-      Math.abs(object.x - flight.player.x) <= reach &&
-      Math.abs(object.y - flight.player.y) <= reach
+      Math.abs(offset.x) <= reach &&
+      Math.abs(offset.y) <= reach
     );
   });
 }
@@ -1884,17 +1978,15 @@ export function inBattle(
 export function inDanger(
   content: GameContent,
   viewportWidth: number,
-  flight: Pick<FlightState, "objects" | "player" | "shots">,
+  flight: Pick<FlightState, "objects" | "player" | "shots" | "topology">,
 ): boolean {
   const reach = viewportWidth / 2 + content.tuning.battleMargin;
   return (
     inBattle(content, viewportWidth, flight) ||
-    flight.shots.some(
-      (shot) =>
-        shot.enemy &&
-        Math.abs(shot.x - flight.player.x) <= reach &&
-        Math.abs(shot.y - flight.player.y) <= reach,
-    )
+    flight.shots.some((shot) => {
+      const offset = worldDelta(flightWorldContext(flight), flight.player, shot);
+      return shot.enemy && Math.abs(offset.x) <= reach && Math.abs(offset.y) <= reach;
+    })
   );
 }
 /** Removes `amount` HP from Ada's shield unless she is in a safe area. */
@@ -1944,8 +2036,14 @@ export function pickupTouched(
 ): boolean {
   const margin = content.tuning.flight.pickupMargin;
   return outline
-    ? outlinesContact(outline, center, shipBody(flight.facing), flight.player, margin) !== null
-    : shipTouches(flight.facing, flight.player, center, radius + margin);
+    ? outlinesContact(
+        outline,
+        worldPoint(flightWorldContext(flight), flight.player, center),
+        shipBody(flight.facing),
+        flight.player,
+        margin,
+      ) !== null
+    : touchesAda(flight, center, radius + margin);
 }
 /**
  * Docks at a station within Talk range (gameplay/economy.md): Ada stops where she is. Returns
@@ -1957,7 +2055,10 @@ export function dockFlight(content: GameContent, id: string, flight: FlightState
       object.id === id &&
       (object.kind === "station" || (object.kind === "destination" && id === HUB_STATION)),
   );
-  if (!station || distance(station, flight.player) > content.tuning.talkRange) {
+  if (
+    !station ||
+    worldDistance(flightWorldContext(flight), station, flight.player) > content.tuning.talkRange
+  ) {
     return false;
   }
   flight.velocity = { x: 0, y: 0 };
@@ -2033,16 +2134,17 @@ function move(
   const steps = Math.max(1, Math.ceil((length(travel) * dt) / 4));
   for (let i = 0; i < steps; i++) {
     const before = { ...flight.player };
-    const key = chunk(content, before);
+    const key = chunk(flight, content, before);
     flight.player.x += (travel.x * dt) / steps;
     flight.player.y += (travel.y * dt) / steps;
     resolveScenery(flight, contactOf, onContact, flight.player, () => {
       flight.player.x = before.x;
       flight.player.y = before.y;
     });
-    const afterKey = chunk(content, flight.player);
+    canonicalPosition(flight, flight.player);
+    const afterKey = chunk(flight, content, flight.player);
     if (flight.freshChunk === key) {
-      flight.freshDistance += distance(before, flight.player);
+      flight.freshDistance += worldDistance(flightWorldContext(flight), before, flight.player);
     }
     if (afterKey !== key) {
       flight.freshChunk = visitedChunk(flight.visited, afterKey) ? null : afterKey;
@@ -2052,7 +2154,7 @@ function move(
   if (
     input.turn === undefined &&
     length(input.aim) <= 0.01 &&
-    distance(start, flight.player) > 0.001 &&
+    worldDistance(flightWorldContext(flight), start, flight.player) > 0.001 &&
     length(flight.velocity)
   ) {
     const turnedFrom = flight.facing;
@@ -2078,7 +2180,7 @@ function presses(targetable: boolean, flight: FlightState, object: SpaceObject):
     !state.returning &&
     !state.fleeing &&
     !state.disabled &&
-    distance(object, flight.player) <=
+    worldDistance(flightWorldContext(flight), object, flight.player) <=
       enemyDefinition(flight.galaxy, state.archetype, state.id).perception
   );
 }
@@ -2138,10 +2240,11 @@ function enemies(
         (obstacle) =>
           SCENERY.includes(obstacle.kind) &&
           obstacle.hp > 0 &&
-          sceneryBlocksSegment(
+          worldSceneryBlocksSegment(
+            flightWorldContext(flight),
             obstacle,
             object,
-            flight.player,
+            worldPoint(flightWorldContext(flight), object, flight.player),
             0,
             frameOf(flight, obstacle),
             drawnOf(flight, obstacle),
@@ -2159,7 +2262,7 @@ function enemies(
           visibility.get(object.id) &&
           !safe(content, flight.player, flight) &&
           !safe(content, object, flight) &&
-          distance(object, flight.player) <= definition.perception
+          worldDistance(flightWorldContext(flight), object, flight.player) <= definition.perception
         );
       })
       .map((object) => object.id),
@@ -2197,8 +2300,9 @@ function enemies(
     const intent = stepEnemy(
       definition,
       {
+        ...flightWorldContext(flight),
         adaWidth: content.tuning.flight.shipRadius * 2,
-        dormantPackMembers: retainedPackMembers(content, flight),
+        dormantPackMembers: worldRetainedPackMembers(flightWorldContext(flight), content, flight),
         dt,
         engagementAdmitted: admissions.has(object.id),
         initialPackSizes: combat(flight).initialPackSizes,
@@ -2238,25 +2342,24 @@ function enemies(
         const point = { x: object.x, y: object.y };
         point[axis] += ((velocity[axis] + drift[axis]) * dt) / steps;
         if (blockade && !object.enemy.fleeing) {
-          const reach = distance(point, object.enemy.home);
+          const offset = worldDelta(flightWorldContext(flight), object.enemy.home, point);
+          const reach = length(offset);
           if (reach > PHANTOM_TUNING.blockadeReach) {
-            point.x =
-              object.enemy.home.x +
-              ((point.x - object.enemy.home.x) / reach) * PHANTOM_TUNING.blockadeReach;
-            point.y =
-              object.enemy.home.y +
-              ((point.y - object.enemy.home.y) / reach) * PHANTOM_TUNING.blockadeReach;
+            point.x = object.enemy.home.x + (offset.x / reach) * PHANTOM_TUNING.blockadeReach;
+            point.y = object.enemy.home.y + (offset.y / reach) * PHANTOM_TUNING.blockadeReach;
           }
         }
         const blocked = flight.objects.some(
           (other) =>
             other !== object &&
             (protectedRadius(content, other) !== null
-              ? distance(other, point) < (protectedRadius(content, other) ?? 0) + object.radius
+              ? worldDistance(flightWorldContext(flight), other, point) <
+                (protectedRadius(content, other) ?? 0) + object.radius
               : other.kind === "enemy" &&
                 other.hp > 0 &&
                 !other.enemy?.salvaged &&
-                distance(other, point) < enemySpacing(object, other)),
+                worldDistance(flightWorldContext(flight), other, point) <
+                  enemySpacing(object, other)),
         );
         if (!blocked) {
           object[axis] = point[axis];
@@ -2270,14 +2373,30 @@ function enemies(
         flight,
         (obstacle, position, frame, drawn) =>
           hull
-            ? sceneryBodyContact(obstacle, position, hull, frame, 0, drawn)
-            : sceneryContact(obstacle, position, object.radius, frame, drawn),
+            ? worldSceneryBodyContact(
+                flightWorldContext(flight),
+                obstacle,
+                position,
+                hull,
+                frame,
+                0,
+                drawn,
+              )
+            : worldSceneryContact(
+                flightWorldContext(flight),
+                obstacle,
+                position,
+                object.radius,
+                frame,
+                drawn,
+              ),
         onContact,
         point,
       );
       object.x = point.x;
       object.y = point.y;
     }
+    canonicalPosition(flight, object);
     object.enemy.position = { x: object.x, y: object.y };
     bounceShips(content, flight, object);
     const rings = new Map<number, Vec[]>();
@@ -2393,7 +2512,15 @@ function stepMines(content: GameContent, dt: number, flight: FlightState): void 
       mine.end.age += dt;
     } else if (mine.age >= MINE_LAYER.lifeSeconds) {
       mine.end = { age: mine.age - MINE_LAYER.lifeSeconds, kind: "fizzle" };
-    } else if (armed(mine) && mineTouches(spinOf(flight, mine), mine, body, flight.player)) {
+    } else if (
+      armed(mine) &&
+      mineTouches(
+        spinOf(flight, mine),
+        mine,
+        body,
+        worldPoint(flightWorldContext(flight), mine, flight.player),
+      )
+    ) {
       damage(content, mine.damage, flight);
       mine.end = { age: 0, kind: "pop" };
     }
@@ -2409,7 +2536,12 @@ function strikeMines(shot: Shot, flight: FlightState): boolean {
     if (
       armed(mine) &&
       !shot.hitIds.includes(mine.id) &&
-      mineTouches(spinOf(flight, mine), mine, SHOT_PARTS, shot)
+      mineTouches(
+        spinOf(flight, mine),
+        mine,
+        SHOT_PARTS,
+        worldPoint(flightWorldContext(flight), mine, shot),
+      )
     ) {
       shot.hitIds.push(mine.id);
       mine.end = { age: 0, kind: "pop" };
@@ -2437,17 +2569,26 @@ function segmentDistance(point: Vec, start: Vec, end: Vec): number {
  * outline against hers, sampled every 2 units along the move; its circle without debris art.
  */
 function debrisTouchesAda(flight: FlightState, object: SpaceObject, from: Vec, to: Vec): boolean {
+  const end = worldPoint(flightWorldContext(flight), from, to);
   const drawn = drawnOf(flight, object);
   if (!drawn) {
-    return shipNearSegment(flight.facing, flight.player, from, to, object.radius);
+    return shipNearSegment(
+      flight.facing,
+      worldPoint(flightWorldContext(flight), from, flight.player),
+      from,
+      worldPoint(flightWorldContext(flight), from, to),
+      object.radius,
+    );
   }
   const frame = frameOf(flight, object);
   const body = shipBody(flight.facing);
-  const steps = Math.max(1, Math.ceil(distance(from, to) / 2));
+  const steps = Math.max(1, Math.ceil(distance(from, end) / 2));
   for (let step = 0; step <= steps; step++) {
     const t = step / steps;
-    const at = { ...object, x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t };
-    if (sceneryBodyContact(at, flight.player, body, frame, 0, drawn)) {
+    const at = { ...object, x: from.x + (end.x - from.x) * t, y: from.y + (end.y - from.y) * t };
+    if (
+      worldSceneryBodyContact(flightWorldContext(flight), at, flight.player, body, frame, 0, drawn)
+    ) {
       return true;
     }
   }
@@ -2486,7 +2627,13 @@ function moveDebris(
       flight.objects.some((area) => {
         const radius = protectedRadius(content, area);
         return (
-          radius !== null && segmentDistance(area, object, next.position) < radius + object.radius
+          radius !== null &&
+          segmentDistance(
+            worldPoint(flightWorldContext(flight), object, area),
+            object,
+            next.position,
+          ) <
+            radius + object.radius
         );
       })
     ) {
@@ -2499,6 +2646,7 @@ function moveDebris(
     }
     object.x = next.position.x;
     object.y = next.position.y;
+    canonicalPosition(flight, object);
   }
 }
 
@@ -2519,17 +2667,25 @@ function shots(
     for (let i = 0; i < steps && shot.life > 0; i++) {
       shot.x += (shot.velocity.x * travelTime) / steps;
       shot.y += (shot.velocity.y * travelTime) / steps;
+      canonicalPosition(flight, shot);
       if (shot.enemy) {
         if (safe(content, shot, flight)) {
           shot.life = 0;
           continue;
         }
-        const struck = shipTouches(flight.facing, flight.player, shot, 3);
+        const struck = touchesAda(flight, shot, 3);
         const blocked = flight.objects.some(
           (object) =>
             SCENERY.includes(object.kind) &&
             object.hp > 0 &&
-            sceneryContact(object, shot, 3, frameOf(flight, object), drawnOf(flight, object)),
+            worldSceneryContact(
+              flightWorldContext(flight),
+              object,
+              shot,
+              3,
+              frameOf(flight, object),
+              drawnOf(flight, object),
+            ),
         );
         if (!struck && !blocked) {
           continue;
@@ -2561,7 +2717,7 @@ function shots(
   flight.shots = flight.shots.filter((s) => s.life > 0);
   for (const object of flight.objects) {
     if (object.hp <= 0) {
-      recordObjectRemoval(content, object, flight);
+      worldRecordObjectRemoval(flightWorldContext(flight), content, object, flight);
     }
   }
   flight.objects = flight.objects.filter((o) => o.hp > 0);
@@ -2577,10 +2733,7 @@ function enemyImpact(content: GameContent, shot: Shot, struck: boolean, flight: 
     blasts.push({ age: 0, radius: shot.blast, x: shot.x, y: shot.y });
     blastFlashes.set(flight, blasts);
   }
-  if (
-    struck ||
-    (shot.blast !== undefined && shipTouches(flight.facing, flight.player, shot, shot.blast))
-  ) {
+  if (struck || (shot.blast !== undefined && touchesAda(flight, shot, shot.blast))) {
     damage(content, shot.damage, flight);
   }
 }
@@ -2605,13 +2758,20 @@ function strike(
       object.enemy?.salvaged ||
       shot.hitIds.includes(object.id) ||
       (object.kind === "enemy"
-        ? !enemyTouched(ROUTE_POSITION[flight.galaxy], object, shot, 3)
-        : !sceneryContact(object, shot, 3, frameOf(flight, object), drawnOf(flight, object)))
+        ? !enemyTouched(flight, ROUTE_POSITION[flight.galaxy], object, shot, 3)
+        : !worldSceneryContact(
+            flightWorldContext(flight),
+            object,
+            shot,
+            3,
+            frameOf(flight, object),
+            drawnOf(flight, object),
+          ))
     ) {
       continue;
     }
     shot.hitIds.push(object.id);
-    const part = hitPart(content, flight.galaxy, partReach(content), 3, shot, object);
+    const part = hitPart(content, flight, partReach(content), 3, shot, object);
     hit(content, shot.damage, part, object, flight, events);
     if (shot.blast !== undefined) {
       blast(content, shot.damage, shot.blast, shot, object, flight, events);
@@ -2655,21 +2815,23 @@ function liveParts(
  * heavy, a hardpoint's base or top; its hull circle without Art's outline.
  */
 function enemyTouched(
+  flight: FlightState,
   position: RoutePosition,
   object: SpaceObject,
   point: Vec,
   reach: number,
 ): boolean {
+  const localPoint = worldPoint(flightWorldContext(flight), object, point);
   const enemy = object.enemy;
   const hull = enemy && enemyHull(enemy);
   if (!enemy || !hull) {
-    return distance(point, object) <= object.radius + reach;
+    return worldDistance(flightWorldContext(flight), localPoint, object) <= object.radius + reach;
   }
   return (
-    outlineContact(hull, object, point, reach) !== null ||
+    outlineContact(hull, object, localPoint, reach) !== null ||
     enemy.hardpoints.some((part) => {
       const outline = enemyPartOutline(position, enemy, part.id);
-      return outline !== null && outlineContact(outline, object, point, reach) !== null;
+      return outline !== null && outlineContact(outline, object, localPoint, reach) !== null;
     })
   );
 }
@@ -2681,12 +2843,14 @@ function enemyTouched(
  */
 function hitPart(
   content: GameContent,
-  galaxy: GalaxyNumber,
+  flight: FlightState,
   reach: number,
   tolerance: number,
   point: Vec,
   object: SpaceObject,
 ): string | null {
+  const galaxy = flight.galaxy;
+  const localPoint = worldPoint(flightWorldContext(flight), object, point);
   const enemy = object.enemy;
   if (object.kind !== "enemy" || !enemy) {
     return null;
@@ -2697,9 +2861,13 @@ function hitPart(
   let nearest: { id: string; gap: number } | undefined;
   for (const part of liveParts(content, galaxy, object)) {
     const outline = enemyPartOutline(ROUTE_POSITION[galaxy], enemy, part.id);
-    const contact = outline && outlineContact(outline, object, point, tolerance);
+    const contact = outline && outlineContact(outline, object, localPoint, tolerance);
     // A drawn part ranks by overlap depth, deepest first; an undrawn one by its anchor gap.
-    const gap = outline ? (contact ? -contact.depth : Infinity) : distance(point, part);
+    const gap = outline
+      ? contact
+        ? -contact.depth
+        : Infinity
+      : worldDistance(flightWorldContext(flight), localPoint, part);
     if ((outline ? contact !== null : gap <= reach) && (!nearest || gap < nearest.gap)) {
       nearest = { gap, id: part.id };
     }
@@ -2815,7 +2983,7 @@ function blast(
   blasts.push({ age: 0, radius, x: at.x, y: at.y });
   blastFlashes.set(flight, blasts);
   for (const mine of flight.mines) {
-    if (armed(mine) && distance(mine, at) <= radius) {
+    if (armed(mine) && worldDistance(flightWorldContext(flight), mine, at) <= radius) {
       mine.end = { age: 0, kind: "pop" };
     }
   }
@@ -2824,8 +2992,8 @@ function blast(
       continue;
     }
     const position = ROUTE_POSITION[flight.galaxy];
-    const part = hitPart(content, flight.galaxy, radius + partReach(content), radius, at, object);
-    if (part === null && !enemyTouched(position, object, at, radius)) {
+    const part = hitPart(content, flight, radius + partReach(content), radius, at, object);
+    if (part === null && !enemyTouched(flight, position, object, at, radius)) {
       continue;
     }
     hit(content, amount, part, object, flight, events);
@@ -2928,6 +3096,7 @@ export function rayCircle(
  * within the beam half-width: the bounding circle's entry, refined in 2-unit steps.
  */
 function sceneryEntry(
+  flight: FlightState,
   origin: Vec,
   direction: Vec,
   range: number,
@@ -2935,15 +3104,27 @@ function sceneryEntry(
   drawn: Silhouette | null,
   object: SpaceObject,
 ): number | null {
-  const bound = sceneryBound(object, BEAM.halfWidth, drawn);
-  const entry = rayCircle(origin, direction, range, object, bound);
+  const imageObject = flight.topology
+    ? { ...object, ...worldPoint(flightWorldContext(flight), origin, object) }
+    : object;
+  const bound = sceneryBound(imageObject, BEAM.halfWidth, drawn);
+  const entry = rayCircle(origin, direction, range, imageObject, bound);
   if (entry === null || !drawn) {
     return entry;
   }
   const exit = Math.min(range, entry + 2 * bound);
   for (let at = entry; at <= exit; at = at < exit && at + 2 > exit ? exit : at + 2) {
     const point = { x: origin.x + direction.x * at, y: origin.y + direction.y * at };
-    if (sceneryContact(object, point, BEAM.halfWidth, frame, drawn)) {
+    if (
+      worldSceneryContact(
+        flightWorldContext(flight),
+        imageObject,
+        point,
+        BEAM.halfWidth,
+        frame,
+        drawn,
+      )
+    ) {
       return at;
     }
   }
@@ -2971,18 +3152,29 @@ function fireBeam(
     }
   };
   const consider = (object: SpaceObject, part: string | null, center: Vec, radius: number) =>
-    nearer(object, part, rayCircle(origin, direction, range, center, radius + BEAM.halfWidth));
+    nearer(
+      object,
+      part,
+      rayCircle(
+        origin,
+        direction,
+        range,
+        worldPoint(flightWorldContext(flight), origin, center),
+        radius + BEAM.halfWidth,
+      ),
+    );
   // Where the beam first meets a drawn outline, within its half-width, refined in 2-unit steps.
   const drawn = (object: SpaceObject, part: string | null, outline: Parts) => {
     const bound = partsReach(worldParts(outline)) + BEAM.halfWidth;
-    const entry = rayCircle(origin, direction, range, object, bound);
+    const image = worldPoint(flightWorldContext(flight), origin, object);
+    const entry = rayCircle(origin, direction, range, image, bound);
     if (entry === null) {
       return;
     }
     const exit = Math.min(range, entry + 2 * bound);
     for (let at = entry; at <= exit; at = at < exit && at + 2 > exit ? exit : at + 2) {
       const point = { x: origin.x + direction.x * at, y: origin.y + direction.y * at };
-      if (outlineContact(outline, object, point, BEAM.halfWidth)) {
+      if (outlineContact(outline, image, point, BEAM.halfWidth)) {
         nearer(object, part, at);
         return;
       }
@@ -2997,6 +3189,7 @@ function fireBeam(
         object,
         null,
         sceneryEntry(
+          flight,
           origin,
           direction,
           range,
@@ -3028,7 +3221,13 @@ function fireBeam(
   let popped: { at: number; mine: Mine } | null = null;
   for (const mine of flight.mines) {
     const at = armed(mine)
-      ? rayCircle(origin, direction, struck?.at ?? range, mine, MINE_REACH + BEAM.halfWidth)
+      ? rayCircle(
+          origin,
+          direction,
+          struck?.at ?? range,
+          worldPoint(flightWorldContext(flight), origin, mine),
+          MINE_REACH + BEAM.halfWidth,
+        )
       : null;
     if (at !== null && (!popped || at < popped.at)) {
       popped = { at, mine };
@@ -3117,6 +3316,7 @@ function obstacleStop(origin: Vec, direction: Vec, range: number, flight: Flight
   for (const object of flight.objects) {
     if (SCENERY.includes(object.kind) && object.hp > 0) {
       const entry = sceneryEntry(
+        flight,
         origin,
         direction,
         stop,
@@ -3210,7 +3410,7 @@ function stepEnemyBeams(
       }
       if (beam.age < LANCE_TELL.trackSeconds) {
         beam.muzzle = { x: owner.x + beam.offset.x, y: owner.y + beam.offset.y };
-        const toward = { x: flight.player.x - beam.muzzle.x, y: flight.player.y - beam.muzzle.y };
+        const toward = worldDelta(flightWorldContext(flight), beam.muzzle, flight.player);
         const span = length(toward);
         if (span) {
           beam.direction = { x: toward.x / span, y: toward.y / span };
@@ -3227,7 +3427,7 @@ function stepEnemyBeams(
           x: beam.muzzle.x + beam.direction.x * at,
           y: beam.muzzle.y + beam.direction.y * at,
         };
-        if (shipTouches(flight.facing, flight.player, point, BEAM.halfWidth)) {
+        if (touchesAda(flight, point, BEAM.halfWidth)) {
           reach = at;
           damage(content, beam.damage, flight);
           break;
@@ -3338,9 +3538,14 @@ export function salvageTarget(content: GameContent, flight: FlightState): SpaceO
         object.hp > 0 &&
         object.enemy?.disabled === true &&
         !object.enemy.salvaged &&
-        distance(object, flight.player) <= content.tuning.talkRange,
+        worldDistance(flightWorldContext(flight), object, flight.player) <=
+          content.tuning.talkRange,
     )
-    .sort((a, b) => distance(a, flight.player) - distance(b, flight.player))[0];
+    .sort(
+      (a, b) =>
+        worldDistance(flightWorldContext(flight), a, flight.player) -
+        worldDistance(flightWorldContext(flight), b, flight.player),
+    )[0];
 }
 
 /**
@@ -3448,13 +3653,16 @@ export function carryPickup(
   const drift = worldFlowAt(flightWorldContext(flight), flight.galaxy, pickup);
   pickup.x += drift.x * dt;
   pickup.y += drift.y * dt;
-  const gap = distance(pickup, flight.player);
+  canonicalPosition(flight, pickup);
+  const delta = worldDelta(flightWorldContext(flight), pickup, flight.player);
+  const gap = Math.hypot(delta.x, delta.y);
   if (gap > ship.tractorRadius || gap === 0) {
     return;
   }
   const step = Math.min(gap, ship.tractorSpeed * dt);
-  pickup.x += ((flight.player.x - pickup.x) / gap) * step;
-  pickup.y += ((flight.player.y - pickup.y) / gap) * step;
+  pickup.x += (delta.x / gap) * step;
+  pickup.y += (delta.y / gap) * step;
+  canonicalPosition(flight, pickup);
 }
 
 export function stepFlight(
@@ -3469,7 +3677,7 @@ export function stepFlight(
   if (!Number.isFinite(dt) || dt <= 0 || flight.shield <= 0) {
     return events;
   }
-  syncFlightRegion(content, flight);
+  worldSyncFlightRegion(flightWorldContext(flight), content, flight);
   // Settle capitals that the region sync just paged in from dormant chunks.
   settleResumedCapitals(content, flight);
   const ship = shipTuning(ECONOMY, content, flight.levels);
@@ -3483,7 +3691,7 @@ export function stepFlight(
     generate(content, flight.player, flight);
     moveDebris(content, slice, events, flight);
     move(content, slice, input, events, flight);
-    syncFlightRegion(content, flight);
+    worldSyncFlightRegion(flightWorldContext(flight), content, flight);
     const aiming = length(input.aim) > 0.01;
     if (aiming) {
       flight.facing = turnToward(slice, ship.physics.aimTurnSeconds, input.aim, flight.facing);
@@ -3513,10 +3721,7 @@ export function stepFlight(
     }
     if (flight.phantom?.allies.length) {
       for (const intent of stepPhantomAllies(ship.physics, slice, flight, flight.phantom.allies)) {
-        const aim = direction({
-          x: intent.target.x - intent.from.x,
-          y: intent.target.y - intent.from.y,
-        });
+        const aim = direction(worldDelta(flightWorldContext(flight), intent.from, intent.target));
         releaseFriendlyVolley(
           content,
           weaponAt(intent.weapon, intent.level),
@@ -3532,10 +3737,7 @@ export function stepFlight(
     stepMines(content, slice, flight);
     stepWrecks(content, slice, input.reducedMotion ?? false, flight);
     for (const object of flight.objects) {
-      if (
-        object.kind === "hazard" &&
-        shipTouches(flight.facing, flight.player, object, object.radius)
-      ) {
+      if (object.kind === "hazard" && touchesAda(flight, object, object.radius)) {
         object.cooldown = Math.max(0, (object.cooldown ?? 0) - slice);
         if (!object.cooldown) {
           damage(content, content.tuning.hazardDamage, flight);
@@ -3568,7 +3770,7 @@ export function stepFlight(
     }
     for (const object of flight.objects) {
       if (object.hp <= 0) {
-        recordObjectRemoval(content, object, flight);
+        worldRecordObjectRemoval(flightWorldContext(flight), content, object, flight);
       }
     }
     flight.objects = flight.objects.filter((o) => o.hp > 0);
@@ -3581,24 +3783,33 @@ export function stepFlight(
       events.push({ type: "depleted" });
     }
   }
+  if (flight.topology) {
+    canonicalPosition(flight, flight.player);
+    for (const object of flight.objects) {
+      canonicalObject(flight, object);
+    }
+    for (const mine of flight.mines) {
+      canonicalPosition(flight, mine);
+    }
+  }
   const orePaid = (flight.shieldOreSpent ?? 0) - oreBefore;
   if (orePaid > 0) {
     events.push({ amount: orePaid, total: flight.shieldOreSpent!, type: "shieldOreSpent" });
   }
-  syncFlightRegion(content, flight);
+  worldSyncFlightRegion(flightWorldContext(flight), content, flight);
   releaseSummonedGuards(input.viewportWidth ?? SCREEN.width, flight);
   cueGuards(content, flight, events);
   for (const object of flight.objects) {
     if (
       object.kind === "destination" &&
       !routeBlocked(object.id, flight) &&
-      distance(object, flight.player) <= content.tuning.talkRange
+      worldDistance(flightWorldContext(flight), object, flight.player) <= content.tuning.talkRange
     ) {
       events.push({ id: object.id, type: "discovered" });
     }
     if (
       object.kind === "station" &&
-      distance(object, flight.player) <= ECONOMY.station.safeRadius
+      worldDistance(flightWorldContext(flight), object, flight.player) <= ECONOMY.station.safeRadius
     ) {
       events.push({ id: object.id, type: "stationDiscovered" });
     }
