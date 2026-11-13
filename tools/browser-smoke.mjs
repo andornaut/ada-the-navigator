@@ -2780,6 +2780,14 @@ try {
   assert.deepEqual(damaged.state.economy.ownedWeapons, ["rapidMissile", "multiLaser"]);
   assert.equal(damaged.state.economy.weapon, "rapidMissile", "The equipped weapon must stay");
   assert.equal(damaged.state.economy.stardust, 30, "The jump home must cost no Stardust");
+  const oreLost = Math.ceil(carriedOre / 2) < carriedOre;
+  const jumpPage = damaged.storyView?.page.text ?? "";
+  assert.ok(
+    jumpPage.includes(CONTENT.labels.jumpHome) &&
+      jumpPage.includes(CONTENT.labels.jumpHomeOreLost) === oreLost &&
+      !jumpPage.includes("cost"),
+    `The jump home page must name the ore loss only when ore was lost, and no fee: ${jumpPage}`,
+  );
   const damageSave = damaged.save();
   assert.deepEqual(relaunch(CONTENT, damageSave).state, damaged.state);
   save("shield-break-fixture.json", {
@@ -2789,12 +2797,9 @@ try {
   await seedOnce(damageSave, "ada-browser.shield-break.v1");
   await page.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
   const jumpNotice = await page.locator("#game-status").textContent();
-  const oreLost = Math.ceil(carriedOre / 2) < carriedOre;
   assert.ok(
-    jumpNotice.includes(CONTENT.labels.jumpHome) &&
-      jumpNotice.includes(CONTENT.labels.jumpHomeOreLost) === oreLost &&
-      !jumpNotice.includes("cost"),
-    `The jump home notice must name the ore loss only when ore was lost, and no fee: ${jumpNotice}`,
+    !jumpNotice.includes(CONTENT.labels.jumpHome),
+    `The jump-home line shows on its page only, never as a restored notice: ${jumpNotice}`,
   );
   events.checks.push(
     "Canonical shield depletion jumps Ada home, costing only the flight and keeping weapons and Stardust",
