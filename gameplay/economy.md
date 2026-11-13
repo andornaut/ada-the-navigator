@@ -406,7 +406,7 @@ The shield shop row reuses the existing `shield` label.
 | `aboutHeavyMissile`  | One slow missile with a big blast.                                        |
 | `aboutRapidMissile`  | Quick missiles with a small blast.                                        |
 | `aboutMultiLaser`    | A fan of laser bolts that grows with each level.                          |
-| `aboutScattershot`   | A shotgun spread, strongest up close.                                     |
+| `aboutScattershot`   | A wide spread, strongest up close.                                        |
 | `aboutPhaser`        | An instant beam that strikes the first thing in its path.                 |
 | `jumpHome`           | Astra jumped you back to Earth to recharge. Your story progress is saved. |
 | `engineTuning`       | Engine tuning                                                             |
