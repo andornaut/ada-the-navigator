@@ -1,10 +1,18 @@
 import type { Vec } from "../model/types.ts";
 
-/** One rear engine mouth in a heading frame, in frame pixels. */
+/** The existing thrust cutoff suppresses direction changes while the ship is effectively still. */
+export function shipJetDirection(facing: Vec, velocity: Vec): "forward" | "reverse" | undefined {
+  if (!(Math.hypot(velocity.x, velocity.y) > 1)) {
+    return undefined;
+  }
+  return facing.x * velocity.x + facing.y * velocity.y < 0 ? "reverse" : "forward";
+}
+
+/** One engine mouth in a heading frame, in frame pixels. */
 export interface JetMouth {
   /** Projected mouth midpoint. */
   anchor: Vec;
-  /** Projected rear direction per ship unit. */
+  /** Projected exhaust direction per ship unit. */
   axis: Vec;
   /** Projected half mouth-width vector. */
   half: Vec;

@@ -17,7 +17,7 @@ import { createEdgeMarkerTracker } from "../model/edgeMarkers.ts";
 import { activeBeamFlashes, activeBlastFlashes, shipSpeedFraction } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { type GainSnapshot } from "../model/itemGains.ts";
-import { shipHeading } from "../model/nose.ts";
+import { SHIP_HEADINGS, shipHeading } from "../model/nose.ts";
 import { projectileOpacity } from "../model/playerProjectiles.ts";
 import { direction } from "../model/shipPhysics.ts";
 import { type StoryNoses } from "../model/storyShips.ts";
@@ -112,8 +112,15 @@ import {
 } from "./sceneUi.ts";
 import { drawCurrents, drawJobs, drawStoryShips, drawWhirlpoolProjects } from "./sceneWorld.ts";
 import { StoryShell } from "./shell.ts";
-import { loadsOnDemand, selectPaintedShipAsset } from "./shipArt.ts";
-import { type EngineJets, engineJets, jetTriangles, levelLayers } from "./shipJets.ts";
+import { hasShipHeadings, loadsOnDemand, selectPaintedShipAsset } from "./shipArt.ts";
+import {
+  type EngineJets,
+  engineJets,
+  jetTriangles,
+  levelLayers,
+  readEngineJets,
+  shipJetDirection,
+} from "./shipJets.ts";
 import { Silhouettes } from "./silhouettes.ts";
 import { FALLBACK_SPACE_PALETTE, type SpacePalette } from "./spacePalette.ts";
 import { spriteOwner, staleSpriteKeys } from "./spriteKeys.ts";
@@ -150,6 +157,7 @@ export class GameScene extends Scene {
   held: { readonly flight: object; readonly snapshot: GainSnapshot } | undefined;
   jets!: GameObjects.Graphics;
   shipJets: EngineJets | undefined;
+  shipRetroJets: EngineJets | undefined;
   /** Shots and feedback draw above enemy sprites. */
   overlay!: GameObjects.Graphics;
   edgeMarkerInk!: GameObjects.Graphics;
@@ -479,6 +487,7 @@ export class GameScene extends Scene {
     this.load.json("art-manifest", "/art/manifest.json");
     this.load.json("destruction", DESTRUCTION_PATH);
     this.load.json("ship-jets", "/art/ship-jets.json");
+    this.load.json("ship-retro-jets", "/art/ship-retro-jets.json");
     preloadTouchChrome(this);
   }
 
@@ -490,6 +499,11 @@ export class GameScene extends Scene {
     this.holdSource = false;
     this.emergencyReturn.cancel();
     buildScene(this);
+    const retro = readEngineJets(this.cache.json.get("ship-retro-jets"));
+    this.shipRetroJets =
+      retro?.headings.length === SHIP_HEADINGS && hasShipHeadings(this.shipAssets)
+        ? retro
+        : undefined;
     const chipColor = () => {
       const color = this.asteroidArt?.stone[1];
       return color ? hexNumber(color) : this.palette.obstacle;
@@ -890,12 +904,13 @@ export class GameScene extends Scene {
     drawFeedback(this);
     this.ship.setPosition(SCREEN.width / 2, SCREEN.height / 2);
     // Jets and thrust frames share the 1 unit/s thrust threshold.
-    const thrusting = Math.hypot(flight.velocity.x, flight.velocity.y) > 1;
-    const speed = thrusting ? shipSpeedFraction(CONTENT, flight) : 0;
+    const travel = shipJetDirection(flight.facing, flight.velocity);
+    const activeJets = travel === "reverse" ? this.shipRetroJets : this.shipJets;
+    const speed = travel ? shipSpeedFraction(CONTENT, flight) : 0;
     const ship = selectPaintedShipAsset(
       this.shipAssets,
       paintInUse(this),
-      !this.shipJets && speed > 0,
+      !activeJets && travel === "forward" && speed > 0,
       flight.facing,
     );
     this.ship.setTexture(ship?.id ?? "ship");
@@ -905,7 +920,7 @@ export class GameScene extends Scene {
     this.ship.setRotation(0);
     keylineSprite(this, "ship", "player-ship", this.ship);
     const flames: Vec[] = [];
-    if (this.shipJets && ship?.directionIndex !== undefined) {
+    if (activeJets && ship?.directionIndex !== undefined) {
       this.jets.setPosition(this.ship.x, this.ship.y);
       this.jetKeyline.setPosition(this.ship.x, this.ship.y);
       const display = {
@@ -916,10 +931,11 @@ export class GameScene extends Scene {
       // Ada's jets take her Engine level's layers; a light field swaps in Art's dark layers for
       // that level, with no halo, keylined with the hull.
       const engine = flight.levels.engine;
-      const level = engineJets(this.shipJets, engine);
-      const jets = this.light
-        ? { ...level, layers: levelLayers(LIGHT_FIELD.jets.shipLevels, engine) }
-        : level;
+      const level = engineJets(activeJets, engine);
+      const jets =
+        this.light && travel !== "reverse"
+          ? { ...level, layers: levelLayers(LIGHT_FIELD.jets.shipLevels, engine) }
+          : level;
       const keyline = this.light && LIGHT_FIELD.keylined.includes("ship");
       for (const { alpha, color, points } of jetTriangles(
         jets,
