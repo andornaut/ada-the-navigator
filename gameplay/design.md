@@ -6,10 +6,10 @@ outside the current version. These documents describe intended behavior; they do
 not claim that features are implemented.
 
 Ada is a curious, intelligent and kind 12-year-old girl living at home on Earth with
-her mom Trista, her dad Bin (bald), two cats (Gadget, a ginger tabby, and Kiwi, a grey tabby) and her dog
-Penny. Story pages call her parents Mom and Dad, and their name tabs read Mom
-and Dad. She enjoys finding, digging up and
-polishing rocks.
+her mom Trista, her dad Bin (bald), two cats (Gadget, a black cat, and Kiwi, a grey
+tabby with irregular dark flecks and no white belly) and her dog Penny. Story
+pages call her parents Mom and Dad, and their name tabs read Trista and Bin. She
+enjoys finding, digging up and polishing rocks.
 
 ## The rock, the ship and Astra
 
