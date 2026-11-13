@@ -5,12 +5,6 @@
     "sleep": "story-ada-room-sleep",
     "to": "story-ada-room-morning-cats",
     "overlays": {
-      "story-ada-room-sleep-figures": {
-        "at": {
-          "x": 168,
-          "y": 325
-        }
-      },
       "story-ada-room-sleep-glow": {
         "at": {
           "x": 361,
@@ -20,9 +14,9 @@
     },
     "steps": [
       {
-        "overlay": "story-ada-room-sleep-figures",
-        "fadeMs": 400,
-        "holdMs": 0
+        "background": "story-ada-room-night",
+        "fadeMs": 0,
+        "holdMs": 400
       },
       {
         "breath": "story-ada-room-sleep-glow",
@@ -37,7 +31,7 @@
     "durationMs": 2500,
     "reducedMotion": [
       {
-        "overlay": "story-ada-room-sleep-figures",
+        "background": "story-ada-room-night",
         "fadeMs": 0,
         "holdMs": 2000
       },
