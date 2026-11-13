@@ -20,7 +20,7 @@ import { GameScene } from "./game/scene.ts";
 import { followPageVisibility } from "./lifecycle.ts";
 import { prepareBootReveal } from "./loading/bootReveal.ts";
 import { mountLoading } from "./loading/progress.ts";
-import { gameShown, setupPhoneApp } from "./pwa/index.ts";
+import { gameShown, launchPhoneApp, setupPhoneApp } from "./pwa/index.ts";
 import { FRAME_TURN } from "./view/frameTurn.ts";
 
 const parent = document.getElementById("game-canvas");
@@ -38,55 +38,58 @@ if (app) {
 }
 // At once: the browser's install prompt can come before the game has drawn anything.
 setupPhoneApp();
-const bootReveal = prepareBootReveal({ document, window }, parent, gameShown);
+// This document must not construct the old game or read its save after a staged switch.
+if ((await launchPhoneApp()) !== "reloading") {
+  const bootReveal = prepareBootReveal({ document, window }, parent, gameShown);
 
-// The canvas fills the play area with its backing in device pixels, up to MAX_RENDER_SCALE per CSS
-// pixel (followFrameTurn's deviceResolution, Scale.NONE); above that the browser upscales it
-// pixelated. Cameras zoom the logical view to fit (src/game/playCamera.ts). Every texture
-// samples nearest unless src/game/textures.ts makes it linear, and nothing is smoothed implicitly.
-const game = new Game({
-  backgroundColor: "#101010",
-  callbacks: {
-    postBoot(bootedGame) {
-      bootedGame.canvas.setAttribute("aria-hidden", "true");
-      followFrameTurn(FRAME_TURN, bootedGame.scale.gameSize, parent, bootedGame, {
-        deviceResolution: { max: MAX_RENDER_SCALE },
-      });
-      const stop = followPageVisibility(window, document, bootedGame.loop);
-      bootedGame.events.once(Core.Events.DESTROY, () => {
-        stop();
-        bootReveal.dispose();
-      });
-      // Scene creation supplies the title art URLs; the reveal owns first-visit registration.
-      bootedGame.scene.getScene("game")?.events.once(Scenes.Events.CREATE, bootReveal.ready);
+  // The canvas fills the play area with its backing in device pixels, up to MAX_RENDER_SCALE per CSS
+  // pixel (followFrameTurn's deviceResolution, Scale.NONE); above that the browser upscales it
+  // pixelated. Cameras zoom the logical view to fit (src/game/playCamera.ts). Every texture
+  // samples nearest unless src/game/textures.ts makes it linear, and nothing is smoothed implicitly.
+  const game = new Game({
+    backgroundColor: "#101010",
+    callbacks: {
+      postBoot(bootedGame) {
+        bootedGame.canvas.setAttribute("aria-hidden", "true");
+        followFrameTurn(FRAME_TURN, bootedGame.scale.gameSize, parent, bootedGame, {
+          deviceResolution: { max: MAX_RENDER_SCALE },
+        });
+        const stop = followPageVisibility(window, document, bootedGame.loop);
+        bootedGame.events.once(Core.Events.DESTROY, () => {
+          stop();
+          bootReveal.dispose();
+        });
+        // Scene creation supplies the title art URLs; the reveal owns first-visit registration.
+        bootedGame.scene.getScene("game")?.events.once(Scenes.Events.CREATE, bootReveal.ready);
+      },
     },
-  },
-  height: SCREEN.height,
-  // The kit's loader timeout and retries; its loader watch gives each file the timeout
-  // (src/game/scene.ts).
-  loader: LOADER_CONFIG,
-  parent,
-  // Lower input-to-screen delay: a desynchronized context lets the browser show a frame without
-  // waiting on the page compositor, and the high-performance GPU where there is a choice.
-  render: {
-    antialias: false,
-    antialiasGL: false,
-    desynchronized: true,
-    powerPreference: "high-performance",
-    roundPixels: true,
-  },
-  scale: { autoCenter: Scale.CENTER_HORIZONTALLY, mode: Scale.NONE },
-  scene: [GameScene],
-  // WebGL only: the build's Phaser has no Canvas renderer (src/tools/phaserBuild.ts).
-  type: WEBGL,
-  width: SCREEN.width,
-});
-// A crash keeps the last save and stops the game under the crash screen.
-CRASH_SCREEN.stopGameOnCrash(() => {
-  stopSaving();
-  game.pause();
-});
+    height: SCREEN.height,
+    // The kit's loader timeout and retries; its loader watch gives each file the timeout
+    // (src/game/scene.ts).
+    loader: LOADER_CONFIG,
+    parent,
+    // Lower input-to-screen delay: a desynchronized context lets the browser show a frame without
+    // waiting on the page compositor, and the high-performance GPU where there is a choice.
+    render: {
+      antialias: false,
+      antialiasGL: false,
+      desynchronized: true,
+      powerPreference: "high-performance",
+      roundPixels: true,
+    },
+    scale: { autoCenter: Scale.CENTER_HORIZONTALLY, mode: Scale.NONE },
+    scene: [GameScene],
+    // WebGL only: the build's Phaser has no Canvas renderer (src/tools/phaserBuild.ts).
+    type: WEBGL,
+    width: SCREEN.width,
+  });
+  // A crash keeps the last save and stops the game under the crash screen.
+  CRASH_SCREEN.stopGameOnCrash(() => {
+    stopSaving();
+    game.pause();
+  });
 
-if (import.meta.hot) {
-  import.meta.hot.dispose(() => game.destroy(true));
+  if (import.meta.hot) {
+    import.meta.hot.dispose(() => game.destroy(true));
+  }
 }

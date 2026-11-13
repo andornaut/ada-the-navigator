@@ -331,7 +331,11 @@ describe("boot image readiness", () => {
       waiting,
     });
     const register = vi.fn(async () => registration);
-    const container = Object.assign(new EventTarget(), { controller: {}, register });
+    const container = Object.assign(new EventTarget(), {
+      controller: {} as unknown,
+      getRegistration: async () => undefined,
+      register,
+    });
     const reload = vi.fn();
     const onRequireNewer = vi.fn();
     const play = startOfflinePlay(
@@ -346,13 +350,18 @@ describe("boot image readiness", () => {
         visibilitySource: Object.assign(new EventTarget(), { visibilityState: "visible" as const }),
       },
     );
+    await play.launchReady();
     expect(register).toHaveBeenCalledExactlyOnceWith("/sw.js", { scope: "/" });
     await settle();
     expect(f.attributes.has(PENDING_ATTRIBUTE)).toBe(true);
     play.flow.requireNewer();
     expect(onRequireNewer).toHaveBeenLastCalledWith("updating");
-    expect(postMessage).toHaveBeenCalledExactlyOnceWith("skip-waiting");
+    expect(postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "skip-waiting" }),
+      expect.any(Array),
+    );
     expect(reload).not.toHaveBeenCalled();
+    container.controller = waiting;
     container.dispatchEvent(new Event("controllerchange"));
     container.dispatchEvent(new Event("controllerchange"));
     expect(reload).toHaveBeenCalledOnce();
@@ -382,6 +391,7 @@ describe("boot image readiness", () => {
       {
         container: Object.assign(new EventTarget(), {
           controller: null,
+          getRegistration: async () => undefined,
           register,
         }),
         eventTarget: new EventTarget(),

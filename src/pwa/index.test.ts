@@ -8,7 +8,11 @@ const offline = vi.hoisted(() => {
     requireNewer: vi.fn(),
     setOfferVisible: vi.fn(),
   };
-  const play = { flow, registrationReady: vi.fn() };
+  const play = {
+    flow,
+    launchReady: vi.fn<() => Promise<"blocked" | "continue" | "reloading">>(),
+    registrationReady: vi.fn(),
+  };
   return {
     play,
     start: vi.fn(
@@ -101,6 +105,7 @@ beforeEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
   vi.stubEnv("PROD", true);
+  offline.play.launchReady.mockResolvedValue("continue");
 });
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -123,6 +128,28 @@ describe("offline play", () => {
     expect(offline.play.registrationReady).not.toHaveBeenCalled();
     pwa.gameShown();
     expect(offline.play.registrationReady).toHaveBeenCalledOnce();
+  });
+
+  it.each(["continue", "blocked", "reloading"] as const)(
+    "returns the kit launch result %s before registrationReady",
+    async (result) => {
+      stubDevice({});
+      offline.play.launchReady.mockResolvedValue(result);
+      const pwa = await import("./index.ts");
+      pwa.setupPhoneApp();
+      expect(await pwa.launchPhoneApp()).toBe(result);
+      expect(offline.play.launchReady).toHaveBeenCalledOnce();
+      expect(offline.play.registrationReady).not.toHaveBeenCalled();
+    },
+  );
+
+  it("continues without a service worker in development", async () => {
+    vi.stubEnv("PROD", false);
+    stubDevice({});
+    const pwa = await import("./index.ts");
+    pwa.setupPhoneApp();
+    expect(await pwa.launchPhoneApp()).toBe("continue");
+    expect(offline.play.launchReady).not.toHaveBeenCalled();
   });
 
   it("wires the start screen and update offer to the kit's update flow", async () => {

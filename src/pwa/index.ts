@@ -3,9 +3,9 @@
 // the page loads; the Settings Install row reads the install functions below, and the start
 // screen the update offer and the back guard's arming.
 //
-// The game starts at once from the version on disk. A newer version downloads in the background
-// and activates only through the start screen's update offer, never on its own; a save written
-// by a newer version requires it (requireNewerVersion).
+// Before game construction or save access, launchPhoneApp checks a build already staged at
+// document launch. Later updates activate through Update now; a newer save is the automatic
+// exception (requireNewerVersion). First visits register only after the prepared reveal.
 import { appCannotClose } from "@andornaut/game-kit/web/pwa/appWindow";
 import {
   backCloseWatcher,
@@ -27,6 +27,7 @@ import {
 } from "@andornaut/game-kit/web/pwa/dom/installFlow";
 import {
   browserOfflinePage,
+  type LaunchResult,
   type OfflinePlay,
   startOfflinePlay,
 } from "@andornaut/game-kit/web/pwa/dom/offlinePlay";
@@ -70,7 +71,9 @@ let onRequired: ((state: RequiredUpdateState) => void) | undefined;
 // The start screen's update offer: Update now switches to the waiting version and reloads; a
 // defer keeps the current one until the next arrival at the start screen.
 export const updateOffer = createUpdateOffer(
-  () => offlinePlay?.flow.accept(),
+  () => {
+    void offlinePlay?.flow.accept();
+  },
   () => offlinePlay?.flow.dismissOffer(),
 );
 
@@ -91,9 +94,9 @@ function requiredUpdate(state: RequiredUpdateState): void {
 }
 
 // The production build only: the dev server has no sw.js, and a worker would serve stale modules
-// over hot reloads. A page a version controls registers now, so its update check runs while the
-// game loads; a first visit registers once the game shows (gameShown), so the precache does not
-// compete with the game's own downloads.
+// over hot reloads. Controlled pages register after launchReady snapshots any staged worker.
+// A first visit registers once the game shows (gameShown), so the precache does not compete
+// with the game's own downloads.
 function setupOfflinePlay(): void {
   const page = import.meta.env.PROD ? browserOfflinePage() : undefined;
   if (page === undefined) {
@@ -254,6 +257,12 @@ export function requireNewerVersion(onState: (state: RequiredUpdateState) => voi
   } else {
     requiredUpdate("unavailable");
   }
+}
+
+// Call once before constructing the game or touching its save. A blocked switch permits the
+// existing build to boot and leaves Update now available for retry; reloading prevents boot.
+export function launchPhoneApp(): Promise<LaunchResult> {
+  return offlinePlay?.launchReady() ?? Promise.resolve("continue");
 }
 
 // The game's first screen has drawn with its art loaded: a first visit registers the service

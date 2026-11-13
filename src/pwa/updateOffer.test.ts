@@ -25,7 +25,10 @@ function enterRoomPage(model: GameModel): void {
 // wired the way index.ts wires it. hide and show move the page out of view and back.
 async function updating(waiting: boolean) {
   const worker = Object.assign(new EventTarget(), {
-    postMessage: vi.fn(() => container.dispatchEvent(new Event("controllerchange"))),
+    postMessage: vi.fn(() => {
+      container.controller = worker;
+      container.dispatchEvent(new Event("controllerchange"));
+    }),
     state: "installed",
   });
   const registration = Object.assign(new EventTarget(), {
@@ -35,7 +38,9 @@ async function updating(waiting: boolean) {
     waiting: waiting ? worker : null,
   });
   const container = Object.assign(new EventTarget(), {
-    controller: {},
+    controller: {} as unknown,
+    // No staged worker at genuine launch; a later register discovers the candidate.
+    getRegistration: vi.fn(async () => undefined),
     register: vi.fn(() => Promise.resolve(registration)),
   });
   const visibilitySource = Object.assign(new EventTarget(), {
@@ -54,7 +59,7 @@ async function updating(waiting: boolean) {
     () => dismiss(),
   );
   offer.subscribe(shown);
-  const { flow } = startOfflinePlay(
+  const play = startOfflinePlay(
     { onRequireNewer: vi.fn(), onUpdateShown: offer.setVisible, serviceWorkerUrl: "/sw.js" },
     {
       container,
@@ -66,7 +71,11 @@ async function updating(waiting: boolean) {
       visibilitySource,
     },
   );
-  accept = () => flow.accept();
+  await play.launchReady();
+  const { flow } = play;
+  accept = () => {
+    void flow.accept();
+  };
   dismiss = () => flow.dismissOffer();
   const start = trackStartScreen(flow);
   await settle();
@@ -191,15 +200,39 @@ describe("start-screen update offer", () => {
     start.shown(true);
     offer.defer();
     flow.requireNewer();
-    expect(worker.postMessage).toHaveBeenCalledWith("skip-waiting");
+    expect(worker.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "skip-waiting" }),
+      expect.any(Array),
+    );
     expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it("restores a blocked async Update now offer for an explicit retry", async () => {
+    const { offer, reload, shown, start, worker } = await updating(true);
+    start.shown(true);
+    worker.postMessage.mockImplementationOnce(() => {
+      throw new Error("switch refused");
+    });
+    offer.accept();
+    offer.accept();
+    await settle();
+    expect(reload).not.toHaveBeenCalled();
+    expect(worker.postMessage).toHaveBeenCalledOnce();
+    expect(shown).toHaveBeenLastCalledWith(true);
+    offer.accept();
+    await settle();
+    expect(reload).toHaveBeenCalledOnce();
+    expect(worker.postMessage).toHaveBeenCalledTimes(2);
   });
 
   it("reloads into the waiting version only on Update now", async () => {
     const { offer, reload, start, worker } = await updating(true);
     start.shown(true);
     offer.accept();
-    expect(worker.postMessage).toHaveBeenCalledWith("skip-waiting");
+    expect(worker.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "skip-waiting" }),
+      expect.any(Array),
+    );
     expect(reload).toHaveBeenCalledTimes(1);
   });
 });
