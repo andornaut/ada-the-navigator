@@ -280,10 +280,11 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   achievementsDisc.setAttribute("aria-hidden", "true");
   achievementsButton.append(achievementsDisc);
   achievementsButton.addEventListener("click", () => achievements.open());
-  // Settings opens from the Paused card. Its standalone HUD position holds Achievements.
-  settings.openButton.replaceWith(achievementsButton);
+  // Title navigation tabs through Achievements, Settings, then Exit where offered.
+  settings.openButton.before(achievementsButton);
+  settings.openButton.hidden = true;
   settings.root.classList.add("ada-no-settings-button");
-  // The start screen's Exit follows Achievements, where the game offers to leave.
+  // Exit keeps its existing far-right position after Settings.
   const exitButton = options.exit ? document.createElement("button") : undefined;
   if (exitButton && options.exit) {
     const { label, onExit } = options.exit;
@@ -298,7 +299,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     exitDisc.setAttribute("aria-hidden", "true");
     exitButton.append(exitDisc);
     exitButton.addEventListener("click", onExit);
-    achievementsButton.after(exitButton);
+    settings.openButton.after(exitButton);
   }
   const pauseButton = createPauseButton(settings.root, options.pause.buttonLabel, () =>
     pause.open(),
@@ -845,9 +846,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       pausable = view.place !== null;
       pause.setState(view);
     },
-    setSettingsButton() {
-      settings.openButton.hidden = true;
-      settings.root.classList.add("ada-no-settings-button");
+    setSettingsButton(shown) {
+      settings.openButton.hidden = !shown;
+      settings.root.classList.toggle("ada-no-settings-button", !shown);
     },
     setStatus(view) {
       statusView = view;

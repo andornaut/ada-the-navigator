@@ -181,11 +181,16 @@ describe("conversation exposure under covering cards", () => {
 });
 
 describe("universal pause caller", () => {
-  it("keeps Pause absent on the title and loading screens, with no Settings shortcut", () => {
+  it("keeps Pause absent on the title and loading screens, with Settings only on the title", () => {
     const model = new GameModel(CONTENT);
     expect(pauseView(model).place).toBeNull();
     expect(pauseView(model, "loading").place).toBeNull();
-    expect(runInContext(controlArgument("setSettingsButton"), createContext({}))).toBe(false);
+    expect(runInContext(controlArgument("setSettingsButton"), createContext({ start: true }))).toBe(
+      true,
+    );
+    expect(
+      runInContext(controlArgument("setSettingsButton"), createContext({ start: false })),
+    ).toBe(false);
   });
 
   it("keeps Pause and the ship available during flight dialogue and docking", () => {

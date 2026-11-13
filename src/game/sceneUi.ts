@@ -1089,7 +1089,7 @@ export function refreshScene(scene: UiContext): void {
     keepScreenOn(playing);
   }
   armBack(scene);
-  scene.controls.setSettingsButton(false);
+  scene.controls.setSettingsButton(start);
   scene.controls.setAchievementsButton(start);
   scene.controls.setExitButton(start);
   const pauseModel: GameModel & { readonly pauseMapAvailable?: boolean } = scene.model;
