@@ -772,9 +772,8 @@ export function buildScene(scene: UiContext): void {
     onJump: () => {
       const selected = scene.model.galaxyMapSelection;
       if (scene.model.galaxyMapStays) {
-        // Stay here: both maps close and the same flight resumes, with no jump.
-        apply(() => scene.model.jump());
-        scene.controls.closePause();
+        // Stay here returns to the local map that opened this galaxy map.
+        closeGalaxyMap();
       } else if (selected !== null && scene.model.isUnlocked(selected)) {
         // The map is the jump's source: its panel, actions and close X go at once.
         if (scene.quantum && !scene.jumping) {
