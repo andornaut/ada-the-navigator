@@ -265,10 +265,14 @@ describe("status pill count", () => {
     readonly style = { setProperty: vi.fn() } as Record<string, unknown>;
     textContent = "";
     parent?: FakeNode;
-    readonly animations: { frames: unknown; options: unknown }[] = [];
+    readonly animations: { finish: () => void; frames: unknown; options: unknown }[] = [];
     animate(frames?: unknown, options?: unknown): { cancel: () => void; finished: Promise<void> } {
-      this.animations.push({ frames, options });
-      return { cancel: vi.fn(), finished: new Promise<void>(() => {}) };
+      let finish!: () => void;
+      const finished = new Promise<void>((resolve) => {
+        finish = resolve;
+      });
+      this.animations.push({ finish, frames, options });
+      return { cancel: vi.fn(), finished };
     }
     append(...nodes: FakeNode[]): void {
       for (const node of nodes) {
@@ -387,9 +391,65 @@ describe("status pill count", () => {
       status.resetShieldOreSpent(500);
       status.setStatus({ ...view, ore: 0, shieldOreSpent: 500 }, 64);
       expect(tick()).toBeUndefined();
-      expect(slot("ore").hidden).toBe(true);
+      expect(slot("ore").hidden).toBe(false);
     },
   );
+
+  it.each([
+    null,
+    { kind: "carrying", label: "Carrying: Spare parts" },
+    { kind: "towing", label: "Towing: Craft" },
+  ] as const)(
+    "keeps resource counters visible without pickup feedback while aboard is %j",
+    (aboard) => {
+      const { count, slot, status } = pill();
+      for (const [time, amount] of [
+        [0, 0],
+        [16, 5],
+        [10_000, 5],
+        [20_000, 0],
+      ] as const) {
+        status.setStatus(
+          {
+            ...full,
+            aboard,
+            ore: amount,
+            oreLabel: "Ore",
+            shieldOreSpent: 0,
+            stardust: amount,
+            stardustLabel: "Stardust",
+          },
+          time,
+        );
+        for (const kind of ["ore", "stardust"]) {
+          expect(slot(kind).hidden).toBe(false);
+          expect(count(kind).children[0]!.data).toBe(String(amount));
+        }
+      }
+    },
+  );
+
+  it("keeps zero ore visible after the final debit animation finishes", async () => {
+    const { count, slot, status } = pill();
+    const view = {
+      ...full,
+      aboard: null,
+      ore: 10,
+      oreLabel: "Ore",
+      shieldOreSpent: 0,
+      stardust: 0,
+      stardustLabel: "Stardust",
+    };
+    status.setStatus(view, 0);
+    status.setStatus({ ...view, ore: 0, shieldOreSpent: 10 }, 16);
+    const tick = slot("ore").children.find((node) => node.className === "ada-status-tick")!;
+    tick.animations[0]!.finish();
+    await Promise.resolve();
+    status.setStatus({ ...view, ore: 0, shieldOreSpent: 10 }, 10_000);
+    expect(slot("ore").children).not.toContain(tick);
+    expect(slot("ore").hidden).toBe(false);
+    expect(count("ore").children[0]!.data).toBe("0");
+  });
 
   it("pads the pill 6 at each end, sets each count 4 from its icon and each divider 6 apart", () => {
     const style = (selector: string) =>
@@ -473,10 +533,10 @@ describe("status pill count", () => {
 describe("status pill cargo segments", () => {
   const carrying = { kind: "carrying", label: "Carrying: Spare parts" } as const;
 
-  it("show ore while Ada holds some, then what she carries or tows, ore first", () => {
-    expect(statusSegments({ aboard: null, ore: 0 })).toEqual([]);
+  it("always shows ore, then what Ada carries or tows", () => {
+    expect(statusSegments({ aboard: null, ore: 0 })).toEqual(["ore"]);
     expect(statusSegments({ aboard: null, ore: 3 })).toEqual(["ore"]);
-    expect(statusSegments({ aboard: carrying, ore: 0 })).toEqual(["aboard"]);
+    expect(statusSegments({ aboard: carrying, ore: 0 })).toEqual(["ore", "aboard"]);
     expect(statusSegments({ aboard: carrying, ore: 3 })).toEqual(["ore", "aboard"]);
   });
 

@@ -428,7 +428,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     const aboard = Boolean(statusView?.aboard);
     // The pill's width as it draws now, from the counts it shows.
     const width = statusPillWidth(
-      { ore: ore > 0 ? pillCount(ore) : null, stardust: pillCount(statusView?.stardust ?? 0) },
+      { ore: pillCount(ore), stardust: pillCount(statusView?.stardust ?? 0) },
       aboard,
     );
     const count = weaponIds.length;

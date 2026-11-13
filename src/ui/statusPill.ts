@@ -260,10 +260,7 @@ const cargoIcon = (url: string) => `background:url('${url}') 0 0 / 100% 100% no-
 
 /** The pill's segments after the Stardust count, in order: ore, then what Ada carries or tows. */
 export function statusSegments(view: Pick<StatusView, "aboard" | "ore">): ("aboard" | "ore")[] {
-  return [
-    ...(view.ore > 0 ? (["ore"] as const) : []),
-    ...(view.aboard ? (["aboard"] as const) : []),
-  ];
+  return ["ore", ...(view.aboard ? (["aboard"] as const) : [])];
 }
 
 // Cut the bar out of the low panel so its two original ink layers still composite over the field.
