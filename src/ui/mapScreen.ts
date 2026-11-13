@@ -58,7 +58,10 @@ export function questEndpoints(places: readonly MapPlace[], line: QuestLine) {
   }
   return [
     ...(line.source === undefined ? [] : [{ id: line.source, kind: "source" as const }]),
-    { id: line.target, kind: "target" as const },
+    {
+      id: line.destination === undefined ? line.target : line.destination,
+      kind: "target" as const,
+    },
   ].map(({ id, kind }) => ({ kind, place: places.find((place) => place.id === id) ?? null }));
 }
 

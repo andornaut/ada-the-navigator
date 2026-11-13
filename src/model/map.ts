@@ -191,6 +191,7 @@ export interface MapPlace {
  * to its target, the id of the target's chip once mapped, else null.
  */
 export interface QuestDetails {
+  readonly destination?: string | null;
   readonly description?: string;
   readonly nextStep?: string;
   readonly progress?: string;
