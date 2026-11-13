@@ -38,39 +38,6 @@ import { clampAmmo, UPGRADE_WEAPONS } from "./weapons.ts";
 /** The save format this build writes and reads. */
 export const SAVE_VERSION: GameState["version"] = 12;
 
-/**
- * Whether saved was written by a newer build: its version is above SAVE_VERSION. Such a save is
- * never read or overwritten here; the game requires the newer version first. Any other save this
- * build cannot read, older or malformed, resets to a new game.
- */
-export function newerSave(saved: unknown): boolean {
-  let value = saved;
-  if (typeof saved === "string") {
-    try {
-      value = JSON.parse(saved) as unknown;
-    } catch {
-      return false;
-    }
-  }
-  return record(value) && finite(value.version) && value.version > SAVE_VERSION;
-}
-
-/** Storage access can fail in private browsing or when quotas are exhausted. */
-export function readSave(storage: Pick<Storage, "getItem">, key: string): unknown {
-  try {
-    return JSON.parse(storage.getItem(key) ?? "null") as unknown;
-  } catch {
-    return null;
-  }
-}
-export function writeSave(storage: Pick<Storage, "setItem">, key: string, value: string): boolean {
-  try {
-    storage.setItem(key, value);
-    return true;
-  } catch {
-    return false;
-  }
-}
 function record(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }

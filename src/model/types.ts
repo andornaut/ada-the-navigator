@@ -365,6 +365,12 @@ export interface GameState {
   /** Unlocked achievements and their counts, which Restart keeps. */
   achievements: AchievementState;
 }
+/** The effective persisted model state, including suspended interaction and story continuation. */
+export interface GameSave extends GameState {
+  depletionContinuation?: boolean | undefined;
+  pendingInteraction?: { dialogue: DialogueState; galaxy: GalaxyNumber } | undefined;
+}
+
 export type FlightEvent =
   | { type: "depleted" }
   /** The equipped weapon ran out of ammunition and Ada switched to Laser. */

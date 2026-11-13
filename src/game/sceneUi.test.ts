@@ -280,3 +280,47 @@ describe("scene cheat action wiring", () => {
     session.dispose();
   });
 });
+
+describe("canonical save caller", () => {
+  it("passes the full effective snapshot and reflects asynchronous save status", async () => {
+    const model = flight();
+    const held = new GameModel(CONTENT, model.save());
+    expect(held.state.mode).toBe("home");
+    const save = vi
+      .fn()
+      .mockResolvedValueOnce({ reason: "quota", status: "unavailable" })
+      .mockResolvedValueOnce({ status: "saved" });
+    const scene = { model: held, savingUnavailable: false, shell: { setSavingAvailable: vi.fn() } };
+    const context = createContext({ saves: { save } });
+    const flush = runInContext(callback("flushScene"), context) as (
+      value: typeof scene,
+    ) => Promise<void>;
+    await flush(scene);
+    expect(save.mock.calls[0]![0].mode).toBe("space");
+    expect(save.mock.calls[0]![0].flight).toEqual(model.state.flight);
+    expect(scene.savingUnavailable).toBe(true);
+    expect(scene.shell.setSavingAvailable).toHaveBeenLastCalledWith(false);
+    await flush(scene);
+    expect(scene.savingUnavailable).toBe(false);
+    expect(scene.shell.setSavingAvailable).toHaveBeenLastCalledWith(true);
+  });
+
+  it.each([true, false])(
+    "blocks all model action dispatch for a newer-save placeholder=%s",
+    (newer) => {
+      const action = vi.fn();
+      const scene = { controls: { reset: vi.fn() }, emergencyReturn: { active: false } };
+      const context = createContext({
+        flushScene: vi.fn(),
+        newer,
+        observeFeedback: vi.fn(),
+        refreshScene: vi.fn(),
+        scene,
+      });
+      const apply = runInContext(callback("apply"), context) as (operation: () => void) => void;
+      apply(action);
+      expect(action).toHaveBeenCalledTimes(newer ? 0 : 1);
+      expect(scene.controls.reset).toHaveBeenCalledTimes(newer ? 0 : 1);
+    },
+  );
+});

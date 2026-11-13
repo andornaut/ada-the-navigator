@@ -6,7 +6,7 @@ import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
 import { createEnemy, stepDebris, stepEnemy } from "./enemyAi.ts";
 import { GameModel } from "./game.ts";
-import { newerSave, readSave, restoreSave, SAVE_VERSION, writeSave } from "./save.ts";
+import { restoreSave, SAVE_VERSION } from "./save.ts";
 import { stationsNear } from "./stations.ts";
 import type { FlightState, GameState, PickupRelease, SpaceObject } from "./types.ts";
 
@@ -25,7 +25,7 @@ describe("save boundary", () => {
     model.startGalaxy(1);
     playOpening(model);
     for (const change of [
-      // An earlier or later save format resets rather than migrating.
+      // Whole-state validation accepts only the current save schema.
       { version: SAVE_VERSION - 1 },
       { version: SAVE_VERSION + 1 },
       { flight: {} },
@@ -79,18 +79,6 @@ describe("save boundary", () => {
     const saved = JSON.parse(model.save()) as { flight: Record<string, unknown> };
     saved.flight.ammo = 7;
     expect(restoreSave(saved)).toBeNull();
-  });
-  it("tolerates blocked storage reads and writes", () => {
-    const storage = {
-      getItem() {
-        throw new Error("blocked");
-      },
-      setItem() {
-        throw new Error("quota");
-      },
-    };
-    expect(readSave(storage, "save")).toBeNull();
-    expect(writeSave(storage, "save", "{} ")).toBe(false);
   });
 });
 
@@ -762,23 +750,6 @@ describe("delivery save boundary", () => {
 });
 
 describe("a save from a newer version", () => {
-  it("is told apart from this build's, older and malformed saves", () => {
-    expect(newerSave({ version: SAVE_VERSION + 1 })).toBe(true);
-    expect(newerSave(JSON.stringify({ mode: "home", version: SAVE_VERSION + 6 }))).toBe(true);
-    for (const saved of [
-      { version: SAVE_VERSION },
-      { version: 0 },
-      { version: "2" },
-      { version: Number.NaN },
-      {},
-      null,
-      "not json",
-      [2],
-    ]) {
-      expect(newerSave(saved), JSON.stringify(saved)).toBe(false);
-    }
-  });
-
   it("is never restored, so the game cannot read or replace it", () => {
     expect(restoreSave({ mode: "home", version: SAVE_VERSION + 1 })).toBeNull();
   });

@@ -1,30 +1,32 @@
-import { readSave as readStoredSave, writeSave as writeStoredSave } from "../model/save.ts";
+import { saveStore } from "@andornaut/game-kit/save/saveStore";
+import type { SaveFormat } from "@andornaut/game-kit/save/versionedSave";
+import { localSaveStorage } from "@andornaut/game-kit/web/save/dom/localSaveStorage";
 
-const KEY = "ada-the-navigator.save";
+import { newGameState } from "../model/game.ts";
+import { restoreSave, SAVE_VERSION } from "../model/save.ts";
+import type { GameSave } from "../model/types.ts";
 
-// Cleared by a crash (src/main.ts): the game's state may be corrupt, so the last save stands.
-let saving = true;
+export const SAVE_KEYS = {
+  backup: "ada-the-navigator.save.backup",
+  save: "ada-the-navigator.save",
+} as const;
 
-/** Writes nothing more for the rest of this page's life; later writes report success. */
-export function stopSaving(): void {
-  saving = false;
-}
+export const SAVE_FORMAT: SaveFormat<GameSave> = {
+  decode(stored) {
+    const save = restoreSave(stored);
+    return save
+      ? { ok: true, value: save }
+      : { ok: false, reason: "The stored Ada save is invalid" };
+  },
+  encode(save) {
+    return save.version === SAVE_VERSION
+      ? { ok: true, value: { ...save } }
+      : { ok: false, reason: "The Ada save format is invalid" };
+  },
+  fresh: newGameState,
+  migrations: {},
+  version: SAVE_VERSION,
+};
 
-export function readSave(): unknown {
-  try {
-    return readStoredSave(localStorage, KEY);
-  } catch {
-    return undefined;
-  }
-}
-
-export function writeSave(saved: string): boolean {
-  if (!saving) {
-    return true;
-  }
-  try {
-    return writeStoredSave(localStorage, KEY, saved);
-  } catch {
-    return false;
-  }
-}
+/** One page-session store owns storage, backups and permanent write fences. */
+export const saves = saveStore(localSaveStorage(), SAVE_KEYS, SAVE_FORMAT);

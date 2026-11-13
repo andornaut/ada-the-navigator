@@ -1,4 +1,5 @@
 import { type LoaderWatch, watchLoader } from "@andornaut/game-kit/load/phaser/watchLoader";
+import type { StoreLoadResult } from "@andornaut/game-kit/save/saveStore";
 import { GameObjects, Loader, Scene } from "phaser";
 
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
@@ -17,7 +18,7 @@ import { type GainSnapshot } from "../model/itemGains.ts";
 import { shipHeading } from "../model/nose.ts";
 import { projectileOpacity } from "../model/playerProjectiles.ts";
 import { type StoryNoses } from "../model/storyShips.ts";
-import type { FlightInput, Vec } from "../model/types.ts";
+import type { FlightInput, GameSave, Vec } from "../model/types.ts";
 import { type ConversationBox } from "../ui/conversation.ts";
 import { createBannerLayer, type PlacedBanner } from "../ui/disabledBanner.ts";
 import { createGalaxyMap, type GalaxyMapView } from "../ui/galaxyMap.ts";
@@ -365,8 +366,10 @@ export class GameScene extends Scene {
   // kit's watch also gives every file the loader's timeout and retries failed loads in rounds.
   loads: LoaderWatch<WaitedLoad> | undefined;
 
-  constructor() {
+  readonly initialSave: StoreLoadResult<GameSave>;
+  constructor(initialSave: StoreLoadResult<GameSave>) {
     super("game");
+    this.initialSave = initialSave;
   }
 
   preload(): void {

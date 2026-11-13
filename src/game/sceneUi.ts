@@ -15,7 +15,6 @@ import type { ExchangePreview, ExchangeQuote } from "../model/exchange.ts";
 import { GameModel } from "../model/game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
-import { newerSave } from "../model/save.ts";
 import { fill, itemAbout, itemName, type ShopItem } from "../model/shop.ts";
 import type { FlightState } from "../model/types.ts";
 import {
@@ -57,7 +56,7 @@ import { enemyPartFrame, GALAXY_FAMILIES } from "./enemyArt.ts";
 import { readEnemyWeaponsArt } from "./enemyWeaponsArt.ts";
 import { TELEPORT_DISTANCE } from "./feedback.ts";
 import { lightGalaxy, readLightGalaxies } from "./lightField.ts";
-import { readSave, stopSaving, writeSave } from "./persistence.ts";
+import { saves } from "./persistence.ts";
 import { fitPlayCamera, sceneFit, shakeIntensity } from "./playCamera.ts";
 import { readProjectArt } from "./projectArt.ts";
 import { readQuantumJump } from "./quantumJump.ts";
@@ -179,6 +178,7 @@ export type UiContext = Scene &
     | "rockQueued"
     | "rockRequests"
     | "routeGalaxies"
+    | "initialSave"
     | "savingUnavailable"
     | "scale"
     | "screenOn"
@@ -213,12 +213,10 @@ export type UiContext = Scene &
   >;
 
 export function buildScene(scene: UiContext): void {
-  const saved = readSave();
-  const newer = newerSave(saved);
-  if (newer) {
-    stopSaving();
-  }
-  scene.model = new GameModel(CONTENT, newer ? null : saved);
+  const saved = scene.initialSave;
+  const newer = saved.status === "newer";
+  scene.savingUnavailable = newer || saved.status === "unavailable";
+  scene.model = new GameModel(CONTENT, newer ? undefined : saved.save);
   scene.basePalette =
     readSpacePalette(scene.cache.json.get("space-palette")) ?? FALLBACK_SPACE_PALETTE;
   scene.palette = scene.basePalette;
@@ -323,7 +321,7 @@ export function buildScene(scene: UiContext): void {
   scene.ship.setDisplaySize(ship?.displayWidth ?? 42, ship?.displayHeight ?? 42);
   scene.ship.setOrigin(ship?.pivot.x ?? 0.5, ship?.pivot.y ?? 0.5);
   const apply = (action: () => void): void => {
-    if (scene.emergencyReturn.active) {
+    if (newer || scene.emergencyReturn.active) {
       return;
     }
     action();
@@ -910,6 +908,7 @@ export function buildScene(scene: UiContext): void {
     scene.shell.dispose();
   });
   observeFeedback(scene);
+  scene.shell.setSavingAvailable(!scene.savingUnavailable);
   if (newer) {
     requireNewerVersion((state) => scene.shell.setRequiredUpdate(state));
   }
@@ -1154,8 +1153,9 @@ export function armBack(scene: UiContext): void {
   setBackArmed(!backReleased(scene.startShown, scene.settingsOpen));
 }
 
-export function flushScene(scene: UiContext): void {
-  const available = writeSave(scene.model.save());
+export async function flushScene(scene: UiContext): Promise<void> {
+  const result = await saves.save(scene.model.saveDocument());
+  const available = result.status === "saved";
   scene.shell.setSavingAvailable(available);
   scene.savingUnavailable = !available;
 }

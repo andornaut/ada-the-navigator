@@ -198,6 +198,7 @@ import type {
   FlightInput,
   FlightState,
   GalaxyProgress,
+  GameSave,
   GameState,
   GuidedCalf,
   HeldActivity,
@@ -3250,7 +3251,7 @@ export class GameModel {
       this.unlockFlight?.from ??
       (Math.max(...this.state.unlocked.map((id) => ROUTE_POSITION[id])) as RoutePosition);
   }
-  save(): string {
+  saveDocument(): GameSave {
     this.pullLoadout();
     const effective = this.heldFlight ? { ...this.state, ...this.heldFlight } : this.state;
     const snapshot = effective.flight?.phantom
@@ -3259,10 +3260,13 @@ export class GameModel {
           flight: { ...effective.flight, phantom: { ...effective.flight.phantom, chatter: [] } },
         }
       : effective;
-    return JSON.stringify({
+    return {
       ...snapshot,
       depletionContinuation: this.depletionContinuation || undefined,
       pendingInteraction: this.suspendedInteraction ?? undefined,
-    });
+    };
+  }
+  save(): string {
+    return JSON.stringify(this.saveDocument());
   }
 }
