@@ -71,7 +71,7 @@ describe("tuning by route position", () => {
     expect(byPosition(galaxyArchetypes, 2).interceptor?.behaviour.kind).toBe("hitAndRun");
   });
 
-  it("gives Needle and Andromeda their own rosters and Phantom Cartwheel's", () => {
+  it("gives Needle, Andromeda and Phantom their approved distinct rosters", () => {
     // Galaxies: Needle 4, Andromeda 5, Phantom 6, Cartwheel 2 (gameplay/ships.md rosters).
     const roster = (galaxy: GalaxyNumber) =>
       byPosition(galaxyEncounters, galaxy).map(({ archetype, groupSize, weight }) => [
@@ -101,7 +101,19 @@ describe("tuning by route position", () => {
     });
     expect(byPosition(galaxyArchetypes, 4)).toEqual({ fighter: { behaviour: { kind: "chase" } } });
     expect(byPosition(galaxyArchetypes, 5)).toEqual({});
-    expect(byPosition(galaxyEncounters, 6)).toBe(byPosition(galaxyEncounters, 2));
+    expect(roster(6)).toEqual([
+      ["swarm", [6, 8], 0.18],
+      ["fighter", [3, 5], 0.25],
+      ["interceptor", [2, 2], 0.15],
+      ["retaliator", [1, 1], 0.07],
+      ["frigate", [1, 2], 0.25],
+      ["capital", [1, 1], 0.1],
+    ]);
+    expect(byPosition(galaxyEncounters, 6).at(-1)!.escorts).toEqual({
+      archetype: "fighter",
+      count: 6,
+    });
+    expect(byPosition(galaxyArchetypes, 6)).toEqual({ fighter: { behaviour: { kind: "chase" } } });
   });
 
   it("gives each placeholder the tuning of the built galaxy before it on the route", () => {

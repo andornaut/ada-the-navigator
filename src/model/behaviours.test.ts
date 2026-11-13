@@ -469,11 +469,13 @@ describe("galaxy difficulty", () => {
         ? enemyDefinition(galaxy, "fighter").retreats.hitAndRun.seconds
         : null;
     };
-    // Sunflower's and Cartwheel's fighters hit and run; Phantom reads Cartwheel's roster.
-    expect([1, 2, 6].map((galaxy) => retreat(galaxy as GalaxyNumber))).toEqual([1.6, 1.6, 1.6]);
+    // Sunflower and Cartwheel fighters hit and run; Phantom home guards chase.
+    expect([1, 2, 6].map((galaxy) => retreat(galaxy as GalaxyNumber))).toEqual([1.6, 1.6, null]);
     expect(DIFFICULTY_SCALE).toBe(1);
     expect(enemyDefinition(2, "fighter").behaviour.kind).toBe("hitAndRun");
     expect(enemyDefinition(2, "interceptor").behaviour.kind).toBe("hitAndRun");
+    expect(enemyDefinition(6, "fighter").behaviour.kind).toBe("chase");
+    expect(enemyDefinition(6, "interceptor").behaviour.kind).toBe("strafe");
     expect(enemyDefinition(3, "fighter").behaviour.kind).toBe("chase");
     expect(enemyDefinition(3, "interceptor").behaviour.kind).toBe("chase");
     expect(enemyDefinition(1, "interceptor").behaviour.kind).toBe("strafe");

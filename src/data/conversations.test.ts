@@ -39,17 +39,22 @@ function passage(start: string, until = " ## "): string {
 // follows its line as (desktop: "...") and has no speaker of its own.
 function spokenLines(text: string): { mood?: string; name: string; text: string }[] {
   return Array.from(
-    text.matchAll(
-      /(Astra|Ada|Penny|Unknown voice|Admiral Archie): "([^"]+)"(?: \((happy|neutral|upset)\))?/gu,
-    ),
+    text
+      .replace(
+        /Admiral Archie, (?:as the flagship attacks|flagship disabled):/gu,
+        "Admiral Archie:",
+      )
+      .matchAll(
+        /(Astra|Ada|Penny|Unknown voice|Admiral Archie): "([^"]+)"(?: \((happy|neutral|upset)\))?/gu,
+      ),
     ([, name = "", line = "", mood]) => (mood ? { mood, name, text: line } : { name, text: line }),
   );
 }
 
-// Phantom's pool waits for a Phantom flight: no galaxy past Whirlpool can be flown yet.
-// Needle's and Andromeda's pools wait for their chapters.
+// Ambient pools beyond Whirlpool wait for their chapters; Phantom battle cues have explicit triggers.
 const IN_FLIGHT = passage("## In-flight conversations", " Needle: - First arrival");
 const PHANTOM = passage("Phantom: - First arrival");
+const BATTLE = passage("Battle chatter stays in the small box:", "Salvage the last holodisk");
 const BROADCASTS = passage("Memory lines and broadcasts follow", "Outposts handing over");
 
 type Conversation = (typeof CONVERSATIONS)[number];
@@ -57,7 +62,9 @@ type Conversation = (typeof CONVERSATIONS)[number];
 // A speaker's tab as the documents name it: the General's broadcasts from the third holodisk on
 // play under his name.
 const nameOf = ({ trigger }: Conversation, speaker: keyof typeof SPEAKERS) =>
-  speaker === "general" && trigger.kind === "general" && trigger.held >= GENERAL_NAMED.holodisks
+  speaker === "general" &&
+  ((trigger.kind === "general" && trigger.held >= GENERAL_NAMED.holodisks) ||
+    trigger.kind === "chapter")
     ? GENERAL_NAMED.name
     : SPEAKERS[speaker].name;
 
@@ -75,7 +82,12 @@ const spoken = (conversations: readonly Conversation[]) =>
   );
 // Job lines are the quests document's; every other line is the player copy's.
 const isJob = ({ trigger }: Conversation) => trigger.kind === "job" || trigger.kind === "jobLore";
-const DATA_LINES = spoken(CONVERSATIONS.filter((conversation) => !isJob(conversation)));
+const DATA_LINES = spoken(
+  CONVERSATIONS.filter(
+    (conversation) => !isJob(conversation) && conversation.trigger.kind !== "chapter",
+  ),
+);
+const BATTLE_CUES = CONVERSATIONS.filter(({ trigger }) => trigger.kind === "chapter");
 
 describe("in-flight conversations", () => {
   it("speak every line as the player copy has it, with its speaker", () => {
@@ -89,7 +101,13 @@ describe("in-flight conversations", () => {
           expect(QUESTS).toContain(`"${text}"`);
           continue;
         }
-        const source = trigger.kind === "job" ? QUESTS : COPY;
+        const source =
+          trigger.kind === "job"
+            ? QUESTS
+            : COPY.replace(
+                /Admiral Archie, (?:as the flagship attacks|flagship disabled):/gu,
+                "Admiral Archie:",
+              );
         expect(source).toContain(`${nameOf(conversation, speaker)}: "${text}"`);
         if (desktop !== undefined) {
           expect(COPY).toContain(`${text}" (desktop: "${desktop}")`);
@@ -107,6 +125,19 @@ describe("in-flight conversations", () => {
     expect(copied).toHaveLength(DATA_LINES.length);
   });
 
+  it("speaks exactly the four authored Phantom battle cues with their moods and known Admiral", () => {
+    expect(BATTLE_CUES.map(({ id }) => id)).toEqual([
+      "chapter:phantom:battleAllies",
+      "chapter:phantom:battleAlone",
+      "chapter:phantom:flagshipAttack",
+      "chapter:phantom:flagshipDisabled",
+    ]);
+    expect(spoken(BATTLE_CUES)).toEqual(spokenLines(BATTLE));
+    expect(
+      BATTLE_CUES.every(({ trigger }) => trigger.kind === "chapter" && trigger.galaxy === 6),
+    ).toBe(true);
+  });
+
   it("speak the quests document's in-flight job lines with their moods", () => {
     const start = QUESTS.indexOf("In-flight lines");
     const copied = spokenLines(QUESTS.slice(start, QUESTS.indexOf(" ## ", start)));
@@ -115,7 +146,7 @@ describe("in-flight conversations", () => {
     expect(jobs).toContainEqual({ mood: "happy", name: "Ada", text: "Hold on, we've got you!" });
   });
 
-  it("leave out Phantom's pool, which has no flight to play in, apart from its job lore", () => {
+  it("keeps Phantom ambient lore deferred while registering only its approved battle cues", () => {
     const pool = spokenLines(PHANTOM);
     expect(pool).toHaveLength(6);
     // Phantom's stations give jobs, so Astra's two job lore lines play there.
@@ -125,11 +156,16 @@ describe("in-flight conversations", () => {
       expect(DATA_LINES).not.toContainEqual(line);
     }
     // Past the built galaxies only job lore, where every galaxy's stations give jobs, and the
-    // General's broadcast that names Phantom are bound to a galaxy.
+    // General's broadcast and the four authored battle cues are bound to a galaxy.
     expect(
       CONVERSATIONS.filter(
         ({ trigger }) => "galaxy" in trigger && trigger.galaxy !== undefined && trigger.galaxy > 3,
-      ).every(({ id, trigger }) => trigger.kind === "jobLore" || id === "general:held:5"),
+      ).every(
+        ({ id, trigger }) =>
+          trigger.kind === "jobLore" ||
+          id === "general:held:5" ||
+          BATTLE_CUES.some((cue) => cue.id === id),
+      ),
     ).toBe(true);
   });
 
@@ -181,11 +217,17 @@ describe("in-flight conversations", () => {
     expect(Object.entries(SPEAKERS).map(([speaker, { side }]) => [speaker, side])).toEqual([
       ["ada", "left"],
       ["astra", "right"],
+      ["avi", "right"],
+      ["blurbs", "right"],
+      ["dollop", "right"],
+      ["elderLoom", "right"],
       ["general", "right"],
       ["grower", "right"],
       ["miner", "right"],
       ["penny", "right"],
+      ["pip", "right"],
       ["salvager", "right"],
+      ["settler", "right"],
       ["station", "right"],
       ["whaleFamily", "right"],
       ["workshop", "right"],
@@ -221,7 +263,23 @@ describe("in-flight conversations", () => {
 describe("approved Use copy", () => {
   it("keeps essential exchanges short with optional topics outside progression", () => {
     for (const [key, copy] of Object.entries(INTERACTION_COPY)) {
-      expect(copy.lines.length, key).toBeGreaterThanOrEqual(key.includes(".") ? 4 : 2);
+      const cue = BATTLE_CUES.find(
+        ({ trigger }) => trigger.kind === "chapter" && key === `6.phantom.${trigger.id}`,
+      );
+      if (cue) {
+        expect(
+          copy.lines.map(({ text }) => text),
+          key,
+        ).toEqual(cue.lines.map(({ text }) => text));
+        expect(copy.topics, key).toHaveLength(0);
+        continue;
+      }
+      if (key === "6.phantom.flagshipSalvage") {
+        expect(copy.lines, key).toHaveLength(2);
+      }
+      expect(copy.lines.length, key).toBeGreaterThanOrEqual(
+        key === "6.phantom.flagshipSalvage" ? 2 : key.includes(".") ? 4 : 2,
+      );
       expect(copy.lines.length, key).toBeLessThanOrEqual(8);
       expect(copy.topics, key).toHaveLength(2);
       expect(

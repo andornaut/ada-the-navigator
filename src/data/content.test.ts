@@ -32,7 +32,11 @@ describe("player text", () => {
       "Admiral Archie. I was his navigator. I scattered my holodisks to keep them from him.",
     );
     expect(playerText).not.toContain("General Gadget");
-    expect(playerText.replaceAll("Admiral Archie", "")).not.toMatch(/archie/i);
+    expect(CONTENT.labels.phantomFlagship).toBe("Archie's flagship");
+    expect(CONTENT.chapters[6]!.objectives).toContain("Fly to Archie's flagship.");
+    expect(
+      playerText.replaceAll("Admiral Archie", "").replaceAll("Archie's flagship", ""),
+    ).not.toMatch(/archie/i);
     expect(CONTENT.premise.prologue[0]?.text).toMatch(/^On the way home, Penny tugs Ada /);
   });
 
