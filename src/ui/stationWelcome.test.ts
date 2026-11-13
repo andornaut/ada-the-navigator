@@ -16,12 +16,13 @@ describe("station welcome speaker contract", () => {
   it("retains the actual keeper and greeting rather than substituting a shared speaker", () => {
     const greeting: StationGreeting = {
       count: 3,
+      displayName: "Station-specific keeper",
       index: 1,
       keeper: "slate",
       line: "The current greeting.",
     };
     expect(stationWelcome("Station", greeting)).toEqual({
-      speaker: "Slate",
+      speaker: { displayName: greeting.displayName, portraitName: "Slate" },
       text: greeting.line,
       title: "",
     });
@@ -30,17 +31,19 @@ describe("station welcome speaker contract", () => {
   it("attributes the General greeting to the identified Admiral without changing its line", () => {
     const greeting: StationGreeting = {
       count: 1,
+      displayName: GENERAL_NAMED.name,
       index: 0,
       keeper: "general",
       line: "The current greeting.",
     };
     expect(stationWelcome("Station", greeting)).toEqual({
-      speaker: GENERAL_NAMED.name,
+      speaker: { displayName: GENERAL_NAMED.name, portraitName: GENERAL_NAMED.name },
       text: greeting.line,
       title: "",
     });
     expect(greeting).toEqual({
       count: 1,
+      displayName: GENERAL_NAMED.name,
       index: 0,
       keeper: "general",
       line: "The current greeting.",
@@ -58,7 +61,13 @@ describe("station greeting Skip availability", () => {
     [1, 0, false],
   ])("for count %i at index %i is %s", (count, index, expected) => {
     expect(
-      stationGreetingCanSkip({ count, index, keeper: "general", line: "The current greeting." }),
+      stationGreetingCanSkip({
+        count,
+        displayName: GENERAL_NAMED.name,
+        index,
+        keeper: "general",
+        line: "The current greeting.",
+      }),
     ).toBe(expected);
   });
   it("does not offer Skip for the generic station welcome", () => {

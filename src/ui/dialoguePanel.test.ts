@@ -146,6 +146,33 @@ describe("shared Earth and space dialogue presentation", () => {
     expect((panel.body.querySelector(".ada-story-tab") as HTMLElement).hidden).toBe(true);
     expect((panel.body.querySelector(".ada-story-frame") as HTMLElement).hidden).toBe(true);
   });
+  it("shows a station-specific name while using only the canonical keeper portrait and tab", () => {
+    setup();
+    const panel = createDialoguePanel({
+      closeAction: "close",
+      closeLabel: "Close",
+      title: "Station",
+    });
+    panel.showLine(
+      { displayName: "Station-specific keeper", portraitName: "Slate" },
+      "Current greeting",
+    );
+    expect(panel.body.querySelector(".ada-story-tab")?.textContent).toBe("Station-specific keeper");
+    expect(panel.body.querySelector<HTMLElement>(".ada-story-tab")?.style.background).toBe(
+      storyTabColour("Slate"),
+    );
+    expect(panel.body.querySelector<HTMLElement>(".ada-story-portrait")?.dataset.speaker).toBe(
+      "slate",
+    );
+    expect(panel.body.querySelector<HTMLElement>(".ada-story-frame")?.hidden).toBe(false);
+    expect(panel.body.querySelector(".ada-story-paragraph")?.textContent).toBe("Current greeting");
+    panel.showLine("Ada", "Her reply");
+    expect(panel.body.querySelector(".ada-story-tab")?.textContent).toBe("Ada");
+    expect(panel.body.querySelector<HTMLElement>(".ada-story-portrait")?.dataset.speaker).toBe(
+      "ada",
+    );
+  });
+
   it("separates neutral topics from navigation and keeps Skip in the shared Earth top slot", () => {
     setup();
     const parent = new Element("div");

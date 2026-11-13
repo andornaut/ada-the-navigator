@@ -2,7 +2,16 @@ import { existsSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { jobAction, rowAction, STATION_STYLE, stationBack, weaponItemGlyph } from "./station.ts";
+import type { StationServices } from "../model/stationServices.ts";
+import {
+  jobAction,
+  rowAction,
+  STATION_STYLE,
+  stationBack,
+  stationJobsShown,
+  stationTabs,
+  weaponItemGlyph,
+} from "./station.ts";
 import { buttonProperty } from "./uiSkin.ts";
 
 describe("station card back steps", () => {
@@ -95,5 +104,49 @@ describe("shop style", () => {
     expect(STATION_STYLE).toContain("var(--ui-button-primary-disabled)");
     // No row keeps a placeholder flat mark: the activity row takes its sheet too.
     expect(STATION_STYLE).not.toMatch(/ada-job-glyph\[data-type=/u);
+  });
+});
+
+describe("canonical station service presentation", () => {
+  const exchangeOnly: StationServices = {
+    equipment: false,
+    exchange: true,
+    heldTask: false,
+    jobs: false,
+    projects: false,
+    weaponsAmmo: false,
+  };
+
+  it.each([
+    ["equipment", ["ship", "exchange"], false],
+    ["weaponsAmmo", ["weapons", "exchange"], false],
+    ["jobs", ["exchange"], true],
+  ] as const)("shows only the %s specialty while retaining Exchange", (service, tabs, jobs) => {
+    const actual = { ...exchangeOnly, [service]: true };
+    expect(stationTabs(actual)).toEqual(tabs);
+    expect(stationJobsShown(actual)).toBe(jobs);
+  });
+
+  it("keeps held-task Drop and existing Projects independent of specialist offers", () => {
+    const held = { ...exchangeOnly, heldTask: true, projects: true };
+    expect(stationJobsShown(held)).toBe(true);
+    expect(stationTabs(held)).toEqual(["projects", "exchange"]);
+    expect(stationTabs(exchangeOnly)).toEqual(["exchange"]);
+    expect(stationJobsShown(exchangeOnly)).toBe(false);
+  });
+
+  it("keeps every existing hub capability and exposes nothing off dock", () => {
+    const hub = {
+      equipment: true,
+      exchange: true as const,
+      heldTask: true,
+      jobs: true,
+      projects: true,
+      weaponsAmmo: true,
+    };
+    expect(stationTabs(hub)).toEqual(["weapons", "ship", "projects", "exchange"]);
+    expect(stationJobsShown(hub)).toBe(true);
+    expect(stationTabs(null)).toEqual([]);
+    expect(stationJobsShown(null)).toBe(false);
   });
 });

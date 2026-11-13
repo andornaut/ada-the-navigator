@@ -5,7 +5,8 @@ import { EXCHANGE_COPY } from "../data/exchangeCopy.ts";
 import type { Weapon } from "../data/types.ts";
 import { weaponShopSheet } from "../data/weaponGlyphs.ts";
 import type { StationGreeting } from "../model/keepers.ts";
-import { createDialoguePanel } from "./dialoguePanel.ts";
+import type { StationServices } from "../model/stationServices.ts";
+import { createDialoguePanel, type DialogueSpeaker } from "./dialoguePanel.ts";
 import { createExchangeView, type ExchangePort } from "./exchange.ts";
 import { keeperName } from "./keeperBlock.ts";
 import { cardPages } from "./layout/cardPages.ts";
@@ -448,6 +449,23 @@ export interface StationLabels {
 
 export type StationTab = "exchange" | "projects" | "ship" | "weapons";
 
+/** Visible shop tabs come only from the docked station's authoritative capabilities. */
+export function stationTabs(services: StationServices | null): readonly StationTab[] {
+  return services === null
+    ? []
+    : [
+        ...(services.weaponsAmmo ? ["weapons" as const] : []),
+        ...(services.equipment ? ["ship" as const] : []),
+        ...(services.projects ? ["projects" as const] : []),
+        "exchange",
+      ];
+}
+
+/** Held tasks remain accessible for Drop at every station. */
+export function stationJobsShown(services: StationServices | null): boolean {
+  return services !== null && (services.jobs || services.heldTask);
+}
+
 /** The station's cards: the station card, the shop and the job board. */
 export type StationView = "card" | "shop" | "jobs";
 
@@ -516,12 +534,17 @@ export function stationWelcome(
   title: string,
   greeting: StationGreeting | null,
 ): {
-  readonly speaker: string | undefined;
+  readonly speaker: DialogueSpeaker | undefined;
   readonly text: string;
   readonly title: string;
 } {
   return {
-    speaker: greeting ? keeperName(greeting.keeper) : undefined,
+    speaker: greeting
+      ? {
+          displayName: greeting.displayName,
+          portraitName: keeperName(greeting.keeper),
+        }
+      : undefined,
     text: greeting?.line ?? "",
     title: greeting ? "" : title,
   };
@@ -542,9 +565,7 @@ export interface StationOptions {
   /** The station card's balance: the amount alone and its line, such as "260 Stardust". */
   readonly balance: () => { readonly amount: number; readonly text: string };
   readonly buy: (key: string) => void;
-  readonly exchange?: ExchangePort;
-  /** Whether the Projects tab shows: once the galaxy's projects are offered. */
-  readonly projectsShown: () => boolean;
+  readonly exchange: ExchangePort;
   readonly dropJob: () => void;
   /** The docked station keeper's line on show, or null for the generic welcome. */
   readonly greeting: () => StationGreeting | null;
@@ -554,6 +575,7 @@ export interface StationOptions {
   readonly request: (key: string) => StationRequest;
   readonly rows: (tab: Exclude<StationTab, "exchange">) => readonly StationRow[];
   readonly select: (key: string) => void;
+  readonly services: () => StationServices | null;
   readonly undock: () => void;
 }
 
@@ -739,12 +761,8 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   list.className = "ada-shop-list";
   list.setAttribute("role", "tabpanel");
   shopCard.body.append(shopBalance, tabs, list);
-  const exchange = options.exchange
-    ? createExchangeView(shopCard.body, options.exchange, () => render())
-    : undefined;
-  if (exchange) {
-    exchange.root.hidden = true;
-  }
+  const exchange = createExchangeView(shopCard.body, options.exchange, () => render());
+  exchange.root.hidden = true;
 
   const confirmCard = createCard({
     closeAction: "confirm-cancel-x",
@@ -888,14 +906,8 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
 
   let open = false;
   let view: StationView = "card";
-  let tab: StationTab = "weapons";
-  // The tabs the shop shows: Projects joins Weapons and Ship once the galaxy offers projects.
-  const shownTabs = (): StationTab[] => [
-    "weapons",
-    "ship",
-    ...(options.projectsShown() ? ["projects" as const] : []),
-    ...(exchange ? ["exchange" as const] : []),
-  ];
+  let tab: StationTab | null = null;
+  const shownTabs = () => stationTabs(options.services());
   let confirm: { readonly key: string } | { readonly drop: true } | null = null;
 
   const renderBalances = (): void => {
@@ -940,6 +952,10 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       [row.name, row.level, trailing.textContent].filter(Boolean).join(", "),
     );
     node.addEventListener("click", () => {
+      if (tab === null || !shownTabs().includes(tab)) {
+        render();
+        return;
+      }
       const action = rowAction(row.state);
       if (action === "select") {
         options.select(row.key);
@@ -997,6 +1013,12 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
 
   // Measure the complete catalogs at natural widths, then bound rows before measuring heights.
   const fitList = (): void => {
+    if (tab === null) {
+      list.hidden = true;
+      exchange.root.hidden = true;
+      shopPager.node.hidden = true;
+      return;
+    }
     list.hidden = tab === "exchange";
     if (exchange) {
       exchange.root.hidden = tab !== "exchange";
@@ -1093,6 +1115,11 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       ].join(", "),
     );
     node.addEventListener("click", () => {
+      const services = options.services();
+      if (!stationJobsShown(services) || (job.state !== "held" && !services?.jobs)) {
+        render();
+        return;
+      }
       if (jobAction(job.state) === "drop") {
         openDrop(job);
         return;
@@ -1128,7 +1155,10 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     const unit = readViewUnit(jobsCard.card);
     const measure = document.createElement("div");
     measure.className = "ada-shop-measure";
-    const rows = options.jobs().map(jobElement);
+    const rows = options
+      .jobs()
+      .filter((job) => options.services()?.jobs || job.state === "held")
+      .map(jobElement);
     measure.append(...rows);
     jobsCard.card.append(measure);
     measure.style.removeProperty("--job-action-width");
@@ -1159,8 +1189,9 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   };
 
   const renderShop = (): void => {
-    if (!shownTabs().includes(tab)) {
-      tab = "weapons";
+    const available = shownTabs();
+    if (tab === null || !available.includes(tab)) {
+      tab = available[0] ?? null;
     }
     for (const [id, button] of tabButtons) {
       button.hidden = !shownTabs().includes(id);
@@ -1170,6 +1201,12 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   };
 
   const render = (): void => {
+    openShop.hidden = shownTabs().length === 0;
+    openJobs.hidden = !stationJobsShown(options.services());
+    if ((view === "shop" && openShop.hidden) || (view === "jobs" && openJobs.hidden)) {
+      closeConfirm();
+      view = "card";
+    }
     renderBalances();
     keeper.render(options.greeting());
     stationCard.frame.hidden = view !== "card";
@@ -1273,7 +1310,16 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     view = step;
     jobsBusy.hidden = true;
     render();
-    const target = view === "card" ? (left === "jobs" ? openJobs : openShop) : tabButtons.get(tab);
+    const target =
+      view === "card"
+        ? left === "jobs" && !openJobs.hidden
+          ? openJobs
+          : openShop.hidden
+            ? undock
+            : openShop
+        : tab === null
+          ? undefined
+          : tabButtons.get(tab);
     if (target) {
       focusTarget(target);
     }
@@ -1289,6 +1335,9 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   window.addEventListener(VIEW_SCALE_EVENT, refit);
 
   openJobs.addEventListener("click", () => {
+    if (!stationJobsShown(options.services())) {
+      return;
+    }
     view = "jobs";
     jobsPage = 0;
     jobsBusy.hidden = true;
@@ -1299,23 +1348,39 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   dropCancel.addEventListener("click", back);
   drop.addEventListener("click", () => {
     closeConfirm();
+    if (!stationJobsShown(options.services())) {
+      render();
+      return;
+    }
     options.dropJob();
     render();
-    focusTarget(jobList.querySelector<HTMLElement>("button") ?? jobsCard.close);
+    focusTarget(
+      view === "jobs"
+        ? (jobList.querySelector<HTMLElement>("button") ?? jobsCard.close)
+        : openShop.hidden
+          ? undock
+          : openShop,
+    );
   });
 
   undock.addEventListener("click", options.undock);
   openShop.addEventListener("click", () => {
+    if (shownTabs().length === 0) {
+      return;
+    }
     view = "shop";
     render();
-    const tabButton = tabButtons.get(tab);
+    const tabButton = tab === null ? undefined : tabButtons.get(tab);
     if (tabButton) {
       focusTarget(tabButton);
     }
   });
   for (const [id, button] of tabButtons) {
     button.addEventListener("click", () => {
-      exchange?.back();
+      if (!shownTabs().includes(id)) {
+        return;
+      }
+      exchange.back();
       tab = id;
       shopPage = 0;
       render();
@@ -1327,8 +1392,9 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   cancel.addEventListener("click", back);
   buy.addEventListener("click", () => {
     const pending = confirm;
+    const available = tab !== null && shownTabs().includes(tab);
     closeConfirm();
-    if (pending && "key" in pending) {
+    if (pending && "key" in pending && available) {
       options.buy(pending.key);
     }
     render();
@@ -1418,7 +1484,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       closeConfirm();
       if (open) {
         render();
-        focusTarget(openShop);
+        focusTarget(openShop.hidden ? (openJobs.hidden ? undock : openJobs) : openShop);
       }
     },
   };

@@ -140,6 +140,7 @@ describe("the keeper block", () => {
   it("makes a first docking one button named Next line that shows a line a tap", () => {
     const { body, element, pips } = mounted({
       count: 3,
+      displayName: "Saffron",
       index: 0,
       keeper: "saffron",
       line: LINES[0],
@@ -163,6 +164,7 @@ describe("the keeper block", () => {
   it("stops being a button on the third line, its focus moving to Shop", () => {
     const { body, element, pips, shop } = mounted({
       count: 3,
+      displayName: "Saffron",
       index: 1,
       keeper: "saffron",
       line: LINES[1],
@@ -181,7 +183,13 @@ describe("the keeper block", () => {
 
   it("shows a later docking's one line as a status, without pips", () => {
     const later = KEEPERS[1]!.greetings.later[0];
-    const { element } = mounted({ count: 1, index: 0, keeper: "bramble", line: later });
+    const { element } = mounted({
+      count: 1,
+      displayName: "Bramble",
+      index: 0,
+      keeper: "bramble",
+      line: later,
+    });
     expect(element().tag).toBe("div");
     expect(element().find("ada-keeper-line").textContent).toBe(later);
     expect(element().find("ada-keeper-name").textContent).toBe("Bramble");
@@ -203,6 +211,7 @@ describe("the keeper block", () => {
   it("renders the identified General through the existing keeper cycle and focus handoff", () => {
     const { element, pips, shop } = mounted({
       count: 3,
+      displayName: GENERAL_NAMED.name,
       index: 1,
       keeper: "general",
       line: LINES[1],

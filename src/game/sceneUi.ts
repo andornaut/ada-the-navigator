@@ -664,7 +664,6 @@ export function buildScene(scene: UiContext): void {
       stationWelcome: label("stationWelcome"),
       undock: label("undock"),
     },
-    projectsShown: () => scene.model.projects !== null,
     reducedMotion: () => scene.controls.reducedMotion(),
     request: (key) => {
       const project = projectId(key);
@@ -731,6 +730,7 @@ export function buildScene(scene: UiContext): void {
         apply(() => scene.model.selectPaint(chosen.scheme));
       }
     },
+    services: () => scene.model.stationServices,
     undock: () => apply(() => scene.model.undock()),
   });
   // Back and Escape leave the shop for the station card, and the card undocks. Settings

@@ -180,6 +180,32 @@ describe("conversation exposure under covering cards", () => {
   );
 });
 
+describe("station service caller", () => {
+  it("reads canonical docked service facts live and leaves off-dock null unchanged", () => {
+    const services = {
+      equipment: true,
+      exchange: true as const,
+      heldTask: false,
+      jobs: false,
+      projects: false,
+      weaponsAmmo: false,
+    };
+    let actual: typeof services | null = services;
+    const model = {
+      get stationServices() {
+        return actual;
+      },
+    };
+    const read = runInContext(
+      callback("services"),
+      createContext({ scene: { model } }),
+    ) as () => typeof actual;
+    expect(read()).toBe(services);
+    actual = null;
+    expect(read()).toBeNull();
+  });
+});
+
 describe("universal pause caller", () => {
   it("keeps Pause absent on the title and loading screens, with Settings only on the title", () => {
     const model = new GameModel(CONTENT);

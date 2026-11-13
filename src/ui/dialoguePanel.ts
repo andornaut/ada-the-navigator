@@ -33,6 +33,13 @@ export const DIALOGUE_PANEL_STYLE = `
 }
 `;
 
+export type DialogueSpeaker =
+  | string
+  | {
+      readonly displayName: string;
+      readonly portraitName: string;
+    };
+
 /** Earth and space dialogues share the story panel, speaker frame, name tab and text roles. */
 export function createDialoguePanel(options: {
   readonly closeAction: string;
@@ -96,12 +103,15 @@ export function createDialoguePanel(options: {
       copy.tabIndex = scrolls ? 0 : -1;
     },
     frame,
-    showLine(name: string | undefined, text: string): void {
-      const resolved = storyPortrait(name);
+    showLine(name: DialogueSpeaker | undefined, text: string): void {
+      const displayName =
+        typeof name === "object" ? name.displayName : storySpeakerName(name ?? "");
+      const portraitName = typeof name === "object" ? name.portraitName : name;
+      const resolved = storyPortrait(portraitName);
       portrait.hidden = resolved === null;
-      speaker.hidden = !name;
-      speaker.textContent = storySpeakerName(name ?? "");
-      speaker.style.background = name ? storyTabColour(name) : "";
+      speaker.hidden = !displayName;
+      speaker.textContent = displayName;
+      speaker.style.background = portraitName ? storyTabColour(portraitName) : "";
       words.textContent = text;
       words.hidden = text === "";
       body.dataset.side = resolved?.side ?? "right";
