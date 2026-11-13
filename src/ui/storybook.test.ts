@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { GENERAL_NAMED } from "../data/conversations.ts";
 import { AWAITING_TAB, SPEAKING_FRAME_MS, TAB_COLOURS } from "./conversation.ts";
 import { TEXT_BUTTON } from "./layout/controls.ts";
 import { font, fromHudEdge, safeEdge, units } from "./layout/css.ts";
@@ -215,7 +216,7 @@ describe("storybook page", () => {
   it("fills the speaker's tab with their conversation colour, or the neutral one", () => {
     expect(storyTabColour("Astra")).toBe(TAB_COLOURS.astra);
     expect(storyTabColour("Ada")).toBe(TAB_COLOURS.ada);
-    expect(storyTabColour("General Gadget")).toBe(TAB_COLOURS.generalNamed);
+    expect(storyTabColour(GENERAL_NAMED.name)).toBe(TAB_COLOURS.generalNamed);
     expect(storyTabColour("Elder Loom")).toBe(AWAITING_TAB);
     // Mom's and Dad's tabs, which only story pages show, as Art's table sets them.
     const table = readFileSync(new URL("../../art/controls.md", import.meta.url), "utf8");
@@ -296,10 +297,10 @@ describe("story page portraits", () => {
 
   it("put Ada at the left and every other speaker at the right, never mirrored", () => {
     expect(storyPortrait("Ada")?.side).toBe("left");
-    for (const name of ["Astra", "Penny", "Unknown voice", "General Gadget"]) {
+    for (const name of ["Astra", "Penny", "Unknown voice", GENERAL_NAMED.name]) {
       expect(storyPortrait(name)?.side, name).toBe("right");
     }
-    expect(storyPortrait("General Gadget")?.named).toBe(true);
+    expect(storyPortrait(GENERAL_NAMED.name)?.named).toBe(true);
     expect(rule(".ada-controls .ada-story-frame")).toContain("float:right");
     expect(rule('.ada-controls .ada-story-text[data-side="left"] .ada-story-frame')).toContain(
       "float:left",
