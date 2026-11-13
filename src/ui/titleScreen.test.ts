@@ -114,7 +114,8 @@ describe("title screen art", () => {
         expect(coordinate).toBeCloseTo(wanted[point]!, 10),
       );
     });
-    expect(polygons[3]).not.toHaveProperty("occluders");
+    const untouched = jetPolygons(readTitleScreen(assets, jets, data)!)[3]!;
+    expect(polygons[3]!.occluders).toEqual(untouched.occluders);
   });
 
   it("reads no art from malformed data", () => {
