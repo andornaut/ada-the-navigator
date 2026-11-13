@@ -108,9 +108,11 @@ import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { MINE_REACH, mineSpin, mineTouches } from "./mineShape.ts";
 import {
+  clearNeedleEnemies,
   ensureNeedleDebris,
   isNeedleRim,
   needleChannelContains,
+  needleChannelEntry,
   needleRimContact,
   needleRims,
 } from "./needleFlight.ts";
@@ -691,6 +693,7 @@ function generate(content: GameContent, point: Vec, flight: FlightState): void {
   ensureStations(content, point, flight);
   ensureDebrisRivers(content, point, flight);
   ensureNeedleDebris(content, flight);
+  clearNeedleEnemies(flight);
   const size = content.tuning.chunkSize;
   const tuning = content.tuning.flight;
   const generated = generatedChunks(flight);
@@ -2494,7 +2497,10 @@ function layMine(
   flight: FlightState,
 ): void {
   const out = flight.mines.filter((mine) => mine.ownerId === ownerId && !mine.end).length;
-  if (out >= MINE_LAYER.count) {
+  if (
+    out >= MINE_LAYER.count ||
+    needleChannelContains({ radius: MINE_REACH }, flight, fire.origin)
+  ) {
     return;
   }
   flight.mines.push({
@@ -2535,6 +2541,9 @@ function armed(mine: Mine): boolean {
  */
 function stepMines(content: GameContent, dt: number, flight: FlightState): void {
   const body = shipBody(flight.facing);
+  flight.mines = flight.mines.filter(
+    (mine) => !needleChannelContains({ radius: MINE_REACH }, flight, mine),
+  );
   for (const mine of flight.mines) {
     mine.age += dt;
     if (mine.end) {
@@ -2543,6 +2552,7 @@ function stepMines(content: GameContent, dt: number, flight: FlightState): void 
       mine.end = { age: mine.age - MINE_LAYER.lifeSeconds, kind: "fizzle" };
     } else if (
       armed(mine) &&
+      !needleChannelContains({}, flight, flight.player) &&
       mineTouches(
         spinOf(flight, mine),
         mine,
@@ -2694,8 +2704,21 @@ function shots(
     const travelTime = Math.min(elapsed, Math.max(0, shot.life));
     const steps = Math.max(1, Math.ceil((length(shot.velocity) * travelTime) / 5));
     for (let i = 0; i < steps && shot.life > 0; i++) {
-      shot.x += (shot.velocity.x * travelTime) / steps;
-      shot.y += (shot.velocity.y * travelTime) / steps;
+      const next = {
+        x: shot.x + (shot.velocity.x * travelTime) / steps,
+        y: shot.y + (shot.velocity.y * travelTime) / steps,
+      };
+      if (shot.enemy) {
+        const entry = needleChannelEntry({ radius: 3 }, flight, shot, next);
+        if (entry !== null) {
+          shot.x += (next.x - shot.x) * entry;
+          shot.y += (next.y - shot.y) * entry;
+          shot.life = 0;
+          break;
+        }
+      }
+      shot.x = next.x;
+      shot.y = next.y;
       canonicalPosition(flight, shot);
       if (shot.enemy) {
         if (safe(content, shot, flight)) {
@@ -3447,7 +3470,14 @@ function stepEnemyBeams(
       }
       beam.range = viewportWidth / projectedLength(beam.direction);
     }
-    const stop = obstacleStop(beam.muzzle, beam.direction, beam.range, flight);
+    const boundary = needleChannelEntry({ radius: BEAM.halfWidth }, flight, beam.muzzle, {
+      x: beam.muzzle.x + beam.direction.x * beam.range,
+      y: beam.muzzle.y + beam.direction.y * beam.range,
+    });
+    const stop = Math.min(
+      obstacleStop(beam.muzzle, beam.direction, beam.range, flight),
+      boundary === null ? beam.range : beam.range * boundary,
+    );
     let reach = stop;
     if (beam.age >= BEAM_TIMING[beam.kind].fires) {
       beam.fired = true;
@@ -3456,6 +3486,10 @@ function stepEnemyBeams(
           x: beam.muzzle.x + beam.direction.x * at,
           y: beam.muzzle.y + beam.direction.y * at,
         };
+        if (needleChannelContains({ radius: BEAM.halfWidth }, flight, point)) {
+          reach = at;
+          break;
+        }
         if (touchesAda(flight, point, BEAM.halfWidth)) {
           reach = at;
           damage(content, beam.damage, flight);
@@ -3744,6 +3778,7 @@ export function stepFlight(
     const shotDelays = new Map<string, number>();
     const viewportWidth = input.viewportWidth ?? SCREEN.width;
     enemies(content, slice, flight, events, shotDelays);
+    clearNeedleEnemies(flight);
     if (flight.phantom?.phase !== "salvaged") {
       stepEnemyBeams(content, slice, viewportWidth, flight);
       stepRingEmissions(slice, flight);
