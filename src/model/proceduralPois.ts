@@ -1,5 +1,6 @@
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
-import type { LandmarkKind } from "../data/jobs.ts";
+import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
+import { JOB_TYPES, type JobType, type LandmarkKind } from "../data/jobs.ts";
 import { PROCEDURAL_POI_NAMES, PROCEDURAL_POIS as T } from "../data/proceduralPois.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { dropRandom } from "./drops.ts";
@@ -22,12 +23,69 @@ export interface ProceduralPoiContext {
   /** Existing story/station clearance policy, evaluated on a canonical candidate point. */
   readonly isProtected?: (point: Vec, clearance: number) => boolean;
   readonly protectedPlaces?: readonly (Vec & { readonly radius?: number })[];
+  /** Legal mechanic profiles, not temporary heavy-admission or occupied-task-slot status. */
+  readonly opportunityEligibility?: ProceduralPoiOpportunityEligibility;
 }
+export interface ProceduralPoiOpportunityEligibility {
+  readonly resources?: boolean;
+  readonly salvage?: boolean;
+  /** Existing templates with an eligible offer, supplied by the canonical job owner. */
+  readonly jobTemplates?: readonly JobType[];
+}
+export type ProceduralPoiOpportunity =
+  | { readonly kind: "resources"; readonly profile: "ordinaryRock" | "oreField" }
+  | { readonly kind: "salvage"; readonly profile: "disabledFrigate" }
+  | {
+      readonly kind: "job";
+      readonly profile: "existingJobs";
+      readonly templates: readonly JobType[];
+    };
 export interface ProceduralPoi extends Vec {
   readonly id: string;
   readonly kind: LandmarkKind;
   /** An existing generic player-string key; never an authored landmark's name. */
   readonly name: string;
+  readonly opportunity: ProceduralPoiOpportunity;
+}
+
+function opportunity(
+  context: ProceduralPoiContext,
+  galaxy: GalaxyNumber,
+  seed: number,
+  id: string,
+): ProceduralPoiOpportunity | undefined {
+  const eligibility = context.opportunityEligibility;
+  const templates = JOB_TYPES.filter((type) => eligibility?.jobTemplates?.includes(type));
+  const eligible = T.opportunities.filter((entry) =>
+    entry.kind === "job" ? templates.length > 0 : eligibility?.[entry.kind] !== false,
+  );
+  const total = eligible.reduce((sum, entry) => sum + entry.weight, 0);
+  if (!total) {
+    return undefined;
+  }
+  // This independent stream never consumes or changes placement or visual-kind draws.
+  let roll = dropRandom(seed, `procedural-poi-opportunity:${galaxy}:${id}`)() * total;
+  let selected = eligible.at(-1);
+  for (const entry of eligible) {
+    if (roll < entry.weight) {
+      selected = entry;
+      break;
+    }
+    roll -= entry.weight;
+  }
+  switch (selected?.kind) {
+    case "resources":
+      return {
+        kind: "resources",
+        profile: ORE_FIELDS.galaxies.includes(galaxy) ? "oreField" : "ordinaryRock",
+      };
+    case "salvage":
+      return { kind: "salvage", profile: "disabledFrigate" };
+    case "job":
+      return { kind: "job", profile: "existingJobs", templates };
+    default:
+      return undefined;
+  }
 }
 
 function inputs(galaxy: GalaxyNumber, seed: number): void {
@@ -74,7 +132,12 @@ function candidate(
   ) {
     return undefined;
   }
-  return { ...point, id: `poi:${galaxy}:${key}:0`, kind, name: PROCEDURAL_POI_NAMES[kind] };
+  const id = `poi:${galaxy}:${key}:0`;
+  const intent = opportunity(context, galaxy, seed, id);
+  if (!intent) {
+    return undefined;
+  }
+  return { ...point, id, kind, name: PROCEDURAL_POI_NAMES[kind], opportunity: intent };
 }
 
 /**

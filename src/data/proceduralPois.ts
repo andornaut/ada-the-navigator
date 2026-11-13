@@ -8,6 +8,11 @@ export const PROCEDURAL_POIS = {
   kinds: LANDMARK_KINDS,
   /** A local query budget, not a boundary of the galaxy or a survey denominator. */
   maxQueryRadius: LANDMARK_TUNING.radius,
+  opportunities: [
+    { kind: "resources", weight: 0.5 },
+    { kind: "salvage", weight: 0.35 },
+    { kind: "job", weight: 0.15 },
+  ],
   placeClearance: LANDMARK_TUNING.placeClearance,
   spacing: LANDMARK_TUNING.spacing,
 } as const;

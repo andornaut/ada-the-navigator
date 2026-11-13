@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { LANDMARK_KINDS, LANDMARK_TUNING } from "../data/jobs.ts";
+import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
+import { type JobType, LANDMARK_KINDS, LANDMARK_TUNING } from "../data/jobs.ts";
 import { PROCEDURAL_POIS as T } from "../data/proceduralPois.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
@@ -163,5 +164,110 @@ describe("additional procedural POIs", () => {
       expect(() => proceduralPoisNear(context, 5, 13, range, far)).toThrow(RangeError);
     }
     expect(() => proceduralPoisNear({ worldSide: 12001 }, 5, 13, 1, far)).toThrow(RangeError);
+  });
+});
+
+const geometry = (sites: ReturnType<typeof proceduralPoisNear>) =>
+  sites.map(({ id, kind, name, x, y }) => ({ id, kind, name, x, y }));
+
+describe("useful procedural POI opportunities", () => {
+  it("uses ordinary ore rocks everywhere without unlocking richer field composition", () => {
+    const resources = { ...context, opportunityEligibility: { resources: true, salvage: false } };
+    for (const galaxy of [1, 2, 3, 4, 5, 6] as const) {
+      const sites = proceduralPoisNear(resources, galaxy, 42, 25000, far);
+      expect(sites.length).toBeGreaterThan(0);
+      for (const site of sites) {
+        expect(site.opportunity).toEqual({
+          kind: "resources",
+          profile: ORE_FIELDS.galaxies.includes(galaxy) ? "oreField" : "ordinaryRock",
+        });
+      }
+    }
+  });
+  it("references the canonical disabled-frigate mechanic without allocating rewards or outcome counters", () => {
+    const salvage = { ...context, opportunityEligibility: { resources: false, salvage: true } };
+    const sites = proceduralPoisNear(salvage, 1, 42, 25000, far);
+    expect(sites.length).toBeGreaterThan(0);
+    for (const site of sites) {
+      expect(site.opportunity).toEqual({ kind: "salvage", profile: "disabledFrigate" });
+    }
+    expect(proceduralPoisNear(salvage, 1, 42, 25000, far)).toEqual(sites);
+  });
+  it("uses only injected existing job templates, including Phantom's survey and rescue", () => {
+    const templates: JobType[] = ["rescue", "survey", "rescue"];
+    const jobs = {
+      ...context,
+      opportunityEligibility: { jobTemplates: templates, resources: false, salvage: false },
+    };
+    const sites = proceduralPoisNear(jobs, 6, 42, 25000, far);
+    expect(sites.length).toBeGreaterThan(0);
+    for (const site of sites) {
+      expect(site.opportunity).toEqual({
+        kind: "job",
+        profile: "existingJobs",
+        templates: ["survey", "rescue"],
+      });
+    }
+    expect(templates).toEqual(["rescue", "survey", "rescue"]);
+    expect(JSON.parse(JSON.stringify(sites))).toEqual(sites);
+    templates.push("delivery");
+    for (const site of sites) {
+      expect(site.opportunity).toEqual({
+        kind: "job",
+        profile: "existingJobs",
+        templates: ["survey", "rescue"],
+      });
+    }
+  });
+  it("filters unavailable job intents without losing a usable place or rerolling geometry", () => {
+    const jobsEnabled = {
+      ...context,
+      opportunityEligibility: { jobTemplates: ["delivery", "rescue"] as readonly JobType[] },
+    };
+    const baseline = proceduralPoisNear(jobsEnabled, 2, 42, 25000, far);
+    const noJobs = proceduralPoisNear(
+      { ...context, opportunityEligibility: { jobTemplates: [] } },
+      2,
+      42,
+      25000,
+      far,
+    );
+    expect(geometry(noJobs)).toEqual(geometry(baseline));
+    expect(noJobs.length).toBeGreaterThan(0);
+    expect(noJobs.every((site) => site.opportunity.kind !== "job")).toBe(true);
+    expect(proceduralPoisNear(context, 2, 42, 25000, far)).toEqual(noJobs);
+  });
+  it("does not emit an unusable marker when every mechanic profile is unavailable", () => {
+    const unavailable = {
+      ...context,
+      opportunityEligibility: { jobTemplates: [], resources: false, salvage: false },
+    };
+    const known = proceduralPoisNear(context, 1, 42, 25000, far)[0]!;
+    expect(proceduralPoisNear(unavailable, 1, 42, 25000, far)).toEqual([]);
+    expect(proceduralPoiById(unavailable, 1, 42, known.id)).toBeUndefined();
+  });
+  it("keeps visual kinds and canonical geometry separate from opportunity eligibility and seam images", () => {
+    const resources = { ...context, opportunityEligibility: { salvage: false } };
+    const salvage = { ...context, opportunityEligibility: { resources: false } };
+    const all = {
+      ...context,
+      opportunityEligibility: { jobTemplates: ["survey", "rescue"] as readonly JobType[] },
+    };
+    const baseline = proceduralPoisNear(context, 6, 42, 25000, corner);
+    expect(geometry(proceduralPoisNear(resources, 6, 42, 25000, corner))).toEqual(
+      geometry(baseline),
+    );
+    expect(geometry(proceduralPoisNear(salvage, 6, 42, 25000, corner))).toEqual(geometry(baseline));
+    const sites = proceduralPoisNear(all, 6, 42, 25000, corner);
+    expect(geometry(sites)).toEqual(geometry(baseline));
+    expect(
+      proceduralPoisNear(all, 6, 42, 25000, {
+        x: corner.x + GALAXY_SIDE,
+        y: corner.y - GALAXY_SIDE,
+      }),
+    ).toEqual(sites);
+    for (const site of sites) {
+      expect(proceduralPoiById(all, 6, 42, site.id)).toEqual(site);
+    }
   });
 });
