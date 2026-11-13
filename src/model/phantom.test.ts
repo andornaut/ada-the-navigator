@@ -259,6 +259,60 @@ describe("Phantom chapter", () => {
     expect(state(context).allies).toEqual([]);
     expect(state(context).phase).toBe("salvaged");
   });
+  it.each([false, true])(
+    "keeps repeated settlement talks from restarting the fleet or salvage, restored=%s",
+    (restored) => {
+      let context = fixture();
+      freeSettlements(context);
+      const revisit = () => {
+        if (restored) {
+          context = {
+            content: CONTENT,
+            flight: JSON.parse(JSON.stringify(context.flight)) as FlightState,
+            progress: JSON.parse(JSON.stringify(context.progress)) as GalaxyProgress,
+          };
+          expect(validPhantomProgress(progress(context))).toBe(true);
+          expect(validPhantomFlight(state(context))).toBe(true);
+          initPhantom(context);
+        }
+        const before = structuredClone({ flight: context.flight, progress: context.progress });
+        for (const id of PHANTOM_DESTINATIONS) {
+          const panel = usePhantom(context, id)!.dialogue!;
+          expect(choosePhantom(context, panel, "continue")).toEqual({});
+        }
+        expect({ flight: context.flight, progress: context.progress }).toEqual(before);
+        expect(validPhantomFlight(state(context))).toBe(true);
+      };
+      revisit();
+      context.flight.player = { ...state(context).waypoint };
+      beforeStepPhantom(context);
+      for (let wave = 1; wave <= PHANTOM_TUNING.waves; wave++) {
+        revisit();
+        beforeStepPhantom(context);
+        expect(state(context).phase).toBe("waves");
+        expect(state(context).wave).toBe(wave);
+        disable(context, state(context).enemyIds);
+        afterStepPhantom(context);
+      }
+      revisit();
+      beforeStepPhantom(context);
+      expect(state(context).phase).toBe("flagship");
+      expect(state(context).wave).toBe(PHANTOM_TUNING.waves);
+      object(context, PHANTOM_FLAGSHIP_ID)!.enemy!.disabled = true;
+      afterStepPhantom(context);
+      const panel = usePhantom(context, PHANTOM_FLAGSHIP_ID)!.dialogue!;
+      expect(choosePhantom(context, panel, "continue")).toEqual({ complete: true, holodisk: {} });
+      context.progress.questComplete = true;
+      context.progress.holodisk = true;
+      revisit();
+      beforeStepPhantom(context);
+      expect(state(context).phase).toBe("salvaged");
+      const afterSalvage = structuredClone(context.flight);
+      expect(choosePhantom(context, panel, "continue")).toEqual({});
+      expect(context.flight).toEqual(afterSalvage);
+      expect(validPhantomFlight(state(context))).toBe(true);
+    },
+  );
   it("restarts the fleet after an emergency launch while preserving freed blockades", () => {
     const context = fixture();
     freeSettlements(context);

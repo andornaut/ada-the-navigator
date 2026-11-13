@@ -425,10 +425,15 @@ export function choosePhantom(
   if (PHANTOM_DESTINATIONS.some((id) => id === key) && progress.broken.includes(key)) {
     if (!progress.freed.includes(key)) {
       progress.freed.push(key);
-    }
-    if (progress.freed.length === PHANTOM_DESTINATIONS.length) {
-      progress.flagshipKnown = true;
-      stateOf(context)!.phase = "approach";
+      const state = stateOf(context)!;
+      if (
+        progress.freed.length === PHANTOM_DESTINATIONS.length &&
+        !progress.flagshipKnown &&
+        state.phase === "blockades"
+      ) {
+        progress.flagshipKnown = true;
+        state.phase = "approach";
+      }
     }
     return {};
   }
