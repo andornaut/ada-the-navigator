@@ -830,7 +830,9 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   flight generates a new layout. See [Economy](economy.md) and
   [What each event keeps](#what-each-event-keeps).
 - The shield is a bar at the bottom centre, between the sticks, with a shield
-  icon. Its length follows shield capacity: 120 logical pixels at base, 180 at
+  icon, in a pill whose visible gaps are equal as drawn: 8 logical pixels from
+  the pill's edge to the drawn icon, 6 from the icon to the bar and 8 from the
+  bar to the pill's edge. Its length follows shield capacity: 120 logical pixels at base, 180 at
   Shield level 2 and 240 at level 3, so each upgrade visibly lengthens it. The bar is blue, turning red when the shield is low (below
   25%) or empty, and shows hits, the recharge delay and regeneration. Low shield
   never relies on color alone: the bar also pulses, held steady under reduced
