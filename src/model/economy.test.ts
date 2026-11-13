@@ -531,9 +531,10 @@ describe("Stardust drops", () => {
       rollAsteroidStardust(ECONOMY, "small", dropRandom(value.seed, "rock")),
     );
     expect(released.every((object) => object.x > 0)).toBe(true);
-    expect(value.objects.filter((object) => object.role === "cargo")).toHaveLength(
-      RESOURCE_ROCKS.classes.medium.pieces,
-    );
+    const ore = value.objects.filter((object) => object.role === "cargo");
+    expect(ore).toHaveLength(1 + RESOURCE_ROCKS.classes.medium.pieces);
+    expect(ore.filter((object) => object.x === rock.x)).toHaveLength(1);
+    expect(ore.filter((object) => object.x < 0)).toHaveLength(RESOURCE_ROCKS.classes.medium.pieces);
   });
 
   it("bursts with 10 extra Stardust 2% of the time per destroyed asteroid or ore rock", () => {
@@ -573,10 +574,11 @@ describe("Stardust drops", () => {
     );
     expect(total(fromDeposit)).toBe(10);
     expect(released.every((object) => object.amount === 1)).toBe(true);
-    // The ore rock keeps its cargo pieces.
-    expect(value.objects.filter((object) => object.role === "cargo")).toHaveLength(
-      RESOURCE_ROCKS.classes.medium.pieces,
-    );
+    // The ordinary asteroid and resource rock release their separate ore yields.
+    const ore = value.objects.filter((object) => object.role === "cargo");
+    expect(ore).toHaveLength(1 + RESOURCE_ROCKS.classes.medium.pieces);
+    expect(ore.filter((object) => object.x === rock.x)).toHaveLength(1);
+    expect(ore.filter((object) => object.x < 0)).toHaveLength(RESOURCE_ROCKS.classes.medium.pieces);
     expect(value.objects.some((object) => object.upgrade)).toBe(false);
   });
 
