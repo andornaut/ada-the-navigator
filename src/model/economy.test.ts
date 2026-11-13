@@ -28,6 +28,8 @@ import {
   dropRandom,
   rollAsteroidStardust,
   rollEnemyDrop,
+  rollRockAmmoDrop,
+  rollRockBurst,
   rollSalvageDrop,
   splitStardust,
 } from "./drops.ts";
@@ -417,8 +419,11 @@ describe("Stardust drops", () => {
     }
   });
 
-  it("releases Stardust from asteroids but none from story mining deposits", () => {
+  it("releases Stardust from asteroids but none as story mining deposits' usual drop", () => {
     const value = flight();
+    // Neither rock bursts at this seed (rock bursts are covered below).
+    expect(rollRockBurst(ECONOMY, dropRandom(value.seed, "burst:rock"))).toBe(0);
+    expect(rollRockBurst(ECONOMY, dropRandom(value.seed, "burst:deposit"))).toBe(0);
     const rock: SpaceObject = { hp: 1, id: "rock", kind: "rock", radius: 20, x: 400, y: 0 };
     const deposit: SpaceObject = {
       hp: 1,
@@ -439,6 +444,80 @@ describe("Stardust drops", () => {
     expect(value.objects.filter((object) => object.role === "cargo")).toHaveLength(
       RESOURCE_ROCKS.classes.medium.pieces,
     );
+  });
+
+  it("bursts with 10 extra Stardust 2% of the time per destroyed asteroid or ore rock", () => {
+    expect(ECONOMY.rockBurst).toEqual({ chance: 0.02, stardust: 10 });
+    const draws = 100000;
+    const bursts = Array.from({ length: draws }, (_, index) =>
+      rollRockBurst(ECONOMY, dropRandom(5, `burst:rock:${index}`)),
+    );
+    expect(new Set(bursts)).toEqual(new Set([0, 10]));
+    expect(Math.abs(bursts.filter(Boolean).length / draws - 0.02)).toBeLessThan(0.002);
+  });
+
+  it("adds a burst to the rock's usual drop, one pickup per Stardust, and never an upgrade", () => {
+    const seed = 77;
+    const ids = Array.from({ length: 2000 }, (_, index) => `rock:${index}`);
+    const burst = (id: string) => rollRockBurst(ECONOMY, dropRandom(seed, `burst:${id}`));
+    const rockId = ids.find((id) => burst(id) > 0)!;
+    const depositId = ids.find((id) => id !== rockId && burst(id) > 0)!;
+    const value = flight(seed);
+    const rock: SpaceObject = { hp: 1, id: rockId, kind: "rock", radius: 20, x: 400, y: 0 };
+    const deposit: SpaceObject = {
+      hp: 1,
+      id: depositId,
+      kind: "resource",
+      radius: 20,
+      x: -400,
+      y: 0,
+    };
+    value.objects.push(rock, deposit);
+    value.shots.push(killShot(rock), killShot(deposit));
+    stepFlight(CONTENT, 1 / 60, idle, value);
+    const released = pickups(value);
+    const fromRock = released.filter((object) => object.x > 0);
+    const fromDeposit = released.filter((object) => object.x < 0);
+    expect(total(fromRock)).toBe(
+      rollAsteroidStardust(ECONOMY, "small", dropRandom(seed, rockId)) + 10,
+    );
+    expect(total(fromDeposit)).toBe(10);
+    expect(released.every((object) => object.amount === 1)).toBe(true);
+    // The ore rock keeps its cargo pieces.
+    expect(value.objects.filter((object) => object.role === "cargo")).toHaveLength(
+      RESOURCE_ROCKS.classes.medium.pieces,
+    );
+    expect(value.objects.some((object) => object.upgrade)).toBe(false);
+  });
+
+  it("drops an ammo pack from a destroyed rock on its own roll while Ada owns a weapon, never an upgrade", () => {
+    const seed = 77;
+    const owned = ["phaser"] as const;
+    const ids = Array.from({ length: 2000 }, (_, index) => `rock:${index}`);
+    const dropsAmmo = (id: string) =>
+      rollRockAmmoDrop(ECONOMY, owned, dropRandom(seed, `ammo:${id}`));
+    const destroy = (weapons: UpgradeWeapon[], ...rockIds: string[]) => {
+      const value = flight(seed);
+      value.ownedWeapons = weapons;
+      // A 10-wide grid 50 units apart, clear of Ada at the origin.
+      for (const [index, id] of rockIds.entries()) {
+        const at = { x: 200 + (index % 10) * 50, y: -225 + Math.floor(index / 10) * 50 };
+        const rock: SpaceObject = { hp: 1, id, kind: "rock", radius: 20, ...at };
+        value.objects.push(rock);
+        value.shots.push(killShot(rock));
+      }
+      stepFlight(CONTENT, 1 / 60, idle, value);
+      return value.objects.filter((object) => object.kind === "pickup" && object.role === "drop");
+    };
+    // Phaser does not unlock in Sunflower, yet its owner still gets rock ammo packs there.
+    const ammoId = ids.find(dropsAmmo)!;
+    expect(destroy([...owned], ammoId)).toMatchObject([{ ammoPack: true }]);
+    expect(destroy([], ammoId)).toEqual([]);
+    // Over many rocks, packs come from the ammo roll alone and none is an upgrade pickup.
+    const many = ids.slice(0, 100);
+    const dropped = destroy([...owned], ...many);
+    expect(dropped).toHaveLength(many.filter(dropsAmmo).length);
+    expect(dropped.every((object) => object.ammoPack && !object.upgrade)).toBe(true);
   });
 
   it("releases each resource rock class's pieces, centred on the rock", () => {

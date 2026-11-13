@@ -43,7 +43,7 @@ function weighted<T>(next: () => number, entries: readonly (readonly [T, number]
  * Weapons gives one weapon's next step by the weapon's weight: the weapon itself if Ada does not
  * own it, else its next level. A category or weapon with nothing left leaves the pool and the
  * rest keep their relative weights; with nothing left, one pack as an ammo pack pickup gives
- * there (chooseAmmoPack), or null when none is eligible.
+ * (chooseAmmoPack), for any owned weapon whatever the galaxy, or null when none is eligible.
  */
 export function chooseUpgrade(
   catalog: EconomyCatalog,
@@ -106,25 +106,21 @@ export function chooseUpgrade(
   if (pool.length) {
     return weighted(next, pool)();
   }
-  const weapon = chooseAmmoPack(catalog, position, economy.ownedWeapons, next);
+  const weapon = chooseAmmoPack(catalog, economy.ownedWeapons, next);
   return weapon && { kind: "ammo", weapon };
 }
 
 /**
- * The weapon an ammo pack is for, chosen as Ada collects it in the galaxy at route `position`
- * (gameplay/economy.md "Weapon unlocks"): an owned weapon other than Laser that the galaxy
- * unlocks, by the ammo pack weights; null while she owns none.
+ * The weapon an ammo pack is for, chosen as Ada collects it (gameplay/economy.md "Earning
+ * Stardust"): an owned weapon other than Laser, in any galaxy, by the ammo pack weights; null
+ * while she owns none.
  */
 export function chooseAmmoPack(
   catalog: EconomyCatalog,
-  position: RoutePosition,
   owned: readonly Weapon[],
   next: () => number,
 ): UpgradeWeapon | null {
-  const unlocked = unlockedWeapons(position);
-  const weapons = UPGRADE_WEAPONS.filter(
-    (weapon) => owned.includes(weapon) && unlocked.includes(weapon),
-  );
+  const weapons = UPGRADE_WEAPONS.filter((weapon) => owned.includes(weapon));
   return weapons.length
     ? weighted(
         next,

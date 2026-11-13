@@ -55,12 +55,14 @@ export interface EconomyCatalog {
    * Ammunition for every upgrade weapon (Laser is unlimited): each pack's shots, fewer seconds of
    * level 1 fire for each later weapon; one shot uses one. A new weapon includes `grantPacks`
    * packs and a found duplicate gives `duplicatePacks`. `packPrice` is Stardust per pack. A
-   * destroyed small craft drops an ammo pack pickup at `dropChance` once Ada owns a weapon other
-   * than Laser; its pack is for an owned weapon by `dropWeights`, as is an upgrade drop's pack once
-   * nothing else is left.
+   * destroyed small craft drops an ammo pack pickup at `dropChance`, and a destroyed asteroid or
+   * ore rock at `rockDropChance`, once Ada owns a weapon other than Laser, in any galaxy; its pack
+   * is for an owned weapon by `dropWeights`, as is an upgrade drop's pack once nothing else is
+   * left.
    */
   ammo: {
     dropChance: number;
+    rockDropChance: number;
     dropWeights: Readonly<Record<UpgradeWeapon, number>>;
     duplicatePacks: number;
     grantPacks: number;
@@ -107,6 +109,11 @@ export interface EconomyCatalog {
   destruction: Readonly<Record<EnemyArchetype, Destruction>>;
   /** Most pickups a destroyed enemy's drop splits into; asteroids release one per Stardust. */
   pickupCap: Readonly<Record<EnemyArchetype, number>>;
+  /**
+   * A destroyed asteroid or ore rock bursts with `stardust` extra Stardust at `chance`, on top of
+   * its usual drop, split one pickup per Stardust.
+   */
+  rockBurst: { readonly chance: number; readonly stardust: number };
   stardustPickupRadius: number;
   station: {
     /** Station placement grid cell, in world units. */
@@ -174,6 +181,8 @@ const UPGRADE_PRICES = weaponUpgradePrices(LASER_UPGRADE_PRICES, UPGRADE_PRICE_S
 // Provisional tuning from gameplay/economy.md; station geometry is Tech's provisional layout.
 export const ECONOMY: EconomyCatalog = {
   ammo: {
+    // Ammo pack drops: destroyed small craft 7.5%, destroyed asteroids and ore rocks 1%
+    // (gameplay/economy.md "Earning Stardust").
     dropChance: 0.075,
     // Each weapon about three quarters as likely as the one before it in weapon order.
     dropWeights: { heavyMissile: 9, multiLaser: 16, phaser: 5, rapidMissile: 12, scattershot: 7 },
@@ -183,6 +192,7 @@ export const ECONOMY: EconomyCatalog = {
     // and Phaser 50.
     pack: { heavyMissile: 35, multiLaser: 300, phaser: 50, rapidMissile: 265, scattershot: 60 },
     packPrice: 10,
+    rockDropChance: 0.01,
   },
   asteroidStardust: { huge: [3, 3], large: [2, 2], medium: [1, 1], small: [0, 1] },
   defaultPaint: "classic",
@@ -262,6 +272,9 @@ export const ECONOMY: EconomyCatalog = {
     retaliator: 8,
     swarm: 8,
   },
+  // A destroyed asteroid or ore rock bursts with 10 extra Stardust 2% of the time
+  // (gameplay/economy.md "Earning Stardust").
+  rockBurst: { chance: 0.02, stardust: 10 },
   // Shield levels 2 and 3: capacity 15 then 20 HP, recharge delay 15 then 10 s, empty to
   // full in 45 then 30 s (gameplay/economy.md).
   shieldLevels: { capacity: [15, 20], fill: [45, 30] },

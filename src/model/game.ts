@@ -726,15 +726,14 @@ export class GameModel {
     this.syncAchievements();
   }
   /**
-   * Gives an ammo pack pickup's pack, for an owned weapon other than Laser that the galaxy
-   * unlocks, chosen by the ammo pack weights as Ada collects it and seeded by the pickup; the
-   * item notice names it.
+   * Gives an ammo pack pickup's pack, for an owned weapon other than Laser in any galaxy, chosen
+   * by the ammo pack weights as Ada collects it and seeded by the pickup; the item notice names
+   * it.
    */
   private collectAmmoPack(id: string, flight: FlightState): void {
     this.pullLoadout();
     const weapon = chooseAmmoPack(
       ECONOMY,
-      ROUTE_POSITION[flight.galaxy],
       this.state.economy.ownedWeapons,
       dropRandom(flight.seed, `ammo:${id}`),
     );

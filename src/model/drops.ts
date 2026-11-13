@@ -1,7 +1,6 @@
 import type { AsteroidSize } from "../data/asteroidCatalog.ts";
-import { type EconomyCatalog, unlockedWeapons } from "../data/economy.ts";
+import type { EconomyCatalog } from "../data/economy.ts";
 import { type EnemyArchetype, enemyStardust, HEAVIES } from "../data/enemyCatalog.ts";
-import type { RoutePosition } from "../data/galaxies.ts";
 import type { GalaxyNumber, Weapon } from "../data/types.ts";
 import type { SpaceObject } from "./types.ts";
 
@@ -47,24 +46,39 @@ export function rollEnemyDrop(
   };
 }
 
+/** Whether Ada owns a weapon an ammo pack can hold: any other than Laser, in any galaxy. */
+function ownsAmmoWeapon(owned: readonly Weapon[]): boolean {
+  return owned.some((weapon) => weapon !== "laser");
+}
+
 /**
- * Whether a destroyed small craft in the galaxy at route `position` drops an ammo pack pickup: at
- * the ammo drop chance, apart from its upgrade roll, while Ada owns a weapon other than Laser
- * that the galaxy unlocks; a destroyed heavy never does.
+ * Whether a destroyed small craft drops an ammo pack pickup: at the ammo drop chance, apart from
+ * its upgrade roll, while Ada owns a weapon other than Laser; a destroyed heavy never does.
  */
 export function rollAmmoDrop(
   catalog: EconomyCatalog,
-  position: RoutePosition,
   owned: readonly Weapon[],
   archetype: EnemyArchetype,
   next: () => number,
 ): boolean {
-  const unlocked: readonly Weapon[] = unlockedWeapons(position);
-  return (
-    !HEAVIES.includes(archetype) &&
-    owned.some((weapon) => unlocked.includes(weapon)) &&
-    next() < catalog.ammo.dropChance
-  );
+  return !HEAVIES.includes(archetype) && ownsAmmoWeapon(owned) && next() < catalog.ammo.dropChance;
+}
+
+/**
+ * Whether a destroyed asteroid or ore rock drops an ammo pack pickup: at the rock ammo drop
+ * chance while Ada owns a weapon other than Laser. Rocks never drop an upgrade pickup.
+ */
+export function rollRockAmmoDrop(
+  catalog: EconomyCatalog,
+  owned: readonly Weapon[],
+  next: () => number,
+): boolean {
+  return ownsAmmoWeapon(owned) && next() < catalog.ammo.rockDropChance;
+}
+
+/** A destroyed asteroid's or ore rock's extra Stardust: the burst at its chance, else 0. */
+export function rollRockBurst(catalog: EconomyCatalog, next: () => number): number {
+  return next() < catalog.rockBurst.chance ? catalog.rockBurst.stardust : 0;
 }
 
 /**

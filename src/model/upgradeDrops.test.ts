@@ -4,9 +4,10 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import type { Weapon } from "../data/types.ts";
 import { playOpening } from "../testing/launch.ts";
-import { dropRandom, rollAmmoDrop } from "./drops.ts";
+import { dropRandom, rollAmmoDrop, rollRockAmmoDrop } from "./drops.ts";
 import { GameModel } from "./game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "./itemGains.ts";
+import { onSale } from "./shop.ts";
 import type { EconomyState } from "./types.ts";
 import { applyUpgrade, chooseAmmoPack, chooseUpgrade, type UpgradeGift } from "./upgradeDrops.ts";
 import { newEconomy } from "./upgrades.ts";
@@ -172,11 +173,14 @@ describe("upgrade drop selection", () => {
     ] as const) {
       expect((counts.get(weapon) ?? 0) / draws).toBeCloseTo(weight / 49, 2);
     }
-    // With everything maxed, Sunflower gives only Multi-Laser's ammunition, the one unlocked there.
-    expect(chooseUpgrade(ECONOMY, economy, 1, dropRandom(4, "a:0"))).toEqual({
-      kind: "ammo",
-      weapon: "multiLaser",
-    });
+    // With everything maxed, Sunflower also gives ammunition for weapons it does not unlock.
+    const sunflower = new Set(
+      Array.from({ length: 2000 }, (_, index) => {
+        const gift = chooseUpgrade(ECONOMY, economy, 1, dropRandom(4, `a:${index}`));
+        return gift?.kind === "ammo" ? gift.weapon : "";
+      }),
+    );
+    expect([...sunflower].sort()).toEqual([...UPGRADE_WEAPONS].sort());
     const before = economy.ammo.phaser;
     applyUpgrade(ECONOMY, { kind: "ammo", weapon: "phaser" }, economy);
     expect(economy.ammo.phaser).toBe(before + ECONOMY.ammo.pack.phaser);
@@ -208,28 +212,34 @@ describe("upgrade drop selection", () => {
 describe("ammo pack drops", () => {
   const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
-  it("drops from a destroyed small craft at 7.5% while Ada owns a weapon unlocked there", () => {
-    const rolls = (
-      owned: readonly Weapon[],
-      archetype: "fighter" | "frigate",
-      position: 1 | 6 = PHANTOM,
-    ) =>
+  it("drops from a destroyed small craft at 7.5% while Ada owns a weapon other than Laser", () => {
+    const rolls = (owned: readonly Weapon[], archetype: "fighter" | "frigate") =>
       Array.from({ length: 20000 }, (_, index) =>
-        rollAmmoDrop(ECONOMY, position, owned, archetype, dropRandom(9, `ammo:${index}`)),
+        rollAmmoDrop(ECONOMY, owned, archetype, dropRandom(9, `ammo:${index}`)),
       ).filter(Boolean).length / 20000;
     expect(ECONOMY.ammo.dropChance).toBe(0.075);
     expect(rolls(["scattershot"], "fighter")).toBeCloseTo(0.075, 2);
     expect(rolls([], "fighter")).toBe(0);
     expect(rolls(["laser"], "fighter")).toBe(0);
     expect(rolls(["scattershot"], "frigate")).toBe(0);
-    // Sunflower unlocks only Multi-Laser: a later weapon's ammunition does not drop there.
-    expect(rolls(["scattershot"], "fighter", 1)).toBe(0);
-    expect(rolls(["multiLaser", "scattershot"], "fighter", 1)).toBeCloseTo(0.075, 2);
   });
 
-  it("holds a pack for an owned weapon unlocked there, by the weights among those", () => {
-    const pick = (owned: readonly Weapon[], index: number, position: 2 | 6 = PHANTOM) =>
-      chooseAmmoPack(ECONOMY, position, owned, dropRandom(3, `p:${index}`));
+  it("drops from a destroyed asteroid or ore rock at 1% while Ada owns a weapon other than Laser", () => {
+    const rolls = (owned: readonly Weapon[]) =>
+      Array.from({ length: 100000 }, (_, index) =>
+        rollRockAmmoDrop(ECONOMY, owned, dropRandom(9, `ammo:rock:${index}`)),
+      ).filter(Boolean).length / 100000;
+    expect(ECONOMY.ammo.rockDropChance).toBe(0.01);
+    expect(Math.abs(rolls(["phaser"]) - 0.01)).toBeLessThan(0.0015);
+    expect(rolls([])).toBe(0);
+    expect(rolls(["laser"])).toBe(0);
+    expect(rollRockAmmoDrop(ECONOMY, ["phaser"], () => 0.0099)).toBe(true);
+    expect(rollRockAmmoDrop(ECONOMY, ["phaser"], () => 0.01)).toBe(false);
+  });
+
+  it("holds a pack for any owned weapon other than Laser, by the weights among those", () => {
+    const pick = (owned: readonly Weapon[], index: number) =>
+      chooseAmmoPack(ECONOMY, owned, dropRandom(3, `p:${index}`));
     expect(pick([], 0)).toBeNull();
     expect(pick(["laser"], 0)).toBeNull();
     // Rapid Missile 12 to Phaser 5 when only those two are owned.
@@ -238,9 +248,17 @@ describe("ammo pack drops", () => {
       pick(["phaser", "rapidMissile"], index),
     ).filter((weapon) => weapon === "rapidMissile").length;
     expect(rapid / draws).toBeCloseTo(12 / 17, 2);
-    // Whirlpool unlocks Rapid Missile but not Phaser.
-    expect(pick(["phaser", "rapidMissile"], 0, 2)).toBe("rapidMissile");
-    expect(pick(["phaser"], 0, 2)).toBeNull();
+  });
+
+  it("drops packs for an owned weapon the galaxy does not unlock, which its shop still does not sell", () => {
+    // Sunflower unlocks only Multi-Laser; Phaser unlocks in Phantom.
+    expect(rollAmmoDrop(ECONOMY, ["phaser"], "fighter", () => 0)).toBe(true);
+    expect(rollRockAmmoDrop(ECONOMY, ["phaser"], () => 0)).toBe(true);
+    expect(chooseAmmoPack(ECONOMY, ["phaser"], () => 0.5)).toBe("phaser");
+    expect(onSale(1, { kind: "ammo", weapon: "phaser" })).toBe(false);
+    expect(onSale(1, { kind: "weapon", weapon: "phaser" })).toBe(false);
+    expect(onSale(1, { kind: "weaponUpgrade", weapon: "phaser" })).toBe(false);
+    expect(onSale(PHANTOM, { kind: "ammo", weapon: "phaser" })).toBe(true);
   });
 
   it("gives its pack as Ada collects it, an item notice's ammo gain", () => {

@@ -22,7 +22,7 @@ import { JOB_TUNING, LANDMARK_TUNING } from "../data/jobs.ts";
 import { RESOURCE_ROCKS, resourceRock } from "../data/resourceRocks.ts";
 import { SCREEN } from "../data/screen.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
-import type { GalaxyNumber, GameContent } from "../data/types.ts";
+import type { GalaxyNumber, GameContent, Weapon } from "../data/types.ts";
 import { BEAM, weaponAt, type WeaponDefinition } from "../data/weaponCatalog.ts";
 import {
   ASTEROID_SHAPES,
@@ -85,6 +85,8 @@ import {
   rollAmmoDrop,
   rollAsteroidStardust,
   rollEnemyDrop,
+  rollRockAmmoDrop,
+  rollRockBurst,
   rollSalvageDrop,
   splitStardust,
 } from "./drops.ts";
@@ -2449,13 +2451,6 @@ function hit(
       y: object.y,
     });
   }
-  if (object.kind === "rock") {
-    const next = dropRandom(flight.seed, object.id);
-    const stardust = rollAsteroidStardust(ECONOMY, asteroidSize(object), next);
-    // The pickups are collectable at once; they draw from Art's release time (art/asteroids.md).
-    const release = { at: flight.time + ROCK_RELEASE.releaseSeconds };
-    releaseStardust(object, ROCK_RELEASE.spread, next, stardust, stardust, release, flight);
-  }
   if (object.kind === "debris") {
     events.push({ id: object.id, type: "debrisCleared" });
   }
@@ -2473,6 +2468,47 @@ function hit(
       });
     }
   }
+  if (object.kind === "rock" || object.kind === "resource") {
+    dropFromRock(content, object, flight);
+  }
+}
+
+/**
+ * A destroyed asteroid's or ore rock's drops (gameplay/economy.md "Earning Stardust"): an
+ * asteroid's Stardust, plus at the burst chance the burst's extra Stardust, one pickup per
+ * Stardust; and, on its own roll, an ammo pack pickup. Rocks never drop an upgrade pickup.
+ */
+function dropFromRock(content: GameContent, object: SpaceObject, flight: FlightState): void {
+  const next = dropRandom(flight.seed, object.id);
+  const stardust =
+    object.kind === "rock" ? rollAsteroidStardust(ECONOMY, asteroidSize(object), next) : 0;
+  // The burst and ammo rolls have their own streams, so they never move the Stardust's spread.
+  const amount = stardust + rollRockBurst(ECONOMY, dropRandom(flight.seed, `burst:${object.id}`));
+  // The pickups are collectable at once; they draw from Art's release time (art/asteroids.md).
+  const release = { at: flight.time + ROCK_RELEASE.releaseSeconds };
+  releaseStardust(object, ROCK_RELEASE.spread, next, amount, amount, release, flight);
+  if (rollRockAmmoDrop(ECONOMY, ammoOwned(flight), dropRandom(flight.seed, `ammo:${object.id}`))) {
+    pushAmmoPack(content, object, flight);
+  }
+}
+
+/** The weapons ammo packs drop for: those Ada owns, not those a story grants for the flight. */
+function ammoOwned(flight: FlightState): readonly Weapon[] {
+  return (flight.ownedWeapons ?? []).filter((weapon) => !flight.grantedWeapons?.includes(weapon));
+}
+
+/** An ammo pack pickup at `at`, its pack chosen as Ada collects it. */
+function pushAmmoPack(content: GameContent, at: Vec, flight: FlightState): void {
+  flight.objects.push({
+    ammoPack: true,
+    hp: 1,
+    id: `drop:${flight.nextId++}`,
+    kind: "pickup",
+    radius: content.tuning.flight.pickupRadius,
+    role: "drop",
+    x: at.x,
+    y: at.y,
+  });
 }
 
 /**
@@ -3106,21 +3142,9 @@ function stepWrecks(
       });
     }
     // The ammo roll has its own stream, so it never moves the Stardust's spread.
-    const owned = (flight.ownedWeapons ?? []).filter(
-      (weapon) => !flight.grantedWeapons?.includes(weapon),
-    );
     const ammo = dropRandom(flight.seed, `ammo:${object.id}`);
-    if (rollAmmoDrop(ECONOMY, ROUTE_POSITION[flight.galaxy], owned, object.wreck.archetype, ammo)) {
-      flight.objects.push({
-        ammoPack: true,
-        hp: 1,
-        id: `drop:${flight.nextId++}`,
-        kind: "pickup",
-        radius: content.tuning.flight.pickupRadius,
-        role: "drop",
-        x: object.x,
-        y: object.y,
-      });
+    if (rollAmmoDrop(ECONOMY, ammoOwned(flight), object.wreck.archetype, ammo)) {
+      pushAmmoPack(content, object, flight);
     }
   }
 }

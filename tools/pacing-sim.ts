@@ -842,15 +842,10 @@ export function simulate(input: SimulationInput): RunResult {
     const ammoRoll = dropRandom(flightSeed, `ammo:${wreckId(id)}`);
     if (
       !salvaged &&
-      rollAmmoDrop(catalog, ROUTE_POSITION[input.galaxy], owned, archetype, ammoRoll) &&
+      rollAmmoDrop(catalog, owned, archetype, ammoRoll) &&
       rng() < behaviour.dropCollection
     ) {
-      const pack = chooseAmmoPack(
-        catalog,
-        ROUTE_POSITION[input.galaxy],
-        owned,
-        dropRandom(flightSeed, `ammo:${id}`),
-      );
+      const pack = chooseAmmoPack(catalog, owned, dropRandom(flightSeed, `ammo:${id}`));
       if (pack) {
         addPacks(catalog, pack, 1, ammo);
         result.ammoDrops++;
