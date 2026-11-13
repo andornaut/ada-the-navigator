@@ -32,7 +32,7 @@ describe("player text", () => {
 
   it("notes on the Move and Aim controls rows that hiding a stick keeps its touch input", () => {
     expect(CONTENT.labels.controlsNote).toBe("Touch still works when hidden");
-    expect(CONTENT.labels.soundNote).toBe("Mutes sound effects");
+    expect(CONTENT.labels.soundNote).toBe("Controls gameplay sound effects.");
   });
 
   it("names the ship's mind Astra", () => {

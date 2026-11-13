@@ -1,5 +1,6 @@
 import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 
+import { SETTINGS_STATE_LABELS } from "../data/settingsCopy.ts";
 import type { InstallStepsKind } from "../pwa/index.ts";
 import {
   type ControlVisibility,
@@ -49,6 +50,10 @@ export interface SettingsLabels {
   readonly settings: string;
   readonly sound: string;
   readonly soundNote: string;
+  readonly stateHidden?: string;
+  readonly stateOff?: string;
+  readonly stateOn?: string;
+  readonly stateShown?: string;
 }
 
 export interface FeedbackSettings {
@@ -223,6 +228,11 @@ ${hudDiscStyle(".ada-controls .ada-exit-open", ".ada-disc")}
 .ada-controls .ada-use:focus-visible{${FOCUS_STYLE}
 }
 
+.ada-controls .ada-setting-state{
+  flex:none;
+  white-space:nowrap
+}
+
 /* This build's version and commit, the Settings card's last line as in Chibi: body text in the
    supporting colour. */
 .ada-controls .ada-build{
@@ -292,10 +302,27 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       note,
     });
     row.dataset.setting = setting;
-    show(settings[setting]);
+    const currentState = document.createElement("span");
+    currentState.className = "ada-setting-state";
+    // The switch's aria-checked already exposes its current state to assistive technology.
+    currentState.setAttribute("aria-hidden", "true");
+    row.insertBefore(currentState, row.lastElementChild);
+    const update = () => {
+      const on = settings[setting];
+      show(on);
+      currentState.textContent =
+        setting === "aim" || setting === "move"
+          ? on
+            ? (options.labels.stateShown ?? SETTINGS_STATE_LABELS.shown)
+            : (options.labels.stateHidden ?? SETTINGS_STATE_LABELS.hidden)
+          : on
+            ? (options.labels.stateOn ?? SETTINGS_STATE_LABELS.on)
+            : (options.labels.stateOff ?? SETTINGS_STATE_LABELS.off);
+    };
+    update();
     row.addEventListener("click", () => {
       settings[setting] = !settings[setting];
-      show(settings[setting]);
+      update();
       writeSetting(storage, setting, settings[setting]);
       if (setting === "aim" || setting === "move") {
         options.onVisibilityChange(visibility());

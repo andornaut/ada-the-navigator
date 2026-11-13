@@ -514,7 +514,7 @@ export const CONTENT: GameContent = {
     morningRecharge:
       "Astra recharges overnight. In the morning, the rock is warm again, and Archie and Kiwi are " +
       "curled at her feet.",
-    motionNote: "Skips screen shakes",
+    motionNote: "Reduces animation and disables screen shake.",
     moveControls: "Move controls",
     next: "Next",
     nextLine: "Next line",
@@ -605,8 +605,8 @@ export const CONTENT: GameContent = {
     shopShip: "Ship",
     shopWeapons: "Weapons",
     skip: "Skip",
-    sound: "Sound",
-    soundNote: "Mutes sound effects",
+    sound: "Sound effects",
+    soundNote: "Controls gameplay sound effects.",
     stardust: "Stardust",
     stardustAmount: "{amount} Stardust",
     start: "Start",
