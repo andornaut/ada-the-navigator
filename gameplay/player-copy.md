@@ -502,10 +502,12 @@ Ask more:
 
 Automatic reactions remain short:
 
-- Elder Loom, after a gate passed too fast, with a lit gate: "Too quick, and the gate stays dark. Back to the last gate you lit. Slow is not the same as stuck."
-- Elder Loom, after a gate passed too fast, with no lit gate: "Too quick, and the gate stays dark. Back to the first gate. Slow is not the same as stuck."
+- Elder Loom, in response to a gate passed too fast: "Slow down before the ring. Then try again."
 - Ada, lighting the Eye's last gate: "Eight gates! I did it, one at a time."
 - Astra, at the Eye's exit: "Drones ahead, Navigator. They've been waiting for us."
+
+Practice feedback responds to attempts. Independent mode has no unsolicited
+hints. A failed crossing does not automatically move Ada back to a gate.
 
 Home resolution: "Ada returns to the same moment, holding her recorder. She
 remembers Elder Loom: one gate at a time. She picks out the hard part and plays
