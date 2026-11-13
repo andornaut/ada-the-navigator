@@ -349,7 +349,7 @@ export function damageEnemy(
         ? { ...part, hp: Math.max(0, part.hp - hit.amount) }
         : { ...part },
     ),
-    hp: Math.max(0, state.hp - hit.amount),
+    hp: Math.max(definition.hullFloor ?? 0, state.hp - hit.amount),
   };
   return { ...next, disabled: enemyEffects(definition, next).disabled };
 }

@@ -123,6 +123,8 @@ export interface EnemyDefinition {
   fire: FireProfile;
   hardpoints: HardpointDefinition[];
   hp: number;
+  /** A disable-only ship retains this hull HP after any hit. */
+  hullFloor?: number;
   morale: { individualHpRatio: number; packLossRatio: number };
   /** A heavy's weapon mounts and their loadout by position tier. */
   mounts?: WeaponMounts;
@@ -669,6 +671,19 @@ export const galaxyEncounters: Readonly<Partial<Record<RoutePosition, readonly E
         weight: 0.03,
       },
     ],
+    6: [
+      { archetype: "swarm", groupSize: [6, 8], weight: 0.18 },
+      { archetype: "fighter", groupSize: [3, 5], weight: 0.25 },
+      { archetype: "interceptor", groupSize: [2, 2], weight: 0.15 },
+      { archetype: "retaliator", groupSize: [1, 1], weight: 0.07 },
+      { archetype: "frigate", groupSize: [1, 2], weight: 0.25 },
+      {
+        archetype: "capital",
+        escorts: { archetype: "fighter", count: 6 },
+        groupSize: [1, 1],
+        weight: 0.1,
+      },
+    ],
   };
 
 /**
@@ -691,6 +706,7 @@ export const galaxyArchetypes: Readonly<
   5: {
     interceptor: { behaviour: { burstVolleys: 3, kind: "hitAndRun" } },
   },
+  6: { fighter: { behaviour: { kind: "chase" } } },
 };
 
 /** The small craft, whose hull HP and weapon each position sets. */
@@ -869,6 +885,7 @@ export function encounterQuiet(galaxy: GalaxyNumber): { distance: number; second
   };
 }
 
+export const PHANTOM_FLAGSHIP_ID = "phantomFlagship";
 const scaled = new Map<string, EnemyDefinition>();
 /**
  * The catalog definition at a galaxy's route position: its roster behaviour, its position's
@@ -883,7 +900,8 @@ export function enemyDefinition(
 ): EnemyDefinition {
   const route = ROUTE_POSITION[galaxy];
   const loadout = heavyLoadout(archetype, route, shipId);
-  const key = `${galaxy}:${archetype}:${loadout ? [...loadout.values()].join(",") : ""}`;
+  const flagship = galaxy === 6 && archetype === "capital" && shipId === PHANTOM_FLAGSHIP_ID;
+  const key = `${flagship ? "flagship:" : ""}${galaxy}:${archetype}:${loadout ? [...loadout.values()].join(",") : ""}`;
   let definition = scaled.get(key);
   if (!definition) {
     const difficulty = difficultyOf(galaxy);
@@ -927,6 +945,16 @@ export function enemyDefinition(
       hp: unscaledHullHp(galaxy, archetype) * DIFFICULTY_SCALE,
       perception: catalog.perception * difficulty.rates.notice,
     };
+    if (flagship) {
+      definition = {
+        ...definition,
+        behaviour: { kind: "siege", speedFraction: 0.25 },
+        hardpoints: definition.hardpoints.map((part) => ({ ...part, hp: 8 })),
+        hp: 160,
+        hullFloor: 1,
+        pursuit: { ...definition.pursuit, homeRadius: 800 },
+      };
+    }
     scaled.set(key, definition);
   }
   return definition;
