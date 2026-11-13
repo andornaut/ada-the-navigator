@@ -392,14 +392,14 @@ edge `#181425`, so on a light field it needs no added outline.
 
 | Key             | Shows                                   | Colours                                                                                         |
 | --------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `icon-ore-20`   | A nugget and a pebble                   | Ore's palette ([ore nugget](cartwheel-props.md#ore-nugget)), rim lit `#eaa070`, shade `#d68a54` |
+| `icon-ore-20`   | A nugget and a pebble                   | Ore's palette ([ore nugget](cartwheel-props.md#ore-nugget)), rim lit `#e798cd`, shade `#d481b9` |
 | `icon-cargo-20` | A strapped crate, any carried item      | The Map's job orange `#feae34`, shade `#c9781c`, strap cream `#ead4aa`                          |
 | `icon-tow-20`   | The tow hook on its line, a towed craft | The tow line's core `#b8bfc9` and edge `#4f5462`                                                |
 
 | Mark          | Colour    | Base, on the panel | Dark fields, on the panel | Sunflower, on the panel | On its ink edge |
 | ------------- | --------- | -----------------: | ------------------------: | ----------------------: | --------------: |
 | Stardust body | `#f4d98a` |            12.16:1 |           12.18:1 or more |                  5.43:1 |         12.99:1 |
-| Ore rim shade | `#d68a54` |             6.12:1 |            6.13:1 or more |                  2.74:1 |          6.54:1 |
+| Ore rim shade | `#d481b9` |             6.15:1 |            6.15:1 or more |                  2.73:1 |          6.55:1 |
 | Cargo orange  | `#feae34` |             9.09:1 |            9.10:1 or more |                  4.06:1 |          9.71:1 |
 | Tow steel     | `#b8bfc9` |             9.10:1 |            9.12:1 or more |                  4.07:1 |          9.72:1 |
 

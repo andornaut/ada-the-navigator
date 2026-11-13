@@ -20,7 +20,7 @@ const INK = "181425";
 const ICONS: Readonly<
   Record<string, { palette: Record<string, string>; rows: readonly string[] }>
 > = {
-  // A nugget and a pebble in ore's palette: rust rim on the lit side, ember body, shade and deep.
+  // A nugget and a pebble in ore's palette: mauve rim, burgundy-purple body, shade and deep.
   "icon-ore-20": {
     palette: ORE_PALETTE,
     rows: [

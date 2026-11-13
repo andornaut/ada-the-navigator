@@ -90,12 +90,13 @@ twinkling [Stardust](stardust.md) star by silhouette, colour, surface, size and
 lightness, in greyscale too.
 
 - Manifest `ore-nugget`: an 11 by 11 sheet with one `rest` frame, displayed at
-  11 by 11 logical px with the pivot at the centre, nearest-neighbour filtered.
+  11 by 11 logical px for one ore and 18 by 18 for five ore, with the pivot at
+  the centre, nearest-neighbour filtered.
   Its Aseprite data is `ore-nugget.json`.
 - Pixel art from a character grid; every pixel is opaque or clear. Lit from
   the upper left and pitted, with no white or glint pixel.
 - Ore's palette is shared with the resource rocks' crystals and the ore HUD
-  icon (`art/tools/ore.ts`): an ember-brown body inside a rust rim. Every
+  icon (`art/tools/ore.ts`): a burgundy-purple body inside a light mauve rim. Every
   outline pixel (one with a clear neighbour) is rim, the lit rim where the
   clear side is up or left and the rim shade where it is down or right.
 - Collision: the `rest` frame of `ore-nugget.json` carries `collision`, its
@@ -103,33 +104,32 @@ lightness, in greyscale too.
   frame (one frame px is one display px), the schema of the ship's
   `collision[k]`. Traced by the
   [shared tracer](ship.md#shared-tracer) at 0.4 frame px, the first of the
-  ladder that passes: 15 parts, intersection over union 0.998.
+  ladder that passes: 15 parts, intersection over union 0.998. The five-ore
+  pickup scales the centred parts by `18 / 11`; the source frame stays unchanged.
 
 | Role       | Colour    |
 | ---------- | --------- |
-| Rim, lit   | `#eaa070` |
-| Rim, shade | `#d68a54` |
-| Light      | `#a86a42` |
-| Body       | `#7a4a30` |
-| Shade      | `#5c3424` |
-| Deep       | `#40241a` |
+| Rim, lit   | `#e798cd` |
+| Rim, shade | `#d481b9` |
+| Light      | `#a56490` |
+| Body       | `#774667` |
+| Shade      | `#58324c` |
+| Deep       | `#3d2334` |
 
-The rim carries the nugget's contrast; the body inside it is 1.96:1 to 2.35:1
-on the dark fields, so the nugget reads as dark rock with a warm edge.
+The rim carries the nugget's contrast; the body inside it is 1.97:1 to 2.31:1
+on the dark fields, so the nugget reads as a dark burgundy-purple nugget with a light edge.
 
 | Field     | Lit rim | Rim shade |
 | --------- | ------- | --------- |
-| Base      | 6.81:1  | 5.32:1    |
-| Cartwheel | 6.87:1  | 5.36:1    |
-| Whirlpool | 6.73:1  | 5.25:1    |
-| Needle    | 7.33:1  | 5.73:1    |
-| Andromeda | 6.85:1  | 5.35:1    |
-| Phantom   | 8.06:1  | 6.30:1    |
+| Base      | 6.81:1  | 5.33:1    |
+| Cartwheel | 6.87:1  | 5.37:1    |
+| Whirlpool | 6.73:1  | 5.27:1    |
+| Needle    | 7.34:1  | 5.74:1    |
+| Andromeda | 6.86:1  | 5.36:1    |
+| Phantom   | 7.91:1  | 6.19:1    |
 
-On Sunflower's light field the nugget draws over the ink keyline
-([Light fields](galaxies.md#light-fields)), 10.90:1. The body is 0.25 from the
-obstacle coral `#D68B72` in Oklab, so ore never reads as a hazard; only its
-rim is warm.
+On Sunflower's light field the burgundy-purple body carries the nugget's
+contrast against the light background; the pickup keeps its authored rim.
 
 ## Stranded craft
 

@@ -198,8 +198,8 @@ lamp); the 0.6-deep window panes on the walls do not count.
 
 Ore on the hub, the miner's bins, the stranded hauler's bins and the ore pod's
 band takes ore's solid tones (`ORE_SOLID` in `art/tools/ore.ts`): lit tops
-`#eaa070`, tops and bands `#d68a54`, sides `#a86a42` and the unlit band
-`#7a4a30`, so everything that means ore reads as the
+`#e798cd`, tops and bands `#d481b9`, sides `#a56490` and the unlit band
+`#774667`, so everything that means ore reads as the
 [ore nugget](cartwheel-props.md#ore-nugget).
 
 Contrast is WCAG against Cartwheel's field background `#39221E`; the table
@@ -210,8 +210,8 @@ lists top colours, which carry each silhouette.
 | Hub, buoy | Cream structure      | `#efe4cf` |  11.73:1 |
 | Hub       | Slate tower, collars | `#9aaccb` |   6.43:1 |
 | Hub       | Slate cap            | `#c3cfe2` |   9.39:1 |
-| Hub       | Ore, lit tops        | `#eaa070` |   6.87:1 |
-| Hub       | Ore tops, bands      | `#d68a54` |   5.36:1 |
+| Hub       | Ore, lit tops        | `#e798cd` |   6.87:1 |
+| Hub       | Ore tops, bands      | `#d481b9` |   5.37:1 |
 | Hub       | Worn patch plate     | `#b3a68a` |   6.15:1 |
 | Hub       | Worn rust streak     | `#9a5f48` |   2.89:1 |
 | Hub       | Worn scorch          | `#a39784` |   5.15:1 |

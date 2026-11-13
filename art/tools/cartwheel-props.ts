@@ -100,7 +100,7 @@ const BODY = bodyRamp(
 // ------------------------------------------------------------------ ore nugget
 
 // 11 by 11 ore nugget, pixel art: a chunky lumpy rock, lit from the upper left and pitted, in ore's
-// palette (art/tools/ore.ts); its outline takes the rust rim.
+// palette (art/tools/ore.ts); its outline takes the light mauve rim.
 const NUGGET = rimmed([
   "...........",
   "...LLM.....",

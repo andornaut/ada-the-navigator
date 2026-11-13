@@ -342,8 +342,8 @@ resource rock reads apart from plain stone at 1x without relying on hue.
   crystal tilted out along its facet's normal and never leaning down-screen
   past the rock. Seat facets under the cluster take the ore shadow tones. The
   cluster turns with the rock, lit by the same world light.
-- Ore ramp (`ore`), lit to shadow: `#EAA070`, `#D68A54`, `#A86A42`,
-  `#7A4A30` and `#5C3424`, ore's rim and body tones (`art/tools/ore.ts`), so
+- Ore ramp (`ore`), lit to shadow: `#E798CD`, `#D481B9`, `#A56490`,
+  `#774667` and `#58324C`, ore's rim and body tones (`art/tools/ore.ts`), so
   the crystals read as the same ore as the
   [ore nugget](cartwheel-props.md#ore-nugget) a rock releases.
 - HP and pieces are Gameplay values (medium 3 HP and 3 pieces, large 5 and 5,

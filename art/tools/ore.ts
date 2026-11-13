@@ -1,16 +1,16 @@
 // Ore's look, shared by the ore nugget (art/tools/cartwheel-props.ts), the resource rocks'
 // crystals (art/tools/asteroids.ts) and the ore HUD icon (art/tools/cargo-icons.ts): a matte
-// ember-brown body inside a warm rust rim, which carries its contrast on the dark galaxies.
+// burgundy-purple body inside a light mauve rim, which carries its contrast on the dark galaxies.
 
 // "R" rim facing up or left, "r" rim facing down or right, "L" light, "M" body, "S" shade,
 // "D" deep. No white and no glint: ore is matte, so it reads apart from twinkling Stardust.
 export const ORE_PALETTE: Readonly<Record<string, string>> = {
-  R: "eaa070",
-  r: "d68a54",
-  L: "a86a42",
-  M: "7a4a30",
-  S: "5c3424",
-  D: "40241a",
+  R: "e798cd",
+  r: "d481b9",
+  L: "a56490",
+  M: "774667",
+  S: "58324c",
+  D: "3d2334",
 };
 
 // The crystals' ramp, lit to shadow: the rim tones on the lit faces, the body on the shaded ones.
