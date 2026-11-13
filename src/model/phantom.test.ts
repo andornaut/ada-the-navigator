@@ -4,7 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { encounterTable, enemyDefinition, PHANTOM_FLAGSHIP_ID } from "../data/enemyCatalog.ts";
 import { PHANTOM_DESTINATIONS, PHANTOM_TUNING } from "../data/phantom.ts";
 import { createEnemy, damageEnemy } from "./enemyAi.ts";
-import { createFlight } from "./flight.ts";
+import { activateRouteEncounter, createFlight, routeBlocked, syncFlightRegion } from "./flight.ts";
 import {
   afterStepPhantom,
   beforeStepPhantom,
@@ -84,6 +84,46 @@ function freeSettlements(context: PhantomContext) {
   }
 }
 describe("Phantom chapter", () => {
+  it.each([false, true])(
+    "opens Talk immediately after the last guard flees, dormant=%s",
+    (dormant) => {
+      const context = fixture();
+      const id = PHANTOM_DESTINATIONS[0];
+      activateRouteEncounter(CONTENT, id, context.flight);
+      const ids = state(context).blockades[id]!;
+      disable(context, ids.slice(1));
+      const settlement = object(context, id)!;
+      const guard = object(context, ids[0]!)!;
+      guard.enemy!.fleeing = true;
+      guard.x = settlement.x + 601;
+      guard.y = settlement.y;
+      guard.enemy!.position = { x: guard.x, y: guard.y };
+      if (dormant) {
+        context.flight.player = {
+          x: settlement.x + CONTENT.tuning.chunkSize * 20,
+          y: settlement.y,
+        };
+        syncFlightRegion(CONTENT, context.flight);
+        expect(context.flight.world.notables[guard.id]).toBe(guard);
+      }
+      context.flight.player = { x: settlement.x, y: settlement.y };
+      expect(routeBlocked(id, context.flight)).toBe(true);
+      const before = structuredClone(guard.enemy);
+      const sizes = { ...context.flight.combat!.initialPackSizes };
+      afterStepPhantom(context);
+      expect(progress(context).broken).toContain(id);
+      expect(routeBlocked(id, context.flight)).toBe(false);
+      expect(context.flight.objects.find((object) => object.id === guard.id)).toBe(guard);
+      expect(guard.persistent).toBe(true);
+      expect(guard.routeId).toBeUndefined();
+      expect(guard.enemy).toEqual(before);
+      expect(context.flight.combat!.initialPackSizes).toEqual(sizes);
+      const panel = usePhantom(context, id)!.dialogue!;
+      expect(panel.context).toBe(`phantom.${id}`);
+      choosePhantom(context, panel, "continue");
+      expect(progress(context).freed).toContain(id);
+    },
+  );
   it("advances only the approved objective entries as actual chapter facts change", () => {
     const context = fixture();
     expect(phantomObjectiveIndex(context)).toBe(0);

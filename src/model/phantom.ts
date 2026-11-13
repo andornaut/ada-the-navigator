@@ -9,6 +9,7 @@ import {
 import type { ChapterContext, ChapterResult } from "./chapterProtocol.ts";
 import { dropRandom } from "./drops.ts";
 import {
+  activateRouteEncounter,
   ensureDestination,
   rollEncounter,
   salvage,
@@ -272,6 +273,15 @@ export function afterStepPhantom(context: PhantomContext): ChapterResult | undef
       finished(context, ids, settlement, T.blockadeReach)
     ) {
       progress.broken.push(id);
+    }
+    if (progress.broken.includes(id)) {
+      // Unindex dormant guards before clearing their route membership. Survivors keep their AI and identity.
+      activateRouteEncounter(context.content, id, context.flight);
+      for (const object of context.flight.objects) {
+        if (ids.includes(object.id) && object.routeId === id) {
+          delete object.routeId;
+        }
+      }
     }
   }
   if (state.phase === "waves" && finished(context, state.enemyIds, state.waypoint, T.battleReach)) {
