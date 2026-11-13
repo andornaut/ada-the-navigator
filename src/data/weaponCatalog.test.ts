@@ -203,6 +203,26 @@ describe("weapon levels", () => {
     expect(perSecond("multiLaser")).toBeGreaterThan(perSecond("laser"));
   });
 
+  it("ranks level 1 damage per second in route order from Multi-Laser, counted per bolt", () => {
+    // Multi-Laser per bolt, Rapid Missile, Heavy Missile (tying Rapid at 5), Scattershot with
+    // every dot hitting, then Phaser: each at least the one before it. Laser sits apart, below
+    // Multi-Laser's full fan but above a single bolt of it.
+    const perSecond = (weapon: Weapon, hits = WEAPON_CATALOG[weapon][0].anglesDegrees.length) =>
+      (WEAPON_CATALOG[weapon][0].damageRatio * hits) / WEAPON_CATALOG[weapon][0].intervalSeconds;
+    const ladder = [
+      perSecond("multiLaser", 1),
+      perSecond("rapidMissile"),
+      perSecond("heavyMissile"),
+      perSecond("scattershot"),
+      perSecond("phaser"),
+    ];
+    for (let index = 1; index < ladder.length; index++) {
+      expect(ladder[index]!).toBeGreaterThanOrEqual(ladder[index - 1]!);
+    }
+    expect(perSecond("laser")).toBeGreaterThan(perSecond("multiLaser", 1));
+    expect(perSecond("laser")).toBeLessThan(perSecond("multiLaser"));
+  });
+
   it("clamps levels outside 1 to 3", () => {
     expect(weaponAt("laser", 0)).toBe(WEAPON_CATALOG.laser[0]);
     expect(weaponAt("laser", 9)).toBe(WEAPON_CATALOG.laser[2]);

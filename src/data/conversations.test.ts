@@ -49,9 +49,7 @@ function spokenLines(text: string): { mood?: string; name: string; text: string 
 // Needle's and Andromeda's pools wait for their chapters.
 const IN_FLIGHT = passage("## In-flight conversations", " Needle: - First arrival");
 const PHANTOM = passage("Phantom: - First arrival");
-// CLEANUP (added 2026-11-12): the sixth broadcast plays in Phantom's finale, which is not built;
-// end the passage at "Outposts handing over" once the finale speaks it.
-const BROADCASTS = passage("Memory lines and broadcasts follow", "- Sixth: General Gadget");
+const BROADCASTS = passage("Memory lines and broadcasts follow", "Outposts handing over");
 
 type Conversation = (typeof CONVERSATIONS)[number];
 
@@ -199,7 +197,7 @@ describe("in-flight conversations", () => {
     );
     expect(
       CONVERSATIONS.filter(({ id }) => id.startsWith("general:")).map((c) => c.priority),
-    ).toEqual(Array(4).fill("warning"));
+    ).toEqual(Array(5).fill("warning"));
   });
 
   it("warn of a low shield at the same share that turns the shield pill low", () => {

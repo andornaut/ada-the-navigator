@@ -574,6 +574,16 @@ export const CONVERSATIONS: readonly Conversation[] = [
     trigger: { held: 4, kind: "general" },
   },
   {
+    id: "general:held:5",
+    lines: [
+      line("general", "So you came to Phantom. I have the last disk, little navigator."),
+      line("ada", "Then we'll come and get it."),
+    ],
+    priority: "warning",
+    repeat: "never",
+    trigger: { held: 5, kind: "general" },
+  },
+  {
     id: "job:towAttached",
     lines: [
       line("astra", "Tow line attached. We'll be slow and heavy."),
