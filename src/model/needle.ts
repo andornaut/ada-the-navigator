@@ -68,7 +68,10 @@ export function createNeedleCourse(
   const next = dropRandom(context.seed ?? 0, "needle:activity");
   const translation =
     kind === "activity"
-      ? { x: NEEDLE.activityOffset.x + next() * 200, y: NEEDLE.activityOffset.y + next() * 200 }
+      ? {
+          x: NEEDLE.activityOffset.x + next() * NEEDLE.activityJitter,
+          y: NEEDLE.activityOffset.y + next() * NEEDLE.activityJitter,
+        }
       : practice
         ? NEEDLE.practiceOffset
         : NEEDLE.eyeOffset;
@@ -319,7 +322,7 @@ export function needleDebris(
       }
     }
     if (
-      index % 10 === 5 &&
+      index % NEEDLE.insideDebrisEvery === NEEDLE.insideDebrisOffset &&
       course.gates.every(
         (gate) =>
           Math.hypot(gate.point.x - center.x, gate.point.y - center.y) > NEEDLE.gate.opening,
@@ -329,4 +332,55 @@ export function needleDebris(
     }
   }
   return debris;
+}
+
+interface NeedleCourseSource {
+  readonly seed: number;
+  readonly needle?: { readonly anchor: Vec };
+}
+const courses = new WeakMap<
+  object,
+  {
+    practice: NeedleCourse;
+    eye: NeedleCourse;
+    activity: NeedleCourse;
+  }
+>();
+/** Courses derive from one bounded saved anchor; geometry is not copied into every save. */
+export function needleCourses(flight: NeedleCourseSource): {
+  practice: NeedleCourse;
+  eye: NeedleCourse;
+  activity: NeedleCourse;
+} | null {
+  const state = flight.needle;
+  if (!state) {
+    return null;
+  }
+  let held = courses.get(state);
+  if (!held) {
+    held = {
+      activity: createNeedleCourse({ anchor: state.anchor, seed: flight.seed }, "activity"),
+      eye: createNeedleCourse({ anchor: state.anchor }, "eye"),
+      practice: createNeedleCourse({ anchor: state.anchor }, "practice"),
+    };
+    courses.set(state, held);
+  }
+  return held;
+}
+
+const heldActivities = new WeakSet<NeedleCourseSource>();
+/** The model derives this transient switch from its actual held activity before a flight step. */
+export function setNeedleActivity(flight: NeedleCourseSource, active: boolean): void {
+  if (active) {
+    heldActivities.add(flight);
+  } else {
+    heldActivities.delete(flight);
+  }
+}
+/** Physics and rendering share the exact same active courses without importing the chapter runtime. */
+export function activeNeedleCourses(flight: NeedleCourseSource): readonly NeedleCourse[] {
+  const layout = needleCourses(flight);
+  return layout
+    ? [layout.practice, layout.eye, ...(heldActivities.has(flight) ? [layout.activity] : [])]
+    : [];
 }

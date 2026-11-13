@@ -4,14 +4,18 @@ import GATES from "../../public/art/needle/gates.json" with { type: "json" };
 /** Chapter rules and bounded placement tuning, in world units and seconds. */
 export const NEEDLE = {
   activityGates: 8,
+  activityJitter: 200,
   activityOffset: { x: -2000, y: 1000 },
   channels: CHANNELS,
   debrisRadius: 10,
+  exitPackRadius: 110,
   eye: EYE,
   eyeGates: 8,
   /** Keep the two courses separate and their entries away from the teaching station. */
   eyeOffset: { x: 2000, y: -2000 },
   gate: GATES,
+  insideDebrisEvery: 10,
+  insideDebrisOffset: 5,
   /** Practice uses the entry and first three gates of the authored Eye path. */
   practiceEnd: 1000,
   practiceGates: 3,

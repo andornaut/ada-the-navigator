@@ -6,6 +6,7 @@ import { NEEDLE_LEARNING } from "../data/needleCopy.ts";
 import { toScreen } from "./convex.ts";
 import { createFlight, stepFlight } from "./flight.ts";
 import {
+  activeNeedleCourses,
   createNeedleCourse,
   inNeedleChannel,
   type NeedleCourse,
@@ -17,6 +18,7 @@ import {
   needleRimContacts,
   needleSlow,
   readNeedleProgress,
+  setNeedleActivity,
   stepNeedleCourse,
 } from "./needle.ts";
 import {
@@ -336,7 +338,12 @@ describe("Needle chapter runtime", () => {
     learn(context, "show");
     cross(context, needleCourses(context.flight)!.practice.gates[0]!, 20);
     expect(chapterProgress(context).practiceLit).toBe(1);
-    const choice = useNeedle(context, "elderLoom")!.dialogue!;
+    const talk = useNeedle(context, "elderLoom")!.dialogue!;
+    expect(talk.choices.map((choice) => choice.id)).toEqual(["continue", "changeApproach"]);
+    const beforeChoice = structuredClone(chapterProgress(context));
+    const choice = chooseNeedle(context, talk, "changeApproach")!.dialogue!;
+    expect(chapterProgress(context)).toEqual(beforeChoice);
+    expect(choice.context).toBe("needle.learningChange");
     chooseNeedle(context, choice, "independent");
     expect(chapterProgress(context)).toMatchObject({ approach: "independent", practiceLit: 1 });
     expect(chapterFlight(context).guidance).toBeUndefined();
@@ -382,10 +389,20 @@ describe("Needle chapter runtime", () => {
     expect(
       chapterFlight(context).chatter.filter((cue) => cue.text === NEEDLE_LEARNING.drones),
     ).toHaveLength(1);
-    expect(useNeedle(context, "holodisk")).toEqual({ complete: true, holodisk: {} });
+    const beforeCollect = structuredClone(context.progress);
+    const collect = useNeedle(context, "holodisk")!.dialogue!;
+    expect(collect).toMatchObject({
+      context: "needle.collect",
+      text: "Collect the holodisk.",
+      title: "Holodisk",
+    });
+    expect(context.progress).toEqual(beforeCollect);
+    expect(chooseNeedle(context, collect, "skip")).toEqual({});
+    expect(chooseNeedle(context, collect, "continue")).toEqual({ complete: true, holodisk: {} });
     context.progress.holodisk = true;
     context.progress.questComplete = true;
     expect(needleObjectiveIndex(context)).toBe(5);
+    expect(chooseNeedle(context, collect, "continue")).toEqual({});
     expect(useNeedle(context, "holodisk")).toEqual({});
     const before = structuredClone(chapterProgress(context));
     const panel = useNeedle(context, "elderLoom")!.dialogue!;
@@ -436,5 +453,90 @@ describe("Needle chapter runtime", () => {
     expect(validNeedleFlight({ ...chapterFlight(context), anchor: { x: Infinity, y: 0 } })).toBe(
       false,
     );
+  });
+});
+
+describe("Needle repeat Talk and collection cards", () => {
+  it("preserves an answered approach on ordinary Talk and stale initial choices", () => {
+    const context = chapter();
+    const arrival = useNeedle(context, "elderLoom")!.dialogue!;
+    const brief = chooseNeedle(context, arrival, "continue")!.dialogue!;
+    const initial = chooseNeedle(context, brief, "continue")!.dialogue!;
+    chooseNeedle(context, initial, "show");
+    const before = structuredClone({ flight: context.flight, progress: context.progress });
+    for (const stale of [initial, JSON.parse(JSON.stringify(initial)) as typeof initial]) {
+      expect(chooseNeedle(context, stale, "feedback")).toEqual({});
+      expect({ flight: context.flight, progress: context.progress }).toEqual(before);
+    }
+    const repeat = useNeedle(context, "elderLoom")!.dialogue!;
+    expect(repeat.context).toBe("needle.practice");
+    expect(chooseNeedle(context, repeat, "continue")).toEqual({});
+    expect({ flight: context.flight, progress: context.progress }).toEqual(before);
+    const change = chooseNeedle(context, repeat, "changeApproach")!.dialogue!;
+    expect({ flight: context.flight, progress: context.progress }).toEqual(before);
+    const resumed = {
+      ...context,
+      flight: JSON.parse(JSON.stringify(context.flight)) as FlightState,
+      progress: JSON.parse(JSON.stringify(context.progress)) as GalaxyProgress,
+    };
+    initNeedle(resumed);
+    expect(chapterProgress(resumed).approach).toBe("show");
+    expect(chooseNeedle(resumed, change, "independent")).toEqual({});
+    expect(chapterProgress(resumed).approach).toBe("independent");
+  });
+  it("rechecks a restored Collect card's range and commits its normal outcome only once", () => {
+    const context = chapter();
+    learn(context, "independent");
+    const layout = needleCourses(context.flight)!;
+    for (const gate of [...layout.practice.gates, ...layout.eye.gates]) {
+      cross(context, gate, 20);
+    }
+    context.flight.player = { ...layout.eye.holodisk };
+    const collect = useNeedle(context, "holodisk")!.dialogue!;
+    const before = structuredClone(context.progress);
+    expect(before.holodisk).toBe(false);
+    expect(before.questComplete).toBe(false);
+    const resumed = {
+      ...context,
+      flight: JSON.parse(JSON.stringify(context.flight)) as FlightState,
+      progress: JSON.parse(JSON.stringify(context.progress)) as GalaxyProgress,
+    };
+    initNeedle(resumed);
+    resumed.flight.player.x += CONTENT.tuning.talkRange + 1;
+    expect(chooseNeedle(resumed, collect, "continue")).toEqual({});
+    expect(resumed.progress).toEqual(before);
+    resumed.flight.player = { ...layout.eye.holodisk };
+    expect(chooseNeedle(resumed, collect, "continue")).toEqual({ complete: true, holodisk: {} });
+    resumed.progress.holodisk = true;
+    resumed.progress.questComplete = true;
+    const completed = structuredClone({ flight: resumed.flight, progress: resumed.progress });
+    expect(chooseNeedle(resumed, collect, "continue")).toEqual({});
+    expect({ flight: resumed.flight, progress: resumed.progress }).toEqual(completed);
+  });
+  it("shares only held activity geometry with physics and rendering without persisting the toggle", () => {
+    const context = chapter();
+    expect(activeNeedleCourses(context.flight).map((course) => course.kind)).toEqual([
+      "practice",
+      "eye",
+    ]);
+    setNeedleActivity(context.flight, true);
+    expect(activeNeedleCourses(context.flight).map((course) => course.kind)).toEqual([
+      "practice",
+      "eye",
+      "activity",
+    ]);
+    const restored = JSON.parse(JSON.stringify(context.flight)) as FlightState;
+    expect(activeNeedleCourses(restored).map((course) => course.kind)).toEqual(["practice", "eye"]);
+    setNeedleActivity(restored, true);
+    expect(activeNeedleCourses(restored).map((course) => course.kind)).toEqual([
+      "practice",
+      "eye",
+      "activity",
+    ]);
+    setNeedleActivity(context.flight, false);
+    expect(activeNeedleCourses(context.flight).map((course) => course.kind)).toEqual([
+      "practice",
+      "eye",
+    ]);
   });
 });

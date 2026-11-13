@@ -61,6 +61,11 @@ export const NEEDLE_COPY: Readonly<Record<string, InteractionCopy>> = {
       },
     ],
   },
+  collect: {
+    lines: [{ speaker: "astra", text: "Collect the holodisk." }],
+    party: "astra",
+    topics: [],
+  },
   practice: {
     lines: [
       { speaker: "loom", text: "To reach the disk you must thread every gate, slowly." },
@@ -107,6 +112,7 @@ export const NEEDLE_COPY: Readonly<Record<string, InteractionCopy>> = {
 };
 /** Approved practice approaches. These change guidance, never the gate or reward rules. */
 export const NEEDLE_LEARNING = {
+  changeLabel: "Change practice approach",
   drones: "Drones ahead, Navigator. They've been waiting for us.",
   eyeComplete: "Eight gates! I did it, one at a time.",
   feedback: {

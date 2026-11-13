@@ -11,9 +11,8 @@ import {
   spawnChapterEnemy,
 } from "./flight.ts";
 import {
-  createNeedleCourse,
   type NeedleApproach,
-  type NeedleCourse,
+  needleCourses,
   needleLearningFeedback,
   type NeedleProgress,
   readNeedleProgress,
@@ -52,35 +51,7 @@ const progressOf = (context: ChapterContext): NeedleChapterProgress =>
     practiceThanked: false,
   });
 const stateOf = (context: ChapterContext) => (context.flight as ChapterFlight).needle;
-const courses = new WeakMap<
-  NeedleFlight,
-  {
-    practice: NeedleCourse;
-    eye: NeedleCourse;
-    activity: NeedleCourse;
-  }
->();
-/** Courses derive from one bounded saved anchor; geometry is not copied into every save. */
-export function needleCourses(flight: FlightState): {
-  practice: NeedleCourse;
-  eye: NeedleCourse;
-  activity: NeedleCourse;
-} | null {
-  const state = (flight as ChapterFlight).needle;
-  if (!state) {
-    return null;
-  }
-  let held = courses.get(state);
-  if (!held) {
-    held = {
-      activity: createNeedleCourse({ anchor: state.anchor, seed: flight.seed }, "activity"),
-      eye: createNeedleCourse({ anchor: state.anchor }, "eye"),
-      practice: createNeedleCourse({ anchor: state.anchor }, "practice"),
-    };
-    courses.set(state, held);
-  }
-  return held;
-}
+export { needleCourses } from "./needle.ts";
 /** Canonical placement and enemy helpers own world retention, pack accounting and physics. */
 export function initNeedle(context: ChapterContext): void {
   if (context.flight.galaxy !== 4) {
@@ -109,8 +80,8 @@ export function initNeedle(context: ChapterContext): void {
     for (let index = 0; index < pack.count; index++) {
       const angle = (index * Math.PI * 2) / pack.count;
       const point = {
-        x: layout.eye.pack.x + Math.cos(angle) * 110,
-        y: layout.eye.pack.y + Math.sin(angle) * 110,
+        x: layout.eye.pack.x + Math.cos(angle) * NEEDLE.exitPackRadius,
+        y: layout.eye.pack.y + Math.sin(angle) * NEEDLE.exitPackRadius,
       };
       spawnChapterEnemy(
         context.content,
@@ -188,16 +159,16 @@ function panel(key: keyof typeof NEEDLE_COPY): DialogueState {
     choices: [{ id: "continue", label: "Continue" }],
     context: `needle.${key}`,
     text: copy.lines.map((line) => line.text).join("\n\n"),
-    title: "Elder Loom",
+    title: key === "collect" ? "Holodisk" : "Elder Loom",
   };
 }
-function learningPanel(): DialogueState {
+function learningPanel(change = false): DialogueState {
   return {
     choices: (["show", "feedback", "independent"] as const).map((id) => ({
       id,
       label: NEEDLE_LEARNING[id].label,
     })),
-    context: "needle.learning",
+    context: change ? "needle.learningChange" : "needle.learning",
     text: NEEDLE_LEARNING.prompt,
     title: "Elder Loom",
   };
@@ -211,28 +182,29 @@ export function useNeedle(context: ChapterContext, id: string): ChapterResult | 
     if (!progress.briefed) {
       return { dialogue: panel("practice") };
     }
-    if (progress.practiceLit === NEEDLE.practiceGates && !progress.practiceThanked) {
-      return { dialogue: panel("practiceComplete") };
-    }
-    return { dialogue: learningPanel() };
+    const dialogue = panel(
+      progress.practiceLit === NEEDLE.practiceGates ? "practiceComplete" : "practice",
+    );
+    dialogue.choices.push({ id: "changeApproach", label: NEEDLE_LEARNING.changeLabel });
+    return { dialogue };
   }
   if (id === "holodisk") {
-    if (context.progress.holodisk || progress.eyeLit !== NEEDLE.eyeGates) {
-      return {};
-    }
-    const disk = context.flight.objects.find(
-      (object) => object.id === "holodisk" && object.kind === "destination",
-    );
-    if (
-      !disk ||
-      Math.hypot(context.flight.player.x - disk.x, context.flight.player.y - disk.y) >
-        context.content.tuning.talkRange
-    ) {
-      return {};
-    }
-    return { complete: true, holodisk: {} };
+    return canCollect(context) ? { dialogue: panel("collect") } : {};
   }
   return undefined;
+}
+function canCollect(context: ChapterContext): boolean {
+  if (context.progress.holodisk || progressOf(context).eyeLit !== NEEDLE.eyeGates) {
+    return false;
+  }
+  const disk = context.flight.objects.find(
+    (object) => object.id === "holodisk" && object.kind === "destination",
+  );
+  return Boolean(
+    disk &&
+    Math.hypot(context.flight.player.x - disk.x, context.flight.player.y - disk.y) <=
+      context.content.tuning.talkRange,
+  );
 }
 export function chooseNeedle(
   context: ChapterContext,
@@ -247,7 +219,17 @@ export function chooseNeedle(
   }
   const progress = progressOf(context);
   if (
-    dialogue.context === "needle.learning" &&
+    choice === "changeApproach" &&
+    progress.briefed &&
+    ["needle.practice", "needle.practiceComplete"].includes(dialogue.context)
+  ) {
+    return { dialogue: learningPanel(true) };
+  }
+  if (
+    ((dialogue.context === "needle.learning" &&
+      !progress.briefed &&
+      progress.approach === undefined) ||
+      (dialogue.context === "needle.learningChange" && progress.briefed)) &&
     ["show", "feedback", "independent"].includes(choice) &&
     progress.met
   ) {
@@ -264,12 +246,15 @@ export function chooseNeedle(
   if (choice !== "continue") {
     return {};
   }
-  if (dialogue.context === "needle.arrival") {
+  if (dialogue.context === "needle.collect") {
+    return canCollect(context) ? { complete: true, holodisk: {} } : {};
+  }
+  if (dialogue.context === "needle.arrival" && !progress.met) {
     progress.met = true;
     context.progress.introduced = true;
     return { dialogue: panel("practice") };
   }
-  if (dialogue.context === "needle.practice" && progress.met) {
+  if (dialogue.context === "needle.practice" && progress.met && !progress.briefed) {
     return { dialogue: learningPanel() };
   }
   if (
@@ -313,7 +298,8 @@ export function readNeedleChapterProgress(value: unknown): NeedleChapterProgress
     [record.met, record.briefed, record.practiceThanked].some(
       (flag) => typeof flag !== "boolean",
     ) ||
-    (record.briefed && (!record.met || !record.approach)) ||
+    (record.briefed && !record.met) ||
+    record.briefed !== Boolean(record.approach) ||
     ((base.practiceLit || base.eyeLit) && !record.briefed) ||
     (record.practiceThanked && base.practiceLit !== NEEDLE.practiceGates)
   ) {
