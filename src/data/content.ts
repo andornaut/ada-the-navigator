@@ -596,6 +596,7 @@ export const CONTENT: GameContent = {
     projectFunded: "Funded",
     projectProgress: "{paid} of {price}",
     projects: "Projects",
+    questBack: "Back",
     questCalfDetail:
       "Find the whale calf and guide it back to its family. Stay close so it can follow you.",
     questCollect: "Collect {item}",
@@ -609,8 +610,10 @@ export const CONTENT: GameContent = {
     questLocate: "Show on map",
     questMiningDetail:
       "Collect ore and deposit it at the hub. Deposit {required} ore after accepting this contract to complete it.",
+    questOtherQuests: "Other quests",
     questOutcome: "Outcome",
     questProgress: "{current} / {required}",
+    questProgressLabel: "Progress",
     questRescueDetail:
       "The {craft} cannot move because its engine has stopped. Attach the tow line and bring it " +
       "to safety. Towing will slow Ada’s ship.",
