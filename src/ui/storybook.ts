@@ -1052,8 +1052,8 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       from && page
         ? transitionSteps(
             art.transitions,
-            art.backgrounds[from.background],
-            art.backgrounds[page.background],
+            art.backgrounds[bedroomBackground(from.run?.pages, from.background)],
+            art.backgrounds[bedroomBackground(page.run?.pages, page.background)],
             options.reducedMotion(),
           )
         : null;
