@@ -1,7 +1,7 @@
 // The route map's backdrop (art/route-sky.md): an evening sky of stars and stellar phenomena
-// behind the chart, and a ground strip with the afterglow and the grass Ada and Penny stand on.
+// behind the chart, and an unoccupied ground strip with afterglow and grass.
 // The sky is dimmed behind every chart mark (the guard), and the build fails if a mark's ground
-// is brighter than the guard's cap. art/tools/storybook.ts draws Ada and Penny's sprites.
+// is brighter than the guard's cap.
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -32,12 +32,6 @@ export const SKY = { width: 960, height: 540, density: 2, offset: 120 } as const
 // The ground strip: its bottom on the view's bottom, its centre on the play view's centre. The
 // grass line runs `grass` below its top, with the afterglow above it.
 export const GROUND = { width: 960, height: 120, density: 2, grass: 86 } as const;
-// Ada and Penny on the ground canvas: each sprite's foot centre, left of Earth (play x 160).
-export const FIGURES = {
-  ada: { x: SKY.offset + 93, y: 112 },
-  penny: { x: SKY.offset + 116, y: 112 },
-} as const;
-
 // The chart the guard keeps dark, in play view px (art/layout.md "Galaxy selector"): one circular
 // arc through the end markers' centres and its top, the six markers at equal angles along it.
 export const ARC = { x: 360, halfWidth: 264, ends: 122, top: 46 } as const;
@@ -534,9 +528,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   writePng(`${art}route-ground.png`, ground);
   placeEntries("core", "route-", [
     entry("route-sky", sky, SKY.density, { x: 0.5, y: 0 }),
-    {
-      ...entry("route-ground", ground, GROUND.density, { x: 0.5, y: 1 }),
-      overlays: ["story-ada-skywatch", "story-penny-sitting"],
-    },
+    entry("route-ground", ground, GROUND.density, { x: 0.5, y: 1 }),
   ]);
 }

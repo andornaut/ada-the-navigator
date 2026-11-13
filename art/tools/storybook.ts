@@ -1,32 +1,9 @@
-// Storybook backgrounds: isometric Earth dioramas with treatment d, on the shared 960 by 540
-// logical canvas at 2x, Ada's room overnight with its sleep scene overlays, and the pixel sprites
-// of Ada (art/tools/ada-sprites.ts) and her family (art/tools/family-sprites.ts) placed over their
-// backgrounds, and over the route map's ground (art/tools/route-sky.ts).
-import { readFileSync, writeFileSync } from "node:fs";
+// Environment-only storybook dioramas and overnight rock-glow overlays on the shared
+// 960 by 540 logical canvas at 2x. Characters use the established story-panel portraits.
+import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { decodePng } from "@andornaut/art-kit/png";
 import { blankImage } from "@andornaut/art-kit/rgbaImage";
-
-import {
-  playing as playingSprite,
-  PLAYING_FEET,
-  waking as wakingSprite,
-  WAKING_CENTRE,
-  WAKING_HEIGHT,
-} from "./ada-sprites.ts";
-import {
-  adaSkywatch,
-  type Cat,
-  catCurled,
-  catSitting,
-  dadAtDinner,
-  dadAtDoor,
-  momAtDoor,
-  pennySitting,
-  type Sprite,
-} from "./family-sprites.ts";
-import { FIGURES as ROUTE_FIGURES } from "./route-sky.ts";
 
 import {
   box,
@@ -52,7 +29,7 @@ import {
   treatmentD,
 } from "./diorama.ts";
 import { editManifest, readManifest } from "./manifest.ts";
-import { fromOklab, hex, type Rgb, toOklab } from "./oklab.ts";
+import { fromOklab, hex, toOklab } from "./oklab.ts";
 import { writePng } from "./paint.ts";
 import { json } from "./projection.ts";
 
@@ -449,8 +426,6 @@ interface RoomOptions {
   glow?: RockGlow;
   // The night window: the moon and stars on the glass.
   moon?: boolean;
-  // Ada and Penny on the bed.
-  figures?: { colours: Colours; pose: Pose };
   // Needle's recorder on its song sheet at the desk's left end.
   recorder?: boolean;
   // Canvas rows to raise the whole room by, so its subject band ends by row 293.
@@ -488,7 +463,7 @@ function recorder(
 
 function room(
   P: Palette,
-  { figures, glow, moon, recorder: withRecorder, lift = 0 }: RoomOptions = {},
+  { glow, moon, recorder: withRecorder, lift = 0 }: RoomOptions = {},
 ): Scene {
   const [nx, ny, wall] = [16, 12, 7];
   const s = fitted(nx, ny, wall, 12 - lift * DESIGN_PER_LOGICAL);
@@ -541,9 +516,6 @@ function room(
   s.solid(box(0, 3.6, 7.0, 11.8, 0, 1.2), P.bed!, 2, 9.4);
   s.solid(box(0, 3.6, 7.0, 11.8, 1.2, 1.8), P.blanket!, 2, 9.6);
   s.solid(box(0.4, 3.2, 7.2, 8.4, 1.8, 2.2), P.pillow!, 2, 9.8);
-  if (figures) {
-    (figures.pose === "asleep" ? asleep : waking)(s, P, figures.colours);
-  }
   // Desk against the right wall, chair, lamp and the rock.
   s.solid(box(1.2, 1.5, 0.2, 2.6, 0, 2.3), P.drawer!, 2, 3.0);
   s.solid(box(4.6, 6.6, 0.2, 2.6, 0, 2.3), P.drawer!, 2, 5.5, [
@@ -597,10 +569,9 @@ function room(
   return s;
 }
 
-/* Ada's room overnight: night, Ada and Penny asleep, and waking in the morning */
+/* Ada's room overnight: moonlight, rock glow and morning sunlight */
 
 type Colours = Readonly<Record<string, string>>;
-type Pose = "asleep" | "waking";
 
 // An Oklab grade: L' = l0 + l1 L, chroma scaled by c, then shifted by (da, db).
 type Grade = readonly [l0: number, l1: number, c: number, da: number, db: number];
@@ -647,26 +618,6 @@ const MORNING: Palette = {
   sunlight: "#ffe2a0",
 };
 
-// Ada and Penny from their portrait palettes (art/portraits.md), Penny's golden coat included.
-const FIGURES: Colours = {
-  bow: "#b55088",
-  bowlight: "#f6757a",
-  coat: "#feae34",
-  collar: "#0099db",
-  ear: "#f77622",
-  hair: "#262b44",
-  muzzle: "#fee761",
-  nose: "#181425",
-  shirt: "#fee761",
-  skin: "#b86f50",
-};
-// Figures take a lighter grade than the room so they stay the subject. At night it keeps full
-// chroma with no blue shift, so under the night haze Penny reads as a dusky gold (about #7f6755).
-const NIGHT_FIGURE_GRADE: Grade = [0.12, 0.6, 1.0, -0.015, 0.01];
-const MORNING_FIGURE_GRADE: Grade = [0.01, 1.0, 1.0, 0.006, 0.02];
-const NIGHT_FIGURES = graded(NIGHT_FIGURE_GRADE, FIGURES);
-const MORNING_FIGURES = graded(MORNING_FIGURE_GRADE, FIGURES);
-
 // Stars on the night glass, as (x, z, half size) on the window wall.
 const STARS = [
   [8.8, 5.05, 0.07],
@@ -711,8 +662,6 @@ function lump(
   return [b, a, ...a.map((p, i) => [p, a[(i + 1) % n]!, b[(i + 1) % n]!, b[i]!])];
 }
 
-type Xy = readonly [number, number];
-
 // A cylinder of n sides and radius r (tapering to r1) from a to b at any angle: stems, the
 // recorder.
 function rod(a: Point, b: Point, r: number, n = 8, r1 = r): Face[] {
@@ -740,92 +689,6 @@ function rod(a: Point, b: Point, r: number, n = 8, r1 = r): Face[] {
   return [B, A, ...A.map((p, i) => [p, A[(i + 1) % n]!, B[(i + 1) % n]!, B[i]!])];
 }
 
-// Ada asleep on her back, head on the pillow and the blanket to her chin; Penny asleep across
-// the foot of the bed, over Ada's feet.
-function asleep(s: Scene, P: Palette, F: Colours) {
-  s.solid([flat(octagon(1.8, 7.75, 1.2, 0, 10, 0.3, 0.55), 2.201)], F.hair!, 2, 9.82);
-  s.solid(lump([1.8, 9.6], [1.15, 1.15], 1.8, 2.4, 0.88), P.blanket!, 2, 9.9);
-  s.solid(box(0.6, 3.0, 8.45, 8.75, 1.8, 2.32), P.pillow!, 2, 9.91);
-  // Face up with her eyes closed, the bow toward the headboard.
-  s.solid(lump([1.78, 7.68], [0.76, 0.66], 2.2, 2.95, 0.8), F.hair!, 2, 9.92);
-  s.solid(lump([1.92, 8.16], [0.52, 0.42], 2.3, 2.7, 0.86), F.skin!, 2, 9.93);
-  s.solid(lump([1.92, 8.16], [0.42, 0.33], 2.7, 2.8, 0.7), F.skin!, 2, 9.931, [
-    [onZ(2.801, 1.64, 1.84, 8.07, 8.13), F.nose!],
-    [onZ(2.801, 2.0, 2.2, 8.07, 8.13), F.nose!],
-  ]);
-  s.solid(lump([2.66, 7.38], [0.3, 0.2], 2.58, 3.18, 0.7), F.bow!, 2, 9.94);
-  s.solid(lump([2.34, 7.22], [0.24, 0.16], 2.58, 3.15, 0.7), F.bowlight!, 2, 9.945);
-  penny(s, F, { at: [1.3, 10.65], awake: false });
-}
-
-// The morning page's bed: Ada's legs under the blanket and Penny sitting up awake at its foot.
-// Ada herself is the story-ada-waking pixel sprite, drawn over the treated background.
-function waking(s: Scene, P: Palette, F: Colours) {
-  s.solid(lump([1.8, 9.6], [1.2, 1.45], 1.8, 2.3, 0.86), P.blanket!, 2, 9.9);
-  penny(s, F, { at: [1.4, 10.7], awake: true });
-}
-
-interface PennyPose {
-  // Body centre on the blanket.
-  at: Xy;
-  // Asleep she lies with her head down and eyes closed; awake she sits up, eyes open.
-  awake: boolean;
-}
-
-// Penny on the blanket, facing the bed's open side and the viewer: golden coat, darker floppy
-// ears and tail, pale muzzle, blue collar.
-function penny(s: Scene, F: Colours, { at, awake }: PennyPose) {
-  const k = 1.7;
-  const z = 1.8;
-  // Offsets and lumps in a frame turned by `turn` in the floor plane, in Penny's units.
-  const frame = (turn: number) => {
-    const [ux, uy] = [Math.cos(turn), Math.sin(turn)];
-    return {
-      along: (p: Xy, du: number, dv: number): Xy => [
-        p[0] + (du * ux - dv * uy) * k,
-        p[1] + (du * uy + dv * ux) * k,
-      ],
-      dot: (p: Xy, r: number, top: number, sy = 1): Face =>
-        flat(octagon(p[0], p[1], r * k, 0, 6, turn, sy), z + top * k + 0.001),
-      L: (p: Xy, rx: number, ry: number, z0: number, z1: number, t: number) =>
-        lump(p, [rx * k, ry * k], z + z0 * k, z + z1 * k, t, turn),
-    };
-  };
-  // Asleep she lies along the foot of the bed, her head turned to the viewer; awake she sits
-  // up facing the bed's open side.
-  const body = frame(awake ? 0.55 : 0);
-  const { along, dot, L } = frame(awake ? 0.55 : 0.8);
-  let head: Xy;
-  let zh: number;
-  if (awake) {
-    s.solid(body.L(body.along(at, -0.2, 0), 0.5, 0.45, 0, 0.42, 0.8), F.coat!, 2, 9.96);
-    s.solid(body.L(body.along(at, -0.5, -0.38), 0.3, 0.12, 0, 0.26, 0.7), F.ear!, 2, 9.961);
-    s.solid(body.L(body.along(at, 0.22, 0), 0.3, 0.3, 0, 1.0, 0.8), F.coat!, 2, 9.962);
-    head = body.along(at, 0.3, 0);
-    zh = 0.95;
-  } else {
-    s.solid(body.L(at, 0.72, 0.5, 0, 0.5, 0.76), F.coat!, 2, 9.96);
-    s.solid(body.L(body.along(at, -0.55, -0.3), 0.36, 0.14, 0, 0.22, 0.7), F.ear!, 2, 9.961);
-    head = body.along(at, 0.7, 0.2);
-    zh = 0.3;
-  }
-  // Eyes open as dots, closed as slits.
-  const eyes: Decal[] = [0.156, -0.156].map((dv) => [
-    dot(along(head, 0.17, dv), awake ? 0.065 : 0.07, zh + 0.58, awake ? 1 : 0.4),
-    F.nose!,
-  ]);
-  s.solid(L(along(head, -0.17, 0), 0.3, 0.3, zh - 0.08, zh + 0.04, 0.9), F.collar!, 2, 9.963);
-  s.solid(L(head, 0.34, 0.34, zh, zh + 0.48, 0.8), F.coat!, 2, 9.97);
-  s.solid(L(head, 0.26, 0.26, zh + 0.48, zh + 0.58, 0.7), F.coat!, 2, 9.971, eyes);
-  s.solid(L(along(head, 0.37, 0), 0.17, 0.17, zh, zh + 0.34, 0.76), F.muzzle!, 2, 9.973, [
-    [dot(along(head, 0.47, 0), 0.075, zh + 0.34), F.nose!],
-  ]);
-  for (const dv of [-0.34, 0.34]) {
-    s.solid(L(along(head, -0.02, dv), 0.22, 0.09, zh + 0.08, zh + 0.42, 0.85), F.ear!, 2, 9.975);
-  }
-}
-
-// Window light: each pane's light on the floor along d (dz < 0), and the beam of air from the
 // pane to that patch as one hull. Panes split at the mullion.
 const PANES = [
   [8.3, 10.2],
@@ -864,11 +727,10 @@ const NIGHT_GLOW: RockGlow = { peak: 170, radius: 3.0 };
 const BREATH_GLOW: RockGlow = { peak: 215, radius: 3.8 };
 
 // Night: moonlight through the window, a faint beam and its patch on the floor.
-function night(P: Palette, glow: RockGlow, figures?: Colours): Scene {
+function night(P: Palette, glow: RockGlow): Scene {
   const s = room(P, {
     glow,
     moon: true,
-    ...(figures && { figures: { colours: figures, pose: "asleep" as const } }),
   });
   const colour = rgb(P.moonlight!);
   s.glows.unshift({ at: WINDOW, colour, peak: 70, radius: 3.4 });
@@ -880,10 +742,9 @@ function night(P: Palette, glow: RockGlow, figures?: Colours): Scene {
 }
 
 // Morning: low sun, a long soft beam and bright patches across the floor, the rock's faint glow
-// as by day, Ada sitting up and Penny awake.
+// as by day, with the bed and pillow unoccupied.
 function morning(P: Palette): Scene {
   const s = room(P, {
-    figures: { colours: MORNING_FIGURES, pose: "waking" },
     glow: glowAmount(0),
   });
   s.glows.unshift({ at: WINDOW, colour: rgb(P.sun!), peak: 80, radius: 3.0 });
@@ -1184,16 +1045,11 @@ const KITCHEN: Palette = {
   lamp: "#ffe2a0",
 };
 
-// The round table near the back corner, its top's far and near points, and Dad's seat behind it.
+// The round table near the back corner.
 const DINNER_TABLE = { cx: 4.3, cy: 4.3, r: 1.75, z: 2.4 };
 const DINNER_FAR: Point = [
   DINNER_TABLE.cx - DINNER_TABLE.r * Math.SQRT1_2,
   DINNER_TABLE.cy - DINNER_TABLE.r * Math.SQRT1_2,
-  DINNER_TABLE.z,
-];
-const DINNER_NEAR: Point = [
-  DINNER_TABLE.cx + DINNER_TABLE.r * Math.SQRT1_2,
-  DINNER_TABLE.cy + DINNER_TABLE.r * Math.SQRT1_2,
   DINNER_TABLE.z,
 ];
 const DAD_SEAT: Point = [
@@ -1201,12 +1057,9 @@ const DAD_SEAT: Point = [
   DINNER_TABLE.cy - 2.35 * Math.SQRT1_2,
   DINNER_TABLE.z,
 ];
-// The kitchen rises 88 rows, so the table's near edge ends on row 293 and the table and Dad clear
+// The kitchen rises 88 rows, so the table's near edge ends on row 293 and the table clears
 // the strip above a story panel at Gameplay's longest page.
 const KITCHEN_LIFT = 88;
-// Dad's chair behind the table, the table and everything on it, in painter's keys: Dad's sprite
-// sits between the two.
-const KITCHEN_DAD_KEY = 5.5;
 
 function kitchenChair(
   s: Scene,
@@ -1331,7 +1184,7 @@ function kitchen(P: Palette): Scene {
   ] as const) {
     s.solid(frustum(x, y, 0.3, 0.38, 10, 0, 0.22), P.catbowl!, 2, 4.5);
   }
-  // Dad's chair (key 5.0) before his sprite's slot, the table and supper after it.
+  // The far chair precedes the table and supper in painter order.
   kitchenChair(s, P, DAD_SEAT[0] - 0.15, DAD_SEAT[1] - 0.15, "-x", 5.0);
   const { cx, cy, r, z } = DINNER_TABLE;
   s.solid(frustum(cx, cy, r * 1.12, r * 1.02, 16, 0.9, z), P.cloth!, 2, 6.0);
@@ -1452,7 +1305,7 @@ const CONCERT: Palette = {
 };
 
 // The hall's scale (design px per model unit), and the spotlight's centre on the stage top,
-// where Ada's feet stand.
+// lighting the empty stage.
 const CONCERT_K = 19.5;
 const CONCERT_SPOT: Point = [4.9, 3.3, 1.7];
 
@@ -1603,7 +1456,7 @@ function concertHall(P: Palette): Scene {
   s.solid(box(0, 1.6, 0, sy - 0.5, sz, sz + 0.5), P.riser!, 2, 2.6);
   piano(s, P, 1.7, 3.6, sz, 6.0);
   for (const mx of [6.0, 7.9, 9.8]) musicStand(s, P, [mx, 0.9, sz + 0.5], mx + 0.9);
-  // The spotlight centre stage, where the story-ada-playing sprite stands.
+  // The spotlight at centre stage.
   const spot = CONCERT_SPOT;
   s.lights.push({
     alpha: 0.55,
@@ -1685,47 +1538,22 @@ interface Background {
   palette: Palette;
   build: Builder;
   subject: Subject;
-  // Pixel sprites drawn over the treated background, by manifest id.
-  overlays?: readonly string[];
 }
 
 const band = (top: number, bottom: number): Subject => ({ top, bottom });
 // The rock on Ada's desk, shared by every room background with the desk in view.
 const DESK_ROCK = band(255, 300);
 
-// Ada's pixel sprites (art/tools/ada-sprites.ts), each placed over one background.
-const PLAYING_ID = "story-ada-playing";
-const WAKING_ID = "story-ada-waking";
-// The family's pixel sprites (art/tools/family-sprites.ts).
-const MOM_DOOR_ID = "story-mom-door";
-const DAD_DOOR_ID = "story-dad-door";
-const DAD_DINNER_ID = "story-dad-dinner";
-const CAT_BED_IDS = { archie: "story-archie-bed", kiwi: "story-kiwi-bed" } as const;
-const CAT_CURLED_IDS = { archie: "story-archie-curled", kiwi: "story-kiwi-curled" } as const;
-// Ada and Penny on the route map's ground (route-ground), at scale 1.
-const SKYWATCH_ID = "story-ada-skywatch";
-const PENNY_SITTING_ID = "story-penny-sitting";
-
-// Story figure pages: each composite draws its base background's image with the page's sprites
-// over it, and is placed as its base in the story run (art/storybook.md "Story figures").
+// Compatibility aliases keep story background keys and run placement stable.
 interface Composite {
   id: string;
   base: string;
-  overlays: readonly string[];
 }
 const COMPOSITES: readonly Composite[] = [
-  { id: "story-front-door-mom", base: "story-front-door", overlays: [MOM_DOOR_ID] },
-  { id: "story-ada-room-recorder-dad", base: "story-ada-room-recorder", overlays: [DAD_DOOR_ID] },
-  {
-    id: "story-ada-room-unpolished-cats",
-    base: "story-ada-room-unpolished",
-    overlays: [CAT_BED_IDS.archie, CAT_BED_IDS.kiwi],
-  },
-  {
-    id: "story-ada-room-morning-cats",
-    base: "story-ada-room-morning",
-    overlays: [WAKING_ID, CAT_CURLED_IDS.archie, CAT_CURLED_IDS.kiwi],
-  },
+  { id: "story-front-door-mom", base: "story-front-door" },
+  { id: "story-ada-room-recorder-dad", base: "story-ada-room-recorder" },
+  { id: "story-ada-room-unpolished-cats", base: "story-ada-room-unpolished" },
+  { id: "story-ada-room-morning-cats", base: "story-ada-room-morning" },
 ];
 
 // Scene order follows the story; the overnight recharge follows the chapters' scenes.
@@ -1753,13 +1581,12 @@ export const BACKGROUNDS: readonly Background[] = [
   { id: "story-schoolyard", palette: YARD, build: schoolyard, subject: band(168, 278) },
   // The notice board beside the near door.
   { id: "story-school-hallway", palette: HALL, build: hallway, subject: band(184, 290) },
-  // Cartwheel's dinner: Dad at the table, his head (row 146) to the table's near edge (293).
+  // Cartwheel's dinner: the table set for supper; preserve the story run's subject band.
   {
     id: "story-kitchen",
     palette: KITCHEN,
     build: kitchen,
     subject: band(146, 293),
-    overlays: [DAD_DINNER_ID],
   },
   // The coats and Penny's lead on their hooks by the door.
   { id: "story-front-door", palette: DOOR, build: frontDoor, subject: band(175, 280) },
@@ -1776,13 +1603,12 @@ export const BACKGROUNDS: readonly Background[] = [
     build: (P: Palette) => room(P, { glow: glowAmount(glow), lift: NEEDLE_LIFT, recorder: true }),
     subject: band(248, 293),
   })),
-  // Needle's closing: the stage, and Ada playing in the spotlight.
+  // Needle's closing: the stage and its spotlight.
   {
     id: "story-concert-hall",
     palette: CONCERT,
     build: concertHall,
     subject: band(188, 293),
-    overlays: [PLAYING_ID],
   },
   // Andromeda: the seedling tray on the potting table, spilled, then replanted.
   {
@@ -1804,18 +1630,16 @@ export const BACKGROUNDS: readonly Background[] = [
     build: (P) => night(P, NIGHT_GLOW),
     subject: band(250, 300),
   },
-  // Ada's waking sprite on the bed (rows 264 to 348) and the rock on the desk.
+  // Morning sunlight on the empty bed and the rock; preserve the story run's subject band.
   {
     id: "story-ada-room-morning",
     palette: MORNING,
     build: morning,
     subject: band(255, 348),
-    overlays: [WAKING_ID],
   },
 ];
 
 const subjectOf = (id: string) => BACKGROUNDS.find((background) => background.id === id)!.subject;
-const overlaysOf = (id: string) => BACKGROUNDS.find((background) => background.id === id)?.overlays;
 
 export function paint(palette: Palette, scene: Scene) {
   return treatmentD(CANVAS, palette.haze ?? TREATMENT.haze, render(CANVAS, palette.back, scene));
@@ -1833,229 +1657,16 @@ export const entry = (id: string, subject = subjectOf(id)) => ({
   facing: "front",
   pivot: { x: 0.5, y: 0.5 },
   subject,
-  ...(overlaysOf(id) && { overlays: overlaysOf(id) }),
 });
 
-/* Ada's pixel sprites over their backgrounds */
-
-// Logical canvas px of a model point in a scene.
-function canvasAt(scene: Scene, point: Point) {
-  const k = 360 / DESIGN.height;
-  const [dx, dy] = scene.project(point);
-  return {
-    x: (dx - (DESIGN.width / 2 - CANVAS.width / 2 / k)) * k,
-    y: (dy - (DESIGN.height / 2 - CANVAS.height / 2 / k)) * k,
-  };
-}
-
-// Each sprite's integer scale (logical px per sprite px) and its top-left corner on the canvas in
-// whole logical px, so its pixel grid lands on whole canvas px.
-function spritePlaces() {
-  // In the concert hall at the hall's furniture scale: her feet on the spotlight's centre.
-  const feet = canvasAt(concertHall(CONCERT), CONCERT_SPOT);
-  // In Ada's room at twice that, the room's furniture scale: centred on her seat against the
-  // pillow, kneeling up so the duvet's lower edge rests on the pillow's back edge (canvas y 348).
-  const seat = canvasAt(room(MORNING), [1.8, 7.5, 2.45]);
-  return {
-    [PLAYING_ID]: {
-      at: { x: Math.round(feet.x - PLAYING_FEET.x), y: Math.round(feet.y) - PLAYING_FEET.y },
-      scale: 1,
-    },
-    [WAKING_ID]: {
-      at: { x: Math.round(seat.x - 2 * WAKING_CENTRE), y: 348 - 2 * WAKING_HEIGHT },
-      scale: 2,
-    },
-  };
-}
-
-// The treated blanket on the morning page, under Ada's legs: the duvet over her lap takes it.
-const BLANKET_PX = { x: 492, y: 776 };
-const blanketOf = (image: RgbaImage): Rgb => {
-  const i = (BLANKET_PX.y * image.width + BLANKET_PX.x) * 4;
-  return [image.data[i]!, image.data[i + 1]!, image.data[i + 2]!];
-};
-
-const spriteEntry = (
-  id: string,
-  image: RgbaImage,
-  { at, scale }: { at: { x: number; y: number }; scale: number },
-) => ({
-  id,
-  path: storyPath(id),
-  width: image.width,
-  height: image.height,
-  displayWidth: image.width * scale,
-  displayHeight: image.height * scale,
-  facing: "front",
-  pivot: { x: 0, y: 0 },
-  at,
-  scale,
-  sampling: "nearest",
-});
-
-/* The family's pixel sprites over their backgrounds */
-
-interface Placed {
-  image: RgbaImage;
-  at: { x: number; y: number };
-  scale: number;
-}
-
-// Top-left, in whole logical px, for a sprite at `scale` whose foot centre (its centre line, on
-// its bottom row) stands on the canvas point `p`.
-const standing = ({ image, centre }: Sprite, p: { x: number; y: number }, scale = 2) => ({
-  x: Math.round(p.x - centre * scale),
-  y: Math.round(p.y) - image.height * scale,
-});
-
-// The vertical quad facing the viewer whose projection is the canvas rect (logical px) of a
-// sprite, through the model point `through`: a stand-in for the sprite in the painter's order.
-function billboard(scene: Scene, through: Point, { image, at, scale }: Placed): Face {
-  const c = canvasAt(scene, through);
-  const unit = 1 / (scene.k * (360 / DESIGN.height));
-  const u: Point = [1 / (2 * R3), -1 / (2 * R3), 0];
-  const v: Point = [1 / 3, 1 / 3, -2 / 3];
-  const p = (sx: number, sy: number): Point => {
-    const [a, b] = [(sx - c.x) * unit, (sy - c.y) * unit];
-    return [0, 1, 2].map((i) => through[i]! + a * u[i]! + b * v[i]!) as unknown as Point;
-  };
-  const [x0, y0] = [at.x, at.y];
-  const [x1, y1] = [at.x + image.width * scale, at.y + image.height * scale];
-  return [p(x0, y0), p(x1, y0), p(x1, y1), p(x0, y1)];
-}
-
-const STAND_IN = "#ff00ff";
-
-// The sprite less the px a scene's nearer solids hide: the scene renders with a stand-in quad in
-// the sprite's painter slot (`key`), and a sprite px stays where the stand-in shows over at
-// least half its canvas block. `keep` px (the seated Dad's arms on the table) always stay.
-function occluded(
-  scene: Scene,
-  back: Palette["back"],
-  through: Point,
-  key: number,
-  sprite: Placed,
-  keep?: RgbaImage,
-) {
-  const quad = billboard(scene, through, sprite);
-  scene.solid([quad], STAND_IN, 2, key, [[quad, STAND_IN]]);
-  scene.glows.length = 0;
-  scene.lights.length = 0;
-  const mask = render(CANVAS, back, scene);
-  const { image, at, scale } = sprite;
-  const out = blankImage(image.width, image.height);
-  const d = CANVAS.density * scale;
-  for (let sy = 0; sy < image.height; sy++) {
-    for (let sx = 0; sx < image.width; sx++) {
-      const i = (sy * image.width + sx) * 4;
-      if (image.data[i + 3] === 0) continue;
-      let shown = 0;
-      for (let y = 0; y < d; y++) {
-        for (let x = 0; x < d; x++) {
-          const j =
-            (((at.y + sy * scale) * CANVAS.density + y) * mask.width +
-              (at.x + sx * scale) * CANVAS.density +
-              x) *
-            4;
-          if (mask.data[j]! > 200 && mask.data[j + 1]! < 80 && mask.data[j + 2]! > 200) shown++;
-        }
-      }
-      if (shown * 2 >= d * d || (keep && keep.data[i + 3]! > 0)) {
-        out.data.set(image.data.subarray(i, i + 4), i);
-      }
-    }
-  }
-  return { ...sprite, image: out };
-}
-
-// Mom beside the front door, Dad in the doorway of Ada's room (behind the bed's headboard,
-// painter's key 6.8) and at the kitchen table (cut at its far edge, his forearms on it), and the
-// cats on the bed and curled at Ada's feet: all at scale 2, each scene's furniture scale.
-const MOM_FEET: Point = [1.25, 4.25, 0];
-const DAD_DOOR_FEET: Point = [0.4, (DOORWAY.y0 + DOORWAY.y1) / 2, 0];
-// The table's far edge meets the seated sprite on this row; his forearms rest in front of it.
-const DAD_CUT_ROW = 39;
-const CAT_BED: Record<Cat, Point> = { archie: [0.95, 9.85, 1.8], kiwi: [2.7, 9.0, 1.8] };
-const CAT_FEET: Record<Cat, Point> = { archie: [3.0, 8.75, 1.8], kiwi: [1.95, 9.25, 2.25] };
-
-function familySprites(): Record<string, Placed> {
-  const placed: Record<string, Placed> = {};
-  const mom = momAtDoor();
-  placed[MOM_DOOR_ID] = {
-    image: mom.image,
-    at: standing(mom, canvasAt(frontDoor(DOOR), MOM_FEET)),
-    scale: 2,
-  };
-  const recorderRoom = () => room(ROOM, { glow: glowAmount(0), lift: NEEDLE_LIFT, recorder: true });
-  const dadDoor = dadAtDoor();
-  placed[DAD_DOOR_ID] = occluded(recorderRoom(), ROOM.back, DAD_DOOR_FEET, 6.7, {
-    image: dadDoor.image,
-    at: standing(dadDoor, canvasAt(recorderRoom(), DAD_DOOR_FEET)),
-    scale: 2,
-  });
-  const dinner = dadAtDinner();
-  const seat = canvasAt(kitchen(KITCHEN), DAD_SEAT);
-  const far = canvasAt(kitchen(KITCHEN), DINNER_FAR);
-  const near = canvasAt(kitchen(KITCHEN), DINNER_NEAR);
-  const dinnerAt = {
-    x: Math.round(seat.x - dinner.figure.centre * 2),
-    y: Math.round(far.y) - DAD_CUT_ROW * 2,
-  };
-  const kitchenBand = subjectOf("story-kitchen");
-  if (dinnerAt.y !== kitchenBand.top || Math.ceil(near.y) !== kitchenBand.bottom) {
-    throw new Error(`story-kitchen's band is ${dinnerAt.y}..${Math.ceil(near.y)}`);
-  }
-  placed[DAD_DINNER_ID] = occluded(
-    kitchen(KITCHEN),
-    KITCHEN.back,
-    DAD_SEAT,
-    KITCHEN_DAD_KEY,
-    { image: dinner.figure.image, at: dinnerAt, scale: 2 },
-    dinner.arms,
-  );
-  const bedroom = room(ROOM);
-  for (const cat of ["archie", "kiwi"] as const) {
-    const sitting = catSitting(cat);
-    placed[CAT_BED_IDS[cat]] = {
-      image: sitting.image,
-      at: standing(sitting, canvasAt(bedroom, CAT_BED[cat])),
-      scale: 2,
-    };
-    const curled = catCurled(cat);
-    placed[CAT_CURLED_IDS[cat]] = {
-      image: curled.image,
-      at: standing(curled, canvasAt(bedroom, CAT_FEET[cat])),
-      scale: 2,
-    };
-  }
-  return placed;
-}
-
-// Ada and Penny on the route-ground canvas, each standing on her foot point at scale 1.
-function skywatchSprites(): Record<string, Placed> {
-  const ada = adaSkywatch();
-  const penny = pennySitting();
-  return {
-    [SKYWATCH_ID]: { image: ada.image, at: standing(ada, ROUTE_FIGURES.ada, 1), scale: 1 },
-    [PENNY_SITTING_ID]: {
-      image: penny.image,
-      at: standing(penny, ROUTE_FIGURES.penny, 1),
-      scale: 1,
-    },
-  };
-}
-
-// A story figure page's background: its base's image, subject band and run placement (`base`),
-// with the page's sprites drawn over it.
-const compositeEntry = ({ id, base, overlays }: Composite) => ({
+// An environment alias shares its base image, subject band and run placement.
+const compositeEntry = ({ id, base }: Composite) => ({
   ...entry(id, subjectOf(base)),
   path: storyPath(base),
   base,
-  overlays,
 });
 
-/* Overnight overlays: the sleep scene is the night background with Ada and Penny over it, and
-   the rock's breath is a glow patch over that */
+/* Overnight overlay: the rock's breath over the unoccupied night room */
 
 // The pixels where `top` differs from `base`, grown by GROW px and cropped with PAD px more to
 // an even box on the 2x canvas: opaque inside the grown difference, clear outside it. Drawn
@@ -2100,16 +1711,14 @@ function overlay(base: RgbaImage, top: RgbaImage): Overlay {
 }
 
 const SLEEP = "story-ada-room-sleep";
-const SLEEP_FIGURES = "story-ada-room-sleep-figures";
 const SLEEP_GLOW = "story-ada-room-sleep-glow";
-const OVERLAYS = [SLEEP_FIGURES, SLEEP_GLOW] as const;
+const OVERLAYS = [SLEEP_GLOW] as const;
 
-// The night background, the sleep scene's figures over it, and the breath's glow over those.
+// The rock's peak glow over the same unoccupied night room.
 function overnightOverlays(): Record<(typeof OVERLAYS)[number], Overlay> {
   const base = paint(NIGHT, night(NIGHT, NIGHT_GLOW));
-  const sleep = paint(NIGHT, night(NIGHT, NIGHT_GLOW, NIGHT_FIGURES));
-  const breath = paint(NIGHT, night(NIGHT, BREATH_GLOW, NIGHT_FIGURES));
-  return { [SLEEP_FIGURES]: overlay(base, sleep), [SLEEP_GLOW]: overlay(sleep, breath) };
+  const breath = paint(NIGHT, night(NIGHT, BREATH_GLOW));
+  return { [SLEEP_GLOW]: overlay(base, breath) };
 }
 
 const overlayEntry = (id: string, { at, image }: Overlay) => ({
@@ -2124,13 +1733,11 @@ const overlayEntry = (id: string, { at, image }: Overlay) => ({
   at,
 });
 
-// The sleep scene's background: the night background under the figures overlay, placed as the
-// night page places it, so the overlays fade in without a jump.
+// The sleep scene shares the night page's environment and run placement.
 const sleepEntry = () => ({
   ...entry(SLEEP, subjectOf("story-ada-room-night")),
   path: storyPath("story-ada-room-night"),
   base: "story-ada-room-night",
-  overlays: [SLEEP_FIGURES],
 });
 
 // The overnight sleep scene, from the night page to the morning page, its steps in order:
@@ -2145,18 +1752,17 @@ type Step =
 const stepMs = (steps: readonly Step[]) =>
   steps.reduce((sum, step) => sum + ("ms" in step ? step.ms : step.fadeMs + step.holdMs), 0);
 
-// The morning page's background: the morning with Ada waking and the cats curled at her feet,
-// so the cats fade in with her.
+// Keep the existing morning page key as an environment-only alias.
 const MORNING_PAGE = "story-ada-room-morning-cats";
 
 function overnight(at: (id: string) => Overlay["at"]) {
   const steps: Step[] = [
-    { overlay: SLEEP_FIGURES, fadeMs: 400, holdMs: 0 },
+    { background: "story-ada-room-night", fadeMs: 0, holdMs: 400 },
     { breath: SLEEP_GLOW, ms: 1500 },
     { background: MORNING_PAGE, fadeMs: 600, holdMs: 0 },
   ];
   const reducedMotion: Step[] = [
-    { overlay: SLEEP_FIGURES, fadeMs: 0, holdMs: 2000 },
+    { background: "story-ada-room-night", fadeMs: 0, holdMs: 2000 },
     { background: MORNING_PAGE, fadeMs: 400, holdMs: 0 },
   ];
   return {
@@ -2192,47 +1798,17 @@ const file = (id: string) => `${art}${storyPath(id).slice("/art/".length)}`;
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const only = process.argv[2];
-  let morningImage: RgbaImage | undefined;
   for (const { build, id, palette } of BACKGROUNDS) {
     if (only && only !== id) continue;
-    const image = paint(palette, build(palette));
-    writePng(file(id), image, true);
-    if (id === "story-ada-room-morning") morningImage = image;
+    writePng(file(id), paint(palette, build(palette)), true);
   }
-  // Ada's sprites rebuild every run; the waking one samples the morning page's blanket.
-  const places = spritePlaces();
-  const blanket = blanketOf(
-    morningImage ?? decodePng(readFileSync(file("story-ada-room-morning"))),
-  );
-  // The family's sprites rebuild every run too, with their placements.
-  const family = familySprites();
-  const placedSprites: Record<string, Placed> = {
-    [PLAYING_ID]: { image: playingSprite(), ...places[PLAYING_ID] },
-    [WAKING_ID]: { image: wakingSprite(blanket), ...places[WAKING_ID] },
-    ...family,
-    ...skywatchSprites(),
-  };
-  for (const [id, { image }] of Object.entries(placedSprites)) writePng(file(id), image);
-  // Each sprite's entry follows the first background or composite that draws it.
-  const listed = new Set<string>();
-  const spritesOf = (overlays: readonly string[] = []) =>
-    overlays
-      .filter((sprite) => !listed.has(sprite) && listed.add(sprite))
-      .map((sprite) => spriteEntry(sprite, placedSprites[sprite]!.image, placedSprites[sprite]!));
-  const spriteOf = (id: string) => [
-    ...spritesOf(overlaysOf(id)),
-    ...COMPOSITES.filter(({ base }) => base === id).flatMap((composite) => [
-      compositeEntry(composite),
-      ...spritesOf(composite.overlays),
-    ]),
-  ];
   // The overlays rebuild with the night background; other single-id runs keep their entries.
   const rebuild = !only || only === "story-ada-room-night" || OVERLAYS.some((id) => id === only);
   let overlays: { at: Overlay["at"]; id: string }[];
   if (rebuild) {
-    const sprites = overnightOverlays();
-    for (const id of OVERLAYS) writePng(file(id), sprites[id].image);
-    overlays = OVERLAYS.map((id) => overlayEntry(id, sprites[id]));
+    const glow = overnightOverlays();
+    for (const id of OVERLAYS) writePng(file(id), glow[id].image);
+    overlays = OVERLAYS.map((id) => overlayEntry(id, glow[id]));
   } else {
     const assets = readManifest("core").assets as { at: Overlay["at"]; id: string }[];
     overlays = OVERLAYS.map((id) => assets.find((asset) => asset.id === id)!);
@@ -2241,11 +1817,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     ...BACKGROUNDS.flatMap(({ id }) =>
       id === "story-ada-room-night"
         ? [entry(id), sleepEntry(), ...overlays]
-        : [entry(id), ...spriteOf(id)],
-    ),
-    // The route map's figures follow the story backgrounds; route-ground lists them.
-    ...[SKYWATCH_ID, PENNY_SITTING_ID].map((id) =>
-      spriteEntry(id, placedSprites[id]!.image, placedSprites[id]!),
+        : [entry(id), ...COMPOSITES.filter(({ base }) => base === id).map(compositeEntry)],
     ),
   ]);
   writeFileSync(`${art}story-transition.json`, json(TRANSITION));

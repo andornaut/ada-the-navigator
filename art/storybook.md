@@ -1,12 +1,16 @@
 # Storybook art
 
-- Rebuild with `node art/tools/storybook.ts` (optionally one id). It writes the
-  Earth backgrounds, [Ada's sprites](#adas-sprites), the
-  [story figures](#story-figures) and the overnight overlays to
-  `public/art/story/`, their `story-` root manifest entries,
-  `story-transition.json` and `story-overnight.json`. `art/tools/diorama.ts`
-  holds the solids, painter, lights and treatment; `art/tools/ada-sprites.ts`
-  draws Ada's sprites and `art/tools/family-sprites.ts` her family's.
+- Rebuild with `node art/tools/storybook.ts` (optionally one background id)
+  inside the isolated art container. It writes environment-only Earth
+  backgrounds and the overnight rock-glow overlay to `public/art/story/`,
+  their `story-` root manifest entries, `story-transition.json` and
+  `story-overnight.json`. `art/tools/diorama.ts` holds the solids, painter,
+  lights and treatment. `node art/tools/route-sky.ts` writes the environment
+  sky and ground and their manifest entries.
+- Backgrounds and overlays contain no human or animal figures. Established
+  portraits appear in the story panel for the existing speakers; narration
+  has no added portrait. Story copy, speaker identities and props remain
+  unchanged. Astra and the rock's glow retain their existing effects.
 - Output is deterministic: the same source writes byte-identical PNGs.
 
 ## Canvas
@@ -73,14 +77,14 @@ and the scene's subject stays clearest above it.
 | `story-grandma-garden-spilled`   | `story-grandma-garden` with the tray spilled          | `#bfe0e8` → `#d9ecd6` | as `story-grandma-garden`, tray `#4f6a5a`, pots `#d9825b`, soil `#6e4a30` |
 | `story-grandma-garden-replanted` | `story-grandma-garden` with the tray replanted        | `#bfe0e8` → `#d9ecd6` | as above, seedlings `#7cc95a`, trowel `#9aa6b4`, sack `#c9a978`           |
 | `story-ada-room-night`           | Ada's room at night: moon and stars, lamp off         | `#1d2452` → `#2a2f5e` | wall `#445487`, floor `#414c64`, blanket `#1d4484`, glass `#16245e`       |
-| `story-ada-room-morning`         | Morning: the bed, Penny awake; Ada is a sprite        | `#f6d9b4` → `#efcfb4` | wall `#ffd5cb`, floor `#f3b65f`, blanket `#a6b3cb`, glass `#fad98a`       |
+| `story-ada-room-morning`         | Morning: empty bed, sunlight and the rock        | `#f6d9b4` → `#efcfb4` | wall `#ffd5cb`, floor `#f3b65f`, blanket `#a6b3cb`, glass `#fad98a`       |
 
 Full palettes are in the generator. Colours are before treatment d.
 
 - Needle opens and resolves in `story-ada-room-recorder`: the recorder lies on
   its song sheet at the desk's free left end, left of the rock, so the rock
   stays the brightest point. It closes in `story-concert-hall`, the stage seen
-  from the hall, with Ada playing in the spotlight. The recorder room draws Ada's
+  from the hall, with the spotlight on the empty stage. The recorder room draws Ada's
   room 7 rows higher and the concert hall rises 7 rows too, so both subjects end
   by row 293.
 - Andromeda opens, resolves and closes in Grandma's garden with a potting table
@@ -106,8 +110,8 @@ Full palettes are in the generator. Colours are before treatment d.
   cabinets with the hob, a pot and the sink under a dusk window along the right
   wall; a round clock, a shelf of jars and the fridge with Ada's drawing on the
   left; checked tiles, two cat bowls, and supper on a cloth-covered round table
-  under a warm lamp glow (`#ffe2a0`, radius 3.4, peak 70). Dad sits behind the
-  table ([story figures](#story-figures)).
+  under a warm lamp glow (`#ffe2a0`, radius 3.4, peak 70). The chairs remain
+  unoccupied.
 
 The game names each page's location by a background key
 (`Background` in `src/data/storybook.ts`):
@@ -124,7 +128,7 @@ The game names each page's location by a background key
 | `adaRoom`                | `story-ada-room`                                      |
 | `adaRoomUnpolished`      | `story-ada-room-unpolished` (the rock as dug up)      |
 | `adaRoomNight`           | `story-ada-room-night`                                |
-| `adaRoomSleep`           | `story-ada-room-sleep` (night plus the figures)       |
+| `adaRoomSleep`           | `story-ada-room-sleep` (the unoccupied night room)       |
 | `adaRoomMorning`         | `story-ada-room-morning`                              |
 | `adaRoomRecorder`        | `story-ada-room-recorder` (key to add)                |
 | `concertHall`            | `story-concert-hall` (key to add)                     |
@@ -175,14 +179,14 @@ at most the panel top + 180; at 720x405 the limit is the panel top + 135.
 | `story-community-garden`         | 180..290 | The sprouting bed, the empty beds, the shed            |
 | `story-schoolyard`               | 168..278 | The play structure beside the school's door            |
 | `story-school-hallway`           | 184..290 | The notice board beside the near door                  |
-| `story-kitchen`                  | 146..293 | Dad at the table, the table to its near edge           |
+| `story-kitchen`                  | 146..293 | The dinner setting and table to its near edge           |
 | `story-front-door`               | 175..280 | The coats and Penny's lead on their hooks by the door  |
 | `story-ada-room-night`           | 250..300 | The rock's glow on the desk; the sleep scene shares it |
-| `story-ada-room-morning`         | 255..348 | Ada's waking sprite on the bed, the rock on the desk   |
+| `story-ada-room-morning`         | 255..348 | The empty bed and the rock on the desk   |
 | `aboard`                         | 172..256 | The ship's canopy and the hull round it                |
 | `aboard-emergency`               | 172..256 | The ship's canopy and the hull round it                |
 | `story-ada-room-recorder`        | 248..293 | The rock and the recorder on the desk                  |
-| `story-concert-hall`             | 188..293 | The stage, the piano and Ada in the spotlight          |
+| `story-concert-hall`             | 188..293 | The stage, piano and spotlight          |
 | `story-grandma-garden-spilled`   | 176..285 | The seedling tray on the potting table and the beds    |
 | `story-grandma-garden-replanted` | 176..285 | The seedling tray on the potting table and the beds    |
 
@@ -223,8 +227,9 @@ characters, the heading and two choices).
 | `story-grandma-garden-spilled`, new chapter at the limit            | y -174: 2..111, top 113         | y -174: 2..111, top 113         | y -135*: 41..150, top 161       |
 | `story-grandma-garden-replanted`, new chapter at the limit          | y -174: 2..111, top 113         | y -174: 2..111, top 113         | y -135*: 41..150, top 161       |
 
-A [story figure](#story-figures) composite carries its base's band and takes
-its base's placement.
+An [environment alias](#environment-aliases) carries its base's band and
+takes its base's placement. Existing subject bands remain unchanged to keep
+story-run anchors stable.
 
 Every band in the current runs clears its panel at these views, the aboard
 band under Astra's three questions included: its 84 rows fit the 93-row strip.
@@ -232,169 +237,25 @@ At Gameplay's limit the four new backgrounds clear too: Needle's recorder room
 and concert hall rise 7 rows so their bands end by row 293, the lowest visible
 row under a 220-character page at 360-high views.
 
-## Ada's sprites
+## Environment aliases
 
-Ada on the concert stage, waking on the morning page and watching the sky on
-the route map's ground is a crisp pixel sprite drawn over its background, not
-painted into it. Each is an
-overlay of its background: the background entry's `overlays` names it, and
-its entry gives the PNG at one sprite px per image px, `scale` (logical px per
-sprite px), `displayWidth` and `displayHeight` (the image times `scale`),
-`pivot` (0, 0), `at` (its top-left corner on the canvas in whole logical px)
-and `sampling: "nearest"`.
+These existing asset IDs preserve the page keys and run anchors. Each entry
+shares its base's PNG, subject band and `base`, with no figure overlays.
+Character names in the IDs are compatibility keys, not rendered contents.
 
-| Id                    | Size (px) | `scale` | `at`       | Background               | Pose                                        |
-| --------------------- | --------- | ------- | ---------- | ------------------------ | ------------------------------------------- |
-| `story-ada-playing`   | 44 x 56   | 1       | (480, 221) | `story-concert-hall`     | Playing the recorder, feet on the spotlight |
-| `story-ada-waking`    | 48 x 42   | 2       | (249, 264) | `story-ada-room-morning` | Stretching and yawning, kneeling in bed     |
-| `story-ada-skywatch`  | 28 x 52   | 1       | (199, 60)  | `route-ground`           | From behind, looking up at the sky          |
-| `story-penny-sitting` | 23 x 28   | 1       | (228, 84)  | `route-ground`           | Penny sitting beside her, looking up        |
+| Alias | Environment base |
+| ----- | ---------------- |
+| `story-front-door-mom` | `story-front-door` |
+| `story-ada-room-recorder-dad` | `story-ada-room-recorder` |
+| `story-ada-room-unpolished-cats` | `story-ada-room-unpolished` |
+| `story-ada-room-morning-cats` | `story-ada-room-morning` |
+| `story-ada-room-sleep` | `story-ada-room-night` |
 
-- Scale: one sprite px is 1 logical px in the concert hall and 2 in Ada's room,
-  each scene's furniture scale; that is 2 and 4 canvas px at the canvas's 2x.
-  Whole-px `at` puts the sprite's grid on whole canvas px.
-- Drawing: after the background's blur, desaturation and haze, with the
-  background's transform (centred, the scene anchor's offset, scale
-  `max(1, viewW / 960, viewH / 540)`), nearest-neighbour at that scale and at
-  the device ratio, like every pixel sprite ([layout](layout.md)): no linear
-  filter and no sub-pixel offset, so each sprite px stays one solid square.
-  It moves and scales with its background and shows whenever it does,
-  cross-fades included.
-- Head: Ada's portrait's neutral frame, pixel for pixel
-  (`art/sources/face-walker-ada.png`, [provenance](portraits.md#storybook-sprite-source)),
-  with these changes only: the crown rounded into an oval (one more row on
-  top), one 1 px white shine per eye (the lower-right shines go), 2 px of blush
-  `#f6757a` per cheek inside the face outline, a small smile, no chin line (the
-  chin is skin and the neck under it `#9c5a42`), and no hair below the chin;
-  the back hair reaches her shoulders behind the neck.
-- Body: a front view in Archie's walker-ada colours (shirt `#fee761` and
-  `#feae34`, shorts `#0099db` and `#124e89`, skin `#b86f50` and `#c28569`,
-  white shoes with soles `#f6757a`), ink edge `#181425` and flat shading,
-  about 2.5 heads tall with torso and legs about equal (shoulder 25 to hip 40,
-  hip to sole 54). It centres on the head's centre line (x 21.5), with weight
-  on her left leg, a gentle A-line shirt hem, rounded shoes and arms as 3 px
-  strokes with clean 1 px steps and bent elbows.
-- Playing: the recorder (`#7a4a32`, shade `#5a3424`, ring `#efe4c8`) leans down
-  and forward from her lips to the viewer's left; her left hand holds it high
-  and her right hand low, each arm from its own side with the elbow out, the
-  arms apart so the recorder shows between them. A 22 by 3 ink shadow at alpha
-  60 sits under her shoes.
-- Waking: arms in a soft V with bent elbows and loose fists by the top of her
-  head, eyes shut and a small open yawn. The duvet's bunched edge covers her
-  lap, in the morning page's treated blanket colour sampled at canvas px
-  (492, 776), with a fold shade 24 darker and the ink edge.
-- Skywatch: Ada from behind, looking up at the sky, redrawn from Archie's
-  back-view walker (`art/sources/walker-ada-idle.png`, 30 x 55) in Ada's
-  style: her wavy hair with its ear, the bow `#b55088` on her crown, the shirt
-  whose sleeves cover her shoulders, her forearms and hands at her sides, the
-  two-tone shorts, legs and shoes. Each part is the walker's resampled by area
-  to 0.9 of its widths (`ADA_FIT`): the head (hair, ear and bow) also 0.9 tall
-  about the hair hem's centre, the body across only, so head 27, shoulders 27,
-  torso 16 and 28 x 52 overall against the walker's 30, 29 and 18. Colours are
-  the walker's in Ada's palette, its hair lights as Ada's `#3a4466`, with
-  Ada's ink edge round the silhouette in place of its brown outline. On the
-  route ground's scale 1, beside Penny ([route sky](route-sky.md)).
-- Penny sitting: Archie's `dog-penny` colours (coat `#feae34`, shade and ears
-  `#f77622`, highlight `#fee761`, harness `#124e89` with a `#0099db` top row)
-  on the same ink edges and flat shading, from behind: her head lifted so the
-  muzzle shows above her crown, her ears hanging, the harness across her back
-  and her tail curled on the grass to her right. About half Ada's height
-  seated. `art/tools/family-sprites.ts` draws both.
-- Evening light, on the two route sprites only: every colour but the ink edge
-  mixed 20% toward `#292734`, then the pixels on the sunset side (the viewer's
-  left) and along the top edges of the left half mixed 65% toward amber
-  `#f0bd68`, inside the ink outline.
-- Penny stays painted on the morning page; her crisp sprite shows on the route
-  ground only.
-
-## Story figures
-
-Ada's family appears only on the pages that show them: Mom (Trista) at the
-front door, Dad (Bin) looking in at Ada's bedroom door and at dinner, and the
-cats Archie, a round ginger tabby, and Kiwi, a slim grey tabby, on the bed and
-curled at Ada's feet. Each is a crisp pixel sprite on the rule of
-[Ada's sprites](#adas-sprites): the same entry fields, drawing and scale 2,
-Ada's room's furniture scale (the front door and kitchen share it).
-
-A page that shows figures over a background its other pages show bare uses a
-composite entry: `path` is the base background's image, `base` its id,
-`subject` its band, and `overlays` the page's sprites, drawn in order. The
-story page places a composite as its `base`: the run anchor counts the
-composite's pages as pages on the base, so the scene never moves when a page
-switches to it. `story-ada-room-sleep` carries `base` (`story-ada-room-night`)
-on the same rule. The kitchen is only Dad's, so its sprite is an overlay of
-`story-kitchen` itself.
-
-| Composite                        | `base`                      | `overlays`                                                     | Page                                                             |
-| -------------------------------- | --------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `story-front-door-mom`           | `story-front-door`          | `story-mom-door`                                               | Whirlpool, Mom after the opening                                 |
-| `story-ada-room-recorder-dad`    | `story-ada-room-recorder`   | `story-dad-door`                                               | Needle, Dad looking in after the branch page                     |
-| `story-ada-room-unpolished-cats` | `story-ada-room-unpolished` | `story-archie-bed`, `story-kiwi-bed`                           | Prologue: "Archie and Kiwi watch from the bed, tails twitching." |
-| `story-ada-room-morning-cats`    | `story-ada-room-morning`    | `story-ada-waking`, `story-archie-curled`, `story-kiwi-curled` | The morning page after the sleep scene                           |
-
-| Sprite                | Size (px) | `scale` | `at`       | Drawn on                         | Pose                                                          |
-| --------------------- | --------- | ------- | ---------- | -------------------------------- | ------------------------------------------------------------- |
-| `story-mom-door`      | 33 x 71   | 2       | (324, 228) | `story-front-door-mom`           | Beside the door, her right hand open toward it, the tote held |
-| `story-dad-door`      | 28 x 76   | 2       | (292, 211) | `story-ada-room-recorder-dad`    | In the doorway, a thumbs-up; the headboard hides his feet     |
-| `story-dad-dinner`    | 30 x 47   | 2       | (403, 146) | `story-kitchen`                  | Seated behind the table, forearms on the cloth                |
-| `story-archie-bed`    | 17 x 20   | 2       | (207, 353) | `story-ada-room-unpolished-cats` | Sitting on the blanket by the wall, tail tip raised           |
-| `story-kiwi-bed`      | 16 x 22   | 2       | (273, 362) | `story-ada-room-unpolished-cats` | Sitting in front of the pillow, tail tip raised               |
-| `story-archie-curled` | 22 x 13   | 2       | (275, 380) | `story-ada-room-morning-cats`    | Curled asleep by the bed's edge below Ada's duvet             |
-| `story-kiwi-curled`   | 22 x 13   | 2       | (238, 360) | `story-ada-room-morning-cats`    | Curled asleep on Ada's legs, beside Penny                     |
-
-- Heads: each parent's walker portrait's neutral frame from the Archie
-  repository, pixel for pixel (`art/sources/face-walker-trista.png`,
-  `face-walker-mr-b.png`, [provenance](portraits.md#storybook-sprite-source)):
-  its rows from the crown to the neck, centred on x 21.5 as Ada's.
-- Bodies: front views in the walker sprites' colours with the ink edge, flat
-  shading and Ada's 3 px arms with bent elbows; adults stand taller than Ada
-  (55 rows): Mom 71 rows, about 3 heads, and Dad 76, about 3.4.
-  - Mom, `walker-trista`: skin `#e8b796`, green cardigan `#3e8948` (shade
-    `#265c42`, light `#63c74d`) open over a white top with gold buttons
-    `#feae34`, brown skirt `#9a6a4a` (shade `#523a2c`), navy tights `#3a4466`,
-    brown shoes `#733e39` and her apple tote `#ead4aa` (`#e4a672`, apple
-    `#e43b44`).
-  - Dad, `walker-mr-b`: bald, skin `#733e39`, his beard from the portrait,
-    purple T-shirt `#a77bd9` (shade `#6d4bb0`), dark jeans `#262b44` with
-    `#8b9bb4` seams, white trainers with red `#e43b44` soles.
-- The walkers' front frames are a wave, a cheer and (Mr. B) a phone; the door
-  gesture, the thumbs-up and the seated pose are drawn on the same build.
-- Cats: Archie in ginger `#f77622` with `#be4a2f` stripes, a cream chest and
-  paws `#ead4aa` and green eyes `#63c74d`; Kiwi in grey `#8b9bb4` with
-  `#5a6988` stripes, a white chest and paws and yellow eyes `#fee761`. Both
-  have pink noses and inner ears `#f6757a`; curled, their eyes are closed arcs
-  and the tail wraps the front.
-- Occlusion is baked: a sprite px the scene's nearer solids would hide is
-  clear. The generator renders the scene with a stand-in quad facing the
-  viewer in the sprite's painter slot (behind the headboard, between Dad's
-  chair and the table) and keeps each sprite px whose canvas block shows the
-  stand-in in at least half its px. The seated Dad's forearms always show,
-  resting on the cloth.
-
-Per page, the canvas top `y` (from the run's tallest page on the base, a star
-for a clamped placement), the page's panel top and the figures' view rows, at
-720x360 with insets 43/43/0/19, 844x390 with the same insets, and 1280x720
-(720x405). The Whirlpool and Needle runs assume a chapter page at Gameplay's
-limit (218 characters, the heading and two choices), as their bases' rows
-above do. A dialogue page without a portrait adds its name tab and
-`SPACING.gap` (20 + 8) above the paragraph. The kitchen's run anchors from
-Dad's line, so both its pages share his placement. Every figure clears its
-panel.
-
-| Page background                  | Page                          | 720x360, insets                   | 844x390, insets                   | 1280x720                           |
-| -------------------------------- | ----------------------------- | --------------------------------- | --------------------------------- | ---------------------------------- |
-| `story-front-door-mom`           | Mom's line                    | y -171, top 229, figures 57..199  | y -171, top 229, figures 57..199  | y -135*, top 277, figures 93..235  |
-| `story-kitchen`                  | Dinner narration              | y -105, top 257, figures 41..135  | y -105, top 273, figures 41..135  | y -81, top 321, figures 65..159    |
-| `story-kitchen`                  | Dad's line                    | y -105, top 229, figures 41..135  | y -105, top 229, figures 41..135  | y -81, top 277, figures 65..159    |
-| `story-ada-room-recorder-dad`    | Dad looking in                | y -180*, top 255, figures 31..183 | y -180*, top 255, figures 31..183 | y -135*, top 303, figures 76..228  |
-| `story-ada-room-unpolished-cats` | Archie and Kiwi on the bed    | y -162, top 257, figures 191..244 | y -162, top 257, figures 191..244 | y -135*, top 305, figures 218..271 |
-| `story-ada-room-morning-cats`    | Morning, the cats at her feet | y -180*, top 231, figures 84..226 | y -180*, top 231, figures 84..226 | y -135*, top 279, figures 129..271 |
-
-To wire, in Tech's code: add the background keys above; point Mom's line, Dad's
-looking-in page, the cats page and the morning page at their composites; and
-place a composite as its `base` in the run anchor. The overnight sequence ends
-on `story-ada-room-morning-cats` ([sequence](#sequence)), so the cats fade in
-with Ada.
+The generator emits no character sprites or character overlay entries.
+Unused character PNGs remain on disk but are absent from the manifest and
+all background and sequence references. The route ground likewise has no
+character overlays; its grass, afterglow, sky and stellar phenomena remain.
+The established portrait sheets and their generators are unchanged.
 
 ## Rock glow transition
 
@@ -448,51 +309,25 @@ keep their values.
 - Morning: grade `(0.02, 0.99, 1.1, 0.014, 0.05)`, a pale gold window
   `#fad98a`, a sun glow `#ffdf96` (radius 3.0, peak 80), a long soft beam and
   bright floor patches screened in `#ffe2a0` that thin toward the room's front,
-  and the rock's faint glow as in `story-ada-room`. Day haze. Penny and the
-  blanket over Ada's legs are drawn into this background; Ada is the
-  `story-ada-waking` sprite over it ([Ada's sprites](#adas-sprites)). The
-  morning page itself shows `story-ada-room-morning-cats`, with Archie and
-  Kiwi curled at her feet ([story figures](#story-figures)).
+  and the rock's faint glow as in `story-ada-room`. Day haze. The bed,
+  blanket and pillow remain unoccupied; morning has no baked Penny or
+  waking sprite. Its existing `story-ada-room-morning-cats` page key is an
+  environment alias.
 
-The painted figures (Ada asleep, and Penny) are drawn about 1.5 times the room's furniture scale so they read
-on a phone, within the bed's footprint, from the portrait palettes: Ada's hair
-`#262b44`, skin `#b86f50`, shirt `#fee761` and bow `#b55088`; Penny's coat
-`#feae34`, ears and tail `#f77622`, muzzle `#fee761` and collar `#0099db`. They
-take their own lighter grades so they stay the subject: night
-`(0.12, 0.6, 1.0, -0.015, 0.01)`, which keeps Penny a dusky gold under the
-night haze (coat `#b57100` before treatment), and morning
-`(0.01, 1.0, 1.0, 0.006, 0.02)` (coat `#ffae00`).
+### Sleep scene overlay
 
-- Asleep: Ada on her back, head on the pillow, the blanket to her chin; Penny
-  asleep across the foot of the bed over Ada's feet, head turned to the viewer,
-  eyes closed.
-- Waking: Penny sits up awake at the foot of the bed; Ada kneels up in bed
-  stretching, the `story-ada-waking` sprite.
+`story-ada-room-sleep` shares the night background and its run placement,
+without a figures overlay. Only `story-ada-room-sleep-glow` is emitted: the
+rock's glow at radius 3.8, peak 215, over the unoccupied night room at radius
+3.0, peak 170.
 
-On the 844 by 390 phone with insets the morning page's panel top is at logical
-y 257 and its background at canvas top -173: the rock's top (105), Ada's sprite
-(top 91, chin 135) and Penny's head (190) all clear the panel. The sleep scene
-shows no panel and keeps the night page's placement (-146.5), so both figures
-stay in view (Ada 206.5, Penny 261.5).
-
-### Sleep scene overlays
-
-`story-ada-room-sleep` is a composite entry: its `path` is the night background
-and `overlays` lists `story-ada-room-sleep-figures`, drawn over it. Overlay
-entries are RGBA PNGs at 2x with `pivot` (0, 0) and `at`, their top-left corner
-on the background canvas in logical px.
-
-| Id                             | Size (px) | `at`       | Contents                                |
-| ------------------------------ | --------- | ---------- | --------------------------------------- |
-| `story-ada-room-sleep-figures` | 334 x 230 | (168, 325) | Ada and Penny asleep, over the night    |
-| `story-ada-room-sleep-glow`    | 440 x 302 | (361, 194) | The rock's glow at radius 3.8, peak 215 |
-
-Each overlay is the exact difference between two full renders: the pixels that
-differ, grown by 2 px, opaque, with clear pixels elsewhere in its box. Over its
-base at alpha 1 it reproduces the larger render exactly, so a linear alpha fade
-equals a cross-fade between the two renders. The figures overlay is the sleep
-render over the night render; the glow overlay is the sleep render at the
-breath's peak over the sleep render.
+The overlay is an RGBA PNG at 2x with `pivot` (0, 0) and `at`, its top-left
+corner on the background canvas in logical px. It is the exact difference
+between the peak-glow render and the night render: differing pixels grown
+by 2 px, opaque, with clear pixels elsewhere in its cropped box. Its bounds
+and placement are derived from those renders and written to the manifest
+and sequence. At alpha 1 it reproduces the peak-glow render exactly, so a
+linear alpha fade equals a cross-fade between the two renders.
 
 ### Sequence
 
@@ -500,9 +335,11 @@ Data: [story-overnight.json](../public/art/story-overnight.json), linked from
 the root manifest as `storyOvernight`. Key `overnight`:
 
 - `from` (`story-ada-room-night`), `sleep` (`story-ada-room-sleep`) and `to`
-  (`story-ada-room-morning-cats`, the morning with Ada waking and the cats at
-  her feet) name the three pages' backgrounds.
-- `overlays` maps each overlay id to its `at`, as in its manifest entry.
+  (`story-ada-room-morning-cats`, the environment-only morning alias) name the three pages' backgrounds.
+- `overlays` contains only the rock-glow overlay and its `at`, as in its
+  manifest entry. The opening hold uses the existing background-step schema
+  with the night background, `fadeMs: 0` and `holdMs: 400` (2000 for reduced
+  motion); it introduces no new cross-fade or sequence schema.
 - `steps` play in order when the sleep page starts (the night page's panel
   has hidden); `durationMs` is their total:
   - `{ overlay, fadeMs, holdMs }`: fade that overlay in from alpha 0 to 1,
@@ -515,10 +352,10 @@ the root manifest as `storyOvernight`. Key `overnight`:
 
 | Time (ms)    | Steps                                                                      |
 | ------------ | -------------------------------------------------------------------------- |
-| 0 to 400     | Figures fade in: night to sleep                                            |
+| 0 to 400     | Hold the unoccupied night room                                            |
 | 400 to 1900  | One breath: the rock's glow from radius 3.0, peak 170 to 3.8, 215 and back |
 | 1900 to 2500 | Cross-fade to the morning page's background; the morning page follows      |
 
-Reduced motion (2400 ms): the figures show at once and hold 2000 ms with the
-glow steady, then one 400 ms cross-fade to the morning page's background. In the
+Reduced motion (2400 ms): hold the unoccupied night room for 2000 ms with
+the glow steady, then one 400 ms cross-fade to the morning page's background. In the
 breath only the glow patch changes, once per 1.5 s.
