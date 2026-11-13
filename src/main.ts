@@ -2,6 +2,7 @@
 import "./crash/install.ts";
 import "@andornaut/game-kit/web/view/frameTurnLandscapeGame.css";
 import "./style.css";
+import "@andornaut/game-kit/web/ui/dom/ui.css";
 // The HTML interface's stylesheet (src/ui/stylesheet.ts, served by src/tools/uiStylePlugin.ts).
 import "virtual:ada-ui.css";
 
@@ -17,6 +18,7 @@ import { SCREEN } from "./data/screen.ts";
 import { stopSaving } from "./game/persistence.ts";
 import { GameScene } from "./game/scene.ts";
 import { followPageVisibility } from "./lifecycle.ts";
+import { prepareBootReveal } from "./loading/bootReveal.ts";
 import { mountLoading } from "./loading/progress.ts";
 import { gameShown, setupPhoneApp } from "./pwa/index.ts";
 import { FRAME_TURN } from "./view/frameTurn.ts";
@@ -36,6 +38,7 @@ if (app) {
 }
 // At once: the browser's install prompt can come before the game has drawn anything.
 setupPhoneApp();
+const bootReveal = prepareBootReveal({ document, window }, parent, gameShown);
 
 // The canvas fills the play area with its backing in device pixels, up to MAX_RENDER_SCALE per CSS
 // pixel (followFrameTurn's deviceResolution, Scale.NONE); above that the browser upscales it
@@ -50,9 +53,12 @@ const game = new Game({
         deviceResolution: { max: MAX_RENDER_SCALE },
       });
       const stop = followPageVisibility(window, document, bootedGame.loop);
-      bootedGame.events.once(Core.Events.DESTROY, stop);
-      // A first visit registers the service worker once the game has drawn with its art loaded.
-      bootedGame.scene.getScene("game")?.events.once(Scenes.Events.CREATE, gameShown);
+      bootedGame.events.once(Core.Events.DESTROY, () => {
+        stop();
+        bootReveal.dispose();
+      });
+      // Scene creation supplies the title art URLs; the reveal owns first-visit registration.
+      bootedGame.scene.getScene("game")?.events.once(Scenes.Events.CREATE, bootReveal.ready);
     },
   },
   height: SCREEN.height,
