@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ControlState, MOVE_STICK_GEOMETRY } from "../input/state.ts";
+import { ControlState, MOVE_STICK_GEOMETRY, stickVector } from "../input/state.ts";
 import { logicalView, NO_INSETS, safeInsets, viewScale } from "./layout/playView.ts";
 import { stickTargets } from "./layout/touchControls.ts";
 import { centredAt, MARKER_THRESHOLD, STICK_DEPTHS, stickViews } from "./sticks.ts";
@@ -226,20 +226,36 @@ describe("speed line", () => {
     });
   });
 
-  it.each([0.5, 1, 3])(
-    "runs from the move origin to the thumb at %s of full reach, unclamped",
-    (share) => {
+  it.each([
+    [0.5, 0.5],
+    [1, 1],
+    [3, 1],
+  ])(
+    "runs from the move origin toward the thumb at %s of full reach, to %s of it",
+    (share, drawn) => {
       const state = new ControlState();
       state.down("move", 1, { x: 100, y: 100 });
-      const thumb = { x: 100 + share * MOVE_STICK_GEOMETRY.reach, y: 100 };
-      state.move(1, thumb);
+      state.move(1, { x: 100 + share * MOVE_STICK_GEOMETRY.reach, y: 100 });
       const view = stickViews(layout, state).move!;
-      expect(view.line).toEqual({ from: { x: 100, y: 100 }, to: thumb });
-      // The drawn knob stays inside the ring while the line follows the thumb past it.
+      const end = { x: 100 + drawn * MOVE_STICK_GEOMETRY.reach, y: 100 };
+      expect(view.line).toEqual({ from: { x: 100, y: 100 }, to: end });
       expect(knobCentre(view.knob).x - 100).toBeLessThanOrEqual(MOVE_KNOB_REACH);
-      expect(speedLinePlacement(view.line!).length).toBe(share * MOVE_STICK_GEOMETRY.reach);
+      expect(speedLinePlacement(view.line!).length).toBe(drawn * MOVE_STICK_GEOMETRY.reach);
     },
   );
+
+  it("stops at full speed's reach in any direction, where the input is full", () => {
+    const state = new ControlState();
+    state.down("move", 1, { x: 100, y: 100 });
+    const thumb = { x: 100 - 90, y: 100 + 120 };
+    state.move(1, thumb);
+    const line = stickViews(layout, state).move!.line!;
+    const placement = speedLinePlacement(line);
+    expect(placement.length).toBeCloseTo(MOVE_STICK_GEOMETRY.reach, 9);
+    expect(placement.angle).toBeCloseTo(Math.atan2(120, -90), 9);
+    const full = stickVector(MOVE_STICK_GEOMETRY, { x: line.to.x - 100, y: line.to.y - 100 });
+    expect(Math.hypot(full.x, full.y)).toBeCloseTo(1, 9);
+  });
 
   it.each([5, 12, 37, 100])("draws no aim line at %s px of deflection", (distance) => {
     const state = new ControlState();

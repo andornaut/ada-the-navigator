@@ -313,7 +313,7 @@ export function rasterTouchChrome(scene: Scene, scale: number): void {
   }
 }
 
-// Draws the line from the stick's origin to the thumb, however far it reaches, or hides it.
+// Draws the line from the stick's origin toward the thumb, as long as stickViews made it, or hides it.
 export function showSpeedLine(
   slice: GameObjects.NineSlice,
   line: { readonly from: Point; readonly to: Point } | undefined,

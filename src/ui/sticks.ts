@@ -32,8 +32,8 @@ interface StickLayout extends Size {
 export interface StickView {
   readonly knob: Point;
   readonly knobPose: TouchChromePose;
-  // The move stick's speed line, from its origin to the thumb's actual position however far it
-  // goes, while the thumb is off the origin. The aim stick has none.
+  // The move stick's speed line, from its origin toward the thumb, at most the full-speed reach
+  // (MOVE_STICK_GEOMETRY.reach) long, while the thumb is off the origin. The aim stick has none.
   readonly line?: { readonly from: Point; readonly to: Point };
   readonly ring: Point;
   readonly ringPose: TouchChromePose;
@@ -49,6 +49,18 @@ export const MARKER_THRESHOLD = Math.sin(Math.PI / 8);
 // The top-left of an odd-sized frame whose centre pixel sits on centre.
 export function centredAt(centre: Point, frame: number): Point {
   return { x: centre.x - (frame - 1) / 2, y: centre.y - (frame - 1) / 2 };
+}
+
+// Where the speed line ends: the thumb, or the point at full speed's reach toward it.
+function speedLineEnd(origin: Point, thumb: Point): Point {
+  const scale = Math.min(
+    1,
+    MOVE_STICK_GEOMETRY.reach / Math.hypot(thumb.x - origin.x, thumb.y - origin.y),
+  );
+  return {
+    x: origin.x + (thumb.x - origin.x) * scale,
+    y: origin.y + (thumb.y - origin.y) * scale,
+  };
 }
 
 const rounded = (point: Point): Point => ({ x: Math.round(point.x), y: Math.round(point.y) });
@@ -99,14 +111,14 @@ export function stickViews(
       const divisor = Math.max(1, Math.hypot(dx, dy) / TOUCH_STICK.knobReach);
       knob = { x: centre.x + Math.round(dx / divisor), y: centre.y + Math.round(dy / divisor) };
     }
-    // The move stick's line runs from its origin to the thumb, unclamped, while the thumb is off
-    // it; the aim stick draws no line.
+    // The move stick's line runs from its origin toward the thumb and stops at full speed's reach,
+    // so a line that stops growing shows full speed; the aim stick draws no line.
     const thumb = side === "move" ? stick?.position : undefined;
     views[side] = {
       knob: centredAt(knob, TOUCH_KNOB_FRAME),
       knobPose: stick ? "held" : "rest",
       ...(stick && thumb && (thumb.x !== stick.origin.x || thumb.y !== stick.origin.y)
-        ? { line: { from: stick.origin, to: thumb } }
+        ? { line: { from: stick.origin, to: speedLineEnd(stick.origin, thumb) } }
         : {}),
       ring: centredAt(centre, TOUCH_CHROME_FRAME),
       ringPose,
