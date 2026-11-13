@@ -1,6 +1,7 @@
+import { LOADER_CONFIG } from "@andornaut/game-kit/load/loaderConfig";
 import { startOfflinePlay } from "@andornaut/game-kit/web/pwa/dom/offlinePlay";
 import { PENDING_ATTRIBUTE } from "@andornaut/game-kit/web/ui/dom/imageReady";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { prepareBootReveal } from "./bootReveal.ts";
 import { loadingProgress } from "./progress.ts";
@@ -56,6 +57,7 @@ function fixture() {
   let nextFrame = 0;
   const window = {
     cancelAnimationFrame: vi.fn((id: number) => frames.delete(id)),
+    clearTimeout: (id?: number) => globalThis.clearTimeout(id),
     fetch: vi.fn((...args: [RequestInfo | URL, RequestInit?]) => {
       void args;
       return manifest.promise;
@@ -71,6 +73,8 @@ function fixture() {
       frames.set(++nextFrame, callback);
       return nextFrame;
     }),
+    setTimeout: (handler: TimerHandler, timeout?: number) =>
+      globalThis.setTimeout(handler as () => void, timeout) as unknown as number,
   };
   const revealed = vi.fn();
   const boot = prepareBootReveal({ document, window }, root, revealed);
@@ -98,6 +102,14 @@ function fixture() {
     window,
   };
 }
+
+beforeEach(() => {
+  vi.useFakeTimers();
+});
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+});
 
 describe("boot image readiness", () => {
   it("predecodes card sheets, waits for scene and title art, then reveals before notification", async () => {
@@ -128,6 +140,7 @@ describe("boot image readiness", () => {
     expect(f.attributes.has(PENDING_ATTRIBUTE)).toBe(false);
     expect(active.at(-1)).toBe(false);
     stop();
+    expect(vi.getTimerCount()).toBe(0);
     expect(f.revealed).not.toHaveBeenCalled();
     f.paint();
     expect(f.revealed).not.toHaveBeenCalled();
@@ -209,6 +222,145 @@ describe("boot image readiness", () => {
     await settle();
     expect(f.frames.size).toBe(0);
     expect(f.revealed).not.toHaveBeenCalled();
+  });
+
+  it("bounds a manifest that ignores abort, then bounds stalled decodes and ignores stale completion", async () => {
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const active: boolean[] = [];
+    const stop = loadingProgress.subscribe((value) => active.push(value.active));
+    const f = fixture();
+    const signal = f.window.fetch.mock.calls[0]![1]!.signal!;
+    f.boot.ready();
+    await vi.advanceTimersByTimeAsync(LOADER_CONFIG.timeout - 1);
+    expect(signal.aborted).toBe(false);
+    expect(f.attributes.has(PENDING_ATTRIBUTE)).toBe(true);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(signal.aborted).toBe(true);
+    expect(f.images.has("https://game.test/art/title.svg")).toBe(true);
+    expect(f.attributes.has(PENDING_ATTRIBUTE)).toBe(true);
+    expect(f.revealed).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(LOADER_CONFIG.timeout - 1);
+    expect(f.attributes.has(PENDING_ATTRIBUTE)).toBe(true);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(f.attributes.has(PENDING_ATTRIBUTE)).toBe(false);
+    expect(active.at(-1)).toBe(false);
+    expect(warning).toHaveBeenCalledTimes(2);
+    f.paint();
+    expect(f.revealed).not.toHaveBeenCalled();
+    f.paint();
+    expect(f.revealed).toHaveBeenCalledOnce();
+    const decoded = [...f.images.keys()];
+    f.manifestReady();
+    f.images.forEach((image) => image.resolve());
+    await settle();
+    expect([...f.images.keys()]).toEqual(decoded);
+    f.paint();
+    expect(f.revealed).toHaveBeenCalledOnce();
+    expect(vi.getTimerCount()).toBe(0);
+    f.boot.dispose();
+    stop();
+  });
+
+  it("bounds a stalled response body without revealing before scene creation", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const f = fixture();
+    const body = deferred<{ sprites: { png: string }[] }>();
+    const signal = f.window.fetch.mock.calls[0]![1]!.signal!;
+    f.manifest.resolve({ json: () => body.promise, ok: true } as unknown as Response);
+    await settle();
+    await vi.advanceTimersByTimeAsync(LOADER_CONFIG.timeout);
+    expect(signal.aborted).toBe(true);
+    expect(f.attributes.has(PENDING_ATTRIBUTE)).toBe(true);
+    expect(f.images.size).toBe(0);
+    body.resolve({ sprites: [{ png: "stale.png" }] });
+    await settle();
+    expect(f.images.size).toBe(0);
+    f.boot.ready();
+    await settle();
+    f.images.forEach((image) => image.resolve());
+    await settle();
+    expect(f.attributes.has(PENDING_ATTRIBUTE)).toBe(false);
+    expect(vi.getTimerCount()).toBe(0);
+    f.paint();
+    f.paint();
+    expect(f.revealed).toHaveBeenCalledOnce();
+    f.boot.dispose();
+  });
+
+  it("cleans up a never-settling manifest without timeout fallback or late registration", async () => {
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const f = fixture();
+    const signal = f.window.fetch.mock.calls[0]![1]!.signal!;
+    f.boot.ready();
+    f.boot.dispose();
+    await settle();
+    expect(signal.aborted).toBe(true);
+    expect(vi.getTimerCount()).toBe(0);
+    await vi.advanceTimersByTimeAsync(LOADER_CONFIG.timeout * 3);
+    expect(warning).not.toHaveBeenCalled();
+    expect(f.images.size).toBe(0);
+    expect(f.frames.size).toBe(0);
+    expect(f.revealed).not.toHaveBeenCalled();
+  });
+
+  it("cleans up after decode timeout before paint and suppresses its registration", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const f = fixture();
+    f.manifestReady();
+    f.boot.ready();
+    await settle();
+    await vi.advanceTimersByTimeAsync(LOADER_CONFIG.timeout);
+    expect(f.attributes.has(PENDING_ATTRIBUTE)).toBe(false);
+    f.boot.dispose();
+    f.images.forEach((image) => image.resolve());
+    await settle();
+    f.paint();
+    f.paint();
+    expect(f.revealed).not.toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("keeps a controlled newer-save update independent of blocked boot art", async () => {
+    const f = fixture();
+    const postMessage = vi.fn();
+    const waiting = Object.assign(new EventTarget(), { postMessage, state: "installed" });
+    const registration = Object.assign(new EventTarget(), {
+      active: Object.assign(new EventTarget(), { postMessage: vi.fn(), state: "activated" }),
+      installing: null,
+      update: vi.fn(async () => {}),
+      waiting,
+    });
+    const register = vi.fn(async () => registration);
+    const container = Object.assign(new EventTarget(), { controller: {}, register });
+    const reload = vi.fn();
+    const onRequireNewer = vi.fn();
+    const play = startOfflinePlay(
+      { onRequireNewer, onUpdateShown: vi.fn(), serviceWorkerUrl: "/sw.js" },
+      {
+        container,
+        eventTarget: new EventTarget(),
+        now: () => 0,
+        online: () => true,
+        reload,
+        session: undefined,
+        visibilitySource: Object.assign(new EventTarget(), { visibilityState: "visible" as const }),
+      },
+    );
+    expect(register).toHaveBeenCalledExactlyOnceWith("/sw.js", { scope: "/" });
+    await settle();
+    expect(f.attributes.has(PENDING_ATTRIBUTE)).toBe(true);
+    play.flow.requireNewer();
+    expect(onRequireNewer).toHaveBeenLastCalledWith("updating");
+    expect(postMessage).toHaveBeenCalledExactlyOnceWith("skip-waiting");
+    expect(reload).not.toHaveBeenCalled();
+    container.dispatchEvent(new Event("controllerchange"));
+    container.dispatchEvent(new Event("controllerchange"));
+    expect(reload).toHaveBeenCalledOnce();
+    expect(f.revealed).not.toHaveBeenCalled();
+    expect(f.attributes.has(PENDING_ATTRIBUTE)).toBe(true);
+    f.boot.dispose();
+    await settle();
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   it("registers a real kit first-visit offline flow only after successful reveal and paint", async () => {
