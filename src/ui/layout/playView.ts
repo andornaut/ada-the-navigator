@@ -278,10 +278,10 @@ export function shieldPillWidth(level: number): number {
   return padding.left + icon + iconGap + shieldBarWidth(level) + padding.right;
 }
 
-/** The shield pill's rect in a logical view view big with insets, at Shield level `level`. */
+/** The shield pill mirrors the status pill's drawn top inset at the viewport bottom. */
 export function shieldPillRect(insets: Insets, view: Size, level = 1): Rect {
   const hud = hudRect(insets, view);
-  const bottom = controlsBottom(insets, view);
+  const bottom = view.height - (hud.y + STATUS_PILL.y);
   const width = shieldPillWidth(level);
   return {
     height: PILL.height,

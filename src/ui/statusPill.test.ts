@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { pixels, units } from "./layout/css.ts";
+import { fromHudEdge, pixels, units } from "./layout/css.ts";
 import { countSlot, SHIELD_PILL, STATUS_PILL } from "./layout/playView.ts";
 import { shieldRasterGeometry } from "./layout/shieldGeometry.ts";
 import {
@@ -215,6 +215,7 @@ describe("status pill shield bar", () => {
     expect(shield).toContain("margin-left:calc(var(--shield-pill) / -2)");
     expect(shield).toContain("background:transparent");
     expect(shield).toContain("pointer-events:none");
+    expect(shield).toContain(`bottom:${fromHudEdge("top", STATUS_PILL.y)}`);
   });
 });
 

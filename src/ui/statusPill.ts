@@ -1,5 +1,5 @@
 import { LIGHT_FIELD } from "../game/lightField.ts";
-import { controlsLine, font, fromHudEdge, hudCentreX, pixels, units } from "./layout/css.ts";
+import { font, fromHudEdge, hudCentreX, pixels, units } from "./layout/css.ts";
 import {
   countSlot,
   SHIELD_PILL,
@@ -7,7 +7,6 @@ import {
   shieldFillWidth,
   shieldPillWidth,
   STATUS_PILL,
-  STICK_AREA_MARGIN,
 } from "./layout/playView.ts";
 import { shieldRasterGeometry } from "./layout/shieldGeometry.ts";
 import { TYPE } from "./layout/tokens.ts";
@@ -294,12 +293,11 @@ export const STATUS_PILL_STYLE = `
 .ada-controls .ada-pause[hidden] ~ .ada-status{
   left:${fromHudEdge("left", STATUS_PILL.xAlone)}
 }
-/* The shield pill at the bottom centre: centred across the HUD rect, its bottom level with the
-   sticks' drawn bottom (shieldPillRect). */
+/* The shield pill mirrors the status pill's drawn top inset at the viewport bottom. */
 .ada-controls .ada-shield{
   position:absolute;
   left:${hudCentreX()};
-  bottom:${controlsLine(SHIELD_PILL.bottom, STICK_AREA_MARGIN)};
+  bottom:${fromHudEdge("top", STATUS_PILL.y)};
   margin-left:calc(var(--shield-pill) / -2);
   box-sizing:border-box;
   width:var(--shield-pill);

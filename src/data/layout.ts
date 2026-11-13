@@ -357,14 +357,12 @@ export const STICK_AREA_MARGIN = 8;
 // drawn pixels: the icon's drawn pixels span x 3 to 17 in its 20 box, so padding.left 5 and
 // iconGap 3 leave 8 and 6 to them, and padding.right 8 follows the bar; the pill is the bar plus
 // 36 wide. It centres across on the HUD rect (the view's centre, as the rect mirrors), so a longer
-// bar grows both ways; its bottom follows its independent controlsBottom anchor. The
-// same place on touch and desktop.
+// bar grows both ways; its bottom mirrors the status pill's drawn top inset on touch and desktop.
 export const SHIELD_BARS = [120, 180, 240] as const;
 
 export const SHIELD_PILL = {
   bar: { height: 12, inset: 2, rim: 1 },
   bars: SHIELD_BARS,
-  bottom: CONTROLS_BOTTOM,
   // The thin timer fill spans the main border's outer edges. gap is the equal dark-background
   // padding around the main border and between its bottom and the timer fill.
   delayStrip: { edge: 1, gap: 1, height: 1 },

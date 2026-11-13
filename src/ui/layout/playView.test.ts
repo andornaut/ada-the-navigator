@@ -370,7 +370,6 @@ describe("HUD anchors", () => {
     expect(SHIELD_PILL.bar).toEqual({ height: 12, inset: 2, rim: 1 });
     expect(SHIELD_PILL.bars).toEqual([120, 180, 240]);
     expect(SHIELD_PILL).toMatchObject({
-      bottom: 40,
       edge: 2,
       icon: 20,
       iconGap: 3,
@@ -389,21 +388,21 @@ describe("HUD anchors", () => {
   });
 
   it.each([
-    ["the 720 base", { height: 360, width: 720 }, NO_INSETS, [282, 252, 222], 292],
-    ["1280x720", logicalView({ height: 720, width: 1280 }), NO_INSETS, [282, 252, 222], 324],
+    ["the 720 base", { height: 360, width: 720 }, NO_INSETS, [282, 252, 222], 317.5],
+    ["1280x720", logicalView({ height: 720, width: 1280 }), NO_INSETS, [282, 252, 222], 362.5],
     [
       "the 720 base with phone insets",
       { height: 360, width: 720 },
       { bottom: 19, left: 43, right: 43, top: 0 },
       [282, 252, 222],
-      273,
+      317.5,
     ],
     [
       "844x390 with phone insets",
       logicalView({ height: 390, width: 844 }),
       { bottom: 19, left: 43, right: 43, top: 0 },
       [311.54, 281.54, 251.54],
-      273,
+      317.5,
     ],
   ] as const)("put the shield pill at the bottom centre at %s", (_, view, insets, xs, y) => {
     const { aim, move } = stickRestCentres(view, insets);
@@ -414,7 +413,7 @@ describe("HUD anchors", () => {
       expect(rect).toMatchObject({ height: 28, width: shieldPillWidth(level) });
       // A longer bar grows both ways about the centre.
       expect(rect.x + rect.width / 2).toBeCloseTo(xs[0]! + 78, 2);
-      // The shield keeps its independent safe-inset bottom and clears both ring frames.
+      // The shield mirrors the drawn status top inset and clears both ring frames.
       expect(rect.y + rect.height).toBe(y + 28);
       expect(rect.x - (move.x + 38)).toBeGreaterThanOrEqual(45);
       expect(aim.x - 37 - (rect.x + rect.width)).toBeGreaterThanOrEqual(45);
@@ -422,14 +421,14 @@ describe("HUD anchors", () => {
   });
 
   it.each([
-    ["the 720 base", { height: 360, width: 720 }, NO_INSETS, 306],
+    ["the 720 base", { height: 360, width: 720 }, NO_INSETS, 331.5],
     [
       "the 720 base with phone insets",
       { height: 360, width: 720 },
       { bottom: 19, left: 43, right: 43, top: 0 },
-      287,
+      331.5,
     ],
-    ["1280x720", logicalView({ height: 720, width: 1280 }), NO_INSETS, 338],
+    ["1280x720", logicalView({ height: 720, width: 1280 }), NO_INSETS, 376.5],
   ] as const)("land a Shield notice on the pill's icon centre at %s", (_, view, insets, y) => {
     const hud = hudRect(insets, view);
     for (const level of [1, 2, 3] as const) {
@@ -616,7 +615,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     [126, 263],
     [593, 263],
     282,
-    [292, 320],
+    [317.5, 345.5],
     [516, 163],
   ],
   [
@@ -626,7 +625,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     [126, 263],
     [593, 263],
     282,
-    [273, 301],
+    [317.5, 345.5],
     [516, 163],
   ],
   [
@@ -636,7 +635,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     [126, 263],
     [652, 263],
     311.54,
-    [292, 320],
+    [317.5, 345.5],
     [575, 163],
   ],
   [
@@ -646,7 +645,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     [126, 263],
     [652, 263],
     311.54,
-    [273, 301],
+    [317.5, 345.5],
     [575, 163],
   ],
   [
@@ -656,7 +655,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     [126, 263],
     [652, 263],
     311.54,
-    [273, 301],
+    [317.5, 345.5],
     [575, 163],
   ],
   [
@@ -666,7 +665,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     [126, 263],
     [593, 263],
     282,
-    [273, 301],
+    [317.5, 345.5],
     [516, 163],
   ],
   [
@@ -676,7 +675,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     [126, 263],
     [652, 263],
     311.54,
-    [292, 320],
+    [317.5, 345.5],
     [575, 163],
   ],
   [
@@ -686,7 +685,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     [126, 308],
     [593, 308],
     282,
-    [324, 352],
+    [362.5, 390.5],
     [516, 208],
   ],
   [
@@ -696,7 +695,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     [126, 263],
     [673, 263],
     322,
-    [292, 320],
+    [317.5, 345.5],
     [596, 163],
   ],
   [
@@ -706,7 +705,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     [126, 263],
     [674, 263],
     322.67,
-    [292, 320],
+    [317.5, 345.5],
     [597, 163],
   ],
   [
@@ -716,7 +715,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     [126, 263],
     [726, 263],
     348.67,
-    [292, 320],
+    [317.5, 345.5],
     [649, 163],
   ],
 ];
@@ -752,7 +751,6 @@ describe("touch controls", () => {
   it("reexports the canonical stick geometry with an independent shield anchor", () => {
     expect(TOUCH_STICK).toBe(CANONICAL_TOUCH_STICK);
     expect(CANONICAL_TOUCH_STICK).toMatchObject({ bottom: 60, side: 90 });
-    expect(SHIELD_PILL.bottom).toBe(40);
     expect(USE_DISC.fromAim).toEqual({ x: -77, y: -100 });
   });
 
@@ -984,6 +982,23 @@ describe("stick reach on every view", () => {
         expect(strength(stickVector(STICK_GEOMETRY, aimOut)), label).toBeGreaterThan(0);
         expect(strength(stickVector(STICK_GEOMETRY, aimDown)), label).toBeGreaterThan(0);
       }
+    }
+  });
+});
+
+describe("shield and resource viewport margins", () => {
+  it.each([
+    { height: 360, width: 720 },
+    { height: 720, width: 1280 },
+    { height: 390, width: 844 },
+    { height: 844, width: 390 },
+  ])("mirrors the status drawn top at every level in $width x $height", (screen) => {
+    const view = logicalView(screen);
+    const top = hudRect(NO_INSETS, view).y + STATUS_PILL.y;
+    for (const level of [1, 2, 3]) {
+      const shield = shieldPillRect(NO_INSETS, view, level);
+      expect(view.height - shield.y - shield.height).toBeCloseTo(top, 9);
+      expect(shield.x + shield.width / 2).toBeCloseTo(view.width / 2, 9);
     }
   });
 });
