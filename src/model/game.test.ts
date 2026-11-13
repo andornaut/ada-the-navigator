@@ -15,6 +15,7 @@ import {
   syncFlightRegion,
 } from "./flight.ts";
 import { GameModel } from "./game.ts";
+import { needleCourses } from "./needle.ts";
 import type { SpaceObject } from "./types.ts";
 import { collectWeapon } from "./weapons.ts";
 
@@ -100,6 +101,53 @@ function finishHome(model: GameModel, choice = 1) {
   model.returnHome();
   expect(model.storyView?.page.id).toBe("resolution");
   readStory(model, choice);
+}
+/** Crosses the mounted practice and Eye using actual flight movement and explicit choices. */
+function finishNeedle(model: GameModel): void {
+  launch(model, 4);
+  const visit = (id: string) => {
+    const flight = model.state.flight!;
+    const target = flight.objects.find((object) => object.id === id) ?? flight.world.notables[id];
+    expect(target).toBeTruthy();
+    flight.player = { x: target!.x, y: target!.y };
+    flight.velocity = { x: 0, y: 0 };
+    model.step(0.001, idle);
+    model.interact();
+  };
+  visit("elderLoom");
+  expect(model.state.dialogue?.context).toBe("needle.arrival");
+  model.choose("continue");
+  model.choose("continue");
+  expect(model.state.dialogue?.context).toBe("needle.learning");
+  model.choose("independent");
+  for (const kind of ["practice", "eye"] as const) {
+    const course = needleCourses(model.state.flight!)![kind];
+    for (const [index, gate] of course.gates.entries()) {
+      const flight = model.state.flight!;
+      flight.player = {
+        x: gate.point.x - gate.tangent.x * 0.1,
+        y: gate.point.y - gate.tangent.y * 0.1,
+      };
+      flight.velocity = { x: gate.tangent.x * 20, y: gate.tangent.y * 20 };
+      model.step(0.05, { ...idle, move: { x: gate.tangent.x * 0.25, y: gate.tangent.y * 0.25 } });
+      expect(model.state.progress[4].needle?.[kind === "practice" ? "practiceLit" : "eyeLit"]).toBe(
+        index + 1,
+      );
+    }
+    if (kind === "practice") {
+      visit("elderLoom");
+      expect(model.state.dialogue?.context).toBe("needle.practiceComplete");
+      model.choose("continue");
+    }
+  }
+  visit("holodisk");
+  expect(model.state.dialogue?.context).toBe("needle.collect");
+  model.choose("continue");
+  readStory(model);
+  expect(model.state.progress[4].questComplete).toBe(true);
+  expect(model.state.progress[4].holodisk).toBe(true);
+  finishHome(model);
+  expect(model.state.progress[4].resolved).toBe(true);
 }
 /** Recovers the current galaxy one or two holodisk and continues past its insertion. */
 function recoverHolodisk(model: GameModel) {
@@ -273,7 +321,7 @@ describe("story and persistence", () => {
   });
 });
 
-it("finishes all three chapters in route order and resumes each terminal state", () => {
+it("finishes the mounted chapters in route order and resumes each terminal state", () => {
   const model = new GameModel(CONTENT);
   launch(model);
   introduce(model, "growers");
@@ -319,9 +367,12 @@ it("finishes all three chapters in route order and resumes each terminal state",
   // Whirlpool's guarded holodisk, recovered as holodisk.test.ts plays it.
   model.state.progress[3].holodisk = true;
   finishHome(model);
-  // Whirlpool unlocks Needle and Andromeda, placeholders, with Cartwheel after them.
-  expect(model.state.unlocked).toEqual([1, 3, 4, 5, 2]);
+  // The mounted Needle must finish before the remaining placeholder leads to Cartwheel.
+  expect(model.state.unlocked).toEqual([1, 3, 4]);
   expect(model.state.progress[3].resolved).toBe(true);
+  expect(relaunch(CONTENT, model.save()).state).toEqual(model.state);
+  finishNeedle(model);
+  expect(model.state.unlocked).toEqual([1, 3, 4, 5, 2]);
   expect(relaunch(CONTENT, model.save()).state).toEqual(model.state);
   launch(model, 2);
   introduce(model, "hub");

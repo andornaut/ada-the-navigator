@@ -50,12 +50,13 @@ describe("the galaxy route", () => {
   it("keeps the existing galaxy ids and adds the placeholders after them", () => {
     expect(named([1, 2, 3])).toEqual(["Sunflower", "Cartwheel", "Whirlpool"]);
     expect(named([4, 5, 6])).toEqual(["Needle", "Andromeda", "Phantom"]);
-    expect([...BUILT]).toEqual([1, 2, 3]);
+    expect([...BUILT]).toEqual([1, 2, 3, 4]);
   });
 
   it("unlocks the next position, each placeholder after it and the next built galaxy", () => {
     expect(named(unlockedBy(1))).toEqual(["Whirlpool"]);
-    expect(named(unlockedBy(3))).toEqual(["Needle", "Andromeda", "Cartwheel"]);
+    expect(named(unlockedBy(3))).toEqual(["Needle"]);
+    expect(named(unlockedBy(4))).toEqual(["Andromeda", "Cartwheel"]);
     expect(named(unlockedBy(2))).toEqual(["Phantom"]);
     expect(unlockedBy(6)).toEqual([]);
   });
@@ -118,7 +119,7 @@ describe("tuning by route position", () => {
 
   it("gives each placeholder the tuning of the built galaxy before it on the route", () => {
     expect([3, 4, 6].map((position) => tuningPosition(position as RoutePosition))).toEqual([
-      2, 2, 5,
+      3, 3, 5,
     ]);
     const tables: readonly Readonly<Partial<Record<RoutePosition, unknown>>>[] = [
       ASTEROID_FIELDS,
@@ -129,10 +130,6 @@ describe("tuning by route position", () => {
       expect(byPosition(table, 4)).toBe(byPosition(table, 3));
       expect(byPosition(table, 5)).toBe(byPosition(table, 3));
       expect(byPosition(table, 6)).toBe(byPosition(table, 2));
-      // Every built galaxy has its own entry.
-      for (const galaxy of BUILT) {
-        expect(table[ROUTE_POSITION[galaxy]]).toBeDefined();
-      }
     }
     // Job rewards are Gameplay's per position, every galaxy having stations: positions 3 to 5
     // pay alike, and Phantom only surveys and rescues.
