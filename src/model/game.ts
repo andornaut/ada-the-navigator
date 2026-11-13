@@ -560,6 +560,21 @@ export class GameModel {
   get roomPage(): boolean {
     return this.story !== null && this.screen === "story" && currentPage(this.story).id === "room";
   }
+  /** Pause navigation is separate from Pause visibility and cannot leave a mandatory page. */
+  get pauseMapAvailable(): boolean {
+    if (
+      !this.state.prologueSeen ||
+      this.state.dialogue ||
+      this.state.docked ||
+      this.suspendedInteraction ||
+      this.depletionContinuation
+    ) {
+      return false;
+    }
+    return this.state.mode === "home"
+      ? this.roomPage
+      : this.screen === "space" && this.state.flight !== null && this.state.flight.shield > 0;
+  }
   /** Whether the galaxy map shows: at boarding, or in flight over the local map. */
   get galaxyMapOpen(): boolean {
     return this.screen === "selector" || this.galaxyMapShownInFlight;
@@ -3104,6 +3119,10 @@ export class GameModel {
   openGalaxyMap(): boolean {
     if (this.reopenInteraction()) {
       return false;
+    }
+    if (this.state.mode === "home" && this.pauseMapAvailable && this.story) {
+      this.openSelection(this.story);
+      return true;
     }
     const f = this.state.flight;
     if (this.state.mode !== "space" || !f || this.state.dialogue || this.state.docked) {
