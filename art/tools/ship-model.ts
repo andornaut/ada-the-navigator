@@ -101,7 +101,7 @@ export const SCHEMES: readonly Scheme[] = [
   { id: "classic", name: "Classic", paint: CLASSIC },
   painted("cobalt", "Cobalt", "#6f9ff0", "#eef5ff", "#b4c8e6"),
   painted("seafoam", "Seafoam", "#d4f6ea", "#14697a", "#0d4c59"),
-  painted("graphite", "Graphite", "#aab2c4", "#59d0ff", "#2a92cc"),
+  painted("graphite", "Crimson", "#d96b73", "#382a32", "#251d24"),
   painted("iris", "Iris", "#d9ccff", "#3a2b8c", "#271c66"),
   painted("amber", "Amber", "#f4b665", "#24577b", "#173a57"),
 ];

@@ -36,14 +36,14 @@
     },
     {
       "id": "graphite",
-      "name": "Graphite",
-      "top": "#aab2c4",
-      "canopyRoof": "#59d0ff",
-      "canopySides": "#2a92cc",
-      "frontSides": "#7c8290",
-      "rearSides": "#4f535c",
-      "skirt": "#7c8290",
-      "canopyHighlight": "#a4e5ff"
+      "name": "Crimson",
+      "top": "#d96b73",
+      "canopyRoof": "#382a32",
+      "canopySides": "#251d24",
+      "frontSides": "#a04d53",
+      "rearSides": "#662f33",
+      "skirt": "#a04d53",
+      "canopyHighlight": "#928a8e"
     },
     {
       "id": "iris",

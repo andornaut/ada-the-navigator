@@ -113,15 +113,16 @@ opaque canopy. Classic uses white wings, steep panels `#b2bec6`, rear panels
 ratios relative to their own top hue. Booster walls use the canopy side colour;
 cyan mouths, thrust flames and speed jets retain their original colours.
 
-| Scheme   | Top       | Canopy roof | Canopy sides |
-| -------- | --------- | ----------- | ------------ |
-| Classic  | `#ffffff` | `#2585d0`   | `#1767b3`    |
-| Cobalt   | `#6f9ff0` | `#eef5ff`   | `#b4c8e6`    |
-| Seafoam  | `#d4f6ea` | `#14697a`   | `#0d4c59`    |
-| Graphite | `#aab2c4` | `#59d0ff`   | `#2a92cc`    |
-| Iris     | `#d9ccff` | `#3a2b8c`   | `#271c66`    |
-| Amber    | `#f4b665` | `#24577b`   | `#173a57`    |
+| Scheme  | Top       | Canopy roof | Canopy sides |
+| ------- | --------- | ----------- | ------------ |
+| Classic | `#ffffff` | `#2585d0`   | `#1767b3`    |
+| Cobalt  | `#6f9ff0` | `#eef5ff`   | `#b4c8e6`    |
+| Seafoam | `#d4f6ea` | `#14697a`   | `#0d4c59`    |
+| Crimson | `#d96b73` | `#382a32`   | `#251d24`    |
+| Iris    | `#d9ccff` | `#3a2b8c`   | `#271c66`    |
+| Amber   | `#f4b665` | `#24577b`   | `#173a57`    |
 
+- Crimson retains the stable `graphite` id and asset paths.
 - Classic is free and is the `ship-{0..31}.svg` set. Other schemes use
   Gameplay's purchase-order prices; Art does not assign a fixed scheme price.
 - Other schemes export idle frames only:
