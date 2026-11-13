@@ -29,6 +29,25 @@ their existing keys and order. Repeated mechanical actions use the short Astra
 briefs below instead of expanding to four to eight lines. These briefs explain
 the existing action and preserve its outcome.
 
+## Design status
+
+The following items are APPROVED DESIGN, not current runtime behavior:
+
+- Unmapped Needle anchors: arrival; holodisk and practice; practice complete.
+- Unmapped Andromeda anchors: arrival; Pip confession; Pip owns up; beacon
+  repaired; Pip holodisk.
+- Unmapped Phantom anchors: first settlement freed; second settlement freed;
+  third settlement freed; map and docks.
+- Unmapped Salvage variant: the last holodisk after the flagship is disabled,
+  including its optional memory response.
+- Expanded editorial responses pending runtime parity: Rivet's "What do you
+  repair?" answer ("Spare parts really help!"), Quartz's "Who uses the hub?"
+  answer ("There's docking space for everyone."), and Mica's company response
+  ("I'd like some company next time. That would help.").
+- Approved Skip contract requiring runtime follow-up: every page with Next also
+  offers Skip; Skip follows the whole continuation across scene boundaries and
+  stops for an unresolved choice. Runtime Skip visibility retains exclusions.
+
 ## Space PARTY inventory
 
 These names follow the cast and species rules. A role in parentheses identifies
