@@ -92,7 +92,11 @@ export interface EnemyDefinition {
   mounts?: WeaponMounts;
   perception: number;
   physics: ShipPhysics;
-  pursuit: { homeRadius: number; maxSeconds: number; unseenSeconds: number };
+  /**
+   * Finite pursuit (gameplay/enemies.md "Finite pursuit"): the home radius, the pursuit clock's
+   * limit, the unseen limit, and the seconds a returning ship waits before it can re-engage.
+   */
+  pursuit: { homeRadius: number; maxSeconds: number; rearmSeconds: number; unseenSeconds: number };
   sizeRatio: number;
   /** A small craft's standoff band from Ada, in world units; heavies have none. */
   standoff?: { far: number; near: number };
@@ -448,7 +452,7 @@ const base: Omit<EnemyDefinition, "physics"> = {
   hp: 4,
   morale: { individualHpRatio: 0.3, packLossRatio: 0.5 },
   perception: 650,
-  pursuit: { homeRadius: 1400, maxSeconds: 18, unseenSeconds: 3 },
+  pursuit: { homeRadius: 2000, maxSeconds: 30, rearmSeconds: 2, unseenSeconds: 6 },
   sizeRatio: 1,
   steering: { separation: 70, wobble: 0 },
 };

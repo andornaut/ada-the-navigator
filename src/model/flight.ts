@@ -41,8 +41,8 @@ import {
   type Silhouette,
 } from "./asteroids.ts";
 import { planChunk } from "./chunkTemplates.ts";
+import { onScreen } from "./conversations.ts";
 import { currentInCell, currentsNear, flowAt, inCurrent, pointOnCurrent } from "./currents.ts";
-import { gameAreaPoint, inGameArea } from "./edgeMarkers.ts";
 import {
   averageVelocity,
   createEnemy,
@@ -1162,8 +1162,9 @@ export { relocateRouteGuards as settleRouteEncounters };
 /**
  * The first time each flight Ada comes within Talk range of a destination its guard still blocks
  * (gameplay/rules.md "Space encounters and feedback"), the guard is cued: a dormant retained
- * guard loads, and each blocking guard is summoned toward Ada, marked at the edge until it is on
- * screen (edgeMarkers.ts). The game has Astra say a guard line on the event.
+ * guard loads, and each blocking guard is summoned toward Ada, holding fire until it is inside the
+ * current play view (releaseSummonedGuards) and marked at the edge while off screen
+ * (edgeMarkers.ts). The game has Astra say a guard line on the event.
  */
 function cueGuards(content: GameContent, flight: FlightState, events: FlightEvent[]): void {
   const cued = flight.objects.filter(
@@ -1191,18 +1192,23 @@ function cueGuards(content: GameContent, flight: FlightState, events: FlightEven
   }
 }
 
-/** A summoned guard fights as usual once it is on screen, disabled, destroyed or gone. */
-function releaseSummonedGuards(flight: FlightState): void {
+/**
+ * A summoned guard holds fire until its centre is inside the current play view, `viewportWidth`
+ * wide at the 720x360 base's aspect around Ada, then fights as usual; disabled, destroyed or gone,
+ * it is released too.
+ */
+function releaseSummonedGuards(viewportWidth: number, flight: FlightState): void {
   if (!flight.summonedGuards) {
     return;
   }
+  const view = { height: (viewportWidth * SCREEN.height) / SCREEN.width, width: viewportWidth };
   flight.summonedGuards = flight.summonedGuards.filter((id) => {
     const guard = flight.objects.find((object) => object.id === id);
     return (
       guard !== undefined &&
       guard.hp > 0 &&
       !guard.enemy?.disabled &&
-      !inGameArea(gameAreaPoint(flight.player, guard))
+      !onScreen(view, flight.player, { radius: 0, x: guard.x, y: guard.y })
     );
   });
   if (!flight.summonedGuards.length) {
@@ -3269,7 +3275,7 @@ export function stepFlight(
     }
   }
   syncFlightRegion(content, flight);
-  releaseSummonedGuards(flight);
+  releaseSummonedGuards(input.viewportWidth ?? SCREEN.width, flight);
   cueGuards(content, flight, events);
   for (const object of flight.objects) {
     if (

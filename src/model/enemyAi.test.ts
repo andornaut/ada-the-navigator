@@ -131,7 +131,7 @@ describe("enemy rules", () => {
     expect(again.fire).toEqual([]);
   });
 
-  it("keeps a saved return latch until home and visible target separation are both satisfied", () => {
+  it("keeps a saved return latch before rearmSeconds unless home with Ada seen beyond perception", () => {
     const definition = enemyCatalog.interceptor;
     const returning = { ...spawn("interceptor"), returning: true };
     const saved = JSON.parse(JSON.stringify(returning)) as EnemyState;
@@ -188,16 +188,174 @@ describe("enemy rules", () => {
 
   it("preserves deterministic future commands and inputs across a JSON round trip", () => {
     const definition = enemyCatalog.capital;
-    const state = stepEnemy(definition, observation(spawn("capital")), spawn("capital")).state;
+    // Ada inside perception but beyond firing range, so the pursuit clock runs.
+    const context = (state: EnemyState): EnemyContext => ({
+      ...observation(state),
+      player: { x: definition.engagement + 100, y: 0 },
+    });
+    const state = stepEnemy(definition, context(spawn("capital")), spawn("capital")).state;
     const before = JSON.stringify(state);
     const restored = JSON.parse(before) as EnemyState;
-    const direct = stepEnemy(definition, observation(state), state);
-    const resumed = stepEnemy(definition, observation(restored), restored);
+    const direct = stepEnemy(definition, context(state), state);
+    const resumed = stepEnemy(definition, context(restored), restored);
     expect(resumed).toEqual(direct);
     expect(JSON.stringify(state)).toBe(before);
     expect(restored.home).toEqual(state.home);
-    expect(restored.lastSeen).toEqual({ x: 300, y: 0 });
+    expect(restored.lastSeen).toEqual({ x: definition.engagement + 100, y: 0 });
     expect(restored.pursuitSeconds).toBeGreaterThan(0);
+  });
+
+  it("re-engages a returning ship that sees Ada on screen once rearmSeconds have passed", () => {
+    const definition = enemyCatalog.fighter;
+    const { rearmSeconds } = definition.pursuit;
+    // Ada on screen, inside perception and firing range: a ship back home, and one stopped short
+    // of it, both re-engage.
+    for (const position of [
+      { x: 0, y: 0 },
+      { x: -500, y: 0 },
+    ]) {
+      const player = { x: position.x + 200, y: 0 };
+      let state: EnemyState = { ...spawn("fighter"), position, returning: true };
+      let elapsed = 0;
+      let fired = false;
+      while (state.returning && elapsed < rearmSeconds + 1) {
+        const intent = stepEnemy(definition, { ...observation(state), player }, state);
+        fired ||= intent.fire.length > 0;
+        state = { ...intent.state, position };
+        elapsed += 1 / 60;
+      }
+      expect(fired).toBe(false);
+      expect(elapsed).toBeGreaterThanOrEqual(rearmSeconds);
+      expect(elapsed).toBeLessThan(rearmSeconds + 2 / 60);
+      expect(state.engaged).toBe(true);
+      expect(state.pursuitSeconds).toBe(0);
+      expect(state.returnSeconds).toBe(0);
+      const next = stepEnemy(definition, { ...observation(state), player }, state);
+      expect(next.fire.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("does not re-engage a fleeing ship, or one whose chase is leashed, on sight", () => {
+    const definition = enemyCatalog.fighter;
+    const fleeing: EnemyState = {
+      ...spawn("fighter"),
+      fleeing: true,
+      returnSeconds: 5,
+      returning: true,
+    };
+    expect(stepEnemy(definition, observation(fleeing), fleeing).state.returning).toBe(true);
+    // Stopped near its home radius with Ada beyond it, though within perception.
+    const leashed: EnemyState = {
+      ...spawn("fighter"),
+      position: { x: definition.pursuit.homeRadius - 400, y: 0 },
+      returnSeconds: 5,
+      returning: true,
+    };
+    const beyond = {
+      ...observation(leashed),
+      player: { x: definition.pursuit.homeRadius + 100, y: 0 },
+    };
+    expect(stepEnemy(definition, beyond, leashed).state.returning).toBe(true);
+  });
+
+  it("wakes a returning ship when it is hit, but not a fleeing one", () => {
+    const definition = enemyCatalog.fighter;
+    const returning: EnemyState = {
+      ...spawn("fighter"),
+      position: { x: -300, y: 0 },
+      pursuitSeconds: 12,
+      returnSeconds: 0.5,
+      returning: true,
+    };
+    const hit = damageEnemy(definition, { amount: 1, hardpointId: null }, returning);
+    expect(hit.returning).toBe(false);
+    expect(hit.engaged).toBe(true);
+    expect(hit.pursuitSeconds).toBe(0);
+    expect(hit.returnSeconds).toBe(0);
+    const next = stepEnemy(definition, observation(hit), hit).state;
+    expect(next.returning).toBe(false);
+    expect(next.engaged).toBe(true);
+    const fleeing = damageEnemy(
+      definition,
+      { amount: 1, hardpointId: null },
+      { ...returning, fleeing: true },
+    );
+    expect(fleeing.returning).toBe(true);
+  });
+
+  it("resets the pursuit clock while fighting and ends a chase held out of range at maxSeconds", () => {
+    const definition = enemyCatalog.fighter;
+    const fighting: EnemyState = { ...spawn("fighter"), engaged: true, pursuitSeconds: 20 };
+    const inRange = { ...observation(fighting), player: { x: definition.engagement - 10, y: 0 } };
+    expect(stepEnemy(definition, inRange, fighting).state.pursuitSeconds).toBe(0);
+    // Ada in sight but held beyond firing range: the clock runs to the limit.
+    const outOfRange = { x: definition.engagement + 100, y: 0 };
+    let state: EnemyState = { ...spawn("fighter"), engaged: true };
+    let elapsed = 0;
+    while (!state.returning && elapsed < definition.pursuit.maxSeconds + 1) {
+      state = {
+        ...stepEnemy(definition, { ...observation(state), player: outOfRange }, state).state,
+        position: { x: 0, y: 0 },
+      };
+      elapsed += 1 / 60;
+    }
+    expect(definition.pursuit.maxSeconds).toBe(30);
+    expect(state.returning).toBe(true);
+    expect(elapsed).toBeGreaterThanOrEqual(definition.pursuit.maxSeconds - 1 / 60);
+    expect(elapsed).toBeLessThan(definition.pursuit.maxSeconds + 1 / 60);
+  });
+
+  it("steers an engaged ship to Ada's last-seen position while she is hidden", () => {
+    const definition = enemyCatalog.fighter;
+    const lastSeen = { x: 0, y: 600 };
+    let state: EnemyState = { ...spawn("fighter"), engaged: true, lastSeen };
+    const hidden: EnemyContext = {
+      ...observation(state),
+      get player(): { x: number; y: number } {
+        throw new Error("Hidden target coordinates must not be read");
+      },
+      visibility: "occluded",
+    };
+    for (let step = 0; step < 180; step++) {
+      const intent = stepEnemy(definition, hidden, state);
+      expect(intent.fire).toEqual([]);
+      state = {
+        ...intent.state,
+        position: {
+          x: state.position.x + intent.velocity.x * hidden.dt,
+          y: state.position.y + intent.velocity.y * hidden.dt,
+        },
+      };
+    }
+    // Three seconds on, still chasing and well on its way to where it last saw her.
+    expect(state.returning).toBe(false);
+    expect(state.engaged).toBe(true);
+    expect(state.lastSeen).toEqual(lastSeen);
+    expect(Math.hypot(state.position.x - lastSeen.x, state.position.y - lastSeen.y)).toBeLessThan(
+      400,
+    );
+  });
+
+  it("ends a chase once Ada stays hidden for unseenSeconds", () => {
+    const definition = enemyCatalog.fighter;
+    let state: EnemyState = { ...spawn("fighter"), engaged: true, lastSeen: { x: 300, y: 0 } };
+    const hidden: EnemyContext = { ...observation(state), visibility: "occluded" };
+    let elapsed = 0;
+    while (!state.returning && elapsed < definition.pursuit.unseenSeconds + 1) {
+      const intent = stepEnemy(definition, hidden, state);
+      state = {
+        ...intent.state,
+        position: {
+          x: state.position.x + intent.velocity.x * hidden.dt,
+          y: state.position.y + intent.velocity.y * hidden.dt,
+        },
+      };
+      elapsed += hidden.dt;
+    }
+    expect(definition.pursuit.unseenSeconds).toBe(6);
+    expect(state.returning).toBe(true);
+    expect(state.engaged).toBe(false);
+    expect(elapsed).toBeCloseTo(definition.pursuit.unseenSeconds, 1);
   });
 
   it("flees after pack losses and keeps the decision after survivor counts change", () => {

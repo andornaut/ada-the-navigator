@@ -89,6 +89,21 @@ describe("a blocking guard's cue", () => {
     expect(flight.guardCues).toEqual(["quest"]);
   });
 
+  it("holds a summoned guard's fire until it is inside the current play view", () => {
+    // East of Ada beyond the 720x360 base view but inside a view twice as wide.
+    const narrow = guarded(600);
+    stepFlight(CONTENT, 0.05, idle, narrow.flight);
+    stepFlight(CONTENT, 0.05, idle, narrow.flight);
+    expect(onScreen(narrow.flight, narrow.guard)).toBe(false);
+    expect(narrow.flight.summonedGuards).toEqual([narrow.guard.id]);
+    const wide = guarded(600);
+    const wider: FlightInput = { ...idle, viewportWidth: 1440 };
+    stepFlight(CONTENT, 0.05, wider, wide.flight);
+    expect(wide.flight.summonedGuards).toEqual([wide.guard.id]);
+    stepFlight(CONTENT, 0.05, wider, wide.flight);
+    expect(wide.flight.summonedGuards).toBeUndefined();
+  });
+
   it("does not cue outside Talk range, for an open route, or once the guard is disabled", () => {
     const outside = guarded(1200);
     const quest = outside.flight.objects.find((object) => object.id === "quest")!;

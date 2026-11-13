@@ -218,14 +218,27 @@ describe("combat save boundary", () => {
     expect(restoreSave(JSON.stringify(snapshot))).toEqual(snapshot);
   });
 
-  it.each(["age", "hp", "lastSeenAge", "phase", "primaryCooldown", "pursuitSeconds"])(
-    "rejects nonfinite enemy %s",
-    (field) => {
-      const snapshot = combatSnapshot();
-      Object.assign(snapshot.flight.objects[0]!.enemy!, { [field]: Infinity });
-      expect(restoreSave(snapshot)).toBeNull();
-    },
-  );
+  it("preserves the time since a return began, and accepts a save without it", () => {
+    const snapshot = combatSnapshot();
+    Object.assign(snapshot.flight.objects[0]!.enemy!, { returnSeconds: 1.25, returning: true });
+    expect(restoreSave(JSON.stringify(snapshot))).toEqual(snapshot);
+    delete snapshot.flight.objects[0]!.enemy!.returnSeconds;
+    expect(restoreSave(JSON.stringify(snapshot))).toEqual(snapshot);
+  });
+
+  it.each([
+    "age",
+    "hp",
+    "lastSeenAge",
+    "phase",
+    "primaryCooldown",
+    "pursuitSeconds",
+    "returnSeconds",
+  ])("rejects nonfinite enemy %s", (field) => {
+    const snapshot = combatSnapshot();
+    Object.assign(snapshot.flight.objects[0]!.enemy!, { [field]: Infinity });
+    expect(restoreSave(snapshot)).toBeNull();
+  });
 
   it.each(["home", "position", "velocity", "lastSeen"] as const)(
     "rejects nonfinite enemy %s coordinates",
@@ -249,6 +262,7 @@ describe("combat save boundary", () => {
     { id: "wrong-object" },
     { lastSeen: {} },
     { pursuitSeconds: -1 },
+    { returnSeconds: -1 },
     { primaryCooldown: -1 },
     { hardpoints: [] },
   ])("rejects malformed enemy state %j", (change) => {

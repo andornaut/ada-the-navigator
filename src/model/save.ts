@@ -123,6 +123,7 @@ function enemyState(galaxy: GalaxyNumber, value: unknown): boolean {
     !["age", "hp", "lastSeenAge", "primaryCooldown", "pursuitSeconds"].every((key) =>
       nonnegative(value[key]),
     ) ||
+    !(value.returnSeconds === undefined || nonnegative(value.returnSeconds)) ||
     !finite(value.phase) ||
     !vector(value.facing) ||
     !nullableVector(value.heading) ||

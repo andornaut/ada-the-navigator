@@ -59,13 +59,22 @@ export interface EnemyState {
   /** Hull hp; a heavy's is its hull HP (gameplay/ships.md "Heavy hull and disabling"). */
   hp: number;
   id: string;
+  /** Where the ship last saw Ada; an engaged ship steers here while she is unseen. */
   lastSeen: Point | null;
+  /** Seconds since the ship last saw Ada. */
   lastSeenAge: number;
   packId: string | null;
   phase: number;
   position: Point;
   primaryCooldown: number;
+  /**
+   * The pursuit clock: seconds engaged while Ada is unseen or beyond firing range, reset to 0
+   * while the ship fights her.
+   */
   pursuitSeconds: number;
+  /** Seconds since the current return began; 0 when not returning. */
+  returnSeconds?: number;
+  /** The return-to-home latch, set when a chase ends. */
   returning: boolean;
   /** A disabled heavy Ada salvaged: powered down, passable and drawn dimmed. */
   salvaged: boolean;
@@ -85,7 +94,7 @@ export interface EnemyContext {
   playerVelocity: Point;
   /**
    * A cued route guard (flight.ts cueGuards): it flies straight at Ada at full speed, past its
-   * pursuit limits and holding its fire, until she sees it.
+   * pursuit limits and holding its fire, until it is inside the current play view.
    */
   summoned?: boolean;
   targetable: boolean;
@@ -290,6 +299,7 @@ export function createEnemy(
     position: { ...position },
     primaryCooldown: 0,
     pursuitSeconds: 0,
+    returnSeconds: 0,
     returning: false,
     salvaged: false,
     tactic: freshTactic(definition.hardpoints.reduce((sum, part) => sum + part.hp, definition.hp)),
@@ -299,7 +309,9 @@ export function createEnemy(
 
 /**
  * Every hit lowers the hull; a hit at a hardpoint (null selects the hull alone) also damages
- * that hardpoint. Destroying a heavy's last weapon hardpoint disables it for good.
+ * that hardpoint. Destroying a heavy's last weapon hardpoint disables it for good. A hit engages
+ * the ship; on a returning ship that is not fleeing it also clears the return latch and resets
+ * the pursuit clock.
  */
 export function damageEnemy(
   definition: EnemyDefinition,
@@ -315,9 +327,11 @@ export function damageEnemy(
   ) {
     return state;
   }
+  const wake = state.returning && !state.fleeing;
   const next: EnemyState = {
     ...state,
     engaged: true,
+    ...(wake ? { pursuitSeconds: 0, returnSeconds: 0, returning: false } : {}),
     hardpoints: state.hardpoints.map((part) =>
       part.id === hit.hardpointId
         ? { ...part, hp: Math.max(0, part.hp - hit.amount) }
@@ -451,7 +465,7 @@ function nextTactic(
 
 /**
  * Desired movement as a fraction of maximum speed: a unit vector, or shorter on arrival. `aim`
- * points at Ada, `distance` away.
+ * points at Ada, or at her last-seen position while she is unseen, `distance` away.
  */
 function steering(
   definition: EnemyDefinition,
@@ -467,8 +481,19 @@ function steering(
   if (state.fleeing) {
     return { x: -aim.x, y: -aim.y };
   }
-  if (!state.engaged || !context.targetable || context.visibility !== "visible") {
+  if (!state.engaged || !context.targetable) {
     return { x: 0, y: 0 };
+  }
+  const behaviour = definition.behaviour;
+  if (context.visibility !== "visible") {
+    // An engaged ship that has lost sight of Ada makes for where it last saw her; a siege ship
+    // keeps to its slow advance.
+    if (!state.lastSeen) {
+      return { x: 0, y: 0 };
+    }
+    const search = arrive(definition, maxSpeed, state.lastSeen, state);
+    const pace = behaviour.kind === "siege" ? behaviour.speedFraction : 1;
+    return { x: search.x * pace, y: search.y * pace };
   }
   const push = separation(definition, context, state);
   const toward = (scale: number): Point =>
@@ -501,7 +526,6 @@ function steering(
     };
     return arrive(definition, maxSpeed, station, state);
   }
-  const behaviour = definition.behaviour;
   switch (behaviour.kind) {
     case "chase":
       return hold();
@@ -575,6 +599,12 @@ export function stepEnemy(
   const target = observed || summoned ? context.player : (state.lastSeen ?? state.position);
   const delta = { x: target.x - state.position.x, y: target.y - state.position.y };
   const aim = unit(delta);
+  const distance = magnitude(delta);
+  /** A sight-aggressive ship sees Ada within its perception. */
+  const sighted =
+    observed && definition.aggression === "sight" && distance <= definition.perception;
+  /** The ship sees Ada within its firing range. */
+  const fighting = observed && distance <= definition.engagement;
   const packSize = state.packId === null ? 0 : (context.initialPackSizes[state.packId] ?? 0);
   const alive =
     context.peers.filter((peer) => peer.packId === state.packId && peer.hp > 0).length +
@@ -583,13 +613,7 @@ export function stepEnemy(
   const next: EnemyState = {
     ...state,
     age: state.age + context.dt,
-    engaged:
-      state.engaged ||
-      summoned ||
-      (context.targetable &&
-        context.visibility === "visible" &&
-        definition.aggression === "sight" &&
-        magnitude(delta) <= definition.perception),
+    engaged: state.engaged || summoned || sighted,
     fleeing:
       state.fleeing ||
       packFlee ||
@@ -603,41 +627,47 @@ export function stepEnemy(
   } else {
     next.lastSeenAge += context.dt;
   }
-  next.pursuitSeconds = next.engaged ? state.pursuitSeconds + context.dt : 0;
+  // The pursuit clock runs only while Ada is unseen or beyond firing range.
+  next.pursuitSeconds = next.engaged && !fighting ? state.pursuitSeconds + context.dt : 0;
   const playerHomeDistance = observed
     ? Math.hypot(context.player.x - state.home.x, context.player.y - state.home.y)
     : 0;
   const homeDistance = Math.hypot(state.position.x - state.home.x, state.position.y - state.home.y);
+  const pursuit = definition.pursuit;
+  /** The ship is beyond its home radius, or sees Ada beyond it: a chase cannot go on. */
+  const leashed = homeDistance >= pursuit.homeRadius || playerHomeDistance > pursuit.homeRadius;
+  const returnSeconds = state.returning ? (state.returnSeconds ?? 0) + context.dt : 0;
   if (summoned) {
     next.returning = false;
     next.pursuitSeconds = 0;
+  } else if (state.returning) {
+    // A returning ship that is not fleeing re-engages on sight within perception once
+    // rearmSeconds have passed and the chase could go on. At home, seeing Ada beyond perception
+    // also clears the latch without engaging.
+    const rearm = !next.fleeing && sighted && returnSeconds >= pursuit.rearmSeconds && !leashed;
+    const settled = homeDistance <= 5 && observed && playerHomeDistance > definition.perception;
+    if (rearm || settled) {
+      next.returning = false;
+      next.pursuitSeconds = 0;
+    }
   } else if (
     next.engaged &&
-    (next.pursuitSeconds >= definition.pursuit.maxSeconds ||
-      homeDistance >= definition.pursuit.homeRadius ||
-      (observed && playerHomeDistance > definition.pursuit.homeRadius) ||
-      next.lastSeenAge >= definition.pursuit.unseenSeconds)
+    (next.pursuitSeconds >= pursuit.maxSeconds ||
+      leashed ||
+      next.lastSeenAge >= pursuit.unseenSeconds)
   ) {
     next.returning = true;
   }
   if (next.returning) {
     next.engaged = false;
-    if (
-      state.returning &&
-      homeDistance <= 5 &&
-      observed &&
-      playerHomeDistance > definition.perception
-    ) {
-      next.returning = false;
-      next.pursuitSeconds = 0;
-    }
   }
+  next.returnSeconds = next.returning ? returnSeconds : 0;
   // An escort without a live capital fights by hitAndRun.
   const acting =
     state.escortOf !== null && !escorted(context, state)
       ? { ...definition, behaviour: definition.escortFallback }
       : definition;
-  next.tactic = nextTactic(acting, next, magnitude(delta), state);
+  next.tactic = nextTactic(acting, next, distance, state);
   // Each working engine gives an equal share of top speed; losing one slows the ship through
   // its own physics, while its maximum speed still bounds saved momentum.
   const fullSpeed = definition.physics.maxSpeed;
@@ -647,7 +677,7 @@ export function stepEnemy(
     ? { x: 0, y: 0 }
     : summoned
       ? aim
-      : steering(acting, context, speed, aim, magnitude(delta), next);
+      : steering(acting, context, speed, aim, distance, next);
   const physics = definition.physics;
   if (effects.defeated || (next.returning && homeDistance <= 5 && !effects.movementStopped)) {
     next.velocity = { x: 0, y: 0 };
@@ -695,7 +725,7 @@ export function stepEnemy(
     next.engaged &&
     context.targetable &&
     context.visibility === "visible" &&
-    magnitude(delta) <= definition.engagement;
+    distance <= definition.engagement;
   const skill = leadSkill(context.lead, state.id);
   const drift = aimDrift(state.id, state.age);
   /**
