@@ -1,13 +1,26 @@
 import { STATION_NAME_WORDS } from "../data/stationCopy.ts";
 
-/** Full identity encoding includes placement namespaces, without discovery-order allocation. */
-export function stationWords(id: string): string {
-  // A leading byte preserves leading zero bytes and distinguishes every encoded length.
+const zigzag = (value: bigint): bigint => (value < 0n ? -2n * value - 1n : 2n * value);
+const pair = (left: bigint, right: bigint): bigint =>
+  ((left + right) * (left + right + 1n)) / 2n + right;
+
+function identityNumber(id: string): bigint {
+  const match = /^station:(infill:)?(-?(?:0|[1-9]\d*)),(-?(?:0|[1-9]\d*))$/.exec(id);
+  if (match && match[2] !== "-0" && match[3] !== "-0") {
+    const cell = pair(zigzag(BigInt(match[2]!)), zigzag(BigInt(match[3]!)));
+    return 2n * pair(cell, match[1] ? 1n : 0n);
+  }
+  // Odd values reserve a separate namespace for complete unknown identity encodings.
   let value = 1n;
   for (const byte of new TextEncoder().encode(id)) {
     value = (value << 8n) | BigInt(byte);
   }
-  return value
+  return 2n * value + 1n;
+}
+
+/** Compact full identity encoding includes layer and signed coordinates without allocation. */
+export function stationWords(id: string): string {
+  return identityNumber(id)
     .toString(16)
     .split("")
     .map((digit) => STATION_NAME_WORDS[Number.parseInt(digit, 16)]!)
