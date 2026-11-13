@@ -15,7 +15,7 @@ targets keep 1000 world units clear of retained frigates, capitals and platforms
 ### Job board
 
 The station card shows the Stardust balance, the welcome line, Undock, Shop and
-Jobs. Jobs opens the job board, which follows the shop's card pattern; its close
+Jobs. Jobs opens the fullscreen job board, which follows the shop's card pattern; its close
 X, an outside tap, back and Escape return to the station card.
 
 - Each board offers three jobs at once, drawn from its galaxy's job pool by the
@@ -96,18 +96,19 @@ or Back to title keeps the tow, and Continue resumes it exactly.
 ### Rewards
 
 A job pays Stardust and a lore line. Rewards sit on top of ordinary earnings from
-asteroids and drones met on the way. The pacing target: a player who takes Sunflower
-jobs back to back affords the first weapon (225) in about 20 minutes instead of
-about 25, against the typical income in [Economy](economy.md). Rewards follow route position: the second galaxy multiplies them by 1.5 and the
-third to sixth by 2, rounded down to a multiple of 5.
+asteroids and drones met on the way. The pacing target is the first weapon
+(400 Stardust) in about 17 minutes of Sunflower jobs taken back to back. This is
+a target awaiting future validation, not a measured result. Pacing, kill-time
+and ore-income simulations remain deferred. Rewards follow
+route position as listed below.
 
 | Job             | Typical minutes | Position 1 | Position 2 | Positions 3 to 5 | Position 6 |
 | --------------- | --------------: | ---------: | ---------: | ---------------: | ---------: |
-| Survey          |               2 |         10 |         15 |               20 |         20 |
-| Lost-item hunt  |               3 |         15 |         20 |               30 |          – |
-| Delivery, short |               3 |         15 |         20 |               30 |          – |
-| Delivery, long  |               4 |         25 |         35 |               50 |          – |
-| Rescue and tow  |               4 |         25 |         35 |               50 |         50 |
+| Survey          |               2 |         30 |         45 |               60 |         60 |
+| Lost-item hunt  |               3 |         45 |         60 |               90 |          – |
+| Delivery, short |               3 |         45 |         60 |               90 |          – |
+| Delivery, long  |               4 |         75 |        105 |              150 |          – |
+| Rescue and tow  |               4 |         75 |        105 |              150 |        150 |
 
 A short delivery is under 6000 world units; a long one is 6000 or more. Phantom
 boards offer only surveys and rescue and tow: travelers stranded by the blockades.
@@ -214,8 +215,8 @@ activity in a galaxy, never both. An accepted activity, its galaxy and its progr
 flights like a job; a supply run's carried item uses the job carried-item slot.
 It pays at completion with the job completion notice alone, with no lore line,
 and is offered again on the next Talk. Phantom has no repeatable activity yet.
-Activity rewards follow route position: 35 at the second, 50 at the third, 55 at
-the fourth and 60 at the fifth; the first galaxy's supply run pays the delivery
+Activity rewards follow route position: 105 at the second, 150 at the third, 165 at
+the fourth and 180 at the fifth; the first galaxy's supply run pays the delivery
 rewards.
 
 - While an activity is active, the galaxy's boards show their jobs, and Accept
@@ -237,16 +238,16 @@ rewards.
 
 | Galaxy    | Activity          | Offered by          | Goal                                                              |   Reward |
 | --------- | ----------------- | ------------------- | ----------------------------------------------------------------- | -------: |
-| Sunflower | Supply run        | Any of the outposts | Carry supplies to a station 3000 or more away.                    | 15 or 25 |
-| Whirlpool | Guide a calf      | The whale family    | Lead a whale calf 5000 to 8000 world units home to them.          |       35 |
-| Needle    | Thread the needle | Elder Loom          | Light the 8 gates of a practice channel.                          |       50 |
-| Andromeda | Courier run       | Pip                 | Fly a parcel with Pip to a settlement, keeping within 600 of him. |       55 |
-| Cartwheel | Mining contract   | The hub             | Deposit 30 ore at the hub; partial loads count.                   |       60 |
+| Sunflower | Supply run        | Any of the outposts | Carry supplies to a station 3000 or more away.                    | 45 or 75 |
+| Whirlpool | Guide a calf      | The whale family    | Lead a whale calf 5000 to 8000 world units home to them.          |      105 |
+| Needle    | Thread the needle | Elder Loom          | Light the 8 gates of a practice channel.                          |      150 |
+| Andromeda | Courier run       | Pip                 | Fly a parcel with Pip to a settlement, keeping within 600 of him. |      165 |
+| Cartwheel | Mining contract   | The hub             | Deposit 30 ore at the hub; partial loads count.                   |      180 |
 
 - **Supply run**: follows the delivery job rules in full, 3000 minimum
   included: the outpost's item goes to a known station at least 3000 world
-  units away, preferring the nearest, and pays the delivery rewards (15 short,
-  25 long). With no such station known, the outpost makes no offer. The items
+  units away, preferring the nearest, and pays the delivery rewards (45 short,
+  75 long). With no such station known, the outpost makes no offer. The items
   are fresh food, repaired tools and spare parts; a lost item is replaced
   through Talk at the issuing outpost.
 - **Mining contract**: counts only deposits made after accepting, from 0; the

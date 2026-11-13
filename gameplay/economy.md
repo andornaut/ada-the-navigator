@@ -15,11 +15,13 @@ without jobs as the pacing simulation measures it:
 |        5 | Cartwheel |            about 15 |
 |        6 | Phantom   | measured once built |
 
-Every pacing target is a price divided by that income: the first weapon (400)
-takes about 50 minutes of Sunflower play, saving 500 for Cartwheel's holodisk
-about 30 minutes of Cartwheel play, and a galaxy's projects the time their total
-takes at its income after its story ends. Exploring finds a station every few
-minutes.
+Without jobs, a price divided by that income gives its pacing estimate: the
+first weapon (400) takes about 50 minutes of Sunflower play, saving 500 for
+Cartwheel's holodisk about 30 minutes of Cartwheel play, and a galaxy's projects
+the time their total takes at its income after its story ends. The first weapon
+targets about 17 minutes with Sunflower jobs taken back to back. Pacing, kill-time
+and ore-income simulations remain deferred; this target awaits future validation.
+Exploring finds a station every few minutes.
 
 ## Earning Stardust
 
@@ -71,7 +73,10 @@ galaxy: 0.25% of destroyed small ships and 10% of salvaged frigates, platforms a
 capitals drop an upgrade pickup. Rocks never drop one. A destroyed heavy drops none. An upgrade drop
 gives one level, as buying the next level does, and only something Ada can still
 use. The game picks a category, then an item within it. Weapons, Shield, Engine
-tuning and Tractor beam have equal weight, and Paint 1/20 of that weight:
+tuning and Tractor beam have equal relative weight. Paint is shop-only and
+never enters the upgrade pool. Removing only Paint renormalizes the remaining
+category weights without changing their ratios; this does not select new
+absolute weight values:
 
 - Weapons: one weapon's next step, the weapon itself with three packs of its
   ammunition if Ada does not own it, otherwise its next level. Each weapon is
@@ -81,7 +86,6 @@ tuning and Tractor beam have equal weight, and Paint 1/20 of that weight:
 - Shield: its next level.
 - Engine tuning: its next level.
 - Tractor beam: its next level.
-- Paint: a paint scheme Ada does not own, owned but not put in use.
 
 A category or weapon with nothing left to give leaves the pool, and the rest keep
 their relative weights. Once nothing is left, the drop gives one pack of
@@ -96,7 +100,6 @@ moment. Its notice names what it gave:
 | Shield        | + Shield level {n}       |
 | Engine tuning | + Engine level {n}       |
 | Tractor beam  | + Tractor beam level {n} |
-| Paint scheme  | + {paint} paint          |
 | Ammunition    | + {weapon} ammo          |
 
 Destroyed small craft also drop an ammo pack 7.5% of the time, and destroyed
@@ -109,6 +112,14 @@ those weapons). Its notice is "+ {weapon} ammo".
 
 Ore rocks release ore instead of a usual Stardust drop. Like asteroids, they
 can still burst with 10 extra Stardust or drop an ammo pack.
+
+Ore rocks occur in every galaxy; Cartwheel is richest in ore. Ore aboard fuels
+shield recharge after a 30-second delay: restoring 10% of maximum shield
+capacity costs 10 ore, so an empty-to-full recharge costs 100 ore at every
+Shield level. Without ore, free recharge stops at 10% capacity; it does not
+reduce a shield already above that threshold. Ore deposited at the mining hub
+still counts toward its story goal and an accepted Mining contract. Deposited
+ore is no longer aboard to fuel recharge.
 
 Station jobs also pay Stardust; see [Quests](quests.md#rewards).
 
@@ -123,12 +134,15 @@ stay rare but findable. A station is a safe
 area. Ada docks with Use (Dock) within Talk range, 160 world units from the
 station's centre, like any other destination; the station has no dock mouth and
 flying over it does nothing. Undocking leaves Ada at rest where she docked, so
-Use offers Dock again at once. Docking opens the station card, which pauses play like other cards. The card shows the Stardust balance, a welcome line (the keeper's greeting; see [Species and greeters](rules.md#species-and-greeters)), Undock, Shop and Jobs; Jobs
+Use offers Dock again at once. Docking opens the fullscreen station card, which pauses play like other cards. The card shows the Stardust balance, a welcome line (the keeper's greeting; see [Species and greeters](rules.md#species-and-greeters)), Undock, Shop and Jobs; Jobs
 opens the station's job board (see [Quests](quests.md)).
 Like Archie's modals it has a close X; the X, an outside tap, back and Escape all
 undock.
 
 ## Shop
+
+Shop, Jobs and Projects use fullscreen views, as do buy and donation confirms
+and detail cards. Their existing contents, actions and dismissal rules apply.
 
 ### Weapon unlocks
 
@@ -151,18 +165,18 @@ are the exception: they drop for every weapon Ada owns, in any galaxy (see
 
 ### Prices
 
-| Item           | Effect                                                                                                                                              | Prices    |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| Multi-Laser    | Owned weapon                                                                                                                                        | 400       |
-| Rapid Missile  | Owned weapon                                                                                                                                        | 500       |
-| Heavy Missile  | Owned weapon                                                                                                                                        | 600       |
-| Scattershot    | Owned weapon                                                                                                                                        | 800       |
-| Phaser         | Owned weapon                                                                                                                                        | 1000      |
-| Weapon upgrade | Per weapon, Laser included: levels 2 and 3, each about ×1.5 effective output (×1.2 to 1.33 for Rapid Missile and Multi-Laser)                       | See below |
-| Shield         | Levels 2 and 3: capacity 15, then 20; empty to full 45, then 30 s                                                                                   | 450, 900  |
-| Engine tuning  | Levels 2 and 3: top speed 200, then 225; each −10% acceleration and braking seconds; aim turn 0.07, then 0.06 s and movement turn 0.14, then 0.12 s | 180, 360  |
-| Tractor beam   | Levels 2 and 3: pull radius 90, then 120; pull speed 160, then 200                                                                                  | 120, 240  |
-| Ship paint     | Cosmetic colour schemes for Ada's ship; the white and blue scheme stays free                                                                        | 75 each   |
+| Item           | Effect                                                                                                                                              | Prices            |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| Multi-Laser    | Owned weapon                                                                                                                                        | 400               |
+| Rapid Missile  | Owned weapon                                                                                                                                        | 500               |
+| Heavy Missile  | Owned weapon                                                                                                                                        | 600               |
+| Scattershot    | Owned weapon                                                                                                                                        | 800               |
+| Phaser         | Owned weapon                                                                                                                                        | 1000              |
+| Weapon upgrade | Per weapon, Laser included: levels 2 and 3, each about ×1.5 effective output (×1.2 to 1.33 for Rapid Missile and Multi-Laser)                       | See below         |
+| Shield         | Levels 2 and 3: capacity 15, then 20; empty to full 45, then 30 s                                                                                   | 450, 900          |
+| Engine tuning  | Levels 2 and 3: top speed 200, then 225; each −10% acceleration and braking seconds; aim turn 0.07, then 0.06 s and movement turn 0.14, then 0.12 s | 180, 360          |
+| Tractor beam   | Levels 2 and 3: pull radius 90, then 120; pull speed 160, then 200                                                                                  | 120, 240          |
+| Ship paint     | Cosmetic colour schemes for Ada's ship; the white and blue scheme stays free                                                                        | By purchase order |
 
 Weapon upgrades cost 25% more for each later weapon in weapon order, compounded
 from Laser's and rounded up to the next 100. Each weapon's purchase price
@@ -197,7 +211,9 @@ and the row then shows Owned.
 Ship paint schemes are Classic (the free white and blue default), Cobalt,
 Seafoam, Graphite and Iris. Tapping an owned scheme puts it in use at once, with
 no confirm; the scheme in use has the selection ring and shows In use instead of
-Owned.
+Owned. The four paid schemes cost 1500, 2000, 2500 and 3000 Stardust by
+purchase order, whichever scheme Ada chooses next. Classic stays free and does
+not advance that order. Paint is a shop-only endgame savings goal.
 
 ## Ammunition
 
@@ -358,8 +374,8 @@ When the shield is depleted, Astra quantum jumps the ship home to Earth so it ca
 recharge overnight. The cost is only the inconvenience: the flight ends, the
 galaxy's layout regenerates on the next flight, and open-space enemies, pickups,
 half the undeposited ore (the smaller half on an odd load) and a towed pod are
-lost; the jump-home page says when ore was lost. Going home or jumping to
-another galaxy by choice keeps all ore. Accepted jobs stay open, each with its carried item (see [Rules](rules.md)). Ada
+lost; the remaining ore stays aboard. The jump-home page says when ore was lost.
+Going home or jumping to another galaxy by choice keeps all ore. Accepted jobs stay open, each with its carried item (see [Rules](rules.md)). Ada
 keeps every weapon, upgrade level, Stardust, purchase, charted landmark and story
 progress.
 
