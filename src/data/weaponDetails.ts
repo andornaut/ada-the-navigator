@@ -5,15 +5,11 @@ import { weaponAt } from "./weaponCatalog.ts";
 export const WEAPON_DETAIL_LINES = {
   heavyMissile: [
     "Fires slowly but hits hard.",
-    "Explodes on a hit or after a short distance, with a big blast.",
+    "Explodes on impact or after a short distance, with a large blast.",
     "Each level hits harder.",
   ],
   laser: ["Fires one laser bolt at a time.", "Each level fires faster and hits harder."],
-  multiLaser: [
-    "Fires a fan of {count} laser bolts.",
-    "Hits several drones at once.",
-    "Each level adds a bolt.",
-  ],
+  multiLaser: ["Fires a fan of {count} laser bolts.", "Each level adds a bolt."],
   phaser: [
     "Fires an instant beam that nothing can dodge.",
     "Fires slowly but hits hard.",
@@ -21,12 +17,11 @@ export const WEAPON_DETAIL_LINES = {
   ],
   rapidMissile: [
     "Fires small missiles quickly.",
-    "Explodes on a hit or after a short distance.",
+    "Explodes on impact or after a short distance.",
     "Each level fires faster.",
   ],
   scattershot: [
-    "Fires a wide spread of {count} shots.",
-    "Only reaches close to your ship.",
+    "Fires a wide spread of {count} short-range shots.",
     "Each level adds shots that hit harder.",
   ],
 } as const satisfies Readonly<Record<Weapon, readonly string[]>>;

@@ -1,8 +1,6 @@
 export const RESOURCE_DESCRIPTIONS = {
-  ore:
-    "Carried ore fuels shield recharge. Deposit ore at the mining hub to advance mining objectives; " +
-    "deposited ore is no longer available for recharge.",
+  ore: "Ore is used to recharge shields. Deposit ore at the mining hub to advance mining objectives.",
   stardust:
-    "Spend Stardust at stations on weapons, ammunition, ship upgrades, paint and community projects. " +
-    "Stardust stays with Ada when she returns to Earth.",
+    "Spend Stardust at stations on weapons, ammo, upgrades, paint and community projects. " +
+    "You keep it when you return to Earth.",
 } as const;
