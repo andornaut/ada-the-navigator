@@ -74,6 +74,7 @@ import { type ControlSample, ControlState } from "./state.ts";
 
 export interface ControlsOptions {
   readonly aboardResource?: () => {
+    readonly questId?: string;
     readonly title: string;
     readonly text: string;
     readonly kind: "carrying" | "towing";
@@ -391,6 +392,10 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       if (kind === "aboard") {
         const details = options.aboardResource?.();
         if (!details) {
+          return;
+        }
+        if (details.questId) {
+          pause.openQuest(details.questId, "flight");
           return;
         }
         if (icon) {
