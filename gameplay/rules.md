@@ -717,9 +717,9 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   speed for the weapon (see [Ships](ships.md#enemy-weapons)). An enemy Heavy
   Missile hit (10) can empty a full base shield, so it fires rarely.
 - Laser bolts travel at 500, 600 and 700 world units per second at weapon
-  levels 1, 2 and 3; Multi-Laser bolts at 400, 500 and 600. Both reach a fixed 300 world units at
-  every level, past the play view's edges straight left, right, up and down
-  (about 255) but short of its corners, which only Phaser reaches; flight time
+  levels 1, 2 and 3; Multi-Laser bolts at 400, 500 and 600. Both reach a fixed 370 world units at
+  every level, as far as Phaser: past the play view's edges straight left,
+  right, up and down (about 255) and its corners (about 360); flight time
   follows speed. Rapid Missile flies at 500, 600 and
   700, and Heavy Missile at a fixed 400; both missiles reach a fixed 220 at every
   level, so a missile that hits nothing explodes on screen. Enemy missiles share
