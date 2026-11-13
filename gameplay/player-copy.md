@@ -1198,6 +1198,20 @@ beacon light. Welcome!"
 - Conversation buttons: Continue, Ask more.
 - Disabled heavy banner: Disabled.
 - Status labels: Shield, Cargo, Stardust, Ore.
+- Weapon detail header: the existing compact weapon name, with no suffix at
+  level 1 and `[2]` or `[3]` at upgraded levels, beside its canonical glyph.
+  The body contains only its description. Below it, show the actual ammunition
+  icon and current `{count}`; Laser instead shows its own canonical glyph and
+  "Unlimited". An unowned shop weapon uses "Comes with 3 ammo packs." instead
+  of a current count.
+- Resource detail titles: "Ore" and "Stardust", text only. Below the description,
+  show the canonical resource icon once beside the actual `{count}`.
+- HUD quest items open their matching quest details, with no generic quantity.
+  Nonquest fallback details show no fabricated count.
+- Detail card dismissal: "Close" for flight details, "Back" for a parent view.
+  A sole Close button is centered. Multi-action rows place the secondary action
+  on the left and the primary action on the right. The close X and Escape return
+  to the same origin.
 - Item notices, always "+ {item}": "+ Holodisk", "+ Spare parts", "+ {weapon}",
   "+ {weapon} level {n}", "+ Shield level {n}", "+ Engine level {n}", "+ Tractor
   beam level {n}", "+ {paint} paint", "+ {weapon} ammo" and "+ {craft}" for a towed craft; merged repeats add

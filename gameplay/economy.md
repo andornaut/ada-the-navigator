@@ -274,23 +274,41 @@ plain description with no exact figures. Holding about 0.5 seconds
   play.
 - In the shop, holding a weapon row or an upgrade row (weapon upgrades, Shield,
   Engine tuning and Tractor beam) opens its card over the shop instead of the
-  buy confirm. Close and the other dismissals return to the same shop tab with
+  buy confirm. Back and the other dismissals return to the same shop tab with
   that row focused. Ammunition, paint, holodisk and project rows have no card.
 
-A weapon card shows the weapon's name, then its lines from the table below,
-then its level as `level` when owned. Below that, Laser shows `detailUnlimited`;
-another owned weapon shows `detailAmmoLeft` with its count; an unowned weapon
-in the shop shows `detailIncludesAmmo` instead. Multi-Laser and Scattershot
-lines name the counts at Ada's level, or level 1 when unowned.
+A weapon card's header shows its canonical weapon glyph and existing compact
+name: level 1 has no suffix, and levels 2 and 3 use `[2]` and `[3]`. The body
+contains only the description lines below, with no separate level or ammunition
+text. Below the description, a separate quantity row shows the weapon's actual
+ammunition icon beside its current count. Laser uses its own canonical glyph
+beside the exact text "Unlimited". An unowned shop weapon shows
+`detailIncludesAmmo` separately below the description instead of a fabricated
+current count. Multi-Laser and Scattershot descriptions use the counts at Ada's
+level, or level 1 when unowned.
 
-| Weapon        | Card lines                                                                                                               |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Laser         | "Fires one laser bolt at a time." "Each level fires faster and hits harder."                                             |
-| Multi-Laser   | "Fires a fan of {count} laser bolts." "Hits several drones at once." "Each level adds a bolt."                           |
-| Rapid Missile | "Fires small missiles quickly." "Explodes on a hit or after a short distance." "Each level fires faster."                |
-| Heavy Missile | "Fires slowly but hits hard." "Explodes on a hit or after a short distance, with a big blast." "Each level hits harder." |
-| Scattershot   | "Fires a wide spread of {count} shots." "Only reaches close to your ship." "Each level adds shots that hit harder."      |
-| Phaser        | "Fires an instant beam that nothing can dodge." "Fires slowly but hits hard." "Each level hits harder."                  |
+Ore and Stardust detail cards have a text-only title and their description. A
+separate quantity row below shows the single canonical resource icon beside the
+actual quantity. The header has no resource icon, so the icon appears only once.
+
+A quest item in the HUD opens its matching quest details, with no generic
+quantity row. A nonquest fallback shows only known item details and never
+fabricates a count.
+
+The contextual dismissal is Close or Back. A sole Close button is centered.
+Multi-action rows place the secondary action on the left and the primary action
+on the right. Close returns from flight details to flight; Back returns to the
+originating parent view. The close X, Escape and other supported dismissals return to that same
+origin, preserving the shop tab and focused row where applicable.
+
+| Weapon        | Card lines                                                                                                                  |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Laser         | "Fires one laser bolt at a time." "Each level fires faster and hits harder."                                                |
+| Multi-Laser   | "Fires a fan of {count} laser bolts." "Each level adds a bolt."                                                             |
+| Rapid Missile | "Fires small missiles quickly." "Explodes on impact or after a short distance." "Each level fires faster."                  |
+| Heavy Missile | "Fires slowly but hits hard." "Explodes on impact or after a short distance, with a large blast." "Each level hits harder." |
+| Scattershot   | "Fires a wide spread of {count} short-range shots." "Each level adds shots that hit harder."                                |
+| Phaser        | "Fires an instant beam that nothing can dodge." "Fires slowly but hits hard." "Each level hits harder."                     |
 
 An upgrade card shows the upgrade's shop name (`weaponUpgrade`, `shield`,
 `engineTuning` or `tractorBeam`), Ada's current level as `level`, then
@@ -447,8 +465,7 @@ The shield shop row reuses the existing `shield` label.
 | `shipPaint`          | Ship paint                                                                |
 | `detailNextLevel`    | Next level                                                                |
 | `detailMaxed`        | Fully upgraded.                                                           |
-| `detailUnlimited`    | Never runs out.                                                           |
-| `detailAmmoLeft`     | Ammo: {count} left                                                        |
+| `detailUnlimited`    | Unlimited                                                                 |
 | `detailIncludesAmmo` | Comes with 3 ammo packs.                                                  |
 | `detailClose`        | Close                                                                     |
 
