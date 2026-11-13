@@ -600,7 +600,7 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   120, and station discovery uses its own 320.
 - Pause, as in Chibi: the pause button at the top left opens a card titled
   "Paused" over the dimmed game, which pauses play, with a close X. Its buttons
-  share one shape. "Map", "Ship", "Settings" and "Back to title" sit above, and
+  share one shape. "Map", "Quests", "Ship", "Settings" and "Back to title" sit above, and
   "Resume" (primary) spans the full width at the bottom, focused when the card
   opens, since primary buttons sit down and to the right. Ship opens a card titled "Ship" with a close
   X, back to the pause card, in two sections. "Cargo" lists Stardust, ore

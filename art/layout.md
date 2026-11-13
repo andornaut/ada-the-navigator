@@ -780,7 +780,7 @@ token above; strings are Gameplay's.
 | Install steps | Header, close. Step rows: row icon, `SPACING.gap`, wrapped body text, rows `SPACING.rowGap` apart (not buttons), height fits text (not controls)                                                                                               | Steps        |
 | Update offer  | Header, close. Action row: decline (secondary), accept (primary)                                                                                                                                                                               | None         |
 | Cheats        | Header, close. Per scope a section group: heading (`TYPE.label`), persistence (supporting prose), `SPACING.rowGap`, then items `SPACING.gap` apart, each an action stack of one with its description (supporting prose) `SPACING.rowGap` below | Sections     |
-| Paused        | Header, close. Control grid, two columns: Map and Ship, then Settings and Back to title. Resume (primary, full width)                                                                                                                          | None         |
+| Paused        | Header, close. Control grid, two columns: Map and Quests, then Ship and Settings, then Back to title. Resume (primary, full width)                                                                                                             | None         |
 | Paused (room) | Header, close. Action stack: Settings, Back to title                                                                                                                                                                                           | None         |
 | Ship          | Header, close. Cargo section. Equipment section ([Ship card](#ship-card))                                                                                                                                                                      | None         |
 | Station card  | Keeper portrait, name tab and current greeting. Balance and Jobs/Shop choices. Separate Next line/Undock navigation and close X ([Station card](#station-card)).                                                                               | None         |
@@ -789,17 +789,16 @@ token above; strings are Gameplay's.
 | Buy confirm   | Header, close. Item well. Description (weapons). Price. Remaining (supporting). Action row: Cancel, Buy                                                                                                                                        | None         |
 | Achievements  | Header, close. Entry list, two columns ([Achievements card](#achievements-card)). Pager: Previous, the page count, Next                                                                                                                        | None         |
 
-The Paused card shows no objective or job lines. Its flight card puts the
-four other actions in a two-column control grid, then Resume across the inner
-width below it: the five do not fit one row of the 328 inner width, so they
-take the grid, and Resume, the primary and the fifth, ends the group at the
-bottom, full width: tiles `(360 - 32 - BUTTON_GAP) / 2` = 156 wide ("Back to title" needs
-122.69), `BUTTON_GAP` across and `STACK_BUTTON_GAP` down. Five stacked
-actions would be `58 + 272 + 16` = 346 high, past the 325 available. At
-720x360 with phone insets the flight card is `58 + 48 + 8 + 48 + 8 + 48 + 16`
-= 234 high, y 61.5 to 295.5, and the room card `58 + 104 + 16` = 178, y 89.5
-to 267.5, both 360 wide, inside the 325 available. Ada's room page opens the room card from its pause button
-([Storybook page](#storybook-page)).
+The Paused card shows no objective or job lines. Its flight card puts Map,
+Quests, Ship, Settings and Back to title in a two-column control grid, then
+Resume across the inner width below it. Quests opens the existing quest panel;
+Back returns through Map to the Paused card, with focus restored to Quests.
+Tiles are `(360 - 32 - BUTTON_GAP) / 2` = 156 wide ("Back to title" needs
+122.69), with `BUTTON_GAP` across and `STACK_BUTTON_GAP` down. At 720x360
+with phone insets the flight card is `58 + 48 + 8 + 48 + 8 + 48 + 8 + 48 + 16`
+= 290 high, inside the 325 available. The room card is `58 + 104 + 16` = 178
+high. Both are 360 wide. Ada's room page opens the room card from its pause
+button ([Storybook page](#storybook-page)).
 
 ### Station card
 
