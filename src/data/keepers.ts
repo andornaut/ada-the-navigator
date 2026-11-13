@@ -84,7 +84,7 @@ export const KEEPERS: Readonly<Partial<Record<GalaxyNumber, GalaxyKeepers>>> = {
     greetings: {
       first: [
         "Welcome, young pilot. Rest your wings. Well, your engines.",
-        "We Avi stand still a long time before we move. It is how we see clearly.",
+        "We Avi stand still a long time before we move. It helps us see clearly.",
         "Trade, or take a job. There is no hurry here.",
       ],
       later: [
@@ -100,7 +100,7 @@ export const KEEPERS: Readonly<Partial<Record<GalaxyNumber, GalaxyKeepers>>> = {
       first: [
         "Hello, traveler! Come into the light. I'm the keeper of this station.",
         "We Munix were built to follow the beacons. Their light shows us home.",
-        "Trade your Stardust, or take a job. Fair dealing, plain and true.",
+        "Trade your Stardust, or take a job. We trade fairly here.",
       ],
       later: [
         "Welcome back! Our lamps are always lit for you.",

@@ -43,8 +43,8 @@ export const CONTENT: GameContent = {
         },
         workshop: {
           optional: [
-            "We repair tools, ships and growing equipment. Spare parts make a ",
-            "difference!",
+            "We repair tools, ships and growing equipment. Spare parts ",
+            "really help!",
           ].join(""),
           speaker: "Workshop",
           text: [
@@ -117,7 +117,7 @@ export const CONTENT: GameContent = {
         },
         hub: {
           optional: [
-            "Independent miners bring ore here for transport. There is docking ",
+            "Independent miners bring ore here for transport. There's docking ",
             "space for everyone.",
           ].join(""),
           speaker: "Station",
@@ -131,8 +131,8 @@ export const CONTENT: GameContent = {
           optional: "I know how to dock. I just need them to stop blocking me.",
           speaker: "Miner",
           text: [
-            "It keeps happening. I've started waiting until they're gone. Would I ",
-            "like company next time? Yes. That would help.",
+            "It keeps happening. I've started waiting until they're gone. I'd like ",
+            "some company next time. That would help.",
           ].join(""),
         },
         visitors: {

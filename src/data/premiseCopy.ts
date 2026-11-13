@@ -37,10 +37,10 @@ export const PREMISE: PremiseContent = {
   gardenFarewell: {
     background: "grandmaGarden",
     speaker: "Grandma",
-    text: "Think about it on your walk home. Good ideas like fresh air.",
+    text: "Think about it on your walk home. A bit of fresh air might help you think.",
   },
   holodisk: {
-    handover: "We found this drifting near our outposts. Take it, with our thanks.",
+    handover: "We found this drifting near our outposts. Take it. And thank you.",
     inserted: [
       { text: "Ada slides the holodisk into Astra's drive." },
       { speaker: "Astra", text: "Memory restored. I've found new coordinates." },

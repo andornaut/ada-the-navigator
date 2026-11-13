@@ -58,7 +58,7 @@ export const PROJECTS: Readonly<Partial<Record<GalaxyNumber, readonly CommunityP
       name: "Salvage beacons",
       site: "salvagers",
       speaker: "salvager",
-      thanks: "Lost things will shine now. Nothing out here stays lost for long.",
+      thanks: "These beacons will help us find lost things. Nothing out here stays lost for long.",
     },
   ],
   2: [

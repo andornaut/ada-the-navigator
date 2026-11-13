@@ -111,7 +111,7 @@ export const JOB_LORE: Readonly<Partial<Record<GalaxyNumber, readonly string[]>>
   ],
   2: [
     "Every rock here was once part of something bigger.",
-    "Miners name their drills. I would like a name for my drive.",
+    "Miners name their drills. I'd like a name for my drive.",
   ],
   3: [
     "Whales sing to map the currents. We are both mapmakers.",
