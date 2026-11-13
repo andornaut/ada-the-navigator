@@ -7,6 +7,9 @@ sprites and their provenance are in [UI assets](ui.md).
 
 ## Buttons
 
+Padding and margins are measured to drawn pixels, counting icon side bearings
+([Spacing tokens](layout.md#spacing-tokens)).
+
 | Rule         | Value                                                                                                                                                                                                                                                  |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Geometry     | `TEXT_BUTTON` and `FOCUS_RING` in [Layout](layout.md#controls-and-targets)                                                                                                                                                                             |
