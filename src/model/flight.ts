@@ -1970,7 +1970,10 @@ function move(
     { maxSpeed: top },
     {
       direction: input.move,
-      speed: movementSpeedFraction(content.tuning, magnitude) * top,
+      speed:
+        (input.throttle === undefined
+          ? movementSpeedFraction(content.tuning, magnitude)
+          : Math.min(1, Math.max(0, input.throttle))) * top,
     },
     { heading: movementHeadings.get(flight) ?? null, velocity: flight.velocity },
   );
@@ -2008,6 +2011,7 @@ function move(
     }
   }
   if (
+    input.turn === undefined &&
     length(input.aim) <= 0.01 &&
     distance(start, flight.player) > 0.001 &&
     length(flight.velocity)
@@ -3447,7 +3451,17 @@ export function stepFlight(
     }
     ageFlashes(slice, flight);
     flight.fireCooldown = Math.max(0, flight.fireCooldown - slice);
-    if (aiming && flight.fireCooldown <= 0) {
+    if (!aiming && input.turn) {
+      const facing = flight.facing;
+      flight.facing = turnToward(
+        slice,
+        towing(flight, ship.physics).turnSeconds,
+        { x: -facing.y * input.turn, y: facing.x * input.turn },
+        facing,
+      );
+      settleAda(content, flight);
+    }
+    if ((input.fire ?? aiming) && flight.fireCooldown <= 0) {
       fire(content, input.viewportWidth ?? SCREEN.width, flight.facing, flight, events);
     }
     const shotDelays = new Map<string, number>();

@@ -731,3 +731,56 @@ describe("shield in battle", () => {
     expect(flight.shield).toBeCloseTo(held + (10 / 60) * 6, 1);
   });
 });
+
+describe("explicit desktop steering and fire", () => {
+  it("turns left or right without firing or translating at rest", () => {
+    for (const turn of [-1, 1] as const) {
+      const flight = empty();
+      flight.facing = { x: 1, y: 0 };
+      const position = { ...flight.player };
+      stepFlight(CONTENT, 0.05, { ...idle, fire: false, turn }, flight);
+      expect(Math.sign(flight.facing.y)).toBe(turn);
+      expect(flight.player).toEqual(position);
+      expect(flight.shots).toEqual([]);
+    }
+  });
+
+  it("aims without firing when fire is explicitly false", () => {
+    const flight = empty();
+    flight.facing = { x: 1, y: 0 };
+    stepFlight(CONTENT, 0.05, { ...idle, aim: { x: 0, y: 1 }, fire: false, turn: 0 }, flight);
+    expect(flight.facing.y).toBeGreaterThan(0);
+    expect(flight.shots).toEqual([]);
+  });
+
+  it("fires along the current hull with no aim vector, while omitted fire retains aim-to-fire", () => {
+    const desktop = empty();
+    const touch = empty();
+    stepFlight(CONTENT, 1 / 60, { ...idle, fire: true, turn: 0 }, desktop);
+    stepFlight(CONTENT, 1 / 60, { ...idle, aim: { x: 1, y: 0 } }, touch);
+    expect(desktop.shots.length).toBeGreaterThan(0);
+    expect(touch.shots.length).toBeGreaterThan(0);
+  });
+
+  it("holds the explicitly steered hull while moving in another direction", () => {
+    const flight = empty();
+    flight.facing = { x: 1, y: 0 };
+    stepFlight(CONTENT, 0.05, { ...idle, fire: false, move: { x: 0, y: 1 }, turn: 0 }, flight);
+    expect(flight.velocity.y).toBeGreaterThan(0);
+    expect(flight.facing).toEqual({ x: 1, y: 0 });
+  });
+
+  it("requests exactly one fifth speed with explicit throttle, preserving touch response", () => {
+    const full = empty();
+    const slow = empty();
+    const touch = empty();
+    stepFlight(CONTENT, 0.05, { ...idle, move: { x: 1, y: 0 }, throttle: 1, turn: 0 }, full);
+    stepFlight(CONTENT, 0.05, { ...idle, move: { x: 0.2, y: 0 }, throttle: 0.2, turn: 0 }, slow);
+    stepFlight(CONTENT, 0.05, { ...idle, move: { x: 0.2, y: 0 } }, touch);
+    expect(slow.velocity.x / full.velocity.x).toBeCloseTo(0.2, 9);
+    expect(touch.velocity.x / full.velocity.x).toBeCloseTo(
+      movementSpeedFraction(CONTENT.tuning, 0.2),
+      9,
+    );
+  });
+});

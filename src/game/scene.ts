@@ -17,6 +17,7 @@ import { GameModel } from "../model/game.ts";
 import { type GainSnapshot } from "../model/itemGains.ts";
 import { shipHeading } from "../model/nose.ts";
 import { projectileOpacity } from "../model/playerProjectiles.ts";
+import { direction } from "../model/shipPhysics.ts";
 import { type StoryNoses } from "../model/storyShips.ts";
 import type { FlightInput, GameSave, Vec } from "../model/types.ts";
 import { type ConversationBox } from "../ui/conversation.ts";
@@ -68,7 +69,7 @@ import { type EnemyWeaponsArt } from "./enemyWeaponsArt.ts";
 import { FeedbackSound, ModelFeedback } from "./feedback.ts";
 import { type JobArt } from "./jobArt.ts";
 import { blastEdges, LIGHT_FIELD, lightGalaxy } from "./lightField.ts";
-import { parentFit } from "./playCamera.ts";
+import { parentFit, sceneFit, viewShift } from "./playCamera.ts";
 import { type ProjectArtSet } from "./projectArt.ts";
 import { drawAndromeda } from "./sceneAndromeda.ts";
 import {
@@ -502,9 +503,25 @@ export class GameScene extends Scene {
       !state.docked;
     if (this.flightLive) {
       this.flightClock += milliseconds;
-      const sampled = this.controls.sample();
+      const flight = state.flight!;
+      const point = this.project(flight.player);
+      const shift = viewShift(sceneFit(this));
+      const sampled = this.controls.sample({
+        facing: direction({
+          x: flight.facing.x - flight.facing.y,
+          y: (flight.facing.x + flight.facing.y) / 2,
+        }),
+        ship: { x: point.x + shift.x, y: point.y + shift.y },
+      });
       const input: FlightInput = {
         aim: screenToWorld(sampled.aim),
+        ...(sampled.fire === undefined ? {} : { fire: sampled.fire }),
+        ...(sampled.turn === undefined
+          ? {}
+          : {
+              throttle: Math.min(1, Math.hypot(sampled.move.x, sampled.move.y)),
+              turn: sampled.turn,
+            }),
         move: screenToWorld(sampled.move),
         reducedMotion: this.reducedMotion,
         use: sampled.use,

@@ -20,6 +20,12 @@ export interface Vec {
   y: number;
 }
 export interface FlightInput {
+  /** Explicit fire request; absent preserves the legacy aim-to-fire control. */
+  fire?: boolean;
+  /** Explicit hull steering; absent preserves automatic facing along movement. */
+  turn?: -1 | 0 | 1;
+  /** Direct speed fraction; absent preserves the touch stick's response curve. */
+  throttle?: number;
   move: Vec;
   aim: Vec;
   use: boolean;
