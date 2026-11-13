@@ -52,9 +52,9 @@ export function leveledValue(value: LeveledValue, level: number): number {
   return value.levels[Math.min(level - 1, value.levels.length) - 1]!;
 }
 
-/** A level's multiplier from a levels 1, 2 and 3 table; out-of-range levels clamp. */
-const multiplier = (table: readonly [number, number, number], level: number) =>
-  table[Math.min(3, Math.max(1, Math.floor(level))) - 1]!;
+/** A level's engine multiplier from its nonempty table; out-of-range levels clamp. */
+const multiplier = (table: readonly [number, ...number[]], level: number) =>
+  table[Math.min(table.length, Math.max(1, Math.floor(level))) - 1]!;
 
 export function shipTuning(
   catalog: EconomyCatalog,

@@ -878,6 +878,29 @@ describe("upgrade effects", () => {
     },
   );
 
+  it.each([
+    { acceleration: 9, braking: 18, level: 99, table: [1, 0.9] },
+    { acceleration: 7, braking: 14, level: 4, table: [1, 0.9, 0.8, 0.7] },
+    { acceleration: 7, braking: 14, level: 99, table: [1, 0.9, 0.8, 0.7] },
+    { acceleration: 9, braking: 18, level: 2.9, table: [1, 0.9, 0.8, 0.7] },
+    { acceleration: 10, braking: 20, level: 0, table: [1] },
+  ] as const)(
+    "clamps engine timing to its actual table at level $level with $table",
+    ({ acceleration, braking, level, table }) => {
+      const catalog = { ...ECONOMY, effects: { engineSeconds: table } };
+      const content = {
+        ...CONTENT,
+        tuning: {
+          ...CONTENT.tuning,
+          physics: { ...CONTENT.tuning.physics, accelerationSeconds: 10, brakingSeconds: 20 },
+        },
+      };
+      const tuning = shipTuning(catalog, content, { ...noLevels(), engine: level });
+      expect(tuning.physics.accelerationSeconds).toBe(acceleration);
+      expect(tuning.physics.brakingSeconds).toBe(braking);
+    },
+  );
+
   it.each([1, 2, 3])("fires Ada's level 1 Laser at 500 at engine level %i", (level) => {
     const value = flight();
     value.levels.engine = level;

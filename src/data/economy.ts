@@ -88,8 +88,8 @@ export interface EconomyCatalog {
   shieldLevels: Readonly<Record<"capacity" | "fill", readonly [number, number]>>;
   /** Maximum-capacity fraction funded per whole ore and the ore-free recharge floor. */
   shieldRecharge: Readonly<{ capacityPerOre: number; freeCapacity: number }>;
-  /** Multipliers on the base value at levels 1, 2 and 3. */
-  effects: Readonly<Record<"engineSeconds", readonly [number, number, number]>>;
+  /** Multipliers on the base engine timing, one per level from level 1. */
+  effects: Readonly<Record<"engineSeconds", readonly [number, ...number[]]>>;
   tractorRadius: LeveledValue;
   tractorSpeed: LeveledValue;
   paints: Readonly<Record<string, PaintScheme>>;
