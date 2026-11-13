@@ -368,9 +368,9 @@ export const SHIELD_PILL = {
   bar: { height: 12, inset: 2, rim: 1 },
   bars: SHIELD_BARS,
   bottom: CONTROLS_BOTTOM,
-  // The recharge-delay strip (art/layout.md "Shield pill"): 2 high on the fill area's bottom
-  // rows under a 1 px ink edge.
-  delayStrip: { edge: 1, height: 2 },
+  // The separate recharge timer below the main bar: a 1 high fill inside a 1 px ink track,
+  // with a 1 px gap from the main bar.
+  delayStrip: { edge: 1, gap: 1, height: 1 },
   // The leading edge inside the fill's right end while the shield regenerates.
   edge: 2,
   icon: HUD_BUTTON.glyph,

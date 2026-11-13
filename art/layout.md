@@ -474,7 +474,7 @@ right, each centred on the pill's row; placement is in
 | Shield icon | `public/art/ui/icons/shield.svg`, 20 (`HUD_BUTTON.glyph`), a mask in the state's icon colour; its drawn pixels span x 3 to 17, side bearings 3 and 3                                                                                                                                      |
 | Icon gap    | `SHIELD_PILL.iconGap` 3 from the icon's box to the bar, so 6 from its drawn pixels                                                                                                                                                                                                        |
 | Shield bar  | `SHIELD_PILL.bar[level]` by 12: 1 rim around the track (ink at 0.65 over the panel), fill area `bar - 4` by 8 at inset 2                                                                                                                                                                  |
-| Delay strip | While the recharge delay runs: 2 high on the fill area's bottom 2 rows (bar y 8 to 10), from the fill area's left (x 2) for `(bar - 4) * elapsed / delay`, so it reaches the full 116, 176 or 236 when recharge starts; a 1 px ink edge (bar y 7 to 8) along its top, the same length     |
+| Delay strip | Separate 3 high track, 1 below the main shield bar: a 1 high fill inside a 1 px ink border, aligned to the main fill area; track stays visible at zero progress                                                                                                                           |
 | Width       | `5 + 20 + 3 + bar + 8` = `bar + 36`                                                                                                                                                                                                                                                       |
 
 The bar's length follows Shield level, so each upgrade visibly lengthens it
@@ -517,20 +517,19 @@ Delay strip (`SHIELD_PILL.delayStrip`), Gameplay's recharge timer:
 Rects relative to the bar's top-left corner (the rim's outer edge), at full
 length; `p` is `elapsed / delay`:
 
-| Shield level | Bar    | Ink edge, x y w h | Strip, x y w h   |
-| -----------: | ------ | ----------------- | ---------------- |
-|            1 | 120x12 | 2, 7, `116 p`, 1  | 2, 8, `116 p`, 2 |
-|            2 | 180x12 | 2, 7, `176 p`, 1  | 2, 8, `176 p`, 2 |
-|            3 | 240x12 | 2, 7, `236 p`, 1  | 2, 8, `236 p`, 2 |
+| Shield level | Main bar | Timer track, x y w h | Timer fill, x y w h |
+| -----------: | -------- | -------------------- | ------------------- |
+|            1 | 120x12   | 1, 13, 118, 3        | 2, 14, `116 p`, 1   |
+|            2 | 180x12   | 1, 13, 178, 3        | 2, 14, `176 p`, 1   |
+|            3 | 240x12   | 1, 13, 238, 3        | 2, 14, `236 p`, 1   |
 
-The strip sits entirely inside the fill area, on its bottom 2 rows, with its
-ink edge on the row above, rather than on the rim or straddling the 1 px track
-gap under the fill. Inside the fill area it has a dark edge on both sides, its ink above and
-the track gap below, so the white reads over the fill, the low fill, the delay
-part and the track alike; it spans exactly the fill area, so 100% of the strip
-means the same length as a full bar; and it stays clear of the rim, which
-changes colour with the low-shield pulse. While it shows, the fill keeps its
-top 5 rows (bar y 2 to 7).
+The timer is a separate track below the main shield bar, not a strip inside
+its fill. `SHIELD_PILL.delayStrip` defines the 1 px gap, 1 px fill height and
+1 px ink border. The fill spans the same 116, 176 or 236 as the main fill
+area at full progress. The dark track keeps its full width at zero progress,
+with no white fill. Within the existing 28 high panel, the main bar spans y 8
+to 20 and the timer track y 21 to 24, leaving 4 below it. The main bar, icon,
+panel size, anchor and hit areas stay unchanged.
 
 - It shows only while the recharge delay runs: the shield is below capacity and
   not regenerating. It is hidden while the shield is full or regenerating.
@@ -541,12 +540,12 @@ top 5 rows (bar y 2 to 7).
   regeneration edge takes over.
 - Damage restarts the delay and empties the strip at once, the same frame as
   the hit flash; it grows again from 0. Nothing else resets it.
-- Layers, bottom to top: track, fill, delay part, hit flash, then the strip and
-  its ink edge, all inside the rim. The low-shield pulse changes only the icon
-  and rim, so it never covers or recolours the strip; the strip's colours are
-  the same in every state.
-- Light field: it sits inside the bar's ink outline, with no edge of its own
-  beyond its ink top.
+- The timer has its own track and fill below the main bar, with no overlap or
+  clipping. The main shield's fill, damage-delay part and flash keep their
+  existing layering and colours. Low-shield pulsing changes only the main
+  icon and rim, leaving the timer's white fill and ink border unchanged.
+- Light field: the timer's own ink border outlines it independently of the
+  main bar's light-field outline.
 - Reduced motion: unchanged, a steady fill with no pulse or easing.
 - It is a meter detail: the bar's accessible value is unchanged, and the strip
   is decorative.

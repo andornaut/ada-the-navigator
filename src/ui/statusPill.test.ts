@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { units } from "./layout/css.ts";
-import { countSlot, shieldDelayStrip, STATUS_PILL } from "./layout/playView.ts";
+import { countSlot, SHIELD_PILL, shieldDelayStrip, STATUS_PILL } from "./layout/playView.ts";
 import {
   blendHex,
   CARGO_ICONS,
@@ -117,8 +117,7 @@ describe("status pill shield bar", () => {
     expect(
       new ShieldBar().update({ ...full, shield: 60, sinceDamage: 12 }, 0, true).recharge,
     ).toBeCloseTo(0.4, 9);
-    // Art's rects from the bar's top-left: the ink edge (2, 7, w, 1) over the strip (2, 8, w, 2),
-    // w the fill area's 116, 176 or 236 times the fill.
+    // The independent track starts 1 below the main bar; its fill aligns with the main fill.
     for (const [level, area] of [
       [1, 116],
       [2, 176],
@@ -126,12 +125,22 @@ describe("status pill shield bar", () => {
     ] as const) {
       for (const p of [0, 0.25, 1]) {
         expect(shieldDelayStrip(level, p)).toEqual({
-          edge: { height: 1, width: area * p, x: 2, y: 7 },
-          strip: { height: 2, width: area * p, x: 2, y: 8 },
+          strip: { height: 1, width: area * p, x: 2, y: 14 },
+          track: { height: 3, width: area + 2, x: 1, y: 13 },
         });
       }
     }
     expect(STATUS_COLOURS.recharge).toBe("#ffffff");
+  });
+
+  it("resets the same recharge timer on damage without changing reduced-motion progress", () => {
+    const bar = new ShieldBar();
+    expect(bar.update({ ...full, shield: 60, sinceDamage: 15 }, 0, true).recharge).toBe(0.5);
+    expect(bar.update({ ...full, shield: 50, sinceDamage: 0 }, 16, true).recharge).toBe(0);
+    expect(bar.update({ ...full, shield: 50, sinceDamage: 30 }, 30_016, true).recharge).toBe(1);
+    expect(
+      bar.update({ ...full, recharging: true, shield: 51, sinceDamage: 31 }, 31_016, true).recharge,
+    ).toBeNull();
   });
 
   it("pulses icon and rim while low, holding the low colour under reduced motion", () => {
@@ -350,6 +359,53 @@ describe("status pill count", () => {
       expect(delay!.hidden).toBe(true);
       expect(flash!.hidden).toBe(true);
       expect(edge!.hidden).toBe(false);
+    },
+  );
+
+  it.each([1, 2, 3])(
+    "renders a separate level %i timer track, including an empty track after damage",
+    (level) => {
+      const { shield, status } = pill();
+      const view = {
+        ...full,
+        aboard: null,
+        level,
+        lightField: false,
+        ore: 0,
+        oreLabel: "Ore",
+        shield: 60,
+        shieldOreSpent: 0,
+        sinceDamage: 15,
+        stardust: 0,
+        stardustLabel: "Stardust",
+      };
+      const meter = shield.children[1]!;
+      const track = shield.children.find((node) => node.className === "ada-status-recharge-track")!;
+      expect(meter.children).not.toContain(track);
+      const fill = track.children[0]!;
+      status.setStatus(view, 0);
+      expect(track.hidden).toBe(false);
+      const rect = shieldDelayStrip(level, 0.5);
+      expect(track.style.top).toBe(
+        units((SHIELD_PILL.pill.height - SHIELD_PILL.bar.height) / 2 + rect.track.y),
+      );
+      expect(track.style.left).toBe(
+        units(SHIELD_PILL.padding.left + SHIELD_PILL.icon + SHIELD_PILL.iconGap + rect.track.x),
+      );
+      expect(track.style.height).toBe(units(rect.track.height));
+      expect(track.style.width).toBe(units(rect.track.width));
+      expect(fill.style.width).toBe(units(rect.strip.width));
+      expect(rect.track.y - SHIELD_PILL.bar.height).toBe(1);
+      expect(
+        (SHIELD_PILL.pill.height - SHIELD_PILL.bar.height) / 2 + rect.track.y + rect.track.height,
+      ).toBeLessThanOrEqual(SHIELD_PILL.pill.height);
+      status.setStatus({ ...view, sinceDamage: 0 }, 16);
+      expect(track.hidden).toBe(false);
+      expect(fill.style.width).toBe(units(0));
+      status.setStatus({ ...view, shield: 100 }, 32);
+      expect(track.hidden).toBe(true);
+      status.setStatus({ ...view, recharging: true }, 48);
+      expect(track.hidden).toBe(true);
     },
   );
 

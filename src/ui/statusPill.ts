@@ -33,7 +33,7 @@ export const STATUS_COLOURS = {
   // The ore +N tick: ore's light rust (art/controls.md "Status pill").
   oreTick: "#eaa676",
   panel: "rgb(24 20 37 / 0.65)",
-  // The recharge-delay strip, under an ink edge (art/controls.md "Status pill").
+  // The separate recharge timer fill and its ink track (art/controls.md "Status pill").
   recharge: "#ffffff",
   rechargeEdge: "#181425",
   rim: "#9a96ad",
@@ -393,11 +393,18 @@ ${SHIELD_PILL.bars
 .ada-controls .ada-status-edge{
   background:${STATUS_COLOURS.flash}
 }
-/* The recharge-delay strip: a steady fill on the fill area's bottom rows under its 1 px ink edge,
-   above the other parts and inside the rim; its rect comes from shieldDelayStrip. */
-.ada-controls .ada-status-bar > .ada-status-recharge{
-  box-sizing:content-box;
-  border-top:${units(SHIELD_PILL.delayStrip.edge)} solid ${STATUS_COLOURS.rechargeEdge};
+/* A separate timer track below the main shield, with its own contained fill. */
+.ada-controls .ada-shield > .ada-status-recharge-track{
+  position:absolute;
+  box-sizing:border-box;
+  border:${units(SHIELD_PILL.delayStrip.edge)} solid ${STATUS_COLOURS.rechargeEdge};
+  background:${STATUS_COLOURS.track}
+}
+.ada-controls .ada-status-recharge-track > .ada-status-recharge{
+  position:absolute;
+  left:0;
+  top:0;
+  height:${units(SHIELD_PILL.delayStrip.height)};
   background:${STATUS_COLOURS.recharge}
 }
 .ada-controls .ada-status-divider{
@@ -628,16 +635,20 @@ export function createStatusPill(
   meter.setAttribute("role", "meter");
   meter.setAttribute("aria-label", options.shieldLabel);
   meter.setAttribute("aria-valuemin", "0");
-  const [fill, delay, flash, edge, recharge] = ["fill", "delay", "flash", "edge", "recharge"].map(
-    (part) => {
-      const node = document.createElement("span");
-      node.className = `ada-status-${part}`;
-      node.setAttribute("aria-hidden", "true");
-      meter.append(node);
-      return node;
-    },
-  ) as [HTMLSpanElement, HTMLSpanElement, HTMLSpanElement, HTMLSpanElement, HTMLSpanElement];
-  shieldRoot.append(shieldMark, meter);
+  const [fill, delay, flash, edge] = ["fill", "delay", "flash", "edge"].map((part) => {
+    const node = document.createElement("span");
+    node.className = `ada-status-${part}`;
+    node.setAttribute("aria-hidden", "true");
+    meter.append(node);
+    return node;
+  }) as [HTMLSpanElement, HTMLSpanElement, HTMLSpanElement, HTMLSpanElement];
+  const rechargeTrack = document.createElement("span");
+  rechargeTrack.className = "ada-status-recharge-track";
+  rechargeTrack.setAttribute("aria-hidden", "true");
+  const recharge = document.createElement("span");
+  recharge.className = "ada-status-recharge";
+  rechargeTrack.append(recharge);
+  shieldRoot.append(shieldMark, meter, rechargeTrack);
   const sparkle = document.createElement("span");
   sparkle.className = "ada-status-stardust";
   sparkle.setAttribute("aria-hidden", "true");
@@ -751,14 +762,18 @@ export function createStatusPill(
       paintInsideFill(bar.fill, bar.delay, delay);
       paintInsideFill(bar.fill, bar.flash, flash);
       place(edge, Math.max(0, bar.fill - SHIELD_PILL.edge), bar.edge ? bar.fill : 0);
-      recharge.hidden = bar.recharge === null;
+      rechargeTrack.hidden = bar.recharge === null;
       if (bar.recharge !== null) {
-        // Bar-relative rects to the rim's inside, where the bar's parts are placed.
-        const { edge: ink, strip } = shieldDelayStrip(Number(level), bar.recharge);
-        recharge.style.left = units(strip.x - SHIELD_PILL.bar.rim);
-        recharge.style.top = units(ink.y - SHIELD_PILL.bar.rim);
+        const { strip, track } = shieldDelayStrip(Number(level), bar.recharge);
+        rechargeTrack.style.left = units(
+          SHIELD_PILL.padding.left + SHIELD_PILL.icon + SHIELD_PILL.iconGap + track.x,
+        );
+        rechargeTrack.style.top = units(
+          (SHIELD_PILL.pill.height - SHIELD_PILL.bar.height) / 2 + track.y,
+        );
+        rechargeTrack.style.width = units(track.width);
+        rechargeTrack.style.height = units(track.height);
         recharge.style.width = units(strip.width);
-        recharge.style.height = units(strip.height);
       }
       meter.setAttribute("aria-valuemax", String(view.capacity));
       meter.setAttribute("aria-valuenow", String(Math.max(0, Math.round(view.shield))));

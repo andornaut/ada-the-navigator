@@ -272,18 +272,24 @@ export function shieldFillWidth(level: number): number {
   return shieldBarWidth(level) - 2 * SHIELD_PILL.bar.inset;
 }
 
-/**
- * The recharge-delay strip at Shield level `level` and fill `fraction` (art/layout.md "Shield
- * pill"), each rect relative to the bar's top-left: the strip on the fill area's bottom rows from
- * its left, its full length the fill area's, and its ink edge on the row above, the same length.
- */
-export function shieldDelayStrip(level: number, fraction: number): { edge: Rect; strip: Rect } {
+/** Separate recharge track and fill, relative to the main shield bar's outer top-left. */
+export function shieldDelayStrip(level: number, fraction: number): { strip: Rect; track: Rect } {
   const { bar, delayStrip } = SHIELD_PILL;
-  const width = shieldFillWidth(level) * Math.max(0, Math.min(1, fraction));
-  const y = bar.height - bar.inset - delayStrip.height;
+  const width = shieldFillWidth(level);
+  const y = bar.height + delayStrip.gap;
   return {
-    edge: { height: delayStrip.edge, width, x: bar.inset, y: y - delayStrip.edge },
-    strip: { height: delayStrip.height, width, x: bar.inset, y },
+    strip: {
+      height: delayStrip.height,
+      width: width * Math.max(0, Math.min(1, fraction)),
+      x: bar.inset,
+      y: y + delayStrip.edge,
+    },
+    track: {
+      height: delayStrip.height + 2 * delayStrip.edge,
+      width: width + 2 * delayStrip.edge,
+      x: bar.inset - delayStrip.edge,
+      y,
+    },
   };
 }
 
