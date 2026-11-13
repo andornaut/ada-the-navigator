@@ -48,6 +48,7 @@ export interface AndromedaLine {
 }
 
 export interface AndromedaConversation {
+  readonly party: string;
   readonly lines: readonly AndromedaLine[];
   readonly questions?: readonly (AndromedaLine & { readonly label: string })[];
 }
@@ -64,6 +65,7 @@ export const ANDROMEDA_CONVERSATIONS = {
       },
       { speaker: "Ada", text: "I'll look at the beacon." },
     ],
+    party: "Wick",
     questions: [
       {
         label: "What do beacons do?",
@@ -95,6 +97,7 @@ export const ANDROMEDA_CONVERSATIONS = {
         text: "I won't tell on you, Pip. But I'll come with you while you tell them.",
       },
     ],
+    party: "Pip",
     questions: [
       {
         label: "What do you carry?",
@@ -115,6 +118,7 @@ export const ANDROMEDA_CONVERSATIONS = {
         text: "This beacon isn't shot. It's dented, like something bumped into it.",
       },
     ],
+    party: "Ada",
   },
   holodisk: {
     lines: [
@@ -123,6 +127,7 @@ export const ANDROMEDA_CONVERSATIONS = {
       { speaker: "Pip", text: "I should have given it back right away. Here." },
       { speaker: "Ada", text: "Thank you, Pip." },
     ],
+    party: "Pip",
     questions: [
       { label: "Where did you find it?", speaker: "Pip", text: "Floating by the beacon." },
       {
@@ -142,6 +147,7 @@ export const ANDROMEDA_CONVERSATIONS = {
         text: "I can help! Spare beacon parts are kept at the settlement. Let's go get them.",
       },
     ],
+    party: "Wick",
     questions: [
       { label: "Where are the parts?", speaker: "Pip", text: "At the settlement. Come with me." },
       {
@@ -158,6 +164,7 @@ export const ANDROMEDA_CONVERSATIONS = {
       { speaker: "Wick", text: "There. The beacon is lit again, and ships can find their way." },
       { speaker: "Ada", text: "I can see its light!" },
     ],
+    party: "Wick",
     questions: [
       {
         label: "Can ships travel now?",
@@ -172,6 +179,12 @@ export const ANDROMEDA_CONVERSATIONS = {
     ],
   },
 } as const satisfies Readonly<Record<string, AndromedaConversation>>;
+
+/** Pip can explain the damage before Ada inspects it. */
+export const ANDROMEDA_CONFESSION_WITHOUT_INSPECTION: readonly AndromedaLine[] = [
+  { speaker: "Ada", text: "Pip, do you know what happened to the beacon?" },
+  { speaker: "Pip", text: "It was me. I was late, I flew too fast, and I clipped it." },
+];
 
 export type AndromedaConversationId = keyof typeof ANDROMEDA_CONVERSATIONS;
 

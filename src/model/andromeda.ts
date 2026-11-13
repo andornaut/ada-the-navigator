@@ -1,5 +1,6 @@
 import {
   ANDROMEDA_CHAPTER,
+  ANDROMEDA_CONFESSION_WITHOUT_INSPECTION,
   ANDROMEDA_CONVERSATIONS,
   ANDROMEDA_PLACES,
   type AndromedaConversation,
@@ -16,7 +17,7 @@ import {
 import type { ChapterContext, ChapterResult, ChapterRuntime } from "./chapterProtocol.ts";
 import { ensureDestination, ensureDestinationAt, ensureStation } from "./flight.ts";
 import { stationById } from "./stations.ts";
-import type { DialogueState, GalaxyProgress, Vec } from "./types.ts";
+import type { DialogueState, GalaxyProgress, UseAction, Vec } from "./types.ts";
 
 export const ANDROMEDA_PARTS = "beaconParts";
 
@@ -100,25 +101,26 @@ export function ensureAndromedaWorld(context: ChapterContext): void {
   }
 }
 
-function script(id: AndromedaConversationId): AndromedaConversation {
-  return ANDROMEDA_CONVERSATIONS[id];
+/** The model and full-card renderer share the same approved conditional conversation. */
+export function andromedaConversation(
+  progress: Pick<GalaxyProgress, "stage">,
+  id: AndromedaConversationId,
+): AndromedaConversation {
+  const entry = ANDROMEDA_CONVERSATIONS[id];
+  return id === "confession" && progress.stage === 1
+    ? { ...entry, lines: [...ANDROMEDA_CONFESSION_WITHOUT_INSPECTION, ...entry.lines.slice(2)] }
+    : entry;
 }
 
-function dialogue(context: ChapterContext, id: AndromedaConversationId, index = 0): DialogueState {
-  const entry = script(id);
-  const line = entry.lines[index]!;
-  const questions = index === entry.lines.length - 1 ? (entry.questions ?? []) : [];
+function dialogue(context: ChapterContext, id: AndromedaConversationId): DialogueState {
+  const entry = andromedaConversation(context.progress, id);
   return {
-    choices: [
-      ...questions.map((question, questionIndex) => ({
-        id: `ask:${questionIndex}`,
-        label: question.label,
-      })),
-      { id: "continue", label: context.content.labels.continue ?? "" },
-    ],
-    context: `andromeda:${id}:line:${index}`,
-    text: line.text,
-    title: line.speaker ?? ANDROMEDA_CHAPTER.name,
+    choices: [{ id: "continue", label: context.content.labels.continue ?? "" }],
+    context: `andromeda:${id}`,
+    text: entry.lines
+      .map((line) => (line.speaker ? `${line.speaker}: ${line.text}` : line.text))
+      .join("\n\n"),
+    title: entry.party,
   };
 }
 
@@ -140,6 +142,38 @@ function relevant(progress: GalaxyProgress, id: AndromedaConversationId): boolea
       return progress.stage === 6 && progress.questComplete && !progress.holodisk;
   }
   return false;
+}
+
+/** The interaction label describes the same due action as Use, without mutating progress. */
+export function andromedaAction(
+  context: ChapterContext,
+  destination: string,
+): UseAction | undefined {
+  const { flight, progress } = context;
+  if (flight.galaxy !== 5) {
+    return undefined;
+  }
+  const target = memory(progress);
+  if (
+    (progress.stage === 0 && stationById(ECONOMY, 5, destination)) ||
+    (progress.stage === 3 && destination === target?.station) ||
+    (destination === ANDROMEDA_PLACES.pip &&
+      (relevant(progress, "confession") || relevant(progress, "holodisk")))
+  ) {
+    return "talk";
+  }
+  if (
+    (progress.stage === 4 && destination === target?.settlement) ||
+    (progress.stage === 5 &&
+      destination === ANDROMEDA_PLACES.beacon &&
+      progress.questItem === ANDROMEDA_PARTS)
+  ) {
+    return "deliver";
+  }
+  if (destination === ANDROMEDA_PLACES.beacon && relevant(progress, "dent")) {
+    return "use";
+  }
+  return undefined;
 }
 
 /** Talk never charges for the chapter or introduces an optional-task prerequisite. */
@@ -246,44 +280,12 @@ export function chooseAndromeda(
   if (context.flight.galaxy !== 5) {
     return undefined;
   }
-  const parsed = /^andromeda:([A-Za-z]+):(line|question):(\d+)$/u.exec(panel.context);
-  if (!parsed || !Object.hasOwn(ANDROMEDA_CONVERSATIONS, parsed[1]!)) {
+  const parsed = /^andromeda:([A-Za-z]+)$/u.exec(panel.context);
+  if (choice !== "continue" || !parsed || !Object.hasOwn(ANDROMEDA_CONVERSATIONS, parsed[1]!)) {
     return undefined;
   }
   const id = parsed[1] as AndromedaConversationId;
-  if (!relevant(context.progress, id)) {
-    return undefined;
-  }
-  const entry = script(id);
-  const index = Number(parsed[3]);
-  if (parsed[2] === "question") {
-    return choice === "continue" && entry.questions?.[index]
-      ? { dialogue: dialogue(context, id, entry.lines.length - 1) }
-      : undefined;
-  }
-  if (!entry.lines[index]) {
-    return undefined;
-  }
-  if (choice.startsWith("ask:") && index === entry.lines.length - 1) {
-    const questionIndex = Number(choice.slice("ask:".length));
-    const question = entry.questions?.[questionIndex];
-    return question
-      ? {
-          dialogue: {
-            choices: [{ id: "continue", label: context.content.labels.continue ?? "" }],
-            context: `andromeda:${id}:question:${questionIndex}`,
-            text: question.text,
-            title: question.speaker ?? ANDROMEDA_CHAPTER.name,
-          },
-        }
-      : undefined;
-  }
-  if (choice !== "continue") {
-    return undefined;
-  }
-  return index + 1 < entry.lines.length
-    ? { dialogue: dialogue(context, id, index + 1) }
-    : finishAndPrepare(context, id);
+  return relevant(context.progress, id) ? finishAndPrepare(context, id) : undefined;
 }
 
 /** First contact uses an actual station; inspecting the dent is useful but never an extra gate. */

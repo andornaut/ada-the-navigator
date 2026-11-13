@@ -6,6 +6,8 @@ import { ECONOMY } from "../data/economy.ts";
 import {
   ANDROMEDA_PARTS,
   ANDROMEDA_RUNTIME,
+  andromedaAction,
+  andromedaConversation,
   andromedaObjective,
   andromedaObjectiveIndex,
   chooseAndromeda,
@@ -19,29 +21,14 @@ import { nearestSettlement, nearestSettlerStation } from "./andromedaPlaces.ts";
 import type { ChapterContext, ChapterResult } from "./chapterProtocol.ts";
 import { createFlight, ensureStation } from "./flight.ts";
 import { newProgress } from "./progress.ts";
-import type { DialogueState } from "./types.ts";
 
 function fresh(): ChapterContext {
   const progress = newProgress();
   return { content: CONTENT, flight: createFlight(CONTENT, 5, 1234, progress), progress };
 }
 
-function last(context: ChapterContext, initial: ChapterResult | undefined): DialogueState {
-  let panel = initial!.dialogue!;
-  for (let count = 0; count < 20; count++) {
-    const [, id, , index] = panel.context.split(":");
-    const script = ANDROMEDA_CONVERSATIONS[id as keyof typeof ANDROMEDA_CONVERSATIONS];
-    if (Number(index) === script.lines.length - 1) {
-      return panel;
-    }
-    panel = chooseAndromeda(context, panel, "continue")!.dialogue!;
-  }
-  throw new Error("Conversation never finishes");
-}
-
 function finish(context: ChapterContext, initial: ChapterResult | undefined): ChapterResult {
-  const panel = last(context, initial);
-  return chooseAndromeda(context, panel, "continue")!;
+  return chooseAndromeda(context, initial!.dialogue!, "continue")!;
 }
 
 function introduced(): ChapterContext {
@@ -66,9 +53,13 @@ describe("Andromeda chapter runtime", () => {
     Object.assign(context.flight.player, station);
     context.progress.stations.push(station.id);
     const initial = stepAndromeda(context)!;
-    expect(initial.dialogue?.text).toBe(ANDROMEDA_CONVERSATIONS.arrival.lines[0].text);
+    for (const line of ANDROMEDA_CONVERSATIONS.arrival.lines) {
+      expect(initial.dialogue?.text).toContain(`${line.speaker}: ${line.text}`);
+    }
+    expect(initial.dialogue?.context).toBe("andromeda:arrival");
+    expect(initial.dialogue?.title).toBe("Wick");
     expect(context.progress.stage).toBe(0);
-    const panel = last(context, initial);
+    const panel = initial.dialogue!;
     expect(context.progress.stage).toBe(0);
     chooseAndromeda(context, panel, "continue");
     // A completed panel cannot replay its transition.
@@ -82,7 +73,7 @@ describe("Andromeda chapter runtime", () => {
     const expected = nearestSettlerStation(ECONOMY, context.flight.player);
     const initial = useAndromeda(context, "pip")!;
     expect(context.progress.stage).toBe(1);
-    const panel = last(context, initial);
+    const panel = initial.dialogue!;
     expect(context.progress.stage).toBe(1);
     chooseAndromeda(context, panel, "continue");
     expect(context.progress.stage).toBe(3);
@@ -92,21 +83,70 @@ describe("Andromeda chapter runtime", () => {
     expect(useAndromeda(context, "darkBeacon")).toBeUndefined();
   });
 
-  it("offers optional answers without consuming the final Continue or advancing the story", () => {
+  it("keeps optional questions local and commits only the whole panel's Continue", () => {
     const context = introduced();
-    let panel = useAndromeda(context, "pip")!.dialogue!;
-    for (let index = 1; index < ANDROMEDA_CONVERSATIONS.confession.lines.length; index++) {
-      panel = chooseAndromeda(context, panel, "continue")!.dialogue!;
-    }
-    expect(context.progress.stage).toBe(1);
-    const answer = chooseAndromeda(context, panel, "ask:0")!.dialogue!;
-    expect(answer.text).toBe(ANDROMEDA_CONVERSATIONS.confession.questions[0].text);
-    expect(context.progress.stage).toBe(1);
-    const returned = chooseAndromeda(context, answer, "continue")!.dialogue!;
-    expect(returned).toEqual(panel);
-    expect(chooseAndromeda(context, panel, "ask:99")).toBeUndefined();
-    chooseAndromeda(context, returned, "continue");
+    const panel = useAndromeda(context, "pip")!.dialogue!;
+    expect(panel.context).toBe("andromeda:confession");
+    expect(panel.title).toBe("Pip");
+    expect(panel.choices).toEqual([{ id: "continue", label: CONTENT.labels.continue }]);
+    const before = JSON.stringify(context.progress);
+    expect(andromedaConversation(context.progress, "confession").questions).toEqual(
+      ANDROMEDA_CONVERSATIONS.confession.questions,
+    );
+    expect(chooseAndromeda(context, panel, "ask:0")).toBeUndefined();
+    expect(chooseAndromeda(context, panel, "skip")).toBeUndefined();
+    expect(JSON.stringify(context.progress)).toBe(before);
+    chooseAndromeda(context, panel, "continue");
     expect(context.progress.stage).toBe(3);
+  });
+
+  it("uses the approved confession for both approach orders without adding an inspection gate", () => {
+    const direct = introduced();
+    const unseen = useAndromeda(direct, "pip")!.dialogue!;
+    expect(unseen.text).toContain("Pip, do you know what happened to the beacon?");
+    expect(unseen.text).toContain("Pip: It was me. I was late, I flew too fast, and I clipped it.");
+    expect(unseen.text).not.toContain("You saw the dent?");
+    const inspected = introduced();
+    finish(inspected, useAndromeda(inspected, "darkBeacon"));
+    expect(inspected.progress.stage).toBe(2);
+    const seen = useAndromeda(inspected, "pip")!.dialogue!;
+    expect(seen.text).toContain("Pip, did you see the dent in the beacon?");
+    expect(seen.text).toContain("You saw the dent? It was me.");
+    for (const line of ANDROMEDA_CONVERSATIONS.confession.lines.slice(2)) {
+      expect(unseen.text).toContain(line.text);
+      expect(seen.text).toContain(line.text);
+    }
+    finish(direct, { dialogue: unseen });
+    finish(inspected, { dialogue: seen });
+    expect(direct.progress.stage).toBe(3);
+    expect(inspected.progress.stage).toBe(3);
+  });
+
+  it("reports due Talk and Deliver actions without changing state or replacing normal docking", () => {
+    const context = fresh();
+    const station = nearestSettlerStation(ECONOMY, context.flight.player);
+    let before = JSON.stringify(context);
+    expect(andromedaAction(context, station.id)).toBe("talk");
+    expect(JSON.stringify(context)).toBe(before);
+    finish(context, useAndromeda(context, station.id));
+    expect(andromedaAction(context, station.id)).toBeUndefined();
+    expect(andromedaAction(context, "pip")).toBe("talk");
+    confession(context);
+    const stationId = andromedaObjective(context)!;
+    expect(andromedaAction(context, stationId)).toBe("talk");
+    finish(context, useAndromeda(context, stationId));
+    const settlement = andromedaObjective(context)!;
+    before = JSON.stringify(context);
+    expect(andromedaAction(context, settlement)).toBe("deliver");
+    expect(andromedaAction(context, "darkBeacon")).toBeUndefined();
+    expect(JSON.stringify(context)).toBe(before);
+    useAndromeda(context, settlement);
+    expect(andromedaAction(context, "darkBeacon")).toBe("deliver");
+    finish(context, useAndromeda(context, "darkBeacon"));
+    context.progress.questComplete = true;
+    expect(andromedaAction(context, "pip")).toBe("talk");
+    context.progress.holodisk = true;
+    expect(andromedaAction(context, "pip")).toBeUndefined();
   });
 
   it("captures a separate settlement from the accepted station and preserves the parts until repair", () => {
