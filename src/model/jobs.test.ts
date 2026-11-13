@@ -459,16 +459,34 @@ describe("jobs in play", () => {
   it("show the held job at the top of every board in its galaxy, marked Active", () => {
     const { model } = docked();
     const held = take(model, "survey");
-    const other = stationsNear(ECONOMY, 1, 30_000, { x: 0, y: 0 }).find(
+    const sites = stationsNear(ECONOMY, 1, 30_000, { x: 0, y: 0 }).filter(
       ({ id }) => id !== held.station,
-    )!;
-    ensureStation(CONTENT, other.id, model.state.flight!);
-    model.state.docked = other.id;
-    const rows = model.jobBoard();
-    expect(rows[0]).toMatchObject({ id: held.id, state: "held" });
-    expect(rows.slice(1).every(({ state }) => state === "busy")).toBe(true);
-    expect(model.acceptJob(rows[1]!.id)).toBe("busy");
-    expect(model.jobObjective).toBe(model.jobText(held).title);
+    );
+    const capabilities = new Set<boolean>();
+    for (const site of sites) {
+      ensureStation(CONTENT, site.id, model.state.flight!);
+      model.state.docked = site.id;
+      const services = model.stationServices!;
+      capabilities.add(services.jobs);
+      expect(services.heldTask).toBe(true);
+      const rows = model.jobBoard();
+      expect(rows[0]).toMatchObject({ id: held.id, state: "held" });
+      if (services.jobs) {
+        expect(rows.length).toBeGreaterThan(1);
+        expect(rows.slice(1).every(({ state }) => state === "busy")).toBe(true);
+        expect(model.acceptJob(rows[1]!.id)).toBe("busy");
+      } else {
+        expect(rows).toHaveLength(1);
+        expect(model.acceptJob(held.id)).toBe("missing");
+      }
+      expect(model.jobObjective).toBe(model.jobText(held).title);
+    }
+    expect(capabilities).toEqual(new Set([true, false]));
+    const nonJobs = sites.find(({ id }) => {
+      model.state.docked = id;
+      return !model.stationServices!.jobs;
+    })!;
+    model.state.docked = nonJobs.id;
     // Dropping returns it to the board that offered it.
     expect(model.dropJob()).toBe(true);
     model.state.docked = held.station;

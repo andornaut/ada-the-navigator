@@ -325,7 +325,12 @@ describe("repeatable activities", () => {
     };
     expect(model.jobBusyLine).toBe("Finish your activity first.");
     model.state.dialogue = null;
-    model.state.docked = stationsNear(ECONOMY, 2, 100000, { x: 0, y: 0 })[0]!.id;
+    const jobStation = stationsNear(ECONOMY, 2, 100000, { x: 0, y: 0 }).find(({ id }) => {
+      model.state.docked = id;
+      return model.stationServices!.jobs;
+    });
+    expect(jobStation).toBeDefined();
+    model.state.docked = jobStation!.id;
     const offer = model.jobBoard().find((row) => row.kind === "job")!;
     expect(offer.state).toBe("busy");
     expect(model.acceptJob(offer.id)).toBe("busy");
@@ -338,17 +343,36 @@ describe("repeatable activities", () => {
   it("heads every board in its galaxy with the active activity, marked Active with Drop", () => {
     const model = atPlace(2, "hub");
     takeContract(model);
-    model.state.docked = stationsNear(ECONOMY, 2, 100000, { x: 0, y: 0 })[0]!.id;
-    const rows = model.jobBoard();
-    expect(rows[0]).toMatchObject({
-      detail: "Deposit 30 ore at the hub.",
-      kind: "activity",
-      reward: 180,
-      state: "held",
-      title: "Mining contract",
-    });
-    expect(rows.length).toBeGreaterThan(1);
-    expect(rows.slice(1).every((row) => row.kind === "job" && row.state === "busy")).toBe(true);
+    const sites = stationsNear(ECONOMY, 2, 30000, { x: 0, y: 0 });
+    const capabilities = new Set<boolean>();
+    for (const site of sites) {
+      model.state.docked = site.id;
+      const services = model.stationServices!;
+      capabilities.add(services.jobs);
+      expect(services.heldTask).toBe(true);
+      const rows = model.jobBoard();
+      expect(rows[0]).toMatchObject({
+        detail: "Deposit 30 ore at the hub.",
+        kind: "activity",
+        reward: 180,
+        state: "held",
+        title: "Mining contract",
+      });
+      if (services.jobs) {
+        expect(rows.length).toBeGreaterThan(1);
+        expect(rows.slice(1).every((row) => row.kind === "job" && row.state === "busy")).toBe(true);
+        expect(model.acceptJob(rows[1]!.id)).toBe("busy");
+      } else {
+        expect(rows).toHaveLength(1);
+        expect(model.acceptJob("miningContract")).toBe("missing");
+      }
+    }
+    expect(capabilities).toEqual(new Set([true, false]));
+    const nonJobs = sites.find(({ id }) => {
+      model.state.docked = id;
+      return !model.stationServices!.jobs;
+    })!;
+    model.state.docked = nonJobs.id;
     expect(model.dropJob()).toBe(true);
     expect(model.state.tasks[2]).toBeUndefined();
   });
