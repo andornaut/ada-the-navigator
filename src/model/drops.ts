@@ -1,6 +1,7 @@
 import type { AsteroidSize } from "../data/asteroidCatalog.ts";
 import type { EconomyCatalog } from "../data/economy.ts";
 import { type EnemyArchetype, enemyStardust, HEAVIES } from "../data/enemyCatalog.ts";
+import { resourceRock } from "../data/resourceRocks.ts";
 import type { GalaxyNumber, Weapon } from "../data/types.ts";
 import type { SpaceObject } from "./types.ts";
 
@@ -74,6 +75,11 @@ export function rollRockAmmoDrop(
   next: () => number,
 ): boolean {
   return ownsAmmoWeapon(owned) && next() < catalog.ammo.rockDropChance;
+}
+
+/** Destruction releases one ore from an asteroid and preserves richer resource-rock yields. */
+export function rockOreDrop(object: Pick<SpaceObject, "kind" | "resource">): number {
+  return object.kind === "rock" ? 1 : object.kind === "resource" ? resourceRock(object).pieces : 0;
 }
 
 /** A destroyed asteroid's or ore rock's extra Stardust: the burst at its chance, else 0. */

@@ -117,6 +117,94 @@ const pickups = (value: FlightState) =>
 const total = (objects: SpaceObject[]) =>
   objects.reduce((sum, object) => sum + (object.amount ?? 0), 0);
 
+describe("guaranteed destruction loot", () => {
+  it.each(["small", "medium", "large", "huge"] as const)(
+    "releases one ore from a destroyed %s asteroid without replacing its Stardust",
+    (size) => {
+      const value = flight();
+      const shape = [...ASTEROID_SHAPES.values()].find((entry) => entry.size === size)!;
+      const rock: SpaceObject = {
+        asteroid: shape.id,
+        hp: 2,
+        id: `guaranteed-${size}`,
+        kind: "rock",
+        radius: shape.radius,
+        x: 600,
+        y: 0,
+      };
+      value.objects.push(rock);
+      value.shots.push({ ...killShot(rock), damage: 1 });
+      stepFlight(CONTENT, 1 / 60, idle, value);
+      expect(value.objects.filter((object) => object.role === "cargo")).toHaveLength(0);
+      value.shots.push(killShot(rock));
+      stepFlight(CONTENT, 1 / 60, idle, value);
+      const ore = value.objects.filter((object) => object.role === "cargo");
+      expect(ore).toHaveLength(1);
+      expect(ore[0]).toMatchObject({ hp: 1, kind: "pickup", x: rock.x, y: rock.y });
+      expect(total(pickups(value))).toBe(
+        rollAsteroidStardust(ECONOMY, size, dropRandom(value.seed, rock.id)) +
+          rollRockBurst(ECONOMY, dropRandom(value.seed, `burst:${rock.id}`)),
+      );
+      value.shots.push(killShot(rock));
+      stepFlight(CONTENT, 1 / 60, idle, value);
+      expect(
+        value.objects.filter((object) => object.role === "cargo").map((object) => object.id),
+      ).toEqual(ore.map((object) => object.id));
+    },
+  );
+
+  it("never pays ore for intact indestructible scenery", () => {
+    const value = flight();
+    const rock: SpaceObject = {
+      hp: Infinity,
+      id: "intact",
+      kind: "rock",
+      radius: 20,
+      x: 600,
+      y: 0,
+    };
+    value.objects.push(rock);
+    value.shots.push(killShot(rock));
+    stepFlight(CONTENT, 1 / 60, idle, value);
+    expect(rock.hp).toBe(Infinity);
+    expect(value.objects.filter((object) => object.kind === "pickup")).toHaveLength(0);
+  });
+
+  it("keeps every enemy archetype and route position above zero without relying on an optional pickup roll", () => {
+    for (const galaxy of [1, 2, 3, 4, 5, 6] as const) {
+      for (const archetype of Object.keys(enemyCatalog) as EnemyArchetype[]) {
+        const drop = rollEnemyDrop(ECONOMY, galaxy, archetype, () => 1);
+        expect(drop.stardust, `${galaxy}:${archetype}`).toBeGreaterThanOrEqual(1);
+        expect(
+          splitStardust(ECONOMY.pickupCap[archetype], drop.stardust).reduce(
+            (sum, amount) => sum + amount,
+            0,
+          ),
+        ).toBe(drop.stardust);
+      }
+    }
+  });
+
+  it("does not pay an already released wreck again after restoring a save", () => {
+    const model = new GameModel(CONTENT);
+    model.state.mode = "space";
+    const value = flight();
+    const target = enemy("fighter", "once-only", 600, 0);
+    value.objects.push(target);
+    value.shots.push(killShot(target));
+    stepFlight(CONTENT, 1 / 60, idle, value);
+    stepFlight(CONTENT, 0.15, idle, value);
+    const before = pickups(value).map((object) => object.id);
+    expect(before.length).toBeGreaterThan(0);
+    expect(value.objects.find((object) => object.kind === "wreck")?.wreck?.released).toBe(true);
+    model.state.flight = value;
+    const restored = restoreSave(model.save());
+    expect(restored).not.toBeNull();
+    stepFlight(CONTENT, 0.1, idle, restored!.flight!);
+    expect(pickups(restored!.flight!).map((object) => object.id)).toEqual(before);
+  });
+});
+
 describe("Stardust drops", () => {
   it("releases the documented Stardust per destroyed enemy archetype at position 1", () => {
     const expected: Record<EnemyArchetype, number> = {

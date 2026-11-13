@@ -57,7 +57,10 @@ salvaging it drops its Stardust and has the heavy upgrade chance (see
 An enemy's Stardust is half its hit points, rounded down, and at least 1; a
 heavy counts all its hardpoints' hit points, not its hull, and a destroyed heavy
 drops twice that; a heavy's row shows destroyed, then salvaged. The table shows
-position 1; values follow each position's hit points.
+position 1; values follow each position's hit points. Every defeated enemy releases
+at least 1 Stardust, with existing larger rewards and eligible pickups preserved.
+Disabling a heavy does not destroy it. Fleeing, unloading, despawning or restoring
+a survivor does not grant defeat loot, and a released wreck never pays again.
 Discovery caches are rare. A destroyed asteroid or ore rock also bursts with 10
 extra Stardust 2% of the time, on top of its usual drop. These values come from a pacing simulation of typical
 play against the targets above; rerun it after changing any earning value.
@@ -112,8 +115,11 @@ those weapons). Each world pack contains one quarter of its shop pack: Multi-Las
 Rapid Missile 65, Heavy Missile 10, Scattershot 15 and Phaser 10. Its feedback shows
 +N beside the corresponding weapon icon, using the actual ammunition added.
 
-Ore rocks release ore instead of a usual Stardust drop. Like asteroids, they
-can still burst with 10 extra Stardust or drop an ammo pack.
+Every destroyed asteroid releases at least 1 ore, in addition to its existing
+Stardust and eligible ammo drops. Resource rocks retain their richer yields:
+medium rocks release 3 ore and large rocks release 5, instead of a usual Stardust
+drop. Both can still burst with 10 extra Stardust or drop an ammo pack.
+Ore is released once on destruction, never for an intact or indestructible rock.
 
 Ore rocks occur in every galaxy; Cartwheel is richest in ore. Ore aboard fuels
 shield recharge after a 30-second delay, at the normal regeneration rate, not
