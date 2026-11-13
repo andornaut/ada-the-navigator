@@ -85,8 +85,7 @@ tuning and Tractor beam have equal weight, and Paint 1/20 of that weight:
 
 A category or weapon with nothing left to give leaves the pool, and the rest keep
 their relative weights. Once nothing is left, the drop gives one pack of
-ammunition for an owned weapon other than Laser that is unlocked in this galaxy,
-chosen by the ammo pack weights below, or nothing when there is none. The pickup is one shared upgrade pickup,
+ammunition for an owned weapon other than Laser, chosen by the ammo pack weights below, or nothing when there is none. The pickup is one shared upgrade pickup,
 and its contents are chosen when Ada collects it, so they fit her upgrades at that
 moment. Its notice names what it gave:
 
@@ -102,8 +101,8 @@ moment. Its notice names what it gave:
 
 Destroyed small craft also drop an ammo pack 7.5% of the time, and destroyed
 asteroids and ore rocks 1% of the time, separately from
-upgrades, while Ada owns a weapon other than Laser that is unlocked in this
-galaxy. Like the upgrade pickup, its contents are chosen when Ada collects it:
+upgrades, while Ada owns a weapon other than Laser, bought or picked up,
+equipped or not, in any galaxy. Like the upgrade pickup, its contents are chosen when Ada collects it:
 one pack for such a weapon, each weapon about three quarters as likely as the one before it in
 weapon order (Multi-Laser 16, Rapid Missile 12, Heavy Missile 9, Scattershot 7, Phaser 5, among
 those weapons). Its notice is "+ {weapon} ammo".
@@ -134,11 +133,12 @@ undock.
 ### Weapon unlocks
 
 Weapons unlock along the route, one per galaxy. The galaxy Ada is in sets what
-its shops sell and what its drops give: the weapons unlocked there, their
-levels and their ammunition. Laser and its levels are available everywhere. Back
-in an earlier galaxy, only that galaxy's weapons, levels and ammunition drop or
-are sold; a later weapon Ada owns keeps the ammunition she carries, with no more
-until she returns to a galaxy that unlocks it.
+its shops sell and what its upgrade drops give: the weapons unlocked there,
+their levels and their ammunition in the shop. Laser and its levels are
+available everywhere. Back in an earlier galaxy, only that galaxy's weapons,
+levels and ammunition are sold, and only its weapons and levels drop. Ammo packs
+are the exception: they drop for every weapon Ada owns, in any galaxy (see
+[Ammunition](#ammunition)).
 
 | Position | Galaxy    | Unlocks       |
 | -------: | --------- | ------------- |
