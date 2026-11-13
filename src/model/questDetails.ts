@@ -3,9 +3,17 @@ import { carriedItemName, STORY_ITEM_NAMES } from "../data/itemNames.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { questItemDestination } from "./indicators.ts";
 import { landmarkById } from "./landmarks.ts";
-import type { QuestDetails } from "./map.ts";
+import type { QuestDetails, QuestLine } from "./map.ts";
 import { fill } from "./shop.ts";
 import type { GalaxyProgress, HeldJob, OptionalTask } from "./types.ts";
+
+/** A live quest view with a stable identity and only already known location labels. */
+export interface QuestEntry {
+  readonly id: string;
+  readonly galaxy: GalaxyNumber;
+  readonly line: Extract<QuestLine, { kind: "story" | "job" }>;
+  readonly locations: readonly { readonly id: string; readonly label: string }[];
+}
 
 export interface QuestDetailContext {
   readonly galaxy: GalaxyNumber;

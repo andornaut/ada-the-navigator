@@ -148,7 +148,7 @@ import {
   type WorldChange,
   worldChanges,
 } from "./projects.ts";
-import { questDetails } from "./questDetails.ts";
+import { questDetails, type QuestEntry } from "./questDetails.ts";
 import { restoreSave, SAVE_VERSION } from "./save.ts";
 import { canRechargeShield } from "./shieldRecharge.ts";
 import { SHIP_REACH } from "./shipBody.ts";
@@ -638,24 +638,29 @@ export class GameModel {
     return (this.state.flight?.dangerFor ?? 0) > 0;
   }
   get objective(): string {
-    const context = this.chapterContext();
+    return this.objectiveFor(this.state.selectedGalaxy);
+  }
+  private objectiveFor(galaxy: GalaxyNumber): string {
+    const chapter =
+      galaxy === this.state.selectedGalaxy
+        ? this.chapter
+        : (BUILT.has(galaxy) && this.content.chapters[galaxy]) || placeholderChapter(galaxy);
+    const context = galaxy === this.state.selectedGalaxy ? this.chapterContext() : undefined;
     const chapterIndex =
       context && chapterRuntime(context.flight.galaxy)?.objectiveIndex?.(context);
     if (chapterIndex !== undefined) {
-      return this.chapter.objectives[chapterIndex] ?? "";
+      return chapter.objectives[chapterIndex] ?? "";
     }
-    const p = this.current;
+    const p = this.state.progress[galaxy];
     const stages: Partial<Record<GalaxyNumber, readonly number[]>> = {
       1: [0, 1, 2, 3, 4],
       2: [0, 1, 2, 3, 4, 5],
       3: [0, 1, 2, 3, 4, 5],
     };
     // After the space quest, recovering the holodisk comes before the return home.
-    const last = this.chapter.objectives.length - 1;
-    const index = p.questComplete
-      ? last - (p.holodisk ? 0 : 1)
-      : (stages[this.state.selectedGalaxy]?.[p.stage] ?? 0);
-    return this.chapter.objectives[index] ?? "";
+    const last = chapter.objectives.length - 1;
+    const index = p.questComplete ? last - (p.holodisk ? 0 : 1) : (stages[galaxy]?.[p.stage] ?? 0);
+    return chapter.objectives[index] ?? "";
   }
   /**
    * The nearest known destination or discovered station within Talk range, its route open
@@ -2266,6 +2271,9 @@ export class GameModel {
    * station's or a story destination's sentence name (data/destinations.ts), else its Map name.
    */
   private placeLabel(id: string): string {
+    return this.placeLabelIn(this.state.selectedGalaxy, id);
+  }
+  private placeLabelIn(galaxy: GalaxyNumber, id: string): string {
     const named = this.label(id) || (id.startsWith("settlement:") ? this.label("settlement") : "");
     if (named) {
       return named;
@@ -2273,24 +2281,34 @@ export class GameModel {
     if (id.startsWith("station:")) {
       return STATION_SENTENCE;
     }
+    const chapter =
+      (BUILT.has(galaxy) && this.content.chapters[galaxy]) || placeholderChapter(galaxy);
     return (
       DESTINATIONS[id]?.sentence ??
-      this.destinations().find((place) => place.id === id)?.label ??
-      this.chapter.dialogue[dialogueKeys[id] ?? id]?.speaker ??
-      this.chapter.name
+      (galaxy === this.state.selectedGalaxy
+        ? this.destinations().find((place) => place.id === id)?.label
+        : undefined) ??
+      chapter.dialogue[dialogueKeys[id] ?? id]?.speaker ??
+      chapter.name
     );
   }
   /** A job's title and one line of detail (gameplay/quests.md "Player strings"). */
   jobText(job: JobOffer): { readonly detail: string; readonly title: string } {
+    return this.jobTextIn(this.state.selectedGalaxy, job);
+  }
+  private jobTextIn(
+    galaxy: GalaxyNumber,
+    job: JobOffer,
+  ): { readonly detail: string; readonly title: string } {
     const titles: Record<JobType, string> = {
       delivery: fill(this.label("deliveryTitle"), {
         item: job.item,
-        place: this.placeLabel(job.target.id),
+        place: this.placeLabelIn(galaxy, job.target.id),
       }),
       hunt: fill(this.label("huntTitle"), { item: job.item }),
       rescue: fill(this.label("rescueTitle"), { craft: job.item }),
       survey: fill(this.label("surveyTitle"), {
-        landmark: this.label(landmarkById(this.state.selectedGalaxy, job.target.id)?.name ?? ""),
+        landmark: this.label(landmarkById(galaxy, job.target.id)?.name ?? ""),
       }),
     };
     return { detail: this.label(`${job.type}About`), title: titles[job.type] };
@@ -2401,14 +2419,17 @@ export class GameModel {
   }
   /** The held job's objective, shown beside the story objective and labelled Job. */
   get jobObjective(): string | null {
-    const held = this.held;
-    if (held) {
-      return this.jobText(held).title;
+    return this.taskObjective(this.state.selectedGalaxy);
+  }
+  private taskObjective(galaxy: GalaxyNumber): string | null {
+    const task = this.state.tasks[galaxy];
+    if (task?.kind === "job") {
+      return this.jobTextIn(galaxy, task).title;
     }
-    const activity = this.activity;
+    const activity = task;
     if (activity?.id === "supplyRun") {
       return fill(this.label("supplyObjective"), {
-        destination: this.placeLabel(activity.target?.id ?? ""),
+        destination: this.placeLabelIn(galaxy, activity.target?.id ?? ""),
         item: SUPPLY_ITEMS[activity.place] ?? "",
       });
     }
@@ -2419,12 +2440,74 @@ export class GameModel {
       });
     }
     if (activity?.id === "guideCalf") {
-      return this.label(this.state.flight?.calf?.following ? "calfGuide" : "calfFind");
+      return this.label(
+        this.state.flight?.galaxy === galaxy && this.state.flight.calf?.following
+          ? "calfGuide"
+          : "calfFind",
+      );
     }
     if (activity?.id === "threadNeedle" || activity?.id === "courierRun") {
-      return this.label(ACTIVITIES[this.state.selectedGalaxy]?.goal ?? "");
+      return this.label(ACTIVITIES[galaxy]?.goal ?? "");
     }
     return null;
+  }
+  /** All accepted tasks and introduced, unresolved story quests, derived without switching galaxies. */
+  get quests(): readonly QuestEntry[] {
+    const entries: QuestEntry[] = [];
+    for (const galaxy of GALAXY_NUMBERS) {
+      const progress = this.state.progress[galaxy];
+      const task = this.state.tasks[galaxy];
+      const flight = this.state.flight?.galaxy === galaxy ? this.state.flight : undefined;
+      const details = questDetails(
+        {
+          galaxy,
+          jobText: (job) => this.jobTextIn(galaxy, job),
+          label: (key) => this.label(key),
+          miningMilestones: this.content.tuning.miningMilestones,
+          placeLabel: (id) => this.placeLabelIn(galaxy, id),
+        },
+        { flight: flight ?? { cargo: 0 }, progress, ...(task ? { task } : {}) },
+      );
+      const locations = [
+        ...new Set([...progress.known, ...progress.stations, ...progress.charted]),
+      ].map((id) => ({
+        id,
+        label: this.label(landmarkById(galaxy, id)?.name ?? "") || this.placeLabelIn(galaxy, id),
+      }));
+      if (BUILT.has(galaxy) && progress.introduced && !progress.resolved) {
+        entries.push({
+          galaxy,
+          id: `story:${galaxy}:${progress.stage}`,
+          line: {
+            ...details.storyDetails,
+            kind: "story",
+            target: null,
+            text: this.objectiveFor(galaxy),
+          },
+          locations,
+        });
+      }
+      const text = this.taskObjective(galaxy);
+      if (task && text) {
+        entries.push({
+          galaxy,
+          id: `${task.kind}:${galaxy}:${task.id}`,
+          line: { ...details.jobDetails, kind: "job", target: null, text },
+          locations,
+        });
+      }
+    }
+    return entries;
+  }
+  get aboardQuestId(): string | null {
+    if (!this.aboard) {
+      return null;
+    }
+    const galaxy = this.state.flight?.galaxy;
+    const kind = this.carrying || this.towing ? "job" : "story";
+    return (
+      this.quests.find((entry) => entry.galaxy === galaxy && entry.line.kind === kind)?.id ?? null
+    );
   }
   /** The current galaxy's accepted activity. */
   private get activity(): HeldActivity | undefined {
