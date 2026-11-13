@@ -137,8 +137,8 @@ Heavies:
 |        5 |         6 |             44 |               4 |             88 |               8 |        ×1.4 |
 |        6 |         6 |             48 |               4 |             96 |               8 |        ×1.5 |
 
-- Small-craft columns are hull HP. The group bonus adds to both ends of every
-  `swarm` and `fighter` group range. Lead is how much of Ada's movement enemy
+- Small-craft columns are hull HP. Outside Sunflower's staged ambient roster,
+  the group bonus adds to both ends of each `swarm` and `fighter` group range. Lead is how much of Ada's movement enemy
   aim allows for (see [Enemy aim](#enemy-aim)). Notice, fire and encounter rates are
   relative to the base catalog.
 - Every heavy hardpoint (weapon, engine, command and platform turret) has the
@@ -259,21 +259,50 @@ Frigates, capitals and platforms have hull HP and hardpoints.
   Ada left it: like a destroyed one, it no longer holds the spacing kept between
   capital ships, and nothing moves it.
 
+## Ambient admission
+
+Ambient encounters use a 900-world-unit local admission radius. Whole groups,
+including every escort and hull, must fit the budget and archetype limit, with
+at most one nearby capital. Admission conservatively counts live neighbouring
+hulls whose footprints could share that neighbourhood, including required
+guards, old packs and pursuing ships. Disabled hulls still count; salvaged ships
+do not. Only complete groups that fit are eligible for weighted selection.
+
+| Galaxy    | Local budget | Archetype limit |
+| --------- | -----------: | --------------: |
+| Whirlpool |            6 |               2 |
+| Needle    |            7 |               3 |
+| Andromeda |            8 |               4 |
+| Cartwheel |            9 |               4 |
+| Phantom   |           10 |               4 |
+
+Later galaxies use their encounter tables, including route-position group bonuses
+and heavy weights. Spawn-cell frequency remains independent of admission.
+These budgets are not strict physical population caps: subsequent movement can
+bring ships together. They do not freeze or despawn existing enemies.
+
+New sight-triggered engagement is admitted separately, reserving required and
+persistent enemies and already engaged enemies first. Only the new sighted
+engagement term is gated; existing engaged AI, damage and summons, and returning
+ships' rearm behaviour remain unchanged. Speeds and damage are unchanged.
+
 ## Sunflower roster
 
-| Archetype      | Encounter   | Group | Weight | Behaviours                                                                             |
-| -------------- | ----------- | ----: | -----: | -------------------------------------------------------------------------------------- |
-| `swarm`        | Pack        |   4–6 |   0.35 | `swarm`; packs `flee` after losses                                                     |
-| `fighter`      | Small group |   1–3 |   0.30 | `hitAndRun`; a group shares pack morale                                                |
-| `interceptor`  | Solo        |     1 |   0.15 | `strafe`                                                                               |
-| `retaliator`   | Solo        |     1 |   0.10 | `retaliate`, then `chase`; three-bolt spread                                           |
-| `frigate`      | Solo        |     1 |   0.07 | `siege`; size 4 Ada widths                                                             |
-| Capital battle | Group       |     1 |   0.03 | A `capital` (5 Ada widths: command, 2 engines, weapon mounts) with 4 `escort` fighters |
+Fresh exploration distance selects Sunflower's ambient stage. These exact group
+ranges receive no route-position group bonus. Weights are relative among eligible
+complete groups; a type absent from a stage cannot spawn ambiently.
 
-Weights choose each encounter; the group size range replaces the shared range
-for that archetype. Values not listed keep the current catalog values. Each
-galaxy below has its own roster in the same format. All values are
-provisional playtest tuning.
+| Fresh distance (world units) | Local budget | Archetype limit | Swarm group / weight | Fighter group / weight | Retaliator group / weight | Interceptor group / weight |
+| ---------------------------: | -----------: | --------------: | -------------------- | ---------------------- | ------------------------- | -------------------------- |
+|                            0 |            3 |               1 | 1–2 / 0.55           | 1 / 0.45               | None                      | None                       |
+|                         1800 |            4 |               2 | 2–3 / 0.45           | 1–2 / 0.40             | 1 / 0.15                  | None                       |
+|                         4200 |            5 |               2 | 2–3 / 0.40           | 1–2 / 0.35             | 1 / 0.15                  | 1 / 0.10                   |
+
+No stage admits ambient frigates or capital battles. Required guards remain.
+Swarm packs use `swarm` and flee after losses; fighters use `hitAndRun` and share
+pack morale; retaliators use `retaliate`, then `chase`, with a three-bolt spread;
+interceptors use `strafe`. Values not listed keep their catalog values. Each
+galaxy below has its own roster. All values are provisional playtest tuning.
 
 ## Whirlpool roster
 
