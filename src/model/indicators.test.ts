@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { ECONOMY } from "../data/economy.ts";
 import {
+  INDICATOR_KINDS,
   INDICATOR_SOURCES,
   type IndicatorContext,
   type IndicatorSource,
@@ -24,8 +25,8 @@ const object = (id: string, kind: SpaceObject["kind"], x: number, extra = {}): S
   ...extra,
 });
 
-// Far away, so only an indicator could point there.
-const FAR = 50_000;
+// Off screen but within direction-indicator range.
+const FAR = 800;
 const ORIGIN = { x: 0, y: 0 };
 // Every station near Ada, discovered, so the station source marks none unless a test says so.
 const NEAR_STATIONS = stationsNear(ECONOMY, 1, ECONOMY.station.indicatorRange, ORIGIN).map(
@@ -60,8 +61,47 @@ const marked = (from: IndicatorContext, sources = INDICATOR_SOURCES) =>
   indicatorTargets(sources, from).map(({ id, kind }) => `${kind}:${id}`);
 
 describe("direction indicators", () => {
-  it("mark the current objective's mapped destination at any distance", () => {
+  it("mark the current objective's mapped destination within range", () => {
     expect(marked(context())).toEqual(["objective:workshop"]);
+  });
+
+  it.each(INDICATOR_KINDS)("limits %s radially from Ada, including the 3000 boundary", (kind) => {
+    const player = { x: 100, y: -200 };
+    const sources = {
+      ...INDICATOR_SOURCES,
+      [kind]: () => [
+        { id: "inside", kind, x: player.x + 1799.9, y: player.y + 2400 },
+        { id: "boundary", kind, x: player.x + 1800, y: player.y + 2400 },
+        { id: "outside", kind, x: player.x + 1800.1, y: player.y + 2400 },
+      ],
+    };
+    const from = context({ flight: { objects: [], player }, objective: null });
+    expect(
+      indicatorTargets(sources, from)
+        .filter((target) => target.kind === kind)
+        .map(({ id }) => id),
+    ).toEqual(["inside", "boundary"]);
+  });
+
+  it("removes distant real destinations and jobs while keeping nearby targets", () => {
+    const from = context({
+      flight: {
+        objects: [
+          object("growers", "destination", 3000),
+          object("workshop", "destination", -3001),
+          object("holodisk", "destination", 3001),
+        ],
+        player: ORIGIN,
+      },
+      holodiskWaypoint: true,
+      job: { id: "job", kind: "job", x: 0, y: -3001 },
+      questItem: "growers",
+    });
+    expect(marked(from)).toEqual(["questItem:growers"]);
+    expect(marked({ ...from, job: { id: "job", kind: "job", x: 0, y: -3000 } })).toEqual([
+      "questItem:growers",
+      "job:job",
+    ]);
   });
 
   it("do not reveal an objective's destination before it is mapped", () => {
@@ -76,7 +116,7 @@ describe("direction indicators", () => {
     expect(marked(context({ questItem: "workshop" }))).toEqual(["objective:workshop"]);
   });
 
-  it("mark the holodisk waypoint at any distance only until it is recovered", () => {
+  it("mark the holodisk waypoint within range only until it is recovered", () => {
     expect(marked(context({ holodiskWaypoint: true, objective: null }))).toEqual([
       "holodisk:holodisk",
     ]);
@@ -103,9 +143,9 @@ describe("direction indicators", () => {
     expect(marked(mining)).toEqual(["objective:hub"]);
   });
 
-  it("mark a station only while it is undiscovered and within 2000 of Ada", () => {
+  it("mark a station only while it is undiscovered and within 3000 of Ada", () => {
     const range = ECONOMY.station.indicatorRange;
-    expect(range).toBe(2000);
+    expect(range).toBe(3000);
     // Points across galaxy one: any station marked is the nearest undiscovered site in range.
     for (let i = 0; i < 40; i++) {
       const player = { x: i * 1234 - 20_000, y: i * 777 - 15_000 };

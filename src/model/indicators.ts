@@ -6,7 +6,7 @@ import type { FlightState, GalaxyProgress } from "./types.ts";
 // Direction indicators (gameplay/rules.md "Space encounters and feedback"): rare arrows that
 // mark only the current objective's destination, where a carried quest item goes, the holodisk
 // waypoint, the held station job's target (gameplay/quests.md) and an undiscovered station within
-// range, at any distance while off screen. Optional discoveries get none; Penny senses those
+// 3000 world units while off screen. Optional discoveries get none; Penny senses those
 // instead. Seen enemies, heavies and stations get edge markers (edgeMarkers.ts) instead, which
 // give way to an indicator on the same object. Each kind is one source below, so a kind gains its
 // rule without touching the others.
@@ -74,7 +74,11 @@ export function indicatorTargets(
 ): IndicatorTarget[] {
   const marked = new Set<string>();
   return INDICATOR_KINDS.flatMap((kind) => sources[kind](context)).filter((target) => {
-    if (marked.has(target.id)) {
+    if (
+      marked.has(target.id) ||
+      Math.hypot(target.x - context.flight.player.x, target.y - context.flight.player.y) >
+        ECONOMY.station.indicatorRange
+    ) {
       return false;
     }
     marked.add(target.id);

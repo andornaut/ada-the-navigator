@@ -1,25 +1,34 @@
 import type { Point, Rect } from "@andornaut/game-kit/rect";
 
-import { STICK_AREA_MARGIN, STICK_DRAWN_HALF, TOUCH_STICK, USE_DISC } from "../../data/layout.ts";
+import {
+  STICK_AREA_MARGIN,
+  STICK_DRAWN_HALF,
+  TOUCH_STICK as STICK_GEOMETRY,
+  USE_DISC,
+} from "../../data/layout.ts";
 import type { StickSide } from "../../input/state.ts";
-import { controlsBottom, type Insets, mirroredSideInset, playView, type Size } from "./playView.ts";
-export { TOUCH_STICK, USE_DISC } from "../../data/layout.ts";
+import { type Insets, playView, type Size } from "./playView.ts";
+export { USE_DISC } from "../../data/layout.ts";
 
-// Each joystick's ring centre at rest in a logical view view big with insets, on whole pixels, so
-// the drawn ring and its DOM target share one centre. The rings mirror as in Chibi: with side the
-// larger side inset plus TOUCH_STICK.side, the move ring's drawn left edge sits at side and the
-// aim ring's right at the view's whole-pixel width less side; both bottoms sit TOUCH_STICK.bottom
-// above the view's bottom inside the bottom inset (controlsBottom). Each edge is then clamped so
-// the whole stick draws inside the game area with STICK_AREA_MARGIN to spare.
+export const TOUCH_STICK = { ...STICK_GEOMETRY, bottom: 50, side: 50 } as const;
+
+// Ring edges are 50 logical pixels from the outer screen, independent of safe insets.
+// Clamp only where the drawn ring would cross the game area's eight-pixel margin.
 export function stickRestCentres(view: Size, insets: Insets): Readonly<Record<StickSide, Point>> {
+  void insets;
   const area = playView(view);
-  const side = Math.ceil(mirroredSideInset(insets) + TOUCH_STICK.side);
+  const side = TOUCH_STICK.side;
   const left = Math.max(side, Math.ceil(area.x + STICK_AREA_MARGIN));
   const right = Math.min(
     Math.floor(view.width) - side,
     Math.floor(area.x + area.width - STICK_AREA_MARGIN),
   );
-  const y = Math.floor(controlsBottom(insets, view)) - 1 - STICK_DRAWN_HALF;
+  const y =
+    Math.floor(
+      Math.min(view.height - TOUCH_STICK.bottom, area.y + area.height - STICK_AREA_MARGIN),
+    ) -
+    1 -
+    STICK_DRAWN_HALF;
   return {
     aim: { x: right - 1 - STICK_DRAWN_HALF, y },
     move: { x: left + STICK_DRAWN_HALF, y },
