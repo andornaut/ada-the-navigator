@@ -82,6 +82,13 @@ export interface ConversationFacts {
   readonly stationsNear: readonly string[];
 }
 
+export interface ConversationEligibilityFacts {
+  readonly galaxy: GalaxyNumber | null;
+  readonly holodisks: number;
+  readonly questComplete: boolean;
+  readonly resolved: boolean;
+}
+
 export interface ShowingConversation {
   readonly conversation: Conversation;
   /** Seconds the current line has shown. */
@@ -103,11 +110,12 @@ interface Request {
   /** Penny's point of interest; one waits at a time. */
   readonly point?: string;
   /** Where an interrupted conversation resumes. */
-  readonly resume?: { readonly elapsed: number; readonly line: number };
+  readonly resume?: { readonly elapsed: number; readonly exposed: boolean; readonly line: number };
 }
 
 interface Active extends Request {
   elapsed: number;
+  exposed: boolean;
   line: number;
 }
 
@@ -248,6 +256,8 @@ export class ConversationDirector {
   private galaxy: GalaxyNumber | null = null;
   private readonly seen: string[];
   private shieldWarned = false;
+  private eligibilityReader: (() => ConversationEligibilityFacts) | undefined;
+  private latestFacts: ConversationFacts | undefined;
 
   /**
    * seen is the saved list, which the director extends as conversations show; random shuffles the
@@ -263,9 +273,56 @@ export class ConversationDirector {
     this.random = random;
   }
 
+  /** Reads live model facts at every display, navigation and scheduling boundary. */
+  setEligibilityReader(read: () => ConversationEligibilityFacts): void {
+    this.eligibilityReader = read;
+    this.revalidate();
+  }
+
+  private eligible(conversation: Conversation): boolean {
+    const facts: Partial<ConversationEligibilityFacts> = this.eligibilityReader?.() ?? {
+      galaxy: this.galaxy,
+      ...(this.latestFacts ? { holodisks: this.latestFacts.holodisks } : {}),
+    };
+    if (facts.galaxy === null || facts.galaxy !== this.galaxy) {
+      return false;
+    }
+    const rule = conversation.eligibility;
+    if (
+      (rule?.minHolodisks !== undefined && !(facts.holodisks! >= rule.minHolodisks)) ||
+      (rule?.maxHolodisks !== undefined && !(facts.holodisks! <= rule.maxHolodisks)) ||
+      (rule?.questComplete !== undefined && facts.questComplete !== rule.questComplete) ||
+      (rule?.resolved !== undefined && facts.resolved !== rule.resolved)
+    ) {
+      return false;
+    }
+    const trigger = conversation.trigger;
+    return (
+      trigger.kind !== "general" ||
+      (trigger.held === facts.holodisks &&
+        (trigger.galaxy === undefined || trigger.galaxy === facts.galaxy))
+    );
+  }
+
+  private revalidate(): void {
+    this.queue = this.queue.filter((request) =>
+      this.latestFacts
+        ? this.valid(this.latestFacts, request)
+        : this.eligible(request.conversation),
+    );
+    if (this.active && !this.eligible(this.active.conversation)) {
+      this.active = null;
+    }
+  }
+
   get showing(): ShowingConversation | null {
+    this.revalidate();
     const active = this.active;
     const line = active?.conversation.lines[active.line];
+    if (active && line && !active.exposed) {
+      active.exposed = true;
+      this.markSeen(active);
+    }
     return active && line
       ? {
           conversation: active.conversation,
@@ -315,6 +372,7 @@ export class ConversationDirector {
 
   /** An explicit Talk command waits for its authored preludes without a background cooldown. */
   beforeInteraction(ids: readonly string[]): boolean {
+    this.revalidate();
     for (const id of ids) {
       if (this.active?.conversation.id === id) {
         return true;
@@ -331,6 +389,7 @@ export class ConversationDirector {
   }
 
   pending(id: string): boolean {
+    this.revalidate();
     return (
       this.active?.conversation.id === id ||
       this.queue.some((request) => request.conversation.id === id)
@@ -371,6 +430,7 @@ export class ConversationDirector {
 
   /** Dismisses the active exchange, preserving queued warnings and reactions. */
   skip(): void {
+    this.revalidate();
     if (!this.active) {
       return;
     }
@@ -388,6 +448,8 @@ export class ConversationDirector {
     if (galaxy === null || !Number.isFinite(dt) || dt <= 0) {
       return;
     }
+    this.latestFacts = facts;
+    this.revalidate();
     this.pennyWait = Math.max(0, this.pennyWait - dt);
     this.observe(galaxy, facts);
     if (notice && !this.warningShowing) {
@@ -414,6 +476,7 @@ export class ConversationDirector {
         (conversation) =>
           conversation.trigger.kind === "quiet" &&
           conversation.trigger.galaxy === galaxy &&
+          this.eligible(conversation) &&
           !this.seen.includes(conversation.id),
       );
       if (pool) {
@@ -514,7 +577,12 @@ export class ConversationDirector {
             )
           : undefined;
       if (general) {
-        this.enqueue({ conversation: general, holds: dronesPress, instance });
+        this.enqueue({
+          conversation: general,
+          holds: (now) =>
+            dronesPress(now) && now.holodisks === facts.holodisks && this.galaxy === galaxy,
+          instance,
+        });
       } else {
         this.request((trigger) => trigger.kind === "drones", dronesPress);
       }
@@ -669,7 +737,7 @@ export class ConversationDirector {
       this.markSeen(request);
       return false;
     }
-    return request.holds(facts);
+    return this.eligible(request.conversation) && request.holds(facts);
   }
 
   /**
@@ -704,18 +772,19 @@ export class ConversationDirector {
   }
 
   private start(request: Request): void {
+    if (!this.eligible(request.conversation)) {
+      this.queue = this.queue.filter((entry) => entry !== request);
+      return;
+    }
     const interrupted = this.active;
     this.queue = this.queue.filter((entry) => entry !== request);
     if (interrupted) {
-      const { elapsed, line, ...waiting } = interrupted;
-      this.queue.unshift({ ...waiting, resume: { elapsed, line } });
+      const { elapsed, exposed, line, ...waiting } = interrupted;
+      this.queue.unshift({ ...waiting, resume: { elapsed, exposed, line } });
     }
-    if (request.resume === undefined) {
-      this.markSeen(request);
-      if (request.conversation.trigger.kind === "penny") {
-        this.pennyWait = CONVERSATION_TUNING.pennyIntervalSeconds;
-        this.sensedPoints.push(request.instance);
-      }
+    if (request.resume === undefined && request.conversation.trigger.kind === "penny") {
+      this.pennyWait = CONVERSATION_TUNING.pennyIntervalSeconds;
+      this.sensedPoints.push(request.instance);
     }
     const { resume, ...shown } = request;
     const pool = request.conversation.pool;
@@ -724,6 +793,7 @@ export class ConversationDirector {
       ...shown,
       conversation,
       elapsed: resume?.elapsed ?? 0,
+      exposed: resume?.exposed ?? false,
       line: resume?.line ?? 0,
     };
   }
@@ -737,6 +807,7 @@ export class ConversationDirector {
 
   /** Whether a warning shows, which a notice waits under. */
   get warningShowing(): boolean {
+    this.revalidate();
     return this.active?.conversation.priority === "warning";
   }
 
@@ -750,6 +821,7 @@ export class ConversationDirector {
   }
 
   private nextLine(): void {
+    this.revalidate();
     const active = this.active;
     if (!active) {
       return;
@@ -765,6 +837,7 @@ export class ConversationDirector {
   }
 
   private reset(): void {
+    this.latestFacts = undefined;
     this.active = null;
     this.cooldown = 0;
     this.dronesCalled = false;

@@ -91,7 +91,15 @@ export interface ConversationLine {
   readonly mood?: Mood;
 }
 
+export interface ConversationEligibility {
+  readonly maxHolodisks?: number;
+  readonly minHolodisks?: number;
+  readonly questComplete?: boolean;
+  readonly resolved?: boolean;
+}
+
 export interface Conversation {
+  readonly eligibility?: ConversationEligibility;
   readonly id: string;
   readonly lines: readonly ConversationLine[];
   /**
@@ -490,6 +498,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     trigger: { galaxy: 2, kind: "quiet" },
   },
   {
+    eligibility: { maxHolodisks: 5 },
     id: "quiet:2:whole",
     lines: [
       line("astra", "Almost whole. I'm a little scared of that."),
@@ -615,6 +624,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     trigger: { cue: "stationNear", galaxy: 5, kind: "encounter" },
   },
   {
+    eligibility: { minHolodisks: 3 },
     id: "quiet:5:disks",
     lines: [
       line("astra", "When I scattered my disks, I didn't tell anyone. Not even myself."),
@@ -635,6 +645,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     trigger: { galaxy: 5, kind: "quiet" },
   },
   {
+    eligibility: { questComplete: false },
     id: "arrival:6",
     lines: [
       line("astra", "Phantom. I don't like it here."),
@@ -645,6 +656,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     trigger: { galaxy: 6, kind: "arrival" },
   },
   {
+    eligibility: { maxHolodisks: 5 },
     id: "quiet:6:whole",
     lines: [
       line("astra", "If I'm whole again, will you still fly with me?"),
@@ -655,6 +667,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     trigger: { galaxy: 6, kind: "quiet" },
   },
   {
+    eligibility: { questComplete: false },
     id: "quiet:6:together",
     lines: [
       line("astra", "Whatever is waiting, I'm not running this time."),

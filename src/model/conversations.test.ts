@@ -62,6 +62,7 @@ function director(galaxy: GalaxyNumber, seen: string[] = [], done = {}) {
 function run(talk: ConversationDirector, seconds: number, facts: Partial<ConversationFacts> = {}) {
   for (let left = seconds; left > 1e-9; left -= 0.05) {
     talk.step(Math.min(0.05, left), false, { ...calm, ...facts });
+    void talk.showing;
   }
 }
 /** How long the line now showing shows unless tapped: 5 s plus 50 ms a character. */
@@ -744,6 +745,7 @@ describe("conversations in the game", () => {
     });
     model.step(0.05, idle);
     expect(model.conversation).toMatchObject({ key: "lesson:stardust:0", mood: "neutral" });
+    void model.conversation;
     model.advanceConversation();
     expect(model.conversation).toMatchObject({
       key: "lesson:stardust:1",
@@ -841,7 +843,9 @@ describe("conversations in the game", () => {
     for (let i = 0; i < 60; i++) {
       model.step(0.05, idle);
     }
+    void model.conversation;
     model.advanceConversation();
+    void model.conversation;
     model.advanceConversation();
     expect(model.warningShowing).toBe(false);
     expect(model.conversation).toBeNull();
@@ -874,6 +878,7 @@ describe("conversations in the game", () => {
   it("save what was heard with story progress and do not repeat it after a reload", () => {
     const model = flying();
     model.step(0.05, idle);
+    void model.conversation;
     model.advanceConversation();
     const saved = model.save();
     expect(restoreSave(saved)?.seenConversations).toContain("lesson:move");
