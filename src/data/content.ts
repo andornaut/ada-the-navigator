@@ -547,10 +547,39 @@ export const CONTENT: GameContent = {
     projectFunded: "Funded",
     projectProgress: "{paid} of {price}",
     projects: "Projects",
+    questCalfDetail:
+      "Find the whale calf and guide it back to its family. Stay close so it can follow you.",
+    questCollect: "Collect {item}",
+    questDeliver: "Deliver {item}",
+    questDeliveryDetail: "Take {item} to {place}, where it is needed.",
+    questExplore: "Explore to locate",
+    questFoodDetail:
+      "The growers need help repairing their equipment. Take their food to the workshop and ask for help.",
+    questFrom: "From",
+    questHuntDetail: "Search the marked area for the lost {item}. Penny can help you find it.",
+    questLocate: "Show on map",
+    questMiningDetail:
+      "Collect ore and deposit it at the hub. Deposit {required} ore after accepting this contract to complete it.",
+    questOutcome: "Outcome",
+    questProgress: "{current} / {required}",
+    questRescueDetail:
+      "The {craft} cannot move because its engine has stopped. Attach the tow line and bring it " +
+      "to safety. Towing will slow Ada’s ship.",
+    questReward: "Reward",
+    questSparePartsDetail:
+      "The salvagers have parts to spare. Bring them to the workshop so it can repair the growers’ equipment.",
+    questSupplyDetail:
+      "Carry {item} from {source} to {destination}. The station is waiting for these supplies.",
+    questSurveyDetail: "Help Astra fill a gap in the map. Fly close to {landmark} to chart it.",
+    questTo: "To",
+    questToolkitDetail:
+      "The workshop needs spare parts. Take its tool kit to the salvagers so they can help.",
     quests: "Quests",
     questsEmpty: "Explore to find something to do.",
     questsJobBoards: "Station job boards have more to do.",
+    questsJobsHeading: "Station jobs",
     questsStoryComplete: "Story complete.",
+    questsStoryHeading: "Story quests",
     reducedMotion: "Reduced motion",
     rescueAbout: "Its engine stopped. Towing makes you slow.",
     rescueTitle: "Tow {craft} to safety",
