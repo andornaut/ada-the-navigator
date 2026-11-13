@@ -527,7 +527,9 @@ Once the chapter is complete, Phantom's drones stand down: it places no new
 encounters, and Gadget is the keeper of its stations. Drones in the other
 galaxies are beyond his signal and keep their last orders, so their space stays
 as dangerous as before. The salvaged flagship stays at the waypoint as a passable
-hulk with its lights on.
+hulk with its lights on. The Blurb settlements' docks show cracks from the blockades
+until the chapter is complete, then show mended, Gadget's work. The "dark nebula"
+in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
 
 ## Flight and combat
 
