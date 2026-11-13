@@ -2,7 +2,9 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { classic, DISPLAY, drawn, FRAME } from "../../../art/tools/ship-model.ts";
 import { CONVERSATIONS } from "../../data/conversations.ts";
+import { SHIP_HEADINGS } from "../../model/nose.ts";
 import { PILL } from "./controls.ts";
 import {
   CONVERSATION_BOX,
@@ -121,16 +123,23 @@ describe("conversation box", () => {
   });
 
   it("rises to the highest drawn hull point of Art's 32 idle headings, at heading 4", () => {
-    // Frames are 96 px with the pivot at (48, 48), drawn 42 px across.
-    const rises = Array.from({ length: 32 }, (_, heading) => {
+    const rises = Array.from({ length: SHIP_HEADINGS }, (_, heading) => {
       const svg = readFileSync(new URL(`../../../public/art/ship-${heading}.svg`, import.meta.url));
       const ys = [...String(svg).matchAll(/[\d.]+,([\d.]+)/g)].map((match) => Number(match[1]));
-      return ((48 - Math.min(...ys)) * 42) / 96;
+      return ((FRAME / 2 - Math.min(...ys)) * DISPLAY) / FRAME;
     });
     const highest = Math.max(...rises);
     expect(rises.indexOf(highest)).toBe(4);
-    // The pyramid hull's measured 11.82125; the rise is never below it, rounded up to 0.01.
-    expect(highest).toBeCloseTo(11.82125, 9);
+    const expectedRises = Array.from({ length: SHIP_HEADINGS }, (_, yaw) => {
+      const ys = drawn(FRAME / 2, classic.paint, { yaw }).flatMap(({ outline }) =>
+        outline.map(([, y]) => y),
+      );
+      // Art's svgPaths serializes frame-coordinate vertices to four decimal places.
+      const top = Number(Math.min(...ys).toFixed(4));
+      return ((FRAME / 2 - top) * DISPLAY) / FRAME;
+    });
+    expect(rises).toEqual(expectedRises);
+    expect(expectedRises.indexOf(Math.max(...expectedRises))).toBe(4);
     expect(highest).toBeLessThanOrEqual(CONVERSATION_BOX.ship.hullRise);
     expect(CONVERSATION_BOX.ship.hullRise).toBe(Math.ceil(highest * 100) / 100);
   });
