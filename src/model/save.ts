@@ -605,7 +605,10 @@ export function restoreSave(saved: unknown): GameState | null {
         !record(p) ||
         (p.andromeda !== undefined && (id !== 5 || !validAndromedaProgress(p.andromeda))) ||
         (p.needle !== undefined && (id !== 4 || !readNeedleChapterProgress(p.needle))) ||
-        (p.phantom !== undefined && (id !== 6 || !validPhantomProgress(p.phantom))) ||
+        (p.phantom !== undefined &&
+          (id !== 6 ||
+            !validPhantomProgress(p.phantom) ||
+            (p.phantom.aftermathComplete === true && (!p.questComplete || !p.holodisk)))) ||
         !Number.isInteger(p.stage) ||
         !nonnegative(p.stage) ||
         Number(p.stage) > (id === 1 ? 4 : id === 5 ? 6 : 5) ||

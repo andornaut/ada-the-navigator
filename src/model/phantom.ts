@@ -22,6 +22,7 @@ export interface PhantomProgress {
   broken: string[];
   freed: string[];
   flagshipKnown: boolean;
+  aftermathComplete?: true;
 }
 export type PhantomChatter = "battleAllies" | "battleAlone" | "flagshipAttack" | "flagshipDisabled";
 export interface PhantomDeparture extends Vec {
@@ -464,6 +465,10 @@ export function validPhantomProgress(value: unknown): value is PhantomProgress {
     ids(state.broken) &&
     ids(state.freed) &&
     state.freed.every((id) => state.broken.includes(id)) &&
+    (state.aftermathComplete === undefined ||
+      (state.aftermathComplete === true &&
+        state.flagshipKnown &&
+        state.freed.length === PHANTOM_DESTINATIONS.length)) &&
     typeof state.flagshipKnown === "boolean" &&
     (!state.flagshipKnown || state.freed.length === PHANTOM_DESTINATIONS.length)
   );

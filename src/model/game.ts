@@ -2,7 +2,6 @@ import { randomStream } from "@andornaut/game-kit/random";
 
 import { ACHIEVEMENTS, PENNY_FIND_RANGE } from "../data/achievements.ts";
 import { ACTIVITIES, MINING_CONTRACT_DEPOSITS, SUPPLY_ITEMS } from "../data/activities.ts";
-import type { CastKey } from "../data/cast.ts";
 import {
   CONVERSATION_TUNING,
   CONVERSATIONS,
@@ -122,7 +121,12 @@ import {
   rerollBoards,
   stationBoard,
 } from "./jobs.ts";
-import { greetingLines, type StationGreeting, stationKeeper } from "./keepers.ts";
+import {
+  greetingLines,
+  type KeeperKey,
+  type StationGreeting,
+  worldStationKeeper,
+} from "./keepers.ts";
 import {
   chartLandmarks,
   galaxyLandmarks,
@@ -395,7 +399,7 @@ export class GameModel {
   // The docked station keeper's greeting: the keeper, this docking's lines and the one on show.
   private greeting: {
     index: number;
-    readonly keeper: CastKey;
+    readonly keeper: KeeperKey;
     readonly lines: readonly string[];
   } | null = null;
   /** Achievements unlocked whose notice has not shown yet; notices show in flight. */
@@ -1084,8 +1088,22 @@ export class GameModel {
    * A docking's keeper greeting (gameplay/rules.md "Species and greeters"): the full greeting the
    * first time, then one later line in turn. The docking counts as greeted at once.
    */
+  private keeperAt(galaxy: GalaxyNumber, id: string) {
+    const progress = this.state.progress[galaxy];
+    return worldStationKeeper(
+      {
+        phantomComplete:
+          progress.phantom?.aftermathComplete === true &&
+          progress.questComplete &&
+          progress.holodisk,
+      },
+      ECONOMY,
+      galaxy,
+      id,
+    );
+  }
   private greet(galaxy: GalaxyNumber, id: string): void {
-    const keeper = stationKeeper(ECONOMY, galaxy, id);
+    const keeper = this.keeperAt(galaxy, id);
     if (!keeper) {
       this.greeting = null;
       return;
@@ -2905,6 +2923,18 @@ export class GameModel {
       this.holodiskMoment();
       return;
     }
+    if (
+      dialogue.context === "phantom.aftermath" &&
+      id === "continue" &&
+      this.state.selectedGalaxy === 6 &&
+      this.current.questComplete &&
+      this.current.holodisk &&
+      this.current.phantom
+    ) {
+      this.current.phantom.aftermathComplete = true;
+      this.state.dialogue = null;
+      return;
+    }
     // A panel that hands on to another speaker's shows it next, one speaker a panel.
     const next = id === "continue" ? this.chapter.dialogue[dialogue.context]?.then : undefined;
     if (next) {
@@ -2936,7 +2966,7 @@ export class GameModel {
       this.heldFlight = null;
       const { docked, flight } = this.state;
       if (docked && flight && !this.greeting) {
-        const keeper = stationKeeper(ECONOMY, flight.galaxy, docked);
+        const keeper = this.keeperAt(flight.galaxy, docked);
         if (keeper) {
           const visits = this.state.progress[flight.galaxy].greetings[docked] ?? 0;
           this.greeting = {
