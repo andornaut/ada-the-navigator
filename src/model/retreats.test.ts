@@ -50,7 +50,9 @@ it.each(["swarm", "fighter", "interceptor", "retaliator"] as const)(
     state.hp = (enemyCatalog[archetype].hp * enemyCatalog[archetype].morale.individualHpRatio) / 2;
     state = step(state).state;
     expect(state.fleeing).toBe(true);
-    for (let frame = 0; frame < 100; frame++) {state = step(state).state;}
+    for (let frame = 0; frame < 100; frame++) {
+      state = step(state).state;
+    }
     expect(state.retreat?.endedAt).toBeDefined();
     expect(state).toMatchObject({ engaged: true, fleeing: false, returning: false });
     const ended = state.retreat!.endedAt!;
@@ -93,7 +95,9 @@ it("investigates only fixed last-seen knowledge after hidden retreat, then retur
   expect(state).toMatchObject({ engaged: false, fleeing: false, returning: false });
   expect(state.lastSeen).toEqual(known);
   expect(Math.hypot(state.velocity.x, state.velocity.y)).toBeGreaterThan(0);
-  for (let frame = 0; frame < 300; frame++) {state = step(state, hidden).state;}
+  for (let frame = 0; frame < 300; frame++) {
+    state = step(state, hidden).state;
+  }
   expect(state.returning).toBe(true);
   expect(state.lastSeen).toEqual(known);
 });
@@ -103,7 +107,9 @@ it("requires admission, perception and the home leash before recovery can reenga
   state.hp = 1;
   state = step(state).state;
   const denied = { ...context(state), engagementAdmitted: false };
-  for (let frame = 0; frame < 110; frame++) {state = step(state, denied).state;}
+  for (let frame = 0; frame < 110; frame++) {
+    state = step(state, denied).state;
+  }
   expect(state.engaged).toBe(false);
   expect(
     step(state, { ...denied, engagementAdmitted: true, player: { x: 1000, y: 0 } }).state.engaged,
@@ -128,8 +134,9 @@ it("uses one smooth seeded bend independent of visible target changes and resume
     const before = state.heading;
     state = result.state;
     resumed = other.state;
-    if (before && state.heading)
-      {expect(before.x * state.heading.x + before.y * state.heading.y).toBeGreaterThan(0.95);}
+    if (before && state.heading) {
+      expect(before.x * state.heading.x + before.y * state.heading.y).toBeGreaterThan(0.95);
+    }
     expect(Math.hypot(state.velocity.x, state.velocity.y)).toBeLessThanOrEqual(
       enemyCatalog.fighter.physics.maxSpeed,
     );
@@ -143,7 +150,9 @@ it("enforces tactical cooldown even when hits and completed volleys still reques
   let state = spawn("fighter");
   state.tactic.volleys = 3;
   state = step(state).state;
-  for (let frame = 0; frame < 100; frame++) {state = step(state).state;}
+  for (let frame = 0; frame < 100; frame++) {
+    state = step(state).state;
+  }
   const ended = state.retreat!.endedAt!;
   state.tactic.volleys = 3;
   state.age = ended + ENEMY_RETREAT.cooldownSeconds - 0.1;
@@ -159,9 +168,13 @@ it("does not restart morale withdrawal while waiting for engagement admission", 
   state.hp = 1;
   state = step(state).state;
   const denied = { ...context(state), engagementAdmitted: false };
-  for (let frame = 0; frame < 110; frame++) {state = step(state, denied).state;}
+  for (let frame = 0; frame < 110; frame++) {
+    state = step(state, denied).state;
+  }
   const ended = state.retreat!.endedAt!;
-  for (let frame = 0; frame < 500; frame++) {state = step(state, denied).state;}
+  for (let frame = 0; frame < 500; frame++) {
+    state = step(state, denied).state;
+  }
   expect(state).toMatchObject({ engaged: false, fleeing: false });
   expect(state.retreat!.endedAt).toBe(ended);
 });
@@ -173,8 +186,9 @@ it("honors an archetype's per-behavior policy override without changing the shar
   };
   let state = spawn("fighter");
   state.tactic.volleys = 3;
-  for (let frame = 0; frame < 16; frame++)
-    {state = stepEnemy(definition, context(state), state).state;}
+  for (let frame = 0; frame < 16; frame++) {
+    state = stepEnemy(definition, context(state), state).state;
+  }
   expect(state.retreat?.endedAt).toBeDefined();
   expect(ENEMY_RETREAT.seconds).toBe(1.6);
 });
