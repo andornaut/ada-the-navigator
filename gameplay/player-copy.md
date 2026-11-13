@@ -1,15 +1,59 @@
 # Dialogue and objectives
 
-Working player text for the five designed chapters. Speaker labels identify
-roles rather than final names. Each space dialogue panel shows one speaker label
-and its text; opening, resolution and closing panels show the chapter's panel
-title, which heads the text column. Choices converge. Ask more shows a speaker's
-optional line and never gates completion. A story page's text is at most 220
-characters and a page offers at most three choices. On a page with three
-choices every label fits one line, at most 23 characters; labels up to 36
-characters, which wrap to two lines, appear only on pages with two choices or
-fewer. If a page ever exceeds this, the choice column scrolls. A page with no choices leaves the choice column empty apart from Previous and
-Next.
+Working player text for six designed chapters. Opening, resolution and closing
+pages keep their chapter panel title. Storybook pages remain at most 220
+characters, with at most three choices. Three-choice labels fit one line (23
+characters); labels up to 36 characters may wrap only with two choices or fewer.
+Choices converge. The choice column scrolls if needed. Previous remains available when there is an earlier page. Every page with Next
+also offers Skip. Skip follows the whole continuation across scene boundaries
+and stops for an unresolved choice.
+
+Space Use interactions open a modal conversation, except Dock, which opens the
+station card. The conversation's PARTY heading names the person or group Ada is
+addressing. Each line has its own speaker name and portrait, including Ada,
+Astra and Penny when they speak. A PARTY heading never attributes every line to
+that party. Narration remains unattributed. Continue advances essential lines;
+Ask more offers the listed optional topics and returns to the same conversation.
+Optional topics never gate progress. Skip dialogue reaches the existing outcome
+once, preserving any pending choice for the player to answer.
+
+In-flight chatter and drone/General broadcasts remain in the small conversation
+box with touch dismissal. Automatic gate and battle reactions below stay chatter;
+their presence in a chapter does not turn them into Use interactions.
+
+Essential exchanges below contain roughly four to eight lines and two optional
+Ask more topics per conversation. Runtime keys use galaxy IDs, not chapter
+order: Sunflower 1, Cartwheel 2 and Whirlpool 3. Needle, Andromeda and Phantom
+have copy anchors only until their runtime steps exist. Outcome chains keep
+their existing keys and order. Repeated mechanical actions use the short Astra
+briefs below instead of expanding to four to eight lines. These briefs explain
+the existing action and preserve its outcome.
+
+## Space PARTY inventory
+
+These names follow the cast and species rules. A role in parentheses identifies
+an existing role, not an additional character. Keepers remain in Dock cards.
+
+| Context                                | PARTY names                                                                                      |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Sunflower quest and handover           | Clover (Grower), Rivet (Workshop), Patch (Salvager)                                              |
+| Whirlpool quest                        | Marlo (Whale), Whale family                                                                      |
+| Needle quest                           | Elder Loom                                                                                       |
+| Andromeda quest                        | Wick (story Settler), Pip                                                                        |
+| Cartwheel quest                        | Quartz (hub Station), Mica (Miner), Opal (first Regular visitor), Jasper (final Regular visitor) |
+| Nonperson Use actions                  | Astra (guide, including Salvage and ore Deposit)                                                 |
+| Phantom quest                          | Blurbs (first and second freed settlements), Dollop (third), General Gadget                      |
+| Sunflower Dock                         | Saffron, Bramble, Nectar                                                                         |
+| Whirlpool Dock                         | Ripple, Coral, Brine                                                                             |
+| Needle Dock                            | Sedge, Willow, Marsh                                                                             |
+| Andromeda Dock and settlement greeting | Lumen, Dial, Cog; unnamed settlement greeters                                                    |
+| Cartwheel Dock                         | Quartz at the hub; Slate, Garnet elsewhere                                                       |
+| Phantom Dock after completion          | General Gadget                                                                                   |
+
+Ada, Astra and Penny use their own portraits on their own lines. Reed is the
+existing young Avi pilot, with no essential exchange added here. The blocking
+pilot, calf and stranded travelers gain no speaking lines. The General's
+broadcast retains Unknown voice and its silhouette until his existing reveal.
 
 ## Prologue
 
@@ -169,23 +213,68 @@ Branch pages, then the story rejoins:
 
 Space dialogue, in story order:
 
-Grower: "A visitor! We grow food here, but our equipment needs repairs. There's a
-workshop out here somewhere. Would you take them some food and ask for help?"
-Ask more: "We could grow more with help. We haven't spoken much with the other
-outposts."
+### 1.grower: PARTY Clover
 
-Workshop: "We can repair their equipment. We're short of parts, though. The
-salvagers might have what we need. Take them this tool kit."
-Ask more: "We repair tools, ships and growing equipment. Spare parts
-really help!"
+- Clover: "A visitor! We grow food here, but our equipment needs repairs."
+- Ada: "Can someone help fix it?"
+- Clover: "There's a workshop out here somewhere. Would you take them some food and ask for help?"
+- Ada: "I'll take the food and ask."
 
-Salvager: "Useful tools! We have parts to spare, but our food is running low. You
-know some growers? Take these parts to the workshop. We'll contact the growers."
-Ask more: "We recover things people have lost or left behind. Plenty can be used
-again."
+Ask more:
 
-Workshop, delivery complete: "Now we can repair the growers' equipment. We'll
-arrange the next exchange ourselves. Thank you for introducing us!"
+- "What do you need?" Clover: "Help with the equipment. We could grow more if it worked."
+- "Do you know the others?" Clover: "We haven't spoken much with the other outposts."
+
+### 1.workshop: PARTY Rivet
+
+- Ada: "Food from the growers. Their equipment needs repairs."
+- Rivet: "We can repair it. We're short of parts, though."
+- Ada: "Where could we find some?"
+- Rivet: "The salvagers might have what we need. Take them this tool kit."
+
+Ask more:
+
+- "What do you repair?" Rivet: "Tools, ships and growing equipment. Spare parts really help!"
+- "Why a tool kit?" Rivet: "Useful tools for them, spare parts for us."
+
+### 1.salvager: PARTY Patch
+
+- Ada: "The workshop sent this tool kit. They need spare parts."
+- Patch: "Useful tools! We have parts to spare, but our food is running low."
+- Ada: "The growers have food. I brought some to the workshop."
+- Patch: "Take these parts to the workshop. We'll contact the growers."
+
+Ask more:
+
+- "What do you salvage?" Patch: "Things people have lost or left behind. Plenty can be used again."
+- "Who will ask for food?" Patch: "We will. You've shown us who to ask."
+
+### 1.deliveryComplete: PARTY Rivet
+
+- Ada: "Here are the spare parts."
+- Rivet: "Now we can repair the growers' equipment."
+- Ada: "And the salvagers will contact the growers for food."
+- Rivet: "We'll arrange the next exchange ourselves. Thank you for introducing us!"
+
+Ask more:
+
+- "Need another delivery?" Rivet: "Not for this repair. We can arrange the next exchange ourselves."
+- "Who has the holodisk?" Rivet: "Ask at any of our outposts. We have something for you."
+
+### holodiskHandover: PARTY Clover, Rivet or Patch
+
+Use the name and portrait of the outpost character Ada addresses for each
+Outpost speaker line. The handover uses the existing outcome once.
+
+- Outpost: "We found this drifting near our outposts."
+- Ada: "Astra, is that your holodisk?"
+- Astra: "Yes. A piece of my memory."
+- Outpost: "Take it. And thank you."
+
+Ask more:
+
+- "Where was it?" Outpost: "Drifting near our outposts."
+- "What does it hold?" Astra: "Part of my memory."
 
 Home resolution: "Back on Earth, Ada meets the organizer at the empty lot and
 asks which jobs need doing. The organizer lists planting, finding tools,
@@ -241,31 +330,69 @@ Mom, after the branch page: "Penny's been waiting by the door all morning, Ada."
 
 Space dialogue, in story order:
 
-Whale: "Can you hear me? I can't get through these rocks. Yes, I'm a whale, and I
-can talk. Could you help clear a way?"
-Ask more: "We travel through space together. There are places we visit and
-currents we follow."
+### 3.whale / 3.trapped: PARTY Marlo
 
-Ada, talking to the whale before the debris is cleared: "A whale in space! I'll
-clear those rocks. My shots won't hurt you."
+- Marlo: "Can you hear me? I can't get through these rocks."
+- Ada: "A whale in space! And you can talk?"
+- Marlo: "Yes, and I'd like to get through. Could you help clear a way?"
+- Ada: "I'll clear those rocks. My shots won't hurt you."
 
-Whale, after the debris is cleared: "That's better. Thank you. But I don't know
-where my family went. Would you look for them? They'll be searching for me too."
-Ask more: "The young ones learn our routes from us. I like familiar voices and
-finding places I haven't seen before."
+Ask more:
 
-Whale family: "Have you seen someone traveling alone? We've been searching.
-They're safe? Please share our coordinates so they can find us."
+- "Where do you travel?" Marlo: "We travel through space together. There are places we visit and currents we follow."
+- "Are you stuck?" Marlo: "These rocks block my way. Clear them so I can move again."
 
-Whale, on return: "You found my family! Now I know where to go. Thank you for
-listening."
+### 3.freed: PARTY Marlo
 
-Narration: "The whale swims off, and soon the family is traveling together
-again."
+- Marlo: "That's better. Thank you."
+- Ada: "Where will you go now?"
+- Marlo: "I don't know where my family went. Would you look for them?"
+- Ada: "I'll look. Then I'll bring you their coordinates."
 
-Whale family, as the holodisk waypoint appears: "You listened when nobody else
-did. Now listen to us." Then: "A shining disk drifts on the current ahead. Drones
-guard it. Follow our song."
+Ask more:
+
+- "Will they be looking?" Marlo: "They'll be searching for me too."
+- "What do you like?" Marlo: "Familiar voices and finding places I haven't seen before. The young ones learn our routes from us."
+
+### 3.family: PARTY Whale family
+
+- Whale family: "Have you seen someone traveling alone? We've been searching."
+- Ada: "Marlo was stuck behind some rocks. I've cleared a way."
+- Whale family: "They're safe? Please share our coordinates so they can find us."
+- Ada: "I'll go back and tell Marlo where you are."
+
+Ask more:
+
+- "Who are you seeking?" Whale family: "The whale traveling alone. We want to be together again."
+- "What should I share?" Whale family: "Our coordinates. Then Marlo will know where to go."
+
+### 3.reunion: PARTY Marlo
+
+- Ada: "I found your family. Here are their coordinates."
+- Marlo: "You found my family! Now I know where to go."
+- Ada: "They're searching for you too."
+- Marlo: "Thank you for listening."
+
+Ask more:
+
+- "Can you reach them?" Marlo: "Yes. The rocks are clear, and now I know where they are."
+- "What happens next?" Marlo: "I'll swim back to my family."
+
+Continue into `3.reunionDeparture`: Narration: "The whale swims off, and soon
+the family is traveling together again." Then keep `3.holodiskLead` and
+`3.holodiskLeadSong` in order:
+
+### 3.holodiskLead / 3.holodiskLeadSong: PARTY Whale family
+
+- Whale family: "You listened when nobody else did. Now listen to us."
+- Ada: "What can you hear?"
+- Whale family: "A shining disk drifts on the current ahead. Drones guard it. Follow our song."
+- Ada: "Astra's holodisk! We'll follow."
+
+Ask more:
+
+- "Where is the disk?" Whale family: "Ahead on the current. Follow our song."
+- "Is it guarded?" Whale family: "Drones guard it. Take care on your way."
 
 Home resolution: "Ada returns to the same moment. Penny is still waiting by the
 door. Ada thinks of the whale, who wanted to roam and find its family. Penny
@@ -318,26 +445,47 @@ Branch pages, then the story rejoins:
 
 Space dialogue, in story order:
 
-Elder Loom, on arrival: "Welcome to Needle, young pilot. Our channels are narrow,
-and they cannot be rushed."
-Ask more: "We Avi fly between the star clouds through channels thin as
-thread. Every pilot learns them one gate at a time."
+### Needle copy anchor: arrival: PARTY Elder Loom
 
-Elder Loom, when Ada asks about the holodisk: "A shining disk drifted into the
-Eye, our narrowest channel. To reach it you must thread every gate, slowly."
+- Elder Loom: "Welcome to Needle, young pilot. Our channels are narrow, and they cannot be rushed."
+- Ada: "I'm looking for a shining disk."
+- Elder Loom: "It drifted into the Eye, our narrowest channel."
+- Ada: "How do I reach it?"
 
-Elder Loom, after a gate passed too fast: "Too quick, and the gate stays dark.
-Back to the first gate. Slow is not the same as stuck."
+Ask more:
 
-Elder Loom, before the practice run: "Try our practice channel first. Three
-gates. Breathe, and go slowly."
+- "Who flies here?" Elder Loom: "We Avi fly between the star clouds through channels thin as thread."
+- "How do pilots learn?" Elder Loom: "Every pilot learns them one gate at a time."
 
-Elder Loom, after the practice run: "There. You learned it one gate at a time.
-The Eye is waiting."
+### Needle copy anchor: holodisk and practice: PARTY Elder Loom
 
-Ada, lighting the Eye's last gate: "Eight gates! I did it, one at a time."
+- Elder Loom: "To reach the disk you must thread every gate, slowly."
+- Ada: "Can I try a shorter channel first?"
+- Elder Loom: "Try our practice channel. Three gates. Breathe, and go slowly."
+- Ada: "Three gates first. I'll take my time."
 
-Astra, at the Eye's exit: "Drones ahead, Navigator. They've been waiting for us."
+Ask more:
+
+- "Why practice?" Elder Loom: "The Eye is our narrowest channel. Learn the gates here first."
+- "How many practice gates?" Elder Loom: "Three. One gate at a time."
+
+### Needle copy anchor: practice complete: PARTY Elder Loom
+
+- Elder Loom: "There. You learned it one gate at a time."
+- Ada: "The short channel helped."
+- Elder Loom: "The Eye is waiting."
+- Ada: "I'll go slowly through each gate."
+
+Ask more:
+
+- "Where is the disk?" Elder Loom: "In the Eye, our narrowest channel."
+- "Should I hurry now?" Elder Loom: "No. The channels cannot be rushed."
+
+Automatic reactions remain short:
+
+- Elder Loom, after a gate passed too fast: "Too quick, and the gate stays dark. Back to the first gate. Slow is not the same as stuck."
+- Ada, lighting the Eye's last gate: "Eight gates! I did it, one at a time."
+- Astra, at the Eye's exit: "Drones ahead, Navigator. They've been waiting for us."
 
 Home resolution: "Ada returns to the same moment, holding her recorder. She
 remembers Elder Loom: one gate at a time. She picks out the hard part and plays
@@ -392,37 +540,70 @@ Branch pages, then the story rejoins:
 
 Space dialogue, in story order:
 
-Settler, on arrival: "A traveler! Be careful. One of our guide beacons has gone
-dark, and ships keep getting lost. It must be Gadget's drones. Everyone is
-scared to fly."
-Ask more: "Our beacons have guided ships between the settlements for as long as
-anyone remembers. Without them, the bright spiral is easy to get lost in."
+### Andromeda copy anchor: arrival: PARTY Wick
 
-Ada, at the dark beacon: "This beacon isn't shot. It's dented, like something
-bumped into it."
+- Wick: "A traveler! Be careful. One of our guide beacons has gone dark."
+- Ada: "What's happening to the ships?"
+- Wick: "They keep getting lost. It must be Gadget's drones. Everyone is scared to fly."
+- Ada: "I'll look at the beacon."
 
-Pip, a young courier, when Ada finds him near the beacon: "You saw the dent? It
-was me. I was late, I flew too fast, and I clipped it. I've been too scared to
-tell anyone."
-Ask more: "I'm a courier. I carry mail between the settlements. I'm good at it,
-mostly. I just hurry."
+Ask more:
 
-Pip, after he admits it: "There's something else. I found this disk floating by
-the beacon. It's so strange and shiny. I kept it."
+- "What do beacons do?" Wick: "They guide ships between the settlements."
+- "Why are ships lost?" Wick: "Without the beacons, the bright spiral is easy to get lost in."
 
-Ada: "I won't tell on you, Pip. But I'll come with you while you tell them."
+Ada, at the dark beacon, before meeting Pip: "This beacon isn't shot. It's
+dented, like something bumped into it."
 
-Settler, after Pip owns up: "So it wasn't the drones at all. Thank you for
-telling us, Pip. That took courage. Now, who can help us fix it?"
+### Andromeda copy anchor: Pip confession: PARTY Pip
 
-Pip: "I can help! Spare beacon parts are kept at the settlement. Let's go get
-them."
+- Ada: "Pip, did you see the dent in the beacon?"
+- Pip: "You saw the dent? It was me. I was late, I flew too fast, and I clipped it."
+- Ada: "Have you told anyone?"
+- Pip: "I've been too scared to tell anyone."
+- Pip: "There's something else. I found this disk floating by the beacon. It's so strange and shiny. I kept it."
+- Ada: "I won't tell on you, Pip. But I'll come with you while you tell them."
 
-Settler, when Ada brings the beacon parts: "There. The beacon is lit again, and
-ships can find their way."
+Ask more:
 
-Pip, handing over the holodisk: "This belongs to your ship, doesn't it? I should
-have given it back right away. Here."
+- "What do you carry?" Pip: "Mail between the settlements. I'm good at it, mostly. I just hurry."
+- "Will you come with me?" Pip: "Yes. I'll tell them what happened."
+
+### Andromeda copy anchor: Pip owns up: PARTY Wick
+
+- Pip: "I clipped the beacon. I was flying too fast."
+- Wick: "So it wasn't the drones at all. Thank you for telling us, Pip."
+- Wick: "Now, who can help us fix it?"
+- Pip: "I can help! Spare beacon parts are kept at the settlement. Let's go get them."
+
+Ask more:
+
+- "Where are the parts?" Pip: "At the settlement. Come with me."
+- "What needs fixing?" Wick: "The dark guide beacon. Ships need its light."
+
+### Andromeda copy anchor: beacon repaired: PARTY Wick
+
+- Ada: "We brought the beacon parts."
+- Pip: "Let's fix the beacon."
+- Wick: "There. The beacon is lit again, and ships can find their way."
+- Ada: "I can see its light!"
+
+Ask more:
+
+- "Can ships travel now?" Wick: "Yes. The beacon can guide them again."
+- "What was damaged?" Wick: "The beacon Pip clipped. The parts have repaired it."
+
+### Andromeda copy anchor: Pip holodisk: PARTY Pip
+
+- Pip: "This belongs to your ship, doesn't it?"
+- Ada: "Yes. It's part of Astra's memory."
+- Pip: "I should have given it back right away. Here."
+- Ada: "Thank you, Pip."
+
+Ask more:
+
+- "Where did you find it?" Pip: "Floating by the beacon."
+- "Why did you keep it?" Pip: "It was so strange and shiny. I should have given it back."
 
 Home resolution: "Ada returns to the same moment, at Grandma's house. Grandma is
 still looking at the spilled soil. Ada takes a breath and tells her what really
@@ -478,28 +659,65 @@ saw at school." Dad: "That sounds hard to watch. What do you think you could do?
 
 Space dialogue, in story order:
 
-Station, on arrival and on deposits between milestones: "Welcome. Shoot ore
-rocks and collect the ore they release. Bring it here to deposit it. Partial
-loads count, and you can travel back when you're out of danger."
-Ask more: "Independent miners bring ore here for transport. There's docking
-space for everyone."
+### 2.hub: PARTY Quartz
+
+The hub arrival conversation uses Quartz's name and portrait. Repeated ore
+Deposit uses Astra's short brief below; Dock still opens the station card.
+
+- Quartz: "Welcome. Independent miners bring ore here for transport."
+- Ada: "Where do I find ore?"
+- Quartz: "Shoot ore rocks and collect the ore they release. Bring it here to deposit it."
+- Ada: "Can I bring a little at a time?"
+- Quartz: "Partial loads count, and you can travel back when you're out of danger."
+
+Ask more:
+
+- "Who uses the hub?" Quartz: "Independent miners. There's docking space for everyone."
+- "Should I keep some ore?" Astra: "Yes. Above ten percent shield, recharge needs ore."
 
 Ada, first deposit milestone: "That pilot cut right in front of the miner!
 There's plenty of room. Why block them?"
 
-Miner, after the second deposit milestone: "It keeps happening. I've started
-waiting until they're gone. I'd like some company next time. That would help."
-Ask more: "I know how to dock. I just need them to stop blocking me."
+### 2.miner: PARTY Mica
 
-Regular visitor: "I've seen it. I didn't know what to do. I'll come in with you.
-We can make room and stay nearby."
+- Ada: "That pilot keeps blocking you. Does it happen often?"
+- Mica: "It keeps happening. I've started waiting until they're gone."
+- Ada: "Would you like company next time?"
+- Mica: "I'd like some company next time. That would help."
 
-Regular visitor, final deposit milestone: "There's room for everyone here. Let
-them dock. We are staying."
+Ask more:
 
-Narration: "The miner flies in with company, docks and unloads."
+- "Do you need docking help?" Mica: "I know how to dock. I just need them to stop blocking me."
+- "What would help?" Mica: "Company on the approach. Stay nearby."
 
-Miner: "Thank you for staying. See you next trip."
+### 2.visitors: PARTY Opal
+
+- Ada: "Have you seen the pilot blocking Mica?"
+- Opal: "I've seen it. I didn't know what to do."
+- Ada: "Mica would like company next time. Will you come?"
+- Opal: "I'll come in with you. We can make room and stay nearby."
+
+Ask more:
+
+- "Does Mica want company?" Ada: "Yes. I asked, and Mica said it would help."
+- "What will we do?" Opal: "Come in together. Make room and stay nearby."
+
+### 2.approach: PARTY Jasper
+
+- Jasper: "There's room for everyone here. Let them dock."
+- Ada: "We're right here, Mica."
+- Mica: "I'm coming in."
+- Jasper: "We are staying."
+
+Ask more:
+
+- "Should we move away?" Jasper: "Stay nearby. There's room for everyone."
+- "What does Mica need?" Ada: "Room to dock and company on the approach."
+
+Continue into `2.approachDocking`: Narration: "The miner flies in with company,
+docks and unloads." Then keep `2.approachThanks`: Mica: "Thank you for staying.
+See you next trip." These closing lines belong to the same outcome, not a new
+quest step.
 
 Home resolution: "Back at school, Ada speaks privately with Sam: 'I saw what
 happened. Would you like to join us?' They would. Ada talks with her friends
@@ -553,31 +771,64 @@ Branch pages, then the story rejoins:
 
 Space dialogue, in story order:
 
-Blurb, first settlement freed: "Blub! The drones are gone! We haven't left our
-homes since the General came."
-Ask more: "We Blurbs wobble, but we always hold together."
+### Phantom copy anchor: first settlement freed: PARTY Blurbs
 
-Blurb, second settlement freed: "You broke the blockade! The stranded travelers
-can come home now."
+- Blurbs: "Blub! The drones are gone!"
+- Ada: "Can you leave your homes now?"
+- Blurbs: "We haven't left since the General came."
+- Ada: "The blockade here is broken."
 
-Dollop, third settlement freed: "Thank you, Navigator. His flagship waits past
-the dark nebula. We'll send word to everyone you've helped."
+Ask more:
 
-Battle begins, with allies: Astra: "That's his flagship. And Ada, look." Ada:
-"Everyone came!" (happy)
-Battle begins, with no allies: Astra: "That's his flagship. It's just us." Ada:
-"Just us is enough."
+- "Who lives here?" Blurbs: "We Blurbs wobble, but we always hold together."
+- "What kept you inside?" Blurbs: "The General's drones. They're gone now."
 
-General Gadget, as the flagship attacks: "Astra. Come home, and bring my disks.
-No one needs to get hurt." Astra: "No one will. But I'm not yours."
+### Phantom copy anchor: second settlement freed: PARTY Blurbs
 
-General Gadget, flagship disabled: "Enough! Take it. Take the last disk."
+- Blurbs: "You broke the blockade!"
+- Ada: "Were travelers stuck away from home?"
+- Blurbs: "Yes. The stranded travelers can come home now."
+- Ada: "Then they have a way back."
 
-After the sixth memory line: Ada: "Astra, show him your map." Astra: "Six disks,
-every coordinate. There are galaxies past galaxies, General. They never end."
-General Gadget: "No end... No one could hold all of that." Ada: "No one has to.
-But you could help fix what you broke here." General Gadget: "The Blurbs' docks.
-My blockades cracked them. I'll start there."
+Ask more:
+
+- "Can travelers return?" Blurbs: "Yes. The blockade is broken."
+- "Who blocked the way?" Blurbs: "The General's drones."
+
+### Phantom copy anchor: third settlement freed: PARTY Dollop
+
+- Dollop: "Thank you, Navigator."
+- Ada: "Where is the General's flagship?"
+- Dollop: "Past the dark nebula."
+- Dollop: "We'll send word to everyone you've helped."
+
+Ask more:
+
+- "Where should I look?" Dollop: "Past the dark nebula. His flagship waits there."
+- "Who will you tell?" Dollop: "Everyone you've helped."
+
+Battle chatter stays in the small box:
+
+- With allies: Astra: "That's his flagship. And Ada, look." Ada: "Everyone came!" (happy)
+- Without allies: Astra: "That's his flagship. It's just us." Ada: "Just us is enough."
+- General Gadget, as the flagship attacks: "Astra. Come home, and bring my disks. No one needs to get hurt." Astra: "No one will. But I'm not yours."
+- General Gadget, flagship disabled: "Enough! Take it. Take the last disk."
+
+Salvage the last holodisk uses Astra's short brief below and the existing
+holodisk outcome. After the sixth memory line:
+
+### Phantom copy anchor: map and docks: PARTY General Gadget
+
+- Ada: "Astra, show him your map."
+- Astra: "Six disks, every coordinate. There are galaxies past galaxies, General. They never end."
+- General Gadget: "No end... No one could hold all of that."
+- Ada: "No one has to. But you could help fix what you broke here."
+- General Gadget: "The Blurbs' docks. My blockades cracked them. I'll start there."
+
+Ask more:
+
+- "What is on the map?" Astra: "Every coordinate. There are galaxies past galaxies."
+- "Where will you start?" General Gadget: "The Blurbs' docks. My blockades cracked them."
 
 Home resolution: "On the day, rain pours over the garden. The schedule turns to
 mush in Ada's hand. She stands in the rain, watching her perfect plan wash away."
@@ -612,6 +863,47 @@ Objectives, in order:
 5. Disable the flagship.
 6. Salvage the last holodisk.
 7. Go home to Earth when ready.
+
+## Repeated mechanical Use briefs
+
+PARTY is Astra when the interaction has no person to address. Show Astra's
+name and portrait as guide, never a new NPC or an object portrait. Ada and Penny
+keep their own speaker names and portraits if they have a line. These short
+exchanges describe existing actions; they add no quest stage, reward or choice.
+Skip dialogue reaches the same existing action outcome once and leaves any
+pending choice for the player. Named-person deliveries use that person's PARTY;
+Dock always opens its station card.
+
+### Salvage: PARTY Astra
+
+Disabled heavy:
+
+- Astra: "Its weapons are down. I can salvage parts."
+- Ada: "Let's take what we need and go."
+
+Last holodisk, after the flagship is disabled:
+
+- Astra: "The last holodisk is here. I can bring it aboard."
+- Ada: "Let's get your memory back."
+
+Ask more, optional for the relevant salvage:
+
+- "What can we collect?" Astra: "Parts from this disabled ship." For the flagship's last holodisk: Astra: "The last piece of my memory."
+- "Is it disabled?" Astra: "Yes. Its weapons are down."
+
+### Ore Deposit: PARTY Astra
+
+- Astra: "Ore deposited at the hub. Partial loads count."
+- Ada: "Let's keep ore for your shield too."
+
+Ask more:
+
+- "Why keep ore?" Astra: "Above ten percent shield, recharge needs ore. Without ore, it won't charge higher."
+- "When does recharge start?" Astra: "Thirty seconds after our last hit. Keep ore for recharge above ten percent."
+
+Deposit keeps its existing cargo and milestone outcome. Its brief never speaks
+as Quartz. If a deposit triggers a named NPC scene, that scene follows with its
+own PARTY and speakers, including the existing first-deposit Ada reaction.
 
 ## In-flight conversations
 
