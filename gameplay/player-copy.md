@@ -581,8 +581,7 @@ But you could help fix what you broke here." General Gadget: "The Blurbs' docks.
 My blockades cracked them. I'll start there."
 
 Home resolution: "On the day, rain pours over the garden. The schedule turns to
-mush in Ada's hand. She stands under the shelter, watching her perfect plan wash
-away."
+mush in Ada's hand. She stands in the rain, watching her perfect plan wash away."
 
 Choices:
 
@@ -591,13 +590,13 @@ Choices:
 
 Branch pages, then the story rejoins:
 
-- "Try to save the plan.": "Ada rushes to move the games under the shelter, but
+- "Try to save the plan.": "Ada rushes to move the games into the shed, but
   nothing fits. Grandma laughs and hands her an umbrella. 'Plans are for
   starting, love.'"
 - "Let the plan go.": "Ada laughs and drops the soggy list. Sam starts a puddle
   race, and Dad shields the cake under his coat."
 
-Rejoin: "Everyone crowds under the shelter. Mom passes cake, Penny shakes rain
+Rejoin: "Everyone crowds together in the rain. Mom passes cake, Penny shakes rain
 over everyone, and nobody minds at all."
 
 Closing: "Nobody remembers the schedule. Everyone remembers the rain. That night,

@@ -487,7 +487,7 @@ never end (see [the design](design.md#general-gadget)).
 
 At home, Ada plans a thank-you party at the community garden for Grandma, Sam,
 her friends, Mom and Dad, with a list for every minute. After the space story, rain
-spoils the plan. Ada lets it go, everyone crowds under the shelter together, and
+spoils the plan. Ada lets it go, everyone crowds together in the rain, and
 nobody remembers the schedule. That night Astra, whole again, chooses to keep
 flying with Ada.
 
