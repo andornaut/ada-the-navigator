@@ -31,7 +31,7 @@ export type WaitedLoad = "boot" | "galaxy";
 
 /** The waited-for loads, each measured by the kit's loader watch (src/game/scene.ts). */
 export const loadingProgress = createProgressState();
-/** The background work, of unknown total: the first visit's precache or a forced update. */
+/** The background work, of unknown total: offline installation and forced updates. */
 export const installProgress = createProgressState();
 
 const colour = (hex: string) => Number.parseInt(hex.slice(1), 16);
@@ -55,11 +55,11 @@ export const BAR_TIMING: DomProgressTiming = {
 // The kit's bar, the fill and track band; the host holds it and the rule below, the whole height.
 const FRAME = { height: LOADING_BAR.fillHeight, width: SCREEN.width, x: 0, y: 0 };
 
-// What the background shows for: the first visit's precache, and a forced update downloading.
-const background = new Set<"precaching" | "required">();
+// Offline installation and forced updates share the bar while either still runs.
+const background = new Set<"offline" | "required">();
 let install: ProgressHandle | undefined;
 
-function showBackground(reason: "precaching" | "required", shown: boolean): void {
+function showBackground(reason: "offline" | "required", shown: boolean): void {
   if (shown) {
     background.add(reason);
   } else {
@@ -73,12 +73,9 @@ function showBackground(reason: "precaching" | "required", shown: boolean): void
   }
 }
 
-/**
- * offlinePlay's activity: only the first visit's precache shows, until it ends; an update installs
- * silently.
- */
+/** Offline installation uses the existing bar until precaching or updating ends. */
 export function offlineActivity(activity: OfflineActivity): void {
-  showBackground("precaching", activity === "precaching");
+  showBackground("offline", activity !== "idle");
 }
 
 /** A forced update for a newer save: the bar travels while it downloads ("updating"). */
