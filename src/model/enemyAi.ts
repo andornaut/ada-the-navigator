@@ -381,6 +381,63 @@ function arrive(
   return { x: (offset.x / distance) * arrival, y: (offset.y / distance) * arrival };
 }
 
+/**
+ * Smooth approach to a seeded ellipse passing through its anchor. The flow uses current
+ * position and fixed ship identity, so resuming or changing frame rate never rerolls a route.
+ */
+function navigate(
+  definition: EnemyDefinition,
+  anchor: Point,
+  searching: boolean,
+  state: EnemyState,
+): Point {
+  const tuning = definition.navigation;
+  if (!tuning) {
+    return { x: 0, y: 0 };
+  }
+  const radius =
+    tuning.patrolRadius[0] +
+    seeded(state.id, 11) * (tuning.patrolRadius[1] - tuning.patrolRadius[0]);
+  const ellipse =
+    tuning.ellipseRatio[0] +
+    seeded(state.id, 12) * (tuning.ellipseRatio[1] - tuning.ellipseRatio[0]);
+  const heading = state.phase + seeded(state.id, 13) * Math.PI * 2;
+  const side = seeded(state.id, 14) < 0.5 ? -1 : 1;
+  const offset = rotate({ x: radius, y: 0 }, heading);
+  const local = rotate(
+    { x: state.position.x - anchor.x - offset.x, y: state.position.y - anchor.y - offset.y },
+    -heading,
+  );
+  const x = local.x / radius;
+  const y = local.y / (radius * ellipse);
+  const radial = Math.hypot(x, y);
+  const correction = Math.max(-1, Math.min(1, 1 - radial));
+  const orbit = rotate(
+    unit({
+      x: x * correction - side * y,
+      y: (y * correction + side * x) * ellipse,
+    }),
+    heading,
+  );
+  const fraction = Math.max(0, Math.min(1, ((radial - 1) * radius) / tuning.approachRadius));
+  const approach = fraction * fraction * (3 - 2 * fraction);
+  const toward = unit({ x: anchor.x - state.position.x, y: anchor.y - state.position.y });
+  const course = unit({
+    x: orbit.x * (1 - approach) + toward.x * approach,
+    y: orbit.y * (1 - approach) + toward.y * approach,
+  });
+  const combatShare =
+    definition.behaviour.kind === "siege" ? definition.behaviour.speedFraction : 1;
+  const pace =
+    combatShare *
+    (searching
+      ? tuning.patrolShare + (tuning.searchShare - tuning.patrolShare) * approach
+      : tuning.patrolShare);
+  // At the ellipse centre its tangent is undefined; the fixed route heading exits it smoothly.
+  const nonzero = magnitude(course) ? course : rotate({ x: 0, y: side }, heading);
+  return { x: nonzero.x * pace, y: nonzero.y * pace };
+}
+
 /** The live capital an escort guards, if it is loaded and not disabled. */
 function escorted(context: EnemyContext, state: EnemyState): EnemyState | undefined {
   return state.escortOf === null
@@ -478,18 +535,23 @@ function steering(
   state: EnemyState,
 ): Point {
   if (state.returning) {
-    return arrive(definition, maxSpeed, state.home, state);
+    return definition.navigation
+      ? navigate(definition, state.home, true, state)
+      : arrive(definition, maxSpeed, state.home, state);
   }
   if (state.fleeing) {
     return { x: -aim.x, y: -aim.y };
   }
   if (!state.engaged || !context.targetable) {
-    return { x: 0, y: 0 };
+    return navigate(definition, state.home, false, state);
   }
   const behaviour = definition.behaviour;
   if (context.visibility !== "visible") {
     // An engaged ship that has lost sight of Ada makes for where it last saw her; a siege ship
     // keeps to its slow advance.
+    if (definition.navigation) {
+      return navigate(definition, state.lastSeen ?? state.home, state.lastSeen !== null, state);
+    }
     if (!state.lastSeen) {
       return { x: 0, y: 0 };
     }
@@ -685,8 +747,22 @@ export function stepEnemy(
     : summoned
       ? aim
       : steering(acting, context, speed, aim, distance, next);
-  const physics = definition.physics;
-  if (effects.defeated || (next.returning && homeDistance <= 5 && !effects.movementStopped)) {
+  const navigating =
+    definition.navigation &&
+    !summoned &&
+    (next.returning ||
+      (!next.fleeing &&
+        (!next.engaged || !context.targetable || context.visibility !== "visible")));
+  const physics = navigating
+    ? {
+        ...definition.physics,
+        turnSeconds: Math.max(definition.physics.turnSeconds, definition.navigation!.turnSeconds),
+      }
+    : definition.physics;
+  if (
+    effects.defeated ||
+    (next.returning && !definition.navigation && homeDistance <= 5 && !effects.movementStopped)
+  ) {
     next.velocity = { x: 0, y: 0 };
     next.heading = null;
   } else {

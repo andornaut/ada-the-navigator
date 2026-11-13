@@ -78,6 +78,26 @@ export interface EscortTuning {
   interceptRadius: number;
   stationGap: number;
 }
+/** Noncombat movement shares use each archetype's existing combat speed. */
+export interface EnemyNavigation {
+  approachRadius: number;
+  ellipseRatio: readonly [number, number];
+  patrolRadius: readonly [number, number];
+  patrolShare: number;
+  searchShare: number;
+  turnSeconds: number;
+}
+
+/** Canonical provisional patrol and investigation tuning for mobile enemies. */
+export const ENEMY_NAVIGATION: EnemyNavigation = {
+  approachRadius: 180,
+  ellipseRatio: [0.7, 1],
+  patrolRadius: [80, 150],
+  patrolShare: 0.5,
+  searchShare: 0.7,
+  turnSeconds: 0.8,
+};
+
 export interface EnemyDefinition {
   aggression: "sight" | "retaliate";
   behaviour: Behaviour;
@@ -90,6 +110,8 @@ export interface EnemyDefinition {
   morale: { individualHpRatio: number; packLossRatio: number };
   /** A heavy's weapon mounts and their loadout by position tier. */
   mounts?: WeaponMounts;
+  /** Null permits a stationary idle variant; combat and finite return rules still apply. */
+  navigation: EnemyNavigation | null;
   perception: number;
   physics: ShipPhysics;
   /**
@@ -451,6 +473,7 @@ const base: Omit<EnemyDefinition, "physics"> = {
   hardpoints: [],
   hp: 4,
   morale: { individualHpRatio: 0.3, packLossRatio: 0.5 },
+  navigation: ENEMY_NAVIGATION,
   perception: 650,
   pursuit: { homeRadius: 2000, maxSeconds: 30, rearmSeconds: 2, unseenSeconds: 6 },
   sizeRatio: 1,
@@ -517,6 +540,7 @@ export const enemyCatalog = {
     hp: 12,
     morale: { individualHpRatio: 0, packLossRatio: 1 },
     mounts: platformMounts,
+    navigation: null,
     perception: 520,
     physics: SHIP_PHYSICS.platform,
     sizeRatio: 3,

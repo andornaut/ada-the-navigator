@@ -64,9 +64,11 @@ the supplied snapshot, avoiding array-order feedback. Catalog offsets are
 fractions of hull width in the hull's local frame. Hulls rotate to face their
 movement, and hardpoint collision and muzzle offsets rotate with them.
 
-Sight aggression latches on visible perception. Retaliators remain idle until hit.
+Sight aggression latches on visible perception. Retaliators patrol without
+attacking until hit.
 Engaged craft move by their behaviours ([Ships](ships.md#behaviours)) and separate from
-peers. Sinusoidal phase makes swarm movement erratic without query-dependent RNG.
+peers. Smooth seeded variation gives each mobile ship a stable patrol shape
+without erratic jitter or query-dependent RNG.
 Flee direction is away from the observed or last-seen player position. Safe-zone collision policy
 must still reject unsafe movement. There is no pathfinder or reachability oracle.
 
@@ -83,6 +85,26 @@ future fire, but does not delete already emitted projectiles.
 no AI, pursuit, morale, aim or weapon. The adapter owns seeded region placement and
 collision damage. Do not repurpose the stationary quest-debris behavior implicitly.
 
+## Patrol and investigation
+
+Most mobile enemies patrol a seeded offset ellipse through their fixed home
+position when unengaged. Investigation uses the same smooth route through the
+fixed last-seen position, or home during return. Ship identity and saved phase
+set the route variation; frames and observation queries do not reroll it.
+
+`ENEMY_NAVIGATION` sets patrol speed to 0.5 of each ship's existing combat
+movement speed. Investigation uses 0.7 far from the ellipse and smoothly blends
+down to 0.5 near ellipse arrival over an approach radius of 180 world units.
+For `siege`, both ratios apply to its existing combat speed, which already
+includes its behaviour speed fraction. Navigation uses
+`max(existing turnSeconds, 0.8)` seconds for smooth turns. These ratios do not
+change archetype maximum speeds.
+
+Platforms have no navigation and remain stationary. Disabled or salvaged ships
+do not patrol or investigate. A ship with every engine destroyed has no thrust
+and coasts to rest. Patrol changes neither aggression, engagement admission,
+pursuit leashes nor safe-zone permissions.
+
 ## Finite pursuit
 
 `pursuit.homeRadius`, `maxSeconds`, `unseenSeconds` and `rearmSeconds` are
@@ -91,16 +113,17 @@ seconds, 6 seconds and 2 seconds. Home is fixed at creation.
 
 The pursuit clock counts only time while Ada is unseen or beyond the ship's
 firing range, and resets to zero while the ship is fighting her. While Ada is
-unseen, an engaged ship steers to her last-seen position instead of stopping. A
-chase ends when the pursuit clock reaches `maxSeconds`, the enemy reaches its
+unseen after actual line-of-sight loss, an engaged mobile ship investigates her
+fixed last-seen position at a slower pace, then patrols around it. It does not
+follow her hidden position. A chase ends when the pursuit clock reaches `maxSeconds`, the enemy reaches its
 home radius, a visible target leaves that radius, or Ada stays unseen for
 `unseenSeconds`. Ending a chase latches return-to-home, clears engagement and
 suppresses new shots. Existing projectiles and incoming damage remain active. No
 grace or invulnerability is granted. Ship physics can retain outward momentum
 briefly before turning; the adapter's fixed slice bounds distance overshoot.
 
-Returning craft steer home and stop within five world units. A returning ship
-re-engages when it visibly observes Ada within its perception once
+Returning mobile craft investigate home and resume patrol instead of stopping
+within five world units. A returning ship re-engages when it visibly observes Ada within its perception once
 `rearmSeconds` have passed since the return began, or at once when it is hit;
 either clears the return latch and resets its pursuit clock. Unknown
 observation never re-engages it. Retreat and flee morale are unchanged: a
@@ -131,8 +154,8 @@ per simulation slice. Apply resolved movement once, respecting safe zones and
 collisions. Adapt fire intents into `Shot` with unique `nextId` values, `enemy: true`,
 empty hit IDs, configured lifetime, intended velocity and projectile kind. Runtime
 shield damage, projectile collisions and danger tracking remain in the flight model.
-Only actual targeting threats and projectiles should extend danger, not idle
-retaliators. Suppress all intents after defeat.
+Only actual targeting threats and projectiles should extend danger, not
+unengaged patrolling retaliators. Suppress all intents after defeat.
 
 Route player-shot collisions to explicit hardpoint hit volumes before hull damage.
 Apply one hit per collision policy, preserve piercing hit IDs at the appropriate

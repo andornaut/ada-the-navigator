@@ -78,10 +78,11 @@ describe("enemy rules", () => {
       pursuitSeconds: definition.pursuit.maxSeconds,
       returning: true,
     };
-    // Unsummoned, a ship whose pursuit is spent stays home.
+    // Unsummoned, a ship whose pursuit is spent patrols home without attacking.
     const resting = stepEnemy(definition, { ...context, summoned: false }, spent);
     expect(resting.state.returning).toBe(true);
-    expect(resting.velocity).toEqual({ x: 0, y: 0 });
+    expect(Math.hypot(resting.velocity.x, resting.velocity.y)).toBeGreaterThan(0);
+    expect(resting.fire).toEqual([]);
     let state = spent;
     let velocity = { x: 0, y: 0 };
     for (let step = 0; step < 600; step++) {
@@ -333,7 +334,7 @@ describe("enemy rules", () => {
       },
       visibility: "occluded",
     };
-    for (let step = 0; step < 180; step++) {
+    for (let step = 0; step < 300; step++) {
       const intent = stepEnemy(definition, hidden, state);
       expect(intent.fire).toEqual([]);
       state = {
@@ -344,7 +345,7 @@ describe("enemy rules", () => {
         },
       };
     }
-    // Three seconds on, still chasing and well on its way to where it last saw her.
+    // Five seconds on, still chasing and well on its way to where it last saw her.
     expect(state.returning).toBe(false);
     expect(state.engaged).toBe(true);
     expect(state.lastSeen).toEqual(lastSeen);
@@ -399,7 +400,8 @@ describe("enemy rules", () => {
     const definition = enemyCatalog.retaliator;
     const state = spawn("retaliator");
     const idle = stepEnemy(definition, observation(state), state);
-    expect(idle.velocity).toEqual({ x: 0, y: 0 });
+    expect(Math.hypot(idle.velocity.x, idle.velocity.y)).toBeGreaterThan(0);
+    expect(idle.state.engaged).toBe(false);
     expect(idle.fire).toEqual([]);
     const hit = damageEnemy(definition, { amount: 1, hardpointId: null }, state);
     expect(
@@ -688,7 +690,7 @@ describe("enemy ship physics and hull rotation", () => {
   });
 
   it.each(archetypes)("moves %s with the shared ship movement model", (archetype) => {
-    const definition = enemyCatalog[archetype];
+    const definition = { ...enemyCatalog[archetype], navigation: null };
     const state: EnemyState = {
       ...spawn(archetype),
       heading: { x: 0, y: 1 },
@@ -711,7 +713,7 @@ describe("enemy ship physics and hull rotation", () => {
   });
 
   it("brakes with brakingSeconds when nothing is requested", () => {
-    const definition = enemyCatalog.fighter;
+    const definition = { ...enemyCatalog.fighter, navigation: null };
     const state = { ...spawn("fighter"), velocity: { x: 40, y: 0 } };
     const context = { ...observation(state), visibility: "unknown" as const };
     const result = stepEnemy(definition, context, state);
@@ -723,7 +725,7 @@ describe("enemy ship physics and hull rotation", () => {
   });
 
   it("turns from rest into motion along its hull with turnSeconds and holds it when stopped", () => {
-    const definition = enemyCatalog.frigate;
+    const definition = { ...enemyCatalog.frigate, navigation: null };
     const turn = definition.physics.turnSeconds;
     let state: EnemyState = { ...spawn("frigate"), home: { x: 5000, y: 0 }, returning: true };
     const context = { ...observation(state), visibility: "unknown" as const };
@@ -800,7 +802,7 @@ describe("enemy ship physics and hull rotation", () => {
   });
 
   it("brings a heavy archetype to rest below 1% of its maximum speed without creeping", () => {
-    const definition = enemyCatalog.capital;
+    const definition = { ...enemyCatalog.capital, navigation: null };
     const maxSpeed = definition.physics.maxSpeed;
     let state: EnemyState = { ...spawn("capital"), velocity: { x: maxSpeed, y: 0 } };
     const context = { ...observation(state), visibility: "unknown" as const };
@@ -856,7 +858,7 @@ describe("enemy ship physics and hull rotation", () => {
   });
 
   it("aims weapons independently of the hull with aimTurnSeconds", () => {
-    const definition = enemyCatalog.frigate;
+    const definition = { ...enemyCatalog.frigate, navigation: null };
     const response = definition.physics.aimTurnSeconds;
     const base = spawn("frigate");
     // A last-seen point straight south while the starboard weapon still points east.
@@ -915,7 +917,7 @@ describe("enemy ship physics and hull rotation", () => {
     expect(enemySpeedFraction(enemyCatalog.platform, state)).toBe(0);
   });
 
-  it.each(archetypes)("returns %s home through its momentum and stops there", (archetype) => {
+  it.each(archetypes)("returns %s home through its momentum and patrols there", (archetype) => {
     const definition = enemyCatalog[archetype];
     const speed = definition.physics.maxSpeed;
     let state: EnemyState = {
@@ -927,7 +929,7 @@ describe("enemy ship physics and hull rotation", () => {
     };
     const context = { ...observation(state), visibility: "unknown" as const };
     let elapsed = 0;
-    while (elapsed < 150 && Math.hypot(state.velocity.x, state.velocity.y) > 0) {
+    while (elapsed < 150) {
       const result = stepEnemy(definition, context, state);
       state = {
         ...result.state,
@@ -938,8 +940,8 @@ describe("enemy ship physics and hull rotation", () => {
       };
       elapsed += context.dt;
     }
-    expect(Math.hypot(state.position.x, state.position.y)).toBeLessThanOrEqual(5);
-    expect(state.velocity).toEqual({ x: 0, y: 0 });
+    expect(Math.hypot(state.position.x, state.position.y)).toBeLessThanOrEqual(480);
+    expect(Math.hypot(state.velocity.x, state.velocity.y)).toBeGreaterThan(0);
   });
 });
 
@@ -1122,7 +1124,7 @@ describe("enemy damage", () => {
 });
 
 describe("new sight engagement admission", () => {
-  it("leaves an unadmitted idle ship tracking Ada without starting movement or fire", () => {
+  it("lets an unadmitted ship patrol while tracking Ada without starting combat", () => {
     const state = spawn("fighter");
     const intent = stepEnemy(
       enemyCatalog.fighter,
@@ -1131,7 +1133,7 @@ describe("new sight engagement admission", () => {
     );
     expect(intent.state.engaged).toBe(false);
     expect(intent.state.lastSeen).toEqual(observation(state).player);
-    expect(intent.velocity).toEqual({ x: 0, y: 0 });
+    expect(Math.hypot(intent.velocity.x, intent.velocity.y)).toBeGreaterThan(0);
     expect(intent.fire).toEqual([]);
   });
 

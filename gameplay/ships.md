@@ -28,9 +28,14 @@ Ada's ship faces its aim while aiming and its movement otherwise. Enemy hulls
 face their velocity direction, turning toward it with the shared
 `hullTurnSeconds` of 0.08 so collision slides do not snap, and keep their last
 facing when stopped. Because an enemy's heading starts from its hull and turns with
-`turnSeconds`, its velocity and hull swing round together. A returning enemy slows as it nears home, scaling its
-speed by `min(1, distance / (maxSpeed * brakingSeconds))`, and stops within five
-world units. Each weapon's aim starts on its first target and then turns with
+`turnSeconds`, its velocity and hull swing round together. Most mobile enemies
+patrol when unengaged, investigate a fixed last-seen position after losing actual
+line of sight, and resume patrol there. Returning craft investigate home and
+patrol instead of stopping within five world units. Patrol and investigation use
+smooth seeded routes, with tuning relative to each ship's existing combat speed
+([Enemy navigation](enemies.md#patrol-and-investigation)). Platforms remain
+stationary; disabled or salvaged ships do not navigate, and ships with no working
+engines coast to rest. Each weapon's aim starts on its first target and then turns with
 `aimTurnSeconds`. Hardpoint hit areas and fire origins rotate with the
 hull. Hardpoint and hull weapons aim independently of the hull with
 `aimTurnSeconds`. An enemy's facing is saved with its other state.
@@ -81,7 +86,7 @@ and firing, and backs off when she comes inside it. They never press in to ram.
 | `strafe`    | Makes firing passes beside Ada, carried by momentum, then loops back for another pass.       |
 | `swarm`     | Holds its band with erratic wobble and peer separation, so a pack rings Ada at range.        |
 | `flee`      | Runs away; triggered by morale (low hull, pack losses) and ends the encounter for that ship. |
-| `retaliate` | Ignores Ada until hit, then switches to its attack behaviour.                                |
+| `retaliate` | Patrols without attacking Ada until hit, then switches to its attack behaviour.              |
 | `escort`    | Stays near its capital and intercepts Ada when she comes close to it.                        |
 | `siege`     | Advances slowly on Ada while its hardpoint turrets fire; used by frigates and capitals.      |
 
