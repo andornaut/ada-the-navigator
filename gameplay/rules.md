@@ -836,7 +836,8 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   Shield level 2 and 240 at level 3, so each upgrade visibly lengthens it. The bar is blue, turning red when the shield is low (below
   25%) or empty, and shows hits, the recharge delay and regeneration. Low shield
   never relies on color alone: the bar also pulses, held steady under reduced
-  motion, and Astra says "Shield low!".
+  motion, and Astra says "Shield low!". Nothing pulses or circles around Ada's
+  ship while the shield recharges; the bar is the only recharge cue.
 - While the recharge delay runs, a thin strip, about 2 logical pixels, along the
   inside of the bar's bottom edge fills left to right across the bar's full
   length, reaching full when recharge starts. Damage empties it and starts it
