@@ -404,7 +404,13 @@ export function buildScene(scene: UiContext): void {
       if (!quest || (quest.kind !== "job" && quest.kind !== "story")) {
         return null;
       }
-      return { kind: aboard.kind, text: quest.description || quest.text, title: aboard.name };
+      const questId = scene.model.aboardQuestId;
+      return {
+        kind: aboard.kind,
+        ...(questId ? { questId } : {}),
+        text: quest.description || quest.text,
+        title: aboard.name,
+      };
     },
     achievements: {
       close: CONTENT.labels.close ?? "",
@@ -1093,6 +1099,7 @@ export function refreshScene(scene: UiContext): void {
     job: scene.model.jobObjective,
     map: scene.model.map,
     place: enabled ? "flight" : scene.model.roomPage ? "room" : null,
+    questEntries: scene.model.quests,
     ship: enabled ? shipView(scene) : null,
     towing: scene.model.towing,
   });

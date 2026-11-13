@@ -387,3 +387,24 @@ describe("aboard resource details", () => {
     expect(read()).toBeNull();
   });
 });
+
+describe("aboard quest routing identity", () => {
+  it("passes the canonical live identity without inferring it from the displayed item", () => {
+    const model = {
+      aboard: { kind: "carrying", name: "Identical cargo" },
+      aboardQuestId: "job:1:actual",
+      carrying: true,
+      map: { quests: [{ kind: "job", text: "Canonical description" }] },
+      towing: false,
+    };
+    const read = runInContext(
+      callback("aboardResource"),
+      createContext({ scene: { model } }),
+    ) as () => { questId?: string };
+    expect(read().questId).toBe("job:1:actual");
+    model.aboardQuestId = "job:2:another";
+    expect(read().questId).toBe("job:2:another");
+    model.aboardQuestId = "";
+    expect(read()).not.toHaveProperty("questId");
+  });
+});
