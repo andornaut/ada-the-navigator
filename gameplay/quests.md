@@ -136,7 +136,7 @@ Job lore lines, said by Astra after a job completes, one unseen line per job:
 - Andromeda: "Andromeda is so bright that people on Earth can see it without a
   telescope." "A beacon only helps if it tells the truth about where it is."
 - Cartwheel: "Every rock here was once part of something bigger." "Miners name
-  their drills. I would like a name for my drive."
+  their drills. I'd like a name for my drive."
 - Phantom: "Not every traveler here chose to stay." "Even a dark rim has
   stars."
 

@@ -34,7 +34,7 @@ First launch only, before chapter one's opening, in Grandma's garden:
 Chapter one's opening and its choice follow. After its branch page, still in the
 garden:
 
-- Grandma: "Think about it on your walk home. Good ideas like fresh air."
+- Grandma: "Think about it on your walk home. A bit of fresh air might help you think."
 
 In the park:
 
@@ -138,7 +138,7 @@ portrait is a dark silhouette with no face; once named, it shows him:
   navigator." Ada: "Then we'll come and get it."
 
 Outposts handing over the holodisk, said by whichever outpost Ada is talking to:
-"We found this drifting near our outposts. Take it, with our thanks."
+"We found this drifting near our outposts. Take it. And thank you."
 
 Boarding after a new galaxy unlocks, once, instead of "Welcome back, Navigator.":
 Astra: "Welcome back, Navigator. A new galaxy is ready." Shown when any newly
@@ -176,8 +176,8 @@ outposts."
 
 Workshop: "We can repair their equipment. We're short of parts, though. The
 salvagers might have what we need. Take them this tool kit."
-Ask more: "We repair tools, ships and growing equipment. Spare parts make a
-difference!"
+Ask more: "We repair tools, ships and growing equipment. Spare parts
+really help!"
 
 Salvager: "Useful tools! We have parts to spare, but our food is running low. You
 know some growers? Take these parts to the workshop. We'll contact the growers."
@@ -481,15 +481,14 @@ Space dialogue, in story order:
 Station, on arrival and on deposits between milestones: "Welcome. Shoot ore
 rocks and collect the ore they release. Bring it here to deposit it. Partial
 loads count, and you can travel back when you're out of danger."
-Ask more: "Independent miners bring ore here for transport. There is docking
+Ask more: "Independent miners bring ore here for transport. There's docking
 space for everyone."
 
 Ada, first deposit milestone: "That pilot cut right in front of the miner!
 There's plenty of room. Why block them?"
 
 Miner, after the second deposit milestone: "It keeps happening. I've started
-waiting until they're gone. Would I like company next time? Yes. That would
-help."
+waiting until they're gone. I'd like some company next time. That would help."
 Ask more: "I know how to dock. I just need them to stop blocking me."
 
 Regular visitor: "I've seen it. I didn't know what to do. I'll come in with you.
@@ -830,7 +829,7 @@ Whirlpool, a Voron keeper:
 Needle, an Avi keeper:
 
 - "Welcome, young pilot. Rest your wings. Well, your engines."
-- "We Avi stand still a long time before we move. It is how we see clearly."
+- "We Avi stand still a long time before we move. It helps us see clearly."
 - "Trade, or take a job. There is no hurry here."
 - Later: "Welcome back. Slowly in, slowly out." / "Ah, the young pilot. Your
   docking was very smooth." / "Hello again. Stay as long as you need."
@@ -839,7 +838,7 @@ Andromeda, a Munix keeper:
 
 - "Hello, traveler! Come into the light. I'm the keeper of this station."
 - "We Munix were built to follow the beacons. Their light shows us home."
-- "Trade your Stardust, or take a job. Fair dealing, plain and true."
+- "Trade your Stardust, or take a job. We trade fairly here."
 - Later: "Welcome back! Our lamps are always lit for you." / "Hello again,
   traveler. Safe flying out there?" / "Back again! Come in, out of the dark."
 
