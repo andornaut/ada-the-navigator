@@ -235,12 +235,6 @@ ${hudDiscStyle(".ada-controls .ada-exit-open", ".ada-disc")}
 
 /* This build's version and commit, the Settings card's last line as in Chibi: body text in the
    supporting colour. */
-/* Settings uses the safe width while its height follows content until scrolling is needed. */
-.ada-controls .ada-card-frame[data-card-size=full][data-dialog=settings],
-.ada-controls .ada-card-frame[data-card-size=full][data-dialog=settings] > .ada-card{
-  height:auto
-}
-
 .ada-controls .ada-rows[data-columns="2"]{
   grid-template-columns:repeat(2,minmax(0,1fr));
   column-gap:${units(SPACING.columnGap)}
@@ -314,7 +308,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     closeAction: "close-settings",
     closeLabel: options.labels.close,
     fontRole: FONT_ROLES.heading,
-    full: true,
+    size: "medium",
     title: options.labels.settings,
   });
   const { body: card, close: closeButton, frame: cardFrame } = settingsCard;
@@ -411,6 +405,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     closeAction: "close-install-steps",
     closeLabel: options.labels.close,
     fontRole: FONT_ROLES.heading,
+    size: "medium",
     title: "",
   });
   const { body: stepsBody, card: stepsCard, close: stepsX, frame: stepsFrame } = stepsParts;

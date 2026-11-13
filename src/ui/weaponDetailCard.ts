@@ -19,6 +19,7 @@ export function createWeaponDetailCard(
   const card = createCard({
     closeAction: "close-weapon-detail",
     closeLabel: options.closeLabel,
+    size: "small",
     title: "",
   });
   card.card.dataset.dialog = "weapon-detail";

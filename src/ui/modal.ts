@@ -7,7 +7,7 @@ import {
   cardTitleReserve,
   listCardHeader,
 } from "./layout/cardFrame.ts";
-import { cardWidth, SCROLL } from "./layout/contentCard.ts";
+import { type CardSize, cardWidth, SCROLL } from "./layout/contentCard.ts";
 import {
   BUTTON_SLICE,
   CARD_SLICE,
@@ -146,23 +146,9 @@ ${UI_SCOPE} .ada-card-frame{
   position:relative;
   max-width:100%;
   max-height:100%;
+  min-height:0;
   display:flex;
   flex-direction:column
-}
-
-/* Full-page dialogs share the same safe inset, frame, header and scrolling body as fitted cards. */
-${UI_SCOPE} .ada-card-frame[data-card-size=full]{
-  width:100%;
-  height:100%;
-  min-height:0
-}
-${UI_SCOPE} .ada-card-frame[data-card-size=full] > .ada-card{
-  width:100%;
-  height:100%;
-  flex:1 1 auto
-}
-${UI_SCOPE} .ada-card-frame[data-card-size=full] > .ada-card > .ada-card-body{
-  flex:1 1 auto
 }
 
 /* Chibi's content-fitted card (src/ui/layout sets its width and header gaps): the header and close
@@ -627,7 +613,7 @@ function fitCard(
   parts: Pick<CardParts, "body" | "card" | "title">,
   close: boolean,
   list: boolean,
-  full: boolean,
+  size: CardSize,
 ): void {
   const { body, card, title } = parts;
   const layer = card.closest<HTMLElement>(".ada-modal, .ada-start");
@@ -635,7 +621,7 @@ function fitCard(
     return;
   }
   const unit = readViewUnit(card);
-  card.style.width = full ? "100%" : "max-content";
+  card.style.width = "max-content";
   const groups = [...body.children].filter(
     (child): child is HTMLElement =>
       child instanceof HTMLElement && child.getClientRects().length > 0,
@@ -653,11 +639,11 @@ function fitCard(
   const availableWidth =
     (layer.clientWidth - parseFloat(styles.paddingLeft) - parseFloat(styles.paddingRight)) / unit;
   const width = cardWidth(
-    availableWidth,
+    { availableWidth, size },
     groups.map((group) => logicalSize(group, unit).width),
     text ? { close, width: titleWidth } : undefined,
   );
-  card.style.width = full ? "100%" : units(width);
+  card.style.width = units(width);
   const titleHeight = text ? logicalSize(title, unit).height : undefined;
   const first = groups[0];
   const { bodyTop, titleTop } = list
@@ -677,7 +663,9 @@ export function createCard(
         readonly closeAction: string;
         readonly closeLabel: string;
         readonly fontRole?: string;
-        /** Fill the modal safe rect while retaining the shared card chrome. */
+        /** Maximum width; the card fits its content within the modal safe rect. */
+        readonly size?: CardSize;
+        // CLEANUP (added 2026-11-13): remove when station callers use explicit size presets.
         readonly full?: boolean;
         /** Chibi's list header (listCardHeader), for a card whose body opens with a list. */
         readonly list?: boolean;
@@ -688,10 +676,8 @@ export function createCard(
   const page = "page" in options;
   const frame = document.createElement("div");
   frame.className = "ada-card-frame";
-  const full = !page && options.full === true;
-  if (full) {
-    frame.dataset.cardSize = "full";
-  }
+  const size = !page ? (options.size ?? (options.full ? "large" : "medium")) : "medium";
+  frame.dataset.cardSize = size;
   const card = document.createElement("section");
   card.className = page ? "ada-card ada-page-card" : "ada-card";
   if (!page) {
@@ -720,7 +706,7 @@ export function createCard(
     frame.append(card, close);
   }
   const list = !("page" in options) && options.list === true;
-  const fit = () => fitCard({ body, card, title }, !page, list, full);
+  const fit = () => fitCard({ body, card, title }, !page, list, size);
   // Keyboard focus scrolls the focused control fully into view, its focus ring included.
   body.addEventListener("focusin", (event) => {
     if (event.target instanceof HTMLElement) {

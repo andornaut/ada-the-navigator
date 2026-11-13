@@ -133,6 +133,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   const paused = createCard({
     closeAction: "close-pause",
     closeLabel: labels.close,
+    size: "medium",
     title: labels.title,
   });
   paused.card.dataset.dialog = "pause";
@@ -159,7 +160,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   const ship = createCard({
     closeAction: "close-ship",
     closeLabel: labels.close,
-    full: true,
+    size: "large",
     title: labels.ship,
   });
   ship.card.dataset.dialog = "ship";

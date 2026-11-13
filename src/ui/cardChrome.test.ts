@@ -37,28 +37,26 @@ describe("shared card chrome", () => {
     const full = createCard({
       closeAction: "back",
       closeLabel: "Close",
-      full: true,
+      size: "large",
       title: "Quests",
     });
     const fitted = createCard({ closeAction: "back", closeLabel: "Close", title: "Ship" });
     const frame = full.frame as unknown as Element;
-    expect(frame.dataset.cardSize).toBe("full");
+    expect(frame.dataset.cardSize).toBe("large");
     expect(frame.attributes.get("role")).toBe("dialog");
     expect(frame.attributes.get("aria-label")).toBe("Quests");
     expect(full.close.dataset.action).toBe("back");
     expect((full.close as unknown as Element).attributes.get("aria-label")).toBe("Close");
     expect(frame.children).toEqual([full.card, full.close]);
     expect((full.card as unknown as Element).children).toEqual([full.header, full.body]);
-    expect(fitted.frame.dataset.cardSize).toBeUndefined();
+    expect(fitted.frame.dataset.cardSize).toBe("medium");
     full.dispose();
     fitted.dispose();
   });
 
-  it("gives full dialogs a shrinking frame and scrollable body through one rule", () => {
-    expect(rule(`${UI_SCOPE} .ada-card-frame[data-card-size=full]`)).toContain("min-height:0");
-    expect(rule(`${UI_SCOPE} .ada-card-frame[data-card-size=full] > .ada-card`)).toContain(
-      "height:100%",
-    );
+  it("fits every preset vertically and scrolls overflowing content through one rule", () => {
+    expect(rule(`${UI_SCOPE} .ada-card-frame`)).toContain("min-height:0");
+    expect(rule(`${UI_SCOPE} .ada-card-frame`)).not.toMatch(/(?:^|;)\s*height:100%/u);
     expect(rule(`${UI_SCOPE} .ada-card-body`)).toContain("overflow-y:auto");
     expect(rule(`${UI_SCOPE} .ada-card-body`)).toContain("min-height:0");
     for (const css of [STATION_STYLE, INTERACTION_STYLE, MAP_SCREEN_STYLE]) {

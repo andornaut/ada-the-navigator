@@ -41,6 +41,7 @@ export function createQuestsScreen(
   const card = createCard({
     closeAction: "close-quests",
     closeLabel: labels.close,
+    size: "large",
     title: labels.quests,
   });
 

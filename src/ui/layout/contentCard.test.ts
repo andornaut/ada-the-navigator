@@ -6,6 +6,7 @@ import { CARD_CLOSE, CARD_CONTENT, cardHeaderLayout, cardTitleReserve } from "./
 import {
   actionsWidth,
   CARD_FLOOR_VIEW_WIDTH,
+  CARD_WIDTH_CAPS,
   cardActionsSize,
   cardWidth,
   groupX,
@@ -22,23 +23,32 @@ const available = (width: number) =>
     .width;
 
 describe("content-fitted card width", () => {
-  it.each([720, 779])(
-    "equals game-kit modalWidth below, at and above the floor at %s wide",
-    (view) => {
-      for (const content of [100, 328, 500]) {
-        expect(cardWidth(available(view), [content], undefined)).toBe(
-          modalWidth({ availableWidth: available(view), viewportWidth: 720 }, content),
-        );
+  it.each(["small", "medium", "large"] as const)(
+    "fits content under the %s cap and clamps to the available width",
+    (size) => {
+      for (const availableWidth of [280, 688, 747]) {
+        for (const content of [100, 328, 500, 800]) {
+          expect(cardWidth({ availableWidth, size }, [content], undefined)).toBe(
+            modalWidth(
+              {
+                availableWidth: Math.min(availableWidth, CARD_WIDTH_CAPS[size]),
+                viewportWidth: 720,
+              },
+              content,
+            ),
+          );
+        }
       }
-      // The floor stays half the fixed 720 base at both widths.
-      expect(cardWidth(available(view), [100], undefined)).toBe(360);
-      expect(cardWidth(available(view), [500], undefined)).toBe(532);
+      expect(cardWidth({ availableWidth: 900, size }, [100], undefined)).toBe(360);
+      expect(cardWidth({ availableWidth: 900, size }, [800], undefined)).toBe(
+        CARD_WIDTH_CAPS[size],
+      );
       expect(CARD_FLOOR_VIEW_WIDTH).toBe(720);
     },
   );
 
-  it("is capped by the available width", () => {
-    expect(cardWidth(available(720), [800], undefined)).toBe(688);
+  it("preserves the logical view scale and page inset", () => {
+    expect(available(720)).toBe(688);
     expect(logicalView({ height: 390, width: 844 }).width).toBeCloseTo(779.08, 2);
   });
 
@@ -49,7 +59,9 @@ describe("content-fitted card width", () => {
     expect(cardTitleReserve(true)).toBe(50);
     expect(cardTitleReserve(false)).toBe(CARD_CONTENT.padding);
     // 400 + 2 * (50 - 16) = 468 content, plus 32 padding.
-    expect(cardWidth(688, [100], { close: true, width: 400 })).toBe(500);
+    expect(
+      cardWidth({ availableWidth: 688, size: "large" }, [100], { close: true, width: 400 }),
+    ).toBe(500);
   });
 });
 

@@ -21,6 +21,7 @@ export function createResourceCard(
   const card = createCard({
     closeAction: "close-resource",
     closeLabel: options.closeLabel,
+    size: "small",
     title: "",
   });
   card.card.dataset.dialog = "resource";

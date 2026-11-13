@@ -1027,7 +1027,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   const questsCard = createCard({
     closeAction: "close-quests",
     closeLabel: labels.close,
-    full: true,
+    size: "large",
     title: labels.quests,
   });
   questsCard.card.dataset.dialog = "quests";

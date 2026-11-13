@@ -32,6 +32,7 @@ export function createUpdateDialog(
     closeAction: "close-update",
     closeLabel: labels.close,
     fontRole: FONT_ROLES.heading,
+    size: "small",
     title: labels.title,
   });
   const { body, card, close, frame } = parts;

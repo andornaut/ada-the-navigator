@@ -28,6 +28,7 @@ export function createRestartCard(
   const card = createCard({
     closeAction: "close-restart",
     closeLabel: labels.close,
+    size: "small",
     title: labels.title,
   });
   card.card.dataset.dialog = "restart";

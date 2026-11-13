@@ -16,10 +16,12 @@ export { CARD_FLOOR_VIEW_WIDTH, SCROLL } from "../../data/layout.ts";
 
 export { CARD_CONTENT, cardHeaderLayout, cardTitleReserve } from "./cardFrame.ts";
 
-// The card's width: min(availableWidth, max(contentWidth + 32, 720 / 2)), where contentWidth is
-// the widest group or the title with its reserved clearance; prose groups do not count.
+export const CARD_WIDTH_CAPS = { large: 760, medium: 560, small: 360 } as const;
+export type CardSize = keyof typeof CARD_WIDTH_CAPS;
+
+// Presets cap the content-fitted width; short content never stretches to fill the cap.
 export function cardWidth(
-  availableWidth: number,
+  context: { readonly availableWidth: number; readonly size: CardSize },
   groupWidths: readonly number[],
   title: { readonly close: boolean; readonly width: number } | undefined,
 ): number {
@@ -27,7 +29,10 @@ export function cardWidth(
     ? title.width + 2 * (cardTitleReserve(title.close) - CARD_CONTENT.padding)
     : 0;
   return modalWidth(
-    { availableWidth, viewportWidth: CARD_FLOOR_VIEW_WIDTH },
+    {
+      availableWidth: Math.min(context.availableWidth, CARD_WIDTH_CAPS[context.size]),
+      viewportWidth: CARD_FLOOR_VIEW_WIDTH,
+    },
     Math.max(headerWidth, 0, ...groupWidths),
   );
 }

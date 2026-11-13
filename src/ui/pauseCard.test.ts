@@ -325,7 +325,7 @@ describe("Ship card", () => {
     expect(ship.hidden).toBe(false);
     expect(modal.children[0]!.hidden).toBe(true);
     expect(ship.getAttribute("aria-label")).toBe("Ship");
-    expect(ship.dataset.cardSize).toBe("full");
+    expect(ship.dataset.cardSize).toBe("large");
     const close = ship.children[1]!;
     expect(close.dataset.action).toBe("close-ship");
     expect(focused()?.dataset.action).toBe("back-ship");

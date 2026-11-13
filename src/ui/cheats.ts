@@ -49,6 +49,7 @@ export function createCheats(
   const parts = createCard({
     closeAction: "close-cheats",
     closeLabel: options.labels.close,
+    size: "medium",
     title: options.labels.title,
   });
   const { body, card, close, frame } = parts;

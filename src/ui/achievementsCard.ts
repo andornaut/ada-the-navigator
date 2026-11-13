@@ -201,6 +201,7 @@ export function createAchievementsCard(
     closeAction: "close-achievements",
     closeLabel: labels.close,
     list: true,
+    size: "large",
     title: labels.title,
   });
   card.card.dataset.dialog = "achievements";
