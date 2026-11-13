@@ -428,12 +428,16 @@ export class ConversationDirector {
     if (this.inFight && !this.dronesCalled && dronesPress(facts)) {
       this.dronesCalled = true;
       // A built galaxy's one broadcast, the line after the holodisks Ada holds (none while she
-      // holds none), speaks for its first engagement's drones; a placeholder plays none.
+      // holds none), speaks for its first engagement's drones; a placeholder plays none, and a
+      // broadcast bound to a galaxy plays only there.
       const instance = `general:${galaxy}`;
       const general =
         BUILT.has(galaxy) && !this.seen.includes(instance)
           ? this.conversations.find(
-              ({ trigger }) => trigger.kind === "general" && trigger.held === facts.holodisks,
+              ({ trigger }) =>
+                trigger.kind === "general" &&
+                trigger.held === facts.holodisks &&
+                (trigger.galaxy === undefined || trigger.galaxy === galaxy),
             )
           : undefined;
       if (general) {

@@ -388,6 +388,15 @@ describe("conversation triggers", () => {
     expect(showing(needle.talk)).toBe("warning:drones:0");
   });
 
+  it("plays the sixth broadcast, which names Phantom, nowhere else at five holodisks held", () => {
+    for (const galaxy of [1, 2, 3] as const) {
+      const { heard, talk } = director(galaxy, [...lessonsHeard, `arrival:${galaxy}`]);
+      run(talk, 0.05, { ...drones, holodisks: 5 });
+      expect(showing(talk)).toBe("warning:drones:0");
+      expect(heard).not.toContain(`general:${galaxy}`);
+    }
+  });
+
   it.each([
     ["drop", null, "arrival:1:0"],
     ["play", "job:lost", "penny:1:job:lost:0"],

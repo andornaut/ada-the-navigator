@@ -51,8 +51,8 @@ export type ConversationTrigger =
   | { readonly kind: "current" }
   | { readonly kind: "shieldLow" }
   | { readonly kind: "drones" }
-  /** The General's broadcast while Ada holds `held` holodisks. */
-  | { readonly kind: "general"; readonly held: number }
+  /** The General's broadcast while Ada holds `held` holodisks, only in `galaxy` when set. */
+  | { readonly kind: "general"; readonly galaxy?: GalaxyNumber; readonly held: number }
   | { readonly kind: "quiet"; readonly galaxy: GalaxyNumber }
   | { readonly kind: "funded"; readonly project: string }
   | { readonly kind: "penny" }
@@ -581,7 +581,8 @@ export const CONVERSATIONS: readonly Conversation[] = [
     ],
     priority: "warning",
     repeat: "never",
-    trigger: { held: 5, kind: "general" },
+    // It names Phantom, so it plays only there.
+    trigger: { galaxy: 6, held: 5, kind: "general" },
   },
   {
     id: "job:towAttached",

@@ -123,11 +123,12 @@ describe("in-flight conversations", () => {
     for (const line of pool.filter(({ text }) => !lore.has(text))) {
       expect(DATA_LINES).not.toContainEqual(line);
     }
-    // Only job lore plays past the built galaxies, where every galaxy's stations give jobs.
+    // Past the built galaxies only job lore, where every galaxy's stations give jobs, and the
+    // General's broadcast that names Phantom are bound to a galaxy.
     expect(
-      CONVERSATIONS.filter(({ trigger }) => "galaxy" in trigger && trigger.galaxy > 3).every(
-        ({ trigger }) => trigger.kind === "jobLore",
-      ),
+      CONVERSATIONS.filter(
+        ({ trigger }) => "galaxy" in trigger && trigger.galaxy !== undefined && trigger.galaxy > 3,
+      ).every(({ id, trigger }) => trigger.kind === "jobLore" || id === "general:held:5"),
     ).toBe(true);
   });
 
