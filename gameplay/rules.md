@@ -1120,8 +1120,9 @@ block required quest routes in the first five galaxies. A guard stops blocking
 its route once it is disabled or destroyed. The first time each flight that Ada
 comes within Talk range of a destination its guard still blocks, Astra says a
 guard line, the guard gets its guard edge marker even if Ada has not seen it yet,
-and the guard wakes and flies toward Ada until it is on screen, then fights as
-usual.
+and the guard wakes and flies toward Ada, holding fire until it is inside the
+current play view (the visible game area, not a fixed 720 by 360), then fights
+as usual.
 
 ## Verification priorities
 

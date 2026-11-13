@@ -85,22 +85,30 @@ collision damage. Do not repurpose the stationary quest-debris behavior implicit
 
 ## Finite pursuit
 
-`pursuit.homeRadius`, `maxSeconds` and `unseenSeconds` are provisional finite tuning.
-The current shared values are 1400 world units, 18 seconds and 3 seconds. Home is
-fixed at creation. A chase ends when elapsed engagement reaches its limit, the enemy
-reaches its home radius, a visible target leaves that radius, or observation expires.
-Ending a chase latches return-to-home, clears engagement and suppresses new shots.
-Existing projectiles and incoming damage remain active. No grace or invulnerability
-is granted. Ship physics can retain outward momentum briefly before
-turning; the adapter's fixed slice bounds distance overshoot.
+`pursuit.homeRadius`, `maxSeconds`, `unseenSeconds` and `rearmSeconds` are
+provisional finite tuning. The current shared values are 2000 world units, 30
+seconds, 6 seconds and 2 seconds. Home is fixed at creation.
 
-Returning craft steer home and stop within five world units. They can rearm sight
-or retaliation only after returning and visibly observing Ada outside perception.
-Unknown observation does not satisfy that reset. Remaining nearby cannot reset the
-pursuit clock or cause repeated reacquisition. Hits do not clear the return latch.
-A damaged engine still takes precedence over return movement. Save and restore the
-latch and timers; unloading or resetting them must not renew a pursuit. Observation
-is supplied by the runtime; last-seen state never reads hidden target coordinates.
+The pursuit clock counts only time while Ada is unseen or beyond the ship's
+firing range, and resets to zero while the ship is fighting her. While Ada is
+unseen, an engaged ship steers to her last-seen position instead of stopping. A
+chase ends when the pursuit clock reaches `maxSeconds`, the enemy reaches its
+home radius, a visible target leaves that radius, or Ada stays unseen for
+`unseenSeconds`. Ending a chase latches return-to-home, clears engagement and
+suppresses new shots. Existing projectiles and incoming damage remain active. No
+grace or invulnerability is granted. Ship physics can retain outward momentum
+briefly before turning; the adapter's fixed slice bounds distance overshoot.
+
+Returning craft steer home and stop within five world units. A returning ship
+re-engages when it visibly observes Ada within its perception once
+`rearmSeconds` have passed since the return began, or at once when it is hit;
+either clears the return latch and resets its pursuit clock. Unknown
+observation never re-engages it. Retreat and flee morale are unchanged: a
+fleeing craft never re-engages. A damaged engine still takes precedence over
+return movement. Save and restore the latch, the pursuit clock, unseen time and
+time since the return began; unloading or resetting them must not renew a
+pursuit. Observation is supplied by the runtime; last-seen state never reads
+hidden target coordinates.
 
 ## Runtime integration interface
 
@@ -148,8 +156,10 @@ actual intents and adapter commands in the following scenarios:
   Damage activates retaliation. Unknown visibility never grants permission.
 - Independent cooldowns survive JSON round trips. Long elapsed fire slices preserve
   scheduled offsets; projectile integration uses each offset exactly once.
-- Faster pursuit terminates on distance, time or lost observation; save/load keeps
-  its return latch and nearby targets cannot immediately restart the chase.
+- Pursuit ends on distance, time spent unseen or out of firing range, or lost
+  observation, and fighting resets its clock; save/load keeps the return latch
+  and timers; a returning ship re-engages on sight within perception after
+  `rearmSeconds`, or at once when hit.
 - A pack losing its configured fraction flees; damage can make one member flee
   before the group. Initial counts persist and unloading is not a casualty.
 - A destroyed frigate weapon stops firing while the other weapon continues. A
