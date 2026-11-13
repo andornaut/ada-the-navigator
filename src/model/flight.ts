@@ -2499,7 +2499,7 @@ function layMine(
   const out = flight.mines.filter((mine) => mine.ownerId === ownerId && !mine.end).length;
   if (
     out >= MINE_LAYER.count ||
-    needleChannelContains({ radius: MINE_REACH }, flight, fire.origin)
+    needleChannelContains({ radius: MINE_CHANNEL_REACH }, flight, fire.origin)
   ) {
     return;
   }
@@ -2515,6 +2515,8 @@ function layMine(
 
 /** How long a mine's fizzle and pop play (art/weapons.md "Mine"). */
 const MINE_END_SECONDS = { fizzle: 0.2, pop: 0.22 } as const;
+// The inverse isometric projection stretches a screen-space radius by at most sqrt(2).
+const MINE_CHANNEL_REACH = Math.SQRT2 * MINE_REACH;
 /** A shot's strike against a mine's drawn silhouette: a 6 px square about the shot. */
 const SHOT_PARTS: Parts = [
   [
@@ -2542,7 +2544,7 @@ function armed(mine: Mine): boolean {
 function stepMines(content: GameContent, dt: number, flight: FlightState): void {
   const body = shipBody(flight.facing);
   flight.mines = flight.mines.filter(
-    (mine) => !needleChannelContains({ radius: MINE_REACH }, flight, mine),
+    (mine) => !needleChannelContains({ radius: MINE_CHANNEL_REACH }, flight, mine),
   );
   for (const mine of flight.mines) {
     mine.age += dt;
