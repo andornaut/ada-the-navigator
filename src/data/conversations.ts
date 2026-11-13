@@ -8,13 +8,19 @@ import type { GalaxyNumber } from "./types.ts";
 
 export type Speaker =
   | "ada"
+  | "avi"
+  | "blurbs"
+  | "dollop"
+  | "elderLoom"
   | "astra"
   | "general"
   | "grower"
   | "miner"
   | "penny"
+  | "pip"
   | "salvager"
   | "station"
+  | "settler"
   | "whaleFamily"
   | "workshop";
 
@@ -105,13 +111,19 @@ export const SPEAKERS: Readonly<
 > = {
   ada: { name: "Ada", side: "left" },
   astra: { name: "Astra", side: "right" },
+  avi: { name: "Avi", side: "right" },
+  blurbs: { name: "Blurbs", side: "right" },
+  dollop: { name: "Dollop", side: "right" },
+  elderLoom: { name: "Elder Loom", side: "right" },
   // Until the third holodisk is inserted; see GENERAL_NAMED.
   general: { name: "Unknown voice", side: "right" },
   // The community projects' thank-you speakers (gameplay/economy.md "Donations").
   grower: { name: "Grower", side: "right" },
   miner: { name: "Miner", side: "right" },
   penny: { name: "Penny", side: "right" },
+  pip: { name: "Pip", side: "right" },
   salvager: { name: "Salvager", side: "right" },
+  settler: { name: "Wick", side: "right" },
   station: { name: "Station", side: "right" },
   whaleFamily: { name: "Whale family", side: "right" },
   workshop: { name: "Workshop", side: "right" },

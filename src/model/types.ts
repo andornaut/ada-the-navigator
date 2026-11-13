@@ -268,6 +268,10 @@ export interface HeldActivity {
   /** The story place that offered it. */
   place: string;
   reward: number;
+  /** A courier escort resumes at its saved position with its one patrol. */
+  courier?: { position: Vec; patrolSpawned: boolean };
+  /** Gates lit in the held Thread the needle run, separate from the chapter's gates. */
+  lit?: number;
   /** A mining contract's resources deposited at the hub since accepting. */
   deposited?: number;
   /** A supply run's item is aboard; a lost one is replaced through Talk at the issuer. */
