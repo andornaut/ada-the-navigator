@@ -368,8 +368,9 @@ from Pip; return to Earth. Archie's drones are hunting here openly. Andromeda's 
 groups with more frigates than Needle's; its roster is tuned like the others.
 
 Andromeda's stations are settlers' stations, drawn with the settlers' art, as
-Cartwheel's station is the mining hub: each is a full station with dock, shop,
-Jobs and, once the chapter is complete, projects, and the local map calls it Station.
+Cartwheel's station is the mining hub: each is a full station with dock, Exchange,
+its supported specialties and, once the chapter is complete, projects. The local
+map calls it Station.
 Going with Pip to the settlers ends at the nearest settlers' station. Getting the beacon parts with Pip ends at the
 nearest settlement, where Pip collects them and Ada carries them to the dark
 beacon. The
@@ -467,12 +468,17 @@ Cartwheel's first regular-visitor line is Opal's and the final-milestone line
 Jasper's. The bullied child at home is Sam (they). The blocking pilot, the whale
 family, settlement greeters and the calf stay unnamed.
 
-Every station in these five galaxies has a keeper of its people, and every
-Andromeda settlement a settler who greets Ada. Each galaxy has three keepers,
-each with a name and portrait of their own. A station's keeper follows its rank
-by distance from the galaxy's origin, cycling through the three, so the nearest
-three stations have different keepers. Cartwheel's mining hub is always
-Quartz's, and its other stations cycle through Slate and Garnet.
+Every station in all six galaxies has a distinct keeper with a unique display
+name, and every Andromeda settlement a settler who greets Ada. A keeper's stable
+identity derives from its station id and is saved across revisits and reloads.
+Portrait ids are separate from keeper identities: a finite species portrait
+roster may be reused without cycling the same three NPC identities through
+stations. Tech owns serialization, deterministic name-collision handling and
+migration, preserving saved identities. Cartwheel's mining hub remains Quartz's;
+other named story roles retain their identities.
+
+The existing keeper names below identify the finite portrait reference roster,
+not a limit of three station identities per galaxy.
 
 | Galaxy    | Keepers                  |
 | --------- | ------------------------ |
@@ -482,18 +488,111 @@ Quartz's, and its other stations cycle through Slate and Garnet.
 | Andromeda | Lumen, Dial, Cog         |
 | Cartwheel | Quartz, Slate, Garnet    |
 
-The mining hub's keeper has greeting lines of its own that mention the hub;
-every other station's keeper uses its species' shared keeper lines. The name
-tab shows the keeper's name. Story destinations keep their
+#### Generic station keeper interface and copy
+
+Logical keeper facts are `stationId`, stable station-derived `keeperId`, unique
+`displayName`, separate `portraitId`, supported services, three introduction
+lines and short return lines. Name components are `givenName`, `familyName` and
+the station-specific qualifier "of {station}". Generic keeper full names use
+"{givenName} {familyName} of {station}", with the canonical station display name.
+Station display names and keeper full names must be unique and stable across
+saves and revisits; nine given/family combinations are not a limit on station
+count or permission to reuse a full name. Do not expose raw coordinates or an
+unreviewed numeric NPC id as the qualifier. Existing named characters keep their
+identities; portrait reuse does not turn them into a new keeper. Tech owns the
+representation, deterministic collision handling and migration; stability does
+not require a new save field.
+
+Generic station labels use "{galaxyName} {stationWords} Station". Encode the full
+stable station identity, including placement layer and signed cell coordinates,
+bijectively as a nonnegative integer. Tech may use zigzag plus Cantor pairing or
+canonical byte encoding; the mapping must be injective over the full identity.
+Render the integer's minimal base-16 digits using this ordered word alphabet,
+separated by spaces:
+
+Amber, Beacon, Comet, Dawn, Ember, Fern, Glimmer, Haven, Iris, Juniper, Kite,
+Lantern, Meadow, Nova, Orbit, Pebble.
+
+Zero is Amber. Other encodings have no leading zero digit, so labels are
+unambiguous. The galaxy name distinguishes galaxies. Never derive labels from
+discovery order, a station index or a collision-prone hash, and never show raw
+coordinates or numeric ids. These words are a label code, not new NPC stories.
+Named story destinations and Quartz's mining hub retain their existing labels.
+Generic legacy keeper keys remain portrait references only; reusing a face does
+not reuse an NPC identity. Labels and full keeper names are purely identity-derived;
+Tech owns migration without rewriting saved identities.
+
+The model supplies `StationGreeting.displayName` separately from
+`keeper: KeeperKey`, which selects the existing portrait. Its
+`GameModel.stationServices` is null off dock, or a readonly `StationServices`
+value with `exchange: true` and boolean `equipment`, `weaponsAmmo`, `jobs`,
+`projects` and `heldTask` fields. `StationService` names the specialties
+`equipment`, `weaponsAmmo` and `jobs`. The UI consumes these facts and the
+formatted greeting; it never derives service availability from dialogue.
+Projects preserve their existing availability. Active task details and Drop
+remain available at any station through `heldTask`; only new job offers require
+`jobs`. Existing story hubs retain all their approved capabilities.
+
+| Galaxy    | Given-name components | Family-name components       |
+| --------- | --------------------- | ---------------------------- |
+| Sunflower | Pollen, Petal, Amber  | Goldwing, Bloom, Honeycomb   |
+| Whirlpool | Cove, Eddy, Foam      | Tide, Current, Shell         |
+| Needle    | Fern, Rush, Aster     | Reedwing, Thread, Stillwater |
+| Andromeda | Prism, Tick, Arc      | Beacon, Lamplight, Compass   |
+| Cartwheel | Flint, Shale, Chert   | Pebble, Copper, Ridge        |
+| Phantom   | Dew, Puddle, Wisp     | Ripple, Drift, Glow          |
+
+Generic station first-visit introductions have three lines:
+
+1. "Welcome to {station}. I'm {keeper}."
+2. The galaxy's flavor line below.
+3. One supported service line below; Exchange is the fallback.
+
+`{station}` is the station's display name and `{keeper}` the keeper's full unique
+display name. The identity and station name make the dialogue package specific
+to that station; the components add no individual NPC backstory.
+
+| Galaxy    | Flavor line                                    |
+| --------- | ---------------------------------------------- |
+| Sunflower | "{station} keeps humming."                     |
+| Whirlpool | "{station} welcomes current riders."           |
+| Needle    | "No need to rush at {station}."                |
+| Andromeda | "The lamps at {station} are lit for you."      |
+| Cartwheel | "A little dust never bothers us at {station}." |
+| Phantom   | "There is room to rest at {station}."          |
+
+Service lines, emitted only when the station offers that service:
+
+- Equipment: "{station} has equipment for your ship."
+- Weapons and ammunition: "{station} sells weapons and ammo."
+- Jobs: "There's work on the board at {station}."
+- Exchange: "You can trade ore and Stardust at {station}."
+
+Return lines cycle within the assigned station:
+
+- "Welcome back to {station}, Navigator."
+- "{keeper} here. You can trade ore and Stardust here."
+- "Back at {station}! What do you need today?"
+
+The mining hub and actual story characters retain their authored lines and
+identities. The generic station contract does not change their story dialogue.
+
+Each station's keeper has short station-specific introduction and return lines,
+including at stations without jobs. The mining hub's lines still mention the
+hub. The name tab shows the keeper's own display name. A bounded name-part and
+flavor pool uses the approved station-name and service templates above without
+inventing individual NPC histories. Portrait assignments use the finite existing
+assets separately from the named story identities. Story destinations keep their
 story characters' arrival lines; landmarks have no greeter. The first time Ada
 docks at a station, its keeper's portrait and full greeting (three lines) show
 in the station card's welcome line, a tap on the line advancing it while Undock,
-Shop and Jobs stay live. Each later docking shows one short line, the galaxy's
-three in turn. The first time Ada comes within Talk range of a settlement, its
+Shop and supported services stay live. Each later docking shows a short return
+line from that station's keeper. The first time Ada comes within Talk range of a settlement, its
 settler's two-line greeting plays in the conversation box. Greetings seen are
-saved per place, and Restart clears them. Phantom's stations keep the generic
-welcome line until the chapter is complete; then Admiral Archie greets Ada there,
-with his own lines and portrait, as their keeper. Lines are in [the player copy](player-copy.md#greeters).
+saved per place, and Restart clears them. Phantom also follows the distinct
+station-keeper contract; Admiral Archie's named finale identity, dialogue and
+portrait remain story content, not one keeper identity repeated at every
+station. Existing authored lines are in [the player copy](player-copy.md#greeters).
 
 ### Galaxy six, Phantom: the finale
 
@@ -550,7 +649,7 @@ battle is tuned to be winnable with none. Objectives are in
 [the player copy](player-copy.md#chapter-six-the-garden-party).
 
 Once the chapter is complete, Phantom's drones stand down: it places no new
-encounters, and Archie is the keeper of its stations. Drones in the other
+encounters, and Archie helps mend the Blurbs' docks. Drones in the other
 galaxies are beyond his signal and keep their last orders, so their space stays
 as dangerous as before. The salvaged flagship stays at the waypoint as a passable
 hulk with its lights on. The Blurb settlements' docks show cracks from the blockades
@@ -1142,7 +1241,9 @@ Discovery rewards use cargo and Stardust pickups; a discovery cache holds 4
 Stardust as four ordinary pickups worth 1 each, arranged in a diamond. Each uses
 normal contact collection and the tractor beam, with no aggregate collider or
 hidden bonus. Weapons come only from shops and rare enemy drops. Stations are rare
-points of interest with shops.
+points of interest with Exchange everywhere and seeded equipment,
+weapons-and-ammunition or jobs specialties, at twice the station density in every
+galaxy (see [Economy](economy.md#stations)).
 
 Visual effects distinguish hits, shield damage, destroyed ships, pickups and
 deposits. Sound effects remain restrained. Reduced motion skips screen shakes.
@@ -1150,8 +1251,14 @@ Asteroids come in more sizes, including much larger ones, with irregular shapes
 and variety. Ordinary asteroids have stationary centres and may rotate slowly;
 they do not translate in circles or oscillate. Legacy orbiting rocks settle at
 their current positions without a position jump, with HP and drops unchanged.
-Every destructible asteroid releases one to five combined ore and Stardust
-units; bigger ones take more shots and are more likely to release higher totals.
+Asteroid resource-yield caps are 4, 6, 8 and 10 units for small, medium, large and
+huge rocks. Small rocks may yield zero; all larger sizes guarantee at least one
+reward, including an ammo-only outcome. An asteroid that drops ammo drops nothing
+else. Resource units split 75% ore and 25% Stardust; ore groups into five-unit
+chunks and remainder singles within the rolled unit cap, never as a bonus.
+Chunks use normal contact and tractor collection and count as ordinary fungible
+ore. Larger rocks are more likely to yield larger totals and five-ore chunks,
+but no chunk is guaranteed. Exact weights are in [Economy](economy.md#earning-stardust).
 Ships bounce off them, with bump damage as for any asteroid. Large
 and huge asteroids stay out of passages and clear of stations, destinations and
 launch points. Background objects stay muted

@@ -26,7 +26,9 @@ Exploring finds a station every few minutes.
 ## Earning Stardust
 
 Destroyed enemy ships release Stardust as small glinting pickups. Destroyed
-asteroids can release ore, Stardust or both, with one to five units in total.
+asteroids release either an eligible ammo pack alone or a size-weighted resource
+yield. Small asteroids may release nothing; medium, large and huge asteroids
+guarantee at least one reward, which may be an ammo pack.
 Ada's ship has a tractor beam, with no visual of its own, that draws every
 pickup (Stardust, ore nuggets, discovery caches, weapons, ammo packs, a floating holodisk and
 a hunt job's lost item) within its pull radius toward her at its pull speed,
@@ -58,11 +60,29 @@ position 1; values follow each position's hit points. Every defeated enemy relea
 at least 1 Stardust, with existing larger rewards and eligible pickups preserved.
 Disabling a heavy does not destroy it. Fleeing, unloading, despawning or restoring
 a survivor does not grant defeat loot, and a released wreck never pays again.
-Discovery caches are rare. Asteroid yields use the size weights in
-[src/data/asteroidLoot.ts](../src/data/asteroidLoot.ts): small asteroids usually
-yield fewer units, and larger asteroids are more likely to yield five. Each unit
-independently becomes ore or Stardust with equal probability. There is no extra
-Stardust burst above the five-unit total.
+Discovery caches are rare. Resource-yield asteroids use the following relative
+weights; each array follows the listed total-unit range in ascending order and
+sums to 100. Maximum-yield chances apply to that resource-yield roll.
+
+| Size   | Resource units | Relative weights                  | Chance of maximum |
+| ------ | -------------- | --------------------------------- | ----------------- |
+| Small  | 0 to 4         | 15, 55, 22, 6, 2                  | 2%                |
+| Medium | 1 to 6         | 20, 35, 25, 12, 4, 4              | 4%                |
+| Large  | 1 to 8         | 10, 20, 25, 20, 10, 5, 2, 8       | 8%                |
+| Huge   | 1 to 10        | 5, 12, 20, 20, 11, 7, 4, 3, 2, 16 | 16%               |
+
+Each resource unit independently becomes ore with probability 0.75 or Stardust
+with probability 0.25. The size weights and this split define the yield targets;
+no separate ore or Stardust multiplier applies.
+
+Group rolled ore into pickups worth 5 ore each, with any remainder as one-unit
+pickups. A five-ore chunk replaces five single ore pickups; it is the same
+fungible ore, collected by normal contact and the tractor beam. Huge asteroids
+can release two five-ore chunks. Larger asteroids have higher chances of these
+chunks, but no size guarantees one. The size cap counts resource units, not
+pickup sprites. There is no extra roll, additive ore bonus or extra Stardust
+burst above the rolled total. Enemy loot, discovery caches and job rewards keep
+their own rules.
 
 A drop splits its Stardust into whole-Stardust pickups, as evenly as possible with
 the larger pieces first, so one pickup can carry more than 1 Stardust. The number
@@ -114,11 +134,13 @@ those weapons). Each world pack contains one quarter of its shop pack: Multi-Las
 Rapid Missile 65, Heavy Missile 10, Scattershot 15 and Phaser 10. Its feedback shows
 +N beside the corresponding weapon icon, using the actual ammunition added.
 
-Every destroyed asteroid, including an ore rock, uses the same size-based
-one-to-five-unit combined ore and Stardust roll. Either output can be zero;
-neither ore nor Stardust is individually guaranteed. Eligible ammo packs remain
-a separate roll. Loot is released once on destruction, never for an intact or
-indestructible rock.
+Every destroyed asteroid, including an ore rock, uses the size-based yields
+above when it does not release ammunition. An asteroid that drops an ammo pack
+drops nothing else: no ore, Stardust or other loot. The ammo outcome satisfies
+the medium, large and huge asteroid minimum-reward guarantee. Without ammo,
+small asteroids may yield zero resources; the other sizes yield at least one
+combined resource unit, but neither ore nor Stardust is individually guaranteed.
+Loot is released once on destruction, never for an intact or indestructible rock.
 
 Ore rocks occur in every galaxy; Cartwheel is richest in ore. Ore aboard fuels
 shield recharge after a 30-second delay, at the normal regeneration rate, not
@@ -137,17 +159,28 @@ Station jobs also pay Stardust; see [Quests](quests.md#rewards).
 
 ## Stations
 
-Stations are rare points of interest, each with a shop. They are placed by the
-galaxy's seed, so a galaxy's stations stay in the same places on every flight, at
-least 8000 world units apart and away from story destinations. A discovered
+Station density is doubled in every galaxy. Station placement remains seeded
+and stable across flights; existing known station ids and positions must survive
+adoption. The minimum station spacing is 8000 / sqrt(2), approximately
+5656.854249 world units. Andromeda's existing settlements stay at their legacy
+station positions plus (6000, 6000), with 1200 world units of station clearance.
+New candidates avoid existing destinations; validation must not apply the denser
+placement rules retroactively to remove or move legacy sites. Tech owns the
+placement algorithm and must measure accepted station density after candidate
+rejections against the approximately doubled target, rather than counting layers. A discovered
 station becomes a travel destination like other destinations. An undiscovered station
 within 3000 world units of Ada is marked by the direction indicator, so stations
-stay rare but findable. A station is a safe
+remain findable. A station is a safe
 area. Ada docks with Use (Dock) within Talk range, 160 world units from the
 station's centre, like any other destination; the station has no dock mouth and
 flying over it does nothing. Undocking leaves Ada at rest where she docked, so
-Use offers Dock again at once. Docking opens the fullscreen station card, which pauses play like other cards. The card shows the Stardust balance, a welcome line (the keeper's greeting; see [Species and greeters](rules.md#species-and-greeters)), Undock, Shop and Jobs; Jobs
-opens the station's job board (see [Quests](quests.md)).
+Use offers Dock again at once. Docking opens the fullscreen station card, which pauses play like other cards. The card shows the Stardust balance, a welcome line (the keeper's greeting; see [Species and greeters](rules.md#species-and-greeters)), Undock, Shop and the station's supported services. Every station offers Exchange;
+equipment, weapons with ammunition, and jobs are seeded specialties. Reachable
+stations in each galaxy collectively offer all three categories, with no
+encounter-order gating or new unlock rules. Jobs opens a board only at stations
+that offer jobs (see [Quests](quests.md)). Every station has its own keeper
+identity and short station-specific flavor dialogue, including those without
+jobs. Portrait reuse does not merge keeper identities.
 Like Archie's modals it has a close X; the X, an outside tap, back and Escape all
 undock.
 
@@ -160,8 +193,9 @@ and detail cards. Their existing contents, actions and dismissal rules apply.
 
 Weapons unlock along the route, one per galaxy. The galaxy Ada is in sets what
 its shops sell and what its upgrade drops give: the weapons unlocked there,
-their levels and their ammunition in the shop. Laser and its levels are
-available everywhere. Back in an earlier galaxy, only that galaxy's weapons,
+their levels and their ammunition at stations with the weapons-and-ammunition
+specialty. Laser and its levels are available through that specialty in every
+galaxy. Back in an earlier galaxy, only that galaxy's weapons,
 levels and ammunition are sold, and only its weapons and levels drop. Ammo packs
 are the exception: they drop for every weapon Ada owns, in any galaxy (see
 [Ammunition](#ammunition)).

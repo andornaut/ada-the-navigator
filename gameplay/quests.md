@@ -7,15 +7,18 @@ Penny's sense, conversations, carried items and persistence.
 
 ## Station jobs
 
-Every station has a job board of small helping jobs. A job takes two to five
+Stations with the jobs specialty have a board of small helping jobs. A job takes two to five
 minutes, reads simply for a 12-year-old and is non-violent at its core: no job
 asks Ada to destroy anything, and drones met on the way are incidental. Job
 targets keep 1000 world units clear of retained frigates, capitals and platforms.
 
 ### Job board
 
-The station card shows the Stardust balance, the welcome line, Undock, Shop and
-Jobs. Jobs opens the fullscreen job board, which follows the shop's card pattern; its close
+At a station with the jobs specialty, the station card offers Jobs alongside
+its Stardust balance, keeper welcome, Undock and Shop. Other stations still offer
+Exchange and their own keeper dialogue, without new job offers. Active task
+details and Drop remain available at any station. Jobs opens the fullscreen job
+board, which follows the shop's card pattern; its close
 X, an outside tap, back and Escape return to the station card.
 
 - Each board offers three jobs at once, drawn from its galaxy's job pool by the
