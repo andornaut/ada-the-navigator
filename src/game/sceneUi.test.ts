@@ -15,6 +15,7 @@ import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
 import { UPGRADE_WEAPONS } from "../model/weapons.ts";
 import { readStory, relaunch } from "../testing/launch.ts";
 import { cheatGroups, type CheatSessionOptions, createCheatSession } from "../ui/cheatActions.ts";
+import type { PauseState } from "../ui/pauseCard.ts";
 import { ShieldOreSpendCounter, type StatusView } from "../ui/statusPill.ts";
 
 // Execute production UI wiring against the real model without loading Phaser's DOM.
@@ -48,6 +49,36 @@ function callback(name: string): string {
     compilerOptions: { target: ts.ScriptTarget.ES2023 },
   }).outputText;
 }
+function controlArgument(name: string): string {
+  let argument: ts.Expression | undefined;
+  const visit = (node: ts.Node): void => {
+    if (ts.isCallExpression(node) && node.expression.getText(source) === `scene.controls.${name}`) {
+      argument = node.arguments[0];
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  if (!argument) {
+    throw new Error(`Missing production control argument ${name}`);
+  }
+  return ts.transpileModule(`(${argument.getText(source)})`, {
+    compilerOptions: { target: ts.ScriptTarget.ES2023 },
+  }).outputText;
+}
+function pauseView(model: GameModel, screen: string = model.screen): PauseState {
+  return runInContext(
+    controlArgument("setPause"),
+    createContext({
+      mapField: () => null,
+      pauseModel: model,
+      scene: { model },
+      screen,
+      shipView: () => ({ name: "current ship" }),
+      state: model.state,
+    }),
+  ) as PauseState;
+}
+
 function flight() {
   const model = new GameModel(CONTENT);
   model.state.unlocked = [1, 3];
@@ -74,6 +105,89 @@ function navigation(model: GameModel) {
   const onJump = runInContext(callback("onJump"), context) as () => void;
   return { controls, jumpThen, localMapOpen: () => localMapOpen, onJump, scene };
 }
+
+describe("universal pause caller", () => {
+  it("keeps Pause absent on the title and loading screens, with no Settings shortcut", () => {
+    const model = new GameModel(CONTENT);
+    expect(pauseView(model).place).toBeNull();
+    expect(pauseView(model, "loading").place).toBeNull();
+    expect(runInContext(controlArgument("setSettingsButton"), createContext({}))).toBe(false);
+  });
+
+  it("keeps Pause and the ship available during flight dialogue and docking", () => {
+    const model = flight();
+    for (const blocked of ["dialogue", "docked"] as const) {
+      model.state.dialogue =
+        blocked === "dialogue"
+          ? {
+              choices: [{ id: "continue", label: "Continue" }],
+              context: "test",
+              text: "Conversation",
+              title: "Ada",
+            }
+          : null;
+      model.state.docked = blocked === "docked" ? "station" : null;
+      const view = pauseView(model);
+      expect(view.place).toBe("flight");
+      expect(view.ship).not.toBeNull();
+    }
+  });
+
+  it("uses only explicit canonical Map permission, failing closed when absent", () => {
+    const model = flight();
+    Object.defineProperty(model, "pauseMapAvailable", { configurable: true, value: undefined });
+    expect(pauseView(model).canMap).toBe(false);
+    Object.defineProperty(model, "pauseMapAvailable", { configurable: true, value: true });
+    expect(pauseView(model).canMap).toBe(true);
+    Object.defineProperty(model, "pauseMapAvailable", { configurable: true, value: false });
+    expect(pauseView(model).canMap).toBe(false);
+  });
+
+  it("offers Pause on each Earth story page without advancing or answering its choice", () => {
+    const model = new GameModel(CONTENT);
+    model.start();
+    const pages: string[] = [];
+    let choice = false;
+    for (let turn = 0; turn < 60 && model.screen === "story"; turn++) {
+      const before = structuredClone(model.storyView);
+      expect(pauseView(model).place).toBe("room");
+      expect(model.storyView).toEqual(before);
+      pages.push(model.storyView!.page.id);
+      if (model.storyView!.choices.length) {
+        choice = true;
+        model.storyNext();
+        expect(model.storyView).toEqual(before);
+        break;
+      }
+      model.storyNext();
+    }
+    expect(pages.length).toBeGreaterThan(1);
+    expect(choice).toBe(true);
+  });
+
+  it("keeps a mandatory flight interaction intact across the actual Back to title caller", () => {
+    const model = flight();
+    model.state.dialogue = {
+      choices: [{ id: "continue", label: "Continue" }],
+      context: "test",
+      text: "Conversation",
+      title: "Ada",
+    };
+    const dialogue = structuredClone(model.state.dialogue);
+    const context = createContext({
+      apply: (action: () => void) => action(),
+      scene: { jumping: false, model },
+    });
+    const leave = runInContext(callback("onBackToTitle"), context) as () => void;
+    expect(pauseView(model).place).toBe("flight");
+    leave();
+    expect(model.screen).toBe("start");
+    expect(pauseView(model).place).toBeNull();
+    model.continueGame();
+    expect(model.state.dialogue).toEqual(dialogue);
+    expect(pauseView(model).place).toBe("flight");
+  });
+});
 
 describe("galaxy map UI navigation", () => {
   it.each(["current", "other", "locked"])(

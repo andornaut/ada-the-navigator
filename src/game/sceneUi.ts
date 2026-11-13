@@ -1089,19 +1089,26 @@ export function refreshScene(scene: UiContext): void {
     keepScreenOn(playing);
   }
   armBack(scene);
-  scene.controls.setSettingsButton(state.mode !== "space");
+  scene.controls.setSettingsButton(false);
   scene.controls.setAchievementsButton(start);
   scene.controls.setExitButton(start);
+  const pauseModel: GameModel & { readonly pauseMapAvailable?: boolean } = scene.model;
   scene.controls.setPause({
+    canMap: pauseModel.pauseMapAvailable === true,
     carrying: scene.model.carrying,
     field: mapField(scene),
     ...(state.mode === "space" && state.flight ? { galaxy: state.flight.galaxy } : {}),
     inDanger: scene.model.inDanger,
     job: scene.model.jobObjective,
     map: scene.model.map,
-    place: enabled ? "flight" : scene.model.roomPage ? "room" : null,
+    place:
+      screen === "space" || screen === "story" || screen === "selector"
+        ? state.mode === "space" && state.flight
+          ? "flight"
+          : "room"
+        : null,
     questEntries: scene.model.quests,
-    ship: enabled ? shipView(scene) : null,
+    ship: state.mode === "space" && state.flight ? shipView(scene) : null,
     towing: scene.model.towing,
   });
   scene.controls.setAchievements(scene.model.achievements);
