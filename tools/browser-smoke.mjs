@@ -3238,21 +3238,19 @@ try {
     state: JSON.parse(weaponSave),
   });
   // heading, when given, also waits for a shot flying at that world angle.
-  async function heldVolley(weapon, projectile, minimum, faded = false, heading = null) {
+  async function heldVolley(weapon, projectile, minimum, heading = null) {
     await seedOnce(weaponSave, `ada-browser.volley-${weapon}.v1`);
     await page.locator(`button[data-weapon="${weapon}"]`).click();
     await page.keyboard.down("ArrowRight");
     try {
       await page.waitForFunction(
-        ({ faded, heading, key, minimum, projectile }) => {
+        ({ heading, key, minimum, projectile }) => {
           const shots =
             JSON.parse(localStorage.getItem(key))?.flight?.shots.filter(
               (shot) => !shot.enemy && shot.projectile === projectile,
             ) ?? [];
           return (
             shots.length >= minimum &&
-            (!faded ||
-              shots.some((shot) => shot.fade && shot.life / shot.fade.initialLife < 0.35)) &&
             (heading === null ||
               shots.some(
                 (shot) =>
@@ -3260,7 +3258,7 @@ try {
               ))
           );
         },
-        { key: storageKey, projectile, minimum, faded, heading },
+        { key: storageKey, projectile, minimum, heading },
       );
       const snapshot = await readSave();
       assert.deepEqual(
@@ -3277,7 +3275,7 @@ try {
   // A level 1 Rapid Missile lives 0.44 s (220 at 500) against its 0.30 s interval, so at most
   // two are in flight between shots. The held screen-right aim settles on world angle -45 degrees.
   const settledAim = -Math.PI / 4;
-  const missiles = await heldVolley("rapidMissile", "missile", 2, false, settledAim);
+  const missiles = await heldVolley("rapidMissile", "missile", 2, settledAim);
   // Remaining life counts down, so ascending life is firing order (oldest first).
   const missileShots = missiles.flight.shots
     .filter((shot) => !shot.enemy && shot.projectile === "missile")
@@ -3326,9 +3324,10 @@ try {
       "The visible projected level 1 Multi-Laser volley must retain its approved ±20 degree spread",
     );
   }
-  const scatter = await heldVolley("scattershot", "dot", 7, true);
+  // A dot lives 100 / 600 s and the save lands once a second, so a snapshot rarely catches one
+  // fading; the fade to nothing is covered in src/model/weaponProjectiles.test.ts.
+  const scatter = await heldVolley("scattershot", "dot", 7);
   const dots = scatter.flight.shots.filter((shot) => !shot.enemy && shot.projectile === "dot");
-  const fading = dots.filter((shot) => shot.life / shot.fade.initialLife < 0.35);
   // Pellets leave the nose of the heading they fired at, so from Ada's centre each lies within
   // Scattershot's 100 world-unit range plus the farthest world nose offset of any facing.
   const scatterRange = 100;
@@ -3340,7 +3339,6 @@ try {
       return Math.hypot(x, y);
     }),
   );
-  assert.ok(fading.length > 0, "Actual scatter particles must reach their fade segment");
   for (const shot of dots) {
     assert.equal(
       shot.fade.projectedRange,
@@ -3373,7 +3371,7 @@ try {
   });
   events.checks.push(
     "Actual held aim emits automatic straight missiles, triple ±20 degree bolts " +
-      "and fading 100 world-unit scatter particles",
+      "and 100 world-unit scatter particles",
   );
 
   const cargoModel = new GameModel(CONTENT);
