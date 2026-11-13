@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { engineJets, readEngineJets } from "../game/shipJets.ts";
+import { engineJets, jetLength, layerAlpha, readEngineJets } from "../game/shipJets.ts";
 import { fromAreaLeft, units } from "./layout/css.ts";
 import { START_SCREEN } from "./layout/startScreen.ts";
 import { START_SCREEN_CLASS, START_SCREEN_STYLE } from "./startScreen.ts";
@@ -40,15 +40,41 @@ describe("title screen art", () => {
     expect(titleShip(art, "unknown")).toBe("/art/ship-26.svg");
   });
 
-  it("holds the speed jets at f 0.8 behind the frame, at the frame's 280 / 96 scale", () => {
+  it("holds frame 26's jets at f 0.8, attached to each exported mouth at the title frame's scale", () => {
+    expect(data.ship).toMatchObject({ animated: false, frame: 26, jetSpeed: 0.8 });
     expect(art.jets.length).toBeGreaterThan(0);
-    // The halo layer at f 0.8: (0.8 - 0.6) / 0.4 of its 0.5 alpha.
     expect(Math.min(...art.jets.map(({ alpha }) => alpha))).toBeCloseTo(0.25, 9);
-    // Art's ink extent: the jets reach play-view x 226.3, 11.7 left of the 238 frame edge.
-    const xs = jetPolygons(art).flatMap(({ points }) =>
-      points.split(" ").map((point) => Number(point.split(",")[0])),
+    const scale = START_SCREEN.ship.size / jets.frame;
+    const layers = jets.layers.filter((layer) => layerAlpha(layer, 0.8) > 0);
+    const polygons = jetPolygons(art);
+    expect(polygons).toHaveLength(jets.headings[26]!.length * layers.length);
+    for (const [index, polygon] of polygons.entries()) {
+      const mouth = jets.headings[26]![Math.floor(index / layers.length)]!;
+      const layer = layers[index % layers.length]!;
+      const points = polygon.points.split(" ").map((point) => point.split(",").map(Number));
+      const [base, tip, other] = points as [[number, number], [number, number], [number, number]];
+      // The base straddles the exported mouth centre; no heading-specific translation.
+      expect((base[0] + other[0]) / 2).toBeCloseTo(mouth.anchor.x * scale, 10);
+      expect((base[1] + other[1]) / 2).toBeCloseTo(mouth.anchor.y * scale, 10);
+      expect((base[0] - other[0]) / 2).toBeCloseTo(mouth.half.x * layer.width * scale, 10);
+      expect((base[1] - other[1]) / 2).toBeCloseTo(mouth.half.y * layer.width * scale, 10);
+      const length = jetLength(jets, 0.8) * layer.length;
+      expect(tip[0]).toBeCloseTo((mouth.anchor.x + mouth.axis.x * length) * scale, 10);
+      expect(tip[1]).toBeCloseTo((mouth.anchor.y + mouth.axis.y * length) * scale, 10);
+    }
+  });
+
+  it("keeps full-frame jet coordinates aligned when the manifest sprite pivot changes", () => {
+    const assets = manifest.assets.map((asset) =>
+      asset.id === "ship-26" ? { ...asset, pivot: { x: 0.2, y: 0.8 } } : asset,
     );
-    expect(Math.min(...xs)).toBeCloseTo(226.3 - 238, 0);
+    const shifted = readTitleScreen(assets, jets, data)!;
+    const expected = jetPolygons(art);
+    for (const [index, polygon] of jetPolygons(shifted).entries()) {
+      const points = polygon.points.split(/[ ,]/u).map(Number);
+      const original = expected[index]!.points.split(/[ ,]/u).map(Number);
+      points.forEach((point, coordinate) => expect(point).toBeCloseTo(original[coordinate]!, 10));
+    }
   });
 
   it("reads no art from malformed data", () => {
