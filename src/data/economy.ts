@@ -269,9 +269,10 @@ export const ECONOMY: EconomyCatalog = {
     maxSpeed: [200, 225],
     turnSeconds: [0.14, 0.12],
   },
-  paintOrder: ["classic", "cobalt", "seafoam", "graphite", "iris"],
-  paintPrices: [1500, 2000, 2500, 3000],
+  paintOrder: ["classic", "cobalt", "seafoam", "graphite", "iris", "amber"],
+  paintPrices: [1500, 2000, 2500, 3000, 3500],
   paints: {
+    amber: { label: "paintAmber", top: "#f4b665" },
     classic: { label: "paintClassic", top: "#ffffff" },
     cobalt: { label: "paintCobalt", top: "#6f9ff0" },
     graphite: { label: "paintGraphite", top: "#aab2c4" },

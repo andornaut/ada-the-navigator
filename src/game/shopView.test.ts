@@ -83,6 +83,7 @@ describe("shop rows on the station view", () => {
       ["paint", "Seafoam", "unaffordable"],
       ["paint", "Graphite", "unaffordable"],
       ["paint", "Iris", "unaffordable"],
+      ["paint", "Amber", "unaffordable"],
     ]);
   });
 });

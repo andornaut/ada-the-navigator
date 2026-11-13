@@ -1192,6 +1192,7 @@ describe("shop purchases", () => {
       [{ kind: "paint", scheme: "seafoam" }, false, false, 1500],
       [{ kind: "paint", scheme: "graphite" }, false, false, 1500],
       [{ kind: "paint", scheme: "iris" }, false, false, 1500],
+      [{ kind: "paint", scheme: "amber" }, false, false, 1500],
     ]);
     expect(selectPaint(ECONOMY, "cobalt", economy)).toBe(false);
     expect(buy(ECONOMY, { kind: "paint", scheme: "cobalt" }, economy)).toEqual({
@@ -1207,14 +1208,14 @@ describe("shop purchases", () => {
   });
 
   it.each([
-    ["iris", "cobalt", "graphite", "seafoam"],
-    ["seafoam", "graphite", "cobalt", "iris"],
+    ["iris", "cobalt", "graphite", "seafoam", "amber"],
+    ["amber", "seafoam", "graphite", "cobalt", "iris"],
   ])("prices paint by purchase order beginning with %s across saves", (...order) => {
     const model = new GameModel(CONTENT);
-    model.state.economy.stardust = 9000;
+    model.state.economy.stardust = 12500;
     for (const [index, scheme] of order.entries()) {
       const economy = model.state.economy;
-      const price = [1500, 2000, 2500, 3000][index]!;
+      const price = [1500, 2000, 2500, 3000, 3500][index]!;
       for (const unowned of order.slice(index)) {
         expect(shopRow(ECONOMY, economy, { kind: "paint", scheme: unowned }).price).toBe(price);
       }
@@ -1278,7 +1279,7 @@ describe("shop purchases", () => {
       "unaffordable",
       "forSale",
     ]);
-    // Shield, engine, tractor; then Classic, Cobalt, Seafoam, Graphite, Iris.
+    // Shield, engine, tractor; then Classic, Cobalt, Seafoam, Graphite, Iris and Amber.
     expect(states("ship")).toEqual([
       "unaffordable",
       "forSale",
@@ -1288,6 +1289,7 @@ describe("shop purchases", () => {
       "unaffordable",
       "unaffordable",
       "selectable",
+      "unaffordable",
     ]);
     economy.stardust = 40;
     expect(states("ship").slice(4)).toEqual([
@@ -1295,6 +1297,7 @@ describe("shop purchases", () => {
       "unaffordable",
       "unaffordable",
       "selectable",
+      "unaffordable",
     ]);
     economy.levels.tractor = 3;
     expect(states("ship")[2]).toBe("owned");
@@ -1354,6 +1357,7 @@ describe("shop purchases", () => {
     expect(name({ kind: "track", track: "engine" })).toBe("Engine tuning");
     expect(name({ kind: "track", track: "tractor" })).toBe("Tractor beam");
     expect(Object.keys(ECONOMY.paints).map((scheme) => name({ kind: "paint", scheme }))).toEqual([
+      "Amber",
       "Classic",
       "Cobalt",
       "Graphite",

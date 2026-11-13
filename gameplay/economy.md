@@ -216,9 +216,9 @@ Ship tab once Cartwheel's space quest is complete: "Holodisk", the detail
 and the row then shows Owned.
 
 Ship paint schemes are Classic (the free white and blue default), Cobalt,
-Seafoam, Graphite and Iris. Tapping an owned scheme puts it in use at once, with
+Seafoam, Graphite, Iris and Amber. Tapping an owned scheme puts it in use at once, with
 no confirm; the scheme in use has the selection ring and shows In use instead of
-Owned. The four paid schemes cost 1500, 2000, 2500 and 3000 Stardust by
+Owned. The five paid schemes cost 1500, 2000, 2500, 3000 and 3500 Stardust by
 purchase order, whichever scheme Ada chooses next. Classic stays free and does
 not advance that order. Paint is a shop-only endgame savings goal.
 

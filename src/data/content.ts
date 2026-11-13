@@ -522,6 +522,7 @@ export const CONTENT: GameContent = {
     ore: "Ore",
     outOfAmmo: "Out of ammo.",
     owned: "Owned",
+    paintAmber: "Amber",
     paintClassic: "Classic",
     paintCobalt: "Cobalt",
     paintGraphite: "Graphite",
