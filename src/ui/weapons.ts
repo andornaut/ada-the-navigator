@@ -2,6 +2,7 @@ import type { Weapon } from "../data/types.ts";
 import { UPGRADE_TIER_COLOURS } from "../data/upgradeTiers.ts";
 import { WEAPON_LEVEL_COUNT } from "../data/weaponCatalog.ts";
 import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
+import { AmmoFeedbackQueue } from "./ammoFeedback.ts";
 import { FOCUS_RING } from "./layout/controls.ts";
 import { font, fromHudEdge, units } from "./layout/css.ts";
 import { HUD_AMMO_COUNT, HUD_BUTTON, HUD_ROW, HUD_WEAPON_LEVEL } from "./layout/playView.ts";
@@ -207,6 +208,22 @@ ${hudDiscStyle(".ada-controls .ada-weapon", ".ada-disc")}
   color:${AMMO_COUNT_TEXT.normal};
   pointer-events:none
 }
+.ada-controls .ada-ammo-gain{
+  position:absolute;
+  left:50%;
+  top:${units(HUD_AMMO_COUNT.top + HUD_AMMO_COUNT.height + 4)};
+  transform:translateX(-50%);
+  padding:0 ${units(HUD_AMMO_COUNT.padding)};
+  border-radius:${units(HUD_AMMO_COUNT.radius)};
+  background:${INK};
+  font:${font(TYPE.count)};
+  white-space:nowrap;
+  color:${AMMO_COUNT_TEXT.normal};
+  pointer-events:none
+}
+.ada-controls .ada-ammo-gain[hidden]{
+  display:none
+}
 .ada-controls .ada-weapon[data-state=empty]{
   color:${HUD_DISC_STATES.empty.glyph}
 }
@@ -270,6 +287,8 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
   const buttons = new Map<Weapon, HTMLButtonElement>();
   let choices: readonly WeaponChoice[] = [];
   let enabled = false;
+  const feedback = new AmmoFeedbackQueue();
+  let lastFeedbackTime: number | undefined;
 
   const render = (): void => {
     root.hidden = !enabled || choices.length === 0;
@@ -301,6 +320,12 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
           count.setAttribute("aria-hidden", "true");
           button.append(count);
         }
+        const gain = document.createElement("span");
+        gain.className = "ada-ammo-gain";
+        gain.hidden = true;
+        gain.setAttribute("aria-live", "polite");
+        gain.setAttribute("aria-atomic", "true");
+        button.append(gain);
         button.addEventListener("click", () => {
           // A switch during the wait after the last one is refused with the shared cue.
           if (enabled && !button.disabled && options.onSelect(choice.id)) {
@@ -342,7 +367,21 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
           { duration: 200, easing: "ease-out" },
         );
     },
-    dispose: () => root.remove(),
+    clearFeedback(): void {
+      feedback.clear();
+      lastFeedbackTime = undefined;
+      for (const button of buttons.values()) {
+        const gain = button.querySelector<HTMLElement>(".ada-ammo-gain");
+        if (gain) {
+          gain.hidden = true;
+          gain.textContent = "";
+        }
+      }
+    },
+    dispose(): void {
+      feedback.clear();
+      root.remove();
+    },
     setEnabled(value: boolean): void {
       enabled = value;
       render();
@@ -357,6 +396,34 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
     setWeapons(value: readonly WeaponChoice[]): void {
       choices = value;
       render();
+    },
+    /** Receives the amount actually added at the grant operation, after outcome handling. */
+    showAmmoGain(weapon: Weapon, added: number): void {
+      feedback.push(weapon, added);
+    },
+    /** The caller advances this beside item notices, pausing and hiding it under cards. */
+    updateFeedback(now: number, running: boolean): void {
+      const ms = lastFeedbackTime === undefined ? 0 : now - lastFeedbackTime;
+      lastFeedbackTime = now;
+      const frames = feedback.advance(ms, running);
+      for (const [weapon, button] of buttons) {
+        const gain = button.querySelector<HTMLElement>(".ada-ammo-gain");
+        if (!gain) {
+          continue;
+        }
+        const frame = frames.get(weapon);
+        gain.hidden = !running || frame === undefined;
+        if (frame) {
+          const text = `+${SHOTS_FORMAT.format(frame.added)}`;
+          if (gain.textContent !== text) {
+            gain.setAttribute("aria-label", `${options.labels.names[weapon]} ${text}`);
+            gain.textContent = text;
+          }
+          gain.style.opacity = String(frame.opacity);
+        } else {
+          gain.textContent = "";
+        }
+      }
     },
   };
 }

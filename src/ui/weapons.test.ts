@@ -128,9 +128,12 @@ describe("HUD weapon buttons", () => {
     });
     // The 33 disc less the 4 annulus on each side leaves the 25 gold face.
     expect(HUD_BUTTON.disc - 2 * HUD_DISC_STATES.selected.edge).toBe(25);
-    // The cream is the shared focus ring's band and the count pill's text.
+    // Counts and refill labels share the cream text, independently of disc state.
     expect(WEAPON_STYLE).not.toMatch(/#f0bd68|pixelated/u);
-    expect(WEAPON_STYLE.match(/#ead4aa/gu)).toHaveLength(2);
+    for (const selector of [".ada-controls .ada-ammo", ".ada-controls .ada-ammo-gain"]) {
+      const rule = WEAPON_STYLE.split("}").find((part) => part.includes(`${selector}{`));
+      expect(rule).toContain(`color:${AMMO_COUNT_TEXT.normal}`);
+    }
   });
 
   it("draws each count in an opaque ink pill on the disc's lower edge, clear of the name tab", () => {

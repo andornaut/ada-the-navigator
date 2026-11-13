@@ -4,30 +4,20 @@ import { weaponGlyphPath, weaponShopSheet } from "../data/weaponGlyphs.ts";
 import type { ItemGain } from "../model/itemGains.ts";
 import { fill, weaponName } from "../model/shop.ts";
 import { font, fromHudEdge, units } from "./layout/css.ts";
-import { chipLeft, chipWidth, flyPoint, ITEM_NOTICE } from "./layout/itemNotice.ts";
+import { chipWidth, ITEM_NOTICE } from "./layout/itemNotice.ts";
 import { STATUS_CARGO_INSET } from "./layout/playView.ts";
-import { SPACING, TYPE } from "./layout/tokens.ts";
+import { TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { STATUS_COLOURS } from "./statusPill.ts";
 
-// Item notices (gameplay/rules.md, art/layout.md "Item notice", art/controls.md "Item notice"): a
-// small ink chip under the status pill names a gain other than Stardust or ore, "+ {item}", then
-// collapses to its icon and flies it to where the gain shows: the pill's cargo segment, the
-// weapon's disc or the shield bar. A holodisk's, an Engine or Tractor beam level's and a paint
-// scheme's fade in place. One shows at a time, in gain order.
+// Non-currency item gains name the actual item at the HUD's top centre, then fade in place.
+// Ammunition refills use the corresponding weapon's feedback instead of this queue.
 
 /** The notices' timing in ms (art/layout.md "Item notice"). */
 export const NOTICE_TIMING = {
   appearMs: 180,
-  /** The landing's bump of the destination's art, scale 1 to bumpScale to 1. */
-  bumpMs: 200,
-  bumpScale: 1.12,
-  /** The label fades out over the collapse's first 84. */
-  collapseLabelMs: 84,
-  collapseMs: 140,
   fadeMs: 300,
-  flyMs: 300,
-  /** The next notice appears this long after the previous one lands or fades. */
+  /** The next notice appears this long after the previous one fades. */
   gap: 120,
   holdMs: 1200,
   /** A hold while another notice waits. */
@@ -68,7 +58,7 @@ export interface Notice {
   /** Identical gains share a key and merge. */
   readonly key: string;
   readonly kind: NoticeKind;
-  /** The label without its count, such as "+ Rapid Missile ammo". */
+  /** The label without its merged count, such as "+ Phaser". */
   readonly label: string;
   /** A sprite under SPRITES (its first of `frames` frames across), or a weapon glyph in cream. */
   readonly icon: { readonly frames?: number; readonly sprite: string } | { readonly mask: string };
@@ -161,7 +151,7 @@ export function countedLabel(labels: Labels, label: string, count: number): stri
   return count > 1 ? fill(labels.itemMerged ?? "", { count, label }) : label;
 }
 
-export type NoticePhase = "appear" | "collapse" | "fade" | "fly" | "hold";
+export type NoticePhase = "appear" | "fade" | "hold";
 
 export interface NoticeFrame {
   readonly count: number;
@@ -235,27 +225,22 @@ export class NoticeQueue {
     const reduced = this.reducedMotion();
     const lengths: Readonly<Record<NoticePhase, number>> = {
       appear: reduced ? NOTICE_TIMING.reducedFadeMs : NOTICE_TIMING.appearMs,
-      collapse: NOTICE_TIMING.collapseMs,
       fade: reduced ? NOTICE_TIMING.reducedFadeMs : NOTICE_TIMING.fadeMs,
-      fly: NOTICE_TIMING.flyMs,
       hold: entry.hold,
     };
     return lengths[phase];
   }
 
   private next(entry: Running): NoticePhase | null {
-    const inPlace = this.reducedMotion() || entry.notice.target.kind === "none";
     const next: Readonly<Record<NoticePhase, NoticePhase | null>> = {
       appear: "hold",
-      collapse: "fly",
       fade: null,
-      fly: null,
-      hold: inPlace ? "fade" : "collapse",
+      hold: "fade",
     };
     return next[entry.phase];
   }
 
-  /** Notices that landed (ended a fly) since the last call, for the destination's bump. */
+  /** Retained for callers of the former fly animation; in-place notices never land. */
   readonly landed: Notice[] = [];
 
   /** Advances play time by ms (none while paused) and returns what shows now. */
@@ -297,10 +282,7 @@ export class NoticeQueue {
       }
       const phase = this.next(entry);
       if (phase === null) {
-        // Landed or faded: the next waits out the gap.
-        if (entry.phase === "fly") {
-          this.landed.push(entry.notice);
-        }
+        // The next notice waits out the gap after this one fades.
         this.current = null;
         this.gapLeft = NOTICE_TIMING.gap;
         if (left <= 0 && this.waiting.length === 0) {
@@ -427,12 +409,17 @@ export function noticeLanding(places: NoticePlaces, target: NoticeTarget): numbe
   return target.kind === "shield" ? places.shield.y : places.row;
 }
 
+/** Centres the notice across the HUD independently of its cargo and weapon destinations. */
+export function centredNoticeLeft(hudWidth: number, noticeWidth: number): number {
+  return Math.max(0, (hudWidth - noticeWidth) / 2);
+}
+
 export function createItemNotices(
   parent: HTMLElement,
   options: {
     readonly labels: Labels;
     readonly reducedMotion: () => boolean;
-    /** Bumps the art a notice lands on. */
+    /** Retained for existing callers; in-place notices do not invoke it. */
     readonly onArrive: (target: NoticeTarget) => void;
   },
 ) {
@@ -459,8 +446,6 @@ export function createItemNotices(
   const queue = new NoticeQueue(options.reducedMotion);
   let shown: { readonly notice: Notice; count: number; width: number } | null = null;
   let last: number | undefined;
-  // The chip's left edge, fixed when its notice appears.
-  let anchor: { readonly left: number; readonly notice: Notice } | null = null;
 
   const showNotice = (frame: NoticeFrame, room: number) => {
     const text = countedLabel(options.labels, frame.notice.label, frame.count);
@@ -504,6 +489,8 @@ export function createItemNotices(
     clear(): void {
       queue.clear();
       shown = null;
+      last = undefined;
+      live.textContent = "";
       root.hidden = true;
     },
     dispose(): void {
@@ -512,7 +499,9 @@ export function createItemNotices(
     },
     push(gains: readonly ItemGain[]): void {
       for (const gain of gains) {
-        queue.push(gainNotice(options.labels, gain));
+        if (gain.kind !== "ammo") {
+          queue.push(gainNotice(options.labels, gain));
+        }
       }
     },
     /** Steps the timeline to now and draws the chip; running false pauses it and hides it. */
@@ -530,23 +519,16 @@ export function createItemNotices(
         }
         return;
       }
-      const right = (places.leftmostTarget ?? places.right) - SPACING.pageInset;
-      const width = chipWidth(showNotice(frame, right - places.pill.left - chipWidth(0)));
-      // The fly reads its destination every frame, as the pill's right edge moves with its counts;
-      // the chip keeps the place it appeared at.
-      const target = noticeDestination(places, frame.notice.target);
-      if (anchor?.notice !== frame.notice) {
-        anchor = { left: chipLeft(target, width, places.pill.left, right), notice: frame.notice };
-      }
-      const { left } = anchor;
+      const width = chipWidth(showNotice(frame, places.right - chipWidth(0)));
+      const left = centredNoticeLeft(places.right, width);
       const iconLeft = ITEM_NOTICE.padding;
       icon.style.left = units(iconLeft);
       let opacity = 1;
-      let panelOpacity = 1;
-      let labelOpacity = 1;
+      const panelOpacity = 1;
+      const labelOpacity = 1;
       let shift = { x: 0, y: 0 };
-      let panelLeft = 0;
-      let panelWidth = width;
+      const panelLeft = 0;
+      const panelWidth = width;
       const t = frame.progress;
       const reduced = options.reducedMotion();
       if (frame.phase === "appear") {
@@ -555,26 +537,6 @@ export function createItemNotices(
       } else if (frame.phase === "fade") {
         opacity = 1 - (reduced ? t : EASE_OUT(t));
         shift = { x: 0, y: reduced ? 0 : -ITEM_NOTICE.rise * EASE_OUT(t) };
-      } else if (frame.phase === "collapse" || frame.phase === "fly") {
-        const share = frame.phase === "collapse" ? EASE_IN_OUT(t) : 1;
-        const labelShare = Math.min(
-          1,
-          (t * NOTICE_TIMING.collapseMs) / NOTICE_TIMING.collapseLabelMs,
-        );
-        labelOpacity = frame.phase === "collapse" ? 1 - labelShare : 0;
-        const squareLeft = iconLeft - (ITEM_NOTICE.square - ITEM_NOTICE.icon) / 2;
-        panelLeft = squareLeft * share;
-        panelWidth = width + (ITEM_NOTICE.square - width) * share;
-        if (frame.phase === "fly") {
-          const from = {
-            x: left + iconLeft + ITEM_NOTICE.icon / 2,
-            y: ITEM_NOTICE.top + ITEM_NOTICE.height / 2,
-          };
-          const to = { x: target, y: noticeLanding(places, frame.notice.target) };
-          const point = flyPoint(from, to, EASE_IN_OUT(t));
-          shift = { x: point.x - from.x, y: point.y - from.y };
-          panelOpacity = 1 - EASE_IN_OUT(t);
-        }
       }
       root.style.left = fromHudEdge("left", left);
       root.style.width = units(width);

@@ -1,10 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { tierColour, UPGRADE_TIER_COLOURS } from "../data/upgradeTiers.ts";
 import {
+  centredNoticeLeft,
   countedLabel,
+  createItemNotices,
   EASE_IN_OUT,
   EASE_OUT,
   gainNotice,
@@ -153,17 +155,16 @@ describe("item notice wording", () => {
 });
 
 describe("item notice timeline", () => {
-  it("appears for 180, holds 1200, collapses for 140 and flies for 300: 1820 to landing", () => {
+  it("appears for 180, holds 1200 and fades in place for 300", () => {
     const queue = new NoticeQueue(() => false);
     queue.push(parts);
     expect(timeline(queue, 2000)).toEqual([
       [parts.key, "appear", 0],
       [parts.key, "hold", 180],
-      [parts.key, "collapse", 1380],
-      [parts.key, "fly", 1520],
+      [parts.key, "fade", 1380],
     ]);
     expect(queue.advance(0, true)).toBeNull();
-    expect(queue.landed).toEqual([parts]);
+    expect(queue.landed).toEqual([]);
   });
 
   it("fades a holodisk's in place over 300 after its hold: 1680 in all, landing nowhere", () => {
@@ -199,12 +200,12 @@ describe("item notice timeline", () => {
     expect(starts).toEqual([
       [parts.key, "appear", 0],
       [parts.key, "hold", 180],
-      // Parts landed at 180 + 600 + 140 + 300 = 1220; the holodisk appears 120 later.
-      [holodisk.key, "appear", 1340],
-      [holodisk.key, "hold", 1520],
-      // Faded at 1520 + 600 + 300 = 2420; ammo, alone, holds the full 1200.
-      [ammo.key, "appear", 2540],
-      [ammo.key, "hold", 2720],
+      // Every notice fades in place before the next starts.
+      [holodisk.key, "appear", 1200],
+      [holodisk.key, "hold", 1380],
+      // The last notice holds the full 1200.
+      [ammo.key, "appear", 2400],
+      [ammo.key, "hold", 2580],
     ]);
   });
 
@@ -214,12 +215,12 @@ describe("item notice timeline", () => {
     early.advance(180 + 200, true);
     early.push(holodisk);
     expect(early.advance(399, true)?.phase).toBe("hold");
-    expect(early.advance(1, true)?.phase).toBe("collapse");
+    expect(early.advance(1, true)?.phase).toBe("fade");
     const late = new NoticeQueue(() => false);
     late.push(parts);
     late.advance(180 + 900, true);
     late.push(holodisk);
-    expect(late.advance(0, true)?.phase).toBe("collapse");
+    expect(late.advance(0, true)?.phase).toBe("fade");
   });
 
   it("merges an identical gain into a waiting or holding notice, restarting the hold", () => {
@@ -232,8 +233,8 @@ describe("item notice timeline", () => {
     expect(queue.advance(1199, true)?.phase).toBe("hold");
     queue.push(holodisk);
     queue.push(holodisk);
-    expect(queue.advance(1, true)?.phase).toBe("collapse");
-    // Once the collapse starts an identical gain queues a new notice.
+    expect(queue.advance(1, true)?.phase).toBe("fade");
+    // Once the fade starts an identical gain queues a new notice.
     queue.push(ammo);
     const after = timeline(queue, 3000).filter(([, phase]) => phase === "appear");
     expect(after.map(([key]) => key)).toEqual([holodisk.key, ammo.key]);
@@ -297,5 +298,43 @@ describe("item notice geometry", () => {
     }
     expect(EASE_OUT(0.5)).toBeGreaterThan(0.5);
     expect(EASE_IN_OUT(0.5)).toBeCloseTo(0.5, 6);
+  });
+});
+
+describe("top-centre item notice routing", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("centres across the HUD independently of the currency pill or weapon selected", () => {
+    expect(centredNoticeLeft(700, 140)).toBe(280);
+    expect(centredNoticeLeft(320, 140)).toBe(90);
+    expect(centredNoticeLeft(100, 140)).toBe(0);
+  });
+
+  it("queues no central notice for an ammo refill", () => {
+    const nodes: { hidden: boolean }[] = [];
+    vi.stubGlobal("document", {
+      createElement: () => {
+        const node = { append: vi.fn(), className: "", hidden: false, setAttribute: vi.fn() };
+        nodes.push(node);
+        return node;
+      },
+      createTextNode: () => ({ data: "" }),
+    });
+    const notices = createItemNotices({ prepend: vi.fn() } as unknown as HTMLElement, {
+      labels: LABELS,
+      onArrive: vi.fn(),
+      reducedMotion: () => false,
+    });
+    notices.push([{ kind: "ammo", weapon: "rapidMissile" }]);
+    notices.update(0, true, {
+      cargo: null,
+      leftmostTarget: 400,
+      pill: { left: 50, width: 200 },
+      right: 700,
+      row: 16,
+      shield: { x: 300, y: 300 },
+      weapons: new Map(),
+    });
+    expect(nodes[0]!.hidden).toBe(true);
   });
 });
