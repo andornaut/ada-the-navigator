@@ -1,3 +1,5 @@
+import { judge, newlyEarned } from "@andornaut/game-kit/achievements";
+
 import type { Achievement, AchievementGoal } from "../data/achievements.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
@@ -213,27 +215,46 @@ export function achievementProgress(
   }
 }
 
-function reached(
-  totals: AchievementTotals,
-  goal: AchievementGoal,
-  achievements: AchievementState,
-  game: AchievementGame,
-): boolean {
-  if (goal.kind === "prologue") {
-    return game.prologueSeen;
-  }
-  if (goal.kind === "chapter") {
-    return game.progress[goal.galaxy].resolved;
-  }
-  if (goal.kind === "chartOne") {
-    // Any one galaxy fully charted, not only the one the card counts.
-    return Object.entries(totals.landmarks).some(
-      ([galaxy, total]) => total > 0 && charted(achievements, Number(galaxy)) >= total,
-    );
-  }
-  const { have, need } = achievementProgress(totals, goal, achievements);
-  return need > 0 && have >= need;
+interface AchievementFacts {
+  readonly achievements: AchievementState;
+  readonly game: AchievementGame;
+  readonly totals: AchievementTotals;
 }
+
+const counted = {
+  holds: ({ achievements, totals }: AchievementFacts, goal: AchievementGoal): boolean => {
+    const { have, need } = achievementProgress(totals, goal, achievements);
+    return need > 0 && have >= need;
+  },
+  scopes: ["game"] as const,
+};
+
+const achievementJudge = judge<AchievementGoal, "game", AchievementFacts>({
+  allies: counted,
+  blockade: counted,
+  chapter: {
+    holds: ({ game }, goal) => game.progress[goal.galaxy].resolved,
+    scopes: ["game"],
+  },
+  chartAll: counted,
+  chartOne: {
+    // Any one galaxy fully charted, not only the one the card counts.
+    holds: ({ achievements, totals }) =>
+      Object.entries(totals.landmarks).some(
+        ([galaxy, total]) => total > 0 && charted(achievements, Number(galaxy)) >= total,
+      ),
+    scopes: ["game"],
+  },
+  helps: counted,
+  jobs: counted,
+  paints: counted,
+  pennyFinds: counted,
+  projects: counted,
+  prologue: {
+    holds: ({ game }) => game.prologueSeen,
+    scopes: ["game"],
+  },
+});
 
 /**
  * Brings the counts up to date with the game (paints owned) and unlocks every achievement now
@@ -248,11 +269,14 @@ export function unlockAchievements(
   for (const paint of game.economy.paints) {
     addOnce(achievements.paints, paint);
   }
-  const unlocked = catalog.filter(
-    (achievement) =>
-      !achievements.unlocked.includes(achievement.id) &&
-      reached(totals, achievement.goal, achievements, game),
+  const ids = newlyEarned(
+    achievementJudge,
+    catalog.map(({ goal, id }) => ({ conditions: [goal] as const, id, tier: "" })),
+    "game",
+    { achievements, game, totals },
+    achievements.unlocked,
   );
+  const unlocked = ids.map((id) => catalog.find((achievement) => achievement.id === id)!);
   achievements.unlocked.push(...unlocked.map(({ id }) => id));
   return unlocked;
 }

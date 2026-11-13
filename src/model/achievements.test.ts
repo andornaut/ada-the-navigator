@@ -175,6 +175,54 @@ describe("Penny finds", () => {
 });
 
 describe("collections and helping", () => {
+  it("unlocks a completed smaller galaxy even when the card counts a larger incomplete galaxy", () => {
+    const state = newAchievements();
+    const totals = { ...ACHIEVEMENT_TOTALS, landmarks: { 1: 5, 2: 1 } };
+    state.charted = { 1: ["a", "b", "c", "d"], 2: ["e"] };
+    const cartographer = ACHIEVEMENTS.find(({ id }) => id === "cartographer")!;
+    expect(achievementProgress(totals, cartographer.goal, state)).toEqual({ have: 4, need: 5 });
+    expect(unlockAchievements([cartographer], totals, state, newGameState())).toEqual([
+      cartographer,
+    ]);
+  });
+
+  it("retains authored unlock order, entry identity and the earned list across repeated evaluation", () => {
+    const state = newAchievements();
+    const game = newGameState();
+    game.prologueSeen = true;
+    state.jobs = 30;
+    const first = ACHIEVEMENTS.find(({ goal }) => goal.kind === "prologue")!;
+    const helped = ACHIEVEMENTS.find(({ goal }) => goal.kind === "jobs")!;
+    const catalog = [helped, first];
+    const earned = state.unlocked;
+    const result = unlockAchievements(catalog, ACHIEVEMENT_TOTALS, state, game);
+    expect(result).toEqual(catalog);
+    expect(result[0]).toBe(helped);
+    expect(result[1]).toBe(first);
+    expect(state.unlocked).toBe(earned);
+    expect(earned).toEqual(catalog.map(({ id }) => id));
+    expect(achievementProgress(ACHIEVEMENT_TOTALS, helped.goal, state)).toEqual({
+      have: 30,
+      need: 1,
+    });
+    expect(unlockAchievements(catalog, ACHIEVEMENT_TOTALS, state, game)).toEqual([]);
+    expect(state.unlocked).toBe(earned);
+    expect(earned).toEqual(catalog.map(({ id }) => id));
+  });
+
+  it("keeps unavailable totals locked even when their retained counters are positive", () => {
+    const state = newAchievements();
+    state.allies = ["friend"];
+    state.projects = ["project"];
+    state.paints = ["classic"];
+    const totals = { allies: 0, landmarks: {}, paints: 0, projects: 0 };
+    const catalog = ACHIEVEMENTS.filter(({ goal }) =>
+      ["allies", "projects", "paints", "chartOne", "chartAll"].includes(goal.kind),
+    );
+    expect(catalog.length).toBeGreaterThan(0);
+    expect(unlockAchievements(catalog, totals, state, newGameState())).toEqual([]);
+  });
+
   it("counts paints owned with Classic and unlocks Full Palette once every paint is owned", () => {
     const model = new GameModel(CONTENT);
     expect(view(model, "Full Palette").progress).toEqual({
