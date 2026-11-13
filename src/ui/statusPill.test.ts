@@ -446,6 +446,7 @@ describe("status pill count", () => {
           {
             ...full,
             aboard,
+            lightField: false,
             ore: amount,
             oreLabel: "Ore",
             shieldOreSpent: 0,
@@ -467,6 +468,7 @@ describe("status pill count", () => {
     const view = {
       ...full,
       aboard: null,
+      lightField: false,
       ore: 10,
       oreLabel: "Ore",
       shieldOreSpent: 0,
