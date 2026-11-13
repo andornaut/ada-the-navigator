@@ -253,14 +253,14 @@ another owned weapon shows `detailAmmoLeft` with its count; an unowned weapon
 in the shop shows `detailIncludesAmmo` instead. Multi-Laser and Scattershot
 lines name the counts at Ada's level, or level 1 when unowned.
 
-| Weapon        | Card lines                                                                                                                                                                                                 |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Laser         | "Fires one laser bolt at a time, for as long as you like." "Reaches across the screen." "Each level fires faster, with faster bolts that hit harder."                                                      |
-| Multi-Laser   | "Fires a fan of {count} laser bolts at once." "Hits several drones together, or one drone with every bolt up close." "Reaches across the screen." "Each level adds a bolt and makes the bolts faster."     |
-| Rapid Missile | "Fires small missiles at a fast rate." "Each one explodes when it hits something, or after a short distance, with a small blast." "Each level fires faster, with faster missiles."                         |
-| Heavy Missile | "Fires slowly, but each missile does a lot of damage." "Explodes when it hits something, or after a short distance, with a big blast that hits every drone nearby." "Each level hits harder."              |
-| Scattershot   | "Fires a wide spread of {count} shots, like a shotgun." "Only works close to your ship: the shots fade away quickly." "Strongest up close, when every shot hits." "Each level adds shots that hit harder." |
-| Phaser        | "Fires an instant beam that hits the first thing in its path." "Fires slowly, but every hit is strong, and nothing can dodge it." "Reaches across the screen." "Each level makes the beam hit harder."     |
+| Weapon        | Card lines                                                                                                                                                                                             |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Laser         | "Fires one laser bolt at a time, for as long as you like." "Reaches across the screen." "Each level fires faster, with faster bolts that hit harder."                                                  |
+| Multi-Laser   | "Fires a fan of {count} laser bolts at once." "Hits several drones together, or one drone with every bolt up close." "Reaches across the screen." "Each level adds a bolt and makes the bolts faster." |
+| Rapid Missile | "Fires small missiles at a fast rate." "Each one explodes when it hits something, or after a short distance, with a small blast." "Each level fires faster, with faster missiles."                     |
+| Heavy Missile | "Fires slowly, but each missile does a lot of damage." "Explodes when it hits something, or after a short distance, with a big blast that hits every drone nearby." "Each level hits harder."          |
+| Scattershot   | "Fires a wide spread of {count} shots." "Only works close to your ship: the shots fade away quickly." "Strongest up close, when every shot hits." "Each level adds shots that hit harder."             |
+| Phaser        | "Fires an instant beam that hits the first thing in its path." "Fires slowly, but every hit is strong, and nothing can dodge it." "Reaches across the screen." "Each level makes the beam hit harder." |
 
 An upgrade card shows the upgrade's shop name (`weaponUpgrade`, `shield`,
 `engineTuning` or `tractorBeam`), Ada's current level as `level`, then
