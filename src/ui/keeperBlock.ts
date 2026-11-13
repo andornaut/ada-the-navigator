@@ -1,8 +1,10 @@
 import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 
 import { CAST, CAST_FRAMES, castSheet } from "../data/cast.ts";
+import { GENERAL_NAMED } from "../data/conversations.ts";
 import { KEEPERS } from "../data/keepers.ts";
-import type { StationGreeting } from "../model/keepers.ts";
+import type { KeeperKey, StationGreeting } from "../model/keepers.ts";
+import { COMPACT_PORTRAITS, portraitFrame, TAB_COLOURS } from "./dialoguePortraits.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { font, units } from "./layout/css.ts";
 import { KEEPER_BLOCK } from "./layout/stationCard.ts";
@@ -13,11 +15,16 @@ import { PANEL_BACKGROUND } from "./notice.ts";
 // the card, with the keeper's compact portrait on the right, the name tab over its top-left and
 // the docking's line. While a first docking has lines to come, the panel and its tab are one
 // button that shows the next line and three static pips mark the lines; on the last line, and on
-// a later docking, the block is a status. Phantom's stations show the generic welcome centred,
-// with no portrait or tab.
+// a later docking, the block is a status. A station without an attributed greeting shows the
+// generic welcome centred, with no portrait or tab.
 
 const { name: label, padding, panel, portrait, tab, text } = CONVERSATION_BOX;
 const { pips } = KEEPER_BLOCK;
+
+/** A keeper's existing display name, including the identified General. */
+export function keeperName(key: KeeperKey): string {
+  return key === "general" ? GENERAL_NAMED.name : CAST[key].name;
+}
 
 // Each keeper's portrait sheet and tab fill; data-keeper names the keeper on the block.
 const KEEPER_RULES = Object.values(KEEPERS)
@@ -34,6 +41,22 @@ const KEEPER_RULES = Object.values(KEEPERS)
 }`,
   )
   .join("");
+
+const GENERAL_FRAME = portraitFrame(true, {
+  elapsed: 0,
+  mood: "neutral",
+  named: true,
+  speaker: "general",
+});
+const GENERAL_RULES = `
+.ada-controls .ada-keeper[data-keeper="general"] .ada-keeper-portrait{
+  background:url('${COMPACT_PORTRAITS.general.url}') ${units(-GENERAL_FRAME * portrait.art)} 0 / ${units(
+    COMPACT_PORTRAITS.general.frames * portrait.art,
+  )} ${units(portrait.art)} no-repeat
+}
+.ada-controls .ada-keeper[data-keeper="general"] .ada-keeper-name{
+  background:${TAB_COLOURS.generalNamed}
+}`;
 
 export const KEEPER_STYLE = `
 /* The panel: the conversation box's, in the card's flow below the name tab's overhang. The card
@@ -163,6 +186,7 @@ export const KEEPER_STYLE = `
   width:auto
 }
 ${KEEPER_RULES}
+${GENERAL_RULES}
 `;
 
 export interface KeeperBlock {
@@ -237,7 +261,7 @@ export function createKeeperBlock(options: {
       line.textContent = greeting?.line ?? options.labels.welcome;
       if (greeting) {
         next.dataset.keeper = greeting.keeper;
-        name.textContent = CAST[greeting.keeper].name;
+        name.textContent = keeperName(greeting.keeper);
         next.removeAttribute("data-generic");
       } else {
         delete next.dataset.keeper;

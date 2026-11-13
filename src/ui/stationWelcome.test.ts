@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { GENERAL_NAMED } from "../data/conversations.ts";
 import type { StationGreeting } from "../model/keepers.ts";
 import { stationWelcome } from "./station.ts";
 
@@ -25,5 +26,24 @@ describe("station welcome speaker contract", () => {
       title: "",
     });
     expect(greeting.index).toBe(1);
+  });
+  it("attributes the General greeting to the identified Admiral without changing its line", () => {
+    const greeting: StationGreeting = {
+      count: 1,
+      index: 0,
+      keeper: "general",
+      line: "The current greeting.",
+    };
+    expect(stationWelcome("Station", greeting)).toEqual({
+      speaker: GENERAL_NAMED.name,
+      text: greeting.line,
+      title: "",
+    });
+    expect(greeting).toEqual({
+      count: 1,
+      index: 0,
+      keeper: "general",
+      line: "The current greeting.",
+    });
   });
 });

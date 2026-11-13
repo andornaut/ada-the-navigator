@@ -1,6 +1,5 @@
 import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 
-import { CAST } from "../data/cast.ts";
 import { CONTENT } from "../data/content.ts";
 import { EXCHANGE_COPY } from "../data/exchangeCopy.ts";
 import type { Weapon } from "../data/types.ts";
@@ -8,6 +7,7 @@ import { weaponShopSheet } from "../data/weaponGlyphs.ts";
 import type { StationGreeting } from "../model/keepers.ts";
 import { createDialoguePanel } from "./dialoguePanel.ts";
 import { createExchangeView, type ExchangePort } from "./exchange.ts";
+import { keeperName } from "./keeperBlock.ts";
 import { cardPages } from "./layout/cardPages.ts";
 import { BUTTON_SLICE, FOCUS_RING, PILL, TEXT_BUTTON } from "./layout/controls.ts";
 import { font, slice, units } from "./layout/css.ts";
@@ -521,7 +521,7 @@ export function stationWelcome(
   readonly title: string;
 } {
   return {
-    speaker: greeting ? CAST[greeting.keeper].name : undefined,
+    speaker: greeting ? keeperName(greeting.keeper) : undefined,
     text: greeting?.line ?? "",
     title: greeting ? "" : title,
   };

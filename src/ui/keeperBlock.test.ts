@@ -1,8 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { GENERAL_NAMED } from "../data/conversations.ts";
 import { KEEPERS } from "../data/keepers.ts";
 import type { StationGreeting } from "../model/keepers.ts";
+import { COMPACT_PORTRAITS, portraitFrame, TAB_COLOURS } from "./dialoguePortraits.ts";
 import { createKeeperBlock, KEEPER_STYLE } from "./keeperBlock.ts";
+import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
+import { units } from "./layout/css.ts";
 
 // A stand-in for the few DOM members the block uses.
 class FakeElement {
@@ -194,6 +198,44 @@ describe("the keeper block", () => {
     expect(element().hasAttribute("data-pips")).toBe(false);
     expect(KEEPER_STYLE).toContain("[data-generic] .ada-keeper-frame,");
     expect(KEEPER_STYLE).toContain("[data-generic] .ada-keeper-name{\n  display:none");
+  });
+
+  it("renders the identified General through the existing keeper cycle and focus handoff", () => {
+    const { element, pips, shop } = mounted({
+      count: 3,
+      index: 1,
+      keeper: "general",
+      line: LINES[1],
+    });
+    const button = element();
+    expect(button.dataset.keeper).toBe("general");
+    expect(button.hasAttribute("data-generic")).toBe(false);
+    expect(button.find("ada-keeper-name").textContent).toBe(GENERAL_NAMED.name);
+    expect(pips()).toEqual([true, true, false]);
+    button.focus();
+    button.click();
+    expect(element().tag).toBe("div");
+    expect(element().find("ada-keeper-name").textContent).toBe(GENERAL_NAMED.name);
+    expect(element().find("ada-keeper-line").textContent).toBe(LINES[2]);
+    expect(fakeDocument.activeElement).toBe(shop);
+    expect(pips()).toEqual([true, true, true]);
+  });
+
+  it("uses the existing named General sheet frame and tab without a cast alias", () => {
+    const frame = portraitFrame(true, {
+      elapsed: 0,
+      mood: "neutral",
+      named: true,
+      speaker: "general",
+    });
+    const art = CONVERSATION_BOX.portrait.art;
+    expect(KEEPER_STYLE).toContain(`[data-keeper="general"] .ada-keeper-portrait`);
+    expect(KEEPER_STYLE).toContain(
+      `url('${COMPACT_PORTRAITS.general.url}') ${units(-frame * art)} 0 / ${units(
+        COMPACT_PORTRAITS.general.frames * art,
+      )}`,
+    );
+    expect(KEEPER_STYLE).toContain(`background:${TAB_COLOURS.generalNamed}`);
   });
 
   it("styles every keeper's portrait and tab", () => {
