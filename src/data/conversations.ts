@@ -775,7 +775,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
         lines: [
           {
             speaker: "Rivet",
-            text: "Tools, ships and growing equipment.",
+            text: "Tools, ships and growing equipment. Spare parts really help!",
           },
         ],
       },
@@ -861,7 +861,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
         lines: [
           {
             speaker: "Quartz",
-            text: "Independent miners. There is docking space for everyone.",
+            text: "Independent miners. There's docking space for everyone.",
           },
         ],
       },
@@ -892,7 +892,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
       },
       {
         speaker: "Mica",
-        text: "Yes. That would help.",
+        text: "I'd like some company next time. That would help.",
       },
     ],
     party: "Mica",
