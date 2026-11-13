@@ -109,6 +109,18 @@
       "once": []
     },
     {
+      "key": "icon-project-channel-lights",
+      "png": "sprites/icon-project-channel-lights.png",
+      "json": "sprites/icon-project-channel-lights.json",
+      "once": []
+    },
+    {
+      "key": "icon-project-courier-school",
+      "png": "sprites/icon-project-courier-school.png",
+      "json": "sprites/icon-project-courier-school.json",
+      "once": []
+    },
+    {
       "key": "icon-project-current-buoys",
       "png": "sprites/icon-project-current-buoys.png",
       "json": "sprites/icon-project-current-buoys.json",
@@ -133,6 +145,12 @@
       "once": []
     },
     {
+      "key": "icon-project-loom-hall",
+      "png": "sprites/icon-project-loom-hall.png",
+      "json": "sprites/icon-project-loom-hall.json",
+      "once": []
+    },
+    {
       "key": "icon-project-nursery-beacon",
       "png": "sprites/icon-project-nursery-beacon.png",
       "json": "sprites/icon-project-nursery-beacon.json",
@@ -142,6 +160,12 @@
       "key": "icon-project-salvage-beacons",
       "png": "sprites/icon-project-salvage-beacons.png",
       "json": "sprites/icon-project-salvage-beacons.json",
+      "once": []
+    },
+    {
+      "key": "icon-project-spare-beacon",
+      "png": "sprites/icon-project-spare-beacon.png",
+      "json": "sprites/icon-project-spare-beacon.json",
       "once": []
     },
     {

@@ -30,6 +30,10 @@ clear ground, drawn for the navy item well `#262b44` (9.59:1) and the card
 | Hub repairs        | `icon-project-hub-repairs`                   | 20x20 |
 | Nursery beacon     | `icon-project-nursery-beacon`                | 20x20 |
 | Current-map buoys  | `icon-project-current-buoys`                 | 20x20 |
+| Channel lights     | `icon-project-channel-lights`                | 20x20 |
+| Loom hall          | `icon-project-loom-hall`                     | 20x20 |
+| Courier school     | `icon-project-courier-school`                | 20x20 |
+| Spare beacon       | `icon-project-spare-beacon`                  | 20x20 |
 
 Each weapon sheet is the same pixel grid as its [weapon icon](weapon-icons.md),
 and each ammunition sheet the same grid as its
@@ -150,3 +154,8 @@ run Prettier on the written JSON.
 - `icon-project-current-buoys`: buoys along a current that ends in an arrow.
 - `icon-shop-ammo-missile`, `icon-shop-ammo-energy` and `icon-shop-ammo-shell`:
   the ammunition kind's HUD glyph, upright stock.
+
+- `icon-project-channel-lights`: paired lamps around a dashed channel lane.
+- `icon-project-loom-hall`: a stepped hall roof over an open doorway.
+- `icon-project-courier-school`: an open training book beneath a graduation cap.
+- `icon-project-spare-beacon`: a reserve lantern with a plus sign.

@@ -1,8 +1,10 @@
+import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/grid";
 import type { Tag } from "@andornaut/art-kit/raster";
-import { writeSprites } from "./sprite-sheet.ts";
+import { json } from "./projection.ts";
+import { prettify, writeSprites } from "./sprite-sheet.ts";
 
 // Shop item glyphs for the dark lavender card. "#" is the glyph colour, "o" is ink and "." is clear.
 // Sheets with a disabled tag draw "#" in cream for normal and in the disabled text colour for
@@ -200,6 +202,110 @@ const ICONS: Readonly<Record<string, Icon>> = {
       "....................",
     ],
   },
+  // Paired channel lamps with a dashed clear lane between them.
+  "icon-project-channel-lights": {
+    disabled: true,
+    rows: [
+      "....................",
+      "....................",
+      "....................",
+      "..####.......####...",
+      "..####...##..####...",
+      "..####...##..####...",
+      "..####.......####...",
+      "...##.........##....",
+      "...##.........##....",
+      "...##....##...##....",
+      "...##....##...##....",
+      "...##.........##....",
+      "...##.........##....",
+      "...##.........##....",
+      "...##....##...##....",
+      "..####...##..####...",
+      "..####.......####...",
+      "....................",
+      "....................",
+      "....................",
+    ],
+  },
+  // A stepped hall roof over an open doorway.
+  "icon-project-loom-hall": {
+    disabled: true,
+    rows: [
+      "....................",
+      "....................",
+      ".........##.........",
+      ".........##.........",
+      "......########......",
+      "......########......",
+      "...##############...",
+      "...##############...",
+      "..################..",
+      "..################..",
+      "....##........##....",
+      "....##..####..##....",
+      "....##..####..##....",
+      "....##..##....##....",
+      "....##..##....##....",
+      "....##..##....##....",
+      "....##..##....##....",
+      "..################..",
+      "..################..",
+      "....................",
+    ],
+  },
+  // A courier training book beneath a graduation cap.
+  "icon-project-courier-school": {
+    disabled: true,
+    rows: [
+      "....................",
+      "....................",
+      ".......######.......",
+      ".......######.......",
+      "....############....",
+      "....##############..",
+      ".......######...##..",
+      ".......######...##..",
+      "................##..",
+      "..######....######..",
+      "..################..",
+      "..##....####....##..",
+      "..##....####....##..",
+      "..##....####....##..",
+      "..##....####....##..",
+      "..################..",
+      "..################..",
+      "........####........",
+      "....................",
+      "....................",
+    ],
+  },
+  // A reserve lantern with a plus sign.
+  "icon-project-spare-beacon": {
+    disabled: true,
+    rows: [
+      "....................",
+      "....................",
+      ".....####...........",
+      ".....####...........",
+      "...########.........",
+      "...########.........",
+      "...##....##.........",
+      "...##.##.##.........",
+      "...##.##.##.........",
+      "...##.##.##.........",
+      "...##....##.........",
+      "...########.........",
+      "...########..##.....",
+      "......##.....##.....",
+      "......##...######...",
+      "......##...######...",
+      "......##.....##.....",
+      "...########..##.....",
+      "...########.........",
+      "....................",
+    ],
+  },
   // Check mark beside Owned and In use.
   "icon-shop-check": {
     disabled: false,
@@ -379,3 +485,22 @@ for (const [key, { disabled, rows }] of Object.entries(ICONS)) {
     : [["rest", [frame(rows, CREAM)], 100]];
   await writeSprites({ data: `${output}${key}.json`, sheet: `${output}${key}.png` }, { key }, tags);
 }
+
+// Register project glyph sheets in the UI subset, preserving all other sprite entries.
+const manifestPath = fileURLToPath(new URL("../../public/art/ui/manifest.json", import.meta.url));
+const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+  sprites: { key: string; png: string; json: string; once: string[] }[];
+};
+const projectKeys = Object.keys(ICONS).filter((key) => key.startsWith("icon-project-"));
+const projectSet = new Set(projectKeys);
+manifest.sprites = [
+  ...manifest.sprites.filter(({ key }) => !projectSet.has(key)),
+  ...projectKeys.map((key) => ({
+    key,
+    png: `sprites/${key}.png`,
+    json: `sprites/${key}.json`,
+    once: [],
+  })),
+].sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+writeFileSync(manifestPath, json(manifest));
+await prettify(manifestPath);
