@@ -38,7 +38,7 @@ describe("space dialogue panels", () => {
         CONTENT.chapters[3]!.name,
         "The whale swims off, and soon the family is traveling together again.",
       ],
-      ["Whale family", "You listened when nobody else did. Now listen to us."],
+      ["Whale family", "You listened when we needed help. Now listen to us."],
       [
         "Whale family",
         "A shining disk drifts on the current ahead. Drones guard it. Follow our song.",
