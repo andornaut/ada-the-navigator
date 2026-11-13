@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
@@ -116,6 +117,12 @@ function finishNeedle(model: GameModel): void {
     flight.velocity = { x: 0, y: 0 };
     model.step(0.001, idle);
     model.interact();
+    model.dismissNotice();
+    const budget = CONVERSATIONS.reduce((sum, conversation) => sum + conversation.lines.length, 0);
+    for (let line = 0; !model.state.dialogue && line < budget; line++) {
+      expect(model.conversation, `conversation before ${id}`).not.toBeNull();
+      model.advanceConversation();
+    }
   };
   visit("elderLoom");
   expect(model.state.dialogue?.context).toBe("needle.arrival");
