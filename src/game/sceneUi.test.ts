@@ -15,6 +15,8 @@ import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
 import { UPGRADE_WEAPONS } from "../model/weapons.ts";
 import { readStory, relaunch } from "../testing/launch.ts";
 import { cheatGroups, type CheatSessionOptions, createCheatSession } from "../ui/cheatActions.ts";
+import { VIEW_HOST_ID } from "../ui/layout/css.ts";
+import { BOX_OCCUPANT, boxOccupant } from "../ui/notice.ts";
 import { galaxiesAvailable } from "../ui/pause.ts";
 import type { PauseState } from "../ui/pauseCard.ts";
 import { ShieldOreSpendCounter, type StatusView } from "../ui/statusPill.ts";
@@ -113,6 +115,70 @@ function navigation(model: GameModel) {
   const onJump = runInContext(callback("onJump"), context) as () => void;
   return { controls, jumpThen, localMapOpen: () => localMapOpen, onJump, scene };
 }
+
+describe("conversation exposure under covering cards", () => {
+  function covered(kind: "dialogue" | "docked" | "settings", emergency: boolean) {
+    const model = flight();
+    model.state.dialogue =
+      kind === "dialogue" ? { choices: [], context: "test", text: "Panel", title: "Astra" } : null;
+    model.state.docked = kind === "docked" ? "station" : null;
+    const line = { text: "Conversation" };
+    const read = vi.fn(() => line);
+    Object.defineProperty(model, "conversation", { get: read });
+    const returning = { text: "Return" };
+    const render = vi.fn();
+    const scene = {
+      boxOccupant: null as string | null,
+      conversationBox: { render },
+      emergencyReturn: { line: emergency ? returning : null },
+      model,
+      reducedMotion: false,
+      savingUnavailable: true,
+      settingsOpen: kind === "settings",
+    };
+    const context = createContext({
+      BOX_OCCUPANT,
+      VIEW_HOST_ID,
+      boxOccupant,
+      coarsePointer: () => false,
+      document: { getElementById: () => null },
+      window: {},
+    });
+    const update = runInContext(callback("renderConversation"), context) as (
+      value: typeof scene,
+    ) => void;
+    return { line, model, read, render, returning, scene, update: () => update(scene) };
+  }
+
+  it.each(["settings", "dialogue", "docked"] as const)(
+    "does not read or expose hidden chatter behind %s",
+    (kind) => {
+      const ui = covered(kind, false);
+      ui.update();
+      expect(ui.read).not.toHaveBeenCalled();
+      expect(ui.render).toHaveBeenLastCalledWith(null, true, false);
+      expect(ui.scene.boxOccupant).toBe("save");
+      ui.scene.settingsOpen = false;
+      ui.model.state.dialogue = null;
+      ui.model.state.docked = null;
+      ui.update();
+      expect(ui.read).toHaveBeenCalledOnce();
+      expect(ui.render).toHaveBeenLastCalledWith(ui.line, true, false);
+      expect(ui.scene.boxOccupant).toBe("line");
+    },
+  );
+
+  it.each(["settings", "dialogue", "docked"] as const)(
+    "preserves the emergency overlay above %s without reading ordinary chatter",
+    (kind) => {
+      const ui = covered(kind, true);
+      ui.update();
+      expect(ui.read).not.toHaveBeenCalled();
+      expect(ui.render).toHaveBeenLastCalledWith(ui.returning, true, false);
+      expect(ui.scene.boxOccupant).toBe("line");
+    },
+  );
+});
 
 describe("universal pause caller", () => {
   it("keeps Pause absent on the title and loading screens, with no Settings shortcut", () => {

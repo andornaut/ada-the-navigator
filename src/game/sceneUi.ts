@@ -959,13 +959,13 @@ export function confirmStationExchange(scene: UiContext, quote: ExchangeQuote): 
 /** The conversation box, in the desktop wording without a coarse pointer. */
 export function renderConversation(scene: UiContext): void {
   const emergency = scene.emergencyReturn.line;
-  const line = emergency ?? scene.model.conversation;
+  const { dialogue, docked, notice } = scene.model.state;
+  const covered = !emergency && (scene.settingsOpen || Boolean(dialogue) || Boolean(docked));
+  const line = emergency ?? (covered ? null : scene.model.conversation);
   scene.conversationBox.render(line, !coarsePointer(window), scene.reducedMotion);
   // One box at a time: a line, else the game notice, else the save status (notice.ts). A card
   // over the play view covers the line or notice under it, which frees the slot for the save
   // status, drawn above cards.
-  const { dialogue, docked, notice } = scene.model.state;
-  const covered = !emergency && (scene.settingsOpen || Boolean(dialogue) || Boolean(docked));
   const occupant = boxOccupant({
     line: line !== null && !covered,
     notice: notice !== "" && !covered,
