@@ -632,10 +632,11 @@ area `STICK_AREA_MARGIN` (8) from its edge, a small border clear of the bands. T
 [Use disc](#use-disc) show only on a touch screen (a coarse primary pointer)
 and outside modals, as in Chibi; desktop hides them.
 
-Only the move stick draws a speed line, from the stick's origin to the thumb's
-actual position: 2px cream `#ead4aa` with a 1px ink `#181425` fringe on each
-side, at the rings' 85% opacity, under the knob. It is not clamped to the ring
-and may run past it; the drawn knob stays inside the ring. The line is absent
+Only the move stick draws a speed line, from the stick's origin toward the
+thumb: 2px cream `#ead4aa` with a 1px ink `#181425` fringe on each side, at the
+rings' 85% opacity, under the knob. It stops at the move input reach,
+`TOUCH_STICK.moveReach` 40 logical, so a line that stops growing shows full
+speed; the drawn knob stays inside the ring. The line is absent
 at rest. The aim stick draws no line. See
 [touch joystick sheets](touch-joystick.md).
 
