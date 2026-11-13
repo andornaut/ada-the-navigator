@@ -57,6 +57,7 @@ describe("canonical cross-galaxy quest views", () => {
     };
     const entry = game.quests[0]!;
     expect(entry.galaxy).toBe(1);
+    expect(entry.jobType).toBe("survey");
     expect(entry.line.text).toContain(CONTENT.labels[landmark.name]);
     expect(entry.line.description).toContain(CONTENT.labels[landmark.name]);
     expect(game.state.selectedGalaxy).toBe(3);
@@ -74,7 +75,7 @@ describe("canonical cross-galaxy quest views", () => {
     expect(JSON.stringify(entry)).not.toContain("12345");
     game.state.progress[1].stations.push("station:hidden-source");
     expect(game.quests[0]!.locations).toEqual([
-      { id: "station:hidden-source", label: expect.any(String) },
+      { id: "station:hidden-source", label: expect.any(String), symbol: "station" },
     ]);
   });
 

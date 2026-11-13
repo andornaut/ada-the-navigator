@@ -1,9 +1,10 @@
 import { MINING_CONTRACT_DEPOSITS, SUPPLY_ITEMS } from "../data/activities.ts";
 import { carriedItemName, STORY_ITEM_NAMES } from "../data/itemNames.ts";
+import type { JobType } from "../data/jobs.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { questItemDestination } from "./indicators.ts";
 import { landmarkById } from "./landmarks.ts";
-import type { QuestDetails, QuestLine } from "./map.ts";
+import type { MapSymbol, QuestDetails, QuestLine } from "./map.ts";
 import { fill } from "./shop.ts";
 import type { GalaxyProgress, HeldJob, OptionalTask } from "./types.ts";
 
@@ -11,8 +12,13 @@ import type { GalaxyProgress, HeldJob, OptionalTask } from "./types.ts";
 export interface QuestEntry {
   readonly id: string;
   readonly galaxy: GalaxyNumber;
+  readonly jobType?: JobType;
   readonly line: Extract<QuestLine, { kind: "story" | "job" }>;
-  readonly locations: readonly { readonly id: string; readonly label: string }[];
+  readonly locations: readonly {
+    readonly id: string;
+    readonly label: string;
+    readonly symbol?: MapSymbol;
+  }[];
 }
 
 export interface QuestDetailContext {
@@ -104,7 +110,7 @@ export function questDetails(
         task.type === "survey" ? landmarkById(context.galaxy, task.target.id) : undefined;
       const description =
         text(key, {
-          craft: task.item,
+          craft: task.item.replace(/^(?:a|an)\s+/iu, ""),
           item: task.item,
           landmark: landmark ? context.label(landmark.name) : context.label("questExplore"),
           place: place(task.target.id),

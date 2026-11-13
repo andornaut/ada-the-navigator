@@ -272,3 +272,20 @@ it("keeps explicit destination null unknown instead of falling back to the picku
     questEndpoints([source, destination], { ...line, destination: destination.id })[1]?.place,
   ).toBe(destination);
 });
+
+describe("rescue description articles", () => {
+  it.each([
+    ["a drifting lamp buoy", "drifting lamp buoy"],
+    ["An old craft", "old craft"],
+    ["anemone craft", "anemone craft"],
+    ["another craft", "another craft"],
+    ["The survey craft", "The survey craft"],
+  ])("normalizes only the description token for %s", (item, expected) => {
+    const model = flight();
+    const task = { ...job("rescue"), item };
+    const before = structuredClone(task);
+    const details = questDetails(context(), { ...snapshot(model), task });
+    expect(details.jobDetails?.description).toBe(expected);
+    expect(task).toEqual(before);
+  });
+});

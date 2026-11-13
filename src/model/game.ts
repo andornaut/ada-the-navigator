@@ -2470,10 +2470,19 @@ export class GameModel {
       );
       const locations = [
         ...new Set([...progress.known, ...progress.stations, ...progress.charted]),
-      ].map((id) => ({
-        id,
-        label: this.label(landmarkById(galaxy, id)?.name ?? "") || this.placeLabelIn(galaxy, id),
-      }));
+      ].map((id) => {
+        const landmark = landmarkById(galaxy, id);
+        const symbol = progress.stations.includes(id)
+          ? ("station" as const)
+          : (landmark?.kind ??
+            DESTINATIONS[id]?.mapKind ??
+            (galaxyRoute(galaxy).includes(id) ? ("destination" as const) : undefined));
+        return {
+          id,
+          label: this.label(landmark?.name ?? "") || this.placeLabelIn(galaxy, id),
+          ...(symbol ? { symbol } : {}),
+        };
+      });
       if (BUILT.has(galaxy) && progress.introduced && !progress.resolved) {
         entries.push({
           galaxy,
@@ -2492,6 +2501,7 @@ export class GameModel {
         entries.push({
           galaxy,
           id: `${task.kind}:${galaxy}:${task.id}`,
+          ...(task.kind === "job" ? { jobType: task.type } : {}),
           line: { ...details.jobDetails, kind: "job", target: null, text },
           locations,
         });
