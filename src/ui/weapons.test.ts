@@ -127,9 +127,12 @@ describe("HUD weapon buttons", () => {
     });
     // The face inside the unchanged 4 annulus remains 25 across.
     expect(HUD_BUTTON.disc - 2 * HUD_DISC_STATES.selected.edge).toBe(25);
-    // Counts and refill labels share the cream text, independently of disc state.
+    // Active counts and refill labels use cream; inactive counts use grey.
     expect(WEAPON_STYLE).not.toMatch(/#f0bd68|pixelated/u);
-    for (const selector of [".ada-controls .ada-ammo", ".ada-controls .ada-ammo-gain"]) {
+    for (const selector of [
+      ".ada-controls .ada-weapon[data-state=selected] .ada-ammo",
+      ".ada-controls .ada-ammo-gain",
+    ]) {
       const rule = WEAPON_STYLE.split("}").find((part) => part.includes(`${selector}{`));
       expect(rule).toContain(`color:${AMMO_COUNT_TEXT.normal}`);
     }
@@ -191,7 +194,15 @@ describe("HUD weapon buttons", () => {
 
   it("draws each count in a navy pill below the disc, clear of the name tab", () => {
     expect(HUD_AMMO_COUNT).toEqual({ clearance: 5, height: 14, padding: 4, radius: 4, top: 42 });
-    expect(AMMO_COUNT_TEXT).toEqual({ empty: "#e4574e", normal: "#ead4aa" });
+    expect(AMMO_COUNT_TEXT).toEqual({ inactive: "#b8b8b8", normal: "#ead4aa" });
+    const counts = WEAPON_STYLE.split("}").find((part) =>
+      part.includes(".ada-controls .ada-ammo{"),
+    );
+    expect(counts).toContain(`color:${AMMO_COUNT_TEXT.inactive}`);
+    expect(WEAPON_STYLE).not.toContain(".ada-controls .ada-weapon[data-state=empty] .ada-ammo{");
+    expect(WEAPON_STYLE).toContain(
+      `.ada-controls .ada-weapon[data-state=selected] .ada-disc{\n  background:${HUD_DISC_STATES.selected.face}`,
+    );
     // The pill overlaps the disc's lower edge, 7.5 + 33 = 40.5 below the target's top.
     expect(HUD_AMMO_COUNT.top - (HUD_BUTTON_INSET.disc + HUD_BUTTON.disc)).toBe(1.5);
     // In the view, the conversation box's top sits clearance (5) below the pill.

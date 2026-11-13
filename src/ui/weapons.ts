@@ -98,9 +98,9 @@ export const WEAPON_FILLS: Readonly<Record<Weapon, string>> = {
   scattershot: "#132d33",
 };
 
-// The count pill's text (art/controls.md "Ammunition count"): cream in every state, the empty
-// state's "0" red; the refusal cue tints only the glyph.
-export const AMMO_COUNT_TEXT = { empty: "#e4574e", normal: "#ead4aa" } as const;
+// The count follows selection: cream like the selected ring, otherwise grey, including zero.
+// Refill labels stay cream and refusal tints only the glyph.
+export const AMMO_COUNT_TEXT = { inactive: "#b8b8b8", normal: "#ead4aa" } as const;
 
 const INK = "#181425";
 
@@ -237,7 +237,7 @@ ${(Object.keys(WEAPON_FILLS) as Weapon[])
   box-shadow:inset 0 0 0 ${units(HUD_BUTTON.edge)} ${INK};
   font:${font(TYPE.count)};
   white-space:nowrap;
-  color:${AMMO_COUNT_TEXT.normal};
+  color:${AMMO_COUNT_TEXT.inactive};
   pointer-events:none
 }
 .ada-controls .ada-ammo-gain{
@@ -259,12 +259,15 @@ ${(Object.keys(WEAPON_FILLS) as Weapon[])
 .ada-controls .ada-weapon[data-state=empty]{
   color:${HUD_DISC_STATES.empty.glyph}
 }
-.ada-controls .ada-weapon[data-state=empty] .ada-ammo{
-  color:${AMMO_COUNT_TEXT.empty}
+.ada-controls .ada-weapon[data-state=selected] .ada-ammo{
+  color:${AMMO_COUNT_TEXT.normal}
 }
 .ada-controls .ada-weapon[data-state=selected]{
   color:${HUD_DISC_STATES.selected.glyph};
   --disc-edge:${units(HUD_DISC_STATES.selected.edge)}
+}
+.ada-controls .ada-weapon[data-state=selected] .ada-disc{
+  background:${HUD_DISC_STATES.selected.face}
 }
 /* Every weapon uses one annulus inside the canonical disc, with ink on both edges. */
 .ada-controls .ada-weapon .ada-disc::after{

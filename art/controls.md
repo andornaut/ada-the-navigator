@@ -510,7 +510,8 @@ Settings buttons draw the vector trophy `achievements.svg` and gear
 `settings.svg` in the [nav disc states](achievements-icon.md#states): idle,
 and white on `#3a4466` while pressed.
 
-Every weapon has an opaque dark face in every state and on every field:
+Every selected weapon has an opaque navy `#262b44` face on every field.
+Inactive weapons use these distinct opaque dark faces:
 
 | Weapon        | Face                 |
 | ------------- | -------------------- |
@@ -531,7 +532,7 @@ Every weapon has an opaque dark face in every state and on every field:
 - Every state and level has the same visible outer diameter, 33 logical px
   including ink. The 4 px annulus contains an outer 1 px ink fringe, a 2 px
   coloured band and an inner 1 px ink fringe. Its centre has the weapon's
-  solid face, including while selected.
+  solid face when inactive and navy `#262b44` when selected.
 - Selection uses the cream band. Idle and empty glyphs are muted by their
   palette colours, without extra opacity that would reduce contrast on the
   solid faces. The same colours apply on dark and light fields. Every glyph
@@ -590,11 +591,11 @@ Each owned non-Laser weapon shows its ammunition count in an opaque navy pill
 on the disc's lower edge; Laser shows none. Geometry is `HUD_AMMO_COUNT` in
 [Layout](layout.md#weapon-count-pill).
 
-| State          | Pill                          | Count text                  | Contrast |
-| -------------- | ----------------------------- | --------------------------- | -------- |
-| Idle, selected | Navy `#262b44`, inset ink rim | Cream `#ead4aa`             | 9.59:1   |
-| Refused        | Navy `#262b44`, inset ink rim | Cream `#ead4aa`, not tinted | 9.59:1   |
-| Empty          | Navy `#262b44`, inset ink rim | "0" in red `#e4574e`        | 3.82:1   |
+| State       | Pill                          | Count text                                  | Contrast        |
+| ----------- | ----------------------------- | ------------------------------------------- | --------------- |
+| Selected    | Navy `#262b44`, inset ink rim | Cream `#ead4aa`, matching the selected ring | 10.11:1         |
+| Idle, empty | Navy `#262b44`, inset ink rim | Grey `#b8b8b8`, including "0"               | 7.00:1          |
+| Refused     | Navy `#262b44`, inset ink rim | Unchanged from the current state            | At least 7.00:1 |
 
 - The count is Gameplay's count string in at most four characters: the exact
   number up to 9999 with no separator, then whole thousands "10k" to "999k",
@@ -602,13 +603,14 @@ on the disc's lower edge; Laser shows none. Geometry is `HUD_AMMO_COUNT` in
 - The pill is opaque navy with a 1 px inset ink rim, so its text reads against
   the same fill on dark and light fields. It keeps the existing 14 px height,
   4 px radius and 4 px side padding without changing the count's geometry.
-- The pill is the same in every disc state, independently of the ring colour.
+- The pill geometry and fill are the same in every disc state. Only the number
+  follows selection: cream when active, grey otherwise.
 - The refusal cue tints only the glyph; the count never tints, and the pill
   shakes with the button.
 - The count updates on every shot with no animation. The pill is decorative
   (`aria-hidden`); the weapon button's accessible label carries the count in
   Gameplay's strings.
-- Out of ammunition: the emptied disc shows Empty and its red "0", Laser is
+- Out of ammunition: the emptied disc shows Empty and its grey "0", Laser is
   selected at once, and Gameplay's `outOfAmmo` notice ("Out of ammo.") shows
   in the conversation slot as a [notice](layout.md#hud-and-overlays): no
   portrait or tab, a tap dismisses it, and an interrupted conversation line
@@ -620,7 +622,7 @@ Draw the chrome in CSS at logical units so it stays sharp at any scale
 | Part        | CSS                                                                                                                                                                                                                                                                                                                                     |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Disc        | `width` and `height` `calc(u * 33)`, `border-radius: 50%`, the weapon's solid face; weapon-only normal disc shadow is none                                                                                                                                                                                                              |
-| Weapon ring | A pseudo-element inset `calc(u * 1)`, a 2 px coloured border, a 1 px outer ink shadow and a 1 px inset ink shadow; selected border cream, all centres filled with their weapon face                                                                                                                                                     |
+| Weapon ring | A pseudo-element inset `calc(u * 1)`, a 2 px coloured border, a 1 px outer ink shadow and a 1 px inset ink shadow; selected border cream, inactive centres filled with their weapon face, selected centre navy                                                                                                                          |
 | Level band  | Levels 2 and 3 set the contained border colour to the tier; no exterior halo or outline and no change to the shared focus styling                                                                                                                                                                                                       |
 | Pips        | A child of the button: `position: absolute`, centred at `top: calc(u * 38.5)` (14.5 below the disc centre at 24), `left: 50%`; each pip `calc(u * 4)` round in the pip colour with `box-shadow: 0 0 0 calc(u * 1)` ink, `gap: calc(u * 3)`, `pointer-events: none`                                                                      |
 | Glyph       | `calc(u * 20)` square, `background` the glyph colour, `mask: url(<glyph>.svg) center / 100% 100% no-repeat`                                                                                                                                                                                                                             |

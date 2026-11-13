@@ -639,8 +639,10 @@ Weapon level dots use `HUD_WEAPON_LEVEL.below`, derived from the containing
 ring's stroke centre: 14.5 below the disc centre. Level 1 shows no dot; levels
 2 and 3 show two or three, horizontally centred. Their ink ends at target
 41.5, 0.5 above the ammo pill's top at 42. Ring dimensions and press targets
-stay unchanged. Weapon faces are opaque dark palette colours in every state;
-see [Controls](controls.md#top-right-hud-icon-buttons).
+stay unchanged. Selected weapon faces are opaque navy; inactive faces keep
+their distinct dark palette colours. Ammo numbers match the cream selected
+ring when active and are grey when inactive, including zero; navy count
+pills and their geometry stay unchanged. See [Controls](controls.md#top-right-hud-icon-buttons).
 
 ### Weapon count pill
 
