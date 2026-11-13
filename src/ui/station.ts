@@ -56,6 +56,14 @@ const RING_OUT = SHOP_ROW.selection.outset + SHOP_ROW.selection.band;
 const scaled = (size: number) => `calc(${units(size)} * var(--glyph-scale,1))`;
 
 export const STATION_STYLE = `
+.ada-controls .ada-dialogue-panel[data-dialog="station"] .ada-story-tab{
+  width:fit-content;
+  max-width:100%;
+  height:auto;
+  white-space:normal;
+  overflow-wrap:anywhere
+}
+
 .ada-controls .ada-exchange{
   max-width:100%;
   text-align:left
