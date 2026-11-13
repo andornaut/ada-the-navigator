@@ -19,21 +19,23 @@ const json = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public/art/ui/${path}`, import.meta.url), "utf8"));
 
 describe("Paused card", () => {
-  it("orders Map, Quests, Ship, Settings, Back to title and the primary Resume last, all available", () => {
+  it("places space-only actions above shared Map, Settings, Back to title and primary Resume", () => {
     expect(pauseActions("flight")).toEqual([
-      { available: true, id: "map", role: "secondary" },
       { available: true, id: "quests", role: "secondary" },
       { available: true, id: "ship", role: "secondary" },
+      { available: true, id: "map", role: "secondary" },
       { available: true, id: "settings", role: "secondary" },
       { available: true, id: "backToTitle", role: "secondary" },
       { available: true, id: "resume", role: "primary" },
     ]);
   });
 
-  it("has only Settings and Back to title on Ada's room page", () => {
+  it("keeps shared action order and primary Resume on Earth", () => {
     expect(pauseActions("room")).toEqual([
+      { available: true, id: "map", role: "secondary" },
       { available: true, id: "settings", role: "secondary" },
       { available: true, id: "backToTitle", role: "secondary" },
+      { available: true, id: "resume", role: "primary" },
     ]);
   });
 
@@ -75,9 +77,9 @@ describe("Map card", () => {
 });
 
 describe("pause button", () => {
-  it("shows only on a touch screen where the card opens (flight or Ada's room page), no card open", () => {
+  it("shows for both pointer modes during gameplay when no card covers it", () => {
     expect(pauseButtonShown(true, true, false)).toBe(true);
-    expect(pauseButtonShown(false, true, false)).toBe(false);
+    expect(pauseButtonShown(false, true, false)).toBe(true);
     expect(pauseButtonShown(true, false, false)).toBe(false);
     expect(pauseButtonShown(true, true, true)).toBe(false);
   });

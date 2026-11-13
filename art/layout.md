@@ -770,8 +770,8 @@ token above; strings are Gameplay's.
 | Install steps | Header, close. Step rows: row icon, `SPACING.gap`, wrapped body text, rows `SPACING.rowGap` apart (not buttons), height fits text (not controls)                                                                                               | Steps        |
 | Update offer  | Header, close. Action row: decline (secondary), accept (primary)                                                                                                                                                                               | None         |
 | Cheats        | Header, close. Per scope a section group: heading (`TYPE.label`), persistence (supporting prose), `SPACING.rowGap`, then items `SPACING.gap` apart, each an action stack of one with its description (supporting prose) `SPACING.rowGap` below | Sections     |
-| Paused        | Header, close. Control grid, two columns: Map and Quests, then Ship and Settings, then Back to title and Resume (primary)                                                                                                                      | None         |
-| Paused (room) | Header, close. Action stack: Settings, Back to title                                                                                                                                                                                           | None         |
+| Paused        | Header, close. Control grid, two columns: Quests and Ship, then Map when permitted and Settings, then Back to title and Resume (primary)                                                                                                       | None         |
+| Paused (room) | Header, close. Equal-size action stack: Map when permitted, Settings, Back to title, primary Resume                                                                                                                                            | None         |
 | Ship          | Header, close. Cargo section. Equipment section ([Ship card](#ship-card))                                                                                                                                                                      | None         |
 | Station card  | Keeper portrait, name tab and current greeting. Balance and Jobs/Shop choices. Separate Next line/Undock navigation and close X ([Station card](#station-card)).                                                                               | None         |
 | Shop          | Header, close. Balance. Tabs (action row). Item list (control grid)                                                                                                                                                                            | Item list    |
@@ -779,17 +779,14 @@ token above; strings are Gameplay's.
 | Buy confirm   | Header, close. Item well. Description (weapons). Price. Remaining (supporting). Action row: Cancel, Buy                                                                                                                                        | None         |
 | Achievements  | Header, close. Entry list, two columns ([Achievements card](#achievements-card)). Pager: Previous, the page count, Next                                                                                                                        | None         |
 
-The Paused card shows no objective or job lines. Its flight card puts Map,
-Quests, Ship, Settings, Back to title and Resume in a two-column control grid.
-Resume is the same size as the other actions, primary at the bottom right beside
-Back to title on the left. Quests opens the existing quest panel;
-Back returns through Map to the Paused card, with focus restored to Quests.
-Tiles are `(360 - 32 - BUTTON_GAP) / 2` = 156 wide ("Back to title" needs
-122.69), with `BUTTON_GAP` across and `STACK_BUTTON_GAP` down. At 720x360
-with phone insets the flight card is `58 + 48 + 8 + 48 + 8 + 48 + 16`
-= 234 high, inside the 325 available. The room card is `58 + 104 + 16` = 178
-high. Both are 360 wide. Ada's room page opens the room card from its pause
-button ([Storybook page](#storybook-page)).
+The Paused card shows no objective or job lines. Shared actions keep the order
+Map, Settings, Back to title and primary Resume. Earth uses equal-size buttons in
+one vertical stack. Space adds Quests and Ship above the shared actions in its
+existing two-column grid, with Resume at the bottom right beside Back to title.
+Map is hidden when its canonical permission is false. All button sizes remain
+unchanged. Quests list Close restores its actual opener; detail Back returns to
+the list, while a directly opened HUD detail Close returns to gameplay. The X,
+Escape and back match the primary footer action.
 
 ### Station card
 

@@ -601,11 +601,14 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   disabled heavy; when several are in range, the nearest wins, and a destination
   on a blocked route is excluded. Other ranges are their own values: tow attach
   120, and station discovery uses its own 320.
-- Pause, as in Chibi: the pause button at the top left opens a card titled
-  "Paused" over the dimmed game, which pauses play, with a close X. Its buttons
-  share one shape and size in a two-column grid: "Map" beside "Quests", "Ship"
-  beside "Settings", then "Back to title" on the left beside "Resume" on the
-  bottom right. "Resume" remains primary and focused when the card opens. Ship opens a card titled "Ship" with a close
+- Pause is visible at the top left during gameplay, including story and dialogue,
+  except on the title screen and during initial loading. Settings opens only from
+  the pause menu. Pause opens a card titled "Paused" over the dimmed game without
+  advancing story or dialogue. Shared actions keep this order: "Map", "Settings",
+  "Back to title", primary "Resume". Earth uses an equal-size vertical stack.
+  Space places "Quests" and "Ship" above the shared actions in its two-column
+  grid, with "Resume" at the bottom right. Map stays hidden before it unlocks
+  and during mandatory story beats or unresolved material choices. "Resume" remains primary and focused when the card opens. Ship opens a card titled "Ship" with a close
   X, back to the pause card, in two sections. "Cargo" lists Stardust, ore
   carried this flight, "Holodisks: {n} of 6", and the carried job or story item or towed
   craft when there is one. "Equipment" lists the shield, engine and tractor
@@ -615,13 +618,19 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   in flight the direction indicator is the objective cue.
   The local map's header shows the galaxy name with its landmark pips and
   "{percent}% mapped" below them, then a "Quests" button and "Galaxies".
-  Quests opens a modal titled "Quests" listing the galaxy's current story
-  objective, or "Story complete." once the chapter is resolved, then the held
-  job or activity as "Job: {objective}". With no job held, a last line reads
-  "Station job boards have more to do." once the galaxy has a discovered station.
-  A line whose target is mapped is a button: it closes the modal and selects
-  and centres that chip. With no lines at all, the modal reads "Explore to find
-  something to do." The close X, an outside tap, back and Escape close it.
+  Quests opens an icon-and-summary list of all accepted story quests, station
+  jobs and activities, grouped as "Story quests" and "Station jobs". A row opens
+  one full-page detail with its complete approved description, actual next step,
+  known From/To locations, saved reward or explicit story outcome, and actual
+  progress. A story without currency or an explicit outcome shows "Story progress".
+  Unknown locations show "Explore to locate" without hidden identity or coordinates.
+  Known locations in the current galaxy can be selected on the map.
+  List detail uses primary "Back" to return to its list. A carried quest item's
+  HUD icon opens its detail directly, with secondary "Other quests" and primary
+  "Close" to resume gameplay. Other quests deliberately opens the list. A list's
+  Close returns to its opener, either the local map, Paused, or gameplay. The close
+  X, Escape and back always perform the same action as the current primary footer
+  button. Detail never paginates, scrolls or truncates; only the list paginates.
   The local map shows the current galaxy: Ada's position, discovered destinations and
   stations, charted landmarks, the current objective's destination once mapped,
   a known holodisk waypoint until its holodisk is recovered, and how much of the

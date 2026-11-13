@@ -49,6 +49,8 @@ export interface PauseOptions {
 }
 
 export interface PauseState {
+  /** Canonical model permission; omitted permission keeps Map hidden. */
+  readonly canMap?: boolean;
   readonly galaxy?: GalaxyNumber;
   /** Live model-owned quests from every galaxy, with no UI or save-state duplication. */
   readonly questEntries?: readonly QuestEntry[];
@@ -97,6 +99,7 @@ ${UI_SCOPE} .ada-actions.ada-pause-grid{
   row-gap:${units(STACK_BUTTON_GAP)};
   width:auto
 }
+${UI_SCOPE} .ada-actions.ada-pause-grid[data-place=room]{grid-template-columns:1fr}
 `;
 
 // Two columns of equal actions, BUTTON_GAP between columns and STACK_BUTTON_GAP between rows.
@@ -213,7 +216,10 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   };
   let layer: ReturnType<typeof createModalLayer> | undefined;
   let leaveLayer: (() => void) | undefined;
-  const actionsHere = () => pauseActions(state.place ?? "flight");
+  const actionsHere = () =>
+    pauseActions(state.place ?? "flight").filter(
+      (action) => action.id !== "map" || state.canMap === true,
+    );
   const mapOpen = () => open && mapScreen.isOpen();
   const shipOpen = () => open && !ship.frame.hidden;
   // The map shows in the cards' and the dim's place; the Ship card in the Paused card's.
@@ -292,7 +298,8 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       map: state.map ?? NO_MAP,
       towing: state.towing,
     });
-    const signature = JSON.stringify([state.place]);
+    const signature = JSON.stringify([state.place, state.canMap]);
+    others.dataset.place = state.place ?? "flight";
     if (signature === shown) {
       return;
     }

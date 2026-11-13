@@ -182,6 +182,7 @@ const MAP: LocalMap = {
   searchArea: null,
 };
 const state = (change: Partial<PauseState> = {}): PauseState => ({
+  canMap: true,
   carrying: false,
   field: null,
   inDanger: false,
@@ -252,17 +253,17 @@ describe("Paused card", () => {
     expect(actions.children[0]!.children.at(-1)!.dataset.action).toBe("pause-resume");
     expect(actions.children[0]!.children.at(-1)!.className).toContain("ada-primary");
     expect(shownActions(actions)).toEqual([
-      "pause-map",
       "pause-quests",
       "pause-ship",
+      "pause-map",
       "pause-settings",
       "pause-backToTitle",
       "pause-resume",
     ]);
     expect(buttonsOf(actions).map((node) => node.textContent)).toEqual([
-      "Map",
       "Quests",
       "Ship",
+      "Map",
       "Settings",
       "Back to title",
       "Resume",
@@ -285,11 +286,17 @@ describe("Paused card", () => {
     expect(options.onBackToTitle).toHaveBeenCalledOnce();
   });
 
-  it("shows only Settings and Back to title on Ada's room page", () => {
+  it("shows shared actions in a vertical Earth stack", () => {
     const { body, options, pause } = cards();
     const actions = body.children[0]!;
     pause.setState(state({ place: "room" }));
-    expect(shownActions(actions)).toEqual(["pause-settings", "pause-backToTitle"]);
+    expect(shownActions(actions)).toEqual([
+      "pause-map",
+      "pause-settings",
+      "pause-backToTitle",
+      "pause-resume",
+    ]);
+    expect(actions.children[0]!.dataset.place).toBe("room");
     button(actions, "pause-backToTitle").click();
     expect(options.onBackToTitle).toHaveBeenCalledOnce();
   });
@@ -611,6 +618,23 @@ it.each(["close-quests", "quest-back", "Escape", "back"])(
     }
     expect(pause.isOpen()).toBe(true);
     expect(root.querySelectorAll().some((button) => button.dataset.questId === "held")).toBe(true);
+    pause.dispose();
+  },
+);
+
+it.each(["room", "flight"] as const)(
+  "hides Map without canonical permission on %s and restores it only when allowed",
+  (place) => {
+    const { body, pause } = cards();
+    const actions = body.children[0]!;
+    pause.setState(state({ canMap: false, place }));
+    expect(shownActions(actions)).not.toContain("pause-map");
+    const { canMap: permission, ...withoutPermission } = state({ place });
+    expect(permission).toBe(true);
+    pause.setState(withoutPermission);
+    expect(shownActions(actions)).not.toContain("pause-map");
+    pause.setState(state({ canMap: true, place }));
+    expect(shownActions(actions)).toContain("pause-map");
     pause.dispose();
   },
 );

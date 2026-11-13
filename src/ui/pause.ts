@@ -1,8 +1,5 @@
-// Pause, as in Chibi (art/controls.md "Pause"): a touch pause button in the view's top-left
-// corner (PAUSE_BUTTON, src/ui/layout/playView.ts), and a Paused card: Resume full width over a
-// two-column grid of the other actions. In flight they are Resume, then Map, Quests, Ship, Settings and
-// Back to title; on Ada's room page, Settings and Back to title (gameplay/rules.md). Return to
-// Earth is on the Map, and Achievements on the start screen.
+// Pause stays available during gameplay. Shared actions retain the same order on Earth and
+// in space; space-only actions precede them. Resume is primary and last.
 
 export type PauseAction = "backToTitle" | "map" | "quests" | "resume" | "settings" | "ship";
 
@@ -28,16 +25,14 @@ export function galaxiesAvailable(inDanger: boolean): boolean {
 // bottom. Back to title stays available in danger; Map still opens, where Travel here and
 // Galaxies are unavailable instead.
 export function pauseActions(place: PausePlace): readonly PauseActionView[] {
-  if (place === "room") {
-    return [
-      { available: true, id: "settings", role: "secondary" },
-      { available: true, id: "backToTitle", role: "secondary" },
-    ];
-  }
   return [
+    ...(place === "flight"
+      ? ([
+          { available: true, id: "quests", role: "secondary" },
+          { available: true, id: "ship", role: "secondary" },
+        ] as const)
+      : []),
     { available: true, id: "map", role: "secondary" },
-    { available: true, id: "quests", role: "secondary" },
-    { available: true, id: "ship", role: "secondary" },
     { available: true, id: "settings", role: "secondary" },
     { available: true, id: "backToTitle", role: "secondary" },
     { available: true, id: "resume", role: "primary" },
@@ -49,10 +44,9 @@ export function mapShowsEmpty(places: readonly unknown[]): boolean {
   return places.length === 0;
 }
 
-// The pause button is a touch control shown only where the card opens (in flight and on Ada's
-// room page); on a fine pointer Escape pauses.
-export function pauseButtonShown(coarse: boolean, pausable: boolean, cardOpen: boolean): boolean {
-  return coarse && pausable && !cardOpen;
+// Both pointer modes keep Pause visible during gameplay when no card covers it.
+export function pauseButtonShown(_coarse: boolean, pausable: boolean, cardOpen: boolean): boolean {
+  return pausable && !cardOpen;
 }
 
 // What Escape does once no card is left to close: pause where the card opens, Settings where its
