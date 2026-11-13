@@ -481,6 +481,7 @@ export function buildScene(scene: UiContext): void {
         settings: CONTENT.labels.settings ?? "",
         ship: CONTENT.labels.ship ?? "",
         shipHeadings: {
+          ammo: CONTENT.labels.ammo ?? "",
           cargo: CONTENT.labels.cargo ?? "",
           equipment: CONTENT.labels.equipment ?? "",
           weapons: CONTENT.labels.shopWeapons ?? "",

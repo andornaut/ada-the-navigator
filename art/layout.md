@@ -898,26 +898,27 @@ Each section is one list, never a nested two-column grid. Strings and row
 content remain Gameplay's. Ship geometry belongs in `src/ui/layout/`,
 consuming the existing canonical tokens rather than a second spacing system.
 
-| Part                   | Existing token or derivation                                   | Rule                                                                                        |
-| ---------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| Outer padding          | `CARD_CONTENT.padding` (16)                                    | Use the shared content-card padding on every edge                                           |
-| Divider                | `CARD_CONTENT.frameBorder` (2), `TEXT_TOKENS.supporting`       | One decorative vertical rule between the sections, spanning the body                        |
-| Divider clearance      | `SPACING.panelPadding` (16) on each side                       | The total inter-column gutter is `2 * SPACING.panelPadding + CARD_CONTENT.frameBorder` (34) |
-| Section heading        | `TYPE.label`, `TEXT_TOKENS.supporting`                         | Same heading role and top alignment in both columns                                         |
-| Heading-to-list gap    | `SPACING.gap` (8)                                              | Separate a heading from its first row                                                       |
-| Equipment subgroup gap | `SPACING.panelPadding` (16)                                    | Between Equipment and Cargo in the left pane                                                |
-| List row gap           | `SPACING.rowGap` (4)                                           | Between rows within either list or equipment subgroup                                       |
-| Row height             | `max(SHIP_CARD.icon, TYPE.body.lineHeight)` (20 minimum)       | Wrapped text grows the row by its type role's line height                                   |
-| Row icon               | Existing `SHIP_CARD.icon` (20), then `SPACING.markGap` (6)     | Retain the current icons and drawn-pixel spacing                                            |
-| Value gap              | `SPACING.gap` (8)                                              | Between a compact name and its separate value or ammunition                                 |
-| Ammunition width       | Measure the widest supported ammunition string in `TYPE.label` | Reserve the same right-aligned track for every weapon row                                   |
+| Part                   | Existing token or derivation                                  | Rule                                                                                        |
+| ---------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Outer padding          | `CARD_CONTENT.padding` (16)                                   | Use the shared content-card padding on every edge                                           |
+| Divider                | `CARD_CONTENT.frameBorder` (2), `TEXT_TOKENS.supporting`      | One decorative vertical rule between the sections, spanning the body                        |
+| Divider clearance      | `SPACING.panelPadding` (16) on each side                      | The total inter-column gutter is `2 * SPACING.panelPadding + CARD_CONTENT.frameBorder` (34) |
+| Section heading        | `TYPE.label`, `TEXT_TOKENS.supporting`                        | Same heading role and top alignment in both columns                                         |
+| Heading-to-list gap    | `SPACING.gap` (8)                                             | Separate a heading from its first row                                                       |
+| Equipment subgroup gap | `SPACING.panelPadding` (16)                                   | Between Equipment and Cargo in the left pane                                                |
+| List row gap           | `SPACING.rowGap` (4)                                          | Between rows within either list or equipment subgroup                                       |
+| Row height             | `max(SHIP_CARD.icon, TYPE.body.lineHeight)` (20 minimum)      | Wrapped text grows the row by its type role's line height                                   |
+| Row icon               | Existing `SHIP_CARD.icon` (20), then `SPACING.markGap` (6)    | Retain the current icons and drawn-pixel spacing                                            |
+| Value gap              | `SPACING.gap` (8)                                             | Between a compact name and its separate value or ammunition                                 |
+| Ammunition width       | Measure the formatted `ECONOMY.ammo.capacity` in `TYPE.label` | Reserve the same right-aligned track for every weapon row                                   |
 
 Rows use `TYPE.body` and `TEXT_TOKENS.label`. A level-one item shows only
 its name. Higher levels append the compact suffix `(2)` or `(3)` to the
 name, without "Level", "LVL" or "of 3". Preserve canonical numeric levels
 and full per-track level metadata in each row's accessible name. Counts
 and the separate weapon ammunition track use `TYPE.label` and remain
-right-aligned. Labels wrap without shrinking type.
+left-aligned in a shared column anchored at the right of the Weapons pane.
+Cargo counts stay right-aligned. Labels wrap without shrinking type.
 
 1. Equipment, upper left: Engine (`icon-shop-engine-tuning`), Shield
    (`icon-shop-shield`), Tractor beam (`icon-shop-tractor-beam`), then
@@ -929,6 +930,11 @@ right-aligned. Labels wrap without shrinking type.
 3. Weapons, right: every owned weapon in HUD order, with its actual name,
    existing weapon icon, compact level suffix and separate ammunition.
    Keep the Weapons heading when the list is empty; add no empty-state copy.
+   "Ammo" sits on the same heading row, in the same `TYPE.label` font.
+   The shared ammo column reserves enough width for the formatted canonical
+   capacity, including its grouping separator. Each finite weapon holds at
+   most 9,999 rounds: show zero as `0`, preserve a blank Laser cell, and
+   show grouped numbers without the "left" suffix.
 
 Measure both panes' natural content in the existing type roles, including
 icons, mark gaps and value tracks. Use twice the wider pane's natural width

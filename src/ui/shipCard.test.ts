@@ -85,7 +85,7 @@ describe("Ship card", () => {
 
   it("gives every weapon an ammunition cell, empty for the one without ammunition", () => {
     const [, right] = shipSections(LABELS, VIEW).equipment;
-    expect(right.map((row) => row.ammo)).toEqual(["", "42 left"]);
+    expect(right.map((row) => row.ammo)).toEqual(["", "42"]);
   });
 
   it("reads the aboard line the same for the card and the pill", () => {
@@ -113,7 +113,7 @@ class ShipElement {
 function rendered(sections: ReturnType<typeof shipSections>): ShipElement {
   vi.stubGlobal("document", { createElement: () => new ShipElement() });
   return renderShipSections(
-    { cargo: "Cargo", equipment: "Equipment", weapons: LABELS.shopWeapons! },
+    { ammo: LABELS.ammo!, cargo: "Cargo", equipment: "Equipment", weapons: LABELS.shopWeapons! },
     sections,
   ) as unknown as ShipElement;
 }
@@ -133,11 +133,13 @@ describe("Ship sections rendering", () => {
     ]);
     expect(right!.children.map((section) => section.dataset.section)).toEqual(["weapons"]);
     const sections = [...left!.children, ...right!.children];
-    expect(sections.map((section) => section.children[0]!.textContent)).toEqual([
-      "Equipment",
-      "Cargo",
-      "Weapons",
-    ]);
+    expect(
+      sections.map((section) =>
+        section.dataset.section === "weapons"
+          ? section.children[0]!.children[0]!.textContent
+          : section.children[0]!.textContent,
+      ),
+    ).toEqual(["Equipment", "Cargo", "Weapons"]);
     expect(sections.map((section) => section.attributes.get("aria-label"))).toEqual([
       "Equipment",
       "Cargo",
@@ -176,7 +178,7 @@ describe("Ship sections rendering", () => {
         `${LABELS.shield}${suffix}`,
         `${LABELS.tractorBeam}${suffix}`,
       ]);
-      expect(rowText(weapon)).toEqual([`Rapid Missile${suffix}`, "42 left"]);
+      expect(rowText(weapon)).toEqual([`Rapid Missile${suffix}`, "42"]);
       for (const row of [...equipment.slice(0, 3), weapon]) {
         expect(row.attributes.get("aria-label")).toContain(`Level ${level} of 3`);
         expect(row.dataset.level).toBe(String(level));
@@ -192,7 +194,7 @@ describe("Ship sections rendering", () => {
       weapons: [],
     });
     const root = rendered(sections);
-    expect(root.children[1]!.children[0]!.children[0]!.textContent).toBe("Weapons");
+    expect(root.children[1]!.children[0]!.children[0]!.children[0]!.textContent).toBe("Weapons");
     expect(root.children[1]!.children[0]!.children[1]!.children).toHaveLength(0);
     const cargo = root.children[0]!.children[1]!.children[1]!;
     expect(rowText(cargo.children.at(-1)!)).toEqual([
@@ -202,4 +204,25 @@ describe("Ship sections rendering", () => {
     expect(empty.children[0]!.children[1]!.children[0]!.textContent).toBe("Cargo");
     expect(empty.children[0]!.children[1]!.children[1]!.children).toHaveLength(0);
   });
+});
+
+it.each([0, 1, 9999])(
+  "shows a finite weapon's %s ammunition as a grouped number without a suffix",
+  (ammo) => {
+    const section = shipSections(LABELS, {
+      ...VIEW,
+      weapons: [{ ammo, id: "rapidMissile", level: 1 }],
+    });
+    expect(section.equipment[1][0]!.ammo).toBe(new Intl.NumberFormat("en-US").format(ammo));
+  },
+);
+
+it("shares the Ammo heading track with an accessible-hidden sample of the canonical cap", () => {
+  const root = rendered(shipSections(LABELS, VIEW));
+  const headings = root.children[1]!.children[0]!.children[0]!;
+  expect(headings.children[0]!.textContent).toBe("Weapons");
+  const ammo = headings.children[1]!;
+  expect(ammo.children[0]!.textContent).toBe("Ammo");
+  expect(ammo.children[1]!.textContent).toBe("9,999");
+  expect(ammo.children[1]!.attributes.get("aria-hidden")).toBe("true");
 });

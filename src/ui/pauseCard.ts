@@ -22,6 +22,7 @@ export interface PauseLabels {
   readonly ship: string;
   /** The Ship card's section headings. */
   readonly shipHeadings: {
+    readonly ammo: string;
     readonly cargo: string;
     readonly equipment: string;
     readonly weapons: string;

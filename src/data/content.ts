@@ -350,6 +350,7 @@ export const CONTENT: GameContent = {
     activityTake: "Accept",
     activityWorkshop: "A station ordered these repaired tools. Could you take them?",
     aimControls: "Aim controls",
+    ammo: "Ammo",
     ammoPack: "{weapon} ammo",
     ammoPackCount: "×{count}",
     askMore: "Ask more",

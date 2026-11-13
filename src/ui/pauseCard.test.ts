@@ -88,7 +88,12 @@ const LABELS: PauseLabels = {
   resume: "Resume",
   settings: "Settings",
   ship: "Ship",
-  shipHeadings: { cargo: "Cargo", equipment: "Equipment", weapons: CONTENT.labels.shopWeapons! },
+  shipHeadings: {
+    ammo: CONTENT.labels.ammo!,
+    cargo: "Cargo",
+    equipment: "Equipment",
+    weapons: CONTENT.labels.shopWeapons!,
+  },
   shipRows: CONTENT.labels,
   title: "Paused",
 };
