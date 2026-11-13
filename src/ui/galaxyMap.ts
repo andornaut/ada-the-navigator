@@ -145,21 +145,14 @@ export const GALAXY_MAP_STYLE = `
   background:center / 100% 100% no-repeat;
   image-rendering:pixelated
 }
-/* The available rect's two inset rules, over the sky and under the ground. */
+/* The available rect preserves the page insets without a surrounding frame. */
 .ada-controls .ada-route-rules{
   position:absolute;
   top:${safeEdge("top", SAFE_MARGIN.page)};
   right:${safeEdge("right", SAFE_MARGIN.page)};
   bottom:${safeEdge("bottom", SAFE_MARGIN.page)};
   left:${safeEdge("left", SAFE_MARGIN.page)};
-  border:${slice(GALAXY_MAP.rules.width)} solid ${GALAXY_MAP.rules.outer};
   pointer-events:none
-}
-.ada-controls .ada-route-rules::after{
-  content:"";
-  position:absolute;
-  inset:${units(GALAXY_MAP.rules.inset - GALAXY_MAP.rules.width)};
-  border:${slice(GALAXY_MAP.rules.width)} solid ${GALAXY_MAP.rules.inner}
 }
 /* The chart, in play-view px from the game area's top-left. */
 .ada-controls .ada-route-chart{
