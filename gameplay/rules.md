@@ -410,8 +410,11 @@ the end of a flight replays with its line when Ada next reaches the hub. The hub
 
 Player text calls resource rocks "ore rocks" and their pieces "ore". Resource
 rocks come in medium and large classes, colliding and taking hits
-like asteroids. A medium rock has 3 HP and releases 3 pieces, a large rock 5 HP
-and 5 pieces; two of every three are medium. Cartwheel has no damaging hazards.
+like asteroids. A medium rock has 3 HP and a large rock 5 HP; two of every three
+are medium. All destroyed asteroids, including ore rocks, release one to five
+units of ore, Stardust or both, using the same size-based weights. Each unit is
+independently ore or Stardust with equal probability, with no extra Stardust
+burst. Cartwheel has no damaging hazards.
 
 Cartwheel's space is an industrial ring of mining platforms in rust and ember
 tones. Gadget's claim-jumper drones harass miners at the ore fields with hit and
@@ -1098,8 +1101,9 @@ Asteroids come in more sizes, including much larger ones, with irregular shapes
 and variety. Ordinary asteroids have stationary centres and may rotate slowly;
 they do not translate in circles or oscillate. Legacy orbiting rocks settle at
 their current positions without a position jump, with HP and drops unchanged.
-Every asteroid can be destroyed; bigger ones take more shots and release more
-Stardust. Ships bounce off them, with bump damage as for any asteroid. Large
+Every destructible asteroid releases one to five combined ore and Stardust
+units; bigger ones take more shots and are more likely to release higher totals.
+Ships bounce off them, with bump damage as for any asteroid. Large
 and huge asteroids stay out of passages and clear of stations, destinations and
 launch points. Background objects stay muted
 but carry a light tint of color; asteroids are play objects, not background.

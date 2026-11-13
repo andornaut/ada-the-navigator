@@ -25,7 +25,8 @@ Exploring finds a station every few minutes.
 
 ## Earning Stardust
 
-Destroyed enemy ships and asteroids release Stardust as small glinting pickups.
+Destroyed enemy ships release Stardust as small glinting pickups. Destroyed
+asteroids can release ore, Stardust or both, with one to five units in total.
 Ada's ship has a tractor beam, with no visual of its own, that draws every
 pickup (Stardust, ore nuggets, discovery caches, weapons, ammo packs, a floating holodisk and
 a hunt job's lost item) within its pull radius toward her at its pull speed,
@@ -39,20 +40,16 @@ is a trade-off: destroying it drops twice its Stardust and no upgrade, and
 salvaging it drops its Stardust and has the heavy upgrade chance (see
 [Ships](ships.md#heavy-hull-and-disabling)).
 
-| Source           | Stardust |
-| ---------------- | -------: |
-| Asteroid, small  |      0–1 |
-| Asteroid, medium |        1 |
-| Asteroid, large  |        2 |
-| Asteroid, huge   |        3 |
-| Discovery cache  |        5 |
-| `swarm`          |        1 |
-| `fighter`        |        2 |
-| `interceptor`    |        1 |
-| `retaliator`     |        4 |
-| `frigate`        |  12 or 6 |
-| `capital`        | 28 or 14 |
-| `platform`       |   8 or 4 |
+| Source          | Stardust |
+| --------------- | -------: |
+| Discovery cache |        5 |
+| `swarm`         |        1 |
+| `fighter`       |        2 |
+| `interceptor`   |        1 |
+| `retaliator`    |        4 |
+| `frigate`       |  12 or 6 |
+| `capital`       | 28 or 14 |
+| `platform`      |   8 or 4 |
 
 An enemy's Stardust is half its hit points, rounded down, and at least 1; a
 heavy counts all its hardpoints' hit points, not its hull, and a destroyed heavy
@@ -61,9 +58,11 @@ position 1; values follow each position's hit points. Every defeated enemy relea
 at least 1 Stardust, with existing larger rewards and eligible pickups preserved.
 Disabling a heavy does not destroy it. Fleeing, unloading, despawning or restoring
 a survivor does not grant defeat loot, and a released wreck never pays again.
-Discovery caches are rare. A destroyed asteroid or ore rock also bursts with 10
-extra Stardust 2% of the time, on top of its usual drop. These values come from a pacing simulation of typical
-play against the targets above; rerun it after changing any earning value.
+Discovery caches are rare. Asteroid yields use the size weights in
+[src/data/asteroidLoot.ts](../src/data/asteroidLoot.ts): small asteroids usually
+yield fewer units, and larger asteroids are more likely to yield five. Each unit
+independently becomes ore or Stardust with equal probability. There is no extra
+Stardust burst above the five-unit total.
 
 A drop splits its Stardust into whole-Stardust pickups, as evenly as possible with
 the larger pieces first, so one pickup can carry more than 1 Stardust. The number
@@ -115,11 +114,11 @@ those weapons). Each world pack contains one quarter of its shop pack: Multi-Las
 Rapid Missile 65, Heavy Missile 10, Scattershot 15 and Phaser 10. Its feedback shows
 +N beside the corresponding weapon icon, using the actual ammunition added.
 
-Every destroyed asteroid releases at least 1 ore, in addition to its existing
-Stardust and eligible ammo drops. Resource rocks retain their richer yields:
-medium rocks release 3 ore and large rocks release 5, instead of a usual Stardust
-drop. Both can still burst with 10 extra Stardust or drop an ammo pack.
-Ore is released once on destruction, never for an intact or indestructible rock.
+Every destroyed asteroid, including an ore rock, uses the same size-based
+one-to-five-unit combined ore and Stardust roll. Either output can be zero;
+neither ore nor Stardust is individually guaranteed. Eligible ammo packs remain
+a separate roll. Loot is released once on destruction, never for an intact or
+indestructible rock.
 
 Ore rocks occur in every galaxy; Cartwheel is richest in ore. Ore aboard fuels
 shield recharge after a 30-second delay, at the normal regeneration rate, not
