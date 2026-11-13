@@ -1,9 +1,10 @@
 # Dialogue and objectives
 
 Working player text for six designed chapters. Opening, resolution and closing
-pages keep their chapter panel title. Storybook pages remain at most 220
-characters, with at most three choices. Three-choice labels fit one line (23
-characters); labels up to 36 characters may wrap only with two choices or fewer.
+pages keep their chapter panel title. A story page's text is at most 220
+characters and a page offers at most three choices. On a page with three choices
+every label fits one line, at most 23 characters; labels up to 36 characters,
+which wrap to two lines, appear only on pages with two choices or fewer.
 Choices converge. The choice column scrolls if needed. Previous remains available when there is an earlier page. Every page with Next
 also offers Skip. Skip follows the whole continuation across scene boundaries
 and stops for an unresolved choice.
