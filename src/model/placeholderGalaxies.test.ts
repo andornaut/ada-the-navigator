@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { galaxyEncounters } from "../data/enemyCatalog.ts";
-import { byPosition, GALAXY_NUMBERS } from "../data/galaxies.ts";
+import { BUILT, byPosition, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { readStory } from "../testing/launch.ts";
 import { currentInCell } from "./currents.ts";
@@ -66,7 +66,21 @@ function questDone(galaxy: GalaxyNumber, unlocked: GalaxyNumber[]): GameModel {
   return model;
 }
 
-describe("placeholder galaxies", () => {
+describe("placeholder galaxies under an explicit incomplete-roster fixture", () => {
+  const productionRoster = [...BUILT];
+  const built = BUILT as Set<GalaxyNumber>;
+  beforeEach(() => {
+    for (const galaxy of PLACEHOLDERS) {
+      built.delete(galaxy);
+    }
+  });
+  afterEach(() => {
+    built.clear();
+    for (const galaxy of productionRoster) {
+      built.add(galaxy);
+    }
+    expect([...BUILT]).toEqual(productionRoster);
+  });
   it.each(PLACEHOLDERS)(
     "galaxy %i flies with generic enemies, rocks and its stations",
     (galaxy) => {
@@ -136,38 +150,38 @@ describe("unlocking along the route", () => {
     expect(model.selectedPosition).toBe(2);
   });
 
-  it("unlocks the placeholders after Whirlpool with Cartwheel, and opens on Cartwheel", () => {
+  it("unlocks only Needle after Whirlpool and selects its mounted story", () => {
     const model = questDone(3, [1, 3]);
     model.returnHome();
     readStory(model, 1);
-    expect(model.state.unlocked).toEqual([1, 3, 4, 5, 2]);
-    // The ship flies from Whirlpool to Cartwheel, past both placeholders, opened together.
-    expect(model.routeFlight).toEqual({ from: 2, opened: [3, 4, 5], to: 5 });
+    expect(model.state.unlocked).toEqual([1, 3, 4]);
+    // The route animation advances exactly one mounted chapter.
+    expect(model.routeFlight).toEqual({ from: 2, opened: [3], to: 3 });
     expect(model.galaxyMapSelection).toBe(3);
     model.finishRouteFlight();
-    // Cartwheel's story is built, so Astra announced it at boarding.
-    expect(model.galaxyMapSelection).toBe(2);
-    expect(model.selectedPosition).toBe(5);
-    // Left reaches each placeholder, and Jump flies to one.
+    // Needle's mounted story becomes the next selected chapter.
+    expect(model.galaxyMapSelection).toBe(4);
+    expect(model.selectedPosition).toBe(3);
+    // Selection can return to Whirlpool and launch its existing chapter.
     model.stepGalaxy(-1);
-    expect(model.galaxyMapSelection).toBe(5);
+    expect(model.galaxyMapSelection).toBe(3);
     expect(model.jump()).toBe(true);
-    expect(model.state.flight?.galaxy).toBe(5);
+    expect(model.state.flight?.galaxy).toBe(3);
   });
 
   it("announces a new galaxy only when one with a built story unlocks", () => {
-    // Whirlpool unlocks Cartwheel with the placeholders, so Astra will announce it.
+    // Whirlpool unlocks the mounted Needle chapter.
     const whirlpool = questDone(3, [1, 3]);
     whirlpool.returnHome();
     readToUnlock(whirlpool);
-    expect(whirlpool.state.unlocked).toEqual([1, 3, 4, 5, 2]);
+    expect(whirlpool.state.unlocked).toEqual([1, 3, 4]);
     expect(whirlpool.state.announceGalaxy).toBe(true);
-    // Cartwheel unlocks Phantom alone, a placeholder, so no announcement.
+    // Cartwheel unlocks the mounted Phantom chapter and announces it.
     const cartwheel = questDone(2, [1, 3, 4, 5, 2]);
     cartwheel.returnHome();
     readToUnlock(cartwheel);
     expect(cartwheel.state.unlocked).toEqual([1, 3, 4, 5, 2, 6]);
-    expect(cartwheel.state.announceGalaxy).toBe(false);
+    expect(cartwheel.state.announceGalaxy).toBe(true);
     readStory(cartwheel, 1);
     cartwheel.finishRouteFlight();
     expect(cartwheel.galaxyMapSelection).toBe(6);

@@ -373,6 +373,8 @@ describe("conversation triggers", () => {
     for (const [galaxy, holodisks, line] of [
       [3, 1, "general:held:1"],
       [2, 2, "general:held:2"],
+      [4, 2, "general:held:2"],
+      [5, 3, "general:held:3"],
     ] as const) {
       const { heard, talk } = director(galaxy, lessonsHeard);
       run(talk, 0.05, { ...drones, holodisks });
@@ -384,10 +386,6 @@ describe("conversation triggers", () => {
       run(talk, 0.05, { ...drones, holodisks: holodisks + 1 });
       expect(showing(talk)).toBe("warning:drones:0");
     }
-    // A placeholder galaxy plays no broadcast.
-    const needle = director(4, lessonsHeard);
-    run(needle.talk, 0.05, { ...drones, holodisks: 2 });
-    expect(showing(needle.talk)).toBe("warning:drones:0");
   });
 
   it("plays the sixth broadcast, which names Phantom, nowhere else at five holodisks held", () => {

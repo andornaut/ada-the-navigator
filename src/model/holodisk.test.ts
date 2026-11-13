@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { BUILT } from "../data/galaxies.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { playOpening, readStory, relaunch } from "../testing/launch.ts";
@@ -210,22 +211,35 @@ describe("new galaxy announcement", () => {
     expect(model.state.announceGalaxy).toBe(true);
   });
 
-  it("is skipped when the galaxies Whirlpool unlocks are all placeholders", () => {
-    const model = questDone(3, ["whale", "family"]);
-    resolveAtHome(model);
-    model.startGalaxy(3);
-    playOpening(model);
-    model.step(0.01, idle);
-    const f = model.state.flight!;
-    f.objects = f.objects.filter((o) => o.routeId !== "holodisk");
-    const disk = f.objects.find((o) => o.id === "holodisk")!;
-    f.player = { x: disk.x, y: disk.y };
-    model.step(0.01, idle);
-    insertion(model);
-    expect(model.state.progress[3].holodisk).toBe(true);
-    // Cartwheel was already open, so only Needle and Andromeda are new, and neither has a story.
-    expect(model.state.unlocked).toEqual([1, 2, 3, 4, 5]);
-    expect(model.state.announceGalaxy).toBe(false);
+  it.each([true, false])("announces Whirlpool's next chapter only when mounted=%s", (mounted) => {
+    const built = BUILT as Set<GalaxyNumber>;
+    const roster = [...built];
+    if (!mounted) {
+      built.delete(4);
+      built.delete(5);
+    }
+    try {
+      const model = questDone(3, ["whale", "family"]);
+      resolveAtHome(model);
+      model.startGalaxy(3);
+      playOpening(model);
+      model.step(0.01, idle);
+      const f = model.state.flight!;
+      f.objects = f.objects.filter((o) => o.routeId !== "holodisk");
+      const disk = f.objects.find((o) => o.id === "holodisk")!;
+      f.player = { x: disk.x, y: disk.y };
+      model.step(0.01, idle);
+      insertion(model);
+      expect(model.state.progress[3].holodisk).toBe(true);
+      expect(model.state.unlocked).toEqual(mounted ? [1, 2, 3, 4] : [1, 2, 3, 4, 5]);
+      expect(model.state.announceGalaxy).toBe(mounted);
+    } finally {
+      built.clear();
+      for (const galaxy of roster) {
+        built.add(galaxy);
+      }
+      expect([...BUILT]).toEqual(roster);
+    }
   });
 });
 
