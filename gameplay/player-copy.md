@@ -938,9 +938,8 @@ beacon light. Welcome!"
 - Unavailable in danger: Unavailable while you are in danger.
 - Shield depletion: Astra jumped you back to Earth to recharge. Your story progress is
   saved.
-- Shield depletion with undeposited ore, after that line on the same page:
-  Astra: "We're safe, and that matters most. The ore we carried didn't make the
-  jump."
+- Shield depletion that loses ore, after that line on the same page: Astra:
+  "We're safe, and that matters most. We lost half the ore we were carrying."
 - After the sleep scene, morning: Narration: "Astra recharges overnight. In the
   morning, the rock is warm again, and Archie and Kiwi are curled at her feet."
 - Station welcome: Welcome aboard. Trade your Stardust, or take a job.

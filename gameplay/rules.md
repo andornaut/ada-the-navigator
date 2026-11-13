@@ -825,7 +825,7 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   Danger disables Travel here and Galaxies; Back to title stays available.
 - No post-hit invulnerability or protection window.
 - Shield depletion makes Astra quantum jump Ada home to recharge overnight. Only the
-  flight and its undeposited ore are lost, and the jump-home page says so;
+  flight and half its undeposited ore are lost, and the jump-home page says so;
   weapons, levels, Stardust, purchases and story progress persist, and the next
   flight generates a new layout. See [Economy](economy.md) and
   [What each event keeps](#what-each-event-keeps).
@@ -948,7 +948,7 @@ holodisks, seen conversations and greetings.
 | Owned weapons, upgrades, ammunition | Kept            | Kept          | Kept                            | Kept                            | Kept                            | Cleared |
 | Held job and its carried item       | Resumes         | Resumes       | Kept with the job in its galaxy | Kept with the job in its galaxy | Kept with the job in its galaxy | Cleared |
 | Carried story item                  | Resumes         | Resumes       | Kept with the story             | Kept with the story             | Kept with the story             | Cleared |
-| Undeposited ore                     | Resumes         | Resumes       | Lost                            | Lost                            | Lost                            | Cleared |
+| Undeposited ore                     | Resumes         | Resumes       | Kept                            | Half lost                       | Kept                            | Cleared |
 | Uncollected pickups                 | Resumes         | Resumes       | Lost                            | Lost                            | Lost                            | Cleared |
 | A tow                               | Resumes         | Resumes       | Craft returns to its start      | Craft returns to its start      | Craft returns to its start      | Cleared |
 | The calf guide                      | Resumes         | Resumes       | Calf returns to its start       | Calf returns to its start       | Calf returns to its start       | Cleared |
@@ -960,7 +960,9 @@ holodisks, seen conversations and greetings.
 
 A tow's craft returns to where it was stranded, still marked; the calf and Pip
 return to their starts with the activity still held. Undeposited ore is cargo
-carried this flight; the jump-home page tells the player it was lost.
+not yet deposited at the hub. A shield-failure jump loses half of it, the
+smaller half on an odd load, so 11 ore keeps 6 and a single ore is kept; the
+jump-home page tells the player when ore was lost. Stardust is never lost.
 
 Preauthored chunk shapes, contents and points of interest assemble near Ada.
 They provide the existing galaxy variety of open areas, asteroid clusters and
