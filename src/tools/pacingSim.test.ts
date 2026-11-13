@@ -26,6 +26,7 @@ const spawnWeights = CONTENT.tuning.flight.spawnWeights;
 
 describe("pacing simulation world", () => {
   it("generates the same asteroids, caches and encounter packs as a real flight", () => {
+    let cachePickups = 0;
     for (const galaxy of [1, 2] as const satisfies readonly GalaxyNumber[]) {
       for (let seed = 1; seed <= 30; seed++) {
         const flight = createFlight(CONTENT, galaxy, seed, { known: [] });
@@ -67,11 +68,17 @@ describe("pacing simulation world", () => {
         }
         expect(rocks.sort()).toEqual(expected.rocks.sort());
         expect(caches.sort()).toEqual(expected.caches.sort());
+        cachePickups += caches.length;
+        for (const cache of flight.objects.filter((object) => object.kind === "pickup")) {
+          expect(cache.id).toMatch(/:stardust:[0-3]$/);
+          expect(cache.amount).toBe(1);
+        }
         expect([...packs].map(([id, members]) => `${id}:${members[0]}x${members.length}`)).toEqual(
           expected.packs,
         );
       }
     }
+    expect(cachePickups).toBeGreaterThan(0);
   });
 
   it("uses the scene's isometric viewport for on-screen checks", () => {

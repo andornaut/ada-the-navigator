@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import GALAXIES_FILE from "../../public/art/galaxies.json" with { type: "json" };
 import { ASTEROID_LOOT } from "../data/asteroidLoot.ts";
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
 import { CONTENT } from "../data/content.ts";
@@ -26,7 +27,7 @@ import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
 import { rollAsteroidLoot } from "./asteroidLoot.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { planChunk } from "./chunkTemplates.ts";
-import { type Parts, worldParts } from "./convex.ts";
+import { type Parts, toScreen, worldParts } from "./convex.ts";
 import {
   dropRandom,
   rollEnemyDrop,
@@ -491,17 +492,35 @@ describe("Stardust drops", () => {
     const reduced = { ...idle, reducedMotion: true };
     stepFlight(CONTENT, 1 / 60, reduced, value);
     const wreck = value.objects.find((object) => object.kind === "wreck")!;
-    // Art's reduced fighter: drops appear at 240 ms, within 7.68 units, and the hull is gone at 360 ms.
+    // Reduced drops keep their release time and separate full glints before appearing in place.
     stepFlight(CONTENT, 0.2, reduced, value);
     expect(pickups(value)).toEqual([]);
     stepFlight(CONTENT, 0.05, reduced, value);
     expect(total(pickups(value))).toBe(enemyStardust(1, "fighter"));
-    for (const pickup of pickups(value)) {
-      const offset = Math.hypot(pickup.x - wreck.x, pickup.y - wreck.y);
-      expect(offset).toBeLessThanOrEqual(7.68 * 1.6);
+    const released = pickups(value);
+    const spread = ECONOMY.destruction.fighter.reduced.spread;
+    const spacing =
+      2 * Math.SQRT2 * (ECONOMY.stardustPickupRadius + GALAXIES_FILE.lightField.keyline) +
+      ECONOMY.stardustPickupGap;
+    const points = released.map((pickup) =>
+      toScreen({ x: pickup.x - wreck.x, y: pickup.y - wreck.y }),
+    );
+    for (const [index, point] of points.entries()) {
+      // Each earlier pickup can displace x by at most one rounded separation step.
+      expect(Math.abs(point.x)).toBeLessThanOrEqual(spread + index * Math.ceil(spacing));
+      expect(Math.abs(point.y)).toBeLessThanOrEqual(spread * 0.8);
+      for (const other of points.slice(index + 1)) {
+        expect(Math.hypot(point.x - other.x, point.y - other.y)).toBeGreaterThanOrEqual(
+          spacing - 1e-9,
+        );
+      }
+      expect(released[index]!.release?.at).toBeCloseTo(0.25);
+      expect(released[index]!.release?.from).toEqual({ x: wreck.x, y: wreck.y });
     }
+    const positions = released.map(({ id, x, y }) => ({ id, x, y }));
     stepFlight(CONTENT, 0.12, reduced, value);
     expect(value.objects.some((object) => object.kind === "wreck")).toBe(false);
+    expect(pickups(value).map(({ id, x, y }) => ({ id, x, y }))).toEqual(positions);
   });
 
   it("destroys a heavy whose hull reaches 0 and drops twice its Stardust", () => {

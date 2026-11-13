@@ -71,6 +71,7 @@ import {
 } from "../src/model/jobs.ts";
 import { chartLandmarks, landmarkById } from "../src/model/landmarks.ts";
 import { clearOfOreFields } from "../src/model/oreFields.ts";
+import { stardustDiamond } from "../src/model/stardustPlacement.ts";
 import { stationById, type StationSite, stationsNear } from "../src/model/stations.ts";
 import type { FlightState, JobTarget } from "../src/model/types.ts";
 import {
@@ -495,13 +496,25 @@ export function generateChunk(
       const size = placement.asteroid ? ASTEROID_SHAPES.get(placement.asteroid)?.size : undefined;
       chunk.rocks.push({ id: placement.id, size: size ?? "small", x: at.x, y: at.y });
     } else if (placement.kind === "pickup") {
-      chunk.caches.push({
-        amount: catalog.discoveryStardust,
-        id: placement.id,
-        source: "caches",
-        x: at.x,
-        y: at.y,
-      });
+      const points = stardustDiamond(catalog, at);
+      const radius = catalog.stardustPickupRadius;
+      if (
+        points.every(
+          (point) =>
+            distance(point, player) > tuning.safeRadius + radius &&
+            distance(point, FLIGHT_START) > tuning.safeRadius + radius &&
+            stationsNear(catalog, galaxy, catalog.station.safeRadius + radius, point).length === 0,
+        )
+      ) {
+        chunk.caches.push(
+          ...points.map((point, index) => ({
+            amount: catalog.discoveryStardust / points.length,
+            id: `${placement.id}:stardust:${index}`,
+            source: "caches" as const,
+            ...point,
+          })),
+        );
+      }
     }
   }
   return chunk;
