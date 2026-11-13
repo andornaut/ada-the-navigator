@@ -1,4 +1,3 @@
-import type { AsteroidSize } from "./asteroidCatalog.ts";
 import type { EnemyArchetype } from "./enemyCatalog.ts";
 import type { RoutePosition } from "./galaxies.ts";
 import type { Weapon } from "./types.ts";
@@ -32,9 +31,6 @@ export interface Destruction extends DestructionTiming {
 }
 
 export interface EconomyCatalog {
-  /** Stardust released by each destroyed enemy archetype. */
-  /** Inclusive Stardust range released by a destroyed asteroid of each size. */
-  asteroidStardust: Readonly<Record<AsteroidSize, readonly [number, number]>>;
   /**
    * Chance, the same in every galaxy, that a destroyed small craft or a salvaged heavy drops an
    * upgrade pickup; a destroyed heavy drops none.
@@ -114,11 +110,6 @@ export interface EconomyCatalog {
   destruction: Readonly<Record<EnemyArchetype, Destruction>>;
   /** Most pickups a destroyed enemy's drop splits into; asteroids release one per Stardust. */
   pickupCap: Readonly<Record<EnemyArchetype, number>>;
-  /**
-   * A destroyed asteroid or ore rock bursts with `stardust` extra Stardust at `chance`, on top of
-   * its usual drop, split one pickup per Stardust.
-   */
-  rockBurst: { readonly chance: number; readonly stardust: number };
   stardustPickupRadius: number;
   station: {
     /** Station placement grid cell, in world units. */
@@ -208,7 +199,6 @@ export const ECONOMY: EconomyCatalog = {
     rockDropChance: 0.04,
     worldPackFraction: 0.25,
   },
-  asteroidStardust: { huge: [3, 3], large: [2, 2], medium: [1, 1], small: [0, 1] },
   defaultPaint: "classic",
   // Frigates and capitals have no shard art yet and keep a provisional 0.6 s break-apart,
   // with Art's 40% reduced spread.
@@ -288,9 +278,6 @@ export const ECONOMY: EconomyCatalog = {
     retaliator: 8,
     swarm: 8,
   },
-  // A destroyed asteroid or ore rock bursts with 10 extra Stardust 2% of the time
-  // (gameplay/economy.md "Earning Stardust").
-  rockBurst: { chance: 0.02, stardust: 10 },
   // Shield levels 2 and 3: capacity 15 then 20 HP, empty to full in 45 then 30 s.
   // Every level waits 30 s after damage (gameplay/economy.md).
   shieldLevels: { capacity: [15, 20], fill: [45, 30] },

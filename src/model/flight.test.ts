@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 
+import { ASTEROID_LOOT } from "../data/asteroidLoot.ts";
 import { CONTENT } from "../data/content.ts";
 import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
-import { RESOURCE_ROCKS } from "../data/resourceRocks.ts";
 import type { GameContent } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
+import { rollAsteroidLoot } from "./asteroidLoot.ts";
+import { dropRandom } from "./drops.ts";
 import { createEnemy } from "./enemyAi.ts";
 import {
   BUMP_DAMAGE,
@@ -199,7 +201,7 @@ describe("flight boundaries", () => {
     expect(events).toContainEqual({ id: "debris", type: "debrisCleared" });
     expect(events).toContainEqual({ type: "enemyDestroyed" });
     expect(flight.objects.filter((o) => o.role === "cargo")).toHaveLength(
-      RESOURCE_ROCKS.classes.medium.pieces,
+      rollAsteroidLoot(ASTEROID_LOOT, "small", dropRandom(flight.seed, "resource")).ore,
     );
     expect(flight.objects.some((o) => ["debris", "enemy", "resource"].includes(o.id))).toBe(false);
   });

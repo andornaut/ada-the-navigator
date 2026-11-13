@@ -1,3 +1,4 @@
+import { ASTEROID_LOOT } from "../data/asteroidLoot.ts";
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
 import { SCENERY_IMPACT_SECONDS, sceneryImpactDamage } from "../data/collisionDamage.ts";
 import { CONTENT } from "../data/content.ts";
@@ -27,6 +28,7 @@ import { SPAWNER_POLICIES, spawnerStage } from "../data/spawnerCatalog.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { GalaxyNumber, GameContent, Weapon } from "../data/types.ts";
 import { BEAM, weaponAt, type WeaponDefinition } from "../data/weaponCatalog.ts";
+import { rollAsteroidLoot } from "./asteroidLoot.ts";
 import {
   ASTEROID_SHAPES,
   asteroidSize,
@@ -86,12 +88,9 @@ import { debrisFrameOf, debrisSilhouette } from "./debrisBody.ts";
 import {
   carriesStardust,
   dropRandom,
-  rockOreDrop,
   rollAmmoDrop,
-  rollAsteroidStardust,
   rollEnemyDrop,
   rollRockAmmoDrop,
-  rollRockBurst,
   rollSalvageDrop,
   splitStardust,
 } from "./drops.ts";
@@ -2708,38 +2707,27 @@ function hit(
     events.push({ id: object.id, type: "debrisCleared" });
   }
   if (object.kind === "rock" || object.kind === "resource") {
-    const pieces = rockOreDrop(object);
-    for (let p = 0; p < pieces; p++) {
-      flight.objects.push({
-        hp: 1,
-        id: `piece:${flight.nextId++}`,
-        kind: "pickup",
-        radius: content.tuning.flight.pieceRadius,
-        role: "cargo",
-        x: object.x + (p - (pieces - 1) / 2) * 12,
-        y: object.y,
-      });
-    }
-  }
-  if (object.kind === "rock" || object.kind === "resource") {
     dropFromRock(content, object, flight);
   }
 }
 
-/**
- * A destroyed asteroid's or ore rock's drops (gameplay/economy.md "Earning Stardust"): an
- * asteroid's Stardust, plus at the burst chance the burst's extra Stardust, one pickup per
- * Stardust; and, on its own roll, an ammo pack pickup. Rocks never drop an upgrade pickup.
- */
+/** One combined ore/Stardust outcome per destroyed asteroid, plus independent ammo. */
 function dropFromRock(content: GameContent, object: SpaceObject, flight: FlightState): void {
   const next = dropRandom(flight.seed, object.id);
-  const stardust =
-    object.kind === "rock" ? rollAsteroidStardust(ECONOMY, asteroidSize(object), next) : 0;
-  // The burst and ammo rolls have their own streams, so they never move the Stardust's spread.
-  const amount = stardust + rollRockBurst(ECONOMY, dropRandom(flight.seed, `burst:${object.id}`));
-  // The pickups are collectable at once; they draw from Art's release time (art/asteroids.md).
+  const loot = rollAsteroidLoot(ASTEROID_LOOT, asteroidSize(object), next);
+  for (let p = 0; p < loot.ore; p++) {
+    flight.objects.push({
+      hp: 1,
+      id: `piece:${flight.nextId++}`,
+      kind: "pickup",
+      radius: content.tuning.flight.pieceRadius,
+      role: "cargo",
+      x: object.x + (p - (loot.ore - 1) / 2) * 12,
+      y: object.y,
+    });
+  }
   const release = { at: flight.time + ROCK_RELEASE.releaseSeconds };
-  releaseStardust(object, ROCK_RELEASE.spread, next, amount, amount, release, flight);
+  releaseStardust(object, ROCK_RELEASE.spread, next, loot.stardust, loot.stardust, release, flight);
   if (rollRockAmmoDrop(ECONOMY, ammoOwned(flight), dropRandom(flight.seed, `ammo:${object.id}`))) {
     pushAmmoPack(content, object, flight);
   }

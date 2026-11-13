@@ -21,6 +21,7 @@
 import { pathToFileURL } from "node:url";
 
 import { ASTEROID_SIZES, type AsteroidSize } from "../src/data/asteroidCatalog.ts";
+import { ASTEROID_LOOT } from "../src/data/asteroidLoot.ts";
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../src/data/chunkCatalog.ts";
 import { CONTENT } from "../src/data/content.ts";
 import { ECONOMY, type EconomyCatalog, type UpgradeWeapon } from "../src/data/economy.ts";
@@ -39,12 +40,12 @@ import { galaxyProjects } from "../src/data/projects.ts";
 import { SCREEN } from "../src/data/screen.ts";
 import type { GalaxyNumber, Weapon } from "../src/data/types.ts";
 import { weaponAt } from "../src/data/weaponCatalog.ts";
+import { rollAsteroidLoot } from "../src/model/asteroidLoot.ts";
 import { ASTEROID_SHAPES, orbitMotion, placementRadius } from "../src/model/asteroids.ts";
 import { planChunk } from "../src/model/chunkTemplates.ts";
 import {
   dropRandom,
   rollAmmoDrop,
-  rollAsteroidStardust,
   rollEnemyDrop,
   rollSalvageDrop,
   splitStardust,
@@ -172,7 +173,6 @@ export interface Prices {
 }
 
 export interface EconomyOverrides {
-  asteroidStardust?: Partial<Record<AsteroidSize, [number, number]>>;
   discoveryStardust?: number;
   ammoPackPrice?: number;
   upgradeDropChance?: Partial<EconomyCatalog["upgradeDropChance"]>;
@@ -369,7 +369,6 @@ function mulberry(seed: number): () => number {
 export function scenarioEconomy(overrides: EconomyOverrides): EconomyCatalog {
   return {
     ...ECONOMY,
-    asteroidStardust: { ...ECONOMY.asteroidStardust, ...overrides.asteroidStardust },
     discoveryStardust: overrides.discoveryStardust ?? ECONOMY.discoveryStardust,
     ammo: { ...ECONOMY.ammo, packPrice: overrides.ammoPackPrice ?? ECONOMY.ammo.packPrice },
     upgradeDropChance: { ...ECONOMY.upgradeDropChance, ...overrides.upgradeDropChance },
@@ -1168,11 +1167,11 @@ export function simulate(input: SimulationInput): RunResult {
         const seconds = asteroidKillSeconds(behaviour, galaxy, weapon, best.rock.size);
         result.asteroidSeconds += seconds;
         shoot(seconds);
-        const amount = rollAsteroidStardust(
-          catalog,
+        const amount = rollAsteroidLoot(
+          ASTEROID_LOOT,
           best.rock.size,
           dropRandom(flightSeed, best.rock.id),
-        );
+        ).stardust;
         if (amount > 0) {
           const dust: Pickup = {
             amount,

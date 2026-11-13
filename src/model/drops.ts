@@ -1,7 +1,5 @@
-import type { AsteroidSize } from "../data/asteroidCatalog.ts";
 import type { EconomyCatalog } from "../data/economy.ts";
 import { type EnemyArchetype, enemyStardust, HEAVIES } from "../data/enemyCatalog.ts";
-import { resourceRock } from "../data/resourceRocks.ts";
 import type { GalaxyNumber, Weapon } from "../data/types.ts";
 import type { SpaceObject } from "./types.ts";
 
@@ -77,16 +75,6 @@ export function rollRockAmmoDrop(
   return ownsAmmoWeapon(owned) && next() < catalog.ammo.rockDropChance;
 }
 
-/** Destruction releases one ore from an asteroid and preserves richer resource-rock yields. */
-export function rockOreDrop(object: Pick<SpaceObject, "kind" | "resource">): number {
-  return object.kind === "rock" ? 1 : object.kind === "resource" ? resourceRock(object).pieces : 0;
-}
-
-/** A destroyed asteroid's or ore rock's extra Stardust: the burst at its chance, else 0. */
-export function rollRockBurst(catalog: EconomyCatalog, next: () => number): number {
-  return next() < catalog.rockBurst.chance ? catalog.rockBurst.stardust : 0;
-}
-
 /**
  * A salvaged heavy's drop: its Stardust, half what destroying it gives, and an upgrade pickup
  * at the heavy chance.
@@ -101,15 +89,6 @@ export function rollSalvageDrop(
     stardust: enemyStardust(galaxy, archetype),
     upgrade: next() < catalog.upgradeDropChance.heavy,
   };
-}
-
-export function rollAsteroidStardust(
-  catalog: EconomyCatalog,
-  size: AsteroidSize,
-  next: () => number,
-): number {
-  const [low, high] = catalog.asteroidStardust[size];
-  return low + Math.floor(next() * (high - low + 1));
 }
 
 /**

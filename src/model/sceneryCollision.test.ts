@@ -144,7 +144,9 @@ describe("scenery collision damage", () => {
       const shot = stepFlight(CONTENT, 1 / 60, idle, laser.flight);
       expect(payload(collision.flight, collided)).toEqual(payload(laser.flight, shot));
       expect(payload(collision.flight, collided).ammo).toBe(1);
-      expect(payload(collision.flight, collided).stardust).toBeGreaterThan(0);
+      const loot = payload(collision.flight, collided);
+      expect(loot.ore + loot.stardust).toBeGreaterThanOrEqual(1);
+      expect(loot.ore + loot.stardust).toBeLessThanOrEqual(5);
       expect(collided.filter(({ type }) => type === "asteroidDestroyed")).toHaveLength(1);
       expect(collision.flight.objects).not.toContain(collision.obstacle);
     },
@@ -156,7 +158,9 @@ describe("scenery collision damage", () => {
     const events = impact(CONTENT, flight, obstacle);
     expect(flight.shield).toBe(0);
     expect(obstacle.hp).toBe(0);
-    expect(payload(flight, events).ore).toBe(3);
+    const loot = payload(flight, events);
+    expect(loot.ore + loot.stardust).toBeGreaterThanOrEqual(1);
+    expect(loot.ore + loot.stardust).toBeLessThanOrEqual(5);
     expect(events.filter(({ type }) => type === "depleted")).toHaveLength(1);
     expect(events.filter(({ type }) => type === "asteroidDestroyed")).toEqual([
       expect.objectContaining({ id: obstacle.id, resource: true }),

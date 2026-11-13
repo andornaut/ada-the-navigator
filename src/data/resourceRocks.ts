@@ -1,14 +1,13 @@
-/** A resource rock's class (gameplay/rules.md): medium and large rocks hold different cargo. */
+/** A resource rock's durability and placement class. */
 export type ResourceClass = "medium" | "large";
 
 export interface ResourceRockClass {
   readonly hp: number;
-  readonly pieces: number;
 }
 
 /**
- * Resource rock classes: a medium rock has 3 HP and releases 3 cargo pieces, a large rock 5
- * and 5. Every third rock in a chunk or ore field is large, from a seeded start. Each rock is
+ * Resource rock classes: a medium rock has 3 HP and a large rock has 5 HP.
+ * Every third rock in a chunk or ore field is large, from a seeded start. Each rock is
  * one of the plain asteroid shapes of its class's size, whose footprints Art's resource rocks
  * share (art/asteroids.md "Resource rocks"), and is drawn as `resource-{shape}`.
  */
@@ -17,8 +16,8 @@ export const RESOURCE_ROCKS: {
   readonly largeEvery: number;
 } = {
   classes: {
-    large: { hp: 5, pieces: 5 },
-    medium: { hp: 3, pieces: 3 },
+    large: { hp: 5 },
+    medium: { hp: 3 },
   },
   largeEvery: 3,
 };
