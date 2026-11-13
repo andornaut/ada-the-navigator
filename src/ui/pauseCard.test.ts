@@ -258,17 +258,17 @@ describe("Paused card", () => {
     expect(actions.children[0]!.children.at(-1)!.dataset.action).toBe("pause-resume");
     expect(actions.children[0]!.children.at(-1)!.className).toContain("ada-primary");
     expect(shownActions(actions)).toEqual([
-      "pause-quests",
-      "pause-ship",
       "pause-map",
+      "pause-ship",
+      "pause-quests",
       "pause-settings",
       "pause-backToTitle",
       "pause-resume",
     ]);
     expect(buttonsOf(actions).map((node) => node.textContent)).toEqual([
-      "Quests",
-      "Ship",
       "Map",
+      "Ship",
+      "Quests",
       "Settings",
       "Back to title",
       "Resume",
@@ -630,18 +630,27 @@ it.each(["close-quests", "quest-back", "Escape", "back"])(
 );
 
 it.each(["room", "flight"] as const)(
-  "hides Map without canonical permission on %s and restores it only when allowed",
+  "keeps Map visible but refuses navigation without canonical permission on %s",
   (place) => {
-    const { body, pause } = cards();
+    const { body, options, pause } = cards();
     const actions = body.children[0]!;
     pause.setState(state({ canMap: false, place }));
-    expect(shownActions(actions)).not.toContain("pause-map");
+    expect(shownActions(actions)).toContain("pause-map");
+    expect(button(actions, "pause-map").getAttribute("aria-disabled")).toBe("true");
+    button(actions, "pause-map").click();
+    expect(pause.mapOpen()).toBe(false);
+    expect(options.onGalaxies).not.toHaveBeenCalled();
     const { canMap: permission, ...withoutPermission } = state({ place });
     expect(permission).toBe(true);
     pause.setState(withoutPermission);
-    expect(shownActions(actions)).not.toContain("pause-map");
+    expect(shownActions(actions)).toContain("pause-map");
+    expect(button(actions, "pause-map").getAttribute("aria-disabled")).toBe("true");
+    button(actions, "pause-map").click();
+    expect(pause.mapOpen()).toBe(false);
+    expect(options.onGalaxies).not.toHaveBeenCalled();
     pause.setState(state({ canMap: true, place }));
     expect(shownActions(actions)).toContain("pause-map");
+    expect(button(actions, "pause-map").getAttribute("aria-disabled")).toBe(null);
     pause.dispose();
   },
 );

@@ -1,5 +1,5 @@
-// Pause stays available during gameplay. Shared actions retain the same order on Earth and
-// in space; space-only actions precede them. Resume is primary and last.
+// Pause stays available during gameplay. Shared actions retain their order on Earth and in
+// space. Resume is primary and last.
 
 export type PauseAction = "backToTitle" | "map" | "quests" | "resume" | "settings" | "ship";
 
@@ -26,13 +26,13 @@ export function galaxiesAvailable(inDanger: boolean): boolean {
 // Galaxies are unavailable instead.
 export function pauseActions(place: PausePlace): readonly PauseActionView[] {
   return [
+    { available: true, id: "map", role: "secondary" },
     ...(place === "flight"
       ? ([
-          { available: true, id: "quests", role: "secondary" },
           { available: true, id: "ship", role: "secondary" },
+          { available: true, id: "quests", role: "secondary" },
         ] as const)
       : []),
-    { available: true, id: "map", role: "secondary" },
     { available: true, id: "settings", role: "secondary" },
     { available: true, id: "backToTitle", role: "secondary" },
     { available: true, id: "resume", role: "primary" },

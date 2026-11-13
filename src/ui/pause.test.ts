@@ -19,11 +19,11 @@ const json = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public/art/ui/${path}`, import.meta.url), "utf8"));
 
 describe("Paused card", () => {
-  it("places space-only actions above shared Map, Settings, Back to title and primary Resume", () => {
+  it("places Map above Quests and Ship above Settings, with primary Resume at bottom right", () => {
     expect(pauseActions("flight")).toEqual([
-      { available: true, id: "quests", role: "secondary" },
-      { available: true, id: "ship", role: "secondary" },
       { available: true, id: "map", role: "secondary" },
+      { available: true, id: "ship", role: "secondary" },
+      { available: true, id: "quests", role: "secondary" },
       { available: true, id: "settings", role: "secondary" },
       { available: true, id: "backToTitle", role: "secondary" },
       { available: true, id: "resume", role: "primary" },

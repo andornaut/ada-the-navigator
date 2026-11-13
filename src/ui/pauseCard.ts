@@ -148,8 +148,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     settings: labels.settings,
     ship: labels.ship,
   };
-  // Every action is built once, in flight's order; each place shows its own. The rest fill the
-  // grid in order, so the room's two share its first row and Resume ends the flight grid.
+  // Every action is built once in flight reading order; each place shows its own actions.
   for (const { id, role } of pauseActions("flight")) {
     const button = createButton(text[id], role);
     button.dataset.action = `pause-${id}`;
@@ -225,9 +224,10 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   let layer: ReturnType<typeof createModalLayer> | undefined;
   let leaveLayer: (() => void) | undefined;
   const actionsHere = () =>
-    pauseActions(state.place ?? "flight").filter(
-      (action) => action.id !== "map" || state.canMap === true,
-    );
+    pauseActions(state.place ?? "flight").map((action) => ({
+      ...action,
+      available: action.available && (action.id !== "map" || state.canMap === true),
+    }));
   const mapOpen = () => open && mapScreen.isOpen();
   const shipOpen = () => open && !ship.frame.hidden;
   // The map shows in the cards' and the dim's place; the Ship card in the Paused card's.
