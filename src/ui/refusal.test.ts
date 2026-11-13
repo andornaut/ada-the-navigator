@@ -1,72 +1,100 @@
+import {
+  REFUSAL_ATTRIBUTES,
+  REFUSAL_SHAKE,
+  REFUSAL_SHAKE_MS,
+} from "@andornaut/game-kit/web/ui/dom/refusalCue";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { REFUSAL, refusalFrames, refuse } from "./refusal.ts";
+import { REFUSAL, refuse } from "./refusal.ts";
 
-// An element's style as the cue sets it.
 function target() {
-  const style = new Map<string, string>();
-  return {
+  const attributes = new Map<string, string>();
+  const values = new Map<string, string>();
+  const element = {
+    removeAttribute: (name: string) => attributes.delete(name),
+    setAttribute: (name: string, value: string) => attributes.set(name, value),
     style: {
-      removeProperty: (name: string) => {
-        style.delete(name);
-        return "";
-      },
-      setProperty: (name: string, value: string) => {
-        style.set(name, value);
-      },
+      removeProperty: (name: string) => values.delete(name),
+      setProperty: (name: string, value: string) => values.set(name, value),
     },
-    values: style,
-  };
+    toggleAttribute: (name: string, force: boolean) => {
+      if (force) {
+        attributes.set(name, "");
+      } else {
+        attributes.delete(name);
+      }
+    },
+  } as unknown as HTMLElement;
+  return { attributes, element, values };
 }
 
-describe("refusal cue", () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
+function expectRest(value: ReturnType<typeof target>) {
+  expect(value.attributes.size).toBe(0);
+  expect(value.values.has(REFUSAL_SHAKE)).toBe(false);
+  expect(value.values.has(REFUSAL_SHAKE_MS)).toBe(false);
+  expect(value.values.has("color")).toBe(false);
+  expect(value.values.has("transform")).toBe(false);
+}
+
+describe("published refusal cue adapter", () => {
+  beforeEach(() => vi.useFakeTimers());
   afterEach(() => {
+    vi.clearAllTimers();
     vi.useRealTimers();
   });
 
-  it("alternates red every 80ms while shaking 3 logical px, for 320ms", () => {
-    const frames = refusalFrames(false);
-    expect(frames.map(({ at }) => at)).toEqual([0, 80, 160, 240, 320]);
-    expect(frames.map(({ red }) => red)).toEqual([true, false, true, false, false]);
-    expect(frames.map(({ offset }) => Math.abs(offset))).toEqual([3, 3, 3, 3, 0]);
-    const element = target();
-    refuse(element, false);
-    vi.advanceTimersByTime(0);
-    expect(element.values.get("color")).toBe(REFUSAL.color);
-    expect(element.values.get("transform")).toBe("translateX(calc(var(--ada-unit) * -3px))");
-    vi.advanceTimersByTime(80);
-    expect(element.values.has("color")).toBe(false);
-    expect(element.values.get("transform")).toBe("translateX(calc(var(--ada-unit) * 3px))");
-    vi.advanceTimersByTime(240);
-    expect(element.values.size).toBe(0);
+  it("keeps four 80ms alternate strokes, red steps and 3 logical pixels through 320ms", () => {
+    const value = target();
+    refuse(value.element, false);
+    expect(value.values.get("--ui-unit")).toBe("var(--ada-unit)");
+    expect(value.values.get("--ui-refusal-colour")).toBe("#e4574e");
+    expect(value.values.get(REFUSAL_SHAKE)).toBe("3");
+    expect(value.values.get(REFUSAL_SHAKE_MS)).toBe("80");
+    for (const [index, stroke] of ["left", "right", "left", "right"].entries()) {
+      expect(value.attributes.has(REFUSAL_ATTRIBUTES.red)).toBe(index % 2 === 0);
+      expect(value.attributes.get(REFUSAL_ATTRIBUTES.shake)).toBe(stroke);
+      vi.advanceTimersByTime(REFUSAL.stepMs);
+    }
+    expectRest(value);
+    expect(vi.getTimerCount()).toBe(0);
   });
 
-  it("holds red for 320ms without shaking under reduced motion", () => {
-    expect(refusalFrames(true)).toEqual([
-      { at: 0, offset: 0, red: true },
-      { at: 320, offset: 0, red: false },
-    ]);
-    const element = target();
-    refuse(element, true);
-    vi.advanceTimersByTime(160);
-    expect(element.values.get("color")).toBe(REFUSAL.color);
-    expect(element.values.has("transform")).toBe(false);
-    vi.advanceTimersByTime(160);
-    expect(element.values.size).toBe(0);
+  it("holds red without any shake for the complete reduced-motion duration", () => {
+    const value = target();
+    refuse(value.element, true);
+    vi.advanceTimersByTime(319);
+    expect(value.attributes.has(REFUSAL_ATTRIBUTES.red)).toBe(true);
+    expect(value.attributes.has(REFUSAL_ATTRIBUTES.shake)).toBe(false);
+    expect(value.values.has(REFUSAL_SHAKE)).toBe(false);
+    vi.advanceTimersByTime(1);
+    expectRest(value);
+    expect(vi.getTimerCount()).toBe(0);
   });
 
-  it("restarts rather than overlapping on a second press", () => {
-    const element = target();
-    refuse(element, false);
+  it("restarts a running cue without old timers clearing its replacement", () => {
+    const value = target();
+    refuse(value.element, false);
     vi.advanceTimersByTime(250);
-    refuse(element, true);
-    vi.advanceTimersByTime(100);
-    expect(element.values.get("color")).toBe(REFUSAL.color);
-    expect(element.values.has("transform")).toBe(false);
-    vi.advanceTimersByTime(220);
-    expect(element.values.size).toBe(0);
+    refuse(value.element, true);
+    vi.advanceTimersByTime(319);
+    expect(value.attributes.has(REFUSAL_ATTRIBUTES.red)).toBe(true);
+    expect(value.attributes.has(REFUSAL_ATTRIBUTES.shake)).toBe(false);
+    vi.advanceTimersByTime(1);
+    expectRest(value);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("cancels a disposed control without stopping a different control", () => {
+    const first = target();
+    const second = target();
+    const cancel = refuse(first.element, false);
+    refuse(second.element, true);
+    vi.advanceTimersByTime(40);
+    cancel();
+    expectRest(first);
+    expect(second.attributes.has(REFUSAL_ATTRIBUTES.red)).toBe(true);
+    vi.advanceTimersByTime(280);
+    expectRest(second);
+    expect(vi.getTimerCount()).toBe(0);
   });
 });

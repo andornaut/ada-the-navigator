@@ -202,8 +202,8 @@ ${hudDiscStyle(".ada-controls .ada-weapon", ".ada-disc")}
 .ada-controls .ada-weapon[data-state=selected] .ada-disc::before{
   opacity:1
 }
-/* The shared refusal cue sets an inline glyph colour; keep that cue at full strength. */
-.ada-controls .ada-weapon[style*="color:"] .ada-disc::before{
+/* The shared refusal attribute keeps the red glyph at full strength. */
+.ada-controls .ada-weapon[data-ui-refusal-red] .ada-disc::before{
   opacity:1
 }
 /* Weapon glyphs stay readable on the light field; selection keeps its cream ring. */

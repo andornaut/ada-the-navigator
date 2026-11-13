@@ -176,7 +176,7 @@ describe("HUD weapon buttons", () => {
       expect(rule).toContain(`opacity:${opacity}`);
     }
     expect(WEAPON_STYLE).toContain(
-      '.ada-controls .ada-weapon[style*="color:"] .ada-disc::before{\n  opacity:1',
+      ".ada-controls .ada-weapon[data-ui-refusal-red] .ada-disc::before{\n  opacity:1",
     );
     const pill = WEAPON_STYLE.split("}").find((part) => part.includes(".ada-controls .ada-ammo{"));
     const pips = WEAPON_STYLE.split("}").find((part) =>
