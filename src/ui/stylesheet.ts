@@ -9,6 +9,7 @@ import { LOADING_STYLE } from "./loadingBar.ts";
 import { MAP_SCREEN_STYLE } from "./mapScreen.ts";
 import { NOTICE_STYLE } from "./notice.ts";
 import { PAUSE_GRID_STYLE } from "./pauseCard.ts";
+import { QUESTS_SCREEN_STYLE } from "./questsScreen.ts";
 import { RESTART_STYLE } from "./restartCard.ts";
 import { SETTINGS_STYLE } from "./settings.ts";
 import { SHIP_CARD_STYLE } from "./shipCard.ts";
@@ -38,6 +39,7 @@ export const UI_STYLESHEET = [
   DISABLED_BANNER_STYLE,
   MAP_SCREEN_STYLE,
   PAUSE_GRID_STYLE,
+  QUESTS_SCREEN_STYLE,
   SHIP_CARD_STYLE,
   ACHIEVEMENTS_STYLE,
   STORYBOOK_STYLE,

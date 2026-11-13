@@ -1,6 +1,7 @@
 import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 import { createModalLayer } from "@andornaut/game-kit/web/ui/dom/modalLayer";
 
+import type { GalaxyNumber } from "../data/types.ts";
 import type { LocalMap } from "../model/map.ts";
 import type { QuestEntry } from "../model/questDetails.ts";
 import { units } from "./layout/css.ts";
@@ -9,6 +10,7 @@ import { readViewUnit } from "./layout/viewScale.ts";
 import { createMapScreen, type MapField, type MapScreenLabels } from "./mapScreen.ts";
 import { createButton, createCard, isTap, UI_SCOPE } from "./modal.ts";
 import { type PauseAction, pauseActions, type PausePlace } from "./pause.ts";
+import { createQuestsScreen, type QuestOrigin } from "./questsScreen.ts";
 import { refuse } from "./refusal.ts";
 import { renderShipSections, shipSections, type ShipView } from "./shipCard.ts";
 
@@ -47,6 +49,7 @@ export interface PauseOptions {
 }
 
 export interface PauseState {
+  readonly galaxy?: GalaxyNumber;
   /** Live model-owned quests from every galaxy, with no UI or save-state duplication. */
   readonly questEntries?: readonly QuestEntry[];
   /** The current galaxy's map field: its name, background and fog. */
@@ -165,11 +168,30 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     onClose: () => closeMap(),
     // The galaxy map opens over the local map, which stays open beneath it.
     onGalaxies: () => options.onGalaxies(),
+    onQuests: () => openQuests(),
     onTravel: (id) => {
       setOpen(false);
       options.onTravel(id);
     },
     reducedMotion: options.reducedMotion,
+  });
+  let questRoot: "map" | "flight" = "map";
+  const quests = createQuestsScreen(root, {
+    labels: labels.mapScreen,
+    onClose: () => {
+      if (questRoot === "flight") {
+        setOpen(false);
+      } else {
+        mapScreen.focusQuests();
+      }
+    },
+    onLocate: (id) => {
+      questRoot = "map";
+      if (!mapScreen.isOpen()) {
+        show("map");
+      }
+      mapScreen.locate(id);
+    },
   });
   let open = false;
   let mapOpener: "map" | "quests" = "map";
@@ -246,6 +268,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       leaveLayer = undefined;
       layer?.dispose();
       layer = undefined;
+      quests.close();
       mapScreen.close();
     }
     options.onOpenChange(value);
@@ -254,6 +277,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   // frames, so a press is never lost to a rebuilt button.
   let shown: string | undefined;
   const render = () => {
+    quests.setState(state.questEntries ?? [], state.map?.places ?? [], state.galaxy);
     mapScreen.setState({
       carrying: state.carrying,
       field: state.field,
@@ -286,7 +310,23 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     mapOpener = opener;
     setOpen(true);
     show("map");
-    mapScreen.openQuests();
+    questRoot = "map";
+    quests.open();
+  }
+  function openQuest(id: string, origin: QuestOrigin = "flight"): void {
+    questRoot = origin === "flight" ? "flight" : "map";
+    setOpen(true);
+    if (questRoot === "flight") {
+      leaveLayer?.();
+      leaveLayer = undefined;
+      layer?.dispose();
+      layer = undefined;
+      modal.hidden = true;
+      mapScreen.close();
+    } else {
+      show("map");
+    }
+    quests.open(id, origin);
   }
   const act = (id: PauseAction) => {
     const button = buttons.get(id)!;
@@ -329,8 +369,8 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   }
   // Back and Escape close the Quests modal first, then the map.
   function closeMap(): void {
-    if (mapOpen() && mapScreen.questsOpen()) {
-      mapScreen.closeQuests();
+    if (quests.isOpen()) {
+      quests.back();
       return;
     }
     if (mapOpen()) {
@@ -361,13 +401,20 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     outside = undefined;
   });
   return {
-    close: () => setOpen(false),
+    close: () => {
+      if (quests.isOpen()) {
+        quests.back();
+      } else {
+        setOpen(false);
+      }
+    },
     closeMap,
     closeShip,
     dispose(): void {
       layer?.dispose();
       paused.dispose();
       ship.dispose();
+      quests.dispose();
       mapScreen.dispose();
       modal.remove();
     },
@@ -380,6 +427,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     isOpen: () => open,
     mapOpen,
     open: () => setOpen(true),
+    openQuest,
     openQuests,
     setState(next: PauseState): void {
       state = next;

@@ -160,6 +160,7 @@ beforeEach(() => {
   vi.stubGlobal("document", {
     createElement: () => new FakeElement(),
     createElementNS: () => new FakeElement(),
+    createTextNode: (text: string) => Object.assign(new FakeElement(), { textContent: text }),
     fonts: Object.assign(new EventTarget(), { status: "loaded" }),
   });
   vi.stubGlobal("window", { addEventListener: vi.fn(), removeEventListener: vi.fn() });
@@ -403,7 +404,7 @@ it("opens the existing Quests route directly from carried cargo and preserves pa
   pause.openQuests();
   expect(pause.isOpen()).toBe(true);
   expect(pause.mapOpen()).toBe(true);
-  expect(openQuests).toHaveBeenCalledOnce();
+  expect(openQuests).not.toHaveBeenCalled();
   expect(options.onOpenChange).toHaveBeenLastCalledWith(true);
   pause.closeMap();
   expect(pause.mapOpen()).toBe(true);
@@ -438,12 +439,14 @@ it("opens Quests from the pause menu and keeps pause through both back layers un
     questsOpen: () => questsOpen,
   }));
   try {
-    const { body, options, pause } = cards();
+    const { body, options, pause, root } = cards();
     pause.setState(state({ map: { ...MAP, quests: [] } }));
     pause.open();
     button(body.children[0]!, "pause-quests").click();
-    expect(openQuests).toHaveBeenCalledOnce();
-    expect(questsOpen).toBe(true);
+    expect(openQuests).not.toHaveBeenCalled();
+    expect(
+      root.children.find((child) => child.className.includes("ada-quests-screen"))?.hidden,
+    ).toBe(false);
     expect(pause.mapOpen()).toBe(true);
     expect(options.onOpenChange.mock.calls).toEqual([[true]]);
     expect(options.onTravel).not.toHaveBeenCalled();
@@ -490,4 +493,43 @@ describe("published modal layer routing", () => {
     expect(modal.children.every((child) => !child.hasAttribute("inert"))).toBe(true);
     pause.dispose();
   });
+});
+
+it("opens a held quest directly, returns Other quests to its list, and resumes only on Close", () => {
+  const { options, pause, root } = cards();
+  const entry = {
+    galaxy: 1 as const,
+    id: "story:1:1",
+    line: {
+      description: "Approved full description",
+      kind: "story" as const,
+      nextStep: "Deliver Food",
+      progress: "1 / 1",
+      target: null,
+      text: "Food objective",
+    },
+    locations: [],
+  };
+  pause.setState(state({ galaxy: 1, questEntries: [entry] }));
+  pause.openQuest(entry.id, "flight");
+  const quests = root.children.find((child) => child.className.includes("ada-quests-screen"))!;
+  expect(quests.hidden).toBe(false);
+  expect(pause.isOpen()).toBe(true);
+  expect(pause.mapOpen()).toBe(false);
+  expect(texts(quests)).toContain("Approved full description");
+  const find = (action: string) =>
+    quests.querySelectorAll().find((button) => button.dataset.action === action)!;
+  find("quest-other").click();
+  const row = quests.querySelectorAll().find((button) => button.dataset.questId === entry.id)!;
+  row.click();
+  expect(find("quest-back")).toBeDefined();
+  expect(find("quest-other")).toBeUndefined();
+  find("quest-back").click();
+  expect(quests.querySelectorAll().some((button) => button.dataset.questId === entry.id)).toBe(
+    true,
+  );
+  find("quest-close").click();
+  expect(pause.isOpen()).toBe(false);
+  expect(options.onOpenChange.mock.calls).toEqual([[true], [false]]);
+  pause.dispose();
 });

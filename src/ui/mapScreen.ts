@@ -105,6 +105,12 @@ export interface MapScreenLabels {
   readonly questOutcome?: string;
   readonly questLocate?: string;
   readonly questExplore?: string;
+  readonly questBack?: string;
+  readonly questOtherQuests?: string;
+  readonly questProgressLabel?: string;
+  readonly questObjective?: string;
+  readonly questNextAction?: string;
+  readonly questStoryProgress?: string;
 
   readonly questsEmpty: string;
   readonly questsJobBoards: string;
@@ -127,6 +133,12 @@ export function mapScreenLabels(strings: Readonly<Record<string, string>>): MapS
   const label = (key: string) => strings[key] ?? "";
   const questLabels = Object.fromEntries(
     [
+      "questBack",
+      "questOtherQuests",
+      "questProgressLabel",
+      "questObjective",
+      "questNextAction",
+      "questStoryProgress",
       "questExplore",
       "questFrom",
       "questLocate",
@@ -197,6 +209,7 @@ export interface MapScreenState {
 }
 
 export interface MapScreenOptions {
+  readonly onQuests?: () => void;
   readonly labels: MapScreenLabels;
   readonly onClose: () => void;
   /** Galaxies: the galaxy map; refused in danger, never while towing (pause.ts galaxiesAvailable). */
@@ -1545,7 +1558,9 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     paginateQuests();
     focusTarget(questLines.querySelector<HTMLButtonElement>("button") ?? questsCard.close);
   };
-  questsButton.addEventListener("click", () => openQuests());
+  questsButton.addEventListener("click", () =>
+    options.onQuests ? options.onQuests() : openQuests(),
+  );
   questsCard.close.addEventListener("click", closeQuests);
   // A full outside tap closes it.
   let outside: Point | undefined;
@@ -1757,7 +1772,16 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     focusGalaxies(): void {
       focusTarget(galaxies);
     },
+    focusQuests(): void {
+      focusTarget(questsButton);
+    },
     isOpen: () => !screen.hidden,
+    locate(id: string): void {
+      const place = places().find((place) => place.id === id);
+      if (place) {
+        goTo(place);
+      }
+    },
     /** Opens at the opening fit with nothing selected, focus on close. */
     open(): void {
       screen.hidden = false;
