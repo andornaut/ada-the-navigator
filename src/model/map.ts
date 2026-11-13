@@ -190,7 +190,14 @@ export interface MapPlace {
  * or, with no job held and a station discovered, the job boards' hint. A story or job line is tied
  * to its target, the id of the target's chip once mapped, else null.
  */
+export interface QuestRequirement {
+  readonly label: string;
+  readonly checked?: boolean;
+  readonly count?: string;
+}
+
 export interface QuestDetails {
+  readonly requirements?: readonly QuestRequirement[];
   readonly destination?: string | null;
   readonly description?: string;
   readonly nextStep?: string;

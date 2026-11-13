@@ -6,7 +6,7 @@ import { questItemDestination } from "./indicators.ts";
 import { landmarkById } from "./landmarks.ts";
 import type { MapSymbol, QuestDetails, QuestLine } from "./map.ts";
 import { fill } from "./shop.ts";
-import type { GalaxyProgress, HeldJob, OptionalTask } from "./types.ts";
+import type { GalaxyProgress, HeldJob, OptionalTask, Vec } from "./types.ts";
 
 /** A live quest view with a stable identity and only already known location labels. */
 export interface QuestEntry {
@@ -37,7 +37,11 @@ export interface QuestDetailSnapshot {
       "stage" | "introduced" | "resolved" | "questComplete" | "questItem" | "deposited"
     >
   > & { readonly known: readonly string[]; readonly stations: readonly string[] };
-  readonly flight: { readonly cargo: number; readonly calf?: { readonly following: boolean } };
+  readonly flight: {
+    readonly cargo: number;
+    readonly calf?: { readonly following: boolean };
+    readonly tow?: Vec;
+  };
   readonly task?: Readonly<OptionalTask>;
 }
 
@@ -79,6 +83,22 @@ export function questDetails(
           destination: destination === null ? null : visible(destination),
           nextStep: carrying(STORY_ITEM_NAMES[exchange.item]!, carried),
           progress: count(Number(carried), 1),
+          requirements: [
+            progress.stage < 2
+              ? { checked: progress.questItem === "food", label: context.label("questFoodAboard") }
+              : { checked: true, label: context.label("questFoodDelivered") },
+            ...(progress.stage >= 2
+              ? [{ checked: progress.stage >= 3, label: context.label("questToolkitDelivered") }]
+              : []),
+            ...(progress.stage >= 3
+              ? [
+                  {
+                    checked: progress.questItem === "parts",
+                    label: context.label("questSparePartsAboard"),
+                  },
+                ]
+              : []),
+          ],
           source: visible(exchange.source),
         };
       }
@@ -92,6 +112,12 @@ export function questDetails(
             flight.cargo > 0,
           ),
           progress: count(progress.deposited, required),
+          requirements: [
+            {
+              count: count(progress.deposited, required),
+              label: context.label("questOreDeposited"),
+            },
+          ],
         };
       }
     }
@@ -115,7 +141,17 @@ export function questDetails(
           landmark: landmark ? context.label(landmark.name) : context.label("questExplore"),
           place: place(task.target.id),
         }) || context.jobText(task).detail;
-      jobDetails = { description, reward };
+      jobDetails = {
+        description,
+        ...(task.type === "rescue"
+          ? {
+              requirements: [
+                { checked: flight.tow !== undefined, label: context.label("questTowLineAttached") },
+              ],
+            }
+          : {}),
+        reward,
+      };
       if (task.type === "delivery") {
         jobDetails = {
           ...jobDetails,
@@ -149,6 +185,12 @@ export function questDetails(
           flight.cargo > 0,
         ),
         progress: count(task.deposited ?? 0, MINING_CONTRACT_DEPOSITS),
+        requirements: [
+          {
+            count: count(task.deposited ?? 0, MINING_CONTRACT_DEPOSITS),
+            label: context.label("questOreDeposited"),
+          },
+        ],
         reward,
       };
     } else if (task.id === "guideCalf") {

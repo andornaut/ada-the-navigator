@@ -289,3 +289,54 @@ describe("rescue description articles", () => {
     expect(task).toEqual(before);
   });
 });
+
+describe("actual named quest requirements", () => {
+  it("distinguishes currently aboard food from completed deliveries and lost later cargo", () => {
+    const model = flight();
+    const progress = model.state.progress[1];
+    Object.assign(progress, { introduced: true, questItem: "food", stage: 1 });
+    expect(questDetails(context(), snapshot(model)).storyDetails?.requirements).toEqual([
+      { checked: true, label: label("questFoodAboard") },
+    ]);
+    Object.assign(progress, { questItem: "toolkit", stage: 2 });
+    expect(questDetails(context(), snapshot(model)).storyDetails?.requirements).toEqual([
+      { checked: true, label: label("questFoodDelivered") },
+      { checked: false, label: label("questToolkitDelivered") },
+    ]);
+    Object.assign(progress, { questItem: null, stage: 3 });
+    const details = questDetails(context(), snapshot(model)).storyDetails!;
+    expect(details.requirements).toEqual([
+      { checked: true, label: label("questFoodDelivered") },
+      { checked: true, label: label("questToolkitDelivered") },
+      { checked: false, label: label("questSparePartsAboard") },
+    ]);
+    progress.questItem = "parts";
+    expect(
+      questDetails(context(), snapshot(model)).storyDetails?.requirements?.at(-1)?.checked,
+    ).toBe(true);
+  });
+
+  it("checks a rescue only from the actual tow attachment, not carrying flags or title text", () => {
+    const model = flight();
+    const task = { ...job("rescue"), carrying: true };
+    const state = { ...snapshot(model), task };
+    expect(questDetails(context(), state).jobDetails?.requirements).toEqual([
+      { checked: false, label: label("questTowLineAttached") },
+    ]);
+    expect(
+      questDetails(context(), { ...state, flight: { ...state.flight, tow: { x: 1, y: 2 } } })
+        .jobDetails?.requirements,
+    ).toEqual([{ checked: true, label: label("questTowLineAttached") }]);
+  });
+
+  it("uses deposited counts and the canonical mining goal instead of current cargo", () => {
+    const model = flight();
+    model.state.selectedGalaxy = 2;
+    const progress = model.state.progress[2];
+    Object.assign(progress, { deposited: 2, introduced: true, stage: 1 });
+    const details = questDetails(context(2), { flight: { cargo: 99 }, progress });
+    expect(details.storyDetails?.requirements).toEqual([
+      { count: `2/${CONTENT.tuning.miningMilestones[0]}`, label: label("questOreDeposited") },
+    ]);
+  });
+});
