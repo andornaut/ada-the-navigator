@@ -144,8 +144,8 @@ like scenery.
   drawn orientation's edge median reaches 3:1 at display size; the build fails
   if either state falls under 3:1. Lamps lit are 13.22:1.
 - A gate lights when Gameplay counts Ada's pass: the lit pair fades in over the
-  dark pair in 240 ms, `cubicOut` (`light`). Reduced motion cuts. When a run
-  resets to its first gate, its gates cut back to dark.
+  dark pair in 240 ms, `cubicOut` (`light`). Reduced motion cuts. A too-fast pass leaves existing lit gates unchanged. Guidance returns to the last
+  lit gate, or the first when none is lit; the ship is never teleported or reset.
 - `rim` gives `inner` 33, `outer` 40 and `depth` 7 in world units: on the
   world plane the rim is two blocks across the channel, 33 to 40 from the
   centre on each side and 7 deep along the axis, for the bump.
@@ -175,8 +175,8 @@ the world plane through the view projection.
 
 ### Debris
 
-Channel debris bumps Ada aside without damage, as scenery does, so it reads as
-harmless matter: no coral contour (coral keeps meaning damage), and the
+Channel debris bumps Ada aside and deals normal scenery bump damage. Gate rims
+bump without damage. Debris keeps its scenery styling: no coral contour (coral keeps meaning damage), and the
 [asteroid drift cue](asteroids.md#drift-cue)'s stone chips in place of the
 coral dashes (`cue` `asteroid`).
 
