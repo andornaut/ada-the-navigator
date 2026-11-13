@@ -44,7 +44,7 @@
   "reports": {
     "project": "Ada the Navigator",
     "scheduledTicks": true,
-    "recipient": "dev-manager",
-    "workerParents": ["dev-manager"]
+    "recipient": "game-coordinator",
+    "workerParents": ["game-coordinator"]
   }
 }

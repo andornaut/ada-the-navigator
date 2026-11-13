@@ -181,8 +181,8 @@ Only delivery-kit 4.0.0 deploys the admitted gated artifact after exact-commit C
 passes and the remote commit matches. `delivery-kit.json` schedules hourly :00
 America/Toronto with `deploy.mode` set to `wrangler`. A pushed range that changes
 only Markdown, `art/` or `gameplay/` files (`deploy.skipPattern`) is gated but not
-deployed. Desired control remains
-paused; game-dev enables only Ada after READY review. The monitor schedule is
+deployed. Persisted desired control governs scheduled delivery. Reports route to
+`game-coordinator`. The monitor schedule is
 unchanged. Existing OAuth authentication remains in place; credentials are not
 part of the repository. No manual deployment is part of this procedure.
 
