@@ -25,7 +25,7 @@ export const CHAPTER_BACKGROUNDS: Readonly<
     opening: "grandmaGardenSpilled",
     resolution: "grandmaGardenSpilled",
   },
-  6: { closing: "adaRoomNight", opening: "gardenLot", resolution: "gardenLot" },
+  6: { closing: "adaRoomNight", opening: "adaRoom", resolution: "gardenLot" },
 };
 
 /**
