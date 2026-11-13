@@ -81,7 +81,7 @@ describe("shop rows on the station view", () => {
       ["paint", "Classic", "inUse"],
       ["paint", "Cobalt", "unaffordable"],
       ["paint", "Seafoam", "unaffordable"],
-      ["paint", "Graphite", "unaffordable"],
+      ["paint", "Crimson", "unaffordable"],
       ["paint", "Iris", "unaffordable"],
       ["paint", "Amber", "unaffordable"],
     ]);

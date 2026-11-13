@@ -525,7 +525,7 @@ export const CONTENT: GameContent = {
     paintAmber: "Amber",
     paintClassic: "Classic",
     paintCobalt: "Cobalt",
-    paintGraphite: "Graphite",
+    paintGraphite: "Crimson",
     paintIris: "Iris",
     paintSeafoam: "Seafoam",
     pause: "Pause",

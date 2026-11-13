@@ -119,7 +119,7 @@ describe("item notice wording", () => {
       amber: "#f4b665",
       classic: "#ffffff",
       cobalt: "#6f9ff0",
-      graphite: "#aab2c4",
+      graphite: "#d96b73",
       iris: "#d9ccff",
       seafoam: "#d4f6ea",
     });

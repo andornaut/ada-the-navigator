@@ -1279,7 +1279,7 @@ describe("shop purchases", () => {
       "unaffordable",
       "forSale",
     ]);
-    // Shield, engine, tractor; then Classic, Cobalt, Seafoam, Graphite, Iris and Amber.
+    // Shield, engine, tractor; then Classic, Cobalt, Seafoam, Crimson, Iris and Amber.
     expect(states("ship")).toEqual([
       "unaffordable",
       "forSale",
@@ -1360,7 +1360,7 @@ describe("shop purchases", () => {
       "Amber",
       "Classic",
       "Cobalt",
-      "Graphite",
+      "Crimson",
       "Iris",
       "Seafoam",
     ]);
