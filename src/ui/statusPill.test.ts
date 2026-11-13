@@ -461,6 +461,96 @@ describe("status pill count", () => {
   });
 
   it.each([false, true])(
+    "shows every paid batch and final remainder exactly once with reduced motion %s",
+    async (reduced) => {
+      for (const remainder of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
+        for (const end of ["full", "exhausted", "interrupted"] as const) {
+          const { slot, status } = pill(reduced);
+          const view = {
+            ...full,
+            aboard: null,
+            lightField: false,
+            ore: 100,
+            oreLabel: "Ore",
+            recharging: true,
+            shield: 50,
+            shieldOreSpent: 0,
+            stardust: 0,
+            stardustLabel: "0 Stardust",
+          };
+          const tick = () =>
+            slot("ore").children.find((node) => node.className === "ada-status-tick");
+          status.setStatus(view, 0);
+          for (const total of [10, 20, 30]) {
+            status.setStatus({ ...view, ore: 100 - total, shieldOreSpent: total }, total);
+          }
+          const total = 30 + remainder;
+          const ended = {
+            ...view,
+            ore: end === "exhausted" ? 0 : 100 - total,
+            recharging: false,
+            shield: end === "full" ? view.capacity : 50,
+            shieldOreSpent: total,
+            sinceDamage: end === "interrupted" ? 0 : view.sinceDamage,
+          };
+          status.setStatus(ended, 40);
+          status.setStatus(ended, 41);
+          const shown: string[] = [];
+          for (let n = 0; tick() && n < 10; n++) {
+            const node = tick()!;
+            shown.push(node.textContent);
+            node.animations[0]!.finish();
+            // Each animation schedules the next queued debit in a microtask.
+            // eslint-disable-next-line no-await-in-loop
+            await Promise.resolve();
+          }
+          expect(shown).toEqual(["-10", "-10", "-10", `-${remainder}`]);
+          expect(shown.reduce((sum, value) => sum - Number(value), 0)).toBe(total);
+          expect(tick()).toBeUndefined();
+          status.setStatus(ended, 42);
+          expect(tick()).toBeUndefined();
+          status.setStatus({ ...ended, recharging: true, shield: 50 }, 43);
+          status.setStatus({ ...ended, recharging: false, shieldOreSpent: total + 3 }, 44);
+          expect(tick()!.textContent).toBe("-3");
+          status.resetShieldOreSpent(500);
+          status.setStatus({ ...ended, shieldOreSpent: 500 }, 45);
+          expect(tick()).toBeUndefined();
+          status.dispose();
+        }
+      }
+    },
+  );
+
+  it("clears queued paid batches when a different flight total is loaded", async () => {
+    const { slot, status } = pill();
+    const view = {
+      ...full,
+      aboard: null,
+      lightField: false,
+      ore: 100,
+      oreLabel: "Ore",
+      recharging: true,
+      shield: 50,
+      shieldOreSpent: 0,
+      stardust: 0,
+      stardustLabel: "Stardust",
+    };
+    const tick = () => slot("ore").children.find((node) => node.className === "ada-status-tick");
+    status.setStatus(view, 0);
+    status.setStatus({ ...view, ore: 63, recharging: false, shieldOreSpent: 37 }, 16);
+    const first = tick()!;
+    expect(first.textContent).toBe("-10");
+    status.resetShieldOreSpent(503);
+    status.setStatus({ ...view, ore: 63, shieldOreSpent: 503 }, 32);
+    first.animations[0]!.finish();
+    await Promise.resolve();
+    expect(tick()).toBeUndefined();
+    status.setStatus({ ...view, ore: 61, recharging: false, shieldOreSpent: 505 }, 48);
+    expect(tick()!.textContent).toBe("-2");
+    status.dispose();
+  });
+
+  it.each([false, true])(
     "ticks only explicit paid ore, including the last ore, with reduced motion %s",
     (reduced) => {
       const { count, shield, slot, status } = pill(reduced);
@@ -689,10 +779,10 @@ describe("paid shield ore batches", () => {
   it("starts from the loaded total, emits each crossed paid batch once, and resets a new total", () => {
     const counter = new ShieldOreSpendCounter();
     expect(counter.update(29)).toBe(0);
-    expect(counter.update(30)).toBe(10);
     expect(counter.update(30)).toBe(0);
-    expect(counter.update(39)).toBe(0);
-    expect(counter.update(60)).toBe(30);
+    expect(counter.update(30)).toBe(0);
+    expect(counter.update(39)).toBe(10);
+    expect(counter.update(60)).toBe(20);
     expect(counter.update(0)).toBe(0);
     expect(counter.update(9)).toBe(0);
     expect(counter.update(10)).toBe(10);
@@ -701,6 +791,25 @@ describe("paid shield ore batches", () => {
     expect(counter.update(210)).toBe(10);
     expect(counter.update()).toBe(0);
     expect(counter.update(900)).toBe(0);
+  });
+
+  it("flushes only new paid ore after reload, interruptions and resumed batches", () => {
+    const counter = new ShieldOreSpendCounter();
+    counter.reset(29);
+    expect(counter.update(29, false)).toBe(0);
+    expect(counter.update(30, true)).toBe(0);
+    expect(counter.update(30, false)).toBe(1);
+    expect(counter.update(30, false)).toBe(0);
+    expect(counter.update(39, true)).toBe(0);
+    expect(counter.update(40, true)).toBe(10);
+    expect(counter.update(47, false)).toBe(7);
+    expect(counter.update(47, false)).toBe(0);
+    expect(counter.update(57, true)).toBe(10);
+    expect(counter.update(57, false)).toBe(0);
+    counter.reset(500);
+    expect(counter.update(500, false)).toBe(0);
+    expect(counter.update(507, false)).toBe(7);
+    expect(counter.update(507, false)).toBe(0);
   });
 
   it("rejects non-finite, fractional, negative and unsafe totals as baselines", () => {

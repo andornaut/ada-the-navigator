@@ -179,22 +179,28 @@ export function shieldMarkColour(tone: ShieldTone, pulse: number): string {
     : STATUS_COLOURS.low;
 }
 
-/** Paid-ore batch boundaries; initializing or replacing a flight never replays old ticks. */
+/** Paid ore since the loaded baseline, batched during recharge and flushed when it stops. */
 export class ShieldOreSpendCounter {
   private previous: number | undefined;
+  private pending = 0;
 
   reset(total?: number): void {
     this.previous = Number.isSafeInteger(total) && total! >= 0 ? total : undefined;
+    this.pending = 0;
   }
 
-  update(total?: number): number {
+  update(total?: number, recharging = true): number {
     const previous = this.previous;
-    this.reset(total);
-    if (previous === undefined || this.previous === undefined || this.previous < previous) {
+    if (!Number.isSafeInteger(total) || total! < 0 || previous === undefined || total! < previous) {
+      this.reset(total);
       return 0;
     }
+    this.previous = total;
+    this.pending += total! - previous;
     const batch = STATUS_PILL.ore.oreSpendBatch;
-    return (Math.floor(this.previous / batch) - Math.floor(previous / batch)) * batch;
+    const paid = recharging ? Math.floor(this.pending / batch) * batch : this.pending;
+    this.pending -= paid;
+    return paid;
   }
 }
 
@@ -519,6 +525,18 @@ function createCounter(
   let shown: number | undefined;
   let tick: { amount: number; node: HTMLSpanElement; animation: Animation } | null = null;
   let lastBump = -Infinity;
+  const spendQueue: { amount: number; nowMs: number }[] = [];
+  const nextSpend = (): void => {
+    const next = spendQueue[0];
+    if (next) {
+      const amount = Math.min(STATUS_PILL.ore.oreSpendBatch, next.amount);
+      next.amount -= amount;
+      if (next.amount === 0) {
+        spendQueue.shift();
+      }
+      gain(-amount, next.nowMs);
+    }
+  };
   const gain = (amount: number, now: number) => {
     const reduced = reducedMotion();
     if (amount > 0 && !reduced && now - lastBump >= STATUS_TIMING.bumpMs) {
@@ -561,12 +579,14 @@ function createCounter(
         if (tick === current) {
           node.remove();
           tick = null;
+          nextSpend();
         }
       })
       .catch(() => undefined);
   };
   return {
     clearSpend() {
+      spendQueue.length = 0;
       if (tick && tick.amount < 0) {
         tick.animation.cancel();
         tick.node.remove();
@@ -592,7 +612,10 @@ function createCounter(
     slot,
     spend: (amount, nowMs) => {
       if (amount > 0) {
-        gain(-amount, nowMs);
+        spendQueue.push({ amount, nowMs });
+        if (!tick || tick.amount > 0) {
+          nextSpend();
+        }
       }
     },
     spending: () => (tick?.amount ?? 0) < 0,
@@ -729,6 +752,7 @@ export function createStatusPill(
       bump(icon);
     },
     dispose: () => {
+      ore.clearSpend();
       root.remove();
       shieldRoot.remove();
     },
@@ -781,7 +805,7 @@ export function createStatusPill(
       meter.setAttribute("aria-valuenow", String(Math.max(0, Math.round(view.shield))));
       stardust.set(view.stardust, view.stardustLabel, nowMs);
       ore.set(view.ore, null, nowMs);
-      ore.spend(shieldOre.update(view.shieldOreSpent), nowMs);
+      ore.spend(shieldOre.update(view.shieldOreSpent, view.recharging), nowMs);
       const segments = statusSegments(view);
       const hasOre = segments.includes("ore") || ore.spending();
       oreDivider.hidden = !hasOre;

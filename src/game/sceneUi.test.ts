@@ -189,6 +189,9 @@ describe("shield ore spend caller", () => {
     expect(ui.ticks).toEqual([]);
     ui.scene.model.state.flight!.shieldOreSpent = batch;
     ui.update();
+    expect(ui.ticks).toEqual([]);
+    ui.scene.model.state.flight!.shieldOreSpent = 2 * batch - 1;
+    ui.update();
     expect(ui.ticks).toEqual([batch]);
     ui.scene.model.state.flight!.cargo = 0;
     ui.update();
