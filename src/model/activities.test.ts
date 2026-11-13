@@ -227,6 +227,25 @@ describe("repeatable activities", () => {
     expect(model.state.tasks[2]).toBeUndefined();
   });
 
+  it("fills the mining objective's goal placeholder from the contract requirement", () => {
+    const model = new GameModel({
+      ...CONTENT,
+      labels: {
+        ...CONTENT.labels,
+        contractObjective: "Deposit ore at the hub: {have} of {need}.",
+      },
+    });
+    model.state.selectedGalaxy = 2;
+    model.state.tasks[2] = {
+      deposited: 9,
+      id: "miningContract",
+      kind: "activity",
+      place: "hub",
+      reward: 180,
+    };
+    expect(model.jobObjective).toBe("Deposit ore at the hub: 9 of 30.");
+  });
+
   it("drops the mining contract from the hub's board, losing its progress", () => {
     const model = atPlace(2, "hub");
     takeContract(model);

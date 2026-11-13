@@ -1,7 +1,7 @@
 import { randomStream } from "@andornaut/game-kit/random";
 
 import { ACHIEVEMENTS, PENNY_FIND_RANGE } from "../data/achievements.ts";
-import { ACTIVITIES, SUPPLY_ITEMS } from "../data/activities.ts";
+import { ACTIVITIES, MINING_CONTRACT_DEPOSITS, SUPPLY_ITEMS } from "../data/activities.ts";
 import type { CastKey } from "../data/cast.ts";
 import {
   CONVERSATION_TUNING,
@@ -2054,7 +2054,10 @@ export class GameModel {
       });
     }
     if (activity?.id === "miningContract") {
-      return fill(this.label("contractObjective"), { have: activity.deposited ?? 0 });
+      return fill(this.label("contractObjective"), {
+        have: activity.deposited ?? 0,
+        need: MINING_CONTRACT_DEPOSITS,
+      });
     }
     if (activity?.id === "guideCalf") {
       return this.label(this.state.flight?.calf?.following ? "calfGuide" : "calfFind");
