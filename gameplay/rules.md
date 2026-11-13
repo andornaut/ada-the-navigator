@@ -1138,8 +1138,10 @@ or galaxy, and saving and reloading clear markers. A marker sits where the line
 from Ada to the object meets the game area's edge, its outermost drawn pixel 1 logical pixel in
 from the edge, and may sit under the HUD. Where a direction
 indicator marks the same object, only the indicator shows.
-Discovery rewards use cargo and Stardust pickups; a discovery cache holds 5
-Stardust. Weapons come only from shops and rare enemy drops. Stations are rare
+Discovery rewards use cargo and Stardust pickups; a discovery cache holds 4
+Stardust as four ordinary pickups worth 1 each, arranged in a diamond. Each uses
+normal contact collection and the tractor beam, with no aggregate collider or
+hidden bonus. Weapons come only from shops and rare enemy drops. Stations are rare
 points of interest with shops.
 
 Visual effects distinguish hits, shield damage, destroyed ships, pickups and

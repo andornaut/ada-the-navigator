@@ -42,7 +42,7 @@ salvaging it drops its Stardust and has the heavy upgrade chance (see
 
 | Source          | Stardust |
 | --------------- | -------: |
-| Discovery cache |        5 |
+| Discovery cache |        4 |
 | `swarm`         |        1 |
 | `fighter`       |        2 |
 | `interceptor`   |        1 |
