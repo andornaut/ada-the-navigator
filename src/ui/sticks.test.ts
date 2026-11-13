@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ControlState, MOVE_STICK_GEOMETRY, stickVector } from "../input/state.ts";
+import { ControlState, MOVE_STICK_GEOMETRY, STICK_GEOMETRY, stickVector } from "../input/state.ts";
 import { logicalView, NO_INSETS, safeInsets, viewScale } from "./layout/playView.ts";
 import { stickTargets } from "./layout/touchControls.ts";
 import { centredAt, MARKER_THRESHOLD, STICK_DEPTHS, stickViews } from "./sticks.ts";
@@ -121,16 +121,87 @@ describe("left stick deflection display", () => {
 });
 
 describe("right stick display", () => {
-  it("keeps the aim ring the move ring's size with twelve-pixel knob travel", () => {
-    const state = new ControlState();
-    state.down("aim", 2, { x: 500, y: 100 });
-    state.move(2, { x: 537, y: 100 });
+  const origin = { x: 500, y: 100 };
+
+  it.each([0, STICK_GEOMETRY.deadZone / 2, STICK_GEOMETRY.deadZone])(
+    "centres the knob at neutral or deadzone travel %s",
+    (distance) => {
+      const state = new ControlState();
+      state.down("aim", 2, origin);
+      state.move(2, { x: origin.x + distance, y: origin.y });
+      const view = stickViews(layout, state).aim!;
+      expect(knobCentre(view.knob)).toEqual(origin);
+      expect(state.stickSample("aim")).toEqual({ x: 0, y: 0 });
+      expect(view.line).toBeUndefined();
+    },
+  );
+
+  it.each([STICK_GEOMETRY.deadZone + 0.001, 12, STICK_GEOMETRY.reach, 100])(
+    "puts the centre on the canonical ring at active travel %s without changing sampled input",
+    (distance) => {
+      const state = new ControlState();
+      state.down("aim", 2, origin);
+      state.move(2, { x: origin.x + distance, y: origin.y });
+      const before = state.stickSample("aim");
+      const view = stickViews(layout, state).aim!;
+      expect(view.ring).toEqual(centredAt(origin, TOUCH_CHROME_FRAME));
+      expect(knobCentre(view.knob)).toEqual({
+        x: origin.x + Math.round(TOUCH_RING_OUTER_RADIUS),
+        y: origin.y,
+      });
+      expect(view.ringPose).toBe("rest");
+      expect(view.knobPose).toBe("held");
+      expect(state.stickSample("aim")).toEqual(before);
+      expect(before.x).toBeCloseTo(stickVector(STICK_GEOMETRY, { x: distance, y: 0 }).x, 12);
+      expect(before.y).toBe(0);
+      expect(view.line).toBeUndefined();
+    },
+  );
+
+  it.each([0, 45, 90, 135, 180, 225, 270, 315])(
+    "keeps the full visual radius at partial and full aim toward %s degrees",
+    (degrees) => {
+      const state = new ControlState();
+      state.down("aim", 2, origin);
+      const angle = (degrees * Math.PI) / 180;
+      for (const distance of [STICK_GEOMETRY.deadZone + 0.01, 20, 200]) {
+        const offset = { x: Math.cos(angle) * distance, y: Math.sin(angle) * distance };
+        state.move(2, { x: origin.x + offset.x, y: origin.y + offset.y });
+        const view = stickViews(layout, state).aim!;
+        const knob = knobCentre(view.knob);
+        expect(knob).toEqual({
+          x: origin.x + Math.round(Math.cos(angle) * TOUCH_RING_OUTER_RADIUS),
+          y: origin.y + Math.round(Math.sin(angle) * TOUCH_RING_OUTER_RADIUS),
+        });
+        expect(
+          Math.abs(Math.hypot(knob.x - origin.x, knob.y - origin.y) - TOUCH_RING_OUTER_RADIUS),
+        ).toBeLessThanOrEqual(Math.SQRT1_2);
+        expect(state.stickSample("aim").x).toBeCloseTo(stickVector(STICK_GEOMETRY, offset).x, 10);
+        expect(state.stickSample("aim").y).toBeCloseTo(stickVector(STICK_GEOMETRY, offset).y, 10);
+      }
+    },
+  );
+
+  it("uses the existing input geometry and returns to centre on deadzone entry or release", () => {
+    const geometry = { deadZone: 10, reach: 20 };
+    const state = new ControlState(geometry);
+    state.down("aim", 2, origin);
+    state.move(2, { x: origin.x + 8, y: origin.y });
+    expect(knobCentre(stickViews(layout, state).aim!.knob)).toEqual(origin);
+    state.move(2, { x: origin.x + 10.01, y: origin.y });
+    expect(knobCentre(stickViews(layout, state).aim!.knob).x).toBe(
+      origin.x + Math.round(TOUCH_RING_OUTER_RADIUS),
+    );
+    state.move(2, { x: origin.x + 10, y: origin.y });
+    expect(knobCentre(stickViews(layout, state).aim!.knob)).toEqual(origin);
+    state.release(2);
     const view = stickViews(layout, state).aim!;
-    expect(view.ring).toEqual(centredAt({ x: 500, y: 100 }, TOUCH_CHROME_FRAME));
-    expect(knobCentre(view.knob)).toEqual({ x: 512, y: 100 });
-    expect(view.ringPose).toBe("rest");
-    expect(view.knobPose).toBe("held");
-    expect(state.sample().aim).toEqual({ x: 1, y: 0 });
+    expect(view.knobPose).toBe("rest");
+    expect(knobCentre(view.knob)).toEqual({
+      x: view.ring.x + (TOUCH_CHROME_FRAME - 1) / 2,
+      y: view.ring.y + (TOUCH_CHROME_FRAME - 1) / 2,
+    });
+    expect(state.sample().aim).toEqual({ x: 0, y: 0 });
   });
 });
 

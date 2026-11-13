@@ -6,12 +6,13 @@ import {
 } from "../input/state.ts";
 import type { ControlVisibility } from "./deviceSettings.ts";
 import type { Insets } from "./layout/playView.ts";
-import { stickRestCentres, TOUCH_STICK } from "./layout/touchControls.ts";
+import { stickRestCentres } from "./layout/touchControls.ts";
 import {
   MOVE_KNOB_REACH,
   type Point,
   TOUCH_CHROME_FRAME,
   TOUCH_KNOB_FRAME,
+  TOUCH_RING_OUTER_RADIUS,
   type TouchChromePose,
 } from "./touchChrome.ts";
 
@@ -56,8 +57,8 @@ const rounded = (point: Point): Point => ({ x: Math.round(point.x), y: Math.roun
 // The joysticks as drawn: a side is absent while hidden by its setting or while controls do not
 // show. A held stick's ring centres on where its drag began; at rest it sits at its rest centre.
 // The move knob moves in proportion to the sampled deflection, at most MOVE_KNOB_REACH pixels,
-// so full strength puts its centre on the outer ring; the aim knob moves at most
-// TOUCH_STICK.knobReach pixels.
+// so full strength puts its centre on the outer ring. The aim knob centres inside its input
+// deadzone and reaches the outer ring at any active aim strength.
 export function stickViews(
   layout: StickLayout,
   state: ControlState,
@@ -98,10 +99,14 @@ export function stickViews(
             ? "held-right"
             : "rest";
     } else {
-      const dx = stick ? stick.position.x - stick.origin.x : 0;
-      const dy = stick ? stick.position.y - stick.origin.y : 0;
-      const divisor = Math.max(1, Math.hypot(dx, dy) / TOUCH_STICK.knobReach);
-      knob = { x: centre.x + Math.round(dx / divisor), y: centre.y + Math.round(dy / divisor) };
+      const sampled = state.stickSample("aim");
+      const strength = Math.hypot(sampled.x, sampled.y);
+      knob = strength
+        ? {
+            x: centre.x + Math.round((sampled.x / strength) * TOUCH_RING_OUTER_RADIUS),
+            y: centre.y + Math.round((sampled.y / strength) * TOUCH_RING_OUTER_RADIUS),
+          }
+        : centre;
     }
     // The move line reaches the actual pointer independently of the capped sampled speed.
     const thumb = side === "move" ? stick?.position : undefined;
