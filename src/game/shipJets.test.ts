@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { anchor, SHIP_HEADINGS as ART_SHIP_HEADINGS, vector } from "../../art/tools/projection.ts";
+import { FRAME, mouthAxis } from "../../art/tools/ship-model.ts";
 import manifest from "../../public/art/manifest.json";
 import art from "../../public/art/ship-jets.json";
 import { SHIP_HEADINGS } from "../model/nose.ts";
@@ -57,7 +59,8 @@ describe("ship jet metadata", () => {
     expect(jets.headings).toHaveLength(32);
     expect(jets.headings.every((mouths) => mouths.length === 2)).toBe(true);
     expect(jets.layers).toHaveLength(3);
-    expect(jets.headings[0]![0]!.anchor).toEqual({ x: 43.55, y: 30.579 });
+    const [x, y] = art.headings[0]!.mouths[0]!.anchor;
+    expect(jets.headings[0]![0]!.anchor).toEqual({ x, y });
   });
 
   it("takes the heading count from the file", () => {
@@ -113,12 +116,16 @@ describe("authored jet occlusion", () => {
   const masked = (occluders: unknown) =>
     withHeading({
       ...art.headings[0],
-      mouths: art.headings[0]!.mouths.map((mouth, index) =>
-        index === 0 ? { ...mouth, occluders } : mouth,
-      ),
+      mouths: art.headings[0]!.mouths.map(({ anchor, axis, half }, index) => ({
+        anchor,
+        axis,
+        half,
+        ...(index === 0 ? { occluders } : {}),
+      })),
     });
 
   it("keeps legacy mouths behind the sprite and distinguishes an explicitly clear exhaust plane", () => {
+    expect(readEngineJets(masked(undefined))!.headings[0]![0]).not.toHaveProperty("occluders");
     expect(jetTriangles(jets, framePixels, 0, 0.8)[0]).not.toHaveProperty("occluders");
     const read = readEngineJets(masked([]))!;
     expect(
@@ -276,21 +283,19 @@ describe("jet triangles", () => {
     expect(outerTriangle!.points[1].y).toBeCloseTo((72 - 48) * scale);
   });
 
-  it("anchors each mouth at local (±12.25, 17.39, 2.60) on the pyramid hull at every heading", () => {
-    // Art's projection (art/tools/projection.ts): heading k turns local forward (negative y) to
-    // world angle k * 360 / 32, then the view along (1, 1, 1) raises +z, pivot (48, 48).
-    const mouth = (sign: -1 | 1, heading: number) => {
-      const angle = (heading * Math.PI) / 16 + Math.PI / 2;
-      const [x, y, z] = [sign * 12.25, 17.39, 2.6];
-      const wx = x * Math.cos(angle) - y * Math.sin(angle);
-      const wy = x * Math.sin(angle) + y * Math.cos(angle);
-      return { x: 48 + ((wx - wy) * Math.sqrt(3)) / 2, y: 48 + (wx + wy) / 2 - z };
-    };
+  it("matches the current canonical producer mouth geometry at every heading", () => {
+    expect(jets.frame).toBe(FRAME);
+    expect(jets.headings).toHaveLength(ART_SHIP_HEADINGS);
     jets.headings.forEach((mouths, heading) => {
+      expect(mouths).toHaveLength(2);
       ([-1, 1] as const).forEach((sign, index) => {
-        const expected = mouth(sign, heading);
-        expect(mouths[index]!.anchor.x).toBeCloseTo(expected.x, 2);
-        expect(mouths[index]!.anchor.y).toBeCloseTo(expected.y, 2);
+        const { half, middle } = mouthAxis(sign);
+        const [x, y] = anchor(ART_SHIP_HEADINGS, FRAME / 2, heading, middle);
+        const [ax, ay] = vector(ART_SHIP_HEADINGS, heading, [0, 1, 0]);
+        const [hx, hy] = vector(ART_SHIP_HEADINGS, heading, half);
+        expect(mouths[index]!.anchor).toEqual({ x, y });
+        expect(mouths[index]!.axis).toEqual({ x: ax, y: ay });
+        expect(mouths[index]!.half).toEqual({ x: hx, y: hy });
       });
     });
   });

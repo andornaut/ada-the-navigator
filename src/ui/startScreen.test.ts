@@ -15,7 +15,10 @@ class Element {
     },
   };
   style = {};
-  constructor(readonly tag: string) {}
+  readonly tag: string;
+  constructor(tag: string) {
+    this.tag = tag;
+  }
   setAttribute(name: string, value: string): void {
     this.attributes.set(name, value);
   }
