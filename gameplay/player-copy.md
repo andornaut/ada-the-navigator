@@ -169,7 +169,8 @@ Boarding, for later chapters: Narration: "Ada holds Penny close and touches the
 rock's glow." Astra: "Welcome back, Navigator."
 
 Holodisk inserted: Narration: "Ada slides the holodisk into Astra's drive."
-Astra: "Memory restored. I've found new coordinates."
+For the first five holodisks, Astra: "Memory restored. I've found new coordinates."
+For the sixth holodisk only, Astra: "Memory restored."
 
 Then Astra's memory line for how many holodisks she now holds:
 
