@@ -59,7 +59,7 @@ describe("Paused card", () => {
     expect(CONTENT.labels.toronto).toBeUndefined();
     expect(CONTENT.labels.travelEmpty).toBe("No destinations mapped yet.");
     expect(CONTENT.labels.map).toBe("Map");
-    expect(CONTENT.labels.mapPercent).toBe("{percent}% mapped");
+    expect(CONTENT.labels.mapPercent).toBe("Survey area: {percent}% mapped");
     expect(CONTENT.labels.travelHere).toBe("Travel here");
     expect(CONTENT.labels.travel).toBeUndefined();
     expect(CONTENT.labels.destinations).toBeUndefined();
