@@ -18,7 +18,7 @@ Ask more offers the listed optional topics and returns to the same conversation.
 Optional topics never gate progress. Skip dialogue reaches the existing outcome
 once, preserving any pending choice for the player to answer.
 
-In-flight chatter and drone/General broadcasts remain in the small conversation
+In-flight chatter and drone/Admiral broadcasts remain in the small conversation
 box with touch dismissal. Automatic gate and battle reactions below stay chatter;
 their presence in a chapter does not turn them into Use interactions.
 
@@ -53,6 +53,8 @@ The following items are APPROVED DESIGN, not current runtime behavior:
 
 These names follow the cast and species rules. A role in parentheses identifies
 an existing role, not an additional character. Keepers remain in Dock cards.
+Admiral Archie is the antagonist dog in a red uniform. Gadget and Kiwi are Ada's
+household cats; Penny remains her dog.
 
 | Context                                | PARTY names                                                                                      |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------ |
@@ -62,17 +64,17 @@ an existing role, not an additional character. Keepers remain in Dock cards.
 | Andromeda quest                        | Wick (story Settler), Pip                                                                        |
 | Cartwheel quest                        | Quartz (hub Station), Mica (Miner), Opal (first Regular visitor), Jasper (final Regular visitor) |
 | Nonperson Use actions                  | Astra (guide, including Salvage and ore Deposit)                                                 |
-| Phantom quest                          | Blurbs (first and second freed settlements), Dollop (third), General Gadget                      |
+| Phantom quest                          | Blurbs (first and second freed settlements), Dollop (third), Admiral Archie                      |
 | Sunflower Dock                         | Saffron, Bramble, Nectar                                                                         |
 | Whirlpool Dock                         | Ripple, Coral, Brine                                                                             |
 | Needle Dock                            | Sedge, Willow, Marsh                                                                             |
 | Andromeda Dock and settlement greeting | Lumen, Dial, Cog; unnamed settlement greeters                                                    |
 | Cartwheel Dock                         | Quartz at the hub; Slate, Garnet elsewhere                                                       |
-| Phantom Dock after completion          | General Gadget                                                                                   |
+| Phantom Dock after completion          | Admiral Archie                                                                                   |
 
 Ada, Astra and Penny use their own portraits on their own lines. Reed is the
 existing young Avi pilot, with no essential exchange added here. The blocking
-pilot, calf and stranded travelers gain no speaking lines. The General's
+pilot, calf and stranded travelers gain no speaking lines. The Admiral's
 broadcast retains Unknown voice and its silhouette until his existing reveal.
 
 ## Prologue
@@ -112,7 +114,7 @@ Ada's room, rock unpolished:
 
 - Narration: "That evening, Ada polishes the rock at her desk. Under the dirt,
   thin lines appear, like a map of somewhere far away."
-- Narration: "Archie and Kiwi watch from the bed, tails twitching."
+- Narration: "Gadget and Kiwi watch from the bed, tails twitching."
 
 Ada's room, rock glowing:
 
@@ -173,7 +175,7 @@ Then Astra's memory line for how many holodisks she now holds:
 
 - First holodisk: "I remember a fleet... and someone giving orders."
 - Second: "I carried that fleet from galaxy to galaxy. But whose fleet?"
-- Third: "General Gadget. I was his navigator. I scattered my holodisks to keep
+- Third: "Admiral Archie. I was his navigator. I scattered my holodisks to keep
   them from him."
 - Fourth: "I remember running from him. I scattered the disks in one wild jump,
   and it broke something in me. That's how I ended up near Earth."
@@ -183,22 +185,22 @@ Then Astra's memory line for how many holodisks she now holds:
   say no. I don't have to run anymore."
 
 Memory lines and broadcasts follow the order holodisks are recovered. The
-General's broadcast in a built galaxy plays once, in the conversation box, the
+Admiral's broadcast in a built galaxy plays once, in the conversation box, the
 first time his drones engage Ada there: the line after the number of holodisks
 she holds then, so none plays while she holds none. Placeholder galaxies play no
 broadcast. His name tab reads "Unknown voice" until the third holodisk is
-inserted, then "General Gadget". While the tab reads "Unknown voice", his
+inserted, then "Admiral Archie". While the tab reads "Unknown voice", his
 portrait is a dark silhouette with no face; once named, it shows him:
 
 - Second: Unknown voice: "All drones: find the holodisks. Bring them to me."
   Astra: "That voice... I don't know why it scares me."
 - Third: Unknown voice: "Someone is collecting my holodisks. Stop them." Ada:
   "Your holodisks? They're Astra's!"
-- Fourth: General Gadget: "Little navigator, you can't hide from me. My drones
+- Fourth: Admiral Archie: "Little navigator, you can't hide from me. My drones
   will wait at every exit." Ada: "Then we'll take our time."
-- Fifth: General Gadget: "Astra. I know you can hear me. Come back, and bring my
-  disks." Astra: "I'm not yours, General. I never was."
-- Sixth: General Gadget: "So you came to Phantom. I have the last disk, little
+- Fifth: Admiral Archie: "Astra. I know you can hear me. Come back, and bring my
+  disks." Astra: "I'm not yours, Admiral. I never was."
+- Sixth: Admiral Archie: "So you came to Phantom. I have the last disk, little
   navigator." Ada: "Then we'll come and get it."
 
 Outposts handing over the holodisk, said by whichever outpost Ada is talking to:
@@ -561,7 +563,7 @@ Space dialogue, in story order:
 
 - Wick: "A traveler! Be careful. One of our guide beacons has gone dark."
 - Ada: "What's happening to the ships?"
-- Wick: "They keep getting lost. It must be Gadget's drones. Everyone is scared to fly."
+- Wick: "They keep getting lost. It must be Archie's drones. Everyone is scared to fly."
 - Ada: "I'll look at the beacon."
 
 Ask more:
@@ -789,13 +791,13 @@ Space dialogue, in story order:
 
 - Blurbs: "Blub! The drones are gone!"
 - Ada: "Can you leave your homes now?"
-- Blurbs: "We haven't left since the General came."
+- Blurbs: "We haven't left since the Admiral came."
 - Ada: "The blockade here is broken."
 
 Ask more:
 
 - "Who lives here?" Blurbs: "We Blurbs wobble, but we always hold together."
-- "What kept you inside?" Blurbs: "The General's drones. They're gone now."
+- "What kept you inside?" Blurbs: "The Admiral's drones. They're gone now."
 
 ### Phantom copy anchor: second settlement freed: PARTY Blurbs
 
@@ -807,12 +809,12 @@ Ask more:
 Ask more:
 
 - "Can travelers return?" Blurbs: "Yes. The blockade is broken."
-- "Who blocked the way?" Blurbs: "The General's drones."
+- "Who blocked the way?" Blurbs: "The Admiral's drones."
 
 ### Phantom copy anchor: third settlement freed: PARTY Dollop
 
 - Dollop: "Thank you, Navigator."
-- Ada: "Where is the General's flagship?"
+- Ada: "Where is the Admiral's flagship?"
 - Dollop: "Past the dark nebula."
 - Dollop: "We'll send word to everyone you've helped."
 
@@ -825,24 +827,24 @@ Battle chatter stays in the small box:
 
 - With allies: Astra: "That's his flagship. And Ada, look." Ada: "Everyone came!" (happy)
 - Without allies: Astra: "That's his flagship. It's just us." Ada: "Just us is enough."
-- General Gadget, as the flagship attacks: "Astra. Come home, and bring my disks. No one needs to get hurt." Astra: "No one will. But I'm not yours."
-- General Gadget, flagship disabled: "Enough! Take it. Take the last disk."
+- Admiral Archie, as the flagship attacks: "Astra. Come home, and bring my disks. No one needs to get hurt." Astra: "No one will. But I'm not yours."
+- Admiral Archie, flagship disabled: "Enough! Take it. Take the last disk."
 
 Salvage the last holodisk uses Astra's short brief below and the existing
 holodisk outcome. After the sixth memory line:
 
-### Phantom copy anchor: map and docks: PARTY General Gadget
+### Phantom copy anchor: map and docks: PARTY Admiral Archie
 
 - Ada: "Astra, show him your map."
-- Astra: "Six disks, every coordinate. There are galaxies past galaxies, General. They never end."
-- General Gadget: "No end... No one could hold all of that."
+- Astra: "Six disks, every coordinate. There are galaxies past galaxies, Admiral. They never end."
+- Admiral Archie: "No end... No one could hold all of that."
 - Ada: "No one has to. But you could help fix what you broke here."
-- General Gadget: "The Blurbs' docks. My blockades cracked them. I'll start there."
+- Admiral Archie: "The Blurbs' docks. My blockades cracked them. I'll start there."
 
 Ask more:
 
 - "What is on the map?" Astra: "Every coordinate. There are galaxies past galaxies."
-- "Where will you start?" General Gadget: "The Blurbs' docks. My blockades cracked them."
+- "Where will you start?" Admiral Archie: "The Blurbs' docks. My blockades cracked them."
 
 Home resolution: "On the day, rain pours over the garden. The schedule turns to
 mush in Ada's hand. She stands in the rain, watching her perfect plan wash away."
@@ -873,7 +875,7 @@ Objectives, in order:
 1. Explore the galaxy.
 2. Break the drone blockades.
 3. Talk with the freed Blurbs.
-4. Fly to Gadget's flagship.
+4. Fly to Archie's flagship.
 5. Disable the flagship.
 6. Salvage the last holodisk.
 7. Go home to Earth when ready.
@@ -1168,7 +1170,7 @@ Every other Cartwheel station, Slate or Garnet:
 - Later: "Welcome back! Wipe your boots. Well, your thrusters." / "Hello again!
   Find any good rocks out there?" / "Back again. There's always room here."
 
-Phantom, General Gadget as keeper once the chapter is complete:
+Phantom, Admiral Archie as keeper once the chapter is complete:
 
 - "Ah. The navigator. Welcome to the Blurbs' station."
 - "I am helping mend their docks. It is slower than conquering, and better."
@@ -1245,7 +1247,7 @@ beacon light. Welcome!"
 - Shield depletion that loses ore, after that line on the same page: Astra:
   "We're safe, and that matters most. We lost half the ore we were carrying."
 - After the sleep scene, morning: Narration: "Astra recharges overnight. In the
-  morning, the rock is warm again, and Archie and Kiwi are curled at her feet."
+  morning, the rock is warm again, and Gadget and Kiwi are curled at her feet."
 - Station welcome: Welcome aboard. Trade your Stardust, or take a job.
 - Crash screen: title "Something went wrong", text "The game stopped. Reload to
   play again.", button "Reload".
