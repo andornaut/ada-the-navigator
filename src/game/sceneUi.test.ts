@@ -5,7 +5,7 @@ import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { ECONOMY } from "../data/economy.ts";
+import { ECONOMY, worldAmmoPack } from "../data/economy.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { STATUS_PILL_LAYOUT } from "../data/layout.ts";
 import { GameModel } from "../model/game.ts";
@@ -239,7 +239,7 @@ describe("ammo pickup scene drain", () => {
     model.step(0.01, { aim: { x: 1, y: 0 }, move: { x: 0, y: 0 }, use: false });
     update(scene);
     expect(setGains).toHaveBeenCalledExactlyOnceWith([
-      { added: ECONOMY.ammo.pack.multiLaser, kind: "ammo", weapon: "multiLaser" },
+      { added: worldAmmoPack(ECONOMY, "multiLaser"), kind: "ammo", weapon: "multiLaser" },
     ]);
     update(scene);
     expect(setGains).toHaveBeenCalledTimes(1);

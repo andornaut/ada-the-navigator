@@ -265,10 +265,16 @@ describe("galaxy two's holodisk", () => {
     const model = questDone(2, ["hub", "miner", "visitors"]);
     expect(model.objective).toBe("Buy the holodisk at the hub.");
     arrive(model, "hub");
-    // Depositing no longer opens a purchase, and Use then docks.
+    // Acknowledge the deposit card before Dock opens the station shop.
     model.state.flight!.cargo = 5;
     expect(model.contextAction).toBe("deposit");
+    const balance = model.state.economy.stardust;
     model.interact();
+    expect(model.state.dialogue).toMatchObject({ context: "deposit", title: "Astra" });
+    expect(model.contextAction).toBeUndefined();
+    expect(model.state.progress[2].holodisk).toBe(false);
+    expect(model.state.economy.stardust).toBe(balance);
+    model.choose("continue");
     expect(model.state.dialogue).toBeNull();
     expect(model.contextAction).toBe("dock");
     model.interact();

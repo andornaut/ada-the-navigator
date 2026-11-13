@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { ECONOMY } from "../data/economy.ts";
+import { ECONOMY, worldAmmoPack } from "../data/economy.ts";
 import type { Weapon } from "../data/types.ts";
 import { relaunch } from "../testing/launch.ts";
 import { GameModel } from "./game.ts";
@@ -36,7 +36,7 @@ describe("applied ammo pickup feedback", () => {
     const before = gainSnapshot(model.state.economy.paints, model.ship);
     model.step(0.01, { ...idle, aim: { x: 1, y: 0 } });
     expect(flight.shots.length).toBeGreaterThan(0);
-    const pack = ECONOMY.ammo.pack.multiLaser;
+    const pack = worldAmmoPack(ECONOMY, "multiLaser");
     expect(flight.ammo.multiLaser - 5).toBeLessThan(pack);
     expect(model.drainPickupFeedback()).toEqual([
       { added: pack, kind: "ammo", weapon: "multiLaser" },
@@ -60,7 +60,7 @@ describe("applied ammo pickup feedback", () => {
     }
     model.step(0.01, idle);
     expect(model.drainPickupFeedback()).toEqual([
-      { added: ECONOMY.ammo.pack.multiLaser, kind: "ammo", weapon: "multiLaser" },
+      { added: worldAmmoPack(ECONOMY, "multiLaser"), kind: "ammo", weapon: "multiLaser" },
     ]);
     expect(model.drainPickupFeedback()).toEqual([]);
   });

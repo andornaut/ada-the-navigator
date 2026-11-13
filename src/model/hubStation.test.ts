@@ -54,9 +54,17 @@ describe("the mining hub as a station", () => {
     model.interact();
     expect(f.cargo).toBe(0);
     expect(model.state.progress[2].deposited).toBe(3);
-    // Depositing below a milestone plays no line and keeps the hub undocked.
-    expect(model.state.dialogue).toBeNull();
+    // The deposit card pauses flight until its explicit Continue, without docking.
+    expect(model.state.dialogue).toMatchObject({ context: "deposit", title: "Astra" });
     expect(model.state.docked).toBeNull();
+    expect(model.contextAction).toBeUndefined();
+    const time = f.time;
+    model.step(0.1, idle);
+    model.interact();
+    expect(f.time).toBe(time);
+    expect(model.state.progress[2].deposited).toBe(3);
+    model.choose("continue");
+    expect(model.state.dialogue).toBeNull();
     expect(model.contextAction).toBe("dock");
     model.interact();
     expect(model.state.docked).toBe(HUB_STATION);
@@ -75,12 +83,21 @@ describe("the mining hub as a station", () => {
     model.interact();
     expect(model.state.docked).toBeNull();
     const { duration } = CARTWHEEL_STORY_SHIPS.scenes.blocked;
+    expect(model.state.dialogue).toMatchObject({ context: "deposit", title: "Astra" });
+    const pausedAt = f.time;
+    model.step(duration + 0.1, idle);
+    expect(f.time).toBe(pausedAt);
+    expect(f.storyScene?.lineDue).toBe(true);
+    model.choose("continue");
+    expect(model.contextAction).toBeUndefined();
     for (let time = 0; time <= duration + 0.1; time += 0.1) {
       model.step(0.1, idle);
     }
     expect(f.storyScene?.lineDue).toBe(false);
-    expect(model.state.dialogue).not.toBeNull();
-    model.state.dialogue = null;
+    expect(model.state.dialogue).toMatchObject({ context: "firstDeposit" });
+    expect(model.contextAction).toBeUndefined();
+    model.choose("continue");
+    expect(model.state.progress[2].deposited).toBe(first);
     expect(model.contextAction).toBe("dock");
   });
 
@@ -99,8 +116,15 @@ describe("the mining hub as a station", () => {
       type: "delivery",
     };
     expect(model.contextAction).toBe("deliver");
+    const balance = model.state.economy.stardust;
     model.interact();
     expect(model.state.tasks[2]).toBeUndefined();
+    expect(model.state.dialogue).toMatchObject({ context: "deliver" });
+    expect(model.state.economy.stardust).toBe(balance + 15);
+    expect(model.contextAction).toBeUndefined();
+    model.interact();
+    model.choose("continue");
+    expect(model.state.economy.stardust).toBe(balance + 15);
     expect(model.contextAction).toBe("dock");
   });
 
