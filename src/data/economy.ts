@@ -284,7 +284,7 @@ export const ECONOMY: EconomyCatalog = {
     // Every cell holds a station; occupancy only gates a cell, so seeded positions never move.
     chance: 1,
     destinationClearance: 1200,
-    indicatorRange: 2000,
+    indicatorRange: 3000,
     jitter: 4000,
     originClearance: 3000,
     radius: 60,

@@ -143,9 +143,9 @@ describe("station placement", () => {
     }
   });
 
-  it("marks the nearest undiscovered station within 2000 for the direction indicator", () => {
+  it("marks the nearest undiscovered station within 3000 for the direction indicator", () => {
     const { indicatorRange } = ECONOMY.station;
-    expect(indicatorRange).toBe(2000);
+    expect(indicatorRange).toBe(3000);
     const near = { x: site.x + indicatorRange - 1, y: site.y };
     expect(stationIndicatorTarget(ECONOMY, 1, [], near)).toEqual(site);
     expect(stationIndicatorTarget(ECONOMY, 1, [], { x: site.x, y: site.y - 600 })).toEqual(site);
