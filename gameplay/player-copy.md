@@ -105,7 +105,7 @@ In the park:
   roots of an old tree."
 - Narration: "Penny digs. Something round glints in the dirt: a rock, smoother
   than any Ada has ever seen."
-- Ada: "Good nose, Penny. Come on, let's take it home."
+- Ada: "Good nose, Penny. Let's take it home."
 
 Ada's room, rock unpolished:
 
