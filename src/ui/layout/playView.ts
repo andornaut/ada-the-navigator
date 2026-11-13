@@ -276,7 +276,7 @@ export function shieldFillWidth(level: number): number {
 export function shieldDelayStrip(level: number, fraction: number): { strip: Rect; track: Rect } {
   const { bar, delayStrip } = SHIELD_PILL;
   const width = shieldFillWidth(level);
-  const y = SHIELD_PILL.pill.height + delayStrip.gap - (SHIELD_PILL.pill.height - bar.height) / 2;
+  const y = bar.height + delayStrip.gap;
   return {
     strip: {
       height: delayStrip.height,

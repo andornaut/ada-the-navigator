@@ -117,7 +117,7 @@ describe("status pill shield bar", () => {
     expect(
       new ShieldBar().update({ ...full, shield: 60, sinceDamage: 12 }, 0, true).recharge,
     ).toBeCloseTo(0.4, 9);
-    // The independent track starts 1 below the panel; its fill aligns with the main fill.
+    // The independent track starts 1 below the main bar; its fill aligns with the main fill.
     for (const [level, area] of [
       [1, 116],
       [2, 176],
@@ -125,12 +125,12 @@ describe("status pill shield bar", () => {
     ] as const) {
       for (const p of [0, 0.25, 1]) {
         expect(shieldDelayStrip(level, p)).toEqual({
-          strip: { height: 1, width: area * p, x: 2, y: 22 },
-          track: { height: 3, width: area + 2, x: 1, y: 21 },
+          strip: { height: 1, width: area * p, x: 2, y: 14 },
+          track: { height: 3, width: area + 2, x: 1, y: 13 },
         });
       }
     }
-    expect(STATUS_COLOURS.recharge).toBe("#ffffff");
+    expect(STATUS_COLOURS.recharge).toBe("#ead4aa");
   });
 
   it("resets the same recharge timer on damage without changing reduced-motion progress", () => {
@@ -156,6 +156,21 @@ describe("status pill shield bar", () => {
     );
     expect(fill).toContain(`top:${units(SHIELD_PILL.bar.inset)}`);
     expect(fill).toContain(`height:${units(SHIELD_PILL.bar.height - 2 * SHIELD_PILL.bar.inset)}`);
+  });
+
+  it("encloses the timer fill and empty track on all four sides without CSS border rounding", () => {
+    const track = STATUS_PILL_STYLE.split("}").find((part) =>
+      part.includes(".ada-controls .ada-shield > .ada-status-recharge-track{"),
+    );
+    const fill = STATUS_PILL_STYLE.split("}").find((part) =>
+      part.includes(".ada-controls .ada-status-recharge-track > .ada-status-recharge{"),
+    );
+    expect(track).toContain("border:0");
+    expect(track).toContain(
+      `box-shadow:inset 0 0 0 ${units(SHIELD_PILL.delayStrip.edge)} ${STATUS_COLOURS.rechargeEdge}`,
+    );
+    expect(fill).toContain(`left:${units(SHIELD_PILL.delayStrip.edge)}`);
+    expect(fill).toContain(`top:${units(SHIELD_PILL.delayStrip.edge)}`);
   });
 
   it("pulses icon and rim while low, holding the low colour under reduced motion", () => {
@@ -411,14 +426,10 @@ describe("status pill count", () => {
       expect(track.style.height).toBe(units(rect.track.height));
       expect(track.style.width).toBe(units(rect.track.width));
       expect(fill.style.width).toBe(units(rect.strip.width));
-      expect(
-        (SHIELD_PILL.pill.height - SHIELD_PILL.bar.height) / 2 +
-          rect.track.y -
-          SHIELD_PILL.pill.height,
-      ).toBe(1);
+      expect(rect.track.y - SHIELD_PILL.bar.height).toBe(1);
       expect(
         (SHIELD_PILL.pill.height - SHIELD_PILL.bar.height) / 2 + rect.track.y + rect.track.height,
-      ).toBe(SHIELD_PILL.pill.height + SHIELD_PILL.delayStrip.gap + rect.track.height);
+      ).toBeLessThanOrEqual(SHIELD_PILL.pill.height);
       status.setStatus({ ...view, sinceDamage: 0 }, 16);
       expect(track.hidden).toBe(false);
       expect(fill.style.width).toBe(units(0));

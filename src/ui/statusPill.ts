@@ -34,7 +34,7 @@ export const STATUS_COLOURS = {
   oreTick: "#eaa676",
   panel: "rgb(24 20 37 / 0.65)",
   // The separate recharge timer fill and its ink track (art/controls.md "Status pill").
-  recharge: "#ffffff",
+  recharge: "#ead4aa",
   rechargeEdge: "#181425",
   rim: "#9a96ad",
   shield: "#70ace8",
@@ -405,13 +405,14 @@ ${SHIELD_PILL.bars
 .ada-controls .ada-shield > .ada-status-recharge-track{
   position:absolute;
   box-sizing:border-box;
-  border:${units(SHIELD_PILL.delayStrip.edge)} solid ${STATUS_COLOURS.rechargeEdge};
+  border:0;
+  box-shadow:inset 0 0 0 ${units(SHIELD_PILL.delayStrip.edge)} ${STATUS_COLOURS.rechargeEdge};
   background:${STATUS_COLOURS.track}
 }
 .ada-controls .ada-status-recharge-track > .ada-status-recharge{
   position:absolute;
-  left:0;
-  top:0;
+  left:${units(SHIELD_PILL.delayStrip.edge)};
+  top:${units(SHIELD_PILL.delayStrip.edge)};
   height:${units(SHIELD_PILL.delayStrip.height)};
   background:${STATUS_COLOURS.recharge}
 }
