@@ -965,7 +965,8 @@ A tow's craft returns to where it was stranded, still marked; the calf and Pip
 return to their starts with the activity still held. Undeposited ore is cargo
 not yet deposited at the hub. A shield-failure jump loses half of it, the
 smaller half on an odd load, so 11 ore keeps 6 and a single ore is kept; the
-jump-home page tells the player when ore was lost. Stardust is never lost.
+jump-home page tells the player when ore was lost. Kept ore stays aboard and
+travels with Ada to every galaxy and home. Stardust is never lost.
 
 Preauthored chunk shapes, contents and points of interest assemble near Ada.
 They provide the existing galaxy variety of open areas, asteroid clusters and
