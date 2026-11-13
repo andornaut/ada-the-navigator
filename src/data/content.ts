@@ -1,4 +1,5 @@
 import { ANDROMEDA_CHAPTER } from "./andromeda.ts";
+import { NEEDLE_CHAPTER } from "./needleCopy.ts";
 import { PHANTOM_CHAPTER, PHANTOM_CLOSING, PHANTOM_RESOLUTION_REJOIN } from "./phantom.ts";
 import { PREMISE } from "./premiseCopy.ts";
 import { SHIP_PHYSICS } from "./shipPhysics.ts";
@@ -303,6 +304,13 @@ export const CONTENT: GameContent = {
       ],
       resolutionChoices: ["Get the leash.", "Let's go exploring."],
     },
+    4: {
+      ...NEEDLE_CHAPTER,
+      resolutionRejoin: NEEDLE_CHAPTER.resolutionRejoin!.map((line) => ({
+        ...line,
+        ...(line.speaker === "dad" ? { speaker: "Dad" } : {}),
+      })),
+    },
     5: ANDROMEDA_CHAPTER,
     6: {
       ...PHANTOM_CHAPTER,
@@ -400,6 +408,7 @@ export const CONTENT: GameContent = {
     donate: "Donate",
     donateStillNeeded: "{amount} still needed after",
     donateTitle: "Donate to {name}?",
+    elderLoom: "Elder Loom",
     engine: "Engine",
     engineTuning: "Engine tuning",
     equipment: "Equipment",
@@ -539,7 +548,9 @@ export const CONTENT: GameContent = {
       "curled at her feet.",
     motionNote: "Reduces animation and disables screen shake.",
     moveControls: "Move controls",
+    needleEye: "The Eye",
     needleGoal: "Light the gates of a practice channel.",
+    needlePractice: "Practice channel",
     next: "Next",
     nextLine: "Next line",
     ore: "Ore",

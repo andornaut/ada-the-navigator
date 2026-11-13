@@ -1,6 +1,7 @@
 import type { CommunityProject } from "../data/projects.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import type {
+  DialogueChoice,
   DialogueState,
   FlightEvent,
   FlightState,
@@ -46,6 +47,10 @@ export interface ChapterRuntime {
     events: readonly FlightEvent[],
   ) => ChapterResult | void;
   /** Undefined means the existing station, job and mechanical Use handlers may continue. */
+  readonly activityChoices?: (
+    context: ChapterContext,
+    destination: string,
+  ) => readonly DialogueChoice[];
   readonly action?: (context: ChapterContext, destination: string) => UseAction | undefined;
   readonly use?: (context: ChapterContext, destination: string) => ChapterResult | undefined;
   /** Called only for an offered, enabled choice; an empty result handles and closes its panel. */

@@ -7,6 +7,7 @@ import {
 import { ECONOMY } from "../data/economy.ts";
 import { byPosition } from "../data/galaxies.ts";
 import { JOB_REWARDS, JOB_TUNING } from "../data/jobs.ts";
+import { NEEDLE } from "../data/needle.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { stationById, type StationSite } from "./stations.ts";
 import type { GalaxyProgress, GameState, HeldActivity, JobTarget, Vec } from "./types.ts";
@@ -206,7 +207,9 @@ export function validActivity(galaxy: GalaxyNumber, value: Record<string, unknow
       ? vector(value.start)
       : value.start === undefined) &&
     (activity.id === "threadNeedle"
-      ? Number.isSafeInteger(value.lit) && (value.lit as number) >= 0 && (value.lit as number) <= 8
+      ? Number.isSafeInteger(value.lit) &&
+        (value.lit as number) >= 0 &&
+        (value.lit as number) <= NEEDLE.activityGates
       : value.lit === undefined) &&
     (activity.id === "courierRun"
       ? typeof value.courier === "object" &&

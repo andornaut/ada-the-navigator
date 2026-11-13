@@ -130,6 +130,7 @@ import {
   unchartedNear,
 } from "./landmarks.ts";
 import { type LocalMap, localMap, type MapContext, recordExplored } from "./map.ts";
+import { needleCourses, setNeedleActivity, stepNeedleCourse } from "./needle.ts";
 import { type PhantomContext, phantomWaypoint } from "./phantom.ts";
 import { phantomAllyRoster, type PhantomAllySpec } from "./phantomAllies.ts";
 import { HUNT_GLINT } from "./pickupBody.ts";
@@ -594,6 +595,7 @@ export class GameModel {
     if (!flight) {
       return undefined;
     }
+    setNeedleActivity(flight, heldActivity(flight.galaxy, this.state)?.id === "threadNeedle");
     let allies = this.chapterRosters.get(flight);
     if (flight.galaxy === 6 && !allies) {
       allies = phantomAllyRoster(
@@ -1160,7 +1162,11 @@ export class GameModel {
       this.exchange(key);
       return;
     }
-    const speaker = this.chapter.dialogue[key]?.speaker ?? this.chapter.name;
+    const speaker = this.chapter.dialogue[key]?.speaker ?? (this.label(place) || this.chapter.name);
+    const context = this.chapterContext();
+    const extraChoices = context
+      ? (chapterRuntime(f.galaxy)?.activityChoices?.(context, place) ?? [])
+      : [];
     const held = heldActivity(f.galaxy, this.state);
     if (held?.place === place) {
       if (held.id === "supplyRun") {
@@ -1170,6 +1176,7 @@ export class GameModel {
         choices: [
           { id: "drop", label: this.label("jobDrop") },
           { id: "continue", label: this.label("continue") },
+          ...extraChoices,
         ],
         context: `activityActive:${place}`,
         text: this.jobObjective ?? "",
@@ -1188,6 +1195,7 @@ export class GameModel {
       choices: [
         { id: "take", label: this.label("activityTake"), ...(busy ? { refused: true } : {}) },
         { id: "skip", label: this.label("activitySkip") },
+        ...extraChoices,
       ],
       context: `activity:${place}`,
       text: this.label(activity.places[place]!),
@@ -1399,6 +1407,9 @@ export class GameModel {
       return;
     }
     const f = this.state.flight;
+    if (f?.galaxy === 4 && id === "holodisk") {
+      return;
+    }
     const station = this.current.stations.includes(id);
     if (
       !f ||
@@ -1536,6 +1547,7 @@ export class GameModel {
     const runtime = chapterRuntime(f.galaxy);
     const context = runtime && this.chapterContext();
     if (context) {
+      setNeedleActivity(f, heldActivity(f.galaxy, this.state)?.id === "threadNeedle");
       runtime?.beforeStep?.(context, dt);
     }
     const previousChapterPosition = runtime?.afterStep ? { ...f.player } : undefined;
@@ -1576,7 +1588,7 @@ export class GameModel {
       }
       // Touching the guarded holodisk recovers it, like a pickup; it never becomes a travel
       // destination.
-      if (event.type === "discovered" && event.id === "holodisk") {
+      if (event.type === "discovered" && event.id === "holodisk" && f.galaxy === 3) {
         if (this.holodiskWaypoint && this.holodiskTouched(f)) {
           this.recoverHolodisk();
         }
@@ -1614,6 +1626,31 @@ export class GameModel {
     this.stepCalf(dt, f);
     if (context && previousChapterPosition) {
       this.applyChapterResult(runtime?.afterStep?.(context, dt, previousChapterPosition, events));
+      const thread = heldActivity(f.galaxy, this.state);
+      const layout = needleCourses(f);
+      if (thread?.id === "threadNeedle" && layout) {
+        const attempt = stepNeedleCourse(
+          {
+            from: previousChapterPosition,
+            to: f.player,
+            topSpeed: shipTuning(ECONOMY, this.content, f.levels).physics.maxSpeed,
+            velocity: f.velocity,
+          },
+          layout.activity,
+          thread.lit!,
+        );
+        thread.lit = attempt.lit;
+        if (thread.lit === layout.activity.gates.length) {
+          this.finishActivity(f.galaxy);
+          setNeedleActivity(f, false);
+        }
+      }
+      for (const cue of f.needle?.chatter.splice(0) ?? []) {
+        this.talk.chapterCue({
+          speaker: cue.speaker === "loom" ? "elderLoom" : cue.speaker,
+          text: cue.text,
+        });
+      }
       const chatter = f.phantom?.chatter.splice(0) ?? [];
       for (const key of chatter) {
         this.talk.chapter(key);
@@ -2072,6 +2109,10 @@ export class GameModel {
     if (!id || !f) {
       return;
     }
+    if (chapterContext && chapterRuntime(f.galaxy) && placeActivity(f.galaxy, this.current, id)) {
+      this.talkAt(id, id);
+      return;
+    }
     if (chapterContext) {
       const result = chapterRuntime(f.galaxy)?.use?.(chapterContext, id);
       if (result !== undefined) {
@@ -2379,6 +2420,9 @@ export class GameModel {
     }
     if (activity?.id === "guideCalf") {
       return this.label(this.state.flight?.calf?.following ? "calfGuide" : "calfFind");
+    }
+    if (activity?.id === "threadNeedle" || activity?.id === "courierRun") {
+      return this.label(ACTIVITIES[this.state.selectedGalaxy]?.goal ?? "");
     }
     return null;
   }
@@ -3254,12 +3298,18 @@ export class GameModel {
   saveDocument(): GameSave {
     this.pullLoadout();
     const effective = this.heldFlight ? { ...this.state, ...this.heldFlight } : this.state;
-    const snapshot = effective.flight?.phantom
-      ? {
-          ...effective,
-          flight: { ...effective.flight, phantom: { ...effective.flight.phantom, chatter: [] } },
-        }
-      : effective;
+    const flight = effective.flight;
+    const snapshot =
+      flight && (flight.needle || flight.phantom)
+        ? {
+            ...effective,
+            flight: {
+              ...flight,
+              ...(flight.needle ? { needle: { ...flight.needle, chatter: [] } } : {}),
+              ...(flight.phantom ? { phantom: { ...flight.phantom, chatter: [] } } : {}),
+            },
+          }
+        : effective;
     return {
       ...snapshot,
       depletionContinuation: this.depletionContinuation || undefined,

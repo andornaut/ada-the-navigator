@@ -8,6 +8,7 @@ import type { StorySceneId } from "../data/storyShips.ts";
 import type { GalaxyNumber, Weapon } from "../data/types.ts";
 import type { AchievementState } from "./achievements.ts";
 import type { EnemyState } from "./enemyAi.ts";
+import type { NeedleChapterProgress, NeedleFlight } from "./needleRuntime.ts";
 import type { PhantomFlight, PhantomProgress } from "./phantom.ts";
 import type { ProjectileFade } from "./playerProjectiles.ts";
 
@@ -118,6 +119,7 @@ export interface PersistentWorldState {
   notables: Record<string, SpaceObject | null>;
 }
 export interface FlightState {
+  needle?: NeedleFlight;
   phantom?: PhantomFlight;
   /** Travel arrival points; encounters stay clear of them as of the flight's start. */
   arrivals?: Vec[];
@@ -179,6 +181,7 @@ export interface FlightState {
 }
 export interface GalaxyProgress {
   andromeda?: AndromedaProgress;
+  needle?: NeedleChapterProgress;
   phantom?: PhantomProgress;
   /** At least one repeatable activity completed here, for this galaxy's finale ally. */
   activityCompleted?: boolean;

@@ -310,6 +310,26 @@ export class ConversationDirector {
     this.request((trigger) => trigger.kind === "chapter" && trigger.id === id);
   }
 
+  /** Event feedback is transient and deduplicated while its exact authored line is pending. */
+  chapterCue(line: ConversationLine): void {
+    const galaxy = this.galaxy;
+    if (galaxy === null) {
+      return;
+    }
+    const id = `chapter:cue:${galaxy}:${line.speaker}:${line.text}`;
+    this.enqueue({
+      conversation: {
+        id,
+        lines: [line],
+        priority: "warning",
+        repeat: "always",
+        trigger: { galaxy, id, kind: "chapter" },
+      },
+      holds: always,
+      instance: id,
+    });
+  }
+
   /** A tap on the box: the next line, or after the last, the box closes. */
   advance(): void {
     if (this.active) {

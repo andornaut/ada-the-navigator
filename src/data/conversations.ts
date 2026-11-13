@@ -1,5 +1,6 @@
 import { GALAXY_NUMBERS } from "./galaxies.ts";
 import { JOB_LORE } from "./jobs.ts";
+import { NEEDLE_COPY } from "./needleCopy.ts";
 import { PHANTOM_COPY } from "./phantom.ts";
 import type { GalaxyNumber } from "./types.ts";
 
@@ -642,7 +643,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
 function displayChapterSpeaker(speaker: string): string {
   return speaker === "general"
     ? GENERAL_NAMED.name
-    : (SPEAKERS[speaker as Speaker]?.name ?? speaker);
+    : (SPEAKERS[(speaker === "loom" ? "elderLoom" : speaker) as Speaker]?.name ?? speaker);
 }
 
 /** Approved Use exchanges, keyed by existing runtime galaxy and dialogue context. */
@@ -659,6 +660,26 @@ export interface InteractionCopy {
   }[];
 }
 export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
+  ...Object.fromEntries(
+    Object.entries(NEEDLE_COPY).map(([key, copy]) => [
+      `4.needle.${key}`,
+      {
+        ...copy,
+        lines: copy.lines.map((line) => ({
+          ...line,
+          speaker: displayChapterSpeaker(line.speaker),
+        })),
+        party: displayChapterSpeaker(copy.party),
+        topics: copy.topics.map((topic) => ({
+          ...topic,
+          lines: topic.lines.map((line) => ({
+            ...line,
+            speaker: displayChapterSpeaker(line.speaker),
+          })),
+        })),
+      },
+    ]),
+  ),
   ...Object.fromEntries(
     Object.entries(PHANTOM_COPY).map(([key, copy]): [string, InteractionCopy] => [
       `6.phantom.${key}`,

@@ -6,6 +6,7 @@ import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { HUNTING_PACKS } from "../data/galaxyFeatures.ts";
 import { JOB_TYPES } from "../data/jobs.ts";
+import { NEEDLE_PLACES } from "../data/needle.ts";
 import { PHANTOM_DESTINATIONS } from "../data/phantom.ts";
 import { galaxyProjects } from "../data/projects.ts";
 import { RESOURCE_ROCKS } from "../data/resourceRocks.ts";
@@ -20,6 +21,7 @@ import { enemyDefeated } from "./enemyAi.ts";
 import { ACTIVE_CHUNK_RADIUS, encounterOf, persistentObject } from "./geography.ts";
 import { isLandmark } from "./landmarks.ts";
 import { validExplored } from "./map.ts";
+import { readNeedleChapterProgress, validNeedleFlight } from "./needleRuntime.ts";
 import { validPhantomFlight, validPhantomProgress } from "./phantom.ts";
 import { namesStation, stationById } from "./stations.ts";
 import type {
@@ -60,6 +62,7 @@ const destinationIds: Record<number, readonly string[]> = {
   1: ["growers", "workshop", "salvagers"],
   2: ["hub", "miner", "visitors"],
   3: ["whale", "family", "holodisk"],
+  4: NEEDLE_PLACES,
   5: [ANDROMEDA_PLACES.beacon, ANDROMEDA_PLACES.pip],
   6: PHANTOM_DESTINATIONS,
 };
@@ -601,6 +604,7 @@ export function restoreSave(saved: unknown): GameState | null {
       if (
         !record(p) ||
         (p.andromeda !== undefined && (id !== 5 || !validAndromedaProgress(p.andromeda))) ||
+        (p.needle !== undefined && (id !== 4 || !readNeedleChapterProgress(p.needle))) ||
         (p.phantom !== undefined && (id !== 6 || !validPhantomProgress(p.phantom))) ||
         !Number.isInteger(p.stage) ||
         !nonnegative(p.stage) ||
@@ -665,6 +669,7 @@ export function restoreSave(saved: unknown): GameState | null {
       const f = value.flight;
       if (
         !record(f) ||
+        (f.needle !== undefined && (f.galaxy !== 4 || !validNeedleFlight(f.needle))) ||
         (f.phantom !== undefined && (f.galaxy !== 6 || !validPhantomFlight(f.phantom))) ||
         f.galaxy !== value.selectedGalaxy ||
         !["player", "velocity", "facing"].every((k) => vector(f[k])) ||
