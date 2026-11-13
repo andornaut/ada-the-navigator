@@ -671,8 +671,6 @@ export function createCard(
         readonly fontRole?: string;
         /** Maximum width; the card fits its content within the modal safe rect. */
         readonly size?: CardSize;
-        // CLEANUP (added 2026-11-13): remove when station callers use explicit size presets.
-        readonly full?: boolean;
         /** Chibi's list header (listCardHeader), for a card whose body opens with a list. */
         readonly list?: boolean;
         readonly title: string;
@@ -682,7 +680,7 @@ export function createCard(
   const page = "page" in options;
   const frame = document.createElement("div");
   frame.className = "ada-card-frame";
-  const size = !page ? (options.size ?? (options.full ? "large" : "medium")) : "medium";
+  const size = !page ? (options.size ?? "medium") : "medium";
   frame.dataset.cardSize = size;
   const card = document.createElement("section");
   card.className = page ? "ada-card ada-page-card" : "ada-card";
