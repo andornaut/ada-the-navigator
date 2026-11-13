@@ -56,10 +56,10 @@ export const BAR_TIMING: DomProgressTiming = {
 const FRAME = { height: LOADING_BAR.fillHeight, width: SCREEN.width, x: 0, y: 0 };
 
 // Offline installation and forced updates share the bar while either still runs.
-const background = new Set<"offline" | "required">();
+const background = new Set<"activation" | "offline" | "required">();
 let install: ProgressHandle | undefined;
 
-function showBackground(reason: "offline" | "required", shown: boolean): void {
+function showBackground(reason: "activation" | "offline" | "required", shown: boolean): void {
   if (shown) {
     background.add(reason);
   } else {
@@ -76,6 +76,11 @@ function showBackground(reason: "offline" | "required", shown: boolean): void {
 /** Offline installation uses the existing bar until precaching or updating ends. */
 export function offlineActivity(activity: OfflineActivity): void {
   showBackground("offline", activity !== "idle");
+}
+
+/** Explicit Update now keeps the bar visible through activation, independently of installation. */
+export function updateActivationActivity(active: boolean): void {
+  showBackground("activation", active);
 }
 
 /** A forced update for a newer save: the bar travels while it downloads ("updating"). */

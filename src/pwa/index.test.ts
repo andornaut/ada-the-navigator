@@ -106,6 +106,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.stubEnv("PROD", true);
   offline.play.launchReady.mockResolvedValue("continue");
+  offline.play.flow.accept.mockResolvedValue("reloading");
 });
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -172,6 +173,51 @@ describe("offline play", () => {
     pwa.updateOffer.accept();
     expect(flow.accept).toHaveBeenCalledOnce();
   });
+
+  it.each(["blocked", "reloading"] as const)(
+    "shows activation progress synchronously before accepting, then finishes on %s",
+    async (outcome) => {
+      stubDevice({});
+      const pwa = await import("./index.ts");
+      const { installProgress, offlineActivity } = await import("../loading/progress.ts");
+      pwa.setupPhoneApp();
+      const options = offline.start.mock.calls[0]![0] as unknown as {
+        onUpdateShown: (shown: boolean) => void;
+      };
+      let active = false;
+      const stop = installProgress.subscribe((state) => {
+        active = state.active;
+      });
+      let finish!: (result: "blocked" | "reloading") => void;
+      offline.play.flow.accept.mockImplementationOnce(() => {
+        expect(active).toBe(true);
+        return new Promise((resolve) => {
+          finish = resolve;
+        });
+      });
+      options.onUpdateShown(true);
+      pwa.updateOffer.accept();
+      pwa.updateOffer.accept();
+      expect(offline.play.flow.accept).toHaveBeenCalledOnce();
+      expect(active).toBe(true);
+      // An installation-idle report cannot end the independent activation wait.
+      offlineActivity("updating");
+      offlineActivity("idle");
+      expect(active).toBe(true);
+      finish(outcome);
+      await Promise.resolve();
+      expect(active).toBe(false);
+      if (outcome === "blocked") {
+        options.onUpdateShown(true);
+        pwa.updateOffer.accept();
+        expect(active).toBe(true);
+        expect(offline.play.flow.accept).toHaveBeenCalledTimes(2);
+        await Promise.resolve();
+        expect(active).toBe(false);
+      }
+      stop();
+    },
+  );
 
   it("arrives home each time the start screen shows, never as a card over it closes", async () => {
     stubDevice({});

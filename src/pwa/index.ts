@@ -40,7 +40,11 @@ import { serviceWorkerUrl } from "@andornaut/game-kit/web/pwa/serviceWorkerUrl";
 import { requestPersistentStorage } from "@andornaut/game-kit/web/pwa/storagePersistence";
 import type { RequiredUpdateState } from "@andornaut/game-kit/web/pwa/updateReady";
 
-import { offlineActivity, requiredUpdateActivity } from "../loading/progress.ts";
+import {
+  offlineActivity,
+  requiredUpdateActivity,
+  updateActivationActivity,
+} from "../loading/progress.ts";
 import { dispatchPhoneEvent, PHONE_EVENTS } from "./events.ts";
 import {
   createUpdateOffer,
@@ -72,7 +76,13 @@ let onRequired: ((state: RequiredUpdateState) => void) | undefined;
 // defer keeps the current one until the next arrival at the start screen.
 export const updateOffer = createUpdateOffer(
   () => {
-    void offlinePlay?.flow.accept();
+    const play = offlinePlay;
+    if (play === undefined) {
+      return;
+    }
+    // Installation is already idle when an offer appears; activation is a separate wait.
+    updateActivationActivity(true);
+    void play.flow.accept().finally(() => updateActivationActivity(false));
   },
   () => offlinePlay?.flow.dismissOffer(),
 );
