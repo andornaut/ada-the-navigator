@@ -2,12 +2,15 @@
 
 - Rebuild with `node art/tools/storybook.ts` (optionally one background id)
   inside the isolated art container. It writes environment-only Earth
-  backgrounds and the overnight rock-glow overlay to `public/art/story/`,
+  backgrounds, the overnight rock-glow overlay and the galaxy map's Ada/Penny
+  sprites to `public/art/story/`,
   their `story-` root manifest entries, `story-transition.json` and
   `story-overnight.json`. `art/tools/diorama.ts` holds the solids, painter,
   lights and treatment. `node art/tools/route-sky.ts` writes the environment
   sky and ground and their manifest entries.
-- Backgrounds and overlays contain no human or animal figures. Established
+- Story backgrounds and overlays contain no human or animal figures. The
+  galaxy map is the exception: its established Ada and Penny sprites remain
+  on the route ground, with their existing placement and scale. Established
   portraits appear in the story panel for the existing speakers; narration
   has no added portrait. Story copy, speaker identities and props remain
   unchanged. Astra and the rock's glow retain their existing effects.
@@ -251,11 +254,13 @@ Character names in the IDs are compatibility keys, not rendered contents.
 | `story-ada-room-morning-cats` | `story-ada-room-morning` |
 | `story-ada-room-sleep` | `story-ada-room-night` |
 
-The generator emits no character sprites or character overlay entries.
-Unused character PNGs remain on disk but are absent from the manifest and
-all background and sequence references. The route ground likewise has no
-character overlays; its grass, afterglow, sky and stellar phenomena remain.
-The established portrait sheets and their generators are unchanged.
+Only the galaxy map emits character sprites: `story-ada-skywatch` and
+`story-penny-sitting`, drawn over `route-ground` at their established
+`FIGURES` foot points and scale 1. Story backgrounds and sequences never
+reference them. Other unused character PNGs remain on disk but are absent
+from the manifest and all background and sequence references. The map's
+grass, afterglow, sky and stellar phenomena remain unchanged. The established
+portrait sheets and their generators are unchanged.
 
 ## Rock glow transition
 

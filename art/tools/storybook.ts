@@ -1,5 +1,6 @@
 // Environment-only storybook dioramas and overnight rock-glow overlays on the shared
-// 960 by 540 logical canvas at 2x. Characters use the established story-panel portraits.
+// 960 by 540 logical canvas at 2x. Story characters use the established panel portraits;
+// the galaxy map retains Ada and Penny on its ground strip.
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -28,10 +29,12 @@ import {
   TREATMENT,
   treatmentD,
 } from "./diorama.ts";
+import { adaSkywatch, pennySitting, type Sprite } from "./family-sprites.ts";
 import { editManifest, readManifest } from "./manifest.ts";
 import { fromOklab, hex, toOklab } from "./oklab.ts";
 import { writePng } from "./paint.ts";
 import { json } from "./projection.ts";
+import { FIGURES as ROUTE_FIGURES } from "./route-sky.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 
@@ -1659,6 +1662,57 @@ export const entry = (id: string, subject = subjectOf(id)) => ({
   subject,
 });
 
+// The galaxy map retains its established Ada and Penny composition.
+const SKYWATCH_ID = "story-ada-skywatch";
+const PENNY_SITTING_ID = "story-penny-sitting";
+
+const spriteEntry = (
+  id: string,
+  image: RgbaImage,
+  { at, scale }: { at: { x: number; y: number }; scale: number },
+) => ({
+  id,
+  path: storyPath(id),
+  width: image.width,
+  height: image.height,
+  displayWidth: image.width * scale,
+  displayHeight: image.height * scale,
+  facing: "front",
+  pivot: { x: 0, y: 0 },
+  at,
+  scale,
+  sampling: "nearest",
+});
+
+/* The galaxy map's pixel sprites over its ground */
+
+interface Placed {
+  image: RgbaImage;
+  at: { x: number; y: number };
+  scale: number;
+}
+
+// Top-left, in whole logical px, for a sprite at `scale` whose foot centre (its centre line, on
+// its bottom row) stands on the canvas point `p`.
+const standing = ({ image, centre }: Sprite, p: { x: number; y: number }, scale = 2) => ({
+  x: Math.round(p.x - centre * scale),
+  y: Math.round(p.y) - image.height * scale,
+});
+
+// Ada and Penny on the route-ground canvas, each standing on her foot point at scale 1.
+function skywatchSprites(): Record<string, Placed> {
+  const ada = adaSkywatch();
+  const penny = pennySitting();
+  return {
+    [SKYWATCH_ID]: { image: ada.image, at: standing(ada, ROUTE_FIGURES.ada, 1), scale: 1 },
+    [PENNY_SITTING_ID]: {
+      image: penny.image,
+      at: standing(penny, ROUTE_FIGURES.penny, 1),
+      scale: 1,
+    },
+  };
+}
+
 // An environment alias shares its base image, subject band and run placement.
 const compositeEntry = ({ id, base }: Composite) => ({
   ...entry(id, subjectOf(base)),
@@ -1813,11 +1867,16 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     const assets = readManifest("core").assets as { at: Overlay["at"]; id: string }[];
     overlays = OVERLAYS.map((id) => assets.find((asset) => asset.id === id)!);
   }
+  const routeSprites = skywatchSprites();
+  for (const [id, { image }] of Object.entries(routeSprites)) writePng(file(id), image);
   placeStoryEntries([
     ...BACKGROUNDS.flatMap(({ id }) =>
       id === "story-ada-room-night"
         ? [entry(id), sleepEntry(), ...overlays]
         : [entry(id), ...COMPOSITES.filter(({ base }) => base === id).map(compositeEntry)],
+    ),
+    ...[SKYWATCH_ID, PENNY_SITTING_ID].map((id) =>
+      spriteEntry(id, routeSprites[id]!.image, routeSprites[id]!),
     ),
   ]);
   writeFileSync(`${art}story-transition.json`, json(TRANSITION));

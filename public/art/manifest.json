@@ -3715,6 +3715,44 @@
       "base": "story-ada-room-morning"
     },
     {
+      "id": "story-ada-skywatch",
+      "path": "/art/story/ada-skywatch.png",
+      "width": 28,
+      "height": 52,
+      "displayWidth": 28,
+      "displayHeight": 52,
+      "facing": "front",
+      "pivot": {
+        "x": 0,
+        "y": 0
+      },
+      "at": {
+        "x": 199,
+        "y": 60
+      },
+      "scale": 1,
+      "sampling": "nearest"
+    },
+    {
+      "id": "story-penny-sitting",
+      "path": "/art/story/penny-sitting.png",
+      "width": 23,
+      "height": 28,
+      "displayWidth": 23,
+      "displayHeight": 28,
+      "facing": "front",
+      "pivot": {
+        "x": 0,
+        "y": 0
+      },
+      "at": {
+        "x": 228,
+        "y": 84
+      },
+      "scale": 1,
+      "sampling": "nearest"
+    },
+    {
       "id": "title-field",
       "path": "/art/title-field.png",
       "width": 1920,
@@ -3874,7 +3912,8 @@
       "pivot": {
         "x": 0.5,
         "y": 1
-      }
+      },
+      "overlays": ["story-ada-skywatch", "story-penny-sitting"]
     },
     {
       "id": "holodisk",
