@@ -29,7 +29,10 @@ export function chunkId(chunkSize: number, point: Vec): string {
 
 /** Whether a chunk's centre lies in the charting disc: the explored record keeps only these. */
 export function chartedChunk(chunkSize: number, chunk: Vec): boolean {
-  return within({ x: (chunk.x + 0.5) * chunkSize, y: (chunk.y + 0.5) * chunkSize });
+  return within({
+    x: (chunk.x + 0.5) * chunkSize,
+    y: (chunk.y + 0.5) * chunkSize,
+  });
 }
 
 const chunkCounts = new Map<number, number>();
@@ -187,8 +190,21 @@ export interface MapPlace {
  * or, with no job held and a station discovered, the job boards' hint. A story or job line is tied
  * to its target, the id of the target's chip once mapped, else null.
  */
+export interface QuestDetails {
+  readonly description?: string;
+  readonly nextStep?: string;
+  readonly progress?: string;
+  readonly outcome?: string;
+  readonly source?: string | null;
+  readonly reward?: string;
+}
+
 export type QuestLine =
-  | { readonly kind: "job" | "story"; readonly target: string | null; readonly text: string }
+  | (QuestDetails & {
+      readonly kind: "job" | "story";
+      readonly target: string | null;
+      readonly text: string;
+    })
   | { readonly kind: "jobBoards" | "storyComplete" };
 
 export interface LocalMap {
@@ -239,12 +255,17 @@ export interface MapContext {
   readonly landmarks: LandmarkChart;
   /** The current objective's destination, shown once it is mapped. */
   readonly objective: string | null;
-  readonly progress: { readonly known: readonly string[]; readonly stations: readonly string[] };
+  readonly progress: {
+    readonly known: readonly string[];
+    readonly stations: readonly string[];
+  };
   /**
    * The quests to list: the story objective's text (or empty), whether the chapter is resolved,
    * and the held job's objective, or null without one.
    */
   readonly quests: {
+    readonly jobDetails?: QuestDetails;
+    readonly storyDetails?: QuestDetails;
     readonly job: string | null;
     readonly story: string;
     readonly storyComplete: boolean;
@@ -368,11 +389,25 @@ export function localMap(context: MapContext): LocalMap {
   const story: QuestLine[] = quests.storyComplete
     ? [{ kind: "storyComplete" }]
     : quests.story
-      ? [{ kind: "story", target: target((place) => place.objective), text: quests.story }]
+      ? [
+          {
+            ...quests.storyDetails,
+            kind: "story",
+            target: target((place) => place.objective),
+            text: quests.story,
+          },
+        ]
       : [];
   const jobLine: QuestLine[] =
     quests.job !== null
-      ? [{ kind: "job", target: target((place) => place.job), text: quests.job }]
+      ? [
+          {
+            ...quests.jobDetails,
+            kind: "job",
+            target: target((place) => place.job),
+            text: quests.job,
+          },
+        ]
       : progress.stations.length > 0
         ? [{ kind: "jobBoards" }]
         : [];

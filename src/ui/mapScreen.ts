@@ -51,6 +51,17 @@ import { galaxiesAvailable, mapShowsEmpty } from "./pause.ts";
 import { refuse } from "./refusal.ts";
 import { hudDiscStyle } from "./weapons.ts";
 
+/** Endpoint identities are drawn only from the already discovered map. */
+export function questEndpoints(places: readonly MapPlace[], line: QuestLine) {
+  if (!("target" in line)) {
+    return [];
+  }
+  return [
+    ...(line.source === undefined ? [] : [{ id: line.source, kind: "source" as const }]),
+    { id: line.target, kind: "target" as const },
+  ].map(({ id, kind }) => ({ kind, place: places.find((place) => place.id === id) ?? null }));
+}
+
 // The pause menu's full-screen map (art/map.md): the galaxy's field under its fog, a chip per
 // discovered place, Ada's arrow, the header, the tool column and the place panel. It takes input
 // exclusively while it shows; the Paused card and its dim hide under it.
@@ -71,6 +82,15 @@ export interface MapScreenLabels {
   readonly galaxies: string;
   readonly mapPercent: string;
   readonly quests: string;
+  readonly questsStoryHeading?: string;
+  readonly questsJobsHeading?: string;
+  readonly questFrom?: string;
+  readonly questTo?: string;
+  readonly questReward?: string;
+  readonly questOutcome?: string;
+  readonly questLocate?: string;
+  readonly questExplore?: string;
+
   readonly questsEmpty: string;
   readonly questsJobBoards: string;
   readonly questsStoryComplete: string;
@@ -90,7 +110,22 @@ export interface MapScreenLabels {
 /** The map's labels from the player strings (gameplay/player-copy.md "Map"). */
 export function mapScreenLabels(strings: Readonly<Record<string, string>>): MapScreenLabels {
   const label = (key: string) => strings[key] ?? "";
+  const questLabels = Object.fromEntries(
+    [
+      "questExplore",
+      "questFrom",
+      "questLocate",
+      "questOutcome",
+      "questReward",
+      "questTo",
+      "questsJobsHeading",
+      "questsStoryHeading",
+    ]
+      .filter((key) => Boolean(strings[key]))
+      .map((key) => [key, strings[key]]),
+  );
   return {
+    ...questLabels,
     carryTravel: label("carryTravel"),
     centerOnAda: label("mapCenterOnAda"),
     close: label("close"),
@@ -100,6 +135,7 @@ export function mapScreenLabels(strings: Readonly<Record<string, string>>): MapS
     jobObjective: label("jobObjective"),
     map: label("map"),
     mapPercent: label("mapPercent"),
+
     quests: label("quests"),
     questsEmpty: label("questsEmpty"),
     questsJobBoards: label("questsJobBoards"),
@@ -160,7 +196,10 @@ export function travelState(
   towing: boolean,
   carrying: boolean,
   place: Pick<MapPlace, "travel"> | null,
-): { readonly offered: boolean; readonly reason: "carrying" | "danger" | "towing" | null } {
+): {
+  readonly offered: boolean;
+  readonly reason: "carrying" | "danger" | "towing" | null;
+} {
   const offered = Boolean(place?.travel);
   return {
     offered,
@@ -471,6 +510,35 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
    slot while its target is unmapped; with no lines, the centred empty note. */
 .ada-controls .ada-map-quests{
   z-index:3
+}
+.ada-controls .ada-map-quests .ada-card-frame{
+  width:100%;
+  height:100%;
+  min-height:0
+}
+.ada-controls .ada-map-quests .ada-card{
+  width:100%!important;
+  height:100%;
+  flex:1 1 auto
+}
+.ada-controls .ada-map-quests .ada-card-body{
+  flex:1 1 auto
+}
+.ada-controls .ada-map-quest-entry{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:${units(SPACING.gap)}
+}
+.ada-controls .ada-map-quest-entry p{
+  margin:0;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere
+}
+.ada-controls .ada-map-quest-entry .ada-button{
+  height:auto;
+  min-height:${units(TEXT_BUTTON.height)};
+  flex-shrink:0
 }
 .ada-controls .ada-map-quest-lines{
   align-self:stretch;
@@ -865,7 +933,10 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       right: inset("right"),
       top: inset("top"),
     };
-    const size = { height: screen.clientHeight / unit, width: screen.clientWidth / unit };
+    const size = {
+      height: screen.clientHeight / unit,
+      width: screen.clientWidth / unit,
+    };
     const fit = fitRegion(insets, size);
     return { fit, inner: innerRegion(fit), insets, size, unit };
   };
@@ -982,7 +1053,10 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       );
     }
     // Chips, kept by id and placed in reading order so Tab follows it.
-    const shown = places().map((place) => ({ place, ...toScreen(inner, current, place) }));
+    const shown = places().map((place) => ({
+      place,
+      ...toScreen(inner, current, place),
+    }));
     const ids = new Set(shown.map(({ place }) => place.id));
     for (const [id, chip] of chips) {
       if (!ids.has(id)) {
@@ -1169,28 +1243,71 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     const lines = state?.map.quests ?? [];
     questLines.replaceChildren(
       ...lines.map((line) => {
-        const target =
-          "target" in line && line.target !== null
-            ? places().find(({ id }) => id === line.target)
-            : undefined;
-        if (target) {
-          const button = createButton("", "secondary");
-          button.classList.add("ada-map-quest");
-          button.dataset.target = target.id;
-          const chip = document.createElement("span");
-          dressChip(chip, target);
-          chip.setAttribute("aria-hidden", "true");
-          const label = document.createElement("span");
-          label.textContent = questText(line);
-          button.replaceChildren(chip, label);
-          button.addEventListener("click", () => goTo(target));
-          return button;
-        }
+        const entry = document.createElement("section");
+        entry.className = "ada-map-quest-entry";
         const text = document.createElement("p");
         text.className = "ada-map-quest-text ada-prose";
         text.textContent = questText(line);
-        text.toggleAttribute("data-ring", "target" in line);
-        return text;
+        text.toggleAttribute("data-ring", "target" in line && line.target === null);
+        const heading = document.createElement("h3");
+        heading.textContent =
+          line.kind === "story" || line.kind === "storyComplete"
+            ? (labels.questsStoryHeading ?? "")
+            : (labels.questsJobsHeading ?? "");
+        if (heading.textContent) {
+          entry.append(heading);
+        }
+        entry.append(text);
+        if ("target" in line) {
+          for (const detail of [line.description, line.nextStep, line.progress]) {
+            if (detail) {
+              const description = document.createElement("p");
+              description.className = "ada-prose";
+              description.textContent = detail;
+              entry.append(description);
+            }
+          }
+          // Resolve both ends from the map's visible places; never expose hidden place metadata.
+          for (const { kind, place } of questEndpoints(places(), line)) {
+            const prefix = kind === "source" ? labels.questFrom : labels.questTo;
+            if (!place) {
+              if (labels.questExplore) {
+                const unknown = document.createElement("p");
+                unknown.className = "ada-prose";
+                unknown.textContent = [prefix, labels.questExplore].filter(Boolean).join(": ");
+                entry.append(unknown);
+              }
+              continue;
+            }
+            const button = createButton("", "secondary");
+            button.classList.add("ada-map-quest");
+            button.dataset.target = place.id;
+            const chip = document.createElement("span");
+            dressChip(chip, place);
+            chip.setAttribute("aria-hidden", "true");
+            const label = document.createElement("span");
+            label.textContent = [prefix, place.label].filter(Boolean).join(": ");
+            if (labels.questLocate) {
+              button.setAttribute("aria-label", `${labels.questLocate}: ${label.textContent}`);
+            }
+            button.replaceChildren(chip, label);
+            button.addEventListener("click", () => goTo(place));
+            entry.append(button);
+          }
+          if (line.reward) {
+            const reward = document.createElement("p");
+            reward.className = "ada-prose";
+            reward.textContent = [labels.questReward, line.reward].filter(Boolean).join(": ");
+            entry.append(reward);
+          }
+          if (line.outcome) {
+            const outcome = document.createElement("p");
+            outcome.className = "ada-prose";
+            outcome.textContent = [labels.questOutcome, line.outcome].filter(Boolean).join(": ");
+            entry.append(outcome);
+          }
+        }
+        return entry;
       }),
     );
     if (lines.length === 0) {
@@ -1214,7 +1331,10 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     if (
       outside &&
       event.target === questsModal &&
-      isTap(readViewUnit(questsModal), outside, { x: event.clientX, y: event.clientY })
+      isTap(readViewUnit(questsModal), outside, {
+        x: event.clientX,
+        y: event.clientY,
+      })
     ) {
       closeQuests();
     }
@@ -1236,7 +1356,10 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   const local = (event: PointerEvent | WheelEvent): Point => {
     const box = screen.getBoundingClientRect();
     const unit = readViewUnit(screen);
-    return { x: (event.clientX - box.left) / unit, y: (event.clientY - box.top) / unit };
+    return {
+      x: (event.clientX - box.left) / unit,
+      y: (event.clientY - box.top) / unit,
+    };
   };
   const onChrome = (event: Event) =>
     event.target instanceof Element &&
