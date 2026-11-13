@@ -183,17 +183,22 @@ describe("storybook text", () => {
     }
   });
 
-  it("heads the opening, resolution and closing pages with the chapter's panel title", () => {
-    for (const galaxy of galaxies) {
+  it("heads every chapter page with its panel title, including branches and first launch", () => {
+    for (const galaxy of [1, 2, 3, 4, 5, 6] as const) {
       const chapter = CONTENT.chapters[galaxy]!;
       expect(COPY).toContain(`Panel title: ${chapter.name}.`);
-      const headed = [openingScene(CONTENT, galaxy), resolutionScene(CONTENT, galaxy)]
-        .flatMap(({ pages }) => pages)
-        .filter(({ heading }) => heading !== undefined);
-      expect(headed.map(({ id }) => id)).toEqual(["opening", "resolution", "closing"]);
-      expect(new Set(headed.map(({ heading }) => heading))).toEqual(new Set([chapter.name]));
+      const chapterScenes = [openingScene(CONTENT, galaxy), resolutionScene(CONTENT, galaxy)];
+      if (galaxy === 1) {
+        chapterScenes.push(openingScene(CONTENT, galaxy, true));
+      }
+      for (const scene of chapterScenes) {
+        expect(scene.pages.length).toBeGreaterThan(0);
+        for (const page of scene.pages) {
+          expect(page.heading, page.id).toBe(chapter.name);
+        }
+      }
     }
-    // Every other page shows no heading.
+    // Prologue and ordinary room pages show no chapter heading.
     for (const scene of [prologueScene(CONTENT, labels), roomScene(CONTENT, labels, true)]) {
       expect(scene.pages.filter(({ heading }) => heading !== undefined)).toEqual([]);
     }
