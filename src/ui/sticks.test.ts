@@ -38,11 +38,11 @@ const knobCentre = (point: { x: number; y: number }) => ({
 describe("joystick placement", () => {
   it("rests both same-sized rings from the outer edges, mirrored across the view", () => {
     const views = stickViews(layout, new ControlState());
-    expect(views.move?.ring).toEqual(centredAt({ x: 86, y: 273 }, TOUCH_CHROME_FRAME));
-    expect(views.aim?.ring).toEqual(centredAt({ x: 633, y: 273 }, TOUCH_CHROME_FRAME));
+    expect(views.move?.ring).toEqual(centredAt({ x: 126, y: 263 }, TOUCH_CHROME_FRAME));
+    expect(views.aim?.ring).toEqual(centredAt({ x: 593, y: 263 }, TOUCH_CHROME_FRAME));
     expect(views.move?.ringPose).toBe("rest");
     expect(views.move?.knobPose).toBe("rest");
-    expect(knobCentre(views.move!.knob)).toEqual({ x: 86, y: 273 });
+    expect(knobCentre(views.move!.knob)).toEqual({ x: 126, y: 263 });
   });
 
   it.each([

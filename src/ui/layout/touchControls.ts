@@ -5,7 +5,7 @@ import type { StickSide } from "../../input/state.ts";
 import { type Insets, playView, type Size } from "./playView.ts";
 export { TOUCH_STICK, USE_DISC } from "../../data/layout.ts";
 
-// Ring edges are 50 logical pixels from the outer screen, independent of safe insets.
+// Ring edges sit 90 logical pixels from the outer sides and 60 from the bottom, ignoring safe insets.
 // Clamp only where the drawn ring would cross the game area's eight-pixel margin.
 export function stickRestCentres(view: Size, insets: Insets): Readonly<Record<StickSide, Point>> {
   void insets;

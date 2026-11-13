@@ -554,7 +554,7 @@ describe.each(SCREENS)("every control inside the game area at %o", (screen) => {
       }
     });
 
-    it(`with ${name}, rests the sticks 50 from the screen's edges, ${STICK_AREA_MARGIN} inside the area`, () => {
+    it(`with ${name}, rests the sticks 90 from the screen's sides, ${STICK_AREA_MARGIN} inside the area`, () => {
       const { aim, move } = stickRestCentres(view, insets);
       const width = Math.floor(view.width);
       expect(ring(move).x).toBe(Math.max(side, area.x + STICK_AREA_MARGIN));
@@ -589,24 +589,24 @@ describe("stick insets", () => {
   const view = { height: 360, width: 720 };
 
   it("ignores asymmetric and fractional safe insets", () => {
-    const expected = { aim: { x: 633, y: 273 }, move: { x: 86, y: 273 } };
+    const expected = { aim: { x: 593, y: 263 }, move: { x: 126, y: 263 } };
     expect(stickRestCentres(view, NO_INSETS)).toEqual(expected);
     expect(stickRestCentres(view, { bottom: 119.5, left: 147.2, right: 10, top: 80 })).toEqual(
       expected,
     );
   });
 
-  it("measures 50 from outer screen sides on a wider view", () => {
+  it("measures 90 from outer screen sides on a wider view", () => {
     const wide = stickRestCentres(logicalView({ height: 390, width: 844 }), PHONE);
-    expect([wide.move.x - 36, wide.aim.x + 37]).toEqual([50, 729]);
+    expect([wide.move.x - 36, wide.aim.x + 37]).toEqual([90, 689]);
     const phone = stickRestCentres(logicalView({ height: 1080, width: 2400 }), PHONE);
-    expect([phone.move.x - 36, phone.aim.x + 37]).toEqual([50, 750]);
+    expect([phone.move.x - 36, phone.aim.x + 37]).toEqual([90, 710]);
   });
 
   it(`clamp a ring ${STICK_AREA_MARGIN} inside the game area where the screen edge lies in a band`, () => {
-    // 2560x1080 is 853.33x360 logical, the area 66 to 786: both sides clamp to 74 and 778.
+    // 2560x1080 is 853.33x360 logical, the area 66 to 786: the ring edges remain 90 from the outer sides.
     const wide = stickRestCentres(logicalView({ height: 1080, width: 2560 }), NO_INSETS);
-    expect([wide.move.x - 36, wide.aim.x + 37]).toEqual([74, 778]);
+    expect([wide.move.x - 36, wide.aim.x + 37]).toEqual([90, 763]);
     // 1440x900 is 720x450: the screen-edge bottom 400 lies in the band, so the rings clamp to 352.
     const tall = stickRestCentres(logicalView({ height: 900, width: 1440 }), NO_INSETS);
     expect(tall.move.y + 37).toBe(360 - STICK_AREA_MARGIN);
@@ -622,111 +622,111 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     "720x360",
     { height: 360, width: 720 },
     NO_INSETS,
-    [86, 273],
-    [633, 273],
+    [126, 263],
+    [593, 263],
     282,
     [292, 320],
-    [556, 173],
+    [516, 163],
   ],
   [
     "720x360, phone insets",
     { height: 360, width: 720 },
     PHONE,
-    [86, 273],
-    [633, 273],
+    [126, 263],
+    [593, 263],
     282,
     [273, 301],
-    [556, 173],
+    [516, 163],
   ],
   [
     "844x390",
     { height: 390, width: 844 },
     NO_INSETS,
-    [86, 273],
-    [692, 273],
+    [126, 263],
+    [652, 263],
     311.54,
     [292, 320],
-    [615, 173],
+    [575, 163],
   ],
   [
     "844x390, phone insets",
     { height: 390, width: 844 },
     PHONE,
-    [86, 273],
-    [692, 273],
+    [126, 263],
+    [652, 263],
     311.54,
     [273, 301],
-    [615, 173],
+    [575, 163],
   ],
   [
     "844x390, bottom 19",
     { height: 390, width: 844 },
     { ...NO_INSETS, bottom: 19 },
-    [86, 273],
-    [692, 273],
+    [126, 263],
+    [652, 263],
     311.54,
     [273, 301],
-    [615, 173],
+    [575, 163],
   ],
   [
     "720x360, left 43, bottom 19",
     { height: 360, width: 720 },
     { ...NO_INSETS, bottom: 19, left: 43 },
-    [86, 273],
-    [633, 273],
+    [126, 263],
+    [593, 263],
     282,
     [273, 301],
-    [556, 173],
+    [516, 163],
   ],
   [
     "844x390, left 47",
     { height: 390, width: 844 },
     { ...NO_INSETS, left: 47 },
-    [86, 273],
-    [692, 273],
+    [126, 263],
+    [652, 263],
     311.54,
     [292, 320],
-    [615, 173],
+    [575, 163],
   ],
   [
     "1280x720",
     { height: 720, width: 1280 },
     NO_INSETS,
-    [86, 315],
-    [633, 315],
+    [126, 308],
+    [593, 308],
     282,
     [324, 352],
-    [556, 215],
+    [516, 208],
   ],
   [
     "2400x1080",
     { height: 1080, width: 2400 },
     NO_INSETS,
-    [86, 273],
-    [713, 273],
+    [126, 263],
+    [673, 263],
     322,
     [292, 320],
-    [636, 173],
+    [596, 163],
   ],
   [
     "2404x1080 at dpr 2.5",
     { height: 1080, width: 2404 },
     NO_INSETS,
-    [86, 273],
-    [714, 273],
+    [126, 263],
+    [674, 263],
     322.67,
     [292, 320],
-    [637, 173],
+    [597, 163],
   ],
   [
     "2560x1080",
     { height: 1080, width: 2560 },
     NO_INSETS,
-    [110, 273],
-    [741, 273],
+    [126, 263],
+    [726, 263],
     348.67,
     [292, 320],
-    [664, 173],
+    [649, 163],
   ],
 ];
 
@@ -760,39 +760,39 @@ describe("touch controls", () => {
 
   it("reexports the canonical stick geometry with an independent shield anchor", () => {
     expect(TOUCH_STICK).toBe(CANONICAL_TOUCH_STICK);
-    expect(CANONICAL_TOUCH_STICK).toMatchObject({ bottom: 50, side: 50 });
+    expect(CANONICAL_TOUCH_STICK).toMatchObject({ bottom: 60, side: 90 });
     expect(SHIELD_PILL.bottom).toBe(40);
     expect(USE_DISC.fromAim).toEqual({ x: -77, y: -100 });
   });
 
-  it("rest the drawn edges 50 from the outer screen sides and bottom", () => {
+  it("rest the drawn edges 90 from the outer screen sides and 60 from the bottom", () => {
     expect(stickRestCentres(view, NO_INSETS)).toEqual({
-      aim: { x: 633, y: 273 },
-      move: { x: 86, y: 273 },
+      aim: { x: 593, y: 263 },
+      move: { x: 126, y: 263 },
     });
-    // A wider view clamps the sides eight inside; its bottom stays 50 from the outer screen.
+    // A wider view clamps the sides eight inside; its bottom stays 60 from the outer screen.
     expect(stickRestCentres({ height: 400, width: 900 }, NO_INSETS)).toEqual({
-      aim: { x: 765, y: 313 },
-      move: { x: 134, y: 313 },
+      aim: { x: 765, y: 303 },
+      move: { x: 134, y: 303 },
     });
     const clear = stickRestCentres(view, { bottom: 30, left: 90, right: 100, top: 0 });
-    expect(ringEdges(clear.move).left).toBe(50);
-    expect(720 - ringEdges(clear.aim).right).toBe(50);
+    expect(ringEdges(clear.move).left).toBe(90);
+    expect(720 - ringEdges(clear.aim).right).toBe(90);
     expect(360 - ringEdges(clear.move).bottom).toBe(TOUCH_STICK.bottom);
     expect(TOUCH_STICK).toMatchObject({
-      bottom: 50,
+      bottom: 60,
       frame: 75,
       knobReach: 12,
       moveDeadZone: 2.4,
       moveReach: 40,
-      side: 50,
+      side: 90,
     });
   });
 
   it.each([
     ["no insets", NO_INSETS],
     ["phone insets", phone],
-  ] as const)("rest both rings 50 above the outer bottom edge, with %s", (_, insets) => {
+  ] as const)("rest both rings 60 above the outer bottom edge, with %s", (_, insets) => {
     const { aim, move } = stickRestCentres(view, insets);
     expect(view.height - ringEdges(move).bottom).toBe(TOUCH_STICK.bottom);
     expect(view.height - ringEdges(aim).bottom).toBe(TOUCH_STICK.bottom);
@@ -810,14 +810,14 @@ describe("touch controls", () => {
   });
 
   it.each([
-    ["the 720 base", view, NO_INSETS, { x: 556, y: 173 }],
-    ["1280x720", logicalView({ height: 720, width: 1280 }), NO_INSETS, { x: 556, y: 215 }],
-    ["the 720 base with phone insets", view, phone, { x: 556, y: 173 }],
+    ["the 720 base", view, NO_INSETS, { x: 516, y: 163 }],
+    ["1280x720", logicalView({ height: 720, width: 1280 }), NO_INSETS, { x: 516, y: 208 }],
+    ["the 720 base with phone insets", view, phone, { x: 516, y: 163 }],
     [
       "844x390 with phone insets",
       logicalView({ height: 390, width: 844 }),
       phone,
-      { x: 615, y: 173 },
+      { x: 575, y: 163 },
     ],
   ] as const)(
     "centre the Use disc (-77, -100) from the aim ring's centre at %s",
@@ -852,10 +852,10 @@ describe("touch controls", () => {
     }
   });
 
-  it("reach the conversation box's lower right by 52.5 regardless of phone insets", () => {
+  it("reach the conversation box's lower right by 62.5 regardless of phone insets", () => {
     for (const [insets, depth] of [
-      [NO_INSETS, 52.5],
-      [phone, 52.5],
+      [NO_INSETS, 62.5],
+      [phone, 62.5],
     ] as const) {
       const disc = useDiscLayout(view, insets);
       const box = conversationBoxRect(insets, view);
@@ -869,7 +869,7 @@ describe("touch controls", () => {
   });
 
   it("put each stick's DOM target over its ring's frame", () => {
-    expect(stickTargets(view, NO_INSETS).move).toEqual({ height: 75, width: 75, x: 49, y: 236 });
+    expect(stickTargets(view, NO_INSETS).move).toEqual({ height: 75, width: 75, x: 89, y: 226 });
   });
 });
 
@@ -929,7 +929,7 @@ describe("symmetric HUD on every view", () => {
           expect(hud.x - gap, label).toBe(HUD_EDGE);
           expect(hud.y, label).toBe(HUD_EDGE);
         }
-        // The sticks sit 50 from the outer screen sides regardless of safe insets, mirrored across
+        // The sticks sit 90 from the outer screen sides regardless of safe insets, mirrored across
         // the view's whole-pixel width at one height, unless the clamp holds a ring
         // STICK_AREA_MARGIN inside the game area.
         const { aim, move } = stickRestCentres(view, insets);

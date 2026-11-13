@@ -512,12 +512,12 @@ export const TOUCH_KNOB_FRAME = 11;
 // ring's centre. Move input reaches full speed moveReach from the touch-down point, past a
 // moveDeadZone.
 export const TOUCH_STICK = {
-  bottom: 50,
+  bottom: 60,
   frame: TOUCH_CHROME_FRAME,
   knobReach: 12,
   moveDeadZone: 2.4,
   moveReach: 40,
-  side: 50,
+  side: 90,
 } as const;
 
 // Art draws each ring 1 inside its frame, so a frame's centre pixel is this far from the drawn
