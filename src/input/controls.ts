@@ -12,6 +12,8 @@ import { BUILD_LABEL } from "../buildLabel.ts";
 import { CONTENT } from "../data/content.ts";
 import { RESOURCE_DESCRIPTIONS } from "../data/resourceDescriptions.ts";
 import type { Weapon } from "../data/types.ts";
+import { WEAPON_LEVEL_COUNT } from "../data/weaponCatalog.ts";
+import { WEAPON_DETAIL_LABELS, weaponDetailLines } from "../data/weaponDetails.ts";
 import { canvasSize, fitCanvasCamera, sceneFit } from "../game/playCamera.ts";
 import { RASTER_SCALE_EVENT } from "../game/svgRasters.ts";
 import {
@@ -64,6 +66,7 @@ import { createStatusPill, pillCount, type StatusView } from "../ui/statusPill.t
 import { STICK_DEPTHS, stickViews } from "../ui/sticks.ts";
 import { USE_PRESS_MS } from "../ui/touchChrome.ts";
 import { createUpdateDialog, type UpdateLabels } from "../ui/updateDialog.ts";
+import { createWeaponDetailCard } from "../ui/weaponDetailCard.ts";
 import { createWeaponSelector, type WeaponChoice, type WeaponLabels } from "../ui/weapons.ts";
 import { FRAME_TURN } from "../view/frameTurn.ts";
 import { coarsePointer, touchControlsActive, useDiscShown } from "./coarsePointer.ts";
@@ -305,6 +308,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     pause.isOpen() ||
     achievements.isOpen() ||
     resource.isOpen() ||
+    weaponDetail.isOpen() ||
     (update?.isOpen() ?? false);
   function syncModal(): void {
     const open = modalOpen();
@@ -320,8 +324,32 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   }
   const weapons = createWeaponSelector(settings.root, {
     labels: options.weaponLabels,
+    onHold: (choice, origin) => {
+      if (!state.accepts()) {
+        return;
+      }
+      const level = CONTENT.labels
+        .level!.replace("{level}", String(choice.level))
+        .replace("{max}", String(WEAPON_LEVEL_COUNT));
+      const ammo =
+        choice.ammo === null
+          ? WEAPON_DETAIL_LABELS.detailUnlimited
+          : WEAPON_DETAIL_LABELS.detailAmmoLeft.replace(
+              "{count}",
+              new Intl.NumberFormat("en-US").format(choice.ammo),
+            );
+      weaponDetail.open(
+        options.weaponLabels.names[choice.id],
+        [...weaponDetailLines(choice.id, choice.level), level, ammo],
+        origin,
+      );
+    },
     onSelect: (weapon) => state.accepts() && options.onWeaponSelect(weapon),
     reducedMotion: () => reducedMotion,
+  });
+  const weaponDetail = createWeaponDetailCard(settings.root, {
+    closeLabel: options.pause.labels.close,
+    onOpenChange: () => syncModal(),
   });
   const resource = createResourceCard(settings.root, {
     closeLabel: options.pause.labels.close,
@@ -504,6 +532,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const backStack = createBackStack();
   const leaveBack = [
     backStack.register({ back: resource.close, isOpen: resource.isOpen }),
+    backStack.register({ back: weaponDetail.close, isOpen: weaponDetail.isOpen }),
     backStack.register({
       back: () => pause.close(),
       isOpen: () => pause.isOpen() && !pause.mapOpen() && !pause.shipOpen(),
@@ -657,6 +686,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       stopPointers();
       state.setEnabled(false);
       resource.dispose();
+      weaponDetail.dispose();
       status.dispose();
       notices.dispose();
       weapons.dispose();

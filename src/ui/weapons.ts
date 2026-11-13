@@ -45,6 +45,7 @@ export function weaponButtonLabel(labels: WeaponLabels, choice: WeaponChoice): s
 
 interface WeaponSelectorOptions {
   readonly labels: WeaponLabels;
+  readonly onHold?: (choice: WeaponChoice, origin: HTMLElement) => void;
   /** Returns whether the switch was refused, so the pressed icon plays the refusal cue. */
   readonly onSelect: (weapon: Weapon) => boolean;
   readonly reducedMotion: () => boolean;
@@ -316,6 +317,7 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
   const buttons = new Map<Weapon, HTMLButtonElement>();
   let choices: readonly WeaponChoice[] = [];
   let enabled = false;
+  const cancelHolds = new Set<() => void>();
   const feedback = new AmmoFeedbackQueue();
   let lastFeedbackTime: number | undefined;
 
@@ -355,7 +357,52 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
         gain.setAttribute("aria-live", "polite");
         gain.setAttribute("aria-atomic", "true");
         button.append(gain);
-        button.addEventListener("click", () => {
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        let held = false;
+        const cancelHold = () => {
+          if (timer !== undefined) {
+            clearTimeout(timer);
+          }
+          timer = undefined;
+        };
+        cancelHolds.add(cancelHold);
+        button.addEventListener("pointerdown", (event) => {
+          event.stopPropagation();
+          cancelHold();
+          held = false;
+          if (!enabled || button.disabled || event.button !== 0 || !options.onHold) {
+            return;
+          }
+          timer = setTimeout(() => {
+            timer = undefined;
+            const current = choices.find((item) => item.id === choice.id);
+            if (!enabled || button.disabled || !current) {
+              return;
+            }
+            held = true;
+            options.onHold?.(current, button);
+          }, 500);
+        });
+        button.addEventListener("pointerup", (event) => {
+          event.stopPropagation();
+          cancelHold();
+          if (held) {
+            event.preventDefault();
+          }
+        });
+        button.addEventListener("pointercancel", cancelHold);
+        button.addEventListener("pointerleave", cancelHold);
+        button.addEventListener("keydown", () => {
+          held = false;
+          cancelHold();
+        });
+        button.addEventListener("click", (event) => {
+          event.stopPropagation();
+          if (held) {
+            held = false;
+            event.preventDefault();
+            return;
+          }
           // A switch during the wait after the last one is refused with the shared cue.
           if (enabled && !button.disabled && options.onSelect(choice.id)) {
             refuse(button, options.reducedMotion());
@@ -409,10 +456,19 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
     },
     dispose(): void {
       feedback.clear();
+      for (const cancel of cancelHolds) {
+        cancel();
+      }
+      cancelHolds.clear();
       root.remove();
     },
     setEnabled(value: boolean): void {
       enabled = value;
+      if (!value) {
+        for (const cancel of cancelHolds) {
+          cancel();
+        }
+      }
       render();
     },
     /** Whether the field under the HUD is light, which outlines a levelled disc in ink. */

@@ -31,13 +31,13 @@ const fixture = vi.hoisted(() => {
   return { Node, card };
 });
 vi.mock("./modal.ts", () => ({
-  createCard: () => fixture.card,
-  createButton: () => new fixture.Node(),
   createActions: (actions: { button: InstanceType<typeof fixture.Node> }[]) => {
     const node = new fixture.Node();
     node.append(...actions.map((action) => action.button));
     return node;
   },
+  createButton: () => new fixture.Node(),
+  createCard: () => fixture.card,
   isTap: () => true,
 }));
 vi.mock("./layout/viewScale.ts", () => ({ readViewUnit: () => 1 }));
