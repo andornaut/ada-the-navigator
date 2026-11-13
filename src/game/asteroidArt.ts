@@ -149,21 +149,48 @@ export function driftChips(
   id: string,
   behind: Vec,
 ): DriftChip[] {
+  if (!(Math.hypot(behind.x, behind.y) > 0)) {
+    return [];
+  }
+  const points = frameSilhouette(art, frame).flat();
+  const xs = points.map((at) => at.x);
+  const ys = points.map((at) => at.y);
+  return driftChipsFromBounds(
+    { behind, id, seed },
+    {
+      bottom: Math.max(...ys),
+      left: Math.min(...xs),
+      right: Math.max(...xs),
+      top: Math.min(...ys),
+    },
+  );
+}
+
+/** Display-space bounds used only to place a visual drift cue, never for collision. */
+export interface DriftChipBounds {
+  readonly bottom: number;
+  readonly left: number;
+  readonly right: number;
+  readonly top: number;
+}
+
+/** The canonical chip budget, spacing, alpha and seeded scatter for any authored visual bounds. */
+export function driftChipsFromBounds(
+  { behind, id, seed }: { readonly behind: Vec; readonly id: string; readonly seed: number },
+  bounds: DriftChipBounds,
+): DriftChip[] {
   const length = Math.hypot(behind.x, behind.y);
   if (!(length > 0)) {
     return [];
   }
   const d = { x: behind.x / length, y: behind.y / length };
-  const points = frameSilhouette(art, frame).flat();
-  const xs = points.map((at) => at.x);
-  const ys = points.map((at) => at.y);
   const centre = {
-    x: (Math.min(...xs) + Math.max(...xs)) / 2,
-    y: (Math.min(...ys) + Math.max(...ys)) / 2,
+    x: (bounds.left + bounds.right) / 2,
+    y: (bounds.top + bounds.bottom) / 2,
   };
   const half = {
-    x: (Math.max(...xs) - Math.min(...xs)) / 2,
-    y: (Math.max(...ys) - Math.min(...ys)) / 2,
+    x: (bounds.right - bounds.left) / 2,
+    y: (bounds.bottom - bounds.top) / 2,
   };
   const edge = 1 / Math.hypot(d.x / half.x, d.y / half.y);
   const side = { x: -d.y, y: d.x };
