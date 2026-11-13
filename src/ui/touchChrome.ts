@@ -102,11 +102,9 @@ const LEFT = [
 const RIGHT = LEFT.map(({ x, y }) => ({ x: TOUCH_CHROME_FRAME - x, y }));
 export const MOVE_MARKERS: readonly (readonly Point[])[] = [LEFT, RIGHT];
 
-// How far the move knob's centre may be drawn from the ring's centre: its outer edge then stays
-// inside the markers' inner edge, the marker ink nearest the centre.
-export const MOVE_KNOB_REACH = Math.floor(
-  CENTRE.x - (Math.max(...LEFT.map(({ x }) => x)) + MARKER_INK_WIDTH / 2) - KNOB_OUTER_RADIUS,
-);
+// The ring's outer ink edge, shared by its rendering and the move knob's full-strength centre.
+export const TOUCH_RING_OUTER_RADIUS = (TOUCH_CHROME_FRAME - 2) / 2;
+export const MOVE_KNOB_REACH = TOUCH_RING_OUTER_RADIUS;
 
 // The layers of one frame, painted in order. The move ring carries Chibi's left and right
 // chevrons, each lit while the stick pushes that way; the aim ring is the plain ring. The knob
@@ -124,7 +122,7 @@ export function touchChromeLayers(
     layers.push({ centre, colour: core, kind: "disc", radius: KNOB_OUTER_RADIUS - 1 });
     return layers;
   }
-  const outer = 36.5;
+  const outer = TOUCH_RING_OUTER_RADIUS;
   layers.push({ centre: CENTRE, colour: colours.ink, inner: outer - 5, kind: "ring", outer });
   layers.push({ centre: CENTRE, colour: core, inner: outer - 4, kind: "ring", outer: outer - 1 });
   if (kind === "move") {

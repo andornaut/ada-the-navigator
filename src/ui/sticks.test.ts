@@ -6,9 +6,7 @@ import { stickTargets } from "./layout/touchControls.ts";
 import { centredAt, MARKER_THRESHOLD, STICK_DEPTHS, stickViews } from "./sticks.ts";
 import {
   KNOB_OUTER_RADIUS,
-  MARKER_INK_WIDTH,
   MOVE_KNOB_REACH,
-  MOVE_MARKERS,
   SPEED_LINE_CAP,
   SPEED_LINE_CAPSULE,
   speedLineLayers,
@@ -16,6 +14,8 @@ import {
   TOUCH_CHROME_COLOURS,
   TOUCH_CHROME_FRAME,
   TOUCH_KNOB_FRAME,
+  TOUCH_RING_OUTER_RADIUS,
+  touchChromeLayers,
   touchChromePixel,
 } from "./touchChrome.ts";
 
@@ -167,34 +167,55 @@ describe("move ring markers", () => {
 });
 
 describe("move knob travel", () => {
-  // Distance from a point to a polyline, in frame pixels.
-  const toPath = (point: { x: number; y: number }, path: readonly { x: number; y: number }[]) =>
-    Math.min(
-      ...path.slice(1).map((to, index) => {
-        const from = path[index]!;
-        const dx = to.x - from.x;
-        const dy = to.y - from.y;
-        const along = ((point.x - from.x) * dx + (point.y - from.y) * dy) / (dx * dx + dy * dy);
-        const t = Math.min(1, Math.max(0, along));
-        return Math.hypot(point.x - from.x - t * dx, point.y - from.y - t * dy);
-      }),
-    );
-
-  it.each([0, 15, 30, 45, 90, 135, 150, 165, 180, 225, 270, 315])(
-    "keeps the knob's outer edge inside the markers at full deflection toward %s degrees",
+  it.each([0, 15, 30, 45, 90, 135, 180, 225, 270, 315])(
+    "straddles the renderer's outer ring at full strength toward %s degrees",
     (degrees) => {
       const state = new ControlState();
       state.down("move", 1, { x: 200, y: 200 });
       const radians = (degrees * Math.PI) / 180;
-      state.move(1, { x: 200 + 80 * Math.cos(radians), y: 200 - 80 * Math.sin(radians) });
-      const view = stickViews(layout, state).move!;
-      const knob = knobCentre(view.knob);
-      // The knob's centre pixel within the ring's frame, at that pixel's centre.
-      const inFrame = { x: knob.x - view.ring.x + 0.5, y: knob.y - view.ring.y + 0.5 };
-      for (const marker of MOVE_MARKERS) {
-        expect(toPath(inFrame, marker) - MARKER_INK_WIDTH / 2).toBeGreaterThanOrEqual(
-          KNOB_OUTER_RADIUS,
+      state.move(1, { x: 200 + 180 * Math.cos(radians), y: 200 + 180 * Math.sin(radians) });
+      const knob = knobCentre(stickViews(layout, state).move!.knob);
+      const distance = Math.hypot(knob.x - 200, knob.y - 200);
+      const ring = touchChromeLayers(TOUCH_CHROME_COLOURS, "move", "rest").find(
+        (layer) => layer.kind === "ring",
+      )!;
+      expect(ring.kind).toBe("ring");
+      if (ring.kind !== "ring") {
+        throw new Error("Missing ring");
+      }
+      expect(MOVE_KNOB_REACH).toBe(ring.outer);
+      expect(Math.abs(distance - ring.outer)).toBeLessThanOrEqual(Math.SQRT1_2);
+      expect(distance - (KNOB_OUTER_RADIUS - 1)).toBeLessThan(ring.outer);
+      expect(distance + (KNOB_OUTER_RADIUS - 1)).toBeGreaterThan(ring.outer);
+      expect(Math.hypot(state.sample().move.x, state.sample().move.y)).toBeCloseTo(1, 12);
+    },
+  );
+
+  it.each([0, 0.1, 0.5, 1, 3])(
+    "keeps responsive geometry and releases from strength %s",
+    (strength) => {
+      for (const screen of [
+        { height: 360, width: 720 },
+        { height: 390, width: 844 },
+        { height: 844, width: 390 },
+      ]) {
+        const state = new ControlState();
+        const view = logicalView(screen);
+        const origin = { x: view.width / 3, y: view.height / 2 };
+        state.down("move", 1, origin);
+        const distance = strength ? travel(Math.min(1, strength)) * Math.max(1, strength) : 0;
+        const pointer = { x: origin.x + distance * 0.6, y: origin.y - distance * 0.8 };
+        state.move(1, pointer);
+        const knob = knobCentre(stickViews({ ...layout, ...view }, state).move!.knob);
+        expect(knob.x).toBe(
+          Math.round(origin.x) + Math.round(Math.min(1, strength) * MOVE_KNOB_REACH * 0.6),
         );
+        expect(knob.y).toBe(
+          Math.round(origin.y) + Math.round(-Math.min(1, strength) * MOVE_KNOB_REACH * 0.8),
+        );
+        state.release(1);
+        expect(stickViews({ ...layout, ...view }, state).move?.line).toBeUndefined();
+        expect(state.sample().move).toEqual({ x: 0, y: 0 });
       }
     },
   );
@@ -206,8 +227,8 @@ describe("move knob travel", () => {
       state.move(1, { x: 100 + travel(strength), y: 100 });
       return knobCentre(stickViews(layout, state).move!.knob).x - 100;
     };
-    expect(MOVE_KNOB_REACH).toBe(11);
-    expect(at(1)).toBe(MOVE_KNOB_REACH);
+    expect(MOVE_KNOB_REACH).toBe(TOUCH_RING_OUTER_RADIUS);
+    expect(at(1)).toBe(Math.round(MOVE_KNOB_REACH));
     expect(at(0.5)).toBe(Math.round(MOVE_KNOB_REACH / 2));
   });
 });
@@ -229,7 +250,7 @@ describe("speed line", () => {
   it.each([
     [0.5, 0.5],
     [1, 1],
-    [3, 1],
+    [3, 3],
   ])(
     "runs from the move origin toward the thumb at %s of full reach, to %s of it",
     (share, drawn) => {
@@ -239,19 +260,20 @@ describe("speed line", () => {
       const view = stickViews(layout, state).move!;
       const end = { x: 100 + drawn * MOVE_STICK_GEOMETRY.reach, y: 100 };
       expect(view.line).toEqual({ from: { x: 100, y: 100 }, to: end });
-      expect(knobCentre(view.knob).x - 100).toBeLessThanOrEqual(MOVE_KNOB_REACH);
+      expect(knobCentre(view.knob).x - 100).toBeLessThanOrEqual(Math.ceil(MOVE_KNOB_REACH));
       expect(speedLinePlacement(view.line!).length).toBe(drawn * MOVE_STICK_GEOMETRY.reach);
     },
   );
 
-  it("stops at full speed's reach in any direction, where the input is full", () => {
+  it("extends to the actual diagonal pointer beyond full speed while input stays capped", () => {
     const state = new ControlState();
     state.down("move", 1, { x: 100, y: 100 });
     const thumb = { x: 100 - 90, y: 100 + 120 };
     state.move(1, thumb);
     const line = stickViews(layout, state).move!.line!;
     const placement = speedLinePlacement(line);
-    expect(placement.length).toBeCloseTo(MOVE_STICK_GEOMETRY.reach, 9);
+    expect(line.to).toEqual(thumb);
+    expect(placement.length).toBeCloseTo(150, 9);
     expect(placement.angle).toBeCloseTo(Math.atan2(120, -90), 9);
     const full = stickVector(MOVE_STICK_GEOMETRY, { x: line.to.x - 100, y: line.to.y - 100 });
     expect(Math.hypot(full.x, full.y)).toBeCloseTo(1, 9);
