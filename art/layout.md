@@ -479,15 +479,12 @@ with fractional widths.
 | Low    | Above 0 and below 25% of capacity         | Fill in the low colour; icon and rim pulse; a delay part keeps the delay colour                                         | Pulse: low colour to the pulse peak and back, sine, 1000 ms per cycle, while low; ends at once at 25%                                  |
 | Empty  | The shield reaches 0                      | Empty track; icon and rim in the low colour, no pulse                                                                   | Held until the depletion outcome: Astra's jump home, or (upgrade selected) the refill, which draws full at once with no flash or edge  |
 
-Clearances, at every Shield level and view: at least 45 from each stick ring's
-frame across. The tightest is level 3 at the 720 base with phone insets (and
-with a left 43 and bottom 19 inset), 45; level 3 gives 88 at the 720 base and
-74.46 at 844x390 with phone insets. The pill keeps 40 above the
-bottom inset and home bar, or 8 above the game area's bottom where the sticks'
-clamp applies (53 above the view's bottom at 1280x720). Use's press circle stays
-9.11 or more clear of it (19.10 at the 720 base and 9.11 with phone insets at
-level 3). Every view and level is in
-[Touch controls by view](#touch-controls-by-view).
+The shield pill's drawn bottom margin matches the resource pill's drawn top
+margin: `HUD_EDGE + STATUS_PILL.y` (12 + 2.5 = 14.5 logical px). Both use the
+full viewport without safe insets, at every Shield level on desktop and touch.
+CSS derives the shield bottom from `fromHudEdge("top", STATUS_PILL.y)`; layout
+geometry uses `view.height - (hudRect(NO_INSETS, view).y + STATUS_PILL.y)`.
+This anchor is independent of the sticks' drawn edges and clamp.
 
 Delay strip (`SHIELD_PILL.delayStrip`), Gameplay's recharge timer:
 
