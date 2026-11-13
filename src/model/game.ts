@@ -1134,7 +1134,7 @@ export class GameModel {
       this.current,
       this.state.economy,
     );
-    delete this.current.cargo;
+    delete this.state.economy.cargo;
     this.state.mode = "space";
     this.state.dialogue = null;
     this.state.docked = null;
@@ -1173,7 +1173,7 @@ export class GameModel {
   /**
    * Ends the flight for Earth, Jump or the shield-failure jump (rules.md "What each event
    * keeps"): the held job keeps its carried item and the story its item, undeposited ore (all of
-   * it unless `keptOre` says less) waits with its galaxy for that galaxy's next flight, pickups
+   * it unless `keptOre` says less) stays aboard for the next flight in any galaxy, pickups
    * go with the flight, a towed craft returns to where it was stranded, a guided calf and Pip
    * return to their starts with the activity still held, and a scene still due its line replays
    * at the hub next time. An in-flight notice ends with its flight.
@@ -1183,7 +1183,7 @@ export class GameModel {
     const flight = this.state.flight;
     const ore = flight ? keptOre(flight.cargo) : 0;
     if (flight && ore > 0) {
-      this.state.progress[flight.galaxy].cargo = ore;
+      this.state.economy.cargo = ore;
     }
     this.resetActivity(this.state.selectedGalaxy);
     // A story scene still due its line replays at the hub on the next flight.

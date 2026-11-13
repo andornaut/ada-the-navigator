@@ -416,7 +416,8 @@ function economyState(value: unknown): value is EconomyState {
     new Set(value.paints).size === value.paints.length &&
     value.paints.includes(ECONOMY.defaultPaint) &&
     value.paints.every((scheme) => Object.hasOwn(ECONOMY.paints, scheme)) &&
-    value.paints.includes(value.paint)
+    value.paints.includes(value.paint) &&
+    (value.cargo === undefined || (Number.isSafeInteger(value.cargo) && nonnegative(value.cargo)))
   );
 }
 /** Each paid amount is a whole number of Stardust toward one of the galaxy's projects, at most its cost. */
@@ -615,7 +616,6 @@ export function restoreSave(saved: unknown): GameState | null {
         !revealedProjects(id as GalaxyNumber, p.donated, p.revealed) ||
         !validExplored(CONTENT.tuning.chunkSize, p.explored) ||
         (p.guides !== undefined && !(Number.isSafeInteger(p.guides) && nonnegative(p.guides))) ||
-        (p.cargo !== undefined && !(Number.isSafeInteger(p.cargo) && nonnegative(p.cargo))) ||
         (p.replayScene !== undefined &&
           !(
             typeof p.replayScene === "string" &&

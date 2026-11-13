@@ -1502,13 +1502,13 @@ export function placeDestinationAhead(
   return existing;
 }
 
-export type Loadout = Pick<EconomyState, "ammo" | "levels" | "ownedWeapons" | "weapon">;
+export type Loadout = Pick<EconomyState, "ammo" | "cargo" | "levels" | "ownedWeapons" | "weapon">;
 
 export function createFlight(
   content: GameContent,
   galaxy: GalaxyNumber,
   seed: number,
-  progress: Pick<GalaxyProgress, "cargo" | "known">,
+  progress: Pick<GalaxyProgress, "known">,
   loadout: Loadout = {
     ammo: grantedAmmo([]),
     levels: noLevels(),
@@ -1519,7 +1519,7 @@ export function createFlight(
   const levels = structuredClone(loadout.levels);
   const flight: FlightState = {
     ammo: { ...loadout.ammo },
-    cargo: progress.cargo ?? 0,
+    cargo: loadout.cargo ?? 0,
     chunks: [],
     dangerFor: 0,
     facing: { x: 0, y: -1 },
