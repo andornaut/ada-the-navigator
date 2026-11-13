@@ -1117,7 +1117,10 @@ describe("combat admission and subframe firing", () => {
     stepFlight(CONTENT, 1 / 60, idle, flight);
     expect(flight.shield).toBe(CONTENT.tuning.shieldMax);
     expect(flight.shots.filter((shot) => shot.enemy)).toHaveLength(1);
-    stepFlight(CONTENT, 1 / 60, idle, flight);
+    // The bolt hits once it has flown to her boundary, within a few frames at 300 a second.
+    for (let frame = 0; frame < 5 && flight.shots.some((shot) => shot.enemy); frame++) {
+      stepFlight(CONTENT, 1 / 60, idle, flight);
+    }
     expect(flight.shield).toBe(CONTENT.tuning.shieldMax - CONTENT.tuning.hazardDamage);
     expect(flight.shots.filter((shot) => shot.enemy)).toHaveLength(0);
   });

@@ -68,11 +68,11 @@ describe("owned upgrade weapons", () => {
     flight.weaponSwitchFor = 0;
     expect(model.selectWeapon("multiLaser")).toBe(true);
     expect(flight.ownedWeapons).toEqual(["rapidMissile", "multiLaser"]);
-    // Each found weapon includes three packs.
+    // Each found weapon includes three packs: 3 of 300 and 3 of 265.
     expect(model.weapons()).toEqual([
       { ammo: null, id: "laser", level: 1, selected: false },
-      { ammo: 600, id: "multiLaser", level: 1, selected: true },
-      { ammo: 300, id: "rapidMissile", level: 1, selected: false },
+      { ammo: 900, id: "multiLaser", level: 1, selected: true },
+      { ammo: 795, id: "rapidMissile", level: 1, selected: false },
     ]);
     const before = model.save();
     expect(model.selectWeapon("scattershot")).toBe(false);
@@ -138,7 +138,7 @@ describe("owned upgrade weapons", () => {
     expect(model.state.flight!.seed).not.toBe(seed);
     expect(model.weapons()).toEqual([
       { ammo: null, id: "laser", level: 1, selected: true },
-      { ammo: 600, id: "multiLaser", level: 1, selected: false },
+      { ammo: 900, id: "multiLaser", level: 1, selected: false },
     ]);
     expect(model.state.progress[1].deposited).toBe(42);
   });
@@ -273,23 +273,45 @@ describe("ammunition", () => {
   });
 
   it("refuses an empty weapon until ammunition is bought", () => {
+    // Sunflower's shops sell Multi-Laser's ammunition, the weapon unlocked there.
     const model = launched();
-    pickup(model, "phaser");
+    pickup(model, "multiLaser");
     const flight = model.state.flight!;
     flight.weaponSwitchFor = 0;
     expect(model.selectWeapon("laser")).toBe(true);
     flight.weaponSwitchFor = 0;
-    flight.ammo.phaser = 0;
-    expect(model.weapons()).toContainEqual({ ammo: 0, id: "phaser", level: 1, selected: false });
-    expect(model.selectWeapon("phaser")).toBe(false);
+    flight.ammo.multiLaser = 0;
+    expect(model.weapons()).toContainEqual({
+      ammo: 0,
+      id: "multiLaser",
+      level: 1,
+      selected: false,
+    });
+    expect(model.selectWeapon("multiLaser")).toBe(false);
     expect(flight.weapon).toBe("laser");
     model.state.docked = "station";
     model.state.economy.stardust = 10;
-    expect(model.buy({ kind: "ammo", weapon: "phaser" })).toEqual({ kind: "bought", price: 10 });
-    expect(flight.ammo.phaser).toBe(20);
+    expect(model.buy({ kind: "ammo", weapon: "multiLaser" })).toEqual({
+      kind: "bought",
+      price: 10,
+    });
+    expect(flight.ammo.multiLaser).toBe(300);
     expect(model.state.economy.stardust).toBe(0);
     model.state.docked = null;
-    expect(model.selectWeapon("phaser")).toBe(true);
+    expect(model.selectWeapon("multiLaser")).toBe(true);
+  });
+
+  it("sells no ammunition for a weapon the galaxy has not unlocked", () => {
+    // Sunflower unlocks only Multi-Laser: a found Phaser keeps its ammunition, with none sold.
+    const model = launched();
+    pickup(model, "phaser");
+    model.state.docked = "station";
+    model.state.economy.stardust = 10;
+    expect(model.buy({ kind: "ammo", weapon: "phaser" })).toEqual({
+      kind: "refused",
+      reason: "notForSale",
+    });
+    expect(model.state.economy.stardust).toBe(10);
   });
 
   it("keeps every weapon's ammunition across flights and the jump home", () => {
@@ -312,7 +334,7 @@ describe("ammunition", () => {
     // Finding it again gives one pack, as for any weapon Ada owns.
     model.state.flight!.objects = [];
     pickup(model, "multiLaser");
-    expect(model.state.flight!.ammo.multiLaser).toBe(123 + 200);
+    expect(model.state.flight!.ammo.multiLaser).toBe(123 + 300);
   });
 
   it("keeps a granted weapon's flight ammunition out of the economy", () => {
@@ -320,11 +342,11 @@ describe("ammunition", () => {
     expect(grantAllWeapons(model.state)).toBe(true);
     const flight = model.state.flight!;
     expect(flight.ammo).toEqual({
-      heavyMissile: 60,
-      multiLaser: 600,
-      phaser: 60,
-      rapidMissile: 300,
-      scattershot: 90,
+      heavyMissile: 105,
+      multiLaser: 900,
+      phaser: 150,
+      rapidMissile: 795,
+      scattershot: 180,
     });
     model.step(0.01, idle);
     expect(model.state.economy.ammo).toEqual(noAmmo());

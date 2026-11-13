@@ -40,12 +40,14 @@ const BASE_SPEED = 600;
 /** The speed ratio that flies a projectile at `worldSpeed` world units per second. */
 const flies = (worldSpeed: number) => worldSpeed / BASE_SPEED;
 /**
- * Laser and Multi-Laser bolts reach 300 world units at every level and speed: past the play
- * view's edges straight out, short of its corners, which only the Phaser reaches.
+ * Laser and Multi-Laser bolts reach 370 world units at every level and speed, as far as the
+ * Phaser: past the play view's edges and corners.
  */
-const BOLT_REACH = 300;
+const BOLT_REACH = 370;
 /** Rapid and Heavy Missiles reach 220 world units at every level and speed. */
 const MISSILE_REACH = 220;
+/** Heavy Missile's blast radius in world units, the same at every level. */
+const HEAVY_BLAST = 50;
 /** Phaser's beam reaches 370 world units at every level, across the play view. */
 const PHASER_RANGE = 370;
 /** Scattershot dots travel 100 world units, its close range at every level. */
@@ -65,13 +67,13 @@ const fan = (count: number, spread: number) =>
  */
 export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
   // Slow and heavy (gameplay/rules.md): one missile every 2 s at every level, damage alone making
-  // each 1.5 step (10, 15 and 22.5 times Laser damage), with a 70 blast at every level. The
+  // each 1.5 step (10, 15 and 22.5 times Laser damage), with a 50 blast at every level. The
   // missile flies 400 world units per second, reaching 220.
   heavyMissile: [
     {
       ...projectile,
       anglesDegrees: [0],
-      blastRadius: 70,
+      blastRadius: HEAVY_BLAST,
       damageRatio: 10,
       intervalSeconds: 2,
       projectileKind: "missile",
@@ -81,7 +83,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
     {
       ...projectile,
       anglesDegrees: [0],
-      blastRadius: 70,
+      blastRadius: HEAVY_BLAST,
       damageRatio: 15,
       intervalSeconds: 2,
       projectileKind: "missile",
@@ -91,7 +93,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
     {
       ...projectile,
       anglesDegrees: [0],
-      blastRadius: 70,
+      blastRadius: HEAVY_BLAST,
       damageRatio: 22.5,
       intervalSeconds: 2,
       projectileKind: "missile",
@@ -100,7 +102,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
     },
   ],
   // Damage and fire rate each grow 1.25/1.2 then 1.5/1.5; the bolt flies 500, 600 and 700 world
-  // units per second, reaching 300 at each.
+  // units per second, reaching 370 at each.
   laser: [
     {
       ...projectile,
@@ -132,7 +134,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
   ],
   // Every 0.30 s, each bolt a fixed 0.7 times Laser damage; levels add only bolts, 3, 4 then 5
   // across the same -20 to 20 fan. Its bolts fly 400, 500 and 600 world units per second,
-  // reaching 300 at each.
+  // reaching 370 at each.
   multiLaser: [
     {
       ...projectile,

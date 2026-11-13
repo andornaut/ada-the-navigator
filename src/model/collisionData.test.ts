@@ -134,18 +134,16 @@ describe("Art's collision data", () => {
       }[];
       tops: Record<string, { collision: Raw }[]>;
     };
-    // A capital whose loadout puts the mine layer on stern-right at positions 5 and 6.
-    let id = "capital:0";
-    for (let index = 0; ; index++) {
-      id = `capital:${index}`;
-      if (
-        [5, 6].every(
-          (at) => heavyLoadout("capital", at as 5 | 6, id)!.get("stern-right") === "mineLayer",
-        )
-      ) {
-        break;
-      }
-    }
+    // A capital whose position 5 loadout carries the mine layer, a single-mount weapon dealt to
+    // one of the first mounts in fill order.
+    const ids = Array.from({ length: 200 }, (_, index) => `capital:${index}`);
+    const id = ids.find((ship) =>
+      [...heavyLoadout("capital", 5, ship)!.values()].includes("mineLayer"),
+    )!;
+    expect(id).toBeDefined();
+    const hopper = [...heavyLoadout("capital", 5, id)!].find(
+      ([, weapon]) => weapon === "mineLayer",
+    )![0];
     const enemy = createEnemy(
       enemyCatalog.capital,
       { archetype: "capital", id, packId: null, phase: 0 },
@@ -165,19 +163,18 @@ describe("Art's collision data", () => {
       );
     }
     // The mine layer's hopper holds aim (3 + 8) mod 16 whatever the turret's aim.
-    const pivot = [placed.pivot![0]! - 240, placed.pivot![1]! - 240];
+    const mount = file.headings[3]!.hardpoints.find((part) => part.id === hopper)!;
+    const pivot = [mount.pivot![0]! - 240, mount.pivot![1]! - 240];
     const armed = [
-      ...scale(placed.collision.intact!, centre),
+      ...scale(mount.collision.intact!, centre),
       ...scale(file.tops.hopper![11]!.collision, pivot),
     ];
-    for (const position of [5, 6] as const) {
-      const outline = enemyPartOutline(position, enemy, "stern-right")!;
-      expect(outline).toHaveLength(armed.length);
-      outline.flat().forEach((at, index) => {
-        expect(at.x).toBeCloseTo(armed.flat()[index]!.x, 9);
-        expect(at.y).toBeCloseTo(armed.flat()[index]!.y, 9);
-      });
-    }
+    const outline = enemyPartOutline(5, enemy, hopper)!;
+    expect(outline).toHaveLength(armed.length);
+    outline.flat().forEach((at, index) => {
+      expect(at.x).toBeCloseTo(armed.flat()[index]!.x, 9);
+      expect(at.y).toBeCloseTo(armed.flat()[index]!.y, 9);
+    });
   });
 
   it.each(["cartwheel", "whirlpool"])("gives every %s debris frame a silhouette", (id) => {

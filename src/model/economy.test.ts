@@ -805,12 +805,12 @@ describe("upgrade effects", () => {
   });
 
   it.each([
-    ["laser", 1, 500, 1200],
-    ["laser", 2, 600, 1200],
-    ["laser", 3, 700, 1200],
-    ["multiLaser", 1, 400, 1200],
-    ["multiLaser", 2, 500, 1200],
-    ["multiLaser", 3, 600, 1200],
+    ["laser", 1, 500, 370],
+    ["laser", 2, 600, 370],
+    ["laser", 3, 700, 370],
+    ["multiLaser", 1, 400, 370],
+    ["multiLaser", 2, 500, 370],
+    ["multiLaser", 3, 600, 370],
     ["rapidMissile", 1, 500, 220],
     ["rapidMissile", 2, 600, 220],
     ["rapidMissile", 3, 700, 220],

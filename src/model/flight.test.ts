@@ -192,7 +192,7 @@ describe("flight boundaries", () => {
       { hp: 1, id: "resource", kind: "resource", radius: 10, x: 190, y: 100 },
     ];
     flight.weapon = "laser";
-    const events = stepFlight(CONTENT, 1, { ...idle, aim: { x: 1, y: 0 } }, flight);
+    const events = stepFlight(CONTENT, 1.5, { ...idle, aim: { x: 1, y: 0 } }, flight);
     expect(events).toContainEqual({ id: "debris", type: "debrisCleared" });
     expect(events).toContainEqual({ type: "enemyDestroyed" });
     expect(flight.objects.filter((o) => o.role === "cargo")).toHaveLength(

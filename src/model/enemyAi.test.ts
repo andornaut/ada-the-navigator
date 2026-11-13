@@ -296,7 +296,10 @@ describe("enemy rules", () => {
     };
     const second = stepEnemy(definition, observation(ready), ready);
     expect(second.fire.map((shot) => shot.hardpointId)).toEqual([mountOf("laser")]);
-    expect(first.fire[0]?.speed).not.toBe(first.fire.at(-1)?.speed);
+    // Each weapon's projectiles fly 0.6 of Ada's level 1 speed for it: Laser 300, Heavy 240.
+    const speedOf = (weapon: string) => first.fire.find((shot) => shot.weapon === weapon)!.speed;
+    expect(speedOf("laser")).toBeCloseTo(300, 9);
+    expect(speedOf("heavyMissile")).toBeCloseTo(240, 9);
   });
 
   it.each(["capital"] as const)(

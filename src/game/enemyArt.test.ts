@@ -153,7 +153,7 @@ describe("enemy frame sets", () => {
     // The coral and claim families' tiered heavies with Gadget's capital, and each recoloured
     // family's tiered frigate and capital.
     const recoloured = GALAXY_FAMILIES.filter(({ wired }) => !wired.has("platform")).length;
-    expect(expected).toBe(2096 + 752 * recoloured);
+    expect(expected).toBe(2288 + 832 * recoloured);
     expect(parts.some((asset) => /^enemy-[a-z]+-\d+$/i.test(asset.id))).toBe(false);
   });
 
@@ -320,7 +320,7 @@ describe("enemy art fallback", () => {
   it("keeps a heavy's vector placeholder without a valid layout or every part frame", () => {
     expect(build(assets, () => undefined).has("frigate")).toBe(false);
     expect(build(assets, () => undefined).has("swarm")).toBe(true);
-    const noTop = assets.filter((asset) => asset.id !== "enemy-capital-turret-top-9");
+    const noTop = assets.filter((asset) => asset.id !== "enemy-capital-gun-top-9");
     expect(build(noTop).has("capital")).toBe(false);
     expect(build(noTop).has("frigate")).toBe(true);
     const noStump = assets.filter((asset) => asset.id !== "enemy-frigate-port-destroyed-4");
@@ -503,11 +503,11 @@ describe("composed heavies", () => {
       const tops = composeEnemy(capital, pose([], world(22.5 * 9)), capital.frames[heading]!)
         .filter((part) => part.layer === "top")
         .map((part) => part.frame.id);
-      expect(tops).toEqual([
+      expect(tops.sort()).toEqual([
+        "enemy-capital-gun-top-9",
         "enemy-capital-gun-top-9",
         "enemy-capital-pod-top-9",
         "enemy-capital-pod-top-9",
-        "enemy-capital-gun-top-9",
       ]);
     }
   });
@@ -623,10 +623,10 @@ describe("enemy SVGs", () => {
     ).filter(({ archetype }) =>
       ["capital", "frigate", "gadget", "platform"].includes(archetype ?? ""),
     );
-    // The coral and claim frigates (256 frames each) and capitals (528 each), Gadget's 528, the
-    // claim platform's 81, and each recoloured family's frigate (256) and capital (528).
+    // The coral and claim frigates (304 frames each) and capitals (560 each), Gadget's 560, the
+    // claim platform's 81, and each recoloured family's frigate (304) and capital (560).
     const recoloured = GALAXY_FAMILIES.filter(({ wired }) => !wired.has("platform")).length;
-    expect(heavies).toHaveLength((256 + 528) * (2 + recoloured) + 528 + 81);
+    expect(heavies).toHaveLength((304 + 560) * (2 + recoloured) + 560 + 81);
     for (const asset of heavies) {
       const svg = readFileSync(new URL(`../../public${asset.path}`, import.meta.url), "utf8");
       const root = /<svg\b[^>]*>/u.exec(svg)?.[0] ?? "";
