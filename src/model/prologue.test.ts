@@ -72,7 +72,7 @@ describe("prologue", () => {
       [
         "grandmaGarden",
         "Grandma",
-        "There's my navigator. Did you two take the long way again?",
+        "There's my navigator! Did you two take the long way again?",
         "Next",
       ],
       ["grandmaGarden", "Ada", "Penny found a shortcut. It was mostly mud.", "Next"],
@@ -320,7 +320,7 @@ describe("prologue", () => {
     model.leaveCockpit();
     const pages = readStory(model);
     expect(pages.map(summary)).toEqual([
-      ["adaRoom", "", "Penny thumps her tail. Time for another adventure?", "Pick up the rock."],
+      ["adaRoom", "", "Penny thumps her tail. Ready for another adventure?", "Pick up the rock."],
       ["adaRoom", "", "Ada holds Penny close and touches the rock's glow.", "Next"],
       ["aboard", "Astra", "Welcome back, Navigator.", "Next"],
     ]);

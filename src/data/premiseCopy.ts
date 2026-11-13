@@ -7,7 +7,7 @@ export const PREMISE: PremiseContent = {
     { speaker: "Astra", text: "Welcome back, Navigator." },
   ],
   boardingNewGalaxy: { speaker: "Astra", text: "Welcome back, Navigator. A new galaxy is ready." },
-  emptyHome: "Penny thumps her tail. Time for another adventure?",
+  emptyHome: "Penny thumps her tail. Ready for another adventure?",
   gardenArrival: [
     {
       background: "grandmaGarden",
@@ -26,7 +26,7 @@ export const PREMISE: PremiseContent = {
     {
       background: "grandmaGarden",
       speaker: "Grandma",
-      text: "There's my navigator. Did you two take the long way again?",
+      text: "There's my navigator! Did you two take the long way again?",
     },
     {
       background: "grandmaGarden",

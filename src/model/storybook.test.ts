@@ -182,7 +182,7 @@ describe("home visits", () => {
     expect(model.storyView?.page).toMatchObject({
       action: "Pick up the rock.",
       background: "adaRoom",
-      text: "Penny thumps her tail. Time for another adventure?",
+      text: "Penny thumps her tail. Ready for another adventure?",
     });
     expect(model.storyView?.canGoBack).toBe(false);
     expect(readStory(model).map(({ id }) => id)).toEqual(["room", "boarding:0", "boarding:1"]);

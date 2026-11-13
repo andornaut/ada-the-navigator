@@ -6,8 +6,8 @@ export const CONTENT: GameContent = {
   chapters: {
     1: {
       closing: [
-        "On planting day, neighbors bring tools, plants and time. They don't ",
-        "all have to do the same thing. The garden has begun.",
+        "On planting day, neighbors bring tools, plants and time. People help ",
+        "in different ways. At last, the garden is getting started.",
       ].join(""),
       dialogue: {
         deliveryComplete: {
@@ -68,8 +68,8 @@ export const CONTENT: GameContent = {
         "organizer needs help, but nobody can look after everything.",
       ].join(""),
       openingBranches: [
-        "Grandma smiles. 'Planting, watering, tools... more than one person can manage.'",
-        "'They'd love that,' Grandma says. 'Most people only offer help when someone asks them.'",
+        "Grandma smiles. 'Planting, watering, finding tools... It's a lot for one person.'",
+        "'They'd love that,' Grandma says. 'Sometimes people want to help. They just need someone to ask.'",
       ],
       openingChoices: ["What kind of help do they need?", "I'd like to meet the organizer."],
       resolution: [
@@ -173,17 +173,17 @@ export const CONTENT: GameContent = {
         {
           background: "kitchen",
           speaker: "Dad",
-          text: "That sounds hard to watch. What do you think you could do?",
+          text: "That sounds hard to watch. What do you think would help?",
         },
       ],
       resolution: [
         "Back at school, Ada speaks privately with Sam: 'I saw what ",
-        "happened. Would you like to join us?' They would. Ada talks with her ",
-        "friends about making room and refusing to laugh along.",
+        "happened. Would you like to join us?' Sam says yes. Ada talks with ",
+        "her friends about making room and refusing to laugh along.",
       ].join(""),
       resolutionBranches: [
         [
-          "Ada's friends shuffle over and make a gap. Sam steps in. When someone ",
+          "Ada's friends shuffle over and make room. Sam steps in. When someone ",
           "laughs, nobody laughs along.",
         ].join(""),
         [
@@ -282,7 +282,7 @@ export const CONTENT: GameContent = {
         {
           background: "frontDoorMom",
           speaker: "Mom",
-          text: "Penny's been waiting by the door all morning, Ada.",
+          text: "Ada, Penny's been waiting by the door all morning.",
         },
       ],
       resolution: [
