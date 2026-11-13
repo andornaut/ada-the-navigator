@@ -50,7 +50,7 @@ import {
 } from "../ui/layout/playView.ts";
 import { stickTargets, useDiscLayout, usePressed } from "../ui/layout/touchControls.ts";
 import { createViewScaleBridge, type PlayLayout } from "../ui/layout/viewScale.ts";
-import { escapeTarget, pauseButtonShown } from "../ui/pause.ts";
+import { pauseButtonShown } from "../ui/pause.ts";
 import { createPauseButton } from "../ui/pauseButton.ts";
 import { createPauseCards, type PauseLabels, type PauseState } from "../ui/pauseCard.ts";
 import { createResourceCard } from "../ui/resourceCard.ts";
@@ -154,9 +154,9 @@ export interface Controls {
   setEnabled(enabled: boolean): void;
   // Shows the HUD settings button (the start screen); in play Settings opens from the Paused card.
   setSettingsButton(shown: boolean): void;
-  // Shows the start screen's Achievements button, immediately left of Settings.
+  // Shows the start screen's Achievements button.
   setAchievementsButton(shown: boolean): void;
-  // Shows the start screen's Exit, right of Settings, where the game offers to leave.
+  // Shows the start screen's Exit where the game offers to leave.
   setExitButton(shown: boolean): void;
   setPause(state: PauseState): void;
   // The status pill's shield and Stardust count.
@@ -195,7 +195,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const state = new ControlState();
   const desktop = new DesktopControlState(() => state.accepts());
   let enabled = true;
-  // Whether the Paused card opens here: in flight or on Ada's room page (PauseState.place).
+  // Whether the current gameplay view permits the Paused card (PauseState.place).
   let pausable = false;
   let disposed = false;
   let context: UseContext | undefined;
@@ -257,7 +257,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     onTravel: (destination) => options.pause.onTravel(destination),
     reducedMotion: () => reducedMotion,
   });
-  // The start screen's Achievements, a HUD disc button immediately left of Settings.
+  // The start screen's Achievements disc remains in the HUD.
   const achievements = createAchievementsCard(settings.root, {
     labels: options.achievements,
     onOpenChange: (open) => {
@@ -280,15 +280,10 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   achievementsDisc.setAttribute("aria-hidden", "true");
   achievementsButton.append(achievementsDisc);
   achievementsButton.addEventListener("click", () => achievements.open());
-  // Before Settings in the overlay, so the start screen tabs Achievements, then Settings.
-  const settingsDisc = settings.root.querySelector(".ada-settings-open");
-  if (settingsDisc) {
-    settingsDisc.before(achievementsButton);
-  } else {
-    settings.root.append(achievementsButton);
-  }
-  // The start screen's Exit, after Settings in the tab order and at the far top right; made only
-  // where the game offers to leave.
+  // Settings opens from the Paused card. Its standalone HUD position holds Achievements.
+  settings.openButton.replaceWith(achievementsButton);
+  settings.root.classList.add("ada-no-settings-button");
+  // The start screen's Exit follows Achievements, where the game offers to leave.
   const exitButton = options.exit ? document.createElement("button") : undefined;
   if (exitButton && options.exit) {
     const { label, onExit } = options.exit;
@@ -303,12 +298,11 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     exitDisc.setAttribute("aria-hidden", "true");
     exitButton.append(exitDisc);
     exitButton.addEventListener("click", onExit);
-    (settingsDisc ?? achievementsButton).after(exitButton);
+    achievementsButton.after(exitButton);
   }
   const pauseButton = createPauseButton(settings.root, options.pause.buttonLabel, () =>
     pause.open(),
   );
-  let settingsButton = true;
   const modalOpen = (): boolean =>
     settings.isOpen() ||
     cheats.isOpen() ||
@@ -635,13 +629,8 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     if (event.code === "Escape") {
       event.preventDefault();
       if (!event.repeat) {
-        if (!backStack.back()) {
-          const target = escapeTarget(pausable, settingsButton);
-          if (target === "pause") {
-            pause.open();
-          } else if (target === "settings") {
-            settings.open();
-          }
+        if (!backStack.back() && pausable) {
+          pause.open();
         }
       }
       return;
@@ -683,8 +672,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       (touchControlsActive(window, enabled, modalOpen()) ||
         (enabled && !modalOpen() && desktopBinding.touchActive()));
     pauseButton.hidden = !pauseButtonShown(coarsePointer(window), pausable, modalOpen());
-    // The pill shows in flight and hides with the pause button under a card; on desktop, where the
-    // pause button is hidden, it keeps its place.
+    // The pill remains beside Pause and hides under a card.
     status.setShown(enabled && !modalOpen());
     notices.update(performance.now(), enabled && !modalOpen(), noticePlaces());
     weapons.updateFeedback(performance.now(), enabled && !modalOpen());
@@ -861,10 +849,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       pausable = view.place !== null;
       pause.setState(view);
     },
-    setSettingsButton(shown) {
-      settingsButton = shown;
-      settings.openButton.hidden = !shown;
-      settings.root.classList.toggle("ada-no-settings-button", !shown);
+    setSettingsButton() {
+      settings.openButton.hidden = true;
+      settings.root.classList.add("ada-no-settings-button");
     },
     setStatus(view) {
       statusView = view;
