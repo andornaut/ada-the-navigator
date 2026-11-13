@@ -270,3 +270,9 @@ it("reads approved quest labels without supplying new player copy", () => {
   };
   expect(mapScreenLabels({ ...CONTENT.labels, ...approved })).toMatchObject(approved);
 });
+
+it("uses existing pagination copy without adding quest-specific player strings", () => {
+  expect(LABELS.previous).toBe(CONTENT.labels.previous);
+  expect(LABELS.next).toBe(CONTENT.labels.next);
+  expect(LABELS.page).toBe(CONTENT.labels.achievementsPage);
+});
