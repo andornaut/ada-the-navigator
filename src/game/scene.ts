@@ -13,6 +13,7 @@ import { createEdgeMarkerTracker } from "../model/edgeMarkers.ts";
 import { activeBeamFlashes, activeBlastFlashes, shipSpeedFraction } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { type GainSnapshot } from "../model/itemGains.ts";
+import { shipHeading } from "../model/nose.ts";
 import { projectileOpacity } from "../model/playerProjectiles.ts";
 import { type StoryNoses } from "../model/storyShips.ts";
 import type { FlightInput, Vec } from "../model/types.ts";
@@ -485,7 +486,7 @@ export class GameScene extends Scene {
     const state = this.model.state;
     this.feedback.advance(Math.min(milliseconds / 1000, 0.05));
     const wasInSpace = state.mode === "space";
-    const returnSource = wasInSpace && !this.jumping ? spaceJumpScene(this) : null;
+    const returnHeading = state.flight ? shipHeading(state.flight.facing) : null;
     this.flightLive =
       !this.jumping &&
       !this.settingsOpen &&
@@ -519,11 +520,8 @@ export class GameScene extends Scene {
     // Outcomes are already durable. Only the presentation waits over the last flight frame.
     if (
       !this.jumping &&
-      returnSource &&
-      this.emergencyReturn.begin(
-        returnedOnDepletion(wasInSpace, this.model.state, this.model.flightEvents),
-        returnSource,
-      )
+      returnedOnDepletion(wasInSpace, this.model.state, this.model.flightEvents) &&
+      this.emergencyReturn.begin(true, { ...spaceJumpScene(this), heading: returnHeading })
     ) {
       this.jumping = true;
       this.holdSource = true;

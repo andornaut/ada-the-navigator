@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { GameModel } from "../model/game.ts";
+import { shipHeading } from "../model/nose.ts";
 import { relaunch } from "../testing/launch.ts";
 import type { JumpPlay } from "../ui/jumpOverlay.ts";
 import { EmergencyReturn, returnedOnDepletion } from "./emergencyReturn.ts";
@@ -24,13 +25,18 @@ const updateCode = ts.transpileModule(
   `(function(time, milliseconds) ${method.body!.getText(source)})`,
   { compilerOptions: { target: ts.ScriptTarget.ES2023 } },
 ).outputText;
-const jumpSource = { center: { x: 360, y: 180 }, heading: 3, specks: [] };
+const jumpSource = {
+  center: { x: 360, y: 180 },
+  heading: shipHeading({ x: 1, y: 0 }),
+  specks: [{ x: 11, y: 22 }],
+};
 function setup(quantum = true) {
   const model = new GameModel(CONTENT);
   model.state.prologueSeen = true;
   model.startGalaxy(1);
   const flight = model.state.flight!;
   flight.objects = [];
+  flight.facing = { x: 1, y: 0 };
   flight.player = { x: 10000, y: 10000 };
   flight.cargo = 9;
   flight.shield = CONTENT.tuning.hazardDamage;
@@ -53,7 +59,7 @@ function setup(quantum = true) {
     draw: vi.fn(),
     emergencyReturn: new EmergencyReturn(),
     feedback: { advance: vi.fn() },
-    feedbackSound: { play: vi.fn<(play: JumpPlay) => void>() },
+    feedbackSound: { play: vi.fn() },
     flightClock: 0,
     holdSource: false,
     jumping: false,
@@ -67,6 +73,7 @@ function setup(quantum = true) {
   };
   const document = { hidden: false };
   const flushScene = vi.fn();
+  const snapshotSource = vi.fn(() => ({ ...jumpSource, heading: null }));
   const context = createContext({
     OVERNIGHT_SLEEP: { seconds: 1 },
     coverShip: vi.fn(),
@@ -82,7 +89,8 @@ function setup(quantum = true) {
     renderConversation: vi.fn(),
     returnedOnDepletion,
     screenToWorld: (v: unknown) => v,
-    spaceJumpScene: () => jumpSource,
+    shipHeading,
+    spaceJumpScene: snapshotSource,
     startRockBreaks: vi.fn(),
     startZips: vi.fn(),
   });
@@ -98,9 +106,34 @@ function setup(quantum = true) {
     },
     model,
     scene,
+    snapshotSource,
   };
 }
 describe("emergency return presentation", () => {
+  it("snapshots specks only for the confirmed return, never during ordinary flight or its held presentation", () => {
+    const { flight, frame, scene, snapshotSource } = setup();
+    const incoming = flight.shots[0]!;
+    flight.shots = [];
+    flight.shield = scene.model.shieldMax;
+    for (let i = 0; i < 80; i++) {
+      frame();
+    }
+    expect(scene.model.state.mode).toBe("space");
+    expect(snapshotSource).not.toHaveBeenCalled();
+    flight.shield = CONTENT.tuning.hazardDamage;
+    flight.shots = [incoming];
+    frame();
+    expect(scene.emergencyReturn.pending).toBe(true);
+    expect(snapshotSource).toHaveBeenCalledTimes(1);
+    for (let i = 0; i < 40; i++) {
+      frame();
+    }
+    expect(snapshotSource).toHaveBeenCalledTimes(1);
+    expect(scene.quantum!.play).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ source: jumpSource }),
+    );
+  });
+
   it("commits the real return once, freezes input, then plays the existing jump from the held heading", () => {
     const { flight, frame, model, scene } = setup();
     frame();
