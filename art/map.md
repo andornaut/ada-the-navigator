@@ -338,13 +338,14 @@ indicator.
   chip at `(x, y)`: tip `(x, y - 23)` (`objective.tip`), base corners
   `(x ± 5, y - 36)`, circle radius 3 at `(x, y - 44)`. The lavender stroke
   draws over the ink stroke on every field.
-- Ada's arrow, in a 28 box with its nose toward +x: hull
-  `M24.5 14 L5.5 4.2 L9.6 14 L5.5 23.8 Z` in white `#ffffff` over its ink
-  keyline, and a canopy ellipse at (15.2, 14), radii 4.2 and 2.7, in
-  `shipHardpoint` `#70ACE8` with a 0.8 ink stroke. It rotates about the box
-  centre to her heading on the map, continuously (not snapped to the ship's
-  32 headings): the screen angle of her projected facing,
-  `atan2((fx + fy) / 2, fx - fy)`.
+- Ada uses Classic's canonical `ship-{0..31}.svg` frames, selected by the
+  existing `shipHeading` helper. The 28 logical pixel wrapper stays centred
+  on her map position at the frame's centre pivot, independent of map zoom.
+  The frames already include the heading's projection, with no additional
+  CSS rotation. All 32 frames decode eagerly and stay cached; a pending or
+  failed heading retains the last decoded frame. The image alpha supplies
+  the ink drop-shadow keyline using the existing `MAP_SYMBOL.ada.keyline`
+  and `MAP_COLORS.ink`, without separate hull or canopy geometry.
 - Ada is not a press target.
 
 Draw order, bottom to top: field, fog, the search area, landmark chips, other chips, the
