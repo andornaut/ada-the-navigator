@@ -646,6 +646,7 @@ export function restoreSave(saved: unknown): GameState | null {
         !chartedIds(id as GalaxyNumber, p.charted) ||
         !revealedProjects(id as GalaxyNumber, p.donated, p.revealed) ||
         !validExplored(CONTENT.tuning.chunkSize, p.explored) ||
+        (p.activityCompleted !== undefined && typeof p.activityCompleted !== "boolean") ||
         (p.guides !== undefined && !(Number.isSafeInteger(p.guides) && nonnegative(p.guides))) ||
         (p.replayScene !== undefined &&
           !(

@@ -175,6 +175,8 @@ export interface FlightState {
   nextId: number;
 }
 export interface GalaxyProgress {
+  /** At least one repeatable activity completed here, for this galaxy's finale ally. */
+  activityCompleted?: boolean;
   stage: number;
   introduced: boolean;
   questComplete: boolean;

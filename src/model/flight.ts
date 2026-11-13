@@ -1554,8 +1554,24 @@ export function ensureDestination(
       }
     }
   }
-  generate(content, target, flight);
-  const object: SpaceObject = { ...target, hp: 1, id, kind: "destination", radius: 30, role: id };
+  return ensureDestinationAt(content, id, target, flight);
+}
+
+/** A seeded chapter site uses the same destination creation and safe-area clearance as exploration. */
+export function ensureDestinationAt(
+  content: GameContent,
+  id: string,
+  point: Vec,
+  flight: FlightState,
+): SpaceObject {
+  const existing = flight.objects.find(
+    (object) => object.kind === "destination" && object.id === id,
+  );
+  if (existing) {
+    return existing;
+  }
+  generate(content, point, flight);
+  const object: SpaceObject = { ...point, hp: 1, id, kind: "destination", radius: 30, role: id };
   flight.objects.push(object);
   // A destination's safe area holds no layout object or drift path from earlier chunks.
   clearLayoutObjects(

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { spawnChapterEnemy, syncFlightRegion } from "./flight.ts";
+import { ensureDestinationAt, spawnChapterEnemy, syncFlightRegion } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { recordObjectRemoval } from "./geography.ts";
 
@@ -16,6 +16,29 @@ function launched() {
 }
 
 describe("required chapter encounters", () => {
+  it("keeps an explicit seeded site at its supplied point and clears unsafe enemy shots", () => {
+    const flight = launched();
+    const point = { x: 10000, y: 10000 };
+    flight.shots = [
+      {
+        ...point,
+        damage: 1,
+        enemy: true,
+        hitIds: [],
+        id: "unsafe",
+        life: 1,
+        piercing: false,
+        velocity: { x: 0, y: 0 },
+      },
+    ];
+    const site = ensureDestinationAt(CONTENT, "settlement:0,0", point, flight);
+    expect(site).toMatchObject({ ...point, id: "settlement:0,0", kind: "destination" });
+    expect(flight.shots).toEqual([]);
+    expect(ensureDestinationAt(CONTENT, site.id, { x: 0, y: 0 }, flight)).toBe(site);
+    expect(site).toMatchObject(point);
+    expect(flight.objects.filter((o) => o.id === site.id)).toHaveLength(1);
+  });
+
   it("registers a canonical persistent enemy and counts its pack member only once", () => {
     const flight = launched();
     const options = { home: { x: 20, y: 30 }, packId: "chapter:pack", routeId: "chapter:site" };

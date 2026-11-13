@@ -54,6 +54,7 @@ import {
   dropActivity,
   heldActivity,
   placeActivity,
+  resetCourier,
   supplyTerms,
 } from "./activities.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
@@ -1187,7 +1188,14 @@ export class GameModel {
    */
   resetActivity(galaxy: GalaxyNumber): void {
     const f = this.state.flight;
-    if (f?.galaxy === galaxy && heldActivity(galaxy, this.state)?.id === "guideCalf") {
+    const held = heldActivity(galaxy, this.state);
+    if (held?.id === "courierRun") {
+      resetCourier(held);
+    }
+    if (held?.id === "threadNeedle") {
+      held.lit = 0;
+    }
+    if (f?.galaxy === galaxy && held?.id === "guideCalf") {
       delete f.calf;
     }
   }
@@ -1202,6 +1210,7 @@ export class GameModel {
     if (!reward) {
       return;
     }
+    this.state.progress[galaxy].activityCompleted = true;
     this.state.economy.stardust += reward;
     this.notify(fill(this.label("jobComplete"), { amount: reward }));
     this.recordAchievement({ kind: "activityCompleted" });
