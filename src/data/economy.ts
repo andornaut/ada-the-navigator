@@ -16,7 +16,6 @@ export interface LeveledValue {
 export interface PaintScheme {
   /** Player string key for the scheme's name. */
   label: string;
-  price: number;
   /** The scheme's top colour, Art's `top` in ship-paint.json, which rims its item notice. */
   top: string;
 }
@@ -46,9 +45,7 @@ export interface EconomyCatalog {
    * each weapon's within Weapons. A category or weapon with nothing left leaves the pool.
    */
   upgradeDropWeights: {
-    readonly categories: Readonly<
-      Record<"engine" | "paint" | "shield" | "tractor" | "weapons", number>
-    >;
+    readonly categories: Readonly<Record<"engine" | "shield" | "tractor" | "weapons", number>>;
     readonly weapons: Readonly<Record<Weapon, number>>;
   };
   /**
@@ -89,6 +86,8 @@ export interface EconomyCatalog {
    * tuning's own. The recharge delay is the same at every level.
    */
   shieldLevels: Readonly<Record<"capacity" | "fill", readonly [number, number]>>;
+  /** Maximum-capacity fraction funded per whole ore and the ore-free recharge floor. */
+  shieldRecharge: Readonly<{ capacityPerOre: number; freeCapacity: number }>;
   /** Multipliers on the base value at levels 1, 2 and 3. */
   effects: Readonly<Record<"engineSeconds", readonly [number, number, number]>>;
   tractorRadius: LeveledValue;
@@ -96,6 +95,8 @@ export interface EconomyCatalog {
   paints: Readonly<Record<string, PaintScheme>>;
   /** Paint schemes in shop order, as Art's ship-paint.json lists them. */
   paintOrder: readonly string[];
+  /** Paid schemes by purchase order; Classic never advances it. */
+  paintPrices: readonly number[];
   /** The free starting scheme, always owned. */
   defaultPaint: string;
   /** Stardust in a discovery cache. */
@@ -256,12 +257,13 @@ export const ECONOMY: EconomyCatalog = {
     turnSeconds: [0.14, 0.12],
   },
   paintOrder: ["classic", "cobalt", "seafoam", "graphite", "iris"],
+  paintPrices: [1500, 2000, 2500, 3000],
   paints: {
-    classic: { label: "paintClassic", price: 0, top: "#ffffff" },
-    cobalt: { label: "paintCobalt", price: 75, top: "#6f9ff0" },
-    graphite: { label: "paintGraphite", price: 75, top: "#aab2c4" },
-    iris: { label: "paintIris", price: 75, top: "#d9ccff" },
-    seafoam: { label: "paintSeafoam", price: 75, top: "#d4f6ea" },
+    classic: { label: "paintClassic", top: "#ffffff" },
+    cobalt: { label: "paintCobalt", top: "#6f9ff0" },
+    graphite: { label: "paintGraphite", top: "#aab2c4" },
+    iris: { label: "paintIris", top: "#d9ccff" },
+    seafoam: { label: "paintSeafoam", top: "#d4f6ea" },
   },
   pickupCap: {
     capital: 24,
@@ -275,9 +277,10 @@ export const ECONOMY: EconomyCatalog = {
   // A destroyed asteroid or ore rock bursts with 10 extra Stardust 2% of the time
   // (gameplay/economy.md "Earning Stardust").
   rockBurst: { chance: 0.02, stardust: 10 },
-  // Shield levels 2 and 3: capacity 15 then 20 HP, recharge delay 15 then 10 s, empty to
-  // full in 45 then 30 s (gameplay/economy.md).
+  // Shield levels 2 and 3: capacity 15 then 20 HP, empty to full in 45 then 30 s.
+  // Every level waits 30 s after damage (gameplay/economy.md).
   shieldLevels: { capacity: [15, 20], fill: [45, 30] },
+  shieldRecharge: { capacityPerOre: 0.01, freeCapacity: 0.1 },
   stardustPickupRadius: 5,
   station: {
     cellSize: 12000,
@@ -300,7 +303,7 @@ export const ECONOMY: EconomyCatalog = {
   tractorSpeed: { base: 120, levels: [160, 200] },
   upgradeDropChance: { heavy: 0.1, small: 0.0025 },
   upgradeDropWeights: {
-    categories: { engine: 1, paint: 1 / 20, shield: 1, tractor: 1, weapons: 1 },
+    categories: { engine: 1, shield: 1, tractor: 1, weapons: 1 },
     // Each weapon half as likely as the one before it in weapon order.
     weapons: {
       heavyMissile: 8,

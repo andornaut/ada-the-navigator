@@ -107,12 +107,15 @@ export function shopRow(catalog: EconomyCatalog, economy: EconomyState, item: Sh
   if (item.kind === "paint") {
     const scheme = catalog.paints[item.scheme];
     const owned = economy.paints.includes(item.scheme) || item.scheme === catalog.defaultPaint;
+    const purchased = catalog.paintOrder.filter(
+      (id) => id !== catalog.defaultPaint && economy.paints.includes(id),
+    ).length;
     return {
       inUse: economy.paint === item.scheme,
       item,
       level: null,
       owned,
-      price: owned || !scheme ? null : scheme.price,
+      price: owned || !scheme ? null : (catalog.paintPrices[purchased] ?? null),
     };
   }
   return { inUse: false, item, level: null, owned: false, price: null };

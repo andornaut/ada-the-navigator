@@ -403,9 +403,21 @@ function upgradeLevels(value: unknown): value is UpgradeLevels {
   );
 }
 
+/** Optional prototype fields preserve ordinary saves without a migration. */
+function rechargeState(value: Record<string, unknown>): boolean {
+  return (
+    (value.shieldRechargeCredit === undefined ||
+      (nonnegative(value.shieldRechargeCredit) &&
+        (value.shieldRechargeCredit as number) <= ECONOMY.shieldRecharge.capacityPerOre)) &&
+    (value.shieldOreSpent === undefined ||
+      (Number.isSafeInteger(value.shieldOreSpent) && nonnegative(value.shieldOreSpent)))
+  );
+}
+
 function economyState(value: unknown): value is EconomyState {
   return (
     record(value) &&
+    rechargeState(value) &&
     Number.isSafeInteger(value.stardust) &&
     nonnegative(value.stardust) &&
     Object.hasOwn(WEAPON_CATALOG, String(value.weapon)) &&
@@ -665,6 +677,8 @@ export function restoreSave(saved: unknown): GameState | null {
           "nextId",
           "weaponSwitchFor",
         ].every((k) => nonnegative(f[k])) ||
+        !rechargeState(f) ||
+        !Number.isSafeInteger(f.cargo) ||
         !ammoCounts(f.ammo) ||
         (f.lastBump !== undefined && !Number.isFinite(f.lastBump)) ||
         (f.tow !== undefined && !vector(f.tow)) ||

@@ -35,7 +35,9 @@ import {
 } from "./drops.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { createFlight, pickupTouched, stepFlight } from "./flight.ts";
+import { GameModel } from "./game.ts";
 import { HUNT_GLINT, pickupOutline } from "./pickupBody.ts";
+import { restoreSave } from "./save.ts";
 import { shipBody } from "./shipBody.ts";
 import {
   buy,
@@ -946,6 +948,7 @@ describe("upgrade effects", () => {
     value.objects = [];
     expect(value.shield).toBe(15);
     value.shield = 5;
+    value.cargo = 100;
     value.sinceDamage = 0;
     // Level 2 waits 30 s, as every level does, then refills 15 HP in 45 s.
     stepFlight(CONTENT, 30 - 0.05, idle, value);
@@ -1156,21 +1159,21 @@ describe("shop purchases", () => {
     ).toEqual({ kind: "refused", reason: "notForSale" });
   });
 
-  it("sells four paint schemes at 75 and keeps Classic free, owned and in use", () => {
-    const economy = rich(110);
+  it("starts every paid paint at 1500 and keeps Classic free, owned and in use", () => {
+    const economy = rich(1535);
     const paints = () =>
       shopRows(ECONOMY, economy, PHANTOM, "ship").filter((row) => row.item.kind === "paint");
     expect(paints().map((row) => [row.item, row.owned, row.inUse, row.price])).toEqual([
       [{ kind: "paint", scheme: "classic" }, true, true, null],
-      [{ kind: "paint", scheme: "cobalt" }, false, false, 75],
-      [{ kind: "paint", scheme: "seafoam" }, false, false, 75],
-      [{ kind: "paint", scheme: "graphite" }, false, false, 75],
-      [{ kind: "paint", scheme: "iris" }, false, false, 75],
+      [{ kind: "paint", scheme: "cobalt" }, false, false, 1500],
+      [{ kind: "paint", scheme: "seafoam" }, false, false, 1500],
+      [{ kind: "paint", scheme: "graphite" }, false, false, 1500],
+      [{ kind: "paint", scheme: "iris" }, false, false, 1500],
     ]);
     expect(selectPaint(ECONOMY, "cobalt", economy)).toBe(false);
     expect(buy(ECONOMY, { kind: "paint", scheme: "cobalt" }, economy)).toEqual({
       kind: "bought",
-      price: 75,
+      price: 1500,
     });
     expect(economy).toMatchObject({ paint: "cobalt", paints: ["classic", "cobalt"], stardust: 35 });
     expect(paints()[0]).toMatchObject({ inUse: false, owned: true });
@@ -1178,6 +1181,64 @@ describe("shop purchases", () => {
     // An owned scheme goes into use at once, with no purchase.
     expect(selectPaint(ECONOMY, "classic", economy)).toBe(true);
     expect(economy).toMatchObject({ paint: "classic", stardust: 35 });
+  });
+
+  it.each([
+    ["iris", "cobalt", "graphite", "seafoam"],
+    ["seafoam", "graphite", "cobalt", "iris"],
+  ])("prices paint by purchase order beginning with %s across saves", (...order) => {
+    const model = new GameModel(CONTENT);
+    model.state.economy.stardust = 9000;
+    for (const [index, scheme] of order.entries()) {
+      const economy = model.state.economy;
+      const price = [1500, 2000, 2500, 3000][index]!;
+      for (const unowned of order.slice(index)) {
+        expect(shopRow(ECONOMY, economy, { kind: "paint", scheme: unowned }).price).toBe(price);
+      }
+      expect(requestPurchase(ECONOMY, economy, { kind: "paint", scheme })).toEqual({
+        kind: "confirm",
+        left: economy.stardust - price,
+        price,
+      });
+      expect(buy(ECONOMY, { kind: "paint", scheme }, economy)).toEqual({ kind: "bought", price });
+      expect(selectPaint(ECONOMY, "classic", economy)).toBe(true);
+      expect(buy(ECONOMY, { kind: "paint", scheme: "classic" }, economy)).toEqual({
+        kind: "refused",
+        reason: "notForSale",
+      });
+      const restored = restoreSave(model.save());
+      expect(restored).not.toBeNull();
+      expect(restored!.economy).toEqual(economy);
+      model.state.economy = restored!.economy;
+    }
+    expect(model.state.economy.stardust).toBe(0);
+    expect(
+      shopRows(ECONOMY, model.state.economy, PHANTOM, "ship")
+        .filter(({ item }) => item.kind === "paint")
+        .every(({ owned, price }) => owned && price === null),
+    ).toBe(true);
+  });
+
+  it("rechecks the current paint price and refuses insufficient funds without advancing order", () => {
+    const economy = rich(3499);
+    expect(requestPurchase(ECONOMY, economy, { kind: "paint", scheme: "iris" })).toMatchObject({
+      price: 1500,
+    });
+    expect(buy(ECONOMY, { kind: "paint", scheme: "cobalt" }, economy)).toMatchObject({
+      kind: "bought",
+      price: 1500,
+    });
+    const before = structuredClone(economy);
+    expect(buy(ECONOMY, { kind: "paint", scheme: "iris" }, economy)).toEqual({
+      kind: "refused",
+      reason: "cantAfford",
+    });
+    expect(economy).toEqual(before);
+    economy.stardust++;
+    expect(buy(ECONOMY, { kind: "paint", scheme: "iris" }, economy)).toMatchObject({
+      kind: "bought",
+      price: 2000,
+    });
   });
 
   it("sets each row's tap behaviour from ownership, use and the balance", () => {
@@ -1200,9 +1261,9 @@ describe("shop purchases", () => {
       "forSale",
       "forSale",
       "inUse",
-      "forSale",
-      "forSale",
-      "forSale",
+      "unaffordable",
+      "unaffordable",
+      "unaffordable",
       "selectable",
     ]);
     economy.stardust = 40;

@@ -132,6 +132,7 @@ import {
   worldChanges,
 } from "./projects.ts";
 import { restoreSave, SAVE_VERSION } from "./save.ts";
+import { canRechargeShield } from "./shieldRecharge.ts";
 import {
   buy,
   fill,
@@ -671,11 +672,7 @@ export class GameModel {
       return false;
     }
     const ship = shipTuning(ECONOMY, this.content, flight.levels);
-    return (
-      flight.shield > 0 &&
-      flight.shield < ship.shieldMax &&
-      flight.sinceDamage >= ship.shieldRechargeDelay
-    );
+    return canRechargeShield(ship, flight) && flight.sinceDamage >= ship.shieldRechargeDelay;
   }
   /** During a flight its loadout is authoritative; the economy mirrors it. */
   private pullLoadout(): void {
@@ -693,6 +690,12 @@ export class GameModel {
       economy.weapon = "laser";
     }
     economy.levels = structuredClone(flight.levels);
+    if (flight.shieldRechargeCredit !== undefined) {
+      economy.shieldRechargeCredit = flight.shieldRechargeCredit;
+    }
+    if (flight.shieldOreSpent !== undefined) {
+      economy.shieldOreSpent = flight.shieldOreSpent;
+    }
     // A granted weapon's flight ammunition stays out of the economy.
     for (const weapon of UPGRADE_WEAPONS) {
       if (!flight.grantedWeapons?.includes(weapon)) {

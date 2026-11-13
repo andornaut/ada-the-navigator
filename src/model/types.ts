@@ -137,6 +137,10 @@ export interface FlightState {
   facing: Vec;
   shield: number;
   sinceDamage: number;
+  /** Unused paid recharge as a fraction of maximum capacity, at most 0.01. */
+  shieldRechargeCredit?: number;
+  /** Cumulative whole ore paid for recharge, including credit not consumed yet. */
+  shieldOreSpent?: number;
   /** Flight time of the last scenery bump that dealt damage (rules.md "bump damage"). */
   lastBump?: number;
   /** Seconds Ada has been in danger without a break (rules.md), 0 outside danger. */
@@ -306,6 +310,9 @@ export interface EconomyState {
   paint: string;
   /** Undeposited ore kept aboard between flights, carried to any galaxy; absent with none. */
   cargo?: number;
+  /** Paid shield credit and ore spending retained between flights. */
+  shieldRechargeCredit?: number;
+  shieldOreSpent?: number;
 }
 export interface DialogueChoice {
   id: string;
@@ -352,6 +359,8 @@ export type FlightEvent =
   /** The equipped weapon ran out of ammunition and Ada switched to Laser. */
   | { type: "outOfAmmo" }
   | { type: "stardust"; amount: number }
+  /** Actual ore paid this step and its persisted cumulative total, for each ten-ore HUD tick. */
+  | { type: "shieldOreSpent"; amount: number; total: number }
   | { type: "stationDiscovered"; id: string }
   | { type: "enemyDestroyed" }
   /** Ada collected an upgrade pickup. */

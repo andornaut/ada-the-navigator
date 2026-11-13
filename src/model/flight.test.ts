@@ -122,6 +122,7 @@ describe("flight boundaries", () => {
     const hit = CONTENT.tuning.shieldMax - BUMP_DAMAGE.amount - 2 * CONTENT.tuning.hazardDamage;
     expect(flight.shield).toBe(hit);
     flight.objects = [];
+    flight.cargo = 100;
     stepFlight(CONTENT, CONTENT.tuning.shieldRechargeDelay + 1, idle, flight);
     expect(flight.shield).toBeGreaterThan(hit);
   });
@@ -706,6 +707,7 @@ describe("shield in battle", () => {
   it("keeps recharging beside an attacker until damage restarts the delay", () => {
     const flight = withEnemy({ x: 300, y: 0 }, {});
     flight.shield = 4;
+    flight.cargo = 100;
     flight.sinceDamage = CONTENT.tuning.shieldRechargeDelay;
     // Battle alone never holds the recharge: with its shots cleared before they land, the
     // shield refills 10 HP over 60 seconds beside the attacker.

@@ -51,17 +51,17 @@ function maxed(): EconomyState {
 }
 
 describe("upgrade drop selection", () => {
-  it("weighs Weapons, Shield, Engine tuning and Tractor beam equally and Paint at 1/20", () => {
+  it("weighs Weapons, Shield, Engine tuning and Tractor beam equally, with paint excluded", () => {
     const share = shares(newEconomy(ECONOMY));
     const category = (prefix: string) =>
       [...share]
         .filter(([key]) => key.startsWith(prefix))
         .reduce((sum, [, value]) => sum + value, 0);
-    const total = 4 + 1 / 20;
+    const total = 4;
     for (const prefix of ["weapons:", "track:shield", "track:engine", "track:tractor"]) {
       expect(Math.abs(category(prefix) - 1 / total)).toBeLessThan(0.01);
     }
-    expect(Math.abs(category("paint") - 1 / 20 / total)).toBeLessThan(0.003);
+    expect(category("paint")).toBe(0);
   });
 
   it("gives each weapon's next step at 64, 32, 16, 8, 4 and 2 in weapon order", () => {
@@ -114,10 +114,10 @@ describe("upgrade drop selection", () => {
     expect(share.has("track:engine")).toBe(false);
     expect(share.has("weapons:laser")).toBe(false);
     expect(share.has("weapons:multiLaser")).toBe(false);
-    // Weapons and Tractor beam at 1 each and Paint at 1/20.
-    const total = 2 + 1 / 20;
+    // Weapons and Tractor beam keep equal weights.
+    const total = 2;
     expect(Math.abs((share.get("track:tractor") ?? 0) - 1 / total)).toBeLessThan(0.01);
-    expect(Math.abs((share.get("paint") ?? 0) - 1 / 20 / total)).toBeLessThan(0.003);
+    expect(share.has("paint")).toBe(false);
     // Rapid Missile 16, Heavy Missile 8, Scattershot 4 and Phaser 2 of the Weapons share.
     const rapid = share.get("weapons:rapidMissile") ?? 0;
     expect(Math.abs(rapid / (1 / total) - 16 / 30)).toBeLessThan(0.02);
@@ -140,16 +140,14 @@ describe("upgrade drop selection", () => {
     }
   });
 
-  it("gives an unowned paint scheme once only Paint is left, owned but not put in use", () => {
+  it("falls back to ammo even while every paid paint is unowned", () => {
     const economy = maxed();
     for (let index = 0; index < 200; index++) {
-      const gift = chooseUpgrade(ECONOMY, economy, PHANTOM, dropRandom(2, `p:${index}`));
-      expect(gift?.kind).toBe("paint");
+      expect(chooseUpgrade(ECONOMY, economy, PHANTOM, dropRandom(2, `p:${index}`))?.kind).toBe(
+        "ammo",
+      );
     }
-    const gift = chooseUpgrade(ECONOMY, economy, PHANTOM, dropRandom(2, "p:0"))!;
-    applyUpgrade(ECONOMY, gift, economy);
-    expect(economy.paints).toHaveLength(2);
-    expect(economy.paint).toBe(ECONOMY.defaultPaint);
+    expect(economy.paints).toEqual([ECONOMY.defaultPaint]);
   });
 
   it("falls back to one ammunition pack for an owned weapon by the ammo pack weights", () => {
@@ -193,7 +191,7 @@ describe("upgrade drop selection", () => {
     );
   });
 
-  it("applies one level, a weapon with three packs, a paint scheme or one pack", () => {
+  it("applies one level, a weapon with three packs or one pack", () => {
     const economy = newEconomy(ECONOMY);
     applyUpgrade(ECONOMY, { kind: "weapon", weapon: "heavyMissile" }, economy);
     expect(economy.ownedWeapons).toEqual(["heavyMissile"]);
@@ -202,8 +200,6 @@ describe("upgrade drop selection", () => {
     expect(economy.levels.shield).toBe(2);
     applyUpgrade(ECONOMY, { kind: "weaponLevel", level: 2, weapon: "laser" }, economy);
     expect(economy.levels.weapons.laser).toBe(2);
-    applyUpgrade(ECONOMY, { kind: "paint", scheme: "cobalt" }, economy);
-    expect(economy.paints).toContain("cobalt");
     applyUpgrade(ECONOMY, { kind: "ammo", weapon: "heavyMissile" }, economy);
     expect(economy.ammo.heavyMissile).toBe(4 * ECONOMY.ammo.pack.heavyMissile);
   });

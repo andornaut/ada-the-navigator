@@ -52,13 +52,12 @@ describe("shop rows on the station view", () => {
     }
   });
 
-  it("matches Art's paint schemes, ids and prices", () => {
+  it("matches Art's paint schemes, ids and colours", () => {
     const art = JSON.parse(readFileSync(publicFile("/art/ship-paint.json"), "utf8")) as {
-      schemes: readonly { id: string; name: string; price: number; top: string }[];
+      schemes: readonly { id: string; name: string; top: string }[];
     };
     expect(art.schemes.map(({ id }) => id)).toEqual(ECONOMY.paintOrder);
     for (const scheme of art.schemes) {
-      expect(ECONOMY.paints[scheme.id]?.price).toBe(scheme.price);
       expect(ECONOMY.paints[scheme.id]?.top).toBe(scheme.top);
       expect(CONTENT.labels[ECONOMY.paints[scheme.id]!.label]).toBe(scheme.name);
     }
@@ -80,10 +79,10 @@ describe("shop rows on the station view", () => {
     expect(rows[2]).toMatchObject({ name: "Tractor beam", price: 120, state: "forSale" });
     expect(rows.slice(3).map((row) => [row.group, row.name, row.state])).toEqual([
       ["paint", "Classic", "inUse"],
-      ["paint", "Cobalt", "forSale"],
-      ["paint", "Seafoam", "forSale"],
-      ["paint", "Graphite", "forSale"],
-      ["paint", "Iris", "forSale"],
+      ["paint", "Cobalt", "unaffordable"],
+      ["paint", "Seafoam", "unaffordable"],
+      ["paint", "Graphite", "unaffordable"],
+      ["paint", "Iris", "unaffordable"],
     ]);
   });
 });

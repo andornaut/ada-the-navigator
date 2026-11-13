@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
+import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { ORE_FIELD_LAYOUTS, oreFieldLayout } from "../data/oreFieldLayouts.ts";
 import { RESOURCE_ROCKS } from "../data/resourceRocks.ts";
@@ -34,6 +35,21 @@ const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
 describe("ore fields", () => {
   const fields = grid(2, 12);
+
+  it.each(GALAXY_NUMBERS)(
+    "galaxy %i supplies ordinary ore rocks without changing Cartwheel's fields",
+    (galaxy) => {
+      const flight = createFlight(CONTENT, galaxy, 7, { known: [] });
+      const rocks = flight.objects.filter(
+        (object) => object.kind === "resource" && !object.id.startsWith("ore:"),
+      );
+      expect(rocks.length).toBeGreaterThan(0);
+      for (const rock of rocks) {
+        expect(rock.resource === "medium" || rock.resource === "large").toBe(true);
+        expect(rock.hp).toBe(RESOURCE_ROCKS.classes[rock.resource!].hp);
+      }
+    },
+  );
 
   it("are seeded in Cartwheel only, the same on every call", () => {
     expect(fields.length).toBeGreaterThan(200);

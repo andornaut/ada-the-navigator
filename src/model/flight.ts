@@ -97,6 +97,7 @@ import { nosePoint } from "./nose.ts";
 import { clearOfOreFields, oreFieldsNear } from "./oreFields.ts";
 import { pickupOutline } from "./pickupBody.ts";
 import { planPlayerVolley, projectileReach } from "./playerProjectiles.ts";
+import { rechargeShield } from "./shieldRecharge.ts";
 import { shipBody, shipCircleContact, shipNearSegment, shipTouches } from "./shipBody.ts";
 import { direction, speedFraction, stepShipMotion, turnToward } from "./shipPhysics.ts";
 import { HUB_STATION, stationById, stationsNear } from "./stations.ts";
@@ -1510,7 +1511,16 @@ export function placeDestinationAhead(
   return existing;
 }
 
-export type Loadout = Pick<EconomyState, "ammo" | "cargo" | "levels" | "ownedWeapons" | "weapon">;
+export type Loadout = Pick<
+  EconomyState,
+  | "ammo"
+  | "cargo"
+  | "levels"
+  | "ownedWeapons"
+  | "weapon"
+  | "shieldRechargeCredit"
+  | "shieldOreSpent"
+>;
 
 export function createFlight(
   content: GameContent,
@@ -1528,6 +1538,10 @@ export function createFlight(
   const flight: FlightState = {
     ammo: { ...loadout.ammo },
     cargo: loadout.cargo ?? 0,
+    ...(loadout.shieldRechargeCredit === undefined
+      ? {}
+      : { shieldRechargeCredit: loadout.shieldRechargeCredit }),
+    ...(loadout.shieldOreSpent === undefined ? {} : { shieldOreSpent: loadout.shieldOreSpent }),
     chunks: [],
     dangerFor: 0,
     facing: { x: 0, y: -1 },
@@ -3194,6 +3208,7 @@ export function stepFlight(
   // Settle capitals that the region sync just paged in from dormant chunks.
   settleResumedCapitals(content, flight);
   const ship = shipTuning(ECONOMY, content, flight.levels);
+  const oreBefore = flight.shieldOreSpent ?? 0;
   let remaining = dt;
   while (remaining > 1e-9 && flight.shield > 0) {
     const slice = Math.min(remaining, 1 / 60);
@@ -3267,12 +3282,14 @@ export function stepFlight(
     // Snap the switch wait to zero within float error of its end.
     const wait = flight.weaponSwitchFor - slice;
     flight.weaponSwitchFor = wait > 1e-9 ? wait : 0;
-    if (flight.sinceDamage >= ship.shieldRechargeDelay) {
-      flight.shield = Math.min(ship.shieldMax, flight.shield + ship.shieldRechargeRate * slice);
-    }
+    rechargeShield(ship, slice, flight);
     if (flight.shield <= 0) {
       events.push({ type: "depleted" });
     }
+  }
+  const orePaid = (flight.shieldOreSpent ?? 0) - oreBefore;
+  if (orePaid > 0) {
+    events.push({ amount: orePaid, total: flight.shieldOreSpent!, type: "shieldOreSpent" });
   }
   syncFlightRegion(content, flight);
   releaseSummonedGuards(input.viewportWidth ?? SCREEN.width, flight);

@@ -18,11 +18,6 @@ export type UpgradeGift =
   | { kind: "paint"; scheme: string }
   | { kind: "ammo"; weapon: UpgradeWeapon };
 
-/** One of `items` at random, by `next` in [0, 1). */
-function pick<T>(next: () => number, items: readonly T[]): T {
-  return items[Math.min(items.length - 1, Math.floor(next() * items.length))]!;
-}
-
 /** One of `entries` by weight, by `next` in [0, 1); every weight is positive. */
 function weighted<T>(next: () => number, entries: readonly (readonly [T, number])[]): T {
   const total = entries.reduce((sum, [, weight]) => sum + weight, 0);
@@ -39,7 +34,7 @@ function weighted<T>(next: () => number, entries: readonly (readonly [T, number]
 /**
  * The gift an upgrade drop gives in the galaxy at route `position` (gameplay/economy.md "Earning
  * Stardust", "Weapon unlocks"): a category by its weight (Weapons, Shield, Engine tuning, Tractor
- * beam and Paint), then an item within it, Weapons among Laser and the galaxy's unlocked weapons.
+ * beam), then an item within it, Weapons among Laser and the galaxy's unlocked weapons.
  * Weapons gives one weapon's next step by the weapon's weight: the weapon itself if Ada does not
  * own it, else its next level. A category or weapon with nothing left leaves the pool and the
  * rest keep their relative weights; with nothing left, one pack as an ammo pack pickup gives
@@ -62,9 +57,6 @@ export function chooseUpgrade(
   );
   const tracks = SHIP_TRACKS.filter(
     (track) => economy.levels[track] < catalog.trackPrices[track].length + 1,
-  );
-  const paints = catalog.paintOrder.filter(
-    (scheme) => scheme !== catalog.defaultPaint && !economy.paints.includes(scheme),
   );
   const pool: (readonly [() => UpgradeGift, number])[] = [
     ...(steps.length
@@ -94,14 +86,6 @@ export function chooseUpgrade(
           categories[track],
         ] as const,
     ),
-    ...(paints.length
-      ? [
-          [
-            () => ({ kind: "paint", scheme: pick(next, paints) }) as const,
-            categories.paint,
-          ] as const,
-        ]
-      : []),
   ];
   if (pool.length) {
     return weighted(next, pool)();
