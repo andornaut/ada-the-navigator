@@ -170,27 +170,29 @@ describe("flight boundaries", () => {
   it("clears consecutive targets with nonpiercing bolts and releases cargo from destroyed resource rocks", () => {
     const flight = empty();
     flight.player = { x: 100, y: 100 };
+    // A disabled platform isolates player bolts from retreat steering and hostile fire.
+    const target = createEnemy(
+      enemyDefinition(1, "platform"),
+      { archetype: "platform", id: "enemy", packId: null, phase: 0 },
+      { x: 220, y: 100 },
+    );
+    target.disabled = true;
+    target.hardpoints.forEach((part) => {
+      part.hp = 0;
+    });
+    target.hp = 1;
     flight.objects = [
       { hp: 1, id: "debris", kind: "debris", radius: 10, x: 130, y: 100 },
       {
-        // Facing along the firing line, it starts moving along it rather than off it.
-        enemy: {
-          ...createEnemy(
-            enemyCatalog.fighter,
-            { archetype: "fighter", id: "enemy", packId: null, phase: 0 },
-            { x: 160, y: 100 },
-          ),
-          facing: { x: 1, y: 0 },
-          hp: 1,
-        },
+        enemy: target,
         hp: 1,
         id: "enemy",
         kind: "enemy",
-        radius: 10,
-        x: 160,
+        radius: enemyCatalog.platform.sizeRatio * CONTENT.tuning.flight.shipRadius,
+        x: 220,
         y: 100,
       },
-      { hp: 1, id: "resource", kind: "resource", radius: 10, x: 190, y: 100 },
+      { hp: 1, id: "resource", kind: "resource", radius: 10, x: 310, y: 100 },
     ];
     flight.weapon = "laser";
     const events = stepFlight(CONTENT, 1.5, { ...idle, aim: { x: 1, y: 0 } }, flight);
