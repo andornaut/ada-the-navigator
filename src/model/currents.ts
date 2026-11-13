@@ -1,8 +1,24 @@
 import { ECONOMY } from "../data/economy.ts";
 import { CURRENTS } from "../data/galaxyFeatures.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import { stationsNear } from "./stations.ts";
+import { ACTIVE_CHUNK_RADIUS } from "./geography.ts";
+import { worldStationsNear } from "./stations.ts";
 import type { Vec } from "./types.ts";
+import {
+  periodicWorldGrid,
+  worldCell,
+  worldCellAt,
+  worldCellChance,
+  type WorldCellContext,
+  worldCellOrigin,
+  worldCellsNear,
+  type WorldGrid,
+} from "./worldCells.ts";
+import { nearestImage, wrappedDistance } from "./worldGeometry.ts";
+const distance = (context: WorldCellContext, a: Vec, b: Vec): number =>
+  context.worldSide === undefined
+    ? Math.hypot(a.x - b.x, a.y - b.y)
+    : wrappedDistance(context.worldSide, a, b);
 
 /** One seeded current: a polyline path in flow order with its width and arc lengths. */
 export interface Current {
@@ -60,28 +76,43 @@ const cache = new Map<string, Current | null>();
  * so currents in different cells never overlap or join. A current that would come within the
  * clearance of the flight start or a station is left out.
  */
-export function currentInCell(galaxy: GalaxyNumber, cell: Vec): Current | null {
-  const key = `${galaxy}:${cell.x},${cell.y}`;
+export function worldCurrentInCell(
+  context: WorldCellContext,
+  galaxy: GalaxyNumber,
+  rawCell: Vec,
+): Current | null {
+  const grid = periodicWorldGrid(context, CURRENTS.cellSize);
+  const cell = worldCell(grid, rawCell);
+  const key = `${context.worldSide ?? "legacy"}:${galaxy}:${cell.x},${cell.y}`;
   if (cache.has(key)) {
     return cache.get(key)!;
   }
-  const current = buildCurrent(galaxy, cell);
+  const current = buildCurrent(context, grid, galaxy, cell);
+  // Geometry cache capacity follows the existing active-region neighbourhood.
+  if (cache.size >= (2 * ACTIVE_CHUNK_RADIUS + 1) ** 2) {
+    cache.delete(cache.keys().next().value!);
+  }
   cache.set(key, current);
   return current;
 }
 
-function buildCurrent(galaxy: GalaxyNumber, cell: Vec): Current | null {
-  const { cellSize, chance, clearance, length, margin, width: widths } = CURRENTS;
+function buildCurrent(
+  context: WorldCellContext,
+  grid: WorldGrid,
+  galaxy: GalaxyNumber,
+  cell: Vec,
+): Current | null {
+  const { clearance, length, margin, width: widths } = CURRENTS;
   if (!CURRENTS.galaxies.includes(galaxy)) {
     return null;
   }
   const seed = GALAXY_SEEDS[galaxy]!;
   const roll = (salt: number) => unit(mix(seed ^ salt, cell.x, cell.y));
-  if (roll(0) >= chance) {
+  if (roll(0) >= worldCellChance(grid, CURRENTS.chance)) {
     return null;
   }
   const width = widths[0] + roll(0x1d2c) * (widths[1] - widths[0]);
-  const span = cellSize - 2 * margin;
+  const span = grid.pitch - 2 * margin;
   const maxAmplitude = span / 2 - width / 2;
   const target = length[0] + roll(0x3e4f) * (Math.min(length[1], span * 2.6) - length[0]);
   const halfWaves = 1 + Math.floor(roll(0x5a6b) * 2);
@@ -101,7 +132,8 @@ function buildCurrent(galaxy: GalaxyNumber, cell: Vec): Current | null {
   const local = wavePoints(span, low, halfWaves, phase);
   // Each cell picks one of four directions across its band, and the flow's sense.
   const turn = Math.floor(roll(0x9eaf) * 4) * (Math.PI / 2);
-  const centre = { x: (cell.x + 0.5) * cellSize, y: (cell.y + 0.5) * cellSize };
+  const origin = worldCellOrigin(grid, cell);
+  const centre = { x: origin.x + grid.pitch / 2, y: origin.y + grid.pitch / 2 };
   const cos = Math.cos(turn);
   const sin = Math.sin(turn);
   let points = local.map(({ x, y }) => {
@@ -113,10 +145,14 @@ function buildCurrent(galaxy: GalaxyNumber, cell: Vec): Current | null {
   }
   const keep = clearance + width / 2;
   if (
-    points.some((point) => Math.hypot(point.x, point.y) < keep) ||
-    stationsNear(ECONOMY, galaxy, cellSize, centre).some((station) =>
-      points.some((point) => Math.hypot(point.x - station.x, point.y - station.y) < keep),
-    )
+    points.some((point) => distance(context, { x: 0, y: 0 }, point) < keep) ||
+    worldStationsNear(
+      context,
+      ECONOMY,
+      galaxy,
+      context.worldSide === undefined ? grid.pitch : grid.pitch + keep,
+      centre,
+    ).some((station) => points.some((point) => distance(context, point, station) < keep))
   ) {
     return null;
   }
@@ -132,32 +168,48 @@ function buildCurrent(galaxy: GalaxyNumber, cell: Vec): Current | null {
 }
 
 /** The current whose cell holds a point, if any; currents never leave their own cell. */
-export function currentAt(galaxy: GalaxyNumber, point: Vec): Current | null {
-  const size = CURRENTS.cellSize;
-  return currentInCell(galaxy, { x: Math.floor(point.x / size), y: Math.floor(point.y / size) });
+export function worldCurrentAt(
+  context: WorldCellContext,
+  galaxy: GalaxyNumber,
+  point: Vec,
+): Current | null {
+  return worldCurrentInCell(
+    context,
+    galaxy,
+    worldCellAt(periodicWorldGrid(context, CURRENTS.cellSize), point),
+  );
 }
 
-/** Currents whose cells overlap a square of half-side `radius` around a point. */
-export function currentsNear(galaxy: GalaxyNumber, radius: number, point: Vec): Current[] {
-  const size = CURRENTS.cellSize;
+/** Currents whose cells overlap a square of half-side radius around a point. */
+export function worldCurrentsNear(
+  context: WorldCellContext,
+  galaxy: GalaxyNumber,
+  radius: number,
+  point: Vec,
+): Current[] {
   const found: Current[] = [];
-  for (
-    let x = Math.floor((point.x - radius) / size);
-    x <= Math.floor((point.x + radius) / size);
-    x++
-  ) {
-    for (
-      let y = Math.floor((point.y - radius) / size);
-      y <= Math.floor((point.y + radius) / size);
-      y++
-    ) {
-      const current = currentInCell(galaxy, { x, y });
-      if (current) {
-        found.push(current);
-      }
+  for (const cell of worldCellsNear(periodicWorldGrid(context, CURRENTS.cellSize), radius, point)) {
+    const current = worldCurrentInCell(context, galaxy, cell);
+    if (current) {
+      found.push(current);
     }
   }
   return found;
+}
+
+/** Selects one image of the query point relative to the whole continuous path. */
+export function worldNearestOnCurrent(
+  context: WorldCellContext,
+  current: Current,
+  point: Vec,
+): ReturnType<typeof nearestOnCurrent> {
+  if (context.worldSide === undefined) {
+    return nearestOnCurrent(current, point);
+  }
+  const first = current.points[0]!;
+  const last = current.points.at(-1)!;
+  const centre = { x: (first.x + last.x) / 2, y: (first.y + last.y) / 2 };
+  return nearestOnCurrent(current, nearestImage(context.worldSide, centre, point).point);
 }
 
 /** The nearest point on a current's path: its distance, arc position and unit tangent. */
@@ -195,12 +247,12 @@ export function nearestOnCurrent(
  * The flow at a point: strongest at the centre line, zero at the edges, fading over the last
  * `fade` units at each end, along the path's direction.
  */
-export function flowAt(galaxy: GalaxyNumber, point: Vec): Vec {
-  const current = currentAt(galaxy, point);
+export function worldFlowAt(context: WorldCellContext, galaxy: GalaxyNumber, point: Vec): Vec {
+  const current = worldCurrentAt(context, galaxy, point);
   if (!current) {
     return { x: 0, y: 0 };
   }
-  const { arc, distance, tangent } = nearestOnCurrent(current, point);
+  const { arc, distance, tangent } = worldNearestOnCurrent(context, current, point);
   const strength = CURRENTS.peakFlow * flowFraction(current, arc, distance);
   return { x: tangent.x * strength, y: tangent.y * strength };
 }
@@ -223,9 +275,15 @@ export function flowFraction(
 }
 
 /** Whether a disc of `radius` at a point touches any current's band. */
-export function inCurrent(galaxy: GalaxyNumber, radius: number, point: Vec): boolean {
-  return currentsNear(galaxy, radius, point).some(
-    (current) => nearestOnCurrent(current, point).distance < current.width / 2 + radius,
+export function worldInCurrent(
+  context: WorldCellContext,
+  galaxy: GalaxyNumber,
+  radius: number,
+  point: Vec,
+): boolean {
+  return worldCurrentsNear(context, galaxy, radius, point).some(
+    (current) =>
+      worldNearestOnCurrent(context, current, point).distance < current.width / 2 + radius,
   );
 }
 
@@ -293,4 +351,20 @@ export function streakFrame(current: CurrentPath, arc: number): { point: Vec; ta
   };
   const size = Math.hypot(blend.x, blend.y);
   return { point, tangent: size > 1e-9 ? { x: blend.x / size, y: blend.y / size } : own };
+}
+
+export function currentInCell(galaxy: GalaxyNumber, cell: Vec): Current | null {
+  return worldCurrentInCell({}, galaxy, cell);
+}
+export function currentAt(galaxy: GalaxyNumber, point: Vec): Current | null {
+  return worldCurrentAt({}, galaxy, point);
+}
+export function currentsNear(galaxy: GalaxyNumber, radius: number, point: Vec): Current[] {
+  return worldCurrentsNear({}, galaxy, radius, point);
+}
+export function flowAt(galaxy: GalaxyNumber, point: Vec): Vec {
+  return worldFlowAt({}, galaxy, point);
+}
+export function inCurrent(galaxy: GalaxyNumber, radius: number, point: Vec): boolean {
+  return worldInCurrent({}, galaxy, radius, point);
 }

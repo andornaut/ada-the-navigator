@@ -6,6 +6,8 @@ import {
 } from "../data/enemyCatalog.ts";
 import type { SpawnerPolicy, SpawnerStage } from "../data/spawnerCatalog.ts";
 import type { SpaceObject, Vec } from "./types.ts";
+import type { WorldCellContext } from "./worldCells.ts";
+import { wrappedDistance } from "./worldGeometry.ts";
 
 export interface EncounterPlan {
   archetype: EnemyArchetype;
@@ -13,7 +15,10 @@ export interface EncounterPlan {
   escorts?: EncounterEntry["escorts"];
 }
 
-const distance = (a: Vec, b: Vec): number => Math.hypot(a.x - b.x, a.y - b.y);
+const distance = (context: WorldCellContext, a: Vec, b: Vec): number =>
+  context.worldSide === undefined
+    ? Math.hypot(a.x - b.x, a.y - b.y)
+    : wrappedDistance(context.worldSide, a, b);
 
 /** Disabled hulls still occupy space. Salvaged ships no longer contribute hostile pressure. */
 export function liveOccupants(objects: readonly SpaceObject[]): SpaceObject[] {
@@ -42,7 +47,8 @@ export function groupReach(policy: SpawnerPolicy, shipRadius: number, plan: Enco
  * with the proposed footprint counts, including guards, old packs and pursuing ships.
  * This conservative spawn budget does not bound subsequent movement or remove existing ships.
  */
-export function fitsEncounter(
+export function worldFitsEncounter(
+  context: WorldCellContext,
   policy: SpawnerPolicy,
   stage: SpawnerStage,
   shipRadius: number,
@@ -52,7 +58,7 @@ export function fitsEncounter(
 ): boolean {
   const reach = groupReach(policy, shipRadius, plan);
   const nearby = liveOccupants(objects).filter(
-    (object) => distance(object, centre) <= policy.localRadius * 2 + reach + object.radius,
+    (object) => distance(context, object, centre) <= policy.localRadius * 2 + reach + object.radius,
   );
   const count = plan.count + (plan.escorts?.count ?? 0);
   const types = new Set(nearby.map((object) => object.enemy?.archetype ?? "fighter"));
@@ -75,7 +81,8 @@ export function fitsEncounter(
  * Samples only positive, allowed entries whose smallest complete group fits. Encounter-cell
  * frequency is independent; occupancy limits cannot select an excluded or unaffordable type.
  */
-export function selectEncounter(
+export function worldSelectEncounter(
+  context: WorldCellContext,
   policy: SpawnerPolicy,
   stage: SpawnerStage,
   shipRadius: number,
@@ -95,7 +102,7 @@ export function selectEncounter(
         count,
         ...(entry.escorts ? { escorts: entry.escorts } : {}),
       };
-      if (fitsEncounter(policy, stage, shipRadius, objects, centre, plan)) {
+      if (worldFitsEncounter(context, policy, stage, shipRadius, objects, centre, plan)) {
         plans.push(plan);
       }
     }
@@ -123,7 +130,8 @@ export function selectEncounter(
  * Reserves new sight engagements against current live combatants. Required guards and already
  * engaged ships keep their normal AI even when they converge above this admission budget.
  */
-export function engagementAdmissions(
+export function worldEngagementAdmissions(
+  context: WorldCellContext,
   policy: SpawnerPolicy,
   stage: SpawnerStage,
   objects: readonly SpaceObject[],
@@ -137,10 +145,14 @@ export function engagementAdmissions(
   const admitted = new Set(reserved.map((object) => object.id));
   const candidates = live
     .filter((object) => !admitted.has(object.id) && eligible.has(object.id))
-    .sort((a, b) => distance(a, player) - distance(b, player) || a.id.localeCompare(b.id));
+    .sort(
+      (a, b) =>
+        distance(context, a, player) - distance(context, b, player) || a.id.localeCompare(b.id),
+    );
   for (const object of candidates) {
     const neighbours = reserved.filter(
-      (other) => distance(other, object) <= policy.localRadius * 2 + other.radius + object.radius,
+      (other) =>
+        distance(context, other, object) <= policy.localRadius * 2 + other.radius + object.radius,
     );
     const types = new Set(neighbours.map((other) => other.enemy?.archetype ?? "fighter"));
     types.add(object.enemy?.archetype ?? "fighter");
@@ -157,4 +169,44 @@ export function engagementAdmissions(
     }
   }
   return admitted;
+}
+
+export function fitsEncounter(
+  policy: SpawnerPolicy,
+  stage: SpawnerStage,
+  shipRadius: number,
+  objects: readonly SpaceObject[],
+  centre: Vec,
+  plan: EncounterPlan,
+): boolean {
+  return worldFitsEncounter({}, policy, stage, shipRadius, objects, centre, plan);
+}
+export function selectEncounter(
+  policy: SpawnerPolicy,
+  stage: SpawnerStage,
+  shipRadius: number,
+  objects: readonly SpaceObject[],
+  centre: Vec,
+  countRoll: number,
+  archetypeRoll: number,
+): EncounterPlan | null {
+  return worldSelectEncounter(
+    {},
+    policy,
+    stage,
+    shipRadius,
+    objects,
+    centre,
+    countRoll,
+    archetypeRoll,
+  );
+}
+export function engagementAdmissions(
+  policy: SpawnerPolicy,
+  stage: SpawnerStage,
+  objects: readonly SpaceObject[],
+  eligible: ReadonlySet<string>,
+  player: Vec,
+): Set<string> {
+  return worldEngagementAdmissions({}, policy, stage, objects, eligible, player);
 }
