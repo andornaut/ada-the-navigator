@@ -284,12 +284,12 @@ describe("prologue", () => {
     );
   });
 
-  it("plays the garden and the prologue once, and Skip from any page but the last goes to galaxy selection", () => {
+  it("Skip reaches galaxy selection from every Next page after explicit story choices", () => {
     for (let at = 0; at < 30; at++) {
       const model = new GameModel(CONTENT);
       model.start();
       for (let turn = 0; turn < at && model.screen === "story"; turn++) {
-        if (model.storyView?.page.choices && !model.storyView.page.questions) {
+        if (model.storyView?.page.choices?.length) {
           model.storyChoose(0);
         } else {
           model.storyNext();
@@ -298,17 +298,17 @@ describe("prologue", () => {
       if (model.screen !== "story") {
         break;
       }
-      if (!model.storyView?.canSkip) {
-        // The last page before galaxy selection: Skip would pass nothing, so Next leaves.
+      for (let decision = 0; model.screen === "story" && decision < 10; decision++) {
         model.storySkip();
-        expect(model.screen).toBe("story");
-        model.storyNext();
-      } else {
-        model.storySkip();
+        if (model.storyView?.page.choices?.length) {
+          const before = model.save();
+          model.storySkip();
+          expect(model.save()).toBe(before);
+          model.storyChoose(0);
+        }
       }
       expect(model.screen, `Skip from page ${at}`).toBe("selector");
       expect(model.state.prologueSeen).toBe(true);
-      // Seen: a later visit plays neither the garden nor the prologue.
       model.leaveCockpit();
       expect(model.storyView?.page.id).toBe("room");
     }

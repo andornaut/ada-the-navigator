@@ -3,8 +3,10 @@ import { CONTROL_WORDS } from "../data/controlWords.ts";
 import { type Mood, type Speaker } from "../data/conversations.ts";
 import { InteractionConversation, interactionCopy } from "../model/conversations.ts";
 import { controlHelpText, createControlHelp } from "./controlHelp.ts";
+import { TEXT_BUTTON } from "./layout/controls.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { font, units, VIEW_HOST_ID } from "./layout/css.ts";
+import { SPACING } from "./layout/tokens.ts";
 import { createButton, createCard, FOCUS_STYLE } from "./modal.ts";
 import { CONVERSATION_SLOT, PANEL_BACKGROUND } from "./notice.ts";
 import { refuse } from "./refusal.ts";
@@ -137,11 +139,11 @@ export const INTERACTION_STYLE = `
 .ada-controls .ada-interaction-modal .ada-card{
   width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;box-sizing:border-box
 }
-.ada-interaction-speaker{display:flex;align-items:center;gap:12px}
+.ada-interaction-speaker{display:flex;align-items:center;gap:${units(SPACING.gap)}}
 .ada-interaction-portrait{
- display:inline-block;flex:none;width:${units(48)};height:${units(48)};background-repeat:no-repeat;
+ display:inline-block;flex:none;width:${units(portrait.art)};height:${units(portrait.art)};background-repeat:no-repeat;
  image-rendering:pixelated}
-.ada-interaction-actions{display:flex;flex-wrap:wrap;gap:12px}
+.ada-interaction-actions{display:flex;flex-wrap:wrap;gap:${units(SPACING.gap)}}
 `;
 
 export const CONVERSATION_STYLE = `
@@ -249,8 +251,9 @@ ${TAB_RULES}
 ${INTERACTION_STYLE}
 .ada-conversation-skip-area{${CONVERSATION_SLOT};background:transparent;pointer-events:none;z-index:6}
 .ada-conversation-skip-area[hidden]{display:none}
-.ada-conversation-skip-area button{position:absolute;right:0;top:${units(-30)};pointer-events:auto;
- min-height:${units(28)};font:${font(label)}}
+.ada-conversation-skip-area button{position:absolute;right:0;
+ top:${units(CONVERSATION_BOX.height + SPACING.gap)};pointer-events:auto;
+ min-height:${units(TEXT_BUTTON.height)};font:${font(label)}}
 `;
 
 export interface ConversationBox {
@@ -352,7 +355,7 @@ export function createInteractionCard(
   parent.append(modal);
   const state = new InteractionConversation();
   let signature = "";
-  const portrait = (name: string): HTMLElement => {
+  const makePortrait = (name: string): HTMLElement => {
     const node = document.createElement("span");
     node.className = "ada-interaction-portrait";
     node.setAttribute("aria-hidden", "true");
@@ -366,9 +369,15 @@ export function createInteractionCard(
     const frames = cast ? 1 : core?.[1].frames;
     if (url && frames) {
       node.style.backgroundImage = `url('${url}')`;
-      node.style.backgroundSize = `${units(frames * 48)} ${units(48)}`;
-      if (name === "General Gadget") {
-        node.style.backgroundPositionX = units(-5 * 48);
+      node.style.backgroundSize = `${units(frames * portrait.art)} ${units(portrait.art)}`;
+      if (core) {
+        const frame = portraitFrame(true, {
+          elapsed: 0,
+          mood: "neutral",
+          named: name === "General Gadget",
+          speaker: core[0] as Speaker,
+        });
+        node.style.backgroundPositionX = units(-frame * portrait.art);
       }
     }
     return node;
@@ -376,7 +385,7 @@ export function createInteractionCard(
   const named = (name: string): HTMLElement => {
     const node = document.createElement("div");
     node.className = "ada-interaction-speaker";
-    node.append(portrait(name), document.createTextNode(name));
+    node.append(makePortrait(name), document.createTextNode(name));
     return node;
   };
   const draw = (): void => {

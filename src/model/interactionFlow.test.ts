@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { relaunch } from "../testing/launch.ts";
+import { createEnemy } from "./enemyAi.ts";
 import { ensureDestination } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
@@ -101,5 +103,71 @@ describe("Use card suspension", () => {
     expect(flight.cargo).toBe(0);
     model.choose("continue");
     expect(model.state.dialogue).toBeNull();
+  });
+});
+
+describe("mechanical outcome retention", () => {
+  it("salvages a heavy once while Close/reopen only restores Astra's card", () => {
+    const model = new GameModel(CONTENT);
+    model.startGalaxy(1);
+    const flight = model.state.flight!;
+    flight.player = { x: 0, y: 0 };
+    const definition = enemyDefinition(1, "frigate");
+    const point = { x: 100, y: 0 };
+    const enemy = createEnemy(
+      definition,
+      { archetype: "frigate", id: "salvage-fixture", packId: null, phase: 0 },
+      point,
+    );
+    enemy.disabled = true;
+    flight.objects = [
+      {
+        ...point,
+        enemy,
+        hp: definition.hp,
+        id: "salvage-fixture",
+        kind: "enemy",
+        radius: definition.sizeRatio * CONTENT.tuning.flight.shipRadius,
+      },
+    ];
+    model.interact();
+    expect(model.state.dialogue).toMatchObject({ context: "salvage", title: "Astra" });
+    expect(enemy.salvaged).toBe(true);
+    const drops = structuredClone(flight.objects);
+    const nextId = flight.nextId;
+    model.closeInteraction();
+    model.interact();
+    expect(flight.objects).toEqual(drops);
+    expect(flight.nextId).toBe(nextId);
+    model.choose("continue");
+    model.interact();
+    expect(flight.objects).toEqual(drops);
+  });
+
+  it("retains a closed pending choice through an emergency return, save and new flight", () => {
+    const model = offer();
+    const question = structuredClone(model.state.dialogue);
+    model.closeInteraction();
+    const flight = model.state.flight!;
+    flight.objects = [];
+    flight.shield = 1;
+    flight.shots.push({
+      ...flight.player,
+      damage: 1,
+      enemy: true,
+      hitIds: [],
+      id: `hit:${flight.nextId++}`,
+      life: 1,
+      piercing: false,
+      velocity: { x: 0, y: 0 },
+    });
+    model.step(0.01, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false });
+    expect(model.state.mode).toBe("home");
+    const loaded = relaunch(CONTENT, model.save());
+    loaded.startGalaxy(1);
+    expect(loaded.state.dialogue).toEqual(question);
+    expect(loaded.state.tasks[1]).toBeUndefined();
+    loaded.choose("skip");
+    expect(loaded.state.tasks[1]).toBeUndefined();
   });
 });

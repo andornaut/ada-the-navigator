@@ -132,6 +132,7 @@ import {
   type WorldChange,
   worldChanges,
 } from "./projects.ts";
+import { questDetails } from "./questDetails.ts";
 import { restoreSave, SAVE_VERSION } from "./save.ts";
 import { canRechargeShield } from "./shieldRecharge.ts";
 import {
@@ -1194,6 +1195,7 @@ export class GameModel {
     if (!this.state.unlocked.includes(id) || this.state.mode === "space") {
       return;
     }
+    this.depletionContinuation = false;
     this.state.selectedGalaxy = id;
     this.state.started = true;
     this.startShown = false;
@@ -1660,6 +1662,20 @@ export class GameModel {
       objective: this.objectiveId(f.galaxy),
       progress: this.current,
       quests: {
+        ...questDetails(
+          {
+            galaxy: f.galaxy,
+            jobText: (job) => this.jobText(job),
+            label: (key) => this.label(key),
+            miningMilestones: this.content.tuning.miningMilestones,
+            placeLabel: (id) => this.placeLabel(id),
+          },
+          {
+            flight: f,
+            progress: this.current,
+            ...(this.state.tasks[f.galaxy] ? { task: this.state.tasks[f.galaxy]! } : {}),
+          },
+        ),
         job: this.jobObjective,
         story: this.objective,
         storyComplete: this.current.resolved,

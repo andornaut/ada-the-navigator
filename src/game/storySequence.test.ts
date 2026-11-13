@@ -40,6 +40,13 @@ function morning(model: GameModel): void {
 }
 
 describe("depletion story navigation", () => {
+  it("clears a completed return's continuation when a new flight starts", () => {
+    const model = depleted();
+    model.startGalaxy(1);
+    expect(model.state.mode).toBe("space");
+    expect(JSON.parse(model.save())).not.toHaveProperty("depletionContinuation");
+  });
+
   it("Previous from morning returns to a navigable page, and Next never replays the interlude", () => {
     const model = depleted();
     morning(model);

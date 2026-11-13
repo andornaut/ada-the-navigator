@@ -16,6 +16,7 @@ import {
 } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import type { SpaceObject } from "./types.ts";
+import { collectWeapon } from "./weapons.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function launch(model: GameModel, galaxy: GalaxyNumber = 1) {
@@ -89,6 +90,13 @@ function talk(model: GameModel, id: string) {
 }
 /** Returns home and reads the waiting scenes, taking each choice page's `choice`. */
 function finishHome(model: GameModel, choice = 1) {
+  for (
+    let page = 0;
+    model.state.dialogue?.choices.some(({ id }) => id === "continue") && page < 10;
+    page++
+  ) {
+    model.choose("continue");
+  }
   model.returnHome();
   expect(model.storyView?.page.id).toBe("resolution");
   readStory(model, choice);
@@ -136,7 +144,8 @@ describe("story and persistence", () => {
     launch(model);
     introduce(model, "growers");
     model.state.flight!.cargo = 3;
-    model.state.flight!.shield = 43;
+    model.state.flight!.shield = model.shieldMax - 1;
+    collectWeapon("rapidMissile", model.state.flight!);
     model.state.flight!.weapon = "rapidMissile";
     model.state.flight!.ammo.rapidMissile = 200;
     model.step(0.05, { ...idle, aim: { x: 1, y: 0 } });
@@ -155,11 +164,12 @@ describe("story and persistence", () => {
     });
     expect(heard(resumed.state)).toEqual(heard(model.state));
     const seed = resumed.state.flight!.seed;
+    const remainingOre = resumed.state.flight!.cargo;
     resumed.returnHome();
     launch(resumed);
     expect(resumed.state.flight!.seed).not.toBe(seed);
     // Earth by choice keeps the undeposited ore for the galaxy's next flight.
-    expect(resumed.state.flight!.cargo).toBe(3);
+    expect(resumed.state.flight!.cargo).toBe(remainingOre);
     // The equipped weapon is a purchase kept with story progress across flights.
     expect(resumed.state.flight!.weapon).toBe("rapidMissile");
     expect(resumed.state.flight!.shield).toBe(CONTENT.tuning.shieldMax);
@@ -346,7 +356,8 @@ it("plays each Cartwheel story scene first, then its line, at the held story des
   arrive(model, "hub");
   model.interact();
   expect(model.state.progress[2].stage).toBe(2);
-  expect(model.state.dialogue).toBeNull();
+  expect(model.state.dialogue).toMatchObject({ context: "deposit", title: "Astra" });
+  model.choose("continue");
   expect(f.storyScene).toEqual({ at: f.time, id: "blocked", lineDue: true });
   expect(relaunch(CONTENT, model.save()).state.flight!.storyScene).toEqual(f.storyScene);
   f.objects = f.objects.filter((o) => o.kind === "destination");
@@ -386,6 +397,7 @@ it("replays a story scene cut short by the flight's end at the hub after a reloa
   arrive(model, "hub");
   model.interact();
   expect(model.state.flight!.storyScene).toMatchObject({ id: "blocked", lineDue: true });
+  model.choose("continue");
   model.returnHome();
   expect(model.state.progress[2].replayScene).toBe("blocked");
   const reloaded = relaunch(CONTENT, model.save());
