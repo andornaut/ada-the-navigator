@@ -67,9 +67,8 @@ of pickups is the drop's value, capped at 8 for small craft, 16 for frigates and
 destroyed capital's, splits into pickups worth more than 1 Stardust.
 
 Upgrades are sold at stations and are also rare drops, at the same rates in every
-galaxy: 0.25% of destroyed small ships, 0.25% of destroyed asteroids and ore
-rocks, and 10% of salvaged frigates, platforms and capitals drop an upgrade
-pickup, with no cap per flight. A destroyed heavy drops none. An upgrade drop
+galaxy: 0.25% of destroyed small ships and 10% of salvaged frigates, platforms and
+capitals drop an upgrade pickup. Rocks never drop one. A destroyed heavy drops none. An upgrade drop
 gives one level, as buying the next level does, and only something Ada can still
 use. The game picks a category, then an item within it. Weapons, Shield, Engine
 tuning and Tractor beam have equal weight, and Paint 1/20 of that weight:
@@ -101,7 +100,8 @@ moment. Its notice names what it gave:
 | Paint scheme  | + {paint} paint          |
 | Ammunition    | + {weapon} ammo          |
 
-Destroyed small craft, and never rocks, also drop an ammo pack 7.5% of the time, separately from
+Destroyed small craft also drop an ammo pack 7.5% of the time, and destroyed
+asteroids and ore rocks 1% of the time, separately from
 upgrades, while Ada owns a weapon other than Laser that is unlocked in this
 galaxy. Like the upgrade pickup, its contents are chosen when Ada collects it:
 one pack for such a weapon, each weapon about three quarters as likely as the one before it in
