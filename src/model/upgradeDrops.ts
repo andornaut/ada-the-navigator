@@ -8,7 +8,7 @@ import type { RoutePosition } from "../data/galaxies.ts";
 import type { Weapon } from "../data/types.ts";
 import { SHIP_TRACKS } from "./shop.ts";
 import type { EconomyState } from "./types.ts";
-import { addPacks, UPGRADE_WEAPONS } from "./weapons.ts";
+import { addPacks, addWorldAmmo, UPGRADE_WEAPONS } from "./weapons.ts";
 
 /** What one upgrade drop gives (gameplay/economy.md "Earning Stardust"). */
 export type UpgradeGift =
@@ -114,19 +114,18 @@ export function chooseAmmoPack(
 }
 
 /**
- * Gives a gift as buying it would, at no cost: a new weapon with its packs, one level, a paint
- * scheme owned but not put in use, or one pack.
+ * Applies a world gift: full packs with a new weapon, a level, an owned paint or world ammo.
+ * Returns the immediate ammo addition, or zero for gifts that add no ammo.
  */
 export function applyUpgrade(
   catalog: EconomyCatalog,
   gift: UpgradeGift,
   economy: EconomyState,
-): void {
+): number {
   switch (gift.kind) {
     case "weapon":
       economy.ownedWeapons.push(gift.weapon);
-      addPacks(catalog, gift.weapon, catalog.ammo.grantPacks, economy.ammo);
-      break;
+      return addPacks(catalog, gift.weapon, catalog.ammo.grantPacks, economy.ammo);
     case "weaponLevel":
       economy.levels.weapons[gift.weapon] = gift.level;
       break;
@@ -137,7 +136,7 @@ export function applyUpgrade(
       economy.paints.push(gift.scheme);
       break;
     case "ammo":
-      addPacks(catalog, gift.weapon, 1, economy.ammo);
-      break;
+      return addWorldAmmo(catalog, gift.weapon, economy.ammo);
   }
+  return 0;
 }

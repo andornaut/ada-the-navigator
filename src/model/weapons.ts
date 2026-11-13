@@ -1,4 +1,9 @@
-import { ECONOMY, type EconomyCatalog, type UpgradeWeapon } from "../data/economy.ts";
+import {
+  ECONOMY,
+  type EconomyCatalog,
+  type UpgradeWeapon,
+  worldAmmoPack,
+} from "../data/economy.ts";
 import type { Weapon } from "../data/types.ts";
 import type { AmmoCounts, FlightState } from "./types.ts";
 
@@ -27,14 +32,27 @@ export function noAmmo(): AmmoCounts {
   return { heavyMissile: 0, multiLaser: 0, phaser: 0, rapidMissile: 0, scattershot: 0 };
 }
 
-/** Adds packs of weapon's ammunition to ammo. */
+/** Adds full packs for shop purchases and weapon grants; returns the immediate ammo delta. */
 export function addPacks(
   catalog: Pick<EconomyCatalog, "ammo">,
   weapon: UpgradeWeapon,
   packs: number,
   ammo: AmmoCounts,
-): void {
+): number {
+  const before = ammo[weapon];
   ammo[weapon] += packs * catalog.ammo.pack[weapon];
+  return ammo[weapon] - before;
+}
+
+/** Adds one world ammo item, returning its immediate grant delta even while Ada fires. */
+export function addWorldAmmo(
+  catalog: Pick<EconomyCatalog, "ammo">,
+  weapon: UpgradeWeapon,
+  ammo: AmmoCounts,
+): number {
+  const before = ammo[weapon];
+  ammo[weapon] += worldAmmoPack(catalog, weapon);
+  return ammo[weapon] - before;
 }
 
 /** The ammunition a new weapon includes, for each weapon in owned and none for the rest. */

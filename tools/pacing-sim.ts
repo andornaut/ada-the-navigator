@@ -79,7 +79,7 @@ import {
   type UpgradeGift,
 } from "../src/model/upgradeDrops.ts";
 import { newEconomy } from "../src/model/upgrades.ts";
-import { addPacks, noAmmo } from "../src/model/weapons.ts";
+import { addPacks, addWorldAmmo, noAmmo } from "../src/model/weapons.ts";
 
 export interface Behaviour {
   /** Cruise speed while exploring, as a fraction of Ada's 200 world units per second. */
@@ -833,7 +833,7 @@ export function simulate(input: SimulationInput): RunResult {
         result.weaponFoundSeconds ??= time;
         weapon = gift.weapon;
       } else if (gift?.kind === "ammo") {
-        addPacks(catalog, gift.weapon, 1, ammo);
+        addWorldAmmo(catalog, gift.weapon, ammo);
         result.duplicatePacks++;
       } else if (gift) {
         applyUpgrade(catalog, gift, gear);
@@ -847,7 +847,7 @@ export function simulate(input: SimulationInput): RunResult {
     ) {
       const pack = chooseAmmoPack(catalog, owned, dropRandom(flightSeed, `ammo:${id}`));
       if (pack) {
-        addPacks(catalog, pack, 1, ammo);
+        addWorldAmmo(catalog, pack, ammo);
         result.ammoDrops++;
       }
     }

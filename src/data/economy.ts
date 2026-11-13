@@ -49,13 +49,13 @@ export interface EconomyCatalog {
     readonly weapons: Readonly<Record<Weapon, number>>;
   };
   /**
-   * Ammunition for every upgrade weapon (Laser is unlimited): each pack's shots, fewer seconds of
+   * Ammunition for every upgrade weapon (Laser is unlimited): each shop pack's shots, fewer seconds of
    * level 1 fire for each later weapon; one shot uses one. A new weapon includes `grantPacks`
    * packs and a found duplicate gives `duplicatePacks`. `packPrice` is Stardust per pack. A
    * destroyed small craft drops an ammo pack pickup at `dropChance`, and a destroyed asteroid or
    * ore rock at `rockDropChance`, once Ada owns a weapon other than Laser, in any galaxy; its pack
    * is for an owned weapon by `dropWeights`, as is an upgrade drop's pack once nothing else is
-   * left.
+   * left. World ammo quantities derive from the shop pack through `worldPackFraction`.
    */
   ammo: {
     dropChance: number;
@@ -65,6 +65,8 @@ export interface EconomyCatalog {
     grantPacks: number;
     pack: Readonly<Record<UpgradeWeapon, number>>;
     packPrice: number;
+    /** World ammo items contain this fraction of a shop pack, rounded to at least one shot. */
+    worldPackFraction: number;
   };
   /** Each upgrade weapon's purchase price: its level 2 upgrade price. */
   weaponPrices: Readonly<Record<UpgradeWeapon, number>>;
@@ -157,6 +159,14 @@ export function unlockedWeapons(position: RoutePosition): UpgradeWeapon[] {
 
 /** Laser's level 2 and 3 upgrade prices, from which every weapon's derive. */
 export const LASER_UPGRADE_PRICES = [300, 600] as const;
+/** One world ammo item's shots, derived from its shop pack without changing weapon grants. */
+export function worldAmmoPack(
+  catalog: Pick<EconomyCatalog, "ammo">,
+  weapon: UpgradeWeapon,
+): number {
+  return Math.max(1, Math.round(catalog.ammo.pack[weapon] * catalog.ammo.worldPackFraction));
+}
+
 /** Each later weapon in weapon order costs this much more to upgrade, compounded. */
 export const UPGRADE_PRICE_STEP = 1.25;
 
@@ -182,9 +192,9 @@ const UPGRADE_PRICES = weaponUpgradePrices(LASER_UPGRADE_PRICES, UPGRADE_PRICE_S
 // Provisional tuning from gameplay/economy.md; station geometry is Tech's provisional layout.
 export const ECONOMY: EconomyCatalog = {
   ammo: {
-    // Ammo pack drops: destroyed small craft 7.5%, destroyed asteroids and ore rocks 1%
+    // Ammo pack drops: destroyed small craft 30%, destroyed asteroids and ore rocks 4%
     // (gameplay/economy.md "Earning Stardust").
-    dropChance: 0.075,
+    dropChance: 0.3,
     // Each weapon about three quarters as likely as the one before it in weapon order.
     dropWeights: { heavyMissile: 9, multiLaser: 16, phaser: 5, rapidMissile: 12, scattershot: 7 },
     duplicatePacks: 1,
@@ -193,7 +203,8 @@ export const ECONOMY: EconomyCatalog = {
     // and Phaser 50.
     pack: { heavyMissile: 35, multiLaser: 300, phaser: 50, rapidMissile: 265, scattershot: 60 },
     packPrice: 10,
-    rockDropChance: 0.01,
+    rockDropChance: 0.04,
+    worldPackFraction: 0.25,
   },
   asteroidStardust: { huge: [3, 3], large: [2, 2], medium: [1, 1], small: [0, 1] },
   defaultPaint: "classic",

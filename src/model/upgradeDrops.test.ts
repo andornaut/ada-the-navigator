@@ -181,7 +181,7 @@ describe("upgrade drop selection", () => {
     expect([...sunflower].sort()).toEqual([...UPGRADE_WEAPONS].sort());
     const before = economy.ammo.phaser;
     applyUpgrade(ECONOMY, { kind: "ammo", weapon: "phaser" }, economy);
-    expect(economy.ammo.phaser).toBe(before + ECONOMY.ammo.pack.phaser);
+    expect(economy.ammo.phaser).toBe(before + 13);
   });
 
   it("gives the same gift for the same seed", () => {
@@ -191,7 +191,7 @@ describe("upgrade drop selection", () => {
     );
   });
 
-  it("applies one level, a weapon with three packs or one pack", () => {
+  it("applies levels and world ammo while preserving three full packs with a new weapon", () => {
     const economy = newEconomy(ECONOMY);
     applyUpgrade(ECONOMY, { kind: "weapon", weapon: "heavyMissile" }, economy);
     expect(economy.ownedWeapons).toEqual(["heavyMissile"]);
@@ -201,36 +201,36 @@ describe("upgrade drop selection", () => {
     applyUpgrade(ECONOMY, { kind: "weaponLevel", level: 2, weapon: "laser" }, economy);
     expect(economy.levels.weapons.laser).toBe(2);
     applyUpgrade(ECONOMY, { kind: "ammo", weapon: "heavyMissile" }, economy);
-    expect(economy.ammo.heavyMissile).toBe(4 * ECONOMY.ammo.pack.heavyMissile);
+    expect(economy.ammo.heavyMissile).toBe(114);
   });
 });
 
 describe("ammo pack drops", () => {
   const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
-  it("drops from a destroyed small craft at 7.5% while Ada owns a weapon other than Laser", () => {
+  it("drops from a destroyed small craft at 30% while Ada owns a weapon other than Laser", () => {
     const rolls = (owned: readonly Weapon[], archetype: "fighter" | "frigate") =>
       Array.from({ length: 20000 }, (_, index) =>
         rollAmmoDrop(ECONOMY, owned, archetype, dropRandom(9, `ammo:${index}`)),
       ).filter(Boolean).length / 20000;
-    expect(ECONOMY.ammo.dropChance).toBe(0.075);
-    expect(rolls(["scattershot"], "fighter")).toBeCloseTo(0.075, 2);
+    expect(ECONOMY.ammo.dropChance).toBe(0.3);
+    expect(rolls(["scattershot"], "fighter")).toBeCloseTo(0.3, 2);
     expect(rolls([], "fighter")).toBe(0);
     expect(rolls(["laser"], "fighter")).toBe(0);
     expect(rolls(["scattershot"], "frigate")).toBe(0);
   });
 
-  it("drops from a destroyed asteroid or ore rock at 1% while Ada owns a weapon other than Laser", () => {
+  it("drops from a destroyed asteroid or ore rock at 4% while Ada owns a weapon other than Laser", () => {
     const rolls = (owned: readonly Weapon[]) =>
       Array.from({ length: 100000 }, (_, index) =>
         rollRockAmmoDrop(ECONOMY, owned, dropRandom(9, `ammo:rock:${index}`)),
       ).filter(Boolean).length / 100000;
-    expect(ECONOMY.ammo.rockDropChance).toBe(0.01);
-    expect(Math.abs(rolls(["phaser"]) - 0.01)).toBeLessThan(0.0015);
+    expect(ECONOMY.ammo.rockDropChance).toBe(0.04);
+    expect(Math.abs(rolls(["phaser"]) - 0.04)).toBeLessThan(0.0015);
     expect(rolls([])).toBe(0);
     expect(rolls(["laser"])).toBe(0);
-    expect(rollRockAmmoDrop(ECONOMY, ["phaser"], () => 0.0099)).toBe(true);
-    expect(rollRockAmmoDrop(ECONOMY, ["phaser"], () => 0.01)).toBe(false);
+    expect(rollRockAmmoDrop(ECONOMY, ["phaser"], () => 0.0399)).toBe(true);
+    expect(rollRockAmmoDrop(ECONOMY, ["phaser"], () => 0.04)).toBe(false);
   });
 
   it("holds a pack for any owned weapon other than Laser, by the weights among those", () => {
@@ -273,8 +273,8 @@ describe("ammo pack drops", () => {
     model.step(0.01, idle);
     const gains = itemGains(false, before, gainSnapshot(model.state.economy.paints, model.ship));
     expect(model.state.flight!.objects).toHaveLength(0);
-    expect(model.state.flight!.ammo.multiLaser).toBe(5 + ECONOMY.ammo.pack.multiLaser);
-    expect(model.state.economy.ammo.multiLaser).toBe(5 + ECONOMY.ammo.pack.multiLaser);
+    expect(model.state.flight!.ammo.multiLaser).toBe(80);
+    expect(model.state.economy.ammo.multiLaser).toBe(80);
     expect(gains).toEqual([{ kind: "ammo", weapon: "multiLaser" }]);
   });
 });
