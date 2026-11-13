@@ -81,6 +81,17 @@ class FakeElement {
   }
 }
 
+// DOM image decoding completes asynchronously without fetching assets in Node.
+class FakeImage extends FakeElement {
+  alt = "";
+  draggable = true;
+  loading = "auto";
+  src = "";
+  decode(): Promise<void> {
+    return Promise.resolve();
+  }
+}
+
 const LABELS: PauseLabels = {
   backToTitle: "Back to title",
   close: "Close",
@@ -112,6 +123,7 @@ const SHIP: ShipView = {
 };
 
 beforeEach(() => {
+  vi.stubGlobal("Image", FakeImage);
   vi.stubGlobal("document", {
     createElement: () => new FakeElement(),
     createElementNS: () => new FakeElement(),
@@ -120,7 +132,8 @@ beforeEach(() => {
   vi.stubGlobal("window", { addEventListener: vi.fn(), removeEventListener: vi.fn() });
 });
 
-afterEach(() => {
+afterEach(async () => {
+  await Promise.resolve();
   vi.unstubAllGlobals();
 });
 
