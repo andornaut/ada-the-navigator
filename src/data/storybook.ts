@@ -25,7 +25,7 @@ export const CHAPTER_BACKGROUNDS: Readonly<
     opening: "grandmaGardenSpilled",
     resolution: "grandmaGardenSpilled",
   },
-  6: { closing: "adaRoomNight", opening: "adaRoom", resolution: "gardenLot" },
+  6: { closing: "adaRoomNight", opening: "adaRoomInvitations", resolution: "gardenLot" },
 };
 
 /**
@@ -38,6 +38,7 @@ export const BACKGROUND_ART: Readonly<Record<ArtBackground, string>> = {
   aboard: "aboard",
   aboardEmergency: "aboard-emergency",
   adaRoom: "story-ada-room",
+  adaRoomInvitations: "story-ada-room-invitations",
   adaRoomMorning: "story-ada-room-morning",
   adaRoomMorningCats: "story-ada-room-morning-cats",
   adaRoomNight: "story-ada-room-night",

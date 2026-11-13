@@ -473,9 +473,12 @@ export function roomScene(
   };
 }
 
-/** The latest explicitly lit room in a visit, with ordinary daylight for a new visit. */
+/** The latest explicit room variant in a visit, with ordinary daylight for a new visit. */
 export function roomBackground(pages: readonly StoryPage[]): Background {
   return pages.reduce<Background>((light, page) => {
+    if (page.background === "adaRoomInvitations") {
+      return "adaRoomInvitations";
+    }
     if (page.background === "adaRoomMorning" || page.background === "adaRoomMorningCats") {
       return "adaRoomMorningCats";
     }
@@ -490,14 +493,18 @@ export function roomBackground(pages: readonly StoryPage[]): Background {
  * Boarding, after Ada's room page: the narration as she touches the glow, then Astra's line
  * aboard; once after a galaxy unlocks, Astra announces it instead.
  */
-export function boardingScene(content: GameContent, announce: boolean): Scene {
+export function boardingScene(
+  content: GameContent,
+  announce: boolean,
+  background: Background = "adaRoom",
+): Scene {
   const { boarding, boardingNewGalaxy } = content.premise;
   const shown = boarding.map((line, index) =>
     index === boarding.length - 1 && announce ? { ...boardingNewGalaxy, announces: true } : line,
   );
   const pages = shown.map((line, index): StoryPage => ({
     ...("announces" in line ? { announces: true } : {}),
-    background: line.speaker === undefined ? "adaRoom" : "aboard",
+    background: line.speaker === undefined ? background : "aboard",
     id: `boarding:${index}`,
     ...(index + 1 < shown.length ? { next: `boarding:${index + 1}` } : {}),
     ...(line.speaker ? { speaker: line.speaker } : {}),

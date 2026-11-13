@@ -55,6 +55,7 @@ export type ArtBackground =
   | "aboard"
   | "aboardEmergency"
   | "adaRoom"
+  | "adaRoomInvitations"
   | "adaRoomMorning"
   | "adaRoomMorningCats"
   | "adaRoomNight"

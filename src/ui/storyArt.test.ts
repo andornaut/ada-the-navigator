@@ -89,10 +89,11 @@ describe("storybook art", () => {
     expect(storySubjects(broken)).not.toHaveProperty("park");
   });
 
-  // Each rock glow: Ada's room, and Needle's recorder room at boarding, into aboard, each through
+  // Each rock glow: Ada's ordinary, invitation and recorder rooms into aboard, each through
   // its own room's three glow frames.
   const GLOWS: readonly { aboard: ArtBackground; frames: string; room: ArtBackground }[] = [
     { aboard: "aboard", frames: "story-ada-room-glow", room: "adaRoom" },
+    { aboard: "aboard", frames: "story-ada-room-invitations-glow", room: "adaRoomInvitations" },
     { aboard: "aboard", frames: "story-ada-room-recorder-glow", room: "adaRoomRecorder" },
   ] as const;
   // A composite shares its base's image, so a page on Dad's recorder room glows as the room does.
