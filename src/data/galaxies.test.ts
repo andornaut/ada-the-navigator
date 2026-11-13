@@ -47,16 +47,17 @@ describe("the galaxy route", () => {
     ]);
   });
 
-  it("keeps the existing galaxy ids and adds the placeholders after them", () => {
+  it("keeps stable galaxy ids while mounting every authored chapter", () => {
     expect(named([1, 2, 3])).toEqual(["Sunflower", "Cartwheel", "Whirlpool"]);
     expect(named([4, 5, 6])).toEqual(["Needle", "Andromeda", "Phantom"]);
-    expect([...BUILT]).toEqual([1, 2, 3, 4]);
+    expect([...BUILT]).toEqual([1, 2, 3, 4, 5, 6]);
   });
 
-  it("unlocks the next position, each placeholder after it and the next built galaxy", () => {
+  it("unlocks exactly the next authored chapter in route order", () => {
     expect(named(unlockedBy(1))).toEqual(["Whirlpool"]);
     expect(named(unlockedBy(3))).toEqual(["Needle"]);
-    expect(named(unlockedBy(4))).toEqual(["Andromeda", "Cartwheel"]);
+    expect(named(unlockedBy(4))).toEqual(["Andromeda"]);
+    expect(named(unlockedBy(5))).toEqual(["Cartwheel"]);
     expect(named(unlockedBy(2))).toEqual(["Phantom"]);
     expect(unlockedBy(6)).toEqual([]);
   });
@@ -117,9 +118,9 @@ describe("tuning by route position", () => {
     expect(byPosition(galaxyArchetypes, 6)).toEqual({ fighter: { behaviour: { kind: "chase" } } });
   });
 
-  it("gives each placeholder the tuning of the built galaxy before it on the route", () => {
+  it("uses mounted tuning positions and the nearest available shared field row", () => {
     expect([3, 4, 6].map((position) => tuningPosition(position as RoutePosition))).toEqual([
-      3, 3, 5,
+      3, 4, 6,
     ]);
     const tables: readonly Readonly<Partial<Record<RoutePosition, unknown>>>[] = [
       ASTEROID_FIELDS,

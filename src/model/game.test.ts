@@ -1,16 +1,19 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { playOpening, readStory, relaunch } from "../testing/launch.ts";
+import { nearestSettlerStation } from "./andromedaPlaces.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { createEnemy } from "./enemyAi.ts";
 import {
   ensureDestination,
   ensureRouteEncounter,
+  ensureStation,
   routeBlocked,
   syncFlightRegion,
 } from "./flight.ts";
@@ -148,6 +151,53 @@ function finishNeedle(model: GameModel): void {
   expect(model.state.progress[4].holodisk).toBe(true);
   finishHome(model);
   expect(model.state.progress[4].resolved).toBe(true);
+}
+/** Completes Andromeda through accepted story targets and actual Use and Continue actions. */
+function finishAndromeda(model: GameModel): void {
+  launch(model, 5);
+  const visit = (id: string) => {
+    const flight = model.state.flight!;
+    const target = flight.objects.find((object) => object.id === id) ?? flight.world.notables[id];
+    expect(target, id).toBeTruthy();
+    flight.player = { x: target!.x, y: target!.y };
+    flight.velocity = { x: 0, y: 0 };
+    model.step(0.001, idle);
+  };
+  const continuePanel = (context: string) => {
+    expect(model.state.dialogue?.context).toBe(`andromeda:${context}`);
+    expect(model.state.dialogue?.choices.map(({ id }) => id)).toEqual(["continue"]);
+    model.choose("continue");
+  };
+  const flight = model.state.flight!;
+  const station = nearestSettlerStation(ECONOMY, flight.player);
+  ensureStation(CONTENT, station.id, flight);
+  visit(station.id);
+  if (!model.state.dialogue) {
+    model.interact();
+  }
+  continuePanel("arrival");
+  visit("pip");
+  model.interact();
+  continuePanel("confession");
+  visit(model.state.progress[5].andromeda!.station!);
+  model.interact();
+  continuePanel("ownsUp");
+  visit(model.state.progress[5].andromeda!.settlement!);
+  model.interact();
+  continuePanel("parts");
+  expect(model.state.progress[5].questItem).toBe("beaconParts");
+  expect(relaunch(CONTENT, model.save()).state).toEqual(model.state);
+  visit("darkBeacon");
+  model.interact();
+  continuePanel("repaired");
+  expect(model.state.progress[5].questComplete).toBe(true);
+  visit("pip");
+  model.interact();
+  continuePanel("holodisk");
+  readStory(model);
+  expect(model.state.progress[5].holodisk).toBe(true);
+  finishHome(model);
+  expect(model.state.progress[5].resolved).toBe(true);
 }
 /** Recovers the current galaxy one or two holodisk and continues past its insertion. */
 function recoverHolodisk(model: GameModel) {
@@ -367,11 +417,14 @@ it("finishes the mounted chapters in route order and resumes each terminal state
   // Whirlpool's guarded holodisk, recovered as holodisk.test.ts plays it.
   model.state.progress[3].holodisk = true;
   finishHome(model);
-  // The mounted Needle must finish before the remaining placeholder leads to Cartwheel.
+  // Each mounted chapter must finish before the next route position unlocks.
   expect(model.state.unlocked).toEqual([1, 3, 4]);
   expect(model.state.progress[3].resolved).toBe(true);
   expect(relaunch(CONTENT, model.save()).state).toEqual(model.state);
   finishNeedle(model);
+  expect(model.state.unlocked).toEqual([1, 3, 4, 5]);
+  expect(relaunch(CONTENT, model.save()).state).toEqual(model.state);
+  finishAndromeda(model);
   expect(model.state.unlocked).toEqual([1, 3, 4, 5, 2]);
   expect(relaunch(CONTENT, model.save()).state).toEqual(model.state);
   launch(model, 2);

@@ -77,7 +77,7 @@ export function galaxyAt(position: RoutePosition): GalaxyNumber {
  * Galaxies with their story, holodisk and art built. The others are placeholders: flyable, in
  * the default field, with generic enemies and rocks and nothing of their own.
  */
-export const BUILT: ReadonlySet<GalaxyNumber> = new Set<GalaxyNumber>([1, 2, 3, 4]);
+export const BUILT: ReadonlySet<GalaxyNumber> = new Set<GalaxyNumber>(GALAXY_NUMBERS);
 
 /**
  * Per-position tuning for the placeholders until their own: each copies the built galaxy before
