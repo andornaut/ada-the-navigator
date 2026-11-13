@@ -3,7 +3,7 @@
 import { densityTexels } from "@andornaut/game-kit/view/renderScale";
 import { Math as PhaserMath, type Scene, TintModes } from "phaser";
 
-import { type AsteroidArt } from "../data/asteroidCatalog.ts";
+import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { CONTENT } from "../data/content.ts";
 import { destinationDrawn } from "../data/destinations.ts";
 import { ECONOMY } from "../data/economy.ts";
@@ -11,6 +11,7 @@ import { enemyCatalog } from "../data/enemyCatalog.ts";
 import { resourceArtId } from "../data/resourceRocks.ts";
 import { SCREEN } from "../data/screen.ts";
 import { rockFrame, scenerySilhouette } from "../model/asteroids.ts";
+import { debrisPieceIndex } from "../model/debrisBody.ts";
 import { carriesStardust } from "../model/drops.ts";
 import { hubBay, hubWorn } from "../model/storyShips.ts";
 import type { SpaceObject, Vec } from "../model/types.ts";
@@ -172,11 +173,9 @@ export type ObjectsContext = Scene &
     | "whirlpoolProjects"
   >;
 
-/**
- * Traveling debris, ballistic or in a river, in a galaxy with Art's debris: its tumbling piece
- * over the trailing coral dashes (art/cartwheel-props.md, art/whirlpool.md). False without
- * that art, so the placeholder draws.
- */
+const DEBRIS_STONES = ASTEROID_ART.asteroids.filter(({ size }) => size === "small");
+
+/** Traveling debris uses its galaxy's authored pieces, or neutral stone in Sunflower. */
 export function drawTravelingDebris(
   scene: ObjectsContext,
   object: SpaceObject,
@@ -184,8 +183,17 @@ export function drawTravelingDebris(
 ): boolean {
   const flight = scene.model.state.flight!;
   const art = scene.debrisArt.get(flight.galaxy);
-  if (!art || !object.velocity || object.orbit) {
+  if (!object.velocity || object.orbit) {
     return false;
+  }
+  if (!art) {
+    if (flight.galaxy !== 1) {
+      return false;
+    }
+    const stone = DEBRIS_STONES[debrisPieceIndex(DEBRIS_STONES.length, object.id)]!;
+    // Match the existing collider's radius without changing the object's gameplay shape.
+    drawAsteroidSprite(scene, object, point, stone, object.radius / stone.footprintRadius);
+    return true;
   }
   const piece = debrisPiece(art, object.id);
   const frame = debrisFrame(art, piece, object.id, scene.reducedMotion, flight.time);
@@ -958,6 +966,7 @@ export function drawAsteroidSprite(
   object: SpaceObject,
   point: Vec,
   art: AsteroidArt,
+  scale = 1,
 ): void {
   const flight = scene.model.state.flight!;
   const frame = rockFrame(
@@ -970,12 +979,12 @@ export function drawAsteroidSprite(
   );
   const texture = rockFrameTexture(scene, art, frame);
   if (!texture) {
-    drawAsteroid(scene, point, footprintOutline(art, frame));
+    drawAsteroid(scene, point, footprintOutline(art, frame), scale);
     return;
   }
   const sprite = objectSprite(scene, object.id, texture)
     .setOrigin(art.pivot.x, art.pivot.y)
-    .setDisplaySize(art.display.width, art.display.height)
+    .setDisplaySize(art.display.width * scale, art.display.height * scale)
     .setPosition(point.x, point.y)
     .setDepth(playDepth(point.y));
   keylineSprite(scene, "asteroid", object.id, sprite);
@@ -997,17 +1006,27 @@ export function drawAsteroidSprite(
 }
 
 /** A rock whose frame has not loaded: its footprint in shadow stone, outlined on the union. */
-export function drawAsteroid(scene: ObjectsContext, point: Vec, outline: AsteroidOutline): void {
+export function drawAsteroid(
+  scene: ObjectsContext,
+  point: Vec,
+  outline: AsteroidOutline,
+  scale = 1,
+): void {
   const stone = scene.asteroidArt.stone;
   scene.ink.fillStyle(hexNumber(stone.at(-1)!));
   for (const part of outline.parts) {
     scene.ink.fillPoints(
-      part.map((at) => new PhaserMath.Vector2(point.x + at.x, point.y + at.y)),
+      part.map((at) => new PhaserMath.Vector2(point.x + at.x * scale, point.y + at.y * scale)),
       true,
     );
   }
   scene.ink.lineStyle(1.5, hexNumber(stone[1]!));
   for (const [start, end] of outline.edges) {
-    scene.ink.lineBetween(point.x + start.x, point.y + start.y, point.x + end.x, point.y + end.y);
+    scene.ink.lineBetween(
+      point.x + start.x * scale,
+      point.y + start.y * scale,
+      point.x + end.x * scale,
+      point.y + end.y * scale,
+    );
   }
 }
