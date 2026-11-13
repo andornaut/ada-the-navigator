@@ -6,6 +6,7 @@ import { playOpening, relaunch } from "../testing/launch.ts";
 import { grantAllWeapons } from "./cheats.ts";
 import { GameModel } from "./game.ts";
 import { stationsNear } from "./stations.ts";
+import { stationSpecialty } from "./stationServices.ts";
 import { collectWeapon } from "./weapons.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -102,8 +103,11 @@ describe("grant all weapons", () => {
     model.step(0.01, idle);
     expect(model.state.economy.ownedWeapons).toEqual(["scattershot"]);
     expect(model.state.economy.stardust).toBe(0);
-    model.state.docked = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 })[0]!.id;
+    model.state.docked = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 }).find(
+      (site) => stationSpecialty(1, site.id) === "weaponsAmmo",
+    )!.id;
     model.state.economy.stardust = 400;
+    expect(model.stationServices?.weaponsAmmo).toBe(true);
     expect(model.buy({ kind: "weapon", weapon: "multiLaser" })).toEqual({
       kind: "bought",
       price: 400,

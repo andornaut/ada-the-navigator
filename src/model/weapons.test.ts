@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { ECONOMY } from "../data/economy.ts";
 import type { Weapon } from "../data/types.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
 import { grantAllWeapons } from "./cheats.ts";
 import { ensureDestination, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
+import { stationsNear } from "./stations.ts";
+import { stationSpecialty } from "./stationServices.ts";
 import type { FlightState } from "./types.ts";
 import { collectWeapon, noAmmo } from "./weapons.ts";
 
@@ -289,8 +292,18 @@ describe("ammunition", () => {
     });
     expect(model.selectWeapon("multiLaser")).toBe(false);
     expect(flight.weapon).toBe("laser");
-    model.state.docked = "station";
+    const vendors = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 });
+    model.state.docked = vendors.find((site) => stationSpecialty(1, site.id) === "equipment")!.id;
     model.state.economy.stardust = 10;
+    expect(model.stationServices?.weaponsAmmo).toBe(false);
+    expect(model.buy({ kind: "ammo", weapon: "multiLaser" })).toEqual({
+      kind: "refused",
+      reason: "notForSale",
+    });
+    expect(flight.ammo.multiLaser).toBe(0);
+    expect(model.state.economy.stardust).toBe(10);
+    model.state.docked = vendors.find((site) => stationSpecialty(1, site.id) === "weaponsAmmo")!.id;
+    expect(model.stationServices?.weaponsAmmo).toBe(true);
     expect(model.buy({ kind: "ammo", weapon: "multiLaser" })).toEqual({
       kind: "bought",
       price: 10,
@@ -305,7 +318,10 @@ describe("ammunition", () => {
     // Sunflower unlocks only Multi-Laser: a found Phaser keeps its ammunition, with none sold.
     const model = launched();
     pickup(model, "phaser");
-    model.state.docked = "station";
+    model.state.docked = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 }).find(
+      (site) => stationSpecialty(1, site.id) === "weaponsAmmo",
+    )!.id;
+    expect(model.stationServices?.weaponsAmmo).toBe(true);
     model.state.economy.stardust = 10;
     expect(model.buy({ kind: "ammo", weapon: "phaser" })).toEqual({
       kind: "refused",

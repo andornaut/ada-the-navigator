@@ -9,6 +9,7 @@ import { stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
+import { type StationService, stationSpecialty } from "./stationServices.ts";
 import type { FlightInput, FlightState, GameState } from "./types.ts";
 import { noLevels } from "./upgrades.ts";
 import { collectWeapon, grantedAmmo } from "./weapons.ts";
@@ -492,15 +493,18 @@ describe("quantum jump home", () => {
 });
 
 describe("shop through the model", () => {
-  function docked(): GameModel {
+  function docked(specialty: StationService = "equipment"): GameModel {
     const model = launched();
-    const site = anyStation();
+    const site = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 }).find(
+      (site) => stationSpecialty(1, site.id) === specialty,
+    )!;
     model.state.docked = site.id;
     return model;
   }
 
   it("adds a bought weapon to the flight's roster and keeps it on later flights", () => {
-    const model = docked();
+    const model = docked("weaponsAmmo");
+    expect(model.stationServices?.weaponsAmmo).toBe(true);
     model.state.economy.stardust = 400;
     expect(model.requestPurchase({ kind: "weapon", weapon: "multiLaser" })).toEqual({
       kind: "confirm",
@@ -518,6 +522,26 @@ describe("shop through the model", () => {
     playOpening(model);
     expect(model.weapons().map((choice) => choice.id)).toEqual(["laser", "multiLaser"]);
     expect(model.state.economy.stardust).toBe(0);
+  });
+
+  it("refuses weapon confirmation and purchase at a canonical equipment-only station", () => {
+    const model = docked("equipment");
+    model.state.economy.stardust = 400;
+    expect(model.stationServices).toMatchObject({ equipment: true, weaponsAmmo: false });
+    const economy = structuredClone(model.state.economy);
+    const ammo = structuredClone(model.state.flight!.ammo);
+    const roster = model.weapons();
+    expect(model.requestPurchase({ kind: "weapon", weapon: "multiLaser" })).toEqual({
+      kind: "refused",
+      reason: "notForSale",
+    });
+    expect(model.buy({ kind: "weapon", weapon: "multiLaser" })).toEqual({
+      kind: "refused",
+      reason: "notForSale",
+    });
+    expect(model.state.economy).toEqual(economy);
+    expect(model.state.flight!.ammo).toEqual(ammo);
+    expect(model.weapons()).toEqual(roster);
   });
 
   it("raises the shield capacity and current charge when a shield level is bought", () => {
