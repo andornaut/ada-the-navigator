@@ -5,8 +5,7 @@ import type { GameState, Vec } from "../model/types.ts";
 /** A frame-to-frame jump of Ada's ship farther than this, in world units, reads as a teleport. */
 export const TELEPORT_DISTANCE = 20;
 
-export type FeedbackKind =
-  "hit" | "disabled" | "damage" | "shield" | "pickup" | "deposit" | "teleport";
+export type FeedbackKind = "hit" | "disabled" | "damage" | "pickup" | "deposit" | "teleport";
 export interface FeedbackPulse extends Vec {
   kind: FeedbackKind;
   age: number;
@@ -90,13 +89,9 @@ export class ModelFeedback {
       }
       emit(kind, point);
     };
+    // Shield recharge shows only on the shield bar.
     if (next.shield < previous.shield) {
       emit("damage", next.player);
-    } else if (
-      next.shield > previous.shield &&
-      !this.pulses.some((pulse) => pulse.kind === "shield")
-    ) {
-      emit("shield", next.player);
     }
     if (
       next.cargo > previous.cargo ||
@@ -159,7 +154,6 @@ const tones: Record<FeedbackKind, [number, number]> = {
   disabled: [180, 80],
   hit: [230, 160],
   pickup: [520, 780],
-  shield: [300, 360],
   teleport: [160, 640],
 };
 

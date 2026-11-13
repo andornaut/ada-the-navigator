@@ -472,7 +472,7 @@ export function drawPulse(scene: HudContext, grow: number, pulse: FeedbackPulse)
       ? LIGHT_FIELD.ink
       : pulse.kind === "damage"
         ? scene.palette.obstacle
-        : pulse.kind === "shield" || pulse.kind === "pickup"
+        : pulse.kind === "pickup"
           ? scene.palette.active
           : pulse.kind === "hit"
             ? scene.palette.weapon

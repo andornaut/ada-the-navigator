@@ -45,6 +45,16 @@ describe("model feedback", () => {
     expect(feedback.observe(100, state)).toEqual([]);
   });
 
+  it("draws no pulse around Ada while the shield recharges", () => {
+    const { feedback, flight, state } = launched();
+    flight.shield -= 10;
+    feedback.observe(100, state);
+    feedback.advance(1);
+    flight.shield += 1;
+    expect(feedback.observe(100, state)).toEqual([]);
+    expect(feedback.pulses).toEqual([]);
+  });
+
   it("does not report switching back to laser fire as a pickup", () => {
     const { feedback, flight, state } = launched();
     flight.weapon = "rapidMissile";
