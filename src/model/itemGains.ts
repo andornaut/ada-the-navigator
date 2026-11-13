@@ -3,7 +3,7 @@ import type { Weapon } from "../data/types.ts";
 import type { Aboard, ShipState } from "./types.ts";
 
 // Item gains (gameplay/rules.md "Item notices"): what Ada gains in flight other than Stardust and
-// ore, read by comparing what she holds from one frame to the next.
+// ore. Ammo comes from applied pickup feedback; other gains compare held snapshots.
 
 /** What Ada holds that a gain changes. */
 export interface GainSnapshot {
@@ -24,7 +24,7 @@ export interface GainSnapshot {
 
 export type ItemGain =
   | { readonly kind: "aboard"; readonly aboard: Aboard }
-  | { readonly kind: "ammo"; readonly weapon: Weapon }
+  | { readonly added: number; readonly kind: "ammo"; readonly weapon: Weapon }
   | { readonly kind: "holodisk" }
   | { readonly kind: "level"; readonly level: number; readonly track: UpgradeTrack }
   | { readonly kind: "paint"; readonly scheme: string }
@@ -46,8 +46,8 @@ const TRACKS: readonly UpgradeTrack[] = ["shield", "engine", "tractor"];
 
 /**
  * The gains from one snapshot to the next, in a fixed order: holodisks, new weapons, weapon
- * levels, Shield, Engine and Tractor beam levels, paint schemes, ammunition, then what Ada newly
- * carries or tows. Weapons, levels, paint and ammunition count only as drops, so a station's
+ * levels, Shield, Engine and Tractor beam levels, paint schemes, then what Ada newly
+ * carries or tows. Weapons, levels and paint count only as drops, so a station's
  * purchases (docked) gain nothing.
  */
 export function itemGains(
@@ -80,12 +80,6 @@ export function itemGains(
     for (const scheme of next.paints) {
       if (!previous.paints.includes(scheme)) {
         gains.push({ kind: "paint", scheme });
-      }
-    }
-    for (const weapon of next.weapons) {
-      const was = before.get(weapon.id)?.ammo;
-      if (was !== undefined && was !== null && weapon.ammo !== null && weapon.ammo > was) {
-        gains.push({ kind: "ammo", weapon: weapon.id });
       }
     }
   }

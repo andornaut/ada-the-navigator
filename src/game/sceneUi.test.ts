@@ -5,9 +5,11 @@ import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { ECONOMY } from "../data/economy.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { STATUS_PILL_LAYOUT } from "../data/layout.ts";
 import { GameModel } from "../model/game.ts";
+import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
 import { readStory, relaunch } from "../testing/launch.ts";
 import { ShieldOreSpendCounter, type StatusView } from "../ui/statusPill.ts";
 
@@ -215,5 +217,32 @@ describe("shield ore spend caller", () => {
     expect(ui.scene.controls.resetShieldOreSpent).toHaveBeenLastCalledWith(2 * batch);
     expect(ui.ticks).toEqual([]);
     expect(ui.order).toEqual(["reset", "status", "reset", "status", "reset", "status"]);
+  });
+});
+
+describe("ammo pickup scene drain", () => {
+  it("drains applied pickup amounts once without also emitting a snapshot ammo notice", () => {
+    const model = flight();
+    const active = model.state.flight!;
+    active.ownedWeapons = ["multiLaser"];
+    active.weapon = "multiLaser";
+    active.weaponSwitchFor = 0;
+    active.ammo.multiLaser = 5;
+    active.objects = [
+      { ...active.player, ammoPack: true, hp: 1, id: "drop:1", kind: "pickup", radius: 10 },
+    ];
+    const setGains = vi.fn<(gains: readonly ItemGain[] | null) => void>();
+    const scene = { controls: { setGains }, model };
+    const context = createContext({ gainSnapshot, itemGains });
+    const update = runInContext(callback("noticeGains"), context) as (scene: object) => void;
+    update(scene);
+    model.step(0.01, { aim: { x: 1, y: 0 }, move: { x: 0, y: 0 }, use: false });
+    update(scene);
+    expect(setGains).toHaveBeenCalledExactlyOnceWith([
+      { added: ECONOMY.ammo.pack.multiLaser, kind: "ammo", weapon: "multiLaser" },
+    ]);
+    update(scene);
+    expect(setGains).toHaveBeenCalledTimes(1);
+    expect(model.drainPickupFeedback()).toEqual([]);
   });
 });

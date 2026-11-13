@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { ECONOMY } from "../data/economy.ts";
+import { ECONOMY, worldAmmoPack } from "../data/economy.ts";
 import type { Weapon } from "../data/types.ts";
 import { playOpening } from "../testing/launch.ts";
 import { dropRandom, rollAmmoDrop, rollRockAmmoDrop } from "./drops.ts";
@@ -273,9 +273,13 @@ describe("ammo pack drops", () => {
     model.step(0.01, idle);
     const gains = itemGains(false, before, gainSnapshot(model.state.economy.paints, model.ship));
     expect(model.state.flight!.objects).toHaveLength(0);
-    expect(model.state.flight!.ammo.multiLaser).toBe(80);
-    expect(model.state.economy.ammo.multiLaser).toBe(80);
-    expect(gains).toEqual([{ kind: "ammo", weapon: "multiLaser" }]);
+    expect(model.state.flight!.ammo.multiLaser).toBe(5 + worldAmmoPack(ECONOMY, "multiLaser"));
+    expect(model.state.economy.ammo.multiLaser).toBe(5 + worldAmmoPack(ECONOMY, "multiLaser"));
+    expect(gains).toEqual([]);
+    expect(model.drainPickupFeedback()).toEqual([
+      { added: worldAmmoPack(ECONOMY, "multiLaser"), kind: "ammo", weapon: "multiLaser" },
+    ]);
+    expect(model.drainPickupFeedback()).toEqual([]);
   });
 });
 
@@ -325,5 +329,6 @@ describe("collecting an upgrade pickup", () => {
     expect(flight.weapon).toBe("multiLaser");
     expect(flight.ammo.multiLaser).toBeGreaterThanOrEqual(3 * ECONOMY.ammo.pack.multiLaser);
     expect(gains).toEqual([{ kind: "weapon", weapon: "multiLaser" }]);
+    expect(model.drainPickupFeedback()).toEqual([]);
   });
 });

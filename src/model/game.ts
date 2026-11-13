@@ -15,7 +15,7 @@ import {
   SPEAKERS,
 } from "../data/conversations.ts";
 import { DESTINATIONS, STATION_SENTENCE } from "../data/destinations.ts";
-import { ECONOMY } from "../data/economy.ts";
+import { ECONOMY, type UpgradeWeapon } from "../data/economy.ts";
 import {
   BUILT,
   GALAXY_COUNT,
@@ -96,6 +96,7 @@ import {
   objectiveDestination,
   questItemDestination,
 } from "./indicators.ts";
+import type { ItemGain } from "./itemGains.ts";
 import {
   acceptJob,
   type BoardContext,
@@ -358,12 +359,15 @@ export interface AchievementView {
   readonly unlocked: boolean;
 }
 
+export type PickupFeedback = Extract<ItemGain, { readonly kind: "ammo" }>;
+
 export class GameModel {
   state: GameState;
   /** The last flight step's events, for view effects; empty when no step ran. */
   flightEvents: FlightEvent[] = [];
   private readonly content: GameContent;
   private readonly talk: ConversationDirector;
+  private pickupFeedback: PickupFeedback[] = [];
   private noticeShownFor = 0;
   /** Held-job moments since the last flight step, for the conversation director. */
   private jobMoments: (JobMoment | "jobComplete")[] = [];
@@ -441,6 +445,7 @@ export class GameModel {
    * Back to title resume it exactly, its tow, calf and carried items included.
    */
   private holdFlight(): void {
+    this.pickupFeedback = [];
     const { dialogue, docked, flight, mode, notice } = this.state;
     this.heldFlight = { dialogue, docked, flight, mode, notice };
     this.state.mode = "home";
@@ -737,6 +742,21 @@ export class GameModel {
       }
     }
   }
+  private grantPickupAmmo(weapon: UpgradeWeapon): void {
+    const before = this.state.economy.ammo[weapon];
+    applyUpgrade(ECONOMY, { kind: "ammo", weapon }, this.state.economy);
+    const added = this.state.economy.ammo[weapon] - before;
+    this.pushLoadout();
+    if (added > 0) {
+      this.pickupFeedback.push({ added, kind: "ammo", weapon });
+    }
+  }
+  /** Applied pickup feedback leaves once and is never serialized. */
+  drainPickupFeedback(): readonly PickupFeedback[] {
+    const feedback = this.pickupFeedback;
+    this.pickupFeedback = [];
+    return feedback;
+  }
   /**
    * Gives an upgrade pickup's gift, chosen from what Ada can use as she collects it and seeded
    * by the pickup; the HUD's item notice names it from what Ada then holds. A new weapon joins
@@ -756,6 +776,8 @@ export class GameModel {
     if (gift.kind === "weapon") {
       collectWeapon(gift.weapon, flight);
       this.pullLoadout();
+    } else if (gift.kind === "ammo") {
+      this.grantPickupAmmo(gift.weapon);
     } else {
       applyUpgrade(ECONOMY, gift, this.state.economy);
       this.pushLoadout();
@@ -775,8 +797,7 @@ export class GameModel {
       dropRandom(flight.seed, `ammo:${id}`),
     );
     if (weapon) {
-      applyUpgrade(ECONOMY, { kind: "ammo", weapon }, this.state.economy);
-      this.pushLoadout();
+      this.grantPickupAmmo(weapon);
     }
   }
   /** Purchases change the economy, which then refreshes the flight's loadout. */
@@ -1160,6 +1181,7 @@ export class GameModel {
     }
   }
   private launch(): void {
+    this.pickupFeedback = [];
     const randomSeed = crypto.getRandomValues(new Uint32Array(1))[0] ?? 1;
     const seed = randomSeed === this.previousSeed ? (randomSeed + 1) >>> 0 : randomSeed;
     this.previousSeed = seed;
@@ -1220,6 +1242,7 @@ export class GameModel {
    * at the hub next time. An in-flight notice ends with its flight.
    */
   private endFlight(keptOre: (ore: number) => number = (ore) => ore): void {
+    this.pickupFeedback = [];
     this.closeGalaxyMapInFlight();
     const flight = this.state.flight;
     const ore = flight ? keptOre(flight.cargo) : 0;
@@ -2597,6 +2620,7 @@ export class GameModel {
     const achievements = { ...this.state.achievements, found: [], sensed: [] };
     this.state = { ...newGameState(), achievements };
     this.suspendedInteraction = null;
+    this.pickupFeedback = [];
     this.depletionContinuation = false;
     this.playedInterludes.clear();
     this.heldFlight = null;

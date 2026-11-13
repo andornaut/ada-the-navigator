@@ -19,7 +19,7 @@ import { chipLeft, chipWidth, flyPoint, ITEM_NOTICE } from "./layout/itemNotice.
 
 const LABELS = CONTENT.labels;
 const notice = (gain: Parameters<typeof gainNotice>[1]) => gainNotice(LABELS, gain);
-const ammo = notice({ kind: "ammo", weapon: "rapidMissile" });
+const ammo = notice({ added: 1, kind: "ammo", weapon: "rapidMissile" });
 const holodisk = notice({ kind: "holodisk" });
 const parts = notice({ aboard: { kind: "carrying", name: "Spare parts" }, kind: "aboard" });
 
@@ -227,7 +227,7 @@ describe("item notice timeline", () => {
     const queue = new NoticeQueue(() => false);
     queue.push(ammo);
     queue.advance(180 + 1000, true);
-    queue.push(notice({ kind: "ammo", weapon: "rapidMissile" }));
+    queue.push(notice({ added: 1, kind: "ammo", weapon: "rapidMissile" }));
     const frame = queue.advance(0, true);
     expect([frame?.count, frame?.phase, frame?.progress]).toEqual([2, "hold", 0]);
     expect(queue.advance(1199, true)?.phase).toBe("hold");

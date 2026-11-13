@@ -12,7 +12,7 @@ import { coarsePointer } from "../input/coarsePointer.ts";
 import { createControls } from "../input/controls.ts";
 import { grantAllWeapons } from "../model/cheats.ts";
 import { GameModel } from "../model/game.ts";
-import { gainSnapshot, itemGains } from "../model/itemGains.ts";
+import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 import { newerSave } from "../model/save.ts";
 import { fill, itemAbout, itemName, type ShopItem } from "../model/shop.ts";
@@ -929,6 +929,7 @@ export function shipView(scene: UiContext): ShipView {
 // Queues item notices for what Ada gained since last frame; a new flight starts from what she
 // holds, and leaving flight clears them.
 export function noticeGains(scene: UiContext): void {
+  const pickups = scene.model.drainPickupFeedback();
   const { flight, mode } = scene.model.state;
   if (mode !== "space" || !flight) {
     if (scene.held) {
@@ -938,13 +939,15 @@ export function noticeGains(scene: UiContext): void {
     return;
   }
   const snapshot = gainSnapshot(scene.model.state.economy.paints, scene.model.ship);
+  const gains: ItemGain[] = [];
   if (scene.held?.flight === flight) {
-    const gains = itemGains(Boolean(scene.model.state.docked), scene.held.snapshot, snapshot);
-    if (gains.length > 0) {
-      scene.controls.setGains(gains);
-    }
+    gains.push(...itemGains(Boolean(scene.model.state.docked), scene.held.snapshot, snapshot));
   } else if (scene.held) {
     scene.controls.setGains(null);
+  }
+  gains.push(...pickups);
+  if (gains.length > 0) {
+    scene.controls.setGains(gains);
   }
   scene.held = { flight, snapshot };
 }

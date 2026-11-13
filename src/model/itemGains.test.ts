@@ -25,7 +25,7 @@ describe("item gains", () => {
     expect(itemGains(false, carrying, BASE)).toEqual([]);
   });
 
-  it("finds a holodisk, a new weapon, an ammunition pack and what Ada newly carries, in that order", () => {
+  it("finds a holodisk, a new weapon and cargo without inferring ammo from frame snapshots", () => {
     const next: GainSnapshot = {
       ...BASE,
       aboard: { kind: "towing", name: "a scrap barge" },
@@ -39,7 +39,6 @@ describe("item gains", () => {
     expect(itemGains(false, BASE, next)).toEqual([
       { kind: "holodisk" },
       { kind: "weapon", weapon: "phaser" },
-      { kind: "ammo", weapon: "rapidMissile" },
       { aboard: { kind: "towing", name: "a scrap barge" }, kind: "aboard" },
     ]);
   });
@@ -80,4 +79,12 @@ describe("item gains", () => {
     expect(itemGains(false, parts, parts)).toEqual([]);
     expect(itemGains(false, parts, towing)).toEqual([{ aboard: towing.aboard, kind: "aboard" }]);
   });
+});
+
+it("never infers a pickup from an ammo delta that can include simultaneous firing", () => {
+  const increased = {
+    ...BASE,
+    weapons: [BASE.weapons[0]!, { ammo: 240, id: "rapidMissile" as const, level: 1 }],
+  };
+  expect(itemGains(false, BASE, increased)).toEqual([]);
 });
