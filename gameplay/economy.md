@@ -149,18 +149,18 @@ until she returns to a galaxy that unlocks it.
 
 ### Prices
 
-| Item           | Effect                                                                                                                        | Prices    |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------- |
-| Multi-Laser    | Owned weapon                                                                                                                  | 400       |
-| Rapid Missile  | Owned weapon                                                                                                                  | 500       |
-| Heavy Missile  | Owned weapon                                                                                                                  | 600       |
-| Scattershot    | Owned weapon                                                                                                                  | 800       |
-| Phaser         | Owned weapon                                                                                                                  | 1000      |
-| Weapon upgrade | Per weapon, Laser included: levels 2 and 3, each about ×1.5 effective output (×1.2 to 1.33 for Rapid Missile and Multi-Laser) | See below |
-| Shield         | Levels 2 and 3: capacity 15, then 20; empty to full 45, then 30 s                                                             | 450, 900  |
-| Engine tuning  | Levels 2 and 3: top speed 200, then 225; each −10% acceleration and braking seconds                                           | 180, 360  |
-| Tractor beam   | Levels 2 and 3: pull radius 90, then 120; pull speed 160, then 200                                                            | 120, 240  |
-| Ship paint     | Cosmetic colour schemes for Ada's ship; the white and blue scheme stays free                                                  | 75 each   |
+| Item           | Effect                                                                                                                                              | Prices    |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| Multi-Laser    | Owned weapon                                                                                                                                        | 400       |
+| Rapid Missile  | Owned weapon                                                                                                                                        | 500       |
+| Heavy Missile  | Owned weapon                                                                                                                                        | 600       |
+| Scattershot    | Owned weapon                                                                                                                                        | 800       |
+| Phaser         | Owned weapon                                                                                                                                        | 1000      |
+| Weapon upgrade | Per weapon, Laser included: levels 2 and 3, each about ×1.5 effective output (×1.2 to 1.33 for Rapid Missile and Multi-Laser)                       | See below |
+| Shield         | Levels 2 and 3: capacity 15, then 20; empty to full 45, then 30 s                                                                                   | 450, 900  |
+| Engine tuning  | Levels 2 and 3: top speed 200, then 225; each −10% acceleration and braking seconds; aim turn 0.07, then 0.06 s and movement turn 0.14, then 0.12 s | 180, 360  |
+| Tractor beam   | Levels 2 and 3: pull radius 90, then 120; pull speed 160, then 200                                                                                  | 120, 240  |
+| Ship paint     | Cosmetic colour schemes for Ada's ship; the white and blue scheme stays free                                                                        | 75 each   |
 
 Weapon upgrades cost 25% more for each later weapon in weapon order, compounded
 from Laser's and rounded up to the next 100. Each weapon's purchase price
@@ -268,17 +268,17 @@ An upgrade card shows the upgrade's shop name (`weaponUpgrade`, `shield`,
 `detailNextLevel` and what the next level adds, from the table below. At level 3
 it shows `detailMaxed` instead.
 
-| Upgrade       | Level 2 adds                           | Level 3 adds                  |
-| ------------- | -------------------------------------- | ----------------------------- |
-| Laser         | "Fires faster and hits harder."        | Same as level 2               |
-| Multi-Laser   | "One more bolt, and faster bolts."     | Same as level 2               |
-| Rapid Missile | "Fires faster."                        | Same as level 2               |
-| Heavy Missile | "Hits harder."                         | Same as level 2               |
-| Scattershot   | "Two more shots that hit harder."      | Same as level 2               |
-| Phaser        | "Hits harder."                         | Same as level 2               |
-| Shield        | "A bigger shield that refills faster." | Same as level 2               |
-| Engine tuning | "Faster. Keep pace with interceptors." | "Faster. Outrun every drone." |
-| Tractor beam  | "Pulls from farther away, and faster." | Same as level 2               |
+| Upgrade       | Level 2 adds                                              | Level 3 adds                                     |
+| ------------- | --------------------------------------------------------- | ------------------------------------------------ |
+| Laser         | "Fires faster and hits harder."                           | Same as level 2                                  |
+| Multi-Laser   | "One more bolt, and faster bolts."                        | Same as level 2                                  |
+| Rapid Missile | "Fires faster."                                           | Same as level 2                                  |
+| Heavy Missile | "Hits harder."                                            | Same as level 2                                  |
+| Scattershot   | "Two more shots that hit harder."                         | Same as level 2                                  |
+| Phaser        | "Hits harder."                                            | Same as level 2                                  |
+| Shield        | "A bigger shield that refills faster."                    | Same as level 2                                  |
+| Engine tuning | "Faster, and turns quicker. Keep pace with interceptors." | "Faster, and turns quicker. Outrun every drone." |
+| Tractor beam  | "Pulls from farther away, and faster."                    | Same as level 2                                  |
 
 ## Donations
 

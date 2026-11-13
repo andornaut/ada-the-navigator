@@ -39,7 +39,7 @@ hull. Hardpoint and hull weapons aim independently of the hull with
 
 | Ship          | Size (Ada widths) | `maxSpeed` | `accelerationSeconds` | `brakingSeconds` | `turnSeconds` | `aimTurnSeconds` |
 | ------------- | ----------------: | ---------: | --------------------: | ---------------: | ------------: | ---------------: |
-| Ada           |                 1 |        175 |                  0.36 |             0.55 |          0.22 |             0.07 |
+| Ada           |                 1 |        175 |                  0.36 |             0.55 |          0.16 |             0.08 |
 | `swarm`       |              0.65 |        160 |                  0.20 |             0.25 |          0.12 |             0.10 |
 | `fighter`     |                 1 |        140 |                  0.40 |             0.50 |          0.30 |             0.15 |
 | `interceptor` |              0.75 |        200 |                  0.90 |             1.20 |          0.60 |             0.12 |
@@ -49,6 +49,9 @@ hull. Hardpoint and hull weapons aim independently of the hull with
 | `platform`    |                 3 |          0 |                     – |                – |             – |             0.30 |
 
 Ada's 175 is her base engine; engine levels 2 and 3 raise it to 200 and 225.
+Her aim turns with `aimTurnSeconds` 0.08, 0.07 and 0.06 at engine levels 1, 2
+and 3, and her movement heading turns twice as slowly, with `turnSeconds` 0.16,
+0.14 and 0.12.
 Enemy speeds are fixed and the same in every galaxy: a new Ada outruns the swarm
 and the interceptor outruns her, engine level 2 keeps pace with the interceptor
 and outruns every other enemy, and level 3 outruns them all. Ada's ship has noticeable momentum: it takes about a second to reach full speed,
