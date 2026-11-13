@@ -1,6 +1,6 @@
 import { ECONOMY } from "../data/economy.ts";
 import { encounterTable } from "../data/enemyCatalog.ts";
-import { NEEDLE } from "../data/needle.ts";
+import { NEEDLE, NEEDLE_PLACES } from "../data/needle.ts";
 import { NEEDLE_COPY, NEEDLE_LEARNING } from "../data/needleCopy.ts";
 import type { ChapterContext, ChapterResult } from "./chapterProtocol.ts";
 import { dropRandom } from "./drops.ts";
@@ -18,7 +18,14 @@ import {
   readNeedleProgress,
   stepNeedleCourse,
 } from "./needle.ts";
-import type { DialogueState, FlightState, GalaxyProgress, UseAction, Vec } from "./types.ts";
+import type {
+  DialogueChoice,
+  DialogueState,
+  FlightState,
+  GalaxyProgress,
+  UseAction,
+  Vec,
+} from "./types.ts";
 import { shipTuning } from "./upgrades.ts";
 export interface NeedleChapterProgress extends NeedleProgress {
   met: boolean;
@@ -211,6 +218,16 @@ export function chooseNeedle(
   dialogue: DialogueState,
   choice: string,
 ): ChapterResult | undefined {
+  if (["activity:elderLoom", "activityActive:elderLoom"].includes(dialogue.context)) {
+    if (
+      choice === "changeApproach" &&
+      needleActivityChoices(context, "elderLoom").length &&
+      dialogue.choices.some((offered) => offered.id === choice && !offered.refused)
+    ) {
+      return { dialogue: learningPanel(true) };
+    }
+    return undefined;
+  }
   if (!dialogue.context.startsWith("needle.")) {
     return undefined;
   }
@@ -285,7 +302,21 @@ export function needleObjective(context: ChapterContext): string | null {
     ] ?? null
   );
 }
-export function needleAction(_context: ChapterContext, id: string): UseAction {
+/** Optional chapter help does not replace the central activity's Take, Drop or Continue actions. */
+export function needleActivityChoices(
+  context: ChapterContext,
+  place: string,
+): readonly DialogueChoice[] {
+  return context.flight.galaxy === 4 &&
+    place === "elderLoom" &&
+    (context.progress as ChapterProgress).needle?.briefed
+    ? [{ id: "changeApproach", label: NEEDLE_LEARNING.changeLabel }]
+    : [];
+}
+export function needleAction(context: ChapterContext, id: string): UseAction | undefined {
+  if (context.flight.galaxy !== 4 || !NEEDLE_PLACES.some((place) => place === id)) {
+    return undefined;
+  }
   return id === "elderLoom" ? "talk" : "use";
 }
 export function readNeedleChapterProgress(value: unknown): NeedleChapterProgress | null {

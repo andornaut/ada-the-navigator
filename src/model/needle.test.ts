@@ -24,6 +24,8 @@ import {
 import {
   chooseNeedle,
   initNeedle,
+  needleAction,
+  needleActivityChoices,
   type NeedleChapterProgress,
   needleCourses,
   type NeedleFlight,
@@ -538,5 +540,65 @@ describe("Needle repeat Talk and collection cards", () => {
       "practice",
       "eye",
     ]);
+  });
+});
+
+describe("Needle optional help on central activity cards", () => {
+  it.each(["activity:elderLoom", "activityActive:elderLoom"])(
+    "handles only an offered help action on %s",
+    (dialogueContext) => {
+      const context = chapter();
+      expect(needleActivityChoices(context, "elderLoom")).toEqual([]);
+      learn(context, "show");
+      context.progress.resolved = true;
+      const before = structuredClone({ flight: context.flight, progress: context.progress });
+      const extra = needleActivityChoices(context, "elderLoom");
+      expect(extra).toEqual([{ id: "changeApproach", label: NEEDLE_LEARNING.changeLabel }]);
+      const primary = dialogueContext.startsWith("activityActive") ? "drop" : "take";
+      const card = {
+        choices: [{ id: primary, label: primary }, { id: "continue", label: "Continue" }, ...extra],
+        context: dialogueContext,
+        text: "Thread the needle",
+        title: "Elder Loom",
+      };
+      expect(chooseNeedle(context, card, primary)).toBeUndefined();
+      expect(chooseNeedle(context, card, "continue")).toBeUndefined();
+      expect({ flight: context.flight, progress: context.progress }).toEqual(before);
+      const absent = {
+        ...card,
+        choices: card.choices.filter((choice) => choice.id !== "changeApproach"),
+      };
+      expect(chooseNeedle(context, absent, "changeApproach")).toBeUndefined();
+      const refused = {
+        ...card,
+        choices: card.choices.map((choice) => ({ ...choice, refused: true })),
+      };
+      expect(chooseNeedle(context, refused, "changeApproach")).toBeUndefined();
+      const changed = chooseNeedle(context, card, "changeApproach")!.dialogue!;
+      expect(changed.context).toBe("needle.learningChange");
+      expect({ flight: context.flight, progress: context.progress }).toEqual(before);
+      chooseNeedle(context, changed, "feedback");
+      expect(chapterProgress(context).approach).toBe("feedback");
+      expect(chapterProgress(context).practiceLit).toBe(0);
+    },
+  );
+  it("does not offer Needle help or replace Use actions at unrelated places", () => {
+    const context = chapter();
+    learn(context, "independent");
+    expect(needleActivityChoices(context, "family")).toEqual([]);
+    expect(needleAction(context, "station:4:0")).toBeUndefined();
+    expect(needleAction(context, "elderLoom")).toBe("talk");
+    expect(needleAction(context, "holodisk")).toBe("use");
+    expect(
+      needleAction({ ...context, flight: { ...context.flight, galaxy: 3 } }, "holodisk"),
+    ).toBeUndefined();
+    const card = {
+      choices: [{ id: "changeApproach", label: NEEDLE_LEARNING.changeLabel }],
+      context: "activity:family",
+      text: "",
+      title: "Whale family",
+    };
+    expect(chooseNeedle(context, card, "changeApproach")).toBeUndefined();
+    expect(chapterProgress(context).approach).toBe("independent");
   });
 });
