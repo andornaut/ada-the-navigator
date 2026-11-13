@@ -17,6 +17,7 @@ import {
   spawnChapterEnemy,
 } from "./flight.ts";
 import { type PhantomAlly, type PhantomAllySpec, rotatePhantomAllies } from "./phantomAllies.ts";
+import { phantomSettlementCopy } from "./phantomSettlementCopy.ts";
 import type { DialogueState, FlightState, GalaxyProgress, SpaceObject, Vec } from "./types.ts";
 export interface PhantomProgress {
   broken: string[];
@@ -383,8 +384,8 @@ export function phantomObjectiveIndex(context: ChapterContext): number {
   }
   return retained(context, PHANTOM_FLAGSHIP)?.enemy?.disabled ? 5 : 4;
 }
-function panel(key: string): DialogueState {
-  const copy = PHANTOM_COPY[key]!;
+function panel(key: string, copyKey = key): DialogueState {
+  const copy = PHANTOM_COPY[copyKey]!;
   return {
     choices: [{ id: "continue", label: "Continue" }],
     context: `phantom.${key}`,
@@ -398,7 +399,8 @@ export function usePhantom(context: PhantomContext, id: string): ChapterResult |
     if (!progress.broken.includes(id)) {
       return {};
     }
-    return { dialogue: panel(id) };
+    const copy = phantomSettlementCopy(progress.freed, id);
+    return copy ? { dialogue: panel(id, copy) } : {};
   }
   const target = salvageTarget(context.content, context.flight);
   if (id === PHANTOM_FLAGSHIP && target?.id === PHANTOM_FLAGSHIP && !context.progress.holodisk) {
