@@ -117,6 +117,34 @@ describe("ordinary Stardust placement", () => {
     expect(stardustDropOffsets(ECONOMY, candidates)).toEqual(placed);
   });
 
+  it("keeps crowded Stardust clear of fixed ore obstacles without moving those obstacles", () => {
+    const obstacles = [
+      { radius: 16, x: 0, y: 0 },
+      { radius: 8, x: 25, y: 0 },
+    ];
+    const before = structuredClone(obstacles);
+    const context = { ...ECONOMY, obstacles };
+    const placed = stardustDropOffsets(context, [
+      { x: 0, y: 0 },
+      { x: 0, y: 0 },
+    ]);
+    const radius = Math.SQRT2 * (ECONOMY.stardustPickupRadius + GALAXIES_FILE.lightField.keyline);
+    for (const point of placed) {
+      for (const obstacle of obstacles) {
+        expect(Math.hypot(point.x - obstacle.x, point.y - obstacle.y)).toBeGreaterThanOrEqual(
+          radius + obstacle.radius + ECONOMY.stardustPickupGap,
+        );
+      }
+    }
+    expect(obstacles).toEqual(before);
+    expect(
+      stardustDropOffsets(context, [
+        { x: 0, y: 0 },
+        { x: 0, y: 0 },
+      ]),
+    ).toEqual(placed);
+  });
+
   it("separates the actual rock-release path without changing its five-unit reward", () => {
     const loot = vi
       .spyOn(asteroidLoot, "rollAsteroidLoot")

@@ -44,6 +44,15 @@ const CACHE = sheetOutline(cache as Sheet, [" 1.aseprite", " 2.aseprite"]);
 export const HUNT_GLINT = sheetOutline(huntGlint as Sheet);
 /** A cargo piece, Art's ore nugget. */
 const ORE = sheetOutline(ore as Sheet);
+const ORE_SCALE = orePickupSize(5) / orePickupSize();
+const LARGE_ORE = ORE?.map((part) =>
+  part.map(({ x, y }) => ({ x: x * ORE_SCALE, y: y * ORE_SCALE })),
+);
+
+/** Ore uses the canonical frame at native size, enlarged for a five-unit chunk. */
+export function orePickupSize(amount?: number): number {
+  return amount === 5 ? 18 : Object.values(ore.frames)[0]!.sourceSize.w;
+}
 /** An ammo pack's cartridge clip: every frame of its glint loop. */
 export const AMMO_PACK = sheetOutline(ammoPack as Sheet);
 const SQUARES = new Map<number, Parts>();
@@ -64,7 +73,7 @@ export function pickupOutline(object: SpaceObject): Parts | null {
     return STARDUST ?? null;
   }
   if (object.role === "cargo") {
-    return ORE ?? null;
+    return (object.amount === 5 ? LARGE_ORE : ORE) ?? null;
   }
   if (object.ammoPack) {
     return AMMO_PACK ?? null;

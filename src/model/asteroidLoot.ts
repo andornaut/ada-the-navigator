@@ -12,12 +12,14 @@ export function rollAsteroidLoot(
   size: AsteroidSize,
   next: () => number,
 ): AsteroidLoot {
-  const weights = context.totals[size];
-  let draw = next() * weights.reduce((sum, weight) => sum + weight, 0);
-  let total = 1;
+  const { minimum, weights } = context.totals[size];
+  const draw = next();
+  const sum = weights.reduce((sum, weight) => sum + weight, 0);
+  let cumulative = 0;
+  let total = minimum;
   for (let index = 0; index < weights.length - 1; index++) {
-    draw -= weights[index]!;
-    if (draw < 0) {
+    cumulative += weights[index]!;
+    if (draw < cumulative / sum) {
       break;
     }
     total++;

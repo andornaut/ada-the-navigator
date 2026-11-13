@@ -39,7 +39,7 @@ import { createEnemy } from "./enemyAi.ts";
 import { createFlight, pickupTouched, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { nosePoint } from "./nose.ts";
-import { HUNT_GLINT, pickupOutline } from "./pickupBody.ts";
+import { HUNT_GLINT, orePickupSize, pickupOutline } from "./pickupBody.ts";
 import { playerWeaponCoverage } from "./playerWeaponCoverage.ts";
 import { restoreSave } from "./save.ts";
 import { shipBody } from "./shipBody.ts";
@@ -114,6 +114,10 @@ function killShot(target: SpaceObject) {
     y: target.y,
   };
 }
+const oreTotal = (objects: SpaceObject[]) =>
+  objects
+    .filter((object) => object.role === "cargo")
+    .reduce((sum, object) => sum + (object.amount ?? 1), 0);
 const gained = (events: FlightEvent[]) =>
   events.reduce((sum, event) => sum + (event.type === "stardust" ? event.amount : 0), 0);
 const pickups = (value: FlightState) =>
@@ -144,9 +148,9 @@ describe("guaranteed destruction loot", () => {
         value.shots.push(killShot(rock));
         stepFlight(CONTENT, 1 / 60, idle, value);
         const ore = value.objects.filter((object) => object.role === "cargo");
-        const amount = ore.length + total(pickups(value));
-        expect(amount).toBeGreaterThanOrEqual(1);
-        expect(amount).toBeLessThanOrEqual(5);
+        const amount = oreTotal(ore) + total(pickups(value));
+        const outcome = rollAsteroidLoot(ASTEROID_LOOT, size, dropRandom(value.seed, rock.id));
+        expect(amount).toBe(outcome.ore + outcome.stardust);
         expect(value.cargo).toBe(0);
         const ids = value.objects.filter((object) => object.kind === "pickup").map(({ id }) => id);
         value.shots.push(killShot(rock), killShot(rock));
@@ -179,7 +183,7 @@ describe("guaranteed destruction loot", () => {
         value.objects.push(rock);
         value.shots.push(killShot(rock), killShot(rock));
         stepFlight(CONTENT, 1 / 60, idle, value);
-        expect(value.objects.filter(({ role }) => role === "cargo")).toHaveLength(chosen.loot.ore);
+        expect(oreTotal(value.objects)).toBe(chosen.loot.ore);
         expect(total(pickups(value))).toBe(chosen.loot.stardust);
         expect(value.objects.some(({ upgrade }) => upgrade)).toBe(false);
         expect(value.cargo).toBe(0);
@@ -196,12 +200,93 @@ describe("guaranteed destruction loot", () => {
       value.objects.push(target, neighbor);
       value.shots.push({ ...killShot(target), blast: 100 }, { ...killShot(target), blast: 100 });
       stepFlight(CONTENT, 1 / 60, idle, value);
-      const amount =
-        value.objects.filter(({ role }) => role === "cargo").length + total(pickups(value));
-      expect(amount).toBeGreaterThanOrEqual(1);
-      expect(amount).toBeLessThanOrEqual(5);
+      const amount = oreTotal(value.objects) + total(pickups(value));
+      const outcome = rollAsteroidLoot(ASTEROID_LOOT, "small", dropRandom(value.seed, target.id));
+      expect(amount).toBe(outcome.ore + outcome.stardust);
       expect(neighbor.hp).toBe(1);
       expect(value.objects.filter(({ id }) => id === target.id)).toEqual([]);
+    },
+  );
+
+  it.each(["rock", "resource"] as const)(
+    "groups rolled ore into five-unit chunks and single remainders from a %s and collects once after save/resume",
+    (kind) => {
+      for (const ore of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
+        const value = flight();
+        const id = Array.from({ length: 2000 }, (_, index) => `ore-group:${index}`).find(
+          (id) => rollAsteroidLoot(ASTEROID_LOOT, "huge", dropRandom(value.seed, id)).ore === ore,
+        )!;
+        expect(id).toBeDefined();
+        const shape = [...ASTEROID_SHAPES.values()].find((entry) => entry.size === "huge")!;
+        const loot = rollAsteroidLoot(ASTEROID_LOOT, "huge", dropRandom(value.seed, id));
+        const target: SpaceObject = {
+          asteroid: shape.id,
+          hp: 1,
+          id,
+          kind,
+          radius: shape.radius,
+          x: 600,
+          y: 0,
+        };
+        value.objects.push(target);
+        value.shots.push(killShot(target), killShot(target));
+        stepFlight(CONTENT, 1 / 60, idle, value);
+        const pieces = value.objects.filter((object) => object.role === "cargo");
+        expect(pieces).toHaveLength(Math.floor(ore / 5) + (ore % 5));
+        expect(pieces.map((piece) => piece.amount)).toEqual([
+          ...Array(Math.floor(ore / 5)).fill(5),
+          ...Array(ore % 5).fill(1),
+        ]);
+        expect(oreTotal(pieces)).toBe(ore);
+        const glyphs = value.objects.filter(
+          (object) => object.role === "cargo" || object.role === "stardust",
+        );
+        for (const [index, first] of glyphs.entries()) {
+          const a = toScreen(first);
+          const widthA = first.role === "cargo" ? orePickupSize(first.amount) : 12;
+          for (const second of glyphs.slice(index + 1)) {
+            const b = toScreen(second);
+            const widthB = second.role === "cargo" ? orePickupSize(second.amount) : 12;
+            const dx = Math.max(0, Math.abs(a.x - b.x) - (widthA + widthB) / 2);
+            const dy = Math.max(0, Math.abs(a.y - b.y) - (widthA + widthB) / 2);
+            expect(Math.hypot(dx, dy)).toBeGreaterThanOrEqual(ECONOMY.stardustPickupGap - 1e-9);
+          }
+        }
+        expect(total(pickups(value))).toBe(loot.stardust);
+        expect(value.cargo).toBe(0);
+        if (ore < 5) {
+          continue;
+        }
+        if (ore === 5) {
+          expect(pieces[0]).toMatchObject({ x: target.x, y: target.y });
+        }
+        const model = new GameModel(CONTENT);
+        model.state.mode = "space";
+        model.state.flight = value;
+        const resumed = restoreSave(model.save())!.flight!;
+        expect(resumed.objects.find((object) => object.role === "cargo")?.amount).toBe(5);
+        resumed.shots.push(killShot(target));
+        stepFlight(CONTENT, 1 / 60, idle, resumed);
+        expect(oreTotal(resumed.objects)).toBe(ore);
+        const ids = new Set(pieces.map((piece) => piece.id));
+        const collected = new Set<string>();
+        for (const pickup of resumed.objects.filter((object) => object.role === "cargo")) {
+          if (pickup.hp <= 0) {
+            continue;
+          }
+          resumed.player = { x: pickup.x, y: pickup.y };
+          const events = stepFlight(CONTENT, 0.001, idle, resumed);
+          for (const event of events) {
+            if (event.type === "collected" && ids.has(event.id)) {
+              collected.add(event.id);
+            }
+          }
+        }
+        expect(resumed.cargo).toBe(ore);
+        expect(collected.size).toBe(pieces.length);
+        stepFlight(CONTENT, 0.001, idle, resumed);
+        expect(resumed.cargo).toBe(ore);
+      }
     },
   );
 
@@ -549,13 +634,12 @@ describe("Stardust drops", () => {
     value.objects.push(rock);
     value.shots.push(killShot(rock));
     stepFlight(CONTENT, 1 / 60, idle, value);
-    const amount =
-      total(pickups(value)) + value.objects.filter(({ role }) => role === "cargo").length;
+    const amount = total(pickups(value)) + oreTotal(value.objects);
     expect(amount).toBeGreaterThanOrEqual(1);
-    expect(amount).toBeLessThanOrEqual(5);
+    expect(amount).toBeLessThanOrEqual(10);
   });
 
-  it("makes an asteroid's Stardust collectable at once, drawn in place from 240 ms within 7.68 units", () => {
+  it("makes an asteroid's Stardust collectable at once, drawn in separated positions from 240 ms", () => {
     const value = flight();
     const shape = [...ASTEROID_SHAPES.values()].find((entry) => entry.size === "huge")!;
     const rock: SpaceObject = {
@@ -575,15 +659,14 @@ describe("Stardust drops", () => {
     stepFlight(CONTENT, 1 / 60, idle, value);
     const released = pickups(value);
     expect(released.length).toBeGreaterThan(0);
-    expect(released.length).toBeLessThanOrEqual(5);
+    expect(released.length).toBeLessThanOrEqual(10);
     for (const pickup of released) {
       // Art's generic reduced destruction (the fighter's reduced timing) at every motion setting.
       expect(pickup.release?.at).toBeCloseTo(destroyedAt + 1 / 60 + 0.24, 9);
       expect(pickup.release?.from).toBeUndefined();
       const offset = Math.hypot(pickup.x - rock.x, pickup.y - rock.y);
       expect(offset).toBeGreaterThan(0);
-      expect(offset).toBeLessThanOrEqual(7.68 * 1.6);
-      expect(offset).toBeLessThan(shape.radius);
+      expect(Number.isFinite(offset)).toBe(true);
     }
   });
 
@@ -680,11 +763,17 @@ describe("Stardust drops", () => {
       value.shots.push(killShot(deposit));
       stepFlight(CONTENT, 1 / 60, idle, value);
       const cargo = value.objects.filter((object) => object.role === "cargo");
-      const amount = cargo.length + total(pickups(value));
-      expect(amount).toBeGreaterThanOrEqual(1);
-      expect(amount).toBeLessThanOrEqual(5);
+      const amount = oreTotal(cargo) + total(pickups(value));
+      const outcome = rollAsteroidLoot(ASTEROID_LOOT, resource, dropRandom(value.seed, deposit.id));
+      expect(amount).toBe(outcome.ore + outcome.stardust);
       if (cargo.length) {
-        expect(cargo.reduce((sum, piece) => sum + piece.x, 0) / cargo.length).toBeCloseTo(-400, 9);
+        const left = Math.min(
+          ...cargo.map((piece) => toScreen(piece).x - orePickupSize(piece.amount) / 2),
+        );
+        const right = Math.max(
+          ...cargo.map((piece) => toScreen(piece).x + orePickupSize(piece.amount) / 2),
+        );
+        expect((left + right) / 2).toBeCloseTo(-400, 9);
       }
     }
     expect([RESOURCE_ROCKS.classes.medium, RESOURCE_ROCKS.classes.large]).toMatchObject([
@@ -781,6 +870,7 @@ describe("tractor beam and pickup reach", () => {
     ["Stardust gem", { amount: 1, radius: ECONOMY.stardustPickupRadius, role: "stardust" }],
     ["cache", { amount: 3, radius: 10, role: "discovery" }],
     ["ore nugget", { radius: 7, role: "cargo" }],
+    ["five-ore chunk", { amount: 5, radius: 7, role: "cargo" }],
     ["upgrade pickup", { radius: 10, upgrade: true }],
     ["ammo pack", { ammoPack: true, radius: 10 }],
   ] as const;

@@ -4,8 +4,8 @@ import type { GalaxyNumber, Weapon } from "../data/types.ts";
 import type { SpaceObject } from "./types.ts";
 
 /** Stardust pickups, from drops or discovery caches, carry an amount. */
-export function carriesStardust(object: Pick<SpaceObject, "amount" | "kind">): boolean {
-  return object.kind === "pickup" && object.amount !== undefined;
+export function carriesStardust(object: Pick<SpaceObject, "amount" | "kind" | "role">): boolean {
+  return object.kind === "pickup" && object.role !== "cargo" && object.amount !== undefined;
 }
 
 export interface Drop {

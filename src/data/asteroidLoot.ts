@@ -2,19 +2,25 @@ import type { AsteroidSize } from "./asteroidCatalog.ts";
 
 export interface AsteroidLootContext {
   readonly oreChance: number;
-  /** Relative weights for total yields of one through five units. */
+  /** Relative total-yield weights, starting at the size's minimum. */
   readonly totals: Readonly<
-    Record<AsteroidSize, readonly [number, number, number, number, number]>
+    Record<
+      AsteroidSize,
+      {
+        readonly minimum: number;
+        readonly weights: readonly number[];
+      }
+    >
   >;
 }
 
 /** Each yielded unit independently becomes ore or Stardust. */
 export const ASTEROID_LOOT: AsteroidLootContext = {
-  oreChance: 0.5,
+  oreChance: 0.75,
   totals: {
-    huge: [5, 10, 20, 30, 35],
-    large: [10, 20, 35, 25, 10],
-    medium: [25, 40, 25, 8, 2],
-    small: [60, 25, 10, 4, 1],
+    huge: { minimum: 1, weights: [5, 12, 20, 20, 11, 7, 4, 3, 2, 16] },
+    large: { minimum: 1, weights: [10, 20, 25, 20, 10, 5, 2, 8] },
+    medium: { minimum: 1, weights: [20, 35, 25, 12, 4, 4] },
+    small: { minimum: 0, weights: [15, 55, 22, 6, 2] },
   },
 };

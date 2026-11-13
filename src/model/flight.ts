@@ -82,7 +82,7 @@ import {
 } from "./geography.ts";
 import { phantomSongSpeed, stepPhantomAllies } from "./phantomAllies.ts";
 import { playerWeaponCoverage, type PlayerWeaponCoverageContext } from "./playerWeaponCoverage.ts";
-import { stardustDiamond, stardustDropOffsets } from "./stardustPlacement.ts";
+import { type PickupObstacle, stardustDiamond, stardustDropOffsets } from "./stardustPlacement.ts";
 import { worldCellAt, worldCellKey, worldCellsNear, worldGrid } from "./worldCells.ts";
 import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
 import { wrapPoint } from "./worldGeometry.ts";
@@ -120,7 +120,7 @@ import {
 } from "./needleFlight.ts";
 import { nosePoint } from "./nose.ts";
 import { worldClearOfOreFields, worldOreFieldsNear } from "./oreFields.ts";
-import { pickupOutline } from "./pickupBody.ts";
+import { orePickupSize, pickupOutline } from "./pickupBody.ts";
 import { planPlayerVolley, projectileReach } from "./playerProjectiles.ts";
 import { sceneryImpact } from "./sceneryImpact.ts";
 import { rechargeShield } from "./shieldRecharge.ts";
@@ -3020,19 +3020,41 @@ function dropFromRock(content: GameContent, object: SpaceObject, flight: FlightS
   }
   const next = dropRandom(flight.seed, object.id);
   const loot = rollAsteroidLoot(ASTEROID_LOOT, asteroidSize(object), next);
-  for (let p = 0; p < loot.ore; p++) {
+  const chunks = Math.floor(loot.ore / 5);
+  const orePieces = chunks + (loot.ore % 5);
+  const amounts = Array.from({ length: orePieces }, (_, index) => (index < chunks ? 5 : 1));
+  const widths = amounts.map(orePickupSize);
+  const span =
+    widths.reduce((sum, width) => sum + width, 0) +
+    Math.max(0, orePieces - 1) * ECONOMY.stardustPickupGap;
+  let edge = -span / 2;
+  const obstacles: PickupObstacle[] = [];
+  for (let p = 0; p < orePieces; p++) {
+    const centre = edge + widths[p]! / 2;
+    edge += widths[p]! + ECONOMY.stardustPickupGap;
+    obstacles.push({ radius: (widths[p]! * Math.SQRT2) / 2, x: centre, y: 0 });
     flight.objects.push({
+      amount: amounts[p]!,
       hp: 1,
       id: `piece:${flight.nextId++}`,
       kind: "pickup",
       radius: content.tuning.flight.pieceRadius,
       role: "cargo",
-      x: object.x + (p - (loot.ore - 1) / 2) * 12,
-      y: object.y,
+      x: object.x + centre / 2,
+      y: object.y - centre / 2,
     });
   }
   const release = { at: flight.time + ROCK_RELEASE.releaseSeconds };
-  releaseStardust(object, ROCK_RELEASE.spread, next, loot.stardust, loot.stardust, release, flight);
+  releaseStardust(
+    obstacles,
+    object,
+    ROCK_RELEASE.spread,
+    next,
+    loot.stardust,
+    loot.stardust,
+    release,
+    flight,
+  );
 }
 
 /** The weapons ammo packs drop for: those Ada owns, not those a story grants for the flight. */
@@ -3603,6 +3625,7 @@ const ROCK_RELEASE = ECONOMY.destruction.fighter.reduced;
  * screen-y offset squashed by 0.8. Each records its release for the view.
  */
 function releaseStardust(
+  obstacles: readonly PickupObstacle[],
   at: Vec,
   spread: number,
   next: () => number,
@@ -3617,7 +3640,7 @@ function releaseStardust(
     const reach = spread * (0.6 + next() * 0.4);
     return { x: Math.cos(angle) * reach, y: Math.sin(angle) * reach * 0.8 };
   });
-  const offsets = stardustDropOffsets(ECONOMY, candidates);
+  const offsets = stardustDropOffsets({ ...ECONOMY, obstacles }, candidates);
   pieces.forEach((value, index) => {
     const screen = offsets[index]!;
     flight.objects.push({
@@ -3670,6 +3693,7 @@ export function salvage(content: GameContent, flight: FlightState): boolean {
   const next = dropRandom(flight.seed, `salvage:${object.id}`);
   const drop = rollSalvageDrop(ECONOMY, flight.galaxy, enemy.archetype, next);
   releaseStardust(
+    [],
     object,
     ECONOMY.destruction[enemy.archetype].spread,
     next,
@@ -3717,6 +3741,7 @@ function stepWrecks(
     const next = dropRandom(flight.seed, object.id);
     const drop = rollEnemyDrop(ECONOMY, flight.galaxy, object.wreck.archetype, next);
     releaseStardust(
+      [],
       object,
       timing.spread,
       next,
@@ -3869,7 +3894,7 @@ export function stepFlight(
       // Collected at contact; the zip into the ship is the view's.
       events.push({ id: object.id, type: "collected", x: object.x, y: object.y });
       if (object.role === "cargo") {
-        flight.cargo++;
+        flight.cargo += object.amount ?? 1;
         object.hp = 0;
       } else if (carriesStardust(object)) {
         events.push({ amount: object.amount ?? 0, type: "stardust" });
