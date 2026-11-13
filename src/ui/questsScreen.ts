@@ -6,7 +6,7 @@ import type { MapPlace } from "../model/map.ts";
 import type { QuestEntry } from "../model/questDetails.ts";
 import { QUEST_LIST_PAGE_SIZE, QUEST_ROUTE_ARROW } from "./layout/questsScreen.ts";
 import { chipFace, chipGlyph, type MapScreenLabels } from "./mapScreen.ts";
-import { createButton, createCard, setFooterAction } from "./modal.ts";
+import { createButton, createCard, setFooterAction, setScrollGroup } from "./modal.ts";
 
 export type QuestOrigin = "flight" | "list";
 
@@ -41,7 +41,6 @@ export function createQuestsScreen(
   const card = createCard({
     closeAction: "close-quests",
     closeLabel: labels.close,
-    full: true,
     title: labels.quests,
   });
 
@@ -107,7 +106,7 @@ export function createQuestsScreen(
       selected = null;
     }
     const body = document.createElement("div");
-    body.className = entry ? "ada-quest-content" : "ada-quest-list";
+    body.className = entry ? "ada-quest-content ada-prose" : "ada-quest-list";
     const footer = document.createElement("footer");
     footer.className = "ada-quest-footer";
     const section = (name: string | undefined, text?: string) => {
@@ -301,7 +300,9 @@ export function createQuestsScreen(
     footer.append(close);
     setFooterAction(entry && origin === "list" ? "back" : "close", footer);
     card.body.replaceChildren(body, footer);
+    setScrollGroup(card, body);
     modal.hidden = false;
+    card.fit();
     layer = createModalLayer(modal);
     leave = layer.open({ close: back, focus: close }, card.frame);
   }

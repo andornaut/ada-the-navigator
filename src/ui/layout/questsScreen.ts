@@ -1,3 +1,4 @@
+import { STATUS_COLOURS } from "../statusPill.ts";
 import { units } from "./css.ts";
 import { BUTTON_GAP } from "./tokens.ts";
 
@@ -11,39 +12,17 @@ export const QUEST_ROUTE_ARROW = {
 export const QUEST_LIST_PAGE_SIZE = 2;
 
 export const QUESTS_SCREEN_STYLE = `
-.ada-controls .ada-quests-screen{padding:${units(12)}}
-.ada-controls .ada-quests-screen .ada-card-frame{width:100%;
-  height:100%;
-  min-height:0}
-.ada-controls .ada-quests-screen .ada-card{width:100%!important;
-  height:100%;
-  padding:0 ${units(8)}}
-.ada-controls .ada-quests-screen .ada-card header{margin-top:${units(4)};
-  padding:0}
-.ada-controls .ada-quests-screen .ada-card-body{overflow:visible;
-  align-items:stretch;
-  gap:${units(8)};
-  margin-top:${units(8)};
-  padding-bottom:${units(8)};
-  flex:1;
-  min-height:0}
 .ada-controls .ada-quest-content{position:relative;
   flex:1;
   min-height:0;
   display:grid;
-  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
-  grid-template-rows:minmax(0,1fr) auto;
-  gap:${units(8)} ${units(16)};
+  grid-template-columns:minmax(0,1fr);
+  grid-auto-rows:max-content;
+  align-content:start;
+  gap:${units(8)};
   padding:${units(4)} ${units(8)} ${units(8)};
   background:#302e42;
   border:1px solid #777186}
-.ada-controls .ada-quest-content::before{content:"";
-  position:absolute;
-  left:50%;
-  top:${units(6)};
-  bottom:${units(6)};
-  width:1px;
-  background:#777186}
 .ada-controls .ada-quest-content section{min-width:0}
 .ada-controls .ada-quest-content h3,.ada-controls .ada-quest-content p{font:inherit;
   margin:0;
@@ -99,7 +78,8 @@ export const QUESTS_SCREEN_STYLE = `
 .ada-controls .ada-quest-footer .ada-button:first-child:not(:last-child):not([data-action="quest-other"]){
   margin-right:auto
 }
-.ada-controls .ada-quest-list{flex:1;
+.ada-controls .ada-quest-list{align-self:stretch;
+  flex:1;
   min-height:0;
   display:flex;
   flex-direction:column;
@@ -112,7 +92,25 @@ export const QUESTS_SCREEN_STYLE = `
   text-align:left;
   flex:none}
 .ada-controls .ada-quest-requirement{display:flex;align-items:center;gap:${units(6)}}
-.ada-controls .ada-quest-requirement input{width:${units(16)};height:${units(16)};margin:0;opacity:1}
+.ada-controls .ada-quest-requirement input{appearance:none;
+  flex:none;
+  display:grid;
+  place-content:center;
+  box-sizing:border-box;
+  width:${units(16)};
+  height:${units(16)};
+  margin:0;
+  border:${units(2)} solid #b8b3c9;
+  border-radius:0;
+  background:#262b44;
+  opacity:1}
+.ada-controls .ada-quest-requirement input:checked{border-color:${STATUS_COLOURS.tick}}
+.ada-controls .ada-quest-requirement input:checked::after{content:"";
+  width:${units(8)};
+  height:${units(4)};
+  border-left:${units(2)} solid ${STATUS_COLOURS.tick};
+  border-bottom:${units(2)} solid ${STATUS_COLOURS.tick};
+  transform:translateY(${units(-1)}) rotate(-45deg)}
 .ada-controls .ada-quest-list h3{font:inherit;margin:0;color:#b8b3c9}
 .ada-controls .ada-quests-screen .ada-card header h2{color:#ead4aa}
 .ada-controls .ada-quest-content p{color:#ead4aa}
