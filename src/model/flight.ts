@@ -82,6 +82,7 @@ import {
 } from "./geography.ts";
 import { phantomSongSpeed, stepPhantomAllies } from "./phantomAllies.ts";
 import { playerWeaponCoverage, type PlayerWeaponCoverageContext } from "./playerWeaponCoverage.ts";
+import { stardustDiamond, stardustDropOffsets } from "./stardustPlacement.ts";
 import { worldCellAt, worldCellKey, worldCellsNear, worldGrid } from "./worldCells.ts";
 import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
 import { wrapPoint } from "./worldGeometry.ts";
@@ -759,23 +760,51 @@ function generate(content: GameContent, point: Vec, flight: FlightState): void {
       if (object.kind === "pickup") {
         object.amount = ECONOMY.discoveryStardust;
       }
+      const cachePickups: SpaceObject[] | null =
+        object.kind === "pickup"
+          ? stardustDiamond(ECONOMY, object).map((point, index, points) => ({
+              ...object,
+              ...point,
+              amount: object.amount! / points.length,
+              id: `${object.id}:stardust:${index}`,
+              radius: ECONOMY.stardustPickupRadius,
+              role: "stardust",
+            }))
+          : null;
       // Asteroids and resource rocks are not placed in currents or ore fields, drift loops
       // included; an ore field holds only its own rocks.
       const footprint = placementRadius(object) + (object.orbit?.radius ?? 0);
       const at = object.orbit ?? object;
       if (
         !existing.has(object.id) &&
+        (object.kind !== "pickup" ||
+          !flight.objects.some((candidate) => candidate.id.startsWith(`${object.id}:stardust:`))) &&
         !Object.hasOwn(flight.world.notables, object.id) &&
         clearOf(flight, content.tuning.safeRadius, flight.player, object) &&
         clearOfSafeAreas(content, object, flight) &&
         clearOfLandmarks(object, flight) &&
+        (cachePickups === null ||
+          cachePickups.every(
+            (pickup) =>
+              clearOf(flight, content.tuning.safeRadius, flight.player, pickup) &&
+              clearOfSafeAreas(content, pickup, flight) &&
+              clearOfLandmarks(pickup, flight),
+          )) &&
         (object.kind === "pickup" ||
           (!worldInCurrent(flightWorldContext(flight), flight.galaxy, footprint, object) &&
             worldClearOfOreFields(flightWorldContext(flight), flight.galaxy, footprint, at)))
       ) {
-        canonicalObject(flight, object);
-        flight.objects.push(object);
-        existing.add(object.id);
+        if (cachePickups) {
+          for (const pickup of cachePickups) {
+            canonicalObject(flight, pickup);
+            flight.objects.push(pickup);
+            existing.add(pickup.id);
+          }
+        } else {
+          canonicalObject(flight, object);
+          flight.objects.push(object);
+          existing.add(object.id);
+        }
       }
     }
     placeOreFields(content, x, y, existing, flight);
@@ -3582,10 +3611,14 @@ function releaseStardust(
   flight: FlightState,
 ) {
   const pieces = splitStardust(cap, amount);
-  pieces.forEach((value, index) => {
+  const candidates = pieces.map((_, index) => {
     const angle = (index / pieces.length) * Math.PI * 2 + (next() * 2 - 1) * 0.3;
     const reach = spread * (0.6 + next() * 0.4);
-    const screen = { x: Math.cos(angle) * reach, y: Math.sin(angle) * reach * 0.8 };
+    return { x: Math.cos(angle) * reach, y: Math.sin(angle) * reach * 0.8 };
+  });
+  const offsets = stardustDropOffsets(ECONOMY, candidates);
+  pieces.forEach((value, index) => {
+    const screen = offsets[index]!;
     flight.objects.push({
       amount: value,
       hp: 1,

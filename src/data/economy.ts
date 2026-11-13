@@ -110,6 +110,7 @@ export interface EconomyCatalog {
   destruction: Readonly<Record<EnemyArchetype, Destruction>>;
   /** Most pickups a destroyed enemy's drop splits into; asteroids release one per Stardust. */
   pickupCap: Readonly<Record<EnemyArchetype, number>>;
+  stardustPickupGap: number;
   stardustPickupRadius: number;
   station: {
     /** Station placement grid cell, in world units. */
@@ -247,7 +248,7 @@ export const ECONOMY: EconomyCatalog = {
       spread: 16.8,
     },
   },
-  discoveryStardust: 5,
+  discoveryStardust: 4,
   // Engine tuning: -10% acceleration and braking seconds per level.
   effects: {
     engineSeconds: [1, 0.9, 0.8],
@@ -282,6 +283,7 @@ export const ECONOMY: EconomyCatalog = {
   // Every level waits 30 s after damage (gameplay/economy.md).
   shieldLevels: { capacity: [15, 20], fill: [45, 30] },
   shieldRecharge: { capacityPerOre: 0.01, freeCapacity: 0.1 },
+  stardustPickupGap: 2,
   stardustPickupRadius: 5,
   station: {
     cellSize: 12000,

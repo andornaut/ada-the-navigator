@@ -669,7 +669,7 @@ describe("Stardust drops", () => {
 });
 
 describe("discovery caches", () => {
-  it("generates Stardust caches worth 5 instead of upgrade pickups", () => {
+  it("generates four ordinary single-unit Stardust pickups per cache instead of upgrade pickups", () => {
     const value = createFlight(CONTENT, 1, 4242, { known: [] });
     const discoveries = new Map<string, SpaceObject>();
     for (let step = 0; step < 40; step++) {
@@ -677,34 +677,34 @@ describe("discovery caches", () => {
       stepFlight(CONTENT, 1 / 60, idle, value);
       // Rare caches are gathered along the way, since distant chunks unload.
       for (const object of value.objects) {
-        if (object.kind === "pickup" && object.role === "discovery") {
+        if (object.kind === "pickup" && /:stardust:[0-3]$/.test(object.id)) {
           discoveries.set(object.id, object);
         }
       }
     }
     expect(discoveries.size).toBeGreaterThan(0);
     for (const cache of discoveries.values()) {
-      expect(cache).toMatchObject({ amount: 5 });
+      expect(cache).toMatchObject({ amount: 1, role: "stardust" });
       expect(cache.upgrade).toBeUndefined();
     }
   });
 
-  it("collects a cache as 5 Stardust and pulls it with the tractor beam", () => {
+  it("collects each cache star as one Stardust and pulls it with the ordinary tractor beam", () => {
     const value = flight();
     value.objects.push({
-      amount: ECONOMY.discoveryStardust,
+      amount: 1,
       hp: 1,
-      id: "cache",
+      id: "cache:stardust:0",
       kind: "pickup",
-      radius: CONTENT.tuning.flight.pickupRadius,
-      role: "discovery",
+      radius: ECONOMY.stardustPickupRadius,
+      role: "stardust",
       x: 60,
       y: 0,
     });
     stepFlight(CONTENT, 0.1, idle, value);
     // The base pull: 120 a second from within 60.
     expect(value.objects[0]!.x).toBeCloseTo(60 - 12, 6);
-    expect(gained(stepFlight(CONTENT, 1, idle, value))).toBe(5);
+    expect(gained(stepFlight(CONTENT, 1, idle, value))).toBe(1);
     expect(value.weapon).toBe("laser");
     expect(value.ownedWeapons).toEqual([]);
   });
