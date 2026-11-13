@@ -447,6 +447,11 @@ ${UI_SCOPE} .ada-pause[data-pose=held]::before{
 ${UI_SCOPE} .ada-pause:focus-visible{${FOCUS_STYLE}
 }
 
+/* A sole visible Close centers; explicit Back and multiple actions retain their own layout. */
+${UI_SCOPE} [data-footer-action="close"]:not(:has(>button:not([hidden])~button:not([hidden]))){
+  align-self:center;justify-content:center;width:max-content;max-width:100%
+}
+
 /* An action row shares one width, the widest label plus the insets, BUTTON_GAP apart, centred. */
 ${UI_SCOPE} .ada-actions{
   display:grid;
@@ -822,6 +827,11 @@ export function createButton(label: string, role: ButtonRole = "secondary"): HTM
 }
 
 // An action group of one shared width, secondary actions left of primary ones.
+/** Footer intent is explicit and independent of translated labels or entry context. */
+export function setFooterAction(action: "back" | "close", footer: HTMLElement): void {
+  footer.dataset.footerAction = action;
+}
+
 export function createActions(
   buttons: readonly { readonly button: HTMLButtonElement; readonly role: ButtonRole }[],
 ): HTMLDivElement {

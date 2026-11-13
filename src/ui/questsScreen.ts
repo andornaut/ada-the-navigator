@@ -6,7 +6,7 @@ import type { MapPlace } from "../model/map.ts";
 import type { QuestEntry } from "../model/questDetails.ts";
 import { QUEST_LIST_PAGE_SIZE, QUEST_ROUTE_ARROW } from "./layout/questsScreen.ts";
 import { chipFace, chipGlyph, type MapScreenLabels } from "./mapScreen.ts";
-import { createButton, createCard } from "./modal.ts";
+import { createButton, createCard, setFooterAction } from "./modal.ts";
 
 export type QuestOrigin = "flight" | "list";
 
@@ -299,6 +299,7 @@ export function createQuestsScreen(
     close.dataset.action = entry && origin === "list" ? "quest-back" : "quest-close";
     close.addEventListener("click", back);
     footer.append(close);
+    setFooterAction(entry && origin === "list" ? "back" : "close", footer);
     card.body.replaceChildren(body, footer);
     modal.hidden = false;
     layer = createModalLayer(modal);

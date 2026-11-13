@@ -2,7 +2,7 @@ import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 
 import { detailCount, renderDetailQuantity } from "./detailQuantity.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
-import { createActions, createButton, createCard, isTap } from "./modal.ts";
+import { createActions, createButton, createCard, isTap, setFooterAction } from "./modal.ts";
 
 export interface ResourceDetails {
   readonly icon?: HTMLElement;
@@ -38,6 +38,7 @@ export function createResourceCard(
     { button: dismiss, role: "primary" },
   ]);
   actions.className += " ada-detail-actions";
+  setFooterAction("close", actions);
   card.body.append(description, quantity, actions);
   modal.append(card.frame);
   root.append(modal);

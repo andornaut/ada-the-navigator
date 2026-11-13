@@ -54,6 +54,9 @@ vi.mock("./modal.ts", () => ({
   },
   createCard: () => fixture.card,
   isTap: () => true,
+  setFooterAction: (action: string, row: { dataset: Record<string, string> }) => {
+    row.dataset.footerAction = action;
+  },
 }));
 vi.mock("./layout/viewScale.ts", () => ({ readViewUnit: () => 1 }));
 vi.mock("@andornaut/game-kit/web/ui/dom/focusModality", () => ({
@@ -129,6 +132,7 @@ it("shows canonical supplied content and secondary Quests before primary Close w
   expect(quantity!.hidden).toBe(true);
   expect(description!.textContent).toBe("Canonical quest description");
   expect(fixture.card.frame.attributes["aria-label"]).toBe("Toolkit");
+  expect(actions!.dataset.footerAction).toBe("close");
   expect(actions!.children.map((button) => [button.textContent, button.dataset.role])).toEqual([
     ["Quests", "secondary"],
     ["Close", "primary"],

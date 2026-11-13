@@ -6,7 +6,7 @@ import { ammoShopSheet, weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import { compactLevelName } from "./compactLevelName.ts";
 import { detailCount, renderDetailQuantity } from "./detailQuantity.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
-import { createActions, createButton, createCard, isTap } from "./modal.ts";
+import { createActions, createButton, createCard, isTap, setFooterAction } from "./modal.ts";
 
 /** Weapon details use the shared card frame and modal pause lifecycle. */
 export function createWeaponDetailCard(
@@ -30,6 +30,7 @@ export function createWeaponDetailCard(
   quantity.hidden = true;
   const actions = createActions([{ button: dismiss, role: "primary" }]);
   actions.className += " ada-detail-actions";
+  setFooterAction("close", actions);
   card.body.append(description, quantity, actions);
   modal.append(card.frame);
   root.append(modal);

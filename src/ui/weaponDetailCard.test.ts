@@ -43,6 +43,9 @@ vi.mock("./modal.ts", () => ({
   createButton: () => new fixture.Node(),
   createCard: () => fixture.card,
   isTap: () => true,
+  setFooterAction: (action: string, row: { dataset: Record<string, string> }) => {
+    row.dataset.footerAction = action;
+  },
 }));
 vi.mock("./layout/viewScale.ts", () => ({ readViewUnit: () => 1 }));
 vi.mock("@andornaut/game-kit/web/ui/dom/focusModality", () => ({
