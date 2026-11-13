@@ -129,7 +129,7 @@ Stations are rare points of interest, each with a shop. They are placed by the
 galaxy's seed, so a galaxy's stations stay in the same places on every flight, at
 least 8000 world units apart and away from story destinations. A discovered
 station becomes a travel destination like other destinations. An undiscovered station
-within 2000 world units of Ada is marked by the direction indicator, so stations
+within 3000 world units of Ada is marked by the direction indicator, so stations
 stay rare but findable. A station is a safe
 area. Ada docks with Use (Dock) within Talk range, 160 world units from the
 station's centre, like any other destination; the station has no dock mouth and
@@ -338,7 +338,7 @@ and, when part stays unpaid, the amount still needed after. The donation pays
 `min(balance, remaining)`, so a short balance makes a part payment that
 persists across flights. A row is unaffordable only at a balance of 0, and then
 refuses with the shared refusal feedback. Funding the last part closes the card
-and plays the thank-you line as a space conversation. A world change is Art's
+and plays the thank-you line as a fullscreen conversation. A world change is Art's
 sprite placed at its site and shows on every later flight; until its art lands,
 funding changes nothing in the world. World changes are passable decoration:
 they never block Ada or shots, Ada is drawn in front of them while she overlaps
