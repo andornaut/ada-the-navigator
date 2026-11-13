@@ -1284,7 +1284,7 @@ describe("Use copy resolution", () => {
     const first = interactionCopy(3, { ...panel, context: "holodiskLead" });
     const last = interactionCopy(3, { ...panel, context: "holodiskLeadSong" });
     expect(first.lines.length + last.lines.length).toBe(4);
-    expect(first.lines[0]?.text).toBe("You listened when nobody else did. Now listen to us.");
+    expect(first.lines[0]?.text).toBe("You listened when we needed help. Now listen to us.");
     expect(last.lines[0]?.text).toContain("A shining disk");
   });
 });
