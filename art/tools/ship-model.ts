@@ -307,12 +307,19 @@ function mouth(sign: number): Point[] {
   return sign === 1 ? quad : quad.toReversed();
 }
 
-/** Front exhaust stations use the hull's exact outer wingtip vertices. */
+/** Front exhaust stations sit one half-mouth width ahead along each wing's leading edge. */
 export function retroMouthAxis(sign: number): { half: Point; middle: Point } {
-  const { tipL, tipR } = vertices();
+  const { tipL, tipR, nose } = vertices();
+  const tip = sign < 0 ? tipL : tipR;
+  const halfWidth = (MOUTHS.outer - MOUTHS.inner) / 2;
+  const alongEdge = halfWidth / (tip[1] - nose[1]);
   return {
-    half: [(sign * (MOUTHS.outer - MOUTHS.inner)) / 2, 0, 0],
-    middle: sign < 0 ? tipL : tipR,
+    half: [sign * halfWidth, 0, 0],
+    middle: [
+      tip[0] + alongEdge * (nose[0] - tip[0]),
+      tip[1] - halfWidth,
+      tip[2] + alongEdge * (nose[2] - tip[2]),
+    ],
   };
 }
 

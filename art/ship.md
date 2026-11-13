@@ -197,8 +197,11 @@ signal and 0.092 from the Iris scheme's rear sides `#8f7cd0`.
 `node art/tools/ship-retro-jets.ts` writes `ship-retro-jets.json`, using the
 existing version 1 engine-jet schema with one `engineLevels` entry (level 1)
 and all 32 headings. Higher engine levels reuse that entry.
-Its two anchors are the model's outer wingtip vertices `(±21.44, 20.48, 1.2)`;
-`retroMouthAxis` derives them from the same hull vertices used by the ship.
+Its two anchors sit 2.75 model units forward of the outer wingtips, on the
+leading edges toward the nose: `(±20.316524, 17.73, 1.2)`. `retroMouthAxis`
+derives this forward distance from half the existing mouth width and
+interpolates the actual wingtip-to-nose edge, moving inward rather than outside
+the wing. The hull's vertices are unchanged.
 Exhaust points forward along local negative Y, with half width
 `(±2.75, 0, 0)` derived from the existing mouth width. The frame remains 96,
 with the same pivot, length rule, layer widths, lengths and halo alpha ramp as
