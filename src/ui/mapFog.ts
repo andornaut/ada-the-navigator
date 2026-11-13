@@ -1,6 +1,7 @@
 import type { Rect } from "@andornaut/game-kit/rect";
 
 import type { LocalMap } from "../model/map.ts";
+import { type FogStampBounds, fogStampBounds } from "./layout/mapFog.ts";
 import { fogBlur, fogReveal, type MapView, toScreen } from "./layout/mapScreen.ts";
 
 interface FogStamp {
@@ -13,20 +14,13 @@ interface FogStamp {
 }
 // Weak keys release the stamp with its target canvas.
 const stamps = new WeakMap<CanvasRenderingContext2D, FogStamp>();
-function fogStamp(
-  context: CanvasRenderingContext2D,
-  rx: number,
-  ry: number,
-  sigma: number,
-): FogStamp | null {
+function fogStamp(context: CanvasRenderingContext2D, bounds: FogStampBounds): FogStamp | null {
+  const { height, pixels, rx, ry, sigma, width, x, y } = bounds;
   if (!context.canvas?.ownerDocument) {
     return null;
   }
   const previous = stamps.get(context);
-  const padding = Math.ceil(8 * sigma + 2);
-  const x = Math.ceil(rx) + padding + 1,
-    y = Math.ceil(ry) + padding + 1;
-  if (4 * x * y > context.canvas.width * context.canvas.height) {
+  if (pixels > context.canvas.width * context.canvas.height) {
     if (previous) {
       previous.canvas.width = 0;
       previous.canvas.height = 0;
@@ -42,8 +36,8 @@ function fogStamp(
   if (!canvas || !raster) {
     return null;
   }
-  canvas.width = 2 * x;
-  canvas.height = 2 * y;
+  canvas.width = width;
+  canvas.height = height;
   raster.filter = fogBlur(sigma);
   raster.fillStyle = "#000";
   raster.beginPath();
@@ -71,13 +65,13 @@ export function drawMapFog(
   height: number,
 ): void {
   const reveal = fogReveal(current.scale);
-  const rx = reveal.rx * px;
-  const ry = reveal.ry * px;
-  const sigma = reveal.sigma * px;
-  const padding = Math.ceil(8 * sigma + 2);
-  const clipWidth = Math.ceil(2 * rx) + 2 * padding + 2;
-  const clipHeight = Math.ceil(2 * ry) + 2 * padding + 2;
-  const stamp = fogStamp(context, rx, ry, sigma);
+  const bounds = fogStampBounds({
+    rx: reveal.rx * px,
+    ry: reveal.ry * px,
+    sigma: reveal.sigma * px,
+  });
+  const { clipHeight, clipWidth, padding, rx, ry, sigma } = bounds;
+  const stamp = fogStamp(context, bounds);
   context.globalCompositeOperation = "source-over";
   context.filter = "none";
   context.fillStyle = colour;
