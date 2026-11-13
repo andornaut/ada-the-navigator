@@ -1501,6 +1501,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       render();
       focusTarget(toolButtons.get("close")!);
     },
+    openQuests,
     questsOpen,
     setState(next: MapScreenState): void {
       state = next;

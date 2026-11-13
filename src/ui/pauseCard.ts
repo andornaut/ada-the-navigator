@@ -372,6 +372,11 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     isOpen: () => open,
     mapOpen,
     open: () => setOpen(true),
+    openQuests(): void {
+      setOpen(true);
+      show("map");
+      mapScreen.openQuests();
+    },
     setState(next: PauseState): void {
       state = next;
       renderAll();

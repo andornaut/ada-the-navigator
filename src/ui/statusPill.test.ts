@@ -255,10 +255,11 @@ describe("status pill count", () => {
   });
 
   // A stand-in for the DOM members the pill uses.
-  class FakeNode {
+  class FakeNode extends EventTarget {
     readonly attributes = new Map<string, string>();
     children: FakeNode[] = [];
     className = "";
+    readonly classList = { add: vi.fn() };
     data = "";
     readonly dataset: Record<string, string> = {};
     hidden = false;
@@ -298,13 +299,17 @@ describe("status pill count", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
   });
-  const pill = (reducedMotion = true) => {
+  const pill = (
+    reducedMotion = true,
+    onResource?: (kind: "ore" | "stardust" | "aboard", origin: HTMLElement) => void,
+  ) => {
     vi.stubGlobal("document", {
       createElement: () => new FakeNode(),
       createTextNode: () => new FakeNode(),
     });
     const parent = new FakeNode();
     const status = createStatusPill(parent as unknown as HTMLElement, {
+      ...(onResource ? { onResource } : {}),
       reducedMotion: () => reducedMotion,
       shieldLabel: "Shield",
     });
@@ -312,7 +317,7 @@ describe("status pill count", () => {
     const slot = (kind: string) =>
       root.children.find((node) => node.className.includes(`ada-status-${kind}-slot`))!;
     const count = (kind: string) => slot(kind).children[0]!;
-    return { count, shield: parent.children[1]!, slot, status };
+    return { count, root, shield: parent.children[1]!, slot, status };
   };
 
   it.each([false, true])(
@@ -484,6 +489,27 @@ describe("status pill count", () => {
     expect(slot("ore").children).not.toContain(tick);
     expect(slot("ore").hidden).toBe(false);
     expect(count("ore").children[0]!.data).toBe("0");
+  });
+
+  it("activates each resource once and consumes HUD pointer/key events", () => {
+    const onResource = vi.fn();
+    const { count, root, slot } = pill(true, onResource);
+    for (const kind of ["ore", "stardust", "aboard"] as const) {
+      const action = kind === "aboard" ? root.children.at(-1)! : count(kind);
+      const target = kind === "aboard" ? action : slot(kind);
+      expect(action.getAttribute("role")).toBe("button");
+      expect(action.getAttribute("tabindex")).toBe("0");
+      const pointer = new Event("pointerdown", { bubbles: true });
+      target.dispatchEvent(pointer);
+      const click = new Event("click", { bubbles: true });
+      target.dispatchEvent(click);
+      expect(onResource).toHaveBeenLastCalledWith(kind, action);
+      const key = new Event("keydown", { cancelable: true });
+      Object.defineProperties(key, { key: { value: "Enter" }, repeat: { value: false } });
+      action.dispatchEvent(key);
+      expect(key.defaultPrevented).toBe(true);
+    }
+    expect(onResource).toHaveBeenCalledTimes(6);
   });
 
   it("pads the pill 6 at each end, sets each count 4 from its icon and each divider 6 apart", () => {

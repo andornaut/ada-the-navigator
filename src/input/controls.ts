@@ -9,6 +9,8 @@ import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 import type { GameObjects, Scene } from "phaser";
 
 import { BUILD_LABEL } from "../buildLabel.ts";
+import { CONTENT } from "../data/content.ts";
+import { RESOURCE_DESCRIPTIONS } from "../data/resourceDescriptions.ts";
 import type { Weapon } from "../data/types.ts";
 import { canvasSize, fitCanvasCamera, sceneFit } from "../game/playCamera.ts";
 import { RASTER_SCALE_EVENT } from "../game/svgRasters.ts";
@@ -50,6 +52,7 @@ import { createViewScaleBridge, type PlayLayout } from "../ui/layout/viewScale.t
 import { escapeTarget, pauseButtonShown } from "../ui/pause.ts";
 import { createPauseButton } from "../ui/pauseButton.ts";
 import { createPauseCards, type PauseLabels, type PauseState } from "../ui/pauseCard.ts";
+import { createResourceCard } from "../ui/resourceCard.ts";
 import {
   createSettings,
   EXIT_SHOWN_ATTRIBUTE,
@@ -301,6 +304,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     cheats.isOpen() ||
     pause.isOpen() ||
     achievements.isOpen() ||
+    resource.isOpen() ||
     (update?.isOpen() ?? false);
   function syncModal(): void {
     const open = modalOpen();
@@ -311,6 +315,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       state.closeModal();
     }
     weapons.setEnabled(enabled && !open);
+    status.setShown(enabled && !open);
     options.onPauseChange?.(open);
   }
   const weapons = createWeaponSelector(settings.root, {
@@ -318,7 +323,21 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     onSelect: (weapon) => state.accepts() && options.onWeaponSelect(weapon),
     reducedMotion: () => reducedMotion,
   });
+  const resource = createResourceCard(settings.root, {
+    closeLabel: options.pause.labels.close,
+    onOpenChange: () => syncModal(),
+  });
   const status = createStatusPill(settings.root, {
+    onResource: (kind, origin) => {
+      if (!state.accepts()) {
+        return;
+      }
+      if (kind === "aboard") {
+        pause.openQuests();
+      } else {
+        resource.open(CONTENT.labels[kind] ?? "", RESOURCE_DESCRIPTIONS[kind], origin);
+      }
+    },
     reducedMotion: () => reducedMotion,
     shieldLabel: options.shieldLabel,
   });
@@ -484,6 +503,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   // through registerBack.
   const backStack = createBackStack();
   const leaveBack = [
+    backStack.register({ back: resource.close, isOpen: resource.isOpen }),
     backStack.register({
       back: () => pause.close(),
       isOpen: () => pause.isOpen() && !pause.mapOpen() && !pause.shipOpen(),
@@ -636,6 +656,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       disposed = true;
       stopPointers();
       state.setEnabled(false);
+      resource.dispose();
       status.dispose();
       notices.dispose();
       weapons.dispose();

@@ -286,6 +286,8 @@ export const STATUS_PILL_STYLE = `
   white-space:nowrap;
   pointer-events:none
 }
+.ada-controls .ada-status .ada-resource-target{pointer-events:auto;cursor:pointer}
+.ada-controls .ada-status [role=button]:focus-visible{outline:1px solid currentColor;outline-offset:1px}
 /* With the pause button hidden the pill is the leftmost art, on the HUD rect's left edge. */
 .ada-controls .ada-pause[hidden] ~ .ada-status{
   left:${fromHudEdge("left", STATUS_PILL.xAlone)}
@@ -601,7 +603,11 @@ function bump(element: HTMLElement): void {
 
 export function createStatusPill(
   parent: HTMLElement,
-  options: { readonly reducedMotion: () => boolean; readonly shieldLabel: string },
+  options: {
+    readonly onResource?: (kind: "ore" | "stardust" | "aboard", origin: HTMLElement) => void;
+    readonly reducedMotion: () => boolean;
+    readonly shieldLabel: string;
+  },
 ) {
   const root = document.createElement("div");
   root.className = "ada-status";
@@ -654,6 +660,35 @@ export function createStatusPill(
   aboardIcon.removeAttribute("aria-hidden");
   aboardIcon.setAttribute("role", "img");
   root.append(sparkle, stardust.slot, oreDivider, oreIcon, ore.slot, aboardDivider, aboardIcon);
+  if (options.onResource) {
+    for (const [kind, nodes, action] of [
+      ["stardust", [sparkle, stardust.slot], stardust.count],
+      ["ore", [oreIcon, ore.slot], ore.count],
+      ["aboard", [aboardIcon], aboardIcon],
+    ] as const) {
+      action.setAttribute("role", "button");
+      action.setAttribute("tabindex", "0");
+      action.setAttribute("aria-haspopup", "dialog");
+      action.dataset.action = `resource-${kind}`;
+      const activate = () => options.onResource?.(kind, action);
+      for (const node of nodes) {
+        node.classList.add("ada-resource-target");
+        node.addEventListener("pointerdown", (event) => event.stopPropagation());
+        node.addEventListener("click", (event) => {
+          event.stopPropagation();
+          activate();
+        });
+      }
+      action.addEventListener("keydown", (event) => {
+        if ((event.key === "Enter" || event.key === " ") && !event.repeat) {
+          event.preventDefault();
+          event.stopPropagation();
+          activate();
+        }
+      });
+    }
+  }
+
   parent.append(root, shieldRoot);
 
   const shieldBar = new ShieldBar();

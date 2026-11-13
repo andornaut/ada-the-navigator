@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import type { LocalMap } from "../model/map.ts";
+import * as mapUI from "./mapScreen.ts";
 import { mapScreenLabels } from "./mapScreen.ts";
 import { createPauseCards, type PauseLabels, type PauseState } from "./pauseCard.ts";
 import type { ShipView } from "./shipCard.ts";
@@ -321,4 +322,43 @@ describe("Ship card", () => {
     pause.focusGalaxies();
     expect(focusLog).toEqual([]);
   });
+});
+
+it("opens the existing Quests route directly from carried cargo and preserves pause until closed", () => {
+  const original = mapUI.createMapScreen;
+  let mapOpen = false;
+  let questsOpen = false;
+  const openQuests = vi.fn(() => {
+    questsOpen = true;
+  });
+  const spy = vi.spyOn(mapUI, "createMapScreen").mockImplementation((...args) => ({
+    ...original(...args),
+    close: () => {
+      mapOpen = false;
+    },
+    closeQuests: () => {
+      questsOpen = false;
+    },
+    isOpen: () => mapOpen,
+    open: () => {
+      mapOpen = true;
+    },
+    openQuests,
+    questsOpen: () => questsOpen,
+  }));
+  const { options, pause } = cards();
+  pause.setState(state({ carrying: true }));
+  pause.openQuests();
+  expect(pause.isOpen()).toBe(true);
+  expect(pause.mapOpen()).toBe(true);
+  expect(openQuests).toHaveBeenCalledOnce();
+  expect(options.onOpenChange).toHaveBeenLastCalledWith(true);
+  pause.closeMap();
+  expect(pause.mapOpen()).toBe(true);
+  expect(pause.isOpen()).toBe(true);
+  pause.close();
+  expect(pause.isOpen()).toBe(false);
+  expect(options.onOpenChange).toHaveBeenLastCalledWith(false);
+  pause.dispose();
+  spy.mockRestore();
 });
