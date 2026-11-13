@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
+import { GALAXY_SIDE } from "../data/world.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
 import { createEnemy, stepDebris, stepEnemy } from "./enemyAi.ts";
 import { GameModel } from "./game.ts";
@@ -19,6 +20,16 @@ describe("save boundary", () => {
     const restored = restoreSave(model.save());
     expect(restored).toEqual(model.state);
     expect(restored?.flight).not.toBe(model.state.flight);
+  });
+  it("keeps schema 12 flat and rejects explicit periodic metadata before its atomic reader release", () => {
+    const model = new GameModel(CONTENT);
+    model.startGalaxy(1);
+    playOpening(model);
+    const original = model.saveDocument();
+    expect(original.version).toBe(12);
+    expect(restoreSave(original)).toEqual(original);
+    original.flight!.topology = { kind: "torus", side: GALAXY_SIDE, version: 1 };
+    expect(restoreSave(original)).toBeNull();
   });
   it("rejects truncated, corrupt and unsupported data without throwing", () => {
     const model = new GameModel(CONTENT);

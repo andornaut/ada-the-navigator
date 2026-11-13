@@ -669,6 +669,8 @@ export function restoreSave(saved: unknown): GameState | null {
       const f = value.flight;
       if (
         !record(f) ||
+        // Version 12 never reads a partially integrated periodic chart.
+        f.topology !== undefined ||
         (f.needle !== undefined && (f.galaxy !== 4 || !validNeedleFlight(f.needle))) ||
         (f.phantom !== undefined && (f.galaxy !== 6 || !validPhantomFlight(f.phantom))) ||
         f.galaxy !== value.selectedGalaxy ||

@@ -47,7 +47,13 @@ import {
 } from "./asteroids.ts";
 import { planChunk } from "./chunkTemplates.ts";
 import { onScreen } from "./conversations.ts";
-import { currentInCell, currentsNear, flowAt, inCurrent, pointOnCurrent } from "./currents.ts";
+import {
+  pointOnCurrent,
+  worldCurrentInCell,
+  worldCurrentsNear,
+  worldFlowAt,
+  worldInCurrent,
+} from "./currents.ts";
 import {
   averageVelocity,
   createEnemy,
@@ -58,6 +64,7 @@ import {
   stepDebris,
   stepEnemy,
 } from "./enemyAi.ts";
+import { flightWorldContext } from "./flightTopology.ts";
 import {
   activateFlightRegion,
   activateRouteEncounter,
@@ -98,7 +105,7 @@ import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { MINE_REACH, mineSpin, mineTouches } from "./mineShape.ts";
 import { nosePoint } from "./nose.ts";
-import { clearOfOreFields, oreFieldsNear } from "./oreFields.ts";
+import { clearOfOreFields, worldOreFieldsNear } from "./oreFields.ts";
 import { pickupOutline } from "./pickupBody.ts";
 import { planPlayerVolley, projectileReach } from "./playerProjectiles.ts";
 import { sceneryImpact } from "./sceneryImpact.ts";
@@ -106,13 +113,13 @@ import { rechargeShield } from "./shieldRecharge.ts";
 import { shipBody, shipCircleContact, shipNearSegment, shipTouches } from "./shipBody.ts";
 import { direction, speedFraction, stepShipMotion, turnToward } from "./shipPhysics.ts";
 import {
-  engagementAdmissions,
-  fitsEncounter,
   groupReach,
   memberPosition,
-  selectEncounter,
+  worldEngagementAdmissions,
+  worldFitsEncounter,
+  worldSelectEncounter,
 } from "./spawner.ts";
-import { HUB_STATION, stationById, stationsNear } from "./stations.ts";
+import { HUB_STATION, worldStationById, worldStationsNear } from "./stations.ts";
 import type {
   EconomyState,
   FlightEvent,
@@ -474,7 +481,12 @@ function ensureDebrisRivers(content: GameContent, point: Vec, flight: FlightStat
   }
   const reach = (ACTIVE_CHUNK_RADIUS + 1) * content.tuning.chunkSize;
   const ids = new Set(flight.objects.map((object) => object.id));
-  for (const current of currentsNear(flight.galaxy, reach, point)) {
+  for (const current of worldCurrentsNear(
+    flightWorldContext(flight),
+    flight.galaxy,
+    reach,
+    point,
+  )) {
     if (!current.debris) {
       continue;
     }
@@ -513,7 +525,10 @@ function placeRiverRock(flight: FlightState, object: SpaceObject): void {
   const river = object.river!;
   const match = /^current:(-?\d+),(-?\d+)$/.exec(river.current);
   const current = match
-    ? currentInCell(flight.galaxy, { x: Number(match[1]), y: Number(match[2]) })
+    ? worldCurrentInCell(flightWorldContext(flight), flight.galaxy, {
+        x: Number(match[1]),
+        y: Number(match[2]),
+      })
     : null;
   if (!current) {
     object.hp = 0;
@@ -535,7 +550,13 @@ function placeRiverRock(flight: FlightState, object: SpaceObject): void {
 /** Station sites within the active region become persistent station objects. */
 function ensureStations(content: GameContent, point: Vec, flight: FlightState): void {
   const reach = (ACTIVE_CHUNK_RADIUS + 1) * content.tuning.chunkSize;
-  for (const site of stationsNear(ECONOMY, flight.galaxy, reach, point)) {
+  for (const site of worldStationsNear(
+    flightWorldContext(flight),
+    ECONOMY,
+    flight.galaxy,
+    reach,
+    point,
+  )) {
     if (
       !flight.objects.some((object) => object.id === site.id) &&
       !Object.hasOwn(flight.world.notables, site.id)
@@ -574,7 +595,7 @@ export function ensureStation(
   if (existing) {
     return existing;
   }
-  const site = stationById(ECONOMY, flight.galaxy, id);
+  const site = worldStationById(flightWorldContext(flight), ECONOMY, flight.galaxy, id);
   if (!site) {
     return null;
   }
@@ -676,7 +697,7 @@ function generate(content: GameContent, point: Vec, flight: FlightState): void {
           clearOfSafeAreas(content, object, flight) &&
           clearOfLandmarks(object, flight) &&
           (object.kind === "pickup" ||
-            (!inCurrent(flight.galaxy, footprint, object) &&
+            (!worldInCurrent(flightWorldContext(flight), flight.galaxy, footprint, object) &&
               clearOfOreFields(flight.galaxy, footprint, at)))
         ) {
           flight.objects.push(object);
@@ -708,7 +729,7 @@ function placeOreFields(
 ): void {
   const size = content.tuning.chunkSize;
   const centre = { x: (x + 0.5) * size, y: (y + 0.5) * size };
-  for (const field of oreFieldsNear(flight.galaxy, size, centre)) {
+  for (const field of worldOreFieldsNear(flightWorldContext(flight), flight.galaxy, size, centre)) {
     if (Math.floor(field.x / size) !== x || Math.floor(field.y / size) !== y) {
       continue;
     }
@@ -717,7 +738,7 @@ function placeOreFields(
       (object) => object.kind === "destination" && object.id === "hub",
     );
     if (
-      stationsNear(ECONOMY, flight.galaxy, reach, field).length ||
+      worldStationsNear(flightWorldContext(flight), ECONOMY, flight.galaxy, reach, field).length ||
       (hub && distance(hub, field) < reach) ||
       (flight.arrivals ?? []).some((arrival) => distance(arrival, field) < reach)
     ) {
@@ -982,7 +1003,8 @@ function generateRegion(content: GameContent, x: number, y: number, flight: Flig
               }
             : {}),
         }
-      : selectEncounter(
+      : worldSelectEncounter(
+          flightWorldContext(flight),
           policy,
           stage,
           content.tuning.flight.shipRadius,
@@ -998,7 +1020,7 @@ function generateRegion(content: GameContent, x: number, y: number, flight: Flig
   // Half of Cartwheel's claim jumpers gather at the nearest ore field within this cell's reach.
   if (ORE_FIELDS.galaxies.includes(flight.galaxy) && archetype === "fighter") {
     const reach = (spacing * size) / 2;
-    const field = oreFieldsNear(flight.galaxy, reach, center).sort(
+    const field = worldOreFieldsNear(flightWorldContext(flight), flight.galaxy, reach, center).sort(
       (a, b) => distance(a, center) - distance(b, center),
     )[0];
     const angle = next() * Math.PI * 2;
@@ -1022,7 +1044,15 @@ function generateRegion(content: GameContent, x: number, y: number, flight: Flig
   // Relocated claim jumpers must also fit the actual destination neighbourhood.
   if (
     !initialized &&
-    !fitsEncounter(policy, stage, content.tuning.flight.shipRadius, flight.objects, center, plan)
+    !worldFitsEncounter(
+      flightWorldContext(flight),
+      policy,
+      stage,
+      content.tuning.flight.shipRadius,
+      flight.objects,
+      center,
+      plan,
+    )
   ) {
     return;
   }
@@ -1531,7 +1561,13 @@ export function ensureDestination(
   // stations and landmarks.
   const crowded = (point: Vec) =>
     flight.objects.some((o) => o.kind === "destination" && distance(o, point) < spacing) ||
-    stationsNear(ECONOMY, flight.galaxy, ECONOMY.station.destinationClearance, point).length > 0 ||
+    worldStationsNear(
+      flightWorldContext(flight),
+      ECONOMY,
+      flight.galaxy,
+      ECONOMY.station.destinationClearance,
+      point,
+    ).length > 0 ||
     landmarkSites(flight.galaxy).some(
       (site) => distance(site, point) < LANDMARK_TUNING.placeClearance,
     );
@@ -1541,7 +1577,7 @@ export function ensureDestination(
   }
   // They also keep a current's clearance: the nearest clear point within a short reach, so
   // the destination stays near where it would have been and its chunks stay in one region.
-  if (inCurrent(flight.galaxy, CURRENTS.clearance, target)) {
+  if (worldInCurrent(flightWorldContext(flight), flight.galaxy, CURRENTS.clearance, target)) {
     const step = CURRENTS.width[1] / 2;
     search: for (let ring = 1; ring <= 8; ring++) {
       for (let spoke = 0; spoke < 16; spoke++) {
@@ -1550,7 +1586,10 @@ export function ensureDestination(
           x: target.x + Math.cos(angle) * ring * step,
           y: target.y + Math.sin(angle) * ring * step,
         };
-        if (!inCurrent(flight.galaxy, CURRENTS.clearance, point) && !crowded(point)) {
+        if (
+          !worldInCurrent(flightWorldContext(flight), flight.galaxy, CURRENTS.clearance, point) &&
+          !crowded(point)
+        ) {
           target.x = point.x;
           target.y = point.y;
           break search;
@@ -1989,7 +2028,7 @@ function move(
   // Drifting scenery can reach a resting ship, so contacts resolve before any travel.
   resolveScenery(flight, contactOf, onContact, flight.player);
   // A current's flow adds drift outside Ada's physics and speed cap.
-  const drift = flowAt(flight.galaxy, flight.player);
+  const drift = worldFlowAt(flightWorldContext(flight), flight.galaxy, flight.player);
   const travel = { x: flight.velocity.x + drift.x, y: flight.velocity.y + drift.y };
   const steps = Math.max(1, Math.ceil((length(travel) * dt) / 4));
   for (let i = 0; i < steps; i++) {
@@ -2125,7 +2164,8 @@ function enemies(
       })
       .map((object) => object.id),
   );
-  const admissions = engagementAdmissions(
+  const admissions = worldEngagementAdmissions(
+    flightWorldContext(flight),
     SPAWNER_POLICIES[flight.galaxy],
     spawnerStage(flight.galaxy, flight.freshDistance),
     objects,
@@ -2188,7 +2228,7 @@ function enemies(
     // Small craft drift with a current; frigates, capitals and platforms are too heavy.
     const drift = DRIFT_PROOF.includes(state.archetype)
       ? { x: 0, y: 0 }
-      : flowAt(flight.galaxy, object);
+      : worldFlowAt(flightWorldContext(flight), flight.galaxy, object);
     const steps = Math.max(
       1,
       Math.ceil((Math.hypot(velocity.x + drift.x, velocity.y + drift.y) * dt) / 4),
@@ -3405,7 +3445,7 @@ export function carryPickup(
   flight: FlightState,
   pickup: Vec,
 ): void {
-  const drift = flowAt(flight.galaxy, pickup);
+  const drift = worldFlowAt(flightWorldContext(flight), flight.galaxy, pickup);
   pickup.x += drift.x * dt;
   pickup.y += drift.y * dt;
   const gap = distance(pickup, flight.player);

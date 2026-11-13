@@ -8,6 +8,7 @@ import type { StorySceneId } from "../data/storyShips.ts";
 import type { GalaxyNumber, Weapon } from "../data/types.ts";
 import type { AchievementState } from "./achievements.ts";
 import type { EnemyState } from "./enemyAi.ts";
+import type { FlightTopology } from "./flightTopology.ts";
 import type { NeedleChapterProgress, NeedleFlight } from "./needleRuntime.ts";
 import type { PhantomFlight, PhantomProgress } from "./phantom.ts";
 import type { ProjectileFade } from "./playerProjectiles.ts";
@@ -125,6 +126,7 @@ export interface PersistentWorldState {
   notables: Record<string, SpaceObject | null>;
 }
 export interface FlightState {
+  topology?: FlightTopology;
   needle?: NeedleFlight;
   phantom?: PhantomFlight;
   /** Travel arrival points; encounters stay clear of them as of the flight's start. */
