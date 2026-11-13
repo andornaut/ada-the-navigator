@@ -91,7 +91,7 @@ First launch only, before chapter one's opening, in Grandma's garden:
   places nobody else bothers to go."
 - Narration: "Every Saturday, she and her dog Penny walk to Grandma's house,
   where the garden grows a little wilder each year."
-- Grandma: "There's my navigator. Did you two take the long way again?"
+- Grandma: "There's my navigator! Did you two take the long way again?"
 - Ada: "Penny found a shortcut. It was mostly mud."
 
 Chapter one's opening and its choice follow. After its branch page, still in the
@@ -105,7 +105,7 @@ In the park:
   roots of an old tree."
 - Narration: "Penny digs. Something round glints in the dirt: a rock, smoother
   than any Ada has ever seen."
-- Ada: "Good nose, Penny. Let's take it home."
+- Ada: "Good nose, Penny. Come on, let's take it home."
 
 Ada's room, rock unpolished:
 
@@ -225,10 +225,8 @@ Choices:
 
 Branch pages, then the story rejoins:
 
-- "What kind of help do they need?": "Grandma smiles. 'Planting, watering, tools...
-  more than one person can manage.'"
-- "I'd like to meet the organizer.": "'They'd love that,' Grandma says. 'Most
-  people only offer help when someone asks them.'"
+- "What kind of help do they need?": "Grandma smiles. 'Planting, watering, finding tools... It's a lot for one person.'"
+- "I'd like to meet the organizer.": "'They'd love that,' Grandma says. 'Sometimes people want to help. They just need someone to ask.'"
 
 Space dialogue, in story order:
 
@@ -313,8 +311,7 @@ Branch pages, then the story rejoins:
   fetch tools, teach. Small jobs are easier to say yes to, and soon every card has
   a name."
 
-Closing: "On planting day, neighbors bring tools, plants and time. They don't all
-have to do the same thing. The garden has begun."
+Closing: "On planting day, neighbors bring tools, plants and time. People help in different ways. At last, the garden is getting started."
 
 Objectives, in order:
 
@@ -345,7 +342,7 @@ Branch pages, then the story rejoins:
 - "Think about what Penny can choose.": "Ada can go anywhere she likes, even other
   galaxies. Penny can only go where Ada takes her."
 
-Mom, after the branch page: "Penny's been waiting by the door all morning, Ada."
+Mom, after the branch page: "Ada, Penny's been waiting by the door all morning."
 
 Space dialogue, in story order:
 
@@ -674,7 +671,7 @@ Branch pages, then the story rejoins:
   someone beside her, and an invitation to join in. No speeches, just company."
 
 At dinner, after the branch page: Narration: "At dinner, Ada tells Dad what she
-saw at school." Dad: "That sounds hard to watch. What do you think you could do?"
+saw at school." Dad: "That sounds hard to watch. What do you think would help?"
 
 Space dialogue, in story order:
 
@@ -738,9 +735,7 @@ docks and unloads." Then keep `2.approachThanks`: Mica: "Thank you for staying.
 See you next trip." These closing lines belong to the same outcome, not a new
 quest step.
 
-Home resolution: "Back at school, Ada speaks privately with Sam: 'I saw what
-happened. Would you like to join us?' They would. Ada talks with her friends
-about making room and refusing to laugh along."
+Home resolution: "Back at school, Ada speaks privately with Sam: 'I saw what happened. Would you like to join us?' Sam says yes. Ada talks with her friends about making room and refusing to laugh along."
 
 Choices:
 
@@ -749,8 +744,7 @@ Choices:
 
 Branch pages, then the story rejoins:
 
-- "Make room in the game.": "Ada's friends shuffle over and make a gap. Sam
-  steps in. When someone laughs, nobody laughs along."
+- "Make room in the game.": "Ada's friends shuffle over and make room. Sam steps in. When someone laughs, nobody laughs along."
 - "Sit with them and invite friends.": "At lunch, Ada and Sam sit
   together. One by one, Ada's friends join them, and the table gets louder and
   happier."
@@ -1191,8 +1185,7 @@ beacon light. Welcome!"
   Restart.
 - Restart card: Restart? with Restart and Cancel.
 - Galaxy map Earth button: Earth.
-- Earth with nothing new: Narration: "Penny thumps her tail. Time for another
-  adventure?" then Pick up the rock.
+- Earth with nothing new: Narration: "Penny thumps her tail. Ready for another adventure?" then Pick up the rock.
 - Use actions, each the disc's accessible name and drawn as a symbol: Talk,
   Deliver, Deposit, Tow, Salvage, Dock, and Use for any other interaction.
 - Conversation buttons: Continue, Ask more.
