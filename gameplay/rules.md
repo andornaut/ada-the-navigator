@@ -658,7 +658,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   Phaser) is also the order of power and rarity: each later weapon costs more,
   drops less often, gets fewer seconds of fire per ammo pack and generally deals
   more single-target damage per second at level 1 (Laser 3.3, Multi-Laser 2.3
-  per bolt and 7 with all 3 bolts, Rapid Missile 6.7, Heavy Missile 5, Scattershot 6.0 with
+  per bolt and 7 with all 3 bolts, Rapid Missile 5, Heavy Missile 5, Scattershot 6.0 with
   every dot hitting, Phaser 6.5). Slower weapons deal more damage per hit. The
   later weapons are situational, each with a limit that offsets its damage:
   Heavy Missile fires slowly, Scattershot works only up close and Phaser fires
@@ -684,15 +684,15 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
     level 1 (-20, 0 and 20 degrees), then 4, then 5, every 0.30 s. Each bolt deals a fixed 0.7 times Laser damage;
     levels add only bolts. Its bolts are slower than Laser's at the same level.
   - Rapid Missile: quick straight missiles with a small blast (25) and a fixed
-    2 times Laser damage; levels grow its fire rate (every 0.30, 0.25, 0.20 s)
+    1.5 times Laser damage; levels grow its fire rate (every 0.30, 0.25, 0.20 s)
     and missile speed.
   - Heavy Missile: one slow straight missile with a large blast (radius 50),
     every 2.0 s at every level; levels grow only its damage (10, 15, 22.5 times
     Laser damage). Rapid Missile is faster at every
-    level, in missile speed and fire rate, and deals more damage per second at
-    levels 1 and 2 (6.7 against 5, 8 against 7.5); Heavy Missile deals more
-    damage per hit at every level, a large blast, and more damage per second at
-    level 3 (11.25 against 10).
+    level, in missile speed and fire rate, and matches Heavy Missile's damage
+    per second at level 1 (5); Heavy Missile deals more damage per hit at every
+    level, a large blast, and more damage per second at levels 2 and 3 (7.5
+    against 6, 11.25 against 7.5).
   - Scattershot: the close-range weapon, a shotgun of visual dots across -30 to
     30 degrees, 7 at level 1, then 9, then 11, one volley every 1.0 s. Its range
     is a fixed 100 world units on every device, and levels add dots. Up
