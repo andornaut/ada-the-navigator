@@ -1,6 +1,8 @@
+import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
 import {
   canvasFit,
   emergencyGlow,
+  emergencyStartMs,
   irisRadius,
   type JumpFrame,
   type JumpStep,
@@ -104,7 +106,7 @@ export function createJumpOverlay(
     pointerEvents: "auto",
     position: "absolute",
     width: "100%",
-    zIndex: "1000",
+    zIndex: String(EMERGENCY_RETURN.layers.jump),
   });
   canvas.setAttribute("aria-hidden", "true");
   const load = (url: string) => {
@@ -329,7 +331,7 @@ export function createJumpOverlay(
       return;
     }
     const play = running;
-    const ms = now - play.start;
+    const ms = now - play.start + (play.emergency ? emergencyStartMs(play.reducedMotion, jump) : 0);
     if (!play.switched && ms >= switchMs(jump, play.reducedMotion)) {
       play.switched = true;
       play.onSwitch();

@@ -6,6 +6,7 @@ import { type SheetArt, sheetFrame } from "../ui/jumpOverlay.ts";
 import {
   canvasFit,
   emergencyGlow,
+  emergencyStartMs,
   irisRadius,
   jumpStepAt,
   posePaths,
@@ -68,6 +69,14 @@ describe("quantum jump data", () => {
       }),
     ).toBeUndefined();
     expect(jump.frames.map((frame) => frame.steps.length)).toEqual([1, 3, 3, 2, 1, 6, 2]);
+  });
+
+  it("starts emergency effects without a blank hold while preserving reduced fades and normal lead-in", () => {
+    expect(jumpStepAt(jump, emergencyStartMs(false, jump))?.frame.name).toBe("charge");
+    expect(jumpStepAt(jump, emergencyStartMs(false, jump))?.step.glow).toBeDefined();
+    expect(reducedWeights(jump, emergencyStartMs(true, jump))?.source).toBe(1);
+    expect(reducedWeights(jump, emergencyStartMs(true, jump) + 1)?.still).toBeGreaterThan(0);
+    expect(jumpStepAt(jump, 0)?.frame.name).toBe("space");
   });
 
   it("holds each step for its ms, the destination from 600 ms and nothing from 1000", () => {

@@ -327,6 +327,14 @@ export function readQuantumJump(value: unknown): QuantumJump | undefined {
 }
 
 /** The phase and step showing at `ms`, or null once the jump is over. Steps hold. */
+/** Emergency motion starts at the first authored effect, preserving every visible fade or step. */
+export function emergencyStartMs(reducedMotion: boolean, jump: QuantumJump): number {
+  return reducedMotion
+    ? (jump.reducedMotion.steps.find((step) => !("show" in step && step.show === "source"))
+        ?.fromMs ?? 0)
+    : (jump.frames.find((frame) => frame.name !== "space")?.startMs ?? 0);
+}
+
 export function jumpStepAt(
   jump: QuantumJump,
   ms: number,

@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { CAST, castSheet, SPEAKER_CAST } from "../data/cast.ts";
 import { SPEAKERS } from "../data/conversations.ts";
+import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
 import { GALAXY_ID } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_MANIFESTS } from "../testing/publicArt.ts";
@@ -31,6 +32,14 @@ const squash = (value: string): string => value.replace(/\s+/gu, "");
 
 describe("conversation box style", () => {
   const css = rules(CONVERSATION_STYLE);
+
+  it("keeps only the emergency warning above the warp canvas", () => {
+    const layer = (selector: string) => Number(/z-index:(\d+)/u.exec(css.get(selector) ?? "")?.[1]);
+    expect(layer(".ada-conversation")).toBeLessThan(EMERGENCY_RETURN.layers.jump);
+    expect(layer(".ada-conversation[data-emergency]")).toBeGreaterThan(
+      EMERGENCY_RETURN.layers.jump,
+    );
+  });
 
   it("swaps the portrait's end and the tab's inset for a right-side speaker, never the text's alignment", () => {
     const sided = [...css].filter(([selector]) => selector.includes('[data-side="right"]'));

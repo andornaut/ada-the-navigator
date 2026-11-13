@@ -86,11 +86,11 @@ import { drawBackdrop, drawBackdropLayer, drawBackdropLayers } from "./sceneBack
 import { drawRockBreaks, drawZips, startRockBreaks, startZips } from "./sceneEffects.ts";
 import { drawEffect, drawEnemyWeapons, enemyWeaponsView } from "./sceneEnemies.ts";
 import {
+  drawCompromisedShield,
   drawEdgeMarkers,
   drawFeedback,
   drawIndicators,
   drawKeylines,
-  drawPulse,
   drawUseCallout,
   keylineEdges,
   keylineSprite,
@@ -557,9 +557,10 @@ export class GameScene extends Scene {
     }
     if (this.emergencyReturn.pending) {
       this.overlay.clear();
-      drawPulse(this, 0, { age: this.emergencyReturn.line!.elapsed, kind: "damage", x: 0, y: 0 });
+      drawCompromisedShield(this);
       const source = this.emergencyReturn.advance(!document.hidden, milliseconds / 1000);
       if (source) {
+        this.overlay.clear();
         const done = () => {
           this.emergencyReturn.cancel();
           endJump(this);

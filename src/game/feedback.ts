@@ -7,6 +7,8 @@ export const TELEPORT_DISTANCE = 20;
 
 export type FeedbackKind = "hit" | "disabled" | "damage" | "pickup" | "deposit" | "teleport";
 export interface FeedbackPulse extends Vec {
+  /** A static presentation cue after the model has committed an emergency return. */
+  compromised?: true;
   kind: FeedbackKind;
   age: number;
 }

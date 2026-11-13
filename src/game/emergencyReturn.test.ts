@@ -87,13 +87,14 @@ function setup(quantum = true) {
   const document = { hidden: false };
   const flushScene = vi.fn();
   const snapshotSource = vi.fn(() => ({ ...jumpSource, heading: null }));
+  const compromisedShield = vi.fn();
   const context = createContext({
     OVERNIGHT_SLEEP: { seconds: 1 },
     SCREEN,
     coverShip: vi.fn(),
     direction,
     document,
-    drawPulse: vi.fn(),
+    drawCompromisedShield: compromisedShield,
     endJump: () => {
       scene.jumping = false;
     },
@@ -118,6 +119,7 @@ function setup(quantum = true) {
   const frame = runInContext(updateCode, context) as (time: number, ms: number) => void;
   let time = 0;
   return {
+    compromisedShield,
     document,
     flight,
     flushScene,
@@ -264,4 +266,37 @@ describe("emergency return presentation", () => {
     presentation.cancel();
     expect(presentation.active).toBe(false);
   });
+});
+
+describe("compromised shield return sequence", () => {
+  it.each([false, true])(
+    "holds the shield, clears it before warp and keeps Astra through transition (reduced: %s)",
+    (reduced) => {
+      const { compromisedShield, frame, scene } = setup();
+      scene.reducedMotion = reduced;
+      frame();
+      expect(compromisedShield).toHaveBeenCalledWith(scene);
+      expect(scene.emergencyReturn.line?.text).toBe("Shields are down. We need to jump to safety!");
+      for (let i = 0; i < 94; i++) {
+        frame();
+      }
+      expect(scene.quantum!.play).not.toHaveBeenCalled();
+      frame();
+      const play = scene.quantum!.play.mock.calls[0]![0];
+      expect(scene.emergencyReturn.pending).toBe(false);
+      expect(scene.emergencyReturn.line).not.toBeNull();
+      const clear = scene.overlay.clear.mock.invocationCallOrder.at(-1)!;
+      expect(compromisedShield.mock.invocationCallOrder.at(-1)!).toBeLessThan(clear);
+      expect(clear).toBeLessThan(scene.quantum!.play.mock.invocationCallOrder[0]!);
+      const held = compromisedShield.mock.calls.length;
+      play.onCover();
+      play.onSwitch();
+      frame();
+      expect(compromisedShield).toHaveBeenCalledTimes(held);
+      expect(scene.emergencyReturn.line).not.toBeNull();
+      play.onDone();
+      expect(scene.emergencyReturn.line).toBeNull();
+      expect(scene.controls.overlay.inert).toBe(false);
+    },
+  );
 });

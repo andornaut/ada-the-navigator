@@ -3,6 +3,7 @@
 import { GameObjects, Math as PhaserMath, ScaleModes, type Scene, Textures } from "phaser";
 
 import { EDGE_MARKER_GLYPHS, edgeMarkerInset } from "../data/edgeMarkers.ts";
+import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
 import { SCREEN } from "../data/screen.ts";
 import { edgePoint } from "../model/edgeMarkers.ts";
 import type { FlightState, Vec } from "../model/types.ts";
@@ -458,6 +459,21 @@ export function drawFeedback(scene: HudContext): void {
   }
 }
 
+/** The frozen depletion cue over the last flight frame, including its light-field keyline. */
+export function drawCompromisedShield(scene: HudContext): void {
+  const pulse: FeedbackPulse = {
+    age: EMERGENCY_RETURN.shield.age,
+    compromised: true,
+    kind: "damage",
+    x: 0,
+    y: 0,
+  };
+  if (scene.light) {
+    drawPulse(scene, LIGHT_FIELD.keyline, pulse);
+  }
+  drawPulse(scene, 0, pulse);
+}
+
 /** One feedback pulse, or with `grow` its ink edge: the same strokes `2 grow` wider in ink. */
 export function drawPulse(scene: HudContext, grow: number, pulse: FeedbackPulse): void {
   // Travel plays the quantum jump; the old teleport ring is retired with it.
@@ -470,14 +486,16 @@ export function drawPulse(scene: HudContext, grow: number, pulse: FeedbackPulse)
     (pulse.kind === "damage" ? 3 : 1.5) + 2 * grow,
     grow
       ? LIGHT_FIELD.ink
-      : pulse.kind === "damage"
-        ? scene.palette.obstacle
-        : pulse.kind === "pickup"
-          ? scene.palette.active
-          : pulse.kind === "hit"
-            ? scene.palette.weapon
-            : scene.palette.pointOfInterest,
-    Math.max(0, 1 - pulse.age / 0.65),
+      : pulse.compromised
+        ? EMERGENCY_RETURN.shield.colour
+        : pulse.kind === "damage"
+          ? scene.palette.obstacle
+          : pulse.kind === "pickup"
+            ? scene.palette.active
+            : pulse.kind === "hit"
+              ? scene.palette.weapon
+              : scene.palette.pointOfInterest,
+    pulse.compromised ? 1 : Math.max(0, 1 - pulse.age / 0.65),
   );
   if (pulse.kind === "hit" || pulse.kind === "disabled") {
     for (let i = 0; i < 6; i++) {
@@ -520,6 +538,18 @@ export function drawPulse(scene: HudContext, grow: number, pulse: FeedbackPulse)
         at.x + radius * 0.65,
         at.y + radius * 0.65,
       );
+    }
+    if (pulse.compromised && !grow) {
+      scene.overlay.lineStyle(3, EMERGENCY_RETURN.shield.damagedColour, 1);
+      scene.overlay.beginPath();
+      scene.overlay.arc(
+        at.x,
+        at.y,
+        radius,
+        EMERGENCY_RETURN.shield.sectorStart,
+        EMERGENCY_RETURN.shield.sectorEnd,
+      );
+      scene.overlay.strokePath();
     }
     if (pulse.kind === "teleport") {
       scene.overlay.strokeCircle(at.x, at.y, radius * 0.6);

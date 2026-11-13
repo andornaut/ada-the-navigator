@@ -2,6 +2,7 @@ import { castFrames, castSheet, SPEAKER_CAST } from "../data/cast.ts";
 import { CONTENT } from "../data/content.ts";
 import { CONTROL_WORDS } from "../data/controlWords.ts";
 import { type Mood, type Speaker } from "../data/conversations.ts";
+import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
 import { InteractionConversation, interactionCopy } from "../model/conversations.ts";
 import { createDialoguePanel, DIALOGUE_PANEL_STYLE } from "./dialoguePanel.ts";
 import { COMPACT_PORTRAITS, portraitFrame, TAB_COLOURS } from "./dialoguePortraits.ts";
@@ -99,6 +100,9 @@ export const CONVERSATION_STYLE = `
 }
 
 /* The page's base button style changes its background on hover; the panel keeps its own. */
+.ada-conversation[data-emergency]{
+  z-index:${EMERGENCY_RETURN.layers.dialogue}
+}
 .ada-conversation:hover{
   background:${PANEL_BACKGROUND}
 }
@@ -287,6 +291,7 @@ export function createConversationBox(onAdvance: () => void): ConversationBox {
       if (key !== shown) {
         shown = key;
         root.hidden = line === null;
+        root.toggleAttribute("data-emergency", line?.key === EMERGENCY_RETURN.key);
         if (line) {
           root.dataset.side = line.side;
           root.dataset.speaker = line.speaker;

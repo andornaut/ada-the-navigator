@@ -19,11 +19,11 @@ export class EmergencyReturn {
   }
 
   get line(): ConversationLineView | null {
-    return this.pending
+    return this.active
       ? {
           ...SPEAKERS.astra,
           elapsed: this.elapsed,
-          key: "emergency-return",
+          key: EMERGENCY_RETURN.key,
           mood: "upset",
           named: true,
           speaker: "astra",
