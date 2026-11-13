@@ -134,6 +134,7 @@ import {
   landmarkSites,
   unchartedNear,
 } from "./landmarks.ts";
+import { lateEncounterCue } from "./lateEncounter.ts";
 import { type LocalMap, localMap, type MapContext, recordExplored } from "./map.ts";
 import { needleCourses, setNeedleActivity, stepNeedleCourse } from "./needle.ts";
 import { clearNeedleEnemies, ensureNeedleDebris } from "./needleFlight.ts";
@@ -236,6 +237,7 @@ const progress = newProgress;
 
 // The dialogue marker that holds the flight under the holodisk moment's story pages.
 const HOLODISK_MOMENT = "holodiskMoment";
+const NEEDLE_PRELUDE = ["arrival:4", "meeting:4:avi"] as const;
 
 /** A first launch: galaxy one unlocked and nothing begun. */
 export function newGameState(): GameState {
@@ -418,6 +420,7 @@ export class GameModel {
   private story: StoryPosition | null = null;
   private heldStory: { position: StoryPosition; slept: number } | null = null;
   private readonly emergencyReferences = new WeakMap<Scene, StorySceneReference>();
+  private queuedNeedleTalk = false;
   private suspendedInteraction: {
     readonly dialogue: DialogueState;
     readonly galaxy: GalaxyNumber;
@@ -492,6 +495,7 @@ export class GameModel {
    */
   private holdFlight(): void {
     this.pickupFeedback = [];
+    this.queuedNeedleTalk = false;
     const { dialogue, docked, flight, mode, notice } = this.state;
     this.heldFlight = { dialogue, docked, flight, mode, notice };
     this.state.mode = "home";
@@ -547,6 +551,25 @@ export class GameModel {
   /** A tap on the conversation box: the next line, or the box closes after the last. */
   advanceConversation(): void {
     this.talk.advance();
+    this.flushNeedleTalk();
+  }
+  private flushNeedleTalk(): void {
+    if (!this.queuedNeedleTalk) {
+      return;
+    }
+    if (this.state.flight?.galaxy !== 4 || this.nearest() !== "elderLoom") {
+      this.queuedNeedleTalk = false;
+      return;
+    }
+    if (
+      !this.talk.beforeInteraction(NEEDLE_PRELUDE) &&
+      this.state.seenConversations.includes("meeting:4:avi") &&
+      !this.state.dialogue &&
+      !this.state.docked
+    ) {
+      this.queuedNeedleTalk = false;
+      this.interact();
+    }
   }
   private beginConversations(): void {
     // The line pools shuffle from the flight's own seed, so they never draw on launch seeds.
@@ -1456,6 +1479,7 @@ export class GameModel {
    */
   private endFlight(keptOre: (ore: number) => number = (ore) => ore): void {
     this.pickupFeedback = [];
+    this.queuedNeedleTalk = false;
     this.closeGalaxyMapInFlight();
     const flight = this.state.flight;
     const ore = flight ? keptOre(flight.cargo) : 0;
@@ -1818,6 +1842,7 @@ export class GameModel {
         .filter(({ id }) => this.current.stations.includes(id))
         .map(({ id }) => id),
     });
+    this.flushNeedleTalk();
     recordSensed(this.state.achievements, this.talk.takeSensed());
     this.syncAchievements();
     // One achievement notice at a time, each once the notice slot is free.
@@ -2050,6 +2075,10 @@ export class GameModel {
         cues.push("stationNear");
       }
     }
+    const late = lateEncounterCue({ catalog: ECONOMY, viewport: SCREEN }, f);
+    if (late) {
+      cues.push(late);
+    }
     return cues;
   }
   /** After the reunion, the whale's family gives Ada a waypoint to galaxy three's holodisk. */
@@ -2219,6 +2248,18 @@ export class GameModel {
     const id = this.nearest();
     const f = this.state.flight;
     if (!id || !f) {
+      return;
+    }
+    if (
+      f.galaxy === 4 &&
+      id === "elderLoom" &&
+      !this.current.needle?.met &&
+      (!this.state.seenConversations.includes("meeting:4:avi") ||
+        this.talk.pending("meeting:4:avi"))
+    ) {
+      this.talk.encounter("stationNear");
+      this.queuedNeedleTalk = true;
+      this.talk.beforeInteraction(NEEDLE_PRELUDE);
       return;
     }
     if (chapterContext && chapterRuntime(f.galaxy) && placeActivity(f.galaxy, this.current, id)) {

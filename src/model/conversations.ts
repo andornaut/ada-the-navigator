@@ -305,6 +305,38 @@ export class ConversationDirector {
     this.request((trigger) => trigger.kind === "funded" && trigger.project === project);
   }
 
+  /** A verified first encounter uses the same request path as observed flight facts. */
+  encounter(cue: EncounterCue): void {
+    this.request(
+      (trigger) =>
+        trigger.kind === "encounter" && trigger.galaxy === this.galaxy && trigger.cue === cue,
+    );
+  }
+
+  /** An explicit Talk command waits for its authored preludes without a background cooldown. */
+  beforeInteraction(ids: readonly string[]): boolean {
+    for (const id of ids) {
+      if (this.active?.conversation.id === id) {
+        return true;
+      }
+      const request = this.queue.find((entry) => entry.conversation.id === id);
+      if (request) {
+        if (!this.active || rank(this.active.conversation) >= rank(request.conversation)) {
+          this.start(request);
+        }
+        return true;
+      }
+    }
+    return false;
+  }
+
+  pending(id: string): boolean {
+    return (
+      this.active?.conversation.id === id ||
+      this.queue.some((request) => request.conversation.id === id)
+    );
+  }
+
   /** A chapter event requests its authored small-box chatter once through the normal director. */
   chapter(id: string): void {
     this.request((trigger) => trigger.kind === "chapter" && trigger.id === id);

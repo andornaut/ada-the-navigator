@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { BUILT, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
@@ -27,6 +28,9 @@ function launch(): GameModel {
   for (const progress of Object.values(model.state.progress)) {
     progress.opened = true;
   }
+  model.state.seenConversations.push(
+    ...CONVERSATIONS.filter(({ trigger }) => trigger.kind === "lesson").map(({ id }) => id),
+  );
   model.startGalaxy(4);
   return model;
 }
@@ -40,7 +44,12 @@ function visit(model: GameModel, id: string): void {
 }
 function learn(model: GameModel): void {
   visit(model, "elderLoom");
+  model.dismissNotice();
   model.interact();
+  const budget = CONVERSATIONS.reduce((sum, conversation) => sum + conversation.lines.length, 0);
+  for (let line = 0; !model.state.dialogue && line < budget; line++) {
+    model.advanceConversation();
+  }
   expect(model.state.dialogue?.context).toBe("needle.arrival");
   expect(interactionCopy(4, model.state.dialogue!).party).toBe("Elder Loom");
   model.choose("continue");
