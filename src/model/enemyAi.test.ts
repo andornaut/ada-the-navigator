@@ -217,21 +217,23 @@ describe("enemy rules", () => {
       const player = { x: position.x + 200, y: 0 };
       let state: EnemyState = { ...spawn("fighter"), position, returning: true };
       let elapsed = 0;
-      let fired = false;
+      let firedReturning = false;
+      let fire: unknown[] = [];
       while (state.returning && elapsed < rearmSeconds + 1) {
         const intent = stepEnemy(definition, { ...observation(state), player }, state);
-        fired ||= intent.fire.length > 0;
+        firedReturning ||= intent.state.returning && intent.fire.length > 0;
+        fire = intent.fire;
         state = { ...intent.state, position };
         elapsed += 1 / 60;
       }
-      expect(fired).toBe(false);
+      // It holds fire while returning, then fires on the step it re-engages.
+      expect(firedReturning).toBe(false);
+      expect(fire.length).toBeGreaterThan(0);
       expect(elapsed).toBeGreaterThanOrEqual(rearmSeconds);
       expect(elapsed).toBeLessThan(rearmSeconds + 2 / 60);
       expect(state.engaged).toBe(true);
       expect(state.pursuitSeconds).toBe(0);
       expect(state.returnSeconds).toBe(0);
-      const next = stepEnemy(definition, { ...observation(state), player }, state);
-      expect(next.fire.length).toBeGreaterThan(0);
     }
   });
 
