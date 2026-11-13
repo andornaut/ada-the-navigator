@@ -79,6 +79,19 @@ describe("desktop flight controls", () => {
     expect(state.sample(frame).fire).toBe(false);
   });
 
+  it("admits each E and Enter press once without turning either Use key into firing", () => {
+    const state = fresh();
+    expect(state.keyDown("KeyE")).toBe(true);
+    expect(state.keyDown("KeyE", true)).toBe(false);
+    expect(state.keyDown("KeyE")).toBe(false);
+    expect(state.sample(frame)).toEqual(neutral);
+    state.keyUp("KeyE");
+    expect(state.keyDown("KeyE")).toBe(true);
+    expect(state.keyDown("Enter")).toBe(true);
+    expect(state.keyDown("Enter", true)).toBe(false);
+    expect(state.sample(frame).fire).toBe(false);
+  });
+
   it("rejects blocked input and requires fresh presses after modal, blur or mode reset", () => {
     let accepts = true;
     const state = new DesktopControlState(() => accepts);

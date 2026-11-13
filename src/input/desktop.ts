@@ -19,8 +19,10 @@ export const DESKTOP_KEYS = new Set([
   "ArrowLeft",
   "ArrowRight",
   "ArrowUp",
+  "Enter",
   "KeyA",
   "KeyD",
+  "KeyE",
   "KeyW",
   "ShiftLeft",
   "ShiftRight",
@@ -44,11 +46,12 @@ export class DesktopControlState {
     this.accepts = accepts;
   }
 
-  keyDown(code: string, repeat = false): void {
-    if (!this.accepts() || !DESKTOP_KEYS.has(code) || (repeat && !this.keys.has(code))) {
-      return;
+  keyDown(code: string, repeat = false): boolean {
+    if (!this.accepts() || !DESKTOP_KEYS.has(code) || this.keys.has(code) || repeat) {
+      return false;
     }
     this.keys.add(code);
+    return true;
   }
 
   keyUp(code: string): void {
@@ -126,6 +129,7 @@ export class DesktopControlState {
 export interface DesktopBindingOptions {
   readonly accepts: () => boolean;
   readonly onModeChange?: (desktop: boolean) => void;
+  readonly onUse?: () => void;
   readonly point: (event: MouseEvent) => Vector;
   readonly surface: HTMLElement;
 }
@@ -133,6 +137,7 @@ export interface DesktopBindingOptions {
 export interface DesktopBinding {
   readonly active: () => boolean;
   readonly dispose: () => void;
+  readonly touchActive: () => boolean;
 }
 
 /** Mouse gestures start on the game surface; page controls and native touch keep their inputs. */
@@ -148,7 +153,11 @@ export function bindDesktopInput(
   const document = surface.ownerDocument;
   let desktop = false;
   let pointerType = "mouse";
+  let touched = false;
   const mode = (active: boolean) => {
+    if (active) {
+      touched = false;
+    }
     if (desktop !== active) {
       desktop = active;
       state.reset();
@@ -167,6 +176,7 @@ export function bindDesktopInput(
     pointerType = event.pointerType;
     if (event.pointerType !== "mouse" && onSurface(event) && options.accepts()) {
       mode(false);
+      touched = true;
     }
   };
   const down = (event: MouseEvent) => {
@@ -194,7 +204,10 @@ export function bindDesktopInput(
     }
     event.preventDefault();
     mode(true);
-    state.keyDown(event.code, event.repeat);
+    const fresh = state.keyDown(event.code, event.repeat);
+    if (fresh && (event.code === "KeyE" || event.code === "Enter")) {
+      options.onUse?.();
+    }
   };
   const keyUp = (event: KeyboardEvent) => state.keyUp(event.code);
   const contextMenu = (event: MouseEvent) => {
@@ -235,5 +248,6 @@ export function bindDesktopInput(
       host.removeEventListener("pagehide", reset);
       document.removeEventListener("visibilitychange", visibility);
     },
+    touchActive: () => touched && !desktop,
   };
 }

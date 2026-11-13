@@ -1,6 +1,5 @@
 import { pageToGame } from "@andornaut/game-kit/view/pagePoint";
 import {
-  clientPoint,
   listenPagePresses,
   onPageControl,
   type PagePointerEvent,
@@ -69,7 +68,8 @@ import { createUpdateDialog, type UpdateLabels } from "../ui/updateDialog.ts";
 import { createWeaponDetailCard } from "../ui/weaponDetailCard.ts";
 import { createWeaponSelector, type WeaponChoice, type WeaponLabels } from "../ui/weapons.ts";
 import { FRAME_TURN } from "../view/frameTurn.ts";
-import { coarsePointer, touchControlsActive, useDiscShown } from "./coarsePointer.ts";
+import { coarsePointer, touchControlsActive } from "./coarsePointer.ts";
+import { bindDesktopInput, DesktopControlState, type DesktopFrame } from "./desktop.ts";
 import { type ControlSample, ControlState } from "./state.ts";
 
 export interface ControlsOptions {
@@ -145,7 +145,7 @@ export interface Controls {
   // Whether Reduced motion is on, for the refusal cue.
   reducedMotion(): boolean;
   reset(): void;
-  sample(): ControlSample;
+  sample(frame?: DesktopFrame): ControlSample;
   // The Achievements card's entries.
   setAchievements(entries: readonly AchievementEntry[]): void;
   // What Use does here and its name, or undefined with nothing in reach.
@@ -192,6 +192,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const previousTouchAction = canvas.style.touchAction;
   canvas.style.touchAction = "none";
   const state = new ControlState();
+  const desktop = new DesktopControlState(() => state.accepts());
   let enabled = true;
   // Whether the Paused card opens here: in flight or on Ada's room page (PauseState.place).
   let pausable = false;
@@ -317,6 +318,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     (update?.isOpen() ?? false);
   function syncModal(): void {
     const open = modalOpen();
+    desktop.reset();
     settings.root.classList.toggle("ada-modal-open", open);
     if (open) {
       state.openModal();
@@ -497,15 +499,25 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   fitControls();
   const raster = (scale: number): void => rasterTouchChrome(scene, scale);
   scene.events.on(RASTER_SCALE_EVENT, raster);
-  const point = (event: PagePointerEvent) => {
+  const point = (event: Pick<PagePointerEvent, "clientX" | "clientY">) => {
     fitControls();
     return pageToGame(
       FRAME_TURN.turn(),
       canvas.getBoundingClientRect(),
       canvasSize(sceneFit(scene)),
-      clientPoint(event),
+      { x: event.clientX, y: event.clientY },
     );
   };
+  const desktopBinding = bindDesktopInput(
+    {
+      accepts: () => state.accepts(),
+      onModeChange: () => state.reset(),
+      onUse: () => state.requestUse(),
+      point,
+      surface: canvas,
+    },
+    desktop,
+  );
   const joystickTarget = (target: EventTarget | null) => {
     const found = target instanceof Element ? target.closest("[data-control]") : null;
     return found && settings.root.contains(found) ? found : null;
@@ -546,7 +558,6 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const stopPointers = listenPagePresses(
     (event) =>
       state.accepts() &&
-      coarsePointer(window) &&
       (event.pointerType === "touch" || joystickTarget(event.target) !== null) &&
       !onPageControl(event.target) &&
       (event.target === canvas || event.target === parent || joystickTarget(event.target) !== null),
@@ -598,7 +609,10 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const onBack = () => {
     pressBack(backStack, pausable, () => pause.open());
   };
-  const reset = () => state.reset();
+  const reset = () => {
+    state.reset();
+    desktop.reset();
+  };
   const keyDown = (event: KeyboardEvent) => {
     // Q exits from the bare start screen, wherever Exit shows.
     if (
@@ -632,13 +646,16 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     }
     if (
       event.target instanceof Element &&
-      (event.target.closest("input,textarea,select") ||
-        (event.code === "Space" && event.target.closest("button,a")))
+      event.target.closest(
+        "input,textarea,select,button,a,[contenteditable]:not([contenteditable=false])",
+      )
     ) {
       return;
     }
     event.preventDefault();
-    state.keyDown(event.code, event.repeat);
+    if (!desktopBinding.active() && coarsePointer(window)) {
+      state.keyDown(event.code, event.repeat);
+    }
   };
   const keyUp = (event: KeyboardEvent) => state.keyUp(event.code);
   const onVisibility = () => {
@@ -656,7 +673,10 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   document.addEventListener("visibilitychange", onVisibility);
   const draw = () => {
     cheats.refresh();
-    const touch = touchControlsActive(window, enabled, modalOpen());
+    const touch =
+      !desktopBinding.active() &&
+      (touchControlsActive(window, enabled, modalOpen()) ||
+        (enabled && !modalOpen() && desktopBinding.touchActive()));
     pauseButton.hidden = !pauseButtonShown(coarsePointer(window), pausable, modalOpen());
     // The pill shows in flight and hides with the pause button under a card; on desktop, where the
     // pause button is hidden, it keeps its place.
@@ -668,7 +688,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     }
     // Use is a touch control, as in Chibi: shown on a touch screen while an action is in reach;
     // on desktop the Use key acts.
-    useShown = useDiscShown(window, enabled, modalOpen(), context !== undefined);
+    useShown = touch && context !== undefined;
     if (!useShown) {
       usePress = undefined;
     }
@@ -728,6 +748,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       }
       disposed = true;
       stopPointers();
+      desktopBinding.dispose();
       state.setEnabled(false);
       resource.dispose();
       weaponDetail.dispose();
@@ -778,7 +799,14 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     resetShieldOreSpent(total) {
       status.resetShieldOreSpent(total);
     },
-    sample: () => state.sample(),
+    sample(frame) {
+      const touch = state.sample();
+      return frame &&
+        !desktopBinding.touchActive() &&
+        (desktopBinding.active() || !coarsePointer(window))
+        ? { ...desktop.sample(frame), use: touch.use }
+        : touch;
+    },
     setAchievements: (entries) => achievements.setEntries(entries),
     setAchievementsButton(shown) {
       achievementsButton.hidden = !shown;
@@ -798,6 +826,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       }
     },
     setEnabled(value) {
+      if (enabled !== value) {
+        desktop.reset();
+      }
       enabled = value;
       state.setEnabled(value);
       weapons.setEnabled(value && !modalOpen());

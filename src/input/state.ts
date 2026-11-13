@@ -8,6 +8,8 @@ export interface Vector {
 }
 
 export interface ControlSample {
+  readonly fire?: boolean;
+  readonly turn?: -1 | 0 | 1;
   readonly aim: Vector;
   readonly move: Vector;
   readonly use: boolean;
