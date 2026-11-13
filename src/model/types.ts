@@ -206,6 +206,8 @@ export interface GalaxyProgress {
   replayScene?: StorySceneId;
   /** Guides of the calf accepted so far, which seed the next calf's start; absent before one. */
   guides?: number;
+  /** Undeposited ore kept from the galaxy's last flight, aboard its next; absent with none. */
+  cargo?: number;
 }
 /** A job's fixed place: a station, outpost or landmark by id, or a spot ("" id). */
 export interface JobTarget extends Vec {

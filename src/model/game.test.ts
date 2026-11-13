@@ -158,7 +158,8 @@ describe("story and persistence", () => {
     resumed.returnHome();
     launch(resumed);
     expect(resumed.state.flight!.seed).not.toBe(seed);
-    expect(resumed.state.flight!.cargo).toBe(0);
+    // Earth by choice keeps the undeposited ore for the galaxy's next flight.
+    expect(resumed.state.flight!.cargo).toBe(3);
     // The equipped weapon is a purchase kept with story progress across flights.
     expect(resumed.state.flight!.weapon).toBe("rapidMissile");
     expect(resumed.state.flight!.shield).toBe(CONTENT.tuning.shieldMax);

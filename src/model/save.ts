@@ -615,6 +615,7 @@ export function restoreSave(saved: unknown): GameState | null {
         !revealedProjects(id as GalaxyNumber, p.donated, p.revealed) ||
         !validExplored(CONTENT.tuning.chunkSize, p.explored) ||
         (p.guides !== undefined && !(Number.isSafeInteger(p.guides) && nonnegative(p.guides))) ||
+        (p.cargo !== undefined && !(Number.isSafeInteger(p.cargo) && nonnegative(p.cargo))) ||
         (p.replayScene !== undefined &&
           !(
             typeof p.replayScene === "string" &&

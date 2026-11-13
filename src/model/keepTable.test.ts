@@ -53,16 +53,19 @@ describe("what each event keeps (rules.md)", () => {
     expect(model.state.progress[1].questItem).toBe("food");
   });
 
-  it("keeps the held job's item and the story's item on Earth, losing ore and the tow", () => {
+  it("keeps the held job's item, the story's item and all ore on Earth, losing the tow", () => {
     const model = loaded();
     model.returnHome();
     expect(model.state.flight).toBeNull();
     expect(model.state.tasks[1]).toMatchObject({ carrying: true });
     expect(model.state.progress[1].questItem).toBe("food");
+    // The ore waits with its galaxy through a save.
+    expect(JSON.parse(model.save())).toMatchObject({ progress: { 1: { cargo: 3 } } });
     readStory(model);
     model.startGalaxy(1);
-    // The next flight starts with no ore and no tow, the items still aboard.
-    expect(model.state.flight!.cargo).toBe(0);
+    // The next flight starts with the ore and no tow, the items still aboard.
+    expect(model.state.flight!.cargo).toBe(3);
+    expect(model.state.progress[1].cargo).toBeUndefined();
     expect(model.state.flight!.tow).toBeUndefined();
     expect(model.state.progress[1].questItem).toBe("food");
     expect(model.state.tasks[1]).toMatchObject({ carrying: true });
@@ -87,12 +90,47 @@ describe("what each event keeps (rules.md)", () => {
     model.step(0.01, idle);
   };
 
+  it("keeps all ore jumping to another galaxy by choice, aboard that galaxy's next flight", () => {
+    const model = loaded();
+    model.state.unlocked.push(3);
+    expect(model.openGalaxyMap()).toBe(true);
+    model.stepGalaxy(1);
+    expect(model.jump()).toBe(true);
+    expect(model.state.flight!.galaxy).not.toBe(1);
+    expect(model.state.flight!.cargo).toBe(0);
+    expect(model.state.progress[1].cargo).toBe(3);
+  });
+
+  it.each([
+    [1, 1],
+    [2, 1],
+    [3, 2],
+    [11, 6],
+  ])("keeps ceil(n / 2) of %i ore on a shield-failure jump: %i", (carried, kept) => {
+    const model = loaded();
+    model.state.flight!.cargo = carried;
+    const stardust = model.state.economy.stardust;
+    deplete(model);
+    expect(model.state.progress[1].cargo).toBe(kept);
+    expect(model.state.economy.stardust).toBe(stardust);
+    const page = model.storyView?.page;
+    expect(page?.id).toBe("jumpHome");
+    // The page names lost ore only when some was lost.
+    expect(page?.text.includes(CONTENT.labels.jumpHomeOreLost ?? "")).toBe(kept < carried);
+    readStory(model);
+    model.startGalaxy(1);
+    expect(model.state.flight!.cargo).toBe(kept);
+  });
+
   it("says on the jump-home page when ore was lost, and keeps the job's item", () => {
     const model = loaded();
     deplete(model);
     const page = model.storyView?.page;
     expect(page?.id).toBe("jumpHome");
     expect(page?.text).toContain(CONTENT.labels.jumpHomeOreLost);
+    expect(CONTENT.labels.jumpHomeOreLost).toBe(
+      'Astra: "We\'re safe, and that matters most. We lost half the ore we were carrying."',
+    );
     expect(model.state.tasks[1]).toMatchObject({ carrying: true });
     // Without ore aboard the page keeps its one line.
     const empty = loaded();
