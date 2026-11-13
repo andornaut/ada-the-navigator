@@ -307,6 +307,15 @@ function mouth(sign: number): Point[] {
   return sign === 1 ? quad : quad.toReversed();
 }
 
+/** Front exhaust stations use the hull's exact outer wingtip vertices. */
+export function retroMouthAxis(sign: number): { half: Point; middle: Point } {
+  const { tipL, tipR } = vertices();
+  return {
+    half: [(sign * (MOUTHS.outer - MOUTHS.inner)) / 2, 0, 0],
+    middle: sign < 0 ? tipL : tipR,
+  };
+}
+
 // Mouth middle and half width along its base, outer minus inner over two.
 export function mouthAxis(sign: number): { half: Point; middle: Point } {
   const quad = mouth(sign);

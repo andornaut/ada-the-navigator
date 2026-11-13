@@ -192,6 +192,23 @@ Oklab from the warm signals beside it: the orange halo is 0.098 from coral
 coral enemy jets at the same speed; purple is 0.25 or more from every warm
 signal and 0.092 from the Iris scheme's rear sides `#8f7cd0`.
 
+### Retro jets
+
+`node art/tools/ship-retro-jets.ts` writes `ship-retro-jets.json`, using the
+existing version 1 engine-jet schema with one `engineLevels` entry (level 1)
+and all 32 headings. Higher engine levels reuse that entry.
+Its two anchors are the model's outer wingtip vertices `(±21.44, 20.48, 1.2)`;
+`retroMouthAxis` derives them from the same hull vertices used by the ship.
+Exhaust points forward along local negative Y, with half width
+`(±2.75, 0, 0)` derived from the existing mouth width. The frame remains 96,
+with the same pivot, length rule, layer widths, lengths and halo alpha ramp as
+the rear jets. Hull geometry, paint and rear jet data are unchanged.
+
+The fixed yellow palette applies at every engine level: halo `#f2d15a`, outer
+`#c9a978` to `#f2d15a`, core `#efe4cf` to `#ffffff`. Runtime selects these
+jets while the ship moves backward relative to its actual facing; normal
+forward motion retains the existing rear jets.
+
 ## Nose
 
 `ship-nose.json` (version 1) gives the point shots leave from. The manifest
