@@ -198,7 +198,7 @@ describe("space currents", () => {
     }
   });
 
-  it("drift small craft and pickups but not frigates, capitals or platforms", () => {
+  it("drift powered-down small craft and pickups but not frigates", () => {
     // A current without a river, so no river rock on the centre line meets the ship.
     const current = currents.find((entry) => entry.length > 3500 && !entry.debris)!;
     const { point } = middle(current);
@@ -213,6 +213,8 @@ describe("space currents", () => {
           { archetype, id: archetype, packId: null, phase: 0 },
           at,
         ),
+        // Remove self-propulsion so this fixture measures current transport only.
+        disabled: true,
         returning: true,
       },
       hp: enemyCatalog[archetype].hp,

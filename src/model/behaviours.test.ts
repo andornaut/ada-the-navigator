@@ -209,7 +209,10 @@ describe("retaliate", () => {
     const ships = [spawn("retaliator", { x: 200, y: 0 }, false)];
     const idle = run(ships, 180);
     expect(ships[0]!.engaged).toBe(false);
-    expect(ships[0]!.velocity).toEqual({ x: 0, y: 0 });
+    expect(Math.hypot(ships[0]!.velocity.x, ships[0]!.velocity.y)).toBeGreaterThan(0);
+    expect(Math.hypot(ships[0]!.velocity.x, ships[0]!.velocity.y)).toBeLessThanOrEqual(
+      enemyCatalog.retaliator.physics.maxSpeed * enemyCatalog.retaliator.navigation!.patrolShare,
+    );
     expect(idle.shots[0]).toBe(0);
     ships[0] = damageEnemy(enemyCatalog.retaliator, { amount: 1, hardpointId: null }, ships[0]!);
     const attack = run(ships, 180);
@@ -494,10 +497,17 @@ describe("galaxy difficulty", () => {
 });
 
 describe("engine thrust", () => {
-  /** Cruises a ship toward a distant home and reports its settled speed. */
+  /** Commands full thrust independently of patrol and investigation speed. */
   function cruise(state: EnemyState): number {
     const ships = [{ ...state, engaged: false, home: { x: 100000, y: 0 }, returning: true }];
-    run(ships, 60 * 20, { context: (peers) => ({ ...context(peers), visibility: "unknown" }) });
+    run(ships, 60 * 20, {
+      context: (peers) => ({
+        ...context(peers),
+        player: { x: 100000, y: 0 },
+        summoned: true,
+        visibility: "unknown",
+      }),
+    });
     return Math.hypot(ships[0]!.velocity.x, ships[0]!.velocity.y);
   }
   const capital = () => spawn("capital", { x: 0, y: 0 }, false);

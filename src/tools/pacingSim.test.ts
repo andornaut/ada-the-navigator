@@ -236,20 +236,26 @@ describe("pacing simulation runs", () => {
 
   it("takes and completes every job type only when jobs are on, paid from the rewards table", () => {
     const scenario = { behaviour: {}, description: "", economy: {}, name: "jobs", prices: {} };
-    const without = runScenario({ ...options, minutes: 40, scenario, seeds: 4 });
+    // Isolate job routes from optional mining, cache detours and shield failures.
+    const behaviour = {
+      ...DEFAULT_BEHAVIOUR,
+      asteroidsPerMinute: 0,
+      cacheChase: 0,
+      depletionChance: 0,
+    };
+    const without = runScenario({ ...options, behaviour, minutes: 40, scenario, seeds: 6 });
     expect(without.runs.every((run) => run.stardust.jobs === 0)).toBe(true);
     const withJobs = runScenario({
       ...options,
-      behaviour: { ...DEFAULT_BEHAVIOUR, jobs: true },
+      behaviour: { ...behaviour, jobs: true },
       minutes: 40,
       scenario,
-      // Deliveries are the rarest job; six runs take at least one.
       seeds: 6,
     });
     const completed = (type: "survey" | "delivery" | "rescue" | "hunt") =>
       withJobs.runs.reduce((sum, run) => sum + (run.jobs[type] ?? 0), 0);
     for (const type of ["survey", "delivery", "rescue", "hunt"] as const) {
-      expect(completed(type)).toBeGreaterThan(0);
+      expect(completed(type), type).toBeGreaterThan(0);
     }
     // Sunflower pays 30 per survey, 45 per hunt, 75 per rescue, and 45 or 75 per delivery.
     for (const run of withJobs.runs) {

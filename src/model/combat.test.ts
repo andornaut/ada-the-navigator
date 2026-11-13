@@ -17,6 +17,7 @@ import { byPosition, ROUTE_POSITION } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { EnemyWeapon, GalaxyNumber, Weapon } from "../data/types.ts";
 import { weaponAt } from "../data/weaponCatalog.ts";
+import { sceneryBodyContact } from "./asteroids.ts";
 import { fromScreen, outlineContact, outlinesContact, type Parts } from "./convex.ts";
 import { carriesStardust } from "./drops.ts";
 import { createEnemy } from "./enemyAi.ts";
@@ -334,9 +335,12 @@ describe("integrated combat", () => {
     const target = ship("fighter", { x: 300, y: 0 });
     target.enemy!.engaged = true;
     target.enemy!.velocity = { x: -100, y: 0 };
-    flight.objects.push(target, { hp: 99, id: "wall", kind: "rock", radius: 40, x: 240, y: 0 });
+    const wall: SpaceObject = { hp: 99, id: "wall", kind: "rock", radius: 40, x: 240, y: 0 };
+    flight.objects.push(target, wall);
     stepFlight(CONTENT, 1, idle, flight);
-    expect(target.x).toBeGreaterThanOrEqual(290);
+    const hull = enemyHull(target.enemy!);
+    expect(hull).not.toBeNull();
+    expect(sceneryBodyContact(wall, target, hull!)).toBeNull();
     expect(flight.shots).toHaveLength(0);
     flight.shots.push({
       damage: 1,
