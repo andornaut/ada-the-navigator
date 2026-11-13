@@ -16,6 +16,7 @@ import { gainSnapshot, itemGains } from "../model/itemGains.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 import { newerSave } from "../model/save.ts";
 import { fill, itemAbout, itemName, type ShopItem } from "../model/shop.ts";
+import type { FlightState } from "../model/types.ts";
 import {
   coverStartScreen,
   exitGame,
@@ -99,6 +100,7 @@ import {
 } from "./worldArt.ts";
 
 const interactionCards = new WeakMap<object, ReturnType<typeof createInteractionCard>>();
+const shieldOreFlights = new WeakMap<object, FlightState | null>();
 
 /** The scene state and methods this module's functions use. */
 export type UiContext = Scene &
@@ -947,6 +949,37 @@ export function noticeGains(scene: UiContext): void {
   scene.held = { flight, snapshot };
 }
 
+/** Baselines a new or loaded flight before the pill observes its cumulative paid ore. */
+export function renderStatus(scene: UiContext): void {
+  const state = scene.model.state;
+  const flight = state.mode === "space" ? state.flight : null;
+  if (!shieldOreFlights.has(scene) || shieldOreFlights.get(scene) !== flight) {
+    scene.controls.resetShieldOreSpent(flight?.shieldOreSpent ?? 0);
+    shieldOreFlights.set(scene, flight);
+  }
+  const aboard = scene.model.aboard;
+  scene.controls.setStatus({
+    aboard: aboard && { kind: aboard.kind, label: aboardLabel(CONTENT.labels, aboard) },
+    capacity: scene.model.shieldMax,
+    level: state.flight?.levels.shield ?? state.economy.levels.shield,
+    lightField: lightGalaxy(
+      scene.lightGalaxies,
+      state.mode === "space" ? state.flight?.galaxy : undefined,
+    ),
+    ore: scene.model.ship.ore,
+    oreLabel: CONTENT.labels.ore ?? "",
+    rechargeDelay: CONTENT.tuning.shieldRechargeDelay,
+    recharging: scene.model.shieldRecharging,
+    shield: state.flight?.shield ?? 0,
+    shieldOreSpent: flight?.shieldOreSpent ?? 0,
+    sinceDamage: state.flight?.sinceDamage ?? 0,
+    stardust: state.economy.stardust,
+    stardustLabel: fill(CONTENT.labels.stardustAmount ?? "", {
+      amount: stardustCount(state.economy.stardust),
+    }),
+  });
+}
+
 export function refreshScene(scene: UiContext): void {
   const state = scene.model.state;
   // The warp ship loads the paint in use, again on a paint change.
@@ -964,26 +997,7 @@ export function refreshScene(scene: UiContext): void {
   scene.controls.setContext(action && { action, label: scene.model.contextLabel ?? "" });
   scene.controls.setWeapons(scene.model.weapons());
   noticeGains(scene);
-  const aboard = scene.model.aboard;
-  scene.controls.setStatus({
-    aboard: aboard && { kind: aboard.kind, label: aboardLabel(CONTENT.labels, aboard) },
-    capacity: scene.model.shieldMax,
-    level: state.flight?.levels.shield ?? state.economy.levels.shield,
-    lightField: lightGalaxy(
-      scene.lightGalaxies,
-      state.mode === "space" ? state.flight?.galaxy : undefined,
-    ),
-    ore: scene.model.ship.ore,
-    oreLabel: CONTENT.labels.ore ?? "",
-    rechargeDelay: CONTENT.tuning.shieldRechargeDelay,
-    recharging: scene.model.shieldRecharging,
-    shield: state.flight?.shield ?? 0,
-    sinceDamage: state.flight?.sinceDamage ?? 0,
-    stardust: state.economy.stardust,
-    stardustLabel: fill(CONTENT.labels.stardustAmount ?? "", {
-      amount: stardustCount(state.economy.stardust),
-    }),
-  });
+  renderStatus(scene);
   scene.station.setOpen(state.mode === "space" && Boolean(state.docked));
   // Each arrival at the start screen shows the offer there, which checks for a new version.
   const screen = scene.model.screen;

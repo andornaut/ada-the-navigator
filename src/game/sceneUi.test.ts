@@ -6,8 +6,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
+import { STATUS_PILL_LAYOUT } from "../data/layout.ts";
 import { GameModel } from "../model/game.ts";
-import { readStory } from "../testing/launch.ts";
+import { readStory, relaunch } from "../testing/launch.ts";
+import { ShieldOreSpendCounter, type StatusView } from "../ui/statusPill.ts";
 
 // Execute the production navigation closures against the real model without loading Phaser's DOM.
 const source = ts.createSourceFile(
@@ -16,8 +18,8 @@ const source = ts.createSourceFile(
   ts.ScriptTarget.Latest,
   true,
 );
-function callback(name: "onJump" | "closeGalaxyMap" | "leaveFlight"): string {
-  let found: ts.Expression | undefined;
+function callback(name: string): string {
+  let found: ts.Expression | ts.FunctionDeclaration | undefined;
   const visit = (node: ts.Node): void => {
     if (
       (ts.isVariableDeclaration(node) || ts.isPropertyAssignment(node)) &&
@@ -27,13 +29,16 @@ function callback(name: "onJump" | "closeGalaxyMap" | "leaveFlight"): string {
     ) {
       found = node.initializer;
     }
+    if (ts.isFunctionDeclaration(node) && node.name?.text === name) {
+      found = node;
+    }
     ts.forEachChild(node, visit);
   };
   visit(source);
   if (!found) {
     throw new Error(`Missing production navigation callback ${name}`);
   }
-  return ts.transpileModule(`(${found.getText(source)})`, {
+  return ts.transpileModule(`(${found.getText(source).replace(/^export /u, "")})`, {
     compilerOptions: { target: ts.ScriptTarget.ES2023 },
   }).outputText;
 }
@@ -133,5 +138,82 @@ describe("galaxy map UI navigation", () => {
     expect(model.galaxyMapOpen).toBe(false);
     expect(ui.controls.focusGalaxies).not.toHaveBeenCalled();
     expect(ui.jumpThen).toHaveBeenCalledOnce();
+  });
+});
+
+describe("shield ore spend caller", () => {
+  const batch = STATUS_PILL_LAYOUT.ore.oreSpendBatch;
+  function caller(total: number) {
+    const model = flight();
+    model.state.flight!.shieldOreSpent = total;
+    model.state.flight!.cargo = 2 * batch;
+    const counter = new ShieldOreSpendCounter();
+    const ticks: number[] = [];
+    const order: string[] = [];
+    const controls = {
+      resetShieldOreSpent: vi.fn((spent?: number) => {
+        order.push("reset");
+        counter.reset(spent);
+      }),
+      setStatus: vi.fn((view: StatusView) => {
+        order.push("status");
+        const debit = counter.update(view.shieldOreSpent);
+        if (debit) {
+          ticks.push(debit);
+        }
+      }),
+    };
+    const scene = { controls, lightGalaxies: new Map(), model };
+    const context = createContext({
+      CONTENT,
+      aboardLabel: () => "",
+      fill: () => "",
+      lightGalaxy: () => false,
+      shieldOreFlights: new WeakMap(),
+      stardustCount: String,
+    });
+    const update = runInContext(callback("renderStatus"), context) as (scene: object) => void;
+    return { counter, order, scene, ticks, update: () => update(scene) };
+  }
+
+  it("baselines before status and emits only actual cumulative spend, never cargo loss", () => {
+    const ui = caller(batch - 1);
+    ui.update();
+    expect(ui.order).toEqual(["reset", "status"]);
+    expect(ui.ticks).toEqual([]);
+    ui.scene.model.state.flight!.shieldOreSpent = batch;
+    ui.update();
+    expect(ui.ticks).toEqual([batch]);
+    ui.scene.model.state.flight!.cargo = 0;
+    ui.update();
+    expect(ui.ticks).toEqual([batch]);
+  });
+
+  it("does not emit retroactive ticks when another flight or a saved flight is loaded", () => {
+    const ui = caller(2 * batch);
+    ui.update();
+    ui.scene.model = relaunch(CONTENT, ui.scene.model.save());
+    ui.update();
+    expect(ui.ticks).toEqual([]);
+    expect(ui.scene.controls.resetShieldOreSpent).toHaveBeenCalledTimes(2);
+    ui.scene.model.state.flight!.shieldOreSpent = 3 * batch - 1;
+    ui.update();
+    expect(ui.ticks).toEqual([]);
+    ui.scene.model.state.flight!.shieldOreSpent = 3 * batch;
+    ui.update();
+    expect(ui.ticks).toEqual([batch]);
+  });
+
+  it("resets on leaving the flight and before resuming its retained cumulative total", () => {
+    const ui = caller(2 * batch);
+    ui.update();
+    ui.scene.model.backToTitle();
+    ui.update();
+    expect(ui.scene.controls.resetShieldOreSpent).toHaveBeenLastCalledWith(0);
+    ui.scene.model.continueGame();
+    ui.update();
+    expect(ui.scene.controls.resetShieldOreSpent).toHaveBeenLastCalledWith(2 * batch);
+    expect(ui.ticks).toEqual([]);
+    expect(ui.order).toEqual(["reset", "status", "reset", "status", "reset", "status"]);
   });
 });

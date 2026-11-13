@@ -148,6 +148,7 @@ export interface Controls {
   setExitButton(shown: boolean): void;
   setPause(state: PauseState): void;
   // The status pill's shield and Stardust count.
+  resetShieldOreSpent(total?: number): void;
   setStatus(view: StatusView): void;
   // Queues item notices for gains; null clears them, as on leaving flight.
   setGains(gains: readonly ItemGain[] | null): void;
@@ -678,6 +679,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     reducedMotion: () => reducedMotion,
     registerBack: (layer) => backStack.register(layer),
     reset,
+    resetShieldOreSpent(total) {
+      status.resetShieldOreSpent(total);
+    },
     sample: () => state.sample(),
     setAchievements: (entries) => achievements.setEntries(entries),
     setAchievementsButton(shown) {
