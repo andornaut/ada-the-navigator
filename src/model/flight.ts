@@ -2280,7 +2280,7 @@ function debrisTouchesAda(flight: FlightState, object: SpaceObject, from: Vec, t
   return false;
 }
 
-/** Ballistic debris keeps constant velocity and bumps Ada; drifting asteroids follow their path. */
+/** Ballistic debris keeps constant velocity; ordinary asteroids hold their centres. */
 function moveDebris(
   content: GameContent,
   dt: number,
@@ -2297,11 +2297,10 @@ function moveDebris(
       }
       continue;
     }
-    if (object.orbit) {
-      const motion = orbitMotion(flight.time, object.orbit);
-      object.x = motion.position.x;
-      object.y = motion.position.y;
-      object.velocity = motion.velocity;
+    if (object.orbit && (object.kind === "rock" || object.kind === "resource")) {
+      // Legacy circular paths settle at their current centre without changing HP or drops.
+      delete object.orbit;
+      delete object.velocity;
       continue;
     }
     if (object.kind !== "debris" || !object.velocity) {

@@ -45,6 +45,7 @@ import {
 } from "./enemyArt.ts";
 import { readJobArt } from "./jobArt.ts";
 import { sceneFit } from "./playCamera.ts";
+import { RockFrames } from "./rockFrames.ts";
 import type { GameScene } from "./scene.ts";
 import { type Asset } from "./sceneShared.ts";
 import { paintFrames } from "./shipArt.ts";
@@ -107,7 +108,7 @@ export type AssetsContext = Pick<
 
 /**
  * Art's rock frames load after the scene starts, at display size times r: each rock's frame 0
- * and the backdrop sprites first, then each spin frame the first time it is drawn, so starting
+ * and the backdrop sprites first, then complete spin sets for visible variants, so starting
  * the scene never waits on 202 SVGs.
  */
 export function loadAsteroidArt(scene: AssetsContext): void {
@@ -452,18 +453,20 @@ export function startRockLoads(scene: AssetsContext): boolean {
   return true;
 }
 
-/** The loaded texture for a rock frame: that frame, else frame 0, else none yet. */
+const rockFrames = new WeakMap<AssetsContext, RockFrames>();
+
+/** Use the exact requested pose only after the visible variant's full spin set is loaded. */
 export function rockFrameTexture(
   scene: AssetsContext,
   art: AsteroidArt,
   frame: number,
 ): string | undefined {
-  const wanted = art.frames[frame]!.file;
-  if (rockTexture(scene, wanted)) {
-    return wanted;
+  let frames = rockFrames.get(scene);
+  if (!frames) {
+    frames = new RockFrames();
+    rockFrames.set(scene, frames);
   }
-  const still = art.frames[0]!.file;
-  return rockTexture(scene, still) ? still : undefined;
+  return frames.frame((file) => rockTexture(scene, file), art, frame);
 }
 
 /** Archetypes without a complete loaded frame set keep their vector placeholders. */

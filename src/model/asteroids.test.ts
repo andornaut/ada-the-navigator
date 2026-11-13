@@ -14,7 +14,6 @@ import { playOpening, relaunch, seedLaunches } from "../testing/launch.ts";
 import {
   ASTEROID_SHAPES,
   bounce,
-  orbitMotion,
   placementRadius,
   reflectDirection,
   rockFrame,
@@ -501,7 +500,7 @@ describe("asteroid chunk fields", () => {
     }
     expect([...sizes].sort()).toEqual([...ASTEROID_SIZES].sort());
     expect(variants.size).toBeGreaterThan(ASTEROID_SIZES.length * 2);
-    expect(drifting).toBeGreaterThan(20);
+    expect(drifting).toBe(0);
     expect(features).toBeGreaterThan(20);
   });
   it("keeps every drift path clear of every other rock and drift path in its chunk", () => {
@@ -607,11 +606,11 @@ describe("asteroids in flight", () => {
     return seen;
   }
 
-  it("generates large irregular and drifting asteroids as the ship explores", () => {
+  it("generates large irregular asteroids with fixed centres as the ship explores", () => {
     const { model } = launched();
     const all = [...explore(model).values()];
     expect(all.some((object) => ASTEROID_SHAPES.get(object.asteroid!)!.size === "huge")).toBe(true);
-    expect(all.some((object) => object.orbit && object.velocity && !object.persistent)).toBe(true);
+    expect(all.every((object) => !object.orbit && !object.velocity)).toBe(true);
     const sized = all.find((object) => ASTEROID_SHAPES.get(object.asteroid!)!.size === "large");
     expect(sized?.hp).toBe(ASTEROID_FIELDS[1]!.hp.large);
   });
@@ -755,41 +754,33 @@ describe("asteroids in flight", () => {
     expect(-flight.velocity.x).toBeLessThanOrEqual(150 * tuning.sceneryRestitution + 1e-6);
   });
 
-  it("resumes a drifting asteroid on its seeded path after paging and a save round-trip", () => {
+  it("keeps an asteroid centre stable across time, paging and a save round-trip", () => {
     const { flight, model } = launched();
     explore(model);
-    const drifter = flight.objects.find((object) => object.orbit);
-    expect(drifter, "the fixed launch seed explores into a drifting asteroid").toBeDefined();
-    if (!drifter) {
-      return;
-    }
-    const orbit = { ...drifter.orbit! };
-    const start = { x: drifter.x, y: drifter.y };
+    const still = flight.objects.find(
+      (object) =>
+        object.kind === "rock" &&
+        object.asteroid &&
+        Math.hypot(object.x - flight.player.x, object.y - flight.player.y) > 320,
+    )!;
+    expect(still).toBeDefined();
+    const start = { x: still.x, y: still.y };
     model.step(1, idle);
-    const moved = orbitMotion(flight.time, orbit);
-    expect(drifter.x).toBeCloseTo(moved.position.x);
-    expect(drifter.y).toBeCloseTo(moved.position.y);
-    expect(Math.hypot(drifter.x - start.x, drifter.y - start.y)).toBeGreaterThan(0);
-    expect(drifter.velocity!.x).toBeCloseTo(moved.velocity.x);
-    // Paging out keeps no ledger entry: the path is regenerated from the chunk seed.
+    expect({ x: still.x, y: still.y }).toEqual(start);
+    expect(still.orbit).toBeUndefined();
+    expect(still.velocity).toBeUndefined();
     flight.player.x += 20 * CONTENT.tuning.chunkSize;
     model.step(1 / 60, idle);
-    expect(flight.objects.some((object) => object.id === drifter.id)).toBe(false);
-    expect(Object.hasOwn(flight.world.notables, drifter.id)).toBe(false);
-    for (let step = 0; step < 300; step++) {
-      model.step(1 / 60, idle);
-    }
+    expect(flight.objects.some((object) => object.id === still.id)).toBe(false);
+    expect(Object.hasOwn(flight.world.notables, still.id)).toBe(false);
     const resumed = relaunch(CONTENT, model.save());
     const again = resumed.state.flight!;
-    expect(again.time).toBe(flight.time);
-    again.player.x = orbit.x + 700;
-    again.player.y = orbit.y;
+    again.player = { x: start.x + 700, y: start.y };
     resumed.step(1 / 60, idle);
-    const back = again.objects.find((object) => object.id === drifter.id)!;
-    expect(back.orbit).toEqual(orbit);
-    const expected = orbitMotion(again.time, orbit);
-    expect(back.x).toBeCloseTo(expected.position.x);
-    expect(back.y).toBeCloseTo(expected.position.y);
+    const back = again.objects.find((object) => object.id === still.id)!;
+    expect(back).toBeDefined();
+    expect(back.orbit).toBeUndefined();
+    expect({ x: back.x, y: back.y }).toEqual(start);
     expect(restoreSave(resumed.save())?.flight?.objects).toContainEqual(back);
   });
 
@@ -926,21 +917,22 @@ describe("asteroids in flight", () => {
     expect(flight.objects).toContain(clear);
   });
 
-  it("bounces Ada off a drifting asteroid that moves into her, one damage a bump", () => {
+  it("keeps collision damage when a legacy orbit settles at its current centre", () => {
     const { flight, model } = launched();
     const shield = flight.shield;
     const rate = -0.3;
     const radius = 60;
     const center = { x: flight.player.x + radius, y: flight.player.y };
-    // The rock starts a quarter loop above its center and sweeps through Ada's resting spot.
+    // Ada coasts into the legacy rock after its circular path is removed.
     const moving = rock("drifter", {
       orbit: { ...center, phase: -Math.PI / 2 - rate * flight.time, radius, rate },
       radius: 20,
       x: center.x,
-      y: center.y - radius,
+      y: center.y,
     });
+    const start = { x: moving.x, y: moving.y };
     flight.objects.push(moving);
-    flight.velocity = { x: 0, y: 0 };
+    flight.velocity = { x: 175, y: 0 };
     let pushed = 0;
     for (let step = 0; step < 480; step++) {
       // Only the rock and safe areas remain, so any shield loss would come from the rock.
@@ -948,19 +940,16 @@ describe("asteroids in flight", () => {
         (object) => object === moving || ["destination", "station"].includes(object.kind),
       );
       model.step(1 / 60, idle);
-      const contact = sceneryContact(moving, flight.player, tuning.shipRadius + 1);
-      if (contact) {
-        pushed = Math.max(
-          pushed,
-          flight.velocity.x * contact.normal.x + flight.velocity.y * contact.normal.y,
-        );
-      }
+      pushed = Math.max(pushed, -flight.velocity.x);
     }
     expect(pushed).toBeGreaterThan(0);
     // Only the rock's bumps cost shield, at most one per BUMP_DAMAGE.seconds over the 8 s.
     expect(flight.shield).toBeLessThan(shield);
     expect(shield - flight.shield).toBeLessThanOrEqual(8 / BUMP_DAMAGE.seconds + 1);
     expect(flight.objects).toContain(moving);
+    expect({ x: moving.x, y: moving.y }).toEqual(start);
+    expect(moving.orbit).toBeUndefined();
+    expect(moving.velocity).toBeUndefined();
   });
 
   it("bounces enemies off scenery by the same rule", () => {
@@ -989,4 +978,25 @@ describe("asteroids in flight", () => {
     expect(sceneryContact(wall, enemy, enemy.radius)).toBeNull();
     expect(flight.objects).toContain(wall);
   });
+});
+
+it("keeps ballistic debris on a constant-velocity straight line", () => {
+  const flight = createFlight(CONTENT, 1, 173, progress);
+  const debris: SpaceObject = {
+    hp: 99,
+    id: "constant-debris",
+    kind: "debris",
+    radius: 8,
+    velocity: { x: -10, y: 5 },
+    x: 600,
+    y: 600,
+  };
+  flight.objects = [debris];
+  for (let step = 1; step <= 5; step++) {
+    stepFlight(CONTENT, 0.1, idleInput, flight);
+    expect(debris.velocity).toEqual({ x: -10, y: 5 });
+    expect(debris.x).toBeCloseTo(600 - step);
+    expect(debris.y).toBeCloseTo(600 + step / 2);
+    expect(debris.hp).toBe(99);
+  }
 });
