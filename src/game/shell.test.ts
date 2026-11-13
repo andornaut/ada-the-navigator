@@ -2,6 +2,7 @@ import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import { GameModel } from "../model/game.ts";
 import { StoryShell } from "./shell.ts";
 
@@ -60,17 +61,16 @@ class Element extends EventTarget {
 
 let host: Element;
 let shell: StoryShell;
-function setup() {
+function setup(model = new GameModel(CONTENT)) {
   const actions = {
     choose: vi.fn(),
-    continueGame: vi.fn(),
+    continueGame: vi.fn(() => model.continueGame()),
     dismissNotice: vi.fn(),
     reducedMotion: () => false,
     restart: vi.fn(),
-    start: vi.fn(),
+    start: vi.fn(() => model.start()),
   };
   shell = new StoryShell(actions);
-  const model = new GameModel(CONTENT);
   const buttons = () => host.querySelectorAll("button");
   const ids = () => buttons().map((node) => node.dataset.action);
   return { actions, buttons, ids, model, shell };
@@ -138,4 +138,96 @@ describe("title Continue permission", () => {
       expect(actions.start).not.toHaveBeenCalled();
     },
   );
+});
+
+describe("held story title consumer", () => {
+  function opening() {
+    const model = new GameModel(CONTENT);
+    model.start();
+    CONTENT.premise.gardenArrival.forEach(() => model.storyNext());
+    expect(model.storyView?.page.id).toBe("opening");
+    expect(model.storyView!.choices.length).toBeGreaterThan(1);
+    return model;
+  }
+
+  function continueFromTitle(model: GameModel) {
+    const ui = setup(model);
+    ui.shell.render(model.state, model.screen, model.canContinue);
+    expect(ui.ids()).toEqual(["restart", "continue"]);
+    const button = ui.buttons()[1]!;
+    expect(button.textContent).toBe(CONTENT.labels.continue);
+    button.click();
+    expect(ui.actions.continueGame).toHaveBeenCalledOnce();
+    expect(ui.actions.start).not.toHaveBeenCalled();
+    return ui;
+  }
+
+  it.each([false, true])(
+    "resumes the real initial unanswered choice through Continue (reload=%s)",
+    (reload) => {
+      const model = opening();
+      const state = structuredClone(model.state);
+      const page = structuredClone(model.storyView);
+      model.backToTitle();
+      expect(model.screen).toBe("start");
+      expect(model.state.started).toBe(false);
+      const active = reload ? new GameModel(CONTENT, model.save()) : model;
+      expect(active.canContinue).toBe(true);
+      expect(active.state.started).toBe(false);
+      continueFromTitle(active);
+      expect(active.state).toEqual(state);
+      expect(active.state.started).toBe(false);
+      expect(active.state.flight).toBeNull();
+      expect(active.storyView?.page).toEqual(page?.page);
+      expect(active.storyView?.choices).toEqual(page?.choices);
+      active.storyNext();
+      expect(active.storyView?.page).toEqual(page?.page);
+    },
+  );
+
+  it("retains asked questions and Previous through reload and a visible Continue click", () => {
+    const model = opening();
+    model.storyChoose(0);
+    for (let turn = 0; turn < 60 && !model.storyView?.page.questions?.length; turn++) {
+      model.storyNext();
+    }
+    expect(model.storyView?.page.questions?.length).toBeGreaterThan(0);
+    const questions = model.storyView!.choices.length;
+    model.storyChoose(0);
+    model.storyNext();
+    const before = structuredClone(model.storyView);
+    const state = structuredClone(model.state);
+    expect(before!.choices.length).toBe(questions - 1);
+    model.backToTitle();
+    const active = new GameModel(CONTENT, model.save());
+    continueFromTitle(active);
+    expect(active.state).toEqual(state);
+    expect(active.storyView?.page).toEqual(before?.page);
+    expect(active.storyView?.choices).toEqual(before?.choices);
+    expect(active.storyView?.canGoBack).toBe(true);
+    active.storyPrevious();
+    expect(active.storyView?.page.id).toContain(":answer:");
+    expect(active.state.started).toBe(false);
+    expect(active.state.prologueSeen).toBe(false);
+  });
+
+  it("continues the remaining sleep clock after reload instead of replaying the interlude", () => {
+    const model = new GameModel(CONTENT);
+    model.startGalaxy(1);
+    const flight = model.state.flight!;
+    flight.shield = CONTENT.tuning.hazardDamage;
+    flight.objects = [{ ...flight.player, hp: 1, id: "depletion", kind: "hazard", radius: 1000 }];
+    model.step(0.1, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false });
+    model.storyNext();
+    expect(model.storyView?.page.sleep).toBe(true);
+    model.storyTick(OVERNIGHT_SLEEP.seconds, OVERNIGHT_SLEEP.seconds / 2);
+    const saved = model.saveDocument();
+    model.backToTitle();
+    const active = new GameModel(CONTENT, model.save());
+    continueFromTitle(active);
+    expect(active.saveDocument()).toEqual(saved);
+    expect(active.storyView?.page.sleep).toBe(true);
+    active.storyTick(OVERNIGHT_SLEEP.seconds, OVERNIGHT_SLEEP.seconds / 2);
+    expect(active.storyView?.page.id).toBe("morning");
+  });
 });
