@@ -505,8 +505,9 @@ not require a new save field.
 
 Generic station labels use "{galaxyName} {stationWords} Station". Encode the full
 stable station identity, including placement layer and signed cell coordinates,
-bijectively as a nonnegative integer. Tech may use zigzag plus Cantor pairing or
-canonical byte encoding; the mapping must be injective over the full identity.
+bijectively as a nonnegative integer using a compact structured layer tag,
+zigzag-encoded coordinates and Cantor pairing. The mapping must be injective
+over the full identity; do not encode the raw UTF-8 full station id.
 Render the integer's minimal base-16 digits using this ordered word alphabet,
 separated by spaces:
 
