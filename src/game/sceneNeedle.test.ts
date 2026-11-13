@@ -4,6 +4,7 @@ import MANIFEST from "../../public/art/needle/manifest.json" with { type: "json"
 import { NEEDLE } from "../data/needle.ts";
 import { createNeedleCourse, type NeedleCourse, needleDebris } from "../model/needle.ts";
 import type { SpaceObject } from "../model/types.ts";
+import { driftChipsFromBounds } from "./asteroidArt.ts";
 import {
   createNeedleRenderer,
   type NeedleImage,
@@ -71,6 +72,8 @@ function fixture() {
   const first = course.gates[0]!.point;
   const images: Image[] = [];
   const lines: number[][] = [];
+  const fills: number[][] = [];
+  const rectangles: number[][] = [];
   const styles: number[][] = [];
   const textures = new Set(MANIFEST.assets.map((a) => a.id));
   const context = {
@@ -81,7 +84,10 @@ function fixture() {
         return image;
       },
     },
+    chipColor: 0x766f66,
     ink: {
+      fillRect: (...values: number[]) => rectangles.push(values),
+      fillStyle: (...values: number[]) => fills.push(values),
       lineBetween: (...values: number[]) => lines.push(values),
       lineStyle: (...values: number[]) => styles.push(values),
     },
@@ -96,15 +102,18 @@ function fixture() {
     player: first,
     playerDepth: 2.002,
     reducedMotion: false,
+    seed: 123,
     slow: false,
     timeMs: 0,
   };
   return {
     context,
     course,
+    fills,
     frame,
     images,
     lines,
+    rectangles,
     renderer: createNeedleRenderer(context),
     styles,
     textures,
@@ -196,6 +205,76 @@ describe("Needle renderer lifecycle and published gate art", () => {
 });
 
 describe("Needle ordinary debris frames", () => {
+  it("places four canonical chips using published visual bounds and the current palette", () => {
+    const f = fixture();
+    const descriptor = { ...needleDebris(f.course, 123)[0]!, piece: "needle-debris-plate" };
+    const object: SpaceObject = {
+      ...f.course.gates[0]!.point,
+      hp: 1,
+      id: "visual-bounds",
+      kind: "debris",
+      radius: 10,
+      velocity: { x: 24, y: 0 },
+    };
+    const frame = { ...f.frame, debris: [{ descriptor, object }], reducedMotion: true };
+    const original = structuredClone(object);
+    f.renderer.draw(frame);
+    // Plate frame zero: published [11.687,19.8,61.704,47.4], pivot .5, scale 35/80.
+    const chips = driftChipsFromBounds(
+      { behind: { x: -24, y: -12 }, id: object.id, seed: 123 },
+      {
+        bottom: 3.2375,
+        left: -12.3869375,
+        right: 9.4955,
+        top: -8.8375,
+      },
+    );
+    expect(f.fills).toEqual([
+      [0x766f66, 0.9],
+      [0x766f66, 0.7],
+      [0x766f66, 0.5],
+      [0x766f66, 0.35],
+    ]);
+    expect(f.rectangles).toHaveLength(4);
+    f.rectangles.forEach((rect, index) => {
+      const chip = chips[index]!;
+      expect(rect[0]).toBeCloseTo(360 + chip.x - chip.size / 2, 9);
+      expect(rect[1]).toBeCloseTo(180 + chip.y - chip.size / 2, 9);
+      expect(rect.slice(2)).toEqual([chip.size, chip.size]);
+    });
+    f.renderer.draw({ ...frame, timeMs: 100000 });
+    expect(f.rectangles.slice(4)).toEqual(f.rectangles.slice(0, 4));
+    f.renderer.draw({
+      ...frame,
+      debris: [{ descriptor: { ...descriptor, tumblePhase: 135 }, object }],
+      reducedMotion: false,
+    });
+    expect(f.rectangles.slice(-4)).not.toEqual(f.rectangles.slice(0, 4));
+    expect(object).toEqual(original);
+  });
+
+  it("uses actual drift and emits no chips for still, culled or missing-art debris", () => {
+    const f = fixture();
+    const descriptor = needleDebris(f.course, 123)[0]!;
+    const object: SpaceObject = {
+      ...f.course.gates[0]!.point,
+      hp: 1,
+      id: descriptor.id,
+      kind: "debris",
+      radius: 10,
+      velocity: { x: 0, y: 0 },
+    };
+    const frame = { ...f.frame, debris: [{ descriptor, object }], reducedMotion: true };
+    f.renderer.draw(frame);
+    expect(f.rectangles).toEqual([]);
+    const moving = { ...object, velocity: { x: 24, y: 0 }, x: object.x + 5000 };
+    f.renderer.draw({ ...frame, debris: [{ descriptor, object: moving }] });
+    expect(f.rectangles).toEqual([]);
+    f.textures.delete(`${descriptor.piece}-0`);
+    f.renderer.draw({ ...frame, debris: [{ descriptor, object: { ...moving, x: object.x } }] });
+    expect(f.rectangles).toEqual([]);
+  });
+
   it("uses the actual moved object position, descriptor piece and tumble phase without integrating movement", () => {
     const f = fixture();
     const descriptor = {

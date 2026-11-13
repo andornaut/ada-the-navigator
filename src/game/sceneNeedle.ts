@@ -1,11 +1,12 @@
 import { NEEDLE } from "../data/needle.ts";
+import { toScreen } from "../model/convex.ts";
 import {
   type NeedleCourse,
   type NeedleDebrisDescriptor,
   needleGateOrientation,
 } from "../model/needle.ts";
 import type { SpaceObject, Vec } from "../model/types.ts";
-import { playDepth } from "./asteroidArt.ts";
+import { driftChipsFromBounds, playDepth } from "./asteroidArt.ts";
 
 export interface NeedleStitch {
   readonly from: Vec;
@@ -69,7 +70,11 @@ export interface NeedleImage {
 
 export interface NeedleRenderContext {
   readonly add: { image(x: number, y: number, texture: string): NeedleImage };
+  /** The scene's current canonical stone chip colour. */
+  readonly chipColor: number;
   readonly ink: {
+    fillRect(x: number, y: number, width: number, height: number): unknown;
+    fillStyle(color: number, alpha: number): unknown;
     lineBetween(x1: number, y1: number, x2: number, y2: number): unknown;
     lineStyle(width: number, color: number, alpha: number): unknown;
   };
@@ -89,6 +94,7 @@ export interface NeedleRenderFrame {
   readonly player: Vec;
   readonly playerDepth: number;
   readonly reducedMotion: boolean;
+  readonly seed: number;
   readonly slow: boolean;
   /** Paused flight time, not wall time, in milliseconds. */
   readonly timeMs: number;
@@ -252,6 +258,29 @@ export function createNeedleRenderer(context: NeedleRenderContext) {
         handled.add(object.id);
         const at = context.project(object);
         if (visible(at, piece.display / 2)) {
+          if (NEEDLE.channels.debris.cue === "asteroid" && object.velocity) {
+            const [left, top, right, bottom] = piece.frames[index]!.bounds;
+            const scale = piece.display / piece.frame;
+            const bounds = {
+              bottom: (bottom! - piece.pivot[1]! * piece.frame) * scale,
+              left: (left! - piece.pivot[0]! * piece.frame) * scale,
+              right: (right! - piece.pivot[0]! * piece.frame) * scale,
+              top: (top! - piece.pivot[1]! * piece.frame) * scale,
+            };
+            const behind = toScreen({ x: -object.velocity.x, y: -object.velocity.y });
+            for (const chip of driftChipsFromBounds(
+              { behind, id: object.id, seed: frame.seed },
+              bounds,
+            )) {
+              context.ink.fillStyle(context.chipColor, chip.alpha);
+              context.ink.fillRect(
+                at.x + chip.x - chip.size / 2,
+                at.y + chip.y - chip.size / 2,
+                chip.size,
+                chip.size,
+              );
+            }
+          }
           place(
             `debris:${object.id}`,
             texture,
