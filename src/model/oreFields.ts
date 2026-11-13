@@ -3,6 +3,18 @@ import { oreFieldLayout } from "../data/oreFieldLayouts.ts";
 import type { ResourceClass } from "../data/resourceRocks.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { Vec } from "./types.ts";
+import {
+  worldCell,
+  type WorldCellContext,
+  worldCellOrigin,
+  worldCellsNear,
+  worldGrid,
+} from "./worldCells.ts";
+import { wrappedDistance } from "./worldGeometry.ts";
+const distance = (context: WorldCellContext, a: Vec, b: Vec): number =>
+  context.worldSide === undefined
+    ? Math.hypot(a.x - b.x, a.y - b.y)
+    : wrappedDistance(context.worldSide, a, b);
 
 /** One seeded ore field: its centre, rock positions and whether a platform guards it. */
 export interface OreField extends Vec {
@@ -34,9 +46,15 @@ const unit = (value: number) => value / 4294967296;
  * field within `clearance` of the flight start is left out; stations, the hub and later
  * arrivals are checked where the field is placed.
  */
-export function oreFieldInCell(galaxy: GalaxyNumber, cell: Vec): OreField | null {
-  const { cellSize, chance, clearance, count, diameter, guardChance, guardGap, jitter } =
-    ORE_FIELDS;
+export function worldOreFieldInCell(
+  context: WorldCellContext,
+  galaxy: GalaxyNumber,
+  rawCell: Vec,
+): OreField | null {
+  const grid = worldGrid(context, ORE_FIELDS.cellSize);
+  const cell = worldCell(grid, rawCell);
+  const origin = worldCellOrigin(grid, cell);
+  const { chance, clearance, count, diameter, guardChance, guardGap, jitter } = ORE_FIELDS;
   if (!ORE_FIELDS.galaxies.includes(galaxy)) {
     return null;
   }
@@ -45,10 +63,10 @@ export function oreFieldInCell(galaxy: GalaxyNumber, cell: Vec): OreField | null
   if (roll(0) >= chance) {
     return null;
   }
-  const margin = (cellSize - jitter) / 2;
-  const x = cell.x * cellSize + margin + roll(0x9e37) * jitter;
-  const y = cell.y * cellSize + margin + roll(0x79b9) * jitter;
-  if (Math.hypot(x, y) < clearance + diameter / 2) {
+  const margin = (grid.pitch - jitter) / 2;
+  const x = origin.x + margin + roll(0x9e37) * jitter;
+  const y = origin.y + margin + roll(0x79b9) * jitter;
+  if (distance(context, { x: 0, y: 0 }, { x, y }) < clearance + diameter / 2) {
     return null;
   }
   const total = count[0] + Math.floor(roll(0x51ed) * (count[1] - count[0] + 1));
@@ -86,28 +104,40 @@ export const ORE_FIELD_CLEAR_RADIUS = ORE_FIELDS.diameter / 2 + ORE_FIELDS.aster
  * Whether an ordinary asteroid of `footprint` (its radius, plus its drift loop's) at a point
  * stays out of every seeded ore field's clear radius.
  */
-export function clearOfOreFields(galaxy: GalaxyNumber, footprint: number, point: Vec): boolean {
-  return oreFieldsNear(galaxy, ORE_FIELD_CLEAR_RADIUS + footprint, point).length === 0;
+export function worldClearOfOreFields(
+  context: WorldCellContext,
+  galaxy: GalaxyNumber,
+  footprint: number,
+  point: Vec,
+): boolean {
+  return (
+    worldOreFieldsNear(context, galaxy, ORE_FIELD_CLEAR_RADIUS + footprint, point).length === 0
+  );
 }
 
-export function oreFieldsNear(galaxy: GalaxyNumber, radius: number, point: Vec): OreField[] {
-  const size = ORE_FIELDS.cellSize;
+export function worldOreFieldsNear(
+  context: WorldCellContext,
+  galaxy: GalaxyNumber,
+  radius: number,
+  point: Vec,
+): OreField[] {
+  const grid = worldGrid(context, ORE_FIELDS.cellSize);
   const fields: OreField[] = [];
-  for (
-    let x = Math.floor((point.x - radius) / size);
-    x <= Math.floor((point.x + radius) / size);
-    x++
-  ) {
-    for (
-      let y = Math.floor((point.y - radius) / size);
-      y <= Math.floor((point.y + radius) / size);
-      y++
-    ) {
-      const field = oreFieldInCell(galaxy, { x, y });
-      if (field && Math.hypot(field.x - point.x, field.y - point.y) <= radius) {
-        fields.push(field);
-      }
+  for (const cell of worldCellsNear(grid, radius, point)) {
+    const field = worldOreFieldInCell(context, galaxy, cell);
+    if (field && distance(context, field, point) <= radius) {
+      fields.push(field);
     }
   }
   return fields;
+}
+
+export function oreFieldInCell(galaxy: GalaxyNumber, cell: Vec): OreField | null {
+  return worldOreFieldInCell({}, galaxy, cell);
+}
+export function clearOfOreFields(galaxy: GalaxyNumber, footprint: number, point: Vec): boolean {
+  return worldClearOfOreFields({}, galaxy, footprint, point);
+}
+export function oreFieldsNear(galaxy: GalaxyNumber, radius: number, point: Vec): OreField[] {
+  return worldOreFieldsNear({}, galaxy, radius, point);
 }

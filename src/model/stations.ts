@@ -1,6 +1,20 @@
 import type { EconomyCatalog } from "../data/economy.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { Vec } from "./types.ts";
+import {
+  worldCell,
+  type WorldCellContext,
+  worldCellKey,
+  worldCellOrigin,
+  worldCellsNear,
+  worldGrid,
+} from "./worldCells.ts";
+import { wrappedDistance } from "./worldGeometry.ts";
+
+const distance = (context: WorldCellContext, a: Vec, b: Vec): number =>
+  context.worldSide === undefined
+    ? Math.hypot(a.x - b.x, a.y - b.y)
+    : wrappedDistance(context.worldSide, a, b);
 
 export interface StationSite extends Vec {
   id: string;
@@ -33,20 +47,24 @@ export function stationId(cell: Vec): string {
  * band of side `jitter`, so stations in different cells are at least
  * `cellSize - jitter` apart.
  */
-export function stationInCell(
+export function worldStationInCell(
+  context: WorldCellContext,
   catalog: EconomyCatalog,
   galaxy: GalaxyNumber,
-  cell: Vec,
+  rawCell: Vec,
 ): StationSite | null {
   const { cellSize, chance, jitter, originClearance } = catalog.station;
+  const grid = worldGrid(context, cellSize);
+  const cell = worldCell(grid, rawCell);
+  const origin = worldCellOrigin(grid, cell);
   const seed = GALAXY_SEEDS[galaxy];
   if (seed === undefined || unit(mix(seed, cell.x, cell.y)) >= chance) {
     return null;
   }
-  const margin = (cellSize - jitter) / 2;
-  const x = cell.x * cellSize + margin + unit(mix(seed ^ 0x9e37, cell.x, cell.y)) * jitter;
-  const y = cell.y * cellSize + margin + unit(mix(seed ^ 0x79b9, cell.x, cell.y)) * jitter;
-  if (Math.hypot(x, y) < originClearance) {
+  const margin = (grid.pitch - jitter) / 2;
+  const x = origin.x + margin + unit(mix(seed ^ 0x9e37, cell.x, cell.y)) * jitter;
+  const y = origin.y + margin + unit(mix(seed ^ 0x79b9, cell.x, cell.y)) * jitter;
+  if (distance(context, { x: 0, y: 0 }, { x, y }) < originClearance) {
     return null;
   }
   return { id: stationId(cell), x, y };
@@ -56,11 +74,19 @@ export function stationInCell(
 export const HUB_STATION = "hub";
 
 /** Whether an id names one of a galaxy's stations: a seeded site, or Cartwheel's hub. */
-export function namesStation(catalog: EconomyCatalog, galaxy: GalaxyNumber, id: string): boolean {
-  return (galaxy === 2 && id === HUB_STATION) || stationById(catalog, galaxy, id) !== null;
+export function worldNamesStation(
+  context: WorldCellContext,
+  catalog: EconomyCatalog,
+  galaxy: GalaxyNumber,
+  id: string,
+): boolean {
+  return (
+    (galaxy === 2 && id === HUB_STATION) || worldStationById(context, catalog, galaxy, id) !== null
+  );
 }
 
-export function stationById(
+export function worldStationById(
+  context: WorldCellContext,
   catalog: EconomyCatalog,
   galaxy: GalaxyNumber,
   id: string,
@@ -73,32 +99,29 @@ export function stationById(
   if (!Number.isSafeInteger(cell.x) || !Number.isSafeInteger(cell.y)) {
     return null;
   }
-  return stationInCell(catalog, galaxy, cell);
+  if (
+    context.worldSide !== undefined &&
+    worldCellKey(worldGrid(context, catalog.station.cellSize), cell) !== `${match[1]},${match[2]}`
+  ) {
+    return null;
+  }
+  return worldStationInCell(context, catalog, galaxy, cell);
 }
 
 /** Stations whose centres are within `radius` of a point. */
-export function stationsNear(
+export function worldStationsNear(
+  context: WorldCellContext,
   catalog: EconomyCatalog,
   galaxy: GalaxyNumber,
   radius: number,
   point: Vec,
 ): StationSite[] {
-  const size = catalog.station.cellSize;
+  const grid = worldGrid(context, catalog.station.cellSize);
   const sites: StationSite[] = [];
-  for (
-    let x = Math.floor((point.x - radius) / size);
-    x <= Math.floor((point.x + radius) / size);
-    x++
-  ) {
-    for (
-      let y = Math.floor((point.y - radius) / size);
-      y <= Math.floor((point.y + radius) / size);
-      y++
-    ) {
-      const site = stationInCell(catalog, galaxy, { x, y });
-      if (site && Math.hypot(site.x - point.x, site.y - point.y) <= radius) {
-        sites.push(site);
-      }
+  for (const cell of worldCellsNear(grid, radius, point)) {
+    const site = worldStationInCell(context, catalog, galaxy, cell);
+    if (site && distance(context, site, point) <= radius) {
+      sites.push(site);
     }
   }
   return sites;
@@ -108,22 +131,62 @@ export function stationsNear(
  * The nearest undiscovered station within the catalog's indicator range of a point, which
  * the direction indicator marks; null when there is none.
  */
-export function stationIndicatorTarget(
+export function worldStationIndicatorTarget(
+  context: WorldCellContext,
   catalog: EconomyCatalog,
   galaxy: GalaxyNumber,
   discovered: readonly string[],
   point: Vec,
 ): StationSite | null {
   let nearest: StationSite | null = null;
-  for (const site of stationsNear(catalog, galaxy, catalog.station.indicatorRange, point)) {
+  for (const site of worldStationsNear(
+    context,
+    catalog,
+    galaxy,
+    catalog.station.indicatorRange,
+    point,
+  )) {
     if (
       !discovered.includes(site.id) &&
-      (!nearest ||
-        Math.hypot(site.x - point.x, site.y - point.y) <
-          Math.hypot(nearest.x - point.x, nearest.y - point.y))
+      (!nearest || distance(context, site, point) < distance(context, nearest, point))
     ) {
       nearest = site;
     }
   }
   return nearest;
+}
+
+// Legacy entry points preserve the existing unbounded topology until callers explicitly opt in.
+export function stationInCell(
+  catalog: EconomyCatalog,
+  galaxy: GalaxyNumber,
+  cell: Vec,
+): StationSite | null {
+  return worldStationInCell({}, catalog, galaxy, cell);
+}
+export function namesStation(catalog: EconomyCatalog, galaxy: GalaxyNumber, id: string): boolean {
+  return worldNamesStation({}, catalog, galaxy, id);
+}
+export function stationById(
+  catalog: EconomyCatalog,
+  galaxy: GalaxyNumber,
+  id: string,
+): StationSite | null {
+  return worldStationById({}, catalog, galaxy, id);
+}
+export function stationsNear(
+  catalog: EconomyCatalog,
+  galaxy: GalaxyNumber,
+  radius: number,
+  point: Vec,
+): StationSite[] {
+  return worldStationsNear({}, catalog, galaxy, radius, point);
+}
+export function stationIndicatorTarget(
+  catalog: EconomyCatalog,
+  galaxy: GalaxyNumber,
+  discovered: readonly string[],
+  point: Vec,
+): StationSite | null {
+  return worldStationIndicatorTarget({}, catalog, galaxy, discovered, point);
 }
