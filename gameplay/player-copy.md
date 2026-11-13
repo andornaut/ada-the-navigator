@@ -5,7 +5,7 @@ pages keep their chapter panel title. A story page's text is at most 220
 characters and a page offers at most three choices. On a page with three choices
 every label fits one line, at most 23 characters; labels up to 36 characters,
 which wrap to two lines, appear only on pages with two choices or fewer.
-Choices converge. The choice column scrolls if needed. Previous remains available when there is an earlier page. Every page with Next
+Choices converge. The choice column scrolls if needed. Previous is hidden when there is no earlier page. Every page with Next
 also offers Skip. Skip follows the whole continuation across scene boundaries
 and stops for an unresolved choice.
 
@@ -24,30 +24,33 @@ their presence in a chapter does not turn them into Use interactions.
 
 Essential exchanges below contain roughly four to eight lines and two optional
 Ask more topics per conversation. Runtime keys use galaxy IDs, not chapter
-order: Sunflower 1, Cartwheel 2 and Whirlpool 3. Needle, Andromeda and Phantom
-have copy anchors only until their runtime steps exist. Outcome chains keep
+order: Sunflower 1, Cartwheel 2, Whirlpool 3, Needle 4, Andromeda 5 and Phantom 6.
+Chapter headings below identify the authored exchanges. Outcome chains keep
 their existing keys and order. Repeated mechanical actions use the short Astra
 briefs below instead of expanding to four to eight lines. These briefs explain
 the existing action and preserve its outcome.
 
 ## Design status
 
-The following items are APPROVED DESIGN, not current runtime behavior:
+The six chapters have approved authored copy. Source presence, normal-route
+availability and play verification are separate:
 
-- Unmapped Needle anchors: arrival; holodisk and practice; practice complete.
-- Unmapped Andromeda anchors: arrival; Pip confession; Pip owns up; beacon
-  repaired; Pip holodisk.
-- Unmapped Phantom anchors: first settlement freed; second settlement freed;
-  third settlement freed; map and docks.
-- Unmapped Salvage variant: the last holodisk after the flagship is disabled,
-  including its optional memory response.
-- Expanded editorial responses pending runtime parity: Rivet's "What do you
-  repair?" answer ("Spare parts really help!"), Quartz's "Who uses the hub?"
-  answer ("There's docking space for everyone."), and Mica's company response
-  ("I'd like some company next time. That would help.").
-- Approved Skip contract requiring runtime follow-up: every page with Next also
-  offers Skip; Skip follows the whole continuation across scene boundaries and
-  stops for an unresolved choice. Runtime Skip visibility retains exclusions.
+- All six chapters are enabled on the normal route: Sunflower, Whirlpool, Needle,
+  Andromeda, Cartwheel and Phantom.
+- Needle's arrival, practice and practice-complete exchanges have runtime steps.
+  Andromeda and Phantom have authored runtime source, including their essential
+  exchanges, Phantom's final-holodisk Salvage variant and map-and-docks exchange.
+- Rivet's "Spare parts really help!", Quartz's "There's docking space for
+  everyone." and Mica's "I'd like some company next time. That would help."
+  responses are present in runtime copy.
+- Approved Skip behavior remains a runtime follow-up: every page with Next also
+  offers Skip; Skip follows the continuation across scene boundaries and stops
+  for an unresolved choice without selecting an answer. Unavailable Previous is
+  hidden.
+
+Normal-route availability does not establish complete source/model, browser,
+ambient, rendering or final-polish acceptance. Those checks remain open until
+verified for the corresponding revision.
 
 ## Space PARTY inventory
 

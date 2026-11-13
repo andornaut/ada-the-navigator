@@ -95,25 +95,25 @@ play: it starts when Ada leaves the start screen, a flight or the galaxy map,
 or with Ada's room page's named action, and ends at the galaxy map or on Ada's
 room page with its named action. Next
 turns one page. Previous returns to the page shown before, across scene
-boundaries within the run, and is disabled only on the run's first page. The
+boundaries within the run, and is hidden when no earlier page exists. The
 run that starts with Ada's room page's named action counts that room page as
 its first, so Previous on the boarding page that follows returns to it. The
 "Welcome back, Navigator." page always follows the rock, so its Previous always
 returns to Ada's room page. A page
 that ends in a named action, such as "Pick up the rock.", shows that action in
-place of Next. Skip passes every remaining page and scene of the run, taking the
-default path through choices and leaving optional questions unasked, and stops
-where play resumes: the galaxy map when the run leads aboard, or Ada's room
-page with its named action. Skip shows only where it passes at least one page that Next, or the page's named
-action, would show. It is hidden on the last page before the galaxy map, on
-the page before Ada's room page, on that room page and on the sleep scene. Skip sits in the top-right corner, apart from
+place of Next. Skip follows the continuation across pages and scenes in the same
+run, leaving optional questions unasked. It stops at an unresolved choice and
+never selects an answer; material choices require the player's explicit answer.
+With no unresolved choice ahead, it stops where play resumes: the galaxy map
+when the run leads aboard, or Ada's room page with its named action. Every page
+with Next also offers Skip. Skip sits in the top-right corner, apart from
 Previous and Next, so tapping quickly through pages cannot skip a run. A scene's effects (a chapter opened or resolved, the prologue
 seen) apply as the scene ends; Previous back into an ended scene does not undo
 them. Choice buttons are
 all secondary, with focus on the first. A choice page offers
 two or three choices; each leads to one or two branch pages and then rejoins the
-main story, so choices never change a chapter's resolution. The first choice is
-the default. Locations include Grandma's house and garden, the community garden
+main story, so choices never change a chapter's resolution. No choice is
+automatically selected. Locations include Grandma's house and garden, the community garden
 lot, Ada's room, the school hallway, the schoolyard, the front door and kitchen at home and
 the park where Ada finds the rock. A scene that leads aboard ends on Ada's room,
 with the narration "Ada's rock glows softly on her desk." and the named action.
