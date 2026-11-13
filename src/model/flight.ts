@@ -81,6 +81,7 @@ import {
   worldSyncFlightRegion,
 } from "./geography.ts";
 import { phantomSongSpeed, stepPhantomAllies } from "./phantomAllies.ts";
+import { playerWeaponCoverage, type PlayerWeaponCoverageContext } from "./playerWeaponCoverage.ts";
 import { worldCellAt, worldCellKey, worldCellsNear, worldGrid } from "./worldCells.ts";
 import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
 import { wrapPoint } from "./worldGeometry.ts";
@@ -1898,6 +1899,7 @@ export function teleport(content: GameContent, id: string, flight: FlightState):
 function fire(
   content: GameContent,
   viewportWidth: number,
+  viewportHeight: number,
   aim: Vec,
   flight: FlightState,
   events: FlightEvent[],
@@ -1910,12 +1912,14 @@ function fire(
   }
   // Every shot and beam leaves the ship's nose for its heading; ranges run from there.
   const origin = nosePoint(flight.facing, flight.player);
+  const coverage = { centre: { ...flight.player }, viewportHeight, viewportWidth };
   if (definition.projectileKind === "beam") {
-    fireBeam(content, definition, aim, origin, flight, events);
+    fireBeam(coverage, content, definition, aim, origin, flight, events);
     flight.fireCooldown += definition.intervalSeconds;
     return;
   }
   flight.fireCooldown += releaseFriendlyVolley(
+    coverage,
     content,
     definition,
     origin,
@@ -1928,6 +1932,7 @@ function fire(
 
 /** The player's and an ally's shots share canonical damage, range and collision handling. */
 function releaseFriendlyVolley(
+  coverage: PlayerWeaponCoverageContext | undefined,
   content: GameContent,
   definition: WeaponDefinition,
   origin: Vec,
@@ -1937,6 +1942,7 @@ function releaseFriendlyVolley(
   events: FlightEvent[],
 ): number {
   const volley = planPlayerVolley(definition, {
+    ...(coverage === undefined ? {} : { coverage }),
     aim,
     baseDamage: content.tuning.flight.playerShotDamage,
     baseLifetime: content.tuning.flight.projectileLifetime,
@@ -3186,6 +3192,7 @@ function sceneryEntry(
 }
 
 function fireBeam(
+  coverage: PlayerWeaponCoverageContext,
   content: GameContent,
   definition: WeaponDefinition,
   aim: Vec,
@@ -3193,8 +3200,8 @@ function fireBeam(
   flight: FlightState,
   events: FlightEvent[],
 ): void {
-  const range = definition.beamRange ?? 0;
   const span = length(aim);
+  const range = playerWeaponCoverage(coverage, { direction: aim, origin });
   if (!span || range <= 0) {
     return;
   }
@@ -3775,7 +3782,14 @@ export function stepFlight(
       settleAda(content, flight);
     }
     if ((input.fire ?? aiming) && flight.fireCooldown <= 0) {
-      fire(content, input.viewportWidth ?? SCREEN.width, flight.facing, flight, events);
+      fire(
+        content,
+        input.viewportWidth ?? SCREEN.width,
+        input.viewportHeight ?? SCREEN.height,
+        flight.facing,
+        flight,
+        events,
+      );
     }
     const shotDelays = new Map<string, number>();
     const viewportWidth = input.viewportWidth ?? SCREEN.width;
@@ -3789,6 +3803,7 @@ export function stepFlight(
       for (const intent of stepPhantomAllies(ship.physics, slice, flight, flight.phantom.allies)) {
         const aim = direction(worldDelta(flightWorldContext(flight), intent.from, intent.target));
         releaseFriendlyVolley(
+          undefined,
           content,
           weaponAt(intent.weapon, intent.level),
           intent.from,

@@ -559,6 +559,7 @@ export class GameScene extends Scene {
         move: screenToWorld(sampled.move),
         reducedMotion: this.reducedMotion,
         use: sampled.use,
+        viewportHeight: this.cameras.main.height / this.cameras.main.zoom,
         viewportWidth: this.cameras.main.width / this.cameras.main.zoom,
       };
       this.model.step(Math.min(milliseconds / 1000, 0.05), input);

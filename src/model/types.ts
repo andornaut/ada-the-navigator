@@ -31,6 +31,7 @@ export interface FlightInput {
   move: Vec;
   aim: Vec;
   use: boolean;
+  viewportHeight?: number;
   viewportWidth?: number;
   /** The device's reduced-motion setting, which times and places destruction drops. */
   reducedMotion?: boolean;

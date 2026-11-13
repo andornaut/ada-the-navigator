@@ -12,6 +12,7 @@ import { activeBeamFlashes, activeBlastFlashes, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { noseOffset, nosePoint } from "./nose.ts";
 import { projectileOpacity } from "./playerProjectiles.ts";
+import { playerWeaponCoverage } from "./playerWeaponCoverage.ts";
 import { restoreSave } from "./save.ts";
 import type { FlightState, SpaceObject } from "./types.ts";
 
@@ -97,6 +98,10 @@ const beamTouches = (at: { x: number; y: number }, point: { x: number; y: number
 // The beam and every shot leave the nose; firing right, along y = nose.y.
 const nose = noseOffset({ x: 1, y: 0 });
 const ahead = (distance: number) => nose.x + distance;
+const playerRange = playerWeaponCoverage(
+  { centre: { x: 0, y: 0 }, viewportHeight: 360, viewportWidth: 720 },
+  { direction: { x: 1, y: 0 }, origin: nose },
+);
 
 describe("Phaser hitscan beam", () => {
   // A retaliator sturdy enough to survive a level 3 beam, so each hit shows in its hit points.
@@ -136,9 +141,9 @@ describe("Phaser hitscan beam", () => {
   });
 
   it.each([
-    [1, 370, 6.5],
-    [2, 370, 9.75],
-    [3, 370, 14.625],
+    [1, playerRange, 6.5],
+    [2, playerRange, 9.75],
+    [3, playerRange, 14.625],
   ])("reaches %i: range %f from the nose, damage %f", (level, range, damage) => {
     // The farthest hull the beam's end still reaches within its half-width.
     const end = { x: ahead(range), y: nose.y };
@@ -165,7 +170,7 @@ describe("Phaser hitscan beam", () => {
     expect(flash.to.y).toBeCloseTo(nose.y, 9);
     expect(flash.hit).toBe(true);
     const miss = beam([]);
-    expect(activeBeamFlashes(miss)[0]!.to.x).toBeCloseTo(ahead(370), 9);
+    expect(activeBeamFlashes(miss)[0]!.to.x).toBeCloseTo(ahead(playerRange), 9);
     expect(activeBeamFlashes(miss)[0]!.hit).toBe(false);
     // The flash shows 0.15 s and a hit's spark 0.16 s, so both last until the spark ends.
     miss.fireCooldown = 100;

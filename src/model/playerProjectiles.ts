@@ -1,7 +1,9 @@
 import type { WeaponDefinition } from "../data/weaponCatalog.ts";
+import { playerWeaponCoverage, type PlayerWeaponCoverageContext } from "./playerWeaponCoverage.ts";
 import type { Vec } from "./types.ts";
 
 export interface VolleyContext {
+  readonly coverage?: PlayerWeaponCoverageContext;
   readonly aim: Vec;
   readonly baseDamage: number;
   readonly baseLifetime: number;
@@ -73,6 +75,10 @@ export function planPlayerVolley(
     ].every(positive) ||
     ![context.origin.x, context.origin.y].every(Number.isFinite) ||
     definition.projectileKind === "beam" ||
+    (context.coverage !== undefined &&
+      (![context.coverage.centre.x, context.coverage.centre.y].every(Number.isFinite) ||
+        !positive(context.coverage.viewportWidth) ||
+        !positive(context.coverage.viewportHeight))) ||
     (definition.blastRadius !== null && !positive(definition.blastRadius)) ||
     !definition.anglesDegrees.length ||
     !definition.anglesDegrees.every(Number.isFinite) ||
@@ -97,7 +103,19 @@ export function planPlayerVolley(
     return {
       ...(definition.blastRadius === null ? {} : { blast: definition.blastRadius }),
       damage,
-      ...projectileReach(definition, speed, context.baseLifetime),
+      ...projectileReach(
+        context.coverage && definition.projectileKind === "bolt"
+          ? {
+              ...definition,
+              rangeWorld: playerWeaponCoverage(context.coverage, {
+                direction: heading,
+                origin: context.origin,
+              }),
+            }
+          : definition,
+        speed,
+        context.baseLifetime,
+      ),
       projectile: definition.projectileKind as PlayerProjectile["projectile"],
       velocity: { x: heading.x * speed, y: heading.y * speed },
       x: context.origin.x,
@@ -109,7 +127,7 @@ export function planPlayerVolley(
 
 /**
  * A projectile's life, and its fade when the weapon fades, at `speed`: a ranged weapon flies its
- * world range on every device, whoever fires it; any other flies `baseLifetime`.
+ * snapshotted world range; any other flies `baseLifetime`.
  */
 export function projectileReach(
   definition: Pick<WeaponDefinition, "fadeStartFraction" | "rangeWorld">,
