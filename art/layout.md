@@ -888,58 +888,72 @@ every available height, so the card never scrolls.
 
 ### Ship card
 
-The Paused card's Ship opens a content-fitted card titled "Ship" with the
-close X; the close X, back and Escape return to Paused. It lists what Ada
-carries and her equipment in two sections, each a section heading
-(`TYPE.label`, supporting `#b8b3c9`, on a 20 line), `SPACING.rowGap`, then
-rows. Strings are Gameplay's. Constants: `SHIP_CARD`, to implement.
+Implementation contract for Tech: the Paused card's Ship opens a
+content-fitted card titled "Ship" with the close X; the close X, back and
+Escape return to Paused. The body has exactly two top-aligned columns:
+Equipment on the left and Cargo on the right, including narrow views.
+Each section is one list, never a nested two-column grid. Strings and row
+content remain Gameplay's. Ship geometry belongs in `src/ui/layout/`,
+consuming the existing canonical tokens rather than a second spacing system.
 
-| Token                 | Value | Rule                                                                                   |
-| --------------------- | ----- | -------------------------------------------------------------------------------------- |
-| `SHIP_CARD.columnGap` | 16    | Between the two columns of both sections (see [Exceptions](#exceptions))               |
-| `SHIP_CARD.column`    | 279   | Each column: the widest row, a weapon's (below)                                        |
-| `SHIP_CARD.row`       | 20    | A row: a 20 icon and one 20 line; rows `SPACING.rowGap` apart                          |
-| `SHIP_CARD.icon`      | 20    | The row icon at the column's left, `SPACING.markGap` to the label                      |
-| `SHIP_CARD.valueGap`  | 8     | `SPACING.gap` between a label and its value, and between a level and the ammunition    |
-| `SHIP_CARD.ammo`      | 55.14 | The ammunition column: "999 left" in `TYPE.label`, right-aligned at the column's right |
+| Part                   | Existing token or derivation                                   | Rule                                                                                        |
+| ---------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Outer padding          | `CARD_CONTENT.padding` (16)                                    | Use the shared content-card padding on every edge                                           |
+| Divider                | `CARD_CONTENT.frameBorder` (2), `TEXT_TOKENS.supporting`       | One decorative vertical rule between the sections, spanning the body                        |
+| Divider clearance      | `SPACING.panelPadding` (16) on each side                       | The total inter-column gutter is `2 * SPACING.panelPadding + CARD_CONTENT.frameBorder` (34) |
+| Section heading        | `TYPE.label`, `TEXT_TOKENS.supporting`                         | Same heading role and top alignment in both columns                                         |
+| Heading-to-list gap    | `SPACING.gap` (8)                                              | Separate a heading from its first row                                                       |
+| Equipment subgroup gap | `SPACING.panelPadding` (16)                                    | Between the systems/paint rows and the owned-weapon rows; absent weapons take no gap        |
+| List row gap           | `SPACING.rowGap` (4)                                           | Between rows within either list or equipment subgroup                                       |
+| Row height             | `max(SHIP_CARD.icon, TYPE.body.lineHeight)` (20 minimum)       | Wrapped text grows the row by its type role's line height                                   |
+| Row icon               | Existing `SHIP_CARD.icon` (20), then `SPACING.markGap` (6)     | Retain the current icons and drawn-pixel spacing                                            |
+| Value gap              | `SPACING.gap` (8)                                              | Between label and value, and between level and ammunition                                   |
+| Ammunition width       | Measure the widest supported ammunition string in `TYPE.label` | Reserve the same right-aligned track for every weapon row                                   |
 
-Rows: the label in `TYPE.body` cream `#ead4aa`; a count right-aligned at the
-column's right in `TYPE.label` cream; a level ("Level {n} of 3")
-right-aligned in `TYPE.body` supporting `#b8b3c9`, at the column's right or,
-on a weapon row, `SHIP_CARD.valueGap` left of the ammunition column. A label
-wider than its column wraps and grows its row by 20; it never shrinks.
+Rows: labels use `TYPE.body` and `TEXT_TOKENS.label`; counts use
+`TYPE.label` and `TEXT_TOKENS.label`, right-aligned. Levels ("Level {n} of
+3") use `TYPE.body` and `TEXT_TOKENS.supporting`, right-aligned before the
+ammunition track on weapon rows. Keep values and icons visible; wrap labels
+and grow rows rather than shrinking type.
 
-1. Cargo: a two-column grid, left to right then down: Stardust
-   (`icon-stardust-20`, count), Ore (`icon-ore-20`, the ore carried this
-   flight), "Holodisks: {n} of 6" (`icon-holodisk-20`), and, when there is
-   one, "Carrying: {item}" (`icon-cargo-20`) or "Towing: {craft}"
-   (`icon-tow-20`).
-2. Equipment, two columns. Left: Shield (`icon-shop-shield`), Engine
+1. Equipment, left: Shield (`icon-shop-shield`), Engine
    (`icon-shop-engine-tuning`), Tractor beam (`icon-shop-tractor-beam`), each
-   with its level, then "Paint: {paint}" (`icon-shop-ship-paint`). Right: every
-   owned weapon in Ada's weapon order (Laser, Multi-Laser, Rapid Missile,
-   Heavy Missile, Scattershot, Phaser), its 20 vector icon as a cream mask
-   ([Weapon icons](weapon-icons.md)), its level and, apart from Laser, "{count}
-   left". The shop icons draw their `normal` frame.
+   with its level, then "Paint: {paint}" (`icon-shop-ship-paint`). Follow
+   these with every owned weapon in Ada's weapon order (Laser, Multi-Laser,
+   Rapid Missile, Heavy Missile, Scattershot, Phaser), its 20 vector icon as
+   a cream mask ([Weapon icons](weapon-icons.md)), its level and, apart from
+   Laser, "{count} left". The shop icons draw their `normal` frame. The
+   subgroup gap adds no new player-facing heading.
+2. Cargo, right: Stardust (`icon-stardust-20`, count), Ore (`icon-ore-20`,
+   the ore carried this flight), "Holodisks: {n} of 6"
+   (`icon-holodisk-20`), and, when there is one, "Carrying: {item}"
+   (`icon-cargo-20`) or "Towing: {craft}" (`icon-tow-20`), top to bottom.
 
-Widths: a weapon row is `20 + 6 + 98.69 + 8 + 82.73 + 8 + 55.14` = 278.56 at
-"Heavy Missile", "Level 3 of 3" and "999 left", so a column is 279 and the
-inner width `2 * 279 + 16` = 574, the card 606 wide. The widest left rows are
-211.28 (Tractor beam with its level) and 189.02 ("Carrying: Watering can").
+Measure each column's natural width from its heading and widest complete
+row in the existing type roles, including icon, mark gap, value gaps and
+reserved value tracks. Pass the sum of those widths and the divider gutter
+to the shared `cardWidth` contract in `contentCard.ts`; retain its title
+clearance, fixed-base half-width floor and available-rect clamp. The usable
+column width is the resulting card width minus `2 * CARD_CONTENT.padding`
+and the divider gutter.
 
-Height: `58 + 68 + 8 + (20 + 4 + rows) + 16`, with Cargo two rows (`20 + 4 +
-20 + 4 + 20` = 68) and Equipment the taller column: six weapons `6 * 20 + 5 *
-4` = 140, so 314 at most; Laser alone with the four left rows, 266.
+Derive each column's minimum from its heading's longest unbreakable segment
+and its rows' fixed icon/value tracks plus the label's longest unbreakable
+segment in the existing font. Allocate the usable width between the two
+natural widths, shrinking only label space and respecting those minima.
+Long unbroken labels may wrap within a word before forcing overflow. Keep
+two columns at every supported narrow view; do not stack sections or add
+internal columns. Tech verifies that the derived minima fit the available
+rect, including phone insets, using Gameplay's longest supported strings.
 
-| At 720x360, view px | No insets            | Phone insets             |
-| ------------------- | -------------------- | ------------------------ |
-| Available           | 688 by 328           | 634 by 325               |
-| Card                | (57, 23) 606x314     | (57, 21.5) 606x314       |
-| Cargo row tops      | 105 and 129          | 103.5 and 127.5          |
-| Equipment row tops  | 181 to 301, 24 apart | 179.5 to 299.5, 24 apart |
-
-It fits without scrolling at every supported view; at 844x390 with phone
-insets the card is (86.54, 21.5) on the 779.08-wide view.
+The taller list sets the body's natural height. Use the shared card header
+and available-height calculation; when that height does not fit, scroll the
+body vertically with both sections and the divider together, keeping the
+title and close control fixed. Do not retain a fixed card size or assume
+that the full equipment list fits without scrolling. Tech owns isolated
+checks and screenshots for the longest content, empty weapon subgroup,
+narrow views, phone insets and desktop; this section specifies the contract,
+not a claim that runtime verification is complete.
 
 Map, from the Paused card, is a full-screen map rather than a card: the
 galaxy's field under the insets, a header panel on the Map's HUD row at the
@@ -1498,7 +1512,7 @@ leaves and lands standing above the markers.
 | Landing page        | Responsive HTML outside the game canvas                                                                                                                                   | Same token numbers in CSS px, CSS safe insets                                                          |
 | Procedural chrome   | Stick rings, knobs and the speed line draw in frame px                                                                                                                    | Frames and opacity from [touch joystick sheets](touch-joystick.md)                                     |
 | Route panel padding | At 360 high the chart (labels end at 164), the 112 panel and the 48 actions fill the available height; padding 16 makes the panel 128 and runs it 7 into the row 2 labels | `SPACING.gap` (8) as padding, the 2 px frame inside it; type roles, row gaps and the capture unchanged |
-| Ship card columns   | Two tables side by side: at 8 a right-aligned level meets the next column's icon                                                                                          | `SPACING.columnGap` elsewhere; 16 is `BUTTON_GAP`'s value                                              |
+| Ship card sections  | Equipment and Cargo remain side by side with a decorative divider | Existing panel padding on both sides of the existing frame-width rule; list row and heading gaps remain distinct |
 
 ## Verification
 
