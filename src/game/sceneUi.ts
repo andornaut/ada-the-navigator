@@ -1112,7 +1112,8 @@ export function refreshScene(scene: UiContext): void {
     towing: scene.model.towing,
   });
   scene.controls.setAchievements(scene.model.achievements);
-  scene.shell.render(state, screen);
+  const continuation: GameModel & { readonly canContinue?: boolean } = scene.model;
+  scene.shell.render(state, screen, continuation.canContinue);
   const interactionPanel = screen === "space" && state.dialogue?.text ? state.dialogue : null;
   const interactionGalaxy = state.flight?.galaxy ?? state.selectedGalaxy;
   interactionCards

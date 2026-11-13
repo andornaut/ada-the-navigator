@@ -54,7 +54,7 @@ export class StoryShell {
     document.getElementById("app")?.append(this.status, this.savingStatus, this.panel);
   }
 
-  render(state: GameState, screen: Screen): void {
+  render(state: GameState, screen: Screen, canContinue = state.started): void {
     const { flight } = state;
     this.status.dataset.mode = state.mode;
     this.status.dataset.x = String(flight?.player.x ?? 0);
@@ -62,7 +62,7 @@ export class StoryShell {
     this.status.textContent = state.notice;
     const nextSignature = JSON.stringify([
       screen,
-      state.started,
+      canContinue,
       state.dialogue,
       state.economy.paint,
       this.titleArt !== null,
@@ -106,11 +106,10 @@ export class StoryShell {
       }
       this.panel.setAttribute("aria-label", state.dialogue.title);
     } else if (screen === "start") {
-      // Start until the first flight begins, then Continue (primary, the default and first Tab
-      // stop) and Restart (secondary, on its left).
+      // Continue resumes a held story or flight; Restart stays secondary on its left.
       const actions = this.requiredUpdate
         ? []
-        : state.started
+        : canContinue
           ? ([
               {
                 action: "restart",

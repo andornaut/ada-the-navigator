@@ -253,6 +253,39 @@ describe("universal pause caller", () => {
   });
 });
 
+describe("held story Continue caller", () => {
+  it("passes model permission to the shell without setting started", () => {
+    const model = new GameModel(CONTENT);
+    Object.defineProperty(model, "canContinue", { value: true });
+    let call: ts.CallExpression | undefined;
+    const visit = (node: ts.Node): void => {
+      if (ts.isCallExpression(node) && node.expression.getText(source) === "scene.shell.render") {
+        call = node;
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+    if (!call) {
+      throw new Error("Missing shell render caller");
+    }
+    const render = vi.fn();
+    const code = ts.transpileModule(call.getText(source), {
+      compilerOptions: { target: ts.ScriptTarget.ES2023 },
+    }).outputText;
+    runInContext(
+      code,
+      createContext({
+        continuation: model,
+        scene: { shell: { render } },
+        screen: model.screen,
+        state: model.state,
+      }),
+    );
+    expect(render).toHaveBeenCalledWith(model.state, "start", true);
+    expect(model.state.started).toBe(false);
+  });
+});
+
 describe("galaxy map UI navigation", () => {
   it.each(["current", "other", "locked"])(
     "Stay here returns to the local map after viewing %s",
