@@ -4,6 +4,7 @@ import { createModalLayer } from "@andornaut/game-kit/web/ui/dom/modalLayer";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { LocalMap } from "../model/map.ts";
 import type { QuestEntry } from "../model/questDetails.ts";
+import { CARD_CONTENT, SCROLL } from "./layout/contentCard.ts";
 import { units } from "./layout/css.ts";
 import { BUTTON_GAP, SPACING, STACK_BUTTON_GAP } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -100,7 +101,12 @@ ${UI_SCOPE} .ada-actions.ada-pause-grid{
   width:auto
 }
 ${UI_SCOPE} .ada-actions.ada-pause-grid[data-place=room]{grid-template-columns:1fr}
-${UI_SCOPE} .ada-ship-back{display:flex;justify-content:flex-end;flex:none;margin:${units(SPACING.gap)} 0}
+${UI_SCOPE} .ada-ship-back{
+  display:flex;
+  justify-content:flex-end;
+  flex:none;
+  margin:${units(SPACING.gap)} 0 ${units(SCROLL.endPad - CARD_CONTENT.frameBorder)}
+}
 `;
 
 // Two columns of equal actions, BUTTON_GAP between columns and STACK_BUTTON_GAP between rows.
