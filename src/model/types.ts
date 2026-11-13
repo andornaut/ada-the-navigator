@@ -7,6 +7,7 @@ import type { StorySceneId } from "../data/storyShips.ts";
 import type { GalaxyNumber, Weapon } from "../data/types.ts";
 import type { AchievementState } from "./achievements.ts";
 import type { EnemyState } from "./enemyAi.ts";
+import type { PhantomFlight, PhantomProgress } from "./phantom.ts";
 import type { ProjectileFade } from "./playerProjectiles.ts";
 
 /** What Use does here: the disc's symbol, and its name the disc's accessible name. */
@@ -116,6 +117,7 @@ export interface PersistentWorldState {
   notables: Record<string, SpaceObject | null>;
 }
 export interface FlightState {
+  phantom?: PhantomFlight;
   /** Travel arrival points; encounters stay clear of them as of the flight's start. */
   arrivals?: Vec[];
   world: PersistentWorldState;
@@ -175,6 +177,7 @@ export interface FlightState {
   nextId: number;
 }
 export interface GalaxyProgress {
+  phantom?: PhantomProgress;
   /** At least one repeatable activity completed here, for this galaxy's finale ally. */
   activityCompleted?: boolean;
   stage: number;

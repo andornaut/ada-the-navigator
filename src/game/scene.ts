@@ -3,6 +3,7 @@ import { GameObjects, Loader, Scene } from "phaser";
 
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { CONTENT } from "../data/content.ts";
+import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import { SCREEN } from "../data/screen.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import type { GalaxyNumber } from "../data/types.ts";
@@ -93,6 +94,7 @@ import {
 } from "./sceneHud.ts";
 import { coverShip, endJump, jumpScene, spaceJumpScene } from "./sceneJump.ts";
 import { drawGuidedCalf, drawObject } from "./sceneObjects.ts";
+import { drawPhantomAllies, drawPhantomFlagship, drawPhantomSettlement } from "./scenePhantom.ts";
 import { type Asset, DESTRUCTION_PATH, screenToWorld, TITLE_SCREEN_KEY } from "./sceneShared.ts";
 import {
   buildScene,
@@ -683,11 +685,16 @@ export class GameScene extends Scene {
     }
     this.enemyPlaceholders = 0;
     for (const object of flight.objects) {
-      drawObject(this, object);
+      if (object.id === PHANTOM_FLAGSHIP && object.enemy) {
+        drawPhantomFlagship(this, object);
+      } else if (!drawPhantomSettlement(this, object)) {
+        drawObject(this, object);
+      }
     }
     this.shell.setEnemyArt(this.enemyPlaceholders === 0);
     drawStoryShips(this, flight);
     drawGuidedCalf(this);
+    drawPhantomAllies(this);
     drawRockBreaks(this);
     drawZips(this);
     startRockLoads(this);
@@ -873,6 +880,12 @@ export class GameScene extends Scene {
     }
     this.placeAda(flames);
     const activeIds = new Set(flight.objects.map((object) => object.id));
+    for (const ally of flight.phantom?.allies ?? []) {
+      activeIds.add(`phantomAlly:${ally.id}`);
+    }
+    for (const ally of flight.phantom?.departures ?? []) {
+      activeIds.add(`phantomAlly:${ally.id}`);
+    }
     this.hitFlashes.retain(activeIds, spriteOwner);
     for (const id of staleSpriteKeys(activeIds, this.enemySprites.keys())) {
       this.enemySprites.get(id)!.destroy();

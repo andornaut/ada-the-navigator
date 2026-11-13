@@ -1,3 +1,4 @@
+import { PHANTOM_CHAPTER, PHANTOM_CLOSING, PHANTOM_RESOLUTION_REJOIN } from "./phantom.ts";
 import { PREMISE } from "./premiseCopy.ts";
 import { SHIP_PHYSICS } from "./shipPhysics.ts";
 import type { GameContent } from "./types.ts";
@@ -301,6 +302,19 @@ export const CONTENT: GameContent = {
       ],
       resolutionChoices: ["Get the leash.", "Let's go exploring."],
     },
+    6: {
+      ...PHANTOM_CHAPTER,
+      closingLines: PHANTOM_CLOSING.map((line) => ({
+        ...line,
+        ...(line.speaker
+          ? {
+              speaker:
+                line.speaker === "astra" ? "Astra" : line.speaker === "ada" ? "Ada" : line.speaker,
+            }
+          : {}),
+      })),
+      resolutionRejoin: PHANTOM_RESOLUTION_REJOIN,
+    },
   },
   installSteps: {
     chromiumAndroid: {
@@ -535,6 +549,10 @@ export const CONTENT: GameContent = {
     paintSeafoam: "Seafoam",
     pause: "Pause",
     pauseTitle: "Paused",
+    phantomFlagship: "Archie's flagship",
+    phantomSettlement1: "Settlement",
+    phantomSettlement2: "Settlement",
+    phantomSettlement3: "Settlement",
     pickUpRock: "Pick up the rock.",
     previous: "Previous",
     projectAboutBeacons: "Bright beacons so lost things are easy to find.",

@@ -30,6 +30,8 @@ export interface IndicatorContext {
   readonly job: IndicatorTarget | null;
   /** The current objective's destination, if it has one. */
   readonly objective: string | null;
+  /** A chapter target may be known by its briefing before ordinary destination discovery. */
+  readonly objectivePoint?: { readonly id: string; readonly x: number; readonly y: number };
   readonly progress: Pick<GalaxyProgress, "known" | "stations">;
   /** Where the carried quest item goes, if Ada carries one. */
   readonly questItem: string | null;
@@ -58,7 +60,10 @@ export const INDICATOR_SOURCES: Readonly<Record<IndicatorKind, IndicatorSource>>
       .filter((object) => holodiskWaypoint && object.id === "holodisk")
       .map(({ id, x, y }) => ({ id, kind: "holodisk", x, y })),
   job: ({ job }) => (job ? [job] : []),
-  objective: (context) => mappedDestination(context, context.objective, "objective"),
+  objective: (context) =>
+    context.objectivePoint
+      ? [{ ...context.objectivePoint, kind: "objective" }]
+      : mappedDestination(context, context.objective, "objective"),
   questItem: (context) => mappedDestination(context, context.questItem, "questItem"),
   // The nearest undiscovered station within the economy's indicator range (stations.ts).
   station: ({ flight, galaxy, progress }) => {

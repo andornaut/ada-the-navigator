@@ -29,6 +29,7 @@ export interface ChapterRuntime {
   /** Mounts the chapter's world and restores flight-local state at launch or Continue. */
   readonly init?: (context: ChapterContext) => void;
   /** Returns the chapter's objective destination, not a replacement player-facing goal. */
+  readonly objectiveIndex?: (context: ChapterContext) => number;
   readonly objective?: (context: ChapterContext) => string | null;
   readonly beforeStep?: (context: ChapterContext, seconds: number) => void;
   readonly afterStep?: (

@@ -5,6 +5,7 @@ import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { HUNTING_PACKS } from "../data/galaxyFeatures.ts";
 import { JOB_TYPES } from "../data/jobs.ts";
+import { PHANTOM_DESTINATIONS } from "../data/phantom.ts";
 import { galaxyProjects } from "../data/projects.ts";
 import { RESOURCE_ROCKS } from "../data/resourceRocks.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
@@ -16,6 +17,7 @@ import { enemyDefeated } from "./enemyAi.ts";
 import { ACTIVE_CHUNK_RADIUS, encounterOf, persistentObject } from "./geography.ts";
 import { isLandmark } from "./landmarks.ts";
 import { validExplored } from "./map.ts";
+import { validPhantomFlight, validPhantomProgress } from "./phantom.ts";
 import { namesStation, stationById } from "./stations.ts";
 import type {
   AmmoCounts,
@@ -88,6 +90,7 @@ const destinationIds: Record<number, readonly string[]> = {
   1: ["growers", "workshop", "salvagers"],
   2: ["hub", "miner", "visitors"],
   3: ["whale", "family", "holodisk"],
+  6: PHANTOM_DESTINATIONS,
 };
 /** Saved achievements: id and count lists, non-negative counts and a blockade flag. */
 function achievementState(value: unknown): boolean {
@@ -626,6 +629,7 @@ export function restoreSave(saved: unknown): GameState | null {
       const p = value.progress[id];
       if (
         !record(p) ||
+        (p.phantom !== undefined && (id !== 6 || !validPhantomProgress(p.phantom))) ||
         !Number.isInteger(p.stage) ||
         !nonnegative(p.stage) ||
         Number(p.stage) > (id === 1 ? 4 : 5) ||
@@ -682,6 +686,7 @@ export function restoreSave(saved: unknown): GameState | null {
       const f = value.flight;
       if (
         !record(f) ||
+        (f.phantom !== undefined && (f.galaxy !== 6 || !validPhantomFlight(f.phantom))) ||
         f.galaxy !== value.selectedGalaxy ||
         !["player", "velocity", "facing"].every((k) => vector(f[k])) ||
         ![

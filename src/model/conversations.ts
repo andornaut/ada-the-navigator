@@ -300,6 +300,11 @@ export class ConversationDirector {
     this.request((trigger) => trigger.kind === "funded" && trigger.project === project);
   }
 
+  /** A chapter event requests its authored small-box chatter once through the normal director. */
+  chapter(id: string): void {
+    this.request((trigger) => trigger.kind === "chapter" && trigger.id === id);
+  }
+
   /** A tap on the box: the next line, or after the last, the box closes. */
   advance(): void {
     if (this.active) {

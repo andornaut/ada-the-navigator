@@ -20,6 +20,7 @@ import { byPosition, ROUTE_POSITION, type RoutePosition } from "../data/galaxies
 import { CURRENTS, HUNTING_PACKS, ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { JOB_TUNING, LANDMARK_TUNING } from "../data/jobs.ts";
+import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP, PHANTOM_TUNING } from "../data/phantom.ts";
 import { RESOURCE_ROCKS } from "../data/resourceRocks.ts";
 import { SCREEN } from "../data/screen.ts";
 import { SPAWNER_POLICIES, spawnerStage } from "../data/spawnerCatalog.ts";
@@ -70,6 +71,7 @@ import {
   retainedRouteBlocked,
   syncFlightRegion,
 } from "./geography.ts";
+import { phantomSongSpeed, stepPhantomAllies } from "./phantomAllies.ts";
 
 export { activateRouteEncounter, syncFlightRegion } from "./geography.ts";
 import {
@@ -1054,6 +1056,9 @@ function admitGroup(
   group: { archetype: EnemyArchetype; count: number; escortOf: string | null; packId: string },
   place: (index: number, phase: number) => Vec,
 ): void {
+  if (flight.galaxy === 6 && flight.phantom?.phase === "salvaged") {
+    return;
+  }
   const { archetype, count, escortOf, packId } = group;
   const state = combat(flight);
   const initialized = Object.hasOwn(state.initialPackSizes, packId);
@@ -1763,6 +1768,27 @@ function fire(
     flight.fireCooldown += definition.intervalSeconds;
     return;
   }
+  flight.fireCooldown += releaseFriendlyVolley(
+    content,
+    definition,
+    origin,
+    aim,
+    viewportWidth,
+    flight,
+    events,
+  );
+}
+
+/** The player's and an ally's shots share canonical damage, range and collision handling. */
+function releaseFriendlyVolley(
+  content: GameContent,
+  definition: WeaponDefinition,
+  origin: Vec,
+  aim: Vec,
+  viewportWidth: number,
+  flight: FlightState,
+  events: FlightEvent[],
+): number {
   const volley = planPlayerVolley(definition, {
     aim,
     baseDamage: content.tuning.flight.playerShotDamage,
@@ -1783,7 +1809,7 @@ function fire(
     // A shot that starts inside an obstacle Ada is touching strikes it at once.
     strike(content, shot, flight, events);
   }
-  flight.fireCooldown += volley.interval;
+  return volley.interval;
 }
 
 /**
@@ -2033,6 +2059,17 @@ function enemies(
   events: FlightEvent[],
   shotDelays: Map<string, number>,
 ): void {
+  if (flight.galaxy === 6 && flight.phantom?.phase === "salvaged") {
+    flight.shots = flight.shots.filter((shot) => !shot.enemy);
+    flight.mines = [];
+    for (const object of flight.objects) {
+      if (object.enemy) {
+        object.enemy.engaged = false;
+        object.enemy.velocity = { x: 0, y: 0 };
+      }
+    }
+    return;
+  }
   const aimVelocity = averageAimVelocity(dt, flight);
   // A salvaged heavy is powered down: it neither moves nor fires, and nothing collides with it.
   const objects = flight.objects.filter(
@@ -2094,7 +2131,23 @@ function enemies(
   );
   for (const object of objects) {
     const state = object.enemy!;
-    const definition = enemyDefinition(flight.galaxy, state.archetype, state.id);
+    const base = enemyDefinition(flight.galaxy, state.archetype, state.id);
+    const blockade =
+      flight.galaxy === 6 && PHANTOM_DESTINATIONS.some((id) => id === object.routeId);
+    const song = phantomSongSpeed(flight.phantom?.allies ?? [], object);
+    const definition =
+      blockade || song !== 1
+        ? {
+            ...base,
+            physics:
+              song === 1
+                ? base.physics
+                : { ...base.physics, maxSpeed: base.physics.maxSpeed * song },
+            pursuit: blockade
+              ? { ...base.pursuit, homeRadius: PHANTOM_TUNING.blockadeReach }
+              : base.pursuit,
+          }
+        : base;
     const targetable = !safe(content, flight.player, flight) && !safe(content, object, flight);
     const visible = visibility.get(object.id)!;
     const before = { x: object.x, y: object.y };
@@ -2141,6 +2194,17 @@ function enemies(
       for (const axis of ["x", "y"] as const) {
         const point = { x: object.x, y: object.y };
         point[axis] += ((velocity[axis] + drift[axis]) * dt) / steps;
+        if (blockade && !object.enemy.fleeing) {
+          const reach = distance(point, object.enemy.home);
+          if (reach > PHANTOM_TUNING.blockadeReach) {
+            point.x =
+              object.enemy.home.x +
+              ((point.x - object.enemy.home.x) / reach) * PHANTOM_TUNING.blockadeReach;
+            point.y =
+              object.enemy.home.y +
+              ((point.y - object.enemy.home.y) / reach) * PHANTOM_TUNING.blockadeReach;
+          }
+        }
         const blocked = flight.objects.some(
           (other) =>
             other !== object &&
@@ -3267,7 +3331,7 @@ export function salvage(content: GameContent, flight: FlightState): boolean {
     ECONOMY.destruction[enemy.archetype].spread,
     next,
     ECONOMY.pickupCap[enemy.archetype],
-    drop.stardust,
+    object.id === PHANTOM_FLAGSHIP ? PHANTOM_TUNING.salvageStardust : drop.stardust,
     { at: flight.time, from: { x: object.x, y: object.y } },
     flight,
   );
@@ -3314,7 +3378,7 @@ function stepWrecks(
       timing.spread,
       next,
       ECONOMY.pickupCap[object.wreck.archetype],
-      drop.stardust,
+      object.id === PHANTOM_FLAGSHIP ? PHANTOM_TUNING.salvageStardust : drop.stardust,
       { at: flight.time, from: { x: object.x, y: object.y } },
       flight,
     );
@@ -3401,8 +3465,27 @@ export function stepFlight(
     const shotDelays = new Map<string, number>();
     const viewportWidth = input.viewportWidth ?? SCREEN.width;
     enemies(content, slice, flight, events, shotDelays);
-    stepEnemyBeams(content, slice, viewportWidth, flight);
-    stepRingEmissions(slice, flight);
+    if (flight.phantom?.phase !== "salvaged") {
+      stepEnemyBeams(content, slice, viewportWidth, flight);
+      stepRingEmissions(slice, flight);
+    }
+    if (flight.phantom?.allies.length) {
+      for (const intent of stepPhantomAllies(ship.physics, slice, flight, flight.phantom.allies)) {
+        const aim = direction({
+          x: intent.target.x - intent.from.x,
+          y: intent.target.y - intent.from.y,
+        });
+        releaseFriendlyVolley(
+          content,
+          weaponAt(intent.weapon, intent.level),
+          intent.from,
+          aim,
+          viewportWidth,
+          flight,
+          events,
+        );
+      }
+    }
     shots(content, slice, flight, events, shotDelays);
     stepMines(content, slice, flight);
     stepWrecks(content, slice, input.reducedMotion ?? false, flight);

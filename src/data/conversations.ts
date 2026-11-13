@@ -1,5 +1,6 @@
 import { GALAXY_NUMBERS } from "./galaxies.ts";
 import { JOB_LORE } from "./jobs.ts";
+import { PHANTOM_COPY } from "./phantom.ts";
 import type { GalaxyNumber } from "./types.ts";
 
 // In-flight conversations (gameplay/rules.md "Astra and Penny in flight"; words from
@@ -40,6 +41,7 @@ export type Lesson = "aim" | "dock" | "move" | "stardust";
 export type ConversationTrigger =
   | { readonly kind: "lesson"; readonly lesson: Lesson }
   | { readonly kind: "arrival"; readonly galaxy: GalaxyNumber }
+  | { readonly kind: "chapter"; readonly galaxy: GalaxyNumber; readonly id: string }
   | { readonly kind: "meeting"; readonly galaxy: GalaxyNumber; readonly destination: string }
   /** A first meeting with a galaxy's people, on its cue. */
   | { readonly kind: "encounter"; readonly galaxy: GalaxyNumber; readonly cue: EncounterCue }
@@ -182,6 +184,18 @@ const pool = (
 const WOOF = happy("penny", "Woof! Woof!");
 
 export const CONVERSATIONS: readonly Conversation[] = [
+  ...(["battleAllies", "battleAlone", "flagshipAttack", "flagshipDisabled"] as const).map(
+    (id): Conversation => ({
+      id: `chapter:phantom:${id}`,
+      lines: PHANTOM_COPY[id]!.lines.map((line) => ({
+        speaker: line.speaker as Speaker,
+        text: line.text,
+      })),
+      priority: "warning",
+      repeat: "flight",
+      trigger: { galaxy: 6, id, kind: "chapter" },
+    }),
+  ),
   {
     id: "lesson:move",
     lines: [line("astra", "Fly with the {move}.", "Fly with WASD.")],
@@ -624,6 +638,13 @@ export const CONVERSATIONS: readonly Conversation[] = [
   ),
 ];
 
+/** Approved chapter copy uses internal speaker keys; panels use their existing display names. */
+function displayChapterSpeaker(speaker: string): string {
+  return speaker === "general"
+    ? GENERAL_NAMED.name
+    : (SPEAKERS[speaker as Speaker]?.name ?? speaker);
+}
+
 /** Approved Use exchanges, keyed by existing runtime galaxy and dialogue context. */
 export interface InteractionLine {
   readonly speaker: string;
@@ -638,6 +659,30 @@ export interface InteractionCopy {
   }[];
 }
 export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
+  ...Object.fromEntries(
+    Object.entries(PHANTOM_COPY).map(([key, copy]): [string, InteractionCopy] => [
+      `6.phantom.${key}`,
+      {
+        lines: copy.lines.map((line) => ({
+          speaker: displayChapterSpeaker(line.speaker),
+          text: line.text,
+        })),
+        party:
+          key === "phantomSettlement3"
+            ? "Dollop"
+            : key.startsWith("phantomSettlement")
+              ? "Blurbs"
+              : GENERAL_NAMED.name,
+        topics: (copy.topics ?? []).map((topic) => ({
+          label: topic.question,
+          lines: topic.lines.map((line) => ({
+            speaker: displayChapterSpeaker(line.speaker),
+            text: line.text,
+          })),
+        })),
+      },
+    ]),
+  ),
   "1.deliveryComplete": {
     lines: [
       {

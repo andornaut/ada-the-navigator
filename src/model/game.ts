@@ -31,6 +31,7 @@ import { HUNTING_PACKS } from "../data/galaxyFeatures.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { carriedItemName, STORY_ITEM_NAMES } from "../data/itemNames.ts";
 import { JOB_TUNING, type JobType } from "../data/jobs.ts";
+import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import { galaxyProjects, PROJECT_THANKS } from "../data/projects.ts";
 import { SCREEN } from "../data/screen.ts";
 import { galaxyCard, OVERNIGHT_SLEEP } from "../data/storybook.ts";
@@ -59,6 +60,8 @@ import {
 } from "./activities.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { calfHome, calfRouteMidpoint, calfStart, placedCalf, stepCalf } from "./calf.ts";
+import type { ChapterResult } from "./chapterProtocol.ts";
+import { chapterRuntime } from "./chapters.ts";
 import {
   ConversationDirector,
   heavyInSight,
@@ -127,6 +130,8 @@ import {
   unchartedNear,
 } from "./landmarks.ts";
 import { type LocalMap, localMap, type MapContext, recordExplored } from "./map.ts";
+import { type PhantomContext, phantomWaypoint } from "./phantom.ts";
+import { phantomAllyRoster, type PhantomAllySpec } from "./phantomAllies.ts";
 import { HUNT_GLINT } from "./pickupBody.ts";
 import { newProgress } from "./progress.ts";
 import {
@@ -145,6 +150,7 @@ import {
 import { questDetails } from "./questDetails.ts";
 import { restoreSave, SAVE_VERSION } from "./save.ts";
 import { canRechargeShield } from "./shieldRecharge.ts";
+import { SHIP_REACH } from "./shipBody.ts";
 import {
   buy,
   fill,
@@ -287,7 +293,7 @@ const required: Partial<Record<GalaxyNumber, readonly string[]>> = {
 
 /** A galaxy's story destinations in the order its route first visits them; the first opens it. */
 export function galaxyRoute(galaxy: GalaxyNumber): readonly string[] {
-  return [...new Set(required[galaxy] ?? [])];
+  return chapterRuntime(galaxy)?.route ?? [...new Set(required[galaxy] ?? [])];
 }
 /** The destination that opens a built galaxy's story; none in a placeholder. */
 const first = (galaxy: GalaxyNumber): string | undefined => galaxyRoute(galaxy)[0];
@@ -581,6 +587,40 @@ export class GameModel {
   isUnlocked(galaxy: number): boolean {
     return this.state.unlocked.some((id) => id === galaxy);
   }
+  private readonly chapterRosters = new WeakMap<FlightState, readonly PhantomAllySpec[]>();
+  private chapterContext(): PhantomContext | undefined {
+    const flight = this.state.flight;
+    if (!flight) {
+      return undefined;
+    }
+    let allies = this.chapterRosters.get(flight);
+    if (flight.galaxy === 6 && !allies) {
+      allies = phantomAllyRoster(
+        GALAXY_NUMBERS.filter((galaxy) => galaxy !== 6).map((galaxy) => ({
+          activityCompleted: this.state.progress[galaxy].activityCompleted === true,
+          galaxy,
+          projects: this.allies(galaxy),
+        })),
+        SHIP_REACH,
+      );
+      this.chapterRosters.set(flight, allies);
+    }
+    return { content: this.content, flight, progress: this.current, ...(allies ? { allies } : {}) };
+  }
+  private applyChapterResult(result: ChapterResult | void): void {
+    if (!result) {
+      return;
+    }
+    if (result.complete && !this.current.questComplete) {
+      this.complete();
+    }
+    if (result.dialogue) {
+      this.state.dialogue = result.dialogue;
+    }
+    if (result.holodisk && !this.current.holodisk) {
+      this.recoverHolodisk(result.holodisk.giver);
+    }
+  }
   private get current(): GalaxyProgress {
     return this.state.progress[this.state.selectedGalaxy];
   }
@@ -595,6 +635,12 @@ export class GameModel {
     return (this.state.flight?.dangerFor ?? 0) > 0;
   }
   get objective(): string {
+    const context = this.chapterContext();
+    const chapterIndex =
+      context && chapterRuntime(context.flight.galaxy)?.objectiveIndex?.(context);
+    if (chapterIndex !== undefined) {
+      return this.chapter.objectives[chapterIndex] ?? "";
+    }
     const p = this.current;
     const stages: Partial<Record<GalaxyNumber, readonly number[]>> = {
       1: [0, 1, 2, 3, 4],
@@ -1248,6 +1294,10 @@ export class GameModel {
     this.explore(this.state.flight);
     this.ensureWhaleDebris();
     this.beginConversations();
+    const context = this.chapterContext();
+    if (context) {
+      chapterRuntime(context.flight.galaxy)?.init?.(context);
+    }
     this.reopenInteraction();
   }
   /** Records the chunk Ada is in to the galaxy's explored record, which the Map's fog reveals. */
@@ -1471,6 +1521,12 @@ export class GameModel {
       this.reopenInteraction();
       return;
     }
+    const runtime = chapterRuntime(f.galaxy);
+    const context = runtime && this.chapterContext();
+    if (context) {
+      runtime?.beforeStep?.(context, dt);
+    }
+    const previousChapterPosition = runtime?.afterStep ? { ...f.player } : undefined;
     this.ensureRequiredApproaches();
     // Before the step, so a sensed cache collected this step still counts as reached.
     reachSensed(PENNY_FIND_RANGE, f.galaxy, f.objects, f.player, this.state.achievements);
@@ -1544,6 +1600,13 @@ export class GameModel {
     }
     this.stepJob(f);
     this.stepCalf(dt, f);
+    if (context && previousChapterPosition) {
+      this.applyChapterResult(runtime?.afterStep?.(context, dt, previousChapterPosition, events));
+      const chatter = f.phantom?.chatter.splice(0) ?? [];
+      for (const key of chatter) {
+        this.talk.chapter(key);
+      }
+    }
     const jobMoments = this.jobMoments;
     this.jobMoments = [];
     const near = (range: number) => (object: { x: number; y: number }) =>
@@ -1602,6 +1665,12 @@ export class GameModel {
       this.notify(fill(this.label("achievement"), { name: unlocked }));
     }
     if (this.suspendedInteraction) {
+      return;
+    }
+    if (runtime) {
+      if (input.use && !this.state.dialogue) {
+        this.interact();
+      }
       return;
     }
     const opener = first(f.galaxy);
@@ -1689,15 +1758,32 @@ export class GameModel {
       return [];
     }
     const p = this.current;
-    return indicatorTargets(INDICATOR_SOURCES, {
+    const chapter = chapterRuntime(f.galaxy);
+    const objective = this.objectiveId(f.galaxy);
+    const point =
+      chapter && objective
+        ? (f.objects.find((object) => object.id === objective) ?? f.world.notables[objective])
+        : null;
+    const context = chapter && this.chapterContext();
+    const waypoint = context && f.galaxy === 6 ? phantomWaypoint(context) : null;
+    const marked = indicatorTargets(INDICATOR_SOURCES, {
       flight: f,
       galaxy: f.galaxy,
       holodiskWaypoint: this.holodiskWaypoint,
       job: this.jobIndicator(f),
-      objective: this.objectiveId(f.galaxy),
+      objective,
+      ...(point ? { objectivePoint: { id: point.id, x: point.x, y: point.y } } : {}),
       progress: p,
       questItem: questItemDestination(p),
     });
+    if (waypoint && !p.holodisk) {
+      const existing = marked.findIndex((target) => target.id === PHANTOM_FLAGSHIP);
+      if (existing !== -1) {
+        marked.splice(existing, 1);
+      }
+      marked.unshift({ ...waypoint, id: PHANTOM_FLAGSHIP, kind: "holodisk" });
+    }
+    return marked;
   }
   /**
    * The pause menu's Map of the current galaxy (map.ts), or null outside a flight: with its
@@ -1709,7 +1795,19 @@ export class GameModel {
       return null;
     }
     const labels = new Map(this.destinations().map(({ id, label }) => [id, label]));
+    const context = this.chapterContext();
+    const waypoint = context && f.galaxy === 6 ? phantomWaypoint(context) : null;
     return localMap({
+      ...(waypoint
+        ? {
+            chapterWaypoint: {
+              ...waypoint,
+              id: PHANTOM_FLAGSHIP,
+              label: this.label(PHANTOM_FLAGSHIP),
+              objective: !this.current.questComplete,
+            },
+          }
+        : {}),
       catalog: ECONOMY,
       chunkSize: this.content.tuning.chunkSize,
       destinations: galaxyRoute(f.galaxy),
@@ -1752,6 +1850,13 @@ export class GameModel {
   }
   /** The current objective's destination in a galaxy, if it has one (indicators.ts). */
   private objectiveId(galaxy: GalaxyNumber): string | null {
+    const context = this.chapterContext();
+    if (context && context.flight.galaxy === galaxy) {
+      const runtime = chapterRuntime(galaxy);
+      if (runtime?.objective) {
+        return runtime.objective(context);
+      }
+    }
     const p = this.current;
     return objectiveDestination(galaxy, p, p.deposited >= this.content.tuning.miningMilestones[1]);
   }
@@ -1821,7 +1926,7 @@ export class GameModel {
   }
   private ensureRequiredApproaches(): void {
     const f = this.state.flight;
-    if (!f || (this.current.questComplete && !this.holodiskWaypoint)) {
+    if (!f || chapterRuntime(f.galaxy) || (this.current.questComplete && !this.holodiskWaypoint)) {
       return;
     }
     for (const object of [...f.objects]) {
@@ -1932,6 +2037,19 @@ export class GameModel {
     if (this.useJob()) {
       return;
     }
+    const chapterContext = this.chapterContext();
+    if (chapterContext) {
+      const runtime = chapterRuntime(chapterContext.flight.galaxy);
+      const target = salvageTarget(this.content, chapterContext.flight);
+      const id = target?.id === PHANTOM_FLAGSHIP ? target.id : undefined;
+      if (runtime?.use && id) {
+        const result = runtime.use(chapterContext, id);
+        if (result !== undefined) {
+          this.applyChapterResult(result);
+          return;
+        }
+      }
+    }
     const flight = this.state.flight;
     if (flight && this.salvageable() && salvage(this.content, flight)) {
       this.panel("salvage", INTERACTION_COPY.salvage!.lines[0]!.text, "Astra");
@@ -1941,6 +2059,13 @@ export class GameModel {
     const f = this.state.flight;
     if (!id || !f) {
       return;
+    }
+    if (chapterContext) {
+      const result = chapterRuntime(f.galaxy)?.use?.(chapterContext, id);
+      if (result !== undefined) {
+        this.applyChapterResult(result);
+        return;
+      }
     }
     if (id !== HUB_STATION && this.current.stations.includes(id)) {
       if (this.supplyDue(id)) {
@@ -2581,6 +2706,15 @@ export class GameModel {
       }
       return;
     }
+    const context = this.chapterContext();
+    if (context) {
+      const result = chapterRuntime(context.flight.galaxy)?.choose?.(context, dialogue, id);
+      if (result !== undefined) {
+        this.state.dialogue = null;
+        this.applyChapterResult(result);
+        return;
+      }
+    }
     if (id === "optional") {
       const entry = this.chapter.dialogue[dialogue.context];
       if (entry?.optional) {
@@ -2656,6 +2790,10 @@ export class GameModel {
         }
       }
       this.beginConversations();
+      const chapter = this.chapterContext();
+      if (chapter) {
+        chapterRuntime(chapter.flight.galaxy)?.init?.(chapter);
+      }
       // A holodisk moment saved mid-way shows again from its first page.
       if (this.state.dialogue?.context === HOLODISK_MOMENT) {
         this.holodiskMoment();
@@ -3019,6 +3157,16 @@ export class GameModel {
       this.story = null;
       if (this.state.dialogue?.context === HOLODISK_MOMENT) {
         this.state.dialogue = null;
+        if (
+          this.state.selectedGalaxy === 6 &&
+          this.current.holodisk &&
+          this.current.questComplete
+        ) {
+          const copy = INTERACTION_COPY["6.phantom.aftermath"];
+          if (copy) {
+            this.panel("phantom.aftermath", copy.lines[0]!.text, copy.party);
+          }
+        }
       }
     } else {
       this.openSelection(position);
@@ -3090,8 +3238,14 @@ export class GameModel {
   save(): string {
     this.pullLoadout();
     const effective = this.heldFlight ? { ...this.state, ...this.heldFlight } : this.state;
+    const snapshot = effective.flight?.phantom
+      ? {
+          ...effective,
+          flight: { ...effective.flight, phantom: { ...effective.flight.phantom, chatter: [] } },
+        }
+      : effective;
     return JSON.stringify({
-      ...effective,
+      ...snapshot,
       depletionContinuation: this.depletionContinuation || undefined,
       pendingInteraction: this.suspendedInteraction ?? undefined,
     });

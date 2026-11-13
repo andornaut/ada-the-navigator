@@ -239,6 +239,12 @@ export interface MapContext {
   readonly flight: Pick<FlightState, "facing" | "objects" | "player" | "galaxy">;
   /** The known holodisk waypoint until its holodisk is recovered, or null. */
   readonly holodisk: Vec | null;
+  /** An authored chapter waypoint, with the same non-Travel marker as a holodisk. */
+  readonly chapterWaypoint?: Vec & {
+    readonly id: string;
+    readonly label: string;
+    readonly objective?: boolean;
+  };
   /**
    * The held job's target, with the job's title: it marks the place there, or shows as its own
    * spot when no shown place is there. It never counts toward the percent.
@@ -363,6 +369,20 @@ export function localMap(context: MapContext): LocalMap {
         },
       ]
     : [];
+  if (context.chapterWaypoint) {
+    const { id, label, x, y } = context.chapterWaypoint;
+    waypoint.push({
+      id,
+      job: false,
+      kind: "destination",
+      label,
+      objective: context.chapterWaypoint.objective ?? true,
+      symbol: "holodisk",
+      travel: false,
+      x,
+      y,
+    });
+  }
   const places = [...destinations, ...stations, ...charted, ...waypoint];
   const { job } = context;
   const marked = places.map((entry) => (entry.id === job?.id ? { ...entry, job: true } : entry));

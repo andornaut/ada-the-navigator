@@ -298,10 +298,12 @@ export function openingScene(
  * closing. */
 export function resolutionScene(content: GameContent, galaxy: GalaxyNumber): Scene {
   const [chapter, backgrounds] = builtChapter(content, galaxy);
+  const rejoin = chapter.resolutionRejoin ?? [];
+  const closing = chapter.closingLines ?? [];
   return {
     effect: { galaxy, kind: "resolved" },
     id: `resolution:${galaxy}`,
-    last: "closing",
+    last: closing.length ? `closing:${closing.length - 1}` : "closing",
     lead: "home",
     pages: [
       {
@@ -317,15 +319,28 @@ export function resolutionScene(content: GameContent, galaxy: GalaxyNumber): Sce
       ...chapter.resolutionBranches.map((text, index): StoryPage => ({
         background: backgrounds.resolution,
         id: `resolution:branch:${index}`,
-        next: "closing",
+        next: rejoin.length ? "resolution:rejoin:0" : "closing",
         text,
+      })),
+      ...rejoin.map((line, index): StoryPage => ({
+        ...line,
+        background: backgrounds.resolution,
+        id: `resolution:rejoin:${index}`,
+        next: index + 1 < rejoin.length ? `resolution:rejoin:${index + 1}` : "closing",
       })),
       {
         background: backgrounds.closing,
         heading: chapter.name,
         id: "closing",
+        ...(closing.length ? { next: "closing:0" } : {}),
         text: chapter.closing,
       },
+      ...closing.map((line, index): StoryPage => ({
+        ...line,
+        background: backgrounds.closing,
+        id: `closing:${index}`,
+        ...(index + 1 < closing.length ? { next: `closing:${index + 1}` } : {}),
+      })),
     ],
   };
 }

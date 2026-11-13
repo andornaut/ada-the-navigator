@@ -21,6 +21,10 @@ export interface ChapterContent {
   /** Pages after either branch page, where the story rejoins, each at its own location. */
   openingRejoin?: readonly PrologueStep[];
   resolution: string;
+  /** Ordered pages after either resolution branch. */
+  resolutionRejoin?: readonly PremiseLine[];
+  /** Ordered speaker pages after the chapter's closing narration. */
+  closingLines?: readonly PremiseLine[];
   /** One branch page per resolution choice, in choice order, before the closing. */
   resolutionBranches: readonly [string, string];
   resolutionChoices: readonly [string, string];
