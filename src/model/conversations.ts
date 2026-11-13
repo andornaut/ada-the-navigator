@@ -745,7 +745,12 @@ export class InteractionConversation {
   }
 
   get atOutcome(): boolean {
-    return !this.answer && this.index >= (this.copy?.lines.length ?? 0) - 1;
+    return (
+      this.copy !== null &&
+      !this.answer &&
+      !this.topicsShown &&
+      this.index >= this.copy.lines.length - 1
+    );
   }
 
   get topics() {
@@ -754,6 +759,12 @@ export class InteractionConversation {
 
   get choices() {
     return this.atOutcome ? (this.panel?.choices.filter(({ id }) => id !== "optional") ?? []) : [];
+  }
+
+  /** Visible model decisions are material; a sole Continue only ends exposition. */
+  get atChoice(): boolean {
+    const choices = this.choices;
+    return choices.length > 0 && !(choices.length === 1 && choices[0]?.id === "continue");
   }
 
   get party(): string {
@@ -765,33 +776,37 @@ export class InteractionConversation {
   }
 
   ask(): void {
-    this.topicsShown = true;
+    if (this.hasTopics && !this.answer) {
+      this.topicsShown = true;
+    }
   }
 
   topic(index: number): void {
     const topic = this.copy?.topics[index];
-    if (!topic || !this.topicsShown) {
+    if (!topic || !this.topicsShown || topic.lines.length === 0) {
       return;
     }
+    this.topicsShown = false;
     this.answer = topic.lines;
     this.answerIndex = 0;
   }
 
-  /** Returns to the topic list after an answer; never resolves a model choice. */
+  /** An answered topic returns to its essential page; visible options require selection. */
   advance(): void {
     if (this.answer) {
       if (++this.answerIndex >= this.answer.length) {
         this.answer = null;
       }
-    } else if (this.topicsShown) {
-      this.topicsShown = false;
-    } else if (!this.atOutcome) {
+    } else if (this.copy && !this.topicsShown && !this.atOutcome) {
       this.index++;
     }
   }
 
   /** Pending choices remain visible and must be explicitly answered. */
   skip(): void {
+    if (!this.copy || this.atChoice) {
+      return;
+    }
     this.answer = null;
     this.topicsShown = false;
     this.index = Math.max(0, (this.copy?.lines.length ?? 0) - 1);
@@ -801,6 +816,9 @@ export class InteractionConversation {
     this.panel = null;
     this.copy = null;
     this.answer = null;
+    this.answerIndex = 0;
+    this.index = 0;
+    this.topicsShown = false;
   }
 }
 

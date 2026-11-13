@@ -1057,18 +1057,197 @@ describe("Use conversation paging", () => {
     expect(run.choices).toEqual(panel.choices);
   });
 
-  it("returns optional answers to their list without moving essential dialogue", () => {
+  it("returns a selected topic to essential progression without reopening the same menu", () => {
     const run = new InteractionConversation();
     run.show(copy, panel);
     run.ask();
     run.topic(0);
     expect(run.line?.text).toBe("Answer");
     run.advance();
-    expect(run.topics.map(({ label }) => label)).toEqual(["Question"]);
-    run.advance();
+    expect(run.topics).toEqual([]);
     expect(run.line?.text).toBe("First");
     run.advance();
     expect(run.line?.speaker).toBe("Ada");
+    expect(run.choices).toEqual(panel.choices);
+  });
+
+  it("does not let Next bypass visible topic options, including at the outcome", () => {
+    for (const atOutcome of [false, true]) {
+      const run = new InteractionConversation();
+      run.show(copy, panel);
+      if (atOutcome) {
+        run.advance();
+      }
+      const line = run.line;
+      run.ask();
+      for (let press = 0; press < 3; press++) {
+        run.advance();
+        run.topic(-1);
+        expect(run.line).toBe(line);
+        expect(run.topics.map(({ label }) => label)).toEqual(["Question"]);
+        expect(run.choices).toEqual([]);
+        expect(run.atOutcome).toBe(false);
+      }
+      run.topic(0);
+      expect(run.line?.text).toBe("Answer");
+      run.advance();
+      expect(run.line).toBe(line);
+      expect(run.topics).toEqual([]);
+      expect(run.atOutcome).toBe(atOutcome);
+    }
+  });
+
+  it("plays every selected branch line once before resuming its current essential page", () => {
+    const run = new InteractionConversation();
+    run.show(
+      {
+        ...copy,
+        topics: [
+          {
+            label: "Question",
+            lines: [
+              { speaker: "Clover", text: "Part one" },
+              { speaker: "Ada", text: "Part two" },
+            ],
+          },
+        ],
+      },
+      panel,
+    );
+    run.ask();
+    run.topic(0);
+    expect(run.line?.text).toBe("Part one");
+    run.ask();
+    expect(run.topics).toEqual([]);
+    run.advance();
+    expect(run.line?.text).toBe("Part two");
+    expect(run.choices).toEqual([]);
+    run.advance();
+    expect(run.line?.text).toBe("First");
+    expect(run.topics).toEqual([]);
+    run.advance();
+    expect(run.line?.text).toBe("Last");
+  });
+
+  it("retains pending meaningful choices and leaves their outcome to explicit model selection", () => {
+    const run = new InteractionConversation();
+    const guarded = {
+      ...panel,
+      choices: [
+        { id: "take", label: "Accept", refused: true },
+        { id: "skip", label: "Not now" },
+      ],
+    };
+    const before = structuredClone(guarded);
+    run.show(copy, guarded);
+    run.skip();
+    expect(run.line?.text).toBe("Last");
+    for (let press = 0; press < 3; press++) {
+      run.advance();
+      run.skip();
+    }
+    expect(run.choices).toEqual(guarded.choices);
+    expect(run.atChoice).toBe(true);
+    expect(guarded).toEqual(before);
+  });
+
+  it("skips optional background without selecting a topic and stops before material outcomes", () => {
+    const run = new InteractionConversation();
+    const before = structuredClone(panel);
+    run.show(copy, panel);
+    run.ask();
+    expect(run.atChoice).toBe(false);
+    run.skip();
+    expect(run.line?.text).toBe("Last");
+    expect(run.topics).toEqual([]);
+    expect(run.choices).toEqual(panel.choices);
+    expect(run.atChoice).toBe(true);
+    run.skip();
+    expect(run.choices).toEqual(panel.choices);
+    expect(panel).toEqual(before);
+  });
+
+  it("guards an active activity's Continue alternative and drop confirmation as decisions", () => {
+    for (const choices of [
+      [
+        { id: "drop", label: "Drop" },
+        { id: "continue", label: "Continue" },
+      ],
+      [
+        { id: "confirmDrop", label: "Drop" },
+        { id: "cancel", label: "Cancel" },
+      ],
+    ]) {
+      const run = new InteractionConversation();
+      run.show(copy, { ...panel, choices });
+      run.skip();
+      expect(run.atChoice).toBe(true);
+      run.advance();
+      run.skip();
+      expect(run.choices).toEqual(choices);
+    }
+  });
+
+  it("treats single action options as material regardless of a Continue display label", () => {
+    for (const id of ["take", "deliver", "confirmDrop"]) {
+      const run = new InteractionConversation();
+      const choices = [{ id, label: "Continue" }];
+      run.show(copy, { ...panel, choices });
+      run.skip();
+      expect(run.atChoice).toBe(true);
+      run.skip();
+      expect(run.choices).toEqual(choices);
+    }
+  });
+
+  it("exempts only the canonical Continue action whose current contexts advance text without outcomes", () => {
+    const contexts: (readonly [GalaxyNumber, string])[] = Object.entries(CONTENT.chapters).flatMap(
+      ([galaxy, chapter]) =>
+        Object.keys(chapter.dialogue).map(
+          (context) => [Number(galaxy) as GalaxyNumber, context] as const,
+        ),
+    );
+    contexts.push(
+      ...["salvage", "deposit", "tow", "deliver", "holodiskHandover"].map(
+        (context) => [1, context] as const,
+      ),
+    );
+    for (const [galaxy, context] of contexts) {
+      const model = new GameModel(CONTENT);
+      model.state.unlocked = [galaxy];
+      model.startGalaxy(galaxy);
+      if (context === "holodiskHandover") {
+        model.state.progress[galaxy].holodisk = true;
+      }
+      const complete = { ...panel, choices: [{ id: "continue", label: "Continue" }], context };
+      model.state.dialogue = complete;
+      const before = structuredClone({ ...model.state, dialogue: null });
+      const run = new InteractionConversation();
+      run.show(copy, complete);
+      run.skip();
+      expect(run.atChoice, `${galaxy}:${context}`).toBe(false);
+      model.choose("continue");
+      expect({ ...model.state, dialogue: null }, `${galaxy}:${context}`).toEqual(before);
+    }
+  });
+
+  it("keeps a plain completion available once without applying or inventing an outcome", () => {
+    const run = new InteractionConversation();
+    const complete = { ...panel, choices: [{ id: "continue", label: "Continue" }] };
+    const before = structuredClone(complete);
+    run.show(copy, complete);
+    run.skip();
+    run.advance();
+    run.skip();
+    expect(run.line?.text).toBe("Last");
+    expect(run.choices).toEqual(complete.choices);
+    expect(run.atChoice).toBe(false);
+    expect(complete).toEqual(before);
+    run.reset();
+    expect(run.choices).toEqual([]);
+    expect(run.topics).toEqual([]);
+    expect(run.line).toBeNull();
+    expect(run.atOutcome).toBe(false);
   });
 
   it("preserves the page on render and resets for a new model panel", () => {
