@@ -1,3 +1,4 @@
+import { ORE_FIELD_LAYOUTS } from "./oreFieldLayouts.ts";
 import type { GalaxyNumber } from "./types.ts";
 
 /**
@@ -19,7 +20,7 @@ export const ORE_FIELDS = {
   /** Inclusive resource rock count per field. */
   count: [6, 10] as const,
   /** Field diameter across its rock centres. */
-  diameter: 900,
+  diameter: 2 * ORE_FIELD_LAYOUTS.radius,
   /**
    * Chance that a field on the guard checkerboard hosts a platform. Only half the cells are on
    * it, so at most half of fields are guarded.
