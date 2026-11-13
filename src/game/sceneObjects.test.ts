@@ -7,6 +7,8 @@ import { describe, expect, it, vi } from "vitest";
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { rockFrame } from "../model/asteroids.ts";
 import { debrisPieceIndex } from "../model/debrisBody.ts";
+import { carriesStardust } from "../model/drops.ts";
+import { orePickupSize } from "../model/pickupBody.ts";
 import type { SpaceObject } from "../model/types.ts";
 import { footprintOutline, hexNumber, playDepth } from "./asteroidArt.ts";
 import { debrisFrame, debrisMarks, debrisPiece, readDebrisArt } from "./debrisArt.ts";
@@ -32,6 +34,7 @@ function fixture(galaxy = 1, ready = true, reducedMotion = false) {
     lineBetween: vi.fn(),
     lineStyle: vi.fn(),
     strokeEllipse: vi.fn(),
+    strokeRect: vi.fn(),
   };
   const sprite = {
     setDepth: vi.fn().mockReturnThis(),
@@ -69,7 +72,9 @@ function fixture(galaxy = 1, ready = true, reducedMotion = false) {
     palette: { environment: 0x645c54 },
     project: () => ({ x: 120, y: 140 }),
     reducedMotion,
+    textures: { exists: vi.fn(() => true) },
   };
+  const drawStardust = vi.fn();
   const context = createContext({
     DEBRIS_STONES: ASTEROID_ART.asteroids.filter(({ size }) => size === "small"),
     PhaserMath: {
@@ -83,14 +88,17 @@ function fixture(galaxy = 1, ready = true, reducedMotion = false) {
       },
     },
     SCREEN: { height: 360, width: 720 },
+    carriesStardust,
     debrisFrame,
     debrisMarks,
     debrisPiece,
     debrisPieceIndex,
+    drawStardust,
     footprintOutline,
     hexNumber,
     keylineSprite: vi.fn(),
     objectSprite,
+    orePickupSize,
     playDepth,
     rockArt: () => undefined,
     rockFrame,
@@ -104,7 +112,7 @@ function fixture(galaxy = 1, ready = true, reducedMotion = false) {
     }).outputText,
     context,
   );
-  return { context, ink, objectSprite, rockFrameTexture, scene, sprite };
+  return { context, drawStardust, ink, objectSprite, rockFrameTexture, scene, sprite };
 }
 
 const debris = (id = "ballistic:0,0:1"): SpaceObject => ({
@@ -202,5 +210,73 @@ describe("traveling debris rendering", () => {
     f.scene.model.state.flight.galaxy = 4;
     expect(f.context.drawTravelingDebris(f.scene, debris(), { x: 120, y: 140 })).toBe(false);
     expect(f.objectSprite).not.toHaveBeenCalled();
+  });
+});
+
+describe("ore quantity rendering", () => {
+  it.each([
+    [undefined, 11],
+    [1, 11],
+    [5, 18],
+  ] as const)("draws cargo amount %s at %s using the same centered rest frame", (amount, size) => {
+    const f = fixture();
+    const object: SpaceObject = {
+      ...(amount === undefined ? {} : { amount }),
+      hp: 1,
+      id: "ore",
+      kind: "pickup",
+      radius: 6,
+      role: "cargo",
+      x: 40,
+      y: 80,
+    };
+    const before = structuredClone(object);
+    f.context.drawObject(f.scene, object);
+    expect(f.objectSprite).toHaveBeenCalledExactlyOnceWith(f.scene, object.id, "ore-nugget", 0);
+    expect(f.sprite.setDisplaySize).toHaveBeenCalledExactlyOnceWith(size, size);
+    expect(f.sprite.setOrigin).toHaveBeenCalledWith(0.5);
+    expect(f.sprite.setPosition).toHaveBeenCalledWith(120, 140);
+    expect(f.sprite.setDepth).toHaveBeenCalledWith(playDepth(140));
+    expect(f.drawStardust).not.toHaveBeenCalled();
+    expect(f.ink.strokeRect).not.toHaveBeenCalled();
+    expect(object).toEqual(before);
+  });
+
+  it("keeps amount-5 Stardust on its own renderer instead of the ore texture", () => {
+    const f = fixture();
+    const object: SpaceObject = {
+      amount: 5,
+      hp: 1,
+      id: "dust",
+      kind: "pickup",
+      radius: 6,
+      x: 40,
+      y: 80,
+    };
+    f.context.drawObject(f.scene, object);
+    expect(f.drawStardust).toHaveBeenCalledExactlyOnceWith(
+      f.scene,
+      object,
+      { x: 120, y: 140 },
+      object.radius,
+    );
+    expect(f.objectSprite).not.toHaveBeenCalled();
+  });
+
+  it("keeps the large ore rest frame under reduced motion", () => {
+    const f = fixture(1, true, true);
+    const object: SpaceObject = {
+      amount: 5,
+      hp: 1,
+      id: "ore-five",
+      kind: "pickup",
+      radius: 6,
+      role: "cargo",
+      x: 40,
+      y: 80,
+    };
+    f.context.drawObject(f.scene, object);
+    expect(f.objectSprite).toHaveBeenCalledExactlyOnceWith(f.scene, object.id, "ore-nugget", 0);
+    expect(f.sprite.setDisplaySize).toHaveBeenCalledExactlyOnceWith(18, 18);
   });
 });

@@ -13,6 +13,7 @@ import { SCREEN } from "../data/screen.ts";
 import { rockFrame, scenerySilhouette } from "../model/asteroids.ts";
 import { debrisPieceIndex } from "../model/debrisBody.ts";
 import { carriesStardust } from "../model/drops.ts";
+import { orePickupSize } from "../model/pickupBody.ts";
 import { hubBay, hubWorn } from "../model/storyShips.ts";
 import type { SpaceObject, Vec } from "../model/types.ts";
 import {
@@ -897,9 +898,10 @@ export function drawObject(scene: ObjectsContext, object: SpaceObject): void {
         scene.ink.lineStyle(1.5, color);
       }
       if (object.role === "cargo" && scene.textures.exists("ore-nugget")) {
-        // Art's 11 px ore nugget, nearest-neighbour filtered.
+        // Five ore uses the shared larger footprint, with the same nearest-filtered rest frame.
+        const size = orePickupSize(object.amount);
         objectSprite(scene, object.id, "ore-nugget", 0)
-          .setDisplaySize(11, 11)
+          .setDisplaySize(size, size)
           .setOrigin(0.5)
           .setPosition(point.x, point.y)
           .setDepth(playDepth(point.y));
