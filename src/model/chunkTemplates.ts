@@ -7,6 +7,7 @@ import { type AsteroidShape, resourceShapes } from "./asteroids.ts";
 import { fromScreen, toScreen } from "./convex.ts";
 import { drawnRock, loopReach, rocksOverlap } from "./rockSpacing.ts";
 import type { Vec } from "./types.ts";
+import { worldCell, worldCellKey, worldCellOrigin, worldGrid } from "./worldCells.ts";
 
 /** Asteroid variants and the galaxy's field weights; without them rocks use `rockRadius`. */
 export interface ChunkAsteroids {
@@ -15,6 +16,7 @@ export interface ChunkAsteroids {
 }
 
 export interface ChunkPlanOptions {
+  readonly worldSide?: number;
   readonly asteroids?: ChunkAsteroids;
   readonly clearance: number;
   readonly objectsPerChunk: number;
@@ -258,8 +260,12 @@ function rolledFeature(
       id: `chunk:${options.x},${options.y}:feature`,
       kind: "rock",
       radius: chosen.shape.radius,
-      x: options.x * options.size + (quadrant % 2 ? 0.75 : 0.25) * options.size,
-      y: options.y * options.size + (quadrant < 2 ? 0.25 : 0.75) * options.size,
+      x:
+        worldCellOrigin(worldGrid(options, options.size), options).x +
+        (quadrant % 2 ? 0.75 : 0.25) * options.size,
+      y:
+        worldCellOrigin(worldGrid(options, options.size), options).y +
+        (quadrant < 2 ? 0.25 : 0.75) * options.size,
     },
     shape: chosen.shape,
   };
@@ -305,14 +311,27 @@ function spacedFeature(
 /** The rolled features of the eight chunks around this one. */
 function neighbourFeatures(catalog: ChunkCatalog, options: ChunkPlanOptions): ChunkPlacement[] {
   const features: ChunkPlacement[] = [];
+  const grid = worldGrid(options, options.size);
+  const seen = new Set([worldCellKey(grid, options)]);
   for (const dx of [-1, 0, 1]) {
     for (const dy of [-1, 0, 1]) {
       if (dx || dy) {
-        const around = { ...options, x: options.x + dx, y: options.y + dy };
+        const raw = { x: options.x + dx, y: options.y + dy };
+        const cell = worldCell(grid, raw);
+        const identity = worldCellKey(grid, cell);
+        if (seen.has(identity)) {
+          continue;
+        }
+        seen.add(identity);
+        const around = { ...options, ...cell };
         const { id, seed } = chunkTemplate(catalog, around);
         const feature = rolledFeature(around, id, seed);
         if (feature) {
-          features.push(feature.placement);
+          features.push({
+            ...feature.placement,
+            x: feature.placement.x + (raw.x - cell.x) * options.size,
+            y: feature.placement.y + (raw.y - cell.y) * options.size,
+          });
         }
       }
     }
@@ -468,10 +487,14 @@ function blocked(
 }
 
 /** Pure plans use normalized authored slots and return world coordinates without retaining visits. */
-export function planChunk(catalog: ChunkCatalog, options: ChunkPlanOptions): ChunkPlan {
-  validate(options);
+export function planChunk(catalog: ChunkCatalog, rawOptions: ChunkPlanOptions): ChunkPlan {
+  validate(rawOptions);
+  const options = {
+    ...rawOptions,
+    ...worldCell(worldGrid(rawOptions, rawOptions.size), rawOptions),
+  };
   const { id, seed } = chunkTemplate(catalog, options);
-  const origin = { x: options.x * options.size, y: options.y * options.size };
+  const origin = worldCellOrigin(worldGrid(options, options.size), options);
   const center = { x: origin.x + options.size / 2, y: origin.y + options.size / 2 };
   const halfWidth = options.shipRadius + options.clearance;
   const templateSlots = TEMPLATES[id];
