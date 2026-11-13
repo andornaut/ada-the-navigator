@@ -124,6 +124,7 @@ function enemyState(galaxy: GalaxyNumber, value: unknown): boolean {
       nonnegative(value[key]),
     ) ||
     !(value.returnSeconds === undefined || nonnegative(value.returnSeconds)) ||
+    !(value.retreat === undefined || retreatState(value.age as number, value.retreat)) ||
     !finite(value.phase) ||
     !vector(value.facing) ||
     !nullableVector(value.heading) ||
@@ -154,6 +155,23 @@ function enemyState(galaxy: GalaxyNumber, value: unknown): boolean {
           (Number.isInteger(part.burst) && (part.burst as number) >= 0)) &&
         nullableVector(part.aim),
     )
+  );
+}
+function retreatState(age: number, value: unknown): boolean {
+  return (
+    record(value) &&
+    ["morale", "hitAndRun"].includes(String(value.kind)) &&
+    vector(value.origin) &&
+    record(value.away) &&
+    vector(value.away) &&
+    finite(value.away.x) &&
+    finite(value.away.y) &&
+    Math.abs(Math.hypot(value.away.x, value.away.y) - 1) < 1e-6 &&
+    finite(value.startedAt) &&
+    value.startedAt >= 0 &&
+    value.startedAt <= age &&
+    (value.endedAt === undefined ||
+      (finite(value.endedAt) && value.endedAt >= value.startedAt && value.endedAt <= age))
   );
 }
 function tacticState(value: unknown): boolean {

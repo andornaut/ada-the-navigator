@@ -99,7 +99,7 @@ describe("hitAndRun", () => {
     expect(ships[0]!.tactic.phase).toBe("retreat");
     expect(fired).toBe(behaviour.burstVolleys);
     const start = range(ships[0]!);
-    run(ships, Math.round(behaviour.retreatSeconds / dt) - 1);
+    run(ships, Math.round(enemyCatalog.fighter.retreats.hitAndRun.seconds / dt) - 1);
     expect(ships[0]!.tactic.phase).toBe("retreat");
     const farthest = range(ships[0]!);
     expect(farthest).toBeGreaterThan(start + 60);
@@ -197,10 +197,13 @@ describe("flee", () => {
       ...context(peers),
       initialPackSizes: { pack: 5 },
     });
-    const { shots } = run(ships, 120, { context: lossContext });
+    const { shots } = run(ships, 60, { context: lossContext });
     expect(ships[0]!.fleeing).toBe(true);
     expect(range(ships[0]!)).toBeGreaterThan(300);
     expect(shots[0]).toBe(0);
+    run(ships, 60, { context: lossContext });
+    expect(ships[0]!.fleeing).toBe(false);
+    expect(ships[0]!.engaged).toBe(true);
   });
 });
 
@@ -462,10 +465,12 @@ describe("galaxy difficulty", () => {
     ]);
     const retreat = (galaxy: GalaxyNumber) => {
       const behaviour = enemyDefinition(galaxy, "fighter").behaviour;
-      return behaviour.kind === "hitAndRun" ? behaviour.retreatSeconds : null;
+      return behaviour.kind === "hitAndRun"
+        ? enemyDefinition(galaxy, "fighter").retreats.hitAndRun.seconds
+        : null;
     };
     // Sunflower's and Cartwheel's fighters hit and run; Phantom reads Cartwheel's roster.
-    expect([1, 2, 6].map((galaxy) => retreat(galaxy as GalaxyNumber))).toEqual([1.6, 1.1, 1]);
+    expect([1, 2, 6].map((galaxy) => retreat(galaxy as GalaxyNumber))).toEqual([1.6, 1.6, 1.6]);
     expect(DIFFICULTY_SCALE).toBe(1);
     expect(enemyDefinition(2, "fighter").behaviour.kind).toBe("hitAndRun");
     expect(enemyDefinition(2, "interceptor").behaviour.kind).toBe("hitAndRun");

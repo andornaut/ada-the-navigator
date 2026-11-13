@@ -783,3 +783,45 @@ describe("a save from a newer version", () => {
     expect(restoreSave({ mode: "home", version: SAVE_VERSION + 1 })).toBeNull();
   });
 });
+
+describe("bounded retreat save state", () => {
+  it.each([undefined, 2])(
+    "preserves active and cooling-down retreats with endedAt %s",
+    (endedAt) => {
+      const snapshot = combatSnapshot();
+      const enemy = snapshot.flight.objects[0]!.enemy!;
+      enemy.age = 3;
+      enemy.retreat = {
+        away: { x: 1, y: 0 },
+        kind: "morale",
+        origin: { x: 10, y: 20 },
+        startedAt: 1,
+        ...(endedAt === undefined ? {} : { endedAt }),
+      };
+      expect(restoreSave(JSON.stringify(snapshot))).toEqual(snapshot);
+    },
+  );
+  it.each([
+    { kind: "other" },
+    { origin: { x: Infinity, y: 0 } },
+    { away: { x: 0, y: 0 } },
+    { startedAt: -1 },
+    { startedAt: 4 },
+    { endedAt: 0 },
+    { endedAt: 4 },
+  ])("rejects malformed bounded retreat fields %j", (change) => {
+    const snapshot = combatSnapshot();
+    const enemy = snapshot.flight.objects[0]!.enemy!;
+    enemy.age = 3;
+    Object.assign(enemy, {
+      retreat: {
+        away: { x: 1, y: 0 },
+        kind: "morale",
+        origin: { x: 10, y: 20 },
+        startedAt: 1,
+        ...change,
+      },
+    });
+    expect(restoreSave(JSON.stringify(snapshot))).toBeNull();
+  });
+});

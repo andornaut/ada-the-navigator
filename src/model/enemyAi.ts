@@ -8,6 +8,7 @@ import {
   type FireProfile,
   type HardpointDefinition,
   type Point,
+  type RetreatPolicy,
   RING_BOLTS,
 } from "../data/enemyCatalog.ts";
 import { MUZZLE_ART, muzzleLayout } from "../data/enemyMuzzles.ts";
@@ -35,6 +36,14 @@ export interface TacticState {
   seconds: number;
   /** Volleys fired in the current attack. */
   volleys: number;
+}
+/** One bounded retreat and its recovery cooldown, retained exactly across a saved flight. */
+export interface RetreatState {
+  away: Point;
+  endedAt?: number;
+  kind: "hitAndRun" | "morale";
+  origin: Point;
+  startedAt: number;
 }
 export interface EnemyState {
   age: number;
@@ -76,6 +85,7 @@ export interface EnemyState {
   returnSeconds?: number;
   /** The return-to-home latch, set when a chase ends. */
   returning: boolean;
+  retreat?: RetreatState;
   /** A disabled heavy Ada salvaged: powered down, passable and drawn dimmed. */
   salvaged: boolean;
   tactic: TacticState;
@@ -471,9 +481,33 @@ function holdBand(
   return { x: aim.x * radial - aim.y * across, y: aim.y * radial + aim.x * across };
 }
 
+const retreatActive = (state: EnemyState): boolean =>
+  state.retreat !== undefined && state.retreat.endedAt === undefined;
+const retreatReady = (definition: EnemyDefinition, state: EnemyState): boolean =>
+  !state.retreat ||
+  (state.retreat.endedAt !== undefined &&
+    state.age - state.retreat.endedAt >= definition.retreats[state.retreat.kind].cooldownSeconds);
+function beginRetreat(kind: RetreatState["kind"], state: EnemyState): RetreatState {
+  const known = state.lastSeen ?? state.position;
+  const away = unit({ x: state.position.x - known.x, y: state.position.y - known.y });
+  const fallback = unit(state.facing);
+  return {
+    away: magnitude(away) ? away : magnitude(fallback) ? fallback : { ...UP },
+    kind,
+    origin: { ...state.position },
+    startedAt: state.age,
+  };
+}
+function retreatCourse(policy: RetreatPolicy, state: EnemyState): Point {
+  const retreat = state.retreat!;
+  const fraction = Math.max(0, Math.min(1, (state.age - retreat.startedAt) / policy.seconds));
+  const curve = fraction * fraction * (3 - 2 * fraction) * policy.curveRadians;
+  return rotate(retreat.away, (seeded(state.id, 21) < 0.5 ? -1 : 1) * curve);
+}
+
 /**
- * Advances the behaviour phase. Hit-and-run pulls away after a hit or a burst and returns once
- * its retreat time has passed and it is beyond its band's far edge; strafe holds its course for a
+ * Advances the behaviour phase. Hit-and-run pulls away after a hit or a burst within its
+ * bounded retreat policy and cooldown; strafe holds its course for a
  * pass once near Ada and loops back beyond its loop distance. Leaving the engagement resets to a
  * fresh attack.
  */
@@ -501,15 +535,15 @@ function nextTactic(
   }
   const behaviour = definition.behaviour;
   if (behaviour.kind === "hitAndRun") {
-    if (tactic.phase === "attack" && (hit || tactic.volleys >= behaviour.burstVolleys)) {
-      return enter("retreat");
+    if (retreatActive(next)) {
+      return tactic.phase === "retreat" ? tactic : enter("retreat");
     }
-    if (
-      tactic.phase === "retreat" &&
-      tactic.seconds >= behaviour.retreatSeconds &&
-      distance >= (definition.standoff?.far ?? 0)
-    ) {
+    if (tactic.phase === "retreat") {
       return enter("attack");
+    }
+    if (retreatReady(definition, next) && (hit || tactic.volleys >= behaviour.burstVolleys)) {
+      next.retreat = beginRetreat("hitAndRun", next);
+      return enter("retreat");
     }
   } else if (behaviour.kind === "strafe") {
     if (tactic.phase === "attack" && distance <= behaviour.passDistance * STRAFE_PASS_ENTRY) {
@@ -539,11 +573,15 @@ function steering(
       ? navigate(definition, state.home, true, state)
       : arrive(definition, maxSpeed, state.home, state);
   }
-  if (state.fleeing) {
-    return { x: -aim.x, y: -aim.y };
+  if (retreatActive(state)) {
+    return retreatCourse(definition.retreats[state.retreat!.kind], state);
   }
   if (!state.engaged || !context.targetable) {
-    return navigate(definition, state.home, false, state);
+    const investigate =
+      state.retreat?.endedAt !== undefined &&
+      state.lastSeen !== null &&
+      state.lastSeenAge < definition.pursuit.unseenSeconds;
+    return navigate(definition, investigate ? state.lastSeen! : state.home, investigate, state);
   }
   const behaviour = definition.behaviour;
   if (context.visibility !== "visible") {
@@ -603,9 +641,6 @@ function steering(
       });
     }
     case "hitAndRun": {
-      if (state.tactic.phase === "retreat") {
-        return toward(-1);
-      }
       // The attack holds a band centred on the standoff band's near edge.
       const half = band ? (band.far - band.near) / 2 : 0;
       return hold(band && { far: band.near + half, near: band.near - half });
@@ -680,11 +715,7 @@ export function stepEnemy(
     ...state,
     age: state.age + context.dt,
     engaged: state.engaged || summoned || sighted,
-    fleeing:
-      state.fleeing ||
-      packFlee ||
-      (definition.morale.individualHpRatio > 0 &&
-        state.hp / definition.hp <= definition.morale.individualHpRatio),
+    fleeing: state.fleeing,
     hardpoints: state.hardpoints.map((part) => ({ ...part })),
   };
   if (observed || summoned) {
@@ -693,8 +724,42 @@ export function stepEnemy(
   } else {
     next.lastSeenAge += context.dt;
   }
-  // The pursuit clock runs only while Ada is unseen or beyond firing range.
-  next.pursuitSeconds = next.engaged && !fighting ? state.pursuitSeconds + context.dt : 0;
+  const morale =
+    packFlee ||
+    (definition.morale.individualHpRatio > 0 &&
+      state.hp / definition.hp <= definition.morale.individualHpRatio);
+  if (
+    !retreatActive(next) &&
+    retreatReady(definition, next) &&
+    (state.fleeing || (morale && !state.returning && (state.engaged || !state.retreat)))
+  ) {
+    next.retreat = beginRetreat("morale", next);
+  }
+  let completedRetreat = false;
+  if (retreatActive(next)) {
+    const retreat = next.retreat!;
+    const policy = definition.retreats[retreat.kind];
+    if (
+      next.age - retreat.startedAt >= policy.seconds ||
+      Math.hypot(next.position.x - retreat.origin.x, next.position.y - retreat.origin.y) >=
+        policy.distance
+    ) {
+      next.retreat = { ...retreat, endedAt: next.age };
+      completedRetreat = true;
+      next.engaged = false;
+    }
+  }
+  next.fleeing = retreatActive(next) && next.retreat!.kind === "morale";
+  const admitted = context.engagementAdmitted !== false;
+  const recovering = next.retreat?.endedAt !== undefined;
+  const reacquired = recovering && perceived && admitted;
+  next.engaged = next.engaged || reacquired || summoned;
+  const investigating = recovering && !next.engaged && next.lastSeen !== null && !state.returning;
+  // Searching during recovery retains the finite pursuit clock and fixed last-seen knowledge.
+  next.pursuitSeconds =
+    (next.engaged || investigating || retreatActive(next)) && !fighting
+      ? state.pursuitSeconds + context.dt
+      : 0;
   const playerHomeDistance = observed
     ? Math.hypot(context.player.x - state.home.x, context.player.y - state.home.y)
     : 0;
@@ -710,7 +775,12 @@ export function stepEnemy(
     // A returning ship that is not fleeing re-engages on sight within perception once
     // rearmSeconds have passed and the chase could go on, a retaliator too, since it has fought
     // Ada. At home, seeing Ada beyond perception also clears the latch without engaging.
-    const rearm = !next.fleeing && perceived && returnSeconds >= pursuit.rearmSeconds && !leashed;
+    const rearm =
+      !next.fleeing &&
+      perceived &&
+      (!recovering || admitted) &&
+      returnSeconds >= pursuit.rearmSeconds &&
+      !leashed;
     const settled = homeDistance <= 5 && observed && playerHomeDistance > definition.perception;
     if (rearm || settled) {
       next.returning = false;
@@ -720,7 +790,7 @@ export function stepEnemy(
       next.engaged = true;
     }
   } else if (
-    next.engaged &&
+    (next.engaged || investigating || retreatActive(next)) &&
     (next.pursuitSeconds >= pursuit.maxSeconds ||
       leashed ||
       next.lastSeenAge >= pursuit.unseenSeconds)
@@ -729,6 +799,10 @@ export function stepEnemy(
   }
   if (next.returning) {
     next.engaged = false;
+    if (retreatActive(next)) {
+      next.retreat = { ...next.retreat!, endedAt: next.age };
+      next.fleeing = false;
+    }
   }
   next.returnSeconds = next.returning ? returnSeconds : 0;
   // An escort without a live capital fights by hitAndRun.
@@ -736,7 +810,9 @@ export function stepEnemy(
     state.escortOf !== null && !escorted(context, state)
       ? { ...definition, behaviour: definition.escortFallback }
       : definition;
-  next.tactic = nextTactic(acting, next, distance, state);
+  next.tactic = completedRetreat
+    ? freshTactic(enemyIntegrity(next))
+    : nextTactic(acting, next, distance, state);
   // Each working engine gives an equal share of top speed; losing one slows the ship through
   // its own physics, while its maximum speed still bounds saved momentum.
   const fullSpeed = definition.physics.maxSpeed;

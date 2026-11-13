@@ -63,9 +63,9 @@ export type Behaviour =
   | { kind: "swarm" }
   /**
    * Rushes to the band's near edge and fires; after `burstVolleys` volleys or a hit it pulls out
-   * for at least `retreatSeconds` and past the far edge, then comes back.
+   * under the bounded hitAndRun retreat policy, then comes back.
    */
-  | { burstVolleys: number; kind: "hitAndRun"; retreatSeconds: number }
+  | { burstVolleys: number; kind: "hitAndRun" }
   /**
    * Makes firing passes beside Ada, never closer than `passDistance`, and loops back beyond
    * `loopDistance`.
@@ -78,6 +78,22 @@ export interface EscortTuning {
   interceptRadius: number;
   stationGap: number;
 }
+/** Retreat bounds are steering transitions; existing momentum and turning remain physical. */
+export interface RetreatPolicy {
+  cooldownSeconds: number;
+  curveRadians: number;
+  distance: number;
+  seconds: number;
+}
+
+/** Shared initial retreat policy; archetypes can override either behavior independently. */
+export const ENEMY_RETREAT: RetreatPolicy = {
+  cooldownSeconds: 6,
+  curveRadians: 0.5,
+  distance: 200,
+  seconds: 1.6,
+};
+
 /** Noncombat movement shares use each archetype's existing combat speed. */
 export interface EnemyNavigation {
   approachRadius: number;
@@ -119,6 +135,7 @@ export interface EnemyDefinition {
    * limit, the unseen limit, and the seconds a returning ship waits before it can re-engage.
    */
   pursuit: { homeRadius: number; maxSeconds: number; rearmSeconds: number; unseenSeconds: number };
+  retreats: { hitAndRun: RetreatPolicy; morale: RetreatPolicy };
   sizeRatio: number;
   /** A small craft's standoff band from Ada, in world units; heavies have none. */
   standoff?: { far: number; near: number };
@@ -468,7 +485,7 @@ const base: Omit<EnemyDefinition, "physics"> = {
   aggression: "sight",
   behaviour: { kind: "chase" },
   engagement: 360,
-  escortFallback: { burstVolleys: 3, kind: "hitAndRun", retreatSeconds: 1.6 },
+  escortFallback: { burstVolleys: 3, kind: "hitAndRun" },
   fire: enemyFire("fighter", armed("laser")),
   hardpoints: [],
   hp: 4,
@@ -476,6 +493,7 @@ const base: Omit<EnemyDefinition, "physics"> = {
   navigation: ENEMY_NAVIGATION,
   perception: 650,
   pursuit: { homeRadius: 2000, maxSeconds: 30, rearmSeconds: 2, unseenSeconds: 6 },
+  retreats: { hitAndRun: ENEMY_RETREAT, morale: ENEMY_RETREAT },
   sizeRatio: 1,
   steering: { separation: 70, wobble: 0 },
 };
@@ -503,7 +521,7 @@ export const enemyCatalog = {
   },
   fighter: {
     ...base,
-    behaviour: { burstVolleys: 3, kind: "hitAndRun", retreatSeconds: 1.6 },
+    behaviour: { burstVolleys: 3, kind: "hitAndRun" },
     physics: SHIP_PHYSICS.fighter,
     standoff: { far: 350, near: 250 },
   },
@@ -671,7 +689,7 @@ export const galaxyArchetypes: Readonly<
   3: { fighter: { behaviour: { kind: "chase" } } },
   4: {},
   5: {
-    interceptor: { behaviour: { burstVolleys: 3, kind: "hitAndRun", retreatSeconds: 1.6 } },
+    interceptor: { behaviour: { burstVolleys: 3, kind: "hitAndRun" } },
   },
 };
 
@@ -689,8 +707,6 @@ export interface PositionDifficulty {
   hp: Readonly<Record<SmallCraft, number>>;
   /** Added to both ends of every swarm and fighter group range. */
   groupBonus: number;
-  /** Seconds a hitAndRun ship pulls away. */
-  retreatSeconds: number;
   /** Multipliers on the base catalog's perception, fire rate and encounter rate. */
   rates: { encounters: number; fire: number; notice: number };
 }
@@ -704,7 +720,6 @@ export const DIFFICULTY_SCALE = 1;
 const position = (
   hp: [swarm: number, fighter: number, interceptor: number, retaliator: number],
   groupBonus: number,
-  retreatSeconds: number,
   rates: [notice: number, fire: number, encounters: number],
   hardpointHp: number,
   hulls: [frigate: number, capital: number],
@@ -716,17 +731,16 @@ const position = (
   hp: { fighter: hp[1], interceptor: hp[2], retaliator: hp[3], swarm: hp[0] },
   hulls: { capital: hulls[1], frigate: hulls[0] },
   rates: { encounters: rates[2], fire: rates[1], notice: rates[0] },
-  retreatSeconds,
 });
 
 /** Difficulty by route position (gameplay/ships.md "Difficulty"). */
 export const POSITION_DIFFICULTY: Readonly<Record<RoutePosition, PositionDifficulty>> = {
-  1: position([2, 4, 3, 8], 1, 1.6, [1.2, 1.44, 1.5], 4, [20, 40], 1),
-  2: position([2, 5, 3, 9], 1, 1.5, [1.3, 1.63, 1.63], 4, [22, 44], 1),
-  3: position([3, 5, 4, 10], 2, 1.4, [1.4, 1.81, 1.69], 5, [30, 60], 1.2),
-  4: position([3, 6, 4, 11], 2, 1.2, [1.45, 1.88, 1.75], 5, [32, 64], 1.3),
-  5: position([3, 6, 5, 11], 3, 1.1, [1.5, 1.94, 1.75], 6, [44, 88], 1.4),
-  6: position([3, 6, 5, 12], 3, 1, [1.5, 2, 1.75], 6, [48, 96], 1.5),
+  1: position([2, 4, 3, 8], 1, [1.2, 1.44, 1.5], 4, [20, 40], 1),
+  2: position([2, 5, 3, 9], 1, [1.3, 1.63, 1.63], 4, [22, 44], 1),
+  3: position([3, 5, 4, 10], 2, [1.4, 1.81, 1.69], 5, [30, 60], 1.2),
+  4: position([3, 6, 4, 11], 2, [1.45, 1.88, 1.75], 5, [32, 64], 1.3),
+  5: position([3, 6, 5, 11], 3, [1.5, 1.94, 1.75], 6, [44, 88], 1.4),
+  6: position([3, 6, 5, 12], 3, [1.5, 2, 1.75], 6, [48, 96], 1.5),
 };
 
 /** A galaxy's difficulty, by its route position. */
@@ -858,7 +872,7 @@ export function encounterQuiet(galaxy: GalaxyNumber): { distance: number; second
 const scaled = new Map<string, EnemyDefinition>();
 /**
  * The catalog definition at a galaxy's route position: its roster behaviour, its position's
- * weapons, hull and hardpoint HP, hitAndRun retreat and perception, and its fire rate, with
+ * weapons, hull and hardpoint HP, perception and fire rate, with
  * difficultyScale on HP and fire rate. A heavy's weapon hardpoints are its tier's armed mounts,
  * armed with the loadout ship `shipId` draws (heavyLoadout).
  */
@@ -899,15 +913,11 @@ export function enemyDefinition(
       ...fire,
       interval: fire.interval / fireRate,
     });
-    const behaviour: Behaviour =
-      catalog.behaviour.kind === "hitAndRun"
-        ? { ...catalog.behaviour, retreatSeconds: difficulty.retreatSeconds }
-        : catalog.behaviour;
     const hardpointHp = difficulty.hardpointHp * DIFFICULTY_SCALE;
     definition = {
       ...catalog,
-      behaviour,
-      escortFallback: { ...catalog.escortFallback, retreatSeconds: difficulty.retreatSeconds },
+      behaviour: catalog.behaviour,
+      escortFallback: catalog.escortFallback,
       fire: faster(catalog.fire),
       hardpoints: catalog.hardpoints.map((part) =>
         part.kind === "weapon"
