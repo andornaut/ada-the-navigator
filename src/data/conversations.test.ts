@@ -262,7 +262,15 @@ describe("in-flight conversations", () => {
 
 describe("approved Use copy", () => {
   it("keeps essential exchanges short with optional topics outside progression", () => {
+    expect(INTERACTION_COPY["4.needle.collect"]).toEqual({
+      lines: [{ speaker: "Astra", text: "Collect the holodisk." }],
+      party: "Astra",
+      topics: [],
+    });
     for (const [key, copy] of Object.entries(INTERACTION_COPY)) {
+      if (key === "4.needle.collect") {
+        continue;
+      }
       const cue = BATTLE_CUES.find(
         ({ trigger }) => trigger.kind === "chapter" && key === `6.phantom.${trigger.id}`,
       );
