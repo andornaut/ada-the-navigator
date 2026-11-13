@@ -801,7 +801,8 @@ Station welcomes use the story panel's text and choice columns, portrait frame,
 name tab, type roles and safe insets. The current station's keeper supplies its
 portrait and name for every greeting line. Jobs and Shop are gold choices;
 Next line and Undock are secondary navigation controls. Shop and job-board
-menus retain their separate list layouts.
+menus retain their separate list layouts. A station without an authored keeper
+shows the station title and actions without speech, portrait or name tab.
 
 Earth and space dialogue choices use the same gold story buttons, visually
 separated from secondary Next, Ask more and Skip navigation. Each spoken line

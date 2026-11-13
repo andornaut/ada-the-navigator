@@ -466,6 +466,22 @@ export type StationRequest =
     }
   | { readonly kind: "refused" };
 
+/** A station without an authored keeper offers its menu without attributed speech. */
+export function stationWelcome(
+  title: string,
+  greeting: StationGreeting | null,
+): {
+  readonly speaker: string | undefined;
+  readonly text: string;
+  readonly title: string;
+} {
+  return {
+    speaker: greeting ? CAST[greeting.keeper].name : undefined,
+    text: greeting?.line ?? "",
+    title: greeting ? "" : title,
+  };
+}
+
 export interface StationOptions {
   /** Accept takes an offer at once; false refuses it while Ada holds a job. */
   readonly acceptJob: (id: string) => boolean;
@@ -607,10 +623,10 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   nextGreeting.classList.add("ada-story-button");
   const keeper = {
     render(greeting: StationGreeting | null) {
-      stationCard.showLine(
-        greeting ? CAST[greeting.keeper].name : undefined,
-        greeting?.line ?? labels.stationWelcome,
-      );
+      const welcome = stationWelcome(labels.station, greeting);
+      stationCard.title.textContent = welcome.title;
+      stationCard.title.hidden = welcome.title === "";
+      stationCard.showLine(welcome.speaker, welcome.text);
       nextGreeting.hidden = !greeting || greeting.index >= greeting.count - 1;
       stationCard.fit();
     },
