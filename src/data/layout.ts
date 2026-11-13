@@ -271,13 +271,10 @@ export const HUD_BUTTON = {
 // lower edge; the conversation box's top sits clearance below its bottom.
 export const HUD_AMMO_COUNT = { clearance: 5, height: 14, padding: 4, radius: 4, top: 42 } as const;
 
-// A weapon disc's level marks (art/controls.md "Weapon level"): at levels 2 and 3 the disc's
-// HUD_BUTTON.edge takes the tier colour, with a halo `halo.spread` wide and `halo.blur` soft just
-// outside it and, on a light field, an `outline` ink line under the halo. One to three pips, each
-// `pip.size` across in a `pip.outline` ink outline, centres `pip.pitch` apart, the row centred
-// across and `below` the disc's centre.
+// A weapon disc's level marks: no pip at level 1, two or three at levels 2 and 3. Pip centres
+// sit on the lower annulus stroke's centre, derived from the canonical disc and annulus.
 export const HUD_WEAPON_LEVEL = {
-  below: 12,
+  below: (HUD_BUTTON.disc - HUD_BUTTON.annulus) / 2,
   halo: { blur: 2, spread: 1 },
   outline: 1,
   pip: { outline: 1, pitch: 7, size: 4 },

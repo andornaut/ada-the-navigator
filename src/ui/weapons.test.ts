@@ -27,6 +27,7 @@ import {
   HUD_DISC_STATES,
   hudDiscStyle,
   LEVEL_PIPS,
+  WEAPON_FILLS,
   WEAPON_STYLE,
   weaponButtonLabel,
   weaponButtonState,
@@ -44,7 +45,7 @@ describe("HUD weapon levels", () => {
       );
     }
     expect(HUD_WEAPON_LEVEL).toEqual({
-      below: 12,
+      below: 14.5,
       halo: { blur: 2, spread: 1 },
       outline: 1,
       pip: { outline: 1, pitch: 7, size: 4 },
@@ -118,13 +119,13 @@ describe("HUD weapon buttons", () => {
     expect(text.length).toBeLessThanOrEqual(4);
   });
 
-  it("keeps a transparent selected centre and uses Ada cream rather than a filled amber puck", () => {
+  it("keeps a solid dark selected face and a distinct cream ring", () => {
     expect(HUD_DISC_STATES).toEqual({
       empty: { edge: 1, face: "#262b44", glyph: "#75748c" },
       idle: { edge: 1, face: "#262b44", glyph: "#b8b3c9" },
-      selected: { edge: 4, face: "transparent", glyph: "#ead4aa" },
+      selected: { edge: 4, face: "#262b44", glyph: "#ead4aa" },
     });
-    // The 33 disc less the 4 annulus on each side leaves a transparent 25 centre.
+    // The face inside the unchanged 4 annulus remains 25 across.
     expect(HUD_BUTTON.disc - 2 * HUD_DISC_STATES.selected.edge).toBe(25);
     // Counts and refill labels share the cream text, independently of disc state.
     expect(WEAPON_STYLE).not.toMatch(/#f0bd68|pixelated/u);
@@ -139,7 +140,9 @@ describe("HUD weapon buttons", () => {
       WEAPON_STYLE.split("}")
         .filter((part) => part.includes(`${selector}{`))
         .at(-1);
-    expect(rule(".ada-controls .ada-weapon .ada-disc")).toContain("background:transparent");
+    expect(rule(".ada-controls .ada-weapon .ada-disc")).toContain(
+      "background:var(--weapon-face, #262b44)",
+    );
     const ring = rule(".ada-controls .ada-weapon .ada-disc::after");
     expect(ring).toContain("position:absolute");
     expect(ring).toContain(`inset:${units(HUD_BUTTON.edge)}`);
@@ -160,16 +163,16 @@ describe("HUD weapon buttons", () => {
     expect(shared).toContain("background:#262b44");
     expect(shared).toContain("color:#b8b3c9");
     expect(shared).not.toMatch(/ada-weapon|::after|opacity:0\./u);
-    expect(rule(".ada-controls .ada-weapon-selector[data-field=light] .ada-weapon")).toContain(
-      "color:#181425",
-    );
+    expect(
+      rule(".ada-controls .ada-weapon-selector[data-field=light] .ada-weapon"),
+    ).toBeUndefined();
   });
 
-  it("mutes only inactive glyphs, preserving opaque counts and level dots", () => {
+  it("keeps muted inactive glyph colours opaque for contrast on solid faces", () => {
     for (const [state, opacity] of [
       ["selected", 1],
-      ["idle", 0.55],
-      ["empty", 0.35],
+      ["idle", 1],
+      ["empty", 1],
     ] as const) {
       const selector = `.ada-controls .ada-weapon[data-state=${state}] .ada-disc::before`;
       const rule = WEAPON_STYLE.split("}").find((part) => part.includes(`${selector}{`));
@@ -216,6 +219,41 @@ describe("HUD weapon buttons", () => {
     }
     expect(WEAPON_STYLE).toContain("background:#181425");
   });
+
+  it("derives the dot row from the lower ring stroke with clearance above ammo", () => {
+    expect(HUD_WEAPON_LEVEL.below).toBe((HUD_BUTTON.disc - HUD_BUTTON.annulus) / 2);
+    const bottom =
+      HUD_BUTTON.target / 2 +
+      HUD_WEAPON_LEVEL.below +
+      HUD_WEAPON_LEVEL.pip.size / 2 +
+      HUD_WEAPON_LEVEL.pip.outline;
+    expect(HUD_AMMO_COUNT.top - bottom).toBe(0.5);
+  });
+
+  it.each(Object.entries(WEAPON_FILLS))(
+    "keeps state glyphs and ring bands legible on %s's solid %s face",
+    (_weapon, face) => {
+      const luminance = (hex: string) => {
+        const rgb = [1, 3, 5]
+          .map((at) => Number.parseInt(hex.slice(at, at + 2), 16) / 255)
+          .map((v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+        return rgb[0]! * 0.2126 + rgb[1]! * 0.7152 + rgb[2]! * 0.0722;
+      };
+      const contrast = (colour: string) =>
+        (Math.max(luminance(colour), luminance(face)) + 0.05) /
+        (Math.min(luminance(colour), luminance(face)) + 0.05);
+      for (const colour of [
+        HUD_DISC_STATES.idle.glyph,
+        HUD_DISC_STATES.empty.glyph,
+        HUD_DISC_STATES.selected.glyph,
+        LEVEL_PIPS[2],
+        LEVEL_PIPS[3],
+      ]) {
+        expect(contrast(colour)).toBeGreaterThanOrEqual(3);
+      }
+      expect(WEAPON_STYLE).toContain(`--weapon-face:${face}`);
+    },
+  );
 
   it("backs finite ammo with the canonical navy pill and an inset ink rim", () => {
     const ammo = WEAPON_STYLE.split("}").find((part) => part.includes(".ada-controls .ada-ammo{"));

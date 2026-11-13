@@ -635,6 +635,13 @@ Holds at the 720 base, with the pause button showing:
 | "+ Holodisk", "1200" and "18", four weapons           | 64.27, 187.62  |          125.95 (pill) |                           308.88 |
 | "+ Heavy Missile ammo ×9", insets, six                | 100.50, 335.50 | 546.50 (Heavy Missile) |                     16 (clamped) |
 
+Weapon level dots use `HUD_WEAPON_LEVEL.below`, derived from the containing
+ring's stroke centre: 14.5 below the disc centre. Level 1 shows no dot; levels
+2 and 3 show two or three, horizontally centred. Their ink ends at target
+41.5, 0.5 above the ammo pill's top at 42. Ring dimensions and press targets
+stay unchanged. Weapon faces are opaque dark palette colours in every state;
+see [Controls](controls.md#top-right-hud-icon-buttons).
+
 ### Weapon count pill
 
 Constants: `HUD_AMMO_COUNT`, `playView.ts`, to implement; it replaces the

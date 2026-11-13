@@ -79,14 +79,24 @@ export function ammoCount(shots: number): string {
   return `${Math.min(999, Math.floor(whole / 1_000_000))}m`;
 }
 
-// Shared HUD disc defaults and the selected weapon's transparent face, ink edge and glyph colour
+// Shared HUD disc defaults and weapon state glyph colours
 // (art/controls.md "Top-right HUD icon buttons"). Empty is an unselected weapon with no
 // ammunition: its glyph is the idle lavender mixed toward the navy face.
 export const HUD_DISC_STATES = {
   empty: { edge: HUD_BUTTON.edge, face: "#262b44", glyph: "#75748c" },
   idle: { edge: HUD_BUTTON.edge, face: "#262b44", glyph: "#b8b3c9" },
-  selected: { edge: HUD_BUTTON.annulus, face: "transparent", glyph: "#ead4aa" },
+  selected: { edge: HUD_BUTTON.annulus, face: "#262b44", glyph: "#ead4aa" },
 } as const satisfies Record<WeaponButtonState, unknown>;
+
+/** Solid weapon faces use existing dark colours from Ada's fields and HUD palette. */
+export const WEAPON_FILLS: Readonly<Record<Weapon, string>> = {
+  heavyMissile: "#332712",
+  laser: "#262b44",
+  multiLaser: "#241827",
+  phaser: "#181425",
+  rapidMissile: "#292734",
+  scattershot: "#132d33",
+};
 
 // The count pill's text (art/controls.md "Ammunition count"): cream in every state, the empty
 // state's "0" red; the refusal cue tints only the glyph.
@@ -190,14 +200,14 @@ ${hudDiscStyle(".ada-controls .ada-weapon", ".ada-disc")}
 }
 .ada-controls .ada-weapon .ada-disc{
   position:relative;
-  background:transparent;
+  background:var(--weapon-face, ${HUD_DISC_STATES.idle.face});
   box-shadow:none
 }
 .ada-controls .ada-weapon[data-state=idle] .ada-disc::before{
-  opacity:0.55
+  opacity:1
 }
 .ada-controls .ada-weapon[data-state=empty] .ada-disc::before{
-  opacity:0.35
+  opacity:1
 }
 .ada-controls .ada-weapon[data-state=selected] .ada-disc::before{
   opacity:1
@@ -206,10 +216,14 @@ ${hudDiscStyle(".ada-controls .ada-weapon", ".ada-disc")}
 .ada-controls .ada-weapon[data-ui-refusal-red] .ada-disc::before{
   opacity:1
 }
-/* Weapon glyphs stay readable on the light field; selection keeps its cream ring. */
-.ada-controls .ada-weapon-selector[data-field=light] .ada-weapon{
-  color:${INK}
-}
+/* Dark faces keep the same readable state glyph colours on every field. */
+${(Object.keys(WEAPON_FILLS) as Weapon[])
+  .map(
+    (weapon) => `.ada-controls .ada-weapon[data-weapon="${weapon}"]{
+  --weapon-face:${WEAPON_FILLS[weapon]}
+}`,
+  )
+  .join("\n")}
 .ada-controls .ada-ammo{
   position:absolute;
   left:50%;
@@ -252,9 +266,6 @@ ${hudDiscStyle(".ada-controls .ada-weapon", ".ada-disc")}
   color:${HUD_DISC_STATES.selected.glyph};
   --disc-edge:${units(HUD_DISC_STATES.selected.edge)}
 }
-.ada-controls .ada-weapon[data-state=selected] .ada-disc{
-  background:${HUD_DISC_STATES.selected.face}
-}
 /* Every weapon uses one annulus inside the canonical disc, with ink on both edges. */
 .ada-controls .ada-weapon .ada-disc::after{
   content:"";
@@ -281,8 +292,7 @@ ${([2, 3] as const)
 }`,
   )
   .join("\n")}
-/* The level's pips: one to three 4 discs in an ink outline, 7 apart, centred 12 below the disc's
-   centre, the same in every state. */
+/* Levels 2 and 3 show two or three pips centred on the bottom ring stroke; level 1 has none. */
 .ada-controls .ada-pips{
   position:absolute;
   left:50%;
@@ -425,7 +435,9 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
         entry.dataset.level = level;
         const pips = entry.querySelector(".ada-pips")!;
         pips.replaceChildren(
-          ...Array.from({ length: Number(level) }, () => document.createElement("span")),
+          ...Array.from({ length: Number(level) === 1 ? 0 : Number(level) }, () =>
+            document.createElement("span"),
+          ),
         );
       }
       entry.title = name;
