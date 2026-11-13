@@ -272,27 +272,6 @@ export function shieldFillWidth(level: number): number {
   return shieldBarWidth(level) - 2 * SHIELD_PILL.bar.inset;
 }
 
-/** Separate recharge track and fill, relative to the main shield bar's outer top-left. */
-export function shieldDelayStrip(level: number, fraction: number): { strip: Rect; track: Rect } {
-  const { bar, delayStrip } = SHIELD_PILL;
-  const width = shieldFillWidth(level);
-  const y = bar.height + delayStrip.gap;
-  return {
-    strip: {
-      height: delayStrip.height,
-      width: width * Math.max(0, Math.min(1, fraction)),
-      x: bar.inset,
-      y: y + delayStrip.edge,
-    },
-    track: {
-      height: delayStrip.height + 2 * delayStrip.edge,
-      width: width + 2 * delayStrip.edge,
-      x: bar.inset - delayStrip.edge,
-      y,
-    },
-  };
-}
-
 /** The shield pill's width at Shield level `level`: padding, the icon, an icon gap and the bar. */
 export function shieldPillWidth(level: number): number {
   const { icon, iconGap, padding } = SHIELD_PILL;

@@ -1,24 +1,25 @@
 import { LIGHT_FIELD } from "../game/lightField.ts";
-import { controlsLine, font, fromHudEdge, hudCentreX, units } from "./layout/css.ts";
+import { controlsLine, font, fromHudEdge, hudCentreX, pixels, units } from "./layout/css.ts";
 import {
   countSlot,
   SHIELD_PILL,
   shieldBarWidth,
-  shieldDelayStrip,
   shieldFillWidth,
   shieldPillWidth,
   STATUS_PILL,
   STICK_AREA_MARGIN,
 } from "./layout/playView.ts";
+import { shieldRasterGeometry } from "./layout/shieldGeometry.ts";
 import { TYPE } from "./layout/tokens.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
+import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import { FOCUS_STYLE } from "./modal.ts";
+import { createShieldDrawing } from "./shieldDrawing.ts";
 
 // The HUD status pill (art/layout.md "Status pill", art/controls.md "Status pill"): one ink pill
 // beside pause holding the Stardust and ore counts, then any carried job or story item or
 // towed craft (gameplay/rules.md), each after its own divider; Stardust and ore
 // gains tick "+N" under their counts. The shield sits apart in its own pill at the bottom centre
-// (SHIELD_PILL). The bar draws in CSS at logical units with fractional widths; the shield's states
+// (SHIELD_PILL). The decorative drawing snaps to physical pixels; the shield's states
 // are a pure function of what the model shows each frame, so they are tested without a browser.
 // On a light field the shield icon and bar each draw inside an ink outline (art/galaxies.md
 // "Light fields").
@@ -270,12 +271,6 @@ export function statusSegments(view: Pick<StatusView, "aboard" | "ore">): ("aboa
   return ["ore", ...(view.aboard ? (["aboard"] as const) : [])];
 }
 
-// Cut the bar out of the low panel so its two original ink layers still composite over the field.
-const TRACK_LEFT = SHIELD_PILL.padding.left + SHIELD_PILL.icon + SHIELD_PILL.iconGap;
-const TRACK_TOP = (SHIELD_PILL.pill.height - SHIELD_PILL.bar.height) / 2;
-const TRACK_RIGHT = `calc(${units(TRACK_LEFT)} + var(--shield-bar))`;
-const TRACK_BOTTOM = units(TRACK_TOP + SHIELD_PILL.bar.height);
-
 export const STATUS_PILL_STYLE = `
 .ada-controls .ada-status{
   position:absolute;
@@ -313,36 +308,12 @@ export const STATUS_PILL_STYLE = `
   display:flex;
   align-items:center;
   border-radius:${units(SHIELD_PILL.pill.radius)};
-  background:${STATUS_COLOURS.panel};
+  background:transparent;
   pointer-events:none;
   --shield-mark:${STATUS_COLOURS.shield};
   --shield-rim:${STATUS_COLOURS.rim};
   --shield-pill:${units(shieldPillWidth(1))};
   --shield-bar:${units(shieldBarWidth(1))}
-}
-.ada-controls .ada-shield[data-tone=low],
-.ada-controls .ada-shield[data-tone=empty]{
-  background:transparent;
-  isolation:isolate
-}
-.ada-controls .ada-shield[data-tone=low]::before,
-.ada-controls .ada-shield[data-tone=empty]::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  z-index:-1;
-  border-radius:inherit;
-  background:${STATUS_COLOURS.lowPanel};
-  clip-path:polygon(evenodd,0 0,100% 0,100% 100%,0 100%,0 0,
-    ${units(TRACK_LEFT)} ${units(TRACK_TOP)},
-    ${units(TRACK_LEFT)} ${TRACK_BOTTOM},
-    ${TRACK_RIGHT} ${TRACK_BOTTOM},
-    ${TRACK_RIGHT} ${units(TRACK_TOP)},
-    ${units(TRACK_LEFT)} ${units(TRACK_TOP)})
-}
-.ada-controls .ada-shield[data-tone=low] .ada-status-bar,
-.ada-controls .ada-shield[data-tone=empty] .ada-status-bar{
-  background:linear-gradient(${STATUS_COLOURS.track},${STATUS_COLOURS.track}),${STATUS_COLOURS.panel}
 }
 ${SHIELD_PILL.bars
   .map(
@@ -352,7 +323,12 @@ ${SHIELD_PILL.bars
 }`,
   )
   .join("\n")}
+.ada-controls .ada-shield-drawing{position:absolute;overflow:visible;pointer-events:none}
+.ada-controls .ada-shield > .ada-status-bar,
+.ada-controls .ada-shield > .ada-status-recharge-track{opacity:0}
 .ada-controls .ada-status-mark{
+  position:relative;
+  z-index:1;
   flex:none;
   display:flex;
   margin-right:${units(SHIELD_PILL.iconGap)}
@@ -674,7 +650,8 @@ export function createStatusPill(
   const recharge = document.createElement("span");
   recharge.className = "ada-status-recharge";
   rechargeTrack.append(recharge);
-  shieldRoot.append(shieldMark, meter, rechargeTrack);
+  const drawing = createShieldDrawing(STATUS_COLOURS);
+  shieldRoot.append(shieldMark, meter, rechargeTrack, drawing.node);
   const sparkle = document.createElement("span");
   sparkle.className = "ada-status-stardust";
   sparkle.setAttribute("aria-hidden", "true");
@@ -732,6 +709,15 @@ export function createStatusPill(
   const shieldBar = new ShieldBar();
   const shieldOre = new ShieldOreSpendCounter();
 
+  let raster: ReturnType<typeof shieldRasterGeometry> | undefined;
+  let rasterLevel = "";
+  let rasterDensity = 0;
+  const invalidateRaster = () => {
+    raster = undefined;
+  };
+  globalThis.addEventListener?.(VIEW_SCALE_EVENT, invalidateRaster);
+  globalThis.addEventListener?.("resize", invalidateRaster);
+
   const place = (node: HTMLElement, from: number, to: number) => {
     const offset = SHIELD_PILL.bar.inset;
     node.hidden = to <= from;
@@ -753,6 +739,8 @@ export function createStatusPill(
       bump(icon);
     },
     dispose: () => {
+      globalThis.removeEventListener?.(VIEW_SCALE_EVENT, invalidateRaster);
+      globalThis.removeEventListener?.("resize", invalidateRaster);
       ore.clearSpend();
       root.remove();
       shieldRoot.remove();
@@ -763,6 +751,9 @@ export function createStatusPill(
       ore.clearSpend();
     },
     setShown(shown: boolean): void {
+      if (shieldRoot.hidden === shown) {
+        invalidateRaster();
+      }
       root.hidden = !shown;
       shieldRoot.hidden = !shown;
     },
@@ -790,18 +781,28 @@ export function createStatusPill(
       paintInsideFill(bar.fill, bar.flash, flash);
       place(edge, Math.max(0, bar.fill - SHIELD_PILL.edge), bar.edge ? bar.fill : 0);
       rechargeTrack.hidden = bar.recharge === null;
-      if (bar.recharge !== null) {
-        const { strip, track } = shieldDelayStrip(Number(level), bar.recharge);
-        rechargeTrack.style.left = units(
-          SHIELD_PILL.padding.left + SHIELD_PILL.icon + SHIELD_PILL.iconGap + track.x,
+      const density = globalThis.devicePixelRatio || 1;
+      if (!raster || rasterLevel !== level || rasterDensity !== density) {
+        raster = shieldRasterGeometry(
+          readViewUnit(shieldRoot),
+          density,
+          shieldRoot.getBoundingClientRect(),
+          Number(level),
         );
-        rechargeTrack.style.top = units(
-          (SHIELD_PILL.pill.height - SHIELD_PILL.bar.height) / 2 + track.y,
-        );
-        rechargeTrack.style.width = units(track.width);
-        rechargeTrack.style.height = units(track.height);
-        recharge.style.width = units(strip.width);
+        rasterLevel = level;
+        rasterDensity = density;
       }
+      meter.style.position = "absolute";
+      meter.style.left = pixels(raster.main.x / density);
+      meter.style.top = pixels(raster.main.y / density);
+      meter.style.width = pixels(raster.main.width / density);
+      meter.style.height = pixels(raster.main.height / density);
+      rechargeTrack.style.left = pixels((raster.timer.x - raster.edge) / density);
+      rechargeTrack.style.top = pixels((raster.timer.y - raster.edge) / density);
+      rechargeTrack.style.width = pixels((raster.capacityWidth + 2 * raster.edge) / density);
+      rechargeTrack.style.height = pixels((raster.timer.height + 2 * raster.edge) / density);
+      recharge.style.width = pixels((raster.capacityWidth * (bar.recharge ?? 0)) / density);
+      drawing.update(raster, bar.fill / shieldFillWidth(Number(level)), bar);
       meter.setAttribute("aria-valuemax", String(view.capacity));
       meter.setAttribute("aria-valuenow", String(Math.max(0, Math.round(view.shield))));
       stardust.set(view.stardust, view.stardustLabel, nowMs);

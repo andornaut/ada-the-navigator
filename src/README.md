@@ -149,3 +149,10 @@ browser's prompt or that browser's menu steps, and registers no service worker.
 - **Browser smoke:** [`tools/browser-check.mjs`](../tools/browser-check.mjs) runs
   [`tools/browser-smoke.mjs`](../tools/browser-smoke.mjs) against a gated build; see
   [check commands and evidence](../docs/checks.md).
+
+The shield's lighter outer pill contains one opaque dark rectangle behind both
+bars. The main border has the same gap to the dark rectangle's top, left and
+right as the gap from its bottom to the cream moving fill and from that fill's
+bottom to the dark rectangle's bottom. Both moving fills share their capacity
+start and end positions; their current progress remains independent. The icon
+retains its field-dependent outline. Shield timing and meter semantics are unchanged.

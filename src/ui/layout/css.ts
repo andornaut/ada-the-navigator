@@ -30,6 +30,11 @@ export function units(value: number): string {
   return value === 0 ? "0px" : `calc(${scaled(value)})`;
 }
 
+/** A CSS length already snapped to physical pixels by layout geometry. */
+export function pixels(value: number): string {
+  return `${value}px`;
+}
+
 // A safe rect's edge on side, for margin m: the view edge moved in by max(m, inset).
 export function safeEdge(side: Side, margin: number): string {
   return `max(var(${VIEW_PROPERTIES.safe(side)}), ${units(margin)})`;

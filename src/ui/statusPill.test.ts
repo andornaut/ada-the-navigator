@@ -2,8 +2,9 @@ import { existsSync } from "node:fs";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { units } from "./layout/css.ts";
-import { countSlot, SHIELD_PILL, shieldDelayStrip, STATUS_PILL } from "./layout/playView.ts";
+import { pixels, units } from "./layout/css.ts";
+import { countSlot, SHIELD_PILL, STATUS_PILL } from "./layout/playView.ts";
+import { shieldRasterGeometry } from "./layout/shieldGeometry.ts";
 import {
   blendHex,
   CARGO_ICONS,
@@ -117,19 +118,6 @@ describe("status pill shield bar", () => {
     expect(
       new ShieldBar().update({ ...full, shield: 60, sinceDamage: 12 }, 0, true).recharge,
     ).toBeCloseTo(0.4, 9);
-    // The independent track starts 1 below the main bar; its fill aligns with the main fill.
-    for (const [level, area] of [
-      [1, 116],
-      [2, 176],
-      [3, 236],
-    ] as const) {
-      for (const p of [0, 0.25, 1]) {
-        expect(shieldDelayStrip(level, p)).toEqual({
-          strip: { height: 1, width: area * p, x: 2, y: 14 },
-          track: { height: 3, width: area + 2, x: 1, y: 13 },
-        });
-      }
-    }
     expect(STATUS_COLOURS.recharge).toBe("#ead4aa");
   });
 
@@ -141,36 +129,6 @@ describe("status pill shield bar", () => {
     expect(
       bar.update({ ...full, recharging: true, shield: 51, sinceDamage: 31 }, 31_016, true).recharge,
     ).toBeNull();
-  });
-
-  it("centres the main fill without fractional CSS border rounding", () => {
-    const meter = STATUS_PILL_STYLE.split("}").find((part) =>
-      part.includes(".ada-controls .ada-status-bar{"),
-    );
-    const fill = STATUS_PILL_STYLE.split("}").find((part) =>
-      part.includes(".ada-controls .ada-status-bar > span{"),
-    );
-    expect(meter).toContain("border:0");
-    expect(meter).toContain(
-      `box-shadow:inset 0 0 0 ${units(SHIELD_PILL.bar.rim)} var(--shield-rim)`,
-    );
-    expect(fill).toContain(`top:${units(SHIELD_PILL.bar.inset)}`);
-    expect(fill).toContain(`height:${units(SHIELD_PILL.bar.height - 2 * SHIELD_PILL.bar.inset)}`);
-  });
-
-  it("encloses the timer fill and empty track on all four sides without CSS border rounding", () => {
-    const track = STATUS_PILL_STYLE.split("}").find((part) =>
-      part.includes(".ada-controls .ada-shield > .ada-status-recharge-track{"),
-    );
-    const fill = STATUS_PILL_STYLE.split("}").find((part) =>
-      part.includes(".ada-controls .ada-status-recharge-track > .ada-status-recharge{"),
-    );
-    expect(track).toContain("border:0");
-    expect(track).toContain(
-      `box-shadow:inset 0 0 0 ${units(SHIELD_PILL.delayStrip.edge)} ${STATUS_COLOURS.rechargeEdge}`,
-    );
-    expect(fill).toContain(`left:${units(SHIELD_PILL.delayStrip.edge)}`);
-    expect(fill).toContain(`top:${units(SHIELD_PILL.delayStrip.edge)}`);
   });
 
   it("pulses icon and rim while low, holding the low colour under reduced motion", () => {
@@ -255,7 +213,7 @@ describe("status pill shield bar", () => {
     expect(shield).toContain(`padding:0 ${units(8)} 0 ${units(5)}`);
     expect(shield).toContain(`height:${units(28)}`);
     expect(shield).toContain("margin-left:calc(var(--shield-pill) / -2)");
-    expect(shield).toContain(`background:${STATUS_COLOURS.panel}`);
+    expect(shield).toContain("background:transparent");
     expect(shield).toContain("pointer-events:none");
   });
 });
@@ -307,6 +265,9 @@ describe("status pill count", () => {
     textContent = "";
     parent?: FakeNode;
     readonly animations: { finish: () => void; frames: unknown; options: unknown }[] = [];
+    getBoundingClientRect() {
+      return { x: 0, y: 0 };
+    }
     animate(frames?: unknown, options?: unknown): { cancel: () => void; finished: Promise<void> } {
       let finish!: () => void;
       const finished = new Promise<void>((resolve) => {
@@ -343,8 +304,10 @@ describe("status pill count", () => {
     reducedMotion = true,
     onResource?: (kind: "ore" | "stardust" | "aboard", origin: HTMLElement) => void,
   ) => {
+    vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
     vi.stubGlobal("document", {
       createElement: () => new FakeNode(),
+      createElementNS: () => new FakeNode(),
       createTextNode: () => new FakeNode(),
     });
     const parent = new FakeNode();
@@ -359,6 +322,53 @@ describe("status pill count", () => {
     const count = (kind: string) => slot(kind).children[0]!;
     return { count, root, shield: parent.children[1]!, slot, status };
   };
+
+  it("paints one complete pill in every shield state and keeps the empty track dark", () => {
+    const { shield, status } = pill();
+    const drawing = shield.children.at(-1)!;
+    const part = (name: string) =>
+      drawing.children.find((node) => node.getAttribute("data-part") === name)!;
+    const view = {
+      ...full,
+      aboard: null,
+      lightField: false,
+      ore: 0,
+      oreLabel: "Ore",
+      sinceDamage: 15,
+      stardust: 0,
+      stardustLabel: "Stardust",
+    };
+    for (const [remaining, background] of [
+      [60, STATUS_COLOURS.panel],
+      [10, STATUS_COLOURS.lowPanel],
+      [0, STATUS_COLOURS.lowPanel],
+    ] as const) {
+      status.setStatus({ ...view, shield: remaining }, 1000);
+      expect(part("pill").getAttribute("fill")).toBe(background);
+      expect(part("pill").getAttribute("height")).toBe("28");
+      expect(part("pill").getAttribute("width")).toBe("156");
+      expect(part("shared-background").getAttribute("fill")).toBe(STATUS_COLOURS.rechargeEdge);
+      expect(part("shared-background").getAttribute("height")).toBe("16");
+      expect(
+        drawing.children.some(
+          (node) =>
+            node.getAttribute("data-part") === "main-track" ||
+            node.getAttribute("data-part") === "timer-track",
+        ),
+      ).toBe(false);
+      expect(drawing.children.filter((node) => node.getAttribute("width") === "156")).toEqual([
+        part("pill"),
+      ]);
+      expect(part("timer-fill").getAttribute("fill")).toBe(STATUS_COLOURS.recharge);
+    }
+    status.setStatus({ ...view, shield: 60, sinceDamage: 0 }, 2000);
+    expect(part("timer-fill").getAttribute("width")).toBe("0");
+    expect(part("timer-border").getAttribute("d")).not.toBe("");
+    status.setStatus({ ...view, shield: 100 }, 3000);
+    expect(part("timer-border").getAttribute("d")).toBe("");
+    status.setStatus({ ...view, recharging: true, shield: 61 }, 4000);
+    expect(part("timer-border").getAttribute("d")).toBe("");
+  });
 
   it.each([false, true])(
     "keeps the unfilled track clear after hits with reduced motion %s",
@@ -416,23 +426,15 @@ describe("status pill count", () => {
       const fill = track.children[0]!;
       status.setStatus(view, 0);
       expect(track.hidden).toBe(false);
-      const rect = shieldDelayStrip(level, 0.5);
-      expect(track.style.top).toBe(
-        units((SHIELD_PILL.pill.height - SHIELD_PILL.bar.height) / 2 + rect.track.y),
-      );
-      expect(track.style.left).toBe(
-        units(SHIELD_PILL.padding.left + SHIELD_PILL.icon + SHIELD_PILL.iconGap + rect.track.x),
-      );
-      expect(track.style.height).toBe(units(rect.track.height));
-      expect(track.style.width).toBe(units(rect.track.width));
-      expect(fill.style.width).toBe(units(rect.strip.width));
-      expect(rect.track.y - SHIELD_PILL.bar.height).toBe(1);
-      expect(
-        (SHIELD_PILL.pill.height - SHIELD_PILL.bar.height) / 2 + rect.track.y + rect.track.height,
-      ).toBeLessThanOrEqual(SHIELD_PILL.pill.height);
+      const g = shieldRasterGeometry(1, 1, { x: 0, y: 0 }, level);
+      expect(track.style.top).toBe(pixels(g.timer.y - g.edge));
+      expect(track.style.left).toBe(pixels(g.timer.x - g.edge));
+      expect(track.style.width).toBe(pixels(g.capacityWidth + 2 * g.edge));
+      expect(track.style.height).toBe(pixels(g.timer.height + 2 * g.edge));
+      expect(fill.style.width).toBe(pixels(g.capacityWidth * 0.5));
       status.setStatus({ ...view, sinceDamage: 0 }, 16);
       expect(track.hidden).toBe(false);
-      expect(fill.style.width).toBe(units(0));
+      expect(fill.style.width).toBe(pixels(0));
       status.setStatus({ ...view, shield: 100 }, 32);
       expect(track.hidden).toBe(true);
       status.setStatus({ ...view, recharging: true }, 48);
@@ -830,19 +832,4 @@ describe("paid shield ore batches", () => {
       expect(counter.update(100)).toBe(0);
     }
   });
-});
-
-it("retains original ink layers inside the low/empty burgundy panel cutout", () => {
-  const rule = STATUS_PILL_STYLE.split("}").find((part) =>
-    part.includes("[data-tone=empty] .ada-status-bar{"),
-  );
-  expect(rule).toContain(
-    `background:linear-gradient(${STATUS_COLOURS.track},${STATUS_COLOURS.track}),${STATUS_COLOURS.panel}`,
-  );
-  const outer = STATUS_PILL_STYLE.split("}").find((part) =>
-    part.includes("[data-tone=empty]::before{"),
-  );
-  expect(outer).toContain(`background:${STATUS_COLOURS.lowPanel}`);
-  expect(outer).toContain("clip-path:polygon(evenodd");
-  expect(STATUS_PILL_STYLE).not.toContain("#100e17");
 });
