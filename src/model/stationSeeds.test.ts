@@ -65,7 +65,7 @@ describe("stations in Needle, Andromeda and Phantom", () => {
     expect(offers).toHaveLength(3);
     expect(offers.every(({ type }) => type === "survey" || type === "rescue")).toBe(true);
     for (const offer of offers) {
-      expect(offer.reward).toBe(offer.type === "survey" ? 20 : 50);
+      expect(offer.reward).toBe(offer.type === "survey" ? 60 : 150);
       if (offer.type === "rescue") {
         expect(offer.item).toBe("a traveler's pod");
       }

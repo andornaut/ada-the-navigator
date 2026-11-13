@@ -195,7 +195,7 @@ describe("pacing simulation runs", () => {
         },
         seeds: 4,
       }).runs.reduce((sum, run) => sum + run.stationSeconds.length, 0);
-    expect(ECONOMY.station.indicatorRange).toBe(2000);
+    expect(ECONOMY.station.indicatorRange).toBe(3000);
     expect(stations(ECONOMY.station.indicatorRange)).toBeGreaterThan(2 * stations(0));
   });
 
@@ -251,11 +251,13 @@ describe("pacing simulation runs", () => {
     for (const type of ["survey", "delivery", "rescue", "hunt"] as const) {
       expect(completed(type)).toBeGreaterThan(0);
     }
-    // Galaxy one's rewards are 10 to 25 Stardust a job.
+    // Sunflower pays 30 per survey, 45 per hunt, 75 per rescue, and 45 or 75 per delivery.
     for (const run of withJobs.runs) {
-      const count = Object.values(run.jobs).reduce<number>((sum, value) => sum + (value ?? 0), 0);
-      expect(run.stardust.jobs).toBeGreaterThanOrEqual(10 * count);
-      expect(run.stardust.jobs).toBeLessThanOrEqual(25 * count);
+      const fixed =
+        30 * (run.jobs.survey ?? 0) + 45 * (run.jobs.hunt ?? 0) + 75 * (run.jobs.rescue ?? 0);
+      const deliveries = run.jobs.delivery ?? 0;
+      expect(run.stardust.jobs).toBeGreaterThanOrEqual(fixed + 45 * deliveries);
+      expect(run.stardust.jobs).toBeLessThanOrEqual(fixed + 75 * deliveries);
     }
     expect(withJobs.summary.firstWeaponMinutes.median).toBeLessThan(
       without.summary.firstWeaponMinutes.median,

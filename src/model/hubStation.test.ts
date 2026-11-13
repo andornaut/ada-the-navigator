@@ -117,7 +117,7 @@ describe("the mining hub as a station", () => {
       detail: "Deposit 30 ore at the hub.",
       id: "miningContract",
       kind: "activity",
-      reward: 60,
+      reward: 180,
       state: "offer",
       title: "Mining contract",
       type: "activity",

@@ -62,10 +62,10 @@ describe("the galaxy route", () => {
 });
 
 describe("tuning by route position", () => {
-  it("keeps each built galaxy's tuning as it was, now at its route position", () => {
+  it("reads each built galaxy's tuning at its route position", () => {
     // Job rewards follow route position (quests.md "Rewards"): Whirlpool second, Cartwheel fifth.
-    expect(byPosition(JOB_REWARDS, 3).deliveryLong).toBe(35);
-    expect(byPosition(JOB_REWARDS, 2).deliveryLong).toBe(50);
+    expect(byPosition(JOB_REWARDS, 3).deliveryLong).toBe(105);
+    expect(byPosition(JOB_REWARDS, 2).deliveryLong).toBe(150);
     // Whirlpool's hunters chase; Cartwheel's interceptors hit and run.
     expect(byPosition(galaxyArchetypes, 3).fighter).toEqual({ behaviour: { kind: "chase" } });
     expect(byPosition(galaxyArchetypes, 2).interceptor?.behaviour.kind).toBe("hitAndRun");
@@ -125,10 +125,10 @@ describe("tuning by route position", () => {
     // Job rewards are Gameplay's per position, every galaxy having stations: positions 3 to 5
     // pay alike, and Phantom only surveys and rescues.
     expect([3, 4, 5].map((position) => JOB_REWARDS[position as RoutePosition])).toEqual([
-      { deliveryLong: 50, deliveryShort: 30, hunt: 30, rescue: 50, survey: 20 },
-      { deliveryLong: 50, deliveryShort: 30, hunt: 30, rescue: 50, survey: 20 },
-      { deliveryLong: 50, deliveryShort: 30, hunt: 30, rescue: 50, survey: 20 },
+      { deliveryLong: 150, deliveryShort: 90, hunt: 90, rescue: 150, survey: 60 },
+      { deliveryLong: 150, deliveryShort: 90, hunt: 90, rescue: 150, survey: 60 },
+      { deliveryLong: 150, deliveryShort: 90, hunt: 90, rescue: 150, survey: 60 },
     ]);
-    expect(JOB_REWARDS[6]).toEqual({ rescue: 50, survey: 20 });
+    expect(JOB_REWARDS[6]).toEqual({ rescue: 150, survey: 60 });
   });
 });
