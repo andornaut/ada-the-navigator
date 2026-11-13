@@ -136,6 +136,7 @@ import {
 } from "./landmarks.ts";
 import { type LocalMap, localMap, type MapContext, recordExplored } from "./map.ts";
 import { needleCourses, setNeedleActivity, stepNeedleCourse } from "./needle.ts";
+import { clearNeedleEnemies, ensureNeedleDebris } from "./needleFlight.ts";
 import { type PhantomContext, phantomWaypoint } from "./phantom.ts";
 import { phantomAllyRoster, type PhantomAllySpec } from "./phantomAllies.ts";
 import { HUNT_GLINT } from "./pickupBody.ts";
@@ -1355,6 +1356,8 @@ export class GameModel {
     const context = this.chapterContext();
     if (context) {
       chapterRuntime(context.flight.galaxy)?.init?.(context);
+      clearNeedleEnemies(context.flight);
+      ensureNeedleDebris(this.content, context.flight);
       syncFlightRegion(this.content, context.flight);
     }
     this.reopenInteraction();
