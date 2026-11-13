@@ -376,7 +376,17 @@ export const STATION_STYLE = `
   align-items:center;
   gap:${units(SPACING.gap)}
 }
+.ada-controls .ada-station-previous{
+  grid-column:1;
+  grid-row:1
+}
+.ada-controls .ada-station-next{
+  grid-column:3;
+  grid-row:1
+}
 .ada-controls .ada-station-pager p{
+  grid-column:2;
+  grid-row:1;
   margin:0
 }
 `;
@@ -751,6 +761,18 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   let shopPage = 0;
   let jobsPage = 0;
 
+  const focusPage = (
+    parts: typeof shopCard,
+    group: HTMLElement,
+    pager: typeof shopPager,
+    preferred?: HTMLElement,
+  ): void => {
+    const action = pager.node.hidden
+      ? undefined
+      : [preferred, pager.previous, pager.next].find((button) => button && !button.hidden);
+    focusTarget(action ?? group.querySelector<HTMLElement>("button") ?? parts.close);
+  };
+
   // Fit actual laid-out grid rows below the fixed groups, with the pager only when needed.
   const fitPages = (
     parts: typeof shopCard,
@@ -759,7 +781,12 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     chunks: readonly HTMLElement[],
     page: number,
   ): number => {
+    const focused =
+      document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
+    const restoreFocus = focused && (pager.node.contains(focused) || group.contains(focused));
     pager.node.hidden = true;
+    pager.previous.hidden = false;
+    pager.next.hidden = false;
     group.replaceChildren(...chunks);
     parts.fit();
     const unit = readViewUnit(group);
@@ -798,10 +825,12 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       [pager.previous, currentPage === 0],
       [pager.next, currentPage === pages.length - 1],
     ] as const) {
-      button.classList.toggle("ada-unavailable", unavailable);
-      button.setAttribute("aria-disabled", String(unavailable));
+      button.hidden = unavailable;
     }
     group.replaceChildren(...pages[currentPage]!.map((index) => chunks[index]!));
+    if (restoreFocus) {
+      focusPage(parts, group, pager, pager.node.contains(focused) ? focused : undefined);
+    }
     return currentPage;
   };
 
@@ -1024,7 +1053,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
           focusTarget(replacement);
           refuse(replacement, options.reducedMotion());
         } else {
-          focusTarget(jobsPager.next);
+          focusPage(jobsCard, jobList, jobsPager);
         }
         return;
       }
@@ -1111,7 +1140,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       [pager.next, 1],
     ] as const) {
       button.addEventListener("click", () => {
-        if (button.getAttribute("aria-disabled") === "true") {
+        if (button.hidden || pager.node.hidden) {
           return;
         }
         if (kind === "shop") {
@@ -1120,7 +1149,12 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
           jobsPage += direction;
         }
         render();
-        focusTarget(button);
+        focusPage(
+          kind === "shop" ? shopCard : jobsCard,
+          kind === "shop" ? list : jobList,
+          pager,
+          button,
+        );
       });
     }
   }

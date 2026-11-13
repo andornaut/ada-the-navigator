@@ -156,7 +156,8 @@ the weapon rows, so the repeat purchase shows without scrolling.
   when a complete natural-width row cannot fit; wrapped text grows its control.
 - A longer list uses Previous, the current page count and Next beneath the rows.
   The pager appears only when needed, keeps its place during navigation and
-  preserves keyboard focus. Its unavailable end actions remain focusable.
+  preserves keyboard focus on a visible control. Previous is hidden on the first
+  page, and Next is hidden on the last page; the page count stays centered.
 - Ammunition precedes items, and paint follows ship equipment with its heading.
   A heading stays with its first row. Changing tabs returns to page one.
 - Pages preserve every name, glyph, level, price, ownership state and action.
