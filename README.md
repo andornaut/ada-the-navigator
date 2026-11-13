@@ -16,6 +16,7 @@ The folder READMEs describe the current design and implementation:
 - [src/](src/README.md): stack, architecture, save data and phone behaviour
 - [docs/checks.md](docs/checks.md): check commands, the container profile, CI and evidence
 - [docs/container-adoption.md](docs/container-adoption.md): container entry points and runner compatibility
+- [Cross-game policies](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md)
 
 ## Playing
 
