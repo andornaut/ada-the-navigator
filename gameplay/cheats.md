@@ -4,14 +4,18 @@ Cheats are available through settings in browser tabs only. Use the published
 `runsInAppWindow` check both when opening cheats and when executing an action.
 Installed PWA windows must reject both operations.
 
-Group actions under **Save-changing** and **Run-only**. The approved action is
-**Grant all weapons**, in Run-only. No save-changing action is specified. Hide a
-group that has no actions.
+Group actions under **Save-changing** and **Run-only**, following the
+[canonical Run-only policy](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#saves-and-cheats).
+Run-only cheats preserve normal saves, progression, statistics and achievements.
+The approved action is **Grant all weapons**, in Run-only. No save-changing action
+is specified. Hide a group that has no actions.
 
 Grant all weapons idempotently adds Multi-Laser, Rapid Missile, Heavy Missile, Scattershot and Phaser to the
-current flight's loadout only. It does not change saved weapon ownership, levels or
-Stardust, and the granted weapons end with the flight. Each granted weapon gets
-its three included packs for the current flight only; they are never saved. Selection, shield, story,
+current flight's loadout only. The grants are not added to permanent weapon
+ownership or permanent ammunition, and do not change levels or Stardust. Each
+granted weapon gets its three included packs for the current flight. The grants
+and their remaining ammunition stay in the current resumable flight through
+normal saving and Continue, and end with that flight. Selection, shield, story,
 cargo and fire cooldown remain unchanged. A granted weapon lost in a quantum jump
 home costs nothing beyond the flight.
 
