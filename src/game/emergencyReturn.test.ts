@@ -100,7 +100,7 @@ function setup(quantum = true) {
     document,
     flight,
     flushScene,
-    frame: (ms = 50) => {
+    frame: (ms = 31.25) => {
       time += ms;
       frame.call(scene, time, ms);
     },
@@ -125,7 +125,7 @@ describe("emergency return presentation", () => {
     frame();
     expect(scene.emergencyReturn.pending).toBe(true);
     expect(snapshotSource).toHaveBeenCalledTimes(1);
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 100; i++) {
       frame();
     }
     expect(snapshotSource).toHaveBeenCalledTimes(1);
@@ -134,64 +134,70 @@ describe("emergency return presentation", () => {
     );
   });
 
-  it("commits the real return once, freezes input, then plays the existing jump from the held heading", () => {
-    const { flight, frame, model, scene } = setup();
-    frame();
-    expect(scene.emergencyReturn.line).toMatchObject({
-      name: "Astra",
-      speaker: "astra",
-      text: "Shields are down. We need to jump to safety!",
-    });
-    expect(model.state).toMatchObject({ flight: null, mode: "home" });
-    expect(scene.controls.overlay.inert).toBe(true);
-    expect(scene.controls.setEnabled).toHaveBeenCalledWith(false);
-    const saved = model.save();
-    const cargo = model.state.economy.cargo;
-    const frozen = structuredClone(flight);
-    for (let i = 0; i < 18; i++) {
+  it.each([false, true])(
+    "holds three visible seconds before the jump, preserving the return once (reduced motion: %s)",
+    (reducedMotion) => {
+      const { flight, frame, model, scene } = setup();
+      scene.reducedMotion = reducedMotion;
       frame();
-    }
-    expect(scene.quantum!.play).not.toHaveBeenCalled();
-    expect(scene.controls.sample).toHaveBeenCalledTimes(1);
-    expect(flight).toEqual(frozen);
-    frame();
-    expect(scene.quantum!.play).toHaveBeenCalledExactlyOnceWith(
-      expect.objectContaining({ emergency: true, source: jumpSource }),
-    );
-    const play = scene.quantum!.play.mock.calls[0]![0];
-    play.onSwitch();
-    expect(scene.holdSource).toBe(false);
-    play.onDone();
-    expect(scene.jumping).toBe(false);
-    expect(scene.controls.overlay.inert).toBe(false);
-    frame();
-    expect(scene.quantum!.play).toHaveBeenCalledTimes(1);
-    expect(model.state.economy.cargo).toBe(cargo);
-    expect(model.save()).toBe(saved);
-    const loaded = relaunch(CONTENT, saved);
-    expect(loaded.state.mode).toBe("home");
-    expect(loaded.state.flight).toBeNull();
-    expect(loaded.state.economy).toEqual(model.state.economy);
-    expect(new EmergencyReturn().pending).toBe(false);
-  });
+      expect(scene.emergencyReturn.line).toMatchObject({
+        name: "Astra",
+        speaker: "astra",
+        text: "Shields are down. We need to jump to safety!",
+      });
+      expect(model.state).toMatchObject({ flight: null, mode: "home" });
+      expect(scene.controls.overlay.inert).toBe(true);
+      expect(scene.controls.setEnabled).toHaveBeenCalledWith(false);
+      const saved = model.save();
+      const cargo = model.state.economy.cargo;
+      const frozen = structuredClone(flight);
+      for (let i = 0; i < 94; i++) {
+        frame();
+      }
+      expect(scene.quantum!.play).not.toHaveBeenCalled();
+      expect(scene.controls.sample).toHaveBeenCalledTimes(1);
+      expect(flight).toEqual(frozen);
+      frame();
+      expect(scene.quantum!.play).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ emergency: true, reducedMotion, source: jumpSource }),
+      );
+      const play = scene.quantum!.play.mock.calls[0]![0];
+      play.onSwitch();
+      expect(scene.holdSource).toBe(false);
+      play.onDone();
+      expect(scene.jumping).toBe(false);
+      expect(scene.controls.overlay.inert).toBe(false);
+      frame();
+      expect(scene.quantum!.play).toHaveBeenCalledTimes(1);
+      expect(model.state.economy.cargo).toBe(cargo);
+      expect(model.save()).toBe(saved);
+      const loaded = relaunch(CONTENT, saved);
+      expect(loaded.state.mode).toBe("home");
+      expect(loaded.state.flight).toBeNull();
+      expect(loaded.state.economy).toEqual(model.state.economy);
+      expect(new EmergencyReturn().pending).toBe(false);
+    },
+  );
   it("holds the readable line across background and clamps the first resumed frame", () => {
     const { document, frame, scene } = setup();
     frame();
     document.hidden = true;
     frame(60000);
-    expect(scene.emergencyReturn.line!.elapsed).toBe(0.05);
+    expect(scene.emergencyReturn.line!.elapsed).toBe(0.03125);
     document.hidden = false;
     frame(60000);
     expect(scene.emergencyReturn.pending).toBe(true);
     expect(scene.quantum!.play).not.toHaveBeenCalled();
-    for (let i = 0; i < 18; i++) {
+    for (let i = 0; i < 93; i++) {
       frame();
     }
+    expect(scene.quantum!.play).not.toHaveBeenCalled();
+    frame();
     expect(scene.quantum!.play).toHaveBeenCalledTimes(1);
   });
   it("finishes without jump art and releases the input lock", () => {
     const { frame, scene } = setup(false);
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 96; i++) {
       frame();
     }
     expect(scene.emergencyReturn.pending).toBe(false);
@@ -224,8 +230,8 @@ describe("emergency return presentation", () => {
   it("keeps input guarded after the warning until the jump completes", () => {
     const presentation = new EmergencyReturn();
     presentation.begin(true, jumpSource);
-    for (let i = 0; i < 20; i++) {
-      presentation.advance(true, 0.05);
+    for (let i = 0; i < 96; i++) {
+      presentation.advance(true, 0.03125);
     }
     expect(presentation.pending).toBe(false);
     expect(presentation.active).toBe(true);

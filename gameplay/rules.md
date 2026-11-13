@@ -150,7 +150,13 @@ jump-home page after the emergency jump shows the aboard-emergency background. E
 jump effect, with Ada's ship shown in it, arriving on the heading she starts the
 flight with: jumps from the galaxy map (Jump, and Earth in flight), Travel and the
 emergency jump. Boarding from her room is the rock's glow, not a jump; Astra's emergency jump when the shield fails tints it red. Jumping
-home, the emergency jump included, arrives in Ada's room. An emergency jump
+home, the emergency jump included, arrives in Ada's room. Before a real shield-failure
+return warps, the existing ship damage effect plays and Astra's portrait and name
+show "Shields are down. We need to jump to safety!" for three visible seconds.
+Combat, input and damage stay frozen until the jump finishes. Hidden-tab time
+does not consume the warning, and reduced motion keeps the same reading time.
+The return outcome is committed once before this presentation: reload resumes
+home without another cargo penalty or replaying the warning. An emergency jump
 lands at night: its jump-home page shows, then a 2 to 3 second sleep scene (Ada
 asleep with Penny curled up, the rock glowing softly) that a tap skips after a
 moment, then morning, when any waiting home scene plays as on any arrival home. A
