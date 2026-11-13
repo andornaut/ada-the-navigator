@@ -1301,12 +1301,12 @@ Ada's tab ("Ada", 42.23) starts 64 in and every other tab 8 in, the widest
 "General Gadget" (131.15). With six weapons the leftmost target is Laser's
 (target 5, no count pill) and the leftmost count pill is target 4's.
 
-| View                  | Box              | Ada's tab        | Widest other tab | Pause press right | Target 5 left | Target 4 (pill centre)                               | Nearest across                     |
-| --------------------- | ---------------- | ---------------- | ---------------- | ----------------- | ------------- | ---------------------------------------------------- | ---------------------------------- |
-| 720x360, 1280x720     | 120 to 600       | 184 to 226.23    | 128 to 259.15    | 54.75             | 382.5         | 439.5 (463.5)                                        | 73.25 to pause, 123.35 to target 5 |
-| 720x360, phone insets | 120 to 600       | 184 to 226.23    | 128 to 259.15    | 85.75             | 351.5         | 279-441, 249-471, 219-501; 273-301                   | 42.25 to pause, 92.35 to target 5  |
-| 844x390               | 149.54 to 629.54 | 213.54 to 255.77 | 157.54 to 288.69 | 83.75             | 412.58        | 308.54-470.54, 278.54-500.54, 248.54-530.54; 292-320 | 73.79 to pause, 123.89 to target 5 |
-| 844x390, insets 43    | 149.54 to 629.54 | 213.54 to 255.77 | 157.54 to 288.69 | 85.75             | 410.58        | 467.58 (491.58)                                      | 71.79 to pause, 121.89 to target 5 |
+| View                  | Box              | Ada's tab        | Widest other tab | Pause press right | Target 5 left | Target 4 (pill centre) | Nearest across                     |
+| --------------------- | ---------------- | ---------------- | ---------------- | ----------------- | ------------- | ---------------------- | ---------------------------------- |
+| 720x360, 1280x720     | 120 to 600       | 184 to 226.23    | 128 to 259.15    | 54.75             | 382.5         | 439.5 (463.5)          | 73.25 to pause, 123.35 to target 5 |
+| 720x360, phone insets | 120 to 600       | 184 to 226.23    | 128 to 259.15    | 85.75             | 351.5         | 408.5 (432.5)          | 42.25 to pause, 92.35 to target 5  |
+| 844x390               | 149.54 to 629.54 | 213.54 to 255.77 | 157.54 to 288.69 | 83.75             | 412.58        | 469.58 (493.58)        | 73.79 to pause, 123.89 to target 5 |
+| 844x390, insets 43    | 149.54 to 629.54 | 213.54 to 255.77 | 157.54 to 288.69 | 85.75             | 410.58        | 467.58 (491.58)        | 71.79 to pause, 121.89 to target 5 |
 
 - No overlaps: every tab ends at least 92.35 left of any weapon column and
   starts at least 42.25 right of the pause press area, the two it shares rows
