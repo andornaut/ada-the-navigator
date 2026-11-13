@@ -394,6 +394,18 @@ export function buildScene(scene: UiContext): void {
     ),
   );
   scene.controls = createControls(scene, {
+    aboardResource: () => {
+      const aboard = scene.model.aboard;
+      if (!aboard) {
+        return null;
+      }
+      const kind = scene.model.carrying || scene.model.towing ? "job" : "story";
+      const quest = scene.model.map?.quests.find((entry) => entry.kind === kind);
+      if (!quest || (quest.kind !== "job" && quest.kind !== "story")) {
+        return null;
+      }
+      return { kind: aboard.kind, text: quest.description || quest.text, title: aboard.name };
+    },
     achievements: {
       close: CONTENT.labels.close ?? "",
       next: CONTENT.labels.next ?? "",

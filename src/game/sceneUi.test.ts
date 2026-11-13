@@ -324,3 +324,66 @@ describe("canonical save caller", () => {
     },
   );
 });
+
+describe("aboard resource details", () => {
+  it("reads the actual carried item and the canonical quest live at each tap", () => {
+    const model = {
+      aboard: { kind: "carrying", name: "Food" },
+      carrying: false,
+      map: {
+        quests: [
+          { description: "Canonical story description", kind: "story", text: "Story step" },
+          { description: "Canonical job description", kind: "job", text: "Job step" },
+        ],
+      },
+      towing: false,
+    };
+    const read = runInContext(
+      callback("aboardResource"),
+      createContext({ scene: { model } }),
+    ) as () => unknown;
+    expect(read()).toEqual({
+      kind: "carrying",
+      text: "Canonical story description",
+      title: "Food",
+    });
+    model.carrying = true;
+    model.aboard.name = "Supplies";
+    expect(read()).toEqual({
+      kind: "carrying",
+      text: "Canonical job description",
+      title: "Supplies",
+    });
+    model.carrying = false;
+    model.towing = true;
+    model.aboard = { kind: "towing", name: "Survey craft" };
+    expect(read()).toEqual({
+      kind: "towing",
+      text: "Canonical job description",
+      title: "Survey craft",
+    });
+  });
+
+  it("never substitutes another quest or stale item when the carried quest is absent", () => {
+    const model: {
+      aboard: { kind: string; name: string } | null;
+      carrying: boolean;
+      map: unknown;
+      towing: boolean;
+    } = {
+      aboard: { kind: "carrying", name: "Supplies" },
+      carrying: true,
+      map: { quests: [{ kind: "story", text: "Unrelated story" }] },
+      towing: false,
+    };
+    const read = runInContext(
+      callback("aboardResource"),
+      createContext({ scene: { model } }),
+    ) as () => unknown;
+    expect(read()).toBeNull();
+    model.map = { quests: [{ kind: "job", text: "Canonical job step" }] };
+    expect(read()).toEqual({ kind: "carrying", text: "Canonical job step", title: "Supplies" });
+    model.aboard = null;
+    expect(read()).toBeNull();
+  });
+});
