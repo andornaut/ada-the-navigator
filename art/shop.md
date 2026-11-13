@@ -49,8 +49,8 @@ The overlay has one close X and no duplicate Close button.
    once the galaxy's projects are offered, Projects (`projects`), left to
    right and sharing one width. The selected tab draws `ui-button-primary`, the
    other `ui-button`; both keep the normal and pressed frames. Tabs are a tab
-   list; switching tabs resets the list scroll to the top.
-4. Item list: the selected tab's row groups, in a vertical scroll viewport.
+   list; switching tabs starts the selected tab at page one.
+4. Item list: the selected tab's row groups, in fitting columns and height-based pages.
 
 The Weapons tab holds the [ammunition row group](#ammunition-rows), when Ada
 owns any non-Laser weapon, then its item row group. The Projects tab holds the
@@ -145,20 +145,22 @@ the weapon rows, so the repeat purchase shows without scrolling.
 - The buy confirm draws the ammunition glyph at 2x (40) in the confirm well,
   with `confirmTitle` ("Buy Rapid Missile ammo?"); `ammoPackCount` ("×200")
   takes the description's place, body text, centred.
-- Row width: the widest ammunition line, "Heavy Missile ammo" (147.59), is
-  narrower than the widest upgrade name, "Heavy Missile upgrade" (161.85), so
-  ammunition rows never widen the shop. Rows stay 301.19 wide (slot 71.34,
-  Owned) and two columns need 656.38, inside the 688 available at 720 logical.
+- Rows share the widest measured name and trailing slot across the available tabs.
+  Complete columns fill the available width without reducing text or control sizes.
 
-### Scrolling
+### Pages
 
-- The item list is the shop's scroll group ([Layout](layout.md#modals)): the
-  header, balance and tabs stay fixed, and the list clips at its edges with no
-  fade.
-- The scroll track is `#2f2d3d`, the list's full height, with a `#6b6685`
-  thumb whose length is proportional to the visible fraction. Its reserve
-  counts towards the content width.
-- Drag and wheel scroll the list.
+- The header, balance and tabs remain fixed. The list uses every complete column
+  that fits inside the card padding and focus-ring clearance.
+- Measured grid rows fill the remaining height in reading order. Names wrap only
+  when a complete natural-width row cannot fit; wrapped text grows its control.
+- A longer list uses Previous, the current page count and Next beneath the rows.
+  The pager appears only when needed, keeps its place during navigation and
+  preserves keyboard focus. Its unavailable end actions remain focusable.
+- Ammunition precedes items, and paint follows ship equipment with its heading.
+  A heading stays with its first row. Changing tabs returns to page one.
+- Pages preserve every name, glyph, level, price, ownership state and action.
+  No scroll track or scroll reserve is needed.
 
 ## Job board
 
@@ -172,9 +174,11 @@ back and Escape return to the station card. Geometry is in
 3. `jobBoardIntro`, supporting text, centred lines.
 4. The refusal line, `jobBusy` (or `activityBusy`), supporting text, centred,
    shown after a busy row refuses and hidden when the board reopens.
-5. Job list: one column of job rows, `STACK_BUTTON_GAP` apart, the scroll
-   group, with the shop's scroll track and thumb. The held job or the active
-   activity heads it.
+5. Job list: measured rows use as many complete columns as fit, retaining
+   `STACK_BUTTON_GAP` between rows. The held job or active activity heads it.
+   Rows that exceed the available height use the same fixed Previous, page count
+   and Next controls as the shop. The refusal line is included when measuring
+   the remaining height. Every title, detail, reward and action remains available.
 
 ### Job row
 
@@ -239,8 +243,7 @@ The shared card layout takes precedence over these mock-up measurements:
   left-aligning in the card.
 - The shop balance is a centred group under the title, not inside the header's
   top-left corner.
-- The two item columns form one centred control grid, rather than rows 8px
-  apart.
+- Item columns form one centred control grid, with the standard button gap.
 - Rows use the standard action height, not 50, and level lines and the Owned
   and In use labels use the 16px text roles, not 14px.
 - Row insets are `SPACING.gap` throughout; the mock-up's well inset was 7, its

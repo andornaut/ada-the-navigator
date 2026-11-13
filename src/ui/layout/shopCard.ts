@@ -1,4 +1,5 @@
-import { SCROLL, SHOP_ROW, SPACING } from "../../data/layout.ts";
+import { SHOP_ROW, SPACING } from "../../data/layout.ts";
+import { FOCUS_RING } from "./controls.ts";
 export { BALANCE, CONFIRM_ITEM, SHOP_ROW } from "../../data/layout.ts";
 
 // The shop item row and the buy confirm's well and price (art/layout.md "Shop item row"), in
@@ -18,13 +19,18 @@ export function shopRowWidth(nameWidth: number, slotWidth: number): number {
   return inset + well + nameGap + nameWidth + nameGap + slotWidth + inset;
 }
 
-// The item list's width for columns of rowWidth rows: the columns a column gap apart, plus the
-// scroll reserve on its right, which counts toward the content width.
-export function shopListWidth(columns: 1 | 2, rowWidth: number): number {
-  return columns * rowWidth + (columns - 1) * SHOP_ROW.columnGap + SCROLL.gap + SCROLL.track;
+// The paged list includes the focus rings on both sides, without a scroll track.
+export function shopListWidth(columns: number, rowWidth: number): number {
+  return columns * rowWidth + (columns - 1) * SHOP_ROW.columnGap;
 }
 
-// Two columns when a two-column list plus the panel padding fits the available width, else one.
-export function shopColumns(availableWidth: number, rowWidth: number): 1 | 2 {
-  return shopListWidth(2, rowWidth) + 2 * SPACING.panelPadding <= availableWidth ? 2 : 1;
+// Use every complete column fitting inside the card padding and the row focus rings.
+export function shopColumns(availableWidth: number, rowWidth: number): number {
+  const room = availableWidth - 2 * SPACING.panelPadding - 2 * FOCUS_RING.outset;
+  return Math.max(1, Math.floor((room + SHOP_ROW.columnGap) / (rowWidth + SHOP_ROW.columnGap)));
+}
+
+// The existing two-line label fits a standard row; only additional wrapped lines grow it.
+export function shopRowHeight(nameHeight: number): number {
+  return Math.max(SHOP_ROW.height, nameHeight + SHOP_ROW.height - 2 * SHOP_ROW.nameLine);
 }

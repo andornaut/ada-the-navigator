@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { SCROLL } from "./contentCard.ts";
 import { FOCUS_RING, PILL, TEXT_BUTTON } from "./controls.ts";
 import {
   BALANCE,
@@ -9,6 +8,7 @@ import {
   SHOP_ROW,
   shopColumns,
   shopListWidth,
+  shopRowHeight,
   shopRowWidth,
 } from "./shopCard.ts";
 import { BUTTON_GAP, SPACING, TYPE } from "./tokens.ts";
@@ -46,22 +46,33 @@ describe("shop item row", () => {
     expect(shopRowWidth(120, 70)).toBe(8 + 36 + 8 + 120 + 8 + 70 + 8);
   });
 
+  it("keeps two-line item controls at the standard height and expands wrapped details", () => {
+    expect(shopRowHeight(2 * SHOP_ROW.nameLine)).toBe(TEXT_BUTTON.height);
+    expect(shopRowHeight(3 * SHOP_ROW.nameLine)).toBe(TEXT_BUTTON.height + SHOP_ROW.nameLine);
+  });
+
   it("heads the paint rows with a 20 icon on a 20 line a gap above them", () => {
     expect(SHOP_ROW.paintHeading).toEqual({ gap: SPACING.gap, icon: 20, line: 20 });
   });
 });
 
 describe("shop item list", () => {
-  it("counts the scroll reserve toward the list's width", () => {
-    expect(shopListWidth(1, 250)).toBe(250 + SCROLL.gap + SCROLL.track);
+  it("fits row columns without reserving space for a scrollbar", () => {
+    expect(shopListWidth(1, 250)).toBe(250);
     // The item grid's columns are buttons side by side, BUTTON_GAP apart.
-    expect(shopListWidth(2, 250)).toBe(2 * 250 + BUTTON_GAP + SCROLL.gap + SCROLL.track);
+    expect(shopListWidth(2, 250)).toBe(2 * 250 + BUTTON_GAP);
   });
 
   it("uses two columns only when they and the panel padding fit the available width", () => {
-    const fits = shopListWidth(2, 250) + 2 * SPACING.panelPadding;
+    const fits = shopListWidth(2, 250) + 2 * SPACING.panelPadding + 2 * FOCUS_RING.outset;
     expect(shopColumns(fits, 250)).toBe(2);
     expect(shopColumns(fits - 1, 250)).toBe(1);
+  });
+  it("uses additional complete columns on wide landscapes without shrinking rows", () => {
+    const fits = shopListWidth(4, 250) + 2 * SPACING.panelPadding + 2 * FOCUS_RING.outset;
+    expect(shopColumns(fits, 250)).toBe(4);
+    expect(shopColumns(fits - 1, 250)).toBe(3);
+    expect(shopColumns(100, 250)).toBe(1);
   });
 });
 

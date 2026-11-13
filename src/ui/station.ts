@@ -1,10 +1,12 @@
 import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 
 import { CAST } from "../data/cast.ts";
+import { CONTENT } from "../data/content.ts";
 import type { Weapon } from "../data/types.ts";
 import { weaponShopSheet } from "../data/weaponGlyphs.ts";
 import type { StationGreeting } from "../model/keepers.ts";
 import { createDialoguePanel } from "./dialoguePanel.ts";
+import { cardPages } from "./layout/cardPages.ts";
 import { BUTTON_SLICE, FOCUS_RING, PILL, TEXT_BUTTON } from "./layout/controls.ts";
 import { font, slice, units } from "./layout/css.ts";
 import {
@@ -13,6 +15,7 @@ import {
   SHOP_ROW,
   shopColumns,
   shopListWidth,
+  shopRowHeight,
   shopRowWidth,
 } from "./layout/shopCard.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
@@ -23,7 +26,6 @@ import {
   createCard,
   FOCUS_STYLE,
   isTap,
-  setScrollGroup,
   TEXT_TOKENS,
 } from "./modal.ts";
 import { refuse } from "./refusal.ts";
@@ -79,8 +81,7 @@ export const STATION_STYLE = `
   color:${TEXT_TOKENS.label}
 }
 
-/* The item list, the shop's scroll group: its width holds the columns, the focus and selection
-   rings' outset, and the scroll reserve, always kept. */
+/* Paged rows retain space for focus and selection rings. */
 .ada-controls .ada-shop-list{
   box-sizing:border-box;
   display:grid;
@@ -88,13 +89,7 @@ export const STATION_STYLE = `
   justify-items:center;
   gap:${units(SPACING.gap)};
   padding:${units(FOCUS_RING.outset)};
-  scrollbar-gutter:stable;
-  overflow-x:hidden;
-  touch-action:pan-y
-}
-.ada-controls .ada-shop-list::-webkit-scrollbar-thumb{
-  background:#6b6685;
-  background-clip:padding-box
+  align-self:center
 }
 
 .ada-controls .ada-shop-group{
@@ -133,7 +128,7 @@ export const STATION_STYLE = `
   width:var(--shop-row-width,max-content);
   height:${units(SHOP_ROW.height)};
   min-width:0;
-  min-height:0;
+  min-height:${units(SHOP_ROW.height)};
   margin:0;
   padding:0 ${ROW_SIDE} ${NORMAL_BOTTOM};
   display:flex;
@@ -249,7 +244,8 @@ export const STATION_STYLE = `
   min-width:0;
   display:grid;
   line-height:${units(SHOP_ROW.nameLine)};
-  white-space:nowrap
+  white-space:normal;
+  overflow-wrap:anywhere
 }
 .ada-controls .ada-shop-level{
   color:${TEXT_TOKENS.rowSupporting}
@@ -311,21 +307,19 @@ export const STATION_STYLE = `
   image-rendering:pixelated
 }
 
-/* The job board's list: one column of rows at the widest row's width. */
+/* The job board packs measured rows into the available width, then pages them. */
 .ada-controls .ada-job-list{
   box-sizing:border-box;
   display:grid;
-  grid-template-columns:max-content;
+  grid-template-columns:1fr;
   justify-content:center;
   align-content:start;
   row-gap:${units(SHOP_ROW.rowGap)};
   padding:${units(FOCUS_RING.outset)};
-  scrollbar-gutter:stable;
-  overflow-x:hidden;
-  touch-action:pan-y
+  align-self:center
 }
 .ada-controls .ada-job-row{
-  width:auto;
+  width:100%;
   justify-self:stretch
 }
 .ada-controls .ada-job-row .ada-shop-slot{
@@ -368,7 +362,22 @@ export const STATION_STYLE = `
   width:max-content
 }
 .ada-controls .ada-shop-measure .ada-shop-name{
-  flex:none
+  flex:none;
+  white-space:nowrap
+}
+.ada-controls .ada-job-page-row{
+  display:grid;
+  grid-template-columns:repeat(var(--shop-columns,1),var(--shop-row-width,max-content));
+  column-gap:${units(SHOP_ROW.columnGap)}
+}
+.ada-controls .ada-station-pager{
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+  gap:${units(SPACING.gap)}
+}
+.ada-controls .ada-station-pager p{
+  margin:0
 }
 `;
 
@@ -576,12 +585,6 @@ function prose(className: string, text: string): HTMLParagraphElement {
   return node;
 }
 
-// An element's laid-out width and height in logical px.
-function measured(element: HTMLElement, unit: number): { height: number; width: number } {
-  const style = getComputedStyle(element);
-  return { height: parseFloat(style.height) / unit, width: parseFloat(style.width) / unit };
-}
-
 /**
  * The docked station card, its shop and the buy confirm, following Archie's Pet shop on
  * the shared card builder: tabs, Owned and In use rows, a confirm naming the item and the
@@ -693,7 +696,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   list.className = "ada-shop-list";
   list.setAttribute("role", "tabpanel");
   shopCard.body.append(shopBalance, tabs, list);
-  setScrollGroup(shopCard, list);
 
   const confirmCard = createCard({
     closeAction: "confirm-cancel-x",
@@ -728,7 +730,80 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   const jobList = document.createElement("div");
   jobList.className = "ada-job-list";
   jobsCard.body.append(jobsBalance, jobsIntro, jobsBusy, jobList);
-  setScrollGroup(jobsCard, jobList);
+
+  const makePager = () => {
+    const node = document.createElement("div");
+    node.className = "ada-station-pager";
+    const previous = createButton(CONTENT.labels.previous ?? "");
+    previous.classList.add("ada-station-previous");
+    const count = document.createElement("p");
+    count.setAttribute("role", "status");
+    count.setAttribute("aria-live", "polite");
+    const next = createButton(CONTENT.labels.next ?? "");
+    next.classList.add("ada-station-next");
+    node.append(previous, count, next);
+    return { count, next, node, pages: 1, previous };
+  };
+  const shopPager = makePager();
+  const jobsPager = makePager();
+  shopCard.body.append(shopPager.node);
+  jobsCard.body.append(jobsPager.node);
+  let shopPage = 0;
+  let jobsPage = 0;
+
+  // Fit actual laid-out grid rows below the fixed groups, with the pager only when needed.
+  const fitPages = (
+    parts: typeof shopCard,
+    group: HTMLElement,
+    pager: typeof shopPager,
+    chunks: readonly HTMLElement[],
+    page: number,
+  ): number => {
+    pager.node.hidden = true;
+    group.replaceChildren(...chunks);
+    parts.fit();
+    const unit = readViewUnit(group);
+    for (const row of group.querySelectorAll<HTMLElement>(".ada-shop-row")) {
+      const name = row.querySelector<HTMLElement>(".ada-shop-name")!;
+      row.style.height = units(shopRowHeight(name.getBoundingClientRect().height / unit));
+    }
+    const heights = chunks.map((chunk) => chunk.getBoundingClientRect().height / unit);
+    const room = () => {
+      const children = [...parts.body.children].filter(
+        (child) => child instanceof HTMLElement && !child.hidden,
+      );
+      const others = children
+        .filter((child) => child !== group)
+        .reduce((total, child) => total + child.getBoundingClientRect().height / unit, 0);
+      const end = parseFloat(getComputedStyle(parts.body, "::after").height) / unit;
+      return (
+        parts.body.clientHeight / unit -
+        others -
+        children.length * SPACING.gap -
+        end -
+        2 * FOCUS_RING.outset
+      );
+    };
+    let pages = cardPages(room(), SPACING.gap, heights);
+    if (pages.length > 1) {
+      pager.node.hidden = false;
+      pages = cardPages(room(), SPACING.gap, heights);
+    }
+    const currentPage = Math.min(page, pages.length - 1);
+    pager.pages = pages.length;
+    pager.count.textContent = (CONTENT.labels.achievementsPage ?? "")
+      .replace("{page}", String(currentPage + 1))
+      .replace("{pages}", String(pages.length));
+    for (const [button, unavailable] of [
+      [pager.previous, currentPage === 0],
+      [pager.next, currentPage === pages.length - 1],
+    ] as const) {
+      button.classList.toggle("ada-unavailable", unavailable);
+      button.setAttribute("aria-disabled", String(unavailable));
+    }
+    group.replaceChildren(...pages[currentPage]!.map((index) => chunks[index]!));
+    return currentPage;
+  };
 
   const dropCancel = createButton(labels.jobDropCancel);
   dropCancel.dataset.action = "drop-cancel";
@@ -797,6 +872,12 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       if (action === "select") {
         options.select(row.key);
         render();
+        const selected = [...list.querySelectorAll<HTMLElement>(".ada-shop-row")].find(
+          (entry) => entry.dataset.item === row.key,
+        );
+        if (selected) {
+          focusTarget(selected);
+        }
         return;
       }
       if (action === "none") {
@@ -819,28 +900,30 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     return group;
   };
 
-  const tabContent = (id: StationTab): HTMLElement[] => {
+  const tabContent = (id: StationTab, columns: number): HTMLElement[] => {
     const rows = options.rows(id);
-    const ammo = rows.filter((row) => row.group === "ammo");
-    const content: HTMLElement[] = [
-      ...(ammo.length ? [groupElement(ammo)] : []),
-      groupElement(rows.filter((row) => row.group === "items")),
-    ];
-    const paint = rows.filter((row) => row.group === "paint");
-    if (paint.length) {
-      const block = document.createElement("div");
-      block.className = "ada-shop-paint";
-      const heading = document.createElement("div");
-      heading.className = "ada-paint-heading";
-      heading.textContent = labels.shipPaint;
-      block.append(heading, groupElement(paint));
-      content.push(block);
+    const chunks: HTMLElement[] = [];
+    for (const kind of ["ammo", "items", "paint"] as const) {
+      const entries = rows.filter((row) => row.group === kind);
+      for (let index = 0; index < entries.length; index += columns) {
+        const group = groupElement(entries.slice(index, index + columns));
+        if (kind === "paint" && index === 0) {
+          const block = document.createElement("div");
+          block.className = "ada-shop-paint";
+          const heading = document.createElement("div");
+          heading.className = "ada-paint-heading";
+          heading.textContent = labels.shipPaint;
+          block.append(heading, group);
+          chunks.push(block);
+        } else {
+          chunks.push(group);
+        }
+      }
     }
-    return content;
+    return chunks;
   };
 
-  // Every row shares the widest row across both tabs and the list keeps the taller tab's height,
-  // so switching tabs never resizes the card.
+  // Measure the complete catalogs at natural widths, then bound rows before measuring heights.
   const fitList = (): void => {
     const card = shopCard.card;
     const unit = readViewUnit(card);
@@ -848,37 +931,29 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       card.style.removeProperty(name);
     }
     const measure = document.createElement("div");
-    measure.className = "ada-shop-list ada-shop-measure";
-    const tabsContent = shownTabs().map((id) => {
-      const holder = document.createElement("div");
-      holder.className = "ada-shop-list";
-      holder.append(...tabContent(id));
-      return holder;
-    });
-    measure.append(...tabsContent);
+    measure.className = "ada-shop-measure";
+    measure.append(...shownTabs().flatMap((id) => options.rows(id).map(rowElement)));
     card.append(measure);
     const widest = (selector: string) =>
       Math.max(
         0,
         ...[...measure.querySelectorAll<HTMLElement>(selector)].map(
-          (node) => measured(node, unit).width,
+          (node) => node.getBoundingClientRect().width / unit,
         ),
       );
     const pill = Math.ceil(widest(".ada-price"));
     const slot = Math.max(pill, Math.ceil(widest(".ada-owned")));
-    const row = shopRowWidth(Math.ceil(widest(".ada-shop-name")), slot);
+    const natural = shopRowWidth(Math.ceil(widest(".ada-shop-name")), slot);
+    measure.remove();
+    const available = card.clientWidth / unit;
+    const row = Math.min(natural, available - 2 * SPACING.panelPadding - 2 * FOCUS_RING.outset);
+    const columns = shopColumns(available, row);
     card.style.setProperty("--shop-pill-width", units(pill));
     card.style.setProperty("--shop-slot-width", units(slot));
     card.style.setProperty("--shop-row-width", units(row));
-    const layer = getComputedStyle(modal);
-    const available =
-      (modal.clientWidth - parseFloat(layer.paddingLeft) - parseFloat(layer.paddingRight)) / unit;
-    const columns = shopColumns(available, row);
     card.style.setProperty("--shop-columns", String(columns));
-    const height = Math.max(...tabsContent.map((holder) => measured(holder, unit).height));
-    measure.remove();
     list.style.width = units(shopListWidth(columns, row) + 2 * FOCUS_RING.outset);
-    list.style.height = units(height);
+    shopPage = fitPages(shopCard, list, shopPager, tabContent(tab, columns), shopPage);
   };
 
   const jobElement = (job: StationJob): HTMLButtonElement => {
@@ -940,11 +1015,21 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       if (!options.acceptJob(job.id)) {
         jobsBusy.textContent = options.busyLine();
         jobsBusy.hidden = false;
+        renderJobs();
         jobsCard.fit();
-        refuse(node, options.reducedMotion());
+        const replacement = [...jobList.querySelectorAll<HTMLElement>(".ada-job-row")].find(
+          (row) => row.dataset.job === job.id,
+        );
+        if (replacement) {
+          focusTarget(replacement);
+          refuse(replacement, options.reducedMotion());
+        } else {
+          focusTarget(jobsPager.next);
+        }
         return;
       }
       jobsBusy.hidden = true;
+      jobsPage = 0;
       render();
       const inUse = jobList.querySelector<HTMLElement>("[data-state=inUse]");
       if (inUse) {
@@ -955,18 +1040,37 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   };
 
   const renderJobs = (): void => {
-    jobList.replaceChildren(...options.jobs().map(jobElement));
-    // Every row's compact action is one width: the widest label's (art/layout.md "Job board row").
-    jobList.style.removeProperty("--job-action-width");
-    const widest = Math.max(
+    const unit = readViewUnit(jobsCard.card);
+    const measure = document.createElement("div");
+    measure.className = "ada-shop-measure";
+    const rows = options.jobs().map(jobElement);
+    measure.append(...rows);
+    jobsCard.card.append(measure);
+    measure.style.removeProperty("--job-action-width");
+    const action = Math.max(
       0,
-      ...[...jobList.querySelectorAll<HTMLElement>(".ada-job-action")].map(
-        (action) => action.getBoundingClientRect().width,
+      ...[...measure.querySelectorAll<HTMLElement>(".ada-job-action")].map(
+        (node) => node.getBoundingClientRect().width / unit,
       ),
     );
-    if (widest > 0) {
-      jobList.style.setProperty("--job-action-width", units(widest / readViewUnit(jobList)));
+    jobList.style.setProperty("--job-action-width", units(action));
+    measure.style.setProperty("--job-action-width", units(action));
+    const natural = Math.max(0, ...rows.map((node) => node.getBoundingClientRect().width / unit));
+    const available = jobsCard.card.clientWidth / unit;
+    const width = Math.min(natural, available - 2 * SPACING.panelPadding - 2 * FOCUS_RING.outset);
+    const columns = shopColumns(available, width);
+    jobList.style.setProperty("--shop-columns", String(columns));
+    jobList.style.setProperty("--shop-row-width", units(width));
+    jobList.style.width = units(shopListWidth(columns, width) + 2 * FOCUS_RING.outset);
+    const chunks: HTMLElement[] = [];
+    for (let index = 0; index < rows.length; index += columns) {
+      const chunk = document.createElement("div");
+      chunk.className = "ada-job-page-row";
+      chunk.append(...rows.slice(index, index + columns));
+      chunks.push(chunk);
     }
+    measure.remove();
+    jobsPage = fitPages(jobsCard, jobList, jobsPager, chunks, jobsPage);
   };
 
   const renderShop = (): void => {
@@ -978,7 +1082,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       button.classList.toggle("ada-primary", id === tab);
       button.setAttribute("aria-selected", String(id === tab));
     }
-    list.replaceChildren(...tabContent(tab));
   };
 
   const render = (): void => {
@@ -998,6 +1101,29 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       stationCard.fit();
     }
   };
+
+  for (const [pager, kind] of [
+    [shopPager, "shop"],
+    [jobsPager, "jobs"],
+  ] as const) {
+    for (const [button, direction] of [
+      [pager.previous, -1],
+      [pager.next, 1],
+    ] as const) {
+      button.addEventListener("click", () => {
+        if (button.getAttribute("aria-disabled") === "true") {
+          return;
+        }
+        if (kind === "shop") {
+          shopPage += direction;
+        } else {
+          jobsPage += direction;
+        }
+        render();
+        focusTarget(button);
+      });
+    }
+  }
 
   const openConfirm = (row: StationRow, request: Extract<StationRequest, { kind: "confirm" }>) => {
     confirm = { key: row.key };
@@ -1062,9 +1188,8 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
 
   // The row width and columns follow the view; the card builder refits the card itself.
   const refit = (): void => {
-    if (open && view === "shop") {
-      fitList();
-      shopCard.fit();
+    if (open && view !== "card") {
+      render();
     }
   };
   window.addEventListener("resize", refit);
@@ -1072,6 +1197,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
 
   openJobs.addEventListener("click", () => {
     view = "jobs";
+    jobsPage = 0;
     jobsBusy.hidden = true;
     render();
     focusTarget(jobList.querySelector<HTMLElement>("button") ?? jobsCard.close);
@@ -1097,8 +1223,8 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   for (const [id, button] of tabButtons) {
     button.addEventListener("click", () => {
       tab = id;
-      renderShop();
-      list.scrollTop = 0;
+      shopPage = 0;
+      render();
     });
   }
   stationCard.close.addEventListener("click", back);
@@ -1132,39 +1258,36 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     });
   }
 
-  // A drag past the threshold scrolls the list and does not activate the row it started on.
-  let drag = { moved: false, scroll: 0, x: 0, y: 0 };
-  let dragging = false;
-  list.addEventListener("pointerdown", (event) => {
-    dragging = true;
-    drag = { moved: false, scroll: list.scrollTop, x: event.clientX, y: event.clientY };
-  });
-  list.addEventListener("pointermove", (event) => {
-    if (!dragging) {
-      return;
-    }
-    const at = { x: event.clientX, y: event.clientY };
-    if (drag.moved || !isTap(readViewUnit(list), drag, at)) {
-      drag.moved = true;
-      list.scrollTop = drag.scroll - (at.y - drag.y);
-    }
-  });
-  list.addEventListener(
-    "click",
-    (event) => {
-      if (drag.moved) {
-        event.stopPropagation();
-        event.preventDefault();
-      }
-      dragging = false;
-      drag.moved = false;
-    },
-    true,
-  );
-  for (const type of ["pointercancel", "pointerup"] as const) {
-    list.addEventListener(type, () => {
-      dragging = false;
+  // A drag across a page must not activate the row where the gesture started.
+  for (const group of [list, jobList]) {
+    let start: { readonly x: number; readonly y: number } | undefined;
+    let moved = false;
+    group.addEventListener("pointerdown", (event) => {
+      start = { x: event.clientX, y: event.clientY };
+      moved = false;
     });
+    group.addEventListener("pointermove", (event) => {
+      if (start && !isTap(readViewUnit(group), start, { x: event.clientX, y: event.clientY })) {
+        moved = true;
+      }
+    });
+    group.addEventListener(
+      "click",
+      (event) => {
+        if (moved) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        moved = false;
+        start = undefined;
+      },
+      true,
+    );
+    for (const type of ["pointerup", "pointercancel"] as const) {
+      group.addEventListener(type, () => {
+        start = undefined;
+      });
+    }
   }
 
   return {
