@@ -4,6 +4,7 @@ import { CAST, castFrames, type CastKey, castSheet, STORY_CAST } from "../data/c
 import { GENERAL_NAMED, type Speaker, SPEAKERS } from "../data/conversations.ts";
 import type { Background } from "../data/storybook.ts";
 import type { StoryChoice, StoryPage } from "../model/storybook.ts";
+import { bedroomBackground, bedroomTop } from "./bedroom.ts";
 import {
   AWAITING_TAB,
   COMPACT_PORTRAITS,
@@ -755,6 +756,10 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   // An alias is placed as its base, so the sleep scene keeps the night's placement.
   const placement = (key: Background, anchored: boolean): string => {
     const { height, width } = viewSize();
+    const roomTop = bedroomTop({ height, width }, key);
+    if (roomTop !== null) {
+      return units(roomTop);
+    }
     const anchor = anchorOf(key);
     const subject: SubjectBand | null = anchored ? (art.subjects[anchor] ?? null) : null;
     const top = storyBackgroundTop({ height, width }, subject, stripTops.get(anchor) ?? null);
@@ -998,7 +1003,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     }
     panel.hidden = page.sleep === true;
     const buttons = fill(page);
-    setBackground(page.background, true);
+    setBackground(bedroomBackground(page.run?.pages, page.background), true);
     startNight(page);
     startHolodisk(page, exit);
     playPortrait(page);

@@ -440,7 +440,12 @@ export function jumpHomeScene(jumpHome: string, morning: string): Scene {
 }
 
 /** Ada's room with the glowing rock, after a scene that leads aboard; empty visits show Penny. */
-export function roomScene(content: GameContent, labels: StoryLabels, empty: boolean): Scene {
+export function roomScene(
+  content: GameContent,
+  labels: StoryLabels,
+  empty: boolean,
+  background: Background = "adaRoom",
+): Scene {
   return {
     endsRun: true,
     id: empty ? "room:empty" : "room",
@@ -449,12 +454,25 @@ export function roomScene(content: GameContent, labels: StoryLabels, empty: bool
     pages: [
       {
         action: labels.pickUpRock,
-        background: "adaRoom",
+        background,
         id: "room",
         text: empty ? content.premise.emptyHome : content.premise.roomRock,
       },
     ],
   };
+}
+
+/** The latest explicitly lit room in a visit, with ordinary daylight for a new visit. */
+export function roomBackground(pages: readonly StoryPage[]): Background {
+  return pages.reduce<Background>((light, page) => {
+    if (page.background === "adaRoomMorning" || page.background === "adaRoomMorningCats") {
+      return "adaRoomMorningCats";
+    }
+    if (page.background === "adaRoomNight" || page.background === "adaRoomSleep") {
+      return "adaRoomNight";
+    }
+    return light;
+  }, "adaRoom");
 }
 
 /**
