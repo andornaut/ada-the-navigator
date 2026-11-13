@@ -9,6 +9,7 @@ import { ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
+import type { DialogueState } from "./types.ts";
 
 /** A flight in a galaxy docked at its station nearest the origin. */
 function dockedIn(galaxy: GalaxyNumber): GameModel {
@@ -28,6 +29,15 @@ function dockedIn(galaxy: GalaxyNumber): GameModel {
   flight.velocity = { x: 0, y: 0 };
   flight.dangerFor = 0;
   model.interact();
+  if (galaxy === 5) {
+    expect(model.state.docked).toBeNull();
+    const arrival = model.state.dialogue as DialogueState | null;
+    expect(arrival?.context).toBe("andromeda:arrival");
+    expect(arrival?.choices.map(({ id }) => id)).toEqual(["continue"]);
+    model.choose("continue");
+    expect(model.state.progress[5].introduced).toBe(true);
+    model.interact();
+  }
   expect(model.state.docked).toBe(site.id);
   return model;
 }
