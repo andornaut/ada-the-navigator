@@ -135,3 +135,132 @@ it("reveals a known seam image near the view without revealing its far canonical
   expect(ellipses[0]!.args.slice(0, 2)).toEqual(Object.values(toScreen(INNER, periodic, place)));
   expect(place.x).toBe(-side / 2 + 100);
 });
+
+function cachedCanvas(width = 720, height = 360) {
+  const target = canvas();
+  const raster = canvas();
+  const image = { getContext: () => raster.context, height: 0, width: 0 };
+  const createElement = () => {
+    allocations++;
+    return image;
+  };
+  let allocations = 0;
+  Object.assign(target.context, {
+    canvas: { height, ownerDocument: { createElement }, width },
+    drawImage: (...args: unknown[]) =>
+      target.commands.push({ args: args.slice(1) as number[], name: "drawImage" }),
+  });
+  return { ...target, allocations: () => allocations, image, raster };
+}
+
+describe("bounded Gaussian stamp", () => {
+  it("blurs once per exact geometry while applying every current reveal in source order", () => {
+    const target = cachedCanvas();
+    const map = {
+      explored: [
+        { x: 0, y: 0 },
+        { x: 100, y: 200 },
+      ],
+      places: [],
+      player: { x: 40, y: 60 },
+    };
+    drawMapFog(target.context, INNER, VIEW, map, 1, "#123456", 720, 360);
+    const draws = target.commands.filter(({ name }) => name === "drawImage");
+    expect(draws).toHaveLength(3);
+    expect(target.raster.commands.filter(({ name }) => name === "fill")).toHaveLength(1);
+    expect(target.commands.filter(({ name }) => name === "ellipse")).toHaveLength(0);
+    const origin = draws[0]!.args;
+    const points = [...map.explored, map.player].map((point) => toScreen(INNER, VIEW, point));
+    draws.forEach(({ args }, index) => {
+      expect(args[0]! - origin[0]!).toBeCloseTo(points[index]!.x - points[0]!.x, 10);
+      expect(args[1]! - origin[1]!).toBeCloseTo(points[index]!.y - points[0]!.y, 10);
+    });
+    const before = target.commands.length;
+    drawMapFog(
+      target.context,
+      INNER,
+      VIEW,
+      { explored: [], places: [], player: map.player },
+      1,
+      "#654321",
+      720,
+      360,
+    );
+    expect(target.commands.slice(before).filter(({ name }) => name === "drawImage")).toHaveLength(
+      1,
+    );
+    expect(target.raster.commands.filter(({ name }) => name === "fill")).toHaveLength(1);
+    expect(target.context.fillStyle).toBe("#000");
+    expect(target.context.globalCompositeOperation).toBe("source-over");
+    expect(target.context.filter).toBe("none");
+    expect(target.allocations()).toBe(1);
+  });
+
+  it("rebuilds the same bounded canvas on zoom or device scale changes, never on fog colour", () => {
+    const target = cachedCanvas(2160, 1080);
+    const map = { explored: [], places: [], player };
+    drawMapFog(target.context, INNER, VIEW, map, 1, "#123456", 2160, 1080);
+    const first = target.image.width;
+    drawMapFog(target.context, INNER, { ...VIEW, scale: 0.03 }, map, 1, "#123456", 2160, 1080);
+    expect(target.image.width).toBeGreaterThan(first);
+    drawMapFog(target.context, INNER, { ...VIEW, scale: 0.03 }, map, 2, "#123456", 2160, 1080);
+    expect(target.raster.commands.filter(({ name }) => name === "fill")).toHaveLength(3);
+    drawMapFog(target.context, INNER, { ...VIEW, scale: 0.03 }, map, 2, "#654321", 2160, 1080);
+    expect(target.raster.commands.filter(({ name }) => name === "fill")).toHaveLength(3);
+    expect(target.image.width * target.image.height).toBeLessThanOrEqual(2160 * 1080);
+    expect(target.allocations()).toBe(1);
+  });
+
+  it("releases an oversized cached raster on viewport shrink and retains the vector rendering", () => {
+    const target = cachedCanvas();
+    const map = { explored: [], places: [], player };
+    drawMapFog(target.context, INNER, VIEW, map, 1, "#123456", 720, 360);
+    expect(target.image.width).toBeGreaterThan(0);
+    Object.assign(target.context.canvas, { height: 20, width: 20 });
+    const shrunk = target.commands.length;
+    drawMapFog(
+      target.context,
+      { height: 20, width: 20, x: 0, y: 0 },
+      VIEW,
+      map,
+      1,
+      "#123456",
+      20,
+      20,
+    );
+    expect(target.commands.slice(shrunk).filter(({ name }) => name === "ellipse")).toHaveLength(1);
+    expect(target.image.width).toBe(0);
+    expect(target.image.height).toBe(0);
+    Object.assign(target.context.canvas, { height: 360, width: 720 });
+    drawMapFog(target.context, INNER, VIEW, map, 1, "#123456", 720, 360);
+    expect(target.allocations()).toBe(2);
+    expect(target.image.width).toBeGreaterThan(0);
+  });
+
+  it("does not retain a previous place after it becomes hidden or leaves the visible area", () => {
+    const target = cachedCanvas();
+    const map = {
+      explored: [],
+      places: [
+        {
+          id: "known",
+          job: false,
+          kind: "landmark" as const,
+          label: "Known",
+          objective: false,
+          symbol: "wreck" as const,
+          travel: false,
+          x: 0,
+          y: 0,
+        },
+      ],
+      player: { x: 1e6, y: 1e6 },
+    };
+    drawMapFog(target.context, INNER, VIEW, map, 1, "#123456", 720, 360);
+    expect(target.commands.filter(({ name }) => name === "drawImage")).toHaveLength(1);
+    const start = target.commands.length;
+    drawMapFog(target.context, INNER, VIEW, { ...map, places: [] }, 1, "#123456", 720, 360);
+    expect(target.commands.slice(start).filter(({ name }) => name === "drawImage")).toHaveLength(0);
+    expect(target.commands.slice(start).filter(({ name }) => name === "fillRect")).toHaveLength(1);
+  });
+});
