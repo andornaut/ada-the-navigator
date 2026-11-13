@@ -1271,6 +1271,18 @@ describe("Use copy resolution", () => {
     expect(copy.party).toBe("Patch");
     expect(copy.lines.map(({ speaker }) => speaker)).toEqual(["Patch", "Ada", "Astra", "Patch"]);
   });
+  it("addresses Astra for flagship salvage while preserving each line and topic speaker", () => {
+    const copy = interactionCopy(6, { ...panel, context: "phantom.flagshipSalvage" });
+    expect(copy.party).toBe("Astra");
+    expect(copy.lines.map(({ speaker }) => speaker)).toEqual(["Astra", "Ada"]);
+    expect(copy.topics.map(({ lines }) => lines.map(({ speaker }) => speaker))).toEqual([
+      ["Astra"],
+      ["Astra"],
+    ]);
+    expect(interactionCopy(6, { ...panel, context: "phantom.aftermath" }).party).toBe(
+      "Admiral Archie",
+    );
+  });
   it("leaves departure narration unattributed", () => {
     const copy = interactionCopy(3, {
       ...panel,

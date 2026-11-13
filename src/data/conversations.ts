@@ -802,7 +802,9 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             ? "Dollop"
             : key.startsWith("phantomSettlement")
               ? "Blurbs"
-              : GENERAL_NAMED.name,
+              : key === "flagshipSalvage"
+                ? "Astra"
+                : GENERAL_NAMED.name,
         topics: (copy.topics ?? []).map((topic) => ({
           label: topic.question,
           lines: topic.lines.map((line) => ({
