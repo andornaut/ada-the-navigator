@@ -408,15 +408,16 @@ completing a galaxy's repeatable activity at least once makes its quest ally:
 | Galaxy    | Quest ally         | Behaviour               |
 | --------- | ------------------ | ----------------------- |
 | Sunflower | Clover's barge     | `escort`                |
-| Whirlpool | Marlo, the whale   | Whale                   |
+| Whirlpool | Marlo, the whale   | Whale, with song        |
 | Needle    | Reed's glider      | `escort`                |
 | Andromeda | Pip's courier ship | `escort`                |
 | Cartwheel | Mica's mining ship | `chase` against turrets |
 
 - **Arrival:** the allies Ada has made jump in beside her with the usual jump
   effect when the battle begins, and jump out when the flagship is salvaged or
-  the flight ends. At most 8 allies are on screen at once; the rest arrive as
-  reinforcements as others leave.
+  the flight ends. At most 8 allies are on screen at once. The rest rotate in: at the
+  start of each later wave and of the flagship fight, allies that have not yet
+  flown jump in and replace ones that have, so every ally takes part.
 - **Look:** allies show thrust jets like every ship and get no edge markers,
   like other friendly objects Ada flies through.
 - **Safety:** drones never target allies, allies take no damage, and Ada and shots
@@ -432,6 +433,9 @@ completing a galaxy's repeatable activity at least once makes its quest ally:
   hardpoints.
 - **Whale:** a whale never fires and follows 250 world units behind Ada, side by
   side with any other whale, moving like the calf.
+- **Song:** drones within 300 world units of Marlo move at three quarters of
+  their top speed. A faint rim marks the song's reach, and a slowed drone shows
+  a ring beneath it; both hold steady under reduced motion.
 
 ## Presentation
 
