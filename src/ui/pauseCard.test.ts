@@ -25,6 +25,7 @@ class FakeElement {
   children: FakeElement[] = [];
   parentElement: FakeElement | null = null;
   tabIndex = 0;
+  tagName = "DIV";
   isConnected = true;
   className = "";
   readonly classList = {
@@ -66,6 +67,9 @@ class FakeElement {
   }
   contains(node: unknown): boolean {
     return this === node || this.children.some((child) => child.contains(node));
+  }
+  getAttributeNames(): string[] {
+    return [...this.attributes.keys()];
   }
   hasAttribute(name: string): boolean {
     return this.attributes.has(name);
@@ -158,7 +162,8 @@ beforeEach(() => {
   vi.stubGlobal("HTMLElement", FakeElement);
   vi.stubGlobal("Image", FakeImage);
   vi.stubGlobal("document", {
-    createElement: () => new FakeElement(),
+    createElement: (tagName: string) =>
+      Object.assign(new FakeElement(), { tagName: tagName.toUpperCase() }),
     createElementNS: () => new FakeElement(),
     createTextNode: (text: string) => Object.assign(new FakeElement(), { textContent: text }),
     fonts: Object.assign(new EventTarget(), { status: "loaded" }),
@@ -310,7 +315,7 @@ describe("Paused card", () => {
 });
 
 describe("Ship card", () => {
-  it("opens from Ship in the Paused card's place, titled Ship, its rows built and focus on the X", () => {
+  it("opens from Ship in the Paused card's place, titled Ship, its rows built and focus on primary Back", () => {
     const { body, modal, pause, ship } = cards();
     pause.setState(state());
     pause.open();
@@ -323,7 +328,7 @@ describe("Ship card", () => {
     expect(ship.dataset.cardSize).toBe("full");
     const close = ship.children[1]!;
     expect(close.dataset.action).toBe("close-ship");
-    expect(focused()).toBe(close);
+    expect(focused()?.dataset.action).toBe("back-ship");
     const shown = texts(ship.children[0]!);
     expect(shown).toEqual(
       expect.arrayContaining(["Ship", "Cargo", "Equipment", "1,234", "Shield [2]", "Weapons"]),
@@ -356,7 +361,9 @@ describe("Ship card", () => {
     const shipButton = button(body.children[0]!, "pause-ship");
     PAGE.dispatchEvent(new Event("touchstart"));
     shipButton.click();
-    expect(focused()).toBe(ship.children[1]);
+    expect(focused()).toBe(
+      ship.querySelectorAll().find((button) => button.dataset.action === "back-ship"),
+    );
     expect(lastFocusOptions).toEqual({ focusVisible: false, preventScroll: true });
     PAGE.dispatchEvent(new Event("keydown"));
     pause.closeShip();
@@ -635,6 +642,48 @@ it.each(["room", "flight"] as const)(
     expect(shownActions(actions)).not.toContain("pause-map");
     pause.setState(state({ canMap: true, place }));
     expect(shownActions(actions)).toContain("pause-map");
+    pause.dispose();
+  },
+);
+
+it("routes Earth's permitted Map to the existing galaxy map without opening an empty local map", () => {
+  const { body, options, pause } = cards();
+  pause.setState(state({ canMap: true, map: null, place: "room" }));
+  pause.open();
+  button(body.children[0]!, "pause-map").click();
+  expect(options.onGalaxies).toHaveBeenCalledOnce();
+  expect(pause.mapOpen()).toBe(false);
+  expect(pause.isOpen()).toBe(true);
+  pause.dispose();
+});
+
+it.each(["back-ship", "close-ship", "Escape", "back"])(
+  "returns Ship to Paused through %s without resuming gameplay",
+  (method) => {
+    const { body, options, pause, ship } = cards();
+    pause.setState(state());
+    pause.open();
+    const opener = button(body.children[0]!, "pause-ship");
+    opener.click();
+    const footer = ship.querySelectorAll().find((button) => button.dataset.action === "back-ship")!;
+    expect(footer.textContent).toBe("Back");
+    expect(footer.className).toContain("ada-primary");
+    if (method === "Escape") {
+      const event = new Event("keydown", { cancelable: true });
+      Object.defineProperty(event, "key", { value: "Escape" });
+      PAGE.dispatchEvent(event);
+    } else if (method === "back") {
+      pause.closeShip();
+    } else {
+      ship
+        .querySelectorAll()
+        .find((button) => button.dataset.action === method)!
+        .click();
+    }
+    expect(pause.shipOpen()).toBe(false);
+    expect(pause.isOpen()).toBe(true);
+    expect(options.onOpenChange.mock.calls).toEqual([[true]]);
+    expect(focused()).toBe(opener);
     pause.dispose();
   },
 );

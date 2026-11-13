@@ -5,7 +5,7 @@ import type { GalaxyNumber } from "../data/types.ts";
 import type { LocalMap } from "../model/map.ts";
 import type { QuestEntry } from "../model/questDetails.ts";
 import { units } from "./layout/css.ts";
-import { BUTTON_GAP, STACK_BUTTON_GAP } from "./layout/tokens.ts";
+import { BUTTON_GAP, SPACING, STACK_BUTTON_GAP } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createMapScreen, type MapField, type MapScreenLabels } from "./mapScreen.ts";
 import { createButton, createCard, isTap, UI_SCOPE } from "./modal.ts";
@@ -100,6 +100,7 @@ ${UI_SCOPE} .ada-actions.ada-pause-grid{
   width:auto
 }
 ${UI_SCOPE} .ada-actions.ada-pause-grid[data-place=room]{grid-template-columns:1fr}
+${UI_SCOPE} .ada-ship-back{display:flex;justify-content:flex-end;flex:none;margin:${units(SPACING.gap)} 0}
 `;
 
 // Two columns of equal actions, BUTTON_GAP between columns and STACK_BUTTON_GAP between rows.
@@ -164,6 +165,13 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   });
   ship.card.dataset.dialog = "ship";
   ship.frame.hidden = true;
+  const shipBack = createButton(labels.mapScreen.questBack ?? labels.close, "primary");
+  shipBack.dataset.action = "back-ship";
+  const shipFooter = document.createElement("footer");
+  shipFooter.className = "ada-ship-back";
+  shipFooter.append(shipBack);
+  ship.card.append(shipFooter);
+  shipBack.addEventListener("click", () => closeShip());
   modal.append(paused.frame, ship.frame);
   root.append(modal);
   const mapScreen = createMapScreen(root, {
@@ -239,7 +247,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     if (view === "ship") {
       renderShip();
       layer = createModalLayer(modal);
-      leaveLayer = layer.open({ close: closeShip, focus: ship.close }, ship.card);
+      leaveLayer = layer.open({ close: closeShip, focus: shipBack }, ship.frame);
       return;
     }
     paused.fit();
@@ -360,7 +368,11 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       setOpen(false);
     } else if (id === "map") {
       mapOpener = "map";
-      show("map");
+      if (state.place === "room") {
+        options.onGalaxies();
+      } else {
+        show("map");
+      }
     } else if (id === "quests") {
       openQuests("quests");
     } else if (id === "ship") {

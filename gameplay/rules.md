@@ -608,7 +608,7 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   "Back to title", primary "Resume". Earth uses an equal-size vertical stack.
   Space places "Quests" and "Ship" above the shared actions in its two-column
   grid, with "Resume" at the bottom right. Map stays hidden before it unlocks
-  and during mandatory story beats or unresolved material choices. "Resume" remains primary and focused when the card opens. Ship opens a card titled "Ship" with a close
+  and during mandatory story beats or unresolved material choices. "Resume" remains primary and focused when the card opens. Ship opens a card titled "Ship" with a primary "Back" at the bottom right and a close
   X, back to the pause card, in two sections. "Cargo" lists Stardust, ore
   carried this flight, "Holodisks: {n} of 6", and the carried job or story item or towed
   craft when there is one. "Equipment" lists the shield, engine and tractor
@@ -623,6 +623,7 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   one full-page detail with its complete approved description, actual next step,
   known From/To locations, saved reward or explicit story outcome, and actual
   progress. A story without currency or an explicit outcome shows "Story progress".
+  Earth’s Map opens the existing galaxy map; flight’s Map opens the local map.
   Unknown locations show "Explore to locate" without hidden identity or coordinates.
   Known locations in the current galaxy can be selected on the map.
   List detail uses primary "Back" to return to its list. A carried quest item's

@@ -784,7 +784,9 @@ Map, Settings, Back to title and primary Resume. Earth uses equal-size buttons i
 one vertical stack. Space adds Quests and Ship above the shared actions in its
 existing two-column grid, with Resume at the bottom right beside Back to title.
 Map is hidden when its canonical permission is false. All button sizes remain
-unchanged. Quests list Close restores its actual opener; detail Back returns to
+unchanged. Earth’s Map opens the galaxy map; flight’s Map opens the local map.
+Ship has primary Back at the bottom right, returning to Paused with the same action
+as its X, Escape and back. Quests list Close restores its actual opener; detail Back returns to
 the list, while a directly opened HUD detail Close returns to gameplay. The X,
 Escape and back match the primary footer action.
 
