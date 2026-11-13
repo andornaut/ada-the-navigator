@@ -80,7 +80,7 @@ and the scene's subject stays clearest above it.
 | `story-grandma-garden-spilled`   | `story-grandma-garden` with the tray spilled          | `#bfe0e8` → `#d9ecd6` | as `story-grandma-garden`, tray `#4f6a5a`, pots `#d9825b`, soil `#6e4a30` |
 | `story-grandma-garden-replanted` | `story-grandma-garden` with the tray replanted        | `#bfe0e8` → `#d9ecd6` | as above, seedlings `#7cc95a`, trowel `#9aa6b4`, sack `#c9a978`           |
 | `story-ada-room-night`           | Ada's room at night: moon and stars, lamp off         | `#1d2452` → `#2a2f5e` | wall `#445487`, floor `#414c64`, blanket `#1d4484`, glass `#16245e`       |
-| `story-ada-room-morning`         | Morning: empty bed, sunlight and the rock        | `#f6d9b4` → `#efcfb4` | wall `#ffd5cb`, floor `#f3b65f`, blanket `#a6b3cb`, glass `#fad98a`       |
+| `story-ada-room-morning`         | Morning: empty bed, sunlight and the rock             | `#f6d9b4` → `#efcfb4` | wall `#ffd5cb`, floor `#f3b65f`, blanket `#a6b3cb`, glass `#fad98a`       |
 
 Full palettes are in the generator. Colours are before treatment d.
 
@@ -131,7 +131,7 @@ The game names each page's location by a background key
 | `adaRoom`                | `story-ada-room`                                      |
 | `adaRoomUnpolished`      | `story-ada-room-unpolished` (the rock as dug up)      |
 | `adaRoomNight`           | `story-ada-room-night`                                |
-| `adaRoomSleep`           | `story-ada-room-sleep` (the unoccupied night room)       |
+| `adaRoomSleep`           | `story-ada-room-sleep` (the unoccupied night room)    |
 | `adaRoomMorning`         | `story-ada-room-morning`                              |
 | `adaRoomRecorder`        | `story-ada-room-recorder` (key to add)                |
 | `concertHall`            | `story-concert-hall` (key to add)                     |
@@ -182,14 +182,14 @@ at most the panel top + 180; at 720x405 the limit is the panel top + 135.
 | `story-community-garden`         | 180..290 | The sprouting bed, the empty beds, the shed            |
 | `story-schoolyard`               | 168..278 | The play structure beside the school's door            |
 | `story-school-hallway`           | 184..290 | The notice board beside the near door                  |
-| `story-kitchen`                  | 146..293 | The dinner setting and table to its near edge           |
+| `story-kitchen`                  | 146..293 | The dinner setting and table to its near edge          |
 | `story-front-door`               | 175..280 | The coats and Penny's lead on their hooks by the door  |
 | `story-ada-room-night`           | 250..300 | The rock's glow on the desk; the sleep scene shares it |
-| `story-ada-room-morning`         | 255..348 | The empty bed and the rock on the desk   |
+| `story-ada-room-morning`         | 255..348 | The empty bed and the rock on the desk                 |
 | `aboard`                         | 172..256 | The ship's canopy and the hull round it                |
 | `aboard-emergency`               | 172..256 | The ship's canopy and the hull round it                |
 | `story-ada-room-recorder`        | 248..293 | The rock and the recorder on the desk                  |
-| `story-concert-hall`             | 188..293 | The stage, piano and spotlight          |
+| `story-concert-hall`             | 188..293 | The stage, piano and spotlight                         |
 | `story-grandma-garden-spilled`   | 176..285 | The seedling tray on the potting table and the beds    |
 | `story-grandma-garden-replanted` | 176..285 | The seedling tray on the potting table and the beds    |
 
@@ -246,13 +246,13 @@ These existing asset IDs preserve the page keys and run anchors. Each entry
 shares its base's PNG, subject band and `base`, with no figure overlays.
 Character names in the IDs are compatibility keys, not rendered contents.
 
-| Alias | Environment base |
-| ----- | ---------------- |
-| `story-front-door-mom` | `story-front-door` |
-| `story-ada-room-recorder-dad` | `story-ada-room-recorder` |
+| Alias                            | Environment base            |
+| -------------------------------- | --------------------------- |
+| `story-front-door-mom`           | `story-front-door`          |
+| `story-ada-room-recorder-dad`    | `story-ada-room-recorder`   |
 | `story-ada-room-unpolished-cats` | `story-ada-room-unpolished` |
-| `story-ada-room-morning-cats` | `story-ada-room-morning` |
-| `story-ada-room-sleep` | `story-ada-room-night` |
+| `story-ada-room-morning-cats`    | `story-ada-room-morning`    |
+| `story-ada-room-sleep`           | `story-ada-room-night`      |
 
 Only the galaxy map emits character sprites: `story-ada-skywatch` and
 `story-penny-sitting`, drawn over `route-ground` at their established
@@ -357,7 +357,7 @@ the root manifest as `storyOvernight`. Key `overnight`:
 
 | Time (ms)    | Steps                                                                      |
 | ------------ | -------------------------------------------------------------------------- |
-| 0 to 400     | Hold the unoccupied night room                                            |
+| 0 to 400     | Hold the unoccupied night room                                             |
 | 400 to 1900  | One breath: the rock's glow from radius 3.0, peak 170 to 3.8, 215 and back |
 | 1900 to 2500 | Cross-fade to the morning page's background; the morning page follows      |
 
