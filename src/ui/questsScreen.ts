@@ -128,6 +128,10 @@ export const QUESTS_SCREEN_STYLE = `
 .ada-controls .ada-quest-requirement{display:flex;align-items:center;gap:${units(6)}}
 .ada-controls .ada-quest-requirement input{width:${units(16)};height:${units(16)};margin:0;opacity:1}
 .ada-controls .ada-quest-list h3{font:inherit;margin:0;color:#b8b3c9}
+.ada-controls .ada-quests-screen .ada-card header h2{color:#ead4aa}
+.ada-controls .ada-quest-content p{color:#ead4aa}
+.ada-controls .ada-quest-objective>p:first-of-type,.ada-controls .ada-quest-reward p{font-weight:bold}
+.ada-controls .ada-quest-objective .ada-quest-description{color:#c0bbd0}
 `;
 
 export function createQuestsScreen(
@@ -148,7 +152,7 @@ export function createQuestsScreen(
     full: true,
     title: labels.quests,
   });
-  card.close.hidden = true;
+
   card.card.dataset.dialog = "quests";
   modal.append(card.frame);
   root.append(modal);
@@ -203,6 +207,7 @@ export function createQuestsScreen(
       options.onClose();
     }
   };
+  card.close.addEventListener("click", back);
   function render(): void {
     release();
     const entry = entries.find((entry) => entry.id === selected);
@@ -237,6 +242,7 @@ export function createQuestsScreen(
         }[];
       };
       const objective = section(labels.questObjective, line.text);
+      objective.className = "ada-quest-objective";
       if (line.description && line.description !== line.text) {
         const description = document.createElement("p");
         description.className = "ada-quest-description";
@@ -298,10 +304,11 @@ export function createQuestsScreen(
         }
         next.append(route);
       }
-      section(
+      const reward = section(
         line.outcome && !line.reward ? labels.questOutcome : labels.questReward,
         line.reward ?? line.outcome ?? labels.questStoryProgress,
       );
+      reward.className = "ada-quest-reward";
       const progress = section(
         labels.questProgressLabel,
         line.requirements?.length ? undefined : line.progress,

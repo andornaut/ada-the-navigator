@@ -175,14 +175,20 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     },
     reducedMotion: options.reducedMotion,
   });
-  let questRoot: "map" | "flight" = "map";
+  let questRoot: "map" | "flight" | "pause" = "map";
   const quests = createQuestsScreen(root, {
     labels: labels.mapScreen,
     onClose: () => {
       if (questRoot === "flight") {
         setOpen(false);
-      } else {
+      } else if (questRoot === "map") {
         mapScreen.focusQuests();
+      } else {
+        show("paused");
+        const button = buttons.get("quests");
+        if (button) {
+          focusTarget(button);
+        }
       }
     },
     onLocate: (id) => {
@@ -306,24 +312,33 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       renderShip();
     }
   };
+  function hidePause(): void {
+    leaveLayer?.();
+    leaveLayer = undefined;
+    layer?.dispose();
+    layer = undefined;
+    modal.hidden = true;
+    mapScreen.close();
+  }
   function openQuests(opener: "map" | "quests" = "map"): void {
     mapOpener = opener;
+    questRoot = opener === "quests" ? "pause" : "map";
     setOpen(true);
-    show("map");
-    questRoot = "map";
-    quests.open();
+    if (questRoot === "map") {
+      if (!mapScreen.isOpen()) {
+        show("map");
+      }
+    } else {
+      hidePause();
+    }
+    quests.open(null, "list");
   }
-  function openQuest(id: string, origin: QuestOrigin = "flight"): void {
+  function openQuest(id: string, origin: QuestOrigin): void {
     questRoot = origin === "flight" ? "flight" : "map";
     setOpen(true);
     if (questRoot === "flight") {
-      leaveLayer?.();
-      leaveLayer = undefined;
-      layer?.dispose();
-      layer = undefined;
-      modal.hidden = true;
-      mapScreen.close();
-    } else {
+      hidePause();
+    } else if (!mapScreen.isOpen()) {
       show("map");
     }
     quests.open(id, origin);

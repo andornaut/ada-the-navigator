@@ -447,13 +447,13 @@ it("opens Quests from the pause menu and keeps pause through both back layers un
     expect(
       root.children.find((child) => child.className.includes("ada-quests-screen"))?.hidden,
     ).toBe(false);
-    expect(pause.mapOpen()).toBe(true);
+    expect(pause.mapOpen()).toBe(false);
     expect(options.onOpenChange.mock.calls).toEqual([[true]]);
     expect(options.onTravel).not.toHaveBeenCalled();
     expect(options.onBackToTitle).not.toHaveBeenCalled();
     pause.closeMap();
     expect(questsOpen).toBe(false);
-    expect(pause.mapOpen()).toBe(true);
+    expect(pause.mapOpen()).toBe(false);
     expect(pause.isOpen()).toBe(true);
     pause.closeMap();
     expect(pause.mapOpen()).toBe(false);
@@ -533,3 +533,84 @@ it("opens a held quest directly, returns Other quests to its list, and resumes o
   expect(options.onOpenChange.mock.calls).toEqual([[true], [false]]);
   pause.dispose();
 });
+
+it.each(["close-quests", "quest-close", "Escape", "back"])(
+  "returns direct HUD detail to flight through %s",
+  (method) => {
+    const { pause, root } = cards();
+    pause.setState(
+      state({
+        questEntries: [
+          {
+            galaxy: 1,
+            id: "held",
+            line: { kind: "job", reward: "17 Stardust", target: null, text: "Held job" },
+            locations: [],
+          },
+        ],
+      }),
+    );
+    pause.openQuest("held", "flight");
+    if (method === "Escape") {
+      const event = new Event("keydown", { cancelable: true });
+      Object.defineProperty(event, "key", { value: "Escape" });
+      PAGE.dispatchEvent(event);
+    } else if (method === "back") {
+      pause.close();
+    } else {
+      root.children
+        .find((child) => child.className.includes("ada-quests-screen"))!
+        .querySelectorAll()
+        .find((button) => button.dataset.action === method)!
+        .click();
+    }
+    expect(pause.isOpen()).toBe(false);
+    const quests = root.children.find((child) => child.className.includes("ada-quests-screen"))!;
+    expect(quests.hidden).toBe(true);
+    pause.dispose();
+  },
+);
+
+it.each(["close-quests", "quest-back", "Escape", "back"])(
+  "returns list detail to the list through %s without resuming",
+  (method) => {
+    const { pause, root } = cards();
+    pause.setState(
+      state({
+        questEntries: [
+          {
+            galaxy: 1,
+            id: "held",
+            line: { kind: "job", target: null, text: "Held job" },
+            locations: [],
+          },
+        ],
+      }),
+    );
+    pause.openQuest("held", "flight");
+    root
+      .querySelectorAll()
+      .find((button) => button.dataset.action === "quest-other")!
+      .click();
+    root
+      .querySelectorAll()
+      .find((button) => button.dataset.questId === "held")!
+      .click();
+    if (method === "Escape") {
+      const event = new Event("keydown", { cancelable: true });
+      Object.defineProperty(event, "key", { value: "Escape" });
+      PAGE.dispatchEvent(event);
+    } else if (method === "back") {
+      pause.closeMap();
+    } else {
+      root.children
+        .find((child) => child.className.includes("ada-quests-screen"))!
+        .querySelectorAll()
+        .find((button) => button.dataset.action === method)!
+        .click();
+    }
+    expect(pause.isOpen()).toBe(true);
+    expect(root.querySelectorAll().some((button) => button.dataset.questId === "held")).toBe(true);
+    pause.dispose();
+  },
+);
