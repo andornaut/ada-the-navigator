@@ -274,7 +274,8 @@ describe("story page portraits", () => {
 
   it("show no portrait for narration or a speaker Art has not drawn", () => {
     expect(storyPortrait(undefined)).toBeNull();
-    expect(storyPortrait("Mom")).toBeNull();
+    expect(storyPortrait("Mom")?.speaker).toBe("mom");
+    expect(storyPortrait("Dad")?.speaker).toBe("dad");
     expect(storyPortrait("Workshop")).toBeNull();
   });
 

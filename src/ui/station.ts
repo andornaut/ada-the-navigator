@@ -1,9 +1,10 @@
 import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 
+import { CAST } from "../data/cast.ts";
 import type { Weapon } from "../data/types.ts";
 import { weaponShopSheet } from "../data/weaponGlyphs.ts";
 import type { StationGreeting } from "../model/keepers.ts";
-import { createKeeperBlock } from "./keeperBlock.ts";
+import { createDialoguePanel } from "./dialoguePanel.ts";
 import { BUTTON_SLICE, FOCUS_RING, PILL, TEXT_BUTTON } from "./layout/controls.ts";
 import { font, slice, units } from "./layout/css.ts";
 import {
@@ -583,10 +584,9 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   confirmModal.dataset.stationConfirm = "";
   confirmModal.hidden = true;
 
-  const stationCard = createCard({
+  const stationCard = createDialoguePanel({
     closeAction: "station-back",
     closeLabel: labels.close,
-    full: true,
     title: labels.station,
   });
   stationCard.card.dataset.dialog = "station";
@@ -599,26 +599,31 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   openShop.dataset.action = "open-shop";
   const openJobs = createButton(labels.jobs);
   openJobs.dataset.action = "open-jobs";
-  // The keeper's block: the greeting where the station has one, a tap showing its next line while
-  // Undock, Jobs and Shop stay live (gameplay/rules.md "Species and greeters"). When its last line
-  // shows, focus on it moves to Shop, where the card's focus starts.
-  const keeper = createKeeperBlock({
-    advance: () => {
-      options.advanceGreeting();
-      keeper.render(options.greeting());
+  for (const button of [undock, openShop, openJobs]) {
+    button.classList.add("ada-story-button");
+  }
+  openJobs.classList.add("ada-primary");
+  const nextGreeting = createButton(labels.nextLine);
+  nextGreeting.classList.add("ada-story-button");
+  const keeper = {
+    render(greeting: StationGreeting | null) {
+      stationCard.showLine(
+        greeting ? CAST[greeting.keeper].name : undefined,
+        greeting?.line ?? labels.stationWelcome,
+      );
+      nextGreeting.hidden = !greeting || greeting.index >= greeting.count - 1;
+      stationCard.fit();
     },
-    focusAfter: () => openShop,
-    labels: { nextLine: labels.nextLine, welcome: labels.stationWelcome },
+  };
+  nextGreeting.addEventListener("click", () => {
+    options.advanceGreeting();
+    keeper.render(options.greeting());
+    if (nextGreeting.hidden) {
+      focusTarget(openShop);
+    }
   });
-  stationCard.body.append(
-    stationBalance,
-    keeper.element(),
-    createActions([
-      { button: undock, role: "secondary" },
-      { button: openJobs, role: "secondary" },
-      { button: openShop, role: "primary" },
-    ]),
-  );
+  stationCard.choices.append(stationBalance, openJobs, openShop);
+  stationCard.controls.append(nextGreeting, undock);
 
   const shopCard = createCard({
     closeAction: "shop-back",

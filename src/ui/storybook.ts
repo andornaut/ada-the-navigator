@@ -7,10 +7,13 @@ import type { StoryChoice, StoryPage } from "../model/storybook.ts";
 import {
   AWAITING_TAB,
   COMPACT_PORTRAITS,
+  FAMILY_PORTRAITS,
+  familyPortrait,
   portraitFrame,
   SPEAKING_FRAME_MS,
+  storySpeakerName,
   TAB_COLOURS,
-} from "./conversation.ts";
+} from "./dialoguePortraits.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { font, fromHudEdge, safeEdge, slice, units } from "./layout/css.ts";
@@ -104,10 +107,11 @@ function tallestView(page: StoryPage): StoryPageView {
 const BREATH_SAMPLES = 24;
 
 // The speakers with a portrait sheet: the conversation box's own and the cast's.
-export type StoryPortraitId = keyof typeof COMPACT_PORTRAITS | CastKey;
+export type StoryPortraitId =
+  keyof typeof COMPACT_PORTRAITS | keyof typeof FAMILY_PORTRAITS | CastKey;
 
 // The cast keys whose story pages speak (data/cast.ts STORY_CAST).
-const STORY_CAST_KEYS = [...new Set(Object.values(STORY_CAST))];
+const STORY_CAST_KEYS = Object.keys(CAST) as CastKey[];
 
 // Each speaker's 32 portrait sheet for the storybook panel (art/conversation.md "Sizes"): the same
 // frames as the compact sheet, drawn at 2x in the 68 frame.
@@ -118,6 +122,7 @@ export const STORY_PORTRAITS: Readonly<
   astra: { frames: 5, url: "/art/portraits/astra.png" },
   general: { frames: 10, url: "/art/portraits/gadget.png" },
   penny: { frames: 3, url: "/art/portraits/penny.png" },
+  ...FAMILY_PORTRAITS,
   ...Object.fromEntries(
     STORY_CAST_KEYS.map((key) => [key, { frames: CAST_FRAMES.frames, url: castSheet(key, false) }]),
   ),
@@ -132,10 +137,19 @@ export interface StoryPortrait {
 
 /** The portrait for a page's speaker name; null for narration or a speaker Art has not drawn. */
 export function storyPortrait(name: string | undefined): StoryPortrait | null {
+  const family = familyPortrait(name);
+  if (family) {
+    return { named: false, side: "right", speaker: family };
+  }
   if (name === GENERAL_NAMED.name) {
     return { named: true, side: SPEAKERS.general.side, speaker: "general" };
   }
-  const cast = name === undefined ? undefined : STORY_CAST[name];
+  const cast =
+    name === undefined
+      ? undefined
+      : (STORY_CAST[name] ??
+        (Object.entries(CAST).find(([, member]) => member.name === name)?.[0] as
+          CastKey | undefined));
   if (cast) {
     return { named: false, side: "right", speaker: cast };
   }
@@ -153,11 +167,14 @@ export const STORY_TAB_COLOURS: Readonly<Record<string, string>> = {
 
 /** The speaker's name tab fill: their story, cast or conversation tab, or the neutral one. */
 export function storyTabColour(name: string): string {
-  const story = STORY_TAB_COLOURS[name];
+  const family = familyPortrait(name);
+  const story = STORY_TAB_COLOURS[family ? FAMILY_PORTRAITS[family].address : name];
   if (story) {
     return story;
   }
-  const cast = STORY_CAST[name];
+  const cast =
+    STORY_CAST[name] ??
+    (Object.entries(CAST).find(([, member]) => member.name === name)?.[0] as CastKey | undefined);
   if (cast) {
     return CAST[cast].tab;
   }
@@ -179,6 +196,9 @@ export function storyPortraitFrame(
   elapsed: number,
 ): number {
   const { speaker } = portrait;
+  if (speaker === "mom" || speaker === "dad") {
+    return FAMILY_PORTRAITS[speaker].neutral;
+  }
   if (!Object.hasOwn(COMPACT_PORTRAITS, speaker)) {
     return CAST_FRAMES.neutral;
   }
@@ -616,7 +636,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     heading.hidden = !page.heading;
     heading.textContent = page.heading ?? "";
     speaker.hidden = !page.speaker;
-    speaker.textContent = page.speaker ?? "";
+    speaker.textContent = storySpeakerName(page.speaker ?? "");
     speaker.style.background = page.speaker ? storyTabColour(page.speaker) : "";
     paragraph.hidden = page.text === "";
     paragraph.textContent = page.text;

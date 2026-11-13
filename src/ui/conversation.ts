@@ -1,13 +1,23 @@
-import { CAST, CAST_FRAMES, castSheet, SPEAKER_CAST } from "../data/cast.ts";
+import { CAST_FRAMES, castSheet, SPEAKER_CAST } from "../data/cast.ts";
+import { CONTENT } from "../data/content.ts";
 import { CONTROL_WORDS } from "../data/controlWords.ts";
 import { type Mood, type Speaker } from "../data/conversations.ts";
 import { InteractionConversation, interactionCopy } from "../model/conversations.ts";
+import { createDialoguePanel, DIALOGUE_PANEL_STYLE } from "./dialoguePanel.ts";
+import { COMPACT_PORTRAITS, portraitFrame, TAB_COLOURS } from "./dialoguePortraits.ts";
+export {
+  AWAITING_TAB,
+  COMPACT_PORTRAITS,
+  portraitFrame,
+  SPEAKING_FRAME_MS,
+  TAB_COLOURS,
+} from "./dialoguePortraits.ts";
 import { controlHelpText, createControlHelp } from "./controlHelp.ts";
 import { TEXT_BUTTON } from "./layout/controls.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { font, units, VIEW_HOST_ID } from "./layout/css.ts";
 import { SPACING } from "./layout/tokens.ts";
-import { createButton, createCard, FOCUS_STYLE } from "./modal.ts";
+import { createButton, FOCUS_STYLE } from "./modal.ts";
 import { CONVERSATION_SLOT, PANEL_BACKGROUND } from "./notice.ts";
 import { refuse } from "./refusal.ts";
 
@@ -37,21 +47,6 @@ const { name: label, padding, panel, portrait, tab, text, textGap } = CONVERSATI
 // tab reads his name, then his named set; Ada and Penny have no loop and show the line's mood.
 // Idle frames are for a silent speaker on screen; the box and the storybook panel show only the
 // one speaking, so neither shows them.
-export const COMPACT_PORTRAITS = {
-  ada: { frames: 2, moods: { happy: 0, neutral: 1 }, url: "/art/portraits/ada-compact.png" },
-  astra: { frames: 5, speaking: [1, 2, 3, 4], url: "/art/portraits/astra-compact.png" },
-  general: {
-    frames: 10,
-    speaking: { named: [6, 7, 8, 9], unknown: [1, 2, 3, 4] },
-    url: "/art/portraits/gadget-compact.png",
-  },
-  penny: {
-    frames: 3,
-    moods: { happy: 0, neutral: 1, upset: 2 },
-    url: "/art/portraits/penny-compact.png",
-  },
-} as const;
-
 // The cast speakers' compact sheets (data/cast.ts), each its one neutral frame.
 const CAST_COMPACT = Object.fromEntries(
   Object.entries(SPEAKER_CAST).map(([speaker, key]) => [
@@ -59,40 +54,6 @@ const CAST_COMPACT = Object.fromEntries(
     { frames: CAST_FRAMES.frames, url: castSheet(key, true) },
   ]),
 ) as Readonly<Record<string, { readonly frames: number; readonly url: string }>>;
-
-/** The tab fill of a story speaker with no tab of their own, the unnamed General's. */
-export const AWAITING_TAB = "#b8b3c9";
-
-/** Each speaking frame's time. */
-export const SPEAKING_FRAME_MS = 120;
-
-/**
- * The sheet frame the box shows for line: Ada's or Penny's mood (neutral where the sheet has no
- * such mood), or Astra's or the General's speaking loop timed from the line's start, held on its
- * first frame under reduced motion.
- */
-export function portraitFrame(
-  reducedMotion: boolean,
-  line: Pick<ConversationLineView, "elapsed" | "mood" | "named" | "speaker">,
-): number {
-  const loop = (frames: readonly number[]): number =>
-    frames[
-      reducedMotion
-        ? 0
-        : Math.floor((line.elapsed * 1000) / SPEAKING_FRAME_MS + 1e-9) % frames.length
-    ]!;
-  if (line.speaker === "ada" || line.speaker === "penny") {
-    const moods: Readonly<Partial<Record<Mood, number>>> = COMPACT_PORTRAITS[line.speaker].moods;
-    return moods[line.mood] ?? moods.neutral!;
-  }
-  if (SPEAKER_CAST[line.speaker]) {
-    return CAST_FRAMES.neutral;
-  }
-  if (line.speaker === "astra") {
-    return loop(COMPACT_PORTRAITS.astra.speaking);
-  }
-  return loop(COMPACT_PORTRAITS.general.speaking[line.named ? "named" : "unknown"]);
-}
 
 // Each speaker's sheet, sized so one frame fills the portrait; portraitFrame picks the frame.
 const PORTRAIT_RULES = Object.entries({ ...COMPACT_PORTRAITS, ...CAST_COMPACT })
@@ -105,18 +66,6 @@ const PORTRAIT_RULES = Object.entries({ ...COMPACT_PORTRAITS, ...CAST_COMPACT })
 }`,
   )
   .join("");
-
-// Each speaker's name tab fill (art/controls.md "Conversation box").
-export const TAB_COLOURS = {
-  ada: "#70ace8",
-  astra: "#8fe0f2",
-  general: "#b8b3c9",
-  generalNamed: "#d68b72",
-  penny: "#feae34",
-  ...Object.fromEntries(
-    Object.entries(SPEAKER_CAST).map(([speaker, key]) => [speaker, CAST[key].tab]),
-  ),
-} as Readonly<Record<string, string>>;
 
 const TAB_RULES = Object.entries(TAB_COLOURS)
   .map(([speaker, colour]) =>
@@ -132,13 +81,7 @@ const TAB_RULES = Object.entries(TAB_COLOURS)
   )
   .join("");
 
-export const INTERACTION_STYLE = `
-.ada-interaction-speaker{display:flex;align-items:center;gap:${units(SPACING.gap)}}
-.ada-interaction-portrait{
- display:inline-block;flex:none;width:${units(portrait.art)};height:${units(portrait.art)};background-repeat:no-repeat;
- image-rendering:pixelated}
-.ada-interaction-party{align-self:stretch}
-`;
+export const INTERACTION_STYLE = DIALOGUE_PANEL_STYLE;
 
 export const CONVERSATION_STYLE = `
 .ada-conversation{${CONVERSATION_SLOT};
@@ -282,7 +225,7 @@ export function createConversationBox(onAdvance: () => void, onSkip?: () => void
   const skipArea = document.createElement("div");
   skipArea.className = "ada-conversation-skip-area";
   skipArea.hidden = true;
-  const skip = createButton("Skip dialogue");
+  const skip = createButton(CONTENT.labels.skip ?? "");
   skip.dataset.action = "conversation-skip";
   skip.addEventListener("click", () => onSkip?.());
   skipArea.append(skip);
@@ -325,7 +268,7 @@ export function createConversationBox(onAdvance: () => void, onSkip?: () => void
   };
 }
 
-/** Fullscreen Use card. The caller owns pausing and every outcome. */
+/** A Use dialogue in the established story panel. The caller owns pausing and every outcome. */
 export function createInteractionCard(
   parent: HTMLElement,
   options: {
@@ -337,107 +280,65 @@ export function createInteractionCard(
   const modal = document.createElement("div");
   modal.className = "ada-modal ada-interaction-modal";
   modal.hidden = true;
-  const card = createCard({
+  const card = createDialoguePanel({
     closeAction: "conversation-close",
-    closeLabel: "Close",
-    full: true,
+    closeLabel: CONTENT.labels.close ?? "",
     title: "",
   });
   card.card.dataset.dialog = "conversation";
-  const party = document.createElement("div");
-  const speaker = document.createElement("div");
-  party.className = "ada-interaction-party";
-  speaker.className = "ada-interaction-party";
-  const words = document.createElement("p");
-  words.className = "ada-prose";
-  const actions = document.createElement("div");
-  actions.className = "ada-actions ada-wrap ada-interaction-actions";
-  card.body.append(party, speaker, words, actions);
   modal.append(card.frame);
   parent.append(modal);
   const state = new InteractionConversation();
   let signature = "";
-  const makePortrait = (name: string): HTMLElement => {
-    const node = document.createElement("span");
-    node.className = "ada-interaction-portrait";
-    node.setAttribute("aria-hidden", "true");
-    const cast = Object.entries(CAST).find(([, member]) => member.name === name);
-    const core = Object.entries(COMPACT_PORTRAITS).find(
-      ([key]) =>
-        key ===
-        (name === "General Gadget" || name === "Unknown voice" ? "general" : name.toLowerCase()),
-    );
-    const url = cast ? castSheet(cast[0] as keyof typeof CAST, true) : core?.[1].url;
-    const frames = cast ? 1 : core?.[1].frames;
-    if (url && frames) {
-      node.style.backgroundImage = `url('${url}')`;
-      node.style.backgroundSize = `${units(frames * portrait.art)} ${units(portrait.art)}`;
-      if (core) {
-        const frame = portraitFrame(true, {
-          elapsed: 0,
-          mood: "neutral",
-          named: name === "General Gadget",
-          speaker: core[0] as Speaker,
-        });
-        node.style.backgroundPositionX = units(-frame * portrait.art);
-      }
-    }
-    return node;
-  };
-  const named = (name: string): HTMLElement => {
-    const node = document.createElement("div");
-    node.className = "ada-interaction-speaker";
-    node.append(makePortrait(name), document.createTextNode(name));
-    return node;
-  };
   const draw = (): void => {
     const line = state.line;
-    party.replaceChildren(named(state.party));
-    speaker.replaceChildren(...(line?.speaker ? [named(line.speaker)] : []));
-    speaker.hidden = !line?.speaker;
-    words.textContent = line?.text ?? "";
-    words.hidden = !words.textContent;
-    actions.replaceChildren();
-    const add = (label: string, callback: () => void) => {
-      const button = createButton(label);
+    card.showLine(line?.speaker, line?.text ?? "");
+    card.choices.replaceChildren();
+    card.controls.replaceChildren();
+    const add = (label: string, callback: () => void, choice = false) => {
+      const button = createButton(label, choice ? "primary" : "secondary");
+      button.classList.add("ada-story-button");
       button.addEventListener("click", () => {
         callback();
         draw();
       });
-      actions.append(button);
+      (choice ? card.choices : card.controls).append(button);
     };
     for (const [index, topic] of state.topics.entries()) {
-      add(topic.label, () => state.topic(index));
+      add(topic.label, () => state.topic(index), true);
     }
     if (!state.atOutcome || state.topics.length > 0) {
-      add("Continue", () => state.advance());
+      add(CONTENT.labels.next ?? "", () => state.advance());
     } else {
       for (const choice of state.choices) {
-        add(choice.label, () => {
-          if (choice.refused) {
-            refuse(actions, false);
-          } else {
-            options.choose(choice.id);
-          }
-        });
+        add(
+          choice.label,
+          () => {
+            if (choice.refused) {
+              refuse(card.choices, false);
+            } else {
+              options.choose(choice.id);
+            }
+          },
+          choice.id !== "continue",
+        );
       }
     }
     if (state.hasTopics && state.topics.length === 0) {
-      add("Ask more", () => state.ask());
+      add(CONTENT.labels.askMore ?? "Ask more", () => state.ask());
     }
-    add("Skip dialogue", () => {
+    add(CONTENT.labels.skip ?? "", () => {
       state.skip();
       const choices = state.choices;
       if (choices.length === 1 && choices[0]?.id === "continue") {
         options.skip();
       }
     });
-    add("Close", () => {
-      state.skip();
-      options.close();
-    });
     card.fit();
-    actions.querySelector<HTMLButtonElement>("button")?.focus({ preventScroll: true });
+    (
+      card.choices.querySelector<HTMLButtonElement>("button") ??
+      card.controls.querySelector<HTMLButtonElement>("button")
+    )?.focus({ preventScroll: true });
   };
   const close = (): void => {
     state.skip();
@@ -485,7 +386,7 @@ export function createInteractionCard(
       const next = JSON.stringify(panel);
       if (signature !== next) {
         signature = next;
-        card.title.textContent = state.party;
+        card.title.textContent = "";
         card.frame.setAttribute("aria-label", state.party);
         draw();
       }

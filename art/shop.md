@@ -30,11 +30,12 @@ more. A balance's amount is cream.
 
 Opens on docking. The close X, an outside tap, back and Escape all act as Undock.
 
-1. Header: `station`.
-2. Balance: `stardustAmount`.
-3. `stationWelcome`, supporting text, centred lines.
-4. Action group, `BUTTON_GAP` apart: Undock (`undock`, secondary), Jobs
-   (`jobs`, secondary) and Shop (`shop`, primary), left to right.
+The welcome uses the same two-column dialogue panel as Earth pages: the actual
+keeper's portrait, name tab and current greeting on the text side; balance, Jobs
+and Shop choices on the action side. Next line and Undock are separate secondary
+navigation controls. The generated station's keeper supplies the speaker; a
+station without an authored keeper shows its generic welcome without inventing a
+speaker. The overlay has one close X and no duplicate Close button.
 
 ## Shop
 

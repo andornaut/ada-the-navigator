@@ -777,7 +777,7 @@ token above; strings are Gameplay's.
 | Paused        | Header, close. Control grid, two columns: Map and Ship, then Settings and Back to title. Resume (primary, full width)                                                                                                                          | None         |
 | Paused (room) | Header, close. Action stack: Settings, Back to title                                                                                                                                                                                           | None         |
 | Ship          | Header, close. Cargo section. Equipment section ([Ship card](#ship-card))                                                                                                                                                                      | None         |
-| Station card  | Header, close. Balance. Keeper block ([Station card](#station-card)). Action row: Undock, Jobs, Shop                                                                                                                                           | None         |
+| Station card  | Keeper portrait, name tab and current greeting. Balance and Jobs/Shop choices. Separate Next line/Undock navigation and close X ([Station card](#station-card)).                                                                               | None         |
 | Shop          | Header, close. Balance. Tabs (action row). Item list (control grid)                                                                                                                                                                            | Item list    |
 | Job board     | Header, close. Balance. Intro (supporting prose, centred). Refusal line (supporting prose, when shown). Job list (one column of job rows)                                                                                                      | Job list     |
 | Buy confirm   | Header, close. Item well. Description (weapons). Price. Remaining (supporting). Action row: Cancel, Buy                                                                                                                                        | None         |
@@ -797,53 +797,18 @@ to 267.5, both 360 wide, inside the 325 available. Ada's room page opens the roo
 
 ### Station card
 
-The station card's welcome is its keeper's block, the
-[conversation box](#conversation-box)'s panel inside the card: the speaker,
-lines and press behaviour players know from flight. Keepers, portraits and
-tab colours are in [Station](station.md#keepers); the lines are Gameplay's
-(`gameplay/player-copy.md` "Greeters").
+Station welcomes use the story panel's text and choice columns, portrait frame,
+name tab, type roles and safe insets. The current station's keeper supplies its
+portrait and name for every greeting line. Jobs and Shop are gold choices;
+Next line and Undock are secondary navigation controls. Shop and job-board
+menus retain their separate list layouts.
 
-| Part     | Geometry                                                                                                                                                         |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Card     | Content-fitted: the block's 480 plus `2 * CARD_CONTENT.padding`, 512 wide; header 58, the balance's 20 line, then the groups `SPACING.gap` apart                 |
-| Block    | `CONVERSATION_BOX` geometry: 480 wide, 60 high, ink `#181425` at 0.65 over the card face, square corners; the name tab's 10 overhang above it                    |
-| Portrait | The keeper's compact portrait (22) at 2x (44), nearest neighbour, in the 52 frame (2 ink edge, navy `#262b44` face), `padding` 4 from the panel's inner right    |
-| Name tab | `CONVERSATION_BOX.tab`: 20 high, the name in `TYPE.label` ink, `SPACING.markGap` either side, 1 ink edge, radius 2, 8 in from the panel's left, 10 above its top |
-| Lines    | `TYPE.body` cream, left-aligned, at most two 20 lines, centred on the panel as the conversation box's; text column 408, or 374 while the pips show               |
-| Pips     | First docking only: three 6 discs, 4 apart (26 wide), `SPACING.gap` right of the text column, centred on the last line box                                       |
-| Height   | `58 + 20 + 8 + 10 + 60 + 8 + 48 + 16` = 228                                                                                                                      |
-
-| View                  | Available  | Card    | Card top | Scroll |
-| --------------------- | ---------- | ------- | -------: | ------ |
-| 720x360               | 688x328    | 512x228 |       66 | None   |
-| 720x360, phone insets | 634x325    | 512x228 |     64.5 | None   |
-| 844x390, insets 43    | 693.08x325 | 512x228 |     64.5 | None   |
-| 1280x720 (720x405)    | 688x373    | 512x228 |     88.5 | None   |
-
-Docking states:
-
-| State         | Lines                                                                           | Pips                                                           | Press                                                                                   |
-| ------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| First docking | The galaxy's three greeting lines, one at a time                                | Shown lines cream `#ead4aa`, coming lines 1 px `#b8b3c9` rings | The block advances one line per tap; the third line holds and the block stops advancing |
-| Later docking | One short line, the galaxy's three in turn                                      | None                                                           | None: the block is a status                                                             |
-| Phantom       | Gameplay's generic welcome, centred in the panel's width less `2 * SPACING.gap` | None                                                           | None; no portrait or tab                                                                |
-
-- A line replaces the last in place, as the conversation box's do, with no
-  transition, so reduced motion changes nothing. The pips are static.
-- On the third line the block stops being a button and becomes a status. If
-  it had focus, focus moves to Shop, where the card's focus starts.
-- Undock, Jobs and Shop stay live throughout; the block never blocks them, and
-  closing the card or leaving for the shop or job board ends the greeting where
-  it is (Gameplay saves greetings seen per place).
-- While the block advances it is one button, the panel and its name tab, named
-  by Gameplay's next-line label, with the shared focus ring; Tab reaches it
-  before the action row. The pips are decorative (`aria-hidden`); the line is
-  the block's text.
-- Every first-docking line fits two lines in 374 (the widest, Needle's "We Avi
-  stand still a long time before we move. It is how we see clearly.", 500.65,
-  wraps to two), and every later line two lines in 408.
-- Contrast: cream lines 10.80:1 on the block over the card face (`#242134`),
-  the coming-line rings 7.70:1; tab labels 7.71:1 or more on every keeper's tab.
+Earth and space dialogue choices use the same gold story buttons, visually
+separated from secondary Next, Ask more and Skip navigation. Each spoken line
+shows its actual speaker's existing portrait and name tab. The close X is the
+only Close control. Narration has no invented speaker or portrait. Mom and Dad
+keep their authored family addresses in text; their name tabs and existing
+portraits identify Trista and Bin.
 
 ### Achievements card
 
