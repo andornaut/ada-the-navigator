@@ -1,6 +1,7 @@
 import {
   ACTIVITIES,
   type ActivityDefinition,
+  COURIER,
   MINING_CONTRACT_DEPOSITS,
 } from "../data/activities.ts";
 import { ECONOMY } from "../data/economy.ts";
@@ -51,9 +52,9 @@ export function activityOffer(
 /** What one run of an activity is fixed with when accepted: its reward and targets. */
 export interface ActivityTerms {
   readonly reward: number;
-  /** A guide's calf start, from the family. */
+  /** A calf's or optional courier's start. */
   readonly start?: Vec;
-  /** A supply run's destination station. */
+  /** A supply run's station or optional courier's settlement. */
   readonly target?: JobTarget;
 }
 
@@ -88,7 +89,7 @@ export function acceptActivity(
   terms: ActivityTerms,
 ): boolean {
   const activity = activityOffer(galaxy, progress, book, place);
-  if (!activity) {
+  if (!activity || (activity.id === "courierRun" && (!terms.start || !terms.target))) {
     return false;
   }
   book.tasks[galaxy] = {
@@ -97,6 +98,10 @@ export function acceptActivity(
     place,
     reward: terms.reward,
     ...(activity.id === "miningContract" ? { deposited: 0 } : {}),
+    ...(activity.id === "threadNeedle" ? { lit: 0 } : {}),
+    ...(activity.id === "courierRun"
+      ? { courier: { patrolSpawned: false, position: { ...terms.start! } } }
+      : {}),
     // A supply run's item loads at once into the job carried-item slot.
     ...(activity.id === "supplyRun" ? { carrying: true } : {}),
     ...(terms.start ? { start: { ...terms.start } } : {}),
@@ -137,6 +142,39 @@ export function contractDeposit(galaxy: GalaxyNumber, book: Tasks, amount: numbe
   return held.deposited >= MINING_CONTRACT_DEPOSITS;
 }
 
+/** Advances only the optional courier; a waiting courier resumes when Ada returns in range. */
+export function stepCourier(
+  context: { readonly baseSpeed: number; readonly dt: number; readonly player: Vec },
+  held: HeldActivity,
+): boolean {
+  if (held.id !== "courierRun" || !held.courier || !held.target) {
+    return false;
+  }
+  const position = held.courier.position;
+  if (Math.hypot(context.player.x - position.x, context.player.y - position.y) > COURIER.follow) {
+    return false;
+  }
+  const dx = held.target.x - position.x;
+  const dy = held.target.y - position.y;
+  const distance = Math.hypot(dx, dy);
+  const travel = Math.max(0, context.baseSpeed * COURIER.speedFraction * context.dt);
+  if (travel >= distance) {
+    position.x = held.target.x;
+    position.y = held.target.y;
+    return true;
+  }
+  position.x += (dx / distance) * travel;
+  position.y += (dy / distance) * travel;
+  return false;
+}
+
+/** Leaving or shield depletion restarts the optional run; Continue does not call this. */
+export function resetCourier(held: HeldActivity): void {
+  if (held.id === "courierRun" && held.start && held.courier) {
+    held.courier = { patrolSpawned: false, position: { ...held.start } };
+  }
+}
+
 /** Whether a saved activity is the galaxy's, offered by one of its places, with its reward. */
 export function validActivity(galaxy: GalaxyNumber, value: Record<string, unknown>): boolean {
   const activity = ACTIVITIES[galaxy];
@@ -152,14 +190,30 @@ export function validActivity(galaxy: GalaxyNumber, value: Record<string, unknow
         value.target !== null &&
         vector(value.target) &&
         stationById(ECONOMY, galaxy, String((value.target as JobTarget).id)) !== null
-      : value.reward === activity.reward && value.target === undefined) &&
+      : activity.id === "courierRun"
+        ? value.reward === activity.reward &&
+          vector(value.target) &&
+          typeof (value.target as JobTarget).id === "string" &&
+          (value.target as JobTarget).id.length > 0
+        : value.reward === activity.reward && value.target === undefined) &&
     (activity.id === "miningContract"
       ? Number.isSafeInteger(value.deposited) && (value.deposited as number) >= 0
       : value.deposited === undefined) &&
     (activity.id === "supplyRun"
       ? typeof value.carrying === "boolean"
       : value.carrying === undefined) &&
-    (activity.id === "guideCalf" ? vector(value.start) : value.start === undefined)
+    (activity.id === "guideCalf" || activity.id === "courierRun"
+      ? vector(value.start)
+      : value.start === undefined) &&
+    (activity.id === "threadNeedle"
+      ? Number.isSafeInteger(value.lit) && (value.lit as number) >= 0 && (value.lit as number) <= 8
+      : value.lit === undefined) &&
+    (activity.id === "courierRun"
+      ? typeof value.courier === "object" &&
+        value.courier !== null &&
+        vector((value.courier as HeldActivity["courier"])!.position) &&
+        typeof (value.courier as HeldActivity["courier"])!.patrolSpawned === "boolean"
+      : value.courier === undefined)
   );
 }
 

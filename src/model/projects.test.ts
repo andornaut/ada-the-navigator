@@ -34,7 +34,13 @@ const progress = (resolved = true, donated: Record<string, number> = {}): Projec
 
 describe("community projects", () => {
   it("are Gameplay's per-project table: name, galaxy, price, speaker and thank-you line", () => {
-    const galaxies = { 1: "Sunflower", 2: "Cartwheel", 3: "Whirlpool" } as const;
+    const galaxies = {
+      1: "Sunflower",
+      2: "Cartwheel",
+      3: "Whirlpool",
+      4: "Needle",
+      5: "Andromeda",
+    } as const;
     for (const [galaxy, projects] of Object.entries(PROJECTS)) {
       for (const { cost, name, speaker, thanks } of projects) {
         const row = ECONOMY_DOC.split("\n").find((line) => line.startsWith(`| ${name} `));
@@ -42,15 +48,62 @@ describe("community projects", () => {
         const cells = row!.split("|").map((cell) => cell.trim());
         expect(cells.slice(1, 6), name).toEqual([
           name,
-          galaxies[Number(galaxy) as 1 | 2 | 3],
+          galaxies[Number(galaxy) as keyof typeof galaxies],
           String(cost),
-          SPEAKERS[speaker].name,
+          speaker === "settler" ? "Settler" : SPEAKERS[speaker].name,
           `"${thanks}"`,
         ]);
       }
     }
-    expect(Object.values(PROJECTS).flat()).toHaveLength(7);
+    expect(Object.values(PROJECTS).flat()).toHaveLength(11);
   });
+
+  it("uses the approved chapter speakers and Art's existing station and channel anchor semantics", () => {
+    expect(SPEAKERS.settler.name).toBe("Wick");
+    expect(PROJECTS[4]!.map(({ id, site, speaker }) => ({ id, site, speaker }))).toEqual([
+      { id: "channelLights", site: "needlePractice", speaker: "elderLoom" },
+      { id: "loomHall", site: "station", speaker: "avi" },
+    ]);
+    expect(PROJECTS[5]!.map(({ id, site, speaker }) => ({ id, site, speaker }))).toEqual([
+      { id: "courierSchool", site: "station", speaker: "pip" },
+      { id: "spareBeacon", site: "darkBeacon", speaker: "settler" },
+    ]);
+  });
+
+  it.each([4, 5] as const)(
+    "funds galaxy %i projects in parts and grants each ally exactly once",
+    (galaxy) => {
+      const projects = PROJECTS[galaxy]!;
+      const state = progress();
+      expect(projects).toHaveLength(2);
+      for (const project of projects) {
+        expect(donate(projects, state, 100, project.id)).toEqual({
+          amount: 100,
+          funded: false,
+          kind: "paid",
+        });
+        expect(projectAllies(projects, state).some(({ project: id }) => id === project.id)).toBe(
+          false,
+        );
+        expect(donate(projects, state, 1000, project.id)).toEqual({
+          amount: project.cost - 100,
+          funded: true,
+          kind: "paid",
+        });
+        expect(donate(projects, state, 1000, project.id)).toEqual({ kind: "refused" });
+        expect(worldChanges(projects, state)).toContainEqual({
+          project: project.id,
+          revealed: false,
+          site: project.site,
+        });
+        expect(revealWorldChange(projects, state, project.id)).toBe(true);
+        expect(revealWorldChange(projects, state, project.id)).toBe(false);
+      }
+      expect(projectAllies(projects, state)).toEqual(
+        projects.map(({ ally, id }) => ({ ally, project: id })),
+      );
+    },
+  );
 
   it("are offered once the galaxy's chapter is complete", () => {
     expect(projectsOffered(progress(false))).toBe(false);

@@ -4,7 +4,8 @@ import type { GalaxyNumber } from "./types.ts";
 // Repeatable activities (gameplay/quests.md "Repeatable activities"): once a galaxy's chapter is
 // complete, its story places offer one through Talk. Rewards are provisional tuning.
 
-export type ActivityId = "guideCalf" | "miningContract" | "supplyRun";
+export type ActivityId =
+  "courierRun" | "guideCalf" | "miningContract" | "supplyRun" | "threadNeedle";
 
 export interface ActivityDefinition {
   /** The board row's detail line: the goal's label key. */
@@ -53,10 +54,31 @@ export const ACTIVITIES: Readonly<Partial<Record<GalaxyNumber, ActivityDefinitio
     places: { family: "activityFamily" },
     reward: ACTIVITY_REWARDS[2]!,
   },
+  4: {
+    goal: "needleGoal",
+    id: "threadNeedle",
+    name: "Thread the needle",
+    places: { elderLoom: "activityLoom" },
+    reward: ACTIVITY_REWARDS[3]!,
+  },
+  5: {
+    goal: "courierGoal",
+    id: "courierRun",
+    name: "Courier run",
+    places: { pip: "activityPip" },
+    reward: ACTIVITY_REWARDS[4]!,
+  },
 };
 
 /** The mining contract's goal: resources deposited at the hub after accepting. */
 export const MINING_CONTRACT_DEPOSITS = 30;
+
+/** Optional courier run, distinct from Pip's chapter accompaniment. */
+export const COURIER = {
+  distance: [5000, 8000] as const,
+  follow: 600,
+  speedFraction: 0.7,
+} as const;
 
 /**
  * Sunflower's supply run items by issuing outpost. Each goes to a known station by the delivery

@@ -12,7 +12,15 @@ import { HUNTING_PACKS } from "../data/galaxyFeatures.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
-import { activityOffer, heldActivity } from "./activities.ts";
+import {
+  acceptActivity,
+  activityOffer,
+  completeActivity,
+  heldActivity,
+  resetCourier,
+  stepCourier,
+  validActivity,
+} from "./activities.ts";
 import { calfRouteMidpoint, calfStart, crossesCurrent } from "./calf.ts";
 import { ensureDestination, ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
@@ -125,16 +133,134 @@ function atFamily() {
 }
 
 describe("repeatable activities", () => {
-  it("pays the approved rewards for implemented activities without adding placeholder activities", () => {
+  const courier = (): HeldActivity => ({
+    courier: { patrolSpawned: true, position: { x: 0, y: 0 } },
+    id: "courierRun",
+    kind: "activity",
+    place: "pip",
+    reward: 165,
+    start: { x: 0, y: 0 },
+    target: { id: "settlement", x: 5000, y: 0 },
+  });
+
+  it("waits beyond 600, resumes at the boundary and clamps arrival at the settlement", () => {
+    const held = courier();
+    expect(stepCourier({ baseSpeed: 100, dt: 1, player: { x: 601, y: 0 } }, held)).toBe(false);
+    expect(held.courier!.position).toEqual({ x: 0, y: 0 });
+    expect(stepCourier({ baseSpeed: 100, dt: 1, player: { x: 600, y: 0 } }, held)).toBe(false);
+    expect(held.courier!.position).toEqual({ x: 70, y: 0 });
+    held.courier!.position = { x: 4990, y: 0 };
+    expect(stepCourier({ baseSpeed: 100, dt: 1, player: { x: 4990, y: 0 } }, held)).toBe(true);
+    expect(held.courier!.position).toEqual({ x: 5000, y: 0 });
+  });
+
+  it("preserves courier position and patrol through a saved Continue, resetting only when requested", () => {
+    const held = courier();
+    held.courier!.position = { x: 400, y: 20 };
+    const saved = JSON.parse(JSON.stringify(held)) as HeldActivity;
+    expect(validActivity(5, saved as unknown as Record<string, unknown>)).toBe(true);
+    expect(saved.courier).toEqual({ patrolSpawned: true, position: { x: 400, y: 20 } });
+    resetCourier(saved);
+    expect(saved.courier).toEqual({ patrolSpawned: false, position: { x: 0, y: 0 } });
+    expect(saved.start).toEqual({ x: 0, y: 0 });
+    expect(saved.target).toEqual(held.target);
+    expect(saved.courier!.position).not.toBe(saved.start);
+  });
+
+  it("initializes a courier run once and refuses incomplete terms or an occupied slot", () => {
+    const book: Pick<GameState, "tasks"> = { tasks: {} };
+    expect(acceptActivity(5, { resolved: true }, book, "pip", { reward: 165 })).toBe(false);
+    const terms = {
+      reward: 165,
+      start: { x: 0, y: 0 },
+      target: { id: "settlement", x: 5000, y: 0 },
+    };
+    expect(acceptActivity(5, { resolved: true }, book, "pip", terms)).toBe(true);
+    expect(heldActivity(5, book)?.courier).toEqual({
+      patrolSpawned: false,
+      position: { x: 0, y: 0 },
+    });
+    expect(acceptActivity(5, { resolved: true }, book, "pip", terms)).toBe(false);
+  });
+
+  it("rejects incomplete courier saves and courier state attached to another activity", () => {
+    const held = courier();
+    const saved = held as unknown as Record<string, unknown>;
+    for (const patch of [
+      { start: undefined },
+      { target: undefined },
+      { target: { x: 5, y: 6 } },
+      { courier: undefined },
+      { courier: { patrolSpawned: 1, position: { x: 0, y: 0 } } },
+      { courier: { patrolSpawned: false, position: { x: Infinity, y: 0 } } },
+    ]) {
+      expect(validActivity(5, { ...saved, ...patch })).toBe(false);
+    }
+    expect(
+      validActivity(4, {
+        courier: held.courier,
+        id: "threadNeedle",
+        lit: 0,
+        place: "elderLoom",
+        reward: 150,
+      }),
+    ).toBe(false);
+  });
+
+  it("keeps repeatable Needle gates separate from chapter progress and releases its task slot", () => {
+    const book: Pick<GameState, "tasks"> = { tasks: {} };
+    const chapter = { resolved: true };
+    expect(acceptActivity(4, chapter, book, "elderLoom", { reward: 150 })).toBe(true);
+    expect(book.tasks[4]).toEqual({
+      id: "threadNeedle",
+      kind: "activity",
+      lit: 0,
+      place: "elderLoom",
+      reward: 150,
+    });
+    expect(activityOffer(4, chapter, book, "elderLoom")).toBeUndefined();
+    expect(completeActivity(4, book)).toBe(150);
+    expect(completeActivity(4, book)).toBe(0);
+    expect(activityOffer(4, chapter, book, "elderLoom")?.id).toBe("threadNeedle");
+  });
+
+  it("validates saved Needle gate counts and rejects chapter or foreign activity fields", () => {
+    const saved = { id: "threadNeedle", lit: 0, place: "elderLoom", reward: 150 };
+    for (const lit of [0, 1, 7, 8]) {
+      expect(validActivity(4, { ...saved, lit }), String(lit)).toBe(true);
+    }
+    for (const lit of [undefined, -1, 9, 1.5, NaN, "3"]) {
+      expect(validActivity(4, { ...saved, lit }), String(lit)).toBe(false);
+    }
+    expect(validActivity(4, { ...saved, place: "needleEye" })).toBe(false);
+    expect(validActivity(4, { ...saved, start: { x: 1, y: 2 } })).toBe(false);
+    expect(
+      validActivity(2, {
+        deposited: 0,
+        id: "miningContract",
+        lit: 0,
+        place: "hub",
+        reward: 180,
+      }),
+    ).toBe(false);
+  });
+
+  it("pays the approved rewards across the five repeatable activities, excluding Phantom", () => {
     expect(ACTIVITY_REWARDS).toEqual({ 2: 105, 3: 150, 4: 165, 5: 180 });
     expect(ACTIVITIES[3]?.reward).toBe(105);
     expect(ACTIVITIES[2]?.reward).toBe(180);
     expect(ACTIVITIES[1]?.reward).toBeUndefined();
-    expect([ACTIVITIES[4], ACTIVITIES[5], ACTIVITIES[6]]).toEqual([
-      undefined,
-      undefined,
-      undefined,
-    ]);
+    expect(ACTIVITIES[4]).toMatchObject({
+      id: "threadNeedle",
+      places: { elderLoom: "activityLoom" },
+      reward: 150,
+    });
+    expect(ACTIVITIES[5]).toMatchObject({
+      id: "courierRun",
+      places: { pip: "activityPip" },
+      reward: 165,
+    });
+    expect(ACTIVITIES[6]).toBeUndefined();
   });
 
   it.each(OFFERS)(
