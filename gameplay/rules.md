@@ -41,14 +41,18 @@ the game; do not modify the source games.
 ## Start, Home and Space
 
 The game has two halves: Home, the storybook scenes on Earth, and Space, the
-flights. The first launch shows only Start, which begins Sunflower's home opening
-and then the prologue. Start stays alone until the first flight begins. Later
-launches show Continue and Restart.
+flights. With neither a started game nor a held story, the start screen offers
+only Start, which begins Sunflower's home opening and then the prologue. Once a
+flight has begun or a held story exists, it offers Continue and Restart,
+including when a story is held before the first flight. A later launch with
+neither condition still offers only Start. Newer-save recovery keeps these
+start actions fenced until compatibility is rechecked.
 
 Every launch opens on the start screen; Continue resumes where the save left off.
-With a saved flight, Continue resumes it exactly: galaxy, position, tow and danger
-(see the exact-resume rule below). Without a saved flight, Continue opens Ada's
-room page, after any waiting home scene; picking up the rock then shows the glow,
+A held story page resumes at that page, including an unanswered choice. A saved
+flight resumes exactly: galaxy, position, tow and danger (see the exact-resume
+rule below), with any held story page restored over it. With neither a held
+story page nor a saved flight, Continue opens Ada's room page, after any waiting home scene; picking up the rock then shows the glow,
 "Welcome back, Navigator." and the galaxy map, with the farthest unlocked galaxy
 selected. A home scene that is waiting, such as a chapter's resolution or the next
 chapter's opening, plays first. When Ada goes home with no new scene, her room
@@ -131,8 +135,13 @@ glowing; the prologue moves from the park to Ada's room. Narration
 pages show no name tab; dialogue pages show the speaker's. Back on a storybook
 page acts as Previous. An optional-question page returns to its question list
 until Continue, so Ada can ask every question. Continue shows Astra's boarding line,
-then the galaxy map. Story position within a scene is not
-saved: a scene interrupted midway restarts from its first page.
+then the galaxy map. Back to title and Continue, or closing and reopening the
+game, retain the exact story page, unanswered choice, questions already asked,
+cross-scene Previous trail and elapsed sleep time. Resume does not select an
+answer, repeat completed scene effects or restart the sleep scene. Saves keep
+canonical scene, page and question references and navigation state, not embedded
+authored text; the runtime resolves those references against its current story
+content under the existing save compatibility guards.
 
 ### Aboard and the galaxy map
 
@@ -965,7 +974,9 @@ Known destinations remain usable despite regeneration.
 Closing the game or Back to title is not leaving the galaxy: resume the same
 flight with exact important state and current nearby space, cargo, owned and
 selected weapons and shield. Disposed ordinary history is not part of that
-exact-resume guarantee. Save durable milestones as they occur.
+exact-resume guarantee. Held story pages retain their page, question history,
+Previous trail and elapsed sleep time as specified in [Earth scenes](#earth-scenes).
+Save durable milestones as they occur.
 
 ### What each event keeps
 
