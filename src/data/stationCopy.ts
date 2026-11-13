@@ -1,0 +1,18 @@
+export const STATION_NAME_WORDS = [
+  "Amber",
+  "Beacon",
+  "Comet",
+  "Dawn",
+  "Ember",
+  "Fern",
+  "Glimmer",
+  "Haven",
+  "Iris",
+  "Juniper",
+  "Kite",
+  "Lantern",
+  "Meadow",
+  "Nova",
+  "Orbit",
+  "Pebble",
+] as const;
