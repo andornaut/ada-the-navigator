@@ -364,6 +364,12 @@ describe("status pill count", () => {
     status.setStatus({ ...view, shield: 60, sinceDamage: 0 }, 2000);
     expect(part("timer-fill").getAttribute("width")).toBe("0");
     expect(part("timer-border").getAttribute("d")).not.toBe("");
+    status.setStatus({ ...view, shield: 60, sinceDamage: 30 }, 2500);
+    expect(part("timer-fill").getAttribute("x")).toBe("28");
+    expect(part("timer-fill").getAttribute("width")).toBe("120");
+    expect(part("timer-fill").getAttribute("data-capacity-end")).toBe("148");
+    expect(part("fill").getAttribute("data-capacity-start")).toBe("30");
+    expect(part("fill").getAttribute("data-capacity-end")).toBe("146");
     status.setStatus({ ...view, shield: 100 }, 3000);
     expect(part("timer-border").getAttribute("d")).toBe("");
     status.setStatus({ ...view, recharging: true, shield: 61 }, 4000);
@@ -429,9 +435,9 @@ describe("status pill count", () => {
       const g = shieldRasterGeometry(1, 1, { x: 0, y: 0 }, level);
       expect(track.style.top).toBe(pixels(g.timer.y - g.edge));
       expect(track.style.left).toBe(pixels(g.timer.x - g.edge));
-      expect(track.style.width).toBe(pixels(g.capacityWidth + 2 * g.edge));
+      expect(track.style.width).toBe(pixels(g.timer.width + 2 * g.edge));
       expect(track.style.height).toBe(pixels(g.timer.height + 2 * g.edge));
-      expect(fill.style.width).toBe(pixels(g.capacityWidth * 0.5));
+      expect(fill.style.width).toBe(pixels(g.timer.width * 0.5));
       status.setStatus({ ...view, sinceDamage: 0 }, 16);
       expect(track.hidden).toBe(false);
       expect(fill.style.width).toBe(pixels(0));

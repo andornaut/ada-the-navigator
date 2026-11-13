@@ -31,7 +31,8 @@ export function shieldRasterGeometry(
   const fill = { height: fillHeight, x: main.x + inset, y: main.y + inset };
   const timer = {
     height: timerHeight,
-    x: fill.x,
+    width: main.width,
+    x: main.x,
     y: main.y + main.height + gap,
   };
   return {

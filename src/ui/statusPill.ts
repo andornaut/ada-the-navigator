@@ -799,9 +799,9 @@ export function createStatusPill(
       meter.style.height = pixels(raster.main.height / density);
       rechargeTrack.style.left = pixels((raster.timer.x - raster.edge) / density);
       rechargeTrack.style.top = pixels((raster.timer.y - raster.edge) / density);
-      rechargeTrack.style.width = pixels((raster.capacityWidth + 2 * raster.edge) / density);
+      rechargeTrack.style.width = pixels((raster.timer.width + 2 * raster.edge) / density);
       rechargeTrack.style.height = pixels((raster.timer.height + 2 * raster.edge) / density);
-      recharge.style.width = pixels((raster.capacityWidth * (bar.recharge ?? 0)) / density);
+      recharge.style.width = pixels((raster.timer.width * (bar.recharge ?? 0)) / density);
       drawing.update(raster, bar.fill / shieldFillWidth(Number(level)), bar);
       meter.setAttribute("aria-valuemax", String(view.capacity));
       meter.setAttribute("aria-valuenow", String(Math.max(0, Math.round(view.shield))));

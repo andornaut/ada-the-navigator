@@ -83,9 +83,12 @@ export function createShieldDrawing(colours: typeof STATUS_COLOURS) {
         g.fill.height,
         bar.tone === "low" ? colours.low : colours.shield,
       );
-      for (const node of [nodes[3]!, nodes[8]!]) {
-        node.setAttribute("data-capacity-start", String(g.fill.x));
-        node.setAttribute("data-capacity-end", String(g.fill.x + g.capacityWidth));
+      for (const [node, x, width] of [
+        [nodes[3]!, g.fill.x, g.capacityWidth],
+        [nodes[8]!, g.timer.x, g.timer.width],
+      ] as const) {
+        node.setAttribute("data-capacity-start", String(x));
+        node.setAttribute("data-capacity-end", String(x + width));
       }
       const overlay = (index: number, range: ShieldBarView["delay"], colour: string) => {
         const from = Math.round(
@@ -106,7 +109,7 @@ export function createShieldDrawing(colours: typeof STATUS_COLOURS) {
       );
       const timerBox = {
         height: g.timer.height + 2 * g.edge,
-        width: g.capacityWidth + 2 * g.edge,
+        width: g.timer.width + 2 * g.edge,
         x: g.timer.x - g.edge,
         y: g.timer.y - g.edge,
       };
@@ -115,7 +118,7 @@ export function createShieldDrawing(colours: typeof STATUS_COLOURS) {
         8,
         g.timer.x,
         g.timer.y,
-        Math.round(g.capacityWidth * (bar.recharge ?? 0)),
+        Math.round(g.timer.width * (bar.recharge ?? 0)),
         g.timer.height,
         colours.recharge,
       );

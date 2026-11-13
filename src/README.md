@@ -153,6 +153,7 @@ browser's prompt or that browser's menu steps, and registers no service worker.
 The shield's lighter outer pill contains one opaque dark rectangle behind both
 bars. The main border has the same gap to the dark rectangle's top, left and
 right as the gap from its bottom to the cream moving fill and from that fill's
-bottom to the dark rectangle's bottom. Both moving fills share their capacity
-start and end positions; their current progress remains independent. The icon
+bottom to the dark rectangle's bottom. The recharge fill spans the main border's
+outer left and right edges at capacity. The main fill keeps its inner inset, and
+each fill's current progress remains independent. The icon
 retains its field-dependent outline. Shield timing and meter semantics are unchanged.

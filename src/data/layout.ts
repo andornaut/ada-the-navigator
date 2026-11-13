@@ -365,7 +365,7 @@ export const SHIELD_PILL = {
   bar: { height: 12, inset: 2, rim: 1 },
   bars: SHIELD_BARS,
   bottom: CONTROLS_BOTTOM,
-  // The thin timer fill shares the main fill's capacity span. gap is the equal dark-background
+  // The thin timer fill spans the main border's outer edges. gap is the equal dark-background
   // padding around the main border and between its bottom and the timer fill.
   delayStrip: { edge: 1, gap: 1, height: 1 },
   // The leading edge inside the fill's right end while the shield regenerates.

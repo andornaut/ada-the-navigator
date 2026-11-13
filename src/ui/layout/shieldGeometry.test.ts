@@ -24,7 +24,8 @@ describe("approved shield geometry", () => {
           bg.x + bg.width - m.x - m.width,
         ]).toEqual(Array(5).fill(g.gap));
         expect(g.gap).toBeGreaterThan(0);
-        expect(t.x).toBe(g.fill.x);
+        expect(t.x).toBe(m.x);
+        expect(t.x + t.width).toBe(m.x + m.width);
         expect(g.fill.x + g.capacityWidth).toBe(m.x + m.width - g.inset);
         expect(m.height - g.fill.height - g.inset).toBe(g.inset);
         expect(bg.x).toBeGreaterThan(0);
