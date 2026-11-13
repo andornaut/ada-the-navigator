@@ -539,7 +539,7 @@ export const CONTENT: GameContent = {
     mapKindStory: "Story place",
     mapKindWreck: "Wreck",
     mapPercent: "Survey area: {percent}% mapped",
-    mapSurveyInfo: "Survey progress covers the central region, not the whole galaxy.",
+    mapSurveyInfo: "Galaxies are big. Mapping progress is tracked only in the center.",
     mapTypeLine: "{type} · {distance}",
     mapZoomIn: "Zoom in",
     mapZoomOut: "Zoom out",
