@@ -637,3 +637,20 @@ describe("periodic map metadata and separate procedural places", () => {
     );
   });
 });
+
+it("blocks generic Travel only for Needle's floating disk while preserving other galaxies", () => {
+  const model = flying();
+  const base = context(model, { known: ["holodisk"], stations: [] });
+  for (const galaxy of [1, 2, 3, 4, 5, 6] as const) {
+    const mapped = localMap({
+      ...base,
+      destinations: ["holodisk"],
+      flight: {
+        ...base.flight,
+        galaxy,
+        objects: [{ hp: 1, id: "holodisk", kind: "destination", radius: 10, x: 20, y: 30 }],
+      },
+    });
+    expect(mapped.places.find(({ id }) => id === "holodisk")?.travel).toBe(galaxy !== 4);
+  }
+});

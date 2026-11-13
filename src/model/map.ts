@@ -316,7 +316,7 @@ export function localMap(context: MapContext): LocalMap {
             label: context.label(id, "destination"),
             objective: id === objectivePlace,
             symbol: destinationSymbol(id),
-            travel: id !== "holodisk",
+            travel: !(galaxy === 4 && id === "holodisk"),
             x: object.x,
             y: object.y,
           },
