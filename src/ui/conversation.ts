@@ -133,17 +133,11 @@ const TAB_RULES = Object.entries(TAB_COLOURS)
   .join("");
 
 export const INTERACTION_STYLE = `
-.ada-controls .ada-interaction-modal .ada-card-frame{
-  width:100%!important;height:100%!important;max-width:none!important;max-height:none!important
-}
-.ada-controls .ada-interaction-modal .ada-card{
-  width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;box-sizing:border-box
-}
 .ada-interaction-speaker{display:flex;align-items:center;gap:${units(SPACING.gap)}}
 .ada-interaction-portrait{
  display:inline-block;flex:none;width:${units(portrait.art)};height:${units(portrait.art)};background-repeat:no-repeat;
  image-rendering:pixelated}
-.ada-interaction-actions{display:flex;flex-wrap:wrap;gap:${units(SPACING.gap)}}
+.ada-interaction-party{align-self:stretch}
 `;
 
 export const CONVERSATION_STYLE = `
@@ -343,13 +337,21 @@ export function createInteractionCard(
   const modal = document.createElement("div");
   modal.className = "ada-modal ada-interaction-modal";
   modal.hidden = true;
-  const card = createCard({ closeAction: "conversation-close", closeLabel: "Close", title: "" });
+  const card = createCard({
+    closeAction: "conversation-close",
+    closeLabel: "Close",
+    full: true,
+    title: "",
+  });
   card.card.dataset.dialog = "conversation";
   const party = document.createElement("div");
   const speaker = document.createElement("div");
+  party.className = "ada-interaction-party";
+  speaker.className = "ada-interaction-party";
   const words = document.createElement("p");
+  words.className = "ada-prose";
   const actions = document.createElement("div");
-  actions.className = "ada-interaction-actions";
+  actions.className = "ada-actions ada-wrap ada-interaction-actions";
   card.body.append(party, speaker, words, actions);
   modal.append(card.frame);
   parent.append(modal);
@@ -392,7 +394,9 @@ export function createInteractionCard(
     const line = state.line;
     party.replaceChildren(named(state.party));
     speaker.replaceChildren(...(line?.speaker ? [named(line.speaker)] : []));
+    speaker.hidden = !line?.speaker;
     words.textContent = line?.text ?? "";
+    words.hidden = !words.textContent;
     actions.replaceChildren();
     const add = (label: string, callback: () => void) => {
       const button = createButton(label);

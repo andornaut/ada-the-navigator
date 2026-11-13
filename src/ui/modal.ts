@@ -150,6 +150,21 @@ ${UI_SCOPE} .ada-card-frame{
   flex-direction:column
 }
 
+/* Full-page dialogs share the same safe inset, frame, header and scrolling body as fitted cards. */
+${UI_SCOPE} .ada-card-frame[data-card-size=full]{
+  width:100%;
+  height:100%;
+  min-height:0
+}
+${UI_SCOPE} .ada-card-frame[data-card-size=full] > .ada-card{
+  width:100%;
+  height:100%;
+  flex:1 1 auto
+}
+${UI_SCOPE} .ada-card-frame[data-card-size=full] > .ada-card > .ada-card-body{
+  flex:1 1 auto
+}
+
 /* Chibi's content-fitted card (src/ui/layout sets its width and header gaps): the header and close
    X stay fixed while the body scrolls. */
 ${UI_SCOPE} .ada-card{
@@ -378,6 +393,22 @@ ${UI_SCOPE} .ada-actions.ada-stack{
   gap:${units(STACK_BUTTON_GAP)}
 }
 
+/* Standard actions wrap with the same horizontal and vertical face gaps as action grids. */
+${UI_SCOPE} .ada-actions.ada-wrap{
+  display:flex;
+  flex-wrap:wrap;
+  align-self:stretch;
+  width:auto;
+  box-sizing:border-box;
+  padding:${units(FOCUS_RING.outset)};
+  column-gap:${units(BUTTON_GAP)};
+  row-gap:${units(STACK_BUTTON_GAP)}
+}
+${UI_SCOPE} .ada-actions.ada-wrap > .ada-button{
+  flex:1 1 auto;
+  overflow-wrap:anywhere
+}
+
 ${UI_SCOPE} .ada-card .ada-card-note{
   text-align:center
 }
@@ -591,6 +622,7 @@ function fitCard(
   parts: Pick<CardParts, "body" | "card" | "title">,
   close: boolean,
   list: boolean,
+  full: boolean,
 ): void {
   const { body, card, title } = parts;
   const layer = card.closest<HTMLElement>(".ada-modal, .ada-start");
@@ -598,7 +630,7 @@ function fitCard(
     return;
   }
   const unit = readViewUnit(card);
-  card.style.width = "max-content";
+  card.style.width = full ? "100%" : "max-content";
   const groups = [...body.children].filter(
     (child): child is HTMLElement =>
       child instanceof HTMLElement && child.getClientRects().length > 0,
@@ -620,7 +652,7 @@ function fitCard(
     groups.map((group) => logicalSize(group, unit).width),
     text ? { close, width: titleWidth } : undefined,
   );
-  card.style.width = units(width);
+  card.style.width = full ? "100%" : units(width);
   const titleHeight = text ? logicalSize(title, unit).height : undefined;
   const first = groups[0];
   const { bodyTop, titleTop } = list
@@ -640,6 +672,8 @@ export function createCard(
         readonly closeAction: string;
         readonly closeLabel: string;
         readonly fontRole?: string;
+        /** Fill the modal safe rect while retaining the shared card chrome. */
+        readonly full?: boolean;
         /** Chibi's list header (listCardHeader), for a card whose body opens with a list. */
         readonly list?: boolean;
         readonly title: string;
@@ -649,6 +683,10 @@ export function createCard(
   const page = "page" in options;
   const frame = document.createElement("div");
   frame.className = "ada-card-frame";
+  const full = !page && options.full === true;
+  if (full) {
+    frame.dataset.cardSize = "full";
+  }
   const card = document.createElement("section");
   card.className = page ? "ada-card ada-page-card" : "ada-card";
   if (!page) {
@@ -677,7 +715,7 @@ export function createCard(
     frame.append(card, close);
   }
   const list = !("page" in options) && options.list === true;
-  const fit = () => fitCard({ body, card, title }, !page, list);
+  const fit = () => fitCard({ body, card, title }, !page, list, full);
   // Keyboard focus scrolls the focused control fully into view, its focus ring included.
   body.addEventListener("focusin", (event) => {
     if (event.target instanceof HTMLElement) {

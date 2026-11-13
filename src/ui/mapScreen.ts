@@ -518,19 +518,6 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
 .ada-controls .ada-map-quests{
   z-index:3
 }
-.ada-controls .ada-map-quests .ada-card-frame{
-  width:100%;
-  height:100%;
-  min-height:0
-}
-.ada-controls .ada-map-quests .ada-card{
-  width:100%!important;
-  height:100%;
-  flex:1 1 auto
-}
-.ada-controls .ada-map-quests .ada-card-body{
-  flex:1 1 auto
-}
 .ada-controls .ada-map-quest-entry{
   min-width:0;
   display:flex;
@@ -911,6 +898,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   const questsCard = createCard({
     closeAction: "close-quests",
     closeLabel: labels.close,
+    full: true,
     title: labels.quests,
   });
   questsCard.card.dataset.dialog = "quests";
