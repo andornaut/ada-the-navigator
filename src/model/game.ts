@@ -178,6 +178,7 @@ import {
   openingScene,
   prologueScene,
   resolutionScene,
+  roomBackground,
   roomScene,
   runTrail,
   type Scene,
@@ -3180,9 +3181,9 @@ export class GameModel {
       : openingScene(this.content, opening, !this.state.prologueSeen);
   }
   /** After Earth scenes: the prologue the first time, else Ada's room with the rock. */
-  private roomScene(empty: boolean): Scene {
+  private roomScene(trail: readonly StoryStep[], empty: boolean): Scene {
     return this.state.prologueSeen
-      ? roomScene(this.content, this.storyLabels, empty)
+      ? roomScene(this.content, this.storyLabels, empty, roomBackground(trail.map(stepPage)))
       : prologueScene(this.content, this.storyLabels);
   }
   private get storyLabels(): StoryLabels {
@@ -3196,7 +3197,7 @@ export class GameModel {
   private beginVisit(trail: readonly StoryStep[] = [], startsRun = trail.length === 0): void {
     this.closeSelection();
     const waiting = this.waitingScene();
-    this.showScene(waiting ?? this.roomScene(true), trail, startsRun);
+    this.showScene(waiting ?? this.roomScene(trail, true), trail, startsRun);
   }
   /**
    * A scene's first page; `trail` carries the story run's earlier pages. A run starts with an
@@ -3300,7 +3301,7 @@ export class GameModel {
     const startsRun = Boolean(ended.endsRun) && !this.depletionContinuation;
     this.applyEffect(ended);
     if (ended.lead === "home") {
-      this.showScene(this.waitingScene() ?? this.roomScene(false), trail, startsRun);
+      this.showScene(this.waitingScene() ?? this.roomScene(trail, false), trail, startsRun);
     } else if (ended.lead === "visit") {
       this.beginVisit(trail, startsRun);
     } else if (ended.lead === "board") {

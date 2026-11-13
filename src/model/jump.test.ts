@@ -4,6 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY, type UpgradeWeapon } from "../data/economy.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
+import { bedroomBackground } from "../ui/bedroom.ts";
 import { stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
@@ -317,9 +318,21 @@ describe("quantum jump home", () => {
     model.storyNext();
     expect(model.storyView?.page).toMatchObject({
       action: CONTENT.labels.pickUpRock,
-      background: "adaRoom",
+      background: "adaRoomMorningCats",
       text: CONTENT.premise.emptyHome,
     });
+    model.storyNext();
+    expect(model.storyView?.page.id).toBe("boarding:0");
+    expect(bedroomBackground(model.storyView!.run.pages, model.storyView!.page.background)).toBe(
+      "adaRoomMorningCats",
+    );
+    model.storyNext();
+    expect(model.storyView?.page.background).toBe("aboard");
+    model.storyPrevious();
+    expect(model.storyView?.page.id).toBe("boarding:0");
+    expect(bedroomBackground(model.storyView!.run.pages, model.storyView!.page.background)).toBe(
+      "adaRoomMorningCats",
+    );
   });
 
   it("continues a depletion return through the room and boarding to galaxy selection", () => {
