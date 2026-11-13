@@ -1,4 +1,6 @@
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
+import { SCENERY_IMPACT_SECONDS, sceneryImpactDamage } from "../data/collisionDamage.ts";
+import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import {
   type EncounterEntry,
@@ -97,6 +99,7 @@ import { nosePoint } from "./nose.ts";
 import { clearOfOreFields, oreFieldsNear } from "./oreFields.ts";
 import { pickupOutline } from "./pickupBody.ts";
 import { planPlayerVolley, projectileReach } from "./playerProjectiles.ts";
+import { sceneryImpact } from "./sceneryImpact.ts";
 import { rechargeShield } from "./shieldRecharge.ts";
 import { shipBody, shipCircleContact, shipNearSegment, shipTouches } from "./shipBody.ts";
 import { direction, speedFraction, stepShipMotion, turnToward } from "./shipPhysics.ts";
@@ -241,7 +244,10 @@ const ASTEROID_SHAPE_LIST = [...ASTEROID_SHAPES.values()];
  * once, with the obstacle's own velocity, so movers bounce and never stay embedded.
  */
 /** Seconds between scenery bumps that deal damage, and the damage each deals (rules.md). */
-export const BUMP_DAMAGE = { amount: 1, seconds: 0.5 } as const;
+export const BUMP_DAMAGE = {
+  amount: sceneryImpactDamage(CONTENT.tuning.flight),
+  seconds: SCENERY_IMPACT_SECONDS,
+} as const;
 
 /**
  * Scenery reflects Ada's velocity and smoothed heading together, so recoil carries momentum. A
@@ -250,13 +256,13 @@ export const BUMP_DAMAGE = { amount: 1, seconds: 0.5 } as const;
  */
 function adaSceneryContact(
   content: GameContent,
+  events: FlightEvent[] | null,
   flight: FlightState,
-  bumps = true,
-): (normal: Vec, surface: Vec) => void {
+): (normal: Vec, surface: Vec, object: SpaceObject) => void {
   const { sceneryRecoil, sceneryRestitution } = content.tuning.flight;
-  return (normal, surface) => {
-    if (bumps) {
-      bumpAda(flight);
+  return (normal, surface, object) => {
+    if (events) {
+      bumpAda(content, flight, events, object);
     }
     flight.velocity = bounce(sceneryRestitution, sceneryRecoil, normal, surface, flight.velocity);
     const heading = movementHeadings.get(flight);
@@ -266,12 +272,22 @@ function adaSceneryContact(
   };
 }
 
-/** A scenery bump's damage: 1, unless another bump dealt it within BUMP_DAMAGE.seconds. */
-function bumpAda(flight: FlightState): void {
-  if (flight.time - (flight.lastBump ?? -Infinity) >= BUMP_DAMAGE.seconds - 1e-9) {
-    flight.lastBump = flight.time;
-    flight.shield = Math.max(0, flight.shield - BUMP_DAMAGE.amount);
-    flight.sinceDamage = 0;
+/** One admitted bump damages Ada and its destructible obstacle through the normal hit path. */
+function bumpAda(
+  content: GameContent,
+  flight: FlightState,
+  events: FlightEvent[],
+  object: SpaceObject,
+): void {
+  const impact = sceneryImpact(content.tuning.flight, flight, object);
+  if (!impact) {
+    return;
+  }
+  flight.lastBump = flight.time;
+  flight.shield = Math.max(0, flight.shield - impact.amount);
+  flight.sinceDamage = 0;
+  if (impact.damageObstacle) {
+    hit(content, impact.amount, null, object, flight, events);
   }
 }
 
@@ -337,7 +353,7 @@ function settleAda(content: GameContent, flight: FlightState): void {
   resolveScenery(
     flight,
     adaContact(flight),
-    adaSceneryContact(content, flight, false),
+    adaSceneryContact(content, null, flight),
     flight.player,
   );
 }
@@ -357,8 +373,8 @@ const SCENERY_COMBINED_MIN = 0.02;
 
 /**
  * Pushes a body at `position` out of overlapping scenery, deepest contact first, reporting each
- * object's first contact to onContact with the object's velocity. In a notch between two
- * silhouette parts the escape normals oppose, so pushing out of one part re-enters the other:
+ * object's first contact with its velocity and identity. In a notch between two silhouette
+ * parts the escape normals oppose, so pushing out of one part re-enters the other:
  * a push back against an escape normal already taken from that object goes along the
  * normalized sum of the two instead. A body still overlapping after SCENERY_PASSES has `undo`
  * return it to where its move began (its position, or the heading it turned from), and
@@ -368,7 +384,7 @@ const SCENERY_COMBINED_MIN = 0.02;
 export function resolveScenery(
   flight: FlightState,
   contactOf: SceneryContactOf,
-  onContact: (normal: Vec, surface: Vec) => void,
+  onContact: (normal: Vec, surface: Vec, object: SpaceObject) => void,
   position: Vec,
   undo?: () => void,
 ): void {
@@ -408,7 +424,7 @@ export function resolveScenery(
     position.y += push.y * distance;
     if (!touched.has(deepest.object)) {
       touched.add(deepest.object);
-      onContact(normal, deepest.object.velocity ?? { x: 0, y: 0 });
+      onContact(normal, deepest.object.velocity ?? { x: 0, y: 0 }, deepest.object);
     }
   }
   const stuck = undo && deepestAt();
@@ -425,7 +441,7 @@ export function resolveScenery(
     : false;
   const back = combined([{ x: position.x - at.x, y: position.y - at.y }]);
   const normal = (agree ? mean : back) ?? mean ?? stuck.contact.normal;
-  onContact(normal, stuck.object.velocity ?? { x: 0, y: 0 });
+  onContact(normal, stuck.object.velocity ?? { x: 0, y: 0 }, stuck.object);
 }
 
 /** An undo that returns position to where it is now. */
@@ -1846,7 +1862,13 @@ export function towing<
     turnSeconds: physics.turnSeconds * turnScale,
   };
 }
-function move(content: GameContent, dt: number, input: FlightInput, flight: FlightState): void {
+function move(
+  content: GameContent,
+  dt: number,
+  input: FlightInput,
+  events: FlightEvent[],
+  flight: FlightState,
+): void {
   const magnitude = Math.min(1, length(input.move));
   const physics = towing(flight, shipTuning(ECONOMY, content, flight.levels).physics);
   const top = physics.maxSpeed;
@@ -1868,7 +1890,7 @@ function move(content: GameContent, dt: number, input: FlightInput, flight: Flig
   flight.velocity = motion.velocity;
   const start = { ...flight.player };
   const contactOf = adaContact(flight);
-  const onContact = adaSceneryContact(content, flight);
+  const onContact = adaSceneryContact(content, events, flight);
   // Drifting scenery can reach a resting ship, so contacts resolve before any travel.
   resolveScenery(flight, contactOf, onContact, flight.player);
   // A current's flow adds drift outside Ada's physics and speed cap.
@@ -2259,14 +2281,19 @@ function debrisTouchesAda(flight: FlightState, object: SpaceObject, from: Vec, t
 }
 
 /** Ballistic debris keeps constant velocity and bumps Ada; drifting asteroids follow their path. */
-function moveDebris(content: GameContent, dt: number, flight: FlightState): void {
+function moveDebris(
+  content: GameContent,
+  dt: number,
+  events: FlightEvent[],
+  flight: FlightState,
+): void {
   for (const object of flight.objects) {
     if (object.river) {
       // River debris follows its current and bumps Ada on contact like other traveling debris.
       const from = { x: object.x, y: object.y };
       placeRiverRock(flight, object);
       if (debrisTouchesAda(flight, object, from, object)) {
-        bumpAda(flight);
+        bumpAda(content, flight, events, object);
       }
       continue;
     }
@@ -2295,7 +2322,7 @@ function moveDebris(content: GameContent, dt: number, flight: FlightState): void
     }
     // A bump, though the debris may pass through her between frames (rules.md: 1 a bump).
     if (debrisTouchesAda(flight, object, object, next.position)) {
-      bumpAda(flight);
+      bumpAda(content, flight, events, object);
     }
     object.x = next.position.x;
     object.y = next.position.y;
@@ -3292,8 +3319,8 @@ export function stepFlight(
     flight.time += slice;
     flight.sinceDamage += slice;
     generate(content, flight.player, flight);
-    moveDebris(content, slice, flight);
-    move(content, slice, input, flight);
+    moveDebris(content, slice, events, flight);
+    move(content, slice, input, events, flight);
     syncFlightRegion(content, flight);
     const aiming = length(input.aim) > 0.01;
     if (aiming) {
