@@ -1427,15 +1427,11 @@ function releaseSummonedGuards(viewportWidth: number, flight: FlightState): void
   const view = { height: (viewportWidth * SCREEN.height) / SCREEN.width, width: viewportWidth };
   flight.summonedGuards = flight.summonedGuards.filter((id) => {
     const guard = flight.objects.find((object) => object.id === id);
-    return (
-      guard !== undefined &&
-      guard.hp > 0 &&
-      !guard.enemy?.disabled &&
-      !onScreen(view, flight.player, {
-        radius: 0,
-        ...worldPoint(flightWorldContext(flight), flight.player, guard),
-      })
-    );
+    if (!guard || guard.hp <= 0 || guard.enemy?.disabled) {
+      return false;
+    }
+    const point = worldPoint(flightWorldContext(flight), flight.player, guard);
+    return !onScreen(view, flight.player, { radius: 0, x: point.x, y: point.y });
   });
   if (!flight.summonedGuards.length) {
     delete flight.summonedGuards;
