@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import { planPlayerVolley } from "../model/playerProjectiles.ts";
 import { CONTENT } from "./content.ts";
+import { enemyFire } from "./enemyCatalog.ts";
+import { SCREEN } from "./screen.ts";
 import type { Weapon } from "./types.ts";
 import { WEAPON_CATALOG, weaponAt, type WeaponDefinition } from "./weaponCatalog.ts";
 
@@ -16,6 +19,38 @@ const output = (definition: WeaponDefinition) =>
   (definition.damageRatio / definition.intervalSeconds) * hits(definition);
 
 describe("weapon levels", () => {
+  it.each([
+    ["laser", [500, 600, 700], 300],
+    ["multiLaser", [400, 500, 600], 240],
+    ["rapidMissile", [500, 600, 700], 300],
+    ["heavyMissile", [400, 400, 400], 240],
+    ["scattershot", [600, 600, 600], 360],
+  ] as const)(
+    "preserves %s player volley and enemy profile world speeds",
+    (weapon, playerSpeeds, enemySpeed) => {
+      expect(CONTENT.tuning.flight.projectileSpeed).toBe(600);
+      for (const level of [1, 2, 3] as const) {
+        const volley = planPlayerVolley(weaponAt(weapon, level), {
+          aim: { x: 1, y: 0 },
+          baseDamage: CONTENT.tuning.flight.playerShotDamage,
+          baseLifetime: CONTENT.tuning.flight.projectileLifetime,
+          baseSpeed: CONTENT.tuning.flight.projectileSpeed,
+          origin: { x: 0, y: 0 },
+          viewportWidth: SCREEN.width,
+        });
+        expect(volley.projectiles.length).toBeGreaterThan(0);
+        for (const shot of volley.projectiles) {
+          expect(Math.hypot(shot.velocity.x, shot.velocity.y)).toBeCloseTo(
+            playerSpeeds[level - 1]!,
+            9,
+          );
+        }
+        // Enemy projectile speeds always use the weapon's level 1 speed.
+        expect(enemyFire("fighter", { level, weapon }).projectileSpeed).toBeCloseTo(enemySpeed, 9);
+      }
+    },
+  );
+
   it.each(
     (Object.keys(WEAPON_CATALOG) as Weapon[]).filter(
       (weapon) => weapon !== "rapidMissile" && weapon !== "multiLaser",

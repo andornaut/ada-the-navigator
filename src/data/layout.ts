@@ -553,13 +553,13 @@ export const MAP_PANEL = {
   /** Chip to the text block (SPACING.gap). */
   markGap: SPACING.gap,
   /** The card floor: half the 720 base width. */
-  minWidth: 360,
+  minWidth: SCREEN.width / 2,
   /** SPACING.panelPadding, including the 2 frame. */
   padding: SPACING.panelPadding,
   /** Row to the reason line (SPACING.gap). */
   reasonGap: SPACING.gap,
   /** The panel's row, TEXT_BUTTON.height. */
-  row: 48,
+  row: TEXT_BUTTON.height,
   /** The two 20 lines' top inside the 48 row. */
   textTop: 4,
 } as const;

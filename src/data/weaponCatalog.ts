@@ -36,9 +36,9 @@ const projectile = {
   speedRatio: 1,
 } as const;
 /** The base projectile speed every speed ratio multiplies (tuning.flight.projectileSpeed). */
-const BASE_SPEED = 600;
+export const BASE_PROJECTILE_SPEED = 600;
 /** The speed ratio that flies a projectile at `worldSpeed` world units per second. */
-const flies = (worldSpeed: number) => worldSpeed / BASE_SPEED;
+const flies = (worldSpeed: number) => worldSpeed / BASE_PROJECTILE_SPEED;
 /**
  * Laser and Multi-Laser bolts reach 370 world units at every level and speed, as far as the
  * Phaser: past the play view's edges and corners.
@@ -266,7 +266,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
 /** A weapon's projectile speed in world units per second at a level; 0 for the hitscan beam. */
 export function weaponSpeed(weapon: Weapon, level: number): number {
   const definition = weaponAt(weapon, level);
-  return definition.projectileKind === "beam" ? 0 : definition.speedRatio * BASE_SPEED;
+  return definition.projectileKind === "beam" ? 0 : definition.speedRatio * BASE_PROJECTILE_SPEED;
 }
 
 /** A weapon's definition at a level from 1 to 3; out-of-range levels clamp. */

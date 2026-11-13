@@ -1,6 +1,7 @@
 import { PREMISE } from "./premiseCopy.ts";
 import { SHIP_PHYSICS } from "./shipPhysics.ts";
 import type { GameContent } from "./types.ts";
+import { BASE_PROJECTILE_SPEED } from "./weaponCatalog.ts";
 export const CONTENT: GameContent = {
   chapters: {
     1: {
@@ -630,7 +631,7 @@ export const CONTENT: GameContent = {
       pieceRadius: 7,
       playerShotDamage: 1,
       projectileLifetime: 2,
-      projectileSpeed: 600,
+      projectileSpeed: BASE_PROJECTILE_SPEED,
       pursuitSpeedFactor: 0.55,
       rockHp: 3,
       rockRadius: 20,

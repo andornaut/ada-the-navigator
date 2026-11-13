@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   beam,
   BEAM_MISS_FADE,
+  BEAM_MS,
   beamKeys,
   blast,
   BLAST_SECONDS,
@@ -15,6 +16,7 @@ import {
   rapidMissile,
   screenAngle,
   spark,
+  SPARK_MS,
   type TaperShape,
 } from "./weaponEffects.ts";
 
@@ -149,6 +151,15 @@ describe("missile blasts", () => {
 });
 
 describe("the Phaser beam", () => {
+  it("retains the 150 ms beam and 160 ms spark lifetimes", () => {
+    expect(BEAM_MS).toBe(150);
+    expect(SPARK_MS).toBe(160);
+    expect(beam(origin, { x: 100, y: 0 }, true, false, 149).length).toBeGreaterThan(0);
+    expect(beam(origin, { x: 100, y: 0 }, true, false, 150)).toEqual([]);
+    expect(spark(origin, 0, false, 159).length).toBeGreaterThan(0);
+    expect(spark(origin, 0, false, 160)).toEqual([]);
+  });
+
   it("keys its width and alpha over 150 ms", () => {
     expect(beamKeys(0)).toEqual({ a: 0.85, w: 0.55 });
     expect(beamKeys(20)).toEqual({ a: 1, w: 1 });

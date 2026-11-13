@@ -17,10 +17,12 @@ import { createRequire } from "node:module";
 import { extname, join, normalize, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { SCREEN } from "../src/data/screen.ts";
+
 const IMAGE = "mcr.microsoft.com/playwright/mcp:v0.0.83";
 const root = fileURLToPath(new URL("..", import.meta.url));
 // The view at 1 px per logical px: the 720 by 360 base at a device pixel ratio of 1.
-const VIEW = { height: 360, width: 720 };
+const VIEW = SCREEN;
 // A fixed world per galaxy, so a re-run captures the same frame.
 const SEED = 1;
 // The ship's offset from the framed destination in world units: the destination draws 80 logical

@@ -1,4 +1,4 @@
-import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
+import { BEAM, WEAPON_CATALOG } from "../data/weaponCatalog.ts";
 import type { Vec } from "../model/types.ts";
 
 // Art's weapon effects (art/weapons.md) as screen-space shapes in logical px, for the scene to
@@ -377,17 +377,18 @@ export function blast(at: Vec, radius: number, reducedMotion: boolean, t: number
   return shapes;
 }
 
-/** The beam's width factor and alpha keys over its 150 ms flash. */
+export const BEAM_MS = BEAM.flashSeconds * 1000;
+export const SPARK_MS = BEAM.sparkSeconds * 1000;
+
+/** The beam's width factor and alpha keys over its flash. */
 const BEAM_KEYS = [
   { a: 0.85, ms: 0, w: 0.55 },
   { a: 1, ms: 20, w: 1 },
   { a: 1, ms: 70, w: 1 },
-  { a: 0, ms: 150, w: 0.4 },
+  { a: 0, ms: BEAM_MS, w: 0.4 },
 ] as const;
-export const BEAM_MS = 150;
 /** A miss fades every layer over its last this many px. */
 export const BEAM_MISS_FADE = 28;
-export const SPARK_MS = 160;
 
 /** The beam's width factor `w` and alpha `a` at `t` ms, linear between keys. */
 export function beamKeys(t: number): { a: number; w: number } {

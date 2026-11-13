@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { mkdirSync, writeFileSync } from "node:fs";
 
+import { SCREEN } from "../src/data/screen.ts";
+
 // Shared by the browser smoke and the Art review captures, which run in the same container.
 export const output = "/tmp/evidence";
 export const storageKey = "ada-the-navigator.save";
@@ -13,8 +15,8 @@ export function save(name, value) {
 
 // A canvas's size in logical px: its CSS size over the fit of the 720x360 base view. Its backing
 // is in device pixels.
-export function logicalSize(canvas) {
-  const fit = Math.min(canvas.offsetWidth / 720, canvas.offsetHeight / 360);
+export function logicalSize(canvas, screen) {
+  const fit = Math.min(canvas.offsetWidth / screen.width, canvas.offsetHeight / screen.height);
   return { width: canvas.offsetWidth / fit, height: canvas.offsetHeight / fit };
 }
 
@@ -94,8 +96,8 @@ const [
 
 // The play view's projection of a world offset from Ada to logical screen px, and back.
 export const toScreen = (world) => ({
-  x: 360 + world.x - world.y,
-  y: 180 + (world.x + world.y) / 2,
+  x: SCREEN.width / 2 + world.x - world.y,
+  y: SCREEN.height / 2 + (world.x + world.y) / 2,
 });
 export const toWorld = (screen) => ({ x: screen.x / 2 + screen.y, y: screen.y - screen.x / 2 });
 

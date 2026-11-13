@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 
+import { SCREEN } from "../src/data/screen.ts";
 import {
   asteroidFixture,
   hideOverCanvas,
@@ -334,9 +335,9 @@ async function captureRocks() {
         id: object.asteroid,
       };
     });
-  const intrinsic = await canvas.evaluate(logicalSize);
+  const intrinsic = await canvas.evaluate(logicalSize, SCREEN);
   const overlay = await page.evaluate(
-    async ({ encoded, intrinsic: size, outlines: drawn }) => {
+    async ({ baseWidth, encoded, intrinsic: size, outlines: drawn }) => {
       const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
       const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
       const sample = document.createElement("canvas");
@@ -346,7 +347,7 @@ async function captureRocks() {
       drawing.drawImage(bitmap, 0, 0);
       bitmap.close();
       const scale = sample.width / size.width;
-      const left = Math.max(0, (size.width - 720) / 2);
+      const left = Math.max(0, (size.width - baseWidth) / 2);
       const map = (point) => [(point.x + left) * scale, point.y * scale];
       drawing.lineWidth = 2;
       drawing.strokeStyle = "#ff00ff";
@@ -363,7 +364,7 @@ async function captureRocks() {
       }
       return sample.toDataURL("image/png").split(",")[1];
     },
-    { encoded: image.toString("base64"), intrinsic, outlines },
+    { baseWidth: SCREEN.width, encoded: image.toString("base64"), intrinsic, outlines },
   );
   writeFileSync(`${output}/asteroids-footprints.png`, Buffer.from(overlay, "base64"));
   events.captures.push("asteroids-footprints.png");

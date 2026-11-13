@@ -3812,7 +3812,7 @@ try {
     await canvas.waitFor({ state: "visible" });
     // The pixel regions sample the canvas alone; the conversation box and notices draw over it.
     const showOverCanvas = await hideOverCanvas(page);
-    const intrinsic = await canvas.evaluate(logicalSize);
+    const intrinsic = await canvas.evaluate(logicalSize, SCREEN);
     // A heavy's part frames load once it is in flight, so sample until its turret tops show.
     async function sampleUntilComposed(remaining) {
       const sampled = await sampleCombatView(view, canvas, intrinsic);
