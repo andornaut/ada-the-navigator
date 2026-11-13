@@ -5,6 +5,8 @@
 // art, painted at the scene's SVG raster scale (texels per logical px) with antialiased edges and
 // shown TOUCH_CHROME_ALPHA opaque.
 
+import { clamp01 } from "@andornaut/game-kit/numbers";
+
 import { TOUCH_CHROME_FRAME } from "../data/layout.ts";
 import type { UseAction } from "../model/types.ts";
 
@@ -499,8 +501,6 @@ export function speedLinePlacement(line: { readonly from: Point; readonly to: Po
     length: Math.hypot(line.to.x - line.from.x, line.to.y - line.from.y),
   };
 }
-
-const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 
 function segmentDistance(point: Point, from: Point, to: Point): number {
   const dx = to.x - from.x;
