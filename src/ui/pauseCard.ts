@@ -2,6 +2,7 @@ import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 import { createModalLayer } from "@andornaut/game-kit/web/ui/dom/modalLayer";
 
 import type { LocalMap } from "../model/map.ts";
+import type { QuestEntry } from "../model/questDetails.ts";
 import { units } from "./layout/css.ts";
 import { BUTTON_GAP, STACK_BUTTON_GAP } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -46,6 +47,8 @@ export interface PauseOptions {
 }
 
 export interface PauseState {
+  /** Live model-owned quests from every galaxy, with no UI or save-state duplication. */
+  readonly questEntries?: readonly QuestEntry[];
   /** The current galaxy's map field: its name, background and fog. */
   readonly field: MapField | null;
   readonly inDanger: boolean;
