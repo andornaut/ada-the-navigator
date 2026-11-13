@@ -1,5 +1,6 @@
 import type { Weapon } from "../data/types.ts";
 import { UPGRADE_TIER_COLOURS } from "../data/upgradeTiers.ts";
+import { WEAPON_LEVEL_COUNT } from "../data/weaponCatalog.ts";
 import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import { FOCUS_RING } from "./layout/controls.ts";
 import { font, fromHudEdge, units } from "./layout/css.ts";
@@ -318,7 +319,7 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
       entry.setAttribute("aria-label", weaponButtonLabel(options.labels, choice));
       entry.setAttribute("aria-pressed", String(choice.selected));
       entry.dataset.state = weaponButtonState(choice);
-      const level = String(Math.min(3, Math.max(1, Math.round(choice.level))));
+      const level = String(Math.min(WEAPON_LEVEL_COUNT, Math.max(1, Math.round(choice.level))));
       if (entry.dataset.level !== level) {
         entry.dataset.level = level;
         const pips = entry.querySelector(".ada-pips")!;
