@@ -1,5 +1,10 @@
 import { type Random, seededRandom, shuffled } from "@andornaut/game-kit/random";
 
+import {
+  ANDROMEDA_CONVERSATIONS,
+  andromedaConversation,
+  type AndromedaConversationId,
+} from "../data/andromeda.ts";
 import { CAST, SPEAKER_CAST } from "../data/cast.ts";
 import {
   type Conversation,
@@ -827,11 +832,36 @@ export class InteractionConversation {
   }
 }
 
-/** Resolves legacy role labels through the existing cast, leaving narration unattributed. */
+export type InteractionContext =
+  | number
+  | {
+      readonly galaxy: number;
+      readonly progress: Pick<GalaxyProgress, "stage">;
+    };
+
+/** Resolves authored chapter lines and legacy role labels through the existing cast. */
 export function interactionCopy(
-  galaxy: number,
+  context: InteractionContext,
   panel: import("./types.ts").DialogueState,
 ): import("../data/conversations.ts").InteractionCopy {
+  const galaxy = typeof context === "number" ? context : context.galaxy;
+  const chapter = /^andromeda:([A-Za-z]+)$/u.exec(panel.context)?.[1];
+  if (
+    galaxy === 5 &&
+    typeof context !== "number" &&
+    chapter &&
+    Object.hasOwn(ANDROMEDA_CONVERSATIONS, chapter)
+  ) {
+    const copy = andromedaConversation(context.progress, chapter as AndromedaConversationId);
+    return {
+      lines: copy.lines.map(({ speaker, text }) => ({ speaker: speaker ?? "", text })),
+      party: copy.party,
+      topics: (copy.questions ?? []).map(({ label, speaker, text }) => ({
+        label,
+        lines: [{ speaker: speaker ?? "", text }],
+      })),
+    };
+  }
   const roles: Readonly<Record<string, string>> = {
     Grower: "Clover",
     Miner: "Mica",

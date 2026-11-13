@@ -4,6 +4,7 @@
 
 /** Story items by their quest item id. */
 export const STORY_ITEM_NAMES: Readonly<Record<string, string>> = {
+  beaconParts: "Beacon parts",
   food: "Food",
   parts: "Spare parts",
   toolkit: "Tool kit",
@@ -22,7 +23,7 @@ export const CARRIED_ITEM_NAMES: Readonly<Record<string, string>> = {
   "a stuck hauler": "Stuck hauler",
   "a traveler's pod": "Traveler's pod",
   "an ore pod": "Ore pod",
-  "beacon parts": "Beacon parts",
+  "beacon parts": STORY_ITEM_NAMES.beaconParts!,
   "courier's badge": "Courier's badge",
   "drill bits": "Drill bits",
   "fresh food": "Fresh food",

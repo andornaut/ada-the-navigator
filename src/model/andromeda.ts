@@ -1,9 +1,9 @@
+export { andromedaConversation } from "../data/andromeda.ts";
 import {
   ANDROMEDA_CHAPTER,
-  ANDROMEDA_CONFESSION_WITHOUT_INSPECTION,
   ANDROMEDA_CONVERSATIONS,
   ANDROMEDA_PLACES,
-  type AndromedaConversation,
+  andromedaConversation,
   type AndromedaConversationId,
   type AndromedaProgress,
 } from "../data/andromeda.ts";
@@ -99,17 +99,6 @@ export function ensureAndromedaWorld(context: ChapterContext): void {
     const place = ensureDestinationAt(content, site.id, site, flight);
     place.role = ANDROMEDA_PLACES.settlement;
   }
-}
-
-/** The model and full-card renderer share the same approved conditional conversation. */
-export function andromedaConversation(
-  progress: Pick<GalaxyProgress, "stage">,
-  id: AndromedaConversationId,
-): AndromedaConversation {
-  const entry = ANDROMEDA_CONVERSATIONS[id];
-  return id === "confession" && progress.stage === 1
-    ? { ...entry, lines: [...ANDROMEDA_CONFESSION_WITHOUT_INSPECTION, ...entry.lines.slice(2)] }
-    : entry;
 }
 
 function dialogue(context: ChapterContext, id: AndromedaConversationId): DialogueState {

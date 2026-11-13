@@ -1,3 +1,4 @@
+import { ANDROMEDA_CHAPTER } from "./andromeda.ts";
 import { PHANTOM_CHAPTER, PHANTOM_CLOSING, PHANTOM_RESOLUTION_REJOIN } from "./phantom.ts";
 import { PREMISE } from "./premiseCopy.ts";
 import { SHIP_PHYSICS } from "./shipPhysics.ts";
@@ -302,6 +303,7 @@ export const CONTENT: GameContent = {
       ],
       resolutionChoices: ["Get the leash.", "Let's go exploring."],
     },
+    5: ANDROMEDA_CHAPTER,
     6: {
       ...PHANTOM_CHAPTER,
       closingLines: PHANTOM_CLOSING.map((line) => ({
@@ -388,6 +390,7 @@ export const CONTENT: GameContent = {
     contractObjective: "Deposit ore at the hub: {have} of {need}.",
     controlsNote: "Touch still works when hidden",
     courierGoal: "Fly a parcel with Pip.",
+    darkBeacon: "Dark beacon",
     deliver: "Deliver",
     deliveryAbout: "They're waiting for it.",
     deliveryTitle: "Deliver {item} to {place}",
@@ -554,6 +557,7 @@ export const CONTENT: GameContent = {
     phantomSettlement2: "Settlement",
     phantomSettlement3: "Settlement",
     pickUpRock: "Pick up the rock.",
+    pip: "Pip",
     previous: "Previous",
     projectAboutBeacons: "Bright beacons so lost things are easy to find.",
     projectAboutChannelLights: "Soft lamps so young pilots can practise any time.",
@@ -625,6 +629,7 @@ export const CONTENT: GameContent = {
       "if you close the game.",
     ].join(""),
     settings: "Settings",
+    settlement: "Settlement",
     shield: "Shield",
     ship: "Ship",
     shipAmmoLeft: "{count} left",

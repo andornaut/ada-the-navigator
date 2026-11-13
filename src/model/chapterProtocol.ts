@@ -1,6 +1,13 @@
 import type { CommunityProject } from "../data/projects.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
-import type { DialogueState, FlightEvent, FlightState, GalaxyProgress, Vec } from "./types.ts";
+import type {
+  DialogueState,
+  FlightEvent,
+  FlightState,
+  GalaxyProgress,
+  UseAction,
+  Vec,
+} from "./types.ts";
 
 /** The active chapter's model data. Chapter hooks do not own home, saves or route unlocks. */
 export interface ChapterContext {
@@ -39,6 +46,7 @@ export interface ChapterRuntime {
     events: readonly FlightEvent[],
   ) => ChapterResult | void;
   /** Undefined means the existing station, job and mechanical Use handlers may continue. */
+  readonly action?: (context: ChapterContext, destination: string) => UseAction | undefined;
   readonly use?: (context: ChapterContext, destination: string) => ChapterResult | undefined;
   /** Called only for an offered, enabled choice; an empty result handles and closes its panel. */
   readonly choose?: (

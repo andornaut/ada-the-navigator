@@ -1,3 +1,4 @@
+import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import { ECONOMY } from "../data/economy.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { stationIndicatorTarget } from "./stations.ts";
@@ -92,6 +93,7 @@ export function indicatorTargets(
 }
 
 const QUEST_ITEM_DESTINATIONS: Readonly<Record<string, string>> = {
+  beaconParts: ANDROMEDA_PLACES.beacon,
   food: "workshop",
   parts: "workshop",
   toolkit: "salvagers",

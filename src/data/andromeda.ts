@@ -205,3 +205,14 @@ export interface AndromedaProgress {
   station?: string;
   settlement?: string;
 }
+
+/** The model and full-card renderer share the same approved conditional conversation. */
+export function andromedaConversation(
+  progress: { readonly stage: number },
+  id: AndromedaConversationId,
+): AndromedaConversation {
+  const entry = ANDROMEDA_CONVERSATIONS[id];
+  return id === "confession" && progress.stage === 1
+    ? { ...entry, lines: [...ANDROMEDA_CONFESSION_WITHOUT_INSPECTION, ...entry.lines.slice(2)] }
+    : entry;
+}

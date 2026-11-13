@@ -424,14 +424,17 @@ export function createInteractionCard(
       modal.remove();
     },
     isOpen: () => !modal.hidden,
-    show(galaxy: number, panel: import("../model/types.ts").DialogueState | null) {
+    show(
+      context: import("../model/conversations.ts").InteractionContext,
+      panel: import("../model/types.ts").DialogueState | null,
+    ) {
       modal.hidden = panel === null;
       if (!panel) {
         state.reset();
         signature = "";
         return;
       }
-      const copy = interactionCopy(galaxy, panel);
+      const copy = interactionCopy(context, panel);
       state.show(copy, panel);
       const next = JSON.stringify(panel);
       if (signature !== next) {

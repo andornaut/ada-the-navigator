@@ -1,4 +1,5 @@
 import type { ActivityId } from "../data/activities.ts";
+import type { AndromedaProgress } from "../data/andromeda.ts";
 import type { UpgradeWeapon } from "../data/economy.ts";
 import type { EnemyArchetype } from "../data/enemyCatalog.ts";
 import type { JobType } from "../data/jobs.ts";
@@ -177,6 +178,7 @@ export interface FlightState {
   nextId: number;
 }
 export interface GalaxyProgress {
+  andromeda?: AndromedaProgress;
   phantom?: PhantomProgress;
   /** At least one repeatable activity completed here, for this galaxy's finale ally. */
   activityCompleted?: boolean;

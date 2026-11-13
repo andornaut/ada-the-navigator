@@ -92,12 +92,23 @@ export function tuningPosition(position: RoutePosition): RoutePosition {
   return 1;
 }
 
-/** A per-position table's entry for a galaxy, placeholders reading the built galaxy before them. */
+/** A galaxy's explicit row, or the nearest built predecessor with an entry in this table. */
 export function byPosition<T>(
   table: Readonly<Partial<Record<RoutePosition, T>>>,
   galaxy: GalaxyNumber,
 ): T {
-  return table[ROUTE_POSITION[galaxy]] ?? table[tuningPosition(ROUTE_POSITION[galaxy])]!;
+  const position = ROUTE_POSITION[galaxy];
+  const own = table[position];
+  if (own !== undefined) {
+    return own;
+  }
+  for (let at = position - 1; at >= 1; at--) {
+    const previous = at as RoutePosition;
+    if (BUILT.has(galaxyAt(previous)) && table[previous] !== undefined) {
+      return table[previous]!;
+    }
+  }
+  throw new RangeError(`No tuning row for galaxy ${galaxy}`);
 }
 
 /**

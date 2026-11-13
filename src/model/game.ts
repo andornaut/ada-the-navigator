@@ -618,7 +618,7 @@ export class GameModel {
       this.state.dialogue = result.dialogue;
     }
     if (result.holodisk && !this.current.holodisk) {
-      this.recoverHolodisk(result.holodisk.giver);
+      this.recoverHolodisk();
     }
   }
   private get current(): GalaxyProgress {
@@ -698,6 +698,11 @@ export class GameModel {
     if (!id) {
       return undefined;
     }
+    const context = this.chapterContext();
+    const action = context && chapterRuntime(context.flight.galaxy)?.action?.(context, id);
+    if (action) {
+      return action;
+    }
     // At a station an action due there comes before Dock (gameplay/rules.md).
     if (id === HUB_STATION) {
       if ((this.state.flight?.cargo ?? 0) > 0) {
@@ -747,7 +752,11 @@ export class GameModel {
     return [
       ...this.current.known.map((id) => ({
         id,
-        label: this.chapter.dialogue[dialogueKeys[id] ?? id]?.speaker ?? this.chapter.name,
+        label:
+          this.label(id) ||
+          (id.startsWith("settlement:")
+            ? this.label("settlement")
+            : (this.chapter.dialogue[dialogueKeys[id] ?? id]?.speaker ?? this.chapter.name)),
       })),
       ...this.current.stations
         .filter((id) => !this.current.known.includes(id))
@@ -2215,6 +2224,10 @@ export class GameModel {
    * station's or a story destination's sentence name (data/destinations.ts), else its Map name.
    */
   private placeLabel(id: string): string {
+    const named = this.label(id) || (id.startsWith("settlement:") ? this.label("settlement") : "");
+    if (named) {
+      return named;
+    }
     if (id.startsWith("station:")) {
       return STATION_SENTENCE;
     }

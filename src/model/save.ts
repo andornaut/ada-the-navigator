@@ -1,3 +1,4 @@
+import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import { CONTENT } from "../data/content.ts";
 import { deliveryDestination } from "../data/destinations.ts";
 import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
@@ -12,6 +13,8 @@ import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { GalaxyNumber, Weapon } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
 import { validActivity } from "./activities.ts";
+import { validAndromedaProgress } from "./andromeda.ts";
+import { settlementById } from "./andromedaPlaces.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { enemyDefeated } from "./enemyAi.ts";
 import { ACTIVE_CHUNK_RADIUS, encounterOf, persistentObject } from "./geography.ts";
@@ -90,6 +93,7 @@ const destinationIds: Record<number, readonly string[]> = {
   1: ["growers", "workshop", "salvagers"],
   2: ["hub", "miner", "visitors"],
   3: ["whale", "family", "holodisk"],
+  5: [ANDROMEDA_PLACES.beacon, ANDROMEDA_PLACES.pip],
   6: PHANTOM_DESTINATIONS,
 };
 /** Saved achievements: id and count lists, non-negative counts and a blockade flag. */
@@ -629,13 +633,21 @@ export function restoreSave(saved: unknown): GameState | null {
       const p = value.progress[id];
       if (
         !record(p) ||
+        (p.andromeda !== undefined && (id !== 5 || !validAndromedaProgress(p.andromeda))) ||
         (p.phantom !== undefined && (id !== 6 || !validPhantomProgress(p.phantom))) ||
         !Number.isInteger(p.stage) ||
         !nonnegative(p.stage) ||
-        Number(p.stage) > (id === 1 ? 4 : 5) ||
+        Number(p.stage) > (id === 1 ? 4 : id === 5 ? 6 : 5) ||
         !strings(p.known) ||
-        ![null, "food", "toolkit", "parts"].includes(p.questItem as string | null) ||
-        (Array.isArray(p.known) && p.known.some((v) => !destinationIds[id]?.includes(v))) ||
+        ![null, "food", "toolkit", "parts", ...(id === 5 ? ["beaconParts"] : [])].includes(
+          p.questItem as string | null,
+        ) ||
+        (Array.isArray(p.known) &&
+          p.known.some(
+            (v) =>
+              !destinationIds[id]?.includes(v) &&
+              !(id === 5 && typeof v === "string" && settlementById(ECONOMY, v)),
+          )) ||
         (p.resolved === true && p.questComplete !== true)
       ) {
         return null;

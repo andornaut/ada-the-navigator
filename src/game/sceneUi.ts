@@ -1088,7 +1088,13 @@ export function refreshScene(scene: UiContext): void {
   scene.controls.setAchievements(scene.model.achievements);
   scene.shell.render(state, screen);
   const interactionPanel = screen === "space" && state.dialogue?.text ? state.dialogue : null;
-  interactionCards.get(scene)?.show(state.flight?.galaxy ?? state.selectedGalaxy, interactionPanel);
+  const interactionGalaxy = state.flight?.galaxy ?? state.selectedGalaxy;
+  interactionCards
+    .get(scene)
+    ?.show(
+      { galaxy: interactionGalaxy, progress: state.progress[interactionGalaxy] },
+      interactionPanel,
+    );
   if (interactionPanel) {
     const legacy = document.querySelector<HTMLElement>(".story-panel");
     if (legacy) {

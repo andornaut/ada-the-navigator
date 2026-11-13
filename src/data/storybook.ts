@@ -19,6 +19,11 @@ export const CHAPTER_BACKGROUNDS: Readonly<
   1: { closing: "gardenLot", opening: "grandmaGarden", resolution: "gardenLot" },
   2: { closing: "schoolyard", opening: "schoolHallway", resolution: "schoolyard" },
   3: { closing: "park", opening: "frontDoor", resolution: "park" },
+  5: {
+    closing: "grandmaGardenReplanted",
+    opening: "grandmaGardenSpilled",
+    resolution: "grandmaGardenSpilled",
+  },
   6: { closing: "adaRoomNight", opening: "gardenLot", resolution: "gardenLot" },
 };
 
