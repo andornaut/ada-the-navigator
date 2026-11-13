@@ -10,6 +10,7 @@ export function renderDetailQuantity(
   label?: string,
 ): void {
   row.className = "ada-detail-quantity";
+  row.setAttribute("role", "group");
   row.hidden = value === undefined;
   row.replaceChildren();
   row.removeAttribute("aria-label");

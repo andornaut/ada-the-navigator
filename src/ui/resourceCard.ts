@@ -33,14 +33,12 @@ export function createResourceCard(
   quests.hidden = true;
   const dismiss = createButton(options.closeLabel, "primary");
   dismiss.dataset.action = "dismiss-resource";
-  card.body.append(
-    description,
-    quantity,
-    createActions([
-      { button: quests, role: "secondary" },
-      { button: dismiss, role: "primary" },
-    ]),
-  );
+  const actions = createActions([
+    { button: quests, role: "secondary" },
+    { button: dismiss, role: "primary" },
+  ]);
+  actions.className += " ada-detail-actions";
+  card.body.append(description, quantity, actions);
   modal.append(card.frame);
   root.append(modal);
   let returnFocus: HTMLElement | null = null;
@@ -105,7 +103,10 @@ export function createResourceCard(
       card.title.className = "ada-detail-header";
       const name = document.createElement("span");
       name.textContent = title;
-      card.title.replaceChildren(...(details.icon ? [details.icon] : []), name);
+      card.title.replaceChildren(
+        ...(details.icon && details.count === undefined ? [details.icon] : []),
+        name,
+      );
       renderDetailQuantity(
         quantity,
         details.icon?.cloneNode(true) as HTMLElement | undefined,

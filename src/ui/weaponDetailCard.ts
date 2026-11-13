@@ -28,7 +28,9 @@ export function createWeaponDetailCard(
   dismiss.dataset.action = "dismiss-weapon-detail";
   const quantity = document.createElement("div");
   quantity.hidden = true;
-  card.body.append(description, quantity, createActions([{ button: dismiss, role: "primary" }]));
+  const actions = createActions([{ button: dismiss, role: "primary" }]);
+  actions.className += " ada-detail-actions";
+  card.body.append(description, quantity, actions);
   modal.append(card.frame);
   root.append(modal);
   let returnFocus: HTMLElement | null = null;

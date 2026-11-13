@@ -167,6 +167,8 @@ it("shows current resource quantities including zero separately and updates them
     });
     const row = fixture.card.body.children[1]!;
     expect(row.hidden).toBe(false);
+    expect(fixture.card.title.children).toHaveLength(1);
+    expect(fixture.card.title.children[0]!.textContent).toBe("Ore");
     expect(row.children[0]!.className).toBe("ada-status-ore");
     expect(row.children[0]).not.toBe(icon);
     expect(row.children[1]!.textContent).toBe(expected);

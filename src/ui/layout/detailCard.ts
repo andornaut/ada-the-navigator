@@ -4,6 +4,7 @@ import { SPACING } from "./tokens.ts";
 
 /** Header and quantity geometry for the shared weapon and resource cards. */
 export const DETAIL_CARD_STYLE = `
+.ada-controls .ada-detail-actions{align-self:stretch;width:auto;grid-auto-columns:max-content;justify-content:end}
 .ada-controls .ada-detail-header,.ada-controls .ada-detail-quantity{
   display:flex;align-items:center;justify-content:center;gap:${units(SPACING.gap)}
 }
