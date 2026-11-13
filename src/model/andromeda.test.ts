@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { ANDROMEDA_CONVERSATIONS, ANDROMEDA_PLACES } from "../data/andromeda.ts";
+import { ANDROMEDA_CHAPTER, ANDROMEDA_CONVERSATIONS, ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { carriedItemName } from "../data/itemNames.ts";
 import {
   ANDROMEDA_PARTS,
   ANDROMEDA_RUNTIME,
@@ -140,7 +141,7 @@ describe("Andromeda chapter runtime", () => {
     expect(andromedaAction(context, settlement)).toBe("deliver");
     expect(andromedaAction(context, "darkBeacon")).toBeUndefined();
     expect(JSON.stringify(context)).toBe(before);
-    useAndromeda(context, settlement);
+    finish(context, useAndromeda(context, settlement));
     expect(andromedaAction(context, "darkBeacon")).toBe("deliver");
     finish(context, useAndromeda(context, "darkBeacon"));
     context.progress.questComplete = true;
@@ -162,7 +163,7 @@ describe("Andromeda chapter runtime", () => {
       "settlement",
     );
     expect(useAndromeda(context, "settlement:100,100")).toBeUndefined();
-    expect(useAndromeda(context, settlement.id)).toEqual({});
+    finish(context, useAndromeda(context, settlement.id));
     expect(context.progress.questItem).toBe(ANDROMEDA_PARTS);
     expect(context.progress.stage).toBe(5);
     const initial = useAndromeda(context, "darkBeacon")!;
@@ -184,6 +185,39 @@ describe("Andromeda chapter runtime", () => {
     expect(useAndromeda(context, "pip")).toBeUndefined();
     expect(andromedaObjective(context)).toBeNull();
     expect(andromedaObjectiveIndex(context.progress)).toBe(7);
+  });
+
+  it("shows the mechanical parts card before granting once on Continue, with no NPC speech", () => {
+    const context = introduced();
+    const station = confession(context);
+    finish(context, useAndromeda(context, station));
+    const target = andromedaObjective(context)!;
+    const before = JSON.stringify(context.progress);
+    const pickup = useAndromeda(context, target)!.dialogue!;
+    expect(pickup.context).toBe("andromeda:parts");
+    expect(pickup.title).toBe("Astra");
+    expect(pickup.text).toBe(
+      [carriedItemName("beacon parts"), ANDROMEDA_CHAPTER.objectives[5]].join("\n\n"),
+    );
+    expect(pickup.choices).toEqual([{ id: "continue", label: CONTENT.labels.continue }]);
+    expect(JSON.stringify(context.progress)).toBe(before);
+    expect(useAndromeda(context, target)?.dialogue).toEqual(pickup);
+    expect(chooseAndromeda(context, pickup, "close")).toBeUndefined();
+    expect(JSON.stringify(context.progress)).toBe(before);
+    expect(chooseAndromeda(context, pickup, "continue")).toEqual({});
+    expect(context.progress.stage).toBe(5);
+    expect(context.progress.questItem).toBe(ANDROMEDA_PARTS);
+    expect(chooseAndromeda(context, pickup, "continue")).toBeUndefined();
+    expect(useAndromeda(context, target)).toBeUndefined();
+    expect(context.progress.questComplete).toBe(false);
+  });
+
+  it("presents Ada's dent observation under Astra without changing the approved line", () => {
+    const context = introduced();
+    const panel = useAndromeda(context, "darkBeacon")!.dialogue!;
+    expect(panel.title).toBe("Astra");
+    expect(panel.text).toBe(`Ada: ${ANDROMEDA_CONVERSATIONS.dent.lines[0].text}`);
+    expect(context.progress.stage).toBe(1);
   });
 
   it("rebinds saved trip targets in a fresh flight without changing objectives on read", () => {

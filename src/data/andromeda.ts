@@ -1,3 +1,4 @@
+import { carriedItemName } from "./itemNames.ts";
 import type { ChapterContent } from "./types.ts";
 
 /** Andromeda's approved chapter, keyed by stable galaxy id 5. */
@@ -118,7 +119,7 @@ export const ANDROMEDA_CONVERSATIONS = {
         text: "This beacon isn't shot. It's dented, like something bumped into it.",
       },
     ],
-    party: "Ada",
+    party: "Astra",
   },
   holodisk: {
     lines: [
@@ -156,6 +157,10 @@ export const ANDROMEDA_CONVERSATIONS = {
         text: "The dark guide beacon. Ships need its light.",
       },
     ],
+  },
+  parts: {
+    lines: [{ text: carriedItemName("beacon parts") }, { text: ANDROMEDA_CHAPTER.objectives[5]! }],
+    party: "Astra",
   },
   repaired: {
     lines: [

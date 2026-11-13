@@ -134,6 +134,8 @@ function relevant(progress: GalaxyProgress, id: AndromedaConversationId): boolea
       return progress.stage === 1 || progress.stage === 2;
     case "ownsUp":
       return progress.stage === 3;
+    case "parts":
+      return progress.stage === 4 && Boolean(memory(progress)?.settlement);
     case "repaired":
       return (
         progress.stage === 6 || (progress.stage === 5 && progress.questItem === ANDROMEDA_PARTS)
@@ -199,9 +201,7 @@ export function useAndromeda(
     return { dialogue: dialogue(context, "ownsUp") };
   }
   if (progress.stage === 4 && destination === target?.settlement) {
-    progress.questItem = ANDROMEDA_PARTS;
-    progress.stage = 5;
-    return {};
+    return { dialogue: dialogue(context, "parts") };
   }
   if (destination === ANDROMEDA_PLACES.beacon && relevant(progress, "repaired")) {
     return { dialogue: dialogue(context, "repaired") };
@@ -232,6 +232,10 @@ function finish(context: ChapterContext, id: AndromedaConversationId): ChapterRe
       progress.stage = 4;
       break;
     }
+    case "parts":
+      progress.questItem = ANDROMEDA_PARTS;
+      progress.stage = 5;
+      break;
     case "repaired":
       if (progress.stage === 5) {
         progress.questItem = null;
