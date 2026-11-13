@@ -325,7 +325,7 @@ describe("top-centre item notice routing", () => {
       onArrive: vi.fn(),
       reducedMotion: () => false,
     });
-    notices.push([{ kind: "ammo", weapon: "rapidMissile" }]);
+    notices.push([{ added: 5, kind: "ammo", weapon: "rapidMissile" }]);
     notices.update(0, true, {
       cargo: null,
       leftmostTarget: 400,
