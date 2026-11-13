@@ -118,6 +118,8 @@ describe("placeholder galaxies", () => {
     }
     expect(model.state.progress[galaxy]).toMatchObject({ holodisk: false, known: [], stage: 0 });
     expect(model.state.flight!.objects.some(({ kind }) => kind === "destination")).toBe(false);
+    expect(model.state.flight!.phantom).toBeUndefined();
+    expect(model.state.progress[galaxy].phantom).toBeUndefined();
   });
 });
 

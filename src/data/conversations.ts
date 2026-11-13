@@ -188,8 +188,8 @@ export const CONVERSATIONS: readonly Conversation[] = [
     (id): Conversation => ({
       id: `chapter:phantom:${id}`,
       lines: PHANTOM_COPY[id]!.lines.map((line) => ({
+        ...line,
         speaker: line.speaker as Speaker,
-        text: line.text,
       })),
       priority: "warning",
       repeat: "flight",

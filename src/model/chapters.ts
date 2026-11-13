@@ -1,3 +1,4 @@
+import { BUILT } from "../data/galaxies.ts";
 import { PHANTOM_DESTINATIONS } from "../data/phantom.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { ChapterRuntime } from "./chapterProtocol.ts";
@@ -27,5 +28,5 @@ const RUNTIMES: Readonly<Partial<Record<GalaxyNumber, ChapterRuntime>>> = {
 };
 
 export function chapterRuntime(galaxy: GalaxyNumber): ChapterRuntime | undefined {
-  return RUNTIMES[galaxy];
+  return BUILT.has(galaxy) ? RUNTIMES[galaxy] : undefined;
 }

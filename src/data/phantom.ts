@@ -1,3 +1,4 @@
+import type { Mood } from "./conversations.ts";
 import type { ChapterContent, PremiseLine } from "./types.ts";
 export const PHANTOM_DESTINATIONS = [
   "phantomSettlement1",
@@ -70,14 +71,21 @@ export const PHANTOM_CLOSING: readonly PremiseLine[] = [
   },
   { speaker: "ada", text: "Always." },
 ];
+export interface PhantomLine extends Required<PremiseLine> {
+  readonly mood?: Mood;
+}
 export interface PhantomCopy {
-  readonly lines: readonly Required<PremiseLine>[];
+  readonly lines: readonly PhantomLine[];
   readonly topics?: readonly {
     question: string;
-    lines: readonly Required<PremiseLine>[];
+    lines: readonly PhantomLine[];
   }[];
 }
-const line = (speaker: string, text: string): Required<PremiseLine> => ({ speaker, text });
+const line = (speaker: string, text: string, mood?: Mood): PhantomLine => ({
+  speaker,
+  text,
+  ...(mood ? { mood } : {}),
+});
 export const PHANTOM_COPY: Readonly<Record<string, PhantomCopy>> = {
   aftermath: {
     lines: [
@@ -102,7 +110,10 @@ export const PHANTOM_COPY: Readonly<Record<string, PhantomCopy>> = {
     ],
   },
   battleAllies: {
-    lines: [line("astra", "That's his flagship. And Ada, look."), line("ada", "Everyone came!")],
+    lines: [
+      line("astra", "That's his flagship. And Ada, look."),
+      line("ada", "Everyone came!", "happy"),
+    ],
   },
   battleAlone: {
     lines: [line("astra", "That's his flagship. It's just us."), line("ada", "Just us is enough.")],

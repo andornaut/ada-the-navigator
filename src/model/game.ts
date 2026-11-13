@@ -626,7 +626,7 @@ export class GameModel {
   }
   private get chapter(): ChapterContent {
     const galaxy = this.state.selectedGalaxy;
-    return this.content.chapters[galaxy] ?? placeholderChapter(galaxy);
+    return (BUILT.has(galaxy) && this.content.chapters[galaxy]) || placeholderChapter(galaxy);
   }
   private label(id: string): string {
     return this.content.labels[id] ?? "";
@@ -1470,7 +1470,9 @@ export class GameModel {
       to: Math.max(...opened) as RoutePosition,
     };
     // Astra announces it only when a newly unlocked galaxy has a built story.
-    this.state.announceGalaxy = fresh.some((id) => Object.hasOwn(this.content.chapters, id));
+    this.state.announceGalaxy = fresh.some(
+      (id) => BUILT.has(id) && Object.hasOwn(this.content.chapters, id),
+    );
   }
   /**
    * Ada inserts a recovered holodisk into Astra's drive at once; `giver` names the outpost
