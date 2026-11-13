@@ -5,7 +5,7 @@ import { writeFileSync } from "node:fs";
 import { ellipse, line, polygon } from "@andornaut/art-kit/draw";
 import { encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/png";
 import type { Rgba } from "@andornaut/art-kit/raster";
-import { composite } from "@andornaut/art-kit/raster";
+import { composite, grayscale } from "@andornaut/art-kit/raster";
 import { blankImage, type RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
 export type { RgbaImage };
@@ -285,10 +285,10 @@ export function blend(a: RgbaImage, b: RgbaImage, t: number): RgbaImage {
 
 // ITU-R 601-2 luma, as Pillow's convert("L").
 export function grey(source: RgbaImage): RgbaImage {
+  const plane = grayscale(source);
   const out = blankImage(source.width, source.height);
-  for (let i = 0; i < source.width * source.height; i++) {
-    const d = source.data;
-    const l = (d[i * 4]! * 19595 + d[i * 4 + 1]! * 38470 + d[i * 4 + 2]! * 7471 + 0x8000) >> 16;
+  for (let i = 0; i < plane.data.length; i++) {
+    const l = plane.data[i]!;
     out.data.set([l, l, l, 255], i * 4);
   }
   return out;
