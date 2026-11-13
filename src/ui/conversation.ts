@@ -15,7 +15,8 @@ export {
 import { controlHelpText, createControlHelp } from "./controlHelp.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { font, units, VIEW_HOST_ID } from "./layout/css.ts";
-import { createButton, FOCUS_STYLE } from "./modal.ts";
+import { readViewUnit } from "./layout/viewScale.ts";
+import { createButton, FOCUS_STYLE, isTap } from "./modal.ts";
 import { CONVERSATION_SLOT, PANEL_BACKGROUND } from "./notice.ts";
 import { refuse } from "./refusal.ts";
 
@@ -214,7 +215,66 @@ export function createConversationBox(onAdvance: () => void): ConversationBox {
   const name = document.createElement("span");
   name.className = "ada-conversation-name";
   root.append(frame, column, name);
-  root.addEventListener("click", onAdvance);
+  let press:
+    | {
+        readonly id: number;
+        readonly start: { readonly x: number; readonly y: number };
+        readonly secondaryTouch: boolean;
+        moved: boolean;
+      }
+    | undefined;
+  let suppressClick = false;
+  root.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0 || press) {
+      return;
+    }
+    event.stopPropagation();
+    suppressClick = false;
+    press = {
+      id: event.pointerId,
+      moved: false,
+      secondaryTouch: event.pointerType === "touch" && !event.isPrimary,
+      start: { x: event.clientX, y: event.clientY },
+    };
+    root.setPointerCapture(event.pointerId);
+  });
+  root.addEventListener("pointermove", (event) => {
+    if (
+      press?.id === event.pointerId &&
+      !isTap(readViewUnit(root), press.start, { x: event.clientX, y: event.clientY })
+    ) {
+      press.moved = true;
+    }
+  });
+  root.addEventListener("pointerup", (event) => {
+    if (press?.id !== event.pointerId) {
+      return;
+    }
+    event.stopPropagation();
+    const completed = press;
+    press = undefined;
+    suppressClick = completed.moved || completed.secondaryTouch;
+    // Browsers do not synthesize a click for a second finger while a flight stick is held.
+    if (completed.secondaryTouch && !completed.moved) {
+      onAdvance();
+    }
+  });
+  const cancelPress = (event: PointerEvent): void => {
+    if (press?.id === event.pointerId) {
+      press = undefined;
+      suppressClick = true;
+    }
+  };
+  root.addEventListener("pointercancel", cancelPress);
+  root.addEventListener("lostpointercapture", cancelPress);
+  root.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (event.detail !== 0 && suppressClick) {
+      event.preventDefault();
+      return;
+    }
+    onAdvance();
+  });
   document.getElementById(VIEW_HOST_ID)?.append(root);
   let shown = "";
   let shownFrame = -1;

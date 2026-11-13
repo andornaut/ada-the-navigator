@@ -20,17 +20,33 @@ class Element {
   };
   readonly dataset: Record<string, string> = {};
   hidden = false;
-  readonly listeners = new Map<string, (() => void)[]>();
+  readonly listeners = new Map<string, ((event: Partial<PointerEvent>) => void)[]>();
   readonly style: Record<string, string> = {};
   textContent = "";
-  addEventListener(type: string, callback: () => void) {
+  addEventListener(type: string, callback: (event: Partial<PointerEvent>) => void) {
     this.listeners.set(type, [...(this.listeners.get(type) ?? []), callback]);
   }
   append(...nodes: Element[]) {
     this.children.push(...nodes);
   }
+  readonly setPointerCapture = vi.fn();
+  dispatch(type: string, values: Partial<PointerEvent> = {}) {
+    const event = {
+      button: 0,
+      clientX: 0,
+      clientY: 0,
+      detail: 1,
+      isPrimary: false,
+      pointerId: 7,
+      pointerType: "touch",
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+      ...values,
+    };
+    this.listeners.get(type)?.forEach((callback) => callback(event));
+  }
   click() {
-    this.listeners.get("click")?.forEach((callback) => callback());
+    this.dispatch("click", { detail: 0 });
   }
   focus() {}
   querySelector(selector: string): Element | null {
@@ -249,6 +265,66 @@ describe("shared Earth and space dialogue presentation", () => {
       .click();
     expect(paragraph()).not.toBe(initial);
     interaction.dispose();
+  });
+
+  it.each(["ada", "penny"] as const)(
+    "advances %s on a secondary touch without relying on a synthesized click",
+    (speaker) => {
+      const host = new Element("div");
+      vi.stubGlobal("document", {
+        createElement: (tag: string) => new Element(tag),
+        getElementById: () => host,
+      });
+      const advance = vi.fn();
+      const box = createConversationBox(advance);
+      box.render(
+        {
+          elapsed: 0,
+          key: speaker,
+          mood: "neutral",
+          name: speaker,
+          named: false,
+          side: speaker === "ada" ? "left" : "right",
+          speaker,
+          text: "A line",
+        },
+        true,
+        true,
+      );
+      const button = host.children[0]!;
+      button.dispatch("pointerdown");
+      expect(button.setPointerCapture).toHaveBeenCalledWith(7);
+      expect(advance).not.toHaveBeenCalled();
+      button.dispatch("pointerup");
+      expect(advance).toHaveBeenCalledTimes(1);
+      button.dispatch("click");
+      expect(advance).toHaveBeenCalledTimes(1);
+      button.click();
+      expect(advance).toHaveBeenCalledTimes(2);
+      box.dispose();
+    },
+  );
+
+  it.each(["pointercancel", "lostpointercapture"])("cancels a held message press on %s", (type) => {
+    const host = new Element("div");
+    vi.stubGlobal("document", {
+      createElement: (tag: string) => new Element(tag),
+      getElementById: () => host,
+    });
+    const advance = vi.fn();
+    const box = createConversationBox(advance);
+    const button = host.children[0]!;
+    button.dispatch("pointerdown");
+    button.dispatch(type);
+    button.dispatch("pointerup");
+    button.dispatch("click");
+    expect(advance).not.toHaveBeenCalled();
+    button.dispatch("pointerdown", { isPrimary: true });
+    button.dispatch("pointerup", { isPrimary: true });
+    expect(advance).not.toHaveBeenCalled();
+    button.dispatch("click", { isPrimary: true });
+    expect(advance).toHaveBeenCalledTimes(1);
+    box.dispose();
   });
 
   it("has no separate ambient Skip button and retains the existing tap advance route", () => {
