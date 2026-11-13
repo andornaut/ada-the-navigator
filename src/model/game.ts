@@ -1321,6 +1321,7 @@ export class GameModel {
     const context = this.chapterContext();
     if (context) {
       chapterRuntime(context.flight.galaxy)?.init?.(context);
+      syncFlightRegion(this.content, context.flight);
     }
     this.reopenInteraction();
   }
