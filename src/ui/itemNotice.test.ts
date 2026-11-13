@@ -116,6 +116,7 @@ describe("item notice wording", () => {
     expect(
       Object.fromEntries(Object.entries(ECONOMY.paints).map(([id, { top }]) => [id, top])),
     ).toEqual({
+      amber: "#f4b665",
       classic: "#ffffff",
       cobalt: "#6f9ff0",
       graphite: "#aab2c4",
