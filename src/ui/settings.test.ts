@@ -93,6 +93,18 @@ const state = (row: Element) =>
   row.children.find((node) => node.className === "ada-setting-state")!;
 
 describe("Settings current-state labels", () => {
+  it("widens Settings through the existing shared card while keeping install steps fitted", () => {
+    const { settings } = setup();
+    const root = settings.root as unknown as Element;
+    const modal = root.children.find((node) => node.className === "ada-modal")!;
+    const [card, steps] = modal.children;
+    expect(card!.dataset.cardSize).toBe("full");
+    expect(card!.dataset.dialog).toBe("settings");
+    expect(card!.attributes.get("aria-label")).toBe(labels.settings);
+    expect(steps!.dataset.cardSize).toBeUndefined();
+    settings.dispose();
+  });
+
   it("names settings separately from their initial current state and preserves switch semantics", () => {
     const { rows, settings } = setup();
     expect(rows.slice(0, 4).map((row) => state(row).textContent)).toEqual([

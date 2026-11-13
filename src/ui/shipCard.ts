@@ -134,12 +134,16 @@ export function shipSections(labels: Labels, view: ShipView): ShipSections {
 }
 
 export const SHIP_CARD_STYLE = `
+${UI_SCOPE} .ada-card-frame[data-card-size=full]:has(> .ada-card[data-dialog=ship]),
+${UI_SCOPE} .ada-card-frame[data-card-size=full] > .ada-card[data-dialog=ship]{
+  height:auto
+}
 ${UI_SCOPE} .ada-ship-sections{
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
   column-gap:${units(SHIP_CARD.gutter)};
   position:relative;
-  width:max-content;
+  width:100%;
   max-width:100%;
   flex:none;
   align-items:stretch
@@ -147,7 +151,7 @@ ${UI_SCOPE} .ada-ship-sections{
 ${UI_SCOPE} .ada-ship-pane{
   display:flex;
   flex-direction:column;
-  gap:${units(SHIP_CARD.subgroupGap)};
+  gap:${units(SHIP_CARD.sectionGap)};
   min-width:0
 }
 ${UI_SCOPE} .ada-ship-section{

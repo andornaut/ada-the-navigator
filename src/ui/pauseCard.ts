@@ -148,6 +148,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   const ship = createCard({
     closeAction: "close-ship",
     closeLabel: labels.close,
+    full: true,
     title: labels.ship,
   });
   ship.card.dataset.dialog = "ship";

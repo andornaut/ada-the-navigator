@@ -7,7 +7,8 @@ export const SHIP_CARD = {
   gutter: 2 * SPACING.panelPadding + CARD_CONTENT.frameBorder,
   icon: TYPE.body.lineHeight,
   row: TYPE.body.lineHeight,
+  // Between Equipment and Cargo, the two card groups in one pane.
+  sectionGap: SPACING.gap,
   sectionPadding: SPACING.panelPadding,
-  subgroupGap: SPACING.panelPadding,
   valueGap: SPACING.gap,
 } as const;

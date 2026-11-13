@@ -14,9 +14,9 @@ import { type InstallPort, startInstall, watchInstallRow } from "./installRow.ts
 import { CONTROL_ROW, WHOLE_PX_EDGES } from "./layout/controls.ts";
 import { font, fromHudEdge, units, viewStyle } from "./layout/css.ts";
 import { hudButtonTarget, type StartNavButton, startNavOrder } from "./layout/playView.ts";
-import { TYPE } from "./layout/tokens.ts";
+import { SPACING, TYPE } from "./layout/tokens.ts";
 import { TOUCH_STICK, USE_DISC } from "./layout/touchControls.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
+import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import {
   createActions,
   createButton,
@@ -235,6 +235,37 @@ ${hudDiscStyle(".ada-controls .ada-exit-open", ".ada-disc")}
 
 /* This build's version and commit, the Settings card's last line as in Chibi: body text in the
    supporting colour. */
+/* Settings uses the safe width while its height follows content until scrolling is needed. */
+.ada-controls .ada-card-frame[data-card-size=full][data-dialog=settings],
+.ada-controls .ada-card-frame[data-card-size=full][data-dialog=settings] > .ada-card{
+  height:auto
+}
+
+.ada-controls .ada-rows[data-columns="2"]{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  column-gap:${units(SPACING.columnGap)}
+}
+.ada-controls .ada-rows[data-columns="2"] > .ada-install-row{
+  grid-column:1 / -1
+}
+.ada-controls .ada-card-body[data-settings-columns="2"]{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) max-content;
+  align-items:center
+}
+.ada-controls .ada-card-body[data-settings-columns="2"] > .ada-rows{
+  grid-column:1 / -1
+}
+.ada-controls .ada-card-body[data-settings-columns="2"] > .ada-build{
+  grid-column:1;
+  grid-row:2
+}
+.ada-controls .ada-card-body[data-settings-columns="2"] > .ada-actions{
+  grid-column:2;
+  grid-row:2;
+  justify-self:end
+}
+
 .ada-controls .ada-build{
   margin:0;
   font:${font(TYPE.body)};
@@ -283,9 +314,11 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     closeAction: "close-settings",
     closeLabel: options.labels.close,
     fontRole: FONT_ROLES.heading,
+    full: true,
     title: options.labels.settings,
   });
   const { body: card, close: closeButton, frame: cardFrame } = settingsCard;
+  cardFrame.dataset.dialog = "settings";
   // Rows in Chibi's and Archie's order: Move controls and Aim controls show or hide each
   // joystick's drawing; Sound and Reduced motion are switches with a note under the label.
   // Install joins last, shown only while the game can be installed.
@@ -324,6 +357,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       settings[setting] = !settings[setting];
       update();
       writeSetting(storage, setting, settings[setting]);
+      fitSettings();
       if (setting === "aim" || setting === "move") {
         options.onVisibilityChange(visibility());
       } else {
@@ -404,12 +438,44 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   let disposed = false;
   let open = false;
   let previousFocus: HTMLElement | undefined;
+  function fitSettings(): void {
+    if (!open || disposed) {
+      return;
+    }
+    rows.dataset.columns = card.dataset.settingsColumns = "1";
+    settingsCard.fit();
+    const needsCompactLayout = rows.scrollHeight > rows.clientHeight;
+    const switches = [...rows.querySelectorAll<HTMLElement>("[role=switch]")];
+    const widths = switches.map((row) => {
+      const text = row.querySelector<HTMLElement>(".ada-setting-text")!;
+      const caption = text.firstElementChild as HTMLElement;
+      const previous = caption.style.width;
+      caption.style.width = "max-content";
+      const label = caption.getBoundingClientRect().width;
+      caption.style.width = previous;
+      const parts = [...row.children].filter((part) => part !== text);
+      return (
+        label +
+        parts.reduce((sum, part) => sum + part.getBoundingClientRect().width, 0) +
+        parseFloat(getComputedStyle(row).columnGap) * parts.length
+      );
+    });
+    const gap = SPACING.columnGap * readViewUnit(rows);
+    const paired =
+      needsCompactLayout &&
+      modal.clientWidth > modal.clientHeight &&
+      rows.clientWidth >= 2 * Math.max(0, ...widths) + gap;
+    rows.dataset.columns = card.dataset.settingsColumns = paired ? "2" : "1";
+    settingsCard.fit();
+  }
+  window.addEventListener("resize", fitSettings);
+  window.addEventListener(VIEW_SCALE_EVENT, fitSettings);
   const stepsOpen = () => !stepsFrame.hidden;
   const closeSteps = () => {
     if (stepsOpen()) {
       stepsFrame.hidden = true;
       cardFrame.hidden = false;
-      settingsCard.fit();
+      fitSettings();
       focusTarget(installButton);
     }
   };
@@ -435,7 +501,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   const stopInstallRow = options.install
     ? watchInstallRow(options.install.port, (shown) => {
         installRow.hidden = !shown;
-        settingsCard.fit();
+        fitSettings();
         if (!shown) {
           closeSteps();
         }
@@ -460,7 +526,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     open = value;
     modal.hidden = !open;
     if (open) {
-      settingsCard.fit();
+      fitSettings();
     }
     openButton.setAttribute("aria-expanded", String(open));
     if (open) {
@@ -531,6 +597,8 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       setOpen(false);
       disposed = true;
       stopInstallRow();
+      window.removeEventListener("resize", fitSettings);
+      window.removeEventListener(VIEW_SCALE_EVENT, fitSettings);
       settingsCard.dispose();
       stepsParts.dispose();
       root.remove();

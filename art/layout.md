@@ -867,7 +867,7 @@ every available height, so the card never scrolls.
 ### Ship card
 
 Implementation contract for Tech: the Paused card's Ship opens a
-content-fitted card titled "Ship" with the close X; the close X, back and
+safe-width card titled "Ship" with the close X; the close X, back and
 Escape return to Paused. The body has exactly two top-aligned columns:
 Equal-width panes contain Equipment then Cargo on the left, and Weapons
 on the right, including narrow views. All three named headings remain visible.
@@ -876,19 +876,19 @@ Each section is one list, never a nested two-column grid. Strings and row
 content remain Gameplay's. Ship geometry belongs in `src/ui/layout/`,
 consuming the existing canonical tokens rather than a second spacing system.
 
-| Part                   | Existing token or derivation                                  | Rule                                                                                        |
-| ---------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| Outer padding          | `CARD_CONTENT.padding` (16)                                   | Use the shared content-card padding on every edge                                           |
-| Divider                | `CARD_CONTENT.frameBorder` (2), `TEXT_TOKENS.supporting`      | One decorative vertical rule between the sections, spanning the body                        |
-| Divider clearance      | `SPACING.panelPadding` (16) on each side                      | The total inter-column gutter is `2 * SPACING.panelPadding + CARD_CONTENT.frameBorder` (34) |
-| Section heading        | `TYPE.label`, `TEXT_TOKENS.supporting`                        | Same heading role and top alignment in both columns                                         |
-| Heading-to-list gap    | `SPACING.gap` (8)                                             | Separate a heading from its first row                                                       |
-| Equipment subgroup gap | `SPACING.panelPadding` (16)                                   | Between Equipment and Cargo in the left pane                                                |
-| List row gap           | `SPACING.rowGap` (4)                                          | Between rows within either list or equipment subgroup                                       |
-| Row height             | `max(SHIP_CARD.icon, TYPE.body.lineHeight)` (20 minimum)      | Wrapped text grows the row by its type role's line height                                   |
-| Row icon               | Existing `SHIP_CARD.icon` (20), then `SPACING.markGap` (6)    | Retain the current icons and drawn-pixel spacing                                            |
-| Value gap              | `SPACING.gap` (8)                                             | Between a compact name and its separate value or ammunition                                 |
-| Ammunition width       | Measure the formatted `ECONOMY.ammo.capacity` in `TYPE.label` | Reserve the same right-aligned track for every weapon row                                   |
+| Part                | Existing token or derivation                                  | Rule                                                                                        |
+| ------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Outer padding       | `CARD_CONTENT.padding` (16)                                   | Use the shared content-card padding on every edge                                           |
+| Divider             | `CARD_CONTENT.frameBorder` (2), `TEXT_TOKENS.supporting`      | One decorative vertical rule between the sections, spanning the body                        |
+| Divider clearance   | `SPACING.panelPadding` (16) on each side                      | The total inter-column gutter is `2 * SPACING.panelPadding + CARD_CONTENT.frameBorder` (34) |
+| Section heading     | `TYPE.label`, `TEXT_TOKENS.supporting`                        | Same heading role and top alignment in both columns                                         |
+| Heading-to-list gap | `SPACING.gap` (8)                                             | Separate a heading from its first row                                                       |
+| Equipment/Cargo gap | `SPACING.gap` (8)                                             | Between Equipment and Cargo in the left pane                                                |
+| List row gap        | `SPACING.rowGap` (4)                                          | Between rows within either list or equipment subgroup                                       |
+| Row height          | `max(SHIP_CARD.icon, TYPE.body.lineHeight)` (20 minimum)      | Wrapped text grows the row by its type role's line height                                   |
+| Row icon            | Existing `SHIP_CARD.icon` (20), then `SPACING.markGap` (6)    | Retain the current icons and drawn-pixel spacing                                            |
+| Value gap           | `SPACING.gap` (8)                                             | Between a compact name and its separate value or ammunition                                 |
+| Ammunition width    | Measure the formatted `ECONOMY.ammo.capacity` in `TYPE.label` | Reserve the same right-aligned track for every weapon row                                   |
 
 Rows use `TYPE.body` and `TEXT_TOKENS.label`. A level-one item shows only
 its name. Higher levels append the compact suffix `(2)` or `(3)` to the
@@ -914,13 +914,12 @@ Cargo counts stay right-aligned. Labels wrap without shrinking type.
    most 9,999 rounds: show zero as `0`, preserve a blank Laser cell, and
    show grouped numbers without the "left" suffix.
 
-Measure both panes' natural content in the existing type roles, including
-icons, mark gaps and value tracks. Use twice the wider pane's natural width
-plus the divider gutter for the shared `cardWidth` contract in
-`contentCard.ts`. Equal fractional grid tracks provide this intrinsic width
-without a duplicated literal modal width. Retain title clearance, the
-fixed-base half-width floor and the available-rect clamp. Both panes share
-half the inner width after subtracting the divider gutter.
+Use the existing shared full safe-width card so short inventories do not
+collapse to the fitted-card floor. Height follows the content up to the
+available rect. Both panes share half the inner width after subtracting
+the central divider gutter. Equipment and Cargo are card groups separated
+by `SPACING.gap`; panel padding remains the inside and divider clearance.
+Preserve title clearance, fonts and the shared safe-area clamp.
 
 Shrink the equal panes together within the available rect. Labels wrap,
 including within long unbroken words, while preserving the existing font
