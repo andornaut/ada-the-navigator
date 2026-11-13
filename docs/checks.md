@@ -93,7 +93,7 @@ available on the delivery host. Config changes require separate operational
 approval and do not start or restart the runner.
 
 The `toolchain` stage pins `node:24.22.2` and ShellCheck 0.11.0 by digest. Its
-empty entrypoint permits delivery-kit 3.0.1 to start `sleep infinity`. The
+empty entrypoint permits delivery-kit 4.0.0 to start `sleep infinity`. The
 default `check` stage adds the locked dependencies (`npm ci --ignore-scripts`)
 and the inner dispatcher; Make and `tools/checks.mjs` build it on demand, and
 `delivery-kit.json` never names it. Make selects `/bin/sh` explicitly and
@@ -177,7 +177,7 @@ entrypoint or build command. This route needs the gated `dist/` and locked
 `node_modules/`, without a deployment rebuild. The dry run is part of the
 isolated `all` gate's build category.
 
-Only delivery-kit 3.0.1 deploys the admitted gated artifact after exact-commit CI
+Only delivery-kit 4.0.0 deploys the admitted gated artifact after exact-commit CI
 passes and the remote commit matches. `delivery-kit.json` schedules hourly :00
 America/Toronto with `deploy.mode` set to `wrangler`. A pushed range that changes
 only Markdown, `art/` or `gameplay/` files (`deploy.skipPattern`) is gated but not
