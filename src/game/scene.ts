@@ -69,6 +69,7 @@ import { type JobArt } from "./jobArt.ts";
 import { blastEdges, LIGHT_FIELD, lightGalaxy } from "./lightField.ts";
 import { parentFit } from "./playCamera.ts";
 import { type ProjectArtSet } from "./projectArt.ts";
+import { drawAndromeda } from "./sceneAndromeda.ts";
 import {
   filterTexture,
   loadGalaxyArt,
@@ -687,7 +688,7 @@ export class GameScene extends Scene {
     for (const object of flight.objects) {
       if (object.id === PHANTOM_FLAGSHIP && object.enemy) {
         drawPhantomFlagship(this, object);
-      } else if (!drawPhantomSettlement(this, object)) {
+      } else if (!drawAndromeda(this, object) && !drawPhantomSettlement(this, object)) {
         drawObject(this, object);
       }
     }

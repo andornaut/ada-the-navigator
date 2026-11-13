@@ -122,7 +122,7 @@ export function stationLoopFrame<T extends StationFrame>(
 }
 
 /** Both blink frames, or undefined to keep the placeholder. */
-function readBlinkArt<T extends StationFrame>(
+export function readBlinkArt<T extends StationFrame>(
   assets: readonly T[],
   idA: string,
   idB: string,
