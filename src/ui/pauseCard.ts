@@ -5,7 +5,7 @@ import type { GalaxyNumber } from "../data/types.ts";
 import type { LocalMap } from "../model/map.ts";
 import type { QuestEntry } from "../model/questDetails.ts";
 import { CARD_CONTENT, SCROLL } from "./layout/contentCard.ts";
-import { units } from "./layout/css.ts";
+import { slice, units } from "./layout/css.ts";
 import { BUTTON_GAP, SPACING, STACK_BUTTON_GAP } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createMapScreen, type MapField, type MapScreenLabels } from "./mapScreen.ts";
@@ -105,7 +105,7 @@ ${UI_SCOPE} .ada-ship-back{
   display:flex;
   justify-content:flex-end;
   flex:none;
-  margin:${units(SPACING.gap)} 0 ${units(SCROLL.endPad - CARD_CONTENT.frameBorder)}
+  margin:${units(SPACING.gap)} 0 calc(${units(SCROLL.endPad)} - ${slice(CARD_CONTENT.frameBorder)})
 }
 `;
 
