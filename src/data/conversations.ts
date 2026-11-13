@@ -1231,7 +1231,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
     lines: [
       {
         speaker: "Whale family",
-        text: "You listened when nobody else did. Now listen to us.",
+        text: "You listened when we needed help. Now listen to us.",
       },
       {
         speaker: "Ada",
@@ -1272,7 +1272,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
     lines: [
       {
         speaker: "Whale family",
-        text: "You listened when nobody else did. Now listen to us.",
+        text: "You listened when we needed help. Now listen to us.",
       },
       {
         speaker: "Ada",

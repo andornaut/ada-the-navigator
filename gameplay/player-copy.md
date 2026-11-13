@@ -315,7 +315,8 @@ Branch pages, then the story rejoins:
   fetch tools, teach. Small jobs are easier to say yes to, and soon every card has
   a name."
 
-Closing: "On planting day, neighbors bring tools, plants and time. People help in different ways. At last, the garden is getting started."
+Closing: "On planting day, neighbors bring tools and plants and stay to help.
+At last, the garden is getting started."
 
 Objectives, in order:
 
@@ -404,7 +405,7 @@ the family is traveling together again." Then keep `3.holodiskLead` and
 
 ### 3.holodiskLead / 3.holodiskLeadSong: PARTY Whale family
 
-- Whale family: "You listened when nobody else did. Now listen to us."
+- Whale family: "You listened when we needed help. Now listen to us."
 - Ada: "What can you hear?"
 - Whale family: "A shining disk drifts on the current ahead. Drones guard it. Follow our song."
 - Ada: "Astra's holodisk! We'll follow."
@@ -529,8 +530,7 @@ Branch pages, then the story rejoins:
 Dad, looking in after the branch page: "Sounding better every day."
 
 Closing: "At the concert, Ada plays the whole song. One note wobbles, and she
-keeps going. Everyone claps, and Ada is proud of every gate she threaded to get
-there."
+keeps going. Everyone claps. Ada is proud that she kept practising."
 
 Objectives, in order:
 
@@ -757,7 +757,7 @@ Branch pages, then the story rejoins:
   happier."
 
 Closing: "Sam joins their lunch table. The next time someone is unkind, Ada
-and her friends stay right beside Sam. Nobody has to stand alone."
+and her friends stay right beside Sam."
 
 Objectives, in order:
 

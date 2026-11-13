@@ -9,8 +9,8 @@ export const CONTENT: GameContent = {
   chapters: {
     1: {
       closing: [
-        "On planting day, neighbors bring tools, plants and time. People help ",
-        "in different ways. At last, the garden is getting started.",
+        "On planting day, neighbors bring tools and plants and stay to help. ",
+        "At last, the garden is getting started.",
       ].join(""),
       dialogue: {
         deliveryComplete: {
@@ -95,7 +95,7 @@ export const CONTENT: GameContent = {
     2: {
       closing: [
         "Sam joins their lunch table. The next time someone is unkind, Ada ",
-        "and her friends stay right beside Sam. Nobody has to stand alone.",
+        "and her friends stay right beside Sam.",
       ].join(""),
       dialogue: {
         approach: {
@@ -223,7 +223,7 @@ export const CONTENT: GameContent = {
         // The family's lead as the holodisk waypoint appears, after the reunion.
         holodiskLead: {
           speaker: "Whale family",
-          text: "You listened when nobody else did. Now listen to us.",
+          text: "You listened when we needed help. Now listen to us.",
           then: "holodiskLeadSong",
         },
         holodiskLeadSong: {

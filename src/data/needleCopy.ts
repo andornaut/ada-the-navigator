@@ -3,7 +3,7 @@ import type { ChapterContent } from "./types.ts";
 export const NEEDLE_CHAPTER: ChapterContent = {
   closing:
     "At the concert, Ada plays the whole song. One note wobbles, and she keeps going. " +
-    "Everyone claps, and Ada is proud of every gate she threaded to get there.",
+    "Everyone claps. Ada is proud that she kept practising.",
   dialogue: {},
   name: "Threading the Needle",
   objectives: [
