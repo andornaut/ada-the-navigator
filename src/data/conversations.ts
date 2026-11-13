@@ -555,6 +555,115 @@ export const CONVERSATIONS: readonly Conversation[] = [
     repeat: "never",
     trigger: { galaxy: 3, kind: "quiet" },
   },
+  {
+    id: "arrival:4",
+    lines: [
+      line("astra", "Needle. So thin, and so long."),
+      line("ada", "Like a road made of stars."),
+    ],
+    priority: "lore",
+    repeat: "never",
+    trigger: { galaxy: 4, kind: "arrival" },
+  },
+  {
+    id: "meeting:4:avi",
+    lines: [
+      line("ada", "Who's that, standing so still?"),
+      line("astra", "An Avi. They wait and watch before they move. That's Elder Loom."),
+      line("astra", "The young Avi pilots learn their channels from Elder Loom."),
+    ],
+    priority: "lore",
+    repeat: "never",
+    trigger: { cue: "stationNear", galaxy: 4, kind: "encounter" },
+  },
+  {
+    id: "quiet:4:look",
+    lines: [
+      line("astra", "I used to jump without thinking. Now I like to look first."),
+      happy("ada", "Me too."),
+    ],
+    priority: "lore",
+    repeat: "never",
+    trigger: { galaxy: 4, kind: "quiet" },
+  },
+  {
+    id: "quiet:4:dream",
+    lines: [line("ada", "Do you dream, Astra?"), line("astra", "Not yet. Maybe I'll learn.")],
+    priority: "lore",
+    repeat: "never",
+    trigger: { galaxy: 4, kind: "quiet" },
+  },
+  {
+    id: "arrival:5",
+    lines: [
+      line("astra", "Andromeda. It feels like visiting a neighbor."),
+      happy("ada", "A very big, very bright neighbor."),
+    ],
+    priority: "lore",
+    repeat: "never",
+    trigger: { galaxy: 5, kind: "arrival" },
+  },
+  {
+    id: "meeting:5:munix",
+    lines: [
+      line("ada", "Are the settlers robots?"),
+      line("astra", "They're Munix. They were built, like me, and they steer by beacon light."),
+      happy("ada", "So you have cousins out here!"),
+    ],
+    priority: "lore",
+    repeat: "never",
+    trigger: { cue: "stationNear", galaxy: 5, kind: "encounter" },
+  },
+  {
+    id: "quiet:5:disks",
+    lines: [
+      line("astra", "When I scattered my disks, I didn't tell anyone. Not even myself."),
+      line("ada", "You can tell me now."),
+    ],
+    priority: "lore",
+    repeat: "never",
+    trigger: { galaxy: 5, kind: "quiet" },
+  },
+  {
+    id: "quiet:5:pretend",
+    lines: [
+      line("astra", "I like that you never pretend, Ada."),
+      happy("ada", "Penny can always tell when I do."),
+    ],
+    priority: "lore",
+    repeat: "never",
+    trigger: { galaxy: 5, kind: "quiet" },
+  },
+  {
+    id: "arrival:6",
+    lines: [
+      line("astra", "Phantom. I don't like it here."),
+      line("ada", "We'll face it together."),
+    ],
+    priority: "lore",
+    repeat: "never",
+    trigger: { galaxy: 6, kind: "arrival" },
+  },
+  {
+    id: "quiet:6:whole",
+    lines: [
+      line("astra", "If I'm whole again, will you still fly with me?"),
+      happy("ada", "Always."),
+    ],
+    priority: "lore",
+    repeat: "never",
+    trigger: { galaxy: 6, kind: "quiet" },
+  },
+  {
+    id: "quiet:6:together",
+    lines: [
+      line("astra", "Whatever is waiting, I'm not running this time."),
+      line("ada", "Neither am I."),
+    ],
+    priority: "lore",
+    repeat: "never",
+    trigger: { galaxy: 6, kind: "quiet" },
+  },
   // The General's broadcasts, one after the number of holodisks Ada holds. Each built galaxy
   // plays its one, seen as general:<galaxy> (the director's instance), so none replays there.
   {

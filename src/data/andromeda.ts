@@ -29,7 +29,8 @@ export const ANDROMEDA_CHAPTER: ChapterContent = {
       "Later, Grandma finds the spilled soil. 'I wonder what happened to my seedlings,' she says",
       "quietly. Ada's stomach twists.",
     ].join(" "),
-    "It was an accident. But when Grandma looks so puzzled and sad, Ada knows that staying quiet isn't.",
+    "It was an accident. But later, when Grandma finds the spilled soil and looks so puzzled and sad, " +
+      "Ada knows that staying quiet isn't.",
   ],
   openingChoices: ["Hope nobody notices.", "Tell herself it was an accident."],
   resolution: [

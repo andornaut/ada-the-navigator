@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { controlHelpText } from "../ui/controlHelp.ts";
 import { SHIELD_PILL } from "../ui/layout/playView.ts";
+import { ANDROMEDA_CHAPTER } from "./andromeda.ts";
 import { CONTROL_WORDS } from "./controlWords.ts";
 import {
   BOX_PRIORITIES,
@@ -14,7 +15,6 @@ import {
   INTERACTION_COPY,
   SPEAKERS,
 } from "./conversations.ts";
-import { JOB_LORE } from "./jobs.ts";
 
 // Gameplay's documents, with their line wrapping undone.
 const read = (name: string) =>
@@ -51,9 +51,8 @@ function spokenLines(text: string): { mood?: string; name: string; text: string 
   );
 }
 
-// Ambient pools beyond Whirlpool wait for their chapters; Phantom battle cues have explicit triggers.
-const IN_FLIGHT = passage("## In-flight conversations", " Needle: - First arrival");
-const PHANTOM = passage("Phantom: - First arrival");
+// Ambient copy covers all galaxies; Phantom battle cues retain their explicit triggers.
+const IN_FLIGHT = passage("## In-flight conversations", " ## Greeters");
 const BATTLE = passage("Battle chatter stays in the small box:", "Salvage the last holodisk");
 const BROADCASTS = passage("Memory lines and broadcasts follow", "Outposts handing over");
 
@@ -146,31 +145,33 @@ describe("in-flight conversations", () => {
     expect(jobs).toContainEqual({ mood: "happy", name: "Ada", text: "Hold on, we've got you!" });
   });
 
-  it("keeps Phantom ambient lore deferred while registering only its approved battle cues", () => {
-    const pool = spokenLines(PHANTOM);
-    expect(pool).toHaveLength(6);
-    // Phantom's stations give jobs, so Astra's two job lore lines play there.
-    const lore = new Set(JOB_LORE[6]);
-    expect(lore.size).toBe(2);
-    for (const line of pool.filter(({ text }) => !lore.has(text))) {
-      expect(DATA_LINES).not.toContainEqual(line);
+  it("binds approved people introductions to existing first-encounter cues only once", () => {
+    for (const [galaxy, id] of [
+      [4, "meeting:4:avi"],
+      [5, "meeting:5:munix"],
+    ] as const) {
+      const entry = CONVERSATIONS.find((entry) => entry.id === id)!;
+      expect(entry.trigger).toEqual({ cue: "stationNear", galaxy, kind: "encounter" });
+      expect(entry.repeat).toBe("never");
+      expect(entry.priority).toBe("lore");
     }
-    // Past the built galaxies only job lore, where every galaxy's stations give jobs, and the
-    // General's broadcast and the four authored battle cues are bound to a galaxy.
-    expect(
-      CONVERSATIONS.filter(
-        ({ trigger }) => "galaxy" in trigger && trigger.galaxy !== undefined && trigger.galaxy > 3,
-      ).every(
-        ({ id, trigger }) =>
-          trigger.kind === "jobLore" ||
-          id === "general:held:5" ||
-          BATTLE_CUES.some((cue) => cue.id === id),
-      ),
-    ).toBe(true);
+    expect(new Set(CONVERSATIONS.map(({ id }) => id)).size).toBe(CONVERSATIONS.length);
+    expect(INTERACTION_COPY["4.needle.arrival"]?.lines[0]?.text).toBeDefined();
   });
 
-  it("grow Astra with an arrival and two quiet stretches in each of Cartwheel and Whirlpool", () => {
-    for (const galaxy of [2, 3]) {
+  it("places Grandma's discovery after the accident in the unchanged second opening choice", () => {
+    expect(ANDROMEDA_CHAPTER.openingBranches[1]).toBe(
+      "It was an accident. But later, when Grandma finds the spilled soil and looks so puzzled and sad, " +
+        "Ada knows that staying quiet isn't.",
+    );
+    expect(ANDROMEDA_CHAPTER.openingChoices).toEqual([
+      "Hope nobody notices.",
+      "Tell herself it was an accident.",
+    ]);
+  });
+
+  it("grow Astra with an arrival and two quiet stretches in each later galaxy", () => {
+    for (const galaxy of [2, 3, 4, 5, 6]) {
       expect(
         CONVERSATIONS.filter(
           ({ priority, trigger }) =>
