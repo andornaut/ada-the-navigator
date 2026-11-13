@@ -11,6 +11,7 @@ import {
   pillCount,
   ShieldBar,
   shieldMarkColour,
+  ShieldOreSpendCounter,
   stardustCount,
   STATUS_COLOURS,
   STATUS_PILL_STYLE,
@@ -165,6 +166,7 @@ describe("status pill shield bar", () => {
       divider: "#57536e",
       flash: "#ffffff",
       low: "#e4574e",
+      lowPanel: "#532e35",
       lowPeak: "#ff8a80",
       oreTick: "#eaa676",
       rim: "#9a96ad",
@@ -262,11 +264,22 @@ describe("status pill count", () => {
     hidden = false;
     readonly style = { setProperty: vi.fn() } as Record<string, unknown>;
     textContent = "";
-    animate(): { cancel: () => void; finished: Promise<void> } {
+    parent?: FakeNode;
+    readonly animations: { frames: unknown; options: unknown }[] = [];
+    animate(frames?: unknown, options?: unknown): { cancel: () => void; finished: Promise<void> } {
+      this.animations.push({ frames, options });
       return { cancel: vi.fn(), finished: new Promise<void>(() => {}) };
     }
     append(...nodes: FakeNode[]): void {
+      for (const node of nodes) {
+        node.parent = this;
+      }
       this.children.push(...nodes);
+    }
+    remove(): void {
+      if (this.parent) {
+        this.parent.children = this.parent.children.filter((node) => node !== this);
+      }
     }
     getAttribute(name: string): string | null {
       return this.attributes.get(name) ?? null;
@@ -281,21 +294,21 @@ describe("status pill count", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
   });
-  const pill = () => {
+  const pill = (reducedMotion = true) => {
     vi.stubGlobal("document", {
       createElement: () => new FakeNode(),
       createTextNode: () => new FakeNode(),
     });
     const parent = new FakeNode();
     const status = createStatusPill(parent as unknown as HTMLElement, {
-      reducedMotion: () => true,
+      reducedMotion: () => reducedMotion,
       shieldLabel: "Shield",
     });
     const root = parent.children[0]!;
     const slot = (kind: string) =>
       root.children.find((node) => node.className.includes(`ada-status-${kind}-slot`))!;
     const count = (kind: string) => slot(kind).children[0]!;
-    return { count, slot, status };
+    return { count, shield: parent.children[1]!, slot, status };
   };
 
   it.each([
@@ -328,6 +341,55 @@ describe("status pill count", () => {
     expect(count("stardust").getAttribute("aria-label")).toBe(`${exact} Stardust`);
     expect(count("ore").getAttribute("aria-label")).toBe(exact);
   });
+
+  it.each([false, true])(
+    "ticks only explicit paid ore, including the last ore, with reduced motion %s",
+    (reduced) => {
+      const { count, shield, slot, status } = pill(reduced);
+      const view = {
+        ...full,
+        aboard: null,
+        lightField: false,
+        ore: 20,
+        oreLabel: "Ore",
+        shieldOreSpent: 90,
+        stardust: 0,
+        stardustLabel: "0 Stardust",
+      };
+      const tick = () => slot("ore").children.find((node) => node.className === "ada-status-tick");
+      status.setStatus(view, 0);
+      expect(tick()).toBeUndefined();
+      // Deposits and a depletion penalty lower cargo without a paid-recharge total change.
+      status.setStatus({ ...view, ore: 10 }, 16);
+      status.setStatus({ ...view, ore: 1, shield: 0 }, 32);
+      expect(tick()).toBeUndefined();
+      expect(shield.dataset.tone).toBe("empty");
+      status.setStatus({ ...view, ore: 0, shieldOreSpent: 100 }, 48);
+      expect(tick()!.textContent).toBe("-10");
+      expect(slot("ore").hidden).toBe(false);
+      expect(count("ore").children[0]!.data).toBe("0");
+      expect(count("ore").animations).toHaveLength(0);
+      const animation = tick()!.animations[0]!;
+      const timing = reduced ? STATUS_TIMING.tickReduced : STATUS_TIMING.tick;
+      expect(animation.options).toEqual({
+        duration: timing.holdMs + timing.fadeMs,
+        fill: "forwards",
+      });
+      expect(animation.frames).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            offset: 1,
+            translate: reduced ? "0 0px" : `0 ${units(-STATUS_PILL.tick.rise)}`,
+          }),
+        ]),
+      );
+      // Loading another cumulative total is a baseline, not a debit animation.
+      status.resetShieldOreSpent(500);
+      status.setStatus({ ...view, ore: 0, shieldOreSpent: 500 }, 64);
+      expect(tick()).toBeUndefined();
+      expect(slot("ore").hidden).toBe(true);
+    },
+  );
 
   it("pads the pill 6 at each end, sets each count 4 from its icon and each divider 6 apart", () => {
     const style = (selector: string) =>
@@ -424,4 +486,46 @@ describe("status pill cargo segments", () => {
       expect(existsSync(new URL(`../../public${url}`, import.meta.url))).toBe(true);
     }
   });
+});
+
+describe("paid shield ore batches", () => {
+  it("starts from the loaded total, emits each crossed paid batch once, and resets a new total", () => {
+    const counter = new ShieldOreSpendCounter();
+    expect(counter.update(29)).toBe(0);
+    expect(counter.update(30)).toBe(10);
+    expect(counter.update(30)).toBe(0);
+    expect(counter.update(39)).toBe(0);
+    expect(counter.update(60)).toBe(30);
+    expect(counter.update(0)).toBe(0);
+    expect(counter.update(9)).toBe(0);
+    expect(counter.update(10)).toBe(10);
+    counter.reset(200);
+    expect(counter.update(200)).toBe(0);
+    expect(counter.update(210)).toBe(10);
+    expect(counter.update()).toBe(0);
+    expect(counter.update(900)).toBe(0);
+  });
+
+  it("rejects non-finite, fractional, negative and unsafe totals as baselines", () => {
+    const counter = new ShieldOreSpendCounter();
+    for (const total of [NaN, Infinity, -1, 0.5, Number.MAX_SAFE_INTEGER + 1]) {
+      expect(counter.update(total)).toBe(0);
+      expect(counter.update(100)).toBe(0);
+    }
+  });
+});
+
+it("retains original ink layers inside the low/empty burgundy panel cutout", () => {
+  const rule = STATUS_PILL_STYLE.split("}").find((part) =>
+    part.includes("[data-tone=empty] .ada-status-bar{"),
+  );
+  expect(rule).toContain(
+    `background:linear-gradient(${STATUS_COLOURS.track},${STATUS_COLOURS.track}),${STATUS_COLOURS.panel}`,
+  );
+  const outer = STATUS_PILL_STYLE.split("}").find((part) =>
+    part.includes("[data-tone=empty]::before{"),
+  );
+  expect(outer).toContain(`background:${STATUS_COLOURS.lowPanel}`);
+  expect(outer).toContain("clip-path:polygon(evenodd");
+  expect(STATUS_PILL_STYLE).not.toContain("#100e17");
 });

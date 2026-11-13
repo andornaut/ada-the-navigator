@@ -27,6 +27,7 @@ export const STATUS_COLOURS = {
   divider: "#57536e",
   flash: "#ffffff",
   low: "#e4574e",
+  lowPanel: "#532e35",
   lowPeak: "#ff8a80",
   // The ore +N tick: ore's light rust (art/controls.md "Status pill").
   oreTick: "#eaa676",
@@ -177,6 +178,25 @@ export function shieldMarkColour(tone: ShieldTone, pulse: number): string {
     : STATUS_COLOURS.low;
 }
 
+/** Paid-ore batch boundaries; initializing or replacing a flight never replays old ticks. */
+export class ShieldOreSpendCounter {
+  private previous: number | undefined;
+
+  reset(total?: number): void {
+    this.previous = Number.isSafeInteger(total) && total! >= 0 ? total : undefined;
+  }
+
+  update(total?: number): number {
+    const previous = this.previous;
+    this.reset(total);
+    if (previous === undefined || this.previous === undefined || this.previous < previous) {
+      return 0;
+    }
+    const batch = STATUS_PILL.ore.oreSpendBatch;
+    return (Math.floor(this.previous / batch) - Math.floor(previous / batch)) * batch;
+  }
+}
+
 // An exact count, en-US grouped: the counts' accessible labels and the Ship card
 // (gameplay/economy.md). The pill draws its counts and +N ticks with pillCount.
 const COUNT_FORMAT = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
@@ -246,6 +266,12 @@ export function statusSegments(view: Pick<StatusView, "aboard" | "ore">): ("aboa
   ];
 }
 
+// Cut the bar out of the low panel so its two original ink layers still composite over the field.
+const TRACK_LEFT = SHIELD_PILL.padding.left + SHIELD_PILL.icon + SHIELD_PILL.iconGap;
+const TRACK_TOP = (SHIELD_PILL.pill.height - SHIELD_PILL.bar.height) / 2;
+const TRACK_RIGHT = `calc(${units(TRACK_LEFT)} + var(--shield-bar))`;
+const TRACK_BOTTOM = units(TRACK_TOP + SHIELD_PILL.bar.height);
+
 export const STATUS_PILL_STYLE = `
 .ada-controls .ada-status{
   position:absolute;
@@ -287,6 +313,30 @@ export const STATUS_PILL_STYLE = `
   --shield-rim:${STATUS_COLOURS.rim};
   --shield-pill:${units(shieldPillWidth(1))};
   --shield-bar:${units(shieldBarWidth(1))}
+}
+.ada-controls .ada-shield[data-tone=low],
+.ada-controls .ada-shield[data-tone=empty]{
+  background:transparent;
+  isolation:isolate
+}
+.ada-controls .ada-shield[data-tone=low]::before,
+.ada-controls .ada-shield[data-tone=empty]::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  border-radius:inherit;
+  background:${STATUS_COLOURS.lowPanel};
+  clip-path:polygon(evenodd,0 0,100% 0,100% 100%,0 100%,0 0,
+    ${units(TRACK_LEFT)} ${units(TRACK_TOP)},
+    ${units(TRACK_LEFT)} ${TRACK_BOTTOM},
+    ${TRACK_RIGHT} ${TRACK_BOTTOM},
+    ${TRACK_RIGHT} ${units(TRACK_TOP)},
+    ${units(TRACK_LEFT)} ${units(TRACK_TOP)})
+}
+.ada-controls .ada-shield[data-tone=low] .ada-status-bar,
+.ada-controls .ada-shield[data-tone=empty] .ada-status-bar{
+  background:linear-gradient(${STATUS_COLOURS.track},${STATUS_COLOURS.track}),${STATUS_COLOURS.panel}
 }
 ${SHIELD_PILL.bars
   .map(
@@ -423,6 +473,8 @@ export interface StatusView {
   /** Ore carried this flight, and its icon's spoken label, "Ore". */
   readonly ore: number;
   readonly oreLabel: string;
+  /** Cumulative ore explicitly paid for shield recharge, never inferred from cargo changes. */
+  readonly shieldOreSpent?: number;
   readonly recharging: boolean;
   // Seconds from the last damage until recharge starts.
   readonly rechargeDelay: number;
@@ -441,6 +493,9 @@ function createCounter(
   reducedMotion: () => boolean,
 ): {
   readonly count: HTMLSpanElement;
+  readonly clearSpend: () => void;
+  readonly spending: () => boolean;
+  readonly spend: (amount: number, nowMs: number) => void;
   readonly slot: HTMLSpanElement;
   // The count, its exact accessible label (null: the exact count alone) and the time.
   readonly set: (value: number, label: string | null, nowMs: number) => void;
@@ -457,7 +512,7 @@ function createCounter(
   let lastBump = -Infinity;
   const gain = (amount: number, now: number) => {
     const reduced = reducedMotion();
-    if (!reduced && now - lastBump >= STATUS_TIMING.bumpMs) {
+    if (amount > 0 && !reduced && now - lastBump >= STATUS_TIMING.bumpMs) {
       lastBump = now;
       count.animate(
         [
@@ -468,14 +523,14 @@ function createCounter(
         { duration: STATUS_TIMING.bumpMs, easing: "ease-out" },
       );
     }
-    const total = (tick?.amount ?? 0) + amount;
+    const total = (tick && Math.sign(tick.amount) === Math.sign(amount) ? tick.amount : 0) + amount;
     tick?.animation.cancel();
     tick?.node.remove();
     const node = document.createElement("span");
     node.className = "ada-status-tick";
     node.dataset.kind = kind;
     node.setAttribute("aria-hidden", "true");
-    node.textContent = `+${pillCount(total)}`;
+    node.textContent = `${total < 0 ? "-" : "+"}${pillCount(Math.abs(total))}`;
     slot.append(node);
     const timing = reduced ? STATUS_TIMING.tickReduced : STATUS_TIMING.tick;
     const duration = timing.holdMs + timing.fadeMs;
@@ -502,6 +557,13 @@ function createCounter(
       .catch(() => undefined);
   };
   return {
+    clearSpend() {
+      if (tick && tick.amount < 0) {
+        tick.animation.cancel();
+        tick.node.remove();
+        tick = null;
+      }
+    },
     count,
     set(value, label, nowMs) {
       const next = pillCount(value);
@@ -519,6 +581,12 @@ function createCounter(
       shown = value;
     },
     slot,
+    spend: (amount, nowMs) => {
+      if (amount > 0) {
+        gain(-amount, nowMs);
+      }
+    },
+    spending: () => (tick?.amount ?? 0) < 0,
   };
 }
 
@@ -592,6 +660,7 @@ export function createStatusPill(
   parent.append(root, shieldRoot);
 
   const shieldBar = new ShieldBar();
+  const shieldOre = new ShieldOreSpendCounter();
 
   const place = (node: HTMLElement, from: number, to: number) => {
     const offset = SHIELD_PILL.bar.inset - SHIELD_PILL.bar.rim;
@@ -612,6 +681,11 @@ export function createStatusPill(
     dispose: () => {
       root.remove();
       shieldRoot.remove();
+    },
+    /** Set the loaded/new flight total before its first status update. */
+    resetShieldOreSpent(total?: number): void {
+      shieldOre.reset(total);
+      ore.clearSpend();
     },
     setShown(shown: boolean): void {
       root.hidden = !shown;
@@ -652,12 +726,13 @@ export function createStatusPill(
       meter.setAttribute("aria-valuemax", String(view.capacity));
       meter.setAttribute("aria-valuenow", String(Math.max(0, Math.round(view.shield))));
       stardust.set(view.stardust, view.stardustLabel, nowMs);
+      ore.set(view.ore, null, nowMs);
+      ore.spend(shieldOre.update(view.shieldOreSpent), nowMs);
       const segments = statusSegments(view);
-      const hasOre = segments.includes("ore");
+      const hasOre = segments.includes("ore") || ore.spending();
       oreDivider.hidden = !hasOre;
       oreIcon.hidden = !hasOre;
       ore.slot.hidden = !hasOre;
-      ore.set(view.ore, null, nowMs);
       if (oreIcon.getAttribute("aria-label") !== view.oreLabel) {
         oreIcon.setAttribute("aria-label", view.oreLabel);
       }

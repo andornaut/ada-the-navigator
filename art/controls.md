@@ -293,10 +293,17 @@ The in-flight status pill holds the Stardust count and, while Ada carries
 them, her ore and her job or story item or towed craft, beside the pause
 button; the shield pill at the bottom centre holds the shield icon and bar.
 Geometry, states and timing are `STATUS_PILL` and `SHIELD_PILL` in
-[Layout](layout.md#status-pill). Both panels and the bar's track are
-translucent ink; every mark and the count draw fully opaque over them. The
-colours, the light-field outline and the contrast below apply to the shield
-pill wherever it sits.
+[Layout](layout.md#status-pill). The normal panels and the bar's track use
+translucent ink. Low and depleted shields use the dark muted
+burgundy outer panel `STATUS_COLOURS.lowPanel` (`#532e35`); the remaining
+fill, icon and rim retain refusal red `#e4574e` (the existing low pulse and
+reduced-motion behavior remain). At zero the fill is empty, with the red
+icon and rim visible. The inner track retains its current dark gray
+appearance: exclude the bar from the burgundy layer and composite the
+original track and normal-panel ink layers over the field, using the
+canonical colours rather than a copied flattened colour. Every mark and
+the count draw fully opaque. The contrast tables describe the normal ink
+panel. The light-field outline applies to the shield pill wherever it sits.
 
 | Token           | Colour    | Use                                                                                      |
 | --------------- | --------- | ---------------------------------------------------------------------------------------- |
@@ -314,7 +321,7 @@ pill wherever it sits.
 | Stardust tick   | `#f4d98a` | `+N` label, Stardust body gold, with a 1 px ink outline                                  |
 | Ore tick        | `#eaa676` | `+N` label, ore's light rust, with a 1 px ink outline                                    |
 
-The panel is ink at 0.65 over the field. The track is its own ink layer at
+The normal panel is ink at 0.65 over the field. The track is its own ink layer at
 0.65 drawn over the pill panel, not a hole in it: 0.8775 combined over the
 field, so it composites to `#1a1627` over the base field and
 `#2f2a33` over Sunflower.

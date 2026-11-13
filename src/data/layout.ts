@@ -330,6 +330,8 @@ export const STATUS_PILL_LAYOUT = {
   iconGap: SPACING.rowGap,
   // The narrowest slot: one digit, so "0" keeps its icon and gap.
   minCount: COUNT_ADVANCE.digit * COUNT_EM,
+  // Whole ore paid per shield-recharge HUD debit tick.
+  ore: { oreSpendBatch: 10 },
   padding: 6,
   pill: PILL,
   stardustIcon: 20,
