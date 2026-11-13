@@ -1089,17 +1089,18 @@ points of interest with shops.
 Visual effects distinguish hits, shield damage, destroyed ships, pickups and
 deposits. Sound effects remain restrained. Reduced motion skips screen shakes.
 Asteroids come in more sizes, including much larger ones, with irregular shapes
-and variety; about a quarter of small and medium asteroids drift in slow closed
-loops around their starting point. Every asteroid can be destroyed; bigger ones take more shots and release more
-Stardust. Drifting asteroids follow fixed loops that never overlap other rocks,
-stations or destinations; ships bounce off them, with bump damage as for any
-asteroid. Large
+and variety. Ordinary asteroids have stationary centres and may rotate slowly;
+they do not translate in circles or oscillate. Legacy orbiting rocks settle at
+their current positions without a position jump, with HP and drops unchanged.
+Every asteroid can be destroyed; bigger ones take more shots and release more
+Stardust. Ships bounce off them, with bump damage as for any asteroid. Large
 and huge asteroids stay out of passages and clear of stations, destinations and
 launch points. Background objects stay muted
 but carry a light tint of color; asteroids are play objects, not background.
-Moving obstacles follow fixed paths (straight lines, closed loops or debris
-rivers) and never steer toward Ada. Regions of traveling debris create
-navigation challenges along exploration and quest routes.
+Ballistic debris travels at constant velocity in a straight line and may rotate;
+it never circles, oscillates or steers toward Ada. Regions of traveling debris
+follow their currents and create navigation challenges along exploration and
+quest routes.
 
 Small enemy ships have independent movement, aiming and firing, with solo,
 erratic circling, swarming and pack behaviors. Aggression can begin on sight or
