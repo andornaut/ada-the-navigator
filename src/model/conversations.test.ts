@@ -659,10 +659,18 @@ describe("drone engagements in flight", () => {
     });
   });
 
-  it("switch the General to his named frames once the third holodisk is in", () => {
+  it("drops a stale broadcast and names the General on a fresh three-disk broadcast", () => {
     const model = engaged(2, "swarm", 6, [1, 3]);
+    expect(model.conversation).toMatchObject({ name: "Unknown voice", named: false });
     model.state.progress[2].holodisk = true;
-    expect(model.conversation).toMatchObject({ name: "Admiral Archie", named: true });
+    expect(model.conversation).toBeNull();
+    expect(speakerName(model.state.progress, "general")).toBe("Admiral Archie");
+    const fresh = engaged(2, "swarm", 6, [1, 2, 3]);
+    expect(fresh.conversation).toMatchObject({
+      key: "general:2:0",
+      name: "Admiral Archie",
+      named: true,
+    });
   });
 });
 
@@ -867,13 +875,16 @@ describe("conversations in the game", () => {
   it("freeze under a story panel and resume with the flight", () => {
     const model = flying();
     model.step(0.05, idle);
-    const key = model.conversation?.key;
+    const before = model.conversation;
+    expect(before).not.toBeNull();
+    const { elapsed, key } = before!;
     model.state.dialogue = { choices: [], context: "test", text: "", title: "" };
     for (let i = 0; i < 200; i++) {
       model.step(0.05, idle);
     }
-    expect(model.conversation?.key).toBe(key);
+    expect(model.conversation).toBeNull();
     model.state.dialogue = null;
+    expect(model.conversation).toMatchObject({ elapsed, key });
     for (let i = 0, steps = lineSteps(lineDuration(model.conversation!.text)); i < steps; i++) {
       model.step(0.05, idle);
     }
