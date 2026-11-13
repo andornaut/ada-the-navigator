@@ -522,6 +522,13 @@ space story runs in three acts:
    the flagship waits and sends word to her friends. The flagship's position then
    shows as a waypoint, marked like the holodisk waypoint, at least 6000 world
    units from every settlement.
+   The authored first, second and third settlement exchanges must follow actual
+   liberation order, not the settlement's fixed destination number. The first two
+   use Blurbs; only the third uses Dollop's flagship lead and message to friends.
+   Keep the actual destination id as the interaction's outcome target. Save the
+   freed-settlement order and reuse each settlement's assigned exchange on revisit
+   and reload; revisiting must not reorder it. A settlement reached early must
+   never expose Dollop's third-liberation lead.
 2. **Fleet battle.** When Ada comes within 1500 world units of the waypoint, the
    battle begins: her allies jump in beside her (see
    [Ships](ships.md#finale-allies)), and three waves of drones come, each two
@@ -1067,7 +1074,26 @@ Conversations come from data, each with a trigger and a priority: warnings
 Penny, then lore. A higher priority interrupts a lower one, which resumes after it
 if still relevant. A queued conversation re-checks its trigger when its turn
 comes and is dropped if the trigger no longer holds, such as Penny's lost-item
-line once Ada has left the item's range. Triggers include the first flight's
+line once Ada has left the item's range.
+
+Quiet lines and broadcasts must also pass data-defined chronology eligibility
+using the current recovered-disk count and chapter completion state. Recheck
+before selection and display, while queued, on interrupted resumption and every
+line advance; do not expose a stale continuation after a state change. Skip an
+ineligible quiet candidate and continue to another eligible unseen line. An
+unheard ineligible line is not marked heard. Preserve saved one-time flags for
+lines already shown, and keep memory and broadcast order tied to recovered
+disk count rather than galaxy number.
+
+- Cartwheel `quiet:2:whole` and Phantom `quiet:6:whole` require at most 5 disks.
+- Andromeda `quiet:5:disks` requires at least 3 disks, when Astra has remembered
+  scattering them.
+- Phantom `arrival:6` and `quiet:6:together` require its space quest to be
+  incomplete; they must not anticipate the confrontation after the finale.
+- A queued or resumed broadcast still requires exactly its authored held-disk
+  count and any galaxy restriction, as well as its drone-danger trigger.
+
+Triggers include the first flight's
 lessons (each shown once, skipped when the player has already done the action),
 a first arrival in a galaxy, meeting each alien group, a newly mapped destination
 or station, a return to a mapped station (once per station each flight), a
