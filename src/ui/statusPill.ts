@@ -12,10 +12,11 @@ import {
 } from "./layout/playView.ts";
 import { TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
+import { FOCUS_STYLE } from "./modal.ts";
 
 // The HUD status pill (art/layout.md "Status pill", art/controls.md "Status pill"): one ink pill
-// beside pause holding the Stardust count, then, while Ada carries them, her ore count and the job
-// or story item or towed craft (gameplay/rules.md), each after its own divider; Stardust and ore
+// beside pause holding the Stardust and ore counts, then any carried job or story item or
+// towed craft (gameplay/rules.md), each after its own divider; Stardust and ore
 // gains tick "+N" under their counts. The shield sits apart in its own pill at the bottom centre
 // (SHIELD_PILL). The bar draws in CSS at logical units with fractional widths; the shield's states
 // are a pure function of what the model shows each frame, so they are tested without a browser.
@@ -287,7 +288,7 @@ export const STATUS_PILL_STYLE = `
   pointer-events:none
 }
 .ada-controls .ada-status .ada-resource-target{pointer-events:auto;cursor:pointer}
-.ada-controls .ada-status [role=button]:focus-visible{outline:1px solid currentColor;outline-offset:1px}
+.ada-controls .ada-status [role=button]:focus-visible{${FOCUS_STYLE}}
 /* With the pause button hidden the pill is the leftmost art, on the HUD rect's left edge. */
 .ada-controls .ada-pause[hidden] ~ .ada-status{
   left:${fromHudEdge("left", STATUS_PILL.xAlone)}
