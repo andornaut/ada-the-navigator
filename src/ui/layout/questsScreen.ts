@@ -1,4 +1,5 @@
 import { units } from "./css.ts";
+import { BUTTON_GAP } from "./tokens.ts";
 
 /** Approved quest card geometry, in logical pixels. */
 export const QUEST_ROUTE_ARROW = {
@@ -94,7 +95,10 @@ export const QUESTS_SCREEN_STYLE = `
   justify-content:flex-end;
   gap:${units(8)};
   flex:none}
-.ada-controls .ada-quest-footer .ada-button:first-child:not(:last-child){margin-right:auto}
+.ada-controls .ada-quest-footer:has(>[data-action="quest-other"]){gap:${units(BUTTON_GAP)}}
+.ada-controls .ada-quest-footer .ada-button:first-child:not(:last-child):not([data-action="quest-other"]){
+  margin-right:auto
+}
 .ada-controls .ada-quest-list{flex:1;
   min-height:0;
   display:flex;
