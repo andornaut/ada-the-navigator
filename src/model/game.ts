@@ -32,6 +32,7 @@ import { HOLODISKS } from "../data/holodisks.ts";
 import { carriedItemName, STORY_ITEM_NAMES } from "../data/itemNames.ts";
 import { JOB_TUNING, type JobType } from "../data/jobs.ts";
 import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
+import { holodiskInsertion } from "../data/premiseCopy.ts";
 import { galaxyProjects, PROJECT_THANKS } from "../data/projects.ts";
 import { SCREEN } from "../data/screen.ts";
 import { galaxyCard, OVERNIGHT_SLEEP } from "../data/storybook.ts";
@@ -1532,7 +1533,8 @@ export class GameModel {
   private holodiskMoment(): void {
     const { inserted, memories } = this.content.premise.holodisk;
     this.state.dialogue = { choices: [], context: HOLODISK_MOMENT, text: "", title: "" };
-    this.showScene(holodiskScene(inserted, memories[holodisksHeld(this.state.progress) - 1] ?? ""));
+    const held = holodisksHeld(this.state.progress);
+    this.showScene(holodiskScene(holodiskInsertion(held, inserted), memories[held - 1] ?? ""));
   }
   step(dt: number, input: FlightInput): void {
     this.flightEvents = [];
