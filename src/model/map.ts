@@ -3,7 +3,7 @@ import type { EconomyCatalog } from "../data/economy.ts";
 import type { JobType, LandmarkKind } from "../data/jobs.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import { stationById, stationsNear } from "./stations.ts";
+import { stationsNear, worldStationById } from "./stations.ts";
 import type { FlightState, Vec } from "./types.ts";
 import { chunkCoordinates } from "./visited.ts";
 
@@ -324,7 +324,7 @@ export function localMap(context: MapContext): LocalMap {
       : [];
   });
   const stations = progress.stations.flatMap((id): MapPlace[] => {
-    const site = stationById(catalog, galaxy, id);
+    const site = worldStationById(context, catalog, galaxy, id);
     return site
       ? [
           {

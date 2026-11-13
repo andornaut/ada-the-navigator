@@ -12,7 +12,7 @@ import {
   objectiveDestination,
   questItemDestination,
 } from "./indicators.ts";
-import { stationIndicatorTarget, stationsNear } from "./stations.ts";
+import { stationIndicatorTarget, stationsNear, worldStationInCell } from "./stations.ts";
 import type { SpaceObject } from "./types.ts";
 
 const object = (id: string, kind: SpaceObject["kind"], x: number, extra = {}): SpaceObject => ({
@@ -282,4 +282,22 @@ it("uses the shortest seam image only with explicit torus context, without discl
     ),
   ).toEqual([]);
   expect(destination.x).toBe(-side / 2 + 100);
+});
+
+it("uses the periodic station query's canonical identity and suppresses already discovered stations", () => {
+  const worldSide = 1_152_000;
+  const site = worldStationInCell({ worldSide }, ECONOMY, 1, { x: -48, y: -48 })!;
+  const from = context({
+    flight: { objects: [], player: { x: site.x + worldSide, y: site.y } },
+    objective: null,
+    progress: { known: [], stations: [] },
+    worldSide,
+  });
+  expect(indicatorTargets(INDICATOR_SOURCES, from)).toEqual([
+    { id: site.id, kind: "station", x: site.x + worldSide, y: site.y },
+  ]);
+  expect(
+    indicatorTargets(INDICATOR_SOURCES, { ...from, progress: { known: [], stations: [site.id] } }),
+  ).toEqual([]);
+  expect(site.id).toBe("station:-48,-48");
 });

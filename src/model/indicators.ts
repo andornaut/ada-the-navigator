@@ -1,7 +1,7 @@
 import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import { ECONOMY } from "../data/economy.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import { stationIndicatorTarget } from "./stations.ts";
+import { worldStationIndicatorTarget } from "./stations.ts";
 import type { FlightState, GalaxyProgress } from "./types.ts";
 import { nearestImage } from "./worldGeometry.ts";
 
@@ -69,8 +69,15 @@ export const INDICATOR_SOURCES: Readonly<Record<IndicatorKind, IndicatorSource>>
       : mappedDestination(context, context.objective, "objective"),
   questItem: (context) => mappedDestination(context, context.questItem, "questItem"),
   // The nearest undiscovered station within the economy's indicator range (stations.ts).
-  station: ({ flight, galaxy, progress }) => {
-    const site = stationIndicatorTarget(ECONOMY, galaxy, progress.stations, flight.player);
+  station: (context) => {
+    const { flight, galaxy, progress } = context;
+    const site = worldStationIndicatorTarget(
+      context,
+      ECONOMY,
+      galaxy,
+      progress.stations,
+      flight.player,
+    );
     return site ? [{ id: site.id, kind: "station", x: site.x, y: site.y }] : [];
   },
 };

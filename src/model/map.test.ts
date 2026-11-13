@@ -24,7 +24,7 @@ import {
   validExplored,
 } from "./map.ts";
 import { restoreSave } from "./save.ts";
-import { stationInCell, stationsNear } from "./stations.ts";
+import { stationInCell, stationsNear, worldStationInCell } from "./stations.ts";
 import type { GameState } from "./types.ts";
 
 // A first flight in galaxy one with nothing discovered.
@@ -653,4 +653,25 @@ it("blocks generic Travel only for Needle's floating disk while preserving other
     });
     expect(mapped.places.find(({ id }) => id === "holodisk")?.travel).toBe(galaxy !== 4);
   }
+});
+
+it("resolves discovered periodic stations by canonical ID without exposing other stations", () => {
+  const model = flying();
+  const worldSide = 1_152_000;
+  const site = worldStationInCell({ worldSide }, ECONOMY, 1, { x: -48, y: -48 })!;
+  const from = { ...context(model, { known: [], stations: [site.id] }), worldSide };
+  expect(localMap(from).places.filter(({ kind }) => kind === "station")).toEqual([
+    {
+      id: site.id,
+      job: false,
+      kind: "station",
+      label: `station:${site.id}`,
+      objective: false,
+      symbol: "station",
+      travel: true,
+      x: site.x,
+      y: site.y,
+    },
+  ]);
+  expect(localMap({ ...from, progress: { known: [], stations: [] } }).places).toEqual([]);
 });
