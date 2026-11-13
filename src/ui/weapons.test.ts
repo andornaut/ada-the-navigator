@@ -57,15 +57,12 @@ describe("HUD weapon levels", () => {
     );
   });
 
-  it("edges and haloes a level 2 or 3 disc in its tier, outlined in ink on a light field", () => {
-    expect(rule('.ada-weapon[data-level="2"] .ada-disc')).toContain("--level-edge:#ff8f1f");
-    expect(rule('.ada-weapon[data-level="2"] .ada-disc')).toContain(
-      "--level-halo:rgba(255,143,31,0.45)",
-    );
-    expect(rule('.ada-weapon[data-level="3"] .ada-disc')).toContain("--level-edge:#a66bff");
-    expect(rule('[data-field=light] .ada-weapon[data-level="3"] .ada-disc')).toContain(
-      "--level-outline:",
-    );
+  it("keeps tier colour inside the shared weapon annulus without exterior halo or outline", () => {
+    for (const level of [2, 3] as const) {
+      const tier = rule(`.ada-weapon[data-level="${level}"] .ada-disc`);
+      expect(tier).toContain(`--weapon-ring:${LEVEL_PIPS[level]}`);
+    }
+    expect(WEAPON_STYLE).not.toMatch(/--level-(?:edge|halo|outline):/u);
     expect(rule('.ada-weapon[data-level="1"] .ada-disc')).toBeUndefined();
   });
 });
@@ -143,9 +140,19 @@ describe("HUD weapon buttons", () => {
         .filter((part) => part.includes(`${selector}{`))
         .at(-1);
     expect(rule(".ada-controls .ada-weapon .ada-disc")).toContain("background:transparent");
-    const ring = rule(".ada-controls .ada-weapon[data-state=selected] .ada-disc::after");
+    const ring = rule(".ada-controls .ada-weapon .ada-disc::after");
     expect(ring).toContain("position:absolute");
-    expect(ring).toContain(`border:${units(2)} solid #ead4aa`);
+    expect(ring).toContain(`inset:${units(HUD_BUTTON.edge)}`);
+    expect(ring).toContain(
+      `border:${units(HUD_BUTTON.annulus - 2 * HUD_BUTTON.edge)} solid var(--weapon-ring, #75748c)`,
+    );
+    expect(ring).toContain(
+      `box-shadow:0 0 0 ${units(HUD_BUTTON.edge)} #181425,\n    inset 0 0 0 ${units(HUD_BUTTON.edge)} #181425`,
+    );
+    expect(rule(".ada-controls .ada-weapon .ada-disc")).toContain("box-shadow:none");
+    expect(rule(".ada-controls .ada-weapon[data-state=selected] .ada-disc::after")).toContain(
+      "border-color:#ead4aa",
+    );
     expect(ring).toContain("background:transparent");
     expect(ring).toContain("pointer-events:none");
     expect(ring).not.toMatch(/width:|height:|transform:/u);
@@ -208,6 +215,19 @@ describe("HUD weapon buttons", () => {
       );
     }
     expect(WEAPON_STYLE).toContain("background:#181425");
+  });
+
+  it("backs finite ammo with the canonical navy pill and an inset ink rim", () => {
+    const ammo = WEAPON_STYLE.split("}").find((part) => part.includes(".ada-controls .ada-ammo{"));
+    expect(ammo).toContain(`background:${HUD_DISC_STATES.idle.face}`);
+    expect(ammo).toContain(`box-shadow:inset 0 0 0 ${units(HUD_BUTTON.edge)} #181425`);
+    expect(ammo).toContain(`height:${units(HUD_AMMO_COUNT.height)}`);
+    expect(ammo).toContain(`padding:0 ${units(HUD_AMMO_COUNT.padding)}`);
+    expect(ammo).toContain(`border-radius:${units(HUD_AMMO_COUNT.radius)}`);
+    const shared = hudDiscStyle(".shared-button", ".disc");
+    expect(shared).toContain(":focus-visible .disc{");
+    expect(shared).toContain("outline:");
+    expect(shared).toContain("outline-offset:");
   });
 
   it.each([

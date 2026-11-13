@@ -115,12 +115,6 @@ export const LEVEL_PIPS = {
   3: UPGRADE_TIER_COLOURS[3],
 } as const;
 
-/** A level's halo colour, the tier at alpha 0.45. */
-const halo = (hex: string) => {
-  const value = Number.parseInt(hex.slice(1), 16);
-  return `rgba(${(value >> 16) & 255},${(value >> 8) & 255},${value & 255},0.45)`;
-};
-
 // One HUD disc button's chrome: a target that is its press area, a smooth disc centred in it, and
 // a glyph centred on the disc, drawn in CSS at logical units so it stays sharp at any scale. The
 // start screen's Settings shares it.
@@ -195,7 +189,8 @@ ${hudDiscStyle(".ada-controls .ada-weapon", ".ada-disc")}
 }
 .ada-controls .ada-weapon .ada-disc{
   position:relative;
-  background:transparent
+  background:transparent;
+  box-shadow:none
 }
 .ada-controls .ada-weapon[data-state=idle] .ada-disc::before{
   opacity:0.55
@@ -223,7 +218,8 @@ ${hudDiscStyle(".ada-controls .ada-weapon", ".ada-disc")}
   height:${units(HUD_AMMO_COUNT.height)};
   padding:0 ${units(HUD_AMMO_COUNT.padding)};
   border-radius:${units(HUD_AMMO_COUNT.radius)};
-  background:${INK};
+  background:${HUD_DISC_STATES.idle.face};
+  box-shadow:inset 0 0 0 ${units(HUD_BUTTON.edge)} ${INK};
   font:${font(TYPE.count)};
   white-space:nowrap;
   color:${AMMO_COUNT_TEXT.normal};
@@ -258,16 +254,21 @@ ${hudDiscStyle(".ada-controls .ada-weapon", ".ada-disc")}
 .ada-controls .ada-weapon[data-state=selected] .ada-disc{
   background:${HUD_DISC_STATES.selected.face}
 }
-/* The cream band sits inside the existing ink annulus, with no centre fill or size change. */
-.ada-controls .ada-weapon[data-state=selected] .ada-disc::after{
+/* Every weapon uses one annulus inside the canonical disc, with ink on both edges. */
+.ada-controls .ada-weapon .ada-disc::after{
   content:"";
   position:absolute;
   inset:${units(HUD_BUTTON.edge)};
   box-sizing:border-box;
-  border:${units(HUD_DISC_STATES.selected.edge - 2 * HUD_BUTTON.edge)} solid ${HUD_DISC_STATES.selected.glyph};
+  border:${units(HUD_BUTTON.annulus - 2 * HUD_BUTTON.edge)} solid var(--weapon-ring, ${HUD_DISC_STATES.empty.glyph});
   border-radius:50%;
   background:transparent;
+  box-shadow:0 0 0 ${units(HUD_BUTTON.edge)} ${INK},
+    inset 0 0 0 ${units(HUD_BUTTON.edge)} ${INK};
   pointer-events:none
+}
+.ada-controls .ada-weapon[data-state=selected] .ada-disc::after{
+  border-color:${HUD_DISC_STATES.selected.glyph}
 }
 .ada-controls .ada-weapon:disabled{
   cursor:default
@@ -275,11 +276,7 @@ ${hudDiscStyle(".ada-controls .ada-weapon", ".ada-disc")}
 ${([2, 3] as const)
   .map(
     (level) => `.ada-controls .ada-weapon[data-level="${level}"] .ada-disc{
-  --level-edge:${UPGRADE_TIER_COLOURS[level]};
-  --level-halo:${halo(UPGRADE_TIER_COLOURS[level])}
-}
-.ada-controls .ada-weapon-selector[data-field=light] .ada-weapon[data-level="${level}"] .ada-disc{
-  --level-outline:${INK}
+  --weapon-ring:${UPGRADE_TIER_COLOURS[level]}
 }`,
   )
   .join("\n")}
