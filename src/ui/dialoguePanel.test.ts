@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CAST, castSheet } from "../data/cast.ts";
 import { CONTENT } from "../data/content.ts";
-import { createInteractionCard } from "./conversation.ts";
+import { createConversationBox, createInteractionCard } from "./conversation.ts";
 import { createDialoguePanel } from "./dialoguePanel.ts";
 import { STORY_PORTRAITS, storyPortrait, storyPortraitFrame, storyTabColour } from "./storybook.ts";
 
@@ -52,6 +52,13 @@ class Element {
   remove() {}
   replaceChildren(...nodes: Element[]) {
     this.children = nodes;
+  }
+  toggleAttribute(name: string, on: boolean) {
+    if (on) {
+      this.attributes.set(name, "");
+    } else {
+      this.attributes.delete(name);
+    }
   }
   setAttribute(name: string, value: string) {
     this.attributes.set(name, value);
@@ -123,7 +130,7 @@ describe("shared Earth and space dialogue presentation", () => {
     expect((panel.body.querySelector(".ada-story-tab") as HTMLElement).hidden).toBe(true);
     expect((panel.body.querySelector(".ada-story-frame") as HTMLElement).hidden).toBe(true);
   });
-  it("separates gold topic choices from navigation, uses canonical Skip and has only the close X", () => {
+  it("separates neutral topics from navigation and keeps Skip in the shared Earth top slot", () => {
     setup();
     const parent = new Element("div");
     const interaction = createInteractionCard(parent as unknown as HTMLElement, {
@@ -149,8 +156,129 @@ describe("shared Earth and space dialogue presentation", () => {
     navigation.children.find((node) => node.textContent === "Ask more")!.click();
     const choices = parent.all().find((node) => node.className === "ada-story-choices")!;
     expect(choices.children.length).toBeGreaterThan(0);
-    expect(choices.children.every((node) => node.className.includes("ada-primary"))).toBe(true);
-    expect(navigation.children.every((node) => !node.className.includes("ada-primary"))).toBe(true);
+    expect(choices.children.every((node) => !node.className.includes("ada-primary"))).toBe(true);
+    expect(navigation.children.some((node) => node.textContent === CONTENT.labels.next)).toBe(
+      false,
+    );
+    const skip = buttons().find((node) => node.textContent === CONTENT.labels.skip)!;
+    expect(skip.className).toContain("ada-compact");
+    expect(skip.className).toContain("ada-story-skip");
+    expect(navigation.children).not.toContain(skip);
+    expect(
+      parent
+        .all()
+        .find((node) => node.className.includes("ada-dialogue-panel"))!
+        .all(),
+    ).not.toContain(skip);
+    expect(skip.hidden).toBe(false);
+    expect(
+      buttons().filter((node) => node.className.includes("ada-primary")).length,
+    ).toBeLessThanOrEqual(1);
     interaction.dispose();
+  });
+  it("hides Skip at material decisions and cannot bypass or select an outcome", () => {
+    setup();
+    const parent = new Element("div");
+    const choose = vi.fn(),
+      skip = vi.fn();
+    const interaction = createInteractionCard(parent as unknown as HTMLElement, {
+      choose,
+      close: vi.fn(),
+      skip,
+    });
+    interaction.show(1, {
+      choices: [
+        { id: "accept", label: "Accept" },
+        { id: "decline", label: "Decline" },
+      ],
+      context: "test-decision",
+      text: "Decision",
+      title: "Rivet",
+    });
+    const skipButton = parent.all().find((node) => node.dataset.action === "dialogue-skip")!;
+    expect(skipButton.hidden).toBe(true);
+    skipButton.click();
+    expect(skip).not.toHaveBeenCalled();
+    expect(choose).not.toHaveBeenCalled();
+    expect(
+      parent
+        .all()
+        .filter((node) => node.tag === "button" && node.textContent === CONTENT.labels.next),
+    ).toHaveLength(0);
+    parent
+      .all()
+      .find((node) => node.tag === "button" && node.textContent === "Accept")!
+      .click();
+    expect(choose).toHaveBeenCalledExactlyOnceWith("accept");
+    interaction.dispose();
+  });
+
+  it("returns from a selected background answer to essential dialogue without reopening the menu", () => {
+    setup();
+    const parent = new Element("div");
+    const interaction = createInteractionCard(parent as unknown as HTMLElement, {
+      choose: vi.fn(),
+      close: vi.fn(),
+      skip: vi.fn(),
+    });
+    interaction.show(1, {
+      choices: [{ id: "continue", label: CONTENT.labels.next! }],
+      context: "deliveryComplete",
+      text: "",
+      title: "Rivet",
+    });
+    const paragraph = () =>
+      parent.all().find((node) => node.className === "ada-story-paragraph")!.textContent;
+    const initial = paragraph();
+    parent
+      .all()
+      .find((node) => node.tag === "button" && node.textContent === "Ask more")!
+      .click();
+    const topics = parent.all().find((node) => node.className === "ada-story-choices")!;
+    topics.children[0]!.click();
+    expect(paragraph()).not.toBe(initial);
+    parent
+      .all()
+      .find((node) => node.tag === "button" && node.textContent === CONTENT.labels.next)!
+      .click();
+    expect(paragraph()).toBe(initial);
+    expect(topics.children).toHaveLength(0);
+    parent
+      .all()
+      .find((node) => node.tag === "button" && node.textContent === CONTENT.labels.next)!
+      .click();
+    expect(paragraph()).not.toBe(initial);
+    interaction.dispose();
+  });
+
+  it("has no separate ambient Skip button and retains the existing tap advance route", () => {
+    const host = new Element("div");
+    vi.stubGlobal("document", {
+      createElement: (tag: string) => new Element(tag),
+      getElementById: () => host,
+    });
+    const advance = vi.fn();
+    const legacySkip = vi.fn();
+    const box = createConversationBox(advance, legacySkip);
+    box.render(
+      {
+        elapsed: 0,
+        key: "ambient",
+        mood: "neutral",
+        name: "Penny",
+        named: false,
+        side: "left",
+        speaker: "penny",
+        text: "A line",
+      },
+      true,
+      true,
+    );
+    expect(host.all().filter((node) => node.tag === "button")).toHaveLength(1);
+    expect(host.all().find((node) => node.dataset.action === "conversation-skip")).toBeUndefined();
+    host.children[0]!.click();
+    expect(advance).toHaveBeenCalledTimes(1);
+    expect(legacySkip).not.toHaveBeenCalled();
+    box.dispose();
   });
 });

@@ -20,6 +20,7 @@ import {
   STORY_TAB_COLOURS,
   STORYBOOK_STYLE,
   storyControlsLayout,
+  storyPageView,
   storyPortrait,
   storyPortraitFrame,
   storyTabColour,
@@ -80,6 +81,40 @@ describe("storybook page", () => {
     );
     expect(rule(".ada-controls .ada-story-choice-column")).not.toContain("overflow");
     expect(rule(".ada-controls .ada-story-controls")).toContain("margin-top:auto");
+  });
+
+  it("hides Next while optional questions are offered without treating them as material decisions", () => {
+    const page = {
+      background: "aboard" as const,
+      id: "questions",
+      next: "done",
+      questions: [{ label: "Ask", next: "answer" }],
+      text: "",
+    };
+    expect(storyPageView(page, page.questions, false, true)).toMatchObject({
+      canSkip: true,
+      next: false,
+    });
+    expect(storyPageView(page, [], true, true)).toMatchObject({ canSkip: true, next: true });
+    const decision = {
+      background: "aboard" as const,
+      choices: [
+        { label: "First", next: "one" },
+        { label: "Second", next: "two" },
+      ],
+      id: "choice",
+      text: "",
+    };
+    expect(storyPageView(decision, decision.choices, false, true)).toMatchObject({
+      canSkip: false,
+      next: false,
+    });
+  });
+
+  it("uses a single occupied navigation slot when Previous is unavailable", () => {
+    const single = rule(".ada-controls .ada-story-controls.ada-story-no-previous");
+    expect(single).toContain('grid-template-areas:"next"');
+    expect(single).toContain("grid-template-columns:minmax(0,1fr)");
   });
 
   it("sets the story text 18 on 26 and the heading as the card title", () => {

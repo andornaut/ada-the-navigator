@@ -35,7 +35,10 @@ keeper's portrait, name tab and current greeting on the text side; balance, Jobs
 and Shop choices on the action side. Next line and Undock are separate secondary
 navigation controls. The generated station's keeper supplies the speaker; a
 station without an authored keeper shows the station title and menu without
-speech, a portrait or a name tab. The overlay has one close X and no duplicate Close button.
+speech, a portrait or a name tab. Jobs is neutral; Shop is the only primary
+action. Skip uses the shared Earth top position while more greeting lines
+remain, advances only those lines, and never selects a menu action.
+The overlay has one close X and no duplicate Close button.
 
 ## Shop
 

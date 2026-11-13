@@ -618,7 +618,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   for (const button of [undock, openShop, openJobs]) {
     button.classList.add("ada-story-button");
   }
-  openJobs.classList.add("ada-primary");
   const nextGreeting = createButton(labels.nextLine);
   nextGreeting.classList.add("ada-story-button");
   const keeper = {
@@ -628,6 +627,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       stationCard.title.hidden = welcome.title === "";
       stationCard.showLine(welcome.speaker, welcome.text);
       nextGreeting.hidden = !greeting || greeting.index >= greeting.count - 1;
+      stationCard.skip.hidden = nextGreeting.hidden;
       stationCard.fit();
     },
   };
@@ -635,6 +635,27 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     options.advanceGreeting();
     keeper.render(options.greeting());
     if (nextGreeting.hidden) {
+      focusTarget(openShop);
+    }
+  });
+  stationCard.skip.addEventListener("click", () => {
+    const initial = options.greeting();
+    if (!initial) {
+      return;
+    }
+    for (let step = 0; step < initial.count; step++) {
+      const current = options.greeting();
+      if (!current || current.index >= current.count - 1) {
+        break;
+      }
+      options.advanceGreeting();
+      const next = options.greeting();
+      if (!next || next.index <= current.index) {
+        break;
+      }
+    }
+    keeper.render(options.greeting());
+    if (stationCard.skip.hidden) {
       focusTarget(openShop);
     }
   });

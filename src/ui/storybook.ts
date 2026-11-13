@@ -85,7 +85,7 @@ export function storyPageView(
   return {
     background: page.background,
     canGoBack,
-    canSkip,
+    canSkip: canSkip && !page.choices?.length,
     ...(page.heading ? { heading: page.heading } : {}),
     text: page.text,
     ...(page.speaker ? { speaker: page.speaker } : {}),
@@ -94,7 +94,7 @@ export function storyPageView(
     ...(page.id === "room" ? { room: true } : {}),
     ...(page.sleep ? { sleep: true } : {}),
     ...(page.holodisk ? { holodisk: true } : {}),
-    next: !page.choices,
+    next: !page.choices && choices.length === 0,
   };
 }
 
@@ -445,6 +445,14 @@ ${STORY_PORTRAIT_RULES}
   grid-template-areas:"previous next";
   gap:${units(SMALL_BUTTON_GAP)}
 }
+.ada-controls .ada-story-controls.ada-story-no-previous{
+  grid-template-columns:minmax(0,1fr);
+  grid-template-areas:"next"
+}
+.ada-controls .ada-story-controls.ada-story-no-next{
+  grid-template-columns:minmax(0,1fr);
+  grid-template-areas:"previous"
+}
 .ada-controls .ada-story-controls.ada-story-beside{
   grid-template-columns:max-content minmax(0, 1fr)
 }
@@ -662,7 +670,10 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     });
     choices.replaceChildren(...buttons);
     choices.hidden = buttons.length === 0;
-    previous.disabled = !page.canGoBack;
+    previous.hidden = !page.canGoBack;
+    controls.hidden = !page.canGoBack && !page.next;
+    controls.classList.toggle("ada-story-no-previous", !page.canGoBack);
+    controls.classList.toggle("ada-story-no-next", !page.next);
     next.hidden = !page.next;
     next.textContent = page.action ?? labels.next;
     // A named action too wide for its half sits beside Previous when both fit at their own widths,
@@ -671,7 +682,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     controls.classList.remove("ada-story-beside", "ada-story-wide");
     controls.replaceChildren(previous, next);
     let layout: StoryControlsLayout = "halves";
-    if (page.next && page.action !== undefined) {
+    if (page.canGoBack && page.next && page.action !== undefined) {
       const unit = readViewUnit(controls);
       previous.style.width = "max-content";
       next.style.width = "max-content";

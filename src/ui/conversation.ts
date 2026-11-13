@@ -13,10 +13,8 @@ export {
   TAB_COLOURS,
 } from "./dialoguePortraits.ts";
 import { controlHelpText, createControlHelp } from "./controlHelp.ts";
-import { TEXT_BUTTON } from "./layout/controls.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { font, units, VIEW_HOST_ID } from "./layout/css.ts";
-import { SPACING } from "./layout/tokens.ts";
 import { createButton, FOCUS_STYLE } from "./modal.ts";
 import { CONVERSATION_SLOT, PANEL_BACKGROUND } from "./notice.ts";
 import { refuse } from "./refusal.ts";
@@ -186,11 +184,6 @@ ${PORTRAIT_RULES}
 
 ${TAB_RULES}
 ${INTERACTION_STYLE}
-.ada-conversation-skip-area{${CONVERSATION_SLOT};background:transparent;pointer-events:none;z-index:6}
-.ada-conversation-skip-area[hidden]{display:none}
-.ada-conversation-skip-area button{position:absolute;right:0;
- top:${units(CONVERSATION_BOX.height + SPACING.gap)};pointer-events:auto;
- min-height:${units(TEXT_BUTTON.height)};font:${font(label)}}
 `;
 
 export interface ConversationBox {
@@ -199,7 +192,8 @@ export interface ConversationBox {
   render(line: ConversationLineView | null, desktop: boolean, reducedMotion: boolean): void;
 }
 
-export function createConversationBox(onAdvance: () => void, onSkip?: () => void): ConversationBox {
+export function createConversationBox(onAdvance: () => void, onSkip?: () => void): ConversationBox;
+export function createConversationBox(onAdvance: () => void): ConversationBox {
   const root = document.createElement("button");
   root.type = "button";
   root.className = "ada-conversation";
@@ -222,27 +216,17 @@ export function createConversationBox(onAdvance: () => void, onSkip?: () => void
   root.append(frame, column, name);
   root.addEventListener("click", onAdvance);
   document.getElementById(VIEW_HOST_ID)?.append(root);
-  const skipArea = document.createElement("div");
-  skipArea.className = "ada-conversation-skip-area";
-  skipArea.hidden = true;
-  const skip = createButton(CONTENT.labels.skip ?? "");
-  skip.dataset.action = "conversation-skip";
-  skip.addEventListener("click", () => onSkip?.());
-  skipArea.append(skip);
-  document.getElementById(VIEW_HOST_ID)?.append(skipArea);
   let shown = "";
   let shownFrame = -1;
   return {
     dispose: () => {
       root.remove();
-      skipArea.remove();
     },
     render(line, desktop, reducedMotion) {
       const key = line ? `${line.key}:${desktop}:${line.name}` : "";
       if (key !== shown) {
         shown = key;
         root.hidden = line === null;
-        skipArea.hidden = line === null || !onSkip;
         if (line) {
           root.dataset.side = line.side;
           root.dataset.speaker = line.speaker;
@@ -295,8 +279,8 @@ export function createInteractionCard(
     card.showLine(line?.speaker, line?.text ?? "");
     card.choices.replaceChildren();
     card.controls.replaceChildren();
-    const add = (label: string, callback: () => void, choice = false) => {
-      const button = createButton(label, choice ? "primary" : "secondary");
+    const add = (label: string, callback: () => void, choice = false, primary = false) => {
+      const button = createButton(label, primary ? "primary" : "secondary");
       button.classList.add("ada-story-button");
       button.addEventListener("click", () => {
         callback();
@@ -307,9 +291,9 @@ export function createInteractionCard(
     for (const [index, topic] of state.topics.entries()) {
       add(topic.label, () => state.topic(index), true);
     }
-    if (!state.atOutcome || state.topics.length > 0) {
-      add(CONTENT.labels.next ?? "", () => state.advance());
-    } else {
+    if (!state.atOutcome && state.topics.length === 0) {
+      add(CONTENT.labels.next ?? "", () => state.advance(), false, true);
+    } else if (state.topics.length === 0) {
       for (const choice of state.choices) {
         add(
           choice.label,
@@ -321,25 +305,31 @@ export function createInteractionCard(
             }
           },
           choice.id !== "continue",
+          state.choices.length === 1,
         );
       }
     }
     if (state.hasTopics && state.topics.length === 0) {
       add(CONTENT.labels.askMore ?? "Ask more", () => state.ask());
     }
-    add(CONTENT.labels.skip ?? "", () => {
-      state.skip();
-      const choices = state.choices;
-      if (choices.length === 1 && choices[0]?.id === "continue") {
-        options.skip();
-      }
-    });
+    card.skip.hidden = state.atChoice;
     card.fit();
     (
       card.choices.querySelector<HTMLButtonElement>("button") ??
       card.controls.querySelector<HTMLButtonElement>("button")
     )?.focus({ preventScroll: true });
   };
+  card.skip.addEventListener("click", () => {
+    if (state.atChoice) {
+      return;
+    }
+    state.skip();
+    const choices = state.choices;
+    if (choices.length === 1 && choices[0]?.id === "continue") {
+      options.skip();
+    }
+    draw();
+  });
   const close = (): void => {
     state.skip();
     options.close();

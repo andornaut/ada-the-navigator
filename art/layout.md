@@ -799,13 +799,18 @@ to 267.5, both 360 wide, inside the 325 available. Ada's room page opens the roo
 
 Station welcomes use the story panel's text and choice columns, portrait frame,
 name tab, type roles and safe insets. The current station's keeper supplies its
-portrait and name for every greeting line. Jobs and Shop are gold choices;
+portrait and name for every greeting line. Jobs is a neutral choice and Shop is the single primary action;
 Next line and Undock are secondary navigation controls. Shop and job-board
 menus retain their separate list layouts. A station without an authored keeper
 shows the station title and actions without speech, portrait or name tab.
 
-Earth and space dialogue choices use the same gold story buttons, visually
-separated from secondary Next, Ask more and Skip navigation. Each spoken line
+Earth and space topic options use neutral story buttons in their own group,
+separate from navigation. There is at most one primary action. Skip uses the
+shared Earth top position and compact style, outside the dialogue panel.
+Unavailable Previous controls are hidden without reserving an empty slot. Next
+is absent while options are offered. Skip is absent at an unresolved material
+choice; it may omit optional background questions and never selects an answer.
+The small ambient in-flight conversation box has no separate Skip control. Each spoken line
 shows its actual speaker's existing portrait and name tab. The close X is the
 only Close control. Narration has no invented speaker or portrait. Mom and Dad
 keep their authored family addresses in text; their name tabs and existing

@@ -1,7 +1,9 @@
+import { CONTENT } from "../data/content.ts";
 import { storySpeakerName } from "./dialoguePortraits.ts";
 import { font, safeEdge, units } from "./layout/css.ts";
 import { STORY_PANEL } from "./layout/storyPage.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
+import { createButton } from "./modal.ts";
 import { STORY_PORTRAITS, storyPortrait, storyPortraitFrame, storyTabColour } from "./storybook.ts";
 
 export const DIALOGUE_PANEL_STYLE = `
@@ -76,7 +78,11 @@ export function createDialoguePanel(options: {
   close.type = "button";
   close.dataset.action = options.closeAction;
   close.setAttribute("aria-label", options.closeLabel);
-  frame.append(card, close);
+  const skip = createButton(CONTENT.labels.skip ?? "");
+  skip.classList.add("ada-compact", "ada-story-skip");
+  skip.dataset.action = "dialogue-skip";
+  skip.hidden = true;
+  frame.append(card, skip, close);
   return {
     body,
     card,
@@ -110,6 +116,7 @@ export function createDialoguePanel(options: {
         }
       }
     },
+    skip,
     title,
   };
 }
