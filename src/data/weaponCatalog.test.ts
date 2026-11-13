@@ -48,7 +48,7 @@ describe("weapon levels", () => {
     ];
     expect(second / first).toBeCloseTo(1.2, 9);
     expect(third / first).toBeCloseTo(1.5, 9);
-    expect(WEAPON_CATALOG.rapidMissile.map((level) => level.damageRatio)).toEqual([2, 2, 2]);
+    expect(WEAPON_CATALOG.rapidMissile.map((level) => level.damageRatio)).toEqual([1.5, 1.5, 1.5]);
     WEAPON_CATALOG.rapidMissile.forEach((level, index) =>
       expect(level.intervalSeconds).toBeCloseTo([0.3, 0.25, 0.2][index]!, 9),
     );
@@ -63,13 +63,13 @@ describe("weapon levels", () => {
       expect(rapid.intervalSeconds).toBeLessThan(heavy.intervalSeconds);
       expect(heavy.damageRatio).toBeGreaterThan(rapid.damageRatio);
     }
-    // Rapid deals more a second at levels 1 and 2 (6.7 against 5, 8 against 7.5), Heavy at
-    // level 3 (11.25 against 10).
+    // Rapid ties Heavy at level 1 (5 a second); Heavy deals more at levels 2 and 3 (7.5 against
+    // 6, 11.25 against 7.5).
     WEAPON_CATALOG.heavyMissile.forEach((level, index) =>
       expect(perSecond(level)).toBeCloseTo([5, 7.5, 11.25][index]!, 9),
     );
     WEAPON_CATALOG.rapidMissile.forEach((level, index) =>
-      expect(perSecond(level)).toBeCloseTo([20 / 3, 8, 10][index]!, 9),
+      expect(perSecond(level)).toBeCloseTo([5, 6, 7.5][index]!, 9),
     );
   });
 
@@ -87,7 +87,7 @@ describe("weapon levels", () => {
     const laser = weaponAt("laser", 1);
     expect(weaponAt("rapidMissile", 1)).toMatchObject({
       blastRadius: 25,
-      damageRatio: 2,
+      damageRatio: 1.5,
       intervalSeconds: 0.3,
     });
     expect([1, 2, 3].map((level) => weaponAt("rapidMissile", level).blastRadius)).toEqual([
@@ -195,7 +195,7 @@ describe("weapon levels", () => {
       perSecond("scattershot"),
       perSecond("phaser"),
     ];
-    [3.33, 2.33, 6.67, 5, 6.0, 6.5].forEach((value, index) =>
+    [3.33, 2.33, 5, 5, 6.0, 6.5].forEach((value, index) =>
       expect(ladder[index]).toBeCloseTo(value, 1),
     );
     // Multi-Laser's full fan of 3 bolts deals 7 a second, more than Laser.

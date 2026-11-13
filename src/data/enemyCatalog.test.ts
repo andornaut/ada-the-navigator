@@ -92,7 +92,7 @@ describe("enemy weapon damage", () => {
     }
     expect(fireDamageRatio({ level: 1, weapon: "heavyMissile" })).toBe(10);
     expect(fireDamageRatio({ level: 1, weapon: "phaser" })).toBe(6.5);
-    expect(fireDamageRatio({ level: 1, weapon: "rapidMissile" })).toBe(2);
+    expect(fireDamageRatio({ level: 1, weapon: "rapidMissile" })).toBe(1.5);
     expect(fireDamageRatio({ level: 1, weapon: "multiLaser" })).toBe(0.7);
     // A Scattershot volley of 6 across its 7 dots.
     expect(fireDamageRatio({ level: 1, weapon: "scattershot" }) * 7).toBeCloseTo(6, 9);

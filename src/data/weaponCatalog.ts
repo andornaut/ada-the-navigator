@@ -44,6 +44,8 @@ const flies = (worldSpeed: number) => worldSpeed / BASE_SPEED;
  * Phaser: past the play view's edges and corners.
  */
 const BOLT_REACH = 370;
+/** Rapid Missile damage per hit at every level: 5, 6 and 7.5 a second, tying Heavy at level 1. */
+const RAPID_DAMAGE = 1.5;
 /** Rapid and Heavy Missiles reach 220 world units at every level and speed. */
 const MISSILE_REACH = 220;
 /** Heavy Missile's blast radius in world units, the same at every level. */
@@ -192,7 +194,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       projectileKind: "beam",
     },
   ],
-  // Fixed 2 damage and a small blast at every level; fire rate grows 1.2 then 1.5 (every 0.30,
+  // Fixed RAPID_DAMAGE and a small blast at every level; fire rate grows 1.2 then 1.5 (every 0.30,
   // 0.25 and 0.20 s) and the missile flies 500, 600 and 700 world units per second, reaching
   // 220 at each.
   rapidMissile: [
@@ -200,7 +202,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       ...projectile,
       anglesDegrees: [0],
       blastRadius: 25,
-      damageRatio: 2,
+      damageRatio: RAPID_DAMAGE,
       intervalSeconds: 0.3,
       projectileKind: "missile",
       rangeWorld: MISSILE_REACH,
@@ -210,7 +212,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       ...projectile,
       anglesDegrees: [0],
       blastRadius: 25,
-      damageRatio: 2,
+      damageRatio: RAPID_DAMAGE,
       intervalSeconds: 0.3 / 1.2,
       projectileKind: "missile",
       rangeWorld: MISSILE_REACH,
@@ -220,7 +222,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       ...projectile,
       anglesDegrees: [0],
       blastRadius: 25,
-      damageRatio: 2,
+      damageRatio: RAPID_DAMAGE,
       intervalSeconds: 0.3 / 1.5,
       projectileKind: "missile",
       rangeWorld: MISSILE_REACH,

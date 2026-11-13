@@ -244,7 +244,7 @@ describe("integrated weapon projectiles", () => {
     ];
     flight.facing = { x: 1, y: 0 };
     stepFlight(CONTENT, 0.1, right, flight);
-    expect(hp(flight, "direct")).toBe(10 - 2);
+    expect(hp(flight, "direct")).toBe(10 - 1.5);
     expect(hp(flight, "nearby")).toBe(10);
     expect(flight.fireCooldown).toBeGreaterThan(
       WEAPON_CATALOG.rapidMissile[0].intervalSeconds - 0.11,
