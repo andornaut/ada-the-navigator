@@ -106,7 +106,7 @@ export function createQuestsScreen(
       selected = null;
     }
     const body = document.createElement("div");
-    body.className = entry ? "ada-quest-content ada-prose" : "ada-quest-list";
+    body.className = entry ? "ada-quest-content" : "ada-quest-list";
     const footer = document.createElement("footer");
     footer.className = "ada-quest-footer";
     const section = (name: string | undefined, text?: string) => {
@@ -300,7 +300,11 @@ export function createQuestsScreen(
     footer.append(close);
     setFooterAction(entry && origin === "list" ? "back" : "close", footer);
     card.body.replaceChildren(body, footer);
-    setScrollGroup(card, body);
+    if (!entry) {
+      setScrollGroup(card, body);
+    } else {
+      card.body.classList.remove("ada-has-scroll");
+    }
     modal.hidden = false;
     card.fit();
     layer = createModalLayer(modal);

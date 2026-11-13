@@ -16,13 +16,22 @@ export const QUESTS_SCREEN_STYLE = `
   flex:1;
   min-height:0;
   display:grid;
-  grid-template-columns:minmax(0,1fr);
-  grid-auto-rows:max-content;
+  width:${units(640)};
+  box-sizing:border-box;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  grid-template-rows:auto auto;
   align-content:start;
-  gap:${units(8)};
+  gap:${units(8)} ${units(16)};
   padding:${units(4)} ${units(8)} ${units(8)};
   background:#302e42;
   border:1px solid #777186}
+.ada-controls .ada-quest-content::before{content:"";
+  position:absolute;
+  left:50%;
+  top:${units(6)};
+  bottom:${units(6)};
+  width:1px;
+  background:#777186}
 .ada-controls .ada-quest-content section{min-width:0}
 .ada-controls .ada-quest-content h3,.ada-controls .ada-quest-content p{font:inherit;
   margin:0;
@@ -71,6 +80,7 @@ export const QUESTS_SCREEN_STYLE = `
   height:${units(12)};
   margin:auto}
 .ada-controls .ada-quest-footer{display:flex;
+  align-self:stretch;
   justify-content:flex-end;
   gap:${units(8)};
   flex:none}
