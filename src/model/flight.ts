@@ -781,6 +781,56 @@ function spawnEnemy(
   };
 }
 
+/** A required chapter encounter uses canonical enemy state and persists beyond the active region. */
+export function spawnChapterEnemy(
+  content: GameContent,
+  archetype: EnemyArchetype,
+  id: string,
+  point: Vec,
+  flight: FlightState,
+  options: { packId?: string; escortOf?: string; home?: Vec; routeId?: string } = {},
+): SpaceObject | null {
+  if (Object.hasOwn(flight.world.notables, id)) {
+    const retained = flight.world.notables[id];
+    if (!retained) {
+      return null;
+    }
+    activateFlightRegion(content, retained, flight);
+  }
+  activateFlightRegion(content, point, flight);
+  const existing = flight.objects.find((object) => object.id === id);
+  if (existing) {
+    return existing.kind === "enemy" ? existing : null;
+  }
+  const object = spawnEnemy(
+    content,
+    flight.galaxy,
+    archetype,
+    id,
+    point,
+    options.packId ?? null,
+    0,
+    options.escortOf ?? null,
+  );
+  object.persistent = true;
+  if (options.routeId !== undefined) {
+    object.routeId = options.routeId;
+  }
+  if (options.home) {
+    object.enemy!.home = { ...options.home };
+  }
+  clearLayoutObjects(
+    (other) => other.kind === "destination" || clearOf(object.radius, object, other),
+    flight,
+  );
+  flight.objects.push(object);
+  if (options.packId) {
+    const sizes = combat(flight).initialPackSizes;
+    sizes[options.packId] = (sizes[options.packId] ?? 0) + 1;
+  }
+  return object;
+}
+
 /**
  * Chooses an encounter's archetype by weight and its group size from that archetype's
  * inclusive range. Rolls are uniform in [0, 1); the count roll is drawn first so the

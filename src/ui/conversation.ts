@@ -1,4 +1,4 @@
-import { CAST_FRAMES, castSheet, SPEAKER_CAST } from "../data/cast.ts";
+import { castFrames, castSheet, SPEAKER_CAST } from "../data/cast.ts";
 import { CONTENT } from "../data/content.ts";
 import { CONTROL_WORDS } from "../data/controlWords.ts";
 import { type Mood, type Speaker } from "../data/conversations.ts";
@@ -50,7 +50,7 @@ const { name: label, padding, panel, portrait, tab, text, textGap } = CONVERSATI
 const CAST_COMPACT = Object.fromEntries(
   Object.entries(SPEAKER_CAST).map(([speaker, key]) => [
     speaker,
-    { frames: CAST_FRAMES.frames, url: castSheet(key, true) },
+    { frames: castFrames(key).frames, url: castSheet(key, true) },
   ]),
 ) as Readonly<Record<string, { readonly frames: number; readonly url: string }>>;
 

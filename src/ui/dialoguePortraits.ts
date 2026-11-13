@@ -1,4 +1,4 @@
-import { CAST, CAST_FRAMES, SPEAKER_CAST } from "../data/cast.ts";
+import { CAST, castFrames, SPEAKER_CAST } from "../data/cast.ts";
 import type { Mood } from "../data/conversations.ts";
 import type { ConversationLineView } from "./conversation.ts";
 
@@ -43,7 +43,7 @@ export function portraitFrame(
     return moods[line.mood] ?? moods.neutral!;
   }
   if (SPEAKER_CAST[line.speaker]) {
-    return CAST_FRAMES.neutral;
+    return castFrames(SPEAKER_CAST[line.speaker]!).neutral;
   }
   if (line.speaker === "astra") {
     return loop(COMPACT_PORTRAITS.astra.speaking);

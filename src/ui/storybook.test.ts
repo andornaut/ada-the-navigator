@@ -217,7 +217,8 @@ describe("storybook page", () => {
     expect(storyTabColour("Astra")).toBe(TAB_COLOURS.astra);
     expect(storyTabColour("Ada")).toBe(TAB_COLOURS.ada);
     expect(storyTabColour(GENERAL_NAMED.name)).toBe(TAB_COLOURS.generalNamed);
-    expect(storyTabColour("Elder Loom")).toBe(AWAITING_TAB);
+    expect(storyTabColour("Elder Loom")).toBe("#e9e3da");
+    expect(storyTabColour("No portrait")).toBe(AWAITING_TAB);
     // Mom's and Dad's tabs, which only story pages show, as Art's table sets them.
     const table = readFileSync(new URL("../../art/controls.md", import.meta.url), "utf8");
     for (const name of ["Mom", "Dad"]) {

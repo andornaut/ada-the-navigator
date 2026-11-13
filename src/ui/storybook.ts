@@ -1,6 +1,6 @@
 import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 
-import { CAST, CAST_FRAMES, type CastKey, castSheet, STORY_CAST } from "../data/cast.ts";
+import { CAST, castFrames, type CastKey, castSheet, STORY_CAST } from "../data/cast.ts";
 import { GENERAL_NAMED, type Speaker, SPEAKERS } from "../data/conversations.ts";
 import type { Background } from "../data/storybook.ts";
 import type { StoryChoice, StoryPage } from "../model/storybook.ts";
@@ -124,7 +124,10 @@ export const STORY_PORTRAITS: Readonly<
   penny: { frames: 3, url: "/art/portraits/penny.png" },
   ...FAMILY_PORTRAITS,
   ...Object.fromEntries(
-    STORY_CAST_KEYS.map((key) => [key, { frames: CAST_FRAMES.frames, url: castSheet(key, false) }]),
+    STORY_CAST_KEYS.map((key) => [
+      key,
+      { frames: castFrames(key).frames, url: castSheet(key, false) },
+    ]),
   ),
 };
 
@@ -200,7 +203,7 @@ export function storyPortraitFrame(
     return FAMILY_PORTRAITS[speaker].neutral;
   }
   if (!Object.hasOwn(COMPACT_PORTRAITS, speaker)) {
-    return CAST_FRAMES.neutral;
+    return castFrames(speaker as CastKey).neutral;
   }
   return portraitFrame(reducedMotion, {
     ...portrait,

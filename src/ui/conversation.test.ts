@@ -139,9 +139,10 @@ describe("conversation box style", () => {
     const controls = readFileSync(new URL("../../art/controls.md", import.meta.url), "utf8");
     for (const [speaker, key] of Object.entries(SPEAKER_CAST)) {
       const { name, tab } = CAST[key];
+      const label = name === "Blurbs" ? "Blurb settler" : name;
       expect(TAB_COLOURS[speaker]).toBe(tab);
-      expect(controls, name).toContain(`| ${name} tab`);
-      expect(controls).toMatch(new RegExp(`\\| ${name} tab +\\| \`${tab}\``));
+      expect(controls, name).toContain(`| ${label} tab`);
+      expect(controls).toMatch(new RegExp(`\\| ${label} tab +\\| \`${tab}\``));
     }
   });
 });

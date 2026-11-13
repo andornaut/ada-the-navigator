@@ -3,7 +3,15 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { ART_MANIFEST, CORE_MANIFEST, GALAXY_MANIFESTS } from "../testing/publicArt.ts";
-import { CAST, CAST_FRAMES, type CastKey, castSheet, SPEAKER_CAST, STORY_CAST } from "./cast.ts";
+import {
+  CAST,
+  castFrames,
+  type CastKey,
+  castSheet,
+  CHAPTER_CAST,
+  SPEAKER_CAST,
+  STORY_CAST,
+} from "./cast.ts";
 import { SPEAKERS } from "./conversations.ts";
 import { GALAXY_ID } from "./galaxies.ts";
 import { PROJECTS } from "./projects.ts";
@@ -32,7 +40,7 @@ type Sheet = {
 };
 
 describe("the cast", () => {
-  it("gives every key both portrait sheets in its own manifest, each one neutral frame", () => {
+  it("gives every key both portrait sheets in its own manifest, its declared neutral frame", () => {
     for (const key of Object.keys(CAST) as CastKey[]) {
       for (const compact of [false, true]) {
         const id = `${key}-portrait${compact ? "-compact" : ""}`;
@@ -40,8 +48,8 @@ describe("the cast", () => {
           Sheet | undefined;
         expect(sheet, id).toBeDefined();
         expect(sheet!.path).toBe(castSheet(key, compact));
-        expect(sheet!.width / sheet!.frameWidth).toBe(CAST_FRAMES.frames);
-        expect(sheet!.frames.neutral, id).toBe(CAST_FRAMES.neutral);
+        expect(sheet!.width / sheet!.frameWidth).toBe(castFrames(key).frames);
+        expect(sheet!.frames.neutral, id).toBe(castFrames(key).neutral);
         // No other galaxy carries the key's sheets.
         expect(ART_MANIFEST.assets.filter((asset) => asset.id === id)).toHaveLength(1);
       }
@@ -57,9 +65,12 @@ describe("the cast", () => {
       ([, key]) => key,
     );
     expect(keepers).toHaveLength(15);
-    expect(new Set(Object.keys(CAST))).toEqual(new Set([...keys, ...keepers, "grandma"]));
+    expect(new Set(Object.keys(CAST))).toEqual(
+      new Set([...keys, ...keepers, "grandma", ...Object.keys(CHAPTER_CAST)]),
+    );
     for (const { name, tab } of Object.values(CAST)) {
-      expect(CONTROLS).toMatch(new RegExp(`\\| ${name} tab +\\| \`${tab}\``));
+      const label = name === "Blurbs" ? "Blurb settler" : name;
+      expect(CONTROLS).toMatch(new RegExp(`\\| ${label} tab +\\| \`${tab}\``));
     }
   });
 
@@ -90,11 +101,17 @@ describe("the cast", () => {
         ]),
       ),
     ).toEqual({
+      Avi: "Reed",
+      Blurbs: "Blurbs",
+      Dollop: "Dollop",
+      "Elder Loom": "Elder Loom",
       Grower: "Clover",
       Miner: "Mica",
+      Pip: "Pip",
       Salvager: "Patch",
       Station: "Quartz",
       "Whale family": "Whale family",
+      Wick: "Wick",
       Workshop: "Rivet",
     });
   });
