@@ -32,8 +32,9 @@ Its sprite is white and blue, an elongated triangle with one front point, two
 rear points, twin thrusters at those rear points, a small tail and a compact
 canopy with room for Ada and her dog. Keep the ship small relative to the viewport.
 When actual velocity is backward relative to the ship's facing or aim, yellow
-reverse-thrust flames point forward from the outside wingtips. Standard rear
-thruster flames remain blue. This is presentation only and does not change
+reverse-thrust flames point forward just forward of the wingtip leading edges,
+without covering the wing tips or extending the attachment points outside the
+wings. Standard rear thruster flames remain blue. This is presentation only and does not change
 forces or speed. Activation threshold and hysteresis preserve the existing
 stationary threshold, reduced-motion behavior and engine-effects setting.
 In these documents, Archie and Chibi name the sibling games Archie's Dog Walks
