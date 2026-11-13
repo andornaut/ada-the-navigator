@@ -265,7 +265,7 @@ Frigates, capitals and platforms have hull HP and hardpoints.
   keeping its momentum and slowing to a stop. Command parts never fire and do not count toward disabling.
 - **Mounts:** Art draws each heavy class once, with every weapon mount it can
   carry, and a turret for each weapon a mount can hold. A mount the position
-  leaves unused is drawn as a capped plate with no hardpoint. General Gadget's flagship has its own, more threatening design.
+  leaves unused is drawn as a capped plate with no hardpoint. Admiral Archie's flagship has its own, more threatening design.
 - **State:** hull HP, hardpoints, disabled and salvaged states are retained like
   other heavy state until the galaxy regenerates. A salvaged heavy stays where
   Ada left it: like a destroyed one, it no longer holds the spacing kept between
@@ -412,7 +412,7 @@ turrets fire while it advances, with no speed to advance.
 
 ## Phantom roster
 
-Phantom's drones are Gadget's home guard: heavier, and they chase.
+Phantom's drones are Archie's home guard: heavier, and they chase.
 
 | Archetype      | Encounter    | Group | Weight | Behaviours                                   |
 | -------------- | ------------ | ----: | -----: | -------------------------------------------- |
@@ -427,9 +427,9 @@ Blockades and the finale's waves draw from this roster (see
 [the version one rules](rules.md#galaxy-six-phantom-the-finale)). Once the
 chapter is complete, Phantom places no new encounters.
 
-## Gadget's flagship
+## Archie's flagship
 
-General Gadget's flagship is a `capital` in his own design, the only crewed ship in
+Admiral Archie's flagship is a `capital` in his own design, the only crewed ship in
 his fleet.
 
 - **Hull and parts:** 160 hull HP; command, two engines and 8 weapon mounts, each

@@ -19,10 +19,10 @@ belongs in [Ideas](ideas.md). The route runs:
 |        6 | Phantom   | The finale: letting go of control  |
 
 Tension rises, dips at Needle, builds again through Andromeda, and peaks with Cartwheel's stand against a bully
-before Phantom's stand against General Gadget. Content tied to a galaxy, its
+before Phantom's stand against Admiral Archie. Content tied to a galaxy, its
 story, places, roster and art, is named by galaxy. Difficulty, rewards and prices
 follow route position, so reordering the route moves a galaxy's content and gives
-it its new position's values. Astra's memory lines and General Gadget's
+it its new position's values. Astra's memory lines and Admiral Archie's
 broadcasts follow the order holodisks are recovered, which is route position once
 every galaxy is built. Station jobs are in [Quests](quests.md).
 
@@ -259,7 +259,7 @@ recovered. No persistent
 companion-following AI or escort is required. Back home, Ada chooses to meet her dog's needs; the lesson
 is expressed through her actions rather than a speech.
 
-Whirlpool's space is teal and full of swirling debris. Gadget's hunter drones
+Whirlpool's space is teal and full of swirling debris. Archie's hunter drones
 chase the whale family; the roster is in [Ships](ships.md#whirlpool-roster).
 Its signature mechanic is space currents, flow fields that push every ship in
 them. All values are provisional tuning:
@@ -319,7 +319,7 @@ her speed is slow enough to light it. A gate passed too fast stays dark, and
 Elder Loom calls her back to the last gate she lit, or to the first gate when
 she has lit none. Debris in the channel drifts slowly and bumps the ship aside,
 dealing bump damage like all scenery. The practice run has 3 gates; the Eye has 8, with the holodisk
-beyond the last. No enemies enter a gate run. Gadget's drones wait outside the
+beyond the last. No enemies enter a gate run. Archie's drones wait outside the
 Eye's exit, so Ada leaves with the holodisk and fights her way clear.
 
 Objectives: explore; meet Elder Loom; light the practice gates; light the Eye's
@@ -346,7 +346,7 @@ Nobody is punished for the accident; the hard part was saying it.
 
 Andromeda's space is a great bright spiral, the closest of the galaxies, with a
 chain of guide beacons that ships follow between its settlements. One beacon has
-gone dark and ships keep getting lost. The frightened settlers blame Gadget's drones. Ada meets Pip, a young courier, who admits to her that he
+gone dark and ships keep getting lost. The frightened settlers blame Archie's drones. Ada meets Pip, a young courier, who admits to her that he
 clipped the beacon during a rushed delivery and was too scared to say. He also
 found a strange disc in the wreckage, Astra's holodisk, and has kept it as a
 treasure. Ada does not tell on him: she offers to go with him while he tells the
@@ -355,7 +355,7 @@ parts to relight the beacon. Pip then hands Ada the holodisk himself.
 
 Objectives: explore; find out why ships are getting lost; talk with Pip; go with
 Pip to the settlers; get beacon parts at the settlement with Pip; bring beacon parts to the dark beacon; take the holodisk
-from Pip; return to Earth. Gadget's drones are hunting here openly. Andromeda's drones patrol in larger
+from Pip; return to Earth. Archie's drones are hunting here openly. Andromeda's drones patrol in larger
 groups with more frigates than Needle's; its roster is tuned like the others.
 
 Andromeda's stations are settlers' stations, drawn with the settlers' art, as
@@ -417,7 +417,7 @@ independently ore or Stardust with equal probability, with no extra Stardust
 burst. Cartwheel has no damaging hazards.
 
 Cartwheel's space is an industrial ring of mining platforms in rust and ember
-tones. Gadget's claim-jumper drones harass miners at the ore fields with hit and
+tones. Archie's claim-jumper drones harass miners at the ore fields with hit and
 run attacks, and fixed turret platforms guard some ore fields. Difficulty ramps
 along the route; the roster is in [Ships](ships.md#cartwheel-roster).
 
@@ -426,7 +426,7 @@ along the route; the roster is in [Ships](ships.md#cartwheel-roster).
 Each galaxy's people are one kid-friendly alien species: animal folk in
 Sunflower, Whirlpool and Needle, androids in Andromeda, living rock in Cartwheel
 and goo in Phantom. Its role voices, story characters and greeters are all of
-that species, apart from Whirlpool's whales and General Gadget.
+that species, apart from Whirlpool's whales and Admiral Archie.
 
 | Galaxy    | People  | Form         | Lore                                                                                                                                               |
 | --------- | ------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -435,7 +435,7 @@ that species, apart from Whirlpool's whales and General Gadget.
 | Needle    | Avi     | Herons       | Long-legged pilots who stand still before they move; Elder Loom is an Avi.                                                                         |
 | Andromeda | Munix   | Androids     | Built settlers who steer by beacon light and keep their lamps lit; Pip and the settlers are Munix.                                                 |
 | Cartwheel | Cobbles | Living rock  | Stone folk who mine the ore that feeds them and never mind a bump; the young are pebble-sized. The miner, visitors and blocking pilot are Cobbles. |
-| Phantom   | Blurbs  | Blobs of goo | Wobbly goo folk of the shadowed rim, living under Gadget's watch; his blockades cut their settlements off.                                         |
+| Phantom   | Blurbs  | Blobs of goo | Wobbly goo folk of the shadowed rim, living under Archie's watch; his blockades cut their settlements off.                                         |
 
 Named characters show their names on name tabs in place of the role labels the
 copy uses:
@@ -483,7 +483,7 @@ Shop and Jobs stay live. Each later docking shows one short line, the galaxy's
 three in turn. The first time Ada comes within Talk range of a settlement, its
 settler's two-line greeting plays in the conversation box. Greetings seen are
 saved per place, and Restart clears them. Phantom's stations keep the generic
-welcome line until the chapter is complete; then General Gadget greets Ada there,
+welcome line until the chapter is complete; then Admiral Archie greets Ada there,
 with his own lines and portrait, as their keeper. Lines are in [the player copy](player-copy.md#greeters).
 
 ### Galaxy six, Phantom: the finale
@@ -491,8 +491,8 @@ with his own lines and portrait, as their keeper. Lines are in [the player copy]
 Ada learns to let go of control. The chapter draws on the first five without
 adding another community problem: everyone Ada helped comes to her thank-you
 party, her perfect plan washes away in the rain, and the day is better for it.
-In space, General Gadget wants to control every galaxy; Ada shows him that they
-never end (see [the design](design.md#general-gadget)).
+In space, Admiral Archie wants to control every galaxy; Ada shows him that they
+never end (see [the design](design.md#admiral-archie)).
 
 At home, Ada plans a thank-you party at the community garden for Grandma, Sam,
 her friends, Mom and Dad, with a list for every minute. After the space story, rain
@@ -500,7 +500,7 @@ spoils the plan. Ada lets it go, everyone crowds together in the rain, and
 nobody remembers the schedule. That night Astra, whole again, chooses to keep
 flying with Ada.
 
-Phantom is a shadowed rim in smoke and violet. Gadget's fleet holds it, and
+Phantom is a shadowed rim in smoke and violet. Archie's fleet holds it, and
 his blockades cut the Blurbs' settlements off from the rest of the galaxy. The
 space story runs in three acts:
 
@@ -519,10 +519,10 @@ space story runs in three acts:
    encounters drawn from the roster without the capital battle. The next wave
    arrives when the last is destroyed, disabled or fled. The flagship and its
    escorts hold back until the third wave is gone.
-3. **The flagship.** Gadget's own capital ([Ships](ships.md#gadgets-flagship))
+3. **The flagship.** Archie's own capital ([Ships](ships.md#archies-flagship))
    then attacks. It can be beaten only by disabling it: its hull never drops below
    1 HP. Disabled, it shows the red "Disabled" banner, and Ada salvages the last
-   holodisk from it. Gadget surrenders the disk, Astra's memory is complete, and
+   holodisk from it. Archie surrenders the disk, Astra's memory is complete, and
    at Ada's request Astra shows him her whole map: galaxies past galaxies, without
    end. He relents and stays in Phantom to help the Blurbs mend the docks his
    blockades broke.
@@ -534,11 +534,11 @@ battle is tuned to be winnable with none. Objectives are in
 [the player copy](player-copy.md#chapter-six-the-garden-party).
 
 Once the chapter is complete, Phantom's drones stand down: it places no new
-encounters, and Gadget is the keeper of its stations. Drones in the other
+encounters, and Archie is the keeper of its stations. Drones in the other
 galaxies are beyond his signal and keep their last orders, so their space stays
 as dangerous as before. The salvaged flagship stays at the waypoint as a passable
 hulk with its lights on. The Blurb settlements' docks show cracks from the blockades
-until the chapter is complete, then show mended, Gadget's work. The "dark nebula"
+until the chapter is complete, then show mended, Archie's work. The "dark nebula"
 in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
 
 ## Flight and combat
@@ -835,7 +835,7 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
 - Enemy behavior uses data-defined archetypes and reusable behavior rules for
   solo ships, packs, frigates and capital ships. Sunflower's roster is in
   [Ships](ships.md).
-- General Gadget's uncrewed drone fleet is the recurring hostile faction in every
+- Admiral Archie's uncrewed drone fleet is the recurring hostile faction in every
   galaxy, searching for the same holodisks.
 - Defeated enemy ships are destroyed and drop Stardust, the game's currency.
 - One rechargeable shield of 10 HP, 15 and 20 at shield levels 2 and 3. No hull
@@ -1040,7 +1040,7 @@ In flight, Ada, Astra and Penny talk in short conversations, as Chibi's bosses
 do. A conversation shows in a compact box shared with Chibi, below the HUD row,
 leaving at least 24 logical pixels clear above Ada's ship. The speaker's name sits
 in a tab above the box, with one portrait per line for its speaker: Ada's on the
-left, Astra's, Penny's and the General's on the right. Each line wraps to at most
+left, Astra's, Penny's and the Admiral's on the right. Each line wraps to at most
 two lines. This speech box and notices never pause play, and the pause button
 and weapon icons stay live while it shows; Talk conversations and cards do
 pause play. Its background is an ink #181425 panel at 0.65 alpha, the opacity of every panel, so it
@@ -1052,7 +1052,7 @@ notice dismisses it. A conversation has one to three lines, and only one shows a
 a time, with a cooldown between ordinary conversations. Hints are always on.
 
 Conversations come from data, each with a trigger and a priority: warnings
-(including the General's broadcasts), then notices, then first-flight lessons, then
+(including the Admiral's broadcasts), then notices, then first-flight lessons, then
 Penny, then lore. A higher priority interrupts a lower one, which resumes after it
 if still relevant. A queued conversation re-checks its trigger when its turn
 comes and is dropped if the trigger no longer holds, such as Penny's lost-item
@@ -1089,7 +1089,7 @@ cache lights when Ada comes within 160 world units. The holodisk is collected on
 contact, like other pickups. The pause menu's Map (the local map) is the only map of a galaxy; there is no minimap.
 Edge markers show where off-screen objects Ada has already seen are. Four kinds
 each have their own look: enemy (swarms, fighters, interceptors and
-retaliators), heavy (frigates, capital ships, platforms and General Gadget),
+retaliators), heavy (frigates, capital ships, platforms and Admiral Archie),
 guard and station (stations and outposts). A guard is a heavy that still blocks
 a route: it shows the guard marker, its own image, in place of the heavy marker,
 and switches to the heavy marker once it is disabled. Friendly objects she flies through (story ships,

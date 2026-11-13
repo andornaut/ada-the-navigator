@@ -502,7 +502,8 @@ Ask more:
 
 Automatic reactions remain short:
 
-- Elder Loom, after a gate passed too fast: "Too quick, and the gate stays dark. Back to the first gate. Slow is not the same as stuck."
+- Elder Loom, after a gate passed too fast, with a lit gate: "Too quick, and the gate stays dark. Back to the last gate you lit. Slow is not the same as stuck."
+- Elder Loom, after a gate passed too fast, with no lit gate: "Too quick, and the gate stays dark. Back to the first gate. Slow is not the same as stuck."
 - Ada, lighting the Eye's last gate: "Eight gates! I did it, one at a time."
 - Astra, at the Eye's exit: "Drones ahead, Navigator. They've been waiting for us."
 
