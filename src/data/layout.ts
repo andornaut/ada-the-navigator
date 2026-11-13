@@ -369,7 +369,7 @@ export const SHIELD_PILL = {
   bars: SHIELD_BARS,
   bottom: CONTROLS_BOTTOM,
   // The separate recharge timer below the main bar: a 1 high fill inside a 1 px ink track,
-  // with a 1 px gap from the main bar.
+  // with a 1 px gap below the panel, without reserving panel space.
   delayStrip: { edge: 1, gap: 1, height: 1 },
   // The leading edge inside the fill's right end while the shield regenerates.
   edge: 2,

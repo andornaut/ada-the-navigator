@@ -117,7 +117,7 @@ describe("status pill shield bar", () => {
     expect(
       new ShieldBar().update({ ...full, shield: 60, sinceDamage: 12 }, 0, true).recharge,
     ).toBeCloseTo(0.4, 9);
-    // The independent track starts 1 below the main bar; its fill aligns with the main fill.
+    // The independent track starts 1 below the panel; its fill aligns with the main fill.
     for (const [level, area] of [
       [1, 116],
       [2, 176],
@@ -125,8 +125,8 @@ describe("status pill shield bar", () => {
     ] as const) {
       for (const p of [0, 0.25, 1]) {
         expect(shieldDelayStrip(level, p)).toEqual({
-          strip: { height: 1, width: area * p, x: 2, y: 14 },
-          track: { height: 3, width: area + 2, x: 1, y: 13 },
+          strip: { height: 1, width: area * p, x: 2, y: 22 },
+          track: { height: 3, width: area + 2, x: 1, y: 21 },
         });
       }
     }
@@ -141,6 +141,21 @@ describe("status pill shield bar", () => {
     expect(
       bar.update({ ...full, recharging: true, shield: 51, sinceDamage: 31 }, 31_016, true).recharge,
     ).toBeNull();
+  });
+
+  it("centres the main fill without fractional CSS border rounding", () => {
+    const meter = STATUS_PILL_STYLE.split("}").find((part) =>
+      part.includes(".ada-controls .ada-status-bar{"),
+    );
+    const fill = STATUS_PILL_STYLE.split("}").find((part) =>
+      part.includes(".ada-controls .ada-status-bar > span{"),
+    );
+    expect(meter).toContain("border:0");
+    expect(meter).toContain(
+      `box-shadow:inset 0 0 0 ${units(SHIELD_PILL.bar.rim)} var(--shield-rim)`,
+    );
+    expect(fill).toContain(`top:${units(SHIELD_PILL.bar.inset)}`);
+    expect(fill).toContain(`height:${units(SHIELD_PILL.bar.height - 2 * SHIELD_PILL.bar.inset)}`);
   });
 
   it("pulses icon and rim while low, holding the low colour under reduced motion", () => {
@@ -202,7 +217,8 @@ describe("status pill shield bar", () => {
     expect(icon!.match(/drop-shadow\(/g)).toHaveLength(4);
     expect(icon).toContain("#181425");
     expect(bar).toContain(".ada-shield[data-field=light] .ada-status-bar{");
-    expect(bar).toMatch(/box-shadow:0 0 0 .+ #181425/);
+    expect(bar).toContain(`0 0 0 ${units(SHIELD_PILL.bar.rim)} #181425`);
+    expect(bar).toContain("var(--shield-rim)");
   });
 
   it("puts each +N tick under its count, centred across on it, ore's in light rust", () => {
@@ -395,10 +411,14 @@ describe("status pill count", () => {
       expect(track.style.height).toBe(units(rect.track.height));
       expect(track.style.width).toBe(units(rect.track.width));
       expect(fill.style.width).toBe(units(rect.strip.width));
-      expect(rect.track.y - SHIELD_PILL.bar.height).toBe(1);
+      expect(
+        (SHIELD_PILL.pill.height - SHIELD_PILL.bar.height) / 2 +
+          rect.track.y -
+          SHIELD_PILL.pill.height,
+      ).toBe(1);
       expect(
         (SHIELD_PILL.pill.height - SHIELD_PILL.bar.height) / 2 + rect.track.y + rect.track.height,
-      ).toBeLessThanOrEqual(SHIELD_PILL.pill.height);
+      ).toBe(SHIELD_PILL.pill.height + SHIELD_PILL.delayStrip.gap + rect.track.height);
       status.setStatus({ ...view, sinceDamage: 0 }, 16);
       expect(track.hidden).toBe(false);
       expect(fill.style.width).toBe(units(0));

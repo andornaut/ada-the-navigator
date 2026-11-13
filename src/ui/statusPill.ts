@@ -367,17 +367,19 @@ ${SHIELD_PILL.bars
   box-sizing:border-box;
   width:var(--shield-bar);
   height:${units(bar.height)};
-  border:${units(bar.rim)} solid var(--shield-rim);
+  border:0;
+  box-shadow:inset 0 0 0 ${units(bar.rim)} var(--shield-rim);
   background:${STATUS_COLOURS.track}
 }
 .ada-controls .ada-shield[data-field=light] .ada-status-bar{
-  box-shadow:0 0 0 ${units(LIGHT_OUTLINE.width)} ${LIGHT_OUTLINE.ink}
+  box-shadow:inset 0 0 0 ${units(bar.rim)} var(--shield-rim),
+    0 0 0 ${units(LIGHT_OUTLINE.width)} ${LIGHT_OUTLINE.ink}
 }
 .ada-controls .ada-status-bar > span{
   position:absolute;
-  top:${units(bar.inset - bar.rim)};
+  top:${units(bar.inset)};
   height:${units(bar.height - 2 * bar.inset)};
-  left:${units(bar.inset - bar.rim)};
+  left:${units(bar.inset)};
   width:0
 }
 .ada-controls .ada-status-fill{
@@ -707,7 +709,7 @@ export function createStatusPill(
   const shieldOre = new ShieldOreSpendCounter();
 
   const place = (node: HTMLElement, from: number, to: number) => {
-    const offset = SHIELD_PILL.bar.inset - SHIELD_PILL.bar.rim;
+    const offset = SHIELD_PILL.bar.inset;
     node.hidden = to <= from;
     node.style.left = units(offset + from);
     node.style.width = units(Math.max(0, to - from));

@@ -474,7 +474,7 @@ right, each centred on the pill's row; placement is in
 | Shield icon | `public/art/ui/icons/shield.svg`, 20 (`HUD_BUTTON.glyph`), a mask in the state's icon colour; its drawn pixels span x 3 to 17, side bearings 3 and 3                                                                                                                                      |
 | Icon gap    | `SHIELD_PILL.iconGap` 3 from the icon's box to the bar, so 6 from its drawn pixels                                                                                                                                                                                                        |
 | Shield bar  | `SHIELD_PILL.bar[level]` by 12: 1 rim around the track (ink at 0.65 over the panel), fill area `bar - 4` by 8 at inset 2                                                                                                                                                                  |
-| Delay strip | Separate 3 high track, 1 below the main shield bar: a 1 high fill inside a 1 px ink border, aligned to the main fill area; track stays visible at zero progress                                                                                                                           |
+| Delay strip | Separate 3 high track, 1 below the shield panel: a 1 high fill inside a 1 px ink border, aligned to the main fill area; track stays visible at zero progress                                                                                                                              |
 | Width       | `5 + 20 + 3 + bar + 8` = `bar + 36`                                                                                                                                                                                                                                                       |
 
 The bar's length follows Shield level, so each upgrade visibly lengthens it
@@ -519,16 +519,18 @@ length; `p` is `elapsed / delay`:
 
 | Shield level | Main bar | Timer track, x y w h | Timer fill, x y w h |
 | -----------: | -------- | -------------------- | ------------------- |
-|            1 | 120x12   | 1, 13, 118, 3        | 2, 14, `116 p`, 1   |
-|            2 | 180x12   | 1, 13, 178, 3        | 2, 14, `176 p`, 1   |
-|            3 | 240x12   | 1, 13, 238, 3        | 2, 14, `236 p`, 1   |
+|            1 | 120x12   | 1, 21, 118, 3        | 2, 22, `116 p`, 1   |
+|            2 | 180x12   | 1, 21, 178, 3        | 2, 22, `176 p`, 1   |
+|            3 | 240x12   | 1, 21, 238, 3        | 2, 22, `236 p`, 1   |
 
-The timer is a separate track below the main shield bar, not a strip inside
-its fill. `SHIELD_PILL.delayStrip` defines the 1 px gap, 1 px fill height and
+The timer is a separate track below the shield panel, with no reserved
+interior space. `SHIELD_PILL.delayStrip` defines the 1 px gap, 1 px fill height and
 1 px ink border. The fill spans the same 116, 176 or 236 as the main fill
 area at full progress. The dark track keeps its full width at zero progress,
 with no white fill. Within the existing 28 high panel, the main bar spans y 8
-to 20 and the timer track y 21 to 24, leaving 4 below it. The main bar, icon,
+to 20 with equal padding above and below. The timer track sits outside the
+panel at y 29 to 32. The main bar uses a canonical inset rim shadow, avoiding
+fractional CSS border rounding that would shift the fill. The main bar, icon,
 panel size, anchor and hit areas stay unchanged.
 
 - It shows only while the recharge delay runs: the shield is below capacity and
@@ -540,7 +542,7 @@ panel size, anchor and hit areas stay unchanged.
   regeneration edge takes over.
 - Damage restarts the delay and empties the strip at once, the same frame as
   the hit flash; it grows again from 0. Nothing else resets it.
-- The timer has its own track and fill below the main bar, with no overlap or
+- The timer has its own track and fill below the shield panel, with no overlap or
   clipping. The main shield's fill, damage-delay part and flash keep their
   existing layering and colours. Low-shield pulsing changes only the main
   icon and rim, leaving the timer's white fill and ink border unchanged.

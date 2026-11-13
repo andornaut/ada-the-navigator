@@ -372,10 +372,12 @@ existing pulse. The flash is 2.40:1 against the filled shield.
   outline (12.99:1 against gold, 8.76:1 against rust) keeps them legible over
   bright objects. The rust tick is 7.04:1 or more on every dark field.
 - The recharge timer is separate from the main shield bar: a 1 px white fill
-  inside a 1 px ink track, with a 1 px gap below the main bar. Its dark track
+  inside a 1 px ink track, with a 1 px gap below the shield panel. Its dark track
   remains visible at zero progress, with no white fill. The white and ink
   colours do not change with low or empty shield states. The main bar retains
-  its existing low-shield red and empty grey appearance.
+  its existing low-shield red and empty grey appearance. The main fill is
+  centred with equal padding above and below; the timer reserves no space
+  inside the panel.
 - The low pulse changes colour, not brightness alone, at 1 Hz; the hit flash
   is one 100 ms flash per hit, at most three per second. Nothing flickers.
 
