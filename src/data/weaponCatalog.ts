@@ -59,6 +59,57 @@ const SCATTER_VOLLEY = 6;
 const fan = (count: number, spread: number) =>
   Array.from({ length: count }, (_, index) => -spread + (2 * spread * index) / (count - 1));
 
+// Each baseline holds one weapon's values shared by its levels.
+const MULTI_LASER_SPREAD = 20;
+const SCATTER_SPREAD = 30;
+const heavyMissileBase = {
+  ...projectile,
+  anglesDegrees: [0],
+  blastRadius: HEAVY_BLAST,
+  intervalSeconds: 2,
+  projectileKind: "missile",
+  rangeWorld: MISSILE_REACH,
+  speedRatio: flies(400),
+} as const;
+const laserBase = {
+  ...projectile,
+  anglesDegrees: [0],
+  intervalSeconds: 0.3,
+  projectileKind: "bolt",
+  rangeWorld: BOLT_REACH,
+} as const;
+const multiLaserBase = {
+  ...projectile,
+  damageRatio: 0.7,
+  intervalSeconds: 0.3,
+  projectileKind: "bolt",
+  rangeWorld: BOLT_REACH,
+} as const;
+const phaserBase = {
+  ...projectile,
+  anglesDegrees: [0],
+  beamRange: PHASER_RANGE,
+  damageRatio: 6.5,
+  intervalSeconds: 1,
+  projectileKind: "beam",
+} as const;
+const rapidMissileBase = {
+  ...projectile,
+  anglesDegrees: [0],
+  blastRadius: 25,
+  damageRatio: RAPID_DAMAGE,
+  intervalSeconds: 0.3,
+  projectileKind: "missile",
+  rangeWorld: MISSILE_REACH,
+} as const;
+const scattershotBase = {
+  ...projectile,
+  fadeStartFraction: 0.65,
+  intervalSeconds: 1,
+  projectileKind: "dot",
+  rangeWorld: SCATTER_RANGE,
+} as const;
+
 /**
  * Provisional tuning: speed and damage ratios multiply the existing base values. Each level
  * multiplies effective output (damage x fire rate x hits per volley) by 1.5, so level 3 is
@@ -73,64 +124,36 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
   // missile flies 400 world units per second, reaching 220.
   heavyMissile: [
     {
-      ...projectile,
-      anglesDegrees: [0],
-      blastRadius: HEAVY_BLAST,
+      ...heavyMissileBase,
       damageRatio: 10,
-      intervalSeconds: 2,
-      projectileKind: "missile",
-      rangeWorld: MISSILE_REACH,
-      speedRatio: flies(400),
     },
     {
-      ...projectile,
-      anglesDegrees: [0],
-      blastRadius: HEAVY_BLAST,
+      ...heavyMissileBase,
       damageRatio: 15,
-      intervalSeconds: 2,
-      projectileKind: "missile",
-      rangeWorld: MISSILE_REACH,
-      speedRatio: flies(400),
     },
     {
-      ...projectile,
-      anglesDegrees: [0],
-      blastRadius: HEAVY_BLAST,
+      ...heavyMissileBase,
       damageRatio: 22.5,
-      intervalSeconds: 2,
-      projectileKind: "missile",
-      rangeWorld: MISSILE_REACH,
-      speedRatio: flies(400),
     },
   ],
   // Damage and fire rate each grow 1.25/1.2 then 1.5/1.5; the bolt flies 500, 600 and 700 world
   // units per second, reaching 370 at each.
   laser: [
     {
-      ...projectile,
-      anglesDegrees: [0],
+      ...laserBase,
       damageRatio: 1,
-      intervalSeconds: 0.3,
-      projectileKind: "bolt",
-      rangeWorld: BOLT_REACH,
       speedRatio: flies(500),
     },
     {
-      ...projectile,
-      anglesDegrees: [0],
+      ...laserBase,
       damageRatio: 1.25,
-      intervalSeconds: 0.3 / 1.2,
-      projectileKind: "bolt",
-      rangeWorld: BOLT_REACH,
+      intervalSeconds: laserBase.intervalSeconds / 1.2,
       speedRatio: flies(600),
     },
     {
-      ...projectile,
-      anglesDegrees: [0],
+      ...laserBase,
       damageRatio: 1.5,
-      intervalSeconds: 0.3 / 1.5,
-      projectileKind: "bolt",
-      rangeWorld: BOLT_REACH,
+      intervalSeconds: laserBase.intervalSeconds / 1.5,
       speedRatio: flies(700),
     },
   ],
@@ -139,30 +162,18 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
   // reaching 370 at each.
   multiLaser: [
     {
-      ...projectile,
-      anglesDegrees: fan(3, 20),
-      damageRatio: 0.7,
-      intervalSeconds: 0.3,
-      projectileKind: "bolt",
-      rangeWorld: BOLT_REACH,
+      ...multiLaserBase,
+      anglesDegrees: fan(3, MULTI_LASER_SPREAD),
       speedRatio: flies(400),
     },
     {
-      ...projectile,
-      anglesDegrees: fan(4, 20),
-      damageRatio: 0.7,
-      intervalSeconds: 0.3,
-      projectileKind: "bolt",
-      rangeWorld: BOLT_REACH,
+      ...multiLaserBase,
+      anglesDegrees: fan(4, MULTI_LASER_SPREAD),
       speedRatio: flies(500),
     },
     {
-      ...projectile,
-      anglesDegrees: fan(5, 20),
-      damageRatio: 0.7,
-      intervalSeconds: 0.3,
-      projectileKind: "bolt",
-      rangeWorld: BOLT_REACH,
+      ...multiLaserBase,
+      anglesDegrees: fan(5, MULTI_LASER_SPREAD),
       speedRatio: flies(600),
     },
   ],
@@ -170,28 +181,15 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
   // play view at every level; damage alone makes each 1.5 step.
   phaser: [
     {
-      ...projectile,
-      anglesDegrees: [0],
-      beamRange: PHASER_RANGE,
-      damageRatio: 6.5,
-      intervalSeconds: 1,
-      projectileKind: "beam",
+      ...phaserBase,
     },
     {
-      ...projectile,
-      anglesDegrees: [0],
-      beamRange: PHASER_RANGE,
-      damageRatio: 6.5 * 1.5,
-      intervalSeconds: 1,
-      projectileKind: "beam",
+      ...phaserBase,
+      damageRatio: phaserBase.damageRatio * 1.5,
     },
     {
-      ...projectile,
-      anglesDegrees: [0],
-      beamRange: PHASER_RANGE,
-      damageRatio: 6.5 * 2.25,
-      intervalSeconds: 1,
-      projectileKind: "beam",
+      ...phaserBase,
+      damageRatio: phaserBase.damageRatio * 2.25,
     },
   ],
   // Fixed RAPID_DAMAGE and a small blast at every level; fire rate grows 1.2 then 1.5 (every 0.30,
@@ -199,33 +197,17 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
   // 220 at each.
   rapidMissile: [
     {
-      ...projectile,
-      anglesDegrees: [0],
-      blastRadius: 25,
-      damageRatio: RAPID_DAMAGE,
-      intervalSeconds: 0.3,
-      projectileKind: "missile",
-      rangeWorld: MISSILE_REACH,
+      ...rapidMissileBase,
       speedRatio: flies(500),
     },
     {
-      ...projectile,
-      anglesDegrees: [0],
-      blastRadius: 25,
-      damageRatio: RAPID_DAMAGE,
-      intervalSeconds: 0.3 / 1.2,
-      projectileKind: "missile",
-      rangeWorld: MISSILE_REACH,
+      ...rapidMissileBase,
+      intervalSeconds: rapidMissileBase.intervalSeconds / 1.2,
       speedRatio: flies(600),
     },
     {
-      ...projectile,
-      anglesDegrees: [0],
-      blastRadius: 25,
-      damageRatio: RAPID_DAMAGE,
-      intervalSeconds: 0.3 / 1.5,
-      projectileKind: "missile",
-      rangeWorld: MISSILE_REACH,
+      ...rapidMissileBase,
+      intervalSeconds: rapidMissileBase.intervalSeconds / 1.5,
       speedRatio: flies(700),
     },
   ],
@@ -234,31 +216,19 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
   // the rest of the 1.5 and 2.25 times level 1 volley.
   scattershot: [
     {
-      ...projectile,
-      anglesDegrees: fan(7, 30),
+      ...scattershotBase,
+      anglesDegrees: fan(7, SCATTER_SPREAD),
       damageRatio: SCATTER_VOLLEY / 7,
-      fadeStartFraction: 0.65,
-      intervalSeconds: 1,
-      projectileKind: "dot",
-      rangeWorld: SCATTER_RANGE,
     },
     {
-      ...projectile,
-      anglesDegrees: fan(9, 30),
+      ...scattershotBase,
+      anglesDegrees: fan(9, SCATTER_SPREAD),
       damageRatio: (SCATTER_VOLLEY * 1.5) / 9,
-      fadeStartFraction: 0.65,
-      intervalSeconds: 1,
-      projectileKind: "dot",
-      rangeWorld: SCATTER_RANGE,
     },
     {
-      ...projectile,
-      anglesDegrees: fan(11, 30),
+      ...scattershotBase,
+      anglesDegrees: fan(11, SCATTER_SPREAD),
       damageRatio: (SCATTER_VOLLEY * 2.25) / 11,
-      fadeStartFraction: 0.65,
-      intervalSeconds: 1,
-      projectileKind: "dot",
-      rangeWorld: SCATTER_RANGE,
     },
   ],
 };
