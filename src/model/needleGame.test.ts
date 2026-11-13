@@ -48,6 +48,7 @@ function learn(model: GameModel): void {
   model.interact();
   const budget = CONVERSATIONS.reduce((sum, conversation) => sum + conversation.lines.length, 0);
   for (let line = 0; !model.state.dialogue && line < budget; line++) {
+    expect(model.conversation).not.toBeNull();
     model.advanceConversation();
   }
   expect(model.state.dialogue?.context).toBe("needle.arrival");

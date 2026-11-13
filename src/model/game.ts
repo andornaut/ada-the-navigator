@@ -485,6 +485,16 @@ export class GameModel {
       [...CONVERSATIONS, ...PROJECT_THANKS],
       this.state.seenConversations,
     );
+    this.talk.setEligibilityReader(() => {
+      const flight = this.state.flight;
+      const progress = flight && this.state.progress[flight.galaxy];
+      return {
+        galaxy: flight?.galaxy ?? null,
+        holodisks: holodisksHeld(this.state.progress),
+        questComplete: progress?.questComplete ?? false,
+        resolved: progress?.resolved ?? false,
+      };
+    });
     if (this.state.mode === "space") {
       this.holdFlight();
     }
@@ -526,12 +536,17 @@ export class GameModel {
   }
   /** The line the conversation box shows now, if any: a warning's, or another with no notice. */
   get conversation(): ConversationView | null {
-    const showing = this.talk.showing;
     if (
-      !showing ||
       this.state.mode !== "space" ||
+      this.state.dialogue ||
+      this.state.docked ||
+      this.screen !== "space" ||
       (this.noticeShowing && !this.talk.warningShowing)
     ) {
+      return null;
+    }
+    const showing = this.talk.showing;
+    if (!showing) {
       return null;
     }
     const { desktop, mood = "neutral", speaker, text } = showing.line;
