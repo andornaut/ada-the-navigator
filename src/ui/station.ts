@@ -2,10 +2,12 @@ import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 
 import { CAST } from "../data/cast.ts";
 import { CONTENT } from "../data/content.ts";
+import { EXCHANGE_COPY } from "../data/exchangeCopy.ts";
 import type { Weapon } from "../data/types.ts";
 import { weaponShopSheet } from "../data/weaponGlyphs.ts";
 import type { StationGreeting } from "../model/keepers.ts";
 import { createDialoguePanel } from "./dialoguePanel.ts";
+import { createExchangeView, type ExchangePort } from "./exchange.ts";
 import { cardPages } from "./layout/cardPages.ts";
 import { BUTTON_SLICE, FOCUS_RING, PILL, TEXT_BUTTON } from "./layout/controls.ts";
 import { font, slice, units } from "./layout/css.ts";
@@ -52,6 +54,29 @@ const RING_OUT = SHOP_ROW.selection.outset + SHOP_ROW.selection.band;
 const scaled = (size: number) => `calc(${units(size)} * var(--glyph-scale,1))`;
 
 export const STATION_STYLE = `
+.ada-controls .ada-exchange{
+  max-width:100%;
+  text-align:left
+}
+.ada-controls .ada-exchange label{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:${units(SPACING.gap)}
+}
+.ada-controls .ada-exchange input{
+  box-sizing:border-box;
+  width:${units(96)};
+  max-width:100%;
+  font:inherit;
+  color:inherit;
+  background:transparent;
+  border:${units(1)} solid currentColor
+}
+.ada-controls .ada-exchange p{
+  overflow-wrap:anywhere
+}
+
 .ada-controls .ada-balance,
 .ada-controls .ada-confirm-price{
   display:flex;
@@ -420,7 +445,7 @@ export interface StationLabels {
   readonly undock: string;
 }
 
-export type StationTab = "projects" | "ship" | "weapons";
+export type StationTab = "exchange" | "projects" | "ship" | "weapons";
 
 /** The station's cards: the station card, the shop and the job board. */
 export type StationView = "card" | "shop" | "jobs";
@@ -511,6 +536,7 @@ export interface StationOptions {
   /** The station card's balance: the amount alone and its line, such as "260 Stardust". */
   readonly balance: () => { readonly amount: number; readonly text: string };
   readonly buy: (key: string) => void;
+  readonly exchange?: ExchangePort;
   /** Whether the Projects tab shows: once the galaxy's projects are offered. */
   readonly projectsShown: () => boolean;
   readonly dropJob: () => void;
@@ -520,7 +546,7 @@ export interface StationOptions {
   readonly labels: StationLabels;
   readonly reducedMotion: () => boolean;
   readonly request: (key: string) => StationRequest;
-  readonly rows: (tab: StationTab) => readonly StationRow[];
+  readonly rows: (tab: Exclude<StationTab, "exchange">) => readonly StationRow[];
   readonly select: (key: string) => void;
   readonly undock: () => void;
 }
@@ -691,6 +717,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     ["weapons", labels.shopWeapons],
     ["ship", labels.shopShip],
     ["projects", labels.projects],
+    ["exchange", EXCHANGE_COPY.title],
   ] as const) {
     const button = createButton(label);
     button.setAttribute("role", "tab");
@@ -706,6 +733,12 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   list.className = "ada-shop-list";
   list.setAttribute("role", "tabpanel");
   shopCard.body.append(shopBalance, tabs, list);
+  const exchange = options.exchange
+    ? createExchangeView(shopCard.body, options.exchange, () => render())
+    : undefined;
+  if (exchange) {
+    exchange.root.hidden = true;
+  }
 
   const confirmCard = createCard({
     closeAction: "confirm-cancel-x",
@@ -851,8 +884,12 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   let view: StationView = "card";
   let tab: StationTab = "weapons";
   // The tabs the shop shows: Projects joins Weapons and Ship once the galaxy offers projects.
-  const shownTabs = (): StationTab[] =>
-    options.projectsShown() ? ["weapons", "ship", "projects"] : ["weapons", "ship"];
+  const shownTabs = (): StationTab[] => [
+    "weapons",
+    "ship",
+    ...(options.projectsShown() ? ["projects" as const] : []),
+    ...(exchange ? ["exchange" as const] : []),
+  ];
   let confirm: { readonly key: string } | { readonly drop: true } | null = null;
 
   const renderBalances = (): void => {
@@ -929,7 +966,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     return group;
   };
 
-  const tabContent = (id: StationTab, columns: number): HTMLElement[] => {
+  const tabContent = (id: Exclude<StationTab, "exchange">, columns: number): HTMLElement[] => {
     const rows = options.rows(id);
     const chunks: HTMLElement[] = [];
     for (const kind of ["ammo", "items", "paint"] as const) {
@@ -954,6 +991,15 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
 
   // Measure the complete catalogs at natural widths, then bound rows before measuring heights.
   const fitList = (): void => {
+    list.hidden = tab === "exchange";
+    if (exchange) {
+      exchange.root.hidden = tab !== "exchange";
+    }
+    if (tab === "exchange") {
+      shopPager.node.hidden = true;
+      exchange?.render();
+      return;
+    }
     const card = shopCard.card;
     const unit = readViewUnit(card);
     for (const name of ["--shop-row-width", "--shop-slot-width", "--shop-pill-width"]) {
@@ -961,7 +1007,11 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     }
     const measure = document.createElement("div");
     measure.className = "ada-shop-measure";
-    measure.append(...shownTabs().flatMap((id) => options.rows(id).map(rowElement)));
+    measure.append(
+      ...shownTabs()
+        .filter((id) => id !== "exchange")
+        .flatMap((id) => options.rows(id).map(rowElement)),
+    );
     card.append(measure);
     const widest = (selector: string) =>
       Math.max(
@@ -1201,6 +1251,9 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   };
 
   const back = (): void => {
+    if (view === "shop" && tab === "exchange" && exchange?.back()) {
+      return;
+    }
     const step = stationBack(view, confirm !== null);
     if (step === "undock") {
       options.undock();
@@ -1256,6 +1309,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   });
   for (const [id, button] of tabButtons) {
     button.addEventListener("click", () => {
+      exchange?.back();
       tab = id;
       shopPage = 0;
       render();
@@ -1328,6 +1382,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     dispose(): void {
       window.removeEventListener("resize", refit);
       window.removeEventListener(VIEW_SCALE_EVENT, refit);
+      exchange?.dispose();
       stationCard.dispose();
       shopCard.dispose();
       jobsCard.dispose();
@@ -1352,6 +1407,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       open = value;
       modal.hidden = !open;
       view = "card";
+      exchange?.back();
       jobsBusy.hidden = true;
       closeConfirm();
       if (open) {

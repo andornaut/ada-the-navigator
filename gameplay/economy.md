@@ -452,3 +452,18 @@ The shield shop row reuses the existing `shield` label.
 | `detailAmmoLeft`     | Ammo: {count} left                                                        |
 | `detailIncludesAmmo` | Comes with 3 ammo packs.                                                  |
 | `detailClose`        | Close                                                                     |
+
+## Exchange
+
+Every station shop has a separate Exchange tab with Buy ore and Sell ore.
+One ore costs 2 Stardust to buy and returns 1 Stardust when sold. Buying and
+selling the same amount therefore loses 1 Stardust per ore.
+
+Choose a positive whole amount. The preview shows the amount, total price and
+resulting ore and Stardust balances. Confirm applies the exchange; Cancel
+returns without changing either balance. Confirmation rechecks current balances
+and rates, so an outdated preview cannot apply a different transaction.
+
+Ore is one fungible balance regardless of origin. Buying ore is an exchange,
+not a pickup or mining event. All carried ore follows the existing shield-fuel,
+sale, loss and deposit rules, including ordinary deposit progress.

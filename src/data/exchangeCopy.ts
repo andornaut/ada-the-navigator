@@ -1,0 +1,17 @@
+export const EXCHANGE_COPY = {
+  amount: "Amount",
+  buyOre: "Buy ore",
+  cancel: "Cancel",
+  cantAfford: "Not enough Stardust",
+  confirm: "Confirm",
+  help: "Buy or sell ore for Stardust.",
+  invalidAmount: "Enter a whole number greater than zero.",
+  notEnoughOre: "Not enough ore",
+  oreAfter: "Ore after",
+  sellOre: "Sell ore",
+  stale: "Balances changed. Review the exchange again.",
+  stardustAfter: "Stardust after",
+  title: "Exchange",
+  totalPrice: "Total price",
+  unavailable: "Exchange unavailable",
+} as const;
