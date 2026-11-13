@@ -509,6 +509,14 @@ export class GameScene extends Scene {
       renderer.dispose();
       this.needleFlight = undefined;
       this.needleRenderer = undefined;
+      // Phaser destroys these scene-owned objects; restarted scenes recreate their draw caches.
+      this.backdropImage = null;
+      this.skyImage = null;
+      this.plateInk = null;
+      this.streakInk = null;
+      this.backdropSprites.clear();
+      this.backdropItems.clear();
+      this.starImages = [];
     });
   }
 
