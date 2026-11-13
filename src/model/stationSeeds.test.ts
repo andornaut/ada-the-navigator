@@ -9,18 +9,19 @@ import { ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
+import { stationSpecialty } from "./stationServices.ts";
 import type { DialogueState } from "./types.ts";
 
-/** A flight in a galaxy docked at its station nearest the origin. */
+/** A flight docked at the nearest seeded station offering jobs. */
 function dockedIn(galaxy: GalaxyNumber): GameModel {
   const model = new GameModel(CONTENT);
   Object.assign(model.state, { prologueSeen: true, started: true, unlocked: [1, 2, 3, 4, 5, 6] });
   model.startGalaxy(galaxy);
   playOpening(model);
   model.state.dialogue = null;
-  const site = stationsNear(ECONOMY, galaxy, 40000, { x: 0, y: 0 }).sort(
-    (a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y),
-  )[0]!;
+  const site = stationsNear(ECONOMY, galaxy, 40000, { x: 0, y: 0 })
+    .filter(({ id }) => stationSpecialty(galaxy, id) === "jobs")
+    .sort((a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y))[0]!;
   const flight = model.state.flight!;
   ensureStation(CONTENT, site.id, flight);
   model.state.progress[galaxy].stations = [site.id];
@@ -39,6 +40,7 @@ function dockedIn(galaxy: GalaxyNumber): GameModel {
     model.interact();
   }
   expect(model.state.docked).toBe(site.id);
+  expect(model.stationServices?.jobs).toBe(true);
   return model;
 }
 
