@@ -253,31 +253,31 @@ another owned weapon shows `detailAmmoLeft` with its count; an unowned weapon
 in the shop shows `detailIncludesAmmo` instead. Multi-Laser and Scattershot
 lines name the counts at Ada's level, or level 1 when unowned.
 
-| Weapon        | Card lines                                                                                                                                                                                             |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Laser         | "Fires one laser bolt at a time, for as long as you like." "Reaches across the screen." "Each level fires faster, with faster bolts that hit harder."                                                  |
-| Multi-Laser   | "Fires a fan of {count} laser bolts at once." "Hits several drones together, or one drone with every bolt up close." "Reaches across the screen." "Each level adds a bolt and makes the bolts faster." |
-| Rapid Missile | "Fires small missiles at a fast rate." "Each one explodes when it hits something, or after a short distance, with a small blast." "Each level fires faster, with faster missiles."                     |
-| Heavy Missile | "Fires slowly, but each missile does a lot of damage." "Explodes when it hits something, or after a short distance, with a big blast that hits every drone nearby." "Each level hits harder."          |
-| Scattershot   | "Fires a wide spread of {count} shots." "Only works close to your ship: the shots fade away quickly." "Strongest up close, when every shot hits." "Each level adds shots that hit harder."             |
-| Phaser        | "Fires an instant beam that hits the first thing in its path." "Fires slowly, but every hit is strong, and nothing can dodge it." "Reaches across the screen." "Each level makes the beam hit harder." |
+| Weapon        | Card lines                                                                                                                           |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Laser         | "Fires one laser bolt at a time." "Reaches across the screen." "Each level fires faster and hits harder."                            |
+| Multi-Laser   | "Fires a fan of {count} laser bolts." "Hits several drones at once." "Reaches across the screen." "Each level adds a bolt."          |
+| Rapid Missile | "Fires small missiles quickly." "Explodes on a hit or after a short distance." "Each level fires faster."                            |
+| Heavy Missile | "Fires slowly but hits hard." "Explodes on a hit or after a short distance, with a big blast." "Each level hits harder."             |
+| Scattershot   | "Fires a wide spread of {count} shots." "Only reaches close to your ship." "Each level adds shots that hit harder."                  |
+| Phaser        | "Fires an instant beam that nothing can dodge." "Fires slowly but hits hard." "Reaches across the screen." "Each level hits harder." |
 
 An upgrade card shows the upgrade's shop name (`weaponUpgrade`, `shield`,
 `engineTuning` or `tractorBeam`), Ada's current level as `level`, then
 `detailNextLevel` and what the next level adds, from the table below. At level 3
 it shows `detailMaxed` instead.
 
-| Upgrade       | Level 2 adds                                                                          | Level 3 adds                                                         |
-| ------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| Laser         | "Fires faster, with faster bolts that hit harder."                                    | Same as level 2                                                      |
-| Multi-Laser   | "One more bolt: 4 in the fan, and faster bolts."                                      | "One more bolt: 5 in the fan, and faster bolts."                     |
-| Rapid Missile | "Fires faster, with faster missiles."                                                 | Same as level 2                                                      |
-| Heavy Missile | "Every missile hits harder."                                                          | Same as level 2                                                      |
-| Scattershot   | "Two more shots: 9 in the spread, and each one hits harder."                          | "Two more shots: 11 in the spread, and each one hits harder."        |
-| Phaser        | "The beam hits harder."                                                               | Same as level 2                                                      |
-| Shield        | "A bigger shield that refills faster."                                                | Same as level 2                                                      |
-| Engine tuning | "Faster, and quicker to speed up and slow down. Outrun every drone but interceptors." | "Faster, and quicker to speed up and slow down. Outrun every drone." |
-| Tractor beam  | "Pulls from farther away, and pulls faster."                                          | Same as level 2                                                      |
+| Upgrade       | Level 2 adds                                   | Level 3 adds                  |
+| ------------- | ---------------------------------------------- | ----------------------------- |
+| Laser         | "Fires faster and hits harder."                | Same as level 2               |
+| Multi-Laser   | "One more bolt, and faster bolts."             | Same as level 2               |
+| Rapid Missile | "Fires faster."                                | Same as level 2               |
+| Heavy Missile | "Hits harder."                                 | Same as level 2               |
+| Scattershot   | "Two more shots that hit harder."              | Same as level 2               |
+| Phaser        | "Hits harder."                                 | Same as level 2               |
+| Shield        | "A bigger shield that refills faster."         | Same as level 2               |
+| Engine tuning | "Faster. Outrun every drone but interceptors." | "Faster. Outrun every drone." |
+| Tractor beam  | "Pulls from farther away, and faster."         | Same as level 2               |
 
 ## Donations
 
