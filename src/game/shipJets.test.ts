@@ -104,6 +104,74 @@ describe("ship jet metadata", () => {
   });
 });
 
+describe("authored jet occlusion", () => {
+  const polygon = [
+    [12, 30],
+    [20, 30],
+    [20, 40],
+  ];
+  const masked = (occluders: unknown) =>
+    withHeading({
+      ...art.headings[0],
+      mouths: art.headings[0]!.mouths.map((mouth, index) =>
+        index === 0 ? { ...mouth, occluders } : mouth,
+      ),
+    });
+
+  it("keeps legacy mouths behind the sprite and distinguishes an explicitly clear exhaust plane", () => {
+    expect(jetTriangles(jets, framePixels, 0, 0.8)[0]).not.toHaveProperty("occluders");
+    const read = readEngineJets(masked([]))!;
+    expect(
+      jetTriangles(engineJets(read, 1), { ...framePixels, includeOccluders: true }, 0, 0.8)[0]!
+        .occluders,
+    ).toEqual([]);
+  });
+
+  it("preserves per-mouth nearer surfaces through engine selection and display projection", () => {
+    const read = readEngineJets(masked([polygon]))!;
+    const selected = engineJets(read, 2);
+    expect(jetTriangles(selected, shipDisplay, 0, 0.8)[0]).not.toHaveProperty("occluders");
+    const triangles = jetTriangles(selected, { ...shipDisplay, includeOccluders: true }, 0, 0.8);
+    const expected = polygon.map(([x, y]) => ({
+      x: ((x! - 48) * 42) / 96,
+      y: ((y! - 48) * 42) / 96,
+    }));
+    expect(triangles[0]!.occluders).toEqual([expected]);
+    expect(triangles[1]!.occluders).toBe(triangles[0]!.occluders);
+    expect(triangles[3]).not.toHaveProperty("occluders");
+    expect(read.headings[0]![0]!.anchor).toEqual(jets.headings[0]![0]!.anchor);
+    const craft = {
+      ...masked([polygon]),
+      engineLevels: undefined,
+      layers: art.engineLevels[0]!.layers,
+    };
+    expect(readShipJets(craft)?.headings[0]![0]!.occluders).toEqual([
+      polygon.map(([x, y]) => ({ x, y })),
+    ]);
+  });
+
+  it.each([
+    null,
+    {},
+    [null],
+    [
+      [
+        [1, 2],
+        [3, 4],
+      ],
+    ],
+    [
+      [
+        [1, 2],
+        [3, 4],
+        [NaN, 5],
+      ],
+    ],
+  ])("rejects malformed optional occluders %j rather than revealing the whole plume", (value) =>
+    expect(readEngineJets(masked(value))).toBeUndefined(),
+  );
+});
+
 describe("jet style from Art's file", () => {
   it.each([
     [0.25, 7.5, 0x73a9d9, 0xa9d3f4, 0],

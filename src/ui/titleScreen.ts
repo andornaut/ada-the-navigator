@@ -4,7 +4,7 @@ import { START_SCREEN } from "./layout/startScreen.ts";
 
 // Art's start screen art (art/title-screen.md), from the core manifest and title-screen.json, which
 // it links as titleScreen: the field, the wordmark, each paint's ship-26 and the speed jets
-// behind it, held still.
+// at their authored depth, held still.
 
 /** A manifest entry the title screen reads. */
 export interface TitleAsset {
@@ -28,7 +28,7 @@ export interface TitleScreenArt {
     readonly url: string;
     readonly width: number;
   };
-  /** The jets behind the ship, in logical px from the ship's pivot, with the pivot's place in the frame. */
+  /** Jets and optional nearer-surface masks in logical px from the ship's pivot. */
   readonly jets: readonly JetTriangle[];
   readonly pivot: Vec;
   /** Each paint's ship frame, by scheme; Classic's under null. */
@@ -96,7 +96,7 @@ export function readTitleScreen(
     jets && jets.headings[frame as number]
       ? jetTriangles(
           jets,
-          { displayHeight: size, displayWidth: size, pivot },
+          { displayHeight: size, displayWidth: size, includeOccluders: true, pivot },
           frame as number,
           ship.jetSpeed,
         )
@@ -125,15 +125,21 @@ export function titleShip(art: TitleScreenArt, paint: string | null): string {
   return (paint !== null && art.ships.get(paint)) || art.ships.get(null)!;
 }
 
-/** The jets as SVG polygons in the ship frame's box, pivot-relative points moved onto the frame. */
-export function jetPolygons(
-  art: TitleScreenArt,
-): { readonly fill: string; readonly opacity: number; readonly points: string }[] {
+/** Jets and their authored nearer surfaces as SVG polygons in the ship frame's box. */
+export function jetPolygons(art: TitleScreenArt): {
+  readonly fill: string;
+  readonly occluders?: readonly string[];
+  readonly opacity: number;
+  readonly points: string;
+}[] {
   const size = START_SCREEN.ship.size;
   const origin = { x: art.pivot.x * size, y: art.pivot.y * size };
-  return art.jets.map(({ alpha, color, points }) => ({
+  const onFrame = (points: readonly Vec[]) =>
+    points.map(({ x, y }) => `${origin.x + x},${origin.y + y}`).join(" ");
+  return art.jets.map(({ alpha, color, occluders, points }) => ({
     fill: `#${color.toString(16).padStart(6, "0")}`,
+    ...(occluders === undefined ? {} : { occluders: occluders.map(onFrame) }),
     opacity: alpha,
-    points: points.map(({ x, y }) => `${origin.x + x},${origin.y + y}`).join(" "),
+    points: onFrame(points),
   }));
 }

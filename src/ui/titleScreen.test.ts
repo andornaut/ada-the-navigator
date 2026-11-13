@@ -77,6 +77,46 @@ describe("title screen art", () => {
     }
   });
 
+  it("moves authored per-mouth occluders into the same full title frame as their plume", () => {
+    const occluders = [
+      [
+        { x: 12, y: 30 },
+        { x: 20, y: 30 },
+        { x: 20, y: 40 },
+      ],
+    ];
+    const masked = {
+      ...jets,
+      headings: jets.headings.map((mouths, heading) =>
+        heading === 26
+          ? mouths.map((mouth, index) => (index === 0 ? { ...mouth, occluders } : mouth))
+          : mouths,
+      ),
+    };
+    const assets = manifest.assets.map((asset) =>
+      asset.id === "ship-26" ? { ...asset, pivot: { x: 0.2, y: 0.8 } } : asset,
+    );
+    const title = readTitleScreen(assets, masked, data)!;
+    const polygons = jetPolygons(title);
+    const expected = occluders.map((polygon) =>
+      polygon
+        .map(
+          ({ x, y }) =>
+            `${(x * START_SCREEN.ship.size) / jets.frame},${(y * START_SCREEN.ship.size) / jets.frame}`,
+        )
+        .join(" "),
+    );
+    expect(polygons[0]!.occluders).toHaveLength(expected.length);
+    polygons[0]!.occluders!.forEach((polygon, index) => {
+      const coordinates = polygon.split(/[ ,]/u).map(Number);
+      const wanted = expected[index]!.split(/[ ,]/u).map(Number);
+      coordinates.forEach((coordinate, point) =>
+        expect(coordinate).toBeCloseTo(wanted[point]!, 10),
+      );
+    });
+    expect(polygons[3]).not.toHaveProperty("occluders");
+  });
+
   it("reads no art from malformed data", () => {
     expect(readTitleScreen(manifest.assets, jets, { ...data, version: 2 })).toBeNull();
     expect(

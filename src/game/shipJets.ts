@@ -8,6 +8,8 @@ export interface JetMouth {
   axis: Vec;
   /** Projected half mouth-width vector. */
   half: Vec;
+  /** Projected surfaces nearer than this mouth's exhaust plane, in heading-frame pixels. */
+  occluders?: readonly (readonly Vec[])[];
   /** The engine hardpoint that drives this mouth, on a composed craft. */
   hardpoint?: string;
 }
@@ -49,12 +51,16 @@ export interface EngineJets extends JetGeometry {
 export interface JetDisplay {
   displayHeight: number;
   displayWidth: number;
+  /** Project optional nearer-surface masks only for consumers that render them. */
+  includeOccluders?: boolean;
   pivot: Vec;
 }
 
 export interface JetTriangle {
   alpha: number;
   color: number;
+  /** Authored nearer surfaces in the same pivot-relative display coordinates as the triangle. */
+  occluders?: readonly (readonly Vec[])[];
   points: readonly [Vec, Vec, Vec];
 }
 
@@ -164,6 +170,24 @@ export function engineJets(jets: EngineJets, level: number): ShipJets {
   };
 }
 
+function readOccluders(value: unknown): Vec[][] | undefined {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+  const polygons: Vec[][] = [];
+  for (const polygon of value as unknown[]) {
+    if (!Array.isArray(polygon) || polygon.length < 3) {
+      return undefined;
+    }
+    const points = (polygon as unknown[]).map(readVec);
+    if (points.some((point) => point === undefined)) {
+      return undefined;
+    }
+    polygons.push(points as Vec[]);
+  }
+  return polygons;
+}
+
 function readMouths(value: unknown): JetMouth[] | undefined {
   if (!Array.isArray(value) || value.length === 0) {
     return undefined;
@@ -174,19 +198,23 @@ function readMouths(value: unknown): JetMouth[] | undefined {
     const anchor = readVec(mouth?.anchor);
     const axis = readVec(mouth?.axis);
     const half = readVec(mouth?.half);
+    const occluders = mouth?.occluders === undefined ? undefined : readOccluders(mouth.occluders);
     if (
       !anchor ||
       !axis ||
       !half ||
+      (mouth!.occluders !== undefined && occluders === undefined) ||
       (mouth!.hardpoint !== undefined && typeof mouth!.hardpoint !== "string")
     ) {
       return undefined;
     }
-    mouths.push(
-      typeof mouth!.hardpoint === "string"
-        ? { anchor, axis, half, hardpoint: mouth!.hardpoint }
-        : { anchor, axis, half },
-    );
+    mouths.push({
+      anchor,
+      axis,
+      half,
+      ...(typeof mouth!.hardpoint === "string" ? { hardpoint: mouth!.hardpoint } : {}),
+      ...(occluders === undefined ? {} : { occluders }),
+    });
   }
   return mouths;
 }
@@ -290,7 +318,10 @@ export function jetTriangles(
   const toDisplay = (x: number, y: number): Vec => ({ x: (x - ox) * sx, y: (y - oy) * sy });
   const length = jetLength(jets, fraction);
   const triangles: JetTriangle[] = [];
-  for (const { anchor, axis, half } of mouths) {
+  for (const { anchor, axis, half, occluders } of mouths) {
+    const displayOccluders = display.includeOccluders
+      ? occluders?.map((polygon) => polygon.map(({ x, y }) => toDisplay(x, y)))
+      : undefined;
     for (const layer of jets.layers) {
       const alpha = layerAlpha(layer, fraction);
       if (alpha <= 0) {
@@ -302,6 +333,7 @@ export function jetTriangles(
       triangles.push({
         alpha,
         color: layerColor(layer, fraction),
+        ...(displayOccluders === undefined ? {} : { occluders: displayOccluders }),
         points: [
           toDisplay(anchor.x + hx, anchor.y + hy),
           toDisplay(anchor.x + axis.x * tip, anchor.y + axis.y * tip),

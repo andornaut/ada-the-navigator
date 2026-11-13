@@ -14,6 +14,7 @@ export const START_SCREEN_CLASS = "ada-start";
 
 const { actions, note, ship, wordmark } = START_SCREEN;
 const SVG = "http://www.w3.org/2000/svg";
+let nextJetMask = 0;
 
 export const START_SCREEN_STYLE = `
 /* Over the canvas and under the HUD row's nav discs (.ada-controls), which draw last. */
@@ -132,16 +133,66 @@ export function createStartScreen(
       top: units(art.field.at.y),
       width: units(art.field.width),
     });
-    const jets = document.createElementNS(SVG, "svg");
-    jets.classList.add("ada-start-jets");
-    jets.setAttribute("aria-hidden", "true");
-    jets.setAttribute("viewBox", `0 0 ${ship.size} ${ship.size}`);
-    for (const { fill, opacity, points } of jetPolygons(art)) {
+    const jetSvg = () => {
+      const node = document.createElementNS(SVG, "svg");
+      node.classList.add("ada-start-jets");
+      node.setAttribute("aria-hidden", "true");
+      node.setAttribute("viewBox", `0 0 ${ship.size} ${ship.size}`);
+      return node;
+    };
+    const jets = jetSvg();
+    const polygons = jetPolygons(art);
+    const front = polygons.some(({ occluders }) => occluders !== undefined) ? jetSvg() : null;
+    front?.classList.add("ada-start-jets-front");
+    const masks = new Map<string, string>();
+    // Include every plume's extent so a mask never clips exhaust outside the sprite frame.
+    const coordinates = polygons.flatMap(({ points }) =>
+      points.split(" ").map((point) => point.split(",").map(Number)),
+    );
+    const xs = coordinates.map(([x]) => x!);
+    const ys = coordinates.map(([, y]) => y!);
+    for (const { fill, occluders, opacity, points } of polygons) {
       const polygon = document.createElementNS(SVG, "polygon");
       polygon.setAttribute("points", points);
       polygon.setAttribute("fill", fill);
       polygon.setAttribute("fill-opacity", String(opacity));
-      jets.append(polygon);
+      if (occluders !== undefined && front) {
+        const signature = JSON.stringify(occluders);
+        let id = masks.get(signature);
+        if (!id) {
+          id = `ada-title-jet-mask-${nextJetMask++}`;
+          masks.set(signature, id);
+          const mask = document.createElementNS(SVG, "mask");
+          mask.setAttribute("id", id);
+          mask.setAttribute("maskUnits", "userSpaceOnUse");
+          mask.setAttribute("maskContentUnits", "userSpaceOnUse");
+          const rect = document.createElementNS(SVG, "rect");
+          for (const [name, value] of Object.entries({
+            height: Math.max(...ys) - Math.min(...ys),
+            width: Math.max(...xs) - Math.min(...xs),
+            x: Math.min(...xs),
+            y: Math.min(...ys),
+          })) {
+            mask.setAttribute(name, String(value));
+            rect.setAttribute(name, String(value));
+          }
+          rect.setAttribute("fill", "white");
+          mask.append(rect);
+          for (const points of occluders) {
+            const cover = document.createElementNS(SVG, "polygon");
+            cover.setAttribute("points", points);
+            cover.setAttribute("fill", "black");
+            mask.append(cover);
+          }
+          const defs = document.createElementNS(SVG, "defs");
+          defs.append(mask);
+          front.append(defs);
+        }
+        polygon.setAttribute("mask", `url(#${id})`);
+        front.append(polygon);
+      } else {
+        jets.append(polygon);
+      }
     }
     const frame = document.createElement("img");
     frame.className = "ada-start-ship";
@@ -149,6 +200,9 @@ export function createStartScreen(
     frame.setAttribute("aria-hidden", "true");
     frame.src = titleShip(art, content.paint);
     parts.push(field, jets, frame);
+    if (front) {
+      parts.push(front);
+    }
   }
   const title = document.createElement("h1");
   title.className = "ada-start-title";
