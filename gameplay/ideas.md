@@ -1,7 +1,7 @@
 # Ada the Navigator ideas
 
-Ideas are proposals outside the current version. Recording an idea does not
-approve implementation. Version one has six galaxies. See [the version one rules](rules.md) for current rules.
+The [shared Ideas policy](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#ideas) governs proposals here.
+See [the version one rules](rules.md) for Ada's current six-galaxy scope.
 
 ## Future candidates
 

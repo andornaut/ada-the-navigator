@@ -1,12 +1,9 @@
 # Cheats
 
-Cheats are available through settings in browser tabs only. Use the published
-`runsInAppWindow` check both when opening cheats and when executing an action.
-Installed PWA windows must reject both operations.
+The [shared saves and cheats policy](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#saves-and-cheats) applies.
+Ada opens cheats through Settings and uses the published `runsInAppWindow` check
+both when opening cheats and when executing an action.
 
-Group actions under **Save-changing** and **Run-only**, following the
-[canonical Run-only policy](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#saves-and-cheats).
-Run-only cheats preserve normal saves, progression, statistics and achievements.
 The approved action is **Grant all weapons**, in Run-only. No save-changing action
 is specified. Hide a group that has no actions.
 

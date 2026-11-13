@@ -678,9 +678,10 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   the aim stick. The icon is decorative; the name stays for screen readers. This
   covers the first-flight lessons and the landing page's mobile line. Keyboard
   text stays words.
-- Every card's close X uses the local map's close icon, the galaxy map's
+- [Shared product consistency policy](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#product-consistency) applies.
+  Every card's close X uses the local map's close icon, the galaxy map's
   included, so all close controls look the same.
-- Settings uses the same terms and patterns as Archie and Chibi. Rows, in order:
+- [Shared settings policy](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#settings) applies. Ada's rows, in order:
   - Move controls and Aim controls, as in Chibi: each shows or hides one on-screen
     joystick (left and right). Each is shown unless the player hides it. Hiding a
     control hides only its drawing; its input still works. Each row has the note
@@ -701,27 +702,26 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
     "Install steps" in [the player copy](player-copy.md#install-steps).
 - Every setting persists on that device. Settings shows no keyboard binding text,
   and keyboard input is unchanged.
-- Updates, as in Archie and Chibi: the active complete build loads its assets
-  cache-first, using the network only for missing assets from that same build.
-  Cached startup has no network dependency apart from cache misses and the
-  separate version check. Offline startup uses a known complete cached build.
-  A first visit without a complete cache may bootstrap from the network; ordinary
-  cached launches never wait for a mandatory new-version download.
+- [Shared update policy](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#updates) governs staging and activation.
+  Ada starts offline from a known complete cached build. A first visit without a
+  complete cache may bootstrap from the network; ordinary cached launches never
+  wait for a mandatory new-version download.
   Version checks run on launch, every Back to title (from the pause card or Ada's
   room page) and resuming the app while the start screen shows. Closing a card
-  on the start screen is not an arrival. A new build stages in a separate cache
-  and becomes ready atomically only after all its assets validate. Pages, art
-  and manifests never mix builds, and a partial or failed download never activates.
-  A complete waiting build is offered only on the uncovered start screen, in a
+  on the start screen is not an arrival. A complete waiting build is offered only
+  on the uncovered start screen, in a
   compact modal titled "Update available", with secondary "Cancel" on the left,
   primary "Update now" on the right, the ordinary close X and no body text.
   Update now activates it and reloads once. Cancel, the close X, an outside tap,
   Escape and back keep the running version and dismiss the offer until the next
   arrival, when a fresh check offers it again. A complete waiting build also
-  activates automatically on the next fresh page or app launch or restart,
-  never mid-flight, on Back to title or on a visibility resume within the same
-  page. Settings and install steps covering the start screen suppress the offer.
-  Newer-save protection and its required update remain in force.
+  activates automatically only on a fresh document launch/restart, before game
+  construction and save access, never on Back to title or a visibility resume in
+  the same document. Settings and install steps covering the start screen suppress
+  the offer. Ada retains the [canonical newer-save recovery exception](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#updates).
+  Start, incompatible save loading and all save writes stay fenced until the new
+  document rechecks compatibility. The save remains untouched while recovery is
+  pending.
 - Back, as in Chibi: it closes the innermost open card (install steps, Settings,
   the cheats card, the station card or shop) or cancels the update offer; during
   flight with nothing open it opens the pause card, and with the pause card open it

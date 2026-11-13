@@ -9,6 +9,10 @@ defines the browser-tab cheats. [Economy](economy.md) defines Stardust, stations
 the shop. [Ideas](ideas.md) contains proposals outside the
 current version. These documents describe design, not implementation.
 
+The [cross-game policies](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md) define shared settings, updates,
+product consistency, saves, cheats and proposal handling. The documents here
+retain Ada's specific rules, copy and lifecycle.
+
 ## Ownership
 
 Gameplay owns this directory, game rules, gameplay data and values, and player
