@@ -569,6 +569,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     // pause button is hidden, it keeps its place.
     status.setShown(enabled && !modalOpen());
     notices.update(performance.now(), enabled && !modalOpen(), noticePlaces());
+    weapons.updateFeedback(performance.now(), enabled && !modalOpen());
     for (const target of settings.joystickTargets) {
       target.hidden = !touch;
     }
@@ -715,7 +716,13 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     setGains(gains) {
       if (gains === null) {
         notices.clear();
+        weapons.clearFeedback();
       } else {
+        for (const gain of gains) {
+          if (gain.kind === "ammo") {
+            weapons.showAmmoGain(gain.weapon, gain.added);
+          }
+        }
         notices.push(gains);
       }
     },

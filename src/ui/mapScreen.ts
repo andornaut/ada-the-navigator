@@ -45,6 +45,11 @@ import { HUD_ROW, SAFE_MARGIN } from "./layout/playView.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { drawMapFog as fogOver } from "./mapFog.ts";
+import {
+  createMapPresentationRevision,
+  createMapRenderQueue,
+  mapPresentationContext,
+} from "./mapRenderQueue.ts";
 import { createButton, createCard, isTap, TEXT_TOKENS } from "./modal.ts";
 import { galaxiesAvailable, mapShowsEmpty } from "./pause.ts";
 import { refuse } from "./refusal.ts";
@@ -1000,7 +1005,10 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     drawSearchArea(context, inner, current, map, px);
   };
 
+  const presentation = createMapPresentationRevision();
+  const renderQueue = createMapRenderQueue(window, () => render());
   const render = () => {
+    renderQueue.cancel();
     if (!state || screen.hidden) {
       return;
     }
@@ -1148,7 +1156,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       return;
     }
     view = zoomed.view;
-    render();
+    renderQueue.schedule();
   };
   const fitCentre = (): Point => {
     const { fit } = layout();
@@ -1380,7 +1388,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
           { x: next.mid.x - pinch.mid.x, y: next.mid.y - pinch.mid.y },
           zoomed.view,
         );
-        render();
+        renderQueue.schedule();
       }
       pinch = next;
       return;
@@ -1394,7 +1402,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     }
     if (press?.moved) {
       view = panView(inner, limit(), { x: at.x - before.x, y: at.y - before.y }, view);
-      render();
+      renderQueue.schedule();
     }
   });
   const release = (event: PointerEvent) => {
@@ -1460,6 +1468,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     focusTarget(targets[(next + targets.length) % targets.length]!);
   });
   const refit = () => {
+    presentation.clear();
     if (!screen.hidden && view) {
       const { inner } = layout();
       view = clampView(inner, limit(), view);
@@ -1467,9 +1476,12 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     }
   };
   window.addEventListener("resize", refit);
+  document.fonts.addEventListener("loadingdone", refit);
 
   return {
     close(): void {
+      renderQueue.cancel();
+      presentation.clear();
       questsModal.hidden = true;
       screen.hidden = true;
       selected = null;
@@ -1480,6 +1492,9 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     /** Closes the Quests modal, back to the map. */
     closeQuests,
     dispose(): void {
+      renderQueue.dispose();
+      presentation.clear();
+      document.fonts.removeEventListener("loadingdone", refit);
       window.removeEventListener("resize", refit);
       questsCard.dispose();
       screen.remove();
@@ -1504,7 +1519,13 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       if (selected !== null && !places().some(({ id }) => id === selected)) {
         selected = null;
       }
-      render();
+      if (screen.hidden) {
+        presentation.clear();
+        return;
+      }
+      if (presentation.changed(mapPresentationContext(screen), next)) {
+        render();
+      }
     },
   };
 }
