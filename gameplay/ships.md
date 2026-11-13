@@ -250,7 +250,7 @@ Frigates, capitals and platforms have hull HP and hardpoints.
   keeping its momentum and slowing to a stop. Command parts never fire and do not count toward disabling.
 - **Mounts:** Art draws each heavy class once, with every weapon mount it can
   carry, and a turret for each weapon a mount can hold. A mount the position
-  leaves unused is drawn as a capped plate with no hardpoint. Phantom's capital is General Gadget's own, more threatening design.
+  leaves unused is drawn as a capped plate with no hardpoint. General Gadget's flagship has its own, more threatening design.
 - **State:** hull HP, hardpoints, disabled and salvaged states are retained like
   other heavy state until the galaxy regenerates. A salvaged heavy stays where
   Ada left it: like a destroyed one, it no longer holds the spacing kept between
@@ -269,8 +269,7 @@ Frigates, capitals and platforms have hull HP and hardpoints.
 
 Weights choose each encounter; the group size range replaces the shared range
 for that archetype. Values not listed keep the current catalog values. Each
-galaxy below has its own roster in the same format; Phantom keeps the current
-shared encounter table until its roster is specified. All values are
+galaxy below has its own roster in the same format. All values are
 provisional playtest tuning.
 
 ## Whirlpool roster
@@ -366,6 +365,66 @@ turrets fire while it advances, with no speed to advance.
   salvaged or destroyed platform persist until the galaxy regenerates. Ada
   bounces off it on contact until it is salvaged. It drops Stardust by the heavy
   rule and has the heavy upgrade chance.
+
+## Phantom roster
+
+Phantom's drones are Gadget's home guard: heavier, and they chase.
+
+| Archetype      | Encounter    | Group | Weight | Behaviours                                   |
+| -------------- | ------------ | ----: | -----: | -------------------------------------------- |
+| `swarm`        | Pack         |   6–8 |   0.18 | `swarm`; packs `flee` after losses           |
+| `fighter`      | Home guard   |   3–5 |   0.25 | `chase`; a group shares pack morale          |
+| `interceptor`  | Pair         |     2 |   0.15 | `strafe`                                     |
+| `retaliator`   | Solo         |     1 |   0.07 | `retaliate`, then `chase`; three-bolt spread |
+| `frigate`      | Solo or pair |   1–2 |   0.25 | `siege`; size 4 Ada widths                   |
+| Capital battle | Group        |     1 |   0.10 | A `capital` with 6 `escort` fighters         |
+
+Blockades and the finale's waves draw from this roster (see
+[the version one rules](rules.md#galaxy-six-phantom-the-finale)). Once the
+chapter is complete, Phantom places no new encounters.
+
+## Gadget's flagship
+
+General Gadget's flagship is a `capital` in his own design, the only crewed ship in
+his fleet.
+
+- **Hull and parts:** 160 hull HP; command, two engines and 8 weapon mounts, each
+  hardpoint 8 HP. Its weapons come from the position 6 capital pool, as for any
+  capital ([Enemy weapons](#enemy-weapons)). Its hull never drops below 1 HP, so
+  it is beaten only by disabling.
+- **Movement:** `siege` at a quarter of its top speed, staying within 800 world
+  units of the waypoint.
+- **Escorts:** 8 `escort` fighters, which hold back with it until the third wave
+  is gone.
+- **Salvage:** salvaging it gives the last holodisk and its Stardust by the heavy
+  rule, then the story scene plays. It never regenerates.
+
+## Finale allies
+
+Allies join only the Phantom fleet battle and flagship fight. Each funded
+community project makes one project ally ([Economy](economy.md#donations)), and
+completing a galaxy's repeatable activity at least once makes its quest ally:
+
+| Galaxy    | Quest ally         | Behaviour               |
+| --------- | ------------------ | ----------------------- |
+| Sunflower | Clover's barge     | `escort`                |
+| Whirlpool | Marlo, the whale   | Whale                   |
+| Needle    | Reed's glider      | `escort`                |
+| Andromeda | Pip's courier ship | `escort`                |
+| Cartwheel | Mica's mining ship | `chase` against turrets |
+
+- **Arrival:** every ally Ada has made jumps in beside her when the battle begins
+  and leaves with her when the flagship is salvaged or the flight ends. At most 8
+  allies are on screen at once; the rest arrive as reinforcements as others leave.
+- **Safety:** drones never target allies, allies take no damage, and Ada and shots
+  pass through them, with Ada drawn in front.
+- **Fire:** an ally that fires uses level 2 Laser every 1.4 seconds at the drone
+  its behaviour picks.
+- **`escort`:** holds station 60 beyond Ada's ship and intercepts drones within
+  600 of her.
+- **`chase` against turrets:** chases the nearest heavy and aims at its weapon
+  hardpoints.
+- **Whale:** a whale never fires.
 
 ## Presentation
 

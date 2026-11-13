@@ -1,8 +1,7 @@
 # Ada the Navigator ideas
 
 Ideas are proposals outside the current version. Recording an idea does not
-approve implementation. Version one has six galaxies; the sixth's home chapter
-remains deferred within that version. See [the version one rules](rules.md) for current rules.
+approve implementation. Version one has six galaxies. See [the version one rules](rules.md) for current rules.
 
 ## Future candidates
 

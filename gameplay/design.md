@@ -85,12 +85,13 @@ the route, whichever galaxy holds that holodisk:
 
 Ada makes friends and allies across the galaxies, and they help her defeat General
 Gadget in Phantom. Ada shows him that there are infinitely many galaxies, so the
-universe cannot be controlled, and the General relents. With all six holodisks
+universe cannot be controlled, and the General relents and stays in Phantom
+to help the Blurbs repair what his blockades broke. With all six holodisks
 Astra can navigate on her own again, but she chooses to keep flying with Ada.
 
 The interactive story at home and procedural space adventures continue together
 throughout the game. The first five chapters, in route order, concern a
 community garden, caring for her dog, patience, honesty and playground
-bullying. A sixth
-concluding chapter, the confrontation with General Gadget, is within version
-one; its home chapter and detailed scenes remain to be designed.
+bullying. The sixth, the confrontation with General Gadget, concerns letting go
+of control: Ada's thank-you party washes out in the rain, and the day is better
+for it.

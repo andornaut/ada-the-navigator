@@ -115,7 +115,8 @@ Then Astra's memory line for how many holodisks she now holds:
   and it broke something in me. That's how I ended up near Earth."
 - Fifth: "Now I remember what he wants: copies of my mind that always obey. If
   I'm whole again, he'll want me even more."
-- Sixth: written with the finale.
+- Sixth: "I remember everything now. He wanted copies of me that would never
+  say no. I don't have to run anymore."
 
 Memory lines and broadcasts follow the order holodisks are recovered. The
 General's broadcast in a built galaxy plays once, in the conversation box, the
@@ -133,6 +134,8 @@ portrait is a dark silhouette with no face; once named, it shows him:
   will wait at every exit." Ada: "Then we'll take our time."
 - Fifth: General Gadget: "Astra. I know you can hear me. Come back, and bring my
   disks." Astra: "I'm not yours, General. I never was."
+- Sixth: General Gadget: "So you came to Phantom. I have the last disk, little
+  navigator." Ada: "Then we'll come and get it."
 
 Outposts handing over the holodisk, said by whichever outpost Ada is talking to:
 "We found this drifting near our outposts. Take it, with our thanks."
@@ -529,6 +532,89 @@ Objectives, in order:
 6. Buy the holodisk at the hub.
 7. Go home to Earth when ready.
 
+## Chapter six: the garden party
+
+Panel title: The Garden Party.
+
+Opening: "Ada wants to thank everyone who helped her this year: Grandma, Sam,
+her friends, Mom and Dad. She plans a party at the community garden, with a list
+for every minute."
+
+Choices:
+
+- "Plan every last detail."
+- "Ask everyone to bring something."
+
+Branch pages, then the story rejoins:
+
+- "Plan every last detail.": "Ada writes a schedule: games at three, cake at
+  four, thank-yous at five. If everything goes to plan, it will be perfect."
+- "Ask everyone to bring something.": "Ada asks everyone to bring one thing.
+  Then she writes it all down anyway, just to be sure nothing goes wrong."
+
+Space dialogue, in story order:
+
+Blurb, first settlement freed: "Blub! The drones are gone! We haven't left our
+homes since the General came."
+Ask more: "We Blurbs wobble, but we always hold together."
+
+Blurb, second settlement freed: "You broke the blockade! The stranded travelers
+can come home now."
+
+Dollop, third settlement freed: "Thank you, Navigator. His flagship waits past
+the dark nebula. We'll send word to everyone you've helped."
+
+Battle begins, with allies: Astra: "That's his flagship. And Ada, look." Ada:
+"Everyone came!" (happy)
+Battle begins, with no allies: Astra: "That's his flagship. It's just us." Ada:
+"Just us is enough."
+
+General Gadget, as the flagship attacks: "Astra. Come home, and bring my disks.
+No one needs to get hurt." Astra: "No one will. But I'm not yours."
+
+General Gadget, flagship disabled: "Enough! Take it. Take the last disk."
+
+After the sixth memory line: Ada: "Astra, show him your map." Astra: "Six disks,
+every coordinate. There are galaxies past galaxies, General. They never end."
+General Gadget: "No end... No one could hold all of that." Ada: "No one has to.
+But you could help fix what you broke here." General Gadget: "The Blurbs' docks.
+My blockades cracked them. I'll start there."
+
+Home resolution: "On the day, rain pours over the garden. The schedule turns to
+mush in Ada's hand. She stands under the shelter, watching her perfect plan wash
+away."
+
+Choices:
+
+- "Try to save the plan."
+- "Let the plan go."
+
+Branch pages, then the story rejoins:
+
+- "Try to save the plan.": "Ada rushes to move the games under the shelter, but
+  nothing fits. Grandma laughs and hands her an umbrella. 'Plans are for
+  starting, love.'"
+- "Let the plan go.": "Ada laughs and drops the soggy list. Sam starts a puddle
+  race, and Dad shields the cake under his coat."
+
+Rejoin: "Everyone crowds under the shelter. Mom passes cake, Penny shakes rain
+over everyone, and nobody minds at all."
+
+Closing: "Nobody remembers the schedule. Everyone remembers the rain. That night,
+Ada tells Astra, 'I couldn't control any of it, and it was the best day.'"
+Astra: "I'm whole now, Ada. I could fly anywhere. I'd like to keep flying with
+you." Ada: "Always." (happy)
+
+Objectives, in order:
+
+1. Explore the galaxy.
+2. Break the drone blockades.
+3. Talk with the freed Blurbs.
+4. Fly to Gadget's flagship.
+5. Disable the flagship.
+6. Salvage the last holodisk.
+7. Go home to Earth when ready.
+
 ## In-flight conversations
 
 Ada's and Penny's lines show the portrait mood in brackets after the line; an
@@ -777,6 +863,14 @@ Every other Cartwheel station, Slate or Garnet:
 - "Trade your Stardust, or take a job. There's room for everyone."
 - Later: "Welcome back! Wipe your boots. Well, your thrusters." / "Hello again!
   Find any good rocks out there?" / "Back again. There's always room here."
+
+Phantom, General Gadget as keeper once the chapter is complete:
+
+- "Ah. The navigator. Welcome to the Blurbs' station."
+- "I am helping mend their docks. It is slower than conquering, and better."
+- "Trade, or take a job. The Blurbs insist I say please."
+- Later: "Welcome back, Navigator." / "The docks are nearly mended. Mind the
+  scaffolding." / "Astra still flies with you, I see. Good."
 
 Andromeda settler, first approach to a settlement: Settler: "Hello! You found
 our little settlement." Settler: "Mail comes by courier, and visitors come by

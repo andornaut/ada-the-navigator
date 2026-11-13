@@ -16,7 +16,7 @@ belongs in [Ideas](ideas.md). The route runs:
 |        3 | Needle    | Patience: practising a hard skill  |
 |        4 | Andromeda | Honesty: owning up to a mistake    |
 |        5 | Cartwheel | Inclusion: standing up to bullying |
-|        6 | Phantom   | The finale; home chapter to design |
+|        6 | Phantom   | The finale: letting go of control  |
 
 Tension rises, dips at Needle, builds again through Andromeda, and peaks with Cartwheel's stand against a bully
 before Phantom's stand against General Gadget. Content tied to a galaxy, its
@@ -124,7 +124,9 @@ in view, its boarding pages included, and closes in the school concert hall, a
 new location, with Ada playing on stage; Andromeda opens, resolves and closes
 at Grandma's house and garden, with the seedling tray spilled from the opening
 through the resolution's branch pages and replanted on the closing; Cartwheel opens in the school hallway, with dinner in the kitchen at home, and resolves and
-closes in the schoolyard; the prologue moves from the park to Ada's room. Narration
+closes in the schoolyard; Phantom opens in Ada's room, resolves at the
+community garden lot in the rain and closes in Ada's room at night with the rock
+glowing; the prologue moves from the park to Ada's room. Narration
 pages show no name tab; dialogue pages show the speaker's. Back on a storybook
 page acts as Previous. An optional-question page returns to its question list
 until Continue, so Ada can ask every question. Continue shows Astra's boarding line,
@@ -423,7 +425,7 @@ that species, apart from Whirlpool's whales and General Gadget.
 | Needle    | Avi     | Herons       | Long-legged pilots who stand still before they move; Elder Loom is an Avi.                                                                         |
 | Andromeda | Munix   | Androids     | Built settlers who steer by beacon light and keep their lamps lit; Pip and the settlers are Munix.                                                 |
 | Cartwheel | Cobbles | Living rock  | Stone folk who mine the ore that feeds them and never mind a bump; the young are pebble-sized. The miner, visitors and blocking pilot are Cobbles. |
-| Phantom   | Blurbs  | Blobs of goo | Wobbly goo folk of the shadowed rim, living under Gadget's watch; their part is designed with the finale.                                          |
+| Phantom   | Blurbs  | Blobs of goo | Wobbly goo folk of the shadowed rim, living under Gadget's watch; his blockades cut their settlements off.                                         |
 
 Named characters show their names on name tabs in place of the role labels the
 copy uses:
@@ -440,6 +442,7 @@ copy uses:
 | Cartwheel | Station (the hub's voice)     | Quartz            |
 | Cartwheel | Miner                         | Mica              |
 | Cartwheel | Regular visitor               | Opal, then Jasper |
+| Phantom   | Blurb, the third settlement   | Dollop            |
 
 Cartwheel's first regular-visitor line is Opal's and the final-milestone line
 Jasper's. The bullied child at home is Sam (they). The blocking pilot, the whale
@@ -470,16 +473,61 @@ Shop and Jobs stay live. Each later docking shows one short line, the galaxy's
 three in turn. The first time Ada comes within Talk range of a settlement, its
 settler's two-line greeting plays in the conversation box. Greetings seen are
 saved per place, and Restart clears them. Phantom's stations keep the generic
-welcome line. Lines are in [the player copy](player-copy.md#greeters).
+welcome line until the chapter is complete; then General Gadget greets Ada there,
+with his own lines and portrait, as their keeper. Lines are in [the player copy](player-copy.md#greeters).
 
 ### Galaxy six, Phantom: the finale
 
-A concluding home chapter draws on the first five experiences without adding
-another community problem. Ada and the allies she made in earlier galaxies
-confront General Gadget's fleet here, take the last holodisk from him by force and
-defeat him; shown that the galaxies are infinite and cannot be controlled, he
-relents. The detailed scenes, enemies and home chapter remain to be designed; see
-[the design](design.md#general-gadget).
+Ada learns to let go of control. The chapter draws on the first five without
+adding another community problem: everyone Ada helped comes to her thank-you
+party, her perfect plan washes away in the rain, and the day is better for it.
+In space, General Gadget wants to control every galaxy; Ada shows him that they
+never end (see [the design](design.md#general-gadget)).
+
+At home, Ada plans a thank-you party at the community garden for Grandma, Sam,
+her friends, Mom and Dad, with a list for every minute. After the space story, rain
+spoils the plan. Ada lets it go, everyone crowds under the shelter together, and
+nobody remembers the schedule. That night Astra, whole again, chooses to keep
+flying with Ada.
+
+Phantom is a shadowed rim in smoke and violet. Gadget's fleet holds it, and
+his blockades cut the Blurbs' settlements off from the rest of the galaxy. The
+space story runs in three acts:
+
+1. **Blockades.** Three Blurb settlements, story destinations placed like
+   Sunflower's outposts, each sit inside a blockade: a `frigate` and two `fighter`
+   groups from Phantom's roster, holding within 600 world units of the
+   settlement. A blockade breaks when all its ships are destroyed, disabled or
+   fled. The direction indicator marks the nearest unbroken blockade. A freed
+   settlement's Blurb thanks Ada through Talk; the third, Dollop, tells her where
+   the flagship waits and sends word to her friends. The flagship's position then
+   shows as a waypoint, marked like the holodisk waypoint, at least 6000 world
+   units from every settlement.
+2. **Fleet battle.** When Ada comes within 1500 world units of the waypoint, the
+   battle begins: her allies jump in beside her (see
+   [Ships](ships.md#finale-allies)), and three waves of drones come, each two
+   encounters drawn from the roster without the capital battle. The next wave
+   arrives when the last is destroyed, disabled or fled. The flagship and its
+   escorts hold back until the third wave is gone.
+3. **The flagship.** Gadget's own capital ([Ships](ships.md#gadgets-flagship))
+   then attacks. It can be beaten only by disabling it: its hull never drops below
+   1 HP. Disabled, it shows the red "Disabled" banner, and Ada salvages the last
+   holodisk from it. Gadget surrenders the disk, Astra's memory is complete, and
+   at Ada's request Astra shows him her whole map: galaxies past galaxies, without
+   end. He relents and stays in Phantom to help the Blurbs mend the docks his
+   blockades broke.
+
+If the shield fails during the fleet battle or the flagship fight, the emergency
+jump works as usual: broken blockades and freed settlements stay, and the battle
+restarts in full on the next approach. Allies help but are never required; the
+battle is tuned to be winnable with none. Objectives are in
+[the player copy](player-copy.md#chapter-six-the-garden-party).
+
+Once the chapter is complete, Phantom's drones stand down: it places no new
+encounters, and Gadget is the keeper of its stations. Drones in the other
+galaxies are beyond his signal and keep their last orders, so their space stays
+as dangerous as before. The salvaged flagship stays at the waypoint as a passable
+hulk with its lights on.
 
 ## Flight and combat
 
@@ -1064,7 +1112,7 @@ its route once it is disabled or destroyed. The first time each flight that Ada
 comes within Talk range of a destination its guard still blocks, Astra says a
 guard line, the guard gets its guard edge marker even if Ada has not seen it yet,
 and the guard wakes and flies toward Ada until it is on screen, then fights as
-usual. Phantom's story and conclusion remain to be designed.
+usual.
 
 ## Verification priorities
 
