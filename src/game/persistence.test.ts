@@ -5,12 +5,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import { ensureDestination } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { SAVE_VERSION } from "../model/save.ts";
 import { stationsNear } from "../model/stations.ts";
 import { collectWeapon } from "../model/weapons.ts";
-import { readStory, relaunch } from "../testing/launch.ts";
+import { relaunch } from "../testing/launch.ts";
 import { SAVE_FORMAT, SAVE_KEYS, saves } from "./persistence.ts";
 
 function storage(raw?: string) {
@@ -117,8 +118,28 @@ describe("canonical Ada save storage", () => {
     expect(loaded.save.depletionContinuation).toBe(true);
     const resumed = new GameModel(CONTENT, loaded.save);
     resumed.continueGame();
-    readStory(resumed);
+    expect(resumed.storyView?.page.id).toBe("jumpHome");
+    resumed.storyNext();
+    expect(resumed.storyView?.page).toMatchObject({ id: "sleep", sleep: true });
+    resumed.storyNext();
+    expect(resumed.storyView?.page.id).toBe("sleep");
+    resumed.storyTick(OVERNIGHT_SLEEP.seconds, OVERNIGHT_SLEEP.seconds);
+    expect(resumed.storyView?.page.id).toBe("morning");
+    resumed.storySkip();
+    expect(resumed.storyView?.page).toMatchObject({
+      id: "opening",
+      text: CONTENT.chapters[1]!.opening,
+    });
+    expect(resumed.storyView?.choices.length).toBeGreaterThan(0);
+    expect(resumed.state.progress[1].opened).toBe(false);
+    const unanswered = resumed.storyView?.page;
+    resumed.storySkip();
+    expect(resumed.storyView?.page).toEqual(unanswered);
+    resumed.storyChoose(0);
+    resumed.storySkip();
     expect(resumed.screen).toBe("selector");
+    expect(resumed.state.economy.ammo.multiLaser).toBe(7);
+    expect(resumed.state.unlocked).toEqual(before.unlocked);
   });
 
   it.each([SAVE_VERSION + 1, SAVE_VERSION + 1.5, Number.MAX_SAFE_INTEGER + 1])(

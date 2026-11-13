@@ -157,13 +157,24 @@ describe("galaxy one's handover", () => {
     resumed.choose("continue");
     expect(resumed.storyView?.page).toMatchObject({ holodisk: true, id: "holodisk:0" });
     expect(resumed.storyView?.page.text).toBe(inserted[0]);
-    // A reload mid-moment shows it again from its first page, the flight still held.
+    // A reload mid-moment resumes the exact page, with the effective flight still held.
     resumed.storyNext();
+    const page = structuredClone(resumed.storyView?.page);
+    expect(page).toMatchObject({ id: "holodisk:1", text: inserted[1] });
+    const beforeReload = resumed.saveDocument();
+    const progress = structuredClone(resumed.state.progress);
     const again = relaunch(CONTENT, resumed.save());
     again.continueGame();
-    expect(again.storyView?.page.id).toBe("holodisk:0");
+    expect(again.storyView?.page).toEqual(page);
+    expect(again.state.progress).toEqual(progress);
+    expect(again.saveDocument().flight).toEqual(beforeReload.flight);
     again.step(1, { aim: { x: 0, y: 0 }, move: { x: 1, y: 0 }, use: false });
     expect(again.screen).toBe("story");
+    expect(again.storyView?.page).toEqual(page);
+    expect(again.saveDocument().flight).toEqual(beforeReload.flight);
+    expect(readStory(again).map(({ id }) => id)).toEqual(["holodisk:1", "holodisk:memory"]);
+    expect(again.state.progress).toEqual(progress);
+    expect(again.state.dialogue).toBeNull();
   });
 });
 
