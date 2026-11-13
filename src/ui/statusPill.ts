@@ -277,7 +277,7 @@ export const STATUS_PILL_STYLE = `
   box-sizing:border-box;
   width:var(--shield-pill);
   height:${units(SHIELD_PILL.pill.height)};
-  padding:0 ${units(SHIELD_PILL.pill.padding)};
+  padding:0 ${units(SHIELD_PILL.padding.right)} 0 ${units(SHIELD_PILL.padding.left)};
   display:flex;
   align-items:center;
   border-radius:${units(SHIELD_PILL.pill.radius)};
@@ -299,7 +299,7 @@ ${SHIELD_PILL.bars
 .ada-controls .ada-status-mark{
   flex:none;
   display:flex;
-  margin-right:${units(SHIELD_PILL.markGap)}
+  margin-right:${units(SHIELD_PILL.iconGap)}
 }
 .ada-controls .ada-shield[data-field=light] .ada-status-mark{
   filter:${ICON_OUTLINE}

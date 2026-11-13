@@ -43,9 +43,9 @@ describe("status pill shield bar", () => {
     const style = (selector: string) =>
       STATUS_PILL_STYLE.split("}").find((part) => part.includes(`${selector}{`));
     for (const [level, pill, bar] of [
-      [1, 162, 120],
-      [2, 222, 180],
-      [3, 282, 240],
+      [1, 156, 120],
+      [2, 216, 180],
+      [3, 276, 240],
     ] as const) {
       const rule = style(`.ada-shield[data-level="${level}"]`);
       expect(rule).toContain(`--shield-pill:${units(pill)}`);
@@ -207,9 +207,10 @@ describe("status pill shield bar", () => {
 
   it("draws the shield pill as an ink PILL at the bottom centre, apart from the status pill", () => {
     const shield = STATUS_PILL_STYLE.split("}").find((part) => part.includes(".ada-shield{"));
-    // Its width follows Shield level (the pill and bar vars), centred: 162 at level 1.
+    // Its width follows Shield level (the pill and bar vars), centred: 156 at level 1.
     expect(shield).toContain("width:var(--shield-pill)");
-    expect(shield).toContain(`--shield-pill:${units(162)}`);
+    expect(shield).toContain(`--shield-pill:${units(156)}`);
+    expect(shield).toContain(`padding:0 ${units(8)} 0 ${units(5)}`);
     expect(shield).toContain(`height:${units(28)}`);
     expect(shield).toContain("margin-left:calc(var(--shield-pill) / -2)");
     expect(shield).toContain(`background:${STATUS_COLOURS.panel}`);

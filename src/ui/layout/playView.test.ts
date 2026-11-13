@@ -374,34 +374,43 @@ describe("HUD anchors", () => {
     }
   });
 
-  it("make the shield bar 120, 180 or 240 by 12 by Shield level, the pill the bar plus 42", () => {
+  it("make the shield bar 120, 180 or 240 by 12 by Shield level, the pill the bar plus 36", () => {
     expect(SHIELD_PILL.bar).toEqual({ height: 12, inset: 2, rim: 1 });
     expect(SHIELD_PILL.bars).toEqual([120, 180, 240]);
-    expect(SHIELD_PILL).toMatchObject({ bottom: TOUCH_STICK.bottom, edge: 2, icon: 20, low: 0.25 });
+    expect(SHIELD_PILL).toMatchObject({
+      bottom: TOUCH_STICK.bottom,
+      edge: 2,
+      icon: 20,
+      iconGap: 3,
+      low: 0.25,
+      padding: { left: 5, right: 8 },
+    });
     expect(SHIELD_PILL.pill).toEqual(PILL);
     expect([1, 2, 3].map(shieldBarWidth)).toEqual([120, 180, 240]);
     expect([1, 2, 3].map(shieldFillWidth)).toEqual([116, 176, 236]);
-    expect([1, 2, 3].map(shieldPillWidth)).toEqual([162, 222, 282]);
-    expect(2 * PILL.padding + SHIELD_PILL.icon + SHIELD_PILL.markGap).toBe(42);
+    expect([1, 2, 3].map(shieldPillWidth)).toEqual([156, 216, 276]);
+    // The icon's drawn pixels span x 3 to 17 in its 20 box: 8 and 6 to them as drawn.
+    expect(SHIELD_PILL.padding.left + 3).toBe(8);
+    expect(SHIELD_PILL.iconGap + 3).toBe(6);
     // Outside 1 to 3, the nearest level.
     expect([0, 4].map(shieldBarWidth)).toEqual([120, 240]);
   });
 
   it.each([
-    ["the 720 base", { height: 360, width: 720 }, NO_INSETS, [279, 249, 219], 292],
-    ["1280x720", logicalView({ height: 720, width: 1280 }), NO_INSETS, [279, 249, 219], 324],
+    ["the 720 base", { height: 360, width: 720 }, NO_INSETS, [282, 252, 222], 292],
+    ["1280x720", logicalView({ height: 720, width: 1280 }), NO_INSETS, [282, 252, 222], 324],
     [
       "the 720 base with phone insets",
       { height: 360, width: 720 },
       { bottom: 19, left: 43, right: 43, top: 0 },
-      [279, 249, 219],
+      [282, 252, 222],
       273,
     ],
     [
       "844x390 with phone insets",
       logicalView({ height: 390, width: 844 }),
       { bottom: 19, left: 43, right: 43, top: 0 },
-      [308.54, 278.54, 248.54],
+      [311.54, 281.54, 251.54],
       273,
     ],
   ] as const)("put the shield pill at the bottom centre at %s", (_, view, insets, xs, y) => {
@@ -412,12 +421,12 @@ describe("HUD anchors", () => {
       expect(rect.y).toBe(y);
       expect(rect).toMatchObject({ height: 28, width: shieldPillWidth(level) });
       // A longer bar grows both ways about the centre.
-      expect(rect.x + rect.width / 2).toBeCloseTo(xs[0]! + 81, 2);
+      expect(rect.x + rect.width / 2).toBeCloseTo(xs[0]! + 78, 2);
       // Its bottom sits level with the sticks' drawn bottom, clear of both rings' frames across:
-      // level 3's 282 pill leaves 42 with phone insets at the 720 base, the narrowest.
+      // level 3's 276 pill leaves 45 with phone insets at the 720 base, the narrowest.
       expect(rect.y + rect.height).toBe(move.y + 37);
-      expect(rect.x - (move.x + 38)).toBeGreaterThanOrEqual(42);
-      expect(aim.x - 37 - (rect.x + rect.width)).toBeGreaterThanOrEqual(42);
+      expect(rect.x - (move.x + 38)).toBeGreaterThanOrEqual(45);
+      expect(aim.x - 37 - (rect.x + rect.width)).toBeGreaterThanOrEqual(45);
     }
   });
 
@@ -435,7 +444,7 @@ describe("HUD anchors", () => {
     for (const level of [1, 2, 3] as const) {
       const pill = shieldPillRect(insets, view, level);
       const icon = shieldIconCentre(insets, view, level);
-      expect(icon.x + hud.x).toBeCloseTo(pill.x + 18, 9);
+      expect(icon.x + hud.x).toBeCloseTo(pill.x + 15, 9);
       expect(icon.y + hud.y).toBe(y);
     }
   });
@@ -625,7 +634,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     NO_INSETS,
     [96, 283],
     [623, 283],
-    279,
+    282,
     [292, 320],
     [546, 183],
   ],
@@ -635,7 +644,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     PHONE,
     [139, 264],
     [580, 264],
-    279,
+    282,
     [273, 301],
     [503, 164],
   ],
@@ -645,7 +654,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     NO_INSETS,
     [96, 283],
     [682, 283],
-    308.54,
+    311.54,
     [292, 320],
     [605, 183],
   ],
@@ -655,7 +664,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     PHONE,
     [139, 264],
     [639, 264],
-    308.54,
+    311.54,
     [273, 301],
     [562, 164],
   ],
@@ -665,7 +674,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     { ...NO_INSETS, bottom: 19 },
     [96, 264],
     [682, 264],
-    308.54,
+    311.54,
     [273, 301],
     [605, 164],
   ],
@@ -675,7 +684,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     { ...NO_INSETS, bottom: 19, left: 43 },
     [139, 264],
     [580, 264],
-    279,
+    282,
     [273, 301],
     [503, 164],
   ],
@@ -685,7 +694,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     { ...NO_INSETS, left: 47 },
     [143, 283],
     [635, 283],
-    308.54,
+    311.54,
     [292, 320],
     [558, 183],
   ],
@@ -695,7 +704,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     NO_INSETS,
     [96, 315],
     [623, 315],
-    279,
+    282,
     [324, 352],
     [546, 215],
   ],
@@ -705,7 +714,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     NO_INSETS,
     [96, 283],
     [703, 283],
-    319,
+    322,
     [292, 320],
     [626, 183],
   ],
@@ -715,7 +724,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     NO_INSETS,
     [96, 283],
     [704, 283],
-    319.67,
+    322.67,
     [292, 320],
     [627, 183],
   ],
@@ -725,7 +734,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     NO_INSETS,
     [110, 283],
     [741, 283],
-    345.67,
+    348.67,
     [292, 320],
     [664, 183],
   ],

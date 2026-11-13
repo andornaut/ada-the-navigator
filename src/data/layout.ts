@@ -354,9 +354,11 @@ export const CONTROLS_BOTTOM = 40;
 export const STICK_AREA_MARGIN = 8;
 
 // The shield pill (art/layout.md "Shield pill"): one PILL at the bottom centre holding the 20
-// shield icon, a mark gap and the bar, whose length follows Shield level: 120, 180 or 240 by 12
-// (a 1 rim, 1 ink, then the fill area 4 shorter by 8 at inset 2), so the pill is the bar plus 42
-// wide. It centres across on the HUD rect (the view's centre, as the rect mirrors), so a longer
+// shield icon, an icon gap and the bar, whose length follows Shield level: 120, 180 or 240 by 12
+// (a 1 rim, 1 ink, then the fill area 4 shorter by 8 at inset 2). Its padding is measured to
+// drawn pixels: the icon's drawn pixels span x 3 to 17 in its 20 box, so padding.left 5 and
+// iconGap 3 leave 8 and 6 to them, and padding.right 8 follows the bar; the pill is the bar plus
+// 36 wide. It centres across on the HUD rect (the view's centre, as the rect mirrors), so a longer
 // bar grows both ways; its bottom sits level with the sticks' drawn bottom (controlsBottom). The
 // same place on touch and desktop.
 export const SHIELD_BARS = [120, 180, 240] as const;
@@ -371,9 +373,10 @@ export const SHIELD_PILL = {
   // The leading edge inside the fill's right end while the shield regenerates.
   edge: 2,
   icon: HUD_BUTTON.glyph,
+  iconGap: 3,
   // Below this share of capacity the shield is low.
   low: 0.25,
-  markGap: SPACING.markGap,
+  padding: { left: 5, right: 8 },
   pill: PILL,
 } as const;
 

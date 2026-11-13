@@ -287,9 +287,10 @@ export function shieldDelayStrip(level: number, fraction: number): { edge: Rect;
   };
 }
 
-/** The shield pill's width at Shield level `level`: padding, the icon, a mark gap and the bar. */
+/** The shield pill's width at Shield level `level`: padding, the icon, an icon gap and the bar. */
 export function shieldPillWidth(level: number): number {
-  return 2 * PILL.padding + HUD_BUTTON.glyph + SPACING.markGap + shieldBarWidth(level);
+  const { icon, iconGap, padding } = SHIELD_PILL;
+  return padding.left + icon + iconGap + shieldBarWidth(level) + padding.right;
 }
 
 /** The shield pill's rect in a logical view view big with insets, at Shield level `level`. */
@@ -306,14 +307,14 @@ export function shieldPillRect(insets: Insets, view: Size, level = 1): Rect {
 }
 
 /**
- * The shield pill's icon centre in HUD rect px at Shield level `level` (the pill's left + 18, on
+ * The shield pill's icon centre in HUD rect px at Shield level `level` (the pill's left + 15, on
  * its centre line), where an item notice for a Shield level lands.
  */
 export function shieldIconCentre(insets: Insets, view: Size, level = 1): { x: number; y: number } {
   const hud = hudRect(insets, view);
   const pill = shieldPillRect(insets, view, level);
   return {
-    x: pill.x - hud.x + PILL.padding + SHIELD_PILL.icon / 2,
+    x: pill.x - hud.x + SHIELD_PILL.padding.left + SHIELD_PILL.icon / 2,
     y: pill.y - hud.y + PILL.height / 2,
   };
 }

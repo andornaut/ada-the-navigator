@@ -2630,7 +2630,7 @@ try {
   const unit = await page
     .locator("#app")
     .evaluate((app) => Number(getComputedStyle(app).getPropertyValue("--ada-unit")));
-  // The shield sits apart in its 162x28 pill at the bottom centre, its Shield level 1 bar 120x12,
+  // The shield sits apart in its 156x28 pill at the bottom centre, its Shield level 1 bar 120x12,
   // centred across the canvas.
   const canvasBox = await settledBox("#game-canvas > canvas");
   const shieldPill = await settledBox(".ada-shield");
@@ -2639,7 +2639,7 @@ try {
       pill &&
       canvasBox &&
       shieldPill &&
-      Math.abs(shieldPill.width - 162 * unit) <= 1 &&
+      Math.abs(shieldPill.width - 156 * unit) <= 1 &&
       Math.abs(shieldPill.height - 28 * unit) <= 1 &&
       bar.x > shieldPill.x &&
       bar.x + bar.width < shieldPill.x + shieldPill.width &&
