@@ -124,7 +124,8 @@ in view, its boarding pages included, and closes in the school concert hall, a
 new location, with Ada playing on stage; Andromeda opens, resolves and closes
 at Grandma's house and garden, with the seedling tray spilled from the opening
 through the resolution's branch pages and replanted on the closing; Cartwheel opens in the school hallway, with dinner in the kitchen at home, and resolves and
-closes in the schoolyard; Phantom opens in Ada's room, resolves at the
+closes in the schoolyard; Phantom opens in Ada's room with the party
+invitations on the desk, its boarding pages included, resolves at the
 community garden lot in the rain and closes in Ada's room at night with the rock
 glowing; the prologue moves from the park to Ada's room. Narration
 pages show no name tab; dialogue pages show the speaker's. Back on a storybook
