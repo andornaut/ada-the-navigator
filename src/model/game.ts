@@ -19,6 +19,7 @@ import { EXCHANGE_RATES } from "../data/exchange.ts";
 import {
   BUILT,
   GALAXY_COUNT,
+  GALAXY_ID,
   GALAXY_NUMBERS,
   galaxyAt,
   ROUTE,
@@ -34,6 +35,7 @@ import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import { holodiskInsertion } from "../data/premiseCopy.ts";
 import { galaxyProjects, PROJECT_THANKS } from "../data/projects.ts";
 import { SCREEN } from "../data/screen.ts";
+import { KEEPER_NAME_PARTS, STATION_KEEPER_COPY } from "../data/stationCopy.ts";
 import { galaxyCard, OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { ChapterContent, GalaxyNumber, GameContent, Weapon } from "../data/types.ts";
@@ -172,7 +174,9 @@ import {
   shopRows,
   type ShopTab,
 } from "./shop.ts";
+import { stationDisplayName } from "./stationIdentity.ts";
 import { HUB_STATION, stationById, type StationSite } from "./stations.ts";
+import { type StationServices, stationSpecialty } from "./stationServices.ts";
 import {
   advance,
   atRunEnd,
@@ -405,6 +409,7 @@ export class GameModel {
   private greeting: {
     index: number;
     readonly keeper: KeeperKey;
+    readonly displayName: string;
     readonly lines: readonly string[];
   } | null = null;
   /** Achievements unlocked whose notice has not shown yet; notices show in flight. */
@@ -1016,7 +1021,37 @@ export class GameModel {
     const after = shipTuning(ECONOMY, this.content, flight.levels).shieldMax;
     flight.shield = Math.min(after, flight.shield + Math.max(0, after - before));
   }
+  get stationServices(): StationServices | null {
+    const flight = this.state.flight;
+    const id = this.state.docked;
+    if (!flight || !id || !this.stationSite(flight, id)) {
+      return null;
+    }
+    const specialty = stationSpecialty(flight.galaxy, id);
+    const all = specialty === null;
+    return {
+      equipment: all || specialty === "equipment",
+      exchange: true,
+      heldTask: Boolean(this.state.tasks[flight.galaxy]),
+      jobs: all || specialty === "jobs",
+      projects: this.projects !== null,
+      weaponsAmmo: all || specialty === "weaponsAmmo",
+    };
+  }
+  private stationSells(item: ShopItem): boolean {
+    const services = this.stationServices;
+    if (!services) {
+      return false;
+    }
+    return item.kind === "weapon" || item.kind === "weaponUpgrade" || item.kind === "ammo"
+      ? services.weaponsAmmo
+      : services.equipment;
+  }
   shopRows(tab: ShopTab): ShopRow[] {
+    const services = this.stationServices;
+    if (!services || !(tab === "ship" ? services.equipment : services.weaponsAmmo)) {
+      return [];
+    }
     this.pullLoadout();
     const holodisk = tab === "ship" ? this.holodiskRow() : null;
     return [
@@ -1050,6 +1085,9 @@ export class GameModel {
     };
   }
   requestPurchase(item: ShopItem): PurchaseRequest {
+    if (!this.stationSells(item)) {
+      return { kind: "refused", reason: "notForSale" };
+    }
     this.pullLoadout();
     if (item.kind === "holodisk") {
       const row = this.holodiskRow();
@@ -1070,7 +1108,7 @@ export class GameModel {
    * plays its insertion, as funding a project closes it for the thank-you line.
    */
   buy(item: ShopItem): PurchaseResult {
-    if (!this.state.docked) {
+    if (!this.state.docked || !this.stationSells(item)) {
       return { kind: "refused", reason: "notForSale" };
     }
     if (item.kind === "holodisk") {
@@ -1213,19 +1251,43 @@ export class GameModel {
     );
   }
   private greet(galaxy: GalaxyNumber, id: string): void {
+    const greetings = this.state.progress[galaxy].greetings;
+    const docked = greetings[id] ?? 0;
+    this.restoreGreeting(galaxy, id, docked);
+    if (this.greeting) {
+      greetings[id] = docked + 1;
+    }
+  }
+  private restoreGreeting(galaxy: GalaxyNumber, id: string, docked: number): void {
     const keeper = this.keeperAt(galaxy, id);
     if (!keeper) {
       this.greeting = null;
       return;
     }
-    const greetings = this.state.progress[galaxy].greetings;
-    const docked = greetings[id] ?? 0;
-    greetings[id] = docked + 1;
-    this.greeting = {
-      index: 0,
-      keeper: keeper.key,
-      lines: greetingLines(keeper.greetings, docked),
-    };
+    const specialty = stationSpecialty(galaxy, id);
+    const station = stationDisplayName(
+      GALAXY_ID[galaxy][0]!.toUpperCase() + GALAXY_ID[galaxy].slice(1),
+      id,
+    );
+    const [given, family] = KEEPER_NAME_PARTS[galaxy];
+    const displayName = id === HUB_STATION ? "Quartz" : `${given[0]} ${family[0]} of ${station}`;
+    const format = (text: string) =>
+      text.replaceAll("{station}", station).replaceAll("{keeper}", displayName);
+    const lines =
+      id === HUB_STATION
+        ? greetingLines(keeper.greetings, docked)
+        : docked === 0
+          ? [
+              format(STATION_KEEPER_COPY.intro),
+              format(STATION_KEEPER_COPY.flavor[galaxy]),
+              format(STATION_KEEPER_COPY.services[specialty ?? "exchange"]),
+            ]
+          : [
+              format(
+                STATION_KEEPER_COPY.returning[(docked - 1) % STATION_KEEPER_COPY.returning.length]!,
+              ),
+            ];
+    this.greeting = { displayName, index: 0, keeper: keeper.key, lines };
   }
   /** The docked station keeper's line on show; null where the generic welcome shows. */
   get stationGreeting(): StationGreeting | null {
@@ -1233,6 +1295,7 @@ export class GameModel {
     return this.state.docked && greeting
       ? {
           count: greeting.lines.length,
+          displayName: greeting.displayName,
           index: greeting.index,
           keeper: greeting.keeper,
           line: greeting.lines[greeting.index]!,
@@ -2486,7 +2549,9 @@ export class GameModel {
     if (!f || !site) {
       return [];
     }
-    const board = stationBoard(this.jobContext(f), this.state, site);
+    const board = this.stationServices?.jobs
+      ? stationBoard(this.jobContext(f), this.state, site)
+      : [];
     const held = this.held;
     const busy = Boolean(this.state.tasks[f.galaxy]);
     const row = (job: JobOffer, state: JobRow["state"]): JobRow => ({
@@ -2532,7 +2597,7 @@ export class GameModel {
   acceptJob(id: string): "accepted" | "busy" | "missing" {
     const station = this.state.docked;
     const f = this.state.flight;
-    if (!station || !f) {
+    if (!station || !f || !this.stationServices?.jobs) {
       return "missing";
     }
     const offered = this.boardActivity(f, station);
@@ -3107,15 +3172,8 @@ export class GameModel {
       this.heldFlight = null;
       const { docked, flight } = this.state;
       if (docked && flight && !this.greeting) {
-        const keeper = this.keeperAt(flight.galaxy, docked);
-        if (keeper) {
-          const visits = this.state.progress[flight.galaxy].greetings[docked] ?? 0;
-          this.greeting = {
-            index: 0,
-            keeper: keeper.key,
-            lines: greetingLines(keeper.greetings, Math.max(0, visits - 1)),
-          };
-        }
+        const visits = this.state.progress[flight.galaxy].greetings[docked] ?? 0;
+        this.restoreGreeting(flight.galaxy, docked, Math.max(0, visits - 1));
       }
       this.beginConversations();
       const chapter = this.chapterContext();

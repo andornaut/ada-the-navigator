@@ -19,6 +19,7 @@ export interface StationKeeperContext {
 
 /** What the station card's keeper block shows: the keeper and the docking's line on show. */
 export interface StationGreeting {
+  readonly displayName: string;
   /** How many lines this docking shows: three the first time, then one. */
   readonly count: number;
   /** The line on show, from 0. */

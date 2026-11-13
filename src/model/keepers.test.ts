@@ -156,18 +156,56 @@ describe("station keepers", () => {
 });
 
 describe("a keeper's greeting at the station card", () => {
+  it("enforces actual docked services before any purchase or new job mutation", () => {
+    const { model } = beside();
+    expect(model.stationServices).toBeNull();
+    model.interact();
+    const services = model.stationServices!;
+    expect(services.exchange).toBe(true);
+    expect([services.equipment, services.weaponsAmmo, services.jobs].filter(Boolean)).toHaveLength(
+      1,
+    );
+    const before = model.save();
+    if (!services.equipment) {
+      expect(model.shopRows("ship")).toEqual([]);
+      expect(model.buy({ kind: "track", track: "shield" })).toEqual({
+        kind: "refused",
+        reason: "notForSale",
+      });
+    }
+    if (!services.weaponsAmmo) {
+      expect(model.shopRows("weapons")).toEqual([]);
+      expect(model.buy({ kind: "ammo", weapon: "rapidMissile" })).toEqual({
+        kind: "refused",
+        reason: "notForSale",
+      });
+    }
+    if (!services.jobs) {
+      expect(model.jobBoard()).toEqual([]);
+      expect(model.acceptJob("unoffered")).toBe("missing");
+    }
+    expect(model.save()).toEqual(before);
+    model.undock();
+    expect(model.stationServices).toBeNull();
+  });
+
   it("greets the first docking with three lines a tap apart, the last staying", () => {
     const { model, station } = beside();
     const keeper = stationKeeper(ECONOMY, 1, station.id)!;
-    expect(dockAndRead(model)).toEqual(keeper.greetings.first);
+    const lines = dockAndRead(model);
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toMatch(/^Welcome to Sunflower .+ Station\. I'm Pollen Goldwing of /);
+    expect(lines[1]).toMatch(/ keeps humming\.$/);
+    expect(lines[2]).toMatch(/(equipment for your ship|weapons and ammo|work on the board)/);
     expect(model.stationGreeting).toEqual({
       count: 3,
+      displayName: model.stationGreeting!.displayName,
       index: 2,
       keeper: keeper.key,
-      line: keeper.greetings.first[2],
+      line: lines[2],
     });
     model.advanceGreeting();
-    expect(model.stationGreeting!.line).toBe(keeper.greetings.first[2]);
+    expect(model.stationGreeting!.line).toBe(lines[2]);
     // The docking counts as greeted once its first line shows.
     expect(model.state.progress[1].greetings[station.id]).toBe(1);
     model.undock();
@@ -178,26 +216,32 @@ describe("a keeper's greeting at the station card", () => {
     const { model, station } = beside();
     const keeper = stationKeeper(ECONOMY, 1, station.id)!;
     model.interact();
+    const first = model.stationGreeting!.line;
+    const displayName = model.stationGreeting!.displayName;
     model.advanceGreeting();
+    const second = model.stationGreeting!.line;
     const visits = structuredClone(model.state.progress[1].greetings);
     const loaded = relaunch(CONTENT, model.save());
     expect(loaded.stationGreeting).toEqual({
       count: 3,
+      displayName,
       index: 0,
       keeper: keeper.key,
-      line: keeper.greetings.first[0],
+      line: first,
     });
     expect(loaded.state.progress[1].greetings).toEqual(visits);
     loaded.advanceGreeting();
-    expect(loaded.stationGreeting?.line).toBe(keeper.greetings.first[1]);
+    expect(loaded.stationGreeting?.line).toBe(second);
     loaded.undock();
     loaded.interact();
+    const returning = loaded.stationGreeting!.line;
     const later = relaunch(CONTENT, loaded.save());
     expect(later.stationGreeting).toEqual({
       count: 1,
+      displayName,
       index: 0,
       keeper: keeper.key,
-      line: keeper.greetings.later[0],
+      line: returning,
     });
     expect(later.state.progress[1].greetings[station.id]).toBe(2);
   });
@@ -236,7 +280,6 @@ describe("a keeper's greeting at the station card", () => {
 
   it("greets later dockings with one line each, the three in turn", () => {
     const { model, station } = beside();
-    const keeper = stationKeeper(ECONOMY, 1, station.id)!;
     dockAndRead(model);
     const later: string[][] = [];
     for (let docking = 0; docking < 4; docking++) {
@@ -244,24 +287,25 @@ describe("a keeper's greeting at the station card", () => {
       later.push(dockAndRead(model));
     }
     expect(later).toEqual([
-      [keeper.greetings.later[0]],
-      [keeper.greetings.later[1]],
-      [keeper.greetings.later[2]],
-      [keeper.greetings.later[0]],
+      ["Welcome back to Sunflower Glimmer Station, Navigator."],
+      ["Pollen Goldwing of Sunflower Glimmer Station here. You can trade ore and Stardust here."],
+      ["Back at Sunflower Glimmer Station! What do you need today?"],
+      ["Welcome back to Sunflower Glimmer Station, Navigator."],
     ]);
     expect(model.state.progress[1].greetings[station.id]).toBe(5);
   });
 
   it("saves the greetings per station across a relaunch, and Restart clears them", () => {
     const { model, station } = beside();
-    const keeper = stationKeeper(ECONOMY, 1, station.id)!;
     dockAndRead(model);
     model.undock();
     const reloaded = relaunch(CONTENT, model.save());
     expect(reloaded.state.progress[1].greetings).toEqual({ [station.id]: 1 });
     reloaded.state.flight!.player = { x: station.x, y: station.y };
     reloaded.state.dialogue = null;
-    expect(dockAndRead(reloaded)).toEqual([keeper.greetings.later[0]]);
+    expect(dockAndRead(reloaded)).toEqual([
+      "Welcome back to Sunflower Glimmer Station, Navigator.",
+    ]);
     reloaded.undock();
     reloaded.backToTitle();
     reloaded.restart();

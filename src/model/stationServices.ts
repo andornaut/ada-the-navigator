@@ -10,3 +10,14 @@ export interface StationServices {
   readonly projects: boolean;
   readonly heldTask: boolean;
 }
+
+/** Coordinate assignment stays stable when nearby stations are added or discovered. */
+export function stationSpecialty(galaxy: number, id: string): StationService | null {
+  const match = /^station:(?:infill:)?(-?\d+),(-?\d+)$/.exec(id);
+  if (!match) {
+    return null;
+  }
+  const value = BigInt(match[1]!) + 2n * BigInt(match[2]!) + BigInt(galaxy);
+  const index = Number(((value % 3n) + 3n) % 3n);
+  return (["equipment", "weaponsAmmo", "jobs"] as const)[index]!;
+}
