@@ -640,7 +640,13 @@ function fitCard(
     (layer.clientWidth - parseFloat(styles.paddingLeft) - parseFloat(styles.paddingRight)) / unit;
   const width = cardWidth(
     { availableWidth, size },
-    groups.map((group) => logicalSize(group, unit).width),
+    groups.map((group) => {
+      const previous = group.style.maxWidth;
+      group.style.maxWidth = "none";
+      const naturalWidth = logicalSize(group, unit).width;
+      group.style.maxWidth = previous;
+      return naturalWidth;
+    }),
     text ? { close, width: titleWidth } : undefined,
   );
   card.style.width = units(width);
