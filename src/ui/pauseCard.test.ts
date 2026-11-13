@@ -14,12 +14,18 @@ let lastFocusOptions: unknown;
 
 // The cards' document, where the kit's focusTarget tracks the last input. With no window it
 // tracks touchstart for presses.
-const PAGE = Object.assign(new EventTarget(), { defaultView: null });
+let PAGE = Object.assign(new EventTarget(), {
+  activeElement: null as FakeElement | null,
+  defaultView: null,
+});
 
 // A stand-in for the few DOM members the pause cards and the map screen's construction use.
 class FakeElement {
   readonly attributes = new Map<string, string>();
   children: FakeElement[] = [];
+  parentElement: FakeElement | null = null;
+  tabIndex = 0;
+  isConnected = true;
   className = "";
   readonly classList = {
     add: (name: string) => this.classes.add(name),
@@ -40,16 +46,35 @@ class FakeElement {
   }
   append(...nodes: FakeElement[]): void {
     this.children.push(...nodes);
+    for (const node of nodes) {
+      node.parentElement = this;
+    }
   }
   click(): void {
     for (const listener of this.listeners.get("click") ?? []) {
       listener();
     }
   }
-  closest(): null {
-    return null;
+  closest(selector: string): FakeElement | null {
+    if (
+      (selector.includes("hidden") && this.hidden) ||
+      (selector.includes("inert") && this.attributes.has("inert"))
+    ) {
+      return this;
+    }
+    return this.parentElement?.closest(selector) ?? null;
+  }
+  contains(node: unknown): boolean {
+    return this === node || this.children.some((child) => child.contains(node));
+  }
+  hasAttribute(name: string): boolean {
+    return this.attributes.has(name);
+  }
+  matches(): boolean {
+    return this.type === "button";
   }
   focus(options?: unknown): void {
+    PAGE.activeElement = this;
     focusLog.push(this);
     lastFocusOptions = options;
   }
@@ -60,7 +85,10 @@ class FakeElement {
     return null;
   }
   querySelectorAll(): FakeElement[] {
-    return [];
+    return this.children.flatMap((child) => [
+      ...(child.type === "button" ? [child] : []),
+      ...child.querySelectorAll(),
+    ]);
   }
   remove(): void {}
   removeAttribute(name: string): void {
@@ -123,6 +151,11 @@ const SHIP: ShipView = {
 };
 
 beforeEach(() => {
+  PAGE = Object.assign(new EventTarget(), {
+    activeElement: null as FakeElement | null,
+    defaultView: null,
+  });
+  vi.stubGlobal("HTMLElement", FakeElement);
   vi.stubGlobal("Image", FakeImage);
   vi.stubGlobal("document", {
     createElement: () => new FakeElement(),
@@ -429,4 +462,30 @@ it("opens Quests from the pause menu and keeps pause through both back layers un
   } finally {
     spy.mockRestore();
   }
+});
+
+describe("published modal layer routing", () => {
+  it("closes Ship before Paused on separate Escape presses and releases its inert marks", () => {
+    const { body, modal, pause } = cards();
+    pause.setState(state());
+    pause.open();
+    const shipButton = button(body.children[0]!, "pause-ship");
+    shipButton.click();
+    expect(pause.shipOpen()).toBe(true);
+    expect(modal.children[0]!.hasAttribute("inert")).toBe(true);
+    const escape = () => {
+      const event = new Event("keydown", { cancelable: true });
+      Object.defineProperty(event, "key", { value: "Escape" });
+      PAGE.dispatchEvent(event);
+      expect(event.defaultPrevented).toBe(true);
+    };
+    escape();
+    expect(pause.shipOpen()).toBe(false);
+    expect(pause.isOpen()).toBe(true);
+    expect(focused()).toBe(shipButton);
+    escape();
+    expect(pause.isOpen()).toBe(false);
+    expect(modal.children.every((child) => !child.hasAttribute("inert"))).toBe(true);
+    pause.dispose();
+  });
 });

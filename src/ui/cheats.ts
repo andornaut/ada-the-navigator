@@ -1,4 +1,5 @@
 import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+import { createModalLayer } from "@andornaut/game-kit/web/ui/dom/modalLayer";
 
 import { type CheatAction, cheatGroups, createCheatSession } from "./cheatActions.ts";
 import { createActions, createButton, createCard } from "./modal.ts";
@@ -95,6 +96,8 @@ export function createCheats(
   }
   modal.append(frame);
   parent.append(modal);
+  let layer: ReturnType<typeof createModalLayer> | undefined;
+  let leaveLayer: (() => void) | undefined;
   let open = false;
   let disposed = false;
   let previousFocus: HTMLElement | null = null;
@@ -112,9 +115,16 @@ export function createCheats(
       parts.fit();
     }
     launcher.setAttribute("aria-expanded", String(value));
+    if (!value) {
+      leaveLayer?.();
+      leaveLayer = undefined;
+      layer?.dispose();
+      layer = undefined;
+    }
     options.onOpenChange(value);
     if (value) {
-      focusTarget(close);
+      layer = createModalLayer(modal);
+      leaveLayer = layer.open({ close: () => setOpen(false), focus: close }, card);
     } else if (previousFocus?.isConnected && previousFocus.getClientRects().length > 0) {
       focusTarget(previousFocus);
     } else {
@@ -150,37 +160,6 @@ export function createCheats(
       focusTarget(close);
     }
   });
-  const retainFocus = (event: FocusEvent): void => {
-    if (open && event.target instanceof Node && !card.contains(event.target)) {
-      focusTarget(close);
-    }
-  };
-  document.addEventListener("focusin", retainFocus);
-  modal.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-      event.preventDefault();
-      event.stopPropagation();
-      setOpen(false);
-    }
-    if (event.key === "Tab") {
-      const targets = [...frame.querySelectorAll<HTMLButtonElement>("button")].filter(
-        (button) => !button.disabled,
-      );
-      const first = targets[0];
-      const last = targets.at(-1);
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        if (last) {
-          focusTarget(last);
-        }
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        if (first) {
-          focusTarget(first);
-        }
-      }
-    }
-  });
   const media = window.matchMedia(
     "(display-mode: fullscreen), (display-mode: standalone), (display-mode: minimal-ui)",
   );
@@ -200,7 +179,7 @@ export function createCheats(
       media.removeEventListener("change", refresh);
       window.removeEventListener("pageshow", refresh);
       document.removeEventListener("visibilitychange", refresh);
-      document.removeEventListener("focusin", retainFocus);
+      layer?.dispose();
       parts.dispose();
       modal.remove();
       launcherGroup.remove();

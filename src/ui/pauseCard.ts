@@ -1,4 +1,5 @@
 import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+import { createModalLayer } from "@andornaut/game-kit/web/ui/dom/modalLayer";
 
 import type { LocalMap } from "../model/map.ts";
 import { units } from "./layout/css.ts";
@@ -179,11 +180,17 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     ship: null,
     towing: false,
   };
+  let layer: ReturnType<typeof createModalLayer> | undefined;
+  let leaveLayer: (() => void) | undefined;
   const actionsHere = () => pauseActions(state.place ?? "flight");
   const mapOpen = () => open && mapScreen.isOpen();
   const shipOpen = () => open && !ship.frame.hidden;
   // The map shows in the cards' and the dim's place; the Ship card in the Paused card's.
   const show = (view: "map" | "paused" | "ship") => {
+    leaveLayer?.();
+    leaveLayer = undefined;
+    layer?.dispose();
+    layer = undefined;
     modal.hidden = view === "map";
     paused.frame.hidden = view !== "paused";
     ship.frame.hidden = view !== "ship";
@@ -194,16 +201,18 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     mapScreen.close();
     if (view === "ship") {
       renderShip();
-      focusTarget(ship.close);
+      layer = createModalLayer(modal);
+      leaveLayer = layer.open({ close: closeShip, focus: ship.close }, ship.card);
       return;
     }
     paused.fit();
     // Focus starts on the primary Resume, else the first action shown.
-    focusTarget(
+    const focus =
       actions.querySelector<HTMLButtonElement>(".ada-primary:not([hidden])") ??
-        actions.querySelector<HTMLButtonElement>("button:not([hidden])") ??
-        paused.close,
-    );
+      actions.querySelector<HTMLButtonElement>("button:not([hidden])") ??
+      paused.close;
+    layer = createModalLayer(modal);
+    leaveLayer = layer.open({ close: () => setOpen(false), focus }, paused.card);
   };
   // What the Ship card last showed, so its rows rebuild only on a change.
   let shipShown: string | undefined;
@@ -230,6 +239,10 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       render();
       show("paused");
     } else {
+      leaveLayer?.();
+      leaveLayer = undefined;
+      layer?.dispose();
+      layer = undefined;
       mapScreen.close();
     }
     options.onOpenChange(value);
@@ -344,32 +357,12 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     }
     outside = undefined;
   });
-  modal.addEventListener("keydown", (event) => {
-    if (event.key === "Tab") {
-      const frame = shipOpen() ? ship.frame : paused.frame;
-      const targets = [...frame.querySelectorAll<HTMLButtonElement>("button")].filter(
-        (button) => !button.closest("[hidden]"),
-      );
-      const first = targets[0];
-      const last = targets.at(-1);
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        if (last) {
-          focusTarget(last);
-        }
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        if (first) {
-          focusTarget(first);
-        }
-      }
-    }
-  });
   return {
     close: () => setOpen(false),
     closeMap,
     closeShip,
     dispose(): void {
+      layer?.dispose();
       paused.dispose();
       ship.dispose();
       mapScreen.dispose();

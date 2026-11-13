@@ -1,4 +1,4 @@
-import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+import { createModalLayer } from "@andornaut/game-kit/web/ui/dom/modalLayer";
 
 import type { UpdateOffer } from "../pwa/updateOffer.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -48,6 +48,8 @@ export function createUpdateDialog(
   );
   modal.append(frame);
   root.append(modal);
+  let layer: ReturnType<typeof createModalLayer> | undefined;
+  let leaveLayer: (() => void) | undefined;
   let open = false;
   const stop = offer.subscribe((visible) => {
     if (visible === open) {
@@ -61,9 +63,16 @@ export function createUpdateDialog(
       parts.fit();
     }
     if (visible) {
-      focusTarget(accept);
-    } else if (focused) {
-      restoreFocus();
+      layer = createModalLayer(modal);
+      leaveLayer = layer.open({ close: () => offer.defer(), focus: accept }, card);
+    } else {
+      leaveLayer?.();
+      leaveLayer = undefined;
+      layer?.dispose();
+      layer = undefined;
+      if (focused) {
+        restoreFocus();
+      }
     }
     onOpenChange(visible);
   });
@@ -86,19 +95,11 @@ export function createUpdateDialog(
     }
     outside = undefined;
   });
-  modal.addEventListener("keydown", (event) => {
-    if (event.key === "Tab") {
-      event.preventDefault();
-      const order = [close, cancel, accept];
-      const index = order.indexOf(document.activeElement as HTMLButtonElement);
-      const step = event.shiftKey ? order.length - 1 : 1;
-      focusTarget(order[(Math.max(0, index) + step) % order.length]!);
-    }
-  });
   return {
     defer,
     dispose(): void {
       stop();
+      layer?.dispose();
       parts.dispose();
       modal.remove();
     },
