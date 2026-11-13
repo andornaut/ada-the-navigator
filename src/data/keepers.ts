@@ -3,7 +3,7 @@ import type { GalaxyNumber } from "./types.ts";
 
 // Station keepers (gameplay/rules.md "Species and greeters", gameplay/player-copy.md
 // "Greeters"): each galaxy's three keepers, in the order stations take them by rank, and the
-// greeting lines its keepers share. Phantom has none; its stations keep the generic welcome.
+// greeting lines its keepers share. Phantom uses a separate post-chapter greeting.
 
 export interface KeeperGreetings {
   /** The full greeting on a station's first docking, shown a line at a time. */
@@ -110,6 +110,20 @@ export const KEEPERS: Readonly<Partial<Record<GalaxyNumber, GalaxyKeepers>>> = {
     },
     keepers: ["lumen", "dial", "cog"],
   },
+};
+
+/** Admiral Archie's greeting after Phantom's completed aftermath, at its real stations only. */
+export const PHANTOM_KEEPER_GREETINGS: KeeperGreetings = {
+  first: [
+    "Ah. The navigator. Welcome to the Blurbs' station.",
+    "I am helping mend their docks. It is slower than conquering, and better.",
+    "Trade, or take a job. The Blurbs insist I say please.",
+  ],
+  later: [
+    "Welcome back, Navigator.",
+    "The docks are nearly mended. Mind the scaffolding.",
+    "Astra still flies with you, I see. Good.",
+  ],
 };
 
 /** An Andromeda settler's two lines, the first time Ada comes within Talk range of a settlement. */

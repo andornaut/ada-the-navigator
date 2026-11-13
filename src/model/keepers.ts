@@ -1,6 +1,6 @@
 import type { CastKey } from "../data/cast.ts";
 import type { EconomyCatalog } from "../data/economy.ts";
-import { type KeeperGreetings, KEEPERS } from "../data/keepers.ts";
+import { type KeeperGreetings, KEEPERS, PHANTOM_KEEPER_GREETINGS } from "../data/keepers.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { HUB_STATION, stationById, stationsNear } from "./stations.ts";
 
@@ -10,19 +10,26 @@ import { HUB_STATION, stationById, stationsNear } from "./stations.ts";
 // stations take Slate and Garnet in turn. Ranks come from the station generator alone, never from
 // saved state.
 
+export type KeeperKey = CastKey | "general";
+
+/** The model supplies completion only after the approved Phantom aftermath is complete. */
+export interface StationKeeperContext {
+  readonly phantomComplete?: boolean;
+}
+
 /** What the station card's keeper block shows: the keeper and the docking's line on show. */
 export interface StationGreeting {
   /** How many lines this docking shows: three the first time, then one. */
   readonly count: number;
   /** The line on show, from 0. */
   readonly index: number;
-  readonly keeper: CastKey;
+  readonly keeper: KeeperKey;
   readonly line: string;
 }
 
 export interface StationKeeper {
   readonly greetings: KeeperGreetings;
-  readonly key: CastKey;
+  readonly key: KeeperKey;
 }
 
 /**
@@ -45,12 +52,18 @@ export function stationRank(
   }).length;
 }
 
-/** The keeper of a docked station, or null where its galaxy has none (Phantom). */
-export function stationKeeper(
+/** A keeper at a real station, with Phantom gated by explicit completed-aftermath context. */
+export function worldStationKeeper(
+  context: StationKeeperContext,
   catalog: EconomyCatalog,
   galaxy: GalaxyNumber,
   id: string,
 ): StationKeeper | null {
+  if (galaxy === 6) {
+    return context.phantomComplete === true && stationById(catalog, galaxy, id) !== null
+      ? { greetings: PHANTOM_KEEPER_GREETINGS, key: "general" }
+      : null;
+  }
   const keepers = KEEPERS[galaxy];
   if (!keepers) {
     return null;
@@ -66,6 +79,15 @@ export function stationKeeper(
   // Cartwheel's other stations take its second and third keepers in turn.
   const key = galaxy === 2 ? keys[1 + (rank % 2)]! : keys[rank % keys.length]!;
   return { greetings, key };
+}
+
+/** Legacy callers keep Phantom's generic welcome until they pass an explicit context. */
+export function stationKeeper(
+  catalog: EconomyCatalog,
+  galaxy: GalaxyNumber,
+  id: string,
+): StationKeeper | null {
+  return worldStationKeeper({}, catalog, galaxy, id);
 }
 
 /**

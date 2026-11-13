@@ -4,12 +4,12 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { KEEPERS, SETTLER_GREETING } from "../data/keepers.ts";
+import { KEEPERS, PHANTOM_KEEPER_GREETINGS, SETTLER_GREETING } from "../data/keepers.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { relaunch } from "../testing/launch.ts";
 import { ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { greetingLines, stationKeeper, stationRank } from "./keepers.ts";
+import { greetingLines, stationKeeper, stationRank, worldStationKeeper } from "./keepers.ts";
 import { restoreSave } from "./save.ts";
 import { HUB_STATION, namesStation, stationsNear } from "./stations.ts";
 
@@ -79,6 +79,52 @@ describe("station keepers", () => {
     expect(stationKeeper(ECONOMY, 1, HUB_STATION)).toBeNull();
     expect(namesStation(ECONOMY, 2, HUB_STATION)).toBe(true);
     expect(namesStation(ECONOMY, 1, HUB_STATION)).toBe(false);
+  });
+
+  it("keeps every real Phantom station generic until the explicit post-aftermath fact", () => {
+    for (const station of nearest(6, 3)) {
+      expect(stationKeeper(ECONOMY, 6, station.id)).toBeNull();
+      expect(worldStationKeeper({}, ECONOMY, 6, station.id)).toBeNull();
+      expect(worldStationKeeper({ phantomComplete: false }, ECONOMY, 6, station.id)).toBeNull();
+      expect(worldStationKeeper({ phantomComplete: true }, ECONOMY, 6, station.id)).toEqual({
+        greetings: PHANTOM_KEEPER_GREETINGS,
+        key: "general",
+      });
+    }
+  });
+
+  it("accepts only real Phantom stations and leaves other galaxies' keeper assignments unchanged", () => {
+    const complete = { phantomComplete: true };
+    for (const id of [HUB_STATION, "flagship", "settlement:0,0", "station:01,0", "not-a-station"]) {
+      expect(worldStationKeeper(complete, ECONOMY, 6, id)).toBeNull();
+    }
+    for (const galaxy of [1, 2, 3, 4, 5] as const) {
+      const station = nearest(galaxy, 1)[0]!;
+      expect(worldStationKeeper(complete, ECONOMY, galaxy, station.id)).toEqual(
+        stationKeeper(ECONOMY, galaxy, station.id),
+      );
+    }
+  });
+
+  it("uses the approved Admiral first greeting and later cycle without advancing visits itself", () => {
+    const station = nearest(6, 1)[0]!;
+    const context = Object.freeze({ phantomComplete: true });
+    const keeper = worldStationKeeper(context, ECONOMY, 6, station.id)!;
+    expect(greetingLines(keeper.greetings, 0)).toEqual([
+      "Ah. The navigator. Welcome to the Blurbs' station.",
+      "I am helping mend their docks. It is slower than conquering, and better.",
+      "Trade, or take a job. The Blurbs insist I say please.",
+    ]);
+    expect([1, 2, 3, 4].map((visits) => greetingLines(keeper.greetings, visits))).toEqual([
+      ["Welcome back, Navigator."],
+      ["The docks are nearly mended. Mind the scaffolding."],
+      ["Astra still flies with you, I see. Good."],
+      ["Welcome back, Navigator."],
+    ]);
+    expect(context).toEqual({ phantomComplete: true });
+    for (const line of [...keeper.greetings.first, ...keeper.greetings.later]) {
+      expect(COPY.replace(/\s+/gu, " ")).toContain(line);
+    }
   });
 
   it("shows the full greeting once, then one later line per docking in turn", () => {
