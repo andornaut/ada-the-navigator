@@ -53,7 +53,7 @@ describe("approved concise detail fixtures", () => {
     expect(WEAPON_DETAIL_LABELS).toEqual({
       detailAmmoLeft: "Ammo: {count} left",
       detailIncludesAmmo: "Comes with 3 ammo packs.",
-      detailUnlimited: "Never runs out.",
+      detailUnlimited: "Unlimited",
     });
   });
 });

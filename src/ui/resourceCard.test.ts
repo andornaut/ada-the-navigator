@@ -19,6 +19,12 @@ const fixture = vi.hoisted(() => {
     replaceChildren(...nodes: Node[]) {
       this.children = nodes;
     }
+    removeAttribute(name: string) {
+      delete this.attributes[name];
+    }
+    cloneNode(): Node {
+      return Object.assign(new Node(), { className: this.className });
+    }
     setAttribute(name: string, value: string) {
       this.attributes[name] = value;
     }
@@ -72,7 +78,7 @@ it("uses the shared card and reports exactly one pause/close transition, restori
   resource.open("Ore", "Approved description", origin as unknown as HTMLElement);
   expect(resource.isOpen()).toBe(true);
   expect(fixture.card.title.textContent).toBe("Ore");
-  expect(fixture.card.body.children[1]!.textContent).toBe("Approved description");
+  expect(fixture.card.body.children[0]!.textContent).toBe("Approved description");
   expect(onOpenChange).toHaveBeenLastCalledWith(true);
   expect(fixture.card.fit).toHaveBeenCalledOnce();
   resource.close();
@@ -100,7 +106,7 @@ it("reopens with current content and traps Tab on the close control", () => {
   root.children[0]!.dispatchEvent(event);
   expect(event.defaultPrevented).toBe(true);
   expect(fixture.card.title.textContent).toBe("Stardust");
-  expect(fixture.card.body.children[1]!.textContent).toBe("Second");
+  expect(fixture.card.body.children[0]!.textContent).toBe("Second");
   resource.dispose();
 });
 
@@ -118,8 +124,9 @@ it("shows canonical supplied content and secondary Quests before primary Close w
     icon: icon as unknown as HTMLElement,
     quests: { label: "Quests", onOpen: () => lifecycle.push("quests-open") },
   });
-  const [image, description, actions] = fixture.card.body.children;
-  expect(image!.children).toEqual([icon]);
+  const [description, quantity, actions] = fixture.card.body.children;
+  expect(fixture.card.title.children[0]).toBe(icon);
+  expect(quantity!.hidden).toBe(true);
   expect(description!.textContent).toBe("Canonical quest description");
   expect(fixture.card.frame.attributes["aria-label"]).toBe("Toolkit");
   expect(actions!.children.map((button) => [button.textContent, button.dataset.role])).toEqual([
@@ -130,11 +137,44 @@ it("shows canonical supplied content and secondary Quests before primary Close w
   expect(lifecycle).toEqual(["paused", "quests-open", "closed"]);
   expect(origin.focus).not.toHaveBeenCalled();
   resource.open("Ore", "Ore use", origin as unknown as HTMLElement);
-  expect(image!.hidden).toBe(true);
-  expect(image!.children).toEqual([]);
+  expect(quantity!.hidden).toBe(true);
+  expect(quantity!.children).toEqual([]);
+  expect(fixture.card.title.children).toHaveLength(1);
   expect(actions!.children[0]!.hidden).toBe(true);
   actions!.children[1]!.dispatchEvent(new Event("click"));
   expect(origin.focus).toHaveBeenCalledOnce();
   expect(resource.isOpen()).toBe(false);
   resource.dispose();
+});
+
+it("shows current resource quantities including zero separately and updates them on reopening", () => {
+  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  const detail = createResourceCard(new fixture.Node() as unknown as HTMLElement, {
+    closeLabel: "Close",
+    onOpenChange: vi.fn(),
+  });
+  const icon = new fixture.Node();
+  icon.className = "ada-status-ore";
+  const origin = new fixture.Node() as unknown as HTMLElement;
+  for (const [count, expected] of [
+    [12345, "12,345"],
+    [0, "0"],
+    [17, "17"],
+  ] as const) {
+    detail.open("Ore", "Approved ore description", origin, {
+      count,
+      icon: icon as unknown as HTMLElement,
+    });
+    const row = fixture.card.body.children[1]!;
+    expect(row.hidden).toBe(false);
+    expect(row.children[0]!.className).toBe("ada-status-ore");
+    expect(row.children[0]).not.toBe(icon);
+    expect(row.children[1]!.textContent).toBe(expected);
+    expect(row.attributes["aria-label"]).toBe(`Ore: ${expected}`);
+    expect(fixture.card.body.children[0]!.textContent).toBe("Approved ore description");
+    detail.close();
+  }
+  detail.open("Ore", "Approved ore description", origin);
+  expect(fixture.card.body.children[1]!.hidden).toBe(true);
+  detail.dispose();
 });

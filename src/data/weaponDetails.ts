@@ -29,7 +29,7 @@ export const WEAPON_DETAIL_LINES = {
 export const WEAPON_DETAIL_LABELS = {
   detailAmmoLeft: "Ammo: {count} left",
   detailIncludesAmmo: "Comes with 3 ammo packs.",
-  detailUnlimited: "Never runs out.",
+  detailUnlimited: "Unlimited",
 } as const;
 
 export function weaponDetailLines(weapon: Weapon, level: number): readonly string[] {

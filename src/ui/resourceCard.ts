@@ -1,10 +1,12 @@
 import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 
+import { detailCount, renderDetailQuantity } from "./detailQuantity.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createActions, createButton, createCard, isTap } from "./modal.ts";
 
 export interface ResourceDetails {
   readonly icon?: HTMLElement;
+  readonly count?: number;
   readonly quests?: { readonly label: string; readonly onOpen: () => void };
 }
 
@@ -24,18 +26,16 @@ export function createResourceCard(
   card.card.dataset.dialog = "resource";
   const description = document.createElement("p");
   description.className = "ada-prose";
-  const icon = document.createElement("span");
-  icon.style.display = "flex";
-  icon.style.justifyContent = "center";
-  icon.setAttribute("aria-hidden", "true");
+  const quantity = document.createElement("div");
+  quantity.hidden = true;
   const quests = createButton("", "secondary");
   quests.dataset.action = "resource-quests";
   quests.hidden = true;
   const dismiss = createButton(options.closeLabel, "primary");
   dismiss.dataset.action = "dismiss-resource";
   card.body.append(
-    icon,
     description,
+    quantity,
     createActions([
       { button: quests, role: "secondary" },
       { button: dismiss, role: "primary" },
@@ -102,8 +102,16 @@ export function createResourceCard(
       returnFocus = origin;
       card.title.textContent = title;
       description.textContent = text;
-      icon.replaceChildren(...(details.icon ? [details.icon] : []));
-      icon.hidden = !details.icon;
+      card.title.className = "ada-detail-header";
+      const name = document.createElement("span");
+      name.textContent = title;
+      card.title.replaceChildren(...(details.icon ? [details.icon] : []), name);
+      renderDetailQuantity(
+        quantity,
+        details.icon?.cloneNode(true) as HTMLElement | undefined,
+        details.count === undefined ? undefined : detailCount(details.count),
+        title,
+      );
       openQuests = details.quests?.onOpen;
       quests.hidden = !details.quests;
       quests.textContent = details.quests?.label ?? "";

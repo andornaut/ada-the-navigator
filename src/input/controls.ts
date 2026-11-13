@@ -11,7 +11,7 @@ import { BUILD_LABEL } from "../buildLabel.ts";
 import { CONTENT } from "../data/content.ts";
 import { RESOURCE_DESCRIPTIONS } from "../data/resourceDescriptions.ts";
 import type { Weapon } from "../data/types.ts";
-import { WEAPON_DETAIL_LABELS, weaponDetailLines } from "../data/weaponDetails.ts";
+import { weaponDetailLines } from "../data/weaponDetails.ts";
 import { canvasSize, fitCanvasCamera, sceneFit } from "../game/playCamera.ts";
 import { RASTER_SCALE_EVENT } from "../game/svgRasters.ts";
 import {
@@ -330,18 +330,16 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       if (!state.accepts()) {
         return;
       }
-      const ammo =
-        choice.ammo === null
-          ? WEAPON_DETAIL_LABELS.detailUnlimited
-          : WEAPON_DETAIL_LABELS.detailAmmoLeft.replace(
-              "{count}",
-              new Intl.NumberFormat("en-US").format(choice.ammo),
-            );
       weaponDetail.open(
         weaponName(CONTENT.labels, choice.id),
-        [...weaponDetailLines(choice.id, choice.level), ammo],
+        weaponDetailLines(choice.id, choice.level),
         origin,
-        { id: choice.id, level: choice.level },
+        {
+          ammo: choice.ammo,
+          ammoLabel: CONTENT.labels.ammo ?? "",
+          id: choice.id,
+          level: choice.level,
+        },
       );
     },
     onSelect: (weapon) => state.accepts() && options.onWeaponSelect(weapon),
@@ -403,12 +401,10 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
           },
         });
       } else {
-        resource.open(
-          CONTENT.labels[kind] ?? "",
-          RESOURCE_DESCRIPTIONS[kind],
-          origin,
-          icon ? { icon } : {},
-        );
+        resource.open(CONTENT.labels[kind] ?? "", RESOURCE_DESCRIPTIONS[kind], origin, {
+          ...(icon ? { icon } : {}),
+          ...(statusView ? { count: statusView[kind] } : {}),
+        });
       }
     },
     reducedMotion: () => reducedMotion,

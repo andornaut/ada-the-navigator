@@ -1,10 +1,10 @@
 import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 
 import type { Weapon } from "../data/types.ts";
-import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
+import { WEAPON_DETAIL_LABELS } from "../data/weaponDetails.ts";
+import { ammoShopSheet, weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import { compactLevelName } from "./compactLevelName.ts";
-import { units } from "./layout/css.ts";
-import { SPACING } from "./layout/tokens.ts";
+import { detailCount, renderDetailQuantity } from "./detailQuantity.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createActions, createButton, createCard, isTap } from "./modal.ts";
 
@@ -26,7 +26,9 @@ export function createWeaponDetailCard(
   description.className = "ada-prose";
   const dismiss = createButton(options.closeLabel, "primary");
   dismiss.dataset.action = "dismiss-weapon-detail";
-  card.body.append(description, createActions([{ button: dismiss, role: "primary" }]));
+  const quantity = document.createElement("div");
+  quantity.hidden = true;
+  card.body.append(description, quantity, createActions([{ button: dismiss, role: "primary" }]));
   modal.append(card.frame);
   root.append(modal);
   let returnFocus: HTMLElement | null = null;
@@ -75,7 +77,12 @@ export function createWeaponDetailCard(
       title: string,
       lines: readonly string[],
       origin: HTMLElement,
-      identity?: { readonly id: Weapon; readonly level?: number },
+      identity?: {
+        readonly id: Weapon;
+        readonly level?: number;
+        readonly ammo?: number | null;
+        readonly ammoLabel?: string;
+      },
     ) {
       returnFocus = origin;
       card.title.textContent = compactLevelName(identity?.level, title);
@@ -102,12 +109,27 @@ export function createWeaponDetailCard(
           );
         }
         icon.append(disc, pips);
-        card.title.style.display = "flex";
-        card.title.style.alignItems = "center";
-        card.title.style.justifyContent = "center";
-        card.title.style.gap = units(SPACING.gap);
+        card.title.className = "ada-detail-header";
         card.title.replaceChildren(icon, label);
       }
+      card.frame.setAttribute("aria-label", compactLevelName(identity?.level, title));
+      let ammoIcon: HTMLElement | undefined;
+      let amount: string | undefined;
+      if (identity?.ammo !== undefined) {
+        ammoIcon = document.createElement("span");
+        if (identity.id === "laser") {
+          ammoIcon.className = "ada-detail-unlimited-icon";
+          ammoIcon.style.setProperty("--glyph", `url('${weaponGlyphPath(identity.id)}')`);
+        } else {
+          ammoIcon.className = "ada-detail-ammo-icon";
+          ammoIcon.style.backgroundImage = `url('/art/ui/sprites/${ammoShopSheet(identity.id)}.png')`;
+        }
+        amount =
+          identity.ammo === null
+            ? WEAPON_DETAIL_LABELS.detailUnlimited
+            : detailCount(identity.ammo);
+      }
+      renderDetailQuantity(quantity, ammoIcon, amount, identity?.ammoLabel);
       description.replaceChildren(
         ...lines.map((line) => {
           const paragraph = document.createElement("span");

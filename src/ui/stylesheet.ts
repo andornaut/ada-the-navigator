@@ -5,6 +5,7 @@ import { DISABLED_BANNER_STYLE } from "./disabledBanner.ts";
 import { GALAXY_MAP_STYLE } from "./galaxyMap.ts";
 import { ITEM_NOTICE_STYLE } from "./itemNotice.ts";
 import { KEEPER_STYLE } from "./keeperBlock.ts";
+import { DETAIL_CARD_STYLE } from "./layout/detailCard.ts";
 import { QUESTS_SCREEN_STYLE } from "./layout/questsScreen.ts";
 import { LOADING_STYLE } from "./loadingBar.ts";
 import { MAP_SCREEN_STYLE } from "./mapScreen.ts";
@@ -34,6 +35,7 @@ export const UI_STYLESHEET = [
   STATION_STYLE,
   KEEPER_STYLE,
   WEAPON_STYLE,
+  DETAIL_CARD_STYLE,
   STATUS_PILL_STYLE,
   ITEM_NOTICE_STYLE,
   DISABLED_BANNER_STYLE,
