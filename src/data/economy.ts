@@ -199,9 +199,8 @@ export const ECONOMY: EconomyCatalog = {
     dropWeights: { heavyMissile: 9, multiLaser: 16, phaser: 5, rapidMissile: 12, scattershot: 7 },
     duplicatePacks: 1,
     grantPacks: 3,
-    // Level 1 fire per pack: Multi-Laser 90 s, Rapid Missile 80, Heavy Missile 70, Scattershot 60
-    // and Phaser 50.
-    pack: { heavyMissile: 35, multiLaser: 300, phaser: 50, rapidMissile: 265, scattershot: 60 },
+    // Shop pack sizes also apply to full packs included with weapon acquisitions.
+    pack: { heavyMissile: 40, multiLaser: 300, phaser: 40, rapidMissile: 260, scattershot: 60 },
     packPrice: 10,
     rockDropChance: 0.04,
     worldPackFraction: 0.25,

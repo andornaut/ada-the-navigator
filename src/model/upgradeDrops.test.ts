@@ -181,7 +181,7 @@ describe("upgrade drop selection", () => {
     expect([...sunflower].sort()).toEqual([...UPGRADE_WEAPONS].sort());
     const before = economy.ammo.phaser;
     applyUpgrade(ECONOMY, { kind: "ammo", weapon: "phaser" }, economy);
-    expect(economy.ammo.phaser).toBe(before + 13);
+    expect(economy.ammo.phaser).toBe(before + 10);
   });
 
   it("gives the same gift for the same seed", () => {
@@ -201,7 +201,7 @@ describe("upgrade drop selection", () => {
     applyUpgrade(ECONOMY, { kind: "weaponLevel", level: 2, weapon: "laser" }, economy);
     expect(economy.levels.weapons.laser).toBe(2);
     applyUpgrade(ECONOMY, { kind: "ammo", weapon: "heavyMissile" }, economy);
-    expect(economy.ammo.heavyMissile).toBe(114);
+    expect(economy.ammo.heavyMissile).toBe(130);
   });
 });
 

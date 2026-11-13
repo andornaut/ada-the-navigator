@@ -847,7 +847,7 @@ describe("tractor beam and pickup reach", () => {
     value.ownedWeapons = ["rapidMissile"];
     value.ammo.rapidMissile = 7;
     expect(collectWeapon("rapidMissile", value)).toBe(false);
-    expect(value.ammo.rapidMissile).toBe(7 + 265);
+    expect(value.ammo.rapidMissile).toBe(7 + 260);
     expect(value.weapon).toBe("laser");
   });
 });
@@ -1087,10 +1087,10 @@ describe("shop purchases", () => {
   it("sells packs of an owned weapon's ammunition, never sold out, and none for others", () => {
     const economy = rich();
     expect(ECONOMY.ammo.pack).toEqual({
-      heavyMissile: 35,
+      heavyMissile: 40,
       multiLaser: 300,
-      phaser: 50,
-      rapidMissile: 265,
+      phaser: 40,
+      rapidMissile: 260,
       scattershot: 60,
     });
     const pack = { kind: "ammo", weapon: "phaser" } as const;
@@ -1104,11 +1104,11 @@ describe("shop purchases", () => {
         kind: "bought",
         price: ECONOMY.ammo.packPrice,
       });
-      expect(economy.ammo.phaser).toBe(count * 50);
+      expect(economy.ammo.phaser).toBe(count * 40);
     }
     expect(shopRow(ECONOMY, economy, pack)).toMatchObject({ owned: false, price: 10 });
     expect(itemName(ECONOMY, CONTENT.labels, pack)).toBe("Phaser ammo");
-    expect(packCount(ECONOMY, CONTENT.labels, "phaser")).toBe("×50");
+    expect(packCount(ECONOMY, CONTENT.labels, "phaser")).toBe("×40");
   });
 
   it.each([
@@ -1309,7 +1309,7 @@ describe("shop purchases", () => {
     expect(about("scattershot")).toBe("A shotgun spread, strongest up close.");
     expect(about("phaser")).toBe("An instant beam that strikes the first thing in its path.");
     expect(itemAbout(ECONOMY, labels, { kind: "track", track: "shield" })).toBe("");
-    expect(itemAbout(ECONOMY, labels, { kind: "ammo", weapon: "heavyMissile" })).toBe("×35");
+    expect(itemAbout(ECONOMY, labels, { kind: "ammo", weapon: "heavyMissile" })).toBe("×40");
     expect(labels.aboutMissiles).toBeUndefined();
     expect(labels.aboutTripleLaser).toBeUndefined();
   });

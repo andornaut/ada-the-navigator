@@ -21,10 +21,10 @@ import {
 
 const PACKS = [
   ["multiLaser", 300, 75, 900],
-  ["rapidMissile", 265, 66, 795],
-  ["heavyMissile", 35, 9, 105],
+  ["rapidMissile", 260, 65, 780],
+  ["heavyMissile", 40, 10, 120],
   ["scattershot", 60, 15, 180],
-  ["phaser", 50, 13, 150],
+  ["phaser", 40, 10, 120],
 ] as const;
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
@@ -38,7 +38,7 @@ function launched() {
 }
 
 describe("world ammunition quantities", () => {
-  it.each(PACKS)("derives %s world ammo from its unchanged shop pack", (weapon, shop, world) => {
+  it.each(PACKS)("derives %s world ammo from its canonical shop pack", (weapon, shop, world) => {
     expect(ECONOMY.ammo.pack[weapon]).toBe(shop);
     expect(worldAmmoPack(ECONOMY, weapon)).toBe(world);
     const ammo = noAmmo();
@@ -55,9 +55,9 @@ describe("world ammunition quantities", () => {
     [2, 1],
     [6, 2],
     [10, 3],
-    [35, 9],
-    [265, 66],
-    [50, 13],
+    [7, 2],
+    [9, 2],
+    [14, 4],
   ])("rounds a quarter of shop pack %i to %i with a one-shot minimum", (shop, world) => {
     const catalog = {
       ...ECONOMY,
@@ -69,7 +69,7 @@ describe("world ammunition quantities", () => {
   it("reads the configured world fraction without a second world-ammo table", () => {
     expect(ECONOMY.ammo.worldPackFraction).toBe(0.25);
     const catalog = { ...ECONOMY, ammo: { ...ECONOMY.ammo, worldPackFraction: 0.5 } };
-    expect(worldAmmoPack(catalog, "phaser")).toBe(25);
+    expect(worldAmmoPack(catalog, "phaser")).toBe(20);
   });
 
   it("returns the immediate grant rather than the net frame delta while firing", () => {

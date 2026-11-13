@@ -68,11 +68,11 @@ describe("owned upgrade weapons", () => {
     flight.weaponSwitchFor = 0;
     expect(model.selectWeapon("multiLaser")).toBe(true);
     expect(flight.ownedWeapons).toEqual(["rapidMissile", "multiLaser"]);
-    // Each found weapon includes three packs: 3 of 300 and 3 of 265.
+    // Each found weapon includes three packs: 3 of 300 and 3 of 260.
     expect(model.weapons()).toEqual([
       { ammo: null, id: "laser", level: 1, selected: false },
       { ammo: 900, id: "multiLaser", level: 1, selected: true },
-      { ammo: 795, id: "rapidMissile", level: 1, selected: false },
+      { ammo: 780, id: "rapidMissile", level: 1, selected: false },
     ]);
     const before = model.save();
     expect(model.selectWeapon("scattershot")).toBe(false);
@@ -342,10 +342,10 @@ describe("ammunition", () => {
     expect(grantAllWeapons(model.state)).toBe(true);
     const flight = model.state.flight!;
     expect(flight.ammo).toEqual({
-      heavyMissile: 105,
+      heavyMissile: 120,
       multiLaser: 900,
-      phaser: 150,
-      rapidMissile: 795,
+      phaser: 120,
+      rapidMissile: 780,
       scattershot: 180,
     });
     model.step(0.01, idle);
