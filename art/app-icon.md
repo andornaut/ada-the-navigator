@@ -30,8 +30,8 @@ neighbour sampling, 32 px favicon enlarged with nearest neighbour sampling.
 ## Palette and maskable safe zone
 
 - Background: `#292734`.
-- Hull: the Classic ship paint, top `#ffffff`, steep panels `#b2bec6`, rear
-  panels `#647d8d` and skirt `#abbfce`.
+- Hull: the Classic ship paint, top `#ffffff`, steep panels `#929ca3`, rear
+  panels `#516674` and skirt `#abbfce`.
 - Walls and canopy sides `#1767b3`, canopy roof `#2585d0`, engine mouths `#64caff`.
 
 The maskable safe zone is the centred circle with diameter 80% of the canvas:

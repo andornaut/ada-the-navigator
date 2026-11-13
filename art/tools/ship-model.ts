@@ -51,10 +51,16 @@ const white = "#ffffff";
 const CLASSIC = {
   canopyRoof: "#2585d0",
   canopySides: "#1767b3",
+  frontSides: "#929ca3",
+  rearSides: "#516674",
+  skirt: "#abbfce",
+  top: "#ffffff",
+} as const;
+// Purchased paints retain their authored facet ratios independently of Classic.
+const PALETTE_RATIOS = {
   frontSides: "#b2bec6",
   rearSides: "#647d8d",
   skirt: "#abbfce",
-  top: "#ffffff",
 } as const;
 const linear = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
 const channels = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
@@ -91,9 +97,9 @@ function painted(
       top,
       canopyRoof,
       canopySides,
-      frontSides: tone(top, CLASSIC.frontSides),
-      rearSides: tone(top, CLASSIC.rearSides),
-      skirt: tone(top, CLASSIC.skirt),
+      frontSides: tone(top, PALETTE_RATIOS.frontSides),
+      rearSides: tone(top, PALETTE_RATIOS.rearSides),
+      skirt: tone(top, PALETTE_RATIOS.skirt),
     },
   };
 }

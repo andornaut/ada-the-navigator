@@ -4303,9 +4303,9 @@
     {
       "id": "aboard-holodisk-0",
       "path": "/art/aboard-holodisk-0.png",
-      "width": 560,
+      "width": 570,
       "height": 366,
-      "displayWidth": 280,
+      "displayWidth": 285,
       "displayHeight": 183,
       "facing": "front",
       "pivot": {
@@ -4313,16 +4313,16 @@
         "y": 0
       },
       "at": {
-        "x": 384,
+        "x": 379,
         "y": 136
       }
     },
     {
       "id": "aboard-holodisk-1",
       "path": "/art/aboard-holodisk-1.png",
-      "width": 560,
+      "width": 570,
       "height": 366,
-      "displayWidth": 280,
+      "displayWidth": 285,
       "displayHeight": 183,
       "facing": "front",
       "pivot": {
@@ -4330,16 +4330,16 @@
         "y": 0
       },
       "at": {
-        "x": 384,
+        "x": 379,
         "y": 136
       }
     },
     {
       "id": "aboard-holodisk-2",
       "path": "/art/aboard-holodisk-2.png",
-      "width": 560,
+      "width": 570,
       "height": 366,
-      "displayWidth": 280,
+      "displayWidth": 285,
       "displayHeight": 183,
       "facing": "front",
       "pivot": {
@@ -4347,16 +4347,16 @@
         "y": 0
       },
       "at": {
-        "x": 384,
+        "x": 379,
         "y": 136
       }
     },
     {
       "id": "aboard-holodisk-3",
       "path": "/art/aboard-holodisk-3.png",
-      "width": 560,
+      "width": 570,
       "height": 366,
-      "displayWidth": 280,
+      "displayWidth": 285,
       "displayHeight": 183,
       "facing": "front",
       "pivot": {
@@ -4364,7 +4364,7 @@
         "y": 0
       },
       "at": {
-        "x": 384,
+        "x": 379,
         "y": 136
       }
     },

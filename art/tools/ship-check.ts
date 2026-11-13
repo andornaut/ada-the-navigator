@@ -16,7 +16,7 @@ const luminance = (hex: string) =>
     0,
   );
 
-test("six exported paints preserve identities and the approved facet luminance ratios", () => {
+test("exported Classic materials and purchased paint ratios match their contracts", () => {
   const metadata = JSON.parse(readFileSync(new URL("ship-paint.json", assets), "utf8")) as {
     schemes: { id: string; name: string; top: string; price?: number }[];
   };
@@ -30,9 +30,17 @@ test("six exported paints preserve identities and the approved facet luminance r
   );
   assert.equal(metadata.schemes.find(({ id }) => id === "amber")!.top, "#f4b665");
   assert(metadata.schemes.every((scheme) => scheme.price === undefined));
-  for (const { paint } of SCHEMES)
+  assert.equal(classic.paint.frontSides, "#929ca3");
+  assert.equal(classic.paint.rearSides, "#516674");
+  for (const { id, paint } of SCHEMES) {
+    const exported = metadata.schemes.find((scheme) => scheme.id === id)!;
+    for (const [material, color] of Object.entries(paint))
+      assert.equal(exported[material as keyof typeof exported], color);
+  }
+  const purchasedRatios = { frontSides: "#b2bec6", rearSides: "#647d8d", skirt: "#abbfce" };
+  for (const { paint } of SCHEMES.filter(({ id }) => id !== "classic"))
     for (const tier of ["frontSides", "rearSides", "skirt"] as const) {
-      const expected = luminance(classic.paint[tier]);
+      const expected = luminance(purchasedRatios[tier]);
       const actual = luminance(paint[tier]) / luminance(paint.top);
       assert(
         Math.abs(actual - expected) < 0.006,
