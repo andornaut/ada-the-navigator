@@ -237,6 +237,21 @@ describe("enemy rules", () => {
     }
   });
 
+  it("re-engages a returning retaliator on sight, since it has fought Ada, but not an untouched one", () => {
+    const definition = enemyCatalog.retaliator;
+    const player = { x: 200, y: 0 };
+    const returning: EnemyState = {
+      ...spawn("retaliator"),
+      returnSeconds: definition.pursuit.rearmSeconds,
+      returning: true,
+    };
+    const rearmed = stepEnemy(definition, { ...observation(returning), player }, returning).state;
+    expect(rearmed).toMatchObject({ engaged: true, returning: false });
+    const untouched = spawn("retaliator");
+    const idle = stepEnemy(definition, { ...observation(untouched), player }, untouched).state;
+    expect(idle.engaged).toBe(false);
+  });
+
   it("does not re-engage a fleeing ship, or one whose chase is leashed, on sight", () => {
     const definition = enemyCatalog.fighter;
     const fleeing: EnemyState = {

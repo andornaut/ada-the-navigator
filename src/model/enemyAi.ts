@@ -600,9 +600,10 @@ export function stepEnemy(
   const delta = { x: target.x - state.position.x, y: target.y - state.position.y };
   const aim = unit(delta);
   const distance = magnitude(delta);
+  /** The ship sees Ada within its perception. */
+  const perceived = observed && distance <= definition.perception;
   /** A sight-aggressive ship sees Ada within its perception. */
-  const sighted =
-    observed && definition.aggression === "sight" && distance <= definition.perception;
+  const sighted = perceived && definition.aggression === "sight";
   /** The ship sees Ada within its firing range. */
   const fighting = observed && distance <= definition.engagement;
   const packSize = state.packId === null ? 0 : (context.initialPackSizes[state.packId] ?? 0);
@@ -642,13 +643,16 @@ export function stepEnemy(
     next.pursuitSeconds = 0;
   } else if (state.returning) {
     // A returning ship that is not fleeing re-engages on sight within perception once
-    // rearmSeconds have passed and the chase could go on. At home, seeing Ada beyond perception
-    // also clears the latch without engaging.
-    const rearm = !next.fleeing && sighted && returnSeconds >= pursuit.rearmSeconds && !leashed;
+    // rearmSeconds have passed and the chase could go on, a retaliator too, since it has fought
+    // Ada. At home, seeing Ada beyond perception also clears the latch without engaging.
+    const rearm = !next.fleeing && perceived && returnSeconds >= pursuit.rearmSeconds && !leashed;
     const settled = homeDistance <= 5 && observed && playerHomeDistance > definition.perception;
     if (rearm || settled) {
       next.returning = false;
       next.pursuitSeconds = 0;
+    }
+    if (rearm) {
+      next.engaged = true;
     }
   } else if (
     next.engaged &&
