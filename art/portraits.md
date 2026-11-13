@@ -101,6 +101,21 @@ for the heads of Mom's and Dad's storybook sprites
 ([storybook](storybook.md#story-figures)); their outfit colours follow the
 Archie walker sprites `walker-trista` and `walker-mr-b`.
 
+## Admiral Archie source
+
+`art/sources/admiral-archie-neutral.png` is the approved 32 px red-uniform
+head-and-shoulder adaptation of Archie's dog, with the established officer
+pose and cap. Its SHA-256 is
+`cccdc6efeeeb954c57958eaf4856dc7c187ba0b0317abc0aa84f18275d6b70d1`.
+The head and ruff derive from neutral frame 1 of
+`public/art/sprites/face-dog-archie.png` in Archie at
+`c7141cd8192289b9b42404ac2cf538023f486d0f` (source SHA-256
+`20aaa3fa0ef7dacb3ee7902c8536c0f27ff9eb01a40bd646427eabb8a6a60463`),
+under the same licence. `art/tools/core-busts.ts` copies this adapted neutral
+frame for idle, animates the mouth for speaking, and uses its silhouette
+for unknown frames. The full and compact contracts are in
+[conversation portraits](conversation.md).
+
 ## Andromeda portraits
 
 Andromeda's Munix portraits, Pip's and Wick's among them, are authored for Ada;

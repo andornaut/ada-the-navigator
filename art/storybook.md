@@ -364,3 +364,18 @@ the root manifest as `storyOvernight`. Key `overnight`:
 Reduced motion (2400 ms): hold the unoccupied night room for 2000 ms with
 the glow steady, then one 400 ms cross-fade to the morning page's background. In the
 breath only the glow patch changes, once per 1.5 s.
+
+## Household cat sprites
+
+`art/tools/household-cats.ts` writes separate sitting and curled sprites to
+`public/art/characters/{gadget,kiwi}-{sitting,curled}.png`. Their manifest ids
+are `household-{gadget,kiwi}-{sitting,curled}`, with a bottom-centre pivot
+following the sprite's centre line. Gadget is black with green eyes. Kiwi
+has a rounded feline silhouette, grey tabby fur, yellow eyes and irregular
+broken grey fur marks, including her grey belly. White is limited to eye
+catchlights. `art/tools/family-sprites.ts` retains `archie` only as a source
+alias for the black household cat Gadget.
+
+These standalone assets do not add figures to story backgrounds, composite
+aliases or overnight overlays. The galaxy map's Ada and Penny exception
+remains unchanged.

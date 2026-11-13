@@ -2,7 +2,7 @@
 
 Portraits for the in-flight [conversation box](layout.md#conversation-box) and
 the storybook panel. Rebuild with `node art/tools/portraits.ts`: it draws the
-Astra, General Gadget and Grandma sheets, crops the compact Ada and Penny
+Astra, Admiral Archie and Grandma sheets, crops the compact Ada and Penny
 sheets from their reused sheets, and replaces its own entries after the other
 portraits in the root manifest. The [cast portraits](#cast-portraits) come
 from one generator per galaxy. Reused sources and checksums are in
@@ -24,7 +24,7 @@ from one generator per galaxy. Reused sources and checksums are in
   the hair or crown to the chin: Ada at (5, 5), Penny at (5, 3). Astra is drawn
   natively at both sizes with the same parts and palette, so the face and voice
   lines stay whole at 22.
-- General Gadget, Grandma and the cast portraits are drawn at 32; each compact
+- Admiral Archie, Grandma and the cast portraits are drawn at 32; each compact
   frame is the 22x22 crop at the origin its table gives. The whales' compact
   frames crop a whale drawn natively smaller, so the whole face fits.
 
@@ -67,8 +67,8 @@ Manifest `frames` names every frame. `loops` lists each speaking loop as
   after it in [player-copy.md](../gameplay/player-copy.md): a line
   marked `(happy)` shows `happy`, an unmarked line `neutral`. Penny's `upset`
   frame is unused for now.
-- General Gadget uses the `unknown-*` frames while his tab reads "Unknown
-  voice" and the `named-*` frames once it reads "General Gadget", also as
+- Admiral Archie uses the `unknown-*` frames while his tab reads "Unknown
+  voice" and the `named-*` frames once it reads "Admiral Archie", also as
   Phantom's station keeper. His
   compact crop is at (5, 1); Grandma's at (5, 2).
 - Dollop and the Blurb settler are in Phantom's manifest
@@ -95,18 +95,15 @@ Manifest `frames` names every frame. `loops` lists each speaking loop as
   `#8fe0f2` 9.34:1 and the ring 5.63:1; the glow (1.46:1 and 2.89:1) stays
   soft. Galaxy fields never touch the portrait, so it reads the same on the
   dark galaxies and on Sunflower.
-- General Gadget named (`named-*`): a black-furred cat `#2e2940` (shade
-  `#221e31`) with a humanoid bust, rim-lit `#8b9bb4` on the upper left and
-  `#5a6988` down the right so the fur reads on the navy slot. Yellow `#fee761`
-  slit eyes, a pink nose, `#8b9bb4` whiskers, pink inner ears, a coral coat
-  `#d68b72` with a stand collar, amber buttons and the drones' claw insignia as
-  a medal ([Sector one enemies](enemies.md#insignia)). A red officer's cap
-  `#e43b44` (shade `#a22633`, light `#f6757a`) with an amber band, a black
-  visor and a small claw badge sits between his ears, which stay whole beside
-  it. The red is 3.32:1 on the fur and 3.31:1 on the slot, inside its 1 px ink
-  edge. Idle is half-lidded and smug; speaking opens his eyes and steps the
-  mouth open, half, open, closed.
-- General Gadget unnamed (`unknown-*`): the same bust and cap as a faceless
+- Admiral Archie named (`named-*`): the brown-and-white Aussie dog in
+  `art/sources/admiral-archie-neutral.png`, with a broad white blaze, white
+  muzzle and ruff, folded brown ears, black nose, viewer-left blue eye and
+  viewer-right amber eye. His head-and-shoulder bust wears a red officer's
+  uniform and cap (`#e43b44`, light `#f6757a`, shade `#a22633`), amber buttons
+  and claw insignia. The named idle frame copies the approved neutral source
+  exactly; speaking varies only the mouth through open, half, open, closed.
+  The legacy `gadget` filenames, ids and reveal frame ordering remain stable.
+- Admiral Archie unnamed (`unknown-*`): the same bust and cap as a faceless
   `#100e1a` silhouette rim-lit `#6b7aa0` and `#68386c`, over static (navy
   `#3a4466` and `#1d2032` noise and a rolling scanline) and torn by two glitch
   bands. An amber voice trace runs below: flat `#b98a40` when idle, a hard

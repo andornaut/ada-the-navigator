@@ -15,7 +15,7 @@ const output = `${art}portraits/`;
 
 // Portrait sheets: 32 px frames for the storybook panel and 22 px compact frames that the
 // conversation box draws at 2x. Ada and Penny compact frames are crops of their reused sheets;
-// Astra is drawn here at both sizes, and General Gadget and Grandma come from core-busts.ts.
+// Astra is drawn here at both sizes, and Admiral Archie and Grandma come from core-busts.ts.
 const FULL = 32;
 const COMPACT = 22;
 const IDLE_MS = 1000;

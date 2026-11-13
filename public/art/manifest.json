@@ -34228,6 +34228,46 @@
           "ms": 70
         }
       ]
+    },
+    {
+      "id": "household-gadget-sitting",
+      "path": "/art/characters/gadget-sitting.png",
+      "width": 17,
+      "height": 20,
+      "pivot": {
+        "x": 0.38235294117647056,
+        "y": 1
+      }
+    },
+    {
+      "id": "household-gadget-curled",
+      "path": "/art/characters/gadget-curled.png",
+      "width": 22,
+      "height": 13,
+      "pivot": {
+        "x": 0.45454545454545453,
+        "y": 1
+      }
+    },
+    {
+      "id": "household-kiwi-sitting",
+      "path": "/art/characters/kiwi-sitting.png",
+      "width": 17,
+      "height": 20,
+      "pivot": {
+        "x": 0.38235294117647056,
+        "y": 1
+      }
+    },
+    {
+      "id": "household-kiwi-curled",
+      "path": "/art/characters/kiwi-curled.png",
+      "width": 22,
+      "height": 13,
+      "pivot": {
+        "x": 0.45454545454545453,
+        "y": 1
+      }
     }
   ],
   "spacePalette": "/art/space-palette.json",

@@ -1,10 +1,10 @@
 // Ada's family as storybook pixel sprites, crisp over the treated backgrounds like Ada's own:
-// Mom (Trista) and Dad (Bin) from the Archie repository's walkers, and the cats Archie and Kiwi.
+// Mom (Trista) and Dad (Bin) from the Archie repository's walkers, and the cats Gadget and Kiwi.
 // Each parent's head is the walker's portrait neutral frame pixel for pixel
 // (art/sources/face-walker-trista.png, face-walker-mr-b.png), as Ada's is hers, on an adult build
 // (Mom about 3 heads, Dad about 3.4) in the walker sprite's outfit colours, with ink edges and
 // flat shading. The walkers have no door gesture, thumbs-up or seated pose; those are drawn here.
-// art/tools/storybook.ts places the sprites over their backgrounds.
+// Story backgrounds stay environment-only; character sprites are separate assets.
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -446,25 +446,28 @@ export function dadAtDinner(): { figure: Sprite; arms: RgbaImage } {
   };
 }
 
-/* The cats: Archie, a round ginger tabby, and Kiwi, a slim grey tabby */
+/* Household Gadget, a black cat, and Kiwi, a grey mixed tabby. */
 
-export type Cat = "archie" | "kiwi";
+export type Cat = "gadget" | "archie" | "kiwi";
 
+const BLACK_CAT = {
+  o: "#2e2940",
+  r: "#221e31",
+  d: "#221e31",
+  c: "#433d5c",
+  e: "#63c74d",
+  n: "#f6757a",
+  p: "#ffffff",
+};
+// `archie` remains a source compatibility alias for the household cat, Gadget.
 const CATS: Readonly<Record<Cat, Readonly<Record<string, string>>>> = {
-  archie: {
-    o: "#f77622", // coat
-    r: "#be4a2f", // stripes
-    d: "#c95e1a", // coat shade
-    c: "#ead4aa", // muzzle, chest and paws
-    e: "#63c74d", // eyes
-    n: "#f6757a", // nose and inner ears
-    p: "#ffffff", // eye shine
-  },
+  gadget: BLACK_CAT,
+  archie: BLACK_CAT,
   kiwi: {
-    o: "#8b9bb4",
-    r: "#5a6988",
-    d: "#6f7f9a",
-    c: "#ffffff",
+    o: "#8798aa",
+    r: "#536274",
+    d: "#657487",
+    c: "#7b8c9d",
     e: "#fee761",
     n: "#f6757a",
     p: "#ffffff",
@@ -484,7 +487,7 @@ const tail = (path: readonly Xy[]): [Mask, Fill] => [
 
 /** Sitting up on the bed, watching, the tail tip raised behind. Paws on the bottom row. */
 export function catSitting(cat: Cat): Sprite {
-  const round = cat === "archie";
+  const round = true;
   const g = grid(22, 22);
   const cx = 10.5;
   part(
@@ -548,12 +551,132 @@ export function catSitting(cat: Cat): Sprite {
   put(g, 11, 8, "n");
   put(g, 10, 9, "H");
   put(g, 11, 9, "H");
-  return sprite(g, CATS[cat], cx);
+  const result = sprite(g, CATS[cat], cx);
+  if (cat === "kiwi") kiwiFur(result);
+  return result;
+}
+
+function kiwiFur(result: Sprite): void {
+  const kiwi = result.image;
+  const fur = new Set(["8798aa", "536274", "657487", "7b8c9d"]);
+  const cx = Math.round(result.centre),
+    offset = Math.round(10.5 - result.centre);
+
+  const inkAt = (x: number, y: number, hex: string) => {
+    if (x >= 0 && x < kiwi.width && y >= 0 && y < kiwi.height)
+      kiwi.data.set([...rgb(`#${hex}`), 255], (y * kiwi.width + x) * 4);
+  };
+  const furAt = (x: number, y: number, hex: string) => {
+    const i = (y * kiwi.width + x) * 4,
+      current = [...kiwi.data.subarray(i, i + 3)]
+        .map((c) => c.toString(16).padStart(2, "0"))
+        .join("");
+    if (fur.has(current)) inkAt(x, y, hex);
+  };
+  // Narrow soft-grey forehead markings avoid a pinched dark eyebrow.
+  for (const [x, y] of [
+    [cx - 3, 3],
+    [cx - 3, 4],
+    [cx, 3],
+    [cx, 4],
+    [cx + 3, 3],
+    [cx + 3, 4],
+  ] as const)
+    furAt(x, y, "697d91");
+  for (const [x, y] of [
+    [cx - 4, 8],
+    [cx - 4, 9],
+    [cx + 4, 8],
+    [cx + 4, 9],
+    [cx - 3, 13],
+    [cx - 3, 14],
+    [cx + 3, 13],
+    [cx + 3, 14],
+    [cx - 4, 16],
+    [cx - 4, 17],
+    [cx + 4, 16],
+    [cx + 4, 17],
+  ] as const)
+    furAt(x, y, "52677c");
+  for (const [x, y] of [
+    [cx - 2, 2],
+    [cx + 2, 2],
+    [cx - 5, 8],
+    [cx + 5, 8],
+    [cx - 2, 15],
+    [cx - 2, 16],
+    [cx + 2, 15],
+    [cx + 2, 16],
+    [cx - 3, 18],
+    [cx + 3, 18],
+  ] as const)
+    furAt(x, y, "a0adbc");
+  for (let y = 10; y < 19; y++)
+    for (let x = cx + 6; x < kiwi.width; x++) furAt(x, y, y % 3 === 0 ? "a0adbc" : "52677c");
+  // A small upward-cornered mouth replaces the flat dark bar beneath the nose.
+  inkAt(10 - offset, 9, "7b8c9d");
+  inkAt(11 - offset, 9, "7b8c9d");
+  inkAt(9 - offset, 9, "344254");
+  inkAt(12 - offset, 9, "344254");
+  inkAt(10 - offset, 10, "344254");
+  inkAt(11 - offset, 10, "344254");
+  const furColors = new Set([...fur, "697d91", "52677c", "a0adbc"]);
+  const lineAt = (x: number, y: number, hex: string) => {
+    if (x < 0 || x >= kiwi.width || y < 0 || y >= kiwi.height) return;
+    const i = (y * kiwi.width + x) * 4,
+      h = [...kiwi.data.subarray(i, i + 3)].map((c) => c.toString(16).padStart(2, "0")).join("");
+    if (furColors.has(h)) inkAt(x, y, hex);
+  };
+  // Uneven short marks suggest individual fur tufts, not horizontal belly bands.
+  for (const [dx, y] of [
+    [-1, 12],
+    [-1, 13],
+    [1, 14],
+    [-2, 15],
+    [2, 17],
+    [0, 18],
+    [-1, 19],
+  ] as const)
+    lineAt(cx + dx, y, "64788c");
+  for (const [dx, y] of [
+    [1, 12],
+    [0, 15],
+    [-2, 17],
+    [1, 19],
+  ] as const)
+    lineAt(cx + dx, y, "96a6b7");
+  for (const [dx, y] of [
+    [-5, 4],
+    [-5, 5],
+    [5, 4],
+    [5, 5],
+    [-4, 9],
+    [-3, 10],
+    [3, 10],
+    [4, 9],
+    [-1, 2],
+    [1, 2],
+    [-1, 4],
+    [1, 4],
+  ] as const)
+    lineAt(cx + dx, y, "a0adbc");
+  for (const [dx, y] of [
+    [-5, 7],
+    [5, 7],
+    [-5, 10],
+    [5, 10],
+    [-4, 13],
+    [4, 13],
+    [-4, 16],
+    [4, 16],
+  ] as const)
+    lineAt(cx + dx, y, "5d7083");
+  for (let y = 10; y < 19; y += 2) for (let x = cx + 6; x < kiwi.width; x++) lineAt(x, y, "a0adbc");
 }
 
 /** Curled asleep in a loaf, head on the left, tail wrapped along the front. Bottom row down. */
 export function catCurled(cat: Cat): Sprite {
-  const round = cat === "archie";
+  const round = true;
   const g = grid(26, 15);
   part(g, round ? disc(14, 8.5, 9.5, 5.4) : disc(14, 9, 9, 4.6), coat(15, 8));
   const head = round ? disc(7.5, 7.5, 5.4, 4.6) : disc(7.5, 8, 4.8, 4.2);
@@ -590,7 +713,34 @@ export function catCurled(cat: Cat): Sprite {
       [10, 12.5],
     ]),
   );
-  return sprite(g, CATS[cat], 13);
+  if (cat === "kiwi") {
+    for (const [x, y] of [
+      [13, 5],
+      [15, 6],
+      [18, 5],
+      [20, 7],
+      [16, 9],
+      [19, 10],
+      [12, 11],
+      [22, 11],
+      [5, 5],
+      [9, 4],
+    ] as const) {
+      if (g[y]?.[x] && g[y]![x] !== "H" && g[y]![x] !== ".") put(g, x, y, "f");
+    }
+    for (const [x, y] of [
+      [14, 6],
+      [17, 5],
+      [21, 8],
+      [18, 11],
+      [13, 9],
+      [6, 4],
+      [10, 5],
+    ] as const) {
+      if (g[y]?.[x] && g[y]![x] !== "H" && g[y]![x] !== ".") put(g, x, y, "l");
+    }
+  }
+  return sprite(g, { ...CATS[cat], f: "#64788c", l: "#a0adbc" }, 13);
 }
 
 /* Ada and Penny watching the sky: the route map's ground layer */
