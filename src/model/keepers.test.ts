@@ -127,6 +127,56 @@ describe("a keeper's greeting at the station card", () => {
     expect(model.stationGreeting).toBeNull();
   });
 
+  it("restores the actual keeper and greeting on a docked reload without counting another visit", () => {
+    const { model, station } = beside();
+    const keeper = stationKeeper(ECONOMY, 1, station.id)!;
+    model.interact();
+    model.advanceGreeting();
+    const visits = structuredClone(model.state.progress[1].greetings);
+    const loaded = relaunch(CONTENT, model.save());
+    expect(loaded.stationGreeting).toEqual({
+      count: 3,
+      index: 0,
+      keeper: keeper.key,
+      line: keeper.greetings.first[0],
+    });
+    expect(loaded.state.progress[1].greetings).toEqual(visits);
+    loaded.advanceGreeting();
+    expect(loaded.stationGreeting?.line).toBe(keeper.greetings.first[1]);
+    loaded.undock();
+    loaded.interact();
+    const later = relaunch(CONTENT, loaded.save());
+    expect(later.stationGreeting).toEqual({
+      count: 1,
+      index: 0,
+      keeper: keeper.key,
+      line: keeper.greetings.later[0],
+    });
+    expect(later.state.progress[1].greetings[station.id]).toBe(2);
+  });
+
+  it.each([1, 2, 3, 4, 5] as const)(
+    "exposes galaxy %i's actual station keeper key to the view",
+    (galaxy) => {
+      const model = new GameModel(CONTENT);
+      model.state.unlocked = [...new Set([1, galaxy] as const)];
+      model.startGalaxy(galaxy);
+      const flight = model.state.flight!;
+      for (const station of nearest(galaxy, 3)) {
+        model.undock();
+        model.state.dialogue = null;
+        flight.objects = [];
+        ensureStation(CONTENT, station.id, flight);
+        model.state.progress[galaxy].stations.push(station.id);
+        flight.player = { x: station.x, y: station.y };
+        flight.dangerFor = 0;
+        model.interact();
+        expect(model.state.docked).toBe(station.id);
+        expect(model.stationGreeting?.keeper).toBe(stationKeeper(ECONOMY, galaxy, station.id)!.key);
+      }
+    },
+  );
+
   it("greets later dockings with one line each, the three in turn", () => {
     const { model, station } = beside();
     const keeper = stationKeeper(ECONOMY, 1, station.id)!;

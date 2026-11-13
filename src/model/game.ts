@@ -2598,6 +2598,18 @@ export class GameModel {
     if (this.heldFlight) {
       Object.assign(this.state, this.heldFlight);
       this.heldFlight = null;
+      const { docked, flight } = this.state;
+      if (docked && flight && !this.greeting) {
+        const keeper = stationKeeper(ECONOMY, flight.galaxy, docked);
+        if (keeper) {
+          const visits = this.state.progress[flight.galaxy].greetings[docked] ?? 0;
+          this.greeting = {
+            index: 0,
+            keeper: keeper.key,
+            lines: greetingLines(keeper.greetings, Math.max(0, visits - 1)),
+          };
+        }
+      }
       this.beginConversations();
       // A holodisk moment saved mid-way shows again from its first page.
       if (this.state.dialogue?.context === HOLODISK_MOMENT) {
