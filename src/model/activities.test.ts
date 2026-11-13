@@ -263,8 +263,9 @@ describe("repeatable activities", () => {
     const flight = model.state.flight!;
     flight.cargo = 12;
     model.interact();
-    // The deposit before accepting is the story's, not the contract's.
-    expect(model.state.dialogue).toBeNull();
+    // Acknowledge the deposit before opening the station's contract board.
+    expect(model.state.dialogue?.context).toBe("deposit");
+    model.choose("continue");
     takeContract(model);
     expect(heldActivity(2, model.state)?.deposited).toBe(0);
     expect(model.jobObjective).toBe("Deposit ore at the hub: 0 of 30.");
@@ -286,7 +287,8 @@ describe("repeatable activities", () => {
     expect(model.state.economy.stardust).toBe(before + 180);
     expect(model.state.notice).toBe("Job complete: +180 Stardust");
     expect(model.state.achievements.activities).toBe(count + 1);
-    // Offered again at the head of the hub's board.
+    // Acknowledge the deposit, then open the board again.
+    model.choose("continue");
     model.interact();
     expect(model.jobBoard()[0]).toMatchObject({ id: "miningContract", state: "offer" });
   });
@@ -342,6 +344,8 @@ describe("repeatable activities", () => {
     expect(model.contextAction).toBe("deliver");
     model.interact();
     expect(model.state.docked).toBeNull();
+    expect(model.state.dialogue).toMatchObject({ context: "deliver" });
+    model.choose("continue");
     expect(model.contextAction).toBe("dock");
     expect(model.state.tasks[1]).toBeUndefined();
     expect(model.state.economy.stardust).toBe(before + reward);

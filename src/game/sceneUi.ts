@@ -547,7 +547,7 @@ export function buildScene(scene: UiContext): void {
     });
   const interaction = createInteractionCard(scene.controls.overlay, {
     choose: (id) => apply(() => scene.model.choose(id)),
-    close: finishConversation,
+    close: () => apply(() => scene.model.closeInteraction()),
     skip: finishConversation,
   });
   interactionCards.set(scene, interaction);

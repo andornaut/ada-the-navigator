@@ -8,6 +8,7 @@ import {
   CONVERSATIONS,
   type EncounterCue,
   GENERAL_NAMED,
+  INTERACTION_COPY,
   type JobMoment,
   lineDuration,
   type Mood,
@@ -164,7 +165,6 @@ import {
   type Scene,
   sceneEnd,
   shownChoices,
-  skipPassesPage,
   stepOf,
   stepPage,
   type StoryChoice,
@@ -176,6 +176,7 @@ import {
 } from "./storybook.ts";
 import type {
   Aboard,
+  DialogueState,
   FlightEvent,
   FlightInput,
   FlightState,
@@ -385,6 +386,13 @@ export class GameModel {
   private heldFlight: Pick<GameState, "dialogue" | "docked" | "flight" | "mode" | "notice"> | null =
     null;
   private story: StoryPosition | null = null;
+  private suspendedInteraction: {
+    readonly dialogue: DialogueState;
+    readonly galaxy: GalaxyNumber;
+  } | null = null;
+  private depletionContinuation = false;
+  private readonly playedInterludes = new Set<Scene>();
+
   // The galaxy map's ship, always on an open galaxy, and the locked galaxy whose panel shows
   // in its place after a tap or focus (null for the ship's own).
   private selection: RoutePosition | null = null;
@@ -398,7 +406,25 @@ export class GameModel {
   private unlockFlight: RouteFlight | null = null;
   constructor(content: GameContent, saved?: unknown) {
     this.content = content;
-    this.state = restoreSave(saved) ?? newGameState();
+    const restored = restoreSave(saved);
+    this.state = restored ?? newGameState();
+    const navigation = restored as
+      | (GameState & {
+          pendingInteraction?: { dialogue?: DialogueState; galaxy?: GalaxyNumber };
+          depletionContinuation?: unknown;
+        })
+      | null;
+    const pending = navigation?.pendingInteraction;
+    if (
+      pending?.galaxy &&
+      GALAXY_NUMBERS.includes(pending.galaxy) &&
+      pending.dialogue &&
+      restoreSave({ ...this.state, dialogue: pending.dialogue })
+    ) {
+      this.suspendedInteraction = { dialogue: pending.dialogue, galaxy: pending.galaxy };
+    }
+    this.depletionContinuation =
+      navigation?.depletionContinuation === true && this.state.mode === "home";
     // Achievements the save already reached unlock without notices.
     unlockAchievements(ACHIEVEMENTS, ACHIEVEMENT_TOTALS, this.state.achievements, this.state);
     this.talk = new ConversationDirector(
@@ -494,7 +520,7 @@ export class GameModel {
     return this.story && this.screen === "story"
       ? {
           canGoBack: canGoBack(this.story),
-          canSkip: !currentPage(this.story).sleep && skipPassesPage(this.runScenes, this.story),
+          canSkip: !currentPage(this.story).sleep && !currentPage(this.story).choices?.length,
           choices: shownChoices(this.story),
           page: currentPage(this.story),
           run: this.run,
@@ -593,6 +619,13 @@ export class GameModel {
   }
   /** What Use does here, or undefined with nothing in reach. */
   get contextAction(): UseAction | undefined {
+    if (
+      this.suspendedInteraction?.galaxy === this.state.flight?.galaxy &&
+      !this.state.dialogue &&
+      !this.state.docked
+    ) {
+      return "use";
+    }
     const job = this.jobUse();
     if (job) {
       return job;
@@ -625,7 +658,7 @@ export class GameModel {
    */
   get useTarget(): { action: UseAction; id: string } | undefined {
     const action = this.contextAction;
-    if (action === undefined || action === "tow") {
+    if (action === undefined || action === "tow" || this.suspendedInteraction) {
       return undefined;
     }
     const id = this.nearest();
@@ -1147,6 +1180,7 @@ export class GameModel {
     this.explore(this.state.flight);
     this.ensureWhaleDebris();
     this.beginConversations();
+    this.reopenInteraction();
   }
   /** Records the chunk Ada is in to the galaxy's explored record, which the Map's fog reveals. */
   private explore(f: FlightState): void {
@@ -1154,6 +1188,9 @@ export class GameModel {
   }
   /** Jumps to an unlocked galaxy's flight. */
   startGalaxy(id: GalaxyNumber): void {
+    if (this.suspendedInteraction && this.suspendedInteraction.galaxy !== id) {
+      return;
+    }
     if (!this.state.unlocked.includes(id) || this.state.mode === "space") {
       return;
     }
@@ -1203,6 +1240,12 @@ export class GameModel {
     this.state.notice = "";
   }
   returnHome(): void {
+    if (this.state.dialogue) {
+      return;
+    }
+    if (this.reopenInteraction()) {
+      return;
+    }
     this.home(false);
   }
   /**
@@ -1222,6 +1265,9 @@ export class GameModel {
     this.startShown = true;
   }
   teleport(id: string): void {
+    if (this.reopenInteraction()) {
+      return;
+    }
     const f = this.state.flight;
     const station = this.current.stations.includes(id);
     if (
@@ -1274,6 +1320,7 @@ export class GameModel {
     this.home(true, kept);
     const line = this.label("jumpHome");
     const page = oreLost ? `${line}\n${this.label("jumpHomeOreLost")}` : line;
+    this.depletionContinuation = true;
     this.showScene(jumpHomeScene(page, this.label("morningRecharge")));
   }
   private complete(): void {
@@ -1348,6 +1395,10 @@ export class GameModel {
       !Number.isFinite(dt) ||
       dt <= 0
     ) {
+      return;
+    }
+    if (input.use && this.suspendedInteraction) {
+      this.reopenInteraction();
       return;
     }
     this.ensureRequiredApproaches();
@@ -1479,6 +1530,9 @@ export class GameModel {
     const unlocked = this.state.notice ? undefined : this.achievementNotices.shift();
     if (unlocked !== undefined) {
       this.notify(fill(this.label("achievement"), { name: unlocked }));
+    }
+    if (this.suspendedInteraction) {
+      return;
     }
     const opener = first(f.galaxy);
     if (
@@ -1754,12 +1808,49 @@ export class GameModel {
       });
     }
   }
+  closeInteraction(): void {
+    const dialogue = this.state.dialogue;
+    const flight = this.state.flight;
+    if (!dialogue || !flight || dialogue.context === HOLODISK_MOMENT || this.suspendedInteraction) {
+      return;
+    }
+    this.suspendedInteraction = { dialogue, galaxy: flight.galaxy };
+    this.state.dialogue = null;
+  }
+  reopenInteraction(): boolean {
+    const pending = this.suspendedInteraction;
+    if (
+      !pending ||
+      this.state.mode !== "space" ||
+      this.state.flight?.galaxy !== pending.galaxy ||
+      this.state.dialogue ||
+      this.state.docked
+    ) {
+      return false;
+    }
+    this.suspendedInteraction = null;
+    this.state.dialogue = pending.dialogue;
+    return true;
+  }
   interact(): void {
+    if (
+      this.state.mode !== "space" ||
+      !this.state.flight ||
+      this.state.dialogue ||
+      this.state.docked
+    ) {
+      return;
+    }
+    if (this.suspendedInteraction) {
+      this.reopenInteraction();
+      return;
+    }
     if (this.useJob()) {
       return;
     }
     const flight = this.state.flight;
     if (flight && this.salvageable() && salvage(this.content, flight)) {
+      this.panel("salvage", INTERACTION_COPY.salvage!.lines[0]!.text, "Astra");
       return;
     }
     const id = this.nearest();
@@ -1770,6 +1861,7 @@ export class GameModel {
     if (id !== HUB_STATION && this.current.stations.includes(id)) {
       if (this.supplyDue(id)) {
         this.finishActivity(f.galaxy);
+        this.panel("deliver", this.state.notice, "Astra");
       } else {
         this.dock(id, f);
       }
@@ -1835,6 +1927,7 @@ export class GameModel {
         if (p.stage === 2 && p.deposited >= b) {
           ensureDestination(this.content, "miner", f);
         }
+        this.panel("deposit", INTERACTION_COPY.deposit!.lines[0]!.text, "Astra");
       } else if (
         id === "miner" &&
         p.stage === 2 &&
@@ -2180,9 +2273,15 @@ export class GameModel {
     }
     if (use === "tow") {
       f.tow = { x: held.target.x, y: held.target.y };
-      this.jobMoments.push("towAttached");
+      const tow = CONVERSATIONS.find(
+        ({ trigger }) => trigger.kind === "job" && trigger.moment === "towAttached",
+      );
+      this.panel("tow", tow?.lines[0]?.text ?? this.label("tow"), "Astra");
     } else {
+      const party =
+        this.chapter.dialogue[dialogueKeys[held.target.id] ?? held.target.id]?.speaker ?? "Astra";
       this.finishJob(f);
+      this.panel("deliver", this.state.notice, party);
     }
     return true;
   }
@@ -2384,7 +2483,18 @@ export class GameModel {
   }
   choose(id: string): void {
     const dialogue = this.state.dialogue;
-    if (!dialogue || !dialogue.choices.some((c) => c.id === id)) {
+    if (!dialogue) {
+      return;
+    }
+    const selected = dialogue.choices.find((choice) => choice.id === id);
+    if (!selected) {
+      return;
+    }
+    if (selected.refused) {
+      const busy = this.state.tasks[this.state.selectedGalaxy];
+      if (busy && dialogue.context.startsWith("activity:")) {
+        this.notify(this.label(busy.kind === "job" ? "jobBusy" : "activityBusy"));
+      }
       return;
     }
     if (id === "optional") {
@@ -2470,6 +2580,9 @@ export class GameModel {
     // the old world, so finds in the new one count again.
     const achievements = { ...this.state.achievements, found: [], sensed: [] };
     this.state = { ...newGameState(), achievements };
+    this.suspendedInteraction = null;
+    this.depletionContinuation = false;
+    this.playedInterludes.clear();
     this.heldFlight = null;
     this.unlockFlight = null;
     this.story = null;
@@ -2494,42 +2607,41 @@ export class GameModel {
   }
   storyPrevious(): void {
     if (this.story && this.screen === "story" && canGoBack(this.story)) {
-      this.story = goBack(this.story);
+      if (currentPage(this.story).sleep) {
+        this.playedInterludes.add(this.story.scene);
+      }
+      let previous = goBack(this.story);
+      while (currentPage(previous).sleep && canGoBack(previous)) {
+        previous = goBack(previous);
+      }
+      if (!currentPage(previous).sleep) {
+        this.story = previous;
+        this.showPage();
+      }
     }
   }
-  /**
-   * Skip passes every remaining page and scene of the story run by the default path, each scene
-   * applying its effect as it ends, and stops where play resumes: galaxy selection, or Ada's room
-   * page with its named action, whose Previous returns to the page Skip left. Where it would pass
-   * no page (the run's end and the page before it) and on the sleep scene it does nothing.
-   */
+  /** Skip follows Next through scene boundaries, stopping for an explicit unresolved choice. */
   storySkip(): void {
     const from = this.story;
-    if (
-      !from ||
-      this.screen !== "story" ||
-      this.sleeping ||
-      !skipPassesPage(this.runScenes, from)
-    ) {
+    if (!from || this.screen !== "story" || this.sleeping) {
       return;
     }
-    // Each pass ends one scene; a run holds only a few, so the bound only guards a cycle.
-    for (let scenes = 0; this.story && this.screen === "story"; scenes++) {
-      if (scenes > 32) {
-        throw new Error(`Skip found no end to the story run from ${from.scene.id}`);
-      }
-      const end = sceneEnd(this.story);
-      if (atRunEnd(end)) {
-        this.story = { ...end, trail: [...from.trail, stepOf(from)] };
-        this.showPage();
+    const visited = new Set<string>();
+    while (this.story && this.screen === "story") {
+      const position = this.story;
+      const page = currentPage(position);
+      if (page.choices?.length) {
         return;
       }
-      // Passing a scene's last page counts as showing it, as Skip landing there once did.
-      this.story = end;
-      this.showPage();
-      this.moveStory(null);
+      const key = `${position.scene.id}:${position.page}`;
+      if (visited.has(key)) {
+        throw new Error(`Story continuation cycle at ${key}`);
+      }
+      visited.add(key);
+      this.moveStory(advance(position));
     }
   }
+
   /**
    * Right (1) and Left (-1): the ship to the next or previous open galaxy in route order,
    * skipping locked ones; at either end it stays. The panel returns to the ship's galaxy.
@@ -2568,6 +2680,9 @@ export class GameModel {
    * flying in. Refused in danger (galaxiesAvailable); towing never refuses it.
    */
   openGalaxyMap(): boolean {
+    if (this.reopenInteraction()) {
+      return false;
+    }
     const f = this.state.flight;
     if (this.state.mode !== "space" || !f || this.state.dialogue || this.state.docked) {
       return false;
@@ -2632,6 +2747,9 @@ export class GameModel {
    */
   jump(): boolean {
     const galaxy = this.galaxyMapSelection;
+    if (this.suspendedInteraction && galaxy !== this.suspendedInteraction.galaxy) {
+      return false;
+    }
     if (galaxy === null || !this.isUnlocked(galaxy)) {
       return false;
     }
@@ -2703,6 +2821,7 @@ export class GameModel {
   ): void {
     this.story = storyStart(scene, trail);
     if (startsRun && !this.simulating) {
+      this.playedInterludes.clear();
       this.runs += 1;
       this.runScenes = this.chainedScenes(scene);
       this.run = {
@@ -2726,13 +2845,14 @@ export class GameModel {
   private chainedScenes(scene: Scene): readonly Scene[] {
     const copy = new GameModel(this.content, JSON.stringify(this.state));
     copy.simulating = true;
+    copy.depletionContinuation = this.depletionContinuation;
     copy.startShown = false;
     copy.story = storyStart(scene);
     const scenes = [scene];
     // A run chains only a few scenes; the bound only guards a cycle.
     for (let steps = 0; copy.story && steps < 32; steps++) {
       const end = sceneEnd(copy.story);
-      if (atRunEnd(end)) {
+      if (atRunEnd(end) && !copy.depletionContinuation) {
         break;
       }
       copy.story = end;
@@ -2770,8 +2890,15 @@ export class GameModel {
    */
   private moveStory(next: StoryPosition | null): void {
     const position = this.story;
-    if (next) {
-      this.story = next;
+    if (position && currentPage(position).sleep) {
+      this.playedInterludes.add(position.scene);
+    }
+    const destination =
+      next && currentPage(next).sleep && this.playedInterludes.has(next.scene)
+        ? advance(next)
+        : next;
+    if (destination) {
+      this.story = destination;
       this.showPage();
       return;
     }
@@ -2779,8 +2906,10 @@ export class GameModel {
       return;
     }
     const ended = position.scene;
-    const trail = runTrail(position);
-    const startsRun = Boolean(ended.endsRun);
+    const trail = this.depletionContinuation
+      ? [...position.trail, stepOf(position)]
+      : runTrail(position);
+    const startsRun = Boolean(ended.endsRun) && !this.depletionContinuation;
     this.applyEffect(ended);
     if (ended.lead === "home") {
       this.showScene(this.waitingScene() ?? this.roomScene(false), trail, startsRun);
@@ -2800,6 +2929,13 @@ export class GameModel {
   }
   private applyEffect(scene: Scene): void {
     const effect = scene.effect;
+    if (
+      (effect?.kind === "opened" && this.state.progress[effect.galaxy].opened) ||
+      (effect?.kind === "resolved" && this.state.progress[effect.galaxy].resolved) ||
+      (effect?.kind === "prologue" && this.state.prologueSeen)
+    ) {
+      return;
+    }
     if (effect?.kind === "opened") {
       this.state.progress[effect.galaxy].opened = true;
     } else if (effect?.kind === "resolved") {
@@ -2846,6 +2982,7 @@ export class GameModel {
    * from, which its close X shows again.
    */
   private openSelection(from: StoryPosition): void {
+    this.depletionContinuation = false;
     this.boardedFrom = from;
     this.story = null;
     this.viewing = null;
@@ -2855,6 +2992,11 @@ export class GameModel {
   }
   save(): string {
     this.pullLoadout();
-    return JSON.stringify(this.heldFlight ? { ...this.state, ...this.heldFlight } : this.state);
+    const effective = this.heldFlight ? { ...this.state, ...this.heldFlight } : this.state;
+    return JSON.stringify({
+      ...effective,
+      depletionContinuation: this.depletionContinuation || undefined,
+      pendingInteraction: this.suspendedInteraction ?? undefined,
+    });
   }
 }

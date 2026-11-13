@@ -188,17 +188,21 @@ describe("home visits", () => {
     expect(readStory(model).map(({ id }) => id)).toEqual(["room", "boarding:0", "boarding:1"]);
   });
 
-  it("finishes every skipped scene's effects once when Skip passes the run", () => {
+  it("finishes a scene once after its explicit story choice", () => {
     const model = questDone(2);
     model.returnHome();
-    expect(model.storyView?.page.id).toBe("resolution");
     model.storySkip();
-    // The resolution passes by its default path to Ada's room. Cartwheel unlocks Phantom, a
-    // placeholder with no opening to play.
-    expect(model.storyView).toMatchObject({ canSkip: false, page: { id: "room" } });
+    expect(model.storyView?.choices.length).toBeGreaterThan(0);
+    expect(model.state.progress[2].resolved).toBe(false);
+    model.storyChoose(0);
+    model.storySkip();
+    expect(model.screen).toBe("selector");
     expect(model.state.progress[2].resolved).toBe(true);
     expect(model.state.progress[6].opened).toBe(false);
     expect(model.state.unlocked).toEqual([1, 2, 6]);
+    const progress = structuredClone(model.state.progress);
+    model.storySkip();
+    expect(model.state.progress).toEqual(progress);
   });
 });
 
@@ -270,25 +274,18 @@ describe("story runs", () => {
     expect(model.state.unlocked).toEqual([1, 3]);
   });
 
-  it("starts at a flight's end and ends on Ada's room page with its named action", () => {
+  it("keeps Skip on the room's named action and follows it to boarding's destination", () => {
     const model = questDone(1);
     model.returnHome();
     expect(model.storyView?.canGoBack).toBe(false);
     readTo(model, "room");
     expect(model.storyView).toMatchObject({
       canGoBack: true,
-      canSkip: false,
+      canSkip: true,
       page: { action: "Pick up the rock." },
     });
-    // Skip does nothing on the run's end; the named action starts boarding's new run.
     model.storySkip();
-    expect(model.storyView?.page.id).toBe("room");
-    model.storyNext();
-    expect(model.storyView).toMatchObject({
-      canGoBack: true,
-      canSkip: true,
-      page: { id: "boarding:0" },
-    });
+    expect(model.screen).toBe("selector");
   });
 
   it("counts Ada's room page as the first page of the run its named action starts", () => {
@@ -299,11 +296,11 @@ describe("story runs", () => {
     const boarding = model.storyView!;
     expect(boarding.page.id).toBe("boarding:0");
     expect(boarding.run.pages[0]).toMatchObject({ action: "Pick up the rock.", id: "room" });
-    // Previous from boarding returns to the room page, where it is disabled and Skip hides.
+    // Previous from boarding returns to the room page, where Previous is disabled.
     model.storyPrevious();
     expect(model.storyView).toMatchObject({
       canGoBack: false,
-      canSkip: false,
+      canSkip: true,
       page: { action: "Pick up the rock.", id: "room" },
     });
     model.storyPrevious();
@@ -317,12 +314,12 @@ describe("story runs", () => {
 
   it("starts on leaving galaxy selection, on the run's end page itself", () => {
     const model = started();
-    model.storySkip();
+    readStory(model);
     expect(model.screen).toBe("selector");
     model.leaveCockpit();
     expect(model.storyView).toMatchObject({
       canGoBack: false,
-      canSkip: false,
+      canSkip: true,
       page: { action: "Pick up the rock.", id: "room" },
     });
   });
@@ -361,27 +358,31 @@ describe("story runs", () => {
     return pages;
   }
 
-  it("shows Skip on every page of a run to galaxy selection but its last", () => {
+  it("shows Skip on every Next page, including the last page before galaxy selection", () => {
     const model = started();
-    const pages = skipShown(model);
+    for (let turns = 0; model.storyView && turns < 80; turns++) {
+      const view = model.storyView;
+      if (view.page.choices?.length) {
+        expect(view.canSkip).toBe(false);
+        model.storyChoose(0);
+      } else {
+        expect(view.canSkip).toBe(true);
+        model.storyNext();
+      }
+    }
     expect(model.screen).toBe("selector");
-    expect(pages.length).toBeGreaterThan(2);
-    expect(pages.slice(0, -1).every(({ skip }) => skip)).toBe(true);
-    // The last page before galaxy selection: Skip would pass nothing.
-    expect(pages.at(-1)!.skip).toBe(false);
   });
 
-  it("hides Skip on Ada's room page and the page before it, and shows it earlier", () => {
+  it("shows Skip on the room and the preceding Next page", () => {
     const model = questDone(1);
     model.returnHome();
     const pages = skipShown(model);
-    expect(pages.at(-1)!.id).toBe("room");
-    expect(pages.slice(-2).map(({ skip }) => skip)).toEqual([false, false]);
-    expect(pages.slice(0, -2).every(({ skip }) => skip)).toBe(true);
+    expect(pages.at(-1)?.id).toBe("room");
+    expect(pages.slice(-2).map(({ skip }) => skip)).toEqual([true, true]);
     expect(pages.length).toBeGreaterThan(2);
   });
 
-  it("does nothing on the page before Ada's room page, where Skip would pass no page", () => {
+  it("continues through the page before the room to galaxy selection", () => {
     const model = questDone(1);
     model.returnHome();
     const before = skipShown(model).at(-2)!.id;
@@ -389,33 +390,34 @@ describe("story runs", () => {
     again.returnHome();
     readTo(again, before);
     again.storySkip();
-    expect(again.storyView?.page.id).toBe(before);
+    expect(again.screen).toBe("selector");
   });
 
-  it("Skip stops on Ada's room page, whose Previous returns to the page Skip left", () => {
+  it("stops Skip at the next unresolved chapter choice instead of selecting it", () => {
     const model = questDone(1);
     model.returnHome();
     readTo(model, "closing");
     model.storySkip();
-    expect(model.storyView?.page.id).toBe("room");
-    model.storyPrevious();
-    expect(model.storyView?.page.id).toBe("closing");
+    expect(model.state.progress[1].resolved).toBe(true);
+    expect(model.storyView?.choices.length).toBeGreaterThan(0);
+    const page = model.storyView?.page.id;
+    model.storySkip();
+    expect(model.storyView?.page.id).toBe(page);
+    expect(model.state.progress[3].opened).toBe(false);
   });
 
-  it("starts on Continue from the start screen on Ada's room page, with Previous disabled", () => {
+  it("starts Continue on the room with Previous disabled and Skip leading through boarding", () => {
     const model = questDone(2);
     model.state.progress[2].questComplete = false;
     model.returnHome();
     const reloaded = relaunch(CONTENT, model.save());
     reloaded.continueGame();
-    // The run ends on the room page, so Skip would pass nothing.
     expect(reloaded.roomPage).toBe(true);
-    expect(reloaded.storyView).toMatchObject({ canGoBack: false, canSkip: false });
+    expect(reloaded.storyView).toMatchObject({ canGoBack: false, canSkip: true });
     reloaded.storySkip();
-    expect(reloaded.roomPage).toBe(true);
-    // Picking up the rock starts the run its boarding pages continue, back to the room.
-    reloaded.storyNext();
-    expect(reloaded.storyView).toMatchObject({ canGoBack: true, page: { id: "boarding:0" } });
+    expect(reloaded.screen).toBe("selector");
+    reloaded.closeGalaxyMap();
+    reloaded.storyPrevious();
     reloaded.storyPrevious();
     expect(reloaded.roomPage).toBe(true);
   });

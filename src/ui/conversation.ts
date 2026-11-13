@@ -130,6 +130,20 @@ const TAB_RULES = Object.entries(TAB_COLOURS)
   )
   .join("");
 
+export const INTERACTION_STYLE = `
+.ada-controls .ada-interaction-modal .ada-card-frame{
+  width:100%!important;height:100%!important;max-width:none!important;max-height:none!important
+}
+.ada-controls .ada-interaction-modal .ada-card{
+  width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;box-sizing:border-box
+}
+.ada-interaction-speaker{display:flex;align-items:center;gap:12px}
+.ada-interaction-portrait{
+ display:inline-block;flex:none;width:${units(48)};height:${units(48)};background-repeat:no-repeat;
+ image-rendering:pixelated}
+.ada-interaction-actions{display:flex;flex-wrap:wrap;gap:12px}
+`;
+
 export const CONVERSATION_STYLE = `
 .ada-conversation{${CONVERSATION_SLOT};
   z-index:5;
@@ -232,6 +246,7 @@ ${PORTRAIT_RULES}
 }
 
 ${TAB_RULES}
+${INTERACTION_STYLE}
 .ada-conversation-skip-area{${CONVERSATION_SLOT};background:transparent;pointer-events:none;z-index:6}
 .ada-conversation-skip-area[hidden]{display:none}
 .ada-conversation-skip-area button{position:absolute;right:0;top:${units(-30)};pointer-events:auto;
@@ -334,9 +349,6 @@ export function createInteractionCard(
   actions.className = "ada-interaction-actions";
   card.body.append(party, speaker, words, actions);
   modal.append(card.frame);
-  const style = document.createElement("style");
-  style.textContent = INTERACTION_STYLE;
-  modal.append(style);
   parent.append(modal);
   const state = new InteractionConversation();
   let signature = "";
@@ -467,17 +479,3 @@ export function createInteractionCard(
     },
   };
 }
-
-export const INTERACTION_STYLE = `
-.ada-controls .ada-interaction-modal .ada-card-frame{
-  width:100%!important;height:100%!important;max-width:none!important;max-height:none!important
-}
-.ada-controls .ada-interaction-modal .ada-card{
-  width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;box-sizing:border-box
-}
-.ada-interaction-speaker{display:flex;align-items:center;gap:12px}
-.ada-interaction-portrait{
- display:inline-block;flex:none;width:${units(48)};height:${units(48)};background-repeat:no-repeat;
- image-rendering:pixelated}
-.ada-interaction-actions{display:flex;flex-wrap:wrap;gap:12px}
-`;

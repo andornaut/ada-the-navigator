@@ -6,6 +6,7 @@ import {
   CONVERSATION_PRIORITIES,
   CONVERSATION_TUNING,
   type ConversationLine,
+  CONVERSATIONS,
   type EncounterCue,
   GENERAL_NAMED,
   INTERACTION_COPY,
@@ -825,7 +826,7 @@ export function interactionCopy(
         { speaker: party, text: "We found this drifting near our outposts." },
         { speaker: "Ada", text: "Astra, is that your holodisk?" },
         { speaker: "Astra", text: "Yes. A piece of my memory." },
-        { speaker: party, text: "Take it, with our thanks." },
+        { speaker: party, text: "Take it. And thank you." },
       ],
       party,
       topics: [
@@ -835,6 +836,17 @@ export function interactionCopy(
         },
         { label: "What does it hold?", lines: [{ speaker: "Astra", text: "Part of my memory." }] },
       ],
+    };
+  }
+  if (panel.context === "tow") {
+    const tow = CONVERSATIONS.find(
+      ({ trigger }) => trigger.kind === "job" && trigger.moment === "towAttached",
+    );
+    return {
+      lines:
+        tow?.lines.map(({ speaker, text }) => ({ speaker: SPEAKERS[speaker].name, text })) ?? [],
+      party: "Astra",
+      topics: [],
     };
   }
   const authored =

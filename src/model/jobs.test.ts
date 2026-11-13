@@ -558,6 +558,8 @@ describe("jobs in play", () => {
     flyTo(model, { x: held.target.x + 100, y: held.target.y }, use);
     expect(flight.tow).toEqual({ x: held.target.x, y: held.target.y });
     expect(model.towing).toBe(true);
+    expect(model.state.dialogue?.context).toBe("tow");
+    model.choose("continue");
     expect(model.jobScenery).toMatchObject({ craft: flight.tow, towing: true });
     // Out of danger, so towing alone refuses Travel.
     flight.dangerFor = 0;
@@ -731,6 +733,8 @@ describe("jobs in play", () => {
     expect(model.state.docked).toBeNull();
     expect(model.state.tasks[1]).toBeUndefined();
     expect(model.state.economy.stardust).toBe(stardust + 15);
+    expect(model.state.dialogue?.context).toBe("deliver");
+    model.choose("continue");
     expect(model.contextAction).toBe("dock");
   });
 
