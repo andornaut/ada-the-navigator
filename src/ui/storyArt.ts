@@ -1,7 +1,7 @@
 import { type Background, BACKGROUND_ART } from "../data/storybook.ts";
 import { STORY_BACKGROUND, type SubjectBand } from "./layout/storyPage.ts";
 
-// Art's storybook backgrounds, their composite overlays, the rock glow transitions, the overnight
+// Art's storybook environments, their compatibility aliases, the rock glow transitions, the overnight
 // sequence (art/storybook.md) and the holodisk moment aboard (art/aboard.md), read from the root
 // manifest and the files it links as storyTransition, storyOvernight and aboardHolodisk.
 
@@ -134,8 +134,20 @@ export function storyBackgrounds(assets: readonly ArtAsset[]): Partial<Record<Ba
   ) as Partial<Record<Background, string>>;
 }
 
+/** Resolve a sequence image to its background key, retaining the current alias when it matches. */
+export function storyBackgroundKey(
+  backgrounds: StoryArt["backgrounds"],
+  current: Background | null,
+  url: string,
+): Background | null {
+  if (current && backgrounds[current] === url) {
+    return current;
+  }
+  return (Object.keys(backgrounds) as Background[]).find((key) => backgrounds[key] === url) ?? null;
+}
+
 /**
- * Each composite background key's base key (art/storybook.md "Story figures"): the background
+ * Each background alias's base key: the background
  * whose entry its `base` names, so a page on the composite is placed as a page on the base.
  */
 export function storyBases(assets: readonly ArtAsset[]): Partial<Record<Background, Background>> {

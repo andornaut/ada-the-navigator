@@ -285,134 +285,26 @@ const BASES = storyBases(MANIFEST.assets);
 const subject = (key: Background) =>
   MANIFEST.assets.find(({ id }) => id === BACKGROUND_ART[key])!.subject!;
 
-describe("story figures", () => {
-  // Each figure page with its run's pages on the same base, and Art's rows (art/storybook.md
-  // "Story figures") at 720x360 with insets, 844x390 with insets and 1280x720: canvas y, the
-  // page's panel top and the figures' view rows. Needle's pages are not on main, so Dad looking
-  // in follows a chapter page at Gameplay's limit (218 characters, the heading and two choices)
-  // in the recorder room, as Art's row assumes.
-  const chapter = (galaxy: 1 | 2 | 3) => openingScene(CONTENT, galaxy).pages;
-  const prologue = prologueScene(CONTENT, labels).pages;
-  const morning = jumpHomeScene("night", CONTENT.labels.morningRecharge ?? "").pages;
-  const find = (pages: readonly StoryPage[], background: Background, text?: string) =>
-    pages.find((page) => page.background === background && (!text || page.text === text))!;
-  const limit = (() => {
-    const words = "Ada plays the hard part slowly and then the whole song again".split(" ");
-    let text = "";
-    for (let index = 0; text.length < 218; index++) {
-      text = `${text} ${words[index % words.length]}`.trim();
+describe("story environment aliases", () => {
+  it("keeps every alias at its base environment's placement without figure overlays", () => {
+    expect(BASES).toEqual({
+      adaRoomMorningCats: "adaRoomMorning",
+      adaRoomRecorderDad: "adaRoomRecorder",
+      adaRoomSleep: "adaRoomNight",
+      adaRoomUnpolishedCats: "adaRoomUnpolished",
+      frontDoorMom: "frontDoor",
+    });
+    for (const [alias, base] of Object.entries(BASES)) {
+      expect(backgroundOverlays(MANIFEST.assets, BACKGROUND_ART[alias as Background])).toEqual([]);
+      expect(subject(alias as Background)).toEqual(subject(base));
+      for (const screen of SCREENS) {
+        for (const strip of [113, 229, 257, 305]) {
+          expect(storyBackgroundTop(screen.view, subject(alias as Background), strip)).toBe(
+            storyBackgroundTop(screen.view, subject(base), strip),
+          );
+        }
+      }
     }
-    return text.slice(0, 218);
-  })();
-  const needle: StoryPage[] = [
-    {
-      background: "adaRoomRecorder",
-      choices: CONTENT.chapters[1]!.openingChoices.map((label) => ({ label, next: "x" })),
-      heading: "Threading the Needle",
-      id: "opening",
-      text: limit,
-    },
-    {
-      background: "adaRoomRecorderDad",
-      id: "opening:rejoin:0",
-      speaker: "Dad",
-      text: "Sounding better every day.",
-    },
-  ];
-  const cases = [
-    {
-      expected: [
-        [-180, 255, 31, 183],
-        [-180, 255, 31, 183],
-        [-135, 303, 76, 228],
-      ],
-      name: "Dad looking in",
-      page: needle[1]!,
-      run: needle,
-    },
-    {
-      expected: [
-        [-171, 229, 57, 199],
-        [-171, 229, 57, 199],
-        [-135, 277, 93, 235],
-      ],
-      name: "Mom's line",
-      page: find(chapter(3), "frontDoorMom"),
-      run: chapter(3),
-    },
-    {
-      expected: [
-        [-105, 257, 41, 135],
-        [-105, 273, 41, 135],
-        [-81, 321, 65, 159],
-      ],
-      name: "Dinner narration",
-      page: find(chapter(2), "kitchen", "At dinner, Ada tells Dad what she saw at school."),
-      run: chapter(2),
-    },
-    {
-      expected: [
-        [-105, 229, 41, 135],
-        [-105, 229, 41, 135],
-        [-81, 277, 65, 159],
-      ],
-      name: "Dad's line",
-      page: chapter(2).find(({ speaker }) => speaker === "Dad")!,
-      run: chapter(2),
-    },
-    {
-      expected: [
-        [-162, 257, 191, 244],
-        [-162, 257, 191, 244],
-        [-135, 305, 218, 271],
-      ],
-      name: "Archie and Kiwi on the bed",
-      page: find(prologue, "adaRoomUnpolishedCats"),
-      run: prologue,
-    },
-    {
-      expected: [
-        [-180, 231, 84, 226],
-        [-180, 231, 84, 226],
-        [-135, 279, 129, 271],
-      ],
-      name: "Morning, the cats at her feet",
-      page: find(morning, "adaRoomMorningCats"),
-      run: morning,
-    },
-  ];
-  const screens = [SCREENS[0]!, SCREENS[1]!, SCREENS[3]!];
-
-  it("place each figure page as Art's table, its figures clear of its panel", () => {
-    const measured: Record<string, number[][]> = {};
-    const wanted: Record<string, number[][]> = {};
-    for (const { expected, name, page, run } of cases) {
-      measured[name] = [];
-      wanted[name] = expected;
-      const base = BASES[page.background] ?? page.background;
-      const onBase = run.filter(
-        (other) => !other.sleep && (BASES[other.background] ?? other.background) === base,
-      );
-      const overlays = backgroundOverlays(MANIFEST.assets, BACKGROUND_ART[page.background]);
-      expect(overlays.length, name).toBeGreaterThan(0);
-      screens.forEach((screen) => {
-        const strip = Math.min(...onBase.map((other) => panelFor(other, screen).top));
-        const y = storyBackgroundTop(screen.view, subject(base), strip);
-        const { top } = panelFor(page, screen);
-        // Each overlay's box is in percent of the 540 high canvas, at scale 1 at these views.
-        const rows = overlays.map(({ box }) => [
-          y + (box.top / 100) * 540,
-          y + ((box.top + box.height) / 100) * 540,
-        ]);
-        const figures = [Math.min(...rows.map(([a]) => a!)), Math.max(...rows.map(([, b]) => b!))];
-        const round = (value: number) => Math.round(value * 10) / 10;
-        measured[name]!.push([y, top, figures[0]!, figures[1]!].map(round));
-        expect(figures[1], `${name} at ${screen.name}: clear of the panel`).toBeLessThanOrEqual(
-          top,
-        );
-      });
-    }
-    expect(measured).toEqual(wanted);
   });
 });
 
@@ -445,7 +337,7 @@ describe("story background placement", () => {
       const highest = new Map<Background, number>();
       for (const page of run.filter(({ sleep }) => !sleep)) {
         const { top } = panelFor(page, screen);
-        // A composite's pages count as pages on its base.
+        // An alias's pages count as pages on its base.
         const anchor = BASES[page.background] ?? page.background;
         highest.set(anchor, Math.min(highest.get(anchor) ?? top, top));
       }

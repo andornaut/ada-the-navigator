@@ -10,6 +10,7 @@ import { STORY_BACKGROUND } from "./layout/storyPage.ts";
 import {
   type ArtAsset,
   readStoryTransitions,
+  storyBackgroundKey,
   storyBackgrounds,
   storyBases,
   storySubjects,
@@ -48,7 +49,7 @@ describe("storybook art", () => {
     }
   });
 
-  it("places each composite as its base: the family's pages and the sleep scene", () => {
+  it("places compatibility aliases as their environment base", () => {
     expect(storyBases(manifest.assets)).toEqual({
       adaRoomMorningCats: "adaRoomMorning",
       adaRoomRecorderDad: "adaRoomRecorder",
@@ -56,12 +57,23 @@ describe("storybook art", () => {
       adaRoomUnpolishedCats: "adaRoomUnpolished",
       frontDoorMom: "frontDoor",
     });
-    // A composite draws its base's image, with its base's band.
+    // An alias draws its base's image, with its base's band.
     const subjects = storySubjects(manifest.assets);
     for (const [key, base] of Object.entries(storyBases(manifest.assets))) {
       expect(backgrounds[key as ArtBackground], key).toBe(backgrounds[base]);
       expect(subjects[key as ArtBackground], key).toEqual(subjects[base]);
     }
+  });
+
+  it("places the overnight night hold on its current alias and resolves the morning to its own key", () => {
+    expect(storyBackgroundKey(backgrounds, "adaRoomSleep", backgrounds.adaRoomNight!)).toBe(
+      "adaRoomSleep",
+    );
+    expect(storyBackgroundKey(backgrounds, "adaRoomSleep", backgrounds.adaRoomMorningCats!)).toBe(
+      "adaRoomMorning",
+    );
+    expect(storyBackgroundKey(backgrounds, null, backgrounds.adaRoomNight!)).toBe("adaRoomNight");
+    expect(storyBackgroundKey(backgrounds, "adaRoomSleep", "/missing.png")).toBeNull();
   });
 
   it("reads every background's subject band from its manifest entry", () => {

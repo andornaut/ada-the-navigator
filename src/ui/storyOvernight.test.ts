@@ -37,118 +37,53 @@ describe("Art's overnight room", () => {
     expect(overnight).not.toBeNull();
   });
 
-  it("draws night, sleep and morning from Art's backgrounds, sleep and morning composites", () => {
+  it("keeps environment aliases and draws no story figure composites", () => {
     const backgrounds = storyBackgrounds(manifest.assets);
     expect(backgrounds.adaRoomNight).toBe("/art/story/ada-room-night.png");
     expect(backgrounds.adaRoomMorning).toBe("/art/story/ada-room-morning.png");
     expect(backgrounds.adaRoomSleep).toBe(backgrounds.adaRoomNight);
-    // Every background whose entry lists overlays is a composite: the sleeping figures on the
-    // night, Ada's sprites waking in the morning and playing in the concert hall, and Ada's
-    // family: the cats on the bed and at her feet, Mom at the front door, Dad at dinner and at
-    // her door.
-    const composites = storyComposites(manifest.assets);
-    expect(Object.keys(composites).sort()).toEqual([
-      "adaRoomMorning",
-      "adaRoomMorningCats",
-      "adaRoomRecorderDad",
-      "adaRoomSleep",
-      "adaRoomUnpolishedCats",
-      "concertHall",
-      "frontDoorMom",
-      "kitchen",
-    ]);
-    expect(composites.adaRoomSleep).toEqual([
-      readOverlay(manifest.assets, "story-ada-room-sleep-figures"),
-    ]);
-    expect(composites.adaRoomMorning).toEqual([readOverlay(manifest.assets, "story-ada-waking")]);
-    expect(composites.concertHall).toEqual([readOverlay(manifest.assets, "story-ada-playing")]);
-    for (const url of [backgrounds.adaRoomNight!, backgrounds.adaRoomMorning!]) {
+    expect(backgrounds.adaRoomMorningCats).toBe(backgrounds.adaRoomMorning);
+    expect(storyComposites(manifest.assets)).toEqual({});
+    for (const url of Object.values(backgrounds)) {
       expect(existsSync(publicFile(url)), url).toBe(true);
     }
   });
 
-  it("places each overlay by its at and display size on the 960 by 540 canvas", () => {
-    expect(readOverlay(manifest.assets, "story-ada-room-sleep-figures")).toEqual({
-      box: {
-        height: (115 / 540) * 100,
-        left: (168 / 960) * 100,
-        top: (325 / 540) * 100,
-        width: (167 / 960) * 100,
-      },
-      id: "story-ada-room-sleep-figures",
-      url: "/art/story/ada-room-sleep-figures.png",
-    });
-    expect(readOverlay(manifest.assets, "story-ada-room-sleep-glow")?.box.left).toBeCloseTo(
-      (361 / 960) * 100,
-      12,
-    );
-    // Ada's sprites: 48 by 42 at scale 2 on (249, 264), 44 by 56 at scale 1 on (480, 221).
-    expect(readOverlay(manifest.assets, "story-ada-waking")?.box).toEqual({
-      height: (84 / 540) * 100,
-      left: (249 / 960) * 100,
-      top: (264 / 540) * 100,
-      width: (96 / 960) * 100,
-    });
-    expect(readOverlay(manifest.assets, "story-ada-playing")?.box).toEqual({
-      height: (56 / 540) * 100,
-      left: (480 / 960) * 100,
-      top: (221 / 540) * 100,
-      width: (44 / 960) * 100,
-    });
+  it("places only the environmental glow overlay on the 960 by 540 canvas", () => {
+    const glow = readOverlay(manifest.assets, "story-ada-room-sleep-glow");
+    expect(glow).not.toBeNull();
+    expect(overnight.overlays).toEqual([glow]);
+    expect(Object.keys(data.overnight.overlays as object)).toEqual(["story-ada-room-sleep-glow"]);
+    expect(glow!.box.left).toBeCloseTo((361 / 960) * 100, 12);
+    expect(existsSync(publicFile(glow!.url))).toBe(true);
     expect(readOverlay(manifest.assets, "story-ada-room-night")).toBeNull();
     expect(readOverlay(manifest.assets, "missing")).toBeNull();
-    for (const overlay of overnight.overlays) {
-      expect(existsSync(publicFile(overlay.url)), overlay.url).toBe(true);
-    }
   });
 
-  it("fades the figures in, breathes the glow once, then cross-fades to morning over 2.5 s", () => {
+  it("holds the night 400 ms, breathes the glow 1500 ms and cross-fades to the morning alias 600 ms", () => {
     expect(overnight.from).toBe(path("story-ada-room-night"));
     expect(overnight.sleep).toBe(path("story-ada-room-sleep"));
     expect(overnight.to).toBe(path("story-ada-room-morning-cats"));
-    expect(
-      overnight.steps.map((step) => [step.kind, "ms" in step ? step.ms : step.fadeMs]),
-    ).toEqual([
-      ["overlay", 400],
-      ["breath", 1500],
-      ["background", 600],
+    expect(data.overnight.to).toBe("story-ada-room-morning-cats");
+    expect(overnight.steps).toEqual([
+      { fadeMs: 0, holdMs: 400, kind: "background", overlays: [], url: overnight.from },
+      {
+        kind: "breath",
+        ms: 1500,
+        overlay: readOverlay(manifest.assets, "story-ada-room-sleep-glow"),
+      },
+      { fadeMs: 600, holdMs: 0, kind: "background", overlays: [], url: overnight.to },
     ]);
     expect(overnightSteps(overnight, false)).toBe(overnight.steps);
     expect(overnightSeconds(overnight, false)).toBe(2.5);
   });
 
-  it("fades Ada waking and both cats curled in with the morning, not after the cross-fade", () => {
-    expect(data.overnight.to).toBe("story-ada-room-morning-cats");
-    const waking = ["story-ada-waking", "story-archie-curled", "story-kiwi-curled"].map((id) =>
-      readOverlay(manifest.assets, id),
-    );
-    for (const reduced of [false, true]) {
-      const morning = overnightSteps(overnight, reduced).at(-1)!;
-      expect(morning.kind).toBe("background");
-      expect(morning.kind === "background" && morning.overlays).toEqual(waking);
-    }
-  });
-
-  it("under reduced motion shows the figures at once, holds 2 s, then one 400 ms cross-fade", () => {
+  it("under reduced motion holds the night 2000 ms then cross-fades to the morning alias 400 ms", () => {
     const steps = overnightSteps(overnight, true);
     expect(steps).toEqual([
-      {
-        fadeMs: 0,
-        holdMs: 2000,
-        kind: "overlay",
-        overlay: readOverlay(manifest.assets, "story-ada-room-sleep-figures"),
-      },
-      {
-        fadeMs: 400,
-        holdMs: 0,
-        kind: "background",
-        overlays: ["story-ada-waking", "story-archie-curled", "story-kiwi-curled"].map((id) =>
-          readOverlay(manifest.assets, id),
-        ),
-        url: path("story-ada-room-morning-cats"),
-      },
+      { fadeMs: 0, holdMs: 2000, kind: "background", overlays: [], url: overnight.from },
+      { fadeMs: 400, holdMs: 0, kind: "background", overlays: [], url: overnight.to },
     ]);
-    // No breath: the glow holds steady.
     expect(steps.some((step) => step.kind === "breath")).toBe(false);
     expect(overnightMs(steps)).toBe(2400);
     expect(overnightSeconds(overnight, true)).toBe(2.4);
@@ -192,7 +127,7 @@ describe("Art's overnight room", () => {
       ["an unknown background", variant({ to: "story-missing" })],
       [
         "an overlay off its manifest at",
-        variant({ overlays: { "story-ada-room-sleep-figures": { at: { x: 0, y: 0 } } } }),
+        variant({ overlays: { "story-ada-room-sleep-glow": { at: { x: 0, y: 0 } } } }),
       ],
       [
         "a step naming an overlay it does not list",
@@ -229,13 +164,12 @@ describe("Art's overnight room", () => {
     expect(storyBackgrounds(assets).adaRoomSleep).toBe(path("story-ada-room-night"));
   });
 
-  it("cross-fades to the morning alone when its waking sprite is missing", () => {
-    const assets = manifest.assets.map((entry) =>
-      entry.id === "story-ada-waking" ? { id: entry.id, path: entry.path } : entry,
+  it("rejects a glow breath when its overlay is absent or unplaced", () => {
+    const assets = manifest.assets.filter((entry) => entry.id !== "story-ada-room-sleep-glow");
+    expect(readOvernight(assets, data)).toBeNull();
+    const unplaced = manifest.assets.map((entry) =>
+      entry.id === "story-ada-room-sleep-glow" ? { id: entry.id, path: entry.path } : entry,
     );
-    const morning = readOvernight(assets, data)?.steps.at(-1);
-    expect(morning?.kind === "background" && morning.overlays).toEqual([]);
-    expect(storyComposites(assets)).not.toHaveProperty("adaRoomMorning");
-    expect(storyComposites(assets)).not.toHaveProperty("adaRoomMorningCats");
+    expect(readOvernight(unplaced, data)).toBeNull();
   });
 });

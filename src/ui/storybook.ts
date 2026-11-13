@@ -31,6 +31,7 @@ import {
   type OvernightStep,
   overnightSteps,
   type StoryArt,
+  storyBackgroundKey,
   type StoryOverlay,
   type TransitionStep,
   transitionSteps,
@@ -717,8 +718,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     stripTops = tops;
   };
   // The canvas top for a background in the current run: its anchor, or centred without a panel.
-  // A composite is placed as its base, so the sleep scene keeps the night's placement and a page
-  // that adds figures never moves the scene.
+  // An alias is placed as its base, so the sleep scene keeps the night's placement.
   const placement = (key: Background, anchored: boolean): string => {
     const { height, width } = viewSize();
     const anchor = anchorOf(key);
@@ -819,9 +819,14 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       );
       ms = step.ms;
     } else {
-      // The morning's own overlays (Ada waking) fade in with it, not after the cross-fade.
+      // Each environment step uses its own anchor, including the initial night hold.
       incoming.style.backgroundImage = image(step.url);
-      place(incoming, "adaRoomMorning", true);
+      const key = storyBackgroundKey(art.backgrounds, shownKey, step.url);
+      if (key) {
+        place(incoming, key, true);
+      } else {
+        incoming.style.top = base.style.top;
+      }
       showIncomingOverlays(step.overlays);
       if (step.fadeMs > 0) {
         nightAnimations.push(
@@ -831,6 +836,13 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
             fill: "forwards",
           }),
         );
+      } else {
+        // A zero-duration fade is a cut at the start of the hold.
+        base.style.backgroundImage = image(step.url);
+        base.style.top = incoming.style.top;
+        showOverlays(step.overlays, 1);
+        incoming.style.backgroundImage = "";
+        showIncomingOverlays([]);
       }
       ms = step.fadeMs + step.holdMs;
     }
