@@ -603,6 +603,8 @@ export const CONTENT: GameContent = {
     questDeliver: "Deliver {item}",
     questDeliveryDetail: "Take {item} to {place}, where it is needed.",
     questExplore: "Explore to locate",
+    questFoodAboard: "Food aboard",
+    questFoodDelivered: "Food delivered",
     questFoodDetail:
       "The growers need help repairing their equipment. Take their food to the workshop and ask for help.",
     questFrom: "From",
@@ -610,6 +612,9 @@ export const CONTENT: GameContent = {
     questLocate: "Show on map",
     questMiningDetail:
       "Collect ore and deposit it at the hub. Deposit {required} ore after accepting this contract to complete it.",
+    questNextAction: "Next action",
+    questObjective: "Objective",
+    questOreDeposited: "Ore deposited",
     questOtherQuests: "Other quests",
     questOutcome: "Outcome",
     questProgress: "{current} / {required}",
@@ -618,14 +623,18 @@ export const CONTENT: GameContent = {
       "The {craft} cannot move because its engine has stopped. Attach the tow line and bring it " +
       "to safety. Towing will slow Ada’s ship.",
     questReward: "Reward",
+    questSparePartsAboard: "Spare parts aboard",
     questSparePartsDetail:
       "The salvagers have parts to spare. Bring them to the workshop so it can repair the growers’ equipment.",
+    questStoryProgress: "Story progress",
     questSupplyDetail:
       "Carry {item} from {source} to {destination}. The station is waiting for these supplies.",
     questSurveyDetail: "Help Astra fill a gap in the map. Fly close to {landmark} to chart it.",
     questTo: "To",
+    questToolkitDelivered: "Toolkit delivered",
     questToolkitDetail:
       "The workshop needs spare parts. Take its tool kit to the salvagers so they can help.",
+    questTowLineAttached: "Tow line attached",
     quests: "Quests",
     questsEmpty: "Explore to find something to do.",
     questsJobBoards: "Station job boards have more to do.",
