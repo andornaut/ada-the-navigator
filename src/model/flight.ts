@@ -20,7 +20,7 @@ import { byPosition, ROUTE_POSITION, type RoutePosition } from "../data/galaxies
 import { CURRENTS, HUNTING_PACKS, ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { JOB_TUNING, LANDMARK_TUNING } from "../data/jobs.ts";
-import { RESOURCE_ROCKS, resourceRock } from "../data/resourceRocks.ts";
+import { RESOURCE_ROCKS } from "../data/resourceRocks.ts";
 import { SCREEN } from "../data/screen.ts";
 import { SPAWNER_POLICIES, spawnerStage } from "../data/spawnerCatalog.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
@@ -84,6 +84,7 @@ import { debrisFrameOf, debrisSilhouette } from "./debrisBody.ts";
 import {
   carriesStardust,
   dropRandom,
+  rockOreDrop,
   rollAmmoDrop,
   rollAsteroidStardust,
   rollEnemyDrop,
@@ -2576,8 +2577,8 @@ function hit(
   if (object.kind === "debris") {
     events.push({ id: object.id, type: "debrisCleared" });
   }
-  if (object.kind === "resource") {
-    const { pieces } = resourceRock(object);
+  if (object.kind === "rock" || object.kind === "resource") {
+    const pieces = rockOreDrop(object);
     for (let p = 0; p < pieces; p++) {
       flight.objects.push({
         hp: 1,
