@@ -114,9 +114,14 @@ Ore rocks release ore instead of a usual Stardust drop. Like asteroids, they
 can still burst with 10 extra Stardust or drop an ammo pack.
 
 Ore rocks occur in every galaxy; Cartwheel is richest in ore. Ore aboard fuels
-shield recharge after a 30-second delay: restoring 10% of maximum shield
-capacity costs 10 ore, so an empty-to-full recharge costs 100 ore at every
-Shield level. Without ore, free recharge stops at 10% capacity; it does not
+shield recharge after a 30-second delay, at the normal regeneration rate, not
+as an instant heal. Each ore funds restoration of 1% of maximum shield capacity,
+so fewer than 10 ore are useful: 10 ore funds 10%, and an empty-to-full recharge
+costs 100 ore at every Shield level. Carried ore stays integer-valued; unused
+fractions of paid recharge credit survive damage and save interruptions without
+being billed again. The HUD shows −10 for each cumulative 10 ore actually paid,
+not for credit consumed; this adds no resource or player-facing counter.
+Without ore, free recharge stops at 10% capacity; it does not
 reduce a shield already above that threshold. Ore deposited at the mining hub
 still counts toward its story goal and an accepted Mining contract. Deposited
 ore is no longer aboard to fuel recharge.
