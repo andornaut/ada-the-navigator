@@ -57,7 +57,7 @@ function arrive(model: GameModel, id: string) {
   f.player = { x: target.x, y: target.y };
   f.dangerFor = 0;
 }
-const handover = "We found this drifting near our outposts. Take it, with our thanks.";
+const handover = "We found this drifting near our outposts. Take it. And thank you.";
 /**
  * Reads the handover panel, then the holodisk moment's story pages aboard, and continues past
  * them back to the flight; each as [speaker or title, text].

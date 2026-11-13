@@ -86,7 +86,7 @@ describe("prologue", () => {
       [
         "grandmaGarden",
         "Grandma",
-        "Think about it on your walk home. Good ideas like fresh air.",
+        "Think about it on your walk home. A bit of fresh air might help you think.",
         "Next",
       ],
     ]);
