@@ -9,6 +9,7 @@
     <meta name="apple-mobile-web-app-title" content="Ada the Navigator" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>Ada the Navigator</title>
+    <link rel="stylesheet" href="/src/ui/layout/bootSplash.css" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/art/app-icon/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" sizes="32x32" href="/art/app-icon/favicon-32.png" />
@@ -18,7 +19,23 @@
   <body>
     <main id="app" aria-label="Ada the Navigator">
       <div id="game-canvas"></div>
+      <div id="boot-splash" aria-hidden="true">
+        <img src="../../public/art/ship-26.svg?inline" width="96" height="96" alt="" />
+      </div>
+      <div
+        id="boot-progress"
+        class="progress-bar"
+        data-state="pending"
+        role="progressbar"
+        aria-label="Ada the Navigator"
+        aria-valuemin="0"
+        aria-valuemax="1"
+      >
+        <div class="boot-progress-track"></div>
+        <div class="progress-bar-band"><div></div></div>
+        <div class="boot-progress-rule"></div>
+      </div>
     </main>
-    <script type="module" src="/src/main.ts"></script>
+    <script type="module" src="/src/loading/bootstrap.ts"></script>
   </body>
 </html>

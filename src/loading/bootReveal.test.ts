@@ -40,6 +40,7 @@ function fixture() {
     setAttribute: (key: string, value: string) => attributes.set(key, value),
     tagName: "DIV",
   } as unknown as HTMLElement;
+  const splash = { remove: vi.fn() };
   const document = {
     baseURI: "https://game.test/play/",
     createElement: () => {
@@ -53,6 +54,7 @@ function fixture() {
       };
       return image;
     },
+    getElementById: () => splash,
   } as unknown as Document;
   let nextFrame = 0;
   const window = {
@@ -99,6 +101,7 @@ function fixture() {
     paint,
     revealed,
     root,
+    splash,
     window,
   };
 }
@@ -138,6 +141,7 @@ describe("boot image readiness", () => {
     f.images.get("https://game.test/art/title.svg")!.resolve();
     await settle();
     expect(f.attributes.has(PENDING_ATTRIBUTE)).toBe(false);
+    expect(f.splash.remove).toHaveBeenCalledOnce();
     expect(active.at(-1)).toBe(false);
     stop();
     expect(vi.getTimerCount()).toBe(0);
@@ -150,6 +154,22 @@ describe("boot image readiness", () => {
     f.paint();
     expect(f.revealed).toHaveBeenCalledOnce();
     f.boot.dispose();
+  });
+
+  it("keeps real pending progress during image decoding after the measured loader finishes", async () => {
+    const snapshots: boolean[] = [];
+    const stop = loadingProgress.subscribe((snapshot) => snapshots.push(snapshot.active));
+    const f = fixture();
+    const loader = loadingProgress.begin();
+    loader.progress(1);
+    loader.finish();
+    expect(snapshots.at(-1)).toBe(false);
+    f.boot.ready();
+    expect(snapshots.at(-1)).toBe(true);
+    expect(f.splash.remove).not.toHaveBeenCalled();
+    f.boot.dispose();
+    await settle();
+    stop();
   });
 
   it.each(["http", "network", "json"])(

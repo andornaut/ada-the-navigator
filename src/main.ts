@@ -19,7 +19,7 @@ import { saves } from "./game/persistence.ts";
 import { GameScene } from "./game/scene.ts";
 import { followPageVisibility } from "./lifecycle.ts";
 import { prepareBootReveal } from "./loading/bootReveal.ts";
-import { mountLoading } from "./loading/progress.ts";
+import { startupFence } from "./loading/startup.ts";
 import { gameShown, launchPhoneApp, setupPhoneApp } from "./pwa/index.ts";
 import { FRAME_TURN } from "./view/frameTurn.ts";
 
@@ -31,23 +31,22 @@ if (!parent) {
 // Script focus as screens open shows the focus ring only after keyboard input (focusTarget).
 trackInputModality(document);
 lockGameOrientation("landscape", screen);
-// Before the game boots, so the boot preload's progress shows.
-const app = parent.closest<HTMLElement>("#app");
-if (app) {
-  mountLoading(app);
-}
 // At once: the browser's install prompt can come before the game has drawn anything.
 setupPhoneApp();
 // The crash fence is installed before asynchronous startup can enter storage.
 let game: Game | undefined;
-let crashed = false;
+let crashed = startupFence.crashed;
 CRASH_SCREEN.stopGameOnCrash(() => {
   saves.blockWrites("game crashed");
   crashed = true;
+  startupFence.crashed = true;
   game?.pause();
 });
+if (crashed) {
+  saves.blockWrites("game crashed");
+}
 // This document must not construct the old game or read its save after a staged switch.
-if ((await launchPhoneApp()) !== "reloading" && !crashed) {
+if (!crashed && (await launchPhoneApp()) !== "reloading" && !crashed) {
   const initialSave = await saves.load();
   if (!crashed) {
     const bootReveal = prepareBootReveal({ document, window }, parent, gameShown);

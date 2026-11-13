@@ -111,6 +111,12 @@ switches to it and reloads, and Cancel keeps the current version for that visit.
 Otherwise it takes over on a later launch, after every page the old one controls
 has closed. The landing page at `/` is not precached.
 
+The play page's lightweight HTML shell shows the existing ship and the kit's
+pending loading bar before game modules download. The live bar covers module,
+update-check and save-read waits, then reports actual loader progress. Image
+decoding keeps it pending until the prepared screen replaces the splash. A crash
+during module download remains fenced when startup continues.
+
 A loading bar along the view's top edge, above every other layer, shows the loads
 the player waits for. The boot preload and a galaxy's art as its first flight
 starts fill it left to right; it holds full for 250 ms and fades out over 150 ms,

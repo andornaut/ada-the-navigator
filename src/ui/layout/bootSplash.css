@@ -1,0 +1,79 @@
+@import "@andornaut/game-kit/web/progress/dom/progressBar.css";
+
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+html {
+  background: #101010;
+}
+
+#boot-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  background: #292734;
+}
+
+#boot-splash img {
+  width: min(40vmin, 280px);
+  height: auto;
+  image-rendering: pixelated;
+}
+
+#boot-progress {
+  --boot-unit: min(calc(100vw / 720), calc(100vh / 360));
+  --progress-bar-cycle: 1500ms;
+  --progress-bar-segment: 0.3;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 40;
+  width: 100%;
+  height: calc(var(--boot-unit) * 3);
+  pointer-events: none;
+}
+
+#boot-progress .boot-progress-track,
+#boot-progress .progress-bar-band {
+  position: absolute;
+  inset: 0 0 auto;
+  height: calc(var(--boot-unit) * 2);
+}
+
+#boot-progress .boot-progress-track {
+  background: rgb(24 20 37 / 0.6);
+}
+
+#boot-progress .progress-bar-band {
+  overflow: hidden;
+}
+
+#boot-progress .progress-bar-band > div {
+  height: 100%;
+  background: #ead4aa;
+  animation-delay: -750ms;
+}
+
+#boot-progress .boot-progress-rule {
+  position: absolute;
+  inset: auto 0 0;
+  height: var(--boot-unit);
+  background: #181425;
+}
+
+/* The live progress host must paint before the full interface stylesheet loads. */
+.ada-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 40;
+  pointer-events: none;
+  transform-origin: 0 0;
+}

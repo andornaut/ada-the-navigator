@@ -10,6 +10,7 @@ const boot = vi.hoisted(() => ({
   pause: vi.fn(),
   reveal: vi.fn(() => ({ dispose: vi.fn(), ready: vi.fn() })),
   scene: vi.fn(),
+  startup: { crashed: false },
 }));
 // Startup ordering does not depend on generating the complete UI stylesheet.
 vi.mock("virtual:ada-ui.css", () => ({}));
@@ -49,6 +50,7 @@ vi.mock("./pwa/index.ts", () => ({
   launchPhoneApp: boot.launch,
   setupPhoneApp: vi.fn(),
 }));
+vi.mock("./loading/startup.ts", () => ({ startupFence: boot.startup }));
 vi.mock("./loading/bootReveal.ts", () => ({ prepareBootReveal: boot.reveal }));
 vi.mock("./loading/progress.ts", () => ({ mountLoading: vi.fn() }));
 vi.mock("./lifecycle.ts", () => ({ followPageVisibility: vi.fn() }));
@@ -65,6 +67,7 @@ beforeEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
   boot.crash = undefined;
+  boot.startup.crashed = false;
   boot.launch.mockResolvedValue("continue");
   boot.load.mockResolvedValue({ save: { version: 12 }, status: "loaded" });
   vi.stubGlobal("document", { getElementById: () => ({ closest: () => null }) });
@@ -134,4 +137,14 @@ it("keeps the same crash fence after boot and pauses the running game", async ()
   boot.crash!();
   expect(boot.blockWrites).toHaveBeenCalledWith("game crashed");
   expect(boot.pause).toHaveBeenCalledOnce();
+});
+
+it("does not load a save or construct the game after a crash during module download", async () => {
+  boot.startup.crashed = true;
+  await import("./main.ts");
+  expect(boot.blockWrites).toHaveBeenCalledWith("game crashed");
+  expect(boot.launch).not.toHaveBeenCalled();
+  expect(boot.load).not.toHaveBeenCalled();
+  expect(boot.scene).not.toHaveBeenCalled();
+  expect(boot.game).not.toHaveBeenCalled();
 });

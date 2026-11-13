@@ -45,7 +45,7 @@ function screenImages(page: BootPage, root: HTMLElement): string[] {
 // A first visit may register offline play only after this reveal and a paint opportunity.
 export function prepareBootReveal(page: BootPage, root: HTMLElement, onRevealed: () => void) {
   const cache = createImageCache(page.document);
-  const progress = loadingProgress.begin();
+  let progress = loadingProgress.begin();
   const abort = new AbortController();
   const manifestAbort = new AbortController();
   let decodeTimer: number | undefined;
@@ -109,6 +109,7 @@ export function prepareBootReveal(page: BootPage, root: HTMLElement, onRevealed:
     if ((!shown && !fallback) || abort.signal.aborted) {
       return;
     }
+    page.document.getElementById("boot-splash")?.remove();
     // A frame callback runs before paint. The next callback lets the revealed screen paint first.
     frame = page.window.requestAnimationFrame(() => {
       frame = page.window.requestAnimationFrame(() => {
@@ -134,6 +135,13 @@ export function prepareBootReveal(page: BootPage, root: HTMLElement, onRevealed:
     },
     // Retain the decoded card sheets for later openings.
     images: cache,
-    ready: () => sceneReady?.(),
+    ready() {
+      if (sceneReady) {
+        // Scene assets are ready; image decoding remains real work of unknown duration.
+        progress = loadingProgress.begin();
+        sceneReady();
+        sceneReady = undefined;
+      }
+    },
   };
 }
