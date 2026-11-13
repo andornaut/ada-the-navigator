@@ -103,7 +103,9 @@ it("transitions from investigating the last-seen point into a moving patrol and 
     state = advance(state);
     returned ||= state.returning;
     expect(state.lastSeen).toEqual({ x: 20, y: 0 });
-    if (step > 60) {expect(speed(state)).toBeGreaterThan(20);}
+    if (step > 60) {
+      expect(speed(state)).toBeGreaterThan(20);
+    }
   }
   expect(returned).toBe(true);
   expect(state.engaged).toBe(false);
