@@ -1,3 +1,5 @@
+import { oklabToSrgb } from "@andornaut/art-kit/colour";
+
 // Oklab conversion on sRGB bytes: linear sRGB through the Oklab M1 and M2 matrices, clamped
 // and rounded half to even on the way back.
 export type Rgb = readonly [number, number, number];
@@ -12,18 +14,6 @@ const toLinear = (c: number) => {
   return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
 };
 
-const toByte = (c: number) => {
-  const v = Math.min(1, Math.max(0, c));
-  return roundHalfEven(255 * (v <= 0.0031308 ? 12.92 * v : 1.055 * v ** (1 / 2.4) - 0.055));
-};
-
-function roundHalfEven(value: number): number {
-  const floor = Math.floor(value);
-  const diff = value - floor;
-  if (diff !== 0.5) return Math.round(value);
-  return floor % 2 === 0 ? floor : floor + 1;
-}
-
 export function toOklab([r8, g8, b8]: Rgb): [number, number, number] {
   const [r, g, b] = [toLinear(r8), toLinear(g8), toLinear(b8)];
   const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
@@ -37,14 +27,7 @@ export function toOklab([r8, g8, b8]: Rgb): [number, number, number] {
 }
 
 export function fromOklab(L: number, a: number, b: number): Rgb {
-  const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3;
-  const m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3;
-  const s = (L - 0.0894841775 * a - 1.291485548 * b) ** 3;
-  return [
-    toByte(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s),
-    toByte(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s),
-    toByte(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s),
-  ];
+  return oklabToSrgb({ gamut: "clip", rounding: "half-even" }, [L, a, b]);
 }
 
 export const hex = (c: Rgb) => `#${c.map((v) => v.toString(16).padStart(2, "0")).join("")}`;

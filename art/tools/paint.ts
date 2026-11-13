@@ -5,7 +5,7 @@ import { writeFileSync } from "node:fs";
 import { ellipse, line, polygon } from "@andornaut/art-kit/draw";
 import { encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/png";
 import type { Rgba } from "@andornaut/art-kit/raster";
-import { composite, grayscale } from "@andornaut/art-kit/raster";
+import { composite, gaussianBlur, grayscale, resizeLanczos3 } from "@andornaut/art-kit/raster";
 import { blankImage, type RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
 export type { RgbaImage };
@@ -132,89 +132,13 @@ export function region(source: RgbaImage, x: number, y: number, width: number, h
   return out;
 }
 
-// Lanczos-3 resample of premultiplied colour, separable, as Pillow's LANCZOS.
+// Generator callers provide positive integer image sizes.
 export function resize(source: RgbaImage, width: number, height: number): RgbaImage {
-  const premultiplied = new Float32Array(source.width * source.height * 4);
-  for (let i = 0; i < source.width * source.height; i++) {
-    const a = source.data[i * 4 + 3]! / 255;
-    premultiplied[i * 4] = source.data[i * 4]! * a;
-    premultiplied[i * 4 + 1] = source.data[i * 4 + 1]! * a;
-    premultiplied[i * 4 + 2] = source.data[i * 4 + 2]! * a;
-    premultiplied[i * 4 + 3] = source.data[i * 4 + 3]!;
-  }
-  const across = pass(premultiplied, source.width, source.height, width, true);
-  const down = pass(across, width, source.height, height, false);
-  const out = blankImage(width, height);
-  for (let i = 0; i < width * height; i++) {
-    const a = Math.min(255, Math.max(0, down[i * 4 + 3]!));
-    const k = a > 0 ? 255 / a : 0;
-    for (let c = 0; c < 3; c++) {
-      out.data[i * 4 + c] = Math.min(255, Math.max(0, Math.round(down[i * 4 + c]! * k)));
-    }
-    out.data[i * 4 + 3] = Math.round(a);
-  }
-  return out;
+  return resizeLanczos3(width, height, source);
 }
 
-function lanczos(x: number): number {
-  if (x === 0) {
-    return 1;
-  }
-  if (x <= -3 || x >= 3) {
-    return 0;
-  }
-  const px = Math.PI * x;
-  return (3 * Math.sin(px) * Math.sin(px / 3)) / (px * px);
-}
-
-function pass(
-  data: Float32Array,
-  width: number,
-  height: number,
-  size: number,
-  horizontal: boolean,
-): Float32Array {
-  const length = horizontal ? width : height;
-  const other = horizontal ? height : width;
-  const scale = length / size;
-  const support = 3 * Math.max(1, scale);
-  const out = new Float32Array((horizontal ? size * height : width * size) * 4);
-  for (let i = 0; i < size; i++) {
-    const centre = (i + 0.5) * scale;
-    const from = Math.max(0, Math.floor(centre - support));
-    const to = Math.min(length, Math.ceil(centre + support));
-    const weights: number[] = [];
-    let total = 0;
-    for (let j = from; j < to; j++) {
-      const w = lanczos((j - centre + 0.5) / Math.max(1, scale));
-      weights.push(w);
-      total += w;
-    }
-    for (let o = 0; o < other; o++) {
-      let r = 0;
-      let g = 0;
-      let b = 0;
-      let a = 0;
-      for (let j = from; j < to; j++) {
-        const w = weights[j - from]! / total;
-        const s = (horizontal ? o * width + j : j * width + o) * 4;
-        r += data[s]! * w;
-        g += data[s + 1]! * w;
-        b += data[s + 2]! * w;
-        a += data[s + 3]! * w;
-      }
-      const t = (horizontal ? o * size + i : i * width + o) * 4;
-      out[t] = r;
-      out[t + 1] = g;
-      out[t + 2] = b;
-      out[t + 3] = a;
-    }
-  }
-  return out;
-}
-
-// Gaussian blur of each channel independently (straight alpha, as Pillow's GaussianBlur),
-// limited to a rectangle; pixels outside it read as clear.
+// Generator callers use finite positive sigma. Blur the expanded ROI with repeated edges;
+// replace its raw RGBA bytes in place and leave pixels outside it unchanged.
 export function blur(
   image: RgbaImage,
   sigma: number,
@@ -230,44 +154,12 @@ export function blur(
   if (w <= 0 || h <= 0) {
     return;
   }
-  const kernel = Array.from({ length: 2 * reach + 1 }, (_, i) =>
-    Math.exp(-((i - reach) ** 2) / (2 * sigma * sigma)),
-  );
-  const sum = kernel.reduce((a, b) => a + b, 0);
-  const k = kernel.map((v) => v / sum);
-  const src = new Float32Array(w * h * 4);
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      for (let c = 0; c < 4; c++) {
-        src[(y * w + x) * 4 + c] = image.data[((y + y0) * image.width + x + x0) * 4 + c]!;
-      }
-    }
-  }
-  // Edge pixels repeat outward, as Pillow's box blur does.
-  const tmp = new Float32Array(w * h * 4);
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      for (let c = 0; c < 4; c++) {
-        let v = 0;
-        for (let i = -reach; i <= reach; i++) {
-          const sx = Math.min(w - 1, Math.max(0, x + i));
-          v += src[(y * w + sx) * 4 + c]! * k[i + reach]!;
-        }
-        tmp[(y * w + x) * 4 + c] = v;
-      }
-    }
-  }
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      for (let c = 0; c < 4; c++) {
-        let v = 0;
-        for (let i = -reach; i <= reach; i++) {
-          const sy = Math.min(h - 1, Math.max(0, y + i));
-          v += tmp[(sy * w + x) * 4 + c]! * k[i + reach]!;
-        }
-        image.data[((y + y0) * image.width + x + x0) * 4 + c] = Math.round(v);
-      }
-    }
+  const out = gaussianBlur({ sigma }, region(image, x0, y0, w, h));
+  for (let row = 0; row < h; row++) {
+    image.data.set(
+      out.data.subarray(row * w * 4, (row + 1) * w * 4),
+      ((row + y0) * image.width + x0) * 4,
+    );
   }
 }
 
