@@ -527,6 +527,11 @@ export function stationWelcome(
   };
 }
 
+/** Skip is distinct from Next only when it advances past more than one remaining line. */
+export function stationGreetingCanSkip(greeting: StationGreeting | null): boolean {
+  return greeting !== null && greeting.count - greeting.index - 1 > 1;
+}
+
 export interface StationOptions {
   /** Accept takes an offer at once; false refuses it while Ada holds a job. */
   readonly acceptJob: (id: string) => boolean;
@@ -667,7 +672,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       stationCard.title.hidden = welcome.title === "";
       stationCard.showLine(welcome.speaker, welcome.text);
       nextGreeting.hidden = !greeting || greeting.index >= greeting.count - 1;
-      stationCard.skip.hidden = nextGreeting.hidden;
+      stationCard.skip.hidden = !stationGreetingCanSkip(greeting);
       stationCard.fit();
     },
   };
@@ -680,7 +685,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   });
   stationCard.skip.addEventListener("click", () => {
     const initial = options.greeting();
-    if (!initial) {
+    if (!initial || !stationGreetingCanSkip(initial)) {
       return;
     }
     for (let step = 0; step < initial.count; step++) {
