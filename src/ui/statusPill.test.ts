@@ -315,6 +315,39 @@ describe("status pill count", () => {
     return { count, shield: parent.children[1]!, slot, status };
   };
 
+  it.each([false, true])(
+    "keeps the unfilled track clear after hits with reduced motion %s",
+    (reduced) => {
+      const { shield, status } = pill(reduced);
+      const view = {
+        ...full,
+        aboard: null,
+        lightField: false,
+        ore: 0,
+        oreLabel: "Ore",
+        stardust: 0,
+        stardustLabel: "0 Stardust",
+      };
+      status.setStatus(view, 0);
+      for (const remaining of [60, 10, 0]) {
+        status.setStatus({ ...view, shield: remaining }, 1000 + remaining);
+        const meter = shield.children[1]!;
+        const [fill, delay, flash] = meter.children;
+        expect(fill!.style.width).toBe(units((116 * remaining) / view.capacity));
+        expect(fill!.hidden).toBe(remaining === 0);
+        expect(delay!.hidden).toBe(true);
+        expect(flash!.hidden).toBe(true);
+        expect(meter.getAttribute("aria-valuenow")).toBe(String(remaining));
+      }
+      status.setStatus({ ...view, recharging: true, shield: 11 }, 2000);
+      const [fill, delay, flash, edge] = shield.children[1]!.children;
+      expect(fill!.style.width).toBe(units((116 * 11) / view.capacity));
+      expect(delay!.hidden).toBe(true);
+      expect(flash!.hidden).toBe(true);
+      expect(edge!.hidden).toBe(false);
+    },
+  );
+
   it.each([
     [9999, "9999", "9,999"],
     [44_449, "44.4k", "44,449"],

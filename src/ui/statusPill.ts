@@ -666,6 +666,10 @@ export function createStatusPill(
     node.style.width = units(Math.max(0, to - from));
   };
 
+  // Transient overlays never colour the unfilled track.
+  const paintInsideFill = (fillWidth: number, range: ShieldBarView["delay"], node: HTMLElement) =>
+    place(node, Math.min(fillWidth, range?.from ?? 0), Math.min(fillWidth, range?.to ?? 0));
+
   return {
     /** An item notice landed on the cargo segment: its icon bumps, as the count does. */
     bumpCargo(): void {
@@ -708,8 +712,8 @@ export function createStatusPill(
         bar.tone === "normal" ? STATUS_COLOURS.rim : mark,
       );
       place(fill, 0, bar.fill);
-      place(delay, bar.delay?.from ?? 0, bar.delay?.to ?? 0);
-      place(flash, bar.flash?.from ?? 0, bar.flash?.to ?? 0);
+      paintInsideFill(bar.fill, bar.delay, delay);
+      paintInsideFill(bar.fill, bar.flash, flash);
       place(edge, Math.max(0, bar.fill - SHIELD_PILL.edge), bar.edge ? bar.fill : 0);
       recharge.hidden = bar.recharge === null;
       if (bar.recharge !== null) {

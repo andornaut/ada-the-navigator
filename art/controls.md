@@ -309,10 +309,10 @@ panel. The light-field outline applies to the shield pill wherever it sits.
 | --------------- | --------- | ---------------------------------------------------------------------------------------- |
 | Status panel    | `#181425` | Ink panel at alpha 0.65, as the conversation panel                                       |
 | Shield          | `#70ace8` | Fill and icon: Ada's ship blue, as her tab                                               |
-| Shield delay    | `#4f7aa6` | Delay part, from a hit until regeneration starts                                         |
+| Shield delay    | `#4f7aa6` | Delay overlay palette, clipped to the remaining filled shield                            |
 | Shield low      | `#e4574e` | Low and empty fill, icon and rim: the refusal red                                        |
 | Shield low peak | `#ff8a80` | Low pulse peak, icon and rim                                                             |
-| Shield flash    | `#ffffff` | Hit flash and the regeneration leading edge                                              |
+| Shield flash    | `#ffffff` | Hit flash clipped to remaining fill, and the regeneration leading edge                   |
 | Delay strip     | `#ffffff` | `STATUS_COLOURS.recharge`: the recharge-delay strip, under a 1 px ink `#181425` top edge |
 | Shield rim      | `#9a96ad` | 1 px bar rim in the normal states                                                        |
 | Shield track    | `#181425` | Ink at alpha 0.65 inside the rim, over the panel                                         |
@@ -347,9 +347,11 @@ Marks on the panel, against the field under it.
 | Rim, inner edge | `#9a96ad` |  6.18:1 |    4.89:1 |    6.17:1 |    6.18:1 |  6.28:1 |    4.42:1 |
 | Low rim, inner  | `#e4574e` |  4.86:1 |    3.85:1 |    4.85:1 |    4.86:1 |  4.94:1 |    3.48:1 |
 
-Bar parts on the track, against the field under the pill. The fill is 1.88:1
-against the delay part and the low fill 1.24:1; the flash is 2.40:1 against
-the fill.
+Bar palette colours against the track and field. Delay and hit-flash ranges
+are clipped to the remaining fill: the emptied portion always exposes the
+usual dark gray track, including while low health pulses. Blue is restricted
+to filled shield; the low fill remains red. The icon and rim retain their
+existing pulse. The flash is 2.40:1 against the filled shield.
 
 - The count meets 4.5:1 over every galaxy field; over a white object under the
   pill it is 3.88:1, accepted as for the conversation line.
@@ -362,10 +364,8 @@ the fill.
   6.30:1, the shield icon 7.51:1 and the low pulse peak 7.89:1, where the
   panel alone gives 2.07:1, 2.63:1, 3.14:1 and 3.30:1. The rim's inner edge
   holds 3:1 against the track (4.89:1).
-- Over a white object under the pill the delay part is 2.81:1 against the
-  track; it stays told from the fill by lightness.
-- The delay part is told from the fill by lightness (1.88:1) and from the low
-  fill by hue; it holds 3:1 against the track over every galaxy field.
+- The delay and hit-flash layers never paint the emptied portion of the
+  track. Their state and timing remain independent of their clipped bounds.
 - The `+N` labels sit on the field, not the panel: Stardust gold is 10.56:1
   on `#292734` and 1.19:1 on Sunflower's `#D8C994`, ore rust 7.12:1 and
   1.24:1, where the ink outline (10.90:1 on the field) carries them; the
