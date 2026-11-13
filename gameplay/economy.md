@@ -89,7 +89,7 @@ absolute weight values:
 
 A category or weapon with nothing left to give leaves the pool, and the rest keep
 their relative weights. Once nothing is left, the drop gives one pack of
-ammunition for an owned weapon other than Laser, chosen by the ammo pack weights below, or nothing when there is none. The pickup is one shared upgrade pickup,
+world ammunition for an owned weapon other than Laser, chosen by the ammo pack weights below, or nothing when there is none. The pickup is one shared upgrade pickup,
 and its contents are chosen when Ada collects it, so they fit her upgrades at that
 moment. Its notice names what it gave:
 
@@ -102,13 +102,15 @@ moment. Its notice names what it gave:
 | Tractor beam  | + Tractor beam level {n} |
 | Ammunition    | + {weapon} ammo          |
 
-Destroyed small craft also drop an ammo pack 7.5% of the time, and destroyed
-asteroids and ore rocks 1% of the time, separately from
+Destroyed small craft also drop an ammo pack 30% of the time, and destroyed
+asteroids and ore rocks 4% of the time, separately from
 upgrades, while Ada owns a weapon other than Laser, bought or picked up,
 equipped or not, in any galaxy. Like the upgrade pickup, its contents are chosen when Ada collects it:
 one pack for such a weapon, each weapon about three quarters as likely as the one before it in
 weapon order (Multi-Laser 16, Rapid Missile 12, Heavy Missile 9, Scattershot 7, Phaser 5, among
-those weapons). Its notice is "+ {weapon} ammo".
+those weapons). Each world pack contains one quarter of its shop pack: Multi-Laser 75,
+Rapid Missile 65, Heavy Missile 10, Scattershot 15 and Phaser 10. Its feedback shows
++N beside the corresponding weapon icon, using the actual ammunition added.
 
 Ore rocks release ore instead of a usual Stardust drop. Like asteroids, they
 can still burst with 10 extra Stardust or drop an ammo pack.
@@ -228,10 +230,9 @@ Phaser use energy packs, and Scattershot uses shells. Each weapon tracks its own
 count, so Phaser energy is separate from Multi-Laser energy. Each volley uses
 one, so a Multi-Laser fan or a Scattershot spread costs one.
 
-Ammunition is sold per weapon in the shop. Every pack costs 10 Stardust, and
-later weapons in weapon order get fewer seconds of level 1 fire per pack:
-Multi-Laser 300 (90 seconds), Rapid Missile 265 (80), Heavy Missile 35 (70),
-Scattershot 60 (60) and Phaser 50 (50). Buying or finding a weapon includes
+Ammunition is sold per weapon in the shop. Every pack costs 10 Stardust:
+Multi-Laser 300 shots, Rapid Missile 260, Heavy Missile 40, Scattershot 60
+and Phaser 40. Buying or finding a weapon includes
 three packs. A pack's shop row shows its name, such as "Rapid Missile
 ammo", with the pack size, such as "×300", on a second line, as levelled rows
 show their level. Typical use of the stronger weapons costs about 15 to 35% of Stardust income,
