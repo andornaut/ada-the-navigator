@@ -1270,7 +1270,13 @@ export class GameModel {
       id,
     );
     const [given, family] = KEEPER_NAME_PARTS[galaxy];
-    const displayName = id === HUB_STATION ? "Quartz" : `${given[0]} ${family[0]} of ${station}`;
+    const nameSeed = Array.from(id).reduce<number>(
+      (seed, character) => (Math.imul(seed, 31) + character.charCodeAt(0)) >>> 0,
+      galaxy,
+    );
+    const givenName = given[nameSeed % given.length];
+    const familyName = family[Math.floor(nameSeed / given.length) % family.length];
+    const displayName = id === HUB_STATION ? "Quartz" : `${givenName} ${familyName} of ${station}`;
     const format = (text: string) =>
       text.replaceAll("{station}", station).replaceAll("{keeper}", displayName);
     const lines =

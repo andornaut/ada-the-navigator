@@ -194,7 +194,9 @@ describe("a keeper's greeting at the station card", () => {
     const keeper = stationKeeper(ECONOMY, 1, station.id)!;
     const lines = dockAndRead(model);
     expect(lines).toHaveLength(3);
-    expect(lines[0]).toMatch(/^Welcome to Sunflower .+ Station\. I'm Pollen Goldwing of /);
+    expect(lines[0]).toMatch(
+      /^Welcome to Sunflower .+ Station\. I'm (Pollen|Petal|Amber) (Goldwing|Bloom|Honeycomb) of /,
+    );
     expect(lines[1]).toMatch(/ keeps humming\.$/);
     expect(lines[2]).toMatch(/(equipment for your ship|weapons and ammo|work on the board)/);
     expect(model.stationGreeting).toEqual({
@@ -253,6 +255,7 @@ describe("a keeper's greeting at the station card", () => {
       model.state.unlocked = [...new Set([1, galaxy] as const)];
       model.startGalaxy(galaxy);
       const flight = model.state.flight!;
+      const personalNames = new Set<string>();
       for (const station of nearest(galaxy, 3)) {
         model.undock();
         model.state.dialogue = null;
@@ -274,13 +277,16 @@ describe("a keeper's greeting at the station card", () => {
         }
         expect(model.state.docked).toBe(station.id);
         expect(model.stationGreeting?.keeper).toBe(stationKeeper(ECONOMY, galaxy, station.id)!.key);
+        personalNames.add(model.stationGreeting!.displayName.split(" of ")[0]!);
       }
+      expect(personalNames.size).toBeGreaterThan(1);
     },
   );
 
   it("greets later dockings with one line each, the three in turn", () => {
     const { model, station } = beside();
     dockAndRead(model);
+    const keeperName = model.stationGreeting!.displayName;
     const later: string[][] = [];
     for (let docking = 0; docking < 4; docking++) {
       model.undock();
@@ -288,7 +294,7 @@ describe("a keeper's greeting at the station card", () => {
     }
     expect(later).toEqual([
       ["Welcome back to Sunflower Glimmer Station, Navigator."],
-      ["Pollen Goldwing of Sunflower Glimmer Station here. You can trade ore and Stardust here."],
+      [`${keeperName} here. You can trade ore and Stardust here.`],
       ["Back at Sunflower Glimmer Station! What do you need today?"],
       ["Welcome back to Sunflower Glimmer Station, Navigator."],
     ]);
