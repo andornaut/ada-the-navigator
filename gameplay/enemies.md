@@ -24,14 +24,17 @@ includes a stable ID, archetype, nullable pack ID and seeded phase in radians. U
 named spawn RNG stream in the adapter. The rules consume no randomness and do not
 mutate supplied state. Serialize phase, age, engagement, flee latch, velocity, hull
 HP, hardpoint HP, cooldowns, home position, last-seen position and age, pursuit
-elapsed time and returning latch. Preserve initial pack sizes separately through losses
+elapsed time and returning latch. The optional retreat record preserves its kind,
+origin, fixed away direction, start age and completion age through save/load.
+Preserve initial pack sizes separately through losses
 and save/load. No functions, maps, clocks or runtime objects belong in saved state.
 
 `damageEnemy(definition, hit, state)` applies finite positive damage to the named
 hardpoint or to the hull with a null ID. Unknown part IDs do nothing. A valid hit
 latches retaliation even when the target is currently unseen. Individual hull damage
-can trigger flight without killing a craft. Pack losses latch flight for survivors.
-Fleeing craft do not shoot or resume aggression in this encounter.
+can trigger a bounded morale retreat without killing a craft. Pack losses can
+trigger the same retreat for survivors. Active morale retreat suppresses fire;
+recovery can resume aggression under the observation and admission rules below.
 
 `enemyEffects(definition, state)` derives destroyed part IDs, disablement and
 destruction. A hit on a heavy's hardpoint damages that hardpoint and the hull; a
@@ -126,12 +129,31 @@ Returning mobile craft investigate home and resume patrol instead of stopping
 within five world units. A returning ship re-engages when it visibly observes Ada within its perception once
 `rearmSeconds` have passed since the return began, or at once when it is hit;
 either clears the return latch and resets its pursuit clock. Unknown
-observation never re-engages it. Retreat and flee morale are unchanged: a
-fleeing craft never re-engages. A damaged engine still takes precedence over
+observation never re-engages it. After a retreat, sight recovery also requires
+engagement admission and the home leash; return recovery keeps its existing
+`rearmSeconds` delay. A damaged engine still takes precedence over
 return movement. Save and restore the latch, the pursuit clock, unseen time and
 time since the return began; unloading or resetting them must not renew a
 pursuit. Observation is supplied by the runtime; last-seen state never reads
 hidden target coordinates.
+
+## Bounded retreat follow-up
+
+This policy matches the approved retreat source awaiting integration; it is not a
+released-behavior claim. Morale and `hitAndRun` use independent policies in
+`retreats.morale` and `retreats.hitAndRun`. Both inherit `ENEMY_RETREAT`: at most
+1.6 seconds or 200 world units of displacement from the retreat origin,
+whichever limit is reached first, with a gentle seeded curve of up to 0.5 radians.
+The six-second cooldown after completion prevents another retreat, not sight
+recovery. Each definition can override either policy independently; route
+position no longer supplies a `retreatSeconds` timer.
+
+Swarm, fighter, interceptor and retaliator morale retreats are temporary, not
+permanent flight. Recovery requires actual line of sight, targeting permission,
+perception range, engagement admission and the existing home leash. Without
+reacquisition, ships investigate the fixed last-seen position within the existing
+unseen and pursuit limits, then return home and patrol. Existing momentum and
+turning still apply; reaching a retreat bound changes steering, not position.
 
 ## Runtime integration interface
 

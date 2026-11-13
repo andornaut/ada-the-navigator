@@ -1104,8 +1104,10 @@ quest routes.
 
 Small enemy ships have independent movement, aiming and firing, with solo,
 erratic circling, swarming and pack behaviors. Aggression can begin on sight or
-only after being attacked. Individual enemies can flee, and packs can retreat
-after losing members. Behavior selection and tuning belong in data wherever
+only after being attacked. The approved retreat follow-up replaces permanent
+morale flight with bounded retreats and gated recovery after individual damage
+or pack losses; it remains pending source integration, not released behavior
+([Retreat policy](enemies.md#bounded-retreat-follow-up)). Behavior selection and tuning belong in data wherever
 practical; reusable code handles the underlying behavior operations.
 
 Frigates have an engine and two to four weapon hardpoints. Capital ships are

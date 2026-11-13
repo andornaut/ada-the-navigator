@@ -85,13 +85,20 @@ and firing, and backs off when she comes inside it. They never press in to ram.
 | `hitAndRun` | Rushes to the near edge of its band, fires a burst, pulls out past the far edge, comes back. |
 | `strafe`    | Makes firing passes beside Ada, carried by momentum, then loops back for another pass.       |
 | `swarm`     | Holds its band with erratic wobble and peer separation, so a pack rings Ada at range.        |
-| `flee`      | Runs away; triggered by morale (low hull, pack losses) and ends the encounter for that ship. |
+| `flee`      | Bounded morale retreat after low hull or pack losses, followed by gated recovery.            |
 | `retaliate` | Patrols without attacking Ada until hit, then switches to its attack behaviour.              |
 | `escort`    | Stays near its capital and intercepts Ada when she comes close to it.                        |
 | `siege`     | Advances slowly on Ada while its hardpoint turrets fire; used by frigates and capitals.      |
 
-Provisional parameters: `hitAndRun` retreats after 3 volleys or a hit, for its
-position's retreat time ([Difficulty](#difficulty)); `strafe` passes no closer than 150 world units and loops back beyond 420; `siege`
+Provisional parameters: `hitAndRun` retreats after 3 volleys or a hit, using
+its independent bounded retreat policy. Morale and `hitAndRun` share initial
+limits of 1.6 seconds or 200 world units of displacement, up to 0.5 radians of
+seeded curvature and a six-second cooldown, with per-policy overrides. These are
+approved follow-up values pending source integration, not a release claim.
+Recovery requires actual line of sight, perception, engagement admission and the
+home leash; otherwise fixed last-seen investigation gives way to home patrol
+([Retreat policy](enemies.md#bounded-retreat-follow-up)). `strafe` passes no closer
+than 150 world units and loops back beyond 420; `siege`
 advances at half top speed; `escort` holds station 60 beyond its capital's hull,
 intercepts Ada within 600 and falls back to `hitAndRun` without its capital.
 A ship that touches Ada still bounces off without damage. Finite pursuit and
@@ -122,14 +129,14 @@ deals 1 damage.
 
 Small craft:
 
-| Position | `swarm` | `fighter` | `interceptor` | `retaliator` | Group bonus | `hitAndRun` retreat | Lead | Notice |  Fire | Encounters |
-| -------: | ------: | --------: | ------------: | -----------: | ----------: | ------------------: | ---: | -----: | ----: | ---------: |
-|        1 |       2 |         4 |             3 |            8 |          +1 |               1.6 s |  20% |   +20% |  +44% |       +50% |
-|        2 |       2 |         5 |             3 |            9 |          +1 |               1.5 s |  40% |   +30% |  +63% |       +63% |
-|        3 |       3 |         5 |             4 |           10 |          +2 |               1.4 s |  60% |   +40% |  +81% |       +69% |
-|        4 |       3 |         6 |             4 |           11 |          +2 |               1.2 s |  80% |   +45% |  +88% |       +75% |
-|        5 |       3 |         6 |             5 |           11 |          +3 |               1.1 s |  90% |   +50% |  +94% |       +75% |
-|        6 |       3 |         6 |             5 |           12 |          +3 |               1.0 s | 100% |   +50% | +100% |       +75% |
+| Position | `swarm` | `fighter` | `interceptor` | `retaliator` | Group bonus | Lead | Notice |  Fire | Encounters |
+| -------: | ------: | --------: | ------------: | -----------: | ----------: | ---: | -----: | ----: | ---------: |
+|        1 |       2 |         4 |             3 |            8 |          +1 |  20% |   +20% |  +44% |       +50% |
+|        2 |       2 |         5 |             3 |            9 |          +1 |  40% |   +30% |  +63% |       +63% |
+|        3 |       3 |         5 |             4 |           10 |          +2 |  60% |   +40% |  +81% |       +69% |
+|        4 |       3 |         6 |             4 |           11 |          +2 |  80% |   +45% |  +88% |       +75% |
+|        5 |       3 |         6 |             5 |           11 |          +3 |  90% |   +50% |  +94% |       +75% |
+|        6 |       3 |         6 |             5 |           12 |          +3 | 100% |   +50% | +100% |       +75% |
 
 Heavies:
 
