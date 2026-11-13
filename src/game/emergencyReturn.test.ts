@@ -5,11 +5,14 @@ import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { SCREEN } from "../data/screen.ts";
 import { GameModel } from "../model/game.ts";
 import { shipHeading } from "../model/nose.ts";
+import { direction } from "../model/shipPhysics.ts";
 import { relaunch } from "../testing/launch.ts";
 import type { JumpPlay } from "../ui/jumpOverlay.ts";
 import { EmergencyReturn, returnedOnDepletion } from "./emergencyReturn.ts";
+import { sceneFit, viewShift } from "./playCamera.ts";
 // Execute the actual scene frame loop against the real model without booting Phaser's renderer.
 const source = ts.createSourceFile(
   "scene.ts",
@@ -25,6 +28,15 @@ const updateCode = ts.transpileModule(
   `(function(time, milliseconds) ${method.body!.getText(source)})`,
   { compilerOptions: { target: ts.ScriptTarget.ES2023 } },
 ).outputText;
+const projectionCode = (name: string) => {
+  const method = sceneClass.members.find(
+    (node) => ts.isMethodDeclaration(node) && node.name.getText(source) === name,
+  ) as ts.MethodDeclaration;
+  const parameters = method.parameters.map((parameter) => parameter.getText(source)).join(",");
+  return ts.transpileModule(`(function(${parameters}) ${method.body!.getText(source)})`, {
+    compilerOptions: { target: ts.ScriptTarget.ES2023 },
+  }).outputText;
+};
 const jumpSource = {
   center: { x: 360, y: 180 },
   heading: shipHeading({ x: 1, y: 0 }),
@@ -68,6 +80,7 @@ function setup(quantum = true) {
     quantum: quantum ? { play: vi.fn<(play: JumpPlay) => void>() } : undefined,
     reducedMotion: false,
     savedAt: 0,
+    scale: { gameSize: { height: SCREEN.height, width: SCREEN.width }, zoom: 1 },
     settingsOpen: false,
     storybook: { sleepSeconds: () => 1 },
   };
@@ -76,7 +89,9 @@ function setup(quantum = true) {
   const snapshotSource = vi.fn(() => ({ ...jumpSource, heading: null }));
   const context = createContext({
     OVERNIGHT_SLEEP: { seconds: 1 },
+    SCREEN,
     coverShip: vi.fn(),
+    direction,
     document,
     drawPulse: vi.fn(),
     endJump: () => {
@@ -88,11 +103,17 @@ function setup(quantum = true) {
     refreshScene: vi.fn(),
     renderConversation: vi.fn(),
     returnedOnDepletion,
+    sceneFit,
     screenToWorld: (v: unknown) => v,
     shipHeading,
     spaceJumpScene: snapshotSource,
     startRockBreaks: vi.fn(),
     startZips: vi.fn(),
+    viewShift,
+  });
+  Object.assign(scene, {
+    project: runInContext(projectionCode("project"), context),
+    projectLayer: runInContext(projectionCode("projectLayer"), context),
   });
   const frame = runInContext(updateCode, context) as (time: number, ms: number) => void;
   let time = 0;
@@ -119,6 +140,10 @@ describe("emergency return presentation", () => {
       frame();
     }
     expect(scene.model.state.mode).toBe("space");
+    expect(scene.controls.sample).toHaveBeenCalledWith({
+      facing: direction({ x: 1, y: 0.5 }),
+      ship: { x: SCREEN.width / 2, y: SCREEN.height / 2 },
+    });
     expect(snapshotSource).not.toHaveBeenCalled();
     flight.shield = CONTENT.tuning.hazardDamage;
     flight.shots = [incoming];
