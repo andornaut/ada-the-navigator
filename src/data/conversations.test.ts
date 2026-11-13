@@ -49,7 +49,9 @@ function spokenLines(text: string): { mood?: string; name: string; text: string 
 // Needle's and Andromeda's pools wait for their chapters.
 const IN_FLIGHT = passage("## In-flight conversations", " Needle: - First arrival");
 const PHANTOM = passage("Phantom: - First arrival");
-const BROADCASTS = passage("Memory lines and broadcasts follow", "Outposts handing over");
+// CLEANUP (added 2026-11-12): the sixth broadcast plays in Phantom's finale, which is not built;
+// end the passage at "Outposts handing over" once the finale speaks it.
+const BROADCASTS = passage("Memory lines and broadcasts follow", "- Sixth: General Gadget");
 
 type Conversation = (typeof CONVERSATIONS)[number];
 
