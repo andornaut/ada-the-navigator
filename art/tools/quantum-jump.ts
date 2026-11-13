@@ -20,6 +20,7 @@ import {
 import { IN_BETWEEN, SHIMMER, SPACE_BG } from "./palette.ts";
 import { Random } from "./random.ts";
 import { centredView, LOGICAL_PER_DESIGN, shimmer } from "./shimmer.ts";
+import { svgPaths } from "./ship-paths.ts";
 import { DISPLAY, drawn, FRAME, type Pose, SCHEMES } from "./ship-model.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
@@ -250,10 +251,7 @@ function poseSvg(scheme: (typeof SCHEMES)[number], pose: (typeof POSES)[number])
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${WARP_FRAME}" height="${WARP_FRAME}" viewBox="0 0 ${WARP_FRAME} ${WARP_FRAME}">`,
     `  <title>Quantum jump ship ${pose.id} ${scheme.name}</title>`,
-    ...polygons.map(
-      ({ color, outline }) =>
-        `  <polygon fill="${color}" points="${outline.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ")}"/>`,
-    ),
+    ...svgPaths(polygons).map(({ color, path }) => `  <path fill="${color}" d="${path}"/>`),
     "</svg>",
     "",
   ].join("\n");

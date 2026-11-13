@@ -13,7 +13,6 @@ import { linkData, placeEntries } from "./manifest.ts";
 import {
   blend,
   blur,
-  fillPolygon,
   grey,
   over,
   region,
@@ -26,6 +25,7 @@ import {
 import { json } from "./projection.ts";
 import { SPACE_BG } from "./palette.ts";
 import { centredView, DESIGN, shimmer, type View } from "./shimmer.ts";
+import { paintShip } from "./ship-raster.ts";
 import { classic, drawn, FRAME } from "./ship-model.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
@@ -82,13 +82,13 @@ function drawShip(target: RgbaImage) {
   const y1 = Math.ceil(Math.max(...all.map(([, y]) => y))) + 2;
   const [w, h] = [(x1 - x0) * D, (y1 - y0) * D];
   const big = blankImage(w * SS, h * SS);
-  for (const { color, points } of outlines) {
-    fillPolygon(
-      big,
-      points.map(([x, y]): Xy => [(x - x0) * D * SS, (y - y0) * D * SS]),
-      rgba(color),
-    );
-  }
+  paintShip(
+    big,
+    outlines.map(({ color, points }) => ({
+      color,
+      outline: points.map(([x, y]): Xy => [(x - x0) * D * SS, (y - y0) * D * SS]),
+    })),
+  );
   over(target, resize(big, w, h), x0 * D, y0 * D);
 }
 

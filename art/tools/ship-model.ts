@@ -1,17 +1,32 @@
 // Ada's ship model: the one hull, canopy, mouths and paint every ship drawing derives from. It
 // has no side effects; ship.ts writes the sprite frames and contracts, and other generators
 // (the quantum jump, the app icon) import it rather than copying the geometry.
-import { depth, facesViewer, type Point, projectAt, rotate, SHIP_HEADINGS } from "./projection.ts";
+import { facesViewer, type Point, projectAt, rotate, SHIP_HEADINGS } from "./projection.ts";
 import type { V2 } from "./silhouette.ts";
+import {
+  convexParts,
+  ordered,
+  outside,
+  partition,
+  plane,
+  planarTriangles,
+  split,
+  type Surface,
+  type Tree,
+  type Plane as CutPlane,
+} from "./ship-surface.ts";
 
-// A silhouette face draws the convex hull of its projected points, as an underlay that
-// hides antialiasing seams between the facets of a convex solid.
+// Material-tagged solid facets retain local geometry before clipping and depth ordering.
 type Face = {
   color: string;
   layer: number;
   points: Point[];
+  part?: string;
   silhouette?: boolean;
   twoSided?: boolean;
+  opening?: boolean;
+  canopyFace?: boolean;
+  collarFace?: boolean;
 };
 
 // The five authored paint colours; the canopy highlight derives from canopyRoof.
@@ -23,80 +38,72 @@ export interface Paint {
   readonly rearSides: string;
   // Hull top.
   readonly top: string;
+  readonly skirt: string;
 }
 
 export interface Scheme {
   readonly id: string;
   readonly name: string;
   readonly paint: Paint;
-  readonly price: number;
 }
 
 const white = "#ffffff";
-// Every scheme but Classic costs Gameplay's paint price (gameplay/economy.md, Ship paint).
-const PAINT_PRICE = 75;
-// Classic is the free default and writes the unprefixed ship frames.
+const CLASSIC = {
+  canopyRoof: "#2585d0",
+  canopySides: "#1767b3",
+  frontSides: "#b2bec6",
+  rearSides: "#647d8d",
+  skirt: "#abbfce",
+  top: "#ffffff",
+} as const;
+const linear = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+const channels = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+const luminance = (hex: string) =>
+  channels(hex)
+    .map(linear)
+    .reduce((s, c, i) => s + c * [0.2126, 0.7152, 0.0722][i]!, 0);
+function tone(top: string, reference: string): string {
+  const factor = luminance(reference);
+  return (
+    "#" +
+    channels(top)
+      .map(linear)
+      .map((c) => {
+        const v = c * factor;
+        return Math.round(255 * (v <= 0.0031308 ? 12.92 * v : 1.055 * v ** (1 / 2.4) - 0.055))
+          .toString(16)
+          .padStart(2, "0");
+      })
+      .join("")
+  );
+}
+function painted(
+  id: string,
+  name: string,
+  top: string,
+  canopyRoof: string,
+  canopySides: string,
+): Scheme {
+  return {
+    id,
+    name,
+    paint: {
+      top,
+      canopyRoof,
+      canopySides,
+      frontSides: tone(top, CLASSIC.frontSides),
+      rearSides: tone(top, CLASSIC.rearSides),
+      skirt: tone(top, CLASSIC.skirt),
+    },
+  };
+}
 export const SCHEMES: readonly Scheme[] = [
-  {
-    id: "classic",
-    name: "Classic",
-    paint: {
-      canopyRoof: "#2585d0",
-      canopySides: "#1767b3",
-      frontSides: "#d4dfe9",
-      rearSides: "#abbfce",
-      top: white,
-    },
-    price: 0,
-  },
-  {
-    id: "cobalt",
-    name: "Cobalt",
-    paint: {
-      canopyRoof: "#eef5ff",
-      canopySides: "#b4c8e6",
-      frontSides: "#4f7fd0",
-      rearSides: "#3a62a8",
-      top: "#6f9ff0",
-    },
-    price: PAINT_PRICE,
-  },
-  {
-    id: "seafoam",
-    name: "Seafoam",
-    paint: {
-      canopyRoof: "#14697a",
-      canopySides: "#0d4c59",
-      frontSides: "#a7dcc9",
-      rearSides: "#80bba8",
-      top: "#d4f6ea",
-    },
-    price: PAINT_PRICE,
-  },
-  {
-    id: "graphite",
-    name: "Graphite",
-    paint: {
-      canopyRoof: "#59d0ff",
-      canopySides: "#2a92cc",
-      frontSides: "#858ea4",
-      rearSides: "#666f86",
-      top: "#aab2c4",
-    },
-    price: PAINT_PRICE,
-  },
-  {
-    id: "iris",
-    name: "Iris",
-    paint: {
-      canopyRoof: "#3a2b8c",
-      canopySides: "#271c66",
-      frontSides: "#b2a0ec",
-      rearSides: "#8f7cd0",
-      top: "#d9ccff",
-    },
-    price: PAINT_PRICE,
-  },
+  { id: "classic", name: "Classic", paint: CLASSIC },
+  painted("cobalt", "Cobalt", "#6f9ff0", "#eef5ff", "#b4c8e6"),
+  painted("seafoam", "Seafoam", "#d4f6ea", "#14697a", "#0d4c59"),
+  painted("graphite", "Graphite", "#aab2c4", "#59d0ff", "#2a92cc"),
+  painted("iris", "Iris", "#d9ccff", "#3a2b8c", "#271c66"),
+  painted("amber", "Amber", "#f4b665", "#24577b", "#173a57"),
 ];
 export const classic = SCHEMES[0]!;
 // UP projects straight up.
@@ -156,7 +163,7 @@ const HULL = {
   skirt: 1.2,
   // The ridge runs low from the nose to the shoulder at the canopy's rear edge, then
   // climbs steeply to the rear-centre apex. Local (x, y, z).
-  shoulder: [0, 6, 7.5],
+  shoulder: [0, 6, 9.5],
   apex: [0, 17, 15],
   // Rear faces lean forward from the skirt top, degrees from horizontal.
   lean: 76,
@@ -212,10 +219,11 @@ function vertices() {
   const { apex, shoulder } = HULL;
   const corner = (tip: Point, notch: Point) =>
     meet(through(shoulder, tip, apex), leaning(tip, notch), through(notch, tail, apex));
+  const rightCorner = corner(tipR, notchR);
   return {
     apex,
-    cornerL: corner(tipL, notchL),
-    cornerR: corner(tipR, notchR),
+    cornerL: [-rightCorner[0], rightCorner[1], rightCorner[2]] as Point,
+    cornerR: rightCorner,
     nose,
     notchL,
     notchR,
@@ -305,85 +313,51 @@ export function mouthAxis(sign: number): { half: Point; middle: Point } {
   return { half, middle };
 }
 
-// Light below which a wing face prefers the rear side colour, and below which a steep
-// face or tail side prefers the front side colour over the top colour.
-const SHADE = { back: 0.45, wing: 0.6 };
-
-// Upper faces take the paint in light order among the visible ones. The walls are the
-// canopy side colour, a blue band round the mouths. The brightest other face is top. Wing
-// faces prefer front sides at light SHADE.wing or more and rear sides below it; steep
-// faces and tail sides prefer top at SHADE.back or more and front sides below it, so the
-// tail reads white with blue-grey shade. Each face takes its first preference that no
-// brighter face sharing an edge with it already has, so neighbouring planes differ.
-function shade(pose: Pose, paint: Paint, upper: readonly { part: Part; points: Point[] }[]) {
-  const key = (p: Point) => p.map((c) => c.toFixed(4)).join(",");
-  const edges = upper.map(({ points }) =>
-    points.map((p, j) => [key(p), key(points[(j + 1) % points.length]!)].toSorted().join("|")),
-  );
-  const touches = (i: number, j: number) => edges[i]!.some((edge) => edges[j]!.includes(edge));
-  const ranked = upper
-    .map(({ part, points }, i) => ({
+// Stable materials follow the physical facet role, not the viewing direction.
+function shade(paint: Paint, upper: readonly { part: Part; points: Point[] }[]) {
+  return new Map(
+    upper.map(({ part }, i) => [
       i,
-      light: lit(pose, points),
-      part,
-      shown: facesViewer(turned(pose, points)),
-    }))
-    .filter(({ shown }) => shown)
-    .toSorted((a, b) => b.light - a.light);
-  const { frontSides, rearSides, top } = paint;
-  const prefer = (part: Part, light: number, brightest: boolean): string[] =>
-    part === "wall"
-      ? [paint.canopySides]
-      : brightest
-        ? [top]
-        : part === "wing"
-          ? light >= SHADE.wing
-            ? [frontSides, rearSides]
-            : [rearSides, frontSides]
-          : light >= SHADE.back
-            ? [top, frontSides]
-            : [frontSides, top];
-  const color = new Map<number, string>();
-  const lead = ranked.find(({ part }) => part !== "wall");
-  for (const [rank, { i, light, part }] of ranked.entries()) {
-    const taken = new Set(
-      ranked
-        .slice(0, rank)
-        .filter(({ i: j }) => touches(i, j))
-        .map(({ i: j }) => color.get(j)),
-    );
-    const options = prefer(part, light, lead?.i === i);
-    color.set(i, options.find((option) => !taken.has(option)) ?? options[0]!);
-  }
-  return color;
+      part === "wing"
+        ? paint.top
+        : part === "steep"
+          ? paint.frontSides
+          : part === "wall"
+            ? paint.canopySides
+            : paint.rearSides,
+    ]),
+  );
 }
 
 function model(pose: Pose, paint: Paint): Face[] {
   const faces: Face[] = [];
   const outline = plan(HULL.skirt, HULL.plan);
-  // Skirt: edges 0 and 5 (the right wing's trailing and leading edges) in the front side
-  // colour, the rest in the rear side colour.
+  // One fixed skirt material surrounds the hull.
   for (let i = 0; i < outline.length; i++) {
     const a = outline[(i + 1) % outline.length]!;
     const b = outline[i]!;
     faces.push({
-      color: i === 0 || i === 5 ? paint.frontSides : paint.rearSides,
+      color: paint.skirt,
       layer: 2,
       points: [a, b, [b[0], b[1], 0], [a[0], a[1], 0]],
     });
   }
   const upper = upperFaces();
-  const color = shade(pose, paint, upper);
-  // Faces behind the canopy draw after it when the rear points toward the viewer,
-  // otherwise with the wing faces before it. The mouths draw last.
+  const color = shade(paint, upper);
   const rear = place(pose, [0, 1, 0]);
   const tailLayer = rear[0] + rear[1] > 0 ? 6 : 3;
   for (const [i, { part, points }] of upper.entries()) {
     const layer = part === "wing" ? 3 : tailLayer;
-    faces.push({ color: color.get(i) ?? paint.rearSides, layer, points });
+    faces.push({
+      color: color.get(i) ?? paint.rearSides,
+      layer,
+      points,
+      part: part,
+      opening: true,
+    });
   }
   for (const sign of [-1, 1]) {
-    faces.push({ color: "#64caff", layer: 6.5, points: mouth(sign) });
+    faces.push({ color: "#64caff", layer: 6.5, points: mouth(sign), part: `mouth-${sign}` });
     if (pose.thrust) {
       // Long pale outer flame with a shorter white core stays legible at 42px.
       const { half, middle } = mouthAxis(sign);
@@ -397,7 +371,8 @@ function model(pose: Pose, paint: Paint): Face[] {
       faces.push({ color: white, layer: -1, points: flame(0.8, 9), twoSided: true });
     }
   }
-  canopy(faces, pose, paint);
+  canopy(faces, paint);
+  closeOpening(faces, paint);
   return faces;
 }
 
@@ -417,91 +392,104 @@ function normal(points: readonly Point[]): Point {
   return [nx, ny, nz];
 }
 
-function unit([x, y, z]: Point): Point {
-  const length = Math.hypot(x, y, z);
-  return [x / length, y / length, z / length];
-}
-
 const dot = (a: Point, b: Point) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 
-// Wind a face of a convex solid so its normal points away from the solid's centre.
-function outward(centre: Point, points: Point[]): Point[] {
-  const mid = points.reduce<Point>(
-    (sum, [x, y, z]) => [
-      sum[0] + x / points.length,
-      sum[1] + y / points.length,
-      sum[2] + z / points.length,
-    ],
-    [0, 0, 0],
-  );
-  const offset: Point = [mid[0] - centre[0], mid[1] - centre[1], mid[2] - centre[2]];
-  return dot(normal(points), offset) < 0 ? points.toReversed() : points;
-}
+// Closed opaque canopy sampled from the continuous upper and lower profiles.
+const CANOPY = { a: 9, b: 9, centre: -3, segments: 48 };
 
-// World light for shading, from above and screen-left of the viewer.
-const LIGHT = unit([-0.25, 0.45, 1]);
+function canopy(faces: Face[], paint: Paint): void {
+  const { a, b, centre, segments } = CANOPY;
+  const rings = Array.from({ length: 13 }, (_, i) => i * 7.5);
 
-// World-space light on a local face in this pose. A stretch or squash is not a rotation, so
-// the normal then comes from the placed face.
-function lit(pose: Pose, points: readonly Point[]): number {
-  const n = rigid(pose) ? place(pose, normal(points)) : normal(turned(pose, points));
-  return dot(unit(n), LIGHT);
-}
-
-// Canopy: a faceted dome on the wing roof, its rear edge at the shoulder. Plan semi-axes
-// a (across) and b (along), centre on local Y. The base ring lies on the roof; the crown
-// is level, h above the roof at the centre, and each ring rises sin(latitude) of the way
-// from the roof to the crown. Ring latitudes in degrees.
-const CANOPY = { a: 9, b: 9, centre: -3, h: 2.8, rings: [0, 30, 60, 90], segments: 16 };
-
-function canopy(faces: Face[], pose: Pose, paint: Paint): void {
-  const { a, b, centre, h, rings, segments } = CANOPY;
-  const crown = roof(0, centre) + h;
-  const at = (u: number, v: number): Point => {
+  const at = (u: number, v: number, deform = true): Point => {
     const theta = (u / segments) * 2 * Math.PI;
     const phi = (v * Math.PI) / 180;
     const x = a * Math.cos(phi) * Math.cos(theta);
     const y = centre + b * Math.cos(phi) * Math.sin(theta);
-    const base = roof(x, y);
-    return [x, y, base + (crown - base) * Math.sin(phi)];
+    const base = canopyBase(x, y) + hoodSeat(x, y),
+      t = (y - centre) / b;
+    const across = Math.sqrt(Math.max(0, 1 - t * t));
+    if (across < 1e-7) return [x, y, y > centre ? 9.5 : roof(0, centre - b)];
+    const top = continuousUpper(y);
+    const fraction = Math.min(1, Math.sin(phi) / across);
+    const lower = Math.max(0, Math.min(1, (0.65 - fraction) / 0.65));
+    const lowerWeight = lower * lower * lower * (10 - 15 * lower + 6 * lower * lower);
+    return [
+      x,
+      y,
+      base + (top - base) * fraction + (deform ? (lowerEnvelope(y) - base) * lowerWeight : 0),
+    ];
   };
-  const middle: Point = [0, centre, roof(0, centre) - 2];
-  const shell: Point[][] = [];
-  for (let ring = 0; ring < rings.length - 1; ring++) {
-    const [low, high] = [rings[ring]!, rings[ring + 1]!];
-    for (let u = 0; u < segments; u++) {
-      const points =
-        high === 90
-          ? [at(u, low), at(u + 1, low), at(u, high)]
-          : [at(u, low), at(u + 1, low), at(u + 1, high), at(u, high)];
-      shell.push(outward(middle, points));
-    }
+
+  // One closed surface removes overlapping shell/closure materials.
+  const rim = [
+    ...Array.from({ length: segments }, (_, u) => at(u, 0)),
+    ...Array.from({ length: segments }, (_, u) => rings.slice(1).map((v) => at(u, v))).flat(),
+  ];
+  const seed = [0, segments / 4, segments / 2, (segments * 3) / 4];
+  const inside: Point = [0, 0, 0].map((_, j) =>
+    seed.reduce((v, i) => v + rim[i]![j]! / 4, 0),
+  ) as unknown as Point;
+  let closure = [
+    [seed[0]!, seed[1]!, seed[2]!],
+    [seed[0]!, seed[3]!, seed[1]!],
+    [seed[0]!, seed[2]!, seed[3]!],
+    [seed[1]!, seed[3]!, seed[2]!],
+  ];
+  const orient = (f: number[]) =>
+    dot(normal(f.map((i) => rim[i]!)), minus(rim[f[0]!]!, inside)) < 0 ? f.toReversed() : f;
+  closure = closure.map(orient);
+  for (let i = 0; i < rim.length; i++) {
+    if (seed.includes(i)) continue;
+    const seen = closure.filter(
+      (f) => dot(normal(f.map((j) => rim[j]!)), minus(rim[i]!, rim[f[0]!]!)) > 1e-8,
+    );
+    if (!seen.length) continue;
+    const edges = new Map<string, number[]>();
+    for (const f of seen)
+      for (let k = 0; k < 3; k++) {
+        const a = f[k]!,
+          b = f[(k + 1) % 3]!,
+          key = [a, b].sort((a, b) => a - b).join(",");
+        if (edges.has(key)) edges.delete(key);
+        else edges.set(key, [a, b]);
+      }
+    closure = closure.filter((f) => !seen.includes(f));
+    for (const edge of edges.values()) closure.push(orient([...edge, i]));
   }
-  // The lowest ring takes the side colour and the rest the roof colour; the two
-  // facets facing the light most directly take the highlight.
-  const light = shell.map((points) => lit(pose, points));
-  const brightest = new Set(
-    light
-      .map((value, i) => [value, i] as const)
-      .toSorted((x, y) => y[0] - x[0])
-      .slice(0, 2)
-      .map(([, i]) => i),
-  );
-  for (const [i, points] of shell.entries()) {
-    const color = brightest.has(i)
-      ? highlight(paint.canopyRoof)
-      : i < segments
-        ? paint.canopySides
-        : paint.canopyRoof;
-    faces.push({ color, layer: 5, points });
-  }
-  faces.push({
-    color: paint.canopyRoof,
-    layer: 4.5,
-    points: shell.flat(),
-    silhouette: true,
-    twoSided: true,
+  canopyClosedPlanes = closure.map((f) => {
+    const points = f.map((i) => rim[i]!),
+      n = normal(points);
+    return { n, d: dot(n, points[0]!) };
   });
+  const rimDepth = 0.18;
+  for (const f of closure) {
+    const vertices = f.map((i) => rim[i]!);
+    const roof: Point[] = [],
+      edge: Point[] = [];
+    for (let i = 0; i < vertices.length; i++) {
+      const a = vertices[i]!,
+        b = vertices[(i + 1) % vertices.length]!;
+      const da = a[2] - lowerEnvelope(a[1]) - rimDepth,
+        db = b[2] - lowerEnvelope(b[1]) - rimDepth;
+      if (da >= 0) roof.push(a);
+      if (da <= 0) edge.push(a);
+      if (da * db < 0) {
+        const t = da / (da - db);
+        const p: Point = [
+          a[0] + t * (b[0] - a[0]),
+          a[1] + t * (b[1] - a[1]),
+          a[2] + t * (b[2] - a[2]),
+        ];
+        roof.push(p);
+        edge.push(p);
+      }
+    }
+    if (roof.length >= 3)
+      faces.push({ color: paint.canopyRoof, layer: 5, canopyFace: true, points: roof });
+    if (edge.length >= 3)
+      faces.push({ color: paint.canopySides, layer: 5, canopyFace: true, points: edge });
+  }
 }
 
 // Canopy highlight: the roof colour mixed 45 percent toward white.
@@ -516,46 +504,239 @@ export function highlight(roof: string): string {
     .join("")}`;
 }
 
-function visible(face: Face): boolean {
-  return face.twoSided === true || facesViewer(face.points);
+// Preserve the original canopy coordinates while the surrounding roof becomes slightly higher.
+function referenceCanopyRoof(x: number, y: number): number {
+  const v = vertices(),
+    shoulder: Point = [0, 6, 7.5];
+  const height = ({ d, n }: Plane) => (d - n[0] * x - n[1] * y) / n[2];
+  return Math.min(
+    height(through(v.nose, v.tipL, shoulder)),
+    height(through(v.nose, shoulder, v.tipR)),
+  );
 }
 
-// Monotone chain hull of 2D points, counterclockwise in screen coordinates.
-function convexHull(points: readonly (readonly [number, number])[]): [number, number][] {
-  const sorted = points
-    .map(([x, y]): [number, number] => [Number(x.toFixed(2)), Number(y.toFixed(2))])
-    .toSorted((a, b) => a[0] - b[0] || a[1] - b[1]);
-  const cross = (o: [number, number], a: [number, number], b: [number, number]) =>
-    (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
-  const chain = (input: [number, number][]) => {
-    const out: [number, number][] = [];
-    for (const point of input) {
-      while (out.length >= 2 && cross(out.at(-2)!, out.at(-1)!, point) <= 0) {
-        out.pop();
-      }
-      out.push(point);
-    }
-    return out.slice(0, -1);
-  };
-  return [...chain(sorted), ...chain(sorted.toReversed())];
-}
-
-// A pose's polygons in draw order, in px about the pivot (frame px for the sprite frames)
-// rounded as the SVGs write them.
-export function drawn(pivot: number, paint: Paint, pose: Pose): { color: string; outline: V2[] }[] {
-  return model(pose, paint)
-    .map((face) => ({
-      ...face,
-      points: turned(pose, face.points),
-    }))
-    .filter(visible)
-    .sort((a, b) => a.layer - b.layer || depth(b.points) - depth(a.points))
-    .map(({ color, points, silhouette }) => {
-      const projected = points.map((point) => projectAt(pivot, pivot, point));
-      const outline = silhouette === true ? convexHull(projected) : projected;
-      return {
-        color,
-        outline: outline.map(([x, y]): V2 => [Number(x.toFixed(2)), Number(y.toFixed(2))]),
-      };
+// Connect the raised roof's opening to the unchanged original canopy base.
+function closeOpening(faces: Face[], paint: Paint): void {
+  const wingColors = shade(paint, upperFaces());
+  const ring = Array.from({ length: 48 }, (_, i) => {
+    const a = (i * Math.PI) / 24,
+      x = 9 * Math.cos(a),
+      y = -3 + 9 * Math.sin(a);
+    const outerX = Math.sign(x) * openingWidth(y, Math.abs(x));
+    return {
+      upper: [outerX, y, roof(outerX, y)] as Point,
+      lower: [x, y, canopyBase(x, y) + hoodSeat(x, y) - rearUndersideDrop(y)] as Point,
+    };
+  });
+  for (let i = 0; i < ring.length; i++) {
+    const a = ring[i]!,
+      b = ring[(i + 1) % ring.length]!;
+    faces.push({
+      color: wingColors.get(a.upper[0] + b.upper[0] < 0 ? 0 : 1) ?? paint.frontSides,
+      layer: 4,
+      part: "collar",
+      collarFace: true,
+      points: [a.upper, b.upper, b.lower, a.lower],
+      twoSided: true,
     });
+  }
+}
+
+// The existing front stays unchanged; the rear base closes into the locked kink.
+function canopyBase(x: number, y: number): number {
+  const t = Math.max(0, Math.min(1, (y + 3) / 9)),
+    blend = t * t * (3 - 2 * t);
+  return referenceCanopyRoof(x, y) + 2 * blend;
+}
+
+// One cubic Bezier spans the whole crown, with a rounded front and horizontal rear contact.
+function continuousUpper(y: number): number {
+  const z0 = roof(0, -12);
+  let low = 0,
+    high = 1;
+  for (let i = 0; i < 28; i++) {
+    const t = (low + high) / 2,
+      u = 1 - t;
+    const py = -12 * u * u * u - 8.027496906094033 * u * u * t + 15.6 * u * t * t + 6 * t * t * t;
+    if (py < y) low = t;
+    else high = t;
+  }
+  const t = (low + high) / 2,
+    u = 1 - t;
+  return z0 * u * u * u + 3 * 13 * u * u * t + 3 * 9.5 * u * t * t + 9.5 * t * t * t;
+}
+
+// The underside and opening collar retain their C2 hood seating. The upper crown
+// uses one Bezier from the exact hood endpoint, with no localized height blend.
+function hoodSeat(x: number, y: number): number {
+  const t = Math.max(0, Math.min(1, (y + 12) / 4));
+  const weight = 1 - t * t * t * (10 - 15 * t + 6 * t * t);
+  return (roof(x, y) - canopyBase(x, y)) * weight;
+}
+
+// The lower rear gains fullness; C2-zero ends preserve both contacts and the front.
+function lowerEnvelope(y: number): number {
+  const t = Math.max(0, Math.min(1, (y + 12) / 18)),
+    u = 2 * t - 1;
+  return roof(0, -12) * (1 - t) + 9.5 * t - 5.7 * Math.sqrt(Math.max(0, 1 - u * u)) * (1 + 0.3 * u);
+}
+function rearUndersideDrop(y: number): number {
+  const u = (y + 3) / 9,
+    x = 9 * Math.sqrt(Math.max(0, 1 - u * u));
+  return canopyBase(x, y) + hoodSeat(x, y) - lowerEnvelope(y);
+}
+
+// The interior aperture follows the lowered glazing depth, leaving the outer wing edge intact.
+function openingWidth(y: number, oldWidth: number): number {
+  const lower = lowerEnvelope(y);
+  const slope = roof(0, y) - roof(1, y);
+  const depthWidth = (roof(0, y) - lower + 0.16) / slope;
+  const wingEdge = (21.44 * (y + 32)) / 52.48;
+  return Math.max(oldWidth, Math.min(wingEdge - 0.65, depthWidth));
+}
+const apertureRing = Array.from({ length: 48 }, (_, i) => {
+  const a = (i * Math.PI) / 24,
+    x = 9 * Math.cos(a),
+    y = -3 + 9 * Math.sin(a);
+  return [Math.sign(x) * openingWidth(y, Math.abs(x)), y];
+});
+let canopyClosedPlanes: { n: Point; d: number }[] = [];
+
+const openingVolumes = convexParts(apertureRing as [number, number][]).map((ids) => {
+  const points = ids.map((i) => apertureRing[i]!);
+  const area = points.reduce((s, a, i) => {
+      const b = points[(i + 1) % points.length]!;
+      return s + a[0]! * b[1]! - b[0]! * a[1]!;
+    }, 0),
+    sign = area > 0 ? 1 : -1;
+  const boundaries: CutPlane[] = points.map((a, i) => {
+    const b = points[(i + 1) % points.length]!,
+      dx = b[0]! - a[0]!,
+      dy = b[1]! - a[1]!,
+      length = Math.hypot(dx, dy),
+      normal: Point = [(sign * dy) / length, (-sign * dx) / length, 0];
+    return { normal, distance: normal[0] * a[0]! + normal[1] * a[1]! };
+  });
+  return {
+    boundaries,
+    x0: Math.min(...points.map((p) => p[0]!)),
+    x1: Math.max(...points.map((p) => p[0]!)),
+    y0: Math.min(...points.map((p) => p[1]!)),
+    y1: Math.max(...points.map((p) => p[1]!)),
+  };
+});
+const prepared = new Map<string, { surfaces: Surface[]; tree: Tree | null }>();
+function geometry(paint: Paint, thrust = false) {
+  const key = JSON.stringify([paint, thrust]);
+  const existing = prepared.get(key);
+  if (existing) return existing;
+  const faces = model({ yaw: 0, thrust }, paint);
+  const bodyPlanes = canopyClosedPlanes.map(({ n, d }) => {
+    const length = Math.hypot(...n);
+    return { normal: n.map((c) => c / length) as unknown as Point, distance: d / length };
+  });
+  const surfaces: Surface[] = [];
+  for (const face of faces) {
+    if (face.silhouette) continue;
+    let pieces = planarTriangles({
+      color: face.color,
+      points: face.points,
+      ...(face.part === undefined ? {} : { kind: face.part }),
+      ...(face.twoSided === undefined ? {} : { twoSided: face.twoSided }),
+    });
+    if (face.opening)
+      for (const opening of openingVolumes)
+        pieces = pieces.flatMap((piece) => {
+          const xs = piece.points.map((p) => p[0]),
+            ys = piece.points.map((p) => p[1]);
+          if (
+            Math.max(...xs) < opening.x0 ||
+            Math.min(...xs) > opening.x1 ||
+            Math.max(...ys) < opening.y0 ||
+            Math.min(...ys) > opening.y1
+          )
+            return [piece];
+          return outside(opening.boundaries, piece);
+        });
+    if (face.collarFace) pieces = pieces.flatMap((piece) => outside(bodyPlanes, piece));
+    surfaces.push(...pieces);
+  }
+  const value = { surfaces, tree: partition(surfaces) };
+  prepared.set(key, value);
+  return value;
+}
+function viewer(pose: Pose): Point {
+  const origin = place(pose, [0, 0, 0]);
+  const basis = ([0, 1, 2] as const).map((i) => {
+    const p = place(pose, [i === 0 ? 1 : 0, i === 1 ? 1 : 0, i === 2 ? 1 : 0]);
+    return p.map((c, j) => c - origin[j]!) as unknown as Point;
+  });
+  const determinant = dot(basis[0]!, cross(basis[1]!, basis[2]!));
+  return [
+    dot(cross(basis[1]!, basis[2]!), [1, 1, 1]) / determinant,
+    dot(cross(basis[2]!, basis[0]!), [1, 1, 1]) / determinant,
+    dot(cross(basis[0]!, basis[1]!), [1, 1, 1]) / determinant,
+  ];
+}
+/** Visible vector fragments, geometrically clipped and ordered at their actual depths. */
+export function drawn(pivot: number, paint: Paint, pose: Pose): { color: string; outline: V2[] }[] {
+  return ordered(viewer(pose), geometry(paint, pose.thrust).tree).flatMap((surface) => {
+    const points = turned(pose, surface.points as Point[]);
+    if (!surface.twoSided && !facesViewer(points)) return [];
+    return [{ color: surface.color, outline: points.map((p) => projectAt(pivot, pivot, p) as V2) }];
+  });
+}
+/** Surfaces nearer than the horizontal exhaust plane, in the same frame as jet anchors. */
+export function mouthOccluders(
+  bounds: { length: number; width: number },
+  sign: number,
+  yaw: number,
+  pivot = FRAME / 2,
+): V2[][] {
+  const { middle, half } = mouthAxis(sign);
+  const corners = [
+    [-bounds.width, 0],
+    [bounds.width, 0],
+    [bounds.width, bounds.length],
+    [-bounds.width, bounds.length],
+  ].map(([w, l]) =>
+    projectAt(
+      pivot,
+      pivot,
+      place({ yaw }, [middle[0] + w! * half[0], middle[1] + w! * half[1] + l!, middle[2]]),
+    ),
+  );
+  const sign2 =
+    corners.reduce((s, a, i) => {
+      const b = corners[(i + 1) % 4]!;
+      return s + a[0] * b[1] - b[0] * a[1];
+    }, 0) > 0
+      ? 1
+      : -1;
+  const limits: CutPlane[] = corners.map((a, i) => {
+    const b = corners[(i + 1) % 4]!,
+      dx = b[0] - a[0],
+      dy = b[1] - a[1],
+      n = Math.hypot(dx, dy),
+      normal: Point = [(sign2 * dy) / n, (-sign2 * dx) / n, 0];
+    return { normal, distance: normal[0] * a[0] + normal[1] * a[1] };
+  });
+  const boundary: CutPlane = { normal: [0, 0, 1], distance: middle[2] };
+  return geometry(classic.paint).surfaces.flatMap((surface) => {
+    if (surface.kind === `mouth-${sign}`) return [];
+    const points = split(boundary, surface.points).front;
+    if (points.length < 3 || !plane(points)) return [];
+    const world = turned({ yaw }, points);
+    if (!surface.twoSided && !facesViewer(world)) return [];
+    let projected = world.map((p) => {
+      const q = projectAt(pivot, pivot, p);
+      return [q[0], q[1], 0] as Point;
+    });
+    for (const limit of limits) {
+      projected = split(limit, projected).back;
+      if (projected.length < 3) return [];
+    }
+    if (!plane(projected)) return [];
+    return [projected.map((p) => [Number(p[0].toFixed(4)), Number(p[1].toFixed(4))] as V2)];
+  });
 }

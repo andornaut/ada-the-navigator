@@ -2858,6 +2858,486 @@
       "paint": "iris"
     },
     {
+      "id": "ship-amber-0",
+      "path": "/art/paint/amber/ship-0.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-1",
+      "path": "/art/paint/amber/ship-1.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-2",
+      "path": "/art/paint/amber/ship-2.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-3",
+      "path": "/art/paint/amber/ship-3.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-4",
+      "path": "/art/paint/amber/ship-4.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-5",
+      "path": "/art/paint/amber/ship-5.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-6",
+      "path": "/art/paint/amber/ship-6.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-7",
+      "path": "/art/paint/amber/ship-7.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-8",
+      "path": "/art/paint/amber/ship-8.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-9",
+      "path": "/art/paint/amber/ship-9.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-10",
+      "path": "/art/paint/amber/ship-10.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-11",
+      "path": "/art/paint/amber/ship-11.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-12",
+      "path": "/art/paint/amber/ship-12.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-13",
+      "path": "/art/paint/amber/ship-13.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-14",
+      "path": "/art/paint/amber/ship-14.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-15",
+      "path": "/art/paint/amber/ship-15.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-16",
+      "path": "/art/paint/amber/ship-16.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-16",
+      "directionIndex": 16,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-17",
+      "path": "/art/paint/amber/ship-17.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-17",
+      "directionIndex": 17,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-18",
+      "path": "/art/paint/amber/ship-18.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-18",
+      "directionIndex": 18,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-19",
+      "path": "/art/paint/amber/ship-19.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-19",
+      "directionIndex": 19,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-20",
+      "path": "/art/paint/amber/ship-20.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-20",
+      "directionIndex": 20,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-21",
+      "path": "/art/paint/amber/ship-21.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-21",
+      "directionIndex": 21,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-22",
+      "path": "/art/paint/amber/ship-22.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-22",
+      "directionIndex": 22,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-23",
+      "path": "/art/paint/amber/ship-23.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-23",
+      "directionIndex": 23,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-24",
+      "path": "/art/paint/amber/ship-24.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-24",
+      "directionIndex": 24,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-25",
+      "path": "/art/paint/amber/ship-25.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-25",
+      "directionIndex": 25,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-26",
+      "path": "/art/paint/amber/ship-26.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-26",
+      "directionIndex": 26,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-27",
+      "path": "/art/paint/amber/ship-27.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-27",
+      "directionIndex": 27,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-28",
+      "path": "/art/paint/amber/ship-28.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-28",
+      "directionIndex": 28,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-29",
+      "path": "/art/paint/amber/ship-29.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-29",
+      "directionIndex": 29,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-30",
+      "path": "/art/paint/amber/ship-30.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-30",
+      "directionIndex": 30,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
+      "id": "ship-amber-31",
+      "path": "/art/paint/amber/ship-31.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-31",
+      "directionIndex": 31,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "amber"
+    },
+    {
       "id": "ada-portrait",
       "path": "/art/portraits/ada.png",
       "width": 64,
@@ -3796,7 +4276,7 @@
       },
       "focus": {
         "x": 493.9,
-        "y": 213.9
+        "y": 213.5
       }
     },
     {
@@ -3817,75 +4297,75 @@
       },
       "focus": {
         "x": 493.9,
-        "y": 213.9
+        "y": 213.5
       }
     },
     {
       "id": "aboard-holodisk-0",
       "path": "/art/aboard-holodisk-0.png",
-      "width": 552,
-      "height": 360,
-      "displayWidth": 276,
-      "displayHeight": 180,
+      "width": 560,
+      "height": 366,
+      "displayWidth": 280,
+      "displayHeight": 183,
       "facing": "front",
       "pivot": {
         "x": 0,
         "y": 0
       },
       "at": {
-        "x": 387,
-        "y": 137
+        "x": 384,
+        "y": 136
       }
     },
     {
       "id": "aboard-holodisk-1",
       "path": "/art/aboard-holodisk-1.png",
-      "width": 552,
-      "height": 360,
-      "displayWidth": 276,
-      "displayHeight": 180,
+      "width": 560,
+      "height": 366,
+      "displayWidth": 280,
+      "displayHeight": 183,
       "facing": "front",
       "pivot": {
         "x": 0,
         "y": 0
       },
       "at": {
-        "x": 387,
-        "y": 137
+        "x": 384,
+        "y": 136
       }
     },
     {
       "id": "aboard-holodisk-2",
       "path": "/art/aboard-holodisk-2.png",
-      "width": 552,
-      "height": 360,
-      "displayWidth": 276,
-      "displayHeight": 180,
+      "width": 560,
+      "height": 366,
+      "displayWidth": 280,
+      "displayHeight": 183,
       "facing": "front",
       "pivot": {
         "x": 0,
         "y": 0
       },
       "at": {
-        "x": 387,
-        "y": 137
+        "x": 384,
+        "y": 136
       }
     },
     {
       "id": "aboard-holodisk-3",
       "path": "/art/aboard-holodisk-3.png",
-      "width": 552,
-      "height": 360,
-      "displayWidth": 276,
-      "displayHeight": 180,
+      "width": 560,
+      "height": 366,
+      "displayWidth": 280,
+      "displayHeight": 183,
       "facing": "front",
       "pivot": {
         "x": 0,
         "y": 0
       },
       "at": {
-        "x": 387,
-        "y": 137
+        "x": 384,
+        "y": 136
       }
     },
     {

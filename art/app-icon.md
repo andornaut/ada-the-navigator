@@ -30,10 +30,9 @@ neighbour sampling, 32 px favicon enlarged with nearest neighbour sampling.
 ## Palette and maskable safe zone
 
 - Background: `#292734`.
-- Hull: the Classic ship paint, top `#ffffff`, front sides `#d4dfe9` and rear
-  sides `#abbfce`.
-- Walls and canopy sides `#1767b3`, canopy roof `#2585d0`, canopy highlight
-  `#87bce5`, engine mouths `#64caff`.
+- Hull: the Classic ship paint, top `#ffffff`, steep panels `#b2bec6`, rear
+  panels `#647d8d` and skirt `#abbfce`.
+- Walls and canopy sides `#1767b3`, canopy roof `#2585d0`, engine mouths `#64caff`.
 
 The maskable safe zone is the centred circle with diameter 80% of the canvas:
 409.6 px at 512 px, centred at (256, 256), radius 204.8 px. Every hull and
@@ -46,17 +45,13 @@ Rebuild the vector master with `node art/tools/app-icon.ts`. It draws the
 nose-up pose (heading 20) from the shared [ship model](ship.md), the polygons
 of `ship.svg` in order, inside one group with
 `translate(-22.4 -3.2) scale(5.8)`, which centres the frame's bounding box on
-the canvas and fits it inside radius 185 px. Each polygon also has a stroke of
-its own fill colour, 0.12 frame px wide with round joins, which hides
-antialiasing seams between faces. Reruns are byte-identical while the model is
-unchanged; after a model change, rebuild it and the exports below.
+the canvas and fits it inside radius 185 px. Adjacent equal fills share compound vector paths, with no added stroke or
+keyline growth. Reruns are byte-identical while the model is unchanged.
 
-Export each PNG directly at its listed dimensions with local
-`rsvg-convert --width SIZE --height SIZE --output OUTPUT icon.svg`. Assemble
-the two favicon PNGs with local ImageMagick:
-`convert favicon-16.png favicon-32.png favicon.ico`. Build the contact sheet
-from `icon-192.png` and the two favicons resized to 192 px with
-`-filter point`, joined with `+append`. No downloaded dependencies.
+The same command writes every PNG, the two-size ICO and the contact sheet.
+Raster exports sample the shared projected geometry at 4x the 512px master
+before reduction. The ICO embeds the exact 16px and 32px PNG payloads. No
+external SVG rasterizer or ImageMagick step is required.
 
 Tech owns manifest and HTML icon links. Asset delivery does not enable PWA,
 service worker or offline behaviour. Keep contact-sheet imagery out of icon links.

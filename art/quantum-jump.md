@@ -85,7 +85,7 @@ A step's `ship` names a `pose`, a `scale` and an optional `white`.
 
 - Every pose faces the arrival heading, 24 (`warp.heading`), the heading a
   flight starts on (facing (0, -1)), and draws from the shared ship model in
-  all five paints: `quantum-jump-ship/{scheme}/{pose}.svg`, 256 frame px
+  all six paints: `quantum-jump-ship/{scheme}/{pose}.svg`, 256 frame px
   square, pivot at the centre, frame px times `warp.displayScale` (0.4375) at
   scale 1. Thrust poses carry the model's thrust flames.
 - From the route map the charge steps draw the sprite at the jump centre,

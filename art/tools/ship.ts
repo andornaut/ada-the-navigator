@@ -10,11 +10,13 @@ import {
   FRAME,
   highlight,
   mouthAxis,
+  mouthOccluders,
   nose,
   SCHEMES,
   type Scheme,
   UP,
 } from "./ship-model.ts";
+import { svgPaths } from "./ship-paths.ts";
 import { check, rasterize, trace, type V2 } from "./silhouette.ts";
 
 // Writes Ada's ship sprite frames, paint schemes, speed jets, nose and collision from the shared
@@ -22,10 +24,9 @@ import { check, rasterize, trace, type V2 } from "./silhouette.ts";
 const output = fileURLToPath(new URL("../../public/art/", import.meta.url));
 
 function svg(yaw: number, thrust: boolean, scheme: Scheme = classic): string {
-  const polygons = drawn(FRAME / 2, scheme.paint, { thrust, yaw }).map(({ color, outline }) => {
-    const text = outline.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`);
-    return `  <polygon fill="${color}" points="${text.join(" ")}"/>`;
-  });
+  const polygons = svgPaths(drawn(FRAME / 2, scheme.paint, { thrust, yaw })).map(
+    ({ color, path }) => `  <path fill="${color}" d="${path}"/>`,
+  );
   return [
     '<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">',
     `  <title>Ship ${yaw}${thrust ? " thrust" : " idle"}${scheme === classic ? "" : ` ${scheme.name}`}</title>`,
@@ -37,6 +38,7 @@ function svg(yaw: number, thrust: boolean, scheme: Scheme = classic): string {
 
 // Speed jet colours by engine level: pale blue at base, orange at level 2, purple at level 3, on
 // every paint scheme. Widths, lengths and the halo's alpha ramp are the same at every level.
+const JET_LENGTH = { base: 6, scale: 24, exponent: 2 };
 const JET_LEVELS = [
   { level: 1, halo: "#70ace8", outer: ["#5b93cc", "#b9ecff"], core: ["#8cc4f0", "#ffffff"] },
   { level: 2, halo: "#ff8f1f", outer: ["#ea6a00", "#ffd59a"], core: ["#ffb24d", "#ffffff"] },
@@ -54,6 +56,11 @@ function jetLayers({ halo, outer, core }: (typeof JET_LEVELS)[number]) {
 // Speed jets: Tech draws halo, outer and core triangles per mouth behind the idle frame, in the
 // layers of Ada's engine level.
 function jets(): string {
+  const layers = JET_LEVELS.flatMap(jetLayers);
+  const bounds = {
+    width: Math.max(...layers.map((l) => l.width)),
+    length: (JET_LENGTH.base + JET_LENGTH.scale) * Math.max(...layers.map((l) => l.length)),
+  };
   const headings = Array.from({ length: SHIP_HEADINGS }, (_, yaw) => ({
     index: yaw,
     mouths: [-1, 1].map((sign) => {
@@ -61,6 +68,7 @@ function jets(): string {
       return {
         anchor: anchor(SHIP_HEADINGS, 48, yaw, middle),
         axis: vector(SHIP_HEADINGS, yaw, [0, 1, 0]),
+        occluders: mouthOccluders(bounds, sign, yaw),
         half: vector(SHIP_HEADINGS, yaw, half),
       };
     }),
@@ -68,7 +76,7 @@ function jets(): string {
   const contract = {
     version: 1,
     frame: 96,
-    length: { base: 6, scale: 24, exponent: 2 },
+    length: JET_LENGTH,
     engineLevels: JET_LEVELS.map((entry) => ({ level: entry.level, layers: jetLayers(entry) })),
     headings,
   };
@@ -138,10 +146,9 @@ writeFileSync(
   `${output}ship-paint.json`,
   json({
     version: 1,
-    schemes: SCHEMES.map(({ id, name, paint, price }) => ({
+    schemes: SCHEMES.map(({ id, name, paint }) => ({
       id,
       name,
-      price,
       ...paint,
       canopyHighlight: highlight(paint.canopyRoof),
     })),

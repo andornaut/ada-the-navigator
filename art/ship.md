@@ -67,9 +67,9 @@
 | Wing tips | (±21.44, 20.48, 1.2) | Swept-back tips                           |
 | Notches   | (±5.44, 15.68, 1.2)  | Inner ends of the trailing edges          |
 | Tail      | (0, 24.32, 1.2)      | Tail tip                                  |
-| Shoulder  | (0, 6, 7.5)          | Ridge kink at the canopy's rear edge      |
+| Shoulder  | (0, 6, 9.5)          | Ridge kink at the canopy's rear edge      |
 | Apex      | (0, 17, 15)          | Rear-centre top                           |
-| Corners   | (±4.29, 13.25, 9.21) | Where wall, steep face and tail side meet |
+| Corners   | (±4.18, 13.02, 9.98) | Where wall, steep face and tail side meet |
 
 - The notches lie ahead of the apex, so no single rear face can rise from the
   notched outline to the apex without overhanging. The rear splits into planar
@@ -79,79 +79,58 @@
   straight ridge from the apex to the tail tip, 62.1 degrees from horizontal, so
   the tail is a sharp wedge from behind. Each corner is the common point of its
   wall, steep face and tail side planes, so every face is planar.
-- Upper faces, slope from horizontal: per side a wing face (nose, wing tip,
-  shoulder) at 23.7 degrees, a steep face (shoulder, wing tip, corner, apex) at
-  45.5, the wall (wing tip, notch, corner) at 76.0 and the tail side (notch,
-  tail tip, apex, corner) at 74.2.
-  The ridge rises 9.4 degrees from the nose to the shoulder and 34.3 degrees
-  from the shoulder to the apex. The steep face is concave at its corner.
-- The canopy is a faceted dome on the two wing faces, its rear edge at the
-  shoulder: plan semi-axes 9 across and 9 along, centre at local Y -3, 16
-  segments and rings at 0, 30, 60 and 90 degrees (the top ring meets at the
-  crown). The base ring lies on the wing faces; the crown is level at z 8.81,
-  2.8 above the ridge at the centre, and each ring rises `sin(latitude)` of the
-  way from the hull surface to the crown, so the glass sits mostly flat. The 0
-  to 30 degree ring is the canopy side colour and the rest the roof colour. Per
-  heading, the two facets whose world normals best face the light
-  `(-0.25, 0.45, 1)` take the highlight colour, so the highlight stays upper
-  left on screen.
-- The canopy stays opaque: a clear canopy reads as grey at 42px and loses the
-  blue accent.
-- A canopy-roof-coloured underlay with the canopy's projected convex outline
-  draws before the facets and hides antialiasing seams between them.
-- Shading: the walls take the canopy side colour, a blue band round the
-  mouths, so the back reads two-tone. The other upper faces take the hull paint
-  in light order among the visible ones, by the same world light. The brightest
-  is the top colour. Wing faces prefer the front side colour at light 0.6 or
-  more and the rear side colour below it; steep faces and tail sides prefer the
-  top colour at light 0.45 or more and the front side colour below it, so the
-  tail reads white with blue-grey shade. Each face takes its first preference
-  that no brighter face sharing an edge with it already has, so neighbouring
-  planes differ. Skirt edges 0 and 5 (the right wing's trailing and leading
-  edges) take the front side colour, the rest the rear side colour.
+- The tail apex and shoulder are on local X 0. Each left corner is the exact
+  reflection of its right corner, preserving the original notches and outer plan.
+- The canopy is one opaque closed rounded solid with plan semi-axes 9, centred
+  at local Y -3. Its upper profile is one cubic Bezier from the hood at
+  `(0, -12, 5.568421)` to the rear contact `(0, 6, 9.5)`. A gently curved lower
+  envelope gives the rear more fullness without moving either contact. The
+  surface samples 48 angular positions and latitudes at 7.5 degree intervals;
+  a 0.18-unit geometric lower band takes the darker canopy material.
+- Material roles are fixed across views: wing top, steep front-side tier,
+  rear-side tier, separate skirt, blue booster walls and cyan mouths. Canopy
+  materials do not depend on triangle normals or the camera heading.
+- Roof openings and the collar are clipped against the actual canopy volume.
+  Concave hull facets use ear triangulation. Surface-plane partitioning orders
+  visible vector fragments by depth; consecutive equal fills share compound
+  SVG paths, so internal tessellation edges do not form visible seams.
 - Twin subtle blue mouths sit on the walls: `|x|` 9.5 to 15, from 0.3 to 2.6
   above the skirt top, the top kept 0.6 under the wall's top edge, lifted 0.03
   off the wall. Thrust adds pale blue flames 16 units long with 9-unit white
   cores from each mouth's middle, readable at 42px display.
-- Draw order, by layer: thrust flames, skirt, wing faces, canopy underlay and
-  facets, then the tail faces (steep faces, walls and tail sides), then the
-  mouths. When the rear points away from the viewer (rotated
-  `x + y <= 0`), the tail faces draw with the wing faces before the canopy
-  instead.
-- All faces use one projection. The viewer looks along `-(1, 1, 1)` from
-  `+(1, 1, 1)`: outward-normal culling keeps faces whose normal has
-  `nx + ny + nz > 0`, and depth `-(x + y + z)` orders faces far to near within
-  each component layer.
-- No raster assets, filters, strokes, external dependencies or screen rotation.
+- All faces use one projection. The viewer looks from `+(1, 1, 1)`;
+  outward normals determine visibility, and geometric depth partitioning handles
+  overlap for ordinary, rolled and stretched poses. Raster generators sample
+  the same ordered fragments at pixel centres before supersampling reduction.
+- SVG exports contain vector paths, with no embedded raster image, filter or
+  screen rotation. The shared source also generates the aboard and icon PNGs.
 
 ## Paint schemes
 
-Ship paint sets five colours: the hull top, front sides and rear sides (the
-three hull tiers, assigned per heading by the [shading](#ship-geometry) rule,
-and skirt edges 0 and 5 front, the rest rear), the canopy roof and the canopy
-sides (with the walls round the mouths). The canopy highlight is derived: the roof colour
-mixed 45 percent toward white per channel. Engine mouths `#64caff`, thrust
-flames and speed jets are the same on every scheme. Geometry, culling and draw
-order are shared, so each painted frame has exactly the polygons of the matching
-Classic frame.
+Ship paint assigns a fixed material to each hull facet role, the skirt and the
+opaque canopy. Classic uses white wings, steep panels `#b2bec6`, rear panels
+`#647d8d` and skirt `#abbfce`. Other paints preserve these linear-luminance
+ratios relative to their own top hue. Booster walls use the canopy side colour;
+cyan mouths, thrust flames and speed jets retain their original colours.
 
-| Scheme   | Price | Top       | Front sides | Rear sides | Canopy roof | Canopy sides | Highlight |
-| -------- | ----: | --------- | ----------- | ---------- | ----------- | ------------ | --------- |
-| Classic  |     0 | `#ffffff` | `#d4dfe9`   | `#abbfce`  | `#2585d0`   | `#1767b3`    | `#87bce5` |
-| Cobalt   |    75 | `#6f9ff0` | `#4f7fd0`   | `#3a62a8`  | `#eef5ff`   | `#b4c8e6`    | `#f6faff` |
-| Seafoam  |    75 | `#d4f6ea` | `#a7dcc9`   | `#80bba8`  | `#14697a`   | `#0d4c59`    | `#7eadb6` |
-| Graphite |    75 | `#aab2c4` | `#858ea4`   | `#666f86`  | `#59d0ff`   | `#2a92cc`    | `#a4e5ff` |
-| Iris     |    75 | `#d9ccff` | `#b2a0ec`   | `#8f7cd0`  | `#3a2b8c`   | `#271c66`    | `#938ac0` |
+| Scheme   | Top       | Canopy roof | Canopy sides |
+| -------- | --------- | ----------- | ------------ |
+| Classic  | `#ffffff` | `#2585d0`   | `#1767b3`    |
+| Cobalt   | `#6f9ff0` | `#eef5ff`   | `#b4c8e6`    |
+| Seafoam  | `#d4f6ea` | `#14697a`   | `#0d4c59`    |
+| Graphite | `#aab2c4` | `#59d0ff`   | `#2a92cc`    |
+| Iris     | `#d9ccff` | `#3a2b8c`   | `#271c66`    |
+| Amber    | `#f4b665` | `#24577b`   | `#173a57`    |
 
-- Classic is the free default and is the `ship-{0..31}.svg` set. Every other
-  scheme costs Gameplay's paint price, 75 Stardust.
+- Classic is free and is the `ship-{0..31}.svg` set. Other schemes use
+  Gameplay's purchase-order prices; Art does not assign a fixed scheme price.
 - Other schemes export idle frames only:
-  `paint/{cobalt,seafoam,graphite,iris}/ship-{0..31}.svg`. Draw speed jets
-  behind them exactly as for Classic. There are no painted thrust frames.
-- `ship-paint.json` (version 1) lists every scheme in shop order with `id`,
-  `name`, `price` and the six colours as `top`, `frontSides`, `rearSides`,
-  `canopyRoof`, `canopySides` and the derived `canopyHighlight`. Gameplay owns
-  the player-facing names.
+  `paint/{cobalt,seafoam,graphite,iris,amber}/ship-{0..31}.svg`. Draw speed jets
+  as for Classic. There are no painted thrust frames.
+- `ship-paint.json` version 1 lists these six schemes in order, with `id`,
+  `name`, `top`, `frontSides`, `rearSides`, `skirt`, `canopyRoof`, `canopySides`
+  and the derived compatibility colour `canopyHighlight`. Highlight metadata
+  does not change the fixed rendered materials. Gameplay owns names and prices.
 - Manifest entries `ship-{scheme}-{N}` follow the ship entries and copy
   `ship-N`'s fields, with their own `path` and a `paint` field holding the
   scheme id. Classic frames have no `paint` field. Select by `paint` and
@@ -165,7 +144,13 @@ Classic frame.
 
 ## Speed jets
 
-`ship-jets.json` (version 1) drives jets that scale continuously with speed. The
+`ship-jets.json` (version 1) drives jets that scale continuously with speed. Each
+mouth may include `occluders`, a list of polygons in the same 96px frame as its
+anchor. They contain actual surface fragments nearer than that mouth's
+horizontal exhaust plane, clipped to the maximum jet support. An empty list is
+clear; absence retains the legacy behind-sprite rendering. The title screen
+uses these polygons to attach each plume without covering nearer hull faces.
+The
 renderer draws them behind the idle `ship-{index}` frame; there are no jet frames.
 
 - `f` is current speed as a fraction of max speed. No jet at `f = 0`.
@@ -173,8 +158,7 @@ renderer draws them behind the idle `ship-{index}` frame; there are no jet frame
   (6 + 24 f²): about 2-3px at f = 0.25 and 13px at max on the 42px display.
 - `headings` holds all 32 ship headings, `headings[k].index` = `k`. Per
   heading, each of the two `mouths` gives frame-px values in the 96 by 96
-  frame: `anchor` (projected middle of the mouth on its wall, local
-  (±12.25, 17.39, 2.60)), `axis` (projected rear
+  frame: `anchor` (projected middle of the actual opening on its wall), `axis` (projected rear
   direction per ship unit) and `half` (projected half mouth width along the
   trailing edge, local (±2.75, 0.83, 0)). Scale them
   with the ship's display size.
@@ -233,7 +217,7 @@ The ship collides, makes contact and is placed by its drawn silhouette,
   runs at 0.5 frame px: at the default 0.75 the hull's long straight edges
   leave headings 15, 17, 19 and 21 below the 0.98 floor.
 - Paint schemes share the geometry. The generator traces every scheme and fails
-  unless all five give the same parts, so the one set serves every paint.
+  unless all six give the same parts, so the one set serves every paint.
 - The parts cover the hull; thrust flames and speed jets have none.
 - No heading has a notch tip; the generator fails if one appears.
 - Results: 3 to 7 parts per heading, intersection over union 0.982 to 0.993

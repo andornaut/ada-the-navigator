@@ -202,7 +202,8 @@
           "cobalt": "/art/quantum-jump-ship/cobalt/bank-8.svg",
           "seafoam": "/art/quantum-jump-ship/seafoam/bank-8.svg",
           "graphite": "/art/quantum-jump-ship/graphite/bank-8.svg",
-          "iris": "/art/quantum-jump-ship/iris/bank-8.svg"
+          "iris": "/art/quantum-jump-ship/iris/bank-8.svg",
+          "amber": "/art/quantum-jump-ship/amber/bank-8.svg"
         }
       },
       {
@@ -216,7 +217,8 @@
           "cobalt": "/art/quantum-jump-ship/cobalt/bank-16.svg",
           "seafoam": "/art/quantum-jump-ship/seafoam/bank-16.svg",
           "graphite": "/art/quantum-jump-ship/graphite/bank-16.svg",
-          "iris": "/art/quantum-jump-ship/iris/bank-16.svg"
+          "iris": "/art/quantum-jump-ship/iris/bank-16.svg",
+          "amber": "/art/quantum-jump-ship/amber/bank-16.svg"
         }
       },
       {
@@ -230,7 +232,8 @@
           "cobalt": "/art/quantum-jump-ship/cobalt/bank-24.svg",
           "seafoam": "/art/quantum-jump-ship/seafoam/bank-24.svg",
           "graphite": "/art/quantum-jump-ship/graphite/bank-24.svg",
-          "iris": "/art/quantum-jump-ship/iris/bank-24.svg"
+          "iris": "/art/quantum-jump-ship/iris/bank-24.svg",
+          "amber": "/art/quantum-jump-ship/amber/bank-24.svg"
         }
       },
       {
@@ -244,7 +247,8 @@
           "cobalt": "/art/quantum-jump-ship/cobalt/bank-30.svg",
           "seafoam": "/art/quantum-jump-ship/seafoam/bank-30.svg",
           "graphite": "/art/quantum-jump-ship/graphite/bank-30.svg",
-          "iris": "/art/quantum-jump-ship/iris/bank-30.svg"
+          "iris": "/art/quantum-jump-ship/iris/bank-30.svg",
+          "amber": "/art/quantum-jump-ship/amber/bank-30.svg"
         }
       },
       {
@@ -258,7 +262,8 @@
           "cobalt": "/art/quantum-jump-ship/cobalt/stretch-30.svg",
           "seafoam": "/art/quantum-jump-ship/seafoam/stretch-30.svg",
           "graphite": "/art/quantum-jump-ship/graphite/stretch-30.svg",
-          "iris": "/art/quantum-jump-ship/iris/stretch-30.svg"
+          "iris": "/art/quantum-jump-ship/iris/stretch-30.svg",
+          "amber": "/art/quantum-jump-ship/amber/stretch-30.svg"
         }
       },
       {
@@ -272,7 +277,8 @@
           "cobalt": "/art/quantum-jump-ship/cobalt/settle-24.svg",
           "seafoam": "/art/quantum-jump-ship/seafoam/settle-24.svg",
           "graphite": "/art/quantum-jump-ship/graphite/settle-24.svg",
-          "iris": "/art/quantum-jump-ship/iris/settle-24.svg"
+          "iris": "/art/quantum-jump-ship/iris/settle-24.svg",
+          "amber": "/art/quantum-jump-ship/amber/settle-24.svg"
         }
       },
       {
@@ -286,7 +292,8 @@
           "cobalt": "/art/quantum-jump-ship/cobalt/settle-16.svg",
           "seafoam": "/art/quantum-jump-ship/seafoam/settle-16.svg",
           "graphite": "/art/quantum-jump-ship/graphite/settle-16.svg",
-          "iris": "/art/quantum-jump-ship/iris/settle-16.svg"
+          "iris": "/art/quantum-jump-ship/iris/settle-16.svg",
+          "amber": "/art/quantum-jump-ship/amber/settle-16.svg"
         }
       },
       {
@@ -300,7 +307,8 @@
           "cobalt": "/art/quantum-jump-ship/cobalt/settle-10.svg",
           "seafoam": "/art/quantum-jump-ship/seafoam/settle-10.svg",
           "graphite": "/art/quantum-jump-ship/graphite/settle-10.svg",
-          "iris": "/art/quantum-jump-ship/iris/settle-10.svg"
+          "iris": "/art/quantum-jump-ship/iris/settle-10.svg",
+          "amber": "/art/quantum-jump-ship/amber/settle-10.svg"
         }
       },
       {
@@ -314,7 +322,8 @@
           "cobalt": "/art/quantum-jump-ship/cobalt/settle-5.svg",
           "seafoam": "/art/quantum-jump-ship/seafoam/settle-5.svg",
           "graphite": "/art/quantum-jump-ship/graphite/settle-5.svg",
-          "iris": "/art/quantum-jump-ship/iris/settle-5.svg"
+          "iris": "/art/quantum-jump-ship/iris/settle-5.svg",
+          "amber": "/art/quantum-jump-ship/amber/settle-5.svg"
         }
       }
     ]
