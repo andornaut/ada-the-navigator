@@ -558,16 +558,16 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   to 1 at full reach, target speed is
   `maxSpeed * (minSpeedFraction + (1 - minSpeedFraction) * m ^ speedCurveExponent)`.
   Provisional values are `minSpeedFraction` 0.04 and `speedCurveExponent` 2.5:
-  at the base engine's 160, about 6 world units per second just past the
-  deadzone, 11 at a quarter, 34 at half, 82 at three quarters and 160 at full. Keyboard movement is full deflection.
+  at the base engine's 175, about 7 world units per second just past the
+  deadzone, 12 at a quarter, 37 at half, 89 at three quarters and 175 at full. Keyboard movement is full deflection.
 - The ship's thrust jets scale with current speed as a fraction of maximum speed,
   not with stick deflection. Their colour follows engine tuning: pale blue at
   base, orange at Engine level 2 and purple at level 3, on every paint scheme.
 - Right joystick aims and fires continuously while deflected. The ship turns toward
   the aim with damping. Shots follow the ship's current facing and start
   immediately at the normal cadence.
-- Ada's maximum movement speed is provisionally 160 world units per second,
-  190 and 220 at engine levels 2 and 3.
+- Ada's maximum movement speed is provisionally 175 world units per second,
+  200 and 225 at engine levels 2 and 3.
 - The space screen shows only essentials: the joysticks, weapon icons, the
   status pill (Stardust and what Ada carries), the shield bar and a pause
   button. There is no travel or destinations panel and

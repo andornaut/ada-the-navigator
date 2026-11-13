@@ -158,7 +158,7 @@ until she returns to a galaxy that unlocks it.
 | Phaser         | Owned weapon                                                                                                                  | 1000      |
 | Weapon upgrade | Per weapon, Laser included: levels 2 and 3, each about ×1.5 effective output (×1.2 to 1.33 for Rapid Missile and Multi-Laser) | See below |
 | Shield         | Levels 2 and 3: capacity 15, then 20; empty to full 45, then 30 s                                                             | 450, 900  |
-| Engine tuning  | Levels 2 and 3: top speed 190, then 220; each −10% acceleration and braking seconds                                           | 180, 360  |
+| Engine tuning  | Levels 2 and 3: top speed 200, then 225; each −10% acceleration and braking seconds                                           | 180, 360  |
 | Tractor beam   | Levels 2 and 3: pull radius 90, then 120; pull speed 160, then 200                                                            | 120, 240  |
 | Ship paint     | Cosmetic colour schemes for Ada's ship; the white and blue scheme stays free                                                  | 75 each   |
 
@@ -175,8 +175,9 @@ matches its level 2 upgrade:
 | Scattershot   |     800 |    1500 |
 | Phaser        |    1000 |    1900 |
 
-Enemy speeds are fixed, so engine tuning lets Ada outrun every enemy but the
-interceptor at level 2 and all of them at level 3. The shop follows Archie's Pet shop pattern: tabs, owned
+Enemy speeds are fixed, so engine tuning lets Ada keep pace with the
+interceptor and outrun every other enemy at level 2, and outrun all of them at
+level 3. The shop follows Archie's Pet shop pattern: tabs, owned
 items marked Owned, and a purchase confirm with Buy and Cancel. The shop's close X, an
 outside tap, back and Escape return to the station card. An item Ada cannot
 afford stays visible with a flat disabled face, stays focusable and tappable,
@@ -267,17 +268,17 @@ An upgrade card shows the upgrade's shop name (`weaponUpgrade`, `shield`,
 `detailNextLevel` and what the next level adds, from the table below. At level 3
 it shows `detailMaxed` instead.
 
-| Upgrade       | Level 2 adds                                   | Level 3 adds                  |
-| ------------- | ---------------------------------------------- | ----------------------------- |
-| Laser         | "Fires faster and hits harder."                | Same as level 2               |
-| Multi-Laser   | "One more bolt, and faster bolts."             | Same as level 2               |
-| Rapid Missile | "Fires faster."                                | Same as level 2               |
-| Heavy Missile | "Hits harder."                                 | Same as level 2               |
-| Scattershot   | "Two more shots that hit harder."              | Same as level 2               |
-| Phaser        | "Hits harder."                                 | Same as level 2               |
-| Shield        | "A bigger shield that refills faster."         | Same as level 2               |
-| Engine tuning | "Faster. Outrun every drone but interceptors." | "Faster. Outrun every drone." |
-| Tractor beam  | "Pulls from farther away, and faster."         | Same as level 2               |
+| Upgrade       | Level 2 adds                           | Level 3 adds                  |
+| ------------- | -------------------------------------- | ----------------------------- |
+| Laser         | "Fires faster and hits harder."        | Same as level 2               |
+| Multi-Laser   | "One more bolt, and faster bolts."     | Same as level 2               |
+| Rapid Missile | "Fires faster."                        | Same as level 2               |
+| Heavy Missile | "Hits harder."                         | Same as level 2               |
+| Scattershot   | "Two more shots that hit harder."      | Same as level 2               |
+| Phaser        | "Hits harder."                         | Same as level 2               |
+| Shield        | "A bigger shield that refills faster." | Same as level 2               |
+| Engine tuning | "Faster. Keep pace with interceptors." | "Faster. Outrun every drone." |
+| Tractor beam  | "Pulls from farther away, and faster." | Same as level 2               |
 
 ## Donations
 
