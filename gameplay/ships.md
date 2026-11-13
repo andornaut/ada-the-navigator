@@ -94,7 +94,7 @@ Provisional parameters: `hitAndRun` retreats after 3 volleys or a hit, using
 its independent bounded retreat policy. Morale and `hitAndRun` share initial
 limits of 1.6 seconds or 200 world units of displacement, up to 0.5 radians of
 seeded curvature and a six-second cooldown, with per-policy overrides. These are
-approved follow-up values pending source integration, not a release claim.
+the shared retreat defaults in source.
 Recovery requires actual line of sight, perception, engagement admission and the
 home leash; otherwise fixed last-seen investigation gives way to home patrol
 ([Retreat policy](enemies.md#bounded-retreat-follow-up)). `strafe` passes no closer

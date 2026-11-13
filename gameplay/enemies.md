@@ -139,8 +139,7 @@ hidden target coordinates.
 
 ## Bounded retreat follow-up
 
-This policy matches the approved retreat source awaiting integration; it is not a
-released-behavior claim. Morale and `hitAndRun` use independent policies in
+This policy describes the approved retreat source. Morale and `hitAndRun` use independent policies in
 `retreats.morale` and `retreats.hitAndRun`. Both inherit `ENEMY_RETREAT`: at most
 1.6 seconds or 200 world units of displacement from the retreat origin,
 whichever limit is reached first, with a gentle seeded curve of up to 0.5 radians.

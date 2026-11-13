@@ -1104,9 +1104,9 @@ quest routes.
 
 Small enemy ships have independent movement, aiming and firing, with solo,
 erratic circling, swarming and pack behaviors. Aggression can begin on sight or
-only after being attacked. The approved retreat follow-up replaces permanent
+only after being attacked. The retreat policy replaces permanent
 morale flight with bounded retreats and gated recovery after individual damage
-or pack losses; it remains pending source integration, not released behavior
+or pack losses
 ([Retreat policy](enemies.md#bounded-retreat-follow-up)). Behavior selection and tuning belong in data wherever
 practical; reusable code handles the underlying behavior operations.
 
