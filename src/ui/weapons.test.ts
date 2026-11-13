@@ -25,6 +25,7 @@ import {
   AMMO_COUNT_TEXT,
   ammoCount,
   HUD_DISC_STATES,
+  hudDiscStyle,
   LEVEL_PIPS,
   WEAPON_STYLE,
   weaponButtonLabel,
@@ -120,13 +121,13 @@ describe("HUD weapon buttons", () => {
     expect(text.length).toBeLessThanOrEqual(4);
   });
 
-  it("colours each state as Art's Chibi skill buttons, with no cream ring or amber", () => {
+  it("keeps a transparent selected centre and uses Ada cream rather than a filled amber puck", () => {
     expect(HUD_DISC_STATES).toEqual({
       empty: { edge: 1, face: "#262b44", glyph: "#75748c" },
       idle: { edge: 1, face: "#262b44", glyph: "#b8b3c9" },
-      selected: { edge: 4, face: "#bfa06f", glyph: "#181425" },
+      selected: { edge: 4, face: "transparent", glyph: "#ead4aa" },
     });
-    // The 33 disc less the 4 annulus on each side leaves the 25 gold face.
+    // The 33 disc less the 4 annulus on each side leaves a transparent 25 centre.
     expect(HUD_BUTTON.disc - 2 * HUD_DISC_STATES.selected.edge).toBe(25);
     // Counts and refill labels share the cream text, independently of disc state.
     expect(WEAPON_STYLE).not.toMatch(/#f0bd68|pixelated/u);
@@ -134,6 +135,48 @@ describe("HUD weapon buttons", () => {
       const rule = WEAPON_STYLE.split("}").find((part) => part.includes(`${selector}{`));
       expect(rule).toContain(`color:${AMMO_COUNT_TEXT.normal}`);
     }
+  });
+
+  it("adds a weapon-only cream ring without changing shared HUD disc styling", () => {
+    const rule = (selector: string) =>
+      WEAPON_STYLE.split("}")
+        .filter((part) => part.includes(`${selector}{`))
+        .at(-1);
+    expect(rule(".ada-controls .ada-weapon .ada-disc")).toContain("background:transparent");
+    const ring = rule(".ada-controls .ada-weapon[data-state=selected] .ada-disc::after");
+    expect(ring).toContain("position:absolute");
+    expect(ring).toContain(`border:${units(2)} solid #ead4aa`);
+    expect(ring).toContain("background:transparent");
+    expect(ring).toContain("pointer-events:none");
+    expect(ring).not.toMatch(/width:|height:|transform:/u);
+    const shared = hudDiscStyle(".shared-button", ".disc");
+    expect(shared).toContain("background:#262b44");
+    expect(shared).toContain("color:#b8b3c9");
+    expect(shared).not.toMatch(/ada-weapon|::after|opacity:0\./u);
+    expect(rule(".ada-controls .ada-weapon-selector[data-field=light] .ada-weapon")).toContain(
+      "color:#181425",
+    );
+  });
+
+  it("mutes only inactive glyphs, preserving opaque counts and level dots", () => {
+    for (const [state, opacity] of [
+      ["selected", 1],
+      ["idle", 0.55],
+      ["empty", 0.35],
+    ] as const) {
+      const selector = `.ada-controls .ada-weapon[data-state=${state}] .ada-disc::before`;
+      const rule = WEAPON_STYLE.split("}").find((part) => part.includes(`${selector}{`));
+      expect(rule).toContain(`opacity:${opacity}`);
+    }
+    expect(WEAPON_STYLE).toContain(
+      '.ada-controls .ada-weapon[style*="color:"] .ada-disc::before{\n  opacity:1',
+    );
+    const pill = WEAPON_STYLE.split("}").find((part) => part.includes(".ada-controls .ada-ammo{"));
+    const pips = WEAPON_STYLE.split("}").find((part) =>
+      part.includes(".ada-controls .ada-pips > span{"),
+    );
+    expect(pill).not.toContain("opacity:");
+    expect(pips).not.toContain("opacity:");
   });
 
   it("draws each count in an opaque ink pill on the disc's lower edge, clear of the name tab", () => {

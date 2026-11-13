@@ -78,13 +78,13 @@ export function ammoCount(shots: number): string {
   return `${Math.min(999, Math.floor(whole / 1_000_000))}m`;
 }
 
-// Each state's disc face, its ink edge (an annulus when selected) and glyph colour
+// Shared HUD disc defaults and the selected weapon's transparent face, ink edge and glyph colour
 // (art/controls.md "Top-right HUD icon buttons"). Empty is an unselected weapon with no
 // ammunition: its glyph is the idle lavender mixed toward the navy face.
 export const HUD_DISC_STATES = {
   empty: { edge: HUD_BUTTON.edge, face: "#262b44", glyph: "#75748c" },
   idle: { edge: HUD_BUTTON.edge, face: "#262b44", glyph: "#b8b3c9" },
-  selected: { edge: HUD_BUTTON.annulus, face: "#bfa06f", glyph: "#181425" },
+  selected: { edge: HUD_BUTTON.annulus, face: "transparent", glyph: "#ead4aa" },
 } as const satisfies Record<WeaponButtonState, unknown>;
 
 // The count pill's text (art/controls.md "Ammunition count"): cream in every state, the empty
@@ -193,6 +193,27 @@ ${hudDiscStyle(".ada-controls .ada-weapon", ".ada-disc")}
 .ada-controls .ada-weapon{
   position:relative
 }
+.ada-controls .ada-weapon .ada-disc{
+  position:relative;
+  background:transparent
+}
+.ada-controls .ada-weapon[data-state=idle] .ada-disc::before{
+  opacity:0.55
+}
+.ada-controls .ada-weapon[data-state=empty] .ada-disc::before{
+  opacity:0.35
+}
+.ada-controls .ada-weapon[data-state=selected] .ada-disc::before{
+  opacity:1
+}
+/* The shared refusal cue sets an inline glyph colour; keep that cue at full strength. */
+.ada-controls .ada-weapon[style*="color:"] .ada-disc::before{
+  opacity:1
+}
+/* Weapon glyphs stay readable on the light field; selection keeps its cream ring. */
+.ada-controls .ada-weapon-selector[data-field=light] .ada-weapon{
+  color:${INK}
+}
 .ada-controls .ada-ammo{
   position:absolute;
   left:50%;
@@ -236,6 +257,17 @@ ${hudDiscStyle(".ada-controls .ada-weapon", ".ada-disc")}
 }
 .ada-controls .ada-weapon[data-state=selected] .ada-disc{
   background:${HUD_DISC_STATES.selected.face}
+}
+/* The cream band sits inside the existing ink annulus, with no centre fill or size change. */
+.ada-controls .ada-weapon[data-state=selected] .ada-disc::after{
+  content:"";
+  position:absolute;
+  inset:${units(HUD_BUTTON.edge)};
+  box-sizing:border-box;
+  border:${units(HUD_DISC_STATES.selected.edge - 2 * HUD_BUTTON.edge)} solid ${HUD_DISC_STATES.selected.glyph};
+  border-radius:50%;
+  background:transparent;
+  pointer-events:none
 }
 .ada-controls .ada-weapon:disabled{
   cursor:default
