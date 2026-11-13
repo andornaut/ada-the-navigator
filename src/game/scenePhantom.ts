@@ -2,7 +2,7 @@ import jumpData from "../../public/art/quantum-jump.json";
 import { CONTENT } from "../data/content.ts";
 import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP, PHANTOM_TUNING as T } from "../data/phantom.ts";
 import type { PhantomFlight } from "../model/phantom.ts";
-import { type PhantomAllySpec,phantomSongSpeed } from "../model/phantomAllies.ts";
+import { type PhantomAllySpec, phantomSongSpeed } from "../model/phantomAllies.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
 import { playDepth } from "./asteroidArt.ts";
 import { enemyJetTriangles, selectEnemyFrame } from "./enemyArt.ts";
@@ -20,11 +20,17 @@ const stateOf = (flight: FlightState) =>
     }
   ).phantom;
 /** Friendly frames remain in their authored species and retain their published craft ids. */
-export function phantomAllyCraft(ally: Pick<PhantomAllySpec, "galaxy" | "id">): string {
-  if (ally.id === "clover" || ally.galaxy === 1) {return "stranded-scrap-barge";}
-  if (ally.id === "reed" || ally.galaxy === 4) {return "glider";}
-  if (ally.id === "pip" || ally.galaxy === 5) {return "pip";}
-  return "miner";
+export function phantomAllyCraft(ally: Pick<PhantomAllySpec, "galaxy" | "id">): string | undefined {
+  if (ally.id === "reed" || ally.id === "project:4:channelLights") {
+    return "glider";
+  }
+  if (ally.id === "pip" || ally.id === "project:5:courierSchool") {
+    return "pip";
+  }
+  if (ally.id === "mica" || ally.id === "project:2:dockingBay") {
+    return "miner";
+  }
+  return undefined;
 }
 /** Both dock states use the same authored frame geometry and pivot. */
 export function phantomSettlementVariant(id: string): string | undefined {
@@ -33,7 +39,9 @@ export function phantomSettlementVariant(id: string): string | undefined {
 }
 export function drawPhantomSettlement(scene: ObjectsContext, object: SpaceObject): boolean {
   const variant = phantomSettlementVariant(object.id);
-  if (!variant || scene.model.state.flight?.galaxy !== 6) {return false;}
+  if (!variant || scene.model.state.flight?.galaxy !== 6) {
+    return false;
+  }
   const state = scene.model.state.progress[6].questComplete ? "mended" : "cracked";
   const frames = scene.shipAssets
     .filter(
@@ -44,7 +52,9 @@ export function drawPhantomSettlement(scene: ObjectsContext, object: SpaceObject
         scene.textures.exists(asset.id),
     )
     .sort((a, b) => a.id.localeCompare(b.id));
-  if (frames.length !== 2 || !frames[0]?.frameMs) {return false;}
+  if (frames.length !== 2 || !frames[0]?.frameMs) {
+    return false;
+  }
   drawOutpost(
     scene,
     { frameMs: frames[0].frameMs, frames: [frames[0], frames[1]!] },
@@ -55,10 +65,14 @@ export function drawPhantomSettlement(scene: ObjectsContext, object: SpaceObject
 }
 /** The flagship keeps its own hull and hardpoint artwork, including the lit post-story hulk. */
 export function drawPhantomFlagship(scene: ObjectsContext, object: SpaceObject): boolean {
-  if (object.id !== PHANTOM_FLAGSHIP || !object.enemy) {return false;}
+  if (object.id !== PHANTOM_FLAGSHIP || !object.enemy) {
+    return false;
+  }
   loadEnemyParts(scene, "gadget");
   const art = familyArt(scene, "gadget");
-  if (!art?.parts) {return false;}
+  if (!art?.parts) {
+    return false;
+  }
   const view = object.enemy.salvaged
     ? { ...object.enemy, disabled: false, salvaged: false }
     : object.enemy;
@@ -73,27 +87,34 @@ function rim(scene: ObjectsContext, center: Vec, radius: number): void {
     }),
   );
   scene.ink.lineStyle(1, scene.palette.environmentDetail, 0.25);
-  for (let index = 1; index < points.length; index++)
-    {scene.ink.lineBetween(
+  for (let index = 1; index < points.length; index++) {
+    scene.ink.lineBetween(
       points[index - 1]!.x,
       points[index - 1]!.y,
       points[index]!.x,
       points[index]!.y,
-    );}
+    );
+  }
 }
 /** Local arrivals reuse the published jump timeline's glow and star sheets. */
 function drawAllyJump(scene: ObjectsContext, id: string, age: number, point: Vec): void {
   const phase = jumpStepAt(jump, age * 1000);
-  if (!phase) {return;}
+  if (!phase) {
+    return;
+  }
   const glow = scene.reducedMotion ? "low" : phase.step.glow;
   for (const [texture, name] of [
     ["quantum-jump-glow", glow],
     ["quantum-jump-star", !scene.reducedMotion && phase.step.star ? "jump" : undefined],
   ] as const) {
-    if (!name || !scene.textures.exists(texture)) {continue;}
+    if (!name || !scene.textures.exists(texture)) {
+      continue;
+    }
     const asset = scene.manifest.assets.find((asset) => asset.id === texture);
     const frame = asset?.frames?.[name];
-    if (frame === undefined) {continue;}
+    if (frame === undefined) {
+      continue;
+    }
     scene.passes(
       objectSprite(scene, `${id}#jump:${texture}`, texture, frame)
         .setPosition(point.x, point.y)
@@ -105,9 +126,16 @@ function drawAllyJump(scene: ObjectsContext, id: string, age: number, point: Vec
 /** Drawn friendlies do not enter the collision, damage, indicator or enemy targeting lists. */
 export function drawPhantomAllies(scene: ObjectsContext): void {
   const flight = scene.model.state.flight;
-  if (!flight || flight.galaxy !== 6) {return;}
+  if (!flight || flight.galaxy !== 6) {
+    return;
+  }
   const state = stateOf(flight);
-  if (!state) {return;}
+  if (!state) {
+    return;
+  }
+  for (const ally of state.departures ?? []) {
+    drawAllyJump(scene, `phantomAlly:${ally.id}#departure`, ally.age, scene.project(ally));
+  }
   const adaDepth = playDepth(scene.project(flight.player).y);
   for (const ally of state.allies) {
     const id = `phantomAlly:${ally.id}`;
@@ -118,10 +146,14 @@ export function drawPhantomAllies(scene: ObjectsContext): void {
         heading: shipDirection(16, ally.facing),
         moving: speed > 1,
       });
-      for (const [key, sprite] of scene.enemySprites)
-        {if (key.startsWith(id)) {sprite.setDepth(Math.min(playDepth(point.y), adaDepth - 0.00001));}}
+      for (const [key, sprite] of scene.enemySprites) {
+        if (key.startsWith(id)) {
+          sprite.setDepth(Math.min(playDepth(point.y), adaDepth - 0.00001));
+        }
+      }
     } else {
-      const art = scene.craftArt.get(phantomAllyCraft(ally));
+      const craft = phantomAllyCraft(ally);
+      const art = craft ? scene.craftArt.get(craft) : undefined;
       if (art) {
         const frame = selectEnemyFrame(art, ally.facing);
         scene.passes(
@@ -149,14 +181,18 @@ export function drawPhantomAllies(scene: ObjectsContext): void {
       }
     }
     drawAllyJump(scene, id, ally.jumpAge, point);
-    if (ally.song) {rim(scene, ally, T.songRadius);}
+    if (ally.song) {
+      rim(scene, ally, T.songRadius);
+    }
   }
-  for (const object of flight.objects)
-    {if (
+  for (const object of flight.objects) {
+    if (
       object.kind === "enemy" &&
       object.enemy &&
       !object.enemy.disabled &&
       phantomSongSpeed(state.allies, object) < 1
-    )
-      {rim(scene, object, object.radius + 4);}}
+    ) {
+      rim(scene, object, object.radius + 4);
+    }
+  }
 }

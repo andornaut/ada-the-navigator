@@ -6,7 +6,7 @@ import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import { createEnemy } from "../model/enemyAi.ts";
 import type { SpaceObject } from "../model/types.ts";
 import type { ObjectsContext } from "./sceneObjects.ts";
-import { drawPhantomFlagship, drawPhantomSettlement } from "./scenePhantom.ts";
+import { drawPhantomFlagship, drawPhantomSettlement, phantomAllyCraft } from "./scenePhantom.ts";
 const calls = vi.hoisted(() => ({
   enemy: vi.fn(),
   family: vi.fn(),
@@ -27,6 +27,13 @@ function scene(complete = false): ObjectsContext {
 }
 beforeEach(() => vi.clearAllMocks());
 describe("Phantom authored rendering", () => {
+  it("uses matching craft and leaves missing ally artwork explicit", () => {
+    expect(phantomAllyCraft({ galaxy: 4, id: "reed" })).toBe("glider");
+    expect(phantomAllyCraft({ galaxy: 5, id: "pip" })).toBe("pip");
+    expect(phantomAllyCraft({ galaxy: 2, id: "mica" })).toBe("miner");
+    expect(phantomAllyCraft({ galaxy: 1, id: "clover" })).toBeUndefined();
+    expect(phantomAllyCraft({ galaxy: 3, id: "project:3:currentMapBuoys" })).toBeUndefined();
+  });
   it("uses the actual settlement's cracked frames until completion and its matching mended frames after", () => {
     for (const [index, variant] of ["homes", "harbour", "signal"].entries()) {
       const object: SpaceObject = {

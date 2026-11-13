@@ -13,6 +13,7 @@ import {
   type PhantomContext,
   type PhantomFlight,
   phantomObjective,
+  phantomObjectiveIndex,
   type PhantomProgress,
   usePhantom,
   validPhantomFlight,
@@ -83,6 +84,32 @@ function freeSettlements(context: PhantomContext) {
   }
 }
 describe("Phantom chapter", () => {
+  it("advances only the approved objective entries as actual chapter facts change", () => {
+    const context = fixture();
+    expect(phantomObjectiveIndex(context)).toBe(0);
+    context.progress.known.push(PHANTOM_DESTINATIONS[0]);
+    expect(phantomObjectiveIndex(context)).toBe(1);
+    for (const ids of Object.values(state(context).blockades)) {
+      disable(context, ids);
+    }
+    afterStepPhantom(context);
+    expect(phantomObjectiveIndex(context)).toBe(2);
+    for (const id of PHANTOM_DESTINATIONS) {
+      choosePhantom(context, usePhantom(context, id)!.dialogue!, "continue");
+    }
+    expect(phantomObjectiveIndex(context)).toBe(3);
+    context.flight.player = { ...state(context).waypoint };
+    beforeStepPhantom(context);
+    expect(phantomObjectiveIndex(context)).toBe(4);
+    for (let wave = 0; wave < 3; wave++) {
+      disable(context, state(context).enemyIds);
+      afterStepPhantom(context);
+    }
+    object(context, PHANTOM_FLAGSHIP_ID)!.enemy!.disabled = true;
+    expect(phantomObjectiveIndex(context)).toBe(5);
+    context.progress.holodisk = true;
+    expect(phantomObjectiveIndex(context)).toBe(6);
+  });
   it("uses the explicit sixth roster and applies the shared bonus exactly once", () => {
     const table = encounterTable(6);
     expect(table.find((entry) => entry.archetype === "swarm")?.groupSize).toEqual([9, 11]);
@@ -221,6 +248,26 @@ describe("Phantom chapter", () => {
   });
 });
 describe("Phantom allies", () => {
+  it("retains only bounded departure effects through the published jump duration, including after completion", () => {
+    const context = fixture();
+    const roster = phantomAllyRoster([{ activityCompleted: true, galaxy: 1, projects: [] }], 21);
+    const withAllies = { ...context, allies: roster };
+    freeSettlements(withAllies);
+    context.flight.player = { ...state(context).waypoint };
+    beforeStepPhantom(withAllies);
+    expect(state(context).allies).toHaveLength(1);
+    const departure = { x: state(context).allies[0]!.x, y: state(context).allies[0]!.y };
+    disable(context, state(context).enemyIds);
+    afterStepPhantom(withAllies);
+    expect(state(context).departures).toEqual([{ age: 0, id: "clover", ...departure }]);
+    expect(validPhantomFlight(state(context))).toBe(true);
+    context.progress.questComplete = true;
+    beforeStepPhantom(withAllies, 0.5);
+    expect(state(context).departures).toHaveLength(1);
+    beforeStepPhantom(withAllies, 0.5);
+    expect(state(context).departures).toEqual([]);
+    expect(state(context).allies).toHaveLength(1);
+  });
   it("uses only explicit completed activities and funded projects, and rotates every eligible ally", () => {
     const roster = phantomAllyRoster(
       [1, 3, 4, 5, 2].map((galaxy) => ({

@@ -1,3 +1,4 @@
+import jumpData from "../../public/art/quantum-jump.json";
 import { encounterTable, type EnemyArchetype } from "../data/enemyCatalog.ts";
 import {
   PHANTOM_COPY,
@@ -22,7 +23,12 @@ export interface PhantomProgress {
   flagshipKnown: boolean;
 }
 export type PhantomChatter = "battleAllies" | "battleAlone" | "flagshipAttack" | "flagshipDisabled";
+export interface PhantomDeparture extends Vec {
+  id: string;
+  age: number;
+}
 export interface PhantomFlight {
+  departures?: PhantomDeparture[];
   phase: "blockades" | "approach" | "waves" | "flagship" | "salvaged";
   wave: number;
   enemyIds: string[];
@@ -197,8 +203,16 @@ function finished(
   }
   return ids.every((id) => state.resolvedIds.includes(id));
 }
+function departAllies(state: PhantomFlight): void {
+  const leaving = new Set(state.allies.map((ally) => ally.id));
+  state.departures = [
+    ...(state.departures ?? []).filter((ally) => !leaving.has(ally.id)),
+    ...state.allies.map((ally) => ({ age: 0, id: ally.id, x: ally.x, y: ally.y })),
+  ].slice(-T.allies * 4);
+}
 function nextWave(context: PhantomContext): void {
   const state = stateOf(context)!;
+  departAllies(state);
   state.wave++;
   state.allyTurn = state.wave - 1;
   state.allies = rotatePhantomAllies(context.allies ?? [], state.allyTurn, context.flight.player);
@@ -225,8 +239,14 @@ function nextWave(context: PhantomContext): void {
   }
   state.phase = "waves";
 }
-export function beforeStepPhantom(context: PhantomContext): void {
+export function beforeStepPhantom(context: PhantomContext, seconds = 0): void {
   const state = stateOf(context);
+  if (state?.departures) {
+    for (const ally of state.departures) {
+      ally.age += Math.max(0, seconds);
+    }
+    state.departures = state.departures.filter((ally) => ally.age * 1000 < jumpData.durationMs);
+  }
   if (!state || context.progress.questComplete || !progressOf(context).flagshipKnown) {
     return;
   }
@@ -258,6 +278,7 @@ export function afterStepPhantom(context: PhantomContext): ChapterResult | undef
     if (state.wave < T.waves) {
       nextWave(context);
     } else {
+      departAllies(state);
       state.phase = "flagship";
       state.allyTurn = T.waves;
       state.allies = rotatePhantomAllies(
@@ -324,6 +345,33 @@ export function phantomObjective(context: ChapterContext): string | null {
 export function phantomWaypoint(context: ChapterContext): Vec | null {
   return progressOf(context).flagshipKnown ? (stateOf(context)?.waypoint ?? null) : null;
 }
+/** The chapter's approved objective text follows its actual blockade and battle state. */
+export function phantomObjectiveIndex(context: ChapterContext): number {
+  if (context.progress.questComplete || context.progress.holodisk) {
+    return 6;
+  }
+  const progress = progressOf(context);
+  if (
+    !progress.broken.length &&
+    !PHANTOM_DESTINATIONS.some((id) => context.progress.known.includes(id))
+  ) {
+    return 0;
+  }
+  if (progress.broken.length < PHANTOM_DESTINATIONS.length) {
+    return 1;
+  }
+  if (progress.freed.length < PHANTOM_DESTINATIONS.length) {
+    return 2;
+  }
+  const state = stateOf(context);
+  if (!state || state.phase === "approach" || state.phase === "blockades") {
+    return 3;
+  }
+  if (state.phase === "salvaged") {
+    return 6;
+  }
+  return retained(context, PHANTOM_FLAGSHIP)?.enemy?.disabled ? 5 : 4;
+}
 function panel(key: string): DialogueState {
   const copy = PHANTOM_COPY[key]!;
   return {
@@ -381,6 +429,7 @@ export function choosePhantom(
     salvage(context.content, context.flight)
   ) {
     const state = stateOf(context)!;
+    departAllies(state);
     state.phase = "salvaged";
     state.allies = [];
     return { complete: true, holodisk: {} };
@@ -434,6 +483,20 @@ export function validPhantomFlight(value: unknown): value is PhantomFlight {
     Number.isInteger(state.allyTurn) &&
     state.allyTurn >= 0 &&
     state.allyTurn <= T.waves &&
+    (state.departures === undefined ||
+      (Array.isArray(state.departures) &&
+        state.departures.length <= T.allies * 4 &&
+        new Set(state.departures.map((ally) => ally.id)).size === state.departures.length &&
+        state.departures.every(
+          (ally) =>
+            point(ally) &&
+            typeof ally.id === "string" &&
+            ally.id.length > 0 &&
+            ally.id.length <= 100 &&
+            Number.isFinite(ally.age) &&
+            ally.age >= 0 &&
+            ally.age * 1000 < jumpData.durationMs,
+        ))) &&
     ids(state.enemyIds) &&
     ids(state.resolvedIds) &&
     point(state.waypoint) &&
