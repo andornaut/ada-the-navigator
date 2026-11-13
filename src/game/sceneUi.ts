@@ -414,7 +414,7 @@ export function buildScene(scene: UiContext): void {
           },
           id: "grant-all-weapons",
           label: CHEAT_COPY.grantAllWeapons,
-          scope: "save",
+          scope: "run",
         },
       ],
       canExecute: () => scene.model.state.mode === "space" && !scene.model.state.dialogue,

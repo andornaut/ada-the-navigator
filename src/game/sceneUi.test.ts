@@ -4,16 +4,20 @@ import { createContext, runInContext } from "node:vm";
 import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
+import { CHEAT_COPY } from "../data/cheatCopy.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY, worldAmmoPack } from "../data/economy.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { STATUS_PILL_LAYOUT } from "../data/layout.ts";
+import { grantAllWeapons } from "../model/cheats.ts";
 import { GameModel } from "../model/game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
+import { UPGRADE_WEAPONS } from "../model/weapons.ts";
 import { readStory, relaunch } from "../testing/launch.ts";
+import { cheatGroups, type CheatSessionOptions, createCheatSession } from "../ui/cheatActions.ts";
 import { ShieldOreSpendCounter, type StatusView } from "../ui/statusPill.ts";
 
-// Execute the production navigation closures against the real model without loading Phaser's DOM.
+// Execute production UI wiring against the real model without loading Phaser's DOM.
 const source = ts.createSourceFile(
   "sceneUi.ts",
   readFileSync(new URL("./sceneUi.ts", import.meta.url), "utf8"),
@@ -27,7 +31,7 @@ function callback(name: string): string {
       (ts.isVariableDeclaration(node) || ts.isPropertyAssignment(node)) &&
       node.name.getText(source) === name &&
       node.initializer &&
-      ts.isArrowFunction(node.initializer)
+      (ts.isArrowFunction(node.initializer) || ts.isObjectLiteralExpression(node.initializer))
     ) {
       found = node.initializer;
     }
@@ -244,5 +248,32 @@ describe("ammo pickup scene drain", () => {
     update(scene);
     expect(setGains).toHaveBeenCalledTimes(1);
     expect(model.drainPickupFeedback()).toEqual([]);
+  });
+});
+
+describe("scene cheat action wiring", () => {
+  it("groups the actual grant as Run-only and executes without the scene save callback", async () => {
+    const model = flight();
+    const economy = structuredClone(model.state.economy);
+    const achievements = structuredClone(model.state.achievements);
+    const apply = vi.fn<(effect: () => void) => void>((effect) => effect());
+    const context = createContext({ CHEAT_COPY, apply, grantAllWeapons, scene: { model } });
+    const options = runInContext(callback("cheats"), context) as Omit<CheatSessionOptions, "host">;
+    const session = createCheatSession({
+      ...options,
+      host: {
+        matchMedia: () => ({ matches: false }),
+        navigator: { maxTouchPoints: 0, userAgent: "fixture" },
+      },
+    });
+    expect(cheatGroups(options.actions)).toEqual(["run"]);
+    expect(session.available()).toBe(true);
+    expect(await session.execute("grant-all-weapons")).toBe(true);
+    expect(model.state.flight!.ownedWeapons).toEqual(UPGRADE_WEAPONS);
+    expect(model.state.economy).toEqual(economy);
+    expect(model.state.achievements).toEqual(achievements);
+    expect(apply).not.toHaveBeenCalled();
+    expect(session.available()).toBe(true);
+    session.dispose();
   });
 });
