@@ -207,7 +207,24 @@ describe("universal pause caller", () => {
       model.storyNext();
     }
     expect(model.storyView!.choices.length).toBeGreaterThan(0);
-    const before = structuredClone(model.storyView);
+    const snapshot = () => {
+      const view = model.storyView!;
+      const saved = model.saveDocument();
+      return {
+        canGoBack: view.canGoBack,
+        canSkip: view.canSkip,
+        choices: structuredClone(view.choices),
+        cursor: structuredClone(saved.pendingStory!.cursor),
+        page: structuredClone(view.page),
+        slept: saved.pendingStory!.slept,
+        state: structuredClone(model.state),
+      };
+    };
+    const before = snapshot();
+    const effects = vi.spyOn(
+      model as unknown as { applyEffect: (scene: unknown) => void },
+      "applyEffect",
+    );
     const scene = { jumping: false, model };
     const context = createContext({
       apply: (action: () => void) => action(),
@@ -219,14 +236,16 @@ describe("universal pause caller", () => {
     expect(pauseView(model).place).toBe("room");
     expect(pauseView(model).canMap).toBe(false);
     open();
-    expect(model.storyView).toEqual(before);
+    expect(snapshot()).toEqual(before);
     leave();
-    if (model.screen === "start") {
-      model.continueGame();
-    }
-    expect(model.storyView).toEqual(before);
+    expect(model.screen).toBe("start");
+    expect(model.canContinue).toBe(true);
+    expect(model.state.started).toBe(false);
+    model.continueGame();
+    expect(snapshot()).toEqual(before);
     model.storyNext();
-    expect(model.storyView).toEqual(before);
+    expect(snapshot()).toEqual(before);
+    expect(effects).not.toHaveBeenCalled();
   });
 
   it("keeps a mandatory flight interaction intact across the actual Back to title caller", () => {
