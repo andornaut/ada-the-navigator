@@ -852,15 +852,15 @@ describe("touch controls", () => {
     }
   });
 
-  it("reach the conversation box's lower right by 50.5 regardless of phone insets", () => {
+  it("reach the conversation box's lower right by 52.5 regardless of phone insets", () => {
     for (const [insets, depth] of [
-      [NO_INSETS, 50.5],
-      [phone, 50.5],
+      [NO_INSETS, 52.5],
+      [phone, 52.5],
     ] as const) {
       const disc = useDiscLayout(view, insets);
       const box = conversationBoxRect(insets, view);
       const boxBottom = box.y + box.height;
-      expect(boxBottom).toBe(123.5);
+      expect(boxBottom).toBe(125.5);
       expect(boxBottom - (disc.centre.y - USE_DISC.radius)).toBe(depth);
       // The circle does take the overlap's points: only the box, over the canvas, keeps them.
       expect(usePressed(disc, { x: disc.centre.x, y: boxBottom - 1 })).toBe(true);

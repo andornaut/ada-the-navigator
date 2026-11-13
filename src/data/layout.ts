@@ -265,11 +265,11 @@ export const HUD_BUTTON = {
   target: HUD_TARGET,
 } as const;
 
-// The weapon count pill (art/layout.md "Weapon count pill"): an opaque ink pill under each
+// The weapon count pill (art/layout.md "Weapon count pill"): an opaque navy pill under each
 // non-Laser disc, height high with radius corners and padding at each end around the count in
-// TYPE.count, centred on the disc, its top `top` below the target's top so it overlaps the disc's
+// TYPE.count, centred on the disc, its top `top` below the target's top and below the disc's
 // lower edge; the conversation box's top sits clearance below its bottom.
-export const HUD_AMMO_COUNT = { clearance: 5, height: 14, padding: 4, radius: 4, top: 40 } as const;
+export const HUD_AMMO_COUNT = { clearance: 5, height: 14, padding: 4, radius: 4, top: 42 } as const;
 
 // A weapon disc's level marks (art/controls.md "Weapon level"): at levels 2 and 3 the disc's
 // HUD_BUTTON.edge takes the tier colour, with a halo `halo.spread` wide and `halo.blur` soft just
@@ -429,7 +429,7 @@ export const CONVERSATION_BOX = {
   // The text column's gap from the portrait frame and from the panel's far edge.
   textGap: SPACING.gap,
   // From the HUD rect's top: the weapon count pills' bottom (the targets reach HUD_ROW.reach above
-  // the rect) plus HUD_AMMO_COUNT.clearance, + 51.5. The tab, overhang above it, clears the status
+  // the rect) plus HUD_AMMO_COUNT.clearance, + 53.5. The tab, overhang above it, clears the status
   // pill and its +N tick, and starts clear of every weapon column across (art/layout.md "Tab
   // clearance").
   top: -HUD_ROW.reach + HUD_AMMO_COUNT.top + HUD_AMMO_COUNT.height + HUD_AMMO_COUNT.clearance,

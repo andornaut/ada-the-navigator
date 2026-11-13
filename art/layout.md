@@ -229,7 +229,7 @@ moves both sides in alike and the HUD mirrors exactly.
 | HUD rect   | Sides `mirroredSide(insets, HUD_EDGE, view)` in from each view edge; top `ceil(max(12, inset top))`; bottom `min(348, view bottom - ceil(max(12, inset bottom)))` | The lines the top controls' drawn art meets (its top corners); the sticks and Use follow their own rule                                                                         | `hudRect(insets, view)`, `HUD_EDGE`, `playView.ts` (Chibi `topShift`)                         |
 | HUD button | Target 48, disc 33, common weapon annulus 4, glyph 20, gap 9; pitch 57                                                                                            | Chibi's `SKILL_BUTTON`; the disc equals the pause disc; small, so discs sit `SMALL_BUTTON_GAP` (24) apart face to face: gap = 24 - 15 = 9 between targets; pitch = target + gap | `HUD_BUTTON` = `{ target, disc, annulus, glyph, gap }`, `playView.ts`                         |
 | HUD row    | Targets reach 7.5 (the disc inset) past the HUD rect's top and right; centre line HUD rect top + 16.5; targets' bottom HUD rect top + 40.5                        | The outermost disc's drawn edge and every disc's drawn top sit on the rect; the pause disc, the discs, the pill and Skip share the centre line                                  | `HUD_ROW` = `{ reach, centre, bottom }`, `playView.ts`                                        |
-| Count pill | 14 high, radius 4, padding 4, top 40 below the target top, clearance 5                                                                                            | Opaque navy pill with a 1 px inset ink rim on the disc's lower edge; the conversation box top sits the clearance below its bottom                                               | `HUD_AMMO_COUNT` = `{ height, radius, padding, top, clearance }`, `playView.ts`, to implement |
+| Count pill | 14 high, radius 4, padding 4, top 42 below the target top, clearance 5                                                                                            | Opaque navy pill with a 1 px inset ink rim on the disc's lower edge; the conversation box top sits the clearance below its bottom                                               | `HUD_AMMO_COUNT` = `{ height, radius, padding, top, clearance }`, `playView.ts`, to implement |
 
 | Screen, CSS px | Insets, logical   | Logical view | Play view x | HUD rect left, right, top |
 | -------------- | ----------------- | ------------ | ----------- | ------------------------- |
@@ -259,7 +259,7 @@ left: 41 at 844x390 without insets, 10.92 inside the game area's right edge
 | Achievements | Start screen only: the same `HUD_BUTTON` with `achievements.svg`; target `hudButtonTarget(1)` (`hudButtonTarget(2)` while Exit shows), one pitch (57) left of Settings's at the same top, so the targets are `HUD_BUTTON.gap` apart; the target is the press area. See [Start screen](#start-screen)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | `HUD_BUTTON`, `hudButtonTarget(1)`, `playView.ts`, to implement on the start screen                                         |
 | Exit         | Start screen only, and only where the platform can close the app: the same `HUD_BUTTON` with `exit.svg` (20, vector, after Archie's `icon-exit`: a door frame open on the right with an arrow leaving it); target `hudButtonTarget(0)`, the rightmost disc, so Settings and Achievements each move one pitch left. See [Start screen](#start-screen)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | `HUD_BUTTON`, `hudButtonTarget(0)`, `playView.ts`, to implement on the start screen                                         |
 | Notice       | The conversation box's slot and panel: same rect and ink panel at 0.65, one or two `TYPE.body` cream lines centred in the box, no portrait or name tab, a tap on the box dismisses it; shows at once and holds the slot ahead of a conversation line, which resumes after; a newer notice replaces the current one in place. See [Conversation box](#conversation-box)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | `CONVERSATION_BOX`, `conversationBox.ts`, to implement; drawn by `notice.ts`                                                |
-| Conversation | In-flight dialogue box below the weapon row: box top `HUD_AMMO_COUNT.clearance` (5) below the count pills' bottom, HUD rect top + 51.5 (63.5 at a top of 12), name tab top 10 higher (53.5), centred, `min(availableWidth, 480)` wide, 60 high, one 48 portrait slot, a name tab overhanging the top edge and up to two lines; the whole box is one press area; non-modal, no dim. See [Conversation box](#conversation-box)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | `CONVERSATION_BOX`, `conversationBox.ts`, to implement                                                                      |
+| Conversation | In-flight dialogue box below the weapon row: box top `HUD_AMMO_COUNT.clearance` (5) below the count pills' bottom, HUD rect top + 53.5 (65.5 at a top of 12), name tab top 10 higher (55.5), centred, `min(availableWidth, 480)` wide, 60 high, one 48 portrait slot, a name tab overhanging the top edge and up to two lines; the whole box is one press area; non-modal, no dim. See [Conversation box](#conversation-box)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | `CONVERSATION_BOX`, `conversationBox.ts`, to implement                                                                      |
 
 ### Touch controls by view
 
@@ -284,29 +284,29 @@ inset. "Clamped" names the edges the game-area clamp moved.
 | 2560x1080                   | 853.33x360, 66            | 74-147, 247-320    | 705-778, 247-320  | (110, 283), (741, 283) | Both sides | 348.67-504.67, 318.67-534.67, 288.67-564.67; 292-320 | (664, 183) |
 
 Clearances that follow. "Below box" is Use's drawn ring top under the
-conversation box's bottom (HUD rect top + 111.5, 123.5); the press circle
+conversation box's bottom (HUD rect top + 113.5, 125.5); the press circle
 reaches into the box (the box wins the press) and stays clear of the weapon
-count pills (bottom 58.5) and targets (bottom 52.5), six weapons; the pill gap
+count pills (bottom 60.5) and targets (bottom 52.5), six weapons; the pill gap
 is from each stick ring's frame across (left/right where they differ), at Shield
 levels 1, 2 and 3.
 
 | Screen, insets              | Ring to game area, left, right, bottom |     Pill gap to ring frames, levels 1, 2, 3 | Pill above view bottom | Use below box | Press into box | Press to counts | Press to targets | Press to pill, levels 1, 2, 3 | Use to game area right |
 | --------------------------- | -------------------------------------- | ------------------------------------------: | ---------------------: | ------------: | -------------: | --------------: | ---------------: | ----------------------------: | ---------------------: |
-| 720x360                     | 60, 60, 40                             |                                148, 118, 88 |                     40 |          23.5 |           40.5 |            24.5 |             30.5 |           53.44, 34.03, 19.10 |                    137 |
-| 720x360, phone insets       | 103, 103, 59                           |                                 105, 75, 45 |                     59 |           4.5 |           59.5 |             5.5 |             11.5 |            26.91, 14.48, 9.11 |                    180 |
-| 844x390                     | 31, 30, 40                             | 177.54/177.46, 147.54/147.46, 117.54/117.46 |                     40 |          23.5 |           40.5 |            24.5 |             30.5 |           75.43, 53.06, 33.72 |                    107 |
-| 844x390, phone insets       | 74, 73, 59                             |   134.54/134.46, 104.54/104.46, 74.54/74.46 |                     59 |           4.5 |           59.5 |             5.5 |             11.5 |           44.23, 26.63, 14.32 |                    150 |
-| 844x390, bottom 19          | 31, 30, 59                             | 177.54/177.46, 147.54/147.46, 117.54/117.46 |                     59 |           4.5 |           59.5 |             5.5 |             11.5 |           75.43, 53.06, 33.72 |                    107 |
-| 720x360, left 43, bottom 19 | 103, 103, 59                           |                                 105, 75, 45 |                     59 |           4.5 |           59.5 |             5.5 |             11.5 |            26.91, 14.48, 9.11 |                    180 |
-| 844x390, left 47            | 78, 77, 40                             |   130.54/130.46, 100.54/100.46, 70.54/70.46 |                     40 |          23.5 |           40.5 |            24.5 |             30.5 |           41.65, 24.65, 13.18 |                    154 |
-| 1280x720                    | 60, 60, 8                              |                                148, 118, 88 |                     53 |          55.5 |            8.5 |            56.5 |             62.5 |           53.44, 34.03, 19.10 |                    137 |
-| 2400x1080                   | 20, 20, 40                             |                               188, 158, 128 |                     40 |          23.5 |           40.5 |            24.5 |             30.5 |           83.81, 60.64, 40.09 |                     97 |
-| 2404x1080 at dpr 2.5        | 20, 19, 40                             | 188.67/188.33, 158.67/158.33, 128.67/128.33 |                     40 |          23.5 |           40.5 |            24.5 |             30.5 |           84.07, 60.88, 40.30 |                     96 |
-| 2560x1080                   | 8, 8, 40                               | 200.67/199.33, 170.67/169.33, 140.67/139.33 |                     40 |          23.5 |           40.5 |            24.5 |             30.5 |           93.05, 69.14, 47.47 |                     85 |
+| 720x360                     | 60, 60, 40                             |                                148, 118, 88 |                     40 |          21.5 |           42.5 |            22.5 |             30.5 |           53.44, 34.03, 19.10 |                    137 |
+| 720x360, phone insets       | 103, 103, 59                           |                                 105, 75, 45 |                     59 |           2.5 |           61.5 |             3.5 |             11.5 |            26.91, 14.48, 9.11 |                    180 |
+| 844x390                     | 31, 30, 40                             | 177.54/177.46, 147.54/147.46, 117.54/117.46 |                     40 |          21.5 |           42.5 |            22.5 |             30.5 |           75.43, 53.06, 33.72 |                    107 |
+| 844x390, phone insets       | 74, 73, 59                             |   134.54/134.46, 104.54/104.46, 74.54/74.46 |                     59 |           2.5 |           61.5 |             3.5 |             11.5 |           44.23, 26.63, 14.32 |                    150 |
+| 844x390, bottom 19          | 31, 30, 59                             | 177.54/177.46, 147.54/147.46, 117.54/117.46 |                     59 |           2.5 |           61.5 |             3.5 |             11.5 |           75.43, 53.06, 33.72 |                    107 |
+| 720x360, left 43, bottom 19 | 103, 103, 59                           |                                 105, 75, 45 |                     59 |           2.5 |           61.5 |             3.5 |             11.5 |            26.91, 14.48, 9.11 |                    180 |
+| 844x390, left 47            | 78, 77, 40                             |   130.54/130.46, 100.54/100.46, 70.54/70.46 |                     40 |          21.5 |           42.5 |            22.5 |             30.5 |           41.65, 24.65, 13.18 |                    154 |
+| 1280x720                    | 60, 60, 8                              |                                148, 118, 88 |                     53 |          53.5 |           10.5 |            54.5 |             62.5 |           53.44, 34.03, 19.10 |                    137 |
+| 2400x1080                   | 20, 20, 40                             |                               188, 158, 128 |                     40 |          21.5 |           42.5 |            22.5 |             30.5 |           83.81, 60.64, 40.09 |                     97 |
+| 2404x1080 at dpr 2.5        | 20, 19, 40                             | 188.67/188.33, 158.67/158.33, 128.67/128.33 |                     40 |          21.5 |           42.5 |            22.5 |             30.5 |           84.07, 60.88, 40.30 |                     96 |
+| 2560x1080                   | 8, 8, 40                               | 200.67/199.33, 170.67/169.33, 140.67/139.33 |                     40 |          21.5 |           42.5 |            22.5 |             30.5 |           93.05, 69.14, 47.47 |                     85 |
 
 `USE_DISC.fromAim` (-77, -100) clears at every view: the drawn ring stays under
 the box and the press circle off the weapon counts and targets. Phone insets
-are the tightest (4.5 and 5.5), because the bottom inset lifts the sticks and
+are the tightest (2.5 and 3.5), because the bottom inset lifts the sticks and
 Use by 19 while the box and weapons stay put; that margin is unchanged from the
 previous rule.
 
@@ -333,7 +333,7 @@ Overlap rules:
   pill's left; the widest pill clears at every view with six weapons, so every
   narrower one does.
 
-- The weapon count pills end at HUD rect top + 46.5 (58.5), 5 above the
+- The weapon count pills end at HUD rect top + 48.5 (60.5), 5 above the
   conversation box top; they stay inside their targets' columns (the widest,
   "999m", is 38.69 of 48), so they add nothing to the clusters' horizontal
   clearance.
@@ -341,12 +341,12 @@ Overlap rules:
   to + 53.5, over the item notice's row, + 34.5 to + 58.5) and draw over the
   conversation box and its name tab, in the item notice's layer
   ([Status pill](#status-pill)).
-- Use's press circle reaches the conversation box's lower right (to + 111.5,
-  123.5 at a top of 12): by 40.5 at the 720 base and 59.5 with phone insets.
+- Use's press circle reaches the conversation box's lower right (to + 113.5,
+  125.5 at a top of 12): by 42.5 at the 720 base and 61.5 with phone insets.
   The conversation box always wins a press in the overlap. Use's drawn ring
-  stays 23.5 below the box (4.5 with phone insets), and its press circle 24.5
-  below the weapon count pills' bottom (HUD rect top + 46.5, so 58.5) and 30.5
-  below the weapon targets (5.5 and 11.5 with phone insets, the tightest
+  stays 21.5 below the box (2.5 with phone insets), and its press circle 22.5
+  below the weapon count pills' bottom (HUD rect top + 48.5, so 60.5) and 30.5
+  below the weapon targets (3.5 and 11.5 with phone insets, the tightest
   view); every view is in [Touch controls by view](#touch-controls-by-view).
 - The sticks and Use show only on a touch screen, outside modals, as in Chibi.
   Desktop hides them with no hint; Space still activates Use.
@@ -360,8 +360,8 @@ Overlap rules:
   Escape. While a modal card or storybook page shows, the flight pause button
   hides and the HUD takes no input under the dim. The conversation box is not modal: the
   pause button, weapons and sticks stay visible and live beside it.
-- The conversation box's bottom (123.5) sits at least 24 above the ship's drawn
-  top at the 360-high view (44.67).
+- The conversation box's bottom (125.5) sits at least 24 above the ship's drawn
+  top at the 360-high view (42.67).
 
 ### Status pill
 
@@ -409,7 +409,7 @@ Quests closes back to the paused map through its existing navigation.
   3.38 and 2.38 at its end, 4 higher. The rise never carries the tick into the
   pill.
 - The line box (+ 33.5 to + 53.5, rising to + 29.5 to + 49.5) overlaps the
-  item notice's row (+ 34.5 to + 58.5) and the name tab's (+ 41.5 to + 61.5)
+  item notice's row (+ 34.5 to + 58.5) and the name tab's (+ 43.5 to + 63.5)
   as before; the labels still draw above the chip, the conversation box and
   the tab, their outline keeping them readable on each.
 - The labels draw in the [item notice](#item-notice)'s layer, above its chip,
@@ -624,9 +624,9 @@ collapse, fly or bump.
 - The chip hides with the pill while a modal card or storybook page shows,
   and its timeline pauses until play resumes. Leaving flight clears the queue.
 - The chip never waits for the conversation box. It covers at most the box's
-  top 7 (63.5 to 70.5) and, when it sits over one, part of a name tab (53.5
-  to 73.5); a two-line text block's first line box starts 3 below it.
-- Across, the chip shares rows with the weapon count pills (to + 46.5) and
+  top 5 (65.5 to 70.5) and, when it sits over one, part of a name tab (55.5
+  to 75.5); a two-line text block's first line box starts 5 below it.
+- Across, the chip shares rows with the weapon count pills (to + 48.5) and
   the pause press area (to + 42.75); the clamp keeps it 16 from every weapon
   target, and its left edge is the pill's, 8 right of the pause press area.
 
@@ -668,14 +668,14 @@ ammunition count string; Laser shows none.
 | Panel    | Opaque navy `#262b44` with a 1 px inset ink rim, `HUD_AMMO_COUNT.height` 14, radius 4, `HUD_AMMO_COUNT.padding` 4 at each end; no geometry change                   |
 | Width    | The count's width plus 8, sized to its text: 14.67 at "0", 34.70 at "9999", 38.69 at "999m" (the widest)                                                            |
 | Text     | The count in `TYPE.count` (12 bold) on its 14 line, centred in the pill                                                                                             |
-| Position | Centred on the disc horizontally; top `HUD_AMMO_COUNT.top` 40 below the target top (HUD rect top + 32.5, so 44.5)                                                   |
-| Box      | Relative to the target's top-left: `x = 24 - w / 2`, `y = 40`, `w` = count width + 8, `h = 14`; so `x` 16.66 and `w` 14.67 at "0", `x` 4.65 and `w` 38.69 at "999m" |
-| Vertical | Spans HUD rect top + 32.5 to + 46.5 (44.5 to 58.5); overlaps the disc's lower edge (+ 33) by 0.5; digit ink from + 35.3 to + 43.8, wholly below the disc            |
+| Position | Centred on the disc horizontally; top `HUD_AMMO_COUNT.top` 42 below the target top (HUD rect top + 34.5, so 46.5)                                                   |
+| Box      | Relative to the target's top-left: `x = 24 - w / 2`, `y = 42`, `w` = count width + 8, `h = 14`; so `x` 16.66 and `w` 14.67 at "0", `x` 4.65 and `w` 38.69 at "999m" |
+| Vertical | Spans HUD rect top + 34.5 to + 48.5 (46.5 to 60.5); clears the disc's lower edge (+ 33) by 1.5; digit ink from + 37.3 to + 45.8, wholly below the disc              |
 | Layer    | A child of the weapon button, drawn over the disc; it takes no input and moves with the button's shake                                                              |
 
-- Position rule: the pill overlaps the disc's lower edge by 0.5. Its bottom
-  is HUD rect top + 46.5, and the conversation box top sits
-  `HUD_AMMO_COUNT.clearance` (5) below it. Its lower 6 lie below the target,
+- Position rule: the pill clears the disc's lower edge by 1.5. Its bottom
+  is HUD rect top + 48.5, and the conversation box top sits
+  `HUD_AMMO_COUNT.clearance` (5) below it. Its lower 8 lie below the target,
   outside the press area.
 - Count strings fit one line at every value: the widest pill (38.69) leaves
   9.31 inside the 48 target and 18.31 between neighbouring pills.
@@ -726,7 +726,7 @@ Clearance along the edges, from the band the 10-across markers can occupy
   at 12, so a light-field marker directly behind a disc loses 1 row to it.
 - With phone insets the side bands (44 to 54, or 44 to 56 lit) share their
   columns with the pause disc and the outermost weapon disc, which start at
-  the same 43 inset: a side marker in the HUD row's span (12 to 58.5, count
+  the same 43 inset: a side marker in the HUD row's span (12 to 60.5, count
   pills included) sits under that disc. At 720x360 with phone insets the stick
   rings start at the 43 inset too, so a side marker in the rings' span (228 to 301) sits under the open ring's band, and shows through its clear centre.
 - The shield pill and the Use disc sit 29 or more from every band.
@@ -1240,7 +1240,7 @@ and the name tab overhangs it by 10.
 | Token          | Value                                                                                          | Rule                                                                                                                                                                                                                           |
 | -------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Width          | `min(availableWidth, CONVERSATION_BOX.maxWidth)`, max 480                                      | Centred on the available rect; 480 at every supported view (the page rect is at least 634 wide)                                                                                                                                |
-| Top            | The count pills' bottom plus `HUD_AMMO_COUNT.clearance` (5) (`CONVERSATION_BOX.top`)           | HUD rect top `- 7.5 + 40 + 14 + 5` = + 51.5, so 63.5 without a top inset; the same rule in both games                                                                                                                          |
+| Top            | The count pills' bottom plus `HUD_AMMO_COUNT.clearance` (5) (`CONVERSATION_BOX.top`)           | HUD rect top `- 7.5 + 42 + 14 + 5` = + 53.5, so 65.5 without a top inset; the same rule in both games                                                                                                                          |
 | Tab top        | Box top minus `CONVERSATION_BOX.tab.overhang` (10)                                             | HUD rect top + 41.5, so 53.5 without a top inset                                                                                                                                                                               |
 | Height         | `CONVERSATION_BOX.height` = frame 52 + `2 * CONVERSATION_BOX.padding` = 60                     | Fixed; the box never grows                                                                                                                                                                                                     |
 | Padding        | `CONVERSATION_BOX.padding` = 4, from the panel edge to the portrait frame                      | The text column keeps `SPACING.gap` from the frame and from the far edge                                                                                                                                                       |
@@ -1279,19 +1279,20 @@ and the name tab overhangs it by 10.
   takes the slot's width, `SPACING.gap` from each end of the panel (464 at
   480), and the name tab keeps the left end. Story pages treat those speakers
   alike: no portrait, and the text fills the inner width.
-- Clearance at the 360-high view: the box spans 63.5 to 123.5. The ship's
+- Clearance at the 360-high view: the box spans 65.5 to 125.5. The ship's
   pivot sits at the view centre (180) with a 42 display frame; its highest
   drawn hull point across the 32 headings is 168.17 (heading 4, the apex),
-  44.67 below the box. The rule is at least 24.
-- At the 1280x720 view (720x405 logical) the box bottom is still 123.5 and the
-  hull top 190.67, 67.17 below.
+  42.67 below the box. The rule is at least 24.
+- At the 1280x720 view (720x405 logical) the box bottom is still 125.5 and the
+  hull top 190.67, 65.17 below.
 
 #### Tab clearance
 
-The tab spans HUD rect top + 41.5 to + 61.5 (53.5 to 73.5). Vertically it
-clears the status pill (bottom + 30.5) by 11, the weapon discs (bottom + 33) by 8.5 and the weapon targets (bottom +
-40.5) by 1; it shares rows only with the count pills (+ 32.5 to + 46.5) and
-the pause press area (to + 42.75). Across, the box is centred and 480 wide;
+The tab spans HUD rect top + 43.5 to + 63.5 (55.5 to 75.5). Vertically it
+clears the status pill (bottom + 30.5) by 13, the weapon discs (bottom + 33)
+by 10.5 and the weapon targets (bottom + 40.5) by 3. It shares rows with the
+count pills (+ 34.5 to + 48.5), and clears the pause press area's bottom
+(+ 42.75) by 0.75. Across, the box is centred and 480 wide;
 Ada's tab ("Ada", 42.23) starts 64 in and every other tab 8 in, the widest
 "General Gadget" (131.15). With six weapons the leftmost target is Laser's
 (target 5, no count pill) and the leftmost count pill is target 4's.

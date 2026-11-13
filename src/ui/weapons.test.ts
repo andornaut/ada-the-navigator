@@ -186,11 +186,11 @@ describe("HUD weapon buttons", () => {
     expect(pips).not.toContain("opacity:");
   });
 
-  it("draws each count in an opaque ink pill on the disc's lower edge, clear of the name tab", () => {
-    expect(HUD_AMMO_COUNT).toEqual({ clearance: 5, height: 14, padding: 4, radius: 4, top: 40 });
+  it("draws each count in a navy pill below the disc, clear of the name tab", () => {
+    expect(HUD_AMMO_COUNT).toEqual({ clearance: 5, height: 14, padding: 4, radius: 4, top: 42 });
     expect(AMMO_COUNT_TEXT).toEqual({ empty: "#e4574e", normal: "#ead4aa" });
     // The pill overlaps the disc's lower edge, 7.5 + 33 = 40.5 below the target's top.
-    expect(HUD_AMMO_COUNT.top).toBeLessThan(HUD_BUTTON_INSET.disc + HUD_BUTTON.disc);
+    expect(HUD_AMMO_COUNT.top - (HUD_BUTTON_INSET.disc + HUD_BUTTON.disc)).toBe(1.5);
     // In the view, the conversation box's top sits clearance (5) below the pill.
     const cases: readonly (readonly [Size, Insets])[] = [
       [{ height: 360, width: 720 }, NO_INSETS],

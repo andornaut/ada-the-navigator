@@ -77,38 +77,38 @@ describe("conversation box", () => {
       const pillBottom = hud.y + hudButtonTarget(0).y + HUD_AMMO_COUNT.top + HUD_AMMO_COUNT.height;
       expect(HUD_AMMO_COUNT.clearance).toBe(5);
       expect(box.y).toBe(pillBottom + HUD_AMMO_COUNT.clearance);
-      expect(box.y).toBe(hud.y + 51.5);
+      expect(box.y).toBe(hud.y + 53.5);
       expect(box.width).toBeLessThanOrEqual(480);
       expect(box.x + box.width / 2).toBeCloseTo(view.width / 2);
       expect(box.x).toBeGreaterThanOrEqual(Math.max(SAFE_MARGIN.page, insets.left));
     },
   );
 
-  it("spans 120, 63.5 to 600, 123.5 on the base view, its tab from 53.5", () => {
+  it("spans 120, 65.5 to 600, 125.5 on the base view, its tab from 55.5", () => {
     expect(conversationBoxRect(NO_INSETS, BASE)).toEqual({
       height: 60,
       width: 480,
       x: 120,
-      y: 63.5,
+      y: 65.5,
     });
-    expect(conversationTabTop(NO_INSETS, BASE)).toBe(53.5);
+    expect(conversationTabTop(NO_INSETS, BASE)).toBe(55.5);
   });
 
-  it("puts the tab top below the pill by 11, the discs by 8.5, targets by 1", () => {
+  it("puts the tab top below the pill by 13, the discs by 10.5, targets by 3", () => {
     const hud = hudRect(NO_INSETS, BASE);
     const tabTop = conversationTabTop(NO_INSETS, BASE) - hud.y;
-    expect(tabTop).toBe(41.5);
-    expect(tabTop - (STATUS_PILL.y + STATUS_PILL.pill.height)).toBe(11);
+    expect(tabTop).toBe(43.5);
+    expect(tabTop - (STATUS_PILL.y + STATUS_PILL.pill.height)).toBe(13);
     // The +N labels sit under their counts and draw over the tab and the box.
     expect(STATUS_PILL.y + (PILL.height - TYPE.label.lineHeight) / 2 + STATUS_PILL.tick.top).toBe(
       33.5,
     );
     const target = hudButtonTarget(0);
-    expect(tabTop - (target.y + HUD_BUTTON_INSET.disc + HUD_BUTTON.disc)).toBe(8.5);
-    expect(tabTop - (target.y + HUD_BUTTON.target)).toBe(1);
-    // It shares rows only with the count pills and the pause press area, so it clears them across.
+    expect(tabTop - (target.y + HUD_BUTTON_INSET.disc + HUD_BUTTON.disc)).toBe(10.5);
+    expect(tabTop - (target.y + HUD_BUTTON.target)).toBe(3);
+    // The tab shares rows with count pills, and clears the pause press area below it.
     expect(target.y + HUD_AMMO_COUNT.top + HUD_AMMO_COUNT.height).toBeGreaterThan(tabTop);
-    expect(PAUSE_BUTTON.hit.y + PAUSE_BUTTON.hit.height).toBeGreaterThan(tabTop);
+    expect(tabTop - (PAUSE_BUTTON.hit.y + PAUSE_BUTTON.hit.height)).toBe(0.75);
   });
 
   it("takes the page width when that is narrower than 480", () => {
@@ -144,11 +144,11 @@ describe("conversation box", () => {
     expect(CONVERSATION_BOX.ship.hullRise).toBe(Math.ceil(highest * 100) / 100);
   });
 
-  it("keeps 44.67 clear above Ada's ship at the 360 high view and 67.17 at 405", () => {
-    expect(conversationShipClearance(NO_INSETS, BASE)).toBeCloseTo(44.67, 9);
+  it("keeps 42.67 clear above Ada's ship at the 360 high view and 65.17 at 405", () => {
+    expect(conversationShipClearance(NO_INSETS, BASE)).toBeCloseTo(42.67, 9);
     // At 405 high the pivot sits at 202.5 and the hull top at 190.67.
     const box = conversationBoxRect(NO_INSETS, BASE);
-    expect(405 / 2 - CONVERSATION_BOX.ship.hullRise - (box.y + box.height)).toBeCloseTo(67.17, 9);
+    expect(405 / 2 - CONVERSATION_BOX.ship.hullRise - (box.y + box.height)).toBeCloseTo(65.17, 9);
   });
 
   it.each(VIEWS)("keeps at least 24 clear above Ada's ship on %s", (_name, view, insets) => {
