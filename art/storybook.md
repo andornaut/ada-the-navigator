@@ -88,8 +88,8 @@ Full palettes are in the generator. Colours are before treatment d.
   its song sheet at the desk's free left end, left of the rock, so the rock
   stays the brightest point. It closes in `story-concert-hall`, the stage seen
   from the hall, with the spotlight on the empty stage. The recorder room draws Ada's
-  room 7 rows higher and the concert hall rises 7 rows too, so both subjects end
-  by row 293.
+  room at the same camera as every other bedroom variant. The concert hall
+  rises 7 rows so its subject ends by row 293.
 - Andromeda opens, resolves and closes in Grandma's garden with a potting table
   on the lawn by the house and a green tray of eight terracotta pots on it.
   `story-grandma-garden-spilled` (the opening, its branch pages and the
@@ -188,7 +188,7 @@ at most the panel top + 180; at 720x405 the limit is the panel top + 135.
 | `story-ada-room-morning`         | 255..348 | The empty bed and the rock on the desk                 |
 | `aboard`                         | 172..256 | The ship's canopy and the hull round it                |
 | `aboard-emergency`               | 172..256 | The ship's canopy and the hull round it                |
-| `story-ada-room-recorder`        | 248..293 | The rock and the recorder on the desk                  |
+| `story-ada-room-recorder`        | 255..300 | The rock and the recorder on the desk                  |
 | `story-concert-hall`             | 188..293 | The stage, piano and spotlight                         |
 | `story-grandma-garden-spilled`   | 176..285 | The seedling tray on the potting table and the beds    |
 | `story-grandma-garden-replanted` | 176..285 | The seedling tray on the potting table and the beds    |
@@ -225,20 +225,17 @@ characters, the heading and two choices).
 | `story-park`, visit, chapter 3 resolution                           | y -180*: 40..105, top 143       | y -176: 44..109, top 153        | y -135*: 85..150, top 201       |
 | `story-ada-room-night`, jump home                                   | y -146.5: 103.5..153.5, top 257 | y -146.5: 103.5..153.5, top 257 | y -122.5: 127.5..177.5, top 305 |
 | `story-ada-room-morning`, jump home                                 | y -173: 82..175, top 257        | y -173: 82..175, top 257        | y -135*: 120..213, top 305      |
-| `story-ada-room-recorder`, new chapter at the limit                 | y -180*: 68..113, top 113       | y -180*: 68..113, top 113       | y -135*: 113..158, top 161      |
 | `story-concert-hall`, new chapter at the limit                      | y -180*: 8..113, top 113        | y -180*: 8..113, top 113        | y -135*: 53..158, top 161       |
 | `story-grandma-garden-spilled`, new chapter at the limit            | y -174: 2..111, top 113         | y -174: 2..111, top 113         | y -135*: 41..150, top 161       |
 | `story-grandma-garden-replanted`, new chapter at the limit          | y -174: 2..111, top 113         | y -174: 2..111, top 113         | y -135*: 41..150, top 161       |
 
 An [environment alias](#environment-aliases) carries its base's band and
-takes its base's placement. Existing subject bands remain unchanged to keep
-story-run anchors stable.
+takes its base's placement. Bedroom variants share the same model scale and camera origin. Recorder
+variants add desk props without shifting the room.
 
-Every band in the current runs clears its panel at these views, the aboard
-band under Astra's three questions included: its 84 rows fit the 93-row strip.
-At Gameplay's limit the four new backgrounds clear too: Needle's recorder room
-and concert hall rise 7 rows so their bands end by row 293, the lowest visible
-row under a 220-character page at 360-high views.
+The aboard band under Astra's three questions spans 84 rows in a 93-row strip.
+The concert hall rises 7 rows so its subject ends by row 293. Bedroom variants
+keep one camera and use the runtime's shared bedroom placement.
 
 ## Environment aliases
 

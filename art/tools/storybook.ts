@@ -431,14 +431,11 @@ interface RoomOptions {
   moon?: boolean;
   // Needle's recorder on its song sheet at the desk's left end.
   recorder?: boolean;
-  // Canvas rows to raise the whole room by, so its subject band ends by row 293.
-  lift?: number;
 }
 
 // Design px per logical canvas px (the canvas is the design frame at 360 / 390).
 const DESIGN_PER_LOGICAL = DESIGN.height / 360;
-// Needle's scenes rise 7 rows, so the desk's recorder and rock and the stage end by row 293 and
-// clear the strip above a story panel at Gameplay's longest page.
+// The concert hall rises 7 rows so the stage ends by row 293 above the story panel.
 const NEEDLE_LIFT = 7;
 
 // The doorway in the left wall of Ada's room, beside the bed's head, in model units: Dad looks
@@ -464,12 +461,9 @@ function recorder(
   s.solid(rod(at(1.2), at(1.42), r * 1.05, 8, r * 1.3), P.recorder!, 2, key + 0.004);
 }
 
-function room(
-  P: Palette,
-  { glow, moon, recorder: withRecorder, lift = 0 }: RoomOptions = {},
-): Scene {
+function room(P: Palette, { glow, moon, recorder: withRecorder }: RoomOptions = {}): Scene {
   const [nx, ny, wall] = [16, 12, 7];
-  const s = fitted(nx, ny, wall, 12 - lift * DESIGN_PER_LOGICAL);
+  const s = fitted(nx, ny, wall);
   s.solid(box(0, nx, 0, ny, -0.8, 0), P.slab!, 0, 0);
   const planks: Decal[] = [1, 2, 3, 4, 5, 6, 7].map((j) => [
     onZ(0.001, 0, nx, j * 1.5, j * 1.5 + 0.08),
@@ -1597,14 +1591,14 @@ export const BACKGROUNDS: readonly Background[] = [
   {
     id: "story-ada-room-recorder",
     palette: ROOM,
-    build: (P) => room(P, { glow: glowAmount(0), lift: NEEDLE_LIFT, recorder: true }),
-    subject: band(248, 293),
+    build: (P) => room(P, { glow: glowAmount(0), recorder: true }),
+    subject: DESK_ROCK,
   },
   ...GLOW.map((glow, i) => ({
     id: `story-ada-room-recorder-glow-${i + 1}`,
     palette: ROOM,
-    build: (P: Palette) => room(P, { glow: glowAmount(glow), lift: NEEDLE_LIFT, recorder: true }),
-    subject: band(248, 293),
+    build: (P: Palette) => room(P, { glow: glowAmount(glow), recorder: true }),
+    subject: DESK_ROCK,
   })),
   // Needle's closing: the stage and its spotlight.
   {
