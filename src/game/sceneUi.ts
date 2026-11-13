@@ -1095,6 +1095,7 @@ export function refreshScene(scene: UiContext): void {
   scene.controls.setPause({
     carrying: scene.model.carrying,
     field: mapField(scene),
+    ...(state.mode === "space" && state.flight ? { galaxy: state.flight.galaxy } : {}),
     inDanger: scene.model.inDanger,
     job: scene.model.jobObjective,
     map: scene.model.map,
