@@ -207,7 +207,7 @@ describe("Paused card", () => {
     expect(remove).toHaveBeenCalledWith("loadingdone", add.mock.calls[0]![1]);
   });
 
-  it("is a two-column grid of Map, Ship, Settings and Back to title over Resume, with no objective", () => {
+  it("is a two-column grid of Map, Quests, Ship, Settings and Back to title over Resume, with no objective", () => {
     const { body, pause } = cards();
     pause.setState(state({ job: "Chart the Sleepy Tug" }));
     expect(body.children).toHaveLength(1);
@@ -217,6 +217,7 @@ describe("Paused card", () => {
     expect(actions.children[1]!.dataset.action).toBe("pause-resume");
     expect(shownActions(actions)).toEqual([
       "pause-map",
+      "pause-quests",
       "pause-ship",
       "pause-settings",
       "pause-backToTitle",
@@ -224,6 +225,7 @@ describe("Paused card", () => {
     ]);
     expect(buttonsOf(actions).map((node) => node.textContent)).toEqual([
       "Map",
+      "Quests",
       "Ship",
       "Settings",
       "Back to title",
@@ -241,8 +243,9 @@ describe("Paused card", () => {
       null,
       null,
       null,
+      null,
     ]);
-    actions[3]!.click();
+    button(body.children[0]!, "pause-backToTitle").click();
     expect(options.onBackToTitle).toHaveBeenCalledOnce();
   });
 
@@ -375,4 +378,55 @@ it("opens the existing Quests route directly from carried cargo and preserves pa
   expect(options.onOpenChange).toHaveBeenLastCalledWith(false);
   pause.dispose();
   spy.mockRestore();
+});
+
+it("opens Quests from the pause menu and keeps pause through both back layers until Resume", () => {
+  const original = mapUI.createMapScreen;
+  let mapOpen = false;
+  let questsOpen = false;
+  const openQuests = vi.fn(() => {
+    questsOpen = true;
+  });
+  const spy = vi.spyOn(mapUI, "createMapScreen").mockImplementation((...args) => ({
+    ...original(...args),
+    close: () => {
+      mapOpen = false;
+    },
+    closeQuests: () => {
+      questsOpen = false;
+    },
+    isOpen: () => mapOpen,
+    open: () => {
+      mapOpen = true;
+    },
+    openQuests,
+    questsOpen: () => questsOpen,
+  }));
+  try {
+    const { body, options, pause } = cards();
+    pause.setState(state({ map: { ...MAP, quests: [] } }));
+    pause.open();
+    button(body.children[0]!, "pause-quests").click();
+    expect(openQuests).toHaveBeenCalledOnce();
+    expect(questsOpen).toBe(true);
+    expect(pause.mapOpen()).toBe(true);
+    expect(options.onOpenChange.mock.calls).toEqual([[true]]);
+    expect(options.onTravel).not.toHaveBeenCalled();
+    expect(options.onBackToTitle).not.toHaveBeenCalled();
+    pause.closeMap();
+    expect(questsOpen).toBe(false);
+    expect(pause.mapOpen()).toBe(true);
+    expect(pause.isOpen()).toBe(true);
+    pause.closeMap();
+    expect(pause.mapOpen()).toBe(false);
+    expect(pause.isOpen()).toBe(true);
+    expect(focused()?.dataset.action).toBe("pause-quests");
+    expect(options.onOpenChange.mock.calls).toEqual([[true]]);
+    button(body.children[0]!, "pause-resume").click();
+    expect(pause.isOpen()).toBe(false);
+    expect(options.onOpenChange.mock.calls).toEqual([[true], [false]]);
+    pause.dispose();
+  } finally {
+    spy.mockRestore();
+  }
 });

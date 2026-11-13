@@ -132,6 +132,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   const text: Record<PauseAction, string> = {
     backToTitle: labels.backToTitle,
     map: labels.map,
+    quests: labels.mapScreen.quests,
     resume: labels.resume,
     settings: labels.settings,
     ship: labels.ship,
@@ -167,6 +168,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     reducedMotion: options.reducedMotion,
   });
   let open = false;
+  let mapOpener: "map" | "quests" = "map";
   let state: PauseState = {
     carrying: false,
     field: null,
@@ -264,6 +266,12 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       renderShip();
     }
   };
+  function openQuests(opener: "map" | "quests" = "map"): void {
+    mapOpener = opener;
+    setOpen(true);
+    show("map");
+    mapScreen.openQuests();
+  }
   const act = (id: PauseAction) => {
     const button = buttons.get(id)!;
     if (!actionsHere().find((view) => view.id === id)?.available) {
@@ -273,7 +281,10 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     if (id === "resume") {
       setOpen(false);
     } else if (id === "map") {
+      mapOpener = "map";
       show("map");
+    } else if (id === "quests") {
+      openQuests("quests");
     } else if (id === "ship") {
       show("ship");
     } else if (id === "settings") {
@@ -308,8 +319,8 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     }
     if (mapOpen()) {
       show("paused");
-      const mapButton = buttons.get("map");
-      if (mapButton) {
+      const mapButton = buttons.get(mapOpener);
+      if (mapButton && !mapButton.hidden) {
         focusTarget(mapButton);
       }
     }
@@ -373,11 +384,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     isOpen: () => open,
     mapOpen,
     open: () => setOpen(true),
-    openQuests(): void {
-      setOpen(true);
-      show("map");
-      mapScreen.openQuests();
-    },
+    openQuests,
     setState(next: PauseState): void {
       state = next;
       renderAll();
