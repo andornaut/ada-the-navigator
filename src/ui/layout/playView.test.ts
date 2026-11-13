@@ -51,7 +51,7 @@ import {
   useDiscLayout,
   usePressed,
 } from "./touchControls.ts";
-import { playLayout, uncoveredInsets, viewProperties } from "./viewScale.ts";
+import { playLayout, viewProperties } from "./viewScale.ts";
 
 const PHONE: Insets = { bottom: 19, left: 43, right: 43, top: 0 };
 
@@ -83,28 +83,25 @@ describe("view scale", () => {
     }
   });
 
-  it("gives the DOM s as --ada-unit, the CSS px insets and whole-pixel drawn edges", () => {
-    const layout = playLayout(
-      { height: 390, width: 844 },
-      { bottom: 21, left: 47, right: 47, top: 0 },
-    );
-    expect(layout.insets.left).toBeCloseTo(47 / (390 / 360), 9);
+  it("gives the DOM full-viewport bounds, scale and whole-pixel drawn edges", () => {
+    const layout = playLayout({ height: 390, width: 844 });
+    expect(layout.insets).toEqual(NO_INSETS);
     expect(layout.slices[2]).toBe(2);
     expect(layout.slices[4]).toBe(4);
     expect(Object.fromEntries(viewProperties(layout))).toMatchObject({
-      "--ada-safe-left": "47px",
+      "--ada-safe-left": "0px",
       "--ada-slice-4": "4px",
       "--ada-unit": String(layout.s),
     });
     expect(layout.slices[1]).toBe(1);
-    expect(playLayout({ height: 720, width: 1280 }, NO_INSETS).slices).toEqual({
+    expect(playLayout({ height: 720, width: 1280 }).slices).toEqual({
       1: 2,
       2: 4,
       4: 7,
       6: 11,
     });
     // The galaxy preview's 1 px frame at 1.78x and 2.67x: round(1 * s) whole CSS px.
-    expect(playLayout({ height: 1080, width: 1920 }, NO_INSETS).slices[1]).toBe(3);
+    expect(playLayout({ height: 1080, width: 1920 }).slices[1]).toBe(3);
   });
 
   it("writes logical sizes as calc(var(--ada-unit) * N), never raw px", () => {
@@ -153,12 +150,6 @@ describe("safe-margin clamp", () => {
       top: 0,
     });
   });
-
-  it("counts only insets the page frame does not already keep clear", () => {
-    expect(
-      uncoveredInsets({ bottom: 21, left: 47, right: 47, top: 20 }, { ...NO_INSETS, top: 20 }),
-    ).toEqual({ bottom: 21, left: 47, right: 47, top: 0 });
-  });
 });
 
 describe("HUD rect", () => {
@@ -186,7 +177,7 @@ describe("HUD rect", () => {
   });
 
   it("gives the bridge the HUD rect's edges in CSS px", () => {
-    const layout = playLayout({ height: 390, width: 844 }, NO_INSETS);
+    const layout = playLayout({ height: 390, width: 844 });
     const properties = new Map(viewProperties(layout));
     expect(parseFloat(properties.get(VIEW_PROPERTIES.hud("left"))!)).toBeCloseTo(41 * layout.s, 6);
     // The right edge mirrors the left: the same distance in from the view's right.

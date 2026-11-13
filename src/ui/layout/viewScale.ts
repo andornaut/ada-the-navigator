@@ -7,14 +7,13 @@ import {
   logicalView,
   NO_INSETS,
   playView,
-  safeInsets,
   type Side,
   type Size,
   viewScale,
 } from "./playView.ts";
 
 // The view-scale bridge: gives the DOM UI the canvas's scale s, as --ada-unit on the play area,
-// with the safe insets and whole-pixel nine-slice edges, so DOM layout reads and writes logical
+// with full-viewport bounds and whole-pixel nine-slice edges, so DOM layout reads and writes logical
 // px only. The play area is not transform-scaled: text stays crisp and hit testing native.
 
 // Dispatched on window after the play area's view properties change, so fitted cards refit.
@@ -22,8 +21,7 @@ export const VIEW_SCALE_EVENT = "ada-view-scale";
 
 const SIDES: readonly Side[] = ["top", "right", "bottom", "left"];
 
-// What the DOM UI lays out against: s, the logical view, the safe insets in logical px and in CSS
-// px, and each nine-slice edge in whole CSS px.
+// Hardware insets are zero in logical and CSS px; normal layout margins remain separate.
 export interface PlayLayout {
   readonly cssInsets: Insets;
   readonly insets: Insets;
@@ -32,23 +30,12 @@ export interface PlayLayout {
   readonly view: Size;
 }
 
-// The safe-area insets still covering the play area: each frame inset less what the page frame's
-// padding already keeps clear on that side, never negative.
-export function uncoveredInsets(frameInsets: Insets, cleared: Insets): Insets {
-  return {
-    bottom: Math.max(0, frameInsets.bottom - cleared.bottom),
-    left: Math.max(0, frameInsets.left - cleared.left),
-    right: Math.max(0, frameInsets.right - cleared.right),
-    top: Math.max(0, frameInsets.top - cleared.top),
-  };
-}
-
-// The play layout for the canvas's CSS display size and the insets still covering it.
-export function playLayout(cssSize: Size, cssInsets: Insets): PlayLayout {
+// The play layout uses the complete canvas CSS display size, including notch-covered areas.
+export function playLayout(cssSize: Size): PlayLayout {
   const s = viewScale(cssSize);
   return {
-    cssInsets,
-    insets: safeInsets(cssInsets, s),
+    cssInsets: NO_INSETS,
+    insets: NO_INSETS,
     s,
     slices: Object.fromEntries(
       WHOLE_PX_EDGES.map((edge) => [edge, Math.max(1, Math.round(edge * s))]),
@@ -81,16 +68,6 @@ export function viewProperties(layout: PlayLayout): readonly (readonly [string, 
   ];
 }
 
-function paddingOf(element: Element): Insets {
-  const style = getComputedStyle(element);
-  return {
-    bottom: parseFloat(style.paddingBottom) || 0,
-    left: parseFloat(style.paddingLeft) || 0,
-    right: parseFloat(style.paddingRight) || 0,
-    top: parseFloat(style.paddingTop) || 0,
-  };
-}
-
 // The scale s in effect at element; 1 before the bridge has measured.
 export function readViewUnit(element: Element): number {
   const value = parseFloat(getComputedStyle(element).getPropertyValue(VIEW_PROPERTIES.unit));
@@ -104,18 +81,14 @@ export function createViewScaleBridge(
   host: HTMLElement,
   displaySize: Size,
 ): { readonly dispose: () => void; readonly update: () => PlayLayout } {
-  const probe = document.createElement("div");
-  probe.className = "ada-safe-probe";
-  probe.setAttribute("aria-hidden", "true");
-  host.append(probe);
   let applied = "";
-  let current = playLayout(SCREEN, NO_INSETS);
+  let current = playLayout(SCREEN);
   const update = (): PlayLayout => {
     const size = { height: displaySize.height, width: displaySize.width };
     if (!(size.width > 0 && size.height > 0)) {
       return current;
     }
-    const next = playLayout(size, uncoveredInsets(paddingOf(probe), paddingOf(document.body)));
+    const next = playLayout(size);
     const properties = viewProperties(next);
     const key = properties.map(([, value]) => value).join();
     current = next;
@@ -128,5 +101,5 @@ export function createViewScaleBridge(
     }
     return current;
   };
-  return { dispose: () => probe.remove(), update };
+  return { dispose: () => {}, update };
 }

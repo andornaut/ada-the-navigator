@@ -1,5 +1,5 @@
 import { HUD_EDGE } from "../../data/layout.ts";
-import { type Side } from "./playView.ts";
+import { NO_INSETS, type Side } from "./playView.ts";
 
 // CSS for logical sizes. The view-scale bridge (viewScale.ts) sets these custom properties on the
 // play area (#app: the canvas, the controls overlay, notices and the story panel); every DOM UI
@@ -90,28 +90,26 @@ export function slice(edge: number): string {
   return `var(${VIEW_PROPERTIES.slice(edge)})`;
 }
 
-// The play area's defaults until the bridge first measures, and the hidden probe that resolves
-// the frame's safe-area insets (game-kit's frame-turn --inset-* properties) to CSS px.
+// The full-viewport policy also applies to the published turned frame's body padding.
 export function viewStyle(edges: readonly number[]): string {
   return `
+html:root,
+html:root[data-frame-turn]{
+  ${Object.entries(NO_INSETS)
+    .map(([side, value]) => `--inset-${side}:${value}px;`)
+    .join("\n  ")}
+}
+
 #${VIEW_HOST_ID}{
   ${VIEW_PROPERTIES.unit}:1;
   ${VIEW_PROPERTIES.areaBottom}:0px;
   ${VIEW_PROPERTIES.areaLeft}:0px;
   ${HUD_SIDES.map((side) => `${VIEW_PROPERTIES.hud(side)}:${units(HUD_EDGE)};`).join("\n  ")}
-  ${(["top", "right", "bottom", "left"] as const).map((side) => `${VIEW_PROPERTIES.safe(side)}:0px;`).join("\n  ")}
+  ${Object.entries(NO_INSETS)
+    .map(([side, value]) => `${VIEW_PROPERTIES.safe(side as Side)}:${value}px;`)
+    .join("\n  ")}
   ${edges.map((edge) => `${VIEW_PROPERTIES.slice(edge)}:${edge}px;`).join("\n  ")}
 }
 
-.ada-safe-probe{
-  position:absolute;
-  top:0;
-  left:0;
-  width:0;
-  height:0;
-  visibility:hidden;
-  pointer-events:none;
-  padding:var(--inset-top,0px) var(--inset-right,0px) var(--inset-bottom,0px) var(--inset-left,0px)
-}
 `;
 }
