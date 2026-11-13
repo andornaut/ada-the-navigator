@@ -431,6 +431,8 @@ interface RoomOptions {
   moon?: boolean;
   // Needle's recorder on its song sheet at the desk's left end.
   recorder?: boolean;
+  // Phantom's blank invitation cards on the desk.
+  invitations?: boolean;
 }
 
 // Design px per logical canvas px (the canvas is the design frame at 360 / 390).
@@ -461,7 +463,10 @@ function recorder(
   s.solid(rod(at(1.2), at(1.42), r * 1.05, 8, r * 1.3), P.recorder!, 2, key + 0.004);
 }
 
-function room(P: Palette, { glow, moon, recorder: withRecorder }: RoomOptions = {}): Scene {
+function room(
+  P: Palette,
+  { glow, invitations, moon, recorder: withRecorder }: RoomOptions = {},
+): Scene {
   const [nx, ny, wall] = [16, 12, 7];
   const s = fitted(nx, ny, wall);
   s.solid(box(0, nx, 0, ny, -0.8, 0), P.slab!, 0, 0);
@@ -519,6 +524,12 @@ function room(P: Palette, { glow, moon, recorder: withRecorder }: RoomOptions = 
     [onY(2.601, 4.9, 6.3, 1.5, 1.6), P.desk!],
   ]);
   const desk: Decal[] = [];
+  if (invitations) {
+    desk.push(
+      [onZ(2.601, 1.15, 2.15, 0.5, 1.2), P.sheet!],
+      [onZ(2.601, 1.15, 2.15, 1.45, 2.15), P.sheet!],
+    );
+  }
   if (withRecorder) {
     // The song sheet, turned a little on the desk, with two staves.
     const sheet = (u0: number, u1: number, v0: number, v1: number, z: number): Face => {
@@ -1518,6 +1529,7 @@ export const TRANSITION = {
   version: 1,
   rockGlow: rockGlow(),
   rockGlowRecorder: rockGlow("story-ada-room-recorder"),
+  rockGlowInvitations: rockGlow("story-ada-room-invitations"),
 };
 
 /* Outputs */
@@ -1568,6 +1580,19 @@ export const BACKGROUNDS: readonly Background[] = [
     id: `story-ada-room-glow-${i + 1}`,
     palette: ROOM,
     build: (P: Palette) => room(P, { glow: glowAmount(glow) }),
+    subject: DESK_ROCK,
+  })),
+  // Phantom's party invitations share the ordinary room and its boarding glow.
+  {
+    id: "story-ada-room-invitations",
+    palette: ROOM,
+    build: (P) => room(P, { glow: glowAmount(0), invitations: true }),
+    subject: DESK_ROCK,
+  },
+  ...GLOW.map((glow, i) => ({
+    id: `story-ada-room-invitations-glow-${i + 1}`,
+    palette: ROOM,
+    build: (P: Palette) => room(P, { glow: glowAmount(glow), invitations: true }),
     subject: DESK_ROCK,
   })),
   // The raised beds in bloom beside the house.

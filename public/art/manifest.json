@@ -3851,6 +3851,74 @@
       }
     },
     {
+      "id": "story-ada-room-invitations",
+      "path": "/art/story/ada-room-invitations.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-ada-room-invitations-glow-1",
+      "path": "/art/story/ada-room-invitations-glow-1.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-ada-room-invitations-glow-2",
+      "path": "/art/story/ada-room-invitations-glow-2.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-ada-room-invitations-glow-3",
+      "path": "/art/story/ada-room-invitations-glow-3.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
       "id": "story-grandma-garden",
       "path": "/art/story/grandma-garden.png",
       "width": 1920,

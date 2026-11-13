@@ -90,6 +90,12 @@ and the scene's subject stays clearest above it.
 
 Full palettes are in the generator. Colours are before treatment d.
 
+- Phantom's opening and its room boarding narration use
+  `story-ada-room-invitations`: the ordinary room with two blank cream cards
+  on the free left side of the desk. The cards use the existing paper colour
+  `#fbf7ee`, with no text, names or extra figures. This variant and its three
+  glow frames share the neutral room's palette, camera, canvas and subject
+  band (255..300). Other bedroom images remain independent.
 - Needle opens and resolves in `story-ada-room-recorder`: the recorder lies on
   its song sheet at the desk's free left end, left of the rock, so the rock
   stays the brightest point. It closes in `story-concert-hall`, the stage seen
@@ -291,6 +297,11 @@ to `-3` into `aboard`, with the same timing and reduced motion. Its
 frames use the shared bedroom camera with the same glow amounts and the
 recorder in place on its song sheet. They carry the room's subject band
 (255..300).
+
+Phantom's `rockGlowInvitations` starts at `story-ada-room-invitations` and
+uses `story-ada-room-invitations-glow-1` through `-3`, then `aboard`.
+The timings, reduced-motion replacement and glow parameters match `rockGlow`;
+the same two cards remain on the desk throughout the room frames.
 
 The glow frames are `story-ada-room` with the rock's glow grown to a third, two
 thirds and all of the room: 32 nested ellipses (height 0.6 of width) in
