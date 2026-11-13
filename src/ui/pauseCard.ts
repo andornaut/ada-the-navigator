@@ -82,7 +82,7 @@ function stack(): HTMLDivElement {
   return group;
 }
 
-/** The Paused card's grid: two equal columns of standard buttons over Resume. */
+/** The Paused card's grid: six equal buttons, with primary Resume last at the bottom right. */
 export const PAUSE_GRID_STYLE = `
 ${UI_SCOPE} .ada-actions.ada-pause-grid{
   grid-auto-flow:row;
@@ -139,12 +139,12 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     ship: labels.ship,
   };
   // Every action is built once, in flight's order; each place shows its own. The rest fill the
-  // grid in order, so the room's two share its first row; Resume spans the card below it.
+  // grid in order, so the room's two share its first row and Resume ends the flight grid.
   for (const { id, role } of pauseActions("flight")) {
     const button = createButton(text[id], role);
     button.dataset.action = `pause-${id}`;
     buttons.set(id, button);
-    (id === "resume" ? actions : others).append(button);
+    others.append(button);
   }
   paused.body.append(actions);
   const ship = createCard({

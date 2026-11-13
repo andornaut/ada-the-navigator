@@ -210,7 +210,7 @@ function cards() {
   return { body, modal, options, pause, root, ship };
 }
 
-// Resume, then the grid's buttons in order.
+// The grid's buttons in reading order, with Resume last.
 const buttonsOf = (actions: FakeElement) =>
   actions.children.flatMap((node) => (node.dataset.action ? [node] : node.children));
 
@@ -240,14 +240,16 @@ describe("Paused card", () => {
     expect(remove).toHaveBeenCalledWith("loadingdone", add.mock.calls[0]![1]);
   });
 
-  it("is a two-column grid of Map, Quests, Ship, Settings and Back to title over Resume, with no objective", () => {
+  it("places six equal-grid actions with primary Resume beside Back to title, with no objective", () => {
     const { body, pause } = cards();
     pause.setState(state({ job: "Chart the Sleepy Tug" }));
     expect(body.children).toHaveLength(1);
     const actions = body.children[0]!;
     expect(actions.className).toContain("ada-stack");
     expect(actions.children[0]!.className).toContain("ada-pause-grid");
-    expect(actions.children[1]!.dataset.action).toBe("pause-resume");
+    expect(actions.children).toHaveLength(1);
+    expect(actions.children[0]!.children.at(-1)!.dataset.action).toBe("pause-resume");
+    expect(actions.children[0]!.children.at(-1)!.className).toContain("ada-primary");
     expect(shownActions(actions)).toEqual([
       "pause-map",
       "pause-quests",
@@ -316,7 +318,7 @@ describe("Ship card", () => {
     expect(focused()).toBe(close);
     const shown = texts(ship.children[0]!);
     expect(shown).toEqual(
-      expect.arrayContaining(["Ship", "Cargo", "Equipment", "1,234", "Shield (2)", "Weapons"]),
+      expect.arrayContaining(["Ship", "Cargo", "Equipment", "1,234", "Shield [2]", "Weapons"]),
     );
   });
 
