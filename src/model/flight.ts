@@ -3,7 +3,6 @@ import { ECONOMY } from "../data/economy.ts";
 import {
   type EncounterEntry,
   encounterRate,
-  encounterTable,
   ENEMY_AIM,
   type EnemyArchetype,
   enemyCatalog,
@@ -21,6 +20,7 @@ import { HOLODISKS } from "../data/holodisks.ts";
 import { JOB_TUNING, LANDMARK_TUNING } from "../data/jobs.ts";
 import { RESOURCE_ROCKS, resourceRock } from "../data/resourceRocks.ts";
 import { SCREEN } from "../data/screen.ts";
+import { SPAWNER_POLICIES, spawnerStage } from "../data/spawnerCatalog.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { GalaxyNumber, GameContent, Weapon } from "../data/types.ts";
 import { BEAM, weaponAt, type WeaponDefinition } from "../data/weaponCatalog.ts";
@@ -100,6 +100,13 @@ import { planPlayerVolley, projectileReach } from "./playerProjectiles.ts";
 import { rechargeShield } from "./shieldRecharge.ts";
 import { shipBody, shipCircleContact, shipNearSegment, shipTouches } from "./shipBody.ts";
 import { direction, speedFraction, stepShipMotion, turnToward } from "./shipPhysics.ts";
+import {
+  engagementAdmissions,
+  fitsEncounter,
+  groupReach,
+  memberPosition,
+  selectEncounter,
+} from "./spawner.ts";
 import { HUB_STATION, stationById, stationsNear } from "./stations.ts";
 import type {
   EconomyState,
@@ -815,20 +822,19 @@ function arrivalPoints(flight: FlightState): Vec[] {
 }
 const FLIGHT_START: Vec = { x: 0, y: 0 };
 
-/** Farthest an encounter's ships are placed from its cell centre, hulls included. */
+/** Complete encounter footprint; callers without a galaxy use Sunflower's policy. */
 export function encounterReach(
   content: GameContent,
   archetype: EnemyArchetype,
   count: number,
   escorts: EncounterEntry["escorts"],
+  galaxy: GalaxyNumber = 1,
 ): number {
-  const radius = (type: EnemyArchetype) =>
-    enemyCatalog[type].sizeRatio * content.tuning.flight.shipRadius;
-  const line = Math.max(0, count - 1) * 85 + radius(archetype);
-  const ring = escorts
-    ? radius(archetype) + escortTuning.stationGap + radius(escorts.archetype)
-    : 0;
-  return Math.max(line, ring);
+  return groupReach(SPAWNER_POLICIES[galaxy], content.tuning.flight.shipRadius, {
+    archetype,
+    count,
+    ...(escorts ? { escorts } : {}),
+  });
 }
 
 /** Whether ships placed within `reach` of `point` could come within the calm radius. */
@@ -887,11 +893,40 @@ function generateRegion(content: GameContent, x: number, y: number, flight: Flig
   }
   const packId = `pack:${x},${y}`;
   const countRoll = next();
-  const { archetype, count, escorts } = rollEncounter(
-    encounterTable(flight.galaxy),
-    countRoll,
-    next(),
-  );
+  const archetypeRoll = next();
+  const policy = SPAWNER_POLICIES[flight.galaxy];
+  const stage = spawnerStage(flight.galaxy, flight.freshDistance);
+  const previous = flight.objects.find((object) => object.enemy?.packId === packId)?.enemy;
+  const escort = flight.objects.find((object) => object.enemy?.escortOf === `${packId}:0`)?.enemy;
+  const initialized = Object.hasOwn(combat(flight).initialPackSizes, packId);
+  // A represented pack keeps its original role across fresh-distance stage changes.
+  const plan =
+    initialized && (previous || escort)
+      ? {
+          archetype: previous?.archetype ?? ("capital" as const),
+          count: combat(flight).initialPackSizes[packId] ?? 0,
+          ...(previous?.archetype === "capital" || escort
+            ? {
+                escorts: {
+                  archetype: escort?.archetype ?? ("fighter" as const),
+                  count: combat(flight).initialPackSizes[escortPackId(packId)] ?? 0,
+                },
+              }
+            : {}),
+        }
+      : selectEncounter(
+          policy,
+          stage,
+          content.tuning.flight.shipRadius,
+          flight.objects,
+          center,
+          countRoll,
+          archetypeRoll,
+        );
+  if (!plan) {
+    return;
+  }
+  const { archetype, count, escorts } = plan;
   // Half of Cartwheel's claim jumpers gather at the nearest ore field within this cell's reach.
   if (ORE_FIELDS.galaxies.includes(flight.galaxy) && archetype === "fighter") {
     const reach = (spacing * size) / 2;
@@ -906,13 +941,26 @@ function generateRegion(content: GameContent, x: number, y: number, flight: Flig
     }
   }
   // Launches and jump arrivals begin calm: the whole encounter stays clear of them.
-  if (nearArrival(content, flight, encounterReach(content, archetype, count, escorts), center)) {
+  if (
+    nearArrival(
+      content,
+      flight,
+      encounterReach(content, archetype, count, escorts, flight.galaxy),
+      center,
+    )
+  ) {
     return;
   }
-  admitGroup(content, flight, next, { archetype, count, escortOf: null, packId }, (index) => ({
-    x: center.x + index * 85,
-    y: center.y,
-  }));
+  // Relocated claim jumpers must also fit the actual destination neighbourhood.
+  if (
+    !initialized &&
+    !fitsEncounter(policy, stage, content.tuning.flight.shipRadius, flight.objects, center, plan)
+  ) {
+    return;
+  }
+  admitGroup(content, flight, next, { archetype, count, escortOf: null, packId }, (index) =>
+    memberPosition(policy.memberSpacing, count, center, index),
+  );
   if (escorts) {
     // Escorts form their own pack, so regeneration restores each group's survivors by count.
     const gap =
@@ -1916,23 +1964,50 @@ function enemies(
       content.tuning.flight.shipRadius * enemyCatalog[object.enemy.archetype].sizeRatio;
   }
   const peers = objects.flatMap((object) => (object.enemy ? [object.enemy] : []));
+  const visibility = new Map(
+    objects.map((object) => {
+      const visible = !flight.objects.some(
+        (obstacle) =>
+          SCENERY.includes(obstacle.kind) &&
+          obstacle.hp > 0 &&
+          sceneryBlocksSegment(
+            obstacle,
+            object,
+            flight.player,
+            0,
+            frameOf(flight, obstacle),
+            drawnOf(flight, obstacle),
+          ),
+      );
+      return [object.id, visible] as const;
+    }),
+  );
+  const eligible = new Set(
+    objects
+      .filter((object) => {
+        const definition = enemyDefinition(flight.galaxy, object.enemy!.archetype, object.id);
+        return (
+          definition.aggression === "sight" &&
+          visibility.get(object.id) &&
+          !safe(content, flight.player, flight) &&
+          !safe(content, object, flight) &&
+          distance(object, flight.player) <= definition.perception
+        );
+      })
+      .map((object) => object.id),
+  );
+  const admissions = engagementAdmissions(
+    SPAWNER_POLICIES[flight.galaxy],
+    spawnerStage(flight.galaxy, flight.freshDistance),
+    objects,
+    eligible,
+    flight.player,
+  );
   for (const object of objects) {
     const state = object.enemy!;
     const definition = enemyDefinition(flight.galaxy, state.archetype, state.id);
     const targetable = !safe(content, flight.player, flight) && !safe(content, object, flight);
-    const visible = !flight.objects.some(
-      (obstacle) =>
-        SCENERY.includes(obstacle.kind) &&
-        obstacle.hp > 0 &&
-        sceneryBlocksSegment(
-          obstacle,
-          object,
-          flight.player,
-          0,
-          frameOf(flight, obstacle),
-          drawnOf(flight, obstacle),
-        ),
-    );
+    const visible = visibility.get(object.id)!;
     const before = { x: object.x, y: object.y };
     const intent = stepEnemy(
       definition,
@@ -1940,6 +2015,7 @@ function enemies(
         adaWidth: content.tuning.flight.shipRadius * 2,
         dormantPackMembers: retainedPackMembers(content, flight),
         dt,
+        engagementAdmitted: admissions.has(object.id),
         initialPackSizes: combat(flight).initialPackSizes,
         lead: ENEMY_AIM.lead[ROUTE_POSITION[flight.galaxy]],
         peers,

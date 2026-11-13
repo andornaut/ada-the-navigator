@@ -791,9 +791,10 @@ describe("rotating hulls", () => {
   });
 });
 
-describe("galaxy one encounters", () => {
+describe("galaxy encounters", () => {
   it("generates a capital battle as a capital pack and a four-fighter escort pack on station", () => {
     const flight = empty();
+    flight.galaxy = 5;
     let leader: SpaceObject | undefined;
     for (let index = 1; index <= 400 && !leader; index++) {
       flight.player = { x: index * 4096, y: (index % 7) * 4096 };
@@ -1004,7 +1005,7 @@ describe("combat admission and subframe firing", () => {
     for (let seed = 0; seed < 64; seed++) {
       const candidate = createFlight(content, 1, seed, progress);
       const group = candidate.objects.filter((object) => object.enemy?.archetype === "swarm");
-      if (group.length >= 3) {
+      if (group.length === 2) {
         template = candidate;
         members = group;
         break;
@@ -1016,7 +1017,16 @@ describe("combat admission and subframe firing", () => {
     const last = members.at(-1)!;
     flight.chunks = [];
     flight.combat = { initialPackSizes: {}, routeEncounters: [] };
-    flight.objects = [{ hp: 1, id: "safe", kind: "destination", radius: 30, x: last.x, y: last.y }];
+    flight.objects = [
+      {
+        hp: 1,
+        id: "safe",
+        kind: "destination",
+        radius: 30,
+        x: last.x + content.tuning.safeRadius * 0.75,
+        y: last.y,
+      },
+    ];
     stepFlight(content, 0.001, idle, flight);
     const admitted = flight.objects.filter((object) => object.enemy?.packId === packId);
     expect(admitted.length).toBeGreaterThan(0);

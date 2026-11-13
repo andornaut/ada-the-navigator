@@ -1,4 +1,9 @@
-import { type EncounterEntry, type EnemyArchetype, enemyCatalog } from "../data/enemyCatalog.ts";
+import {
+  type EncounterEntry,
+  type EnemyArchetype,
+  enemyCatalog,
+  escortTuning,
+} from "../data/enemyCatalog.ts";
 import type { SpawnerPolicy, SpawnerStage } from "../data/spawnerCatalog.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 
@@ -27,7 +32,7 @@ export function groupReach(policy: SpawnerPolicy, shipRadius: number, plan: Enco
   const hull = enemyCatalog[plan.archetype].sizeRatio * shipRadius;
   const line = (Math.max(0, plan.count - 1) * policy.memberSpacing) / 2 + hull;
   const escort = plan.escorts
-    ? hull + 60 + enemyCatalog[plan.escorts.archetype].sizeRatio * shipRadius
+    ? hull + escortTuning.stationGap + enemyCatalog[plan.escorts.archetype].sizeRatio * shipRadius
     : 0;
   return Math.max(line, escort);
 }
@@ -112,4 +117,44 @@ export function selectEncounter(
   return chosen.plans[
     Math.min(chosen.plans.length - 1, Math.floor(countRoll * chosen.plans.length))
   ]!;
+}
+
+/**
+ * Reserves new sight engagements against current live combatants. Required guards and already
+ * engaged ships keep their normal AI even when they converge above this admission budget.
+ */
+export function engagementAdmissions(
+  policy: SpawnerPolicy,
+  stage: SpawnerStage,
+  objects: readonly SpaceObject[],
+  eligible: ReadonlySet<string>,
+  player: Vec,
+): Set<string> {
+  const live = liveOccupants(objects);
+  const reserved = live.filter(
+    (object) => object.routeId !== undefined || object.persistent || object.enemy?.engaged,
+  );
+  const admitted = new Set(reserved.map((object) => object.id));
+  const candidates = live
+    .filter((object) => !admitted.has(object.id) && eligible.has(object.id))
+    .sort((a, b) => distance(a, player) - distance(b, player) || a.id.localeCompare(b.id));
+  for (const object of candidates) {
+    const neighbours = reserved.filter(
+      (other) => distance(other, object) <= policy.localRadius * 2 + other.radius + object.radius,
+    );
+    const types = new Set(neighbours.map((other) => other.enemy?.archetype ?? "fighter"));
+    types.add(object.enemy?.archetype ?? "fighter");
+    const capitals =
+      neighbours.filter((other) => other.enemy?.archetype === "capital").length +
+      (object.enemy?.archetype === "capital" ? 1 : 0);
+    if (
+      neighbours.length < stage.localCap &&
+      types.size <= stage.maxNearbyArchetypes &&
+      capitals <= policy.maxNearbyCapitals
+    ) {
+      admitted.add(object.id);
+      reserved.push(object);
+    }
+  }
+  return admitted;
 }

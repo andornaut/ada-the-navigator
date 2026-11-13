@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+import { CONTENT } from "../data/content.ts";
 import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { SPAWNER_POLICIES, spawnerStage } from "../data/spawnerCatalog.ts";
 import { createEnemy } from "./enemyAi.ts";
+import { createFlight, stepFlight } from "./flight.ts";
 import { fitsEncounter, groupReach, memberPosition, selectEncounter } from "./spawner.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 
@@ -109,4 +111,76 @@ describe("spawner admission", () => {
       positions.every((point) => Math.hypot(point.x - centre.x, point.y - centre.y) + 6.5 <= reach),
     ).toBe(true);
   });
+});
+
+describe("actual flight engagement path", () => {
+  it("reserves guard and existing chaser pressure before admitting new ambient ships", () => {
+    const content = structuredClone(CONTENT);
+    content.tuning.flight.objectsPerChunk = 0;
+    const flight = createFlight(content, 1, 19, { known: [] });
+    flight.player = { x: 4000, y: 4000 };
+    const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
+    stepFlight(content, 0.001, idle, flight);
+    const ships = Array.from({ length: 5 }, (_, index) =>
+      occupant(`candidate:${index}`, { x: 4200 + index * 80, y: 4000 }),
+    );
+    ships.forEach((ship) => {
+      ship.enemy!.packId = null;
+    });
+    ships[4]!.routeId = "required";
+    ships[3]!.enemy!.engaged = true;
+    flight.objects = ships;
+    stepFlight(content, 0.001, idle, flight);
+    expect(ships.filter((ship) => ship.enemy!.engaged)).toHaveLength(3);
+    expect(ships[4]!.enemy!.engaged).toBe(true);
+    expect(ships[3]!.enemy!.engaged).toBe(true);
+    const waiting = ships.filter((ship) => !ship.enemy!.engaged);
+    expect(waiting).toHaveLength(2);
+    expect(waiting.every((ship) => ship.enemy!.lastSeen?.x === flight.player.x)).toBe(true);
+    // Existing combatants can converge beyond the budget without being frozen or removed.
+    ships.forEach((ship) => {
+      ship.enemy!.engaged = true;
+    });
+    stepFlight(content, 0.001, idle, flight);
+    expect(ships.every((ship) => ship.enemy!.engaged)).toBe(true);
+    expect(
+      ships.every((ship) => Math.hypot(ship.enemy!.velocity.x, ship.enemy!.velocity.y) > 0),
+    ).toBe(true);
+    expect(flight.objects.filter((object) => object.kind === "enemy")).toHaveLength(5);
+  });
+});
+
+it("uses the approved stage roster in actual seeded chunk generation", () => {
+  const content = structuredClone(CONTENT);
+  content.tuning.flight.objectsPerChunk = 0;
+  const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
+  for (const freshDistance of [0, 1800, 4200]) {
+    const stage = spawnerStage(1, freshDistance);
+    let encounters = 0;
+    for (let seed = 0; seed < 24; seed++) {
+      const flight = createFlight(content, 1, seed, { known: [] });
+      flight.freshDistance = freshDistance;
+      flight.freshChunk = null;
+      flight.player = { x: 4500, y: 4500 };
+      stepFlight(content, 0.001, idle, flight);
+      const packs = new Map<string, SpaceObject[]>();
+      for (const object of flight.objects) {
+        const packId = object.enemy?.packId;
+        if (!packId?.startsWith("pack:")) {
+          continue;
+        }
+        const entry = stage.roster.find((entry) => entry.archetype === object.enemy!.archetype);
+        expect(entry).toBeDefined();
+        packs.set(packId, [...(packs.get(packId) ?? []), object]);
+      }
+      for (const group of packs.values()) {
+        const entry = stage.roster.find((entry) => entry.archetype === group[0]!.enemy!.archetype)!;
+        expect(group.length).toBeLessThanOrEqual(entry.groupSize[1]);
+        encounters++;
+      }
+      // Waiting and non-flight repositioning do not contribute fresh exploration.
+      expect(flight.freshDistance).toBe(freshDistance);
+    }
+    expect(encounters).toBeGreaterThan(12);
+  }
 });

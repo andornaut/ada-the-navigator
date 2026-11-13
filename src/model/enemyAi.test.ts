@@ -1120,3 +1120,47 @@ describe("enemy damage", () => {
     }
   });
 });
+
+describe("new sight engagement admission", () => {
+  it("leaves an unadmitted idle ship tracking Ada without starting movement or fire", () => {
+    const state = spawn("fighter");
+    const intent = stepEnemy(
+      enemyCatalog.fighter,
+      { ...observation(state), engagementAdmitted: false },
+      state,
+    );
+    expect(intent.state.engaged).toBe(false);
+    expect(intent.state.lastSeen).toEqual(observation(state).player);
+    expect(intent.velocity).toEqual({ x: 0, y: 0 });
+    expect(intent.fire).toEqual([]);
+  });
+
+  it("keeps damage, summons and existing combat authoritative when admission is false", () => {
+    const state = spawn("fighter");
+    const context = { ...observation(state), engagementAdmitted: false };
+    const hit = damageEnemy(enemyCatalog.fighter, { amount: 1, hardpointId: null }, state);
+    expect(stepEnemy(enemyCatalog.fighter, context, hit).state.engaged).toBe(true);
+    expect(
+      stepEnemy(enemyCatalog.fighter, { ...context, summoned: true }, state).state.engaged,
+    ).toBe(true);
+    const engaged = { ...state, engaged: true };
+    expect(stepEnemy(enemyCatalog.fighter, context, engaged)).toEqual(
+      stepEnemy(enemyCatalog.fighter, observation(engaged), engaged),
+    );
+  });
+
+  it("preserves the default context and the existing return rearm rule", () => {
+    const state = spawn("fighter");
+    expect(
+      stepEnemy(enemyCatalog.fighter, { ...observation(state), engagementAdmitted: true }, state),
+    ).toEqual(stepEnemy(enemyCatalog.fighter, observation(state), state));
+    const returning = { ...state, returnSeconds: 5, returning: true };
+    expect(
+      stepEnemy(
+        enemyCatalog.fighter,
+        { ...observation(returning), engagementAdmitted: false },
+        returning,
+      ).state.engaged,
+    ).toBe(stepEnemy(enemyCatalog.fighter, observation(returning), returning).state.engaged);
+  });
+});

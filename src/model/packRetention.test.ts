@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
+import { SPAWNER_POLICIES, spawnerStage } from "../data/spawnerCatalog.ts";
 import { relaunch } from "../testing/launch.ts";
 import { createEnemy, damageEnemy } from "./enemyAi.ts";
 import {
@@ -44,12 +45,23 @@ function fixture() {
   content.tuning.flight.playerShotDamage = 1e-6;
   for (let seed = 0; seed < 256; seed++) {
     const flight = createFlight(content, 1, seed, progress);
-    // A four-member fighter group: galaxy one's swarm packs start at five.
+    // A legacy Sunflower pack uses Whirlpool's authored group minimum to test saved larger packs.
     const members = flight.objects.filter(
       (object) => object.enemy?.archetype === "fighter" && object.enemy.escortOf === null,
     );
     const packId = members[0]?.enemy?.packId;
-    if (members.length === 4 && packId && members.every((m) => m.enemy?.packId === packId)) {
+    if (members.length === 1 && packId) {
+      const count = spawnerStage(3, 0).roster.find((entry) => entry.archetype === "fighter")!
+        .groupSize[0];
+      for (let index = 1; index < count; index++) {
+        const copy = structuredClone(members[0]!);
+        copy.id = `${packId}:${index}`;
+        copy.enemy!.id = copy.id;
+        copy.x += index * 85;
+        copy.enemy!.position.x = copy.x;
+        flight.objects.push(copy);
+      }
+      flight.combat!.initialPackSizes[packId] = count;
       const model = new GameModel(content);
       model.state.flight = flight;
       model.state.mode = "space";
@@ -72,7 +84,7 @@ function reposition(object: SpaceObject, x: number, y = 100): void {
 }
 function defeat(model: GameModel, object: SpaceObject): void {
   const flight = model.state.flight!;
-  const before = model.state.progress[1].destroyedEnemies;
+  const before = model.state.progress[model.state.flight!.galaxy].destroyedEnemies;
   flight.shots.push({
     damage: object.enemy!.hp,
     enemy: false,
@@ -85,7 +97,7 @@ function defeat(model: GameModel, object: SpaceObject): void {
     y: object.y,
   });
   model.step(0.001, idle);
-  expect(model.state.progress[1].destroyedEnemies).toBe(before + 1);
+  expect(model.state.progress[model.state.flight!.galaxy].destroyedEnemies).toBe(before + 1);
   expect(flight.objects).not.toContain(object);
 }
 function regenerate(content: typeof CONTENT, model: GameModel, packId: string): void {
@@ -112,7 +124,7 @@ describe("casualty-preserving pack retention", () => {
     expect(members(model, packId)).toHaveLength(1);
     expect(flight.combat!.initialPackSizes[packId]).toBe(4);
     expect(flight.combat!.unloadedPackMembers).toEqual({ [packId]: 2 });
-    expect(model.state.progress[1].destroyedEnemies).toBe(1);
+    expect(model.state.progress[model.state.flight!.galaxy].destroyedEnemies).toBe(1);
     model.step(0.001, idle);
     expect(members(model, packId)[0]!.enemy!.fleeing).toBe(false);
     const resumed = relaunch(content, model.save());
@@ -192,7 +204,7 @@ describe("casualty-preserving pack retention", () => {
       expect(flight.combat!.unloadedPackMembers?.[packId]).toBe(2);
       model.step(0.001, idle);
       expect(members(model, packId)[0]!.enemy!.fleeing).toBe(false);
-      expect(model.state.progress[1].destroyedEnemies).toBe(1);
+      expect(model.state.progress[model.state.flight!.galaxy].destroyedEnemies).toBe(1);
       expect(restoreSave(model.save())).toEqual(model.state);
     },
   );
@@ -209,8 +221,7 @@ describe("casualty-preserving pack retention", () => {
       const flight = createFlight(content, 1, seed, progress);
       const solo = flight.objects.find(
         (object) =>
-          (object.enemy?.archetype === "interceptor" || object.enemy?.archetype === "retaliator") &&
-          object.enemy.packId?.startsWith("pack:"),
+          object.enemy?.archetype === "fighter" && object.enemy.packId?.startsWith("pack:"),
       );
       if (solo?.enemy?.packId) {
         found = { flight, packId: solo.enemy.packId };
@@ -236,7 +247,7 @@ describe("casualty-preserving pack retention", () => {
     expect(members(resumed, packId)).toHaveLength(3);
     expect(restored.combat!.initialPackSizes[packId]).toBe(4);
     expect(restored.combat!.unloadedPackMembers?.[packId]).toBeUndefined();
-    expect(resumed.state.progress[1].destroyedEnemies).toBe(0);
+    expect(resumed.state.progress[resumed.state.flight!.galaxy].destroyedEnemies).toBe(0);
     expect(members(resumed, packId).every((object) => !object.enemy!.fleeing)).toBe(true);
     expect(new Set(restored.objects.map((object) => object.id)).size).toBe(restored.objects.length);
     expect(restoreSave(resumed.save())).toEqual(resumed.state);
@@ -266,7 +277,7 @@ describe("casualty-preserving pack retention", () => {
       id: "growers",
       kind: "destination",
       radius: 30,
-      x: 511,
+      x: content.tuning.chunkSize / 2 + 1.5 * SPAWNER_POLICIES[1].memberSpacing,
       y: 256,
     };
     flight.objects.push(friendly);
@@ -390,11 +401,13 @@ describe("per-role encounter restore", () => {
     // Enemy fire barely scratches Ada, so long fixtures never deplete her shield.
     content.tuning.flight.playerShotDamage = 1e-6;
     for (let seed = 0; seed < 4000; seed++) {
-      const flight = createFlight(content, 1, seed, progress);
+      const flight = createFlight(content, 3, seed, progress);
       const escort = flight.objects.find((object) => object.enemy?.escortOf);
       if (escort?.enemy?.packId) {
         const model = new GameModel(content);
         model.state.flight = flight;
+        model.state.selectedGalaxy = flight.galaxy;
+        model.state.unlocked = [1, 3];
         model.state.mode = "space";
         const leader = escort.enemy.escortOf!;
         return {
@@ -414,9 +427,9 @@ describe("per-role encounter restore", () => {
       object.enemy = damageEnemy(definition, { amount: 99, hardpointId: part.id }, object.enemy!);
     }
     object.enemy = damageEnemy(definition, { amount: 99, hardpointId: null }, object.enemy!);
-    const before = model.state.progress[1].destroyedEnemies;
+    const before = model.state.progress[model.state.flight!.galaxy].destroyedEnemies;
     model.step(0.001, idle);
-    expect(model.state.progress[1].destroyedEnemies).toBe(before + 1);
+    expect(model.state.progress[model.state.flight!.galaxy].destroyedEnemies).toBe(before + 1);
   };
   /** Takes Ada and the kept ships far enough away to unload the battle's cell, then back. */
   function revisit(

@@ -82,6 +82,8 @@ export interface EnemyState {
   velocity: Point;
 }
 export interface EnemyContext {
+  /** Admission for new sight aggression only; damage, summons and existing pursuit bypass it. */
+  engagementAdmitted?: boolean;
   dormantPackMembers?: Readonly<Record<string, number>>;
   adaWidth: number;
   dt: number;
@@ -603,7 +605,8 @@ export function stepEnemy(
   /** The ship sees Ada within its perception. */
   const perceived = observed && distance <= definition.perception;
   /** A sight-aggressive ship sees Ada within its perception. */
-  const sighted = perceived && definition.aggression === "sight";
+  const sighted =
+    perceived && definition.aggression === "sight" && context.engagementAdmitted !== false;
   /** The ship sees Ada within its firing range. */
   const fighting = observed && distance <= definition.engagement;
   const packSize = state.packId === null ? 0 : (context.initialPackSizes[state.packId] ?? 0);
