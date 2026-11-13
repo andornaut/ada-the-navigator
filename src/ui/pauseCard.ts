@@ -21,7 +21,11 @@ export interface PauseLabels {
   /** The Ship button and card title. */
   readonly ship: string;
   /** The Ship card's section headings. */
-  readonly shipHeadings: { readonly cargo: string; readonly equipment: string };
+  readonly shipHeadings: {
+    readonly cargo: string;
+    readonly equipment: string;
+    readonly weapons: string;
+  };
   /** Player copy for the Ship card's rows. */
   readonly shipRows: Readonly<Record<string, string>>;
   readonly title: string;

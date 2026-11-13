@@ -891,8 +891,9 @@ every available height, so the card never scrolls.
 Implementation contract for Tech: the Paused card's Ship opens a
 content-fitted card titled "Ship" with the close X; the close X, back and
 Escape return to Paused. The body has exactly two top-aligned columns:
-Equal-width Equipment and Cargo panes sit on the left and right, including
-narrow views. The central divider and its clearance are outside both panes.
+Equal-width panes contain Equipment then Cargo on the left, and Weapons
+on the right, including narrow views. All three named headings remain visible.
+The central divider and its clearance are outside both panes.
 Each section is one list, never a nested two-column grid. Strings and row
 content remain Gameplay's. Ship geometry belongs in `src/ui/layout/`,
 consuming the existing canonical tokens rather than a second spacing system.
@@ -904,30 +905,30 @@ consuming the existing canonical tokens rather than a second spacing system.
 | Divider clearance      | `SPACING.panelPadding` (16) on each side                       | The total inter-column gutter is `2 * SPACING.panelPadding + CARD_CONTENT.frameBorder` (34) |
 | Section heading        | `TYPE.label`, `TEXT_TOKENS.supporting`                         | Same heading role and top alignment in both columns                                         |
 | Heading-to-list gap    | `SPACING.gap` (8)                                              | Separate a heading from its first row                                                       |
-| Equipment subgroup gap | `SPACING.panelPadding` (16)                                    | Between systems, weapons and final paint groups; absent weapons take no gap                 |
+| Equipment subgroup gap | `SPACING.panelPadding` (16)                                    | Between Equipment and Cargo in the left pane                                                |
 | List row gap           | `SPACING.rowGap` (4)                                           | Between rows within either list or equipment subgroup                                       |
 | Row height             | `max(SHIP_CARD.icon, TYPE.body.lineHeight)` (20 minimum)       | Wrapped text grows the row by its type role's line height                                   |
 | Row icon               | Existing `SHIP_CARD.icon` (20), then `SPACING.markGap` (6)     | Retain the current icons and drawn-pixel spacing                                            |
-| Value gap              | `SPACING.gap` (8)                                              | Between label and value, and between level and ammunition                                   |
+| Value gap              | `SPACING.gap` (8)                                              | Between a compact name and its separate value or ammunition                                 |
 | Ammunition width       | Measure the widest supported ammunition string in `TYPE.label` | Reserve the same right-aligned track for every weapon row                                   |
 
-Rows: labels use `TYPE.body` and `TEXT_TOKENS.label`; counts use
-`TYPE.label` and `TEXT_TOKENS.label`, right-aligned. Levels ("Level {n} of
-3") use `TYPE.body` and `TEXT_TOKENS.supporting`, right-aligned before the
-ammunition track on weapon rows. Keep values and icons visible; wrap labels
-and grow rows rather than shrinking type.
+Rows use `TYPE.body` and `TEXT_TOKENS.label`. A level-one item shows only
+its name. Higher levels append the compact suffix `(2)` or `(3)` to the
+name, without "Level", "LVL" or "of 3". Preserve canonical numeric levels
+and full per-track level metadata in each row's accessible name. Counts
+and the separate weapon ammunition track use `TYPE.label` and remain
+right-aligned. Labels wrap without shrinking type.
 
-1. Equipment, left: Engine (`icon-shop-engine-tuning`), Shield
-   (`icon-shop-shield`), Tractor beam (`icon-shop-tractor-beam`), each with
-   its level. Follow these with every owned weapon in Ada's weapon order
-   (Laser, Multi-Laser, Rapid Missile, Heavy Missile, Scattershot, Phaser),
-   its existing icon, level and ammunition. Paint (`icon-shop-ship-paint`)
-   is the final row. The shop icons draw their normal frame. Subgroup gaps
-   add no new player-facing headings.
-2. Cargo, right: Stardust (`icon-stardust-20`, count), Ore (`icon-ore-20`,
-   the ore carried this flight), "Holodisks: {n} of 6"
-   (`icon-holodisk-20`), and, when there is one, "Carrying: {item}"
-   (`icon-cargo-20`) or "Towing: {craft}" (`icon-tow-20`), top to bottom.
+1. Equipment, upper left: Engine (`icon-shop-engine-tuning`), Shield
+   (`icon-shop-shield`), Tractor beam (`icon-shop-tractor-beam`), then
+   Paint (`icon-shop-ship-paint`). Preserve the actual paint name and
+   the shop icons' normal frames.
+2. Cargo, lower left: Stardust and Ore with their exact counts, then
+   Holodisks and, when present, the carried item or towed craft. Keep
+   their existing player strings and icons.
+3. Weapons, right: every owned weapon in HUD order, with its actual name,
+   existing weapon icon, compact level suffix and separate ammunition.
+   Keep the Weapons heading when the list is empty; add no empty-state copy.
 
 Measure both panes' natural content in the existing type roles, including
 icons, mark gaps and value tracks. Use twice the wider pane's natural width

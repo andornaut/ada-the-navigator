@@ -13,7 +13,7 @@ import { stardustCount } from "./statusPill.ts";
 
 export { SHIP_CARD } from "./layout/shipCard.ts";
 
-// Equipment and Cargo remain separate columns at every width; the card body owns scrolling.
+// Equipment and Cargo share the left pane; Weapons occupies the equal-width right pane.
 
 const SPRITES = "/art/ui/sprites/";
 
@@ -49,6 +49,8 @@ export interface ShipRow {
   readonly label: string;
   readonly count?: string;
   readonly level?: string;
+  /** Canonical numeric level, used only for the compact visible name suffix. */
+  readonly tier?: number;
   /** A weapon row: its ammunition, empty for the weapon without it. */
   readonly ammo?: string;
 }
@@ -56,7 +58,7 @@ export interface ShipRow {
 export interface ShipSections {
   /** Cargo rows in reading order. */
   readonly cargo: readonly ShipRow[];
-  /** Systems and paint, then weapons. Rendered as one list with a subgroup gap. */
+  /** Systems and paint for Equipment, then the independent Weapons list. */
   readonly equipment: readonly [readonly ShipRow[], readonly ShipRow[]];
 }
 
@@ -102,16 +104,19 @@ export function shipSections(labels: Labels, view: ShipView): ShipSections {
       icon: sprite("icon-shop-engine-tuning", 2),
       label: labels.engine ?? "",
       level: level(view.engine, ECONOMY.trackPrices.engine.length + 1),
+      tier: view.engine,
     },
     {
       icon: sprite("icon-shop-shield", 2),
       label: labels.shield ?? "",
       level: level(view.shield, ECONOMY.trackPrices.shield.length + 1),
+      tier: view.shield,
     },
     {
       icon: sprite("icon-shop-tractor-beam", 2),
       label: labels.tractorBeam ?? "",
       level: level(view.tractor, ECONOMY.trackPrices.tractor.length + 1),
+      tier: view.tractor,
     },
     {
       icon: sprite("icon-shop-ship-paint", 2),
@@ -123,6 +128,7 @@ export function shipSections(labels: Labels, view: ShipView): ShipSections {
     icon: { mask: weaponGlyphPath(weapon.id) },
     label: weaponName(labels, weapon.id),
     level: level(weapon.level, WEAPON_LEVEL_COUNT),
+    tier: weapon.level,
   }));
   return { cargo, equipment: [left, right] };
 }
@@ -137,6 +143,12 @@ ${UI_SCOPE} .ada-ship-sections{
   max-width:100%;
   flex:none;
   align-items:stretch
+}
+${UI_SCOPE} .ada-ship-pane{
+  display:flex;
+  flex-direction:column;
+  gap:${units(SHIP_CARD.subgroupGap)};
+  min-width:0
 }
 ${UI_SCOPE} .ada-ship-section{
   display:flex;
@@ -171,9 +183,9 @@ ${UI_SCOPE} .ada-ship-column{
   align-items:start
 }
 ${UI_SCOPE} .ada-ship-grid[data-equipment]{
-  grid-template-columns:${units(SHIP_CARD.icon)} minmax(0,max-content) max-content max-content;
+  grid-template-columns:${units(SHIP_CARD.icon)} minmax(0,1fr) max-content;
   column-gap:0;
-  row-gap:${units(SHIP_CARD.subgroupGap)}
+  row-gap:${units(SPACING.rowGap)}
 }
 ${UI_SCOPE} .ada-ship-row{
   display:flex;
@@ -260,14 +272,22 @@ function rowNode(row: ShipRow): HTMLDivElement {
   line.className = "ada-ship-row";
   const label = document.createElement("span");
   label.className = "ada-ship-label";
-  label.textContent = row.label;
+  label.textContent =
+    row.tier !== undefined && row.tier > 1 ? `${row.label} (${row.tier})` : row.label;
+  line.setAttribute("role", "listitem");
+  line.setAttribute(
+    "aria-label",
+    [row.label, row.level, row.count, row.ammo].filter(Boolean).join(", "),
+  );
+  if (row.tier !== undefined) {
+    line.dataset.level = String(row.tier);
+  }
   const content = document.createElement("span");
   content.className = "ada-ship-text";
   content.append(label);
   line.append(iconNode(row.icon), content);
   for (const [part, text] of [
     ["count", row.count],
-    ["level", row.level],
     ["ammo", row.ammo],
   ] as const) {
     if (text !== undefined) {
@@ -280,40 +300,42 @@ function rowNode(row: ShipRow): HTMLDivElement {
   return line;
 }
 
-/** The two sections' nodes, built from their rows. */
+/** Three named sections arranged in two equal panes. */
 export function renderShipSections(
-  headings: { readonly cargo: string; readonly equipment: string },
+  headings: { readonly cargo: string; readonly equipment: string; readonly weapons: string },
   sections: ShipSections,
 ): HTMLDivElement {
   const root = document.createElement("div");
   root.className = "ada-ship-sections";
   root.dataset.inkTop = "0";
-  const section = (key: "cargo" | "equipment", grid: HTMLDivElement) => {
+  const left = document.createElement("div");
+  const right = document.createElement("div");
+  left.className = right.className = "ada-ship-pane";
+  root.append(left, right);
+  const section = (
+    pane: HTMLDivElement,
+    key: "cargo" | "equipment" | "weapons",
+    rows: readonly ShipRow[],
+  ) => {
+    const name = headings[key];
     const node = document.createElement("section");
     node.className = "ada-ship-section";
     node.dataset.section = key;
+    node.setAttribute("aria-label", name);
     const heading = document.createElement("h3");
-    heading.textContent = headings[key];
-    node.append(heading, grid);
-    root.append(node);
-  };
-  const cargo = document.createElement("div");
-  cargo.className = "ada-ship-grid";
-  cargo.append(...sections.cargo.map(rowNode));
-  const equipment = document.createElement("div");
-  equipment.className = "ada-ship-grid";
-  equipment.dataset.equipment = "";
-  const [systemsAndPaint, weapons] = sections.equipment;
-  const paint = systemsAndPaint.slice(-1);
-  for (const rows of [systemsAndPaint.slice(0, -1), weapons, paint]) {
-    const column = document.createElement("div");
-    column.className = "ada-ship-column";
-    column.append(...rows.map(rowNode));
-    if (rows.length > 0) {
-      equipment.append(column);
+    heading.textContent = name;
+    const grid = document.createElement("div");
+    grid.className = "ada-ship-grid";
+    grid.setAttribute("role", "list");
+    if (key !== "cargo") {
+      grid.dataset.equipment = "";
     }
-  }
-  section("equipment", equipment);
-  section("cargo", cargo);
+    grid.append(...rows.map(rowNode));
+    node.append(heading, grid);
+    pane.append(node);
+  };
+  section(left, "equipment", sections.equipment[0]);
+  section(left, "cargo", sections.cargo);
+  section(right, "weapons", sections.equipment[1]);
   return root;
 }

@@ -88,7 +88,7 @@ const LABELS: PauseLabels = {
   resume: "Resume",
   settings: "Settings",
   ship: "Ship",
-  shipHeadings: { cargo: "Cargo", equipment: "Equipment" },
+  shipHeadings: { cargo: "Cargo", equipment: "Equipment", weapons: CONTENT.labels.shopWeapons! },
   shipRows: CONTENT.labels,
   title: "Paused",
 };
@@ -260,7 +260,7 @@ describe("Ship card", () => {
     expect(focused()).toBe(close);
     const shown = texts(ship.children[0]!);
     expect(shown).toEqual(
-      expect.arrayContaining(["Ship", "Cargo", "Equipment", "1,234", "Level 2 of 3"]),
+      expect.arrayContaining(["Ship", "Cargo", "Equipment", "1,234", "Shield (2)", "Weapons"]),
     );
   });
 

@@ -104,13 +104,16 @@ class ShipElement {
   append(...nodes: ShipElement[]): void {
     this.children.push(...nodes);
   }
-  setAttribute(): void {}
+  readonly attributes = new Map<string, string>();
+  setAttribute(name: string, value: string): void {
+    this.attributes.set(name, value);
+  }
 }
 
 function rendered(sections: ReturnType<typeof shipSections>): ShipElement {
   vi.stubGlobal("document", { createElement: () => new ShipElement() });
   return renderShipSections(
-    { cargo: "Cargo", equipment: "Equipment" },
+    { cargo: "Cargo", equipment: "Equipment", weapons: LABELS.shopWeapons! },
     sections,
   ) as unknown as ShipElement;
 }
@@ -120,53 +123,83 @@ const rowText = (row: ShipElement) => row.children[1]!.children.map((part) => pa
 afterEach(() => vi.unstubAllGlobals());
 
 describe("Ship sections rendering", () => {
-  it("renders exactly Equipment left and Cargo right, with systems then weapons in one list", () => {
-    const sections = shipSections(LABELS, VIEW);
-    const root = rendered(sections);
-    expect(root.children.map((section) => section.dataset.section)).toEqual(["equipment", "cargo"]);
-    const [equipment, cargo] = root.children;
-    expect(equipment!.children[0]!.textContent).toBe("Equipment");
-    expect(cargo!.children[0]!.textContent).toBe("Cargo");
-    const groups = equipment!.children[1]!.children;
-    expect(groups.flatMap((group) => group.children.map((row) => rowText(row)[0]))).toEqual([
-      "Engine",
+  it("names Equipment above Cargo on the left and Weapons on the right", () => {
+    const root = rendered(shipSections(LABELS, VIEW));
+    expect(root.children).toHaveLength(2);
+    const [left, right] = root.children;
+    expect(left!.children.map((section) => section.dataset.section)).toEqual([
+      "equipment",
+      "cargo",
+    ]);
+    expect(right!.children.map((section) => section.dataset.section)).toEqual(["weapons"]);
+    const sections = [...left!.children, ...right!.children];
+    expect(sections.map((section) => section.children[0]!.textContent)).toEqual([
+      "Equipment",
+      "Cargo",
+      "Weapons",
+    ]);
+    expect(sections.map((section) => section.attributes.get("aria-label"))).toEqual([
+      "Equipment",
+      "Cargo",
+      "Weapons",
+    ]);
+    expect(left!.children[0]!.children[1]!.children.map((row) => rowText(row)[0])).toEqual([
+      "Engine (2)",
       LABELS.shield,
-      LABELS.tractorBeam,
-      ...sections.equipment[1].map((row) => row.label),
+      `${LABELS.tractorBeam} (3)`,
       "Paint: Sky blue",
     ]);
-    expect(cargo!.children[1]!.children.map(rowText)).toEqual([
+    expect(left!.children[1]!.children[1]!.children.map(rowText)).toEqual([
       ["Stardust", "1,234,567"],
       ["Ore", "12,500"],
       ["Holodisks: 3 of 6"],
     ]);
   });
 
-  it("preserves long carried text and every owned weapon value without extra outer columns", () => {
-    const view = {
-      ...VIEW,
-      aboard: { kind: "carrying" as const, name: "A very long cargo name that must wrap" },
-    };
-    const sections = shipSections(LABELS, view);
-    const root = rendered(sections);
-    expect(root.children).toHaveLength(2);
-    const cargoRows = root.children[1]!.children[1]!.children;
-    expect(rowText(cargoRows.at(-1)!)).toEqual(["Carrying: A very long cargo name that must wrap"]);
-    const weapons = root.children[0]!.children[1]!.children[1]!.children;
-    expect(weapons.map(rowText)).toEqual(
-      sections.equipment[1].map((row) => [row.label, row.level, row.ammo]),
-    );
-  });
-});
+  it.each([1, 2, 3])(
+    "shows compact level %s names, full accessible levels and separate ammunition",
+    (level) => {
+      const root = rendered(
+        shipSections(LABELS, {
+          ...VIEW,
+          engine: level,
+          shield: level,
+          tractor: level,
+          weapons: [{ ammo: 42, id: "rapidMissile", level }],
+        }),
+      );
+      const equipment = root.children[0]!.children[0]!.children[1]!.children;
+      const weapon = root.children[1]!.children[0]!.children[1]!.children[0]!;
+      const suffix = level === 1 ? "" : ` (${level})`;
+      expect(equipment.slice(0, 3).map((row) => rowText(row)[0])).toEqual([
+        `Engine${suffix}`,
+        `${LABELS.shield}${suffix}`,
+        `${LABELS.tractorBeam}${suffix}`,
+      ]);
+      expect(rowText(weapon)).toEqual([`Rapid Missile${suffix}`, "42 left"]);
+      for (const row of [...equipment.slice(0, 3), weapon]) {
+        expect(row.attributes.get("aria-label")).toContain(`Level ${level} of 3`);
+        expect(row.dataset.level).toBe(String(level));
+        expect(rowText(row).join(" ")).not.toMatch(/Level|LVL|of 3/);
+      }
+    },
+  );
 
-it("omits the weapon subgroup when no weapons are owned", () => {
-  const root = rendered(shipSections(LABELS, { ...VIEW, weapons: [] }));
-  expect(root.children[0]!.children[1]!.children).toHaveLength(2);
-  const rows = root.children[0]!.children[1]!.children.flatMap((group) => group.children);
-  expect(rows.map((row) => rowText(row)[0])).toEqual([
-    "Engine",
-    LABELS.shield,
-    LABELS.tractorBeam,
-    "Paint: Sky blue",
-  ]);
+  it("retains long cargo and named empty lists without adding copy or removing headings", () => {
+    const sections = shipSections(LABELS, {
+      ...VIEW,
+      aboard: { kind: "carrying", name: "A very long cargo name that must wrap" },
+      weapons: [],
+    });
+    const root = rendered(sections);
+    expect(root.children[1]!.children[0]!.children[0]!.textContent).toBe("Weapons");
+    expect(root.children[1]!.children[0]!.children[1]!.children).toHaveLength(0);
+    const cargo = root.children[0]!.children[1]!.children[1]!;
+    expect(rowText(cargo.children.at(-1)!)).toEqual([
+      "Carrying: A very long cargo name that must wrap",
+    ]);
+    const empty = rendered({ ...sections, cargo: [] });
+    expect(empty.children[0]!.children[1]!.children[0]!.textContent).toBe("Cargo");
+    expect(empty.children[0]!.children[1]!.children[1]!.children).toHaveLength(0);
+  });
 });

@@ -483,6 +483,7 @@ export function buildScene(scene: UiContext): void {
         shipHeadings: {
           cargo: CONTENT.labels.cargo ?? "",
           equipment: CONTENT.labels.equipment ?? "",
+          weapons: CONTENT.labels.shopWeapons ?? "",
         },
         shipRows: CONTENT.labels,
         title: CONTENT.labels.pauseTitle ?? "",
