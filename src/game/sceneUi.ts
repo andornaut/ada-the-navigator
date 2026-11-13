@@ -11,6 +11,7 @@ import { galaxyCard } from "../data/storybook.ts";
 import { coarsePointer } from "../input/coarsePointer.ts";
 import { createControls } from "../input/controls.ts";
 import { grantAllWeapons } from "../model/cheats.ts";
+import type { ExchangePreview, ExchangeQuote } from "../model/exchange.ts";
 import { GameModel } from "../model/game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
@@ -610,6 +611,10 @@ export function buildScene(scene: UiContext): void {
         }
       }),
     dropJob: () => apply(() => scene.model.dropJob()),
+    exchange: {
+      confirm: (quote) => confirmStationExchange(scene, quote),
+      preview: (order) => scene.model.previewExchange(order),
+    },
     greeting: () => scene.model.stationGreeting,
     jobs: () =>
       scene.model.jobBoard().map((job) => ({
@@ -910,6 +915,28 @@ export function buildScene(scene: UiContext): void {
   }
   refreshScene(scene);
   loadAsteroidArt(scene);
+}
+
+/** A station trade updates its status without fabricating flight pickup feedback. */
+export function confirmStationExchange(scene: UiContext, quote: ExchangeQuote): ExchangePreview {
+  if (scene.emergencyReturn.active) {
+    return { kind: "refused", reason: "unavailable" };
+  }
+  const result = scene.model.confirmExchange(quote);
+  if (result.kind === "quote") {
+    scene.controls.reset();
+    scene.feedback.baseline(scene.model.state);
+    const flight = scene.model.state.flight;
+    if (flight) {
+      scene.held = {
+        flight,
+        snapshot: gainSnapshot(scene.model.state.economy.paints, scene.model.ship),
+      };
+    }
+    flushScene(scene);
+    refreshScene(scene);
+  }
+  return result;
 }
 
 /** The conversation box, in the desktop wording without a coarse pointer. */

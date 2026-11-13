@@ -40,6 +40,12 @@ export class ModelFeedback {
     }
   }
 
+  /** A confirmed inventory transaction starts a new baseline without a flight pickup pulse. */
+  baseline(state: GameState): void {
+    this.previous = undefined;
+    this.observe(TELEPORT_DISTANCE, state);
+  }
+
   observe(teleportDistance: number, state: GameState): FeedbackKind[] {
     const flight = state.flight;
     const previous = this.previous;

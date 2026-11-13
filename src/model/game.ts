@@ -16,6 +16,7 @@ import {
 } from "../data/conversations.ts";
 import { DESTINATIONS, STATION_SENTENCE } from "../data/destinations.ts";
 import { ECONOMY, type UpgradeWeapon } from "../data/economy.ts";
+import { EXCHANGE_RATES } from "../data/exchange.ts";
 import {
   BUILT,
   GALAXY_COUNT,
@@ -67,6 +68,13 @@ import {
 } from "./conversations.ts";
 import { inCurrent } from "./currents.ts";
 import { carriesStardust, dropRandom } from "./drops.ts";
+import {
+  confirmExchange,
+  type ExchangeOrder,
+  type ExchangePreview,
+  type ExchangeQuote,
+  quoteExchange,
+} from "./exchange.ts";
 import {
   activateRouteEncounter,
   carryPickup,
@@ -966,6 +974,34 @@ export class GameModel {
   /** Records that a funded project's world change has played its one reveal (projects.ts). */
   revealWorldChange(galaxy: GalaxyNumber, id: string): boolean {
     return revealWorldChange(galaxyProjects(galaxy), this.state.progress[galaxy], id);
+  }
+  /** Exchange uses the one fungible ore balance and never emits a pickup event. */
+  previewExchange(order: ExchangeOrder): ExchangePreview {
+    const flight = this.state.flight;
+    if (this.state.mode !== "space" || !flight || !this.state.docked || this.state.dialogue) {
+      return { kind: "refused", reason: "unavailable" };
+    }
+    return quoteExchange(
+      EXCHANGE_RATES,
+      { ore: flight.cargo, stardust: this.state.economy.stardust },
+      order,
+    );
+  }
+  confirmExchange(quote: ExchangeQuote): ExchangePreview {
+    const flight = this.state.flight;
+    if (this.state.mode !== "space" || !flight || !this.state.docked || this.state.dialogue) {
+      return { kind: "refused", reason: "unavailable" };
+    }
+    const result = confirmExchange(
+      EXCHANGE_RATES,
+      { ore: flight.cargo, stardust: this.state.economy.stardust },
+      quote,
+    );
+    if (result.kind === "quote") {
+      flight.cargo = result.after.ore;
+      this.state.economy.stardust = result.after.stardust;
+    }
+    return result;
   }
   selectPaint(scheme: string): boolean {
     return selectPaint(ECONOMY, scheme, this.state.economy);
