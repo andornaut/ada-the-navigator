@@ -3237,23 +3237,30 @@ try {
       "Canonical cleared-flight fixture for actual UI firing, not natural pickup or combat progression",
     state: JSON.parse(weaponSave),
   });
-  async function heldVolley(weapon, projectile, minimum, faded = false) {
+  // heading, when given, also waits for a shot flying at that world angle.
+  async function heldVolley(weapon, projectile, minimum, faded = false, heading = null) {
     await seedOnce(weaponSave, `ada-browser.volley-${weapon}.v1`);
     await page.locator(`button[data-weapon="${weapon}"]`).click();
     await page.keyboard.down("ArrowRight");
     try {
       await page.waitForFunction(
-        ({ faded, key, minimum, projectile }) => {
+        ({ faded, heading, key, minimum, projectile }) => {
           const shots =
             JSON.parse(localStorage.getItem(key))?.flight?.shots.filter(
               (shot) => !shot.enemy && shot.projectile === projectile,
             ) ?? [];
           return (
             shots.length >= minimum &&
-            (!faded || shots.some((shot) => shot.fade && shot.life / shot.fade.initialLife < 0.35))
+            (!faded ||
+              shots.some((shot) => shot.fade && shot.life / shot.fade.initialLife < 0.35)) &&
+            (heading === null ||
+              shots.some(
+                (shot) =>
+                  Math.abs(Math.atan2(shot.velocity.y, shot.velocity.x) - heading) < 0.000001,
+              ))
           );
         },
-        { key: storageKey, projectile, minimum, faded },
+        { key: storageKey, projectile, minimum, faded, heading },
       );
       const snapshot = await readSave();
       assert.deepEqual(
@@ -3268,8 +3275,9 @@ try {
     }
   }
   // A level 1 Rapid Missile lives 0.44 s (220 at 500) against its 0.30 s interval, so at most
-  // two are in flight between shots.
-  const missiles = await heldVolley("rapidMissile", "missile", 2);
+  // two are in flight between shots. The held screen-right aim settles on world angle -45 degrees.
+  const settledAim = -Math.PI / 4;
+  const missiles = await heldVolley("rapidMissile", "missile", 2, false, settledAim);
   // Remaining life counts down, so ascending life is firing order (oldest first).
   const missileShots = missiles.flight.shots
     .filter((shot) => !shot.enemy && shot.projectile === "missile")
@@ -3282,7 +3290,6 @@ try {
   // the facing settles on the held screen-right aim (world angle -45 degrees) every later
   // missile shares that straight heading.
   const headingOf = (shot) => Math.atan2(shot.velocity.y, shot.velocity.x);
-  const settledAim = -Math.PI / 4;
   const firstSettled = missileShots.findIndex(
     (shot) => Math.abs(headingOf(shot) - settledAim) < 0.000001,
   );
