@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { ACTIVITIES, CALF, MINING_CONTRACT_DEPOSITS } from "../data/activities.ts";
+import {
+  ACTIVITIES,
+  ACTIVITY_REWARDS,
+  CALF,
+  MINING_CONTRACT_DEPOSITS,
+} from "../data/activities.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { HUNTING_PACKS } from "../data/galaxyFeatures.ts";
@@ -14,6 +19,18 @@ import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
 import type { GameState, HeldActivity, Vec } from "./types.ts";
+
+/** The same held target is absent beyond 3000 and present just inside it, without advancing play. */
+function expectJobIndicatorRange(model: GameModel, target: Vec & { id: string }): void {
+  const flight = model.state.flight!;
+  const before = flight.player;
+  const match = expect.objectContaining({ id: target.id, kind: "job", x: target.x, y: target.y });
+  flight.player = { x: target.x + 3001, y: target.y };
+  expect(model.indicatorTargets).not.toContainEqual(match);
+  flight.player = { x: target.x + 2999, y: target.y };
+  expect(model.indicatorTargets).toContainEqual(match);
+  flight.player = before;
+}
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
@@ -108,6 +125,18 @@ function atFamily() {
 }
 
 describe("repeatable activities", () => {
+  it("pays the approved rewards for implemented activities without adding placeholder activities", () => {
+    expect(ACTIVITY_REWARDS).toEqual({ 2: 105, 3: 150, 4: 165, 5: 180 });
+    expect(ACTIVITIES[3]?.reward).toBe(105);
+    expect(ACTIVITIES[2]?.reward).toBe(180);
+    expect(ACTIVITIES[1]?.reward).toBeUndefined();
+    expect([ACTIVITIES[4], ACTIVITIES[5], ACTIVITIES[6]]).toEqual([
+      undefined,
+      undefined,
+      undefined,
+    ]);
+  });
+
   it.each(OFFERS)(
     "galaxy %i's %s offers its activity through Talk with Accept and Not now",
     (galaxy, place, line, speaker) => {
@@ -166,7 +195,7 @@ describe("repeatable activities", () => {
       id: "miningContract",
       kind: "activity",
       place: "hub",
-      reward: 60,
+      reward: 180,
     };
     expect(model.jobBusyLine).toBe("Finish your activity first.");
     model.state.dialogue = null;
@@ -188,7 +217,7 @@ describe("repeatable activities", () => {
     expect(rows[0]).toMatchObject({
       detail: "Deposit 30 ore at the hub.",
       kind: "activity",
-      reward: 60,
+      reward: 180,
       state: "held",
       title: "Mining contract",
     });
@@ -235,8 +264,8 @@ describe("repeatable activities", () => {
     flight.cargo = MINING_CONTRACT_DEPOSITS - 24;
     model.interact();
     expect(model.state.tasks[2]).toBeUndefined();
-    expect(model.state.economy.stardust).toBe(before + 60);
-    expect(model.state.notice).toBe("Job complete: +60 Stardust");
+    expect(model.state.economy.stardust).toBe(before + 180);
+    expect(model.state.notice).toBe("Job complete: +180 Stardust");
     expect(model.state.achievements.activities).toBe(count + 1);
     // Offered again at the head of the hub's board.
     model.interact();
@@ -254,7 +283,7 @@ describe("repeatable activities", () => {
     model.interact();
     model.choose("take");
     const length = Math.hypot(site.x - growers.x, site.y - growers.y);
-    const reward = length >= JOB_TUNING.delivery.longFrom ? 25 : 15;
+    const reward = length >= JOB_TUNING.delivery.longFrom ? 75 : 45;
     expect(heldActivity(1, model.state)).toMatchObject({
       carrying: true,
       place: "growers",
@@ -266,16 +295,14 @@ describe("repeatable activities", () => {
     const delivery = {
       id: "job:x",
       item: "seeds",
-      reward: 15,
+      reward: 45,
       station: site.id,
       target: { id: site.id, x: site.x, y: site.y },
       type: "delivery",
     } as const;
     expect(model.jobText(delivery).title).toBe("Deliver seeds to the station");
     expect(model.map?.places.find(({ id }) => id === site.id)?.label).toBe("Station");
-    expect(model.indicatorTargets).toContainEqual(
-      expect.objectContaining({ id: site.id, kind: "job", x: site.x, y: site.y }),
-    );
+    expectJobIndicatorRange(model, site);
     // Kept with the activity on leaving the galaxy (rules.md "What each event keeps").
     flight.dangerFor = 0;
     model.returnHome();
@@ -332,25 +359,25 @@ describe("repeatable activities", () => {
     const saved = JSON.parse(model.save()) as GameState;
     expect(restoreSave(JSON.stringify(saved))!.tasks[2]).toEqual(saved.tasks[2]);
     for (const bad of [
-      { deposited: 0, id: "supplyRun", kind: "activity", place: "hub", reward: 35 },
-      { deposited: 0, id: "miningContract", kind: "activity", place: "growers", reward: 35 },
+      { deposited: 0, id: "supplyRun", kind: "activity", place: "hub", reward: 180 },
+      { deposited: 0, id: "miningContract", kind: "activity", place: "growers", reward: 180 },
       { deposited: 0, id: "miningContract", kind: "activity", place: "hub", reward: 50 },
-      { id: "miningContract", kind: "activity", place: "hub", reward: 35 },
-      { deposited: -1, id: "miningContract", kind: "activity", place: "hub", reward: 35 },
+      { id: "miningContract", kind: "activity", place: "hub", reward: 180 },
+      { deposited: -1, id: "miningContract", kind: "activity", place: "hub", reward: 180 },
       {
         carrying: true,
         deposited: 0,
         id: "miningContract",
         kind: "activity",
         place: "hub",
-        reward: 35,
+        reward: 180,
       },
       {
         deposited: 0,
         id: "miningContract",
         kind: "activity",
         place: "hub",
-        reward: 35,
+        reward: 180,
         target: { id: "x", x: 0, y: 0 },
       },
     ]) {
@@ -395,9 +422,7 @@ describe("Guide a calf", () => {
     expect(flight.calf).toMatchObject({ following: false });
     expect(Math.hypot(flight.calf!.x - start.x, flight.calf!.y - start.y)).toBeLessThan(5);
     expect(model.jobObjective).toBe("Find the whale calf.");
-    expect(model.indicatorTargets).toContainEqual(
-      expect.objectContaining({ id: "activity:calf", kind: "job" }),
-    );
+    expectJobIndicatorRange(model, { id: "activity:calf", x: flight.calf!.x, y: flight.calf!.y });
     // One pack of 3 to 4 fighters waits at the midpoint of the straight line home.
     const pack = flight.objects.filter((o) => o.enemy?.packId === "hunt:calf");
     expect(pack.length).toBeGreaterThanOrEqual(HUNTING_PACKS.count[0]);
@@ -415,9 +440,7 @@ describe("Guide a calf", () => {
     model.step(0.05, idle);
     expect(flight.calf!.following).toBe(true);
     expect(model.jobObjective).toBe("Guide the calf home.");
-    expect(model.indicatorTargets).toContainEqual(
-      expect.objectContaining({ id: "family", kind: "job", x: family.x, y: family.y }),
-    );
+    expectJobIndicatorRange(model, family);
     // It keeps following out to 340, then waits.
     flight.player = { x: flight.calf!.x + CALF.release - 10, y: flight.calf!.y };
     model.step(0.05, idle);
@@ -425,15 +448,15 @@ describe("Guide a calf", () => {
     flight.player = { x: flight.calf!.x + CALF.release + 10, y: flight.calf!.y };
     model.step(0.05, idle);
     expect(flight.calf!.following).toBe(false);
-    // Home with the family completes the guide, paying 50 with the notice alone.
+    // Home with the family completes the guide, paying 105 with the notice alone.
     const before = model.state.economy.stardust;
     Object.assign(flight.calf!, { x: family.x + CALF.home - 1, y: family.y });
     model.step(0.05, idle);
     expect(model.state.tasks[3]).toBeUndefined();
     expect(flight.calf).toBeUndefined();
     expect(model.calfAway).toBe(false);
-    expect(model.state.economy.stardust).toBe(before + 50);
-    expect(model.state.notice).toBe("Job complete: +50 Stardust");
+    expect(model.state.economy.stardust).toBe(before + 105);
+    expect(model.state.notice).toBe("Job complete: +105 Stardust");
   });
 
   it("returns the calf to its start and places its pack again on reset, Drop and leaving", () => {

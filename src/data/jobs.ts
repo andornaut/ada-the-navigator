@@ -46,13 +46,13 @@ export const JOB_TUNING = {
 export const JOB_REWARDS: Readonly<
   Partial<Record<RoutePosition, Readonly<Partial<Record<JobRewardKind, number>>>>>
 > = {
-  1: { deliveryLong: 25, deliveryShort: 15, hunt: 15, rescue: 25, survey: 10 },
-  2: { deliveryLong: 35, deliveryShort: 20, hunt: 20, rescue: 35, survey: 15 },
-  3: { deliveryLong: 50, deliveryShort: 30, hunt: 30, rescue: 50, survey: 20 },
-  4: { deliveryLong: 50, deliveryShort: 30, hunt: 30, rescue: 50, survey: 20 },
-  5: { deliveryLong: 50, deliveryShort: 30, hunt: 30, rescue: 50, survey: 20 },
+  1: { deliveryLong: 75, deliveryShort: 45, hunt: 45, rescue: 75, survey: 30 },
+  2: { deliveryLong: 105, deliveryShort: 60, hunt: 60, rescue: 105, survey: 45 },
+  3: { deliveryLong: 150, deliveryShort: 90, hunt: 90, rescue: 150, survey: 60 },
+  4: { deliveryLong: 150, deliveryShort: 90, hunt: 90, rescue: 150, survey: 60 },
+  5: { deliveryLong: 150, deliveryShort: 90, hunt: 90, rescue: 150, survey: 60 },
   // Phantom's boards offer only surveys and rescues.
-  6: { rescue: 50, survey: 20 },
+  6: { rescue: 150, survey: 60 },
 };
 
 /**

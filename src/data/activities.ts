@@ -1,3 +1,4 @@
+import type { RoutePosition } from "./galaxies.ts";
 import type { GalaxyNumber } from "./types.ts";
 
 // Repeatable activities (gameplay/quests.md "Repeatable activities"): once a galaxy's chapter is
@@ -17,6 +18,14 @@ export interface ActivityDefinition {
   readonly reward?: number;
 }
 
+/** Fixed activity pay by route position; Sunflower uses delivery pay, Phantom has no activity. */
+export const ACTIVITY_REWARDS: Readonly<Partial<Record<RoutePosition, number>>> = {
+  2: 105,
+  3: 150,
+  4: 165,
+  5: 180,
+};
+
 /** Each galaxy's activity; Phantom has none yet. */
 export const ACTIVITIES: Readonly<Partial<Record<GalaxyNumber, ActivityDefinition>>> = {
   1: {
@@ -35,14 +44,14 @@ export const ACTIVITIES: Readonly<Partial<Record<GalaxyNumber, ActivityDefinitio
     name: "Mining contract",
     // The hub is a station: its board offers the contract, with no Talk line.
     places: { hub: "" },
-    reward: 60,
+    reward: ACTIVITY_REWARDS[5]!,
   },
   3: {
     goal: "calfGoal",
     id: "guideCalf",
     name: "Guide a calf",
     places: { family: "activityFamily" },
-    reward: 50,
+    reward: ACTIVITY_REWARDS[2]!,
   },
 };
 

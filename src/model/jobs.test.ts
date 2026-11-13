@@ -35,6 +35,18 @@ import { stationsNear } from "./stations.ts";
 import type { FlightState, HeldJob, Vec } from "./types.ts";
 import { noLevels, shipTuning } from "./upgrades.ts";
 
+/** The same held target is absent beyond 3000 and present just inside it, without advancing play. */
+function expectJobIndicatorRange(model: GameModel, target: Vec & { id: string }): void {
+  const flight = model.state.flight!;
+  const before = flight.player;
+  const match = expect.objectContaining({ id: target.id, kind: "job", x: target.x, y: target.y });
+  flight.player = { x: target.x + 3001, y: target.y };
+  expect(model.indicatorTargets).not.toContainEqual(match);
+  flight.player = { x: target.x + 2999, y: target.y };
+  expect(model.indicatorTargets).toContainEqual(match);
+  flight.player = before;
+}
+
 const QUESTS = readFileSync(new URL("../../gameplay/quests.md", import.meta.url), "utf8");
 /** A Markdown table's body rows as trimmed cells, from the table after a heading or lead-in. */
 function tableRows(after: string): string[][] {
@@ -235,6 +247,17 @@ describe("landmarks", () => {
 });
 
 describe("job boards", () => {
+  it("pays the exact approved reward table by route position", () => {
+    expect(JOB_REWARDS).toEqual({
+      1: { deliveryLong: 75, deliveryShort: 45, hunt: 45, rescue: 75, survey: 30 },
+      2: { deliveryLong: 105, deliveryShort: 60, hunt: 60, rescue: 105, survey: 45 },
+      3: { deliveryLong: 150, deliveryShort: 90, hunt: 90, rescue: 150, survey: 60 },
+      4: { deliveryLong: 150, deliveryShort: 90, hunt: 90, rescue: 150, survey: 60 },
+      5: { deliveryLong: 150, deliveryShort: 90, hunt: 90, rescue: 150, survey: 60 },
+      6: { rescue: 150, survey: 60 },
+    });
+  });
+
   it("never send a delivery to a story place that takes none, only to stations and outposts", () => {
     const station = firstStation(3);
     // The whale family, the whale and the hub's buoy-held miner and visitors, nearer than any
@@ -458,12 +481,7 @@ describe("jobs in play", () => {
     const { model } = docked();
     const held = take(model, "survey");
     const stardust = model.state.economy.stardust;
-    expect(model.indicatorTargets).toContainEqual({
-      id: held.target.id,
-      kind: "job",
-      x: held.target.x,
-      y: held.target.y,
-    });
+    expectJobIndicatorRange(model, held.target);
     flyTo(model, held.target);
     expect(model.state.progress[1].charted).toContain(held.target.id);
     // Charting and the completed job count toward Cartographer and Helping Hand.
@@ -621,7 +639,7 @@ describe("jobs in play", () => {
     const { model } = docked();
     const held = take(model, "hunt");
     const spot = held.spot!;
-    expect(model.indicatorTargets.some(({ kind }) => kind === "job")).toBe(true);
+    expectJobIndicatorRange(model, { ...held.target, id: `job:${held.id}` });
     expect(model.jobScenery.area).toEqual({ radius: 900, x: held.target.x, y: held.target.y });
     // The far side of the area from the item, so nothing is collected on entry.
     const away = Math.atan2(held.target.y - spot.y, held.target.x - spot.x);
@@ -692,12 +710,7 @@ describe("jobs in play", () => {
     // marks the destination.
     expect(model.state.tasks[1]?.carrying).toBe(true);
     model.startGalaxy(1);
-    expect(model.indicatorTargets).toContainEqual({
-      id: target.id,
-      kind: "job",
-      x: target.x,
-      y: target.y,
-    });
+    expectJobIndicatorRange(model, target);
     (model.state.tasks[1] as HeldJob).carrying = false;
     const reach = (site: Vec & { id: string }) => {
       ensureStation(CONTENT, site.id, model.state.flight!);
