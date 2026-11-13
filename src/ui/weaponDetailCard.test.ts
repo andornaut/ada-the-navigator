@@ -1,5 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 
+import { WEAPON_DETAIL_LABELS, weaponDetailLines } from "../data/weaponDetails.ts";
+import { compactLevelName } from "./compactLevelName.ts";
 import { createWeaponDetailCard } from "./weaponDetailCard.ts";
 
 const fixture = vi.hoisted(() => {
@@ -9,10 +11,11 @@ const fixture = vi.hoisted(() => {
     dataset: Record<string, string> = {};
     hidden = false;
     textContent = "";
-    style = { display: "" };
+    style = { display: "", setProperty: vi.fn() };
     replaceChildren(...nodes: Node[]) {
       this.children = nodes;
     }
+    setAttribute() {}
     focus = vi.fn();
     remove = vi.fn();
     append(...nodes: Node[]) {
@@ -92,4 +95,58 @@ it("reopens with current content and traps Tab on the close control", () => {
   expect(fixture.card.title.textContent).toBe("Stardust");
   expect(fixture.card.body.children.at(-2)!.children[0]!.textContent).toBe("Second");
   resource.dispose();
+});
+
+it.each([1, 2, 3])(
+  "shows canonical icon and level %s in the owned title instead of a description row",
+  (level) => {
+    vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+    const detail = createWeaponDetailCard(new fixture.Node() as unknown as HTMLElement, {
+      closeLabel: "Close",
+      onOpenChange: vi.fn(),
+    });
+    detail.open(
+      "Rapid Missile",
+      [
+        ...weaponDetailLines("rapidMissile", level),
+        WEAPON_DETAIL_LABELS.detailAmmoLeft.replace("{count}", "0"),
+      ],
+      new fixture.Node() as unknown as HTMLElement,
+      { id: "rapidMissile", level },
+    );
+    const [icon, label] = fixture.card.title.children;
+    expect(label!.textContent).toBe(compactLevelName(level, "Rapid Missile"));
+    expect(icon!.dataset).toEqual({ level: String(level), state: "idle", weapon: "rapidMissile" });
+    expect(icon!.children[0]!.style.setProperty).toHaveBeenCalledWith(
+      "--glyph",
+      "url('/art/ui/icons/weapon-rapidMissile.svg')",
+    );
+    expect(icon!.children[1]!.children).toHaveLength(level === 1 ? 0 : level);
+    const lines = fixture.card.body.children.at(-2)!.children.map((node) => node.textContent);
+    expect(lines).toContain("Ammo: 0 left");
+    expect(lines.some((line) => line.startsWith("Level "))).toBe(false);
+    detail.dispose();
+  },
+);
+
+it("keeps an unowned preview unnumbered without inventing owned level metadata", () => {
+  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  const detail = createWeaponDetailCard(new fixture.Node() as unknown as HTMLElement, {
+    closeLabel: "Close",
+    onOpenChange: vi.fn(),
+  });
+  detail.open(
+    "Rapid Missile",
+    [WEAPON_DETAIL_LABELS.detailIncludesAmmo],
+    new fixture.Node() as unknown as HTMLElement,
+    { id: "rapidMissile" },
+  );
+  const [icon, label] = fixture.card.title.children;
+  expect(label!.textContent).toBe("Rapid Missile");
+  expect(icon!.dataset).not.toHaveProperty("level");
+  expect(icon!.children[1]!.children).toHaveLength(0);
+  expect(fixture.card.body.children.at(-2)!.children[0]!.textContent).toBe(
+    WEAPON_DETAIL_LABELS.detailIncludesAmmo,
+  );
+  detail.dispose();
 });

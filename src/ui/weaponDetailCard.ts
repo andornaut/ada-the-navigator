@@ -1,5 +1,10 @@
 import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 
+import type { Weapon } from "../data/types.ts";
+import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
+import { compactLevelName } from "./compactLevelName.ts";
+import { units } from "./layout/css.ts";
+import { SPACING } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createActions, createButton, createCard, isTap } from "./modal.ts";
 
@@ -66,9 +71,43 @@ export function createWeaponDetailCard(
       returnFocus = null;
     },
     isOpen: () => !modal.hidden,
-    open(title: string, lines: readonly string[], origin: HTMLElement) {
+    open(
+      title: string,
+      lines: readonly string[],
+      origin: HTMLElement,
+      identity?: { readonly id: Weapon; readonly level?: number },
+    ) {
       returnFocus = origin;
-      card.title.textContent = title;
+      card.title.textContent = compactLevelName(identity?.level, title);
+      if (identity) {
+        const label = document.createElement("span");
+        label.textContent = compactLevelName(identity.level, title);
+        const icon = document.createElement("span");
+        icon.className = "ada-weapon";
+        icon.dataset.weapon = identity.id;
+        icon.dataset.state = "idle";
+        if (identity.level !== undefined) {
+          icon.dataset.level = String(identity.level);
+        }
+        icon.setAttribute("aria-hidden", "true");
+        icon.style.pointerEvents = "none";
+        const disc = document.createElement("span");
+        disc.className = "ada-disc";
+        disc.style.setProperty("--glyph", `url('${weaponGlyphPath(identity.id)}')`);
+        const pips = document.createElement("span");
+        pips.className = "ada-pips";
+        if (identity.level !== undefined && identity.level > 1) {
+          pips.append(
+            ...Array.from({ length: identity.level }, () => document.createElement("span")),
+          );
+        }
+        icon.append(disc, pips);
+        card.title.style.display = "flex";
+        card.title.style.alignItems = "center";
+        card.title.style.justifyContent = "center";
+        card.title.style.gap = units(SPACING.gap);
+        card.title.replaceChildren(icon, label);
+      }
       description.replaceChildren(
         ...lines.map((line) => {
           const paragraph = document.createElement("span");

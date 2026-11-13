@@ -12,7 +12,6 @@ import { BUILD_LABEL } from "../buildLabel.ts";
 import { CONTENT } from "../data/content.ts";
 import { RESOURCE_DESCRIPTIONS } from "../data/resourceDescriptions.ts";
 import type { Weapon } from "../data/types.ts";
-import { WEAPON_LEVEL_COUNT } from "../data/weaponCatalog.ts";
 import { WEAPON_DETAIL_LABELS, weaponDetailLines } from "../data/weaponDetails.ts";
 import { canvasSize, fitCanvasCamera, sceneFit } from "../game/playCamera.ts";
 import { RASTER_SCALE_EVENT } from "../game/svgRasters.ts";
@@ -26,6 +25,7 @@ import {
   useDiscFrame,
 } from "../game/touchChrome.ts";
 import type { ItemGain } from "../model/itemGains.ts";
+import { weaponName } from "../model/shop.ts";
 import type { UseAction } from "../model/types.ts";
 import { PHONE_EVENTS } from "../pwa/events.ts";
 import type { StartCover, UpdateOffer } from "../pwa/updateOffer.ts";
@@ -73,6 +73,11 @@ import { coarsePointer, touchControlsActive, useDiscShown } from "./coarsePointe
 import { type ControlSample, ControlState } from "./state.ts";
 
 export interface ControlsOptions {
+  readonly aboardResource?: () => {
+    readonly title: string;
+    readonly text: string;
+    readonly kind: "carrying" | "towing";
+  } | null;
   readonly achievements: AchievementsLabels;
   readonly cheats: {
     readonly actions: readonly CheatAction[];
@@ -328,9 +333,6 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       if (!state.accepts()) {
         return;
       }
-      const level = CONTENT.labels
-        .level!.replace("{level}", String(choice.level))
-        .replace("{max}", String(WEAPON_LEVEL_COUNT));
       const ammo =
         choice.ammo === null
           ? WEAPON_DETAIL_LABELS.detailUnlimited
@@ -339,9 +341,10 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
               new Intl.NumberFormat("en-US").format(choice.ammo),
             );
       weaponDetail.open(
-        options.weaponLabels.names[choice.id],
-        [...weaponDetailLines(choice.id, choice.level), level, ammo],
+        weaponName(CONTENT.labels, choice.id),
+        [...weaponDetailLines(choice.id, choice.level), ammo],
         origin,
+        { id: choice.id, level: choice.level },
       );
     },
     onSelect: (weapon) => state.accepts() && options.onWeaponSelect(weapon),
@@ -360,10 +363,51 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       if (!state.accepts()) {
         return;
       }
+      const iconSource =
+        kind === "aboard"
+          ? origin
+          : origin
+              .closest(".ada-status")
+              ?.querySelector<HTMLElement>(
+                kind === "ore" ? ".ada-status-ore" : ".ada-status-stardust",
+              );
+      const icon = iconSource?.cloneNode(true) as HTMLElement | undefined;
+      if (icon) {
+        for (const attribute of [
+          "tabindex",
+          "role",
+          "aria-label",
+          "aria-haspopup",
+          "data-action",
+        ]) {
+          icon.removeAttribute(attribute);
+        }
+        icon.classList.remove("ada-resource-target");
+        icon.setAttribute("aria-hidden", "true");
+        icon.hidden = false;
+      }
       if (kind === "aboard") {
-        pause.openQuests();
+        const details = options.aboardResource?.();
+        if (!details) {
+          return;
+        }
+        if (icon) {
+          icon.dataset.kind = details.kind;
+        }
+        resource.open(details.title, details.text, origin, {
+          ...(icon ? { icon } : {}),
+          quests: {
+            label: options.pause.labels.mapScreen.quests,
+            onOpen: () => pause.openQuests(),
+          },
+        });
       } else {
-        resource.open(CONTENT.labels[kind] ?? "", RESOURCE_DESCRIPTIONS[kind], origin);
+        resource.open(
+          CONTENT.labels[kind] ?? "",
+          RESOURCE_DESCRIPTIONS[kind],
+          origin,
+          icon ? { icon } : {},
+        );
       }
     },
     reducedMotion: () => reducedMotion,

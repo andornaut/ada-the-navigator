@@ -5,6 +5,7 @@ import { WEAPON_LEVEL_COUNT } from "../data/weaponCatalog.ts";
 import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import { fill, weaponName } from "../model/shop.ts";
 import type { Aboard } from "../model/types.ts";
+import { compactLevelName } from "./compactLevelName.ts";
 import { font, units } from "./layout/css.ts";
 import { SHIP_CARD } from "./layout/shipCard.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
@@ -305,8 +306,7 @@ function rowNode(row: ShipRow): HTMLDivElement {
   line.className = "ada-ship-row";
   const label = document.createElement("span");
   label.className = "ada-ship-label";
-  label.textContent =
-    row.tier !== undefined && row.tier > 1 ? `${row.label} (${row.tier})` : row.label;
+  label.textContent = compactLevelName(row.tier, row.label);
   line.setAttribute("role", "listitem");
   line.setAttribute(
     "aria-label",

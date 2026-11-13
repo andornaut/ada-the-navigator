@@ -146,9 +146,9 @@ describe("Ship sections rendering", () => {
       "Weapons",
     ]);
     expect(left!.children[0]!.children[1]!.children.map((row) => rowText(row)[0])).toEqual([
-      "Engine (2)",
+      "Engine [2]",
       LABELS.shield,
-      `${LABELS.tractorBeam} (3)`,
+      `${LABELS.tractorBeam} [3]`,
       "Paint: Sky blue",
     ]);
     expect(left!.children[1]!.children[1]!.children.map(rowText)).toEqual([
@@ -172,7 +172,7 @@ describe("Ship sections rendering", () => {
       );
       const equipment = root.children[0]!.children[0]!.children[1]!.children;
       const weapon = root.children[1]!.children[0]!.children[1]!.children[0]!;
-      const suffix = level === 1 ? "" : ` (${level})`;
+      const suffix = level === 1 ? "" : ` [${level}]`;
       expect(equipment.slice(0, 3).map((row) => rowText(row)[0])).toEqual([
         `Engine${suffix}`,
         `${LABELS.shield}${suffix}`,
