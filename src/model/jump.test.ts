@@ -468,7 +468,7 @@ describe("quantum jump home", () => {
     expect(waiting.state.mode).toBe("space");
   });
 
-  it("goes Back to title from Ada's room page only, never from another storybook page", () => {
+  it("holds both the room and an unresolved story page through Back to title", () => {
     const model = launched();
     seenHome(model);
     model.returnHome();
@@ -479,8 +479,15 @@ describe("quantum jump home", () => {
     resolving.state.progress[1].questComplete = true;
     resolving.returnHome();
     expect(resolving.roomPage).toBe(false);
+    const before = resolving.storyView;
     resolving.backToTitle();
-    expect(resolving.screen).toBe("story");
+    expect(resolving.screen).toBe("start");
+    expect(resolving.state.progress[1].resolved).toBe(false);
+    const loaded = new GameModel(CONTENT, resolving.save());
+    loaded.continueGame();
+    expect(loaded.storyView?.page).toEqual(before?.page);
+    expect(loaded.storyView?.choices).toEqual(before?.choices);
+    expect(loaded.state.progress[1].resolved).toBe(false);
   });
 });
 

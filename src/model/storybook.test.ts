@@ -492,7 +492,7 @@ describe("galaxy selection", () => {
 });
 
 describe("start flow", () => {
-  it("offers only Start until the first flight begins", () => {
+  it("offers Start for a new game and Continue for a saved story before the first flight", () => {
     const model = new GameModel(CONTENT);
     expect(model.screen).toBe("start");
     model.continueGame();
@@ -500,18 +500,15 @@ describe("start flow", () => {
     model.start();
     readStory(model);
     model.leaveCockpit();
+    const room = model.storyView?.page;
     const reloaded = relaunch(CONTENT, model.save());
     expect(reloaded.state.started).toBe(false);
+    expect(reloaded.canContinue).toBe(true);
     reloaded.start();
-    // Start replays galaxy one's opening; the prologue is seen, so Ada boards from her room.
-    expect(reloaded.storyView?.page.id).toBe("opening");
-    expect(readStory(reloaded).map(({ id }) => id)).toEqual([
-      "opening",
-      "opening:branch:0",
-      "room",
-      "boarding:0",
-      "boarding:1",
-    ]);
+    expect(reloaded.screen).toBe("start");
+    reloaded.continueGame();
+    expect(reloaded.storyView?.page).toEqual(room);
+    expect(readStory(reloaded).map(({ id }) => id)).toEqual(["room", "boarding:0", "boarding:1"]);
     reloaded.jump();
     expect(relaunch(CONTENT, reloaded.save()).state.started).toBe(true);
   });

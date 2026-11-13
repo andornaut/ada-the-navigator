@@ -155,7 +155,7 @@ import {
   worldChanges,
 } from "./projects.ts";
 import { questDetails, type QuestEntry } from "./questDetails.ts";
-import { restoreSave, SAVE_VERSION } from "./save.ts";
+import { restoreGameSave, restoreSave, SAVE_VERSION } from "./save.ts";
 import { canRechargeShield } from "./shieldRecharge.ts";
 import { SHIP_REACH } from "./shipBody.ts";
 import {
@@ -199,6 +199,8 @@ import {
   storyStart,
   type StoryStep,
 } from "./storybook.ts";
+import { readStoryCursor, storyCursor, type StorySceneReference } from "./storyCursor.ts";
+import { referenceStoryScene, resolveStoryScene } from "./storyScenes.ts";
 import type {
   Aboard,
   DialogueState,
@@ -406,8 +408,7 @@ export class GameModel {
   /** Achievements unlocked whose notice has not shown yet; notices show in flight. */
   private achievementNotices: string[] = [];
   private previousSeed = 0;
-  // The home half's place is not saved: every launch shows the start screen, and Continue
-  // rebuilds any waiting scene from story progress or resumes the saved flight.
+  // Every launch shows the title. Continue restores a saved story cursor or the held flight.
   private startShown = true;
   // A flight saved mid-flight, with its notice, held off the state while the launch's start
   // screen shows so nothing in flight runs or shows; save() writes it back unchanged and
@@ -415,6 +416,8 @@ export class GameModel {
   private heldFlight: Pick<GameState, "dialogue" | "docked" | "flight" | "mode" | "notice"> | null =
     null;
   private story: StoryPosition | null = null;
+  private heldStory: { position: StoryPosition; slept: number } | null = null;
+  private readonly emergencyReferences = new WeakMap<Scene, StorySceneReference>();
   private suspendedInteraction: {
     readonly dialogue: DialogueState;
     readonly galaxy: GalaxyNumber;
@@ -435,7 +438,7 @@ export class GameModel {
   private unlockFlight: RouteFlight | null = null;
   constructor(content: GameContent, saved?: unknown) {
     this.content = content;
-    const restored = restoreSave(saved);
+    const restored = restoreGameSave(content, saved);
     this.state = restored ?? newGameState();
     const navigation = restored as
       | (GameState & {
@@ -443,6 +446,25 @@ export class GameModel {
           depletionContinuation?: unknown;
         })
       | null;
+    const pendingStory = (restored as GameSave | null)?.pendingStory;
+    if (pendingStory) {
+      const position = readStoryCursor(
+        {
+          resolve: (reference) => {
+            const scene = resolveStoryScene(this.storySceneContext, reference);
+            if (scene?.id === "jumpHome") {
+              this.emergencyReferences.set(scene, reference);
+            }
+            return scene;
+          },
+        },
+        pendingStory.cursor,
+      );
+      if (position) {
+        this.heldStory = { position, slept: pendingStory.slept };
+      }
+      delete (this.state as GameSave).pendingStory;
+    }
     const pending = navigation?.pendingInteraction;
     if (
       pending?.galaxy &&
@@ -533,6 +555,40 @@ export class GameModel {
       { stardust: this.state.economy.stardust > 0 },
       randomStream(this.state.flight?.seed ?? 1, "line-pools"),
     );
+  }
+  get canContinue(): boolean {
+    return this.state.started || this.heldStory !== null;
+  }
+  private get storySceneContext() {
+    return {
+      content: this.content,
+      holodisks: holodisksHeld(this.state.progress),
+      labels: this.storyLabels,
+    };
+  }
+  private resumeHeldStory(): boolean {
+    const held = this.heldStory;
+    if (!held) {
+      return false;
+    }
+    this.story = held.position;
+    this.slept = held.slept;
+    this.heldStory = null;
+    this.runScenes = [
+      ...new Set([...held.position.trail.map((step) => step.scene), held.position.scene]),
+    ];
+    this.runs += 1;
+    this.run = {
+      id: `${held.position.scene.id}#${this.runs}`,
+      pages: this.runScenes.flatMap((scene) => scene.pages),
+    };
+    this.playedInterludes.clear();
+    for (const step of held.position.trail) {
+      if (stepPage(step).sleep) {
+        this.playedInterludes.add(step.scene);
+      }
+    }
+    return true;
   }
   /** Which half and screen shows now. */
   get screen(): Screen {
@@ -1432,14 +1488,20 @@ export class GameModel {
   }
   /**
    * Back to title: the start screen, where Continue resumes. From flight it first ends the flight
-   * as the galaxy map's Earth does, with story progress saved and no sleep scene, even in danger;
-   * it also leaves Ada's room page.
+   * with its exact flight held, even in danger. Story pages retain their cursor and questions.
    */
   backToTitle(): void {
+    if (this.screen === "start") {
+      return;
+    }
+    const position = this.story ?? this.boardedFrom;
+    if (position) {
+      this.heldStory = { position, slept: this.slept };
+    }
     if (this.state.mode === "space" && this.state.flight) {
       this.closeGalaxyMapInFlight();
       this.holdFlight();
-    } else if (!this.roomPage) {
+    } else if (!position) {
       return;
     }
     this.story = null;
@@ -1506,7 +1568,12 @@ export class GameModel {
     const line = this.label("jumpHome");
     const page = oreLost ? `${line}\n${this.label("jumpHomeOreLost")}` : line;
     this.depletionContinuation = true;
-    this.showScene(jumpHomeScene(page, this.label("morningRecharge")));
+    const scene = jumpHomeScene(page, this.label("morningRecharge"));
+    this.emergencyReferences.set(scene, {
+      id: scene.id,
+      ...(oreLost ? { variant: "oreLost" as const } : {}),
+    });
+    this.showScene(scene);
   }
   private complete(): void {
     this.current.questComplete = true;
@@ -2963,7 +3030,7 @@ export class GameModel {
   }
   /** Start: galaxy one's home opening, then the prologue, until the first flight begins. */
   start(): void {
-    if (this.screen !== "start" || this.state.started) {
+    if (this.screen !== "start" || this.canContinue) {
       return;
     }
     this.state.progress[1].opened = false;
@@ -2975,7 +3042,7 @@ export class GameModel {
    * waiting home scene first, then Ada's room page.
    */
   continueGame(): void {
-    if (this.screen !== "start" || !this.state.started) {
+    if (this.screen !== "start" || !this.canContinue) {
       return;
     }
     this.startShown = false;
@@ -2999,13 +3066,18 @@ export class GameModel {
       if (chapter) {
         chapterRuntime(chapter.flight.galaxy)?.init?.(chapter);
       }
-      // A holodisk moment saved mid-way shows again from its first page.
+      if (this.resumeHeldStory()) {
+        return;
+      }
+      // A legacy holodisk moment without a cursor resumes from its first page.
       if (this.state.dialogue?.context === HOLODISK_MOMENT) {
         this.holodiskMoment();
       }
       return;
     }
-    this.beginVisit();
+    if (!this.resumeHeldStory()) {
+      this.beginVisit();
+    }
   }
   /**
    * Restart clears story progress, galaxies, holodisks, Stardust and purchases and replays from
@@ -3024,6 +3096,7 @@ export class GameModel {
     this.depletionContinuation = false;
     this.playedInterludes.clear();
     this.heldFlight = null;
+    this.heldStory = null;
     this.unlockFlight = null;
     this.story = null;
     this.closeSelection();
@@ -3463,6 +3536,22 @@ export class GameModel {
       ...snapshot,
       depletionContinuation: this.depletionContinuation || undefined,
       pendingInteraction: this.suspendedInteraction ?? undefined,
+      pendingStory:
+        this.story || this.heldStory
+          ? {
+              cursor: storyCursor(
+                {
+                  reference: (scene) =>
+                    referenceStoryScene(
+                      { emergency: (candidate) => this.emergencyReferences.get(candidate) },
+                      scene,
+                    ),
+                },
+                this.story ?? this.heldStory!.position,
+              ),
+              slept: this.story ? this.slept : this.heldStory!.slept,
+            }
+          : undefined,
     };
   }
   save(): string {

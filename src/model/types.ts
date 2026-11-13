@@ -12,6 +12,7 @@ import type { FlightTopology } from "./flightTopology.ts";
 import type { NeedleChapterProgress, NeedleFlight } from "./needleRuntime.ts";
 import type { PhantomFlight, PhantomProgress } from "./phantom.ts";
 import type { ProjectileFade } from "./playerProjectiles.ts";
+import type { StoryCursor } from "./storyCursor.ts";
 
 /** What Use does here: the disc's symbol, and its name the disc's accessible name. */
 export type UseAction = "deliver" | "deposit" | "dock" | "salvage" | "talk" | "tow" | "use";
@@ -378,6 +379,7 @@ export interface GameState {
 }
 /** The effective persisted model state, including suspended interaction and story continuation. */
 export interface GameSave extends GameState {
+  pendingStory?: { cursor: StoryCursor; slept: number } | undefined;
   depletionContinuation?: boolean | undefined;
   pendingInteraction?: { dialogue: DialogueState; galaxy: GalaxyNumber } | undefined;
 }

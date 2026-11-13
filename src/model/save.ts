@@ -10,13 +10,15 @@ import { NEEDLE_PLACES } from "../data/needle.ts";
 import { PHANTOM_DESTINATIONS } from "../data/phantom.ts";
 import { galaxyProjects } from "../data/projects.ts";
 import { RESOURCE_ROCKS } from "../data/resourceRocks.ts";
+import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
-import type { GalaxyNumber, Weapon } from "../data/types.ts";
+import type { GalaxyNumber, GameContent, Weapon } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
 import { validActivity } from "./activities.ts";
 import { validAndromedaProgress } from "./andromeda.ts";
 import { settlementById } from "./andromedaPlaces.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
+import { holodisksHeld } from "./conversations.ts";
 import { enemyDefeated } from "./enemyAi.ts";
 import { ACTIVE_CHUNK_RADIUS, encounterOf, persistentObject } from "./geography.ts";
 import { isLandmark } from "./landmarks.ts";
@@ -24,6 +26,9 @@ import { validExplored } from "./map.ts";
 import { readNeedleChapterProgress, validNeedleFlight } from "./needleRuntime.ts";
 import { validPhantomFlight, validPhantomProgress } from "./phantom.ts";
 import { namesStation, stationById } from "./stations.ts";
+import { currentPage } from "./storybook.ts";
+import { readStoryCursor } from "./storyCursor.ts";
+import { resolveStoryScene } from "./storyScenes.ts";
 import type {
   AmmoCounts,
   EconomyState,
@@ -570,6 +575,10 @@ function optionalTasks(value: unknown): boolean {
  * invalidate quest state. The result shares no references with `saved`.
  */
 export function restoreSave(saved: unknown): GameState | null {
+  return restoreGameSave(CONTENT, saved);
+}
+
+export function restoreGameSave(content: GameContent, saved: unknown): GameState | null {
   try {
     const value: unknown = typeof saved === "string" ? JSON.parse(saved) : structuredClone(saved);
     if (
@@ -846,6 +855,45 @@ export function restoreSave(saved: unknown): GameState | null {
     }
     if (value.mode === "space" && value.flight === null) {
       return null;
+    }
+    if (value.pendingStory !== undefined) {
+      const pending = value.pendingStory;
+      if (
+        !record(pending) ||
+        Reflect.ownKeys(pending).length !== 2 ||
+        !Object.hasOwn(pending, "cursor") ||
+        !Object.hasOwn(pending, "slept") ||
+        !["cursor", "slept"].every((key) => {
+          const descriptor = Object.getOwnPropertyDescriptor(pending, key);
+          return descriptor && "value" in descriptor && descriptor.enumerable;
+        }) ||
+        !finite(pending.slept) ||
+        pending.slept < 0 ||
+        pending.slept > OVERNIGHT_SLEEP.seconds
+      ) {
+        return null;
+      }
+      const state = value as unknown as GameState;
+      const position = readStoryCursor(
+        {
+          resolve: (reference) =>
+            resolveStoryScene(
+              {
+                content,
+                holodisks: holodisksHeld(state.progress),
+                labels: {
+                  continue: content.labels.continue ?? "continue",
+                  pickUpRock: content.labels.pickUpRock ?? "pickUpRock",
+                },
+              },
+              reference,
+            ),
+        },
+        pending.cursor,
+      );
+      if (!position || (!currentPage(position).sleep && pending.slept !== 0)) {
+        return null;
+      }
     }
     const restored = value as unknown as GameState;
     restored.economy.ammo = clampAmmo(ECONOMY, restored.economy.ammo);
