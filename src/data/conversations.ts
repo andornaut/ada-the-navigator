@@ -118,7 +118,7 @@ export const SPEAKERS: Readonly<
 };
 
 /** The General's name tab once the third holodisk is inserted, from whichever galaxy. */
-export const GENERAL_NAMED = { holodisks: 3, name: "General Gadget" } as const;
+export const GENERAL_NAMED = { holodisks: 3, name: "Admiral Archie" } as const;
 
 /** How long a line or notice of this text shows unless tapped (rules.md): 5 s plus 50 ms a character. */
 export function lineDuration(text: string): number {
@@ -567,7 +567,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     id: "general:held:4",
     lines: [
       line("general", "Astra. I know you can hear me. Come back, and bring my disks."),
-      line("astra", "I'm not yours, General. I never was."),
+      line("astra", "I'm not yours, Admiral. I never was."),
     ],
     priority: "warning",
     repeat: "never",

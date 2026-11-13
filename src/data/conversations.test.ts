@@ -40,7 +40,7 @@ function passage(start: string, until = " ## "): string {
 function spokenLines(text: string): { mood?: string; name: string; text: string }[] {
   return Array.from(
     text.matchAll(
-      /(Astra|Ada|Penny|Unknown voice|General Gadget): "([^"]+)"(?: \((happy|neutral|upset)\))?/gu,
+      /(Astra|Ada|Penny|Unknown voice|Admiral Archie): "([^"]+)"(?: \((happy|neutral|upset)\))?/gu,
     ),
     ([, name = "", line = "", mood]) => (mood ? { mood, name, text: line } : { name, text: line }),
   );

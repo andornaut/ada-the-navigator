@@ -658,7 +658,7 @@ describe("drone engagements in flight", () => {
   it("switch the General to his named frames once the third holodisk is in", () => {
     const model = engaged(2, "swarm", 6, [1, 3]);
     model.state.progress[2].holodisk = true;
-    expect(model.conversation).toMatchObject({ name: "General Gadget", named: true });
+    expect(model.conversation).toMatchObject({ name: "Admiral Archie", named: true });
   });
 });
 
@@ -666,8 +666,8 @@ describe("the General's name tab", () => {
   it("reads Unknown voice until the third holodisk is inserted, from whichever galaxy", () => {
     const progress = { 1: { holodisk: true }, 2: { holodisk: false }, 3: { holodisk: true } };
     expect(speakerName(progress, "general")).toBe("Unknown voice");
-    expect(speakerName({ ...progress, 2: { holodisk: true } }, "general")).toBe("General Gadget");
-    expect(speakerName({ ...progress, 5: { holodisk: true } }, "general")).toBe("General Gadget");
+    expect(speakerName({ ...progress, 2: { holodisk: true } }, "general")).toBe("Admiral Archie");
+    expect(speakerName({ ...progress, 5: { holodisk: true } }, "general")).toBe("Admiral Archie");
     expect(speakerName(progress, "astra")).toBe("Astra");
   });
 });

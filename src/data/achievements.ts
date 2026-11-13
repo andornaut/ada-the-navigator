@@ -63,7 +63,7 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
     name: "Room for Everyone",
   },
   {
-    condition: "Break General Gadget's blockade in Phantom.",
+    condition: "Break Admiral Archie's blockade in Phantom.",
     counted: false,
     goal: { kind: "blockade" },
     id: "blockadeBreaker",

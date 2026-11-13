@@ -23,10 +23,16 @@ describe("player text", () => {
     expect(playerText).not.toMatch(/toronto/i);
   });
 
-  it("names Ada's dog Penny, and Archie only as her cat beside Kiwi, never the sibling game", () => {
-    // The cats appear together, as "Archie and Kiwi"; any other Archie would name the sibling game.
-    expect(playerText).toContain("Archie and Kiwi");
-    expect(playerText.replaceAll("Archie and Kiwi", "")).not.toMatch(/archie/i);
+  it("distinguishes Gadget and Kiwi at home from Admiral Archie", () => {
+    expect(CONTENT.premise.prologue[4]?.text).toBe(
+      "Gadget and Kiwi watch from the bed, tails twitching.",
+    );
+    expect(CONTENT.labels.morningRecharge).toContain("Gadget and Kiwi");
+    expect(CONTENT.premise.holodisk.memories[2]).toBe(
+      "Admiral Archie. I was his navigator. I scattered my holodisks to keep them from him.",
+    );
+    expect(playerText).not.toContain("General Gadget");
+    expect(playerText.replaceAll("Admiral Archie", "")).not.toMatch(/archie/i);
     expect(CONTENT.premise.prologue[0]?.text).toMatch(/^On the way home, Penny tugs Ada /);
   });
 

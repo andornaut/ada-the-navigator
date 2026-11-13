@@ -21,7 +21,7 @@ const inserted = [
 const memories = [
   "I remember a fleet... and someone giving orders.",
   "I carried that fleet from galaxy to galaxy. But whose fleet?",
-  "General Gadget. I was his navigator. I scattered my holodisks to keep them from him.",
+  "Admiral Archie. I was his navigator. I scattered my holodisks to keep them from him.",
 ];
 
 /**

@@ -513,7 +513,7 @@ export const CONTENT: GameContent = {
     mapZoomIn: "Zoom in",
     mapZoomOut: "Zoom out",
     morningRecharge:
-      "Astra recharges overnight. In the morning, the rock is warm again, and Archie and Kiwi are " +
+      "Astra recharges overnight. In the morning, the rock is warm again, and Gadget and Kiwi are " +
       "curled at her feet.",
     motionNote: "Reduces animation and disables screen shake.",
     moveControls: "Move controls",

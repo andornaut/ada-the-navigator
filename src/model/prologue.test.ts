@@ -118,7 +118,7 @@ describe("prologue", () => {
           "a map of somewhere far away.",
         "Next",
       ],
-      ["adaRoomUnpolishedCats", "", "Archie and Kiwi watch from the bed, tails twitching.", "Next"],
+      ["adaRoomUnpolishedCats", "", "Gadget and Kiwi watch from the bed, tails twitching.", "Next"],
       [
         "adaRoom",
         "",

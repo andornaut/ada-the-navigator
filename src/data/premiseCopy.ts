@@ -48,7 +48,7 @@ export const PREMISE: PremiseContent = {
     memories: [
       "I remember a fleet... and someone giving orders.",
       "I carried that fleet from galaxy to galaxy. But whose fleet?",
-      "General Gadget. I was his navigator. I scattered my holodisks to keep them from him.",
+      "Admiral Archie. I was his navigator. I scattered my holodisks to keep them from him.",
       [
         "I remember running from him. I scattered the disks in one wild jump, and it broke ",
         "something in me. That's how I ended up near Earth.",
@@ -85,7 +85,7 @@ export const PREMISE: PremiseContent = {
     },
     {
       background: "adaRoomUnpolishedCats",
-      text: "Archie and Kiwi watch from the bed, tails twitching.",
+      text: "Gadget and Kiwi watch from the bed, tails twitching.",
     },
     {
       background: "adaRoom",
