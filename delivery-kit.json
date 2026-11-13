@@ -29,7 +29,8 @@
   },
   "resources": {
     "cpus": 4,
-    "loadLimit": 30
+    "loadLimit": 30,
+    "memoryMiB": 4096
   },
   "ci": {
     "requiredNames": ["AI attributions", "Lint", "Test"],
