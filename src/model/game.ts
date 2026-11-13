@@ -3474,7 +3474,11 @@ export class GameModel {
     } else if (ended.lead === "visit") {
       this.beginVisit(trail, startsRun);
     } else if (ended.lead === "board") {
-      this.showScene(boardingScene(this.content, this.state.announceGalaxy), trail, startsRun);
+      this.showScene(
+        boardingScene(this.content, this.state.announceGalaxy, roomBackground(trail.map(stepPage))),
+        trail,
+        startsRun,
+      );
     } else if (ended.lead === "flight") {
       // Back to the flight the moment paused.
       this.story = null;

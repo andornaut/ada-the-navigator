@@ -12,7 +12,7 @@ import {
   type Scene,
   type StoryLabels,
 } from "./storybook.ts";
-import type { StorySceneReference } from "./storyCursor.ts";
+import { isStoryRoomBackground, type StorySceneReference } from "./storyCursor.ts";
 
 export interface StorySceneContext {
   readonly content: GameContent;
@@ -32,16 +32,16 @@ export function resolveStoryScene(
       ? roomScene(content, labels, id === "room:empty", background)
       : null;
   }
+  if (id === "boarding") {
+    return variant === undefined || variant === "announce"
+      ? boardingScene(content, variant === "announce", background)
+      : null;
+  }
   if (background !== undefined) {
     return null;
   }
   if (id === "prologue") {
     return variant === undefined ? prologueScene(content, labels) : null;
-  }
-  if (id === "boarding") {
-    return variant === undefined || variant === "announce"
-      ? boardingScene(content, variant === "announce")
-      : null;
   }
   if (id === "jumpHome") {
     if (variant !== undefined && variant !== "oreLost") {
@@ -93,11 +93,7 @@ export function referenceStoryScene(
   }
   if (scene.id === "room" || scene.id === "room:empty") {
     const background = scene.pages[0]?.background;
-    if (
-      background !== "adaRoom" &&
-      background !== "adaRoomNight" &&
-      background !== "adaRoomMorningCats"
-    ) {
+    if (!isStoryRoomBackground(background)) {
       throw new RangeError("Invalid room story background");
     }
     return { background, id: scene.id };
@@ -105,8 +101,16 @@ export function referenceStoryScene(
   if (scene.id === "opening:1" && scene.pages.some((page) => page.id === "opening:farewell")) {
     return { id: scene.id, variant: "firstLaunch" };
   }
-  if (scene.id === "boarding" && scene.pages.some((page) => page.announces)) {
-    return { id: scene.id, variant: "announce" };
+  if (scene.id === "boarding") {
+    const background = scene.pages.find((page) => page.speaker === undefined)?.background;
+    if (background !== undefined && !isStoryRoomBackground(background)) {
+      throw new RangeError("Invalid boarding story background");
+    }
+    return {
+      id: scene.id,
+      ...(scene.pages.some((page) => page.announces) ? { variant: "announce" as const } : {}),
+      ...(background === undefined ? {} : { background }),
+    };
   }
   return { id: scene.id };
 }

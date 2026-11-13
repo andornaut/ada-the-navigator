@@ -1,9 +1,22 @@
 import type { Scene, StoryPosition, StoryStep } from "./storybook.ts";
 
+const ROOM_BACKGROUNDS = [
+  "adaRoom",
+  "adaRoomMorningCats",
+  "adaRoomNight",
+  "adaRoomRecorder",
+  "adaRoomInvitations",
+] as const;
+type StoryRoomBackground = (typeof ROOM_BACKGROUNDS)[number];
+
+export function isStoryRoomBackground(value: unknown): value is StoryRoomBackground {
+  return ROOM_BACKGROUNDS.some((background) => background === value);
+}
+
 export interface StorySceneReference {
   readonly id: string;
   readonly variant?: "firstLaunch" | "announce" | "oreLost";
-  readonly background?: "adaRoom" | "adaRoomMorningCats" | "adaRoomNight";
+  readonly background?: StoryRoomBackground;
 }
 
 export interface StoryCursorStep {
@@ -79,12 +92,7 @@ function reference(value: unknown): StorySceneReference | null {
   ) {
     return null;
   }
-  if (
-    background !== undefined &&
-    background !== "adaRoom" &&
-    background !== "adaRoomMorningCats" &&
-    background !== "adaRoomNight"
-  ) {
+  if (background !== undefined && !isStoryRoomBackground(background)) {
     return null;
   }
   if (
