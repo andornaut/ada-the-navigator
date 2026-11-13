@@ -145,8 +145,7 @@ describe("scenery collision damage", () => {
       expect(payload(collision.flight, collided)).toEqual(payload(laser.flight, shot));
       expect(payload(collision.flight, collided).ammo).toBe(1);
       const loot = payload(collision.flight, collided);
-      expect(loot.ore + loot.stardust).toBeGreaterThanOrEqual(1);
-      expect(loot.ore + loot.stardust).toBeLessThanOrEqual(5);
+      expect(loot.ore + loot.stardust).toBe(0);
       expect(collided.filter(({ type }) => type === "asteroidDestroyed")).toHaveLength(1);
       expect(collision.flight.objects).not.toContain(collision.obstacle);
     },

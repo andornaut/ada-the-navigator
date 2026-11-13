@@ -3012,8 +3012,12 @@ function hit(
   }
 }
 
-/** One combined ore/Stardust outcome per destroyed asteroid, plus independent ammo. */
+/** An ammo outcome replaces the destroyed asteroid's combined ore/Stardust payout. */
 function dropFromRock(content: GameContent, object: SpaceObject, flight: FlightState): void {
+  if (rollRockAmmoDrop(ECONOMY, ammoOwned(flight), dropRandom(flight.seed, `ammo:${object.id}`))) {
+    pushAmmoPack(content, object, flight);
+    return;
+  }
   const next = dropRandom(flight.seed, object.id);
   const loot = rollAsteroidLoot(ASTEROID_LOOT, asteroidSize(object), next);
   for (let p = 0; p < loot.ore; p++) {
@@ -3029,9 +3033,6 @@ function dropFromRock(content: GameContent, object: SpaceObject, flight: FlightS
   }
   const release = { at: flight.time + ROCK_RELEASE.releaseSeconds };
   releaseStardust(object, ROCK_RELEASE.spread, next, loot.stardust, loot.stardust, release, flight);
-  if (rollRockAmmoDrop(ECONOMY, ammoOwned(flight), dropRandom(flight.seed, `ammo:${object.id}`))) {
-    pushAmmoPack(content, object, flight);
-  }
 }
 
 /** The weapons ammo packs drop for: those Ada owns, not those a story grants for the flight. */

@@ -587,6 +587,47 @@ describe("Stardust drops", () => {
     }
   });
 
+  it.each(["rock", "resource"] as const)(
+    "replaces all %s resources with an eligible ammo pack",
+    (kind) => {
+      const seed = 77;
+      for (const result of [true, false]) {
+        const id = Array.from({ length: 2000 }, (_, index) => `exclusive:${index}`).find(
+          (id) => rollRockAmmoDrop(ECONOMY, ["phaser"], dropRandom(seed, `ammo:${id}`)) === result,
+        )!;
+        expect(id).toBeDefined();
+        for (const ownership of ["owned", "none", "granted"] as const) {
+          const value = flight(seed);
+          value.ownedWeapons = ownership === "none" ? [] : ["phaser"];
+          if (ownership === "granted") {
+            value.grantedWeapons = ["phaser"];
+          }
+          const target: SpaceObject = { hp: 1, id, kind, radius: 20, x: 600, y: 0 };
+          value.objects.push(target);
+          value.shots.push(killShot(target), killShot(target));
+          stepFlight(CONTENT, 1 / 60, idle, value);
+          const drops = value.objects.filter((object) => object.kind === "pickup");
+          if (result && ownership === "owned") {
+            expect(drops).toHaveLength(1);
+            expect(drops[0]).toMatchObject({ ammoPack: true, role: "drop" });
+            expect(drops[0]!.upgrade).not.toBe(true);
+          } else {
+            expect(drops.some((object) => object.ammoPack)).toBe(false);
+            const expected = rollAsteroidLoot(ASTEROID_LOOT, "small", dropRandom(seed, id));
+            expect(drops.filter((object) => object.role === "cargo")).toHaveLength(expected.ore);
+            expect(total(pickups(value))).toBe(expected.stardust);
+          }
+          const ids = drops.map((object) => object.id);
+          value.shots.push(killShot(target));
+          stepFlight(CONTENT, 0.001, idle, value);
+          expect(
+            value.objects.filter((object) => object.kind === "pickup").map((object) => object.id),
+          ).toEqual(ids);
+        }
+      }
+    },
+  );
+
   it("drops an ammo pack from a destroyed rock on its own roll while Ada owns a weapon, never an upgrade", () => {
     const seed = 77;
     const owned = ["phaser"] as const;
