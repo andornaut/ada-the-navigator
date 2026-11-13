@@ -11,6 +11,8 @@ const boot = vi.hoisted(() => ({
   reveal: vi.fn(() => ({ dispose: vi.fn(), ready: vi.fn() })),
   scene: vi.fn(),
 }));
+// Startup ordering does not depend on generating the complete UI stylesheet.
+vi.mock("virtual:ada-ui.css", () => ({}));
 vi.mock("./crash/install.ts", () => ({}));
 vi.mock("./crash/crashScreen.ts", () => ({
   CRASH_SCREEN: {
@@ -63,7 +65,7 @@ beforeEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
   boot.crash = undefined;
-  boot.launch.mockResolvedValue("ready");
+  boot.launch.mockResolvedValue("continue");
   boot.load.mockResolvedValue({ save: { version: 12 }, status: "loaded" });
   vi.stubGlobal("document", { getElementById: () => ({ closest: () => null }) });
   vi.stubGlobal("screen", {});
@@ -72,20 +74,28 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 it("loads the canonical store before constructing the scene and preserves the complete result", async () => {
-  let resolve!: (value: unknown) => void;
-  boot.load.mockReturnValue(
-    new Promise((done) => {
-      resolve = done;
-    }),
-  );
+  let release!: (value: unknown) => void;
+  const loading = new Promise<unknown>((resolve) => {
+    release = resolve;
+  });
+  const enteredLoad = new Promise<void>((entered) => {
+    boot.load.mockImplementation(() => {
+      entered();
+      return loading;
+    });
+  });
   const pending = import("./main.ts");
-  await vi.waitFor(() => expect(boot.load).toHaveBeenCalledOnce());
-  expect(boot.crash).toBeTypeOf("function");
-  expect(boot.game).not.toHaveBeenCalled();
-  expect(boot.scene).not.toHaveBeenCalled();
   const result = { save: { pendingInteraction: { galaxy: 1 }, version: 12 }, status: "loaded" };
-  resolve(result);
-  await pending;
+  try {
+    await Promise.race([enteredLoad, pending]);
+    expect(boot.load).toHaveBeenCalledOnce();
+    expect(boot.crash).toBeTypeOf("function");
+    expect(boot.game).not.toHaveBeenCalled();
+    expect(boot.scene).not.toHaveBeenCalled();
+  } finally {
+    release(result);
+    await pending;
+  }
   expect(boot.scene).toHaveBeenCalledWith(result);
   expect(boot.game).toHaveBeenCalledOnce();
 });
@@ -96,17 +106,26 @@ it("does not read or construct the old game after a staged version switch", asyn
   expect(boot.game).not.toHaveBeenCalled();
 });
 it("permanently fences writes and prevents construction when a crash occurs during load", async () => {
-  let resolve!: (value: unknown) => void;
-  boot.load.mockReturnValue(
-    new Promise((done) => {
-      resolve = done;
-    }),
-  );
+  let release!: (value: unknown) => void;
+  const loading = new Promise<unknown>((resolve) => {
+    release = resolve;
+  });
+  const enteredLoad = new Promise<void>((entered) => {
+    boot.load.mockImplementation(() => {
+      entered();
+      return loading;
+    });
+  });
   const pending = import("./main.ts");
-  await vi.waitFor(() => expect(boot.load).toHaveBeenCalledOnce());
-  boot.crash!();
-  resolve({ save: { version: 12 }, status: "loaded" });
-  await pending;
+  try {
+    await Promise.race([enteredLoad, pending]);
+    expect(boot.load).toHaveBeenCalledOnce();
+    expect(boot.crash).toBeTypeOf("function");
+    boot.crash!();
+  } finally {
+    release({ save: { version: 12 }, status: "loaded" });
+    await pending;
+  }
   expect(boot.blockWrites).toHaveBeenCalledWith("game crashed");
   expect(boot.game).not.toHaveBeenCalled();
 });
