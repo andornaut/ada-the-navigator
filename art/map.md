@@ -213,13 +213,18 @@ unavailable.
 
 ### Quests modal
 
-The galaxy's current quests on a standard content-fitted card
+The galaxy's current quests fill the available card area
 ([Layout](layout.md#modals)) titled "Quests", with the close X, over the map
 under the modal dim. The dim covers the field, the header, the HUD row, the
-tools and the panel. The close X, an outside tap, back and Escape close it,
-leaving the map's view and selection unchanged. Focus starts on the first line
-button, or on the close X without one. Constants: `MAP_SCREEN.quests`, to
-implement.
+tools and the panel. The header and page controls stay fixed; measured pages
+retain every quest entry, description, source and destination icon and label,
+reward and action without scrolling or reducing the text size. Long prose
+continues on subsequent pages. Previous is hidden on the first page; Next
+shows only when another page follows. The close X, an outside tap, back and
+Escape close it, leaving the map's view and selection unchanged. Focus starts
+on the first visible location button, or on the close X without one. The
+existing `openQuests` and `closeQuests` map routes remain unchanged.
+Constants: `MAP_SCREEN.quests`.
 
 | Token                          | Value | Rule                                                                                   |
 | ------------------------------ | ----- | -------------------------------------------------------------------------------------- |
