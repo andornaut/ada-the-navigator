@@ -1,4 +1,4 @@
-import type { PremiseContent } from "./types.ts";
+import type { PremiseContent, PremiseLine } from "./types.ts";
 
 // Narration has no speaker.
 export const PREMISE: PremiseContent = {
@@ -56,6 +56,10 @@ export const PREMISE: PremiseContent = {
       [
         "Now I remember what he wants: copies of my mind that always obey. If I'm whole again, ",
         "he'll want me even more.",
+      ].join(""),
+      [
+        "I remember everything now. He wanted copies of me that would never say no. ",
+        "I don't have to run anymore.",
       ].join(""),
     ],
     name: "Holodisk",
@@ -182,3 +186,15 @@ export const PREMISE: PremiseContent = {
   ],
   roomRock: "Ada's rock glows softly on her desk.",
 };
+
+/** The final recovery restores Astra without announcing another set of coordinates. */
+export function holodiskInsertion(
+  held: number,
+  lines: readonly PremiseLine[],
+): readonly PremiseLine[] {
+  return held === 6
+    ? lines.map((line, index) =>
+        index === lines.length - 1 ? { ...line, text: "Memory restored." } : line,
+      )
+    : lines;
+}
