@@ -52,7 +52,7 @@ const CLASSIC = {
   canopyRoof: "#2585d0",
   canopySides: "#1767b3",
   frontSides: "#929ca3",
-  rearSides: "#516674",
+  rearSides: "#28558a",
   skirt: "#abbfce",
   top: "#ffffff",
 } as const;

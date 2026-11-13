@@ -109,7 +109,7 @@
 
 Ship paint assigns a fixed material to each hull facet role, the skirt and the
 opaque canopy. Classic uses white wings, steep panels `#929ca3`, rear panels
-`#516674` and skirt `#abbfce`. Other paints use fixed linear-luminance references
+`#28558a` and skirt `#abbfce`. Other paints use fixed linear-luminance references
 `#b2bec6`, `#647d8d` and `#abbfce` for those three tiers relative to their own top hue. Booster walls use the canopy side colour;
 cyan mouths, thrust flames and speed jets retain their original colours.
 

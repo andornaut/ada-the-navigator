@@ -31,7 +31,7 @@ test("exported Classic materials and purchased paint ratios match their contract
   assert.equal(metadata.schemes.find(({ id }) => id === "amber")!.top, "#f4b665");
   assert(metadata.schemes.every((scheme) => scheme.price === undefined));
   assert.equal(classic.paint.frontSides, "#929ca3");
-  assert.equal(classic.paint.rearSides, "#516674");
+  assert.equal(classic.paint.rearSides, "#28558a");
   for (const { id, paint } of SCHEMES) {
     const exported = metadata.schemes.find((scheme) => scheme.id === id)!;
     for (const [material, color] of Object.entries(paint))
