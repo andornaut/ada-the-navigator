@@ -15,6 +15,7 @@ import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
 import { UPGRADE_WEAPONS } from "../model/weapons.ts";
 import { readStory, relaunch } from "../testing/launch.ts";
 import { cheatGroups, type CheatSessionOptions, createCheatSession } from "../ui/cheatActions.ts";
+import { galaxiesAvailable } from "../ui/pause.ts";
 import type { PauseState } from "../ui/pauseCard.ts";
 import { ShieldOreSpendCounter, type StatusView } from "../ui/statusPill.ts";
 
@@ -35,6 +36,13 @@ function callback(name: string): string {
       (ts.isArrowFunction(node.initializer) || ts.isObjectLiteralExpression(node.initializer))
     ) {
       found = node.initializer;
+    }
+    if (
+      ts.isBinaryExpression(node) &&
+      node.left.getText(source) === name &&
+      ts.isArrowFunction(node.right)
+    ) {
+      found = node.right;
     }
     if (ts.isFunctionDeclaration(node) && node.name?.text === name) {
       found = node;
@@ -163,6 +171,62 @@ describe("universal pause caller", () => {
     }
     expect(pages.length).toBeGreaterThan(1);
     expect(choice).toBe(true);
+  });
+
+  it("uses the real Earth Map permission and restores the exact room through scene callbacks", () => {
+    const model = new GameModel(CONTENT);
+    model.state.started = true;
+    model.state.prologueSeen = true;
+    model.state.progress[1].opened = true;
+    model.continueGame();
+    const before = structuredClone(model.storyView);
+    const scene = { controls: { focusGalaxies: vi.fn() }, model };
+    const context = createContext({
+      apply: (action: () => void) => action(),
+      galaxiesAvailable,
+      scene,
+    });
+    const open = runInContext(callback("scene.openGalaxies"), context) as () => void;
+    const close = runInContext(callback("closeGalaxyMap"), context) as () => void;
+    expect(pauseView(model).canMap).toBe(true);
+    expect(pauseView(model).place).toBe("room");
+    open();
+    expect(model.screen).toBe("selector");
+    expect(model.state.flight).toBeNull();
+    expect(pauseView(model).canMap).toBe(false);
+    close();
+    expect(model.storyView).toEqual(before);
+    expect(pauseView(model).canMap).toBe(true);
+    expect(scene.controls.focusGalaxies).not.toHaveBeenCalled();
+  });
+
+  it("cannot consume a mandatory Earth choice through Map or Back to title", () => {
+    const model = new GameModel(CONTENT);
+    model.start();
+    for (let turn = 0; turn < 60 && !model.storyView?.choices.length; turn++) {
+      model.storyNext();
+    }
+    expect(model.storyView!.choices.length).toBeGreaterThan(0);
+    const before = structuredClone(model.storyView);
+    const scene = { jumping: false, model };
+    const context = createContext({
+      apply: (action: () => void) => action(),
+      galaxiesAvailable,
+      scene,
+    });
+    const open = runInContext(callback("scene.openGalaxies"), context) as () => void;
+    const leave = runInContext(callback("onBackToTitle"), context) as () => void;
+    expect(pauseView(model).place).toBe("room");
+    expect(pauseView(model).canMap).toBe(false);
+    open();
+    expect(model.storyView).toEqual(before);
+    leave();
+    if (model.screen === "start") {
+      model.continueGame();
+    }
+    expect(model.storyView).toEqual(before);
+    model.storyNext();
+    expect(model.storyView).toEqual(before);
   });
 
   it("keeps a mandatory flight interaction intact across the actual Back to title caller", () => {
