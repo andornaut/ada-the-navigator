@@ -2899,6 +2899,18 @@ export class GameModel {
       }
       return;
     }
+    if (
+      dialogue.context === "phantom.aftermath" &&
+      id === "continue" &&
+      this.state.selectedGalaxy === 6 &&
+      this.current.questComplete &&
+      this.current.holodisk &&
+      this.current.phantom
+    ) {
+      this.current.phantom.aftermathComplete = true;
+      this.state.dialogue = null;
+      return;
+    }
     const context = this.chapterContext();
     if (context) {
       const result = chapterRuntime(context.flight.galaxy)?.choose?.(context, dialogue, id);
@@ -2939,18 +2951,6 @@ export class GameModel {
     }
     if (dialogue.context === "holodiskHandover") {
       this.holodiskMoment();
-      return;
-    }
-    if (
-      dialogue.context === "phantom.aftermath" &&
-      id === "continue" &&
-      this.state.selectedGalaxy === 6 &&
-      this.current.questComplete &&
-      this.current.holodisk &&
-      this.current.phantom
-    ) {
-      this.current.phantom.aftermathComplete = true;
-      this.state.dialogue = null;
       return;
     }
     // A panel that hands on to another speaker's shows it next, one speaker a panel.

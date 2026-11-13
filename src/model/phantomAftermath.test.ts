@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { PHANTOM_DESTINATIONS } from "../data/phantom.ts";
+import { createFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { validPhantomProgress } from "./phantom.ts";
 import { restoreSave } from "./save.ts";
@@ -17,6 +18,9 @@ function aftermath() {
     flagshipKnown: true,
     freed: [...PHANTOM_DESTINATIONS],
   };
+  model.state.unlocked = [1, 3, 4, 5, 2, 6];
+  model.state.mode = "space";
+  model.state.flight = createFlight(CONTENT, 6, 7, progress, model.state.economy);
   model.state.dialogue = {
     choices: [{ id: "continue", label: "Continue" }],
     context: "phantom.aftermath",
@@ -35,7 +39,7 @@ describe("Phantom aftermath completion", () => {
     model.choose("continue");
     expect(model.state.progress[6].phantom?.aftermathComplete).toBe(true);
     expect(model.state.dialogue).toBeNull();
-    const restored = restoreSave({ ...model.saveDocument(), selectedGalaxy: 1 });
+    const restored = restoreSave(model.saveDocument());
     expect(restored?.progress[6].phantom?.aftermathComplete).toBe(true);
     expect(model.state.progress[6].greetings).toEqual({ "station:0,0": 2 });
     model.choose("continue");
