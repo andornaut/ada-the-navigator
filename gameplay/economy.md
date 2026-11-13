@@ -224,8 +224,8 @@ not advance that order. Paint is a shop-only endgame savings goal.
 
 ## Ammunition
 
-Laser fire is unlimited. Every other weapon has its own ammunition count with no
-capacity limit: Rapid Missile and Heavy Missile use missiles, Multi-Laser and
+Laser fire is unlimited. Each finite-ammunition weapon holds at most 9,999 shots.
+Rapid Missile and Heavy Missile use missiles, Multi-Laser and
 Phaser use energy packs, and Scattershot uses shells. Each weapon tracks its own
 count, so Phaser energy is separate from Multi-Laser energy. Each volley uses
 one, so a Multi-Laser fan or a Scattershot spread costs one.

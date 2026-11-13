@@ -191,6 +191,9 @@ export function requestPurchase(
   economy: EconomyState,
   item: ShopItem,
 ): PurchaseRequest {
+  if (item.kind === "ammo" && economy.ammo[item.weapon] >= catalog.ammo.capacity) {
+    return { kind: "refused", reason: "notForSale" };
+  }
   const { price } = shopRow(catalog, economy, item);
   if (price === null) {
     return { kind: "refused", reason: "notForSale" };

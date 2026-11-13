@@ -718,10 +718,13 @@ export function simulate(input: SimulationInput): RunResult {
   const restock = () => {
     const price = catalog.ammo.packPrice;
     for (const each of owned) {
-      const target = behaviour.restockPacks * catalog.ammo.pack[each];
+      const target = Math.min(
+        catalog.ammo.capacity,
+        behaviour.restockPacks * catalog.ammo.pack[each],
+      );
       while (ammo[each] < target && balance >= price) {
         balance -= price;
-        ammo[each] += catalog.ammo.pack[each];
+        addPacks(catalog, each, 1, ammo);
         result.ammoSpent += price;
         result.packsBought++;
       }

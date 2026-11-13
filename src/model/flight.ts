@@ -125,7 +125,7 @@ import type {
 } from "./types.ts";
 import { noLevels, type ShipTuning, shipTuning } from "./upgrades.ts";
 import { markVisited, visitedChunk } from "./visited.ts";
-import { ensureOwnedWeapons, grantedAmmo, shotsLeft, spendShot } from "./weapons.ts";
+import { clampAmmo, ensureOwnedWeapons, grantedAmmo, shotsLeft, spendShot } from "./weapons.ts";
 
 const length = (v: Vec) => Math.hypot(v.x, v.y);
 const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -1600,7 +1600,7 @@ export function createFlight(
 ): FlightState {
   const levels = structuredClone(loadout.levels);
   const flight: FlightState = {
-    ammo: { ...loadout.ammo },
+    ammo: clampAmmo(ECONOMY, loadout.ammo),
     cargo: loadout.cargo ?? 0,
     ...(loadout.shieldRechargeCredit === undefined
       ? {}

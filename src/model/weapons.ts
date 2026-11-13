@@ -32,6 +32,27 @@ export function noAmmo(): AmmoCounts {
   return { heavyMissile: 0, multiLaser: 0, phaser: 0, rapidMissile: 0, scattershot: 0 };
 }
 
+/** Copies a loadout with every finite weapon bounded by the canonical capacity. */
+export function clampAmmo(catalog: Pick<EconomyCatalog, "ammo">, ammo: AmmoCounts): AmmoCounts {
+  const capped = { ...ammo };
+  for (const weapon of UPGRADE_WEAPONS) {
+    capped[weapon] = Math.min(catalog.ammo.capacity, capped[weapon]);
+  }
+  return capped;
+}
+
+/** Applies an acquisition and reports only shots actually added, never a negative feedback gain. */
+function addAmmo(
+  catalog: Pick<EconomyCatalog, "ammo">,
+  weapon: UpgradeWeapon,
+  amount: number,
+  ammo: AmmoCounts,
+): number {
+  const before = ammo[weapon];
+  ammo[weapon] = Math.min(catalog.ammo.capacity, before + amount);
+  return Math.max(0, ammo[weapon] - before);
+}
+
 /** Adds full packs for shop purchases and weapon grants; returns the immediate ammo delta. */
 export function addPacks(
   catalog: Pick<EconomyCatalog, "ammo">,
@@ -39,9 +60,7 @@ export function addPacks(
   packs: number,
   ammo: AmmoCounts,
 ): number {
-  const before = ammo[weapon];
-  ammo[weapon] += packs * catalog.ammo.pack[weapon];
-  return ammo[weapon] - before;
+  return addAmmo(catalog, weapon, packs * catalog.ammo.pack[weapon], ammo);
 }
 
 /** Adds one world ammo item, returning its immediate grant delta even while Ada fires. */
@@ -50,9 +69,7 @@ export function addWorldAmmo(
   weapon: UpgradeWeapon,
   ammo: AmmoCounts,
 ): number {
-  const before = ammo[weapon];
-  ammo[weapon] += worldAmmoPack(catalog, weapon);
-  return ammo[weapon] - before;
+  return addAmmo(catalog, weapon, worldAmmoPack(catalog, weapon), ammo);
 }
 
 /** The ammunition a new weapon includes, for each weapon in owned and none for the rest. */

@@ -28,7 +28,7 @@ import type {
 } from "./types.ts";
 import { shipTuning } from "./upgrades.ts";
 import { chunkCoordinates, validVisitedPages } from "./visited.ts";
-import { UPGRADE_WEAPONS } from "./weapons.ts";
+import { clampAmmo, UPGRADE_WEAPONS } from "./weapons.ts";
 
 /** The save format this build writes and reads. */
 export const SAVE_VERSION: GameState["version"] = 12;
@@ -834,7 +834,12 @@ export function restoreSave(saved: unknown): GameState | null {
     if (value.mode === "space" && value.flight === null) {
       return null;
     }
-    return value as unknown as GameState;
+    const restored = value as unknown as GameState;
+    restored.economy.ammo = clampAmmo(ECONOMY, restored.economy.ammo);
+    if (restored.flight) {
+      restored.flight.ammo = clampAmmo(ECONOMY, restored.flight.ammo);
+    }
+    return restored;
   } catch {
     return null;
   }
