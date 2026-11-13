@@ -543,6 +543,21 @@ export interface ViewStar {
   readonly y: number;
 }
 
+interface SeededStar {
+  readonly u: number;
+  readonly v: number;
+  readonly shine: number;
+  readonly r: number;
+  readonly period: number;
+  readonly phase: number;
+}
+
+// Immutable recipes use identity keys; only chunks meeting the current view remain resident.
+const starChunks = new WeakMap<
+  BackdropRules,
+  WeakMap<GalaxyBackdrop, Map<string, readonly SeededStar[]>>
+>();
+
 /**
  * Both star depths over the view for a camera at world `camera` at `seconds`: each star's
  * brightness times its twinkle, which holds at the rules' reduced motion value when asked.
@@ -556,6 +571,17 @@ export function viewStars(
 ): ViewStar[] {
   const { brightness, chunk, large, salt, twinkle } = rules.stars;
   const { seed } = galaxy;
+  let galaxies = starChunks.get(rules);
+  if (!galaxies) {
+    galaxies = new WeakMap();
+    starChunks.set(rules, galaxies);
+  }
+  let chunks = galaxies.get(galaxy);
+  if (!chunks) {
+    chunks = new Map();
+    galaxies.set(galaxy, chunks);
+  }
+  const used = new Set<string>();
   const out: ViewStar[] = [];
   for (const layer of rules.stars.layers) {
     const origin = layerOrigin(camera, layer.parallax);
@@ -564,27 +590,49 @@ export function viewStars(
     for (let i = Math.floor(rect[0] / chunk); i <= Math.floor(rect[2] / chunk); i++) {
       for (let j = Math.floor(rect[1] / chunk); j <= Math.floor(rect[3] / chunk); j++) {
         const id = `${i},${j}`;
-        for (let k = 0; k < layer.perChunk; k++) {
-          const name = `${salt}-${layer.name}-${k}`;
-          const u = (i + unit(seed, id, `${name}-x`)) * chunk;
-          const v = (j + unit(seed, id, `${name}-y`)) * chunk;
-          if (u < rect[0] || u > rect[2] || v < rect[1] || v > rect[3]) {
+        const key = `${layer.name}:${id}`;
+        used.add(key);
+        let stars = chunks.get(key);
+        if (!stars) {
+          stars = Array.from({ length: layer.perChunk }, (_, k) => {
+            const name = `${salt}-${layer.name}-${k}`;
+            return {
+              period:
+                twinkle.period[0] +
+                (twinkle.period[1] - twinkle.period[0]) * unit(seed, id, `${name}-p`),
+              phase: 2 * Math.PI * unit(seed, id, `${name}-f`),
+              r: layer.radius * (unit(seed, id, `${name}-l`) > 1 - large.share ? large.scale : 1),
+              shine: brightness[0] + (brightness[1] - brightness[0]) * unit(seed, id, `${name}-b`),
+              u: (i + unit(seed, id, `${name}-x`)) * chunk,
+              v: (j + unit(seed, id, `${name}-y`)) * chunk,
+            };
+          });
+          chunks.set(key, stars);
+        }
+        for (const star of stars) {
+          if (star.u < rect[0] || star.u > rect[2] || star.v < rect[1] || star.v > rect[3]) {
             continue;
           }
-          const shine =
-            brightness[0] + (brightness[1] - brightness[0]) * unit(seed, id, `${name}-b`);
-          const [x, y] = toView(origin, [u, v]);
+          const [low, high] = twinkle.range;
+          const pulse = reducedMotion
+            ? twinkle.reducedMotion
+            : low +
+              (high - low) *
+                (0.5 + 0.5 * Math.sin((2 * Math.PI * seconds) / star.period + star.phase));
+          const [x, y] = toView(origin, [star.u, star.v]);
           out.push({
-            alpha:
-              galaxy.stars.alpha[layer.name] *
-              shine *
-              twinkleAt(twinkle, seed, id, name, seconds, reducedMotion),
-            r: layer.radius * (unit(seed, id, `${name}-l`) > 1 - large.share ? large.scale : 1),
+            alpha: galaxy.stars.alpha[layer.name] * star.shine * pulse,
+            r: star.r,
             x,
             y,
           });
         }
       }
+    }
+  }
+  for (const key of chunks.keys()) {
+    if (!used.has(key)) {
+      chunks.delete(key);
     }
   }
   return out;
