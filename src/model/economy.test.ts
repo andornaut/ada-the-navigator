@@ -21,6 +21,7 @@ import {
 } from "../data/enemyCatalog.ts";
 import { byPosition } from "../data/galaxies.ts";
 import { RESOURCE_ROCKS } from "../data/resourceRocks.ts";
+import { SCREEN } from "../data/screen.ts";
 import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
 import { rollAsteroidLoot } from "./asteroidLoot.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
@@ -36,7 +37,9 @@ import {
 import { createEnemy } from "./enemyAi.ts";
 import { createFlight, pickupTouched, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
+import { nosePoint } from "./nose.ts";
 import { HUNT_GLINT, pickupOutline } from "./pickupBody.ts";
+import { playerWeaponCoverage } from "./playerWeaponCoverage.ts";
 import { restoreSave } from "./save.ts";
 import { shipBody } from "./shipBody.ts";
 import {
@@ -987,12 +990,12 @@ describe("upgrade effects", () => {
   });
 
   it.each([
-    ["laser", 1, 500, 370],
-    ["laser", 2, 600, 370],
-    ["laser", 3, 700, 370],
-    ["multiLaser", 1, 400, 370],
-    ["multiLaser", 2, 500, 370],
-    ["multiLaser", 3, 600, 370],
+    ["laser", 1, 500, "viewport"],
+    ["laser", 2, 600, "viewport"],
+    ["laser", 3, 700, "viewport"],
+    ["multiLaser", 1, 400, "viewport"],
+    ["multiLaser", 2, 500, "viewport"],
+    ["multiLaser", 3, 600, "viewport"],
     ["rapidMissile", 1, 500, 220],
     ["rapidMissile", 2, 600, 220],
     ["rapidMissile", 3, 700, 220],
@@ -1000,7 +1003,7 @@ describe("upgrade effects", () => {
     ["heavyMissile", 2, 400, 220],
     ["heavyMissile", 3, 400, 220],
   ] as const)(
-    "fires %s at level %i at %i world units per second, reaching %i",
+    "fires %s at level %i at %i world units per second, reaching %s",
     (weapon, level, speed, reach) => {
       const value = flight();
       value.weapon = weapon;
@@ -1008,12 +1011,30 @@ describe("upgrade effects", () => {
         value.ammo[weapon] = 5;
       }
       value.levels.weapons[weapon] = level;
-      stepFlight(CONTENT, 1 / 60, { ...idle, aim: { x: 1, y: 0 } }, value);
+      const centre = { ...value.player };
+      stepFlight(
+        CONTENT,
+        1 / 60,
+        {
+          ...idle,
+          aim: { x: 1, y: 0 },
+          viewportHeight: SCREEN.height,
+          viewportWidth: SCREEN.width,
+        },
+        value,
+      );
       expect(value.shots.length).toBeGreaterThan(0);
       for (const { fade, life, velocity } of value.shots) {
         expect(Math.hypot(velocity.x, velocity.y)).toBeCloseTo(speed, 6);
         // The lifetime is the reach over the speed, less the step already flown; no fade.
-        expect((life + 1 / 60) * speed).toBeCloseTo(reach, 6);
+        const expected =
+          reach === "viewport"
+            ? playerWeaponCoverage(
+                { centre, viewportHeight: SCREEN.height, viewportWidth: SCREEN.width },
+                { direction: velocity, origin: nosePoint(value.facing, centre) },
+              )
+            : reach;
+        expect((life + 1 / 60) * speed).toBeCloseTo(expected, 6);
         expect(fade).toBeUndefined();
       }
     },

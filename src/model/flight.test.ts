@@ -440,13 +440,31 @@ describe("directional handling", () => {
     damped.facing = { ...east };
     instant.facing = { ...east };
     const aim = { ...idle, aim: { x: 0, y: -1 } };
+    const dampedEmissions: { frame: number; id: string }[] = [];
+    const instantEmissions: { frame: number; id: string }[] = [];
+    const seenDamped = new Set<string>(),
+      seenInstant = new Set<string>();
     for (let i = 0; i < 60; i++) {
       stepFlight(CONTENT, 1 / 60, aim, damped);
       stepFlight(instantAim, 1 / 60, aim, instant);
-      expect(damped.shots.map((s) => s.id)).toEqual(instant.shots.map((s) => s.id));
+      for (const shot of damped.shots) {
+        if (!seenDamped.has(shot.id)) {
+          seenDamped.add(shot.id);
+          dampedEmissions.push({ frame: i, id: shot.id });
+        }
+      }
+      for (const shot of instant.shots) {
+        if (!seenInstant.has(shot.id)) {
+          seenInstant.add(shot.id);
+          instantEmissions.push({ frame: i, id: shot.id });
+        }
+      }
+      expect(dampedEmissions).toEqual(instantEmissions);
       expect(damped.fireCooldown).toBe(instant.fireCooldown);
     }
-    expect(damped.shots.length).toBeGreaterThan(1);
+    const expected = 1 + Math.floor(59 / 60 / WEAPON_CATALOG.laser[0].intervalSeconds);
+    expect(dampedEmissions).toHaveLength(expected);
+    expect(instantEmissions).toHaveLength(expected);
     expect(damped.shots.at(-1)!.velocity).toEqual(instant.shots.at(-1)!.velocity);
   });
 
