@@ -16,6 +16,7 @@ import { SHARED_SHIP_PHYSICS } from "../data/shipPhysics.ts";
 import { muzzleOffset } from "./muzzles.ts";
 import { fanHeading } from "./playerProjectiles.ts";
 import { direction, hullOffset, speedFraction, stepShipMotion, turnToward } from "./shipPhysics.ts";
+import { type WorldContext, worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
 
 export interface HardpointState {
   /** Smoothed weapon aim; null until the weapon first has a target direction. */
@@ -91,7 +92,7 @@ export interface EnemyState {
   tactic: TacticState;
   velocity: Point;
 }
-export interface EnemyContext {
+export interface EnemyContext extends WorldContext {
   /** Admission for new sight aggression only; damage, summons and existing pursuit bypass it. */
   engagementAdmitted?: boolean;
   dormantPackMembers?: Readonly<Record<string, number>>;
@@ -361,7 +362,7 @@ function separation(definition: EnemyDefinition, context: EnemyContext, state: E
     if (peer.id === state.id || peer.hp <= 0) {
       continue;
     }
-    const delta = { x: state.position.x - peer.position.x, y: state.position.y - peer.position.y };
+    const delta = worldDelta(context, peer.position, state.position);
     const length = magnitude(delta);
     if (length > 0 && length < definition.steering.separation) {
       const weight = 1 - length / definition.steering.separation;
@@ -375,11 +376,12 @@ function separation(definition: EnemyDefinition, context: EnemyContext, state: E
 /** Steer to a point, slowing on approach so momentum cannot carry the ship around it. */
 function arrive(
   definition: EnemyDefinition,
+  context: WorldContext,
   maxSpeed: number,
   goal: Point,
   state: EnemyState,
 ): Point {
-  const offset = { x: goal.x - state.position.x, y: goal.y - state.position.y };
+  const offset = worldDelta(context, state.position, goal);
   const distance = magnitude(offset);
   if (distance <= 5) {
     return { x: 0, y: 0 };
@@ -397,6 +399,7 @@ function arrive(
  */
 function navigate(
   definition: EnemyDefinition,
+  context: WorldContext,
   anchor: Point,
   searching: boolean,
   state: EnemyState,
@@ -414,10 +417,8 @@ function navigate(
   const heading = state.phase + seeded(state.id, 13) * Math.PI * 2;
   const side = seeded(state.id, 14) < 0.5 ? -1 : 1;
   const offset = rotate({ x: radius, y: 0 }, heading);
-  const local = rotate(
-    { x: state.position.x - anchor.x - offset.x, y: state.position.y - anchor.y - offset.y },
-    -heading,
-  );
+  const relative = worldDelta(context, anchor, state.position);
+  const local = rotate({ x: relative.x - offset.x, y: relative.y - offset.y }, -heading);
   const x = local.x / radius;
   const y = local.y / (radius * ellipse);
   const radial = Math.hypot(x, y);
@@ -431,7 +432,7 @@ function navigate(
   );
   const fraction = Math.max(0, Math.min(1, ((radial - 1) * radius) / tuning.approachRadius));
   const approach = fraction * fraction * (3 - 2 * fraction);
-  const toward = unit({ x: anchor.x - state.position.x, y: anchor.y - state.position.y });
+  const toward = unit(worldDelta(context, state.position, anchor));
   const course = unit({
     x: orbit.x * (1 - approach) + toward.x * approach,
     y: orbit.y * (1 - approach) + toward.y * approach,
@@ -487,9 +488,13 @@ const retreatReady = (definition: EnemyDefinition, state: EnemyState): boolean =
   !state.retreat ||
   (state.retreat.endedAt !== undefined &&
     state.age - state.retreat.endedAt >= definition.retreats[state.retreat.kind].cooldownSeconds);
-function beginRetreat(kind: RetreatState["kind"], state: EnemyState): RetreatState {
+function beginRetreat(
+  context: WorldContext,
+  kind: RetreatState["kind"],
+  state: EnemyState,
+): RetreatState {
   const known = state.lastSeen ?? state.position;
-  const away = unit({ x: state.position.x - known.x, y: state.position.y - known.y });
+  const away = unit(worldDelta(context, known, state.position));
   const fallback = unit(state.facing);
   return {
     away: magnitude(away) ? away : magnitude(fallback) ? fallback : { ...UP },
@@ -513,6 +518,7 @@ function retreatCourse(policy: RetreatPolicy, state: EnemyState): Point {
  */
 function nextTactic(
   definition: EnemyDefinition,
+  context: WorldContext,
   next: EnemyState,
   distance: number,
   state: EnemyState,
@@ -542,7 +548,7 @@ function nextTactic(
       return enter("attack");
     }
     if (retreatReady(definition, next) && (hit || tactic.volleys >= behaviour.burstVolleys)) {
-      next.retreat = beginRetreat("hitAndRun", next);
+      next.retreat = beginRetreat(context, "hitAndRun", next);
       return enter("retreat");
     }
   } else if (behaviour.kind === "strafe") {
@@ -570,8 +576,8 @@ function steering(
 ): Point {
   if (state.returning) {
     return definition.navigation
-      ? navigate(definition, state.home, true, state)
-      : arrive(definition, maxSpeed, state.home, state);
+      ? navigate(definition, context, state.home, true, state)
+      : arrive(definition, context, maxSpeed, state.home, state);
   }
   if (retreatActive(state)) {
     return retreatCourse(definition.retreats[state.retreat!.kind], state);
@@ -581,19 +587,31 @@ function steering(
       state.retreat?.endedAt !== undefined &&
       state.lastSeen !== null &&
       state.lastSeenAge < definition.pursuit.unseenSeconds;
-    return navigate(definition, investigate ? state.lastSeen! : state.home, investigate, state);
+    return navigate(
+      definition,
+      context,
+      investigate ? state.lastSeen! : state.home,
+      investigate,
+      state,
+    );
   }
   const behaviour = definition.behaviour;
   if (context.visibility !== "visible") {
     // An engaged ship that has lost sight of Ada makes for where it last saw her; a siege ship
     // keeps to its slow advance.
     if (definition.navigation) {
-      return navigate(definition, state.lastSeen ?? state.home, state.lastSeen !== null, state);
+      return navigate(
+        definition,
+        context,
+        state.lastSeen ?? state.home,
+        state.lastSeen !== null,
+        state,
+      );
     }
     if (!state.lastSeen) {
       return { x: 0, y: 0 };
     }
-    const search = arrive(definition, maxSpeed, state.lastSeen, state);
+    const search = arrive(definition, context, maxSpeed, state.lastSeen, state);
     const pace = behaviour.kind === "siege" ? behaviour.speedFraction : 1;
     return { x: search.x * pace, y: search.y * pace };
   }
@@ -614,10 +632,7 @@ function steering(
   if (capital) {
     // Escorts hold a station beside the capital and intercept Ada when she comes close to it.
     const hull = (enemyCatalog[capital.archetype].sizeRatio * context.adaWidth) / 2;
-    const reach = Math.hypot(
-      context.player.x - capital.position.x,
-      context.player.y - capital.position.y,
-    );
+    const reach = worldDistance(context, capital.position, context.player);
     if (reach <= escortTuning.interceptRadius + hull) {
       return hold();
     }
@@ -626,7 +641,7 @@ function steering(
       x: capital.position.x + Math.cos(state.phase) * gap,
       y: capital.position.y + Math.sin(state.phase) * gap,
     };
-    return arrive(definition, maxSpeed, station, state);
+    return arrive(definition, context, maxSpeed, station, state);
   }
   switch (behaviour.kind) {
     case "chase":
@@ -696,7 +711,7 @@ export function stepEnemy(
   const observed = context.targetable && context.visibility === "visible";
   const summoned = context.summoned === true;
   const target = observed || summoned ? context.player : (state.lastSeen ?? state.position);
-  const delta = { x: target.x - state.position.x, y: target.y - state.position.y };
+  const delta = worldDelta(context, state.position, target);
   const aim = unit(delta);
   const distance = magnitude(delta);
   /** The ship sees Ada within its perception. */
@@ -733,7 +748,7 @@ export function stepEnemy(
     retreatReady(definition, next) &&
     (state.fleeing || (morale && !state.returning && (state.engaged || !state.retreat)))
   ) {
-    next.retreat = beginRetreat("morale", next);
+    next.retreat = beginRetreat(context, "morale", next);
   }
   let completedRetreat = false;
   if (retreatActive(next)) {
@@ -741,8 +756,7 @@ export function stepEnemy(
     const policy = definition.retreats[retreat.kind];
     if (
       next.age - retreat.startedAt >= policy.seconds ||
-      Math.hypot(next.position.x - retreat.origin.x, next.position.y - retreat.origin.y) >=
-        policy.distance
+      worldDistance(context, retreat.origin, next.position) >= policy.distance
     ) {
       next.retreat = { ...retreat, endedAt: next.age };
       completedRetreat = true;
@@ -760,10 +774,8 @@ export function stepEnemy(
     (next.engaged || investigating || retreatActive(next)) && !fighting
       ? state.pursuitSeconds + context.dt
       : 0;
-  const playerHomeDistance = observed
-    ? Math.hypot(context.player.x - state.home.x, context.player.y - state.home.y)
-    : 0;
-  const homeDistance = Math.hypot(state.position.x - state.home.x, state.position.y - state.home.y);
+  const playerHomeDistance = observed ? worldDistance(context, state.home, context.player) : 0;
+  const homeDistance = worldDistance(context, state.home, state.position);
   const pursuit = definition.pursuit;
   /** The ship is beyond its home radius, or sees Ada beyond it: a chase cannot go on. */
   const leashed = homeDistance >= pursuit.homeRadius || playerHomeDistance > pursuit.homeRadius;
@@ -812,7 +824,7 @@ export function stepEnemy(
       : definition;
   next.tactic = completedRetreat
     ? freshTactic(enemyIntegrity(next))
-    : nextTactic(acting, next, distance, state);
+    : nextTactic(acting, context, next, distance, state);
   // Each working engine gives an equal share of top speed; losing one slows the ship through
   // its own physics, while its maximum speed still bounds saved momentum.
   const fullSpeed = definition.physics.maxSpeed;
@@ -896,8 +908,8 @@ export function stepEnemy(
     const direct = profile.projectile === "beam";
     const speed = profile.projectileSpeed;
     const velocity = observed && !direct ? context.playerVelocity : { x: 0, y: 0 };
-    const point = leadPoint(origin, target, velocity, speed, skill);
-    const line = unit({ x: point.x - origin.x, y: point.y - origin.y });
+    const point = leadPoint(origin, worldPoint(context, origin, target), velocity, speed, skill);
+    const line = unit(worldDelta(context, origin, point));
     if (!magnitude(line)) {
       return current;
     }

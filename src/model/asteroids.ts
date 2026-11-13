@@ -20,6 +20,7 @@ import {
   worldParts,
 } from "./convex.ts";
 import type { SpaceObject, Vec } from "./types.ts";
+import { type WorldContext, worldPoint } from "./worldContacts.ts";
 
 export type { Contact } from "./convex.ts";
 
@@ -310,6 +311,64 @@ export function sceneryBlocksSegment(
   const a = toScreen({ x: start.x - object.x, y: start.y - object.y });
   const b = toScreen({ x: end.x - object.x, y: end.y - object.y });
   return segmentNearParts(drawn.frames[frame] ?? drawn.frames[0]!, a, b, inflate);
+}
+
+/** Translate only the obstacle anchor; authored parts and entity identity remain unchanged. */
+function sceneryImage(context: WorldContext, reference: Vec, object: SpaceObject): SpaceObject {
+  return context.worldSide === undefined
+    ? object
+    : { ...object, ...worldPoint(context, reference, object) };
+}
+
+export function worldSceneryContact(
+  context: WorldContext,
+  object: SpaceObject,
+  center: Vec,
+  radius: number,
+  frame = 0,
+  drawn = scenerySilhouette(object),
+): Contact | null {
+  return sceneryContact(sceneryImage(context, center, object), center, radius, frame, drawn);
+}
+
+export function worldSceneryBodyContact(
+  context: WorldContext,
+  object: SpaceObject,
+  center: Vec,
+  body: Parts,
+  frame = 0,
+  margin = 0,
+  drawn = scenerySilhouette(object),
+): Contact | null {
+  return sceneryBodyContact(
+    sceneryImage(context, center, object),
+    center,
+    body,
+    frame,
+    margin,
+    drawn,
+  );
+}
+
+/** The caller supplies one continuous local sweep; its endpoints and outline vertices are not wrapped. */
+export function worldSceneryBlocksSegment(
+  context: WorldContext,
+  object: SpaceObject,
+  start: Vec,
+  end: Vec,
+  inflate: number,
+  frame = 0,
+  drawn = scenerySilhouette(object),
+): boolean {
+  const midpoint = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
+  return sceneryBlocksSegment(
+    sceneryImage(context, midpoint, object),
+    start,
+    end,
+    inflate,
+    frame,
+    drawn,
+  );
 }
 
 /**
