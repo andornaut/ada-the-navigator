@@ -52,6 +52,7 @@ import {
   type PassableDraw,
   type Placed,
 } from "./drawOrder.ts";
+import { EmergencyReturn, returnedOnDepletion } from "./emergencyReturn.ts";
 import {
   composedArchetypes,
   type EnemyArt,
@@ -84,6 +85,7 @@ import {
   drawFeedback,
   drawIndicators,
   drawKeylines,
+  drawPulse,
   drawUseCallout,
   keylineEdges,
   keylineSprite,
@@ -319,6 +321,7 @@ export class GameScene extends Scene {
   // scene's specks, and the warp ship's paint: its source and the scheme last loaded.
   quantum: ReturnType<typeof createJumpOverlay> | null = null;
   jumping = false;
+  readonly emergencyReturn = new EmergencyReturn();
   private holdSource = false;
   warpCover = false;
   specks: Vec[] = [];
@@ -469,6 +472,9 @@ export class GameScene extends Scene {
   // from a newer version is never read or overwritten: saving stops, Start stays closed and the
   // newer version installs (requireNewerVersion). update waits for the controls build makes.
   create(): void {
+    this.jumping = false;
+    this.holdSource = false;
+    this.emergencyReturn.cancel();
     buildScene(this);
   }
 
@@ -479,6 +485,7 @@ export class GameScene extends Scene {
     const state = this.model.state;
     this.feedback.advance(Math.min(milliseconds / 1000, 0.05));
     const wasInSpace = state.mode === "space";
+    const returnSource = wasInSpace && !this.jumping ? spaceJumpScene(this) : null;
     this.flightLive =
       !this.jumping &&
       !this.settingsOpen &&
@@ -509,22 +516,51 @@ export class GameScene extends Scene {
         Math.min(milliseconds / 1000, 0.05),
       );
     }
-    // A failed shield already sent Ada home; hold the last drawn flight as the source scene
-    // until Astra's emergency jump covers it.
-    if (wasInSpace && this.model.state.mode !== "space" && !this.jumping && this.quantum) {
+    // Outcomes are already durable. Only the presentation waits over the last flight frame.
+    if (
+      !this.jumping &&
+      returnSource &&
+      this.emergencyReturn.begin(
+        returnedOnDepletion(wasInSpace, this.model.state, this.model.flightEvents),
+        returnSource,
+      )
+    ) {
       this.jumping = true;
       this.holdSource = true;
-      this.quantum.play({
-        destination: () => jumpScene(this),
-        emergency: true,
-        onCover: () => coverShip(this),
-        onDone: () => endJump(this),
-        onSwitch: () => {
+      this.enabled = false;
+      this.controls.setEnabled(false);
+      this.controls.reset();
+      this.controls.overlay.inert = true;
+      this.feedbackSound.play(["damage"]);
+      flushScene(this);
+    }
+    if (this.emergencyReturn.pending) {
+      this.overlay.clear();
+      drawPulse(this, 0, { age: this.emergencyReturn.line!.elapsed, kind: "damage", x: 0, y: 0 });
+      const source = this.emergencyReturn.advance(!document.hidden, milliseconds / 1000);
+      if (source) {
+        const done = () => {
+          this.emergencyReturn.cancel();
+          endJump(this);
+          this.controls.overlay.inert = false;
+        };
+        if (this.quantum) {
+          this.quantum.play({
+            destination: () => jumpScene(this),
+            emergency: true,
+            onCover: () => coverShip(this),
+            onDone: done,
+            onSwitch: () => {
+              this.holdSource = false;
+            },
+            reducedMotion: this.reducedMotion,
+            source,
+          });
+        } else {
           this.holdSource = false;
-        },
-        reducedMotion: this.reducedMotion,
-        source: spaceJumpScene(this),
-      });
+          done();
+        }
+      }
     }
     if (!this.holdSource) {
       refreshScene(this);

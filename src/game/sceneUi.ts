@@ -127,6 +127,7 @@ export type UiContext = Scene &
     | "debrisArt"
     | "destruction"
     | "edgeMarkerInk"
+    | "emergencyReturn"
     | "enabled"
     | "enemyArt"
     | "enemyJets"
@@ -321,6 +322,9 @@ export function buildScene(scene: UiContext): void {
   scene.ship.setDisplaySize(ship?.displayWidth ?? 42, ship?.displayHeight ?? 42);
   scene.ship.setOrigin(ship?.pivot.x ?? 0.5, ship?.pivot.y ?? 0.5);
   const apply = (action: () => void): void => {
+    if (scene.emergencyReturn.active) {
+      return;
+    }
     action();
     observeFeedback(scene);
     scene.controls.reset();
@@ -561,10 +565,16 @@ export function buildScene(scene: UiContext): void {
   });
   scene.conversationBox = createConversationBox(
     () => {
+      if (scene.emergencyReturn.active) {
+        return;
+      }
       scene.model.advanceConversation();
       renderConversation(scene);
     },
     () => {
+      if (scene.emergencyReturn.active) {
+        return;
+      }
       const initial = scene.model.conversation?.key;
       const instance = initial?.slice(0, initial.lastIndexOf(":"));
       for (let count = 0; count < 100; count++) {
@@ -850,6 +860,19 @@ export function buildScene(scene: UiContext): void {
     scene.controls.reset();
     flushScene(scene);
   };
+  const blockReturnInput = (event: Event): void => {
+    if (scene.emergencyReturn.active) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+  };
+  const unregisterReturn = scene.controls.registerBack({
+    back: () => undefined,
+    isOpen: () => scene.emergencyReturn.active,
+  });
+  for (const type of ["keydown", "pointerdown", "click"]) {
+    window.addEventListener(type, blockReturnInput, true);
+  }
   window.addEventListener("pointerdown", scene.feedbackSound.unlock);
   window.addEventListener("keydown", scene.feedbackSound.unlock);
   document.addEventListener("visibilitychange", hide);
@@ -868,6 +891,12 @@ export function buildScene(scene: UiContext): void {
     scene.galaxies.dispose();
     scene.restartCard.dispose();
     scene.station.dispose();
+    unregisterReturn();
+    for (const type of ["keydown", "pointerdown", "click"]) {
+      window.removeEventListener(type, blockReturnInput, true);
+    }
+    scene.emergencyReturn.cancel();
+    scene.controls.overlay.inert = false;
     scene.conversationBox.dispose();
     unregisterInteraction();
     interaction.dispose();
@@ -885,18 +914,16 @@ export function buildScene(scene: UiContext): void {
 
 /** The conversation box, in the desktop wording without a coarse pointer. */
 export function renderConversation(scene: UiContext): void {
-  scene.conversationBox.render(
-    scene.model.conversation,
-    !coarsePointer(window),
-    scene.reducedMotion,
-  );
+  const emergency = scene.emergencyReturn.line;
+  const line = emergency ?? scene.model.conversation;
+  scene.conversationBox.render(line, !coarsePointer(window), scene.reducedMotion);
   // One box at a time: a line, else the game notice, else the save status (notice.ts). A card
   // over the play view covers the line or notice under it, which frees the slot for the save
   // status, drawn above cards.
   const { dialogue, docked, notice } = scene.model.state;
-  const covered = scene.settingsOpen || Boolean(dialogue) || Boolean(docked);
+  const covered = !emergency && (scene.settingsOpen || Boolean(dialogue) || Boolean(docked));
   const occupant = boxOccupant({
-    line: scene.model.conversation !== null && !covered,
+    line: line !== null && !covered,
     notice: notice !== "" && !covered,
     saveStatus: scene.savingUnavailable,
   });
