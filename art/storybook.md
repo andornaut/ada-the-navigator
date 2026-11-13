@@ -20,12 +20,18 @@
 
 Every storybook background, like the aboard backdrop, is a 960 by 540 logical px canvas
 at 2x: a 1920 by 1080 opaque PNG with `displayWidth` 960 and `displayHeight` 540
-and the pivot at the centre. Draw it at display size under the insets, centred
-across and offset down by the [run anchor](layout.md#storybook-page), which
-places its [subject band](#subject-bands) in the strip above the story panel;
+and the pivot at the centre. Non-bedroom backgrounds draw at display size under
+the insets, centred across and offset by the [run anchor](layout.md#storybook-page),
+which places their [subject bands](#subject-bands) in the strip above the story panel;
 a backdrop without a panel stays centred. It covers every view up to 960 by 540
 (a 720 by 540 4:3 view, an 800 by 360 21:9 phone); scale it up to cover only
 past that.
+
+All bedroom backgrounds, aliases and glow frames share one camera. With logical
+view dimensions `viewW` and `viewH`, their cover scale is
+`k = max(1, viewW / 960, viewH / 540)` and canvas top is `viewH - 540 * k`.
+This bottom alignment is independent of panel height, subject band, story run,
+Previous navigation and overnight cross-fades, including pages without a panel.
 
 Scenes are composed on the 844 by 390 design frame, the 779 by 360 logical view
 of an 844 by 390 phone, which sits at the canvas centre (logical x 90.5 to
@@ -167,11 +173,12 @@ their scene's background (Grandma's choice uses `story-grandma-garden`).
 
 Each background's manifest entry carries `subject: { top, bottom }`, the canvas
 rows (logical px) its key objects span, written by its generator
-(`art/tools/storybook.ts`, `art/tools/aboard.ts`). The story page offsets the
-background so the band centres in the strip above the tallest panel in the
+(`art/tools/storybook.ts`, `art/tools/aboard.ts`). For non-bedroom backgrounds,
+the story page offsets the canvas so the band centres in the strip above the tallest panel in the
 story run ([run anchor](layout.md#storybook-page)). At a 360-high view the canvas can
 rise at most 180 (90 past centred), so a band's bottom shows only while it is
 at most the panel top + 180; at 720x405 the limit is the panel top + 135.
+Bedroom subject bands describe the art; they do not control its placement.
 
 | Id                               | Band     | Key objects                                            |
 | -------------------------------- | -------- | ------------------------------------------------------ |
@@ -193,10 +200,13 @@ at most the panel top + 180; at 720x405 the limit is the panel top + 135.
 | `story-grandma-garden-spilled`   | 176..285 | The seedling tray on the potting table and the beds    |
 | `story-grandma-garden-replanted` | 176..285 | The seedling tray on the potting table and the beds    |
 
-Placement per story run and background: canvas top `y`, then the band's view
-rows and the tallest panel's top, at 720x360 with insets 43/43/0/19, 844x390
-with the same insets, and 1280x720 (720x405). A star marks a clamped
-placement. Runs: the first launch (chapter one's opening, then the prologue),
+The viewport columns below are CSS sizes; coordinates are logical px. Their
+logical views are 720x360, 779.08x360 and 720x405. Bedroom cover scale is 1 at
+all three, so every bedroom variant uses fixed top -180, -180 and -135.
+The bedroom row lists this top only. Other rows list the per-run canvas top
+`y`, subject band view rows and tallest panel top, with insets 43/43/0/19 at
+the two phone sizes. A star marks a clamped non-bedroom placement. Runs: the
+first launch (chapter one's opening, then the prologue),
 a visit (a waiting chapter scene, Ada's room, boarding), the empty visit, the
 jump home (the jump-home page, night, morning, then the visit) and the holodisk
 moment (its narration, Astra's "Memory restored." and her memory line). Aboard
@@ -207,27 +217,24 @@ shorter line anchors on its own tallest page). The four new backgrounds have
 no pages yet; their rows assume a chapter page at Gameplay's limit (220
 characters, the heading and two choices).
 
-| Background, runs                                                    | 720x360, insets                 | 844x390, insets                 | 1280x720                        |
-| ------------------------------------------------------------------- | ------------------------------- | ------------------------------- | ------------------------------- |
-| `story-grandma-garden`, first launch                                | y -180*: 19..105, top 113       | y -180*: 19..105, top 113       | y -135*: 64..150, top 161       |
-| `story-park`, first launch                                          | y -138: 82..147, top 229        | y -134: 86..151, top 237        | y -110: 110..175, top 285       |
-| `story-ada-room-unpolished`, first launch                           | y -162: 93..138, top 231        | y -162: 93..138, top 231        | y -135*: 120..165, top 279      |
-| `story-ada-room`, every visit, first launch, empty visit, jump home | y -171: 84..129, top 213        | y -171: 84..129, top 213        | y -135*: 120..165, top 261      |
-| `aboard`, first launch (standing, questions, seated)                | y -167.5: 4.5..88.5, top 93     | y -167.5: 4.5..88.5, top 93     | y -135*: 37..121, top 141       |
-| `story-community-garden`, visit, chapter 1 resolution               | y -178.5: 1.5..111.5, top 113   | y -178.5: 1.5..111.5, top 113   | y -135*: 45..155, top 161       |
-| `aboard`, boarding                                                  | y -95.5: 76.5..160.5, top 237   | y -95.5: 76.5..160.5, top 237   | y -71.5: 100.5..184.5, top 285  |
-| `aboard`, boarding after an unlock                                  | y -99.5: 72.5..156.5, top 229   | y -99.5: 72.5..156.5, top 229   | y -75.5: 96.5..180.5, top 277   |
-| `aboard`, holodisk moment, fourth memory line                       | y -125.5: 46.5..130.5, top 177  | y -125.5: 46.5..130.5, top 177  | y -101.5: 70.5..154.5, top 225  |
-| `aboard-emergency`, jump home                                       | y -85.5: 86.5..170.5, top 257   | y -85.5: 86.5..170.5, top 257   | y -61.5: 110.5..194.5, top 305  |
-| `story-school-hallway`, visit, chapter 2 opening                    | y -170.5: 13.5..119.5, top 133  | y -170.5: 13.5..119.5, top 133  | y -135*: 49..155, top 181       |
-| `story-schoolyard`, visit, chapter 2 resolution                     | y -156.5: 11.5..121.5, top 133  | y -156.5: 11.5..121.5, top 133  | y -132.5: 35.5..145.5, top 181  |
-| `story-front-door`, visit, chapter 3 opening                        | y -171: 4..109, top 113         | y -171: 4..109, top 113         | y -135*: 40..145, top 161       |
-| `story-park`, visit, chapter 3 resolution                           | y -180*: 40..105, top 143       | y -176: 44..109, top 153        | y -135*: 85..150, top 201       |
-| `story-ada-room-night`, jump home                                   | y -146.5: 103.5..153.5, top 257 | y -146.5: 103.5..153.5, top 257 | y -122.5: 127.5..177.5, top 305 |
-| `story-ada-room-morning`, jump home                                 | y -173: 82..175, top 257        | y -173: 82..175, top 257        | y -135*: 120..213, top 305      |
-| `story-concert-hall`, new chapter at the limit                      | y -180*: 8..113, top 113        | y -180*: 8..113, top 113        | y -135*: 53..158, top 161       |
-| `story-grandma-garden-spilled`, new chapter at the limit            | y -174: 2..111, top 113         | y -174: 2..111, top 113         | y -135*: 41..150, top 161       |
-| `story-grandma-garden-replanted`, new chapter at the limit          | y -174: 2..111, top 113         | y -174: 2..111, top 113         | y -135*: 41..150, top 161       |
+| Background, runs                                           | 720x360, insets                | 844x390, insets                | 1280x720                       |
+| ---------------------------------------------------------- | ------------------------------ | ------------------------------ | ------------------------------ |
+| `story-grandma-garden`, first launch                       | y -180*: 19..105, top 113      | y -180*: 19..105, top 113      | y -135*: 64..150, top 161      |
+| `story-park`, first launch                                 | y -138: 82..147, top 229       | y -134: 86..151, top 237       | y -110: 110..175, top 285      |
+| `story-ada-room*`, every run, alias and glow frame         | y -180 (fixed bottom)          | y -180 (fixed bottom)          | y -135 (fixed bottom)          |
+| `aboard`, first launch (standing, questions, seated)       | y -167.5: 4.5..88.5, top 93    | y -167.5: 4.5..88.5, top 93    | y -135*: 37..121, top 141      |
+| `story-community-garden`, visit, chapter 1 resolution      | y -178.5: 1.5..111.5, top 113  | y -178.5: 1.5..111.5, top 113  | y -135*: 45..155, top 161      |
+| `aboard`, boarding                                         | y -95.5: 76.5..160.5, top 237  | y -95.5: 76.5..160.5, top 237  | y -71.5: 100.5..184.5, top 285 |
+| `aboard`, boarding after an unlock                         | y -99.5: 72.5..156.5, top 229  | y -99.5: 72.5..156.5, top 229  | y -75.5: 96.5..180.5, top 277  |
+| `aboard`, holodisk moment, fourth memory line              | y -125.5: 46.5..130.5, top 177 | y -125.5: 46.5..130.5, top 177 | y -101.5: 70.5..154.5, top 225 |
+| `aboard-emergency`, jump home                              | y -85.5: 86.5..170.5, top 257  | y -85.5: 86.5..170.5, top 257  | y -61.5: 110.5..194.5, top 305 |
+| `story-school-hallway`, visit, chapter 2 opening           | y -170.5: 13.5..119.5, top 133 | y -170.5: 13.5..119.5, top 133 | y -135*: 49..155, top 181      |
+| `story-schoolyard`, visit, chapter 2 resolution            | y -156.5: 11.5..121.5, top 133 | y -156.5: 11.5..121.5, top 133 | y -132.5: 35.5..145.5, top 181 |
+| `story-front-door`, visit, chapter 3 opening               | y -171: 4..109, top 113        | y -171: 4..109, top 113        | y -135*: 40..145, top 161      |
+| `story-park`, visit, chapter 3 resolution                  | y -180*: 40..105, top 143      | y -176: 44..109, top 153       | y -135*: 85..150, top 201      |
+| `story-concert-hall`, new chapter at the limit             | y -180*: 8..113, top 113       | y -180*: 8..113, top 113       | y -135*: 53..158, top 161      |
+| `story-grandma-garden-spilled`, new chapter at the limit   | y -174: 2..111, top 113        | y -174: 2..111, top 113        | y -135*: 41..150, top 161      |
+| `story-grandma-garden-replanted`, new chapter at the limit | y -174: 2..111, top 113        | y -174: 2..111, top 113        | y -135*: 41..150, top 161      |
 
 An [environment alias](#environment-aliases) carries its base's band and
 takes its base's placement. Bedroom variants share the same model scale and camera origin. Recorder
@@ -281,9 +288,9 @@ root manifest as `storyTransition`. Key `rockGlow` ends on
 Needle boards from the recorder room, so key `rockGlowRecorder` is the
 same glow from `story-ada-room-recorder` through `story-ada-room-recorder-glow-1`
 to `-3` into `aboard`, with the same timing and reduced motion. Its
-frames are the recorder room with the same glow amounts, drawn 7 rows higher as
-the room is, the recorder in place on its song sheet, and carry the room's
-subject band (248..293).
+frames use the shared bedroom camera with the same glow amounts and the
+recorder in place on its song sheet. They carry the room's subject band
+(255..300).
 
 The glow frames are `story-ada-room` with the rock's glow grown to a third, two
 thirds and all of the room: 32 nested ellipses (height 0.6 of width) in
@@ -318,7 +325,7 @@ keep their values.
 
 ### Sleep scene overlay
 
-`story-ada-room-sleep` shares the night background and its run placement,
+`story-ada-room-sleep` shares the night background and fixed bedroom placement,
 without a figures overlay. Only `story-ada-room-sleep-glow` is emitted: the
 rock's glow at radius 3.8, peak 215, over the unoccupied night room at radius
 3.0, peak 170.
