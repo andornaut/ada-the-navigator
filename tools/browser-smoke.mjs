@@ -2773,6 +2773,7 @@ try {
   damaged.state.economy.stardust = 30;
   // The flight a step before the shield breaks, for the browser's own jump home below.
   const breakingSave = damaged.save();
+  const carriedOre = damaged.state.flight.cargo;
   damaged.step(0.01, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false });
   assert.equal(damaged.state.mode, "home", "Shield depletion must jump Ada home");
   assert.equal(damaged.state.flight, null, "The jump home must lose only the flight");
@@ -2788,11 +2789,12 @@ try {
   await seedOnce(damageSave, "ada-browser.shield-break.v1");
   await page.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
   const jumpNotice = await page.locator("#game-status").textContent();
+  const oreLost = Math.ceil(carriedOre / 2) < carriedOre;
   assert.ok(
     jumpNotice.includes(CONTENT.labels.jumpHome) &&
-      !jumpNotice.includes("lost") &&
+      jumpNotice.includes(CONTENT.labels.jumpHomeOreLost) === oreLost &&
       !jumpNotice.includes("cost"),
-    `The jump home notice must name no loss or fee: ${jumpNotice}`,
+    `The jump home notice must name the ore loss only when ore was lost, and no fee: ${jumpNotice}`,
   );
   events.checks.push(
     "Canonical shield depletion jumps Ada home, costing only the flight and keeping weapons and Stardust",
