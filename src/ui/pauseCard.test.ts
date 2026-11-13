@@ -109,6 +109,7 @@ beforeEach(() => {
   vi.stubGlobal("document", {
     createElement: () => new FakeElement(),
     createElementNS: () => new FakeElement(),
+    fonts: Object.assign(new EventTarget(), { status: "loaded" }),
   });
   vi.stubGlobal("window", { addEventListener: vi.fn(), removeEventListener: vi.fn() });
 });
@@ -176,6 +177,17 @@ const texts = (node: FakeElement): string[] => [
 ];
 
 describe("Paused card", () => {
+  it("registers and releases the map's font completion listener", () => {
+    const fonts = document.fonts;
+    const add = vi.spyOn(fonts, "addEventListener");
+    const remove = vi.spyOn(fonts, "removeEventListener");
+    const { pause } = cards();
+    expect(add).toHaveBeenCalledWith("loadingdone", expect.any(Function));
+    expect(() => fonts.dispatchEvent(new Event("loadingdone"))).not.toThrow();
+    pause.dispose();
+    expect(remove).toHaveBeenCalledWith("loadingdone", add.mock.calls[0]![1]);
+  });
+
   it("is a two-column grid of Map, Ship, Settings and Back to title over Resume, with no objective", () => {
     const { body, pause } = cards();
     pause.setState(state({ job: "Chart the Sleepy Tug" }));
