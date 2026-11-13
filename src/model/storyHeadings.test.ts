@@ -5,6 +5,20 @@ import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { openingScene, resolutionScene } from "./storybook.ts";
 
 describe("chapter page titles", () => {
+  it("keeps the actual first-launch arrival and farewell titled without changing their lines", () => {
+    const opening = openingScene(CONTENT, 1, true);
+    for (const page of opening.pages) {
+      expect(page.heading, page.id).toBe(CONTENT.chapters[1]!.name);
+    }
+    expect(
+      opening.pages
+        .filter((page) => page.id.startsWith("opening:arrival:"))
+        .map(({ speaker, text }) => ({ speaker, text })),
+    ).toEqual(CONTENT.premise.gardenArrival.map(({ speaker, text }) => ({ speaker, text })));
+    const farewell = opening.pages.find((page) => page.id === "opening:farewell")!;
+    expect(farewell.text).toBe(CONTENT.premise.gardenFarewell.text);
+    expect(farewell.speaker).toBe(CONTENT.premise.gardenFarewell.speaker);
+  });
   it.each(GALAXY_NUMBERS)(
     "keeps galaxy %s's canonical title through every branch and rejoin",
     (galaxy) => {

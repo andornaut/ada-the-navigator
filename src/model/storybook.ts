@@ -248,14 +248,15 @@ export function openingScene(
   const [chapter, { opening: background }] = builtChapter(content, galaxy);
   const framed = firstLaunch && galaxy === 1;
   const arrival = framed ? content.premise.gardenArrival : [];
-  const arrivalPages = arrival.map((step, index) =>
-    linePage(
+  const arrivalPages = arrival.map((step, index) => ({
+    ...linePage(
       background,
       `opening:arrival:${index}`,
       index + 1 < arrival.length ? `opening:arrival:${index + 1}` : "opening",
       step,
     ),
-  );
+    heading: chapter.name,
+  }));
   const farewell = framed ? "opening:farewell" : undefined;
   // Either branch rejoins on the chapter's rejoin pages (Cartwheel's dinner), then the farewell.
   const rejoin = chapter.openingRejoin ?? [];
@@ -290,7 +291,12 @@ export function openingScene(
         heading: chapter.name,
       })),
       ...(farewell
-        ? [linePage(background, farewell, undefined, content.premise.gardenFarewell)]
+        ? [
+            {
+              ...linePage(background, farewell, undefined, content.premise.gardenFarewell),
+              heading: chapter.name,
+            },
+          ]
         : []),
     ],
   };
