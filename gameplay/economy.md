@@ -253,14 +253,14 @@ another owned weapon shows `detailAmmoLeft` with its count; an unowned weapon
 in the shop shows `detailIncludesAmmo` instead. Multi-Laser and Scattershot
 lines name the counts at Ada's level, or level 1 when unowned.
 
-| Weapon        | Card lines                                                                                                                           |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Laser         | "Fires one laser bolt at a time." "Reaches across the screen." "Each level fires faster and hits harder."                            |
-| Multi-Laser   | "Fires a fan of {count} laser bolts." "Hits several drones at once." "Reaches across the screen." "Each level adds a bolt."          |
-| Rapid Missile | "Fires small missiles quickly." "Explodes on a hit or after a short distance." "Each level fires faster."                            |
-| Heavy Missile | "Fires slowly but hits hard." "Explodes on a hit or after a short distance, with a big blast." "Each level hits harder."             |
-| Scattershot   | "Fires a wide spread of {count} shots." "Only reaches close to your ship." "Each level adds shots that hit harder."                  |
-| Phaser        | "Fires an instant beam that nothing can dodge." "Fires slowly but hits hard." "Reaches across the screen." "Each level hits harder." |
+| Weapon        | Card lines                                                                                                               |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Laser         | "Fires one laser bolt at a time." "Each level fires faster and hits harder."                                             |
+| Multi-Laser   | "Fires a fan of {count} laser bolts." "Hits several drones at once." "Each level adds a bolt."                           |
+| Rapid Missile | "Fires small missiles quickly." "Explodes on a hit or after a short distance." "Each level fires faster."                |
+| Heavy Missile | "Fires slowly but hits hard." "Explodes on a hit or after a short distance, with a big blast." "Each level hits harder." |
+| Scattershot   | "Fires a wide spread of {count} shots." "Only reaches close to your ship." "Each level adds shots that hit harder."      |
+| Phaser        | "Fires an instant beam that nothing can dodge." "Fires slowly but hits hard." "Each level hits harder."                  |
 
 An upgrade card shows the upgrade's shop name (`weaponUpgrade`, `shield`,
 `engineTuning` or `tractorBeam`), Ada's current level as `level`, then
