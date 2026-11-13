@@ -611,3 +611,704 @@ export const CONVERSATIONS: readonly Conversation[] = [
     })),
   ),
 ];
+
+/** Approved Use exchanges, keyed by existing runtime galaxy and dialogue context. */
+export interface InteractionLine {
+  readonly speaker: string;
+  readonly text: string;
+}
+export interface InteractionCopy {
+  readonly party: string;
+  readonly lines: readonly InteractionLine[];
+  readonly topics: readonly {
+    readonly label: string;
+    readonly lines: readonly InteractionLine[];
+  }[];
+}
+export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
+  "1.deliveryComplete": {
+    lines: [
+      {
+        speaker: "Ada",
+        text: "Here are the spare parts.",
+      },
+      {
+        speaker: "Rivet",
+        text: "Now we can repair the growers' equipment.",
+      },
+      {
+        speaker: "Ada",
+        text: "And the salvagers will contact the growers for food.",
+      },
+      {
+        speaker: "Rivet",
+        text: "We'll arrange the next exchange ourselves. Thank you for introducing us!",
+      },
+    ],
+    party: "Rivet",
+    topics: [
+      {
+        label: "Need another delivery?",
+        lines: [
+          {
+            speaker: "Rivet",
+            text: "Not for this repair. We can arrange the next exchange ourselves.",
+          },
+        ],
+      },
+      {
+        label: "Who has the holodisk?",
+        lines: [
+          {
+            speaker: "Rivet",
+            text: "Ask at any of our outposts. We have something for you.",
+          },
+        ],
+      },
+    ],
+  },
+  "1.grower": {
+    lines: [
+      {
+        speaker: "Clover",
+        text: "A visitor! We grow food here, but our equipment needs repairs.",
+      },
+      {
+        speaker: "Ada",
+        text: "Can someone help fix it?",
+      },
+      {
+        speaker: "Clover",
+        text: "There's a workshop out here somewhere. Would you take them some food and ask for help?",
+      },
+      {
+        speaker: "Ada",
+        text: "I'll take the food and ask.",
+      },
+    ],
+    party: "Clover",
+    topics: [
+      {
+        label: "What do you need?",
+        lines: [
+          {
+            speaker: "Clover",
+            text: "Help with the equipment. We could grow more if it worked.",
+          },
+        ],
+      },
+      {
+        label: "Do you know the others?",
+        lines: [
+          {
+            speaker: "Clover",
+            text: "We haven't spoken much with the other outposts.",
+          },
+        ],
+      },
+    ],
+  },
+  "1.salvager": {
+    lines: [
+      {
+        speaker: "Ada",
+        text: "The workshop sent this tool kit. They need spare parts.",
+      },
+      {
+        speaker: "Patch",
+        text: "Useful tools! We have parts to spare, but our food is running low.",
+      },
+      {
+        speaker: "Ada",
+        text: "The growers have food. I brought some to the workshop.",
+      },
+      {
+        speaker: "Patch",
+        text: "Take these parts to the workshop. We'll contact the growers.",
+      },
+    ],
+    party: "Patch",
+    topics: [
+      {
+        label: "What do you salvage?",
+        lines: [
+          {
+            speaker: "Patch",
+            text: "Things people have lost or left behind. Plenty can be used again.",
+          },
+        ],
+      },
+      {
+        label: "Who will ask for food?",
+        lines: [
+          {
+            speaker: "Patch",
+            text: "We will. You've shown us who to ask.",
+          },
+        ],
+      },
+    ],
+  },
+  "1.workshop": {
+    lines: [
+      {
+        speaker: "Ada",
+        text: "Food from the growers. Their equipment needs repairs.",
+      },
+      {
+        speaker: "Rivet",
+        text: "We can repair it. We're short of parts, though.",
+      },
+      {
+        speaker: "Ada",
+        text: "Where could we find some?",
+      },
+      {
+        speaker: "Rivet",
+        text: "The salvagers might have what we need. Take them this tool kit.",
+      },
+    ],
+    party: "Rivet",
+    topics: [
+      {
+        label: "What do you repair?",
+        lines: [
+          {
+            speaker: "Rivet",
+            text: "Tools, ships and growing equipment.",
+          },
+        ],
+      },
+      {
+        label: "Why a tool kit?",
+        lines: [
+          {
+            speaker: "Rivet",
+            text: "Useful tools for them, spare parts for us.",
+          },
+        ],
+      },
+    ],
+  },
+  "2.approach": {
+    lines: [
+      {
+        speaker: "Jasper",
+        text: "There's room for everyone here. Let them dock.",
+      },
+      {
+        speaker: "Ada",
+        text: "We're right here, Mica.",
+      },
+      {
+        speaker: "Mica",
+        text: "I'm coming in.",
+      },
+      {
+        speaker: "Jasper",
+        text: "We are staying.",
+      },
+    ],
+    party: "Jasper",
+    topics: [
+      {
+        label: "Should we move away?",
+        lines: [
+          {
+            speaker: "Jasper",
+            text: "Stay nearby. There's room for everyone.",
+          },
+        ],
+      },
+      {
+        label: "What does Mica need?",
+        lines: [
+          {
+            speaker: "Ada",
+            text: "Room to dock and company on the approach.",
+          },
+        ],
+      },
+    ],
+  },
+  "2.hub": {
+    lines: [
+      {
+        speaker: "Quartz",
+        text: "Welcome. Independent miners bring ore here for transport.",
+      },
+      {
+        speaker: "Ada",
+        text: "Where do I find ore?",
+      },
+      {
+        speaker: "Quartz",
+        text: "Shoot ore rocks and collect the ore they release. Bring it here to deposit it.",
+      },
+      {
+        speaker: "Ada",
+        text: "Can I bring a little at a time?",
+      },
+      {
+        speaker: "Quartz",
+        text: "Partial loads count, and you can travel back when you're out of danger.",
+      },
+    ],
+    party: "Quartz",
+    topics: [
+      {
+        label: "Who uses the hub?",
+        lines: [
+          {
+            speaker: "Quartz",
+            text: "Independent miners. There is docking space for everyone.",
+          },
+        ],
+      },
+      {
+        label: "Should I keep some ore?",
+        lines: [
+          {
+            speaker: "Astra",
+            text: "Yes. Above ten percent shield, recharge needs ore.",
+          },
+        ],
+      },
+    ],
+  },
+  "2.miner": {
+    lines: [
+      {
+        speaker: "Ada",
+        text: "That pilot keeps blocking you. Does it happen often?",
+      },
+      {
+        speaker: "Mica",
+        text: "It keeps happening. I've started waiting until they're gone.",
+      },
+      {
+        speaker: "Ada",
+        text: "Would you like company next time?",
+      },
+      {
+        speaker: "Mica",
+        text: "Yes. That would help.",
+      },
+    ],
+    party: "Mica",
+    topics: [
+      {
+        label: "Do you need docking help?",
+        lines: [
+          {
+            speaker: "Mica",
+            text: "I know how to dock. I just need them to stop blocking me.",
+          },
+        ],
+      },
+      {
+        label: "What would help?",
+        lines: [
+          {
+            speaker: "Mica",
+            text: "Company on the approach. Stay nearby.",
+          },
+        ],
+      },
+    ],
+  },
+  "2.visitors": {
+    lines: [
+      {
+        speaker: "Ada",
+        text: "Have you seen the pilot blocking Mica?",
+      },
+      {
+        speaker: "Opal",
+        text: "I've seen it. I didn't know what to do.",
+      },
+      {
+        speaker: "Ada",
+        text: "Mica would like company next time. Will you come?",
+      },
+      {
+        speaker: "Opal",
+        text: "I'll come in with you. We can make room and stay nearby.",
+      },
+    ],
+    party: "Opal",
+    topics: [
+      {
+        label: "Does Mica want company?",
+        lines: [
+          {
+            speaker: "Ada",
+            text: "Yes. I asked, and Mica said it would help.",
+          },
+        ],
+      },
+      {
+        label: "What will we do?",
+        lines: [
+          {
+            speaker: "Opal",
+            text: "Come in together. Make room and stay nearby.",
+          },
+        ],
+      },
+    ],
+  },
+  "3.family": {
+    lines: [
+      {
+        speaker: "Whale family",
+        text: "Have you seen someone traveling alone? We've been searching.",
+      },
+      {
+        speaker: "Ada",
+        text: "Marlo was stuck behind some rocks. I've cleared a way.",
+      },
+      {
+        speaker: "Whale family",
+        text: "They're safe? Please share our coordinates so they can find us.",
+      },
+      {
+        speaker: "Ada",
+        text: "I'll go back and tell Marlo where you are.",
+      },
+    ],
+    party: "Whale family",
+    topics: [
+      {
+        label: "Who are you seeking?",
+        lines: [
+          {
+            speaker: "Whale family",
+            text: "The whale traveling alone. We want to be together again.",
+          },
+        ],
+      },
+      {
+        label: "What should I share?",
+        lines: [
+          {
+            speaker: "Whale family",
+            text: "Our coordinates. Then Marlo will know where to go.",
+          },
+        ],
+      },
+    ],
+  },
+  "3.freed": {
+    lines: [
+      {
+        speaker: "Marlo",
+        text: "That's better. Thank you.",
+      },
+      {
+        speaker: "Ada",
+        text: "Where will you go now?",
+      },
+      {
+        speaker: "Marlo",
+        text: "I don't know where my family went. Would you look for them?",
+      },
+      {
+        speaker: "Ada",
+        text: "I'll look. Then I'll bring you their coordinates.",
+      },
+    ],
+    party: "Marlo",
+    topics: [
+      {
+        label: "Will they be looking?",
+        lines: [
+          {
+            speaker: "Marlo",
+            text: "They'll be searching for me too.",
+          },
+        ],
+      },
+      {
+        label: "What do you like?",
+        lines: [
+          {
+            speaker: "Marlo",
+            text: "Familiar voices and finding places I haven't seen before. The young ones learn our routes from us.",
+          },
+        ],
+      },
+    ],
+  },
+  "3.holodiskLead": {
+    lines: [
+      {
+        speaker: "Whale family",
+        text: "You listened when nobody else did. Now listen to us.",
+      },
+      {
+        speaker: "Ada",
+        text: "What can you hear?",
+      },
+      {
+        speaker: "Whale family",
+        text: "A shining disk drifts on the current ahead. Drones guard it. Follow our song.",
+      },
+      {
+        speaker: "Ada",
+        text: "Astra's holodisk! We'll follow.",
+      },
+    ],
+    party: "Whale family",
+    topics: [
+      {
+        label: "Where is the disk?",
+        lines: [
+          {
+            speaker: "Whale family",
+            text: "Ahead on the current. Follow our song.",
+          },
+        ],
+      },
+      {
+        label: "Is it guarded?",
+        lines: [
+          {
+            speaker: "Whale family",
+            text: "Drones guard it. Take care on your way.",
+          },
+        ],
+      },
+    ],
+  },
+  "3.holodiskLeadSong": {
+    lines: [
+      {
+        speaker: "Whale family",
+        text: "You listened when nobody else did. Now listen to us.",
+      },
+      {
+        speaker: "Ada",
+        text: "What can you hear?",
+      },
+      {
+        speaker: "Whale family",
+        text: "A shining disk drifts on the current ahead. Drones guard it. Follow our song.",
+      },
+      {
+        speaker: "Ada",
+        text: "Astra's holodisk! We'll follow.",
+      },
+    ],
+    party: "Whale family",
+    topics: [
+      {
+        label: "Where is the disk?",
+        lines: [
+          {
+            speaker: "Whale family",
+            text: "Ahead on the current. Follow our song.",
+          },
+        ],
+      },
+      {
+        label: "Is it guarded?",
+        lines: [
+          {
+            speaker: "Whale family",
+            text: "Drones guard it. Take care on your way.",
+          },
+        ],
+      },
+    ],
+  },
+  "3.reunion": {
+    lines: [
+      {
+        speaker: "Ada",
+        text: "I found your family. Here are their coordinates.",
+      },
+      {
+        speaker: "Marlo",
+        text: "You found my family! Now I know where to go.",
+      },
+      {
+        speaker: "Ada",
+        text: "They're searching for you too.",
+      },
+      {
+        speaker: "Marlo",
+        text: "Thank you for listening.",
+      },
+    ],
+    party: "Marlo",
+    topics: [
+      {
+        label: "Can you reach them?",
+        lines: [
+          {
+            speaker: "Marlo",
+            text: "Yes. The rocks are clear, and now I know where they are.",
+          },
+        ],
+      },
+      {
+        label: "What happens next?",
+        lines: [
+          {
+            speaker: "Marlo",
+            text: "I'll swim back to my family.",
+          },
+        ],
+      },
+    ],
+  },
+  "3.trapped": {
+    lines: [
+      {
+        speaker: "Marlo",
+        text: "Can you hear me? I can't get through these rocks.",
+      },
+      {
+        speaker: "Ada",
+        text: "A whale in space! And you can talk?",
+      },
+      {
+        speaker: "Marlo",
+        text: "Yes, and I'd like to get through. Could you help clear a way?",
+      },
+      {
+        speaker: "Ada",
+        text: "I'll clear those rocks. My shots won't hurt you.",
+      },
+    ],
+    party: "Marlo",
+    topics: [
+      {
+        label: "Where do you travel?",
+        lines: [
+          {
+            speaker: "Marlo",
+            text: "We travel through space together. There are places we visit and currents we follow.",
+          },
+        ],
+      },
+      {
+        label: "Are you stuck?",
+        lines: [
+          {
+            speaker: "Marlo",
+            text: "These rocks block my way. Clear them so I can move again.",
+          },
+        ],
+      },
+    ],
+  },
+  "3.whale": {
+    lines: [
+      {
+        speaker: "Marlo",
+        text: "Can you hear me? I can't get through these rocks.",
+      },
+      {
+        speaker: "Ada",
+        text: "A whale in space! And you can talk?",
+      },
+      {
+        speaker: "Marlo",
+        text: "Yes, and I'd like to get through. Could you help clear a way?",
+      },
+      {
+        speaker: "Ada",
+        text: "I'll clear those rocks. My shots won't hurt you.",
+      },
+    ],
+    party: "Marlo",
+    topics: [
+      {
+        label: "Where do you travel?",
+        lines: [
+          {
+            speaker: "Marlo",
+            text: "We travel through space together. There are places we visit and currents we follow.",
+          },
+        ],
+      },
+      {
+        label: "Are you stuck?",
+        lines: [
+          {
+            speaker: "Marlo",
+            text: "These rocks block my way. Clear them so I can move again.",
+          },
+        ],
+      },
+    ],
+  },
+  deposit: {
+    lines: [
+      {
+        speaker: "Astra",
+        text: "Ore deposited at the hub. Partial loads count.",
+      },
+      {
+        speaker: "Ada",
+        text: "Let's keep ore for your shield too.",
+      },
+    ],
+    party: "Astra",
+    topics: [
+      {
+        label: "Why keep ore?",
+        lines: [
+          {
+            speaker: "Astra",
+            text: "Above ten percent shield, recharge needs ore. Without ore, it won't charge higher.",
+          },
+        ],
+      },
+      {
+        label: "When does recharge start?",
+        lines: [
+          {
+            speaker: "Astra",
+            text: "Thirty seconds after our last hit. Keep ore for recharge above ten percent.",
+          },
+        ],
+      },
+    ],
+  },
+  salvage: {
+    lines: [
+      {
+        speaker: "Astra",
+        text: "Its weapons are down. I can salvage parts.",
+      },
+      {
+        speaker: "Ada",
+        text: "Let's take what we need and go.",
+      },
+    ],
+    party: "Astra",
+    topics: [
+      {
+        label: "What can we collect?",
+        lines: [
+          {
+            speaker: "Astra",
+            text: "Parts from this disabled ship.",
+          },
+        ],
+      },
+      {
+        label: "Is it disabled?",
+        lines: [
+          {
+            speaker: "Astra",
+            text: "Yes. Its weapons are down.",
+          },
+        ],
+      },
+    ],
+  },
+};

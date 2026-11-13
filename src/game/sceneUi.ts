@@ -32,7 +32,7 @@ import {
   updateOffer,
 } from "../pwa/index.ts";
 import { backReleased } from "../ui/backStack.ts";
-import { createConversationBox } from "../ui/conversation.ts";
+import { createConversationBox, createInteractionCard } from "../ui/conversation.ts";
 import { screenShakes } from "../ui/deviceSettings.ts";
 import { createBannerLayer } from "../ui/disabledBanner.ts";
 import { createGalaxyMap } from "../ui/galaxyMap.ts";
@@ -97,6 +97,8 @@ import {
   HOLODISK_FRAMES,
   readLoopArt,
 } from "./worldArt.ts";
+
+const interactionCards = new WeakMap<object, ReturnType<typeof createInteractionCard>>();
 
 /** The scene state and methods this module's functions use. */
 export type UiContext = Scene &
@@ -526,10 +528,51 @@ export function buildScene(scene: UiContext): void {
   const amount = (value: number): string => fill(label("stardustAmount"), { amount: value });
   const item = (key: string): ShopItem => JSON.parse(key) as ShopItem;
   // The conversation box never pauses play; a tap moves it on.
-  scene.conversationBox = createConversationBox(() => {
-    scene.model.advanceConversation();
-    renderConversation(scene);
+  const finishConversation = (): void =>
+    apply(() => {
+      for (let count = 0; count < 20; count++) {
+        const panel = scene.model.state.dialogue;
+        if (
+          !panel ||
+          panel.choices.some(({ id }) => id !== "continue" && id !== "optional") ||
+          !panel.choices.some(({ id }) => id === "continue")
+        ) {
+          break;
+        }
+        scene.model.choose("continue");
+        if (scene.model.state.dialogue === panel) {
+          break;
+        }
+      }
+    });
+  const interaction = createInteractionCard(scene.controls.overlay, {
+    choose: (id) => apply(() => scene.model.choose(id)),
+    close: finishConversation,
+    skip: finishConversation,
   });
+  interactionCards.set(scene, interaction);
+  const unregisterInteraction = scene.controls.registerBack({
+    back: interaction.back,
+    isOpen: () => interaction.isOpen() && !scene.settingsOpen,
+  });
+  scene.conversationBox = createConversationBox(
+    () => {
+      scene.model.advanceConversation();
+      renderConversation(scene);
+    },
+    () => {
+      const initial = scene.model.conversation?.key;
+      const instance = initial?.slice(0, initial.lastIndexOf(":"));
+      for (let count = 0; count < 100; count++) {
+        const current = scene.model.conversation?.key;
+        if (!instance || !current || current.slice(0, current.lastIndexOf(":")) !== instance) {
+          break;
+        }
+        scene.model.advanceConversation();
+      }
+      renderConversation(scene);
+    },
+  );
   scene.station = createStationView(scene.controls.overlay, {
     acceptJob: (id) => {
       let accepted = false;
@@ -823,6 +866,9 @@ export function buildScene(scene: UiContext): void {
     scene.restartCard.dispose();
     scene.station.dispose();
     scene.conversationBox.dispose();
+    unregisterInteraction();
+    interaction.dispose();
+    interactionCards.delete(scene);
     scene.controls.dispose();
     scene.shell.dispose();
   });
@@ -969,6 +1015,14 @@ export function refreshScene(scene: UiContext): void {
   });
   scene.controls.setAchievements(scene.model.achievements);
   scene.shell.render(state, screen);
+  const interactionPanel = screen === "space" && state.dialogue?.text ? state.dialogue : null;
+  interactionCards.get(scene)?.show(state.flight?.galaxy ?? state.selectedGalaxy, interactionPanel);
+  if (interactionPanel) {
+    const legacy = document.querySelector<HTMLElement>(".story-panel");
+    if (legacy) {
+      legacy.hidden = true;
+    }
+  }
   const flightGalaxy = state.mode === "space" ? state.flight?.galaxy : undefined;
   scene.palette = (flightGalaxy && scene.galaxyPalettes.get(flightGalaxy)) || scene.basePalette;
   const background = scene.palette.background;

@@ -10,6 +10,8 @@ import {
   ConversationDirector,
   type ConversationFacts,
   heavyInSight,
+  InteractionConversation,
+  interactionCopy,
   pennyInstance,
   pennyPoints,
   speakerName,
@@ -1022,5 +1024,90 @@ describe("line pools", () => {
     const sunflower = director(1, [...lessonsHeard, "arrival:1"]);
     run(sunflower.talk, cooldownSeconds, { encounters: ["hubNear", "stationNear"] });
     expect(sunflower.talk.showing).toBeNull();
+  });
+});
+
+describe("Use conversation paging", () => {
+  const copy = {
+    lines: [
+      { speaker: "Clover", text: "First" },
+      { speaker: "Ada", text: "Last" },
+    ],
+    party: "Clover",
+    topics: [{ label: "Question", lines: [{ speaker: "Clover", text: "Answer" }] }],
+  };
+  const panel = {
+    choices: [
+      { id: "take", label: "Accept" },
+      { id: "skip", label: "Not now" },
+    ],
+    context: "grower",
+    text: "old",
+    title: "Grower",
+  };
+
+  it("keeps a pending choice after Skip and never applies an outcome", () => {
+    const run = new InteractionConversation();
+    run.show(copy, panel);
+    expect(run.choices).toEqual([]);
+    run.skip();
+    expect(run.line?.text).toBe("Last");
+    expect(run.choices).toEqual(panel.choices);
+    run.skip();
+    expect(run.choices).toEqual(panel.choices);
+  });
+
+  it("returns optional answers to their list without moving essential dialogue", () => {
+    const run = new InteractionConversation();
+    run.show(copy, panel);
+    run.ask();
+    run.topic(0);
+    expect(run.line?.text).toBe("Answer");
+    run.advance();
+    expect(run.topics.map(({ label }) => label)).toEqual(["Question"]);
+    run.advance();
+    expect(run.line?.text).toBe("First");
+    run.advance();
+    expect(run.line?.speaker).toBe("Ada");
+  });
+
+  it("preserves the page on render and resets for a new model panel", () => {
+    const run = new InteractionConversation();
+    run.show(copy, panel);
+    run.advance();
+    run.show(copy, panel);
+    expect(run.line?.text).toBe("Last");
+    run.show(copy, { ...panel });
+    expect(run.line?.text).toBe("First");
+  });
+});
+
+describe("Use copy resolution", () => {
+  const panel = {
+    choices: [{ id: "continue", label: "Continue" }],
+    context: "holodiskHandover",
+    text: "",
+    title: "Salvager",
+  };
+  it("keeps the addressed outpost as party while Ada and Astra speak as themselves", () => {
+    const copy = interactionCopy(1, panel);
+    expect(copy.party).toBe("Patch");
+    expect(copy.lines.map(({ speaker }) => speaker)).toEqual(["Patch", "Ada", "Astra", "Patch"]);
+  });
+  it("leaves departure narration unattributed", () => {
+    const copy = interactionCopy(3, {
+      ...panel,
+      context: "reunionDeparture",
+      text: "The whale swims off.",
+    });
+    expect(copy.party).toBe("Marlo");
+    expect(copy.lines[0]?.speaker).toBe("");
+  });
+  it("keeps the two existing family handover panels in order without replaying the exchange", () => {
+    const first = interactionCopy(3, { ...panel, context: "holodiskLead" });
+    const last = interactionCopy(3, { ...panel, context: "holodiskLeadSong" });
+    expect(first.lines.length + last.lines.length).toBe(4);
+    expect(first.lines[0]?.text).toBe("You listened when nobody else did. Now listen to us.");
+    expect(last.lines[0]?.text).toContain("A shining disk");
   });
 });

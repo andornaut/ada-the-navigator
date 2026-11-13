@@ -67,13 +67,9 @@ describe("station card", () => {
     expect(stationCardHeight()).toBe(228);
   });
 
-  it("is 512 by 228 at every view, centred in the page rect at Art's tops, never scrolling", () => {
-    for (const { available, insets, name, top, view } of VIEWS) {
-      const page = safeRect(insets, SAFE_MARGIN.page, view);
-      expect(`${Math.round(page.width * 100) / 100}x${page.height}`, name).toBe(available);
-      const card = stationCardRect(insets, view);
-      expect([card.width, card.height, card.y], name).toEqual([512, 228, top]);
-      expect(card.height, name).toBeLessThanOrEqual(page.height);
+  it("fills the safe page rect at every view", () => {
+    for (const { insets, name, view } of VIEWS) {
+      expect(stationCardRect(insets, view), name).toEqual(safeRect(insets, SAFE_MARGIN.page, view));
     }
   });
 });

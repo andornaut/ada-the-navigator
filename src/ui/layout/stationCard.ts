@@ -66,13 +66,5 @@ export function stationCardHeight(): number {
 
 /** The station card in the logical view: the block's width and padding, centred in the page rect. */
 export function stationCardRect(insets: Insets, view: Size): Rect {
-  const page = safeRect(insets, SAFE_MARGIN.page, view);
-  const width = KEEPER_BLOCK.width + 2 * CARD_CONTENT.padding;
-  const height = stationCardHeight();
-  return {
-    height,
-    width,
-    x: page.x + (page.width - width) / 2,
-    y: page.y + (page.height - height) / 2,
-  };
+  return safeRect(insets, SAFE_MARGIN.page, view);
 }

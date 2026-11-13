@@ -8,6 +8,7 @@ import {
   type ConversationLine,
   type EncounterCue,
   GENERAL_NAMED,
+  INTERACTION_COPY,
   type JobMoment,
   type Lesson,
   lineDuration,
@@ -303,6 +304,15 @@ export class ConversationDirector {
     if (this.active) {
       this.nextLine();
     }
+  }
+
+  /** Dismisses the active exchange, preserving queued warnings and reactions. */
+  skip(): void {
+    if (!this.active) {
+      return;
+    }
+    this.active.line = this.active.conversation.lines.length - 1;
+    this.nextLine();
   }
 
   /**
@@ -703,4 +713,148 @@ export class ConversationDirector {
     this.quietFor = 0;
     this.shieldWarned = false;
   }
+}
+
+/** Pages one Use panel without applying or guessing any gameplay outcome. */
+export class InteractionConversation {
+  private panel: import("./types.ts").DialogueState | null = null;
+  private copy: import("../data/conversations.ts").InteractionCopy | null = null;
+  private index = 0;
+  private answer: readonly import("../data/conversations.ts").InteractionLine[] | null = null;
+  private answerIndex = 0;
+  private topicsShown = false;
+
+  show(
+    copy: import("../data/conversations.ts").InteractionCopy,
+    panel: import("./types.ts").DialogueState,
+  ): void {
+    if (panel === this.panel) {
+      return;
+    }
+    this.panel = panel;
+    this.copy = copy;
+    this.index = 0;
+    this.answer = null;
+    this.answerIndex = 0;
+    this.topicsShown = false;
+  }
+
+  get line(): import("../data/conversations.ts").InteractionLine | null {
+    return this.answer?.[this.answerIndex] ?? this.copy?.lines[this.index] ?? null;
+  }
+
+  get atOutcome(): boolean {
+    return !this.answer && this.index >= (this.copy?.lines.length ?? 0) - 1;
+  }
+
+  get topics() {
+    return this.topicsShown && !this.answer ? (this.copy?.topics ?? []) : [];
+  }
+
+  get choices() {
+    return this.atOutcome ? (this.panel?.choices.filter(({ id }) => id !== "optional") ?? []) : [];
+  }
+
+  get party(): string {
+    return this.copy?.party ?? "Astra";
+  }
+
+  get hasTopics(): boolean {
+    return (this.copy?.topics.length ?? 0) > 0;
+  }
+
+  ask(): void {
+    this.topicsShown = true;
+  }
+
+  topic(index: number): void {
+    const topic = this.copy?.topics[index];
+    if (!topic || !this.topicsShown) {
+      return;
+    }
+    this.answer = topic.lines;
+    this.answerIndex = 0;
+  }
+
+  /** Returns to the topic list after an answer; never resolves a model choice. */
+  advance(): void {
+    if (this.answer) {
+      if (++this.answerIndex >= this.answer.length) {
+        this.answer = null;
+      }
+    } else if (this.topicsShown) {
+      this.topicsShown = false;
+    } else if (!this.atOutcome) {
+      this.index++;
+    }
+  }
+
+  /** Pending choices remain visible and must be explicitly answered. */
+  skip(): void {
+    this.answer = null;
+    this.topicsShown = false;
+    this.index = Math.max(0, (this.copy?.lines.length ?? 0) - 1);
+  }
+
+  reset(): void {
+    this.panel = null;
+    this.copy = null;
+    this.answer = null;
+  }
+}
+
+/** Resolves legacy role labels through the existing cast, leaving narration unattributed. */
+export function interactionCopy(
+  galaxy: number,
+  panel: import("./types.ts").DialogueState,
+): import("../data/conversations.ts").InteractionCopy {
+  const roles: Readonly<Record<string, string>> = {
+    Grower: "Clover",
+    Miner: "Mica",
+    "Regular visitor": panel.context === "approach" ? "Jasper" : "Opal",
+    Salvager: "Patch",
+    Station: "Quartz",
+    Whale: "Marlo",
+    Workshop: "Rivet",
+  };
+  const name = roles[panel.title] ?? panel.title;
+  if (panel.context === "holodiskHandover") {
+    const party = ["Clover", "Rivet", "Patch"].includes(name) ? name : "Clover";
+    return {
+      lines: [
+        { speaker: party, text: "We found this drifting near our outposts." },
+        { speaker: "Ada", text: "Astra, is that your holodisk?" },
+        { speaker: "Astra", text: "Yes. A piece of my memory." },
+        { speaker: party, text: "Take it, with our thanks." },
+      ],
+      party,
+      topics: [
+        {
+          label: "Where was it?",
+          lines: [{ speaker: party, text: "Drifting near our outposts." }],
+        },
+        { label: "What does it hold?", lines: [{ speaker: "Astra", text: "Part of my memory." }] },
+      ],
+    };
+  }
+  const authored =
+    INTERACTION_COPY[`${galaxy}.${panel.context}`] ?? INTERACTION_COPY[panel.context];
+  if (authored) {
+    if (panel.context === "holodiskLead") {
+      return { ...authored, lines: authored.lines.slice(0, 2), topics: [] };
+    }
+    if (panel.context === "holodiskLeadSong") {
+      return { ...authored, lines: authored.lines.slice(2) };
+    }
+    return authored;
+  }
+  const narration = ["reunionDeparture", "approachDocking"].includes(panel.context);
+  const known = ["Ada", "Astra", "Penny", ...Object.values(CAST).map(({ name }) => name)].includes(
+    name,
+  );
+  return {
+    lines: [{ speaker: narration ? "" : known ? name : "Astra", text: panel.text }],
+    party: narration ? (galaxy === 3 ? "Marlo" : "Jasper") : known ? name : "Astra",
+    topics: [],
+  };
 }

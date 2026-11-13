@@ -49,6 +49,15 @@ const RING_OUT = SHOP_ROW.selection.outset + SHOP_ROW.selection.band;
 const scaled = (size: number) => `calc(${units(size)} * var(--glyph-scale,1))`;
 
 export const STATION_STYLE = `
+.ada-controls [data-station] .ada-card-frame,
+.ada-controls [data-stationConfirm] .ada-card-frame{
+ width:100%!important;height:100%!important;max-width:none!important;max-height:none!important
+}
+.ada-controls [data-station] .ada-card,
+.ada-controls [data-stationConfirm] .ada-card{
+ width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;box-sizing:border-box
+}
+
 .ada-controls .ada-balance,
 .ada-controls .ada-confirm-price{
   display:flex;

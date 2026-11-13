@@ -1,11 +1,13 @@
 import { CAST, CAST_FRAMES, castSheet, SPEAKER_CAST } from "../data/cast.ts";
 import { CONTROL_WORDS } from "../data/controlWords.ts";
-import type { Mood, Speaker } from "../data/conversations.ts";
+import { type Mood, type Speaker } from "../data/conversations.ts";
+import { InteractionConversation, interactionCopy } from "../model/conversations.ts";
 import { controlHelpText, createControlHelp } from "./controlHelp.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { font, units, VIEW_HOST_ID } from "./layout/css.ts";
-import { FOCUS_STYLE } from "./modal.ts";
+import { createButton, createCard, FOCUS_STYLE } from "./modal.ts";
 import { CONVERSATION_SLOT, PANEL_BACKGROUND } from "./notice.ts";
+import { refuse } from "./refusal.ts";
 
 // The in-flight conversation box (layout/conversationBox.ts): one line at a time with the
 // speaker's name tab and portrait, over the play view and under the HUD controls and cards. The
@@ -230,6 +232,10 @@ ${PORTRAIT_RULES}
 }
 
 ${TAB_RULES}
+.ada-conversation-skip-area{${CONVERSATION_SLOT};background:transparent;pointer-events:none;z-index:6}
+.ada-conversation-skip-area[hidden]{display:none}
+.ada-conversation-skip-area button{position:absolute;right:0;top:${units(-30)};pointer-events:auto;
+ min-height:${units(28)};font:${font(label)}}
 `;
 
 export interface ConversationBox {
@@ -238,7 +244,7 @@ export interface ConversationBox {
   render(line: ConversationLineView | null, desktop: boolean, reducedMotion: boolean): void;
 }
 
-export function createConversationBox(onAdvance: () => void): ConversationBox {
+export function createConversationBox(onAdvance: () => void, onSkip?: () => void): ConversationBox {
   const root = document.createElement("button");
   root.type = "button";
   root.className = "ada-conversation";
@@ -261,17 +267,27 @@ export function createConversationBox(onAdvance: () => void): ConversationBox {
   root.append(frame, column, name);
   root.addEventListener("click", onAdvance);
   document.getElementById(VIEW_HOST_ID)?.append(root);
+  const skipArea = document.createElement("div");
+  skipArea.className = "ada-conversation-skip-area";
+  skipArea.hidden = true;
+  const skip = createButton("Skip dialogue");
+  skip.dataset.action = "conversation-skip";
+  skip.addEventListener("click", () => onSkip?.());
+  skipArea.append(skip);
+  document.getElementById(VIEW_HOST_ID)?.append(skipArea);
   let shown = "";
   let shownFrame = -1;
   return {
     dispose: () => {
       root.remove();
+      skipArea.remove();
     },
     render(line, desktop, reducedMotion) {
       const key = line ? `${line.key}:${desktop}:${line.name}` : "";
       if (key !== shown) {
         shown = key;
         root.hidden = line === null;
+        skipArea.hidden = line === null || !onSkip;
         if (line) {
           root.dataset.side = line.side;
           root.dataset.speaker = line.speaker;
@@ -296,3 +312,172 @@ export function createConversationBox(onAdvance: () => void): ConversationBox {
     },
   };
 }
+
+/** Fullscreen Use card. The caller owns pausing and every outcome. */
+export function createInteractionCard(
+  parent: HTMLElement,
+  options: {
+    choose(id: string): void;
+    close(): void;
+    skip(): void;
+  },
+) {
+  const modal = document.createElement("div");
+  modal.className = "ada-modal ada-interaction-modal";
+  modal.hidden = true;
+  const card = createCard({ closeAction: "conversation-close", closeLabel: "Close", title: "" });
+  card.card.dataset.dialog = "conversation";
+  const party = document.createElement("div");
+  const speaker = document.createElement("div");
+  const words = document.createElement("p");
+  const actions = document.createElement("div");
+  actions.className = "ada-interaction-actions";
+  card.body.append(party, speaker, words, actions);
+  modal.append(card.frame);
+  const style = document.createElement("style");
+  style.textContent = INTERACTION_STYLE;
+  modal.append(style);
+  parent.append(modal);
+  const state = new InteractionConversation();
+  let signature = "";
+  const portrait = (name: string): HTMLElement => {
+    const node = document.createElement("span");
+    node.className = "ada-interaction-portrait";
+    node.setAttribute("aria-hidden", "true");
+    const cast = Object.entries(CAST).find(([, member]) => member.name === name);
+    const core = Object.entries(COMPACT_PORTRAITS).find(
+      ([key]) =>
+        key ===
+        (name === "General Gadget" || name === "Unknown voice" ? "general" : name.toLowerCase()),
+    );
+    const url = cast ? castSheet(cast[0] as keyof typeof CAST, true) : core?.[1].url;
+    const frames = cast ? 1 : core?.[1].frames;
+    if (url && frames) {
+      node.style.backgroundImage = `url('${url}')`;
+      node.style.backgroundSize = `${units(frames * 48)} ${units(48)}`;
+      if (name === "General Gadget") {
+        node.style.backgroundPositionX = units(-5 * 48);
+      }
+    }
+    return node;
+  };
+  const named = (name: string): HTMLElement => {
+    const node = document.createElement("div");
+    node.className = "ada-interaction-speaker";
+    node.append(portrait(name), document.createTextNode(name));
+    return node;
+  };
+  const draw = (): void => {
+    const line = state.line;
+    party.replaceChildren(named(state.party));
+    speaker.replaceChildren(...(line?.speaker ? [named(line.speaker)] : []));
+    words.textContent = line?.text ?? "";
+    actions.replaceChildren();
+    const add = (label: string, callback: () => void) => {
+      const button = createButton(label);
+      button.addEventListener("click", () => {
+        callback();
+        draw();
+      });
+      actions.append(button);
+    };
+    for (const [index, topic] of state.topics.entries()) {
+      add(topic.label, () => state.topic(index));
+    }
+    if (!state.atOutcome || state.topics.length > 0) {
+      add("Continue", () => state.advance());
+    } else {
+      for (const choice of state.choices) {
+        add(choice.label, () => {
+          if (choice.refused) {
+            refuse(actions, false);
+          } else {
+            options.choose(choice.id);
+          }
+        });
+      }
+    }
+    if (state.hasTopics && state.topics.length === 0) {
+      add("Ask more", () => state.ask());
+    }
+    add("Skip dialogue", () => {
+      state.skip();
+      const choices = state.choices;
+      if (choices.length === 1 && choices[0]?.id === "continue") {
+        options.skip();
+      }
+    });
+    add("Close", () => {
+      state.skip();
+      options.close();
+    });
+    card.fit();
+    actions.querySelector<HTMLButtonElement>("button")?.focus({ preventScroll: true });
+  };
+  const close = (): void => {
+    state.skip();
+    options.close();
+    draw();
+  };
+  card.close.addEventListener("click", close);
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) {
+      close();
+    }
+  });
+  modal.addEventListener("keydown", (event) => {
+    if (event.key !== "Tab") {
+      return;
+    }
+    const buttons = [...modal.querySelectorAll<HTMLButtonElement>("button")];
+    const first = buttons[0];
+    const last = buttons.at(-1);
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last?.focus();
+    }
+    if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first?.focus();
+    }
+  });
+  return {
+    back: close,
+    dispose() {
+      card.dispose();
+      modal.remove();
+    },
+    isOpen: () => !modal.hidden,
+    show(galaxy: number, panel: import("../model/types.ts").DialogueState | null) {
+      modal.hidden = panel === null;
+      if (!panel) {
+        state.reset();
+        signature = "";
+        return;
+      }
+      const copy = interactionCopy(galaxy, panel);
+      state.show(copy, panel);
+      const next = JSON.stringify(panel);
+      if (signature !== next) {
+        signature = next;
+        card.title.textContent = state.party;
+        card.frame.setAttribute("aria-label", state.party);
+        draw();
+      }
+    },
+  };
+}
+
+export const INTERACTION_STYLE = `
+.ada-controls .ada-interaction-modal .ada-card-frame{
+  width:100%!important;height:100%!important;max-width:none!important;max-height:none!important
+}
+.ada-controls .ada-interaction-modal .ada-card{
+  width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;box-sizing:border-box
+}
+.ada-interaction-speaker{display:flex;align-items:center;gap:12px}
+.ada-interaction-portrait{
+ display:inline-block;flex:none;width:${units(48)};height:${units(48)};background-repeat:no-repeat;
+ image-rendering:pixelated}
+.ada-interaction-actions{display:flex;flex-wrap:wrap;gap:12px}
+`;

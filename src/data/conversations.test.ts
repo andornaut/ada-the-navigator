@@ -11,6 +11,7 @@ import {
   CONVERSATION_TUNING,
   CONVERSATIONS,
   GENERAL_NAMED,
+  INTERACTION_COPY,
   SPEAKERS,
 } from "./conversations.ts";
 import { JOB_LORE } from "./jobs.ts";
@@ -214,5 +215,36 @@ describe("in-flight conversations", () => {
       quietSeconds: 60,
       shieldLowFraction: 0.25,
     });
+  });
+});
+
+describe("approved Use copy", () => {
+  it("keeps essential exchanges short with optional topics outside progression", () => {
+    for (const [key, copy] of Object.entries(INTERACTION_COPY)) {
+      expect(copy.lines.length, key).toBeGreaterThanOrEqual(key.includes(".") ? 4 : 2);
+      expect(copy.lines.length, key).toBeLessThanOrEqual(8);
+      expect(copy.topics, key).toHaveLength(2);
+      expect(
+        copy.topics.every(({ lines }) => lines.length > 0),
+        key,
+      ).toBe(true);
+    }
+  });
+
+  it("guides nonperson salvage and deposits as Astra", () => {
+    for (const key of ["salvage", "deposit"]) {
+      const copy = INTERACTION_COPY[key]!;
+      expect(copy.party).toBe("Astra");
+      expect(copy.lines[0]?.speaker).toBe("Astra");
+      expect(copy.lines.some(({ speaker }) => speaker === "Station" || speaker === "Quartz")).toBe(
+        false,
+      );
+    }
+  });
+
+  it("attributes each line separately from the party", () => {
+    const copy = INTERACTION_COPY["2.approach"]!;
+    expect(copy.party).toBe("Jasper");
+    expect(copy.lines.map(({ speaker }) => speaker)).toEqual(["Jasper", "Ada", "Mica", "Jasper"]);
   });
 });
