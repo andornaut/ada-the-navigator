@@ -19,8 +19,6 @@ import {
   chipRect,
   clampView,
   fitRegion,
-  fogBlur,
-  fogReveal,
   innerRegion,
   keepClear,
   MAP_COLORS,
@@ -46,6 +44,7 @@ import {
 import { HUD_ROW, SAFE_MARGIN } from "./layout/playView.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
+import { drawMapFog as fogOver } from "./mapFog.ts";
 import { createButton, createCard, isTap, TEXT_TOKENS } from "./modal.ts";
 import { galaxiesAvailable, mapShowsEmpty } from "./pause.ts";
 import { refuse } from "./refusal.ts";
@@ -999,35 +998,6 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       fogOver(context, inner, current, map, px, state.field.fog, width, height);
     }
     drawSearchArea(context, inner, current, map, px);
-  };
-
-  // The fog over the field, with every explored centre, place and Ada revealed.
-  const fogOver = (
-    context: CanvasRenderingContext2D,
-    inner: Parameters<typeof toScreen>[0],
-    current: MapView,
-    map: LocalMap,
-    px: number,
-    colour: string,
-    width: number,
-    height: number,
-  ) => {
-    const { rx, ry, sigma } = fogReveal(current.scale);
-    context.globalCompositeOperation = "source-over";
-    context.filter = "none";
-    context.fillStyle = colour;
-    context.fillRect(0, 0, width, height);
-    context.globalCompositeOperation = "destination-out";
-    context.filter = fogBlur(sigma * px);
-    context.fillStyle = "#000";
-    for (const point of [...map.explored, ...map.places, map.player]) {
-      const at = toScreen(inner, current, point);
-      context.beginPath();
-      context.ellipse(at.x * px, at.y * px, rx * px, ry * px, 0, 0, Math.PI * 2);
-      context.fill();
-    }
-    context.globalCompositeOperation = "source-over";
-    context.filter = "none";
   };
 
   const render = () => {
