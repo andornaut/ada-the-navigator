@@ -178,7 +178,10 @@ describe("Phaser hitscan beam", () => {
   it("strikes an obstacle at the nose at once", () => {
     // A rock over Ada's drawn nose: she is pushed off it and the beam meets it where it leaves.
     const flight = beam([{ hp: 10, id: "rock", kind: "rock", radius: 2, x: 12, y: nose.y }]);
-    expect(hp(flight, "rock")).toBe(10 - 6.5);
+    const collisionDamage = CONTENT.tuning.shieldMax - flight.shield;
+    expect(collisionDamage).toBe(1);
+    // Subtract the admitted bump to verify the beam's damage independently.
+    expect(10 - collisionDamage - hp(flight, "rock")!).toBe(6.5);
     const flash = activeBeamFlashes(flight)[0]!;
     const from = nosePoint({ x: 1, y: 0 }, flight.player);
     expect(flash.from).toEqual(from);
@@ -229,8 +232,12 @@ describe("Ada's shot origin", () => {
     // every 5 units of travel, so from the nose it would first test 5.19 from the rock's centre,
     // past its 5-unit reach, and pass through.
     flight.objects = [{ hp: 3, id: "rock", kind: "rock", radius: 2, x: 12, y: nose.y }];
+    const shield = flight.shield;
     stepFlight(CONTENT, 1 / 60, right, flight);
-    expect(hp(flight, "rock")).toBe(2);
+    const collisionDamage = shield - flight.shield;
+    expect(collisionDamage).toBe(1);
+    // A missed bolt would leave only bump damage, so the projectile must account for one more.
+    expect(3 - collisionDamage - hp(flight, "rock")!).toBe(1);
     expect(flight.shots.filter((shot) => !shot.enemy)).toHaveLength(0);
   });
 });
