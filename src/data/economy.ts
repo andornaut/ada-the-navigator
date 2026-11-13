@@ -58,6 +58,8 @@ export interface EconomyCatalog {
    * left. World ammo quantities derive from the shop pack through `worldPackFraction`.
    */
   ammo: {
+    /** Maximum stored shots per finite-ammunition weapon. */
+    capacity: number;
     dropChance: number;
     rockDropChance: number;
     dropWeights: Readonly<Record<UpgradeWeapon, number>>;
@@ -192,6 +194,7 @@ const UPGRADE_PRICES = weaponUpgradePrices(LASER_UPGRADE_PRICES, UPGRADE_PRICE_S
 // Provisional tuning from gameplay/economy.md; station geometry is Tech's provisional layout.
 export const ECONOMY: EconomyCatalog = {
   ammo: {
+    capacity: 9999,
     // Ammo pack drops: destroyed small craft 30%, destroyed asteroids and ore rocks 4%
     // (gameplay/economy.md "Earning Stardust").
     dropChance: 0.3,
