@@ -4,6 +4,7 @@ import { SPACING, TYPE } from "./tokens.ts";
 /** Ship geometry uses the shared card and text roles, in logical px. */
 export const SHIP_CARD = {
   divider: CARD_CONTENT.frameBorder,
+  gutter: 2 * SPACING.panelPadding + CARD_CONTENT.frameBorder,
   icon: TYPE.body.lineHeight,
   row: TYPE.body.lineHeight,
   sectionPadding: SPACING.panelPadding,

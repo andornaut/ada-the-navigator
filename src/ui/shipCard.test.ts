@@ -29,8 +29,8 @@ describe("Ship card", () => {
       VIEW,
     );
     expect(sections.equipment[0].slice(0, 3).map((row) => row.level)).toEqual([
-      "Level 1 of 3",
       "Level 2 of 3",
+      "Level 1 of 3",
       "Level 3 of 3",
     ]);
     expect(sections.equipment[1][0]!.level).toBe("Level 2 of 3");
@@ -67,12 +67,12 @@ describe("Ship card", () => {
     });
   });
 
-  it("puts the shield, engine, tractor beam and paint left, and the weapons right in HUD order", () => {
+  it("keeps the systems and paint data with Engine first, and weapons in HUD order", () => {
     const [left, right] = shipSections(LABELS, VIEW).equipment;
-    expect(labels(left)).toEqual([LABELS.shield, "Engine", LABELS.tractorBeam, "Paint: Sky blue"]);
+    expect(labels(left)).toEqual(["Engine", LABELS.shield, LABELS.tractorBeam, "Paint: Sky blue"]);
     expect(left.map((row) => row.level)).toEqual([
-      "Level 1 of 3",
       "Level 2 of 3",
+      "Level 1 of 3",
       "Level 3 of 3",
       undefined,
     ]);
@@ -128,11 +128,13 @@ describe("Ship sections rendering", () => {
     expect(equipment!.children[0]!.textContent).toBe("Equipment");
     expect(cargo!.children[0]!.textContent).toBe("Cargo");
     const groups = equipment!.children[1]!.children;
-    expect(groups.map((group) => group.children.map(rowText))).toEqual(
-      sections.equipment.map((group) =>
-        group.map((row) => [row.label, row.level, row.ammo].filter((value) => value !== undefined)),
-      ),
-    );
+    expect(groups.flatMap((group) => group.children.map((row) => rowText(row)[0]))).toEqual([
+      "Engine",
+      LABELS.shield,
+      LABELS.tractorBeam,
+      ...sections.equipment[1].map((row) => row.label),
+      "Paint: Sky blue",
+    ]);
     expect(cargo!.children[1]!.children.map(rowText)).toEqual([
       ["Stardust", "1,234,567"],
       ["Ore", "12,500"],
@@ -159,5 +161,12 @@ describe("Ship sections rendering", () => {
 
 it("omits the weapon subgroup when no weapons are owned", () => {
   const root = rendered(shipSections(LABELS, { ...VIEW, weapons: [] }));
-  expect(root.children[0]!.children[1]!.children).toHaveLength(1);
+  expect(root.children[0]!.children[1]!.children).toHaveLength(2);
+  const rows = root.children[0]!.children[1]!.children.flatMap((group) => group.children);
+  expect(rows.map((row) => rowText(row)[0])).toEqual([
+    "Engine",
+    LABELS.shield,
+    LABELS.tractorBeam,
+    "Paint: Sky blue",
+  ]);
 });

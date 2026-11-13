@@ -891,7 +891,8 @@ every available height, so the card never scrolls.
 Implementation contract for Tech: the Paused card's Ship opens a
 content-fitted card titled "Ship" with the close X; the close X, back and
 Escape return to Paused. The body has exactly two top-aligned columns:
-Equipment on the left and Cargo on the right, including narrow views.
+Equal-width Equipment and Cargo panes sit on the left and right, including
+narrow views. The central divider and its clearance are outside both panes.
 Each section is one list, never a nested two-column grid. Strings and row
 content remain Gameplay's. Ship geometry belongs in `src/ui/layout/`,
 consuming the existing canonical tokens rather than a second spacing system.
@@ -903,7 +904,7 @@ consuming the existing canonical tokens rather than a second spacing system.
 | Divider clearance      | `SPACING.panelPadding` (16) on each side                       | The total inter-column gutter is `2 * SPACING.panelPadding + CARD_CONTENT.frameBorder` (34) |
 | Section heading        | `TYPE.label`, `TEXT_TOKENS.supporting`                         | Same heading role and top alignment in both columns                                         |
 | Heading-to-list gap    | `SPACING.gap` (8)                                              | Separate a heading from its first row                                                       |
-| Equipment subgroup gap | `SPACING.panelPadding` (16)                                    | Between the systems/paint rows and the owned-weapon rows; absent weapons take no gap        |
+| Equipment subgroup gap | `SPACING.panelPadding` (16)                                    | Between systems, weapons and final paint groups; absent weapons take no gap                 |
 | List row gap           | `SPACING.rowGap` (4)                                           | Between rows within either list or equipment subgroup                                       |
 | Row height             | `max(SHIP_CARD.icon, TYPE.body.lineHeight)` (20 minimum)       | Wrapped text grows the row by its type role's line height                                   |
 | Row icon               | Existing `SHIP_CARD.icon` (20), then `SPACING.markGap` (6)     | Retain the current icons and drawn-pixel spacing                                            |
@@ -916,35 +917,31 @@ Rows: labels use `TYPE.body` and `TEXT_TOKENS.label`; counts use
 ammunition track on weapon rows. Keep values and icons visible; wrap labels
 and grow rows rather than shrinking type.
 
-1. Equipment, left: Shield (`icon-shop-shield`), Engine
-   (`icon-shop-engine-tuning`), Tractor beam (`icon-shop-tractor-beam`), each
-   with its level, then "Paint: {paint}" (`icon-shop-ship-paint`). Follow
-   these with every owned weapon in Ada's weapon order (Laser, Multi-Laser,
-   Rapid Missile, Heavy Missile, Scattershot, Phaser), its 20 vector icon as
-   a cream mask ([Weapon icons](weapon-icons.md)), its level and, apart from
-   Laser, "{count} left". The shop icons draw their `normal` frame. The
-   subgroup gap adds no new player-facing heading.
+1. Equipment, left: Engine (`icon-shop-engine-tuning`), Shield
+   (`icon-shop-shield`), Tractor beam (`icon-shop-tractor-beam`), each with
+   its level. Follow these with every owned weapon in Ada's weapon order
+   (Laser, Multi-Laser, Rapid Missile, Heavy Missile, Scattershot, Phaser),
+   its existing icon, level and ammunition. Paint (`icon-shop-ship-paint`)
+   is the final row. The shop icons draw their normal frame. Subgroup gaps
+   add no new player-facing headings.
 2. Cargo, right: Stardust (`icon-stardust-20`, count), Ore (`icon-ore-20`,
    the ore carried this flight), "Holodisks: {n} of 6"
    (`icon-holodisk-20`), and, when there is one, "Carrying: {item}"
    (`icon-cargo-20`) or "Towing: {craft}" (`icon-tow-20`), top to bottom.
 
-Measure each column's natural width from its heading and widest complete
-row in the existing type roles, including icon, mark gap, value gaps and
-reserved value tracks. Pass the sum of those widths and the divider gutter
-to the shared `cardWidth` contract in `contentCard.ts`; retain its title
-clearance, fixed-base half-width floor and available-rect clamp. The usable
-column width is the resulting card width minus `2 * CARD_CONTENT.padding`
-and the divider gutter.
+Measure both panes' natural content in the existing type roles, including
+icons, mark gaps and value tracks. Use twice the wider pane's natural width
+plus the divider gutter for the shared `cardWidth` contract in
+`contentCard.ts`. Equal fractional grid tracks provide this intrinsic width
+without a duplicated literal modal width. Retain title clearance, the
+fixed-base half-width floor and the available-rect clamp. Both panes share
+half the inner width after subtracting the divider gutter.
 
-Derive each column's minimum from its heading's longest unbreakable segment
-and its rows' fixed icon/value tracks plus the label's longest unbreakable
-segment in the existing font. Allocate the usable width between the two
-natural widths, shrinking only label space and respecting those minima.
-Long unbroken labels may wrap within a word before forcing overflow. Keep
-two columns at every supported narrow view; do not stack sections or add
-internal columns. Tech verifies that the derived minima fit the available
-rect, including phone insets, using Gameplay's longest supported strings.
+Shrink the equal panes together within the available rect. Labels wrap,
+including within long unbroken words, while preserving the existing font
+sizes and content. Keep two columns at narrow widths and with phone insets;
+do not stack sections or add internal columns. Values retain their shared
+tracks and wrap where needed to avoid horizontal overflow.
 
 The taller list sets the body's natural height. Use the shared card header
 and available-height calculation; when that height does not fit, scroll the

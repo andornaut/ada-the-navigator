@@ -99,14 +99,14 @@ export function shipSections(labels: Labels, view: ShipView): ShipSections {
   }
   const left: ShipRow[] = [
     {
-      icon: sprite("icon-shop-shield", 2),
-      label: labels.shield ?? "",
-      level: level(view.shield, ECONOMY.trackPrices.shield.length + 1),
-    },
-    {
       icon: sprite("icon-shop-engine-tuning", 2),
       label: labels.engine ?? "",
       level: level(view.engine, ECONOMY.trackPrices.engine.length + 1),
+    },
+    {
+      icon: sprite("icon-shop-shield", 2),
+      label: labels.shield ?? "",
+      level: level(view.shield, ECONOMY.trackPrices.shield.length + 1),
     },
     {
       icon: sprite("icon-shop-tractor-beam", 2),
@@ -130,7 +130,9 @@ export function shipSections(labels: Labels, view: ShipView): ShipSections {
 export const SHIP_CARD_STYLE = `
 ${UI_SCOPE} .ada-ship-sections{
   display:grid;
-  grid-template-columns:repeat(2,minmax(min-content,max-content));
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  column-gap:${units(SHIP_CARD.gutter)};
+  position:relative;
   width:max-content;
   max-width:100%;
   flex:none;
@@ -143,12 +145,15 @@ ${UI_SCOPE} .ada-ship-section{
   min-width:0;
   margin:0
 }
-${UI_SCOPE} .ada-ship-section[data-section="equipment"]{
-  padding-right:${units(SHIP_CARD.sectionPadding)}
-}
-${UI_SCOPE} .ada-ship-section[data-section="cargo"]{
-  border-left:${units(SHIP_CARD.divider)} solid ${TEXT_TOKENS.supporting};
-  padding-left:${units(SHIP_CARD.sectionPadding)}
+${UI_SCOPE} .ada-ship-sections::before{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:0;
+  bottom:0;
+  width:${units(SHIP_CARD.divider)};
+  transform:translateX(-50%);
+  background:${TEXT_TOKENS.supporting}
 }
 ${UI_SCOPE} .ada-ship-section h3{
   margin:0;
@@ -298,7 +303,9 @@ export function renderShipSections(
   const equipment = document.createElement("div");
   equipment.className = "ada-ship-grid";
   equipment.dataset.equipment = "";
-  for (const rows of sections.equipment) {
+  const [systemsAndPaint, weapons] = sections.equipment;
+  const paint = systemsAndPaint.slice(-1);
+  for (const rows of [systemsAndPaint.slice(0, -1), weapons, paint]) {
     const column = document.createElement("div");
     column.className = "ada-ship-column";
     column.append(...rows.map(rowNode));
