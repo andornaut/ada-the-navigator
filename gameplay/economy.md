@@ -107,8 +107,8 @@ one pack for such a weapon, each weapon about three quarters as likely as the on
 weapon order (Multi-Laser 16, Rapid Missile 12, Heavy Missile 9, Scattershot 7, Phaser 5, among
 those weapons). Its notice is "+ {weapon} ammo".
 
-Story mining deposits keep their
-existing cargo role and do not drop Stardust.
+Ore rocks release ore instead of a usual Stardust drop. Like asteroids, they
+can still burst with 10 extra Stardust or drop an ammo pack.
 
 Station jobs also pay Stardust; see [Quests](quests.md#rewards).
 
