@@ -11,6 +11,7 @@ import {
   TEXT_BUTTON,
 } from "../../data/layout.ts";
 import { CHARTING_RADIUS, type MapSymbol } from "../../model/map.ts";
+import { nearestImage, wrapPoint } from "../../model/worldGeometry.ts";
 import { hudRect, type Insets, safeRect, type Size } from "./playView.ts";
 import { BUTTON_GAP, SMALL_BUTTON_GAP } from "./tokens.ts";
 export { MAP_PANEL, MAP_SYMBOL } from "../../data/layout.ts";
@@ -100,6 +101,7 @@ export interface Point {
 
 /** A map view: logical px per projected unit, and the projected point at the inner centre. */
 export interface MapView {
+  readonly worldSide?: number;
   readonly centre: Point;
   readonly scale: number;
 }
@@ -210,9 +212,20 @@ const centreOf = (rect: Rect): Point => ({
   y: rect.y + rect.height / 2,
 });
 
+/** The nearest periodic image to the current view, or the unchanged legacy point. */
+export function mapImage(view: MapView, world: Point): Point {
+  return view.worldSide === undefined
+    ? world
+    : nearestImage(view.worldSide, mapWorld(view.centre), world).point;
+}
+
+function mapWorld(projected: Point): Point {
+  return { x: projected.y + projected.x / 2, y: projected.y - projected.x / 2 };
+}
+
 /** A world position's place on screen, in logical px. */
 export function toScreen(inner: Rect, view: MapView, world: Point): Point {
-  const projected = mapProjection(world);
+  const projected = mapProjection(mapImage(view, world));
   const middle = centreOf(inner);
   return {
     x: middle.x + (projected.x - view.centre.x) * view.scale,
@@ -244,6 +257,14 @@ export function panLimit(places: readonly Point[]): Rect {
 
 /** A view with its centre clamped to the pan limit and its scale to the zoom range. */
 export function clampView(inner: Rect, limit: Rect, view: MapView): MapView {
+  if (view.worldSide !== undefined) {
+    const { max, min } = scaleLimits(inner);
+    return {
+      ...view,
+      centre: mapProjection(wrapPoint(view.worldSide, mapWorld(view.centre))),
+      scale: clamp(min, max, view.scale),
+    };
+  }
   const { max, min } = scaleLimits(inner);
   return {
     centre: {
@@ -259,6 +280,7 @@ function panInside(rect: Rect, point: Point, view: MapView): MapView {
   const dx = point.x < rect.x ? point.x - rect.x : Math.max(0, point.x - (rect.x + rect.width));
   const dy = point.y < rect.y ? point.y - rect.y : Math.max(0, point.y - (rect.y + rect.height));
   return {
+    ...view,
     centre: { x: view.centre.x + dx / view.scale, y: view.centre.y + dy / view.scale },
     scale: view.scale,
   };
@@ -306,6 +328,7 @@ export function zoomView(
   return {
     refused: false,
     view: clampView(inner, limit, {
+      ...view,
       centre: {
         x: projected.x - (anchor.x - middle.x) / scale,
         y: projected.y - (anchor.y - middle.y) / scale,
@@ -318,6 +341,7 @@ export function zoomView(
 /** Pans by a screen delta: the map follows the pointer. */
 export function panView(inner: Rect, limit: Rect, delta: Point, view: MapView): MapView {
   return clampView(inner, limit, {
+    ...view,
     centre: { x: view.centre.x - delta.x / view.scale, y: view.centre.y - delta.y / view.scale },
     scale: view.scale,
   });
@@ -325,7 +349,7 @@ export function panView(inner: Rect, limit: Rect, delta: Point, view: MapView): 
 
 /** Pans so Ada sits at the inner centre, at the same scale. */
 export function recentreView(inner: Rect, limit: Rect, player: Point, view: MapView): MapView {
-  return clampView(inner, limit, { centre: mapProjection(player), scale: view.scale });
+  return clampView(inner, limit, { ...view, centre: mapProjection(player) });
 }
 
 /**

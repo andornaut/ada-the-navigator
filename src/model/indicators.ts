@@ -3,6 +3,7 @@ import { ECONOMY } from "../data/economy.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { stationIndicatorTarget } from "./stations.ts";
 import type { FlightState, GalaxyProgress } from "./types.ts";
+import { nearestImage } from "./worldGeometry.ts";
 
 // Direction indicators (gameplay/rules.md "Space encounters and feedback"): rare arrows that
 // mark only the current objective's destination, where a carried quest item goes, the holodisk
@@ -24,6 +25,7 @@ export interface IndicatorTarget {
 }
 
 export interface IndicatorContext {
+  readonly worldSide?: number;
   readonly flight: Pick<FlightState, "objects" | "player">;
   /** The galaxy's holodisk waypoint shows until the holodisk is recovered. */
   readonly holodiskWaypoint: boolean;
@@ -79,17 +81,23 @@ export function indicatorTargets(
   context: IndicatorContext,
 ): IndicatorTarget[] {
   const marked = new Set<string>();
-  return INDICATOR_KINDS.flatMap((kind) => sources[kind](context)).filter((target) => {
-    if (
-      marked.has(target.id) ||
-      Math.hypot(target.x - context.flight.player.x, target.y - context.flight.player.y) >
-        ECONOMY.station.indicatorRange
-    ) {
-      return false;
-    }
-    marked.add(target.id);
-    return true;
-  });
+  return INDICATOR_KINDS.flatMap((kind) => sources[kind](context))
+    .map((target) =>
+      context.worldSide === undefined
+        ? target
+        : { ...target, ...nearestImage(context.worldSide, context.flight.player, target).point },
+    )
+    .filter((target) => {
+      if (
+        marked.has(target.id) ||
+        Math.hypot(target.x - context.flight.player.x, target.y - context.flight.player.y) >
+          ECONOMY.station.indicatorRange
+      ) {
+        return false;
+      }
+      marked.add(target.id);
+      return true;
+    });
 }
 
 const QUEST_ITEM_DESTINATIONS: Readonly<Record<string, string>> = {

@@ -609,3 +609,31 @@ function launched(galaxy: GalaxyNumber) {
     return { id, x, y };
   });
 }
+
+describe("periodic map metadata and separate procedural places", () => {
+  it("carries only explicit topology and adds known POIs without survey credit or duplicate IDs", () => {
+    const model = flying();
+    const base = context(model, { known: [], stations: [] });
+    const original = localMap(base);
+    const site = {
+      id: "poi:1:1,1:0",
+      kind: "nebula" as const,
+      label: "Nebula",
+      x: 500000,
+      y: -500000,
+    };
+    const periodic = localMap({ ...base, chartedPois: [site, site], worldSide: 1_152_000 });
+    expect(original).not.toHaveProperty("worldSide");
+    expect(periodic.worldSide).toBe(1_152_000);
+    expect(periodic.places.filter(({ id }) => id === site.id)).toHaveLength(1);
+    expect(periodic.places.find(({ id }) => id === site.id)).toMatchObject({
+      kind: "landmark",
+      travel: false,
+    });
+    expect(periodic.mapped).toBe(original.mapped);
+    expect(periodic.landmarks).toEqual(original.landmarks);
+    expect(localMap({ ...base, worldSide: 1_152_000 }).places).not.toContainEqual(
+      expect.objectContaining({ id: site.id }),
+    );
+  });
+});

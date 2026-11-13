@@ -209,6 +209,8 @@ export type QuestLine =
   | { readonly kind: "jobBoards" | "storyComplete" };
 
 export interface LocalMap {
+  /** Omitted for a legacy flight; explicit side selects periodic map geometry. */
+  readonly worldSide?: number;
   /**
    * Where Ada has explored, for the fog: the centre of each chunk in the galaxy's explored record.
    * An empty record draws no fog.
@@ -229,6 +231,10 @@ export interface LocalMap {
 }
 
 export interface MapContext {
+  /** Known procedural POIs, separate from the bounded authored survey and its credit. */
+  readonly chartedPois?: readonly MapLandmark[];
+  /** Taken from the active flight topology, never inferred from the current build. */
+  readonly worldSide?: number;
   readonly catalog: EconomyCatalog;
   /** World units per chunk, whose visited centres are the explored record. */
   readonly chunkSize: number;
@@ -310,7 +316,7 @@ export function localMap(context: MapContext): LocalMap {
             label: context.label(id, "destination"),
             objective: id === objectivePlace,
             symbol: destinationSymbol(id),
-            travel: true,
+            travel: id !== "holodisk",
             x: object.x,
             y: object.y,
           },
@@ -384,6 +390,24 @@ export function localMap(context: MapContext): LocalMap {
     });
   }
   const places = [...destinations, ...stations, ...charted, ...waypoint];
+  const present = new Set(places.map(({ id }) => id));
+  for (const { id, kind, label, x, y } of context.chartedPois ?? []) {
+    if (present.has(id)) {
+      continue;
+    }
+    present.add(id);
+    places.push({
+      id,
+      job: false,
+      kind: "landmark",
+      label,
+      objective: false,
+      symbol: kind,
+      travel: false,
+      x,
+      y,
+    });
+  }
   const { job } = context;
   const marked = places.map((entry) => (entry.id === job?.id ? { ...entry, job: true } : entry));
   const spot: MapPlace[] =
@@ -433,6 +457,7 @@ export function localMap(context: MapContext): LocalMap {
         ? [{ kind: "jobBoards" }]
         : [];
   return {
+    ...(context.worldSide === undefined ? {} : { worldSide: context.worldSide }),
     explored: exploredCentres(chunkSize, context.explored),
     facing: { x: flight.facing.x, y: flight.facing.y },
     landmarks: { charted: landmarks.charted.length, total: landmarks.total },

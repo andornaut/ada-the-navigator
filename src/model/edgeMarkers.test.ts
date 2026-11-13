@@ -373,3 +373,22 @@ describe("edge markers inside the safe game area", () => {
     expect(at({ x: from.x, y: 1e5 }).y).toBeCloseTo(centres[3], 9);
   });
 });
+
+it("retains one seen identity across a seam using the explicit factory context", () => {
+  const side = 1_152_000;
+  const object = enemy("fighter", { x: -side / 2 + 50, y: 0 });
+  const current = flight([object]);
+  Object.assign(current.player, { x: side / 2 - 50, y: 0 });
+  const periodic = createEdgeMarkerTracker({ worldSide: () => side });
+  expect(periodic.update(current, new Set())).toEqual([]);
+  object.x += 600;
+  expect(periodic.update(current, new Set())).toEqual([
+    { id: object.id, kind: "enemy", x: object.x + side, y: 0 },
+  ]);
+  expect(periodic.update(current, new Set([object.id]))).toEqual([]);
+  const legacy = createEdgeMarkerTracker();
+  expect(legacy.update(current, new Set())).toEqual([]);
+  object.x += 100;
+  expect(legacy.update(current, new Set())).toEqual([]);
+  expect(object.x).toBe(-side / 2 + 750);
+});

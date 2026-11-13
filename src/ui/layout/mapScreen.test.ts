@@ -22,11 +22,13 @@ import {
   mapGalaxiesRect,
   mapHeaderCap,
   mapHeaderWidth,
+  mapImage,
   mapProjection,
   mapQuestsRect,
   openingView,
   panelMaxWidth,
   panLimit,
+  panView,
   readingOrder,
   recentreView,
   scaleLimits,
@@ -375,5 +377,35 @@ describe("fog and Ada", () => {
   it("points Ada's arrow along her projected facing", () => {
     expect(adaAngle({ x: 1, y: -1 })).toBeCloseTo(0);
     expect(adaAngle({ x: 1, y: 1 })).toBeCloseTo(Math.PI / 2);
+  });
+});
+
+describe("explicit periodic map views", () => {
+  const side = 1_152_000;
+  const player = { x: side / 2 - 100, y: side / 2 - 80 };
+  const place = { x: -side / 2 + 60, y: -side / 2 + 40 };
+  const inner = { height: 300, width: 600, x: 0, y: 0 };
+  const limit = panLimit([]);
+  const view = { centre: mapProjection(player), scale: 0.02, worldSide: side };
+
+  it("projects one nearest image across both seams without changing the canonical point", () => {
+    expect(mapImage(view, place)).toEqual({ x: place.x + side, y: place.y + side });
+    expect(toScreen(inner, view, place)).toEqual({ x: 300.8, y: 152.8 });
+    const legacy = { centre: view.centre, scale: view.scale };
+    expect(mapImage(legacy, place)).toBe(place);
+    expect(toScreen(inner, legacy, place).y).toBeLessThan(-20_000);
+    expect(place).toEqual({ x: -side / 2 + 60, y: -side / 2 + 40 });
+  });
+
+  it("preserves explicit topology through zoom pan recenter and panel clearance", () => {
+    const zoomed = zoomView(inner, limit, 1.5, { x: 300, y: 150 }, view).view;
+    const panned = panView(inner, limit, { x: -50, y: 40 }, zoomed);
+    const centred = recentreView(inner, limit, player, panned);
+    const clear = keepClear(inner, inner, 200, place, centred);
+    for (const current of [zoomed, panned, centred, clear]) {
+      expect(current.worldSide).toBe(side);
+    }
+    expect(toScreen(inner, centred, player)).toEqual({ x: 300, y: 150 });
+    expect(Math.abs(toScreen(inner, clear, place).x - 300)).toBeLessThan(50);
   });
 });

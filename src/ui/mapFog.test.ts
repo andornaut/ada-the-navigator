@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { fogReveal, toScreen } from "./layout/mapScreen.ts";
+import { fogReveal, mapProjection, toScreen } from "./layout/mapScreen.ts";
 import { drawMapFog } from "./mapFog.ts";
 
 const INNER = { height: 300, width: 600, x: 20, y: 40 };
@@ -102,4 +102,36 @@ describe.each([1, 1.5, 2.6, 3])("fog at device scale %s", (px) => {
       "restore",
     ]);
   });
+});
+
+it("reveals a known seam image near the view without revealing its far canonical position", () => {
+  const side = 1_152_000;
+  const player = { x: side / 2 - 100, y: 0 };
+  const place = {
+    id: "known",
+    job: false,
+    kind: "landmark" as const,
+    label: "Wreck",
+    objective: false,
+    symbol: "wreck" as const,
+    travel: false,
+    x: -side / 2 + 100,
+    y: 0,
+  };
+  const periodic = { centre: mapProjection(player), scale: 0.02, worldSide: side };
+  const { commands, context } = canvas();
+  drawMapFog(
+    context,
+    INNER,
+    periodic,
+    { explored: [], places: [place], player },
+    1,
+    "#123456",
+    640,
+    360,
+  );
+  const ellipses = commands.filter(({ name }) => name === "ellipse");
+  expect(ellipses).toHaveLength(2);
+  expect(ellipses[0]!.args.slice(0, 2)).toEqual(Object.values(toScreen(INNER, periodic, place)));
+  expect(place.x).toBe(-side / 2 + 100);
 });

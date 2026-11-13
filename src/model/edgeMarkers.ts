@@ -10,6 +10,7 @@ import {
 import { SCREEN } from "../data/screen.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { SpaceObject, Vec } from "./types.ts";
+import { nearestImage } from "./worldGeometry.ts";
 
 // Edge markers (gameplay/rules.md "Space encounters and feedback"): an enemy, heavy, guard or
 // station gets a marker only once it has been in the game area and left it. The marker stays
@@ -102,7 +103,9 @@ export interface EdgeMarkerFlight {
  * The seen state across frames. update takes the flight each frame, or null outside one, the ids
  * a direction indicator marks and the time in ms; it returns the objects to mark this frame.
  */
-export function createEdgeMarkerTracker(): {
+export function createEdgeMarkerTracker(context?: {
+  readonly worldSide?: () => number | undefined;
+}): {
   update(
     flight: EdgeMarkerFlight | null,
     indicated: ReadonlySet<string>,
@@ -130,6 +133,9 @@ export function createEdgeMarkerTracker(): {
         return [];
       }
       const markers: EdgeMarker[] = [];
+      const worldSide = context?.worldSide?.();
+      const image = (point: Vec) =>
+        worldSide === undefined ? point : nearestImage(worldSide, flight.player, point).point;
       const present = new Set<string>();
       const summoned = new Set(flight.summonedGuards);
       /** The marker for `object`: a guard's bar, or the bar fading off a heavy just disabled. */
@@ -141,9 +147,8 @@ export function createEdgeMarkerTracker(): {
             : since !== undefined && now - since < EDGE_MARKERS.swapMs
               ? 1 - (now - since) / EDGE_MARKERS.swapMs
               : 0;
-        return bar > 0
-          ? { bar, id: object.id, kind, x: object.x, y: object.y }
-          : { id: object.id, kind, x: object.x, y: object.y };
+        const { x, y } = image(object);
+        return bar > 0 ? { bar, id: object.id, kind, x, y } : { id: object.id, kind, x, y };
       };
       for (const object of flight.objects) {
         const kind = edgeMarkerKind(object);
@@ -155,8 +160,9 @@ export function createEdgeMarkerTracker(): {
           swapped.set(object.id, now);
         }
         kinds.set(object.id, kind);
-        const away = Math.hypot(object.x - flight.player.x, object.y - flight.player.y);
-        if (inGameArea(gameAreaPoint(flight.player, object))) {
+        const point = image(object);
+        const away = Math.hypot(point.x - flight.player.x, point.y - flight.player.y);
+        if (inGameArea(gameAreaPoint(flight.player, point))) {
           seen.set(object.id, "inside");
         } else if (summoned.has(object.id)) {
           if (!indicated.has(object.id)) {

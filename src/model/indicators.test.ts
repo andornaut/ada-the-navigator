@@ -261,3 +261,25 @@ describe("space view", () => {
     expect(sources.filter((source) => /\.add\s*\.text\(/u.test(source))).toEqual([]);
   });
 });
+
+it("uses the shortest seam image only with explicit torus context, without disclosing unknown targets", () => {
+  const side = 1_152_000;
+  const player = { x: side / 2 - 100, y: 0 };
+  const destination = object("workshop", "destination", -side / 2 + 100);
+  const periodic = context({ flight: { objects: [destination], player }, worldSide: side });
+  const targets = indicatorTargets({ ...INDICATOR_SOURCES, station: () => [] }, periodic);
+  expect(targets).toEqual([{ id: "workshop", kind: "objective", x: side / 2 + 100, y: 0 }]);
+  expect(
+    indicatorTargets(
+      { ...INDICATOR_SOURCES, station: () => [] },
+      context({ flight: periodic.flight }),
+    ),
+  ).toEqual([]);
+  expect(
+    indicatorTargets(
+      { ...INDICATOR_SOURCES, station: () => [] },
+      { ...periodic, progress: { known: [], stations: [] } },
+    ),
+  ).toEqual([]);
+  expect(destination.x).toBe(-side / 2 + 100);
+});

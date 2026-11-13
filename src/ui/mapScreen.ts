@@ -30,6 +30,8 @@ import {
   MAP_SCREEN,
   MAP_SYMBOL,
   MAP_TOOLS,
+  mapImage,
+  mapProjection,
   type MapTool,
   type MapView,
   openingView,
@@ -90,6 +92,7 @@ export interface MapScreenLabels {
   /** "{percent}% mapped". */
   readonly galaxies: string;
   readonly mapPercent: string;
+  readonly mapSurveyInfo?: string;
   readonly quests: string;
   readonly previous: string;
   readonly next: string;
@@ -147,6 +150,7 @@ export function mapScreenLabels(strings: Readonly<Record<string, string>>): MapS
     jobObjective: label("jobObjective"),
     map: label("map"),
     mapPercent: label("mapPercent"),
+    ...(strings.mapSurveyInfo ? { mapSurveyInfo: strings.mapSurveyInfo } : {}),
     next: label("next"),
     page: label("achievementsPage"),
     previous: label("previous"),
@@ -509,6 +513,21 @@ export const MAP_SCREEN_STYLE = `
   border-color:${MAP_COLORS.cream};
   background:${MAP_COLORS.cream}
 }
+
+.ada-controls .ada-map-survey-info{
+  position:absolute;
+  box-sizing:border-box;
+  margin:0;
+  padding:${units(SPACING.gap / 2)};
+  font:${font(TYPE.body)};
+  color:${TEXT_TOKENS.supporting};
+  background:rgba(24,20,37,${MAP_SCREEN.header.alpha});
+  border-radius:${units(MAP_SCREEN.header.radius)};
+  white-space:normal;
+  overflow-wrap:anywhere;
+  pointer-events:none
+}
+.ada-controls .ada-map-survey-info[hidden]{display:none}
 
 /* The tools: HUD disc buttons in a column on the HUD rect's top-right corner, reaching
    HUD_ROW.reach past it so the discs' drawn right edges and the top disc's drawn top sit on it. */
@@ -913,6 +932,11 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   column.className = "ada-map-column";
   column.append(pips, percent);
   header.append(galaxy, divider, column);
+  const surveyInfo = document.createElement("p");
+  surveyInfo.className = "ada-map-survey-info";
+  surveyInfo.setAttribute("role", "note");
+  surveyInfo.textContent = labels.mapSurveyInfo ?? "";
+  surveyInfo.hidden = !labels.mapSurveyInfo;
   // The tools.
   const tools = document.createElement("div");
   tools.className = "ada-map-tools";
@@ -1009,7 +1033,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   questPager.append(questPrevious, questPageCount, questNext);
   questsCard.body.append(questLines, questPager);
   questsModal.append(questsCard.frame);
-  screen.append(fog, placesLayer, adaLayer, hudRow, tools, panel, questsModal);
+  screen.append(fog, placesLayer, adaLayer, hudRow, tools, surveyInfo, panel, questsModal);
   root.append(screen);
 
   let state: MapScreenState | null = null;
@@ -1046,8 +1070,20 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       state?.carrying ?? false,
       selectedPlace(),
     );
-  const detailLines = (place: MapPlace) =>
-    state ? placeLines(labels, state.map.player, state.job, place) : [];
+  const detailLines = (place: MapPlace) => {
+    if (!state) {
+      return [];
+    }
+    const geometry = {
+      centre: mapProjection(state.map.player),
+      scale: 1,
+      ...(state.map.worldSide === undefined ? {} : { worldSide: state.map.worldSide }),
+    };
+    return placeLines(labels, state.map.player, state.job, {
+      ...place,
+      ...mapImage(geometry, place),
+    });
+  };
   // The panel shows for a selected place, with nothing mapped, or for a reason alone.
   const panelShown = () =>
     selectedPlace() !== null || mapShowsEmpty(places()) || travelNow().reason !== null;
@@ -1102,12 +1138,27 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     if (!state || screen.hidden) {
       return;
     }
-    const { inner, unit } = layout();
+    const { fit, inner, unit } = layout();
     if (!view) {
-      view = openingView(inner, places(), state.map.player);
+      const geometry = {
+        centre: mapProjection(state.map.player),
+        scale: 1,
+        ...(state.map.worldSide === undefined ? {} : { worldSide: state.map.worldSide }),
+      };
+      view = {
+        ...openingView(
+          inner,
+          places().map((place) => mapImage(geometry, place)),
+          state.map.player,
+        ),
+        ...(state.map.worldSide === undefined ? {} : { worldSide: state.map.worldSide }),
+      };
     }
     const current = view;
     screen.style.setProperty("--map-field", state.field?.background ?? "");
+    surveyInfo.style.left = units(fit.x);
+    surveyInfo.style.top = units(fit.y);
+    surveyInfo.style.maxWidth = units(fit.width);
     // Header.
     galaxy.textContent = state.field?.name ?? "";
     percent.textContent = labels.mapPercent.replace("{percent}", String(state.map.mapped));
@@ -1720,6 +1771,10 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     setState(next: MapScreenState): void {
       const refreshQuests =
         questsOpen() && questRevision !== JSON.stringify([next.map.quests, next.map.places]);
+      if (state?.map.worldSide !== next.map.worldSide) {
+        view = null;
+        presentation.clear();
+      }
       state = next;
       if (refreshQuests) {
         openQuests(true);
