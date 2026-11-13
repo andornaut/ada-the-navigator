@@ -280,13 +280,15 @@ export function openingScene(
       },
       ...chapter.openingBranches.map((text, index): StoryPage => ({
         background,
+        heading: chapter.name,
         id: `opening:branch:${index}`,
         ...(after[0] ? { next: after[0] } : {}),
         text,
       })),
-      ...rejoin.map((step, index) =>
-        linePage(background, rejoinIds[index]!, after[index + 1], step),
-      ),
+      ...rejoin.map((step, index) => ({
+        ...linePage(background, rejoinIds[index]!, after[index + 1], step),
+        heading: chapter.name,
+      })),
       ...(farewell
         ? [linePage(background, farewell, undefined, content.premise.gardenFarewell)]
         : []),
@@ -318,6 +320,7 @@ export function resolutionScene(content: GameContent, galaxy: GalaxyNumber): Sce
       },
       ...chapter.resolutionBranches.map((text, index): StoryPage => ({
         background: backgrounds.resolution,
+        heading: chapter.name,
         id: `resolution:branch:${index}`,
         next: rejoin.length ? "resolution:rejoin:0" : "closing",
         text,
@@ -325,6 +328,7 @@ export function resolutionScene(content: GameContent, galaxy: GalaxyNumber): Sce
       ...rejoin.map((line, index): StoryPage => ({
         ...line,
         background: backgrounds.resolution,
+        heading: chapter.name,
         id: `resolution:rejoin:${index}`,
         next: index + 1 < rejoin.length ? `resolution:rejoin:${index + 1}` : "closing",
       })),
@@ -338,6 +342,7 @@ export function resolutionScene(content: GameContent, galaxy: GalaxyNumber): Sce
       ...closing.map((line, index): StoryPage => ({
         ...line,
         background: backgrounds.closing,
+        heading: chapter.name,
         id: `closing:${index}`,
         ...(index + 1 < closing.length ? { next: `closing:${index + 1}` } : {}),
       })),
