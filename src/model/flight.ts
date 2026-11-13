@@ -107,6 +107,13 @@ import {
 import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { MINE_REACH, mineSpin, mineTouches } from "./mineShape.ts";
+import {
+  ensureNeedleDebris,
+  isNeedleRim,
+  needleChannelContains,
+  needleRimContact,
+  needleRims,
+} from "./needleFlight.ts";
 import { nosePoint } from "./nose.ts";
 import { worldClearOfOreFields, worldOreFieldsNear } from "./oreFields.ts";
 import { pickupOutline } from "./pickupBody.ts";
@@ -211,10 +218,13 @@ function protectedRadius(content: GameContent, object: SpaceObject): number | nu
       : null;
 }
 function safe(content: GameContent, point: Vec, flight: FlightState): boolean {
-  return flight.objects.some((o) => {
-    const radius = protectedRadius(content, o);
-    return radius !== null && worldDistance(flightWorldContext(flight), point, o) <= radius;
-  });
+  return (
+    needleChannelContains({}, flight, point) ||
+    flight.objects.some((o) => {
+      const radius = protectedRadius(content, o);
+      return radius !== null && worldDistance(flightWorldContext(flight), point, o) <= radius;
+    })
+  );
 }
 /**
  * An object's whole reach for clearances: a drawn rock's silhouette radius, else its radius, and
@@ -279,7 +289,7 @@ function adaSceneryContact(
 ): (normal: Vec, surface: Vec, object: SpaceObject) => void {
   const { sceneryRecoil, sceneryRestitution } = content.tuning.flight;
   return (normal, surface, object) => {
-    if (events) {
+    if (events && !isNeedleRim(object)) {
       bumpAda(content, flight, events, object);
     }
     flight.velocity = bounce(sceneryRestitution, sceneryRecoil, normal, surface, flight.velocity);
@@ -399,15 +409,17 @@ function canonicalObject(flight: FlightState, object: SpaceObject): void {
 /** Ada's drawn ship against scenery at her current facing. */
 function adaContact(flight: FlightState): SceneryContactOf {
   return (object, position, frame, drawn) =>
-    worldSceneryBodyContact(
-      flightWorldContext(flight),
-      object,
-      position,
-      shipBody(flight.facing),
-      frame,
-      0,
-      drawn,
-    );
+    isNeedleRim(object)
+      ? needleRimContact({ body: shipBody(flight.facing), position }, object)
+      : worldSceneryBodyContact(
+          flightWorldContext(flight),
+          object,
+          position,
+          shipBody(flight.facing),
+          frame,
+          0,
+          drawn,
+        );
 }
 
 /** Pushes Ada's drawn ship out of scenery and bounces her off what she touched. */
@@ -417,6 +429,8 @@ function settleAda(content: GameContent, flight: FlightState): void {
     adaContact(flight),
     adaSceneryContact(content, null, flight),
     flight.player,
+    undefined,
+    needleRims(flight),
   );
 }
 
@@ -449,12 +463,13 @@ export function resolveScenery(
   onContact: (normal: Vec, surface: Vec, object: SpaceObject) => void,
   position: Vec,
   undo?: () => void,
+  additional: readonly SpaceObject[] = [],
 ): void {
   const touched = new Set<SpaceObject>();
   const escapes = new Map<SpaceObject, Vec[]>();
   const deepestAt = () => {
     let deepest: { contact: Contact; object: SpaceObject } | null = null;
-    for (const object of flight.objects) {
+    for (const object of [...flight.objects, ...additional]) {
       if (!SCENERY.includes(object.kind) || object.hp <= 0) {
         continue;
       }
@@ -675,6 +690,7 @@ function generate(content: GameContent, point: Vec, flight: FlightState): void {
   worldActivateFlightRegion(flightWorldContext(flight), content, point, flight);
   ensureStations(content, point, flight);
   ensureDebrisRivers(content, point, flight);
+  ensureNeedleDebris(content, flight);
   const size = content.tuning.chunkSize;
   const tuning = content.tuning.flight;
   const generated = generatedChunks(flight);
@@ -1178,6 +1194,7 @@ function admitGroup(
     }
     if (
       !safe(content, object, flight) &&
+      !needleChannelContains({ radius: object.radius }, flight, object) &&
       !flight.objects.some((other) => other.id === object.id) &&
       !Object.hasOwn(flight.world.notables, object.id)
     ) {
@@ -2123,7 +2140,7 @@ function move(
   const contactOf = adaContact(flight);
   const onContact = adaSceneryContact(content, events, flight);
   // Drifting scenery can reach a resting ship, so contacts resolve before any travel.
-  resolveScenery(flight, contactOf, onContact, flight.player);
+  resolveScenery(flight, contactOf, onContact, flight.player, undefined, needleRims(flight));
   // A current's flow adds drift outside Ada's physics and speed cap.
   const drift = worldFlowAt(flightWorldContext(flight), flight.galaxy, flight.player);
   const travel = { x: flight.velocity.x + drift.x, y: flight.velocity.y + drift.y };
@@ -2133,10 +2150,17 @@ function move(
     const key = chunk(flight, content, before);
     flight.player.x += (travel.x * dt) / steps;
     flight.player.y += (travel.y * dt) / steps;
-    resolveScenery(flight, contactOf, onContact, flight.player, () => {
-      flight.player.x = before.x;
-      flight.player.y = before.y;
-    });
+    resolveScenery(
+      flight,
+      contactOf,
+      onContact,
+      flight.player,
+      () => {
+        flight.player.x = before.x;
+        flight.player.y = before.y;
+      },
+      needleRims(flight),
+    );
     canonicalPosition(flight, flight.player);
     const afterKey = chunk(flight, content, flight.player);
     if (flight.freshChunk === key) {
@@ -2157,10 +2181,17 @@ function move(
     const settled = returnTo(flight.player);
     flight.facing = turnToward(dt, physics.aimTurnSeconds, flight.velocity, flight.facing);
     // A new heading draws a new outline, which may reach scenery; one wedged in it keeps the old.
-    resolveScenery(flight, contactOf, onContact, flight.player, () => {
-      settled();
-      flight.facing = turnedFrom;
-    });
+    resolveScenery(
+      flight,
+      contactOf,
+      onContact,
+      flight.player,
+      () => {
+        settled();
+        flight.facing = turnedFrom;
+      },
+      needleRims(flight),
+    );
   }
 }
 /**
@@ -2345,18 +2376,20 @@ function enemies(
             point.y = object.enemy.home.y + (offset.y / reach) * PHANTOM_TUNING.blockadeReach;
           }
         }
-        const blocked = flight.objects.some(
-          (other) =>
-            other !== object &&
-            (protectedRadius(content, other) !== null
-              ? worldDistance(flightWorldContext(flight), other, point) <
-                (protectedRadius(content, other) ?? 0) + object.radius
-              : other.kind === "enemy" &&
-                other.hp > 0 &&
-                !other.enemy?.salvaged &&
-                worldDistance(flightWorldContext(flight), other, point) <
-                  enemySpacing(object, other)),
-        );
+        const blocked =
+          needleChannelContains({ radius: object.radius }, flight, point) ||
+          flight.objects.some(
+            (other) =>
+              other !== object &&
+              (protectedRadius(content, other) !== null
+                ? worldDistance(flightWorldContext(flight), other, point) <
+                  (protectedRadius(content, other) ?? 0) + object.radius
+                : other.kind === "enemy" &&
+                  other.hp > 0 &&
+                  !other.enemy?.salvaged &&
+                  worldDistance(flightWorldContext(flight), other, point) <
+                    enemySpacing(object, other)),
+          );
         if (!blocked) {
           object[axis] = point[axis];
         } else {
