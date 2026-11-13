@@ -565,7 +565,11 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   The local map shows the current galaxy: Ada's position, discovered destinations and
   stations, charted landmarks, the current objective's destination once mapped,
   a known holodisk waypoint until its holodisk is recovered, and how much of the
-  galaxy is mapped. Undiscovered places never appear. Map places keep at least
+  galaxy is mapped. The mapped percentage counts the destinations, stations and
+  landmarks inside the galaxy's charting circle, 25000 world units around its
+  origin: those discovered or charted over the total, rounded down. Stations
+  beyond the circle still show on the Map once discovered but do not count.
+  Undiscovered places never appear. Map places keep at least
   1020 world units apart, so each stays separate at full zoom; placement
   enforces this for every mapped place, outposts and the waypoint included, and
   story destinations keep at least 1200 apart. Story characters
@@ -726,7 +730,9 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   this reach. Scattershot dots fly at 600.
   None depends on her engine level.
 - Ada's shots and Phaser beams leave from her ship's nose, and weapon ranges are
-  measured from there.
+  measured from there. Enemy shots leave from the drawn muzzle of the gun's
+  current aim frame wherever the art defines muzzles, and from the model's fire
+  origin otherwise; shot direction always follows the continuous aim.
 - Fan angles are measured in the projected aim plane. Rotate there before
   unprojecting each shot direction; preserve the weapon's world speed.
 - Each scattershot dot travels 100 world units along its own rotated heading on
