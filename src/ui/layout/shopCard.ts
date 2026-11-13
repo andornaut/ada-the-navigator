@@ -2,6 +2,8 @@ import { SHOP_ROW, SPACING } from "../../data/layout.ts";
 import { FOCUS_RING } from "./controls.ts";
 export { BALANCE, CONFIRM_ITEM, SHOP_ROW } from "../../data/layout.ts";
 
+export const EXCHANGE_FIELD = { edge: 1, width: 96 } as const;
+
 // The shop item row and the buy confirm's well and price (art/layout.md "Shop item row"), in
 // logical px. A row is a ui-button-tile at the action height, its content centred on each state's
 // face: the item well at the left inset, the name block a gap right of it, the trailing slot at the

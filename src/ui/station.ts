@@ -14,6 +14,7 @@ import { font, slice, units } from "./layout/css.ts";
 import {
   BALANCE,
   CONFIRM_ITEM,
+  EXCHANGE_FIELD,
   SHOP_ROW,
   shopColumns,
   shopListWidth,
@@ -66,12 +67,12 @@ export const STATION_STYLE = `
 }
 .ada-controls .ada-exchange input{
   box-sizing:border-box;
-  width:${units(96)};
+  width:${units(EXCHANGE_FIELD.width)};
   max-width:100%;
   font:inherit;
   color:inherit;
   background:transparent;
-  border:${units(1)} solid currentColor
+  border:${units(EXCHANGE_FIELD.edge)} solid currentColor
 }
 .ada-controls .ada-exchange p{
   overflow-wrap:anywhere
