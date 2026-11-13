@@ -344,11 +344,10 @@ export const STATUS_PILL_LAYOUT = {
   y: HUD_ROW.centre - PILL.height / 2,
 } as const;
 
-// The bottom controls' drawn bottom above the view's bottom, inside the bottom safe inset: the
-// joysticks' rings (TOUCH_STICK.bottom) and the shield pill sit level on it (controlsBottom).
+// The shield pill's independent drawn bottom above the view's bottom, inside the bottom safe inset.
 export const CONTROLS_BOTTOM = 40;
 
-// The least gap from each stick's drawn ring, and the shield pill level with them, to the game
+// The least gap from each stick's drawn ring and the shield pill to the game
 // area's edge (art/layout.md "Stick area margin"). Here rather than touchControls.ts, which
 // imports this module, so the shield pill can read it.
 export const STICK_AREA_MARGIN = 8;
@@ -359,7 +358,7 @@ export const STICK_AREA_MARGIN = 8;
 // drawn pixels: the icon's drawn pixels span x 3 to 17 in its 20 box, so padding.left 5 and
 // iconGap 3 leave 8 and 6 to them, and padding.right 8 follows the bar; the pill is the bar plus
 // 36 wide. It centres across on the HUD rect (the view's centre, as the rect mirrors), so a longer
-// bar grows both ways; its bottom sits level with the sticks' drawn bottom (controlsBottom). The
+// bar grows both ways; its bottom follows its independent controlsBottom anchor. The
 // same place on touch and desktop.
 export const SHIELD_BARS = [120, 180, 240] as const;
 
@@ -505,18 +504,18 @@ export const TOUCH_CHROME_FRAME = 75;
 export const TOUCH_KNOB_FRAME = 11;
 
 // The on-screen joysticks (art/layout.md "HUD and overlays", Sticks), in logical canvas px: 75
-// frames, each ring's drawn edge side (60) in from the screen's left (move) or right (aim) edge
-// and bottom (40, level with the shield pill) above its bottom, inside the safe insets, then
+// frames, each ring's drawn edge side (50) in from the screen's outer left (move) or right (aim)
+// edge and bottom (50) above its outer bottom, ignoring safe insets, then
 // clamped STICK_AREA_MARGIN inside the game area; the drawn knob moves at most knobReach from the
 // ring's centre. Move input reaches full speed moveReach from the touch-down point, past a
 // moveDeadZone.
 export const TOUCH_STICK = {
-  bottom: CONTROLS_BOTTOM,
+  bottom: 50,
   frame: TOUCH_CHROME_FRAME,
   knobReach: 12,
   moveDeadZone: 2.4,
   moveReach: 40,
-  side: 60,
+  side: 50,
 } as const;
 
 // Art draws each ring 1 inside its frame, so a frame's centre pixel is this far from the drawn

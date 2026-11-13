@@ -1,16 +1,9 @@
 import type { Point, Rect } from "@andornaut/game-kit/rect";
 
-import {
-  STICK_AREA_MARGIN,
-  STICK_DRAWN_HALF,
-  TOUCH_STICK as STICK_GEOMETRY,
-  USE_DISC,
-} from "../../data/layout.ts";
+import { STICK_AREA_MARGIN, STICK_DRAWN_HALF, TOUCH_STICK, USE_DISC } from "../../data/layout.ts";
 import type { StickSide } from "../../input/state.ts";
 import { type Insets, playView, type Size } from "./playView.ts";
-export { USE_DISC } from "../../data/layout.ts";
-
-export const TOUCH_STICK = { ...STICK_GEOMETRY, bottom: 50, side: 50 } as const;
+export { TOUCH_STICK, USE_DISC } from "../../data/layout.ts";
 
 // Ring edges are 50 logical pixels from the outer screen, independent of safe insets.
 // Clamp only where the drawn ring would cross the game area's eight-pixel margin.

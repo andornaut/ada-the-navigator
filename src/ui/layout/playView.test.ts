@@ -2,6 +2,7 @@ import type { Rect } from "@andornaut/game-kit/rect";
 import { HIT_RULE } from "@andornaut/game-kit/ui/hitAreas";
 import { describe, expect, it } from "vitest";
 
+import { TOUCH_STICK as CANONICAL_TOUCH_STICK } from "../../data/layout.ts";
 import { MOVE_STICK_GEOMETRY, STICK_GEOMETRY, stickVector } from "../../input/state.ts";
 import { PILL, TEXT_BUTTON } from "./controls.ts";
 import { conversationBoxRect } from "./conversationBox.ts";
@@ -755,6 +756,13 @@ describe("touch controls", () => {
     bottom: centre.y + 37,
     left: centre.x - 36,
     right: centre.x + 37,
+  });
+
+  it("reexports the canonical stick geometry with an independent shield anchor", () => {
+    expect(TOUCH_STICK).toBe(CANONICAL_TOUCH_STICK);
+    expect(CANONICAL_TOUCH_STICK).toMatchObject({ bottom: 50, side: 50 });
+    expect(SHIELD_PILL.bottom).toBe(40);
+    expect(USE_DISC.fromAim).toEqual({ x: -77, y: -100 });
   });
 
   it("rest the drawn edges 50 from the outer screen sides and bottom", () => {
