@@ -710,7 +710,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   const shopCard = createCard({
     closeAction: "shop-back",
     closeLabel: labels.close,
-    full: true,
+    size: "large",
     title: labels.shop,
   });
   shopCard.card.dataset.dialog = "shop";
@@ -749,7 +749,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   const confirmCard = createCard({
     closeAction: "confirm-cancel-x",
     closeLabel: labels.close,
-    full: true,
+    size: "small",
     title: "",
   });
   confirmCard.card.dataset.dialog = "confirm";
@@ -765,7 +765,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   const jobsCard = createCard({
     closeAction: "jobs-back",
     closeLabel: labels.close,
-    full: true,
+    size: "large",
     title: labels.jobBoard,
   });
   jobsCard.card.dataset.dialog = "jobs";
