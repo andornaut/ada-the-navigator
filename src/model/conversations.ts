@@ -23,6 +23,7 @@ import {
 } from "../data/conversations.ts";
 import { BUILT } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { phantomSettlementCopy } from "./phantomSettlementCopy.ts";
 import type { FlightState, GalaxyProgress, SpaceObject, Vec } from "./types.ts";
 
 // The in-flight conversation box's schedule (gameplay/rules.md "Astra and Penny in flight"):
@@ -961,7 +962,7 @@ export type InteractionContext =
   | number
   | {
       readonly galaxy: number;
-      readonly progress: Pick<GalaxyProgress, "stage">;
+      readonly progress: Pick<GalaxyProgress, "phantom" | "stage">;
     };
 
 /** Resolves authored chapter lines and legacy role labels through the existing cast. */
@@ -1027,8 +1028,16 @@ export function interactionCopy(
       topics: [],
     };
   }
+  let copyContext: string | null = panel.context;
+  const settlement = /^phantom\.(phantomSettlement[123])$/u.exec(panel.context)?.[1];
+  if (galaxy === 6 && typeof context !== "number" && context.progress.phantom && settlement) {
+    const key = phantomSettlementCopy(context.progress.phantom.freed, settlement);
+    copyContext = key === null ? null : `phantom.${key}`;
+  }
   const authored =
-    INTERACTION_COPY[`${galaxy}.${panel.context}`] ?? INTERACTION_COPY[panel.context];
+    copyContext === null
+      ? undefined
+      : (INTERACTION_COPY[`${galaxy}.${copyContext}`] ?? INTERACTION_COPY[copyContext]);
   if (authored) {
     if (panel.context === "holodiskLead") {
       return { ...authored, lines: authored.lines.slice(0, 2), topics: [] };

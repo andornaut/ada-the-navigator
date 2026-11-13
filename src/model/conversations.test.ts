@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { CONVERSATION_TUNING, CONVERSATIONS, lineDuration } from "../data/conversations.ts";
+import {
+  CONVERSATION_TUNING,
+  CONVERSATIONS,
+  INTERACTION_COPY,
+  lineDuration,
+} from "../data/conversations.ts";
 import { type EnemyArchetype, enemyCatalog } from "../data/enemyCatalog.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { GalaxyNumber } from "../data/types.ts";
@@ -1276,6 +1281,40 @@ describe("Use copy resolution", () => {
     expect(copy.party).toBe("Patch");
     expect(copy.lines.map(({ speaker }) => speaker)).toEqual(["Patch", "Ada", "Astra", "Patch"]);
   });
+  it("resolves Phantom party, lines and topics by liberation order without changing the actual target", () => {
+    const context = {
+      galaxy: 6,
+      progress: { phantom: { broken: [], flagshipKnown: false, freed: [] as string[] }, stage: 0 },
+    };
+    const actual = { ...panel, context: "phantom.phantomSettlement3" };
+    const before = structuredClone(actual);
+    expect(interactionCopy(context, actual)).toEqual(
+      INTERACTION_COPY["6.phantom.phantomSettlement1"],
+    );
+    context.progress.phantom.freed.push("phantomSettlement3", "phantomSettlement2");
+    expect(interactionCopy(context, { ...panel, context: "phantom.phantomSettlement1" })).toEqual(
+      INTERACTION_COPY["6.phantom.phantomSettlement3"],
+    );
+    context.progress.phantom.freed.push("phantomSettlement1");
+    expect(interactionCopy(context, actual)).toEqual(
+      INTERACTION_COPY["6.phantom.phantomSettlement1"],
+    );
+    expect(actual).toEqual(before);
+    expect(context.progress.phantom.freed).toEqual([
+      "phantomSettlement3",
+      "phantomSettlement2",
+      "phantomSettlement1",
+    ]);
+  });
+
+  it("preserves legacy Phantom copy lookup when liberation facts are not supplied", () => {
+    const actual = { ...panel, context: "phantom.phantomSettlement3" };
+    expect(interactionCopy(6, actual)).toEqual(INTERACTION_COPY["6.phantom.phantomSettlement3"]);
+    expect(interactionCopy({ galaxy: 6, progress: { stage: 0 } }, actual)).toEqual(
+      INTERACTION_COPY["6.phantom.phantomSettlement3"],
+    );
+  });
+
   it("addresses Astra for flagship salvage while preserving each line and topic speaker", () => {
     const copy = interactionCopy(6, { ...panel, context: "phantom.flagshipSalvage" });
     expect(copy.party).toBe("Astra");
