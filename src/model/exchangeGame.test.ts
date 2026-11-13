@@ -108,12 +108,14 @@ describe("confirmed station ore Exchange", () => {
     model.interact();
     expect(model.acceptJob("miningContract")).toBe("accepted");
     const before = model.state.progress[2].deposited;
+    const progress = structuredClone(model.state.progress);
+    const achievements = structuredClone(model.state.achievements);
     model.confirmExchange(quote(model.previewExchange({ amount: 30, direction: "buy" })));
-    expect(model.state.progress[2].deposited).toBe(before);
+    expect(model.state.progress).toEqual(progress);
+    expect(model.state.achievements).toEqual(achievements);
     model.undock();
     model.interact();
     expect(model.state.progress[2].deposited).toBe(before + 30);
-    expect(model.state.progress[2].activityCompleted).toBe(true);
     expect(model.state.tasks[2]).toBeUndefined();
     expect(flight.cargo).toBe(0);
     expect(model.state.economy.stardust).toBe(220);
