@@ -86,7 +86,7 @@ describe("flight boundaries", () => {
   it("keeps movement independent of aim and fires an upgrade only while aiming, one shot per volley", () => {
     const flight = empty();
     flight.player = { x: 100, y: 100 };
-    stepFlight(CONTENT, 0.4, { ...idle, move: { x: 1, y: 0 } }, flight);
+    stepFlight(CONTENT, 0.5, { ...idle, move: { x: 1, y: 0 } }, flight);
     expect(flight.shots).toHaveLength(0);
     expect(flight.facing).toEqual({ x: 1, y: 0 });
     flight.weapon = "multiLaser";
@@ -422,8 +422,8 @@ describe("directional handling", () => {
       90 * Math.exp(-0.1 / physics.aimTurnSeconds),
       6,
     );
-    // The half-degree snap lands on frame 22 at aimTurnSeconds 0.07.
-    frames(CONTENT, 15, aim, flight);
+    // The half-degree snap lands on frame 25 at aimTurnSeconds 0.08.
+    frames(CONTENT, 18, aim, flight);
     expect(flight.facing).not.toEqual(aim.aim);
     frames(CONTENT, 1, aim, flight);
     expect(flight.facing).toEqual(aim.aim);
@@ -458,9 +458,9 @@ describe("directional handling", () => {
       6,
     );
     expect(degrees(flight.facing, east)).toBeGreaterThan(100);
-    frames(CONTENT, 21, move, flight);
+    frames(CONTENT, 24, move, flight);
     expect(degrees(flight.facing, east)).toBeLessThan(1);
-    frames(CONTENT, 3, move, flight);
+    frames(CONTENT, 4, move, flight);
     expect(flight.facing).toEqual(east);
     stepFlight(CONTENT, 1, move, flight);
     expect(flight.shots.every((s) => fired.has(s.id))).toBe(true);
@@ -557,11 +557,11 @@ describe("analog movement speed", () => {
   }
 
   it.each([
-    [1e-9, 6],
-    [0.25, 11],
-    [0.5, 34],
-    [0.75, 82],
-    [1, 160],
+    [1e-9, 7],
+    [0.25, 12],
+    [0.5, 37],
+    [0.75, 89],
+    [1, 175],
   ])("targets about Gameplay's speed at %s deflection", (deflection, expected) => {
     const fraction = movementSpeedFraction(CONTENT.tuning, deflection);
     expect(fraction * maxSpeed).toBeCloseTo(expected, -0.5);
@@ -629,7 +629,7 @@ describe("analog movement speed", () => {
 describe("ship speed fraction", () => {
   it.each([
     [{ x: 0, y: 0 }, 0],
-    [{ x: 48, y: 64 }, 0.5],
+    [{ x: 52.5, y: 70 }, 0.5],
     [{ x: -200, y: 0 }, 1],
     [{ x: 300, y: 400 }, 1],
   ])("reports %j as %s of maxSpeed", (velocity, expected) => {
@@ -650,12 +650,12 @@ describe("ship speed fraction", () => {
 
   it("scales jets by Ada's tuned top speed so they do not saturate after engine tuning", () => {
     const levels = { ...noLevels(), engine: 3 };
-    // Engine level 3 raises the top speed from 200 to 220.
+    // Engine level 3 raises the top speed from 175 to 225.
     expect(shipSpeedFraction(CONTENT, { levels, velocity: { x: 200, y: 0 } })).toBeCloseTo(
-      200 / 220,
+      200 / 225,
       12,
     );
-    expect(shipSpeedFraction(CONTENT, { levels, velocity: { x: 220, y: 0 } })).toBeCloseTo(1, 12);
+    expect(shipSpeedFraction(CONTENT, { levels, velocity: { x: 225, y: 0 } })).toBeCloseTo(1, 12);
     expect(shipSpeedFraction(CONTENT, { levels: noLevels(), velocity: { x: 200, y: 0 } })).toBe(1);
   });
 });

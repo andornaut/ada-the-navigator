@@ -773,12 +773,12 @@ describe("tractor beam and pickup reach", () => {
 
 describe("upgrade effects", () => {
   it.each([
-    [1, 10, 30, 60, 160, 1],
-    [2, 15, 30, 45, 190, 0.9],
-    [3, 20, 30, 30, 220, 0.8],
+    [1, 10, 30, 60, 175, 1, 0.08, 0.16],
+    [2, 15, 30, 45, 200, 0.9, 0.07, 0.14],
+    [3, 20, 30, 30, 225, 0.8, 0.06, 0.12],
   ])(
     "applies shield, recharge and engine level %i",
-    (level, shield, delay, fill, speed, seconds) => {
+    (level, shield, delay, fill, speed, seconds, aimTurn, turn) => {
       const levels = { ...noLevels(), engine: level, shield: level };
       const tuning = shipTuning(ECONOMY, CONTENT, levels);
       const base = CONTENT.tuning;
@@ -792,7 +792,8 @@ describe("upgrade effects", () => {
         9,
       );
       expect(tuning.physics.brakingSeconds).toBeCloseTo(base.physics.brakingSeconds * seconds, 9);
-      expect(tuning.physics.turnSeconds).toBe(base.physics.turnSeconds);
+      expect(tuning.physics.aimTurnSeconds).toBe(aimTurn);
+      expect(tuning.physics.turnSeconds).toBe(turn);
     },
   );
 

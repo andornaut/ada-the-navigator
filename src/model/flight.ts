@@ -3176,12 +3176,7 @@ export function stepFlight(
     syncFlightRegion(content, flight);
     const aiming = length(input.aim) > 0.01;
     if (aiming) {
-      flight.facing = turnToward(
-        slice,
-        content.tuning.physics.aimTurnSeconds,
-        input.aim,
-        flight.facing,
-      );
+      flight.facing = turnToward(slice, ship.physics.aimTurnSeconds, input.aim, flight.facing);
       settleAda(content, flight);
     }
     ageFlashes(slice, flight);

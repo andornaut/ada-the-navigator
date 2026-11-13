@@ -42,10 +42,10 @@ export const SHARED_SHIP_PHYSICS: SharedShipPhysics = {
 
 /**
  * Provisional tuning for Ada's ship and every enemy archetype (gameplay/ships.md "Values"). Ada's
- * maximum speed is her base engine's; engine levels raise it.
+ * maximum speed and turn time constants are her base engine's; engine levels change them.
  */
 export const SHIP_PHYSICS = {
-  ada: physics(160, 0.36, 0.55, 0.22, 0.07),
+  ada: physics(175, 0.36, 0.55, 0.16, 0.08),
   capital: physics(40, 2.5, 3, 2, 0.5),
   fighter: physics(140, 0.4, 0.5, 0.3, 0.15),
   frigate: physics(80, 1.5, 2, 1.2, 0.4),

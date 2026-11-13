@@ -114,7 +114,8 @@ describe("enemy rules", () => {
       // Keep the target in sight and ahead so distance loss cannot end this chase.
       context.player = { x: state.position.x + 400, y: 0 };
       const result = stepEnemy(definition, context, state);
-      reachedFasterSpeed ||= result.velocity.x > SHIP_PHYSICS.ada.maxSpeed;
+      reachedFasterSpeed ||=
+        Math.hypot(result.velocity.x, result.velocity.y) > SHIP_PHYSICS.ada.maxSpeed;
       state = {
         ...result.state,
         position: { x: state.position.x + result.velocity.x * context.dt, y: 0 },

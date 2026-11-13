@@ -67,15 +67,16 @@ export function shipTuning(
   const shieldLevel = (base: number, value: keyof EconomyCatalog["shieldLevels"]) =>
     leveledValue({ base, levels: catalog.shieldLevels[value] }, levels.shield);
   const capacity = shieldLevel(content.tuning.shieldMax, "capacity");
+  const engineLevel = (value: keyof EconomyCatalog["engineLevels"]) =>
+    leveledValue({ base: base[value], levels: catalog.engineLevels[value] }, levels.engine);
   return {
     physics: {
       ...base,
       accelerationSeconds: base.accelerationSeconds * seconds,
+      aimTurnSeconds: engineLevel("aimTurnSeconds"),
       brakingSeconds: base.brakingSeconds * seconds,
-      maxSpeed: leveledValue(
-        { base: base.maxSpeed, levels: catalog.engineMaxSpeed },
-        levels.engine,
-      ),
+      maxSpeed: engineLevel("maxSpeed"),
+      turnSeconds: engineLevel("turnSeconds"),
     },
     shieldMax: capacity,
     shieldRechargeDelay: content.tuning.shieldRechargeDelay,

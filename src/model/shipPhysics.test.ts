@@ -24,7 +24,7 @@ describe("ship physics data", () => {
         ]),
       ),
     ).toEqual({
-      ada: [160, 0.36, 0.55, 0.22, 0.07],
+      ada: [175, 0.36, 0.55, 0.16, 0.08],
       capital: [40, 2.5, 3, 2, 0.5],
       fighter: [140, 0.4, 0.5, 0.3, 0.15],
       frigate: [80, 1.5, 2, 1.2, 0.4],
@@ -35,12 +35,15 @@ describe("ship physics data", () => {
     });
   });
 
-  it("lets the swarm match a new Ada, engine 2 outrun all but the interceptor, engine 3 all", () => {
-    const [second, third] = ECONOMY.engineMaxSpeed;
+  it("lets a new Ada outrun all but the interceptor, engine 2 match it, engine 3 outrun all", () => {
+    const [second, third] = ECONOMY.engineLevels.maxSpeed;
     const enemies = Object.values(enemyCatalog).map((definition) => definition.physics.maxSpeed);
-    expect(SHIP_PHYSICS.swarm.maxSpeed).toBe(SHIP_PHYSICS.ada.maxSpeed);
-    expect(SHIP_PHYSICS.interceptor.maxSpeed).toBeGreaterThan(SHIP_PHYSICS.ada.maxSpeed);
-    expect(enemies.filter((speed) => speed >= second)).toEqual([SHIP_PHYSICS.interceptor.maxSpeed]);
+    const { interceptor } = SHIP_PHYSICS;
+    expect(enemies.filter((speed) => speed >= SHIP_PHYSICS.ada.maxSpeed)).toEqual([
+      interceptor.maxSpeed,
+    ]);
+    expect(interceptor.maxSpeed).toBe(second);
+    expect(enemies.filter((speed) => speed >= second)).toEqual([interceptor.maxSpeed]);
     expect(Math.max(...enemies)).toBeLessThan(third);
   });
 

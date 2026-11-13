@@ -75,8 +75,13 @@ export interface EconomyCatalog {
    */
   weaponUpgradePrices: Readonly<Record<Weapon, readonly number[]>>;
   trackPrices: Readonly<Record<UpgradeTrack, readonly number[]>>;
-  /** Ada's maximum speed at engine levels 2 and 3; level 1 is her ship physics' own. */
-  engineMaxSpeed: readonly [number, number];
+  /**
+   * Ada's maximum speed and movement and aim turn time constants at engine levels 2 and 3; level 1
+   * is her ship physics' own.
+   */
+  engineLevels: Readonly<
+    Record<"aimTurnSeconds" | "maxSpeed" | "turnSeconds", readonly [number, number]>
+  >;
   /**
    * The Shield at levels 2 and 3: capacity and seconds from empty to full; level 1 is the content
    * tuning's own. The recharge delay is the same at every level.
@@ -233,8 +238,13 @@ export const ECONOMY: EconomyCatalog = {
   effects: {
     engineSeconds: [1, 0.9, 0.8],
   },
-  // Engine levels 2 and 3 raise Ada's 160 to 190, then 220 (gameplay/economy.md).
-  engineMaxSpeed: [190, 220],
+  // Engine levels 2 and 3 raise Ada's 175 to 200, then 225, and shorten her turns
+  // (gameplay/economy.md).
+  engineLevels: {
+    aimTurnSeconds: [0.07, 0.06],
+    maxSpeed: [200, 225],
+    turnSeconds: [0.14, 0.12],
+  },
   paintOrder: ["classic", "cobalt", "seafoam", "graphite", "iris"],
   paints: {
     classic: { label: "paintClassic", price: 0, top: "#ffffff" },
