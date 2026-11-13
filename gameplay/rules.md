@@ -743,6 +743,9 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   Orange and purple mark level 2 and level 3 the same way on the jets. Switching preserves
   ownership of the other weapons. Ada can switch at any time, including in combat;
   after a switch the next switch waits 1 second (provisional).
+- Pressing and holding a weapon icon pauses play and opens that weapon's detail
+  card instead of selecting it; shop weapon and upgrade rows open their cards
+  the same way (see [Economy](economy.md#detail-cards)).
 - Enemy behavior uses data-defined archetypes and reusable behavior rules for
   solo ships, packs, frigates and capital ships. Sunflower's roster is in
   [Ships](ships.md).

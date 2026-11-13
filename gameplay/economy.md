@@ -232,6 +232,53 @@ refuse with the shared refusal feedback. Equipping a picked-up weapon counts as 
 switch and starts the wait; the out-of-ammo switch to Laser does not. The selected weapon's icon has a treatment
 like Chibi's power-ups.
 
+## Detail cards
+
+Pressing and holding a weapon or upgrade opens its detail card: a short,
+plain description with no exact figures. Holding about 0.5 seconds
+(provisional) opens the card instead of acting; a shorter tap acts as before.
+
+- In flight, holding a top-right weapon icon pauses play and opens that
+  weapon's card without selecting it or starting the switch wait. The card's
+  Close button, close X, an outside tap, back and Escape close it and resume
+  play.
+- In the shop, holding a weapon row or an upgrade row (weapon upgrades, Shield,
+  Engine tuning and Tractor beam) opens its card over the shop instead of the
+  buy confirm. Close and the other dismissals return to the same shop tab with
+  that row focused. Ammunition, paint, holodisk and project rows have no card.
+
+A weapon card shows the weapon's name, then its lines from the table below,
+then its level as `level` when owned. Below that, Laser shows `detailUnlimited`;
+another owned weapon shows `detailAmmoLeft` with its count; an unowned weapon
+in the shop shows `detailIncludesAmmo` instead. Multi-Laser and Scattershot
+lines name the counts at Ada's level, or level 1 when unowned.
+
+| Weapon        | Card lines                                                                                                                                                                                                 |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Laser         | "Fires one laser bolt at a time, for as long as you like." "Reaches across the screen." "Each level fires faster, with faster bolts that hit harder."                                                      |
+| Multi-Laser   | "Fires a fan of {count} laser bolts at once." "Hits several drones together, or one drone with every bolt up close." "Reaches across the screen." "Each level adds a bolt and makes the bolts faster."     |
+| Rapid Missile | "Fires small missiles at a fast rate." "Each one explodes when it hits something, or after a short distance, with a small blast." "Each level fires faster, with faster missiles."                         |
+| Heavy Missile | "Fires slowly, but each missile does a lot of damage." "Explodes when it hits something, or after a short distance, with a big blast that hits every drone nearby." "Each level hits harder."              |
+| Scattershot   | "Fires a wide spread of {count} shots, like a shotgun." "Only works close to your ship: the shots fade away quickly." "Strongest up close, when every shot hits." "Each level adds shots that hit harder." |
+| Phaser        | "Fires an instant beam that hits the first thing in its path." "Fires slowly, but every hit is strong, and nothing can dodge it." "Reaches across the screen." "Each level makes the beam hit harder."     |
+
+An upgrade card shows the upgrade's shop name (`weaponUpgrade`, `shield`,
+`engineTuning` or `tractorBeam`), Ada's current level as `level`, then
+`detailNextLevel` and what the next level adds, from the table below. At level 3
+it shows `detailMaxed` instead.
+
+| Upgrade       | Level 2 adds                                                                          | Level 3 adds                                                         |
+| ------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Laser         | "Fires faster, with faster bolts that hit harder."                                    | Same as level 2                                                      |
+| Multi-Laser   | "One more bolt: 4 in the fan, and faster bolts."                                      | "One more bolt: 5 in the fan, and faster bolts."                     |
+| Rapid Missile | "Fires faster, with faster missiles."                                                 | Same as level 2                                                      |
+| Heavy Missile | "Every missile hits harder."                                                          | Same as level 2                                                      |
+| Scattershot   | "Two more shots: 9 in the spread, and each one hits harder."                          | "Two more shots: 11 in the spread, and each one hits harder."        |
+| Phaser        | "The beam hits harder."                                                               | Same as level 2                                                      |
+| Shield        | "A bigger shield that refills faster."                                                | Same as level 2                                                      |
+| Engine tuning | "Faster, and quicker to speed up and slow down. Outrun every drone but interceptors." | "Faster, and quicker to speed up and slow down. Outrun every drone." |
+| Tractor beam  | "Pulls from farther away, and pulls faster."                                          | Same as level 2                                                      |
+
 ## Donations
 
 Once a galaxy's chapter is complete (its space story and its home page), every
@@ -324,45 +371,51 @@ accessible labels give the exact count, en-US grouped; Stardust's is
 
 The shield shop row reuses the existing `shield` label.
 
-| Key                 | Text                                                                      |
-| ------------------- | ------------------------------------------------------------------------- |
-| `stardust`          | Stardust                                                                  |
-| `stardustAmount`    | {amount} Stardust                                                         |
-| `station`           | Station                                                                   |
-| `shop`              | Shop                                                                      |
-| `shopWeapons`       | Weapons                                                                   |
-| `shopShip`          | Ship                                                                      |
-| `owned`             | Owned                                                                     |
-| `level`             | Level {level} of {max}                                                    |
-| `confirmTitle`      | Buy {name}?                                                               |
-| `confirmLeft`       | {amount} left after                                                       |
-| `confirmBuy`        | Buy                                                                       |
-| `confirmCancel`     | Cancel                                                                    |
-| `projects`          | Projects                                                                  |
-| `donate`            | Donate                                                                    |
-| `projectFunded`     | Funded                                                                    |
-| `ammoPack`          | {weapon} ammo                                                             |
-| `ammoPackCount`     | ×{count}                                                                  |
-| `outOfAmmo`         | Out of ammo.                                                              |
-| `weaponAmmoLabel`   | {weapon}, {count} left                                                    |
-| `projectProgress`   | {paid} of {price}                                                         |
-| `donateTitle`       | Donate to {name}?                                                         |
-| `donateStillNeeded` | {amount} still needed after                                               |
-| `undock`            | Undock                                                                    |
-| `stationWelcome`    | Welcome aboard. Trade your Stardust, or take a job.                       |
-| `inUse`             | In use                                                                    |
-| `paintClassic`      | Classic                                                                   |
-| `paintCobalt`       | Cobalt                                                                    |
-| `paintSeafoam`      | Seafoam                                                                   |
-| `paintGraphite`     | Graphite                                                                  |
-| `paintIris`         | Iris                                                                      |
-| `aboutHeavyMissile` | One slow missile with a big blast.                                        |
-| `aboutRapidMissile` | Quick missiles with a small blast.                                        |
-| `aboutMultiLaser`   | A fan of laser bolts that grows with each level.                          |
-| `aboutScattershot`  | A shotgun spread, strongest up close.                                     |
-| `aboutPhaser`       | An instant beam that strikes the first thing in its path.                 |
-| `jumpHome`          | Astra jumped you back to Earth to recharge. Your story progress is saved. |
-| `engineTuning`      | Engine tuning                                                             |
-| `tractorBeam`       | Tractor beam                                                              |
-| `weaponUpgrade`     | {weapon} upgrade                                                          |
-| `shipPaint`         | Ship paint                                                                |
+| Key                  | Text                                                                      |
+| -------------------- | ------------------------------------------------------------------------- |
+| `stardust`           | Stardust                                                                  |
+| `stardustAmount`     | {amount} Stardust                                                         |
+| `station`            | Station                                                                   |
+| `shop`               | Shop                                                                      |
+| `shopWeapons`        | Weapons                                                                   |
+| `shopShip`           | Ship                                                                      |
+| `owned`              | Owned                                                                     |
+| `level`              | Level {level} of {max}                                                    |
+| `confirmTitle`       | Buy {name}?                                                               |
+| `confirmLeft`        | {amount} left after                                                       |
+| `confirmBuy`         | Buy                                                                       |
+| `confirmCancel`      | Cancel                                                                    |
+| `projects`           | Projects                                                                  |
+| `donate`             | Donate                                                                    |
+| `projectFunded`      | Funded                                                                    |
+| `ammoPack`           | {weapon} ammo                                                             |
+| `ammoPackCount`      | ×{count}                                                                  |
+| `outOfAmmo`          | Out of ammo.                                                              |
+| `weaponAmmoLabel`    | {weapon}, {count} left                                                    |
+| `projectProgress`    | {paid} of {price}                                                         |
+| `donateTitle`        | Donate to {name}?                                                         |
+| `donateStillNeeded`  | {amount} still needed after                                               |
+| `undock`             | Undock                                                                    |
+| `stationWelcome`     | Welcome aboard. Trade your Stardust, or take a job.                       |
+| `inUse`              | In use                                                                    |
+| `paintClassic`       | Classic                                                                   |
+| `paintCobalt`        | Cobalt                                                                    |
+| `paintSeafoam`       | Seafoam                                                                   |
+| `paintGraphite`      | Graphite                                                                  |
+| `paintIris`          | Iris                                                                      |
+| `aboutHeavyMissile`  | One slow missile with a big blast.                                        |
+| `aboutRapidMissile`  | Quick missiles with a small blast.                                        |
+| `aboutMultiLaser`    | A fan of laser bolts that grows with each level.                          |
+| `aboutScattershot`   | A shotgun spread, strongest up close.                                     |
+| `aboutPhaser`        | An instant beam that strikes the first thing in its path.                 |
+| `jumpHome`           | Astra jumped you back to Earth to recharge. Your story progress is saved. |
+| `engineTuning`       | Engine tuning                                                             |
+| `tractorBeam`        | Tractor beam                                                              |
+| `weaponUpgrade`      | {weapon} upgrade                                                          |
+| `shipPaint`          | Ship paint                                                                |
+| `detailNextLevel`    | Next level                                                                |
+| `detailMaxed`        | Fully upgraded.                                                           |
+| `detailUnlimited`    | Never runs out.                                                           |
+| `detailAmmoLeft`     | Ammo: {count} left                                                        |
+| `detailIncludesAmmo` | Comes with 3 ammo packs.                                                  |
+| `detailClose`        | Close                                                                     |
