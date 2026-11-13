@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import type { MapPlace, MapSymbol } from "../model/map.ts";
@@ -8,6 +8,7 @@ import { MAP_FACES, MAP_GLYPHS } from "./layout/mapScreen.ts";
 import {
   chipFace,
   chipGlyph,
+  createMapShipMarker,
   emptyPanelHeight,
   MAP_SCREEN_STYLE,
   mapDistance,
@@ -275,4 +276,61 @@ it("uses existing pagination copy without adding quest-specific player strings",
   expect(LABELS.previous).toBe(CONTENT.labels.previous);
   expect(LABELS.next).toBe(CONTENT.labels.next);
   expect(LABELS.page).toBe(CONTENT.labels.achievementsPage);
+});
+
+it("predecodes canonical headings and retains a ready ship while the next frame loads", async () => {
+  const element = {
+    className: "",
+    dataset: {} as Record<string, string>,
+    replaceChildren: vi.fn(),
+    setAttribute: vi.fn(),
+  };
+  vi.stubGlobal("document", { createElement: () => element });
+  const loads: { frame: HTMLImageElement; resolve: () => void; reject: () => void }[] = [];
+  try {
+    const marker = createMapShipMarker(() => {
+      let resolve!: () => void;
+      let reject!: () => void;
+      const ready = new Promise<void>((yes, no) => {
+        resolve = yes;
+        reject = no;
+      });
+      const frame = { decode: () => ready } as HTMLImageElement;
+      loads.push({ frame, reject, resolve });
+      return frame;
+    });
+    expect(loads).toHaveLength(32);
+    expect(loads.map(({ frame }) => frame.src)).toEqual(
+      Array.from({ length: 32 }, (_, heading) => `/art/ship-${heading}.svg`),
+    );
+    expect(
+      loads.every(({ frame }) => frame.loading === "eager" && frame.alt === "" && !frame.draggable),
+    ).toBe(true);
+    marker.setFacing({ x: 1, y: 0 });
+    loads[0]!.resolve();
+    await Promise.resolve();
+    expect(element.replaceChildren).toHaveBeenLastCalledWith(loads[0]!.frame);
+    const before = element.replaceChildren.mock.calls.length;
+    marker.setFacing({ x: 0, y: 1 });
+    expect(element.replaceChildren).toHaveBeenCalledTimes(before);
+    loads[8]!.resolve();
+    await Promise.resolve();
+    expect(element.replaceChildren).toHaveBeenLastCalledWith(loads[8]!.frame);
+    marker.setFacing({ x: -1, y: 0 });
+    loads[16]!.reject();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(element.replaceChildren).toHaveBeenLastCalledWith(loads[8]!.frame);
+    marker.setFacing({ x: 1, y: 1 });
+    marker.setFacing({ x: 0, y: 1 });
+    loads[4]!.resolve();
+    await Promise.resolve();
+    expect(element.replaceChildren).toHaveBeenLastCalledWith(loads[8]!.frame);
+    marker.dispose();
+    loads[24]!.resolve();
+    await Promise.resolve();
+    expect(element.replaceChildren).toHaveBeenLastCalledWith();
+  } finally {
+    vi.unstubAllGlobals();
+  }
 });

@@ -11,12 +11,12 @@ import {
   placeType,
   type QuestLine,
 } from "../model/map.ts";
+import { SHIP_HEADINGS, shipHeading } from "../model/nose.ts";
 import type { Vec } from "../model/types.ts";
 import { cardPages } from "./layout/cardPages.ts";
 import { CARD_SLICE, FOCUS_RING, TEXT_BUTTON } from "./layout/controls.ts";
 import { font, fromHudEdge, safeEdge, slice, units, VIEW_PROPERTIES } from "./layout/css.ts";
 import {
-  adaAngle,
   chipRect,
   clampView,
   fitRegion,
@@ -400,13 +400,20 @@ export const MAP_SCREEN_STYLE = `
   overflow:visible;
   pointer-events:none
 }
-.ada-controls .ada-map-ada svg{
+.ada-controls .ada-map-ada > .ada-map-ship{
   position:absolute;
-  transform-origin:50% 50%;
   width:${units(MAP_SYMBOL.ada.size)};
   height:${units(MAP_SYMBOL.ada.size)};
   overflow:visible
 }
+.ada-controls .ada-map-ship img{
+  width:100%;
+  height:100%;
+  display:block;
+  pointer-events:none;
+  filter:drop-shadow(0 0 ${units(MAP_SYMBOL.ada.keyline)} ${MAP_COLORS.ink})
+}
+
 
 /* The HUD row, on the tool targets' row box (layout/mapScreen.ts mapRowTop), from the HUD rect's
    left to SMALL_BUTTON_GAP short of the close tool's disc (mapGalaxiesRect): the header on its left,
@@ -749,29 +756,52 @@ function objectiveIndicator(): SVGSVGElement {
   return svg;
 }
 
-// Ada's arrow in its 28 box, nose toward +x: the white hull over its ink keyline and the canopy.
-function adaArrow(): SVGSVGElement {
-  const ns = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(ns, "svg");
-  svg.setAttribute("viewBox", "0 0 28 28");
-  svg.setAttribute("aria-hidden", "true");
-  const hull = document.createElementNS(ns, "path");
-  hull.setAttribute("d", "M24.5 14 L5.5 4.2 L9.6 14 L5.5 23.8 Z");
-  hull.setAttribute("fill", MAP_COLORS.hull);
-  hull.setAttribute("stroke", MAP_COLORS.ink);
-  hull.setAttribute("stroke-width", String(2 * MAP_SYMBOL.ada.keyline));
-  hull.setAttribute("stroke-linejoin", "round");
-  hull.setAttribute("paint-order", "stroke");
-  const canopy = document.createElementNS(ns, "ellipse");
-  canopy.setAttribute("cx", "15.2");
-  canopy.setAttribute("cy", "14");
-  canopy.setAttribute("rx", "4.2");
-  canopy.setAttribute("ry", "2.7");
-  canopy.setAttribute("fill", MAP_COLORS.canopy);
-  canopy.setAttribute("stroke", MAP_COLORS.ink);
-  canopy.setAttribute("stroke-width", "0.8");
-  svg.append(hull, canopy);
-  return svg;
+/** Canonical ship frames are decoded eagerly; heading changes retain the last ready frame. */
+export function createMapShipMarker(image: () => HTMLImageElement = () => new Image()) {
+  const element = document.createElement("div");
+  element.className = "ada-map-ship";
+  element.setAttribute("aria-hidden", "true");
+  const ready = new Set<number>();
+  let wanted = 0;
+  let shown: number | null = null;
+  let disposed = false;
+  const show = () => {
+    if (disposed || !ready.has(wanted) || shown === wanted) {
+      return;
+    }
+    element.replaceChildren(frames[wanted]!);
+    element.dataset.heading = String(wanted);
+    shown = wanted;
+  };
+  const frames = Array.from({ length: SHIP_HEADINGS }, (_, heading) => {
+    const frame = image();
+    frame.alt = "";
+    frame.draggable = false;
+    frame.loading = "eager";
+    frame.src = `/art/ship-${heading}.svg`;
+    void frame
+      .decode()
+      .then(() => {
+        if (disposed) {
+          return;
+        }
+        ready.add(heading);
+        show();
+      })
+      .catch(() => {});
+    return frame;
+  });
+  return {
+    dispose() {
+      disposed = true;
+      element.replaceChildren();
+    },
+    element,
+    setFacing(facing: Vec) {
+      wanted = shipHeading(facing);
+      show();
+    },
+  };
 }
 
 // A place's chip node: its face, glyph, kind and marks.
@@ -863,7 +893,8 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   placesLayer.className = "ada-map-places";
   const adaLayer = document.createElement("div");
   adaLayer.className = "ada-map-ada";
-  const ada = adaArrow();
+  const shipMarker = createMapShipMarker();
+  const ada = shipMarker.element;
   adaLayer.append(ada);
   // The header.
   const header = document.createElement("div");
@@ -1146,7 +1177,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     const at = toScreen(inner, current, state.map.player);
     ada.style.left = units(at.x - MAP_SYMBOL.ada.size / 2);
     ada.style.top = units(at.y - MAP_SYMBOL.ada.size / 2);
-    ada.style.transform = `rotate(${adaAngle(state.map.facing)}rad)`;
+    shipMarker.setFacing(state.map.facing);
     dressPanel();
     drawFog(inner, unit, current);
   };
@@ -1667,6 +1698,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       window.removeEventListener(VIEW_SCALE_EVENT, refit);
       window.removeEventListener("resize", refit);
       questsCard.dispose();
+      shipMarker.dispose();
       screen.remove();
     },
     element: screen,
