@@ -184,3 +184,25 @@ it("shows current resource quantities including zero separately and updates them
   expect(fixture.card.body.children[1]!.hidden).toBe(true);
   detail.dispose();
 });
+
+it("shows shield identity in the header and formatted HP below while preserving resource reuse", () => {
+  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  const detail = createResourceCard(new fixture.Node() as unknown as HTMLElement, {
+    closeLabel: "Close",
+    onOpenChange: vi.fn(),
+  });
+  const icon = new fixture.Node();
+  const origin = new fixture.Node();
+  detail.open("Shield [2]", "Approved recharge copy", origin as unknown as HTMLElement, {
+    icon: icon as unknown as HTMLElement,
+    quantity: "8 / 15 HP",
+  });
+  expect(fixture.card.title.children[0]).toBe(icon);
+  const quantity = fixture.card.body.children[1]!;
+  expect(quantity.hidden).toBe(false);
+  expect(quantity.children.at(-1)!.textContent).toBe("8 / 15 HP");
+  detail.close();
+  detail.open("Ore", "Resource copy", origin as unknown as HTMLElement, { count: 9 });
+  expect(quantity.children.at(-1)!.textContent).toBe("9");
+  detail.dispose();
+});

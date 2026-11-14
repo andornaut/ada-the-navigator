@@ -61,6 +61,7 @@ import {
   type SettingsLabels,
   type SettingsOptions,
 } from "../ui/settings.ts";
+import { shieldDetails } from "../ui/shieldDetails.ts";
 import { createStatusPill, pillCount, type StatusView } from "../ui/statusPill.ts";
 import { STICK_DEPTHS, stickViews } from "../ui/sticks.ts";
 import { USE_PRESS_MS } from "../ui/touchChrome.ts";
@@ -407,6 +408,20 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
           ...(statusView ? { count: statusView[kind] } : {}),
         });
       }
+    },
+    onShield: (origin) => {
+      if (!state.accepts() || !statusView) {
+        return;
+      }
+      const details = shieldDetails(options.shieldLabel, statusView);
+      const icon = document.createElement("span");
+      icon.className = "ada-detail-unlimited-icon";
+      icon.style.setProperty("--glyph", "url('/art/ui/icons/shield.svg')");
+      icon.setAttribute("aria-hidden", "true");
+      resource.open(details.title, details.text, origin, {
+        icon,
+        quantity: details.quantity,
+      });
     },
     reducedMotion: () => reducedMotion,
     shieldLabel: options.shieldLabel,

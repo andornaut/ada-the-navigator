@@ -7,6 +7,7 @@ import { createActions, createButton, createCard, isTap, setFooterAction } from 
 export interface ResourceDetails {
   readonly icon?: HTMLElement;
   readonly count?: number;
+  readonly quantity?: string;
   readonly quests?: { readonly label: string; readonly onOpen: () => void };
 }
 
@@ -111,8 +112,10 @@ export function createResourceCard(
       );
       renderDetailQuantity(
         quantity,
-        details.icon?.cloneNode(true) as HTMLElement | undefined,
-        details.count === undefined ? undefined : detailCount(details.count),
+        details.quantity === undefined
+          ? (details.icon?.cloneNode(true) as HTMLElement | undefined)
+          : undefined,
+        details.quantity ?? (details.count === undefined ? undefined : detailCount(details.count)),
         title,
       );
       openQuests = details.quests?.onOpen;

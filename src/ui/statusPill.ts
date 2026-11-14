@@ -313,6 +313,14 @@ export const STATUS_PILL_STYLE = `
   --shield-pill:${units(shieldPillWidth(1))};
   --shield-bar:${units(shieldBarWidth(1))}
 }
+.ada-controls button.ada-shield{
+  appearance:none;
+  border:0;
+  pointer-events:auto;
+  cursor:pointer
+}
+.ada-controls button.ada-shield:focus-visible{${FOCUS_STYLE}
+}
 ${SHIELD_PILL.bars
   .map(
     (_, index) => `.ada-controls .ada-shield[data-level="${index + 1}"]{
@@ -613,6 +621,7 @@ export function createStatusPill(
   parent: HTMLElement,
   options: {
     readonly onResource?: (kind: "ore" | "stardust" | "aboard", origin: HTMLElement) => void;
+    readonly onShield?: (origin: HTMLElement) => void;
     readonly reducedMotion: () => boolean;
     readonly shieldLabel: string;
   },
@@ -620,9 +629,20 @@ export function createStatusPill(
   const root = document.createElement("div");
   root.className = "ada-status";
   root.hidden = true;
-  const shieldRoot = document.createElement("div");
+  const shieldRoot = document.createElement(options.onShield ? "button" : "div");
   shieldRoot.className = "ada-shield";
   shieldRoot.hidden = true;
+  if (options.onShield) {
+    shieldRoot.setAttribute("type", "button");
+    shieldRoot.setAttribute("aria-label", options.shieldLabel);
+    shieldRoot.setAttribute("aria-haspopup", "dialog");
+    shieldRoot.dataset.action = "shield-details";
+    shieldRoot.addEventListener("pointerdown", (event) => event.stopPropagation());
+    shieldRoot.addEventListener("click", (event) => {
+      event.stopPropagation();
+      options.onShield?.(shieldRoot);
+    });
+  }
   // The icon's outline is a filter on a wrapper: the icon's own mask would clip it.
   const shieldMark = document.createElement("span");
   shieldMark.className = "ada-status-mark";

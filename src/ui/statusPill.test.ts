@@ -304,6 +304,7 @@ describe("status pill count", () => {
   const pill = (
     reducedMotion = true,
     onResource?: (kind: "ore" | "stardust" | "aboard", origin: HTMLElement) => void,
+    onShield?: (origin: HTMLElement) => void,
   ) => {
     vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
     vi.stubGlobal("document", {
@@ -314,6 +315,7 @@ describe("status pill count", () => {
     const parent = new FakeNode();
     const status = createStatusPill(parent as unknown as HTMLElement, {
       ...(onResource ? { onResource } : {}),
+      ...(onShield ? { onShield } : {}),
       reducedMotion: () => reducedMotion,
       shieldLabel: "Shield",
     });
@@ -323,6 +325,20 @@ describe("status pill count", () => {
     const count = (kind: string) => slot(kind).children[0]!;
     return { count, root, shield: parent.children[1]!, slot, status };
   };
+
+  it("makes the whole shield a dialog button and stops its press before flight input", () => {
+    const onShield = vi.fn();
+    const { shield } = pill(true, undefined, onShield);
+    expect(shield.getAttribute("type")).toBe("button");
+    expect(shield.getAttribute("aria-label")).toBe("Shield");
+    expect(shield.getAttribute("aria-haspopup")).toBe("dialog");
+    const press = new Event("pointerdown");
+    const stop = vi.spyOn(press, "stopPropagation");
+    shield.dispatchEvent(press);
+    expect(stop).toHaveBeenCalledOnce();
+    shield.dispatchEvent(new Event("click"));
+    expect(onShield).toHaveBeenCalledExactlyOnceWith(shield);
+  });
 
   it("paints one complete pill in every shield state and keeps the empty track dark", () => {
     const { shield, status } = pill();
