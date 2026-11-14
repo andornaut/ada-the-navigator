@@ -16,6 +16,8 @@ export interface ChunkAsteroids {
 }
 
 export interface ChunkPlanOptions {
+  /** Multiplies accepted ambient asteroids while preserving existing cache and feature rolls. */
+  readonly asteroidDensity?: number;
   readonly worldSide?: number;
   readonly asteroids?: ChunkAsteroids;
   readonly clearance: number;
@@ -172,6 +174,12 @@ function validate(options: ChunkPlanOptions): void {
     2 * (options.shipRadius + options.clearance) >= options.size
   ) {
     throw new RangeError("Invalid chunk geometry or identity");
+  }
+  if (
+    options.asteroidDensity !== undefined &&
+    (!Number.isFinite(options.asteroidDensity) || options.asteroidDensity < 1)
+  ) {
+    throw new RangeError("Invalid asteroid density");
   }
   const weights = Object.values(options.spawnWeights);
   if (
@@ -689,6 +697,43 @@ export function planChunk(catalog: ChunkCatalog, rawOptions: ChunkPlanOptions): 
         rate: drift.sign * Math.min(drift.speed / radius, ORBIT_MAX_RATE),
       },
     };
+  }
+  const density = options.asteroidDensity ?? 1;
+  if (density > 1 && options.asteroids) {
+    const ordinary = placements.filter((placement) => placement.kind !== "pickup");
+    const extra = ordinary.length * (density - 1);
+    const wanted = Math.floor(extra) + (unit(seed, 9001) < extra % 1 ? 1 : 0);
+    const known = new Set(placements.map((placement) => placement.id));
+    let added = 0;
+    // Only unused authored slots provide additions. Existing geometry, drift and cache rolls stay fixed.
+    for (let budget = count + 1; budget <= templateSlots.length && added < wanted; budget++) {
+      const candidates = planChunk(catalog, {
+        ...options,
+        asteroidDensity: 1,
+        objectsPerChunk: budget,
+        spawnWeights: { ...options.spawnWeights, enemy: 0, pickup: 0 },
+      });
+      for (const candidate of candidates.placements) {
+        if (added >= wanted) {
+          break;
+        }
+        if (candidate.kind === "pickup" || known.has(candidate.id)) {
+          continue;
+        }
+        const proposal: Slot = { placement: candidate, salt: 0, size: null, steps: 0 };
+        const fixed = [...around, ...placements];
+        // Existing drift loops keep their swept geometry; still additions can use the slot's normal respacing.
+        if (!candidate.orbit) {
+          respace(options, origin, fixed, feature, [proposal]);
+        }
+        if (blocked(options, fixed, feature, [proposal], proposal)) {
+          continue;
+        }
+        placements.push(proposal.placement);
+        known.add(candidate.id);
+        added++;
+      }
+    }
   }
   return {
     id,

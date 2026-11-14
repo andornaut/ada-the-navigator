@@ -708,6 +708,7 @@ export const CONTENT: GameContent = {
     encounterFreshDistance: 600,
     flight: {
       arrivalCalm: 2000,
+      asteroidDensity: 1.2,
       damageInterval: 1,
       enemyFireInterval: 2.5,
       enemyHp: 2,

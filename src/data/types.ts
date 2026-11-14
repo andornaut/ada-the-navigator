@@ -158,6 +158,7 @@ export interface GameContent {
     storySpacing: number;
     whaleDebris: { asteroids: string[]; count: number; hp: number; spacing: number };
     flight: {
+      asteroidDensity: number;
       objectsPerChunk: number;
       spawnWeights: { resource: number; rock: number; enemy: number; pickup: number };
       rockHp: number;

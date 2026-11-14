@@ -717,6 +717,7 @@ function generate(content: GameContent, point: Vec, flight: FlightState): void {
     const field = byPosition(ASTEROID_FIELDS, flight.galaxy);
     const plan = planChunk(CHUNK_CATALOG, {
       ...flightWorldContext(flight),
+      asteroidDensity: tuning.asteroidDensity,
       asteroids: { field, shapes: ASTEROID_SHAPE_LIST },
       clearance: content.tuning.flight.shipRadius,
       galaxy: flight.galaxy,
