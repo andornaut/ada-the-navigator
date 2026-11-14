@@ -55,6 +55,7 @@ import {
   createMapRenderQueue,
   mapPresentationContext,
 } from "./mapRenderQueue.ts";
+import { drawMapSurveyOutline } from "./mapSurveyOutline.ts";
 import { createButton, createCard, isTap, TEXT_TOKENS } from "./modal.ts";
 import { galaxiesAvailable, mapShowsEmpty } from "./pause.ts";
 import { refuse } from "./refusal.ts";
@@ -1129,6 +1130,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     if (map.explored.length > 0 && state?.field) {
       fogOver(context, inner, current, map, px, state.field.fog, width, height);
     }
+    drawMapSurveyOutline(context, inner, current, px);
     drawSearchArea(context, inner, current, map, px);
   };
 

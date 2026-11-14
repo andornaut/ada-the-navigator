@@ -20,7 +20,7 @@ import { chunkCoordinates } from "./visited.ts";
  */
 export const CHARTING_RADIUS = 25000;
 
-const ORIGIN: Vec = { x: 0, y: 0 };
+export const CHARTING_ORIGIN: Readonly<Vec> = { x: 0, y: 0 };
 
 /** A chunk's id, "x,y" in chunk coordinates (flight chunks), from a world point in it. */
 export function chunkId(chunkSize: number, point: Vec): string {
@@ -306,7 +306,7 @@ function waitingAt(galaxy: GalaxyNumber, id: string): string | null {
 }
 
 export const withinChartingRadius = (point: Vec) =>
-  Math.hypot(point.x - ORIGIN.x, point.y - ORIGIN.y) <= CHARTING_RADIUS;
+  Math.hypot(point.x - CHARTING_ORIGIN.x, point.y - CHARTING_ORIGIN.y) <= CHARTING_RADIUS;
 
 /** The galaxy's map from what Ada has discovered and charted, and nothing else. */
 export function localMap(context: MapContext): LocalMap {
@@ -367,7 +367,7 @@ export function localMap(context: MapContext): LocalMap {
     charted.filter(withinChartingRadius).length;
   const total =
     context.destinations.filter(mapped).length +
-    worldStationsNear(context, catalog, galaxy, CHARTING_RADIUS, ORIGIN).length +
+    worldStationsNear(context, catalog, galaxy, CHARTING_RADIUS, CHARTING_ORIGIN).length +
     (landmarks.surveyTotal ?? landmarks.total);
   const waypoint: MapPlace[] = context.holodisk
     ? [

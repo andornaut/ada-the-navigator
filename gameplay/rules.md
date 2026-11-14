@@ -760,7 +760,10 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   a known holodisk waypoint until its holodisk is recovered, and how much of the
   galaxy is mapped. The mapped percentage counts the destinations, stations and
   landmarks inside the galaxy's charting circle, 25000 world units around its
-  origin: those discovered or charted over the total, rounded down. Stations
+  origin: those discovered or charted over the total, rounded down. An outline-only
+  dashed circle marks this central progress area on the full-screen local map. It
+  stays centered on the galaxy origin and follows map projection, pan and zoom;
+  it is not a gameplay boundary. Stations
   beyond the circle still show on the Map once discovered but do not count.
   Landmarks extend independently to 100000 world units, targeting roughly 200
   safely placed sites per galaxy while preserving the original 12 identities and
