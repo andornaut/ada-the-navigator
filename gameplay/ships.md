@@ -279,6 +279,8 @@ at most one nearby capital. Admission conservatively counts live neighbouring
 hulls whose footprints could share that neighbourhood, including required
 guards, old packs and pursuing ships. Disabled hulls still count; salvaged ships
 do not. Fighter groups target four and use the largest size that fits the remaining budget.
+Swarms target their configured maximum and fit the remaining budget down to two;
+with fewer than two slots they wait rather than spawning a singleton.
 Other groups and all mandatory escorts remain atomic: unaffordable groups are
 excluded rather than trimmed, and admission never raises the cap.
 
@@ -308,9 +310,9 @@ continues to exclude standing, teleports and revisits for quest pacing.
 |        6 | Phantom   |         150% |         2.5875 | 6 / 7 / 8                     | 4               |
 
 Sunflower retains its stage-specific roster and type gates below. Later
-galaxies retain their non-fighter encounter groups, route-position bonuses,
-heavy weights and archetype limits. Ambient fighters target four without a route
-bonus and downscale to the remaining local budget.
+galaxies retain their other encounter groups, heavy weights and archetype limits.
+Swarm maxima retain their route-position bonus; their ambient minimum stays two.
+Ambient fighters target four without a route bonus and downscale to the local budget.
 Spawn-cell frequency remains independent of admission.
 These budgets are not strict physical population caps: subsequent movement can
 bring ships together. They do not freeze or despawn existing enemies.
@@ -330,7 +332,7 @@ eligible groups; a type absent from a stage cannot spawn ambiently.
 
 | Region base distance (world units) | Archetype limit | Swarm group / weight | Fighter target / weight | Retaliator group / weight | Interceptor group / weight |
 | ---------------------------------: | --------------: | -------------------- | ----------------------- | ------------------------- | -------------------------- |
-|                                  0 |               1 | 1–2 / 0.55           | 4 / 0.45                | None                      | None                       |
+|                                  0 |               1 | 2 / 0.55             | 4 / 0.45                | None                      | None                       |
 |                              10000 |               2 | 2–3 / 0.45           | 4 / 0.40                | 1 / 0.15                  | None                       |
 |                              25000 |               2 | 2–3 / 0.40           | 4 / 0.35                | 1 / 0.15                  | 1 / 0.10                   |
 
@@ -347,7 +349,7 @@ holodisk drifted. They chase rather than hit and run.
 
 | Archetype      | Encounter    | Group | Weight | Behaviours                                   |
 | -------------- | ------------ | ----: | -----: | -------------------------------------------- |
-| `swarm`        | Pack         |   5–8 |   0.25 | `swarm`; packs `flee` after losses           |
+| `swarm`        | Pack         |   2–8 |   0.25 | `swarm`; packs `flee` after losses           |
 | `fighter`      | Hunting pack |     4 |   0.30 | `chase`; a group shares pack morale          |
 | `interceptor`  | Solo or pair |   1–2 |   0.15 | `chase`                                      |
 | `retaliator`   | Solo         |     1 |   0.10 | `retaliate`, then `chase`; three-bolt spread |
@@ -366,7 +368,7 @@ Needle's drones gather at the mouths of its narrow channels and fly fast passes.
 
 | Archetype      | Encounter | Group | Weight | Behaviours                                   |
 | -------------- | --------- | ----: | -----: | -------------------------------------------- |
-| `swarm`        | Pack      |   6–8 |   0.20 | `swarm`; packs `flee` after losses           |
+| `swarm`        | Pack      |   2–8 |   0.20 | `swarm`; packs `flee` after losses           |
 | `fighter`      | Patrol    |     4 |   0.25 | `chase`; a group shares pack morale          |
 | `interceptor`  | Pair      |     2 |   0.25 | `strafe`                                     |
 | `retaliator`   | Solo      |     1 |   0.08 | `retaliate`, then `chase`; three-bolt spread |
@@ -382,7 +384,7 @@ Andromeda's drones hunt in the open, in larger patrols with more frigates.
 
 | Archetype      | Encounter    | Group | Weight | Behaviours                                   |
 | -------------- | ------------ | ----: | -----: | -------------------------------------------- |
-| `swarm`        | Pack         |   6–8 |   0.20 | `swarm`; packs `flee` after losses           |
+| `swarm`        | Pack         |   2–8 |   0.20 | `swarm`; packs `flee` after losses           |
 | `fighter`      | Patrol       |     4 |   0.30 | `hitAndRun`; a group shares pack morale      |
 | `interceptor`  | Pair         |     2 |   0.15 | `strafe`                                     |
 | `retaliator`   | Solo         |     1 |   0.10 | `retaliate`, then `chase`; three-bolt spread |
@@ -399,7 +401,7 @@ any miner who comes near, Ada included. Fixed turret platforms guard ore fields.
 
 | Archetype      | Encounter       | Group | Weight | Behaviours                                                     |
 | -------------- | --------------- | ----: | -----: | -------------------------------------------------------------- |
-| `swarm`        | Pack            |   5–7 |   0.25 | `swarm`; packs `flee` after losses                             |
+| `swarm`        | Pack            |   2–7 |   0.25 | `swarm`; packs `flee` after losses                             |
 | `fighter`      | Claim jumpers   |     4 |   0.40 | `hitAndRun`; a group shares pack morale                        |
 | `interceptor`  | Solo or pair    |   1–2 |   0.12 | `hitAndRun`                                                    |
 | `retaliator`   | Solo            |     1 |   0.10 | `retaliate`, then `chase`; three-bolt spread                   |
@@ -440,7 +442,7 @@ Phantom's drones are Archie's home guard: heavier, and they chase.
 
 | Archetype      | Encounter    | Group | Weight | Behaviours                                   |
 | -------------- | ------------ | ----: | -----: | -------------------------------------------- |
-| `swarm`        | Pack         |   6–8 |   0.18 | `swarm`; packs `flee` after losses           |
+| `swarm`        | Pack         |   2–8 |   0.18 | `swarm`; packs `flee` after losses           |
 | `fighter`      | Home guard   |     4 |   0.25 | `chase`; a group shares pack morale          |
 | `interceptor`  | Pair         |     2 |   0.15 | `strafe`                                     |
 | `retaliator`   | Solo         |     1 |   0.07 | `retaliate`, then `chase`; three-bolt spread |

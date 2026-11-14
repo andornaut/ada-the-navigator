@@ -22,6 +22,8 @@ export const SPAWNER_REGIONS = {
 } as const;
 /** Ambient fighter groups target this size, then fit the available local budget. */
 export const FIGHTER_GROUP_TARGET = 4;
+/** Ambient swarms may fit a smaller budget, but never become singletons. */
+export const SWARM_GROUP_MINIMUM = 2;
 const fighterGroup = [FIGHTER_GROUP_TARGET, FIGHTER_GROUP_TARGET] as const;
 
 const sunflower: SpawnerPolicy = {
@@ -34,7 +36,7 @@ const sunflower: SpawnerPolicy = {
       localCap: 3,
       maxNearbyArchetypes: 1,
       roster: [
-        { archetype: "swarm", groupSize: [1, 2], weight: 0.55 },
+        { archetype: "swarm", groupSize: [SWARM_GROUP_MINIMUM, 2], weight: 0.55 },
         { archetype: "fighter", groupSize: fighterGroup, weight: 0.45 },
       ],
     },
@@ -43,7 +45,7 @@ const sunflower: SpawnerPolicy = {
       localCap: 4,
       maxNearbyArchetypes: 2,
       roster: [
-        { archetype: "swarm", groupSize: [2, 3], weight: 0.45 },
+        { archetype: "swarm", groupSize: [SWARM_GROUP_MINIMUM, 3], weight: 0.45 },
         { archetype: "fighter", groupSize: fighterGroup, weight: 0.4 },
         { archetype: "retaliator", groupSize: [1, 1], weight: 0.15 },
       ],
@@ -53,7 +55,7 @@ const sunflower: SpawnerPolicy = {
       localCap: 5,
       maxNearbyArchetypes: 2,
       roster: [
-        { archetype: "swarm", groupSize: [2, 3], weight: 0.4 },
+        { archetype: "swarm", groupSize: [SWARM_GROUP_MINIMUM, 3], weight: 0.4 },
         { archetype: "fighter", groupSize: fighterGroup, weight: 0.35 },
         { archetype: "retaliator", groupSize: [1, 1], weight: 0.15 },
         { archetype: "interceptor", groupSize: [1, 1], weight: 0.1 },
@@ -68,7 +70,11 @@ function laterStages(
   localCaps: readonly [number, number, number],
 ): readonly SpawnerStage[] {
   const roster = encounterTable(galaxy).map((entry) =>
-    entry.archetype === "fighter" ? { ...entry, groupSize: fighterGroup } : entry,
+    entry.archetype === "fighter"
+      ? { ...entry, groupSize: fighterGroup }
+      : entry.archetype === "swarm"
+        ? { ...entry, groupSize: [SWARM_GROUP_MINIMUM, entry.groupSize[1]] as const }
+        : entry,
   );
   return SPAWNER_REGIONS.centerDistances.map((centerDistance, index) => ({
     centerDistance,

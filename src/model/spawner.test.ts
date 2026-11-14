@@ -3,7 +3,12 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { encounterTable, enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
-import { FIGHTER_GROUP_TARGET, SPAWNER_POLICIES, spawnerStage } from "../data/spawnerCatalog.ts";
+import {
+  FIGHTER_GROUP_TARGET,
+  SPAWNER_POLICIES,
+  spawnerStage,
+  SWARM_GROUP_MINIMUM,
+} from "../data/spawnerCatalog.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { createFlight, stepFlight } from "./flight.ts";
@@ -153,7 +158,9 @@ describe("spawner admission", () => {
           encounterTable(galaxy).map((entry) =>
             entry.archetype === "fighter"
               ? { ...entry, groupSize: [FIGHTER_GROUP_TARGET, FIGHTER_GROUP_TARGET] }
-              : entry,
+              : entry.archetype === "swarm"
+                ? { ...entry, groupSize: [SWARM_GROUP_MINIMUM, entry.groupSize[1]] }
+                : entry,
           ),
         );
         expect(stage.maxNearbyArchetypes).toBe({ 2: 4, 3: 2, 4: 3, 5: 4, 6: 4 }[galaxy]);
@@ -234,6 +241,51 @@ describe("spawner admission", () => {
     const plan = selectEncounter(policy, spawnerStage(1, 0), 10, objects, centre, 0.99, 0)!;
     expect(plan).toMatchObject({ archetype: "fighter", count: 2 });
     expect(objects).toHaveLength(1);
+  });
+
+  it("admits configured swarm maxima within every galaxy region's budget", () => {
+    for (const galaxy of GALAXY_NUMBERS) {
+      const policy = SPAWNER_POLICIES[galaxy];
+      for (const stage of policy.stages) {
+        const swarm = stage.roster.find(({ archetype }) => archetype === "swarm")!;
+        const plan = selectEncounter(policy, { ...stage, roster: [swarm] }, 10, [], centre, 0, 0);
+        expect(plan).toMatchObject({
+          archetype: "swarm",
+          count: Math.min(stage.localCap, swarm.groupSize[1]),
+        });
+        expect(plan!.count).toBeGreaterThanOrEqual(2);
+      }
+    }
+  });
+
+  it("fits occupied swarm capacity down to two without singleton, cap raises or max growth", () => {
+    const policy = SPAWNER_POLICIES[6];
+    const stage = policy.stages[2]!;
+    const swarm = stage.roster.find(({ archetype }) => archetype === "swarm")!;
+    for (const [occupied, expected] of [
+      [8, null],
+      [7, null],
+      [6, 2],
+      [5, 3],
+    ] as const) {
+      const objects = Array.from({ length: occupied }, (_, i) => occupant(`old:${i}`, centre));
+      const before = structuredClone({ objects, stage });
+      const plan = selectEncounter(
+        policy,
+        { ...stage, roster: [swarm] },
+        10,
+        objects,
+        centre,
+        0,
+        0,
+      );
+      if (expected === null) {
+        expect(plan).toBeNull();
+      } else {
+        expect(plan).toMatchObject({ archetype: "swarm", count: expected });
+      }
+      expect({ objects, stage }).toEqual(before);
+    }
   });
 
   it("fits target-four fighters to available slots without exceeding or raising the budget", () => {

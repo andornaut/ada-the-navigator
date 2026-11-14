@@ -9,6 +9,7 @@ import {
   type SpawnerPolicy,
   type SpawnerStage,
   spawnerStageAtDistance,
+  SWARM_GROUP_MINIMUM,
 } from "../data/spawnerCatalog.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 import type { WorldCellContext } from "./worldCells.ts";
@@ -92,7 +93,8 @@ export function worldFitsEncounter(
 }
 
 /**
- * Fighters take the largest available group up to their target; other groups and every escort
+ * Fighters and swarms take their largest fitting group, respecting the swarm minimum.
+ * Other groups and every escort
  * remain atomic. Samples only positive entries with an admissible plan. Encounter-cell
  * frequency is independent; occupancy limits cannot select an excluded or unaffordable type.
  */
@@ -112,7 +114,8 @@ export function worldSelectEncounter(
     }
     const plans: EncounterPlan[] = [];
     const flexibleFighters = entry.archetype === "fighter" && entry.escorts === undefined;
-    const minimum = flexibleFighters ? 1 : entry.groupSize[0];
+    const flexibleSwarm = entry.archetype === "swarm" && entry.escorts === undefined;
+    const minimum = flexibleFighters ? 1 : flexibleSwarm ? SWARM_GROUP_MINIMUM : entry.groupSize[0];
     const maximum = flexibleFighters
       ? Math.min(FIGHTER_GROUP_TARGET, entry.groupSize[1])
       : entry.groupSize[1];
@@ -127,7 +130,12 @@ export function worldSelectEncounter(
       }
     }
     return plans.length
-      ? [{ plans: flexibleFighters ? plans.slice(-1) : plans, weight: entry.weight }]
+      ? [
+          {
+            plans: flexibleFighters || flexibleSwarm ? plans.slice(-1) : plans,
+            weight: entry.weight,
+          },
+        ]
       : [];
   });
   const total = choices.reduce((sum, choice) => sum + choice.weight, 0);
