@@ -31,9 +31,9 @@ import type { FlightInput, SpaceObject, Vec } from "./types.ts";
 
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
-function courseFlight(seed = 417) {
+function courseFlight(anchor: Vec = { x: 0, y: 0 }, seed = 417) {
   const flight = createFlight(CONTENT, 4, seed, newProgress());
-  flight.needle = { anchor: { x: 0, y: 0 }, chatter: [], exitPackPlaced: true };
+  flight.needle = { anchor: { ...anchor }, chatter: [], exitPackPlaced: true };
   flight.objects = [];
   const course = needleCourses(flight)!.practice;
   const gate = course.gates[0]!;
@@ -97,11 +97,19 @@ describe("mounted Needle flight physics", () => {
 
   it("keeps each freshly admitted enemy's complete radius outside every active channel", () => {
     let enemies = 0;
+    // Encounter cells must be eligible beyond the launch-calm exclusion.
+    const anchor = { x: CONTENT.tuning.flight.arrivalCalm * 2, y: 0 };
     for (const seed of [1, 2, 3, 4, 42, 417]) {
-      const { flight, gate } = courseFlight(seed);
+      const { flight, gate } = courseFlight(anchor, seed);
       flight.player = { ...gate.point };
+      expect(Math.hypot(gate.point.x, gate.point.y)).toBeGreaterThan(
+        CONTENT.tuning.flight.arrivalCalm,
+      );
       stepFlight(CONTENT, 0.001, idle, flight);
-      for (const object of flight.objects.filter(({ kind }) => kind === "enemy")) {
+      expect(flight.freshDistance).toBe(0);
+      const admitted = flight.objects.filter(({ kind }) => kind === "enemy");
+      expect(admitted.length, `seed ${seed}`).toBeGreaterThan(0);
+      for (const object of admitted) {
         enemies++;
         expect(
           activeNeedleCourses(flight).some((course) =>
