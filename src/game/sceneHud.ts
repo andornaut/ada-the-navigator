@@ -6,6 +6,7 @@ import { EDGE_MARKER_GLYPHS, edgeMarkerInset } from "../data/edgeMarkers.ts";
 import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
 import { SCREEN } from "../data/screen.ts";
 import { edgePoint } from "../model/edgeMarkers.ts";
+import { pennyIndicatorTargets } from "../model/pennyMarkers.ts";
 import type { FlightState, Vec } from "../model/types.ts";
 import { safeGameArea } from "../ui/layout/playView.ts";
 import { USE_CALLOUT_FADE_MS, useCalloutAlpha, useCalloutLift } from "../ui/touchChrome.ts";
@@ -326,13 +327,19 @@ export function keylineEdges(
  * the palette's threat, the station diamond in pointOfInterest; a light field adds an ink outline
  * (lightField.markerOutline) under each, as the indicators' ink does.
  */
-export function drawEdgeMarkers(scene: HudContext, flight: FlightState): void {
+export function drawEdgeMarkers(
+  scene: HudContext & Pick<GameScene, "litCaches">,
+  flight: FlightState,
+): void {
   const indicated = new Set(scene.model.indicatorTargets.map(({ id }) => id));
   const centre = scene.project(flight.player);
   const outline = LIGHT_FIELD.markerOutline;
   const { insets, view } = scene.controls.layout();
   // Inside the safe game area: never under a notch, a curved corner or the home bar.
   const area = safeGameArea(insets, view);
+  for (const marker of scene.model.pennyMarkers(area, scene.litCaches)) {
+    indicated.add(marker.id);
+  }
   for (const marker of scene.edgeMarkers.update(flight, indicated, scene.time.now)) {
     // The outermost drawn pixel, the ink outline included on a light field, sits 1 in.
     const at = edgePoint(
@@ -380,10 +387,14 @@ export function drawEdgeMarkers(scene: HudContext, flight: FlightState): void {
  * An arrow at the view's edge toward each marked place off screen, at any distance
  * (model/indicators.ts), and the holodisk's placeholder beacon ring while it is on screen.
  */
-export function drawIndicators(scene: HudContext): void {
+export function drawIndicators(scene: HudContext & Pick<GameScene, "litCaches">): void {
   const cx = SCREEN.width / 2;
   const cy = SCREEN.height / 2;
-  for (const target of scene.model.indicatorTargets) {
+  const { insets, view } = scene.controls.layout();
+  const penny = new Set(
+    scene.model.pennyMarkers(safeGameArea(insets, view), scene.litCaches).map(({ id }) => id),
+  );
+  for (const target of pennyIndicatorTargets(penny, scene.model.indicatorTargets)) {
     const point = scene.project(target);
     const onScreen =
       point.x >= 0 && point.y >= 0 && point.x <= SCREEN.width && point.y <= SCREEN.height;

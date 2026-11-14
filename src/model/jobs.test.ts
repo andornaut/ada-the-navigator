@@ -803,7 +803,7 @@ describe("jobs in play", () => {
     expect(restoreSave(badJob)).toBeNull();
   });
 
-  it("let Penny sense a lost item within 350 during her usual rest", () => {
+  it("let Penny sense a lost item within 1500 during her usual rest", () => {
     const { model } = docked();
     const held = take(model, "hunt");
     const spot = held.spot!;
@@ -814,7 +814,10 @@ describe("jobs in play", () => {
     )!;
     const sensed = listen(model, { x: landmark.x + 600, y: landmark.y }, 2);
     expect(sensed.filter((instance) => instance.startsWith("penny:1:"))).toHaveLength(1);
-    expect(listen(model, { x: spot.x + 340, y: spot.y }, 30)).toContain(`penny:1:job:${held.id}`);
+    const instance = `penny:1:job:${held.id}`;
+    expect(listen(model, { x: spot.x + 1501, y: spot.y }, 0.05)).not.toContain(instance);
+    expect(listen(model, { x: spot.x + 1500, y: spot.y }, 30)).toContain(instance);
+    expect(listen(model, { x: spot.x + 1500, y: spot.y }, 30)).not.toContain(instance);
   });
 });
 

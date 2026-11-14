@@ -25,6 +25,7 @@ import { BUILT } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { phantomSettlementCopy } from "./phantomSettlementCopy.ts";
 import type { FlightState, GalaxyProgress, SpaceObject, Vec } from "./types.ts";
+import { nearestImage } from "./worldGeometry.ts";
 
 // The in-flight conversation box's schedule (gameplay/rules.md "Astra and Penny in flight"):
 // one conversation at a time, chosen by priority (BOX_PRIORITIES). A higher one interrupts a lower
@@ -214,8 +215,13 @@ export function pennyPoints(
   holodiskWaypoint: boolean,
   landmarks: readonly (Vec & { readonly id: string })[],
   flight: Pick<FlightState, "objects" | "player">,
+  worldSide?: number,
 ): string[] {
-  const distance = (point: Vec) => Math.hypot(point.x - flight.player.x, point.y - flight.player.y);
+  const distance = (point: Vec) => {
+    const at =
+      worldSide === undefined ? point : nearestImage(worldSide, flight.player, point).point;
+    return Math.hypot(at.x - flight.player.x, at.y - flight.player.y);
+  };
   return [
     ...flight.objects.filter((object) =>
       object.kind === "destination"

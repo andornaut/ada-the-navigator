@@ -160,7 +160,7 @@ export const CONVERSATION_TUNING = {
   /** Seconds after Penny senses something before she can again; points found meanwhile pass. */
   pennyIntervalSeconds: 60,
   /** An undiscovered point of interest within this many world units, even off screen. */
-  pennyRange: 900,
+  pennyRange: 1500,
   /** Seconds without danger that make a quiet stretch. */
   quietSeconds: 60,
   /** The shield fraction at or below which, in a fight, Astra warns once. */

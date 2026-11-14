@@ -25,7 +25,7 @@ export const JOB_TUNING = {
    * A lost item's search area: its centre's distance from the station and its radius; Penny
    * senses the item and it glints within their ranges.
    */
-  hunt: { glint: 160, max: 7000, min: 3000, penny: 350, radius: 900 },
+  hunt: { glint: 160, max: 7000, min: 3000, penny: 1500, radius: 900 },
   /** A stranded craft's distance from the issuing station, in world units. */
   rescue: { max: 7000, min: 3000 },
   /** Tow handling: attach reach, line length, the safe-place radius and Ada's handling. */

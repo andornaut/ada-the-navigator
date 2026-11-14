@@ -527,7 +527,7 @@ describe("Penny's points of interest", () => {
   it("include the uncharted landmarks given within range, by distance", () => {
     const landmarks = [
       { id: "landmark:1:0", x: 250, y: 0 },
-      { id: "landmark:1:1", x: 950, y: 0 },
+      { id: "landmark:1:1", x: pennyRange + 50, y: 0 },
     ];
     expect(pennyPoints({ known: ["growers"], stations: [] }, false, landmarks, flight)).toEqual([
       "station:1:0",

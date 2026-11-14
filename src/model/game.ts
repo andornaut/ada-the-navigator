@@ -1,4 +1,5 @@
 import { randomStream } from "@andornaut/game-kit/random";
+import type { Rect } from "@andornaut/game-kit/rect";
 
 import { ACHIEVEMENTS, PENNY_FIND_RANGE } from "../data/achievements.ts";
 import { ACTIVITIES, MINING_CONTRACT_DEPOSITS, SUPPLY_ITEMS } from "../data/activities.ts";
@@ -103,6 +104,7 @@ import {
   teleport as teleportFlight,
   undockFlight,
 } from "./flight.ts";
+import { flightWorldContext } from "./flightTopology.ts";
 import {
   INDICATOR_SOURCES,
   type IndicatorTarget,
@@ -129,17 +131,12 @@ import {
   type StationGreeting,
   worldStationKeeper,
 } from "./keepers.ts";
-import {
-  chartLandmarks,
-  galaxyLandmarks,
-  landmarkById,
-  landmarkSites,
-  unchartedNear,
-} from "./landmarks.ts";
+import { chartLandmarks, galaxyLandmarks, landmarkById, landmarkSites } from "./landmarks.ts";
 import { lateEncounterCue } from "./lateEncounter.ts";
 import { type LocalMap, localMap, type MapContext, recordExplored } from "./map.ts";
 import { needleCourses, setNeedleActivity, stepNeedleCourse } from "./needle.ts";
 import { clearNeedleEnemies, ensureNeedleDebris } from "./needleFlight.ts";
+import { type PennyMarker, PennyMarkers, type PennyPoint } from "./pennyMarkers.ts";
 import { type PhantomContext, phantomWaypoint } from "./phantom.ts";
 import { phantomAllyRoster, type PhantomAllySpec } from "./phantomAllies.ts";
 import { HUNT_GLINT } from "./pickupBody.ts";
@@ -241,6 +238,7 @@ import {
   UPGRADE_WEAPONS,
   type WeaponChoice,
 } from "./weapons.ts";
+import { worldDistance } from "./worldContacts.ts";
 
 export { newProgress } from "./progress.ts";
 const progress = newProgress;
@@ -400,6 +398,7 @@ export interface AchievementView {
 export type PickupFeedback = Extract<ItemGain, { readonly kind: "ammo" }>;
 
 export class GameModel {
+  private readonly pennyTracking = new PennyMarkers();
   state: GameState;
   /** The last flight step's events, for view effects; empty when no step ran. */
   flightEvents: FlightEvent[] = [];
@@ -573,6 +572,82 @@ export class GameModel {
       speaker,
       text,
     };
+  }
+  /** Called only after the visible conversation box has rendered this exact line. */
+  pennyNoticeDisplayed(key: string): void {
+    const f = this.state.flight;
+    if (!f || this.conversation?.key !== key) {
+      return;
+    }
+    const prefix = `penny:${f.galaxy}:`;
+    const instance = key.slice(0, key.lastIndexOf(":"));
+    if (instance.startsWith(prefix)) {
+      this.pennyTracking.displayed(f, instance.slice(prefix.length));
+    }
+  }
+
+  /** Transient off-screen hints, without granting discovery or changing the saved chart. */
+  pennyMarkers(area: Rect, litCaches?: ReadonlySet<string>): PennyMarker[] {
+    const f = this.state.flight;
+    if (!f || this.screen !== "space") {
+      return [];
+    }
+    const points: PennyPoint[] = [];
+    for (const id of this.pennyTracking.ids(f)) {
+      const object = f.objects.find((entry) => entry.id === id) ?? f.world.notables[id];
+      const landmark = landmarkById(f.galaxy, id);
+      const station = worldStationById(flightStationContext(f), ECONOMY, f.galaxy, id);
+      const held = this.held;
+      const hunt = held?.type === "hunt" && `job:${held.id}` === id ? held.spot : null;
+      const point = object ?? station ?? landmark ?? hunt;
+      if (!point || (object && object.hp <= 0)) {
+        continue;
+      }
+      points.push({
+        id,
+        identifiable: hunt
+          ? worldDistance(flightWorldContext(f), hunt, f.player) <= JOB_TUNING.hunt.glint
+          : object?.kind === "pickup" && object.role === "discovery"
+            ? litCaches?.has(id) === true
+            : true,
+        known:
+          this.current.known.includes(id) ||
+          this.current.stations.includes(id) ||
+          this.current.charted.includes(id),
+        symbol:
+          station || object?.kind === "station"
+            ? "station"
+            : landmark
+              ? landmark.kind
+              : id === "holodisk"
+                ? "holodisk"
+                : (DESTINATIONS[id]?.mapKind ?? "destination"),
+        x: point.x,
+        y: point.y,
+        ...(hunt ? { jobType: "hunt" as const } : {}),
+        ...(object?.kind === "pickup" && object.role === "discovery"
+          ? { item: "stardust" as const }
+          : {}),
+      });
+    }
+    return this.pennyTracking.targets(
+      f,
+      area,
+      new Set(
+        this.indicatorTargets
+          .filter(
+            (target) =>
+              target.kind !== "station" &&
+              (target.kind !== "job" ||
+                this.held?.type !== "hunt" ||
+                target.id !== `job:${this.held.id}`),
+          )
+          .map(({ id }) => id),
+      ),
+      flightWorldContext(f).worldSide,
+      f.player,
+      points,
+    );
   }
   /** A tap on the conversation box: the next line, or the box closes after the last. */
   advanceConversation(): void {
@@ -1919,8 +1994,9 @@ export class GameModel {
       pennyPoints: pennyPoints(
         this.current,
         this.holodiskWaypoint,
-        unchartedNear(f.galaxy, this.current, CONVERSATION_TUNING.pennyRange, f.player),
+        landmarkSites(f.galaxy).filter(({ id }) => !this.current.charted.includes(id)),
         f,
+        flightWorldContext(f).worldSide,
       ),
       shieldFraction: this.shieldMax > 0 ? f.shield / this.shieldMax : 1,
       stardustInSight: f.objects.some(
@@ -2971,7 +3047,7 @@ export class GameModel {
     const held = this.held;
     return held?.type === "hunt" &&
       held.spot &&
-      distance(held.spot, f.player) <= JOB_TUNING.hunt.penny
+      worldDistance(flightWorldContext(f), held.spot, f.player) <= JOB_TUNING.hunt.penny
       ? `job:${held.id}`
       : null;
   }

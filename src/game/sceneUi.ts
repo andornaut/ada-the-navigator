@@ -40,9 +40,11 @@ import { createGalaxyMap } from "../ui/galaxyMap.ts";
 import { createJumpOverlay, type SheetArt } from "../ui/jumpOverlay.ts";
 import { VIEW_HOST_ID } from "../ui/layout/css.ts";
 import { fogColor } from "../ui/layout/mapScreen.ts";
+import { safeGameArea } from "../ui/layout/playView.ts";
 import { type MapField, mapScreenLabels } from "../ui/mapScreen.ts";
 import { BOX_OCCUPANT, boxOccupant } from "../ui/notice.ts";
 import { galaxiesAvailable } from "../ui/pause.ts";
+import { createPennyMarkerLayer } from "../ui/pennyMarkers.ts";
 import { createRestartCard } from "../ui/restartCard.ts";
 import { aboardLabel, type ShipView } from "../ui/shipCard.ts";
 import { createStationView } from "../ui/station.ts";
@@ -99,6 +101,7 @@ import {
   readLoopArt,
 } from "./worldArt.ts";
 
+const pennyLayers = new WeakMap<object, ReturnType<typeof createPennyMarkerLayer>>();
 const interactionCards = new WeakMap<object, ReturnType<typeof createInteractionCard>>();
 const shieldOreFlights = new WeakMap<object, FlightState | null>();
 
@@ -156,6 +159,8 @@ export type UiContext = Scene &
     | "jobArt"
     | "jumping"
     | "lightGalaxies"
+    | "litCaches"
+    | "light"
     | "load"
     | "loads"
     | "manifest"
@@ -249,6 +254,12 @@ export function buildScene(scene: UiContext): void {
   scene.events.once(Scenes.Events.SHUTDOWN, () => scene.scale.off(Scale.Events.RESIZE, followZoom));
   const host = document.getElementById(VIEW_HOST_ID);
   if (host) {
+    const penny = createPennyMarkerLayer(document, host);
+    pennyLayers.set(scene, penny);
+    scene.events.once(Scenes.Events.SHUTDOWN, () => {
+      penny.destroy();
+      pennyLayers.delete(scene);
+    });
     const layer = createBannerLayer(document, host, CONTENT.labels.disabledBanner ?? "");
     scene.bannerLayer = layer;
     scene.events.once(Scenes.Events.SHUTDOWN, () => layer.destroy());
@@ -964,6 +975,21 @@ export function renderConversation(scene: UiContext): void {
   const covered = !emergency && (scene.settingsOpen || Boolean(dialogue) || Boolean(docked));
   const line = emergency ?? (covered ? null : scene.model.conversation);
   scene.conversationBox.render(line, !coarsePointer(window), scene.reducedMotion);
+  if (line && !covered && !emergency) {
+    scene.model.pennyNoticeDisplayed(line.key);
+  }
+  const { insets, view } = scene.controls.layout();
+  const area = safeGameArea(insets, view);
+  const flight = scene.model.state.flight;
+  pennyLayers.get(scene)?.place(
+    flight?.player ?? { x: 0, y: 0 },
+    area,
+    {
+      color: `#${scene.palette.pointOfInterest.toString(16).padStart(6, "0")}`,
+      light: scene.light,
+    },
+    !covered && !emergency && flight ? scene.model.pennyMarkers(area, scene.litCaches) : [],
+  );
   // One box at a time: a line, else the game notice, else the save status (notice.ts). A card
   // over the play view covers the line or notice under it, which frees the slot for the save
   // status, drawn above cards.
