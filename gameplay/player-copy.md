@@ -991,8 +991,9 @@ Penny senses a point of interest (Penny's line is always the same, so players
 learn it). The displayed notice identifies the exact target for the direction
 marker: a question mark until actual on-screen identification, then that
 target's matching real map, location or item glyph. Sensing alone grants no
-discovery or quest progress. Ordinary range
-is 1500 world units with the same 60-second cooldown; hunt sensing stays 350.
+discovery or quest progress. Ordinary and hunt sensing both use 1500 world
+units. Ordinary sensing keeps its 60-second cooldown; hunt sensing keeps its
+existing once-per-target and cooldown rules.
 Marker retention, wrapped direction and HUD clearance follow
 [Rules](rules.md#astra-and-penny-in-flight):
 

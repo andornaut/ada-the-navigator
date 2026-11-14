@@ -1233,8 +1233,9 @@ of interest comes within 1500 world units of Ada, even off screen,
 one conversation shows Penny's "Woof! Woof!" and then Ada's reaction; it plays
 once per point of interest, at most once per 60 seconds. Exact lines are in
 [the player copy](player-copy.md#in-flight-conversations).
-The ordinary sense range is separate from the hunt lost-item sense range, which
-stays 350 world units.
+Ordinary point-of-interest sensing and hunt lost-item sensing both use a
+1500-world-unit range. Their existing once-per-target and cooldown rules remain
+separate and unchanged.
 
 When Penny's notice is actually displayed, its exact target gets a direction
 marker; do not bind the marker to the current nearest object or an enqueued

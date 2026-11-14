@@ -69,7 +69,7 @@ layout regeneration like stations. Restart clears jobs and boards.
   [Tow handling](#tow-handling).
 - **Lost-item hunt**: search a marked area, 900 world units in radius, for a lost
   item. The indicator points to the area's centre while Ada is outside it and
-  hides while she is inside. Penny's sense helps: when the item is within 350 world units, Penny's
+  hides while she is inside. Penny's sense helps: when the item is within 1500 world units, Penny's
   "Woof! Woof!" conversation plays once for that item, ignoring its usual 60 second
   limit. The item glints within 160 world units, like a discovery cache, and is
   collected as a pickup by the one pickup rule, and the tractor beam pulls it.
