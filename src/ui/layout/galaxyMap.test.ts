@@ -218,8 +218,20 @@ describe("route ship", () => {
     const end = restingTangent(6);
     const angle = GALAXY_MAP_ARC.first + 5 * GALAXY_MAP_ARC.step;
     expect(Math.atan2(end.y, end.x)).toBeCloseTo(angle, 2);
-    expect(positions.map((position) => routeHeading(restingTangent(position)))).toEqual([
-      24, 25, 27, 29, 31, 0,
-    ]);
+    for (const position of positions) {
+      const tangent = restingTangent(position);
+      const selected = routeHeading(tangent);
+      const nose = SHIP_NOSE.noses[selected]!;
+      const pivot = SHIP_NOSE.frame / 2;
+      const angle = Math.atan2(tangent.y, tangent.x);
+      const error = (point: { x: number; y: number }) =>
+        Math.abs(
+          Math.atan2(
+            Math.sin(Math.atan2(point.y - pivot, point.x - pivot) - angle),
+            Math.cos(Math.atan2(point.y - pivot, point.x - pivot) - angle),
+          ),
+        );
+      expect(error(nose)).toBe(Math.min(...SHIP_NOSE.noses.map(error)));
+    }
   });
 });

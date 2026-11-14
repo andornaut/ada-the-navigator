@@ -18,9 +18,9 @@ const TRACK_ICONS: Readonly<Record<UpgradeTrack, string>> = {
   tractor: "icon-shop-tractor-beam",
 };
 
-/** A paint scheme's swatch: the scheme's idle frame 24, Classic's from the unpainted set. */
+/** A paint scheme's swatch: the scheme's idle frame 48, Classic's from the unpainted set. */
 export function paintSwatchPath(scheme: string, defaultPaint: string): string {
-  return scheme === defaultPaint ? "/art/ship-24.svg" : `/art/paint/${scheme}/ship-24.svg`;
+  return scheme === defaultPaint ? "/art/ship-48.svg" : `/art/paint/${scheme}/ship-48.svg`;
 }
 
 export function itemGlyph(catalog: EconomyCatalog, item: ShopItem): ItemGlyph {

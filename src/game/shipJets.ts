@@ -1,6 +1,7 @@
 import { jetShapePolygons, layerAlpha } from "./jetGeometry.ts";
 export { coreOutboardOffset, layerAlpha } from "./jetGeometry.ts";
 
+import { readShipHeadingContract, SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
 import type { Vec } from "../model/types.ts";
 
 /** The existing thrust cutoff suppresses direction changes while the ship is effectively still. */
@@ -307,7 +308,13 @@ export function readJetGeometry(value: unknown): JetGeometry | undefined {
     const heading = fields(entry);
     const index = heading?.index;
     const mouths = readMouths(heading?.mouths);
-    if (!Number.isInteger(index) || headings[index as number] || !mouths) {
+    if (
+      !Number.isInteger(index) ||
+      (index as number) < 0 ||
+      (index as number) >= root.headings.length ||
+      headings[index as number] ||
+      !mouths
+    ) {
       return undefined;
     }
     headings[index as number] = mouths;
@@ -341,7 +348,12 @@ export function readEngineJets(value: unknown): EngineJets | undefined {
   const root = fields(value);
   const geometry = readJetGeometry(root);
   const engineLevels = readLevelLayers(root?.engineLevels);
-  return geometry && engineLevels ? { ...geometry, engineLevels } : undefined;
+  return geometry &&
+    engineLevels &&
+    readShipHeadingContract(root?.shipHeadings) &&
+    geometry.headings.length === SHIP_HEADINGS
+    ? { ...geometry, engineLevels }
+    : undefined;
 }
 
 /** Jet length in ship units at speed fraction f. */

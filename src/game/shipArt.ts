@@ -11,23 +11,29 @@ export interface ShipAsset {
   pivot: Vec;
 }
 
-// Ship heading 2k of SHIP_HEADINGS (32) faces enemy heading k of ENEMY_HEADINGS (16).
+// Ship heading 4k of SHIP_HEADINGS (64) faces enemy heading k of ENEMY_HEADINGS (16).
 const DIRECTIONAL = /^ship-(?:thrust-)?\d+$/;
 const IDLE = /^ship-\d+$/;
 
 /**
- * Whether every one of the 32 idle headings is present, so the sprite can snap to the nearest.
+ * Whether every one of the 64 idle headings is present, so the sprite can snap to the nearest.
  * Thrust frames are optional; painted entries and legacy aliases do not count.
  */
 export function hasShipHeadings(assets: readonly ShipAsset[]): boolean {
   const indices = new Set<number>();
   for (const asset of assets) {
-    if (
-      IDLE.test(asset.id) &&
-      asset.paint === undefined &&
-      Number.isInteger(asset.directionIndex)
-    ) {
-      indices.add(asset.directionIndex!);
+    if (IDLE.test(asset.id) && asset.paint === undefined) {
+      const index = asset.directionIndex;
+      if (
+        !Number.isInteger(index) ||
+        index! < 0 ||
+        index! >= SHIP_HEADINGS ||
+        Number(asset.id.slice(5)) !== index ||
+        indices.has(index!)
+      ) {
+        return false;
+      }
+      indices.add(index!);
     }
   }
   return Array.from({ length: SHIP_HEADINGS }, (_, index) => indices.has(index)).every(Boolean);
@@ -40,16 +46,18 @@ export function shipDirection(count: number, facing: Vec): number {
 }
 
 /**
- * The nearest of the 32 headings: aim and movement stay continuous and only the sprite snaps.
- * A missing thrust frame falls back to the matching idle view, and an incomplete heading set
- * to the legacy aliases.
+ * The nearest of the 64 headings: aim and movement stay continuous and only the sprite snaps.
+ * A missing thrust frame falls back to the matching idle view. Incomplete sets are rejected.
  */
 export function selectShipAsset<T extends ShipAsset>(
   assets: readonly T[],
   thrust: boolean,
   facing: Vec,
 ): T | undefined {
-  const direction = hasShipHeadings(assets) ? shipDirection(SHIP_HEADINGS, facing) : undefined;
+  if (!hasShipHeadings(assets)) {
+    return undefined;
+  }
+  const direction = shipDirection(SHIP_HEADINGS, facing);
   const directional = (prefix: string) =>
     direction === undefined
       ? undefined
@@ -60,12 +68,7 @@ export function selectShipAsset<T extends ShipAsset>(
             (prefix === "ship-thrust" || !asset.id.startsWith("ship-thrust")) &&
             asset.directionIndex === direction,
         );
-  return (
-    (thrust ? directional("ship-thrust") : undefined) ??
-    directional("ship") ??
-    (thrust ? assets.find((asset) => asset.id === "ship-thrust") : undefined) ??
-    assets.find((asset) => asset.id === "ship")
-  );
+  return (thrust ? directional("ship-thrust") : undefined) ?? directional("ship");
 }
 
 /** A paint scheme's idle frames, which load only while that scheme is in use. */

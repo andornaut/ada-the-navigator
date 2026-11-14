@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "shipHeadings": { "count": 64, "version": 2 },
   "durationMs": 1000,
   "frames": [
     { "name": "space", "startMs": 0, "ms": 100, "steps": [{ "ms": 100 }] },
@@ -186,7 +187,7 @@
     }
   ],
   "warp": {
-    "heading": 24,
+    "heading": 48,
     "frame": 256,
     "displayScale": 0.4375,
     "tunnel": "quantum-jump-tunnel",

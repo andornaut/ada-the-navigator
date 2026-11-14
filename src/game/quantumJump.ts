@@ -1,3 +1,4 @@
+import { readShipHeadingContract, SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
 import type { Vec } from "../model/types.ts";
 import { type JetGeometry, readJetGeometry } from "./shipJets.ts";
 
@@ -196,7 +197,9 @@ function readWarp(value: unknown): Warp | undefined {
   const warp = fields(value);
   if (
     !warp ||
-    !finite(warp.heading) ||
+    !Number.isInteger(warp.heading) ||
+    (warp.heading as number) < 0 ||
+    (warp.heading as number) >= SHIP_HEADINGS ||
     !finite(warp.frame) ||
     !finite(warp.displayScale) ||
     !name(warp.tunnel) ||
@@ -230,7 +233,7 @@ function readWarp(value: unknown): Warp | undefined {
   return {
     displayScale: warp.displayScale,
     frame: warp.frame,
-    heading: warp.heading,
+    heading: warp.heading as number,
     poses,
     tunnel: warp.tunnel,
   };
@@ -272,6 +275,7 @@ export function readQuantumJump(value: unknown): QuantumJump | undefined {
   if (
     !root ||
     root.version !== 1 ||
+    !readShipHeadingContract(root.shipHeadings) ||
     !finite(root.durationMs) ||
     !Array.isArray(root.frames) ||
     !warp ||

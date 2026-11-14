@@ -33,15 +33,15 @@ describe("title screen art", () => {
     expect(art.wordmark).toEqual({ height: 102, url: "/art/ui/title-wordmark.svg", width: 270 });
   });
 
-  it("draws the selected paint's ship-26, Classic's before a paint or for an unknown one", () => {
-    expect(titleShip(art, null)).toBe("/art/ship-26.svg");
-    const cobalt = manifest.assets.find(({ id }) => id === "ship-cobalt-26")!;
+  it("draws the selected paint's ship-52, Classic's before a paint or for an unknown one", () => {
+    expect(titleShip(art, null)).toBe("/art/ship-52.svg");
+    const cobalt = manifest.assets.find(({ id }) => id === "ship-cobalt-52")!;
     expect(titleShip(art, "cobalt")).toBe(cobalt.path);
-    expect(titleShip(art, "unknown")).toBe("/art/ship-26.svg");
+    expect(titleShip(art, "unknown")).toBe("/art/ship-52.svg");
   });
 
-  it("holds frame 26 at f 0.8 with one corner-attached group and an outboard core", () => {
-    expect(data.ship).toMatchObject({ animated: false, frame: 26, jetSpeed: 0.8 });
+  it("holds frame 52 at f 0.8 with one corner-attached group and an outboard core", () => {
+    expect(data.ship).toMatchObject({ animated: false, frame: 52, jetSpeed: 0.8 });
     expect(art.jets.length).toBeGreaterThan(0);
     expect(Math.min(...art.jets.map(({ alpha }) => alpha))).toBeCloseTo(0.25, 9);
     const scale = START_SCREEN.ship.size / jets.frame;
@@ -55,9 +55,9 @@ describe("title screen art", () => {
     );
     expect(coreOffset).toBeGreaterThan(0);
     const polygons = jetPolygons(art);
-    expect(polygons).toHaveLength(jets.headings[26]!.length * layers.length);
+    expect(polygons).toHaveLength(jets.headings[52]!.length * layers.length);
     for (const [index, polygon] of polygons.entries()) {
-      const mouth = jets.headings[26]![Math.floor(index / layers.length)]!;
+      const mouth = jets.headings[52]![Math.floor(index / layers.length)]!;
       const layer = layers[index % layers.length]!;
       const points = polygon.points.split(" ").map((point) => point.split(",").map(Number));
       const [base, tip, other] = points as [[number, number], [number, number], [number, number]];
@@ -92,7 +92,7 @@ describe("title screen art", () => {
     ) => ({
       ...jets,
       headings: jets.headings.map((mouths, heading) =>
-        heading === 26 ? mouths.map(transform) : mouths,
+        heading === 52 ? mouths.map(transform) : mouths,
       ),
     });
     const movedCentres = withMouths((mouth) => ({
@@ -123,7 +123,7 @@ describe("title screen art", () => {
 
   it("keeps full-frame jet coordinates aligned when the manifest sprite pivot changes", () => {
     const assets = manifest.assets.map((asset) =>
-      asset.id === "ship-26" ? { ...asset, pivot: { x: 0.2, y: 0.8 } } : asset,
+      asset.id === "ship-52" ? { ...asset, pivot: { x: 0.2, y: 0.8 } } : asset,
     );
     const shifted = readTitleScreen(assets, jets, data)!;
     const expected = jetPolygons(art);
@@ -145,13 +145,13 @@ describe("title screen art", () => {
     const masked = {
       ...jets,
       headings: jets.headings.map((mouths, heading) =>
-        heading === 26
+        heading === 52
           ? mouths.map((mouth, index) => (index === 0 ? { ...mouth, occluders } : mouth))
           : mouths,
       ),
     };
     const assets = manifest.assets.map((asset) =>
-      asset.id === "ship-26" ? { ...asset, pivot: { x: 0.2, y: 0.8 } } : asset,
+      asset.id === "ship-52" ? { ...asset, pivot: { x: 0.2, y: 0.8 } } : asset,
     );
     const title = readTitleScreen(assets, masked, data)!;
     const polygons = jetPolygons(title);

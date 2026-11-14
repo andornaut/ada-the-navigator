@@ -19,12 +19,12 @@ jump-home page.
 ## Ship
 
 - The shared ship model in [ship-model.ts](tools/ship-model.ts) (`drawn`, the
-  Classic paint), the same faces as the `ship-25` sprite frame: heading 25 of
-  32, up and to the right, the engine mouths toward the viewer.
+  Classic paint), the same faces as the `ship-50` sprite frame: heading 50 of
+  64, up and to the right, the engine mouths toward the viewer.
 - 5.85 logical px per frame px, the frame centre on canvas (476, 245), so the
   canopy spans canvas rows 172 to 256.
 - A soft engine glow from each mouth (the `ship-jets.json` anchors at heading
-  25): `#64caff`, 34 by 24 px, peak alpha 170, blurred 6 px, drawn under the
+  50): `#64caff`, 34 by 24 px, peak alpha 170, blurred 6 px, drawn under the
   hull.
 - The canopy stays opaque, as in the game; no interior or figures show.
 

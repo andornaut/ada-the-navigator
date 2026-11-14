@@ -299,9 +299,9 @@ it("predecodes canonical headings and retains a ready ship while the next frame 
       loads.push({ frame, reject, resolve });
       return frame;
     });
-    expect(loads).toHaveLength(32);
+    expect(loads).toHaveLength(64);
     expect(loads.map(({ frame }) => frame.src)).toEqual(
-      Array.from({ length: 32 }, (_, heading) => `/art/ship-${heading}.svg`),
+      Array.from({ length: 64 }, (_, heading) => `/art/ship-${heading}.svg`),
     );
     expect(
       loads.every(({ frame }) => frame.loading === "eager" && frame.alt === "" && !frame.draggable),
@@ -313,21 +313,21 @@ it("predecodes canonical headings and retains a ready ship while the next frame 
     const before = element.replaceChildren.mock.calls.length;
     marker.setFacing({ x: 0, y: 1 });
     expect(element.replaceChildren).toHaveBeenCalledTimes(before);
-    loads[8]!.resolve();
+    loads[16]!.resolve();
     await Promise.resolve();
-    expect(element.replaceChildren).toHaveBeenLastCalledWith(loads[8]!.frame);
+    expect(element.replaceChildren).toHaveBeenLastCalledWith(loads[16]!.frame);
     marker.setFacing({ x: -1, y: 0 });
-    loads[16]!.reject();
+    loads[32]!.reject();
     await Promise.resolve();
     await Promise.resolve();
-    expect(element.replaceChildren).toHaveBeenLastCalledWith(loads[8]!.frame);
+    expect(element.replaceChildren).toHaveBeenLastCalledWith(loads[16]!.frame);
     marker.setFacing({ x: 1, y: 1 });
     marker.setFacing({ x: 0, y: 1 });
-    loads[4]!.resolve();
+    loads[8]!.resolve();
     await Promise.resolve();
-    expect(element.replaceChildren).toHaveBeenLastCalledWith(loads[8]!.frame);
+    expect(element.replaceChildren).toHaveBeenLastCalledWith(loads[16]!.frame);
     marker.dispose();
-    loads[24]!.resolve();
+    loads[48]!.resolve();
     await Promise.resolve();
     expect(element.replaceChildren).toHaveBeenLastCalledWith();
   } finally {

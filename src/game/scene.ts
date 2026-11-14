@@ -73,6 +73,7 @@ import { FeedbackSound, ModelFeedback } from "./feedback.ts";
 import { type JobArt } from "./jobArt.ts";
 import { blastEdges, foregroundEdge, LIGHT_FIELD, lightGalaxy } from "./lightField.ts";
 import { parentFit, sceneFit, viewShift } from "./playCamera.ts";
+import { hasPlayerHeadingPackage } from "./playerHeadingPackage.ts";
 import { type ProjectArtSet } from "./projectArt.ts";
 import { drawAndromeda } from "./sceneAndromeda.ts";
 import {
@@ -415,6 +416,14 @@ export class GameScene extends Scene {
     });
     this.load.once("filecomplete-json-art-manifest", () => {
       const manifest = this.cache.json.get("art-manifest") as CoreManifest<Asset>;
+      if (
+        !hasPlayerHeadingPackage(
+          ECONOMY.paintOrder.filter((paint) => paint !== ECONOMY.defaultPaint),
+          manifest,
+        )
+      ) {
+        throw new Error("Player art requires the complete active heading package");
+      }
       if (manifest.spacePalette) {
         this.load.json("space-palette", manifest.spacePalette);
       }

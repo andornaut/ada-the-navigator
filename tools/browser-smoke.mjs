@@ -3132,7 +3132,7 @@ try {
     );
     assert.equal(shot.note, 0, `${name}: the start screen has no note`);
     assert.equal(shot.title, CONTENT.labels.home, `${name}: the wordmark is named by home`);
-    assert.equal(shot.shipSrc, "/art/ship-26.svg", `${name}: Classic's ship-26 before a paint`);
+    assert.equal(shot.shipSrc, "/art/ship-52.svg", `${name}: Classic's ship-52 before a paint`);
     for (const [action, box, role] of shot.actions) {
       assert.deepEqual(
         box,

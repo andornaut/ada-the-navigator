@@ -10,7 +10,7 @@ const reference = (parts: Parts) =>
 describe("immutable outline reach", () => {
   it("preserves every ship heading and asteroid frame radius in screen and world coordinates", () => {
     const outlines = [
-      ...Array.from({ length: 32 }, (_, heading) => shipSilhouette(heading)),
+      ...Array.from({ length: 64 }, (_, heading) => shipSilhouette(heading)),
       ...[...ASTEROID_SHAPES.values()].flatMap((shape) => shape.silhouette.frames),
     ];
     for (const outline of outlines) {

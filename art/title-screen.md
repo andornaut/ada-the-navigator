@@ -39,7 +39,7 @@ portraits. Placement and press areas are in [Layout](layout.md#start-screen).
 
 The title ship is the in-game ship art, not a separate drawing.
 
-- Frame: the selected paint's `ship-26` (Classic `ship-26` before a paint is
+- Frame: the selected paint's `ship-52` (Classic `ship-52` before a paint is
   chosen), nose right with a slight climb, its 96 frame drawn 280 by 280.
 - Speed jets from `ship-jets.json` at `f = 0.8` (`title-screen.json`
   `ship.jetSpeed`): 21.36 ship units long, the halo at alpha 0.25, drawn behind
@@ -86,3 +86,5 @@ note with a margin.
 
 The nav discs' navy face sits close to the field (about 1.1:1), as it does on
 the plain space background; the glyph identifies each control.
+
+The version 1 data requires `shipHeadings: { count: 64, version: 2 }`. Its fixed ship frame is 52, at world 292.5 degrees.

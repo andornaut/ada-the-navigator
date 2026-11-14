@@ -165,7 +165,7 @@ export const SCHEMES: readonly Scheme[] = [
 ];
 export const classic = SCHEMES[0]!;
 // UP projects straight up.
-export const UP = 20;
+export const UP = (SHIP_HEADINGS * 225) / 360;
 // Frame and display size in px.
 export const FRAME = 96;
 export const DISPLAY = 42;

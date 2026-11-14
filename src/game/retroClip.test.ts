@@ -147,7 +147,10 @@ describe("approved calibrated rear clipping", () => {
   it("allows untrimmed forward corners and rejects malformed corners or clips", () => {
     const original = rearArt.headings[0]!.mouths[0]!;
     const entry = { anchor: original.anchor, axis: original.axis, half: original.half };
-    const file = (mouth: unknown) => ({ ...rearArt, headings: [{ index: 0, mouths: [mouth] }] });
+    const file = (mouth: unknown) => ({
+      ...rearArt,
+      headings: [{ index: 0, mouths: [mouth] }, ...rearArt.headings.slice(1)],
+    });
     expect(readEngineJets(file(entry))).toBeDefined();
     expect(
       readEngineJets(file({ ...entry, outerCorner: [0, 0] }))?.headings[0]![0]!.rearClip,

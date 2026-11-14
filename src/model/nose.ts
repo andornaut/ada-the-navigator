@@ -1,8 +1,7 @@
 import art from "../../public/art/ship-nose.json" with { type: "json" };
+import { readShipHeadingContract, SHIP_HEADINGS } from "./shipHeadingContract.ts";
+export { SHIP_HEADINGS } from "./shipHeadingContract.ts";
 import type { Vec } from "./types.ts";
-
-/** Art draws Ada's ship in 32 heading frames (art/ship.md); enemy craft keep 16. */
-export const SHIP_HEADINGS = 32;
 
 /**
  * Art's ship-nose.json, version 1 (art/ship.md): the hull top's forward tip in frame px for
@@ -46,16 +45,20 @@ function readParts(frame: number, value: unknown): Vec[][] | undefined {
 }
 
 /**
- * A version 1 nose file with a point inside the frame and a silhouette for each of the 32
+ * A version 1 nose file with a point inside the frame and a silhouette for each of the 64
  * headings.
  */
 export function readShipNose(value: unknown): ShipNose | undefined {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return undefined;
   }
-  const { collision, displayScale, frame, noses, version } = value as Record<string, unknown>;
+  const { collision, displayScale, frame, noses, shipHeadings, version } = value as Record<
+    string,
+    unknown
+  >;
   if (
     version !== 1 ||
+    !readShipHeadingContract(shipHeadings) ||
     !finite(frame) ||
     !(frame > 0) ||
     !finite(displayScale) ||
@@ -78,12 +81,12 @@ export function readShipNose(value: unknown): ShipNose | undefined {
 const shipped = readShipNose(art);
 if (!shipped) {
   throw new Error(
-    "public/art/ship-nose.json must be version 1 with 32 noses and silhouettes inside the frame",
+    "public/art/ship-nose.json requires the active 64-heading nose and collision contract",
   );
 }
 export const SHIP_NOSE: ShipNose = shipped;
 
-/** The heading frame a facing draws: `round(atan2(y, x) / (PI / 16))` modulo 32. */
+/** The heading frame a facing draws: `round(atan2(y, x) / (PI / 32))` modulo 64. */
 export function shipHeading(facing: Vec): number {
   const index = Math.round(Math.atan2(facing.y, facing.x) / ((2 * Math.PI) / SHIP_HEADINGS));
   return ((index % SHIP_HEADINGS) + SHIP_HEADINGS) % SHIP_HEADINGS;

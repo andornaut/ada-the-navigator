@@ -91,7 +91,7 @@ export interface GalaxyMapArt {
   readonly ground: string;
   /** The shared locked grey (galaxies.json `marker.locked`). */
   readonly locked: string;
-  /** The ship's 32 heading frames, idle or on thrust; empty strings where none loaded. */
+  /** The ship's 64 heading frames, idle or on thrust; empty strings where none loaded. */
   readonly ship: (thrust: boolean) => readonly string[];
   readonly sky: string;
 }

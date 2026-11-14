@@ -12,41 +12,57 @@
   about the hull's forward axis), `stretch` along the hull and `squash` across
   it, about the pivot and before the heading turn. Sprite frames use the bare
   heading, so their numbers are the heading rotation's exactly.
-- Exports: `ship-{0..31}.svg`, `ship-thrust-{0..31}.svg`, `ship-jets.json`,
+- Exports: `ship-{0..63}.svg`, `ship-thrust-{0..31}.svg`, `ship-jets.json`,
   `ship-nose.json` and the [paint schemes](#paint-schemes). Frames, jets and
   nose all derive from the one model, so a model change regenerates them
   together.
   `ship.svg` and `ship-thrust.svg` are byte-identical aliases of index 20 (up).
 - Transparent 96 by 96 viewport, pivot (48, 48), display 42 by 42.
   Keep the viewport intact and render the selected frame with rotation zero.
-- The ship has 32 headings (`SHIP_HEADINGS`); enemy craft keep 16
-  (`ENEMY_HEADINGS`, [sector one enemies](enemies.md)). Heading index is
-  normalized `round(atan2(world.y, world.x) / (PI / 16))` modulo 32, in 11.25
-  degree world steps. Ship heading `2k` faces the same angle as enemy heading
-  `k`. Multiples of four project down-right (0), down (4), down-left (8), left
-  (12), up-left (16), up (20), up-right (24) and right (28).
-- The isometric projection makes screen steps uneven: 19.0 degrees either side
-  of down and up, 6.6 degrees either side of left and right. Nose screen angles are
-  clockwise from screen right, with screen y down:
+- The ship has 64 headings from the shared player heading contract; enemy
+  craft keep 16. Enemy heading `k` faces ship heading `4k`. World heading `k`
+  is `k * 360 / 64` degrees. Quantization uses normalized
+  `round(atan2(world.y, world.x) / (PI / 32))` modulo 64, retaining the nearest
+  sample tie rule. Movement and aim stay continuous.
+- The isometric projection makes screen angles uneven. World quarter turns are
+  indices 0, 16, 32 and 48; screen down, left, up and right are 8, 24, 40 and 56.
+  These projected forward angles are clockwise from screen right, with screen
+  y down; the fixed nose height is excluded from the angle table.
 
-| Index |  World | Screen | Index |  World | Screen |
-| ----: | -----: | -----: | ----: | -----: | -----: |
-|     0 |      0 |   30.0 |    16 |    180 |  210.0 |
-|     1 |  11.25 |   40.8 |    17 | 191.25 |  220.8 |
-|     2 |   22.5 |   54.3 |    18 |  202.5 |  234.3 |
-|     3 |  33.75 |   71.0 |    19 | 213.75 |  251.0 |
-|     4 |     45 |   90.0 |    20 |    225 |  270.0 |
-|     5 |  56.25 |  109.0 |    21 | 236.25 |  289.0 |
-|     6 |   67.5 |  125.7 |    22 |  247.5 |  305.7 |
-|     7 |  78.75 |  139.2 |    23 | 258.75 |  319.2 |
-|     8 |     90 |  150.0 |    24 |    270 |  330.0 |
-|     9 | 101.25 |  158.9 |    25 | 281.25 |  338.9 |
-|    10 |  112.5 |  166.6 |    26 |  292.5 |  346.6 |
-|    11 | 123.75 |  173.4 |    27 | 303.75 |  353.4 |
-|    12 |    135 |  180.0 |    28 |    315 |    0.0 |
-|    13 | 146.25 |  186.6 |    29 | 326.25 |    6.6 |
-|    14 |  157.5 |  193.4 |    30 |  337.5 |   13.4 |
-|    15 | 168.75 |  201.1 |    31 | 348.75 |   21.1 |
+| Index |   World | Screen | Index |   World | Screen |
+| ----: | ------: | -----: | ----: | ------: | -----: |
+|     0 |       0 |   30.0 |    32 |     180 |  210.0 |
+|     1 |   5.625 |   35.1 |    33 | 185.625 |  215.1 |
+|     2 |   11.25 |   40.8 |    34 |  191.25 |  220.8 |
+|     3 |  16.875 |   47.2 |    35 | 196.875 |  227.2 |
+|     4 |    22.5 |   54.3 |    36 |   202.5 |  234.3 |
+|     5 |  28.125 |   62.3 |    37 | 208.125 |  242.3 |
+|     6 |   33.75 |   71.0 |    38 |  213.75 |  251.0 |
+|     7 |  39.375 |   80.3 |    39 | 219.375 |  260.3 |
+|     8 |      45 |   90.0 |    40 |     225 |  270.0 |
+|     9 |  50.625 |   99.7 |    41 | 230.625 |  279.7 |
+|    10 |   56.25 |  109.0 |    42 |  236.25 |  289.0 |
+|    11 |  61.875 |  117.7 |    43 | 241.875 |  297.7 |
+|    12 |    67.5 |  125.7 |    44 |   247.5 |  305.7 |
+|    13 |  73.125 |  132.8 |    45 | 253.125 |  312.8 |
+|    14 |   78.75 |  139.2 |    46 |  258.75 |  319.2 |
+|    15 |  84.375 |  144.9 |    47 | 264.375 |  324.9 |
+|    16 |      90 |  150.0 |    48 |     270 |  330.0 |
+|    17 |  95.625 |  154.6 |    49 | 275.625 |  334.6 |
+|    18 |  101.25 |  158.9 |    50 |  281.25 |  338.9 |
+|    19 | 106.875 |  162.8 |    51 | 286.875 |  342.8 |
+|    20 |   112.5 |  166.6 |    52 |   292.5 |  346.6 |
+|    21 | 118.125 |  170.1 |    53 | 298.125 |  350.1 |
+|    22 |  123.75 |  173.4 |    54 |  303.75 |  353.4 |
+|    23 | 129.375 |  176.7 |    55 | 309.375 |  356.7 |
+|    24 |     135 |  180.0 |    56 |     315 |  360.0 |
+|    25 | 140.625 |  183.3 |    57 | 320.625 |    3.3 |
+|    26 |  146.25 |  186.6 |    58 |  326.25 |    6.6 |
+|    27 | 151.875 |  189.9 |    59 | 331.875 |    9.9 |
+|    28 |   157.5 |  193.4 |    60 |   337.5 |   13.4 |
+|    29 | 163.125 |  197.2 |    61 | 343.125 |   17.2 |
+|    30 |  168.75 |  201.1 |    62 |  348.75 |   21.1 |
+|    31 | 174.375 |  205.4 |    63 | 354.375 |   25.4 |
 
 - Local forward is negative Y. Rotate the solid model into world heading before
   projecting `screenX = (x - y) * sqrt(3) / 2` and
@@ -126,10 +142,10 @@ Engine surfaces do not recolour flame layers.
 | Amber   | `#f4b665` | `#24577b`   | `#173a57`    |
 
 - Crimson retains the stable `graphite` id and asset paths.
-- Classic is free and is the `ship-{0..31}.svg` set. Other schemes use
+- Classic is free and is the `ship-{0..63}.svg` set. Other schemes use
   Gameplay's purchase-order prices; Art does not assign a fixed scheme price.
 - Other schemes export idle frames only:
-  `paint/{cobalt,seafoam,graphite,iris,amber}/ship-{0..31}.svg`. Draw speed jets
+  `paint/{cobalt,seafoam,graphite,iris,amber}/ship-{0..63}.svg`. Draw speed jets
   as for Classic. There are no painted thrust frames.
 - `ship-paint.json` version 1 lists these six schemes in order, with `id`,
   `name`, `top`, `frontSides`, `rearSides`, `skirt`, `canopyRoof`, `canopySides`,
@@ -186,6 +202,21 @@ applied to flames or hull geometry.
 | Iris    | `#342e72` | `#b0d3ff` | 0.3485 / 0.1131     | 0.8565 / 0.0721     |
 | Amber   | `#294964` | `#82e0fa` | 0.3934 / 0.0596     | 0.8577 / 0.0962     |
 
+## Heading package
+
+The pure `src/model/shipHeadingContract.ts` owns the player sample count and
+contract version. Art projection re-exports that contract. The active core
+manifest, nose/collision, main jets, retro jets, title and quantum data require
+`shipHeadings: { count: 64, version: 2 }`; their root and generic geometry
+versions remain 1. These artifacts are consumed together. A stale descriptor,
+missing index, duplicate index or wrong array count invalidates the player set.
+The six paint materials are independent of heading indices. Warp pose geometry
+keeps its single local heading 0 under the quantum data's player descriptor.
+
+The unused yellow retro archive remains a historical version 1, 32-heading
+file. It is not an active player fallback. Enemy and other craft heading sets
+remain independent at 16.
+
 ## Speed jets
 
 `ship-jets.json` (version 1) drives jets that scale continuously with speed. Each
@@ -200,7 +231,7 @@ renderer draws them behind the idle `ship-{index}` frame; there are no jet frame
 - `f` is current speed as a fraction of max speed. No jet at `f = 0`.
 - Jet length in ship units: `length.base + length.scale * f ^ length.exponent`
   (6 + 24 f²): about 2-3px at f = 0.25 and 13px at max on the 42px display.
-- `headings` holds all 32 ship headings, `headings[k].index` = `k`. Per
+- `headings` holds all 64 ship headings, `headings[k].index` = `k`. Per
   heading, each of the two `mouths` gives frame-px values in the 96 by 96
   frame: `anchor` (legacy projected opening middle), `outerCorner` (the visible wing
   corner controlling the whole group), `coreOutboard: true`, `axis` (projected rear
@@ -245,7 +276,7 @@ Light fields keep Engine 1 blue. Engine 2 uses outer `#9e3027`, core
 ### Retro jets
 
 `node art/tools/ship-retro-jets.ts` writes `ship-retro-jets.json`, using the
-version 1 engine-jet geometry with all 32 headings in the same 96 px frame
+version 1 engine-jet geometry with all 64 headings in the same 96 px frame
 and pivot as the ship. Its compatibility `engineLevels` derive from the
 same `JET_LEVELS` source as `ship-jets.json`.
 
@@ -290,11 +321,11 @@ links it as `shipNose`.
 
 - `frame` is the frame size in px (96) and `displayScale` the display px per
   frame px (0.4375, 42 / 96).
-- `noses[k]` is `[x, y]` in frame px for heading `k`, 32 entries: the hull's
+- `noses[k]` is `[x, y]` in frame px for heading `k`, 64 entries: the hull's
   forward tip at the skirt top, local (0, -32, 1.2), projected like the frames, so it is the drawn
   tip vertex of `ship-k`. Its offset from the pivot (48, 48) times
   `displayScale` gives display px from the ship's position.
-- `collision[k]` is idle heading `k`'s drawn silhouette, 32 entries in heading
+- `collision[k]` is idle heading `k`'s drawn silhouette, 64 entries in heading
   order: an array of convex parts, each an array of `[x, y]` in frame px, the
   schema of the asteroids' `frames[k].collision`. See [Collision](#collision).
 
@@ -306,15 +337,13 @@ The ship collides, makes contact and is placed by its drawn silhouette,
 
 - `art/tools/ship.ts` traces each idle frame's fills with the shared tracer
   (below). The frames have no strokes, so the drawing is not grown. Douglas-Peucker
-  runs at 0.5 frame px: at the default 0.75 the hull's long straight edges
-  leave headings 15, 17, 19 and 21 below the 0.98 floor.
+  runs at 0.5 frame px and retains the 0.98 intersection-over-union floor.
 - Paint schemes share the geometry. The generator traces every scheme and fails
   unless all six give the same parts, so the one set serves every paint.
 - The parts cover the hull; thrust flames and speed jets have none.
 - No heading has a notch tip; the generator fails if one appears.
-- Results: 3 to 7 parts per heading, intersection over union 0.982 to 0.993
-  (0.981 or more against librsvg renders at 4 px per frame px) and every
-  boundary within 0.5 frame px of the drawing.
+
+- Across all64 actual SVGs at 4 px per frame px: 3 to 8 collision parts, minimum intersection over union 0.9821 and maximum boundary distance 0.500 frame px.
 
 ### Shared tracer
 

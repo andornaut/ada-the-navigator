@@ -17,7 +17,7 @@ order and behaviour; the keys below are Gameplay's player string keys.
 | Item glyphs         | `icon-shop-*` and `icon-project-*` sheets and `weapon-<id>.svg`; see [Shop icons](shop-icons.md) |
 | Job glyphs          | `icon-job-*` sheets; see [Shop icons](shop-icons.md#job-icons)                                   |
 | Owned and In use    | `icon-shop-check`, 12x8                                                                          |
-| Ship paint swatches | The scheme's `ship-24` frame: `ship-24` for Classic, `ship-<scheme>-24` for the others           |
+| Ship paint swatches | The scheme's `ship-48` frame: `ship-48` for Classic, `ship-<scheme>-48` for the others           |
 
 Text uses the [controls text tokens](controls.md#colour-tokens): titles white
 `#ffffff`, body and names cream `#ead4aa`, supporting text `#b8b3c9`, disabled

@@ -1,10 +1,11 @@
 // Shared solid-model projection for ship and enemy frame exports.
+export { SHIP_HEADINGS, SHIP_HEADING_CONTRACT } from "../../src/model/shipHeadingContract.ts";
+
 export type Point = readonly [number, number, number];
 
 // Heading k of n faces world angle k * 360 / n degrees; local forward is negative Y.
-// Ada's ship turns through 32 headings for finer aiming; enemy craft keep 16, so ship
-// heading 2k faces enemy heading k.
-export const SHIP_HEADINGS = 32;
+// Ada's canonical heading contract is shared with runtime; enemy craft keep 16, so ship
+// heading 4k faces enemy heading k.
 export const ENEMY_HEADINGS = 16;
 
 export function rotate(headings: number, yaw: number, [x, y, z]: Point): Point {

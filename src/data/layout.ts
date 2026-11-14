@@ -484,7 +484,7 @@ export const START_SCREEN = {
     height: TYPE.body.lineHeight,
     top: START_ACTIONS_TOP + TEXT_BUTTON.height + SPACING.gap,
   },
-  // The selected paint's ship-26, its 96 frame drawn 280 square on this centre; its speed jets
+  // The selected paint's ship-52, its 96 frame drawn 280 square on this centre; its speed jets
   // draw behind it at the same scale.
   ship: { centre: { x: 378, y: 84 }, frame: 96, size: 280 },
   wordmark: {

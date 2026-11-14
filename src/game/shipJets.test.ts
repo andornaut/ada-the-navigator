@@ -55,20 +55,20 @@ const withHalo = (change: Record<string, unknown>) => ({
 });
 
 describe("ship jet metadata", () => {
-  it("reads 32 headings of two mouths and three layers from Art's file", () => {
+  it("reads 64 headings of two mouths and three layers from Art's file", () => {
     expect(jets.frame).toBe(96);
-    expect(jets.headings).toHaveLength(32);
+    expect(jets.headings).toHaveLength(64);
     expect(jets.headings.every((mouths) => mouths.length === 2)).toBe(true);
     expect(jets.layers).toHaveLength(3);
     const [x, y] = art.headings[0]!.mouths[0]!.anchor;
     expect(jets.headings[0]![0]!.anchor).toEqual({ x, y });
   });
 
-  it("takes the heading count from the file", () => {
+  it("rejects a reduced player heading set rather than treating it as a supported package", () => {
     const sixteen = art.headings
       .filter((heading) => heading.index % 2 === 0)
       .map((heading) => ({ ...heading, index: heading.index / 2 }));
-    expect(readEngineJets({ ...art, headings: sixteen })?.headings).toHaveLength(16);
+    expect(readEngineJets({ ...art, headings: sixteen })).toBeUndefined();
     expect(readEngineJets({ ...art, headings: [] })).toBeUndefined();
   });
 

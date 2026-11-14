@@ -13,8 +13,8 @@ import {
 } from "./nose.ts";
 
 const headingDirection = (index: number) => ({
-  x: Math.cos((index * Math.PI) / 16),
-  y: Math.sin((index * Math.PI) / 16),
+  x: Math.cos((index * Math.PI) / 32),
+  y: Math.sin((index * Math.PI) / 32),
 });
 const project = (v: { x: number; y: number }) => ({ x: v.x - v.y, y: (v.x + v.y) / 2 });
 // The nose is the pyramid hull's forward tip, local (0, -32, 1.2) in frame px (art/ship.md).
@@ -22,14 +22,14 @@ const FORWARD = 32;
 const HEIGHT = 1.2;
 
 describe("Ada's ship nose", () => {
-  it("reads Art's 32 noses from the file the manifest links as shipNose", () => {
+  it("reads Art's 64 noses from the file the manifest links as shipNose", () => {
     expect(manifest.shipNose).toBe("/art/ship-nose.json");
-    expect(SHIP_HEADINGS).toBe(32);
+    expect(SHIP_HEADINGS).toBe(64);
     expect(SHIP_NOSE.frame).toBe(96);
     expect(SHIP_NOSE.displayScale).toBe(0.4375);
-    expect(SHIP_NOSE.noses).toHaveLength(32);
-    expect(SHIP_NOSE.noses[28]).toEqual({ x: 87.192, y: 46.8 });
-    expect(SHIP_NOSE.noses[20]).toEqual({ x: 48, y: 24.173 });
+    expect(SHIP_NOSE.noses).toHaveLength(64);
+    expect(SHIP_NOSE.noses[56]).toEqual({ x: 87.192, y: 46.8 });
+    expect(SHIP_NOSE.noses[40]).toEqual({ x: 48, y: 24.173 });
   });
 
   it.each([
@@ -45,24 +45,24 @@ describe("Ada's ship nose", () => {
 
   it("selects the heading frame Art's ship draws for a facing", () => {
     expect(shipHeading({ x: 1, y: 0 })).toBe(0);
-    expect(shipHeading({ x: 0, y: -1 })).toBe(24);
-    expect(shipHeading({ x: 1, y: -1 })).toBe(28);
-    expect(shipHeading({ x: -1, y: -1 })).toBe(20);
-    expect(shipHeading({ x: Math.cos(0.098), y: Math.sin(0.098) })).toBe(0);
-    expect(shipHeading({ x: Math.cos(0.0985), y: Math.sin(0.0985) })).toBe(1);
+    expect(shipHeading({ x: 0, y: -1 })).toBe(48);
+    expect(shipHeading({ x: 1, y: -1 })).toBe(56);
+    expect(shipHeading({ x: -1, y: -1 })).toBe(40);
+    expect(shipHeading({ x: Math.cos(0.049), y: Math.sin(0.049) })).toBe(0);
+    expect(shipHeading({ x: Math.cos(0.0491), y: Math.sin(0.0491) })).toBe(1);
   });
 
-  it("offsets the drawn nose from the pivot (48, 48) in display px, 17.1 px right at heading 28", () => {
-    const right = noseScreenOffset(28);
+  it("offsets the drawn nose from the pivot (48, 48) in display px, 17.1 px right at heading 56", () => {
+    const right = noseScreenOffset(56);
     expect(right.x).toBeCloseTo((87.192 - 48) * 0.4375, 9);
     expect(right.x).toBeCloseTo(17.15, 2);
     expect(right.y).toBeCloseTo(-HEIGHT * 0.4375, 9);
     // Pointing up, the nose is above the centre by its forward reach and its height.
-    expect(noseScreenOffset(20).x).toBeCloseTo(0, 9);
-    expect(noseScreenOffset(20).y).toBeCloseTo((24.173 - 48) * 0.4375, 9);
+    expect(noseScreenOffset(40).x).toBeCloseTo(0, 9);
+    expect(noseScreenOffset(40).y).toBeCloseTo((24.173 - 48) * 0.4375, 9);
   });
 
-  it.each(Array.from({ length: 32 }, (_, index) => index))(
+  it.each(Array.from({ length: 64 }, (_, index) => index))(
     "projects heading %i's world nose offset onto Art's drawn nose",
     (index) => {
       const facing = headingDirection(index);

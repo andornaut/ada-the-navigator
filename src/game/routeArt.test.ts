@@ -59,7 +59,7 @@ describe("route map art", () => {
 
   it("keeps the selected idle hull paint during thrust and never uses baked Classic flames", () => {
     const classic = routeShipFrames(CORE_MANIFEST.assets, null);
-    expect(classic).toHaveLength(32);
+    expect(classic).toHaveLength(64);
     expect(classic[12]).toBe("/art/ship-12.svg");
     expect(classic.some((path) => path.includes("thrust"))).toBe(false);
     const cobalt = routeShipFrames(CORE_MANIFEST.assets, "cobalt");

@@ -36,7 +36,7 @@ const facing = (index: number) => ({
 });
 
 describe("Art's collision data", () => {
-  it("gives Ada's ship a silhouette at every one of its 32 headings", () => {
+  it("gives Ada's ship a silhouette at every one of its 64 headings", () => {
     const file = json("ship-nose.json") as { collision: unknown[] };
     expect(file.collision).toHaveLength(SHIP_HEADINGS);
     expect(file.collision.every(parts)).toBe(true);

@@ -187,7 +187,7 @@ describe("quantum jump data", () => {
 
   it("reads the warp's nine poses with a path for each of the five paints", () => {
     const { warp } = jump;
-    expect(warp.heading).toBe(24);
+    expect(warp.heading).toBe(48);
     expect(warp.tunnel).toBe("quantum-jump-tunnel");
     expect(warp.poses.map((pose) => pose.id)).toEqual([
       "bank-8",
@@ -215,12 +215,12 @@ describe("quantum jump data", () => {
   });
 
   it("turns the sprite the shortest way to the arrival heading, on whole frames", () => {
-    expect(spriteHeading(8, 24, undefined, 32)).toBe(24);
-    expect(spriteHeading(20, 24, 0.5, 32)).toBe(22);
-    expect(spriteHeading(20, 24, 1, 32)).toBe(24);
-    // From 4 the short way to 24 runs down through 0, over -12 frames.
-    expect(spriteHeading(4, 24, 0.333, 32)).toBe(0);
-    expect(spriteHeading(4, 24, 0.667, 32)).toBe(28);
+    expect(spriteHeading(16, 48, undefined, 64)).toBe(48);
+    expect(spriteHeading(40, 48, 0.5, 64)).toBe(44);
+    expect(spriteHeading(40, 48, 1, 64)).toBe(48);
+    // From 8 the short way to 48 runs down through 0, over -24 frames.
+    expect(spriteHeading(8, 48, 0.333, 64)).toBe(0);
+    expect(spriteHeading(8, 48, 0.667, 64)).toBe(56);
   });
 
   it("scales the tunnel to cover the view from the jump centre", () => {

@@ -19,6 +19,7 @@ import {
 } from "./paint.ts";
 import { IN_BETWEEN, SHIMMER, SPACE_BG } from "./palette.ts";
 import { Random } from "./random.ts";
+import { SHIP_HEADINGS, SHIP_HEADING_CONTRACT } from "./projection.ts";
 import { centredView, LOGICAL_PER_DESIGN, shimmer } from "./shimmer.ts";
 import { svgPaths } from "./ship-paths.ts";
 import { DISPLAY, drawn, FRAME, forwardJetMouths, type Pose, SCHEMES } from "./ship-model.ts";
@@ -229,7 +230,7 @@ if (!dataOnly && !paintOnly) writePng(`${art}quantum-jump-tunnel.png`, tunnelShe
 // (roll, degrees), a stretch along the hull and a squash across it, about the pivot. "sprite" in a
 // step is the in-game idle frame instead. Frames are 256 frame px square, pivot at the centre,
 // at the sprite's display scale, so a step's scale 1 is the in-game size.
-const WARP_HEADING = 24;
+const WARP_HEADING = (SHIP_HEADINGS * 270) / 360;
 const WARP_FRAME = 256;
 const POSES: readonly (Omit<Pose, "yaw"> & { readonly id: string })[] = [
   { id: "bank-8", roll: 8 },
@@ -460,6 +461,7 @@ for (const phase of PHASES) {
 
 const effect = {
   version: 1,
+  shipHeadings: SHIP_HEADING_CONTRACT,
   durationMs: 1000,
   frames: PHASES.map((phase) => ({ ...phase, steps: STEPS[phase.name] })),
   warp: {

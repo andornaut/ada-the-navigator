@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 import { filled, rgba, type RgbaImage, writePng } from "./paint.ts";
 import { INK, IN_BETWEEN, SPACE_BG } from "./palette.ts";
 import { linkData, replaceEntries } from "./manifest.ts";
-import { json } from "./projection.ts";
+import { json, SHIP_HEADINGS, SHIP_HEADING_CONTRACT } from "./projection.ts";
 import { Random } from "./random.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
@@ -246,37 +246,39 @@ writeFileSync(
   `${art}title-screen.json`,
   json({
     version: 1,
+    shipHeadings: SHIP_HEADING_CONTRACT,
     background: `#${SPACE_BG}`,
     field: { id: "title-field", at: [FIELD.x, FIELD.y] },
-    ship: { frame: 26, jetSpeed: 0.8, animated: false },
+    ship: { frame: (SHIP_HEADINGS * 292.5) / 360, jetSpeed: 0.8, animated: false },
     wordmark: { id: "title-wordmark" },
   }),
 );
+const titleEntries = [
+  {
+    id: "title-field",
+    path: "/art/title-field.png",
+    width: FIELD.width * FIELD.density,
+    height: FIELD.height * FIELD.density,
+    displayWidth: FIELD.width,
+    displayHeight: FIELD.height,
+    facing: "front",
+    pivot: { x: 0, y: 0 },
+  },
+  {
+    id: "title-wordmark",
+    path: "/art/ui/title-wordmark.svg",
+    width: mark.width,
+    height: mark.height,
+    displayWidth: mark.width,
+    displayHeight: mark.height,
+    facing: "front",
+    pivot: { x: 0, y: 0 },
+  },
+];
 replaceEntries(
   "core",
   (id) => id.startsWith("title-"),
-  [
-    {
-      id: "title-field",
-      path: "/art/title-field.png",
-      width: FIELD.width * FIELD.density,
-      height: FIELD.height * FIELD.density,
-      displayWidth: FIELD.width,
-      displayHeight: FIELD.height,
-      facing: "front",
-      pivot: { x: 0, y: 0 },
-    },
-    {
-      id: "title-wordmark",
-      path: "/art/ui/title-wordmark.svg",
-      width: mark.width,
-      height: mark.height,
-      displayWidth: mark.width,
-      displayHeight: mark.height,
-      facing: "front",
-      pivot: { x: 0, y: 0 },
-    },
-  ],
+  titleEntries,
   (id) => id.startsWith("aboard"),
 );
 linkData("core", { titleScreen: "/art/title-screen.json" });

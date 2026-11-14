@@ -22,7 +22,7 @@ import {
   writePng,
   type Xy,
 } from "./paint.ts";
-import { json } from "./projection.ts";
+import { json, SHIP_HEADINGS } from "./projection.ts";
 import { SPACE_BG } from "./palette.ts";
 import { centredView, DESIGN, shimmer, type View } from "./shimmer.ts";
 import { paintShip } from "./ship-raster.ts";
@@ -33,8 +33,8 @@ const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 // The story canvas: 960 by 540 logical px at 2 image px per logical px.
 const CANVAS = { width: 960, height: 540, density: 2 } as const;
 const D = CANVAS.density;
-// Heading 25 of 32: up and to the right, the engine mouths toward the viewer.
-const HEADING = 25;
+// World 281.25 degrees: up and to the right, the engine mouths toward the viewer.
+const HEADING = (SHIP_HEADINGS * 281.25) / 360;
 // Logical px per ship frame px, and the canvas point (logical px) under the frame centre.
 const SCALE = 5.85;
 const CENTRE: Xy = [476, 245];

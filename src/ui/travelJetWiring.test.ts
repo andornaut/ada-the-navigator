@@ -158,7 +158,7 @@ describe("warp material wiring", () => {
       tunnel: sheet,
     });
     let level = 1;
-    const sprites = Array.from({ length: 32 }, () => "idle.svg");
+    const sprites = Array.from({ length: 64 }, () => "idle.svg");
     overlay.setPaint({
       jets: () => staticShipJets(main, undefined, level),
       scheme: "classic",
@@ -199,7 +199,7 @@ describe("warp material wiring", () => {
       overlay.setPaint({
         jets: () => staticShipJets(main, undefined, 3),
         scheme: "classic",
-        sprites: Array.from({ length: 32 }, () => "idle.svg"),
+        sprites: Array.from({ length: 64 }, () => "idle.svg"),
       });
       overlay.play(play(reduced));
       fixture.tick(10);
@@ -254,7 +254,7 @@ it("draws route thrust below the painted hull and hides it under reduced motion"
     ground: "",
     jets: provider,
     locked: "#888888",
-    ship: () => Array.from({ length: 32 }, (_, heading) => `cobalt-${heading}.svg`),
+    ship: () => Array.from({ length: 64 }, (_, heading) => `cobalt-${heading}.svg`),
     sky: "",
   });
   map.show(mapView({ from: 1, opened: [2], to: 2 }));

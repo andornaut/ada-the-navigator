@@ -325,7 +325,7 @@ const NOSE_ANGLES = SHIP_NOSE.noses.map(({ x, y }) =>
   Math.atan2(y - SHIP_NOSE.frame / 2, x - SHIP_NOSE.frame / 2),
 );
 
-/** Of the 32 headings, the one whose nose angle is nearest a direction on screen. */
+/** Of the 64 headings, the one whose nose angle is nearest a direction on screen. */
 export function routeHeading(direction: Point): number {
   const angle = Math.atan2(direction.y, direction.x);
   let best = 0;

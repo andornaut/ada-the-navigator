@@ -147,6 +147,32 @@ function contours(polygons: readonly (readonly Xy[])[]): Xy[][] {
   const joined = edges
     .map((edge) => ({ a: canonical(edge.a), b: canonical(edge.b) }))
     .filter((edge) => edge.a !== edge.b);
+  const balance = vertices.map(() => 0);
+  for (const { a, b } of joined) {
+    balance[a]!++;
+    balance[b]!--;
+  }
+  // Endpoint comparisons each allow EPSILON; close only opposite flows within their combined bound.
+  for (let from = 0; from < vertices.length; from++) {
+    while (balance[from]! < 0) {
+      let to = -1;
+      let nearest = 2 * EPSILON;
+      const a = vertices[from]!;
+      for (let index = 0; index < vertices.length; index++) {
+        if (balance[index]! <= 0) continue;
+        const b = vertices[index]!;
+        const distance = Math.hypot(a[0] - b[0], a[1] - b[1]);
+        if (distance <= nearest) {
+          to = index;
+          nearest = distance;
+        }
+      }
+      if (to < 0) break;
+      joined.push({ a: from, b: to });
+      balance[from]!++;
+      balance[to]!--;
+    }
+  }
   const outgoing = new Map<number, number[]>();
   joined.forEach((edge, i) => {
     const list = outgoing.get(edge.a) ?? [];

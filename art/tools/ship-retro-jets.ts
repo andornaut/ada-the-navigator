@@ -1,7 +1,7 @@
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { anchor, json, round, SHIP_HEADINGS, vector } from "./projection.ts";
+import { anchor, json, round, SHIP_HEADINGS, SHIP_HEADING_CONTRACT, vector } from "./projection.ts";
 import { JET_LENGTH, JET_LEVELS, jetLayers } from "./ship-jet-layers.ts";
 import { FRAME, jetAttachment, retroMouthAxis } from "./ship-model.ts";
 
@@ -42,6 +42,7 @@ const headings = Array.from({ length: SHIP_HEADINGS }, (_, yaw) => ({
 }));
 const contract = {
   version: 1,
+  shipHeadings: SHIP_HEADING_CONTRACT,
   frame: FRAME,
   length: {
     base: round(JET_LENGTH.base * 1.1),

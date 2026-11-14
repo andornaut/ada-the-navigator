@@ -1,9 +1,10 @@
 import { type JetTriangle, jetTriangles, type ShipJets } from "../game/shipJets.ts";
+import { readShipHeadingContract, SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
 import type { Vec } from "../model/types.ts";
 import { START_SCREEN } from "./layout/startScreen.ts";
 
 // Art's start screen art (art/title-screen.md), from the core manifest and title-screen.json, which
-// it links as titleScreen: the field, the wordmark, each paint's ship-26 and the speed jets
+// it links as titleScreen: the field, the wordmark, each paint's ship-52 and the speed jets
 // at their authored depth, held still.
 
 /** A manifest entry the title screen reads. */
@@ -65,11 +66,14 @@ export function readTitleScreen(
   const frame = ship?.frame;
   if (
     root?.version !== 1 ||
+    !readShipHeadingContract(root?.shipHeadings) ||
     typeof root.background !== "string" ||
     !Array.isArray(at) ||
     at.length !== 2 ||
     !at.every(finite) ||
     !Number.isInteger(frame) ||
+    (frame as number) < 0 ||
+    (frame as number) >= SHIP_HEADINGS ||
     !finite(ship?.jetSpeed) ||
     !fieldAsset ||
     !positive(fieldAsset.displayWidth) ||

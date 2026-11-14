@@ -19,10 +19,25 @@ import {
 } from "./ship-model.ts";
 import { AUTHORED_JET_CURVE, AUTHORED_JET_LENGTH } from "./ship-jet-svg.ts";
 import { paintShip } from "./ship-raster.ts";
+import { svgPaths } from "./ship-paths.ts";
 import { rgb, toOklab } from "./oklab.ts";
-import { projectAt, rotate } from "./projection.ts";
+import {
+  ENEMY_HEADINGS,
+  projectAt,
+  rotate,
+  SHIP_HEADINGS,
+  SHIP_HEADING_CONTRACT,
+} from "./projection.ts";
 
 const assets = new URL("../../public/art/", import.meta.url);
+const worldView = (degrees: number) => (degrees * SHIP_HEADINGS) / 360;
+
+test("a sampled canopy tangency retains closed vector material contours", () => {
+  const fragments = drawn(48, classic.paint, { yaw: worldView(73.125) });
+  const paths = svgPaths(fragments);
+  assert(paths.length > 0);
+  assert(paths.every(({ path }) => path.endsWith("Z")));
+});
 const linear = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
 const luminance = (hex: string) =>
   [1, 3, 5].reduce(
@@ -62,7 +77,7 @@ test("exported Classic materials and purchased paint ratios match their contract
         `${tier} must preserve the luminance ratio after byte rounding`,
       );
     }
-  assert.deepEqual([FRAME, DISPLAY, UP], [96, 42, 20]);
+  assert.deepEqual([FRAME, DISPLAY, UP], [96, 42, 40]);
 });
 
 function mask(yaw: number) {
@@ -78,9 +93,9 @@ function mask(yaw: number) {
 }
 
 test("actual opaque render has mirrored outer coverage at matched opposing views", () => {
-  for (const yaw of [2, 3, 10, 15, 18, 26]) {
+  for (const yaw of [22.5, 33.75, 112.5, 168.75, 202.5, 292.5].map(worldView)) {
     const a = mask(yaw),
-      b = mask((8 - yaw + 32) % 32);
+      b = mask((SHIP_HEADINGS / 4 - yaw + SHIP_HEADINGS) % SHIP_HEADINGS);
     let different = 0;
     for (let y = 0; y < 288; y++)
       for (let x = 0; x < 288; x++) if (a[y * 288 + x] !== b[y * 288 + 287 - x]) different++;
@@ -93,7 +108,7 @@ test("actual opaque render has mirrored outer coverage at matched opposing views
 });
 
 test("the opaque hull and canopy leave no enclosed background slivers", () => {
-  for (const yaw of [2, 3, 10, 15, 18, 26]) {
+  for (const yaw of [22.5, 33.75, 112.5, 168.75, 202.5, 292.5].map(worldView)) {
     const filled = mask(yaw),
       exterior = new Set<number>(),
       queue = [0];
@@ -150,11 +165,11 @@ test("title jet anchors land inside the actual visible rear mouth regions", () =
     headings: { index: number; mouths: { anchor: number[]; occluders?: number[][][] }[] }[];
   };
   assert.equal(jets.frame, FRAME);
-  assert.equal(jets.headings.length, 32);
-  const mouths = drawn(48, classic.paint, { yaw: 26 }).filter(
+  assert.equal(jets.headings.length, SHIP_HEADINGS);
+  const mouths = drawn(48, classic.paint, { yaw: worldView(292.5) }).filter(
     ({ color }) => color === classic.paint.engineOpening,
   );
-  for (const mouth of jets.headings.find(({ index }) => index === 26)!.mouths) {
+  for (const mouth of jets.headings.find(({ index }) => index === worldView(292.5))!.mouths) {
     assert(
       mouths.some(({ outline }) => contains(outline, mouth.anchor)),
       "anchor must originate on an actual cyan engine opening",
@@ -208,8 +223,8 @@ test("authored group attachments use the near skirt bottom and retain the far up
       mouths: { outerCorner: number[]; coreOutboard: boolean; rearClip?: unknown }[];
     }[];
   };
-  assert.equal(jetAttachment(12, -1).corner[2], 0);
-  assert.equal(jetAttachment(12, 1).corner[2], 1.2);
+  assert.equal(jetAttachment(worldView(135), -1).corner[2], 0);
+  assert.equal(jetAttachment(worldView(135), 1).corner[2], 1.2);
   for (const heading of jets.headings)
     for (const mouth of heading.mouths) {
       assert.equal(mouth.coreOutboard, true);
@@ -286,7 +301,7 @@ test("warp poses publish projected uncut groups without scaling authored thrust 
     };
   };
   assert.equal(warp.frame, 256);
-  assert.equal(warp.heading, 24);
+  assert.equal(warp.heading, 48);
   assert.equal(warp.displayScale, DISPLAY / FRAME);
   assert.equal(warp.poses.length, 9);
   assert.equal(warp.poses.filter((pose) => pose.jets).length, 7);
@@ -323,9 +338,11 @@ test("enlarged luminous openings stay within the housing at grazing views", () =
     });
     return distances.every((d) => d >= -1e-7) || distances.every((d) => d <= 1e-7);
   };
-  for (let yaw = 0; yaw < 32; yaw++) {
+  for (let yaw = 0; yaw < SHIP_HEADINGS; yaw++) {
     const housings = [-1, 1].map((sign) =>
-      engineOpeningGeometry(sign).housing.map((p) => projectAt(48, 48, rotate(32, yaw, p))),
+      engineOpeningGeometry(sign).housing.map((p) =>
+        projectAt(48, 48, rotate(SHIP_HEADINGS, yaw, p)),
+      ),
     );
     for (const opening of drawn(48, classic.paint, { yaw }).filter(
       (f) => f.color === classic.paint.engineOpening,
@@ -333,10 +350,52 @@ test("enlarged luminous openings stay within the housing at grazing views", () =
       assert(housings.some((housing) => opening.outline.every((p) => inside(housing, p))));
   }
   const image = blankImage(96, 96);
-  paintShip(image, drawn(48, classic.paint, { yaw: 13 }));
+  paintShip(image, drawn(48, classic.paint, { yaw: worldView(146.25) }));
   assert.equal(
     image.data[(58 * 96 + 66) * 4 + 3],
     0,
     "raised aperture must not add an exterior hull pixel",
   );
+});
+
+test("the active player package publishes one complete 64-heading contract without changing enemy or archive counts", () => {
+  assert.equal(SHIP_HEADINGS, 64);
+  assert.equal(ENEMY_HEADINGS, 16);
+  assert.equal(SHIP_HEADINGS / ENEMY_HEADINGS, 4);
+  for (const file of [
+    "manifest.json",
+    "ship-nose.json",
+    "ship-jets.json",
+    "ship-retro-jets.json",
+    "title-screen.json",
+    "quantum-jump.json",
+  ]) {
+    const data = JSON.parse(readFileSync(new URL(file, assets), "utf8"));
+    assert.equal(data.version, 1);
+    assert.deepEqual(data.shipHeadings, SHIP_HEADING_CONTRACT);
+    if (file === "ship-nose.json") {
+      assert.equal(data.noses.length, SHIP_HEADINGS);
+      assert.equal(data.collision.length, SHIP_HEADINGS);
+    }
+    if (["ship-jets.json", "ship-retro-jets.json"].includes(file))
+      assert.deepEqual(
+        data.headings.map((h: { index: number }) => h.index),
+        Array.from({ length: SHIP_HEADINGS }, (_, index) => index),
+      );
+  }
+  const manifest = JSON.parse(readFileSync(new URL("manifest.json", assets), "utf8")) as {
+    assets: { id: string; paint?: string; directionIndex?: number }[];
+  };
+  for (const scheme of SCHEMES) {
+    const frames = manifest.assets.filter((a) =>
+      scheme.id === "classic" ? /^ship-\d+$/.test(a.id) && !a.paint : a.paint === scheme.id,
+    );
+    assert.deepEqual(
+      frames.map((a) => a.directionIndex),
+      Array.from({ length: SHIP_HEADINGS }, (_, index) => index),
+    );
+  }
+  const archive = JSON.parse(readFileSync(new URL("ship-retro-jets-yellow.json", assets), "utf8"));
+  assert.equal(archive.version, 1);
+  assert.equal(archive.headings.length, 32);
 });

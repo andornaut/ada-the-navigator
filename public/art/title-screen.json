@@ -1,12 +1,16 @@
 {
   "version": 1,
+  "shipHeadings": {
+    "count": 64,
+    "version": 2
+  },
   "background": "#292734",
   "field": {
     "id": "title-field",
     "at": [-120, 0]
   },
   "ship": {
-    "frame": 26,
+    "frame": 52,
     "jetSpeed": 0.8,
     "animated": false
   },

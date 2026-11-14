@@ -1,5 +1,6 @@
 import { byGalaxy } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import type { ShipHeadingContract } from "../model/shipHeadingContract.ts";
 import { type EnemyFrame, enemyPartFrame } from "./enemyArt.ts";
 import { whaleFrameAsset } from "./whaleArt.ts";
 
@@ -9,6 +10,7 @@ import { whaleFrameAsset } from "./whaleArt.ts";
 
 /** The core manifest's assets and links that the game reads. */
 export interface CoreManifest<T> {
+  readonly shipHeadings?: ShipHeadingContract;
   readonly assets: T[];
   /** The backdrop layers' shared rules (public/art/backdrop.json). */
   readonly backdropLayers?: string;

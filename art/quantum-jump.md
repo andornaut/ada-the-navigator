@@ -15,6 +15,12 @@
 - Ada's ship shows in every jump, drawn from the shared
   [ship model](ship.md) in the selected paint.
 
+The root requires `shipHeadings: { count: 64, version: 2 }`, independently of
+its version 1 effect and pose geometry encoding. The fixed warp world angle is
+270 degrees (heading 48). Pose geometry retains local heading 0, the same 54
+hull paths, bank/roll/stretch transforms, pivots and authored 16-unit outer jet
+length.
+
 ## Timeline
 
 1000 ms in seven phases. The game switches to the destination at 520 ms, the

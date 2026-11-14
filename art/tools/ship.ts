@@ -2,7 +2,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { editManifest } from "./manifest.ts";
-import { anchor, json, SHIP_HEADINGS, vector } from "./projection.ts";
+import { anchor, json, SHIP_HEADINGS, SHIP_HEADING_CONTRACT, vector } from "./projection.ts";
 import {
   classic,
   DISPLAY,
@@ -69,6 +69,7 @@ function jets(): string {
   }));
   const contract = {
     version: 1,
+    shipHeadings: SHIP_HEADING_CONTRACT,
     frame: 96,
     length: JET_LENGTH,
     engineLevels: JET_LEVELS.map((entry) => ({ level: entry.level, layers: jetLayers(entry) })),
@@ -108,6 +109,7 @@ function collision(yaw: number): V2[][] {
 function noses(): string {
   return json({
     version: 1,
+    shipHeadings: SHIP_HEADING_CONTRACT,
     frame: FRAME,
     displayScale: DISPLAY / FRAME,
     noses: Array.from({ length: SHIP_HEADINGS }, (_, yaw) =>
@@ -186,5 +188,6 @@ if (!process.argv.includes("--data-only")) {
     editManifest("core", (manifest) => {
       manifest.assets = [...entries, ...manifest.assets.filter((asset) => !isShip(asset))];
       manifest.shipNose = "/art/ship-nose.json";
+      manifest.shipHeadings = SHIP_HEADING_CONTRACT;
     });
 }
