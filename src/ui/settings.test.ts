@@ -93,6 +93,15 @@ const state = (row: Element) =>
   row.children.find((node) => node.className === "ada-setting-state")!;
 
 describe("Settings current-state labels", () => {
+  it("provides a primary Close in the shared launcher actions without renaming it", () => {
+    const { settings } = setup();
+    const actions = settings.actions as unknown as Element;
+    expect(actions.dataset.footerAction).toBe("close");
+    expect(actions.children.map((button) => button.textContent)).toEqual([labels.close]);
+    expect(actions.children[0]!.dataset.action).toBe("settings-close");
+    expect(actions.children[0]!.className).toContain("ada-primary");
+    settings.dispose();
+  });
   it("fits Settings and install steps within the shared medium cap", () => {
     const { settings } = setup();
     const root = settings.root as unknown as Element;

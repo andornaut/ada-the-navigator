@@ -15,8 +15,9 @@ import { CARD_WIDTH_CAPS } from "./layout/contentCard.ts";
 import { CONTROL_ROW, WHOLE_PX_EDGES } from "./layout/controls.ts";
 import { font, fromHudEdge, units, viewStyle } from "./layout/css.ts";
 import { hudButtonTarget, type StartNavButton, startNavOrder } from "./layout/playView.ts";
-import { settingsColumns } from "./layout/settings.ts";
-import { SPACING, TYPE } from "./layout/tokens.ts";
+import { SETTINGS_COLUMN_GAP, settingsColumns } from "./layout/settings.ts";
+import { STORY_PANEL } from "./layout/storyPage.ts";
+import { TYPE } from "./layout/tokens.ts";
 import { TOUCH_STICK, USE_DISC } from "./layout/touchControls.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import {
@@ -27,6 +28,7 @@ import {
   FOCUS_STYLE,
   isTap,
   MODAL_STYLE,
+  setFooterAction,
   setScrollGroup,
   TEXT_TOKENS,
 } from "./modal.ts";
@@ -239,27 +241,33 @@ ${hudDiscStyle(".ada-controls .ada-exit-open", ".ada-disc")}
    supporting colour. */
 .ada-controls .ada-rows[data-columns="2"]{
   grid-template-columns:repeat(2,minmax(0,1fr));
-  column-gap:${units(SPACING.columnGap)}
+  column-gap:${units(SETTINGS_COLUMN_GAP)}
 }
-.ada-controls .ada-rows[data-columns="2"] > .ada-install-row{
-  grid-column:1 / -1
+.ada-controls .ada-rows[data-columns="2"]::before{
+  content:"";
+  grid-column:1 / -1;
+  grid-row:1 / 4;
+  justify-self:center;
+  align-self:stretch;
+  width:${units(STORY_PANEL.rule.width)};
+  background:${STORY_PANEL.rule.colour};
+  pointer-events:none
 }
-.ada-controls .ada-card-body[data-settings-columns="2"]{
-  display:grid;
-  grid-template-columns:minmax(0,1fr) max-content;
-  align-items:center
-}
-.ada-controls .ada-card-body[data-settings-columns="2"] > .ada-rows{
-  grid-column:1 / -1
-}
-.ada-controls .ada-card-body[data-settings-columns="2"] > .ada-build{
-  grid-column:1;
-  grid-row:2
-}
-.ada-controls .ada-card-body[data-settings-columns="2"] > .ada-actions{
+.ada-controls .ada-rows[data-columns="2"] > :nth-child(1){grid-column:1;grid-row:1}
+.ada-controls .ada-rows[data-columns="2"] > :nth-child(2){grid-column:2;grid-row:1}
+.ada-controls .ada-rows[data-columns="2"] > :nth-child(3){grid-column:1;grid-row:2}
+.ada-controls .ada-rows[data-columns="2"] > :nth-child(4){grid-column:2;grid-row:2}
+.ada-controls .ada-rows[data-columns="2"] > .ada-install-row{grid-column:1;grid-row:3}
+.ada-controls .ada-rows[data-columns="2"] > .ada-settings-actions{
   grid-column:2;
-  grid-row:2;
-  justify-self:end
+  grid-row:3;
+  justify-self:end;
+  align-self:center
+}
+.ada-controls .ada-rows[data-columns="2"] > .ada-settings-actions:not(:has(>button:not([hidden])~button:not([hidden]))){
+  grid-column:1 / -1;
+  grid-row:4;
+  justify-self:center
 }
 
 .ada-controls .ada-build{
@@ -373,10 +381,15 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     switchRow("reducedMotion", options.labels.reducedMotion, options.labels.motionNote),
   );
   // The build line, after the rows as in Chibi: plain text screen readers read with the card.
+  const dismiss = createButton(options.labels.close, "primary");
+  dismiss.dataset.action = "settings-close";
+  const actions = createActions([{ button: dismiss, role: "primary" }]);
+  actions.classList.add("ada-settings-actions");
+  setFooterAction("close", actions);
   const build = document.createElement("p");
   build.className = "ada-build";
   build.textContent = options.build;
-  card.append(rows, build);
+  card.append(rows, build, actions);
   setScrollGroup(settingsCard, rows);
   // The Install row, as in Archie: its label and note, and a button that asks for the browser's
   // prompt or opens that browser's menu steps in the Settings card's place.
@@ -440,6 +453,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       return;
     }
     rows.dataset.columns = card.dataset.settingsColumns = "1";
+    card.append(actions);
     settingsCard.card.style.minWidth = "";
     settingsCard.fit();
     const needsCompactLayout = rows.scrollHeight > rows.clientHeight;
@@ -464,6 +478,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       (modal.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)) / unit;
     const fitted = settingsColumns(
       {
+        actionsWidth: actions.getBoundingClientRect().width / unit,
         availableWidth,
         landscape: modal.clientWidth > modal.clientHeight,
         overflowing: needsCompactLayout,
@@ -472,12 +487,19 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     );
     rows.dataset.columns = card.dataset.settingsColumns = String(fitted.columns);
     if (fitted.columns === 2) {
+      rows.append(actions);
       settingsCard.card.style.minWidth = units(fitted.minimumWidth);
     }
     settingsCard.fit();
     if (fitted.columns === 2 && rows.scrollHeight > rows.clientHeight) {
       settingsCard.card.style.minWidth = units(Math.min(availableWidth, CARD_WIDTH_CAPS.medium));
       settingsCard.fit();
+      if (rows.scrollHeight > rows.clientHeight) {
+        rows.dataset.columns = card.dataset.settingsColumns = "1";
+        card.append(actions);
+        settingsCard.card.style.minWidth = "";
+        settingsCard.fit();
+      }
     }
   }
   window.addEventListener("resize", fitSettings);
@@ -552,6 +574,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   };
   openButton.addEventListener("click", () => setOpen(true));
   closeButton.addEventListener("click", () => setOpen(false));
+  dismiss.addEventListener("click", () => setOpen(false));
   // A full outside click closes the card; dragging out of the card does not.
   let outsidePress: { readonly id: number; readonly x: number; readonly y: number } | undefined;
   modal.addEventListener("pointerdown", (event) => {
@@ -599,6 +622,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     }
   });
   return {
+    actions,
     card,
     close: () => setOpen(false),
     closeSteps,

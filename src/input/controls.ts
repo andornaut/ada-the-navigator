@@ -229,7 +229,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   // to the Paused card when they close.
   let returnToPause = false;
   let cheatsOpening = false;
-  const cheats = createCheats(settings.root, settings.card, {
+  const cheats = createCheats(settings.root, settings.actions, {
     ...options.cheats,
     beforeOpen: () => {
       cheatsOpening = true;

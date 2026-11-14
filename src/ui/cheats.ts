@@ -2,7 +2,7 @@ import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 import { createModalLayer } from "@andornaut/game-kit/web/ui/dom/modalLayer";
 
 import { type CheatAction, cheatGroups, createCheatSession } from "./cheatActions.ts";
-import { createActions, createButton, createCard } from "./modal.ts";
+import { createButton, createCard } from "./modal.ts";
 
 export interface CheatLabels {
   readonly close: string;
@@ -28,7 +28,7 @@ interface CheatOptions {
 /** Browser-tab-only modal; the session also guards dispatch and deferred commits. */
 export function createCheats(
   parent: HTMLElement,
-  launcherParent: HTMLElement,
+  launcherActions: HTMLElement,
   options: CheatOptions,
 ) {
   const session = createCheatSession({
@@ -40,9 +40,7 @@ export function createCheats(
   launcher.dataset.action = "cheats";
   launcher.setAttribute("aria-haspopup", "dialog");
   launcher.setAttribute("aria-expanded", "false");
-  // A single action, centred as every action group is.
-  const launcherGroup = createActions([{ button: launcher, role: "secondary" }]);
-  launcherParent.append(launcherGroup);
+  launcherActions.prepend(launcher);
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
@@ -141,7 +139,6 @@ export function createCheats(
     currentRun = nextRun;
     const eligible = session.eligible();
     launcher.hidden = !eligible;
-    launcherGroup.hidden = !eligible;
     if (!eligible) {
       setOpen(false);
     }
@@ -183,7 +180,7 @@ export function createCheats(
       layer?.dispose();
       parts.dispose();
       modal.remove();
-      launcherGroup.remove();
+      launcher.remove();
     },
     isOpen: () => open,
     refresh,
