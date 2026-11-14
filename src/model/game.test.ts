@@ -82,6 +82,8 @@ function arrive(model: GameModel, id: string) {
   ensureDestination(CONTENT, id, f);
   const target = f.objects.find((o) => o.id === id)!;
   f.player = { x: target.x, y: target.y };
+  // Direct test travel settles the active region as production travel does.
+  syncFlightRegion(CONTENT, f);
   if (!model.state.progress[f.galaxy].known.includes(id)) {
     model.state.progress[f.galaxy].known.push(id);
   }
