@@ -2,31 +2,30 @@
 // art-kit's Pillow-compatible primitives, Lanczos resampling, Gaussian blur and blends.
 import { writeFileSync } from "node:fs";
 
+import { rgb } from "@andornaut/art-kit/colour";
 import { ellipse, line, polygon } from "@andornaut/art-kit/draw";
 import { encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/png";
 import type { Rgba } from "@andornaut/art-kit/raster";
-import { composite, gaussianBlur, grayscale, resizeLanczos3 } from "@andornaut/art-kit/raster";
+import {
+  composite,
+  crop,
+  filledImage,
+  gaussianBlur,
+  grayscale,
+  resizeLanczos3,
+} from "@andornaut/art-kit/raster";
 import { blankImage, type RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
 export type { RgbaImage };
 export type Xy = readonly [number, number];
 
+// Generator palettes provide six-digit hexadecimal colours, optionally prefixed with #.
 export function rgba(hex: string, alpha = 255): Rgba {
-  const h = hex.replace("#", "");
-  return [
-    parseInt(h.slice(0, 2), 16),
-    parseInt(h.slice(2, 4), 16),
-    parseInt(h.slice(4, 6), 16),
-    alpha,
-  ];
+  return [...rgb(hex.replace("#", "")), alpha];
 }
 
 export function filled(colour: Rgba, width: number, height: number): RgbaImage {
-  const image = blankImage(width, height);
-  for (let i = 0; i < width * height; i++) {
-    image.data.set(colour, i * 4);
-  }
-  return image;
+  return filledImage(colour, width, height);
 }
 
 const at = (points: readonly Xy[]) => points.map(([x, y]) => ({ x, y }));
@@ -113,23 +112,7 @@ export function over(target: RgbaImage, source: RgbaImage, x = 0, y = 0): void {
 
 // Region of an image, with pixels outside it clear.
 export function region(source: RgbaImage, x: number, y: number, width: number, height: number) {
-  const out = blankImage(width, height);
-  for (let row = 0; row < height; row++) {
-    const sy = y + row;
-    if (sy < 0 || sy >= source.height) {
-      continue;
-    }
-    for (let col = 0; col < width; col++) {
-      const sx = x + col;
-      if (sx >= 0 && sx < source.width) {
-        out.data.set(
-          source.data.subarray((sy * source.width + sx) * 4, (sy * source.width + sx) * 4 + 4),
-          (row * width + col) * 4,
-        );
-      }
-    }
-  }
-  return out;
+  return crop({ x, y, width, height }, source);
 }
 
 // Generator callers provide positive integer image sizes.
