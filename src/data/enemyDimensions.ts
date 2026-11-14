@@ -6,6 +6,6 @@ export const ENEMY_SIZE_RATIOS = {
   frigate: 5,
   interceptor: 1,
   platform: 4,
-  retaliator: 2,
+  retaliator: 3,
   swarm: 0.65,
 } as const;
