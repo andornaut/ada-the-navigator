@@ -182,7 +182,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   root.append(modal);
   const mapScreen = createMapScreen(root, {
     labels: labels.mapScreen,
-    onClose: () => closeMap(),
+    onClose: () => setOpen(false),
     // The galaxy map opens over the local map, which stays open beneath it.
     onGalaxies: () => options.onGalaxies(),
     onQuests: () => openQuests(),

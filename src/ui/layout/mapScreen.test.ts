@@ -5,7 +5,6 @@ import { describe, expect, it } from "vitest";
 
 import type { GalaxyNumber } from "../../data/types.ts";
 import { FALLBACK_SPACE_PALETTE, readGalaxyFields } from "../../game/spacePalette.ts";
-import { TEXT_BUTTON } from "./controls.ts";
 import {
   adaAngle,
   chipRect,
@@ -19,8 +18,10 @@ import {
   MAP_SCREEN,
   MAP_SYMBOL,
   MAP_TOOLS,
+  mapCloseRect,
   mapGalaxiesRect,
   mapHeaderCap,
+  mapHeaderGeometry,
   mapHeaderWidth,
   mapImage,
   mapProjection,
@@ -36,16 +37,8 @@ import {
   toScreen,
   zoomView,
 } from "./mapScreen.ts";
-import {
-  HUD_BUTTON_INSET,
-  hudRect,
-  logicalView,
-  NO_INSETS,
-  safeInsets,
-  safeRect,
-  viewScale,
-} from "./playView.ts";
-import { BUTTON_GAP, SMALL_BUTTON_GAP, SPACING } from "./tokens.ts";
+import { logicalView, NO_INSETS, safeInsets, safeRect, viewScale } from "./playView.ts";
+import { SPACING } from "./tokens.ts";
 
 const BASE = { height: 360, width: 720 };
 const regionsAt = (css: { height: number; width: number }, cssInsets = NO_INSETS) => {
@@ -66,7 +59,7 @@ describe("map screen tokens", () => {
       header: {
         alpha: 0.65,
         dividerGap: 12,
-        height: 48,
+        height: 64,
         labelTop: 14,
         nameTop: 10,
         padding: 16,
@@ -100,12 +93,12 @@ describe("map screen tokens", () => {
     });
   });
 
-  it("use Art's 13 glyphs, each a shipped map-*.svg", () => {
+  it("use Art's map glyphs without the replaced close X, each a shipped map-*.svg", () => {
     const glyphs = [
       ...Object.values(MAP_GLYPHS).filter((glyph) => glyph !== null),
       ...MAP_TOOLS.map(({ glyph }) => glyph),
     ];
-    expect(new Set(glyphs).size).toBe(13);
+    expect(new Set(glyphs).size).toBe(12);
     for (const glyph of glyphs) {
       const svg = readFileSync(
         new URL(`../../../public/art/ui/icons/${glyph}.svg`, import.meta.url),
@@ -119,66 +112,35 @@ describe("map screen tokens", () => {
 describe("map projection and fit", () => {
   it("fits the regions and zoom range of Art's table", () => {
     const base = regionsAt(BASE);
-    expect([base.fit.width, base.fit.height]).toEqual([643.5, 283.5]);
-    expect([base.inner.width, base.inner.height]).toEqual([599.5, 239.5]);
+    expect([base.fit.width, base.fit.height]).toEqual([688, 200]);
+    expect([base.inner.width, base.inner.height]).toEqual([644, 156]);
     const limits = scaleLimits(base.inner);
-    expect(round(limits.max, 5)).toBe(0.03992);
-    expect(round(limits.min, 5)).toBe(0.00677);
-    expect(round(Math.log(limits.max / limits.min) / Math.log(MAP_SCREEN.zoomStep), 2)).toBe(4.37);
+    expect(round(limits.max, 5)).toBe(0.04733);
+    expect(round(limits.min, 5)).toBe(0.00441);
+    expect(round(Math.log(limits.max / limits.min) / Math.log(MAP_SCREEN.zoomStep), 2)).toBe(5.85);
     const wide = regionsAt({ height: 720, width: 1280 });
-    expect([wide.fit.width, round(wide.fit.height, 2)]).toEqual([643.5, 328.5]);
-    expect(round(scaleLimits(wide.inner).max, 5)).toBe(0.04742);
+    expect([wide.fit.width, round(wide.fit.height, 2)]).toEqual([688, 245]);
+    expect(round(scaleLimits(wide.inner).max, 5)).toBe(0.05367);
   });
 
-  it("puts Quests then Galaxies on the HUD row, one 98 width, 24 left of the close disc", () => {
-    // 720 logical with phone insets of 43 at each side.
-    const phone = { bottom: 0, left: 43, right: 43, top: 0 };
-    // One action row: the wider label, Galaxies' 66 (TYPE.label 65.83), plus the inset each side.
-    const width = 66 + 2 * TEXT_BUTTON.inset;
-    expect(width).toBe(98);
-    expect(MAP_SCREEN.hudRow).toEqual({
-      galaxies: { width },
-      gap: BUTTON_GAP,
-      height: 48,
-      quests: { width },
-      right: 33 + SMALL_BUTTON_GAP,
-    });
-    const span = (rect: { width: number; x: number }) => [rect.x, rect.x + rect.width];
-    // Art's table: Quests 439 to 537 and Galaxies 553 to 651 at the base, 408 to 506 and 522 to
-    // 620 with phone insets; the tool column's left at 667.5 and 636.5.
-    expect(span(mapQuestsRect(NO_INSETS, BASE))).toEqual([439, 537]);
-    expect(span(mapGalaxiesRect(NO_INSETS, BASE))).toEqual([553, 651]);
-    expect(span(mapQuestsRect(phone, BASE))).toEqual([408, 506]);
-    expect(span(mapGalaxiesRect(phone, BASE))).toEqual([522, 620]);
-    expect([toolColumnLeft(NO_INSETS, BASE), toolColumnLeft(phone, BASE)]).toEqual([667.5, 636.5]);
-    // Galaxies, a standard button, ends SMALL_BUTTON_GAP left of the close tool's small disc, and
-    // Quests ends BUTTON_GAP left of it.
-    const hud = hudRect(phone, BASE);
-    const closeDisc = toolColumnLeft(phone, BASE) + HUD_BUTTON_INSET.disc;
-    expect(closeDisc).toBe(hud.x + hud.width - 33);
-    expect(closeDisc - (mapGalaxiesRect(phone, BASE).x + width)).toBe(SMALL_BUTTON_GAP);
-    expect(mapGalaxiesRect(phone, BASE).x - (mapQuestsRect(phone, BASE).x + width)).toBe(
-      BUTTON_GAP,
-    );
-    expect(mapQuestsRect(phone, BASE).y).toBe(mapGalaxiesRect(phone, BASE).y);
-    // The header reaches Quests less SPACING.gap: 12 to 431 (419) at the base, 43 to 400 (357)
-    // with phone insets, the smallest view.
-    expect(mapHeaderCap(NO_INSETS, BASE)).toBe(419);
-    expect(mapHeaderCap(phone, BASE)).toBe(357);
+  it("anchors Quests, Galaxies and the sole primary Close at the bottom right", () => {
+    expect(mapQuestsRect(NO_INSETS, BASE)).toEqual({ height: 48, width: 98, x: 378, y: 296 });
+    expect(mapGalaxiesRect(NO_INSETS, BASE)).toEqual({ height: 48, width: 98, x: 492, y: 296 });
+    expect(mapCloseRect(NO_INSETS, BASE)).toEqual({ height: 48, width: 98, x: 606, y: 296 });
+    const phone = { bottom: 19, left: 43, right: 43, top: 0 };
+    expect(mapCloseRect(phone, BASE)).toEqual({ height: 48, width: 98, x: 579, y: 293 });
+    expect(MAP_TOOLS.map(({ id }) => id)).toEqual(["zoomOut", "zoomIn", "recentre"]);
+    expect(toolColumnLeft(NO_INSETS, BASE)).toBe(542);
+    expect(mapHeaderCap(NO_INSETS, BASE)).toBe(518);
   });
 
-  it("stacks the pips over the percent: the widest header is 279.8 and the cap holds 23 pips", () => {
-    const { header } = MAP_SCREEN;
-    expect([header.stackTop, header.stackGap, header.labelTop]).toEqual([9, 4, 14]);
-    // The column tops at stackTop: 6 pips, the gap and the 20 line centre on the 48 row.
-    expect(header.stackTop).toBe((header.height - (header.pip + header.stackGap + 20)) / 2);
-    // "Sunflower" (116.0), "100% mapped" (106.8) and 12 pips (94).
-    expect(mapHeaderWidth(116, 106.8, 12)).toBeCloseTo(279.8, 9);
-    expect(mapHeaderWidth(116, 0, 12)).toBe(32 + 116 + 25 + 94);
-    expect(mapHeaderWidth(116, 106.8, 0)).toBeCloseTo(279.8, 9);
-    const cap = mapHeaderCap({ bottom: 0, left: 43, right: 43, top: 0 }, BASE);
-    expect(mapHeaderWidth(116, 106.8, 23)).toBeLessThanOrEqual(cap);
-    expect(mapHeaderWidth(116, 106.8, 24)).toBeGreaterThan(cap);
+  it("uses one equal ink gap for title, divider, percent, pips and both outer edges", () => {
+    // Synthetic measured ink widths: content 260 plus five equal 24 gaps fills a 380 header.
+    const geometry = mapHeaderGeometry(100, 65, 12, 348);
+    expect(geometry).toEqual({ gap: 24, width: 380 });
+    expect(mapHeaderWidth(100, 65, 12, 348)).toBe(380);
+    expect(mapHeaderGeometry(100, 65, 0, 348)).toEqual({ gap: 54, width: 382 });
+    expect(mapHeaderWidth(100, 65, 12, 600)).toBe(635);
   });
 
   it("sets the Quests lines: a 28 chip overhanging the 20 label by 4, text from 50", () => {
@@ -192,28 +154,20 @@ describe("map projection and fit", () => {
     });
   });
 
-  it("keeps the centred place panel a gap clear of the tool column: 599 at the 720 base", () => {
-    expect(toolColumnLeft(NO_INSETS, BASE)).toBe(667.5);
-    expect(panelMaxWidth(NO_INSETS, BASE)).toBe(599);
+  it("reserves destination details left of footer actions at every supported inset", () => {
+    expect(panelMaxWidth(NO_INSETS, BASE)).toBe(354);
     for (const [css, cssInsets] of [
       [
         { height: 390, width: 844 },
         { bottom: 21, left: 47, right: 47, top: 0 },
       ],
       [{ height: 720, width: 1280 }, NO_INSETS],
-      [
-        { height: 390, width: 844 },
-        { bottom: 0, left: 47, right: 0, top: 0 },
-      ],
     ] as const) {
       const view = logicalView(css);
       const insets = safeInsets(cssInsets, viewScale(css));
       const page = safeRect(insets, SPACING.pageInset, view);
-      const width = panelMaxWidth(insets, view);
-      const centre = page.x + page.width / 2;
-      expect(width).toBeLessThanOrEqual(page.width);
-      expect(centre + width / 2).toBeCloseTo(
-        Math.min(page.x + page.width, toolColumnLeft(insets, view) - SPACING.gap),
+      expect(page.x + panelMaxWidth(insets, view) + SPACING.gap).toBeCloseTo(
+        mapQuestsRect(insets, view).x,
         9,
       );
     }
@@ -222,9 +176,10 @@ describe("map projection and fit", () => {
   it("opens on the box of Ada and every place, clamped between the disc and the minimum box", () => {
     const { inner } = regionsAt(BASE);
     const { max, min } = scaleLimits(inner);
-    // Close places: the minimum box clamps to maxScale, its centre at the inner centre.
+    // The opening fits the minimum box inside reserved chrome; further zoom remains available.
     const close = openingView(inner, [{ x: 500, y: 0 }], { x: 0, y: 0 });
-    expect(close.scale).toBeCloseTo(max);
+    expect(close.scale).toBeCloseTo(0.026);
+    expect(close.scale).toBeLessThan(max);
     // A spread galaxy fits between the limits.
     const spread = [
       { x: 12000, y: -12000 },
@@ -311,12 +266,13 @@ describe("close places", () => {
     expect(pressedArea(areas, { x: 111, y: 100 })).toBe("b");
   });
 
-  it("separate at full zoom for places at least 1020 apart, in every direction", () => {
+  it("preserves full-page maximum zoom despite reserved chrome and separates 1020-apart places", () => {
     const { inner } = regionsAt(
       { height: 390, width: 844 },
       { bottom: 21, left: 47, right: 47, top: 0 },
     );
     const { max } = scaleLimits(inner);
+    expect(max).toBeGreaterThanOrEqual(0.039);
     const view = { centre: { x: 0, y: 0 }, scale: max };
     for (let degrees = 0; degrees < 360; degrees += 5) {
       const angle = (degrees * Math.PI) / 180;

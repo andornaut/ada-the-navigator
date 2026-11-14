@@ -3,9 +3,8 @@ import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 import { GALAXY_COUNT, type RoutePosition } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { RouteFlight } from "../model/game.ts";
-import { CARD_CLOSE } from "./layout/cardFrame.ts";
 import { CARD_SLICE } from "./layout/controls.ts";
-import { font, fromAreaLeft, fromHudEdge, safeEdge, slice, units } from "./layout/css.ts";
+import { font, fromAreaLeft, safeEdge, slice, units } from "./layout/css.ts";
 import {
   easeInOutSine,
   GALAXY_MAP,
@@ -37,6 +36,7 @@ import { refuse } from "./refusal.ts";
 // this draws them and animates the ship between them.
 
 export interface GalaxyMapLabels {
+  readonly back?: string;
   readonly close: string;
   /** A placeholder galaxy's line under its flavour line. */
   readonly development: string;
@@ -312,26 +312,18 @@ export const GALAXY_MAP_STYLE = `
 .ada-controls .ada-route-development{
   color:${GALAXY_MAP_PANEL.colors.development}
 }
-.ada-controls .ada-route-action{
+.ada-controls .ada-route-flight-actions{
   position:absolute;
+  left:${safeEdge("left", SAFE_MARGIN.page)};
   bottom:${safeEdge("bottom", SAFE_MARGIN.page)};
-  width:${units(GALAXY_MAP_ACTIONS.width)}
+  display:flex;
+  gap:${units(SPACING.panelPadding)}
 }
-.ada-controls .ada-route-action[data-action="galaxy-home"]{
-  left:${fromAreaLeft(GALAXY_MAP_ACTIONS.earth)}
-}
-.ada-controls .ada-route-action[data-action="galaxy-jump"]{
-  left:${fromAreaLeft(GALAXY_MAP_ACTIONS.jump)}
-}
-/* The close X: its 24 face's top and right edges on the HUD rect's top-right corner. */
-.ada-controls .ada-route .ada-close{
-  top:${fromHudEdge("top", -(CARD_CLOSE.hit.height - CARD_CLOSE.art.height) / 2)};
-  right:${fromHudEdge("right", -(CARD_CLOSE.hit.width - CARD_CLOSE.art.width) / 2)}
-}
+.ada-controls .ada-route-action{width:${units(GALAXY_MAP_ACTIONS.width)}}
 /* A quantum jump from the map: the panel, actions and close X go, then the warp ship covers Ada's. */
 .ada-controls .ada-route[data-jumping] .ada-route-panel,
 .ada-controls .ada-route[data-jumping] .ada-route-action,
-.ada-controls .ada-route[data-jumping] .ada-close,
+.ada-controls .ada-route[data-jumping] .ada-map-navigation,
 .ada-controls .ada-route[data-ship-covered] .ada-route-ship{
   visibility:hidden
 }
@@ -470,15 +462,18 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   const earth = createButton(labels.home);
   earth.classList.add("ada-route-action");
   earth.dataset.action = "galaxy-home";
-  const jump = createButton(labels.jump, "primary");
+  const jump = createButton(labels.jump, "secondary");
   jump.classList.add("ada-route-action");
   jump.dataset.action = "galaxy-jump";
-  const close = document.createElement("button");
-  close.type = "button";
-  close.className = "ada-close";
-  close.dataset.action = "close-galaxies";
-  close.setAttribute("aria-label", labels.close);
-  screen.append(sky, rules, ground, chart, panel, earth, jump, close);
+  const back = createButton(labels.back ?? labels.close, "primary");
+  back.dataset.action = "close-galaxies";
+  const navigation = document.createElement("div");
+  navigation.className = "ada-map-navigation";
+  navigation.append(back);
+  const flightActions = document.createElement("div");
+  flightActions.className = "ada-route-flight-actions";
+  flightActions.append(earth, jump);
+  screen.append(sky, rules, ground, chart, panel, flightActions, navigation);
   root.append(screen);
 
   let view: GalaxyMapView | null = null;
@@ -749,7 +744,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   );
 
   earth.addEventListener("click", () => options.onEarth());
-  close.addEventListener("click", () => options.onClose());
+  back.addEventListener("click", () => options.onClose());
   jump.addEventListener("click", () => {
     const galaxy = view?.galaxies[view.panel - 1];
     if (galaxy?.unlocked) {
@@ -769,7 +764,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     if (event.key !== "Tab") {
       return;
     }
-    const order = [...markers.map(({ button }) => button), earth, jump, close];
+    const order = [...markers.map(({ button }) => button), earth, jump, back];
     event.preventDefault();
     const at = order.indexOf(document.activeElement as HTMLButtonElement);
     const step = event.shiftKey ? -1 : 1;

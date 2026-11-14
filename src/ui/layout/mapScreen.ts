@@ -3,7 +3,6 @@ import type { Rect } from "@andornaut/game-kit/rect";
 
 import {
   HUD_BUTTON,
-  HUD_ROW,
   MAP_HUD_LABEL_WIDTHS,
   MAP_SCREEN_LAYOUT,
   MAP_SYMBOL,
@@ -12,8 +11,8 @@ import {
 } from "../../data/layout.ts";
 import { CHARTING_RADIUS, type MapSymbol } from "../../model/map.ts";
 import { nearestImage, wrapPoint } from "../../model/worldGeometry.ts";
-import { hudRect, type Insets, safeRect, type Size } from "./playView.ts";
-import { BUTTON_GAP, SMALL_BUTTON_GAP } from "./tokens.ts";
+import { type Insets, safeRect, type Size } from "./playView.ts";
+import { BUTTON_GAP, TYPE } from "./tokens.ts";
 export { MAP_PANEL, MAP_SYMBOL } from "../../data/layout.ts";
 
 // The pause menu's full-screen map (art/map.md): the screen's header, tools, fog and fit
@@ -27,18 +26,23 @@ export const MAP_SCREEN = {
   ...MAP_SCREEN_LAYOUT,
   /** The charting disc minScale fits (model/map.ts CHARTING_RADIUS). */
   chartRadius: CHARTING_RADIUS,
-  /**
-   * The HUD row's two secondary TEXT_BUTTONs, left to right: Quests and Galaxies, one action
-   * row of one width (HUD_ACTION_WIDTH), BUTTON_GAP apart. Galaxies ends right in from
-   * the HUD rect's right: SMALL_BUTTON_GAP left of the close tool's disc, a small button whose
-   * drawn right edge is on that line.
-   */
+  header: {
+    ...MAP_SCREEN_LAYOUT.header,
+    height: TYPE.heading.lineHeight + 2 * SPACING.rowGap + TYPE.body.lineHeight + SPACING.gap,
+    rowHeight: TYPE.heading.lineHeight + 2 * SPACING.rowGap,
+  },
   hudRow: {
+    close: { width: HUD_ACTION_WIDTH },
     galaxies: { width: HUD_ACTION_WIDTH },
     gap: BUTTON_GAP,
     height: TEXT_BUTTON.height,
     quests: { width: HUD_ACTION_WIDTH },
-    right: HUD_BUTTON.disc + SMALL_BUTTON_GAP,
+    right: 0,
+  },
+  toolRow: {
+    gap: HUD_BUTTON.gap,
+    height: HUD_BUTTON.target,
+    width: 3 * HUD_BUTTON.target + 2 * HUD_BUTTON.gap,
   },
 } as const;
 
@@ -85,11 +89,10 @@ export const MAP_GLYPHS: Readonly<Record<MapSymbol, string | null>> = {
   wreck: "map-wreck",
 };
 
-/** The tools, top to bottom, with their glyphs. */
+/** The compact tools, left to right, with their glyphs. */
 export const MAP_TOOLS = [
-  { glyph: "map-close", id: "close" },
-  { glyph: "map-zoom-in", id: "zoomIn" },
   { glyph: "map-zoom-out", id: "zoomOut" },
+  { glyph: "map-zoom-in", id: "zoomIn" },
   { glyph: "map-recentre", id: "recentre" },
 ] as const;
 export type MapTool = (typeof MAP_TOOLS)[number]["id"];
@@ -111,95 +114,112 @@ export function mapProjection(world: Point): Point {
   return { x: world.x - world.y, y: (world.x + world.y) / 2 };
 }
 
-/**
- * The region left for the map: below the header row, left of the tool column, inside the page
- * safe rect.
- */
-export function fitRegion(insets: Insets, view: Size): Rect {
-  const page = safeRect(insets, SPACING.pageInset, view);
-  const left = page.x;
-  const top = mapRowTop(insets, view) + MAP_SCREEN.header.height + SPACING.gap;
-  const right = toolColumnLeft(insets, view) - SPACING.gap;
-  const bottom = page.y + page.height;
-  return { height: bottom - top, width: right - left, x: left, y: top };
+/** The map's geometry stays clear of the top header and bottom navigation. */
+export interface MapRegion extends Rect {
+  readonly zoomHeight?: number;
 }
 
-/**
- * The Map's HUD row top: the header, Quests and Return to Earth share the tool targets' row box,
- * reaching HUD_ROW.reach above the HUD rect, so everything on it centres on the tool discs.
- */
+export function fitRegion(insets: Insets, view: Size): MapRegion {
+  const page = safeRect(insets, SPACING.pageInset, view);
+  const top = page.y + MAP_SCREEN.header.height + SPACING.gap;
+  const bottom = mapCloseRect(insets, view).y - SPACING.gap;
+  return { height: bottom - top, width: page.width, x: page.x, y: top, zoomHeight: page.height };
+}
+
 export function mapRowTop(insets: Insets, view: Size): number {
-  return hudRect(insets, view).y - HUD_ROW.reach;
+  return safeRect(insets, SPACING.pageInset, view).y;
 }
 
-/**
- * The tool column's left edge: its targets reach HUD_ROW.reach past the HUD rect's right, so this
- * is one target in from there.
- */
+/** The left of the horizontal tool row, retained for existing geometry consumers. */
 export function toolColumnLeft(insets: Insets, view: Size): number {
-  const hud = hudRect(insets, view);
-  return hud.x + hud.width + HUD_ROW.reach - HUD_BUTTON.target;
-}
-
-/**
- * The place panel's widest: inside the page safe rect and, centred there, SPACING.gap clear of
- * the tool column on each side, so a tall panel never reaches under it (592 at the 720 base).
- */
-export function panelMaxWidth(insets: Insets, view: Size): number {
   const page = safeRect(insets, SPACING.pageInset, view);
-  const centre = page.x + page.width / 2;
-  return Math.min(page.width, 2 * (toolColumnLeft(insets, view) - SPACING.gap - centre));
+  return page.x + page.width - MAP_SCREEN.toolRow.width;
 }
 
-/**
- * Galaxies on the local map's HUD row (art/map.md): its top on the HUD row (mapRowTop) and its
- * right edge SPACING.pageInset left of the tool column; it never moves with the header.
- */
+export function mapCloseRect(insets: Insets, view: Size): Rect {
+  const page = safeRect(insets, SPACING.pageInset, view);
+  const { close, height } = MAP_SCREEN.hudRow;
+  return {
+    height,
+    width: close.width,
+    x: page.x + page.width - close.width,
+    y: page.y + page.height - height,
+  };
+}
+
 export function mapGalaxiesRect(insets: Insets, view: Size): Rect {
-  const hud = hudRect(insets, view);
-  const { galaxies, height } = MAP_SCREEN.hudRow;
-  const right = hud.x + hud.width - MAP_SCREEN.hudRow.right;
-  return { height, width: galaxies.width, x: right - galaxies.width, y: mapRowTop(insets, view) };
+  const close = mapCloseRect(insets, view);
+  const { galaxies, gap, height } = MAP_SCREEN.hudRow;
+  return { height, width: galaxies.width, x: close.x - gap - galaxies.width, y: close.y };
 }
 
-/** Quests on the HUD row: ending hudRow.gap left of Galaxies, at the same top. */
 export function mapQuestsRect(insets: Insets, view: Size): Rect {
   const galaxies = mapGalaxiesRect(insets, view);
   const { gap, height, quests } = MAP_SCREEN.hudRow;
   return { height, width: quests.width, x: galaxies.x - gap - quests.width, y: galaxies.y };
 }
 
-/** The header's cap: the HUD row from its left to SPACING.gap short of Quests. */
-export function mapHeaderCap(insets: Insets, view: Size): number {
-  return mapQuestsRect(insets, view).x - SPACING.gap - hudRect(insets, view).x;
+/** The selected destination stays left of the entire footer action group. */
+export function panelMaxWidth(insets: Insets, view: Size): number {
+  const page = safeRect(insets, SPACING.pageInset, view);
+  return Math.max(0, mapQuestsRect(insets, view).x - SPACING.gap - page.x);
 }
 
-/**
- * The header's width: its padding, the name, the divider and its gaps, then the column of the
- * pips (one pitch apart) over the percent, as wide as the wider of the two.
- */
-export function mapHeaderWidth(nameWidth: number, percentWidth: number, pips: number): number {
-  const { divider, dividerGap, padding, pip, pipPitch } = MAP_SCREEN.header;
-  const pipRow = pips > 0 ? pip + (pips - 1) * pipPitch : 0;
-  return 2 * padding + nameWidth + 2 * dividerGap + divider.width + Math.max(percentWidth, pipRow);
+export function mapHeaderCap(insets: Insets, view: Size): number {
+  return toolColumnLeft(insets, view) - SPACING.gap - safeRect(insets, SPACING.pageInset, view).x;
+}
+
+/** One equal gap spans both outer edges and each pair of adjacent ink segments. */
+export function mapHeaderGeometry(
+  nameWidth: number,
+  percentWidth: number,
+  pips: number,
+  noteWidth = 0,
+  pixelUnit = 1,
+) {
+  const { divider, padding, pip, pipPitch } = MAP_SCREEN.header;
+  const pipRow =
+    pips > 0 ? Math.round((pips - 1) * pipPitch * pixelUnit) + Math.round(pip * pixelUnit) : 0;
+  const ink =
+    Math.round(nameWidth * pixelUnit) +
+    Math.round(divider.width * pixelUnit) +
+    Math.round(percentWidth * pixelUnit) +
+    pipRow;
+  const gaps = pips > 0 ? 5 : 4;
+  const minimum = Math.max(
+    ink + gaps * Math.round(SPACING.gap * pixelUnit),
+    Math.ceil(noteWidth * pixelUnit) + 2 * Math.round(padding * pixelUnit),
+  );
+  const gap = Math.ceil((minimum - ink) / gaps);
+  return { gap: gap / pixelUnit, width: (ink + gaps * gap) / pixelUnit };
+}
+
+export function mapHeaderWidth(
+  nameWidth: number,
+  percentWidth: number,
+  pips: number,
+  noteWidth = 0,
+): number {
+  return mapHeaderGeometry(nameWidth, percentWidth, pips, noteWidth).width;
 }
 
 /** The fit region inset by fitMargin on every side. */
-export function innerRegion(fit: Rect): Rect {
+export function innerRegion(fit: MapRegion): MapRegion {
   const margin = MAP_SCREEN.fitMargin;
   return {
     height: fit.height - 2 * margin,
     width: fit.width - 2 * margin,
     x: fit.x + margin,
     y: fit.y + margin,
+    ...(fit.zoomHeight === undefined ? {} : { zoomHeight: fit.zoomHeight - 2 * margin }),
   };
 }
 
 /** The zoom range: minScale fits the charting disc, maxScale the minimum box. */
-export function scaleLimits(inner: Rect): { readonly max: number; readonly min: number } {
+export function scaleLimits(inner: MapRegion): { readonly max: number; readonly min: number } {
   const { chartRadius, minBox } = MAP_SCREEN;
   return {
-    max: Math.min(inner.width / minBox.width, inner.height / minBox.height),
+    max: Math.min(inner.width / minBox.width, (inner.zoomHeight ?? inner.height) / minBox.height),
     min: Math.min(
       inner.width / (2 * Math.SQRT2 * chartRadius),
       inner.height / (Math.SQRT2 * chartRadius),

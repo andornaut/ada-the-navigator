@@ -1,5 +1,4 @@
 import type { Rect } from "@andornaut/game-kit/rect";
-import { HIT_RULE, hitAround } from "@andornaut/game-kit/ui/hitAreas";
 
 import { GALAXY_COUNT, type RoutePosition } from "../../data/galaxies.ts";
 import {
@@ -13,8 +12,8 @@ import {
 } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import { SHIP_HEADINGS, SHIP_NOSE } from "../../model/nose.ts";
-import { CARD_CLOSE } from "./cardFrame.ts";
-import { hudRect, type Insets, playView, safeRect, type Size } from "./playView.ts";
+import { mapCloseRect } from "./mapScreen.ts";
+import { type Insets, playView, safeRect, type Size } from "./playView.ts";
 export {
   GALAXY_MAP_ACTIONS,
   GALAXY_MAP_MOVE,
@@ -95,17 +94,11 @@ export function galaxyMapRects(insets: Insets, view: Size): GalaxyMapRects {
   const panelTop = actionsTop - SPACING.gap - GALAXY_MAP_PANEL.height;
   const panelLeft = x0 + (SCREEN.width - GALAXY_MAP_PANEL.width) / 2;
   const inner = { x: panelLeft + GALAXY_MAP_PANEL.padding, y: panelTop + GALAXY_MAP_PANEL.padding };
-  const hud = hudRect(insets, view);
-  const face: Rect = {
-    height: CARD_CLOSE.art.height,
-    width: CARD_CLOSE.art.width,
-    x: hud.x + hud.width - CARD_CLOSE.art.width,
-    y: hud.y,
-  };
+  const face = mapCloseRect(insets, view);
   const action = (left: number): Rect => ({
     height: GALAXY_MAP_ACTIONS.height,
     width: GALAXY_MAP_ACTIONS.width,
-    x: x0 + left,
+    x: available.x + left,
     y: actionsTop,
   });
   return {
@@ -115,9 +108,9 @@ export function galaxyMapRects(insets: Insets, view: Size): GalaxyMapRects {
       width: GALAXY_MAP_PANEL.capture.width + 2 * GALAXY_MAP_PANEL.capture.frame,
       ...inner,
     },
-    close: { face, target: hitAround(HIT_RULE, face) },
-    earth: action(GALAXY_MAP_ACTIONS.earth),
-    jump: action(GALAXY_MAP_ACTIONS.jump),
+    close: { face, target: face },
+    earth: action(0),
+    jump: action(GALAXY_MAP_ACTIONS.width + SPACING.panelPadding),
     markers: GALAXY_MAP.centres.map(({ x, y }) => ({
       height: GALAXY_MAP.press,
       width: GALAXY_MAP.press,

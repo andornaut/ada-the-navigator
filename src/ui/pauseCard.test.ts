@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { ControlState } from "../input/state.ts";
 import type { LocalMap } from "../model/map.ts";
 import * as mapUI from "./mapScreen.ts";
 import { mapScreenLabels } from "./mapScreen.ts";
@@ -236,6 +237,51 @@ const texts = (node: FakeElement): string[] => [
 ];
 
 describe("Paused card", () => {
+  it("Close leaves the local map for gameplay and clears held input through the modal lifecycle", () => {
+    const original = mapUI.createMapScreen;
+    let mapOpen = false;
+    const spy = vi.spyOn(mapUI, "createMapScreen").mockImplementation((...args) => ({
+      ...original(...args),
+      close: () => {
+        mapOpen = false;
+      },
+      isOpen: () => mapOpen,
+      open: () => {
+        mapOpen = true;
+      },
+    }));
+    try {
+      const controls = new ControlState();
+      controls.keyDown("KeyD");
+      expect(controls.sample().move.x).toBe(1);
+      const { body, options, pause, root } = cards();
+      options.onOpenChange.mockImplementation((open: boolean) => {
+        if (open) {
+          controls.openModal();
+        } else {
+          controls.closeModal();
+        }
+      });
+      pause.setState(state());
+      pause.open();
+      button(body.children[0]!, "pause-map").click();
+      expect(pause.mapOpen()).toBe(true);
+      expect(controls.accepts()).toBe(false);
+      root
+        .querySelectorAll()
+        .find((entry) => entry.dataset.action === "map-close")!
+        .click();
+      expect(pause.mapOpen()).toBe(false);
+      expect(pause.isOpen()).toBe(false);
+      expect(controls.accepts()).toBe(true);
+      expect(controls.sample()).toMatchObject({ move: { x: 0, y: 0 }, use: false });
+      expect(options.onOpenChange).toHaveBeenLastCalledWith(false);
+      pause.dispose();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
   it("registers and releases the map's font completion listener", () => {
     const fonts = document.fonts;
     const add = vi.spyOn(fonts, "addEventListener");

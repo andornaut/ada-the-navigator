@@ -28,7 +28,7 @@ const inside = (outer: Rect, inner: Rect) =>
   inner.y + inner.height <= outer.y + outer.height + 1e-9;
 
 describe("route map layout", () => {
-  it("places the panel, capture, text, Earth, Jump and close X as Art's table at 720x360", () => {
+  it("places the panel, capture, text, Earth, Jump and bottom navigation as Art's table at 720x360", () => {
     const plain = galaxyMapRects(NO_INSETS, BASE);
     const phone = galaxyMapRects(PHONE, BASE);
     expect([plain, phone].map((rects) => box(rects.available))).toEqual([
@@ -49,29 +49,29 @@ describe("route map layout", () => {
     ]);
     expect([plain, phone].map(({ earth, jump }) => [box(earth), box(jump)])).toEqual([
       [
-        [160, 296, 192, 48],
-        [368, 296, 192, 48],
+        [16, 296, 192, 48],
+        [224, 296, 192, 48],
       ],
       [
-        [160, 293, 192, 48],
-        [368, 293, 192, 48],
+        [43, 293, 192, 48],
+        [251, 293, 192, 48],
       ],
     ]);
     expect([plain, phone].map(({ close }) => [box(close.target), box(close.face)])).toEqual([
       [
-        [672, 0, 48, 48],
-        [684, 12, 24, 24],
+        [606, 296, 98, 48],
+        [606, 296, 98, 48],
       ],
       [
-        [641, 0, 48, 48],
-        [653, 12, 24, 24],
+        [579, 293, 98, 48],
+        [579, 293, 98, 48],
       ],
     ]);
   });
 
-  it("puts the close face on the HUD rect's corner at 844x390 with phone insets", () => {
+  it("puts Close at the shared bottom-right anchor at 844x390 with phone insets", () => {
     const view = { height: 360, width: (844 * 360) / 390 };
-    expect(galaxyMapRects(PHONE, view).close.face.x).toBeCloseTo(712.08, 2);
+    expect(galaxyMapRects(PHONE, view).close.face.x).toBeCloseTo(638.08, 2);
   });
 
   it("keeps every rect in the available rect, the end labels 15 and 12 above the panel", () => {

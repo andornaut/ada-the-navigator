@@ -15,7 +15,7 @@ import { SHIP_HEADINGS, shipHeading } from "../model/nose.ts";
 import type { Vec } from "../model/types.ts";
 import { cardPages } from "./layout/cardPages.ts";
 import { CARD_SLICE, FOCUS_RING, TEXT_BUTTON } from "./layout/controls.ts";
-import { font, fromHudEdge, safeEdge, slice, units, VIEW_PROPERTIES } from "./layout/css.ts";
+import { font, pixels, safeEdge, slice, units, VIEW_PROPERTIES } from "./layout/css.ts";
 import {
   chipRect,
   clampView,
@@ -30,6 +30,7 @@ import {
   MAP_SCREEN,
   MAP_SYMBOL,
   MAP_TOOLS,
+  mapHeaderGeometry,
   mapImage,
   mapProjection,
   type MapTool,
@@ -44,7 +45,7 @@ import {
   toScreen,
   zoomView,
 } from "./layout/mapScreen.ts";
-import { HUD_ROW, SAFE_MARGIN } from "./layout/playView.ts";
+import { SAFE_MARGIN, safeRect } from "./layout/playView.ts";
 import { questTextParts } from "./layout/questPages.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
@@ -432,77 +433,62 @@ export const MAP_SCREEN_STYLE = `
 }
 
 
-/* The HUD row, on the tool targets' row box (layout/mapScreen.ts mapRowTop), from the HUD rect's
-   left to SMALL_BUTTON_GAP short of the close tool's disc (mapGalaxiesRect): the header on its left,
-   SPACING.gap from Quests, which caps it (mapHeaderCap), then Quests and Galaxies,
-   secondary text buttons MAP_SCREEN.hudRow sets, hudRow.gap apart, on its right. */
-.ada-controls .ada-map-hud-row{
+/* The shared bottom-right navigation leaves the selected destination on the left. */
+.ada-controls .ada-map-navigation{
   position:absolute;
-  left:var(${VIEW_PROPERTIES.hud("left")});
-  top:${fromHudEdge("top", -HUD_ROW.reach)};
-  right:${fromHudEdge("right", MAP_SCREEN.hudRow.right)};
-  height:${units(MAP_SCREEN.header.height)};
+  right:${safeEdge("right", SPACING.pageInset)};
+  bottom:${safeEdge("bottom", SPACING.pageInset)};
   display:flex;
   align-items:center;
-  justify-content:space-between;
-  gap:${units(SPACING.gap)};
-  pointer-events:none
-}
-.ada-controls .ada-map-hud-row .ada-button{
-  flex:none;
-  box-sizing:border-box;
-  height:${units(MAP_SCREEN.hudRow.height)};
-  padding-left:0;
-  padding-right:0;
-  white-space:nowrap;
+  gap:${units(MAP_SCREEN.hudRow.gap)};
   pointer-events:auto
 }
-.ada-controls .ada-map-hud-row [data-action="map-quests"]{
-  margin-left:auto;
-  width:${units(MAP_SCREEN.hudRow.quests.width)}
+.ada-controls .ada-map-navigation .ada-button{
+  flex:none;
+  box-sizing:border-box;
+  width:${units(MAP_SCREEN.hudRow.close.width)};
+  white-space:nowrap
 }
-.ada-controls .ada-map-hud-row [data-action="map-galaxies"]{
-  margin-left:${units(MAP_SCREEN.hudRow.gap - SPACING.gap)};
-  width:${units(MAP_SCREEN.hudRow.galaxies.width)}
-}
-
-/* The header: one ink panel with the galaxy name, a divider, then the column of one pip per
-   landmark over the percent mapped. It takes no input. */
 .ada-controls .ada-map-header{
-  min-width:0;
-  overflow:hidden;
+  position:absolute;
+  left:${safeEdge("left", SPACING.pageInset)};
+  top:${safeEdge("top", SPACING.pageInset)};
   box-sizing:border-box;
   height:${units(MAP_SCREEN.header.height)};
-  padding:0 ${units(MAP_SCREEN.header.padding)};
-  display:flex;
-  align-items:center;
+  display:grid;
+  grid-template-rows:${units(MAP_SCREEN.header.rowHeight)} ${units(TYPE.body.lineHeight)};
+  padding-bottom:${units(SPACING.gap)};
   border-radius:${units(MAP_SCREEN.header.radius)};
   background:rgba(24,20,37,${MAP_SCREEN.header.alpha});
   pointer-events:none;
-  white-space:nowrap
+  white-space:nowrap;
+  z-index:2
+}
+.ada-controls .ada-map-header-row{
+  display:flex;
+  align-items:center;
+  gap:var(--map-header-gap);
+  padding:0 var(--map-header-gap)
 }
 .ada-controls .ada-map-galaxy{
   font:${font(TYPE.heading)};
   color:${TEXT_TOKENS.title}
 }
+.ada-controls .ada-map-galaxy,.ada-controls .ada-map-percent{
+  flex:none;
+  position:relative
+}
+.ada-controls .ada-map-ink{display:inline-block;white-space:nowrap}
 .ada-controls .ada-map-divider{
+  flex:none;
   width:${units(MAP_SCREEN.header.divider.width)};
   height:${units(MAP_SCREEN.header.divider.height)};
-  margin:0 ${units(MAP_SCREEN.header.dividerGap)};
   background:${MAP_COLORS.divider}
 }
-/* The column tops at stackTop, the pips stackGap over the percent; with no landmarks the percent
-   alone tops at labelTop. */
 .ada-controls .ada-map-column{
-  align-self:flex-start;
   display:flex;
-  flex-direction:column;
-  align-items:flex-start;
-  gap:${units(MAP_SCREEN.header.stackGap)};
-  padding-top:${units(MAP_SCREEN.header.stackTop)}
-}
-.ada-controls .ada-map-column:has(.ada-map-pips:empty){
-  padding-top:${units(MAP_SCREEN.header.labelTop)}
+  align-items:center;
+  gap:var(--map-header-gap)
 }
 .ada-controls .ada-map-percent{
   font:${font(TYPE.label)};
@@ -510,11 +496,10 @@ export const MAP_SCREEN_STYLE = `
 }
 .ada-controls .ada-map-pips{
   display:flex;
+  align-items:center;
   gap:${units(MAP_SCREEN.header.pipPitch - MAP_SCREEN.header.pip)}
 }
-.ada-controls .ada-map-pips:empty{
-  display:none
-}
+.ada-controls .ada-map-pips:empty{display:none}
 .ada-controls .ada-map-pip{
   box-sizing:border-box;
   width:${units(MAP_SCREEN.header.pip)};
@@ -526,36 +511,26 @@ export const MAP_SCREEN_STYLE = `
   border-color:${MAP_COLORS.cream};
   background:${MAP_COLORS.cream}
 }
-
 .ada-controls .ada-map-survey-info{
-  position:absolute;
+  display:flex;
+  justify-content:center;
   box-sizing:border-box;
   margin:0;
-  padding:${units(SPACING.gap / 2)};
+  padding:0 ${units(MAP_SCREEN.header.padding)};
   font:${font(TYPE.body)};
   color:${TEXT_TOKENS.supporting};
-  background:rgba(24,20,37,${MAP_SCREEN.header.alpha});
-  border-radius:${units(MAP_SCREEN.header.radius)};
-  white-space:normal;
-  overflow-wrap:anywhere;
+  white-space:nowrap;
   pointer-events:none
 }
 .ada-controls .ada-map-survey-info[hidden]{display:none}
-
-/* The tools: HUD disc buttons in a column on the HUD rect's top-right corner, reaching
-   HUD_ROW.reach past it so the discs' drawn right edges and the top disc's drawn top sit on it. */
 .ada-controls .ada-map-tools{
   position:absolute;
-  right:${fromHudEdge("right", -HUD_ROW.reach)};
-  top:${fromHudEdge("top", -HUD_ROW.reach)};
+  right:${safeEdge("right", SPACING.pageInset)};
+  top:${safeEdge("top", SPACING.pageInset)};
   display:flex;
-  flex-direction:column;
-  gap:${units(MAP_SCREEN.tools.pitch - TEXT_BUTTON.height)}
+  gap:${units(MAP_SCREEN.toolRow.gap)}
 }
 ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
-.ada-controls .ada-map-tool[data-tool="close"]{
-  color:${MAP_COLORS.cream}
-}
 
 /* The Quests modal (art/map.md "Quests modal"): the standard card under the modal dim, which
    covers the whole map. Its lines stack lineGap apart across the inner width: a mapped line is a
@@ -684,16 +659,12 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
 /* The place panel: a card face with no close X, centred in the page safe rect on its bottom. */
 .ada-controls .ada-map-panel{
   position:absolute;
-  left:calc((${safeEdge("left", SAFE_MARGIN.page)} + 100% - ${safeEdge(
-    "right",
-    SAFE_MARGIN.page,
-  )}) / 2);
+  left:${safeEdge("left", SAFE_MARGIN.page)};
   bottom:${safeEdge("bottom", SAFE_MARGIN.page)};
-  transform:translateX(-50%);
   box-sizing:border-box;
   /* Its own text width: shrink-to-fit would stop at the half view right of a centred left. */
   width:max-content;
-  min-width:${units(MAP_PANEL.minWidth)};
+  min-width:min(${units(MAP_PANEL.minWidth)},var(--map-panel-width));
   padding:calc(${units(MAP_PANEL.padding)} - ${slice(CARD_SLICE)});
   display:grid;
   gap:${units(MAP_PANEL.reasonGap)};
@@ -943,18 +914,31 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   pips.setAttribute("aria-hidden", "true");
   const column = document.createElement("span");
   column.className = "ada-map-column";
-  column.append(pips, percent);
-  header.append(galaxy, divider, column);
+  column.append(percent, pips);
+  const headerRow = document.createElement("div");
+  headerRow.className = "ada-map-header-row";
+  headerRow.append(galaxy, divider, column);
+  header.append(headerRow);
   const surveyInfo = document.createElement("p");
   surveyInfo.className = "ada-map-survey-info";
   surveyInfo.setAttribute("role", "note");
   surveyInfo.textContent = labels.mapSurveyInfo ?? "";
   surveyInfo.hidden = !labels.mapSurveyInfo;
+  header.append(surveyInfo);
+  const galaxyInk = document.createElement("span");
+  const percentInk = document.createElement("span");
+  const noteInk = document.createElement("span");
+  for (const ink of [galaxyInk, percentInk, noteInk]) {
+    ink.className = "ada-map-ink";
+  }
+  galaxy.append(galaxyInk);
+  percent.append(percentInk);
+  noteInk.textContent = surveyInfo.textContent;
+  surveyInfo.replaceChildren(noteInk);
   // The tools.
   const tools = document.createElement("div");
   tools.className = "ada-map-tools";
   const toolLabels: Record<MapTool, string> = {
-    close: labels.close,
     recentre: labels.centerOnAda,
     zoomIn: labels.zoomIn,
     zoomOut: labels.zoomOut,
@@ -991,7 +975,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     line.className = "ada-map-detail";
   }
   text.append(name, ...detail);
-  const travel = createButton(labels.travelHere, "primary");
+  const travel = createButton(labels.travelHere, "secondary");
   travel.dataset.action = "map-travel";
   row.append(panelChip, text, travel);
   const reason = document.createElement("div");
@@ -1012,14 +996,16 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   // Quests, then Galaxies, on the HUD row; Galaxies opens the galaxy map with no confirm, as for
   // Travel here.
   const hudRow = document.createElement("div");
-  hudRow.className = "ada-map-hud-row";
+  hudRow.className = "ada-map-hud-row ada-map-navigation";
   const questsButton = createButton(labels.quests, "secondary");
   questsButton.dataset.action = "map-quests";
   questsButton.setAttribute("aria-haspopup", "dialog");
   const galaxies = createButton(labels.galaxies, "secondary");
   galaxies.dataset.action = "map-galaxies";
   galaxies.setAttribute("aria-haspopup", "dialog");
-  hudRow.append(header, questsButton, galaxies);
+  const closeButton = createButton(labels.close, "primary");
+  closeButton.dataset.action = "map-close";
+  hudRow.append(questsButton, galaxies, closeButton);
   // The Quests modal over the whole map.
   const questsModal = document.createElement("div");
   questsModal.className = "ada-modal ada-map-quests";
@@ -1046,9 +1032,11 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   questPager.append(questPrevious, questPageCount, questNext);
   questsCard.body.append(questLines, questPager);
   questsModal.append(questsCard.frame);
-  screen.append(fog, placesLayer, adaLayer, hudRow, tools, surveyInfo, panel, questsModal);
+  screen.append(fog, placesLayer, adaLayer, header, hudRow, tools, panel, questsModal);
   root.append(screen);
 
+  let textMeasure: CanvasRenderingContext2D | null | undefined;
+  const inkMeasurements = new Map<string, { offset: number; width: number }>();
   let state: MapScreenState | null = null;
   let view: MapView | null = null;
   let selected: string | null = null;
@@ -1151,7 +1139,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     if (!state || screen.hidden) {
       return;
     }
-    const { fit, inner, unit } = layout();
+    const { inner, insets, size, unit } = layout();
     if (!view) {
       const geometry = {
         centre: mapProjection(state.map.player),
@@ -1169,12 +1157,9 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     }
     const current = view;
     screen.style.setProperty("--map-field", state.field?.background ?? "");
-    surveyInfo.style.left = units(fit.x);
-    surveyInfo.style.top = units(fit.y);
-    surveyInfo.style.maxWidth = units(fit.width);
     // Header.
-    galaxy.textContent = state.field?.name ?? "";
-    percent.textContent = labels.mapPercent.replace("{percent}", String(state.map.mapped));
+    galaxyInk.textContent = state.field?.name ?? "";
+    percentInk.textContent = labels.mapPercent.replace("{percent}", String(state.map.mapped));
     const { charted, total } = state.map.landmarks;
     if (pips.childElementCount !== total || pips.dataset.charted !== String(charted)) {
       pips.dataset.charted = String(charted);
@@ -1186,6 +1171,75 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
           return pip;
         }),
       );
+    }
+    const density = devicePixelRatio;
+    const pixelUnit = unit * density;
+    const measureInk = (box: HTMLElement, ink: HTMLElement) => {
+      const measure = (textMeasure ??= document.createElement("canvas").getContext("2d"));
+      if (!measure) {
+        return ink.getBoundingClientRect().width / unit;
+      }
+      const style = getComputedStyle(box);
+      const text = ink.textContent ?? "";
+      const key = `${style.font}:${density}:${text}`;
+      const cached = inkMeasurements.get(key);
+      if (cached) {
+        box.style.width = pixels(cached.width / density);
+        ink.style.transform = `translateX(${pixels(cached.offset / density)})`;
+        return cached.width / pixelUnit;
+      }
+      measure.font = style.font;
+      const em = parseFloat(style.fontSize);
+      const advance = measure.measureText(text).width;
+      const origin = Math.ceil(em * density);
+      measure.canvas.width = Math.ceil(advance * density) + 2 * origin;
+      measure.canvas.height = 3 * origin;
+      measure.scale(density, density);
+      measure.font = style.font;
+      measure.fillStyle = "white";
+      measure.fillText(text, origin / density, (2 * origin) / density);
+      const raster = measure.getImageData(0, 0, measure.canvas.width, measure.canvas.height);
+      let left = raster.width;
+      let right = -1;
+      for (let y = 0; y < raster.height; y++) {
+        for (let x = 0; x < raster.width; x++) {
+          if (raster.data[(y * raster.width + x) * 4 + 3]! >= 128) {
+            left = Math.min(left, x);
+            right = Math.max(right, x);
+          }
+        }
+      }
+      const width = Math.max(0, right - left + 1);
+      inkMeasurements.set(key, { offset: origin - left, width });
+      box.style.width = pixels(width / density);
+      ink.style.transform = `translateX(${pixels((origin - left) / density)})`;
+      return width / pixelUnit;
+    };
+    const nameWidth = measureInk(galaxy, galaxyInk);
+    const percentWidth = measureInk(percent, percentInk);
+    const noteWidth = measureInk(noteInk, noteInk);
+    const geometry = mapHeaderGeometry(nameWidth, percentWidth, total, noteWidth, pixelUnit);
+    const page = safeRect(insets, SPACING.pageInset, size);
+    header.style.left = pixels(Math.round(page.x * pixelUnit) / density);
+    header.style.top = pixels(Math.round(page.y * pixelUnit) / density);
+    header.style.width = units(geometry.width);
+    header.style.setProperty("--map-header-gap", units(geometry.gap));
+    divider.style.width = pixels(Math.round(MAP_SCREEN.header.divider.width * pixelUnit) / density);
+    const diameter = Math.round(MAP_SCREEN.header.pip * pixelUnit);
+    pips.style.position = "relative";
+    pips.style.height = pixels(diameter / density);
+    pips.style.width = pixels(
+      total > 0
+        ? (Math.round((total - 1) * MAP_SCREEN.header.pipPitch * pixelUnit) + diameter) / density
+        : 0,
+    );
+    for (const [index, pip] of [...pips.children].entries()) {
+      const style = (pip as HTMLElement).style;
+      style.position = "absolute";
+      style.left = pixels(Math.round(index * MAP_SCREEN.header.pipPitch * pixelUnit) / density);
+      style.width = pixels(diameter / density);
+      style.height = pixels(diameter / density);
+      style.borderWidth = pixels(Math.round(MAP_SCREEN.header.pipRing * pixelUnit) / density);
     }
     // Chips, kept by id and placed in reading order so Tab follows it.
     const shown = places().map((place) => ({
@@ -1249,7 +1303,9 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   // The panel's content and width for the selection.
   const dressPanel = () => {
     const { insets, size } = layout();
-    panel.style.maxWidth = units(panelMaxWidth(insets, size));
+    const width = units(panelMaxWidth(insets, size));
+    panel.style.maxWidth = width;
+    panel.style.setProperty("--map-panel-width", width);
     const place = selectedPlace();
     const travelling = travelNow();
     panel.hidden = !panelShown();
@@ -1316,7 +1372,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     const { fit } = layout();
     return { x: fit.x + fit.width / 2, y: fit.y + fit.height / 2 };
   };
-  toolButtons.get("close")!.addEventListener("click", () => options.onClose());
+  closeButton.addEventListener("click", () => options.onClose());
   toolButtons
     .get("zoomIn")!
     .addEventListener("click", () =>
@@ -1716,10 +1772,11 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
         ]
       : [
           ...tools.querySelectorAll<HTMLButtonElement>("button"),
-          questsButton,
-          galaxies,
           ...placesLayer.querySelectorAll<HTMLButtonElement>("button"),
           travel,
+          questsButton,
+          galaxies,
+          closeButton,
         ];
     const targets = order.filter((button) => !button.closest("[hidden]") && !button.hidden);
     if (targets.length === 0) {
@@ -1788,7 +1845,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       selected = null;
       view = null;
       render();
-      focusTarget(toolButtons.get("close")!);
+      focusTarget(closeButton);
     },
     openQuests,
     questsOpen,
