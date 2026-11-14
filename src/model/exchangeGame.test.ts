@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { questReward } from "../data/questRewards.ts";
 import { relaunch } from "../testing/launch.ts";
 import type { ExchangePreview, ExchangeQuote } from "./exchange.ts";
 import { ensureDestination, ensureStation } from "./flight.ts";
@@ -107,10 +108,13 @@ describe("confirmed station ore Exchange", () => {
     model.state.economy.stardust = 100;
     model.interact();
     expect(model.acceptJob("miningContract")).toBe("accepted");
+    const baseReward = model.state.tasks[2]!.reward;
     const before = model.state.progress[2].deposited;
     const progress = structuredClone(model.state.progress);
     const achievements = structuredClone(model.state.achievements);
     model.confirmExchange(quote(model.previewExchange({ amount: 30, direction: "buy" })));
+    const afterPurchase = model.state.economy.stardust;
+    expect(afterPurchase).toBe(40);
     expect(model.state.progress).toEqual(progress);
     expect(model.state.achievements).toEqual(achievements);
     model.undock();
@@ -118,6 +122,6 @@ describe("confirmed station ore Exchange", () => {
     expect(model.state.progress[2].deposited).toBe(before + 30);
     expect(model.state.tasks[2]).toBeUndefined();
     expect(flight.cargo).toBe(0);
-    expect(model.state.economy.stardust).toBe(220);
+    expect(model.state.economy.stardust).toBe(afterPurchase + questReward(baseReward));
   });
 });

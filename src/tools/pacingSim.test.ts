@@ -15,6 +15,8 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { galaxyEncounters } from "../data/enemyCatalog.ts";
 import { byPosition } from "../data/galaxies.ts";
+import { JOB_REWARDS } from "../data/jobs.ts";
+import { questReward } from "../data/questRewards.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { weaponAt } from "../data/weaponCatalog.ts";
@@ -265,13 +267,20 @@ describe("pacing simulation runs", () => {
     for (const type of ["survey", "delivery", "rescue", "hunt"] as const) {
       expect(completed(type), type).toBeGreaterThan(0);
     }
-    // Sunflower pays 30 per survey, 45 per hunt, 75 per rescue, and 45 or 75 per delivery.
+    // Sunflower completion payouts use the canonical conversion of catalog base rewards.
+    const rewards = JOB_REWARDS[1]!;
     for (const run of withJobs.runs) {
       const fixed =
-        30 * (run.jobs.survey ?? 0) + 45 * (run.jobs.hunt ?? 0) + 75 * (run.jobs.rescue ?? 0);
+        questReward(rewards.survey!) * (run.jobs.survey ?? 0) +
+        questReward(rewards.hunt!) * (run.jobs.hunt ?? 0) +
+        questReward(rewards.rescue!) * (run.jobs.rescue ?? 0);
       const deliveries = run.jobs.delivery ?? 0;
-      expect(run.stardust.jobs).toBeGreaterThanOrEqual(fixed + 45 * deliveries);
-      expect(run.stardust.jobs).toBeLessThanOrEqual(fixed + 75 * deliveries);
+      expect(run.stardust.jobs).toBeGreaterThanOrEqual(
+        fixed + questReward(rewards.deliveryShort!) * deliveries,
+      );
+      expect(run.stardust.jobs).toBeLessThanOrEqual(
+        fixed + questReward(rewards.deliveryLong!) * deliveries,
+      );
     }
     expect(withJobs.summary.firstWeaponMinutes.median).toBeLessThan(
       without.summary.firstWeaponMinutes.median,

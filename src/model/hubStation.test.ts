@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import { ACTIVITIES } from "../data/activities.ts";
 import { CONTENT } from "../data/content.ts";
+import { questReward } from "../data/questRewards.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import { playOpening } from "../testing/launch.ts";
 import { ensureDestination } from "./flight.ts";
@@ -120,11 +122,11 @@ describe("the mining hub as a station", () => {
     model.interact();
     expect(model.state.tasks[2]).toBeUndefined();
     expect(model.state.dialogue).toMatchObject({ context: "deliver" });
-    expect(model.state.economy.stardust).toBe(balance + 15);
+    expect(model.state.economy.stardust).toBe(balance + questReward(15));
     expect(model.contextAction).toBeUndefined();
     model.interact();
     model.choose("continue");
-    expect(model.state.economy.stardust).toBe(balance + 15);
+    expect(model.state.economy.stardust).toBe(balance + questReward(15));
     expect(model.contextAction).toBe("dock");
   });
 
@@ -141,7 +143,7 @@ describe("the mining hub as a station", () => {
       detail: "Deposit 30 ore at the hub.",
       id: "miningContract",
       kind: "activity",
-      reward: 180,
+      reward: questReward(ACTIVITIES[2]!.reward!),
       state: "offer",
       title: "Mining contract",
       type: "activity",
