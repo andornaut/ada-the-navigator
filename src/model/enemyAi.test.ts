@@ -579,8 +579,8 @@ describe("enemy rules", () => {
       expect(state.disabled).toBe(false);
       state = damageEnemy(definition, { amount: part.hp, hardpointId: part.id }, state);
     }
-    // The four 3 HP weapons took 12 of the hull's 18.
-    expect(state).toMatchObject({ disabled: true, hp: 6 });
+    // Destroying the weapons leaves the hull intact.
+    expect(state).toMatchObject({ disabled: true, hp: definition.hp });
     const moving = { ...state, velocity: { x: 30, y: 0 } };
     const result = stepEnemy(definition, observation(moving), moving);
     expect(result.effects).toMatchObject({ defeated: false, disabled: true });
@@ -589,7 +589,7 @@ describe("enemy rules", () => {
     expect(result.velocity.x).toBeLessThan(30);
     expect(result.velocity.x).toBeGreaterThan(0);
     expect(result.state.disabled).toBe(true);
-    state = damageEnemy(definition, { amount: 6, hardpointId: null }, result.state);
+    state = damageEnemy(definition, { amount: definition.hp, hardpointId: null }, result.state);
     expect(enemyEffects(definition, state).defeated).toBe(true);
     expect(stepEnemy(definition, observation(state), state).fire).toEqual([]);
   });

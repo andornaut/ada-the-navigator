@@ -327,8 +327,8 @@ export function createEnemy(
 }
 
 /**
- * Every hit lowers the hull; a hit at a hardpoint (null selects the hull alone) also damages
- * that hardpoint. Destroying a heavy's last weapon hardpoint disables it for good. A hit engages
+ * A hit damages only its selected hardpoint, with no overflow; null selects only the hull.
+ * Destroying a heavy's last weapon hardpoint disables it for good. A hit engages
  * the ship; on a returning ship that is not fleeing it also clears the return latch and resets
  * the pursuit clock.
  */
@@ -356,7 +356,10 @@ export function damageEnemy(
         ? { ...part, hp: Math.max(0, part.hp - hit.amount) }
         : { ...part },
     ),
-    hp: Math.max(definition.hullFloor ?? 0, state.hp - hit.amount),
+    hp:
+      hit.hardpointId === null
+        ? Math.max(definition.hullFloor ?? 0, state.hp - hit.amount)
+        : state.hp,
   };
   return { ...next, disabled: enemyEffects(definition, next).disabled };
 }

@@ -270,8 +270,8 @@ warning; its emission shows only as it fires.
 
 Frigates, capitals and platforms have hull HP and hardpoints.
 
-- **Damage:** every hit on a heavy reduces its hull HP, including hits on a
-  hardpoint, which also damage that hardpoint.
+- **Damage:** a hardpoint hit damages only that part, with no hull damage or
+  overflow. A hull hit damages only the hull. The flagship retains its hull floor of 1.
 - **Destroyed:** at 0 hull HP the ship breaks apart and drops twice its Stardust
   and no upgrade (see [Economy](economy.md#earning-stardust)).
 - **Disabled:** when every weapon hardpoint is destroyed, the ship is disabled,

@@ -542,7 +542,7 @@ describe("engine thrust", () => {
     return Math.hypot(ships[0]!.velocity.x, ships[0]!.velocity.y);
   }
   const capital = () => spawn("capital", { x: 0, y: 0 }, false);
-  /** Destroys each named part with exactly its HP, which the hull loses too. */
+  /** Destroys each named part with exactly its HP, preserving the hull. */
   const disable = (ids: string[], state: EnemyState) =>
     ids.reduce((next, id) => {
       const amount = enemyCatalog.capital.hardpoints.find((part) => part.id === id)!.hp;
@@ -598,11 +598,11 @@ describe("engine thrust", () => {
 
   it("destroys a heavy at 0 hull, whatever its parts", () => {
     const definition = enemyCatalog.capital;
-    // Each engine's 4 HP comes off the hull's 18 too.
+    // Losing engines preserves the hull.
     const engines = disable(["engine-left", "engine-right"], capital());
-    expect(engines.hp).toBe(10);
+    expect(engines.hp).toBe(definition.hp);
     expect(enemyEffects(definition, engines)).toMatchObject({ defeated: false, disabled: false });
-    const broken = damageEnemy(definition, { amount: 10, hardpointId: null }, engines);
+    const broken = damageEnemy(definition, { amount: definition.hp, hardpointId: null }, engines);
     expect(enemyEffects(definition, broken).defeated).toBe(true);
     expect(broken.hardpoints.find((part) => part.id === "command")!.hp).toBe(5);
   });
