@@ -750,8 +750,8 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   Unknown locations show "Explore to locate" without hidden identity or coordinates.
   Known locations in the current galaxy can be selected on the map.
   List detail uses primary "Back" to return to its list. A carried quest item's
-  HUD icon opens its detail directly, with secondary "Other quests" and primary
-  "Close" to resume gameplay. Other quests deliberately opens the list. A list's
+  HUD icon opens its detail directly, with secondary "All quests" and primary
+  "Close" to resume gameplay. All quests deliberately opens the list. A list's
   Close returns to its opener, either the local map, Paused, or gameplay. The close
   X, Escape and back always perform the same action as the current primary footer
   button. Detail never paginates, scrolls or truncates; only the list paginates.

@@ -616,7 +616,7 @@ export const CONTENT: GameContent = {
     questNextAction: "Next action",
     questObjective: "Objective",
     questOreDeposited: "Ore deposited",
-    questOtherQuests: "Other quests",
+    questOtherQuests: "All quests",
     questOutcome: "Outcome",
     questProgress: "{current} / {required}",
     questProgressLabel: "Progress",

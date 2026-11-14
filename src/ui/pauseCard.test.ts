@@ -555,7 +555,7 @@ describe("published modal layer routing", () => {
   });
 });
 
-it("opens a held quest directly, returns Other quests to its list, and resumes only on Close", () => {
+it("opens a held quest directly, returns All quests to its list, and resumes only on Close", () => {
   const { options, pause, root } = cards();
   const entry = {
     galaxy: 1 as const,
@@ -579,6 +579,7 @@ it("opens a held quest directly, returns Other quests to its list, and resumes o
   expect(texts(quests)).toContain("Approved full description");
   const find = (action: string) =>
     quests.querySelectorAll().find((button) => button.dataset.action === action)!;
+  expect(find("quest-other").textContent).toBe("All quests");
   find("quest-other").click();
   const row = quests.querySelectorAll().find((button) => button.dataset.questId === entry.id)!;
   row.click();
