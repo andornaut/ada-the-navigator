@@ -307,19 +307,24 @@ function mouth(sign: number): Point[] {
   return sign === 1 ? quad : quad.toReversed();
 }
 
-/** Front exhaust stations sit one half-mouth width ahead along each wing's leading edge. */
-export function retroMouthAxis(sign: number): { half: Point; middle: Point } {
-  const { tipL, tipR, nose } = vertices();
+/** Retro exhaust attaches its opaque outer corner to the wing tip and stops at the rear edge. */
+export function retroMouthAxis(sign: number): {
+  axis: Point;
+  corner: Point;
+  half: Point;
+  rearNormal: Point;
+} {
+  const { tipL, tipR, notchL, notchR } = vertices();
   const tip = sign < 0 ? tipL : tipR;
+  const notch = sign < 0 ? notchL : notchR;
   const halfWidth = (MOUTHS.outer - MOUTHS.inner) / 2;
-  const alongEdge = halfWidth / (tip[1] - nose[1]);
+  const angle = (10 * Math.PI) / 180;
+  const slope = (tip[1] - notch[1]) / (tip[0] - notch[0]);
   return {
+    axis: [sign * Math.sin(angle), -Math.cos(angle), 0],
+    corner: tip,
     half: [sign * halfWidth, 0, 0],
-    middle: [
-      tip[0] + alongEdge * (nose[0] - tip[0]),
-      tip[1] - halfWidth,
-      tip[2] + alongEdge * (nose[2] - tip[2]),
-    ],
+    rearNormal: [-slope, 1, 0],
   };
 }
 

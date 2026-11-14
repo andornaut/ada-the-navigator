@@ -195,29 +195,42 @@ signal and 0.092 from the Iris scheme's rear sides `#8f7cd0`.
 ### Retro jets
 
 `node art/tools/ship-retro-jets.ts` writes `ship-retro-jets.json`, using the
-existing version 1 engine-jet schema with one `engineLevels` entry (level 1)
-and all 32 headings. Higher engine levels reuse that entry.
-Its two anchors sit 2.75 model units forward of the outer wingtips, on the
-leading edges toward the nose: `(±20.316524, 17.73, 1.2)`. `retroMouthAxis`
-derives this forward distance from half the existing mouth width and
-interpolates the actual wingtip-to-nose edge, moving inward rather than outside
-the wing. The hull's vertices are unchanged.
-Exhaust points forward along local negative Y, with half width
-`(±2.75, 0, 0)` derived from the existing mouth width. The frame remains 96,
-with the same pivot, length rule and outer/core layer widths and lengths as
-the rear jets. Hull geometry, paint and rear jet data are unchanged.
+version 1 engine-jet geometry with all 32 headings in the same 96 px frame
+and pivot as the ship. Its compatibility `engineLevels` derive from the
+same `JET_LEVELS` source as `ship-jets.json`.
 
-The active fixed blue style reuses `lightField.jets.shipLevels[0]` from
-`galaxies.json`: outer `#1767b3`, core `#2585d0` to `#64caff`, with two
-layers and no halo. The existing global retro-jet consumer uses this style at
-every engine level; field ink policy is unchanged. Runtime selects retro jets
-while the ship moves backward relative to its actual facing; normal forward
-motion retains the existing rear jets.
+Every paint uses the exact main-exhaust layers selected for its Engine level
+and field: the forward engine material on dark fields, or the corresponding
+`lightField.jets.shipLevels` entry on light fields. The consumer applies that
+same layer array to retro geometry; paint does not define another exhaust
+palette.
 
-The producer exports `RETRO_BLUE` and `RETRO_YELLOW` and also writes
-`ship-retro-jets-yellow.json` with identical geometry for reverting the style.
-Yellow retains its halo `#f2d15a`, outer `#c9a978` to `#f2d15a`, and core
-`#efe4cf` to `#ffffff`; it is not a Settings toggle.
+`retroMouthAxis` derives each outer wing tip `(±21.44, 20.48, 1.2)`, the
+half-mouth vector `(±2.75, 0, 0)` and the forward/outward unit direction
+`(±sin(10°), -cos(10°), 0)` from the canonical model. Each mouth's
+`outerCorner` is that tip projected into the heading frame. The opaque outer
+triangle's base corner meets it: derive the midpoint as
+`outerCorner - half * selectedOuterLayer.width`. The selected outer width is
+read from the main material, including field policy. At width 1.6 the model
+midpoints are `(±17.04, 20.48, 1.2)`. The emitted `anchor` is the base-engine
+compatibility midpoint.
+
+All layers, including the halo, stop at the wing's rear tip-to-notch plane.
+With side `sign` equal to -1 or 1 and local positive Y pointing rearward, keep
+`y - 0.3 * sign * x <= 14.048`. Each mouth's `rearClip` expresses this as
+`dot(normal, framePoint) <= constant` in heading-frame pixels. The producer
+calibrates the plane to the same rounded half/direction basis as the jet
+triangles. Apply it consistently through the jet display's pivot and scale;
+the opaque attachment corner and forward tip remain fixed.
+
+The retro length curve is `6.6 + 26.4 f²`, 1.10 times the main curve.
+Layer widths, relative lengths, colours and alpha ramps come from the selected
+main material. Retro rendering adds no wing-edge ink. Actual backward velocity
+relative to facing selects retro jets with the existing motion threshold;
+forward motion, forward jets and reduced-motion behavior retain their contracts.
+
+`ship-retro-jets-yellow.json` is a static archive and is not rewritten by the
+active producer. It is not a Settings toggle.
 
 ## Nose
 

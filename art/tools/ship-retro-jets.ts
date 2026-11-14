@@ -1,45 +1,55 @@
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import GALAXIES from "../../public/art/galaxies.json" with { type: "json" };
-import { anchor, json, SHIP_HEADINGS, vector } from "./projection.ts";
-import { JET_LENGTH, jetLayers } from "./ship-jet-layers.ts";
+import { anchor, json, round, SHIP_HEADINGS, vector } from "./projection.ts";
+import { JET_LENGTH, JET_LEVELS, jetLayers } from "./ship-jet-layers.ts";
 import { FRAME, retroMouthAxis } from "./ship-model.ts";
 
-// Retro styles are fixed across engine levels; yellow remains available for reverting.
-export const RETRO_BLUE = GALAXIES.lightField.jets.shipLevels[0]!;
-export const RETRO_YELLOW = {
-  level: 1,
-  layers: jetLayers({
-    halo: "#f2d15a",
-    outer: ["#c9a978", "#f2d15a"],
-    core: ["#efe4cf", "#ffffff"],
-  }),
-};
+// Compatibility layers derive from the same source as the forward exhaust. Runtime selects
+// the forward engine/field material and derives the retro midpoint from its outer layer width.
+const engineLevels = JET_LEVELS.map((entry) => ({ level: entry.level, layers: jetLayers(entry) }));
+const fallbackOuter = engineLevels[0]!.layers.find((layer) => layer.name === "outer")!.width;
 const headings = Array.from({ length: SHIP_HEADINGS }, (_, yaw) => ({
   index: yaw,
   mouths: [-1, 1].map((sign) => {
-    const { half, middle } = retroMouthAxis(sign);
+    const model = retroMouthAxis(sign);
+    const outerCorner = anchor(SHIP_HEADINGS, FRAME / 2, yaw, model.corner);
+    const half = vector(SHIP_HEADINGS, yaw, model.half);
+    const axis = vector(SHIP_HEADINGS, yaw, model.axis);
+    // Express the model rear plane in the same quantized basis as the rendered triangles.
+    const dot = (point: readonly number[]) =>
+      model.rearNormal.reduce((sum, value, index) => sum + value * point[index]!, 0);
+    const h = dot(model.half);
+    const a = dot(model.axis);
+    const determinant = half[0] * axis[1] - half[1] * axis[0];
+    const normal = [
+      (h * axis[1] - half[1] * a) / determinant,
+      (half[0] * a - h * axis[0]) / determinant,
+    ];
     return {
-      anchor: anchor(SHIP_HEADINGS, FRAME / 2, yaw, middle),
-      axis: vector(SHIP_HEADINGS, yaw, [0, -1, 0]),
-      half: vector(SHIP_HEADINGS, yaw, half),
+      anchor: outerCorner.map((value, index) => value - half[index]! * fallbackOuter),
+      axis,
+      half,
+      outerCorner,
+      rearClip: {
+        normal,
+        constant: normal[0]! * outerCorner[0] + normal[1]! * outerCorner[1],
+      },
     };
   }),
 }));
 const contract = {
   version: 1,
   frame: FRAME,
-  length: JET_LENGTH,
-  engineLevels: [RETRO_BLUE],
+  length: {
+    base: round(JET_LENGTH.base * 1.1),
+    scale: round(JET_LENGTH.scale * 1.1),
+    exponent: JET_LENGTH.exponent,
+  },
+  engineLevels,
   headings,
 };
 writeFileSync(
   fileURLToPath(new URL("../../public/art/ship-retro-jets.json", import.meta.url)),
   json(contract),
-);
-
-writeFileSync(
-  fileURLToPath(new URL("../../public/art/ship-retro-jets-yellow.json", import.meta.url)),
-  json({ ...contract, engineLevels: [RETRO_YELLOW] }),
 );
