@@ -53,13 +53,16 @@ salvaging it drops its Stardust and has the heavy upgrade chance (see
 | `capital`       | 28 or 14 |
 | `platform`      |   8 or 4 |
 
-An enemy's Stardust is half its hit points, rounded down, and at least 1; a
-heavy counts all its hardpoints' hit points, not its hull, and a destroyed heavy
-drops twice that; a heavy's row shows destroyed, then salvaged. The table shows
-position 1; values follow each position's hit points. Every defeated enemy releases
-at least 1 Stardust, with existing larger rewards and eligible pickups preserved.
-Disabling a heavy does not destroy it. Fleeing, unloading, despawning or restoring
-a survivor does not grant defeat loot, and a released wreck never pays again.
+Small-craft Stardust is half its unscaled hull hit points, rounded down, and at
+least 1. Heavy salvage rewards are fixed by route position, independent of hull
+HP, part HP and mount count. A destroyed heavy releases twice its salvage reward.
+The rewards at route positions 1 through 6 are frigate 6/6/10/10/15/15,
+capital 14/14/22/22/33/33 and platform 4/4/5/5/6/6. The table shows position 1,
+with each heavy's destroyed reward followed by its salvaged reward. Every defeated
+enemy releases at least 1 Stardust, with existing larger rewards and eligible
+pickups preserved. Disabling a heavy does not destroy it. Fleeing, unloading,
+despawning or restoring a survivor does not grant defeat loot, and a released
+wreck never pays again.
 Discovery caches are rare. Resource-yield asteroids first roll a total using
 these relative weights. Each array follows the listed total-unit range in
 ascending order and sums to 100. The maximum chances in this table describe

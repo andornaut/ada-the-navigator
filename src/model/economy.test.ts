@@ -386,15 +386,18 @@ describe("Stardust drops", () => {
     }
   });
 
-  it("pays each enemy half its position's hit points, rounded down, and at least 1", () => {
+  it("keeps heavy rewards independent of part HP and small-craft rewards tied to hull HP", () => {
+    const rewards = {
+      capital: [14, 33, 14, 22, 22, 33],
+      frigate: [6, 15, 6, 10, 10, 15],
+      platform: [4, 6, 4, 5, 5, 6],
+    };
     for (const galaxy of [1, 2, 3, 4, 5, 6] as const) {
       for (const archetype of Object.keys(enemyCatalog) as EnemyArchetype[]) {
-        const definition = enemyDefinition(galaxy, archetype);
-        // A heavy counts its hardpoints' hit points, not its hull.
-        const hp = HEAVIES.includes(archetype)
-          ? definition.hardpoints.reduce((sum, part) => sum + part.hp, 0)
-          : definition.hp;
-        expect(enemyStardust(galaxy, archetype)).toBe(Math.max(1, Math.floor(hp / 2)));
+        const expected = HEAVIES.includes(archetype)
+          ? rewards[archetype as keyof typeof rewards][galaxy - 1]
+          : Math.max(1, Math.floor(enemyDefinition(galaxy, archetype).hp / 2));
+        expect(enemyStardust(galaxy, archetype)).toBe(expected);
       }
     }
     // Position 1 (gameplay/economy.md): a heavy's salvaged value; destroying it pays double.

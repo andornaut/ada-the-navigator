@@ -7,15 +7,17 @@ import {
   enemyCatalog,
   enemyDefinition,
   enemyFire,
+  enemyStardust,
   fireDamageRatio,
   type FireProfile,
   HEAVY_POOLS,
   HEAVY_TYPES,
   heavyLoadout,
+  PHANTOM_FLAGSHIP_ID,
   SINGLE_MOUNT_WEAPONS,
   type WeaponMounts,
 } from "./enemyCatalog.ts";
-import type { RoutePosition } from "./galaxies.ts";
+import { ROUTE_POSITION, type RoutePosition } from "./galaxies.ts";
 import type { EnemyWeapon, GalaxyNumber, Weapon } from "./types.ts";
 import { WEAPON_CATALOG, weaponAt, weaponSpeed } from "./weaponCatalog.ts";
 
@@ -185,7 +187,7 @@ describe("enemy fire profiles", () => {
       "engine-left",
       "engine-right",
     ]);
-    expect(new Set(capital.map((part) => part.hp))).toEqual(new Set([6]));
+    expect(new Set(capital.map((part) => part.hp))).toEqual(new Set([7]));
   });
 
   it("arms small craft by position and fires at the enemy cadence over the position's fire rate", () => {
@@ -229,5 +231,38 @@ describe("enemy fire profiles", () => {
     // The platform's Laser fires two-shot bursts 0.15 s apart.
     const turret = enemyDefinition(2, "platform").hardpoints[0]!;
     expect(turret.kind === "weapon" && turret.fire.burst).toEqual({ count: 2, gap: 0.15 });
+  });
+});
+
+describe("approved heavy health and independent rewards", () => {
+  it("applies route part HP without changing hull HP or salvage rewards", () => {
+    const partHp = [5, 5, 6, 6, 7, 7];
+    const hulls = {
+      capital: [40, 44, 60, 64, 88, 96],
+      frigate: [20, 22, 30, 32, 44, 48],
+      platform: [10, 11, 15, 16, 22, 24],
+    };
+    const salvage = {
+      capital: [14, 14, 22, 22, 33, 33],
+      frigate: [6, 6, 10, 10, 15, 15],
+      platform: [4, 4, 5, 5, 6, 6],
+    };
+    for (const galaxy of GALAXY_NUMBERS) {
+      const index = ROUTE_POSITION[galaxy] - 1;
+      for (const archetype of ["capital", "frigate", "platform"] as const) {
+        const definition = enemyDefinition(galaxy, archetype);
+        expect(definition.hardpoints.length).toBeGreaterThan(0);
+        expect(definition.hardpoints.every((part) => part.hp === partHp[index])).toBe(true);
+        expect(definition.hp).toBe(hulls[archetype][index]);
+        expect(enemyStardust(galaxy, archetype)).toBe(salvage[archetype][index]);
+      }
+    }
+  });
+
+  it("keeps the flagship hull and floor while assigning nine HP to every part", () => {
+    const flagship = enemyDefinition(6, "capital", PHANTOM_FLAGSHIP_ID);
+    expect(flagship.hardpoints.every((part) => part.hp === 9)).toBe(true);
+    expect(flagship.hp).toBe(160);
+    expect(flagship.hullFloor).toBe(1);
   });
 });

@@ -228,7 +228,7 @@ describe("ore fields", () => {
     expect(platform.enemy?.archetype).toBe("platform");
     expect(platform.enemy?.facing).toEqual(PLATFORM_FACING);
     expect(shipDirection(16, PLATFORM_FACING)).toBe(0);
-    expect(platform.enemy?.hardpoints.map((part) => part.hp)).toEqual([6, 6]);
+    expect(platform.enemy?.hardpoints.map((part) => part.hp)).toEqual([7, 7]);
     expect(platform.radius).toBe(CONTENT.tuning.flight.shipRadius * 3);
   });
 });

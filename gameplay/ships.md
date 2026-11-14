@@ -121,7 +121,8 @@ a new Ada at position 1.
 
 One tuning value, `difficultyScale` (1), multiplies every enemy hit point, the
 fire rate and the encounter rate at every position, so the whole curve can be
-tuned at once. Stardust drops use the unscaled hit points, so tuning it leaves
+tuned at once. Small-craft Stardust drops use unscaled hull hit points. Heavy rewards are fixed
+independently of hull HP, part HP and mount counts, so tuning them leaves
 the economy unchanged. It is not a player setting: there is one forgiving difficulty.
 
 Damage and hit points share one unit: 1 damage removes 1 HP. A level 1 Laser shot
@@ -142,19 +143,20 @@ Heavies:
 
 | Position | Hardpoint | `frigate` hull | Frigate weapons | `capital` hull | Capital weapons | Heavy share |
 | -------: | --------: | -------------: | --------------: | -------------: | --------------: | ----------: |
-|        1 |         4 |             20 |               2 |             40 |               4 |          ×1 |
-|        2 |         4 |             22 |               2 |             44 |               4 |          ×1 |
-|        3 |         5 |             30 |               3 |             60 |               6 |        ×1.2 |
-|        4 |         5 |             32 |               3 |             64 |               6 |        ×1.3 |
-|        5 |         6 |             44 |               4 |             88 |               8 |        ×1.4 |
-|        6 |         6 |             48 |               4 |             96 |               8 |        ×1.5 |
+|        1 |         5 |             20 |               2 |             40 |               4 |          ×1 |
+|        2 |         5 |             22 |               2 |             44 |               4 |          ×1 |
+|        3 |         6 |             30 |               3 |             60 |               6 |        ×1.2 |
+|        4 |         6 |             32 |               3 |             64 |               6 |        ×1.3 |
+|        5 |         7 |             44 |               4 |             88 |               8 |        ×1.4 |
+|        6 |         7 |             48 |               4 |             96 |               8 |        ×1.5 |
 
 - Small-craft columns are hull HP. Outside Sunflower's staged ambient roster,
   the group bonus adds to both ends of each `swarm` and `fighter` group range. Lead is how much of Ada's movement enemy
   aim allows for (see [Enemy aim](#enemy-aim)). Notice and fire rates are
   relative to the base catalog. Encounter rates are in [Ambient admission](#ambient-admission).
 - Every heavy hardpoint (weapon, engine, command and platform turret) has the
-  position's hardpoint HP. A `platform` hull has half the frigate hull.
+  position's hardpoint HP: 5, 5, 6, 6, 7 and 7 along the route. The flagship's
+  parts have 9 HP. A `platform` hull has half the frigate hull.
 - Heavy share multiplies the roster's `frigate` and `capital` weights; the weights
   then renormalize. Placed platforms are not weighted.
 

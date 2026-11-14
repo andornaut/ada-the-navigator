@@ -161,7 +161,7 @@ describe("Phantom chapter", () => {
     const definition = enemyDefinition(6, "capital", PHANTOM_FLAGSHIP_ID);
     expect(definition.hp).toBe(160);
     expect(definition.hardpoints).toHaveLength(11);
-    expect(definition.hardpoints.every((part) => part.hp === 8)).toBe(true);
+    expect(definition.hardpoints.every((part) => part.hp === 9)).toBe(true);
     expect(definition.behaviour).toEqual({ kind: "siege", speedFraction: 0.25 });
     expect(definition.pursuit.homeRadius).toBe(800);
     let enemy = createEnemy(

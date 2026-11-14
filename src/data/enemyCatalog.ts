@@ -751,12 +751,12 @@ const position = (
 
 /** Difficulty by route position (gameplay/ships.md "Difficulty"). */
 export const POSITION_DIFFICULTY: Readonly<Record<RoutePosition, PositionDifficulty>> = {
-  1: position([2, 4, 3, 8], 1, [1.2, 1.44, 1.725], 4, [20, 40], 1),
-  2: position([2, 5, 3, 9], 1, [1.3, 1.63, 1.8975], 4, [22, 44], 1),
-  3: position([3, 5, 4, 10], 2, [1.4, 1.81, 2.07], 5, [30, 60], 1.2),
-  4: position([3, 6, 4, 11], 2, [1.45, 1.88, 2.2425], 5, [32, 64], 1.3),
-  5: position([3, 6, 5, 11], 3, [1.5, 1.94, 2.415], 6, [44, 88], 1.4),
-  6: position([3, 6, 5, 12], 3, [1.5, 2, 2.5875], 6, [48, 96], 1.5),
+  1: position([2, 4, 3, 8], 1, [1.2, 1.44, 1.725], 5, [20, 40], 1),
+  2: position([2, 5, 3, 9], 1, [1.3, 1.63, 1.8975], 5, [22, 44], 1),
+  3: position([3, 5, 4, 10], 2, [1.4, 1.81, 2.07], 6, [30, 60], 1.2),
+  4: position([3, 6, 4, 11], 2, [1.45, 1.88, 2.2425], 6, [32, 64], 1.3),
+  5: position([3, 6, 5, 11], 3, [1.5, 1.94, 2.415], 7, [44, 88], 1.4),
+  6: position([3, 6, 5, 12], 3, [1.5, 2, 2.5875], 7, [48, 96], 1.5),
 };
 
 /** A galaxy's difficulty, by its route position. */
@@ -781,16 +781,19 @@ export function unscaledHullHp(galaxy: GalaxyNumber, archetype: EnemyArchetype):
 /** Frigates, capitals and platforms: hull HP and hardpoints, disabled and salvaged. */
 export const HEAVIES: readonly EnemyArchetype[] = ["frigate", "capital", "platform"];
 
-/**
- * An enemy's Stardust at a galaxy's position (gameplay/economy.md "Earning Stardust"): half its
- * unscaled hit points, rounded down, and at least 1; a heavy counts all its hardpoints' hit
- * points, not its hull.
- */
+/** Heavy salvage rewards by route position, independent of hull, part HP and mount count. */
+export const HEAVY_STARDUST = {
+  capital: [14, 14, 22, 22, 33, 33],
+  frigate: [6, 6, 10, 10, 15, 15],
+  platform: [4, 4, 5, 5, 6, 6],
+} as const;
+
+/** Small craft use half their unscaled hull HP; heavies use their fixed salvage rewards. */
 export function enemyStardust(galaxy: GalaxyNumber, archetype: EnemyArchetype): number {
-  const hp = HEAVIES.includes(archetype)
-    ? enemyDefinition(galaxy, archetype).hardpoints.length * difficultyOf(galaxy).hardpointHp
-    : unscaledHullHp(galaxy, archetype);
-  return Math.max(1, Math.floor(hp / 2));
+  if (Object.hasOwn(HEAVY_STARDUST, archetype)) {
+    return HEAVY_STARDUST[archetype as keyof typeof HEAVY_STARDUST][ROUTE_POSITION[galaxy] - 1]!;
+  }
+  return Math.max(1, Math.floor(unscaledHullHp(galaxy, archetype) / 2));
 }
 
 /** A galaxy's encounter rate: its position's, times difficultyScale. */
@@ -886,6 +889,7 @@ export function encounterQuiet(galaxy: GalaxyNumber): { distance: number; second
 }
 
 export const PHANTOM_FLAGSHIP_ID = "phantomFlagship";
+export const FLAGSHIP_PART_HP = 9;
 const scaled = new Map<string, EnemyDefinition>();
 /**
  * The catalog definition at a galaxy's route position: its roster behaviour, its position's
@@ -949,7 +953,7 @@ export function enemyDefinition(
       definition = {
         ...definition,
         behaviour: { kind: "siege", speedFraction: 0.25 },
-        hardpoints: definition.hardpoints.map((part) => ({ ...part, hp: 8 })),
+        hardpoints: definition.hardpoints.map((part) => ({ ...part, hp: FLAGSHIP_PART_HP })),
         hp: 160,
         hullFloor: 1,
         pursuit: { ...definition.pursuit, homeRadius: 800 },
