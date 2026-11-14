@@ -1,3 +1,6 @@
+import controlPresentationCss from "@andornaut/game-kit/web/ui/dom/controlPresentation.css?raw";
+import controlsCss from "@andornaut/game-kit/web/ui/dom/controls.css?raw";
+
 import { STORY_PANEL } from "../../data/layout.ts";
 import { TEXT_TOKENS } from "../modal.ts";
 import { CONTROL_ROW, FRAME_LINE } from "./controls.ts";
@@ -16,7 +19,7 @@ export const DETAILS_DISCLOSURE_STYLE = {
   width: CONTROL_ROW.icon,
 };
 
-export const ADA_CONTROL_PRESENTATION_STYLE = `
+export const ADA_CONTROL_PRESENTATION_STYLE = `${controlsCss}\n${controlPresentationCss}
 .ada-button-presentation{
   flex-direction:column;
   align-items:stretch;

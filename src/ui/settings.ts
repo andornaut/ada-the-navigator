@@ -2,6 +2,7 @@ import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 
 import { SETTINGS_STATE_LABELS } from "../data/settingsCopy.ts";
 import type { InstallStepsKind } from "../pwa/index.ts";
+import { applyAdaControlTheme, createAdaPageDivider } from "./buttonPresentation.ts";
 import {
   type ControlVisibility,
   type DeviceSetting,
@@ -24,7 +25,6 @@ import {
   settingsColumns,
   settingsTitleInkTop,
 } from "./layout/settings.ts";
-import { STORY_PANEL } from "./layout/storyPage.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { TOUCH_STICK, USE_DISC } from "./layout/touchControls.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
@@ -271,14 +271,11 @@ ${hudDiscStyle(".ada-controls .ada-exit-open", ".ada-disc")}
   grid-template-columns:repeat(2,minmax(0,1fr));
   column-gap:${units(SETTINGS_COLUMN_GAP)}
 }
-.ada-controls .ada-rows[data-columns="2"]::before{
-  content:"";
+.ada-controls .ada-rows[data-columns="2"] > .ada-page-divider{
   grid-column:1 / -1;
   grid-row:1 / 4;
   justify-self:center;
   align-self:stretch;
-  width:${units(STORY_PANEL.rule.width)};
-  background:${STORY_PANEL.rule.colour};
   pointer-events:none
 }
 .ada-controls .ada-rows[data-columns="2"] > :nth-child(1){grid-column:1;grid-row:1}
@@ -318,6 +315,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   const textMeasure = document.createElement("canvas").getContext?.("2d");
   const root = document.createElement("div");
   root.className = "ada-controls";
+  applyAdaControlTheme(root);
   root.dataset.fontRole = FONT_ROLES.body;
   const openButton = document.createElement("button");
   openButton.className = "ada-settings-open";
@@ -366,6 +364,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   // A control row, as in Chibi: icon, label (and note) and switch; the whole row is the switch.
   const switchRow = (setting: DeviceSetting, label: string, note?: string) => {
     const { row, show } = createSwitchRow({
+      align: note ? "top" : "center",
       icon: settingsIcon(SETTING_ICONS[setting]),
       id: setting,
       label,
@@ -453,6 +452,9 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     }
   });
   rows.append(installRow);
+  const divider = createAdaPageDivider(document);
+  divider.hidden = true;
+  rows.append(divider);
   const stepsParts = createCard({
     closeAction: "close-install-steps",
     closeLabel: options.labels.close,
@@ -490,6 +492,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       return;
     }
     rows.dataset.columns = card.dataset.settingsColumns = "1";
+    divider.hidden = true;
     card.append(actions);
     settingsCard.card.style.minWidth = "";
     const unit = readViewUnit(rows);
@@ -534,6 +537,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       widths.map((width) => width / unit),
     );
     rows.dataset.columns = card.dataset.settingsColumns = String(fitted.columns);
+    divider.hidden = fitted.columns !== 2;
     if (fitted.columns === 2) {
       rows.append(actions);
       settingsCard.card.style.minWidth = units(fitted.minimumWidth);
@@ -544,6 +548,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       settingsCard.fit();
       if (rows.scrollHeight > rows.clientHeight) {
         rows.dataset.columns = card.dataset.settingsColumns = "1";
+        divider.hidden = true;
         card.append(actions);
         settingsCard.card.style.minWidth = "";
         settingsCard.fit();

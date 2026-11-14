@@ -1,4 +1,5 @@
 import { HIT_RULE, hitMargin } from "@andornaut/game-kit/ui/hitAreas";
+import { setControlPlacement } from "@andornaut/game-kit/web/ui/dom/buttonLayout";
 
 import { SCREEN } from "../data/screen.ts";
 import {
@@ -506,7 +507,7 @@ ${UI_SCOPE} .ada-button.ada-story-button::after{
 ${UI_SCOPE} .ada-row{
   box-sizing:border-box;
   display:flex;
-  align-items:center;
+  align-items:flex-start;
   gap:${units(CONTROL_ROW.gap)};
   width:100%;
   min-height:${units(CONTROL_ROW.height)};
@@ -520,6 +521,9 @@ ${UI_SCOPE} .ada-row{
   border-radius:0;
   cursor:pointer;
   pointer-events:auto
+}
+${UI_SCOPE} .ada-row[data-ui-placement="center"]{
+  align-items:center
 }
 
 ${UI_SCOPE} .ada-switch{
@@ -755,6 +759,7 @@ export function switchState(on: boolean): {
 // A control row: one switch button at least a control row high holding icon, label, optional note and switch, so the
 // whole row is the press target. show sets its state.
 export function createSwitchRow(options: {
+  readonly align?: "top" | "center";
   readonly icon: HTMLElement;
   readonly id: string;
   readonly label: string;
@@ -763,6 +768,7 @@ export function createSwitchRow(options: {
   const row = document.createElement("button");
   row.type = "button";
   row.className = "ada-row";
+  setControlPlacement(options.align ?? "top", row);
   row.setAttribute("role", "switch");
   row.setAttribute("aria-label", options.label);
   const text = document.createElement("span");

@@ -1,13 +1,13 @@
 import { capTop } from "./cardFrame.ts";
 import { CARD_WIDTH_CAPS } from "./contentCard.ts";
+import { PAGE_DIVIDER_STYLE } from "./controlPresentation.ts";
 import { CONTROL_ROW } from "./controls.ts";
-import { STORY_PANEL } from "./storyPage.ts";
 import { SPACING, TYPE } from "./tokens.ts";
 
 export const SETTINGS_OUTER_PADDING = 2 * SPACING.panelPadding;
 export const SETTINGS_INNER_PADDING = SPACING.panelPadding;
 export const SETTINGS_SECTION_GAP = SPACING.panelPadding;
-export const SETTINGS_COLUMN_GAP = 2 * SETTINGS_INNER_PADDING + STORY_PANEL.rule.width;
+export const SETTINGS_COLUMN_GAP = 2 * SETTINGS_INNER_PADDING + PAGE_DIVIDER_STYLE.thickness;
 export const SETTINGS_TITLE_INK_TOP = CONTROL_ROW.textInset + capTop(TYPE.body);
 
 /** The title's visible cap top, from the actual loaded font's metrics. */

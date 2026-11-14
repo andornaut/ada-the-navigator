@@ -3,7 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { SETTINGS_STATE_LABELS } from "../data/settingsCopy.ts";
 import { DEVICE_STORAGE_KEYS } from "./deviceSettings.ts";
-import { createSettings, type SettingsLabels } from "./settings.ts";
+import { PAGE_DIVIDER_STYLE } from "./layout/controlPresentation.ts";
+import { createSettings, SETTINGS_STYLE, type SettingsLabels } from "./settings.ts";
 
 vi.mock("./uiSkin.ts", () => ({ applyButtonSkin: vi.fn().mockResolvedValue(undefined) }));
 
@@ -16,7 +17,11 @@ class Element {
   hidden = false;
   parent: Element | undefined;
   readonly listeners = new Map<string, (() => void)[]>();
-  readonly style = { setProperty: vi.fn() };
+  readonly properties = new Map<string, string>();
+  readonly style = {
+    getPropertyValue: (name: string) => this.properties.get(name) ?? "",
+    setProperty: vi.fn((name: string, value: string) => this.properties.set(name, value)),
+  };
   textContent = "";
   addEventListener(type: string, listener: () => void) {
     this.listeners.set(type, [...(this.listeners.get(type) ?? []), listener]);
@@ -109,6 +114,35 @@ describe("Settings current-state labels", () => {
     }
     settings.dispose();
   });
+  it("uses the shared native divider and inherited tokens without changing control or install row order", () => {
+    const { rows, settings } = setup();
+    const dividers = rows.filter((row) => row.attributes.get("aria-orientation") === "vertical");
+    expect(dividers).toHaveLength(1);
+    expect(dividers[0]!.hidden).toBe(true);
+    expect(dividers[0]!.properties.size).toBe(0);
+    expect(rows.slice(0, 4).map((row) => row.attributes.get("data-ui-placement"))).toEqual([
+      "top",
+      "top",
+      "top",
+      "top",
+    ]);
+    expect(rows[4]!.className).toBe("ada-row ada-install-row");
+    const root = settings.root as unknown as Element;
+    expect(root.properties.get("--ui-page-divider-thickness")).toBe(
+      String(PAGE_DIVIDER_STYLE.thickness),
+    );
+    expect(root.properties.get("--ui-page-divider-colour")).toBe(
+      `#${PAGE_DIVIDER_STYLE.colour.toString(16)}`,
+    );
+    const rule = SETTINGS_STYLE.match(
+      /\.ada-rows\[data-columns="2"\] > \.ada-page-divider\{([^}]+)\}/u,
+    )?.[1];
+    expect(rule).toBeDefined();
+    expect(rule).not.toMatch(/background|width:|border/u);
+    expect(SETTINGS_STYLE).not.toContain('.ada-rows[data-columns="2"]::before');
+    settings.dispose();
+  });
+
   it("provides a primary Close in the shared launcher actions without renaming it", () => {
     const { settings } = setup();
     const actions = settings.actions as unknown as Element;

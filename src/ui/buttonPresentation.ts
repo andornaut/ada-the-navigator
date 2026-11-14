@@ -1,6 +1,3 @@
-import "@andornaut/game-kit/web/ui/dom/controls.css";
-import "@andornaut/game-kit/web/ui/dom/controlPresentation.css";
-
 import {
   setButtonFrame,
   setButtonRole,
