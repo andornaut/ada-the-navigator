@@ -57,7 +57,7 @@ import { EDGE_MARKER_DEPTH } from "./drawOrder.ts";
 import { enemyPartFrame, GALAXY_FAMILIES } from "./enemyArt.ts";
 import { readEnemyWeaponsArt } from "./enemyWeaponsArt.ts";
 import { TELEPORT_DISTANCE } from "./feedback.ts";
-import { lightGalaxy, readLightGalaxies } from "./lightField.ts";
+import { lightGalaxy, readForegroundEdges, readLightGalaxies } from "./lightField.ts";
 import { saves } from "./persistence.ts";
 import { fitPlayCamera, sceneFit, shakeIntensity } from "./playCamera.ts";
 import { readProjectArt } from "./projectArt.ts";
@@ -106,7 +106,8 @@ const interactionCards = new WeakMap<object, ReturnType<typeof createInteraction
 const shieldOreFlights = new WeakMap<object, FlightState | null>();
 
 /** The scene state and methods this module's functions use. */
-export type UiContext = Scene &
+export type UiContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
+  Scene &
   Pick<
     GameScene,
     | "add"
@@ -141,6 +142,7 @@ export type UiContext = Scene &
     | "familyShards"
     | "feedback"
     | "feedbackSound"
+    | "foregroundEdges"
     | "galaxies"
     | "galaxyBackdrops"
     | "galaxyLoads"
@@ -231,6 +233,7 @@ export function buildScene(scene: UiContext): void {
     readGalaxyFields(scene.cache.json.get("galaxy-fields")),
   );
   scene.lightGalaxies = readLightGalaxies(scene.cache.json.get("galaxy-fields"));
+  scene.foregroundEdges = readForegroundEdges(scene.cache.json.get("galaxy-fields"));
   const background = scene.palette.background;
   scene.game.config.backgroundColor.setTo(
     (background >> 16) & 255,
@@ -986,6 +989,9 @@ export function renderConversation(scene: UiContext): void {
     area,
     {
       color: `#${scene.palette.pointOfInterest.toString(16).padStart(6, "0")}`,
+      ...(scene.edgeInk === undefined
+        ? {}
+        : { edge: `#${scene.edgeInk.toString(16).padStart(6, "0")}` }),
       light: scene.light,
     },
     !covered && !emergency && flight ? scene.model.pennyMarkers(area, scene.litCaches) : [],

@@ -71,7 +71,7 @@ import {
 import { type EnemyWeaponsArt } from "./enemyWeaponsArt.ts";
 import { FeedbackSound, ModelFeedback } from "./feedback.ts";
 import { type JobArt } from "./jobArt.ts";
-import { blastEdges, LIGHT_FIELD, lightGalaxy } from "./lightField.ts";
+import { blastEdges, foregroundEdge, LIGHT_FIELD, lightGalaxy } from "./lightField.ts";
 import { parentFit, sceneFit, viewShift } from "./playCamera.ts";
 import { type ProjectArtSet } from "./projectArt.ts";
 import { drawAndromeda } from "./sceneAndromeda.ts";
@@ -186,7 +186,10 @@ export class GameScene extends Scene {
   partLoads = new Set<string>();
   // A light field (art/galaxies.md "Light fields"): this frame's keylined sprites, each keyline's
   // eight ink copies by key, the ship jets' ink edge and the indicators' ink stroke layer.
+  /** Whether a foreground boundary treatment is enabled, including explicit Art ink. */
   light = false;
+  fieldLight = false;
+  edgeInk = LIGHT_FIELD.ink;
   // Which seen enemies, heavies and stations are off screen and marked (model/edgeMarkers.ts).
   readonly edgeMarkers = createEdgeMarkerTracker();
   keyed: {
@@ -367,6 +370,7 @@ export class GameScene extends Scene {
   galaxyPalettes: ReadonlyMap<GalaxyNumber, SpacePalette> = new Map();
   // The galaxies whose field is light, from the same galaxies.json as their palettes.
   lightGalaxies: ReadonlySet<GalaxyNumber> = new Set();
+  foregroundEdges: ReadonlyMap<GalaxyNumber, number> = new Map();
   // The space background in use: the flight's galaxy field, else the base palette's.
   spaceBackground = FALLBACK_SPACE_PALETTE.background;
   station!: ReturnType<typeof createStationView>;
@@ -672,6 +676,11 @@ export class GameScene extends Scene {
 
   private draw(): void {
     const flight = this.model.state.flight;
+    const galaxy = this.model.state.mode === "space" ? flight?.galaxy : undefined;
+    this.fieldLight = lightGalaxy(this.lightGalaxies, galaxy);
+    const edge = foregroundEdge(this.lightGalaxies, this.foregroundEdges, galaxy);
+    this.light = edge !== undefined;
+    this.edgeInk = edge ?? LIGHT_FIELD.ink;
     if (flight !== this.needleFlight) {
       this.needleRenderer?.clear();
       this.needleFlight = flight ?? undefined;
@@ -725,7 +734,6 @@ export class GameScene extends Scene {
       this.bannerLayer?.place([]);
       return;
     }
-    this.light = lightGalaxy(this.lightGalaxies, flight.galaxy);
     drawBackdrop(this, flight);
     // Dust specks, the debris layer's motion cue at its parallax, in the galaxy's backdropSide.
     const cell = 160;
@@ -806,11 +814,7 @@ export class GameScene extends Scene {
       const edged =
         this.light &&
         ["blastRing", "blastFlash"].some((kind) => LIGHT_FIELD.effects.includes(kind));
-      drawEffect(
-        this,
-        shapes,
-        edged ? blastEdges(LIGHT_FIELD.ink, LIGHT_FIELD.keyline, shapes) : [],
-      );
+      drawEffect(this, shapes, edged ? blastEdges(this.edgeInk, LIGHT_FIELD.keyline, shapes) : []);
     }
     // Art's Phaser beam from the nose, and a hit's spark at the contact.
     for (const flash of activeBeamFlashes(flight)) {
@@ -818,7 +822,7 @@ export class GameScene extends Scene {
       const to = this.project(flash.to);
       const ms = flash.age * 1000;
       // On a light field the beam's outer glow and bloom are ink.
-      const glow = this.light ? LIGHT_FIELD.phaser : AMBER_BEAM_GLOW;
+      const glow = this.light ? { ...LIGHT_FIELD.phaser, colour: this.edgeInk } : AMBER_BEAM_GLOW;
       drawEffect(this, glowingBeam(glow, from, to, flash.hit, this.reducedMotion, ms));
       if (flash.hit) {
         const angle = Math.atan2(to.y - from.y, to.x - from.x);
@@ -840,7 +844,7 @@ export class GameScene extends Scene {
       const edge = this.light ? LIGHT_FIELD.shotEdge : 0;
       if (shot.projectile === "dot") {
         if (edge) {
-          this.overlay.fillStyle(LIGHT_FIELD.ink, alpha);
+          this.overlay.fillStyle(this.edgeInk, alpha);
           this.overlay.fillCircle(point.x, point.y, 1.5 + edge);
         }
         this.overlay.fillStyle(color, alpha);
@@ -891,7 +895,7 @@ export class GameScene extends Scene {
         );
       } else {
         if (edge) {
-          this.overlay.lineStyle(1.5 + 2 * edge, LIGHT_FIELD.ink, alpha);
+          this.overlay.lineStyle(1.5 + 2 * edge, this.edgeInk, alpha);
           this.overlay.lineBetween(tail.x, tail.y, point.x, point.y);
         }
         this.overlay.lineStyle(1.5, color, alpha);
@@ -941,8 +945,8 @@ export class GameScene extends Scene {
         speed,
       )) {
         if (keyline) {
-          this.jetKeyline.fillStyle(LIGHT_FIELD.ink, alpha);
-          this.jetKeyline.lineStyle(2 * LIGHT_FIELD.keyline, LIGHT_FIELD.ink, alpha);
+          this.jetKeyline.fillStyle(this.edgeInk, alpha);
+          this.jetKeyline.lineStyle(2 * LIGHT_FIELD.keyline, this.edgeInk, alpha);
           this.jetKeyline.fillTriangle(
             points[0].x,
             points[0].y,

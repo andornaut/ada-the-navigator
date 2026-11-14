@@ -2,15 +2,18 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import {
   alphaTopRow,
   blastEdges,
+  foregroundEdge,
   inkEdges,
   KEYLINE_ALPHA,
   keylineOffsets,
   keylineWidth,
   LIGHT_FIELD,
   lightGalaxy,
+  readForegroundEdges,
   readLightField,
   readLightGalaxies,
   thresholdSilhouette,
@@ -99,18 +102,54 @@ describe("light-field rule", () => {
     expect(alphaTopRow(new Uint8ClampedArray(4 * 3 * 4), 3, 4, KEYLINE_ALPHA)).toBe(4);
   });
 
-  it("applies only to Sunflower, galaxy 1, and never at home", () => {
+  it("uses Art's current light-field classifications and never applies at home", () => {
     const light = readLightGalaxies(galaxies);
-    expect([...light]).toEqual([1]);
-    expect([1, 2, 3].map((galaxy) => lightGalaxy(light, galaxy as 1 | 2 | 3))).toEqual([
-      true,
-      false,
-      false,
-    ]);
+    const authored = galaxies as { galaxies: Record<string, { tint?: { light?: boolean } }> };
+    const expected = GALAXY_NUMBERS.filter(
+      (galaxy) => authored.galaxies[GALAXY_ID[galaxy]]?.tint?.light === true,
+    );
+    expect([...light]).toEqual(expected);
+    expect(GALAXY_NUMBERS.map((galaxy) => lightGalaxy(light, galaxy))).toEqual(
+      GALAXY_NUMBERS.map((galaxy) => authored.galaxies[GALAXY_ID[galaxy]]?.tint?.light === true),
+    );
     expect(lightGalaxy(light, null)).toBe(false);
     expect(lightGalaxy(light, undefined)).toBe(false);
     // The base field the previews capture locked galaxies on lists no galaxy, so none is light.
     expect(lightGalaxy(readLightGalaxies({ galaxies: {} }), 1)).toBe(false);
+  });
+
+  it("selects an explicit white edge without classifying Phantom as a light field", () => {
+    const data = {
+      galaxies: {
+        andromeda: { tint: { light: true } },
+        phantom: { foregroundEdge: "#FFFFFF" },
+      },
+      version: 1,
+    };
+    const light = readLightGalaxies(data);
+    const edges = readForegroundEdges(data);
+    expect(lightGalaxy(light, 6)).toBe(false);
+    expect(foregroundEdge(light, edges, 6)).toBe(0xffffff);
+    expect(foregroundEdge(light, edges, 5)).toBe(INK);
+    expect(foregroundEdge(light, edges, undefined)).toBeUndefined();
+    expect(foregroundEdge(light, edges, null)).toBeUndefined();
+    expect(foregroundEdge(light, edges, 2)).toBeUndefined();
+  });
+
+  it("keeps legacy treatment for absent or malformed optional edge colors", () => {
+    const data = {
+      galaxies: {
+        phantom: { foregroundEdge: "#fff" },
+        sunflower: { foregroundEdge: "invalid", tint: { light: true } },
+        unknown: { foregroundEdge: "#FFFFFF" },
+      },
+      version: 1,
+    };
+    const edges = readForegroundEdges(data);
+    expect(edges.size).toBe(0);
+    expect(foregroundEdge(readLightGalaxies(data), edges, 1)).toBe(INK);
+    expect(foregroundEdge(readLightGalaxies(data), edges, 6)).toBeUndefined();
+    expect(readForegroundEdges(null).size).toBe(0);
   });
 
   it("reads no rule from malformed data", () => {

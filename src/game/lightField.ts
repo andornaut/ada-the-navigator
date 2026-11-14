@@ -160,6 +160,33 @@ export function lightGalaxy(
   return galaxy !== null && galaxy !== undefined && light.has(galaxy);
 }
 
+/** Optional foreground boundary ink is independent of a field's light/dark styling. */
+export function readForegroundEdges(value: unknown): ReadonlyMap<GalaxyNumber, number> {
+  const data = fields(value);
+  if (data?.version !== 1) {
+    return new Map();
+  }
+  const edges = byGalaxy((entry) => {
+    const color = colour(fields(entry)?.foregroundEdge);
+    return color === undefined ? null : color;
+  }, data.galaxies);
+  return new Map(
+    [...(edges ?? [])].filter((entry): entry is [GalaxyNumber, number] => entry[1] !== null),
+  );
+}
+
+/** Explicit Art ink wins; absent or malformed optional data preserves the legacy treatment. */
+export function foregroundEdge(
+  light: ReadonlySet<GalaxyNumber>,
+  overrides: ReadonlyMap<GalaxyNumber, number>,
+  galaxy: GalaxyNumber | null | undefined,
+): number | undefined {
+  if (galaxy === null || galaxy === undefined) {
+    return undefined;
+  }
+  return overrides.get(galaxy) ?? (lightGalaxy(light, galaxy) ? LIGHT_FIELD.ink : undefined);
+}
+
 /** Art's keyline source: the pixels at this alpha or more, so the keyline edge stays crisp. */
 export const KEYLINE_ALPHA = 0.5;
 

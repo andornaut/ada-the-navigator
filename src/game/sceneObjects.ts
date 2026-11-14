@@ -75,7 +75,8 @@ import {
 } from "./worldArt.ts";
 
 /** The scene state and methods this module's functions use. */
-export type ObjectsContext = Scene &
+export type ObjectsContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
+  Scene &
   Pick<
     GameScene,
     | "add"
@@ -604,7 +605,8 @@ export function drawHolodisk(scene: ObjectsContext, object: SpaceObject, point: 
     holodiskWaypoint(scene.model.state.progress[flight.galaxy].holodisk, [object])
   ) {
     // A light field holds the beacon on its base frame, with no pulse.
-    const held = scene.light ? beacon.frames[LIGHT_FIELD.holodiskBeacon] : undefined;
+    const held =
+      (scene.fieldLight ?? scene.light) ? beacon.frames[LIGHT_FIELD.holodiskBeacon] : undefined;
     objectSprite(
       scene,
       `${object.id}${BEACON_SUFFIX}`,
@@ -893,7 +895,7 @@ export function drawObject(scene: ObjectsContext, object: SpaceObject): void {
       }
       if (scene.light && object.upgrade && LIGHT_FIELD.keylined.includes("upgradePickup")) {
         // The square's ink keyline: a stroke 2 keyline wider on the same path.
-        scene.ink.lineStyle(1.5 + 2 * LIGHT_FIELD.keyline, LIGHT_FIELD.ink);
+        scene.ink.lineStyle(1.5 + 2 * LIGHT_FIELD.keyline, scene.edgeInk ?? LIGHT_FIELD.ink);
         scene.ink.strokeRect(point.x - radius, point.y - radius, radius * 2, radius * 2);
         scene.ink.lineStyle(1.5, color);
       }

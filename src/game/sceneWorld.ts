@@ -47,7 +47,8 @@ import {
 } from "./whirlpoolProjects.ts";
 
 /** The scene state and methods this module's functions use. */
-export type WorldContext = Scene &
+export type WorldContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
+  Scene &
   Pick<
     GameScene,
     | "add"
@@ -503,7 +504,7 @@ export function drawJobs(scene: WorldContext): void {
       };
       // On a light field the rim draws over an ink dash on the same path.
       if (scene.light) {
-        stroke(rim.lightInk.width, LIGHT_FIELD.ink, rim.lightInk.alpha);
+        stroke(rim.lightInk.width, scene.edgeInk ?? LIGHT_FIELD.ink, rim.lightInk.alpha);
       }
       stroke(rim.width, scene.palette.pointOfInterest, rim.alpha);
     } else {
@@ -525,7 +526,7 @@ export function drawJobs(scene: WorldContext): void {
       if (ping) {
         // The ping is on the world plane, under the glint; a light field draws it over ink.
         if (scene.light) {
-          scene.ink.lineStyle(sprite.ping.lightInk, LIGHT_FIELD.ink, ping.alpha);
+          scene.ink.lineStyle(sprite.ping.lightInk, scene.edgeInk ?? LIGHT_FIELD.ink, ping.alpha);
           scene.ink.strokeEllipse(glint.x, glint.y, ping.width, ping.height);
         }
         scene.ink.lineStyle(sprite.ping.width, scene.palette.pointOfInterest, ping.alpha);

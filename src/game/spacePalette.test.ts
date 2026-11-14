@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { GALAXIES, galaxyPreview } from "../data/storybook.ts";
 import type { SpaceObject } from "../model/types.ts";
 import { ART_MANIFEST, publicJson } from "../testing/publicArt.ts";
@@ -97,18 +98,20 @@ describe("galaxy fields", () => {
   it("retints the background, environment and detail of each galaxy from Art's galaxies.json", () => {
     // Keyed there by stable galaxy id: Sunflower, Cartwheel, Whirlpool, Needle, Andromeda, Phantom.
     expect(
-      ([1, 2, 3, 4, 5, 6] as const).map((galaxy) => {
+      GALAXY_NUMBERS.map((galaxy) => {
         const { background, environment, environmentDetail } = palettes.get(galaxy)!;
         return [background, environment, environmentDetail].map(spaceColorCss);
       }),
-    ).toEqual([
-      ["#d8c994", "#c9ba86", "#baab77"],
-      ["#39221e", "#452e2a", "#523a36"],
-      ["#132d33", "#1f3940", "#2b464c"],
-      ["#26221f", "#312d2a", "#3e3936"],
-      ["#232641", "#2f324e", "#3a3e5b"],
-      ["#241827", "#302333", "#3c2e3f"],
-    ]);
+    ).toEqual(
+      GALAXY_NUMBERS.map((galaxy) => {
+        const entry = (
+          galaxiesData as { galaxies: Record<string, { colors: Record<string, string> }> }
+        ).galaxies[GALAXY_ID[galaxy]]!;
+        return ["background", "environment", "environmentDetail"].map((role) =>
+          entry.colors[role]!.toLowerCase(),
+        );
+      }),
+    );
   });
 
   it("keeps every signal role at the base palette's colour", () => {

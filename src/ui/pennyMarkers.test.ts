@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { edgePoint, gameAreaPoint } from "../model/edgeMarkers.ts";
 import type { PennyMarker } from "../model/pennyMarkers.ts";
-import { MAP_GLYPHS } from "./layout/mapScreen.ts";
+import { MAP_COLORS, MAP_GLYPHS } from "./layout/mapScreen.ts";
 import {
   createPennyMarkerLayer,
   PENNY_MARKER_INSET,
@@ -127,6 +127,12 @@ it("reuses one DOM target through identification, clears obsolete nodes and rele
   });
   expect(chip.properties.get("--glyph")).toContain("icon-stardust-20.png");
   expect(chip.lastElementChild!.children[0]!.children).toHaveLength(2);
+  ui.place({ x: 0, y: 0 }, area, { color: "#65c9bf", edge: "#FFFFFF", light: true }, [marker]);
+  expect(layer.children[0]).toBe(chip);
+  expect(chip.properties.get("--direction-color")).toBe("#65c9bf");
+  expect(chip.properties.get("--direction-ink")).toBe("#FFFFFF");
+  ui.place({ x: 0, y: 0 }, area, { color: "#65c9bf", light: true }, [marker]);
+  expect(chip.properties.get("--direction-ink")).toBe(MAP_COLORS.ink);
   ui.place({ x: 0, y: 0 }, area, undefined, []);
   expect(layer.children).toEqual([]);
   ui.destroy();

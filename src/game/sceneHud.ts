@@ -27,7 +27,8 @@ import { createUseCallout } from "./touchChrome.ts";
 import { type EffectShape } from "./weaponEffects.ts";
 
 /** The scene state and methods this module's functions use. */
-export type HudContext = Scene &
+export type HudContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
+  Scene &
   Pick<
     GameScene,
     | "add"
@@ -289,7 +290,8 @@ export function keylineSilhouette(
   // Keyed by the frame's raster size too, so a frame rasterised again gets a new silhouette and
   // the old one is swept once nothing draws it (silhouettes.ts).
   const traced = `${frame.texture.key}#${String(frame.name)}`;
-  const key = `keyline:${traced}@${frame.cutWidth}`;
+  const ink = scene.edgeInk ?? LIGHT_FIELD.ink;
+  const key = `keyline:${traced}@${frame.cutWidth}:${ink.toString(16)}`;
   scene.silhouettes.use(traced, key);
   if (scene.textures.exists(key)) {
     return key;
@@ -313,7 +315,7 @@ export function keylineSilhouette(
     height,
   );
   const pixels = context.getImageData(0, 0, width, height);
-  thresholdSilhouette(LIGHT_FIELD.ink, KEYLINE_ALPHA, pixels.data);
+  thresholdSilhouette(ink, KEYLINE_ALPHA, pixels.data);
   context.putImageData(pixels, 0, 0);
   canvas.refresh();
   // The silhouette samples as its source does.
@@ -328,7 +330,7 @@ export function keylineEdges(
   shapes: readonly EffectShape[],
 ): EffectShape[] {
   return scene.light && kinds.some((kind) => LIGHT_FIELD.effects.includes(kind))
-    ? inkEdges(LIGHT_FIELD.ink, LIGHT_FIELD.keyline, shapes)
+    ? inkEdges(scene.edgeInk ?? LIGHT_FIELD.ink, LIGHT_FIELD.keyline, shapes)
     : [];
 }
 
@@ -370,7 +372,7 @@ export function drawEdgeMarkers(
         new PhaserMath.Vector2(at.x - half, at.y),
       ];
       if (scene.light) {
-        scene.edgeMarkerInk.lineStyle(stroke + 2 * outline, LIGHT_FIELD.ink, 1);
+        scene.edgeMarkerInk.lineStyle(stroke + 2 * outline, scene.edgeInk ?? LIGHT_FIELD.ink, 1);
         scene.edgeMarkerInk.strokePoints(points, true, true);
       }
       scene.edgeMarkerInk.lineStyle(stroke, scene.palette.pointOfInterest, 1);
@@ -379,7 +381,7 @@ export function drawEdgeMarkers(
     }
     const radius = EDGE_MARKER_GLYPHS[marker.kind].disc / 2;
     if (scene.light) {
-      scene.edgeMarkerInk.fillStyle(LIGHT_FIELD.ink, 1);
+      scene.edgeMarkerInk.fillStyle(scene.edgeInk ?? LIGHT_FIELD.ink, 1);
       scene.edgeMarkerInk.fillCircle(at.x, at.y, radius + outline);
     }
     scene.edgeMarkerInk.fillStyle(scene.palette.threat, 1);
@@ -459,10 +461,10 @@ export function drawIndicatorInk(
 ): void {
   const width = LIGHT_FIELD.indicatorStroke;
   const ink = scene.indicatorInk.setAlpha(0.8);
-  ink.lineStyle(width, LIGHT_FIELD.ink, 1);
+  ink.lineStyle(width, scene.edgeInk ?? LIGHT_FIELD.ink, 1);
   ink.strokeTriangle(arrow[0].x, arrow[0].y, arrow[1].x, arrow[1].y, arrow[2].x, arrow[2].y);
   ink.strokeCircle(ring.x, ring.y, 3);
-  ink.fillStyle(LIGHT_FIELD.ink, 1);
+  ink.fillStyle(scene.edgeInk ?? LIGHT_FIELD.ink, 1);
   for (const corner of arrow) {
     ink.fillCircle(corner.x, corner.y, width / 2);
   }
@@ -507,7 +509,7 @@ export function drawPulse(scene: HudContext, grow: number, pulse: FeedbackPulse)
   scene.overlay.lineStyle(
     (pulse.kind === "damage" ? 3 : 1.5) + 2 * grow,
     grow
-      ? LIGHT_FIELD.ink
+      ? (scene.edgeInk ?? LIGHT_FIELD.ink)
       : pulse.compromised
         ? EMERGENCY_RETURN.shield.colour
         : pulse.kind === "damage"

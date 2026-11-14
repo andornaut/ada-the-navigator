@@ -33,7 +33,8 @@ background:var(--glyph) center / contain no-repeat}
 .ada-penny-direction svg{position:absolute;left:${units(arrow.offset)};top:0;
 width:${units(arrow.width)};height:${units(arrow.height)};overflow:visible;
 transform:translate(-50%,-50%);fill:none;stroke:var(--direction-color);stroke-width:${arrow.stroke}}
-.ada-penny-direction .ada-penny-arrow-ink{stroke:${MAP_COLORS.ink};stroke-width:${LIGHT_FIELD.indicatorStroke}}
+.ada-penny-direction .ada-penny-arrow-ink{stroke:var(--direction-ink,${MAP_COLORS.ink});
+stroke-width:${LIGHT_FIELD.indicatorStroke}}
 .ada-penny-marker[data-light="false"] .ada-penny-arrow-ink{display:none}
 `;
 
@@ -46,6 +47,12 @@ export function pennyGlyph(marker: PennyMarker): string | null {
   }
   const key = marker.jobType ? `map-job-${marker.jobType}` : MAP_GLYPHS[marker.symbol];
   return key ? `/art/ui/icons/${key}.svg` : null;
+}
+
+interface DirectionStyle {
+  readonly color: string;
+  readonly edge?: string | undefined;
+  readonly light: boolean;
 }
 
 /** Reuses the existing atlas question mark and canonical map/item glyphs. */
@@ -66,10 +73,13 @@ export function createPennyMarkerLayer(
     place(
       player: Vec,
       area: Rect,
-      directionStyle: { readonly color: string; readonly light: boolean } | undefined,
+      directionStyle: DirectionStyle | undefined,
       markers: readonly PennyMarker[],
     ) {
-      const style = directionStyle ?? { color: MAP_FACES.destination, light: false };
+      const style: DirectionStyle = directionStyle ?? {
+        color: MAP_FACES.destination,
+        light: false,
+      };
       const shown = new Set<string>();
       for (const marker of markers) {
         let node = nodes.get(marker.id);
@@ -110,6 +120,7 @@ export function createPennyMarkerLayer(
           delete node.dataset.item;
         }
         node.style.setProperty("--direction-color", style.color);
+        node.style.setProperty("--direction-ink", style.edge ?? MAP_COLORS.ink);
         node.style.left = fromAreaLeft(at.x);
         node.style.top = units(at.y);
         node.style.background = !marker.identified

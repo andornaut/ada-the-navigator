@@ -40,7 +40,8 @@ import { drawTaper, objectSprite } from "./sceneSprites.ts";
 import { type EffectShape } from "./weaponEffects.ts";
 
 /** The scene state and methods this module's functions use. */
-export type EnemiesContext = Scene &
+export type EnemiesContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
+  Scene &
   Pick<
     GameScene,
     | "add"
@@ -310,7 +311,7 @@ export function drawEnemySprite(
   const speed = enemySpeedFraction(enemyCatalog[enemy.archetype], enemy);
   // A light field swaps in Art's dark enemy jet layers.
   const jets =
-    scene.light && art.jets
+    (scene.fieldLight ?? scene.light) && art.jets
       ? { ...art, jets: { ...art.jets, layers: LIGHT_FIELD.jets.enemy } }
       : art;
   for (const { alpha, color, points } of enemyJetTriangles(jets, frame, speed, pose.intact)) {
@@ -476,11 +477,17 @@ export function drawEnemyWeapons(scene: EnemiesContext, view: EnemyWeaponsView):
   if (art) {
     const light = scene.light;
     const motion = scene.reducedMotion;
+    const edgeArt =
+      scene.edgeInk === undefined
+        ? art
+        : { ...art, colours: { ...art.colours, ink: scene.edgeInk } };
     const draw = (effect: EnemyEffect, graphics?: Phaser.GameObjects.Graphics) =>
       drawEffect(
         scene,
         effect.shapes,
-        light ? enemyInkEdges(art.colours.ink, art.lightField.edge, effect.edged) : [],
+        light
+          ? enemyInkEdges(scene.edgeInk ?? art.colours.ink, art.lightField.edge, effect.edged)
+          : [],
         graphics,
       );
     for (const ring of view.rings) {
@@ -498,10 +505,10 @@ export function drawEnemyWeapons(scene: EnemiesContext, view: EnemyWeaponsView):
       muzzle: scene.project(tell.muzzle),
     });
     for (const tell of view.lances) {
-      draw(lance(art, screen(tell), light, motion));
+      draw(lance(edgeArt, screen(tell), light, motion));
     }
     for (const tell of view.phasers) {
-      draw(enemyPhaser(art, screen(tell), light, motion));
+      draw(enemyPhaser(edgeArt, screen(tell), light, motion));
     }
     for (const dropped of view.mines) {
       const centre = scene.project(dropped.at);
