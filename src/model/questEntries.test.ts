@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { questReward } from "../data/questRewards.ts";
 import { createFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
@@ -40,7 +41,9 @@ describe("canonical cross-galaxy quest views", () => {
       "activity:3:guideCalf",
     ]);
     expect(entries.map(({ line }) => line.reward)).toEqual(
-      [17, 23, 29].map((amount) => CONTENT.labels.jobReward!.replace("{amount}", String(amount))),
+      [17, 23, 29].map((amount) =>
+        CONTENT.labels.jobReward!.replace("{amount}", String(questReward(amount))),
+      ),
     );
     expect(game.state).toEqual(before);
     expect(game.state.selectedGalaxy).toBe(3);

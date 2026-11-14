@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { carriedItemName } from "../data/itemNames.ts";
+import { questReward } from "../data/questRewards.ts";
 import { ensureDestination } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { fill } from "./shop.ts";
@@ -62,7 +63,7 @@ describe("GameModel map quest detail integration", () => {
     expect(model.map!.quests.find((quest) => quest.kind === "job")).toMatchObject({
       destination: null,
       nextStep: fill(CONTENT.labels.questCollect!, { item: carriedItemName(task.item) }),
-      reward: fill(CONTENT.labels.jobReward!, { amount: task.reward }),
+      reward: fill(CONTENT.labels.jobReward!, { amount: questReward(task.reward) }),
     });
     expect(task).toEqual(before);
     task.carrying = true;
@@ -71,7 +72,7 @@ describe("GameModel map quest detail integration", () => {
     expect(model.map!.quests.find((quest) => quest.kind === "job")).toMatchObject({
       destination: task.target.id,
       nextStep: fill(CONTENT.labels.questDeliver!, { item: carriedItemName(task.item) }),
-      reward: fill(CONTENT.labels.jobReward!, { amount: task.reward }),
+      reward: fill(CONTENT.labels.jobReward!, { amount: questReward(task.reward) }),
     });
   });
 

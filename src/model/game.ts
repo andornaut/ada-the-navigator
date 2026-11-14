@@ -35,6 +35,7 @@ import { JOB_TUNING, type JobType } from "../data/jobs.ts";
 import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import { holodiskInsertion } from "../data/premiseCopy.ts";
 import { galaxyProjects, PROJECT_THANKS } from "../data/projects.ts";
+import { questReward } from "../data/questRewards.ts";
 import { SCREEN } from "../data/screen.ts";
 import { KEEPER_NAME_PARTS, STATION_KEEPER_COPY } from "../data/stationCopy.ts";
 import { galaxyCard, OVERNIGHT_SLEEP } from "../data/storybook.ts";
@@ -2649,7 +2650,7 @@ export class GameModel {
       ...this.jobText(job),
       id: job.id,
       kind: "job",
-      reward: job.reward,
+      reward: questReward(job.reward),
       state,
       type: job.type,
     });
@@ -2665,7 +2666,7 @@ export class GameModel {
               detail: this.label(ACTIVITIES[f.galaxy]?.goal ?? ""),
               id: activity?.id ?? offered!.id,
               kind: "activity",
-              reward: activity?.reward ?? offered!.reward,
+              reward: questReward(activity?.reward ?? offered!.reward),
               state: activity ? "held" : busy ? "busy" : "offer",
               title: ACTIVITIES[f.galaxy]?.name ?? "",
               type: "activity",

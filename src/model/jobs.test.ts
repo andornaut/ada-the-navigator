@@ -15,6 +15,7 @@ import {
   LANDMARK_TUNING,
   landmarkNameKey,
 } from "../data/jobs.ts";
+import { questReward } from "../data/questRewards.ts";
 import { galaxyCard } from "../data/storybook.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { relaunch } from "../testing/launch.ts";
@@ -112,6 +113,8 @@ function take(model: GameModel, type: HeldJob["type"]): HeldJob {
   const offer = model.jobBoard().find((row) => row.type === type);
   expect(offer).toBeDefined();
   expect(model.acceptJob(offer!.id)).toBe("accepted");
+  expect(offer!.reward).toBe(questReward(model.state.tasks[1]!.reward));
+  expect(model.jobBoard().find(({ id }) => id === offer!.id)?.reward).toBe(offer!.reward);
   model.undock();
   return structuredClone(model.state.tasks[1] as HeldJob);
 }
@@ -400,7 +403,7 @@ describe("job boards", () => {
     const board = stationBoard(context(), book, station);
     const taken = board[1]!;
     acceptJob(1, station.id, taken.id, book);
-    expect(completeJob(context(), station, book)).toBe(taken.reward);
+    expect(completeJob(context(), station, book)).toBe(questReward(taken.reward));
     expect(book.tasks[1]).toBeUndefined();
     const after = stationBoard(context(), book, station);
     expect(after).toHaveLength(3);
@@ -507,8 +510,8 @@ describe("jobs in play", () => {
     expect(model.state.achievements.jobs).toBe(1);
     expect(model.state.achievements.unlocked).toContain("helpingHand");
     expect(model.state.tasks[1]).toBeUndefined();
-    expect(model.state.economy.stardust).toBe(stardust + held.reward);
-    expect(model.state.notice).toBe(`Job complete: +${held.reward} Stardust`);
+    expect(model.state.economy.stardust).toBe(stardust + questReward(held.reward));
+    expect(model.state.notice).toBe(`Job complete: +${questReward(held.reward)} Stardust`);
     const board = model.state.jobs.boards[1]![held.station]!;
     expect(board).toHaveLength(3);
     expect(board.some(({ id }) => id === held.id)).toBe(false);
@@ -652,7 +655,7 @@ describe("jobs in play", () => {
     flyTo(model, { x: station.x + 460, y: station.y });
     expect(model.state.tasks[1]).toBeUndefined();
     expect(flight.tow).toBeUndefined();
-    expect(model.state.economy.stardust).toBe(stardust + held.reward);
+    expect(model.state.economy.stardust).toBe(stardust + questReward(held.reward));
   });
 
   it("find a lost item: the area's indicator shows outside it and contact collects the item", () => {
@@ -684,7 +687,7 @@ describe("jobs in play", () => {
       x: spot.x,
       y: spot.y,
     });
-    expect(model.state.economy.stardust).toBe(stardust + held.reward);
+    expect(model.state.economy.stardust).toBe(stardust + questReward(held.reward));
   });
 
   it.each([
@@ -750,7 +753,7 @@ describe("jobs in play", () => {
     model.interact();
     expect(model.state.docked).toBeNull();
     expect(model.state.tasks[1]).toBeUndefined();
-    expect(model.state.economy.stardust).toBe(stardust + 15);
+    expect(model.state.economy.stardust).toBe(stardust + questReward(15));
     expect(model.state.dialogue?.context).toBe("deliver");
     model.choose("continue");
     expect(model.contextAction).toBe("dock");

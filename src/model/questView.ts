@@ -1,4 +1,5 @@
 import { ACTIVITIES } from "../data/activities.ts";
+import { questReward } from "../data/questRewards.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { QuestDetails } from "./map.ts";
 import type { OptionalTask } from "./types.ts";
@@ -22,7 +23,7 @@ export function taskQuestDetails(
         : undefined;
   return {
     ...(description ? { description } : {}),
-    reward: context.label("jobReward").replace("{amount}", String(task.reward)),
+    reward: context.label("jobReward").replace("{amount}", String(questReward(task.reward))),
     source: task.kind === "job" ? task.station : task.place,
   };
 }

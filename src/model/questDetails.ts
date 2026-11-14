@@ -1,6 +1,7 @@
 import { MINING_CONTRACT_DEPOSITS, SUPPLY_ITEMS } from "../data/activities.ts";
 import { carriedItemName, STORY_ITEM_NAMES } from "../data/itemNames.ts";
 import type { JobType } from "../data/jobs.ts";
+import { questReward } from "../data/questRewards.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { questItemDestination } from "./indicators.ts";
 import { landmarkById } from "./landmarks.ts";
@@ -124,7 +125,7 @@ export function questDetails(
   }
   let jobDetails: RoutedQuestDetails | undefined;
   if (task) {
-    const reward = text("jobReward", { amount: task.reward });
+    const reward = text("jobReward", { amount: questReward(task.reward) });
     if (task.kind === "job") {
       const key = {
         delivery: "questDeliveryDetail",

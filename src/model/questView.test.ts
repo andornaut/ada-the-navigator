@@ -4,6 +4,7 @@ import { ACTIVITIES } from "../data/activities.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { JOB_REWARDS, JOB_TYPES } from "../data/jobs.ts";
+import { questReward } from "../data/questRewards.ts";
 import { localMap, type MapContext, NO_LANDMARKS } from "./map.ts";
 import { taskQuestDetails } from "./questView.ts";
 import type { HeldJob } from "./types.ts";
@@ -30,12 +31,12 @@ describe("accepted task quest details", () => {
       const before = JSON.stringify(task);
       expect(taskQuestDetails(context, task)).toEqual({
         description: `approved ${type} detail`,
-        reward: `${reward} Stardust`,
+        reward: `${questReward(reward)} Stardust`,
         source: "issuer",
       });
       expect(JSON.stringify(task)).toBe(before);
       expect(taskQuestDetails(context, { ...task, reward: reward * 3 }).reward).toBe(
-        `${reward * 3} Stardust`,
+        `${questReward(reward * 3)} Stardust`,
       );
     });
   }
@@ -53,7 +54,7 @@ describe("accepted task quest details", () => {
         },
       );
       expect(result.description).toBe(context.label(definition.goal));
-      expect(result.reward).toBe(`${reward} Stardust`);
+      expect(result.reward).toBe(`${questReward(reward)} Stardust`);
     });
   }
 });

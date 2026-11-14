@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { MINING_CONTRACT_DEPOSITS, SUPPLY_ITEMS } from "../data/activities.ts";
 import { CONTENT } from "../data/content.ts";
 import { JOB_REWARDS, JOB_TYPES } from "../data/jobs.ts";
+import { questReward } from "../data/questRewards.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { playOpening } from "../testing/launch.ts";
 import { questEndpoints } from "../ui/mapScreen.ts";
@@ -156,7 +157,7 @@ describe("accepted optional task facts", () => {
       const state = snapshot(model, task);
       const before = JSON.stringify(state);
       const view = questDetails(context(), state).jobDetails!;
-      expect(view.reward).toBe(`${task.reward} Stardust`);
+      expect(view.reward).toBe(`${questReward(task.reward)} Stardust`);
       expect(view.description).not.toMatch(/[{}]/u);
       if (type !== "delivery") {
         expect(view).not.toHaveProperty("nextStep");
@@ -166,7 +167,7 @@ describe("accepted optional task facts", () => {
       expect(
         questDetails(context(), { ...state, task: { ...task, reward: task.reward * 3 } }).jobDetails
           ?.reward,
-      ).toBe(`${task.reward * 3} Stardust`);
+      ).toBe(`${questReward(task.reward * 3)} Stardust`);
       expect(JSON.stringify(state)).toBe(before);
     });
   }
@@ -213,7 +214,7 @@ describe("accepted optional task facts", () => {
     expect(view.description).toBe(
       `${SUPPLY_ITEMS[task.place]}|known:${task.place}|${label("questExplore")}`,
     );
-    expect(view.reward).toBe(`${task.reward} Stardust`);
+    expect(view.reward).toBe(`${questReward(task.reward)} Stardust`);
     expect(view.destination).toBeNull();
     expect(view.nextStep).toBe("deliver:Repaired tools");
     expect(
@@ -234,7 +235,7 @@ describe("accepted optional task facts", () => {
     const view = questDetails(context(2), snapshot(model, task)).jobDetails!;
     expect(view.progress).toBe(`${task.deposited}/${MINING_CONTRACT_DEPOSITS}`);
     expect(view.description).toBe(String(MINING_CONTRACT_DEPOSITS));
-    expect(view.reward).toBe(`${task.reward} Stardust`);
+    expect(view.reward).toBe(`${questReward(task.reward)} Stardust`);
   });
 
   it("changes the calf step only with actual following state", () => {

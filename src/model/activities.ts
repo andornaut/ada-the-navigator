@@ -8,6 +8,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { byPosition } from "../data/galaxies.ts";
 import { JOB_REWARDS, JOB_TUNING } from "../data/jobs.ts";
 import { NEEDLE } from "../data/needle.ts";
+import { questReward } from "../data/questRewards.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { stationById, type StationSite } from "./stations.ts";
 import type { GalaxyProgress, GameState, HeldActivity, JobTarget, Vec } from "./types.ts";
@@ -127,7 +128,7 @@ export function completeActivity(galaxy: GalaxyNumber, book: Tasks): number {
     return 0;
   }
   delete book.tasks[galaxy];
-  return held.reward;
+  return questReward(held.reward);
 }
 
 /**

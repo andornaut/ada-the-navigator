@@ -9,6 +9,7 @@ import {
   type JobRewardKind,
   type JobType,
 } from "../data/jobs.ts";
+import { questReward } from "../data/questRewards.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { dropRandom } from "./drops.ts";
 import { landmarkSites } from "./landmarks.ts";
@@ -337,7 +338,7 @@ export function completeJob(
       board.splice(slot, 1);
     }
   }
-  return held.reward;
+  return questReward(held.reward);
 }
 
 /**

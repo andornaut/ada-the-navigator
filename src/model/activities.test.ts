@@ -10,6 +10,7 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { HUNTING_PACKS } from "../data/galaxyFeatures.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
+import { questReward } from "../data/questRewards.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
 import {
@@ -219,7 +220,7 @@ describe("repeatable activities", () => {
       reward: 150,
     });
     expect(activityOffer(4, chapter, book, "elderLoom")).toBeUndefined();
-    expect(completeActivity(4, book)).toBe(150);
+    expect(completeActivity(4, book)).toBe(450);
     expect(completeActivity(4, book)).toBe(0);
     expect(activityOffer(4, chapter, book, "elderLoom")?.id).toBe("threadNeedle");
   });
@@ -354,7 +355,7 @@ describe("repeatable activities", () => {
       expect(rows[0]).toMatchObject({
         detail: "Deposit 30 ore at the hub.",
         kind: "activity",
-        reward: 180,
+        reward: 550,
         state: "held",
         title: "Mining contract",
       });
@@ -434,8 +435,8 @@ describe("repeatable activities", () => {
     flight.cargo = MINING_CONTRACT_DEPOSITS - 24;
     model.interact();
     expect(model.state.tasks[2]).toBeUndefined();
-    expect(model.state.economy.stardust).toBe(before + 180);
-    expect(model.state.notice).toBe("Job complete: +180 Stardust");
+    expect(model.state.economy.stardust).toBe(before + questReward(180));
+    expect(model.state.notice).toBe("Job complete: +550 Stardust");
     expect(model.state.achievements.activities).toBe(count + 1);
     // Acknowledge the deposit, then open the board again.
     model.choose("continue");
@@ -498,8 +499,8 @@ describe("repeatable activities", () => {
     model.choose("continue");
     expect(model.contextAction).toBe("dock");
     expect(model.state.tasks[1]).toBeUndefined();
-    expect(model.state.economy.stardust).toBe(before + reward);
-    expect(model.state.notice).toBe(`Job complete: +${reward} Stardust`);
+    expect(model.state.economy.stardust).toBe(before + questReward(reward));
+    expect(model.state.notice).toBe(`Job complete: +${questReward(reward)} Stardust`);
   });
 
   it("makes no supply run offer without a known station 3000 from the outpost", () => {
@@ -628,8 +629,8 @@ describe("Guide a calf", () => {
     expect(model.state.tasks[3]).toBeUndefined();
     expect(flight.calf).toBeUndefined();
     expect(model.calfAway).toBe(false);
-    expect(model.state.economy.stardust).toBe(before + 105);
-    expect(model.state.notice).toBe("Job complete: +105 Stardust");
+    expect(model.state.economy.stardust).toBe(before + questReward(105));
+    expect(model.state.notice).toBe("Job complete: +325 Stardust");
   });
 
   it("returns the calf to its start and places its pack again on reset, Drop and leaving", () => {
