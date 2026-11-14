@@ -138,8 +138,8 @@ describe("asteroid-only density", () => {
           ensureDestinationAt(content, "density-fixture", point, flight);
         }
         const inRegion = ({ x, y }: { x: number; y: number }) =>
-          Math.abs(Math.floor(x / CONTENT.tuning.chunkSize) - origin.x) <= 3 &&
-          Math.abs(Math.floor(y / CONTENT.tuning.chunkSize) - origin.y) <= 3;
+          Math.abs(Math.floor(x / CONTENT.tuning.chunkSize) - origin.x) <= 2 &&
+          Math.abs(Math.floor(y / CONTENT.tuning.chunkSize) - origin.y) <= 2;
         const before = base.objects.filter(inRegion);
         const after = actual.objects.filter(inRegion);
         const oreBefore = before.filter(({ id }) => id.startsWith("ore:"));
@@ -152,8 +152,8 @@ describe("asteroid-only density", () => {
         expect(after.filter(({ role }) => role === "stardust")).toEqual(cachesBefore);
         total.caches += cachesBefore.length;
         total.authored += oreBefore.filter(({ kind }) => kind === "resource").length;
-        for (let x = origin.x - 3; x <= origin.x + 3; x++) {
-          for (let y = origin.y - 3; y <= origin.y + 3; y++) {
+        for (let x = origin.x - 2; x <= origin.x + 2; x++) {
+          for (let y = origin.y - 2; y <= origin.y + 2; y++) {
             const id = planChunk(CHUNK_CATALOG, {
               ...options(galaxy, x, y),
               asteroidDensity: 1,

@@ -16,7 +16,7 @@ export interface ChunkAsteroids {
 }
 
 export interface ChunkPlanOptions {
-  /** Multiplies accepted ambient asteroids while preserving existing cache and feature rolls. */
+  /** Target multiplier, at least 1; absent keeps the base plan and slot geometry can limit additions. */
   readonly asteroidDensity?: number;
   readonly worldSide?: number;
   readonly asteroids?: ChunkAsteroids;
