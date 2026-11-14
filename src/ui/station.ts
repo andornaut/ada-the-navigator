@@ -1179,6 +1179,9 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     jobList.style.setProperty("--job-action-width", units(action));
     measure.style.setProperty("--job-action-width", units(action));
     const natural = Math.max(0, ...rows.map((node) => node.getBoundingClientRect().width / unit));
+    // Fit the natural list before bounding rows, so a previous card width cannot narrow names.
+    jobList.style.width = units(natural + 2 * FOCUS_RING.outset);
+    jobsCard.fit();
     const available = jobsCard.card.clientWidth / unit;
     const width = Math.min(natural, available - 2 * SPACING.panelPadding - 2 * FOCUS_RING.outset);
     const columns = shopColumns(available, width);
