@@ -16,7 +16,7 @@ export { CARD_FLOOR_VIEW_WIDTH, SCROLL } from "../../data/layout.ts";
 
 export { CARD_CONTENT, cardHeaderLayout, cardTitleReserve } from "./cardFrame.ts";
 
-export const CARD_WIDTH_CAPS = { large: 760, medium: 640, small: 480 } as const;
+export const CARD_WIDTH_CAPS = { large: 760, medium: 650, small: 480 } as const;
 export type CardSize = keyof typeof CARD_WIDTH_CAPS;
 
 // Presets cap the content-fitted width; short content never stretches to fill the cap.

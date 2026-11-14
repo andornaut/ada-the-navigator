@@ -11,13 +11,21 @@ import {
   writeSetting,
 } from "./deviceSettings.ts";
 import { type InstallPort, startInstall, watchInstallRow } from "./installRow.ts";
+import { UI_FONT_FACE } from "./layout/cardFrame.ts";
 import { CARD_WIDTH_CAPS } from "./layout/contentCard.ts";
 import { CONTROL_ROW, WHOLE_PX_EDGES } from "./layout/controls.ts";
-import { font, fromHudEdge, units, viewStyle } from "./layout/css.ts";
+import { font, fromHudEdge, pixels, units, viewStyle } from "./layout/css.ts";
 import { hudButtonTarget, type StartNavButton, startNavOrder } from "./layout/playView.ts";
-import { SETTINGS_COLUMN_GAP, settingsColumns } from "./layout/settings.ts";
+import {
+  SETTINGS_COLUMN_GAP,
+  SETTINGS_OUTER_PADDING,
+  SETTINGS_SECTION_GAP,
+  SETTINGS_TITLE_INK_TOP,
+  settingsColumns,
+  settingsTitleInkTop,
+} from "./layout/settings.ts";
 import { STORY_PANEL } from "./layout/storyPage.ts";
-import { TYPE } from "./layout/tokens.ts";
+import { SPACING, TYPE } from "./layout/tokens.ts";
 import { TOUCH_STICK, USE_DISC } from "./layout/touchControls.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import {
@@ -234,7 +242,27 @@ ${hudDiscStyle(".ada-controls .ada-exit-open", ".ada-disc")}
 
 .ada-controls .ada-setting-state{
   flex:none;
-  white-space:nowrap
+  white-space:nowrap;
+  text-align:center
+}
+.ada-controls [data-dialog=settings] .ada-setting-toggle{
+  display:flex;
+  flex:none;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:${units(SPACING.rowGap)};
+  align-self:center
+}
+.ada-controls [data-dialog=settings] .ada-row > .ada-icon{
+  align-self:flex-start;
+  margin-top:calc(
+    var(--setting-title-ink-top,${units(SETTINGS_TITLE_INK_TOP)}) - var(--setting-icon-ink-top,0px)
+  )
+}
+.ada-controls [data-dialog=settings] .ada-rows{
+  padding:0 ${units(SETTINGS_OUTER_PADDING - SPACING.panelPadding)};
+  box-sizing:border-box
 }
 
 /* This build's version and commit, the Settings card's last line as in Chibi: body text in the
@@ -258,6 +286,10 @@ ${hudDiscStyle(".ada-controls .ada-exit-open", ".ada-disc")}
 .ada-controls .ada-rows[data-columns="2"] > :nth-child(3){grid-column:1;grid-row:2}
 .ada-controls .ada-rows[data-columns="2"] > :nth-child(4){grid-column:2;grid-row:2}
 .ada-controls .ada-rows[data-columns="2"] > .ada-install-row{grid-column:1;grid-row:3}
+.ada-controls .ada-rows[data-columns="2"] > .ada-install-row,
+.ada-controls .ada-rows[data-columns="2"] > .ada-settings-actions{
+  margin-top:${units(SETTINGS_SECTION_GAP - SPACING.rowGap)}
+}
 .ada-controls .ada-rows[data-columns="2"] > .ada-settings-actions{
   grid-column:2;
   grid-row:3;
@@ -283,6 +315,7 @@ ${MODAL_STYLE}
 
 // Intrinsic browser text measurement keeps the card centred without shrinking its fonts.
 export function createSettings(parent: HTMLElement, options: SettingsOptions) {
+  const textMeasure = document.createElement("canvas").getContext?.("2d");
   const root = document.createElement("div");
   root.className = "ada-controls";
   root.dataset.fontRole = FONT_ROLES.body;
@@ -343,7 +376,11 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     currentState.className = "ada-setting-state";
     // The switch's aria-checked already exposes its current state to assistive technology.
     currentState.setAttribute("aria-hidden", "true");
-    row.insertBefore(currentState, row.lastElementChild);
+    const toggle = row.lastElementChild!;
+    const toggleStack = document.createElement("span");
+    toggleStack.className = "ada-setting-toggle";
+    toggleStack.append(toggle, currentState);
+    row.append(toggleStack);
     const update = () => {
       const on = settings[setting];
       show(on);
@@ -455,6 +492,18 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     rows.dataset.columns = card.dataset.settingsColumns = "1";
     card.append(actions);
     settingsCard.card.style.minWidth = "";
+    const unit = readViewUnit(rows);
+    const stacks = [...rows.querySelectorAll<HTMLElement>(".ada-setting-toggle")];
+    for (const stack of stacks) {
+      stack.style.width = "max-content";
+    }
+    const stackWidth = Math.max(
+      CONTROL_ROW.switch.width,
+      ...stacks.map((stack) => stack.getBoundingClientRect().width / unit),
+    );
+    for (const stack of stacks) {
+      stack.style.width = units(stackWidth);
+    }
     settingsCard.fit();
     const needsCompactLayout = rows.scrollHeight > rows.clientHeight;
     const switches = [...rows.querySelectorAll<HTMLElement>("[role=switch]")];
@@ -472,7 +521,6 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
         parseFloat(getComputedStyle(row).columnGap) * parts.length
       );
     });
-    const unit = readViewUnit(rows);
     const style = getComputedStyle(modal);
     const availableWidth =
       (modal.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)) / unit;
@@ -500,6 +548,27 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
         settingsCard.card.style.minWidth = "";
         settingsCard.fit();
       }
+    }
+    for (const row of rows.querySelectorAll<HTMLElement>(".ada-row")) {
+      const caption = row.querySelector<HTMLElement>(".ada-setting-text")?.firstElementChild;
+      if (!caption || !textMeasure || row.getClientRects().length === 0) {
+        continue;
+      }
+      const style = getComputedStyle(caption);
+      textMeasure.font = style.font;
+      const ink = textMeasure.measureText(caption.textContent ?? "");
+      const size = parseFloat(style.fontSize) / unit;
+      const inkTop = settingsTitleInkTop({
+        ascent: UI_FONT_FACE.ascent * size,
+        descent: UI_FONT_FACE.descent * size,
+        inkAscent: ink.actualBoundingBoxAscent / unit,
+        lineHeight: parseFloat(style.lineHeight) / unit,
+      });
+      const top = row.getBoundingClientRect().top;
+      const ratio = window.devicePixelRatio || 1;
+      // Align the visible sprite to the title's device-pixel ink row after the card has fitted.
+      const snapped = Math.floor((top + inkTop * unit) * ratio) / ratio;
+      row.style.setProperty("--setting-title-ink-top", pixels(snapped - top));
     }
   }
   window.addEventListener("resize", fitSettings);

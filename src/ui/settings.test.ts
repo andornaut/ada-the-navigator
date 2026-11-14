@@ -14,6 +14,7 @@ class Element {
   readonly classList = { add: vi.fn(), remove: vi.fn() };
   readonly dataset: Record<string, string> = {};
   hidden = false;
+  parent: Element | undefined;
   readonly listeners = new Map<string, (() => void)[]>();
   readonly style = { setProperty: vi.fn() };
   textContent = "";
@@ -21,7 +22,11 @@ class Element {
     this.listeners.set(type, [...(this.listeners.get(type) ?? []), listener]);
   }
   append(...nodes: Element[]) {
-    this.children.push(...nodes);
+    for (const node of nodes) {
+      node.parent?.children.splice(node.parent.children.indexOf(node), 1);
+      node.parent = this;
+      this.children.push(node);
+    }
   }
   click() {
     this.listeners.get("click")?.forEach((listener) => listener());
@@ -89,10 +94,21 @@ function setup(copy: SettingsLabels = labels) {
   return { onFeedbackChange, onVisibilityChange, rows, settings };
 }
 
-const state = (row: Element) =>
-  row.children.find((node) => node.className === "ada-setting-state")!;
+const toggleStack = (row: Element) =>
+  row.children.find((node) => node.className === "ada-setting-toggle")!;
+const state = (row: Element) => toggleStack(row).children[1]!;
 
 describe("Settings current-state labels", () => {
+  it("places each state below its switch inside one shared-width stack", () => {
+    const { rows, settings } = setup();
+    for (const row of rows.slice(0, 4)) {
+      const stack = toggleStack(row);
+      expect(stack.children[0]!.className).toBe("ada-switch");
+      expect(stack.children[1]!.className).toBe("ada-setting-state");
+      expect(row.children).toHaveLength(3);
+    }
+    settings.dispose();
+  });
   it("provides a primary Close in the shared launcher actions without renaming it", () => {
     const { settings } = setup();
     const actions = settings.actions as unknown as Element;
@@ -154,7 +170,7 @@ describe("Settings current-state labels", () => {
           visible ? (on ? "Shown" : "Hidden") : on ? "On" : "Off",
         );
         expect(row.attributes.get("aria-checked")).toBe(String(on));
-        expect(row.children.at(-1)!.dataset.tag).toBe(on ? "on" : "off");
+        expect(toggleStack(row).children[0]!.dataset.tag).toBe(on ? "on" : "off");
         expect(stored.get(DEVICE_STORAGE_KEYS[key])).toBe(on ? "on" : "off");
         expect(text.children[0]!.textContent).toBe(caption);
         expect(text.children[1]!.textContent).toBe(help);

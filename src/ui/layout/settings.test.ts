@@ -1,22 +1,26 @@
 import { describe, expect, it } from "vitest";
 
 import { CARD_WIDTH_CAPS } from "./contentCard.ts";
-import { settingsColumns } from "./settings.ts";
+import { settingsColumns, settingsTitleInkTop } from "./settings.ts";
 
-const context = { actionsWidth: 0, availableWidth: 608, landscape: true, overflowing: true };
+const context = { actionsWidth: 0, availableWidth: 688, landscape: true, overflowing: true };
 
 describe("Settings compact width", () => {
+  it("aligns visible icon ink to the title using its loaded font metrics", () => {
+    expect(settingsTitleInkTop({ ascent: 15, descent: 5, inkAscent: 11, lineHeight: 20 })).toBe(8);
+    expect(settingsTitleInkTop({ ascent: 18, descent: 6, inkAscent: 12, lineHeight: 24 })).toBe(10);
+  });
   it("widens an overflowing landscape card only enough for both control columns", () => {
     const fitted = settingsColumns(context, [220, 230]);
     expect(fitted.columns).toBe(2);
-    expect(fitted.minimumWidth).toBe(509);
+    expect(fitted.minimumWidth).toBe(557);
     expect(fitted.minimumWidth).toBeLessThan(CARD_WIDTH_CAPS.medium);
   });
 
   it("reserves the shared footer pair inside the right column", () => {
     expect(settingsColumns({ ...context, actionsWidth: 270 }, [230])).toEqual({
       columns: 2,
-      minimumWidth: 589,
+      minimumWidth: 637,
     });
   });
 

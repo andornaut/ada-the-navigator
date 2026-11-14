@@ -24,7 +24,7 @@ const available = (width: number) =>
 
 describe("content-fitted card width", () => {
   it("uses the approved wider small and medium caps without changing large", () => {
-    expect(CARD_WIDTH_CAPS).toEqual({ large: 760, medium: 640, small: 480 });
+    expect(CARD_WIDTH_CAPS).toEqual({ large: 760, medium: 650, small: 480 });
   });
   it.each(["small", "medium", "large"] as const)(
     "fits content under the %s cap and clamps to the available width",
