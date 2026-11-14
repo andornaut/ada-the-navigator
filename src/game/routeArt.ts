@@ -49,19 +49,15 @@ export function routePreviews(
 }
 
 /**
- * Ada's 32 heading frames on the route map: the paint's idle frame where it has one, else
- * Classic's (`ship-{k}`); on thrust, Classic's thrust frame (`ship-thrust-{k}`), else the idle one.
+ * Ada's 32 idle heading frames on the route map: the paint's frame where present, else Classic's.
+ * Thrust is a separate canonical material overlay, so it never replaces the selected hull paint.
  */
-export function routeShipFrames(
-  assets: readonly RouteAsset[],
-  paint: string | null,
-  thrust: boolean,
-): string[] {
+export function routeShipFrames(assets: readonly RouteAsset[], paint: string | null): string[] {
   const path = (id: string) => assets.find((asset) => asset.id === id)?.path;
   return Array.from({ length: SHIP_HEADINGS }, (_, heading) => {
     const painted = paint === null ? undefined : path(`ship-${paint}-${heading}`);
     const idle = painted ?? path(`ship-${heading}`);
-    return (thrust ? path(`ship-thrust-${heading}`) : undefined) ?? idle ?? "";
+    return idle ?? "";
   });
 }
 

@@ -2,6 +2,7 @@ import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 
 import { GALAXY_COUNT, type RoutePosition } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
+import type { ShipJets } from "../game/shipJets.ts";
 import type { RouteFlight } from "../model/game.ts";
 import { CARD_SLICE } from "./layout/controls.ts";
 import { font, fromAreaLeft, safeEdge, slice, units } from "./layout/css.ts";
@@ -26,8 +27,10 @@ import {
 } from "./layout/galaxyMap.ts";
 import { SAFE_MARGIN } from "./layout/playView.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
+import { readViewUnit } from "./layout/viewScale.ts";
 import { createButton, FOCUS_STYLE, MODAL_LAYER } from "./modal.ts";
 import { refuse } from "./refusal.ts";
+import { drawShipJets } from "./shipJetCanvas.ts";
 
 // The galaxy map (art/layout.md "Galaxy selector"), after Chibi's MapScene: the route sky and
 // ground, the chart's legs, markers, labels and Ada's ship, the panel for the chosen galaxy, Earth
@@ -76,6 +79,8 @@ export interface GalaxyMapView {
 
 /** The route sky, its ground and figures, and Ada's ship frames by heading. */
 export interface GalaxyMapArt {
+  /** Current selected main material and fixed-length static travel geometry. */
+  readonly jets?: () => ShipJets | undefined;
   readonly figures: readonly {
     readonly height: number;
     readonly url: string;
@@ -435,6 +440,22 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   });
   const shipSprite = document.createElement("div");
   shipSprite.className = "ada-route-ship";
+  const jetCanvas = document.createElement("canvas");
+  jetCanvas.setAttribute("aria-hidden", "true");
+  Object.assign(jetCanvas.style, {
+    height: "100%",
+    inset: "0",
+    position: "absolute",
+    width: "100%",
+  });
+  const shipHull = document.createElement("div");
+  Object.assign(shipHull.style, {
+    background: "center / 100% 100% no-repeat",
+    inset: "0",
+    position: "absolute",
+  });
+  shipSprite.append(jetCanvas, shipHull);
+  let shipFrameUrl = "";
   const pulse = document.createElement("div");
   pulse.className = "ada-route-pulse";
   pulse.hidden = true;
@@ -498,10 +519,41 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     shipSprite.style.top = units(at.y);
     const heading = routeHeading(direction ?? tangent);
     const key = (thrust ? 1 : 0) * 100 + heading;
-    if (key !== frame && art) {
+    if (art) {
       frame = key;
       const url = art.ship(thrust)[heading] || art.ship(false)[heading] || "";
-      shipSprite.style.backgroundImage = url ? `url('${url}')` : "none";
+      if (url !== shipFrameUrl) {
+        shipFrameUrl = url;
+        shipHull.style.backgroundImage = url ? `url('${url}')` : "none";
+      }
+    }
+    const jets = thrust && !reduced() ? art?.jets?.() : undefined;
+    jetCanvas.hidden = !jets;
+    if (jets) {
+      const pixels = Math.max(
+        1,
+        Math.ceil(SHIP.size * readViewUnit(root) * (window.devicePixelRatio || 1)),
+      );
+      if (jetCanvas.width !== pixels || jetCanvas.height !== pixels) {
+        jetCanvas.width = pixels;
+        jetCanvas.height = pixels;
+      }
+      const context = jetCanvas.getContext("2d");
+      if (context) {
+        context.setTransform(pixels / SHIP.size, 0, 0, pixels / SHIP.size, 0, 0);
+        context.clearRect(0, 0, SHIP.size, SHIP.size);
+        drawShipJets(
+          context,
+          jets,
+          {
+            displayHeight: SHIP.size,
+            displayWidth: SHIP.size,
+            pivot: { x: 0.5, y: 0.5 },
+          },
+          heading,
+          { x: SHIP.size / 2, y: SHIP.size / 2 },
+        );
+      }
     }
   }
 

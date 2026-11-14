@@ -16,9 +16,11 @@ import {
   tunnelScale,
   warpPoseSize,
 } from "../game/quantumJump.ts";
+import type { ShipJets } from "../game/shipJets.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 import type { Vec } from "../model/types.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
+import { drawShipJets } from "./shipJetCanvas.ts";
 
 // Draws Art's quantum jump over the play area (art/quantum-jump.md). The real scene shows through
 // the transparent canvas: the source until the switch, then the destination the game switched to.
@@ -63,6 +65,8 @@ export interface JumpPlay {
 }
 /** The paint in use: its scheme for the warp poses and its in-game idle frame URL per heading. */
 export interface WarpPaint {
+  /** Read at draw time so engine and field changes do not depend on a paint reload. */
+  readonly jets?: () => ShipJets | undefined;
   readonly scheme: string;
   readonly sprites: readonly string[];
 }
@@ -223,6 +227,25 @@ export function createJumpOverlay(
     const x = options.centre.x - size / 2;
     const y = options.centre.y - size / 2;
     context.imageSmoothingEnabled = true;
+    if (image === pose) {
+      const geometry = warp.poses.find(({ id }) => id === options.pose)?.jets;
+      const material = paint?.jets?.();
+      if (geometry && material) {
+        drawShipJets(
+          context,
+          { ...geometry, layers: material.layers },
+          {
+            displayHeight: size,
+            displayWidth: size,
+            pivot: { x: 0.5, y: 0.5 },
+          },
+          0,
+          options.centre,
+          options.alpha,
+          options.white,
+        );
+      }
+    }
     context.globalAlpha = options.alpha;
     context.drawImage(raster(image, size * options.pixels, false), x, y, size, size);
     if (options.white > 0) {
@@ -440,6 +463,7 @@ export function createJumpOverlay(
         paint.scheme === next.scheme &&
         paint.sprites.join("\n") === next.sprites.join("\n")
       ) {
+        paint = next;
         return;
       }
       paint = next;

@@ -57,13 +57,14 @@ describe("route map art", () => {
     expect(readRouteArt([], markers, () => [])).toBeNull();
   });
 
-  it("draws the paint's idle frames where it has them, and Classic's thrust frames", () => {
-    const classic = routeShipFrames(CORE_MANIFEST.assets, null, false);
+  it("keeps the selected idle hull paint during thrust and never uses baked Classic flames", () => {
+    const classic = routeShipFrames(CORE_MANIFEST.assets, null);
     expect(classic).toHaveLength(32);
     expect(classic[12]).toBe("/art/ship-12.svg");
-    expect(routeShipFrames(CORE_MANIFEST.assets, null, true)[12]).toBe("/art/ship-thrust-12.svg");
-    const cobalt = routeShipFrames(CORE_MANIFEST.assets, "cobalt", false);
+    expect(classic.some((path) => path.includes("thrust"))).toBe(false);
+    const cobalt = routeShipFrames(CORE_MANIFEST.assets, "cobalt");
     expect(cobalt[12]).toMatch(/cobalt/u);
-    expect(routeShipFrames(CORE_MANIFEST.assets, "none", false)).toEqual(classic);
+    expect(cobalt.some((path) => path.includes("thrust"))).toBe(false);
+    expect(routeShipFrames(CORE_MANIFEST.assets, "none")).toEqual(classic);
   });
 });

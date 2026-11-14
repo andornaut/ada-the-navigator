@@ -57,7 +57,7 @@ import { EDGE_MARKER_DEPTH } from "./drawOrder.ts";
 import { enemyPartFrame, GALAXY_FAMILIES } from "./enemyArt.ts";
 import { readEnemyWeaponsArt } from "./enemyWeaponsArt.ts";
 import { TELEPORT_DISTANCE } from "./feedback.ts";
-import { lightGalaxy, readForegroundEdges, readLightGalaxies } from "./lightField.ts";
+import { LIGHT_FIELD, lightGalaxy, readForegroundEdges, readLightGalaxies } from "./lightField.ts";
 import { saves } from "./persistence.ts";
 import { fitPlayCamera, sceneFit, shakeIntensity } from "./playCamera.ts";
 import { readProjectArt } from "./projectArt.ts";
@@ -90,6 +90,7 @@ import {
   readSpacePalette,
 } from "./spacePalette.ts";
 import { readStardustArt } from "./stardustArt.ts";
+import { staticShipJets } from "./staticShipJets.ts";
 import { readOutpostArt, readStationArt } from "./stationArt.ts";
 import { RASTER_SCALE_EVENT } from "./svgRasters.ts";
 import { readUpgradePickup } from "./upgradePickup.ts";
@@ -841,16 +842,26 @@ export function buildScene(scene: UiContext): void {
   // The route map's art: the sky, ground and figures, the marker hues and Ada's frames.
   const routeAssets = manifest?.assets ?? [];
   const markers = readRouteMarkers(scene.cache.json.get("galaxy-fields"));
-  const routeArt = readRouteArt(routeAssets, markers, (thrust) =>
-    routeShipFrames(routeAssets, paintInUse(scene), thrust),
+  const travelMaterial = () => {
+    const state = scene.model.state;
+    const flight = state.mode === "space" ? state.flight : null;
+    return staticShipJets(
+      scene.shipJets,
+      lightGalaxy(scene.lightGalaxies, flight?.galaxy) ? LIGHT_FIELD.jets.shipLevels : undefined,
+      flight?.levels.engine ?? state.economy.levels.engine,
+    );
+  };
+  const routeArt = readRouteArt(routeAssets, markers, () =>
+    routeShipFrames(routeAssets, paintInUse(scene)),
   );
   if (routeArt) {
-    scene.galaxies.setArt(routeArt);
+    scene.galaxies.setArt({ ...routeArt, jets: travelMaterial });
   }
   // The warp ship: the paint's poses, and its idle frames for the sprite steps.
   scene.warpPaint = () => ({
+    jets: travelMaterial,
     scheme: scene.model.state.economy.paint,
-    sprites: routeShipFrames(routeAssets, paintInUse(scene), false),
+    sprites: routeShipFrames(routeAssets, paintInUse(scene)),
   });
   scene.routeGalaxies = () =>
     ROUTE.map((galaxy) => {

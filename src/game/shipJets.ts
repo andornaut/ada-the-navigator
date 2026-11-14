@@ -284,7 +284,9 @@ function readMouths(value: unknown): JetMouth[] | undefined {
 }
 
 /** Validates a jet file's version, frame, length rule and headings. */
-function readJetGeometry(root: Fields | undefined): JetGeometry | undefined {
+/** Validates geometry independently of the selected runtime material. */
+export function readJetGeometry(value: unknown): JetGeometry | undefined {
+  const root = fields(value);
   const length = fields(root?.length);
   if (
     !root ||

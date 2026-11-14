@@ -1,4 +1,5 @@
 import type { Vec } from "../model/types.ts";
+import { type JetGeometry, readJetGeometry } from "./shipJets.ts";
 
 // Art's quantum jump effect (art/quantum-jump.md): the data, its step timeline, the warp ship's
 // poses and the shared canvas fit.
@@ -40,6 +41,8 @@ export interface JumpFrame {
 
 export interface WarpPose {
   readonly id: string;
+  /** Full-pose projected geometry, independent of the selected engine material. */
+  readonly jets?: JetGeometry;
   /** Each paint scheme's SVG path. */
   readonly paths: Readonly<Record<string, string>>;
 }
@@ -214,8 +217,15 @@ function readWarp(value: unknown): Warp | undefined {
     if (!keys || (schemes !== undefined && keys !== schemes)) {
       return undefined;
     }
+    const jets = pose.jets === undefined ? undefined : readJetGeometry(pose.jets);
+    if (
+      pose.jets !== undefined &&
+      (!jets || jets.frame !== warp.frame || jets.headings.length !== 1)
+    ) {
+      return undefined;
+    }
     schemes = keys;
-    poses.push({ id: pose.id, paths: paths as Record<string, string> });
+    poses.push({ id: pose.id, paths: paths as Record<string, string>, ...(jets ? { jets } : {}) });
   }
   return {
     displayScale: warp.displayScale,

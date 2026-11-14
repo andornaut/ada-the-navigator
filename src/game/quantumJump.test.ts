@@ -71,6 +71,56 @@ describe("quantum jump data", () => {
     expect(jump.frames.map((frame) => frame.steps.length)).toEqual([1, 3, 3, 2, 1, 6, 2]);
   });
 
+  it("reads seven full-pose jet geometries without changing coast or pose scaling", () => {
+    expect(jump.warp.poses.filter((pose) => pose.jets)).toHaveLength(7);
+    for (const pose of jump.warp.poses) {
+      if (pose.jets) {
+        expect(pose.jets.frame).toBe(jump.warp.frame);
+        expect(pose.jets.headings).toHaveLength(1);
+        expect(pose.jets.length).toEqual({ base: 16, exponent: 2, scale: 0 });
+        expect(pose.jets.headings[0]).toHaveLength(2);
+        expect(pose.jets.headings[0]!.every((mouth) => mouth.coreOutboard && !mouth.rearClip)).toBe(
+          true,
+        );
+      }
+    }
+    expect(jump.warp.poses.find(({ id }) => id === "bank-8")?.jets).toBeUndefined();
+    expect(jump.warp.poses.find(({ id }) => id === "settle-5")?.jets).toBeUndefined();
+  });
+
+  it("rejects malformed, wrong-frame and multi-heading optional pose jets but supports absent geometry", () => {
+    const geometry = {
+      frame: data.warp.frame,
+      headings: [{ index: 0, mouths: [{ anchor: [128, 128], axis: [0, 1], half: [2, 0] }] }],
+      length: { base: 16, exponent: 2, scale: 0 },
+      version: 1,
+    };
+    for (const jets of [
+      null,
+      { ...geometry, frame: 96 },
+      { ...geometry, version: 2 },
+      { ...geometry, headings: [...geometry.headings, { ...geometry.headings[0], index: 1 }] },
+      {
+        ...geometry,
+        headings: [
+          {
+            index: 0,
+            mouths: [{ anchor: [0, 0], axis: [0, 1], coreOutboard: false, half: [2, 0] }],
+          },
+        ],
+      },
+    ]) {
+      const value = structuredClone(data);
+      Object.assign(value.warp.poses[0]!, { jets });
+      expect(readQuantumJump(value)).toBeUndefined();
+    }
+    const legacy = structuredClone(data);
+    for (const pose of legacy.warp.poses) {
+      Reflect.deleteProperty(pose, "jets");
+    }
+    expect(readQuantumJump(legacy)).toBeDefined();
+  });
+
   it("starts emergency effects without a blank hold while preserving reduced fades and normal lead-in", () => {
     expect(jumpStepAt(jump, emergencyStartMs(false, jump))?.frame.name).toBe("charge");
     expect(jumpStepAt(jump, emergencyStartMs(false, jump))?.step.glow).toBeDefined();
