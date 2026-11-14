@@ -2,7 +2,6 @@ import type { EconomyCatalog } from "../data/economy.ts";
 import { LANDMARK_TUNING } from "../data/jobs.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { flightWorldContext } from "./flightTopology.ts";
-import { landmarkSites } from "./landmarks.ts";
 import { worldSettlementsNear } from "./legacySettlements.ts";
 import {
   GALAXY_SEEDS,
@@ -15,6 +14,7 @@ import {
   worldLegacyStationsNear,
   worldStationInCell,
 } from "./legacyStations.ts";
+import { retainedLandmarkSites as landmarkSites } from "./retainedLandmarks.ts";
 import type { FlightState, Vec } from "./types.ts";
 import {
   worldCell,

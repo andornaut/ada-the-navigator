@@ -144,16 +144,20 @@ export function landmarkNameKey(galaxy: LandmarkGalaxy, kind: LandmarkKind, nth:
   return `landmark${galaxy}${kind[0]!.toUpperCase()}${kind.slice(1)}${nth}`;
 }
 
+export const LANDMARK_NAME_FORMAT = "{baseName} {landmarkWords}";
+const RETAINED_LANDMARKS = { count: 12, radius: 25000 } as const;
+
 /** Landmark placement and charting (quests.md "Landmarks"), in world units. */
 export const LANDMARK_TUNING = {
   /** Charting range: flying this close charts a landmark at once. */
   chart: 300,
   /** Landmarks per galaxy, a third of each kind. */
-  count: 12,
+  count: RETAINED_LANDMARKS.count,
   /** Clearance from stations and story destinations. */
   placeClearance: 1500,
   /** Within this distance of the galaxy's world origin. */
-  radius: 25000,
+  radius: RETAINED_LANDMARKS.radius,
+  retained: RETAINED_LANDMARKS,
   /** Apart from one another. */
   spacing: 3000,
 } as const;

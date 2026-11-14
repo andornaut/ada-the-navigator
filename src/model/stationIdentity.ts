@@ -20,7 +20,15 @@ function identityNumber(id: string): bigint {
 
 /** Compact full identity encoding includes layer and signed coordinates without allocation. */
 export function stationWords(id: string): string {
-  return identityNumber(id)
+  return identityWords(identityNumber(id));
+}
+
+/** The shared nonnegative integer alphabet used for stable place identity labels. */
+export function identityWords(value: bigint): string {
+  if (value < 0n) {
+    throw new RangeError("Negative word identity");
+  }
+  return value
     .toString(16)
     .split("")
     .map((digit) => STATION_NAME_WORDS[Number.parseInt(digit, 16)]!)

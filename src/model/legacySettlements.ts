@@ -1,12 +1,12 @@
 import type { EconomyCatalog } from "../data/economy.ts";
 import { LANDMARK_TUNING } from "../data/jobs.ts";
-import { landmarkSites } from "./landmarks.ts";
 import {
   stationDistance as distance,
   type StationSite,
   worldLegacyStationById,
   worldLegacyStationsNear,
 } from "./legacyStations.ts";
+import { retainedLandmarkSites as landmarkSites } from "./retainedLandmarks.ts";
 import type { Vec } from "./types.ts";
 import type { WorldCellContext } from "./worldCells.ts";
 import { wrapPoint } from "./worldGeometry.ts";
