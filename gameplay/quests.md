@@ -191,12 +191,19 @@ In-flight lines, each played once per save:
 
 ## Landmarks
 
-Each galaxy has 12 landmarks for surveys to chart: nebulae, wrecks and beacons,
-drawn in the galaxy's own palette. Wrecks are old hulls with no one aboard.
-Landmarks are placed by the galaxy's seed within 25000 world units of the galaxy's
-world origin, at least 3000 world units apart and 1500 from stations and story
-destinations, so they stay in the same places on every flight, like stations.
-Chunk generation keeps their space clear.
+Each galaxy targets roughly 200 landmarks for surveys to chart: nebulae, wrecks
+and beacons, drawn in the galaxy's own palette. Wrecks are old hulls with no one
+aboard. Seeded placements extend to a maximum radius of 100000 world units
+from the galaxy's origin, retaining 3000-world-unit landmark spacing and
+1500-world-unit clearance from stations and story destinations. Measure accepted
+safe placements after rejection; the target is not an unverified accepted count.
+Preserve the existing 12 landmarks' ids, positions, kinds, names, charted state
+and saved survey targets. Additional placements do not relocate or invalidate
+them. Chunk generation keeps landmark space clear.
+
+Landmarks beyond the existing 25000-world-unit galactic-center progress circle
+remain visible, scannable, chartable and available on the map. Their wider
+extent does not expand the mapping-progress or survey-area denominator.
 
 - An uncharted landmark is a point of interest for Penny's sense. As a survey's
   target, it gets a direction indicator.
@@ -211,9 +218,28 @@ Chunk generation keeps their space clear.
   pay again. The map, indicator and interaction target stay consistent.
 - Charted landmarks persist across flights and regeneration. Restart clears them.
 
-Each galaxy has four landmarks of each kind. The seed assigns the kinds, and the
-names go in table order within a kind, so each landmark keeps its name on every
-flight. The Map and survey titles use these names.
+The original 12 landmarks retain their four names per kind exactly. New
+landmarks use stable ids `landmark:{galaxy}:{index}`, with permanent indices
+12 through 199; these are identity indices, never discovery order. Select the
+base name from the existing four canonical names of the actual kind using
+`index % 4`. `LANDMARK_NAME_FORMAT` is "{baseName} {landmarkWords}".
+
+For a new landmark, encode its full stable identity as
+`N = 6 * index + (galaxy - 1)`, for galaxy numbers 1 through 6. Render the minimal
+base-16 digits as words from this ordered alphabet, separated by spaces:
+Amber, Beacon, Comet, Dawn, Ember, Fern, Glimmer, Haven, Iris, Juniper, Kite,
+Lantern, Meadow, Nova, Orbit, Pebble. Zero is Amber; nonzero encodings have no
+leading zero digit. This is injective across galaxies and permanent indices,
+without raw numeric UI, full UTF-8 id encoding or collision-prone hashes.
+The finite 200-per-galaxy identity domain needs at most three qualifier words.
+Do not add a redundant galaxy name, new stories or assets. Tech must report an
+actual longest-label example for UI wrapping rather than invent an abbreviation.
+
+`LandmarkSite.name` remains a canonical base-name key. Only new sites have the
+optional `nameWords` qualifier. The shared `landmarkLabel(labelFn, site)` returns
+legacy labels unchanged and formats new labels consistently for Scan, Penny,
+the map, survey offers and task details. Names remain stable across revisits
+and saves.
 
 | Galaxy    | Nebulae                                                 | Wrecks                                                               | Beacons                                                |
 | --------- | ------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------ |
