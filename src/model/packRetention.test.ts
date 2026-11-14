@@ -10,6 +10,7 @@ import {
   createFlight,
   ensureDestination,
   ensureRouteEncounter,
+  stepFlight,
   syncFlightRegion,
 } from "./flight.ts";
 import { GameModel } from "./game.ts";
@@ -392,7 +393,7 @@ describe("casualty-preserving pack retention", () => {
 });
 
 describe("per-role encounter restore", () => {
-  /** A galaxy one start whose region holds a capital battle: a capital and its escort pack. */
+  /** A later Whirlpool stage whose region holds a capital battle and its escort pack. */
   function battle() {
     const content = structuredClone(CONTENT);
     // Pack fixtures use encounters at the flight start, which launches otherwise keep clear.
@@ -402,6 +403,11 @@ describe("per-role encounter restore", () => {
     content.tuning.flight.playerShotDamage = 1e-6;
     for (let seed = 0; seed < 4000; seed++) {
       const flight = createFlight(content, 3, seed, progress);
+      // A capital and four escorts require the second stage's five-ship budget.
+      flight.freshDistance = 1800;
+      flight.freshChunk = null;
+      flight.player = { x: 4000, y: 4000 };
+      stepFlight(content, 0.001, idle, flight);
       const escort = flight.objects.find((object) => object.enemy?.escortOf);
       if (escort?.enemy?.packId) {
         const model = new GameModel(content);
@@ -442,7 +448,9 @@ describe("per-role encounter restore", () => {
     const start = { ...flight.player };
     const away = content.tuning.chunkSize * 12;
     flight.player = { x: start.x + away, y: start.y };
-    kept.forEach((object, index) => reposition(object, start.x + away + 200 + index * 100));
+    kept.forEach((object, index) =>
+      reposition(object, start.x + away + 200 + index * 100, start.y + 100),
+    );
     syncFlightRegion(content, flight);
     check?.();
     flight.player = start;

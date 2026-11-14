@@ -4,6 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import {
   DIFFICULTY_SCALE,
   encounterQuiet,
+  encounterRate,
   ENEMY_FIRE,
   type EnemyArchetype,
   enemyCatalog,
@@ -481,25 +482,29 @@ describe("galaxy difficulty", () => {
     expect(enemyDefinition(1, "interceptor").behaviour.kind).toBe("strafe");
   });
 
-  it("shortens quiet travel and time and raises encounter density 50% in galaxy one", () => {
-    expect(encounterQuiet(1)).toEqual({ distance: 1200, seconds: 8 });
-    expect(encounterQuiet(2).distance).toBeCloseTo(1800 / 1.75, 9);
-    expect(encounterQuiet(3).seconds).toBeCloseTo(12 / 1.63, 9);
-    expect(encounterSpacing(CONTENT, 3)).toBeCloseTo(4 / Math.sqrt(1.63), 9);
-    const spacing = encounterSpacing(CONTENT, 1);
-    const hosts = (value: number) =>
-      Array.from({ length: 20000 }, (_, index) => index - 10000).filter((index) =>
-        hostsEncounterCell(value, index),
+  it("uses the approved additive route encounter curve without changing combat difficulty", () => {
+    const rates = [1.725, 1.8975, 2.07, 2.2425, 2.415, 2.5875];
+    for (const [index, galaxy] of ([1, 3, 4, 5, 2, 6] as const).entries()) {
+      const rate = rates[index]!;
+      expect(encounterRate(galaxy)).toBe(rate);
+      expect(rate / rates[0]!).toBeCloseTo(1 + index * 0.1, 12);
+      expect(encounterQuiet(galaxy).distance).toBeCloseTo(1800 / rate, 9);
+      expect(encounterQuiet(galaxy).seconds).toBeCloseTo(12 / rate, 9);
+      const spacing = encounterSpacing(CONTENT, galaxy);
+      expect(spacing).toBeCloseTo(4 / Math.sqrt(rate), 9);
+      const hosts = (value: number) =>
+        Array.from({ length: 20000 }, (_, index) => index - 10000).filter((index) =>
+          hostsEncounterCell(value, index),
+        );
+      const active = hosts(spacing),
+        base = hosts(4);
+      expect((active.length / base.length) ** 2).toBeCloseTo(rate, 2);
+      expect(base.every((index) => index % 4 === 0)).toBe(true);
+      const gaps = active.slice(1).map((index, at) => index - active[at]!);
+      expect(Math.min(...gaps) * CONTENT.tuning.chunkSize).toBeGreaterThanOrEqual(
+        encounterQuiet(galaxy).distance,
       );
-    const first = hosts(spacing);
-    const shared = hosts(4);
-    // Cells sit on a grid, so per-axis density squared is the areal density.
-    expect((first.length / shared.length) ** 2).toBeCloseTo(1.5, 2);
-    expect(shared.every((index) => index % 4 === 0)).toBe(true);
-    const gaps = first.slice(1).map((index, at) => index - first[at]!);
-    expect(Math.min(...gaps) * CONTENT.tuning.chunkSize).toBeGreaterThanOrEqual(
-      encounterQuiet(1).distance,
-    );
+    }
   });
 });
 

@@ -16,13 +16,15 @@ export interface SpawnerPolicy {
   stages: readonly SpawnerStage[];
 }
 
+const FRESH_DISTANCES = [0, 1800, 4200] as const;
+
 const sunflower: SpawnerPolicy = {
   localRadius: 900,
   maxNearbyCapitals: 1,
   memberSpacing: 120,
   stages: [
     {
-      freshDistance: 0,
+      freshDistance: FRESH_DISTANCES[0],
       localCap: 3,
       maxNearbyArchetypes: 1,
       roster: [
@@ -31,7 +33,7 @@ const sunflower: SpawnerPolicy = {
       ],
     },
     {
-      freshDistance: 1800,
+      freshDistance: FRESH_DISTANCES[1],
       localCap: 4,
       maxNearbyArchetypes: 2,
       roster: [
@@ -41,7 +43,7 @@ const sunflower: SpawnerPolicy = {
       ],
     },
     {
-      freshDistance: 4200,
+      freshDistance: FRESH_DISTANCES[2],
       localCap: 5,
       maxNearbyArchetypes: 2,
       roster: [
@@ -54,6 +56,20 @@ const sunflower: SpawnerPolicy = {
   ],
 };
 
+function laterStages(
+  galaxy: GalaxyNumber,
+  maxNearbyArchetypes: number,
+  localCaps: readonly [number, number, number],
+): readonly SpawnerStage[] {
+  const roster = encounterTable(galaxy);
+  return FRESH_DISTANCES.map((freshDistance, index) => ({
+    freshDistance,
+    localCap: localCaps[index]!,
+    maxNearbyArchetypes,
+    roster,
+  }));
+}
+
 /** Explicit ambient budgets by galaxy; encounter frequency remains independently configured. */
 export const SPAWNER_POLICIES: Readonly<Record<GalaxyNumber, SpawnerPolicy>> = {
   1: sunflower,
@@ -61,31 +77,31 @@ export const SPAWNER_POLICIES: Readonly<Record<GalaxyNumber, SpawnerPolicy>> = {
     localRadius: 900,
     maxNearbyCapitals: 1,
     memberSpacing: 100,
-    stages: [{ freshDistance: 0, localCap: 9, maxNearbyArchetypes: 4, roster: encounterTable(2) }],
+    stages: laterStages(2, 4, [7, 8, 9]),
   },
   3: {
     localRadius: 900,
     maxNearbyCapitals: 1,
     memberSpacing: 110,
-    stages: [{ freshDistance: 0, localCap: 6, maxNearbyArchetypes: 2, roster: encounterTable(3) }],
+    stages: laterStages(3, 2, [4, 5, 6]),
   },
   4: {
     localRadius: 900,
     maxNearbyCapitals: 1,
     memberSpacing: 110,
-    stages: [{ freshDistance: 0, localCap: 7, maxNearbyArchetypes: 3, roster: encounterTable(4) }],
+    stages: laterStages(4, 3, [5, 6, 7]),
   },
   5: {
     localRadius: 900,
     maxNearbyCapitals: 1,
     memberSpacing: 100,
-    stages: [{ freshDistance: 0, localCap: 8, maxNearbyArchetypes: 4, roster: encounterTable(5) }],
+    stages: laterStages(5, 4, [6, 7, 8]),
   },
   6: {
     localRadius: 900,
     maxNearbyCapitals: 1,
     memberSpacing: 100,
-    stages: [{ freshDistance: 0, localCap: 10, maxNearbyArchetypes: 4, roster: encounterTable(6) }],
+    stages: laterStages(6, 4, [8, 9, 10]),
   },
 };
 

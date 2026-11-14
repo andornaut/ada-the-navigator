@@ -1,12 +1,18 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
+import { encounterTable, enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { SPAWNER_POLICIES, spawnerStage } from "../data/spawnerCatalog.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { createFlight, stepFlight } from "./flight.ts";
-import { fitsEncounter, groupReach, memberPosition, selectEncounter } from "./spawner.ts";
+import {
+  engagementAdmissions,
+  fitsEncounter,
+  groupReach,
+  memberPosition,
+  selectEncounter,
+} from "./spawner.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 
 function occupant(
@@ -33,12 +39,71 @@ const centre = { x: 4000, y: 0 };
 
 describe("spawner admission", () => {
   it("uses the fresh ledger at stage boundaries without changing enemy physics", () => {
-    expect([0, 1799, 1800, 4199, 4200].map((fresh) => spawnerStage(1, fresh).localCap)).toEqual([
-      3, 3, 4, 4, 5,
-    ]);
+    for (const [index, galaxy] of ([1, 3, 4, 5, 2, 6] as const).entries()) {
+      const first = index + 3;
+      expect(
+        [-1, 0, 1799, 1800, 4199, 4200, 10000].map((fresh) => spawnerStage(galaxy, fresh).localCap),
+      ).toEqual([first, first, first, first + 1, first + 1, first + 2, first + 2]);
+      expect(SPAWNER_POLICIES[galaxy].stages.map((stage) => stage.freshDistance)).toEqual([
+        0, 1800, 4200,
+      ]);
+    }
     for (const galaxy of GALAXY_NUMBERS) {
       for (const archetype of ["swarm", "fighter", "interceptor", "capital"] as const) {
         expect(enemyDefinition(galaxy, archetype).physics).toBe(enemyCatalog[archetype].physics);
+      }
+    }
+  });
+
+  it("preserves later rosters and geometry while whole-group admission follows each stage budget", () => {
+    for (const galaxy of [3, 4, 5, 2, 6] as const) {
+      const policy = SPAWNER_POLICIES[galaxy];
+      expect(policy.localRadius).toBe(900);
+      expect(policy.maxNearbyCapitals).toBe(1);
+      expect(policy.memberSpacing).toBe(galaxy === 3 || galaxy === 4 ? 110 : 100);
+      for (const stage of policy.stages) {
+        expect(stage.roster).toEqual(encounterTable(galaxy));
+        expect(stage.maxNearbyArchetypes).toBe({ 2: 4, 3: 2, 4: 3, 5: 4, 6: 4 }[galaxy]);
+        const objects = Array.from({ length: stage.localCap }, (_, index) =>
+          occupant(`occupied:${index}`, centre),
+        );
+        const before = structuredClone(objects);
+        expect(selectEncounter(policy, stage, 10, objects, centre, 0, 0)).toBeNull();
+        expect(objects).toEqual(before);
+        const single = { archetype: "fighter", count: 1 } as const;
+        expect(fitsEncounter(policy, stage, 10, objects.slice(1), centre, single)).toBe(true);
+        expect(fitsEncounter(policy, stage, 10, objects, centre, single)).toBe(false);
+      }
+    }
+  });
+
+  it("uses every galaxy stage for live admissions while preserving guards and existing combatants", () => {
+    for (const galaxy of GALAXY_NUMBERS) {
+      for (const stage of SPAWNER_POLICIES[galaxy].stages) {
+        const ships = Array.from({ length: stage.localCap + 2 }, (_, index) =>
+          occupant(`live:${index}`, centre),
+        );
+        ships[0]!.routeId = "required";
+        ships[1]!.enemy!.engaged = true;
+        const eligible = new Set(ships.map((ship) => ship.id));
+        const before = structuredClone(ships);
+        const admitted = engagementAdmissions(
+          SPAWNER_POLICIES[galaxy],
+          stage,
+          ships,
+          eligible,
+          centre,
+        );
+        expect(admitted.size).toBe(stage.localCap);
+        expect(admitted.has(ships[0]!.id)).toBe(true);
+        expect(admitted.has(ships[1]!.id)).toBe(true);
+        expect(ships).toEqual(before);
+        ships.forEach((ship) => {
+          ship.enemy!.engaged = true;
+        });
+        expect(
+          engagementAdmissions(SPAWNER_POLICIES[galaxy], stage, ships, eligible, centre).size,
+        ).toBe(ships.length);
       }
     }
   });
@@ -80,12 +145,13 @@ describe("spawner admission", () => {
 
   it("budgets the whole capital battle, its large footprint and the one-capital limit", () => {
     const laterPolicy = SPAWNER_POLICIES[3];
-    const stage = spawnerStage(3, 0);
+    const stage = spawnerStage(3, 1800);
     const plan = {
       archetype: "capital",
       count: 1,
       escorts: { archetype: "fighter", count: 4 },
     } as const;
+    expect(fitsEncounter(laterPolicy, spawnerStage(3, 0), 10, [], centre, plan)).toBe(false);
     expect(fitsEncounter(laterPolicy, stage, 10, [], centre, plan)).toBe(true);
     const objects = [occupant("old:0", centre), occupant("old:1", centre)];
     expect(fitsEncounter(laterPolicy, stage, 10, objects, centre, plan)).toBe(false);

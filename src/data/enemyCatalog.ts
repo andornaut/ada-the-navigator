@@ -751,12 +751,12 @@ const position = (
 
 /** Difficulty by route position (gameplay/ships.md "Difficulty"). */
 export const POSITION_DIFFICULTY: Readonly<Record<RoutePosition, PositionDifficulty>> = {
-  1: position([2, 4, 3, 8], 1, [1.2, 1.44, 1.5], 4, [20, 40], 1),
-  2: position([2, 5, 3, 9], 1, [1.3, 1.63, 1.63], 4, [22, 44], 1),
-  3: position([3, 5, 4, 10], 2, [1.4, 1.81, 1.69], 5, [30, 60], 1.2),
-  4: position([3, 6, 4, 11], 2, [1.45, 1.88, 1.75], 5, [32, 64], 1.3),
-  5: position([3, 6, 5, 11], 3, [1.5, 1.94, 1.75], 6, [44, 88], 1.4),
-  6: position([3, 6, 5, 12], 3, [1.5, 2, 1.75], 6, [48, 96], 1.5),
+  1: position([2, 4, 3, 8], 1, [1.2, 1.44, 1.725], 4, [20, 40], 1),
+  2: position([2, 5, 3, 9], 1, [1.3, 1.63, 1.8975], 4, [22, 44], 1),
+  3: position([3, 5, 4, 10], 2, [1.4, 1.81, 2.07], 5, [30, 60], 1.2),
+  4: position([3, 6, 4, 11], 2, [1.45, 1.88, 2.2425], 5, [32, 64], 1.3),
+  5: position([3, 6, 5, 11], 3, [1.5, 1.94, 2.415], 6, [44, 88], 1.4),
+  6: position([3, 6, 5, 12], 3, [1.5, 2, 2.5875], 6, [48, 96], 1.5),
 };
 
 /** A galaxy's difficulty, by its route position. */
