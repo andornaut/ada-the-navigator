@@ -1074,6 +1074,18 @@ the action's name is its accessible name. On desktop the disc is hidden, as in
 Chibi, and the Use key still acts. Where the disc's press area overlaps the
 conversation box, the box takes the press. Resources collect on contact. Mining cargo has no capacity limit.
 
+Functional landmarks remain recognizable foreground objects even though Ada
+can fly through them. Pure background decoration is muted and has no quest,
+reward or collision role. Within the existing station Talk range (160 world
+units), an uncharted landmark offers Use (Scan) and the same nearby Use callout
+pattern as stations. Astra's instruction is "Fly closer, then press {useIcon} to
+scan it." Render `{useIcon}` as the actual inline Use control glyph, never as
+literal placeholder text or an emoji. Explicit Scan alone charts the landmark
+and commits its survey and achievement progress once. Flying over it, seeing it
+on screen or sensing it with Penny does not chart it or grant a discovery
+reward. An already charted landmark cannot pay again. The Use target, callout,
+map and direction indicator refer to the same landmark and charted state.
+
 Required events and undiscovered quest destinations spawn ahead of Ada in chunks
 she approaches. Tune fresh-chunk exploration distance between encounters so continued
 exploration reliably encounters required events regardless of direction. Standing

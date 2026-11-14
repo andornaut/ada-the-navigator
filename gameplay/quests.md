@@ -156,32 +156,32 @@ Job lore lines, said by Astra after a job completes, one unseen line per job:
 
 ### Player strings
 
-| Key             | Text                                       |
-| --------------- | ------------------------------------------ |
-| `jobs`          | Jobs                                       |
-| `jobBoard`      | Job board                                  |
-| `jobBoardIntro` | People here could use some help.           |
-| `jobObjective`  | Job: {objective}                           |
-| `job`           | Job                                        |
-| `jobAccept`     | Accept                                     |
-| `jobActive`     | Active                                     |
-| `jobDrop`       | Drop                                       |
-| `jobDropTitle`  | Drop this job?                             |
-| `jobDropCancel` | Cancel                                     |
-| `jobBusy`       | Finish or drop your current job first.     |
-| `jobReward`     | {amount} Stardust                          |
-| `jobComplete`   | Job complete: +{amount} Stardust           |
-| `tow`           | Tow                                        |
-| `towTravel`     | Unavailable while towing.                  |
-| `carryTravel`   | Unavailable while carrying a delivery.     |
-| `surveyTitle`   | Chart the {landmark}                       |
-| `surveyAbout`   | Astra's map has a gap here. Fly close.     |
-| `deliveryTitle` | Deliver {item} to {place}                  |
-| `deliveryAbout` | They're waiting for it.                    |
-| `rescueTitle`   | Tow {craft} to safety                      |
-| `rescueAbout`   | Its engine stopped. Towing makes you slow. |
-| `huntTitle`     | Find a lost {item}                         |
-| `huntAbout`     | It's in the marked area. Ask Penny.        |
+| Key             | Text                                         |
+| --------------- | -------------------------------------------- |
+| `jobs`          | Jobs                                         |
+| `jobBoard`      | Job board                                    |
+| `jobBoardIntro` | People here could use some help.             |
+| `jobObjective`  | Job: {objective}                             |
+| `job`           | Job                                          |
+| `jobAccept`     | Accept                                       |
+| `jobActive`     | Active                                       |
+| `jobDrop`       | Drop                                         |
+| `jobDropTitle`  | Drop this job?                               |
+| `jobDropCancel` | Cancel                                       |
+| `jobBusy`       | Finish or drop your current job first.       |
+| `jobReward`     | {amount} Stardust                            |
+| `jobComplete`   | Job complete: +{amount} Stardust             |
+| `tow`           | Tow                                          |
+| `towTravel`     | Unavailable while towing.                    |
+| `carryTravel`   | Unavailable while carrying a delivery.       |
+| `surveyTitle`   | Chart the {landmark}                         |
+| `surveyAbout`   | Fly closer, then press {useIcon} to scan it. |
+| `deliveryTitle` | Deliver {item} to {place}                    |
+| `deliveryAbout` | They're waiting for it.                      |
+| `rescueTitle`   | Tow {craft} to safety                        |
+| `rescueAbout`   | Its engine stopped. Towing makes you slow.   |
+| `huntTitle`     | Find a lost {item}                           |
+| `huntAbout`     | It's in the marked area. Ask Penny.          |
 
 In-flight lines, each played once per save:
 
@@ -198,10 +198,17 @@ world origin, at least 3000 world units apart and 1500 from stations and story
 destinations, so they stay in the same places on every flight, like stations.
 Chunk generation keeps their space clear.
 
-- An uncharted landmark is a point of interest for Penny's sense. It gets a
-  direction indicator only as a survey's target.
-- Flying within 300 world units of a landmark charts it at once and plays the
-  existing "New place mapped." conversation.
+- An uncharted landmark is a point of interest for Penny's sense. As a survey's
+  target, it gets a direction indicator.
+- Within the existing station Talk range of 160 world units, an uncharted
+  landmark offers Use (Scan), with the same nearby Use callout as stations.
+  Astra says "Fly closer, then press {useIcon} to scan it." The inline
+  `{useIcon}` is the actual Use control glyph, not visible placeholder text.
+- Only explicit Scan charts it and plays the existing "New place mapped."
+  conversation, committing chart, survey and achievement progress once.
+  Passable flyover, on-screen identification and Penny sensing do not chart it
+  or automatically grant a discovery reward. Already charted landmarks cannot
+  pay again. The map, indicator and interaction target stay consistent.
 - Charted landmarks persist across flights and regeneration. Restart clears them.
 
 Each galaxy has four landmarks of each kind. The seed assigns the kinds, and the

@@ -1005,6 +1005,12 @@ Marker retention, wrapped direction and HUD clearance follow
 - Penny: "Woof! Woof!" (happy) Ada: "Okay, okay! I'll find it." (happy)
 - Penny: "Woof! Woof!" (happy) Ada: "Ears up! Astra, Penny found something."
 
+Landmark Scan instruction, Astra: "Fly closer, then press {useIcon} to scan it."
+Render `{useIcon}` as the actual inline Use control glyph, not literal
+placeholder text or an emoji. Nearby landmarks offer the Use (Scan) callout
+within the shared station Talk range. Only explicit Scan charts the landmark;
+Penny sensing and on-screen identification do not grant chart or reward progress.
+
 New destination mapped:
 
 - Astra: "New place mapped." Ada: "Our map is growing!" (happy)
@@ -1204,7 +1210,7 @@ beacon light. Welcome!"
 - Galaxy map Earth button: Earth.
 - Earth with nothing new: Narration: "Penny thumps her tail. Ready for another adventure?" then Pick up the rock.
 - Use actions, each the disc's accessible name and drawn as a symbol: Talk,
-  Deliver, Deposit, Tow, Salvage, Dock, and Use for any other interaction.
+  Deliver, Deposit, Tow, Salvage, Dock, Scan, and Use for any other interaction.
 - Conversation buttons: Continue, Ask more.
 - Disabled heavy banner: Disabled.
 - Status labels: Shield, Cargo, Stardust, Ore.
