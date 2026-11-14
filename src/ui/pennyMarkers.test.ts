@@ -119,6 +119,7 @@ it("reuses one DOM target through identification, clears obsolete nodes and rele
     area,
     {
       color: "#65c9bf",
+      edge: "#102030",
       light: true,
     },
     [{ ...marker, identified: true, item: "stardust" }],

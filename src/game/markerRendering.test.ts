@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { type EdgeMarker, gameAreaPoint } from "../model/edgeMarkers.ts";
 import type { IndicatorKind } from "../model/indicators.ts";
 import type { FlightState } from "../model/types.ts";
+import { LIGHT_FIELD } from "./lightField.ts";
 import { drawEdgeMarkers, drawIndicators } from "./sceneHud.ts";
 
 vi.mock("phaser", () => ({
@@ -97,6 +98,25 @@ function fixture(kind: IndicatorKind = "objective", light = false, reducedMotion
 }
 
 describe("canonical marker rendering", () => {
+  it.each([
+    [undefined, LIGHT_FIELD.ink],
+    [0, 0],
+    [0x235689, 0x235689],
+  ])(
+    "preserves the supplied foreground ink in both station paths, edgeInk=%s",
+    (edgeInk, expected) => {
+      const seen = fixture("station", true);
+      Object.assign(seen.scene, { edgeInk });
+      seen.markers.push({ ...seen.at, id: "station", kind: "station" });
+      drawEdgeMarkers(seen.scene, seen.flight);
+      const nearby = fixture("station", true);
+      Object.assign(nearby.scene, { edgeInk });
+      drawIndicators(nearby.scene);
+      expect(nearby.edge.calls).toEqual(seen.edge.calls);
+      expect(seen.edge.calls[0]).toEqual(["lineStyle", expect.any(Number), expected, 1]);
+    },
+  );
+
   it.each([false, true])(
     "uses exactly the same station draw path before and after discovery, light=%s",
     (light) => {
