@@ -1277,8 +1277,30 @@ and safe corridors. Caches, other points of interest and enemies are outside
 this increase. Measure actual accepted asteroid counts after clearance
 rejections; the placement target alone does not establish an accepted-count
 ratio. A higher object-candidate count must not increase cache placement.
-Authored `ORE_FIELDS` retain their fixed 6-to-10-rock Art layouts and associated
-points of interest, guards and platforms. Apply the increase through ambient
+Authored `ORE_FIELDS` retain their 6-to-10-rock counts and associated points of
+interest, guards and platforms. Their approved variety catalog has eight total
+pattern families, each with realizations for counts 6 through 10: 40 count-specific
+records, not 40 distinct patterns. The families are loose cluster, crescent, two
+pockets, broken ring, scattered trail, three pockets, forked trail and open spiral.
+The loose-cluster family preserves the five existing layouts exactly.
+The version 2 catalog supplies these families to `oreFieldLayout(variantId, count)`.
+An independent seeded selection chooses uniformly among the eight families,
+without changing existing placement, count or rotation seeds. The selected
+variant id is transient; saved field and rock identities remain unchanged.
+
+The catalog keeps a 450-world-unit radius and 55-world-unit footprint gap. Each
+count realization preserves the existing rock-id order, start frames and large
+rock count (2, 2, 3, 3 and 3 for counts 6 through 10); new variety changes only
+positions, preserving comparable resource totals and clear ship routes. Art owns
+the layout geometry and Tech its catalog consumer. Preserve the existing seeded
+rigid rotation where geometry permits and the authored seeded rock choices; the
+consumer does not reroll rock ids or start frames. Guards keep their
+independent placement angle and 610-world-unit distance; platforms retain their
+fixed positive-X facing and do not rotate with the rocks. Field frequency, loot,
+guard counts, points of interest and saved field identities do not change.
+
+The density exception preserves counts and guard coupling while allowing this
+variety catalog. Apply the increase through ambient
 ordinary and resource rocks, compensating there toward an aggregate accepted
 count of approximately 1.2 times baseline where feasible. Report unchanged
 authored-field counts separately alongside ambient counts in that aggregate
