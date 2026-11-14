@@ -143,13 +143,18 @@ describe("modal buttons", () => {
     expect(rule(`${UI_SCOPE} .ada-card header`)).toContain(`padding:0 ${units(34)}`);
   });
 
-  it("draws a row's compact button as a 72x28 face with an 8 inset", () => {
+  it("keeps compact geometry with top placement by default and explicit centered rows", () => {
     const compact = rule(`${UI_SCOPE} .ada-button.ada-compact`);
     expect(compact).toContain(`min-width:${units(TEXT_BUTTON.compactWidth)}`);
     expect(compact).toContain(`height:${units(TEXT_BUTTON.compactHeight)}`);
     // The 2 nine-slice edge plus the padding makes the 8 inset.
     expect(compact).toContain(`padding:0 calc(${units(8)} - ${slice(2)})`);
-    expect(rule(`${UI_SCOPE} .ada-row`)).toContain("align-items:center");
+    expect(rule(`${UI_SCOPE} .ada-row`)).toContain("align-items:flex-start");
+    expect(rule(`${UI_SCOPE} .ada-row[data-ui-placement="center"]`)).toContain(
+      "align-items:center",
+    );
+    expect(rule(`${UI_SCOPE} .ada-button`)).toContain("align-items:center");
+    expect(rule(`${UI_SCOPE} .ada-button`)).toContain("justify-content:center");
   });
 
   it("keeps the end pad below the last control when a card scrolls to its end", () => {
