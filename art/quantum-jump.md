@@ -4,7 +4,8 @@
   `public/art/quantum-jump.json`, four sheets in `public/art/` (field, glow,
   star and tunnel), the warp ship frames in `public/art/quantum-jump-ship/`,
   the sheets' root [manifest](../public/art/manifest.json) entries and the
-  manifest's `quantumJump` path.
+  manifest's `quantumJump` path. `--data-only` writes only the effect JSON,
+  without changing images, SVGs or manifest entries.
 - Every quantum jump uses this one effect, the warp: galaxy jumps from the
   route map, Travel to discovered destinations, Return to Earth and Astra's
   emergency jump when the shield fails. Boarding from Ada's room is the rock's
@@ -87,7 +88,19 @@ A step's `ship` names a `pose`, a `scale` and an optional `white`.
   flight starts on (facing (0, -1)), and draws from the shared ship model in
   all six paints: `quantum-jump-ship/{scheme}/{pose}.svg`, 256 frame px
   square, pivot at the centre, frame px times `warp.displayScale` (0.4375) at
-  scale 1. Thrust poses carry the model's thrust flames.
+  scale 1. SVGs contain only the opaque hull and its materials. Seven thrust
+  poses carry optional `jets` geometry instead of baked flame colours. Its
+  version 1 geometry has the same 256 frame and one heading at index 0, with
+  projected mouths for that exact bank, roll, stretch and squash.
+- The jet renderer uses the selected main engine/field layer array behind the
+  hull, including the visible-width attachment and outboard-core arrangement.
+  The static outer cue retains 16 model units; core and halo lengths are the
+  canonical 0.55 and 1.1 ratios. The projected axis already includes the pose
+  transform: do not normalize it or apply frame conversion or stretch again.
+- Shared polygon construction comes from `src/game/jetGeometry.ts`; producer
+  and runtime use the same pure geometry. The runtime does not import Art's
+  build tools or use a separate warp palette. Whitening and alpha follow the
+  existing ship step, and non-thrust poses retain no jets.
 - From the route map the charge steps draw the sprite at the jump centre,
   turning from the heading the route map ship shows.
 - A flight destination arrives with the ship at heading 24 at the jump centre,
@@ -170,7 +183,10 @@ one or two laps per loop. `jump` is the next loop frame blended 22% toward
   (`{ pose, scale, turn?, white? }`). A phase's steps' `ms` sum to its `ms`.
 - `warp`: `heading` (24), `frame` (256), `displayScale` (0.4375), `tunnel`
   (the sheet id) and `poses`, each with `id`, `roll`, `stretch`, `squash`,
-  `thrust` and `paths` (one SVG path per paint scheme id).
+  `thrust` and `paths` (one hull SVG path per paint scheme id), plus optional
+  `jets` for thrust poses: `{ version, frame, length, headings }`. Each
+  heading mouth uses `anchor`, `axis`, `half`, `outerCorner` and
+  `coreOutboard: true`; forward poses have no `rearClip`.
 - `iris` (`rim`, `line`), `streak`, `emergency` and `reducedMotion`
   (`durationMs`, `still`, `steps`, `ship`) as above.
 - CLEANUP (added 2026-11-12): each phase also keeps `iris`, `field`, `white`,

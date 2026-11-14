@@ -1,7 +1,8 @@
 // Ada's ship model: the one hull, canopy, mouths and paint every ship drawing derives from. It
 // has no side effects; ship.ts writes the sprite frames and contracts, and other generators
 // (the quantum jump, the app icon) import it rather than copying the geometry.
-import { facesViewer, type Point, projectAt, rotate, SHIP_HEADINGS } from "./projection.ts";
+import { fromOklab, hex, rgb, toOklab } from "./oklab.ts";
+import { facesViewer, type Point, projectAt, rotate, round, SHIP_HEADINGS } from "./projection.ts";
 import type { V2 } from "./silhouette.ts";
 import {
   convexParts,
@@ -29,11 +30,13 @@ type Face = {
   collarFace?: boolean;
 };
 
-// The five authored paint colours; the canopy highlight derives from canopyRoof.
-// Mouths and thrust flames keep their own colours on every scheme.
+// Hull and glazing materials retain their authored references; engine surfaces derive from them.
+// Flame materials are independent of the housing and opening.
 export interface Paint {
   readonly canopyRoof: string;
   readonly canopySides: string;
+  readonly engineHousing: string;
+  readonly engineOpening: string;
   readonly frontSides: string;
   readonly rearSides: string;
   // Hull top.
@@ -47,10 +50,44 @@ export interface Scheme {
   readonly paint: Paint;
 }
 
-const white = "#ffffff";
+export const ENGINE_MATERIAL_RELATIONSHIPS = {
+  referenceWall: "#1767b3",
+  referenceOpening: "#64caff",
+  housingLightnessLift: 0.055,
+  housingChromaRatio: 0.92,
+  openingLightnessLift: 0.065,
+  openingChromaRatio: 0.9,
+} as const;
+
+/** Engine surfaces share Classic's perceptual relationships at each paint's glazing hue. */
+export function engineMaterials(base: string) {
+  const reference = ENGINE_MATERIAL_RELATIONSHIPS;
+  const [wallL, wallA, wallB] = toOklab(rgb(reference.referenceWall));
+  const [openingL, openingA, openingB] = toOklab(rgb(reference.referenceOpening));
+  const [L, a, b] = toOklab(rgb(base));
+  const chroma = Math.hypot(a, b),
+    hue = Math.atan2(b, a);
+  const colour = (lightness: number, C: number, h: number) =>
+    hex(fromOklab(Math.min(1, Math.max(0, lightness)), C * Math.cos(h), C * Math.sin(h)));
+  return {
+    engineHousing: colour(
+      L + reference.housingLightnessLift,
+      chroma * reference.housingChromaRatio,
+      hue,
+    ),
+    engineOpening: colour(
+      L + openingL - wallL + reference.openingLightnessLift,
+      ((chroma * Math.hypot(openingA, openingB)) / Math.hypot(wallA, wallB)) *
+        reference.openingChromaRatio,
+      hue + Math.atan2(openingB, openingA) - Math.atan2(wallB, wallA),
+    ),
+  };
+}
+
 const CLASSIC = {
   canopyRoof: "#2585d0",
   canopySides: "#1767b3",
+  ...engineMaterials("#1767b3"),
   frontSides: "#929ca3",
   rearSides: "#28558a",
   skirt: "#abbfce",
@@ -97,6 +134,7 @@ function painted(
       top,
       canopyRoof,
       canopySides,
+      ...engineMaterials(canopySides),
       frontSides: tone(top, PALETTE_RATIOS.frontSides),
       rearSides: tone(top, PALETTE_RATIOS.rearSides),
       skirt: tone(top, PALETTE_RATIOS.skirt),
@@ -118,7 +156,7 @@ export const UP = 20;
 export const FRAME = 96;
 export const DISPLAY = 42;
 
-// A pose: the sprite's heading (`yaw`, of SHIP_HEADINGS, fractional allowed) and engine thrust,
+// A pose: the sprite's heading (`yaw`, of SHIP_HEADINGS, fractional allowed) and authored thrust flag,
 // plus, for drawings beyond the sprite frames, a bank (`roll`, degrees about the hull's forward
 // axis, positive lowering the starboard wing on screen), a `stretch` along the hull's length
 // and a `squash` across it, all about the pivot and applied before the heading turn. The
@@ -288,7 +326,7 @@ const MOUTHS = { inner: 9.5, outer: 15, low: 0.3, high: 2.6 };
 
 // Mouth quad on the sign side's wall, lifted 0.03 off it, wound outward: outer low,
 // inner low, inner high, outer high.
-function mouth(sign: number): Point[] {
+function mouthBase(sign: number): Point[] {
   const v = vertices();
   const [tip, notch, corner] =
     sign === 1 ? [v.tipR, v.notchR, v.cornerR] : [v.tipL, v.notchL, v.cornerL];
@@ -307,7 +345,69 @@ function mouth(sign: number): Point[] {
   return sign === 1 ? quad : quad.toReversed();
 }
 
-/** Retro exhaust attaches its opaque outer corner to the wing tip and stops at the rear edge. */
+export const ENGINE_OPENING_SCALE = 1.25;
+
+/** The luminous aperture grows about its existing centre, independently of jet hardpoints. */
+export function engineOpeningGeometry(sign: number) {
+  const original = mouthBase(sign);
+  const centre = original.reduce<Point>(
+    (sum, point) =>
+      point.map((value, index) => sum[index]! + value / original.length) as unknown as Point,
+    [0, 0, 0],
+  );
+  const points = original.map(
+    (point) =>
+      point.map(
+        (value, index) => centre[index]! + (value - centre[index]!) * ENGINE_OPENING_SCALE,
+      ) as unknown as Point,
+  );
+  const v = vertices();
+  const housing = sign < 0 ? [v.tipL, v.notchL, v.cornerL] : [v.tipR, v.notchR, v.cornerR];
+  return { original, points, centre, housing, linearScale: ENGINE_OPENING_SCALE };
+}
+
+function mouth(sign: number): Point[] {
+  return engineOpeningGeometry(sign).points;
+}
+
+/** A near wing attaches at the visible skirt bottom; equal-depth wings share that choice. */
+export function jetAttachmentForPose(pose: Pose, sign: number) {
+  const { tipL, tipR, notchL, notchR } = vertices();
+  const tips = [tipL, tipR];
+  const depths = tips.map((tip) => {
+    const [x, y, z] = place(pose, tip);
+    return x + y + z;
+  });
+  const index = sign < 0 ? 0 : 1;
+  const near = depths[index]! >= depths[1 - index]! - 1e-9;
+  const tip = tips[index]!,
+    notch = sign < 0 ? notchL : notchR;
+  const z = near ? 0 : HULL.skirt;
+  return { corner: [tip[0], tip[1], z] as Point, notch: [notch[0], notch[1], z] as Point, near };
+}
+
+export function jetAttachment(yaw: number, sign: number) {
+  return jetAttachmentForPose({ yaw }, sign);
+}
+
+/** Project the same forward hardpoints through ordinary, banked or stretched ship poses. */
+export function forwardJetMouths(pivot: number, pose: Pose) {
+  const projected = (centre: number, point: Point) =>
+    projectAt(centre, centre, place(pose, point)).map(round) as [number, number];
+  return [-1, 1].map((sign) => {
+    const { middle, half } = mouthAxis(sign);
+    const { corner } = jetAttachmentForPose(pose, sign);
+    return {
+      anchor: projected(pivot, middle),
+      axis: projected(0, [0, 1, 0]),
+      half: projected(0, half),
+      outerCorner: projected(pivot, corner),
+      coreOutboard: true as const,
+    };
+  });
+}
+
+/** Retro exhaust points forward and outward, retaining the true rear wall's plane. */
 export function retroMouthAxis(sign: number): {
   axis: Point;
   corner: Point;
@@ -330,7 +430,7 @@ export function retroMouthAxis(sign: number): {
 
 // Mouth middle and half width along its base, outer minus inner over two.
 export function mouthAxis(sign: number): { half: Point; middle: Point } {
-  const quad = mouth(sign);
+  const quad = mouthBase(sign);
   const [outerLow, innerLow] = sign === 1 ? [quad[0]!, quad[1]!] : [quad[3]!, quad[2]!];
   const middle = quad.reduce<Point>(
     (sum, [x, y, z]) => [sum[0] + x / 4, sum[1] + y / 4, sum[2] + z / 4],
@@ -350,7 +450,7 @@ function shade(paint: Paint, upper: readonly { part: Part; points: Point[] }[]) 
         : part === "steep"
           ? paint.frontSides
           : part === "wall"
-            ? paint.canopySides
+            ? paint.engineHousing
             : paint.rearSides,
     ]),
   );
@@ -384,19 +484,12 @@ function model(pose: Pose, paint: Paint): Face[] {
     });
   }
   for (const sign of [-1, 1]) {
-    faces.push({ color: "#64caff", layer: 6.5, points: mouth(sign), part: `mouth-${sign}` });
-    if (pose.thrust) {
-      // Long pale outer flame with a shorter white core stays legible at 42px.
-      const { half, middle } = mouthAxis(sign);
-      const [mx, my, mz] = middle;
-      const flame = (width: number, length: number): Point[] => [
-        [mx - half[0] * width, my - half[1] * width, mz],
-        [mx, my + length, mz],
-        [mx + half[0] * width, my + half[1] * width, mz],
-      ];
-      faces.push({ color: "#b9ecff", layer: -2, points: flame(1.6, 16), twoSided: true });
-      faces.push({ color: white, layer: -1, points: flame(0.8, 9), twoSided: true });
-    }
+    faces.push({
+      color: paint.engineOpening,
+      layer: 6.5,
+      points: mouth(sign),
+      part: `mouth-${sign}`,
+    });
   }
   canopy(faces, paint);
   closeOpening(faces, paint);
@@ -653,11 +746,11 @@ const openingVolumes = convexParts(apertureRing as [number, number][]).map((ids)
   };
 });
 const prepared = new Map<string, { surfaces: Surface[]; tree: Tree | null }>();
-function geometry(paint: Paint, thrust = false) {
-  const key = JSON.stringify([paint, thrust]);
+function geometry(paint: Paint) {
+  const key = JSON.stringify(paint);
   const existing = prepared.get(key);
   if (existing) return existing;
-  const faces = model({ yaw: 0, thrust }, paint);
+  const faces = model({ yaw: 0 }, paint);
   const bodyPlanes = canopyClosedPlanes.map(({ n, d }) => {
     const length = Math.hypot(...n);
     return { normal: n.map((c) => c / length) as unknown as Point, distance: d / length };
@@ -705,12 +798,39 @@ function viewer(pose: Pose): Point {
     dot(cross(basis[0]!, basis[1]!), [1, 1, 1]) / determinant,
   ];
 }
+/** The raised luminous surface stays inside its actual housing even at grazing angles. */
+function visibleOutline(pivot: number, pose: Pose, surface: Surface): V2[] {
+  const points = turned(pose, surface.points as Point[]);
+  if (!surface.twoSided && !facesViewer(points)) return [];
+  let projected: Point[] = points.map((p) => {
+    const [x, y] = projectAt(pivot, pivot, p);
+    return [x, y, 0];
+  });
+  const sign = surface.kind === "mouth--1" ? -1 : surface.kind === "mouth-1" ? 1 : undefined;
+  if (sign !== undefined) {
+    const housing = turned(pose, engineOpeningGeometry(sign).housing).map((p) =>
+      projectAt(pivot, pivot, p),
+    );
+    const area = housing.reduce((sum, a, i) => {
+      const b = housing[(i + 1) % housing.length]!;
+      return sum + a[0] * b[1] - b[0] * a[1];
+    }, 0);
+    const winding = area > 0 ? 1 : -1;
+    for (const [i, a] of housing.entries()) {
+      const b = housing[(i + 1) % housing.length]!;
+      const normal: Point = [winding * (b[1] - a[1]), winding * (a[0] - b[0]), 0];
+      projected = split({ normal, distance: normal[0] * a[0] + normal[1] * a[1] }, projected).back;
+      if (projected.length < 3) return [];
+    }
+  }
+  return projected.map(([x, y]) => [x, y]);
+}
+
 /** Visible vector fragments, geometrically clipped and ordered at their actual depths. */
 export function drawn(pivot: number, paint: Paint, pose: Pose): { color: string; outline: V2[] }[] {
-  return ordered(viewer(pose), geometry(paint, pose.thrust).tree).flatMap((surface) => {
-    const points = turned(pose, surface.points as Point[]);
-    if (!surface.twoSided && !facesViewer(points)) return [];
-    return [{ color: surface.color, outline: points.map((p) => projectAt(pivot, pivot, p) as V2) }];
+  return ordered(viewer(pose), geometry(paint).tree).flatMap((surface) => {
+    const outline = visibleOutline(pivot, pose, surface);
+    return outline.length < 3 ? [] : [{ color: surface.color, outline }];
   });
 }
 /** Surfaces nearer than the horizontal exhaust plane, in the same frame as jet anchors. */
@@ -719,8 +839,9 @@ export function mouthOccluders(
   sign: number,
   yaw: number,
   pivot = FRAME / 2,
+  station?: { middle: Point; half: Point },
 ): V2[][] {
-  const { middle, half } = mouthAxis(sign);
+  const { middle, half } = station ?? mouthAxis(sign);
   const corners = [
     [-bounds.width, 0],
     [bounds.width, 0],
@@ -750,15 +871,15 @@ export function mouthOccluders(
   });
   const boundary: CutPlane = { normal: [0, 0, 1], distance: middle[2] };
   return geometry(classic.paint).surfaces.flatMap((surface) => {
-    if (surface.kind === `mouth-${sign}`) return [];
+    if (!station && surface.kind === `mouth-${sign}`) return [];
     const points = split(boundary, surface.points).front;
     if (points.length < 3 || !plane(points)) return [];
-    const world = turned({ yaw }, points);
-    if (!surface.twoSided && !facesViewer(world)) return [];
-    let projected = world.map((p) => {
-      const q = projectAt(pivot, pivot, p);
-      return [q[0], q[1], 0] as Point;
-    });
+    let projected = visibleOutline(pivot, { yaw }, { ...surface, points }).map(([x, y]): Point => [
+      x,
+      y,
+      0,
+    ]);
+    if (projected.length < 3) return [];
     for (const limit of limits) {
       projected = split(limit, projected).back;
       if (projected.length < 3) return [];

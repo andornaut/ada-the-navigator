@@ -141,15 +141,15 @@ const LIGHT_FIELD = {
       {
         level: 2,
         layers: [
-          { name: "outer", colors: ["#a84400", "#a84400"], width: 1.6, length: 1 },
-          { name: "core", colors: ["#ea6a00", "#ffb24d"], width: 0.8, length: 0.55 },
+          { name: "outer", colors: ["#9e3027", "#9e3027"], width: 1.6, length: 1 },
+          { name: "core", colors: ["#cf4935", "#ee7960"], width: 0.8, length: 0.55 },
         ],
       },
       {
         level: 3,
         layers: [
-          { name: "outer", colors: ["#7a3fd6", "#7a3fd6"], width: 1.6, length: 1 },
-          { name: "core", colors: ["#8652e7", "#b98cff"], width: 0.8, length: 0.55 },
+          { name: "outer", colors: ["#91620e", "#91620e"], width: 1.6, length: 1 },
+          { name: "core", colors: ["#d49b22", "#f2cf62"], width: 0.8, length: 0.55 },
         ],
       },
     ],

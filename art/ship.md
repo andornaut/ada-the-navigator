@@ -96,8 +96,10 @@
   SVG paths, so internal tessellation edges do not form visible seams.
 - Twin subtle blue mouths sit on the walls: `|x|` 9.5 to 15, from 0.3 to 2.6
   above the skirt top, the top kept 0.6 under the wall's top edge, lifted 0.03
-  off the wall. Thrust adds pale blue flames 16 units long with 9-unit white
-  cores from each mouth's middle, readable at 42px display.
+  off the wall. Compatibility thrust exports retain the authored 16-unit outer length and
+  use the canonical three layers through the shared projected geometry helper.
+  Their visible group attaches at the selected wing corner with the core outboard;
+  aperture enlargement does not scale the flames.
 - All faces use one projection. The viewer looks from `+(1, 1, 1)`;
   outward normals determine visibility, and geometric depth partitioning handles
   overlap for ordinary, rolled and stretched poses. Raster generators sample
@@ -110,8 +112,9 @@
 Ship paint assigns a fixed material to each hull facet role, the skirt and the
 opaque canopy. Classic uses white wings, steep panels `#929ca3`, rear panels
 `#28558a` and skirt `#abbfce`. Other paints use fixed linear-luminance references
-`#b2bec6`, `#647d8d` and `#abbfce` for those three tiers relative to their own top hue. Booster walls use the canopy side colour;
-cyan mouths, thrust flames and speed jets retain their original colours.
+`#b2bec6`, `#647d8d` and `#abbfce` for those three tiers relative to their own top hue. Rear booster walls use the scoped `engineHousing` material; luminous mouths use
+`engineOpening`. Canopy sides, tail, kink, skirt and hull keep their own materials.
+Engine surfaces do not recolour flame layers.
 
 | Scheme  | Top       | Canopy roof | Canopy sides |
 | ------- | --------- | ----------- | ------------ |
@@ -129,8 +132,8 @@ cyan mouths, thrust flames and speed jets retain their original colours.
   `paint/{cobalt,seafoam,graphite,iris,amber}/ship-{0..31}.svg`. Draw speed jets
   as for Classic. There are no painted thrust frames.
 - `ship-paint.json` version 1 lists these six schemes in order, with `id`,
-  `name`, `top`, `frontSides`, `rearSides`, `skirt`, `canopyRoof`, `canopySides`
-  and the derived compatibility colour `canopyHighlight`. Highlight metadata
+  `name`, `top`, `frontSides`, `rearSides`, `skirt`, `canopyRoof`, `canopySides`,
+  `engineHousing`, `engineOpening` and the derived compatibility colour `canopyHighlight`. Highlight metadata
   does not change the fixed rendered materials. Gameplay owns names and prices.
 - Manifest entries `ship-{scheme}-{N}` follow the ship entries and copy
   `ship-N`'s fields, with their own `path` and a `paint` field holding the
@@ -141,7 +144,35 @@ cyan mouths, thrust flames and speed jets retain their original colours.
   and `ship-*` manifest entry at the start of the manifest, in order: `ship`,
   `ship-thrust`, then `ship-N` and `ship-thrust-N` per heading, then the paint
   entries. It replaces any earlier ship entries and sets the manifest's
-  `shipNose` link.
+  `shipNose` link. `--data-only` writes only the jet and paint JSON, without
+  generating frames, collision or manifest entries.
+
+### Engine housing and opening materials
+
+`engineMaterials` derives both engine surfaces from each paint's unchanged
+`canopySides` in Oklab. Classic's references are wall `#1767b3` and opening
+`#64caff`. Housing adds 0.055 to the wall lightness and uses 0.92 times its
+chroma at the same hue. Opening adds 0.065 to the reference opening lightness;
+its lightness difference, chroma ratio and hue offset from the reference wall
+transfer to every paint. There are no per-paint engine colour lists. The luminous aperture is enlarged
+1.25 times in both in-plane dimensions about its existing centre, increasing
+area by 1.5625. Its raised luminous surface is constrained to the projected
+housing boundary at grazing views. Jet hardpoints, widths and lengths
+derive from the unchanged base opening; the luminous-aperture scale is not
+applied to flames or hull geometry.
+
+Lightness is bounded to [0, 1]. Conversion uses the shared Oklab helper's
+explicit sRGB gamut clipping and half-even byte rounding. The table records
+the resulting in-gamut colours and measured Oklab values.
+
+| Scheme  | Housing   | Opening   | Housing Oklab L / C | Opening Oklab L / C |
+| ------- | --------- | --------- | ------------------- | ------------------- |
+| Classic | `#3578bf` | `#86deff` | 0.5642 / 0.1295     | 0.8569 / 0.0963     |
+| Cobalt  | `#c7daf6` | `#eaffff` | 0.8830 / 0.0438     | 0.9847 / 0.0219     |
+| Seafoam | `#275b67` | `#87b5b5` | 0.4411 / 0.0583     | 0.7404 / 0.0488     |
+| Crimson | `#322a31` | `#827d86` | 0.2966 / 0.0169     | 0.5970 / 0.0147     |
+| Iris    | `#342e72` | `#718ec9` | 0.3485 / 0.1131     | 0.6486 / 0.0948     |
+| Amber   | `#294964` | `#7ba3b5` | 0.3934 / 0.0596     | 0.6925 / 0.0509     |
 
 ## Speed jets
 
@@ -159,12 +190,25 @@ renderer draws them behind the idle `ship-{index}` frame; there are no jet frame
   (6 + 24 f²): about 2-3px at f = 0.25 and 13px at max on the 42px display.
 - `headings` holds all 32 ship headings, `headings[k].index` = `k`. Per
   heading, each of the two `mouths` gives frame-px values in the 96 by 96
-  frame: `anchor` (projected middle of the actual opening on its wall), `axis` (projected rear
+  frame: `anchor` (legacy projected opening middle), `outerCorner` (the visible wing
+  corner controlling the whole group), `coreOutboard: true`, `axis` (projected rear
   direction per ship unit) and `half` (projected half mouth width along the
   trailing edge, local (±2.75, 0.83, 0)). Scale them
   with the ship's display size.
-- Per mouth, draw one filled triangle per entry of the level's `layers`, in order (halo, outer,
-  core): base `anchor ± half * width`, tip `anchor + axis * jetLength * length`.
+- At the current speed, find the widest selected layer with positive alpha and
+  set the common group anchor to `outerCorner - half * visibleWidth`. Every
+  layer receives the same group translation. Near wings attach to the actual
+  skirt-bottom corner at model z = 0; far wings retain the upper corner at
+  z = 1.2. Nearness follows the rotated model's viewer depth. Equal-depth wings
+  share the same lower attachment.
+- Draw halo, outer and core in their canonical order with unchanged widths,
+  lengths, colours and alpha. The approved outboard-core arrangement adds
+  `half * min(outer.width - core.width,
+outer.width * (1 - core.length / outer.length))` to the core's centre only.
+  This is 0.72 half-mouth units for the canonical layers. The core remains
+  contained by the outer triangle, with the darker band toward the hull.
+- Forward groups have no `rearClip`. The canonical opaque hull occludes them;
+  title occluders describe actual nearer hull fragments at the new group plane.
 - Colour is `color`, or `colors` interpolated linearly in sRGB by `f`. The halo
   alpha is `max(0, (f - from) / (to - from)) * max`, skipped at zero; other layers
   are opaque.
@@ -175,22 +219,16 @@ renderer draws them behind the idle `ship-{index}` frame; there are no jet frame
 | Engine level | `halo.color` | `outer.colors`       | `core.colors`        |
 | -----------: | ------------ | -------------------- | -------------------- |
 |      1, base | `#70ace8`    | `#5b93cc`, `#b9ecff` | `#8cc4f0`, `#ffffff` |
-|    2, orange | `#ff8f1f`    | `#ea6a00`, `#ffd59a` | `#ffb24d`, `#ffffff` |
-|    3, purple | `#a66bff`    | `#8652e7`, `#e6ccff` | `#b98cff`, `#ffffff` |
+|       2, red | `#e34a3c`    | `#a62c22`, `#e74b35` | `#f0895d`, `#ffcab0` |
+|     3, amber | `#e3b13f`    | `#b77d22`, `#e8ba3c` | `#f3d46c`, `#fff0a6` |
 
 On a light field the jets take `lightField.jets.shipLevels` in
 [galaxies.json](../public/art/galaxies.json) for the same level
 ([Light fields](galaxies.md#light-fields)).
 
-Every colour that carries a jet holds 3:1 or better on every dark galaxy
-(Whirlpool lowest): orange halo 6.34:1, outer start 4.52:1, core start 8.08:1;
-purple halo 4.25:1, outer start 3.02:1, core start 5.69:1; on Phantom's
-`#241827` purple is 4.99:1, 3.54:1 and 6.69:1. Each tier is 0.08 or more in
-Oklab from the warm signals beside it: the orange halo is 0.098 from coral
-`#d68b72`, 0.104 from amber `#f0bd68`, 0.148 from the low red `#e4574e` and
-0.091 from its pulse peak `#ff8a80`; orange jets are 0.082 to 0.131 from the
-coral enemy jets at the same speed; purple is 0.25 or more from every warm
-signal and 0.092 from the Iris scheme's rear sides `#8f7cd0`.
+Light fields keep Engine 1 blue. Engine 2 uses outer `#9e3027`, core
+`#cf4935` to `#ee7960`; Engine 3 uses outer `#91620e`, core `#d49b22` to
+`#f2cf62`. Both use the existing two-layer geometry without a halo.
 
 ### Retro jets
 
@@ -205,15 +243,14 @@ and field: the forward engine material on dark fields, or the corresponding
 same layer array to retro geometry; paint does not define another exhaust
 palette.
 
-`retroMouthAxis` derives each outer wing tip `(±21.44, 20.48, 1.2)`, the
-half-mouth vector `(±2.75, 0, 0)` and the forward/outward unit direction
-`(±sin(10°), -cos(10°), 0)` from the canonical model. Each mouth's
-`outerCorner` is that tip projected into the heading frame. The opaque outer
-triangle's base corner meets it: derive the midpoint as
-`outerCorner - half * selectedOuterLayer.width`. The selected outer width is
-read from the main material, including field policy. At width 1.6 the model
-midpoints are `(±17.04, 20.48, 1.2)`. The emitted `anchor` is the base-engine
-compatibility midpoint.
+`retroMouthAxis` derives each wing's half-mouth vector `(±2.75, 0, 0)`
+and forward/outward unit direction `(±sin(10°), -cos(10°), 0)`.
+`jetAttachment` selects the same near underside or far upper corner as the
+forward group, at model x/y `(±21.44, 20.48)`. Each mouth's `outerCorner`
+is this selected point projected into its heading frame. The common anchor
+uses the widest currently visible selected layer, including a visible halo.
+`coreOutboard` applies the same contained outboard-core geometry as forward
+exhaust. The compatibility `anchor` uses the base engine's full-speed width.
 
 All layers, including the halo, stop at the wing's rear tip-to-notch plane.
 With side `sign` equal to -1 or 1 and local positive Y pointing rearward, keep
@@ -221,13 +258,15 @@ With side `sign` equal to -1 or 1 and local positive Y pointing rearward, keep
 `dot(normal, framePoint) <= constant` in heading-frame pixels. The producer
 calibrates the plane to the same rounded half/direction basis as the jet
 triangles. Apply it consistently through the jet display's pivot and scale;
-the opaque attachment corner and forward tip remain fixed.
+the selected visible attachment corner remains fixed. Only the portion behind
+this true rear boundary is removed; there is no additional attachment crop.
 
 The retro length curve is `6.6 + 26.4 f²`, 1.10 times the main curve.
 Layer widths, relative lengths, colours and alpha ramps come from the selected
 main material. Retro rendering adds no wing-edge ink. Actual backward velocity
 relative to facing selects retro jets with the existing motion threshold;
-forward motion, forward jets and reduced-motion behavior retain their contracts.
+forward motion and reduced-motion behavior retain their contracts. Forward
+attachment uses the shared visible-corner rule without retro trimming.
 
 `ship-retro-jets-yellow.json` is a static archive and is not rewritten by the
 active producer. It is not a Settings toggle.

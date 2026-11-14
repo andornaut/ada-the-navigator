@@ -1,10 +1,10 @@
-// Speed jet colours by engine level: pale blue at base, orange at level 2, purple at level 3, on
+// Speed jet colours by engine level: pale blue at base, red at level 2, amber-yellow at level 3, on
 // every paint scheme. Widths, lengths and the halo's alpha ramp are the same at every level.
 export const JET_LENGTH = { base: 6, scale: 24, exponent: 2 };
 export const JET_LEVELS = [
   { level: 1, halo: "#70ace8", outer: ["#5b93cc", "#b9ecff"], core: ["#8cc4f0", "#ffffff"] },
-  { level: 2, halo: "#ff8f1f", outer: ["#ea6a00", "#ffd59a"], core: ["#ffb24d", "#ffffff"] },
-  { level: 3, halo: "#a66bff", outer: ["#8652e7", "#e6ccff"], core: ["#b98cff", "#ffffff"] },
+  { level: 2, halo: "#e34a3c", outer: ["#a62c22", "#e74b35"], core: ["#f0895d", "#ffcab0"] },
+  { level: 3, halo: "#e3b13f", outer: ["#b77d22", "#e8ba3c"], core: ["#f3d46c", "#fff0a6"] },
 ] as const;
 
 export function jetLayers({

@@ -9,6 +9,7 @@ import {
   drawn,
   FRAME,
   highlight,
+  jetAttachment,
   mouthAxis,
   mouthOccluders,
   nose,
@@ -18,6 +19,7 @@ import {
 } from "./ship-model.ts";
 import { JET_LENGTH, JET_LEVELS, jetLayers } from "./ship-jet-layers.ts";
 import { svgPaths } from "./ship-paths.ts";
+import { forwardJetSvg } from "./ship-jet-svg.ts";
 import { check, rasterize, trace, type V2 } from "./silhouette.ts";
 
 // Writes Ada's ship sprite frames, paint schemes, speed jets, nose and collision from the shared
@@ -31,6 +33,7 @@ function svg(yaw: number, thrust: boolean, scheme: Scheme = classic): string {
   return [
     '<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">',
     `  <title>Ship ${yaw}${thrust ? " thrust" : " idle"}${scheme === classic ? "" : ` ${scheme.name}`}</title>`,
+    ...(thrust ? forwardJetSvg(FRAME / 2, { yaw }).map((path) => `  ${path}`) : []),
     ...polygons,
     "</svg>",
     "",
@@ -49,10 +52,16 @@ function jets(): string {
     index: yaw,
     mouths: [-1, 1].map((sign) => {
       const { half, middle } = mouthAxis(sign);
+      const { corner } = jetAttachment(yaw, sign);
+      const groupMiddle = corner.map(
+        (value, index) => value - half[index]! * bounds.width,
+      ) as unknown as readonly [number, number, number];
       return {
         anchor: anchor(SHIP_HEADINGS, 48, yaw, middle),
         axis: vector(SHIP_HEADINGS, yaw, [0, 1, 0]),
-        occluders: mouthOccluders(bounds, sign, yaw),
+        outerCorner: anchor(SHIP_HEADINGS, 48, yaw, corner),
+        coreOutboard: true,
+        occluders: mouthOccluders(bounds, sign, yaw, FRAME / 2, { middle: groupMiddle, half }),
         half: vector(SHIP_HEADINGS, yaw, half),
       };
     }),
@@ -109,23 +118,6 @@ function noses(): string {
 
 mkdirSync(output, { recursive: true });
 writeFileSync(`${output}ship-jets.json`, jets());
-writeFileSync(`${output}ship-nose.json`, noses());
-for (let yaw = 0; yaw < SHIP_HEADINGS; yaw++) {
-  for (const thrust of [false, true]) {
-    writeFileSync(`${output}ship-${thrust ? "thrust-" : ""}${yaw}.svg`, svg(yaw, thrust));
-  }
-}
-writeFileSync(`${output}ship.svg`, svg(UP, false));
-writeFileSync(`${output}ship-thrust.svg`, svg(UP, true));
-
-// Paint schemes: idle frames only; speed jets are unpainted and drawn behind them.
-const painted = SCHEMES.filter((scheme) => scheme !== classic);
-for (const scheme of painted) {
-  mkdirSync(`${output}paint/${scheme.id}`, { recursive: true });
-  for (let yaw = 0; yaw < SHIP_HEADINGS; yaw++) {
-    writeFileSync(`${output}paint/${scheme.id}/ship-${yaw}.svg`, svg(yaw, false, scheme));
-  }
-}
 writeFileSync(
   `${output}ship-paint.json`,
   json({
@@ -139,36 +131,56 @@ writeFileSync(
   }),
 );
 
-// Ship entries open the manifest: the up aliases, then idle and thrust per heading, then
-// the paint frames, which mirror ship-N with their own path and a paint id.
-const entry = (id: string, path: string, yaw: number) => ({
-  id,
-  path,
-  width: FRAME,
-  height: FRAME,
-  displayWidth: DISPLAY,
-  displayHeight: DISPLAY,
-  facing: `world-${yaw}`,
-  directionIndex: yaw,
-  pivot: { x: 0.5, y: 0.5 },
-});
-const yaws = Array.from({ length: SHIP_HEADINGS }, (_, yaw) => yaw);
-const entries = [
-  entry("ship", "/art/ship.svg", UP),
-  entry("ship-thrust", "/art/ship-thrust.svg", UP),
-  ...yaws.flatMap((yaw) => [
-    entry(`ship-${yaw}`, `/art/ship-${yaw}.svg`, yaw),
-    entry(`ship-thrust-${yaw}`, `/art/ship-thrust-${yaw}.svg`, yaw),
-  ]),
-  ...painted.flatMap((scheme) =>
-    yaws.map((yaw) => ({
-      ...entry(`ship-${scheme.id}-${yaw}`, `/art/paint/${scheme.id}/ship-${yaw}.svg`, yaw),
-      paint: scheme.id,
-    })),
-  ),
-];
-const isShip = ({ id }: { id: string }) => id === "ship" || id.startsWith("ship-");
-editManifest("core", (manifest) => {
-  manifest.assets = [...entries, ...manifest.assets.filter((asset) => !isShip(asset))];
-  manifest.shipNose = "/art/ship-nose.json";
-});
+if (!process.argv.includes("--data-only")) {
+  writeFileSync(`${output}ship-nose.json`, noses());
+  for (let yaw = 0; yaw < SHIP_HEADINGS; yaw++) {
+    for (const thrust of [false, true]) {
+      writeFileSync(`${output}ship-${thrust ? "thrust-" : ""}${yaw}.svg`, svg(yaw, thrust));
+    }
+  }
+  writeFileSync(`${output}ship.svg`, svg(UP, false));
+  writeFileSync(`${output}ship-thrust.svg`, svg(UP, true));
+
+  // Paint schemes: idle frames only; speed jets are unpainted and drawn behind them.
+  const painted = SCHEMES.filter((scheme) => scheme !== classic);
+  for (const scheme of painted) {
+    mkdirSync(`${output}paint/${scheme.id}`, { recursive: true });
+    for (let yaw = 0; yaw < SHIP_HEADINGS; yaw++) {
+      writeFileSync(`${output}paint/${scheme.id}/ship-${yaw}.svg`, svg(yaw, false, scheme));
+    }
+  }
+
+  // Ship entries open the manifest: the up aliases, then idle and thrust per heading, then
+  // the paint frames, which mirror ship-N with their own path and a paint id.
+  const entry = (id: string, path: string, yaw: number) => ({
+    id,
+    path,
+    width: FRAME,
+    height: FRAME,
+    displayWidth: DISPLAY,
+    displayHeight: DISPLAY,
+    facing: `world-${yaw}`,
+    directionIndex: yaw,
+    pivot: { x: 0.5, y: 0.5 },
+  });
+  const yaws = Array.from({ length: SHIP_HEADINGS }, (_, yaw) => yaw);
+  const entries = [
+    entry("ship", "/art/ship.svg", UP),
+    entry("ship-thrust", "/art/ship-thrust.svg", UP),
+    ...yaws.flatMap((yaw) => [
+      entry(`ship-${yaw}`, `/art/ship-${yaw}.svg`, yaw),
+      entry(`ship-thrust-${yaw}`, `/art/ship-thrust-${yaw}.svg`, yaw),
+    ]),
+    ...painted.flatMap((scheme) =>
+      yaws.map((yaw) => ({
+        ...entry(`ship-${scheme.id}-${yaw}`, `/art/paint/${scheme.id}/ship-${yaw}.svg`, yaw),
+        paint: scheme.id,
+      })),
+    ),
+  ];
+  const isShip = ({ id }: { id: string }) => id === "ship" || id.startsWith("ship-");
+  editManifest("core", (manifest) => {
+    manifest.assets = [...entries, ...manifest.assets.filter((asset) => !isShip(asset))];
+    manifest.shipNose = "/art/ship-nose.json";
+  });
+}

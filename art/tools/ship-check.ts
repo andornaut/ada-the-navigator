@@ -4,8 +4,23 @@ import test from "node:test";
 
 import { blankImage } from "@andornaut/art-kit/rgbaImage";
 
-import { classic, DISPLAY, drawn, FRAME, SCHEMES, UP } from "./ship-model.ts";
+import {
+  classic,
+  DISPLAY,
+  drawn,
+  ENGINE_MATERIAL_RELATIONSHIPS,
+  engineOpeningGeometry,
+  ENGINE_OPENING_SCALE,
+  FRAME,
+  forwardJetMouths,
+  jetAttachment,
+  SCHEMES,
+  UP,
+} from "./ship-model.ts";
+import { AUTHORED_JET_CURVE, AUTHORED_JET_LENGTH } from "./ship-jet-svg.ts";
 import { paintShip } from "./ship-raster.ts";
+import { rgb, toOklab } from "./oklab.ts";
+import { projectAt, rotate } from "./projection.ts";
 
 const assets = new URL("../../public/art/", import.meta.url);
 const linear = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
@@ -136,7 +151,9 @@ test("title jet anchors land inside the actual visible rear mouth regions", () =
   };
   assert.equal(jets.frame, FRAME);
   assert.equal(jets.headings.length, 32);
-  const mouths = drawn(48, classic.paint, { yaw: 26 }).filter(({ color }) => color === "#64caff");
+  const mouths = drawn(48, classic.paint, { yaw: 26 }).filter(
+    ({ color }) => color === classic.paint.engineOpening,
+  );
   for (const mouth of jets.headings.find(({ index }) => index === 26)!.mouths) {
     assert(
       mouths.some(({ outline }) => contains(outline, mouth.anchor)),
@@ -148,4 +165,158 @@ test("title jet anchors land inside the actual visible rear mouth regions", () =
         polygon.length >= 3 && polygon.every((p) => p.length === 2 && p.every(Number.isFinite)),
       );
   }
+});
+
+test("engine housing and opening are scoped brighter materials with unchanged glazing", () => {
+  assert.equal(classic.paint.canopySides, "#1767b3");
+  assert.equal(classic.paint.canopyRoof, "#2585d0");
+  const originalOpeningL = toOklab(rgb(ENGINE_MATERIAL_RELATIONSHIPS.referenceOpening))[0];
+  assert(toOklab(rgb(classic.paint.engineOpening))[0] > originalOpeningL);
+  for (const { paint } of SCHEMES) {
+    const glazingL = toOklab(rgb(paint.canopySides))[0];
+    const housingL = toOklab(rgb(paint.engineHousing))[0];
+    const openingL = toOklab(rgb(paint.engineOpening))[0];
+    assert(housingL > glazingL, "housing must be lighter than its unchanged glazing reference");
+    assert(openingL > housingL, "opening must remain lighter than its housing");
+  }
+});
+
+test("authored group attachments use the near skirt bottom and retain the far upper corner", () => {
+  const jets = JSON.parse(readFileSync(new URL("ship-jets.json", assets), "utf8")) as {
+    headings: {
+      index: number;
+      mouths: { outerCorner: number[]; coreOutboard: boolean; rearClip?: unknown }[];
+    }[];
+  };
+  assert.equal(jetAttachment(12, -1).corner[2], 0);
+  assert.equal(jetAttachment(12, 1).corner[2], 1.2);
+  for (const heading of jets.headings)
+    for (const mouth of heading.mouths) {
+      assert.equal(mouth.coreOutboard, true);
+      assert.equal(mouth.outerCorner.length, 2);
+      assert(mouth.outerCorner.every(Number.isFinite));
+      assert.equal(mouth.rearClip, undefined, "forward groups must not carry rear clipping");
+    }
+});
+
+test("the luminous aperture grows 25 percent about its centre and stays inside its housing", () => {
+  const dot = (a: readonly number[], b: readonly number[]) =>
+    a.reduce((sum, value, index) => sum + value * b[index]!, 0);
+  const minus = (a: readonly number[], b: readonly number[]) =>
+    a.map((value, index) => value - b[index]!);
+  const area = (points: readonly (readonly number[])[]) => {
+    const normal = [0, 0, 0];
+    for (const [i, a] of points.entries()) {
+      const b = points[(i + 1) % points.length]!;
+      normal[0]! += (a[1]! - b[1]!) * (a[2]! + b[2]!);
+      normal[1]! += (a[2]! - b[2]!) * (a[0]! + b[0]!);
+      normal[2]! += (a[0]! - b[0]!) * (a[1]! + b[1]!);
+    }
+    return Math.hypot(...normal) / 2;
+  };
+  assert.equal(ENGINE_OPENING_SCALE, 1.25);
+  for (const sign of [-1, 1]) {
+    const { original, points, centre, housing } = engineOpeningGeometry(sign);
+    for (let k = 0; k < 3; k++) {
+      assert(
+        Math.abs(points.reduce((sum, p) => sum + p[k]! / points.length, 0) - centre[k]!) < 1e-12,
+      );
+      for (let i = 0; i < points.length; i++)
+        assert(
+          Math.abs(points[i]![k]! - centre[k]! - 1.25 * (original[i]![k]! - centre[k]!)) < 1e-12,
+        );
+    }
+    assert(Math.abs(area(points) / area(original) - 1.5625) < 1e-12);
+    const a = housing[0]!,
+      u = minus(housing[1]!, a),
+      v = minus(housing[2]!, a);
+    const uu = dot(u, u),
+      uv = dot(u, v),
+      vv = dot(v, v),
+      denominator = uu * vv - uv * uv;
+    for (const p of points) {
+      const w = minus(p, a),
+        wu = dot(w, u),
+        wv = dot(w, v);
+      const b = (vv * wu - uv * wv) / denominator,
+        c = (uu * wv - uv * wu) / denominator;
+      assert(Math.min(1 - b - c, b, c) > 0, "enlarged aperture must retain housing margins");
+    }
+  }
+});
+
+test("warp poses publish projected uncut groups without scaling authored thrust twice", () => {
+  const { warp } = JSON.parse(readFileSync(new URL("quantum-jump.json", assets), "utf8")) as {
+    warp: {
+      frame: number;
+      heading: number;
+      displayScale: number;
+      poses: {
+        roll: number;
+        squash: number;
+        stretch: number;
+        thrust: boolean;
+        paths: Record<string, string>;
+        jets?: {
+          frame: number;
+          length: typeof AUTHORED_JET_CURVE;
+          headings: { index: number; mouths: ReturnType<typeof forwardJetMouths> }[];
+        };
+      }[];
+    };
+  };
+  assert.equal(warp.frame, 256);
+  assert.equal(warp.heading, 24);
+  assert.equal(warp.displayScale, DISPLAY / FRAME);
+  assert.equal(warp.poses.length, 9);
+  assert.equal(warp.poses.filter((pose) => pose.jets).length, 7);
+  assert.equal(AUTHORED_JET_LENGTH, 16);
+  for (const pose of warp.poses) {
+    assert.deepEqual(
+      Object.keys(pose.paths),
+      SCHEMES.map(({ id }) => id),
+    );
+    if (!pose.thrust) {
+      assert.equal(pose.jets, undefined, "idle poses must not acquire exhaust");
+      continue;
+    }
+    assert.equal(pose.jets!.frame, warp.frame);
+    assert.deepEqual(pose.jets!.length, AUTHORED_JET_CURVE);
+    assert.deepEqual(pose.jets!.headings, [
+      {
+        index: 0,
+        mouths: forwardJetMouths(warp.frame / 2, { ...pose, yaw: warp.heading }),
+      },
+    ]);
+    for (const mouth of pose.jets!.headings[0]!.mouths) {
+      assert.equal(mouth.coreOutboard, true);
+      assert(!("rearClip" in mouth), "forward warp groups must remain uncut");
+    }
+  }
+});
+
+test("enlarged luminous openings stay within the housing at grazing views", () => {
+  const inside = (polygon: readonly (readonly number[])[], p: readonly number[]) => {
+    const distances = polygon.map((a, i) => {
+      const b = polygon[(i + 1) % polygon.length]!;
+      return (b[0]! - a[0]!) * (p[1]! - a[1]!) - (b[1]! - a[1]!) * (p[0]! - a[0]!);
+    });
+    return distances.every((d) => d >= -1e-7) || distances.every((d) => d <= 1e-7);
+  };
+  for (let yaw = 0; yaw < 32; yaw++) {
+    const housings = [-1, 1].map((sign) =>
+      engineOpeningGeometry(sign).housing.map((p) => projectAt(48, 48, rotate(32, yaw, p))),
+    );
+    for (const opening of drawn(48, classic.paint, { yaw }).filter(
+      (f) => f.color === classic.paint.engineOpening,
+    ))
+      assert(housings.some((housing) => opening.outline.every((p) => inside(housing, p))));
+  }
+  const image = blankImage(96, 96);
+  paintShip(image, drawn(48, classic.paint, { yaw: 13 }));
+  assert.equal(
+    image.data[(58 * 96 + 66) * 4 + 3],
+    0,
+    "raised aperture must not add an exterior hull pixel",
+  );
 });

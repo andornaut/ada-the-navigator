@@ -21,9 +21,11 @@ import { IN_BETWEEN, SHIMMER, SPACE_BG } from "./palette.ts";
 import { Random } from "./random.ts";
 import { centredView, LOGICAL_PER_DESIGN, shimmer } from "./shimmer.ts";
 import { svgPaths } from "./ship-paths.ts";
-import { DISPLAY, drawn, FRAME, type Pose, SCHEMES } from "./ship-model.ts";
+import { DISPLAY, drawn, FRAME, forwardJetMouths, type Pose, SCHEMES } from "./ship-model.ts";
+import { AUTHORED_JET_CURVE } from "./ship-jet-svg.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
+const dataOnly = process.argv.includes("--data-only");
 
 // The field canvas: 960 by 540 logical px at 1 image px per logical px, like the aboard backdrop.
 const CANVAS = { width: 960, height: 540 } as const;
@@ -213,14 +215,14 @@ const glowSheet = sheet(
   LEVELS.length,
 );
 const starImage = star();
-writePng(`${art}quantum-jump-field.png`, fieldSheet, true);
-writePng(`${art}quantum-jump-glow.png`, glowSheet);
-writePng(`${art}quantum-jump-star.png`, starImage);
+if (!dataOnly) writePng(`${art}quantum-jump-field.png`, fieldSheet, true);
+if (!dataOnly) writePng(`${art}quantum-jump-glow.png`, glowSheet);
+if (!dataOnly) writePng(`${art}quantum-jump-star.png`, starImage);
 const tunnelSheet = sheet(
   TUNNEL_SHEET.map(([, image]) => image),
   1,
 );
-writePng(`${art}quantum-jump-tunnel.png`, tunnelSheet, true);
+if (!dataOnly) writePng(`${art}quantum-jump-tunnel.png`, tunnelSheet, true);
 
 // Warp ship poses at the arrival heading, drawn from the shared ship model in every paint: banks
 // (roll, degrees), a stretch along the hull and a squash across it, about the pivot. "sprite" in a
@@ -242,7 +244,11 @@ const POSES: readonly (Omit<Pose, "yaw"> & { readonly id: string })[] = [
 const posePath = (scheme: string, pose: string) => `/art/quantum-jump-ship/${scheme}/${pose}.svg`;
 
 function poseSvg(scheme: (typeof SCHEMES)[number], pose: (typeof POSES)[number]): string {
-  const polygons = drawn(WARP_FRAME / 2, scheme.paint, { ...pose, yaw: WARP_HEADING });
+  const polygons = drawn(WARP_FRAME / 2, scheme.paint, {
+    ...pose,
+    thrust: false,
+    yaw: WARP_HEADING,
+  });
   for (const { outline } of polygons) {
     if (outline.some(([x, y]) => Math.min(x, y) < 2 || Math.max(x, y) > WARP_FRAME - 2)) {
       throw new Error(`warp pose ${pose.id} leaves its ${WARP_FRAME} frame`);
@@ -257,13 +263,15 @@ function poseSvg(scheme: (typeof SCHEMES)[number], pose: (typeof POSES)[number])
   ].join("\n");
 }
 
-for (const scheme of SCHEMES) {
-  mkdirSync(`${art}quantum-jump-ship/${scheme.id}`, { recursive: true });
-  for (const pose of POSES) {
-    writeFileSync(
-      `${art}${posePath(scheme.id, pose.id).slice("/art/".length)}`,
-      poseSvg(scheme, pose),
-    );
+if (!dataOnly) {
+  for (const scheme of SCHEMES) {
+    mkdirSync(`${art}quantum-jump-ship/${scheme.id}`, { recursive: true });
+    for (const pose of POSES) {
+      writeFileSync(
+        `${art}${posePath(scheme.id, pose.id).slice("/art/".length)}`,
+        poseSvg(scheme, pose),
+      );
+    }
   }
 }
 
@@ -286,30 +294,31 @@ const entry = (
   frameHeight,
   frames: Object.fromEntries(names.map((name, i) => [name, i])),
 });
-placeEntries("core", "quantum-jump", [
-  entry(
-    "quantum-jump-field",
-    fieldSheet,
-    CANVAS.width,
-    CANVAS.height,
-    FIELDS.map(([name]) => name),
-  ),
-  entry(
-    "quantum-jump-glow",
-    glowSheet,
-    GLOW_SIZE,
-    GLOW_SIZE,
-    LEVELS.map(([name]) => name),
-  ),
-  entry("quantum-jump-star", starImage, STAR, STAR, ["jump"]),
-  entry(
-    "quantum-jump-tunnel",
-    tunnelSheet,
-    CANVAS.width,
-    CANVAS.height,
-    TUNNEL_SHEET.map(([name]) => name),
-  ),
-]);
+if (!dataOnly)
+  placeEntries("core", "quantum-jump", [
+    entry(
+      "quantum-jump-field",
+      fieldSheet,
+      CANVAS.width,
+      CANVAS.height,
+      FIELDS.map(([name]) => name),
+    ),
+    entry(
+      "quantum-jump-glow",
+      glowSheet,
+      GLOW_SIZE,
+      GLOW_SIZE,
+      LEVELS.map(([name]) => name),
+    ),
+    entry("quantum-jump-star", starImage, STAR, STAR, ["jump"]),
+    entry(
+      "quantum-jump-tunnel",
+      tunnelSheet,
+      CANVAS.width,
+      CANVAS.height,
+      TUNNEL_SHEET.map(([name]) => name),
+    ),
+  ]);
 
 // Logical px: 360 per 390 design px. Iris radii are fractions of the view's half-diagonal
 // while they reach the screen edges and logical px while they hug the ship.
@@ -463,6 +472,26 @@ const effect = {
       squash,
       thrust,
       paths: Object.fromEntries(SCHEMES.map((scheme) => [scheme.id, posePath(scheme.id, id)])),
+      ...(thrust
+        ? {
+            jets: {
+              version: 1,
+              frame: WARP_FRAME,
+              length: AUTHORED_JET_CURVE,
+              headings: [
+                {
+                  index: 0,
+                  mouths: forwardJetMouths(WARP_FRAME / 2, {
+                    yaw: WARP_HEADING,
+                    roll,
+                    squash,
+                    stretch,
+                  }),
+                },
+              ],
+            },
+          }
+        : {}),
     })),
   },
   iris: {
@@ -500,4 +529,4 @@ writeFileSync(
 );
 
 // The core manifest names the effect data next to the space palette.
-linkData("core", { quantumJump: "/art/quantum-jump.json" });
+if (!dataOnly) linkData("core", { quantumJump: "/art/quantum-jump.json" });

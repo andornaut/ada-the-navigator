@@ -219,6 +219,32 @@
           "graphite": "/art/quantum-jump-ship/graphite/bank-16.svg",
           "iris": "/art/quantum-jump-ship/iris/bank-16.svg",
           "amber": "/art/quantum-jump-ship/amber/bank-16.svg"
+        },
+        "jets": {
+          "version": 1,
+          "frame": 256,
+          "length": { "base": 16, "scale": 0, "exponent": 2 },
+          "headings": [
+            {
+              "index": 0,
+              "mouths": [
+                {
+                  "anchor": [102.122, 131.264],
+                  "axis": [-0.866, 0.5],
+                  "half": [-3.004, -0.151],
+                  "outerCorner": [92.129, 132.526],
+                  "coreOutboard": true
+                },
+                {
+                  "anchor": [122.518, 136.286],
+                  "axis": [-0.866, 0.5],
+                  "half": [1.575, 0.976],
+                  "outerCorner": [128.112, 142.635],
+                  "coreOutboard": true
+                }
+              ]
+            }
+          ]
         }
       },
       {
@@ -234,6 +260,32 @@
           "graphite": "/art/quantum-jump-ship/graphite/bank-24.svg",
           "iris": "/art/quantum-jump-ship/iris/bank-24.svg",
           "amber": "/art/quantum-jump-ship/amber/bank-24.svg"
+        },
+        "jets": {
+          "version": 1,
+          "frame": 256,
+          "length": { "base": 16, "scale": 0, "exponent": 2 },
+          "headings": [
+            {
+              "index": 0,
+              "mouths": [
+                {
+                  "anchor": [102.327, 133.115],
+                  "axis": [-0.866, 0.5],
+                  "half": [-2.89, 0.275],
+                  "outerCorner": [92.879, 135.827],
+                  "coreOutboard": true
+                },
+                {
+                  "anchor": [121.711, 134.341],
+                  "axis": [-0.866, 0.5],
+                  "half": [1.461, 0.55],
+                  "outerCorner": [127.226, 139.313],
+                  "coreOutboard": true
+                }
+              ]
+            }
+          ]
         }
       },
       {
@@ -249,6 +301,32 @@
           "graphite": "/art/quantum-jump-ship/graphite/bank-30.svg",
           "iris": "/art/quantum-jump-ship/iris/bank-30.svg",
           "amber": "/art/quantum-jump-ship/amber/bank-30.svg"
+        },
+        "jets": {
+          "version": 1,
+          "frame": 256,
+          "length": { "base": 16, "scale": 0, "exponent": 2 },
+          "headings": [
+            {
+              "index": 0,
+              "mouths": [
+                {
+                  "anchor": [102.617, 134.551],
+                  "axis": [-0.866, 0.5],
+                  "half": [-2.777, 0.597],
+                  "outerCorner": [93.664, 138.337],
+                  "coreOutboard": true
+                },
+                {
+                  "anchor": [120.992, 132.91],
+                  "axis": [-0.866, 0.5],
+                  "half": [1.348, 0.228],
+                  "outerCorner": [126.344, 136.804],
+                  "coreOutboard": true
+                }
+              ]
+            }
+          ]
         }
       },
       {
@@ -264,6 +342,32 @@
           "graphite": "/art/quantum-jump-ship/graphite/stretch-30.svg",
           "iris": "/art/quantum-jump-ship/iris/stretch-30.svg",
           "amber": "/art/quantum-jump-ship/amber/stretch-30.svg"
+        },
+        "jets": {
+          "version": 1,
+          "frame": 256,
+          "length": { "base": 16, "scale": 0, "exponent": 2 },
+          "headings": [
+            {
+              "index": 0,
+              "mouths": [
+                {
+                  "anchor": [71.063, 153.985],
+                  "axis": [-2.771, 1.6],
+                  "half": [-4.039, 1.477],
+                  "outerCorner": [57.134, 160.85],
+                  "coreOutboard": true
+                },
+                {
+                  "anchor": [86.681, 152.59],
+                  "axis": [-2.771, 1.6],
+                  "half": [-0.533, 1.163],
+                  "outerCorner": [84.912, 159.547],
+                  "coreOutboard": true
+                }
+              ]
+            }
+          ]
         }
       },
       {
@@ -279,6 +383,32 @@
           "graphite": "/art/quantum-jump-ship/graphite/settle-24.svg",
           "iris": "/art/quantum-jump-ship/iris/settle-24.svg",
           "amber": "/art/quantum-jump-ship/amber/settle-24.svg"
+        },
+        "jets": {
+          "version": 1,
+          "frame": 256,
+          "length": { "base": 16, "scale": 0, "exponent": 2 },
+          "headings": [
+            {
+              "index": 0,
+              "mouths": [
+                {
+                  "anchor": [90.289, 140.065],
+                  "axis": [-1.559, 0.9],
+                  "half": [-3.462, 0.605],
+                  "outerCorner": [78.69, 144.019],
+                  "coreOutboard": true
+                },
+                {
+                  "anchor": [109.672, 141.291],
+                  "axis": [-1.559, 0.9],
+                  "half": [0.89, 0.88],
+                  "outerCorner": [113.037, 147.505],
+                  "coreOutboard": true
+                }
+              ]
+            }
+          ]
         }
       },
       {
@@ -294,6 +424,32 @@
           "graphite": "/art/quantum-jump-ship/graphite/settle-16.svg",
           "iris": "/art/quantum-jump-ship/iris/settle-16.svg",
           "amber": "/art/quantum-jump-ship/amber/settle-16.svg"
+        },
+        "jets": {
+          "version": 1,
+          "frame": 256,
+          "length": { "base": 16, "scale": 0, "exponent": 2 },
+          "headings": [
+            {
+              "index": 0,
+              "mouths": [
+                {
+                  "anchor": [97.608, 133.87],
+                  "axis": [-1.126, 0.65],
+                  "half": [-3.218, -0.027],
+                  "outerCorner": [86.808, 135.598],
+                  "coreOutboard": true
+                },
+                {
+                  "anchor": [118.003, 138.893],
+                  "axis": [-1.126, 0.65],
+                  "half": [1.36, 1.1],
+                  "outerCorner": [122.791, 145.707],
+                  "coreOutboard": true
+                }
+              ]
+            }
+          ]
         }
       },
       {
@@ -309,6 +465,32 @@
           "graphite": "/art/quantum-jump-ship/graphite/settle-10.svg",
           "iris": "/art/quantum-jump-ship/iris/settle-10.svg",
           "amber": "/art/quantum-jump-ship/amber/settle-10.svg"
+        },
+        "jets": {
+          "version": 1,
+          "frame": 256,
+          "length": { "base": 16, "scale": 0, "exponent": 2 },
+          "headings": [
+            {
+              "index": 0,
+              "mouths": [
+                {
+                  "anchor": [100.601, 130.812],
+                  "axis": [-0.953, 0.55],
+                  "half": [-3.131, -0.423],
+                  "outerCorner": [90.024, 131.144],
+                  "coreOutboard": true
+                },
+                {
+                  "anchor": [121.497, 138.621],
+                  "axis": [-0.953, 0.55],
+                  "half": [1.559, 1.33],
+                  "outerCorner": [126.776, 146.098],
+                  "coreOutboard": true
+                }
+              ]
+            }
+          ]
         }
       },
       {
