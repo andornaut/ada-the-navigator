@@ -14,7 +14,7 @@ import {
   type Mood,
   SPEAKERS,
 } from "../data/conversations.ts";
-import { DESTINATIONS, STATION_SENTENCE } from "../data/destinations.ts";
+import { deliveryDestination, DESTINATIONS, STATION_SENTENCE } from "../data/destinations.ts";
 import { ECONOMY, type UpgradeWeapon } from "../data/economy.ts";
 import { EXCHANGE_RATES } from "../data/exchange.ts";
 import {
@@ -614,6 +614,14 @@ export class GameModel {
         continue;
       }
       points.push({
+        category:
+          station ||
+          object?.kind === "station" ||
+          (object?.kind === "destination" && deliveryDestination(id))
+            ? "station"
+            : landmark || (object?.kind === "pickup" && object.role === "discovery")
+              ? "discovery"
+              : "objective",
         id,
         identifiable: hunt
           ? worldDistance(flightWorldContext(f), hunt, f.player) <= JOB_TUNING.hunt.glint

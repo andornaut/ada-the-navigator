@@ -127,6 +127,7 @@ describe("conversation exposure under covering cards", () => {
     const line = { key: "penny:1:displayed-cache:0", text: "Conversation" };
     const acknowledge = vi.spyOn(model, "pennyNoticeDisplayed").mockImplementation(() => {});
     const marker = {
+      category: "discovery" as const,
       id: "displayed-cache",
       identified: false,
       known: false,

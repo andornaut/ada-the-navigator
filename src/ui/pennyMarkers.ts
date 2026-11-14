@@ -4,7 +4,7 @@ import { edgePoint, gameAreaPoint } from "../model/edgeMarkers.ts";
 import type { PennyMarker } from "../model/pennyMarkers.ts";
 import type { Vec } from "../model/types.ts";
 import { fromAreaLeft, units } from "./layout/css.ts";
-import { MAP_COLORS, MAP_FACES, MAP_GLYPHS, MAP_JOB_FACE, MAP_SYMBOL } from "./layout/mapScreen.ts";
+import { MAP_COLORS, MAP_FACES, MAP_SYMBOL } from "./layout/mapScreen.ts";
 import { PENNY_MARKER } from "./layout/pennyMarkers.ts";
 
 const { question: BODY_QUESTION, size: SIZE } = PENNY_MARKER;
@@ -26,19 +26,16 @@ mask-size:${units(BODY_QUESTION.atlasWidth)} ${units(BODY_QUESTION.atlasHeight)}
 -webkit-mask-size:${units(BODY_QUESTION.atlasWidth)} ${units(BODY_QUESTION.atlasHeight)};
 mask-position:${units(-BODY_QUESTION.x)} ${units(-BODY_QUESTION.y)};
 -webkit-mask-position:${units(-BODY_QUESTION.x)} ${units(-BODY_QUESTION.y)}}
-.ada-penny-marker[data-item] .ada-penny-glyph{mask:none;-webkit-mask:none;
-background:var(--glyph) center / contain no-repeat}
 `;
 
 export function pennyGlyph(marker: PennyMarker): string | null {
   if (!marker.identified) {
     return null;
   }
-  if (marker.item) {
-    return `/art/ui/sprites/icon-${marker.item}-20.png`;
-  }
-  const key = marker.jobType ? `map-job-${marker.jobType}` : MAP_GLYPHS[marker.symbol];
-  return key ? `/art/ui/icons/${key}.svg` : null;
+  const key = { discovery: "map-beacon", objective: "map-destination", station: "map-station" }[
+    marker.category
+  ];
+  return `/art/ui/icons/${key}.svg`;
 }
 
 interface DirectionStyle {
@@ -47,7 +44,7 @@ interface DirectionStyle {
   readonly light: boolean;
 }
 
-/** Reuses the existing atlas question mark and canonical map/item glyphs. */
+/** Reuses the existing atlas question mark and approved category glyphs. */
 export function createPennyMarkerLayer(
   doc: Pick<Document, "createElement" | "createElementNS">,
   parent: Pick<HTMLElement, "append">,
@@ -90,18 +87,15 @@ export function createPennyMarkerLayer(
         node.dataset.target = marker.id;
         node.dataset.identified = String(marker.identified);
         node.dataset.light = String(style.light);
-        if (marker.identified && marker.item) {
-          node.dataset.item = marker.item;
-        } else {
-          delete node.dataset.item;
-        }
         node.style.left = fromAreaLeft(at.x);
         node.style.top = units(at.y);
         node.style.background = !marker.identified
           ? MAP_FACES.destination
-          : marker.jobType
-            ? MAP_JOB_FACE
-            : MAP_FACES[marker.symbol];
+          : {
+              discovery: MAP_FACES.beacon,
+              objective: MAP_COLORS.objective,
+              station: MAP_FACES.station,
+            }[marker.category];
         const glyph = pennyGlyph(marker);
         if (glyph) {
           node.style.setProperty("--glyph", `url('${glyph}')`);

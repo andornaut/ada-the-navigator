@@ -73,7 +73,7 @@ describe("Penny's actual presentation acknowledgement", () => {
     expect(model.pennyMarkers(GAME_AREA)).toEqual([]);
     model.pennyNoticeDisplayed(key);
     expect(model.pennyMarkers(GAME_AREA)).toMatchObject([
-      { id: "cache:displayed", identified: false, item: "stardust" },
+      { category: "discovery", id: "cache:displayed", identified: false, item: "stardust" },
     ]);
     talk.advance();
     talk.advance();
@@ -138,11 +138,24 @@ it("replaces an undiscovered station arrow with the exact displayed question mar
   expect(model.indicatorTargets).toContainEqual({ ...site, kind: "station" });
   model.pennyNoticeDisplayed(model.conversation!.key);
   expect(model.pennyMarkers(GAME_AREA)).toMatchObject([
-    { id: site.id, identified: false, symbol: "station" },
+    { category: "station", id: site.id, identified: false, symbol: "station" },
   ]);
   expect(model.state.progress[1].stations).not.toContain(site.id);
   model.state.progress[1].stations.push(site.id);
   expect(model.pennyMarkers(GAME_AREA)).toMatchObject([
-    { id: site.id, identified: true, symbol: "station" },
+    { category: "station", id: site.id, identified: true, symbol: "station" },
   ]);
 });
+
+it.each(["growers", "workshop", "salvagers"])(
+  "classifies the actual %s outpost as station despite its old symbol",
+  (id) => {
+    const { flight, model, talk } = fixture();
+    flight.objects = [{ hp: 1, id, kind: "destination", radius: 5, x: 1450, y: 0 }];
+    talk.step(0.05, false, { ...facts, pennyPoints: [id] });
+    model.pennyNoticeDisplayed(model.conversation!.key);
+    expect(model.pennyMarkers(GAME_AREA)).toMatchObject([
+      { category: "station", id, identified: false },
+    ]);
+  },
+);

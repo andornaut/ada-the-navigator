@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { edgePoint, gameAreaPoint } from "../model/edgeMarkers.ts";
 import type { PennyMarker } from "../model/pennyMarkers.ts";
-import { MAP_GLYPHS } from "./layout/mapScreen.ts";
+import { MAP_COLORS, MAP_FACES } from "./layout/mapScreen.ts";
 import { PENNY_MARKER } from "./layout/pennyMarkers.ts";
 import {
   createPennyMarkerLayer,
@@ -12,6 +12,7 @@ import {
 } from "./pennyMarkers.ts";
 
 const marker: PennyMarker = {
+  category: "discovery",
   id: "a",
   identified: false,
   known: false,
@@ -21,20 +22,24 @@ const marker: PennyMarker = {
 };
 
 describe("Penny's existing marker art", () => {
-  it("keeps an unknown target anonymous, then uses the canonical matching map or item asset", () => {
+  it("uses only the approved three category assets and keeps unknown targets anonymous", () => {
     expect(pennyGlyph(marker)).toBeNull();
-    expect(pennyGlyph({ ...marker, identified: true })).toBe(
-      `/art/ui/icons/${MAP_GLYPHS.wreck}.svg`,
-    );
-    expect(pennyGlyph({ ...marker, identified: true, symbol: "station" })).toBe(
-      "/art/ui/icons/map-station.svg",
-    );
-    expect(pennyGlyph({ ...marker, identified: true, jobType: "hunt" })).toBe(
-      "/art/ui/icons/map-job-hunt.svg",
-    );
-    expect(pennyGlyph({ ...marker, identified: true, item: "stardust" })).toBe(
-      "/art/ui/sprites/icon-stardust-20.png",
-    );
+    for (const [category, glyph] of [
+      ["station", "map-station"],
+      ["objective", "map-destination"],
+      ["discovery", "map-beacon"],
+    ] as const) {
+      expect(pennyGlyph({ ...marker, category, identified: true })).toBe(
+        `/art/ui/icons/${glyph}.svg`,
+      );
+      expect(pennyGlyph({ ...marker, category, identified: false })).toBeNull();
+    }
+    expect(
+      pennyGlyph({ ...marker, category: "objective", identified: true, jobType: "hunt" }),
+    ).toBe("/art/ui/icons/map-destination.svg");
+    expect(
+      pennyGlyph({ ...marker, category: "discovery", identified: true, item: "stardust" }),
+    ).toBe("/art/ui/icons/map-beacon.svg");
     expect(PENNY_MARKERS_STYLE).toContain("/art/ui/fonts/font-body.png");
   });
 
@@ -122,11 +127,18 @@ it("reuses one DOM target through identification, clears obsolete nodes and rele
   expect(layer.children[0]).toBe(chip);
   expect(chip.dataset).toMatchObject({
     identified: "true",
-    item: "stardust",
     light: "true",
     target: "a",
   });
-  expect(chip.properties.get("--glyph")).toContain("icon-stardust-20.png");
+  expect(chip.properties.get("--glyph")).toContain("map-beacon.svg");
+  expect(chip.style.background).toBe(MAP_FACES.beacon);
+  for (const [category, face] of [
+    ["station", MAP_FACES.station],
+    ["objective", MAP_COLORS.objective],
+  ] as const) {
+    ui.place({ x: 0, y: 0 }, area, undefined, [{ ...marker, category, identified: true }]);
+    expect(chip.style.background).toBe(face);
+  }
   expect(PENNY_MARKER.size).toBe(24);
   expect(PENNY_MARKERS_STYLE).toContain("border-radius:50%");
   expect(PENNY_MARKERS_STYLE).not.toContain("ada-penny-direction");

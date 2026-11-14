@@ -9,7 +9,10 @@ import type { MapSymbol } from "./map.ts";
 import type { Vec } from "./types.ts";
 import { nearestImage } from "./worldGeometry.ts";
 
+export type PennyCategory = "station" | "objective" | "discovery";
+
 export interface PennyPoint extends Vec {
+  readonly category: PennyCategory;
   readonly id: string;
   readonly known: boolean;
   readonly identifiable?: boolean;

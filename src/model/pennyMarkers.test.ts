@@ -6,6 +6,7 @@ import { pennyIndicatorTargets, PennyMarkers, type PennyPoint } from "./pennyMar
 
 const player = { x: 0, y: 0 };
 const point = (id: string, x = 1450): PennyPoint => ({
+  category: "discovery",
   id,
   known: false,
   symbol: "wreck",
