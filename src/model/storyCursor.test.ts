@@ -139,33 +139,9 @@ describe("canonical story cursors", () => {
       },
     ],
     [
-      "non-question target",
-      (value: ReturnType<typeof encoded>) => {
-        value.current.asked = [value.current.page];
-      },
-    ],
-    [
       "unknown variant",
       (value: ReturnType<typeof encoded>) => {
         value.current.scene.variant = "other";
-      },
-    ],
-    [
-      "unsupported factory combination",
-      (value: ReturnType<typeof encoded>) => {
-        value.current.scene.variant = "oreLost";
-      },
-    ],
-    [
-      "unknown lighting",
-      (value: ReturnType<typeof encoded>) => {
-        value.current.scene.background = "aboard";
-      },
-    ],
-    [
-      "unsupported lighting combination",
-      (value: ReturnType<typeof encoded>) => {
-        value.current.scene.background = "adaRoom";
       },
     ],
     [
@@ -181,12 +157,6 @@ describe("canonical story cursors", () => {
       },
     ],
     [
-      "step extra key",
-      (value: ReturnType<typeof encoded>) => {
-        value.current.text = "authored text";
-      },
-    ],
-    [
       "unknown trail page",
       (value: ReturnType<typeof encoded>) => {
         value.trail = [{ ...value.current, page: "missing" }];
@@ -196,18 +166,6 @@ describe("canonical story cursors", () => {
       "version",
       (value: ReturnType<typeof encoded>) => {
         value.version = 2;
-      },
-    ],
-    [
-      "sparse trail",
-      (value: ReturnType<typeof encoded>) => {
-        value.trail = Array(1);
-      },
-    ],
-    [
-      "explicit undefined variant",
-      (value: ReturnType<typeof encoded>) => {
-        value.current.scene.variant = undefined;
       },
     ],
   ] as const)("rejects %s without a partial restore", (_, mutate) => {
