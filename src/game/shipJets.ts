@@ -12,6 +12,10 @@ export function shipJetDirection(facing: Vec, velocity: Vec): "forward" | "rever
 export interface JetMouth {
   /** Projected mouth midpoint. */
   anchor: Vec;
+  /** Projected wing apex used by reverse jets to attach their opaque outer base corner. */
+  outerCorner?: Vec;
+  /** The calibrated frame-space half-plane retaining the forward side of the wing rear. */
+  rearClip?: { readonly constant: number; readonly normal: Vec };
   /** Projected exhaust direction per ship unit. */
   axis: Vec;
   /** Projected half mouth-width vector. */
@@ -23,6 +27,8 @@ export interface JetMouth {
 }
 
 export interface JetLayer {
+  /** Authored material role, including the opaque outer layer. */
+  name?: string;
   /** Linear opacity ramp over f; absent means opaque. */
   alpha?: { from: number; max: number; to: number };
   /** Colours at f = 0 and f = 1; a single colour repeats. */
@@ -94,7 +100,12 @@ function readColor(value: unknown): number | undefined {
 
 function readLayer(value: unknown): JetLayer | undefined {
   const layer = fields(value);
-  if (!layer || !finite(layer.width) || !finite(layer.length)) {
+  if (
+    !layer ||
+    !finite(layer.width) ||
+    !finite(layer.length) ||
+    (layer.name !== undefined && typeof layer.name !== "string")
+  ) {
     return undefined;
   }
   const single = readColor(layer.color);
@@ -104,7 +115,12 @@ function readLayer(value: unknown): JetLayer | undefined {
   if (from === undefined || to === undefined) {
     return undefined;
   }
-  const result: JetLayer = { colors: [from, to], length: layer.length, width: layer.width };
+  const result: JetLayer = {
+    colors: [from, to],
+    length: layer.length,
+    width: layer.width,
+    ...(typeof layer.name === "string" ? { name: layer.name } : {}),
+  };
   if (layer.alpha !== undefined) {
     const alpha = fields(layer.alpha);
     if (!alpha || !finite(alpha.from) || !finite(alpha.to) || !finite(alpha.max)) {
@@ -178,6 +194,24 @@ export function engineJets(jets: EngineJets, level: number): ShipJets {
   };
 }
 
+/** Geometry follows travel; material always follows the main exhaust's selected level and field. */
+export function travelJets(
+  main: EngineJets | undefined,
+  reverse: EngineJets | undefined,
+  fieldLevels: readonly (readonly JetLayer[])[] | undefined,
+  level: number,
+  direction: "forward" | "reverse" | undefined,
+): ShipJets | undefined {
+  const geometry = direction === "reverse" ? reverse : main;
+  if (!main || !geometry) {
+    return undefined;
+  }
+  return {
+    ...engineJets(geometry, level),
+    layers: levelLayers(fieldLevels ?? main.engineLevels, level),
+  };
+}
+
 function readOccluders(value: unknown): Vec[][] | undefined {
   if (!Array.isArray(value)) {
     return undefined;
@@ -206,11 +240,20 @@ function readMouths(value: unknown): JetMouth[] | undefined {
     const anchor = readVec(mouth?.anchor);
     const axis = readVec(mouth?.axis);
     const half = readVec(mouth?.half);
+    const outerCorner = mouth?.outerCorner === undefined ? undefined : readVec(mouth.outerCorner);
+    const clip = fields(mouth?.rearClip);
+    const normal = readVec(clip?.normal);
+    const rearClip =
+      normal && Math.hypot(normal.x, normal.y) > 0 && finite(clip?.constant)
+        ? { constant: clip.constant, normal }
+        : undefined;
+    const hasAttachment = mouth?.outerCorner !== undefined || mouth?.rearClip !== undefined;
     const occluders = mouth?.occluders === undefined ? undefined : readOccluders(mouth.occluders);
     if (
       !anchor ||
       !axis ||
       !half ||
+      (hasAttachment && (!outerCorner || !rearClip)) ||
       (mouth!.occluders !== undefined && occluders === undefined) ||
       (mouth!.hardpoint !== undefined && typeof mouth!.hardpoint !== "string")
     ) {
@@ -220,6 +263,7 @@ function readMouths(value: unknown): JetMouth[] | undefined {
       anchor,
       axis,
       half,
+      ...(outerCorner && rearClip ? { outerCorner, rearClip } : {}),
       ...(typeof mouth!.hardpoint === "string" ? { hardpoint: mouth!.hardpoint } : {}),
       ...(occluders === undefined ? {} : { occluders }),
     });
@@ -307,6 +351,29 @@ export function layerAlpha(layer: JetLayer, f: number): number {
   return Math.min(1, Math.max(0, (f - from) / (to - from))) * max;
 }
 
+/** Clips in calibrated frame space before display scaling, retaining boundary vertices. */
+function clipRear(clip: NonNullable<JetMouth["rearClip"]>, polygon: readonly Vec[]): Vec[] {
+  const distance = (point: Vec) =>
+    clip.normal.x * point.x + clip.normal.y * point.y - clip.constant;
+  const out: Vec[] = [];
+  for (let i = 0; i < polygon.length; i++) {
+    const a = polygon[i]!;
+    const b = polygon[(i + 1) % polygon.length]!;
+    const da = distance(a),
+      db = distance(b);
+    const aInside = da <= 1e-10,
+      bInside = db <= 1e-10;
+    if (aInside) {
+      out.push(a);
+    }
+    if (aInside !== bInside && Math.abs(da) > 1e-10 && Math.abs(db) > 1e-10) {
+      const fraction = da / (da - db);
+      out.push({ x: a.x + (b.x - a.x) * fraction, y: a.y + (b.y - a.y) * fraction });
+    }
+  }
+  return out;
+}
+
 /** Filled triangles per mouth in layer order; empty at f = 0. */
 export function jetTriangles(
   jets: ShipJets,
@@ -326,7 +393,19 @@ export function jetTriangles(
   const toDisplay = (x: number, y: number): Vec => ({ x: (x - ox) * sx, y: (y - oy) * sy });
   const length = jetLength(jets, fraction);
   const triangles: JetTriangle[] = [];
-  for (const { anchor, axis, half, occluders } of mouths) {
+  for (const mouth of mouths) {
+    const { axis, half, occluders, outerCorner, rearClip } = mouth;
+    const outer = outerCorner ? jets.layers.find(({ name }) => name === "outer") : undefined;
+    if (outerCorner && (!outer || !(outer.width > 0))) {
+      continue;
+    }
+    const anchor =
+      outerCorner && outer
+        ? {
+            x: outerCorner.x - half.x * outer.width,
+            y: outerCorner.y - half.y * outer.width,
+          }
+        : mouth.anchor;
     const displayOccluders = display.includeOccluders
       ? occluders?.map((polygon) => polygon.map(({ x, y }) => toDisplay(x, y)))
       : undefined;
@@ -338,16 +417,23 @@ export function jetTriangles(
       const hx = half.x * layer.width;
       const hy = half.y * layer.width;
       const tip = length * layer.length;
-      triangles.push({
-        alpha,
-        color: layerColor(layer, fraction),
-        ...(displayOccluders === undefined ? {} : { occluders: displayOccluders }),
-        points: [
-          toDisplay(anchor.x + hx, anchor.y + hy),
-          toDisplay(anchor.x + axis.x * tip, anchor.y + axis.y * tip),
-          toDisplay(anchor.x - hx, anchor.y - hy),
-        ],
-      });
+      const polygon = [
+        { x: anchor.x + hx, y: anchor.y + hy },
+        { x: anchor.x + axis.x * tip, y: anchor.y + axis.y * tip },
+        { x: anchor.x - hx, y: anchor.y - hy },
+      ];
+      const clipped = rearClip ? clipRear(rearClip, polygon) : polygon;
+      for (let i = 1; i + 1 < clipped.length; i++) {
+        const a = clipped[0]!,
+          b = clipped[i]!,
+          c = clipped[i + 1]!;
+        triangles.push({
+          alpha,
+          color: layerColor(layer, fraction),
+          ...(displayOccluders === undefined ? {} : { occluders: displayOccluders }),
+          points: [toDisplay(a.x, a.y), toDisplay(b.x, b.y), toDisplay(c.x, c.y)],
+        });
+      }
     }
   }
   return triangles;

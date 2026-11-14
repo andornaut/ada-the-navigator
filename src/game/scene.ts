@@ -115,11 +115,10 @@ import { StoryShell } from "./shell.ts";
 import { hasShipHeadings, loadsOnDemand, selectPaintedShipAsset } from "./shipArt.ts";
 import {
   type EngineJets,
-  engineJets,
   jetTriangles,
-  levelLayers,
   readEngineJets,
   shipJetDirection,
+  travelJets,
 } from "./shipJets.ts";
 import { Silhouettes } from "./silhouettes.ts";
 import { FALLBACK_SPACE_PALETTE, type SpacePalette } from "./spacePalette.ts";
@@ -905,7 +904,13 @@ export class GameScene extends Scene {
     this.ship.setPosition(SCREEN.width / 2, SCREEN.height / 2);
     // Jets and thrust frames share the 1 unit/s thrust threshold.
     const travel = shipJetDirection(flight.facing, flight.velocity);
-    const activeJets = travel === "reverse" ? this.shipRetroJets : this.shipJets;
+    const activeJets = travelJets(
+      this.shipJets,
+      this.shipRetroJets,
+      this.light ? LIGHT_FIELD.jets.shipLevels : undefined,
+      flight.levels.engine,
+      travel,
+    );
     const speed = travel ? shipSpeedFraction(CONTENT, flight) : 0;
     const ship = selectPaintedShipAsset(
       this.shipAssets,
@@ -928,17 +933,9 @@ export class GameScene extends Scene {
         displayWidth: ship.displayWidth ?? 42,
         pivot: ship.pivot,
       };
-      // Ada's jets take her Engine level's layers; a light field swaps in Art's dark layers for
-      // that level, with no halo, keylined with the hull.
-      const engine = flight.levels.engine;
-      const level = engineJets(activeJets, engine);
-      const jets =
-        this.light && travel !== "reverse"
-          ? { ...level, layers: levelLayers(LIGHT_FIELD.jets.shipLevels, engine) }
-          : level;
       const keyline = this.light && LIGHT_FIELD.keylined.includes("ship");
       for (const { alpha, color, points } of jetTriangles(
-        jets,
+        activeJets,
         display,
         ship.directionIndex,
         speed,

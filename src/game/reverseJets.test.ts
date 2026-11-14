@@ -62,15 +62,17 @@ describe("velocity-directed ship jets", () => {
 });
 
 describe("canonical reverse jet data", () => {
-  it("reads every canonical heading with the existing engine schema and a fixed yellow style", () => {
+  it("reads the approved geometry and canonical main-exhaust fallback layers", () => {
     expect(retro).toBeDefined();
     expect(retro.headings).toHaveLength(SHIP_HEADINGS);
     expect(retro.headings.every((mouths) => mouths.length === 2)).toBe(true);
     expect(retro.frame).toBe(rear.frame);
-    expect(retro.length).toEqual(rear.length);
-    expect(retro.engineLevels).toHaveLength(1);
+    expect(retro.length.base).toBeCloseTo(rear.length.base * 1.1);
+    expect(retro.length.scale).toBeCloseTo(rear.length.scale * 1.1);
+    expect(retro.length.exponent).toBe(rear.length.exponent);
+    expect(retro.engineLevels).toEqual(rear.engineLevels);
     for (const level of [1, 2, 3]) {
-      expect(engineJets(retro, level).layers).toEqual(retro.engineLevels[0]);
+      expect(engineJets(retro, level).layers).toEqual(engineJets(rear, level).layers);
     }
   });
 
@@ -83,7 +85,7 @@ describe("canonical reverse jet data", () => {
       }
       expect(jetTriangles(engineJets(retro, 1), display, heading, 0)).toEqual([]);
       const triangles = jetTriangles(engineJets(retro, 1), display, heading, 1);
-      expect(triangles).toHaveLength(
+      expect(triangles.length).toBeGreaterThanOrEqual(
         retro.headings[heading]!.length * retro.engineLevels[0]!.length,
       );
       expect(
