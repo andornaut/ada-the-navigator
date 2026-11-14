@@ -1972,6 +1972,7 @@ function fire(
   }
   flight.fireCooldown += releaseFriendlyVolley(
     coverage,
+    flight.velocity,
     content,
     definition,
     origin,
@@ -1985,6 +1986,7 @@ function fire(
 /** The player's and an ally's shots share canonical damage, range and collision handling. */
 function releaseFriendlyVolley(
   coverage: PlayerWeaponCoverageContext | undefined,
+  inheritedVelocity: Vec | undefined,
   content: GameContent,
   definition: WeaponDefinition,
   origin: Vec,
@@ -1995,6 +1997,7 @@ function releaseFriendlyVolley(
 ): number {
   const volley = planPlayerVolley(definition, {
     ...(coverage === undefined ? {} : { coverage }),
+    ...(inheritedVelocity === undefined ? {} : { inheritedVelocity }),
     aim,
     baseDamage: content.tuning.flight.playerShotDamage,
     baseLifetime: content.tuning.flight.projectileLifetime,
@@ -3897,6 +3900,7 @@ export function stepFlight(
       for (const intent of stepPhantomAllies(ship.physics, slice, flight, flight.phantom.allies)) {
         const aim = direction(worldDelta(flightWorldContext(flight), intent.from, intent.target));
         releaseFriendlyVolley(
+          undefined,
           undefined,
           content,
           weaponAt(intent.weapon, intent.level),

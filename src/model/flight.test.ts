@@ -100,7 +100,15 @@ describe("flight boundaries", () => {
     expect(flight.weapon).toBe("multiLaser");
     expect(flight.facing.x).toBeGreaterThan(0);
     expect(flight.facing.y).toBeLessThan(0);
-    expect(degrees(flight.shots[1]!.velocity, flight.facing)).toBeLessThan(1e-9);
+    expect(
+      degrees(
+        {
+          x: flight.shots[1]!.velocity.x - flight.velocity.x,
+          y: flight.shots[1]!.velocity.y - flight.velocity.y,
+        },
+        flight.facing,
+      ),
+    ).toBeLessThan(1e-9);
   });
 
   it("blocks scenery with one bump's damage and accepts consecutive hits without invulnerability", () => {
