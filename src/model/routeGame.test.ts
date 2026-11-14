@@ -16,8 +16,8 @@ function approach(galaxy: GalaxyNumber) {
   const flight = model.state.flight!;
   flight.objects = [];
   const target = ensureDestination(CONTENT, galaxyRoute(galaxy)[0]!, flight);
-  model.step(1 / 60, idle);
   flight.player = { x: target.x, y: target.y };
+  model.step(1 / 60, idle);
   return { flight, model, target };
 }
 
