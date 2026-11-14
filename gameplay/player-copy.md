@@ -1207,6 +1207,15 @@ beacon light. Welcome!"
   icon and current `{count}`; Laser instead shows its own canonical glyph and
   "Unlimited". An unowned shop weapon uses "Comes with 3 ammo packs." instead
   of a current count.
+- Shield pill detail header: the canonical shield icon and "Shield", with no
+  suffix at level 1 and `[2]` or `[3]` at upgraded levels. Show live current/max
+  HP using the existing numeric presentation. Description: "Recharges after
+  {delay} seconds without damage. Ore fuels recharge above {freePercent}%. If
+  depleted, Astra jumps you home and you lose half your ore." Derive `{delay}`
+  from the current ship's `shieldRechargeDelay` and `{freePercent}` from
+  `ECONOMY.shieldRecharge.freeCapacity` times 100 (currently 30 and 10). The sole
+  primary button is "Close", centered; dismissal returns to the same origin
+  with the usual detail-card pause and resume lifecycle.
 - Resource detail titles: "Ore" and "Stardust", text only. Below the description,
   show the canonical resource icon once beside the actual `{count}`.
 - HUD quest items open their matching quest details, with no generic quantity.

@@ -989,6 +989,17 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   never relies on color alone: the bar also pulses, held steady under reduced
   motion, and Astra says "Shield low!". Nothing pulses or circles around Ada's
   ship while the shield recharges; the bar is the only recharge cue.
+- Tapping anywhere on the shield pill opens a shared-style shield detail card
+  and pauses flight. Its header shows the canonical shield icon and "Shield",
+  with no suffix at level 1 and `[2]` or `[3]` at upgraded levels. Show live
+  current and maximum shield HP and the recharge/depletion copy in
+  [Player copy](player-copy.md). The delay comes from the current ship's
+  `shieldRechargeDelay`; the free percentage comes from
+  `ECONOMY.shieldRecharge.freeCapacity` times 100 (currently 30 seconds and 10%).
+  Preserve existing HP presentation and rounding. The sole primary Close button
+  is centered. Close, the close X, Escape and other supported dismissals return
+  to the same game or originating view, following other details' pause and
+  resume lifecycle. Opening details does not change recharge or depletion rules.
 - While the recharge delay runs, a thin strip, about 2 logical pixels, along the
   inside of the bar's bottom edge fills left to right across the bar's full
   length, reaching full when recharge starts. Damage empties it and starts it
