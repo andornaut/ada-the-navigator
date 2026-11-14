@@ -156,32 +156,32 @@ Job lore lines, said by Astra after a job completes, one unseen line per job:
 
 ### Player strings
 
-| Key             | Text                                         |
-| --------------- | -------------------------------------------- |
-| `jobs`          | Jobs                                         |
-| `jobBoard`      | Job board                                    |
-| `jobBoardIntro` | People here could use some help.             |
-| `jobObjective`  | Job: {objective}                             |
-| `job`           | Job                                          |
-| `jobAccept`     | Accept                                       |
-| `jobActive`     | Active                                       |
-| `jobDrop`       | Drop                                         |
-| `jobDropTitle`  | Drop this job?                               |
-| `jobDropCancel` | Cancel                                       |
-| `jobBusy`       | Finish or drop your current job first.       |
-| `jobReward`     | {amount} Stardust                            |
-| `jobComplete`   | Job complete: +{amount} Stardust             |
-| `tow`           | Tow                                          |
-| `towTravel`     | Unavailable while towing.                    |
-| `carryTravel`   | Unavailable while carrying a delivery.       |
-| `surveyTitle`   | Chart the {landmark}                         |
-| `surveyAbout`   | Fly closer, then press {useIcon} to scan it. |
-| `deliveryTitle` | Deliver {item} to {place}                    |
-| `deliveryAbout` | They're waiting for it.                      |
-| `rescueTitle`   | Tow {craft} to safety                        |
-| `rescueAbout`   | Its engine stopped. Towing makes you slow.   |
-| `huntTitle`     | Find a lost {item}                           |
-| `huntAbout`     | It's in the marked area. Ask Penny.          |
+| Key             | Text                                       |
+| --------------- | ------------------------------------------ |
+| `jobs`          | Jobs                                       |
+| `jobBoard`      | Job board                                  |
+| `jobBoardIntro` | People here could use some help.           |
+| `jobObjective`  | Job: {objective}                           |
+| `job`           | Job                                        |
+| `jobAccept`     | Accept                                     |
+| `jobActive`     | Active                                     |
+| `jobDrop`       | Drop                                       |
+| `jobDropTitle`  | Drop this job?                             |
+| `jobDropCancel` | Cancel                                     |
+| `jobBusy`       | Finish or drop your current job first.     |
+| `jobReward`     | {amount} Stardust                          |
+| `jobComplete`   | Job complete: +{amount} Stardust           |
+| `tow`           | Tow                                        |
+| `towTravel`     | Unavailable while towing.                  |
+| `carryTravel`   | Unavailable while carrying a delivery.     |
+| `surveyTitle`   | Chart the {landmark}                       |
+| `surveyAbout`   | Fly close and scan it.                     |
+| `deliveryTitle` | Deliver {item} to {place}                  |
+| `deliveryAbout` | They're waiting for it.                    |
+| `rescueTitle`   | Tow {craft} to safety                      |
+| `rescueAbout`   | Its engine stopped. Towing makes you slow. |
+| `huntTitle`     | Find a lost {item}                         |
+| `huntAbout`     | It's in the marked area. Ask Penny.        |
 
 In-flight lines, each played once per save:
 

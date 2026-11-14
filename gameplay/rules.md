@@ -1080,7 +1080,14 @@ reward or collision role. Within the existing station Talk range (160 world
 units), an uncharted landmark offers Use (Scan) and the same nearby Use callout
 pattern as stations. Astra's instruction is "Fly closer, then press {useIcon} to
 scan it." Render `{useIcon}` as the actual inline Use control glyph, never as
-literal placeholder text or an emoji. Explicit Scan alone charts the landmark
+literal placeholder text or an emoji. First actual on-screen identification of
+an uncharted landmark queues this in-flight Astra tutorial once per save. If
+Penny's notice for that exact landmark is already active, the instruction follows
+or appends through the normal conversation flow without a duplicate; direct
+identification without Penny provides the first-time fallback. Normal cover and
+dialogue guards apply, and the tutorial is heard only when visibly shown.
+Sensing, seeing and tutorial playback do not chart the landmark. Scan needs no
+additional confirmation. Explicit Scan alone charts the landmark
 and commits its survey and achievement progress once. Flying over it, seeing it
 on screen or sensing it with Penny does not chart it or grant a discovery
 reward. An already charted landmark cannot pay again. The Use target, callout,

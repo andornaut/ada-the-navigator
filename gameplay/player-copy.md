@@ -1010,6 +1010,11 @@ Render `{useIcon}` as the actual inline Use control glyph, not literal
 placeholder text or an emoji. Nearby landmarks offer the Use (Scan) callout
 within the shared station Talk range. Only explicit Scan charts the landmark;
 Penny sensing and on-screen identification do not grant chart or reward progress.
+The first uncharted landmark actually identified on screen queues this Astra
+tutorial once per save, following or appending to an active Penny notice for the
+same landmark without a duplicate. Direct identification without Penny uses the
+same first-time fallback. Normal conversation visibility guards apply; mark it
+heard only when visibly shown. Tutorial playback does not chart the landmark.
 
 New destination mapped:
 
