@@ -9,7 +9,7 @@ import { STATION_NAME_WORDS } from "../data/stationCopy.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { ACHIEVEMENT_TOTALS } from "./achievements.ts";
 import { createFlight } from "./flight.ts";
-import { GameModel, newGameState } from "./game.ts";
+import { galaxyRoute, GameModel, newGameState } from "./game.ts";
 import { acceptJob, type BoardContext, stationBoard } from "./jobs.ts";
 import {
   chartLandmarks,
@@ -146,6 +146,24 @@ describe("expanded landmark placement", () => {
     },
   );
 
+  it.each([1, 2, 3] as const)("keeps generated known story places clear in galaxy %i", (galaxy) => {
+    const known = [...galaxyRoute(galaxy)];
+    const flight = createFlight(CONTENT, galaxy, 173, { known });
+    const destinations = flight.objects.filter(({ kind }) => kind === "destination");
+    expect(destinations.length).toBe(known.length);
+    expect(destinations.length).toBeGreaterThan(0);
+    const canonical = landmarkSites(galaxy);
+    expect(flightLandmarkSites(flight)).toEqual(canonical);
+    console.info(
+      "GENERATED_STORY_REACH",
+      JSON.stringify({
+        accepted: canonical.length,
+        destinations: destinations.map(({ id, x, y }) => ({ id, x, y })),
+        galaxy,
+      }),
+    );
+  });
+
   it("offers only eligible surveys and preserves already-held tasks", () => {
     const site = landmarkSites(1)[12]!;
     const station = stationById(ECONOMY, 1, "station:0,0")!;
@@ -177,11 +195,15 @@ describe("expanded landmark placement", () => {
   it("round-trips canonical new chart IDs without adding reward or save fields", () => {
     const model = new GameModel(CONTENT);
     model.startGalaxy(1);
-    const site = landmarkSites(1)[199]!;
+    const sites = landmarkSites(1);
     const money = model.state.economy.stardust;
-    expect(chartLandmarks(1, model.state.progress[1], site)).toEqual([site.id]);
-    const restored = restoreSave(model.save())!;
-    expect(restored.progress[1].charted).toContain(site.id);
+    for (const site of sites) {
+      expect(chartLandmarks(1, model.state.progress[1], site)).toEqual([site.id]);
+    }
+    const save = model.save();
+    expect(JSON.parse(save).version).toBe(12);
+    const restored = restoreSave(save)!;
+    expect(restored.progress[1].charted).toEqual(sites.map(({ id }) => id));
     expect(restored.economy.stardust).toBe(money);
     expect(isLandmark(1, "landmark:1:0200")).toBe(false);
     expect(isLandmark(1, "landmark:1:200")).toBe(false);
