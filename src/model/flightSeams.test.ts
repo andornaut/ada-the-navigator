@@ -1,11 +1,15 @@
 import { describe, expect, it } from "vitest";
 
+import { ASTEROID_LOOT } from "../data/asteroidLoot.ts";
 import { CONTENT } from "../data/content.ts";
+import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog, enemyDefinition, heavyLoadout } from "../data/enemyCatalog.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { PHANTOM_DESTINATIONS, PHANTOM_TUNING } from "../data/phantom.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
+import { rollAsteroidLoot } from "./asteroidLoot.ts";
+import { dropRandom } from "./drops.ts";
 import { createEnemy } from "./enemyAi.ts";
 import {
   activeEnemyBeams,
@@ -18,6 +22,7 @@ import {
 } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { pickupOutline } from "./pickupBody.ts";
+import { flightStationContext, worldStationsNear } from "./stations.ts";
 import type { FlightInput, SpaceObject, Vec } from "./types.ts";
 import { worldCellKey, worldCellsNear, worldGrid } from "./worldCells.ts";
 import { wrappedDelta, wrappedDistance } from "./worldGeometry.ts";
@@ -40,6 +45,17 @@ function fixture(player: Vec, galaxy: GalaxyNumber = 1) {
   const grid = worldGrid(flightWorldContext(flight), CONTENT.tuning.chunkSize);
   flight.chunks = [...worldCellsNear(grid, CONTENT.tuning.chunkSize * 2, player)].map((cell) =>
     worldCellKey(grid, cell),
+  );
+  return flight;
+}
+
+const seamY = ECONOMY.station.cellSize / 2;
+
+/** Seam interactions require open space beyond canonical station safe areas. */
+function stationClearFixture(player: Vec, galaxy: GalaxyNumber = 1) {
+  const flight = fixture(player, galaxy);
+  expect(worldStationsNear(flightStationContext(flight), ECONOMY, galaxy, 4000, player)).toEqual(
+    [],
   );
   return flight;
 }
@@ -70,14 +86,17 @@ describe("explicit flight seam callers", () => {
   });
 
   it("hits one asteroid through the seam and releases its loot only once", () => {
-    const flight = fixture({ x: half - 400, y: 0 });
+    const flight = stationClearFixture({ x: half - 400, y: seamY });
     const rock: SpaceObject = {
       hp: 1,
-      id: "seam-rock",
+      id: Array.from({ length: 100 }, (_, index) => `seam-rock:${index}`).find((id) => {
+        const loot = rollAsteroidLoot(ASTEROID_LOOT, "small", dropRandom(flight.seed, id));
+        return loot.ore + loot.stardust > 0;
+      })!,
       kind: "rock",
       radius: 10,
       x: -half + 4,
-      y: 0,
+      y: seamY,
     };
     flight.objects.push(rock);
     const shot = {
@@ -89,7 +108,7 @@ describe("explicit flight seam callers", () => {
       piercing: false,
       velocity: { x: 800, y: 0 },
       x: half - 15,
-      y: 0,
+      y: seamY,
     };
     flight.shots.push(shot, { ...shot, hitIds: [], id: "second-shot" });
     stepFlight(CONTENT, 1 / 60, idle, flight);
@@ -97,17 +116,18 @@ describe("explicit flight seam callers", () => {
     expect(flight.objects.some(({ id }) => id === rock.id)).toBe(false);
     const loot = flight.objects.filter(({ kind }) => kind === "pickup");
     const units = loot.reduce(
-      (sum, item) => sum + (item.role === "cargo" ? 1 : (item.amount ?? 0)),
+      (sum, item) => sum + (item.role === "cargo" ? (item.amount ?? 1) : (item.amount ?? 0)),
       0,
     );
+    const expected = rollAsteroidLoot(ASTEROID_LOOT, "small", dropRandom(flight.seed, rock.id));
     expect(units).toBeGreaterThanOrEqual(1);
-    expect(units).toBeLessThanOrEqual(5);
+    expect(units).toBe(expected.ore + expected.stardust);
     expect(loot.every(({ x, y }) => x >= -half && x < half && y >= -half && y < half)).toBe(true);
   });
 
   it("admits a nearby enemy across the seam using local visibility and perception", () => {
-    const flight = fixture({ x: half - 100, y: 0 });
-    const point = { x: -half + 100, y: 0 };
+    const flight = stationClearFixture({ x: half - 100, y: seamY });
+    const point = { x: -half + 100, y: seamY };
     const state = createEnemy(
       enemyCatalog.fighter,
       { archetype: "fighter", id: "seam-fighter", packId: null, phase: 0 },
@@ -132,7 +152,7 @@ describe("explicit flight seam callers", () => {
 
 describe("reviewed seam guards and drawn pickups", () => {
   it("collects the actual drawn ore outline through the seam", () => {
-    const flight = fixture({ x: half - 2, y: 0 });
+    const flight = stationClearFixture({ x: half - 2, y: seamY });
     const pickup: SpaceObject = {
       hp: 1,
       id: "seam-ore",
@@ -140,7 +160,7 @@ describe("reviewed seam guards and drawn pickups", () => {
       radius: 7,
       role: "cargo",
       x: -half + 2,
-      y: 0,
+      y: seamY,
     };
     const outline = pickupOutline(pickup);
     expect(outline).not.toBeNull();
@@ -188,9 +208,9 @@ describe("reviewed seam guards and drawn pickups", () => {
   });
 
   it("clamps a Phantom blockade through its home seam without a world-sized displacement", () => {
-    const flight = fixture({ x: half - 100, y: 300 }, 6);
-    const home = { x: half - 300, y: 0 };
-    const point = { x: -half + 400, y: 0 };
+    const flight = stationClearFixture({ x: half - 100, y: seamY + 300 }, 6);
+    const home = { x: half - 300, y: seamY };
+    const point = { x: -half + 400, y: seamY };
     const state = createEnemy(
       enemyCatalog.fighter,
       { archetype: "fighter", id: "blockade", packId: null, phase: 0 },
@@ -216,7 +236,7 @@ describe("reviewed seam guards and drawn pickups", () => {
   });
 
   it("tracks a charged lance along the short seam direction", () => {
-    const flight = fixture({ x: half - 200, y: 0 }, 2);
+    const flight = stationClearFixture({ x: half - 200, y: seamY }, 2);
     const id = Array.from({ length: 500 }, (_, index) => `lance:${index}`).find((candidate) =>
       [...heavyLoadout("frigate", ROUTE_POSITION[2], candidate)!.values()].includes("chargedLance"),
     )!;
@@ -225,7 +245,7 @@ describe("reviewed seam guards and drawn pickups", () => {
       ([, weapon]) => weapon === "chargedLance",
     )![0];
     const definition = enemyDefinition(2, "frigate", id);
-    const point = { x: -half + 200, y: 0 };
+    const point = { x: -half + 200, y: seamY };
     const state = createEnemy(
       definition,
       { archetype: "frigate", id, packId: null, phase: 0 },
@@ -245,7 +265,7 @@ describe("reviewed seam guards and drawn pickups", () => {
     stepFlight(CONTENT, 1 / 60, idle, flight);
     const beam = activeEnemyBeams(flight).find(({ kind }) => kind === "lance");
     expect(beam).toBeDefined();
-    flight.player.y = 50;
+    flight.player.y = seamY + 50;
     stepFlight(CONTENT, 0.1, idle, flight);
     const delta = wrappedDelta(GALAXY_SIDE, beam!.muzzle, flight.player);
     expect(beam!.direction.x).toBeCloseTo(delta.x / Math.hypot(delta.x, delta.y), 8);
