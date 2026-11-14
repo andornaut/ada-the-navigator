@@ -941,9 +941,15 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   measured from there. Enemy shots leave from the drawn muzzle of the gun's
   current aim frame wherever the art defines muzzles, and from the model's fire
   origin otherwise; shot direction always follows the continuous aim.
+- At launch, Ada's projectile world velocity is its weapon heading times weapon
+  speed plus her current flight velocity. This velocity is captured once: later
+  ship turns, acceleration and drag do not affect the released projectile.
+  Lifetime and range fade use weapon speed alone, excluding inherited velocity.
+  The rounded coverage boundary is captured at fire time without changing its
+  dimensions. Instant Phaser beams, allied fire and enemy fire are unchanged.
 - Fan angles are measured in the projected aim plane. Rotate there before
-  unprojecting each shot direction; preserve the weapon's world speed.
-- Each scattershot dot travels 100 world units along its own rotated heading on
+  unprojecting each shot direction; preserve weapon speed before adding launch velocity.
+- Each scattershot dot has 100 weapon-relative world units of travel along its rotated heading on
   every device, fades after 65% of that range and vanishes at the limit.
 - Weapon intervals, speeds, damage, angles, reach and fade are provisional
   catalog tuning; damage is in multiples of a level 1 Laser shot. No homing, piercing or reloading is added.

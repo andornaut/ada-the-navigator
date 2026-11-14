@@ -144,4 +144,92 @@ describe("pure player projectile volleys", () => {
       planPlayerVolley(WEAPON_CATALOG.scattershot[0], { ...context, viewportWidth: 0 }),
     ).toThrow(RangeError);
   });
+
+  it.each([
+    ["forward", { x: 170, y: 0 }],
+    ["backward", { x: -170, y: 0 }],
+    ["strafe", { x: 0, y: 170 }],
+    ["stationary", { x: 0, y: 0 }],
+    ["opposed at weapon speed", { x: -600, y: 0 }],
+  ])("adds the %s launch velocity once to each projectile", (_, inheritedVelocity) => {
+    for (const weapon of [
+      "laser",
+      "multiLaser",
+      "rapidMissile",
+      "heavyMissile",
+      "scattershot",
+    ] as const) {
+      const definition = WEAPON_CATALOG[weapon][0];
+      const baseline = planPlayerVolley(definition, context);
+      const moving = planPlayerVolley(definition, { ...context, inheritedVelocity });
+      expect(moving.interval).toBe(baseline.interval);
+      moving.projectiles.forEach((shot, index) => {
+        const original = baseline.projectiles[index]!;
+        expect(shot.velocity.x).toBeCloseTo(original.velocity.x + inheritedVelocity.x);
+        expect(shot.velocity.y).toBeCloseTo(original.velocity.y + inheritedVelocity.y);
+        expect({ ...shot, velocity: original.velocity }).toEqual(original);
+      });
+    }
+  });
+
+  it("snapshots launch velocity without retaining later shooter motion or aim", () => {
+    const inheritedVelocity = { x: 57, y: -91 };
+    const aim = { x: 0.3, y: 0.7 };
+    const volley = planPlayerVolley(WEAPON_CATALOG.multiLaser[0], {
+      ...context,
+      aim,
+      inheritedVelocity,
+    });
+    const snapshot = structuredClone(volley);
+    inheritedVelocity.x = -450;
+    inheritedVelocity.y = 212;
+    aim.x = -1;
+    aim.y = 0;
+    expect(volley).toEqual(snapshot);
+  });
+
+  it("keeps the fire-time coverage, fade and lifetime independent of combined speed", () => {
+    const coverage = { centre: { ...context.origin }, viewportHeight: 360, viewportWidth: 720 };
+    for (const weapon of ["laser", "multiLaser", "scattershot"] as const) {
+      const definition = WEAPON_CATALOG[weapon][0];
+      const baseline = planPlayerVolley(definition, { ...context, coverage });
+      const moving = planPlayerVolley(definition, {
+        ...context,
+        coverage,
+        inheritedVelocity: { x: -711, y: 283 },
+      });
+      moving.projectiles.forEach((shot, index) => {
+        const original = baseline.projectiles[index]!;
+        expect(shot.life).toBe(original.life);
+        expect(shot.fade).toEqual(original.fade);
+        if (shot.fade) {
+          for (const fraction of [1, 0.35, 0.175, 0]) {
+            expect(projectileOpacity(shot.fade, shot.life * fraction)).toBe(
+              projectileOpacity(original.fade!, original.life * fraction),
+            );
+          }
+        }
+      });
+      coverage.centre.x += 96;
+      coverage.viewportWidth = 1080;
+      expect(moving.projectiles.map((shot) => shot.life)).toEqual(
+        baseline.projectiles.map((shot) => shot.life),
+      );
+    }
+  });
+
+  it("preserves default allied volleys and rejects invalid inherited velocity", () => {
+    const definition = WEAPON_CATALOG.rapidMissile[0];
+    expect(planPlayerVolley(definition, { ...context, inheritedVelocity: { x: 0, y: 0 } })).toEqual(
+      planPlayerVolley(definition, context),
+    );
+    for (const inheritedVelocity of [
+      { x: NaN, y: 0 },
+      { x: 0, y: Infinity },
+    ]) {
+      expect(() => planPlayerVolley(definition, { ...context, inheritedVelocity })).toThrow(
+        RangeError,
+      );
+    }
+  });
 });

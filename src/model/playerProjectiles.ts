@@ -8,13 +8,15 @@ export interface VolleyContext {
   readonly baseDamage: number;
   readonly baseLifetime: number;
   readonly baseSpeed: number;
+  /** Shooter velocity captured once at launch; omitted for existing stationary/allied fire. */
+  readonly inheritedVelocity?: Vec;
   readonly origin: Vec;
   readonly viewportWidth: number;
 }
 export interface ProjectileFade {
   readonly fadeStartFraction: number;
   readonly initialLife: number;
-  /** The world range the projectile travels (the saved name predates world ranges). */
+  /** Weapon-relative range used for lifetime, excluding inherited launch velocity. */
   readonly projectedRange: number;
 }
 export interface PlayerProjectile extends Vec {
@@ -75,6 +77,8 @@ export function planPlayerVolley(
     ].every(positive) ||
     ![context.origin.x, context.origin.y].every(Number.isFinite) ||
     definition.projectileKind === "beam" ||
+    (context.inheritedVelocity !== undefined &&
+      ![context.inheritedVelocity.x, context.inheritedVelocity.y].every(Number.isFinite)) ||
     (context.coverage !== undefined &&
       (![context.coverage.centre.x, context.coverage.centre.y].every(Number.isFinite) ||
         !positive(context.coverage.viewportWidth) ||
@@ -117,7 +121,10 @@ export function planPlayerVolley(
         context.baseLifetime,
       ),
       projectile: definition.projectileKind as PlayerProjectile["projectile"],
-      velocity: { x: heading.x * speed, y: heading.y * speed },
+      velocity: {
+        x: heading.x * speed + (context.inheritedVelocity?.x ?? 0),
+        y: heading.y * speed + (context.inheritedVelocity?.y ?? 0),
+      },
       x: context.origin.x,
       y: context.origin.y,
     };
@@ -127,7 +134,7 @@ export function planPlayerVolley(
 
 /**
  * A projectile's life, and its fade when the weapon fades, at `speed`: a ranged weapon flies its
- * snapshotted world range; any other flies `baseLifetime`.
+ * snapshotted weapon-relative range, excluding inherited velocity; others fly `baseLifetime`.
  */
 export function projectileReach(
   definition: Pick<WeaponDefinition, "fadeStartFraction" | "rangeWorld">,
@@ -151,7 +158,7 @@ export function projectileReach(
       };
 }
 
-/** Constant-speed flight makes remaining lifetime equivalent to remaining projected distance. */
+/** Remaining lifetime tracks weapon-relative range independently of inherited launch velocity. */
 export function projectileOpacity(fade: ProjectileFade, remainingLife: number): number {
   if (!positive(fade.initialLife) || !Number.isFinite(remainingLife)) {
     return 0;
