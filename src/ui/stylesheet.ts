@@ -5,6 +5,7 @@ import { DISABLED_BANNER_STYLE } from "./disabledBanner.ts";
 import { GALAXY_MAP_STYLE } from "./galaxyMap.ts";
 import { ITEM_NOTICE_STYLE } from "./itemNotice.ts";
 import { KEEPER_STYLE } from "./keeperBlock.ts";
+import { ADA_CONTROL_PRESENTATION_STYLE } from "./layout/controlPresentation.ts";
 import { DETAIL_CARD_STYLE } from "./layout/detailCard.ts";
 import { QUESTS_SCREEN_STYLE } from "./layout/questsScreen.ts";
 import { LOADING_STYLE } from "./loadingBar.ts";
@@ -31,6 +32,7 @@ export const UI_STYLESHEET = [
   CONVERSATION_STYLE,
   CONTROL_HELP_STYLE,
   SETTINGS_STYLE,
+  ADA_CONTROL_PRESENTATION_STYLE,
   NOTICE_STYLE,
   START_SCREEN_STYLE,
   STATION_STYLE,

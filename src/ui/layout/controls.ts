@@ -1,4 +1,6 @@
-import { BUTTON_SLICE, CARD_SLICE, FRAME_LINE } from "../../data/layout.ts";
+import type { ButtonMetrics } from "@andornaut/game-kit/ui/buttonLayout";
+
+import { BUTTON_SLICE, CARD_SLICE, FRAME_LINE, TEXT_BUTTON } from "../../data/layout.ts";
 
 export {
   BUTTON_SLICE,
@@ -21,3 +23,19 @@ export {
 export const WHOLE_PX_EDGES = [
   ...new Set([CARD_SLICE, BUTTON_SLICE.bottom, BUTTON_SLICE.left, BUTTON_SLICE.top, FRAME_LINE]),
 ].sort((a, b) => a - b);
+
+/** Named control metrics shared by actual buttons and typed layout ports. */
+export const BUTTON_METRICS: Readonly<Record<"ordinary" | "compact", ButtonMetrics>> = {
+  compact: {
+    height: TEXT_BUTTON.compactHeight,
+    minWidth: TEXT_BUTTON.compactWidth,
+    paddingX: TEXT_BUTTON.compactInset,
+    paddingY: 0,
+  },
+  ordinary: {
+    height: TEXT_BUTTON.height,
+    minWidth: TEXT_BUTTON.height,
+    paddingX: TEXT_BUTTON.inset,
+    paddingY: TEXT_BUTTON.verticalInset,
+  },
+};

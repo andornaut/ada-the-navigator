@@ -331,6 +331,7 @@ ${UI_SCOPE} .ada-button{
   display:inline-flex;
   align-items:center;
   justify-content:center;
+  text-align:center;
   gap:${units(SPACING.markGap)};
   font:${font(TYPE.label)};
   color:${TEXT_TOKENS.buttonLabel};
@@ -370,7 +371,9 @@ ${UI_SCOPE} .ada-button.ada-primary:disabled{
 
 /* An unavailable action keeps the disabled face but stays pressable, so it can refuse. */
 ${UI_SCOPE} .ada-button.ada-unavailable,
-${UI_SCOPE} .ada-button.ada-unavailable:active{
+${UI_SCOPE} .ada-button.ada-unavailable:active,
+${UI_SCOPE} .ada-button[aria-disabled="true"],
+${UI_SCOPE} .ada-button[aria-disabled="true"]:active{
   padding:${SUNK_PADDING};
   color:${TEXT_TOKENS.disabledLabel};
   background:#2f2d3d;
