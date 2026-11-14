@@ -20,10 +20,7 @@ import { nearestImage } from "./worldGeometry.ts";
 // summoned guard (flight.ts cueGuards) is marked while off screen whether or not it was seen.
 
 export interface EdgeMarker {
-  /**
-   * The guard's bar alpha: 1 on a guard, fading to 0 over EDGE_MARKERS.swapMs on a heavy just
-   * disabled from a guard; absent when no bar draws.
-   */
+  /** A route guard retains the same full-strength bar after it is disabled. */
   readonly bar?: number;
   readonly id: string;
   readonly kind: EdgeMarkerKind;
@@ -47,7 +44,7 @@ export function edgeMarkerKind(object: SpaceObject): EdgeMarkerKind | null {
       return "enemy";
     }
     const kind = ENEMY_MARKER_KINDS[object.enemy.archetype];
-    const blocking = object.routeId !== undefined && !object.enemy.disabled;
+    const blocking = object.routeId !== undefined;
     return (blocking && BLOCKING_MARKER_KINDS[kind]) || kind;
   }
   if (
@@ -114,18 +111,13 @@ export function createEdgeMarkerTracker(context?: {
 } {
   // Each tracked object: in the game area now, or seen and since left.
   const seen = new Map<string, "inside" | "left">();
-  // Each object's kind last frame, and when each guard was disabled into a heavy, in ms.
-  const kinds = new Map<string, EdgeMarkerKind>();
-  const swapped = new Map<string, number>();
   let following: EdgeMarkerFlight | null = null;
   let galaxy: GalaxyNumber | null = null;
   return {
-    update(flight, indicated, now = 0) {
+    update(flight, indicated) {
       if (flight === null || flight !== following || flight.galaxy !== galaxy) {
         // A new flight, a galaxy change, or no flight at all: nothing is remembered.
         seen.clear();
-        kinds.clear();
-        swapped.clear();
         following = flight;
         galaxy = flight?.galaxy ?? null;
       }
@@ -138,17 +130,12 @@ export function createEdgeMarkerTracker(context?: {
         worldSide === undefined ? point : nearestImage(worldSide, flight.player, point).point;
       const present = new Set<string>();
       const summoned = new Set(flight.summonedGuards);
-      /** The marker for `object`: a guard's bar, or the bar fading off a heavy just disabled. */
+      /** Visual route identity survives disabling; no timing or motion setting changes its icon. */
       const marker = (object: SpaceObject, kind: EdgeMarkerKind): EdgeMarker => {
-        const since = swapped.get(object.id);
-        const bar =
-          kind === "guard"
-            ? 1
-            : since !== undefined && now - since < EDGE_MARKERS.swapMs
-              ? 1 - (now - since) / EDGE_MARKERS.swapMs
-              : 0;
         const { x, y } = image(object);
-        return bar > 0 ? { bar, id: object.id, kind, x, y } : { id: object.id, kind, x, y };
+        return kind === "guard"
+          ? { bar: 1, id: object.id, kind, x, y }
+          : { id: object.id, kind, x, y };
       };
       for (const object of flight.objects) {
         const kind = edgeMarkerKind(object);
@@ -156,10 +143,6 @@ export function createEdgeMarkerTracker(context?: {
           continue;
         }
         present.add(object.id);
-        if (kinds.get(object.id) === "guard" && kind !== "guard") {
-          swapped.set(object.id, now);
-        }
-        kinds.set(object.id, kind);
         const point = image(object);
         const away = Math.hypot(point.x - flight.player.x, point.y - flight.player.y);
         if (inGameArea(gameAreaPoint(flight.player, point))) {
@@ -180,11 +163,9 @@ export function createEdgeMarkerTracker(context?: {
         }
       }
       // Destroyed and unloaded objects are no longer in the flight's objects.
-      for (const map of [seen, kinds, swapped]) {
-        for (const id of map.keys()) {
-          if (!present.has(id)) {
-            map.delete(id);
-          }
+      for (const id of seen.keys()) {
+        if (!present.has(id)) {
+          seen.delete(id);
         }
       }
       return markers;

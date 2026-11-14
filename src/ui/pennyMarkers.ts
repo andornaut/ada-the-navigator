@@ -1,6 +1,5 @@
 import type { Rect } from "@andornaut/game-kit/rect";
 
-import { LIGHT_FIELD } from "../game/lightField.ts";
 import { edgePoint, gameAreaPoint } from "../model/edgeMarkers.ts";
 import type { PennyMarker } from "../model/pennyMarkers.ts";
 import type { Vec } from "../model/types.ts";
@@ -8,7 +7,7 @@ import { fromAreaLeft, units } from "./layout/css.ts";
 import { MAP_COLORS, MAP_FACES, MAP_GLYPHS, MAP_JOB_FACE, MAP_SYMBOL } from "./layout/mapScreen.ts";
 import { PENNY_MARKER } from "./layout/pennyMarkers.ts";
 
-const { arrow, question: BODY_QUESTION, size: SIZE } = PENNY_MARKER;
+const { question: BODY_QUESTION, size: SIZE } = PENNY_MARKER;
 export const PENNY_MARKER_INSET = PENNY_MARKER.inset;
 
 export const PENNY_MARKERS_STYLE = `
@@ -29,13 +28,6 @@ mask-position:${units(-BODY_QUESTION.x)} ${units(-BODY_QUESTION.y)};
 -webkit-mask-position:${units(-BODY_QUESTION.x)} ${units(-BODY_QUESTION.y)}}
 .ada-penny-marker[data-item] .ada-penny-glyph{mask:none;-webkit-mask:none;
 background:var(--glyph) center / contain no-repeat}
-.ada-penny-direction{position:absolute;left:50%;top:50%;width:0;height:0}
-.ada-penny-direction svg{position:absolute;left:${units(arrow.offset)};top:0;
-width:${units(arrow.width)};height:${units(arrow.height)};overflow:visible;
-transform:translate(-50%,-50%);fill:none;stroke:var(--direction-color);stroke-width:${arrow.stroke}}
-.ada-penny-direction .ada-penny-arrow-ink{stroke:var(--direction-ink,${MAP_COLORS.ink});
-stroke-width:${LIGHT_FIELD.indicatorStroke}}
-.ada-penny-marker[data-light="false"] .ada-penny-arrow-ink{display:none}
 `;
 
 export function pennyGlyph(marker: PennyMarker): string | null {
@@ -88,23 +80,7 @@ export function createPennyMarkerLayer(
           node.className = "ada-penny-marker";
           const glyph = doc.createElement("span");
           glyph.className = "ada-penny-glyph";
-          const direction = doc.createElement("span");
-          direction.className = "ada-penny-direction";
-          const svg = doc.createElementNS("http://www.w3.org/2000/svg", "svg");
-          svg.setAttribute("viewBox", "-6 -6 15 12");
-          for (const ink of [true, false]) {
-            const shape = doc.createElementNS("http://www.w3.org/2000/svg", "polygon");
-            shape.setAttribute(
-              "points",
-              `${arrow.tip},0 ${arrow.base},${arrow.base} ${arrow.base},${-arrow.base}`,
-            );
-            if (ink) {
-              shape.setAttribute("class", "ada-penny-arrow-ink");
-            }
-            svg.append(shape);
-          }
-          direction.append(svg);
-          node.append(glyph, direction);
+          node.append(glyph);
           layer.append(node);
           nodes.set(marker.id, node);
         }
@@ -119,8 +95,6 @@ export function createPennyMarkerLayer(
         } else {
           delete node.dataset.item;
         }
-        node.style.setProperty("--direction-color", style.color);
-        node.style.setProperty("--direction-ink", style.edge ?? MAP_COLORS.ink);
         node.style.left = fromAreaLeft(at.x);
         node.style.top = units(at.y);
         node.style.background = !marker.identified
@@ -134,8 +108,6 @@ export function createPennyMarkerLayer(
         } else {
           node.style.removeProperty("--glyph");
         }
-        const direction = node.lastElementChild as HTMLElement;
-        direction.style.transform = `rotate(${Math.atan2(target.y - centre.y, target.x - centre.x)}rad)`;
         shown.add(marker.id);
       }
       for (const [id, node] of nodes) {

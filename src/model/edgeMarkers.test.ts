@@ -80,34 +80,34 @@ describe("edge marker kinds", () => {
     expect(edgeMarkerKind({ ...enemy("fighter", NEAR), hp: 0 })).toBeNull();
   });
 
-  it("marks a heavy that still blocks its route as guard, and as heavy once it is disabled", () => {
+  it("keeps a route guard icon unchanged after its weapons are disabled", () => {
     expect(BLOCKING_MARKER_KINDS).toEqual({ heavy: "guard" });
     for (const archetype of ["frigate", "capital", "platform"] as const) {
       const guard = { ...enemy(archetype, NEAR), routeId: "quest" };
       expect(edgeMarkerKind(guard)).toBe("guard");
       guard.enemy!.disabled = true;
-      expect(edgeMarkerKind(guard)).toBe("heavy");
+      expect(edgeMarkerKind(guard)).toBe("guard");
     }
     // A small craft guarding a route, such as the holodisk leader, keeps the enemy marker.
     expect(edgeMarkerKind({ ...enemy("fighter", NEAR), routeId: "holodisk" })).toBe("enemy");
   });
 
-  it("draws enemies as a 6 disc, heavies as a 10 disc, guards barred and stations as a diamond", () => {
+  it("keeps generic enemies at six pixels and heavy, guard and station icons at twelve", () => {
     expect(EDGE_MARKER_GLYPHS).toEqual({
       enemy: { disc: 6 },
-      guard: { bar: { height: 2, width: 7 }, disc: 10 },
-      heavy: { disc: 10 },
-      station: { diamond: 10, stroke: 2 },
+      guard: { bar: { height: 2, width: 7 }, disc: 12 },
+      heavy: { disc: 12 },
+      station: { diamond: 12, stroke: 2 },
     });
     expect(range).toBe(1400);
     expect(gap).toBe(1);
     // Half the drawn extent, plus the outline, plus 1.
     expect(edgeMarkerInset(0, "enemy")).toBe(4);
     expect(edgeMarkerInset(1, "enemy")).toBe(5);
-    expect(edgeMarkerInset(0, "heavy")).toBe(6);
-    expect(edgeMarkerInset(0, "guard")).toBe(6);
-    expect(edgeMarkerInset(1, "guard")).toBe(7);
-    expect(edgeMarkerInset(1, "station")).toBe(7);
+    expect(edgeMarkerInset(0, "heavy")).toBe(7);
+    expect(edgeMarkerInset(0, "guard")).toBe(7);
+    expect(edgeMarkerInset(1, "guard")).toBe(8);
+    expect(edgeMarkerInset(1, "station")).toBe(8);
   });
 });
 
@@ -148,28 +148,19 @@ describe("edge marker lifecycle", () => {
     ]);
   });
 
-  it("keeps a disabled guard's marker, fading its bar out over 150 ms as it becomes a heavy", () => {
-    expect(EDGE_MARKERS.swapMs).toBe(150);
+  it("retains the identical blocking icon at every time after a guard is disabled", () => {
     const tracker = createEdgeMarkerTracker();
     const guard = { ...enemy("frigate", NEAR, "guard"), routeId: "quest" };
     const state = flight([guard]);
     tracker.update(state, new Set(), 900);
     Object.assign(guard, OFF);
-    expect(tracker.update(state, new Set(), 1000)).toEqual([
-      { bar: 1, id: "guard", kind: "guard", ...OFF },
-    ]);
-    // Its weapons go; its hull holds, so it keeps a marker, now the heavy's.
+    const expected = [{ bar: 1, id: "guard", kind: "guard", ...OFF }];
+    expect(tracker.update(state, new Set(), 1000)).toEqual(expected);
     guard.enemy!.disabled = true;
     expect(guard.hp).toBeGreaterThan(0);
-    expect(tracker.update(state, new Set(), 1000)).toEqual([
-      { bar: 1, id: "guard", kind: "heavy", ...OFF },
-    ]);
-    const bar = (now: number) => tracker.update(state, new Set(), now)[0]!.bar;
-    expect(bar(1075)).toBeCloseTo(0.5, 9);
-    expect(bar(1120)).toBeCloseTo(0.2, 9);
-    expect(tracker.update(state, new Set(), 1150)).toEqual([
-      { id: "guard", kind: "heavy", ...OFF },
-    ]);
+    for (const now of [1000, 1075, 1120, 1150, 100000]) {
+      expect(tracker.update(state, new Set(), now)).toEqual(expected);
+    }
   });
 
   it("never marks an object that was never in the game area", () => {
@@ -348,15 +339,15 @@ describe("edge marker placement", () => {
 });
 
 describe("edge markers inside the safe game area", () => {
-  // art/layout.md "Edge markers": each view's safe game area and the 10-across kinds' centre
+  // art/layout.md "Edge markers": each view's safe game area and the 12-across kinds' centre
   // lines on a dark field, in logical view px. Phone insets are 43 at the sides and 19 below.
   const phone = { bottom: 19, left: 43, right: 43, top: 0 };
   const wide = logicalView({ height: 390, width: 844 });
   it.each([
-    ["720x360", SCREEN, NO_INSETS, [0, 720, 0, 360], [6, 714, 6, 354]],
-    ["720x360, phone insets", SCREEN, phone, [43, 677, 0, 341], [49, 671, 6, 335]],
-    ["844x390", wide, NO_INSETS, [29, 749, 0, 360], [35, 743, 6, 354]],
-    ["844x390, insets 43", wide, phone, [43, 736.08, 0, 341], [49, 730.08, 6, 335]],
+    ["720x360", SCREEN, NO_INSETS, [0, 720, 0, 360], [7, 713, 7, 353]],
+    ["720x360, phone insets", SCREEN, phone, [43, 677, 0, 341], [50, 670, 7, 334]],
+    ["844x390", wide, NO_INSETS, [29, 749, 0, 360], [36, 742, 7, 353]],
+    ["844x390, insets 43", wide, phone, [43, 736.08, 0, 341], [50, 729.08, 7, 334]],
   ] as const)("%s", (_, view, insets, safe, centres) => {
     const area = safeGameArea(insets, view);
     const left = playView(view).x;

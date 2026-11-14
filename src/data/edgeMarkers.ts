@@ -14,8 +14,6 @@ export const EDGE_MARKERS = {
   gap: 1,
   /** A marked object past this many world units from Ada is forgotten, for every kind. */
   range: 1400,
-  /** A disabled guard's bar fades out over this many ms, linear; reduced motion removes it. */
-  swapMs: 150,
 } as const;
 
 /**
@@ -27,9 +25,9 @@ export const EDGE_MARKERS = {
  */
 export const EDGE_MARKER_GLYPHS = {
   enemy: { disc: 6 },
-  guard: { bar: { height: 2, width: 7 }, disc: 10 },
-  heavy: { disc: 10 },
-  station: { diamond: 10, stroke: 2 },
+  guard: { bar: { height: 2, width: 7 }, disc: 12 },
+  heavy: { disc: 12 },
+  station: { diamond: 12, stroke: 2 },
 } as const;
 
 /**

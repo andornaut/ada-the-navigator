@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { edgePoint, gameAreaPoint } from "../model/edgeMarkers.ts";
 import type { PennyMarker } from "../model/pennyMarkers.ts";
-import { MAP_COLORS, MAP_GLYPHS } from "./layout/mapScreen.ts";
+import { MAP_GLYPHS } from "./layout/mapScreen.ts";
+import { PENNY_MARKER } from "./layout/pennyMarkers.ts";
 import {
   createPennyMarkerLayer,
   PENNY_MARKER_INSET,
@@ -126,13 +127,12 @@ it("reuses one DOM target through identification, clears obsolete nodes and rele
     target: "a",
   });
   expect(chip.properties.get("--glyph")).toContain("icon-stardust-20.png");
-  expect(chip.lastElementChild!.children[0]!.children).toHaveLength(2);
-  ui.place({ x: 0, y: 0 }, area, { color: "#65c9bf", edge: "#FFFFFF", light: true }, [marker]);
-  expect(layer.children[0]).toBe(chip);
-  expect(chip.properties.get("--direction-color")).toBe("#65c9bf");
-  expect(chip.properties.get("--direction-ink")).toBe("#FFFFFF");
-  ui.place({ x: 0, y: 0 }, area, { color: "#65c9bf", light: true }, [marker]);
-  expect(chip.properties.get("--direction-ink")).toBe(MAP_COLORS.ink);
+  expect(PENNY_MARKER.size).toBe(24);
+  expect(PENNY_MARKERS_STYLE).toContain("border-radius:50%");
+  expect(PENNY_MARKERS_STYLE).not.toContain("ada-penny-direction");
+  expect(chip.children).toHaveLength(1);
+  expect(chip.children[0]!.className).toBe("ada-penny-glyph");
+  expect(chip.children[0]!.children).toHaveLength(0);
   ui.place({ x: 0, y: 0 }, area, undefined, []);
   expect(layer.children).toEqual([]);
   ui.destroy();

@@ -334,6 +334,26 @@ export function keylineEdges(
     : [];
 }
 
+/** Both discovered and nearby undiscovered stations use the same canonical border icon. */
+function drawStationEdgeMarker(scene: HudContext, at: Vec): void {
+  const outline = LIGHT_FIELD.markerOutline;
+  const { diamond, stroke } = EDGE_MARKER_GLYPHS.station;
+  // The stroke sits inside the diamond's extent.
+  const half = (diamond - stroke) / 2;
+  const points = [
+    new PhaserMath.Vector2(at.x, at.y - half),
+    new PhaserMath.Vector2(at.x + half, at.y),
+    new PhaserMath.Vector2(at.x, at.y + half),
+    new PhaserMath.Vector2(at.x - half, at.y),
+  ];
+  if (scene.light) {
+    scene.edgeMarkerInk.lineStyle(stroke + 2 * outline, scene.edgeInk ?? LIGHT_FIELD.ink, 1);
+    scene.edgeMarkerInk.strokePoints(points, true, true);
+  }
+  scene.edgeMarkerInk.lineStyle(stroke, scene.palette.pointOfInterest, 1);
+  scene.edgeMarkerInk.strokePoints(points, true, true);
+}
+
 /**
  * A marker at the game area's edge toward each seen enemy, heavy and station off screen and
  * within range (model/edgeMarkers.ts); a direction indicator on the same object wins. Discs in
@@ -362,21 +382,7 @@ export function drawEdgeMarkers(
       scene.project(marker),
     );
     if (marker.kind === "station") {
-      const { diamond, stroke } = EDGE_MARKER_GLYPHS.station;
-      // The stroke sits inside the diamond's extent.
-      const half = (diamond - stroke) / 2;
-      const points = [
-        new PhaserMath.Vector2(at.x, at.y - half),
-        new PhaserMath.Vector2(at.x + half, at.y),
-        new PhaserMath.Vector2(at.x, at.y + half),
-        new PhaserMath.Vector2(at.x - half, at.y),
-      ];
-      if (scene.light) {
-        scene.edgeMarkerInk.lineStyle(stroke + 2 * outline, scene.edgeInk ?? LIGHT_FIELD.ink, 1);
-        scene.edgeMarkerInk.strokePoints(points, true, true);
-      }
-      scene.edgeMarkerInk.lineStyle(stroke, scene.palette.pointOfInterest, 1);
-      scene.edgeMarkerInk.strokePoints(points, true, true);
+      drawStationEdgeMarker(scene, at);
       continue;
     }
     const radius = EDGE_MARKER_GLYPHS[marker.kind].disc / 2;
@@ -386,11 +392,10 @@ export function drawEdgeMarkers(
     }
     scene.edgeMarkerInk.fillStyle(scene.palette.threat, 1);
     scene.edgeMarkerInk.fillCircle(at.x, at.y, radius);
-    // A guard's ink bar; a guard just disabled fades it out, or drops it under reduced motion.
-    const bar = marker.kind === "guard" || !scene.reducedMotion ? (marker.bar ?? 0) : 0;
-    if (bar > 0) {
+    // Blocking and disabled route guards share one icon, independently of reduced motion.
+    if (marker.kind === "guard") {
       const { height, width } = EDGE_MARKER_GLYPHS.guard.bar;
-      scene.edgeMarkerInk.fillStyle(LIGHT_FIELD.ink, bar);
+      scene.edgeMarkerInk.fillStyle(LIGHT_FIELD.ink, 1);
       scene.edgeMarkerInk.fillRect(at.x - width / 2, at.y - height / 2, width, height);
     }
   }
@@ -420,6 +425,19 @@ export function drawIndicators(scene: HudContext & Pick<GameScene, "litCaches">)
       }
       continue;
     }
+    if (target.kind === "station") {
+      const area = safeGameArea(insets, view);
+      drawStationEdgeMarker(
+        scene,
+        edgePoint(
+          area,
+          edgeMarkerInset(scene.light ? LIGHT_FIELD.markerOutline : 0, "station"),
+          { x: cx, y: cy },
+          point,
+        ),
+      );
+      continue;
+    }
     const dx = point.x - cx;
     const dy = point.y - cy;
     const length = Math.hypot(dx, dy);
@@ -430,8 +448,8 @@ export function drawIndicators(scene: HudContext & Pick<GameScene, "litCaches">)
     const y = cy + dy * Math.max(0, scale);
     const arrow = [
       { x: x + ux * 8, y: y + uy * 8 },
-      { x: x - ux * 5 - uy * 5, y: y - uy * 5 + ux * 5 },
-      { x: x - ux * 5 + uy * 5, y: y - uy * 5 - ux * 5 },
+      { x: x - ux * 5 - uy * 6, y: y - uy * 5 + ux * 6 },
+      { x: x - ux * 5 + uy * 6, y: y - uy * 5 - ux * 6 },
     ] as const;
     const ring = { x: x - ux * 13, y: y - uy * 13 };
     if (scene.light) {
