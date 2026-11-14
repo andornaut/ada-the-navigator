@@ -46,7 +46,7 @@ describe("Art's asteroid catalog, version 1", () => {
       ...catalog.asteroids.flatMap((rock) => rock.frames.map((frame) => frame.file)),
       ...catalog.backdrop.sprites.map((sprite) => sprite.file),
     ];
-    expect(files).toHaveLength(202);
+    expect(files).toHaveLength(204);
     for (const file of files) {
       expect(existsSync(`${PUBLIC}${file}`), file).toBe(true);
     }

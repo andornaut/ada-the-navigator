@@ -89,6 +89,31 @@
       }
     }
   ],
+  "decorations": {
+    "parallax": 0.08,
+    "chunk": [4200, 3000],
+    "chance": 0.35,
+    "salt": "rare-decoration",
+    "scale": [0.9, 1.08],
+    "rotation": [-18, 18],
+    "sprites": [
+      {
+        "asset": "backdrop-decoration-cartwheel-1",
+        "width": 2200,
+        "height": 1650
+      },
+      {
+        "asset": "backdrop-decoration-cartwheel-2",
+        "width": 2200,
+        "height": 1650
+      },
+      {
+        "asset": "backdrop-decoration-cartwheel-3",
+        "width": 2200,
+        "height": 1650
+      }
+    ]
+  },
   "far": [
     {
       "look": "cluster",

@@ -217,8 +217,8 @@ export function backdropTint(
   return (galaxy === null ? undefined : catalog.tints[GALAXY_ID[galaxy]]) ?? catalog.tints.base!;
 }
 
-/** Provisional backdrop field density until Art sets one: world cell size and fill chance. */
-export const BACKDROP_FIELD = { cell: 320, chance: 0.35, scale: [0.6, 1] } as const;
+/** Decorative backdrop field: world cell size, fill chance and display scale. */
+export const BACKDROP_FIELD = { cell: 320, chance: 0.48, scale: [0.6, 1] } as const;
 
 export interface BackdropRock extends Vec {
   readonly scale: number;

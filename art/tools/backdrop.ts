@@ -14,6 +14,11 @@ import { decodePng } from "@andornaut/art-kit/png";
 import { blankImage } from "@andornaut/art-kit/rgbaImage";
 
 import {
+  decorationRecipe,
+  type DecorationRecipe,
+  writeDecorations,
+} from "./backdrop-decorations.ts";
+import {
   chunkItems,
   inside,
   layerOrigin,
@@ -144,7 +149,7 @@ const CAPS = {
 const PLATE_RULES: PlateRules = {
   patternWeight: 0.75,
   jitterWeight: 1,
-  edges: [-0.55, -0.22, 0.3, 0.62],
+  edges: [-0.55, -0.16, 0.22, 0.62],
 };
 
 const RULES = {
@@ -154,11 +159,11 @@ const RULES = {
   sky: { parallax: 0, anchor: "view" },
   phenomena: {
     fixed: { parallax: 0, anchor: "view" },
-    far: { parallax: 0.05, chunk: [2400, 1500], chance: 0.5, salt: "far" },
+    far: { parallax: 0.05, chunk: [2400, 1500], chance: 0.75, salt: "far" },
     planets: {
       parallax: 0.12,
       chunk: [1500, 1000],
-      chance: 0.55,
+      chance: 0.92,
       salt: "planet",
       radius: [28, 98],
       light: [-0.62, -0.78],
@@ -472,6 +477,7 @@ type GalaxyBackdrop = {
     steps: StepPaint[];
   };
   planets: Planet[];
+  decorations: DecorationRecipe;
   far: { look: "nebula" | "cluster"; [key: string]: unknown }[];
   fixed: readonly string[];
   stars: { color: string; alpha: { far: number; near: number } };
@@ -663,6 +669,7 @@ function build(galaxy: GalaxyId): GalaxyBackdrop {
       steps,
     },
     planets,
+    decorations: decorationRecipe(galaxy),
     far,
     fixed: cfg.fixed,
     stars: {
@@ -1205,6 +1212,7 @@ function centring(
 const writes: (() => void)[] = [];
 for (const galaxy of GALAXIES) {
   const data = build(galaxy);
+  writes.push(() => writeDecorations(data.planets[0]!.colors, galaxy));
   const bg = data.background;
   const yb = luminance(float(bg));
   const light = data.light;

@@ -134,12 +134,15 @@ const SHAPES: readonly {
   { id: "asteroid-h3", size: "huge", width: 258.36, seed: 139, aspect: 1.8 },
 ];
 
-// Backdrop rocks reuse the medium model rules at backdrop widths.
+// Backdrop rocks reuse the medium model rules at backdrop widths. The largest silhouettes
+// remain scenery: muted by the backdrop tint and separated from play objects by parallax.
 const BACKDROP: readonly { id: string; width: number; seed: number; aspect: number }[] = [
   { id: "backdrop-1", width: 30, seed: 211, aspect: 1.3 },
   { id: "backdrop-2", width: 46, seed: 223, aspect: 1.6 },
   { id: "backdrop-3", width: 64, seed: 227, aspect: 1.2 },
   { id: "backdrop-4", width: 90, seed: 229, aspect: 1.5 },
+  { id: "backdrop-5", width: 180, seed: 233, aspect: 1.7 },
+  { id: "backdrop-6", width: 270, seed: 239, aspect: 1.05 },
 ];
 
 // Resource rocks: every medium and large shape (same seed, aspect and width, so the same base

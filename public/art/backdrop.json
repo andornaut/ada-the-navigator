@@ -14,13 +14,13 @@
     "far": {
       "parallax": 0.05,
       "chunk": [2400, 1500],
-      "chance": 0.5,
+      "chance": 0.75,
       "salt": "far"
     },
     "planets": {
       "parallax": 0.12,
       "chunk": [1500, 1000],
-      "chance": 0.55,
+      "chance": 0.92,
       "salt": "planet",
       "radius": [28, 98],
       "light": [-0.62, -0.78],
@@ -73,7 +73,7 @@
     "parallax": 0.15,
     "patternWeight": 0.75,
     "jitterWeight": 1,
-    "edges": [-0.55, -0.22, 0.3, 0.62],
+    "edges": [-0.55, -0.16, 0.22, 0.62],
     "blend": {
       "darker": "multiply",
       "lighter": "screen"

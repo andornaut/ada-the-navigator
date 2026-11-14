@@ -9700,6 +9700,34 @@
         },
         "pivot": [0.5, 0.69106],
         "tint": "backdropLit"
+      },
+      {
+        "id": "backdrop-5",
+        "file": "/art/asteroids/backdrop-5.svg",
+        "frame": {
+          "width": 474,
+          "height": 429
+        },
+        "display": {
+          "width": 207.38,
+          "height": 187.69
+        },
+        "pivot": [0.5, 0.71795],
+        "tint": "backdropLit"
+      },
+      {
+        "id": "backdrop-6",
+        "file": "/art/asteroids/backdrop-6.svg",
+        "frame": {
+          "width": 664,
+          "height": 553
+        },
+        "display": {
+          "width": 290.5,
+          "height": 241.94
+        },
+        "pivot": [0.5, 0.66546],
+        "tint": "backdropLit"
       }
     ]
   },

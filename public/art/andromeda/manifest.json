@@ -17578,6 +17578,42 @@
       "blink": "b",
       "frameMs": 700,
       "craft": "stranded-lamp-buoy"
+    },
+    {
+      "id": "backdrop-decoration-andromeda-1",
+      "path": "/art/andromeda/decoration-1.svg",
+      "width": 1024,
+      "height": 768,
+      "kind": "backdrop-decoration",
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "id": "backdrop-decoration-andromeda-2",
+      "path": "/art/andromeda/decoration-2.svg",
+      "width": 1024,
+      "height": 768,
+      "kind": "backdrop-decoration",
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "id": "backdrop-decoration-andromeda-3",
+      "path": "/art/andromeda/decoration-3.svg",
+      "width": 1024,
+      "height": 768,
+      "kind": "backdrop-decoration",
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
     }
   ],
   "backdropHaze": "/art/andromeda/haze.json",

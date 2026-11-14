@@ -173,14 +173,31 @@ describe("backdrop layers in the view", () => {
       from[0] - sx * parallax,
       from[1] - sy * parallax,
     ];
-    const before = viewPlates(rules, backdropOf(2), [0, 0])[0]!;
-    const after = viewPlates(rules, backdropOf(2), delta).find((plate) =>
-      plate.points.every((point, k) => {
-        const [x, y] = shifted(before.points[k]!, 0.15);
-        return Math.abs(point[0] - x) < 1e-9 && Math.abs(point[1] - y) < 1e-9;
-      }),
-    );
-    expect(after).toBeDefined();
+    const beforePlates = viewPlates(rules, backdropOf(2), [0, 0]);
+    const afterPlates = viewPlates(rules, backdropOf(2), delta);
+    let checked = 0;
+    for (const before of beforePlates) {
+      const centre: Xy = [
+        before.points.reduce((sum, point) => sum + point[0], 0) / before.points.length,
+        before.points.reduce((sum, point) => sum + point[1], 0) / before.points.length,
+      ];
+      const movedCentre = shifted(centre, 0.15);
+      const interior = ([x, y]: Xy) => x > 0 && x < 720 && y > 0 && y < 360;
+      if (!interior(centre) || !interior(movedCentre)) {
+        continue;
+      }
+      const after = afterPlates.find(
+        (plate) =>
+          plate.points.length === before.points.length &&
+          plate.points.every((point, k) => {
+            const [x, y] = shifted(before.points[k]!, 0.15);
+            return Math.abs(point[0] - x) < 1e-9 && Math.abs(point[1] - y) < 1e-9;
+          }),
+      );
+      expect(after).toBeDefined();
+      checked++;
+    }
+    expect(checked).toBeGreaterThan(0);
     const stars = viewStars(rules, backdropOf(2), [0, 0], 0, true);
     const moved = viewStars(rules, backdropOf(2), delta, 0, true);
     // A star of either depth, moved by 0.3 or 0.5 of the camera's projected motion.

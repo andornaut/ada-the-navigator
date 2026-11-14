@@ -41,6 +41,40 @@ moves by. Play objects, effects and the HUD draw over all of them.
   paint: a darker plate multiplies what is under it by one grey factor and a
   lighter plate screens it with one colour, so the haze, the band, planets and
   nebulae keep their shapes and hues under a plate.
+
+### Rare giant decorations
+
+Each galaxy's optional `decorations` recipe adds rare, purely decorative
+compositions below the plates. The shared placement uses that galaxy's existing
+seed, parallax 0.08, 4200 by 3000 layer-coordinate chunks and chance 0.35.
+Seeded scale is 0.9 to 1.08 and rotation is -18 to 18 degrees. Empty chunks
+retain quiet stretches. These forms have no gameplay objects, collision,
+landmark, reward or map role; story-room art is separate.
+
+The recipe's three `sprites` entries hold `asset`, `width` and `height`.
+Their 2200 by 1650 logical-px display size is defined only in this recipe.
+The native SVG sources are 1024 by 768, tagged `kind: backdrop-decoration`
+in the galaxy manifest. The consumer caps this category's longest texture
+edge at 1024, uses linear filtering and shares each texture across placements.
+It culls by the complete rotated bounds. Giant planet discs are about
+1440 logical px across at scale 1; moons and broad fragments share the
+existing planet palette without extra surface texture.
+
+| Galaxy    | Recurrent rare signature                                           |
+| --------- | ------------------------------------------------------------------ |
+| Sunflower | Golden ringed planets, overlapping broad rings and polygon regions |
+| Whirlpool | Large asteroid spirals with concentrated arm pockets               |
+| Needle    | Long narrow debris streams and enormous fractured slabs            |
+| Andromeda | Blue-violet gas planets, broad curved bands and distant moons      |
+| Cartwheel | Broken asteroid rings and hollow faceted rock formations           |
+| Phantom   | Dark eclipsed planets, sparse fragment arcs and subtle silhouettes |
+
+[backdrop-decorations.ts](tools/backdrop-decorations.ts) is the native
+composition producer. `backdrop.ts` writes its assets and recipes only after
+the existing galaxy contrast checks pass. Each composition uses opaque
+colours from that galaxy's existing planet recipe, so overlapping forms do
+not compound alpha or add palette entries.
+
 - Multiply and screen are Phaser `BlendModes.MULTIPLY` and `BlendModes.SCREEN`
   on the plates' Graphics, one object per mode.
 
@@ -80,15 +114,16 @@ sky when its id changes.
   `b c d`); otherwise the cell is one plate. A plate's value is
   `patternWeight` (0.75) times the pattern at its centroid plus
   `jitterWeight` (1) times `unit - 0.5` (salt `plate-tone-{k}`, `k` the
-  triangle). Its step is the number of `edges` (-0.55, -0.22, 0.3, 0.62) at or
+  triangle). Its step is the number of `edges` (-0.55, -0.16, 0.22, 0.62) at or
   below the value, less 2; step 0 is sky and draws nothing. A galaxy with
   `lighter` false keeps only its darker steps.
 - **Chunks.** A chunked layer holds at most one item per chunk: chunk `(i, j)`
   of size `chunk` has one when `unit(seed, "i,j", salt)` is below `chance`, at
   `((i + 0.2 + 0.6 u) w, (j + 0.2 + 0.6 v) h)` with `u`, `v` from the salts
   `{salt}-x` and `{salt}-y`. Planets use salt `planet`, chunk 1500 by 1000 and
-  chance 0.55; far items `far`, 2400 by 1500 and 0.5. With the view at 720 by
-  360 and these parallaxes, one or two show at most.
+  chance 0.92; far items `far`, 2400 by 1500 and 0.75. With the view at 720 by
+  360 and these parallaxes, the large forms remain sparse while occupying more
+  of the layered background.
 - **Planets.** The look is `planets[floor(unit("planet-look") n)]`; the radius
   is `(28 + 70 unit("planet-r")) size`. Lit from `light` (-0.62, -0.78), the
   upper left. Over the disc in `night`, `body` fills where the point lies
@@ -193,7 +228,7 @@ Measured over the sampled cameras:
 | --------- | -------------------------- | ---------------- | -------------------------------------------------------- |
 | Sunflower | `#A1966B` 1.79:1           | `#BAB27C` 1.30:1 | Ink 6.08, 8.38                                           |
 | Cartwheel | `#643F39` 1.63:1           | `#5E353A` 1.44:1 | Obstacle 3.37, 3.81; hull 3.87, 4.37; white 9.08, 10.26  |
-| Whirlpool | `#26515C` 1.66:1           | `#314E63` 1.65:1 | Obstacle 3.23, 3.25; hull 3.71, 3.73; white 8.70, 8.75   |
+| Whirlpool | `#26515C` 1.66:1           | `#31465F` 1.49:1 | Obstacle 3.23, 3.61; hull 3.71, 4.14; white 8.70, 9.72   |
 | Needle    | Band peak `#4F4945` 1.78:1 | `#4D4842` 1.74:1 | Obstacle 3.29, 3.36; hull 3.78, 3.86; white 8.86, 9.06   |
 | Andromeda | Haze core `#6970A0` 3.12:1 | `#69709F` 3.10:1 | Obstacle 1.75, 1.77; hull 2.01, 2.03; white 4.72, 4.76   |
 | Phantom   | `#49344E` 1.53:1           | `#423458` 1.52:1 | Obstacle 4.14, 4.16; hull 4.75, 4.78; white 11.14, 11.22 |
@@ -229,14 +264,15 @@ at the capture camera.
 
 ## Performance and device pixels
 
-- L0 is one gradient quad. L1 is up to 13 plates per view in two Graphics
+- L0 is one gradient quad. L1 keeps its large plate lattice in two Graphics
   objects, one per blend mode, redrawn when the camera moves.
 - L2 holds one or two items on screen. Planets are vector or baked at
   min(DPR, 2) when their chunk comes into view and released when it leaves,
   two at most, up to about 2.8 MB each at DPR 2. The nebula textures are
   192 by 80 texels, 60 KB each in memory.
-- L3 is about 60 discs per view. L4 is today's rocks and specks plus two to
-  four streaks.
+- L3 is about 60 discs per view. L4 keeps its existing rock placement and
+  specks plus two to four streaks; its six rock silhouettes include the
+  180 and 270 logical-px-wide decorative masses.
 - About two to three screens of overdraw in all. Chunk lookups are a few dozen
   hashes per frame.
 - Draw vector layers at min(DPR, 2). Draw the nebula textures with linear

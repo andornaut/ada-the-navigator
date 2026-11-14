@@ -13,6 +13,7 @@ import {
   frameSilhouette,
   playDepth,
   rockArt,
+  unit,
 } from "./asteroidArt.ts";
 
 const ART = ASTEROID_ART;
@@ -94,6 +95,30 @@ describe("Art's asteroid sprites", () => {
     expect(driftChips(rock, 3, 0, "drifter", { x: 0, y: 0 })).toEqual([]);
   });
 
+  it("adds decorative rock cells while preserving the existing seeded positions and scale", () => {
+    let previous = 0;
+    let added = 0;
+    for (let x = -30; x < 30; x++) {
+      for (let y = -30; y < 30; y++) {
+        const id = `${x},${y}`;
+        const availability = unit(9, id, "backdrop");
+        const rock = backdropRock(ART, 9, x, y);
+        if (availability < 0.35) {
+          previous++;
+          expect(rock).not.toBeNull();
+          expect(rock!.x).toBe((x + unit(9, id, "backdrop-x")) * 320);
+          expect(rock!.y).toBe((y + unit(9, id, "backdrop-y")) * 320);
+          expect(rock!.scale).toBe(0.6 + unit(9, id, "backdrop-scale") * 0.4);
+        } else if (rock) {
+          added++;
+        }
+      }
+    }
+    expect(previous).toBeGreaterThan(0);
+    expect(added / previous).toBeGreaterThan(0.25);
+    expect(added / previous).toBeLessThan(0.5);
+  });
+
   it("tints the backdrop by galaxy, sorts play objects by pivot y and lists every SVG", () => {
     expect(backdropTint(ART, 1)).toEqual(ART.tints.sunflower);
     expect(backdropTint(ART, 3)).toEqual(ART.tints.whirlpool);
@@ -112,6 +137,6 @@ describe("Art's asteroid sprites", () => {
     expect(playDepth(100)).toBeLessThan(playDepth(101));
     expect(playDepth(-50)).toBeGreaterThan(1.9);
     expect(playDepth(5000)).toBeLessThan(3);
-    expect(asteroidFiles(ART)).toHaveLength(202);
+    expect(asteroidFiles(ART)).toHaveLength(204);
   });
 });

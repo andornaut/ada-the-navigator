@@ -1222,6 +1222,42 @@
         "y": 0.5
       },
       "craft": "stranded-scrap-barge"
+    },
+    {
+      "id": "backdrop-decoration-sunflower-1",
+      "path": "/art/sunflower/decoration-1.svg",
+      "width": 1024,
+      "height": 768,
+      "kind": "backdrop-decoration",
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "id": "backdrop-decoration-sunflower-2",
+      "path": "/art/sunflower/decoration-2.svg",
+      "width": 1024,
+      "height": 768,
+      "kind": "backdrop-decoration",
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "id": "backdrop-decoration-sunflower-3",
+      "path": "/art/sunflower/decoration-3.svg",
+      "width": 1024,
+      "height": 768,
+      "kind": "backdrop-decoration",
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
     }
   ],
   "backdrop": "/art/sunflower/backdrop.json",

@@ -95,7 +95,7 @@ of the field. Signals are unchanged.
 
 ## Backdrop
 
-Backdrop rocks (`backdrop.sprites`) are four greyscale SVGs, white tops and grey
+Backdrop rocks (`backdrop.sprites`) are six greyscale SVGs, white tops and grey
 sides, drawn under every play object with no collision. Tech multiplies them by
 the current galaxy's `backdropLit` (Phaser `setTint`), so the tops take
 `backdropLit` and the sides `backdropSide` exactly. The mock-ups draw them at
@@ -115,7 +115,11 @@ at their own depth behind the play plane:
   an ore field, under its crystals, so a world-space clearance would not hold.
 - A placeholder galaxy's rocks and specks take the base field's tints.
 
-Density: one backdrop rock in 35% of the 320 by 320 world-unit cells.
+Density: one backdrop rock in 48% of the 320 by 320 world-unit cells. The
+30, 46, 64 and 90 logical-px silhouettes are joined by simple 180 and 270 px
+masses, using the same low-detail model and tint rule. These are backdrop
+sprites only; the play asteroid shapes, resource rocks and collision data
+remain separate.
 
 `tints` holds the computed colours for the base field and each galaxy id, from
 one rule (`backdrop.rule`):

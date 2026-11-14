@@ -92,6 +92,31 @@
       }
     }
   ],
+  "decorations": {
+    "parallax": 0.08,
+    "chunk": [4200, 3000],
+    "chance": 0.35,
+    "salt": "rare-decoration",
+    "scale": [0.9, 1.08],
+    "rotation": [-18, 18],
+    "sprites": [
+      {
+        "asset": "backdrop-decoration-whirlpool-1",
+        "width": 2200,
+        "height": 1650
+      },
+      {
+        "asset": "backdrop-decoration-whirlpool-2",
+        "width": 2200,
+        "height": 1650
+      },
+      {
+        "asset": "backdrop-decoration-whirlpool-3",
+        "width": 2200,
+        "height": 1650
+      }
+    ]
+  },
   "far": [
     {
       "look": "nebula",
@@ -119,20 +144,20 @@
     "cameras": 9,
     "today": "#26515C",
     "todayContrast": 1.664,
-    "extreme": "#314E63",
-    "extremeContrast": 1.654,
+    "extreme": "#31465F",
+    "extremeContrast": 1.489,
     "signals": {
       "obstacle": {
         "today": 3.229,
-        "after": 3.249
+        "after": 3.608
       },
       "shipWhite": {
         "today": 8.7,
-        "after": 8.753
+        "after": 9.719
       },
       "shipHullDark": {
         "today": 3.708,
-        "after": 3.731
+        "after": 4.143
       }
     }
   }
