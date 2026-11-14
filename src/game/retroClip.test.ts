@@ -7,6 +7,7 @@ import { LIGHT_FIELD } from "./lightField.ts";
 import {
   engineJets,
   jetTriangles,
+  layerAlpha,
   layerColor,
   readEngineJets,
   type ShipJets,
@@ -44,17 +45,18 @@ describe("retro material selection", () => {
   });
 });
 describe("approved calibrated rear clipping", () => {
-  it("keeps both outer corners and clips every layer, including halo, for all headings, fields and speeds", () => {
+  it("attaches the widest visible layer and clips the retro group for all headings, fields and speeds", () => {
     let haloCount = 0;
     for (const field of [undefined, LIGHT_FIELD.jets.shipLevels]) {
       for (const level of [1, 2, 3]) {
         const jets = travelJets(main, retro, field, level, "reverse")!;
-        const outer = jets.layers.find((layer) => layer.name === "outer")!;
+
         for (let heading = 0; heading < jets.headings.length; heading++) {
           const mouths = jets.headings[heading]!;
           expect(mouths).toHaveLength(2);
           for (const speed of [0.2, 0.65, 1]) {
             for (const mouth of mouths) {
+              expect(mouth.coreOutboard).toBe(true);
               expect(mouth.outerCorner).toBeDefined();
               expect(mouth.rearClip).toBeDefined();
               const single = { ...jets, headings: [[mouth]] };
@@ -68,7 +70,10 @@ describe("approved calibrated rear clipping", () => {
                   ).toBeLessThanOrEqual(1e-8);
                 }
               }
-              const color = layerColor(outer, speed);
+              const reference = jets.layers
+                .filter((layer) => layerAlpha(layer, speed) > 0)
+                .reduce((widest, layer) => (layer.width > widest.width ? layer : widest));
+              const color = layerColor(reference, speed);
               const outerPoints = triangles
                 .filter((triangle) => triangle.color === color)
                 .flatMap((triangle) => triangle.points);
@@ -94,7 +99,7 @@ describe("approved calibrated rear clipping", () => {
     }
     expect(haloCount).toBeGreaterThan(0);
   });
-  it("derives the attachment from the selected outer role, not a fixed width or layer index", () => {
+  it("derives the attachment from visible selected widths without requiring a named role", () => {
     const fixture: ShipJets = {
       frame: 96,
       headings: [
@@ -131,21 +136,27 @@ describe("approved calibrated rear clipping", () => {
       { x: -12, y: -3 },
       { x: -24, y: 0 },
     ]);
-    expect(
-      jetTriangles(
-        { ...fixture, layers: fixture.layers.filter((layer) => layer.name !== "outer") },
-        display,
-        0,
-        1,
-      ),
-    ).toEqual([]);
+    const onlyCore = jetTriangles(
+      { ...fixture, layers: fixture.layers.slice(0, 1) },
+      display,
+      0,
+      1,
+    );
+    expect(onlyCore[0]!.points[0]).toEqual(fixture.headings[0]![0]!.outerCorner);
   });
-  it("rejects malformed or unpaired attachment metadata without affecting legacy jet data", () => {
-    const entry = { ...rearArt.headings[0]!.mouths[0]! };
+  it("allows untrimmed forward corners and rejects malformed corners or clips", () => {
+    const original = rearArt.headings[0]!.mouths[0]!;
+    const entry = { anchor: original.anchor, axis: original.axis, half: original.half };
     const file = (mouth: unknown) => ({ ...rearArt, headings: [{ index: 0, mouths: [mouth] }] });
     expect(readEngineJets(file(entry))).toBeDefined();
+    expect(
+      readEngineJets(file({ ...entry, outerCorner: [0, 0] }))?.headings[0]![0]!.rearClip,
+    ).toBeUndefined();
+    expect(
+      readEngineJets(file({ ...entry, outerCorner: [0, 0] }))?.headings[0]![0]!.outerCorner,
+    ).toEqual({ x: 0, y: 0 });
     for (const extra of [
-      { outerCorner: [0, 0] },
+      { outerCorner: [0] },
       { rearClip: { constant: 0, normal: [1, 0] } },
       { outerCorner: [0, 0], rearClip: { constant: 0, normal: [0, 0] } },
       { outerCorner: [0, 0], rearClip: { constant: NaN, normal: [1, 0] } },

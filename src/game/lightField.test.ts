@@ -56,17 +56,31 @@ describe("light-field rule", () => {
         "ammoPickup",
       ]),
     );
-    // Each jet set is a flat dark outer layer and a core gradient, with no halo. Ada's take her
-    // Engine level's dark set: blue, orange and purple.
+    // Field materials consume the canonical per-engine data without a local palette copy.
+    const source = (
+      galaxies as {
+        lightField: {
+          jets: {
+            shipLevels: {
+              level: number;
+              layers: { name?: string; color?: string; colors?: [string, string] }[];
+            }[];
+          };
+        };
+      }
+    ).lightField.jets.shipLevels;
+    const color = (value: string) => Number.parseInt(value.slice(1), 16);
     expect(
       LIGHT_FIELD.jets.shipLevels.map((layers) =>
         layers.flatMap((layer) => [layerColor(layer, 0), layerColor(layer, 1)]),
       ),
-    ).toEqual([
-      [0x1767b3, 0x1767b3, 0x2585d0, 0x64caff],
-      [0xa84400, 0xa84400, 0xea6a00, 0xffb24d],
-      [0x7a3fd6, 0x7a3fd6, 0x8652e7, 0xb98cff],
-    ]);
+    ).toEqual(
+      source.map(({ layers }) =>
+        layers.flatMap((layer) =>
+          layer.color ? [color(layer.color), color(layer.color)] : layer.colors!.map(color),
+        ),
+      ),
+    );
     expect(LIGHT_FIELD.jets.enemy.map((layer) => layerColor(layer, 1))).toEqual([
       0x7f4b3d, 0xd68b72,
     ]);
@@ -102,16 +116,29 @@ describe("light-field rule", () => {
     expect(alphaTopRow(new Uint8ClampedArray(4 * 3 * 4), 3, 4, KEYLINE_ALPHA)).toBe(4);
   });
 
-  it("uses Art's current light-field classifications and never applies at home", () => {
+  it("uses canonical per-galaxy light flags and never applies at home", () => {
     const light = readLightGalaxies(galaxies);
-    const authored = galaxies as { galaxies: Record<string, { tint?: { light?: boolean } }> };
+    const source = (galaxies as { galaxies: Record<string, { tint: { light: boolean } }> })
+      .galaxies;
     const expected = GALAXY_NUMBERS.filter(
-      (galaxy) => authored.galaxies[GALAXY_ID[galaxy]]?.tint?.light === true,
+      (galaxy) => source[GALAXY_ID[galaxy]]!.tint.light === true,
     );
     expect([...light]).toEqual(expected);
-    expect(GALAXY_NUMBERS.map((galaxy) => lightGalaxy(light, galaxy))).toEqual(
-      GALAXY_NUMBERS.map((galaxy) => authored.galaxies[GALAXY_ID[galaxy]]?.tint?.light === true),
-    );
+    for (const galaxy of GALAXY_NUMBERS) {
+      expect(lightGalaxy(light, galaxy)).toBe(expected.includes(galaxy));
+    }
+    const mixed = readLightGalaxies({
+      galaxies: {
+        cartwheel: { tint: { light: false } },
+        phantom: { tint: { light: true } },
+        sunflower: { tint: { light: true } },
+      },
+    });
+    expect([...mixed]).toEqual([1, 6]);
+    expect(lightGalaxy(mixed, 2)).toBe(false);
+    expect([
+      ...readLightGalaxies({ galaxies: { sunflower: { tint: { light: "true" } } } }),
+    ]).toEqual([]);
     expect(lightGalaxy(light, null)).toBe(false);
     expect(lightGalaxy(light, undefined)).toBe(false);
     // The base field the previews capture locked galaxies on lists no galaxy, so none is light.

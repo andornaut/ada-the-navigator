@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { anchor, SHIP_HEADINGS as ART_SHIP_HEADINGS, vector } from "../../art/tools/projection.ts";
+import { JET_LEVELS } from "../../art/tools/ship-jet-layers.ts";
 import { FRAME, mouthAxis } from "../../art/tools/ship-model.ts";
 import manifest from "../../public/art/manifest.json";
 import art from "../../public/art/ship-jets.json";
@@ -179,7 +180,7 @@ describe("authored jet occlusion", () => {
   );
 });
 
-describe("jet style from Art's file", () => {
+describe("jet interpolation", () => {
   it.each([
     [0.25, 7.5, 0x73a9d9, 0xa9d3f4, 0],
     [0.5, 12, 0x8ac0e6, 0xc6e2f8, 0],
@@ -189,9 +190,9 @@ describe("jet style from Art's file", () => {
     "at f = %s has length %s, outer %s, core %s and halo alpha %s",
     (f, length, outerColor, coreColor, haloAlpha) => {
       expect(jetLength(jets, f)).toBeCloseTo(length);
-      expect(layerColor(outer!, f)).toBe(outerColor);
-      expect(layerColor(core!, f)).toBe(coreColor);
-      expect(layerColor(halo!, f)).toBe(0x70ace8);
+      expect(layerColor({ ...outer!, colors: [0x5b93cc, 0xb9ecff] }, f)).toBe(outerColor);
+      expect(layerColor({ ...core!, colors: [0x8cc4f0, 0xffffff] }, f)).toBe(coreColor);
+      expect(layerColor({ ...halo!, colors: [0x70ace8, 0x70ace8] }, f)).toBe(0x70ace8);
       expect(layerAlpha(halo!, f)).toBeCloseTo(haloAlpha);
       expect(layerAlpha(outer!, f)).toBe(1);
     },
@@ -212,18 +213,22 @@ describe("jet style from Art's file", () => {
 });
 
 describe("jets by Engine level", () => {
-  it.each([
-    [1, 0x70ace8, 0xb9ecff, 0xffffff],
-    [2, 0xff8f1f, 0xffd59a, 0xffffff],
-    [3, 0xa66bff, 0xe6ccff, 0xffffff],
-  ])("draws level %s in Art's colours, widths and lengths unchanged", (level, h, o, c) => {
-    const { layers } = engineJets(ada, level);
-    expect(layers.map((layer) => layerColor(layer, 1))).toEqual([h, o, c]);
-    expect(layers.map(({ length, width }) => [length, width])).toEqual(
-      jets.layers.map(({ length, width }) => [length, width]),
-    );
-    expect(layers[0]!.alpha).toEqual(halo!.alpha);
-  });
+  it.each(JET_LEVELS)(
+    "draws engine $level in the canonical palette with unchanged layer geometry",
+    ({ core: coreColors, halo: haloColor, level, outer: outerColors }) => {
+      const { layers } = engineJets(ada, level);
+      const color = (value: string) => Number.parseInt(value.slice(1), 16);
+      expect(layers.map((layer) => layerColor(layer, 1))).toEqual([
+        color(haloColor),
+        color(outerColors[1]),
+        color(coreColors[1]),
+      ]);
+      expect(layers.map(({ length, width }) => [length, width])).toEqual(
+        jets.layers.map(({ length, width }) => [length, width]),
+      );
+      expect(layers[0]!.alpha).toEqual(halo!.alpha);
+    },
+  );
 
   it("reads only the level list, clamping outside 1 to 3, with the geometry unchanged", () => {
     expect(ada.engineLevels).toHaveLength(3);
@@ -256,14 +261,14 @@ describe("jet triangles", () => {
 
   it("orders halo, outer and core per mouth", () => {
     const triangles = jetTriangles(jets, framePixels, 3, 1);
-    expect(triangles.map(({ alpha, color }) => [color, alpha])).toEqual([
-      [0x70ace8, 0.5],
-      [0xb9ecff, 1],
-      [0xffffff, 1],
-      [0x70ace8, 0.5],
-      [0xb9ecff, 1],
-      [0xffffff, 1],
-    ]);
+    const color = (value: string) => Number.parseInt(value.slice(1), 16);
+    const palette = JET_LEVELS[0];
+    const one = [
+      [color(palette.halo), 0.5],
+      [color(palette.outer[1]), 1],
+      [color(palette.core[1]), 1],
+    ];
+    expect(triangles.map(({ alpha, color }) => [color, alpha])).toEqual([...one, ...one]);
   });
 
   it("spans anchor plus or minus half times width to a tip along the rear axis", () => {

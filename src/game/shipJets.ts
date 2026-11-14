@@ -12,8 +12,10 @@ export function shipJetDirection(facing: Vec, velocity: Vec): "forward" | "rever
 export interface JetMouth {
   /** Projected mouth midpoint. */
   anchor: Vec;
-  /** Projected wing apex used by reverse jets to attach their opaque outer base corner. */
+  /** Art selects the upper or near underside corner anchoring the whole visible jet group. */
   outerCorner?: Vec;
+  /** Uses the selected outer/core geometry to move the canonical core outboard within its outer. */
+  coreOutboard?: true;
   /** The calibrated frame-space half-plane retaining the forward side of the wing rear. */
   rearClip?: { readonly constant: number; readonly normal: Vec };
   /** Projected exhaust direction per ship unit. */
@@ -247,13 +249,18 @@ function readMouths(value: unknown): JetMouth[] | undefined {
       normal && Math.hypot(normal.x, normal.y) > 0 && finite(clip?.constant)
         ? { constant: clip.constant, normal }
         : undefined;
-    const hasAttachment = mouth?.outerCorner !== undefined || mouth?.rearClip !== undefined;
+    const malformedCorner = mouth?.outerCorner !== undefined && !outerCorner;
+    const malformedClip = mouth?.rearClip !== undefined && (!outerCorner || !rearClip);
+    const malformedCore =
+      mouth?.coreOutboard !== undefined && (mouth.coreOutboard !== true || !outerCorner);
     const occluders = mouth?.occluders === undefined ? undefined : readOccluders(mouth.occluders);
     if (
       !anchor ||
       !axis ||
       !half ||
-      (hasAttachment && (!outerCorner || !rearClip)) ||
+      malformedCorner ||
+      malformedClip ||
+      malformedCore ||
       (mouth!.occluders !== undefined && occluders === undefined) ||
       (mouth!.hardpoint !== undefined && typeof mouth!.hardpoint !== "string")
     ) {
@@ -263,7 +270,9 @@ function readMouths(value: unknown): JetMouth[] | undefined {
       anchor,
       axis,
       half,
-      ...(outerCorner && rearClip ? { outerCorner, rearClip } : {}),
+      ...(outerCorner ? { outerCorner } : {}),
+      ...(mouth!.coreOutboard === true ? { coreOutboard: true as const } : {}),
+      ...(rearClip ? { rearClip } : {}),
       ...(typeof mouth!.hardpoint === "string" ? { hardpoint: mouth!.hardpoint } : {}),
       ...(occluders === undefined ? {} : { occluders }),
     });
@@ -351,6 +360,23 @@ export function layerAlpha(layer: JetLayer, f: number): number {
   return Math.min(1, Math.max(0, (f - from) / (to - from))) * max;
 }
 
+/** Outboard displacement in signed half-mouth units, bounded by outer/core containment. */
+export function coreOutboardOffset(layers: readonly JetLayer[]): number | undefined {
+  const outer = layers.find((layer) => layer.name === "outer");
+  const core = layers.find((layer) => layer.name === "core");
+  if (
+    !outer ||
+    !core ||
+    ![outer.width, outer.length, core.width, core.length].every(
+      (value) => Number.isFinite(value) && value > 0,
+    )
+  ) {
+    return undefined;
+  }
+  const offset = Math.min(outer.width - core.width, outer.width * (1 - core.length / outer.length));
+  return Number.isFinite(offset) && offset >= 0 ? offset : undefined;
+}
+
 /** Clips in calibrated frame space before display scaling, retaining boundary vertices. */
 function clipRear(clip: NonNullable<JetMouth["rearClip"]>, polygon: readonly Vec[]): Vec[] {
   const distance = (point: Vec) =>
@@ -394,18 +420,27 @@ export function jetTriangles(
   const length = jetLength(jets, fraction);
   const triangles: JetTriangle[] = [];
   for (const mouth of mouths) {
-    const { axis, half, occluders, outerCorner, rearClip } = mouth;
-    const outer = outerCorner ? jets.layers.find(({ name }) => name === "outer") : undefined;
-    if (outerCorner && (!outer || !(outer.width > 0))) {
+    const { axis, coreOutboard, half, occluders, outerCorner, rearClip } = mouth;
+    const coreOffset = coreOutboard ? coreOutboardOffset(jets.layers) : 0;
+    if (coreOffset === undefined) {
       continue;
     }
-    const anchor =
-      outerCorner && outer
-        ? {
-            x: outerCorner.x - half.x * outer.width,
-            y: outerCorner.y - half.y * outer.width,
-          }
-        : mouth.anchor;
+    const groupWidth = outerCorner
+      ? jets.layers.reduce(
+          (width, layer) =>
+            layerAlpha(layer, fraction) > 0 ? Math.max(width, layer.width) : width,
+          0,
+        )
+      : 0;
+    if (outerCorner && !(groupWidth > 0)) {
+      continue;
+    }
+    const anchor = outerCorner
+      ? {
+          x: outerCorner.x - half.x * groupWidth,
+          y: outerCorner.y - half.y * groupWidth,
+        }
+      : mouth.anchor;
     const displayOccluders = display.includeOccluders
       ? occluders?.map((polygon) => polygon.map(({ x, y }) => toDisplay(x, y)))
       : undefined;
@@ -417,10 +452,13 @@ export function jetTriangles(
       const hx = half.x * layer.width;
       const hy = half.y * layer.width;
       const tip = length * layer.length;
+      const offset = coreOutboard && layer.name === "core" ? coreOffset : 0;
+      const x = anchor.x + half.x * offset;
+      const y = anchor.y + half.y * offset;
       const polygon = [
-        { x: anchor.x + hx, y: anchor.y + hy },
-        { x: anchor.x + axis.x * tip, y: anchor.y + axis.y * tip },
-        { x: anchor.x - hx, y: anchor.y - hy },
+        { x: x + hx, y: y + hy },
+        { x: x + axis.x * tip, y: y + axis.y * tip },
+        { x: x - hx, y: y - hy },
       ];
       const clipped = rearClip ? clipRear(rearClip, polygon) : polygon;
       for (let i = 1; i + 1 < clipped.length; i++) {
