@@ -1190,14 +1190,17 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       }
       measure.font = style.font;
       const em = parseFloat(style.fontSize);
-      const advance = measure.measureText(text).width;
+      const metrics = measure.measureText(text);
+      const advance = metrics.width;
       const origin = Math.ceil(em * density);
       measure.canvas.width = Math.ceil(advance * density) + 2 * origin;
-      measure.canvas.height = 3 * origin;
+      const baseline = Math.ceil(metrics.actualBoundingBoxAscent * density) + origin;
+      const descent = Math.ceil(metrics.actualBoundingBoxDescent * density);
+      measure.canvas.height = baseline + descent + origin;
       measure.scale(density, density);
       measure.font = style.font;
       measure.fillStyle = "white";
-      measure.fillText(text, origin / density, (2 * origin) / density);
+      measure.fillText(text, origin / density, baseline / density);
       const raster = measure.getImageData(0, 0, measure.canvas.width, measure.canvas.height);
       let left = raster.width;
       let right = -1;
