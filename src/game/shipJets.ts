@@ -1,3 +1,6 @@
+import { jetShapePolygons, layerAlpha } from "./jetGeometry.ts";
+export { coreOutboardOffset, layerAlpha } from "./jetGeometry.ts";
+
 import type { Vec } from "../model/types.ts";
 
 /** The existing thrust cutoff suppresses direction changes while the ship is effectively still. */
@@ -315,7 +318,11 @@ function readJetGeometry(root: Fields | undefined): JetGeometry | undefined {
   return {
     frame: root.frame,
     headings,
-    length: { base: length.base, exponent: length.exponent, scale: length.scale },
+    length: {
+      base: length.base,
+      exponent: length.exponent,
+      scale: length.scale,
+    },
   };
 }
 
@@ -352,54 +359,6 @@ export function layerColor(layer: JetLayer, f: number): number {
   return color;
 }
 
-export function layerAlpha(layer: JetLayer, f: number): number {
-  if (!layer.alpha) {
-    return 1;
-  }
-  const { from, max, to } = layer.alpha;
-  return Math.min(1, Math.max(0, (f - from) / (to - from))) * max;
-}
-
-/** Outboard displacement in signed half-mouth units, bounded by outer/core containment. */
-export function coreOutboardOffset(layers: readonly JetLayer[]): number | undefined {
-  const outer = layers.find((layer) => layer.name === "outer");
-  const core = layers.find((layer) => layer.name === "core");
-  if (
-    !outer ||
-    !core ||
-    ![outer.width, outer.length, core.width, core.length].every(
-      (value) => Number.isFinite(value) && value > 0,
-    )
-  ) {
-    return undefined;
-  }
-  const offset = Math.min(outer.width - core.width, outer.width * (1 - core.length / outer.length));
-  return Number.isFinite(offset) && offset >= 0 ? offset : undefined;
-}
-
-/** Clips in calibrated frame space before display scaling, retaining boundary vertices. */
-function clipRear(clip: NonNullable<JetMouth["rearClip"]>, polygon: readonly Vec[]): Vec[] {
-  const distance = (point: Vec) =>
-    clip.normal.x * point.x + clip.normal.y * point.y - clip.constant;
-  const out: Vec[] = [];
-  for (let i = 0; i < polygon.length; i++) {
-    const a = polygon[i]!;
-    const b = polygon[(i + 1) % polygon.length]!;
-    const da = distance(a),
-      db = distance(b);
-    const aInside = da <= 1e-10,
-      bInside = db <= 1e-10;
-    if (aInside) {
-      out.push(a);
-    }
-    if (aInside !== bInside && Math.abs(da) > 1e-10 && Math.abs(db) > 1e-10) {
-      const fraction = da / (da - db);
-      out.push({ x: a.x + (b.x - a.x) * fraction, y: a.y + (b.y - a.y) * fraction });
-    }
-  }
-  return out;
-}
-
 /** Filled triangles per mouth in layer order; empty at f = 0. */
 export function jetTriangles(
   jets: ShipJets,
@@ -416,51 +375,24 @@ export function jetTriangles(
   const sy = display.displayHeight / jets.frame;
   const ox = display.pivot.x * jets.frame;
   const oy = display.pivot.y * jets.frame;
-  const toDisplay = (x: number, y: number): Vec => ({ x: (x - ox) * sx, y: (y - oy) * sy });
+  const toDisplay = (x: number, y: number): Vec => ({
+    x: (x - ox) * sx,
+    y: (y - oy) * sy,
+  });
   const length = jetLength(jets, fraction);
   const triangles: JetTriangle[] = [];
   for (const mouth of mouths) {
-    const { axis, coreOutboard, half, occluders, outerCorner, rearClip } = mouth;
-    const coreOffset = coreOutboard ? coreOutboardOffset(jets.layers) : 0;
-    if (coreOffset === undefined) {
-      continue;
-    }
-    const groupWidth = outerCorner
-      ? jets.layers.reduce(
-          (width, layer) =>
-            layerAlpha(layer, fraction) > 0 ? Math.max(width, layer.width) : width,
-          0,
-        )
-      : 0;
-    if (outerCorner && !(groupWidth > 0)) {
-      continue;
-    }
-    const anchor = outerCorner
-      ? {
-          x: outerCorner.x - half.x * groupWidth,
-          y: outerCorner.y - half.y * groupWidth,
-        }
-      : mouth.anchor;
     const displayOccluders = display.includeOccluders
-      ? occluders?.map((polygon) => polygon.map(({ x, y }) => toDisplay(x, y)))
+      ? mouth.occluders?.map((polygon) => polygon.map(({ x, y }) => toDisplay(x, y)))
       : undefined;
-    for (const layer of jets.layers) {
+    for (const { layerIndex, points: clipped } of jetShapePolygons(
+      mouth,
+      jets.layers,
+      length,
+      fraction,
+    )) {
+      const layer = jets.layers[layerIndex]!;
       const alpha = layerAlpha(layer, fraction);
-      if (alpha <= 0) {
-        continue;
-      }
-      const hx = half.x * layer.width;
-      const hy = half.y * layer.width;
-      const tip = length * layer.length;
-      const offset = coreOutboard && layer.name === "core" ? coreOffset : 0;
-      const x = anchor.x + half.x * offset;
-      const y = anchor.y + half.y * offset;
-      const polygon = [
-        { x: x + hx, y: y + hy },
-        { x: x + axis.x * tip, y: y + axis.y * tip },
-        { x: x - hx, y: y - hy },
-      ];
-      const clipped = rearClip ? clipRear(rearClip, polygon) : polygon;
       for (let i = 1; i + 1 < clipped.length; i++) {
         const a = clipped[0]!,
           b = clipped[i]!,
