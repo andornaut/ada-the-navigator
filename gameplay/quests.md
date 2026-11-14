@@ -205,17 +205,19 @@ Landmarks beyond the existing 25000-world-unit galactic-center progress circle
 remain visible, scannable, chartable and available on the map. Their wider
 extent does not expand the mapping-progress or survey-area denominator.
 
-- An uncharted landmark is a point of interest for Penny's sense. As a survey's
-  target, it gets a direction indicator.
+- An uncharted landmark is a point of interest for Penny's sense. A survey's
+  target gets a direction indicator. The exact target of an actually displayed
+  Penny notice also gets its marker within 1500 world units: a question mark
+  until actual on-screen identification, then its matching real glyph, without
+  duplicate markers. Sensing and identification alone do not chart it.
 - Within the existing station Talk range of 160 world units, an uncharted
-  landmark offers Use (Scan), with the same nearby Use callout as stations.
-  Astra says "Fly closer, then press {useIcon} to scan it." The inline
-  `{useIcon}` is the actual Use control glyph, not visible placeholder text.
-- Only explicit Scan charts it and plays the existing "New place mapped."
-  conversation, committing chart, survey and achievement progress once.
-  Passable flyover, on-screen identification and Penny sensing do not chart it
-  or automatically grant a discovery reward. Already charted landmarks cannot
-  pay again. The map, indicator and interaction target stay consistent.
+  landmark offers Use (Scan), with the nearby Use callout. Only explicit Scan
+  charts it and plays the existing "New place mapped." conversation, committing
+  survey and achievement progress once. Passable flyover does not chart it or
+  grant a discovery reward; already charted landmarks cannot pay again.
+  [Rules](rules.md#interactions-and-navigation) defines the shared interaction
+  contract; [Penny's sense](rules.md#astra-and-penny-in-flight) defines marker
+  retention and the displayed-target contract.
 - Charted landmarks persist across flights and regeneration. Restart clears them.
 
 The original 12 landmarks retain their four names per kind exactly. New
