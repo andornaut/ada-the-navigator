@@ -133,6 +133,7 @@ describe("pacing simulation runs", () => {
       for (let x = -20; x < 20; x++) {
         for (let y = -20; y < 20; y++) {
           const plan = planChunk(CHUNK_CATALOG, {
+            asteroidDensity: CONTENT.tuning.flight.asteroidDensity,
             asteroids: { field: ASTEROID_FIELDS[1]!, shapes: [...ASTEROID_SHAPES.values()] },
             clearance: CONTENT.tuning.flight.shipRadius,
             galaxy: 1,

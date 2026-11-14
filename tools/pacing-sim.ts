@@ -458,6 +458,7 @@ export function generateChunk(
     }
   }
   const plan = planChunk(CHUNK_CATALOG, {
+    asteroidDensity: flight.asteroidDensity,
     asteroids: {
       field: byPosition(ASTEROID_FIELDS, galaxy),
       shapes: [...ASTEROID_SHAPES.values()],
