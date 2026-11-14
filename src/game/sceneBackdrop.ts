@@ -244,6 +244,7 @@ export function drawDecorations(
       BACKDROP_DEPTH.decorations,
       used,
     )
+      .setRenderNodeRole("BatchHandler", "BatchHandlerQuadSingle")
       .setPosition(item.x, item.y)
       .setOrigin(0.5, 0.5)
       .setDisplaySize(item.width, item.height)

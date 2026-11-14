@@ -24,6 +24,7 @@ function fixture() {
     setDisplaySize: vi.fn().mockReturnThis(),
     setOrigin: vi.fn().mockReturnThis(),
     setPosition: vi.fn().mockReturnThis(),
+    setRenderNodeRole: vi.fn().mockReturnThis(),
     setVertexRoundMode: vi.fn().mockReturnThis(),
     setVisible: vi.fn().mockReturnThis(),
   };
@@ -72,6 +73,10 @@ describe("production rare decoration drawing", () => {
     expect(f.scene.add.image).toHaveBeenCalledOnce();
     expect(f.image.setDisplaySize).toHaveBeenCalledWith(2200, 1650);
     expect(f.image.setAngle).toHaveBeenCalledWith(-18);
+    expect(f.image.setRenderNodeRole).toHaveBeenCalledWith(
+      "BatchHandler",
+      "BatchHandlerQuadSingle",
+    );
     expect(f.image.setDepth).toHaveBeenCalledWith(BACKDROP_DEPTH.decorations);
     expect(BACKDROP_DEPTH.decorations).toBeGreaterThan(BACKDROP_DEPTH.far);
     expect(BACKDROP_DEPTH.decorations).toBeLessThan(BACKDROP_DEPTH.planets);
