@@ -3,6 +3,7 @@ import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 import { detailCount, renderDetailQuantity } from "./detailQuantity.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createActions, createButton, createCard, isTap, setFooterAction } from "./modal.ts";
+import { createProse } from "./prose.ts";
 
 export interface ResourceDetails {
   readonly icon?: HTMLElement;
@@ -26,8 +27,7 @@ export function createResourceCard(
     title: "",
   });
   card.card.dataset.dialog = "resource";
-  const description = document.createElement("p");
-  description.className = "ada-prose";
+  const description = createProse();
   const quantity = document.createElement("div");
   quantity.hidden = true;
   const quests = createButton("", "secondary");
