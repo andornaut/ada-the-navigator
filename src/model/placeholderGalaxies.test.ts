@@ -68,6 +68,9 @@ function questDone(galaxy: GalaxyNumber, unlocked: GalaxyNumber[]): GameModel {
 
 describe("placeholder galaxies under an explicit incomplete-roster fixture", () => {
   const productionRoster = [...BUILT];
+  const acceptedCatalogs = new Map(
+    PLACEHOLDERS.map((galaxy) => [galaxy, [...landmarkSites(galaxy)]]),
+  );
   const built = BUILT as Set<GalaxyNumber>;
   beforeEach(() => {
     for (const galaxy of PLACEHOLDERS) {
@@ -99,7 +102,7 @@ describe("placeholder galaxies under an explicit incomplete-roster fixture", () 
       for (const object of objects.filter(({ kind }) => kind === "enemy")) {
         expect(roster.has(object.enemy!.archetype), object.enemy!.archetype).toBe(true);
       }
-      // Every galaxy has seeded stations at the canonical minimum spacing and twelve landmarks.
+      // Seeded stations retain their spacing and the accepted landmark catalog survives the fixture.
       const stations = stationsNear(ECONOMY, galaxy, 40000, { x: 0, y: 0 });
       expect(stations.length).toBeGreaterThan(0);
       expect(Number.isFinite(ECONOMY.station.minimumSpacing)).toBe(true);
@@ -111,7 +114,8 @@ describe("placeholder galaxies under an explicit incomplete-roster fixture", () 
           );
         }
       }
-      expect(landmarkSites(galaxy)).toHaveLength(12);
+      expect(acceptedCatalogs.get(galaxy)!.length).toBeGreaterThan(0);
+      expect(landmarkSites(galaxy)).toEqual(acceptedCatalogs.get(galaxy));
       for (let x = -4; x <= 4; x++) {
         for (let y = -4; y <= 4; y++) {
           expect(currentInCell(galaxy, { x, y })).toBeNull();

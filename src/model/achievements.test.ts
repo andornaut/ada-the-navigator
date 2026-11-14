@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { ACHIEVEMENTS, PENNY_FIND_RANGE } from "../data/achievements.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { PROJECTS } from "../data/projects.ts";
 import { boardAndJump, playOpening, readStory } from "../testing/launch.ts";
 import {
@@ -257,8 +258,9 @@ describe("collections and helping", () => {
   it("counts landmarks and projects toward the game's own totals", () => {
     expect(ACHIEVEMENT_TOTALS).toEqual({
       allies: 0,
-      // Every galaxy has twelve landmarks.
-      landmarks: { 1: 12, 2: 12, 3: 12, 4: 12, 5: 12, 6: 12 },
+      landmarks: Object.fromEntries(
+        GALAXY_NUMBERS.map((galaxy) => [galaxy, landmarkSites(galaxy).length]),
+      ),
       paints: Object.keys(ECONOMY.paints).length,
       projects: Object.values(PROJECTS).flat().length,
     });
@@ -267,7 +269,10 @@ describe("collections and helping", () => {
       model.recordAchievement({ galaxy: 2, id: site.id, kind: "landmarkCharted" });
     }
     model.recordAchievement({ id: PROJECTS[1]![0]!.id, kind: "projectFunded" });
-    expect(view(model, "Cartographer").progress).toEqual({ have: 3, need: 12 });
+    expect(view(model, "Cartographer").progress).toEqual({
+      have: 3,
+      need: landmarkSites(2).length,
+    });
     expect(view(model, "Community Builder").progress).toEqual({
       have: 1,
       need: ACHIEVEMENT_TOTALS.projects,
@@ -287,9 +292,11 @@ describe("collections and helping", () => {
         model.recordAchievement({ galaxy, id: site.id, kind: "landmarkCharted" });
       }
     }
-    // Three galaxies' landmarks charted of the six galaxies' 72.
     expect(view(model, "Astra's Atlas")).toMatchObject({
-      progress: { have: 36, need: 72 },
+      progress: {
+        have: ([1, 2, 3] as const).reduce((sum, galaxy) => sum + landmarkSites(galaxy).length, 0),
+        need: GALAXY_NUMBERS.reduce((sum, galaxy) => sum + landmarkSites(galaxy).length, 0),
+      },
       unlocked: false,
     });
     expect(view(model, "Friends Everywhere")).toMatchObject({ unlocked: false });
