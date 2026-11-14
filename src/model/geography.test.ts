@@ -78,9 +78,14 @@ function retained(flight: FlightState): SpaceObject[] {
 }
 
 describe("regenerating ordinary chunks and persistent notables", () => {
-  it.each(["station:1,0", "station:infill:1,0"])(
-    "regenerates untouched %s on revisit while preserving discovery and greeting saves",
-    (id) => {
+  it.each([
+    ["station:1,0", false],
+    ["station:1,0", true],
+    ["station:infill:1,0", false],
+    ["station:infill:1,0", true],
+  ] as const)(
+    "regenerates untouched %s after save/Continue (previous archive=%s)",
+    (id, archived) => {
       const model = new GameModel(CONTENT);
       model.state.prologueSeen = true;
       model.startGalaxy(1);
@@ -102,11 +107,24 @@ describe("regenerating ordinary chunks and persistent notables", () => {
       syncFlightRegion(CONTENT, flight);
       expect(flight.objects.some((object) => object.id === id)).toBe(false);
       expect(flight.world.notables).not.toHaveProperty(id);
+      // A prior save can already contain the canonical object from the former archive policy.
+      if (archived) {
+        flight.world.notables[id] = structuredClone(expected);
+      }
       const loaded = relaunch(CONTENT, model.save());
       expect(loaded.state.progress[1].stations).toContain(id);
       expect(loaded.state.progress[1].greetings[id]).toBe(visits);
       expect(ensureStation(CONTENT, id, loaded.state.flight!)).toEqual(expected);
       expect(loaded.state.progress[1].greetings[id]).toBe(visits);
+      expect(loaded.state.flight!.world.notables).not.toHaveProperty(id);
+      loaded.teleport(id);
+      loaded.interact();
+      expect(loaded.state.docked).toBe(id);
+      expect(loaded.state.progress[1].greetings[id]).toBe(visits! + 1);
+      loaded.undock();
+      loaded.state.flight!.player = { ...flight.player };
+      syncFlightRegion(CONTENT, loaded.state.flight!);
+      expect(loaded.state.flight!.world.notables).not.toHaveProperty(id);
     },
   );
 
