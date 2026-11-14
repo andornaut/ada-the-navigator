@@ -154,7 +154,11 @@ ${UI_SCOPE} .ada-achievement-pager{
   align-items:center;
   column-gap:${units(SPACING.gap)}
 }
+${UI_SCOPE} .ada-achievement-pager > [data-action=achievements-previous]{grid-column:1;grid-row:1}
+${UI_SCOPE} .ada-achievement-pager > [data-action=achievements-next]{grid-column:3;grid-row:1}
 ${UI_SCOPE} .ada-achievement-pager > p{
+  grid-column:2;
+  grid-row:1;
   margin:0;
   color:${TEXT_TOKENS.supporting}
 }
@@ -238,6 +242,7 @@ export function createAchievementsCard(
     perPage = columns * achievementRows((modal.clientHeight - down) / unit);
   };
   const render = () => {
+    const focused = document.activeElement;
     if (!modal.hidden) {
       measure();
     }
@@ -252,20 +257,13 @@ export function createAchievementsCard(
     );
     pager.hidden = pages === 1;
     pageCount.textContent = fillPage(labels.page, page + 1, pages);
-    // An end of the list shows the disabled face but stays focusable, as other cards' do.
-    for (const [button, unavailable] of [
-      [previous, page === 0],
-      [next, page === pages - 1],
-    ] as const) {
-      button.classList.toggle("ada-unavailable", unavailable);
-      if (unavailable) {
-        button.setAttribute("aria-disabled", "true");
-      } else {
-        button.removeAttribute("aria-disabled");
-      }
-    }
+    previous.hidden = page === 0;
+    next.hidden = page === pages - 1;
     if (!modal.hidden) {
       card.fit();
+      if ((focused === previous && previous.hidden) || (focused === next && next.hidden)) {
+        focusTarget(!previous.hidden ? previous : !next.hidden ? next : card.close);
+      }
     }
   };
   window.addEventListener(VIEW_SCALE_EVENT, render);
@@ -282,10 +280,16 @@ export function createAchievementsCard(
     options.onOpenChange(open);
   };
   previous.addEventListener("click", () => {
+    if (previous.hidden) {
+      return;
+    }
     page = Math.max(0, page - 1);
     render();
   });
   next.addEventListener("click", () => {
+    if (next.hidden) {
+      return;
+    }
     page = Math.min(achievementPages(entries.length, perPage) - 1, page + 1);
     render();
   });
