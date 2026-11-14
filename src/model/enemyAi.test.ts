@@ -677,7 +677,7 @@ describe("enemy ship physics and hull rotation", () => {
     expect(pick("frigate")).toEqual({ behaviour: "siege", engagement: 500, hp: 10, sizeRatio: 4 });
     expect(pick("capital")).toEqual({ behaviour: "siege", engagement: 750, hp: 18, sizeRatio: 5 });
     expect(enemyCatalog.retaliator.fire).toMatchObject({
-      angles: [-20, 0, 20],
+      angles: [-8, 0, 8],
       interval: 2.2,
       weapon: "multiLaser",
     });

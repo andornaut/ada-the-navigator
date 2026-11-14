@@ -867,14 +867,8 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   bought at shops or found as ammo pack drops (see
   [Economy](economy.md#ammunition)).
 - Weapon order (Laser, Multi-Laser, Rapid Missile, Heavy Missile, Scattershot,
-  Phaser) is also the order of power and rarity: each later weapon costs more,
-  drops less often, gets fewer seconds of fire per ammo pack and generally deals
-  more single-target damage per second at level 1 (Laser 3.3, Multi-Laser 2.3
-  per bolt and 7 with all 3 bolts, Rapid Missile 5, Heavy Missile 5, Scattershot 6.0 with
-  every dot hitting, Phaser 6.5). Slower weapons deal more damage per hit. The
-  later weapons are situational, each with a limit that offsets its damage:
-  Heavy Missile fires slowly, Scattershot works only up close and Phaser fires
-  slowly. Every weapon stays worth using.
+  Phaser) is also the order used by inventory and shops. Each weapon has its own
+  damage, rate, spread and reach; the canonical values below govern combat.
 - Laser is the starter weapon. The other weapons are Multi-Laser, Rapid
   Missile, Heavy Missile, Scattershot and Phaser, bought at station shops or found as rare drops, one
   more unlocked in each galaxy along the route; see
@@ -883,43 +877,41 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   [Economy](economy.md#earning-stardust)). A new weapon from it is equipped at
   once unless the switch wait is running, when it is added without equipping;
   other owned weapons are kept.
-- Every weapon and the shield have three levels. For most weapons each level
-  multiplies effective output (damage times fire rate times how often it hits)
-  by about 1.5, so level 3 is about 2.25 times level 1; Rapid Missile and
-  Multi-Laser gain about 1.2 to 1.33 times per level. Single-target output meets
-  those steps on its own; reach and blast stay fixed at every level. The
-  shield's capacity is 10, 15 and 20, so level 3 holds 2 times level 1. Each
-  weapon grows along its own dimensions:
+- Every weapon and the shield have three levels. The shield's capacity is 10,
+  15 and 20. Weapons grow only along these dimensions:
   - Laser: damage, fire rate and bolt speed: every 0.30, 0.25, 0.20 s, dealing 1,
     1.25 and 1.5 times Laser damage.
-  - Multi-Laser: a fan of bolts evenly spaced across a fixed 40 degrees, 3 at
-    level 1 (-20, 0 and 20 degrees), then 4, then 5, every 0.30 s. Each bolt deals a fixed 0.7 times Laser damage;
+  - Multi-Laser: a fan of bolts evenly spaced across a fixed 16 degrees, 3 at
+    level 1 (-8, 0 and 8 degrees), then 4, then 5, every 0.30 s. Each bolt deals a fixed 0.7 times Laser damage;
     levels add only bolts. Its bolts are slower than Laser's at the same level.
-  - Rapid Missile: quick straight missiles with a small blast (25) and a fixed
+  - Rapid Missile: quick straight missiles with a small blast (30) and a fixed
     1.5 times Laser damage; levels grow its fire rate (every 0.30, 0.25, 0.20 s)
     and missile speed.
-  - Heavy Missile: one slow straight missile with a large blast (radius 50),
-    every 2.0 s at every level; levels grow only its damage (10, 15, 22.5 times
-    Laser damage). Rapid Missile is faster at every
-    level, in missile speed and fire rate, and matches Heavy Missile's damage
-    per second at level 1 (5); Heavy Missile deals more damage per hit at every
-    level, a large blast, and more damage per second at levels 2 and 3 (7.5
-    against 6, 11.25 against 7.5).
+  - Heavy Missile: one slow straight missile with a large blast (radius 60),
+    every 2.0 s at every level; levels grow only its damage (8, 12, 16 times
+    Laser damage). Rapid Missile remains faster at every level. Heavy Missile
+    deals 4, 6 and 8 Laser damage per second at levels 1, 2 and 3.
   - Scattershot: the close-range weapon, a shotgun of visual dots across -30 to
     30 degrees, 7 at level 1, then 9, then 11, one volley every 1.0 s. Its range
     is a fixed 100 world units on every device, and levels add dots. Up
     close every dot hits; toward its range the spread covers more area but fewer
-    dots hit. A level 1 volley deals 6 times Laser damage when every dot hits
-    (about 0.86 per dot); levels 2 and 3 share 1.5 and 2.25 times that volley
-    across their dots. Dots do not apply damage over time.
+    dots hit. Each pellet deals 0.8, 1 and 1.2 times Laser damage at levels 1,
+    2 and 3. Dots do not apply damage over time.
   - Phaser: the long-range weapon, a hitscan beam. Each shot hits instantly
-    along the aim from the ship out to a fixed 370 world units at every level,
-    enough to cover the whole play view in any direction, stopping at the first
-    enemy or obstacle it meets, then shows briefly as a visible beam. It fires
-    once every 1.0 s and deals 6.5 times Laser damage to the enemy it hits;
-    levels grow only its damage (6.5, 9.75, 14.625).
-- A missile, Ada's or an enemy's, explodes when it touches a ship it can hit or
-  an obstacle, or at the end of its reach. Its blast damages every enemy within its radius, never Ada. An enemy
+    along the aim to the fire-time rounded coverage boundary at every level,
+    stopping at the first enemy or obstacle it meets, then shows briefly as a visible beam. It fires
+    once every 1.0 s and deals 13/3 times Laser damage to the enemy it hits;
+    levels grow only its damage (13/3, 6.5, 9.75).
+- Rapid and Heavy Missiles have a full collision width of 12 world units
+  (radius 6). Phaser also has a full hit width of 12 world units (radius 6),
+  with its visible beam scaled from that same canonical width.
+- A missile, Ada's or an enemy's, explodes once when it touches a ship it can hit,
+  a rock, resource rock, debris or an armed mine, or at the end of its reach.
+  Stations and landmarks do not consume projectiles. The primary target takes
+  direct damage once; the blast does not apply the same damage to it again.
+- Projectile impact feedback and missile blast origins use the drawn contact
+  edge on the facing side of the target. Whole-object destruction bursts remain
+  at the object's pivot. A friendly blast damages enemies within its radius, never Ada. An enemy
   missile's blast damages Ada, never enemies.
 - Damage and hit points share one unit: 1 damage removes 1 HP, and a level 1
   Laser shot deals 1 damage. Enemies fire the same weapons, always at level 1
@@ -927,12 +919,12 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   weapons; each enemy
   keeps its own cadence, and enemy projectiles fly at 0.6 times Ada's level 1
   speed for the weapon (see [Ships](ships.md#enemy-weapons)). An enemy Heavy
-  Missile hit (10) can empty a full base shield, so it fires rarely.
+  Missile hit (8) removes 8 HP from a base shield, so it fires rarely.
 - Laser bolts travel at 500, 600 and 700 world units per second at weapon
-  levels 1, 2 and 3; Multi-Laser bolts at 400, 500 and 600. Both reach a fixed 370 world units at
-  every level, as far as Phaser: past the play view's edges straight left,
-  right, up and down (about 255) and its corners (about 360); flight time
-  follows speed. Rapid Missile flies at 500, 600 and
+  levels 1, 2 and 3; Multi-Laser bolts at 400, 500 and 600. Ada's bolts and Phaser use the same fire-time rounded coverage envelope,
+  half-width 380 and half-height 260 at the 720 x 360 base view. The canonical
+  shape scales with the game area; its centre and heading range are captured
+  once when firing. Bolt lifetime follows weapon speed. Rapid Missile flies at 500, 600 and
   700, and Heavy Missile at a fixed 400; both missiles reach a fixed 220 at every
   level, so a missile that hits nothing explodes on screen. Enemy missiles share
   this reach. Scattershot dots fly at 600.

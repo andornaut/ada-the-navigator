@@ -1,4 +1,4 @@
-import { wreckId } from "../model/flight.ts";
+import { activeProjectileImpacts, wreckId } from "../model/flight.ts";
 import { archivedObjectIds } from "../model/geography.ts";
 import type { GameState, Vec } from "../model/types.ts";
 
@@ -61,7 +61,10 @@ export class ModelFeedback {
       deposited: state.progress[flight.galaxy].deposited,
       destroyedEnemies: state.progress[flight.galaxy].destroyedEnemies,
       galaxy: flight.galaxy,
-      impacts: new Set(flight.shots.flatMap((shot) => shot.hitIds.map((id) => `${shot.id}:${id}`))),
+      impacts: new Set([
+        ...flight.shots.flatMap((shot) => shot.hitIds.map((id) => `${shot.id}:${id}`)),
+        ...activeProjectileImpacts(flight).map((impact) => impact.id),
+      ]),
       objects: new Map(
         flight.objects.map((object) => [
           object.id,
@@ -84,6 +87,10 @@ export class ModelFeedback {
       this.pulses.length = 0;
       return [];
     }
+    const contactFor = (id: string) =>
+      activeProjectileImpacts(flight).findLast(
+        (impact) => impact.targetId === id && !previous.impacts.has(impact.id),
+      );
     const events = new Set<FeedbackKind>();
     const emit = (kind: FeedbackKind, point: Vec) => {
       events.add(kind);
@@ -130,7 +137,11 @@ export class ModelFeedback {
         disabled ||= oldHp !== undefined && oldHp > 0 && hp <= 0;
       }
       if (hit) {
-        destroyed(id, disabled || object.hp <= 0 ? "disabled" : "hit", object.point);
+        destroyed(
+          id,
+          disabled || object.hp <= 0 ? "disabled" : "hit",
+          contactFor(id) ?? object.point,
+        );
       }
     }
     let removedDestroyed = Math.max(0, next.destroyedEnemies - previous.destroyedEnemies);
@@ -143,11 +154,12 @@ export class ModelFeedback {
         destroyed(id, "disabled", before.point);
         removedDestroyed--;
       } else if (
+        contactFor(id) ||
         flight.shots.some(
           (shot) => shot.hitIds.includes(id) && !previous.impacts.has(`${shot.id}:${id}`),
         )
       ) {
-        emit("hit", before.point);
+        emit("hit", contactFor(id) ?? before.point);
       }
     }
     // Bound effects even when many objects take damage in one frame.

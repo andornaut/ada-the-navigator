@@ -514,14 +514,39 @@ export function glowingBeam(
       }
       return shapes;
     };
-    return [...steady(glow.colour, 4, glow.edgeAlpha * a), ...steady(cream, 2, a)];
+    return [
+      ...steady(glow.colour, BEAM.halfWidth * 2, glow.edgeAlpha * a),
+      ...steady(cream, BEAM.halfWidth, a),
+    ];
   }
   const { a, w } = beamKeys(t);
   const [start, end] = glow.glow.width;
+  const widthScale = (BEAM.halfWidth * 2) / AMBER_BEAM_GLOW.glow.width[0];
   return [
-    ...beamLayer(glow.colour, along, length, [start * w, end * w], glow.glow.alpha * a, fade),
-    ...beamLayer(cream, along, length, [4 * w, 2.4 * w], 0.95 * a, fade),
-    ...beamLayer(white, along, length, [1.8 * w, w], a, fade),
+    ...beamLayer(
+      glow.colour,
+      along,
+      length,
+      [start * widthScale * w, end * widthScale * w],
+      glow.glow.alpha * a,
+      fade,
+    ),
+    ...beamLayer(
+      cream,
+      along,
+      length,
+      [BEAM.halfWidth * w, BEAM.halfWidth * 0.6 * w],
+      0.95 * a,
+      fade,
+    ),
+    ...beamLayer(
+      white,
+      along,
+      length,
+      [BEAM.halfWidth * 0.45 * w, BEAM.halfWidth * 0.25 * w],
+      a,
+      fade,
+    ),
     {
       alpha: glow.bloom.alpha * a,
       at: from,

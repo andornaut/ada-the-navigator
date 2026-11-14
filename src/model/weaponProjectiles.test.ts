@@ -71,7 +71,6 @@ function beam(objects: SpaceObject[], level = 1): FlightState {
   stepFlight(CONTENT, 1 / 60, right, flight);
   return flight;
 }
-const reach = (enemy: number) => enemy + BEAM.halfWidth;
 /** A retaliator's drawn hull on the world plane, from its position. */
 const retaliatorHull = () => worldParts(enemyHull(retaliator("probe", 0, 0).enemy!)!);
 /**
@@ -108,9 +107,9 @@ describe("Phaser hitscan beam", () => {
   const STURDY = 30;
   const sturdy = (id: string, x: number, y: number) => retaliator(id, x, y, STURDY);
 
-  it("strikes only the nearest enemy along its line, for 6.5x Laser damage", () => {
+  it("strikes only the nearest enemy along its line, for 13/3x Laser damage", () => {
     const flight = beam([sturdy("far", 200, nose.y), sturdy("near", 100, nose.y)]);
-    expect(hp(flight, "near")).toBe(STURDY - 6.5);
+    expect(hp(flight, "near")).toBe(STURDY - 13 / 3);
     expect(hp(flight, "far")).toBe(STURDY);
     expect(flight.shots.filter((shot) => !shot.enemy)).toHaveLength(0);
     expect(flight.fireCooldown).toBeCloseTo(1, 9);
@@ -122,8 +121,8 @@ describe("Phaser hitscan beam", () => {
       { hp: 10, id: "rock", kind: "rock", radius: 20, x: 80, y: nose.y },
     ]);
     expect(hp(flight, "behind")).toBe(STURDY);
-    expect(hp(flight, "rock")).toBe(10 - 6.5);
-    expect(activeBeamFlashes(flight)[0]!.to.x).toBeCloseTo(80 - reach(20), 9);
+    expect(hp(flight, "rock")).toBe(10 - 13 / 3);
+    expect(activeBeamFlashes(flight)[0]!.to.x).toBeCloseTo(80 - 20, 9);
   });
 
   it("grazes an enemy's drawn hull within the beam half-width and misses one just beyond it", () => {
@@ -135,15 +134,15 @@ describe("Phaser hitscan beam", () => {
     );
     const edge = nose.y - top + BEAM.halfWidth;
     const grazed = beam([sturdy("enemy", 150, edge - 0.5)]);
-    expect(hp(grazed, "enemy")).toBe(STURDY - 6.5);
+    expect(hp(grazed, "enemy")).toBe(STURDY - 13 / 3);
     const missed = beam([sturdy("enemy", 150, edge + 0.5)]);
     expect(hp(missed, "enemy")).toBe(STURDY);
   });
 
   it.each([
-    [1, playerRange, 6.5],
-    [2, playerRange, 9.75],
-    [3, playerRange, 14.625],
+    [1, playerRange, 13 / 3],
+    [2, playerRange, 6.5],
+    [3, playerRange, 9.75],
   ])("reaches %i: range %f from the nose, damage %f", (level, range, damage) => {
     // The farthest hull the beam's end still reaches within its half-width.
     const end = { x: ahead(range), y: nose.y };
@@ -152,22 +151,18 @@ describe("Phaser hitscan beam", () => {
     const struck = beam([sturdy("enemy", edge, nose.y)], level);
     expect(hp(struck, "enemy")).toBe(STURDY - damage);
     expect(hp(beam([sturdy("enemy", edge + 1, nose.y)], level), "enemy")).toBe(STURDY);
-    // From level 2 one shot destroys a retaliator's own 8 hit points; level 1's 6.5 does not.
-    expect(alive(beam([retaliator("enemy", edge, nose.y)], level), "enemy")).toBe(level === 1);
+    // Only level 3 exceeds a retaliator's own 8 hit points.
+    expect(alive(beam([retaliator("enemy", edge, nose.y)], level), "enemy")).toBe(level < 3);
   });
 
   it("flashes from the nose to the hit point, or to full range on a miss, spark included", () => {
     const hitFlight = beam([retaliator("enemy", 100, nose.y)]);
     const flash = activeBeamFlashes(hitFlight)[0]!;
     expect(flash.from).toEqual(nose);
-    // It ends where the beam first meets the drawn hull, refined in 2-unit steps.
-    const before = edgeOf(
-      (t) => !beamTouches({ x: 100, y: nose.y }, { x: nose.x + t, y: nose.y }),
-      100 - nose.x,
-    );
-    expect(flash.to.x).toBeGreaterThanOrEqual(nose.x + before - 1e-6);
-    expect(flash.to.x).toBeLessThanOrEqual(nose.x + before + 2);
-    expect(flash.to.y).toBeCloseTo(nose.y, 9);
+    // The spark sits on the actual drawn hull surface, rather than the inflated beam ray.
+    const target = retaliator("probe", 100, nose.y);
+    expect(outlineContact(enemyHull(target.enemy!)!, target, flash.to, 0.01)).not.toBeNull();
+    expect(flash.to.x).toBeLessThan(target.x);
     expect(flash.hit).toBe(true);
     const miss = beam([]);
     expect(activeBeamFlashes(miss)[0]!.to.x).toBeCloseTo(ahead(playerRange), 9);
@@ -186,11 +181,11 @@ describe("Phaser hitscan beam", () => {
     const collisionDamage = CONTENT.tuning.shieldMax - flight.shield;
     expect(collisionDamage).toBe(1);
     // Subtract the admitted bump to verify the beam's damage independently.
-    expect(10 - collisionDamage - hp(flight, "rock")!).toBe(6.5);
+    expect(10 - collisionDamage - hp(flight, "rock")!).toBeCloseTo(13 / 3);
     const flash = activeBeamFlashes(flight)[0]!;
     const from = nosePoint({ x: 1, y: 0 }, flight.player);
     expect(flash.from).toEqual(from);
-    expect(flash.to).toEqual(from);
+    expect(Math.hypot(flash.to.x - 12, flash.to.y - nose.y)).toBeCloseTo(2, 5);
   });
 
   it("hits once per shot and keeps no projectile or save state", () => {
@@ -202,7 +197,7 @@ describe("Phaser hitscan beam", () => {
     for (let slice = 0; slice < 60; slice++) {
       stepFlight(CONTENT, 1 / 60, right, flight);
     }
-    expect(hp(flight, "enemy")).toBe(STURDY - 6.5);
+    expect(hp(flight, "enemy")).toBe(STURDY - 13 / 3);
     expect(flight.shots.filter((shot) => !shot.enemy)).toHaveLength(0);
     expect(model.save()).not.toContain("flash");
   });
@@ -282,7 +277,7 @@ describe("integrated weapon projectiles", () => {
     expect(alive(flight, "inside")).toBe(false);
     expect(hp(flight, "outside")).toBe(8);
     expect(flight.shield).toBe(shield);
-    expect(activeBlastFlashes(flight)).toMatchObject([{ radius: 50 }]);
+    expect(activeBlastFlashes(flight)).toMatchObject([{ radius: 60 }]);
   });
 
   it("lets one blast flash stand in for the destruction flash of every enemy it destroys", () => {
@@ -333,7 +328,7 @@ describe("integrated weapon projectiles", () => {
     flight.fireCooldown = 100;
     flight.objects = [{ hp: 3, id: "target", kind: "rock", radius: 4, x: 30, y: 0 }];
     stepFlight(CONTENT, 0.1, idle, flight);
-    expect(flight.objects[0]!.hp).toBeCloseTo(3 - 6 / 7);
+    expect(flight.objects[0]!.hp).toBeCloseTo(3 - 0.8);
     expect(flight.shots).toHaveLength(0);
   });
 

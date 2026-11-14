@@ -14,8 +14,8 @@ const context: VolleyContext = {
 
 describe("pure player projectile volleys", () => {
   it.each([
-    ["rapidMissile", 0.3, 500 / 600, 1.5, 25],
-    ["heavyMissile", 2, 400 / 600, 10, 50],
+    ["rapidMissile", 0.3, 500 / 600, 1.5, 30],
+    ["heavyMissile", 2, 400 / 600, 8, 60],
   ] as const)(
     "plans one straight %s at interval %f, speed x%f, damage x%f and blast %i",
     (weapon, interval, speed, damage, blast) => {
@@ -46,9 +46,9 @@ describe("pure player projectile volleys", () => {
   });
 
   it.each([
-    [1, [-20, 0, 20], [-30, -20, -10, 0, 10, 20, 30]],
-    [2, [-20, -20 / 3, 20 / 3, 20], [-30, -22.5, -15, -7.5, 0, 7.5, 15, 22.5, 30]],
-    [3, [-20, -10, 0, 10, 20], [-30, -24, -18, -12, -6, 0, 6, 12, 18, 24, 30]],
+    [1, [-8, 0, 8], [-30, -20, -10, 0, 10, 20, 30]],
+    [2, [-8, -8 / 3, 8 / 3, 8], [-30, -22.5, -15, -7.5, 0, 7.5, 15, 22.5, 30]],
+    [3, [-8, -4, 0, 4, 8], [-30, -24, -18, -12, -6, 0, 6, 12, 18, 24, 30]],
   ])("fans level %i Multi-Laser bolts and Scattershot dots evenly", (level, bolts, dots) => {
     const multi = WEAPON_CATALOG.multiLaser[level - 1]!;
     const scatter = WEAPON_CATALOG.scattershot[level - 1]!;
@@ -62,7 +62,7 @@ describe("pure player projectile volleys", () => {
 
   it("keeps laser and scatter fans at their visible offsets for cardinal and diagonal world headings", () => {
     const cases = [
-      { definition: WEAPON_CATALOG.multiLaser[0], degrees: [-20, 0, 20] },
+      { definition: WEAPON_CATALOG.multiLaser[0], degrees: [-8, 0, 8] },
       { definition: WEAPON_CATALOG.scattershot[0], degrees: [-30, -20, -10, 0, 10, 20, 30] },
     ];
     for (const { definition, degrees } of cases) {
@@ -115,7 +115,7 @@ describe("pure player projectile volleys", () => {
           const dx = shot.velocity.x * shot.life;
           const dy = shot.velocity.y * shot.life;
           expect(Math.hypot(dx, dy)).toBeCloseTo(100);
-          expect(shot.damage).toBeCloseTo((context.baseDamage * 6) / 7);
+          expect(shot.damage).toBeCloseTo(context.baseDamage * 0.8);
           expect(shot.projectile).toBe("dot");
           expect(shot.fade?.projectedRange).toBe(100);
         }

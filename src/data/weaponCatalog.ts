@@ -8,7 +8,7 @@ export interface WeaponDefinition {
   projectileKind: "bolt" | "missile" | "dot" | "beam";
   /** Visible angular offsets in the projected aim plane, before unprojection. */
   anglesDegrees: readonly number[];
-  /** World units a projectile travels before it vanishes; null for the base lifetime. */
+  /** Weapon-relative world range before expiry; null for the base lifetime. */
   rangeWorld: number | null;
   fadeStartFraction: number | null;
   /** World radius of a missile's blast, which damages every enemy in it; null without one. */
@@ -26,7 +26,12 @@ export const WEAPON_LEVEL_COUNT = 3;
  * The beam half-width that lets a near miss graze, how long its flash shows and how long a hit's
  * spark shows (art/weapons.md "Phaser beam").
  */
-export const BEAM = { flashSeconds: 0.15, halfWidth: 4, sparkSeconds: 0.16 } as const;
+export const BEAM = { flashSeconds: 0.15, halfWidth: 6, sparkSeconds: 0.16 } as const;
+
+/** Full missile collision width is 12 world units. */
+export const MISSILE_HIT_RADIUS = 6;
+/** The enemy-only charged lance retains its existing collision width. */
+export const LANCE_HIT_RADIUS = 4;
 
 const projectile = {
   beamRange: null,
@@ -40,27 +45,26 @@ export const BASE_PROJECTILE_SPEED = 600;
 /** The speed ratio that flies a projectile at `worldSpeed` world units per second. */
 const flies = (worldSpeed: number) => worldSpeed / BASE_PROJECTILE_SPEED;
 /**
- * Laser and Multi-Laser bolts reach 370 world units at every level and speed, as far as the
- * Phaser: past the play view's edges and corners.
+ * Catalog fallback reach without Ada's snapshotted coverage, shared with enemy bolts.
  */
 const BOLT_REACH = 370;
-/** Rapid Missile damage per hit at every level: 5, 6 and 7.5 a second, tying Heavy at level 1. */
+/** Rapid Missile damage per hit at every level. */
 const RAPID_DAMAGE = 1.5;
 /** Rapid and Heavy Missiles reach 220 world units at every level and speed. */
 const MISSILE_REACH = 220;
 /** Heavy Missile's blast radius in world units, the same at every level. */
-const HEAVY_BLAST = 50;
-/** Phaser's beam reaches 370 world units at every level, across the play view. */
+const HEAVY_BLAST = 60;
+/** Enemy Phaser catalog range; Ada uses her snapshotted rounded coverage. */
 const PHASER_RANGE = 370;
 /** Scattershot dots travel 100 world units, its close range at every level. */
 const SCATTER_RANGE = 100;
-/** A level 1 Scattershot volley's damage, as Laser damage, when every dot hits. */
-const SCATTER_VOLLEY = 6;
+/** A level 1 Scattershot pellet's damage, as Laser damage. */
+const SCATTER_PELLET_DAMAGE = 0.8;
 const fan = (count: number, spread: number) =>
   Array.from({ length: count }, (_, index) => -spread + (2 * spread * index) / (count - 1));
 
 // Each baseline holds one weapon's values shared by its levels.
-const MULTI_LASER_SPREAD = 20;
+const MULTI_LASER_SPREAD = 8;
 const SCATTER_SPREAD = 30;
 const heavyMissileBase = {
   ...projectile,
@@ -89,14 +93,14 @@ const phaserBase = {
   ...projectile,
   anglesDegrees: [0],
   beamRange: PHASER_RANGE,
-  damageRatio: 6.5,
+  damageRatio: 6.5 * (2 / 3),
   intervalSeconds: 1,
   projectileKind: "beam",
 } as const;
 const rapidMissileBase = {
   ...projectile,
   anglesDegrees: [0],
-  blastRadius: 25,
+  blastRadius: 30,
   damageRatio: RAPID_DAMAGE,
   intervalSeconds: 0.3,
   projectileKind: "missile",
@@ -110,30 +114,23 @@ const scattershotBase = {
   rangeWorld: SCATTER_RANGE,
 } as const;
 
-/**
- * Provisional tuning: speed and damage ratios multiply the existing base values. Each level
- * multiplies effective output (damage x fire rate x hits per volley) by 1.5, so level 3 is
- * 2.25 times level 1, except Rapid Missile, whose fire rate alone takes it to 1.2 and 1.5 times
- * level 1, and Multi-Laser, whose bolt count alone takes it to 4/3 and 5/3; gameplay/rules.md
- * gives each weapon's growth dimensions. A fan's extra bolts or dots
- * count as hits; blast and beam range growth is a bonus on top.
- */
+/** Canonical weapon values; levels change only each weapon's approved growth dimensions. */
 export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
   // Slow and heavy (gameplay/rules.md): one missile every 2 s at every level, damage alone making
-  // each 1.5 step (10, 15 and 22.5 times Laser damage), with a 50 blast at every level. The
+  // each damage step (8, 12 and 16 times Laser damage), with a 60 blast at every level. The
   // missile flies 400 world units per second, reaching 220.
   heavyMissile: [
     {
       ...heavyMissileBase,
-      damageRatio: 10,
+      damageRatio: 8,
     },
     {
       ...heavyMissileBase,
-      damageRatio: 15,
+      damageRatio: 12,
     },
     {
       ...heavyMissileBase,
-      damageRatio: 22.5,
+      damageRatio: 16,
     },
   ],
   // Damage and fire rate each grow 1.25/1.2 then 1.5/1.5; the bolt flies 500, 600 and 700 world
@@ -158,7 +155,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
     },
   ],
   // Every 0.30 s, each bolt a fixed 0.7 times Laser damage; levels add only bolts, 3, 4 then 5
-  // across the same -20 to 20 fan. Its bolts fly 400, 500 and 600 world units per second,
+  // across the same -8 to 8 fan. Its bolts fly 400, 500 and 600 world units per second,
   // reaching 370 at each.
   multiLaser: [
     {
@@ -177,7 +174,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       speedRatio: flies(600),
     },
   ],
-  // The long-range weapon: once a second at 6.5 times Laser damage, its 370 range covering the
+  // The long-range weapon: once a second at 13/3 times Laser damage, its 370 range covering the
   // play view at every level; damage alone makes each 1.5 step.
   phaser: [
     {
@@ -211,24 +208,22 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       speedRatio: flies(700),
     },
   ],
-  // The close-range weapon: a volley a second within 100. A level 1 volley deals 6 times Laser
-  // damage when every dot hits; dots grow hits 9/7 then 11/7 across -30 to 30, and damage makes up
-  // the rest of the 1.5 and 2.25 times level 1 volley.
+  // One volley per second, with 7, 9 and 11 pellets at 0.8, 1 and 1.2 damage each.
   scattershot: [
     {
       ...scattershotBase,
       anglesDegrees: fan(7, SCATTER_SPREAD),
-      damageRatio: SCATTER_VOLLEY / 7,
+      damageRatio: SCATTER_PELLET_DAMAGE,
     },
     {
       ...scattershotBase,
       anglesDegrees: fan(9, SCATTER_SPREAD),
-      damageRatio: (SCATTER_VOLLEY * 1.5) / 9,
+      damageRatio: SCATTER_PELLET_DAMAGE * 1.25,
     },
     {
       ...scattershotBase,
       anglesDegrees: fan(11, SCATTER_SPREAD),
-      damageRatio: (SCATTER_VOLLEY * 2.25) / 11,
+      damageRatio: (SCATTER_PELLET_DAMAGE * 3) / 2,
     },
   ],
 };

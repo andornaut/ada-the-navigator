@@ -27,7 +27,13 @@ import { SCREEN } from "../data/screen.ts";
 import { SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { GalaxyNumber, GameContent, Weapon } from "../data/types.ts";
-import { BEAM, weaponAt, type WeaponDefinition } from "../data/weaponCatalog.ts";
+import {
+  BEAM,
+  LANCE_HIT_RADIUS,
+  MISSILE_HIT_RADIUS,
+  weaponAt,
+  type WeaponDefinition,
+} from "../data/weaponCatalog.ts";
 import { rollAsteroidLoot } from "./asteroidLoot.ts";
 import {
   ASTEROID_SHAPES,
@@ -109,7 +115,7 @@ import {
 } from "./drops.ts";
 import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
 import { landmarkSites } from "./landmarks.ts";
-import { MINE_REACH, mineSpin, mineTouches } from "./mineShape.ts";
+import { MINE_REACH, mineParts, mineSpin, mineTouches } from "./mineShape.ts";
 import {
   clearNeedleEnemies,
   ensureNeedleDebris,
@@ -123,6 +129,7 @@ import { nosePoint } from "./nose.ts";
 import { worldClearOfOreFields, worldOreFieldsNear } from "./oreFields.ts";
 import { orePickupSize, pickupOutline } from "./pickupBody.ts";
 import { planPlayerVolley, projectileReach } from "./playerProjectiles.ts";
+import { impactEntry, impactSurface } from "./projectileImpact.ts";
 import { sceneryImpact } from "./sceneryImpact.ts";
 import { rechargeShield } from "./shieldRecharge.ts";
 import { shipBody, shipCircleContact, shipNearSegment, shipTouches } from "./shipBody.ts";
@@ -2600,6 +2607,8 @@ const SHOT_PARTS: Parts = [
   ],
 ];
 
+const shotRadius = (shot: Shot) => (shot.projectile === "missile" ? MISSILE_HIT_RADIUS : 3);
+
 /** The mine's spin for collision, as drawn: still under reduced motion. */
 function spinOf(flight: FlightState, mine: Mine): number {
   return mineSpin(reducedMotions.get(flight) ?? false, Math.max(0, mine.age));
@@ -2645,20 +2654,44 @@ function stepMines(content: GameContent, dt: number, flight: FlightState): void 
 }
 
 /** Ada's shot pops each armed mine it touches that it has not; true once the shot is spent. */
-function strikeMines(shot: Shot, flight: FlightState): boolean {
+function strikeMines(
+  content: GameContent,
+  shot: Shot,
+  flight: FlightState,
+  events: FlightEvent[],
+): boolean {
   for (const mine of flight.mines) {
     if (
       armed(mine) &&
       !shot.hitIds.includes(mine.id) &&
-      mineTouches(
-        spinOf(flight, mine),
-        mine,
-        SHOT_PARTS,
-        worldPoint(flightWorldContext(flight), mine, shot),
-      )
+      (shot.projectile === "missile"
+        ? outlineContact(
+            mineParts(spinOf(flight, mine)),
+            mine,
+            worldPoint(flightWorldContext(flight), mine, shot),
+            MISSILE_HIT_RADIUS,
+          ) !== null
+        : mineTouches(
+            spinOf(flight, mine),
+            mine,
+            SHOT_PARTS,
+            worldPoint(flightWorldContext(flight), mine, shot),
+          ))
     ) {
       shot.hitIds.push(mine.id);
       mine.end = { age: 0, kind: "pop" };
+      if (shot.blast !== undefined) {
+        const contact = outlineContact(
+          mineParts(spinOf(flight, mine)),
+          mine,
+          worldPoint(flightWorldContext(flight), mine, shot),
+          shotRadius(shot),
+        );
+        const at = contact
+          ? impactSurface({ contact, projected: false, radius: shotRadius(shot) }, shot)
+          : shot;
+        blast(content, shot.damage, shot.blast, at, null, flight, events);
+      }
       if (!shot.piercing) {
         shot.life = 0;
         return true;
@@ -2779,12 +2812,14 @@ function shots(
     const travelTime = Math.min(elapsed, Math.max(0, shot.life));
     const steps = Math.max(1, Math.ceil((length(shot.velocity) * travelTime) / 5));
     for (let i = 0; i < steps && shot.life > 0; i++) {
+      const from = { x: shot.x, y: shot.y };
+      const radius = shotRadius(shot);
       const next = {
         x: shot.x + (shot.velocity.x * travelTime) / steps,
         y: shot.y + (shot.velocity.y * travelTime) / steps,
       };
       if (shot.enemy) {
-        const entry = needleChannelEntry({ radius: 3 }, flight, shot, next);
+        const entry = needleChannelEntry({ radius }, flight, shot, next);
         if (entry !== null) {
           shot.x += (next.x - shot.x) * entry;
           shot.y += (next.y - shot.y) * entry;
@@ -2800,23 +2835,24 @@ function shots(
           shot.life = 0;
           continue;
         }
-        const struck = touchesAda(flight, shot, 3);
-        const blocked = flight.objects.some(
+        const struck = touchesAda(flight, shot, radius);
+        const blocked = flight.objects.find(
           (object) =>
             SCENERY.includes(object.kind) &&
             object.hp > 0 &&
-            worldSceneryContact(
-              flightWorldContext(flight),
-              object,
-              shot,
-              3,
-              frameOf(flight, object),
-              drawnOf(flight, object),
-            ),
+            projectileSceneryContact(flight, object, shot, radius),
         );
         if (!struck && !blocked) {
           continue;
         }
+        const bodyContact = outlineContact(shipBody(flight.facing), flight.player, shot, radius);
+        const point = blocked
+          ? projectileContact(flight, blocked, shot, radius, from)
+          : bodyContact
+            ? impactSurface({ contact: bodyContact, projected: false, radius }, shot)
+            : shot;
+        shot.x = point.x;
+        shot.y = point.y;
         shot.life = 0;
         enemyImpact(content, shot, struck, flight);
         continue;
@@ -2825,10 +2861,10 @@ function shots(
         shot.life = 0;
         continue;
       }
-      if (strikeMines(shot, flight)) {
+      if (strikeMines(content, shot, flight, events)) {
         continue;
       }
-      strike(content, shot, flight, events);
+      strike(content, shot, flight, events, from);
     }
     // A missile still flying at the end of its reach explodes where it is.
     const reachEnd = shot.life > 0 && shot.life <= elapsed;
@@ -2865,6 +2901,86 @@ function enemyImpact(content: GameContent, shot: Shot, struck: boolean, flight: 
   }
 }
 
+/** Missile widths are world-space circles against the existing drawn scenery outlines. */
+function projectileSceneryContact(
+  flight: FlightState,
+  object: SpaceObject,
+  at: Vec,
+  radius: number,
+) {
+  const drawn = drawnOf(flight, object);
+  if (radius === MISSILE_HIT_RADIUS && drawn) {
+    const frame = frameOf(flight, object);
+    const image = worldPoint(flightWorldContext(flight), at, object);
+    return outlineContact(drawn.frames[frame] ?? drawn.frames[0]!, image, at, radius);
+  }
+  return worldSceneryContact(
+    flightWorldContext(flight),
+    object,
+    at,
+    radius,
+    frameOf(flight, object),
+    drawn,
+  );
+}
+
+/** The detected contact's surface, refined within the existing sampled movement segment. */
+function projectileContact(
+  flight: FlightState,
+  object: SpaceObject,
+  point: Vec,
+  radius: number,
+  from = point,
+  part?: string | null,
+): Vec {
+  const contactAt = (at: Vec) => {
+    if (object.kind !== "enemy") {
+      return projectileSceneryContact(flight, object, at, radius);
+    }
+    const local = worldPoint(flightWorldContext(flight), object, at);
+    const enemy = object.enemy;
+    const outlines = enemy
+      ? [
+          ...(part ? [enemyPartOutline(ROUTE_POSITION[flight.galaxy], enemy, part)] : []),
+          enemyHull(enemy),
+          ...enemy.hardpoints.map((part) =>
+            enemyPartOutline(ROUTE_POSITION[flight.galaxy], enemy, part.id),
+          ),
+        ]
+      : [];
+    for (const outline of outlines) {
+      const contact = outline && outlineContact(outline, object, local, radius);
+      if (contact) {
+        return contact;
+      }
+    }
+    return null;
+  };
+  const at = impactEntry(
+    (at) => contactAt(at) !== null,
+    worldPoint(flightWorldContext(flight), point, from),
+    point,
+  );
+  const contact = contactAt(at);
+  if (contact) {
+    return impactSurface(
+      {
+        contact,
+        projected:
+          object.kind !== "enemy" &&
+          radius !== MISSILE_HIT_RADIUS &&
+          drawnOf(flight, object) !== null,
+        radius,
+      },
+      at,
+    );
+  }
+  // Circle-only enemies use the same outward normal and overlap as their collision fallback.
+  const image = worldPoint(flightWorldContext(flight), at, object);
+  const normal = direction({ x: at.x - image.x, y: at.y - image.y });
+  return { x: image.x + normal.x * object.radius, y: image.y + normal.y * object.radius };
+}
+
 /**
  * Ada's shot strikes every enemy and obstacle it touches at its position that it has not struck,
  * until it is spent; a large hull only takes it at a live hardpoint.
@@ -2874,6 +2990,7 @@ function strike(
   shot: Shot,
   flight: FlightState,
   events: FlightEvent[],
+  from?: Vec,
 ): void {
   if (shot.damage === undefined) {
     return;
@@ -2885,23 +3002,20 @@ function strike(
       object.enemy?.salvaged ||
       shot.hitIds.includes(object.id) ||
       (object.kind === "enemy"
-        ? !enemyTouched(flight, ROUTE_POSITION[flight.galaxy], object, shot, 3)
-        : !worldSceneryContact(
-            flightWorldContext(flight),
-            object,
-            shot,
-            3,
-            frameOf(flight, object),
-            drawnOf(flight, object),
-          ))
+        ? !enemyTouched(flight, ROUTE_POSITION[flight.galaxy], object, shot, shotRadius(shot))
+        : !projectileSceneryContact(flight, object, shot, shotRadius(shot)))
     ) {
       continue;
     }
     shot.hitIds.push(object.id);
-    const part = hitPart(content, flight, partReach(content), 3, shot, object);
+    const part = hitPart(content, flight, partReach(content), shotRadius(shot), shot, object);
+    const at = projectileContact(flight, object, shot, shotRadius(shot), from, part);
+    const impacts = projectileImpacts.get(flight) ?? [];
+    impacts.push({ ...at, age: 0, id: `${shot.id}:${object.id}`, targetId: object.id });
+    projectileImpacts.set(flight, impacts);
     hit(content, shot.damage, part, object, flight, events);
     if (shot.blast !== undefined) {
-      blast(content, shot.damage, shot.blast, shot, object, flight, events);
+      blast(content, shot.damage, shot.blast, at, object, flight, events);
     }
     if (!shot.piercing) {
       shot.life = 0;
@@ -3179,6 +3293,16 @@ export interface BlastFlash extends Vec {
   radius: number;
   age: number;
 }
+export interface ProjectileImpact extends Vec {
+  readonly id: string;
+  readonly targetId: string;
+  age: number;
+}
+const projectileImpacts = new WeakMap<FlightState, ProjectileImpact[]>();
+/** Short-lived contact records survive consumed shots so feedback retains the actual hit point. */
+export function activeProjectileImpacts(flight: FlightState): readonly ProjectileImpact[] {
+  return projectileImpacts.get(flight) ?? [];
+}
 const blastFlashes = new WeakMap<FlightState, BlastFlash[]>();
 /** How long a blast shows: the longest blast effect, the Heavy Missile's 340 ms. */
 export const BLAST_FLASH_SECONDS = 0.34;
@@ -3194,6 +3318,14 @@ export function activeBlastFlashes(flight: FlightState): readonly BlastFlash[] {
 }
 
 function ageFlashes(dt: number, flight: FlightState): void {
+  const impacts = projectileImpacts.get(flight) ?? [];
+  for (const impact of impacts) {
+    impact.age += dt;
+  }
+  projectileImpacts.set(
+    flight,
+    impacts.filter((impact) => impact.age < 0.65),
+  );
   const beams = beamFlashes.get(flight);
   if (beams) {
     beams.forEach((flash) => (flash.age += dt));
@@ -3253,11 +3385,12 @@ function sceneryEntry(
   frame: number,
   drawn: Silhouette | null,
   object: SpaceObject,
+  halfWidth: number = BEAM.halfWidth,
 ): number | null {
   const imageObject = flight.topology
     ? { ...object, ...worldPoint(flightWorldContext(flight), origin, object) }
     : object;
-  const bound = sceneryBound(imageObject, BEAM.halfWidth, drawn);
+  const bound = sceneryBound(imageObject, halfWidth, drawn);
   const entry = rayCircle(origin, direction, range, imageObject, bound);
   if (entry === null || !drawn) {
     return entry;
@@ -3266,14 +3399,16 @@ function sceneryEntry(
   for (let at = entry; at <= exit; at = at < exit && at + 2 > exit ? exit : at + 2) {
     const point = { x: origin.x + direction.x * at, y: origin.y + direction.y * at };
     if (
-      worldSceneryContact(
-        flightWorldContext(flight),
-        imageObject,
-        point,
-        BEAM.halfWidth,
-        frame,
-        drawn,
-      )
+      halfWidth === BEAM.halfWidth
+        ? outlineContact(drawn.frames[frame] ?? drawn.frames[0]!, imageObject, point, halfWidth)
+        : worldSceneryContact(
+            flightWorldContext(flight),
+            imageObject,
+            point,
+            halfWidth,
+            frame,
+            drawn,
+          )
     ) {
       return at;
     }
@@ -3397,12 +3532,16 @@ function fireBeam(
     return;
   }
   const reach = struck ? struck.at : range;
+  const end = { x: origin.x + direction.x * reach, y: origin.y + direction.y * reach };
+  const contact = struck
+    ? projectileContact(flight, struck.object, end, BEAM.halfWidth, end, struck.part)
+    : end;
   const flashes = beamFlashes.get(flight) ?? [];
   flashes.push({
     age: 0,
     from: origin,
     hit: struck !== null,
-    to: { x: origin.x + direction.x * reach, y: origin.y + direction.y * reach },
+    to: contact,
   });
   beamFlashes.set(flight, flashes);
   if (struck) {
@@ -3462,7 +3601,13 @@ export function activeEnemyBeams(flight: FlightState): readonly EnemyBeam[] {
 }
 
 /** How far along a line from `origin` the first live obstacle stops it, within `range`. */
-function obstacleStop(origin: Vec, direction: Vec, range: number, flight: FlightState): number {
+function obstacleStop(
+  origin: Vec,
+  direction: Vec,
+  range: number,
+  flight: FlightState,
+  halfWidth: number = BEAM.halfWidth,
+): number {
   let stop = range;
   for (const object of flight.objects) {
     if (SCENERY.includes(object.kind) && object.hp > 0) {
@@ -3474,6 +3619,7 @@ function obstacleStop(origin: Vec, direction: Vec, range: number, flight: Flight
         frameOf(flight, object),
         drawnOf(flight, object),
         object,
+        halfWidth,
       );
       stop = entry === null ? stop : Math.min(stop, entry);
     }
@@ -3569,12 +3715,13 @@ function stepEnemyBeams(
       }
       beam.range = viewportWidth / projectedLength(beam.direction);
     }
-    const boundary = needleChannelEntry({ radius: BEAM.halfWidth }, flight, beam.muzzle, {
+    const halfWidth = beam.kind === "lance" ? LANCE_HIT_RADIUS : BEAM.halfWidth;
+    const boundary = needleChannelEntry({ radius: halfWidth }, flight, beam.muzzle, {
       x: beam.muzzle.x + beam.direction.x * beam.range,
       y: beam.muzzle.y + beam.direction.y * beam.range,
     });
     const stop = Math.min(
-      obstacleStop(beam.muzzle, beam.direction, beam.range, flight),
+      obstacleStop(beam.muzzle, beam.direction, beam.range, flight, halfWidth),
       boundary === null ? beam.range : beam.range * boundary,
     );
     let reach = stop;
@@ -3585,11 +3732,11 @@ function stepEnemyBeams(
           x: beam.muzzle.x + beam.direction.x * at,
           y: beam.muzzle.y + beam.direction.y * at,
         };
-        if (needleChannelContains({ radius: BEAM.halfWidth }, flight, point)) {
+        if (needleChannelContains({ radius: halfWidth }, flight, point)) {
           reach = at;
           break;
         }
-        if (touchesAda(flight, point, BEAM.halfWidth)) {
+        if (touchesAda(flight, point, halfWidth)) {
           reach = at;
           damage(content, beam.damage, flight);
           break;

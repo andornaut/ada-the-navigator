@@ -1,3 +1,4 @@
+import { BEAM } from "../data/weaponCatalog.ts";
 import type { Vec } from "../model/types.ts";
 import { type EffectShape, headingFactor, type LineShape, screenAngle } from "./weaponEffects.ts";
 
@@ -1083,7 +1084,27 @@ export function enemyPhaser(
   light: boolean,
   reducedMotion: boolean,
 ): EnemyEffect {
-  const spec = art.phaser;
+  const base = art.phaser;
+  const scale = (BEAM.halfWidth * 2) / base.layers[0]!.width[0];
+  const spec = {
+    ...base,
+    layers: base.layers.map((layer) => ({
+      ...layer,
+      width: layer.width.map((width) => width * scale) as [number, number],
+    })),
+    lightField: {
+      ...base.lightField,
+      glow: {
+        ...base.lightField.glow,
+        width: base.lightField.glow.width.map((width) => width * scale) as [number, number],
+      },
+    },
+    reducedMotion: {
+      ...base.reducedMotion,
+      edge: { ...base.reducedMotion.edge, width: BEAM.halfWidth * 2 },
+      line: { ...base.reducedMotion.line, width: BEAM.halfWidth },
+    },
+  };
   const { end, muzzle } = view;
   const t = view.ageMs;
   if (t < 0) {

@@ -315,9 +315,9 @@ describe("light-field rule", () => {
     const glow = light.slice(0, 3);
     expect(glow.every((shape) => shape.colour === INK)).toBe(true);
     expect(glow[1]).toMatchObject({
-      head: { alpha: 0.9 * a, width: 4 * w },
+      head: { alpha: 0.9 * a, width: 6 * w },
       kind: "taper",
-      tail: { alpha: 0.9 * a, width: 6.5 * w },
+      tail: { alpha: 0.9 * a, width: 9.75 * w },
     });
     const bloom = light.at(-3);
     expect(bloom).toEqual({ alpha: 0.6 * a, at: from, colour: INK, kind: "disc", radius: 5 * w });
@@ -326,15 +326,15 @@ describe("light-field rule", () => {
     expect(dark[0]!.colour).toBe(EFFECT_COLOURS.amber);
   });
 
-  it("draws the reduced-motion beam's 4 px edge in ink at 0.9", () => {
+  it("draws the reduced-motion beam's 12 px edge in ink at 0.9", () => {
     const from = { x: 0, y: 0 };
     const to = { x: 100, y: 0 };
     const [edge, ...rest] = glowingBeam(LIGHT_FIELD.phaser, from, to, true, true, 0);
     expect(edge).toMatchObject({
       colour: INK,
-      head: { alpha: 0.9, width: 4 },
+      head: { alpha: 0.9, width: 12 },
       kind: "taper",
-      tail: { alpha: 0.9, width: 4 },
+      tail: { alpha: 0.9, width: 12 },
     });
     expect(rest).toEqual(beam(from, to, true, true, 0).slice(1));
   });

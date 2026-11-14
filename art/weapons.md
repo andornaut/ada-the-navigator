@@ -10,13 +10,14 @@ pickup's only image is its chevron mask. The HUD and shop glyphs are in [weapon 
 Gameplay owns these values; they appear here because the effects are sized and
 timed against them. `src/data/weaponCatalog.ts` holds the current tuning.
 
-| Weapon        | Interval | Speed | Damage       | Effect                        |
-| ------------- | -------- | ----- | ------------ | ----------------------------- |
-| Laser         | 0.28 s   | x1    | x1           | Bolt                          |
-| Rapid Missile | 0.30 s   | x1.3  | x1.5         | Missile, blast R 25           |
-| Heavy Missile | 1.2 s    | x0.6  | x8 and blast | Missile, blast R 60, 72, 85   |
-| Multi-Laser   | 0.3 s    | x1    | x1           | Fan of 3, 4, 5 bolts by level |
-| Phaser        | 1.12 s   | n/a   | x4           | Hitscan beam, 320 wu range    |
+| Weapon        | Interval         | Speed (wu/s) | Damage by level      | Effect                               |
+| ------------- | ---------------- | ------------ | -------------------- | ------------------------------------ |
+| Laser         | 0.30/0.25/0.20 s | 500/600/700  | 1/1.25/1.5           | Bolt                                 |
+| Rapid Missile | 0.30/0.25/0.20 s | 500/600/700  | 1.5/1.5/1.5          | Missile, blast R 30                  |
+| Heavy Missile | 2 s              | 400          | 8/12/16              | Missile, blast R 60                  |
+| Multi-Laser   | 0.30 s           | 400/500/600  | 0.7 per bolt         | Fan of 3/4/5 bolts across ±8 degrees |
+| Scattershot   | 1 s              | 600          | 0.8/1/1.2 per pellet | Fan of 7/9/11 pellets                |
+| Phaser        | 1 s              | n/a          | 13/3, 6.5, 9.75      | Instant beam, fire-time coverage     |
 
 Levels 2 and 3 change intervals, damage, blast radius and beam range as the
 catalogue sets them. The effects below take the level's blast radius and beam
@@ -103,12 +104,13 @@ projected blast point, half-width `r x 1.414` and half-height `r x 0.707`.
 Stroke widths and dash lengths are screen px and do not scale with `R`; radii
 in world units do.
 
-| Blast | `R` (wu)   | Ellipse at the base view (px)  | `T`    | `G`    | Flash steps    | `k_f` | Ring stroke (px) | Tint | Debris |
-| ----- | ---------- | ------------------------------ | ------ | ------ | -------------- | ----- | ---------------- | ---- | ------ |
-| Rapid | 25         | 71 x 35                        | 220 ms | 110 ms | 0-20, 20-40 ms | 0.42  | 2.5 to 1.0       | 0.14 | none   |
-| Heavy | 60, 72, 85 | 170 x 85, 204 x 102, 240 x 120 | 340 ms | 180 ms | 0-30, 30-60 ms | 0.34  | 4.0 to 1.5       | 0.16 | 8      |
+| Blast | `R` (wu) | Ellipse at the base view (px) | `T`    | `G`    | Flash steps    | `k_f` | Ring stroke (px) | Tint | Debris |
+| ----- | -------- | ----------------------------- | ------ | ------ | -------------- | ----- | ---------------- | ---- | ------ |
+| Rapid | 30       | 85 x 42                       | 220 ms | 110 ms | 0-20, 20-40 ms | 0.42  | 2.5 to 1.0       | 0.14 | none   |
+| Heavy | 60       | 170 x 85                      | 340 ms | 180 ms | 0-30, 30-60 ms | 0.34  | 4.0 to 1.5       | 0.16 | 8      |
 
-Rapid uses `R` 25 at every level; Heavy takes 60, 72 and 85 at levels 1 to 3.
+Rapid uses `R` 30 and Heavy `R` 60 at every level. A blast starts at the actual
+contact edge, or at the projectile position on range expiry.
 At time `t` from detonation, with `g = min(1, t / G)`:
 
 - Ring radius `r = max(0.5, R (1 - (1 - g)^3))` wu (ease-out cubic).
@@ -137,24 +139,23 @@ Rapid `T_r` 200 ms, stroke 2 px; Heavy `T_r` 300 ms, stroke 3 px.
 
 ## Multi-Laser fan
 
-The existing bolt, fired as a fan evenly spaced across 40 degrees: 3, 4 and 5
-bolts at levels 1 to 3, at `-20 + 40 i / (n - 1)` degrees (-20, 0, 20; -20,
--6.7, 6.7, 20; -20, -10, 0, 10, 20). Offsets apply in the projected aim plane,
+The existing bolt, fired as a fan evenly spaced across 16 degrees: 3, 4 and 5
+bolts at levels 1 to 3, at `-8 + 16 i / (n - 1)` degrees. Offsets apply in the projected aim plane,
 then each bolt's screen direction unprojects to its world velocity, so screen
 length and speed vary per bolt. All bolts leave the nose together. The level
 reads from the bolt count only; colour and width stay the bolt's.
 
 ## Phaser beam
 
-A hitscan flash from the nose to the first contact (Tech's beam test against hit
-circles and asteroids), or on a miss to the level's full range, `|P(d x range)|`
-px. Gameplay's ranges are 320, 384 and 460.8 wu at levels 1 to 3:
+The full collision width is 12 world units (half-width 6). Beam layers derive
+their width from the canonical collision half-width. Impact sparks use the
+contact edge; whole-object destruction effects remain at the object pivot.
 
-| Level | Range (wu) | Heading 14 (px) | Headings 2 and 10 (px) |
-| ----- | ---------- | --------------- | ---------------------- |
-| 1     | 320        | 453             | 226                    |
-| 2     | 384        | 543             | 272                    |
-| 3     | 460.8      | 652             | 326                    |
+A hitscan flash runs from the nose to the first drawn contact edge. A miss
+reaches Ada's fire-time rounded coverage boundary: half-width 380 and
+half-height 260 at the 720 x 360 base view, scaled with the actual game area.
+The shape and the player's centre are captured when firing. Levels change
+neither this envelope nor the one-second fire interval.
 
 Keyframes for width factor `w` and alpha `a`, linear between keys: 0 ms `w`
 0.55 `a` 0.85; 20 ms `w` 1 `a` 1; 70 ms `w` 1 `a` 1; 150 ms `w` 0.4 `a` 0. The
@@ -166,9 +167,9 @@ the whole beam, whatever its length:
 
 | Layer | Colour | Width at nose to end (px, times `w`) | Alpha    |
 | ----- | ------ | ------------------------------------ | -------- |
-| Glow  | amber  | 8 to 5                               | `0.38 a` |
-| Body  | cream  | 4 to 2.4                             | `0.95 a` |
-| Core  | white  | 1.8 to 1                             | `a`      |
+| Glow  | amber  | 12 to 7.5                            | `0.38 a` |
+| Body  | cream  | 6 to 3.6                             | `0.95 a` |
+| Core  | white  | 2.7 to 1.5                           | `a`      |
 
 A miss fades every layer linearly to alpha 0 over its last 28 px; a hit ends
 hard at the contact. Over the beam, a muzzle bloom at `u = 0`: discs of radius
@@ -189,7 +190,7 @@ One spark per shot, centred on the contact point (a fighter or an asteroid), for
 
 ### Reduced motion
 
-A steady 2 px cream line (alpha `a`) over a 4 px amber edge (alpha `0.35 a`),
+A steady 6 px cream line (alpha `a`) over a 12 px amber edge (alpha `0.35 a`),
 without taper, width change or bloom, alpha 1 to 90 ms then linear to 0 at
 150 ms. A miss keeps the 28 px end fade. The spark becomes an unrotated cream
 ring, radius 3, 1.5 px stroke, alpha `1 - p` over 160 ms.
@@ -218,9 +219,9 @@ miss fade over the last 28 px and hit spark, in coral:
 
 | Layer | Colour     | Width at nose to end (px, times `w`) | Alpha    |
 | ----- | ---------- | ------------------------------------ | -------- |
-| Glow  | `obstacle` | 8 to 5                               | `0.38 a` |
-| Body  | `obstacle` | 4 to 2.4                             | `a`      |
-| Core  | white      | 1.8 to 1                             | `a`      |
+| Glow  | `obstacle` | 12 to 7.5                            | `0.38 a` |
+| Body  | `obstacle` | 6 to 3.6                             | `a`      |
+| Core  | white      | 2.7 to 1.5                           | `a`      |
 
 Muzzle bloom: discs of radius `5 w` coral `0.3 a`, `2.9 w` coral `0.9 a` and
 `1.6 w` white `a`. The [enemy spark](#enemy-only-conventions) marks a hit.
@@ -229,8 +230,8 @@ Light field: the glow is ink, width 6.5 to 4 times `w`, alpha `0.9 a`; the
 bloom's outer disc is ink at `0.6 a`. The aim line follows the
 [edged line](#enemy-only-conventions) rule.
 
-Reduced motion: the aim line is unchanged. The beam is a steady 2 px coral line
-over a 4 px coral edge at `0.35 a` (ink at `0.9 a` on a light field), alpha 1 to
+Reduced motion: the aim line is unchanged. The beam is a steady 6 px coral line
+over a 12 px coral edge at `0.35 a` (ink at `0.9 a` on a light field), alpha 1 to
 90 ms then linear to 0 at 150 ms. The spark is an unrotated coral ring, radius 3,
 1.5 px, alpha `1 - p` over 160 ms.
 

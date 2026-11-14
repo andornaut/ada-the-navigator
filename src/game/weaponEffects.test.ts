@@ -48,7 +48,7 @@ describe("weapon effect conventions", () => {
   });
 
   it("tells Rapid blasts from Heavy ones by radius", () => {
-    expect(missileKind(25)).toBe("rapid");
+    expect(missileKind(30)).toBe("rapid");
     for (const radius of [70]) {
       expect(missileKind(radius)).toBe("heavy");
     }
@@ -108,29 +108,29 @@ describe("missile blasts", () => {
   });
 
   it("grows the ring by an ease-out cubic and draws one flash in two steps", () => {
-    const at0 = blast(origin, 25, false, 0);
+    const at0 = blast(origin, 30, false, 0);
     const ellipses = ofKind(at0, "ellipse");
-    // Tint and ring at 0.5, then the flash's four ellipses of radius 25 x 0.42.
+    // Tint and ring at 0.5, then the flash's four ellipses of radius 30 x 0.42.
     const flash = ellipses.slice(2);
     expect(flash).toHaveLength(4);
-    expect(flash[1]!.halfWidth).toBeCloseTo(25 * 0.42 * Math.SQRT2, 9);
+    expect(flash[1]!.halfWidth).toBeCloseTo(30 * 0.42 * Math.SQRT2, 9);
     expect(flash[1]!.alpha).toBeCloseTo(0.85 * 0.95, 9);
-    const step2 = ofKind(blast(origin, 25, false, 20), "ellipse");
-    expect(step2.at(-3)!.halfWidth).toBeCloseTo(25 * 0.42 * 0.55 * Math.SQRT2, 9);
-    expect(ofKind(blast(origin, 25, false, 40), "ellipse")).toHaveLength(3);
+    const step2 = ofKind(blast(origin, 30, false, 20), "ellipse");
+    expect(step2.at(-3)!.halfWidth).toBeCloseTo(30 * 0.42 * 0.55 * Math.SQRT2, 9);
+    expect(ofKind(blast(origin, 30, false, 40), "ellipse")).toHaveLength(3);
     // The ring reaches R at G and fades to 0 at T.
-    const grown = ofKind(blast(origin, 25, false, 110), "ellipse")[1]!;
-    expect(grown.halfWidth).toBeCloseTo(25 * Math.SQRT2, 9);
-    expect(grown.halfHeight).toBeCloseTo(25 * Math.SQRT1_2, 9);
+    const grown = ofKind(blast(origin, 30, false, 110), "ellipse")[1]!;
+    expect(grown.halfWidth).toBeCloseTo(30 * Math.SQRT2, 9);
+    expect(grown.halfHeight).toBeCloseTo(30 * Math.SQRT1_2, 9);
     expect(grown.alpha).toBe(1);
-    expect(ofKind(blast(origin, 25, false, 165), "ellipse")[1]!.alpha).toBeCloseTo(0.5, 9);
-    expect(blast(origin, 25, false, 220)).toEqual([]);
+    expect(ofKind(blast(origin, 30, false, 165), "ellipse")[1]!.alpha).toBeCloseTo(0.5, 9);
+    expect(blast(origin, 30, false, 220)).toEqual([]);
   });
 
   it("throws eight cream debris lines from a Heavy blast until G + 40", () => {
     expect(ofKind(blast(origin, 60, false, 100), "line")).toHaveLength(8);
     expect(ofKind(blast(origin, 60, false, 220), "line")).toHaveLength(0);
-    expect(ofKind(blast(origin, 25, false, 50), "line")).toHaveLength(0);
+    expect(ofKind(blast(origin, 30, false, 50), "line")).toHaveLength(0);
     expect(ofKind(blast(origin, 85, false, 0), "ellipse")[2]!.halfWidth).toBeCloseTo(
       85 * 0.34 * 1.25 * Math.SQRT2,
       9,
@@ -138,14 +138,14 @@ describe("missile blasts", () => {
   });
 
   it("draws a static fading ring and tint at R under reduced motion, with no flash", () => {
-    const rapid = blast(origin, 25, true, 0);
+    const rapid = blast(origin, 30, true, 0);
     expect(rapid).toEqual([
-      expect.objectContaining({ alpha: 0.15, halfWidth: 25 * Math.SQRT2, kind: "ellipse" }),
+      expect.objectContaining({ alpha: 0.15, halfWidth: 30 * Math.SQRT2, kind: "ellipse" }),
       expect.objectContaining({ alpha: 0.9, kind: "ellipse", stroke: 2 }),
     ]);
     expect(ofKind(blast(origin, 60, true, 150), "ellipse")[1]).toMatchObject({ stroke: 3 });
     expect(ofKind(blast(origin, 60, true, 150), "ellipse")[1]!.alpha).toBeCloseTo(0.45, 9);
-    expect(blast(origin, 25, true, 200)).toEqual([]);
+    expect(blast(origin, 30, true, 200)).toEqual([]);
     expect(blast(origin, 60, true, 300)).toEqual([]);
   });
 });
@@ -175,10 +175,10 @@ describe("the Phaser beam", () => {
     const tapers = ofKind(miss, "taper");
     expect(tapers).toHaveLength(6);
     const [glowSolid, glowFade] = tapers;
-    expect(glowSolid!.tail.width).toBeCloseTo(8, 9);
+    expect(glowSolid!.tail.width).toBeCloseTo(12, 9);
     expect(glowSolid!.head.at.x).toBeCloseTo(453 - BEAM_MISS_FADE, 9);
     expect(glowFade!.head).toMatchObject({ alpha: 0 });
-    expect(glowFade!.head.width).toBeCloseTo(5, 9);
+    expect(glowFade!.head.width).toBeCloseTo(7.5, 9);
     expect(glowSolid!.tail.alpha).toBeCloseTo(0.38, 9);
     // The muzzle bloom over the nose.
     expect(
@@ -195,11 +195,11 @@ describe("the Phaser beam", () => {
     expect(tapers.every(({ head }) => head.at.x === 100 && head.alpha > 0)).toBe(true);
   });
 
-  it("draws a steady 2 px cream line over a 4 px amber edge under reduced motion", () => {
+  it("draws a steady 6 px cream line over a 12 px amber edge under reduced motion", () => {
     const steady = ofKind(beam(origin, { x: 100, y: 0 }, true, true, 60), "taper");
     expect(steady.map(({ colour, tail }) => [colour, tail.width, tail.alpha])).toEqual([
-      [EFFECT_COLOURS.amber, 4, 0.35],
-      [EFFECT_COLOURS.cream, 2, 1],
+      [EFFECT_COLOURS.amber, 12, 0.35],
+      [EFFECT_COLOURS.cream, 6, 1],
     ]);
     expect(
       ofKind(beam(origin, { x: 100, y: 0 }, true, true, 120), "taper")[1]!.tail.alpha,
