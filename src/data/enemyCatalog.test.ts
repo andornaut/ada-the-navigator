@@ -92,12 +92,12 @@ describe("enemy weapon damage", () => {
     for (const weapon of Object.keys(WEAPON_CATALOG) as Weapon[]) {
       expect(fireDamageRatio({ level: 1, weapon }), weapon).toBe(weaponAt(weapon, 1).damageRatio);
     }
-    expect(fireDamageRatio({ level: 1, weapon: "heavyMissile" })).toBe(10);
-    expect(fireDamageRatio({ level: 1, weapon: "phaser" })).toBe(6.5);
+    expect(fireDamageRatio({ level: 1, weapon: "heavyMissile" })).toBe(8);
+    expect(fireDamageRatio({ level: 1, weapon: "phaser" })).toBe(13 / 3);
     expect(fireDamageRatio({ level: 1, weapon: "rapidMissile" })).toBe(1.5);
     expect(fireDamageRatio({ level: 1, weapon: "multiLaser" })).toBe(0.7);
-    // A Scattershot volley of 6 across its 7 dots.
-    expect(fireDamageRatio({ level: 1, weapon: "scattershot" }) * 7).toBeCloseTo(6, 9);
+    // A Scattershot volley has seven pellets at 0.8 damage each.
+    expect(fireDamageRatio({ level: 1, weapon: "scattershot" }) * 7).toBeCloseTo(5.6, 9);
   });
 });
 

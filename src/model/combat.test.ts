@@ -471,7 +471,7 @@ describe("integrated combat", () => {
   });
 
   it("fires an enemy Phaser along its fixed aim line 0.4 s after it appears", () => {
-    // Phantom (position 6): a capital whose loadout carries the Phaser, 6.5 damage.
+    // Phantom (position 6): a capital whose loadout carries the canonical Phaser.
     const fixture = () => {
       const flight = createFlight(CONTENT, 6, 173, progress);
       flight.objects = [];
@@ -491,7 +491,10 @@ describe("integrated combat", () => {
     expect(flight.shield).toBe(shield);
     stepFlight(CONTENT, 0.15, idle, flight);
     expect(beam).toMatchObject({ fired: true, stopped: true });
-    expect(flight.shield).toBeCloseTo(shield - 6.5, 9);
+    expect(flight.shield).toBeCloseTo(
+      shield - weaponAt("phaser", 1).damageRatio * CONTENT.tuning.flight.playerShotDamage,
+      9,
+    );
     // The beam shows for its flash and spark, then goes.
     stepFlight(CONTENT, 0.2, idle, flight);
     expect(activeEnemyBeams(flight)).not.toContain(beam);
