@@ -208,33 +208,42 @@ rock clusters, and no field speck can read as a nugget or Stardust.
   [resource-rocks.json](../public/art/resource-rocks.json), writes
   [ore-field.json](../public/art/cartwheel/ore-field.json) and links it from
   Cartwheel's manifest as `oreField`. Reruns are byte-identical.
-- One layout per rock count from 6 to 10, each from the first seed from 23 up
-  that draws that count (Python's `random.Random` sequence, `art/tools/random.ts`).
-  Seed 23, 8 rocks, is the approved field.
-- Large rocks: `round(count / 3)`, so two of every three are medium. Each rock
-  is a seeded pick of its class's shapes; large rocks are placed first.
-- Each rock's centre is a uniform point of the disc of radius `450 - footprint
-radius`, outside its innermost 2% by area, so every footprint stays inside the
-  450 world unit field radius. A try is kept when its footprint stays at least
-  55 world units (`gap`) from every placed footprint, by footprint radius; the
-  build fails if a rock finds no room in 4000 tries or if a rounded position
-  breaks a clearance.
+- Eight pattern families: `loose-cluster`, `crescent`, `two-pockets`,
+  `broken-ring`, `scattered-trail`, `three-pockets`, `forked-trail` and `open-spiral`.
+  Each family has one realization for each rock count from 6 to 10: 40 records,
+  with eight families available for every count.
+- The loose cluster uses the first seed from 23 up that draws its count
+  (Python's `random.Random` sequence, `art/tools/random.ts`). Its published
+  positions, rock order, shapes and start frames are retained. Every other
+  family reuses that count's exact rock order, shapes and frames; only positions
+  differ. Large counts remain 2, 2, 3, 3 and 3 for totals 6 through 10.
+- Every footprint stays inside the 450 world unit radius and at least 55 world
+  units clear of every other footprint. Rounded positions are checked using
+  the resource catalog's footprint radii. The open gaps provide ship routes;
+  rigid rotation preserves those clearances. Each family's anchors place the
+  large rocks where the full set has the most clearance.
 - Medium rocks start on a seeded spin frame; large rocks show their one frame.
 
 Field counts, size, spacing and guards are Gameplay values
 ([Ships](../gameplay/ships.md)). Tech places a field's layout
-for its rock count with the layout centre at the field centre, and may turn it
-about the centre by a seeded angle, which keeps every clearance. Positions are
-rest positions; drift is the rocks' class data.
+by a seeded family choice for its existing rock count, with the layout centre
+at the field centre and its existing seeded rotation. Field centres, counts,
+frequencies, guard rolls and identities keep their independent seeds. A guard
+remains 610 units from the centre on its independently seeded angle; its
+platform stays facing world +X. Positions are rest positions; drift is the
+rocks' class data.
 
-`ore-field.json`, version 1, world units:
+`ore-field.json`, version 2, world units:
 
 - `rocks`: the resource rock catalog the ids name.
 - `radius` (450), `gap` (55) and `count` (`[6, 10]`).
-- `layouts[i]`: `count`, `large` (its large rocks), `seed`, `reach` (the
-  farthest footprint edge from the centre) and `rocks`, each with `id`,
-  `position` (`[x, y]` from the field centre on the world plane) and `frame`
-  (the start frame).
+- `variants[i]`: the family `id` and its five `layouts`.
+- Each layout: `count`, `large` (its large rocks), `seed` (the retained rock
+  selection seed), `reach` (the farthest footprint edge from the centre) and
+  `rocks`, each with `id`, `position` (`[x, y]` from the field centre on the
+  world plane) and `frame` (the start frame).
+
+The loose cluster retains these seed and reach values:
 
 | Rocks | Seed | Large |  Reach |
 | ----: | ---: | ----: | -----: |

@@ -1,7 +1,7 @@
-// Cartwheel's ore field: seeded clusters of crystal resource rocks. For each rock count Gameplay
-// allows, picks the first seed from FIRST_SEED up that draws that count and places the cluster:
-// large rocks first, then medium, each at a uniform point of the field disc whose footprint
-// stays GAP world units clear of every placed footprint and inside the field radius. Writes
+// Cartwheel's eight ore-field families, each with a realization for 6 to 10 crystal rocks.
+// The loose cluster keeps its seeded positions; each other family reuses its rock order, shapes
+// and start frames, with authored positions that preserve the footprint gap and field radius.
+// Writes
 // public/art/cartwheel/ore-field.json and links it from Cartwheel's manifest as `oreField`.
 // Usage: node art/tools/ore-field.ts (after node art/tools/asteroids.ts)
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -52,8 +52,7 @@ interface Placed {
   footprintRadius: number;
 }
 
-// One seeded cluster. The draw order (count, kinds, then per rock its tries and start frame)
-// matches the approved mock-up, so seed 23 gives the approved field.
+// The loose cluster's seeded draw order: count, kinds, then each rock's tries and start frame.
 function cluster(seed: number): Placed[] {
   const rnd = new Random(seed);
   const count = COUNT[0] + rnd.below(COUNT[1] - COUNT[0] + 1);
@@ -110,17 +109,133 @@ for (let count = COUNT[0]; count <= COUNT[1]; count++) {
   });
 }
 
+type Position = readonly [number, number];
+type Layout = (typeof layouts)[number];
+const FAMILIES = [
+  "loose-cluster",
+  "crescent",
+  "two-pockets",
+  "broken-ring",
+  "scattered-trail",
+  "three-pockets",
+  "forked-trail",
+  "open-spiral",
+] as const;
+type Family = (typeof FAMILIES)[number];
+const polar = (radius: number, degrees: number): Position => [
+  radius * Math.cos((degrees * Math.PI) / 180),
+  radius * Math.sin((degrees * Math.PI) / 180),
+];
+
+function anchors(family: Family, count: number): Position[] {
+  if (family === "crescent" || family === "broken-ring") {
+    const radius = family === "crescent" ? 365 : 340;
+    const start = family === "crescent" ? -124 : -150;
+    const span = family === "crescent" ? 248 : 300;
+    return Array.from({ length: count }, (_, i) => polar(radius, start + (span * i) / (count - 1)));
+  }
+  if (family === "two-pockets" || family === "three-pockets") {
+    const pockets = family === "two-pockets" ? 2 : 3;
+    const points: Position[] = [];
+    for (let pocket = 0; pocket < pockets; pocket++) {
+      const amount = Math.floor(count / pockets) + (pocket < count % pockets ? 1 : 0);
+      const centre: Position =
+        pockets === 2 ? [pocket === 0 ? -215 : 215, 0] : polar(235, 90 + pocket * 120);
+      for (let i = 0; i < amount; i++) {
+        const offset = polar(pockets === 2 ? 130 : 110, (360 * i) / amount + pocket * 24);
+        points.push([centre[0] + offset[0], centre[1] + offset[1]]);
+      }
+    }
+    return points;
+  }
+  if (family === "scattered-trail") {
+    return Array.from({ length: count }, (_, i) => [
+      -350 + (700 * i) / (count - 1),
+      (i % 2 === 0 ? -120 : 120) + 25 * Math.sin((i * Math.PI) / (count - 1)),
+    ]);
+  }
+  if (family === "forked-trail") {
+    const points: Position[] = [[0, 0]];
+    for (let arm = 0; arm < 3; arm++) {
+      const amount = Math.floor((count - 1) / 3) + (arm < (count - 1) % 3 ? 1 : 0);
+      const radii = amount === 3 ? [130, 255, 380] : amount === 2 ? [170, 380] : [380];
+      for (const [i, radius] of radii.entries()) {
+        points.push(polar(radius, -90 + arm * 120 + (amount === 3 && i === 1 ? 25 : 0)));
+      }
+    }
+    return points;
+  }
+  if (family === "open-spiral") {
+    return Array.from({ length: count }, (_, i) =>
+      polar(150 + (215 * i) / (count - 1), -170 + (440 * i) / (count - 1)),
+    );
+  }
+  throw new Error(`No authored anchors for ${family}`);
+}
+
+const footprint = new Map(catalog.rocks.map((rock) => [rock.id, rock.footprintRadius]));
+
+// Pick spacious anchors for the large rocks without changing their published order or frames.
+// Every candidate uses the exact footprint radii, including the smaller rocks that fill it.
+function realize(family: Family, layout: Layout): Layout {
+  const points = anchors(family, layout.count).map(([x, y]) => [r2(x), r2(y)] as const);
+  const candidates: { margin: number; rocks: Layout["rocks"] }[] = [];
+  function candidate(indices: number[]): void {
+    const selected = new Set(indices);
+    const order = [...indices, ...points.map((_, i) => i).filter((i) => !selected.has(i))];
+    const rocks = layout.rocks.map((rock, i) => ({ ...rock, position: [...points[order[i]!]!] }));
+    let margin = Infinity;
+    for (const [i, rock] of rocks.entries()) {
+      const [x, y] = rock.position;
+      const fp = footprint.get(rock.id)!;
+      margin = Math.min(margin, RADIUS - Math.hypot(x!, y!) - fp);
+      for (const other of rocks.slice(i + 1)) {
+        margin = Math.min(
+          margin,
+          Math.hypot(x! - other.position[0]!, y! - other.position[1]!) -
+            fp -
+            footprint.get(other.id)! -
+            GAP,
+        );
+      }
+    }
+    if (margin >= 0) candidates.push({ margin, rocks });
+  }
+  function choose(indices: number[], next: number): void {
+    if (indices.length === layout.large) return candidate(indices);
+    for (let i = next; i <= points.length - (layout.large - indices.length); i++)
+      choose([...indices, i], i + 1);
+  }
+  choose([], 0);
+  const best = candidates.sort((a, b) => b.margin - a.margin)[0];
+  if (!best) throw new Error(`${family} ${layout.count}: authored anchors have no clear placement`);
+  const rocks = best.rocks;
+  const reach = r2(
+    Math.max(
+      ...rocks.map(
+        (rock) => Math.hypot(rock.position[0]!, rock.position[1]!) + footprint.get(rock.id)!,
+      ),
+    ),
+  );
+  return { ...layout, reach, rocks };
+}
+
+const variants = FAMILIES.map((id) => ({
+  id,
+  layouts: id === "loose-cluster" ? layouts : layouts.map((layout) => realize(id, layout)),
+}));
+
 const path = `${dir}ore-field.json`;
 writeFileSync(
   path,
   await format(
     json({
-      version: 1,
+      version: 2,
       rocks: "/art/resource-rocks.json",
       radius: RADIUS,
       gap: GAP,
       count: COUNT,
-      layouts,
+      variants,
     }),
     { ...(await resolveConfig(path)), filepath: path },
   ),

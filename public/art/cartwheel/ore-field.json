@@ -1,247 +1,1967 @@
 {
-  "version": 1,
+  "version": 2,
   "rocks": "/art/resource-rocks.json",
   "radius": 450,
   "gap": 55,
   "count": [6, 10],
-  "layouts": [
+  "variants": [
     {
-      "count": 6,
-      "large": 2,
-      "seed": 28,
-      "reach": 418.45,
-      "rocks": [
+      "id": "loose-cluster",
+      "layouts": [
         {
-          "id": "resource-l3",
-          "position": [15.86, -184.36],
-          "frame": 0
+          "count": 6,
+          "large": 2,
+          "seed": 28,
+          "reach": 418.45,
+          "rocks": [
+            {
+              "id": "resource-l3",
+              "position": [15.86, -184.36],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [-279.92, 226.65],
+              "frame": 0
+            },
+            {
+              "id": "resource-m2",
+              "position": [-152.8, -120.69],
+              "frame": 13
+            },
+            {
+              "id": "resource-m2",
+              "position": [8.92, 140.22],
+              "frame": 10
+            },
+            {
+              "id": "resource-m2",
+              "position": [-125.4, -359.09],
+              "frame": 5
+            },
+            {
+              "id": "resource-m4",
+              "position": [246.29, -169.65],
+              "frame": 22
+            }
+          ]
         },
         {
-          "id": "resource-l1",
-          "position": [-279.92, 226.65],
-          "frame": 0
+          "count": 7,
+          "large": 2,
+          "seed": 26,
+          "reach": 441.06,
+          "rocks": [
+            {
+              "id": "resource-l3",
+              "position": [-38.36, -306.3],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [-252.31, -287.8],
+              "frame": 0
+            },
+            {
+              "id": "resource-m4",
+              "position": [-322.35, 207.02],
+              "frame": 22
+            },
+            {
+              "id": "resource-m1",
+              "position": [90.47, -16.23],
+              "frame": 7
+            },
+            {
+              "id": "resource-m2",
+              "position": [124.18, 158.45],
+              "frame": 15
+            },
+            {
+              "id": "resource-m4",
+              "position": [215.75, -345.42],
+              "frame": 11
+            },
+            {
+              "id": "resource-m1",
+              "position": [12.86, 321.92],
+              "frame": 0
+            }
+          ]
         },
         {
-          "id": "resource-m2",
-          "position": [-152.8, -120.69],
-          "frame": 13
+          "count": 8,
+          "large": 3,
+          "seed": 23,
+          "reach": 446.42,
+          "rocks": [
+            {
+              "id": "resource-l1",
+              "position": [-31.31, -205.66],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [48.39, 262.97],
+              "frame": 0
+            },
+            {
+              "id": "resource-l3",
+              "position": [302.91, 237.71],
+              "frame": 0
+            },
+            {
+              "id": "resource-m3",
+              "position": [-265.24, 143.12],
+              "frame": 23
+            },
+            {
+              "id": "resource-m4",
+              "position": [26.77, 93.5],
+              "frame": 11
+            },
+            {
+              "id": "resource-m4",
+              "position": [-180.45, -276.26],
+              "frame": 23
+            },
+            {
+              "id": "resource-m3",
+              "position": [-237.32, 276.83],
+              "frame": 11
+            },
+            {
+              "id": "resource-m2",
+              "position": [222.76, -44.58],
+              "frame": 10
+            }
+          ]
         },
         {
-          "id": "resource-m2",
-          "position": [8.92, 140.22],
-          "frame": 10
+          "count": 9,
+          "large": 3,
+          "seed": 24,
+          "reach": 440.27,
+          "rocks": [
+            {
+              "id": "resource-l3",
+              "position": [-54.53, -336.77],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [-327.08, 67.18],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [212.52, 188.77],
+              "frame": 0
+            },
+            {
+              "id": "resource-m2",
+              "position": [-137.27, 384.29],
+              "frame": 2
+            },
+            {
+              "id": "resource-m2",
+              "position": [-265.03, -223.12],
+              "frame": 9
+            },
+            {
+              "id": "resource-m2",
+              "position": [-50.96, -81.14],
+              "frame": 6
+            },
+            {
+              "id": "resource-m1",
+              "position": [128.56, 60.11],
+              "frame": 21
+            },
+            {
+              "id": "resource-m2",
+              "position": [170.15, -241.42],
+              "frame": 9
+            },
+            {
+              "id": "resource-m3",
+              "position": [124.05, -63.55],
+              "frame": 15
+            }
+          ]
         },
         {
-          "id": "resource-m2",
-          "position": [-125.4, -359.09],
-          "frame": 5
-        },
-        {
-          "id": "resource-m4",
-          "position": [246.29, -169.65],
-          "frame": 22
+          "count": 10,
+          "large": 3,
+          "seed": 29,
+          "reach": 441.48,
+          "rocks": [
+            {
+              "id": "resource-l1",
+              "position": [210.25, 160.42],
+              "frame": 0
+            },
+            {
+              "id": "resource-l2",
+              "position": [41.02, -118.43],
+              "frame": 0
+            },
+            {
+              "id": "resource-l3",
+              "position": [-145.72, 267.85],
+              "frame": 0
+            },
+            {
+              "id": "resource-m3",
+              "position": [200.08, -29],
+              "frame": 13
+            },
+            {
+              "id": "resource-m1",
+              "position": [-159.27, -309.1],
+              "frame": 16
+            },
+            {
+              "id": "resource-m3",
+              "position": [113.66, 324.64],
+              "frame": 9
+            },
+            {
+              "id": "resource-m4",
+              "position": [170.68, -370.23],
+              "frame": 15
+            },
+            {
+              "id": "resource-m4",
+              "position": [-360.42, -35.68],
+              "frame": 9
+            },
+            {
+              "id": "resource-m1",
+              "position": [-288.68, -175.89],
+              "frame": 12
+            },
+            {
+              "id": "resource-m1",
+              "position": [284.2, -219.67],
+              "frame": 11
+            }
+          ]
         }
       ]
     },
     {
-      "count": 7,
-      "large": 2,
-      "seed": 26,
-      "reach": 441.06,
-      "rocks": [
+      "id": "crescent",
+      "layouts": [
         {
-          "id": "resource-l3",
-          "position": [-38.36, -306.3],
-          "frame": 0
+          "count": 6,
+          "large": 2,
+          "seed": 28,
+          "reach": 426.37,
+          "rocks": [
+            {
+              "id": "resource-l3",
+              "position": [98.16, -351.55],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [331.34, -153.1],
+              "frame": 0
+            },
+            {
+              "id": "resource-m2",
+              "position": [-204.11, -302.6],
+              "frame": 13
+            },
+            {
+              "id": "resource-m2",
+              "position": [331.34, 153.1],
+              "frame": 10
+            },
+            {
+              "id": "resource-m2",
+              "position": [98.16, 351.55],
+              "frame": 5
+            },
+            {
+              "id": "resource-m4",
+              "position": [-204.11, 302.6],
+              "frame": 22
+            }
+          ]
         },
         {
-          "id": "resource-l1",
-          "position": [-252.31, -287.8],
-          "frame": 0
+          "count": 7,
+          "large": 2,
+          "seed": 26,
+          "reach": 426.37,
+          "rocks": [
+            {
+              "id": "resource-l3",
+              "position": [46.59, -362.01],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [274.07, -241.06],
+              "frame": 0
+            },
+            {
+              "id": "resource-m4",
+              "position": [-204.11, -302.6],
+              "frame": 22
+            },
+            {
+              "id": "resource-m1",
+              "position": [365, 0],
+              "frame": 7
+            },
+            {
+              "id": "resource-m2",
+              "position": [274.07, 241.06],
+              "frame": 15
+            },
+            {
+              "id": "resource-m4",
+              "position": [46.59, 362.01],
+              "frame": 11
+            },
+            {
+              "id": "resource-m1",
+              "position": [-204.11, 302.6],
+              "frame": 0
+            }
+          ]
         },
         {
-          "id": "resource-m4",
-          "position": [-322.35, 207.02],
-          "frame": 22
+          "count": 8,
+          "large": 3,
+          "seed": 23,
+          "reach": 426.37,
+          "rocks": [
+            {
+              "id": "resource-l1",
+              "position": [-204.11, -302.6],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [9.1, -364.89],
+              "frame": 0
+            },
+            {
+              "id": "resource-l3",
+              "position": [347.69, -111.06],
+              "frame": 0
+            },
+            {
+              "id": "resource-m3",
+              "position": [218.93, -292.05],
+              "frame": 23
+            },
+            {
+              "id": "resource-m4",
+              "position": [347.69, 111.06],
+              "frame": 11
+            },
+            {
+              "id": "resource-m4",
+              "position": [218.93, 292.05],
+              "frame": 23
+            },
+            {
+              "id": "resource-m3",
+              "position": [9.1, 364.89],
+              "frame": 11
+            },
+            {
+              "id": "resource-m2",
+              "position": [-204.11, 302.6],
+              "frame": 10
+            }
+          ]
         },
         {
-          "id": "resource-m1",
-          "position": [90.47, -16.23],
-          "frame": 7
+          "count": 9,
+          "large": 3,
+          "seed": 24,
+          "reach": 426.37,
+          "rocks": [
+            {
+              "id": "resource-l3",
+              "position": [365, 0],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [171.36, 322.28],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [-204.11, 302.6],
+              "frame": 0
+            },
+            {
+              "id": "resource-m2",
+              "position": [-204.11, -302.6],
+              "frame": 2
+            },
+            {
+              "id": "resource-m2",
+              "position": [-19.1, -364.5],
+              "frame": 9
+            },
+            {
+              "id": "resource-m2",
+              "position": [171.36, -322.28],
+              "frame": 6
+            },
+            {
+              "id": "resource-m1",
+              "position": [312.87, -187.99],
+              "frame": 21
+            },
+            {
+              "id": "resource-m2",
+              "position": [312.87, 187.99],
+              "frame": 9
+            },
+            {
+              "id": "resource-m3",
+              "position": [-19.1, 364.5],
+              "frame": 15
+            }
+          ]
         },
         {
-          "id": "resource-m2",
-          "position": [124.18, 158.45],
-          "frame": 15
-        },
-        {
-          "id": "resource-m4",
-          "position": [215.75, -345.42],
-          "frame": 11
-        },
-        {
-          "id": "resource-m1",
-          "position": [12.86, 321.92],
-          "frame": 0
+          "count": 10,
+          "large": 3,
+          "seed": 29,
+          "reach": 426.37,
+          "rocks": [
+            {
+              "id": "resource-l1",
+              "position": [-204.11, -302.6],
+              "frame": 0
+            },
+            {
+              "id": "resource-l2",
+              "position": [131.46, -340.5],
+              "frame": 0
+            },
+            {
+              "id": "resource-l3",
+              "position": [131.46, 340.5],
+              "frame": 0
+            },
+            {
+              "id": "resource-m3",
+              "position": [-40.97, -362.69],
+              "frame": 13
+            },
+            {
+              "id": "resource-m1",
+              "position": [274.07, -241.06],
+              "frame": 16
+            },
+            {
+              "id": "resource-m3",
+              "position": [354.5, -86.93],
+              "frame": 9
+            },
+            {
+              "id": "resource-m4",
+              "position": [354.5, 86.93],
+              "frame": 15
+            },
+            {
+              "id": "resource-m4",
+              "position": [274.07, 241.06],
+              "frame": 9
+            },
+            {
+              "id": "resource-m1",
+              "position": [-40.97, 362.69],
+              "frame": 12
+            },
+            {
+              "id": "resource-m1",
+              "position": [-204.11, 302.6],
+              "frame": 11
+            }
+          ]
         }
       ]
     },
     {
-      "count": 8,
-      "large": 3,
-      "seed": 23,
-      "reach": 446.42,
-      "rocks": [
+      "id": "two-pockets",
+      "layouts": [
         {
-          "id": "resource-l1",
-          "position": [-31.31, -205.66],
-          "frame": 0
+          "count": 6,
+          "large": 2,
+          "seed": 28,
+          "reach": 370.12,
+          "rocks": [
+            {
+              "id": "resource-l3",
+              "position": [-280, 112.58],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [201.41, -129.29],
+              "frame": 0
+            },
+            {
+              "id": "resource-m2",
+              "position": [-85, 0],
+              "frame": 13
+            },
+            {
+              "id": "resource-m2",
+              "position": [-280, -112.58],
+              "frame": 10
+            },
+            {
+              "id": "resource-m2",
+              "position": [333.76, 52.88],
+              "frame": 5
+            },
+            {
+              "id": "resource-m4",
+              "position": [109.83, 76.41],
+              "frame": 22
+            }
+          ]
         },
         {
-          "id": "resource-l1",
-          "position": [48.39, 262.97],
-          "frame": 0
+          "count": 7,
+          "large": 2,
+          "seed": 26,
+          "reach": 399.29,
+          "rocks": [
+            {
+              "id": "resource-l3",
+              "position": [333.76, 52.88],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [201.41, -129.29],
+              "frame": 0
+            },
+            {
+              "id": "resource-m4",
+              "position": [-85, 0],
+              "frame": 22
+            },
+            {
+              "id": "resource-m1",
+              "position": [-215, 130],
+              "frame": 7
+            },
+            {
+              "id": "resource-m2",
+              "position": [-345, 0],
+              "frame": 15
+            },
+            {
+              "id": "resource-m4",
+              "position": [-215, -130],
+              "frame": 11
+            },
+            {
+              "id": "resource-m1",
+              "position": [109.83, 76.41],
+              "frame": 0
+            }
+          ]
         },
         {
-          "id": "resource-l3",
-          "position": [302.91, 237.71],
-          "frame": 0
+          "count": 8,
+          "large": 3,
+          "seed": 23,
+          "reach": 378.8,
+          "rocks": [
+            {
+              "id": "resource-l1",
+              "position": [-85, 0],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [162.12, 118.76],
+              "frame": 0
+            },
+            {
+              "id": "resource-l3",
+              "position": [267.88, -118.76],
+              "frame": 0
+            },
+            {
+              "id": "resource-m3",
+              "position": [-215, 130],
+              "frame": 23
+            },
+            {
+              "id": "resource-m4",
+              "position": [-345, 0],
+              "frame": 11
+            },
+            {
+              "id": "resource-m4",
+              "position": [-215, -130],
+              "frame": 23
+            },
+            {
+              "id": "resource-m3",
+              "position": [333.76, 52.88],
+              "frame": 11
+            },
+            {
+              "id": "resource-m2",
+              "position": [96.24, -52.88],
+              "frame": 10
+            }
+          ]
         },
         {
-          "id": "resource-m3",
-          "position": [-265.24, 143.12],
-          "frame": 23
+          "count": 9,
+          "large": 3,
+          "seed": 24,
+          "reach": 399.29,
+          "rocks": [
+            {
+              "id": "resource-l3",
+              "position": [333.76, 52.88],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [96.24, -52.88],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [267.88, -118.76],
+              "frame": 0
+            },
+            {
+              "id": "resource-m2",
+              "position": [-85, 0],
+              "frame": 2
+            },
+            {
+              "id": "resource-m2",
+              "position": [-174.83, 123.64],
+              "frame": 9
+            },
+            {
+              "id": "resource-m2",
+              "position": [-320.17, 76.41],
+              "frame": 6
+            },
+            {
+              "id": "resource-m1",
+              "position": [-320.17, -76.41],
+              "frame": 21
+            },
+            {
+              "id": "resource-m2",
+              "position": [-174.83, -123.64],
+              "frame": 9
+            },
+            {
+              "id": "resource-m3",
+              "position": [162.12, 118.76],
+              "frame": 15
+            }
+          ]
         },
         {
-          "id": "resource-m4",
-          "position": [26.77, 93.5],
-          "frame": 11
-        },
-        {
-          "id": "resource-m4",
-          "position": [-180.45, -276.26],
-          "frame": 23
-        },
-        {
-          "id": "resource-m3",
-          "position": [-237.32, 276.83],
-          "frame": 11
-        },
-        {
-          "id": "resource-m2",
-          "position": [222.76, -44.58],
-          "frame": 10
+          "count": 10,
+          "large": 3,
+          "seed": 29,
+          "reach": 390.17,
+          "rocks": [
+            {
+              "id": "resource-l1",
+              "position": [-85, 0],
+              "frame": 0
+            },
+            {
+              "id": "resource-l2",
+              "position": [-320.17, 76.41],
+              "frame": 0
+            },
+            {
+              "id": "resource-l3",
+              "position": [150, -112.58],
+              "frame": 0
+            },
+            {
+              "id": "resource-m3",
+              "position": [-174.83, 123.64],
+              "frame": 13
+            },
+            {
+              "id": "resource-m1",
+              "position": [-320.17, -76.41],
+              "frame": 16
+            },
+            {
+              "id": "resource-m3",
+              "position": [-174.83, -123.64],
+              "frame": 9
+            },
+            {
+              "id": "resource-m4",
+              "position": [333.76, 52.88],
+              "frame": 15
+            },
+            {
+              "id": "resource-m4",
+              "position": [201.41, 129.29],
+              "frame": 9
+            },
+            {
+              "id": "resource-m1",
+              "position": [87.84, 27.03],
+              "frame": 12
+            },
+            {
+              "id": "resource-m1",
+              "position": [301.99, -96.61],
+              "frame": 11
+            }
+          ]
         }
       ]
     },
     {
-      "count": 9,
-      "large": 3,
-      "seed": 24,
-      "reach": 440.27,
-      "rocks": [
+      "id": "broken-ring",
+      "layouts": [
         {
-          "id": "resource-l3",
-          "position": [-54.53, -336.77],
-          "frame": 0
+          "count": 6,
+          "large": 2,
+          "seed": 28,
+          "reach": 401.37,
+          "rocks": [
+            {
+              "id": "resource-l3",
+              "position": [0, -340],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [294.45, -170],
+              "frame": 0
+            },
+            {
+              "id": "resource-m2",
+              "position": [-294.45, -170],
+              "frame": 13
+            },
+            {
+              "id": "resource-m2",
+              "position": [294.45, 170],
+              "frame": 10
+            },
+            {
+              "id": "resource-m2",
+              "position": [0, 340],
+              "frame": 5
+            },
+            {
+              "id": "resource-m4",
+              "position": [-294.45, 170],
+              "frame": 22
+            }
+          ]
         },
         {
-          "id": "resource-l1",
-          "position": [-327.08, 67.18],
-          "frame": 0
+          "count": 7,
+          "large": 2,
+          "seed": 26,
+          "reach": 401.37,
+          "rocks": [
+            {
+              "id": "resource-l3",
+              "position": [-59.04, -334.83],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [218.55, -260.46],
+              "frame": 0
+            },
+            {
+              "id": "resource-m4",
+              "position": [-294.45, -170],
+              "frame": 22
+            },
+            {
+              "id": "resource-m1",
+              "position": [340, 0],
+              "frame": 7
+            },
+            {
+              "id": "resource-m2",
+              "position": [218.55, 260.46],
+              "frame": 15
+            },
+            {
+              "id": "resource-m4",
+              "position": [-59.04, 334.83],
+              "frame": 11
+            },
+            {
+              "id": "resource-m1",
+              "position": [-294.45, 170],
+              "frame": 0
+            }
+          ]
         },
         {
-          "id": "resource-l1",
-          "position": [212.52, 188.77],
-          "frame": 0
+          "count": 8,
+          "large": 3,
+          "seed": 23,
+          "reach": 401.37,
+          "rocks": [
+            {
+              "id": "resource-l1",
+              "position": [-294.45, -170],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [-100.22, -324.89],
+              "frame": 0
+            },
+            {
+              "id": "resource-l3",
+              "position": [-100.22, 324.89],
+              "frame": 0
+            },
+            {
+              "id": "resource-m3",
+              "position": [147.52, -306.33],
+              "frame": 23
+            },
+            {
+              "id": "resource-m4",
+              "position": [316.5, -124.22],
+              "frame": 11
+            },
+            {
+              "id": "resource-m4",
+              "position": [316.5, 124.22],
+              "frame": 23
+            },
+            {
+              "id": "resource-m3",
+              "position": [147.52, 306.33],
+              "frame": 11
+            },
+            {
+              "id": "resource-m2",
+              "position": [-294.45, 170],
+              "frame": 10
+            }
+          ]
         },
         {
-          "id": "resource-m2",
-          "position": [-137.27, 384.29],
-          "frame": 2
+          "count": 9,
+          "large": 3,
+          "seed": 24,
+          "reach": 401.37,
+          "rocks": [
+            {
+              "id": "resource-l3",
+              "position": [88, -328.41],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [340, 0],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [88, 328.41],
+              "frame": 0
+            },
+            {
+              "id": "resource-m2",
+              "position": [-294.45, -170],
+              "frame": 2
+            },
+            {
+              "id": "resource-m2",
+              "position": [-130.11, -314.12],
+              "frame": 9
+            },
+            {
+              "id": "resource-m2",
+              "position": [269.74, -206.98],
+              "frame": 6
+            },
+            {
+              "id": "resource-m1",
+              "position": [269.74, 206.98],
+              "frame": 21
+            },
+            {
+              "id": "resource-m2",
+              "position": [-130.11, 314.12],
+              "frame": 9
+            },
+            {
+              "id": "resource-m3",
+              "position": [-294.45, 170],
+              "frame": 15
+            }
+          ]
         },
         {
-          "id": "resource-m2",
-          "position": [-265.03, -223.12],
-          "frame": 9
-        },
-        {
-          "id": "resource-m2",
-          "position": [-50.96, -81.14],
-          "frame": 6
-        },
-        {
-          "id": "resource-m1",
-          "position": [128.56, 60.11],
-          "frame": 21
-        },
-        {
-          "id": "resource-m2",
-          "position": [170.15, -241.42],
-          "frame": 9
-        },
-        {
-          "id": "resource-m3",
-          "position": [124.05, -63.55],
-          "frame": 15
+          "count": 10,
+          "large": 3,
+          "seed": 29,
+          "reach": 401.37,
+          "rocks": [
+            {
+              "id": "resource-l1",
+              "position": [-294.45, -170],
+              "frame": 0
+            },
+            {
+              "id": "resource-l2",
+              "position": [39.47, 337.7],
+              "frame": 0
+            },
+            {
+              "id": "resource-l3",
+              "position": [-294.45, 170],
+              "frame": 0
+            },
+            {
+              "id": "resource-m3",
+              "position": [-152.59, -303.84],
+              "frame": 13
+            },
+            {
+              "id": "resource-m1",
+              "position": [39.47, -337.7],
+              "frame": 16
+            },
+            {
+              "id": "resource-m3",
+              "position": [218.55, -260.46],
+              "frame": 9
+            },
+            {
+              "id": "resource-m4",
+              "position": [325.72, -97.51],
+              "frame": 15
+            },
+            {
+              "id": "resource-m4",
+              "position": [325.72, 97.51],
+              "frame": 9
+            },
+            {
+              "id": "resource-m1",
+              "position": [218.55, 260.46],
+              "frame": 12
+            },
+            {
+              "id": "resource-m1",
+              "position": [-152.59, 303.84],
+              "frame": 11
+            }
+          ]
         }
       ]
     },
     {
-      "count": 10,
-      "large": 3,
-      "seed": 29,
-      "reach": 441.48,
-      "rocks": [
+      "id": "scattered-trail",
+      "layouts": [
         {
-          "id": "resource-l1",
-          "position": [210.25, 160.42],
-          "frame": 0
+          "count": 6,
+          "large": 2,
+          "seed": 28,
+          "reach": 403.8,
+          "rocks": [
+            {
+              "id": "resource-l3",
+              "position": [-210, 134.69],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [-70, -96.22],
+              "frame": 0
+            },
+            {
+              "id": "resource-m2",
+              "position": [-350, -120],
+              "frame": 13
+            },
+            {
+              "id": "resource-m2",
+              "position": [70, 143.78],
+              "frame": 10
+            },
+            {
+              "id": "resource-m2",
+              "position": [210, -105.31],
+              "frame": 5
+            },
+            {
+              "id": "resource-m4",
+              "position": [350, 120],
+              "frame": 22
+            }
+          ]
         },
         {
-          "id": "resource-l2",
-          "position": [41.02, -118.43],
-          "frame": 0
+          "count": 7,
+          "large": 2,
+          "seed": 26,
+          "reach": 403.8,
+          "rocks": [
+            {
+              "id": "resource-l3",
+              "position": [-233.33, 132.5],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [-116.67, -98.35],
+              "frame": 0
+            },
+            {
+              "id": "resource-m4",
+              "position": [-350, -120],
+              "frame": 22
+            },
+            {
+              "id": "resource-m1",
+              "position": [0, 145],
+              "frame": 7
+            },
+            {
+              "id": "resource-m2",
+              "position": [116.67, -98.35],
+              "frame": 15
+            },
+            {
+              "id": "resource-m4",
+              "position": [233.33, 132.5],
+              "frame": 11
+            },
+            {
+              "id": "resource-m1",
+              "position": [350, -120],
+              "frame": 0
+            }
+          ]
         },
         {
-          "id": "resource-l3",
-          "position": [-145.72, 267.85],
-          "frame": 0
+          "count": 8,
+          "large": 3,
+          "seed": 23,
+          "reach": 403,
+          "rocks": [
+            {
+              "id": "resource-l1",
+              "position": [-250, 130.85],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [-150, -100.45],
+              "frame": 0
+            },
+            {
+              "id": "resource-l3",
+              "position": [150, 139.55],
+              "frame": 0
+            },
+            {
+              "id": "resource-m3",
+              "position": [-350, -120],
+              "frame": 23
+            },
+            {
+              "id": "resource-m4",
+              "position": [-50, 144.37],
+              "frame": 11
+            },
+            {
+              "id": "resource-m4",
+              "position": [50, -95.63],
+              "frame": 23
+            },
+            {
+              "id": "resource-m3",
+              "position": [250, -109.15],
+              "frame": 11
+            },
+            {
+              "id": "resource-m2",
+              "position": [350, 120],
+              "frame": 10
+            }
+          ]
         },
         {
-          "id": "resource-m3",
-          "position": [200.08, -29],
-          "frame": 13
+          "count": 9,
+          "large": 3,
+          "seed": 24,
+          "reach": 403,
+          "rocks": [
+            {
+              "id": "resource-l3",
+              "position": [-175, -102.32],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [87.5, 143.1],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [175, -102.32],
+              "frame": 0
+            },
+            {
+              "id": "resource-m2",
+              "position": [-350, -120],
+              "frame": 2
+            },
+            {
+              "id": "resource-m2",
+              "position": [-262.5, 129.57],
+              "frame": 9
+            },
+            {
+              "id": "resource-m2",
+              "position": [-87.5, 143.1],
+              "frame": 6
+            },
+            {
+              "id": "resource-m1",
+              "position": [0, -95],
+              "frame": 21
+            },
+            {
+              "id": "resource-m2",
+              "position": [262.5, 129.57],
+              "frame": 9
+            },
+            {
+              "id": "resource-m3",
+              "position": [350, -120],
+              "frame": 15
+            }
+          ]
         },
         {
-          "id": "resource-m1",
-          "position": [-159.27, -309.1],
-          "frame": 16
+          "count": 10,
+          "large": 3,
+          "seed": 29,
+          "reach": 431.37,
+          "rocks": [
+            {
+              "id": "resource-l1",
+              "position": [-350, -120],
+              "frame": 0
+            },
+            {
+              "id": "resource-l2",
+              "position": [-272.22, 128.55],
+              "frame": 0
+            },
+            {
+              "id": "resource-l3",
+              "position": [350, 120],
+              "frame": 0
+            },
+            {
+              "id": "resource-m3",
+              "position": [-194.44, -103.93],
+              "frame": 13
+            },
+            {
+              "id": "resource-m1",
+              "position": [-116.67, 141.65],
+              "frame": 16
+            },
+            {
+              "id": "resource-m3",
+              "position": [-38.89, -95.38],
+              "frame": 9
+            },
+            {
+              "id": "resource-m4",
+              "position": [38.89, 144.62],
+              "frame": 15
+            },
+            {
+              "id": "resource-m4",
+              "position": [116.67, -98.35],
+              "frame": 9
+            },
+            {
+              "id": "resource-m1",
+              "position": [194.44, 136.07],
+              "frame": 12
+            },
+            {
+              "id": "resource-m1",
+              "position": [272.22, -111.45],
+              "frame": 11
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "three-pockets",
+      "layouts": [
+        {
+          "count": 6,
+          "large": 2,
+          "seed": 28,
+          "reach": 376.79,
+          "rocks": [
+            {
+              "id": "resource-l3",
+              "position": [110, 235],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [-103.03, -72.76],
+              "frame": 0
+            },
+            {
+              "id": "resource-m2",
+              "position": [-110, 235],
+              "frame": 13
+            },
+            {
+              "id": "resource-m2",
+              "position": [-304.01, -162.24],
+              "frame": 10
+            },
+            {
+              "id": "resource-m2",
+              "position": [277.12, -35.75],
+              "frame": 5
+            },
+            {
+              "id": "resource-m4",
+              "position": [129.91, -199.25],
+              "frame": 22
+            }
+          ]
         },
         {
-          "id": "resource-m3",
-          "position": [113.66, 324.64],
-          "frame": 9
+          "count": 7,
+          "large": 2,
+          "seed": 26,
+          "reach": 378.39,
+          "rocks": [
+            {
+              "id": "resource-l3",
+              "position": [-103.03, -72.76],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [277.12, -35.75],
+              "frame": 0
+            },
+            {
+              "id": "resource-m4",
+              "position": [110, 235],
+              "frame": 22
+            },
+            {
+              "id": "resource-m1",
+              "position": [-55, 330.26],
+              "frame": 7
+            },
+            {
+              "id": "resource-m2",
+              "position": [-55, 139.74],
+              "frame": 15
+            },
+            {
+              "id": "resource-m4",
+              "position": [-304.01, -162.24],
+              "frame": 11
+            },
+            {
+              "id": "resource-m1",
+              "position": [129.91, -199.25],
+              "frame": 0
+            }
+          ]
         },
         {
-          "id": "resource-m4",
-          "position": [170.68, -370.23],
-          "frame": 15
+          "count": 8,
+          "large": 3,
+          "seed": 23,
+          "reach": 368.61,
+          "rocks": [
+            {
+              "id": "resource-l1",
+              "position": [-103.03, -72.76],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [277.12, -35.75],
+              "frame": 0
+            },
+            {
+              "id": "resource-l3",
+              "position": [129.91, -199.25],
+              "frame": 0
+            },
+            {
+              "id": "resource-m3",
+              "position": [110, 235],
+              "frame": 23
+            },
+            {
+              "id": "resource-m4",
+              "position": [-55, 330.26],
+              "frame": 11
+            },
+            {
+              "id": "resource-m4",
+              "position": [-55, 139.74],
+              "frame": 23
+            },
+            {
+              "id": "resource-m3",
+              "position": [-292.51, -52.84],
+              "frame": 11
+            },
+            {
+              "id": "resource-m2",
+              "position": [-215.01, -226.9],
+              "frame": 10
+            }
+          ]
         },
         {
-          "id": "resource-m4",
-          "position": [-360.42, -35.68],
-          "frame": 9
+          "count": 9,
+          "large": 3,
+          "seed": 24,
+          "reach": 367.01,
+          "rocks": [
+            {
+              "id": "resource-l3",
+              "position": [110, 235],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [-103.03, -72.76],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [277.12, -35.75],
+              "frame": 0
+            },
+            {
+              "id": "resource-m2",
+              "position": [-55, 330.26],
+              "frame": 2
+            },
+            {
+              "id": "resource-m2",
+              "position": [-55, 139.74],
+              "frame": 9
+            },
+            {
+              "id": "resource-m2",
+              "position": [-292.51, -52.84],
+              "frame": 6
+            },
+            {
+              "id": "resource-m1",
+              "position": [-215.01, -226.9],
+              "frame": 21
+            },
+            {
+              "id": "resource-m2",
+              "position": [95.92, -94.63],
+              "frame": 9
+            },
+            {
+              "id": "resource-m3",
+              "position": [237.51, -222.12],
+              "frame": 15
+            }
+          ]
         },
         {
-          "id": "resource-m1",
-          "position": [-288.68, -175.89],
-          "frame": 12
+          "count": 10,
+          "large": 3,
+          "seed": 29,
+          "reach": 376.43,
+          "rocks": [
+            {
+              "id": "resource-l1",
+              "position": [-292.51, -52.84],
+              "frame": 0
+            },
+            {
+              "id": "resource-l2",
+              "position": [-215.01, -226.9],
+              "frame": 0
+            },
+            {
+              "id": "resource-l3",
+              "position": [277.12, -35.75],
+              "frame": 0
+            },
+            {
+              "id": "resource-m3",
+              "position": [110, 235],
+              "frame": 13
+            },
+            {
+              "id": "resource-m1",
+              "position": [0, 345],
+              "frame": 16
+            },
+            {
+              "id": "resource-m3",
+              "position": [-110, 235],
+              "frame": 9
+            },
+            {
+              "id": "resource-m4",
+              "position": [0, 125],
+              "frame": 15
+            },
+            {
+              "id": "resource-m4",
+              "position": [-103.03, -72.76],
+              "frame": 9
+            },
+            {
+              "id": "resource-m1",
+              "position": [95.92, -94.63],
+              "frame": 12
+            },
+            {
+              "id": "resource-m1",
+              "position": [237.51, -222.12],
+              "frame": 11
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "forked-trail",
+      "layouts": [
+        {
+          "count": 6,
+          "large": 2,
+          "seed": 28,
+          "reach": 413.8,
+          "rocks": [
+            {
+              "id": "resource-l3",
+              "position": [0, -170],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [147.22, 85],
+              "frame": 0
+            },
+            {
+              "id": "resource-m2",
+              "position": [0, 0],
+              "frame": 13
+            },
+            {
+              "id": "resource-m2",
+              "position": [0, -380],
+              "frame": 10
+            },
+            {
+              "id": "resource-m2",
+              "position": [329.09, 190],
+              "frame": 5
+            },
+            {
+              "id": "resource-m4",
+              "position": [-329.09, 190],
+              "frame": 22
+            }
+          ]
         },
         {
-          "id": "resource-m1",
-          "position": [284.2, -219.67],
-          "frame": 11
+          "count": 7,
+          "large": 2,
+          "seed": 26,
+          "reach": 412.2,
+          "rocks": [
+            {
+              "id": "resource-l3",
+              "position": [0, -170],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [147.22, 85],
+              "frame": 0
+            },
+            {
+              "id": "resource-m4",
+              "position": [0, 0],
+              "frame": 22
+            },
+            {
+              "id": "resource-m1",
+              "position": [0, -380],
+              "frame": 7
+            },
+            {
+              "id": "resource-m2",
+              "position": [329.09, 190],
+              "frame": 15
+            },
+            {
+              "id": "resource-m4",
+              "position": [-147.22, 85],
+              "frame": 11
+            },
+            {
+              "id": "resource-m1",
+              "position": [-329.09, 190],
+              "frame": 0
+            }
+          ]
+        },
+        {
+          "count": 8,
+          "large": 3,
+          "seed": 23,
+          "reach": 441.37,
+          "rocks": [
+            {
+              "id": "resource-l1",
+              "position": [0, -380],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [147.22, 85],
+              "frame": 0
+            },
+            {
+              "id": "resource-l3",
+              "position": [329.09, 190],
+              "frame": 0
+            },
+            {
+              "id": "resource-m3",
+              "position": [0, 0],
+              "frame": 23
+            },
+            {
+              "id": "resource-m4",
+              "position": [0, -130],
+              "frame": 11
+            },
+            {
+              "id": "resource-m4",
+              "position": [107.77, -231.11],
+              "frame": 23
+            },
+            {
+              "id": "resource-m3",
+              "position": [-147.22, 85],
+              "frame": 11
+            },
+            {
+              "id": "resource-m2",
+              "position": [-329.09, 190],
+              "frame": 10
+            }
+          ]
+        },
+        {
+          "count": 9,
+          "large": 3,
+          "seed": 24,
+          "reach": 441.37,
+          "rocks": [
+            {
+              "id": "resource-l3",
+              "position": [0, -380],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [329.09, 190],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [-147.22, 85],
+              "frame": 0
+            },
+            {
+              "id": "resource-m2",
+              "position": [0, 0],
+              "frame": 2
+            },
+            {
+              "id": "resource-m2",
+              "position": [0, -130],
+              "frame": 9
+            },
+            {
+              "id": "resource-m2",
+              "position": [107.77, -231.11],
+              "frame": 6
+            },
+            {
+              "id": "resource-m1",
+              "position": [112.58, 65],
+              "frame": 21
+            },
+            {
+              "id": "resource-m2",
+              "position": [146.26, 208.88],
+              "frame": 9
+            },
+            {
+              "id": "resource-m3",
+              "position": [-329.09, 190],
+              "frame": 15
+            }
+          ]
+        },
+        {
+          "count": 10,
+          "large": 3,
+          "seed": 29,
+          "reach": 441.37,
+          "rocks": [
+            {
+              "id": "resource-l1",
+              "position": [0, -380],
+              "frame": 0
+            },
+            {
+              "id": "resource-l2",
+              "position": [329.09, 190],
+              "frame": 0
+            },
+            {
+              "id": "resource-l3",
+              "position": [-329.09, 190],
+              "frame": 0
+            },
+            {
+              "id": "resource-m3",
+              "position": [0, 0],
+              "frame": 13
+            },
+            {
+              "id": "resource-m1",
+              "position": [0, -130],
+              "frame": 16
+            },
+            {
+              "id": "resource-m3",
+              "position": [107.77, -231.11],
+              "frame": 9
+            },
+            {
+              "id": "resource-m4",
+              "position": [112.58, 65],
+              "frame": 15
+            },
+            {
+              "id": "resource-m4",
+              "position": [146.26, 208.88],
+              "frame": 9
+            },
+            {
+              "id": "resource-m1",
+              "position": [-112.58, 65],
+              "frame": 12
+            },
+            {
+              "id": "resource-m1",
+              "position": [-254.03, 22.22],
+              "frame": 11
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "open-spiral",
+      "layouts": [
+        {
+          "count": 6,
+          "large": 2,
+          "seed": 28,
+          "reach": 398.8,
+          "rocks": [
+            {
+              "id": "resource-l3",
+              "position": [234.71, 24.67],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [-19.46, 278.32],
+              "frame": 0
+            },
+            {
+              "id": "resource-m2",
+              "position": [-147.72, -26.05],
+              "frame": 13
+            },
+            {
+              "id": "resource-m2",
+              "position": [26.86, -191.12],
+              "frame": 10
+            },
+            {
+              "id": "resource-m2",
+              "position": [-321.8, -11.24],
+              "frame": 5
+            },
+            {
+              "id": "resource-m4",
+              "position": [0, -365],
+              "frame": 22
+            }
+          ]
+        },
+        {
+          "count": 7,
+          "large": 2,
+          "seed": 26,
+          "reach": 396.43,
+          "rocks": [
+            {
+              "id": "resource-l3",
+              "position": [203.54, -87.8],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [165.52, 197.26],
+              "frame": 0
+            },
+            {
+              "id": "resource-m4",
+              "position": [-147.72, -26.05],
+              "frame": 22
+            },
+            {
+              "id": "resource-m1",
+              "position": [-21.57, -184.58],
+              "frame": 7
+            },
+            {
+              "id": "resource-m2",
+              "position": [-161.19, 245.08],
+              "frame": 15
+            },
+            {
+              "id": "resource-m4",
+              "position": [-315.34, -94.41],
+              "frame": 11
+            },
+            {
+              "id": "resource-m1",
+              "position": [0, -365],
+              "frame": 0
+            }
+          ]
+        },
+        {
+          "count": 8,
+          "large": 3,
+          "seed": 23,
+          "reach": 397.2,
+          "rocks": [
+            {
+              "id": "resource-l1",
+              "position": [151.35, -147.63],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [229.53, 77.12],
+              "frame": 0
+            },
+            {
+              "id": "resource-l3",
+              "position": [40.67, 269.81],
+              "frame": 0
+            },
+            {
+              "id": "resource-m3",
+              "position": [-147.72, -26.05],
+              "frame": 23
+            },
+            {
+              "id": "resource-m4",
+              "position": [-53.27, -172.69],
+              "frame": 11
+            },
+            {
+              "id": "resource-m4",
+              "position": [-246.48, 177.21],
+              "frame": 23
+            },
+            {
+              "id": "resource-m3",
+              "position": [-297.47, -152.5],
+              "frame": 11
+            },
+            {
+              "id": "resource-m2",
+              "position": [0, -365],
+              "frame": 10
+            }
+          ]
+        },
+        {
+          "count": 9,
+          "large": 3,
+          "seed": 24,
+          "reach": 398,
+          "rocks": [
+            {
+              "id": "resource-l3",
+              "position": [229.75, -20.1],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [165.52, 197.26],
+              "frame": 0
+            },
+            {
+              "id": "resource-l1",
+              "position": [-73.6, 274.69],
+              "frame": 0
+            },
+            {
+              "id": "resource-m2",
+              "position": [-147.72, -26.05],
+              "frame": 2
+            },
+            {
+              "id": "resource-m2",
+              "position": [-74.75, -160.3],
+              "frame": 9
+            },
+            {
+              "id": "resource-m2",
+              "position": [101.88, -176.45],
+              "frame": 6
+            },
+            {
+              "id": "resource-m1",
+              "position": [-292.48, 106.45],
+              "frame": 21
+            },
+            {
+              "id": "resource-m2",
+              "position": [-276.98, -193.94],
+              "frame": 9
+            },
+            {
+              "id": "resource-m3",
+              "position": [0, -365],
+              "frame": 15
+            }
+          ]
+        },
+        {
+          "count": 10,
+          "large": 3,
+          "seed": 29,
+          "reach": 396.43,
+          "rocks": [
+            {
+              "id": "resource-l1",
+              "position": [203.54, -87.8],
+              "frame": 0
+            },
+            {
+              "id": "resource-l2",
+              "position": [221.53, 105.93],
+              "frame": 0
+            },
+            {
+              "id": "resource-l3",
+              "position": [72.26, 259.57],
+              "frame": 0
+            },
+            {
+              "id": "resource-m3",
+              "position": [-147.72, -26.05],
+              "frame": 13
+            },
+            {
+              "id": "resource-m1",
+              "position": [-89.85, -148.88],
+              "frame": 16
+            },
+            {
+              "id": "resource-m3",
+              "position": [60.39, -188.33],
+              "frame": 9
+            },
+            {
+              "id": "resource-m4",
+              "position": [-161.19, 245.08],
+              "frame": 15
+            },
+            {
+              "id": "resource-m4",
+              "position": [-314.3, 42.93],
+              "frame": 9
+            },
+            {
+              "id": "resource-m1",
+              "position": [-257.01, -224.29],
+              "frame": 12
+            },
+            {
+              "id": "resource-m1",
+              "position": [0, -365],
+              "frame": 11
+            }
+          ]
         }
       ]
     }
