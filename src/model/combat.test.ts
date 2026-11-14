@@ -209,17 +209,24 @@ describe("integrated combat", () => {
   });
 
   it("lowers the hull on every hit, disables a heavy without weapons and destroys it at 0 hull", () => {
-    // Sunflower's capital: a 40 HP hull and 4 HP hardpoints.
+    // Targeted hits consume current part HP and also lower the hull.
     const flight = empty();
     const target = ship("capital", { x: 400, y: 0 }, enemyDefinition(1, "capital", "target"));
     flight.objects.push(target);
     target.enemy!.velocity = { x: 20, y: 10 };
     // A moving hull faces its velocity.
     target.enemy!.facing = { x: 20 / Math.hypot(20, 10), y: 10 / Math.hypot(20, 10) };
-    hit(flight, partPosition(target, "engine-left"), 4);
-    hit(flight, partPosition(target, "weapon-left"), 4);
+    let remainingHull = target.enemy!.hp;
+    const destroyPart = (id: string) => {
+      const damage = target.enemy!.hardpoints.find((part) => part.id === id)!.hp;
+      expect(damage).toBeGreaterThan(0);
+      hit(flight, partPosition(target, id), damage);
+      remainingHull -= damage;
+    };
+    destroyPart("engine-left");
+    destroyPart("weapon-left");
     stepFlight(CONTENT, 0.001, idle, flight);
-    expect(target.enemy!.hp).toBe(32);
+    expect(target.enemy!.hp).toBe(remainingHull);
     flight.shots = [];
     const before = { x: target.x, y: target.y };
     for (const part of target.enemy!.hardpoints) {
@@ -235,14 +242,15 @@ describe("integrated combat", () => {
     );
     expect(flight.shots.map((shot) => shot.projectile).sort()).toEqual(standing.sort());
     flight.shots = [];
-    // Destroying the last weapons disables it, once, with 20 hull left.
+    // Destroying the last weapons disables it once while hull remains.
     for (const id of ["weapon-right", "weapon-rear-left", "weapon-rear-right"]) {
-      hit(flight, partPosition(target, id), 4);
+      destroyPart(id);
     }
     const disabling = stepFlight(CONTENT, 0.01, idle, flight);
     expect(disabling).toContainEqual({ id: "target", type: "enemyDisabled" });
     expect(disabling).not.toContainEqual({ type: "enemyDestroyed" });
-    expect(target.enemy).toMatchObject({ disabled: true, hp: 20 });
+    expect(remainingHull).toBeGreaterThan(0);
+    expect(target.enemy).toMatchObject({ disabled: true, hp: remainingHull });
     expect(flight.objects).toContain(target);
     // It holds fire and coasts to rest on its other engine.
     flight.shots = [];
@@ -254,7 +262,7 @@ describe("integrated combat", () => {
     expect(flight.shots.filter((shot) => shot.enemy)).toEqual([]);
     expect(Math.hypot(target.enemy!.velocity.x, target.enemy!.velocity.y)).toBeLessThan(0.01);
     // Hits on the destroyed command part's place go to the hull until it breaks.
-    hit(flight, partPosition(target, "command"), 20);
+    hit(flight, partPosition(target, "command"), remainingHull);
     expect(stepFlight(CONTENT, 0.01, idle, flight)).toContainEqual({ type: "enemyDestroyed" });
     expect(flight.objects).not.toContain(target);
     expect(stepFlight(CONTENT, 0.01, idle, flight)).not.toContainEqual({
