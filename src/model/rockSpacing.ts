@@ -1,5 +1,5 @@
 import { scenerySilhouette, type Silhouette } from "./asteroids.ts";
-import { grown, hull, inside, type Parts, partsReach, toScreen, unionContact } from "./convex.ts";
+import { grown, hull, type Parts, partsReach, toScreen, unionContact } from "./convex.ts";
 import type { Vec } from "./types.ts";
 
 // Rock-to-rock spacing on the screen (gameplay/rules.md: placement keeps drawn objects from
@@ -44,6 +44,56 @@ export function drawnRock(placement: Spaced): Envelope | null {
 /** Screen px a drift loop of world radius r can move a rock from its loop's centre. */
 export const loopReach = (radius: number): number => radius * Math.SQRT2;
 
+interface PreparedEdge {
+  readonly dx: number;
+  readonly dy: number;
+  readonly x: number;
+  readonly y: number;
+}
+const EXPANDED_ENVELOPES = new WeakMap<
+  Envelope,
+  WeakMap<Envelope, readonly (readonly PreparedEdge[])[]>
+>();
+
+/** Prepares the same edge cross products once per immutable, ordered envelope pair. */
+function envelopesContain(first: Envelope, second: Envelope, point: Vec): boolean {
+  let byBody = EXPANDED_ENVELOPES.get(first);
+  if (!byBody) {
+    byBody = new WeakMap();
+    EXPANDED_ENVELOPES.set(first, byBody);
+  }
+  let parts = byBody.get(second);
+  if (!parts) {
+    parts = grown(first.parts, second.parts).map((part) =>
+      part.map((origin, index) => {
+        const next = part[(index + 1) % part.length]!;
+        return { dx: next.x - origin.x, dy: next.y - origin.y, x: origin.x, y: origin.y };
+      }),
+    );
+    byBody.set(second, parts);
+  }
+  for (const part of parts) {
+    let sign = 0;
+    let outside = false;
+    for (const edge of part) {
+      const cross = edge.dx * (point.y - edge.y) - edge.dy * (point.x - edge.x);
+      if (cross === 0) {
+        continue;
+      }
+      const direction = Math.sign(cross);
+      if (sign && direction !== sign) {
+        outside = true;
+        break;
+      }
+      sign = direction;
+    }
+    if (!outside) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /** Whether two placements' drawn rocks can overlap on the screen, a drifting one anywhere on its loop. */
 export function rocksOverlap(a: Spaced, b: Spaced): boolean {
   const first = drawnRock(a);
@@ -54,7 +104,12 @@ export function rocksOverlap(a: Spaced, b: Spaced): boolean {
   const offset = toScreen({ x: b.x - a.x, y: b.y - a.y });
   const driftA = loopReach(a.orbit?.radius ?? 0);
   const driftB = loopReach(b.orbit?.radius ?? 0);
-  if (Math.hypot(offset.x, offset.y) >= first.reach + driftA + second.reach + driftB) {
+  const reach = first.reach + driftA + second.reach + driftB;
+  if (
+    Math.abs(offset.x) >= reach ||
+    Math.abs(offset.y) >= reach ||
+    Math.hypot(offset.x, offset.y) >= reach
+  ) {
     return false;
   }
   if (driftA && driftB) {
@@ -68,5 +123,5 @@ export function rocksOverlap(a: Spaced, b: Spaced): boolean {
     return unionContact(still.parts, centre, moving.reach + drift) !== null;
   }
   // b at `offset` overlaps a when the offset lies in a grown by b.
-  return grown(first.parts, second.parts).some((part) => inside(part, offset));
+  return envelopesContain(first, second, offset);
 }

@@ -112,18 +112,60 @@ export function galaxyLandmarks(
   }));
 }
 
-/** Uncharted landmarks within range of a point. */
+interface IndexedLandmark {
+  readonly order: number;
+  readonly site: LandmarkSite;
+}
+const NEARBY_INDEXES = new WeakMap<readonly LandmarkSite[], readonly IndexedLandmark[]>();
+
+/** Uncharted landmarks within range of a point, in canonical catalog order. */
 export function unchartedNear(
   galaxy: GalaxyNumber,
   progress: Pick<GalaxyProgress, "charted">,
   range: number,
   point: Vec,
 ): LandmarkSite[] {
-  return landmarkSites(galaxy).filter(
-    (site) =>
+  const catalog = landmarkSites(galaxy);
+  if (![range, point.x, point.y].every(Number.isFinite)) {
+    return catalog.filter(
+      (site) =>
+        !progress.charted.includes(site.id) &&
+        Math.hypot(site.x - point.x, site.y - point.y) <= range,
+    );
+  }
+  let index = NEARBY_INDEXES.get(catalog);
+  if (!index) {
+    index = catalog
+      .map((site, order) => ({ order, site }))
+      .sort((a, b) => a.site.x - b.site.x || a.order - b.order);
+    NEARBY_INDEXES.set(catalog, index);
+  }
+  // The broad phase includes subtraction rounding; the exact distance test keeps its boundary.
+  const padding = 2 * Number.EPSILON * (Math.abs(point.x) + Math.abs(range));
+  const minimum = point.x - range - padding;
+  const maximum = point.x + range + padding;
+  let low = 0;
+  let high = index.length;
+  while (low < high) {
+    const middle = Math.floor((low + high) / 2);
+    if (index[middle]!.site.x < minimum) {
+      low = middle + 1;
+    } else {
+      high = middle;
+    }
+  }
+  const nearby: IndexedLandmark[] = [];
+  for (let cursor = low; cursor < index.length && index[cursor]!.site.x <= maximum; cursor++) {
+    const entry = index[cursor]!;
+    const { site } = entry;
+    if (
       !progress.charted.includes(site.id) &&
-      Math.hypot(site.x - point.x, site.y - point.y) <= range,
-  );
+      Math.hypot(site.x - point.x, site.y - point.y) <= range
+    ) {
+      nearby.push(entry);
+    }
+  }
+  return nearby.sort((a, b) => a.order - b.order).map(({ site }) => site);
 }
 
 /** Charts every uncharted landmark within charting range of Ada; returns the newly charted. */

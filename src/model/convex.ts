@@ -203,9 +203,20 @@ export function segmentNearParts(parts: Parts, a: Vec, b: Vec, inflate: number):
   );
 }
 
-/** The farthest point of the parts from their origin. */
+const PARTS_REACH = new WeakMap<Parts, number>();
+/** The farthest point of immutable parts from their origin, prepared once per outline. */
 export function partsReach(parts: Parts): number {
-  return Math.max(0, ...parts.flatMap((part) => part.map((at) => Math.hypot(at.x, at.y))));
+  let reach = PARTS_REACH.get(parts);
+  if (reach === undefined) {
+    reach = 0;
+    for (const part of parts) {
+      for (const at of part) {
+        reach = Math.max(reach, Math.hypot(at.x, at.y));
+      }
+    }
+    PARTS_REACH.set(parts, reach);
+  }
+  return reach;
 }
 
 /** Convex hull of points, counter-clockwise in screen axes (y down), by monotone chain. */
