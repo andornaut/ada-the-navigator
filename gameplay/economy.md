@@ -60,29 +60,65 @@ position 1; values follow each position's hit points. Every defeated enemy relea
 at least 1 Stardust, with existing larger rewards and eligible pickups preserved.
 Disabling a heavy does not destroy it. Fleeing, unloading, despawning or restoring
 a survivor does not grant defeat loot, and a released wreck never pays again.
-Discovery caches are rare. Resource-yield asteroids use the following relative
-weights; each array follows the listed total-unit range in ascending order and
-sums to 100. Maximum-yield chances apply to that resource-yield roll.
+Discovery caches are rare. Resource-yield asteroids first roll a total using
+these relative weights. Each array follows the listed total-unit range in
+ascending order and sums to 100. The maximum chances in this table describe
+only that initial roll, before ore redistribution.
 
-| Size   | Resource units | Relative weights                  | Chance of maximum |
-| ------ | -------------- | --------------------------------- | ----------------- |
-| Small  | 0 to 4         | 15, 55, 22, 6, 2                  | 2%                |
-| Medium | 1 to 6         | 20, 35, 25, 12, 4, 4              | 4%                |
-| Large  | 1 to 8         | 10, 20, 25, 20, 10, 5, 2, 8       | 8%                |
-| Huge   | 1 to 10        | 5, 12, 20, 20, 11, 7, 4, 3, 2, 16 | 16%               |
+| Size   | Initial resource units | Relative weights                 | Initial chance of maximum |
+| ------ | ---------------------- | -------------------------------- | ------------------------- |
+| Small  | 0 to 4                 | 15, 10, 37, 36, 2                | 2%                        |
+| Medium | 1 to 6                 | 15, 20, 30, 24, 7, 4             | 4%                        |
+| Large  | 1 to 8                 | 10, 14, 19, 20, 16, 10, 3, 8     | 8%                        |
+| Huge   | 1 to 10                | 5, 8, 12, 36, 14, 2, 2, 2, 3, 16 | 16%                       |
 
-Each resource unit independently becomes ore with probability 0.75 or Stardust
-with probability 0.25. The size weights and this split define the yield targets;
-no separate ore or Stardust multiplier applies.
+Each initial resource unit independently becomes ore with probability 0.75 or
+Stardust with probability 0.25. `ASTEROID_LOOT.oreChance` defines that split.
+After the ore redistribution below, expected units per resource outcome are:
 
-Group rolled ore into pickups worth 5 ore each, with any remainder as one-unit
-pickups. A five-ore chunk replaces five single ore pickups; it is the same
-fungible ore, collected by normal contact and the tractor beam. Huge asteroids
-can release two five-ore chunks. Larger asteroids have higher chances of these
-chunks, but no size guarantees one. The size cap counts resource units, not
-pickup sprites. There is no extra roll, additive ore bonus or extra Stardust
-burst above the rolled total. Enemy loot, discovery caches and job rewards keep
+| Size   | Ore  | Stardust | Total |
+| ------ | ---- | -------- | ----- |
+| Small  | 1.5  | 0.5      | 2     |
+| Medium | 2.25 | 0.75     | 3     |
+| Large  | 3    | 1        | 4     |
+| Huge   | 3.75 | 1.25     | 5     |
+
+`ASTEROID_LOOT.oreBundleMultiplier` is 2: for medium, large and huge rocks,
+redistribute ore to double the expected number of five-ore pickups relative to
+these same initial weights with redistribution disabled. This is not a target
+of doubling the chance of seeing at least one pickup. Huge ten-ore outcomes
+count as two five-ore pickups. Small rocks have no redistribution and cannot
+produce a five-ore pickup under their four-unit cap.
+
+For an original ore amount K and Stardust amount S, the lower ore endpoint is
+`max(5 * floor(K / 5), minimum - S)` and the upper endpoint is the next multiple
+of five above K. Redistribution is eligible only when `upper + S <= cap`.
+Within the derived mix, choose the upper endpoint with probability
+`(K - lower) / (upper - lower)`, otherwise the lower endpoint; outside that mix,
+keep K. `oreBundleMix` derives the bounded mix from the size weights and bundle
+multiplier, rather than storing separate per-size tuning constants. The sampler
+uses the residual uniform value from the last classified resource unit without
+an extra random draw. Expected ore is preserved for every original K/S pair;
+Stardust stays unchanged on each event. Final event totals can differ from the
+initial total, while preserving the size cap, minimum and expected total.
+Ammo remains an exclusive outcome under its own rules.
+
+Group the resulting ore into pickups worth 5 ore each, with any remainder as
+one-unit pickups. A five-ore chunk replaces five single ore pickups; it is the
+same fungible ore, collected by normal contact and the tractor beam. The size
+cap counts resource units, not pickup sprites. There is no additive ore bonus
+or extra Stardust burst. Enemy loot, discovery caches and job rewards keep
 their own rules.
+
+The final distribution per resource outcome is below. Probabilities are
+rounded for display; the canonical sampler and exact enumeration define them.
+
+| Size   | Expected five-ore pickup count | Chance of at least one five-ore pickup | Final chance of maximum total |
+| ------ | ------------------------------ | -------------------------------------- | ----------------------------- |
+| Small  | 0                              | 0%                                     | 2%                            |
+| Medium | 0.0759375                      | 7.59375%                               | 5.89949%                      |
+| Large  | 0.369898681641                 | 36.9898681641%                         | 9.05836%                      |
+| Huge   | 0.542278289795                 | 52.9722835395%                         | 16.45245%                     |
 
 A drop splits its Stardust into whole-Stardust pickups, as evenly as possible with
 the larger pieces first, so one pickup can carry more than 1 Stardust. The number
