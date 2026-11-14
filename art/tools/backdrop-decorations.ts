@@ -13,23 +13,46 @@ export interface DecorationRecipe {
   readonly salt: string;
   readonly scale: readonly [number, number];
   readonly rotation: readonly [number, number];
-  readonly sprites: readonly { asset: string; width: number; height: number }[];
+  readonly sizes: readonly { scale: number; weight: number }[];
+  readonly sprites: readonly {
+    asset: string;
+    width: number;
+    height: number;
+    bodies: readonly DecorationBody[];
+  }[];
 }
 
 /** Display geometry and placement are shared by the runtime and native Art proofs. */
 export function decorationRecipe(galaxy: GalaxyId): DecorationRecipe {
   return {
-    parallax: 0.08,
-    chunk: [4200, 3000],
-    chance: 0.35,
+    parallax: 0.12,
+    chunk: [1050, 780],
+    chance: 0.65,
     salt: "rare-decoration",
-    scale: [0.9, 1.08],
+    scale: [0.98, 1.02],
     rotation: [-18, 18],
-    sprites: [1, 2, 3].map((variant) => ({
-      asset: `backdrop-decoration-${galaxy}-${variant}`,
-      width: 2200,
-      height: 1650,
-    })),
+    sizes: [
+      { scale: 1, weight: 6 },
+      { scale: 2, weight: 3 },
+      { scale: 3, weight: 1 },
+    ],
+    sprites: [1, 2, 3].map((variant) => {
+      const { bodies } = decorationDrawing(
+        { body: "#000000", lit: "#000000", night: "#000000", ring: "#000000" },
+        galaxy,
+        variant - 1,
+      );
+      const xs = bodies.flatMap((body) =>
+        body.polygons.flatMap((polygon) => polygon.outer.map((point) => point[0])),
+      );
+      const width = 720 / (Math.max(...xs) - Math.min(...xs));
+      return {
+        asset: `backdrop-decoration-${galaxy}-${variant}`,
+        width: n(width),
+        height: n(width * 0.75),
+        bodies,
+      };
+    }),
   };
 }
 
@@ -64,8 +87,64 @@ export function writeDecorations(
 type Colours = { body: string; lit: string; night: string; ring: string };
 const tau = Math.PI * 2;
 const n = (v: number) => Number(v.toFixed(2));
-const polygon = (points: readonly (readonly [number, number])[], fill: string) =>
-  `<polygon fill="${fill}" points="${points.map(([x, y]) => `${n(x)},${n(y)}`).join(" ")}"/>`;
+type Vertex = readonly [number, number];
+interface DecorationPolygon {
+  readonly outer: readonly Vertex[];
+  readonly holes: readonly (readonly Vertex[])[];
+}
+export interface DecorationBody {
+  readonly id: string;
+  readonly polygons: readonly DecorationPolygon[];
+}
+let bodies: { id: string; polygons: DecorationPolygon[] }[] = [];
+let current = "formation";
+let recording = true;
+function clip(points: readonly Vertex[]): Vertex[] {
+  let out = [...points];
+  for (const [axis, edge, sign] of [
+    [0, 0, 1],
+    [0, 1024, -1],
+    [1, 0, 1],
+    [1, 768, -1],
+  ] as const) {
+    const input = out;
+    out = [];
+    for (let i = 0; i < input.length; i++) {
+      const a = input[i]!,
+        b = input[(i + 1) % input.length]!;
+      const insideA = sign * (a[axis] - edge) >= 0,
+        insideB = sign * (b[axis] - edge) >= 0;
+      if (insideA) out.push(a);
+      if (insideA !== insideB) {
+        const t = (edge - a[axis]) / (b[axis] - a[axis]);
+        out.push([a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])]);
+      }
+    }
+  }
+  return out;
+}
+function record(outer: readonly Vertex[], holes: readonly (readonly Vertex[])[] = []) {
+  if (!recording) return;
+  const boundary = clip(outer);
+  if (boundary.length < 3) return;
+  let body = bodies.find((body) => body.id === current);
+  if (!body) {
+    body = { id: current, polygons: [] };
+    bodies.push(body);
+  }
+  const normalize = (ring: readonly Vertex[]) =>
+    clip(ring).map(
+      ([x, y]) => [Number((x / 1024).toFixed(6)), Number((y / 768).toFixed(6))] as const,
+    );
+  body.polygons.push({
+    outer: normalize(boundary),
+    holes: holes.map(normalize).filter((ring) => ring.length >= 3),
+  });
+}
+const polygon = (points: readonly Vertex[], fill: string) => {
+  record(points);
+  return `<polygon fill="${fill}" points="${points.map(([x, y]) => `${n(x)},${n(y)}`).join(" ")}"/>`;
+};
 const path = (d: string, fill: string) => `<path fill="${fill}" d="${d}"/>`;
 const around = (x: number, y: number, r: number, count = 14) =>
   Array.from(
@@ -102,6 +181,12 @@ function planet(
   gas = false,
   eclipse = false,
 ) {
+  const previous = current;
+  current = id === "giant" ? "formation" : id;
+  record(around(x, y, r));
+  current = previous;
+  const wasRecording = recording;
+  recording = false;
   const outline = polygon(around(x, y, r), "white");
   let ink =
     `<defs><clipPath id="${id}">${outline}</clipPath></defs><g clip-path="url(#${id})">` +
@@ -117,6 +202,7 @@ function planet(
     );
   }
   ink += `<ellipse cx="${x + r * (eclipse ? 0.11 : 0.45)}" cy="${y + r * 0.12}" rx="${r * (eclipse ? 0.94 : 0.88)}" ry="${r * 1.04}" fill="${c.night}"/>`;
+  recording = wasRecording;
   return ink + "</g>";
 }
 function rings(
@@ -128,6 +214,27 @@ function rings(
   angle: number,
   front = false,
 ) {
+  if (!front) {
+    const radians = (angle * Math.PI) / 180;
+    const ring = (a: number, b: number, half: number) => {
+      const boundary = (side: number) =>
+        Array.from({ length: 128 }, (_, i): Vertex => {
+          const t = (i * tau) / 128,
+            nx = Math.cos(t) / a,
+            ny = Math.sin(t) / b,
+            length = Math.hypot(nx, ny);
+          const px = a * Math.cos(t) + (side * half * nx) / length,
+            py = b * Math.sin(t) + (side * half * ny) / length;
+          return [
+            n(x + px * Math.cos(radians) - py * Math.sin(radians)),
+            n(y + px * Math.sin(radians) + py * Math.cos(radians)),
+          ];
+        });
+      record(boundary(1), [boundary(-1)]);
+    };
+    ring(rx, ry, 6.5);
+    ring(rx * 0.88, ry * 0.82, 10);
+  }
   const transform = `transform="rotate(${angle} ${x} ${y})"`;
   return front
     ? `<g ${transform}><path d="M${x - rx} ${y} A${rx} ${ry} 0 0 0 ${x + rx} ${y}" fill="none" stroke="${c.ring}" stroke-width="13"/><path d="M${x - rx * 0.88} ${y} A${rx * 0.88} ${ry * 0.82} 0 0 0 ${x + rx * 0.88} ${y}" fill="none" stroke="${c.body}" stroke-width="20"/></g>`
@@ -236,13 +343,13 @@ function slab(c: Colours, variant: number) {
     )
   );
 }
-function stream(c: Colours, variant: number) {
+function stream(c: Colours, variant: number, shift: number) {
   let ink = "";
   for (let i = 0; i < 18; i++)
     ink += fragment(
       c,
       40 + i * 55,
-      318 - i * 3 + Math.sin(i * 1.8 + variant) * 20,
+      318 - i * 3 + Math.sin(i * 1.8 + variant) * 20 + shift,
       13 + (i % 3) * 4,
       1.6,
       -0.1,
@@ -255,6 +362,7 @@ function hollow(c: Colours, variant: number) {
     inner = around(504, 377, 150, 8).reverse();
   const points = (ps: readonly (readonly [number, number])[]) =>
     ps.map(([x, y]) => `${x} ${y}`).join(" L");
+  record(outer, [inner]);
   return (
     path(`M${points(outer)} Z M${points(inner)} Z`, c.body).replace(
       "<path ",
@@ -273,7 +381,14 @@ function hollow(c: Colours, variant: number) {
     fragment(c, 808, 477, 81, 1.5, 0.3, variant)
   );
 }
-export function decorationSvg(c: Colours, galaxy: GalaxyId, variant: number): string {
+export function decorationDrawing(
+  c: Colours,
+  galaxy: GalaxyId,
+  variant: number,
+): { svg: string; bodies: DecorationBody[] } {
+  bodies = [];
+  current = "formation";
+  recording = true;
   let ink = "";
   const v = variant;
   if (galaxy === "sunflower") {
@@ -301,7 +416,7 @@ export function decorationSvg(c: Colours, galaxy: GalaxyId, variant: number): st
     ink +=
       rings(c, 512, 384, 470, 140, -18 + v * 9, true) +
       rings(c, 570, 365, 400, 205, 24 - v * 7, true);
-    ink += planet(c, 112, 584, 31, "moon");
+    ink += planet(c, 112, 584, 38, "moon");
   } else if (galaxy === "whirlpool") {
     if (v === 1) ink += planet(c, 520, 385, 335, "giant");
     ink += spiral(c, v);
@@ -309,7 +424,7 @@ export function decorationSvg(c: Colours, galaxy: GalaxyId, variant: number): st
   } else if (galaxy === "needle") {
     if (v === 1) ink += planet(c, 510, 384, 335, "giant");
     else ink += slab(c, v);
-    ink += `<g transform="translate(0 ${v === 0 ? 160 : -90})">${stream(c, v)}</g>`;
+    ink += stream(c, v, v === 0 ? 160 : -90);
   } else if (galaxy === "andromeda") {
     ink += planet(c, 512 + v * 12, 384, 335, "giant", true);
     ink += planet(c, 108, 180, 36, "moon1") + planet(c, 903, 579, 44, "moon2");
@@ -321,5 +436,12 @@ export function decorationSvg(c: Colours, galaxy: GalaxyId, variant: number): st
     ink += planet(c, 512, 384, 335, "giant", false, true) + brokenRing(c, v, true);
     if (v === 2) ink += fragment(c, 890, 620, 155, 1.2, -0.3, 7);
   }
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="768" viewBox="0 0 1024 768">${ink}</svg>\n`;
+  return {
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="768" viewBox="0 0 1024 768">${ink}</svg>\n`,
+    bodies,
+  };
+}
+
+export function decorationSvg(c: Colours, galaxy: GalaxyId, variant: number): string {
+  return decorationDrawing(c, galaxy, variant).svg;
 }

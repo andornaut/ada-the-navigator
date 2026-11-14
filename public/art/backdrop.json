@@ -22,7 +22,7 @@
       "chunk": [1500, 1000],
       "chance": 0.92,
       "salt": "planet",
-      "radius": [28, 98],
+      "radius": [40, 98],
       "light": [-0.62, -0.78],
       "facets": 14,
       "push": {

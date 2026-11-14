@@ -116,8 +116,9 @@ at their own depth behind the play plane:
 - A placeholder galaxy's rocks and specks take the base field's tints.
 
 Density: one backdrop rock in 48% of the 320 by 320 world-unit cells. The
-30, 46, 64 and 90 logical-px silhouettes are joined by simple 180 and 270 px
-masses, using the same low-detail model and tint rule. These are backdrop
+160, 180, 192, 216, 240 and 270 logical-px silhouettes use the same low-detail
+model and tint rule. Their minimum seeded display scale keeps every standalone
+backdrop rock larger than the ship. These are backdrop
 sprites only; the play asteroid shapes, resource rocks and collision data
 remain separate.
 
@@ -126,7 +127,8 @@ one rule (`backdrop.rule`):
 
 - `backdropLit` on a dark field: Oklab L of the field's `environmentDetail`
   plus 0.035 (`lift`), at the galaxy tint hue with 1.5 times the galaxy tint
-  chroma (`chromaScale`). The base field uses the hue and chroma of its own
+  chroma (`chromaScale`), reducing lightness if needed to keep the existing
+  1.8:1 backdrop cap. The base field uses the hue and chroma of its own
   `environmentDetail`.
 - `backdropLit` on a light field (`tint.light`): Oklab L of the background
   minus 0.045 (`lightDrop`), at the tint chroma and hue. The tops sit just

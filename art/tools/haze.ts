@@ -59,8 +59,8 @@ const hazes: Haze[] = [
       { colour: field("andromeda", "environmentDetail"), alpha: 0.55, width: 28, phase: 0.25 },
     ],
     core: [
-      { colour: "#6E76AE", alpha: 0.55, rx: 92, ry: 52 },
-      { colour: "#A3ABE6", alpha: 0.45, rx: 40, ry: 22 },
+      { colour: field("andromeda", "environment"), alpha: 0.55, rx: 92, ry: 52 },
+      { colour: field("andromeda", "environmentDetail"), alpha: 0.45, rx: 40, ry: 22 },
     ],
     blur: 20,
   },

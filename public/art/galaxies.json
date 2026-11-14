@@ -142,55 +142,59 @@
   "galaxies": {
     "andromeda": {
       "tint": {
-        "lightness": 0,
-        "chroma": 0.05,
-        "hue": 278
+        "lightness": 0.4041893132053612,
+        "chroma": 0.043193901489280886,
+        "hue": -83.99388788353585,
+        "light": true
       },
       "colors": {
-        "background": "#232641",
-        "environment": "#2F324E",
-        "environmentDetail": "#3A3E5B"
+        "background": "#9298B5",
+        "environment": "#8087A4",
+        "environmentDetail": "#6F7693"
       },
       "marker": "#B8C1FF"
     },
     "cartwheel": {
       "tint": {
-        "lightness": 0,
-        "chroma": 0.036,
-        "hue": 30
+        "lightness": 0.43974454465296087,
+        "chroma": 0.041424038342620255,
+        "hue": 44.00626223542938,
+        "light": true
       },
       "colors": {
-        "background": "#39221E",
-        "environment": "#452E2A",
-        "environmentDetail": "#523A36"
+        "background": "#BC9D90",
+        "environment": "#A8897C",
+        "environmentDetail": "#957569"
       },
       "marker": "#F3B6AC"
     },
     "needle": {
       "tint": {
-        "lightness": -0.025,
-        "chroma": 0.008,
-        "hue": 60
+        "lightness": 0.514907190605187,
+        "chroma": 0.031415456093410406,
+        "hue": 83.6191687545825,
+        "light": true
       },
       "colors": {
-        "background": "#26221F",
-        "environment": "#312D2A",
-        "environmentDetail": "#3E3936"
+        "background": "#C6BBA6",
+        "environment": "#B3A891",
+        "environmentDetail": "#9E937E"
       },
       "marker": "#CFC5BD"
     },
     "phantom": {
       "tint": {
-        "lightness": -0.05,
-        "chroma": 0.034,
-        "hue": 320
+        "lightness": 0.13713318485718884,
+        "chroma": 0.022133039814596016,
+        "hue": -45.42986679895719
       },
       "colors": {
-        "background": "#241827",
-        "environment": "#302333",
-        "environmentDetail": "#3C2E3F"
+        "background": "#514955",
+        "environment": "#625868",
+        "environmentDetail": "#75677B"
       },
-      "marker": "#DCBAE3"
+      "marker": "#DCBAE3",
+      "foregroundEdge": "#FFFFFF"
     },
     "sunflower": {
       "tint": {
@@ -208,14 +212,15 @@
     },
     "whirlpool": {
       "tint": {
-        "lightness": 0,
-        "chroma": 0.034,
-        "hue": 215
+        "lightness": 0.5514493919595524,
+        "chroma": 0.0274759746090149,
+        "hue": 166.6248137213011,
+        "light": true
       },
       "colors": {
-        "background": "#132D33",
-        "environment": "#1F3940",
-        "environmentDetail": "#2B464C"
+        "background": "#B8CEC4",
+        "environment": "#A6BDB3",
+        "environmentDetail": "#92ABA1"
       },
       "marker": "#94D3E3"
     }

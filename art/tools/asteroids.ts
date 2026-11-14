@@ -137,11 +137,11 @@ const SHAPES: readonly {
 // Backdrop rocks reuse the medium model rules at backdrop widths. The largest silhouettes
 // remain scenery: muted by the backdrop tint and separated from play objects by parallax.
 const BACKDROP: readonly { id: string; width: number; seed: number; aspect: number }[] = [
-  { id: "backdrop-1", width: 30, seed: 211, aspect: 1.3 },
-  { id: "backdrop-2", width: 46, seed: 223, aspect: 1.6 },
-  { id: "backdrop-3", width: 64, seed: 227, aspect: 1.2 },
-  { id: "backdrop-4", width: 90, seed: 229, aspect: 1.5 },
-  { id: "backdrop-5", width: 180, seed: 233, aspect: 1.7 },
+  { id: "backdrop-1", width: 160, seed: 211, aspect: 1.3 },
+  { id: "backdrop-2", width: 180, seed: 223, aspect: 1.6 },
+  { id: "backdrop-3", width: 192, seed: 227, aspect: 1.2 },
+  { id: "backdrop-4", width: 216, seed: 229, aspect: 1.5 },
+  { id: "backdrop-5", width: 240, seed: 233, aspect: 1.7 },
   { id: "backdrop-6", width: 270, seed: 239, aspect: 1.05 },
 ];
 
@@ -579,7 +579,16 @@ function backdropLit(
     return oklch(L - BACKDROP_LIGHT_DROP, chroma, hue);
   }
   const [L] = toOklab(rgb(field.environmentDetail!));
-  return oklch(L + BACKDROP_LIFT, chroma * BACKDROP_CHROMA, hue);
+  let lightness = L + BACKDROP_LIFT;
+  let colour = oklch(lightness, chroma * BACKDROP_CHROMA, hue);
+  while (
+    contrast(field.background!.slice(1), colour.slice(1)) >= BACKDROP_MAX_CONTRAST &&
+    lightness > 0
+  ) {
+    lightness -= 0.002;
+    colour = oklch(lightness, chroma * BACKDROP_CHROMA, hue);
+  }
+  return colour;
 }
 
 function multiply(colour: string, k: number): string {
@@ -652,10 +661,14 @@ function rock(
   };
 }
 
-const asteroids = SHAPES.map((shape) => rock(shape, false));
+const backdropOnly = process.argv.includes("--backdrop-only");
+const previous = backdropOnly
+  ? (JSON.parse(readFileSync(`${art}asteroids.json`, "utf8")) as { asteroids: unknown[] })
+  : undefined;
+const asteroids = backdropOnly ? [] : SHAPES.map((shape) => rock(shape, false));
 
 // A resource rock stands on its plain shape's base: the footprints must match exactly.
-const resources = RESOURCES.map((shape) => {
+const resources = (backdropOnly ? [] : RESOURCES).map((shape) => {
   const entry = rock(shape, true);
   const plain = asteroids.find(({ id }) => id === shape.shape)!;
   const same =
@@ -696,7 +709,7 @@ writeFileSync(
       version: 1,
       displayScale: DISPLAY,
       stone: STONE,
-      asteroids,
+      asteroids: previous?.asteroids ?? asteroids,
       backdrop: {
         sideScale: BACKDROP_SIDE,
         rule: { lift: BACKDROP_LIFT, chromaScale: BACKDROP_CHROMA, lightDrop: BACKDROP_LIGHT_DROP },
@@ -709,17 +722,19 @@ writeFileSync(
 );
 
 // Each `rocks[i]` has the `asteroids[i]` schema; `ore` is the crystals' ramp.
-const resourcePath = `${art}resource-rocks.json`;
-writeFileSync(
-  resourcePath,
-  await format(
-    json({ version: 1, displayScale: DISPLAY, stone: STONE, ore: ORE, rocks: resources }),
-    {
-      ...(await resolveConfig(resourcePath)),
-      filepath: resourcePath,
-    },
-  ),
-);
+if (!backdropOnly) {
+  const resourcePath = `${art}resource-rocks.json`;
+  writeFileSync(
+    resourcePath,
+    await format(
+      json({ version: 1, displayScale: DISPLAY, stone: STONE, ore: ORE, rocks: resources }),
+      {
+        ...(await resolveConfig(resourcePath)),
+        filepath: resourcePath,
+      },
+    ),
+  );
 
-// The root manifest names the asteroid and resource rock data next to the other data files.
-linkData("core", { asteroids: "/art/asteroids.json", resourceRocks: "/art/resource-rocks.json" });
+  // The root manifest names the asteroid and resource rock data next to the other data files.
+  linkData("core", { asteroids: "/art/asteroids.json", resourceRocks: "/art/resource-rocks.json" });
+}

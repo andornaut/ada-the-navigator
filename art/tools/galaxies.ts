@@ -37,6 +37,7 @@ const SIGNALS = [
 ] as const;
 const MIN_CONTRAST = 5;
 const INK = "#181425";
+const FOREGROUND_EDGES: Readonly<Record<string, string>> = { phantom: "#FFFFFF" };
 
 type Tint = { lightness: number; chroma: number; hue: number; light?: true };
 
@@ -49,6 +50,15 @@ const GALAXIES: Readonly<Record<string, Tint>> = {
   phantom: { lightness: -0.05, chroma: 0.034, hue: 320 },
   sunflower: { lightness: 0.5549, chroma: 0.0714, hue: 94.2, light: true },
   whirlpool: { lightness: 0, chroma: 0.034, hue: 215 },
+};
+
+// Approved field roles: base, facet and accent. Signal and map-marker colours are independent.
+const THEMES: Readonly<Record<string, readonly [string, string, string]>> = {
+  whirlpool: ["#B8CEC4", "#A6BDB3", "#92ABA1"],
+  needle: ["#C6BBA6", "#B3A891", "#9E937E"],
+  andromeda: ["#9298B5", "#8087A4", "#6F7693"],
+  cartwheel: ["#BC9D90", "#A8897C", "#957569"],
+  phantom: ["#514955", "#625868", "#75677B"],
 };
 
 // Bank fields by id: tints kept for a later galaxy and assigned to none; Gameplay places them.
@@ -169,12 +179,18 @@ const base = JSON.parse(readFileSync(`${art}space-palette.json`, "utf8")) as {
 const baseBackground = lightnessOf(base.colors.background!);
 function field(id: string, t: Tint): Record<string, string> {
   const colors = Object.fromEntries(
-    FIELD.map((role) => [role, tint(t, baseBackground, base.colors[role]!)]),
+    FIELD.map((role, index) => [
+      role,
+      THEMES[id]?.[index] ?? tint(t, baseBackground, base.colors[role]!),
+    ]),
   );
-  // On a light field every play object sits in an ink keyline, so the keyline carries the signal.
-  const edges: [string, string][] = t.light
-    ? [["ink keyline", INK]]
-    : SIGNALS.map((signal) => [signal, base.colors[signal]!]);
+  // The actual emitted recognition edge carries contrast independently of field brightness.
+  const foreground = FOREGROUND_EDGES[id];
+  const edges: [string, string][] = foreground
+    ? [["foreground edge", foreground]]
+    : t.light || (THEMES[id] !== undefined && id !== "phantom")
+      ? [["ink keyline", INK]]
+      : SIGNALS.map((signal) => [signal, base.colors[signal]!]);
   for (const [name, edge] of edges) {
     const ratio = contrast(colors.background!.slice(1), edge.slice(1));
     if (ratio < MIN_CONTRAST) {
@@ -201,7 +217,24 @@ const distance = (a: string, b: string) => {
 const galaxies = Object.fromEntries(
   Object.entries(GALAXIES).map(([id, t]) => {
     const colors = field(id, t);
-    return [id, { tint: t, colors, marker: marker(t, colors) }];
+    const [L, a, b] = toOklab(rgb(colors.background!));
+    const themeTint = THEMES[id]
+      ? {
+          lightness: L - baseBackground,
+          chroma: Math.hypot(a, b),
+          hue: (Math.atan2(b, a) * 180) / Math.PI,
+          ...(id !== "phantom" ? { light: true } : {}),
+        }
+      : t;
+    return [
+      id,
+      {
+        tint: themeTint,
+        colors,
+        marker: marker(t, field(`legacy:${id}`, t)),
+        ...(FOREGROUND_EDGES[id] ? { foregroundEdge: FOREGROUND_EDGES[id] } : {}),
+      },
+    ];
   }),
 );
 const bank = Object.fromEntries(
@@ -370,28 +403,30 @@ function locked(image: RgbaImage): RgbaImage {
   return out;
 }
 
-const previewDir = `${art}previews/`;
-mkdirSync(previewDir, { recursive: true });
-const previewEntries = PLACEHOLDERS.flatMap((id) =>
-  (
-    [
-      ["", placeholder(id, galaxies[id]!.colors)],
-      // Locked captures fly the base field, so the greyed placeholder draws on it too.
-      ["-locked", locked(placeholder(id, base.colors))],
-    ] as const
-  ).map(([suffix, image]) => {
-    writePng(`${previewDir}galaxy-${id}${suffix}.png`, image, true);
-    return {
-      id: `galaxy-preview-${id}${suffix}`,
-      path: `/art/previews/galaxy-${id}${suffix}.png`,
-      width: PREVIEW.width,
-      height: PREVIEW.height,
-      displayWidth: PREVIEW.width,
-      displayHeight: PREVIEW.height,
-      facing: "front",
-      pivot: { x: 0, y: 0 },
-      placeholder: true,
-    };
-  }),
-);
-replaceEntries("core", (id) => id.startsWith("galaxy-preview-"), previewEntries);
+if (!process.argv.includes("--fields-only")) {
+  const previewDir = `${art}previews/`;
+  mkdirSync(previewDir, { recursive: true });
+  const previewEntries = PLACEHOLDERS.flatMap((id) =>
+    (
+      [
+        ["", placeholder(id, galaxies[id]!.colors)],
+        // Locked captures fly the base field, so the greyed placeholder draws on it too.
+        ["-locked", locked(placeholder(id, base.colors))],
+      ] as const
+    ).map(([suffix, image]) => {
+      writePng(`${previewDir}galaxy-${id}${suffix}.png`, image, true);
+      return {
+        id: `galaxy-preview-${id}${suffix}`,
+        path: `/art/previews/galaxy-${id}${suffix}.png`,
+        width: PREVIEW.width,
+        height: PREVIEW.height,
+        displayWidth: PREVIEW.width,
+        displayHeight: PREVIEW.height,
+        facing: "front",
+        pivot: { x: 0, y: 0 },
+        placeholder: true,
+      };
+    }),
+  );
+  replaceEntries("core", (id) => id.startsWith("galaxy-preview-"), previewEntries);
+}

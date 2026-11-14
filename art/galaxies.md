@@ -4,11 +4,11 @@
   [galaxies.json](../public/art/galaxies.json) from the base field roles in
   [space-palette.json](../public/art/space-palette.json), formatted with the
   project's Prettier settings, and links it from the core manifest as
-  `galaxyFields`. The build fails if any space signal falls below
-  5:1 on a dark galaxy's background, or the ink keyline below 5:1 on a light
-  galaxy's background, or a [marker](#markers) below its ink or distance
-  floors. It also draws the [placeholder previews](#placeholder-previews) and
-  lists them in the core manifest.
+  `galaxyFields`. The build validates each emitted foreground boundary at
+  5:1 on its base field, or each legacy space signal when no boundary applies,
+  and checks the [marker](#markers) ink and distance floors. It also draws the
+  [placeholder previews](#placeholder-previews); `--fields-only` preserves
+  existing selector previews.
 - `galaxies` maps each stable galaxy id to its `tint`, `colors` and `marker`.
   It holds no position or number: route order, numbers, names and flavour
   lines are Gameplay's, and keys sit in id order.
@@ -18,46 +18,39 @@
 
 ## Field hues
 
-Each galaxy retints the space field to one Oklab hue. `colors` holds the
-results under the space palette's role names; they replace `background`,
-`environment` and `environmentDetail` while Ada is in that galaxy. Signals
-(`pointOfInterest`, `obstacle`, `active`, `weapon`, `shipHardpoint`), the ship
-and the in-between colours never change.
+The selected base, facet and accent colours are published as `background`,
+`environment` and `environmentDetail`. Signal fills, ship paints, the in-between
+colours and the canonical route-map marker palette remain separate.
 
-| Id          | `background` | `environment` | `environmentDetail` | Lowest edge contrast       |
-| ----------- | ------------ | ------------- | ------------------- | -------------------------- |
-| `sunflower` | `#D8C994`    | `#C9BA86`     | `#BAAB77`           | Ink keyline 10.90:1, light |
-| `whirlpool` | `#132D33`    | `#1F3940`     | `#2B464C`           | `obstacle` 5.37:1          |
-| `needle`    | `#26221F`    | `#312D2A`     | `#3E3936`           | `obstacle` 5.86:1          |
-| `andromeda` | `#232641`    | `#2F324E`     | `#3A3E5B`           | `obstacle` 5.47:1          |
-| `cartwheel` | `#39221E`    | `#452E2A`     | `#523A36`           | `obstacle` 5.48:1          |
-| `phantom`   | `#241827`    | `#302333`     | `#3C2E3F`           | `obstacle` 6.31:1          |
+| Id          | `background` | `environment` | `environmentDetail` | Foreground boundary |
+| ----------- | ------------ | ------------- | ------------------- | ------------------- |
+| `sunflower` | `#D8C994`    | `#C9BA86`     | `#BAAB77`           | Existing dark ink   |
+| `whirlpool` | `#B8CEC4`    | `#A6BDB3`     | `#92ABA1`           | Existing dark ink   |
+| `needle`    | `#C6BBA6`    | `#B3A891`     | `#9E937E`           | Existing dark ink   |
+| `andromeda` | `#9298B5`    | `#8087A4`     | `#6F7693`           | Existing dark ink   |
+| `cartwheel` | `#BC9D90`    | `#A8897C`     | `#957569`           | Existing dark ink   |
+| `phantom`   | `#514955`    | `#625868`     | `#75677B`           | Canonical white     |
 
-On the dark galaxies every other signal is above 6:1. Needle is a warm
-graphite, so its thin silver line of stars carries the galaxy; Andromeda is a
-deep blue under the brightest marker on the route. On both, the ship's white
-body is 14.74:1 or more and its darkest hull tone `#9AABBF` 6.28:1 or more, and
-cream HUD text on the ink panel at 0.65 is 11.71:1 or more. Sunflower is Chibi's farm
-yellow: its environment (1.17:1) and detail (1.38:1) step darker than the
-background, as Chibi's farm layers do. Bare signals there are 1.04:1
-(`weapon`) to 1.63:1 (`obstacle`), so on a light field every play object and
-pickup reads by its ink keyline.
+Sunflower's palette is unchanged. Whirlpool is pale aqua/sage, Needle warm
+stone, Andromeda dusty periwinkle, Cartwheel dusty clay and Phantom dark plum.
+The roles stay muted; foreground recognition uses the resolved boundary colour,
+not a collision or passability classification.
 
 ## Tint rule
 
-`tint` is `lightness` (Oklab L offset), `chroma`, `hue` (degrees) and, on a
-light galaxy, `light: true`. A field colour keeps its own Oklab L plus
-`lightness` and takes `chroma` at `hue`: `(L + lightness, chroma cos hue,
-chroma sin hue)`, converted back to sRGB and clamped. The four base roles keep
-their lightness steps, so the field reads the same in every galaxy, only in
-another hue; Needle is also 0.025 darker and Phantom 0.05.
+`tint` describes the base field in Oklab: `lightness` is its offset from the
+shared base background, `chroma` and `hue` describe its colour, and `light: true`
+selects the existing light-field palette behaviour. The selected role triples
+are explicit; they do not inherit identical lightness steps from another field.
+Sunflower retains its existing tint and role values. Unassigned bank fields
+retain the base-role tint calculation.
 
-With `light: true` each role's step from the base background mirrors below it:
-`L' = 2 L_background - L + lightness`, with `L_background` the base
-background's Oklab L. The background is unchanged by the mirror and the
-environment and detail land darker by their usual steps. Sunflower's tint is
-`lightness` +0.5549, `chroma` 0.0714, `hue` 94.2, which gives `#D8C994`
-exactly.
+`foregroundEdge`, an optional colour on the galaxy entry, selects the recognition
+boundary independently of `tint.light`. Phantom emits `#FFFFFF`; it remains a
+dark field. Without an override, light fields retain `lightField.ink` (`#181425`)
+and legacy dark fields retain their signal fills. Producer metadata and the
+matching foreground-edge consumer are an atomic dependency. Boundary texture
+cache identities include the resolved ink.
 
 The same rule retints raster space art and captures on a dark galaxy: a pixel
 is field paint when its Oklab L is below `fieldPaint.lightness` (0.45) and its
@@ -67,10 +60,11 @@ dark outlines with the field.
 
 ## Light fields
 
-A galaxy with `tint.light` has a light field. There Tech draws the following
-from `lightField`, in addition to the usual art; a dark galaxy draws none of
-it. Widths are logical px, scaled by `s` like every other space stroke; ink is
-`#181425` (`lightField.ink`).
+A galaxy with `tint.light` has a light field. Tech draws the following from
+`lightField`, in addition to the usual art. An explicit `foregroundEdge` reuses
+the boundary widths and categories with its resolved ink independently of the
+field's palette classification. Signal fills remain unchanged. Widths are
+logical px, scaled by `s`; default light-field ink is `#181425`.
 
 | Part                 | Rule                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -156,10 +150,10 @@ and where each asset sits:
 Each galaxy's route-map [marker](layout.md#galaxy-selector) takes its main hue
 (`marker` per galaxy):
 
-- A light galaxy's marker is its background. A dark galaxy's is Oklab L 0.83
-  (`marker.lightness`) at its tint hue with twice its tint chroma
-  (`marker.chromaScale`), so every marker sits at one lightness and differs by
-  hue.
+- The canonical marker colours below remain independent of background themes.
+  Sunflower retains its background-coloured marker; the other markers retain
+  their authored route hues and lightness. Background palette generation does
+  not recolour the route map.
 - Every locked marker is one grey, `#8B8B8B` (`marker.locked`), so a locked
   marker gives away no hue.
 - The build fails if ink is below 4.5:1 on a marker or the locked grey (each
@@ -235,14 +229,11 @@ pale core ([Andromeda](andromeda.md)).
   `environment` stroke 92 px wide at alpha 0.9 and an `environmentDetail`
   stroke 28 px wide at alpha 0.55, a quarter radian ahead. The core is two
   ellipses at (660, 186) of the texture, which lands at (540, 126) of the play
-  view: `#6E76AE` 92 by 52 px at alpha 0.55 and `#A3ABE6` 40 by 22 px at alpha
-  0.45.
-- Over the field the arms stay at or below 1.22:1 and the core peaks at 3.07:1
-  (`#686FA0`); 4% of the view is above 1.8:1. The core is Andromeda's
-  brightest backdrop tone, the one above the rocks' 1.8:1: a single soft glow,
-  below every signal's 5:1. The [backdrop caps](backdrop.md#contrast-caps)
-  hold every other layer at or under it, and Andromeda's plates only darken,
-  so nothing brightens it.
+  view: the `environment` colour 92 by 52 px at alpha 0.55 and
+  `environmentDetail` 40 by 22 px at alpha 0.45.
+- Arms and core derive from the same field roles. The
+  [backdrop caps](backdrop.md#contrast-caps) validate their composed field
+  tones; Andromeda's plates only darken.
 - The same in every state: no blink, so reduced motion changes nothing. The
   [selector preview](#selector-preview) capture includes it.
 
@@ -267,8 +258,8 @@ ink keyline keeps 8.8:1 or more over every plate.
 
 ## Placeholder previews
 
-Needle and Andromeda have no space art yet, so `galaxies.ts` draws their
-previews as placeholders until their galaxies are built and captured:
+Needle and Andromeda retain authored selector placeholders until their own
+selector captures are supplied. `galaxies.ts` can draw these placeholders:
 `public/art/previews/galaxy-{id}.png` and `galaxy-{id}-locked.png`, 180x90,
 opaque. The core manifest lists them as `galaxy-preview-{id}` and
 `galaxy-preview-{id}-locked`, each with `placeholder: true`.

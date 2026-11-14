@@ -44,21 +44,37 @@ moves by. Play objects, effects and the HUD draw over all of them.
 
 ### Rare giant decorations
 
-Each galaxy's optional `decorations` recipe adds rare, purely decorative
-compositions below the plates. The shared placement uses that galaxy's existing
-seed, parallax 0.08, 4200 by 3000 layer-coordinate chunks and chance 0.35.
-Seeded scale is 0.9 to 1.08 and rotation is -18 to 18 degrees. Empty chunks
-retain quiet stretches. These forms have no gameplay objects, collision,
-landmark, reward or map role; story-room art is separate.
+Each galaxy's optional `decorations` recipe adds purely decorative compositions
+below the plates. Placement, parallax, jitter and weighted sizes are authored in
+[backdrop-decorations.ts](tools/backdrop-decorations.ts), then published in each
+galaxy's `backdrop.json`; consumers do not duplicate these values. The shared
+size distribution weights approximately one, two and three screen-width
+formations 6:3:1, independently of the selected signature. A screen is 720
+projected gameplay pixels, not a device-pixel width or a placement cell.
 
-The recipe's three `sprites` entries hold `asset`, `width` and `height`.
-Their 2200 by 1650 logical-px display size is defined only in this recipe.
+The placement target is an average new visible formation every 8 to 10 screens
+of projected travel. The focused travel proof must report opaque-geometry
+entries, residence, simultaneous formations and quiet runs separately. A
+bounding-box entry rate or the fraction of nonempty cameras does not establish
+this target. Prefer the lowest measured parallax that preserves a distant feel
+with bounded overlap and quiet stretches.
+
+The recipe's three `sprites` entries hold `asset`, `width`, `height` and
+`bodies`. Each body's normalized `polygons` have an `outer` ring and optional
+`holes`; polygons combine by union. Coordinates follow the actual clipped
+visible drawing, including ring and hollow openings. A body represents an
+independent object or a recognizable formation containing smaller components;
+standalone moons have separate ids. The producer derives display size from the
+visible formation span, not transparent canvas margins. Independent bodies
+remain visibly larger than the canonical 42-pixel ship at minimum scale.
+
 The native SVG sources are 1024 by 768, tagged `kind: backdrop-decoration`
-in the galaxy manifest. The consumer caps this category's longest texture
-edge at 1024, uses linear filtering and shares each texture across placements.
-It culls by the complete rotated bounds. Giant planet discs are about
-1440 logical px across at scale 1; moons and broad fragments share the
-existing planet palette without extra surface texture.
+in the galaxy manifest. The consumer caps the longest texture edge at 1024,
+uses linear filtering, shares textures across placements and retains
+`BatchHandlerQuadSingle`. The rotated full bounds remain the render envelope;
+visible encounter proofs use the opaque geometry. Decorations have no model
+objects, collision, loot, discovery, landmark or map role. Functional landmarks,
+route-map compositions and story-room art remain separate.
 
 | Galaxy    | Recurrent rare signature                                           |
 | --------- | ------------------------------------------------------------------ |
@@ -125,7 +141,7 @@ sky when its id changes.
   360 and these parallaxes, the large forms remain sparse while occupying more
   of the layered background.
 - **Planets.** The look is `planets[floor(unit("planet-look") n)]`; the radius
-  is `(28 + 70 unit("planet-r")) size`. Lit from `light` (-0.62, -0.78), the
+  is `(40 + 58 unit("planet-r")) size`. Lit from `light` (-0.62, -0.78), the
   upper left. Over the disc in `night`, `body` fills where the point lies
   outside a shadow disc of the same radius pushed away from the light by
   `push` r (0.42 for a crescent, 0.7 otherwise), and `lit` where it lies
@@ -193,14 +209,21 @@ size).
 
 ## Contrast caps
 
-The rule: no backdrop area tone is brighter than the galaxy's brightest
-backdrop tone today, or on a light field darker than its darkest. Today's
-tone is the galaxy's `backdropLit` on a dark field (Andromeda's haze core or
-Needle's band peak where brighter, measured from the texture and the profile) and `backdropSide` on Sunflower; a
-placeholder's is the base field's. So Ada's white body
-and darkest hull tone `#9AABBF`, the `obstacle` coral and Sunflower's ink
-keyline never lose contrast against the backdrop. Ratios are WCAG against the
-galaxy background:
+Area-tone caps preserve the galaxy's existing reference: its brightest backdrop
+tone on a dark field, or darkest on a light field. The reference includes fixed
+haze or band peaks where applicable. Recognition checks use the actual emitted
+foreground boundary independently of the palette's light/dark classification.
+All opened area samples must retain at least that boundary's contrast against
+the unchanged reference, within the existing 0.005 tolerance. Legacy dark fields
+without a boundary retain their direct signal checks.
+
+The 5:1 field requirement applies to the base background and its recognition
+edge, not every bare ship fill over every formation. Separate diagnostics derive
+Classic white and the darkest Classic hull facet from the shared ship model and
+record their sampled minima, colours and locations. A bare facet can approach
+1:1 at an intermediate field tone while its recognition outline remains clear;
+these diagnostics are not a 5:1 or no-degradation assertion for bare fills.
+Ratios are WCAG luminance contrast:
 
 | Layer            | Dark field                                                                                                   | Light field                                   |
 | ---------------- | ------------------------------------------------------------------------------------------------------------ | --------------------------------------------- |
@@ -215,8 +238,10 @@ galaxy background:
 - The build checks each tone against its cap, then renders the area layers
   (L0, the fixed layers, L2 and L1) at six seeded cameras plus one centred on
   each planet and far look, takes the brightest (light field: darkest) tone
-  after a 5 px grey opening, which drops point stars and 1 px lines, and fails
-  if any signal's contrast over it is below its contrast over today's tone.
+  after a 5 px grey opening, which drops point stars and 1 px lines, and checks
+  every sampled tone against the recognition reference. The metadata records
+  the minimizing source colour and location. Brightest-only sampling is not
+  sufficient for a fill whose luminance lies inside the background range.
 - Stars and streaks are points and hairlines, as the specks and the band's
   stars are; they stay
   below the 5:1 signal floor and smaller than Stardust, with no glint or cross
@@ -224,18 +249,14 @@ galaxy background:
 
 Measured over the sampled cameras:
 
-| Galaxy    | Today                      | New extreme      | Signal over today, then over the new extreme             |
-| --------- | -------------------------- | ---------------- | -------------------------------------------------------- |
-| Sunflower | `#A1966B` 1.79:1           | `#BAB27C` 1.30:1 | Ink 6.08, 8.38                                           |
-| Cartwheel | `#643F39` 1.63:1           | `#5E353A` 1.44:1 | Obstacle 3.37, 3.81; hull 3.87, 4.37; white 9.08, 10.26  |
-| Whirlpool | `#26515C` 1.66:1           | `#31465F` 1.49:1 | Obstacle 3.23, 3.61; hull 3.71, 4.14; white 8.70, 9.72   |
-| Needle    | Band peak `#4F4945` 1.78:1 | `#4D4842` 1.74:1 | Obstacle 3.29, 3.36; hull 3.78, 3.86; white 8.86, 9.06   |
-| Andromeda | Haze core `#6970A0` 3.12:1 | `#69709F` 3.10:1 | Obstacle 1.75, 1.77; hull 2.01, 2.03; white 4.72, 4.76   |
-| Phantom   | `#49344E` 1.53:1           | `#423458` 1.52:1 | Obstacle 4.14, 4.16; hull 4.75, 4.78; white 11.14, 11.22 |
-
-Over the brightest plate alone the obstacle stays at 4.3:1 or more and the
-darkest hull tone at 5.0:1 or more on every dark field; on Sunflower the ink
-keyline stays at 8.8:1 or more over the darkest plate.
+| Galaxy    | Recognition edge: reference / sampled minimum | Bare white / darkest hull minimum |
+| --------- | --------------------------------------------- | --------------------------------- |
+| Sunflower | 6.083 / 8.383                                 | 1.387 / 3.545                     |
+| Whirlpool | 6.078 / 8.345                                 | 1.428 / 3.529                     |
+| Needle    | 5.282 / 7.320                                 | 1.631 / 3.095                     |
+| Andromeda | 3.592 / 4.013                                 | 2.547 / 1.697                     |
+| Cartwheel | 4.036 / 5.512                                 | 2.150 / 2.331                     |
+| Phantom   | 4.848 / 4.888                                 | 4.888 / 1.000                     |
 
 ## Placeholder galaxies
 

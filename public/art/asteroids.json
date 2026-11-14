@@ -9649,70 +9649,70 @@
         "id": "backdrop-1",
         "file": "/art/asteroids/backdrop-1.svg",
         "frame": {
-          "width": 78,
-          "height": 35
+          "width": 396,
+          "height": 166
         },
         "display": {
-          "width": 34.13,
-          "height": 15.31
+          "width": 173.25,
+          "height": 72.63
         },
-        "pivot": [0.5, 0.68571],
+        "pivot": [0.5, 0.71084],
         "tint": "backdropLit"
       },
       {
         "id": "backdrop-2",
         "file": "/art/asteroids/backdrop-2.svg",
         "frame": {
-          "width": 110,
-          "height": 64
+          "width": 418,
+          "height": 232
         },
         "display": {
-          "width": 48.13,
-          "height": 28
+          "width": 182.88,
+          "height": 101.5
         },
-        "pivot": [0.5, 0.70313],
+        "pivot": [0.5, 0.71983],
         "tint": "backdropLit"
       },
       {
         "id": "backdrop-3",
         "file": "/art/asteroids/backdrop-3.svg",
         "frame": {
-          "width": 166,
-          "height": 106
+          "width": 488,
+          "height": 307
         },
         "display": {
-          "width": 72.63,
-          "height": 46.38
+          "width": 213.5,
+          "height": 134.31
         },
-        "pivot": [0.5, 0.66038],
+        "pivot": [0.5, 0.66775],
         "tint": "backdropLit"
       },
       {
         "id": "backdrop-4",
         "file": "/art/asteroids/backdrop-4.svg",
         "frame": {
-          "width": 218,
-          "height": 123
+          "width": 516,
+          "height": 289
         },
         "display": {
-          "width": 95.38,
-          "height": 53.81
+          "width": 225.75,
+          "height": 126.44
         },
-        "pivot": [0.5, 0.69106],
+        "pivot": [0.5, 0.69204],
         "tint": "backdropLit"
       },
       {
         "id": "backdrop-5",
         "file": "/art/asteroids/backdrop-5.svg",
         "frame": {
-          "width": 474,
-          "height": 429
+          "width": 630,
+          "height": 570
         },
         "display": {
-          "width": 207.38,
-          "height": 187.69
+          "width": 275.63,
+          "height": 249.38
         },
-        "pivot": [0.5, 0.71795],
+        "pivot": [0.5, 0.71754],
         "tint": "backdropLit"
       },
       {
@@ -9737,28 +9737,28 @@
       "backdropSide": "#3A394A"
     },
     "andromeda": {
-      "backdropLit": "#414572",
-      "backdropSide": "#34375B"
+      "backdropLit": "#848AA7",
+      "backdropSide": "#6A6E86"
     },
     "cartwheel": {
-      "backdropLit": "#643F39",
-      "backdropSide": "#50322E"
+      "backdropLit": "#AE8F82",
+      "backdropSide": "#8B7268"
     },
     "needle": {
-      "backdropLit": "#48423D",
-      "backdropSide": "#3A3531"
+      "backdropLit": "#B8AD98",
+      "backdropSide": "#938A7A"
     },
     "phantom": {
-      "backdropLit": "#49344E",
-      "backdropSide": "#3A2A3E"
+      "backdropLit": "#7A6D81",
+      "backdropSide": "#625767"
     },
     "sunflower": {
       "backdropLit": "#C9BB86",
       "backdropSide": "#A1966B"
     },
     "whirlpool": {
-      "backdropLit": "#26515C",
-      "backdropSide": "#1E414A"
+      "backdropLit": "#AAC0B6",
+      "backdropSide": "#889A92"
     }
   }
 }

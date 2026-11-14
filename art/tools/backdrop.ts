@@ -33,6 +33,7 @@ import { editManifest, GALAXIES, linkData, manifestUrl, replaceEntries } from ".
 import { fromOklab, hex, rgb, toOklab } from "./oklab.ts";
 import { writePng } from "./paint.ts";
 import { json, round } from "./projection.ts";
+import { classic } from "./ship-model.ts";
 
 type GalaxyId = (typeof GALAXIES)[number];
 type Float3 = [number, number, number];
@@ -45,6 +46,7 @@ const fields = read("galaxies.json") as {
     {
       tint: { light?: boolean; chroma: number; hue: number };
       colors: { background: string };
+      foregroundEdge?: string;
       marker?: string;
     }
   >;
@@ -63,9 +65,6 @@ const band = read("needle/band.json") as {
 const HAZE = { path: "andromeda/haze.png", texel: 2 } as const;
 
 const VIEW: Xy = [720, 360];
-// Ada's white body and darkest hull tone (art/ship.md).
-const SHIP_WHITE = "#FFFFFF";
-const SHIP_HULL_DARK = "#9AABBF";
 
 // ---------------------------------------------------------------- colour
 
@@ -74,6 +73,16 @@ const float = (colour: string): Float3 => rgb(colour).map((v) => v / 255) as Flo
 const luminance = ([r, g, b]: readonly number[]) =>
   0.2126 * toLinear(r!) + 0.7152 * toLinear(g!) + 0.0722 * toLinear(b!);
 const ratio = (a: number, b: number) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+// Bare-facet diagnostics follow the actual shared Classic paint, not a copied palette.
+const SHIP_WHITE = classic.paint.top.toUpperCase();
+const SHIP_HULL_DARK = [
+  classic.paint.top,
+  classic.paint.frontSides,
+  classic.paint.rearSides,
+  classic.paint.skirt,
+]
+  .sort((a, b) => luminance(float(a)) - luminance(float(b)))[0]!
+  .toUpperCase();
 const hexOf = (c: readonly number[]) =>
   hex(
     c.map((v) => Math.round(Math.min(1, Math.max(0, v)) * 255)) as unknown as [
@@ -165,7 +174,7 @@ const RULES = {
       chunk: [1500, 1000],
       chance: 0.92,
       salt: "planet",
-      radius: [28, 98],
+      radius: [40, 98],
       light: [-0.62, -0.78],
       facets: 14,
       push: { crescent: 0.42, gibbous: 0.7 },
@@ -1315,6 +1324,42 @@ for (const galaxy of GALAXIES) {
       cameras.push(camera);
     }
   }
+  type ContrastSample = {
+    color: string;
+    minimum: number;
+    location?: {
+      camera: number;
+      x: number;
+      y: number;
+      luminance: number;
+      sourceColor?: string;
+      sourceX?: number;
+      sourceY?: number;
+    };
+  };
+  const explicitEdge = fields.galaxies[galaxy]?.foregroundEdge;
+  const signals: Record<string, string> = explicitEdge
+    ? { foregroundEdge: explicitEdge }
+    : light
+      ? { ink: fields.lightField.ink }
+      : { obstacle: palette.obstacle!, shipWhite: SHIP_WHITE, shipHullDark: SHIP_HULL_DARK };
+  const recognition = Object.entries(signals).map(([name, color]) => ({
+    name,
+    sample: { color, minimum: Infinity } as ContrastSample,
+    luminance: luminance(float(color)),
+  }));
+  const shipContrast: Record<string, ContrastSample> = {
+    white: { color: SHIP_WHITE, minimum: Infinity },
+    hullDark: { color: SHIP_HULL_DARK, minimum: Infinity },
+  };
+  const samples = [
+    ...recognition,
+    ...Object.entries(shipContrast).map(([name, sample]) => ({
+      name,
+      sample,
+      luminance: luminance(float(sample.color)),
+    })),
+  ];
   let extreme = light ? Infinity : -Infinity;
   let extremeColour: Float3 = float(bg);
   cameras.forEach((camera, k) => {
@@ -1326,10 +1371,30 @@ for (const galaxy of GALAXIES) {
     const opened = opening(lum, RULES.check.opening, light);
     for (let p = 0; p < W * H; p++) {
       const v = opened[p]!;
+      for (const target of samples) {
+        const measured = ratio(target.luminance, v);
+        if (measured < target.sample.minimum) {
+          target.sample.minimum = measured;
+          target.sample.location = { camera: k, x: p % W, y: Math.floor(p / W), luminance: v };
+        }
+      }
       if (light ? v < extreme : v > extreme) {
         extreme = v;
         extremeColour = [raster.rgb[p * 3]!, raster.rgb[p * 3 + 1]!, raster.rgb[p * 3 + 2]!];
       }
+    }
+    for (const target of samples) {
+      const location = target.sample.location;
+      if (location?.camera !== k) continue;
+      const source = lum.indexOf(location.luminance);
+      if (source < 0) throw new Error("Opened sample has no source tone");
+      location.sourceColor = hexOf([
+        raster.rgb[source * 3]!,
+        raster.rgb[source * 3 + 1]!,
+        raster.rgb[source * 3 + 2]!,
+      ]);
+      location.sourceX = source % W;
+      location.sourceY = Math.floor(source / W);
     }
     if (previewDir) {
       drawPoints(data, camera, raster);
@@ -1343,18 +1408,19 @@ for (const galaxy of GALAXIES) {
       writePng(`${previewDir}/${galaxy}-${k}.png`, image);
     }
   });
-  const signals: Record<string, string> = light
-    ? { ink: fields.lightField.ink }
-    : { obstacle: palette.obstacle!, shipWhite: SHIP_WHITE, shipHullDark: SHIP_HULL_DARK };
-  const checked: Record<string, { today: number; after: number }> = {};
-  for (const [name, colour] of Object.entries(signals)) {
-    const y = luminance(float(colour));
-    const before = ratio(y, yToday);
-    const after = ratio(y, extreme);
-    checked[name] = { today: round(before), after: round(after) };
+  const checked: Record<string, unknown> = {};
+  for (const target of recognition) {
+    const before = ratio(target.luminance, yToday);
+    const after = target.sample.minimum;
+    checked[target.name] = {
+      color: target.sample.color,
+      today: round(before),
+      after: round(after),
+      location: target.sample.location,
+    };
     if (after < before - 0.005) {
       fail(
-        `${galaxy}: ${name} ${after.toFixed(2)}:1 over ${hexOf(extremeColour)} is under today's ${before.toFixed(2)}:1`,
+        `${galaxy}: ${target.name} sampled minimum ${after.toFixed(2)}:1 is under today's ${before.toFixed(2)}:1`,
       );
     }
   }
@@ -1370,6 +1436,12 @@ for (const galaxy of GALAXIES) {
       extreme: hexOf(extremeColour),
       extremeContrast: round(ratio(extreme, yb)),
       signals: checked,
+      shipContrast: Object.fromEntries(
+        Object.entries(shipContrast).map(([role, sample]) => [
+          role,
+          { color: sample.color, minimum: round(sample.minimum), location: sample.location },
+        ]),
+      ),
     },
   });
   writes.push(() => {
