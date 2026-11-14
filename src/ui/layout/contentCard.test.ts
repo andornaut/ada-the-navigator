@@ -1,11 +1,9 @@
-import { modalWidth } from "@andornaut/game-kit/modalLayout";
 import { HIT_RULE, hitAround } from "@andornaut/game-kit/ui/hitAreas";
 import { describe, expect, it } from "vitest";
 
 import { CARD_CLOSE, CARD_CONTENT, cardHeaderLayout, cardTitleReserve } from "./cardFrame.ts";
 import {
   actionsWidth,
-  CARD_FLOOR_VIEW_WIDTH,
   CARD_WIDTH_CAPS,
   cardActionsSize,
   cardWidth,
@@ -14,57 +12,28 @@ import {
   SCROLL,
 } from "./contentCard.ts";
 import { CONTROL_ROW, TEXT_BUTTON } from "./controls.ts";
-import { logicalView, SAFE_MARGIN, safeRect } from "./playView.ts";
 import { BUTTON_GAP, SPACING } from "./tokens.ts";
 
-// The page safe rect's width at a logical view width, without insets.
-const available = (width: number) =>
-  safeRect({ bottom: 0, left: 0, right: 0, top: 0 }, SAFE_MARGIN.page, { height: 360, width })
-    .width;
-
-describe("content-fitted card width", () => {
-  it("uses the approved wider small and medium caps without changing large", () => {
-    expect(CARD_WIDTH_CAPS).toEqual({ large: 760, medium: 650, small: 480 });
+describe("fixed modal width", () => {
+  it("uses the approved fixed presets", () => {
+    expect(CARD_WIDTH_CAPS).toEqual({ large: 700, medium: 500, small: 400 });
   });
+
   it.each(["small", "medium", "large"] as const)(
-    "fits content under the %s cap and clamps to the available width",
+    "keeps %s fixed within available space",
     (size) => {
-      for (const availableWidth of [280, 688, 747]) {
-        for (const content of [100, 328, 500, 800]) {
-          expect(cardWidth({ availableWidth, size }, [content], undefined)).toBe(
-            modalWidth(
-              {
-                availableWidth: Math.min(availableWidth, CARD_WIDTH_CAPS[size]),
-                viewportWidth: 720,
-              },
-              content,
-            ),
-          );
-        }
-      }
-      expect(cardWidth({ availableWidth: 900, size }, [100], undefined)).toBe(360);
-      expect(cardWidth({ availableWidth: 900, size }, [800], undefined)).toBe(
-        CARD_WIDTH_CAPS[size],
-      );
-      expect(CARD_FLOOR_VIEW_WIDTH).toBe(720);
+      expect(cardWidth({ availableWidth: 700, size })).toBe(CARD_WIDTH_CAPS[size]);
+      expect(cardWidth({ availableWidth: 900, size })).toBe(CARD_WIDTH_CAPS[size]);
     },
   );
 
-  it("preserves the logical view scale and page inset", () => {
-    expect(available(720)).toBe(688);
-    expect(logicalView({ height: 390, width: 844 }).width).toBeCloseTo(779.08, 2);
+  it.each(["small", "medium", "large"] as const)("clamps %s to a narrow game-area rect", (size) => {
+    expect(cardWidth({ availableWidth: 380, size })).toBe(380);
+    expect(cardWidth({ availableWidth: 0, size })).toBe(0);
   });
 
-  it("counts the title with its derived 50 clearance on each side as content", () => {
-    expect(CARD_CLOSE.hit).toEqual(hitAround(HIT_RULE, CARD_CLOSE.art));
-    expect(CARD_CLOSE.hit).toEqual({ height: 48, width: 48, x: -6, y: -6 });
-    expect(cardTitleReserve(true)).toBe(CARD_CLOSE.hit.x + CARD_CLOSE.hit.width + SPACING.gap);
-    expect(cardTitleReserve(true)).toBe(50);
-    expect(cardTitleReserve(false)).toBe(CARD_CONTENT.padding);
-    // 400 + 2 * (50 - 16) = 468 content, plus 32 padding.
-    expect(
-      cardWidth({ availableWidth: 688, size: "large" }, [100], { close: true, width: 400 }),
-    ).toBe(500);
+  it("does not allocate space when safe-area constraints exhaust the rect", () => {
+    expect(cardWidth({ availableWidth: -10, size: "large" })).toBe(0);
   });
 });
 
@@ -98,6 +67,14 @@ describe("card groups", () => {
 });
 
 describe("card header", () => {
+  it("reserves the close hit target and mirrored title clearance", () => {
+    expect(CARD_CLOSE.hit).toEqual(hitAround(HIT_RULE, CARD_CLOSE.art));
+    expect(CARD_CLOSE.hit).toEqual({ height: 48, width: 48, x: -6, y: -6 });
+    expect(cardTitleReserve(true)).toBe(CARD_CLOSE.hit.x + CARD_CLOSE.hit.width + SPACING.gap);
+    expect(cardTitleReserve(true)).toBe(50);
+    expect(cardTitleReserve(false)).toBe(CARD_CONTENT.padding);
+  });
+
   it("starts the first group at 58 below a 28 title line box", () => {
     expect(cardHeaderLayout(true, 0, 28)).toEqual({ bodyTop: 58, titleTop: 16 });
     // A measured line box a layout unit over 28 still starts the group at 58.

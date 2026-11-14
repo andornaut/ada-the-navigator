@@ -93,7 +93,7 @@ icon whose drawn pixels sit 3 inside its 20 box takes 3 less on that side.
 | HUD edge          | 12    | Game area edge to the drawn art of the HUD's outermost elements                                        | `HUD_EDGE`, `playView.ts` (Chibi's value)                                     |
 | Control edge      | 8     | The HUD safe-rect margin                                                                               | `CONTROL_EDGE`, `playView.ts` (Chibi `CONTROL_EDGE`)                          |
 | Stick area margin | 8     | Least gap from each stick's drawn ring to the game area's edge                                         | `STICK_AREA_MARGIN`, `playView.ts`, to implement                              |
-| Page inset        | 16    | Modals and page content from the view edge                                                             | `SPACING.pageInset`, `tokens.ts`, to implement; now `.ada-modal` padding      |
+| Page inset        | 16    | Page content from the view edge; preset modal margins are defined below                                | `SPACING.pageInset`, `tokens.ts`                                              |
 | Panel padding     | 16    | Inside cards and the story panel, including the 2 px frame                                             | `SPACING.panelPadding` = game-kit `MODAL_CONTENT.padding`; now `CARD.padding` |
 | Body line box     | 20    | 16 px text (body, labels, supporting)                                                                  | `TYPE.body.lineHeight`, `tokens.ts`, to implement                             |
 | Heading line box  | 28    | 24 px bold titles                                                                                      | `TYPE.heading.lineHeight`, `tokens.ts`, to implement                          |
@@ -173,24 +173,27 @@ the face of each state, never the press area.
 
 ## Modals
 
-| Token           | Value                                                                | Rule                                                                                                   | Constant                                                                      |
-| --------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
-| Card width      | `min(availableWidth, max(contentWidth + 32, viewportWidth * 0.5))`   | Content-fitted; 50% floor of the fixed 720 base width (360), as in Chibi; capped by the available rect | game-kit `modalWidth`, `MODAL_CONTENT`; `contentCardLayout`, `contentCard.ts` |
-| Card height     | Content-fitted, capped by the available height                       | No minimum, no reserved space                                                                          | `contentCardLayout`, `contentCard.ts`, to implement                           |
-| Frame border    | 2                                                                    | Counts inside the 16 padding                                                                           | `CARD_CONTENT.frameBorder`, `cardFrame.ts`; now `CARD.frameBorder`            |
-| Close face      | 24x24                                                                | `ui-close`                                                                                             | `CARD_CONTENT.closeSize`, `cardFrame.ts`; now `CARD.closeSize`                |
-| Close inset     | 6 from the top and right edges                                       | Press area `hitAround(face)` = 48x48, may extend 6 past the card                                       | `CARD_CONTENT.closeInset`; now `CARD.closeInset`                              |
-| Title clearance | `max(padding, closeHitRight + SPACING.gap)` = `max(16, 42 + 8)` = 50 | Mirrored on both sides of the title                                                                    | `cardTitleReserve(close)`, `cardFrame.ts`; now `card-layout.ts`               |
-| Header balance  | Frame inner edge to title equals title to first group                | Measured on line boxes in DOM                                                                          | `cardHeaderLayout`, `cardFrame.ts`; now `card-layout.ts`                      |
-| Scroll reserve  | 6 gap plus an 8 track, thumb inset 1                                 | A scrolling region reserves 14 on its right, inside the padding                                        | `SCROLL`, `contentCard.ts`, to implement                                      |
-| Scroll end pad  | 16                                                                   | Below the last control at the scroll end                                                               | `SCROLL.endPad` = `SPACING.panelPadding`                                      |
-| Drag threshold  | 8                                                                    | A pointer moving further scrolls and does not activate                                                 | `SCROLL.dragThreshold`, to implement                                          |
+| Token           | Value                                                                | Rule                                                                                     | Constant                                                           |
+| --------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Card width      | `min(presetWidth, availableGameWidth)`                               | Fixed Large 700, Medium 500 and Small 400 logical px, clamped to the safe game-area rect | `CARD_WIDTH_CAPS`, `cardWidth`, `contentCard.ts`                   |
+| Card height     | Content-fitted, capped by the available height                       | No minimum, no reserved space                                                            | `contentCardLayout`, `contentCard.ts`, to implement                |
+| Frame border    | 2                                                                    | Counts inside the 16 padding                                                             | `CARD_CONTENT.frameBorder`, `cardFrame.ts`; now `CARD.frameBorder` |
+| Close face      | 24x24                                                                | `ui-close`                                                                               | `CARD_CONTENT.closeSize`, `cardFrame.ts`; now `CARD.closeSize`     |
+| Close inset     | 6 from the top and right edges                                       | Press area `hitAround(face)` = 48x48, may extend 6 past the card                         | `CARD_CONTENT.closeInset`; now `CARD.closeInset`                   |
+| Title clearance | `max(padding, closeHitRight + SPACING.gap)` = `max(16, 42 + 8)` = 50 | Mirrored on both sides of the title                                                      | `cardTitleReserve(close)`, `cardFrame.ts`; now `card-layout.ts`    |
+| Header balance  | Frame inner edge to title equals title to first group                | Measured on line boxes in DOM                                                            | `cardHeaderLayout`, `cardFrame.ts`; now `card-layout.ts`           |
+| Scroll reserve  | 6 gap plus an 8 track, thumb inset 1                                 | A scrolling region reserves 14 on its right, inside the padding                          | `SCROLL`, `contentCard.ts`, to implement                           |
+| Scroll end pad  | 16                                                                   | Below the last control at the scroll end                                                 | `SCROLL.endPad` = `SPACING.panelPadding`                           |
+| Drag threshold  | 8                                                                    | A pointer moving further scrolls and does not activate                                   | `SCROLL.dragThreshold`, to implement                               |
 
-- `contentWidth` is the widest group, or the title's single-line width plus
-  `2 * (titleClearance - padding)`. `viewportWidth` is the full logical view
-  width before insets; `availableWidth` is the available rect's width.
-- The card centres in the available rect. A title wider than its slot wraps
-  and grows the header.
+- Shared preset cards have fixed widths: Large 700, Medium 500 and Small 400
+  logical pixels. Their available rect is the actual game area, excluding
+  letterboxing, inset by 10 logical pixels on each side and further constrained
+  by applicable safe-area insets.
+- Cards centre in that rect. Height fits content up to the rect's height: at most
+  game height minus 20. Taller content uses the existing scroll region. A title
+  wider than its slot wraps and grows the header. Large has 10-pixel horizontal
+  margins in the 720-pixel game area when no larger safe-area inset applies.
 - Header balance: with line boxes, the title starts at 16 and the first group
   at `2 * 16 - 2 + 28 = 58`. DOM measures line boxes, not ink; canvas-drawn
   text measures ink. The close target's bottom (42) plus 8 never exceeds 58.

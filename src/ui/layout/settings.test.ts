@@ -11,16 +11,16 @@ describe("Settings compact width", () => {
     expect(settingsTitleInkTop({ ascent: 18, descent: 6, inkAscent: 12, lineHeight: 24 })).toBe(10);
   });
   it("widens an overflowing landscape card only enough for both control columns", () => {
-    const fitted = settingsColumns(context, [220, 230]);
+    const fitted = settingsColumns(context, [190, 200]);
     expect(fitted.columns).toBe(2);
-    expect(fitted.minimumWidth).toBe(557);
+    expect(fitted.minimumWidth).toBe(497);
     expect(fitted.minimumWidth).toBeLessThan(CARD_WIDTH_CAPS.medium);
   });
 
-  it("reserves the shared footer pair inside the right column", () => {
+  it("uses the scrolling fallback when the footer pair cannot fit the fixed Medium", () => {
     expect(settingsColumns({ ...context, actionsWidth: 270 }, [230])).toEqual({
-      columns: 2,
-      minimumWidth: 637,
+      columns: 1,
+      minimumWidth: 0,
     });
   });
 

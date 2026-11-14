@@ -1,40 +1,19 @@
-import { modalWidth } from "@andornaut/game-kit/modalLayout";
-
-import {
-  CARD_CONTENT,
-  CARD_FLOOR_VIEW_WIDTH,
-  CONTROL_ROW,
-  TEXT_BUTTON,
-} from "../../data/layout.ts";
-import { cardTitleReserve } from "./cardFrame.ts";
+import { CONTROL_ROW, TEXT_BUTTON } from "../../data/layout.ts";
 import { BUTTON_GAP } from "./tokens.ts";
-export { CARD_FLOOR_VIEW_WIDTH, SCROLL } from "../../data/layout.ts";
 
-// The content-fitted card (art/layout.md "Modals" and "Groups"), as Chibi's
-// src/ui/layout/contentCard.ts, in logical px, shared by every Ada modal. The width source is
-// game-kit's modalWidth.
-
+export { SCROLL } from "../../data/layout.ts";
 export { CARD_CONTENT, cardHeaderLayout, cardTitleReserve } from "./cardFrame.ts";
 
-export const CARD_WIDTH_CAPS = { large: 760, medium: 650, small: 480 } as const;
+/** Fixed modal widths in logical pixels, clamped to the available game-area rect. */
+export const CARD_WIDTH_CAPS = { large: 700, medium: 500, small: 400 } as const;
+export const MODAL_GAME_MARGIN = 10;
 export type CardSize = keyof typeof CARD_WIDTH_CAPS;
 
-// Presets cap the content-fitted width; short content never stretches to fill the cap.
-export function cardWidth(
-  context: { readonly availableWidth: number; readonly size: CardSize },
-  groupWidths: readonly number[],
-  title: { readonly close: boolean; readonly width: number } | undefined,
-): number {
-  const headerWidth = title
-    ? title.width + 2 * (cardTitleReserve(title.close) - CARD_CONTENT.padding)
-    : 0;
-  return modalWidth(
-    {
-      availableWidth: Math.min(context.availableWidth, CARD_WIDTH_CAPS[context.size]),
-      viewportWidth: CARD_FLOOR_VIEW_WIDTH,
-    },
-    Math.max(headerWidth, 0, ...groupWidths),
-  );
+export function cardWidth(context: {
+  readonly availableWidth: number;
+  readonly size: CardSize;
+}): number {
+  return Math.max(0, Math.min(context.availableWidth, CARD_WIDTH_CAPS[context.size]));
 }
 
 // A group's left edge in the card's inner width: centred.

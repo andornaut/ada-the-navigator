@@ -1,5 +1,6 @@
 import { HIT_RULE, hitMargin } from "@andornaut/game-kit/ui/hitAreas";
 
+import { SCREEN } from "../data/screen.ts";
 import {
   CARD_CLOSE,
   CARD_CONTENT,
@@ -7,7 +8,7 @@ import {
   cardTitleReserve,
   listCardHeader,
 } from "./layout/cardFrame.ts";
-import { type CardSize, cardWidth, SCROLL } from "./layout/contentCard.ts";
+import { CARD_WIDTH_CAPS, type CardSize, MODAL_GAME_MARGIN, SCROLL } from "./layout/contentCard.ts";
 import {
   BUTTON_SLICE,
   CARD_SLICE,
@@ -16,8 +17,8 @@ import {
   STORY_BUTTON,
   TEXT_BUTTON,
 } from "./layout/controls.ts";
-import { font, fromHudEdge, safeEdge, slice, units } from "./layout/css.ts";
-import { PAUSE_BUTTON, SAFE_MARGIN } from "./layout/playView.ts";
+import { font, fromHudEdge, safeEdge, slice, units, VIEW_PROPERTIES } from "./layout/css.ts";
+import { PAUSE_BUTTON } from "./layout/playView.ts";
 import { BUTTON_GAP, SPACING, STACK_BUTTON_GAP, TYPE } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import { PAUSE_ART } from "./pause.ts";
@@ -124,8 +125,7 @@ export const UI_SCOPE = ":is(.ada-controls,.ada-start)";
 export const MODAL_LAYER = 10;
 
 export const MODAL_STYLE = `
-/* A modal dims the whole play area; its card centres in the page safe rect, shrinks to fit and
-   scrolls its body on a short screen. */
+/* The dim covers the view; fixed-width cards centre inside the safe game-area rect. */
 ${UI_SCOPE} .ada-modal{
   position:absolute;
   inset:0;
@@ -135,10 +135,14 @@ ${UI_SCOPE} .ada-modal{
   justify-content:center;
   background:#101926b3;
   pointer-events:auto;
-  padding:${safeEdge("top", SAFE_MARGIN.page)} ${safeEdge("right", SAFE_MARGIN.page)} ${safeEdge(
-    "bottom",
-    SAFE_MARGIN.page,
-  )} ${safeEdge("left", SAFE_MARGIN.page)};
+  padding:${safeEdge("top", MODAL_GAME_MARGIN)}
+    max(var(${VIEW_PROPERTIES.safe("right")}),calc(
+      max(0px,calc(100% - var(${VIEW_PROPERTIES.areaLeft}) - ${units(SCREEN.width)})) + ${units(MODAL_GAME_MARGIN)}
+    ))
+    max(var(${VIEW_PROPERTIES.safe("bottom")}),
+      calc(var(${VIEW_PROPERTIES.areaBottom}) + ${units(MODAL_GAME_MARGIN)}))
+    max(var(${VIEW_PROPERTIES.safe("left")}),
+      calc(max(0px,var(${VIEW_PROPERTIES.areaLeft})) + ${units(MODAL_GAME_MARGIN)}));
   box-sizing:border-box
 }
 
@@ -151,8 +155,12 @@ ${UI_SCOPE} .ada-card-frame{
   flex-direction:column
 }
 
-/* Chibi's content-fitted card (src/ui/layout sets its width and header gaps): the header and close
-   X stay fixed while the body scrolls. */
+${UI_SCOPE} .ada-card-frame[data-card-size=small]{width:${units(CARD_WIDTH_CAPS.small)}}
+${UI_SCOPE} .ada-card-frame[data-card-size=medium]{width:${units(CARD_WIDTH_CAPS.medium)}}
+${UI_SCOPE} .ada-card-frame[data-card-size=large]{width:${units(CARD_WIDTH_CAPS.large)}}
+${UI_SCOPE} .ada-card-frame[data-card-size] > .ada-card{width:100%}
+
+/* Shared fixed-width card chrome: the header and close X stay fixed while the body scrolls. */
 ${UI_SCOPE} .ada-card{
   box-sizing:border-box;
   width:max-content;
@@ -606,14 +614,12 @@ function logicalSize(element: HTMLElement, unit: number): { height: number; widt
   return { height: parseFloat(style.height) / unit, width: parseFloat(style.width) / unit };
 }
 
-// Fits a shown card: measures each visible group and the title at their natural widths in logical
-// px, sets the card's width, then the title's top and the body's gap so the header's gaps balance.
+// Fits a shown card's header within its fixed preset width, balancing its vertical gaps.
 // A group's data-ink-top gives the distance from its top to its first visible content.
 function fitCard(
   parts: Pick<CardParts, "body" | "card" | "title">,
   close: boolean,
   list: boolean,
-  size: CardSize,
 ): void {
   const { body, card, title } = parts;
   const layer = card.closest<HTMLElement>(".ada-modal, .ada-start");
@@ -621,35 +627,11 @@ function fitCard(
     return;
   }
   const unit = readViewUnit(card);
-  card.style.width = "max-content";
   const groups = [...body.children].filter(
     (child): child is HTMLElement =>
       child instanceof HTMLElement && child.getClientRects().length > 0,
   );
   const text = title.textContent ?? "";
-  let titleWidth = 0;
-  if (text) {
-    title.style.whiteSpace = "nowrap";
-    title.style.width = "max-content";
-    titleWidth = logicalSize(title, unit).width;
-    title.style.whiteSpace = "";
-    title.style.width = "";
-  }
-  const styles = getComputedStyle(layer);
-  const availableWidth =
-    (layer.clientWidth - parseFloat(styles.paddingLeft) - parseFloat(styles.paddingRight)) / unit;
-  const width = cardWidth(
-    { availableWidth, size },
-    groups.map((group) => {
-      const previous = group.style.maxWidth;
-      group.style.maxWidth = "none";
-      const naturalWidth = logicalSize(group, unit).width;
-      group.style.maxWidth = previous;
-      return naturalWidth;
-    }),
-    text ? { close, width: titleWidth } : undefined,
-  );
-  card.style.width = units(width);
   const titleHeight = text ? logicalSize(title, unit).height : undefined;
   const first = groups[0];
   const { bodyTop, titleTop } = list
@@ -669,7 +651,7 @@ export function createCard(
         readonly closeAction: string;
         readonly closeLabel: string;
         readonly fontRole?: string;
-        /** Maximum width; the card fits its content within the modal safe rect. */
+        /** Fixed preset width, clamped to the modal game-area rect. */
         readonly size?: CardSize;
         /** Chibi's list header (listCardHeader), for a card whose body opens with a list. */
         readonly list?: boolean;
@@ -710,7 +692,7 @@ export function createCard(
     frame.append(card, close);
   }
   const list = !("page" in options) && options.list === true;
-  const fit = () => fitCard({ body, card, title }, !page, list, size);
+  const fit = () => fitCard({ body, card, title }, !page, list);
   // Keyboard focus scrolls the focused control fully into view, its focus ring included.
   body.addEventListener("focusin", (event) => {
     if (event.target instanceof HTMLElement) {
