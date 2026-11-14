@@ -45,6 +45,7 @@ import {
 } from "./enemyArt.ts";
 import { readJobArt } from "./jobArt.ts";
 import { sceneFit } from "./playCamera.ts";
+import { decorationRasterSize } from "./rareDecorations.ts";
 import { RockFrames } from "./rockFrames.ts";
 import type { GameScene } from "./scene.ts";
 import { type Asset } from "./sceneShared.ts";
@@ -608,6 +609,13 @@ export function filterTexture(scene: AssetsContext, key: string, filter: Texture
  * own size times it when it declares none.
  */
 export function loadSvg(scene: AssetsContext, asset: Asset): void {
+  if (asset.kind === "backdrop-decoration") {
+    const size = decorationRasterSize(asset.width, asset.height);
+    if (size) {
+      scene.load.svg(asset.id, asset.path, size);
+    }
+    return;
+  }
   const { displayHeight, displayWidth } = asset;
   queueSvg(scene, {
     key: asset.id,

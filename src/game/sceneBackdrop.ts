@@ -25,6 +25,7 @@ import {
   viewStreaks,
 } from "./backdropLayers.ts";
 import { BACKDROP_DEPTH } from "./drawOrder.ts";
+import { viewDecorations } from "./rareDecorations.ts";
 import type { GameScene } from "./scene.ts";
 import { bakeScale, bakeTexture, rockTexture } from "./sceneAssets.ts";
 import { STREAK_PIECES } from "./sceneShared.ts";
@@ -126,6 +127,7 @@ export function drawBackdropLayers(scene: BackdropContext, flight: FlightState |
     const camera = [flight.player.x, flight.player.y] as const;
     drawSky(scene, flight.galaxy, backdrop);
     drawFarItems(scene, rules, flight.galaxy, backdrop, camera, used);
+    drawDecorations(scene, flight.galaxy, backdrop, camera, used);
     drawPlates(scene, rules, backdrop, camera);
     drawStars(scene, rules, backdrop, camera);
     drawStreaks(scene, rules, backdrop, camera);
@@ -217,6 +219,35 @@ export function drawFarItems(
     backdropItem(scene, key, key, BACKDROP_DEPTH.planets, used)
       .setPosition(planet.x, planet.y)
       .setDisplaySize(size, size);
+  }
+}
+
+/** Shared distant decorations have no model objects or per-instance baked textures. */
+export function drawDecorations(
+  scene: BackdropContext,
+  galaxy: GalaxyNumber,
+  backdrop: GalaxyBackdrop,
+  camera: readonly [number, number],
+  used: Set<string>,
+): void {
+  if (scene.model.galaxyMapShownInFlight) {
+    return;
+  }
+  for (const item of viewDecorations(backdrop, camera)) {
+    if (!scene.textures.exists(item.asset)) {
+      continue;
+    }
+    backdropItem(
+      scene,
+      `backdrop-decoration-${galaxy}-${item.id}`,
+      item.asset,
+      BACKDROP_DEPTH.decorations,
+      used,
+    )
+      .setPosition(item.x, item.y)
+      .setOrigin(0.5, 0.5)
+      .setDisplaySize(item.width, item.height)
+      .setAngle(item.rotation);
   }
 }
 

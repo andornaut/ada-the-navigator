@@ -10,6 +10,7 @@ import {
   viewRect,
   type Xy,
 } from "./backdropField.ts";
+import { type DecorationLayer, readDecorations } from "./rareDecorations.ts";
 
 // The layered backdrop (art/backdrop.md): Art's shared rules (backdrop.json) and each galaxy's
 // tones and recipes ({galaxy}/backdrop.json), placed in the play view for a camera, and the
@@ -113,6 +114,7 @@ export interface PlateStep {
 
 /** {galaxy}/backdrop.json, version 1: one galaxy's tones and recipes. */
 export interface GalaxyBackdrop {
+  readonly decorations?: DecorationLayer;
   readonly far: readonly FarRecipe[];
   /** The manifest links of the fixed L2 layers: backdropHaze, needleBand. */
   readonly fixed: readonly string[];
@@ -354,7 +356,9 @@ export function readGalaxyBackdrop(value: unknown): GalaxyBackdrop | undefined {
     const stars = fields(data.stars);
     const streaks = fields(data.streaks);
     const list = (entry: unknown): entry is unknown[] => Array.isArray(entry);
+    const decorations = readDecorations(data.decorations);
     return {
+      ...(decorations ? { decorations } : {}),
       far: must(list, data.far).map(readFar),
       fixed: must(list, data.fixed).map((link) =>
         must((name): name is string => typeof name === "string", link),

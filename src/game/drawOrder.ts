@@ -102,6 +102,7 @@ export function adaDepth(
  * rocks (-1), the landmarks, the dust specks on the field ink (0) and every play object.
  */
 export const BACKDROP_DEPTH = {
+  decorations: -2.65,
   far: -2.7,
   fixed: -2.8,
   multiply: -2.5,
