@@ -99,12 +99,16 @@ describe("placeholder galaxies under an explicit incomplete-roster fixture", () 
       for (const object of objects.filter(({ kind }) => kind === "enemy")) {
         expect(roster.has(object.enemy!.archetype), object.enemy!.archetype).toBe(true);
       }
-      // Every galaxy has seeded stations, at least 8000 apart, and twelve landmarks.
+      // Every galaxy has seeded stations at the canonical minimum spacing and twelve landmarks.
       const stations = stationsNear(ECONOMY, galaxy, 40000, { x: 0, y: 0 });
       expect(stations.length).toBeGreaterThan(0);
+      expect(Number.isFinite(ECONOMY.station.minimumSpacing)).toBe(true);
+      expect(ECONOMY.station.minimumSpacing).toBeGreaterThan(0);
       for (const [index, a] of stations.entries()) {
         for (const b of stations.slice(index + 1)) {
-          expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThanOrEqual(8000);
+          expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThanOrEqual(
+            ECONOMY.station.minimumSpacing,
+          );
         }
       }
       expect(landmarkSites(galaxy)).toHaveLength(12);
