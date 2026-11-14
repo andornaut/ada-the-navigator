@@ -618,8 +618,11 @@ export class GameScene extends Scene {
     }
     if (this.emergencyReturn.pending) {
       this.overlay.clear();
-      drawCompromisedShield(this);
-      const source = this.emergencyReturn.advance(!document.hidden, milliseconds / 1000);
+      drawCompromisedShield(this, this.emergencyReturn.line!.elapsed);
+      const source = this.emergencyReturn.advance(
+        !document.hidden && !this.settingsOpen,
+        milliseconds / 1000,
+      );
       if (source) {
         this.overlay.clear();
         const done = () => {

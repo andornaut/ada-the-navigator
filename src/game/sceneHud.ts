@@ -501,10 +501,10 @@ export function drawFeedback(scene: HudContext): void {
   }
 }
 
-/** The frozen depletion cue over the last flight frame, including its light-field keyline. */
-export function drawCompromisedShield(scene: HudContext): void {
+/** The depletion cue advances independently over the held flight, with its light-field keyline. */
+export function drawCompromisedShield(scene: HudContext, elapsed: number): void {
   const pulse: FeedbackPulse = {
-    age: EMERGENCY_RETURN.shield.age,
+    age: EMERGENCY_RETURN.shield.age + (scene.reducedMotion ? 0 : elapsed),
     compromised: true,
     kind: "damage",
     x: 0,

@@ -5,6 +5,7 @@ import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
 import { SCREEN } from "../data/screen.ts";
 import { GameModel } from "../model/game.ts";
 import { shipHeading } from "../model/nose.ts";
@@ -222,6 +223,30 @@ describe("emergency return presentation", () => {
     frame();
     expect(scene.quantum!.play).toHaveBeenCalledTimes(1);
   });
+  it("advances only the failure visual clock while world and paused time stay held", () => {
+    const { compromisedShield, document, flight, frame, scene } = setup();
+    frame();
+    const frozen = structuredClone(flight);
+    frame();
+    const age = compromisedShield.mock.lastCall![1];
+    expect(age).toBeGreaterThan(0);
+    expect(flight).toEqual(frozen);
+    expect(scene.controls.sample).toHaveBeenCalledTimes(1);
+    scene.settingsOpen = true;
+    const held = scene.emergencyReturn.line!.elapsed;
+    frame(1000);
+    expect(scene.emergencyReturn.line!.elapsed).toBe(held);
+    scene.settingsOpen = false;
+    document.hidden = true;
+    frame(1000);
+    expect(scene.emergencyReturn.line!.elapsed).toBe(held);
+    document.hidden = false;
+    frame();
+    frame();
+    expect(compromisedShield.mock.lastCall![1]).toBeGreaterThan(age);
+    expect(flight).toEqual(frozen);
+    expect(scene.quantum!.play).not.toHaveBeenCalled();
+  });
   it("finishes without jump art and releases the input lock", () => {
     const { frame, scene } = setup(false);
     for (let i = 0; i < 96; i++) {
@@ -275,7 +300,7 @@ describe("compromised shield return sequence", () => {
       const { compromisedShield, frame, scene } = setup();
       scene.reducedMotion = reduced;
       frame();
-      expect(compromisedShield).toHaveBeenCalledWith(scene);
+      expect(compromisedShield).toHaveBeenCalledWith(scene, 0);
       expect(scene.emergencyReturn.line?.text).toBe("Shields are down. We need to jump to safety!");
       for (let i = 0; i < 94; i++) {
         frame();
@@ -297,6 +322,44 @@ describe("compromised shield return sequence", () => {
       play.onDone();
       expect(scene.emergencyReturn.line).toBeNull();
       expect(scene.controls.overlay.inert).toBe(false);
+    },
+  );
+});
+
+describe("failure visual rendering clock", () => {
+  it.each([false, true])(
+    "uses elapsed warning time only with normal motion (reduced: %s)",
+    (reducedMotion) => {
+      const hud = ts.createSourceFile(
+        "sceneHud.ts",
+        readFileSync(new URL("./sceneHud.ts", import.meta.url), "utf8"),
+        ts.ScriptTarget.Latest,
+        true,
+      );
+      const draw = hud.statements.find(
+        (node) => ts.isFunctionDeclaration(node) && node.name?.text === "drawCompromisedShield",
+      ) as ts.FunctionDeclaration;
+      const code = ts.transpileModule(`(function(scene, elapsed) ${draw.body!.getText(hud)})`, {
+        compilerOptions: { target: ts.ScriptTarget.ES2023 },
+      }).outputText;
+      const drawPulse = vi.fn();
+      const render = runInContext(
+        code,
+        createContext({ EMERGENCY_RETURN, LIGHT_FIELD: { keyline: 2 }, drawPulse }),
+      );
+      const scene = { light: true, reducedMotion };
+      render(scene, 0);
+      render(scene, 1);
+      expect(drawPulse.mock.calls[0]![2].age).toBe(EMERGENCY_RETURN.shield.age);
+      expect(drawPulse.mock.calls[2]![2].age).toBe(
+        EMERGENCY_RETURN.shield.age + (reducedMotion ? 0 : 1),
+      );
+      expect(drawPulse.mock.calls[2]![2]).toMatchObject({
+        compromised: true,
+        kind: "damage",
+        x: 0,
+        y: 0,
+      });
     },
   );
 });
