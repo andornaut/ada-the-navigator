@@ -8,39 +8,45 @@ import { dropRandom } from "./drops.ts";
 describe("asteroid destruction loot", () => {
   it("uses the approved size weights and 75/25 per-unit split", () => {
     expect(ASTEROID_LOOT).toEqual({
+      oreBundleMultiplier: 2,
       oreChance: 0.75,
       totals: {
-        huge: { minimum: 1, weights: [5, 12, 20, 20, 11, 7, 4, 3, 2, 16] },
-        large: { minimum: 1, weights: [10, 20, 25, 20, 10, 5, 2, 8] },
-        medium: { minimum: 1, weights: [20, 35, 25, 12, 4, 4] },
-        small: { minimum: 0, weights: [15, 55, 22, 6, 2] },
+        huge: { minimum: 1, weights: [5, 8, 12, 36, 14, 2, 2, 2, 3, 16] },
+        large: { minimum: 1, weights: [10, 14, 19, 20, 16, 10, 3, 8] },
+        medium: { minimum: 1, weights: [15, 20, 30, 24, 7, 4] },
+        small: { minimum: 0, weights: [15, 10, 37, 36, 2] },
       },
     });
   });
 
-  it.each(ASTEROID_SIZES)("selects every %s total at its exact weighted interval", (size) => {
-    const { minimum, weights } = ASTEROID_LOOT.totals[size];
-    const sum = weights.reduce((a, b) => a + b, 0);
-    expect(sum).toBe(100);
-    expect(weights.at(-1)).toBe({ huge: 16, large: 8, medium: 4, small: 2 }[size]);
-    let start = 0;
-    weights.forEach((weight, index) => {
-      for (const fraction of [
-        start / sum,
-        (start + weight / 2) / sum,
-        (start + weight) / sum - 1e-8,
-      ]) {
-        let calls = 0;
-        const result = rollAsteroidLoot(ASTEROID_LOOT, size, () => (calls++ === 0 ? fraction : 0));
-        expect(result, `${size}:${fraction}`).toEqual({ ore: minimum + index, stardust: 0 });
-        expect(calls).toBe(minimum + index + 1);
-      }
-      start += weight;
-    });
-  });
+  it.each(ASTEROID_SIZES)(
+    "selects every original %s total when redistribution is not selected",
+    (size) => {
+      const { minimum, weights } = ASTEROID_LOOT.totals[size];
+      const sum = weights.reduce((a, b) => a + b, 0);
+      expect(sum).toBe(100);
+      expect(weights.at(-1)).toBe({ huge: 16, large: 8, medium: 4, small: 2 }[size]);
+      let start = 0;
+      weights.forEach((weight, index) => {
+        for (const fraction of [
+          start / sum,
+          (start + weight / 2) / sum,
+          (start + weight) / sum - 1e-8,
+        ]) {
+          let calls = 0;
+          const result = rollAsteroidLoot(ASTEROID_LOOT, size, () =>
+            calls++ === 0 ? fraction : 0.75 - Number.EPSILON,
+          );
+          expect(result, `${size}:${fraction}`).toEqual({ ore: minimum + index, stardust: 0 });
+          expect(calls).toBe(minimum + index + 1);
+        }
+        start += weight;
+      });
+    },
+  );
 
   it.each(ASTEROID_SIZES)(
-    "assigns each %s unit independently and conserves the complete weighted distribution",
+    "retains the original %s split outside the redistribution intervals",
     (size) => {
       const { minimum, weights } = ASTEROID_LOOT.totals[size];
       let start = 0,
@@ -64,7 +70,7 @@ describe("asteroid destruction loot", () => {
             const isOre = (mask & (1 << (calls - 2))) !== 0;
             ore += Number(isOre);
             probability *= isOre ? 0.75 : 0.25;
-            return isOre ? 0.75 - Number.EPSILON : 0.75;
+            return isOre ? 0.75 - Number.EPSILON : 1 - Number.EPSILON;
           });
           expect(result).toEqual({ ore, stardust: total - ore });
           expect(calls).toBe(total + 1);
