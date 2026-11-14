@@ -204,13 +204,20 @@ interpolates the actual wingtip-to-nose edge, moving inward rather than outside
 the wing. The hull's vertices are unchanged.
 Exhaust points forward along local negative Y, with half width
 `(±2.75, 0, 0)` derived from the existing mouth width. The frame remains 96,
-with the same pivot, length rule, layer widths, lengths and halo alpha ramp as
+with the same pivot, length rule and outer/core layer widths and lengths as
 the rear jets. Hull geometry, paint and rear jet data are unchanged.
 
-The fixed yellow palette applies at every engine level: halo `#f2d15a`, outer
-`#c9a978` to `#f2d15a`, core `#efe4cf` to `#ffffff`. Runtime selects these
-jets while the ship moves backward relative to its actual facing; normal
-forward motion retains the existing rear jets.
+The active fixed blue style reuses `lightField.jets.shipLevels[0]` from
+`galaxies.json`: outer `#1767b3`, core `#2585d0` to `#64caff`, with two
+layers and no halo. The existing global retro-jet consumer uses this style at
+every engine level; field ink policy is unchanged. Runtime selects retro jets
+while the ship moves backward relative to its actual facing; normal forward
+motion retains the existing rear jets.
+
+The producer exports `RETRO_BLUE` and `RETRO_YELLOW` and also writes
+`ship-retro-jets-yellow.json` with identical geometry for reverting the style.
+Yellow retains its halo `#f2d15a`, outer `#c9a978` to `#f2d15a`, and core
+`#efe4cf` to `#ffffff`; it is not a Settings toggle.
 
 ## Nose
 

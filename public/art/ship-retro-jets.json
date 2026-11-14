@@ -11,25 +11,14 @@
       "level": 1,
       "layers": [
         {
-          "name": "halo",
-          "color": "#f2d15a",
-          "width": 2.4,
-          "length": 1.1,
-          "alpha": {
-            "from": 0.6,
-            "to": 1,
-            "max": 0.5
-          }
-        },
-        {
           "name": "outer",
-          "colors": ["#c9a978", "#f2d15a"],
+          "colors": ["#1767b3", "#1767b3"],
           "width": 1.6,
           "length": 1
         },
         {
           "name": "core",
-          "colors": ["#efe4cf", "#ffffff"],
+          "colors": ["#2585d0", "#64caff"],
           "width": 0.8,
           "length": 0.55
         }
