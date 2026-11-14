@@ -50,10 +50,12 @@ interface PreparedEdge {
   readonly x: number;
   readonly y: number;
 }
-const EXPANDED_ENVELOPES = new WeakMap<
-  Envelope,
-  WeakMap<Envelope, readonly (readonly PreparedEdge[])[]>
->();
+interface ExpandedEnvelope {
+  readonly maximum: Vec;
+  readonly minimum: Vec;
+  readonly parts: readonly (readonly PreparedEdge[])[];
+}
+const EXPANDED_ENVELOPES = new WeakMap<Envelope, WeakMap<Envelope, ExpandedEnvelope>>();
 
 /** Prepares the same edge cross products once per immutable, ordered envelope pair. */
 function envelopesContain(first: Envelope, second: Envelope, point: Vec): boolean {
@@ -62,17 +64,41 @@ function envelopesContain(first: Envelope, second: Envelope, point: Vec): boolea
     byBody = new WeakMap();
     EXPANDED_ENVELOPES.set(first, byBody);
   }
-  let parts = byBody.get(second);
-  if (!parts) {
-    parts = grown(first.parts, second.parts).map((part) =>
-      part.map((origin, index) => {
-        const next = part[(index + 1) % part.length]!;
-        return { dx: next.x - origin.x, dy: next.y - origin.y, x: origin.x, y: origin.y };
-      }),
-    );
-    byBody.set(second, parts);
+  let expanded = byBody.get(second);
+  if (!expanded) {
+    const outlines = grown(first.parts, second.parts);
+    const points = outlines.flat();
+    const extent = Math.max(1, ...points.flatMap(({ x, y }) => [Math.abs(x), Math.abs(y)]));
+    // Include arithmetic rounding at the box edge; the exact cross products still decide contact.
+    const padding = 8 * Number.EPSILON * extent;
+    const unbounded = outlines.some((part) => part.length < 3);
+    expanded = {
+      maximum: {
+        x: unbounded ? Infinity : Math.max(...points.map(({ x }) => x)) + padding,
+        y: unbounded ? Infinity : Math.max(...points.map(({ y }) => y)) + padding,
+      },
+      minimum: {
+        x: unbounded ? -Infinity : Math.min(...points.map(({ x }) => x)) - padding,
+        y: unbounded ? -Infinity : Math.min(...points.map(({ y }) => y)) - padding,
+      },
+      parts: outlines.map((part) =>
+        part.map((origin, index) => {
+          const next = part[(index + 1) % part.length]!;
+          return { dx: next.x - origin.x, dy: next.y - origin.y, x: origin.x, y: origin.y };
+        }),
+      ),
+    };
+    byBody.set(second, expanded);
   }
-  for (const part of parts) {
+  if (
+    point.x < expanded.minimum.x ||
+    point.x > expanded.maximum.x ||
+    point.y < expanded.minimum.y ||
+    point.y > expanded.maximum.y
+  ) {
+    return false;
+  }
+  for (const part of expanded.parts) {
     let sign = 0;
     let outside = false;
     for (const edge of part) {
