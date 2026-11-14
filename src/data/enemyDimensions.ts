@@ -4,6 +4,7 @@ export const ENEMY_SIZE_RATIOS = {
   fighter: 1,
   flagship: 6,
   frigate: 5,
+  hostileStation: 7,
   interceptor: 1,
   platform: 4,
   retaliator: 3,
