@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { SHIELD_PILL } from "./playView.ts";
 import { shieldRasterGeometry } from "./shieldGeometry.ts";
 
 describe("approved shield geometry", () => {
@@ -24,6 +25,7 @@ describe("approved shield geometry", () => {
           bg.x + bg.width - m.x - m.width,
         ]).toEqual(Array(5).fill(g.gap));
         expect(g.gap).toBeGreaterThan(0);
+        expect(g.iconY + (SHIELD_PILL.icon * unit * density) / 2).toBeCloseTo(g.height / 2, 9);
         expect(t.x).toBe(m.x);
         expect(t.x + t.width).toBe(m.x + m.width);
         expect(g.fill.x + g.capacityWidth).toBe(m.x + m.width - g.inset);

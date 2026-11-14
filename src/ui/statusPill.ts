@@ -333,7 +333,8 @@ ${SHIELD_PILL.bars
 .ada-controls .ada-shield > .ada-status-bar,
 .ada-controls .ada-shield > .ada-status-recharge-track{opacity:0}
 .ada-controls .ada-status-mark{
-  position:relative;
+  position:absolute;
+  left:${units(SHIELD_PILL.padding.left)};
   z-index:1;
   flex:none;
   display:flex;
@@ -810,6 +811,7 @@ export function createStatusPill(
         rasterLevel = level;
         rasterDensity = density;
       }
+      shieldMark.style.top = pixels(raster.y + raster.iconY / density);
       meter.style.position = "absolute";
       meter.style.left = pixels(raster.main.x / density);
       meter.style.top = pixels(raster.main.y / density);

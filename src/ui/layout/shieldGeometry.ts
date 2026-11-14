@@ -43,6 +43,7 @@ export function shieldRasterGeometry(
     fill,
     gap,
     height,
+    iconY: (height - SHIELD_PILL.icon * unit * density) / 2,
     inset,
     main,
     radius: length(SHIELD_PILL.pill.radius),
