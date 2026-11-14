@@ -9,9 +9,10 @@ import type { StationServices } from "../model/stationServices.ts";
 import { createDialoguePanel, type DialogueSpeaker } from "./dialoguePanel.ts";
 import { createExchangeView, type ExchangePort } from "./exchange.ts";
 import { keeperName } from "./keeperBlock.ts";
+import { CARD_CLOSE } from "./layout/cardFrame.ts";
 import { cardPages } from "./layout/cardPages.ts";
 import { BUTTON_SLICE, FOCUS_RING, PILL, TEXT_BUTTON } from "./layout/controls.ts";
-import { font, slice, units } from "./layout/css.ts";
+import { font, safeEdge, slice, units } from "./layout/css.ts";
 import {
   BALANCE,
   CONFIRM_ITEM,
@@ -56,6 +57,10 @@ const RING_OUT = SHOP_ROW.selection.outset + SHOP_ROW.selection.band;
 const scaled = (size: number) => `calc(${units(size)} * var(--glyph-scale,1))`;
 
 export const STATION_STYLE = `
+.ada-controls .ada-dialogue-frame.ada-station-frame > .ada-story-skip{
+  right:${safeEdge("right", SPACING.pageInset + CARD_CLOSE.hit.width + SPACING.gap)}
+}
+
 .ada-controls .ada-dialogue-panel[data-dialog="station"] .ada-story-tab{
   width:fit-content;
   max-width:100%;
@@ -681,6 +686,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     title: labels.station,
   });
   stationCard.card.dataset.dialog = "station";
+  stationCard.frame.classList.add("ada-station-frame");
   const stationBalance = document.createElement("div");
   stationBalance.className = "ada-balance";
   stationBalance.dataset.inkTop = "0";
