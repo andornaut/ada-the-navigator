@@ -11,9 +11,11 @@ import {
   writeSetting,
 } from "./deviceSettings.ts";
 import { type InstallPort, startInstall, watchInstallRow } from "./installRow.ts";
+import { CARD_WIDTH_CAPS } from "./layout/contentCard.ts";
 import { CONTROL_ROW, WHOLE_PX_EDGES } from "./layout/controls.ts";
 import { font, fromHudEdge, units, viewStyle } from "./layout/css.ts";
 import { hudButtonTarget, type StartNavButton, startNavOrder } from "./layout/playView.ts";
+import { settingsColumns } from "./layout/settings.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { TOUCH_STICK, USE_DISC } from "./layout/touchControls.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
@@ -438,6 +440,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       return;
     }
     rows.dataset.columns = card.dataset.settingsColumns = "1";
+    settingsCard.card.style.minWidth = "";
     settingsCard.fit();
     const needsCompactLayout = rows.scrollHeight > rows.clientHeight;
     const switches = [...rows.querySelectorAll<HTMLElement>("[role=switch]")];
@@ -455,13 +458,27 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
         parseFloat(getComputedStyle(row).columnGap) * parts.length
       );
     });
-    const gap = SPACING.columnGap * readViewUnit(rows);
-    const paired =
-      needsCompactLayout &&
-      modal.clientWidth > modal.clientHeight &&
-      rows.clientWidth >= 2 * Math.max(0, ...widths) + gap;
-    rows.dataset.columns = card.dataset.settingsColumns = paired ? "2" : "1";
+    const unit = readViewUnit(rows);
+    const style = getComputedStyle(modal);
+    const availableWidth =
+      (modal.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)) / unit;
+    const fitted = settingsColumns(
+      {
+        availableWidth,
+        landscape: modal.clientWidth > modal.clientHeight,
+        overflowing: needsCompactLayout,
+      },
+      widths.map((width) => width / unit),
+    );
+    rows.dataset.columns = card.dataset.settingsColumns = String(fitted.columns);
+    if (fitted.columns === 2) {
+      settingsCard.card.style.minWidth = units(fitted.minimumWidth);
+    }
     settingsCard.fit();
+    if (fitted.columns === 2 && rows.scrollHeight > rows.clientHeight) {
+      settingsCard.card.style.minWidth = units(Math.min(availableWidth, CARD_WIDTH_CAPS.medium));
+      settingsCard.fit();
+    }
   }
   window.addEventListener("resize", fitSettings);
   window.addEventListener(VIEW_SCALE_EVENT, fitSettings);
