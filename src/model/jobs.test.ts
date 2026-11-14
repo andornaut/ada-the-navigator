@@ -31,6 +31,7 @@ import {
   stationBoard,
 } from "./jobs.ts";
 import { chartLandmarks, landmarkSites } from "./landmarks.ts";
+import { retainedLandmarkSites } from "./retainedLandmarks.ts";
 import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
 import type { FlightState, HeldJob, Vec } from "./types.ts";
@@ -162,7 +163,7 @@ function listen(model: GameModel, point: Vec, seconds: number): string[] {
 }
 
 describe("landmarks", () => {
-  it("place twelve per galaxy within 25000 of the origin, 3000 apart and 1500 from stations", () => {
+  it("places the target per galaxy within its extent, 3000 apart and 1500 from stations", () => {
     for (const galaxy of [1, 2, 3, 4, 5, 6] as const) {
       const sites = landmarkSites(galaxy);
       expect(sites).toHaveLength(LANDMARK_TUNING.count);
@@ -170,7 +171,7 @@ describe("landmarks", () => {
         new Set(["nebula", "wreck", "beacon"]),
       );
       for (const site of sites) {
-        expect(Math.hypot(site.x, site.y)).toBeLessThanOrEqual(25_000);
+        expect(Math.hypot(site.x, site.y)).toBeLessThanOrEqual(LANDMARK_TUNING.radius);
         expect(stationsNear(ECONOMY, galaxy, 1500, site)).toEqual([]);
         for (const other of sites.filter((entry) => entry !== site)) {
           expect(distance(site, other)).toBeGreaterThanOrEqual(3000);
@@ -181,7 +182,7 @@ describe("landmarks", () => {
 
   it("have four of each kind per galaxy, the seed's kinds and names on every flight", () => {
     for (const galaxy of [1, 2, 3] as const) {
-      const sites = landmarkSites(galaxy);
+      const sites = retainedLandmarkSites(galaxy);
       for (const kind of LANDMARK_KINDS) {
         // Names follow the table's order within a kind, in id order.
         expect(sites.filter((site) => site.kind === kind).map(({ name }) => name)).toEqual(
@@ -207,8 +208,8 @@ describe("landmarks", () => {
     expect(names[1]).toBe(names[0]);
   });
 
-  it("name all 72 landmarks, twelve in every galaxy, as quests.md's table does", () => {
-    const rows = tableRows("Each galaxy has four landmarks of each kind.");
+  it("keeps all 72 retained base names aligned with the authored landmark table", () => {
+    const rows = tableRows("## Landmarks");
     // The table lists all six galaxies in route order.
     expect(rows.map(([galaxy]) => galaxy)).toEqual(ROUTE.map((galaxy) => galaxyCard(galaxy).name));
     const named = LANDMARK_GALAXIES.flatMap((galaxy) =>
@@ -799,7 +800,7 @@ describe("jobs in play", () => {
     const saved = JSON.parse(model.save()) as ReturnType<typeof newGameState>;
     expect(restoreSave(saved)).toEqual(model.state);
     const badLandmark = structuredClone(saved);
-    badLandmark.progress[1].charted = ["landmark:1:99"];
+    badLandmark.progress[1].charted = [`landmark:1:${LANDMARK_TUNING.count}`];
     expect(restoreSave(badLandmark)).toBeNull();
     const badJob = structuredClone(saved);
     (badJob.tasks[1] as HeldJob).station = "station:nowhere";

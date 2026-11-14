@@ -29,7 +29,7 @@ export function chunkId(chunkSize: number, point: Vec): string {
 
 /** Whether a chunk's centre lies in the charting disc: the explored record keeps only these. */
 export function chartedChunk(chunkSize: number, chunk: Vec): boolean {
-  return within({
+  return withinChartingRadius({
     x: (chunk.x + 0.5) * chunkSize,
     y: (chunk.y + 0.5) * chunkSize,
   });
@@ -112,6 +112,8 @@ export interface MapLandmark {
 
 /** The galaxy's landmarks: those Ada has charted, and how many the charted area holds. */
 export interface LandmarkChart {
+  /** The subset inside the charting circle; omitted by legacy callers. */
+  readonly surveyTotal?: number;
   readonly charted: readonly MapLandmark[];
   readonly total: number;
 }
@@ -303,7 +305,7 @@ function waitingAt(galaxy: GalaxyNumber, id: string): string | null {
     : null;
 }
 
-const within = (point: Vec) =>
+export const withinChartingRadius = (point: Vec) =>
   Math.hypot(point.x - ORIGIN.x, point.y - ORIGIN.y) <= CHARTING_RADIUS;
 
 /** The galaxy's map from what Ada has discovered and charted, and nothing else. */
@@ -361,12 +363,12 @@ export function localMap(context: MapContext): LocalMap {
   }));
   const found =
     context.destinations.filter((id) => mapped(id) && progress.known.includes(id)).length +
-    stations.filter(within).length +
-    charted.filter(within).length;
+    stations.filter(withinChartingRadius).length +
+    charted.filter(withinChartingRadius).length;
   const total =
     context.destinations.filter(mapped).length +
     worldStationsNear(context, catalog, galaxy, CHARTING_RADIUS, ORIGIN).length +
-    landmarks.total;
+    (landmarks.surveyTotal ?? landmarks.total);
   const waypoint: MapPlace[] = context.holodisk
     ? [
         {

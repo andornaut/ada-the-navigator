@@ -22,6 +22,7 @@ import {
   placeType,
   recordExplored,
   validExplored,
+  withinChartingRadius,
 } from "./map.ts";
 import { restoreSave } from "./save.ts";
 import { stationInCell, stationsNear, worldStationInCell } from "./stations.ts";
@@ -342,21 +343,25 @@ describe("galaxy map", () => {
         y: landmark.y,
       },
     ]);
-    const total = galaxyRoute(1).length + inside.length + landmarkSites(1).length;
+    const total =
+      galaxyRoute(1).length + inside.length + landmarkSites(1).filter(withinChartingRadius).length;
     expect(model.map?.mapped).toBe(Math.floor(100 / total));
     const at = { ...flight.player };
     model.teleport(landmark.id);
     expect(model.state.flight!.player).toEqual(at);
   });
 
-  it("places every landmark inside the charted area, so the whole galaxy can be mapped", () => {
-    expect(LANDMARK_TUNING.radius).toBeLessThanOrEqual(CHARTING_RADIUS);
-    for (const galaxy of [1, 2, 3] as const) {
+  it("keeps the 25k survey circle separate from the expanded landmark extent", () => {
+    expect(CHARTING_RADIUS).toBe(25000);
+    expect(LANDMARK_TUNING.radius).toBe(100000);
+    for (const galaxy of [1, 2, 3, 4, 5, 6] as const) {
       const sites = landmarkSites(galaxy);
-      expect(sites, `galaxy ${galaxy}`).toHaveLength(LANDMARK_TUNING.count);
-      for (const site of sites) {
-        expect(Math.hypot(site.x, site.y), site.id).toBeLessThanOrEqual(CHARTING_RADIUS);
-      }
+      expect(sites).toHaveLength(LANDMARK_TUNING.count);
+      expect(sites.some((site) => !withinChartingRadius(site))).toBe(true);
+      expect(sites.slice(0, LANDMARK_TUNING.retained.count).every(withinChartingRadius)).toBe(true);
+      expect(sites.every((site) => Math.hypot(site.x, site.y) <= LANDMARK_TUNING.radius)).toBe(
+        true,
+      );
     }
   });
 

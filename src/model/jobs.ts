@@ -12,7 +12,7 @@ import {
 import { questReward } from "../data/questRewards.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { dropRandom } from "./drops.ts";
-import { landmarkSites } from "./landmarks.ts";
+import { type LandmarkSite, landmarkSites } from "./landmarks.ts";
 import { stationById, type StationSite } from "./stations.ts";
 import type {
   FlightState,
@@ -35,6 +35,8 @@ export type JobBook = Pick<GameState, "jobs" | "tasks">;
 
 /** What a board draws on when it makes offers. */
 export interface BoardContext {
+  /** Eligible survey sites in the actual flight; legacy callers use the static catalog. */
+  readonly landmarks?: readonly LandmarkSite[];
   readonly galaxy: GalaxyNumber;
   /** Charted landmarks, and discovered stations: delivery destinations. */
   readonly progress: Pick<GalaxyProgress, "charted" | "stations">;
@@ -121,7 +123,7 @@ function jobTarget(
   if (type === "survey") {
     const taken = surveyed(context.galaxy, book);
     // One of the three nearest uncharted landmarks no other survey names.
-    const open = landmarkSites(context.galaxy)
+    const open = (context.landmarks ?? landmarkSites(context.galaxy))
       .filter((site) => !context.progress.charted.includes(site.id) && !taken.has(site.id))
       .sort((a, b) => distance(a, station) - distance(b, station))
       .slice(0, 3);
@@ -246,7 +248,12 @@ function offerValid(
   slot: number,
   offer: JobOffer,
 ): boolean {
-  if (offer.type === "survey" && context.progress.charted.includes(offer.target.id)) {
+  if (
+    offer.type === "survey" &&
+    (context.progress.charted.includes(offer.target.id) ||
+      (context.landmarks !== undefined &&
+        !context.landmarks.some(({ id }) => id === offer.target.id)))
+  ) {
     return false;
   }
   if (offer.target.id === "") {

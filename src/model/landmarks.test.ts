@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { LANDMARK_GALAXIES } from "../data/jobs.ts";
 import { landmarkLabel, landmarkSites } from "./landmarks.ts";
+import { retainedLandmarkSites } from "./retainedLandmarks.ts";
 import { identityWords, stationWords } from "./stationIdentity.ts";
 
 const label = (key: string) => CONTENT.labels[key] ?? "";
@@ -10,7 +11,7 @@ const label = (key: string) => CONTENT.labels[key] ?? "";
 describe("landmark identity labels", () => {
   it("leaves every retained landmark's exact label key and display unchanged", () => {
     for (const galaxy of LANDMARK_GALAXIES) {
-      for (const site of landmarkSites(galaxy)) {
+      for (const site of retainedLandmarkSites(galaxy)) {
         expect(site.nameWords).toBeUndefined();
         expect(landmarkLabel(label, site)).toBe(label(site.name));
         expect(landmarkLabel(label, site)).not.toBe("");

@@ -1,11 +1,91 @@
-import { LANDMARK_NAME_FORMAT, LANDMARK_TUNING } from "../data/jobs.ts";
+import { ECONOMY } from "../data/economy.ts";
+import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
+import {
+  LANDMARK_KINDS,
+  LANDMARK_NAME_FORMAT,
+  LANDMARK_TUNING,
+  landmarkNameKey,
+} from "../data/jobs.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import { type LandmarkSite, retainedLandmarkSites } from "./retainedLandmarks.ts";
-import type { GalaxyProgress, Vec } from "./types.ts";
+import { flightDestinationSites } from "./destinationContext.ts";
+import { dropRandom } from "./drops.ts";
+import { flightWorldContext } from "./flightTopology.ts";
+import { settlementsNear } from "./legacySettlements.ts";
+import { worldOreFieldsNear } from "./oreFields.ts";
+import { LANDMARK_SEEDS, type LandmarkSite, retainedLandmarkSites } from "./retainedLandmarks.ts";
+import { identityWords } from "./stationIdentity.ts";
+import { stationsNear } from "./stations.ts";
+import type { FlightState, GalaxyProgress, Vec } from "./types.ts";
+import { worldDistance } from "./worldContacts.ts";
 export type { LandmarkSite } from "./retainedLandmarks.ts";
 
+const sites = new Map<GalaxyNumber, readonly LandmarkSite[]>();
+
 export function landmarkSites(galaxy: GalaxyNumber): readonly LandmarkSite[] {
-  return retainedLandmarkSites(galaxy);
+  const cached = sites.get(galaxy);
+  if (cached) {
+    return cached;
+  }
+  const retained = retainedLandmarkSites(galaxy);
+  const seed = LANDMARK_SEEDS[galaxy];
+  if (seed === undefined) {
+    return retained;
+  }
+  const placed = [...retained];
+  const { attempts, count, placeClearance, radius, spacing } = LANDMARK_TUNING;
+  const kinds = Array.from(
+    { length: Math.max(0, count - placed.length) },
+    (_, index) => LANDMARK_KINDS[index % LANDMARK_KINDS.length]!,
+  );
+  const kindRoll = dropRandom(seed, `expanded-landmark-kinds:${galaxy}`);
+  for (let index = kinds.length - 1; index > 0; index--) {
+    const swap = Math.floor(kindRoll() * (index + 1));
+    [kinds[index], kinds[swap]] = [kinds[swap]!, kinds[index]!];
+  }
+  const next = dropRandom(seed, `expanded-landmarks:${galaxy}`);
+  for (let attempt = 0; placed.length < count && attempt < attempts; attempt++) {
+    const reach = Math.sqrt(next()) * radius;
+    const angle = next() * Math.PI * 2;
+    const at = { x: Math.cos(angle) * reach, y: Math.sin(angle) * reach };
+    if (placed.some((site) => Math.hypot(site.x - at.x, site.y - at.y) < spacing)) {
+      continue;
+    }
+    if (stationsNear(ECONOMY, galaxy, placeClearance, at).length > 0) {
+      continue;
+    }
+    if (galaxy === 5 && settlementsNear(ECONOMY, placeClearance, at).length > 0) {
+      continue;
+    }
+    if (worldOreFieldsNear({}, galaxy, ORE_FIELDS.diameter / 2 + placeClearance, at).length > 0) {
+      continue;
+    }
+    const index = placed.length;
+    const kind = kinds[index - retained.length]!;
+    placed.push({
+      ...at,
+      id: `landmark:${galaxy}:${index}`,
+      kind,
+      name: landmarkNameKey(galaxy, kind, (index % 4) + 1),
+      nameWords: identityWords(BigInt(6 * index + galaxy - 1)),
+    });
+  }
+  sites.set(galaxy, placed);
+  return placed;
+}
+
+/** Legacy landmarks remain available; only additions yield to retained story destinations. */
+export function flightLandmarkSites(flight: FlightState): readonly LandmarkSite[] {
+  const context = flightWorldContext(flight);
+  const destinations = flightDestinationSites(flight);
+  const retained = new Set(retainedLandmarkSites(flight.galaxy).map(({ id }) => id));
+  return landmarkSites(flight.galaxy).filter(
+    (site) =>
+      retained.has(site.id) ||
+      destinations.every(
+        (destination) =>
+          worldDistance(context, destination, site) >= LANDMARK_TUNING.placeClearance,
+      ),
+  );
 }
 
 /** Existing label keys stay unchanged; new sites add their approved identity words. */

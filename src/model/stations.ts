@@ -1,6 +1,7 @@
 import type { EconomyCatalog } from "../data/economy.ts";
 import { LANDMARK_TUNING } from "../data/jobs.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { flightDestinationSites } from "./destinationContext.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { worldSettlementsNear } from "./legacySettlements.ts";
 import {
@@ -42,12 +43,7 @@ export interface StationPlacementContext extends WorldCellContext {
 export function flightStationContext(flight: FlightState): StationPlacementContext {
   return {
     ...flightWorldContext(flight),
-    stationExclusions: [
-      ...flight.objects.filter((object) => object.kind === "destination"),
-      ...Object.values(flight.world.notables).filter(
-        (object): object is NonNullable<typeof object> => object?.kind === "destination",
-      ),
-    ],
+    stationExclusions: flightDestinationSites(flight),
   };
 }
 

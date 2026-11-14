@@ -4,7 +4,7 @@ import { JOB_TYPES, type JobType, type LandmarkKind } from "../data/jobs.ts";
 import { PROCEDURAL_POI_NAMES, PROCEDURAL_POIS as T } from "../data/proceduralPois.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { dropRandom } from "./drops.ts";
-import { landmarkSites } from "./landmarks.ts";
+import { retainedLandmarkSites as landmarkSites } from "./retainedLandmarks.ts";
 import type { Vec } from "./types.ts";
 import {
   worldCell,

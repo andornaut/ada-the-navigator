@@ -6,8 +6,9 @@ import { type JobType, LANDMARK_KINDS, LANDMARK_TUNING } from "../data/jobs.ts";
 import { PROCEDURAL_POIS as T } from "../data/proceduralPois.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
-import { landmarkSites } from "./landmarks.ts";
+import { CHARTING_RADIUS } from "./map.ts";
 import { chartedProceduralPois, proceduralPoiById, proceduralPoisNear } from "./proceduralPois.ts";
+import { retainedLandmarkSites as landmarkSites } from "./retainedLandmarks.ts";
 import { nearestImage, wrappedDistance } from "./worldGeometry.ts";
 
 const context = { worldSide: GALAXY_SIDE };
@@ -26,7 +27,7 @@ describe("additional procedural POIs", () => {
       const sites = proceduralPoisNear(context, galaxy, 42, 25000, far);
       expect(sites.length).toBeGreaterThan(0);
       expect(sites).toEqual(proceduralPoisNear(context, galaxy, 42, 25000, far));
-      expect(sites.every((site) => Math.hypot(site.x, site.y) > LANDMARK_TUNING.radius)).toBe(true);
+      expect(sites.every((site) => Math.hypot(site.x, site.y) > CHARTING_RADIUS)).toBe(true);
       for (const site of sites) {
         expect(site.id).toMatch(new RegExp(`^poi:${galaxy}:-?\\d+,-?\\d+:0$`));
         expect(LANDMARK_KINDS).toContain(site.kind);
@@ -122,8 +123,8 @@ describe("additional procedural POIs", () => {
         }
       }
     }
-    expect(LANDMARK_TUNING.count).toBe(12);
-    expect(LANDMARK_TUNING.radius).toBe(25000);
+    expect(LANDMARK_TUNING.retained.count).toBe(12);
+    expect(LANDMARK_TUNING.retained.radius).toBe(25000);
   });
   it("feeds only known procedural identities without adding survey credit or changing discovery state", () => {
     const sites = proceduralPoisNear(context, 3, 42, 25000, far);

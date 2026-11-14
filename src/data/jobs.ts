@@ -149,14 +149,16 @@ const RETAINED_LANDMARKS = { count: 12, radius: 25000 } as const;
 
 /** Landmark placement and charting (quests.md "Landmarks"), in world units. */
 export const LANDMARK_TUNING = {
+  /** Bounded placement work per galaxy. */
+  attempts: 10000,
   /** Charting range: flying this close charts a landmark at once. */
   chart: 300,
-  /** Landmarks per galaxy, a third of each kind. */
-  count: RETAINED_LANDMARKS.count,
+  /** Total target, including the retained landmarks. */
+  count: 200,
   /** Clearance from stations and story destinations. */
   placeClearance: 1500,
   /** Within this distance of the galaxy's world origin. */
-  radius: RETAINED_LANDMARKS.radius,
+  radius: 100000,
   retained: RETAINED_LANDMARKS,
   /** Apart from one another. */
   spacing: 3000,

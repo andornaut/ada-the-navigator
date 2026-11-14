@@ -76,7 +76,7 @@ export function retainedLandmarkSites(galaxy: GalaxyNumber): readonly LandmarkSi
   const kinds = seededKinds(landmarkGalaxy, seed);
   const named = { beacon: 0, nebula: 0, wreck: 0 };
   const placed: LandmarkSite[] = [];
-  for (let attempt = 0; placed.length < count && attempt < 10000; attempt++) {
+  for (let attempt = 0; placed.length < count && attempt < LANDMARK_TUNING.attempts; attempt++) {
     // Uniform over the disc's area.
     const reach = Math.sqrt(next()) * radius;
     const angle = next() * Math.PI * 2;

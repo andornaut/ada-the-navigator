@@ -4,10 +4,10 @@ import { LANDMARK_KINDS, LANDMARK_TUNING, type LandmarkKind } from "./jobs.ts";
 /** Additional nonstory places use the existing survey's initial per-area density, without its credit. */
 export const PROCEDURAL_POIS = {
   cellSize: ECONOMY.station.cellSize,
-  density: LANDMARK_TUNING.count / (Math.PI * LANDMARK_TUNING.radius ** 2),
+  density: LANDMARK_TUNING.retained.count / (Math.PI * LANDMARK_TUNING.retained.radius ** 2),
   kinds: LANDMARK_KINDS,
   /** A local query budget, not a boundary of the galaxy or a survey denominator. */
-  maxQueryRadius: LANDMARK_TUNING.radius,
+  maxQueryRadius: LANDMARK_TUNING.retained.radius,
   opportunities: [
     { kind: "resources", weight: 0.5 },
     { kind: "salvage", weight: 0.35 },
