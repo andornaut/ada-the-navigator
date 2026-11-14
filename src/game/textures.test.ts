@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { SCREEN } from "../data/screen.ts";
 import { ART_MANIFEST, GALAXY_MANIFESTS, publicJson } from "../testing/publicArt.ts";
 import { readGalaxyBackdrop } from "./backdropLayers.ts";
 import { parentFit } from "./playCamera.ts";
@@ -72,6 +71,45 @@ describe("vector raster size", () => {
       }),
     );
     expect(decorations.size).toBe(18);
+    const authoredSizes = {
+      andromeda: [
+        [842.61, 631.95],
+        [842.61, 631.95],
+        [842.61, 631.95],
+      ],
+      cartwheel: [
+        [805.51, 604.13],
+        [798.2, 598.65],
+        [1116.53, 837.4],
+      ],
+      needle: [
+        [755.36, 566.52],
+        [755.36, 566.52],
+        [755.36, 566.52],
+      ],
+      phantom: [
+        [880.35, 660.27],
+        [863.7, 647.77],
+        [784.4, 588.3],
+      ],
+      sunflower: [
+        [720, 540],
+        [720, 540],
+        [720, 540],
+      ],
+      whirlpool: [
+        [878.07, 658.55],
+        [882.12, 661.59],
+        [870.11, 652.58],
+      ],
+    };
+    for (const [galaxy, sizes] of Object.entries(authoredSizes)) {
+      sizes.forEach((size, index) => {
+        const id = `backdrop-decoration-${galaxy}-${index + 1}`;
+        const recipe = decorations.get(id);
+        expect([recipe?.width, recipe?.height], id).toEqual(size);
+      });
+    }
     const seen = new Set<string>();
     const svgs = ART_MANIFEST.assets.filter(({ path }) => path.endsWith(".svg"));
     expect(svgs.length).toBeGreaterThan(1000);
@@ -79,8 +117,6 @@ describe("vector raster size", () => {
       if (asset.kind === "backdrop-decoration") {
         const recipe = decorations.get(asset.id);
         expect(recipe, asset.id).toBeDefined();
-        expect(recipe!.width, asset.id).toBeGreaterThan(SCREEN.width);
-        expect(recipe!.height, asset.id).toBeGreaterThan(SCREEN.height);
         expect([asset.displayWidth, asset.displayHeight], asset.id).toEqual([undefined, undefined]);
         expect([asset.width, asset.height], asset.id).toEqual([1024, 768]);
         expect(decorationRasterSize(asset.width, asset.height), asset.id).toEqual({

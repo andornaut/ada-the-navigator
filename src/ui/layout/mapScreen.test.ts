@@ -319,7 +319,7 @@ describe("fog and Ada", () => {
       return fogColor(field.environment, field.environmentDetail);
     };
     // Sunflower, Cartwheel, Whirlpool and Phantom.
-    expect(([1, 2, 3, 6] as const).map(fog)).toEqual(["#c2b37f", "#4c3430", "#254046", "#362939"]);
+    expect(([1, 2, 3, 6] as const).map(fog)).toEqual(["#c2b37f", "#9f7f73", "#9cb4aa", "#6c6072"]);
   });
 
   it("reveals an ellipse twice as wide as it is tall with a floored feather", () => {

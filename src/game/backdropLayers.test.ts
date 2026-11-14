@@ -276,9 +276,9 @@ describe("backdrop layers in the view", () => {
 describe("backdrop rasters", () => {
   it("paints the sky from the background at the top-left to the darker tone at the bottom-right", () => {
     const { sky } = backdropOf(3);
-    expect(skyColor(sky, 0, 0).map((c) => Math.round(c * 255))).toEqual([0x13, 0x2d, 0x33]);
+    expect(skyColor(sky, 0, 0).map((c) => Math.round(c * 255))).toEqual([0xb8, 0xce, 0xc4]);
     expect(skyColor(sky, SCREEN.width, SCREEN.height).map((c) => Math.round(c * 255))).toEqual([
-      0x07, 0x28, 0x2b,
+      0xb0, 0xca, 0xc1,
     ]);
     const raster = paintSky(sky, 1 / 4);
     expect([raster.width, raster.height]).toEqual([SKY_AREA.width / 4, SKY_AREA.height / 4]);
