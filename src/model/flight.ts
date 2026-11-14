@@ -24,7 +24,7 @@ import { JOB_TUNING, LANDMARK_TUNING } from "../data/jobs.ts";
 import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP, PHANTOM_TUNING } from "../data/phantom.ts";
 import { RESOURCE_ROCKS } from "../data/resourceRocks.ts";
 import { SCREEN } from "../data/screen.ts";
-import { SPAWNER_POLICIES, spawnerStage } from "../data/spawnerCatalog.ts";
+import { SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { GalaxyNumber, GameContent, Weapon } from "../data/types.ts";
 import { BEAM, weaponAt, type WeaponDefinition } from "../data/weaponCatalog.ts";
@@ -130,9 +130,10 @@ import { direction, speedFraction, stepShipMotion, turnToward } from "./shipPhys
 import {
   groupReach,
   memberPosition,
-  worldEngagementAdmissions,
   worldFitsEncounter,
+  worldRegionalEngagementAdmissions,
   worldSelectEncounter,
+  worldSpawnerStage,
 } from "./spawner.ts";
 import {
   flightStationContext,
@@ -1102,11 +1103,11 @@ function generateRegion(content: GameContent, x: number, y: number, flight: Flig
   const countRoll = next();
   const archetypeRoll = next();
   const policy = SPAWNER_POLICIES[flight.galaxy];
-  const stage = spawnerStage(flight.galaxy, flight.freshDistance);
+  const stage = worldSpawnerStage(flightWorldContext(flight), policy, center);
   const previous = flight.objects.find((object) => object.enemy?.packId === packId)?.enemy;
   const escort = flight.objects.find((object) => object.enemy?.escortOf === `${packId}:0`)?.enemy;
   const initialized = Object.hasOwn(combat(flight).initialPackSizes, packId);
-  // A represented pack keeps its original role across fresh-distance stage changes.
+  // A represented pack keeps its original composition across geographic region changes.
   const plan =
     initialized && (previous || escort)
       ? {
@@ -2354,10 +2355,9 @@ function enemies(
       })
       .map((object) => object.id),
   );
-  const admissions = worldEngagementAdmissions(
+  const admissions = worldRegionalEngagementAdmissions(
     flightWorldContext(flight),
     SPAWNER_POLICIES[flight.galaxy],
-    spawnerStage(flight.galaxy, flight.freshDistance),
     objects,
     eligible,
     flight.player,

@@ -278,30 +278,39 @@ including every escort and hull, must fit the budget and archetype limit, with
 at most one nearby capital. Admission conservatively counts live neighbouring
 hulls whose footprints could share that neighbourhood, including required
 guards, old packs and pursuing ships. Disabled hulls still count; salvaged ships
-do not. Only complete groups that fit are eligible for weighted selection.
+do not. Fighter groups target four and use the largest size that fits the remaining budget.
+Other groups and all mandatory escorts remain atomic: unaffordable groups are
+excluded rather than trimmed, and admission never raises the cap.
 
 Encounter frequency uses a baseline of 1.725, which is 15% above 1.5, multiplied
 by the route factors below. The route increments are additive: 100%, 110%,
 120%, 130%, 140% and 150%, not a compounded 10% increase. This changes encounter
 frequency only, not HP, fire rate, speed, `difficultyScale` or asteroid density.
 
-Every galaxy uses three ambient budget stages at fresh exploration distances
-0, 1800 and 4200 world units. The ramp caps at the third stage and resets on a
-fresh flight, using the existing fresh-exploration ledger. Standing still,
-teleporting and revisiting explored chunks do not advance it.
+Every galaxy uses three geographic regions measured from the galactic center at
+the encounter location: inner below 10000 world units, middle from 10000 to below
+25000, and outer from 25000 onward. Periodic worlds use the shortest wrapped
+center distance. Exploration history, quest intro distance and map progress do
+not choose difficulty, and existing enemies keep their composition when crossing.
 
-| Position | Galaxy    | Route factor | Encounter rate | Budget at 0 / 1800 / 4200 | Archetype limit |
-| -------: | --------- | -----------: | -------------: | ------------------------- | --------------- |
-|        1 | Sunflower |         100% |          1.725 | 3 / 4 / 5                 | 1 / 2 / 2       |
-|        2 | Whirlpool |         110% |         1.8975 | 4 / 5 / 6                 | 2               |
-|        3 | Needle    |         120% |           2.07 | 5 / 6 / 7                 | 3               |
-|        4 | Andromeda |         130% |         2.2425 | 6 / 7 / 8                 | 4               |
-|        5 | Cartwheel |         140% |          2.415 | 7 / 8 / 9                 | 4               |
-|        6 | Phantom   |         150% |         2.5875 | 8 / 9 / 10                | 4               |
+Composition weights blend linearly across 2000-world-unit bands centered on each
+boundary (9000–11000 and 24000–26000). Numeric budgets and archetype limits switch
+discretely at 10000 and 25000; they do not interpolate. The fresh-chunk ledger
+continues to exclude standing, teleports and revisits for quest pacing.
+
+| Position | Galaxy    | Route factor | Encounter rate | Inner / middle / outer budget | Archetype limit |
+| -------: | --------- | -----------: | -------------: | ----------------------------- | --------------- |
+|        1 | Sunflower |         100% |          1.725 | 3 / 4 / 5                     | 1 / 2 / 2       |
+|        2 | Whirlpool |         110% |         1.8975 | 4 / 5 / 6                     | 2               |
+|        3 | Needle    |         120% |           2.07 | 4 / 5 / 6                     | 3               |
+|        4 | Andromeda |         130% |         2.2425 | 5 / 6 / 7                     | 4               |
+|        5 | Cartwheel |         140% |          2.415 | 5 / 6 / 7                     | 4               |
+|        6 | Phantom   |         150% |         2.5875 | 6 / 7 / 8                     | 4               |
 
 Sunflower retains its stage-specific roster and type gates below. Later
-galaxies retain their encounter tables, route-position group bonuses, heavy
-weights and archetype limits; only their local budgets gain these stages.
+galaxies retain their non-fighter encounter groups, route-position bonuses,
+heavy weights and archetype limits. Ambient fighters target four without a route
+bonus and downscale to the remaining local budget.
 Spawn-cell frequency remains independent of admission.
 These budgets are not strict physical population caps: subsequent movement can
 bring ships together. They do not freeze or despawn existing enemies.
@@ -313,15 +322,17 @@ ships' rearm behaviour remain unchanged. Speeds and damage are unchanged.
 
 ## Sunflower roster
 
-Fresh exploration distance selects Sunflower's ambient stage. These exact group
-ranges receive no route-position group bonus. Weights are relative among eligible
-complete groups; a type absent from a stage cannot spawn ambiently.
+Encounter location selects Sunflower's region. The table lists unblended base
+composition weights; transition bands mix those weights only. These exact group
+ranges receive no route-position group bonus. Fighters target four and may
+be smaller when the local budget has fewer slots. Weights are relative among
+eligible groups; a type absent from a stage cannot spawn ambiently.
 
-| Fresh distance (world units) | Archetype limit | Swarm group / weight | Fighter group / weight | Retaliator group / weight | Interceptor group / weight |
-| ---------------------------: | --------------: | -------------------- | ---------------------- | ------------------------- | -------------------------- |
-|                            0 |               1 | 1–2 / 0.55           | 1 / 0.45               | None                      | None                       |
-|                         1800 |               2 | 2–3 / 0.45           | 1–2 / 0.40             | 1 / 0.15                  | None                       |
-|                         4200 |               2 | 2–3 / 0.40           | 1–2 / 0.35             | 1 / 0.15                  | 1 / 0.10                   |
+| Region base distance (world units) | Archetype limit | Swarm group / weight | Fighter target / weight | Retaliator group / weight | Interceptor group / weight |
+| ---------------------------------: | --------------: | -------------------- | ----------------------- | ------------------------- | -------------------------- |
+|                                  0 |               1 | 1–2 / 0.55           | 4 / 0.45                | None                      | None                       |
+|                              10000 |               2 | 2–3 / 0.45           | 4 / 0.40                | 1 / 0.15                  | None                       |
+|                              25000 |               2 | 2–3 / 0.40           | 4 / 0.35                | 1 / 0.15                  | 1 / 0.10                   |
 
 No stage admits ambient frigates or capital battles. Required guards remain.
 Swarm packs use `swarm` and flee after losses; fighters use `hitAndRun` and share
@@ -337,7 +348,7 @@ holodisk drifted. They chase rather than hit and run.
 | Archetype      | Encounter    | Group | Weight | Behaviours                                   |
 | -------------- | ------------ | ----: | -----: | -------------------------------------------- |
 | `swarm`        | Pack         |   5–8 |   0.25 | `swarm`; packs `flee` after losses           |
-| `fighter`      | Hunting pack |   3–4 |   0.30 | `chase`; a group shares pack morale          |
+| `fighter`      | Hunting pack |     4 |   0.30 | `chase`; a group shares pack morale          |
 | `interceptor`  | Solo or pair |   1–2 |   0.15 | `chase`                                      |
 | `retaliator`   | Solo         |     1 |   0.10 | `retaliate`, then `chase`; three-bolt spread |
 | `frigate`      | Solo         |     1 |   0.15 | `siege`; size 4 Ada widths                   |
@@ -356,7 +367,7 @@ Needle's drones gather at the mouths of its narrow channels and fly fast passes.
 | Archetype      | Encounter | Group | Weight | Behaviours                                   |
 | -------------- | --------- | ----: | -----: | -------------------------------------------- |
 | `swarm`        | Pack      |   6–8 |   0.20 | `swarm`; packs `flee` after losses           |
-| `fighter`      | Patrol    |   3–4 |   0.25 | `chase`; a group shares pack morale          |
+| `fighter`      | Patrol    |     4 |   0.25 | `chase`; a group shares pack morale          |
 | `interceptor`  | Pair      |     2 |   0.25 | `strafe`                                     |
 | `retaliator`   | Solo      |     1 |   0.08 | `retaliate`, then `chase`; three-bolt spread |
 | `frigate`      | Solo      |     1 |   0.15 | `siege`; size 4 Ada widths                   |
@@ -372,7 +383,7 @@ Andromeda's drones hunt in the open, in larger patrols with more frigates.
 | Archetype      | Encounter    | Group | Weight | Behaviours                                   |
 | -------------- | ------------ | ----: | -----: | -------------------------------------------- |
 | `swarm`        | Pack         |   6–8 |   0.20 | `swarm`; packs `flee` after losses           |
-| `fighter`      | Patrol       |   3–4 |   0.30 | `hitAndRun`; a group shares pack morale      |
+| `fighter`      | Patrol       |     4 |   0.30 | `hitAndRun`; a group shares pack morale      |
 | `interceptor`  | Pair         |     2 |   0.15 | `strafe`                                     |
 | `retaliator`   | Solo         |     1 |   0.10 | `retaliate`, then `chase`; three-bolt spread |
 | `frigate`      | Solo or pair |   1–2 |   0.18 | `siege`; size 4 Ada widths                   |
@@ -389,7 +400,7 @@ any miner who comes near, Ada included. Fixed turret platforms guard ore fields.
 | Archetype      | Encounter       | Group | Weight | Behaviours                                                     |
 | -------------- | --------------- | ----: | -----: | -------------------------------------------------------------- |
 | `swarm`        | Pack            |   5–7 |   0.25 | `swarm`; packs `flee` after losses                             |
-| `fighter`      | Claim jumpers   |   2–4 |   0.40 | `hitAndRun`; a group shares pack morale                        |
+| `fighter`      | Claim jumpers   |     4 |   0.40 | `hitAndRun`; a group shares pack morale                        |
 | `interceptor`  | Solo or pair    |   1–2 |   0.12 | `hitAndRun`                                                    |
 | `retaliator`   | Solo            |     1 |   0.10 | `retaliate`, then `chase`; three-bolt spread                   |
 | `frigate`      | Solo            |     1 |   0.10 | `siege`; size 4 Ada widths                                     |
@@ -430,7 +441,7 @@ Phantom's drones are Archie's home guard: heavier, and they chase.
 | Archetype      | Encounter    | Group | Weight | Behaviours                                   |
 | -------------- | ------------ | ----: | -----: | -------------------------------------------- |
 | `swarm`        | Pack         |   6–8 |   0.18 | `swarm`; packs `flee` after losses           |
-| `fighter`      | Home guard   |   3–5 |   0.25 | `chase`; a group shares pack morale          |
+| `fighter`      | Home guard   |     4 |   0.25 | `chase`; a group shares pack morale          |
 | `interceptor`  | Pair         |     2 |   0.15 | `strafe`                                     |
 | `retaliator`   | Solo         |     1 |   0.07 | `retaliate`, then `chase`; three-bolt spread |
 | `frigate`      | Solo or pair |   1–2 |   0.25 | `siege`; size 4 Ada widths                   |

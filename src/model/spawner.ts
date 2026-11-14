@@ -4,7 +4,12 @@ import {
   enemyCatalog,
   escortTuning,
 } from "../data/enemyCatalog.ts";
-import type { SpawnerPolicy, SpawnerStage } from "../data/spawnerCatalog.ts";
+import {
+  FIGHTER_GROUP_TARGET,
+  type SpawnerPolicy,
+  type SpawnerStage,
+  spawnerStageAtDistance,
+} from "../data/spawnerCatalog.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 import type { WorldCellContext } from "./worldCells.ts";
 import { wrappedDistance } from "./worldGeometry.ts";
@@ -19,6 +24,15 @@ const distance = (context: WorldCellContext, a: Vec, b: Vec): number =>
   context.worldSide === undefined
     ? Math.hypot(a.x - b.x, a.y - b.y)
     : wrappedDistance(context.worldSide, a, b);
+
+/** Encounter-local shortest distance to the galactic center, including periodic aliases. */
+export function worldSpawnerStage(
+  context: WorldCellContext,
+  policy: SpawnerPolicy,
+  point: Vec,
+): SpawnerStage {
+  return spawnerStageAtDistance(policy, distance(context, { x: 0, y: 0 }, point));
+}
 
 /** Disabled hulls still occupy space. Salvaged ships no longer contribute hostile pressure. */
 export function liveOccupants(objects: readonly SpaceObject[]): SpaceObject[] {
@@ -78,7 +92,8 @@ export function worldFitsEncounter(
 }
 
 /**
- * Samples only positive, allowed entries whose smallest complete group fits. Encounter-cell
+ * Fighters take the largest available group up to their target; other groups and every escort
+ * remain atomic. Samples only positive entries with an admissible plan. Encounter-cell
  * frequency is independent; occupancy limits cannot select an excluded or unaffordable type.
  */
 export function worldSelectEncounter(
@@ -96,7 +111,12 @@ export function worldSelectEncounter(
       return [];
     }
     const plans: EncounterPlan[] = [];
-    for (let count = entry.groupSize[0]; count <= entry.groupSize[1]; count++) {
+    const flexibleFighters = entry.archetype === "fighter" && entry.escorts === undefined;
+    const minimum = flexibleFighters ? 1 : entry.groupSize[0];
+    const maximum = flexibleFighters
+      ? Math.min(FIGHTER_GROUP_TARGET, entry.groupSize[1])
+      : entry.groupSize[1];
+    for (let count = minimum; count <= maximum; count++) {
       const plan = {
         archetype: entry.archetype,
         count,
@@ -106,7 +126,9 @@ export function worldSelectEncounter(
         plans.push(plan);
       }
     }
-    return plans.length ? [{ plans, weight: entry.weight }] : [];
+    return plans.length
+      ? [{ plans: flexibleFighters ? plans.slice(-1) : plans, weight: entry.weight }]
+      : [];
   });
   const total = choices.reduce((sum, choice) => sum + choice.weight, 0);
   if (!total) {
@@ -138,6 +160,35 @@ export function worldEngagementAdmissions(
   eligible: ReadonlySet<string>,
   player: Vec,
 ): Set<string> {
+  return admittedAt(context, policy, () => stage, objects, eligible, player);
+}
+
+/** Geographic admission changes only new sight engagements, never existing enemy state. */
+export function worldRegionalEngagementAdmissions(
+  context: WorldCellContext,
+  policy: SpawnerPolicy,
+  objects: readonly SpaceObject[],
+  eligible: ReadonlySet<string>,
+  player: Vec,
+): Set<string> {
+  return admittedAt(
+    context,
+    policy,
+    (point) => worldSpawnerStage(context, policy, point),
+    objects,
+    eligible,
+    player,
+  );
+}
+
+function admittedAt(
+  context: WorldCellContext,
+  policy: SpawnerPolicy,
+  stageAt: (point: Vec) => SpawnerStage,
+  objects: readonly SpaceObject[],
+  eligible: ReadonlySet<string>,
+  player: Vec,
+): Set<string> {
   const live = liveOccupants(objects);
   const reserved = live.filter(
     (object) => object.routeId !== undefined || object.persistent || object.enemy?.engaged,
@@ -150,6 +201,7 @@ export function worldEngagementAdmissions(
         distance(context, a, player) - distance(context, b, player) || a.id.localeCompare(b.id),
     );
   for (const object of candidates) {
+    const stage = stageAt(object);
     const neighbours = reserved.filter(
       (other) =>
         distance(context, other, object) <= policy.localRadius * 2 + other.radius + object.radius,
