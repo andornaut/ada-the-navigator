@@ -299,7 +299,7 @@ export function createConversationBox(onAdvance: () => void): ConversationBox {
           face.dataset.speaker = line.speaker;
           name.textContent = line.name;
           // Keyboard wording is words alone; touch wording follows each named control with its icon.
-          if (desktop) {
+          if (desktop && !line.text.includes("{useIcon}")) {
             words.textContent = line.desktop ?? controlHelpText(CONTROL_WORDS, line.text);
           } else {
             words.replaceChildren(...createControlHelp(document, CONTROL_WORDS, line.text));

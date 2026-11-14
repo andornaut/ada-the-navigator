@@ -104,11 +104,16 @@ export type HudContext = Scene &
  * in and out over 150 ms with cubicOut, at once under reduced motion. It holds its place while
  * it fades out.
  */
-export function drawUseCallout(scene: HudContext, flight: FlightState | null | undefined): void {
+export function drawUseCallout(
+  scene: HudContext & Pick<GameScene, "landmarkSprites">,
+  flight: FlightState | null | undefined,
+): void {
   scene.useCallout ??= createUseCallout(scene, scene.rasters.scale).setDepth(USE_CALLOUT_DEPTH);
   const target = flight ? scene.model.useTarget : undefined;
   const object =
-    target && flight?.objects.find((entry) => entry.id === target.id && entry.kind !== "enemy");
+    target &&
+    (flight?.objects.find((entry) => entry.id === target.id && entry.kind !== "enemy") ??
+      scene.model.jobScenery.landmarks.find((entry) => entry.id === target.id));
   const now = scene.time.now;
   const state = scene.calloutState;
   if (object && target) {
@@ -147,14 +152,20 @@ export function calloutRemaining(scene: HudContext, now: number): number {
  * A drawn object's top in display px above its pivot at `point`: the topmost pixel at alpha 0.5
  * or more over its sprites and every frame they have shown this flight.
  */
-export function drawnTop(scene: HudContext, id: string, point: Vec): number {
+export function drawnTop(
+  scene: HudContext & Pick<GameScene, "landmarkSprites">,
+  id: string,
+  point: Vec,
+): number {
   let top = scene.drawnTops.get(id) ?? 0;
-  for (const [key, sprite] of scene.enemySprites) {
-    if ((key === id || key.startsWith(`${id}#`)) && sprite.visible) {
-      const fraction = frameTop(scene, sprite.frame);
-      const drawn =
-        sprite.y - sprite.originY * sprite.displayHeight + fraction * sprite.displayHeight;
-      top = Math.max(top, point.y - drawn);
+  for (const sprites of [scene.enemySprites, scene.landmarkSprites]) {
+    for (const [key, sprite] of sprites) {
+      if ((key === id || key.startsWith(`${id}#`)) && sprite.visible) {
+        const fraction = frameTop(scene, sprite.frame);
+        const drawn =
+          sprite.y - sprite.originY * sprite.displayHeight + fraction * sprite.displayHeight;
+        top = Math.max(top, point.y - drawn);
+      }
     }
   }
   scene.drawnTops.set(id, top);

@@ -22,7 +22,8 @@ const read = (name: string) =>
     .replace(/\s+/gu, " ")
     .trim();
 // The player copy, and the job lines in the quests document.
-const COPY = read("player-copy.md");
+// Inline icon copy compares its accessible control name.
+const COPY = read("player-copy.md").replaceAll("{useIcon}", CONTROL_WORDS.use);
 const QUESTS = read("quests.md");
 
 // A copy passage from its heading or lead-in up to until, by default the next heading.

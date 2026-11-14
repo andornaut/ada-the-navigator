@@ -43,7 +43,7 @@ export const CONTROL_HELP_STYLE = `
 
 export type ControlHelpPart =
   | { readonly kind: "text"; readonly text: string }
-  | { readonly control: HelpControl; readonly kind: "control" };
+  | { readonly control: HelpControl; readonly kind: "control" | "controlIcon" };
 
 const isControl = (token: string): token is HelpControl =>
   (HELP_CONTROLS as readonly string[]).includes(token);
@@ -57,10 +57,13 @@ export function controlHelpParts(text: string): readonly ControlHelpPart[] {
       parts.push({ kind: "text", text: text.slice(start, match.index) });
     }
     const control = match[1]!;
-    if (!isControl(control)) {
+    if (control === "useIcon") {
+      parts.push({ control: "use", kind: "controlIcon" });
+    } else if (isControl(control)) {
+      parts.push({ control, kind: "control" });
+    } else {
       throw new Error(`Unknown control help token ${control}`);
     }
-    parts.push({ control, kind: "control" });
     start = match.index + match[0].length;
   }
   if (start < text.length) {
@@ -85,12 +88,17 @@ export function createControlHelp(document: Document, words: ControlWords, text:
     const icon = document.createElement("img");
     icon.className = "ada-control-icon";
     icon.dataset.control = part.control;
-    icon.alt = "";
-    icon.setAttribute("aria-hidden", "true");
+    icon.alt = part.kind === "controlIcon" ? words[part.control] : "";
+    if (part.kind !== "controlIcon") {
+      icon.setAttribute("aria-hidden", "true");
+    }
     icon.src = controlIconSource(part.control);
     const unit = document.createElement("span");
     unit.className = "ada-control-help";
-    unit.append(document.createTextNode(words[part.control]), icon);
+    unit.append(
+      ...(part.kind === "controlIcon" ? [] : [document.createTextNode(words[part.control])]),
+      icon,
+    );
     return unit;
   });
 }
@@ -109,10 +117,14 @@ export function controlHelpMarkup(words: ControlWords, text: string): string {
     .map((part) =>
       part.kind === "text"
         ? escaped(part.text)
-        : `<span class="ada-control-help">${escaped(words[part.control])}` +
-          `<img class="ada-control-icon" data-control="${part.control}" ` +
-          `src="${controlIconSource(part.control)}" alt="" aria-hidden="true" ` +
-          `width="${INLINE_CONTROL.icon}" height="${INLINE_CONTROL.icon}"></span>`,
+        : part.kind === "controlIcon"
+          ? `<span class="ada-control-help"><img class="ada-control-icon" data-control="${part.control}" ` +
+            `src="${controlIconSource(part.control)}" alt="${escaped(words[part.control])}" ` +
+            `width="${INLINE_CONTROL.icon}" height="${INLINE_CONTROL.icon}"></span>`
+          : `<span class="ada-control-help">${escaped(words[part.control])}` +
+            `<img class="ada-control-icon" data-control="${part.control}" ` +
+            `src="${controlIconSource(part.control)}" alt="" aria-hidden="true" ` +
+            `width="${INLINE_CONTROL.icon}" height="${INLINE_CONTROL.icon}"></span>`,
     )
     .join("");
 }

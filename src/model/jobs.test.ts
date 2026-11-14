@@ -505,6 +505,8 @@ describe("jobs in play", () => {
     const stardust = model.state.economy.stardust;
     expectJobIndicatorRange(model, held.target);
     flyTo(model, held.target);
+    expect(model.state.progress[1].charted).not.toContain(held.target.id);
+    model.interact();
     expect(model.state.progress[1].charted).toContain(held.target.id);
     // Charting and the completed job count toward Cartographer and Helping Hand.
     expect(model.state.achievements.charted[1]).toEqual([held.target.id]);
@@ -541,6 +543,7 @@ describe("jobs in play", () => {
     });
     const before = model.map!.mapped;
     flyTo(model, site);
+    model.interact();
     const charted = model.map!.places.find(({ id }) => id === site.id)!;
     expect(charted).toMatchObject({ job: false, kind: "landmark", travel: false });
     expect(charted.label).toBe(label(site.name));

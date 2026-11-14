@@ -32,6 +32,7 @@ import { HUNTING_PACKS } from "../data/galaxyFeatures.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { carriedItemName, STORY_ITEM_NAMES } from "../data/itemNames.ts";
 import { JOB_TUNING, type JobType } from "../data/jobs.ts";
+import { LANDMARK_SCAN_COPY } from "../data/landmarkScanCopy.ts";
 import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import { holodiskInsertion } from "../data/premiseCopy.ts";
 import { galaxyProjects, PROJECT_THANKS } from "../data/projects.ts";
@@ -132,9 +133,16 @@ import {
   type StationGreeting,
   worldStationKeeper,
 } from "./keepers.ts";
-import { chartLandmarks, galaxyLandmarks, landmarkById, landmarkSites } from "./landmarks.ts";
+import { flightLandmarkSites, landmarkById, landmarkLabel, landmarkSites } from "./landmarks.ts";
+import { landmarkScanTarget } from "./landmarkScan.ts";
 import { lateEncounterCue } from "./lateEncounter.ts";
-import { type LocalMap, localMap, type MapContext, recordExplored } from "./map.ts";
+import {
+  type LocalMap,
+  localMap,
+  type MapContext,
+  recordExplored,
+  withinChartingRadius,
+} from "./map.ts";
 import { needleCourses, setNeedleActivity, stepNeedleCourse } from "./needle.ts";
 import { clearNeedleEnemies, ensureNeedleDebris } from "./needleFlight.ts";
 import { type PennyMarker, PennyMarkers, type PennyPoint } from "./pennyMarkers.ts";
@@ -400,6 +408,7 @@ export type PickupFeedback = Extract<ItemGain, { readonly kind: "ammo" }>;
 
 export class GameModel {
   private readonly pennyTracking = new PennyMarkers();
+  private scannedLandmarks: string[] = [];
   state: GameState;
   /** The last flight step's events, for view effects; empty when no step ran. */
   flightEvents: FlightEvent[] = [];
@@ -596,7 +605,7 @@ export class GameModel {
     const points: PennyPoint[] = [];
     for (const id of this.pennyTracking.ids(f)) {
       const object = f.objects.find((entry) => entry.id === id) ?? f.world.notables[id];
-      const landmark = landmarkById(f.galaxy, id);
+      const landmark = flightLandmarkSites(f).find((site) => site.id === id);
       const station = worldStationById(flightStationContext(f), ECONOMY, f.galaxy, id);
       const held = this.held;
       const hunt = held?.type === "hunt" && `job:${held.id}` === id ? held.spot : null;
@@ -674,6 +683,7 @@ export class GameModel {
     }
   }
   private beginConversations(): void {
+    this.scannedLandmarks = [];
     // The line pools shuffle from the flight's own seed, so they never draw on launch seeds.
     this.talk.beginFlight(
       this.state.selectedGalaxy,
@@ -889,6 +899,45 @@ export class GameModel {
           Math.hypot(b.x - f.player.x, b.y - f.player.y),
       )[0]?.id;
   }
+  /** A rendered landmark may teach Scan without granting charting or survey outcomes. */
+  landmarkDisplayed(id: string): void {
+    const f = this.state.flight;
+    if (
+      !f ||
+      this.screen !== "space" ||
+      this.state.dialogue ||
+      this.state.docked ||
+      this.current.charted.includes(id) ||
+      !flightLandmarkSites(f).some((site) => site.id === id)
+    ) {
+      return;
+    }
+    this.talk.requestScanLesson();
+  }
+
+  private nearestScan() {
+    const f = this.state.flight;
+    if (!f || this.state.mode !== "space" || this.state.dialogue || this.state.docked) {
+      return undefined;
+    }
+    const context = flightWorldContext(f);
+    const site = landmarkScanTarget(
+      {
+        ...context,
+        charted: this.current.charted,
+        player: f.player,
+        range: this.content.tuning.talkRange,
+      },
+      flightLandmarkSites(f),
+    );
+    const placeId = this.nearest();
+    const place = placeId && f.objects.find(({ id }) => id === placeId);
+    return site &&
+      (!place || worldDistance(context, f.player, site) < worldDistance(context, f.player, place))
+      ? site
+      : undefined;
+  }
+
   /** What Use does here, or undefined with nothing in reach. */
   get contextAction(): UseAction | undefined {
     if (
@@ -904,6 +953,9 @@ export class GameModel {
     }
     if (this.salvageable()) {
       return "salvage";
+    }
+    if (this.nearestScan()) {
+      return "scan";
     }
     const id = this.nearest();
     if (!id) {
@@ -938,13 +990,17 @@ export class GameModel {
     if (action === undefined || action === "tow" || this.suspendedInteraction) {
       return undefined;
     }
-    const id = this.nearest();
+    const id = action === "scan" ? this.nearestScan()?.id : this.nearest();
     return id === undefined ? undefined : { action, id };
   }
   /** The Use action's name, the disc's accessible name. */
   get contextLabel(): string | undefined {
     const action = this.contextAction;
-    return action === undefined ? undefined : this.label(action);
+    return action === "scan"
+      ? LANDMARK_SCAN_COPY.action
+      : action === undefined
+        ? undefined
+        : this.label(action);
   }
   weapons(): WeaponChoice[] {
     return this.state.mode === "space" && this.state.flight ? ownedWeapons(this.state.flight) : [];
@@ -1861,7 +1917,7 @@ export class GameModel {
     this.explore(f);
     this.flightEvents = events;
     this.pullLoadout();
-    const mapped: string[] = [];
+    const mapped: string[] = this.scannedLandmarks.splice(0);
     const stationsDiscovered: string[] = [];
     for (const event of events) {
       if (event.type === "depleted") {
@@ -1917,11 +1973,6 @@ export class GameModel {
     ) {
       this.current.stations.push(HUB_STATION);
       stationsDiscovered.push(HUB_STATION);
-    }
-    const charted = chartLandmarks(f.galaxy, this.current, f.player);
-    mapped.push(...charted);
-    for (const id of charted) {
-      this.recordAchievement({ galaxy: f.galaxy, id, kind: "landmarkCharted" });
     }
     this.stepJob(f);
     this.stepCalf(dt, f);
@@ -1995,7 +2046,7 @@ export class GameModel {
       pennyPoints: pennyPoints(
         this.current,
         this.holodiskWaypoint,
-        landmarkSites(f.galaxy).filter(({ id }) => !this.current.charted.includes(id)),
+        flightLandmarkSites(f).filter(({ id }) => !this.current.charted.includes(id)),
         f,
         flightWorldContext(f).worldSide,
       ),
@@ -2146,6 +2197,7 @@ export class GameModel {
     if (!f || this.state.mode !== "space") {
       return null;
     }
+    const landmarks = landmarkSites(f.galaxy);
     const labels = new Map(this.destinations().map(({ id, label }) => [id, label]));
     const context = this.chapterContext();
     const waypoint = context && f.galaxy === 6 ? phantomWaypoint(context) : null;
@@ -2173,10 +2225,17 @@ export class GameModel {
       label: (id, kind) =>
         kind === "holodisk" ? this.label("mapHolodiskWaypoint") : (labels.get(id) ?? id),
       landmarks: {
-        charted: galaxyLandmarks(f.galaxy, this.current)
-          .filter(({ charted }) => charted)
-          .map(({ id, kind, name, x, y }) => ({ id, kind, label: this.label(name), x, y })),
-        total: landmarkSites(f.galaxy).length,
+        charted: landmarks
+          .filter(({ id }) => this.current.charted.includes(id))
+          .map((site) => ({
+            id: site.id,
+            kind: site.kind,
+            label: landmarkLabel((key) => this.label(key), site),
+            x: site.x,
+            y: site.y,
+          })),
+        surveyTotal: landmarks.filter(withinChartingRadius).length,
+        total: landmarks.length,
       },
       objective: this.objectiveId(f.galaxy),
       progress: this.current,
@@ -2412,6 +2471,18 @@ export class GameModel {
       this.panel("salvage", INTERACTION_COPY.salvage!.lines[0]!.text, "Astra");
       return;
     }
+    const scan = this.nearestScan();
+    if (scan) {
+      this.current.charted.push(scan.id);
+      this.scannedLandmarks.push(scan.id);
+      this.recordAchievement({
+        galaxy: this.state.flight.galaxy,
+        id: scan.id,
+        kind: "landmarkCharted",
+      });
+      this.stepJob(this.state.flight);
+      return;
+    }
     const id = this.nearest();
     const f = this.state.flight;
     if (!id || !f) {
@@ -2571,6 +2642,7 @@ export class GameModel {
     return {
       galaxy: flight.galaxy,
       hostiles: jobHostiles(flight),
+      landmarks: flightLandmarkSites(flight),
       outposts: this.outposts(flight),
       progress: {
         ...this.current,
@@ -2618,6 +2690,7 @@ export class GameModel {
     galaxy: GalaxyNumber,
     job: JobOffer,
   ): { readonly detail: string; readonly title: string } {
+    const landmark = landmarkById(galaxy, job.target.id);
     const titles: Record<JobType, string> = {
       delivery: fill(this.label("deliveryTitle"), {
         item: job.item,
@@ -2626,10 +2699,13 @@ export class GameModel {
       hunt: fill(this.label("huntTitle"), { item: job.item }),
       rescue: fill(this.label("rescueTitle"), { craft: job.item }),
       survey: fill(this.label("surveyTitle"), {
-        landmark: this.label(landmarkById(galaxy, job.target.id)?.name ?? ""),
+        landmark: landmark ? landmarkLabel((key) => this.label(key), landmark) : "",
       }),
     };
-    return { detail: this.label(`${job.type}About`), title: titles[job.type] };
+    return {
+      detail: this.label(`${job.type}About`),
+      title: titles[job.type],
+    };
   }
   /**
    * The docked station's job board: the held job first, marked Active, then the station's
@@ -2799,7 +2875,9 @@ export class GameModel {
             (galaxyRoute(galaxy).includes(id) ? ("destination" as const) : undefined));
         return {
           id,
-          label: this.label(landmark?.name ?? "") || this.placeLabelIn(galaxy, id),
+          label: landmark
+            ? landmarkLabel((key) => this.label(key), landmark)
+            : this.placeLabelIn(galaxy, id),
           ...(symbol ? { symbol } : {}),
         };
       });
@@ -3159,7 +3237,10 @@ export class GameModel {
         hunt?.spot && distance(hunt.spot, f.player) <= JOB_TUNING.hunt.glint
           ? { ...hunt.spot }
           : null,
-      landmarks: galaxyLandmarks(f.galaxy, this.current),
+      landmarks: flightLandmarkSites(f).map((site) => ({
+        ...site,
+        charted: this.current.charted.includes(site.id),
+      })),
       towing: Boolean(f.tow),
     };
   }

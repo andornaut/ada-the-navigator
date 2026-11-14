@@ -168,6 +168,11 @@ type SymbolPart =
 
 // The symbols' cores with each one's whole-px shift already applied (art/controls.md "Use disc"),
 // so each one's drawn bounds, ink included, centre on the ring's centre.
+const USE_SYMBOL: readonly SymbolPart[] = [
+  { centre: CENTRE, inner: 6, kind: "ring", outer: 10 },
+  { centre: CENTRE, kind: "disc", radius: 3 },
+];
+
 export const USE_SYMBOLS: Readonly<Record<UseAction, readonly SymbolPart[]>> = {
   deliver: [
     {
@@ -260,6 +265,7 @@ export const USE_SYMBOLS: Readonly<Record<UseAction, readonly SymbolPart[]>> = {
       width: 4,
     },
   ],
+  scan: USE_SYMBOL,
   talk: [28.5, 37.5, 46.5].map((x) => ({ centre: { x, y: 37.5 }, kind: "disc", radius: 4 })),
   tow: [
     { centre: { x: 42.5, y: 24 }, inner: 2.5, kind: "ring", outer: 4 },
@@ -269,10 +275,7 @@ export const USE_SYMBOLS: Readonly<Record<UseAction, readonly SymbolPart[]>> = {
       width: 3,
     },
   ],
-  use: [
-    { centre: CENTRE, inner: 6, kind: "ring", outer: 10 },
-    { centre: CENTRE, kind: "disc", radius: 3 },
-  ],
+  use: USE_SYMBOL,
 };
 
 // Salvage's magnet pole gaps: ink rects over its core.

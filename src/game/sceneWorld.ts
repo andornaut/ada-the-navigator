@@ -107,6 +107,7 @@ export type WorldContext = Scene &
     | "projectArt"
     | "quantum"
     | "rasters"
+    | "settingsOpen"
     | "reducedMotion"
     | "resourceFiles"
     | "resourceRocks"
@@ -418,7 +419,7 @@ export function drawJobs(scene: WorldContext): void {
     if (!near(point)) {
       continue;
     }
-    const key = `landmark:${landmark.x},${landmark.y}`;
+    const key = landmark.id;
     if (landmark.kind === "nebula" && art?.nebula && galaxy) {
       art.nebula.forEach((layer, index) =>
         drawLandmarkLayer(scene, `${key}#${index}`, layer.frame, point, index, {
@@ -459,6 +460,26 @@ export function drawJobs(scene: WorldContext): void {
       scene.ink.fillCircle(point.x, point.y, 4);
       scene.ink.lineStyle(1, scene.palette.pointOfInterest, 0.7 - pulse * 0.5);
       scene.ink.strokeCircle(point.x, point.y, 10 + pulse * 18);
+    }
+    if (!scene.settingsOpen) {
+      const sprites = [...scene.landmarkSprites].filter(
+        ([id, sprite]) => (id === key || id.startsWith(`${key}#`)) && sprite.visible,
+      );
+      const visible =
+        sprites.length > 0
+          ? sprites.some(([, sprite]) => {
+              const bounds = sprite.getBounds();
+              return (
+                bounds.right > 0 &&
+                bounds.bottom > 0 &&
+                bounds.left < SCREEN.width &&
+                bounds.top < SCREEN.height
+              );
+            })
+          : point.x >= 0 && point.x <= SCREEN.width && point.y >= 0 && point.y <= SCREEN.height;
+      if (visible) {
+        scene.model.landmarkDisplayed(landmark.id);
+      }
     }
   }
   if (scenery.area) {

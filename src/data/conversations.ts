@@ -1,5 +1,6 @@
 import { GALAXY_NUMBERS } from "./galaxies.ts";
 import { JOB_LORE } from "./jobs.ts";
+import { LANDMARK_SCAN_COPY } from "./landmarkScanCopy.ts";
 import { NEEDLE_COPY } from "./needleCopy.ts";
 import { PHANTOM_COPY } from "./phantom.ts";
 import type { GalaxyNumber } from "./types.ts";
@@ -37,7 +38,7 @@ export type ConversationPriority = (typeof CONVERSATION_PRIORITIES)[number];
 export const BOX_PRIORITIES = ["warning", "notice", "lesson", "penny", "lore"] as const;
 
 /** The first flight's lessons, each skipped once Ada has already done what it teaches. */
-export type Lesson = "aim" | "dock" | "move" | "stardust";
+export type Lesson = "aim" | "dock" | "move" | "scan" | "stardust";
 
 export type ConversationTrigger =
   | { readonly kind: "lesson"; readonly lesson: Lesson }
@@ -228,6 +229,13 @@ export const CONVERSATIONS: readonly Conversation[] = [
     priority: "lesson",
     repeat: "never",
     trigger: { kind: "lesson", lesson: "stardust" },
+  },
+  {
+    id: "lesson:scan",
+    lines: [line("astra", LANDMARK_SCAN_COPY.instruction)],
+    priority: "lesson",
+    repeat: "never",
+    trigger: { kind: "lesson", lesson: "scan" },
   },
   {
     id: "lesson:dock",

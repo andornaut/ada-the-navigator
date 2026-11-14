@@ -4,6 +4,7 @@ import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite"
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { LANDMARK_SCAN_COPY } from "../data/landmarkScanCopy.ts";
 import type { UseAction } from "../model/types.ts";
 import {
   isTouchChromePose,
@@ -188,8 +189,10 @@ describe("Use disc chrome", () => {
 
   it("names each action with Gameplay's string, the disc's accessible name", () => {
     expect(
-      (Object.keys(USE_SYMBOLS) as UseAction[]).map((action) => CONTENT.labels[action]),
-    ).toEqual(["Deliver", "Deposit", "Dock", "Salvage", "Talk", "Tow", "Use"]);
+      (Object.keys(USE_SYMBOLS) as UseAction[]).map((action) =>
+        action === "scan" ? LANDMARK_SCAN_COPY.action : CONTENT.labels[action],
+      ),
+    ).toEqual(["Deliver", "Deposit", "Dock", "Salvage", "Scan", "Talk", "Tow", "Use"]);
   });
 
   it("draws Dock as a filled ship under a hangar arch, the ship's ink its outline stroked 2", () => {

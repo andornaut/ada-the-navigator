@@ -245,7 +245,13 @@ export class ConversationDirector {
   private readonly conversations: readonly Conversation[];
   /** Each pool's variants still to play in this shuffle, by index, and the last one drawn. */
   private readonly decks = new Map<string, { order: number[]; last: number | null }>();
-  private done: Record<Lesson, boolean> = { aim: false, dock: false, move: false, stardust: false };
+  private done: Record<Lesson, boolean> = {
+    aim: false,
+    dock: false,
+    move: false,
+    scan: false,
+    stardust: false,
+  };
   /** Danger since it last cleared: a fight, which a low shield warns of once. */
   private inFight = false;
   /** This fight's drones were called out. */
@@ -263,6 +269,7 @@ export class ConversationDirector {
   private galaxy: GalaxyNumber | null = null;
   private readonly seen: string[];
   private shieldWarned = false;
+  private scanLessonAfterPenny = false;
   private eligibilityReader: (() => ConversationEligibilityFacts) | undefined;
   private latestFacts: ConversationFacts | undefined;
 
@@ -353,7 +360,7 @@ export class ConversationDirector {
     this.reset();
     this.random = random;
     this.galaxy = galaxy;
-    this.done = { aim: false, dock: false, move: false, stardust: false, ...done };
+    this.done = { aim: false, dock: false, move: false, scan: false, stardust: false, ...done };
     this.request((trigger) => trigger.kind === "lesson" && trigger.lesson === "move");
     this.request((trigger) => trigger.kind === "arrival" && trigger.galaxy === galaxy);
   }
@@ -362,6 +369,21 @@ export class ConversationDirector {
   endFlight(): void {
     this.reset();
     this.galaxy = null;
+  }
+
+  /** An actually visible landmark requests the saved once-only Scan lesson. */
+  requestScanLesson(): void {
+    if (this.seen.includes("lesson:scan")) {
+      return;
+    }
+    if (
+      this.active?.conversation.trigger.kind === "penny" ||
+      this.queue.some((request) => request.resume && request.conversation.trigger.kind === "penny")
+    ) {
+      this.scanLessonAfterPenny = true;
+      return;
+    }
+    this.request((trigger) => trigger.kind === "lesson" && trigger.lesson === "scan");
   }
 
   /** A funded project's thank-you line, which waits its turn in the queue. */
@@ -459,6 +481,14 @@ export class ConversationDirector {
     this.revalidate();
     this.pennyWait = Math.max(0, this.pennyWait - dt);
     this.observe(galaxy, facts);
+    if (
+      this.scanLessonAfterPenny &&
+      this.active?.conversation.trigger.kind !== "penny" &&
+      !this.queue.some((request) => request.resume && request.conversation.trigger.kind === "penny")
+    ) {
+      this.scanLessonAfterPenny = false;
+      this.requestScanLesson();
+    }
     if (notice && !this.warningShowing) {
       this.queue = this.queue.filter((request) => this.valid(facts, request));
       const warning = this.queue.find((request) => request.conversation.priority === "warning");
@@ -855,6 +885,7 @@ export class ConversationDirector {
     this.queue = [];
     this.quietFor = 0;
     this.shieldWarned = false;
+    this.scanLessonAfterPenny = false;
   }
 }
 

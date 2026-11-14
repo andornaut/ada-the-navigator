@@ -317,15 +317,17 @@ describe("galaxy map", () => {
     expect(model.map).toBeNull();
   });
 
-  it("shows a landmark once Ada flies close, counts it and never travels there", () => {
+  it("shows a landmark only after explicit Scan, counts it and never travels there", () => {
     const model = flying();
     const flight = model.state.flight!;
     model.state.dialogue = null;
     flight.objects = [];
     flight.velocity = { x: 0, y: 0 };
     const landmark = landmarkSites(1)[0]!;
-    flight.player = { x: landmark.x + LANDMARK_TUNING.chart / 2, y: landmark.y };
+    flight.player = { x: landmark.x + CONTENT.tuning.talkRange / 2, y: landmark.y };
     model.step(0.05, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false });
+    expect(model.state.progress[1].charted).not.toContain(landmark.id);
+    model.interact();
     expect(model.state.progress[1].charted).toContain(landmark.id);
     // The landmark's own name, from its player-string key.
     const label = CONTENT.labels[landmark.name];

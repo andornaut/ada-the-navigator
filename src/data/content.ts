@@ -1,4 +1,5 @@
 import { ANDROMEDA_CHAPTER } from "./andromeda.ts";
+import { LANDMARK_SCAN_COPY } from "./landmarkScanCopy.ts";
 import { NEEDLE_CHAPTER } from "./needleCopy.ts";
 import { PHANTOM_CHAPTER, PHANTOM_CLOSING, PHANTOM_RESOLUTION_REJOIN } from "./phantom.ts";
 import { PREMISE } from "./premiseCopy.ts";
@@ -677,7 +678,7 @@ export const CONTENT: GameContent = {
     stayHere: "Stay here",
     supplyGoal: "Carry supplies to a station.",
     supplyObjective: "Carry {item} to {destination}.",
-    surveyAbout: "Astra's map has a gap here. Fly close.",
+    surveyAbout: LANDMARK_SCAN_COPY.surveyAbout,
     surveyTitle: "Chart the {landmark}",
     talk: "Talk",
     tow: "Tow",

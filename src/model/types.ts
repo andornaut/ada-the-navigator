@@ -15,7 +15,8 @@ import type { ProjectileFade } from "./playerProjectiles.ts";
 import type { StoryCursor } from "./storyCursor.ts";
 
 /** What Use does here: the disc's symbol, and its name the disc's accessible name. */
-export type UseAction = "deliver" | "deposit" | "dock" | "salvage" | "talk" | "tow" | "use";
+export type UseAction =
+  "deliver" | "deposit" | "dock" | "salvage" | "scan" | "talk" | "tow" | "use";
 
 export interface Vec {
   x: number;

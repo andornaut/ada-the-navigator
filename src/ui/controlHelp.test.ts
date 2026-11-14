@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { CONTROL_WORDS } from "../data/controlWords.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
 import { HOME_COPY } from "../data/homeCopy.ts";
+import { LANDMARK_SCAN_COPY } from "../data/landmarkScanCopy.ts";
 import {
   CONTROL_ICONS,
   controlHelpMarkup,
@@ -129,4 +130,22 @@ describe("control icons", () => {
     );
     expect(controlHelpMarkup(CONTROL_WORDS, "A < B & {use}")).toMatch(/^A &lt; B &amp; <span/u);
   });
+});
+
+it("renders the approved Scan instruction with the actual icon only and an accessible Use name", () => {
+  const nodes = createControlHelp(
+    fakeDocument,
+    CONTROL_WORDS,
+    LANDMARK_SCAN_COPY.instruction,
+  ) as unknown as FakeNode[];
+  expect(nodes[0]!.textContent).toBe("Fly closer, then press ");
+  expect(nodes[1]!.children).toHaveLength(1);
+  const icon = nodes[1]!.children[0]!;
+  expect(icon.src).toBe("/art/ui/sprites/icon-use-control.png");
+  expect(icon.alt).toBe(CONTROL_WORDS.use);
+  expect(icon.getAttribute("aria-hidden")).not.toBe("true");
+  expect(nodes[2]!.textContent).toBe(" to scan it.");
+  expect(controlHelpMarkup(CONTROL_WORDS, LANDMARK_SCAN_COPY.instruction)).toContain(
+    `alt="${CONTROL_WORDS.use}"`,
+  );
 });
