@@ -9,6 +9,7 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY, worldAmmoPack } from "../data/economy.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { STATUS_PILL_LAYOUT } from "../data/layout.ts";
+import { SCREEN } from "../data/screen.ts";
 import { grantAllWeapons } from "../model/cheats.ts";
 import { GameModel } from "../model/game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
@@ -16,6 +17,7 @@ import { UPGRADE_WEAPONS } from "../model/weapons.ts";
 import { readStory, relaunch } from "../testing/launch.ts";
 import { cheatGroups, type CheatSessionOptions, createCheatSession } from "../ui/cheatActions.ts";
 import { VIEW_HOST_ID } from "../ui/layout/css.ts";
+import { NO_INSETS, safeGameArea } from "../ui/layout/playView.ts";
 import { BOX_OCCUPANT, boxOccupant } from "../ui/notice.ts";
 import { galaxiesAvailable } from "../ui/pause.ts";
 import type { PauseState } from "../ui/pauseCard.ts";
@@ -122,32 +124,62 @@ describe("conversation exposure under covering cards", () => {
     model.state.dialogue =
       kind === "dialogue" ? { choices: [], context: "test", text: "Panel", title: "Astra" } : null;
     model.state.docked = kind === "docked" ? "station" : null;
-    const line = { text: "Conversation" };
+    const line = { key: "penny:1:displayed-cache:0", text: "Conversation" };
+    const acknowledge = vi.spyOn(model, "pennyNoticeDisplayed").mockImplementation(() => {});
+    const marker = {
+      id: "displayed-cache",
+      identified: false,
+      known: false,
+      symbol: "wreck" as const,
+      x: 1450,
+      y: 0,
+    };
+    const markers = vi.spyOn(model, "pennyMarkers").mockReturnValue([marker]);
+    const place = vi.fn();
     const read = vi.fn(() => line);
     Object.defineProperty(model, "conversation", { get: read });
     const returning = { text: "Return" };
     const render = vi.fn();
     const scene = {
       boxOccupant: null as string | null,
+      controls: { layout: () => ({ insets: NO_INSETS, view: SCREEN }) },
       conversationBox: { render },
       emergencyReturn: { line: emergency ? returning : null },
+      light: false,
+      litCaches: new Set<string>(),
       model,
+      palette: { pointOfInterest: 0x65c9bf },
       reducedMotion: false,
       savingUnavailable: true,
       settingsOpen: kind === "settings",
     };
+    const pennyLayers = new WeakMap([[scene, { place }]]);
     const context = createContext({
       BOX_OCCUPANT,
       VIEW_HOST_ID,
       boxOccupant,
       coarsePointer: () => false,
       document: { getElementById: () => null },
+      pennyLayers,
+      safeGameArea,
       window: {},
     });
     const update = runInContext(callback("renderConversation"), context) as (
       value: typeof scene,
     ) => void;
-    return { line, model, read, render, returning, scene, update: () => update(scene) };
+    return {
+      acknowledge,
+      line,
+      marker,
+      markers,
+      model,
+      place,
+      read,
+      render,
+      returning,
+      scene,
+      update: () => update(scene),
+    };
   }
 
   it.each(["settings", "dialogue", "docked"] as const)(
@@ -156,6 +188,9 @@ describe("conversation exposure under covering cards", () => {
       const ui = covered(kind, false);
       ui.update();
       expect(ui.read).not.toHaveBeenCalled();
+      expect(ui.acknowledge).not.toHaveBeenCalled();
+      expect(ui.markers).not.toHaveBeenCalled();
+      expect(ui.place.mock.lastCall?.at(-1)).toEqual([]);
       expect(ui.render).toHaveBeenLastCalledWith(null, true, false);
       expect(ui.scene.boxOccupant).toBe("save");
       ui.scene.settingsOpen = false;
@@ -164,6 +199,15 @@ describe("conversation exposure under covering cards", () => {
       ui.update();
       expect(ui.read).toHaveBeenCalledOnce();
       expect(ui.render).toHaveBeenLastCalledWith(ui.line, true, false);
+      expect(ui.acknowledge).toHaveBeenCalledExactlyOnceWith(ui.line.key);
+      expect(ui.render.mock.invocationCallOrder.at(-1)).toBeLessThan(
+        ui.acknowledge.mock.invocationCallOrder[0]!,
+      );
+      expect(ui.markers).toHaveBeenCalledExactlyOnceWith(
+        safeGameArea(NO_INSETS, SCREEN),
+        ui.scene.litCaches,
+      );
+      expect(ui.place.mock.lastCall?.at(-1)).toEqual([ui.marker]);
       expect(ui.scene.boxOccupant).toBe("line");
     },
   );
@@ -175,6 +219,9 @@ describe("conversation exposure under covering cards", () => {
       ui.update();
       expect(ui.read).not.toHaveBeenCalled();
       expect(ui.render).toHaveBeenLastCalledWith(ui.returning, true, false);
+      expect(ui.acknowledge).not.toHaveBeenCalled();
+      expect(ui.markers).not.toHaveBeenCalled();
+      expect(ui.place.mock.lastCall?.at(-1)).toEqual([]);
       expect(ui.scene.boxOccupant).toBe("line");
     },
   );
