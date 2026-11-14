@@ -1229,10 +1229,24 @@ theme and draws them in a shuffled order, never the same variant twice in a row,
 starting a new shuffle once all have played.
 
 Penny rides in the second seat and never barks aloud. When an undiscovered point
-of interest comes within a provisional 900 world units of Ada, even off screen,
+of interest comes within 1500 world units of Ada, even off screen,
 one conversation shows Penny's "Woof! Woof!" and then Ada's reaction; it plays
-once per point of interest, at most once per 60 seconds (provisional). Exact lines are in
+once per point of interest, at most once per 60 seconds. Exact lines are in
 [the player copy](player-copy.md#in-flight-conversations).
+The ordinary sense range is separate from the hunt lost-item sense range, which
+stays 350 world units.
+
+When Penny's notice is actually displayed, its exact target gets a direction
+marker; do not bind the marker to the current nearest object or an enqueued
+notice. Show a question mark until the target has actually been identified on
+screen, then use its matching real map, location or item glyph. Sensing alone
+does not discover the target or advance a quest. An unknown-target marker
+remains until the target is reached, removed or outside Penny's 1500-world-unit
+range; dialogue fading does not clear it. After identification, keep the real
+icon under the ordinary known-object rules, except that this sensed target
+retains the full 1500 range rather than being cut off at 1400. Show only one
+marker for the target. Compute direction and range using the shortest wrapped
+path and keep this marker clear of the HUD.
 
 ## Space encounters and feedback
 
@@ -1241,8 +1255,9 @@ areas, asteroid clusters and narrow passages. There is no spawn warning;
 Astra's drone-arrival line is the only cue.
 Direction indicators are rare. They mark only the current objective's
 destination, a quest item or quest event, the holodisk waypoint and an
-undiscovered station within range. Optional discovery caches and ordinary
-resource rocks get none; Penny senses those instead. A discovery
+undiscovered station within range, plus the exact target of a displayed Penny
+sense notice under the rules above. Optional discovery caches and ordinary
+resource rocks otherwise get none. A discovery
 cache lights when Ada comes within 160 world units. The holodisk is collected on
 contact, like other pickups. The pause menu's Map (the local map) is the only map of a galaxy; there is no minimap.
 Edge markers show where off-screen objects Ada has already seen are. Four kinds
@@ -1253,7 +1268,8 @@ a route: it shows the guard marker, its own image, in place of the heavy marker,
 and switches to the heavy marker once it is disabled. Friendly objects she flies through (story ships,
 whales, wrecks and landmarks) get none. An object gets a marker only after it
 has been on Ada's screen and then left it. The marker stays while the object is
-within 1400 world units of Ada, one range for every kind; past 1400 the object is
+within 1400 world units of Ada, except for the Penny-sensed target's 1500 range
+above; past its applicable range the object is
 forgotten until it is on screen again. Destroying the object, leaving the zone
 or galaxy, and saving and reloading clear markers. A marker sits where the line
 from Ada to the object meets the game area's edge, its outermost drawn pixel 1 logical pixel in
