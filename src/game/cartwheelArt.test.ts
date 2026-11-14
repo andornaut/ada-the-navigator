@@ -6,8 +6,10 @@ import { ASTEROID_ART, readResourceRocks } from "../data/asteroidCatalog.ts";
 import { PROJECTS } from "../data/projects.ts";
 import { resourceArtId } from "../data/resourceRocks.ts";
 import { STORY_SHIP_CRAFT } from "../data/storyShips.ts";
+import type { GalaxyNumber } from "../data/types.ts";
 import { ASTEROID_SHAPES } from "../model/asteroids.ts";
 import { ART_MANIFEST, CORE_MANIFEST, GALAXY_MANIFESTS } from "../testing/publicArt.ts";
+import { readGalaxyBackdrop } from "./backdropLayers.ts";
 import {
   type CartwheelAsset,
   craftArt,
@@ -43,6 +45,14 @@ describe("Cartwheel art", () => {
     // Every galaxy manifest with entries; a placeholder galaxy's holds none.
     const drawn = [...GALAXY_MANIFESTS].filter(([, galaxy]) => galaxy.assets.length > 0);
     expect([...sets.keys()].sort()).toEqual([...drawn.map(([galaxy]) => galaxy), null].sort());
+    const decorationIds = (galaxy: GalaxyNumber): ReadonlySet<string> => {
+      const backdrop = readGalaxyBackdrop(json(GALAXY_MANIFESTS.get(galaxy)!.links.backdrop!));
+      expect(backdrop?.decorations?.sprites, `galaxy ${galaxy}`).toHaveLength(3);
+      return new Set(backdrop!.decorations!.sprites.map(({ asset }) => asset));
+    };
+    const cartwheelDecorations = decorationIds(2);
+    const sunflowerDecorations = decorationIds(1);
+    const whirlpoolDecorations = decorationIds(3);
     const cartwheel = sets.get(2)!;
     expect(cartwheel).toEqual(
       expect.arrayContaining([
@@ -59,7 +69,7 @@ describe("Cartwheel art", () => {
     // Every Cartwheel entry is in one family, counted from the manifest: the hub, the buoy, the
     // three story craft, debris, the claim family's hull frames, the stranded ore pod's blink pairs
     // and hauler's frames, the claim jumpers' part frames, and the cast's portraits, which any
-    // galaxy's manifest may carry.
+    // galaxy's manifest may carry, plus the rare decorations named by its backdrop recipe.
     const part = (id: string) => {
       const entry = assets.find((asset) => asset.id === id)!;
       return entry.hardpoint !== undefined || entry.top !== undefined;
@@ -73,6 +83,7 @@ describe("Cartwheel art", () => {
       ["stranded", (id) => id.startsWith("craft-stranded-"), 16 * 2 + 16],
       ["claim parts", part],
       ["portraits", portrait],
+      ["rare decorations", (id) => cartwheelDecorations.has(id), 3],
     ];
     for (const id of cartwheel) {
       expect(
@@ -89,7 +100,10 @@ describe("Cartwheel art", () => {
       sets
         .get(3)!
         .every(
-          (id) => /^(whale|whirlpool|nebula-whirlpool|craft-stranded)-/.test(id) || portrait(id),
+          (id) =>
+            /^(whale|whirlpool|nebula-whirlpool|craft-stranded)-/.test(id) ||
+            portrait(id) ||
+            whirlpoolDecorations.has(id),
         ),
     ).toBe(true);
     expect(sets.get(3)!.filter((id) => id.startsWith("whirlpool-debris-"))).toHaveLength(16);
@@ -98,7 +112,11 @@ describe("Cartwheel art", () => {
       sets
         .get(1)!
         .every(
-          (id) => id.startsWith("outpost-") || id.startsWith("craft-stranded-") || portrait(id),
+          (id) =>
+            id.startsWith("outpost-") ||
+            id.startsWith("craft-stranded-") ||
+            portrait(id) ||
+            sunflowerDecorations.has(id),
         ),
     ).toBe(true);
     expect(sets.get(1)).toEqual(

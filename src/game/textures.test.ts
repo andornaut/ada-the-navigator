@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { ART_MANIFEST } from "../testing/publicArt.ts";
+import { SCREEN } from "../data/screen.ts";
+import { ART_MANIFEST, GALAXY_MANIFESTS, publicJson } from "../testing/publicArt.ts";
+import { readGalaxyBackdrop } from "./backdropLayers.ts";
 import { parentFit } from "./playCamera.ts";
+import { decorationRasterSize } from "./rareDecorations.ts";
 import { fileFilter, needsRaster, RASTER_CAP, rasterScale, vectorRaster } from "./textures.ts";
 
 describe("texture filters", () => {
@@ -60,14 +63,38 @@ describe("vector raster size", () => {
     });
   });
 
-  it("covers every SVG in Art's manifests: each declares its display size", () => {
+  it("covers every SVG through manifest display dimensions or canonical rare-decoration recipes", () => {
+    const decorations = new Map(
+      [...GALAXY_MANIFESTS.values()].flatMap(({ links }) => {
+        const backdrop = readGalaxyBackdrop(publicJson(links.backdrop!));
+        expect(backdrop?.decorations?.sprites).toHaveLength(3);
+        return backdrop!.decorations!.sprites.map((sprite) => [sprite.asset, sprite] as const);
+      }),
+    );
+    expect(decorations.size).toBe(18);
+    const seen = new Set<string>();
     const svgs = ART_MANIFEST.assets.filter(({ path }) => path.endsWith(".svg"));
     expect(svgs.length).toBeGreaterThan(1000);
     for (const asset of svgs) {
+      if (asset.kind === "backdrop-decoration") {
+        const recipe = decorations.get(asset.id);
+        expect(recipe, asset.id).toBeDefined();
+        expect(recipe!.width, asset.id).toBeGreaterThan(SCREEN.width);
+        expect(recipe!.height, asset.id).toBeGreaterThan(SCREEN.height);
+        expect([asset.displayWidth, asset.displayHeight], asset.id).toEqual([undefined, undefined]);
+        expect([asset.width, asset.height], asset.id).toEqual([1024, 768]);
+        expect(decorationRasterSize(asset.width, asset.height), asset.id).toEqual({
+          height: 768,
+          width: 1024,
+        });
+        seen.add(asset.id);
+        continue;
+      }
       expect([asset.displayWidth, asset.displayHeight], asset.id).toEqual([
         expect.any(Number),
         expect.any(Number),
       ]);
     }
+    expect([...seen].sort()).toEqual([...decorations.keys()].sort());
   });
 });
