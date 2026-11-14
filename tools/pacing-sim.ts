@@ -907,9 +907,27 @@ export function simulate(input: SimulationInput): RunResult {
     }
     advance(behaviour.collectSeconds);
   };
+  let currentRegion:
+    | {
+        readonly chunks: Map<string, Chunk>;
+        readonly count: number;
+        readonly x: number;
+        readonly y: number;
+        readonly near: Chunk[];
+      }
+    | undefined;
   const region = () => {
     const cx = Math.floor(position.x / size);
     const cy = Math.floor(position.y / size);
+    // This private map changes only here or by replacement on a new flight.
+    if (
+      currentRegion?.chunks === chunks &&
+      currentRegion.count === chunks.size &&
+      currentRegion.x === cx &&
+      currentRegion.y === cy
+    ) {
+      return currentRegion.near;
+    }
     for (const key of chunks.keys()) {
       const [x, y] = key.split(",").map(Number) as [number, number];
       if (Math.abs(x - cx) > 3 || Math.abs(y - cy) > 3) {
@@ -928,7 +946,9 @@ export function simulate(input: SimulationInput): RunResult {
         }
       }
     }
-    return [...chunks.values()];
+    const near = [...chunks.values()];
+    currentRegion = { chunks, count: chunks.size, near, x: cx, y: cy };
+    return near;
   };
   const boardContext = (): BoardContext => ({ hostiles: [], outposts, progress, galaxy });
   const finishJob = () => {

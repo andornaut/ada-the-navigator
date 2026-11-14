@@ -165,7 +165,16 @@ export function worldStationsNear(
 ): StationSite[] {
   const sites = worldLegacyStationsNear(context, catalog, galaxy, radius, point);
   const grid = worldGrid(context, catalog.station.cellSize);
+  const extent = Math.min(
+    catalog.station.jitter / 2,
+    (grid.pitch - catalog.station.minimumSpacing) / 2,
+  );
+  // Every candidate lies within this disc of its cell origin, including wrapped cells.
+  const candidateReach = radius + Math.SQRT2 * Math.max(0, extent);
   for (const cell of worldCellsNear(grid, radius + grid.pitch, point)) {
+    if (distance(context, worldCellOrigin(grid, cell), point) > candidateReach) {
+      continue;
+    }
     const site = worldInfillStationInCell(context, catalog, galaxy, cell);
     if (site && distance(context, site, point) <= radius) {
       sites.push(site);
