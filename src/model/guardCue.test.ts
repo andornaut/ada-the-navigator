@@ -1,16 +1,23 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { ECONOMY } from "../data/economy.ts";
+import { enemyCatalog } from "../data/enemyCatalog.ts";
+import { GALAXY_SIDE } from "../data/world.ts";
 import { createEdgeMarkerTracker, gameAreaPoint, inGameArea } from "./edgeMarkers.ts";
 import {
   createFlight,
   ensureDestination,
+  ensureDestinationAt,
   ensureRouteEncounter,
+  ensureStation,
   routeBlocked,
   stepFlight,
   syncFlightRegion,
 } from "./flight.ts";
+import { flightWorldContext } from "./flightTopology.ts";
 import { ACTIVE_CHUNK_RADIUS } from "./geography.ts";
+import { stationsNear } from "./stations.ts";
 import type {
   FlightEvent,
   FlightInput,
@@ -18,6 +25,7 @@ import type {
   GalaxyProgress,
   SpaceObject,
 } from "./types.ts";
+import { worldDistance, worldPoint } from "./worldContacts.ts";
 
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const progress: GalaxyProgress = {
@@ -55,7 +63,9 @@ function guarded(away: number): { flight: FlightState; guard: SpaceObject } {
   return { flight, guard };
 }
 const onScreen = (flight: FlightState, object: SpaceObject) =>
-  inGameArea(gameAreaPoint(flight.player, object));
+  inGameArea(
+    gameAreaPoint(flight.player, worldPoint(flightWorldContext(flight), flight.player, object)),
+  );
 
 describe("a blocking guard's cue", () => {
   it("cues once per flight when Ada reaches the destination, summoning and marking the guard", () => {
@@ -87,6 +97,101 @@ describe("a blocking guard's cue", () => {
     events = [...events, ...stepFlight(CONTENT, 0.05, idle, flight)];
     expect(events).not.toContainEqual(cue);
     expect(flight.guardCues).toEqual(["quest"]);
+  });
+
+  it("hands a distant summoned guard into combat without returning to its dormant anchor", () => {
+    const { flight, guard } = guarded(enemyCatalog.frigate.pursuit.homeRadius + 600);
+    syncFlightRegion(CONTENT, flight);
+    expect(flight.world.notables[guard.id]).toBe(guard);
+    expect(stepFlight(CONTENT, 0.05, idle, flight)).toContainEqual(cue);
+    let steps = 0;
+    while (flight.summonedGuards && steps++ < 1000) {
+      stepFlight(CONTENT, 0.05, idle, flight);
+    }
+    expect(flight.summonedGuards).toBeUndefined();
+    expect(onScreen(flight, guard)).toBe(true);
+    // Leave the destination's safe area toward the arriving guard, without firing.
+    const destination = flight.objects.find((object) => object.id === "quest")!;
+    flight.player = { x: destination.x + CONTENT.tuning.safeRadius + 10, y: destination.y };
+    stepFlight(CONTENT, 0.05, idle, flight);
+    expect(guard.enemy!.returning).toBe(false);
+    expect(guard.enemy!.engaged).toBe(true);
+    for (let step = 0; step < 40; step++) {
+      stepFlight(CONTENT, 0.05, idle, flight);
+      expect(guard.enemy!.returning).toBe(false);
+      expect(onScreen(flight, guard)).toBe(true);
+    }
+    expect(routeBlocked("quest", flight)).toBe(true);
+    expect(flight.objects.filter((object) => object.id === guard.id)).toEqual([guard]);
+    // Safety still breaks sight and ends the ordinary finite pursuit after the handoff.
+    flight.player = { x: destination.x, y: destination.y };
+    for (let step = 0; !guard.enemy!.returning && step < 160; step++) {
+      stepFlight(CONTENT, 0.05, idle, flight);
+    }
+    expect(guard.enemy!.returning).toBe(true);
+    expect(routeBlocked("quest", flight)).toBe(true);
+  });
+
+  it("summons across the world seam using the same nearby image for movement and its marker", () => {
+    const { flight, guard } = guarded(1200);
+    flight.topology = { kind: "torus", side: GALAXY_SIDE, version: 1 };
+    const destination = flight.objects.find((object) => object.id === "quest")!;
+    Object.assign(destination, { x: GALAXY_SIDE / 2 - 200, y: 0 });
+    flight.player = { x: destination.x, y: destination.y };
+    Object.assign(guard, { x: -GALAXY_SIDE / 2 + 1000, y: 0 });
+    Object.assign(guard.enemy!, {
+      home: { x: guard.x, y: guard.y },
+      position: { x: guard.x, y: guard.y },
+    });
+    const context = flightWorldContext(flight);
+    const tracker = createEdgeMarkerTracker({ worldSide: () => flight.topology?.side });
+    expect(stepFlight(CONTENT, 0.05, idle, flight)).toContainEqual(cue);
+    const marker = tracker.update(flight, new Set()).find(({ id }) => id === guard.id)!;
+    expect(marker).toMatchObject({ id: guard.id, kind: "guard" });
+    expect(marker.x - flight.player.x).toBeCloseTo(1200, 0);
+    const initial = worldDistance(context, flight.player, guard);
+    for (let step = 0; flight.summonedGuards && step < 500; step++) {
+      stepFlight(CONTENT, 0.05, idle, flight);
+      expect(flight.objects.filter(({ id }) => id === guard.id)).toHaveLength(1);
+    }
+    expect(worldDistance(context, flight.player, guard)).toBeLessThan(initial / 2);
+    expect(flight.summonedGuards).toBeUndefined();
+    expect(onScreen(flight, guard)).toBe(true);
+    expect(tracker.update(flight, new Set()).some(({ id }) => id === guard.id)).toBe(false);
+    expect(routeBlocked("quest", flight)).toBe(true);
+  });
+
+  it("brings a summoned guard around a station without crossing its protected area", () => {
+    const flight = createFlight(CONTENT, 1, 173, progress);
+    flight.objects = [];
+    const site = stationsNear(ECONOMY, 1, 20000, { x: 0, y: 0 })[0]!;
+    const station = ensureStation(CONTENT, site.id, flight)!;
+    const destination = ensureDestinationAt(
+      CONTENT,
+      "quest",
+      { x: site.x - 1000, y: site.y },
+      flight,
+    );
+    const guard = ensureRouteEncounter(CONTENT, "quest", flight)!;
+    Object.assign(guard, { x: site.x + 800, y: site.y });
+    Object.assign(guard.enemy!, {
+      home: { x: guard.x, y: guard.y },
+      position: { x: guard.x, y: guard.y },
+    });
+    flight.player = { x: destination.x, y: destination.y };
+    expect(stepFlight(CONTENT, 0.05, idle, flight)).toContainEqual(cue);
+    const shield = flight.shield;
+    for (let step = 0; flight.summonedGuards && step < 1200; step++) {
+      stepFlight(CONTENT, 0.05, idle, flight);
+      expect(worldDistance(flightWorldContext(flight), station, guard)).toBeGreaterThanOrEqual(
+        ECONOMY.station.safeRadius + guard.radius,
+      );
+      expect(flight.shots.some((shot) => shot.enemy)).toBe(false);
+    }
+    expect(flight.summonedGuards).toBeUndefined();
+    expect(onScreen(flight, guard)).toBe(true);
+    expect(flight.shield).toBeGreaterThanOrEqual(shield);
+    expect(routeBlocked("quest", flight)).toBe(true);
   });
 
   it("holds a summoned guard's fire until it is inside the current play view", () => {

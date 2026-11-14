@@ -80,6 +80,7 @@ import {
   worldRetainedPackMembers,
   worldSyncFlightRegion,
 } from "./geography.ts";
+import { guardApproach } from "./guardApproach.ts";
 import { phantomSongSpeed, stepPhantomAllies } from "./phantomAllies.ts";
 import { playerWeaponCoverage, type PlayerWeaponCoverageContext } from "./playerWeaponCoverage.ts";
 import { type PickupObstacle, stardustDiamond, stardustDropOffsets } from "./stardustPlacement.ts";
@@ -1487,8 +1488,22 @@ function releaseSummonedGuards(viewportWidth: number, flight: FlightState): void
     if (!guard || guard.hp <= 0 || guard.enemy?.disabled) {
       return false;
     }
-    const point = worldPoint(flightWorldContext(flight), flight.player, guard);
-    return !onScreen(view, flight.player, { radius: 0, x: point.x, y: point.y });
+    const context = flightWorldContext(flight);
+    const point = worldPoint(context, flight.player, guard);
+    if (!onScreen(view, flight.player, { radius: 0, x: point.x, y: point.y })) {
+      return true;
+    }
+    if (guard.enemy) {
+      const pursuit = enemyDefinition(flight.galaxy, guard.enemy.archetype, guard.id).pursuit;
+      // A remote summons starts its local fight here instead of immediately leashing back.
+      if (
+        worldDistance(context, guard.enemy.home, guard) >= pursuit.homeRadius ||
+        worldDistance(context, guard.enemy.home, flight.player) > pursuit.homeRadius
+      ) {
+        guard.enemy.home = { x: guard.x, y: guard.y };
+      }
+    }
+    return false;
   });
   if (!flight.summonedGuards.length) {
     delete flight.summonedGuards;
@@ -2383,6 +2398,19 @@ function enemies(
         player: flight.player,
         playerVelocity: aimVelocity,
         summoned: flight.summonedGuards?.includes(object.id) ?? false,
+        ...(flight.summonedGuards?.includes(object.id)
+          ? {
+              summonTarget: guardApproach(
+                flightWorldContext(flight),
+                flight.objects.flatMap((other) => {
+                  const radius = protectedRadius(content, other);
+                  return radius === null ? [] : [{ radius, x: other.x, y: other.y }];
+                }),
+                flight.player,
+                object,
+              ),
+            }
+          : {}),
         targetable,
         visibility: visible ? "visible" : "occluded",
       },

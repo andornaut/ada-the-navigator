@@ -106,10 +106,12 @@ export interface EnemyContext extends WorldContext {
   /** Ada's velocity averaged for aim (ENEMY_AIM.velocitySeconds). */
   playerVelocity: Point;
   /**
-   * A cued route guard (flight.ts cueGuards): it flies straight at Ada at full speed, past its
+   * A cued route guard (flight.ts cueGuards): it approaches Ada at full speed, past its
    * pursuit limits and holding its fire, until it is inside the current play view.
    */
   summoned?: boolean;
+  /** An obstacle detour for summoned steering only; observations still use Ada's actual position. */
+  summonTarget?: Point;
   targetable: boolean;
   visibility: "visible" | "occluded" | "unknown";
 }
@@ -833,7 +835,7 @@ export function stepEnemy(
   const request = effects.disabled
     ? { x: 0, y: 0 }
     : summoned
-      ? aim
+      ? unit(worldDelta(context, state.position, context.summonTarget ?? context.player))
       : steering(acting, context, speed, aim, distance, next);
   const navigating =
     definition.navigation &&

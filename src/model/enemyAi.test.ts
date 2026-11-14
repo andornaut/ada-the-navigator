@@ -63,6 +63,25 @@ const observation = (state: EnemyState): EnemyContext => ({
 });
 
 describe("enemy rules", () => {
+  it("uses a summon detour only for steering while retaining Ada's actual observation", () => {
+    const state = { ...spawn("frigate"), facing: { x: 0, y: 1 } };
+    const context: EnemyContext = {
+      ...observation(state),
+      player: { x: 1000, y: 0 },
+      summonTarget: { x: 0, y: 1000 },
+      summoned: true,
+    };
+    const detour = stepEnemy(enemyCatalog.frigate, context, state);
+    expect(detour.velocity.y).toBeGreaterThan(0);
+    expect(detour.velocity.x).toBeCloseTo(0, 10);
+    expect(detour.state.lastSeen).toEqual(context.player);
+    expect(detour.fire).toEqual([]);
+    const ordinary = { ...observation(state), player: context.player, summoned: false };
+    expect(stepEnemy(enemyCatalog.frigate, { ...context, summoned: false }, state)).toEqual(
+      stepEnemy(enemyCatalog.frigate, ordinary, state),
+    );
+  });
+
   it("flies a summoned guard straight at an unseen Ada past its pursuit limits, holding fire", () => {
     const definition = enemyCatalog.frigate;
     // Ada far beyond the guard's perception and home radius, behind scenery.
