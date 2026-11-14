@@ -98,20 +98,30 @@ or Back to title keeps the tow, and Continue resumes it exactly.
 
 ### Rewards
 
-A job pays Stardust and a lore line. Rewards sit on top of ordinary earnings from
-asteroids and drones met on the way. The pacing target is the first weapon
-(400 Stardust) in about 17 minutes of Sunflower jobs taken back to back. This is
-a target awaiting future validation, not a measured result. Pacing, kill-time
-and ore-income simulations remain deferred. Rewards follow
-route position as listed below.
+A job pays Stardust and a lore line, on top of ordinary earnings from asteroids
+and drones met on the way. All existing Stardust quest-completion rewards use
+`questReward(base) = ceil(3 * base / 25) * 25`: triple the base reward, then round
+up to the nearest 25. This covers station jobs, repeatable activities and any
+existing story-quest Stardust payout. Current main-story outcomes do not award
+Stardust; this rule adds none. Ordinary drops, discovery caches, shop prices,
+Exchange, donations and nonquest achievement bonuses keep their own rules.
+Pacing, kill-time and ore-income simulations remain deferred; job-assisted
+pacing awaits validation.
+
+Keep saved job and activity rewards in base units, including existing saves.
+Offer rows, accepted-task details, completion notices and the actual credited
+amount must use the same canonical transform exactly once. Preserve already
+paid balances and existing completion guards; do not multiply stored base
+values on reload or pay a completed task again. Final payouts follow route
+position below.
 
 | Job             | Typical minutes | Position 1 | Position 2 | Positions 3 to 5 | Position 6 |
 | --------------- | --------------: | ---------: | ---------: | ---------------: | ---------: |
-| Survey          |               2 |         30 |         45 |               60 |         60 |
-| Lost-item hunt  |               3 |         45 |         60 |               90 |          – |
-| Delivery, short |               3 |         45 |         60 |               90 |          – |
-| Delivery, long  |               4 |         75 |        105 |              150 |          – |
-| Rescue and tow  |               4 |         75 |        105 |              150 |        150 |
+| Survey          |               2 |        100 |        150 |              200 |        200 |
+| Lost-item hunt  |               3 |        150 |        200 |              275 |          – |
+| Delivery, short |               3 |        150 |        200 |              275 |          – |
+| Delivery, long  |               4 |        225 |        325 |              450 |          – |
+| Rescue and tow  |               4 |        225 |        325 |              450 |        450 |
 
 A short delivery is under 6000 world units; a long one is 6000 or more. Phantom
 boards offer only surveys and rescue and tow: travelers stranded by the blockades.
@@ -218,9 +228,10 @@ activity in a galaxy, never both. An accepted activity, its galaxy and its progr
 flights like a job; a supply run's carried item uses the job carried-item slot.
 It pays at completion with the job completion notice alone, with no lore line,
 and is offered again on the next Talk. Phantom has no repeatable activity yet.
-Activity rewards follow route position: 105 at the second, 150 at the third, 165 at
-the fourth and 180 at the fifth; the first galaxy's supply run pays the delivery
-rewards.
+Final activity rewards follow route position: 325 at the second, 450 at the
+third, 500 at the fourth and 550 at the fifth; the first galaxy's supply run pays
+the final delivery rewards. Stored base rewards use the same one-time
+`questReward` transform defined above.
 
 - While an activity is active, the galaxy's boards show their jobs, and Accept
   refuses with "Finish your activity first." The activity shows at the top of
@@ -239,18 +250,18 @@ rewards.
 - Holding one outpost's supply run, Talk at another outpost refuses Accept with
   "Finish your activity first."
 
-| Galaxy    | Activity          | Offered by          | Goal                                                              |   Reward |
-| --------- | ----------------- | ------------------- | ----------------------------------------------------------------- | -------: |
-| Sunflower | Supply run        | Any of the outposts | Carry supplies to a station 3000 or more away.                    | 45 or 75 |
-| Whirlpool | Guide a calf      | The whale family    | Lead a whale calf 5000 to 8000 world units home to them.          |      105 |
-| Needle    | Thread the needle | Elder Loom          | Light the 8 gates of a practice channel.                          |      150 |
-| Andromeda | Courier run       | Pip                 | Fly a parcel with Pip to a settlement, keeping within 600 of him. |      165 |
-| Cartwheel | Mining contract   | The hub             | Deposit 30 ore at the hub; partial loads count.                   |      180 |
+| Galaxy    | Activity          | Offered by          | Goal                                                              |     Reward |
+| --------- | ----------------- | ------------------- | ----------------------------------------------------------------- | ---------: |
+| Sunflower | Supply run        | Any of the outposts | Carry supplies to a station 3000 or more away.                    | 150 or 225 |
+| Whirlpool | Guide a calf      | The whale family    | Lead a whale calf 5000 to 8000 world units home to them.          |        325 |
+| Needle    | Thread the needle | Elder Loom          | Light the 8 gates of a practice channel.                          |        450 |
+| Andromeda | Courier run       | Pip                 | Fly a parcel with Pip to a settlement, keeping within 600 of him. |        500 |
+| Cartwheel | Mining contract   | The hub             | Deposit 30 ore at the hub; partial loads count.                   |        550 |
 
 - **Supply run**: follows the delivery job rules in full, 3000 minimum
   included: the outpost's item goes to a known station at least 3000 world
-  units away, preferring the nearest, and pays the delivery rewards (45 short,
-  75 long). With no such station known, the outpost makes no offer. The items
+  units away, preferring the nearest, and pays the final delivery rewards
+  (150 short, 225 long). With no such station known, the outpost makes no offer. The items
   are fresh food, repaired tools and spare parts; a lost item is replaced
   through Talk at the issuing outpost.
 - **Mining contract**: counts only deposits made after accepting, from 0; the

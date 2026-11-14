@@ -18,9 +18,9 @@ without jobs as the pacing simulation measures it:
 Without jobs, a price divided by that income gives its pacing estimate: the
 first weapon (400) takes about 50 minutes of Sunflower play, saving 500 for
 Cartwheel's holodisk about 30 minutes of Cartwheel play, and a galaxy's projects
-the time their total takes at its income after its story ends. The first weapon
-targets about 17 minutes with Sunflower jobs taken back to back. Pacing, kill-time
-and ore-income simulations remain deferred; this target awaits future validation.
+the time their total takes at its income after its story ends. Job-assisted
+pacing with the approved completion rewards awaits validation. Pacing, kill-time
+and ore-income simulations remain deferred.
 Exploring finds a station every few minutes.
 
 ## Earning Stardust
@@ -191,7 +191,12 @@ reduce a shield already above that threshold. Ore deposited at the mining hub
 still counts toward its story goal and an accepted Mining contract. Deposited
 ore is no longer aboard to fuel recharge.
 
-Station jobs also pay Stardust; see [Quests](quests.md#rewards).
+All existing Stardust quest-completion payouts use
+`questReward(base) = ceil(3 * base / 25) * 25`, including station jobs and
+repeatable activities. Use the same final amount in offers, details, completion
+notices and payment, preserving saved base values and already paid balances.
+This does not change ordinary drops, discovery caches, prices, Exchange,
+donations or nonquest achievement bonuses. See [Quests](quests.md#rewards).
 
 ## Stations
 
