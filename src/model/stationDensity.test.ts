@@ -145,6 +145,7 @@ describe("additive station density", () => {
       model.state.docked = site.id;
       expect(model.stationServices).toBeNull();
       expect(model.jobBoard()).toEqual([]);
+      expect(model.destinations().some(({ id }) => id === site.id)).toBe(false);
       expect(model.map!.places.some(({ id }) => id === site.id)).toBe(false);
     },
   );

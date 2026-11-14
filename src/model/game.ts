@@ -895,6 +895,7 @@ export class GameModel {
       })),
       ...this.current.stations
         .filter((id) => !this.current.known.includes(id))
+        .filter((id) => !this.state.flight || this.stationSite(this.state.flight, id) !== null)
         .map((id) => ({ id, label: this.label("station") })),
     ];
   }
@@ -1424,9 +1425,7 @@ export class GameModel {
       return null;
     }
     if (activity.id === "supplyRun") {
-      const stations = this.current.stations.flatMap(
-        (id) => stationById(ECONOMY, f.galaxy, id) ?? [],
-      );
+      const stations = this.current.stations.flatMap((id) => this.stationSite(f, id) ?? []);
       return supplyTerms(f.galaxy, stations, at);
     }
     if (activity.id === "guideCalf") {
