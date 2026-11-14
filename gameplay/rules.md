@@ -1061,6 +1061,10 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
 - Friendly destinations, dialogue locations and teleport arrivals are always safe. No
   encounter is placed within 2000 world units of a flight's start or any quantum
   jump arrival, so every launch begins calm.
+- Ambient encounter frequency and the three capped fresh-exploration budget
+  stages in every galaxy follow [Ships](ships.md#ambient-admission). Fresh flights
+  reset the stage; roster and type gates remain galaxy-specific. This density
+  tuning does not change enemy HP, fire rate, speed or asteroid density.
 
 ## Interactions and navigation
 
@@ -1266,7 +1270,14 @@ galaxy (see [Economy](economy.md#stations)).
 Visual effects distinguish hits, shield damage, destroyed ships, pickups and
 deposits. Sound effects remain restrained. Reduced motion skips screen shakes.
 Asteroids come in more sizes, including much larger ones, with irregular shapes
-and variety. Ordinary asteroids have stationary centres and may rotate slowly;
+and variety. The approved global placement-density target is 20% more ordinary
+and resource asteroids in every galaxy, with no additional galaxy-by-galaxy
+asteroid curve. Preserve composition weights, size distribution, HP, loot, motion
+and safe corridors. Caches, other points of interest and enemies are outside
+this increase. Measure actual accepted asteroid counts after clearance
+rejections; the placement target alone does not establish an accepted-count
+ratio. A higher object-candidate count must not increase cache placement.
+Ordinary asteroids have stationary centres and may rotate slowly;
 they do not translate in circles or oscillate. Legacy orbiting rocks settle at
 their current positions without a position jump, with HP and drops unchanged.
 Asteroid resource-yield caps are 4, 6, 8 and 10 units for small, medium, large and

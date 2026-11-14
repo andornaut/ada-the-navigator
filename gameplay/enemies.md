@@ -2,6 +2,8 @@
 
 This module supplies pure observation-to-intent rules. Overall encounter placement,
 quiet travel and optional versus required fights belong to the version one rules.
+[Ambient admission](ships.md#ambient-admission) defines route encounter rates and
+the three fresh-exploration budget stages; these do not change enemy intent rules.
 All numeric catalog values are provisional tuning, not user-selected values.
 Each archetype's maximum speed is fixed in world units ([Ships](ships.md#values)).
 Frigates and capitals may block required quest routes in the first five chapters;

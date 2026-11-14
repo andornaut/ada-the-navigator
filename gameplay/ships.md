@@ -129,14 +129,14 @@ deals 1 damage.
 
 Small craft:
 
-| Position | `swarm` | `fighter` | `interceptor` | `retaliator` | Group bonus | Lead | Notice |  Fire | Encounters |
-| -------: | ------: | --------: | ------------: | -----------: | ----------: | ---: | -----: | ----: | ---------: |
-|        1 |       2 |         4 |             3 |            8 |          +1 |  20% |   +20% |  +44% |       +50% |
-|        2 |       2 |         5 |             3 |            9 |          +1 |  40% |   +30% |  +63% |       +63% |
-|        3 |       3 |         5 |             4 |           10 |          +2 |  60% |   +40% |  +81% |       +69% |
-|        4 |       3 |         6 |             4 |           11 |          +2 |  80% |   +45% |  +88% |       +75% |
-|        5 |       3 |         6 |             5 |           11 |          +3 |  90% |   +50% |  +94% |       +75% |
-|        6 |       3 |         6 |             5 |           12 |          +3 | 100% |   +50% | +100% |       +75% |
+| Position | `swarm` | `fighter` | `interceptor` | `retaliator` | Group bonus | Lead | Notice |  Fire |
+| -------: | ------: | --------: | ------------: | -----------: | ----------: | ---: | -----: | ----: |
+|        1 |       2 |         4 |             3 |            8 |          +1 |  20% |   +20% |  +44% |
+|        2 |       2 |         5 |             3 |            9 |          +1 |  40% |   +30% |  +63% |
+|        3 |       3 |         5 |             4 |           10 |          +2 |  60% |   +40% |  +81% |
+|        4 |       3 |         6 |             4 |           11 |          +2 |  80% |   +45% |  +88% |
+|        5 |       3 |         6 |             5 |           11 |          +3 |  90% |   +50% |  +94% |
+|        6 |       3 |         6 |             5 |           12 |          +3 | 100% |   +50% | +100% |
 
 Heavies:
 
@@ -151,8 +151,8 @@ Heavies:
 
 - Small-craft columns are hull HP. Outside Sunflower's staged ambient roster,
   the group bonus adds to both ends of each `swarm` and `fighter` group range. Lead is how much of Ada's movement enemy
-  aim allows for (see [Enemy aim](#enemy-aim)). Notice, fire and encounter rates are
-  relative to the base catalog.
+  aim allows for (see [Enemy aim](#enemy-aim)). Notice and fire rates are
+  relative to the base catalog. Encounter rates are in [Ambient admission](#ambient-admission).
 - Every heavy hardpoint (weapon, engine, command and platform turret) has the
   position's hardpoint HP. A `platform` hull has half the frigate hull.
 - Heavy share multiplies the roster's `frigate` and `capital` weights; the weights
@@ -280,16 +280,29 @@ hulls whose footprints could share that neighbourhood, including required
 guards, old packs and pursuing ships. Disabled hulls still count; salvaged ships
 do not. Only complete groups that fit are eligible for weighted selection.
 
-| Galaxy    | Local budget | Archetype limit |
-| --------- | -----------: | --------------: |
-| Whirlpool |            6 |               2 |
-| Needle    |            7 |               3 |
-| Andromeda |            8 |               4 |
-| Cartwheel |            9 |               4 |
-| Phantom   |           10 |               4 |
+Encounter frequency uses a baseline of 1.725, which is 15% above 1.5, multiplied
+by the route factors below. The route increments are additive: 100%, 110%,
+120%, 130%, 140% and 150%, not a compounded 10% increase. This changes encounter
+frequency only, not HP, fire rate, speed, `difficultyScale` or asteroid density.
 
-Later galaxies use their encounter tables, including route-position group bonuses
-and heavy weights. Spawn-cell frequency remains independent of admission.
+Every galaxy uses three ambient budget stages at fresh exploration distances
+0, 1800 and 4200 world units. The ramp caps at the third stage and resets on a
+fresh flight, using the existing fresh-exploration ledger. Standing still,
+teleporting and revisiting explored chunks do not advance it.
+
+| Position | Galaxy    | Route factor | Encounter rate | Budget at 0 / 1800 / 4200 | Archetype limit |
+| -------: | --------- | -----------: | -------------: | ------------------------- | --------------- |
+|        1 | Sunflower |         100% |          1.725 | 3 / 4 / 5                 | 1 / 2 / 2       |
+|        2 | Whirlpool |         110% |         1.8975 | 4 / 5 / 6                 | 2               |
+|        3 | Needle    |         120% |           2.07 | 5 / 6 / 7                 | 3               |
+|        4 | Andromeda |         130% |         2.2425 | 6 / 7 / 8                 | 4               |
+|        5 | Cartwheel |         140% |          2.415 | 7 / 8 / 9                 | 4               |
+|        6 | Phantom   |         150% |         2.5875 | 8 / 9 / 10                | 4               |
+
+Sunflower retains its stage-specific roster and type gates below. Later
+galaxies retain their encounter tables, route-position group bonuses, heavy
+weights and archetype limits; only their local budgets gain these stages.
+Spawn-cell frequency remains independent of admission.
 These budgets are not strict physical population caps: subsequent movement can
 bring ships together. They do not freeze or despawn existing enemies.
 
@@ -304,11 +317,11 @@ Fresh exploration distance selects Sunflower's ambient stage. These exact group
 ranges receive no route-position group bonus. Weights are relative among eligible
 complete groups; a type absent from a stage cannot spawn ambiently.
 
-| Fresh distance (world units) | Local budget | Archetype limit | Swarm group / weight | Fighter group / weight | Retaliator group / weight | Interceptor group / weight |
-| ---------------------------: | -----------: | --------------: | -------------------- | ---------------------- | ------------------------- | -------------------------- |
-|                            0 |            3 |               1 | 1–2 / 0.55           | 1 / 0.45               | None                      | None                       |
-|                         1800 |            4 |               2 | 2–3 / 0.45           | 1–2 / 0.40             | 1 / 0.15                  | None                       |
-|                         4200 |            5 |               2 | 2–3 / 0.40           | 1–2 / 0.35             | 1 / 0.15                  | 1 / 0.10                   |
+| Fresh distance (world units) | Archetype limit | Swarm group / weight | Fighter group / weight | Retaliator group / weight | Interceptor group / weight |
+| ---------------------------: | --------------: | -------------------- | ---------------------- | ------------------------- | -------------------------- |
+|                            0 |               1 | 1–2 / 0.55           | 1 / 0.45               | None                      | None                       |
+|                         1800 |               2 | 2–3 / 0.45           | 1–2 / 0.40             | 1 / 0.15                  | None                       |
+|                         4200 |               2 | 2–3 / 0.40           | 1–2 / 0.35             | 1 / 0.15                  | 1 / 0.10                   |
 
 No stage admits ambient frigates or capital battles. Required guards remain.
 Swarm packs use `swarm` and flee after losses; fighters use `hitAndRun` and share
