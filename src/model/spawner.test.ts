@@ -316,7 +316,7 @@ describe("spawner admission", () => {
       count: 1,
       escorts: { archetype: "fighter", count: 4 },
     } as const;
-    expect(fitsEncounter(laterPolicy, spawnerStage(3, 0), 10, [], centre, plan)).toBe(false);
+    expect(fitsEncounter(laterPolicy, spawnerStage(3, 0), 10, [], centre, plan)).toBe(true);
     expect(fitsEncounter(laterPolicy, stage, 10, [], centre, plan)).toBe(true);
     const capital = stage.roster.find(({ archetype }) => archetype === "capital")!;
     expect(
@@ -329,13 +329,16 @@ describe("spawner admission", () => {
         0,
         0,
       ),
-    ).toBeNull();
+    ).toEqual(plan);
     expect(
       selectEncounter(laterPolicy, { ...stage, roster: [capital] }, 10, [], centre, 0, 0),
     ).toEqual(plan);
     expect(capital.escorts).toEqual(plan.escorts);
     const objects = [occupant("old:0", centre), occupant("old:1", centre)];
-    expect(fitsEncounter(laterPolicy, stage, 10, objects, centre, plan)).toBe(false);
+    expect(fitsEncounter(laterPolicy, stage, 10, objects, centre, plan)).toBe(true);
+    expect(
+      fitsEncounter(laterPolicy, stage, 10, [...objects, occupant("old:2", centre)], centre, plan),
+    ).toBe(false);
     expect(
       fitsEncounter(laterPolicy, stage, 10, [occupant("capital", centre, "capital")], centre, plan),
     ).toBe(false);
@@ -345,9 +348,9 @@ describe("spawner admission", () => {
       x: centre.x + laterPolicy.localRadius * 2 + reach + 5,
       y: centre.y,
     });
-    expect(fitsEncounter(laterPolicy, { ...stage, localCap: 5 }, 10, [edge], centre, plan)).toBe(
-      false,
-    );
+    expect(fitsEncounter(laterPolicy, stage, 10, [...objects, edge], centre, plan)).toBe(false);
+    edge.x += edge.radius;
+    expect(fitsEncounter(laterPolicy, stage, 10, [...objects, edge], centre, plan)).toBe(true);
   });
 
   it("keeps complete symmetric groups within their reserved footprint", () => {

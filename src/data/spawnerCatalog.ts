@@ -24,6 +24,8 @@ export const SPAWNER_REGIONS = {
 export const FIGHTER_GROUP_TARGET = 4;
 /** Ambient swarms may fit a smaller budget, but never become singletons. */
 export const SWARM_GROUP_MINIMUM = 2;
+/** One nonstacking local allowance around a capital or an explicitly hostile station. */
+export const HOSTILE_LOCAL_ALLOWANCE = 2;
 const fighterGroup = [FIGHTER_GROUP_TARGET, FIGHTER_GROUP_TARGET] as const;
 
 const sunflower: SpawnerPolicy = {

@@ -6,6 +6,7 @@ import {
 } from "../data/enemyCatalog.ts";
 import {
   FIGHTER_GROUP_TARGET,
+  HOSTILE_LOCAL_ALLOWANCE,
   type SpawnerPolicy,
   type SpawnerStage,
   spawnerStageAtDistance,
@@ -15,20 +16,25 @@ import type { SpaceObject, Vec } from "./types.ts";
 import type { WorldCellContext } from "./worldCells.ts";
 import { wrappedDistance } from "./worldGeometry.ts";
 
+/** Station hostility is authoritative caller context, never inferred from a friendly station. */
+export interface SpawnerContext extends WorldCellContext {
+  readonly hostileStationIds?: ReadonlySet<string>;
+}
+
 export interface EncounterPlan {
   archetype: EnemyArchetype;
   count: number;
   escorts?: EncounterEntry["escorts"];
 }
 
-const distance = (context: WorldCellContext, a: Vec, b: Vec): number =>
+const distance = (context: SpawnerContext, a: Vec, b: Vec): number =>
   context.worldSide === undefined
     ? Math.hypot(a.x - b.x, a.y - b.y)
     : wrappedDistance(context.worldSide, a, b);
 
 /** Encounter-local shortest distance to the galactic center, including periodic aliases. */
 export function worldSpawnerStage(
-  context: WorldCellContext,
+  context: SpawnerContext,
   policy: SpawnerPolicy,
   point: Vec,
 ): SpawnerStage {
@@ -57,13 +63,48 @@ export function groupReach(policy: SpawnerPolicy, shipRadius: number, plan: Enco
   return Math.max(line, escort);
 }
 
+function neighbours(
+  context: SpawnerContext,
+  policy: SpawnerPolicy,
+  reach: number,
+  centre: Vec,
+  objects: readonly SpaceObject[],
+): SpaceObject[] {
+  return objects.filter(
+    (object) => distance(context, object, centre) <= policy.localRadius * 2 + reach + object.radius,
+  );
+}
+
+/** Uses the same footprint neighbourhood for spawning and first sight admission. */
+export function worldLocalCap(
+  context: SpawnerContext,
+  policy: SpawnerPolicy,
+  stage: SpawnerStage,
+  reach: number,
+  centre: Vec,
+  includesCapital: boolean,
+  objects: readonly SpaceObject[],
+): number {
+  const qualifies =
+    includesCapital ||
+    neighbours(context, policy, reach, centre, objects).some(
+      (object) =>
+        object.hp > 0 &&
+        ((object.kind === "enemy" &&
+          object.enemy?.archetype === "capital" &&
+          !object.enemy.salvaged) ||
+          (object.kind === "station" && context.hostileStationIds?.has(object.id) === true)),
+    );
+  return stage.localCap + (qualifies ? HOSTILE_LOCAL_ALLOWANCE : 0);
+}
+
 /**
  * Whole-group admission: any live neighbour whose hull can share a local-radius neighbourhood
  * with the proposed footprint counts, including guards, old packs and pursuing ships.
  * This conservative spawn budget does not bound subsequent movement or remove existing ships.
  */
 export function worldFitsEncounter(
-  context: WorldCellContext,
+  context: SpawnerContext,
   policy: SpawnerPolicy,
   stage: SpawnerStage,
   shipRadius: number,
@@ -72,9 +113,7 @@ export function worldFitsEncounter(
   plan: EncounterPlan,
 ): boolean {
   const reach = groupReach(policy, shipRadius, plan);
-  const nearby = liveOccupants(objects).filter(
-    (object) => distance(context, object, centre) <= policy.localRadius * 2 + reach + object.radius,
-  );
+  const nearby = neighbours(context, policy, reach, centre, liveOccupants(objects));
   const count = plan.count + (plan.escorts?.count ?? 0);
   const types = new Set(nearby.map((object) => object.enemy?.archetype ?? "fighter"));
   types.add(plan.archetype);
@@ -86,7 +125,8 @@ export function worldFitsEncounter(
     (plan.archetype === "capital" ? plan.count : 0) +
     (plan.escorts?.archetype === "capital" ? plan.escorts.count : 0);
   return (
-    nearby.length + count <= stage.localCap &&
+    nearby.length + count <=
+      worldLocalCap(context, policy, stage, reach, centre, plan.archetype === "capital", objects) &&
     types.size <= stage.maxNearbyArchetypes &&
     capitals <= policy.maxNearbyCapitals
   );
@@ -99,7 +139,7 @@ export function worldFitsEncounter(
  * frequency is independent; occupancy limits cannot select an excluded or unaffordable type.
  */
 export function worldSelectEncounter(
-  context: WorldCellContext,
+  context: SpawnerContext,
   policy: SpawnerPolicy,
   stage: SpawnerStage,
   shipRadius: number,
@@ -161,7 +201,7 @@ export function worldSelectEncounter(
  * engaged ships keep their normal AI even when they converge above this admission budget.
  */
 export function worldEngagementAdmissions(
-  context: WorldCellContext,
+  context: SpawnerContext,
   policy: SpawnerPolicy,
   stage: SpawnerStage,
   objects: readonly SpaceObject[],
@@ -173,7 +213,7 @@ export function worldEngagementAdmissions(
 
 /** Geographic admission changes only new sight engagements, never existing enemy state. */
 export function worldRegionalEngagementAdmissions(
-  context: WorldCellContext,
+  context: SpawnerContext,
   policy: SpawnerPolicy,
   objects: readonly SpaceObject[],
   eligible: ReadonlySet<string>,
@@ -190,7 +230,7 @@ export function worldRegionalEngagementAdmissions(
 }
 
 function admittedAt(
-  context: WorldCellContext,
+  context: SpawnerContext,
   policy: SpawnerPolicy,
   stageAt: (point: Vec) => SpawnerStage,
   objects: readonly SpaceObject[],
@@ -210,17 +250,23 @@ function admittedAt(
     );
   for (const object of candidates) {
     const stage = stageAt(object);
-    const neighbours = reserved.filter(
-      (other) =>
-        distance(context, other, object) <= policy.localRadius * 2 + other.radius + object.radius,
-    );
-    const types = new Set(neighbours.map((other) => other.enemy?.archetype ?? "fighter"));
+    const nearby = neighbours(context, policy, object.radius, object, reserved);
+    const types = new Set(nearby.map((other) => other.enemy?.archetype ?? "fighter"));
     types.add(object.enemy?.archetype ?? "fighter");
     const capitals =
-      neighbours.filter((other) => other.enemy?.archetype === "capital").length +
+      nearby.filter((other) => other.enemy?.archetype === "capital").length +
       (object.enemy?.archetype === "capital" ? 1 : 0);
     if (
-      neighbours.length < stage.localCap &&
+      nearby.length <
+        worldLocalCap(
+          context,
+          policy,
+          stage,
+          object.radius,
+          object,
+          object.enemy?.archetype === "capital",
+          objects,
+        ) &&
       types.size <= stage.maxNearbyArchetypes &&
       capitals <= policy.maxNearbyCapitals
     ) {

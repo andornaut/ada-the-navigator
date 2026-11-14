@@ -283,6 +283,13 @@ guards, old packs and pursuing ships. Disabled hulls still count; salvaged ships
 do not. Fighter groups target four and use the largest size that fits the remaining budget.
 Swarms target their configured maximum and fit the remaining budget down to two;
 with fewer than two slots they wait rather than spawning a singleton.
+One nonstacking local allowance adds two slots near a capital ship or a hostile
+station. A proposed capital supplies the allowance to its own formation. Multiple
+qualifying ships and stations never add more than two slots. Spawn and first-sight
+admission use the same existing footprint neighborhood. Frigates do not supply
+this allowance, and all escorts still consume cap slots. Friendly stations do not
+qualify. Encounter weights, frequency, HP and rewards are unchanged.
+
 Other groups and all mandatory escorts remain atomic: unaffordable groups are
 excluded rather than trimmed, and admission never raises the cap.
 
