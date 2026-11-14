@@ -1,6 +1,8 @@
 // Ada's ship model: the one hull, canopy, mouths and paint every ship drawing derives from. It
 // has no side effects; ship.ts writes the sprite frames and contracts, and other generators
 // (the quantum jump, the app icon) import it rather than copying the geometry.
+import { oklchToSrgb } from "@andornaut/art-kit/colour";
+
 import { fromOklab, hex, rgb, toOklab } from "./oklab.ts";
 import { facesViewer, type Point, projectAt, rotate, round, SHIP_HEADINGS } from "./projection.ts";
 import type { V2 } from "./silhouette.ts";
@@ -52,14 +54,12 @@ export interface Scheme {
 
 export const ENGINE_MATERIAL_RELATIONSHIPS = {
   referenceWall: "#1767b3",
-  referenceOpening: "#64caff",
+  referenceOpening: "#86deff",
   housingLightnessLift: 0.055,
   housingChromaRatio: 0.92,
-  openingLightnessLift: 0.065,
-  openingChromaRatio: 0.9,
 } as const;
 
-/** Engine surfaces share Classic's perceptual relationships at each paint's glazing hue. */
+/** Openings share Classic's luminous reference while retaining paint-derived hues. */
 export function engineMaterials(base: string) {
   const reference = ENGINE_MATERIAL_RELATIONSHIPS;
   const [wallL, wallA, wallB] = toOklab(rgb(reference.referenceWall));
@@ -69,18 +69,32 @@ export function engineMaterials(base: string) {
     hue = Math.atan2(b, a);
   const colour = (lightness: number, C: number, h: number) =>
     hex(fromOklab(Math.min(1, Math.max(0, lightness)), C * Math.cos(h), C * Math.sin(h)));
+  const engineHousing = colour(
+    L + reference.housingLightnessLift,
+    chroma * reference.housingChromaRatio,
+    hue,
+  );
+  const referenceHousing = colour(
+    wallL + reference.housingLightnessLift,
+    Math.hypot(wallA, wallB) * reference.housingChromaRatio,
+    Math.atan2(wallB, wallA),
+  );
+  const housingL = toOklab(rgb(engineHousing))[0];
+  const referenceHousingL = toOklab(rgb(referenceHousing))[0];
+  const headroom = (openingL - referenceHousingL) / (1 - referenceHousingL);
+  const openingHue = Math.atan2(openingB, openingA) + hue - Math.atan2(wallB, wallA);
   return {
-    engineHousing: colour(
-      L + reference.housingLightnessLift,
-      chroma * reference.housingChromaRatio,
-      hue,
-    ),
-    engineOpening: colour(
-      L + openingL - wallL + reference.openingLightnessLift,
-      ((chroma * Math.hypot(openingA, openingB)) / Math.hypot(wallA, wallB)) *
-        reference.openingChromaRatio,
-      hue + Math.atan2(openingB, openingA) - Math.atan2(wallB, wallA),
-    ),
+    engineHousing,
+    engineOpening:
+      base === reference.referenceWall
+        ? reference.referenceOpening
+        : hex(
+            oklchToSrgb([
+              Math.max(openingL, housingL + (1 - housingL) * headroom),
+              Math.hypot(openingA, openingB),
+              (openingHue * 180) / Math.PI,
+            ]),
+          ),
   };
 }
 

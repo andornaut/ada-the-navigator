@@ -167,17 +167,37 @@ test("title jet anchors land inside the actual visible rear mouth regions", () =
   }
 });
 
-test("engine housing and opening are scoped brighter materials with unchanged glazing", () => {
+test("engine openings use Classic luminous brightness and paint-derived hues with unchanged glazing", () => {
   assert.equal(classic.paint.canopySides, "#1767b3");
   assert.equal(classic.paint.canopyRoof, "#2585d0");
-  const originalOpeningL = toOklab(rgb(ENGINE_MATERIAL_RELATIONSHIPS.referenceOpening))[0];
-  assert(toOklab(rgb(classic.paint.engineOpening))[0] > originalOpeningL);
-  for (const { paint } of SCHEMES) {
+  assert.equal(classic.paint.engineOpening, "#86deff");
+  const measure = (color: string) => {
+    const [L, a, b] = toOklab(rgb(color));
+    return { L, C: Math.hypot(a, b), h: Math.atan2(b, a) };
+  };
+  const reference = measure(ENGINE_MATERIAL_RELATIONSHIPS.referenceOpening);
+  const glazingReference = measure(classic.paint.canopySides);
+  const approved = ["#86deff", "#e4f6ff", "#80e5db", "#dac3ff", "#b0d3ff", "#82e0fa"];
+  for (const [index, { paint }] of SCHEMES.entries()) {
     const glazingL = toOklab(rgb(paint.canopySides))[0];
     const housingL = toOklab(rgb(paint.engineHousing))[0];
     const openingL = toOklab(rgb(paint.engineOpening))[0];
     assert(housingL > glazingL, "housing must be lighter than its unchanged glazing reference");
     assert(openingL > housingL, "opening must remain lighter than its housing");
+    assert.equal(
+      paint.engineOpening,
+      approved[index],
+      "opening must match the approved shared-reference preview",
+    );
+    const opening = measure(paint.engineOpening);
+    assert(opening.L >= reference.L - 0.002, "paint must not inherit a dim opening lightness");
+    assert(opening.C <= reference.C + 0.001, "gamut mapping must not increase target chroma");
+    const hue = reference.h + measure(paint.canopySides).h - glazingReference.h;
+    const hueError = Math.abs(Math.atan2(Math.sin(opening.h - hue), Math.cos(opening.h - hue)));
+    assert(
+      hueError < (2 * Math.PI) / 180,
+      "gamut mapping must preserve paint hue within byte quantization",
+    );
   }
 });
 

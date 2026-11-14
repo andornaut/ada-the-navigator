@@ -26,6 +26,7 @@ import { AUTHORED_JET_CURVE } from "./ship-jet-svg.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const dataOnly = process.argv.includes("--data-only");
+const paintOnly = process.argv.includes("--paint-only");
 
 // The field canvas: 960 by 540 logical px at 1 image px per logical px, like the aboard backdrop.
 const CANVAS = { width: 960, height: 540 } as const;
@@ -215,14 +216,14 @@ const glowSheet = sheet(
   LEVELS.length,
 );
 const starImage = star();
-if (!dataOnly) writePng(`${art}quantum-jump-field.png`, fieldSheet, true);
-if (!dataOnly) writePng(`${art}quantum-jump-glow.png`, glowSheet);
-if (!dataOnly) writePng(`${art}quantum-jump-star.png`, starImage);
+if (!dataOnly && !paintOnly) writePng(`${art}quantum-jump-field.png`, fieldSheet, true);
+if (!dataOnly && !paintOnly) writePng(`${art}quantum-jump-glow.png`, glowSheet);
+if (!dataOnly && !paintOnly) writePng(`${art}quantum-jump-star.png`, starImage);
 const tunnelSheet = sheet(
   TUNNEL_SHEET.map(([, image]) => image),
   1,
 );
-if (!dataOnly) writePng(`${art}quantum-jump-tunnel.png`, tunnelSheet, true);
+if (!dataOnly && !paintOnly) writePng(`${art}quantum-jump-tunnel.png`, tunnelSheet, true);
 
 // Warp ship poses at the arrival heading, drawn from the shared ship model in every paint: banks
 // (roll, degrees), a stretch along the hull and a squash across it, about the pivot. "sprite" in a
@@ -265,6 +266,7 @@ function poseSvg(scheme: (typeof SCHEMES)[number], pose: (typeof POSES)[number])
 
 if (!dataOnly) {
   for (const scheme of SCHEMES) {
+    if (paintOnly && scheme.id === "classic") continue;
     mkdirSync(`${art}quantum-jump-ship/${scheme.id}`, { recursive: true });
     for (const pose of POSES) {
       writeFileSync(
@@ -294,7 +296,7 @@ const entry = (
   frameHeight,
   frames: Object.fromEntries(names.map((name, i) => [name, i])),
 });
-if (!dataOnly)
+if (!dataOnly && !paintOnly)
   placeEntries("core", "quantum-jump", [
     entry(
       "quantum-jump-field",
@@ -519,14 +521,16 @@ const effect = {
   },
 };
 const dataPath = `${art}quantum-jump.json`;
-writeFileSync(dataPath, JSON.stringify(effect));
-writeFileSync(
-  dataPath,
-  await format(readFileSync(dataPath, "utf8"), {
-    ...(await resolveConfig(dataPath)),
-    filepath: dataPath,
-  }),
-);
+if (!paintOnly) {
+  writeFileSync(dataPath, JSON.stringify(effect));
+  writeFileSync(
+    dataPath,
+    await format(readFileSync(dataPath, "utf8"), {
+      ...(await resolveConfig(dataPath)),
+      filepath: dataPath,
+    }),
+  );
+}
 
 // The core manifest names the effect data next to the space palette.
-if (!dataOnly) linkData("core", { quantumJump: "/art/quantum-jump.json" });
+if (!dataOnly && !paintOnly) linkData("core", { quantumJump: "/art/quantum-jump.json" });

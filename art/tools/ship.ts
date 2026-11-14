@@ -25,6 +25,7 @@ import { check, rasterize, trace, type V2 } from "./silhouette.ts";
 // Writes Ada's ship sprite frames, paint schemes, speed jets, nose and collision from the shared
 // model in ship-model.ts.
 const output = fileURLToPath(new URL("../../public/art/", import.meta.url));
+const paintOnly = process.argv.includes("--paint-only");
 
 function svg(yaw: number, thrust: boolean, scheme: Scheme = classic): string {
   const polygons = svgPaths(drawn(FRAME / 2, scheme.paint, { thrust, yaw })).map(
@@ -117,7 +118,7 @@ function noses(): string {
 }
 
 mkdirSync(output, { recursive: true });
-writeFileSync(`${output}ship-jets.json`, jets());
+if (!paintOnly) writeFileSync(`${output}ship-jets.json`, jets());
 writeFileSync(
   `${output}ship-paint.json`,
   json({
@@ -132,14 +133,16 @@ writeFileSync(
 );
 
 if (!process.argv.includes("--data-only")) {
-  writeFileSync(`${output}ship-nose.json`, noses());
-  for (let yaw = 0; yaw < SHIP_HEADINGS; yaw++) {
-    for (const thrust of [false, true]) {
-      writeFileSync(`${output}ship-${thrust ? "thrust-" : ""}${yaw}.svg`, svg(yaw, thrust));
+  if (!paintOnly) {
+    writeFileSync(`${output}ship-nose.json`, noses());
+    for (let yaw = 0; yaw < SHIP_HEADINGS; yaw++) {
+      for (const thrust of [false, true]) {
+        writeFileSync(`${output}ship-${thrust ? "thrust-" : ""}${yaw}.svg`, svg(yaw, thrust));
+      }
     }
+    writeFileSync(`${output}ship.svg`, svg(UP, false));
+    writeFileSync(`${output}ship-thrust.svg`, svg(UP, true));
   }
-  writeFileSync(`${output}ship.svg`, svg(UP, false));
-  writeFileSync(`${output}ship-thrust.svg`, svg(UP, true));
 
   // Paint schemes: idle frames only; speed jets are unpainted and drawn behind them.
   const painted = SCHEMES.filter((scheme) => scheme !== classic);
@@ -179,8 +182,9 @@ if (!process.argv.includes("--data-only")) {
     ),
   ];
   const isShip = ({ id }: { id: string }) => id === "ship" || id.startsWith("ship-");
-  editManifest("core", (manifest) => {
-    manifest.assets = [...entries, ...manifest.assets.filter((asset) => !isShip(asset))];
-    manifest.shipNose = "/art/ship-nose.json";
-  });
+  if (!paintOnly)
+    editManifest("core", (manifest) => {
+      manifest.assets = [...entries, ...manifest.assets.filter((asset) => !isShip(asset))];
+      manifest.shipNose = "/art/ship-nose.json";
+    });
 }

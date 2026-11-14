@@ -5,7 +5,9 @@
   star and tunnel), the warp ship frames in `public/art/quantum-jump-ship/`,
   the sheets' root [manifest](../public/art/manifest.json) entries and the
   manifest's `quantumJump` path. `--data-only` writes only the effect JSON,
-  without changing images, SVGs or manifest entries.
+  without changing images, SVGs or manifest entries. `--paint-only` writes
+  only the five purchased paint pose sets, without changing Classic poses,
+  effect data, sheets or manifest entries.
 - Every quantum jump uses this one effect, the warp: galaxy jumps from the
   route map, Travel to discovered destinations, Return to Earth and Astra's
   emergency jump when the shield fails. Boarding from Ada's room is the rock's

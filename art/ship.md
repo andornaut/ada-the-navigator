@@ -145,34 +145,46 @@ Engine surfaces do not recolour flame layers.
   `ship-thrust`, then `ship-N` and `ship-thrust-N` per heading, then the paint
   entries. It replaces any earlier ship entries and sets the manifest's
   `shipNose` link. `--data-only` writes only the jet and paint JSON, without
-  generating frames, collision or manifest entries.
+  generating frames, collision or manifest entries. `--paint-only` writes
+  `ship-paint.json` and the five purchased paint frame sets, without changing
+  Classic frames, jets, collision or manifest entries.
 
 ### Engine housing and opening materials
 
-`engineMaterials` derives both engine surfaces from each paint's unchanged
-`canopySides` in Oklab. Classic's references are wall `#1767b3` and opening
-`#64caff`. Housing adds 0.055 to the wall lightness and uses 0.92 times its
-chroma at the same hue. Opening adds 0.065 to the reference opening lightness;
-its lightness difference, chroma ratio and hue offset from the reference wall
-transfer to every paint. There are no per-paint engine colour lists. The luminous aperture is enlarged
+`engineMaterials` derives engine surfaces from each paint's unchanged
+`canopySides`. Housing adds 0.055 to the glazing's Oklab lightness and uses
+0.92 times its chroma at the same hue. Housing conversion clips to sRGB and
+rounds half to even.
+
+Every opening targets Classic `#86deff`'s measured Oklab lightness
+`Lref = 0.8569375081` and chroma `Cref = 0.0963169227`. Opening hue is Classic's
+opening hue plus the paint glazing's hue difference from Classic glazing.
+Let `q = (Lref - LhousingClassic) / (1 - LhousingClassic) = 0.6717177581`.
+Opening lightness is `max(Lref, Lhousing + (1 - Lhousing) * q)`: this keeps an
+opening brighter than its housing, including Cobalt's pale housing. There are
+no per-paint brightness or chroma controls.
+
+The published colour helper maps openings into sRGB by reducing chroma at
+fixed lightness and hue in 24 steps, then rounds bytes nearest, ties upward.
+Cobalt, Crimson and Iris reach their hue's gamut boundary below `Cref`.
+Classic retains its exact `#86deff` bytes. The table records the resulting
+in-gamut colours and measured Oklab values.
+
+The luminous aperture is enlarged
 1.25 times in both in-plane dimensions about its existing centre, increasing
 area by 1.5625. Its raised luminous surface is constrained to the projected
 housing boundary at grazing views. Jet hardpoints, widths and lengths
 derive from the unchanged base opening; the luminous-aperture scale is not
 applied to flames or hull geometry.
 
-Lightness is bounded to [0, 1]. Conversion uses the shared Oklab helper's
-explicit sRGB gamut clipping and half-even byte rounding. The table records
-the resulting in-gamut colours and measured Oklab values.
-
 | Scheme  | Housing   | Opening   | Housing Oklab L / C | Opening Oklab L / C |
 | ------- | --------- | --------- | ------------------- | ------------------- |
 | Classic | `#3578bf` | `#86deff` | 0.5642 / 0.1295     | 0.8569 / 0.0963     |
-| Cobalt  | `#c7daf6` | `#eaffff` | 0.8830 / 0.0438     | 0.9847 / 0.0219     |
-| Seafoam | `#275b67` | `#87b5b5` | 0.4411 / 0.0583     | 0.7404 / 0.0488     |
-| Crimson | `#322a31` | `#827d86` | 0.2966 / 0.0169     | 0.5970 / 0.0147     |
-| Iris    | `#342e72` | `#718ec9` | 0.3485 / 0.1131     | 0.6486 / 0.0948     |
-| Amber   | `#294964` | `#7ba3b5` | 0.3934 / 0.0596     | 0.6925 / 0.0509     |
+| Cobalt  | `#c7daf6` | `#e4f6ff` | 0.8830 / 0.0438     | 0.9625 / 0.0225     |
+| Seafoam | `#275b67` | `#80e5db` | 0.4411 / 0.0583     | 0.8577 / 0.0963     |
+| Crimson | `#322a31` | `#dac3ff` | 0.2966 / 0.0169     | 0.8563 / 0.0854     |
+| Iris    | `#342e72` | `#b0d3ff` | 0.3485 / 0.1131     | 0.8565 / 0.0721     |
+| Amber   | `#294964` | `#82e0fa` | 0.3934 / 0.0596     | 0.8577 / 0.0962     |
 
 ## Speed jets
 
