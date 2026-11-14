@@ -1,3 +1,6 @@
+/** Model-unit outer length for authored static warp and map thrust cues. */
+export const AUTHORED_JET_LENGTH = 16;
+
 /** Projected frame-space geometry, independent of rendering and material colours. */
 export interface JetPoint {
   x: number;
