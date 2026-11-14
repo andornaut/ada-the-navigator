@@ -122,14 +122,16 @@ describe("conversation box", () => {
     expect(shipHullTop(DESKTOP)).toBeCloseTo(play.y + play.height / 2 - 11.83, 9);
   });
 
-  it("rises to the highest drawn hull point of Art's 32 idle headings, at heading 4", () => {
+  it("rises to the highest drawn hull point of Art's 64 idle headings, at the same 45-degree orientation", () => {
     const rises = Array.from({ length: SHIP_HEADINGS }, (_, heading) => {
       const svg = readFileSync(new URL(`../../../public/art/ship-${heading}.svg`, import.meta.url));
       const ys = [...String(svg).matchAll(/[\d.]+,([\d.]+)/g)].map((match) => Number(match[1]));
       return ((FRAME / 2 - Math.min(...ys)) * DISPLAY) / FRAME;
     });
     const highest = Math.max(...rises);
-    expect(rises.indexOf(highest)).toBe(4);
+    const peakHeading = rises.indexOf(highest);
+    expect(peakHeading).toBe(SHIP_HEADINGS / 8);
+    expect((peakHeading * 360) / SHIP_HEADINGS).toBe(45);
     const expectedRises = Array.from({ length: SHIP_HEADINGS }, (_, yaw) => {
       const ys = drawn(FRAME / 2, classic.paint, { yaw }).flatMap(({ outline }) =>
         outline.map(([, y]) => y),
@@ -139,7 +141,7 @@ describe("conversation box", () => {
       return ((FRAME / 2 - top) * DISPLAY) / FRAME;
     });
     expect(rises).toEqual(expectedRises);
-    expect(expectedRises.indexOf(Math.max(...expectedRises))).toBe(4);
+    expect(expectedRises.indexOf(Math.max(...expectedRises))).toBe(peakHeading);
     expect(highest).toBeLessThanOrEqual(CONVERSATION_BOX.ship.hullRise);
     expect(CONVERSATION_BOX.ship.hullRise).toBe(Math.ceil(highest * 100) / 100);
   });

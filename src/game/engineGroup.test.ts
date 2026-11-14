@@ -8,6 +8,7 @@ import {
   layerAlpha,
   layerColor,
   readEngineJets,
+  readShipJets,
   type ShipJets,
   travelJets,
 } from "./shipJets.ts";
@@ -193,14 +194,33 @@ describe("canonical outboard core arrangement", () => {
   it("validates the opt-in metadata without changing absent centered legacy groups", () => {
     const raw = mainArt.headings[0]!.mouths[0]!;
     const legacy = { anchor: raw.anchor, axis: raw.axis, half: raw.half };
-    const file = (mouth: unknown) => ({ ...mainArt, headings: [{ index: 0, mouths: [mouth] }] });
-    expect(readEngineJets(file(legacy))).toBeDefined();
+    const file = (mouth: unknown) => ({
+      ...mainArt,
+      headings: [{ index: 0, mouths: [mouth] }, ...mainArt.headings.slice(1)],
+    });
+    const generic = (mouth: unknown) => ({
+      frame: mainArt.frame,
+      headings: [{ index: 0, mouths: [mouth] }],
+      layers: mainArt.engineLevels[0]!.layers,
+      length: mainArt.length,
+      version: 1,
+    });
+    expect(readEngineJets(file(legacy))?.headings).toHaveLength(64);
+    expect(readShipJets(generic(legacy))).toBeDefined();
+    expect(readEngineJets({ ...file(legacy), headings: generic(legacy).headings })).toBeUndefined();
+    expect(readShipJets(generic({ ...legacy, coreOutboard: true }))).toBeUndefined();
     expect(readEngineJets(file({ ...legacy, coreOutboard: true }))).toBeUndefined();
     for (const value of [false, 1, "true"]) {
       expect(
         readEngineJets(file({ ...legacy, coreOutboard: value, outerCorner: [48, 48] })),
       ).toBeUndefined();
+      expect(
+        readShipJets(generic({ ...legacy, coreOutboard: value, outerCorner: [48, 48] })),
+      ).toBeUndefined();
     }
+    expect(
+      readShipJets(generic({ ...legacy, coreOutboard: true, outerCorner: [48, 48] })),
+    ).toBeDefined();
     expect(
       readEngineJets(file({ ...legacy, coreOutboard: true, outerCorner: [48, 48] })),
     ).toBeDefined();
