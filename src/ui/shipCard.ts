@@ -5,16 +5,18 @@ import { WEAPON_LEVEL_COUNT } from "../data/weaponCatalog.ts";
 import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import { fill, weaponName } from "../model/shop.ts";
 import type { Aboard } from "../model/types.ts";
+import {
+  applyAdaControlTheme,
+  createAdaDisclosure,
+  createAdaPageDivider,
+} from "./buttonPresentation.ts";
 import { compactLevelName } from "./compactLevelName.ts";
-import { font, units } from "./layout/css.ts";
-import { SHIP_CARD } from "./layout/shipCard.ts";
-import { SPACING, TYPE } from "./layout/tokens.ts";
-import { TEXT_TOKENS, UI_SCOPE } from "./modal.ts";
+import { TEXT_TOKENS } from "./modal.ts";
 import { stardustCount } from "./statusPill.ts";
 
-export { SHIP_CARD } from "./layout/shipCard.ts";
+export { SHIP_CARD, SHIP_CARD_STYLE } from "./layout/shipCard.ts";
 
-// Equipment and Cargo share the left pane; Weapons occupies the equal-width right pane.
+// Cargo, Equipment and Weapons occupy three inventory columns.
 
 const SPRITES = "/art/ui/sprites/";
 
@@ -27,6 +29,8 @@ export interface ShipWeapon {
 
 export interface ShipView {
   readonly aboard: Aboard | null;
+  /** Canonical held quest identity for cargo details, when one exists. */
+  readonly aboardQuestId?: string;
   readonly engine: number;
   readonly holodisks: number;
   /** Ore carried this flight. */
@@ -44,8 +48,20 @@ export interface ShipView {
 export type ShipIcon =
   { readonly frames: number; readonly sprite: string } | { readonly mask: string };
 
+/** Canonical inventory identities route details without reading player-facing labels. */
+export type ShipItem =
+  | { readonly kind: "resource"; readonly id: "ore" | "stardust" }
+  | { readonly kind: "cargo"; readonly id: "aboard" | "holodisks" }
+  | { readonly kind: "equipment"; readonly id: "engine" | "paint" | "shield" | "tractor" }
+  | { readonly kind: "weapon"; readonly id: Weapon };
+
+export function shipItemKey(item: ShipItem): string {
+  return `${item.kind}:${item.id}`;
+}
+
 /** One row: its icon, label, and a count or a level, with a weapon's ammunition last. */
 export interface ShipRow {
+  readonly item: ShipItem;
   readonly icon: ShipIcon;
   readonly label: string;
   readonly count?: string;
@@ -86,47 +102,60 @@ export function shipSections(labels: Labels, view: ShipView): ShipSections {
     {
       count: stardustCount(view.stardust),
       icon: sprite("icon-stardust-20"),
+      item: { id: "stardust", kind: "resource" },
       label: labels.stardust ?? "",
     },
-    { count: stardustCount(view.ore), icon: sprite("icon-ore-20"), label: labels.ore ?? "" },
+    {
+      count: stardustCount(view.ore),
+      icon: sprite("icon-ore-20"),
+      item: { id: "ore", kind: "resource" },
+      label: labels.ore ?? "",
+    },
     {
       icon: sprite("icon-holodisk-20"),
+      item: { id: "holodisks", kind: "cargo" },
       label: fill(labels.shipHolodisks ?? "", { n: view.holodisks, total: GALAXY_COUNT }),
     },
   ];
   if (view.aboard) {
     cargo.push({
       icon: sprite(view.aboard.kind === "towing" ? "icon-tow-20" : "icon-cargo-20"),
+      item: { id: "aboard", kind: "cargo" },
       label: aboardLabel(labels, view.aboard),
     });
   }
   const left: ShipRow[] = [
     {
       icon: sprite("icon-shop-engine-tuning", 2),
+      item: { id: "engine", kind: "equipment" },
       label: labels.engine ?? "",
       level: level(view.engine, ECONOMY.trackPrices.engine.length + 1),
       tier: view.engine,
     },
     {
       icon: sprite("icon-shop-shield", 2),
+      item: { id: "shield", kind: "equipment" },
       label: labels.shield ?? "",
       level: level(view.shield, ECONOMY.trackPrices.shield.length + 1),
       tier: view.shield,
     },
     {
       icon: sprite("icon-shop-tractor-beam", 2),
+      item: { id: "tractor", kind: "equipment" },
       label: labels.tractorBeam ?? "",
       level: level(view.tractor, ECONOMY.trackPrices.tractor.length + 1),
       tier: view.tractor,
     },
     {
       icon: sprite("icon-shop-ship-paint", 2),
+      item: { id: "paint", kind: "equipment" },
       label: fill(labels.shipPaintName ?? "", { paint: view.paint }),
     },
   ];
-  const right: ShipRow[] = view.weapons.map((weapon) => ({
+  const right: ShipRow[] = view.weapons.map((weapon): ShipRow => ({
     ammo: weapon.ammo === null ? "" : stardustCount(weapon.ammo),
     icon: { mask: weaponGlyphPath(weapon.id) },
+    item: { id: weapon.id, kind: "weapon" },
     label: weaponName(labels, weapon.id),
     level: level(weapon.level, WEAPON_LEVEL_COUNT),
     tier: weapon.level,
@@ -134,160 +163,7 @@ export function shipSections(labels: Labels, view: ShipView): ShipSections {
   return { cargo, equipment: [left, right] };
 }
 
-export const SHIP_CARD_STYLE = `
-${UI_SCOPE} .ada-card-frame[data-card-size=full]:has(> .ada-card[data-dialog=ship]),
-${UI_SCOPE} .ada-card-frame[data-card-size=full] > .ada-card[data-dialog=ship]{
-  height:auto
-}
-${UI_SCOPE} .ada-ship-sections{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  column-gap:${units(SHIP_CARD.gutter)};
-  position:relative;
-  width:100%;
-  max-width:100%;
-  flex:none;
-  align-items:stretch
-}
-${UI_SCOPE} .ada-ship-pane{
-  display:flex;
-  flex-direction:column;
-  gap:${units(SHIP_CARD.sectionGap)};
-  min-width:0
-}
-${UI_SCOPE} .ada-ship-section{
-  display:flex;
-  flex-direction:column;
-  gap:${units(SPACING.gap)};
-  min-width:0;
-  margin:0
-}
-${UI_SCOPE} .ada-ship-sections::before{
-  content:"";
-  position:absolute;
-  left:50%;
-  top:0;
-  bottom:0;
-  width:${units(SHIP_CARD.divider)};
-  transform:translateX(-50%);
-  background:${TEXT_TOKENS.supporting}
-}
-${UI_SCOPE} .ada-ship-section h3{
-  margin:0;
-  overflow-wrap:anywhere;
-  font:${font(TYPE.label)};
-  line-height:${units(SHIP_CARD.row)};
-  color:${TEXT_TOKENS.supporting}
-}
-${UI_SCOPE} .ada-ship-grid,
-${UI_SCOPE} .ada-ship-column{
-  display:grid;
-  grid-template-columns:minmax(0,1fr);
-  row-gap:${units(SPACING.rowGap)};
-  min-width:0;
-  align-items:start
-}
-${UI_SCOPE} .ada-ship-grid[data-equipment]{
-  grid-template-columns:${units(SHIP_CARD.icon)} minmax(0,1fr) max-content;
-  column-gap:0;
-  row-gap:${units(SPACING.rowGap)}
-}
-${UI_SCOPE} .ada-ship-row{
-  display:flex;
-  align-items:flex-start;
-  min-width:0;
-  min-height:${units(SHIP_CARD.row)};
-  margin:0;
-  font:${font(TYPE.body)};
-  line-height:${units(SHIP_CARD.row)};
-  color:${TEXT_TOKENS.label}
-}
-${UI_SCOPE} .ada-ship-icon{
-  flex:none;
-  width:${units(SHIP_CARD.icon)};
-  height:${units(SHIP_CARD.icon)};
-  margin-right:${units(SPACING.markGap)};
-  image-rendering:pixelated
-}
-${UI_SCOPE} [data-equipment] .ada-ship-column,
-${UI_SCOPE} [data-equipment] .ada-ship-row{
-  display:grid;
-  grid-template-columns:subgrid;
-  grid-column:1 / -1
-}
-${UI_SCOPE} [data-equipment] .ada-ship-label{
-  padding-left:${units(SPACING.markGap)}
-}
-${UI_SCOPE} [data-equipment] .ada-ship-level,
-${UI_SCOPE} [data-equipment] .ada-ship-ammo{
-  padding-left:${units(SHIP_CARD.valueGap)}
-}
-${UI_SCOPE} [data-equipment] .ada-ship-icon{
-  margin-right:0
-}
-${UI_SCOPE} [data-equipment] .ada-ship-text{
-  display:contents
-}
-${UI_SCOPE} .ada-ship-text{
-  display:flex;
-  flex:1;
-  flex-wrap:wrap;
-  gap:0 ${units(SHIP_CARD.valueGap)};
-  min-width:0
-}
-${UI_SCOPE} .ada-ship-label{
-  flex:1 1 auto;
-  min-width:0;
-  overflow-wrap:anywhere
-}
-${UI_SCOPE} .ada-ship-count,
-${UI_SCOPE} .ada-ship-level,
-${UI_SCOPE} .ada-ship-ammo{
-  min-width:0;
-  max-width:100%;
-  overflow-wrap:anywhere;
-  text-align:right
-}
-${UI_SCOPE} .ada-ship-count,
-${UI_SCOPE} .ada-ship-ammo{
-  font:${font(TYPE.label)};
-  line-height:${units(SHIP_CARD.row)}
-}
-${UI_SCOPE} .ada-ship-level{
-  color:${TEXT_TOKENS.supporting}
-}
-${UI_SCOPE} .ada-ship-section[data-section=weapons]{
-  display:grid;
-  grid-template-columns:${units(SHIP_CARD.icon)} minmax(0,1fr) max-content;
-  column-gap:0;
-  align-content:start
-}
-${UI_SCOPE} .ada-ship-weapon-headings,
-${UI_SCOPE} [data-section=weapons] .ada-ship-grid{
-  display:grid;
-  grid-template-columns:subgrid;
-  grid-column:1 / -1
-}
-${UI_SCOPE} .ada-ship-weapon-headings > h3:first-child{
-  grid-column:1 / 3
-}
-${UI_SCOPE} .ada-ship-ammo-heading{
-  grid-column:3;
-  display:grid;
-  padding-left:${units(SHIP_CARD.valueGap)}
-}
-${UI_SCOPE} .ada-ship-ammo-heading > span{
-  grid-area:1 / 1
-}
-${UI_SCOPE} .ada-ship-ammo-measure{
-  visibility:hidden
-}
-${UI_SCOPE} .ada-ship-ammo{
-  text-align:left
-}
-`;
-
-function iconNode(icon: ShipIcon): HTMLSpanElement {
+export function shipIconNode(icon: ShipIcon): HTMLSpanElement {
   const node = document.createElement("span");
   node.className = "ada-ship-icon";
   node.setAttribute("aria-hidden", "true");
@@ -301,13 +177,18 @@ function iconNode(icon: ShipIcon): HTMLSpanElement {
   return node;
 }
 
-function rowNode(row: ShipRow): HTMLDivElement {
-  const line = document.createElement("div");
+function rowNode(
+  onItem: (row: ShipRow, origin: HTMLButtonElement) => void,
+  row: ShipRow,
+): HTMLButtonElement {
+  const line = document.createElement("button");
+  line.type = "button";
+  line.dataset.item = shipItemKey(row.item);
+  line.addEventListener("click", () => onItem(row, line));
   line.className = "ada-ship-row";
   const label = document.createElement("span");
   label.className = "ada-ship-label";
   label.textContent = compactLevelName(row.tier, row.label);
-  line.setAttribute("role", "listitem");
   line.setAttribute(
     "aria-label",
     [row.label, row.level, row.count, row.ammo].filter(Boolean).join(", "),
@@ -318,7 +199,7 @@ function rowNode(row: ShipRow): HTMLDivElement {
   const content = document.createElement("span");
   content.className = "ada-ship-text";
   content.append(label);
-  line.append(iconNode(row.icon), content);
+  line.append(shipIconNode(row.icon), content, createAdaDisclosure(document));
   for (const [part, text] of [
     ["count", row.count],
     ["ammo", row.ammo],
@@ -333,7 +214,7 @@ function rowNode(row: ShipRow): HTMLDivElement {
   return line;
 }
 
-/** Three named sections arranged in two equal panes. */
+/** Three inventory columns with canonical shared dividers and inline weapon ammunition. */
 export function renderShipSections(
   headings: {
     readonly ammo: string;
@@ -342,54 +223,31 @@ export function renderShipSections(
     readonly weapons: string;
   },
   sections: ShipSections,
+  onItem: (row: ShipRow, origin: HTMLButtonElement) => void = () => undefined,
 ): HTMLDivElement {
   const root = document.createElement("div");
   root.className = "ada-ship-sections";
   root.dataset.inkTop = "0";
-  const left = document.createElement("div");
-  const right = document.createElement("div");
-  left.className = right.className = "ada-ship-pane";
-  root.append(left, right);
-  const section = (
-    pane: HTMLDivElement,
-    key: "cargo" | "equipment" | "weapons",
-    rows: readonly ShipRow[],
-  ) => {
-    const name = headings[key];
-    const node = document.createElement("section");
-    node.className = "ada-ship-section";
-    node.dataset.section = key;
-    node.setAttribute("aria-label", name);
+  applyAdaControlTheme(root);
+  for (const [key, rows] of [
+    ["cargo", sections.cargo],
+    ["equipment", sections.equipment[0]],
+    ["weapons", sections.equipment[1]],
+  ] as const) {
+    if (root.children.length) {
+      root.append(createAdaPageDivider(document));
+    }
+    const section = document.createElement("section");
+    section.className = "ada-ship-section";
+    section.dataset.section = key;
+    section.setAttribute("aria-label", headings[key]);
     const heading = document.createElement("h3");
-    heading.textContent = name;
+    heading.textContent = headings[key];
     const grid = document.createElement("div");
     grid.className = "ada-ship-grid";
-    grid.setAttribute("role", "list");
-    if (key !== "cargo") {
-      grid.dataset.equipment = "";
-    }
-    grid.append(...rows.map(rowNode));
-    if (key === "weapons") {
-      const header = document.createElement("div");
-      header.className = "ada-ship-weapon-headings";
-      const ammo = document.createElement("h3");
-      ammo.className = "ada-ship-ammo-heading";
-      const label = document.createElement("span");
-      label.textContent = headings.ammo;
-      const measure = document.createElement("span");
-      measure.className = "ada-ship-ammo-measure";
-      measure.textContent = stardustCount(ECONOMY.ammo.capacity);
-      measure.setAttribute("aria-hidden", "true");
-      ammo.append(label, measure);
-      header.append(heading, ammo);
-      node.append(header, grid);
-    } else {
-      node.append(heading, grid);
-    }
-    pane.append(node);
-  };
-  section(left, "equipment", sections.equipment[0]);
-  section(left, "cargo", sections.cargo);
-  section(right, "weapons", sections.equipment[1]);
+    grid.append(...rows.map((row) => rowNode(onItem, row)));
+    section.append(heading, grid);
+    root.append(section);
+  }
   return root;
 }

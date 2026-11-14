@@ -1040,7 +1040,11 @@ export function observeFeedback(scene: UiContext): void {
 export function shipView(scene: UiContext): ShipView {
   const ship = scene.model.ship;
   const paint = ECONOMY.paints[ship.paint]?.label;
-  return { ...ship, paint: (paint && CONTENT.labels[paint]) ?? "" };
+  return {
+    ...ship,
+    ...(scene.model.aboardQuestId ? { aboardQuestId: scene.model.aboardQuestId } : {}),
+    paint: (paint && CONTENT.labels[paint]) ?? "",
+  };
 }
 
 // Queues item notices for what Ada gained since last frame; a new flight starts from what she

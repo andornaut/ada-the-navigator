@@ -40,7 +40,11 @@ class FakeElement {
   hidden = false;
   readonly listeners = new Map<string, (() => void)[]>();
   readonly ownerDocument = PAGE;
-  readonly style: Record<string, unknown> = { removeProperty: vi.fn(), setProperty: vi.fn() };
+  readonly style: Record<string, unknown> = {
+    getPropertyValue: () => "",
+    removeProperty: vi.fn(),
+    setProperty: vi.fn(),
+  };
   textContent = "";
   type = "";
   addEventListener(type: string, listener: () => void): void {
@@ -94,6 +98,9 @@ class FakeElement {
       ...(child.type === "button" ? [child] : []),
       ...child.querySelectorAll(),
     ]);
+  }
+  cloneNode(): FakeElement {
+    return Object.assign(new FakeElement(), { className: this.className });
   }
   remove(): void {}
   removeAttribute(name: string): void {
@@ -743,3 +750,64 @@ it.each(["back-ship", "close-ship", "Escape", "back"])(
     pause.dispose();
   },
 );
+
+it.each([
+  "resource:ore",
+  "equipment:engine",
+  "equipment:shield",
+  "equipment:tractor",
+  "equipment:paint",
+  "cargo:holodisks",
+  "weapon:laser",
+])("returns %s details to the same Ship and item context", (item) => {
+  const { body, modal, options, pause, root, ship } = cards();
+  pause.setState(state());
+  pause.open();
+  button(body.children[0]!, "pause-ship").click();
+  const origin = ship.querySelectorAll().find((node) => node.dataset.item === item)!;
+  expect(origin).toBeDefined();
+  const snapshot = structuredClone(SHIP);
+  origin.click();
+  expect(modal.hidden).toBe(true);
+  expect(pause.shipOpen()).toBe(true);
+  expect(
+    root.children.some((node) => node !== modal && node.className === "ada-modal" && !node.hidden),
+  ).toBe(true);
+  pause.closeShip();
+  expect(pause.shipOpen()).toBe(true);
+  expect(modal.hidden).toBe(false);
+  expect(focused()).toBe(origin);
+  expect(SHIP).toEqual(snapshot);
+  expect(options.onBackToTitle).not.toHaveBeenCalled();
+  expect(options.onGalaxies).not.toHaveBeenCalled();
+});
+
+it("returns held cargo quest details directly to the same Ship", () => {
+  const { body, modal, pause, root, ship } = cards();
+  pause.setState(
+    state({
+      questEntries: [
+        {
+          galaxy: 1,
+          id: "held",
+          line: { kind: "job", reward: "17 Stardust", target: null, text: "Held job" },
+          locations: [],
+        },
+      ],
+      ship: { ...SHIP, aboard: { kind: "carrying", name: "Supplies" }, aboardQuestId: "held" },
+    }),
+  );
+  pause.open();
+  button(body.children[0]!, "pause-ship").click();
+  const origin = ship.querySelectorAll().find((node) => node.dataset.item === "cargo:aboard")!;
+  origin.click();
+  expect(modal.hidden).toBe(true);
+  const detail = root.children.find((node) => node.className.includes("ada-quests-screen"))!;
+  expect(detail.querySelectorAll().some((node) => node.dataset.action === "quest-other")).toBe(
+    false,
+  );
+  pause.closeShip();
+  expect(modal.hidden).toBe(false);
+  expect(pause.shipOpen()).toBe(true);
+  expect(focused()).toBe(origin);
+});

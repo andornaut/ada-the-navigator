@@ -1,19 +1,27 @@
 import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 import { createModalLayer } from "@andornaut/game-kit/web/ui/dom/modalLayer";
 
+import { RESOURCE_DESCRIPTIONS } from "../data/resourceDescriptions.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { weaponDetailLines } from "../data/weaponDetails.ts";
 import type { LocalMap } from "../model/map.ts";
 import type { QuestEntry } from "../model/questDetails.ts";
-import { CARD_CONTENT, SCROLL } from "./layout/contentCard.ts";
-import { slice, units } from "./layout/css.ts";
-import { BUTTON_GAP, SPACING, STACK_BUTTON_GAP } from "./layout/tokens.ts";
+import { compactLevelName } from "./compactLevelName.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createMapScreen, type MapField, type MapScreenLabels } from "./mapScreen.ts";
-import { createButton, createCard, isTap, UI_SCOPE } from "./modal.ts";
+import { createButton, createCard, isTap } from "./modal.ts";
 import { type PauseAction, pauseActions, type PausePlace } from "./pause.ts";
 import { createQuestsScreen, type QuestOrigin } from "./questsScreen.ts";
 import { refuse } from "./refusal.ts";
-import { renderShipSections, shipSections, type ShipView } from "./shipCard.ts";
+import { createResourceCard } from "./resourceCard.ts";
+import {
+  renderShipSections,
+  shipIconNode,
+  type ShipRow,
+  shipSections,
+  type ShipView,
+} from "./shipCard.ts";
+import { createWeaponDetailCard } from "./weaponDetailCard.ts";
 
 export interface PauseLabels {
   readonly backToTitle: string;
@@ -90,24 +98,6 @@ function stack(): HTMLDivElement {
   group.dataset.inkTop = "0";
   return group;
 }
-
-/** The Paused card's grid: six equal buttons, with primary Resume last at the bottom right. */
-export const PAUSE_GRID_STYLE = `
-${UI_SCOPE} .ada-actions.ada-pause-grid{
-  grid-auto-flow:row;
-  grid-template-columns:1fr 1fr;
-  column-gap:${units(BUTTON_GAP)};
-  row-gap:${units(STACK_BUTTON_GAP)};
-  width:auto
-}
-${UI_SCOPE} .ada-actions.ada-pause-grid[data-place=room]{grid-template-columns:1fr}
-${UI_SCOPE} .ada-ship-back{
-  display:flex;
-  justify-content:flex-end;
-  flex:none;
-  margin:${units(SPACING.gap)} 0 calc(${units(SCROLL.endPad)} - ${slice(CARD_CONTENT.frameBorder)})
-}
-`;
 
 // Two columns of equal actions, BUTTON_GAP between columns and STACK_BUTTON_GAP between rows.
 function grid(): HTMLDivElement {
@@ -192,11 +182,14 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     },
     reducedMotion: options.reducedMotion,
   });
-  let questRoot: "map" | "flight" | "pause" = "map";
+  let questRoot: "map" | "flight" | "pause" | "ship" = "map";
+  let shipDetailOrigin: HTMLElement | undefined;
   const quests = createQuestsScreen(root, {
     labels: labels.mapScreen,
     onClose: () => {
-      if (questRoot === "flight") {
+      if (questRoot === "ship") {
+        restoreShip();
+      } else if (questRoot === "flight") {
         setOpen(false);
       } else if (questRoot === "map") {
         mapScreen.focusQuests();
@@ -266,6 +259,65 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     layer = createModalLayer(modal);
     leaveLayer = layer.open({ close: () => setOpen(false), focus }, paused.card);
   };
+  const restoreShip = () => {
+    if (open && shipOpen()) {
+      show("ship");
+      if (shipDetailOrigin?.isConnected) {
+        focusTarget(shipDetailOrigin);
+      }
+    }
+  };
+  const detailOptions = {
+    closeLabel: labels.mapScreen.questBack ?? labels.close,
+    onOpenChange: (visible: boolean) => {
+      if (!visible) {
+        restoreShip();
+      }
+    },
+  };
+  const shipResource = createResourceCard(root, detailOptions);
+  const shipWeapon = createWeaponDetailCard(root, detailOptions);
+  const openShipItem = (row: ShipRow, origin: HTMLButtonElement) => {
+    const view = state.ship;
+    if (!view || !shipOpen()) {
+      return;
+    }
+    shipDetailOrigin = origin;
+    hidePause();
+    if (row.item.kind === "weapon") {
+      const id = row.item.id;
+      const weapon = view.weapons.find((weapon) => weapon.id === id);
+      if (!weapon) {
+        restoreShip();
+        return;
+      }
+      shipWeapon.open(row.label, weaponDetailLines(weapon.id, weapon.level), origin, {
+        ammo: weapon.ammo,
+        ammoLabel: labels.shipHeadings.ammo,
+        id: weapon.id,
+        level: weapon.level,
+      });
+    } else if (
+      row.item.kind === "cargo" &&
+      row.item.id === "aboard" &&
+      view.aboardQuestId &&
+      state.questEntries?.some(({ id }) => id === view.aboardQuestId)
+    ) {
+      questRoot = "ship";
+      quests.open(view.aboardQuestId, "ship");
+    } else {
+      const text =
+        row.item.kind === "resource"
+          ? RESOURCE_DESCRIPTIONS[row.item.id]
+          : row.item.kind === "cargo" && row.item.id === "holodisks"
+            ? (labels.shipRows.holodiskAbout ?? "")
+            : (row.level ?? "");
+      shipResource.open(compactLevelName(row.tier, row.label), text, origin, {
+        icon: shipIconNode(row.icon),
+        ...(row.count ? { quantity: row.count } : {}),
+      });
+    }
+  };
   // What the Ship card last showed, so its rows rebuild only on a change.
   let shipShown: string | undefined;
   const renderShip = () => {
@@ -274,7 +326,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     if (signature !== shipShown) {
       shipShown = signature;
       ship.body.replaceChildren(
-        ...(sections ? [renderShipSections(labels.shipHeadings, sections)] : []),
+        ...(sections ? [renderShipSections(labels.shipHeadings, sections, openShipItem)] : []),
       );
     }
     ship.fit();
@@ -296,6 +348,8 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       layer?.dispose();
       layer = undefined;
       quests.close();
+      shipResource.close();
+      shipWeapon.close();
       mapScreen.close();
     }
     options.onOpenChange(value);
@@ -400,6 +454,18 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   ship.close.addEventListener("click", () => closeShip());
   // The Ship card's X, back and Escape return to the Paused card, on its Ship button.
   function closeShip(): void {
+    if (shipResource.isOpen()) {
+      shipResource.close();
+      return;
+    }
+    if (shipWeapon.isOpen()) {
+      shipWeapon.close();
+      return;
+    }
+    if (questRoot === "ship" && quests.isOpen()) {
+      quests.back();
+      return;
+    }
     if (shipOpen()) {
       show("paused");
       const shipButton = buttons.get("ship");
@@ -454,6 +520,8 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     dispose(): void {
       layer?.dispose();
       paused.dispose();
+      shipResource.dispose();
+      shipWeapon.dispose();
       ship.dispose();
       quests.dispose();
       mapScreen.dispose();
@@ -477,3 +545,5 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     shipOpen,
   };
 }
+
+export { PAUSE_GRID_STYLE } from "./layout/pauseCard.ts";

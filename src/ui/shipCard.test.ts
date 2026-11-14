@@ -1,7 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { aboardLabel, renderShipSections, shipSections, type ShipView } from "./shipCard.ts";
+import {
+  aboardLabel,
+  renderShipSections,
+  shipItemKey,
+  shipSections,
+  type ShipView,
+} from "./shipCard.ts";
 
 const LABELS = CONTENT.labels;
 
@@ -55,6 +61,7 @@ describe("Ship card", () => {
     }).cargo.at(-1);
     expect(carrying).toEqual({
       icon: { frames: 1, sprite: "icon-cargo-20" },
+      item: { id: "aboard", kind: "cargo" },
       label: "Carrying: Spare parts",
     });
     const towing = shipSections(LABELS, {
@@ -63,6 +70,7 @@ describe("Ship card", () => {
     }).cargo.at(-1);
     expect(towing).toEqual({
       icon: { frames: 1, sprite: "icon-tow-20" },
+      item: { id: "aboard", kind: "cargo" },
       label: "Towing: Sleepy Tug",
     });
   });
@@ -95,11 +103,12 @@ describe("Ship card", () => {
 });
 
 // Only the element members used by the Ship renderer; geometry is checked in browser captures.
-class ShipElement {
+class ShipElement extends EventTarget {
+  readonly classList = { add: vi.fn() };
   children: ShipElement[] = [];
   className = "";
   dataset: Record<string, string> = {};
-  style = { background: "", setProperty: vi.fn() };
+  style = { background: "", getPropertyValue: () => "", setProperty: vi.fn() };
   textContent = "";
   append(...nodes: ShipElement[]): void {
     this.children.push(...nodes);
@@ -111,7 +120,10 @@ class ShipElement {
 }
 
 function rendered(sections: ReturnType<typeof shipSections>): ShipElement {
-  vi.stubGlobal("document", { createElement: () => new ShipElement() });
+  vi.stubGlobal("document", {
+    createElement: () => new ShipElement(),
+    createElementNS: () => new ShipElement(),
+  });
   return renderShipSections(
     { ammo: LABELS.ammo!, cargo: "Cargo", equipment: "Equipment", weapons: LABELS.shopWeapons! },
     sections,
@@ -123,35 +135,24 @@ const rowText = (row: ShipElement) => row.children[1]!.children.map((part) => pa
 afterEach(() => vi.unstubAllGlobals());
 
 describe("Ship sections rendering", () => {
-  it("names Equipment above Cargo on the left and Weapons on the right", () => {
+  it("places Cargo, Equipment and Weapons in three columns with shared dividers", () => {
     const root = rendered(shipSections(LABELS, VIEW));
-    expect(root.children).toHaveLength(2);
-    const [left, right] = root.children;
-    expect(left!.children.map((section) => section.dataset.section)).toEqual([
-      "equipment",
-      "cargo",
-    ]);
-    expect(right!.children.map((section) => section.dataset.section)).toEqual(["weapons"]);
-    const sections = [...left!.children, ...right!.children];
-    expect(
-      sections.map((section) =>
-        section.dataset.section === "weapons"
-          ? section.children[0]!.children[0]!.textContent
-          : section.children[0]!.textContent,
-      ),
-    ).toEqual(["Equipment", "Cargo", "Weapons"]);
-    expect(sections.map((section) => section.attributes.get("aria-label"))).toEqual([
-      "Equipment",
+    expect(root.children).toHaveLength(5);
+    const sections = root.children.filter((node) => node.dataset.section);
+    expect(sections.map((node) => node.dataset.section)).toEqual(["cargo", "equipment", "weapons"]);
+    expect(sections.map((node) => node.children[0]!.textContent)).toEqual([
       "Cargo",
+      "Equipment",
       "Weapons",
     ]);
-    expect(left!.children[0]!.children[1]!.children.map((row) => rowText(row)[0])).toEqual([
+    expect(root.children.filter((node) => !node.dataset.section)).toHaveLength(2);
+    expect(sections[1]!.children[1]!.children.map((row) => rowText(row)[0])).toEqual([
       "Engine [2]",
       LABELS.shield,
       `${LABELS.tractorBeam} [3]`,
       "Paint: Sky blue",
     ]);
-    expect(left!.children[1]!.children[1]!.children.map(rowText)).toEqual([
+    expect(sections[0]!.children[1]!.children.map(rowText)).toEqual([
       ["Stardust", "1,234,567"],
       ["Ore", "12,500"],
       ["Holodisks: 3 of 6"],
@@ -170,8 +171,8 @@ describe("Ship sections rendering", () => {
           weapons: [{ ammo: 42, id: "rapidMissile", level }],
         }),
       );
-      const equipment = root.children[0]!.children[0]!.children[1]!.children;
-      const weapon = root.children[1]!.children[0]!.children[1]!.children[0]!;
+      const equipment = root.children[2]!.children[1]!.children;
+      const weapon = root.children[4]!.children[1]!.children[0]!;
       const suffix = level === 1 ? "" : ` [${level}]`;
       expect(equipment.slice(0, 3).map((row) => rowText(row)[0])).toEqual([
         `Engine${suffix}`,
@@ -194,15 +195,15 @@ describe("Ship sections rendering", () => {
       weapons: [],
     });
     const root = rendered(sections);
-    expect(root.children[1]!.children[0]!.children[0]!.children[0]!.textContent).toBe("Weapons");
-    expect(root.children[1]!.children[0]!.children[1]!.children).toHaveLength(0);
-    const cargo = root.children[0]!.children[1]!.children[1]!;
+    expect(root.children[4]!.children[0]!.textContent).toBe("Weapons");
+    expect(root.children[4]!.children[1]!.children).toHaveLength(0);
+    const cargo = root.children[0]!.children[1]!;
     expect(rowText(cargo.children.at(-1)!)).toEqual([
       "Carrying: A very long cargo name that must wrap",
     ]);
     const empty = rendered({ ...sections, cargo: [] });
-    expect(empty.children[0]!.children[1]!.children[0]!.textContent).toBe("Cargo");
-    expect(empty.children[0]!.children[1]!.children[1]!.children).toHaveLength(0);
+    expect(empty.children[0]!.children[0]!.textContent).toBe("Cargo");
+    expect(empty.children[0]!.children[1]!.children).toHaveLength(0);
   });
 });
 
@@ -217,12 +218,49 @@ it.each([0, 1, 9999])(
   },
 );
 
-it("shares the Ammo heading track with an accessible-hidden sample of the canonical cap", () => {
+it("keeps ammo inside each weapon row without separate oversized ammo rows", () => {
   const root = rendered(shipSections(LABELS, VIEW));
-  const headings = root.children[1]!.children[0]!.children[0]!;
-  expect(headings.children[0]!.textContent).toBe("Weapons");
-  const ammo = headings.children[1]!;
-  expect(ammo.children[0]!.textContent).toBe("Ammo");
-  expect(ammo.children[1]!.textContent).toBe("9,999");
-  expect(ammo.children[1]!.attributes.get("aria-hidden")).toBe("true");
+  const weapons = root.children[4]!;
+  expect(weapons.children[0]!.textContent).toBe("Weapons");
+  expect(weapons.children[1]!.children).toHaveLength(VIEW.weapons.length);
+  expect(rowText(weapons.children[1]!.children[1]!)).toEqual(["Rapid Missile", "42"]);
+});
+
+it("keeps canonical detail identities when display labels collide or change", () => {
+  const rows = shipSections({ ...LABELS, engine: "Same", ore: "Same", stardust: "Same" }, VIEW);
+  expect(rows.cargo.slice(0, 2).map(({ item }) => shipItemKey(item))).toEqual([
+    "resource:stardust",
+    "resource:ore",
+  ]);
+  expect(rows.equipment[0].map(({ item }) => shipItemKey(item))).toEqual([
+    "equipment:engine",
+    "equipment:shield",
+    "equipment:tractor",
+    "equipment:paint",
+  ]);
+  expect(rows.equipment[1].map(({ item }) => shipItemKey(item))).toEqual(
+    VIEW.weapons.map(({ id }) => `weapon:${id}`),
+  );
+  expect(rows.cargo.every(({ tier }) => tier === undefined)).toBe(true);
+  expect(rows.equipment[0].at(-1)?.tier).toBeUndefined();
+});
+
+it("routes clickable inventory identities without reading labels", () => {
+  vi.stubGlobal("document", {
+    createElement: () => new ShipElement(),
+    createElementNS: () => new ShipElement(),
+  });
+  const onItem = vi.fn();
+  const sections = shipSections(LABELS, VIEW);
+  const root = renderShipSections(
+    { ammo: "Ammo", cargo: "Cargo", equipment: "Equipment", weapons: "Weapons" },
+    sections,
+    onItem,
+  ) as unknown as ShipElement;
+  const row = root.children[4]!.children[1]!.children[0]!;
+  row.dispatchEvent(new Event("click"));
+  expect(onItem).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({ item: { id: "laser", kind: "weapon" } }),
+    row,
+  );
 });

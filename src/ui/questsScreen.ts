@@ -9,7 +9,7 @@ import { QUEST_LIST_PAGE_SIZE, QUEST_ROUTE_ARROW } from "./layout/questsScreen.t
 import { chipFace, chipGlyph, type MapScreenLabels } from "./mapScreen.ts";
 import { createButton, createCard, setFooterAction, setScrollGroup } from "./modal.ts";
 
-export type QuestOrigin = "flight" | "list";
+export type QuestOrigin = "flight" | "list" | "ship";
 
 /** Endpoint metadata is already filtered by the model; current map membership enables locating. */
 export function questRoute(entry: QuestEntry, places: readonly MapPlace[]) {
@@ -167,7 +167,8 @@ export function createQuestsScreen(
           const button = document.createElement("button");
           button.type = "button";
           button.className = "ada-quest-endpoint";
-          button.disabled = endpoint.location === null || endpoint.place === null;
+          button.disabled =
+            origin === "ship" || endpoint.location === null || endpoint.place === null;
           if (endpoint.location?.symbol) {
             const image = icon(entry, endpoint.location.symbol, false);
             if (image) {
@@ -183,7 +184,7 @@ export function createQuestsScreen(
             document.createTextNode(endpoint.location?.label ?? labels.questExplore ?? ""),
           );
           button.append(text);
-          if (endpoint.location && endpoint.place) {
+          if (origin !== "ship" && endpoint.location && endpoint.place) {
             button.setAttribute(
               "aria-label",
               `${labels.questLocate ?? ""}: ${endpoint.location.label}`,

@@ -1247,8 +1247,10 @@ beacon light. Welcome!"
   beam level {n}", "+ {paint} paint", "+ {weapon} ammo" and "+ {craft}" for a towed craft; merged repeats add
   " ×{n}".
 - Ship card: Ship; Cargo: Stardust, Ore, Holodisks: {n} of 6, Carrying:
-  {item}, Towing: {craft}; Equipment: Shield, Engine, Tractor beam and each owned weapon's name with Level {n} of 3, a weapon's ammunition
-  as {count} left, and Paint: {paint}.
+  {item}, Towing: {craft}; Equipment: Engine, Shield, Tractor beam and Paint:
+  {paint}; Weapons: each owned weapon with its ammunition count. Equipment and
+  weapon names append [{n}] above level one; level-one names have no suffix. Full
+  accessible level descriptions retain Level {n} of 3. Cargo and paint have no level.
 - Pause: Pause (button label), Paused, Map, Ship, Settings, Back to title, Resume. On Ada's room page: Settings, Back to title.
 - Start screen top right: Achievements, Settings, Exit (label and accessible
   name Exit).
