@@ -1277,6 +1277,13 @@ and safe corridors. Caches, other points of interest and enemies are outside
 this increase. Measure actual accepted asteroid counts after clearance
 rejections; the placement target alone does not establish an accepted-count
 ratio. A higher object-candidate count must not increase cache placement.
+Authored `ORE_FIELDS` retain their fixed 6-to-10-rock Art layouts and associated
+points of interest, guards and platforms. Apply the increase through ambient
+ordinary and resource rocks, compensating there toward an aggregate accepted
+count of approximately 1.2 times baseline where feasible. Report unchanged
+authored-field counts separately alongside ambient counts in that aggregate
+measurement, and report feasibility limits rather than claiming every subsystem
+increases by 20%.
 Ordinary asteroids have stationary centres and may rotate slowly;
 they do not translate in circles or oscillate. Legacy orbiting rocks settle at
 their current positions without a position jump, with HP and drops unchanged.
