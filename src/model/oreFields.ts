@@ -1,5 +1,5 @@
 import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
-import { oreFieldLayout } from "../data/oreFieldLayouts.ts";
+import { ORE_FIELD_LAYOUTS, oreFieldLayout } from "../data/oreFieldLayouts.ts";
 import type { ResourceClass } from "../data/resourceRocks.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { Vec } from "./types.ts";
@@ -23,6 +23,8 @@ export interface OreField extends Vec {
   id: string;
   /** Each rock's class, the plain asteroid shape it collides on and its start spin frame. */
   rocks: readonly (Vec & { asteroid: string; resource: ResourceClass; spinStart: number })[];
+  /** Recomputed from the placement cell; not stored in flight or save state. */
+  variantId: string;
 }
 
 /** Fixed seeds for the galaxies with ore fields, so ore fields are the same on every flight. */
@@ -75,7 +77,9 @@ export function worldOreFieldInCell(
   const turn = roll(0x2b3c) * Math.PI * 2;
   const cos = Math.cos(turn);
   const sin = Math.sin(turn);
-  const rocks = oreFieldLayout(total).map((rock) => ({
+  const variant =
+    ORE_FIELD_LAYOUTS.variants[Math.floor(roll(0x8e13) * ORE_FIELD_LAYOUTS.variants.length)]!;
+  const rocks = oreFieldLayout(variant.id, total).map((rock) => ({
     asteroid: rock.asteroid,
     resource: rock.resource,
     spinStart: rock.frame,
@@ -93,7 +97,7 @@ export function worldOreFieldInCell(
       y: y + Math.sin(angle) * reach,
     };
   }
-  return { guard, id: `ore:${cell.x},${cell.y}`, rocks, x, y };
+  return { guard, id: `ore:${cell.x},${cell.y}`, rocks, variantId: variant.id, x, y };
 }
 
 /** Ore fields whose centres are within `radius` of a point. */

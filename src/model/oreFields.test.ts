@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
@@ -16,6 +18,7 @@ import {
   type OreField,
   oreFieldInCell,
   oreFieldsNear,
+  worldOreFieldInCell,
 } from "./oreFields.ts";
 import { stationsNear } from "./stations.ts";
 
@@ -76,7 +79,7 @@ describe("ore fields", () => {
   it("place Art's layout for the rock count, turned by the seed, keeping gaps and radius", () => {
     const turns = new Set<number>();
     for (const field of fields) {
-      const layout = oreFieldLayout(field.rocks.length);
+      const layout = oreFieldLayout(field.variantId, field.rocks.length);
       expect(field.rocks.map((rock) => [rock.asteroid, rock.spinStart])).toEqual(
         layout.map((rock) => [rock.asteroid, rock.frame]),
       );
@@ -101,8 +104,57 @@ describe("ore fields", () => {
       );
     }
     expect(turns.size).toBeGreaterThan(20);
-    expect(() => oreFieldLayout(11)).toThrow("No ore field layout for 11 rocks");
-    expect(() => oreFieldLayout(5)).toThrow();
+    expect(() => oreFieldLayout("loose-cluster", 11)).toThrow(
+      "No ore field layout for loose-cluster with 11 rocks",
+    );
+    expect(() => oreFieldLayout("loose-cluster", 5)).toThrow();
+  });
+
+  it("uses all eight seeded families across every supported count", () => {
+    expect(new Set(fields.map((field) => field.variantId))).toEqual(
+      new Set(ORE_FIELD_LAYOUTS.variants.map((variant) => variant.id)),
+    );
+    for (const variant of ORE_FIELD_LAYOUTS.variants) {
+      expect(
+        new Set(
+          fields
+            .filter((field) => field.variantId === variant.id)
+            .map((field) => field.rocks.length),
+        ),
+      ).toEqual(new Set([6, 7, 8, 9, 10]));
+    }
+  });
+
+  it("preserves seeded occupancy, IDs, centres, counts and guards in legacy and wrapped grids", () => {
+    const rows = [];
+    for (const context of [{}, { worldSide: 36000 }]) {
+      for (let x = -12; x <= 12; x++) {
+        for (let y = -12; y <= 12; y++) {
+          const field = worldOreFieldInCell(context, 2, { x, y });
+          rows.push({
+            cell: { x, y },
+            context,
+            field: field
+              ? {
+                  guard: field.guard,
+                  id: field.id,
+                  total: field.rocks.length,
+                  x: field.x,
+                  y: field.y,
+                }
+              : null,
+          });
+        }
+      }
+    }
+    expect(
+      createHash("sha256")
+        .update(JSON.stringify(rows.map(({ cell, context, field }) => [context, cell, field])))
+        .digest("hex"),
+    ).toBe("bb0b2180caea40ebda21b66f3b218f061928b1f69ff518273ec4b17de15e5b24");
+    expect(worldOreFieldInCell({ worldSide: 36000 }, 2, { x: 2, y: 3 })).toEqual(
+      worldOreFieldInCell({ worldSide: 36000 }, 2, { x: 10, y: 11 }),
+    );
   });
 
   it("guards at most half of the fields, each guard at its field's edge", () => {
