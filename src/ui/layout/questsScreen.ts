@@ -1,4 +1,3 @@
-import { STATUS_COLOURS } from "../statusPill.ts";
 import { units } from "./css.ts";
 import { BUTTON_GAP } from "./tokens.ts";
 
@@ -102,25 +101,6 @@ export const QUESTS_SCREEN_STYLE = `
   text-align:left;
   flex:none}
 .ada-controls .ada-quest-requirement{display:flex;align-items:center;gap:${units(6)}}
-.ada-controls .ada-quest-requirement input{appearance:none;
-  flex:none;
-  display:grid;
-  place-content:center;
-  box-sizing:border-box;
-  width:${units(16)};
-  height:${units(16)};
-  margin:0;
-  border:${units(2)} solid #b8b3c9;
-  border-radius:0;
-  background:#262b44;
-  opacity:1}
-.ada-controls .ada-quest-requirement input:checked{border-color:${STATUS_COLOURS.tick}}
-.ada-controls .ada-quest-requirement input:checked::after{content:"";
-  width:${units(8)};
-  height:${units(4)};
-  border-left:${units(2)} solid ${STATUS_COLOURS.tick};
-  border-bottom:${units(2)} solid ${STATUS_COLOURS.tick};
-  transform:translateY(${units(-1)}) rotate(-45deg)}
 .ada-controls .ada-quest-list h3{font:inherit;margin:0;color:#b8b3c9}
 .ada-controls .ada-quests-screen .ada-card header h2{color:#ead4aa}
 .ada-controls .ada-quest-content p{color:#ead4aa}

@@ -1,6 +1,7 @@
 import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 
 import { SCREEN } from "../data/screen.ts";
+import { COMPLETION_INDICATOR, createCompletionIndicator } from "./completionIndicator.ts";
 import { listCardHeader } from "./layout/cardFrame.ts";
 import { TEXT_BUTTON } from "./layout/controls.ts";
 import { units } from "./layout/css.ts";
@@ -13,7 +14,7 @@ import { createButton, createCard, isTap, TEXT_TOKENS, UI_SCOPE } from "./modal.
 // count at the name's right end and the condition below; Previous, the page count and Next page
 // the list.
 // CLEANUP (added 2026-11-11): Art has not designed this card. It uses the shared card tokens and
-// placeholder badges; replace the entry styles and badges once Art's design lands.
+// entry styles; replace the entry styles once Art's design lands.
 
 export interface AchievementEntry {
   readonly condition: string;
@@ -42,7 +43,7 @@ export interface AchievementsLabels {
  * it.
  */
 export const ACHIEVEMENTS_CARD = {
-  badge: 16,
+  badge: COMPLETION_INDICATOR.size,
   badgeGap: SPACING.gap,
   columnGap: SPACING.panelPadding,
   columnWidth: 312,
@@ -123,14 +124,6 @@ ${UI_SCOPE} .ada-achievement{
   align-content:start;
   color:${TEXT_TOKENS.disabledLabel}
 }
-${UI_SCOPE} .ada-achievement-badge{
-  width:${units(badge)};
-  height:${units(badge)};
-  background:${TEXT_TOKENS.disabledLabel}
-}
-${UI_SCOPE} .ada-achievement[data-unlocked="true"] .ada-achievement-badge{
-  background:${TEXT_TOKENS.label}
-}
 ${UI_SCOPE} .ada-achievement-name{
   font-size:${units(TYPE.label.size)};
   line-height:${units(TYPE.label.lineHeight)};
@@ -168,9 +161,7 @@ function entryNode(labels: AchievementsLabels, entry: AchievementEntry): HTMLEle
   const node = document.createElement("li");
   node.className = "ada-achievement";
   node.dataset.unlocked = String(entry.unlocked);
-  const badge = document.createElement("span");
-  badge.className = "ada-achievement-badge";
-  badge.setAttribute("aria-hidden", "true");
+  const badge = createCompletionIndicator(entry.name, entry.unlocked);
   const name = document.createElement("span");
   name.className = "ada-achievement-name";
   name.textContent = entry.name;

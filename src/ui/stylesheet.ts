@@ -1,4 +1,5 @@
 import { ACHIEVEMENTS_STYLE } from "./achievementsCard.ts";
+import { COMPLETION_INDICATOR_STYLE } from "./completionIndicator.ts";
 import { CONTROL_HELP_STYLE } from "./controlHelp.ts";
 import { CONVERSATION_STYLE } from "./conversation.ts";
 import { DISABLED_BANNER_STYLE } from "./disabledBanner.ts";
@@ -28,6 +29,7 @@ import { WEAPON_STYLE } from "./weapons.ts";
 // box first, then the controls layer and its shared card styles (SETTINGS_STYLE holds the modal's),
 // then the cards that refine them, the storybook after the shared card styles it refines.
 export const UI_STYLESHEET = [
+  COMPLETION_INDICATOR_STYLE,
   LOADING_STYLE,
   CONVERSATION_STYLE,
   CONTROL_HELP_STYLE,

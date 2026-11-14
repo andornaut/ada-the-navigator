@@ -4,6 +4,7 @@ import { createModalLayer } from "@andornaut/game-kit/web/ui/dom/modalLayer";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { MapPlace } from "../model/map.ts";
 import type { QuestEntry } from "../model/questDetails.ts";
+import { createCompletionIndicator } from "./completionIndicator.ts";
 import { QUEST_LIST_PAGE_SIZE, QUEST_ROUTE_ARROW } from "./layout/questsScreen.ts";
 import { chipFace, chipGlyph, type MapScreenLabels } from "./mapScreen.ts";
 import { createButton, createCard, setFooterAction, setScrollGroup } from "./modal.ts";
@@ -209,12 +210,7 @@ export function createQuestsScreen(
         const row = document.createElement("div");
         row.className = "ada-quest-requirement";
         if (requirement.checked !== undefined) {
-          const check = document.createElement("input");
-          check.type = "checkbox";
-          check.checked = requirement.checked;
-          check.disabled = true;
-          check.setAttribute("aria-label", requirement.label);
-          row.append(check);
+          row.append(createCompletionIndicator(requirement.label, requirement.checked));
         }
         const text = document.createElement("span");
         text.textContent = requirement.label;
