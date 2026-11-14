@@ -8,7 +8,7 @@ import {
 } from "../data/jobs.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { dropRandom } from "./drops.ts";
-import { stationsNear } from "./stations.ts";
+import { worldLegacyStationsNear } from "./legacyStations.ts";
 import type { GalaxyProgress, Vec } from "./types.ts";
 
 // Each galaxy's landmarks (gameplay/quests.md "Landmarks"): nebulae, wrecks and beacons placed by
@@ -81,7 +81,7 @@ export function landmarkSites(galaxy: GalaxyNumber): readonly LandmarkSite[] {
     const at = { x: Math.cos(angle) * reach, y: Math.sin(angle) * reach };
     if (
       placed.some((site) => Math.hypot(site.x - at.x, site.y - at.y) < spacing) ||
-      stationsNear(ECONOMY, galaxy, placeClearance, at).length > 0
+      worldLegacyStationsNear({}, ECONOMY, galaxy, placeClearance, at).length > 0
     ) {
       continue;
     }

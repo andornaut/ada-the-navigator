@@ -133,7 +133,12 @@ import {
   worldFitsEncounter,
   worldSelectEncounter,
 } from "./spawner.ts";
-import { HUB_STATION, worldStationById, worldStationsNear } from "./stations.ts";
+import {
+  flightStationContext,
+  HUB_STATION,
+  worldStationById,
+  worldStationsNear,
+} from "./stations.ts";
 import type {
   EconomyState,
   FlightEvent,
@@ -624,7 +629,7 @@ function placeRiverRock(flight: FlightState, object: SpaceObject): void {
 function ensureStations(content: GameContent, point: Vec, flight: FlightState): void {
   const reach = (ACTIVE_CHUNK_RADIUS + 1) * content.tuning.chunkSize;
   for (const site of worldStationsNear(
-    flightWorldContext(flight),
+    flightStationContext(flight),
     ECONOMY,
     flight.galaxy,
     reach,
@@ -668,7 +673,7 @@ export function ensureStation(
   if (existing) {
     return existing;
   }
-  const site = worldStationById(flightWorldContext(flight), ECONOMY, flight.galaxy, id);
+  const site = worldStationById(flightStationContext(flight), ECONOMY, flight.galaxy, id);
   if (!site) {
     return null;
   }
@@ -840,7 +845,8 @@ function placeOreFields(
       (object) => object.kind === "destination" && object.id === "hub",
     );
     if (
-      worldStationsNear(flightWorldContext(flight), ECONOMY, flight.galaxy, reach, field).length ||
+      worldStationsNear(flightStationContext(flight), ECONOMY, flight.galaxy, reach, field)
+        .length ||
       (hub && worldDistance(flightWorldContext(flight), hub, field) < reach) ||
       (flight.arrivals ?? []).some(
         (arrival) => worldDistance(flightWorldContext(flight), arrival, field) < reach,
@@ -1690,7 +1696,7 @@ export function ensureDestination(
         o.kind === "destination" && worldDistance(flightWorldContext(flight), o, point) < spacing,
     ) ||
     worldStationsNear(
-      flightWorldContext(flight),
+      flightStationContext(flight),
       ECONOMY,
       flight.galaxy,
       ECONOMY.station.destinationClearance,

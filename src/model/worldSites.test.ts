@@ -53,7 +53,7 @@ describe("explicit periodic station and ore placement", () => {
       for (const second of sites) {
         if (first.id !== second.id) {
           expect(wrappedDistance(context.worldSide, first, second)).toBeGreaterThanOrEqual(
-            ECONOMY.station.cellSize - ECONOMY.station.jitter,
+            ECONOMY.station.minimumSpacing,
           );
         }
       }

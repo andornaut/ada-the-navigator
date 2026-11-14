@@ -2,7 +2,7 @@ import type { CastKey } from "../data/cast.ts";
 import type { EconomyCatalog } from "../data/economy.ts";
 import { type KeeperGreetings, KEEPERS, PHANTOM_KEEPER_GREETINGS } from "../data/keepers.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import { HUB_STATION, stationById, stationsNear } from "./stations.ts";
+import { HUB_STATION, stationById, worldLegacyStationsNear } from "./stations.ts";
 
 // Which keeper greets at a station (gameplay/rules.md "Species and greeters"): a station's rank by
 // distance from its galaxy's origin picks one of the galaxy's three keepers in turn, so the nearest
@@ -47,7 +47,7 @@ export function stationRank(
     return null;
   }
   const reach = Math.hypot(site.x, site.y);
-  return stationsNear(catalog, galaxy, reach, { x: 0, y: 0 }).filter((other) => {
+  return worldLegacyStationsNear({}, catalog, galaxy, reach, { x: 0, y: 0 }).filter((other) => {
     const near = Math.hypot(other.x, other.y);
     return near < reach || (near === reach && other.id < site.id);
   }).length;

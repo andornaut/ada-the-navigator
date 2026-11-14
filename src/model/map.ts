@@ -3,7 +3,7 @@ import type { EconomyCatalog } from "../data/economy.ts";
 import type { JobType, LandmarkKind } from "../data/jobs.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import { stationsNear, worldStationById } from "./stations.ts";
+import { type StationPlacementContext, worldStationById, worldStationsNear } from "./stations.ts";
 import type { FlightState, Vec } from "./types.ts";
 import { chunkCoordinates } from "./visited.ts";
 
@@ -237,7 +237,7 @@ export interface LocalMap {
   readonly searchArea: (Vec & { readonly radius: number }) | null;
 }
 
-export interface MapContext {
+export interface MapContext extends StationPlacementContext {
   /** Known procedural POIs, separate from the bounded authored survey and its credit. */
   readonly chartedPois?: readonly MapLandmark[];
   /** Taken from the active flight topology, never inferred from the current build. */
@@ -365,7 +365,7 @@ export function localMap(context: MapContext): LocalMap {
     charted.filter(within).length;
   const total =
     context.destinations.filter(mapped).length +
-    stationsNear(catalog, galaxy, CHARTING_RADIUS, ORIGIN).length +
+    worldStationsNear(context, catalog, galaxy, CHARTING_RADIUS, ORIGIN).length +
     landmarks.total;
   const waypoint: MapPlace[] = context.holodisk
     ? [

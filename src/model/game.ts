@@ -175,7 +175,13 @@ import {
   type ShopTab,
 } from "./shop.ts";
 import { stationDisplayName } from "./stationIdentity.ts";
-import { HUB_STATION, stationById, type StationSite } from "./stations.ts";
+import {
+  flightStationContext,
+  HUB_STATION,
+  stationById,
+  type StationSite,
+  worldStationById,
+} from "./stations.ts";
 import { type StationServices, stationSpecialty } from "./stationServices.ts";
 import {
   advance,
@@ -2068,6 +2074,7 @@ export class GameModel {
     const context = this.chapterContext();
     const waypoint = context && f.galaxy === 6 ? phantomWaypoint(context) : null;
     return localMap({
+      ...flightStationContext(f),
       ...(waypoint
         ? {
             chapterWaypoint: {
@@ -2489,7 +2496,10 @@ export class GameModel {
       galaxy: flight.galaxy,
       hostiles: jobHostiles(flight),
       outposts: this.outposts(flight),
-      progress: this.current,
+      progress: {
+        ...this.current,
+        stations: this.current.stations.filter((id) => this.stationSite(flight, id) !== null),
+      },
     };
   }
   private jobStation(job: HeldJob): StationSite | null {
@@ -2630,7 +2640,7 @@ export class GameModel {
    * hub is Cartwheel's station (gameplay/rules.md).
    */
   private stationSite(f: FlightState, id: string): StationSite | null {
-    const seeded = stationById(ECONOMY, f.galaxy, id);
+    const seeded = worldStationById(flightStationContext(f), ECONOMY, f.galaxy, id);
     if (seeded || id !== HUB_STATION || f.galaxy !== 2) {
       return seeded;
     }

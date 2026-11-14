@@ -2,6 +2,9 @@ import type { EnemyArchetype } from "./enemyCatalog.ts";
 import type { RoutePosition } from "./galaxies.ts";
 import type { Weapon } from "./types.ts";
 
+const STATION_CELL_SIZE = 12000;
+const STATION_JITTER = 4000;
+
 export type UpgradeWeapon = Exclude<Weapon, "laser">;
 export type UpgradeTrack = "shield" | "engine" | "tractor";
 
@@ -117,6 +120,8 @@ export interface EconomyCatalog {
     cellSize: number;
     /** Side of the square band inside each cell where a station may sit. */
     jitter: number;
+    /** Minimum separation after doubling station density without moving legacy sites. */
+    minimumSpacing: number;
     /** Chance that a grid cell holds a station. */
     chance: number;
     /** Minimum distance from the flight start. */
@@ -286,12 +291,13 @@ export const ECONOMY: EconomyCatalog = {
   stardustPickupGap: 2,
   stardustPickupRadius: 5,
   station: {
-    cellSize: 12000,
+    cellSize: STATION_CELL_SIZE,
     // Every cell holds a station; occupancy only gates a cell, so seeded positions never move.
     chance: 1,
     destinationClearance: 1200,
     indicatorRange: 3000,
-    jitter: 4000,
+    jitter: STATION_JITTER,
+    minimumSpacing: (STATION_CELL_SIZE - STATION_JITTER) / Math.SQRT2,
     originClearance: 3000,
     radius: 60,
     safeRadius: 320,
