@@ -46,19 +46,23 @@ function fixture() {
   content.tuning.flight.playerShotDamage = 1e-6;
   for (let seed = 0; seed < 256; seed++) {
     const flight = createFlight(content, 1, seed, progress);
-    // A legacy Sunflower pack uses Whirlpool's authored group minimum to test saved larger packs.
+    // Retained four-member packs keep their survivor denominator under the current admission cap.
+    const packId = "pack:0,0";
     const members = flight.objects.filter(
-      (object) => object.enemy?.archetype === "fighter" && object.enemy.escortOf === null,
+      (object) =>
+        object.enemy?.archetype === "fighter" &&
+        object.enemy.packId === packId &&
+        object.enemy.escortOf === null,
     );
-    const packId = members[0]?.enemy?.packId;
-    if (members.length === 1 && packId) {
+    if (members.length > 0) {
       const count = spawnerStage(3, 0).roster.find((entry) => entry.archetype === "fighter")!
         .groupSize[0];
-      for (let index = 1; index < count; index++) {
+      expect(members.length).toBeLessThanOrEqual(spawnerStage(1, 0).localCap);
+      for (let index = members.length; index < count; index++) {
         const copy = structuredClone(members[0]!);
         copy.id = `${packId}:${index}`;
         copy.enemy!.id = copy.id;
-        copy.x += index * 85;
+        copy.x += index * SPAWNER_POLICIES[1].memberSpacing;
         copy.enemy!.position.x = copy.x;
         flight.objects.push(copy);
       }
@@ -221,8 +225,7 @@ describe("casualty-preserving pack retention", () => {
     for (let seed = 0; seed < 512 && !found; seed++) {
       const flight = createFlight(content, 1, seed, progress);
       const solo = flight.objects.find(
-        (object) =>
-          object.enemy?.archetype === "fighter" && object.enemy.packId?.startsWith("pack:"),
+        (object) => object.enemy?.archetype === "fighter" && object.enemy.packId === "pack:0,0",
       );
       if (solo?.enemy?.packId) {
         found = { flight, packId: solo.enemy.packId };
@@ -236,6 +239,11 @@ describe("casualty-preserving pack retention", () => {
     model.state.flight = flight;
     model.state.mode = "space";
     model.state.started = true;
+    // This saved snapshot retains one active member, not a newly admitted solo encounter.
+    const retained = members(model, packId)[0]!;
+    flight.objects = flight.objects.filter(
+      (object) => object.enemy?.packId !== packId || object === retained,
+    );
     expect(members(model, packId)).toHaveLength(1);
     // A save from the earlier shared roster: four members, one lost, two unloaded.
     flight.combat!.initialPackSizes[packId] = 4;
@@ -393,7 +401,7 @@ describe("casualty-preserving pack retention", () => {
 });
 
 describe("per-role encounter restore", () => {
-  /** A later Whirlpool stage whose region holds a capital battle and its escort pack. */
+  /** A middle Whirlpool region admits a capital and its whole four-fighter escort pack. */
   function battle() {
     const content = structuredClone(CONTENT);
     // Pack fixtures use encounters at the flight start, which launches otherwise keep clear.
@@ -403,10 +411,12 @@ describe("per-role encounter restore", () => {
     content.tuning.flight.playerShotDamage = 1e-6;
     for (let seed = 0; seed < 4000; seed++) {
       const flight = createFlight(content, 3, seed, progress);
-      // A capital and four escorts require the second stage's five-ship budget.
-      flight.freshDistance = 1800;
-      flight.freshChunk = null;
-      flight.player = { x: 4000, y: 4000 };
+      const region = SPAWNER_POLICIES[3].stages[1]!;
+      expect(region.localCap).toBeGreaterThanOrEqual(5);
+      flight.player = {
+        x: region.centerDistance + 4 * content.tuning.chunkSize,
+        y: 4 * content.tuning.chunkSize,
+      };
       stepFlight(content, 0.001, idle, flight);
       const escort = flight.objects.find((object) => object.enemy?.escortOf);
       if (escort?.enemy?.packId) {
