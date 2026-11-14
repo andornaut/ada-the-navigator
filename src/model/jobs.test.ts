@@ -160,7 +160,7 @@ function listen(model: GameModel, point: Vec, seconds: number): string[] {
 
 describe("landmarks", () => {
   it("place twelve per galaxy within 25000 of the origin, 3000 apart and 1500 from stations", () => {
-    for (const galaxy of [1, 2, 3] as const) {
+    for (const galaxy of [1, 2, 3, 4, 5, 6] as const) {
       const sites = landmarkSites(galaxy);
       expect(sites).toHaveLength(LANDMARK_TUNING.count);
       expect(new Set(sites.map(({ kind }) => kind))).toEqual(

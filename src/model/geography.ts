@@ -1,5 +1,7 @@
+import { ECONOMY } from "../data/economy.ts";
 import type { GameContent } from "../data/types.ts";
 import { enemyDefeated } from "./enemyAi.ts";
+import { worldStationById } from "./stations.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
 import { chunkCoordinates } from "./visited.ts";
 import {
@@ -75,6 +77,24 @@ export function persistentObject(object: SpaceObject): boolean {
       ["frigate", "capital", "platform"].includes(object.enemy.archetype))
   );
 }
+/** Untouched seeded stations carry no object state beyond their canonical descriptor. */
+function derivedStation(
+  context: GeographyContext,
+  flight: FlightState,
+  object: SpaceObject,
+): boolean {
+  if (
+    object.kind !== "station" ||
+    Object.keys(object).length !== 6 ||
+    object.hp !== 1 ||
+    object.radius !== ECONOMY.station.radius
+  ) {
+    return false;
+  }
+  const site = worldStationById(context, ECONOMY, flight.galaxy, object.id);
+  return site !== null && site.x === object.x && site.y === object.y;
+}
+
 function account(
   context: GeographyContext,
   content: GameContent,
@@ -253,7 +273,7 @@ export function worldSyncFlightRegion(
       continue;
     }
     removed.add(object.id);
-    if (persistentObject(object)) {
+    if (persistentObject(object) && !derivedStation(context, flight, object)) {
       if (object.hp > 0 && !(object.kind === "enemy" && !liveEnemy(object))) {
         flight.world.notables[object.id] = object;
         account(context, content, index, object, true);

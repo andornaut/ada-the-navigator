@@ -1,24 +1,29 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
+import { relaunch } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import {
   activateRouteEncounter,
   createFlight,
   ensureDestination,
   ensureRouteEncounter,
+  ensureStation,
   routeBlocked,
   stepFlight,
   syncFlightRegion,
   teleport,
 } from "./flight.ts";
+import { GameModel } from "./game.ts";
 import {
   activateFlightRegion,
   ACTIVE_CHUNK_RADIUS,
   archivedObjectIds,
   persistentObject,
 } from "./geography.ts";
+import { stationById } from "./stations.ts";
 import type { FlightState, GalaxyProgress, SpaceObject } from "./types.ts";
 
 const progress: GalaxyProgress = {
@@ -73,6 +78,53 @@ function retained(flight: FlightState): SpaceObject[] {
 }
 
 describe("regenerating ordinary chunks and persistent notables", () => {
+  it.each(["station:1,0", "station:infill:1,0"])(
+    "regenerates untouched %s on revisit while preserving discovery and greeting saves",
+    (id) => {
+      const model = new GameModel(CONTENT);
+      model.state.prologueSeen = true;
+      model.startGalaxy(1);
+      model.state.dialogue = null;
+      const flight = model.state.flight!;
+      const site = stationById(ECONOMY, 1, id)!;
+      flight.player = { x: site.x, y: site.y };
+      const station = ensureStation(CONTENT, id, flight)!;
+      model.step(1 / 60, idle);
+      model.interact();
+      expect(model.state.docked).toBe(id);
+      const visits = model.state.progress[1].greetings[id];
+      const expected = structuredClone(station);
+      model.undock();
+      flight.player = {
+        x: site.x + CONTENT.tuning.chunkSize * (ACTIVE_CHUNK_RADIUS + 2),
+        y: site.y,
+      };
+      syncFlightRegion(CONTENT, flight);
+      expect(flight.objects.some((object) => object.id === id)).toBe(false);
+      expect(flight.world.notables).not.toHaveProperty(id);
+      const loaded = relaunch(CONTENT, model.save());
+      expect(loaded.state.progress[1].stations).toContain(id);
+      expect(loaded.state.progress[1].greetings[id]).toBe(visits);
+      expect(ensureStation(CONTENT, id, loaded.state.flight!)).toEqual(expected);
+      expect(loaded.state.progress[1].greetings[id]).toBe(visits);
+    },
+  );
+
+  it("retains an explicitly persistent or modified seeded station", () => {
+    for (const modification of [{ persistent: true }, { hp: 2 }]) {
+      const flight = empty();
+      const site = stationById(ECONOMY, 1, "station:infill:1,0")!;
+      const station = ensureStation(CONTENT, site.id, flight)!;
+      Object.assign(station, modification);
+      flight.player = {
+        x: site.x + CONTENT.tuning.chunkSize * (ACTIVE_CHUNK_RADIUS + 2),
+        y: site.y,
+      };
+      syncFlightRegion(CONTENT, flight);
+      expect(flight.world.notables[site.id]).toEqual(station);
+    }
+  });
+
   it("bounds ordinary objects, active chunk keys and pack metadata over long travel", () => {
     const flight = empty();
     const sizes: number[] = [];

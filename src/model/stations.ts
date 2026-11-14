@@ -1,4 +1,5 @@
 import type { EconomyCatalog } from "../data/economy.ts";
+import { LANDMARK_TUNING } from "../data/jobs.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { landmarkSites } from "./landmarks.ts";
@@ -103,7 +104,7 @@ export function worldInfillStationInCell(
       }
       if (
         landmarkSites(galaxy).some(
-          (site) => distance(context, site, point) <= catalog.station.destinationClearance,
+          (site) => distance(context, site, point) <= LANDMARK_TUNING.placeClearance,
         )
       ) {
         continue;
