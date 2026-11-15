@@ -43,3 +43,42 @@ export function dialoguePanelTree(): ComponentNode<DialoguePanelSchema> {
     native("close"),
   ]);
 }
+
+export type StoryPanelContainer = Exclude<DialoguePanelContainer, "frame"> | "controls";
+export type StoryPanelNative =
+  Exclude<DialoguePanelNative, "close" | "controls" | "skip"> | "previous" | "next";
+export type StoryPanelSchema = {
+  container: { props: StoryPanelContainer; slots: "children" };
+  native: { props: StoryPanelNative; slots: never };
+};
+
+/** The Storybook's native navigation remains in the caller's existing focus order. */
+export function storyPanelTree(): ComponentNode<StoryPanelSchema> {
+  const leaf = (id: StoryPanelNative): ComponentNode<StoryPanelSchema> => ({
+    component: "native",
+    key: id,
+    kind: "component",
+    props: id,
+  });
+  const group = (
+    id: StoryPanelContainer,
+    children: ComponentNode<StoryPanelSchema>[],
+  ): ComponentNode<StoryPanelSchema> => ({
+    component: "container",
+    key: id,
+    kind: "component",
+    props: id,
+    slots: { children },
+  });
+  return group("card", [
+    group("copy", [
+      group("body", [
+        leaf("title"),
+        group("portrait", [leaf("face")]),
+        leaf("speaker"),
+        leaf("words"),
+      ]),
+    ]),
+    group("column", [leaf("choices"), group("controls", [leaf("previous"), leaf("next")])]),
+  ]);
+}

@@ -1,10 +1,17 @@
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
+import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { CAST, castFrames, type CastKey, castSheet, STORY_CAST } from "../data/cast.ts";
 import { GENERAL_NAMED, type Speaker, SPEAKERS } from "../data/conversations.ts";
 import type { Background } from "../data/storybook.ts";
 import type { StoryChoice, StoryPage } from "../model/storybook.ts";
 import { bedroomBackground, bedroomTop } from "./bedroom.ts";
+import {
+  type StoryPanelContainer,
+  type StoryPanelNative,
+  type StoryPanelSchema,
+  storyPanelTree,
+} from "./dialoguePanelTree.ts";
 import {
   AWAITING_TAB,
   COMPACT_PORTRAITS,
@@ -584,13 +591,10 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   portraitFrameNode.setAttribute("aria-hidden", "true");
   const face = document.createElement("span");
   face.className = "ada-story-portrait";
-  portraitFrameNode.append(face);
   const speaker = document.createElement("p");
   speaker.className = "ada-story-tab";
   const paragraph = document.createElement("p");
   paragraph.className = "ada-story-paragraph";
-  text.append(heading, portraitFrameNode, speaker, paragraph);
-  copy.append(text);
   const column = document.createElement("div");
   column.className = "ada-story-choice-column";
   const choices = document.createElement("div");
@@ -607,9 +611,44 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   next.classList.add("ada-story-button");
   next.dataset.action = "story-next";
   // In focus order: the full-row named action before Previous, else Previous then Next.
-  controls.append(previous, next);
-  column.append(choices, controls);
-  panel.append(copy, column);
+  const panelContainers: Readonly<Record<StoryPanelContainer, HTMLElement>> = {
+    body: text,
+    card: panel,
+    column,
+    controls,
+    copy,
+    portrait: portraitFrameNode,
+  };
+  const panelNative: Readonly<Record<StoryPanelNative, HTMLElement>> = {
+    choices,
+    face,
+    next,
+    previous,
+    speaker,
+    title: heading,
+    words: paragraph,
+  };
+  const panelArrangement = mountLayout<StoryPanelSchema>(
+    {
+      components: {
+        container: {
+          create: (id) => ({
+            dispose() {},
+            element: panelContainers[id],
+            slots: { children: panelContainers[id] },
+            update() {},
+          }),
+          slots: ["children"],
+        },
+        native: {
+          create: (id) => ({ dispose() {}, element: panelNative[id], slots: {}, update() {} }),
+          slots: [],
+        },
+      },
+      host: document.createElement("div"),
+    },
+    storyPanelTree(),
+  );
   artWindow.append(background);
   layer.append(artWindow, panel, skip);
   // The page goes first in the controls layer, so the HUD's settings button draws and presses
@@ -1149,6 +1188,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       stopNight();
       stopPortrait();
       window.removeEventListener(VIEW_SCALE_EVENT, relayout);
+      panelArrangement.dispose();
       layer.remove();
     },
     show,
