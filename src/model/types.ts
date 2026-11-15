@@ -144,7 +144,17 @@ export interface RequiredRoleEncounterPlan {
   actors: readonly SpaceObject[];
 }
 export type AnyRequiredEncounterPlan = RequiredEncounterPlan | RequiredRoleEncounterPlan;
+export interface HostileStationSiteState {
+  point: Vec;
+  identified: boolean;
+}
+export interface HostileStationEncounterState {
+  bodyId: string;
+  defenderIds: [string, string];
+  rewarded: boolean;
+}
 export interface FlightState {
+  hostileStations?: Record<string, HostileStationEncounterState>;
   requiredPlans?: Record<string, AnyRequiredEncounterPlan>;
   topology?: FlightTopology;
   needle?: NeedleFlight;
@@ -222,6 +232,8 @@ export interface GalaxyGeography {
 }
 
 export interface GalaxyProgress {
+  /** Permanent geographic knowledge, independent of current encounter bodies or outcomes. */
+  hostileSites?: Record<string, HostileStationSiteState>;
   /** Canonical required-site points; planning alone grants no discovery or marker knowledge. */
   requiredSites?: Record<string, Vec>;
   markerKnowledge?: TargetKnowledgeRecord;

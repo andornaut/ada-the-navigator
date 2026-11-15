@@ -24,6 +24,10 @@ import { holodisksHeld } from "./conversations.ts";
 import { enemyDefeated } from "./enemyAi.ts";
 import { adoptLegacyGeography, validGalaxyGeography } from "./galaxyGeography.ts";
 import { ACTIVE_CHUNK_RADIUS, encounterOf, liveEnemy, persistentObject } from "./geography.ts";
+import {
+  validHostileStationEncounters,
+  validHostileStationSites,
+} from "./hostileStationPersistence.ts";
 import { isLandmark } from "./landmarks.ts";
 import { validExplored } from "./map.ts";
 import { markerObjectTracked, validMarkerActors, validTargetKnowledge } from "./markerKnowledge.ts";
@@ -662,6 +666,10 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
               ([siteId, point]) => destinationIds[id]?.includes(siteId) && vector(point),
             )
           )) ||
+        !validHostileStationSites(id, p.hostileSites) ||
+        (record(p.hostileSites) &&
+          Object.keys(p.hostileSites).length > 0 &&
+          (!record(p.geography) || p.geography.seed === null || p.geography.seed === undefined)) ||
         (p.markerKnowledge !== undefined && !validTargetKnowledge(p.markerKnowledge)) ||
         (p.andromeda !== undefined && (id !== 5 || !validAndromedaProgress(p.andromeda))) ||
         (p.needle !== undefined && (id !== 4 || !readNeedleChapterProgress(p.needle))) ||
@@ -863,6 +871,16 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
           markerContext,
           f.objects,
           f.world,
+        )
+      ) {
+        return null;
+      }
+      if (
+        !validHostileStationEncounters(
+          (value.progress as unknown as GameState["progress"])[
+            value.selectedGalaxy as GalaxyNumber
+          ],
+          f as unknown as FlightState,
         )
       ) {
         return null;
