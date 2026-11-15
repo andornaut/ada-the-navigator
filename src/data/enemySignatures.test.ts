@@ -1,14 +1,17 @@
 import { expect, it } from "vitest";
 
+import { difficultyOf } from "./enemyCatalog.ts";
 import {
   capitalProfile,
   HEAVY_FIRE_RATE,
   HOSTILE_STATION_SIGNATURE,
+  hostileStationHullHp,
   hostileStationSignatureTiers,
   platformSignatureTiers,
   signatureLoadout,
   SMALL_CRAFT_SIGNATURES,
 } from "./enemySignatures.ts";
+import { ROUTE, ROUTE_POSITION } from "./galaxies.ts";
 
 it("states the approved small-craft weapons and heavy fire multiplier", () => {
   expect(SMALL_CRAFT_SIGNATURES).toEqual({
@@ -83,4 +86,12 @@ it("exports approved v1 platform and station tiers with capped unused mounts", (
   );
   expect(HOSTILE_STATION_SIGNATURE.remaining).toBe("rapidMissile");
   expect(HOSTILE_STATION_SIGNATURE.special).toEqual({ mount: "weapon-5", weapon: "ringBurst" });
+});
+
+it("derives the approved station hull from actual galaxy part HP without early station tiers", () => {
+  expect(
+    ROUTE.map((galaxy) =>
+      hostileStationHullHp(difficultyOf(galaxy).hardpointHp, ROUTE_POSITION[galaxy]),
+    ),
+  ).toEqual([undefined, undefined, undefined, 72, 98, 112]);
 });

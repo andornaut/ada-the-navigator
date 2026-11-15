@@ -273,6 +273,16 @@ Frigates, capitals and platforms have hull HP and hardpoints.
   Ada left it: like a destroyed one, it no longer holds the spacing kept between
   capital ships, and nothing moves it.
 
+## Hostile station hull
+
+Hostile stations have six active weapon parts in Andromeda, seven in Cartwheel
+and eight in Phantom. Their hull HP is twice the active weapon count times the
+route part HP: 72, 98 and 112 respectively. Part hits damage only the selected
+part, with no hull damage or overflow. Hull hits damage only the hull. A station
+has no hull floor: zero hull destroys it, and disabling every weapon disables it.
+Friendly stations retain one HP. Existing ship hull HP and the flagship hull floor
+remain unchanged.
+
 ## Ambient admission
 
 Ambient encounters use a 900-world-unit local admission radius. Whole groups,
