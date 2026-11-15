@@ -7,18 +7,50 @@ vi.mock("@andornaut/game-kit/runtime/web/pwa/appWindow", () => ({
   runsInAppWindow: () => installed,
 }));
 
-class Element {
+class Element extends EventTarget {
+  nodeType = 1;
+  disabled = false;
+  isConnected = true;
+  get ownerDocument() {
+    return document;
+  }
+  get parentElement(): Element | null {
+    return this.parent ?? null;
+  }
+  get parentNode(): Element | null {
+    return this.parent ?? null;
+  }
+  get nextSibling(): Element | null {
+    return this.parent?.children[this.parent.children.indexOf(this) + 1] ?? null;
+  }
+  get firstChild(): Element | null {
+    return this.children[0] ?? null;
+  }
+  getClientRects() {
+    return [1];
+  }
+  focus() {}
+  contains(node: unknown): boolean {
+    return node === this || this.children.some((child) => child.contains(node));
+  }
+  insertBefore(node: Element, before: Element | null) {
+    node.remove();
+    node.parent = this;
+    this.children.splice(
+      before === null ? this.children.length : this.children.indexOf(before),
+      0,
+      node,
+    );
+  }
   readonly children: Element[] = [];
   className = "";
   readonly dataset: Record<string, string> = {};
   hidden = false;
   parent: Element | undefined;
   textContent = "";
-  addEventListener() {}
   append(...nodes: Element[]) {
     for (const node of nodes) {
-      node.parent = this;
-      this.children.push(node);
+      this.insertBefore(node, null);
     }
   }
   prepend(node: Element) {
@@ -31,20 +63,29 @@ class Element {
   setAttribute() {}
 }
 
+vi.mock("./modalLayer.ts", () => ({
+  createModalLayer: () => ({ dispose: vi.fn(), open: () => vi.fn() }),
+}));
+vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
+  focusTarget: (node: Element) => node.focus(),
+}));
+
 vi.mock("./modal.ts", () => ({
   createButton: (label: string) => Object.assign(new Element(), { textContent: label }),
-  createCard: () => ({
-    body: new Element(),
-    card: new Element(),
-    close: new Element(),
-    dispose: vi.fn(),
-    fit: vi.fn(),
-    frame: new Element(),
-  }),
+  createCard: () => {
+    const body = new Element(),
+      card = new Element(),
+      close = new Element(),
+      frame = new Element();
+    card.append(body);
+    frame.append(card, close);
+    return { body, card, close, dispose: vi.fn(), fit: vi.fn(), frame };
+  },
 }));
 
 beforeEach(() => {
   installed = false;
+  vi.stubGlobal("HTMLElement", Element);
   vi.stubGlobal("document", {
     addEventListener: vi.fn(),
     createElement: () => new Element(),
@@ -109,4 +150,83 @@ describe("Settings cheat launcher", () => {
     cheats.dispose();
     expect(actions.children).toEqual([close]);
   });
+});
+
+function descendants(root: Element): Element[] {
+  return [root, ...root.children.flatMap(descendants)];
+}
+it("keeps group order, executes actions once and unregisters on disposal", async () => {
+  const root = new Element(),
+    launcher = new Element();
+  const save = vi.fn(),
+    runEffect = vi.fn(),
+    onSave = vi.fn();
+  const run = {};
+  const cheats = createCheats(root as unknown as HTMLElement, launcher as unknown as HTMLElement, {
+    actions: [
+      {
+        description: "Run description",
+        execute: ({ commit }) => {
+          commit(runEffect);
+        },
+        id: "run",
+        label: "Run action",
+        scope: "run",
+      },
+      {
+        description: "Save description",
+        execute: ({ commit }) => {
+          commit(save);
+        },
+        id: "save",
+        label: "Save action",
+        scope: "save",
+      },
+    ],
+    beforeOpen: vi.fn(),
+    canExecute: () => true,
+    labels: {
+      close: "Close",
+      open: "Open cheats",
+      runGroup: "Run",
+      runPersistence: "Run only",
+      saveGroup: "Save",
+      savePersistence: "Saved",
+      title: "Cheats",
+    },
+    onOpenChange: vi.fn(),
+    onSave,
+    restoreFocus: vi.fn(),
+    run: () => run,
+  });
+  const nodes = descendants(root);
+  expect(
+    nodes.filter((n) => n.className === "ada-cheat-section").map((n) => n.children[0]!.textContent),
+  ).toEqual(["Save", "Run"]);
+  expect(nodes.filter((n) => n.className === "ada-prose").map((n) => n.textContent)).toEqual([
+    "Saved",
+    "Save description",
+    "Run only",
+    "Run description",
+  ]);
+  const buttons = nodes.filter((n) => n.dataset.cheat);
+  launcher.children[0]!.dispatchEvent(new Event("click"));
+  buttons[0]!.dispatchEvent(new Event("click"));
+  buttons[0]!.dispatchEvent(new Event("click"));
+  await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(save).toHaveBeenCalledOnce();
+  expect(onSave).toHaveBeenCalledOnce();
+  expect(runEffect).not.toHaveBeenCalled();
+  cheats.refresh();
+  buttons[1]!.dispatchEvent(new Event("click"));
+  await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(runEffect).toHaveBeenCalledOnce();
+  expect(onSave).toHaveBeenCalledOnce();
+  cheats.dispose();
+  buttons[0]!.dispatchEvent(new Event("click"));
+  expect(save).toHaveBeenCalledOnce();
 });

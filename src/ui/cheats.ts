@@ -1,6 +1,8 @@
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
+import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { type CheatAction, cheatGroups, createCheatSession } from "./cheatActions.ts";
+import { type CheatsSchema, cheatsTree } from "./cheatsTree.ts";
 import { createButton, createCard } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 
@@ -52,47 +54,92 @@ export function createCheats(
   });
   const { body, card, close, frame } = parts;
   const buttons: HTMLButtonElement[] = [];
-  for (const scope of cheatGroups(options.actions)) {
-    const section = document.createElement("section");
-    section.className = "ada-cheat-section";
-    const heading = document.createElement("h3");
-    heading.textContent = scope === "save" ? options.labels.saveGroup : options.labels.runGroup;
-    const persistence = document.createElement("p");
-    persistence.className = "ada-prose";
-    persistence.textContent =
-      scope === "save" ? options.labels.savePersistence : options.labels.runPersistence;
-    section.setAttribute("aria-label", heading.textContent);
-    section.append(heading, persistence);
-    const actions = options.actions.filter((action) => action.scope === scope);
-    const items = document.createElement("div");
-    items.className = "ada-cheat-items";
-    for (const action of actions) {
-      const button = createButton(action.label);
-      button.dataset.cheat = action.id;
-      const description = document.createElement("p");
-      description.className = "ada-prose";
-      description.textContent = action.description;
-      description.id = `cheat-description-${action.id}`;
-      button.setAttribute("aria-describedby", description.id);
-      button.addEventListener("click", () => {
-        if (!open || !session.available() || button.disabled) {
-          return;
-        }
-        button.disabled = true;
-        void session
-          .execute(action.id)
-          .catch((error: unknown) => window.reportError(error))
-          .finally(refresh);
-      });
-      const item = document.createElement("div");
-      item.className = "ada-cheat-item";
-      item.append(button, description);
-      items.append(item);
-      buttons.push(button);
-    }
-    section.append(items);
-    body.append(section);
-  }
+  const mounted = mountLayout<CheatsSchema>(
+    {
+      components: {
+        group: {
+          create(data) {
+            const section = document.createElement("section");
+            section.className = "ada-cheat-section";
+            const heading = document.createElement("h3");
+            const persistence = document.createElement("p");
+            persistence.className = "ada-prose";
+            const items = document.createElement("div");
+            items.className = "ada-cheat-items";
+            section.append(heading, persistence, items);
+            const update = (next: CheatsSchema["group"]["props"]) => {
+              heading.textContent = next.label;
+              persistence.textContent = next.persistence;
+              section.setAttribute("aria-label", next.label);
+            };
+            update(data);
+            return { dispose() {}, element: section, slots: { items }, update };
+          },
+          slots: ["items"],
+        },
+        groups: {
+          create() {
+            return { dispose() {}, element: body, slots: { groups: body }, update() {} };
+          },
+          slots: ["groups"],
+        },
+        item: {
+          create(data) {
+            let current = data;
+            const button = createButton(data.label);
+            const description = document.createElement("p");
+            description.className = "ada-prose";
+            const update = (next: CheatsSchema["item"]["props"]) => {
+              current = next;
+              button.textContent = next.label;
+              button.dataset.cheat = next.id;
+              description.textContent = next.description;
+              description.id = `cheat-description-${next.id}`;
+              button.setAttribute("aria-describedby", description.id);
+            };
+            update(data);
+            const activate = () => {
+              if (!open || !session.available() || button.disabled) {
+                return;
+              }
+              button.disabled = true;
+              void session
+                .execute(current.id)
+                .catch((error: unknown) => window.reportError(error))
+                .finally(refresh);
+            };
+            button.addEventListener("click", activate);
+            const item = document.createElement("div");
+            item.className = "ada-cheat-item";
+            item.append(button, description);
+            buttons.push(button);
+            return {
+              dispose() {
+                button.removeEventListener("click", activate);
+                buttons.splice(buttons.indexOf(button), 1);
+              },
+              element: item,
+              slots: {},
+              update,
+            };
+          },
+          slots: [],
+        },
+      },
+      host: card,
+    },
+    cheatsTree(
+      cheatGroups(options.actions).map((scope) => ({
+        actions: options.actions
+          .filter((action) => action.scope === scope)
+          .map(({ description, id, label }) => ({ description, id, label })),
+        label: scope === "save" ? options.labels.saveGroup : options.labels.runGroup,
+        persistence:
+          scope === "save" ? options.labels.savePersistence : options.labels.runPersistence,
+        scope,
+      })),
+    ),
+  );
   modal.append(frame);
   parent.append(modal);
   let layer: ReturnType<typeof createModalLayer> | undefined;
@@ -178,6 +225,7 @@ export function createCheats(
       window.removeEventListener("pageshow", refresh);
       document.removeEventListener("visibilitychange", refresh);
       layer?.dispose();
+      mounted.dispose();
       parts.dispose();
       modal.remove();
       launcher.remove();
