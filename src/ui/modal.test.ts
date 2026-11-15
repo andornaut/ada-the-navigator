@@ -1,8 +1,9 @@
 import { readdirSync, readFileSync } from "node:fs";
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CARD_CLOSE } from "./layout/cardFrame.ts";
+import { ADA_CONTROL_PRESENTATION_STYLE } from "./layout/controlPresentation.ts";
 import { CONTROL_ROW, FOCUS_RING, TEXT_BUTTON } from "./layout/controls.ts";
 import { slice, units } from "./layout/css.ts";
 import { BUTTON_GAP, SPACING, STACK_BUTTON_GAP, TYPE } from "./layout/tokens.ts";
@@ -11,8 +12,10 @@ import {
   actionOrder,
   BUTTON_SLICE,
   buttonTag,
+  createActions,
   MODAL_LAYER,
   MODAL_STYLE,
+  setFooterAction,
   SWITCH_ROW_PARTS,
   switchState,
   TEXT_TOKENS,
@@ -252,4 +255,35 @@ describe("modal stacking", () => {
     expect(LOADING_STYLE).toContain(`z-index:${LOADING_LAYER};`);
     expect(LOADING_LAYER).toBeGreaterThan(Math.max(MODAL_LAYER, ...layers));
   });
+});
+
+afterEach(() => vi.unstubAllGlobals());
+
+it("keeps original action nodes and roles while marking the footer for one shared presentation", () => {
+  const nodes: unknown[] = [];
+  const attributes = new Map<string, string>();
+  const root = {
+    append: (...children: unknown[]) => nodes.push(...children),
+    className: "",
+    dataset: {} as Record<string, string>,
+    setAttribute: (key: string, value: string) => attributes.set(key, value),
+  };
+  vi.stubGlobal("document", { createElement: () => root });
+  const primary = { textContent: "A wrapped primary action" } as HTMLButtonElement;
+  const secondary = { textContent: "Back" } as HTMLButtonElement;
+  const group = createActions([
+    { button: primary, role: "primary" },
+    { button: secondary, role: "secondary" },
+  ]);
+  setFooterAction("back", group);
+  expect(nodes).toEqual([secondary, primary]);
+  expect(root.dataset.footerAction).toBe("back");
+  expect(attributes.get("data-ui-placement")).toBe("footer");
+  expect(primary.textContent).toBe("A wrapped primary action");
+  expect(ADA_CONTROL_PRESENTATION_STYLE).toContain("grid-template-rows:subgrid");
+  expect(ADA_CONTROL_PRESENTATION_STYLE).toContain(":not(.ada-stack):not(.ada-wrap)");
+  expect(ADA_CONTROL_PRESENTATION_STYLE).toContain(".ada-button-reason:not([hidden])");
+  expect(rule(`${UI_SCOPE} .ada-actions.ada-stack`)).toContain(
+    "grid-template-columns:minmax(0,1fr)",
+  );
 });

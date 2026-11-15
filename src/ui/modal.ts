@@ -386,6 +386,7 @@ ${UI_SCOPE} .ada-button[aria-disabled="true"]:active{
 /* An action stack fills the card's inner width, its faces STACK_BUTTON_GAP apart. */
 ${UI_SCOPE} .ada-actions.ada-stack{
   grid-auto-flow:row;
+  grid-template-columns:minmax(0,1fr);
   align-self:stretch;
   width:auto;
   gap:${units(STACK_BUTTON_GAP)}
@@ -811,6 +812,7 @@ export function createButton(label: string, role: ButtonRole = "secondary"): HTM
 /** Footer intent is explicit and independent of translated labels or entry context. */
 export function setFooterAction(action: "back" | "close", footer: HTMLElement): void {
   footer.dataset.footerAction = action;
+  setControlPlacement("footer", footer);
 }
 
 export function createActions(

@@ -43,4 +43,25 @@ export const ADA_CONTROL_PRESENTATION_STYLE = `${controlsCss}\n${controlPresenta
   height:auto;
   align-self:stretch
 }
+
+/* Grid footer faces share one row; requirements occupy a separate row without changing face height. */
+.ada-actions[data-footer-action]:not(.ada-stack):not(.ada-wrap):has(> .ada-button-presentation){
+  grid-template-rows:auto auto;
+  row-gap:0
+}
+.ada-actions[data-footer-action]:not(.ada-stack):not(.ada-wrap) > .ada-button{
+  grid-row:1
+}
+.ada-actions[data-footer-action]:not(.ada-stack):not(.ada-wrap) > .ada-button-presentation{
+  display:grid;
+  grid-template-rows:subgrid;
+  grid-row:span 2;
+  align-self:stretch;
+  gap:inherit
+}
+.ada-actions[data-footer-action]:not(.ada-stack):not(.ada-wrap):has(
+  > .ada-button-presentation > .ada-button-reason:not([hidden])
+){
+  row-gap:${units(SPACING.markGap)}
+}
 `;
