@@ -62,17 +62,14 @@ import { saves } from "./persistence.ts";
 import { fitPlayCamera, sceneFit, shakeIntensity } from "./playCamera.ts";
 import { readProjectArt } from "./projectArt.ts";
 import { readQuantumJump } from "./quantumJump.ts";
-import {
-  markerHue,
-  readRouteArt,
-  readRouteMarkers,
-  routePreviews,
-  routeShipFrames,
-} from "./routeArt.ts";
+import { markerHue, readRouteArt, readRouteMarkers, routePreviews } from "./routeArt.ts";
 import type { GameScene } from "./scene.ts";
 import {
   loadAsteroidArt,
   loadShipFrames,
+  materialShipFrames,
+  materialShipSwatch,
+  materialWarpPoses,
   paintInUse,
   rasterAgain,
   readEnemyArt,
@@ -736,9 +733,12 @@ export function buildScene(scene: UiContext): void {
                 ? "forSale"
                 : "unaffordable",
           }))
-        : scene.model
-            .shopRows(tab)
-            .map((row) => stationRow(ECONOMY, labels, scene.model.state.economy.stardust, row)),
+        : scene.model.shopRows(tab).map((row) => {
+            const view = stationRow(ECONOMY, labels, scene.model.state.economy.stardust, row);
+            const path =
+              row.item.kind === "paint" ? materialShipSwatch(scene, row.item.scheme) : undefined;
+            return path ? { ...view, glyph: { kind: "swatch" as const, path } } : view;
+          }),
     select: (key) => {
       const chosen = item(key);
       if (chosen.kind === "paint") {
@@ -852,17 +852,22 @@ export function buildScene(scene: UiContext): void {
     );
   };
   const routeArt = readRouteArt(routeAssets, markers, () =>
-    routeShipFrames(routeAssets, paintInUse(scene)),
+    materialShipFrames(scene, routeAssets, paintInUse(scene)),
   );
   if (routeArt) {
     scene.galaxies.setArt({ ...routeArt, jets: travelMaterial });
   }
   // The warp ship: the paint's poses, and its idle frames for the sprite steps.
-  scene.warpPaint = () => ({
-    jets: travelMaterial,
-    scheme: scene.model.state.economy.paint,
-    sprites: routeShipFrames(routeAssets, paintInUse(scene)),
-  });
+  scene.warpPaint = () => {
+    const scheme = scene.model.state.economy.paint;
+    const poses = materialWarpPoses(scene, scheme);
+    return {
+      jets: travelMaterial,
+      ...(poses ? { poses } : {}),
+      scheme,
+      sprites: materialShipFrames(scene, routeAssets, paintInUse(scene)),
+    };
+  };
   scene.routeGalaxies = () =>
     ROUTE.map((galaxy) => {
       const card = galaxyCard(galaxy);

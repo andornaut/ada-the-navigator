@@ -11,6 +11,8 @@ import { whaleFrameAsset } from "./whaleArt.ts";
 /** The core manifest's assets and links that the game reads. */
 export interface CoreManifest<T> {
   readonly shipHeadings?: ShipHeadingContract;
+  /** Shared ship geometry and material slots for every declared paint. */
+  readonly shipMaterials?: string;
   readonly assets: T[];
   /** The backdrop layers' shared rules (public/art/backdrop.json). */
   readonly backdropLayers?: string;

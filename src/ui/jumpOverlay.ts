@@ -67,6 +67,7 @@ export interface JumpPlay {
 export interface WarpPaint {
   /** Read at draw time so engine and field changes do not depend on a paint reload. */
   readonly jets?: () => ShipJets | undefined;
+  readonly poses?: ReadonlyMap<string, string>;
   readonly scheme: string;
   readonly sprites: readonly string[];
 }
@@ -461,13 +462,16 @@ export function createJumpOverlay(
       if (
         paint &&
         paint.scheme === next.scheme &&
-        paint.sprites.join("\n") === next.sprites.join("\n")
+        paint.sprites.join("\n") === next.sprites.join("\n") &&
+        paint.poses === next.poses
       ) {
         paint = next;
         return;
       }
       paint = next;
-      poses = new Map([...posePaths(warp, next.scheme)].map(([id, url]) => [id, load(url)]));
+      poses = new Map(
+        [...(next.poses ?? posePaths(warp, next.scheme))].map(([id, url]) => [id, load(url)]),
+      );
       sprites = next.sprites.map((url) => (url ? load(url) : null));
       rasters = new Map();
     },

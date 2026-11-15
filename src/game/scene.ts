@@ -81,7 +81,9 @@ import {
   loadGalaxyArt,
   loadGalaxyAsset,
   loadSvg,
+  materialShipHeading,
   paintInUse,
+  queueShipMaterialSources,
   queueSvg,
   rasterAgain,
   startRockLoads,
@@ -450,6 +452,7 @@ export class GameScene extends Scene {
       if (manifest.titleScreen) {
         this.load.json(TITLE_SCREEN_KEY, manifest.titleScreen);
       }
+      const materialFrames = queueShipMaterialSources(this, manifest);
       const composed = composedArchetypes(manifest.assets);
       for (const [archetype, frames] of enemyFrameSets(manifest.assets)) {
         this.load.json(`enemy-jets-${archetype}`, enemyJetsPath(archetype, frames[0]!));
@@ -468,7 +471,11 @@ export class GameScene extends Scene {
         // Painted ship frames load for the scheme in use, thrust frames only without valid jets,
         // a heavy's part frames when that craft first appears and whale frames for a whale. A
         // galaxy's own art is in its galaxy manifest, not here.
-        if (loadsOnDemand(asset) || !galaxyLoadsAtOnce(asset)) {
+        if (
+          loadsOnDemand(asset) ||
+          !galaxyLoadsAtOnce(asset) ||
+          (materialFrames && materialShipHeading(asset) !== undefined)
+        ) {
           continue;
         }
         if (asset.path.endsWith(".svg")) {

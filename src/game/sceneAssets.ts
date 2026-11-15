@@ -9,6 +9,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { GALAXY_ID } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import {
+  type CoreManifest,
   galaxyLoadsAtOnce,
   type GalaxyManifest,
   galaxyManifestKey,
@@ -45,17 +46,144 @@ import {
 } from "./enemyArt.ts";
 import { readJobArt } from "./jobArt.ts";
 import { sceneFit } from "./playCamera.ts";
+import { readQuantumJump } from "./quantumJump.ts";
 import { decorationRasterSize } from "./rareDecorations.ts";
 import { RockFrames } from "./rockFrames.ts";
+import { routeShipFrames } from "./routeArt.ts";
 import type { GameScene } from "./scene.ts";
 import { type Asset } from "./sceneShared.ts";
 import { paintFrames } from "./shipArt.ts";
+import {
+  readShipMaterialPalettes,
+  readShipMaterials,
+  ShipMaterialSources,
+} from "./shipMaterials.ts";
 import { readGalaxyStationArt } from "./stationArt.ts";
 import { type SvgRequest } from "./svgRasters.ts";
 import { type TextureFilter, vectorRaster } from "./textures.ts";
 import { readStrandedCraft, readTowLine } from "./towArt.ts";
 import { readWhaleArt, whaleFrameAsset } from "./whaleArt.ts";
 import { readWhirlpoolProjects } from "./whirlpoolProjects.ts";
+
+interface MaterialCache {
+  readonly poses: Map<string, ReadonlyMap<string, string>>;
+  readonly poseIds: readonly string[];
+  readonly source: ShipMaterialSources;
+  readonly sprites: Map<string, readonly string[]>;
+}
+const materialCaches = new WeakMap<object, MaterialCache>();
+
+/** The legacy aliases and logical idle frames whose geometry is shared across paints. */
+export function materialShipHeading(asset: Asset): number | undefined {
+  const heading = asset.directionIndex;
+  if (heading === undefined) {
+    return undefined;
+  }
+  const id = asset.paint ? `ship-${asset.paint}-${heading}` : `ship-${heading}`;
+  return asset.id === id || (asset.id === "ship" && asset.paint === undefined)
+    ? heading
+    : undefined;
+}
+
+/** Queue one pinned material package before the classic player textures finish preload. */
+export function queueShipMaterialSources(
+  scene: AssetsContext,
+  manifest: CoreManifest<Asset>,
+): boolean {
+  materialCaches.delete(scene);
+  if (!manifest.shipMaterials || !manifest.quantumJump) {
+    return false;
+  }
+  let queued = false;
+  const prepare = () => {
+    if (
+      queued ||
+      !scene.cache.json.exists("ship-materials") ||
+      !scene.cache.json.exists("ship-material-palettes") ||
+      !scene.cache.json.exists("quantum-jump")
+    ) {
+      return;
+    }
+    queued = true;
+    const jump = readQuantumJump(scene.cache.json.get("quantum-jump"));
+    const geometry = jump
+      ? readShipMaterials(
+          { poses: jump.warp.poses.map(({ id }) => id), warpHeading: jump.warp.heading },
+          scene.cache.json.get("ship-materials"),
+        )
+      : undefined;
+    const palettes = readShipMaterialPalettes(
+      ECONOMY.paintOrder,
+      scene.cache.json.get("ship-material-palettes"),
+    );
+    if (geometry && palettes && jump) {
+      materialCaches.set(scene, {
+        poseIds: jump.warp.poses.map(({ id }) => id),
+        poses: new Map(),
+        source: new ShipMaterialSources(geometry, palettes),
+        sprites: new Map(),
+      });
+    }
+    for (const asset of manifest.assets) {
+      if (asset.paint === undefined && materialShipHeading(asset) !== undefined) {
+        loadSvg(scene, asset);
+      }
+    }
+  };
+  for (const key of ["ship-materials", "ship-material-palettes", "quantum-jump"]) {
+    scene.load.once(`filecomplete-json-${key}`, prepare);
+  }
+  scene.load.json("ship-materials", manifest.shipMaterials);
+  scene.load.json("ship-material-palettes", "/art/ship-paint.json");
+  return true;
+}
+
+/** Stable material-generated source URLs for the selected paint, including the route map. */
+export function materialShipFrames(
+  scene: object,
+  assets: readonly Asset[],
+  paint: string | null,
+): readonly string[] {
+  const cache = materialCaches.get(scene);
+  if (!cache) {
+    return routeShipFrames(assets, paint);
+  }
+  const scheme = paint ?? ECONOMY.defaultPaint;
+  let sprites = cache.sprites.get(scheme);
+  if (!sprites) {
+    const legacy = routeShipFrames(assets, paint);
+    sprites = legacy.map((path, heading) => cache.source.ship(scheme, heading)?.url ?? path);
+    cache.sprites.set(scheme, sprites);
+  }
+  return sprites;
+}
+
+/** A shop swatch uses the same cached source as heading 48 of the selected paint. */
+export function materialShipSwatch(scene: object, paint: string): string | undefined {
+  return materialCaches.get(scene)?.source.ship(paint, 48)?.url;
+}
+
+/** Pose sources are assembled on paint selection, never during jump animation frames. */
+export function materialWarpPoses(
+  scene: object,
+  paint: string,
+): ReadonlyMap<string, string> | undefined {
+  const cache = materialCaches.get(scene);
+  if (!cache) {
+    return undefined;
+  }
+  let poses = cache.poses.get(paint);
+  if (!poses) {
+    poses = new Map(
+      cache.poseIds.flatMap((id) => {
+        const source = cache.source.pose(paint, id);
+        return source ? [[id, source.url] as const] : [];
+      }),
+    );
+    cache.poses.set(paint, poses);
+  }
+  return poses;
+}
 
 /** The scene state and methods this module's functions use. */
 export type AssetsContext = Pick<
@@ -619,7 +747,13 @@ export function loadSvg(scene: AssetsContext, asset: Asset): void {
   const { displayHeight, displayWidth } = asset;
   queueSvg(scene, {
     key: asset.id,
-    path: asset.path,
+    path:
+      materialShipHeading(asset) === undefined
+        ? asset.path
+        : (materialCaches
+            .get(scene)
+            ?.source.ship(asset.paint ?? ECONOMY.defaultPaint, materialShipHeading(asset)!)?.url ??
+          asset.path),
     size: (scale) =>
       displayHeight !== undefined && displayWidth !== undefined
         ? vectorRaster(scale, { displayHeight, displayWidth })
