@@ -293,3 +293,12 @@ it("keeps original action nodes and roles while marking the footer for one share
     "grid-template-columns:minmax(0,1fr)",
   );
 });
+
+it("aligns only a sole visible Close right while retaining native and presented button counting", () => {
+  const selector = `${UI_SCOPE} [data-footer-action="close"]:not(:has(
+  > :is(button,.ada-button-presentation):not([hidden])
+  ~ :is(button,.ada-button-presentation):not([hidden])
+))`;
+  expect(rule(selector)).toContain("align-self:flex-end;justify-content:end");
+  expect(rule(selector)).toContain("width:max-content;max-width:100%");
+});
