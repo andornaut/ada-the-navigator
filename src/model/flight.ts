@@ -1108,8 +1108,9 @@ export function planRequiredFrigate(
   flight: FlightState,
   id: string,
   siteId: string,
+  maxSupport = FRIGATE_ESCORT_COUNT,
 ): RequiredFrigatePlan | null {
-  for (let count = FRIGATE_ESCORT_COUNT; count >= 0; count--) {
+  for (let count = maxSupport; count >= 0; count--) {
     const home = questFrigateHome(content, flight, id, siteId, count);
     if (!home) {
       continue;
@@ -1127,6 +1128,45 @@ export function planRequiredFrigate(
     }
   }
   return null;
+}
+
+export type RequiredRoutePlanningResult =
+  | { readonly status: "blocked"; readonly siteId: string }
+  | { readonly status: "planned"; readonly plans: readonly RequiredFrigatePlan[] };
+
+/** Reserve every required leader before allocating support; planning changes no knowledge or world state. */
+export function planRequiredRouteReservations(
+  content: GameContent,
+  flight: FlightState,
+  sites: readonly SpaceObject[],
+): RequiredRoutePlanningResult {
+  const projection = structuredClone(flight);
+  for (const site of sites) {
+    if (!projection.objects.some((actor) => actor.id === site.id)) {
+      projection.objects.push(structuredClone(site));
+    }
+  }
+  const plans: RequiredFrigatePlan[] = [];
+  for (const site of sites) {
+    const plan = planRequiredFrigate(content, projection, `route:${site.id}`, site.id, 0);
+    if (!plan) {
+      return { siteId: site.id, status: "blocked" };
+    }
+    projection.objects.push(plan.leader);
+    plans.push(plan);
+  }
+  for (const [index, reserved] of plans.entries()) {
+    const withoutLeader = {
+      ...projection,
+      objects: projection.objects.filter((actor) => actor.id !== reserved.leader.id),
+    };
+    const plan = planRequiredFrigate(content, withoutLeader, reserved.leader.id, reserved.siteId);
+    if (plan) {
+      plans[index] = plan;
+      projection.objects = [...withoutLeader.objects, plan.leader, ...plan.support];
+    }
+  }
+  return { plans, status: "planned" };
 }
 
 /** Caller-supplied station plans have no implicit site, defender count, reward or replenishment. */

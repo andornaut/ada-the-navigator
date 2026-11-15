@@ -2,7 +2,12 @@ import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
-import { createFlight, planRequiredFrigate, spawnQuestFrigateAt } from "./flight.ts";
+import {
+  createFlight,
+  planRequiredFrigate,
+  planRequiredRouteReservations,
+  spawnQuestFrigateAt,
+} from "./flight.ts";
 import { worldFitsEncounter, worldSpawnerStage } from "./spawner.ts";
 import type { SpaceObject } from "./types.ts";
 
@@ -73,4 +78,24 @@ it("reports an incompatible occupied type budget without omitting the required l
   expect(planRequiredFrigate(CONTENT, flight, "route:growers", site.id)).toBeNull();
   expect(flight).toEqual(before);
   expect(flight.combat?.emptyRoutePlans).toBeUndefined();
+});
+
+it("reserves all three real Sunflower leaders before optional support without revealing planned sites", () => {
+  const { flight, site } = siteFlight(0);
+  flight.objects = [];
+  const sites = ["growers", "workshop", "salvagers"].map((id, index) => ({
+    ...site,
+    id,
+    x: (index - 1) * CONTENT.tuning.storySpacing,
+  }));
+  const before = structuredClone(flight);
+  const result = planRequiredRouteReservations(CONTENT, flight, sites);
+  expect(result.status).toBe("planned");
+  if (result.status !== "planned") {
+    throw new Error(result.siteId);
+  }
+  expect(result.plans.map((plan) => plan.leader.routeId)).toEqual(sites.map((item) => item.id));
+  expect(result.plans.every((plan) => plan.support.length === 0)).toBe(true);
+  expect(result.plans.every((plan) => plan.leader.enemy!.archetype === "frigate")).toBe(true);
+  expect(flight).toEqual(before);
 });
