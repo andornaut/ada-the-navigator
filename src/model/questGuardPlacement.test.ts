@@ -2,6 +2,9 @@ import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ENEMY_AVOIDANCE } from "../data/enemyNavigation.ts";
+import { ROUTE_POSITION } from "../data/galaxies.ts";
+import { partsReach, worldParts } from "./convex.ts";
+import { enemyPhysicalBody } from "./enemyBody.ts";
 import {
   createFlight,
   ensureRouteEncounter,
@@ -15,6 +18,7 @@ import { worldActivateFlightRegion, worldSyncFlightRegion } from "./geography.ts
 import { legacyGuardHomeUpdates } from "./legacyGuardHomes.ts";
 import { questGuardAnchor, questGuardHomePorts } from "./questGuardPlacement.ts";
 import type { SpaceObject } from "./types.ts";
+import { worldDistance } from "./worldContacts.ts";
 
 function fixture() {
   const flight = createFlight(CONTENT, 1, 173, { known: [] });
@@ -135,9 +139,30 @@ it("creates a new quest route frigate at the canonical local home without projec
   const guard = ensureRouteEncounter(CONTENT, site.id, flight)!;
   expect(guard).not.toBeNull();
   expect({ x: guard.x, y: guard.y }).toEqual(home);
-  expect(guard.enemy!.home).toEqual(home);
+  expect({ x: guard.enemy!.home.x, y: guard.enemy!.home.y }).toEqual(home);
   expect(guard.routeId).toBe(site.id);
-  expect(flight.objects.filter((actor) => actor.enemy?.escortOf === guard.id)).toHaveLength(2);
+  const followers = flight.objects.filter((actor) => actor.enemy?.escortOf === guard.id);
+  expect(followers).toHaveLength(2);
+  const world = flightWorldContext(flight);
+  const reach = Math.max(
+    ...[guard, ...followers].map(
+      (actor) =>
+        worldDistance(world, guard, actor) +
+        partsReach(worldParts(enemyPhysicalBody(ROUTE_POSITION[flight.galaxy], actor.enemy!)!)),
+    ),
+  );
+  const minimum = CONTENT.tuning.safeRadius + reach;
+  expect(worldDistance(world, site, guard)).toBeGreaterThanOrEqual(minimum);
+  expect(worldDistance(world, site, guard)).toBeLessThanOrEqual(
+    minimum + ENEMY_AVOIDANCE.clearance,
+  );
+  expect(guard.x).toBe(site.x);
+  expect(guard.y).toBeLessThan(site.y);
+  const remote = structuredClone(before);
+  remote.player = { x: -30000, y: -10000 };
+  const independentlyPlaced = ensureRouteEncounter(CONTENT, site.id, remote)!;
+  expect(independentlyPlaced).not.toBeNull();
+  expect({ x: independentlyPlaced.x, y: independentlyPlaced.y }).toEqual(home);
   expect(flight.combat!.routeEncounters).toContain(site.id);
   const once = structuredClone(flight);
   flight.player = { x: 30000, y: -10000 };
