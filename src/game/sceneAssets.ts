@@ -6,7 +6,7 @@ import { GameObjects, Loader } from "phaser";
 
 import { ASTEROID_ART, type AsteroidArt, readResourceRocks } from "../data/asteroidCatalog.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { GALAXY_ID } from "../data/galaxies.ts";
+import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import {
   type CoreManifest,
@@ -316,6 +316,14 @@ export function loadGalaxyAsset(scene: AssetsContext, asset: Asset): void {
  * its SVGs and sheets, its craft and claim jumper data and its own data files.
  */
 export function queueGalaxyArt(scene: AssetsContext, galaxy: GalaxyNumber): void {
+  queueGalaxyAssets(scene, undefined, galaxy);
+}
+
+function queueGalaxyAssets(
+  scene: AssetsContext,
+  familySubset: { readonly family: string; readonly archetype: string } | undefined,
+  galaxy: GalaxyNumber,
+): void {
   const manifest =
     scene.galaxyManifests.get(galaxy) ??
     readGalaxyManifest<Asset>(scene.cache.json.get(galaxyManifestKey(galaxy)));
@@ -336,7 +344,12 @@ export function queueGalaxyArt(scene: AssetsContext, galaxy: GalaxyNumber): void
       ]);
     }
   }
-  const assets = manifest.assets;
+  const assets = familySubset
+    ? manifest.assets.filter(
+        (asset) =>
+          asset.family === familySubset.family && asset.archetype === familySubset.archetype,
+      )
+    : manifest.assets;
   for (const asset of assets) {
     loadGalaxyAsset(scene, asset);
   }
@@ -364,6 +377,9 @@ export function queueGalaxyArt(scene: AssetsContext, galaxy: GalaxyNumber): void
         );
       }
     }
+  }
+  if (familySubset) {
+    return;
   }
   queueBackdrop(scene, galaxy, manifest);
   // The galaxy's own data files, named by its manifest's links, and its stranded craft data.
@@ -640,6 +656,51 @@ export function familyArt(scene: AssetsContext, archetype: string): EnemyArt<Ass
     : scene.enemyArt.get(archetype);
 }
 
+/** Source-family metadata uses the scene's canonical manifest cache and loader, without world art. */
+export function ensureEnemyFamilyManifest(
+  scene: AssetsContext,
+  family: EnemyFamily | undefined,
+  archetype: string,
+): boolean {
+  if (!family) {
+    return true;
+  }
+  const galaxy = GALAXY_NUMBERS.find((id) => GALAXY_ID[id] === family.galaxy);
+  if (galaxy === undefined) {
+    return false;
+  }
+  if (scene.galaxyManifests.has(galaxy)) {
+    return true;
+  }
+  const key = galaxyManifestKey(galaxy);
+  const subset = { archetype, family: family.family };
+  if (scene.cache.json.exists(key)) {
+    queueGalaxyAssets(scene, subset, galaxy);
+    if (!scene.galaxyManifests.has(galaxy)) {
+      return false;
+    }
+    scene.load.once(Loader.Events.COMPLETE, () => readGalaxyArt(scene));
+    scene.load.start();
+    return scene.galaxyManifests.has(galaxy);
+  }
+  const path = scene.galaxyManifestPaths[galaxy];
+  if (!path || scene.galaxyLoads.has(galaxy)) {
+    return false;
+  }
+  // Share the existing in-flight manifest marker; a later own flight still queues its world art.
+  scene.galaxyLoads.add(galaxy);
+  scene.load.once(`filecomplete-json-${key}`, () => {
+    queueGalaxyAssets(scene, subset, galaxy);
+    if (scene.galaxyManifests.has(galaxy)) {
+      scene.galaxyLoads.delete(galaxy);
+    }
+  });
+  scene.load.once(Loader.Events.COMPLETE, () => readGalaxyArt(scene));
+  scene.load.json(key, path);
+  scene.load.start();
+  return false;
+}
+
 /**
  * A heavy's hardpoint bases and turret tops load the first time that archetype is in flight, so
  * their hundreds of frames never delay a screen that shows none. Until they load, the craft
@@ -647,11 +708,9 @@ export function familyArt(scene: AssetsContext, archetype: string): EnemyArt<Ass
  */
 export function loadEnemyParts(scene: AssetsContext, archetype: string): void {
   const family = familyOf(scene, archetype);
-  const galaxy = scene.model.state.flight?.galaxy;
-  // Coral parts are in the core manifest; a galaxy family's in its galaxy's, which may not
-  // have loaded when the craft first draws.
+  // A shared family can come from a different galaxy than the current flight.
   const parts = enemyPartsToLoad(
-    !family || (galaxy !== undefined && scene.galaxyManifests.has(galaxy)),
+    ensureEnemyFamilyManifest(scene, family, archetype),
     (id) => scene.textures.exists(id),
     family ? (scene.familyParts.get(family.family) ?? []) : scene.partAssets,
     archetype,
