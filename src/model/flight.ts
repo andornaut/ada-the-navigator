@@ -121,6 +121,8 @@ import {
 import { readRequiredPlan, storeRequiredPlan, takeRequiredPlan } from "./requiredEncounterPlans.ts";
 import { requiredRouteGeometry } from "./requiredRouteGeometry.ts";
 import {
+  type OptionalWorldFootprint,
+  requiredWorldOccupantsPlacementClear,
   requiredWorldPlacementClear,
   requiredWorldPopulation,
   type RequiredWorldReservation,
@@ -274,19 +276,37 @@ function pendingRequiredRoutes(flight: FlightState): readonly RequiredWorldReser
   );
 }
 
+function requiredFootprintClear(
+  content: GameContent,
+  flight: FlightState,
+  footprint: OptionalWorldFootprint,
+): boolean {
+  const context = { ...flightWorldContext(flight), content, galaxy: flight.galaxy };
+  const authored = flight.galaxy === 4 && flight.needle ? stationPopulationObjects(flight) : [];
+  return (
+    requiredWorldPlacementClear(context, requiredRouteGeometry(content, flight), footprint) &&
+    requiredWorldOccupantsPlacementClear(
+      context,
+      {
+        actors: authored.filter(
+          (object) => object.enemy?.packId === "needle:exit" && liveEnemy(object),
+        ),
+        sites: authored.filter((object) => object.kind === "destination"),
+      },
+      footprint,
+    )
+  );
+}
+
 function requiredPlacementClear(
   content: GameContent,
   flight: FlightState,
   object: SpaceObject,
 ): boolean {
-  return requiredWorldPlacementClear(
-    { ...flightWorldContext(flight), content, galaxy: flight.galaxy },
-    requiredRouteGeometry(content, flight),
-    {
-      center: object.orbit ?? object,
-      radius: placementRadius(object) + (object.orbit?.radius ?? 0),
-    },
-  );
+  return requiredFootprintClear(content, flight, {
+    center: object.orbit ?? object,
+    radius: placementRadius(object) + (object.orbit?.radius ?? 0),
+  });
 }
 
 function safe(content: GameContent, point: Vec, flight: FlightState): boolean {
@@ -1644,11 +1664,10 @@ function generateRegion(content: GameContent, x: number, y: number, flight: Flig
   }
   // Reserve the complete optional formation before creating any of its mandatory escorts.
   if (
-    !requiredWorldPlacementClear(
-      { ...flightWorldContext(flight), content, galaxy: flight.galaxy },
-      requiredRouteGeometry(content, flight),
-      { center, radius: encounterReach(content, archetype, count, escorts, flight.galaxy) },
-    )
+    !requiredFootprintClear(content, flight, {
+      center,
+      radius: encounterReach(content, archetype, count, escorts, flight.galaxy),
+    })
   ) {
     return;
   }
