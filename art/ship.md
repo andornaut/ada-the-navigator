@@ -12,11 +12,11 @@
   about the hull's forward axis), `stretch` along the hull and `squash` across
   it, about the pivot and before the heading turn. Sprite frames use the bare
   heading, so their numbers are the heading rotation's exactly.
-- Exports: `ship-{0..63}.svg`, `ship-thrust-{0..31}.svg`, `ship-jets.json`,
+- Exports: `ship-{0..63}.svg`, `ship-thrust-{0..63}.svg`, `ship-jets.json`,
   `ship-nose.json` and the [paint schemes](#paint-schemes). Frames, jets and
   nose all derive from the one model, so a model change regenerates them
   together.
-  `ship.svg` and `ship-thrust.svg` are byte-identical aliases of index 20 (up).
+  `ship.svg` and `ship-thrust.svg` are byte-identical aliases of index 40 (up).
 - Transparent 96 by 96 viewport, pivot (48, 48), display 42 by 42.
   Keep the viewport intact and render the selected frame with rotation zero.
 - The ship has 64 headings from the shared player heading contract; enemy
