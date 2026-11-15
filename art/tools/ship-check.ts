@@ -11,6 +11,7 @@ import {
   ENGINE_MATERIAL_RELATIONSHIPS,
   engineOpeningGeometry,
   ENGINE_OPENING_SCALE,
+  NORMAL_CORE_BASE_SCALE,
   FRAME,
   forwardJetMouths,
   jetAttachment,
@@ -217,7 +218,7 @@ test("engine openings use Classic luminous brightness and paint-derived hues wit
   }
 });
 
-test("normal apertures share flush opening centres and contained physical widths", () => {
+test("normal apertures share the rear face above the skirt and contained root segments", () => {
   const jets = JSON.parse(readFileSync(new URL("ship-jets.json", assets), "utf8")) as {
     headings: {
       index: number;
@@ -239,12 +240,18 @@ test("normal apertures share flush opening centres and contained physical widths
     for (const [index, mouth] of heading.mouths.entries()) {
       const sign = index === 0 ? -1 : 1;
       const station = normalJetStation({ yaw: heading.index }, sign);
-      assert.deepEqual(station.middle, engineOpeningGeometry(sign).centre);
-      assert(Math.abs(station.width - 18.72) < 1e-12);
-      assert(Math.abs(station.coreWidth * station.width - 6.875) < 1e-12);
-      assert(Math.abs(Math.abs(station.middle[0]) - 12.25) < 1e-12);
-      assert(Math.abs(mouth.normalAperture.coreWidth - 6.875 / 18.72) < 1e-12);
-      assert.deepEqual(mouth.occluders, [], "normal triangles must have no visible mask kink");
+      assert.deepEqual(station.root, [
+        [sign * 21.44, 20.48, 1.2],
+        [sign * 5.44, 15.68, 1.2],
+      ]);
+      assert.deepEqual(station.middle, [sign * 13.44, 18.08, 1.2]);
+      assert.equal(station.half[2], 0);
+      assert(Math.abs(station.width - 16) < 1e-12);
+      assert(Math.abs(station.coreWidth * station.width - 6.1875) < 1e-12);
+      assert(Math.abs(Math.abs(station.middle[0]) - 13.44) < 1e-12);
+      assert(Math.abs(mouth.normalAperture.coreWidth - 6.1875 / 16) < 1e-12);
+      assert(Array.isArray(mouth.occluders), "normal tail overlay regions must be explicit");
+      if (heading.index === 52) assert(mouth.occluders.length > 0);
       assert.equal(mouth.outerCorner, undefined);
       assert.equal(mouth.coreOutboard, undefined);
       assert.equal(mouth.rearClip, undefined);
@@ -252,48 +259,26 @@ test("normal apertures share flush opening centres and contained physical widths
   }
 });
 
-test("the luminous aperture grows 25 percent about its centre and stays inside its housing", () => {
-  const dot = (a: readonly number[], b: readonly number[]) =>
-    a.reduce((sum, value, index) => sum + value * b[index]!, 0);
-  const minus = (a: readonly number[], b: readonly number[]) =>
-    a.map((value, index) => value - b[index]!);
-  const area = (points: readonly (readonly number[])[]) => {
-    const normal = [0, 0, 0];
-    for (const [i, a] of points.entries()) {
-      const b = points[(i + 1) % points.length]!;
-      normal[0]! += (a[1]! - b[1]!) * (a[2]! + b[2]!);
-      normal[1]! += (a[2]! - b[2]!) * (a[0]! + b[0]!);
-      normal[2]! += (a[0]! - b[0]!) * (a[1]! + b[1]!);
-    }
-    return Math.hypot(...normal) / 2;
-  };
+test("luminous apertures meet fixed normal-core roots without changing the housing", () => {
   assert.equal(ENGINE_OPENING_SCALE, 1.25);
+  assert.equal(NORMAL_CORE_BASE_SCALE, 0.9);
   for (const sign of [-1, 1]) {
-    const { original, points, centre, housing } = engineOpeningGeometry(sign);
-    for (let k = 0; k < 3; k++) {
-      assert(
-        Math.abs(points.reduce((sum, p) => sum + p[k]! / points.length, 0) - centre[k]!) < 1e-12,
+    const station = normalJetStation({ yaw: 52 }, sign);
+    const { points, height, referenceHeight, housing } = engineOpeningGeometry(sign);
+    const lower = points.filter((p) => Math.abs(p[2] - 1.2) < 1e-10);
+    assert.equal(lower.length, 2);
+    assert(Math.abs(Math.abs(lower[0]![0] - lower[1]![0]) - 6.1875) < 1e-10);
+    for (const side of [1, -1]) {
+      const expected = station.middle.map(
+        (v, i) => v + side * station.half[i]! * station.coreWidth,
       );
-      for (let i = 0; i < points.length; i++)
-        assert(
-          Math.abs(points[i]![k]! - centre[k]! - 1.25 * (original[i]![k]! - centre[k]!)) < 1e-12,
-        );
+      assert(lower.some((p) => p.every((v, i) => Math.abs(v - expected[i]!) < 1e-10)));
     }
-    assert(Math.abs(area(points) / area(original) - 1.5625) < 1e-12);
-    const a = housing[0]!,
-      u = minus(housing[1]!, a),
-      v = minus(housing[2]!, a);
-    const uu = dot(u, u),
-      uv = dot(u, v),
-      vv = dot(v, v),
-      denominator = uu * vv - uv * uv;
+    assert(height > 0 && height <= referenceHeight);
+    const [tip, , corner] = housing;
     for (const p of points) {
-      const w = minus(p, a),
-        wu = dot(w, u),
-        wv = dot(w, v);
-      const b = (vv * wu - uv * wv) / denominator,
-        c = (uu * wv - uv * wu) / denominator;
-      assert(Math.min(1 - b - c, b, c) > 0, "enlarged aperture must retain housing margins");
+      const upper = tip![2] + ((corner![2] - tip![2]) * (p[0] - tip![0])) / (corner![0] - tip![0]);
+      assert(p[2] >= 1.2 - 1e-10 && p[2] <= upper + 1e-10);
     }
   }
 });
@@ -342,8 +327,8 @@ test("warp poses publish projected uncut groups without scaling authored thrust 
       },
     ]);
     for (const mouth of pose.jets!.headings[0]!.mouths) {
-      assert(Math.abs(mouth.normalAperture.coreWidth - 6.875 / 18.72) < 1e-12);
-      assert.deepEqual(mouth.occluders, []);
+      assert(Math.abs(mouth.normalAperture.coreWidth - 6.1875 / 16) < 1e-12);
+      assert(Array.isArray(mouth.occluders), "warp retains projected tail overlay regions");
       assert(!("rearClip" in mouth), "forward warp groups must remain uncut");
     }
   }

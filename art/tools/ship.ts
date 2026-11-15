@@ -12,6 +12,7 @@ import {
   forwardJetMouths,
   nose,
   SCHEMES,
+  tailOccluders,
   type Scheme,
   UP,
 } from "./ship-model.ts";
@@ -26,16 +27,26 @@ import { check, rasterize, trace, type V2 } from "./silhouette.ts";
 // model in ship-model.ts.
 const output = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const paintOnly = process.argv.includes("--paint-only");
+const jetsOnly = process.argv.includes("--jets-only");
 
 function svg(yaw: number, thrust: boolean, scheme: Scheme = classic): string {
   const polygons = svgPaths(drawn(FRAME / 2, scheme.paint, { thrust, yaw })).map(
     ({ color, path }) => `  <path fill="${color}" d="${path}"/>`,
   );
+  const tail = thrust
+    ? svgPaths(
+        tailOccluders(FRAME / 2, { yaw }).map((outline) => ({
+          color: scheme.paint.rearSides,
+          outline,
+        })),
+      ).map(({ color, path }) => `  <path fill="${color}" d="${path}"/>`)
+    : [];
   return [
     '<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">',
     `  <title>Ship ${yaw}${thrust ? " thrust" : " idle"}${scheme === classic ? "" : ` ${scheme.name}`}</title>`,
     ...polygons,
     ...(thrust ? forwardJetSvg(FRAME / 2, { yaw }).map((path) => `  ${path}`) : []),
+    ...tail,
     "</svg>",
     "",
   ].join("\n");
@@ -104,20 +115,28 @@ function noses(): string {
 
 mkdirSync(output, { recursive: true });
 if (!paintOnly) writeFileSync(`${output}ship-jets.json`, jets());
-writeFileSync(
-  `${output}ship-paint.json`,
-  json({
-    version: 1,
-    schemes: SCHEMES.map(({ id, name, paint }) => ({
-      id,
-      name,
-      ...paint,
-      canopyHighlight: highlight(paint.canopyRoof),
-    })),
-  }),
-);
+if (!jetsOnly)
+  writeFileSync(
+    `${output}ship-paint.json`,
+    json({
+      version: 1,
+      schemes: SCHEMES.map(({ id, name, paint }) => ({
+        id,
+        name,
+        ...paint,
+        canopyHighlight: highlight(paint.canopyRoof),
+      })),
+    }),
+  );
 
-if (!process.argv.includes("--data-only")) {
+if (jetsOnly) {
+  for (let yaw = 0; yaw < SHIP_HEADINGS; yaw++) {
+    writeFileSync(`${output}ship-thrust-${yaw}.svg`, svg(yaw, true));
+  }
+  writeFileSync(`${output}ship-thrust.svg`, svg(UP, true));
+}
+
+if (!jetsOnly && !process.argv.includes("--data-only")) {
   if (!paintOnly) {
     writeFileSync(`${output}ship-nose.json`, noses());
     for (let yaw = 0; yaw < SHIP_HEADINGS; yaw++) {
@@ -168,4 +187,4 @@ if (!process.argv.includes("--data-only")) {
     });
 }
 
-if (!paintOnly) writeShipMaterials();
+if (!paintOnly && !jetsOnly) writeShipMaterials();

@@ -109,8 +109,9 @@ A step's `ship` names a `pose`, a `scale` and an optional `white`.
   version 1 geometry has the same 256 frame and one heading at index 0, with
   projected mouths for that exact bank, roll, stretch and squash.
 - The jet renderer uses the selected main engine/field layers with the same
-  centred normal-aperture profile and solid outer as forward flight. Complete
-  triangles render in front of the hull, with empty surface masks.
+  rear-face normal-aperture profile and solid outer as forward flight. Complete
+  triangles render above the base hull; the actual painted tail is redrawn above
+  overlapping flames using the shared projected tail regions.
   The static outer cue retains 16 model units; core and halo lengths are the
   canonical 0.55 and 1.1 ratios. The projected axis already includes the pose
   transform: do not normalize it or apply frame conversion or stretch again.

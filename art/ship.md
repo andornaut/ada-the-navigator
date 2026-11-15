@@ -1,7 +1,38 @@
-# Ship geometry
+# Ship drawing specification
+
+## Drawing requirements
+
+- Keep the canonical bilateral hull, canopy and tail geometry, proportions and
+  silhouette. Corresponding left/right facets use the same semantic material;
+  view-dependent shading does not change physical shape or material identity.
+- Derive all six paint schemes from the shared Classic-relative material rules
+  below. Keep hull facets, canopy, tail, rear housing and luminous openings
+  distinct. Palette changes do not duplicate geometry or alter collision.
+- Render 64 player headings from the one model and heading contract, with the
+  documented frame, pivot and collision alignment. Enemy craft retain 16 headings.
+- Use the semantic geometry and palette for player hulls and jump poses. Every
+  title, warp, map and flight consumer that draws normal exhaust uses the same
+  projected mouths and pure polygon/material helpers, not a separate jet design.
+- Each normal flame has three solid, perfect nested triangles: brightest core
+  centered inside medium, medium centered inside darkest outer, with dark visible
+  on both sides. All three root segments are collinear on the physical rear
+  wall edge above the skirt. The outer runs from the wing tip at the skirt top to the tail/rear-wall
+  junction; inner segments are centered and contained on that same line.
+- Render the actual painted tail above overlapping normal flames. Keep each
+  authored flame triangle complete: do not move its valid roots, cut vertices or
+  mask the flame to simulate draw order. Tail overlap is physical occlusion,
+  not a reason to deform the flame or change the hull. Do not create a connector
+  or move roots onto the underside of the skirt.
+  Retain the opening's physical width for the core where it fits the root span.
+- Reverse exhaust retains its separately approved corner attachment, outboard
+  core, rear-plane trim, selected materials and compositing contract below.
+
+## Canonical exports and geometry
 
 - Rebuild with `node art/tools/ship.ts` when resources are available. It uses
-  Node builtins and writes directly to `public/art/`.
+  Node builtins and writes directly to `public/art/`. Retained SVG exports are
+  Classic only; purchased paints and jump poses keep shared semantic geometry,
+  not regenerated coloured hull files.
 - The model is [ship-model.ts](tools/ship-model.ts), a module with no side
   effects: `drawn(pivot, paint, pose)` returns a pose's polygons in draw order.
   Every ship drawing imports it rather than copying the geometry:
@@ -16,7 +47,8 @@
   `ship-nose.json` and the [paint schemes](#paint-schemes). Frames, jets and
   nose all derive from the one model, so a model change regenerates them
   together.
-  `ship.svg` and `ship-thrust.svg` are byte-identical aliases of index 40 (up).
+  `ship-thrust.svg` is the index-40 (up) fallback alias. `ship.svg` remains a
+  logical manifest alias, resolved from semantic geometry rather than a file.
 - Transparent 96 by 96 viewport, pivot (48, 48), display 42 by 42.
   Keep the viewport intact and render the selected frame with rotation zero.
 - The ship has 64 headings from the shared player heading contract; enemy
@@ -114,7 +146,7 @@
   above the skirt top, the top kept 0.6 under the wall's top edge, lifted 0.03
   off the wall. Compatibility thrust exports retain the authored 16-unit outer length and
   use the canonical three layers through the shared projected geometry helper.
-  Their normal group is centred on the rear opening, with a solid outer;
+  Their normal group is centred on the physical rear-wall midpoint above the skirt, with a solid outer;
   aperture enlargement does not scale the flames.
 - All faces use one projection. The viewer looks from `+(1, 1, 1)`;
   outward normals determine visibility, and geometric depth partitioning handles
@@ -186,12 +218,15 @@ Cobalt, Crimson and Iris reach their hue's gamut boundary below `Cref`.
 Classic retains its exact `#86deff` bytes. The table records the resulting
 in-gamut colours and measured Oklab values.
 
-The luminous aperture is enlarged
-1.25 times in both in-plane dimensions about its existing centre, increasing
-area by 1.5625. Its raised luminous surface is constrained to the projected
-housing boundary at grazing views. Jet hardpoints, widths and lengths
-derive from the unchanged base opening; the luminous-aperture scale is not
-applied to flames or hull geometry.
+The fixed normal-core width is the original mouth width times the 1.25
+reference scale times 0.9: `(15 - 9.5) * 1.25 * 0.9 = 6.1875` model X units.
+It is independent of `engineOpeningGeometry`, so moving or fitting the luminous
+surface cannot move the flame. The luminous lower corners meet those fixed core
+roots on the rear wall. Its vertical edges follow the existing leaning wall;
+height is the smaller of the original 2.875 reference and the available wall
+height at both ends. This gives 2.495395 model Z units without changing the
+housing, canopy or outer hull. Paints use this same geometry and their existing
+opening material.
 
 | Scheme  | Housing   | Opening   | Housing Oklab L / C | Opening Oklab L / C |
 | ------- | --------- | --------- | ------------------- | ------------------- |
@@ -255,22 +290,32 @@ yellow archive and all 450 logical player manifest entries remain available.
 
 `ship-jets.json` (version 1) drives jets that scale continuously with speed. Each
 mouth may include `occluders`, a list of polygons in the same 96px frame as its
-anchor. Legacy masks describe nearer surface fragments. Normal aperture mouths
-publish an empty list and draw their complete triangles in front of the idle
-`ship-{index}` frame. Legacy mouths without this profile retain their existing
-masking and compositing order; there are no animated jet frames.
+anchor. Legacy masks describe nearer surface fragments. For normal aperture
+mouths, these polygons identify the exact visible tail-side region. Draw complete
+triangles above the base hull, then the same painted tail region above the flames.
+Select it from the already loaded hull image; do not recolour or reconstruct it.
+Legacy and reverse mouths retain their existing metadata and compositing order;
+there are no animated jet frames.
 
 - `f` is current speed as a fraction of max speed. No jet at `f = 0`.
 - Jet length in ship units: `length.base + length.scale * f ^ length.exponent`
   (6 + 24 f²): about 2-3px at f = 0.25 and 13px at max on the 42px display.
 - `headings` holds all 64 headings. Each normal mouth has `anchor`, `axis`,
-  `half` and `normalAperture: { coreWidth }`. `anchor` is the projected centre
-  of the actual luminous rear opening. The full physical mouth spans 18.72
-  model X units; the unchanged luminous core spans 6.875. Thus `coreWidth` is
-  `6.875 / 18.72`, independent of paint, heading and Engine level.
+  `half` and `normalAperture: { coreWidth }`. The outer root endpoints are
+  `(sign * 21.44, 20.48, 1.2)` and `(sign * 5.44, 15.68, 1.2)`: the physical
+  rear-wall edge above the skirt. Its model midpoint is
+  `(sign * 13.44, 18.08, 1.2)`;
+  the model half-vector is `(sign * 8, 2.4, 0)`. Project and quantize both
+  endpoints through the actual pose, then derive frame `anchor` and `half`
+  from their sum and difference. This retains those exact projected endpoints.
+  The full mouth spans 16 model X units; the luminous core has width 6.1875.
+  Thus `coreWidth` is `6.1875 / 16`, independent of paint, heading and Engine level.
+- The luminous opening's lower corners derive from the fixed core root endpoints.
+  Its centre and upper edge follow from the fitted height on the existing rear
+  wall. Move the luminous surface to the flame, not the flame to the old opening.
 - Every selected normal triangle has the same root centre and axis. The
-  outer width factor is 1; the canonical medium is 0.734508547 and the core
-  is 0.367254274. A core-only selection retains the physical core factor.
+  outer width factor is 1; the canonical medium is 0.7734375 and the core
+  is 0.38671875. A core-only selection retains the physical core factor.
   Layer widths and lengths must remain nonincreasing, so each triangle stays
   inside the next. The new profile has no `outerCorner`, `coreOutboard` or
   `rearClip` and does not translate individual layers.
@@ -278,12 +323,16 @@ masking and compositing order; there are no animated jet frames.
   existing canonical material over the canonical space background at the
   homepage reference fraction, using the shared raster compositor. This fixes
   the visible dark shade without changing the canonical Engine RGB values or
-  the reverse material. Medium and core colours retain their existing rules.
-- Normal triangles render as complete three-edge polygons in front of the
-  hull, with explicit empty `occluders`. No hull mask cuts a facet or kink
-  into the visible outer triangle. The normal root direction reaches the
-  visible lower attachment corner; the outer covers that corner beyond the
-  medium layer. Hull geometry, housing and opening materials remain unchanged.
+  the reverse material. Engine 1 then multiplies the derived shade's Oklab
+  lightness by 0.55 and chroma by 0.9 at the same hue, with sRGB clipping and
+  half-even rounding, yielding solid blue-black `#101a2e`. Engine 2/3 colours
+  remain unchanged. Medium and core colours retain their existing rules.
+- Normal triangles retain three complete edges above the base hull. Their
+  `occluders` select the exact visible tail-side surfaces, projected by
+  `tailOccluders` from the canonical model. Redraw that painted tail above the
+  flames. The physical skirt occupies z=0 through z=1.2, below the emission
+  edge; it is geometry, not a shadow. Hull, housing and opening materials stay
+  unchanged. Reverse mouths do not acquire this normal-only overlay behavior.
 - Colour is `color`, or `colors` interpolated linearly in sRGB by `f`. The halo
   alpha is `max(0, (f - from) / (to - from)) * max` for legacy profiles.
   The normal outer uses its opaque appearance policy; other layers are opaque.
@@ -311,6 +360,20 @@ Light fields keep Engine 1 blue. Engine 2 uses outer `#9e3027`, core
 `#f2cf62`. Reverse and legacy mouths retain those two visible layers. Normal apertures
 include the solid normal outer described above.
 
+### Verification contract
+
+Check actual rendered pixels before accepting a change. Review the rear view and
+both root closeups at consistent scale: complete opaque triangles, dark on both
+sides, roots above the physical skirt, uninterrupted foreground tail, and no
+connector gap. Compare all authored triangle coordinates before and after a
+compositing change; the tail can occlude them without changing those coordinates.
+Source-coordinate assertions alone do not establish visible compliance. Verify
+all 64 projected mouth/collision/nose alignments when those geometries change;
+compare legacy/reverse points, RGB and alpha independently. A static contact does
+not establish full application or PWA acceptance. `node art/tools/ship.ts
+--jets-only` updates the normal JSON and 65 thrust fallbacks without rebuilding
+unchanged hull/collision/material exports.
+
 ### Retro jets
 
 `node art/tools/ship-retro-jets.ts` writes `ship-retro-jets.json`, using the
@@ -326,8 +389,8 @@ palette.
 
 `retroMouthAxis` derives each wing's half-mouth vector `(±2.75, 0, 0)`
 and forward/outward unit direction `(±sin(10°), -cos(10°), 0)`.
-`jetAttachment` selects the same near underside or far upper corner as the
-forward group, at model x/y `(±21.44, 20.48)`. Each mouth's `outerCorner`
+`jetAttachment` independently selects the near underside or far upper corner
+for reverse exhaust, at model x/y `(±21.44, 20.48)`. Each mouth's `outerCorner`
 is this selected point projected into its heading frame. The common anchor
 uses the widest currently visible selected layer, including a visible halo.
 `coreOutboard` retains the contained outboard-core arrangement for reverse
@@ -347,7 +410,8 @@ Layer widths, relative lengths, colours and alpha ramps come from the selected
 main material. Retro rendering adds no wing-edge ink. Actual backward velocity
 relative to facing selects retro jets with the existing motion threshold;
 forward motion and reduced-motion behavior retain their contracts. Forward
-root stays centred on the rear opening, with no geometry trimming.
+roots share the physical rear-wall midpoint above the skirt and collinear base edge,
+with no geometry trimming.
 
 `ship-retro-jets-yellow.json` is a static archive and is not rewritten by the
 active producer. It is not a Settings toggle.

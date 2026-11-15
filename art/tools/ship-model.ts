@@ -360,59 +360,67 @@ function mouthBase(sign: number): Point[] {
 }
 
 export const ENGINE_OPENING_SCALE = 1.25;
+export const NORMAL_CORE_BASE_SCALE = 0.9;
+const NORMAL_CORE_WIDTH =
+  (MOUTHS.outer - MOUTHS.inner) * ENGINE_OPENING_SCALE * NORMAL_CORE_BASE_SCALE;
 
-/** The luminous aperture grows about its existing centre, independently of jet hardpoints. */
-export function engineOpeningGeometry(sign: number) {
-  const original = mouthBase(sign);
-  const centre = original.reduce<Point>(
-    (sum, point) =>
-      point.map((value, index) => sum[index]! + value / original.length) as unknown as Point,
-    [0, 0, 0],
-  );
-  const points = original.map(
-    (point) =>
-      point.map(
-        (value, index) => centre[index]! + (value - centre[index]!) * ENGINE_OPENING_SCALE,
-      ) as unknown as Point,
-  );
-  const v = vertices();
-  const housing = sign < 0 ? [v.tipL, v.notchL, v.cornerL] : [v.tipR, v.notchR, v.cornerR];
-  return { original, points, centre, housing, linearScale: ENGINE_OPENING_SCALE };
-}
-
-/** Centred normal-exhaust station on the actual luminous rear aperture plane. */
-export function normalJetStation(pose: Pose, sign: number) {
+function normalRearRoot(sign: number) {
   const v = vertices();
   const wing = sign < 0 ? v.tipL : v.tipR;
   const notch = sign < 0 ? v.notchL : v.notchR;
-  const tailMidpoint: Point = [
-    (notch[0] + v.tail[0]) / 2,
-    (notch[1] + v.tail[1]) / 2,
-    (notch[2] + v.tail[2]) / 2,
-  ];
-  const opening = engineOpeningGeometry(sign);
-  const width = round(Math.abs(wing[0] - tailMidpoint[0]));
-  const attachment = jetAttachmentForPose(pose, sign).corner;
-  const spanScale = width / (2 * Math.abs(attachment[0] - opening.centre[0]));
-  const half: Point = [
-    (attachment[0] - opening.centre[0]) * spanScale,
-    (attachment[1] - opening.centre[1]) * spanScale,
-    (attachment[2] - opening.centre[2]) * spanScale,
-  ];
-  const openingWidth =
-    Math.max(...opening.points.map((point) => point[0])) -
-    Math.min(...opening.points.map((point) => point[0]));
+  const outer: Point = [wing[0], wing[1], HULL.skirt];
+  const inner: Point = [notch[0], notch[1], HULL.skirt];
+  const middle = outer.map((value, i) => round((value + inner[i]!) / 2)) as unknown as Point;
+  const half = outer.map((value, i) => round((value - inner[i]!) / 2)) as unknown as Point;
+  const width = round(2 * Math.abs(half[0]));
+  return { root: [outer, inner] as const, middle, half, width, wing, notch };
+}
+
+/** Luminous lower corners meet the fixed normal core; height fits the unchanged rear wall. */
+export function engineOpeningGeometry(sign: number) {
+  const original = mouthBase(sign);
+  const v = vertices();
+  const housing = sign < 0 ? [v.tipL, v.notchL, v.cornerL] : [v.tipR, v.notchR, v.cornerR];
+  const { root, middle, half, width } = normalRearRoot(sign);
+  const factor = NORMAL_CORE_WIDTH / width;
+  const [outer, inner] = [1, -1].map(
+    (side) => middle.map((value, i) => value + side * half[i]! * factor) as unknown as Point,
+  ) as [Point, Point];
+  const [tip, notch, corner] = housing as [Point, Point, Point];
+  const { d, n } = leaning(tip, notch);
+  const edge = (x: number) => tip[2] + ((corner[2] - tip[2]) * (x - tip[0])) / (corner[0] - tip[0]);
+  const referenceHeight =
+    (Math.max(...original.map((p) => p[2])) - Math.min(...original.map((p) => p[2]))) *
+    ENGINE_OPENING_SCALE;
+  const height = Math.min(referenceHeight, edge(outer[0]) - outer[2], edge(inner[0]) - inner[2]);
+  const top = (p: Point): Point => {
+    const z = p[2] + height;
+    return [p[0], (d - n[0] * p[0] - n[2] * z) / n[1], z];
+  };
+  const quad = [outer, inner, top(inner), top(outer)];
+  const points = sign === 1 ? quad : quad.toReversed();
+  const centre = points.reduce<Point>(
+    (sum, p) => p.map((value, i) => sum[i]! + value / points.length) as unknown as Point,
+    [0, 0, 0],
+  );
   return {
-    middle: opening.centre,
-    half,
-    width,
-    coreWidth: openingWidth / width,
-    opening,
-    wing,
-    notch,
-    tail: v.tail,
-    tailMidpoint,
-    referenceSpan: Math.abs(wing[0] - tailMidpoint[0]),
+    original,
+    points,
+    centre,
+    housing,
+    height,
+    referenceHeight,
+    referenceScale: ENGINE_OPENING_SCALE,
+    root,
+  };
+}
+
+/** Fixed rear-face roots and core reference do not depend on the relocated luminous geometry. */
+export function normalJetStation(pose: Pose, sign: number) {
+  return {
+    ...normalRearRoot(sign),
+    coreWidth: NORMAL_CORE_WIDTH / normalRearRoot(sign).width,
+    near: jetAttachmentForPose(pose, sign).near,
   };
 }
 
@@ -444,14 +452,19 @@ export function jetAttachment(yaw: number, sign: number) {
 export function forwardJetMouths(pivot: number, pose: Pose) {
   const projected = (centre: number, point: Point) =>
     projectAt(centre, centre, place(pose, point)).map(round) as [number, number];
+  const occluders = tailOccluders(pivot, pose);
   return [-1, 1].map((sign) => {
-    const { middle, half, coreWidth } = normalJetStation(pose, sign);
+    const { root, coreWidth } = normalJetStation(pose, sign);
+    const [outer, inner] = root.map((point) => projected(pivot, point)) as [
+      [number, number],
+      [number, number],
+    ];
     return {
-      anchor: projected(pivot, middle),
+      anchor: [(outer[0] + inner[0]) / 2, (outer[1] + inner[1]) / 2] as [number, number],
       axis: projected(0, [0, 1, 0]),
-      half: projected(0, half),
+      half: [(outer[0] - inner[0]) / 2, (outer[1] - inner[1]) / 2] as [number, number],
       normalAperture: { coreWidth },
-      occluders: [],
+      occluders,
     };
   });
 }
@@ -882,6 +895,17 @@ export function drawn(pivot: number, paint: Paint, pose: Pose): { color: string;
     return outline.length < 3 ? [] : [{ color: surface.color, outline }];
   });
 }
+/** Actual visible tail-side regions used to redraw the painted hull above normal flames. */
+export function tailOccluders(pivot: number, pose: Pose): V2[][] {
+  return ordered(viewer(pose), geometry(classic.paint).tree).flatMap((surface) => {
+    if (surface.kind !== "side") return [];
+    const outline = visibleOutline(pivot, pose, surface);
+    return outline.length < 3
+      ? []
+      : [outline.map(([x, y]) => [Number(x.toFixed(4)), Number(y.toFixed(4))] as V2)];
+  });
+}
+
 /** Surfaces nearer than the horizontal exhaust plane, in the same frame as jet anchors. */
 export function mouthOccluders(
   bounds: { length: number; width: number },
