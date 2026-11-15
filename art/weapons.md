@@ -49,6 +49,39 @@ range; their strokes and timings do not change by level.
 - Every player shot, bolt, missile and beam starts at the same origin, the
   ship's nose point for its heading.
 
+## Hit animation families
+
+Contacts carry explicit firing-weapon provenance, their actual world contact point and
+elapsed age. Directional contacts retain the incoming world vector; missile effects use
+that event's actual world blast radius. The current loadout, damage and radius do not
+select a family. Rendering projects the contact and direction once.
+
+| Source weapon                | Family          | Contact appearance                                            |
+| ---------------------------- | --------------- | ------------------------------------------------------------- |
+| Rapid Missile, Heavy Missile | `missile`       | One explosion recipe, scaled to the actual blast radius       |
+| Laser, Multi-Laser           | `compact`       | The same compact flash, rays and flecks                       |
+| Phaser                       | `compactBright` | The compact grammar, brighter and longer                      |
+| Scattershot                  | `pellet`        | A tiny, short-lived spark per actual pellet contact           |
+| Charged lance                | `lance`         | Concentrated flash and streak along the incoming direction    |
+| Ring burst                   | `ripple`        | One clean projected circular ripple                           |
+| Mine                         | `shockwave`     | An expanding outer front, distinct inner front and faint fill |
+
+`impactEffect`, `IMPACT_STYLE` and the shared spark/blast constants in
+[`weaponEffects.ts`](../src/game/weaponEffects.ts) are the canonical presentation
+coefficients. The existing renderer consumes their `EffectShape` records and light-field
+edges. There is no second effect-data file or duplicated weapon tuning.
+
+Enemy Lance and Phaser hooks use the actual drawn beam endpoint and its incoming
+vector. Their existing hit-window age is normalized into the shared effect phase; the
+mine pop uses its existing normal or reduced-motion duration. Firing tells, damage,
+collision, arming, radius and expiry remain unchanged. Reduced motion removes expansion
+and moving sparks while retaining the family silhouette and fade; the Mine keeps both
+fronts and its fill, and the fill receives no ink outline.
+
+An impact is separate from [ship destruction](destruction.md). The destruction flash,
+shards and pickup release use the same recipe regardless of the killing weapon; a
+missile does not suppress the wreck's own flash.
+
 ## Bolt and dot
 
 Unchanged. The Laser and Multi-Laser bolt is a 1.5 px amber line from the head
@@ -99,43 +132,19 @@ Reduced motion holds frame 0.
 
 ## Missile blasts
 
-A ground-plane circle of world radius `r` draws as an ellipse centred on the
-projected blast point, half-width `r x 1.414` and half-height `r x 0.707`.
-Stroke widths and dash lengths are screen px and do not scale with `R`; radii
-in world units do.
+Rapid and Heavy contacts both use the shared `BLASTS.heavy` recipe through
+`impactEffect`; only the actual event radius changes their spatial envelope.
+A ground-plane circle of world radius `r` projects to an ellipse with half-width
+`r × sqrt(2)` and half-height `r / sqrt(2)`, centred on the actual contact or
+projectile position at range expiry. Screen-space strokes do not scale with `r`.
 
-| Blast | `R` (wu) | Ellipse at the base view (px) | `T`    | `G`    | Flash steps    | `k_f` | Ring stroke (px) | Tint | Debris |
-| ----- | -------- | ----------------------------- | ------ | ------ | -------------- | ----- | ---------------- | ---- | ------ |
-| Rapid | 30       | 85 x 42                       | 220 ms | 110 ms | 0-20, 20-40 ms | 0.42  | 2.5 to 1.0       | 0.14 | none   |
-| Heavy | 60       | 170 x 85                      | 340 ms | 180 ms | 0-30, 30-60 ms | 0.34  | 4.0 to 1.5       | 0.16 | 8      |
+The recipe draws a tint, expanding ring, inner line, debris and a brief layered
+flash. Its growth, fade, stroke, alpha and flash coefficients remain in
+[`weaponEffects.ts`](../src/game/weaponEffects.ts). Each actual detonation has
+one impact effect. A destroyed ship still plays its own independent destruction.
 
-Rapid uses `R` 30 and Heavy `R` 60 at every level. A blast starts at the actual
-contact edge, or at the projectile position on range expiry.
-At time `t` from detonation, with `g = min(1, t / G)`:
-
-- Ring radius `r = max(0.5, R (1 - (1 - g)^3))` wu (ease-out cubic).
-- Ring alpha `a = 1` to `G`, then linear to 0 at `T`.
-- Tint: the ellipse at `r` filled amber, alpha `tint x (1 - t / T)^2`.
-- Ring: the ellipse at `r` stroked amber, alpha `a`, width linear from the first
-  to the second ring stroke value over `T`.
-- Inner line: when `r > 6`, the ellipse at `r - 2.2` wu stroked cream, 1 px,
-  alpha `0.8 a`.
-- Debris (Heavy only, to `G + 40` = 220 ms): for `i` 0 to 7, angle
-  `th = 2 pi i / 8 + 0.3`, ellipse direction
-  `e = (1.414 cos th, 0.707 sin th)` and its unit `n`; a cream line from `centre + r e + 3 n` for 6 px along `n`, 1.5 px, round caps,
-  alpha `1 - t / (G + 40)`.
-- Flash, drawn last: four filled ellipses of world radius `fr = R x k_f x s`,
-  scaled `1.25 fr` amber 0.3, `fr` amber 0.85, `0.66 fr` cream 1, `0.36 fr`
-  white 1, each alpha times `q`. Step 1: `s = 1`, `q = 0.95`. Step 2: `s = 0.55`,
-  `q = 0.6`. Then none.
-
-Each blast has at most one flash, played once. When a blast kills an enemy, its
-flash stands in for that enemy's [destruction](destruction.md) flash: the
-destruction skips its flash and keeps its shards and Stardust release.
-
-Reduced motion: no flash, growth or debris. The ellipse at `R` fills amber at
-alpha `0.15 a` and strokes amber at alpha `0.9 a`, with `a = 1 - t / T_r`:
-Rapid `T_r` 200 ms, stroke 2 px; Heavy `T_r` 300 ms, stroke 3 px.
+Reduced motion keeps a fading ring and tint at the actual radius, without
+flash, growth or debris, using the same shared recipe for both missiles.
 
 ## Multi-Laser fan
 
@@ -177,23 +186,17 @@ hard at the contact. Over the beam, a muzzle bloom at `u = 0`: discs of radius
 
 ### Hit spark
 
-One spark per shot, centred on the contact point (a fighter or an asteroid), for
-160 ms; a miss has none. With `p = t / 160`, rotated by the beam's screen angle:
-
-- Rays, while `p < 0.6` with `k = p / 0.6`: six 1.5 px round-capped lines at -150,
-  -95, -35, 25, 80 and 140 degrees, from radius `1.5 + 5 k` to `7.5 + 3 k`,
-  white while `p < 0.25` then cream, alpha `1 - 0.6 k`.
-- Core, while `p < 0.35`: white disc, radius `3 (1 - p / 0.35) + 0.5`.
-- Flecks, while `p > 0.2` with `m = (p - 0.2) / 0.8`: three amber discs, radius
-  1.1, at -120, -10 and 100 degrees and radius `6 + 5 (1 - (1 - m)^2)`, alpha
-  `1 - m`.
+A successful Phaser contact uses `compactBright`: the same rays, central core
+and flecks as Laser and Multi-Laser, at greater brightness and a longer visual
+lifetime. A miss has no contact effect. The spark is centred on the actual
+contact and aligned with the incoming beam; source coefficients live in
+`IMPACT_STYLE` and `spark`, rather than a separate Phaser spark recipe.
 
 ### Reduced motion
 
 A steady 6 px cream line (alpha `a`) over a 12 px amber edge (alpha `0.35 a`),
 without taper, width change or bloom, alpha 1 to 90 ms then linear to 0 at
-150 ms. A miss keeps the 28 px end fade. The spark becomes an unrotated cream
-ring, radius 3, 1.5 px stroke, alpha `1 - p` over 160 ms.
+150 ms. A miss keeps the 28 px end fade. The contact becomes the shared family's still cream ring and fades over its visual lifetime.
 
 ## Enemy Phaser
 
@@ -215,7 +218,7 @@ for Ada's beam) or to the first obstacle on it. It stays where it started.
   white core of radius 0.5 to 1.1.
 
 Beam: Ada's [Phaser beam](#phaser-beam) geometry, width and alpha keys (150 ms),
-miss fade over the last 28 px and hit spark, in coral:
+miss fade over the last 28 px. Its beam layers are coral:
 
 | Layer | Colour     | Width at nose to end (px, times `w`) | Alpha    |
 | ----- | ---------- | ------------------------------------ | -------- |
@@ -224,7 +227,8 @@ miss fade over the last 28 px and hit spark, in coral:
 | Core  | white      | 2.7 to 1.5                           | `a`      |
 
 Muzzle bloom: discs of radius `5 w` coral `0.3 a`, `2.9 w` coral `0.9 a` and
-`1.6 w` white `a`. The [enemy spark](#enemy-only-conventions) marks a hit.
+`1.6 w` white `a`. A hit uses the shared `compactBright` contact family at
+the drawn endpoint, independently of the coral beam body.
 
 Light field: the glow is ink, width 6.5 to 4 times `w`, alpha `0.9 a`; the
 bloom's outer disc is ink at `0.6 a`. The aim line follows the
@@ -232,8 +236,7 @@ bloom's outer disc is ink at `0.6 a`. The aim line follows the
 
 Reduced motion: the aim line is unchanged. The beam is a steady 6 px coral line
 over a 12 px coral edge at `0.35 a` (ink at `0.9 a` on a light field), alpha 1 to
-90 ms then linear to 0 at 150 ms. The spark is an unrotated coral ring, radius 3,
-1.5 px, alpha `1 - p` over 160 ms.
+90 ms then linear to 0 at 150 ms. The contact uses the shared reduced-motion `compactBright` ring.
 
 ## Enemy-only weapons
 
@@ -264,8 +267,9 @@ their damage, intervals, speeds, counts and lifetimes
 - Tells, lines and beams draw in the effect layer with the Phaser beam. They
   start at the firing turret's muzzle and stop at the first obstacle, like the
   beams.
-- Enemy spark: Art's [hit spark](#hit-spark) with rays white while `p < 0.25`
-  then coral, a white core and coral flecks. `scale` multiplies its radii.
+- Contact effects use the shared [hit families](#hit-animation-families):
+  `compactBright` for Phaser and a directional streak for Lance. Their warm
+  contact colours do not recolour the coral beam body or its tell.
 - Light field: a stroke draws over an ink stroke 2 px wider on the same path. A
   solid line's ink runs 1 px past each end. A dashed line's ink dashes are 8 on
   2 off, offset 1 px earlier, so each coral dash has 1 px of ink at both ends. A
@@ -324,17 +328,11 @@ scales by `1 - p^2` about its centre with its core white, and four coral flecks 
 radius 1 at 45, 135, 225 and 315 degrees sit at distance `5 + 6 p`, their y
 times 0.75, at alpha `1 - p`.
 
-Pop, when Ada's shot destroys the mine or it touches Ada, for 220 ms. With
-`g = min(1, t / 110)` and `R = 5 + 11 (1 - (1 - g)^3)`:
-
-- An ellipse of half-width `R` and half-height `R / 2`, filled coral at alpha
-  `0.14 (1 - t / 220)^2` and stroked coral at alpha 1 to 110 ms then linear to 0
-  at 220 ms, width 2 to 1 over the 220 ms.
-- To 180 ms, four coral flecks of radius 1.1 at 20, 110, 200 and 290 degrees, at
-  distance `4 + 9 (1 - (1 - t / 180)^2)`, their y times 0.6, alpha `1 - t / 180`.
-- Flash, drawn last: discs of radius `6 x scale` times 1.25 coral 0.3, 1 coral
-  0.85, 0.66 `plate` 1 and 0.36 white 1, each alpha times `q`. 0-40 ms: scale 1,
-  `q` 0.95. 40-80 ms: scale 0.55, `q` 0.6. Then none.
+Pop, when a shot destroys the mine or it touches Ada, uses the shared
+`shockwave` family: an expanding outer ring, a separate inner front and faint
+fill. The actual pop age is normalized over the existing pop duration. Ring
+burst contacts remain one clean ripple; they do not acquire the Mine's inner
+front or fill. This is presentation only, not a new blast or damage radius.
 
 Collision: contact is the drawn silhouette against Ada's drawn ship. `collision`
 holds it as convex `[x, y]` parts in logical px around the mine's centre at
@@ -345,13 +343,13 @@ it, and a fizzling mine has none. Against the drawing the parts have an IoU of
 0.9977 and lie within 0.023 px of its edge.
 
 Light field: the spikes and body draw over their silhouette grown by 1 px in
-ink; the hint arc, fizzle flecks, pop ring stroke, pop flecks and the flash's
-outer disc take ink edges, never the pop's tint.
+ink; the hint arc, fizzle flecks and both pop front strokes take ink edges,
+never the pop's faint fill.
 
 Reduced motion: `th` stays 0 and the core stays amber with no blink; the hint arc
 is unchanged. The fizzle is the still mine fading to alpha 0 over 200 ms. The pop
-is the ellipse at `R` 16, filled coral at `0.15 a` and stroked coral 2 px at
-`0.9 a`, with `a = 1 - t / 200`.
+holds both shockwave fronts and its fill at the shared radius while fading,
+without expansion. It retains the existing reduced pop expiry.
 
 ### Charged lance
 
@@ -381,7 +379,7 @@ first obstacle on it.
 - Muzzle bloom: discs of radius `7 w` coral `0.3 a`, `4.5 w` coral `0.9 a` and
   `2.5 w` white `a`. A beam at full length fades every layer linearly to
   alpha 0 over its last 28 px, as a Phaser miss does; one stopped by an
-  obstacle ends hard there with the enemy spark at scale 1.35.
+  obstacle ends hard there with the shared directional `lance` contact flash.
 
 Light field: the glow is ink, width 10 to 7.5 times `w`, alpha `0.9 a`; the
 bloom's outer disc is ink at `0.6 a`. The lines and the charge disc follow the
@@ -389,8 +387,8 @@ edge rule.
 
 Reduced motion: the dashes do not march and the lock has no white pulses. The
 beam is a steady 3 px coral line over a 6 px coral edge at `0.35 a` (ink at
-`0.9 a` on a light field), alpha 1 to 180 ms then linear to 0 at 300 ms. The spark
-is an unrotated coral ring, radius 4, 1.5 px, alpha `1 - p` over 160 ms.
+`0.9 a` on a light field), alpha 1 to 180 ms then linear to 0 at 300 ms. The contact uses the shared still-ring
+reduced-motion fallback over the existing Lance hit window.
 
 ## Pickups
 
