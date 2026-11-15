@@ -1,7 +1,7 @@
 import { expect, it, vi } from "vitest";
 
 import { createModalLayer } from "./modalLayer.ts";
-import { currentView, inCurrentView, rootPressGuard } from "./pressScope.ts";
+import { currentView, inCurrentView, invalidatePressScope, rootPressGuard } from "./pressScope.ts";
 
 const published = vi.hoisted(() => ({
   back: vi.fn(() => true),
@@ -86,4 +86,19 @@ it("disposes reporting without invoking leave/focus restoration and invalidates 
   expect(currentView(root)).toBe(root);
   Object.defineProperty(root, "isConnected", { value: false });
   expect(guard.gate.accepts()).toBe(false);
+});
+
+it("invalidates a disabled group press without changing the foreground view", () => {
+  const root = node(),
+    dialog = node(root);
+  const guard = rootPressGuard(root),
+    layer = createModalLayer(root);
+  const leave = layer.open({}, dialog),
+    captured = guard.gate.capture();
+  invalidatePressScope(root);
+  expect(captured()).toBe(false);
+  expect(currentView(root)).toBe(dialog);
+  expect(guard.gate.accepts()).toBe(true);
+  leave();
+  layer.dispose();
 });

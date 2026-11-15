@@ -73,3 +73,10 @@ export function enterPressView(
     }
   };
 }
+
+/** Cancel in-flight UI captures when an owned control group is disabled or keyboard-owned. */
+export function invalidatePressScope(root: HTMLElement): void {
+  const shared = state(owner(root));
+  const interruption = shared.gate.open();
+  interruption.close();
+}

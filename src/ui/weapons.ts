@@ -2,11 +2,15 @@ import type { Weapon } from "../data/types.ts";
 import { UPGRADE_TIER_COLOURS } from "../data/upgradeTiers.ts";
 import { WEAPON_LEVEL_COUNT } from "../data/weaponCatalog.ts";
 import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
+import { bindAdaAction } from "./actionBinding.ts";
 import { AmmoFeedbackQueue } from "./ammoFeedback.ts";
+import { SCROLL } from "./layout/contentCard.ts";
 import { FOCUS_RING } from "./layout/controls.ts";
 import { font, fromHudEdge, units } from "./layout/css.ts";
 import { HUD_AMMO_COUNT, HUD_BUTTON, HUD_ROW, HUD_WEAPON_LEVEL } from "./layout/playView.ts";
 import { TYPE } from "./layout/tokens.ts";
+import { readViewUnit } from "./layout/viewScale.ts";
+import { invalidatePressScope } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
 
 export interface WeaponChoice {
@@ -330,7 +334,8 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
   const buttons = new Map<Weapon, HTMLButtonElement>();
   let choices: readonly WeaponChoice[] = [];
   let enabled = false;
-  const cancelHolds = new Set<() => void>();
+  let disposed = false;
+  const actionBindings = new Map<Weapon, ReturnType<typeof bindAdaAction>>();
   const feedback = new AmmoFeedbackQueue();
   let lastFeedbackTime: number | undefined;
 
@@ -339,6 +344,8 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
     const ids = new Set(choices.map((choice) => choice.id));
     for (const [id, entry] of buttons) {
       if (!ids.has(id)) {
+        actionBindings.get(id)?.dispose();
+        actionBindings.delete(id);
         entry.remove();
         buttons.delete(id);
       }
@@ -370,57 +377,49 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
         gain.setAttribute("aria-live", "polite");
         gain.setAttribute("aria-atomic", "true");
         button.append(gain);
-        let timer: ReturnType<typeof setTimeout> | undefined;
-        let held = false;
-        const cancelHold = () => {
-          if (timer !== undefined) {
-            clearTimeout(timer);
-          }
-          timer = undefined;
-        };
-        cancelHolds.add(cancelHold);
-        button.addEventListener("pointerdown", (event) => {
-          event.stopPropagation();
-          cancelHold();
-          held = false;
-          if (!enabled || button.disabled || event.button !== 0 || !options.onHold) {
-            return;
-          }
-          timer = setTimeout(() => {
-            timer = undefined;
-            const current = choices.find((item) => item.id === choice.id);
-            if (!enabled || button.disabled || !current) {
-              return;
-            }
-            held = true;
-            options.onHold?.(current, button);
-          }, 500);
-        });
-        button.addEventListener("pointerup", (event) => {
-          event.stopPropagation();
-          cancelHold();
-          if (held) {
-            event.preventDefault();
-          }
-        });
-        button.addEventListener("pointercancel", cancelHold);
-        button.addEventListener("pointerleave", cancelHold);
+        const availability = () =>
+          enabled && !disposed && !button.disabled && choices.some((item) => item.id === choice.id)
+            ? { kind: "available" as const }
+            : { kind: "omitted" as const };
+        button.addEventListener("pointerdown", (event) => event.stopPropagation());
         button.addEventListener("keydown", () => {
-          held = false;
-          cancelHold();
-        });
-        button.addEventListener("click", (event) => {
-          event.stopPropagation();
-          if (held) {
-            held = false;
-            event.preventDefault();
-            return;
-          }
-          // A switch during the wait after the last one is refused with the shared cue.
-          if (enabled && !button.disabled && options.onSelect(choice.id)) {
-            refuse(button, options.reducedMotion());
+          if (!disposed) {
+            invalidatePressScope(parent);
           }
         });
+        actionBindings.set(
+          choice.id,
+          bindAdaAction(
+            {
+              beforeClick: (event) => event.stopPropagation(),
+              click: {
+                availability,
+                run: () => {
+                  // A switch during the wait after the last one is refused with the shared cue.
+                  if (enabled && !button.disabled && options.onSelect(choice.id)) {
+                    refuse(button, options.reducedMotion());
+                  }
+                },
+              },
+              current: () => !disposed,
+              ...(options.onHold
+                ? {
+                    hold: {
+                      availability,
+                      run: () => {
+                        const current = choices.find((item) => item.id === choice.id);
+                        if (enabled && !button.disabled && current) {
+                          options.onHold?.(current, button);
+                        }
+                      },
+                    },
+                  }
+                : {}),
+              slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
+            },
+            button,
+          ),
+        );
         root.append(button);
         entry = button;
         buttons.set(choice.id, entry);
@@ -471,19 +470,18 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
     },
     dispose(): void {
       feedback.clear();
-      for (const cancel of cancelHolds) {
-        cancel();
+      disposed = true;
+      for (const binding of actionBindings.values()) {
+        binding.dispose();
       }
-      cancelHolds.clear();
+      actionBindings.clear();
       root.remove();
     },
     setEnabled(value: boolean): void {
-      enabled = value;
-      if (!value) {
-        for (const cancel of cancelHolds) {
-          cancel();
-        }
+      if (enabled && !value) {
+        invalidatePressScope(parent);
       }
+      enabled = value;
       render();
     },
     /** Whether the field under the HUD is light, which outlines a levelled disc in ink. */

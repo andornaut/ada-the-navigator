@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createWeaponSelector, type WeaponLabels } from "./weapons.ts";
 
-class Element {
+class Element extends EventTarget {
   readonly attributes = new Map<string, string>();
   children: Element[] = [];
   className = "";
@@ -10,7 +10,6 @@ class Element {
   hidden = false;
   readonly style = { opacity: "", setProperty: vi.fn() };
   textContent = "";
-  addEventListener() {}
   append(...nodes: Element[]) {
     this.children.push(...nodes);
   }
