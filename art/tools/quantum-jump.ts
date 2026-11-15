@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { ellipse, line } from "@andornaut/art-kit/draw";
@@ -19,11 +19,12 @@ import {
 } from "./paint.ts";
 import { IN_BETWEEN, SHIMMER, SPACE_BG } from "./palette.ts";
 import { Random } from "./random.ts";
-import { SHIP_HEADINGS, SHIP_HEADING_CONTRACT } from "./projection.ts";
+import { SHIP_HEADING_CONTRACT } from "./projection.ts";
 import { centredView, LOGICAL_PER_DESIGN, shimmer } from "./shimmer.ts";
-import { svgPaths } from "./ship-paths.ts";
-import { DISPLAY, drawn, FRAME, forwardJetMouths, type Pose, SCHEMES } from "./ship-model.ts";
+import { DISPLAY, FRAME, forwardJetMouths, SCHEMES } from "./ship-model.ts";
 import { AUTHORED_JET_CURVE } from "./ship-jet-svg.ts";
+import { writeShipMaterials } from "./ship-materials.ts";
+import { WARP_FRAME, WARP_HEADING, WARP_POSES as POSES } from "./ship-poses.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const dataOnly = process.argv.includes("--data-only");
@@ -230,53 +231,9 @@ if (!dataOnly && !paintOnly) writePng(`${art}quantum-jump-tunnel.png`, tunnelShe
 // (roll, degrees), a stretch along the hull and a squash across it, about the pivot. "sprite" in a
 // step is the in-game idle frame instead. Frames are 256 frame px square, pivot at the centre,
 // at the sprite's display scale, so a step's scale 1 is the in-game size.
-const WARP_HEADING = (SHIP_HEADINGS * 270) / 360;
-const WARP_FRAME = 256;
-const POSES: readonly (Omit<Pose, "yaw"> & { readonly id: string })[] = [
-  { id: "bank-8", roll: 8 },
-  { id: "bank-16", roll: 16, thrust: true },
-  { id: "bank-24", roll: 24, thrust: true },
-  { id: "bank-30", roll: 30, thrust: true },
-  { id: "stretch-30", roll: 30, squash: 0.85, stretch: 3.2, thrust: true },
-  { id: "settle-24", roll: 24, stretch: 1.8, thrust: true },
-  { id: "settle-16", roll: 16, stretch: 1.3, thrust: true },
-  { id: "settle-10", roll: 10, stretch: 1.1, thrust: true },
-  { id: "settle-5", roll: 5 },
-];
 const posePath = (scheme: string, pose: string) => `/art/quantum-jump-ship/${scheme}/${pose}.svg`;
 
-function poseSvg(scheme: (typeof SCHEMES)[number], pose: (typeof POSES)[number]): string {
-  const polygons = drawn(WARP_FRAME / 2, scheme.paint, {
-    ...pose,
-    thrust: false,
-    yaw: WARP_HEADING,
-  });
-  for (const { outline } of polygons) {
-    if (outline.some(([x, y]) => Math.min(x, y) < 2 || Math.max(x, y) > WARP_FRAME - 2)) {
-      throw new Error(`warp pose ${pose.id} leaves its ${WARP_FRAME} frame`);
-    }
-  }
-  return [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${WARP_FRAME}" height="${WARP_FRAME}" viewBox="0 0 ${WARP_FRAME} ${WARP_FRAME}">`,
-    `  <title>Quantum jump ship ${pose.id} ${scheme.name}</title>`,
-    ...svgPaths(polygons).map(({ color, path }) => `  <path fill="${color}" d="${path}"/>`),
-    "</svg>",
-    "",
-  ].join("\n");
-}
-
-if (!dataOnly) {
-  for (const scheme of SCHEMES) {
-    if (paintOnly && scheme.id === "classic") continue;
-    mkdirSync(`${art}quantum-jump-ship/${scheme.id}`, { recursive: true });
-    for (const pose of POSES) {
-      writeFileSync(
-        `${art}${posePath(scheme.id, pose.id).slice("/art/".length)}`,
-        poseSvg(scheme, pose),
-      );
-    }
-  }
-}
+// Pose paths remain logical metadata; the runtime resolves their shared material geometry.
 
 const entry = (
   id: string,
@@ -535,4 +492,7 @@ if (!paintOnly) {
 }
 
 // The core manifest names the effect data next to the space palette.
-if (!dataOnly && !paintOnly) linkData("core", { quantumJump: "/art/quantum-jump.json" });
+if (!dataOnly && !paintOnly) {
+  linkData("core", { quantumJump: "/art/quantum-jump.json" });
+  writeShipMaterials();
+}

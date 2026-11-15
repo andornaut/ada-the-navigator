@@ -217,6 +217,40 @@ The unused yellow retro archive remains a historical version 1, 32-heading
 file. It is not an active player fallback. Enemy and other craft heading sets
 remain independent at 16.
 
+## Shared material geometry
+
+`node art/tools/ship-materials.ts` writes `public/art/ship-materials.json`
+and the core manifest's `shipMaterials` link. The ship and quantum producers
+also rebuild it. The version 1 payload retains the canonical 64-heading
+descriptor and references the unchanged `ship-paint.json` palettes.
+
+The material slots are `top`, `frontSides`, `rearSides`, `skirt`,
+`canopyRoof`, `canopySides`, `engineHousing` and `engineOpening`.
+`canopyHighlight` remains palette metadata; the current hull has no separate
+highlight geometry. All geometric materials are opaque. Antialias coverage
+comes from the existing SVG paths, without per-material bitmap masks.
+
+A shared path table stores exact SVG path data once. Each heading and actual
+warp pose has ordered `{ path, slot, alpha }` references for two profiles:
+`distinct` retains Classic's separate materials; `frontSkirt` unions the
+equal-colour `frontSides` and `skirt` regions in the five purchased paints.
+Resolve fills from the selected palette after selecting its matching profile.
+Keep the path order, nonzero fill rule, alpha 1 and four-decimal coordinates.
+Recolouring independently rasterized material masks changes their shared
+antialias boundaries.
+
+Ship geometry keeps frame 96, display scale 42/96 and pivot `[0.5, 0.5]`.
+Warp geometry keeps frame 256, heading 48, the same display scale and pivot,
+and all nine authored bank/stretch/squash poses. Their shared source is
+`art/tools/ship-poses.ts`; each pose exports its actual projected paths.
+Jet geometry, collision, opening dimensions and all palette values remain
+independent of this material contract.
+
+<!-- CLEANUP (added 2026-11-14): Remove coloured compatibility exports only after paired shared-material loader, build and PWA adoption. -->
+
+The existing coloured ship and warp SVGs remain available alongside this
+additive contract.
+
 ## Speed jets
 
 `ship-jets.json` (version 1) drives jets that scale continuously with speed. Each

@@ -23,6 +23,7 @@ import {
 } from "../model/nose.ts";
 import { shipBody, shipTouches } from "../model/shipBody.ts";
 import { SHIP_HEADING_CONTRACT } from "../model/shipHeadingContract.ts";
+import { SHIPPED_SHIP_SOURCES } from "../testing/shippedShipSources.ts";
 import { readTitleScreen } from "../ui/titleScreen.ts";
 import { ENEMY_HEADINGS } from "./enemyArt.ts";
 import { hasPlayerHeadingPackage } from "./playerHeadingPackage.ts";
@@ -93,8 +94,14 @@ describe("atomic 64-heading player package", () => {
         expect(selected.directionIndex).toBe(index);
         expect(selected.displayWidth).toBe(42);
         expect(selected.displayHeight).toBe(42);
-        expect(existsSync(`public${selected.path}`)).toBe(true);
-        expect(readFileSync(`public${selected.path}`, "utf8")).toContain('viewBox="0 0 96 96"');
+        if (SHIPPED_SHIP_SOURCES) {
+          const source = SHIPPED_SHIP_SOURCES.ship(paint, index);
+          expect(source).toBeDefined();
+          expect(source!.svg).toContain('viewBox="0 0 96 96"');
+        } else {
+          expect(existsSync(`public${selected.path}`)).toBe(true);
+          expect(readFileSync(`public${selected.path}`, "utf8")).toContain('viewBox="0 0 96 96"');
+        }
       }
       for (const jets of [forward, reverse]) {
         expect(jets.headings[index]).toHaveLength(2);

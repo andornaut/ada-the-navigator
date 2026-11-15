@@ -37651,5 +37651,6 @@
   "shipHeadings": {
     "count": 64,
     "version": 2
-  }
+  },
+  "shipMaterials": "/art/ship-materials.json"
 }

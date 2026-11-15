@@ -21,6 +21,12 @@ its version 1 effect and pose geometry encoding. The fixed warp world angle is
 hull paths, bank/roll/stretch transforms, pivots and authored 16-unit outer jet
 length.
 
+The nine pose definitions share `art/tools/ship-poses.ts` with the
+[shared material geometry](ship.md#shared-material-geometry) exporter.
+`ship-materials.json` contains each pose's actual ordered material paths,
+with the same frame, pivot and transform. Coloured pose SVGs and the current
+effect/jet metadata remain available for paired loader adoption.
+
 ## Timeline
 
 1000 ms in seven phases. The game switches to the destination at 520 ms, the

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 
+import { SHIPPED_TITLE_SHIP } from "../src/testing/shippedShipSources.ts";
 import {
   asteroidFixture,
   backdropSeed,
@@ -3132,7 +3133,7 @@ try {
     );
     assert.equal(shot.note, 0, `${name}: the start screen has no note`);
     assert.equal(shot.title, CONTENT.labels.home, `${name}: the wordmark is named by home`);
-    assert.equal(shot.shipSrc, "/art/ship-52.svg", `${name}: Classic's ship-52 before a paint`);
+    assert.equal(shot.shipSrc, SHIPPED_TITLE_SHIP, `${name}: the canonical Classic title frame`);
     for (const [action, box, role] of shot.actions) {
       assert.deepEqual(
         box,

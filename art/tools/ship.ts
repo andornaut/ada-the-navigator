@@ -20,6 +20,7 @@ import {
 import { JET_LENGTH, JET_LEVELS, jetLayers } from "./ship-jet-layers.ts";
 import { svgPaths } from "./ship-paths.ts";
 import { forwardJetSvg } from "./ship-jet-svg.ts";
+import { writeShipMaterials } from "./ship-materials.ts";
 import { check, rasterize, trace, type V2 } from "./silhouette.ts";
 
 // Writes Ada's ship sprite frames, paint schemes, speed jets, nose and collision from the shared
@@ -142,18 +143,11 @@ if (!process.argv.includes("--data-only")) {
         writeFileSync(`${output}ship-${thrust ? "thrust-" : ""}${yaw}.svg`, svg(yaw, thrust));
       }
     }
-    writeFileSync(`${output}ship.svg`, svg(UP, false));
     writeFileSync(`${output}ship-thrust.svg`, svg(UP, true));
   }
 
-  // Paint schemes: idle frames only; speed jets are unpainted and drawn behind them.
+  // Paid hulls use the shared material geometry; retain their logical manifest entries.
   const painted = SCHEMES.filter((scheme) => scheme !== classic);
-  for (const scheme of painted) {
-    mkdirSync(`${output}paint/${scheme.id}`, { recursive: true });
-    for (let yaw = 0; yaw < SHIP_HEADINGS; yaw++) {
-      writeFileSync(`${output}paint/${scheme.id}/ship-${yaw}.svg`, svg(yaw, false, scheme));
-    }
-  }
 
   // Ship entries open the manifest: the up aliases, then idle and thrust per heading, then
   // the paint frames, which mirror ship-N with their own path and a paint id.
@@ -191,3 +185,5 @@ if (!process.argv.includes("--data-only")) {
       manifest.shipHeadings = SHIP_HEADING_CONTRACT;
     });
 }
+
+if (!paintOnly) writeShipMaterials();

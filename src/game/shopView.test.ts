@@ -6,6 +6,7 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { shopRows } from "../model/shop.ts";
 import { newEconomy } from "../model/upgrades.ts";
+import { SHIPPED_SHIP_SOURCES } from "../testing/shippedShipSources.ts";
 import { itemGlyph, paintSwatchPath, stationRow } from "./shopView.ts";
 
 const publicFile = (path: string) => new URL(`../../public${path}`, import.meta.url);
@@ -48,7 +49,13 @@ describe("shop rows on the station view", () => {
     expect(paintSwatchPath("classic", "classic")).toBe("/art/ship-48.svg");
     expect(paintSwatchPath("iris", "classic")).toBe("/art/paint/iris/ship-48.svg");
     for (const scheme of Object.keys(ECONOMY.paints)) {
-      expect(existsSync(publicFile(paintSwatchPath(scheme, ECONOMY.defaultPaint)))).toBe(true);
+      if (SHIPPED_SHIP_SOURCES) {
+        const source = SHIPPED_SHIP_SOURCES.ship(scheme, 48);
+        expect(source).toBeDefined();
+        expect(source!.svg).toContain('viewBox="0 0 96 96"');
+      } else {
+        expect(existsSync(publicFile(paintSwatchPath(scheme, ECONOMY.defaultPaint)))).toBe(true);
+      }
     }
   });
 
