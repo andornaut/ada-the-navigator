@@ -104,6 +104,7 @@ import {
   worldSyncFlightRegion,
 } from "./geography.ts";
 import { guardApproach } from "./guardApproach.ts";
+import { queueHostileStationReward } from "./hostileStationReward.ts";
 import {
   hostileStationContext,
   materializeHostileStation,
@@ -3443,6 +3444,7 @@ function enemies(
     );
     object.enemy = intent.state;
     if (intent.effects.defeated) {
+      queueHostileStationReward(flight, events, object);
       destroyEnemy(object, flight);
       events.push({ id: object.id, type: "enemyDestroyed" });
       continue;
@@ -4167,6 +4169,9 @@ function hit(
     const disabled = object.enemy.disabled;
     object.enemy = damageEnemy(definition, { amount, hardpointId: part }, object.enemy);
     object.hp = enemyDefeated(object.enemy) ? 0 : Math.max(1, object.enemy.hp);
+    if ((!disabled && object.enemy.disabled) || object.hp <= 0) {
+      queueHostileStationReward(flight, events, object);
+    }
     if (object.hp > 0 && !disabled && object.enemy.disabled) {
       events.push({ id: object.id, type: "enemyDisabled" });
     }
@@ -4854,7 +4859,6 @@ export function wreckId(enemyId: string): string {
 function destroyEnemy(object: SpaceObject, flight: FlightState): void {
   object.hp = 0;
   const archetype = object.enemy?.archetype ?? "fighter";
-  // CLEANUP (added 2026-11-15): Bind station wreck/reward effects only after its policy is supplied.
   if (archetype === "hostileStation") {
     return;
   }
