@@ -99,6 +99,7 @@ import {
   placeDestinationAhead,
   placeHuntingPack,
   populateFlight,
+  populateRequiredChapterFlight,
   populateRequiredFlight,
   questGuardPlacementContext,
   routeBlocked,
@@ -1920,6 +1921,14 @@ export class GameModel {
       if (populateRequiredFlight(this.content, this.current, sites, flight).status === "blocked") {
         return;
       }
+    } else if (flight.galaxy === 4) {
+      populateRequiredChapterFlight(this.content, this.current, flight, () => {
+        chapterRuntime(flight.galaxy)?.init?.({
+          content: this.content,
+          flight,
+          progress: this.current,
+        });
+      });
     } else {
       populateFlight(this.content, this.current, flight);
     }

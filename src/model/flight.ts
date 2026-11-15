@@ -760,9 +760,10 @@ function generatedChunks(flight: FlightState): Set<string> {
 }
 
 const planningRequiredWorld = new WeakSet<FlightState>();
+const initializingRequiredChapter = new WeakSet<FlightState>();
 
 function generate(content: GameContent, point: Vec, flight: FlightState): void {
-  if (planningRequiredWorld.has(flight)) {
+  if (planningRequiredWorld.has(flight) || initializingRequiredChapter.has(flight)) {
     return;
   }
   worldActivateFlightRegion(flightWorldContext(flight), content, point, flight);
@@ -2584,6 +2585,22 @@ export function populateFlight(
     }
   }
   worldSyncFlightRegion(flightWorldContext(flight), content, flight);
+}
+
+/** Initialize the authored chapter before optional generation without changing placement policy. */
+export function populateRequiredChapterFlight(
+  content: GameContent,
+  progress: GalaxyProgress,
+  flight: FlightState,
+  initialize: () => void,
+): void {
+  initializingRequiredChapter.add(flight);
+  try {
+    initialize();
+  } finally {
+    initializingRequiredChapter.delete(flight);
+  }
+  populateFlight(content, progress, flight);
 }
 
 export function populateRequiredFlight(
