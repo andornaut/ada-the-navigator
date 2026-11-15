@@ -1,5 +1,4 @@
 import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
-import { createModalLayer } from "@andornaut/game-kit/web/ui/dom/modalLayer";
 
 import type { GalaxyNumber } from "../data/types.ts";
 import type { MapPlace } from "../model/map.ts";
@@ -8,6 +7,7 @@ import { createCompletionIndicator } from "./completionIndicator.ts";
 import { QUEST_LIST_PAGE_SIZE, QUEST_ROUTE_ARROW } from "./layout/questsScreen.ts";
 import { chipFace, chipGlyph, type MapScreenLabels } from "./mapScreen.ts";
 import { createButton, createCard, setFooterAction, setScrollGroup } from "./modal.ts";
+import { createModalLayer } from "./modalLayer.ts";
 
 export type QuestOrigin = "flight" | "list" | "ship";
 

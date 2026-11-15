@@ -1,8 +1,8 @@
 import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
-import { createModalLayer } from "@andornaut/game-kit/web/ui/dom/modalLayer";
 
 import { type CheatAction, cheatGroups, createCheatSession } from "./cheatActions.ts";
 import { createButton, createCard } from "./modal.ts";
+import { createModalLayer } from "./modalLayer.ts";
 
 export interface CheatLabels {
   readonly close: string;

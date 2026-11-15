@@ -1,5 +1,4 @@
 import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
-import { createModalLayer } from "@andornaut/game-kit/web/ui/dom/modalLayer";
 
 import { RESOURCE_DESCRIPTIONS } from "../data/resourceDescriptions.ts";
 import type { GalaxyNumber } from "../data/types.ts";
@@ -10,6 +9,7 @@ import { compactLevelName } from "./compactLevelName.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createMapScreen, type MapField, type MapScreenLabels } from "./mapScreen.ts";
 import { createButton, createCard, isTap } from "./modal.ts";
+import { createModalLayer } from "./modalLayer.ts";
 import { type PauseAction, pauseActions, type PausePlace } from "./pause.ts";
 import { createQuestsScreen, type QuestOrigin } from "./questsScreen.ts";
 import { refuse } from "./refusal.ts";

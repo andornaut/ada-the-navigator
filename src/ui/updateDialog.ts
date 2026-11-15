@@ -1,8 +1,7 @@
-import { createModalLayer } from "@andornaut/game-kit/web/ui/dom/modalLayer";
-
 import type { UpdateOffer } from "../pwa/updateOffer.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createActions, createButton, createCard, isTap } from "./modal.ts";
+import { createModalLayer } from "./modalLayer.ts";
 import { FONT_ROLES } from "./settings.ts";
 
 export interface UpdateLabels {
