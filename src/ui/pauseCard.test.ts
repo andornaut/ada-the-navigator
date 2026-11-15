@@ -15,10 +15,19 @@ let lastFocusOptions: unknown;
 
 // The cards' document, where the kit's focusTarget tracks the last input. With no window it
 // tracks touchstart for presses.
-let PAGE = Object.assign(new EventTarget(), {
-  activeElement: null as FakeElement | null,
-  defaultView: null,
-});
+function createDocument() {
+  return Object.assign(new EventTarget(), {
+    activeElement: null as FakeElement | null,
+    createElement: (tagName: string): FakeElement =>
+      Object.assign(new FakeElement(), { tagName: tagName.toUpperCase() }),
+    createElementNS: (): FakeElement => new FakeElement(),
+    createTextNode: (text: string): FakeElement =>
+      Object.assign(new FakeElement(), { textContent: text }),
+    defaultView: null,
+    fonts: Object.assign(new EventTarget(), { status: "loaded" }),
+  });
+}
+let PAGE = createDocument();
 
 // A stand-in for the few DOM members the pause cards and the map screen's construction use.
 class FakeElement {
@@ -56,18 +65,35 @@ class FakeElement {
       (this.listeners.get(type) ?? []).filter((item) => item !== listener),
     );
   }
+  get parentNode(): FakeElement | null {
+    return this.parentElement;
+  }
+  get firstElementChild(): FakeElement | null {
+    return this.children[0] ?? null;
+  }
+  get nextSibling(): FakeElement | null {
+    const siblings = this.parentElement?.children;
+    return siblings?.[siblings.indexOf(this) + 1] ?? null;
+  }
+  insertBefore(node: FakeElement, before: FakeElement | null): FakeElement {
+    if (node === before) {
+      return node;
+    }
+    node.remove();
+    node.parentElement = this;
+    this.children.splice(before ? this.children.indexOf(before) : this.children.length, 0, node);
+    return node;
+  }
   append(...nodes: FakeElement[]): void {
-    this.children.push(...nodes);
     for (const node of nodes) {
-      node.parentElement = this;
+      this.insertBefore(node, null);
     }
   }
   prepend(...nodes: FakeElement[]): void {
+    const before = this.firstElementChild;
     for (const node of nodes) {
-      node.parentElement?.children.splice(node.parentElement.children.indexOf(node), 1);
-      node.parentElement = this;
+      this.insertBefore(node, before);
     }
-    this.children.unshift(...nodes);
   }
   click(): void {
     for (const listener of this.listeners.get("click") ?? []) {
@@ -115,12 +141,21 @@ class FakeElement {
   cloneNode(): FakeElement {
     return Object.assign(new FakeElement(), { className: this.className });
   }
-  remove(): void {}
+  remove(): void {
+    if (this.parentElement) {
+      const siblings = this.parentElement.children;
+      siblings.splice(siblings.indexOf(this), 1);
+      this.parentElement = null;
+    }
+  }
   removeAttribute(name: string): void {
     this.attributes.delete(name);
   }
   replaceChildren(...nodes: FakeElement[]): void {
-    this.children = nodes;
+    for (const node of [...this.children]) {
+      node.remove();
+    }
+    this.append(...nodes);
   }
   setAttribute(name: string, value: string): void {
     this.attributes.set(name, value);
@@ -176,19 +211,10 @@ const SHIP: ShipView = {
 };
 
 beforeEach(() => {
-  PAGE = Object.assign(new EventTarget(), {
-    activeElement: null as FakeElement | null,
-    defaultView: null,
-  });
+  PAGE = createDocument();
   vi.stubGlobal("HTMLElement", FakeElement);
   vi.stubGlobal("Image", FakeImage);
-  vi.stubGlobal("document", {
-    createElement: (tagName: string) =>
-      Object.assign(new FakeElement(), { tagName: tagName.toUpperCase() }),
-    createElementNS: () => new FakeElement(),
-    createTextNode: (text: string) => Object.assign(new FakeElement(), { textContent: text }),
-    fonts: Object.assign(new EventTarget(), { status: "loaded" }),
-  });
+  vi.stubGlobal("document", PAGE);
   vi.stubGlobal("window", { addEventListener: vi.fn(), removeEventListener: vi.fn() });
 });
 
