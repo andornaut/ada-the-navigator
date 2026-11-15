@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import manifest from "../../public/art/manifest.json";
 import data from "../../public/art/quantum-jump.json";
+import jetData from "../../public/art/ship-jets.json";
 import { type SheetArt, sheetFrame } from "../ui/jumpOverlay.ts";
+import { jetShapePolygons } from "./jetGeometry.ts";
 import {
   canvasFit,
   emergencyGlow,
@@ -79,9 +81,30 @@ describe("quantum jump data", () => {
         expect(pose.jets.headings).toHaveLength(1);
         expect(pose.jets.length).toEqual({ base: 16, exponent: 2, scale: 0 });
         expect(pose.jets.headings[0]).toHaveLength(2);
-        expect(pose.jets.headings[0]!.every((mouth) => mouth.coreOutboard && !mouth.rearClip)).toBe(
-          true,
-        );
+        const layers = jetData.engineLevels[0]!.layers;
+        for (const mouth of pose.jets.headings[0]!) {
+          expect(mouth.normalAperture).toEqual({ coreWidth: 6.1875 / 16 });
+          expect(mouth.coreOutboard).toBeUndefined();
+          expect(mouth.outerCorner).toBeUndefined();
+          expect(mouth.rearClip).toBeUndefined();
+          const triangles = jetShapePolygons(mouth, layers, pose.jets.length.base, 1);
+          expect(triangles).toHaveLength(3);
+          for (const { layerIndex, points } of triangles) {
+            expect(points).toHaveLength(3);
+            const [a, tip, b] = points;
+            expect((a!.x + b!.x) / 2).toBeCloseTo(mouth.anchor.x, 12);
+            expect((a!.y + b!.y) / 2).toBeCloseTo(mouth.anchor.y, 12);
+            const width =
+              layerIndex === 0
+                ? 1
+                : (mouth.normalAperture!.coreWidth * layers[layerIndex]!.width) / layers[2]!.width;
+            expect(a!.x - mouth.anchor.x).toBeCloseTo(mouth.half.x * width, 12);
+            expect(a!.y - mouth.anchor.y).toBeCloseTo(mouth.half.y * width, 12);
+            const length = pose.jets.length.base * layers[layerIndex]!.length;
+            expect(tip!.x).toBeCloseTo(mouth.anchor.x + mouth.axis.x * length, 12);
+            expect(tip!.y).toBeCloseTo(mouth.anchor.y + mouth.axis.y * length, 12);
+          }
+        }
       }
     }
     expect(jump.warp.poses.find(({ id }) => id === "bank-8")?.jets).toBeUndefined();
