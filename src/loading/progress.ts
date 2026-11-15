@@ -53,7 +53,7 @@ export const BAR_TIMING: DomProgressTiming = {
   segment: LOADING_BAR.segment,
 };
 // The kit's bar, the fill and track band; the host holds it and the rule below, the whole height.
-const FRAME = { height: LOADING_BAR.fillHeight, width: SCREEN.width, x: 0, y: 0 };
+const FRAME = { height: LOADING_BAR.height, width: SCREEN.width, x: 0, y: 0 };
 
 // Offline installation and forced updates share the bar while either still runs.
 const background = new Set<"activation" | "offline" | "required">();
@@ -163,7 +163,7 @@ export function mountLoading(parent: HTMLElement): () => void {
     height: `${LOADING_BAR.ruleHeight}px`,
     left: "0",
     position: "absolute",
-    top: `${FRAME.height}px`,
+    top: `${LOADING_BAR.fillHeight}px`,
     width: `${FRAME.width}px`,
   });
   bar.element.append(rule);
