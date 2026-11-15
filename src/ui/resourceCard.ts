@@ -1,11 +1,15 @@
+import type { ControlAvailability } from "@andornaut/game-kit/runtime/ui/controlPresentation";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
+import { bindAdaAction } from "./actionBinding.ts";
 import { presentAdaButton } from "./buttonPresentation.ts";
 import { detailCount, renderDetailQuantity } from "./detailQuantity.ts";
+import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createAdaLayoutPorts } from "./layoutTree.ts";
 import { createActions, createCard, isTap, setFooterAction } from "./modal.ts";
+import { inCurrentView } from "./pressScope.ts";
 import { createProse } from "./prose.ts";
 import {
   type ResourceAction,
@@ -63,7 +67,18 @@ export function createResourceCard(
     }
     returnFocus = null;
   };
-  card.close.addEventListener("click", close);
+  const availability = (action: ResourceAction): ControlAvailability =>
+    disposed || !visible || (action === "resource-quests" && !openQuests)
+      ? { kind: "omitted" }
+      : { kind: "available" };
+  const headerBinding = bindAdaAction(
+    {
+      click: { availability: () => availability("close-resource"), run: close },
+      current: () => !disposed && !modal.hidden && inCurrentView(root, card.close),
+      slopPx: () => SCROLL.dragThreshold * readViewUnit(card.close),
+    },
+    card.close,
+  );
   const showQuests = () => {
     if (!openQuests || modal.hidden) {
       return;
@@ -78,10 +93,7 @@ export function createResourceCard(
       ["dismiss-resource", close],
       ["resource-quests", showQuests],
     ]),
-    availability: (action) =>
-      disposed || !visible || (action === "resource-quests" && !openQuests)
-        ? { kind: "omitted" }
-        : { kind: "available" },
+    availability,
     presentButton: presentAdaButton,
   });
   const renderContent = (data: ResourceLayoutData) => {
@@ -144,6 +156,7 @@ export function createResourceCard(
     close,
     dispose() {
       disposed = true;
+      headerBinding.dispose();
       mounted.dispose();
       modal.remove();
       returnFocus = null;

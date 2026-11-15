@@ -1,6 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 
 import { resolveAdaHoldAction } from "./actionBinding.ts";
+import { enterPressView } from "./pressScope.ts";
 import { createResourceCard } from "./resourceCard.ts";
 
 const fixture = vi.hoisted(() => {
@@ -342,4 +343,60 @@ it("retains footer nodes, resolves the current Quests closure and unregisters di
   dismissal?.activate();
   dismiss!.dispatchEvent(new Event("click"));
   expect(onOpenChange.mock.calls).toEqual([[true], [true], [false], [true]]);
+});
+
+it("registers one native header click and closes once through the shared default hold", () => {
+  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  const root = new fixture.Node();
+  const origin = new fixture.Node();
+  const onOpenChange = vi.fn();
+  const listen = vi.spyOn(fixture.card.close, "addEventListener");
+  const remove = vi.spyOn(fixture.card.close, "removeEventListener");
+  const detail = createResourceCard(root as unknown as HTMLElement, {
+    closeLabel: "Close",
+    onOpenChange,
+  });
+  const x = fixture.card.close;
+  const action = resolveAdaHoldAction(root as unknown as HTMLElement, x);
+  expect(action?.available()).toBe(false);
+  detail.open("Ore", "Current", origin as unknown as HTMLElement);
+  expect(action?.available()).toBe(true);
+  const clickRegistrations = listen.mock.calls.filter(([type]) => type === "click");
+  expect(clickRegistrations).toHaveLength(1);
+  action?.activate();
+  x.dispatchEvent(new Event("click"));
+  expect(onOpenChange.mock.calls).toEqual([[true], [false]]);
+  expect(origin.focus).toHaveBeenCalledOnce();
+  detail.dispose();
+  expect(remove).toHaveBeenCalledWith("click", clickRegistrations[0]![1]);
+  listen.mockRestore();
+  remove.mockRestore();
+});
+
+it("rejects background header clicks and removes the registered X callback on disposal", () => {
+  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  const root = new fixture.Node();
+  const origin = new fixture.Node();
+  const onOpenChange = vi.fn();
+  const detail = createResourceCard(root as unknown as HTMLElement, {
+    closeLabel: "Close",
+    onOpenChange,
+  });
+  detail.open("Shield", "Current", origin as unknown as HTMLElement, { quantity: "12 / 20" });
+  const x = fixture.card.close;
+  const action = resolveAdaHoldAction(root as unknown as HTMLElement, x);
+  const front = new fixture.Node();
+  root.append(front);
+  const leave = enterPressView(root as unknown as HTMLElement, front as unknown as HTMLElement);
+  expect(action?.available()).toBe(false);
+  x.dispatchEvent(new Event("click"));
+  action?.activate();
+  expect(onOpenChange.mock.calls).toEqual([[true]]);
+  leave();
+  expect(action?.available()).toBe(true);
+  detail.dispose();
+  expect(resolveAdaHoldAction(root as unknown as HTMLElement, x)).toBeNull();
+  x.dispatchEvent(new Event("click"));
+  action?.activate();
+  expect(onOpenChange.mock.calls).toEqual([[true]]);
 });
