@@ -71,7 +71,8 @@ import {
   stepDebris,
   stepEnemy,
 } from "./enemyAi.ts";
-import { flightWorldContext } from "./flightTopology.ts";
+import { enemyEquipmentDefinition, rollEnemyWeaponLevel } from "./enemyEquipment.ts";
+import { flightEncounterSeed, flightWorldContext } from "./flightTopology.ts";
 import {
   createFrigateEscorts,
   FRIGATE_ESCORT_ROLE,
@@ -899,7 +900,7 @@ function placeOreFields(
     });
     const id = `platform:${field.id}`;
     if (field.guard && !existing.has(id) && !Object.hasOwn(flight.world.notables, id)) {
-      const platform = spawnEnemy(content, flight.galaxy, "platform", id, field.guard);
+      const platform = spawnEnemy(content, flight, "platform", id, field.guard);
       platform.enemy!.facing = { ...PLATFORM_FACING };
       flight.objects.push(platform);
       existing.add(id);
@@ -914,7 +915,7 @@ function combat(flight: FlightState) {
 /** A new enemy with its galaxy's archetype changes, hit points and hardpoints. */
 function spawnEnemy(
   content: GameContent,
-  galaxy: GalaxyNumber,
+  flight: FlightState,
   archetype: EnemyArchetype,
   id: string,
   point: Vec,
@@ -922,10 +923,14 @@ function spawnEnemy(
   phase = 0,
   escortOf: string | null = null,
 ): SpaceObject {
-  const definition = enemyDefinition(galaxy, archetype, id);
+  const weaponLevel = rollEnemyWeaponLevel(
+    { encounterSeed: flightEncounterSeed(flight), galaxy: flight.galaxy },
+    id,
+  );
+  const definition = enemyDefinition(flight.galaxy, archetype, id, weaponLevel);
   return {
     ...point,
-    enemy: createEnemy(definition, { archetype, escortOf, id, packId, phase }, point),
+    enemy: createEnemy(definition, { archetype, escortOf, id, packId, phase, weaponLevel }, point),
     hp: definition.hp,
     id,
     kind: "enemy",
@@ -960,6 +965,7 @@ function installFrigateEscorts(
   const packId = escortPackId(leader.enemy.packId ?? leader.id);
   const followers = createFrigateEscorts(
     {
+      encounterSeed: flightEncounterSeed(flight),
       galaxy: flight.galaxy,
       id: (index) => requiredFrigateEscortId(leader.id, index),
       packId,
@@ -1004,7 +1010,7 @@ export function spawnChapterEnemy(
   }
   const object = spawnEnemy(
     content,
-    flight.galaxy,
+    flight,
     archetype,
     id,
     point,
@@ -1127,7 +1133,7 @@ function generateRegion(content: GameContent, x: number, y: number, flight: Flig
   if (!hostsEncounterCell(spacing, x) || !hostsEncounterCell(spacing, y)) {
     return;
   }
-  const next = random(hash(flight.seed ^ 9173, x, y));
+  const next = random(hash(flightEncounterSeed(flight) ^ 9173, x, y));
   const center = { x: (x + 0.5) * size, y: (y + 0.5) * size };
   if (
     worldDistance(flightWorldContext(flight), center, flight.player) <
@@ -1252,7 +1258,7 @@ function generateRegion(content: GameContent, x: number, y: number, flight: Flig
     const leaders = Array.from({ length: count }, (_, index) => {
       const leader = spawnEnemy(
         content,
-        flight.galaxy,
+        flight,
         "frigate",
         `${packId}:${index}`,
         memberPosition(policy.memberSpacing, count, center, index),
@@ -1265,6 +1271,7 @@ function generateRegion(content: GameContent, x: number, y: number, flight: Flig
     const followers = leaders.flatMap((leader, leaderIndex) =>
       createFrigateEscorts(
         {
+          encounterSeed: flightEncounterSeed(flight),
           galaxy: flight.galaxy,
           id: (index) => `${escortPackId(packId)}:${leaderIndex * FRIGATE_ESCORT_COUNT + index}`,
           packId: escortPackId(packId),
@@ -1360,7 +1367,7 @@ function admitGroup(
     const phase = next() * Math.PI * 2;
     const object = spawnEnemy(
       content,
-      flight.galaxy,
+      flight,
       archetype,
       `${packId}:${i}`,
       place(i, phase),
@@ -1639,7 +1646,7 @@ function releaseSummonedGuards(viewportWidth: number, flight: FlightState): void
       return true;
     }
     if (guard.enemy) {
-      const pursuit = enemyDefinition(flight.galaxy, guard.enemy.archetype, guard.id).pursuit;
+      const pursuit = enemyEquipmentDefinition(flight.galaxy, guard.enemy).pursuit;
       // A remote summons starts its local fight here instead of immediately leashing back.
       if (
         worldDistance(context, guard.enemy.home, guard) >= pursuit.homeRadius ||
@@ -1677,7 +1684,7 @@ function guardPack(content: GameContent, leader: Vec, flight: FlightState): void
     const angle = (i * Math.PI * 2) / packSize;
     const member = spawnEnemy(
       content,
-      flight.galaxy,
+      flight,
       pack,
       `${packId}:${i}`,
       { x: leader.x + Math.cos(angle) * 90, y: leader.y + Math.sin(angle) * 90 },
@@ -1714,7 +1721,7 @@ export function placeHuntingPack(
     const phase = (i * Math.PI * 2) / count;
     const member = spawnEnemy(
       content,
-      flight.galaxy,
+      flight,
       HUNTING_PACKS.archetype,
       `${packId}:${i}`,
       {
@@ -1802,7 +1809,7 @@ export function ensureRouteEncounter(
   const approach = length(heading) ? heading : { x: 0, y: 1 };
   const offset = content.tuning.safeRadius + radius + 120;
   const point = { x: destination.x + approach.x * offset, y: destination.y + approach.y * offset };
-  const object = spawnEnemy(content, flight.galaxy, archetype, `route:${id}`, point);
+  const object = spawnEnemy(content, flight, archetype, `route:${id}`, point);
   object.routeId = id;
   // Clear the guard footprint and leave the protected destination untouched.
   clearLayoutObjects(
@@ -2423,7 +2430,7 @@ function presses(targetable: boolean, flight: FlightState, object: SpaceObject):
     !state.fleeing &&
     !state.disabled &&
     worldDistance(flightWorldContext(flight), object, flight.player) <=
-      enemyDefinition(flight.galaxy, state.archetype, state.id).perception
+      enemyEquipmentDefinition(flight.galaxy, state).perception
   );
 }
 
@@ -2498,7 +2505,7 @@ function enemies(
   const eligible = new Set(
     objects
       .filter((object) => {
-        const definition = enemyDefinition(flight.galaxy, object.enemy!.archetype, object.id);
+        const definition = enemyEquipmentDefinition(flight.galaxy, object.enemy!);
         return (
           definition.aggression === "sight" &&
           visibility.get(object.id) &&
@@ -2518,7 +2525,7 @@ function enemies(
   );
   for (const object of objects) {
     const state = object.enemy!;
-    const base = enemyDefinition(flight.galaxy, state.archetype, state.id);
+    const base = enemyEquipmentDefinition(flight.galaxy, state);
     const blockade =
       flight.galaxy === 6 && PHANTOM_DESTINATIONS.some((id) => id === object.routeId);
     const song = phantomSongSpeed(flight.phantom?.allies ?? [], object);
@@ -3211,7 +3218,7 @@ function liveParts(
   if (!enemy) {
     return [];
   }
-  const definition = enemyDefinition(galaxy, enemy.archetype, enemy.id);
+  const definition = enemyEquipmentDefinition(galaxy, enemy);
   const adaWidth = content.tuning.flight.shipRadius * 2;
   return definition.hardpoints
     .filter((part) => enemy.hardpoints.some((value) => value.id === part.id && value.hp > 0))
@@ -3299,7 +3306,7 @@ function hit(
     return;
   }
   if (object.kind === "enemy" && object.enemy) {
-    const definition = enemyDefinition(flight.galaxy, object.enemy.archetype, object.enemy.id);
+    const definition = enemyEquipmentDefinition(flight.galaxy, object.enemy);
     const disabled = object.enemy.disabled;
     object.enemy = damageEnemy(definition, { amount, hardpointId: part }, object.enemy);
     object.hp = enemyDefeated(object.enemy) ? 0 : Math.max(1, object.enemy.hp);

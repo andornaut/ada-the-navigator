@@ -4,9 +4,10 @@ import { densityTexels } from "@andornaut/game-kit/view/renderScale";
 import { Math as PhaserMath, type Scene, TintModes } from "phaser";
 
 import { CONTENT } from "../data/content.ts";
-import { enemyCatalog, enemyDefinition, heavyLoadout, MINE_LAYER } from "../data/enemyCatalog.ts";
+import { enemyCatalog, heavyLoadout, MINE_LAYER } from "../data/enemyCatalog.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { enemySpeedFraction } from "../model/enemyAi.ts";
+import { enemyEquipmentDefinition } from "../model/enemyEquipment.ts";
 import { activeEnemyBeams, activeRingEmissions, type EnemyBeam } from "../model/flight.ts";
 import { hullOffset } from "../model/shipPhysics.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
@@ -135,7 +136,7 @@ export function drawEnemy(scene: EnemiesContext, point: Vec, object: SpaceObject
     );
     return;
   }
-  const definition = enemyDefinition(scene.model.state.flight!.galaxy, enemy.archetype, enemy.id);
+  const definition = enemyEquipmentDefinition(scene.model.state.flight!.galaxy, enemy);
   const art = familyArt(scene, enemy.archetype);
   if (art) {
     drawEnemySprite(scene, art, point, object.id, enemy);

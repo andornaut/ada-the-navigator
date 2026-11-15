@@ -1,6 +1,7 @@
 import { enemyDefinition, escortTuning, FRIGATE_ESCORT_COUNT } from "../data/enemyCatalog.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { createEnemy } from "./enemyAi.ts";
+import { rollEnemyWeaponLevel } from "./enemyEquipment.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 
 export const FRIGATE_ESCORT_ROLE = "frigateEscort";
@@ -17,6 +18,7 @@ export function frigateEscortStation(leader: SpaceObject, phase: number): Vec {
 /** Two opposite stations keep each frigate's mandatory fighters clear of the leader line. */
 export function createFrigateEscorts(
   context: {
+    encounterSeed: number;
     galaxy: GalaxyNumber;
     id: (index: number) => string;
     packId: string;
@@ -29,12 +31,20 @@ export function createFrigateEscorts(
     const id = context.id(index);
     const phase = Math.PI / 2 + index * Math.PI;
     const point = frigateEscortStation(leader, phase);
-    const definition = enemyDefinition(context.galaxy, "fighter", id);
+    const weaponLevel = rollEnemyWeaponLevel(context, id);
+    const definition = enemyDefinition(context.galaxy, "fighter", id, weaponLevel);
     return {
       ...point,
       enemy: createEnemy(
         definition,
-        { archetype: "fighter", escortOf: leader.id, id, packId: context.packId, phase },
+        {
+          archetype: "fighter",
+          escortOf: leader.id,
+          id,
+          packId: context.packId,
+          phase,
+          weaponLevel,
+        },
         point,
       ),
       hp: definition.hp,
