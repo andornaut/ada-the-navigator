@@ -216,7 +216,11 @@ describe("regenerating ordinary chunks and persistent notables", () => {
   it("records defeated notable tombstones before filtering and never respawns their guards", () => {
     const flight = empty();
     const destination = ensureDestination(CONTENT, "growers", flight);
+    // The middle region admits the complete frigate and two-fighter formation.
+    Object.assign(destination, { x: 10000, y: 10000 });
     const guard = ensureRouteEncounter(CONTENT, destination.id, flight)!;
+    expect(guard).not.toBeNull();
+    flight.player = { x: guard.x, y: guard.y };
     guard.enemy!.hp = 0;
     expect(stepFlight(CONTENT, 0.001, idle, flight)).toContainEqual({
       id: guard.id,
@@ -285,7 +289,10 @@ describe("regenerating ordinary chunks and persistent notables", () => {
   it("retains quest objects and explicit persistence markers beyond the ordinary window", () => {
     const flight = empty();
     const destination = ensureDestination(CONTENT, "growers", flight);
+    // The middle region admits the complete frigate and two-fighter formation.
+    Object.assign(destination, { x: 10000, y: 10000 });
     const guard = ensureRouteEncounter(CONTENT, destination.id, flight)!;
+    expect(guard).not.toBeNull();
     guard.enemy!.hardpoints[0]!.hp = 1;
     const npc: SpaceObject = {
       hp: 1,

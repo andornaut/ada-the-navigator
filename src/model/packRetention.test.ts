@@ -173,7 +173,7 @@ describe("casualty-preserving pack retention", () => {
   });
 
   it.each(["destination", "guard"] as const)(
-    "preserves a prior casualty fraction through %s layout clearance",
+    "preserves a prior casualty fraction through %s placement",
     (clearance) => {
       const { content, model, packId } = fixture();
       defeat(model, members(model, packId)[0]!);
@@ -192,6 +192,7 @@ describe("casualty-preserving pack retention", () => {
               { x: 1100, y: 0 },
             ];
       survivors.forEach((object, index) => reposition(object, points[index]!.x, points[index]!.y));
+      const expectedSurvivors = structuredClone(survivors);
       if (clearance === "destination") {
         ensureDestination(content, "growers", flight);
       } else {
@@ -203,11 +204,16 @@ describe("casualty-preserving pack retention", () => {
           x: 1000,
           y: 0,
         });
-        ensureRouteEncounter(content, "growers", flight);
+        expect(ensureRouteEncounter(content, "growers", flight)).toBeNull();
+        expect(flight.combat!.emptyRoutePlans).toContain("growers");
+        expect(flight.combat!.routeEncounters).not.toContain("growers");
+        expect(members(model, packId)).toEqual(expectedSurvivors);
       }
-      expect(members(model, packId)).toHaveLength(1);
+      expect(members(model, packId)).toHaveLength(clearance === "destination" ? 1 : 3);
       expect(flight.combat!.initialPackSizes[packId]).toBe(4);
-      expect(flight.combat!.unloadedPackMembers?.[packId]).toBe(2);
+      expect(flight.combat!.unloadedPackMembers?.[packId]).toBe(
+        clearance === "destination" ? 2 : undefined,
+      );
       model.step(0.001, idle);
       expect(members(model, packId)[0]!.enemy!.fleeing).toBe(false);
       expect(model.state.progress[model.state.flight!.galaxy].destroyedEnemies).toBe(1);
