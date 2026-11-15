@@ -1,5 +1,6 @@
 import type { RoutePosition } from "./galaxies.ts";
-import type { WeaponLevel } from "./types.ts";
+import type { EnemyWeapon, WeaponLevel } from "./types.ts";
+import { WEAPON_CATALOG } from "./weaponCatalog.ts";
 
 /** Relative weights for weapon levels 1, 2 and 3, by galaxy route position. */
 export const ENEMY_WEAPON_LEVEL_WEIGHTS = {
@@ -26,4 +27,9 @@ export function selectEnemyWeaponLevel(position: RoutePosition, roll: number): W
     }
   }
   throw new RangeError("Enemy weapon level weights have no selected outcome");
+}
+
+/** The six shared weapons equip the selected level; enemy-only weapons remain level one. */
+export function equippedEnemyWeaponLevel(level: WeaponLevel, weapon: EnemyWeapon): WeaponLevel {
+  return Object.hasOwn(WEAPON_CATALOG, weapon) ? level : 1;
 }

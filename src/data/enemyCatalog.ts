@@ -1,3 +1,4 @@
+import { equippedEnemyWeaponLevel } from "./enemyWeaponLevels.ts";
 import { byPosition, ROUTE_POSITION, type RoutePosition } from "./galaxies.ts";
 import { SHIP_PHYSICS, type ShipPhysics } from "./shipPhysics.ts";
 import type { EnemyOnlyWeapon, EnemyWeapon, GalaxyNumber, WeaponLevel } from "./types.ts";
@@ -204,7 +205,8 @@ export function enemyOnly(weapon: EnemyWeapon): weapon is EnemyOnlyWeapon {
  * ENEMY_SPEED_SHARE of Ada's level 1 speed for the weapon.
  */
 export function enemyFire(archetype: string, mounted: MountedWeapon): FireProfile {
-  const { level, weapon } = mounted;
+  const { weapon } = mounted;
+  const level = equippedEnemyWeaponLevel(mounted.level, weapon);
   const cadence = ARCHETYPE_FIRE[archetype]?.[weapon] ?? ENEMY_FIRE[weapon];
   const shared = enemyOnly(weapon) ? null : weaponAt(weapon, level);
   return {
@@ -360,6 +362,7 @@ function mountedHardpoints(
   tier: MountTier,
   hp: number,
   loadout: ReadonlyMap<string, EnemyWeapon> | null = null,
+  weaponLevel: WeaponLevel = 1,
 ): HardpointDefinition[] {
   return mounts.fill.flatMap((id): HardpointDefinition[] => {
     const weapon = tier.mounts[id] && loadout?.get(id);
@@ -367,7 +370,7 @@ function mountedHardpoints(
     return mounted
       ? [
           {
-            fire: enemyFire(archetype, mounted),
+            fire: enemyFire(archetype, { ...mounted, level: weaponLevel }),
             hp,
             id,
             kind: "weapon",
@@ -906,11 +909,13 @@ export function enemyDefinition(
   galaxy: GalaxyNumber,
   archetype: EnemyArchetype,
   shipId = "",
+  weaponLevel: WeaponLevel = 1,
 ): EnemyDefinition {
   const route = ROUTE_POSITION[galaxy];
   const loadout = heavyLoadout(archetype, route, shipId);
   const flagship = galaxy === 6 && archetype === "capital" && shipId === PHANTOM_FLAGSHIP_ID;
-  const key = `${flagship ? "flagship:" : ""}${galaxy}:${archetype}:${loadout ? [...loadout.values()].join(",") : ""}`;
+  const weapons = loadout ? [...loadout.values()].join(",") : "";
+  const key = `${flagship ? "flagship:" : ""}${galaxy}:${archetype}:${weaponLevel}:${weapons}`;
   let definition = scaled.get(key);
   if (!definition) {
     const difficulty = difficultyOf(galaxy);
@@ -921,7 +926,10 @@ export function enemyDefinition(
     const catalog: EnemyDefinition = {
       ...entry,
       ...byPosition(galaxyArchetypes, galaxy)[archetype],
-      fire: small ? enemyFire(archetype, small) : entry.fire,
+      fire: enemyFire(archetype, {
+        level: weaponLevel,
+        weapon: small?.weapon ?? entry.fire.weapon,
+      }),
       hardpoints: entry.mounts
         ? [
             ...entry.hardpoints.filter((part) => part.kind !== "weapon"),
@@ -931,6 +939,7 @@ export function enemyDefinition(
               mountTier(entry.mounts, route),
               0,
               loadout,
+              weaponLevel,
             ),
           ]
         : entry.hardpoints,
