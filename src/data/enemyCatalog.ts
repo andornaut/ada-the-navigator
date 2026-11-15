@@ -1,4 +1,9 @@
-import { equippedEnemyWeaponLevel } from "./enemyWeaponLevels.ts";
+import { ENEMY_FIRE_MULTIPLIERS } from "./enemySignatures.ts";
+import {
+  ENEMY_SHARED_WEAPON_TUNING,
+  enemyRelativeFireRate,
+  equippedEnemyWeaponLevel,
+} from "./enemyWeaponLevels.ts";
 import { byPosition, ROUTE_POSITION, type RoutePosition } from "./galaxies.ts";
 import { SHIP_PHYSICS, type ShipPhysics } from "./shipPhysics.ts";
 import type { EnemyOnlyWeapon, EnemyWeapon, GalaxyNumber, WeaponLevel } from "./types.ts";
@@ -152,20 +157,11 @@ const engine = (id: string, x: number, y: number): HardpointDefinition => ({
   offset: { x, y },
 });
 type Cadence = Pick<FireProfile, "burst" | "interval">;
-/**
- * Each weapon's enemy cadence (gameplay/ships.md "Enemy weapons"), before the position's fire
- * rate. The Phaser and the lance are hitscan and mines are laid in place.
- */
-export const ENEMY_FIRE: Readonly<Record<EnemyWeapon, Cadence>> = {
+/** Enemy-only base intervals retain their own cadence and the existing galaxy fire curve. */
+export const ENEMY_FIRE: Readonly<Record<EnemyOnlyWeapon, Cadence>> = {
   chargedLance: { interval: 6 },
-  heavyMissile: { interval: 4 },
-  laser: { interval: 1.4 },
   mineLayer: { interval: 5 },
-  multiLaser: { interval: 2.2 },
-  phaser: { interval: 3 },
-  rapidMissile: { interval: 2 },
   ringBurst: { interval: 3.5 },
-  scattershot: { interval: 2.4 },
 };
 /** An enemy projectile flies this share of Ada's level 1 speed for the same weapon. */
 export const ENEMY_SPEED_SHARE = 0.6;
@@ -183,10 +179,11 @@ export const LANCE_TELL = { lockSeconds: 0.3, trackSeconds: 0.7 } as const;
 export const RING_BOLTS = 8;
 /** Mines one ship keeps out at once, and the seconds each lasts. */
 export const MINE_LAYER = { count: 4, lifeSeconds: 20 } as const;
-/** The swarm's slower, lighter Laser and the platform's two-shot Laser bursts. */
-const ARCHETYPE_FIRE: Readonly<Partial<Record<string, Partial<Record<EnemyWeapon, Cadence>>>>> = {
-  platform: { laser: { ...ENEMY_FIRE.laser, burst: { count: 2, gap: 0.15 } } },
-  swarm: { laser: { interval: 1.8 } },
+/** Platform Laser bursts retain their internal timing at every equipped level. */
+const ENEMY_BURSTS: Readonly<
+  Partial<Record<string, Partial<Record<EnemyWeapon, FireProfile["burst"]>>>>
+> = {
+  platform: { laser: { count: 2, gap: 0.15 } },
 };
 const ENEMY_ONLY_PROJECTILE: Readonly<Record<EnemyOnlyWeapon, FireProfile["projectile"]>> = {
   chargedLance: "beam",
@@ -207,10 +204,14 @@ export function enemyOnly(weapon: EnemyWeapon): weapon is EnemyOnlyWeapon {
 export function enemyFire(archetype: string, mounted: MountedWeapon): FireProfile {
   const { weapon } = mounted;
   const level = equippedEnemyWeaponLevel(mounted.level, weapon);
-  const cadence = ARCHETYPE_FIRE[archetype]?.[weapon] ?? ENEMY_FIRE[weapon];
   const shared = enemyOnly(weapon) ? null : weaponAt(weapon, level);
+  const cadence = shared
+    ? { interval: shared.intervalSeconds }
+    : ENEMY_FIRE[weapon as EnemyOnlyWeapon];
+  const burst = ENEMY_BURSTS[archetype]?.[weapon];
   return {
     ...cadence,
+    ...(burst ? { burst } : {}),
     angles: shared?.anglesDegrees ?? [0],
     level,
     projectile: shared?.projectileKind ?? ENEMY_ONLY_PROJECTILE[weapon as EnemyOnlyWeapon],
@@ -838,14 +839,14 @@ export const ENEMY_ONLY_DAMAGE: Readonly<Record<EnemyOnlyWeapon, number>> = {
 
 /**
  * A profile's damage per hit as a multiple of base shot damage: a shared weapon's at its level,
- * the same whoever fires it (every enemy weapon is level 1), or an enemy-only weapon's own.
+ * the same whoever fires it, or an enemy-only weapon's own.
  */
 export function fireDamageRatio(profile: Pick<FireProfile, "level" | "weapon">): number {
   const weapon = profile.weapon;
   if (enemyOnly(weapon)) {
     return ENEMY_ONLY_DAMAGE[weapon];
   }
-  return weaponAt(weapon, profile.level).damageRatio;
+  return weaponAt(weapon, profile.level).damageRatio * ENEMY_SHARED_WEAPON_TUNING.damageMultiplier;
 }
 
 /** Natural enemy aim for every aimed enemy weapon (gameplay/ships.md "Enemy aim"). */
@@ -898,6 +899,20 @@ export function encounterQuiet(galaxy: GalaxyNumber): { distance: number; second
 
 export const PHANTOM_FLAGSHIP_ID = "phantomFlagship";
 export const FLAGSHIP_PART_HP = 9;
+/** Shared weapons use the player cadence share; enemy-only weapons retain their galaxy curve. */
+export function enemyFireRate(
+  galaxy: GalaxyNumber,
+  archetype: keyof typeof ENEMY_FIRE_MULTIPLIERS,
+  weapon: EnemyWeapon,
+): number {
+  const shipRate = ENEMY_FIRE_MULTIPLIERS[archetype];
+  return enemyOnly(weapon)
+    ? difficultyOf(galaxy).rates.fire * DIFFICULTY_SCALE * shipRate
+    : ENEMY_SHARED_WEAPON_TUNING.fireRateShare[ROUTE_POSITION[galaxy]] *
+        shipRate *
+        enemyRelativeFireRate(archetype, weapon);
+}
+
 const scaled = new Map<string, EnemyDefinition>();
 /**
  * The catalog definition at a galaxy's route position: its roster behaviour, its position's
@@ -944,10 +959,9 @@ export function enemyDefinition(
           ]
         : entry.hardpoints,
     };
-    const fireRate = difficulty.rates.fire * DIFFICULTY_SCALE;
     const faster = (fire: FireProfile): FireProfile => ({
       ...fire,
-      interval: fire.interval / fireRate,
+      interval: fire.interval / enemyFireRate(galaxy, archetype, fire.weapon),
     });
     const hardpointHp = difficulty.hardpointHp * DIFFICULTY_SCALE;
     definition = {

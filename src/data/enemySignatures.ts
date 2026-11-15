@@ -17,7 +17,16 @@ export const HEAVY_SIGNATURES = {
   frigate: { mount: "port", remaining: "laser", weapon: "heavyMissile" },
 } as const;
 
-export const HEAVY_FIRE_RATE = 1.2;
+export const ENEMY_FIRE_MULTIPLIERS = {
+  capital: 1.5,
+  fighter: 1,
+  frigate: 2,
+  hostileStation: 1,
+  interceptor: 1,
+  platform: 1.5,
+  retaliator: 1,
+  swarm: 1,
+} as const;
 
 export const CAPITAL_PROFILE_SELECTION = {
   lanceWeight: 1,

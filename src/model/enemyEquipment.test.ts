@@ -41,7 +41,7 @@ it("uses one stable per-enemy result within an encounter and a fresh encounter s
   expect(context).toEqual({ encounterSeed: 71, galaxy: 6 });
 });
 
-it("isolates cached equipped levels while preserving active mounts, hulls and cadence", () => {
+it("isolates equipped levels while preserving active mounts, hulls and projectile speeds", () => {
   for (const archetype of [
     "capital",
     "frigate",
@@ -59,7 +59,11 @@ it("isolates cached equipped levels while preserving active mounts, hulls and ca
     expect(upgraded).not.toBe(legacy);
     expect(upgraded.hp).toBe(legacy.hp);
     expect(upgraded.physics).toEqual(enemyCatalog[archetype].physics);
-    expect(upgraded.fire.interval).toBe(legacy.fire.interval);
+    const primaryRatio = enemyOnly(upgraded.fire.weapon)
+      ? 1
+      : weaponAt(upgraded.fire.weapon, 3).intervalSeconds /
+        weaponAt(upgraded.fire.weapon, 1).intervalSeconds;
+    expect(upgraded.fire.interval).toBeCloseTo(legacy.fire.interval * primaryRatio, 12);
     expect(upgraded.fire.projectileSpeed).toBe(legacy.fire.projectileSpeed);
     expect(upgraded.hardpoints.map((part) => [part.id, part.kind, part.hp])).toEqual(
       legacy.hardpoints.map((part) => [part.id, part.kind, part.hp]),
@@ -71,7 +75,11 @@ it("isolates cached equipped levels while preserving active mounts, hulls and ca
         if (original.kind !== "weapon") {
           throw Error("expected weapon mount");
         }
-        expect(part.fire.interval).toBe(original.fire.interval);
+        const ratio = enemyOnly(part.fire.weapon)
+          ? 1
+          : weaponAt(part.fire.weapon, 3).intervalSeconds /
+            weaponAt(part.fire.weapon, 1).intervalSeconds;
+        expect(part.fire.interval).toBeCloseTo(original.fire.interval * ratio, 12);
         expect(part.fire.projectileSpeed).toBe(original.fire.projectileSpeed);
       }
     }

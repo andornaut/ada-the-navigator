@@ -9,10 +9,12 @@ import {
   type EnemyArchetype,
   enemyCatalog,
   enemyDefinition,
+  enemyOnly,
   escortTuning,
   type FireProfile,
 } from "../data/enemyCatalog.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { weaponAt } from "../data/weaponCatalog.ts";
 import {
   aimDrift,
   createEnemy,
@@ -414,26 +416,43 @@ describe("standoff", () => {
 
 describe("galaxy difficulty", () => {
   it.each([
-    [1, 1.2, 1.44],
-    [3, 1.3, 1.63],
-    [4, 1.4, 1.81],
-    [5, 1.45, 1.88],
-    [2, 1.5, 1.94],
-    [6, 1.5, 2],
+    [1, 1.2, 1.44, 0.25],
+    [3, 1.3, 1.63, 0.25],
+    [4, 1.4, 1.81, 0.3],
+    [5, 1.45, 1.88, 0.3],
+    [2, 1.5, 1.94, 0.35],
+    [6, 1.5, 2, 0.35],
   ] as const)(
-    "scales galaxy %i's perception by %f and fire rate by %f, its route position's",
-    (galaxy, perception, fireRate) => {
+    "applies galaxy %i perception %f, enemy-only curve %f and shared fire share %f",
+    (galaxy, perception, enemyOnlyRate, sharedRate) => {
       for (const archetype of Object.keys(enemyCatalog) as EnemyArchetype[]) {
         const base = enemyCatalog[archetype];
         const scaled = enemyDefinition(galaxy, archetype);
-        // Each weapon's enemy cadence before the fire rate; the swarm's Laser is slower.
-        const cadence = (fire: FireProfile) =>
-          fire.weapon === "laser" && archetype === "swarm" ? 1.8 : ENEMY_FIRE[fire.weapon].interval;
+        const shipRate =
+          archetype === "frigate"
+            ? 2
+            : archetype === "capital" || archetype === "platform"
+              ? 1.5
+              : 1;
+        const interval = (fire: FireProfile) => {
+          if (enemyOnly(fire.weapon)) {
+            return ENEMY_FIRE[fire.weapon].interval / (enemyOnlyRate * shipRate);
+          }
+          const relative =
+            archetype === "swarm" && fire.weapon === "laser"
+              ? 7 / 9
+              : archetype === "retaliator" && fire.weapon === "rapidMissile"
+                ? 5 / 4
+                : 1;
+          return (
+            weaponAt(fire.weapon, fire.level).intervalSeconds / (sharedRate * shipRate * relative)
+          );
+        };
         expect(scaled.perception).toBeCloseTo(base.perception * perception, 9);
-        expect(1 / scaled.fire.interval).toBeCloseTo((1 / cadence(scaled.fire)) * fireRate, 9);
+        expect(scaled.fire.interval).toBeCloseTo(interval(scaled.fire), 9);
         for (const part of scaled.hardpoints) {
           if (part.kind === "weapon") {
-            expect(part.fire.interval).toBeCloseTo(cadence(part.fire) / fireRate, 9);
+            expect(part.fire.interval).toBeCloseTo(interval(part.fire), 9);
           }
         }
       }

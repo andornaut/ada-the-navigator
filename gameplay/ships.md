@@ -120,7 +120,7 @@ target is that a fully upgraded Ada at position 6 meets about the same pressure 
 a new Ada at position 1.
 
 One tuning value, `difficultyScale` (1), multiplies every enemy hit point, the
-fire rate and the encounter rate at every position, so the whole curve can be
+enemy-only weapon fire rate and the encounter rate at every position, so the whole curve can be
 tuned at once. Small-craft Stardust drops use unscaled hull hit points. Heavy rewards are fixed
 independently of hull HP, part HP and mount counts, so tuning them leaves
 the economy unchanged. It is not a player setting: there is one forgiving difficulty.
@@ -153,7 +153,8 @@ Heavies:
 - Small-craft columns are hull HP. Outside Sunflower's staged ambient roster,
   the group bonus adds to both ends of each `swarm` and `fighter` group range. Lead is how much of Ada's movement enemy
   aim allows for (see [Enemy aim](#enemy-aim)). Notice and fire rates are
-  relative to the base catalog. Encounter rates are in [Ambient admission](#ambient-admission).
+  relative to the base catalog. The Fire column applies to enemy-only weapons; shared
+  weapons use the equipped-level rate shares below. Encounter rates are in [Ambient admission](#ambient-admission).
 - Every heavy hardpoint (weapon, engine, command and platform turret) has the
   position's hardpoint HP: 5, 5, 6, 6, 7 and 7 along the route. The flagship's
   parts have 9 HP. A `platform` hull has half the frigate hull.
@@ -178,15 +179,36 @@ Enemy aim is natural rather than perfect, and every aimed enemy weapon follows i
 
 ### Enemy weapons
 
-Enemies fire the same weapons Ada does, plus three weapons only they carry. Every
-enemy weapon is level 1, with Ada's level 1 damage, blast, spread and reach (see
-[Flight and combat](rules.md#flight-and-combat)), so no enemy hit grows with the
-route. Each enemy's fire cadence stays its own and its projectiles fly at 0.6 times
-Ada's level 1 speed, so attacks
-stay readable and dodgeable. Enemies carry no ammunition. Enemy pressure rises
-with position through fire rate, aim lead, group sizes, encounter rates and heavy
-weapon mounts, not weapon levels. Enemy damage has no cap; the pacing simulation
-reports each weapon's kill times against frigates and capitals.
+All enemy types, including swarms, escorts, heavies, hostile stations and the
+flagship, roll one equipped weapon level at spawn. All six shared weapons on that
+enemy use the same result. Lance, Mine and Ring remain level 1. Save and Continue
+retain the result within the flight; a fresh galaxy entry resets enemies and
+rolls new loadouts. Rolls use a dedicated stream independent of geography,
+encounter composition, ship identity/profile selection and loot.
+
+| Galaxy    | Level 1 | Level 2 | Level 3 | Shared fire-rate share |
+| --------- | ------: | ------: | ------: | ---------------------: |
+| Sunflower |    100% |      0% |      0% |                    25% |
+| Whirlpool |     75% |     25% |      0% |                    25% |
+| Needle    |     50% |     50% |      0% |                    30% |
+| Andromeda |     25% |     75% |      0% |                    30% |
+| Cartwheel |      0% |     75% |     25% |                    35% |
+| Phantom   |      0% |     50% |     50% |                    35% |
+
+Shared weapon intervals are the player's interval at the equipped level divided
+by the galaxy's fire-rate share and existing ship rate modifiers. Frigates use
+2, capitals including the flagship use 1.5, and platforms use 1.5; other ships and
+hostile stations use 1. Swarm Laser retains its 7/9 relative rate and industrial
+Rapid Missile its 5/4 relative rate. These shares replace the shared weapons'
+absolute enemy intervals and position fire curve; the old values do not stack.
+Platform bursts retain two shots 0.15 seconds apart. Warning times are unchanged.
+Enemy-only weapons retain their own base intervals and position fire curve.
+
+Shared weapon damage is 100% of the player's damage at the equipped level.
+Blast, spread and reach use that level's canonical weapon definition; more fan
+bolts do not add physical mounts. Projectile speed stays at 0.6 times the
+player's level-1 speed for that weapon, without level speed scaling. Enemies
+carry no ammunition.
 
 | Archetype     | Positions 1–2 | Positions 3–4 | Positions 5–6 |
 | ------------- | ------------- | ------------- | ------------- |
@@ -219,18 +241,16 @@ enemy Heavy Missile flies slowly and its Phaser shows a thin aim line for 0.4
 seconds before the beam fires. The aim line stays where it started, so Ada can
 move off it.
 
-| Enemy weapon  | Interval | Projectile speed | Notes                                                |
-| ------------- | -------: | ---------------: | ---------------------------------------------------- |
-| Laser         |    1.4 s |              300 | `swarm` 1.8 s; platform two-shot bursts 0.15 s apart |
-| Multi-Laser   |    2.2 s |              240 | The level's fan                                      |
-| Rapid Missile |    2.0 s |              300 | Its blast damages Ada                                |
-| Heavy Missile |    4.0 s |              240 | Its blast damages Ada                                |
-| Scattershot   |    2.4 s |              360 | Ada's dot count, range and fade                      |
-| Phaser        |    3.0 s |          Hitscan | 0.4 s aim line first                                 |
+| Enemy weapon  | Projectile speed | Notes                                               |
+| ------------- | ---------------: | --------------------------------------------------- |
+| Laser         |              300 | Platform two-shot bursts 0.15 s apart               |
+| Multi-Laser   |              240 | The equipped level's fan                            |
+| Rapid Missile |              300 | Equipped-level cadence; its blast damages Ada       |
+| Heavy Missile |              240 | Equipped-level damage; its blast damages Ada        |
+| Scattershot   |              360 | Equipped-level pellet count, damage, range and fade |
+| Phaser        |          Hitscan | 0.4 s fixed aim line before firing                  |
 
-Intervals are before the position's fire rate. An enemy projectile flies at 0.6 times
-Ada's level 1 speed for that weapon, in world units per second, with no cap. Damage is Ada's level 1
-damage for that weapon. The three enemy-only weapons:
+Projectile speeds are world units per second. The three enemy-only weapons:
 
 - **Ring burst:** 8 bolts outward in a ring, 1.5 damage each, every 3.5 seconds,
   at 240 world units per second.

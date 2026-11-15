@@ -190,23 +190,25 @@ describe("enemy fire profiles", () => {
     expect(new Set(capital.map((part) => part.hp))).toEqual(new Set([7]));
   });
 
-  it("arms small craft by position and fires at the enemy cadence over the position's fire rate", () => {
+  it("arms small craft by position with the shared player cadence and unchanged projectile speeds", () => {
     const fire = (galaxy: GalaxyNumber, archetype: EnemyArchetype) => {
       const profile = enemyDefinition(galaxy, archetype).fire;
       return [profile.weapon, profile.level, profile.interval, profile.projectileSpeed];
     };
-    // Sunflower (position 1, fire +44%), Needle (3, +81%) and Phantom (6, +100%).
-    expect(fire(1, "swarm")).toEqual(["laser", 1, 1.8 / 1.44, 300]);
-    expect(fire(1, "fighter")).toEqual(["laser", 1, 1.4 / 1.44, 300]);
-    expect(fire(1, "interceptor")).toEqual(["laser", 1, 1.4 / 1.44, 300]);
-    expect(fire(1, "retaliator")).toEqual(["multiLaser", 1, 2.2 / 1.44, 240]);
-    expect(fire(4, "swarm")).toEqual(["laser", 1, 1.8 / 1.81, 300]);
-    expect(fire(4, "fighter")).toEqual(["rapidMissile", 1, 2 / 1.81, 300]);
-    expect(fire(4, "interceptor")).toEqual(["multiLaser", 1, 2.2 / 1.81, 240]);
-    expect(fire(4, "retaliator")).toEqual(["multiLaser", 1, 2.2 / 1.81, 240]);
-    expect(fire(6, "fighter")).toEqual(["rapidMissile", 1, 2 / 2, 300]);
-    expect(fire(6, "interceptor")).toEqual(["multiLaser", 1, 2.2 / 2, 240]);
-    expect(ENEMY_FIRE.heavyMissile).toEqual({ interval: 4 });
+    // Sunflower and Whirlpool share 25%, Needle 30%, and Phantom 35% of the player rate.
+    expect(fire(1, "swarm")).toEqual(["laser", 1, 0.3 / (0.25 * (7 / 9)), 300]);
+    expect(fire(1, "fighter")).toEqual(["laser", 1, 0.3 / 0.25, 300]);
+    expect(fire(1, "interceptor")).toEqual(["laser", 1, 0.3 / 0.25, 300]);
+    expect(fire(1, "retaliator")).toEqual(["multiLaser", 1, 0.3 / 0.25, 240]);
+    expect(fire(4, "swarm")).toEqual(["laser", 1, 0.3 / (0.3 * (7 / 9)), 300]);
+    expect(fire(4, "fighter")).toEqual(["rapidMissile", 1, 0.3 / 0.3, 300]);
+    expect(fire(4, "interceptor")).toEqual(["multiLaser", 1, 0.3 / 0.3, 240]);
+    expect(fire(4, "retaliator")).toEqual(["multiLaser", 1, 0.3 / 0.3, 240]);
+    expect(fire(6, "fighter")).toEqual(["rapidMissile", 1, 0.3 / 0.35, 300]);
+    expect(fire(6, "interceptor")).toEqual(["multiLaser", 1, 0.3 / 0.35, 240]);
+    expect(enemyFire("frigate", { level: 1, weapon: "heavyMissile" }).interval).toBe(
+      weaponAt("heavyMissile", 1).intervalSeconds,
+    );
     // Every enemy projectile flies 0.6 of Ada's level 1 speed for its weapon, the ring burst a
     // fixed 240; the Phaser and the lance are hitscan and mines lie still.
     const speed = (weapon: EnemyWeapon) =>
@@ -227,7 +229,7 @@ describe("enemy fire profiles", () => {
       ).map((weapon) => Math.round(speed(weapon) * 1e9) / 1e9),
     ).toEqual([300, 240, 300, 240, 360, 0, 240, 0, 0]);
     expect(speed("laser")).toBeCloseTo(ENEMY_SPEED_SHARE * weaponSpeed("laser", 1), 9);
-    expect(ENEMY_FIRE.phaser.interval).toBe(3);
+    expect(ENEMY_FIRE.chargedLance.interval).toBe(6);
     // The platform's Laser fires two-shot bursts 0.15 s apart.
     const turret = enemyDefinition(2, "platform").hardpoints[0]!;
     expect(turret.kind === "weapon" && turret.fire.burst).toEqual({ count: 2, gap: 0.15 });
