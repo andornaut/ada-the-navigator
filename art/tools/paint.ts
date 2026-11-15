@@ -76,36 +76,6 @@ export function polyline(
   }
 }
 
-// Filled rounded rectangle; with `ring`, only the band `ring` px inside its edge.
-export function roundedRect(
-  image: RgbaImage,
-  [x0, y0, x1, y1]: readonly [number, number, number, number],
-  radius: number,
-  colour: Rgba,
-  ring = 0,
-): void {
-  const inside = (x: number, y: number, inset: number) => {
-    const r = Math.max(0, radius - inset);
-    const ax = x0 + inset;
-    const ay = y0 + inset;
-    const bx = x1 - inset;
-    const by = y1 - inset;
-    if (x < ax || x > bx || y < ay || y > by) {
-      return false;
-    }
-    const dx = x < ax + r ? ax + r - x : x > bx - r ? x - (bx - r) : 0;
-    const dy = y < ay + r ? ay + r - y : y > by - r ? y - (by - r) : 0;
-    return dx * dx + dy * dy <= r * r;
-  };
-  for (let y = Math.max(0, Math.floor(y0)); y <= Math.min(image.height - 1, Math.ceil(y1)); y++) {
-    for (let x = Math.max(0, Math.floor(x0)); x <= Math.min(image.width - 1, Math.ceil(x1)); x++) {
-      if (inside(x, y, 0) && !(ring > 0 && inside(x, y, ring))) {
-        image.data.set(colour, (y * image.width + x) * 4);
-      }
-    }
-  }
-}
-
 export function over(target: RgbaImage, source: RgbaImage, x = 0, y = 0): void {
   composite({ x, y }, source, target);
 }
