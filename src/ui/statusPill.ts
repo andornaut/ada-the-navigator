@@ -1,4 +1,6 @@
 import { LIGHT_FIELD } from "../game/lightField.ts";
+import { bindAdaAction } from "./actionBinding.ts";
+import { SCROLL } from "./layout/contentCard.ts";
 import { font, fromHudEdge, hudCentreX, pixels, units } from "./layout/css.ts";
 import {
   countSlot,
@@ -627,6 +629,8 @@ export function createStatusPill(
     readonly shieldLabel: string;
   },
 ) {
+  let disposed = false;
+  let shieldBinding: ReturnType<typeof bindAdaAction> | undefined;
   const root = document.createElement("div");
   root.className = "ada-status";
   root.hidden = true;
@@ -639,10 +643,18 @@ export function createStatusPill(
     shieldRoot.setAttribute("aria-haspopup", "dialog");
     shieldRoot.dataset.action = "shield-details";
     shieldRoot.addEventListener("pointerdown", (event) => event.stopPropagation());
-    shieldRoot.addEventListener("click", (event) => {
-      event.stopPropagation();
-      options.onShield?.(shieldRoot);
-    });
+    shieldBinding = bindAdaAction(
+      {
+        beforeClick: (event) => event.stopPropagation(),
+        click: {
+          availability: () => ({ kind: "available" }),
+          run: () => options.onShield?.(shieldRoot),
+        },
+        current: () => !disposed,
+        slopPx: () => SCROLL.dragThreshold * readViewUnit(shieldRoot),
+      },
+      shieldRoot,
+    );
   }
   // The icon's outline is a filter on a wrapper: the icon's own mask would clip it.
   const shieldMark = document.createElement("span");
@@ -758,6 +770,8 @@ export function createStatusPill(
       bump(icon);
     },
     dispose: () => {
+      disposed = true;
+      shieldBinding?.dispose();
       globalThis.removeEventListener?.(VIEW_SCALE_EVENT, invalidateRaster);
       globalThis.removeEventListener?.("resize", invalidateRaster);
       ore.clearSpend();

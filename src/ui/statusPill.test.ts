@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { fromHudEdge, pixels, units } from "./layout/css.ts";
 import { countSlot, SHIELD_PILL, STATUS_PILL } from "./layout/playView.ts";
 import { shieldRasterGeometry } from "./layout/shieldGeometry.ts";
@@ -249,6 +250,22 @@ describe("status pill count", () => {
 
   // A stand-in for the DOM members the pill uses.
   class FakeNode extends EventTarget {
+    get parentElement(): FakeNode | null {
+      return this.parent ?? null;
+    }
+    readonly isConnected = true;
+    get ownerDocument() {
+      return document;
+    }
+    closest(): FakeNode | null {
+      return this.hidden ? this : (this.parent?.closest() ?? null);
+    }
+    contains(target: unknown): boolean {
+      return (
+        target === this ||
+        (target instanceof FakeNode && Boolean(target.parent) && this.contains(target.parent))
+      );
+    }
     readonly attributes = new Map<string, string>();
     children: FakeNode[] = [];
     className = "";
@@ -305,6 +322,7 @@ describe("status pill count", () => {
       createElement: () => new FakeNode(),
       createElementNS: () => new FakeNode(),
       createTextNode: () => new FakeNode(),
+      defaultView: { HTMLElement: FakeNode, Node: FakeNode },
     });
     const parent = new FakeNode();
     const status = createStatusPill(parent as unknown as HTMLElement, {
@@ -317,12 +335,12 @@ describe("status pill count", () => {
     const slot = (kind: string) =>
       root.children.find((node) => node.className.includes(`ada-status-${kind}-slot`))!;
     const count = (kind: string) => slot(kind).children[0]!;
-    return { count, root, shield: parent.children[1]!, slot, status };
+    return { count, parent, root, shield: parent.children[1]!, slot, status };
   };
 
   it("makes the whole shield a dialog button and stops its press before flight input", () => {
     const onShield = vi.fn();
-    const { shield } = pill(true, undefined, onShield);
+    const { parent, shield, status } = pill(true, undefined, onShield);
     expect(shield.getAttribute("type")).toBe("button");
     expect(shield.getAttribute("aria-label")).toBe("Shield");
     expect(shield.getAttribute("aria-haspopup")).toBe("dialog");
@@ -332,6 +350,11 @@ describe("status pill count", () => {
     expect(stop).toHaveBeenCalledOnce();
     shield.dispatchEvent(new Event("click"));
     expect(onShield).toHaveBeenCalledExactlyOnceWith(shield);
+    shield.hidden = false;
+    resolveAdaHoldAction(parent as unknown as HTMLElement, shield)?.activate();
+    expect(onShield).toHaveBeenCalledTimes(2);
+    status.dispose();
+    expect(resolveAdaHoldAction(parent as unknown as HTMLElement, shield)).toBeNull();
   });
 
   it("paints one complete pill in every shield state and keeps the empty track dark", () => {

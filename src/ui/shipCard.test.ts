@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { resolveAdaHoldAction } from "./actionBinding.ts";
 import {
   aboardLabel,
+  disposeShipSections,
   renderShipSections,
   shipItemKey,
   shipSections,
@@ -104,6 +106,22 @@ describe("Ship card", () => {
 
 // Only the element members used by the Ship renderer; geometry is checked in browser captures.
 class ShipElement extends EventTarget {
+  parentElement: ShipElement | null = null;
+  readonly isConnected = true;
+  get ownerDocument() {
+    return document;
+  }
+  closest(): ShipElement | null {
+    return this.parentElement?.closest() ?? null;
+  }
+  contains(target: unknown): boolean {
+    return (
+      target === this ||
+      (target instanceof ShipElement &&
+        Boolean(target.parentElement) &&
+        this.contains(target.parentElement))
+    );
+  }
   readonly classList = { add: vi.fn() };
   children: ShipElement[] = [];
   className = "";
@@ -111,6 +129,9 @@ class ShipElement extends EventTarget {
   style = { background: "", getPropertyValue: () => "", setProperty: vi.fn() };
   textContent = "";
   append(...nodes: ShipElement[]): void {
+    for (const node of nodes) {
+      node.parentElement = this;
+    }
     this.children.push(...nodes);
   }
   readonly attributes = new Map<string, string>();
@@ -123,6 +144,7 @@ function rendered(sections: ReturnType<typeof shipSections>): ShipElement {
   vi.stubGlobal("document", {
     createElement: () => new ShipElement(),
     createElementNS: () => new ShipElement(),
+    defaultView: { HTMLElement: ShipElement, Node: ShipElement },
   });
   return renderShipSections(
     { ammo: LABELS.ammo!, cargo: "Cargo", equipment: "Equipment", weapons: LABELS.shopWeapons! },
@@ -249,7 +271,9 @@ it("routes clickable inventory identities without reading labels", () => {
   vi.stubGlobal("document", {
     createElement: () => new ShipElement(),
     createElementNS: () => new ShipElement(),
+    defaultView: { HTMLElement: ShipElement, Node: ShipElement },
   });
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
   const onItem = vi.fn();
   const sections = shipSections(LABELS, VIEW);
   const root = renderShipSections(
@@ -260,9 +284,12 @@ it("routes clickable inventory identities without reading labels", () => {
   const row = root.children[4]!.children[1]!.children[0]!;
   expect(row.children).toHaveLength(2);
   expect(row.attributes.get("aria-label")).toContain("Laser");
-  row.dispatchEvent(new Event("click"));
+  resolveAdaHoldAction(root as unknown as HTMLElement, row)?.activate();
   expect(onItem).toHaveBeenCalledExactlyOnceWith(
     expect.objectContaining({ item: { id: "laser", kind: "weapon" } }),
     row,
   );
+  disposeShipSections(root as unknown as HTMLElement);
+  row.dispatchEvent(new Event("click"));
+  expect(onItem).toHaveBeenCalledTimes(1);
 });

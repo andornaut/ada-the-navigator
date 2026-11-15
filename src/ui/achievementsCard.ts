@@ -1,13 +1,16 @@
 import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 
 import { SCREEN } from "../data/screen.ts";
+import { bindAdaAction } from "./actionBinding.ts";
 import { COMPLETION_INDICATOR, createCompletionIndicator } from "./completionIndicator.ts";
 import { listCardHeader } from "./layout/cardFrame.ts";
+import { SCROLL } from "./layout/contentCard.ts";
 import { TEXT_BUTTON } from "./layout/controls.ts";
 import { units } from "./layout/css.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import { createButton, createCard, isTap, TEXT_TOKENS, UI_SCOPE } from "./modal.ts";
+import { enterPressView } from "./pressScope.ts";
 
 // The Achievements card (gameplay/quests.md "Achievements"), in Chibi's shape and spacing: every
 // entry in Gameplay's order, two columns of a badge beside the name, a locked counted entry's
@@ -189,6 +192,21 @@ export function createAchievementsCard(
   },
 ) {
   const { labels } = options;
+  let disposed = false;
+  let leavePressView: (() => void) | undefined;
+  const bindings: ReturnType<typeof bindAdaAction>[] = [];
+  const register = (element: HTMLElement, run: () => void) => {
+    bindings.push(
+      bindAdaAction(
+        {
+          click: { availability: () => ({ kind: "available" }), run },
+          current: () => !disposed,
+          slopPx: () => SCROLL.dragThreshold * readViewUnit(element),
+        },
+        element,
+      ),
+    );
+  };
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
@@ -262,6 +280,8 @@ export function createAchievementsCard(
     if (open === !modal.hidden) {
       return;
     }
+    leavePressView?.();
+    leavePressView = open ? enterPressView(root, card.frame) : undefined;
     modal.hidden = !open;
     if (open) {
       page = 0;
@@ -270,21 +290,21 @@ export function createAchievementsCard(
     }
     options.onOpenChange(open);
   };
-  previous.addEventListener("click", () => {
+  register(previous, () => {
     if (previous.hidden) {
       return;
     }
     page = Math.max(0, page - 1);
     render();
   });
-  next.addEventListener("click", () => {
+  register(next, () => {
     if (next.hidden) {
       return;
     }
     page = Math.min(achievementPages(entries.length, perPage) - 1, page + 1);
     render();
   });
-  card.close.addEventListener("click", () => setOpen(false));
+  register(card.close, () => setOpen(false));
   let outside: { readonly x: number; readonly y: number } | undefined;
   modal.addEventListener("pointerdown", (event) => {
     outside = event.target === modal ? { x: event.clientX, y: event.clientY } : undefined;
@@ -302,6 +322,12 @@ export function createAchievementsCard(
   return {
     close: () => setOpen(false),
     dispose(): void {
+      disposed = true;
+      leavePressView?.();
+      leavePressView = undefined;
+      for (const binding of bindings) {
+        binding.dispose();
+      }
       window.removeEventListener(VIEW_SCALE_EVENT, render);
       card.dispose();
       modal.remove();

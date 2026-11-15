@@ -50,6 +50,12 @@ class FakeElement {
   addEventListener(type: string, listener: () => void): void {
     this.listeners.set(type, [...(this.listeners.get(type) ?? []), listener]);
   }
+  removeEventListener(type: string, listener: () => void): void {
+    this.listeners.set(
+      type,
+      (this.listeners.get(type) ?? []).filter((item) => item !== listener),
+    );
+  }
   append(...nodes: FakeElement[]): void {
     this.children.push(...nodes);
     for (const node of nodes) {

@@ -2,6 +2,22 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const fixture = vi.hoisted(() => {
   class Node extends EventTarget {
+    parentElement: Node | null = null;
+    readonly isConnected = true;
+    get ownerDocument() {
+      return document;
+    }
+    contains(target: unknown): boolean {
+      return (
+        target === this ||
+        (target instanceof Node &&
+          Boolean(target.parentElement) &&
+          this.contains(target.parentElement))
+      );
+    }
+    closest(): Node | null {
+      return this.hidden ? this : (this.parentElement?.closest() ?? null);
+    }
     children: Node[] = [];
     className = "";
     dataset: Record<string, string> = {};
@@ -10,9 +26,15 @@ const fixture = vi.hoisted(() => {
     focus = vi.fn();
     remove = vi.fn();
     append(...nodes: Node[]) {
+      for (const node of nodes) {
+        node.parentElement = this;
+      }
       this.children.push(...nodes);
     }
     replaceChildren(...nodes: Node[]) {
+      for (const node of nodes) {
+        node.parentElement = this;
+      }
       this.children = nodes;
     }
   }
@@ -43,10 +65,16 @@ vi.mock("@andornaut/game-kit/web/ui/dom/focusModality", () => ({
   focusTarget: (node: { focus(): void }) => node.focus(),
 }));
 
+import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { createMenuCard } from "./menuCard.ts";
 import { actionOrder } from "./modal.ts";
 
+const menus: ReturnType<typeof createMenuCard>[] = [];
+
 afterEach(() => {
+  for (const menu of menus.splice(0)) {
+    menu.dispose();
+  }
   vi.unstubAllGlobals();
   vi.clearAllMocks();
   fixture.card.body.children = [];
@@ -54,7 +82,12 @@ afterEach(() => {
 });
 
 function setup() {
-  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  vi.stubGlobal("document", {
+    createElement: () => new fixture.Node(),
+    defaultView: { HTMLElement: fixture.Node, Node: fixture.Node },
+  });
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
+  fixture.card.frame.replaceChildren(fixture.card.body, fixture.card.close);
   const root = new fixture.Node();
   const onAction = vi.fn();
   const onOpenChange = vi.fn();
@@ -65,7 +98,14 @@ function setup() {
     onOpenChange,
     title: "Menu",
   });
-  return { menu, onAction, onOpenChange, rows: () => fixture.card.body.children[0]!.children };
+  menus.push(menu);
+  return {
+    menu,
+    onAction,
+    onOpenChange,
+    root,
+    rows: () => fixture.card.body.children[0]!.children,
+  };
 }
 
 describe("production Menu consumer", () => {
@@ -146,4 +186,21 @@ it("opens the child before reporting the parent hidden so pause ownership never 
   expect(onAction.mock.invocationCallOrder[0]!).toBeLessThan(
     onOpenChange.mock.invocationCallOrder[1]!,
   );
+});
+
+it("routes a held Menu action through the original caller and unregisters rebuilt rows", () => {
+  const { menu, onAction, root, rows } = setup();
+  menu.open();
+  const stale = rows()[1]!;
+  const held = resolveAdaHoldAction(root as unknown as HTMLElement, stale);
+  expect(held?.available()).toBe(true);
+  held?.activate();
+  expect(onAction).toHaveBeenCalledExactlyOnceWith("settings", expect.any(Function));
+  menu.open();
+  held?.activate();
+  stale.dispatchEvent(new Event("click"));
+  expect(onAction).toHaveBeenCalledTimes(1);
+  const current = rows()[1]!;
+  menu.dispose();
+  expect(resolveAdaHoldAction(root as unknown as HTMLElement, current)).toBeNull();
 });

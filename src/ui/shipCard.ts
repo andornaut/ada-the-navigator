@@ -5,8 +5,11 @@ import { WEAPON_LEVEL_COUNT } from "../data/weaponCatalog.ts";
 import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import { fill, weaponName } from "../model/shop.ts";
 import type { Aboard } from "../model/types.ts";
+import { bindAdaAction } from "./actionBinding.ts";
 import { applyAdaControlTheme, createAdaPageDivider } from "./buttonPresentation.ts";
 import { compactLevelName } from "./compactLevelName.ts";
+import { SCROLL } from "./layout/contentCard.ts";
+import { readViewUnit } from "./layout/viewScale.ts";
 import { TEXT_TOKENS } from "./modal.ts";
 import { stardustCount } from "./statusPill.ts";
 
@@ -175,12 +178,22 @@ export function shipIconNode(icon: ShipIcon): HTMLSpanElement {
 
 function rowNode(
   onItem: (row: ShipRow, origin: HTMLButtonElement) => void,
+  bindings: ReturnType<typeof bindAdaAction>[],
   row: ShipRow,
 ): HTMLButtonElement {
   const line = document.createElement("button");
   line.type = "button";
   line.dataset.item = shipItemKey(row.item);
-  line.addEventListener("click", () => onItem(row, line));
+  bindings.push(
+    bindAdaAction(
+      {
+        click: { availability: () => ({ kind: "available" }), run: () => onItem(row, line) },
+        current: () => true,
+        slopPx: () => SCROLL.dragThreshold * readViewUnit(line),
+      },
+      line,
+    ),
+  );
   line.className = "ada-ship-row";
   const label = document.createElement("span");
   label.className = "ada-ship-label";
@@ -210,6 +223,16 @@ function rowNode(
   return line;
 }
 
+const sectionBindings = new WeakMap<HTMLElement, ReturnType<typeof bindAdaAction>[]>();
+
+/** Release retained row callbacks before a view replaces or disposes these sections. */
+export function disposeShipSections(root: HTMLElement): void {
+  for (const binding of sectionBindings.get(root) ?? []) {
+    binding.dispose();
+  }
+  sectionBindings.delete(root);
+}
+
 /** Three inventory columns with canonical shared dividers and inline weapon ammunition. */
 export function renderShipSections(
   headings: {
@@ -223,6 +246,8 @@ export function renderShipSections(
 ): HTMLDivElement {
   const root = document.createElement("div");
   root.className = "ada-ship-sections";
+  const bindings: ReturnType<typeof bindAdaAction>[] = [];
+  sectionBindings.set(root, bindings);
   root.dataset.inkTop = "0";
   applyAdaControlTheme(root);
   for (const [key, rows] of [
@@ -241,7 +266,7 @@ export function renderShipSections(
     heading.textContent = headings[key];
     const grid = document.createElement("div");
     grid.className = "ada-ship-grid";
-    grid.append(...rows.map((row) => rowNode(onItem, row)));
+    grid.append(...rows.map((row) => rowNode(onItem, bindings, row)));
     section.append(heading, grid);
     root.append(section);
   }

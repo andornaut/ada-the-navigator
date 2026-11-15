@@ -1,5 +1,8 @@
 import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 
+import { bindAdaAction } from "./actionBinding.ts";
+import { SCROLL } from "./layout/contentCard.ts";
+import { readViewUnit } from "./layout/viewScale.ts";
 import { createButton, createCard } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 
@@ -47,6 +50,16 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
   let origin: HTMLElement | undefined;
   let returnAction: MenuAction | undefined;
   let disposed = false;
+  const generatedBindings: ReturnType<typeof bindAdaAction>[] = [];
+  const register = (element: HTMLElement, run: () => void) =>
+    bindAdaAction(
+      {
+        click: { availability: () => ({ kind: "available" }), run },
+        current: () => !disposed,
+        slopPx: () => SCROLL.dragThreshold * readViewUnit(element),
+      },
+      element,
+    );
   let leave: (() => void) | undefined;
   let layer: ReturnType<typeof createModalLayer> | undefined;
   const hide = (notify = true) => {
@@ -80,6 +93,10 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
     }
     root.append(modal);
     modal.hidden = false;
+    for (const binding of generatedBindings) {
+      binding.dispose();
+    }
+    generatedBindings.length = 0;
     actions.replaceChildren();
     let focus = closeButton;
     for (const action of menuActions(context)) {
@@ -88,18 +105,20 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
       if (returnAction === action) {
         focus = button;
       }
-      button.addEventListener("click", () => {
-        if (disposed || modal.hidden) {
-          return;
-        }
-        returnAction = action;
-        hide(false);
-        try {
-          options.onAction(action, () => open());
-        } finally {
-          options.onOpenChange(false);
-        }
-      });
+      generatedBindings.push(
+        register(button, () => {
+          if (disposed || modal.hidden) {
+            return;
+          }
+          returnAction = action;
+          hide(false);
+          try {
+            options.onAction(action, () => open());
+          } finally {
+            options.onOpenChange(false);
+          }
+        }),
+      );
       actions.append(button);
     }
     actions.append(closeButton);
@@ -108,13 +127,15 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
     leave = layer.open({ close, focus }, card.frame);
     options.onOpenChange(true);
   };
-  closeButton.addEventListener("click", close);
-  card.close.addEventListener("click", close);
+  const fixedBindings = [register(closeButton, close), register(card.close, close)];
   return {
     close,
     dispose() {
       hide();
       disposed = true;
+      for (const binding of [...generatedBindings, ...fixedBindings]) {
+        binding.dispose();
+      }
       card.dispose();
       modal.remove();
     },

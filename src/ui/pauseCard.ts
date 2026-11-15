@@ -5,7 +5,9 @@ import type { GalaxyNumber } from "../data/types.ts";
 import { weaponDetailLines } from "../data/weaponDetails.ts";
 import type { LocalMap } from "../model/map.ts";
 import type { QuestEntry } from "../model/questDetails.ts";
+import { bindAdaAction } from "./actionBinding.ts";
 import { compactLevelName } from "./compactLevelName.ts";
+import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createMapScreen, type MapField, type MapScreenLabels } from "./mapScreen.ts";
 import { createButton, createCard, isTap } from "./modal.ts";
@@ -15,6 +17,7 @@ import { createQuestsScreen, type QuestOrigin } from "./questsScreen.ts";
 import { refuse } from "./refusal.ts";
 import { createResourceCard } from "./resourceCard.ts";
 import {
+  disposeShipSections,
   renderShipSections,
   shipIconNode,
   type ShipRow,
@@ -125,6 +128,20 @@ function setAvailable(button: HTMLButtonElement, available: boolean): void {
 // they return to the Paused card.
 export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   const { labels } = options;
+  let disposed = false;
+  const actionBindings: ReturnType<typeof bindAdaAction>[] = [];
+  const register = (element: HTMLElement, run: () => void) => {
+    actionBindings.push(
+      bindAdaAction(
+        {
+          click: { availability: () => ({ kind: "available" }), run },
+          current: () => !disposed,
+          slopPx: () => SCROLL.dragThreshold * readViewUnit(element),
+        },
+        element,
+      ),
+    );
+  };
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
@@ -169,7 +186,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   shipFooter.className = "ada-ship-back";
   shipFooter.append(shipBack);
   ship.card.append(shipFooter);
-  shipBack.addEventListener("click", () => closeShip());
+  register(shipBack, () => closeShip());
   modal.append(paused.frame, ship.frame);
   root.append(modal);
   const mapScreen = createMapScreen(root, {
@@ -322,14 +339,19 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   };
   // What the Ship card last showed, so its rows rebuild only on a change.
   let shipShown: string | undefined;
+  let shipRows: HTMLElement | undefined;
   const renderShip = () => {
     const sections = state.ship ? shipSections(labels.shipRows, state.ship) : null;
     const signature = JSON.stringify(sections);
     if (signature !== shipShown) {
       shipShown = signature;
-      ship.body.replaceChildren(
-        ...(sections ? [renderShipSections(labels.shipHeadings, sections, openShipItem)] : []),
-      );
+      if (shipRows) {
+        disposeShipSections(shipRows);
+      }
+      shipRows = sections
+        ? renderShipSections(labels.shipHeadings, sections, openShipItem)
+        : undefined;
+      ship.body.replaceChildren(...(shipRows ? [shipRows] : []));
     }
     ship.fit();
   };
@@ -450,10 +472,10 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     }
   };
   for (const [id, button] of buttons) {
-    button.addEventListener("click", () => act(id));
+    register(button, () => act(id));
   }
-  paused.close.addEventListener("click", () => setOpen(false));
-  ship.close.addEventListener("click", () => closeShip());
+  register(paused.close, () => setOpen(false));
+  register(ship.close, () => closeShip());
   // The Ship card's X, back and Escape return to the Paused card, on its Ship button.
   function closeShip(): void {
     if (shipResource.isOpen()) {
@@ -520,6 +542,13 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     closeMap,
     closeShip,
     dispose(): void {
+      disposed = true;
+      for (const binding of actionBindings) {
+        binding.dispose();
+      }
+      if (shipRows) {
+        disposeShipSections(shipRows);
+      }
       layer?.dispose();
       paused.dispose();
       shipResource.dispose();
