@@ -40,3 +40,9 @@ Hidden, disconnected, zero-size or missing evidence yields `unavailable`. A pend
 font/art fit also stays unavailable. Actual scroll/clipping remains visible in the
 report; it cannot establish fit by hiding excess content. Physical reports and
 rendered artifacts are both required for visual review.
+
+Shop offer rows and purchase-detail headers share `createStationItemIcon` from
+[src/ui/stationItemIcon.ts](../src/ui/stationItemIcon.ts). The caller's existing
+item descriptor selects the canonical sprite, weapon upgrade composite or paint
+swatch. Header icons are decorative and preserve the visible item name. Rendering
+an additional header icon does not move or replace the row's icon.

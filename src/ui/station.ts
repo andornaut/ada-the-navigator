@@ -2,8 +2,6 @@ import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 
 import { CONTENT } from "../data/content.ts";
 import { EXCHANGE_COPY } from "../data/exchangeCopy.ts";
-import type { Weapon } from "../data/types.ts";
-import { weaponShopSheet } from "../data/weaponGlyphs.ts";
 import type { StationGreeting } from "../model/keepers.ts";
 import type { StationServices } from "../model/stationServices.ts";
 import { createDialoguePanel, type DialogueSpeaker } from "./dialoguePanel.ts";
@@ -25,6 +23,7 @@ import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import { createActions, createButton, createCard, isTap } from "./modal.ts";
 import { refuse } from "./refusal.ts";
 import { mountStationDropDetails } from "./stationDropDetails.ts";
+import { createStationItemIcon, type ItemGlyph, setStationItemTitle } from "./stationItemIcon.ts";
 import { applyButtonSkin } from "./uiSkin.ts";
 
 // The station card, the shop, the job board and their confirms (art/shop.md,
@@ -34,6 +33,8 @@ import { applyButtonSkin } from "./uiSkin.ts";
 const SPRITES = STATION_SPRITES;
 
 export { STATION_STYLE } from "./layout/stationStyle.ts";
+export type { ItemGlyph } from "./stationItemIcon.ts";
+export { weaponItemGlyph } from "./stationItemIcon.ts";
 
 export interface StationLabels {
   readonly close: string;
@@ -108,12 +109,6 @@ export interface StationJob {
  * applies an owned paint at once, and owned and inUse rows do nothing.
  */
 export type StationRowState = "forSale" | "unaffordable" | "selectable" | "owned" | "inUse";
-
-/** An item's glyph (art/shop-icons.md). */
-export type ItemGlyph =
-  | { readonly kind: "sprite"; readonly key: string }
-  | { readonly kind: "upgrade"; readonly weapon: Weapon }
-  | { readonly kind: "swatch"; readonly path: string };
 
 /** One shop row as shown; `key` names the item to the caller. */
 export interface StationRow {
@@ -220,41 +215,13 @@ export function rowAction(state: StationRowState): "request" | "select" | "none"
   return state === "owned" || state === "inUse" ? "none" : "request";
 }
 
-/** A weapon's shop glyph: its two-frame shop sheet. */
-export function weaponItemGlyph(weapon: Weapon): ItemGlyph {
-  return { key: weaponShopSheet(weapon), kind: "sprite" };
-}
-
-function glyphElement(glyph: ItemGlyph): HTMLElement {
-  if (glyph.kind === "swatch") {
-    const image = document.createElement("img");
-    image.className = "ada-glyph-swatch";
-    image.src = glyph.path;
-    image.alt = "";
-    image.setAttribute("aria-hidden", "true");
-    return image;
-  }
-  const node = document.createElement("span");
-  node.setAttribute("aria-hidden", "true");
-  if (glyph.kind === "upgrade") {
-    node.className = "ada-glyph-upgrade";
-    const badge = document.createElement("span");
-    badge.className = "ada-glyph-badge";
-    node.append(glyphElement(weaponItemGlyph(glyph.weapon)), badge);
-    return node;
-  }
-  node.className = "ada-glyph ada-glyph-sprite";
-  node.style.setProperty("--sheet", `url('${SPRITES}${glyph.key}.png')`);
-  return node;
-}
-
 function well(glyph: ItemGlyph, large = false): HTMLElement {
   const node = document.createElement("span");
   node.className = large ? "ada-well ada-large" : "ada-well";
   if (large) {
     node.style.setProperty("--glyph-scale", String(CONFIRM_ITEM.glyphScale));
   }
-  node.append(glyphElement(glyph));
+  node.append(createStationItemIcon(glyph));
   return node;
 }
 
@@ -874,7 +841,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     confirm = { key: row.key };
     confirmCard.frame.hidden = false;
     dropHost.hidden = true;
-    confirmCard.title.textContent = request.title;
+    setStationItemTitle(row.glyph, request.title, confirmCard.title);
     confirmCard.frame.setAttribute("aria-label", request.title);
     const item = well(row.glyph, true);
     item.dataset.inkTop = "0";
