@@ -11,7 +11,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { HUNTING_PACKS } from "../data/galaxyFeatures.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
 import { questReward } from "../data/questRewards.ts";
-import type { GalaxyNumber } from "../data/types.ts";
+import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
 import {
   acceptActivity,
@@ -23,11 +23,27 @@ import {
   validActivity,
 } from "./activities.ts";
 import { calfRouteMidpoint, calfStart, crossesCurrent } from "./calf.ts";
-import { ensureDestination, ensureStation } from "./flight.ts";
+import { activateRequiredRoute, ensureDestination, ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
-import type { GameState, HeldActivity, Vec } from "./types.ts";
+import type { FlightState, GameState, HeldActivity, Vec } from "./types.ts";
+
+/** Test support: admit the saved required encounter, then disable its actual noncombat-fixture guard. */
+function disableStoryGuard(content: GameContent, flight: FlightState, id: string): void {
+  const encounter = activateRequiredRoute(content, id, flight);
+  if (encounter.status === "resolved") {
+    return;
+  }
+  if (encounter.status !== "created" && encounter.status !== "existing") {
+    throw new Error(`Expected the saved required guard for ${id}, got ${encounter.status}`);
+  }
+  const guard = encounter.guard;
+  if (guard.routeId !== id || guard.enemy?.archetype !== "frigate") {
+    throw new Error(`Expected the actual required frigate for ${id}`);
+  }
+  guard.enemy.disabled = true;
+}
 
 /** The same held target is absent beyond 3000 and present just inside it, without advancing play. */
 function expectJobIndicatorRange(model: GameModel, target: Vec & { id: string }): void {
@@ -76,6 +92,9 @@ function atPlace(galaxy: GalaxyNumber, place: string, resolved = true) {
   }
   flight.player = { x: at.x, y: at.y };
   flight.velocity = { x: 0, y: 0 };
+  if (galaxy === 1) {
+    disableStoryGuard(CONTENT, flight, place);
+  }
   return model;
 }
 
@@ -96,6 +115,9 @@ function flyTo(model: GameModel, place: string) {
   const at = ensureDestination(CONTENT, place, flight);
   flight.player = { x: at.x, y: at.y };
   flight.velocity = { x: 0, y: 0 };
+  if (flight.galaxy === 1) {
+    disableStoryGuard(CONTENT, flight, place);
+  }
   model.state.dialogue = null;
 }
 
@@ -277,6 +299,7 @@ describe("repeatable activities", () => {
         text: line,
         title: speaker,
       });
+      expect(model.state.dialogue).not.toBeNull();
       model.choose("take");
       expect(model.state.dialogue).toBeNull();
       expect(model.state.tasks[galaxy]).toMatchObject({
@@ -290,9 +313,11 @@ describe("repeatable activities", () => {
   it("offers nothing before the chapter is complete, and Not now leaves the slot empty", () => {
     const early = atPlace(1, "growers", false);
     early.interact();
+    expect(early.state.dialogue).not.toBeNull();
     expect(early.state.dialogue?.context).not.toMatch(/^activity/);
     const model = atPlace(1, "growers");
     model.interact();
+    expect(model.state.dialogue).not.toBeNull();
     model.choose("skip");
     expect(model.state.dialogue).toBeNull();
     expect(model.state.tasks[1]).toBeUndefined();
@@ -416,6 +441,7 @@ describe("repeatable activities", () => {
     model.interact();
     // Acknowledge the deposit before opening the station's contract board.
     expect(model.state.dialogue?.context).toBe("deposit");
+    expect(model.state.dialogue).not.toBeNull();
     model.choose("continue");
     takeContract(model);
     expect(heldActivity(2, model.state)?.deposited).toBe(0);
@@ -439,6 +465,7 @@ describe("repeatable activities", () => {
     expect(model.state.notice).toBe("Job complete: +550 Stardust");
     expect(model.state.achievements.activities).toBe(count + 1);
     // Acknowledge the deposit, then open the board again.
+    expect(model.state.dialogue).not.toBeNull();
     model.choose("continue");
     model.interact();
     expect(model.jobBoard()[0]).toMatchObject({ id: "miningContract", state: "offer" });
@@ -453,6 +480,7 @@ describe("repeatable activities", () => {
     const others = stationsNear(ECONOMY, 1, 40_000, growers).filter(({ id }) => id !== site.id);
     model.state.progress[1].stations = [site.id, ...others.map(({ id }) => id)];
     model.interact();
+    expect(model.state.dialogue).not.toBeNull();
     model.choose("take");
     const length = Math.hypot(site.x - growers.x, site.y - growers.y);
     const reward = length >= JOB_TUNING.delivery.longFrom ? 75 : 45;
@@ -496,6 +524,7 @@ describe("repeatable activities", () => {
     model.interact();
     expect(model.state.docked).toBeNull();
     expect(model.state.dialogue).toMatchObject({ context: "deliver" });
+    expect(model.state.dialogue).not.toBeNull();
     model.choose("continue");
     expect(model.contextAction).toBe("dock");
     expect(model.state.tasks[1]).toBeUndefined();
@@ -514,6 +543,7 @@ describe("repeatable activities", () => {
   it("refuses Accept at another outpost while one outpost's supply run is held", () => {
     const model = atPlace(1, "growers");
     model.interact();
+    expect(model.state.dialogue).not.toBeNull();
     model.choose("take");
     flyTo(model, "workshop");
     model.interact();
@@ -521,6 +551,7 @@ describe("repeatable activities", () => {
       choices: [{ id: "take", refused: true }, { id: "skip" }],
       context: "activity:workshop",
     });
+    expect(model.state.dialogue).not.toBeNull();
     model.choose("take");
     expect(model.state.notice).toBe("Finish your activity first.");
     expect(heldActivity(1, model.state)?.place).toBe("growers");
@@ -585,6 +616,7 @@ describe("Guide a calf", () => {
   it("waits with its pack, follows Ada from 160 to 340, and completes home with the family", () => {
     const { family, flight, model } = atFamily();
     model.interact();
+    expect(model.state.dialogue).not.toBeNull();
     model.choose("take");
     const held = heldActivity(3, model.state) as HeldActivity;
     expect(held.start).toEqual(calfStart(3, FAMILY, 0));
@@ -636,6 +668,7 @@ describe("Guide a calf", () => {
   it("returns the calf to its start and places its pack again on reset, Drop and leaving", () => {
     const { flight, model } = atFamily();
     model.interact();
+    expect(model.state.dialogue).not.toBeNull();
     model.choose("take");
     const held = heldActivity(3, model.state)!;
     model.step(0.05, idle);
@@ -675,6 +708,7 @@ describe("Guide a calf", () => {
   it("ends the follow on Travel here, leaving the calf where it is", () => {
     const { flight, model } = atFamily();
     model.interact();
+    expect(model.state.dialogue).not.toBeNull();
     model.choose("take");
     model.step(0.05, idle);
     flight.calf!.following = true;
@@ -689,6 +723,7 @@ describe("Guide a calf", () => {
   it("rejects a saved calf that is not a position, velocity and follow flag", () => {
     const { flight, model } = atFamily();
     model.interact();
+    expect(model.state.dialogue).not.toBeNull();
     model.choose("take");
     model.step(0.05, idle);
     expect(flight.calf).toBeDefined();

@@ -3,12 +3,30 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
+import type { GameContent } from "../data/types.ts";
 import { relaunch } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
-import { ensureDestination } from "./flight.ts";
+import { activateRequiredRoute, ensureDestination } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
+import type { FlightState } from "./types.ts";
+
+/** Test support: admit the saved required encounter, then disable its actual noncombat-fixture guard. */
+function disableStoryGuard(content: GameContent, flight: FlightState, id: string): void {
+  const encounter = activateRequiredRoute(content, id, flight);
+  if (encounter.status === "resolved") {
+    return;
+  }
+  if (encounter.status !== "created" && encounter.status !== "existing") {
+    throw new Error(`Expected the saved required guard for ${id}, got ${encounter.status}`);
+  }
+  const guard = encounter.guard;
+  if (guard.routeId !== id || guard.enemy?.archetype !== "frigate") {
+    throw new Error(`Expected the actual required frigate for ${id}`);
+  }
+  guard.enemy.disabled = true;
+}
 
 function offer() {
   const model = new GameModel(CONTENT);
@@ -31,7 +49,9 @@ function offer() {
       (site) => Math.hypot(site.x - place.x, site.y - place.y) >= 3000,
     )!.id,
   ];
+  disableStoryGuard(CONTENT, flight, "growers");
   model.interact();
+  expect(model.state.dialogue).not.toBeNull();
   expect(model.state.dialogue?.choices.map(({ id }) => id)).toEqual(["take", "skip"]);
   return model;
 }
@@ -41,6 +61,7 @@ describe("Use card suspension", () => {
     const model = offer();
     const panel = model.state.dialogue;
     const before = structuredClone(model.state.economy);
+    expect(model.state.dialogue).not.toBeNull();
     model.closeInteraction();
     model.closeInteraction();
     expect(model.state.dialogue).toBeNull();
@@ -49,8 +70,10 @@ describe("Use card suspension", () => {
     model.interact();
     expect(model.state.dialogue).toBe(panel);
     expect(model.state.economy).toEqual(before);
+    expect(model.state.dialogue).not.toBeNull();
     model.choose("unknown");
     expect(model.state.dialogue).toBe(panel);
+    expect(model.state.dialogue).not.toBeNull();
     model.choose("take");
     expect(model.state.tasks[1]).toMatchObject({ kind: "activity", place: "growers" });
   });
@@ -58,6 +81,7 @@ describe("Use card suspension", () => {
   it("saves a suspended question and reopens it after Continue without inferring an answer", () => {
     const model = offer();
     const panel = structuredClone(model.state.dialogue);
+    expect(model.state.dialogue).not.toBeNull();
     model.closeInteraction();
     const save = model.save();
     expect(restoreSave(save)).not.toBeNull();
@@ -65,6 +89,7 @@ describe("Use card suspension", () => {
     expect(loaded.state.tasks[1]).toBeUndefined();
     loaded.interact();
     expect(loaded.state.dialogue).toEqual(panel);
+    expect(loaded.state.dialogue).not.toBeNull();
     loaded.choose("skip");
     expect(loaded.state.tasks[1]).toBeUndefined();
   });
@@ -73,8 +98,10 @@ describe("Use card suspension", () => {
     const model = offer();
     const panel = model.state.dialogue!;
     panel.choices[0]!.refused = true;
+    expect(model.state.dialogue).not.toBeNull();
     model.choose("take");
     expect(model.state.tasks[1]).toBeUndefined();
+    expect(model.state.dialogue).not.toBeNull();
     model.closeInteraction();
     expect(model.openGalaxyMap()).toBe(false);
     expect(model.state.dialogue).toBe(panel);
@@ -96,11 +123,13 @@ describe("Use card suspension", () => {
     expect(model.state.dialogue).toMatchObject({ context: "deposit", title: "Astra" });
     const deposited = model.state.progress[2].deposited;
     const balance = model.state.economy.stardust;
+    expect(model.state.dialogue).not.toBeNull();
     model.closeInteraction();
     model.interact();
     expect(model.state.progress[2].deposited).toBe(deposited);
     expect(model.state.economy.stardust).toBe(balance);
     expect(flight.cargo).toBe(0);
+    expect(model.state.dialogue).not.toBeNull();
     model.choose("continue");
     expect(model.state.dialogue).toBeNull();
   });
@@ -135,10 +164,12 @@ describe("mechanical outcome retention", () => {
     expect(enemy.salvaged).toBe(true);
     const drops = structuredClone(flight.objects);
     const nextId = flight.nextId;
+    expect(model.state.dialogue).not.toBeNull();
     model.closeInteraction();
     model.interact();
     expect(flight.objects).toEqual(drops);
     expect(flight.nextId).toBe(nextId);
+    expect(model.state.dialogue).not.toBeNull();
     model.choose("continue");
     model.interact();
     expect(flight.objects).toEqual(drops);
@@ -147,6 +178,7 @@ describe("mechanical outcome retention", () => {
   it("retains a closed pending choice through an emergency return, save and new flight", () => {
     const model = offer();
     const question = structuredClone(model.state.dialogue);
+    expect(model.state.dialogue).not.toBeNull();
     model.closeInteraction();
     const flight = model.state.flight!;
     flight.objects = [];
@@ -167,6 +199,7 @@ describe("mechanical outcome retention", () => {
     loaded.startGalaxy(1);
     expect(loaded.state.dialogue).toEqual(question);
     expect(loaded.state.tasks[1]).toBeUndefined();
+    expect(loaded.state.dialogue).not.toBeNull();
     loaded.choose("skip");
     expect(loaded.state.tasks[1]).toBeUndefined();
   });

@@ -6,13 +6,31 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
-import { ensureDestination } from "../model/flight.ts";
+import type { GameContent } from "../data/types.ts";
+import { activateRequiredRoute, ensureDestination } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { SAVE_VERSION } from "../model/save.ts";
 import { stationsNear } from "../model/stations.ts";
+import type { FlightState } from "../model/types.ts";
 import { collectWeapon } from "../model/weapons.ts";
 import { relaunch } from "../testing/launch.ts";
 import { SAVE_FORMAT, SAVE_KEYS, saves } from "./persistence.ts";
+
+/** Test support: admit the saved required encounter, then disable its actual noncombat-fixture guard. */
+function disableStoryGuard(content: GameContent, flight: FlightState, id: string): void {
+  const encounter = activateRequiredRoute(content, id, flight);
+  if (encounter.status === "resolved") {
+    return;
+  }
+  if (encounter.status !== "created" && encounter.status !== "existing") {
+    throw new Error(`Expected the saved required guard for ${id}, got ${encounter.status}`);
+  }
+  const guard = encounter.guard;
+  if (guard.routeId !== id || guard.enemy?.archetype !== "frigate") {
+    throw new Error(`Expected the actual required frigate for ${id}`);
+  }
+  guard.enemy.disabled = true;
+}
 
 function storage(raw?: string) {
   const values = new Map<string, string>(raw === undefined ? [] : [[SAVE_KEYS.save, raw]]);
@@ -43,7 +61,9 @@ function pendingOffer(): GameModel {
       (site) => Math.hypot(site.x - place.x, site.y - place.y) >= 3000,
     )!.id,
   ];
+  disableStoryGuard(CONTENT, flight, "growers");
   model.interact();
+  expect(model.state.dialogue).not.toBeNull();
   expect(model.state.dialogue?.choices.map(({ id }) => id)).toEqual(["take", "skip"]);
   return model;
 }
@@ -70,6 +90,7 @@ describe("canonical Ada save storage", () => {
   it("keeps a closed meaningful choice without accepting it or losing its effective held flight", async () => {
     const model = pendingOffer();
     const question = structuredClone(model.state.dialogue);
+    expect(model.state.dialogue).not.toBeNull();
     model.closeInteraction();
     const waiting = new GameModel(CONTENT, model.save());
     const boundary = storage();
@@ -82,6 +103,7 @@ describe("canonical Ada save storage", () => {
     resumed.interact();
     expect(resumed.state.dialogue).toEqual(question);
     expect(resumed.state.tasks[1]).toBeUndefined();
+    expect(resumed.state.dialogue).not.toBeNull();
     resumed.choose("take");
     expect(resumed.state.tasks[1]).toMatchObject({ kind: "activity", place: "growers" });
     await boundary.store.save(resumed.saveDocument());

@@ -4,15 +4,31 @@ import { MINING_CONTRACT_DEPOSITS, SUPPLY_ITEMS } from "../data/activities.ts";
 import { CONTENT } from "../data/content.ts";
 import { JOB_REWARDS, JOB_TYPES } from "../data/jobs.ts";
 import { questReward } from "../data/questRewards.ts";
-import type { GalaxyNumber } from "../data/types.ts";
+import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import { playOpening } from "../testing/launch.ts";
 import { questEndpoints } from "../ui/mapScreen.ts";
-import { ensureDestination } from "./flight.ts";
+import { activateRequiredRoute, ensureDestination } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
 import type { MapPlace } from "./map.ts";
 import { type QuestDetailContext, questDetails, type QuestDetailSnapshot } from "./questDetails.ts";
-import type { HeldJob, OptionalTask } from "./types.ts";
+import type { FlightState, HeldJob, OptionalTask } from "./types.ts";
+
+/** Test support: admit the saved required encounter, then disable its actual noncombat-fixture guard. */
+function disableStoryGuard(content: GameContent, flight: FlightState, id: string): void {
+  const encounter = activateRequiredRoute(content, id, flight);
+  if (encounter.status === "resolved") {
+    return;
+  }
+  if (encounter.status !== "created" && encounter.status !== "existing") {
+    throw new Error(`Expected the saved required guard for ${id}, got ${encounter.status}`);
+  }
+  const guard = encounter.guard;
+  if (guard.routeId !== id || guard.enemy?.archetype !== "frigate") {
+    throw new Error(`Expected the actual required frigate for ${id}`);
+  }
+  guard.enemy.disabled = true;
+}
 
 // Synthetic templates exercise approved keys and token substitution without duplicating copy.
 const templates: Readonly<Record<string, string>> = {
@@ -54,7 +70,10 @@ function talk(model: GameModel, id: string) {
   f.player = { x: at.x, y: at.y };
   model.state.progress[1].known.push(id);
   model.state.dialogue = null;
+  disableStoryGuard(CONTENT, f, id);
   model.interact();
+  expect(model.state.dialogue).not.toBeNull();
+  expect(model.state.dialogue).not.toBeNull();
   model.choose("continue");
 }
 function job(type: HeldJob["type"]): HeldJob {
