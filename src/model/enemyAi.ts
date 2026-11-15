@@ -13,6 +13,7 @@ import {
 } from "../data/enemyCatalog.ts";
 import { MUZZLE_ART, muzzleLayout } from "../data/enemyMuzzles.ts";
 import { SHARED_SHIP_PHYSICS } from "../data/shipPhysics.ts";
+import type { WeaponLevel } from "../data/types.ts";
 import { muzzleOffset } from "./muzzles.ts";
 import { fanHeading } from "./playerProjectiles.ts";
 import { direction, hullOffset, speedFraction, stepShipMotion, turnToward } from "./shipPhysics.ts";
@@ -91,6 +92,8 @@ export interface EnemyState {
   salvaged: boolean;
   tactic: TacticState;
   velocity: Point;
+  /** Equipped level resolved at spawn; legacy absence is interpreted by the loadout owner. */
+  weaponLevel?: WeaponLevel;
 }
 export interface EnemyContext extends WorldContext {
   /** Admission for new sight aggression only; damage, summons and existing pursuit bypass it. */
@@ -288,6 +291,7 @@ export function createEnemy(
     id: string;
     packId: string | null;
     phase: number;
+    weaponLevel?: WeaponLevel;
   },
   position: Point,
 ): EnemyState {
