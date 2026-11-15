@@ -1375,6 +1375,12 @@ export function spawnPlannedHostileStation(
   flight: FlightState,
   plan: PlannedHostileStation,
 ): StationMaterialization {
+  const reservations = pendingRequiredRoutes(flight);
+  const population = requiredWorldPopulation(flight, reservations);
+  const placement = {
+    ...flight,
+    objects: [...population, ...reservations.map(({ site }) => site)],
+  };
   return materializeHostileStation(
     {
       canPlace: (actors) =>
@@ -1383,7 +1389,7 @@ export function spawnPlannedHostileStation(
             arrivals: arrivalPoints(flight),
             content,
             drawnOf: (object) => drawnOf(flight, object),
-            flight,
+            flight: placement,
             frameOf: (object) => frameOf(flight, object),
           },
           actors,
@@ -1395,6 +1401,7 @@ export function spawnPlannedHostileStation(
         return object;
       },
       flight,
+      population,
     },
     plan,
   );

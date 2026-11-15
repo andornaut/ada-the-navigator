@@ -1,6 +1,7 @@
 import { enemyActorAvailable, type EnemyActorKind } from "../data/enemyActors.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
-import { SPAWNER_POLICIES, SWARM_GROUP_MINIMUM } from "../data/spawnerCatalog.ts";
+import { HOSTILE_STATION_POLICY } from "../data/hostileStationPolicy.ts";
+import { SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
 import type { GameContent } from "../data/types.ts";
 import { partsReach, worldParts } from "./convex.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
@@ -23,6 +24,7 @@ export interface PlannedHostileStation extends PlannedActor {
 export interface StationMaterializationContext {
   readonly content: GameContent;
   readonly flight: FlightState;
+  readonly population?: readonly SpaceObject[];
   readonly create: (kind: EnemyActorKind, actor: PlannedActor, packId: string) => SpaceObject;
   readonly canPlace: (actors: readonly SpaceObject[]) => boolean;
 }
@@ -79,7 +81,7 @@ export function materializeHostileStation(
   }
   const packId = hostileStationPack(plan.id);
   const defenderPack = escortPackId(packId);
-  const represented = stationPopulationObjects(flight);
+  const represented = context.population ?? stationPopulationObjects(flight);
   if (Object.hasOwn(flight.world.notables, plan.id) && flight.world.notables[plan.id] === null) {
     return { status: "removed" };
   }
@@ -106,7 +108,7 @@ export function materializeHostileStation(
   const swarm = stage.roster.find(({ archetype }) => archetype === "swarm");
   if (
     new Set(ids).size !== ids.length ||
-    plan.defenders.length < SWARM_GROUP_MINIMUM ||
+    plan.defenders.length !== HOSTILE_STATION_POLICY.defenders ||
     !swarm ||
     plan.defenders.length > swarm.groupSize[1] ||
     plan.defenders.some(
@@ -133,7 +135,7 @@ export function materializeHostileStation(
       );
     }),
   );
-  const population = hostileStationContext(flight);
+  const population = hostileStationContext({ ...flight, objects: [...represented] });
   const stationIds = new Set(population.hostileStationIds);
   stationIds.add(plan.id);
   if (
