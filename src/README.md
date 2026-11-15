@@ -129,7 +129,11 @@ The play page's lightweight HTML shell shows the existing ship and the kit's
 pending loading bar before game modules download. The live bar covers module,
 update-check and save-read waits, then reports actual loader progress. Image
 decoding keeps it pending until the prepared screen replaces the splash. A crash
-during module download remains fenced when startup continues.
+during module download remains fenced when startup continues. Explicit Retry reloads
+one document after a game-module import rejection or startup without a reclaimable
+Phaser instance. Other required-file and background-download failures retry in place.
+The reload preserves saved data and preferences and retains the normal launch/update
+fences; it does not activate a worker or modify asset URLs.
 
 A loading bar along the view's top edge, above every other layer, shows the loads
 the player waits for. The boot preload and a galaxy's art as its first flight

@@ -37,6 +37,7 @@ vi.mock("@andornaut/game-kit/runtime/web/progress/dom/loadingFailure", () => ({
   },
 }));
 import { presentGalaxyDownload, presentInstallation } from "../pwa/installationPresentation.ts";
+import { type EntryRecoveryPhase, EntryReloadRequired } from "./entryRecovery.ts";
 import { type RequiredGame, startLoading, startupFence } from "./startup.ts";
 const root = (size = { height: 360, width: 720 }) =>
   ({
@@ -67,10 +68,11 @@ beforeEach(() => {
   startupFence.crashed = false;
 });
 afterEach(() => vi.unstubAllGlobals());
-it("keeps the same bar/error through failed import and retries once into actual construction", async () => {
+it("keeps provider preparation failures on the same in-place Retry and constructs once", async () => {
   const required = createRequiredLoading(),
     entry = game();
-  const load = vi.fn().mockRejectedValueOnce(new Error("import failed")).mockResolvedValue(entry);
+  entry.prepare.mockRejectedValueOnce(new Error("preparation failed")).mockResolvedValue(undefined);
+  const load = vi.fn().mockResolvedValue(entry);
   const stop = await startLoading(required, { stopGameOnCrash: vi.fn() }, load, root());
   expect(required.state.kind).toBe("failed");
   expect(entry.load).not.toHaveBeenCalled();
@@ -377,3 +379,36 @@ it("keeps required and installation errors ahead of galaxy Retry in the same pre
   expect(required.state.kind).toBe("ready");
   stop();
 });
+
+it.each(["module-import", "unavailable-retirement"] as const)(
+  "reloads only on explicit Retry for %s and disposes the old attempt once",
+  async (phase: EntryRecoveryPhase) => {
+    const required = createRequiredLoading(),
+      entry = game(),
+      reload = vi.fn();
+    const events = Object.assign(new EventTarget(), { location: { reload } });
+    const host = root();
+    Object.defineProperty(host.ownerDocument, "defaultView", { value: events });
+    const terminal = new EntryReloadRequired(phase, new Error("original failure"));
+    const load =
+      phase === "module-import"
+        ? vi.fn().mockRejectedValue(terminal)
+        : vi.fn().mockResolvedValue(entry);
+    if (phase === "unavailable-retirement") {
+      entry.load.mockRejectedValue(terminal);
+    }
+    const stop = await startLoading(required, { stopGameOnCrash: vi.fn() }, load, host);
+    await settle();
+    expect(required.state.kind).toBe("failed");
+    expect(reload).not.toHaveBeenCalled();
+    await view.retry!();
+    expect(reload).toHaveBeenCalledOnce();
+    expect(load).toHaveBeenCalledOnce();
+    expect(view.dispose).toHaveBeenCalledOnce();
+    expect(progress.mount).toHaveBeenCalledOnce();
+    await view.retry!();
+    stop();
+    expect(reload).toHaveBeenCalledOnce();
+    expect(view.dispose).toHaveBeenCalledOnce();
+  },
+);

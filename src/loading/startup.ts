@@ -20,6 +20,7 @@ import { viewScale } from "../ui/layout/playView.ts";
 import { VIEW_SCALE_EVENT } from "../ui/layout/viewScale.ts";
 import { LOADING_LAYER } from "../ui/loadingBar.ts";
 import { TEXT_TOKENS } from "../ui/modal.ts";
+import { EntryReloadRequired } from "./entryRecovery.ts";
 import { loadingProgress, mountLoading } from "./progress.ts";
 
 export const startupFence = { crashed: false };
@@ -90,7 +91,18 @@ export async function startLoading(
   const failure = mountLoadingFailure(
     {
       async onRetry() {
+        if (disposed || startupFence.crashed) {
+          return;
+        }
         try {
+          const needsDocument = [moduleAttempt.state, gameAttempt.state].some(
+            (state) => state.kind === "failed" && state.error instanceof EntryReloadRequired,
+          );
+          if (needsDocument) {
+            dispose();
+            root.ownerDocument.defaultView!.location.reload();
+            return;
+          }
           if (required.state.kind === "ready" && background?.state.kind === "failed") {
             await background.retry();
           } else {

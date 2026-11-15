@@ -24,6 +24,7 @@ import { GameScene } from "./game/scene.ts";
 import { flushScene, refreshScene } from "./game/sceneUi.ts";
 import { followPageVisibility } from "./lifecycle.ts";
 import { prepareBootReveal } from "./loading/bootReveal.ts";
+import { EntryReloadRequired } from "./loading/entryRecovery.ts";
 import { requiredLoading, requiredReady } from "./loading/required.ts";
 import { validateBootCore } from "./loading/requiredCore.ts";
 import { requireSceneFiles } from "./loading/requiredFiles.ts";
@@ -313,9 +314,10 @@ async function enterGame(attempt: LoadingAttempt): Promise<void> {
     finishEntry();
   } catch (error) {
     if (!owned || !owned.isRunning) {
-      // A constructor that exposes no instance has no public reclamation handle. Do not overlap
-      // another constructor on Retry until an actual late preBoot handle can retire it.
-      unavailableRetirement(error);
+      // Keep the constructor fence until an explicit Retry creates a fresh document.
+      const terminal = new EntryReloadRequired("unavailable-retirement", error);
+      unavailableRetirement(terminal);
+      throw terminal;
     }
     throw error;
   }

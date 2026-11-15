@@ -230,7 +230,10 @@ it("does not overlap a constructor that failed before exposing a public retireme
   boot.constructorThrows = true;
   const { attempt } = await entry();
   await attempt.start();
-  expect(attempt.state.kind).toBe("failed");
+  expect(attempt.state).toMatchObject({
+    error: { phase: "unavailable-retirement" },
+    kind: "failed",
+  });
   boot.constructorThrows = false;
   await attempt.retry();
   expect(attempt.state.kind).toBe("failed");

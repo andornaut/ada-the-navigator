@@ -2,6 +2,7 @@
 import "../crash/install.ts";
 
 import { CRASH_SCREEN } from "../crash/crashScreen.ts";
+import { EntryReloadRequired } from "./entryRecovery.ts";
 import { requiredLoading } from "./required.ts";
 import { startLoading } from "./startup.ts";
 
@@ -13,7 +14,9 @@ const stop = await startLoading(
   requiredLoading,
   CRASH_SCREEN,
   async () => {
-    const game = await import("../main.ts");
+    const game = await import("../main.ts").catch((error: unknown) => {
+      throw new EntryReloadRequired("module-import", error);
+    });
     return {
       commit: game.commitGame,
       dispose: game.disposeGame,
