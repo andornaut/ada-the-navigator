@@ -98,6 +98,7 @@ import {
   pickupTouched,
   placeDestinationAhead,
   placeHuntingPack,
+  questGuardPlacementContext,
   routeBlocked,
   salvage,
   salvageTarget,
@@ -139,6 +140,7 @@ import {
 import { flightLandmarkSites, landmarkById, landmarkLabel, landmarkSites } from "./landmarks.ts";
 import { landmarkScanTarget } from "./landmarkScan.ts";
 import { lateEncounterCue } from "./lateEncounter.ts";
+import { recoverLegacyQuestGuards } from "./legacyGuardRecovery.ts";
 import {
   type LocalMap,
   localMap,
@@ -3601,6 +3603,9 @@ export class GameModel {
       Object.assign(this.state, this.heldFlight);
       this.heldFlight = null;
       const { docked, flight } = this.state;
+      if (flight) {
+        recoverLegacyQuestGuards(questGuardPlacementContext(this.content, flight));
+      }
       if (docked && flight && !this.greeting) {
         const visits = this.state.progress[flight.galaxy].greetings[docked] ?? 0;
         this.restoreGreeting(flight.galaxy, docked, Math.max(0, visits - 1));

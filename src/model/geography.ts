@@ -2,6 +2,7 @@ import { ECONOMY } from "../data/economy.ts";
 import type { GameContent } from "../data/types.ts";
 import { enemyDefeated } from "./enemyAi.ts";
 import { markerObjectTracked } from "./markerKnowledge.ts";
+import { stationGuardSite } from "./stationGuardSite.ts";
 import { worldStationById } from "./stations.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
 import { chunkCoordinates } from "./visited.ts";
@@ -23,6 +24,7 @@ export interface GeographyContext extends WorldCellContext {
 export const ACTIVE_CHUNK_RADIUS = 3;
 const archived = new WeakMap<FlightState, Set<string>>();
 const emptyIds: ReadonlySet<string> = new Set();
+const questGuardRecovery = new WeakMap<FlightState, ReadonlySet<string>>();
 interface WorldIndex {
   worldSide: number | undefined;
   chunks: Map<string, Set<string>>;
@@ -249,11 +251,70 @@ export function recordUnloadedPackMember(object: SpaceObject, flight: FlightStat
   unloaded[packId] = (unloaded[packId] ?? 0) + 1;
 }
 
+/** Existing required formations remain active with their site's normal chunk neighbourhood. */
+function activateQuestGuardRecovery(
+  context: GeographyContext,
+  content: GameContent,
+  flight: FlightState,
+): ReadonlySet<string> {
+  const leaders = questGuardRecovery.get(flight);
+  if (!leaders?.size) {
+    return emptyIds;
+  }
+  const actors = new Map([
+    ...Object.values(flight.world.notables).flatMap((object) =>
+      object ? [[object.id, object] as const] : [],
+    ),
+    ...flight.objects.map((object) => [object.id, object] as const),
+  ]);
+  const center = coordinates(context, content, flight.player);
+  const active = new Set<string>();
+  for (const id of leaders) {
+    const guard = actors.get(id);
+    if (
+      !guard?.enemy ||
+      guard.enemy.archetype !== "frigate" ||
+      guard.enemy.disabled ||
+      !liveEnemy(guard)
+    ) {
+      continue;
+    }
+    const site = stationGuardSite({ content, flight }, guard);
+    if (
+      site.status !== "present" ||
+      !near(context, content, coordinates(context, content, site.center), center)
+    ) {
+      continue;
+    }
+    for (const actor of actors.values()) {
+      if ((actor.id === id || actor.enemy?.escortOf === id) && liveEnemy(actor)) {
+        active.add(actor.id);
+      }
+    }
+  }
+  for (const id of active) {
+    activate(context, content, id, flight);
+  }
+  return active;
+}
+
+/** Ephemeral membership is reconstructed from each continued flight, never serialized. */
+export function retainQuestGuardRecovery(
+  context: GeographyContext,
+  content: GameContent,
+  guardIds: ReadonlySet<string>,
+  flight: FlightState,
+): ReadonlySet<string> {
+  questGuardRecovery.set(flight, new Set(guardIds));
+  return activateQuestGuardRecovery(context, content, flight);
+}
+
 export function worldSyncFlightRegion(
   context: GeographyContext,
   content: GameContent,
   flight: FlightState,
 ): void {
+  const questGuards = activateQuestGuardRecovery(context, content, flight);
   worldActivateFlightRegion(context, content, flight.player, flight);
   const center = coordinates(context, content, flight.player);
   const index = indexWorld(context, content, flight);
@@ -269,6 +330,7 @@ export function worldSyncFlightRegion(
       object.id.startsWith("whale-debris:") ||
       // A summoned guard stays loaded while it flies toward Ada (flight.ts cueGuards).
       flight.summonedGuards?.includes(object.id) ||
+      questGuards.has(object.id) ||
       near(context, content, coordinates(context, content, object), center)
     ) {
       active.push(object);
