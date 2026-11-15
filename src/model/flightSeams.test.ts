@@ -238,17 +238,17 @@ describe("reviewed seam guards and drawn pickups", () => {
   it("tracks a charged lance along the short seam direction", () => {
     const flight = stationClearFixture({ x: half - 200, y: seamY }, 2);
     const id = Array.from({ length: 500 }, (_, index) => `lance:${index}`).find((candidate) =>
-      [...heavyLoadout("frigate", ROUTE_POSITION[2], candidate)!.values()].includes("chargedLance"),
+      [...heavyLoadout("capital", ROUTE_POSITION[2], candidate)!.values()].includes("chargedLance"),
     )!;
     expect(id).toBeDefined();
-    const mount = [...heavyLoadout("frigate", ROUTE_POSITION[2], id)!].find(
+    const mount = [...heavyLoadout("capital", ROUTE_POSITION[2], id)!].find(
       ([, weapon]) => weapon === "chargedLance",
     )![0];
-    const definition = enemyDefinition(2, "frigate", id);
+    const definition = enemyDefinition(2, "capital", id);
     const point = { x: -half + 200, y: seamY };
     const state = createEnemy(
       definition,
-      { archetype: "frigate", id, packId: null, phase: 0 },
+      { archetype: "capital", id, packId: null, phase: 0 },
       point,
     );
     for (const part of state.hardpoints) {

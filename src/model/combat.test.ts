@@ -1250,7 +1250,7 @@ describe("combat admission and subframe firing", () => {
 
   it("does not hit Ada before a delayed bolt can reach her collision boundary", () => {
     const flight = empty();
-    const target = ship("fighter", { x: 15, y: 0 });
+    const target = ship("swarm", { x: 15, y: 0 });
     target.cooldown = 999;
     target.enemy!.primaryCooldown = 0.012;
     flight.objects.push(target);

@@ -1,13 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import {
-  enemyCatalog,
-  enemyDefinition,
-  heavyLoadout,
-  PHASER_AIM_SECONDS,
-} from "../data/enemyCatalog.ts";
-import { BUILT, GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
+import { enemyCatalog, enemyDefinition, PHASER_AIM_SECONDS } from "../data/enemyCatalog.ts";
+import { BUILT, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { NEEDLE } from "../data/needle.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { BEAM } from "../data/weaponCatalog.ts";
@@ -346,29 +341,15 @@ describe("mounted Needle flight physics", () => {
     const flight = createFlight(CONTENT, 6, 173, newProgress());
     flight.objects = [];
     flight.player = { x: 0, y: 0 };
-    let id = "";
-    let mount = "";
-    for (let index = 0; index < 100 && !mount; index++) {
-      const candidate = `beam-target:${index}`;
-      const selected = [...heavyLoadout("capital", ROUTE_POSITION[6], candidate)!].find(
-        ([, weapon]) => weapon === "phaser",
-      );
-      if (selected) {
-        id = candidate;
-        mount = selected[0];
-      }
-    }
-    expect(mount).not.toBe("");
+    const id = "beam-target:interceptor";
     const point = { x: 220, y: 0 };
-    const definition = enemyDefinition(6, "capital", id);
+    const definition = enemyDefinition(6, "interceptor", id);
     const enemy = createEnemy(
       definition,
-      { archetype: "capital", id, packId: null, phase: 0 },
+      { archetype: "interceptor", id, packId: null, phase: 0 },
       point,
     );
-    enemy.hardpoints.forEach((part) => {
-      part.cooldown = part.id === mount ? 0 : 999;
-    });
+    enemy.primaryCooldown = 0;
     flight.objects = [
       {
         ...point,

@@ -101,7 +101,7 @@ describe("hitAndRun", () => {
       frames++;
     }
     expect(ships[0]!.tactic.phase).toBe("retreat");
-    expect(fired).toBe(behaviour.burstVolleys);
+    expect(fired).toBe(behaviour.burstVolleys * enemyCatalog.fighter.fire.angles.length);
     const start = range(ships[0]!);
     run(ships, Math.round(enemyCatalog.fighter.retreats.hitAndRun.seconds / dt) - 1);
     expect(ships[0]!.tactic.phase).toBe("retreat");
@@ -639,7 +639,7 @@ describe("independent weapon aim", () => {
           const offset = hardpointOffset(definition, 20, facing, part);
           const wanted = rotate(
             { x: target.x - offset.x, y: target.y - offset.y },
-            aimDrift(state.id, state.age),
+            part.fire.projectile === "beam" ? 0 : aimDrift(state.id, state.age),
           );
           const aim = next.hardpoints.find((entry) => entry.id === part.id)!.aim!;
           expect(between(aim, wanted)).toBeCloseTo(between({ x: 1, y: 0 }, wanted) * decay, 9);
