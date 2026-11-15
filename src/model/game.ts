@@ -88,7 +88,7 @@ import {
 import {
   activateRouteEncounter,
   carryPickup,
-  createFlight,
+  createUnpopulatedFlight,
   dockFlight,
   dronesNear,
   ensureDestination,
@@ -98,6 +98,8 @@ import {
   pickupTouched,
   placeDestinationAhead,
   placeHuntingPack,
+  populateFlight,
+  populateRequiredFlight,
   questGuardPlacementContext,
   routeBlocked,
   salvage,
@@ -1906,14 +1908,22 @@ export class GameModel {
     const randomSeed = crypto.getRandomValues(new Uint32Array(1))[0] ?? 1;
     const seed = randomSeed === this.previousSeed ? (randomSeed + 1) >>> 0 : randomSeed;
     this.previousSeed = seed;
-    this.state.flight = createFlight(
+    const flight = createUnpopulatedFlight(
       this.content,
       this.state.selectedGalaxy,
       geography.seed,
-      this.current,
       this.state.economy,
       seed,
     );
+    if (flight.galaxy === 1 && !this.current.questComplete) {
+      const sites = galaxyRoute(flight.galaxy).filter((id) => !this.current.known.includes(id));
+      if (populateRequiredFlight(this.content, this.current, sites, flight).status === "blocked") {
+        return;
+      }
+    } else {
+      populateFlight(this.content, this.current, flight);
+    }
+    this.state.flight = flight;
     delete this.state.economy.cargo;
     this.state.mode = "space";
     this.state.dialogue = null;
@@ -2666,6 +2676,10 @@ export class GameModel {
   private placePending(id: string): void {
     const f = this.state.flight;
     if (!f) {
+      return;
+    }
+    if (f.galaxy === 1 && this.current.requiredSites?.[id]) {
+      ensureDestination(this.content, id, f);
       return;
     }
     activateRouteEncounter(this.content, id, f);

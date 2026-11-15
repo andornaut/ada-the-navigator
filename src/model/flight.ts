@@ -117,6 +117,7 @@ import {
   questGuardFormationReach,
   questGuardHomePorts,
 } from "./questGuardPlacement.ts";
+import { readRequiredPlan, storeRequiredPlan, takeRequiredPlan } from "./requiredEncounterPlans.ts";
 import {
   requiredWorldPlacementClear,
   requiredWorldPopulation,
@@ -265,15 +266,10 @@ function chunk(flight: FlightState, content: GameContent, point: Vec): string {
 }
 
 /** Whether a point lies inside an existing friendly protected place. */
-const requiredRouteStorage = new WeakMap<FlightState, RequiredRouteStorage>();
-
-/** Fresh entry and Continue bind the same saved reservation facade before world generation. */
-export function bindRequiredRouteStorage(storage: RequiredRouteStorage, flight: FlightState): void {
-  requiredRouteStorage.set(flight, storage);
-}
-
 function pendingRequiredRoutes(flight: FlightState): readonly RequiredWorldReservation[] {
-  return requiredRouteStorage.get(flight)?.read(flight) ?? [];
+  return Object.values(flight.requiredPlans ?? {}).flatMap(({ leader, site, support }) =>
+    [leader, ...support].map((guard) => ({ guard, site })),
+  );
 }
 
 function requiredPlacementClear(
@@ -1216,21 +1212,21 @@ export function planRequiredWorld(
   content: GameContent,
   flight: FlightState,
   siteIds: readonly string[],
+  rememberedSites: Readonly<Record<string, Vec>> = {},
 ): RequiredRoutePlanningResult {
   const projection = structuredClone(flight);
   planningRequiredWorld.add(projection);
   try {
-    const sites = siteIds.map((id) => ensureDestination(content, id, projection));
+    const sites = siteIds.map((id) => {
+      const point = rememberedSites[id];
+      return point
+        ? ensureDestinationAt(content, id, point, projection)
+        : ensureDestination(content, id, projection);
+    });
     return planRequiredRouteReservations(content, projection, sites);
   } finally {
     planningRequiredWorld.delete(projection);
   }
-}
-
-export interface RequiredRouteStorage {
-  read(flight: FlightState): readonly RequiredWorldReservation[];
-  install(flight: FlightState, reservations: readonly RequiredWorldReservation[]): void;
-  consumeSite(flight: FlightState, siteId: string): void;
 }
 
 export type RequiredRouteActivation =
@@ -1240,7 +1236,6 @@ export type RequiredRouteActivation =
 /** Existing authored eligibility activates exact reserved actors, with no reward or discovery mutation. */
 export function activateRequiredRoute(
   content: GameContent,
-  storage: RequiredRouteStorage,
   siteId: string,
   flight: FlightState,
 ): RequiredRouteActivation {
@@ -1254,7 +1249,7 @@ export function activateRequiredRoute(
   if (evidence.admissionRecorded) {
     return { status: "unplanned" };
   }
-  const reservations = storage.read(flight);
+  const reservations = pendingRequiredRoutes(flight);
   const group = reservations.filter(({ site }) => site.id === siteId);
   const leader = group.find(
     ({ guard }) => guard.routeId === siteId && guard.enemy?.archetype === "frigate",
@@ -1276,7 +1271,7 @@ export function activateRequiredRoute(
   ) {
     return { status: "blocked" };
   }
-  const actors = [leader, ...support].map(({ guard }) => structuredClone(guard));
+  const actors = [leader, ...support].map(({ guard }) => guard);
   if (
     actors.some(
       (actor) =>
@@ -1315,8 +1310,12 @@ export function activateRequiredRoute(
   ) {
     return { status: "blocked" };
   }
+  const transferred = takeRequiredPlan(flight, siteId);
+  if (!transferred) {
+    return { status: "unplanned" };
+  }
   if (!site) {
-    const destination = structuredClone(leader.site);
+    const destination = transferred.site;
     canonicalObject(flight, destination);
     flight.objects.push(destination);
   }
@@ -1325,7 +1324,6 @@ export function activateRequiredRoute(
   const state = combat(flight);
   state.routeEncounters.push(siteId);
   state.initialPackSizes[escortPackId(leader.guard.id)] = support.length;
-  storage.consumeSite(flight, siteId);
   return { guard: actors.find((actor) => actor.id === leader.guard.id)!, status: "created" };
 }
 
@@ -1670,6 +1668,16 @@ function generateRegion(content: GameContent, x: number, y: number, flight: Flig
   ) {
     return;
   }
+  // Reserve the complete optional formation before creating any of its mandatory escorts.
+  if (
+    !requiredWorldPlacementClear(
+      { ...flightWorldContext(flight), content, galaxy: flight.galaxy },
+      pendingRequiredRoutes(flight),
+      { center, radius: encounterReach(content, archetype, count, escorts, flight.galaxy) },
+    )
+  ) {
+    return;
+  }
   // Relocated claim jumpers must also fit the actual destination neighbourhood.
   if (
     !initialized &&
@@ -1815,7 +1823,6 @@ function admitGroup(
     }
     if (
       !safe(content, object, flight) &&
-      requiredPlacementClear(content, flight, object) &&
       !needleChannelContains({ radius: object.radius }, flight, object) &&
       !flight.objects.some((other) => other.id === object.id) &&
       !Object.hasOwn(flight.world.notables, object.id)
@@ -2287,9 +2294,8 @@ export function ensureRouteEncounter(
       ? "frigate"
       : "capital";
   if (archetype === "frigate") {
-    const storage = requiredRouteStorage.get(flight);
-    if (storage) {
-      const activated = activateRequiredRoute(content, storage, id, flight);
+    if (flight.requiredPlans) {
+      const activated = activateRequiredRoute(content, id, flight);
       return activated.status === "created" || activated.status === "existing"
         ? activated.guard
         : null;
@@ -2338,6 +2344,14 @@ export function ensureDestination(
   const existing = flight.objects.find((o) => o.id === id && o.kind === "destination");
   if (existing) {
     return existing;
+  }
+  const pending = readRequiredPlan(flight, id);
+  if (pending && !planningRequiredWorld.has(flight)) {
+    activateRequiredRoute(content, id, flight);
+    return (
+      flight.objects.find((object) => object.kind === "destination" && object.id === id) ??
+      pending.site
+    );
   }
   const held = heldDestination(content, id, flight);
   if (held) {
@@ -2577,35 +2591,35 @@ export function createUnpopulatedFlight(
 /** Optional world generation starts only after the caller has installed required reservations. */
 export function populateFlight(
   content: GameContent,
-  progress: Pick<GalaxyProgress, "known">,
+  progress: Pick<GalaxyProgress, "known" | "requiredSites">,
   flight: FlightState,
 ): void {
   generate(content, flight.player, flight);
   for (const id of progress.known) {
-    ensureDestination(content, id, flight);
+    const point = progress.requiredSites?.[id];
+    if (point) {
+      ensureDestinationAt(content, id, point, flight);
+    } else {
+      ensureDestination(content, id, flight);
+    }
   }
   worldSyncFlightRegion(flightWorldContext(flight), content, flight);
 }
 
 export function populateRequiredFlight(
   content: GameContent,
-  storage: RequiredRouteStorage,
-  progress: Pick<GalaxyProgress, "known">,
+  progress: GalaxyProgress,
   siteIds: readonly string[],
   flight: FlightState,
 ): RequiredRoutePlanningResult {
-  const result = planRequiredWorld(content, flight, siteIds);
+  const result = planRequiredWorld(content, flight, siteIds, progress.requiredSites);
   if (result.status !== "planned") {
     return result;
   }
-  storage.install(
-    flight,
-    result.plans.flatMap((plan) => {
-      const site = result.sites.find((candidate) => candidate.id === plan.siteId)!;
-      return [plan.leader, ...plan.support].map((guard) => ({ guard, site }));
-    }),
-  );
-  bindRequiredRouteStorage(storage, flight);
+  for (const plan of result.plans) {
+    const site = result.sites.find((candidate) => candidate.id === plan.siteId)!;
+    storeRequiredPlan(progress, flight, { leader: plan.leader, site, support: [...plan.support] });
+  }
   populateFlight(content, progress, flight);
   return result;
 }
