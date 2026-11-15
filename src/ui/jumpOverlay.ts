@@ -20,7 +20,7 @@ import { normalJetsInFront, type ShipJets } from "../game/shipJets.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 import type { Vec } from "../model/types.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
-import { drawShipJets } from "./shipJetCanvas.ts";
+import { drawShipJets, drawShipTail } from "./shipJetCanvas.ts";
 
 // Draws Art's quantum jump over the play area (art/quantum-jump.md). The real scene shows through
 // the transparent canvas: the source until the switch, then the destination the game switched to.
@@ -249,14 +249,25 @@ export function createJumpOverlay(
     if (!front) {
       drawJets();
     }
-    context.globalAlpha = options.alpha;
-    context.drawImage(raster(image, size * options.pixels, false), x, y, size, size);
-    if (options.white > 0) {
-      context.globalAlpha = options.alpha * options.white;
-      context.drawImage(raster(image, size * options.pixels, true), x, y, size, size);
-    }
-    if (front) {
+    const drawHull = () => {
+      context.globalAlpha = options.alpha;
+      context.drawImage(raster(image, size * options.pixels, false), x, y, size, size);
+      if (options.white > 0) {
+        context.globalAlpha = options.alpha * options.white;
+        context.drawImage(raster(image, size * options.pixels, true), x, y, size, size);
+      }
+    };
+    drawHull();
+    if (front && jets) {
       drawJets();
+      drawShipTail(
+        context,
+        jets,
+        { displayHeight: size, displayWidth: size, pivot: { x: 0.5, y: 0.5 } },
+        0,
+        options.centre,
+        drawHull,
+      );
     }
     context.globalAlpha = 1;
     return true;

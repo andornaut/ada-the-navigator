@@ -1,4 +1,9 @@
-import { type JetDisplay, jetTriangles, type ShipJets } from "../game/shipJets.ts";
+import {
+  type JetDisplay,
+  jetTriangles,
+  normalJetTailRegions,
+  type ShipJets,
+} from "../game/shipJets.ts";
 import type { Vec } from "../model/types.ts";
 
 /** Draws the shared projected polygons in logical canvas coordinates at the caller-selected hull order. */
@@ -33,5 +38,35 @@ export function drawShipJets(
       context.fill();
     }
   }
+  context.restore();
+}
+
+/** Selects actual tail pixels from the same hull image after the unchanged normal triangles. */
+export function drawShipTail(
+  context: CanvasRenderingContext2D,
+  jets: ShipJets,
+  display: JetDisplay,
+  heading: number,
+  centre: Vec,
+  drawHull: () => void,
+): void {
+  const regions = normalJetTailRegions(jets, display, heading);
+  if (!regions.length) {
+    return;
+  }
+  context.save();
+  context.beginPath();
+  for (const region of regions) {
+    for (const [index, point] of region.entries()) {
+      if (index === 0) {
+        context.moveTo(centre.x + point.x, centre.y + point.y);
+      } else {
+        context.lineTo(centre.x + point.x, centre.y + point.y);
+      }
+    }
+    context.closePath();
+  }
+  context.clip();
+  drawHull();
   context.restore();
 }

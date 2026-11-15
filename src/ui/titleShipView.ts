@@ -1,5 +1,6 @@
 import { fromAreaLeft, units } from "./layout/css.ts";
 import { START_SCREEN } from "./layout/startScreen.ts";
+import { createShipTailView } from "./shipTailView.ts";
 import { jetPolygons, type TitleScreenArt, titleShip } from "./titleScreen.ts";
 
 const { ship } = START_SCREEN;
@@ -32,7 +33,8 @@ export function titleShipView(art: TitleScreenArt, paint: string | null): readon
   };
   const jets = jetSvg();
   const polygons = jetPolygons(art);
-  const front = polygons.some(({ occluders }) => occluders !== undefined) ? jetSvg() : null;
+  const front =
+    art.normalJets || polygons.some(({ occluders }) => occluders !== undefined) ? jetSvg() : null;
   front?.classList.add("ada-start-jets-front");
   const masks = new Map<string, string>();
   // Include every plume's extent so a mask never clips exhaust outside the sprite frame.
@@ -46,7 +48,9 @@ export function titleShipView(art: TitleScreenArt, paint: string | null): readon
     polygon.setAttribute("points", points);
     polygon.setAttribute("fill", fill);
     polygon.setAttribute("fill-opacity", String(opacity));
-    if (occluders !== undefined && front) {
+    if (art.normalJets && front) {
+      front.append(polygon);
+    } else if (occluders !== undefined && front) {
       const signature = JSON.stringify(occluders);
       let id = masks.get(signature);
       if (!id) {
@@ -92,6 +96,15 @@ export function titleShipView(art: TitleScreenArt, paint: string | null): readon
   const parts: Element[] = [jets, frame];
   if (front) {
     parts.push(front);
+  }
+  if (art.normalJets) {
+    const tail = createShipTailView(ship.size);
+    tail.root.classList.add("ada-start-jets", "ada-start-tail");
+    tail.set(
+      frame.src,
+      polygons.flatMap(({ occluders }) => occluders ?? []),
+    );
+    parts.push(tail.root);
   }
   return parts;
 }

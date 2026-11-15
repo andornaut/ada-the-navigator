@@ -2,7 +2,7 @@ import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModalit
 
 import { GALAXY_COUNT, type RoutePosition } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
-import { normalJetsInFront, type ShipJets } from "../game/shipJets.ts";
+import { normalJetsInFront, normalJetTailRegions, type ShipJets } from "../game/shipJets.ts";
 import type { RouteFlight } from "../model/game.ts";
 import { CARD_SLICE } from "./layout/controls.ts";
 import { font, fromAreaLeft, safeEdge, slice, units } from "./layout/css.ts";
@@ -31,6 +31,7 @@ import { readViewUnit } from "./layout/viewScale.ts";
 import { createButton, FOCUS_STYLE, MODAL_LAYER } from "./modal.ts";
 import { refuse } from "./refusal.ts";
 import { drawShipJets } from "./shipJetCanvas.ts";
+import { createShipTailView } from "./shipTailView.ts";
 
 // The galaxy map (art/layout.md "Galaxy selector"), after Chibi's MapScene: the route sky and
 // ground, the chart's legs, markers, labels and Ada's ship, the panel for the chosen galaxy, Earth
@@ -486,7 +487,16 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     inset: "0",
     position: "absolute",
   });
-  shipSprite.append(jetCanvas, shipHull);
+  const tail = createShipTailView(SHIP.size);
+  Object.assign(tail.root.style, {
+    height: "100%",
+    inset: "0",
+    pointerEvents: "none",
+    position: "absolute",
+    width: "100%",
+    zIndex: "2",
+  });
+  shipSprite.append(jetCanvas, shipHull, tail.root);
   let shipFrameUrl = "";
   const pulse = document.createElement("div");
   pulse.className = "ada-route-pulse";
@@ -564,6 +574,17 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
       }
     }
     const jets = thrust && !reduced() ? art?.jets?.() : undefined;
+    const tailRegions = normalJetTailRegions(
+      jets,
+      { displayHeight: SHIP.size, displayWidth: SHIP.size, pivot: { x: 0.5, y: 0.5 } },
+      heading,
+    );
+    tail.set(
+      shipFrameUrl,
+      tailRegions.map((region) =>
+        region.map(({ x, y }) => `${SHIP.size / 2 + x},${SHIP.size / 2 + y}`).join(" "),
+      ),
+    );
     jetCanvas.hidden = !jets;
     jetCanvas.style.zIndex = normalJetsInFront(jets, heading) ? "1" : "";
     if (jets) {

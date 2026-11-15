@@ -8,10 +8,13 @@ import { type JetGeometry, readEngineJets } from "../game/shipJets.ts";
 import { staticShipJets } from "../game/staticShipJets.ts";
 import { createGalaxyMap, type GalaxyMapView } from "./galaxyMap.ts";
 import { createJumpOverlay, type SheetArt } from "./jumpOverlay.ts";
-import { drawShipJets } from "./shipJetCanvas.ts";
+import { drawShipJets, drawShipTail } from "./shipJetCanvas.ts";
 
 const events = vi.hoisted(() => [] as string[]);
-vi.mock("./shipJetCanvas.ts", () => ({ drawShipJets: vi.fn(() => events.push("jets")) }));
+vi.mock("./shipJetCanvas.ts", () => ({
+  drawShipJets: vi.fn(() => events.push("jets")),
+  drawShipTail: vi.fn(() => events.push("tail")),
+}));
 vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({ focusTarget: vi.fn() }));
 
 const main = readEngineJets(mainData)!;
@@ -169,6 +172,19 @@ function effect(pose = "bank-16"): QuantumJump {
   };
 }
 
+function legacyGeometry(geometry: JetGeometry): JetGeometry {
+  return {
+    ...geometry,
+    headings: geometry.headings.map((mouths) =>
+      mouths.map((mouth) => {
+        const legacy = { ...mouth };
+        Reflect.deleteProperty(legacy, "normalAperture");
+        return legacy;
+      }),
+    ),
+  };
+}
+
 function apertureGeometry(geometry: JetGeometry): JetGeometry {
   return {
     ...geometry,
@@ -200,10 +216,21 @@ function play(reducedMotion = false) {
 describe("warp material wiring", () => {
   it("draws full-pose jets before the hull and reads engine/field changes without paint reload", () => {
     const fixture = dom();
+    const jump = effect();
+    const legacy = {
+      ...jump,
+      warp: {
+        ...jump.warp,
+        poses: jump.warp.poses.map((pose) => ({
+          ...pose,
+          ...(pose.jets ? { jets: legacyGeometry(pose.jets) } : {}),
+        })),
+      },
+    };
     const overlay = createJumpOverlay(fixture.host, {
       field: sheet,
       glow: sheet,
-      jump: effect(),
+      jump: legacy,
       star: sheet,
       tunnel: sheet,
     });
@@ -263,6 +290,8 @@ describe("warp material wiring", () => {
     fixture.tick(10);
     expect(drawShipJets).toHaveBeenCalled();
     expect(events.lastIndexOf("jets")).toBeGreaterThan(events.lastIndexOf("image"));
+    expect(drawShipTail).toHaveBeenCalled();
+    expect(events.lastIndexOf("tail")).toBeGreaterThan(events.lastIndexOf("jets"));
     overlay.dispose();
   });
 
@@ -341,8 +370,9 @@ it("draws route thrust below the painted hull and hides it under reduced motion"
   expect(earthMarker.attributes.get("aria-label")).toBe("Earth");
   let normal = false;
   const normalMain = { ...main, ...apertureGeometry(main) };
+  const legacyMain = { ...main, ...legacyGeometry(main) };
   const provider = vi.fn(() =>
-    staticShipJets(normal ? normalMain : main, LIGHT_FIELD.jets.shipLevels, 3),
+    staticShipJets(normal ? normalMain : legacyMain, LIGHT_FIELD.jets.shipLevels, 3),
   );
   map.setArt({
     figures: [],

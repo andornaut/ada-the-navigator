@@ -1,4 +1,9 @@
-import { type JetTriangle, jetTriangles, type ShipJets } from "../game/shipJets.ts";
+import {
+  type JetTriangle,
+  jetTriangles,
+  normalJetsInFront,
+  type ShipJets,
+} from "../game/shipJets.ts";
 import { readShipHeadingContract, SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
 import type { Vec } from "../model/types.ts";
 import { START_SCREEN } from "./layout/startScreen.ts";
@@ -31,6 +36,8 @@ export interface TitleScreenArt {
   };
   /** Jets and optional nearer-surface masks in logical px from the ship's pivot. */
   readonly jets: readonly JetTriangle[];
+  /** Normal tail regions select hull pixels above intact jet polygons. */
+  readonly normalJets?: true;
   readonly pivot: Vec;
   /** Each paint's ship frame, by scheme; Classic's under null. */
   readonly ships: ReadonlyMap<string | null, string>;
@@ -114,6 +121,7 @@ export function readTitleScreen(
       width: fieldAsset.displayWidth,
     },
     jets: triangles,
+    ...(normalJetsInFront(jets, frame as number) ? { normalJets: true as const } : {}),
     pivot,
     ships: new Map(frames.map((asset) => [asset.paint ?? null, asset.path])),
     wordmark: {

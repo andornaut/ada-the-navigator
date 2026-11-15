@@ -33,7 +33,8 @@ describe("pure normal material policy", () => {
   });
 
   it("parses optional authored hex colour and rejects malformed present values", () => {
-    const raw = art.engineLevels[0]!.layers[0]!;
+    const raw: Record<string, unknown> = { ...art.engineLevels[0]!.layers[0]! };
+    Reflect.deleteProperty(raw, "normalColor");
     expect(readJetLayers([{ ...raw, normalColor: "#000000" }])![0]!.normalColor).toBe(0);
     expect(readJetLayers([{ ...raw }])![0]).not.toHaveProperty("normalColor");
     for (const normalColor of [null, 0, "red", "#fff", "#1234567", {}]) {

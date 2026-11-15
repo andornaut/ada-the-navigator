@@ -105,10 +105,17 @@ describe("atomic 64-heading player package", () => {
       }
       for (const jets of [forward, reverse]) {
         expect(jets.headings[index]).toHaveLength(2);
-        expect(
-          jets.headings[index]!.every((mouth) => mouth.outerCorner && mouth.coreOutboard),
-        ).toBe(true);
         for (const mouth of jets.headings[index]!) {
+          if (jets === forward && mouth.normalAperture) {
+            expect(mouth.outerCorner).toBeUndefined();
+            expect(mouth.coreOutboard).toBeUndefined();
+            expect(mouth.normalAperture.coreWidth).toBeGreaterThan(0);
+            expect(mouth.normalAperture.coreWidth).toBeLessThan(1);
+          } else {
+            expect(mouth.outerCorner).toBeDefined();
+            expect(mouth.coreOutboard).toBe(true);
+          }
+
           const triangles = jetTriangles(
             { ...engineJets(jets, 1), headings: [[mouth]] },
             { displayHeight: 96, displayWidth: 96, pivot: { x: 0, y: 0 } },

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { anchor, SHIP_HEADINGS as ART_SHIP_HEADINGS, vector } from "../../art/tools/projection.ts";
+import { SHIP_HEADINGS as ART_SHIP_HEADINGS } from "../../art/tools/projection.ts";
 import { JET_LEVELS } from "../../art/tools/ship-jet-layers.ts";
-import { FRAME, mouthAxis } from "../../art/tools/ship-model.ts";
+import { forwardJetMouths, FRAME } from "../../art/tools/ship-model.ts";
 import manifest from "../../public/art/manifest.json";
 import art from "../../public/art/ship-jets.json";
 import { SHIP_HEADINGS } from "../model/nose.ts";
@@ -263,8 +263,12 @@ describe("jet triangles", () => {
     const triangles = jetTriangles(jets, framePixels, 3, 1);
     const color = (value: string) => Number.parseInt(value.slice(1), 16);
     const palette = JET_LEVELS[0];
+    const normal = jets.headings[3]![0]!.normalAperture !== undefined;
+    const firstColor = normal
+      ? (jets.layers[0]!.normalColor ?? color(palette.halo))
+      : color(palette.halo);
     const one = [
-      [color(palette.halo), 0.5],
+      [firstColor, normal ? 1 : 0.5],
       [color(palette.outer[1]), 1],
       [color(palette.core[1]), 1],
     ];
@@ -293,11 +297,10 @@ describe("jet triangles", () => {
     expect(jets.headings).toHaveLength(ART_SHIP_HEADINGS);
     jets.headings.forEach((mouths, heading) => {
       expect(mouths).toHaveLength(2);
-      ([-1, 1] as const).forEach((sign, index) => {
-        const { half, middle } = mouthAxis(sign);
-        const [x, y] = anchor(ART_SHIP_HEADINGS, FRAME / 2, heading, middle);
-        const [ax, ay] = vector(ART_SHIP_HEADINGS, heading, [0, 1, 0]);
-        const [hx, hy] = vector(ART_SHIP_HEADINGS, heading, half);
+      forwardJetMouths(FRAME / 2, { yaw: heading }).forEach((mouth, index) => {
+        const [x, y] = mouth.anchor;
+        const [ax, ay] = mouth.axis;
+        const [hx, hy] = mouth.half;
         expect(mouths[index]!.anchor).toEqual({ x, y });
         expect(mouths[index]!.axis).toEqual({ x: ax, y: ay });
         expect(mouths[index]!.half).toEqual({ x: hx, y: hy });

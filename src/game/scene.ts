@@ -122,6 +122,7 @@ import {
   type EngineJets,
   jetTriangles,
   normalJetsInFront,
+  normalJetTailRegions,
   readEngineJets,
   shipJetDirection,
   travelJets,
@@ -161,6 +162,7 @@ export class GameScene extends Scene {
   // What Ada held last frame in this flight, for the item notices' gains.
   held: { readonly flight: object; readonly snapshot: GainSnapshot } | undefined;
   jets!: GameObjects.Graphics;
+  private normalTail: { image: GameObjects.Image; shape: GameObjects.Graphics } | undefined;
   shipJets: EngineJets | undefined;
   shipRetroJets: EngineJets | undefined;
   /** Shots and feedback draw above enemy sprites. */
@@ -614,6 +616,9 @@ export class GameScene extends Scene {
       this.events.off(Scenes.Events.SHUTDOWN, disposeRenderer);
       this.events.off(Scenes.Events.DESTROY, disposeRenderer);
       renderer.dispose();
+      this.normalTail?.image.destroy();
+      this.normalTail?.shape.destroy();
+      this.normalTail = undefined;
       this.needleFlight = undefined;
       this.needleRenderer = undefined;
       // Phaser destroys these scene-owned objects; restarted scenes recreate their draw caches.
@@ -791,6 +796,8 @@ export class GameScene extends Scene {
     }
     this.ink.clear();
     this.jets.clear();
+    this.normalTail?.image.setVisible(false);
+    this.normalTail?.shape.clear();
     this.overlay.clear();
     this.edgeMarkerInk.clear();
     this.enemyJets.clear();
@@ -1038,6 +1045,7 @@ export class GameScene extends Scene {
     this.ship.setRotation(0);
     keylineSprite(this, "ship", "player-ship", this.ship);
     const flames: Vec[] = [];
+    let tailRegions: readonly (readonly Vec[])[] = [];
     if (activeJets && ship?.directionIndex !== undefined) {
       this.jets.setPosition(this.ship.x, this.ship.y);
       this.jetKeyline.setPosition(this.ship.x, this.ship.y);
@@ -1046,6 +1054,9 @@ export class GameScene extends Scene {
         displayWidth: ship.displayWidth ?? 42,
         pivot: ship.pivot,
       };
+      if (travel === "forward") {
+        tailRegions = normalJetTailRegions(activeJets, display, ship.directionIndex);
+      }
       const keyline = this.light && LIGHT_FIELD.keylined.includes("ship");
       for (const { alpha, color, points } of jetTriangles(
         activeJets,
@@ -1091,6 +1102,9 @@ export class GameScene extends Scene {
       flames,
       travel === "forward" && normalJetsInFront(activeJets, ship?.directionIndex ?? -1),
     );
+    if (tailRegions.length) {
+      this.drawNormalTail(tailRegions);
+    }
     const activeIds = new Set(flight.objects.map((object) => object.id));
     for (const ally of flight.phantom?.allies ?? []) {
       activeIds.add(`phantomAlly:${ally.id}`);
@@ -1123,6 +1137,45 @@ export class GameScene extends Scene {
   /** Records a drawn fly-through object, which Ada draws above while she overlaps it. */
   passes(sprite: Placed & { readonly depth: number }): void {
     this.passable.push({ box: drawnBox(sprite), depth: sprite.depth });
+  }
+
+  /** Composite actual painted tail pixels after the unchanged normal flame geometry. */
+  private drawNormalTail(regions: readonly (readonly Vec[])[]): void {
+    if (!regions.length) {
+      return;
+    }
+    const ship = this.ship;
+    if (!this.normalTail) {
+      const image = this.add.image(ship.x, ship.y, ship.texture.key).setVisible(false);
+      const shape = this.make.graphics({ x: 0, y: 0 }, false);
+      image.enableFilters();
+      image.filters!.internal.addMask(shape, false, this.cameras.main);
+      this.normalTail = { image, shape };
+    }
+    const { image, shape } = this.normalTail;
+    shape.setPosition(ship.x, ship.y);
+    shape.clear();
+    shape.fillStyle(0xffffff, 1);
+    for (const region of regions) {
+      shape.beginPath();
+      for (const [index, point] of region.entries()) {
+        if (index === 0) {
+          shape.moveTo(point.x, point.y);
+        } else {
+          shape.lineTo(point.x, point.y);
+        }
+      }
+      shape.closePath();
+      shape.fillPath();
+    }
+    image.setTexture(ship.texture.key, ship.frame.name);
+    image.setPosition(ship.x, ship.y);
+    image.setOrigin(ship.originX, ship.originY);
+    image.setDisplaySize(ship.displayWidth, ship.displayHeight);
+    image.setRotation(ship.rotation);
+    image.setAlpha(ship.alpha);
+    image.setDepth(ship.depth - ADA_LAYERS.towLine);
+    image.setVisible(true);
   }
 
   /**

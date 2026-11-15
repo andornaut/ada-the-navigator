@@ -70,9 +70,16 @@ describe("canonical reverse jet data", () => {
     expect(retro.length.base).toBeCloseTo(rear.length.base * 1.1);
     expect(retro.length.scale).toBeCloseTo(rear.length.scale * 1.1);
     expect(retro.length.exponent).toBe(rear.length.exponent);
-    expect(retro.engineLevels).toEqual(rear.engineLevels);
+    const rawMain = rear.engineLevels.map((layers) =>
+      layers.map((layer) => {
+        const raw = { ...layer };
+        Reflect.deleteProperty(raw, "normalColor");
+        return raw;
+      }),
+    );
+    expect(retro.engineLevels).toEqual(rawMain);
     for (const level of [1, 2, 3]) {
-      expect(engineJets(retro, level).layers).toEqual(engineJets(rear, level).layers);
+      expect(engineJets(retro, level).layers).toEqual(rawMain[level - 1]);
     }
   });
 

@@ -393,6 +393,24 @@ export function normalJetsInFront(jets: JetGeometry | undefined, heading: number
   );
 }
 
+/** Exact authored tail regions in display coordinates, deduplicated across normal plumes. */
+export function normalJetTailRegions(
+  jets: ShipJets | undefined,
+  display: JetDisplay,
+  heading: number,
+): readonly (readonly Vec[])[] {
+  if (!jets || !normalJetsInFront(jets, heading)) {
+    return [];
+  }
+  const regions = new Map<string, readonly Vec[]>();
+  for (const triangle of jetTriangles(jets, { ...display, includeOccluders: true }, heading, 1)) {
+    for (const region of triangle.occluders ?? []) {
+      regions.set(JSON.stringify(region), region);
+    }
+  }
+  return [...regions.values()];
+}
+
 /** Jet length in ship units at speed fraction f. */
 export function jetLength(jets: JetGeometry, f: number): number {
   return jets.length.base + jets.length.scale * f ** jets.length.exponent;

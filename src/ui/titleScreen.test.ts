@@ -40,9 +40,38 @@ describe("title screen art", () => {
     expect(titleShip(art, "unknown")).toBe("/art/ship-52.svg");
   });
 
-  it("holds frame 52 at f 0.8 with one corner-attached group and an outboard core", () => {
+  it("holds frame 52 at f 0.8 with its selected physical attachment profile", () => {
     expect(data.ship).toMatchObject({ animated: false, frame: 52, jetSpeed: 0.8 });
     expect(art.jets.length).toBeGreaterThan(0);
+    if (art.normalJets) {
+      expect(art.jets.every(({ alpha }) => alpha === 1)).toBe(true);
+      const scale = START_SCREEN.ship.size / jets.frame;
+      const core = jets.layers.find((layer) => layer.name === "core")!;
+      const polygons = jetPolygons(art);
+      expect(polygons).toHaveLength(jets.headings[52]!.length * jets.layers.length);
+      polygons.forEach((polygon, index) => {
+        const mouth = jets.headings[52]![Math.floor(index / jets.layers.length)]!;
+        const layerIndex = index % jets.layers.length;
+        const layer = jets.layers[layerIndex]!;
+        const width =
+          layer.name === "core"
+            ? mouth.normalAperture!.coreWidth
+            : layerIndex === 0
+              ? 1
+              : (mouth.normalAperture!.coreWidth * layer.width) / core.width;
+        const [base, tip, other] = polygon.points
+          .split(" ")
+          .map((point) => point.split(",").map(Number));
+        expect((base![0]! + other![0]!) / 2).toBeCloseTo(mouth.anchor.x * scale, 10);
+        expect((base![1]! + other![1]!) / 2).toBeCloseTo(mouth.anchor.y * scale, 10);
+        expect((base![0]! - other![0]!) / 2).toBeCloseTo(mouth.half.x * width * scale, 10);
+        expect((base![1]! - other![1]!) / 2).toBeCloseTo(mouth.half.y * width * scale, 10);
+        const length = jetLength(jets, 0.8) * layer.length;
+        expect(tip![0]).toBeCloseTo((mouth.anchor.x + mouth.axis.x * length) * scale, 10);
+        expect(tip![1]).toBeCloseTo((mouth.anchor.y + mouth.axis.y * length) * scale, 10);
+      });
+      return;
+    }
     expect(Math.min(...art.jets.map(({ alpha }) => alpha))).toBeCloseTo(0.25, 9);
     const scale = START_SCREEN.ship.size / jets.frame;
     const layers = jets.layers.filter((layer) => layerAlpha(layer, 0.8) > 0);
@@ -84,7 +113,7 @@ describe("title screen art", () => {
     }
   });
 
-  it("uses the authored corner rather than the old mouth centre and translates the entire group together", () => {
+  it("translates the entire group with its authored attachment without changing the other profile", () => {
     const withMouths = (
       transform: (
         mouth: (typeof jets.headings)[number][number],
@@ -99,6 +128,22 @@ describe("title screen art", () => {
       ...mouth,
       anchor: { x: mouth.anchor.x + 17, y: mouth.anchor.y - 9 },
     }));
+    if (art.normalJets) {
+      const original = jetPolygons(art);
+      const moved = jetPolygons(readTitleScreen(manifest.assets, movedCentres, data)!);
+      const scale = START_SCREEN.ship.size / jets.frame;
+      moved.forEach((polygon, index) => {
+        const points = polygon.points.split(/[ ,]/u).map(Number);
+        const before = original[index]!.points.split(/[ ,]/u).map(Number);
+        points.forEach((point, coordinate) =>
+          expect(point - before[coordinate]!).toBeCloseTo(
+            (coordinate % 2 === 0 ? 17 : -9) * scale,
+            10,
+          ),
+        );
+      });
+      return;
+    }
     expect(jetPolygons(readTitleScreen(manifest.assets, movedCentres, data)!)).toEqual(
       jetPolygons(art),
     );

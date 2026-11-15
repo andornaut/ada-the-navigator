@@ -4,6 +4,8 @@ import mainArt from "../../public/art/ship-jets.json";
 import { LIGHT_FIELD } from "./lightField.ts";
 import {
   coreOutboardOffset,
+  jetShapeLayerAlpha,
+  jetShapeLayerColor,
   jetTriangles,
   layerAlpha,
   layerColor,
@@ -93,6 +95,42 @@ describe("one translated canonical flame group", () => {
         const jets = travelJets(main, undefined, field, engine, "forward")!;
         for (let heading = 0; heading < jets.headings.length; heading++) {
           for (const mouth of jets.headings[heading]!) {
+            if (mouth.normalAperture) {
+              expect(mouth.coreOutboard).toBeUndefined();
+              expect(mouth.outerCorner).toBeUndefined();
+              expect(mouth.rearClip).toBeUndefined();
+              for (const fraction of [0.2, 0.6, 0.65, 1]) {
+                const visible = jets.layers.filter(
+                  (layer, index) => jetShapeLayerAlpha(mouth, layer, index, fraction) > 0,
+                );
+                const triangles = jetTriangles(
+                  { ...jets, headings: [[mouth]] },
+                  display,
+                  0,
+                  fraction,
+                );
+                expect(triangles).toHaveLength(visible.length);
+                expect(triangles.map((t) => t.color)).toEqual(
+                  visible.map((layer, index) =>
+                    jetShapeLayerColor(mouth, layer, index, layerColor(layer, fraction)),
+                  ),
+                );
+                triangles.forEach((triangle) => {
+                  expect(triangle.points).toHaveLength(3);
+                  expect((triangle.points[0].x + triangle.points[2].x) / 2).toBeCloseTo(
+                    mouth.anchor.x,
+                    10,
+                  );
+                  expect((triangle.points[0].y + triangle.points[2].y) / 2).toBeCloseTo(
+                    mouth.anchor.y,
+                    10,
+                  );
+                });
+                expect(triangles[0]!.points[0].x).toBeCloseTo(mouth.anchor.x + mouth.half.x, 10);
+                expect(triangles[0]!.points[0].y).toBeCloseTo(mouth.anchor.y + mouth.half.y, 10);
+              }
+              continue;
+            }
             expect(mouth.coreOutboard).toBe(true);
             expect(mouth.outerCorner).toBeDefined();
             expect(mouth.rearClip).toBeUndefined();

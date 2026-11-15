@@ -120,7 +120,11 @@ describe("centered normal aperture geometry", () => {
         12,
       );
       for (const [index, triangle] of triangles.entries()) {
-        expect(triangle.color).toBe(material[index]!.colors[1]);
+        expect(triangle.color).toBe(
+          index === 0
+            ? (material[index]!.normalColor ?? material[index]!.colors[1])
+            : material[index]!.colors[1],
+        );
         expect(triangle.alpha).toBe(index === 0 ? 1 : (material[index]!.alpha?.max ?? 1));
         expect(triangle.points[1]!.y).toBeCloseTo(17 + 30 * material[index]!.length, 12);
       }
