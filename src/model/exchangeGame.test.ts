@@ -90,7 +90,6 @@ describe("confirmed station ore Exchange", () => {
     const model = new GameModel(CONTENT);
     model.state.prologueSeen = true;
     model.state.unlocked = [1, 2];
-    model.startGalaxy(2);
     Object.assign(model.state.progress[2], {
       holodisk: true,
       introduced: true,
@@ -100,6 +99,7 @@ describe("confirmed station ore Exchange", () => {
       resolved: true,
       stage: 5,
     });
+    model.startGalaxy(2);
     const flight = model.state.flight!;
     flight.objects = [];
     const hub = ensureDestination(CONTENT, "hub", flight);

@@ -73,8 +73,10 @@ function questDone(
   for (const held of recovered) {
     model.state.progress[held].holodisk = true;
   }
-  model.startGalaxy(galaxy);
-  playOpening(model);
+  if (galaxy !== 2) {
+    model.startGalaxy(galaxy);
+    playOpening(model);
+  }
   Object.assign(model.state.progress[galaxy], {
     discoveries: known.length,
     introduced: true,
@@ -82,6 +84,10 @@ function questDone(
     questComplete: true,
     stage: galaxy === 1 ? 4 : 5,
   } satisfies Partial<GalaxyProgress>);
+  if (galaxy === 2) {
+    model.startGalaxy(galaxy);
+    playOpening(model);
+  }
   model.state.dialogue = null;
   return model;
 }

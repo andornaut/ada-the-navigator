@@ -10,7 +10,6 @@ function atHub() {
   const model = new GameModel(CONTENT);
   model.state.prologueSeen = true;
   model.state.unlocked = [1, 2];
-  model.startGalaxy(2);
   Object.assign(model.state.progress[2], {
     holodisk: true,
     introduced: true,
@@ -19,6 +18,7 @@ function atHub() {
     resolved: true,
     stage: 5,
   });
+  model.startGalaxy(2);
   const flight = model.state.flight!;
   flight.objects = [];
   const hub = ensureDestination(CONTENT, "hub", flight);

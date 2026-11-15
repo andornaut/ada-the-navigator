@@ -71,7 +71,7 @@ function takeContract(model: GameModel): void {
 function atPlace(galaxy: GalaxyNumber, place: string, resolved = true) {
   const model = new GameModel(CONTENT);
   model.state.unlocked = [1, 2, 3];
-  if (galaxy !== 3) {
+  if (galaxy === 1) {
     model.startGalaxy(galaxy);
     playOpening(model);
   }
@@ -84,7 +84,7 @@ function atPlace(galaxy: GalaxyNumber, place: string, resolved = true) {
     stage: galaxy === 1 ? 4 : 5,
   });
   progress.known = [...new Set([...progress.known, place])];
-  if (galaxy === 3) {
+  if (galaxy !== 1) {
     model.startGalaxy(galaxy);
     playOpening(model);
   }
