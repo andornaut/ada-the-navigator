@@ -118,6 +118,7 @@ import {
   questGuardHomePorts,
 } from "./questGuardPlacement.ts";
 import { readRequiredPlan, storeRequiredPlan, takeRequiredPlan } from "./requiredEncounterPlans.ts";
+import { requiredRouteGeometry } from "./requiredRouteGeometry.ts";
 import {
   requiredWorldPlacementClear,
   requiredWorldPopulation,
@@ -279,7 +280,7 @@ function requiredPlacementClear(
 ): boolean {
   return requiredWorldPlacementClear(
     { ...flightWorldContext(flight), content, galaxy: flight.galaxy },
-    pendingRequiredRoutes(flight),
+    requiredRouteGeometry(content, flight),
     {
       center: object.orbit ?? object,
       radius: placementRadius(object) + (object.orbit?.radius ?? 0),
@@ -1672,7 +1673,7 @@ function generateRegion(content: GameContent, x: number, y: number, flight: Flig
   if (
     !requiredWorldPlacementClear(
       { ...flightWorldContext(flight), content, galaxy: flight.galaxy },
-      pendingRequiredRoutes(flight),
+      requiredRouteGeometry(content, flight),
       { center, radius: encounterReach(content, archetype, count, escorts, flight.galaxy) },
     )
   ) {
