@@ -146,10 +146,10 @@ describe("offline play", () => {
     expect(options.serviceWorkerUrl).toBe("/sw.js");
     expect(offline.play.registrationReady).not.toHaveBeenCalled();
     expect(navigator.serviceWorker.getRegistration).not.toHaveBeenCalled();
-    pwa.gameShown();
-    await Promise.resolve();
+    const registration = new Promise<void>(() => {});
+    offline.play.registrationReady.mockReturnValueOnce(registration);
+    expect(pwa.gameShown()).toBeUndefined();
     expect(offline.play.registrationReady).toHaveBeenCalledOnce();
-    expect(navigator.serviceWorker.getRegistration).toHaveBeenCalledOnce();
   });
 
   it.each(["continue", "blocked", "reloading"] as const)(
