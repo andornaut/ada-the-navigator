@@ -13,7 +13,9 @@ import {
   mountLayout,
 } from "@andornaut/game-kit/web/ui/dom/layoutTree";
 
-import type { CardSize } from "./layout/contentCard.ts";
+import { bindAdaAction } from "./actionBinding.ts";
+import { type CardSize, SCROLL } from "./layout/contentCard.ts";
+import { readViewUnit } from "./layout/viewScale.ts";
 import {
   type ButtonRole,
   createActions,
@@ -79,6 +81,7 @@ export function createAdaLayoutPorts<A extends string>(context: AdaLayoutContext
     button: {
       create(initial) {
         let current = initial;
+        let disposed = false;
         const button = createButton(initial.label, initial.role);
         const label = button.firstChild;
         if (!label || label.nodeType !== 3) {
@@ -94,7 +97,14 @@ export function createAdaLayoutPorts<A extends string>(context: AdaLayoutContext
           button,
         );
         const activate = () => dispatch(current.actionId);
-        button.addEventListener("click", activate);
+        const registered = bindAdaAction(
+          {
+            click: { availability: () => context.availability(current.actionId), run: activate },
+            current: () => !disposed,
+            slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
+          },
+          button,
+        );
         const update = (next: AdaButtonProps<A>) => {
           current = next;
           button.dataset.action = next.actionId;
@@ -106,7 +116,8 @@ export function createAdaLayoutPorts<A extends string>(context: AdaLayoutContext
         update(initial);
         return {
           dispose() {
-            button.removeEventListener("click", activate);
+            disposed = true;
+            registered.dispose();
             binding.dispose();
             presentation.dispose();
           },
@@ -120,6 +131,7 @@ export function createAdaLayoutPorts<A extends string>(context: AdaLayoutContext
     card: {
       create(initial) {
         let current = initial;
+        let disposed = false;
         const parts = createCard(initial);
         const body = parts.body.ownerDocument.createElement("div");
         body.style.alignSelf = "stretch";
@@ -129,10 +141,18 @@ export function createAdaLayoutPorts<A extends string>(context: AdaLayoutContext
         parts.body.append(body, footer);
         fits.add(parts.fit);
         const activate = () => dispatch(current.closeAction);
-        parts.close.addEventListener("click", activate);
+        const registered = bindAdaAction(
+          {
+            click: { availability: () => context.availability(current.closeAction), run: activate },
+            current: () => !disposed,
+            slopPx: () => SCROLL.dragThreshold * readViewUnit(parts.close),
+          },
+          parts.close,
+        );
         return {
           dispose() {
-            parts.close.removeEventListener("click", activate);
+            disposed = true;
+            registered.dispose();
             fits.delete(parts.fit);
             parts.dispose();
           },

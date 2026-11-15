@@ -1,8 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { type AdaButtonProps, type AdaCardProps, createAdaLayoutPorts } from "./layoutTree.ts";
 
 class Element extends EventTarget {
+  parentElement: Element | null = null;
+  isConnected = true;
   children: Element[] = [];
   className = "";
   dataset: Record<string, string> = {};
@@ -12,9 +15,24 @@ class Element extends EventTarget {
   textContent = "";
   firstChild = { nodeType: 3, nodeValue: "" };
   attributes = new Map<string, string>();
-  ownerDocument = { createElement: () => new Element() };
+  ownerDocument = {
+    createElement: () => new Element(),
+    defaultView: { HTMLElement: Element, Node: Element },
+  };
+  closest(): Element | null {
+    return this.hidden ? this : (this.parentElement?.closest() ?? null);
+  }
+  contains(node: unknown): boolean {
+    return (
+      node === this ||
+      (node instanceof Element && Boolean(node.parentElement) && this.contains(node.parentElement))
+    );
+  }
   classList = { toggle: vi.fn() };
   append(...nodes: Element[]) {
+    for (const node of nodes) {
+      node.parentElement = this;
+    }
     this.children.push(...nodes);
   }
   setAttribute(name: string, value: string) {
@@ -183,4 +201,27 @@ describe("shared production prose", () => {
     expect(node.textContent).toBe("Second");
     expect(node.className).toBe("ada-prose ada-card-note");
   });
+});
+
+it("registers held activation against updated action identity and removes it with the component", () => {
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "2" }));
+  const f = fixture();
+  const part = f.ports.components.button.create({
+    actionId: "first",
+    label: "First",
+    role: "secondary",
+  });
+  const root = part.element;
+  const resolve = () => resolveAdaHoldAction(root, f.button() as unknown as HTMLElement);
+  expect(resolve()?.rule.slopPx).toBe(16);
+  part.update({ actionId: "second", label: "Second", role: "primary" });
+  resolve()?.activate();
+  expect(f.first).not.toHaveBeenCalled();
+  expect(f.second).toHaveBeenCalledOnce();
+  f.setState({ kind: "unavailable", reason: "Needs weapon" });
+  expect(resolve()?.available()).toBe(false);
+  resolve()?.activate();
+  expect(f.second).toHaveBeenCalledOnce();
+  part.dispose();
+  expect(resolve()).toBeNull();
 });
