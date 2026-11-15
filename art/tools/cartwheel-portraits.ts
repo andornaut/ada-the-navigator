@@ -2,7 +2,7 @@
 // the keepers Slate and Garnet, Mica the miner and the regular visitors Opal and Jasper, each one
 // neutral frame in the conversation format. Contract: art/conversation.md (Cast portraits).
 // Usage: node art/tools/cartwheel-portraits.ts
-import type { Frame } from "@andornaut/art-kit/grid";
+import type { Frame } from "@andornaut/art-kit/build/grid";
 
 import {
   above,

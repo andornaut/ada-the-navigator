@@ -1,4 +1,4 @@
-import { oklabToSrgb, rgb as parseRgb } from "@andornaut/art-kit/colour";
+import { oklabToSrgb, rgb as parseRgb } from "@andornaut/art-kit/build/colour";
 
 // Oklab conversion on sRGB bytes: linear sRGB through the Oklab M1 and M2 matrices, clamped
 // and rounded half to even on the way back.
@@ -9,7 +9,7 @@ export function rgb(hex: string): Rgb {
   return parseRgb(hex.replace("#", ""));
 }
 
-export { srgbToOklab as toOklab } from "@andornaut/art-kit/colour";
+export { srgbToOklab as toOklab } from "@andornaut/art-kit/build/colour";
 
 export function fromOklab(L: number, a: number, b: number): Rgb {
   return oklabToSrgb({ gamut: "clip", rounding: "half-even" }, [L, a, b]);

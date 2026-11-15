@@ -5,7 +5,7 @@
 // The frames, tags and data stay ui-close.json's. Usage: node art/tools/card-close.ts
 import { fileURLToPath } from "node:url";
 
-import { blankImage } from "@andornaut/art-kit/rgbaImage";
+import { blankImage } from "@andornaut/art-kit/build/rgbaImage";
 
 import { CLOSE_GLYPH } from "./close-glyph.ts";
 import { rgb } from "./oklab.ts";

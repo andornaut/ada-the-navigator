@@ -5,8 +5,8 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import type { Frame } from "@andornaut/art-kit/grid";
-import { writeSpriteSheet } from "@andornaut/art-kit/spriteSheet";
+import type { Frame } from "@andornaut/art-kit/build/grid";
+import { writeSpriteSheet } from "@andornaut/art-kit/build/spriteSheet";
 import { format, resolveConfig } from "prettier";
 
 import { ORE_PALETTE } from "./ore.ts";

@@ -1,8 +1,8 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import type { Frame } from "@andornaut/art-kit/grid";
-import type { Tag } from "@andornaut/art-kit/raster";
+import type { Frame } from "@andornaut/art-kit/build/grid";
+import type { Tag } from "@andornaut/art-kit/build/raster";
 import { json } from "./projection.ts";
 import { prettify, writeSprites } from "./sprite-sheet.ts";
 

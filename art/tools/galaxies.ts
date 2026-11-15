@@ -6,7 +6,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { contrast } from "@andornaut/art-kit/colour";
+import { contrast } from "@andornaut/art-kit/build/colour";
 import { format, resolveConfig } from "prettier";
 
 import { linkData, replaceEntries } from "./manifest.ts";

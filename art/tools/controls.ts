@@ -1,10 +1,10 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
-import type { Frame } from "@andornaut/art-kit/grid";
-import { decodePng } from "@andornaut/art-kit/png";
-import type { Tag } from "@andornaut/art-kit/raster";
-import type { Margins } from "@andornaut/art-kit/spriteSheet";
+import type { Frame } from "@andornaut/art-kit/build/grid";
+import { decodePng } from "@andornaut/art-kit/build/png";
+import type { Tag } from "@andornaut/art-kit/build/raster";
+import type { Margins } from "@andornaut/art-kit/build/spriteSheet";
 import { writeSprites } from "./sprite-sheet.ts";
 
 type Colours = Readonly<Record<string, string>>;

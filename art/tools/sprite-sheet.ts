@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 
-import type { Tag } from "@andornaut/art-kit/raster";
-import { type SpriteSheetOptions, writeSpriteSheet } from "@andornaut/art-kit/spriteSheet";
+import type { Tag } from "@andornaut/art-kit/build/raster";
+import { type SpriteSheetOptions, writeSpriteSheet } from "@andornaut/art-kit/build/spriteSheet";
 import { format, resolveConfig } from "prettier";
 
 // Rewrites a written file through the project's Prettier settings, so generated JSON matches the

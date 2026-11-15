@@ -7,7 +7,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { blankImage } from "@andornaut/art-kit/rgbaImage";
+import { blankImage } from "@andornaut/art-kit/build/rgbaImage";
 
 import { linkData, placeEntries } from "./manifest.ts";
 import {

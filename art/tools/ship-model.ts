@@ -1,7 +1,7 @@
 // Ada's ship model: the one hull, canopy, mouths and paint every ship drawing derives from. It
 // has no side effects; ship.ts writes the sprite frames and contracts, and other generators
 // (the quantum jump, the app icon) import it rather than copying the geometry.
-import { oklchToSrgb } from "@andornaut/art-kit/colour";
+import { oklchToSrgb } from "@andornaut/art-kit/build/colour";
 
 import { fromOklab, hex, rgb, toOklab } from "./oklab.ts";
 import { facesViewer, type Point, projectAt, rotate, round, SHIP_HEADINGS } from "./projection.ts";

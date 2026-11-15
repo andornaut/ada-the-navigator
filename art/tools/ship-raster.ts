@@ -1,4 +1,4 @@
-import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
+import type { RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
 
 import { rgba } from "./paint.ts";
 import { paintRegions } from "./ship-paths.ts";

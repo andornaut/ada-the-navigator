@@ -1,7 +1,7 @@
 // Authored chibi bust portraits in the conversation format (art/conversation.md): 32 px masks
 // painted as ink-edged parts with a lower-right shade and an upper-left light, face stamps and
 // the 22 px compact crop.
-import type { Colour, Frame } from "@andornaut/art-kit/grid";
+import type { Colour, Frame } from "@andornaut/art-kit/build/grid";
 
 export const FULL = 32;
 export const COMPACT = 22;

@@ -3,7 +3,7 @@
 // The whales' compact frames are drawn natively at a smaller size. Contract:
 // art/conversation.md (Cast portraits).
 // Usage: node art/tools/whirlpool-portraits.ts
-import type { Frame } from "@andornaut/art-kit/grid";
+import type { Frame } from "@andornaut/art-kit/build/grid";
 
 import {
   blank,

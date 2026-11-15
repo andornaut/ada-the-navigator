@@ -2,10 +2,10 @@
 // art-kit's Pillow-compatible primitives, Lanczos resampling, Gaussian blur and blends.
 import { writeFileSync } from "node:fs";
 
-import { rgb } from "@andornaut/art-kit/colour";
-import { ellipse, line, polygon } from "@andornaut/art-kit/draw";
-import { encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/png";
-import type { Rgba } from "@andornaut/art-kit/raster";
+import { rgb } from "@andornaut/art-kit/build/colour";
+import { ellipse, line, polygon } from "@andornaut/art-kit/build/draw";
+import { encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/build/png";
+import type { Rgba } from "@andornaut/art-kit/build/raster";
 import {
   composite,
   crop,
@@ -13,8 +13,8 @@ import {
   gaussianBlur,
   grayscale,
   resizeLanczos3,
-} from "@andornaut/art-kit/raster";
-import { blankImage, type RgbaImage } from "@andornaut/art-kit/rgbaImage";
+} from "@andornaut/art-kit/build/raster";
+import { blankImage, type RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
 
 export type { RgbaImage };
 export type Xy = readonly [number, number];

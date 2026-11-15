@@ -4,7 +4,7 @@
 // outline and merge the triangles into convex parts (Hertel-Mehlhorn). `check` fails unless every
 // part is strictly convex, the parts' union matches the drawing with intersection over union
 // MIN_IOU or more, and no boundary lies more than MAX_DISTANCE frame px from the drawing.
-import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
+import type { RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
 
 export type V2 = [number, number];
 

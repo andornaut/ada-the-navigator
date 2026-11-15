@@ -8,8 +8,8 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { decodePng } from "@andornaut/art-kit/png";
-import { blankImage, type RgbaImage } from "@andornaut/art-kit/rgbaImage";
+import { decodePng } from "@andornaut/art-kit/build/png";
+import { blankImage, type RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
 
 import { PALETTE as ADA } from "./ada-sprites.ts";
 import { rgb } from "./oklab.ts";

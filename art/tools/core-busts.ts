@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
-import { decodePng } from "@andornaut/art-kit/png";
+import { decodePng } from "@andornaut/art-kit/build/png";
 // Admiral Archie and Grandma bust frames. The legacy gadget export and asset keys retain the
 // ten-frame reveal contract. The unknown officer is the same dog bust without facial details.
-import type { Frame } from "@andornaut/art-kit/grid";
+import type { Frame } from "@andornaut/art-kit/build/grid";
 
 import {
   above,

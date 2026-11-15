@@ -3,7 +3,7 @@
 // once the chapter is complete, uses his named portrait (art/conversation.md).
 // Contract: art/conversation.md (Cast portraits) and art/phantom.md (Portraits).
 // Usage: node art/tools/phantom-portraits.ts
-import type { Frame } from "@andornaut/art-kit/grid";
+import type { Frame } from "@andornaut/art-kit/build/grid";
 
 import {
   blank,

@@ -5,7 +5,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { blankImage, type RgbaImage } from "@andornaut/art-kit/rgbaImage";
+import { blankImage, type RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
 
 import { placeEntries } from "./manifest.ts";
 import { rgb, type Rgb } from "./oklab.ts";

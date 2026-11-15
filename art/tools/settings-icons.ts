@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import type { Frame } from "@andornaut/art-kit/grid";
+import type { Frame } from "@andornaut/art-kit/build/grid";
 import { prettify, writeSprites } from "./sprite-sheet.ts";
 
 // Cream icon ink for the dark lavender card, drawn as 2-pixel strokes on a clear frame: 16 by 16

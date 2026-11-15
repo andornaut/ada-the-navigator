@@ -4,7 +4,7 @@
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { blankImage } from "@andornaut/art-kit/rgbaImage";
+import { blankImage } from "@andornaut/art-kit/build/rgbaImage";
 
 import {
   box,

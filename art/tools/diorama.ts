@@ -4,8 +4,8 @@
 //
 // Positions are design px: the 844 by 390 design frame is 779 by 360 logical px, the view of an
 // 844 by 390 phone. A canvas maps its output pixels onto that frame and extends past it.
-import { polygon } from "@andornaut/art-kit/draw";
-import { blankImage, type RgbaImage } from "@andornaut/art-kit/rgbaImage";
+import { polygon } from "@andornaut/art-kit/build/draw";
+import { blankImage, type RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
 
 import { fromOklab, type Rgb, rgb, toOklab } from "./oklab.ts";
 import { type Point, projectAt } from "./projection.ts";

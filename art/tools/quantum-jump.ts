@@ -1,8 +1,8 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { ellipse, line } from "@andornaut/art-kit/draw";
-import { blankImage } from "@andornaut/art-kit/rgbaImage";
+import { ellipse, line } from "@andornaut/art-kit/build/draw";
+import { blankImage } from "@andornaut/art-kit/build/rgbaImage";
 import { format, resolveConfig } from "prettier";
 
 import { linkData, placeEntries } from "./manifest.ts";

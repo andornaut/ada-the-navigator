@@ -1,7 +1,7 @@
 // The in-between field: slow diagonal bands of the violet ramp with soft glows and sparkles.
 // Positions are design px: the 844 by 390 design frame is 779 by 360 logical px, the view of
 // an 844 by 390 phone. A view maps its output pixels onto that frame and may extend past it.
-import { blankImage } from "@andornaut/art-kit/rgbaImage";
+import { blankImage } from "@andornaut/art-kit/build/rgbaImage";
 
 import { blur, disc, over, rgba } from "./paint.ts";
 import { IN_BETWEEN, SHIMMER } from "./palette.ts";

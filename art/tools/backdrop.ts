@@ -10,8 +10,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { decodePng } from "@andornaut/art-kit/png";
-import { blankImage } from "@andornaut/art-kit/rgbaImage";
+import { decodePng } from "@andornaut/art-kit/build/png";
+import { blankImage } from "@andornaut/art-kit/build/rgbaImage";
 
 import {
   decorationRecipe,

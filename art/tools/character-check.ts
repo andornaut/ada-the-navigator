@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import { decodePng } from "@andornaut/art-kit/png";
+import { decodePng } from "@andornaut/art-kit/build/png";
 
 import { gadget } from "./core-busts.ts";
 import { catSitting } from "./family-sprites.ts";

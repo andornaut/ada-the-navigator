@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import type { Colour, Frame } from "@andornaut/art-kit/grid";
-import { decodePng } from "@andornaut/art-kit/png";
-import type { Tag } from "@andornaut/art-kit/raster";
+import type { Colour, Frame } from "@andornaut/art-kit/build/grid";
+import { decodePng } from "@andornaut/art-kit/build/png";
+import type { Tag } from "@andornaut/art-kit/build/raster";
 
 import { crop } from "./bust.ts";
 import { gadget, grandma, GRANDMA_CROP } from "./core-busts.ts";

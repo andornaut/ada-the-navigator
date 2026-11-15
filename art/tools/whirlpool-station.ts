@@ -6,7 +6,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { contrast } from "@andornaut/art-kit/colour";
+import { contrast } from "@andornaut/art-kit/build/colour";
 
 import { replaceEntries } from "./manifest.ts";
 import { layout, placed, svgFile } from "./needle-common.ts";

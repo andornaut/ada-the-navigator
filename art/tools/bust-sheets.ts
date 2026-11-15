@@ -3,9 +3,9 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import type { Frame } from "@andornaut/art-kit/grid";
-import type { Tag } from "@andornaut/art-kit/raster";
-import { writeSpriteSheet } from "@andornaut/art-kit/spriteSheet";
+import type { Frame } from "@andornaut/art-kit/build/grid";
+import type { Tag } from "@andornaut/art-kit/build/raster";
+import { writeSpriteSheet } from "@andornaut/art-kit/build/spriteSheet";
 import { format, resolveConfig } from "prettier";
 
 import { COMPACT, crop, FULL, type Point } from "./bust.ts";

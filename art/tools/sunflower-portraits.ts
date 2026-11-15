@@ -2,7 +2,7 @@
 // salvager and the station keepers Saffron, Bramble and Nectar, each one neutral frame in the
 // conversation format. Contract: art/conversation.md (Cast portraits).
 // Usage: node art/tools/sunflower-portraits.ts
-import type { Frame } from "@andornaut/art-kit/grid";
+import type { Frame } from "@andornaut/art-kit/build/grid";
 
 import {
   above,
