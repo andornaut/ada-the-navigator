@@ -1,132 +1,91 @@
 import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { enemyDefinition } from "../data/enemyCatalog.ts";
-import { ENEMY_AVOIDANCE } from "../data/enemyNavigation.ts";
+import { CONVERSATIONS } from "../data/conversations.ts";
+import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
 import { relaunch } from "../testing/launch.ts";
-import { ASTEROID_SHAPES } from "./asteroids.ts";
-import { createEnemy } from "./enemyAi.ts";
-import { ensureRouteEncounter, questFrigateHome, routeGuardPlanResult } from "./flight.ts";
+import { ensureRouteEncounter, routeBlocked, routeGuardPlanResult } from "./flight.ts";
+import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
-import type { SpaceObject } from "./types.ts";
+import { worldRecordObjectRemoval } from "./geography.ts";
+import { rememberRequiredSite } from "./requiredEncounterPlans.ts";
+import type { Vec } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
-function fixture(inner = false) {
+function fixture(point?: Vec) {
   const model = new GameModel(CONTENT);
+  model.state.prologueSeen = true;
+  model.state.progress[1].opened = true;
+  model.state.seenConversations.push(...CONVERSATIONS.map(({ id }) => id));
+  if (point) {
+    rememberRequiredSite(model.state.progress[1], "growers", point);
+  }
   model.startGalaxy(1);
   model.state.dialogue = null;
   const flight = model.state.flight!;
-  flight.objects = [];
-  flight.world = { notables: {}, version: 1 };
-  flight.combat = { initialPackSizes: {}, routeEncounters: [] };
-  const progress = model.state.progress[1];
-  Object.assign(progress, { introduced: false, known: [], questComplete: false, stage: 0 });
-  const site: SpaceObject = {
-    hp: 1,
-    id: "growers",
-    kind: "destination",
-    radius: 30,
-    x: inner ? 6000 : 10000,
-    y: inner ? 0 : 10000,
+  const before = {
+    kills: model.state.progress[1].destroyedEnemies,
+    stardust: model.state.economy.stardust,
   };
-  flight.objects.push(site);
-  flight.player = { x: site.x, y: site.y + 2000 };
-  return { flight, model, progress, site };
+  flight.freshDistance = CONTENT.tuning.introFreshDistance;
+  model.step(SIMULATION_STEP_SECONDS, idle);
+  const guard = flight.objects.find((actor) => actor.routeId === "growers")!;
+  expect(guard).toBeDefined();
+  return { before, flight, guard, model };
 }
 
-it.each(["capacity", "geometry", "type"] as const)(
-  "completes a zero plan on %s rejection and retains it through Continue without claiming a kill",
-  (mode) => {
-    const { flight, model, progress, site } = fixture(mode === "type");
-    const home = questFrigateHome(CONTENT, flight, "route:growers", site.id)!;
-    expect(home).not.toBeNull();
-    if (mode === "capacity") {
-      for (let index = 0; index < 4; index++) {
-        const id = `occupied:${index}`,
-          point = { x: site.x + 1000 + index * 40, y: site.y };
-        const definition = enemyDefinition(1, "fighter", id);
-        flight.objects.push({
-          ...point,
-          enemy: createEnemy(
-            definition,
-            { archetype: "fighter", id, packId: null, phase: 0 },
-            point,
-          ),
-          hp: definition.hp,
-          id,
-          kind: "enemy",
-          radius: CONTENT.tuning.flight.shipRadius,
-        });
-      }
-    } else if (mode === "geometry") {
-      const radius = Math.hypot(home.x - site.x, home.y - site.y);
-      const shape = [...ASTEROID_SHAPES.values()].find((shape) => shape.size === "huge")!;
-      for (let index = 0; index < ENEMY_AVOIDANCE.directions; index++) {
-        const angle = (index * Math.PI * 2) / ENEMY_AVOIDANCE.directions;
-        flight.objects.push({
-          asteroid: shape.id,
-          hp: CONTENT.tuning.flight.rockHp,
-          id: `blocking-rock:${index}`,
-          kind: "rock",
-          radius: shape.radius,
-          x: site.x + Math.cos(angle) * radius,
-          y: site.y + Math.sin(angle) * radius,
-        });
-      }
-    }
-    model.step(0.001, idle);
-    expect(routeGuardPlanResult(flight, site.id).status).toBe("empty");
-    expect(flight.combat!.emptyRoutePlans).toEqual([site.id]);
-    expect(flight.combat!.routeEncounters).toEqual([]);
-    expect(progress.destroyedEnemies).toBe(0);
-    expect(progress.known).not.toContain(site.id);
-    expect(progress.introduced).toBe(false);
-    flight.objects = [site];
-    flight.world = { notables: {}, version: 1 };
-    const resumed = relaunch(CONTENT, model.save());
-    expect(resumed.state.flight).not.toBeNull();
-    const restoredFlight = resumed.state.flight!;
-    expect(restoredFlight.combat!.emptyRoutePlans).toEqual([site.id]);
-    expect(ensureRouteEncounter(CONTENT, site.id, restoredFlight)).toBeNull();
-    expect(restoredFlight.objects.some((actor) => actor.routeId === site.id)).toBe(false);
-    restoredFlight.player = { x: site.x, y: site.y };
-    resumed.step(0.001, idle);
-    const restoredProgress = resumed.state.progress[1];
-    expect(restoredProgress.introduced).toBe(true);
-    expect(restoredProgress.stage).toBe(1);
-    expect(restoredProgress.questItem).toBe("food");
-    expect(restoredProgress.destroyedEnemies).toBe(0);
-    expect(restoredFlight.combat!.routeEncounters).toEqual([]);
-    expect(restoredFlight.combat!.emptyRoutePlans).toEqual([site.id]);
-    resumed.state.dialogue = null;
-    resumed.step(0.001, idle);
-    expect(restoredFlight.objects.some((actor) => actor.routeId === site.id)).toBe(false);
-    expect(restoredProgress.stage).toBe(1);
-  },
-);
-
-it("admits one complete fitting formation, preserves its site-local home and restores exactly three hulls", () => {
-  const { flight, model, progress, site } = fixture();
-  const guard = ensureRouteEncounter(CONTENT, site.id, flight)!;
-  expect(guard).not.toBeNull();
-  expect(routeGuardPlanResult(flight, site.id).status).toBe("admitted");
+it("retains one required leader with zero support through Continue without claiming defeat or rewards", () => {
+  const { before, flight, guard, model } = fixture();
+  expect(flight.objects.filter((actor) => actor.enemy?.escortOf === guard.id)).toEqual([]);
+  expect(routeGuardPlanResult(flight, "growers").status).toBe("admitted");
+  expect(flight.combat!.routeEncounters).toEqual(["growers"]);
   expect(flight.combat!.emptyRoutePlans).toBeUndefined();
-  expect(flight.combat!.routeEncounters).toEqual([site.id]);
-  const followers = flight.objects.filter((actor) => actor.enemy?.escortOf === guard.id);
-  expect(followers).toHaveLength(2);
-  const home = structuredClone(guard.enemy!.home);
-  flight.player = { x: site.x, y: site.y };
-  flight.summonedGuards = [guard.id, ...followers.map((actor) => actor.id)];
-  model.step(0.001, idle);
-  expect(flight.summonedGuards?.includes(guard.id) ?? false).toBe(false);
-  expect(guard.enemy!.home).toEqual(home);
-  expect(progress.introduced).toBe(false);
-  expect(progress.destroyedEnemies).toBe(0);
-  const restored = relaunch(CONTENT, model.save());
-  expect(restored.state.flight).not.toBeNull();
-  const actors = restored.state.flight!.objects;
-  expect(
-    actors.filter((actor) => actor.id === guard.id || actor.enemy?.escortOf === guard.id),
-  ).toHaveLength(3);
-  expect(actors.find((actor) => actor.id === guard.id)!.enemy!.home).toEqual(home);
+  expect(model.state.progress[1].destroyedEnemies).toBe(before.kills);
+  expect(model.state.economy.stardust).toBe(before.stardust);
+  guard.enemy!.hardpoints[0]!.cooldown = 0.73;
+  guard.enemy!.firePhasesInitialized = true;
+  const snapshot = structuredClone(guard);
+  const resumed = relaunch(CONTENT, model.save());
+  const restored = resumed.state.flight!;
+  expect(restored).not.toBeNull();
+  expect(restored.objects.find((actor) => actor.id === guard.id)).toEqual(snapshot);
+  expect(ensureRouteEncounter(CONTENT, "growers", restored)).toEqual(snapshot);
+  expect(routeBlocked("growers", restored)).toBe(true);
+  expect(restored.combat!.routeEncounters).toEqual(["growers"]);
+  expect(resumed.state.progress[1]).toMatchObject({
+    destroyedEnemies: before.kills,
+    introduced: false,
+    questItem: null,
+    stage: 0,
+  });
+  expect(resumed.state.economy.stardust).toBe(before.stardust);
+});
+
+it("preserves admitted support casualties and surviving full states without replenishment on Continue", () => {
+  const { before, flight, guard, model } = fixture({ x: 15000, y: 0 });
+  const support = flight.objects.filter((actor) => actor.enemy?.escortOf === guard.id);
+  expect(support).toHaveLength(2);
+  const casualty = support[0]!;
+  const survivor = support[1]!;
+  guard.enemy!.hardpoints[0]!.cooldown = 0.73;
+  guard.enemy!.firePhasesInitialized = true;
+  survivor.hp -= 1;
+  survivor.enemy!.hp = survivor.hp;
+  worldRecordObjectRemoval(flightWorldContext(flight), CONTENT, casualty, flight);
+  flight.objects = flight.objects.filter((actor) => actor.id !== casualty.id);
+  const leaderState = structuredClone(guard);
+  const survivorState = structuredClone(survivor);
+  const resumed = relaunch(CONTENT, model.save());
+  const restored = resumed.state.flight!;
+  expect(restored).not.toBeNull();
+  expect(ensureRouteEncounter(CONTENT, "growers", restored)).toEqual(leaderState);
+  expect(restored.objects.filter((actor) => actor.enemy?.escortOf === guard.id)).toEqual([
+    survivorState,
+  ]);
+  expect(restored.world.notables[casualty.id]).toBeNull();
+  expect(restored.combat!.routeEncounters).toEqual(["growers"]);
+  expect(routeBlocked("growers", restored)).toBe(true);
+  expect(resumed.state.progress[1].introduced).toBe(false);
+  expect(resumed.state.progress[1].destroyedEnemies).toBe(before.kills);
+  expect(resumed.state.economy.stardust).toBe(before.stardust);
 });
