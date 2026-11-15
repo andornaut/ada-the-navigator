@@ -160,16 +160,13 @@ export function flashAt(
   return phase ? { alpha: phase.alpha, width: timing.flashWidth * phase.scale } : null;
 }
 
-/**
- * A wreck's flash at its age: none for a wreck a missile blast destroyed, whose blast flash
- * stands in for it (art/weapons.md "Missile blasts"); its shards and drops still play.
- */
+/** A wreck's destruction flash is independent of the weapon that destroyed it. */
 export function wreckFlashAt(
   data: DestructionData,
   timing: DestructionTiming,
   wreck: { readonly age: number; readonly blasted?: boolean },
 ): { alpha: number; width: number } | null {
-  return wreck.blasted ? null : flashAt(data, timing, wreck.age * 1000);
+  return flashAt(data, timing, wreck.age * 1000);
 }
 
 /**

@@ -82,11 +82,14 @@ describe("enemy destruction art", () => {
     expect(flashAt(data, timing, 80)).toBeNull();
   });
 
-  it("skips the flash of a wreck a missile blast destroyed, whose blast flash stands in", () => {
+  it("uses the same destruction flash after missile and other weapon hits", () => {
     expect(wreckFlashAt(data, timing, { age: 0 })).toEqual(flashAt(data, timing, 0));
     expect(wreckFlashAt(data, timing, { age: 0.04 })).toEqual(flashAt(data, timing, 40));
-    expect(wreckFlashAt(data, timing, { age: 0, blasted: true })).toBeNull();
-    expect(wreckFlashAt(data, timing, { age: 0.04, blasted: true })).toBeNull();
+    expect(wreckFlashAt(data, timing, { age: 0, blasted: true })).toEqual(flashAt(data, timing, 0));
+    expect(wreckFlashAt(data, timing, { age: 0.04, blasted: true })).toEqual(
+      flashAt(data, timing, 40),
+    );
+    expect(wreckFlashAt(data, timing, { age: 0.08, blasted: true })).toBeNull();
   });
 
   it("tints, shrinks and fades the idle frame under reduced motion", () => {
