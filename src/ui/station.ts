@@ -23,7 +23,7 @@ import {
 import { STATION_SPRITES } from "./layout/stationStyle.ts";
 import { SPACING } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
-import { createActions, createButton, createCard, isTap } from "./modal.ts";
+import { createActions, createButton, createCard, isTap, setFooterAction } from "./modal.ts";
 import { enterPressView, inCurrentView } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
 import { mountStationDropDetails } from "./stationDropDetails.ts";
@@ -530,6 +530,19 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   };
   const shopPager = makePager(shopCard.body);
   const jobsPager = makePager(jobsCard.body);
+  const shopBack = createButton(CONTENT.labels.questBack!, "primary");
+  shopBack.dataset.action = "shop-back-footer";
+  const jobsBack = createButton(CONTENT.labels.questBack!, "primary");
+  jobsBack.dataset.action = "jobs-back-footer";
+  for (const [parts, button] of [
+    [shopCard, shopBack],
+    [jobsCard, jobsBack],
+  ] as const) {
+    const footer = createActions([{ button, role: "primary" }]);
+    setFooterAction("back", footer);
+    footer.style.alignSelf = "flex-end";
+    parts.body.append(footer);
+  }
   let shopPage = 0;
   let jobsPage = 0;
 
@@ -1276,6 +1289,8 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   }
   register(stationCard.close, back);
   register(shopCard.close, back);
+  register(shopBack, back);
+  register(jobsBack, back);
   register(confirmCard.close, back);
   register(cancel, back);
   register(buy, () => {
