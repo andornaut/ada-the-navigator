@@ -74,12 +74,29 @@ describe("Cartwheel art", () => {
       const entry = assets.find((asset) => asset.id === id)!;
       return entry.hardpoint !== undefined || entry.top !== undefined;
     };
+    const claimHullIds = [
+      ...[
+        "swarm",
+        "fighter",
+        "interceptor",
+        "retaliator",
+        "retaliatorCargoHauler",
+        "retaliatorMiningFreighter",
+        "frigate",
+        "capital",
+        "hostileStation",
+      ].flatMap((body) => Array.from({ length: 16 }, (_, index) => `enemy-claim-${body}-${index}`)),
+      "enemy-claim-platform",
+    ];
+    expect(cartwheel.filter((id) => id.startsWith("enemy-claim-") && !part(id)).sort()).toEqual(
+      claimHullIds.sort(),
+    );
     const families: readonly (readonly [string, (id: string) => boolean, number?])[] = [
       ["hub", (id) => id.startsWith("outpost-hub-"), 6],
       ["buoy", (id) => id.startsWith("mooring-buoy-"), 2],
       ["story craft", (id) => /^craft-(blocker|visitor[12])-/.test(id), 3 * 16],
       ["debris", (id) => id.startsWith("cartwheel-debris-"), 8],
-      ["claim hulls", (id) => id.startsWith("enemy-claim-") && !part(id), 6 * 16 + 1],
+      ["claim hulls", (id) => id.startsWith("enemy-claim-") && !part(id), claimHullIds.length],
       ["stranded", (id) => id.startsWith("craft-stranded-"), 16 * 2 + 16],
       ["claim parts", part],
       ["portraits", portrait],

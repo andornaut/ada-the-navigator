@@ -16,14 +16,33 @@ import {
 const read = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public/art/enemies/${path}`, import.meta.url), "utf8"));
 const data = readDestruction(read("destruction.json"))!;
-const fighter = readShards(read("fighter-shards.json"))!;
+const fighterSource = read("fighter-shards.json") as { halfSpan: number };
+const fighter = readShards(fighterSource)!;
+// The producer sizes the flash from the raw model half-span, rounded to three decimals.
+const fighterFlashWidth = Math.round(fighterSource.halfSpan * 1.98 * 1000) / 1000;
 const timing = data.archetypes.fighter!;
 
 describe("enemy destruction art", () => {
   it("reads the timings and every shard archetype", () => {
-    expect(timing).toMatchObject({ durationMs: 450, flashWidth: 41.58, releaseMs: 150 });
-    for (const archetype of ["swarm", "fighter", "interceptor", "retaliator"]) {
-      expect(readShards(read(`${archetype}-shards.json`))).toBeDefined();
+    expect(fighterSource).toMatchObject({ archetype: "fighter", frame: 104, halfSpan: 21.44 });
+    expect(timing).toMatchObject({
+      durationMs: 450,
+      flashWidth: fighterFlashWidth,
+      releaseMs: 150,
+    });
+    expect(Object.keys(data.archetypes).sort()).toEqual([
+      "fighter",
+      "interceptor",
+      "retaliator",
+      "retaliatorCargoHauler",
+      "retaliatorMiningFreighter",
+      "swarm",
+    ]);
+    for (const [archetype, timing] of Object.entries(data.archetypes)) {
+      const source = read(`${archetype}-shards.json`) as { archetype: string; halfSpan: number };
+      expect(source.archetype).toBe(archetype);
+      expect(readShards(source), archetype).toBeDefined();
+      expect(timing.flashWidth, archetype).toBe(Math.round(source.halfSpan * 1.98 * 1000) / 1000);
     }
     expect(readShards({ version: 2 })).toBeUndefined();
   });
@@ -77,8 +96,8 @@ describe("enemy destruction art", () => {
   });
 
   it("flashes for 80 ms at full then reduced width", () => {
-    expect(flashAt(data, timing, 0)).toEqual({ alpha: 0.922, width: 41.58 });
-    expect(flashAt(data, timing, 40)).toEqual({ alpha: 0.588, width: 41.58 * 0.55 });
+    expect(flashAt(data, timing, 0)).toEqual({ alpha: 0.922, width: fighterFlashWidth });
+    expect(flashAt(data, timing, 40)).toEqual({ alpha: 0.588, width: fighterFlashWidth * 0.55 });
     expect(flashAt(data, timing, 80)).toBeNull();
   });
 

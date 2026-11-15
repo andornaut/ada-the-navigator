@@ -42,18 +42,30 @@ describe("claim jumper art loading", () => {
     expect(parts.some(galaxyLoadsAtOnce)).toBe(false);
   });
 
-  it("resolves the platform's, frigate's and capital's part frames once Cartwheel's manifest is known", () => {
-    expect([...composedArchetypes(claim)].sort()).toEqual(["capital", "frigate", "platform"]);
-    const counts = Object.fromEntries(
-      ["platform", "frigate", "capital"].map((archetype) => {
-        const due = enemyPartsToLoad(true, () => false, parts, archetype)!;
-        for (const part of due) {
-          expect(present(part.path), part.path).toBe(true);
-        }
-        return [archetype, due.length];
-      }),
-    );
-    expect(counts).toEqual({ capital: 544, frigate: 288, platform: 80 });
+  it("resolves every composed claim body's exact parts once Cartwheel's manifest is known", () => {
+    const expectedCounts = {
+      capital: 464,
+      frigate: 224,
+      hostileStation: 416,
+      platform: 160,
+      retaliator: 32,
+      retaliatorCargoHauler: 32,
+      retaliatorMiningFreighter: 32,
+    };
+    expect([...composedArchetypes(claim)].sort()).toEqual(Object.keys(expectedCounts).sort());
+    const allDue: string[] = [];
+    for (const [body, count] of Object.entries(expectedCounts)) {
+      const due = enemyPartsToLoad(true, () => false, parts, body)!;
+      expect(due, body).toHaveLength(count);
+      for (const part of due) {
+        expect(part.id.startsWith(`enemy-claim-${body}-`), part.id).toBe(true);
+        expect(part.path.startsWith(`/art/cartwheel/enemies/${body}-`), part.path).toBe(true);
+        expect(present(part.path), part.path).toBe(true);
+        allDue.push(part.id);
+      }
+    }
+    expect(allDue.sort()).toEqual(parts.map(({ id }) => id).sort());
+    expect(new Set(allDue).size).toBe(allDue.length);
   });
 
   it("asks again, rather than marking the parts loaded, while the galaxy's manifest is unknown", () => {
