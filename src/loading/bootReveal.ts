@@ -1,10 +1,17 @@
-import { LOADER_CONFIG } from "@andornaut/game-kit/load/loaderConfig";
-import { createImageCache, revealWhenDecoded } from "@andornaut/game-kit/web/ui/dom/imageReady";
+import type { RequiredLoading } from "@andornaut/game-kit/load/loadingAttempts";
+import {
+  createImageCache,
+  PENDING_ATTRIBUTE,
+  revealWhenDecoded,
+} from "@andornaut/game-kit/web/ui/dom/imageReady";
 
-import { loadingProgress } from "./progress.ts";
+import { requireBootFonts } from "./requiredFonts.ts";
+import { requireBootUi } from "./requiredUi.ts";
 
 interface BootPage {
   readonly document: Document;
+  readonly required: RequiredLoading;
+  readonly ui: HTMLElement;
   readonly window: Pick<
     Window,
     | "cancelAnimationFrame"
@@ -16,132 +23,95 @@ interface BootPage {
   >;
 }
 
-interface UiManifest {
-  readonly sprites?: readonly { readonly png: string }[];
-}
-
-// Read the images the first screen actually uses, including CSS backgrounds and borders.
-// The UI manifest supplies the card sheets whose hidden rules have not painted yet.
-function screenImages(page: BootPage, root: HTMLElement): string[] {
-  const urls = new Set<string>();
+/** Discover only the first screen's active UI images; hidden/optional world art keeps its fallback. */
+function screenImages(
+  page: BootPage,
+  root: HTMLElement,
+): { readonly url: string; readonly image?: HTMLImageElement }[] {
+  const urls: { url: string; image?: HTMLImageElement }[] = [];
+  const css = new Set<string>();
   for (const node of [root, ...root.querySelectorAll<HTMLElement>("*")]) {
+    if (node.closest("[hidden], #boot-splash, .ada-loading, #boot-progress")) {
+      continue;
+    }
+    const style = page.window.getComputedStyle(node);
+    if (style.display === "none" || style.visibility === "hidden") {
+      continue;
+    }
     if (node.tagName === "IMG") {
       const image = node as HTMLImageElement;
       if (image.currentSrc || image.src) {
-        urls.add(image.currentSrc || image.src);
+        urls.push({ image, url: image.currentSrc || image.src });
       }
     }
-    const style = page.window.getComputedStyle(node);
     for (const value of [style.backgroundImage, style.borderImageSource]) {
       for (const match of value.matchAll(/url\(["']?([^"')]+)["']?\)/g)) {
-        urls.add(new URL(match[1]!, page.document.baseURI).href);
+        css.add(new URL(match[1]!, page.document.baseURI).href);
       }
     }
   }
-  return [...urls];
+  return [...urls, ...[...css].map((url) => ({ url }))];
 }
 
-// The kit settles failed images as well as decoded ones, preserving the UI's flat fallback.
-// A first visit may register offline play only after this reveal and a paint opportunity.
+/** Page-owned required resources survive a failed game attempt and its Retry. */
 export function prepareBootReveal(page: BootPage, root: HTMLElement, onRevealed: () => void) {
+  page.ui.inert = true;
   const cache = createImageCache(page.document);
-  let progress = loadingProgress.begin();
-  const abort = new AbortController();
-  const manifestAbort = new AbortController();
-  let decodeTimer: number | undefined;
-  let fallback = false;
-  let sceneReady: (() => void) | undefined;
-  const scene = new Promise<void>((resolve) => {
-    sceneReady = resolve;
+  const stopFonts = requireBootFonts(page.required, {
+    document: page.document,
+    timer: page.window,
   });
-  let finishCards!: (urls: readonly string[]) => void;
-  const cards = new Promise<readonly string[]>((resolve) => {
-    let pending = true;
-    const timer = page.window.setTimeout(() => {
-      manifestAbort.abort();
-      console.warn("UI art manifest timed out; using visible screen art.");
-      finishCards([]);
-    }, LOADER_CONFIG.timeout);
-    finishCards = (urls) => {
-      if (pending) {
-        pending = false;
-        page.window.clearTimeout(timer);
-        resolve(urls);
-      }
-    };
+  const ui = requireBootUi(page.required, page);
+  let release!: (urls: readonly string[]) => void;
+  const pending = new Promise<readonly string[]>((resolve) => {
+    release = resolve;
   });
-  void page.window
-    .fetch("/art/ui/manifest.json", { signal: manifestAbort.signal })
-    .then(async (response) => {
-      if (!response.ok || manifestAbort.signal.aborted) {
-        finishCards([]);
-        return;
-      }
-      const manifest = (await response.json()) as UiManifest;
-      if (manifestAbort.signal.aborted) {
-        return;
-      }
-      const urls = (manifest.sprites ?? []).map(
-        ({ png }) => new URL(`/art/ui/${png}`, page.document.baseURI).href,
-      );
-      cache.retain(urls);
-      finishCards(urls);
-    })
-    .catch(() => finishCards([]));
-  const urls = Promise.all([scene, cards]).then(([, cards]) => {
-    if (abort.signal.aborted) {
-      return [];
-    }
-    // imageReady deliberately has no deadline. The game uses the loader's existing per-file
-    // timeout for both the manifest (including its body) and the subsequent decode phase.
-    decodeTimer = page.window.setTimeout(() => {
-      fallback = true;
-      console.warn("UI art decoding timed out; revealing the fallback screen.");
-      reveal.cancel();
-    }, LOADER_CONFIG.timeout);
-    return [...cards, ...screenImages(page, root)];
-  });
-  const reveal = revealWhenDecoded(cache, urls, root);
+  const reveal = revealWhenDecoded(cache, pending, root);
+  let disposed = false;
   let frame: number | undefined;
   void reveal.revealed.then((shown) => {
-    page.window.clearTimeout(decodeTimer);
-    progress.finish();
-    if ((!shown && !fallback) || abort.signal.aborted) {
+    if (!shown || disposed) {
       return;
     }
+    page.ui.inert = false;
     page.document.getElementById("boot-splash")?.remove();
-    // A frame callback runs before paint. The next callback lets the revealed screen paint first.
     frame = page.window.requestAnimationFrame(() => {
       frame = page.window.requestAnimationFrame(() => {
         frame = undefined;
-        if (!abort.signal.aborted) {
+        if (!disposed) {
           onRevealed();
         }
       });
     });
   });
   return {
+    collect() {
+      // Inspect the active screen without its temporary boot visibility rule in the same task.
+      root.removeAttribute(PENDING_ATTRIBUTE);
+      try {
+        screenImages(page, page.ui).forEach(({ image, url }) => ui.requireImage(url, image));
+      } finally {
+        root.setAttribute(PENDING_ATTRIBUTE, "");
+      }
+    },
+    commit() {
+      if (!disposed && page.required.state.kind === "ready") {
+        release([]);
+      }
+    },
     dispose() {
-      abort.abort();
-      manifestAbort.abort();
-      finishCards([]);
-      page.window.clearTimeout(decodeTimer);
-      sceneReady?.();
+      if (disposed) {
+        return;
+      }
+      disposed = true;
       reveal.cancel();
+      release([]);
       if (frame !== undefined) {
         page.window.cancelAnimationFrame(frame);
-        frame = undefined;
       }
+      stopFonts();
+      ui.dispose();
     },
-    // Retain the decoded card sheets for later openings.
     images: cache,
-    ready() {
-      if (sceneReady) {
-        // Scene assets are ready; image decoding remains real work of unknown duration.
-        progress = loadingProgress.begin();
-        sceneReady();
-        sceneReady = undefined;
-      }
-    },
   };
 }

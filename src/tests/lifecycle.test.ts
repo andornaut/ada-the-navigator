@@ -45,3 +45,17 @@ describe("published visibility adapter", () => {
     stop();
   });
 });
+
+it("does not wake or sleep a revoked attempt while native teardown is still pending", () => {
+  const page = new EventTarget(),
+    document = new PageDocument();
+  const loop = { sleep: vi.fn(), wake: vi.fn() };
+  let active = true;
+  const stop = followPageVisibility(page, document, loop, () => active);
+  active = false;
+  page.dispatchEvent(new Event("pagehide"));
+  page.dispatchEvent(new Event("pageshow"));
+  expect(loop.sleep).not.toHaveBeenCalled();
+  expect(loop.wake).not.toHaveBeenCalled();
+  stop();
+});

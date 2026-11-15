@@ -7,6 +7,7 @@ import "@andornaut/game-kit/web/ui/dom/ui.css";
 import "virtual:ada-ui.css";
 
 import { LOADER_CONFIG } from "@andornaut/game-kit/load/loaderConfig";
+import type { LoadingAttempt, RequiredLoading } from "@andornaut/game-kit/load/loadingAttempts";
 import { MAX_RENDER_SCALE } from "@andornaut/game-kit/view/renderScale";
 import { trackInputModality } from "@andornaut/game-kit/web/ui/dom/focusModality";
 import { lockGameOrientation } from "@andornaut/game-kit/web/view/dom/watchFrameTurn";
@@ -17,10 +18,14 @@ import { CRASH_SCREEN } from "./crash/crashScreen.ts";
 import { SCREEN } from "./data/screen.ts";
 import { saves } from "./game/persistence.ts";
 import { GameScene } from "./game/scene.ts";
+import { flushScene, refreshScene } from "./game/sceneUi.ts";
 import { followPageVisibility } from "./lifecycle.ts";
 import { prepareBootReveal } from "./loading/bootReveal.ts";
+import { requiredLoading, requiredReady } from "./loading/required.ts";
+import { validateBootCore } from "./loading/requiredCore.ts";
+import { requireSceneFiles } from "./loading/requiredFiles.ts";
 import { startupFence } from "./loading/startup.ts";
-import { gameShown, launchPhoneApp, setupPhoneApp } from "./pwa/index.ts";
+import { gameShown, launchPhoneApp, requireNewerVersion, setupPhoneApp } from "./pwa/index.ts";
 import { FRAME_TURN } from "./view/frameTurn.ts";
 
 const mount = document.getElementById("game-canvas");
@@ -28,6 +33,11 @@ if (!mount) {
   throw new Error("Missing game canvas mount");
 }
 const parent: HTMLElement = mount;
+const application = document.getElementById("app");
+if (!application) {
+  throw new Error("Missing application mount");
+}
+const ui: HTMLElement = application;
 
 // Script focus as screens open shows the focus ring only after keyboard input (focusTarget).
 trackInputModality(document);
@@ -47,40 +57,210 @@ if (crashed) {
   saves.blockWrites("game crashed");
 }
 let entry: Promise<void> | undefined;
+let boot: ReturnType<typeof prepareBootReveal> | undefined;
+let retirement: Promise<void> = Promise.resolve();
+let saved: ReturnType<typeof saves.load> | undefined;
+let launched: ReturnType<typeof launchPhoneApp> | undefined;
+let cancelGame: (() => void) | undefined;
 
-/** One document owns one entry operation, including calls through a cached module. */
-export function startGame(): Promise<void> {
-  entry ??= enterGame();
+/** Page resources retain successful imports, fonts and bitmaps across a failed game attempt. */
+export async function prepareGame(
+  required: RequiredLoading,
+  attempt: LoadingAttempt,
+): Promise<void> {
+  if (!attempt.isCurrent() || crashed) {
+    return;
+  }
+  boot ??= prepareBootReveal({ document, required, ui, window }, parent, () => {
+    if (!game || crashed || !requiredReady()) {
+      return;
+    }
+    const scene = game.scene.getScene("game") as GameScene;
+    scene.enabled = undefined;
+    refreshScene(scene);
+    scene.controls.reset();
+    gameShown();
+  });
+  launched ??= launchPhoneApp();
+  if ((await launched) === "reloading" || !attempt.isCurrent() || crashed) {
+    return;
+  }
+  saved ??= saves.load();
+  const initial = await saved;
+  if (!attempt.isCurrent() || crashed) {
+    return;
+  }
+  // A newer-save update must remain available while required fonts or artwork are blocked.
+  if (initial.status === "newer") {
+    requireNewerVersion(() => {});
+  }
+}
+
+/** Fallible construction and first-scene validation run inside the public loading attempt. */
+export function startGame(attempt: LoadingAttempt): Promise<void> {
+  entry ??= enterGame(attempt).catch((error) => {
+    entry = undefined;
+    throw error;
+  });
   return entry;
 }
 
-async function enterGame(): Promise<void> {
-  // This document must not construct the old game or read its save after a staged switch.
-  if (!crashed && (await launchPhoneApp()) !== "reloading" && !crashed) {
-    const initialSave = await saves.load();
-    if (!crashed) {
-      const bootReveal = prepareBootReveal({ document, window }, parent, gameShown);
+export function commitGame(): void {
+  if (game && !crashed && requiredReady()) {
+    boot?.commit();
+  }
+}
 
-      // The canvas fills the play area with its backing in device pixels, up to MAX_RENDER_SCALE per CSS
-      // pixel (followFrameTurn's deviceResolution, Scale.NONE); above that the browser upscales it
-      // pixelated. Cameras zoom the logical view to fit (src/game/playCamera.ts). Every texture
-      // samples nearest unless src/game/textures.ts makes it linear, and nothing is smoothed implicitly.
-      game = new Game({
+export function disposeGame(): void {
+  cancelGame?.();
+  boot?.dispose();
+  boot = undefined;
+}
+
+async function enterGame(attempt: LoadingAttempt): Promise<void> {
+  await retirement;
+  if (!attempt.isCurrent() || crashed) {
+    return;
+  }
+  launched ??= launchPhoneApp();
+  if ((await launched) === "reloading" || !attempt.isCurrent() || crashed) {
+    return;
+  }
+  // No save read is admitted before the existing launch/update fence.
+  saved ??= saves.load();
+  const initialSave = await saved;
+  if (!attempt.isCurrent() || crashed) {
+    return;
+  }
+  const scene = new GameScene(initialSave);
+  let owned: Game | undefined;
+  let constructScene: (() => void) | undefined;
+  scene.entryCreate = (create) => {
+    constructScene = create;
+  };
+  let destroyRequested: Game | undefined;
+  let closed = false;
+  let stopFrameTurn: (() => void) | undefined;
+  let stopVisibility: (() => void) | undefined;
+  let stopCreate: (() => void) | undefined;
+  let createTimer: ReturnType<typeof setTimeout> | undefined;
+  let resolveCreated!: () => void;
+  let rejectCreated!: (error: unknown) => void;
+  const ready = new Promise<void>((resolve, reject) => {
+    resolveCreated = resolve;
+    rejectCreated = reject;
+  });
+  void ready.catch(() => undefined);
+  const retire = (instance: Game) => {
+    if (destroyRequested === instance) {
+      return;
+    }
+    destroyRequested = instance;
+    instance.pause();
+    scene.controls?.setEnabled(false);
+    scene.controls?.reset();
+    if (requiredReady() && scene.entryCurrent()) {
+      void flushScene(scene);
+    }
+    scene.entryCurrent = () => false;
+    scene.disposeEntryResources?.();
+    scene.loads?.dispose();
+    if (game === instance) {
+      game = undefined;
+    }
+    instance.destroy(true);
+    // destroy is deferred to the next step, including while isPaused. Keep that step runnable.
+    if (instance.isRunning) {
+      instance.loop.wake();
+    }
+  };
+  const cleanup = () => {
+    if (closed) {
+      return;
+    }
+    closed = true;
+    clearTimeout(createTimer);
+    stopCreate?.();
+    stopVisibility?.();
+    stopFrameTurn?.();
+    scene.entryFailure = undefined;
+    if (owned) {
+      retire(owned);
+    }
+    rejectCreated(new Error("Game loading attempt cancelled"));
+    entry = undefined;
+  };
+  cancelGame = cleanup;
+  attempt.onCancel(cleanup);
+  scene.entryCurrent = () => owned !== undefined && game === owned && !crashed;
+  scene.entryFailure = (error) => {
+    if (attempt.isCurrent()) {
+      rejectCreated(error);
+    }
+  };
+  scene.registerEntryCleanup = attempt.onCancel;
+  const ownGame = (instance: Game) => {
+    if (owned === instance) {
+      return;
+    }
+    owned = instance;
+    retirement = new Promise<void>((resolve) => {
+      instance.events.once(Core.Events.DESTROY, () => {
+        stopCreate?.();
+        stopVisibility?.();
+        stopFrameTurn?.();
+        // Core DESTROY precedes renderer/canvas/loop teardown in the same stack.
+        queueMicrotask(resolve);
+      });
+    });
+    if (closed || !attempt.isCurrent()) {
+      retire(instance);
+      return;
+    }
+    game = instance;
+  };
+  const finishEntry = () => {
+    scene.entryFailure = undefined;
+  };
+  const unavailableRetirement = (error: unknown) => {
+    retirement = Promise.reject(error);
+    void retirement.catch(() => undefined);
+  };
+  const created = () => {
+    if (!attempt.isCurrent()) {
+      return;
+    }
+    clearTimeout(createTimer);
+    resolveCreated();
+  };
+  try {
+    createTimer = setTimeout(
+      () => rejectCreated(new Error("Required scene creation timed out")),
+      LOADER_CONFIG.timeout * (LOADER_CONFIG.maxRetries + 1),
+    );
+    ownGame(
+      new Game({
         backgroundColor: "#101010",
         callbacks: {
           postBoot(bootedGame) {
+            ownGame(bootedGame);
+            if (!attempt.isCurrent()) {
+              return;
+            }
             bootedGame.canvas.setAttribute("aria-hidden", "true");
-            followFrameTurn(FRAME_TURN, bootedGame.scale.gameSize, parent, bootedGame, {
-              deviceResolution: { max: MAX_RENDER_SCALE },
-            });
-            const stop = followPageVisibility(window, document, bootedGame.loop);
-            bootedGame.events.once(Core.Events.DESTROY, () => {
-              stop();
-              bootReveal.dispose();
-            });
-            // Scene creation supplies the title art URLs; the reveal owns first-visit registration.
-            bootedGame.scene.getScene("game")?.events.once(Scenes.Events.CREATE, bootReveal.ready);
+            stopFrameTurn = followFrameTurn(
+              FRAME_TURN,
+              bootedGame.scale.gameSize,
+              parent,
+              bootedGame,
+              {
+                deviceResolution: { max: MAX_RENDER_SCALE },
+              },
+            );
+            scene.events.once(Scenes.Events.CREATE, created);
+            stopCreate = () => scene.events.off(Scenes.Events.CREATE, created);
           },
+          preBoot: ownGame,
         },
         height: SCREEN.height,
         // The kit's loader timeout and retries; its loader watch gives each file the timeout
@@ -97,14 +277,38 @@ async function enterGame(): Promise<void> {
           roundPixels: true,
         },
         scale: { autoCenter: Scale.CENTER_HORIZONTALLY, mode: Scale.NONE },
-        scene: [new GameScene(initialSave)],
+        scene: [scene],
         // WebGL only: the build's Phaser has no Canvas renderer (src/tools/phaserBuild.ts).
         type: WEBGL,
         width: SCREEN.width,
-      });
-      if (import.meta.hot) {
-        import.meta.hot.dispose(() => game?.destroy(true));
-      }
+      }),
+    );
+    await ready;
+    if (!attempt.isCurrent()) {
+      return;
     }
+    if (!scene.loads || !constructScene) {
+      throw new Error("Required scene initialization was not prepared");
+    }
+    await requireSceneFiles(requiredLoading, attempt, scene.loads);
+    if (!attempt.isCurrent()) {
+      return;
+    }
+    constructScene();
+    validateBootCore(scene.cache.json, scene.textures.exists("ship"));
+    boot!.collect();
+    stopVisibility = followPageVisibility(window, document, owned!.loop, scene.entryCurrent);
+    finishEntry();
+  } catch (error) {
+    if (!owned || !owned.isRunning) {
+      // A constructor that exposes no instance has no public reclamation handle. Do not overlap
+      // another constructor on Retry until an actual late preBoot handle can retire it.
+      unavailableRetirement(error);
+    }
+    throw error;
   }
+}
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(disposeGame);
 }

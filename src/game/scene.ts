@@ -12,6 +12,8 @@ import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { createControls } from "../input/controls.ts";
 import { loadingProgress, type WaitedLoad } from "../loading/progress.ts";
+import { requiredReady } from "../loading/required.ts";
+import { requiredSceneFile } from "../loading/requiredFiles.ts";
 import { heldActivity } from "../model/activities.ts";
 import { type Current } from "../model/currents.ts";
 import { activeBeamFlashes, activeWeaponImpacts, shipSpeedFraction } from "../model/flight.ts";
@@ -385,6 +387,12 @@ export class GameScene extends Scene {
   // kit's watch also gives every file the loader's timeout and retries failed loads in rounds.
   loads: LoaderWatch<WaitedLoad> | undefined;
 
+  entryCurrent: () => boolean = () => true;
+  entryFailure: ((error: unknown) => void) | undefined;
+  entryCreate: ((create: () => void) => void) | undefined;
+  registerEntryCleanup: ((cleanup: () => void) => () => void) | undefined;
+  disposeEntryResources: (() => void) | undefined;
+
   readonly initialSave: StoreLoadResult<GameSave>;
   constructor(initialSave: StoreLoadResult<GameSave>) {
     super("game");
@@ -392,9 +400,29 @@ export class GameScene extends Scene {
   }
 
   preload(): void {
+    if (!this.entryCurrent()) {
+      return;
+    }
+    try {
+      this.preloadEntry();
+    } catch (error) {
+      if (this.entryFailure) {
+        this.entryFailure(error);
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  private preloadEntry(): void {
     // Each time the scene starts, before its files queue; scene shutdown disposes it.
     this.loads = watchLoader<WaitedLoad>(
-      { console, progress: loadingProgress, timer: window },
+      {
+        console,
+        progress: loadingProgress,
+        retryMode: (failure) => (requiredSceneFile(failure) ? "manual" : "automatic"),
+        timer: window,
+      },
       this,
     );
     this.loads.waitFor("boot");
@@ -405,6 +433,10 @@ export class GameScene extends Scene {
     // Each texture file samples by its kind (textures.ts) once it loads; an SVG asked for at a
     // raster scale since replaced rasterises again.
     this.load.on(Loader.Events.FILE_COMPLETE, (key: string, type: string) => {
+      if (!this.entryCurrent()) {
+        return;
+      }
+
       const filter = fileFilter(type);
       if (filter && this.textures.exists(key)) {
         filterTexture(this, key, filter);
@@ -415,79 +447,96 @@ export class GameScene extends Scene {
       }
     });
     this.load.once("filecomplete-json-art-manifest", () => {
-      const manifest = this.cache.json.get("art-manifest") as CoreManifest<Asset>;
-      if (
-        !hasPlayerHeadingPackage(
-          ECONOMY.paintOrder.filter((paint) => paint !== ECONOMY.defaultPaint),
-          manifest,
-        )
-      ) {
-        throw new Error("Player art requires the complete active heading package");
+      if (!this.entryCurrent()) {
+        return;
       }
-      if (manifest.spacePalette) {
-        this.load.json("space-palette", manifest.spacePalette);
-      }
-      if (typeof manifest.galaxyFields === "string") {
-        this.load.json("galaxy-fields", manifest.galaxyFields);
-      }
-      // The galaxies map is paths, never inline data: only a string path is loaded.
-      this.galaxyManifestPaths = galaxyManifestPaths(manifest.galaxies);
-      const sunflower = this.galaxyManifestPaths[1];
-      if (sunflower) {
-        this.load.once(`filecomplete-json-${galaxyManifestKey(1)}`, () => {
-          const galaxy = readGalaxyManifest<Asset>(this.cache.json.get(galaxyManifestKey(1)));
-          for (const asset of galaxy?.assets ?? []) {
-            loadGalaxyAsset(this, asset);
-          }
-        });
-        this.load.json(galaxyManifestKey(1), sunflower);
-      }
-      if (manifest.quantumJump) {
-        this.load.json("quantum-jump", manifest.quantumJump);
-      }
-      if (manifest.enemyWeapons) {
-        this.load.json("enemy-weapons", manifest.enemyWeapons);
-      }
-      if (manifest.titleScreen) {
-        this.load.json(TITLE_SCREEN_KEY, manifest.titleScreen);
-      }
-      const materialFrames = queueShipMaterialSources(this, manifest);
-      const composed = composedArchetypes(manifest.assets);
-      for (const [archetype, frames] of enemyFrameSets(manifest.assets)) {
-        this.load.json(`enemy-jets-${archetype}`, enemyJetsPath(archetype, frames[0]!));
-        if (composed.has(archetype)) {
-          this.load.json(
-            `enemy-hardpoints-${archetype}`,
-            enemyHardpointsPath(archetype, frames[0]!),
-          );
-        }
-      }
-      // Story craft that several galaxies fly are in core; their jets load with it.
-      for (const [craft, frames] of craftFrameSets(manifest.assets)) {
-        this.load.json(`craft-jets-${craft}`, enemyJetsPath(craft, frames[0]!));
-      }
-      for (const asset of manifest.assets) {
-        // Painted ship frames load for the scheme in use, thrust frames only without valid jets,
-        // a heavy's part frames when that craft first appears and whale frames for a whale. A
-        // galaxy's own art is in its galaxy manifest, not here.
+      try {
+        const manifest = this.cache.json.get("art-manifest") as CoreManifest<Asset>;
         if (
-          loadsOnDemand(asset) ||
-          !galaxyLoadsAtOnce(asset) ||
-          (materialFrames && materialShipHeading(asset) !== undefined)
+          !hasPlayerHeadingPackage(
+            ECONOMY.paintOrder.filter((paint) => paint !== ECONOMY.defaultPaint),
+            manifest,
+          )
         ) {
-          continue;
+          throw new Error("Player art requires the complete active heading package");
         }
-        if (asset.path.endsWith(".svg")) {
-          loadSvg(this, asset);
-        } else if (asset.frameWidth && asset.frameHeight) {
-          this.load.spritesheet(asset.id, asset.path, {
-            frameHeight: asset.frameHeight,
-            frameWidth: asset.frameWidth,
+        if (manifest.spacePalette) {
+          this.load.json("space-palette", manifest.spacePalette);
+        }
+        if (typeof manifest.galaxyFields === "string") {
+          this.load.json("galaxy-fields", manifest.galaxyFields);
+        }
+        // The galaxies map is paths, never inline data: only a string path is loaded.
+        this.galaxyManifestPaths = galaxyManifestPaths(manifest.galaxies);
+        const sunflower = this.galaxyManifestPaths[1];
+        if (sunflower) {
+          this.load.once(`filecomplete-json-${galaxyManifestKey(1)}`, () => {
+            if (!this.entryCurrent()) {
+              return;
+            }
+            const galaxy = readGalaxyManifest<Asset>(this.cache.json.get(galaxyManifestKey(1)));
+            for (const asset of galaxy?.assets ?? []) {
+              loadGalaxyAsset(this, asset);
+            }
           });
+          this.load.json(galaxyManifestKey(1), sunflower);
+        }
+        if (manifest.quantumJump) {
+          this.load.json("quantum-jump", manifest.quantumJump);
+        }
+        if (manifest.enemyWeapons) {
+          this.load.json("enemy-weapons", manifest.enemyWeapons);
+        }
+        if (manifest.titleScreen) {
+          this.load.json(TITLE_SCREEN_KEY, manifest.titleScreen);
+        }
+        const materialFrames = queueShipMaterialSources(this, manifest);
+        const composed = composedArchetypes(manifest.assets);
+        for (const [archetype, frames] of enemyFrameSets(manifest.assets)) {
+          this.load.json(`enemy-jets-${archetype}`, enemyJetsPath(archetype, frames[0]!));
+          if (composed.has(archetype)) {
+            this.load.json(
+              `enemy-hardpoints-${archetype}`,
+              enemyHardpointsPath(archetype, frames[0]!),
+            );
+          }
+        }
+        // Story craft that several galaxies fly are in core; their jets load with it.
+        for (const [craft, frames] of craftFrameSets(manifest.assets)) {
+          this.load.json(`craft-jets-${craft}`, enemyJetsPath(craft, frames[0]!));
+        }
+        for (const asset of manifest.assets) {
+          // Painted ship frames load for the scheme in use, thrust frames only without valid jets,
+          // a heavy's part frames when that craft first appears and whale frames for a whale. A
+          // galaxy's own art is in its galaxy manifest, not here.
+          if (
+            loadsOnDemand(asset) ||
+            !galaxyLoadsAtOnce(asset) ||
+            (materialFrames && materialShipHeading(asset) !== undefined)
+          ) {
+            continue;
+          }
+          if (asset.path.endsWith(".svg")) {
+            loadSvg(this, asset);
+          } else if (asset.frameWidth && asset.frameHeight) {
+            this.load.spritesheet(asset.id, asset.path, {
+              frameHeight: asset.frameHeight,
+              frameWidth: asset.frameWidth,
+            });
+          }
+        }
+      } catch (error) {
+        if (this.entryFailure) {
+          this.entryFailure(error);
+        } else {
+          throw error;
         }
       }
     });
     this.load.once("filecomplete-json-destruction", () => {
+      if (!this.entryCurrent()) {
+        return;
+      }
       const data = readDestruction(this.cache.json.get("destruction"));
       if (!data) {
         return;
@@ -512,6 +561,25 @@ export class GameScene extends Scene {
   // from a newer version is never read or overwritten: saving stops, Start stays closed and the
   // newer version installs (requireNewerVersion). update waits for the controls build makes.
   create(): void {
+    if (!this.entryCurrent()) {
+      return;
+    }
+    try {
+      if (this.entryCreate) {
+        this.entryCreate(() => this.createEntry());
+      } else {
+        this.createEntry();
+      }
+    } catch (error) {
+      if (this.entryFailure) {
+        this.entryFailure(error);
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  private createEntry(): void {
     this.jumping = false;
     this.holdSource = false;
     this.emergencyReturn.cancel();
@@ -536,7 +604,14 @@ export class GameScene extends Scene {
       viewport: SCREEN,
     });
     this.needleRenderer = renderer;
-    this.events.once(Scenes.Events.SHUTDOWN, () => {
+    let disposedRenderer = false;
+    const disposeRenderer = () => {
+      if (disposedRenderer) {
+        return;
+      }
+      disposedRenderer = true;
+      this.events.off(Scenes.Events.SHUTDOWN, disposeRenderer);
+      this.events.off(Scenes.Events.DESTROY, disposeRenderer);
       renderer.dispose();
       this.needleFlight = undefined;
       this.needleRenderer = undefined;
@@ -548,11 +623,19 @@ export class GameScene extends Scene {
       this.backdropSprites.clear();
       this.backdropItems.clear();
       this.starImages = [];
-    });
+    };
+    this.events.once(Scenes.Events.SHUTDOWN, disposeRenderer);
+    this.events.once(Scenes.Events.DESTROY, disposeRenderer);
+    this.registerEntryCleanup?.(disposeRenderer);
   }
 
   override update(time: number, milliseconds: number): void {
     if (!this.controls) {
+      return;
+    }
+    if (!this.entryCurrent() || !requiredReady()) {
+      this.controls.setEnabled(false);
+      this.controls.reset();
       return;
     }
     const state = this.model.state;

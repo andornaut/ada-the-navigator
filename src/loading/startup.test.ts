@@ -1,122 +1,207 @@
+import {
+  createRequiredLoading,
+  type LoadingAttempt,
+  type RequiredLoading,
+} from "@andornaut/game-kit/load/loadingAttempts";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-const failure = vi.hoisted(() => ({
+const view = vi.hoisted(() => ({
   dispose: vi.fn(),
   retry: undefined as (() => void | PromiseLike<void>) | undefined,
   style: vi.fn(),
   update: vi.fn(),
 }));
-vi.mock("@andornaut/game-kit/web/progress/dom/loadingFailure", () => ({
-  mountLoadingFailure: (context: { onRetry: () => void | PromiseLike<void> }) => {
-    failure.retry = context.onRetry;
-    return {
-      dispose: failure.dispose,
-      element: { style: { setProperty: failure.style } },
-      update: failure.update,
-    };
-  },
+const progress = vi.hoisted(() => ({
+  begin: vi.fn(() => ({ finish: vi.fn(), progress: vi.fn() })),
+  mount: vi.fn(() => vi.fn()),
 }));
-
-const progress = vi.hoisted(() => ({ begin: vi.fn(), mount: vi.fn(() => vi.fn()) }));
 vi.mock("./progress.ts", () => ({
   loadingProgress: { begin: progress.begin },
   mountLoading: progress.mount,
 }));
-
-import { startLoading, startupFence } from "./startup.ts";
-
+vi.mock("@andornaut/game-kit/web/progress/dom/loadingFailure", () => ({
+  mountLoadingFailure: (context: { onRetry: () => void | PromiseLike<void> }) => {
+    view.retry = context.onRetry;
+    return {
+      dispose: view.dispose,
+      element: { style: { setProperty: view.style } },
+      update: view.update,
+    };
+  },
+}));
+import { type RequiredGame, startLoading, startupFence } from "./startup.ts";
+const root = () =>
+  ({
+    ownerDocument: { body: {} },
+    querySelector: () => ({ remove: vi.fn() }),
+  }) as unknown as HTMLElement;
+async function settle() {
+  for (let n = 0; n < 24; n++) {
+    // eslint-disable-next-line no-await-in-loop
+    await Promise.resolve();
+  }
+}
+function game() {
+  return {
+    commit: vi.fn(),
+    dispose: vi.fn(),
+    load: vi.fn<(attempt: LoadingAttempt) => Promise<void>>(async () => {}),
+    prepare: vi.fn(),
+  } satisfies RequiredGame;
+}
 beforeEach(() => {
   vi.clearAllMocks();
   startupFence.crashed = false;
 });
 afterEach(() => vi.unstubAllGlobals());
-
-it("shows pending progress and installs the crash fence while the game module is still downloading", async () => {
-  let crash!: () => void;
-  let release!: (entry: () => Promise<void>) => void;
-  const load = new Promise<() => Promise<void>>((resolve) => {
-    release = resolve;
+it("keeps the same bar/error through failed import and retries once into actual construction", async () => {
+  const required = createRequiredLoading(),
+    entry = game();
+  const load = vi.fn().mockRejectedValueOnce(new Error("import failed")).mockResolvedValue(entry);
+  const stop = await startLoading(required, { stopGameOnCrash: vi.fn() }, load, root());
+  expect(required.state.kind).toBe("failed");
+  expect(entry.load).not.toHaveBeenCalled();
+  await Promise.all([view.retry!(), view.retry!()]);
+  await settle();
+  expect(load).toHaveBeenCalledTimes(2);
+  expect(entry.load).toHaveBeenCalledOnce();
+  expect(entry.commit).toHaveBeenCalledOnce();
+  expect(progress.mount).toHaveBeenCalledOnce();
+  stop();
+  stop();
+  expect(view.dispose).toHaveBeenCalledOnce();
+});
+it("registers late resources before entry and retains successful preparation across resource Retry", async () => {
+  const required = createRequiredLoading(),
+    entry = game();
+  let status: "failed" | "loading" | "ready" = "failed";
+  const retry = vi.fn(() => {
+    status = "ready";
+    required.invalidate();
   });
-  const removeStatic = vi.fn();
-  const root = {
-    ownerDocument: { body: {} },
-    querySelector: () => ({ remove: removeStatic }),
-  } as unknown as HTMLElement;
+  entry.prepare.mockImplementation((registry: RequiredLoading) => {
+    registry.observe({ retry, status: () => status });
+  });
+  const stop = await startLoading(
+    required,
+    { stopGameOnCrash: vi.fn() },
+    async () => entry,
+    root(),
+  );
+  await settle();
+  expect(entry.load).not.toHaveBeenCalled();
+  expect(entry.commit).not.toHaveBeenCalled();
+  await view.retry!();
+  await settle();
+  expect(entry.load).toHaveBeenCalledOnce();
+  expect(entry.prepare).toHaveBeenCalledOnce();
+  expect(entry.commit).toHaveBeenCalledOnce();
+  await view.retry!();
+  expect(entry.commit).toHaveBeenCalledOnce();
+  stop();
+});
+it("keeps fallible construction inside load and cancels before showing the shared failure", async () => {
+  const required = createRequiredLoading(),
+    entry = game(),
+    cancel = vi.fn();
+  entry.load.mockImplementationOnce(async (attempt) => {
+    attempt.onCancel(cancel);
+    throw new Error("required scene failed");
+  });
+  const stop = await startLoading(
+    required,
+    { stopGameOnCrash: vi.fn() },
+    async () => entry,
+    root(),
+  );
+  await settle();
+  expect(required.state.kind).toBe("failed");
+  expect(cancel).toHaveBeenCalledOnce();
+  expect(entry.commit).not.toHaveBeenCalled();
+  await view.retry!();
+  await settle();
+  expect(entry.load).toHaveBeenCalledTimes(2);
+  expect(entry.commit).toHaveBeenCalledOnce();
+  stop();
+});
+it("disposes an active partial game and rejects late completion without committing entry", async () => {
+  const required = createRequiredLoading(),
+    entry = game(),
+    cancel = vi.fn();
+  let finish!: () => void;
+  entry.load.mockImplementation(async (attempt) => {
+    attempt.onCancel(cancel);
+    await new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+  });
+  const stop = await startLoading(
+    required,
+    { stopGameOnCrash: vi.fn() },
+    async () => entry,
+    root(),
+  );
+  await settle();
+  stop();
+  finish();
+  await settle();
+  expect(cancel).toHaveBeenCalledOnce();
+  expect(required.state.kind).toBe("disposed");
+  expect(entry.commit).not.toHaveBeenCalled();
+  expect(entry.dispose).toHaveBeenCalledOnce();
+});
+it("fences a crash during import and never constructs when that same import completes", async () => {
+  const required = createRequiredLoading(),
+    entry = game();
+  let crash!: () => void, finish!: (entry: RequiredGame) => void;
   const pending = startLoading(
+    required,
     {
-      stopGameOnCrash: (stop) => {
-        crash = stop;
+      stopGameOnCrash: (callback) => {
+        crash = callback;
       },
     },
-    () => load,
-    root,
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+    root(),
   );
-  await Promise.resolve();
-  expect(progress.begin).toHaveBeenCalledOnce();
-  expect(progress.mount).toHaveBeenCalledWith(root);
-  expect(removeStatic).toHaveBeenCalledOnce();
+  await settle();
   crash();
+  finish(entry);
+  const stop = await pending;
+  await settle();
   expect(startupFence.crashed).toBe(true);
-  const enter = vi.fn(async () => {});
-  release(enter);
-  await pending;
-  expect(enter).not.toHaveBeenCalled();
+  expect(entry.load).not.toHaveBeenCalled();
+  expect(entry.commit).not.toHaveBeenCalled();
+  stop();
 });
 
-it("keeps one bar through import failure, retries once per pending attempt, and enters once", async () => {
-  const enter = vi.fn(async () => {});
-  const load = vi
-    .fn()
-    .mockRejectedValueOnce(new Error("import unavailable"))
-    .mockResolvedValue(enter);
-  const stop = await startLoading({ stopGameOnCrash: vi.fn() }, load, {
-    ownerDocument: { body: {} },
-    querySelector: () => null,
-  } as unknown as HTMLElement);
-  expect(failure.update).toHaveBeenLastCalledWith(expect.objectContaining({ kind: "failed" }));
-  expect(enter).not.toHaveBeenCalled();
-  await Promise.all([failure.retry!(), failure.retry!()]);
-  expect(load).toHaveBeenCalledTimes(2);
-  expect(enter).toHaveBeenCalledOnce();
+it("keeps real pending progress after scene loading until a late required image is usable", async () => {
+  const required = createRequiredLoading(),
+    entry = game();
+  let image: "loading" | "ready" = "loading";
+  entry.load.mockImplementation(async () => {
+    required.observe({ retry: () => {}, status: () => image });
+  });
+  const stop = await startLoading(
+    required,
+    { stopGameOnCrash: vi.fn() },
+    async () => entry,
+    root(),
+  );
+  await settle();
+  expect(entry.load).toHaveBeenCalledOnce();
+  expect(required.state.kind).toBe("loading");
+  expect(entry.commit).not.toHaveBeenCalled();
+  const handle = progress.begin.mock.results.at(-1)!.value;
+  expect(handle.finish).not.toHaveBeenCalled();
+  image = "ready";
+  required.invalidate();
+  await settle();
+  expect(entry.commit).toHaveBeenCalledOnce();
+  expect(handle.finish).toHaveBeenCalledOnce();
   expect(progress.mount).toHaveBeenCalledOnce();
-  expect(progress.begin).toHaveBeenCalledTimes(2);
-  await failure.retry!();
-  expect(enter).toHaveBeenCalledOnce();
   stop();
-  stop();
-  expect(failure.dispose).toHaveBeenCalledOnce();
-});
-
-it("does not treat constructor rejection as a retriable import failure", async () => {
-  const error = new Error("construction failed");
-  const enter = vi.fn().mockRejectedValue(error);
-  const load = vi.fn().mockResolvedValue(enter);
-  await expect(
-    startLoading({ stopGameOnCrash: vi.fn() }, load, {
-      ownerDocument: { body: {} },
-      querySelector: () => null,
-    } as unknown as HTMLElement),
-  ).rejects.toBe(error);
-  expect(failure.update.mock.calls.some(([state]) => state.kind === "failed")).toBe(false);
-  expect(failure.dispose).toHaveBeenCalledOnce();
-  expect(load).toHaveBeenCalledOnce();
-});
-
-it("reports entry failure after a successful import Retry through the existing page error fence", async () => {
-  const report = vi.fn();
-  vi.stubGlobal("reportError", report);
-  const error = new Error("construction failed after Retry");
-  const enter = vi.fn().mockRejectedValue(error);
-  const load = vi
-    .fn()
-    .mockRejectedValueOnce(new Error("import unavailable"))
-    .mockResolvedValue(enter);
-  await startLoading({ stopGameOnCrash: vi.fn() }, load, {
-    ownerDocument: { body: {} },
-    querySelector: () => null,
-  } as unknown as HTMLElement);
-  await failure.retry!();
-  expect(report).toHaveBeenCalledWith(error);
-  expect(failure.dispose).toHaveBeenCalledOnce();
-  expect(enter).toHaveBeenCalledOnce();
 });

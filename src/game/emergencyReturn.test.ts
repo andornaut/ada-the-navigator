@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
 import { SCREEN } from "../data/screen.ts";
+import { requiredReady } from "../loading/required.ts";
 import { GameModel } from "../model/game.ts";
 import { shipHeading } from "../model/nose.ts";
 import { direction } from "../model/shipPhysics.ts";
@@ -71,6 +72,7 @@ function setup(quantum = true) {
     controls: { overlay: { inert: false }, reset: vi.fn(), sample, setEnabled: vi.fn() },
     draw: vi.fn(),
     emergencyReturn: new EmergencyReturn(),
+    entryCurrent: () => true,
     feedback: { advance: vi.fn() },
     feedbackSound: { play: vi.fn() },
     flightClock: 0,
@@ -104,6 +106,7 @@ function setup(quantum = true) {
     observeFeedback: vi.fn(),
     refreshScene: vi.fn(),
     renderConversation: vi.fn(),
+    requiredReady,
     returnedOnDepletion,
     sceneFit,
     screenToWorld: (v: unknown) => v,

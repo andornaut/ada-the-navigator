@@ -11,6 +11,7 @@ import { BUILT, ROUTE } from "../data/galaxies.ts";
 import { galaxyCard } from "../data/storybook.ts";
 import { coarsePointer } from "../input/coarsePointer.ts";
 import { createControls } from "../input/controls.ts";
+import { requiredLoading, requiredReady } from "../loading/required.ts";
 import { grantAllWeapons } from "../model/cheats.ts";
 import type { ExchangePreview, ExchangeQuote } from "../model/exchange.ts";
 import { GameModel } from "../model/game.ts";
@@ -139,6 +140,9 @@ export type UiContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
     | "edgeMarkerInk"
     | "emergencyReturn"
     | "enabled"
+    | "entryCurrent"
+    | "registerEntryCleanup"
+    | "disposeEntryResources"
     | "enemyArt"
     | "enemyJets"
     | "enemyWeaponsArt"
@@ -226,6 +230,18 @@ export type UiContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
   >;
 
 export function buildScene(scene: UiContext): void {
+  const partial: (() => void)[] = [];
+  let disposedPartial = false;
+  const disposePartial = () => {
+    if (disposedPartial) {
+      return;
+    }
+    disposedPartial = true;
+    for (const dispose of [...partial].reverse()) {
+      dispose();
+    }
+  };
+  const stopPartial = scene.registerEntryCleanup?.(disposePartial);
   const saved = scene.initialSave;
   const newer = saved.status === "newer";
   scene.savingUnavailable = newer || saved.status === "unavailable";
@@ -260,18 +276,18 @@ export function buildScene(scene: UiContext): void {
   };
   followZoom();
   scene.scale.on(Scale.Events.RESIZE, followZoom);
-  scene.events.once(Scenes.Events.SHUTDOWN, () => scene.scale.off(Scale.Events.RESIZE, followZoom));
+  partial.push(() => scene.scale.off(Scale.Events.RESIZE, followZoom));
   const host = document.getElementById(VIEW_HOST_ID);
   if (host) {
     const penny = createPennyMarkerLayer(document, host);
     pennyLayers.set(scene, penny);
-    scene.events.once(Scenes.Events.SHUTDOWN, () => {
+    partial.push(() => {
       penny.destroy();
       pennyLayers.delete(scene);
     });
     const layer = createBannerLayer(document, host, CONTENT.labels.disabledBanner ?? "");
     scene.bannerLayer = layer;
-    scene.events.once(Scenes.Events.SHUTDOWN, () => layer.destroy());
+    partial.push(() => layer.destroy());
   }
   scene.ink = scene.add.graphics();
   // Enemy jets draw behind enemy sprites; shots and feedback draw above both.
@@ -344,6 +360,9 @@ export function buildScene(scene: UiContext): void {
   scene.ship.setDisplaySize(ship?.displayWidth ?? 42, ship?.displayHeight ?? 42);
   scene.ship.setOrigin(ship?.pivot.x ?? 0.5, ship?.pivot.y ?? 0.5);
   const apply = (action: () => void): void => {
+    if (!scene.entryCurrent() || !requiredReady()) {
+      return;
+    }
     if (newer || scene.emergencyReturn.active) {
       return;
     }
@@ -407,6 +426,7 @@ export function buildScene(scene: UiContext): void {
     restart: () => scene.restartCard.open(),
     start: () => apply(() => scene.model.start()),
   });
+  partial.push(() => scene.shell.dispose());
   // The start screen's art: its field, wordmark, each paint's ship frame and the speed jets at
   // Engine level 1.
   const titleArt = readTitleScreen(
@@ -424,6 +444,9 @@ export function buildScene(scene: UiContext): void {
     scene.shipJets && engineJets(scene.shipJets, 1),
     scene.cache.json.get(TITLE_SCREEN_KEY),
   );
+  if (!titleArt || !scene.shipJets) {
+    throw new Error("Required first-screen art or normal jets are invalid");
+  }
   titleArts.set(scene, titleArt);
   scene.shell.setTitleArt(titleArt);
   scene.controls = createControls(scene, {
@@ -559,6 +582,7 @@ export function buildScene(scene: UiContext): void {
       },
     },
     rasterScale: scene.rasters.scale,
+    requiredReady,
     shieldLabel: CONTENT.labels.shield ?? "",
     update: {
       labels: {
@@ -583,6 +607,7 @@ export function buildScene(scene: UiContext): void {
       },
     },
   });
+  partial.push(() => scene.controls.dispose());
   const labels = CONTENT.labels;
   const label = (key: string): string => labels[key] ?? "";
   const amount = (value: number): string => fill(label("stardustAmount"), { amount: value });
@@ -611,10 +636,15 @@ export function buildScene(scene: UiContext): void {
     skip: finishConversation,
   });
   interactionCards.set(scene, interaction);
+  partial.push(() => {
+    interaction.dispose();
+    interactionCards.delete(scene);
+  });
   const unregisterInteraction = scene.controls.registerBack({
     back: interaction.back,
     isOpen: () => interaction.isOpen() && !scene.settingsOpen,
   });
+  partial.push(unregisterInteraction);
   scene.conversationBox = createConversationBox(
     () => {
       if (scene.emergencyReturn.active) {
@@ -639,6 +669,7 @@ export function buildScene(scene: UiContext): void {
       renderConversation(scene);
     },
   );
+  partial.push(() => scene.conversationBox.dispose());
   scene.station = createStationView(scene.controls.overlay, {
     acceptJob: (id) => {
       let accepted = false;
@@ -771,6 +802,7 @@ export function buildScene(scene: UiContext): void {
     services: () => scene.model.stationServices,
     undock: () => apply(() => scene.model.undock()),
   });
+  partial.push(() => scene.station.dispose());
   // Back and Escape leave the shop for the station card, and the card undocks. Settings
   // opened over either closes first, as the innermost card.
   const { card, inner } = scene.station.layers;
@@ -781,6 +813,7 @@ export function buildScene(scene: UiContext): void {
     }),
   );
   const unregisterStation = () => stationLayers.forEach((unregister) => unregister());
+  partial.push(unregisterStation);
   // Art's quantum jump, played over every layer.
   const artManifest = scene.cache.json.get("art-manifest") as
     { assets?: (Asset & { frames?: Record<string, number> })[] } | undefined;
@@ -809,6 +842,7 @@ export function buildScene(scene: UiContext): void {
     jumpData && field && glow && star && tunnel
       ? createJumpOverlay(scene.controls.overlay, { field, glow, jump: jumpData, star, tunnel })
       : null;
+  partial.push(() => scene.quantum?.dispose());
   // The home half: storybook pages, galaxy selection and Restart's confirm.
   scene.storybook = createStorybook(scene.controls.overlay, {
     labels: { next: label("next"), previous: label("previous"), skip: label("skip") },
@@ -818,6 +852,7 @@ export function buildScene(scene: UiContext): void {
     onSkip: () => apply(() => scene.model.storySkip()),
     reducedMotion: () => scene.controls.reducedMotion(),
   });
+  partial.push(() => scene.storybook.dispose());
   scene.galaxies = createGalaxyMap(scene.controls.overlay, {
     labels: {
       back: label("questBack"),
@@ -862,6 +897,7 @@ export function buildScene(scene: UiContext): void {
     onView: (position) => apply(() => scene.model.viewGalaxy(position)),
     reducedMotion: () => scene.controls.reducedMotion(),
   });
+  partial.push(() => scene.galaxies.dispose());
   // The route map's art: the sky, ground and figures, the marker hues and Ada's frames.
   const routeAssets = manifest?.assets ?? [];
   const markers = readRouteMarkers(scene.cache.json.get("galaxy-fields"));
@@ -912,6 +948,7 @@ export function buildScene(scene: UiContext): void {
     },
     onRestart: () => apply(() => scene.model.restart()),
   });
+  partial.push(() => scene.restartCard.dispose());
   const homeLayers = [
     // Back on a storybook page acts as Previous, and does nothing on a scene's first page. On
     // Ada's room page, back and Escape open the Paused card instead.
@@ -933,6 +970,7 @@ export function buildScene(scene: UiContext): void {
       isOpen: () => scene.restartCard.isOpen() && !scene.settingsOpen,
     }),
   ];
+  partial.push(() => homeLayers.forEach((unregister) => unregister()));
   const hide = (): void => {
     scene.controls.reset();
     flushScene(scene);
@@ -954,33 +992,33 @@ export function buildScene(scene: UiContext): void {
   window.addEventListener("keydown", scene.feedbackSound.unlock);
   document.addEventListener("visibilitychange", hide);
   window.addEventListener("pagehide", hide);
-  scene.events.once(Scenes.Events.SHUTDOWN, () => {
+  let disposedUi = false;
+  const disposeUi = () => {
+    if (disposedUi) {
+      return;
+    }
+    disposedUi = true;
+    scene.events.off(Scenes.Events.SHUTDOWN, disposeUi);
+    scene.events.off(Scenes.Events.DESTROY, disposeUi);
     flushScene(scene);
     document.removeEventListener("visibilitychange", hide);
     window.removeEventListener("pagehide", hide);
     window.removeEventListener("pointerdown", scene.feedbackSound.unlock);
     window.removeEventListener("keydown", scene.feedbackSound.unlock);
     scene.feedbackSound.dispose();
-    unregisterStation();
-    homeLayers.forEach((unregister) => unregister());
-    scene.storybook.dispose();
-    scene.quantum?.dispose();
-    scene.galaxies.dispose();
-    scene.restartCard.dispose();
-    scene.station.dispose();
     unregisterReturn();
     for (const type of ["keydown", "pointerdown", "click"]) {
       window.removeEventListener(type, blockReturnInput, true);
     }
     scene.emergencyReturn.cancel();
     scene.controls.overlay.inert = false;
-    scene.conversationBox.dispose();
-    unregisterInteraction();
-    interaction.dispose();
-    interactionCards.delete(scene);
-    scene.controls.dispose();
-    scene.shell.dispose();
-  });
+    disposePartial();
+  };
+  scene.disposeEntryResources = disposeUi;
+  scene.events.once(Scenes.Events.SHUTDOWN, disposeUi);
+  scene.events.once(Scenes.Events.DESTROY, disposeUi);
+  stopPartial?.();
+  scene.registerEntryCleanup?.(disposeUi);
   observeFeedback(scene);
   scene.shell.setSavingAvailable(!scene.savingUnavailable);
   if (newer) {
@@ -1279,7 +1317,20 @@ export function armBack(scene: UiContext): void {
 }
 
 export async function flushScene(scene: UiContext): Promise<void> {
+  if (!requiredReady() || !scene.entryCurrent()) {
+    return;
+  }
+  const admitted = scene.entryCurrent;
+  const generation = requiredLoading.state.attempt;
   const result = await saves.save(scene.model.saveDocument());
+  if (
+    !admitted() ||
+    !requiredReady() ||
+    generation !== requiredLoading.state.attempt ||
+    !scene.sys.isActive()
+  ) {
+    return;
+  }
   const available = result.status === "saved";
   scene.shell.setSavingAvailable(available);
   scene.savingUnavailable = !available;

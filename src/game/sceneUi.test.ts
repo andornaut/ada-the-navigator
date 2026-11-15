@@ -685,8 +685,18 @@ describe("canonical save caller", () => {
       .fn()
       .mockResolvedValueOnce({ reason: "quota", status: "unavailable" })
       .mockResolvedValueOnce({ status: "saved" });
-    const scene = { model: held, savingUnavailable: false, shell: { setSavingAvailable: vi.fn() } };
-    const context = createContext({ saves: { save } });
+    const scene = {
+      entryCurrent: () => true,
+      model: held,
+      savingUnavailable: false,
+      shell: { setSavingAvailable: vi.fn() },
+      sys: { isActive: () => true },
+    };
+    const context = createContext({
+      requiredLoading: { state: { attempt: 1 } },
+      requiredReady: () => true,
+      saves: { save },
+    });
     const flush = runInContext(callback("flushScene"), context) as (
       value: typeof scene,
     ) => Promise<void>;
@@ -704,12 +714,17 @@ describe("canonical save caller", () => {
     "blocks all model action dispatch for a newer-save placeholder=%s",
     (newer) => {
       const action = vi.fn();
-      const scene = { controls: { reset: vi.fn() }, emergencyReturn: { active: false } };
+      const scene = {
+        controls: { reset: vi.fn() },
+        emergencyReturn: { active: false },
+        entryCurrent: () => true,
+      };
       const context = createContext({
         flushScene: vi.fn(),
         newer,
         observeFeedback: vi.fn(),
         refreshScene: vi.fn(),
+        requiredReady: () => true,
         scene,
       });
       const apply = runInContext(callback("apply"), context) as (operation: () => void) => void;
@@ -803,3 +818,171 @@ describe("aboard quest routing identity", () => {
     expect(read()).not.toHaveProperty("questId");
   });
 });
+
+describe("required entry save admission", () => {
+  it("blocks unready save admission and ignores an admitted stale completion", async () => {
+    let ready = false,
+      current = true,
+      finish!: (value: unknown) => void;
+    const requiredLoading = { state: { attempt: 1 } };
+    const save = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const snapshot = { mode: "home" };
+    const scene = {
+      entryCurrent: () => current,
+      model: { saveDocument: () => snapshot },
+      savingUnavailable: false,
+      shell: { setSavingAvailable: vi.fn() },
+      sys: { isActive: () => true },
+    };
+    const flush = runInContext(
+      callback("flushScene"),
+      createContext({ requiredLoading, requiredReady: () => ready, saves: { save } }),
+    ) as (value: typeof scene) => Promise<void>;
+    await flush(scene);
+    expect(save).not.toHaveBeenCalled();
+    ready = true;
+    const pending = flush(scene);
+    expect(save).toHaveBeenCalledExactlyOnceWith(snapshot);
+    current = false;
+    requiredLoading.state.attempt++;
+    finish({ status: "saved" });
+    await pending;
+    expect(scene.shell.setSavingAvailable).not.toHaveBeenCalled();
+    expect(scene.savingUnavailable).toBe(false);
+    await flush(scene);
+    expect(save).toHaveBeenCalledOnce();
+  });
+  it("uses the same readiness and ownership admission for model-changing UI actions", () => {
+    let ready = false,
+      current = true;
+    const action = vi.fn();
+    const scene = {
+      controls: { reset: vi.fn() },
+      emergencyReturn: { active: false },
+      entryCurrent: () => current,
+    };
+    const apply = runInContext(
+      callback("apply"),
+      createContext({
+        flushScene: vi.fn(),
+        newer: false,
+        observeFeedback: vi.fn(),
+        refreshScene: vi.fn(),
+        requiredReady: () => ready,
+        scene,
+      }),
+    ) as (action: () => void) => void;
+    apply(action);
+    ready = true;
+    current = false;
+    apply(action);
+    expect(action).not.toHaveBeenCalled();
+    current = true;
+    apply(action);
+    expect(action).toHaveBeenCalledOnce();
+  });
+});
+
+it.each(["shutdown", "destroy", "cancel"])(
+  "disposes the actual scene UI wiring once on %s and subsequent retirement",
+  async (first) => {
+    const { EventEmitter } = await import("node:events");
+    const events = new EventEmitter(),
+      document = new EventTarget(),
+      window = new EventTarget();
+    // Normalize DOM capture options for Node's EventTarget removal implementation.
+    const remove = window.removeEventListener.bind(window);
+    window.removeEventListener = (type, callback, options) =>
+      remove(type, callback, typeof options === "boolean" ? { capture: options } : options);
+    const partial = [vi.fn(), vi.fn()],
+      disposePartial = vi.fn(() => partial.forEach((stop) => stop()));
+    const scene = {
+      controls: { overlay: { inert: true } },
+      disposeEntryResources: undefined as (() => void) | undefined,
+      emergencyReturn: { cancel: vi.fn() },
+      events,
+      feedbackSound: { dispose: vi.fn(), unlock: vi.fn() },
+      registerEntryCleanup: vi.fn<(cleanup: () => void) => () => void>(() => () => {}),
+    };
+    const hide = vi.fn(),
+      blockReturnInput = vi.fn(),
+      unregisterReturn = vi.fn(),
+      stopPartial = vi.fn(),
+      flushScene = vi.fn();
+    for (const type of ["visibilitychange"]) {
+      document.addEventListener(type, hide);
+    }
+    window.addEventListener("pagehide", hide);
+    window.addEventListener("pointerdown", scene.feedbackSound.unlock);
+    window.addEventListener("keydown", scene.feedbackSound.unlock);
+    for (const type of ["keydown", "pointerdown", "click"]) {
+      window.addEventListener(type, blockReturnInput, true);
+    }
+    const build = source.statements.find(
+      (node) => ts.isFunctionDeclaration(node) && node.name?.text === "buildScene",
+    ) as ts.FunctionDeclaration;
+    const statements = [...build.body!.statements],
+      start = statements.findIndex(
+        (node) =>
+          ts.isVariableStatement(node) &&
+          node.declarationList.declarations.some(
+            (decl) => decl.name.getText(source) === "disposedUi",
+          ),
+      ),
+      end = statements.findIndex(
+        (node, index) =>
+          index > start &&
+          ts.isExpressionStatement(node) &&
+          ts.isCallExpression(node.expression) &&
+          node.expression.expression.getText(source) === "observeFeedback",
+      );
+    expect(start).toBeGreaterThan(0);
+    expect(end).toBeGreaterThan(start);
+    const code = ts.transpileModule(
+      statements
+        .slice(start, end)
+        .map((node) => node.getText(source))
+        .join("\n"),
+      { compilerOptions: { target: ts.ScriptTarget.ES2023 } },
+    ).outputText;
+    runInContext(
+      code,
+      createContext({
+        Scenes: { Events: { DESTROY: "destroy", SHUTDOWN: "shutdown" } },
+        blockReturnInput,
+        disposePartial,
+        document,
+        flushScene,
+        hide,
+        scene,
+        stopPartial,
+        unregisterReturn,
+        window,
+      }),
+    );
+    if (first === "cancel") {
+      scene.registerEntryCleanup.mock.calls[0]![0]();
+    } else {
+      events.emit(first);
+    }
+    events.emit("shutdown");
+    events.emit("destroy");
+    scene.disposeEntryResources!();
+    document.dispatchEvent(new Event("visibilitychange"));
+    window.dispatchEvent(new Event("pagehide"));
+    window.dispatchEvent(new Event("keydown"));
+    expect(disposePartial).toHaveBeenCalledOnce();
+    partial.forEach((dispose) => expect(dispose).toHaveBeenCalledOnce());
+    expect(scene.feedbackSound.dispose).toHaveBeenCalledOnce();
+    expect(hide).not.toHaveBeenCalled();
+    expect(blockReturnInput).not.toHaveBeenCalled();
+    expect(flushScene).toHaveBeenCalledOnce();
+    expect(stopPartial).toHaveBeenCalledOnce();
+    expect(unregisterReturn).toHaveBeenCalledOnce();
+  },
+);
