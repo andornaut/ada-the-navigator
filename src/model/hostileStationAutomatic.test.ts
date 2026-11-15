@@ -6,15 +6,18 @@ import { BUILT, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { relaunch } from "../testing/launch.ts";
 import { settlementsNear } from "./andromedaPlaces.ts";
-import { createUnpopulatedFlight, populateFlight } from "./flight.ts";
+import { createUnpopulatedFlight, populateFlight, spawnPlannedHostileStation } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { freshGalaxyGeography } from "./galaxyGeography.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval } from "./geography.ts";
+import { hostileStationEncounterIds } from "./hostileStationPersistence.ts";
 import { materializeGeneratedHostileStations } from "./hostileStationRuntime.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
+import { planHostileStationFormation } from "./hostileStationSchedule.ts";
 import { hostileStationSites } from "./hostileStationSites.ts";
 import { flightStationContext, worldStationsNear } from "./stations.ts";
+import type { FlightState } from "./types.ts";
 
 const originallyBuilt = BUILT.has(5);
 afterEach(() => {
@@ -33,6 +36,7 @@ function atCandidate() {
   const flight = model.state.flight!;
   const context = flightWorldContext(flight);
   const protection = ECONOMY.station.safeRadius + CONTENT.tuning.safeRadius;
+  const before = structuredClone(model.state);
   const site = hostileStationSites(
     { ...context, galaxy: 5, geographySeed: flight.seed },
     {
@@ -41,11 +45,27 @@ function atCandidate() {
       x: -100000,
       y: -100000,
     },
-  ).find(
-    (candidate) =>
-      !worldStationsNear(flightStationContext(flight), ECONOMY, 5, protection, candidate).length &&
-      !settlementsNear(ECONOMY, protection, candidate).length,
-  )!;
+  ).find((candidate) => {
+    if (
+      worldStationsNear(flightStationContext(flight), ECONOMY, 5, protection, candidate).length ||
+      settlementsNear(ECONOMY, protection, candidate).length
+    ) {
+      return false;
+    }
+    // Query this finite world's candidates without removing required actors or pickups.
+    const probe = structuredClone(flight);
+    probe.player = { x: candidate.x, y: candidate.y + CONTENT.tuning.chunkSize };
+    probe.velocity = { x: 0, y: 0 };
+    populateFlight(CONTENT, model.state.progress[5], probe);
+    clearOptional(probe);
+    const plan = planHostileStationFormation(
+      { ...context, galaxy: 5 },
+      hostileStationEncounterIds(candidate.id),
+      candidate,
+    );
+    return plan !== null && spawnPlannedHostileStation(CONTENT, probe, plan).status === "created";
+  })!;
+  expect(model.state).toEqual(before);
   expect(site).toBeDefined();
   flight.player = { x: site.x, y: site.y + CONTENT.tuning.chunkSize };
   flight.velocity = { x: 0, y: 0 };
@@ -53,8 +73,7 @@ function atCandidate() {
 }
 
 /** Isolate admission in a cleared encounter area, preserving all required and registered actors. */
-function clearOptional(model: GameModel): void {
-  const flight = model.state.flight!;
+function clearOptional(flight: FlightState): void {
   const ids = new Set(
     stationPopulationObjects(flight)
       .filter(
@@ -79,7 +98,7 @@ it("queries generated cells, retains encounters on Continue and credits a real h
     identified: false,
     point: { x: site.x, y: site.y },
   });
-  clearOptional(model);
+  clearOptional(flight);
   model.step(0.001, idle);
   const body = stationPopulationObjects(flight).find(({ id }) => id === site.id)!;
   expect(body?.enemy?.archetype).toBe("hostileStation");
