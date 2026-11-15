@@ -33,6 +33,7 @@ import {
   type StationMenuSchema,
   stationMenuTree,
 } from "./stationMenuTree.ts";
+import { type StationPagerSchema, stationPagerTree } from "./stationPagerTree.ts";
 import { applyButtonSkin } from "./uiSkin.ts";
 
 // The station card, the shop, the job board and their confirms (art/shop.md,
@@ -458,23 +459,65 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   jobList.className = "ada-job-list";
   jobsCard.body.append(jobsBalance, jobsIntro, jobsBusy, jobList);
 
-  const makePager = () => {
+  const pagerLayouts: ReturnType<typeof mountLayout<StationPagerSchema>>[] = [];
+  const makePager = (host: HTMLElement) => {
     const node = document.createElement("div");
     node.className = "ada-station-pager";
-    const previous = createButton(CONTENT.labels.previous ?? "");
-    previous.classList.add("ada-station-previous");
-    const count = document.createElement("p");
-    count.setAttribute("role", "status");
-    count.setAttribute("aria-live", "polite");
-    const next = createButton(CONTENT.labels.next ?? "");
-    next.classList.add("ada-station-next");
-    node.append(previous, count, next);
+    let previous!: HTMLButtonElement;
+    let next!: HTMLButtonElement;
+    let count!: HTMLParagraphElement;
+    pagerLayouts.push(
+      mountLayout<StationPagerSchema>(
+        {
+          components: {
+            button: {
+              create(initial) {
+                const button = createButton(initial.label);
+                button.classList.add(`ada-station-${initial.direction}`);
+                if (initial.direction === "previous") {
+                  previous = button;
+                } else {
+                  next = button;
+                }
+                return {
+                  dispose() {},
+                  element: button,
+                  slots: {},
+                  update(data) {
+                    button.textContent = data.label;
+                  },
+                };
+              },
+              slots: [],
+            },
+            count: {
+              create() {
+                count = document.createElement("p");
+                count.setAttribute("role", "status");
+                count.setAttribute("aria-live", "polite");
+                return { dispose() {}, element: count, slots: {}, update() {} };
+              },
+              slots: [],
+            },
+            pager: {
+              create() {
+                return { dispose() {}, element: node, slots: { controls: node }, update() {} };
+              },
+              slots: ["controls"],
+            },
+          },
+          host,
+        },
+        stationPagerTree({
+          next: CONTENT.labels.next ?? "",
+          previous: CONTENT.labels.previous ?? "",
+        }),
+      ),
+    );
     return { count, next, node, pages: 1, previous };
   };
-  const shopPager = makePager();
-  const jobsPager = makePager();
-  shopCard.body.append(shopPager.node);
-  jobsCard.body.append(jobsPager.node);
+  const shopPager = makePager(shopCard.body);
+  const jobsPager = makePager(jobsCard.body);
   let shopPage = 0;
   let jobsPage = 0;
 
@@ -1215,6 +1258,9 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       window.removeEventListener(VIEW_SCALE_EVENT, refit);
       exchange?.dispose();
       menuLayout.dispose();
+      for (const pagerLayout of pagerLayouts) {
+        pagerLayout.dispose();
+      }
       stationCard.dispose();
       shopCard.dispose();
       jobsCard.dispose();
