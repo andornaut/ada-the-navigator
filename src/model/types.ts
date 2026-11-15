@@ -131,7 +131,14 @@ export interface PersistentWorldState {
   version: 1;
   notables: Record<string, SpaceObject | null>;
 }
+/** Hidden required actors have one owner until their complete plan is materialized. */
+export interface RequiredEncounterPlan {
+  site: SpaceObject;
+  leader: SpaceObject;
+  support: SpaceObject[];
+}
 export interface FlightState {
+  requiredPlans?: Record<string, RequiredEncounterPlan>;
   topology?: FlightTopology;
   needle?: NeedleFlight;
   phantom?: PhantomFlight;
@@ -205,6 +212,8 @@ export interface GalaxyGeography {
 }
 
 export interface GalaxyProgress {
+  /** Canonical required-site points; planning alone grants no discovery or marker knowledge. */
+  requiredSites?: Record<string, Vec>;
   markerKnowledge?: TargetKnowledgeRecord;
   /** Persistent geography; null seed explicitly records unavailable legacy history. */
   geography?: GalaxyGeography;

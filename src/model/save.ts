@@ -29,6 +29,7 @@ import { validExplored } from "./map.ts";
 import { markerObjectTracked, validMarkerActors, validTargetKnowledge } from "./markerKnowledge.ts";
 import { readNeedleChapterProgress, validNeedleFlight } from "./needleRuntime.ts";
 import { validPhantomFlight, validPhantomProgress } from "./phantom.ts";
+import { requiredPlanConsistent } from "./requiredEncounterPlans.ts";
 import { namesStation, stationById } from "./stations.ts";
 import { currentPage } from "./storybook.ts";
 import { readStoryCursor } from "./storyCursor.ts";
@@ -39,6 +40,7 @@ import type {
   FlightState,
   GameState,
   PersistentWorldState,
+  RequiredEncounterPlan,
   SpaceObject,
   UpgradeLevels,
 } from "./types.ts";
@@ -655,6 +657,13 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
       if (
         !record(p) ||
         (p.geography !== undefined && !validGalaxyGeography(p.geography)) ||
+        (p.requiredSites !== undefined &&
+          !(
+            record(p.requiredSites) &&
+            Object.entries(p.requiredSites).every(
+              ([siteId, point]) => destinationIds[id]?.includes(siteId) && vector(point),
+            )
+          )) ||
         (p.markerKnowledge !== undefined && !validTargetKnowledge(p.markerKnowledge)) ||
         (p.andromeda !== undefined && (id !== 5 || !validAndromedaProgress(p.andromeda))) ||
         (p.needle !== undefined && (id !== 4 || !readNeedleChapterProgress(p.needle))) ||
@@ -859,6 +868,60 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
         )
       ) {
         return null;
+      }
+      if (f.requiredPlans !== undefined) {
+        if (!record(f.requiredPlans)) {
+          return null;
+        }
+        const progress = value.progress[value.selectedGalaxy as GalaxyNumber];
+        const sites =
+          record(progress) && record(progress.requiredSites) ? progress.requiredSites : {};
+        const owned = new Set([
+          ...f.objects.map((object) => object.id),
+          ...Object.keys((f.world as PersistentWorldState).notables),
+        ]);
+        for (const [id, rawPlan] of Object.entries(f.requiredPlans)) {
+          if (
+            !routes.includes(id) ||
+            !record(rawPlan) ||
+            Object.keys(rawPlan).length !== 3 ||
+            !spaceObject(value.selectedGalaxy as GalaxyNumber, routes, rawPlan.site) ||
+            !spaceObject(value.selectedGalaxy as GalaxyNumber, routes, rawPlan.leader) ||
+            !Array.isArray(rawPlan.support) ||
+            !rawPlan.support.every((actor) =>
+              spaceObject(value.selectedGalaxy as GalaxyNumber, routes, actor),
+            )
+          ) {
+            return null;
+          }
+          const plan = rawPlan as unknown as RequiredEncounterPlan;
+          const point = sites[id];
+          if (
+            plan.site.id !== id ||
+            (record(f.combat) &&
+              Array.isArray(f.combat.routeEncounters) &&
+              f.combat.routeEncounters.includes(id)) ||
+            !requiredPlanConsistent(plan) ||
+            !record(point) ||
+            plan.site.x !== point.x ||
+            plan.site.y !== point.y
+          ) {
+            return null;
+          }
+          for (const actor of [plan.site, plan.leader, ...plan.support]) {
+            if (owned.has(actor.id)) {
+              return null;
+            }
+            owned.add(actor.id);
+            if (
+              record(f.markerActors) &&
+              record(f.markerActors.knowledge) &&
+              Object.hasOwn(f.markerActors.knowledge, actor.id)
+            ) {
+              return null;
+            }
+          }
+        }
       }
       if (f.combat !== undefined && !unloadedPackState(f.objects, f.world, f.combat)) {
         return null;
