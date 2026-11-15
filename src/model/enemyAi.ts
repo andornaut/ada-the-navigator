@@ -12,7 +12,7 @@ import {
 } from "../data/enemyCatalog.ts";
 import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
 import { MUZZLE_ART, muzzleArtForDefinition, muzzleLayout } from "../data/enemyMuzzles.ts";
-import { ENEMY_STRAFE } from "../data/enemyNavigation.ts";
+import { ENEMY_STEERING, ENEMY_STRAFE } from "../data/enemyNavigation.ts";
 import { SHARED_SHIP_PHYSICS } from "../data/shipPhysics.ts";
 import type { WeaponLevel } from "../data/types.ts";
 import type { NavigationQuery } from "./ai/navigationQuery.ts";
@@ -697,7 +697,9 @@ function steering(
       return hold();
     case "swarm": {
       // Sinusoidal phase makes the hold erratic without query-dependent RNG.
-      const wobble = Math.sin(state.age * 3 + state.phase) * definition.steering.wobble;
+      const wobble =
+        Math.sin(state.age * ENEMY_STEERING.swarmWobbleRadiansPerSecond + state.phase) *
+        definition.steering.wobble;
       const held = band ? holdBand(band, aim, distance, side) : aim;
       return unit({
         x: held.x - held.y * wobble + push.x,
@@ -723,7 +725,11 @@ function steering(
         const gap = magnitude(miss);
         const away = gap > 1e-9 ? { x: -miss.x / gap, y: -miss.y / gap } : { x: -aim.x, y: -aim.y };
         const margin = floor * ENEMY_STRAFE.floorMargin;
-        const bend = Math.max(0, Math.min(1, (margin - gap) / (margin - floor * 0.8))) * 2;
+        const bend =
+          Math.max(
+            0,
+            Math.min(1, (margin - gap) / (margin - floor * ENEMY_STRAFE.floorBlendShare)),
+          ) * ENEMY_STRAFE.bendGain;
         return unit({ x: course.x + away.x * bend, y: course.y + away.y * bend });
       }
       // The approach aims beside Ada, so the pass goes by rather than at her.
