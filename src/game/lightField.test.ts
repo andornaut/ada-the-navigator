@@ -92,7 +92,7 @@ describe("light-field rule", () => {
     });
   });
 
-  it("keylines destinations 2 px wide and every other keylined kind 1 px", () => {
+  it("keylines destinations 2 px, Ada 0.5 px and other keylined kinds 1 px", () => {
     expect(LIGHT_FIELD.destinationKeyline).toEqual({
       kinds: ["station", "outpost", "storyPlace"],
       width: 2,
@@ -100,7 +100,8 @@ describe("light-field rule", () => {
     expect(
       ["station", "outpost", "storyPlace"].map((kind) => keylineWidth(LIGHT_FIELD, kind)),
     ).toEqual([2, 2, 2]);
-    expect(keylineWidth(LIGHT_FIELD, "ship")).toBe(1);
+    expect(keylineWidth(LIGHT_FIELD, "ship")).toBe(0.5);
+    expect(keylineWidth({ ...LIGHT_FIELD, keyline: 2 }, "ship")).toBe(1);
     expect(keylineWidth(LIGHT_FIELD, "discoveryCache")).toBe(1);
     expect(keylineOffsets(2).every(({ x, y }) => Math.max(Math.abs(x), Math.abs(y)) === 2)).toBe(
       true,

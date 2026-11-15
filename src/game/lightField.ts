@@ -124,8 +124,11 @@ export function alphaTopRow(
   return height;
 }
 
-/** The keyline width a keylined kind takes on a light field: wider for destinations. */
+/** Destinations use their wider outline; Ada uses half the ordinary silhouette growth. */
 export function keylineWidth(rule: LightField, kind: string): number {
+  if (kind === "ship") {
+    return rule.keyline / 2;
+  }
   return rule.destinationKeyline.kinds.includes(kind)
     ? rule.destinationKeyline.width
     : rule.keyline;
