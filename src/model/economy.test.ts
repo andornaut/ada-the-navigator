@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import GALAXIES_FILE from "../../public/art/galaxies.json" with { type: "json" };
 import { ASTEROID_LOOT } from "../data/asteroidLoot.ts";
@@ -24,7 +24,8 @@ import { byPosition } from "../data/galaxies.ts";
 import { RESOURCE_ROCKS } from "../data/resourceRocks.ts";
 import { SCREEN } from "../data/screen.ts";
 import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
-import { rollAsteroidLoot } from "./asteroidLoot.ts";
+import * as asteroidLoot from "./asteroidLoot.ts";
+import { oreQuantityScale, rollAsteroidLoot } from "./asteroidLoot.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { planChunk } from "./chunkTemplates.ts";
 import { type Parts, toScreen, worldParts } from "./convex.ts";
@@ -211,14 +212,53 @@ describe("guaranteed destruction loot", () => {
   it.each(["rock", "resource"] as const)(
     "groups rolled ore into five-unit chunks and single remainders from a %s and collects once after save/resume",
     (kind) => {
-      for (const ore of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
-        const value = flight();
-        const id = Array.from({ length: 2000 }, (_, index) => `ore-group:${index}`).find(
-          (id) => rollAsteroidLoot(ASTEROID_LOOT, "huge", dropRandom(value.seed, id)).ore === ore,
-        )!;
-        expect(id).toBeDefined();
+      const { minimum, weights } = ASTEROID_LOOT.totals.huge;
+      const cap = minimum + weights.length - 1;
+      const scale = oreQuantityScale(ASTEROID_LOOT, "huge");
+      const support = new Set<number>();
+      for (const [index, weight] of weights.entries()) {
+        if (weight === 0) {
+          continue;
+        }
+        const rawTotal = minimum + index;
+        for (let rawOre = 0; rawOre <= rawTotal; rawOre++) {
+          const protectedOne = rawOre === 1 && rawTotal === 1 && minimum === 1;
+          const quantity = protectedOne ? 1 : scale * rawOre;
+          support.add(Math.floor(quantity));
+          support.add(Math.ceil(quantity));
+        }
+      }
+      const seed = flight().seed;
+      const candidates = new Map<number, { id: string; loot: asteroidLoot.AsteroidLoot }>();
+      for (let index = 0; index < 2000 && candidates.size < support.size; index++) {
+        const id = `ore-group:${index}`;
+        const loot = rollAsteroidLoot(ASTEROID_LOOT, "huge", dropRandom(seed, id));
+        if (!candidates.has(loot.ore)) {
+          candidates.set(loot.ore, { id, loot });
+        }
+      }
+      expect([...candidates.keys()].sort((a, b) => a - b)).toEqual(
+        [...support].sort((a, b) => a - b),
+      );
+      const cases = [...support]
+        .sort((a, b) => a - b)
+        .map((ore) => ({
+          ...candidates.get(ore)!,
+          ore,
+          packingOnly: false,
+        }));
+      if (!support.has(cap)) {
+        // Exercise multiple bundles through the real packing path without claiming a reachable roll.
+        cases.push({
+          id: "packing-seam",
+          loot: { ore: cap, stardust: 0 },
+          ore: cap,
+          packingOnly: true,
+        });
+      }
+      for (const { id, loot, ore, packingOnly } of cases) {
+        const value = flight(seed);
         const shape = [...ASTEROID_SHAPES.values()].find((entry) => entry.size === "huge")!;
-        const loot = rollAsteroidLoot(ASTEROID_LOOT, "huge", dropRandom(value.seed, id));
         const target: SpaceObject = {
           asteroid: shape.id,
           hp: 1,
@@ -230,7 +270,17 @@ describe("guaranteed destruction loot", () => {
         };
         value.objects.push(target);
         value.shots.push(killShot(target), killShot(target));
-        stepFlight(CONTENT, 1 / 60, idle, value);
+        if (packingOnly) {
+          const stub = vi.spyOn(asteroidLoot, "rollAsteroidLoot").mockReturnValueOnce(loot);
+          try {
+            stepFlight(CONTENT, 1 / 60, idle, value);
+            expect(stub).toHaveBeenCalledTimes(1);
+          } finally {
+            stub.mockRestore();
+          }
+        } else {
+          stepFlight(CONTENT, 1 / 60, idle, value);
+        }
         const pieces = value.objects.filter((object) => object.role === "cargo");
         expect(pieces).toHaveLength(Math.floor(ore / 5) + (ore % 5));
         expect(pieces.map((piece) => piece.amount)).toEqual([
