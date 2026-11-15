@@ -23,6 +23,7 @@ import {
   STORY_BACKGROUND,
   STORY_PANEL,
   storyBackgroundTop,
+  storyHalfArtOffset,
   type SubjectBand,
 } from "./layout/storyPage.ts";
 import { SMALL_BUTTON_GAP, SPACING, TYPE } from "./layout/tokens.ts";
@@ -40,7 +41,7 @@ import {
   type TransitionStep,
   transitionStepsForBackgrounds,
 } from "./storyArt.ts";
-import { storyOverlayCrop } from "./storyCompositions.ts";
+import { createStoryOverlay } from "./storySceneView.ts";
 import type { TitleScreenArt } from "./titleScreen.ts";
 import { titleShipView } from "./titleShipView.ts";
 
@@ -275,6 +276,25 @@ export const STORYBOOK_STYLE = `
   pointer-events:none
 }
 
+.ada-controls .ada-story-art-window{
+  position:absolute;
+  inset:0;
+  overflow:hidden
+}
+.ada-controls .ada-story-half .ada-story-art-window{
+  bottom:50%
+}
+.ada-controls .ada-story-half .ada-story-background{
+  height:200%;
+  bottom:auto;
+  overflow:visible
+}
+.ada-controls .ada-story.ada-story-half .ada-story-panel{
+  top:50%;
+  bottom:0;
+  width:100%;
+  max-height:none
+}
 .ada-controls .ada-story-background{
   position:absolute;
   inset:0;
@@ -532,6 +552,8 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   const layer = document.createElement("div");
   layer.className = "ada-story";
   layer.hidden = true;
+  const artWindow = document.createElement("div");
+  artWindow.className = "ada-story-art-window";
   const background = document.createElement("div");
   background.className = "ada-story-background";
   const [base, incoming] = [0, 1].map(() => {
@@ -588,7 +610,8 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   controls.append(previous, next);
   column.append(choices, controls);
   panel.append(copy, column);
-  layer.append(background, panel, skip);
+  artWindow.append(background);
+  layer.append(artWindow, panel, skip);
   // The page goes first in the controls layer, so the HUD's settings button draws and presses
   // above it. Its style follows the shared card styles it refines (src/ui/stylesheet.ts).
   root.prepend(layer);
@@ -743,7 +766,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     };
   };
   const panelTop = (unit: number) =>
-    (panel.getBoundingClientRect().top - background.getBoundingClientRect().top) / unit;
+    (panel.getBoundingClientRect().top - layer.getBoundingClientRect().top) / unit;
   // The background a key is placed as: a composite's base, else itself.
   const anchorOf = (key: Background): Background => art.bases[key] ?? key;
   // Measures each page of the story run in the panel, keeping the highest panel top on each
@@ -782,23 +805,28 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   };
   const place = (node: HTMLDivElement, key: Background, anchored: boolean) => {
     node.style.top = placement(key, anchored);
+    if (node === base) {
+      const half = Boolean(rendered && !rendered.sleep);
+      const view = viewSize();
+      const offset =
+        half && !rendered?.aboard
+          ? storyHalfArtOffset(
+              view,
+              art.subjects[anchorOf(key)] ?? null,
+              bedroomTop(view, key) ??
+                storyBackgroundTop(
+                  view,
+                  anchored ? (art.subjects[anchorOf(key)] ?? null) : null,
+                  stripTops.get(anchorOf(key)) ?? null,
+                ),
+              bedroomTop(view, key) !== null,
+            )
+          : 0;
+      background.style.transform = offset === 0 ? "" : `translateY(${units(offset)})`;
+    }
   };
   const image = (url: string | undefined) => (url ? `url('${url}')` : "");
-  // An overlay element for overlay, placed on the canvas by its box.
-  const placeOverlay = (overlay: StoryOverlay, node = document.createElement("div")) => {
-    node.className = "ada-story-overlay";
-    node.dataset.overlay = overlay.id;
-    const { box } = overlay;
-    Object.assign(node.style, {
-      backgroundImage: image(overlay.url),
-      ...storyOverlayCrop(overlay.source),
-      height: `${box.height}%`,
-      left: `${box.left}%`,
-      top: `${box.top}%`,
-      width: `${box.width}%`,
-    });
-    return node;
-  };
+  const placeOverlay = createStoryOverlay;
   const overlayFor = (overlay: StoryOverlay): HTMLDivElement => {
     let node = overlays.get(overlay.id);
     if (!node) {
@@ -1006,7 +1034,9 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     exit: StoryOverlay | null = null,
   ) => {
     rendered = page;
+    layer.classList.toggle("ada-story-half", Boolean(page && !page.sleep));
     aboardShip.hidden = !page?.aboard;
+    aboardShip.style.height = page?.aboard && !page.sleep ? "50%" : "";
     aboardShip.replaceChildren(
       ...(page?.aboard ? titleShipView(page.aboard.art, page.aboard.paint) : []),
     );
@@ -1084,6 +1114,8 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     }
     panel.hidden = true;
     skip.hidden = true;
+    layer.classList.remove("ada-story-half");
+    background.style.transform = "";
     play(steps, () => render(page, backdrop, focusFirst, exit));
   };
   void loadStoryArt().then((loaded) => {

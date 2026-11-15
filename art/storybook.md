@@ -15,6 +15,43 @@
   has no added portrait. Story copy, speaker identities and props remain
   unchanged. Astra and the rock's glow retain their existing effects.
 - Output is deterministic: the same source writes byte-identical PNGs.
+- When the root manifest links `storyCompositions`, the legacy generator refuses
+  before writing PNGs or replacing story rows. Use the shared composition producer
+  for active story output; preserved authored PNG inputs remain outside public art.
+
+## Shared scene package
+
+`node art/tools/story-compositions.ts <candidate-directory>` builds the additive
+lossless WebP package from the authored PNG references. It does not activate the
+root manifest or remove reference images. The package contains eleven full bases
+across nine locations, a polished-rock patch, recorder and invitation four-state
+sheets, three shared glow patches, two garden-state patches and the sleep-glow
+overlay. The two existing galaxy-map character images remain unchanged: twenty
+new physical images and two reused images in total.
+
+`art/sources/story-reference.json` preserves the authored scene paths, subject
+bands and overlay positions independently of the activated runtime manifest.
+The producer reads preserved PNG inputs in `art/sources/story/`, falling back
+to their original public paths before cutover. Paired retirement moves those
+authored inputs out of `public/art/story/`; it does not discard their bytes.
+
+`story-compositions.json` uses version 1 and the existing 960 by 540 logical
+canvas at pixel ratio 2. Stable scene IDs select a physical base and ordered
+source-over layers. `atLogical` and subject bands use logical pixels; optional
+`sourceRect` values use bounded integer encoded pixels, with layer display size
+equal to half the selected rectangle. Base and layers share one camera and clip.
+Recorder and invitation cells have transparent padding and independent source
+rectangles. The producer checks exact native RGBA reconstruction of every
+resolved scene and preserves the original subject bands and aliases.
+
+The paired consumer retains every logical scene row in the root manifest and
+points its path to the physical base. It links the composition document through
+`storyCompositions`. The sleep overlay keeps its original logical position and
+dimensions. Transition IDs, fade timing, overnight steps, story copy, portraits
+and the galaxy-map exception remain unchanged. Reference PNG retirement and
+offline cache closure are paired with the consumer, not performed by this
+generator. Ordinary half-art placement is owned by the shared story component;
+this package does not alter its logical canvas or the bedroom/run camera math.
 
 ## Canvas
 

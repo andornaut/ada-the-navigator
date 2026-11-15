@@ -18,18 +18,29 @@ import {
   transitionStepsForBackgrounds,
 } from "./storyArt.ts";
 import { STORYBOOK_STYLE } from "./storybook.ts";
+import { readStoryCompositionAssets } from "./storyCompositions.ts";
 
 const publicFile = (path: string) => new URL(`../../public${path}`, import.meta.url);
 const manifest = JSON.parse(readFileSync(publicFile("/art/manifest.json"), "utf8")) as {
   assets: ArtAsset[];
+  storyCompositions?: string;
   storyTransition: string;
 };
 const transitionData: unknown = JSON.parse(
   readFileSync(publicFile(manifest.storyTransition), "utf8"),
 );
-const backgrounds = storyBackgrounds(manifest.assets);
-const transitions = readStoryTransitions(manifest.assets, transitionData);
-const asset = (id: string) => manifest.assets.find((entry) => entry.id === id);
+const assets = manifest.storyCompositions
+  ? readStoryCompositionAssets(
+      manifest.assets,
+      JSON.parse(readFileSync(publicFile(manifest.storyCompositions), "utf8")),
+    )
+  : manifest.assets;
+if (!assets) {
+  throw new Error("Invalid shipped story compositions");
+}
+const backgrounds = storyBackgrounds(assets);
+const transitions = readStoryTransitions(assets, transitionData);
+const asset = (id: string) => assets.find((entry) => entry.id === id);
 
 const LABELS = { continue: "Continue", pickUpRock: "Pick up the rock." };
 
@@ -98,13 +109,16 @@ describe("storybook art", () => {
     { aboard: "aboard", frames: "story-ada-room-recorder-glow", room: "adaRoomRecorder" },
   ] as const;
   // A composite shares its base's image, so a page on Dad's recorder room glows as the room does.
-  const bases = storyBases(manifest.assets);
+  const bases = storyBases(assets);
   const glows = (from: ArtBackground, to: ArtBackground) =>
     GLOWS.some(({ aboard, room }) => room === (bases[from] ?? from) && aboard === to);
 
   it("joins each glowing room to aboard with its rock glow frames", () => {
     for (const { aboard, frames, room } of GLOWS) {
-      const steps = transitionSteps(transitions, backgrounds[room], backgrounds[aboard], false);
+      const steps = transitionStepsForBackgrounds({ bases, transitions }, false, {
+        from: room,
+        to: aboard,
+      });
       expect(
         steps?.map(({ url }) => url),
         `${room} to ${aboard}`,
@@ -125,9 +139,9 @@ describe("storybook art", () => {
 
   it("replaces the glow frames with one cross-fade under reduced motion", () => {
     for (const { aboard, room } of GLOWS) {
-      expect(transitionSteps(transitions, backgrounds[room], backgrounds[aboard], true)).toEqual([
-        { fadeMs: 400, holdMs: 0, url: backgrounds[aboard] },
-      ]);
+      expect(
+        transitionStepsForBackgrounds({ bases, transitions }, true, { from: room, to: aboard }),
+      ).toEqual([{ fadeMs: 400, holdMs: 0, url: backgrounds[aboard] }]);
     }
   });
 
@@ -136,7 +150,7 @@ describe("storybook art", () => {
       for (const to of KEYS) {
         if (!glows(from, to)) {
           expect(
-            transitionSteps(transitions, backgrounds[from], backgrounds[to], false),
+            transitionStepsForBackgrounds({ bases, transitions }, false, { from, to }),
             `${from} to ${to}`,
           ).toBeNull();
         }

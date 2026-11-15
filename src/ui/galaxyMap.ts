@@ -32,6 +32,7 @@ import { createButton, FOCUS_STYLE, MODAL_LAYER } from "./modal.ts";
 import { refuse } from "./refusal.ts";
 import { drawShipJets } from "./shipJetCanvas.ts";
 import { createShipTailView } from "./shipTailView.ts";
+import { setStoryScenePreview, type StoryScenePreview } from "./storySceneView.ts";
 
 // The galaxy map (art/layout.md "Galaxy selector"), after Chibi's MapScene: the route sky and
 // ground, the chart's legs, markers, labels and Ada's ship, the panel for the chosen galaxy, Earth
@@ -83,6 +84,7 @@ export interface GalaxyMapView {
 /** The route sky, its ground and figures, and Ada's ship frames by heading. */
 export interface GalaxyMapArt {
   readonly homePreview?: string;
+  readonly homeScene?: StoryScenePreview;
   /** Current selected main material and fixed-length static travel geometry. */
   readonly jets?: () => ShipJets | undefined;
   readonly figures: readonly {
@@ -307,6 +309,8 @@ export const GALAXY_MAP_STYLE = `
   pointer-events:auto
 }
 .ada-controls .ada-route-panel .ada-galaxy-shot{
+  position:relative;
+  overflow:hidden;
   flex:none;
   box-sizing:content-box;
   width:${units(GALAXY_MAP_PANEL.capture.width)};
@@ -666,7 +670,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
       development.hidden = true;
       text.removeAttribute("data-locked");
       screen.setAttribute("aria-label", EARTH_PANEL.title);
-      shot.style.backgroundImage = art?.homePreview ? `url('${art.homePreview}')` : "none";
+      setStoryScenePreview(art?.homeScene, art?.homePreview, shot);
       jump.classList.remove("ada-unavailable");
       jump.removeAttribute("aria-disabled");
       return;
@@ -680,7 +684,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     flavor.textContent = galaxy.unlocked ? galaxy.flavor : labels.locked;
     development.hidden = !(galaxy.unlocked && galaxy.placeholder);
     const preview = galaxy.unlocked ? galaxy.preview.open : galaxy.preview.locked;
-    shot.style.backgroundImage = preview ? `url('${preview}')` : "none";
+    setStoryScenePreview(undefined, preview, shot);
     jump.classList.toggle("ada-unavailable", !galaxy.unlocked);
     if (galaxy.unlocked) {
       jump.removeAttribute("aria-disabled");

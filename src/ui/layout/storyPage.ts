@@ -1,4 +1,4 @@
-import { SAFE_MARGIN, STORY_BACKGROUND, STORY_PANEL } from "../../data/layout.ts";
+import { SAFE_MARGIN, SPACING, STORY_BACKGROUND, STORY_PANEL } from "../../data/layout.ts";
 import { type Insets, safeRect, type Size } from "./playView.ts";
 export { STORY_BACKGROUND, STORY_PANEL } from "../../data/layout.ts";
 
@@ -73,4 +73,20 @@ export function storyBackgroundTop(
   }
   const anchored = stripTop / 2 - (scale * (subject.top + subject.bottom)) / 2;
   return Math.min(0, Math.max(lowest, anchored));
+}
+
+/** One translation for the existing canvas and every ordered layer in the upper art window. */
+export function storyHalfArtOffset(
+  view: Size,
+  subject: SubjectBand | null,
+  canvasTop: number,
+  room: boolean,
+): number {
+  const centre = subject ? (subject.top + subject.bottom) / 2 : STORY_BACKGROUND.height / 2;
+  return (
+    view.height / 4 -
+    canvasTop -
+    storyBackgroundScale(view) * centre -
+    (room ? SPACING.panelPadding : 0)
+  );
 }

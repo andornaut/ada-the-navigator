@@ -7028,7 +7028,7 @@
     },
     {
       "id": "story-park",
-      "path": "/art/story/park.png",
+      "path": "/art/story-composed/base-park.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7045,7 +7045,7 @@
     },
     {
       "id": "story-ada-room-unpolished",
-      "path": "/art/story/ada-room-unpolished.png",
+      "path": "/art/story-composed/base-ada-room-unpolished.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7062,7 +7062,7 @@
     },
     {
       "id": "story-ada-room-unpolished-cats",
-      "path": "/art/story/ada-room-unpolished.png",
+      "path": "/art/story-composed/base-ada-room-unpolished.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7080,7 +7080,7 @@
     },
     {
       "id": "story-ada-room",
-      "path": "/art/story/ada-room.png",
+      "path": "/art/story-composed/base-ada-room-unpolished.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7097,7 +7097,7 @@
     },
     {
       "id": "story-ada-room-glow-1",
-      "path": "/art/story/ada-room-glow-1.png",
+      "path": "/art/story-composed/base-ada-room-unpolished.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7114,7 +7114,7 @@
     },
     {
       "id": "story-ada-room-glow-2",
-      "path": "/art/story/ada-room-glow-2.png",
+      "path": "/art/story-composed/base-ada-room-unpolished.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7131,7 +7131,7 @@
     },
     {
       "id": "story-ada-room-glow-3",
-      "path": "/art/story/ada-room-glow-3.png",
+      "path": "/art/story-composed/base-ada-room-unpolished.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7148,7 +7148,7 @@
     },
     {
       "id": "story-ada-room-invitations",
-      "path": "/art/story/ada-room-invitations.png",
+      "path": "/art/story-composed/base-ada-room-unpolished.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7165,7 +7165,7 @@
     },
     {
       "id": "story-ada-room-invitations-glow-1",
-      "path": "/art/story/ada-room-invitations-glow-1.png",
+      "path": "/art/story-composed/base-ada-room-unpolished.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7182,7 +7182,7 @@
     },
     {
       "id": "story-ada-room-invitations-glow-2",
-      "path": "/art/story/ada-room-invitations-glow-2.png",
+      "path": "/art/story-composed/base-ada-room-unpolished.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7199,7 +7199,7 @@
     },
     {
       "id": "story-ada-room-invitations-glow-3",
-      "path": "/art/story/ada-room-invitations-glow-3.png",
+      "path": "/art/story-composed/base-ada-room-unpolished.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7216,7 +7216,7 @@
     },
     {
       "id": "story-grandma-garden",
-      "path": "/art/story/grandma-garden.png",
+      "path": "/art/story-composed/base-grandma-garden.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7233,7 +7233,7 @@
     },
     {
       "id": "story-community-garden",
-      "path": "/art/story/community-garden.png",
+      "path": "/art/story-composed/base-community-garden.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7250,7 +7250,7 @@
     },
     {
       "id": "story-schoolyard",
-      "path": "/art/story/schoolyard.png",
+      "path": "/art/story-composed/base-schoolyard.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7267,7 +7267,7 @@
     },
     {
       "id": "story-school-hallway",
-      "path": "/art/story/school-hallway.png",
+      "path": "/art/story-composed/base-school-hallway.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7284,7 +7284,7 @@
     },
     {
       "id": "story-kitchen",
-      "path": "/art/story/kitchen.png",
+      "path": "/art/story-composed/base-kitchen.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7301,7 +7301,7 @@
     },
     {
       "id": "story-front-door",
-      "path": "/art/story/front-door.png",
+      "path": "/art/story-composed/base-front-door.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7318,7 +7318,7 @@
     },
     {
       "id": "story-front-door-mom",
-      "path": "/art/story/front-door.png",
+      "path": "/art/story-composed/base-front-door.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7336,7 +7336,7 @@
     },
     {
       "id": "story-ada-room-recorder",
-      "path": "/art/story/ada-room-recorder.png",
+      "path": "/art/story-composed/base-ada-room-unpolished.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7353,7 +7353,7 @@
     },
     {
       "id": "story-ada-room-recorder-dad",
-      "path": "/art/story/ada-room-recorder.png",
+      "path": "/art/story-composed/base-ada-room-unpolished.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7371,7 +7371,7 @@
     },
     {
       "id": "story-ada-room-recorder-glow-1",
-      "path": "/art/story/ada-room-recorder-glow-1.png",
+      "path": "/art/story-composed/base-ada-room-unpolished.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7388,7 +7388,7 @@
     },
     {
       "id": "story-ada-room-recorder-glow-2",
-      "path": "/art/story/ada-room-recorder-glow-2.png",
+      "path": "/art/story-composed/base-ada-room-unpolished.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7405,7 +7405,7 @@
     },
     {
       "id": "story-ada-room-recorder-glow-3",
-      "path": "/art/story/ada-room-recorder-glow-3.png",
+      "path": "/art/story-composed/base-ada-room-unpolished.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7422,7 +7422,7 @@
     },
     {
       "id": "story-concert-hall",
-      "path": "/art/story/concert-hall.png",
+      "path": "/art/story-composed/base-concert-hall.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7439,7 +7439,7 @@
     },
     {
       "id": "story-grandma-garden-spilled",
-      "path": "/art/story/grandma-garden-spilled.png",
+      "path": "/art/story-composed/base-grandma-garden.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7456,7 +7456,7 @@
     },
     {
       "id": "story-grandma-garden-replanted",
-      "path": "/art/story/grandma-garden-replanted.png",
+      "path": "/art/story-composed/base-grandma-garden.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7473,7 +7473,7 @@
     },
     {
       "id": "story-ada-room-night",
-      "path": "/art/story/ada-room-night.png",
+      "path": "/art/story-composed/base-ada-room-night.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7490,7 +7490,7 @@
     },
     {
       "id": "story-ada-room-sleep",
-      "path": "/art/story/ada-room-night.png",
+      "path": "/art/story-composed/base-ada-room-night.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7508,7 +7508,7 @@
     },
     {
       "id": "story-ada-room-sleep-glow",
-      "path": "/art/story/ada-room-sleep-glow.png",
+      "path": "/art/story-composed/story-ada-room-sleep-glow.webp",
       "width": 440,
       "height": 302,
       "displayWidth": 220,
@@ -7525,7 +7525,7 @@
     },
     {
       "id": "story-ada-room-morning",
-      "path": "/art/story/ada-room-morning.png",
+      "path": "/art/story-composed/base-ada-room-morning.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -7542,7 +7542,7 @@
     },
     {
       "id": "story-ada-room-morning-cats",
-      "path": "/art/story/ada-room-morning.png",
+      "path": "/art/story-composed/base-ada-room-morning.webp",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -43412,5 +43412,6 @@
     "count": 64,
     "version": 2
   },
-  "shipMaterials": "/art/ship-materials.json"
+  "shipMaterials": "/art/ship-materials.json",
+  "storyCompositions": "/art/story-compositions.json"
 }

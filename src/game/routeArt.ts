@@ -1,8 +1,9 @@
 import { byGalaxy } from "../data/galaxies.ts";
-import { BACKGROUND_ART, type GalaxyCard, galaxyPreview } from "../data/storybook.ts";
+import { type GalaxyCard, galaxyPreview } from "../data/storybook.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 import type { GalaxyMapArt } from "../ui/galaxyMap.ts";
+import type { StoryArt } from "../ui/storyArt.ts";
 
 // The route map's art from Art's manifests (art/route-sky.md, art/galaxies.md "Markers"): the
 // sky and ground with their figures, each galaxy's marker hue and the shared locked grey, each
@@ -66,6 +67,7 @@ export function readRouteArt(
   assets: readonly RouteAsset[],
   markers: ReturnType<typeof readRouteMarkers>,
   ship: GalaxyMapArt["ship"],
+  home?: Pick<StoryArt, "backgrounds" | "composites">,
 ): GalaxyMapArt | null {
   const sky = assets.find(({ id }) => id === "route-sky");
   const ground = assets.find(({ id }) => id === "route-ground");
@@ -89,7 +91,9 @@ export function readRouteArt(
   return {
     figures,
     ground: ground.path,
-    homePreview: assets.find(({ id }) => id === BACKGROUND_ART.adaRoom)?.path ?? "",
+    ...(home?.backgrounds.adaRoom
+      ? { homeScene: { overlays: home.composites.adaRoom ?? [], url: home.backgrounds.adaRoom } }
+      : {}),
     locked: markers.locked,
     ship,
     sky: sky.path,

@@ -1,0 +1,801 @@
+{
+  "version": 1,
+  "canvas": {
+    "width": 960,
+    "height": 540
+  },
+  "assets": [
+    {
+      "id": "base-park",
+      "path": "/art/story-composed/base-park.webp",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "pixelRatio": 2
+    },
+    {
+      "id": "base-ada-room-unpolished",
+      "path": "/art/story-composed/base-ada-room-unpolished.webp",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "pixelRatio": 2
+    },
+    {
+      "id": "base-ada-room-night",
+      "path": "/art/story-composed/base-ada-room-night.webp",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "pixelRatio": 2
+    },
+    {
+      "id": "base-ada-room-morning",
+      "path": "/art/story-composed/base-ada-room-morning.webp",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "pixelRatio": 2
+    },
+    {
+      "id": "base-grandma-garden",
+      "path": "/art/story-composed/base-grandma-garden.webp",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "pixelRatio": 2
+    },
+    {
+      "id": "base-community-garden",
+      "path": "/art/story-composed/base-community-garden.webp",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "pixelRatio": 2
+    },
+    {
+      "id": "base-schoolyard",
+      "path": "/art/story-composed/base-schoolyard.webp",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "pixelRatio": 2
+    },
+    {
+      "id": "base-school-hallway",
+      "path": "/art/story-composed/base-school-hallway.webp",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "pixelRatio": 2
+    },
+    {
+      "id": "base-kitchen",
+      "path": "/art/story-composed/base-kitchen.webp",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "pixelRatio": 2
+    },
+    {
+      "id": "base-front-door",
+      "path": "/art/story-composed/base-front-door.webp",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "pixelRatio": 2
+    },
+    {
+      "id": "base-concert-hall",
+      "path": "/art/story-composed/base-concert-hall.webp",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "pixelRatio": 2
+    },
+    {
+      "id": "prop-polished-rock",
+      "path": "/art/story-composed/prop-polished-rock.webp",
+      "width": 182,
+      "height": 126,
+      "displayWidth": 91,
+      "displayHeight": 63,
+      "pixelRatio": 2
+    },
+    {
+      "id": "glow-1",
+      "path": "/art/story-composed/glow-1.webp",
+      "width": 824,
+      "height": 556,
+      "displayWidth": 412,
+      "displayHeight": 278,
+      "pixelRatio": 2
+    },
+    {
+      "id": "glow-2",
+      "path": "/art/story-composed/glow-2.webp",
+      "width": 1474,
+      "height": 990,
+      "displayWidth": 737,
+      "displayHeight": 495,
+      "pixelRatio": 2
+    },
+    {
+      "id": "glow-3",
+      "path": "/art/story-composed/glow-3.webp",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "pixelRatio": 2
+    },
+    {
+      "id": "prop-recorder",
+      "path": "/art/story-composed/prop-recorder.webp",
+      "width": 528,
+      "height": 90,
+      "displayWidth": 264,
+      "displayHeight": 45,
+      "pixelRatio": 2
+    },
+    {
+      "id": "prop-invitations",
+      "path": "/art/story-composed/prop-invitations.webp",
+      "width": 608,
+      "height": 98,
+      "displayWidth": 304,
+      "displayHeight": 49,
+      "pixelRatio": 2
+    },
+    {
+      "id": "garden-spilled",
+      "path": "/art/story-composed/garden-spilled.webp",
+      "width": 188,
+      "height": 212,
+      "displayWidth": 94,
+      "displayHeight": 106,
+      "pixelRatio": 2
+    },
+    {
+      "id": "garden-replanted",
+      "path": "/art/story-composed/garden-replanted.webp",
+      "width": 200,
+      "height": 200,
+      "displayWidth": 100,
+      "displayHeight": 100,
+      "pixelRatio": 2
+    },
+    {
+      "id": "story-ada-room-sleep-glow",
+      "path": "/art/story-composed/story-ada-room-sleep-glow.webp",
+      "width": 440,
+      "height": 302,
+      "displayWidth": 220,
+      "displayHeight": 151,
+      "pixelRatio": 2,
+      "at": {
+        "x": 361,
+        "y": 194
+      }
+    }
+  ],
+  "scenes": {
+    "story-park": {
+      "base": "base-park",
+      "layers": [],
+      "subject": {
+        "top": 220,
+        "bottom": 285
+      }
+    },
+    "story-ada-room-unpolished": {
+      "base": "base-ada-room-unpolished",
+      "layers": [],
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    "story-ada-room-night": {
+      "base": "base-ada-room-night",
+      "layers": [],
+      "subject": {
+        "top": 250,
+        "bottom": 300
+      }
+    },
+    "story-ada-room-morning": {
+      "base": "base-ada-room-morning",
+      "layers": [],
+      "subject": {
+        "top": 255,
+        "bottom": 348
+      }
+    },
+    "story-grandma-garden": {
+      "base": "base-grandma-garden",
+      "layers": [],
+      "subject": {
+        "top": 199,
+        "bottom": 285
+      }
+    },
+    "story-community-garden": {
+      "base": "base-community-garden",
+      "layers": [],
+      "subject": {
+        "top": 180,
+        "bottom": 290
+      }
+    },
+    "story-schoolyard": {
+      "base": "base-schoolyard",
+      "layers": [],
+      "subject": {
+        "top": 168,
+        "bottom": 278
+      }
+    },
+    "story-school-hallway": {
+      "base": "base-school-hallway",
+      "layers": [],
+      "subject": {
+        "top": 184,
+        "bottom": 290
+      }
+    },
+    "story-kitchen": {
+      "base": "base-kitchen",
+      "layers": [],
+      "subject": {
+        "top": 146,
+        "bottom": 293
+      }
+    },
+    "story-front-door": {
+      "base": "base-front-door",
+      "layers": [],
+      "subject": {
+        "top": 175,
+        "bottom": 280
+      }
+    },
+    "story-concert-hall": {
+      "base": "base-concert-hall",
+      "layers": [],
+      "subject": {
+        "top": 188,
+        "bottom": 293
+      }
+    },
+    "story-ada-room": {
+      "base": "base-ada-room-unpolished",
+      "layers": [
+        {
+          "asset": "prop-polished-rock",
+          "atLogical": {
+            "x": 426,
+            "y": 238
+          },
+          "displayWidth": 91,
+          "displayHeight": 63
+        }
+      ],
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    "story-ada-room-glow-1": {
+      "base": "base-ada-room-unpolished",
+      "layers": [
+        {
+          "asset": "prop-polished-rock",
+          "atLogical": {
+            "x": 426,
+            "y": 238
+          },
+          "displayWidth": 91,
+          "displayHeight": 63
+        },
+        {
+          "asset": "glow-1",
+          "atLogical": {
+            "x": 266,
+            "y": 132
+          },
+          "displayWidth": 412,
+          "displayHeight": 278
+        }
+      ],
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    "story-ada-room-glow-2": {
+      "base": "base-ada-room-unpolished",
+      "layers": [
+        {
+          "asset": "prop-polished-rock",
+          "atLogical": {
+            "x": 426,
+            "y": 238
+          },
+          "displayWidth": 91,
+          "displayHeight": 63
+        },
+        {
+          "asset": "glow-2",
+          "atLogical": {
+            "x": 102,
+            "y": 24
+          },
+          "displayWidth": 737,
+          "displayHeight": 495
+        }
+      ],
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    "story-ada-room-glow-3": {
+      "base": "base-ada-room-unpolished",
+      "layers": [
+        {
+          "asset": "prop-polished-rock",
+          "atLogical": {
+            "x": 426,
+            "y": 238
+          },
+          "displayWidth": 91,
+          "displayHeight": 63
+        },
+        {
+          "asset": "glow-3",
+          "atLogical": {
+            "x": 0,
+            "y": 0
+          },
+          "displayWidth": 960,
+          "displayHeight": 540
+        }
+      ],
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    "story-ada-room-recorder": {
+      "base": "base-ada-room-unpolished",
+      "layers": [
+        {
+          "asset": "prop-polished-rock",
+          "atLogical": {
+            "x": 426,
+            "y": 238
+          },
+          "displayWidth": 91,
+          "displayHeight": 63
+        },
+        {
+          "asset": "prop-recorder",
+          "atLogical": {
+            "x": 401,
+            "y": 248
+          },
+          "displayWidth": 66,
+          "displayHeight": 45,
+          "sourceRect": {
+            "x": 0,
+            "y": 0,
+            "width": 132,
+            "height": 90
+          }
+        }
+      ],
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    "story-ada-room-recorder-glow-1": {
+      "base": "base-ada-room-unpolished",
+      "layers": [
+        {
+          "asset": "prop-polished-rock",
+          "atLogical": {
+            "x": 426,
+            "y": 238
+          },
+          "displayWidth": 91,
+          "displayHeight": 63
+        },
+        {
+          "asset": "glow-1",
+          "atLogical": {
+            "x": 266,
+            "y": 132
+          },
+          "displayWidth": 412,
+          "displayHeight": 278
+        },
+        {
+          "asset": "prop-recorder",
+          "atLogical": {
+            "x": 401,
+            "y": 248
+          },
+          "displayWidth": 66,
+          "displayHeight": 44,
+          "sourceRect": {
+            "x": 132,
+            "y": 0,
+            "width": 132,
+            "height": 88
+          }
+        }
+      ],
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    "story-ada-room-recorder-glow-2": {
+      "base": "base-ada-room-unpolished",
+      "layers": [
+        {
+          "asset": "prop-polished-rock",
+          "atLogical": {
+            "x": 426,
+            "y": 238
+          },
+          "displayWidth": 91,
+          "displayHeight": 63
+        },
+        {
+          "asset": "glow-2",
+          "atLogical": {
+            "x": 102,
+            "y": 24
+          },
+          "displayWidth": 737,
+          "displayHeight": 495
+        },
+        {
+          "asset": "prop-recorder",
+          "atLogical": {
+            "x": 401,
+            "y": 247
+          },
+          "displayWidth": 66,
+          "displayHeight": 45,
+          "sourceRect": {
+            "x": 264,
+            "y": 0,
+            "width": 132,
+            "height": 90
+          }
+        }
+      ],
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    "story-ada-room-recorder-glow-3": {
+      "base": "base-ada-room-unpolished",
+      "layers": [
+        {
+          "asset": "prop-polished-rock",
+          "atLogical": {
+            "x": 426,
+            "y": 238
+          },
+          "displayWidth": 91,
+          "displayHeight": 63
+        },
+        {
+          "asset": "glow-3",
+          "atLogical": {
+            "x": 0,
+            "y": 0
+          },
+          "displayWidth": 960,
+          "displayHeight": 540
+        },
+        {
+          "asset": "prop-recorder",
+          "atLogical": {
+            "x": 401,
+            "y": 248
+          },
+          "displayWidth": 66,
+          "displayHeight": 45,
+          "sourceRect": {
+            "x": 396,
+            "y": 0,
+            "width": 132,
+            "height": 90
+          }
+        }
+      ],
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    "story-ada-room-invitations": {
+      "base": "base-ada-room-unpolished",
+      "layers": [
+        {
+          "asset": "prop-polished-rock",
+          "atLogical": {
+            "x": 426,
+            "y": 238
+          },
+          "displayWidth": 91,
+          "displayHeight": 63
+        },
+        {
+          "asset": "prop-invitations",
+          "atLogical": {
+            "x": 403,
+            "y": 239
+          },
+          "displayWidth": 74,
+          "displayHeight": 48,
+          "sourceRect": {
+            "x": 0,
+            "y": 0,
+            "width": 148,
+            "height": 96
+          }
+        }
+      ],
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    "story-ada-room-invitations-glow-1": {
+      "base": "base-ada-room-unpolished",
+      "layers": [
+        {
+          "asset": "prop-polished-rock",
+          "atLogical": {
+            "x": 426,
+            "y": 238
+          },
+          "displayWidth": 91,
+          "displayHeight": 63
+        },
+        {
+          "asset": "glow-1",
+          "atLogical": {
+            "x": 266,
+            "y": 132
+          },
+          "displayWidth": 412,
+          "displayHeight": 278
+        },
+        {
+          "asset": "prop-invitations",
+          "atLogical": {
+            "x": 402,
+            "y": 239
+          },
+          "displayWidth": 76,
+          "displayHeight": 49,
+          "sourceRect": {
+            "x": 152,
+            "y": 0,
+            "width": 152,
+            "height": 98
+          }
+        }
+      ],
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    "story-ada-room-invitations-glow-2": {
+      "base": "base-ada-room-unpolished",
+      "layers": [
+        {
+          "asset": "prop-polished-rock",
+          "atLogical": {
+            "x": 426,
+            "y": 238
+          },
+          "displayWidth": 91,
+          "displayHeight": 63
+        },
+        {
+          "asset": "glow-2",
+          "atLogical": {
+            "x": 102,
+            "y": 24
+          },
+          "displayWidth": 737,
+          "displayHeight": 495
+        },
+        {
+          "asset": "prop-invitations",
+          "atLogical": {
+            "x": 403,
+            "y": 239
+          },
+          "displayWidth": 74,
+          "displayHeight": 48,
+          "sourceRect": {
+            "x": 304,
+            "y": 0,
+            "width": 148,
+            "height": 96
+          }
+        }
+      ],
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    "story-ada-room-invitations-glow-3": {
+      "base": "base-ada-room-unpolished",
+      "layers": [
+        {
+          "asset": "prop-polished-rock",
+          "atLogical": {
+            "x": 426,
+            "y": 238
+          },
+          "displayWidth": 91,
+          "displayHeight": 63
+        },
+        {
+          "asset": "glow-3",
+          "atLogical": {
+            "x": 0,
+            "y": 0
+          },
+          "displayWidth": 960,
+          "displayHeight": 540
+        },
+        {
+          "asset": "prop-invitations",
+          "atLogical": {
+            "x": 403,
+            "y": 239
+          },
+          "displayWidth": 73,
+          "displayHeight": 48,
+          "sourceRect": {
+            "x": 456,
+            "y": 0,
+            "width": 146,
+            "height": 96
+          }
+        }
+      ],
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    "story-grandma-garden-spilled": {
+      "base": "base-grandma-garden",
+      "layers": [
+        {
+          "asset": "garden-spilled",
+          "atLogical": {
+            "x": 423,
+            "y": 172
+          },
+          "displayWidth": 94,
+          "displayHeight": 106
+        }
+      ],
+      "subject": {
+        "top": 176,
+        "bottom": 285
+      }
+    },
+    "story-grandma-garden-replanted": {
+      "base": "base-grandma-garden",
+      "layers": [
+        {
+          "asset": "garden-replanted",
+          "atLogical": {
+            "x": 417,
+            "y": 170
+          },
+          "displayWidth": 100,
+          "displayHeight": 100
+        }
+      ],
+      "subject": {
+        "top": 176,
+        "bottom": 285
+      }
+    },
+    "story-ada-room-unpolished-cats": {
+      "base": "base-ada-room-unpolished",
+      "layers": [],
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    "story-front-door-mom": {
+      "base": "base-front-door",
+      "layers": [],
+      "subject": {
+        "top": 175,
+        "bottom": 280
+      }
+    },
+    "story-ada-room-recorder-dad": {
+      "base": "base-ada-room-unpolished",
+      "layers": [
+        {
+          "asset": "prop-polished-rock",
+          "atLogical": {
+            "x": 426,
+            "y": 238
+          },
+          "displayWidth": 91,
+          "displayHeight": 63
+        },
+        {
+          "asset": "prop-recorder",
+          "atLogical": {
+            "x": 401,
+            "y": 248
+          },
+          "displayWidth": 66,
+          "displayHeight": 45,
+          "sourceRect": {
+            "x": 0,
+            "y": 0,
+            "width": 132,
+            "height": 90
+          }
+        }
+      ],
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    "story-ada-room-sleep": {
+      "base": "base-ada-room-night",
+      "layers": [],
+      "subject": {
+        "top": 250,
+        "bottom": 300
+      }
+    },
+    "story-ada-room-morning-cats": {
+      "base": "base-ada-room-morning",
+      "layers": [],
+      "subject": {
+        "top": 255,
+        "bottom": 348
+      }
+    }
+  }
+}

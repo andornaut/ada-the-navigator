@@ -1856,7 +1856,16 @@ function overnight(at: (id: string) => Overlay["at"]) {
 // Root manifest groups after the ship and portraits, in order; the story group leads.
 const LATER = ["title-", "aboard", "stardust", "holodisk", "quantum-jump", "station-", "enemy-"];
 
+function requireLegacyStoryOutput() {
+  if (typeof readManifest("core").storyCompositions === "string") {
+    throw new Error(
+      "Story compositions are active. Use art/tools/story-compositions.ts; legacy PNG output and story row replacement are disabled.",
+    );
+  }
+}
+
 export function placeStoryEntries(entries: readonly { id: string }[]) {
+  requireLegacyStoryOutput();
   editManifest("core", (manifest) => {
     const kept = manifest.assets.filter(({ id }) => !id.startsWith("story-"));
     const next = kept.findIndex(({ id }) => LATER.some((prefix) => id.startsWith(prefix)));
@@ -1870,6 +1879,7 @@ export function placeStoryEntries(entries: readonly { id: string }[]) {
 const file = (id: string) => `${art}${storyPath(id).slice("/art/".length)}`;
 
 if (import.meta.url === `file://${process.argv[1]}`) {
+  requireLegacyStoryOutput();
   const only = process.argv[2];
   for (const { build, id, palette } of BACKGROUNDS) {
     if (only && only !== id) continue;

@@ -1,0 +1,268 @@
+{
+  "assets": [
+    {
+      "id": "story-park",
+      "path": "/art/story/park.png",
+      "subject": {
+        "top": 220,
+        "bottom": 285
+      }
+    },
+    {
+      "id": "story-ada-room-unpolished",
+      "path": "/art/story/ada-room-unpolished.png",
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-ada-room-unpolished-cats",
+      "path": "/art/story/ada-room-unpolished.png",
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-ada-room",
+      "path": "/art/story/ada-room.png",
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-ada-room-glow-1",
+      "path": "/art/story/ada-room-glow-1.png",
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-ada-room-glow-2",
+      "path": "/art/story/ada-room-glow-2.png",
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-ada-room-glow-3",
+      "path": "/art/story/ada-room-glow-3.png",
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-ada-room-invitations",
+      "path": "/art/story/ada-room-invitations.png",
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-ada-room-invitations-glow-1",
+      "path": "/art/story/ada-room-invitations-glow-1.png",
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-ada-room-invitations-glow-2",
+      "path": "/art/story/ada-room-invitations-glow-2.png",
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-ada-room-invitations-glow-3",
+      "path": "/art/story/ada-room-invitations-glow-3.png",
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-grandma-garden",
+      "path": "/art/story/grandma-garden.png",
+      "subject": {
+        "top": 199,
+        "bottom": 285
+      }
+    },
+    {
+      "id": "story-community-garden",
+      "path": "/art/story/community-garden.png",
+      "subject": {
+        "top": 180,
+        "bottom": 290
+      }
+    },
+    {
+      "id": "story-schoolyard",
+      "path": "/art/story/schoolyard.png",
+      "subject": {
+        "top": 168,
+        "bottom": 278
+      }
+    },
+    {
+      "id": "story-school-hallway",
+      "path": "/art/story/school-hallway.png",
+      "subject": {
+        "top": 184,
+        "bottom": 290
+      }
+    },
+    {
+      "id": "story-kitchen",
+      "path": "/art/story/kitchen.png",
+      "subject": {
+        "top": 146,
+        "bottom": 293
+      }
+    },
+    {
+      "id": "story-front-door",
+      "path": "/art/story/front-door.png",
+      "subject": {
+        "top": 175,
+        "bottom": 280
+      }
+    },
+    {
+      "id": "story-front-door-mom",
+      "path": "/art/story/front-door.png",
+      "subject": {
+        "top": 175,
+        "bottom": 280
+      }
+    },
+    {
+      "id": "story-ada-room-recorder",
+      "path": "/art/story/ada-room-recorder.png",
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-ada-room-recorder-dad",
+      "path": "/art/story/ada-room-recorder.png",
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-ada-room-recorder-glow-1",
+      "path": "/art/story/ada-room-recorder-glow-1.png",
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-ada-room-recorder-glow-2",
+      "path": "/art/story/ada-room-recorder-glow-2.png",
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-ada-room-recorder-glow-3",
+      "path": "/art/story/ada-room-recorder-glow-3.png",
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-concert-hall",
+      "path": "/art/story/concert-hall.png",
+      "subject": {
+        "top": 188,
+        "bottom": 293
+      }
+    },
+    {
+      "id": "story-grandma-garden-spilled",
+      "path": "/art/story/grandma-garden-spilled.png",
+      "subject": {
+        "top": 176,
+        "bottom": 285
+      }
+    },
+    {
+      "id": "story-grandma-garden-replanted",
+      "path": "/art/story/grandma-garden-replanted.png",
+      "subject": {
+        "top": 176,
+        "bottom": 285
+      }
+    },
+    {
+      "id": "story-ada-room-night",
+      "path": "/art/story/ada-room-night.png",
+      "subject": {
+        "top": 250,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-ada-room-sleep",
+      "path": "/art/story/ada-room-night.png",
+      "subject": {
+        "top": 250,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-ada-room-sleep-glow",
+      "path": "/art/story/ada-room-sleep-glow.png",
+      "at": {
+        "x": 361,
+        "y": 194
+      }
+    },
+    {
+      "id": "story-ada-room-morning",
+      "path": "/art/story/ada-room-morning.png",
+      "subject": {
+        "top": 255,
+        "bottom": 348
+      }
+    },
+    {
+      "id": "story-ada-room-morning-cats",
+      "path": "/art/story/ada-room-morning.png",
+      "subject": {
+        "top": 255,
+        "bottom": 348
+      }
+    },
+    {
+      "id": "story-ada-skywatch",
+      "path": "/art/story/ada-skywatch.png",
+      "at": {
+        "x": 199,
+        "y": 60
+      }
+    },
+    {
+      "id": "story-penny-sitting",
+      "path": "/art/story/penny-sitting.png",
+      "at": {
+        "x": 228,
+        "y": 84
+      }
+    }
+  ]
+}

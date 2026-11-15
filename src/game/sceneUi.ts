@@ -56,6 +56,7 @@ import { createScanFeedbackView } from "../ui/scanFeedbackView.ts";
 import { aboardLabel, type ShipView } from "../ui/shipCard.ts";
 import { createStationView } from "../ui/station.ts";
 import { stardustCount } from "../ui/statusPill.ts";
+import { loadStoryArt } from "../ui/storyArt.ts";
 import { createStorybook, storyPageView } from "../ui/storybook.ts";
 import { readTitleScreen, type TitleScreenArt } from "../ui/titleScreen.ts";
 import { type CoreManifest, galaxyManifestKey, readGalaxyManifest } from "./artManifest.ts";
@@ -934,6 +935,23 @@ export function buildScene(scene: UiContext): void {
   if (routeArt) {
     scene.galaxies.setArt({ ...routeArt, jets: travelMaterial });
   }
+  void loadStoryArt().then(
+    (home) => {
+      if (disposedPartial || !scene.entryCurrent()) {
+        return;
+      }
+      const resolved = readRouteArt(
+        routeAssets,
+        markers,
+        () => materialShipFrames(scene, routeAssets, paintInUse(scene)),
+        home,
+      );
+      if (resolved) {
+        scene.galaxies.setArt({ ...resolved, jets: travelMaterial });
+      }
+    },
+    () => undefined,
+  );
   // The warp ship: the paint's poses, and its idle frames for the sprite steps.
   scene.warpPaint = () => {
     const scheme = scene.model.state.economy.paint;
