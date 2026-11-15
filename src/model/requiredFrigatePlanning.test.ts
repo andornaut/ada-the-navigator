@@ -4,8 +4,10 @@ import { CONTENT } from "../data/content.ts";
 import { SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
 import {
   createFlight,
+  createUnpopulatedFlight,
   planRequiredFrigate,
   planRequiredRouteReservations,
+  planRequiredWorld,
   spawnQuestFrigateAt,
 } from "./flight.ts";
 import { worldFitsEncounter, worldSpawnerStage } from "./spawner.ts";
@@ -98,4 +100,21 @@ it("reserves all three real Sunflower leaders before optional support without re
   expect(result.plans.every((plan) => plan.support.length === 0)).toBe(true);
   expect(result.plans.every((plan) => plan.leader.enemy!.archetype === "frigate")).toBe(true);
   expect(flight).toEqual(before);
+});
+
+it("plans canonical required sites and leaders before the first optional chunk without revealing them", () => {
+  const flight = createUnpopulatedFlight(CONTENT, 1, 173);
+  const before = structuredClone(flight);
+  const result = planRequiredWorld(CONTENT, flight, ["growers", "workshop", "salvagers"]);
+  expect(result.status).toBe("planned");
+  if (result.status !== "planned") {
+    throw new Error(result.siteId);
+  }
+  expect(result.sites.map((site) => site.id)).toEqual(["growers", "workshop", "salvagers"]);
+  expect(result.plans).toHaveLength(3);
+  expect(result.plans.every((plan) => plan.leader.hp > 0)).toBe(true);
+  expect(flight).toEqual(before);
+  expect(flight.chunks).toEqual([]);
+  expect(flight.objects).toEqual([]);
+  expect(flight.world.notables).toEqual({});
 });

@@ -21,6 +21,7 @@ import {
 } from "../data/enemyCatalog.ts";
 import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
 import { WRECK_ID_PREFIX } from "../data/enemyIdentity.ts";
+import { ENEMY_AVOIDANCE } from "../data/enemyNavigation.ts";
 import { byPosition, ROUTE_POSITION, type RoutePosition } from "../data/galaxies.ts";
 import { CURRENTS, HUNTING_PACKS, ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
@@ -728,7 +729,12 @@ function generatedChunks(flight: FlightState): Set<string> {
   return index.keys;
 }
 
+const planningRequiredWorld = new WeakSet<FlightState>();
+
 function generate(content: GameContent, point: Vec, flight: FlightState): void {
+  if (planningRequiredWorld.has(flight)) {
+    return;
+  }
   worldActivateFlightRegion(flightWorldContext(flight), content, point, flight);
   ensureStations(content, point, flight);
   ensureDebrisRivers(content, point, flight);
@@ -1132,7 +1138,11 @@ export function planRequiredFrigate(
 
 export type RequiredRoutePlanningResult =
   | { readonly status: "blocked"; readonly siteId: string }
-  | { readonly status: "planned"; readonly plans: readonly RequiredFrigatePlan[] };
+  | {
+      readonly status: "planned";
+      readonly plans: readonly RequiredFrigatePlan[];
+      readonly sites: readonly SpaceObject[];
+    };
 
 /** Reserve every required leader before allocating support; planning changes no knowledge or world state. */
 export function planRequiredRouteReservations(
@@ -1166,7 +1176,23 @@ export function planRequiredRouteReservations(
       projection.objects = [...withoutLeader.objects, plan.leader, ...plan.support];
     }
   }
-  return { plans, status: "planned" };
+  return { plans, sites: structuredClone(sites), status: "planned" };
+}
+
+/** Existing destination placement runs before optional chunks, on a detached planning flight. */
+export function planRequiredWorld(
+  content: GameContent,
+  flight: FlightState,
+  siteIds: readonly string[],
+): RequiredRoutePlanningResult {
+  const projection = structuredClone(flight);
+  planningRequiredWorld.add(projection);
+  try {
+    const sites = siteIds.map((id) => ensureDestination(content, id, projection));
+    return planRequiredRouteReservations(content, projection, sites);
+  } finally {
+    planningRequiredWorld.delete(projection);
+  }
 }
 
 /** Caller-supplied station plans have no implicit site, defender count, reward or replenishment. */
@@ -2179,7 +2205,22 @@ export function ensureDestination(
         ? flight.facing
         : { x: 0, y: -1 },
   );
-  const span = content.tuning.chunkSize * 2;
+  const baseSpan = content.tuning.chunkSize * 2;
+  const leaderReach = planningRequiredWorld.has(flight)
+    ? questGuardFormationReach(questGuardPlacementContext(content, flight), [
+        spawnEnemy(content, flight, "frigate", `route:${id}`, flight.player),
+      ])
+    : 0;
+  // A new planned site's inward guard edge also stays outside the existing launch calm area.
+  const span = planningRequiredWorld.has(flight)
+    ? Math.max(
+        baseSpan,
+        content.tuning.flight.arrivalCalm +
+          content.tuning.safeRadius +
+          leaderReach * 2 +
+          ENEMY_AVOIDANCE.clearance,
+      )
+    : baseSpan;
   const index = flight.objects.filter((o) => o.kind === "destination").length;
   const spacing = content.tuning.storySpacing;
   const offset = Math.ceil(index / 2) * (index % 2 ? 1 : -1) * spacing;
@@ -2338,11 +2379,10 @@ export type Loadout = Pick<
   | "shieldOreSpent"
 >;
 
-export function createFlight(
+export function createUnpopulatedFlight(
   content: GameContent,
   galaxy: GalaxyNumber,
   seed: number,
-  progress: Pick<GalaxyProgress, "known">,
   loadout: Loadout = {
     ammo: grantedAmmo([]),
     levels: noLevels(),
@@ -2386,11 +2426,32 @@ export function createFlight(
     world: { notables: {}, version: 1 },
   };
   markVisited(flight.visited, "0,0");
+  return flight;
+}
+
+/** Optional world generation starts only after the caller has installed required reservations. */
+export function populateFlight(
+  content: GameContent,
+  progress: Pick<GalaxyProgress, "known">,
+  flight: FlightState,
+): void {
   generate(content, flight.player, flight);
   for (const id of progress.known) {
     ensureDestination(content, id, flight);
   }
   worldSyncFlightRegion(flightWorldContext(flight), content, flight);
+}
+
+export function createFlight(
+  content: GameContent,
+  galaxy: GalaxyNumber,
+  seed: number,
+  progress: Pick<GalaxyProgress, "known">,
+  loadout?: Loadout,
+  encounterSeed?: number,
+): FlightState {
+  const flight = createUnpopulatedFlight(content, galaxy, seed, loadout, encounterSeed);
+  populateFlight(content, progress, flight);
   return flight;
 }
 
