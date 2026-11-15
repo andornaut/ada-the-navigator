@@ -180,6 +180,7 @@ describe("conversation exposure under covering cards", () => {
       markerFootprints: () => [],
       pennyLayers,
       safeGameArea,
+      scanViews: new WeakMap(),
       window: {},
     });
     const update = runInContext(callback("renderConversation"), context) as (
