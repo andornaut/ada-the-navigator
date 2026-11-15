@@ -40,6 +40,12 @@ import {
   stationMenuTree,
 } from "./stationMenuTree.ts";
 import { type StationPagerSchema, stationPagerTree } from "./stationPagerTree.ts";
+import {
+  type StationShopRowSchema,
+  stationShopRowTree,
+  type StationShopSchema,
+  stationShopTree,
+} from "./stationShopTree.ts";
 import { applyButtonSkin } from "./uiSkin.ts";
 
 // The station card, the shop, the job board and their confirms (art/shop.md,
@@ -641,40 +647,65 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     jobsBalance.textContent = String(balance.amount);
   };
 
+  const shopLayouts: { dispose(): void }[] = [];
   const rowElement = (row: StationRow, interactive = true): HTMLButtonElement => {
     const node = document.createElement("button");
-    node.type = "button";
-    node.className = "ada-shop-row";
-    node.dataset.item = row.key;
-    node.dataset.state = row.state;
-    const name = document.createElement("span");
-    name.className = "ada-shop-name";
-    const title = document.createElement("span");
-    title.textContent = row.name;
-    name.append(title);
-    if (row.level) {
-      const level = document.createElement("span");
-      level.className = "ada-shop-level";
-      level.textContent = row.level;
-      name.append(level);
-    }
-    const slot = document.createElement("span");
-    slot.className = "ada-shop-slot";
-    const trailing = document.createElement("span");
-    if (row.state === "owned" || row.state === "selectable" || row.state === "inUse") {
-      trailing.className = "ada-owned";
-      trailing.textContent =
-        row.state === "inUse" ? labels.inUse : row.project ? labels.projectFunded : labels.owned;
-    } else {
-      trailing.className = "ada-price";
-      trailing.textContent = row.price === null ? "" : String(row.price);
-    }
-    slot.append(trailing);
-    node.append(well(row.glyph), name, slot);
-    node.setAttribute(
-      "aria-label",
-      [row.name, row.level, trailing.textContent].filter(Boolean).join(", "),
+    const host = document.createElement("div");
+    const layout = mountLayout<StationShopRowSchema>(
+      {
+        components: {
+          name: {
+            create(initial) {
+              const name = document.createElement("span");
+              name.className = "ada-shop-name";
+              const title = document.createElement("span");
+              title.textContent = initial.title;
+              name.append(title);
+              if (initial.level) {
+                const level = document.createElement("span");
+                level.className = "ada-shop-level";
+                level.textContent = initial.level;
+                name.append(level);
+              }
+              return { dispose() {}, element: name, slots: {}, update() {} };
+            },
+            slots: [],
+          },
+          row: {
+            create(initial) {
+              node.type = "button";
+              node.className = "ada-shop-row";
+              node.dataset.item = initial.id;
+              node.dataset.state = initial.state;
+              node.setAttribute("aria-label", initial.ariaLabel);
+              return { dispose() {}, element: node, slots: { parts: node }, update() {} };
+            },
+            slots: ["parts"],
+          },
+          trailing: {
+            create(initial) {
+              const slot = document.createElement("span");
+              slot.className = "ada-shop-slot";
+              const trailing = document.createElement("span");
+              trailing.className = initial.className;
+              trailing.textContent = initial.text;
+              slot.append(trailing);
+              return { dispose() {}, element: slot, slots: {}, update() {} };
+            },
+            slots: [],
+          },
+          well: {
+            create(initial) {
+              return { dispose() {}, element: well(initial.glyph), slots: {}, update() {} };
+            },
+            slots: [],
+          },
+        },
+        host,
+      },
+      stationShopRowTree(labels, row),
     );
+    shopLayouts.push(layout);
     if (interactive) {
       register(
         node,
@@ -718,38 +749,47 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     return node;
   };
 
-  const groupElement = (rows: readonly StationRow[]): HTMLDivElement => {
-    const group = document.createElement("div");
-    group.className = "ada-shop-group";
-    group.append(...rows.map((row) => rowElement(row)));
-    return group;
-  };
-
   const tabContent = (id: Exclude<StationTab, "exchange">, columns: number): HTMLElement[] => {
     const rows = options.rows(id);
     const chunks: HTMLElement[] = [];
-    for (const kind of ["ammo", "items", "paint"] as const) {
-      const entries = rows.filter((row) => row.group === kind);
-      for (let index = 0; index < entries.length; index += columns) {
-        const group = groupElement(entries.slice(index, index + columns));
-        if (kind === "paint" && index === 0) {
-          const block = document.createElement("div");
-          block.className = "ada-shop-paint";
-          const heading = document.createElement("div");
-          heading.className = "ada-paint-heading";
-          heading.textContent = labels.shipPaint;
-          block.append(heading, group);
-          chunks.push(block);
-        } else {
-          chunks.push(group);
-        }
-      }
+    for (const tree of stationShopTree({ columns, paintHeading: labels.shipPaint }, rows)) {
+      let chunk!: HTMLDivElement;
+      shopLayouts.push(
+        mountLayout<StationShopSchema>(
+          {
+            components: {
+              group: {
+                create(initial) {
+                  const group = document.createElement("div");
+                  group.className = "ada-shop-group";
+                  group.append(...initial.indices.map((index) => rowElement(rows[index]!)));
+                  chunk = group;
+                  if (initial.heading !== null) {
+                    const block = document.createElement("div");
+                    block.className = "ada-shop-paint";
+                    const heading = document.createElement("div");
+                    heading.className = "ada-paint-heading";
+                    heading.textContent = initial.heading;
+                    block.append(heading, group);
+                    chunk = block;
+                  }
+                  return { dispose() {}, element: chunk, slots: {}, update() {} };
+                },
+                slots: [],
+              },
+            },
+            host: document.createElement("div"),
+          },
+          tree,
+        ),
+      );
+      chunks.push(chunk);
     }
     return chunks;
   };
 
   // Measure the complete catalogs at natural widths, then bound rows before measuring heights.
-  const fitList = (): void => {
+  const fitListContent = (): void => {
     clearBindings(shopBindings);
     if (tab === null) {
       list.hidden = true;
@@ -799,6 +839,14 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     card.style.setProperty("--shop-columns", String(columns));
     list.style.width = units(shopListWidth(columns, row) + 2 * FOCUS_RING.outset);
     shopPage = fitPages(shopCard, list, shopPager, tabContent(tab, columns), shopPage);
+  };
+
+  const fitList = (): void => {
+    const previousLayouts = shopLayouts.splice(0);
+    fitListContent();
+    for (const layout of previousLayouts) {
+      layout.dispose();
+    }
   };
 
   const jobLayouts: { dispose(): void }[] = [];
@@ -1305,6 +1353,9 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       window.removeEventListener(VIEW_SCALE_EVENT, refit);
       exchange?.dispose();
       for (const layout of jobLayouts) {
+        layout.dispose();
+      }
+      for (const layout of shopLayouts) {
         layout.dispose();
       }
       menuLayout.dispose();
