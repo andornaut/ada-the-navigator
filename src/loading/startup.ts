@@ -27,7 +27,6 @@ export async function startLoading(
   root: HTMLElement,
 ): Promise<() => void> {
   const stop = mountLoading(root);
-  root.querySelector("#boot-progress")?.remove();
   let game: RequiredGame | undefined;
   const failure = mountLoadingFailure(
     {

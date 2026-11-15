@@ -15,7 +15,6 @@ import type { DownloadProgress } from "@andornaut/game-kit/web/pwa/downloadProgr
 import type { RequiredUpdateState } from "@andornaut/game-kit/web/pwa/updateReady";
 
 import { SCREEN } from "../data/screen.ts";
-import { VIEW_PROPERTIES } from "../ui/layout/css.ts";
 import { VIEW_SCALE_EVENT } from "../ui/layout/viewScale.ts";
 import { LOADING_BAR } from "../ui/loadingBar.ts";
 
@@ -142,13 +141,17 @@ export function mountLoading(parent: HTMLElement): () => void {
   host.style.width = `${FRAME.width}px`;
   host.style.height = `${LOADING_BAR.height}px`;
   const fit = () => {
-    const unit = Number.parseFloat(getComputedStyle(parent).getPropertyValue(VIEW_PROPERTIES.unit));
     const across = parent.clientWidth / FRAME.width;
-    const down = Number.isFinite(unit) && unit > 0 ? unit : across;
+    const down = Math.min(across, parent.clientHeight / SCREEN.height);
     host.style.transform = `scale(${across}, ${down})`;
   };
   fit();
-  parent.append(host);
+  const boot = parent.querySelector("#boot-progress");
+  if (boot) {
+    boot.replaceWith(host);
+  } else {
+    parent.append(host);
+  }
   window.addEventListener("resize", fit);
   window.addEventListener(VIEW_SCALE_EVENT, fit);
   const bar = createDomProgressBar(host, BAR_STYLE, FRAME, BAR_TIMING);
