@@ -1,4 +1,7 @@
 import packageInfo from "../../package.json";
+import { galaxyRoute } from "./game.ts";
+import { stationPopulationObjects } from "./hostileStations.ts";
+import { routeGuardEvidence } from "./routeGuardEvidence.ts";
 import { restoreSave } from "./save.ts";
 import type { GameState } from "./types.ts";
 
@@ -14,11 +17,38 @@ export function preV1SaveResetAllowed(applicationVersion = packageInfo.version):
   );
 }
 
+/** Missing history cannot clear a known opener before its first authored introduction. */
+function ambiguousRequiredOpener(save: GameState): boolean {
+  const flight = save.flight;
+  if (!flight || ![1, 2, 3].includes(flight.galaxy)) {
+    return false;
+  }
+  const progress = save.progress[flight.galaxy];
+  if (progress.introduced || progress.stage > 0 || progress.questComplete) {
+    return false;
+  }
+  const opener = galaxyRoute(flight.galaxy)[0];
+  if (
+    !opener ||
+    !progress.known.includes(opener) ||
+    flight.requiredPlans?.[opener] ||
+    !stationPopulationObjects(flight).some(
+      (object) => object.id === opener && object.kind === "destination",
+    )
+  ) {
+    return false;
+  }
+  const evidence = routeGuardEvidence(flight, opener);
+  return evidence.status === "unknown";
+}
+
 /** Inspect raw Ada data before a storage adapter applies its newer-save fence. */
 export function inspectAdaSave(raw: string | null): AdaSaveInspection {
   if (raw === null) {
     return { status: "new" };
   }
   const save = restoreSave(raw);
-  return save ? { save, status: "valid" } : { problem: "invalid-save", status: "issue" };
+  return save && !ambiguousRequiredOpener(save)
+    ? { save, status: "valid" }
+    : { problem: "invalid-save", status: "issue" };
 }
