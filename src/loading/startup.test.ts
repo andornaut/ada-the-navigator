@@ -7,6 +7,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const view = vi.hoisted(() => ({
   dispose: vi.fn(),
+  layout: undefined as unknown,
   retry: undefined as (() => void | PromiseLike<void>) | undefined,
   style: vi.fn(),
   update: vi.fn(),
@@ -20,7 +21,8 @@ vi.mock("./progress.ts", () => ({
   mountLoading: progress.mount,
 }));
 vi.mock("@andornaut/game-kit/runtime/web/progress/dom/loadingFailure", () => ({
-  mountLoadingFailure: (context: { onRetry: () => void | PromiseLike<void> }) => {
+  mountLoadingFailure: (context: { layout?: unknown; onRetry: () => void | PromiseLike<void> }) => {
+    view.layout = context.layout;
     view.retry = context.onRetry;
     return {
       dispose: view.dispose,
@@ -31,8 +33,10 @@ vi.mock("@andornaut/game-kit/runtime/web/progress/dom/loadingFailure", () => ({
 }));
 import { presentInstallation } from "../pwa/installationPresentation.ts";
 import { type RequiredGame, startLoading, startupFence } from "./startup.ts";
-const root = () =>
+const root = (size = { height: 360, width: 720 }) =>
   ({
+    clientHeight: size.height,
+    clientWidth: size.width,
     ownerDocument: { body: {} },
     querySelector: () => ({ remove: vi.fn() }),
   }) as unknown as HTMLElement;
@@ -247,4 +251,27 @@ it("retries optional offline installation through the same presenter without ree
     state: { ...identity, error: new Error("late"), kind: "failed", stage: "registration" },
   });
   expect(view.update).toHaveBeenCalledTimes(calls);
+});
+
+it.each([
+  { height: 844, width: 390 },
+  { height: 390, width: 844 },
+])("uses the shared fallback layout with a physical minimum at $width x $height", async (size) => {
+  const required = createRequiredLoading(),
+    entry = game();
+  const stop = await startLoading(
+    required,
+    { stopGameOnCrash: vi.fn() },
+    async () => entry,
+    root(size),
+  );
+  const unit = Math.min(size.width / 720, size.height / 360);
+  expect(view.layout).toEqual({
+    actionAlign: "start",
+    gapPx: 8 * unit,
+    minActionSizePx: Math.max(48, 48 * unit),
+    paddingPx: 16 * unit,
+  });
+  expect(view.style.mock.calls.some(([property]) => property === "padding")).toBe(false);
+  stop();
 });

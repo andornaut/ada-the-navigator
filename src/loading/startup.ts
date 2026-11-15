@@ -8,10 +8,12 @@ import type { ProgressHandle } from "@andornaut/game-kit/runtime/progressState";
 import type { CrashScreen } from "@andornaut/game-kit/runtime/web/crash/dom/crashScreen";
 import { mountLoadingFailure } from "@andornaut/game-kit/runtime/web/progress/dom/loadingFailure";
 
+import { SPACING, TEXT_BUTTON } from "../data/layout.ts";
 import {
   type InstallationPresentation,
   observeInstallation,
 } from "../pwa/installationPresentation.ts";
+import { viewScale } from "../ui/layout/playView.ts";
 import { LOADING_LAYER } from "../ui/loadingBar.ts";
 import { loadingProgress, mountLoading } from "./progress.ts";
 
@@ -34,8 +36,16 @@ export async function startLoading(
   const stop = mountLoading(root);
   let game: RequiredGame | undefined;
   let installation: InstallationPresentation | undefined;
+  const scale = viewScale({ height: root.clientHeight, width: root.clientWidth });
+  const unit = Number.isFinite(scale) && scale > 0 ? scale : 1;
   const failure = mountLoadingFailure(
     {
+      layout: {
+        actionAlign: "start",
+        gapPx: SPACING.gap * unit,
+        minActionSizePx: Math.max(TEXT_BUTTON.height, TEXT_BUTTON.height * unit),
+        paddingPx: SPACING.pageInset * unit,
+      },
       async onRetry() {
         try {
           if (required.state.kind === "ready" && installation?.state.kind === "failed") {
@@ -61,7 +71,6 @@ export async function startLoading(
     "max-height": "calc(100vh - 2rem)",
     "max-width": "calc(100vw - 2rem)",
     overflow: "auto",
-    padding: "1rem",
     position: "fixed",
     top: "50%",
     transform: "translate(-50%, -50%)",
