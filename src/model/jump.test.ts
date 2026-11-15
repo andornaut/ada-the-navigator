@@ -190,6 +190,7 @@ describe("quantum jump home", () => {
     const model = launched();
     const flight = model.state.flight!;
     const seed = flight.seed;
+    const encounterSeed = flight.encounterSeed;
     flight.objects = [
       { hp: 1, id: "lost:pickup", kind: "pickup", radius: 10, upgrade: true, x: 900, y: 0 },
       {
@@ -221,7 +222,8 @@ describe("quantum jump home", () => {
     model.startGalaxy(1);
     playOpening(model);
     const next = model.state.flight!;
-    expect(next.seed).not.toBe(seed);
+    expect(next.seed).toBe(seed);
+    expect(next.encounterSeed).not.toBe(encounterSeed);
     // Of 3 ore, the jump keeps ceil(3 / 2).
     expect(next.cargo).toBe(2);
     expect(next.objects.some(({ id }) => id.startsWith("lost:"))).toBe(false);

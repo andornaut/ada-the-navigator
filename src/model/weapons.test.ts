@@ -129,6 +129,7 @@ describe("owned upgrade weapons", () => {
     expect(model.selectWeapon("laser")).toBe(true);
     const flight = model.state.flight!;
     const seed = flight.seed;
+    const encounterSeed = flight.encounterSeed;
     model.state.progress[1].deposited = 42;
     flight.shield = CONTENT.tuning.hazardDamage;
     incoming(flight);
@@ -138,7 +139,8 @@ describe("owned upgrade weapons", () => {
     expect(model.state.progress[1].deposited).toBe(42);
     model.startGalaxy(1);
     playOpening(model);
-    expect(model.state.flight!.seed).not.toBe(seed);
+    expect(model.state.flight!.seed).toBe(seed);
+    expect(model.state.flight!.encounterSeed).not.toBe(encounterSeed);
     expect(model.weapons()).toEqual([
       { ammo: null, id: "laser", level: 1, selected: true },
       { ammo: 900, id: "multiLaser", level: 1, selected: false },

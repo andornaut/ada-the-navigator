@@ -151,8 +151,11 @@ describe("persistent geography fresh entry", () => {
     expect(flightEncounterSeed(game.state.flight!)).not.toBe(flightEncounterSeed(first));
     game.backToTitle();
     game.restart();
-    expect(game.state.progress[1].geography).not.toEqual(geography);
+    expect(game.state.progress[1].geography).toBeUndefined();
     expect(game.state.progress[1].resolved).toBe(false);
+    game.startGalaxy(1);
+    expect(game.state.progress[1].geography).not.toEqual(geography);
+    expect(game.state.flight!.seed).not.toBe(first.seed);
   });
 
   it("keeps separate galaxy charts through travel and serialized home reentry", () => {

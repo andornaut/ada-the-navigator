@@ -29,12 +29,12 @@ export function freshGalaxyGeography(seed: number): GalaxyGeography {
   return { seed, sitePolicy: "seeded", version: 1 };
 }
 
-/** Initialize only absent procedural history; legacy fixed-site policy never changes. */
+/** First entry initializes a new chart; migrated legacy charts retain their explicit site policy. */
 export function initializeGalaxyGeography(
   nextSeed: () => number,
   progress: Pick<GalaxyProgress, "geography">,
 ): GalaxyGeography & { seed: number } {
-  const geography = progress.geography ?? { seed: null, sitePolicy: "legacy-fixed", version: 1 };
+  const geography = progress.geography ?? { seed: null, sitePolicy: "seeded", version: 1 };
   if (geography.seed === null) {
     const seed = nextSeed();
     if (!uint32(seed)) {

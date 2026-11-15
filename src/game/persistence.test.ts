@@ -63,7 +63,7 @@ describe("canonical Ada save storage", () => {
     expect(boundary.values.get("ada-the-navigator.save")).toBe(before);
     const loaded = await boundary.store.load();
     expect(loaded.status).toBe("loaded");
-    expect(loaded.save.version).toBe(12);
+    expect(loaded.save.version).toBe(SAVE_VERSION);
     expect(relaunch(CONTENT, loaded.save).state).toEqual(model.state);
   });
 

@@ -21,7 +21,7 @@ import {
 import { settlementsNear } from "./legacySettlements.ts";
 import { worldOreFieldsNear } from "./oreFields.ts";
 import { retainedLandmarkSites } from "./retainedLandmarks.ts";
-import { restoreSave } from "./save.ts";
+import { restoreSave, SAVE_VERSION } from "./save.ts";
 import { stationById, stationsNear } from "./stations.ts";
 import type { SpaceObject } from "./types.ts";
 
@@ -201,7 +201,7 @@ describe("expanded landmark placement", () => {
       expect(chartLandmarks(1, model.state.progress[1], site)).toEqual([site.id]);
     }
     const save = model.save();
-    expect(JSON.parse(save).version).toBe(12);
+    expect(JSON.parse(save).version).toBe(SAVE_VERSION);
     const restored = restoreSave(save)!;
     expect(restored.progress[1].charted).toEqual(sites.map(({ id }) => id));
     expect(restored.economy.stardust).toBe(money);

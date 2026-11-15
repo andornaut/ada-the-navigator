@@ -747,6 +747,12 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
       ) {
         return null;
       }
+      const geography = (value.progress as unknown as GameState["progress"])[
+        f.galaxy as GalaxyNumber
+      ].geography;
+      if (geography !== undefined && geography.seed !== f.seed) {
+        return null;
+      }
       const routes = destinationIds[value.selectedGalaxy as number] ?? [];
       if (f.combat !== undefined && !combatState(routes, f.combat)) {
         return null;
