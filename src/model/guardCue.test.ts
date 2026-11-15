@@ -81,16 +81,13 @@ const onScreen = (flight: FlightState, object: SpaceObject) =>
   );
 
 describe("a blocking guard's cue", () => {
-  it("cues once per flight when Ada reaches the destination, summoning and marking the guard", () => {
+  it("cues once per flight when Ada reaches the destination without disclosing the unseen guard", () => {
     const { flight, guard } = guarded(1200);
     expect(onScreen(flight, guard)).toBe(false);
     expect(stepFlight(CONTENT, 0.05, idle, flight)).toContainEqual(cue);
     expect(flight.guardCues).toEqual(["quest"]);
     expect(flight.summonedGuards).toEqual(expect.arrayContaining([guard.id]));
-    // Its guard marker shows though Ada has never seen it.
-    expect(markerEdges(markerModel(flight)).filter((marker) => marker.id === guard.id)).toEqual([
-      { bar: 1, id: guard.id, kind: "guard", x: guard.x, y: guard.y },
-    ]);
+    expect(markerEdges(markerModel(flight)).filter((marker) => marker.id === guard.id)).toEqual([]);
     // It flies in until it is on screen, firing nothing on the way, then fights as usual.
     let seconds = 0;
     let events: FlightEvent[] = [];
@@ -158,6 +155,7 @@ describe("a blocking guard's cue", () => {
     });
     const context = flightWorldContext(flight);
     const tracker = markerModel(flight);
+    tracker.markerTargetDisplayed(guard.id);
     expect(stepFlight(CONTENT, 0.05, idle, flight)).toContainEqual(cue);
     const marker = tracker.targetMarkers(GAME_AREA).find(({ id }) => id === guard.id)!;
     expect(marker).toMatchObject({ id: guard.id, symbol: "guard" });

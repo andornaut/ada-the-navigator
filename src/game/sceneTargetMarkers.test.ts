@@ -46,6 +46,29 @@ describe("actual target render acknowledgment", () => {
     expect(f.displayed).not.toHaveBeenCalled();
   });
 
+  it.each(["hidden-parent", "transparent-parent", "masked-node", "masked-parent"])(
+    "does not identify through %s",
+    (kind) => {
+      const f = fixture();
+      const parent = { ...f.node };
+      if (kind === "hidden-parent") {
+        parent.visible = false;
+      }
+      if (kind === "transparent-parent") {
+        parent.alpha = 0;
+      }
+      if (kind === "masked-node") {
+        Object.assign(f.node, { mask: {} });
+      }
+      if (kind === "masked-parent") {
+        Object.assign(parent, { mask: {} });
+      }
+      Object.assign(f.node, { parentContainer: parent });
+      acknowledgeTargetDraws(f.context);
+      expect(f.displayed).not.toHaveBeenCalled();
+    },
+  );
+
   it.each(["hidden", "transparent", "outside", "empty"])("ignores %s nodes", (kind) => {
     const f = fixture();
     if (kind === "hidden") {

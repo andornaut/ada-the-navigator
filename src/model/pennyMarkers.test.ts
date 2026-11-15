@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
+import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
 import { createEnemy } from "./enemyAi.ts";
@@ -31,7 +32,7 @@ function fixture() {
   const store = markerKnowledgeStore(progress, flight, (id) => id === "workshop");
   return { cache, flight, model, progress, store };
 }
-function boss(id: string, archetype: "capital" | "fighter"): SpaceObject {
+function boss(id: string, archetype: "capital" | "fighter" | "frigate" | "platform"): SpaceObject {
   const definition = enemyDefinition(1, archetype, id);
   return {
     enemy: createEnemy(definition, { archetype, id, packId: null, phase: 0 }, { x: 8000, y: 0 }),
@@ -124,14 +125,41 @@ describe("production unified marker facade", () => {
     flight.objects = [{ hp: 1, id: "workshop", kind: "destination", radius: 10, x: 2000, y: 0 }];
     expect(model.targetMarkers(GAME_AREA).filter(({ id }) => id === "workshop")).toHaveLength(1);
   });
-  it("limits the distant exception to the actual triggered boss, ending it with the trigger", () => {
+  it("does not disclose summoned ordinary quest or station guards outside range", () => {
     const { flight, model } = fixture();
-    flight.objects = [boss("boss", "capital"), boss("escort", "fighter")];
-    flight.summonedGuards = ["boss", "escort"];
-    expect(model.targetMarkers(GAME_AREA).map(({ id }) => id)).toEqual(["boss"]);
-    delete flight.summonedGuards;
+    flight.objects = [boss("quest-frigate", "frigate"), boss("quest-platform", "platform")];
+    flight.summonedGuards = flight.objects.map(({ id }) => id);
+    flight.guardCues = ["workshop"];
     expect(model.targetMarkers(GAME_AREA)).toEqual([]);
-    flight.objects[0]!.x = 4000;
-    expect(model.targetMarkers(GAME_AREA).map(({ id }) => id)).toEqual(["boss"]);
+    expect(flight.markerActors).toBeUndefined();
+  });
+  it("limits distant disclosure to the active canonical flagship encounter and terminates it", () => {
+    const { model } = fixture();
+    const flight = createFlight(CONTENT, 6, 7, { known: [] });
+    flight.player = { x: 0, y: 0 };
+    model.state.flight = flight;
+    const flagship = boss(PHANTOM_FLAGSHIP, "capital");
+    flight.objects = [flagship, boss("escort", "fighter")];
+    flight.phantom = {
+      allies: [],
+      allyTurn: 0,
+      blockades: {},
+      chatter: [],
+      disabledCued: false,
+      enemyIds: [PHANTOM_FLAGSHIP, "escort"],
+      phase: "flagship",
+      resolvedIds: [],
+      wave: 3,
+      waypoint: { x: 8000, y: 0 },
+    };
+    expect(model.targetMarkers(GAME_AREA).map(({ id }) => id)).toEqual([PHANTOM_FLAGSHIP]);
+    flight.phantom.phase = "salvaged";
+    expect(model.targetMarkers(GAME_AREA)).toEqual([]);
+    flagship.x = 4000;
+    expect(model.targetMarkers(GAME_AREA).map(({ id }) => id)).toEqual([PHANTOM_FLAGSHIP]);
+    flagship.x = 8000;
+    flight.phantom.phase = "flagship";
+    flagship.enemy!.disabled = true;
+    expect(model.targetMarkers(GAME_AREA)).toEqual([]);
   });
 });

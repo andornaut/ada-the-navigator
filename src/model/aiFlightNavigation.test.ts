@@ -59,6 +59,7 @@ it.each([false, true])(
       type: "guardCue",
     });
     const tracker = markerModel(flight);
+    tracker.markerTargetDisplayed(guard.id);
     expect(tracker.targetMarkers(GAME_AREA).some(({ id }) => id === guard.id)).toBe(true);
     const radius = guard.radius;
     let closest = Infinity;

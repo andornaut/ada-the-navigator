@@ -7,6 +7,8 @@ import { isDiscoveryCache } from "./worldArt.ts";
 interface DrawnTarget {
   readonly alpha: number;
   readonly visible: boolean;
+  readonly mask?: unknown;
+  readonly parentContainer?: DrawnTarget | null;
   getBounds(): {
     readonly bottom: number;
     readonly left: number;
@@ -28,8 +30,14 @@ interface TargetDrawContext {
   readonly warpCover: boolean;
 }
 function displayed(node: DrawnTarget): boolean {
-  if (!node.visible || node.alpha <= 0) {
-    return false;
+  for (
+    let current: DrawnTarget | null | undefined = node;
+    current;
+    current = current.parentContainer
+  ) {
+    if (!current.visible || current.alpha <= 0 || current.mask) {
+      return false;
+    }
   }
   const bounds = node.getBounds();
   return (

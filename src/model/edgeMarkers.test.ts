@@ -117,16 +117,16 @@ describe("canonical edge marker lifecycle", () => {
     Object.assign(drone, NEAR);
     expect(markerEdges(model)).toEqual([]);
   });
-  it("merges known and triggered boss contributions before the boss reaches view", () => {
+  it("does not disclose a generic summoned guard and retains its icon after actual display", () => {
     const guard = { ...enemy("capital", { x: range + 500, y: 0 }, "guard"), routeId: "quest" };
     const state = flight([guard]),
       model = markerModel(state);
     expect(markerEdges(model)).toEqual([]);
     state.summonedGuards = [guard.id];
-    const expected = [{ bar: 1, id: "guard", kind: "guard", x: range + 500, y: 0 }];
-    expect(markerEdges(model)).toEqual(expected);
-    expect(markerEdges(model)).toEqual(expected);
+    expect(markerEdges(model)).toEqual([]);
+    expect(markerEdges(model)).toEqual([]);
     Object.assign(guard, NEAR);
+    displayMarkerFixtures(model);
     expect(markerEdges(model)).toEqual([]);
     delete state.summonedGuards;
     Object.assign(guard, OFF);

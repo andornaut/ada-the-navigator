@@ -736,11 +736,18 @@ export class GameModel {
         ...store.ids().filter((id) => store.get(id) === "identified"),
       ]),
     ];
+    const encounterIds =
+      f.galaxy === 6 &&
+      !progress.questComplete &&
+      f.phantom?.phase === "flagship" &&
+      f.phantom.enemyIds.includes(PHANTOM_FLAGSHIP)
+        ? [PHANTOM_FLAGSHIP]
+        : [];
     const candidates = new Set([
       ...known,
       ...store.ids(),
       ...this.indicatorTargets.map(({ id }) => id),
-      ...(f.summonedGuards ?? []),
+      ...encounterIds,
     ]);
     const task = this.state.tasks[f.galaxy];
     const questContext = {
@@ -757,7 +764,7 @@ export class GameModel {
       if (questsForObject(questContext, id).length > 0) {
         contributions.push({ id, source: "quest" });
       }
-      if (f.summonedGuards?.includes(id)) {
+      if (encounterIds.includes(id)) {
         const resolved = resolveTargetObject(f, id);
         if (
           resolved.state === "present" &&
