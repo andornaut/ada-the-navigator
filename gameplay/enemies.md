@@ -39,8 +39,8 @@ trigger the same retreat for survivors. Active morale retreat suppresses fire;
 recovery can resume aggression under the observation and admission rules below.
 
 `enemyEffects(definition, state)` derives destroyed part IDs, disablement and
-destruction. A hit on a heavy's hardpoint damages that hardpoint and the hull; a
-hull hit damages the hull. Hull HP at 0 destroys the ship. Destroying every weapon
+destruction. A hit on a heavy's hardpoint damages only that hardpoint, without
+spill into the hull. A hull hit damages only the hull. Hull HP at 0 destroys the ship. Destroying every weapon
 hardpoint disables it while its hull survives: it emits no intents, steers no
 more and coasts to rest. A destroyed weapon emits no further shots. Each engine provides an equal share of thrust: a
 ship's top speed scales with the fraction of its engines still working, and
@@ -109,6 +109,18 @@ Platforms have no navigation and remain stationary. Disabled or salvaged ships
 do not patrol or investigate. A ship with every engine destroyed has no thrust
 and coasts to rest. Patrol changes neither aggression, engagement admission,
 pursuit leashes nor safe-zone permissions.
+
+## Obstacle clearance
+
+The optional read-only navigation query steers around authored scenery using the
+actual moving hull and drawn obstacle outlines. `ENEMY_AVOIDANCE` in
+`src/data/enemyNavigation.ts` supplies the preferred 80-world-unit berth,
+40-unit constrained-passage berth, 16 candidate directions and six minimum
+prediction samples. Prediction resolves intermediate simulation steps as needed.
+These steering clearances do not inflate physical collision geometry or introduce
+cover behavior. They do not guarantee the preferred berth in every passage.
+Without relevant obstacle candidates, the existing steering path remains active.
+Combat speed, pursuit limits, weapon intent and damage remain unchanged.
 
 ## Finite pursuit
 
