@@ -23,6 +23,7 @@ import {
   showTouchChrome,
   useDiscFrame,
 } from "../game/touchChrome.ts";
+import type { RequiredReady } from "../loading/required.ts";
 import type { ItemGain } from "../model/itemGains.ts";
 import type { ContextQuestDetails } from "../model/questObjectLinks.ts";
 import { weaponName } from "../model/shop.ts";
@@ -78,6 +79,7 @@ import { bindDesktopInput, DesktopControlState, type DesktopFrame } from "./desk
 import { type ControlSample, ControlState } from "./state.ts";
 
 export interface ControlsOptions {
+  readonly requiredReady?: RequiredReady;
   readonly contextQuestDetails?: () => ContextQuestDetails | null;
   readonly aboardResource?: () => {
     readonly questId?: string;
@@ -202,7 +204,8 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const previousTouchAction = canvas.style.touchAction;
   canvas.style.touchAction = "none";
   const state = new ControlState();
-  const desktop = new DesktopControlState(() => state.accepts());
+  const requiredReady = () => options.requiredReady?.() ?? true;
+  const desktop = new DesktopControlState(() => requiredReady() && state.accepts());
   let enabled = true;
   // Whether the current gameplay view permits the Paused card (PauseState.place).
   let pausable = false;
@@ -728,6 +731,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     desktop.reset();
   };
   const keyDown = (event: KeyboardEvent) => {
+    if (!requiredReady()) {
+      return;
+    }
     // Q exits from the bare start screen, wherever Exit shows.
     if (
       event.code === "KeyQ" &&
@@ -915,6 +921,10 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       status.resetShieldOreSpent(total);
     },
     sample(frame) {
+      if (!requiredReady()) {
+        reset();
+        return state.sample();
+      }
       const touch = state.sample();
       const sample =
         frame &&
@@ -952,12 +962,13 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       }
     },
     setEnabled(value) {
-      if (enabled !== value) {
+      const nextEnabled = value && requiredReady();
+      if (enabled !== nextEnabled) {
         desktop.reset();
       }
-      enabled = value;
-      state.setEnabled(value);
-      weapons.setEnabled(value && !modalOpen());
+      enabled = nextEnabled;
+      state.setEnabled(nextEnabled);
+      weapons.setEnabled(nextEnabled && !modalOpen());
     },
     setExitButton() {
       if (exitButton) {
