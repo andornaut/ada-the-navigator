@@ -2138,14 +2138,10 @@ function releaseSummonedGuards(viewportWidth: number, flight: FlightState): void
   }
 }
 
-export type RouteGuardPlanResult =
-  { readonly status: "empty" } | ReturnType<typeof routeGuardEvidence>;
+export type RouteGuardPlanResult = ReturnType<typeof routeGuardEvidence>;
 
-/** A zero plan is a completed authoring outcome, separate from admission and enemy defeat. */
+/** Only actual actor or tombstone evidence establishes a required guard's outcome. */
 export function routeGuardPlanResult(flight: FlightState, id: string): RouteGuardPlanResult {
-  if (flight.combat?.emptyRoutePlans?.includes(id)) {
-    return { status: "empty" };
-  }
   return routeGuardEvidence(flight, id);
 }
 
@@ -2274,8 +2270,7 @@ export function ensureRouteEncounter(
   if (
     isHeld(id, flight) ||
     Object.hasOwn(flight.world.notables, `route:${id}`) ||
-    combat(flight).routeEncounters.includes(id) ||
-    combat(flight).emptyRoutePlans?.includes(id)
+    combat(flight).routeEncounters.includes(id)
   ) {
     return null;
   }
@@ -2292,13 +2287,20 @@ export function ensureRouteEncounter(
       ? "frigate"
       : "capital";
   if (archetype === "frigate") {
+    const storage = requiredRouteStorage.get(flight);
+    if (storage) {
+      const activated = activateRequiredRoute(content, storage, id, flight);
+      return activated.status === "created" || activated.status === "existing"
+        ? activated.guard
+        : null;
+    }
     const guardId = `route:${id}`;
-    const home = questFrigateHome(content, flight, guardId, id);
-    const guard = home ? spawnQuestFrigateAt(content, flight, guardId, id, home) : null;
+    const plan = planRequiredFrigate(content, flight, guardId, id);
+    const guard = plan
+      ? spawnQuestFrigateAt(content, flight, guardId, id, plan.leader, plan.support.length)
+      : null;
     if (guard) {
       combat(flight).routeEncounters.push(id);
-    } else {
-      (combat(flight).emptyRoutePlans ??= []).push(id);
     }
     return guard;
   }
