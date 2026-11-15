@@ -18,6 +18,12 @@ class Element {
   addEventListener(type: string, callback: () => void) {
     this.listeners.set(type, [...(this.listeners.get(type) ?? []), callback]);
   }
+  removeEventListener(type: string, callback: () => void) {
+    this.listeners.set(
+      type,
+      (this.listeners.get(type) ?? []).filter((item) => item !== callback),
+    );
+  }
   append(...nodes: Element[]) {
     for (const node of nodes) {
       node.parent = this;
@@ -165,5 +171,8 @@ describe("Achievements page actions", () => {
     expect(next.hidden).toBe(false);
     expect(active).toBe(close);
     card.dispose();
+    for (const control of [previous, next, close]) {
+      expect(control.listeners.get("click")).toEqual([]);
+    }
   });
 });
