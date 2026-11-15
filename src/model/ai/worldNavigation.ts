@@ -31,7 +31,7 @@ export function worldNavigationQuery(
   objects: readonly SpaceObject[],
   definition: Pick<EnemyDefinition, "navigation" | "physics">,
   enemy: Pick<EnemyState, "archetype" | "facing" | "position"> & { readonly radius: number },
-): NavigationQuery {
+): NavigationQuery | undefined {
   const reach = navigationReach(definition);
   const initialHull = enemyHull(enemy);
   const hullRadius = initialHull ? partsReach(worldParts(initialHull)) : enemy.radius;
@@ -43,6 +43,9 @@ export function worldNavigationQuery(
         reach +
           sceneryBound(object, hullRadius + ENEMY_AVOIDANCE.clearance, context.drawnOf(object)),
   );
+  if (!candidates.length) {
+    return undefined;
+  }
   const contact = (
     pose: NavigationPose,
     clearance: number,

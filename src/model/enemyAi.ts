@@ -14,6 +14,8 @@ import {
 import { MUZZLE_ART, muzzleLayout } from "../data/enemyMuzzles.ts";
 import { SHARED_SHIP_PHYSICS } from "../data/shipPhysics.ts";
 import type { WeaponLevel } from "../data/types.ts";
+import type { NavigationQuery } from "./ai/navigationQuery.ts";
+import { avoidObstacles } from "./ai/obstacleNavigation.ts";
 import { muzzleOffset } from "./muzzles.ts";
 import { fanHeading } from "./playerProjectiles.ts";
 import { direction, hullOffset, speedFraction, stepShipMotion, turnToward } from "./shipPhysics.ts";
@@ -96,6 +98,8 @@ export interface EnemyState {
   weaponLevel?: WeaponLevel;
 }
 export interface EnemyContext extends WorldContext {
+  /** Optional hull-clearance steering, separate from perception and weapon intent. */
+  navigationQuery?: NavigationQuery;
   /** Admission for new sight aggression only; damage, summons and existing pursuit bypass it. */
   engagementAdmitted?: boolean;
   dormantPackMembers?: Readonly<Record<string, number>>;
@@ -839,7 +843,7 @@ export function stepEnemy(
   const fullSpeed = definition.physics.maxSpeed;
   const speed = fullSpeed * effects.thrust;
   // A disabled heavy stops steering and coasts to rest.
-  const request = effects.disabled
+  let request = effects.disabled
     ? { x: 0, y: 0 }
     : summoned
       ? unit(worldDelta(context, state.position, context.summonTarget ?? context.player))
@@ -856,6 +860,9 @@ export function stepEnemy(
         turnSeconds: Math.max(definition.physics.turnSeconds, definition.navigation!.turnSeconds),
       }
     : definition.physics;
+  if (context.navigationQuery && !effects.disabled && !effects.movementStopped) {
+    request = avoidObstacles(physics, context.navigationQuery, context.dt, speed, state, request);
+  }
   if (
     effects.defeated ||
     (next.returning && !definition.navigation && homeDistance <= 5 && !effects.movementStopped)

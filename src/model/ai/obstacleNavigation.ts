@@ -11,6 +11,7 @@ import { navigationHorizon } from "./prediction.ts";
 export function avoidObstacles(
   physics: ShipPhysics,
   query: NavigationQuery,
+  stepSeconds: number,
   speed: number,
   state: EnemyState,
   request: Point,
@@ -28,17 +29,24 @@ export function avoidObstacles(
     }
   }
   const desired = direction(request);
-  const dt = horizon / ENEMY_AVOIDANCE.predictionSteps;
+  const firstStep = Math.min(horizon, stepSeconds);
+  const samples = Math.max(ENEMY_AVOIDANCE.predictionSteps, Math.ceil(horizon / stepSeconds));
+  const predictionStep = (horizon - firstStep) / (samples - 1);
   const safe = (course: Point, clearance: number): boolean => {
     let position = { ...state.position };
     let facing = { ...state.facing };
     let motion = { heading: state.heading, velocity: { ...state.velocity } };
     let cleared = query.clear({ facing, position }, clearance);
-    for (let step = 0; step < ENEMY_AVOIDANCE.predictionSteps; step++) {
+    // Check the exact next runtime step before sampling the remaining prediction horizon.
+    for (let step = 0; step < samples; step++) {
+      const dt = step === 0 ? firstStep : predictionStep;
+      if (dt <= 0) {
+        continue;
+      }
       motion = stepShipMotion(
         physics,
         dt,
-        { maxSpeed: speed, restHeading: facing },
+        { maxSpeed: physics.maxSpeed, restHeading: facing },
         { direction: course, speed: speed * share },
         motion,
       );

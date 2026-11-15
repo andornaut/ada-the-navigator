@@ -35,6 +35,7 @@ import {
   weaponAt,
   type WeaponDefinition,
 } from "../data/weaponCatalog.ts";
+import { worldNavigationQuery } from "./ai/worldNavigation.ts";
 import { rollAsteroidLoot } from "./asteroidLoot.ts";
 import {
   ASTEROID_SHAPES,
@@ -2552,6 +2553,16 @@ function enemies(
           )
         : undefined;
     const approach = escortLeader ? frigateEscortStation(escortLeader, state.phase) : flight.player;
+    const navigationQuery = worldNavigationQuery(
+      {
+        ...flightWorldContext(flight),
+        drawnOf: (entry) => drawnOf(flight, entry),
+        frameOf: (entry) => frameOf(flight, entry),
+      },
+      flight.objects,
+      definition,
+      { ...state, position: before, radius: object.radius },
+    );
     const intent = stepEnemy(
       definition,
       {
@@ -2562,6 +2573,7 @@ function enemies(
         engagementAdmitted: admissions.has(object.id),
         initialPackSizes: combat(flight).initialPackSizes,
         lead: ENEMY_AIM.lead[ROUTE_POSITION[flight.galaxy]],
+        ...(navigationQuery ? { navigationQuery } : {}),
         peers,
         player: flight.player,
         playerVelocity: aimVelocity,

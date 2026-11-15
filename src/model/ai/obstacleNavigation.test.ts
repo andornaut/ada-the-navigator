@@ -41,13 +41,10 @@ it("steers the released navigation core past an authored asteroid using current 
       definition,
       { ...state, radius },
     );
-    const request = avoidObstacles(
-      definition.physics,
-      query,
-      definition.physics.maxSpeed,
-      state,
-      direction({ x: 800 - state.position.x, y: -state.position.y }),
-    );
+    const direct = direction({ x: 800 - state.position.x, y: -state.position.y });
+    const request = query
+      ? avoidObstacles(definition.physics, query, dt, definition.physics.maxSpeed, state, direct)
+      : direct;
     const motion = stepShipMotion(
       definition.physics,
       dt,
@@ -71,4 +68,19 @@ it("steers the released navigation core past an authored asteroid using current 
   expect(state.position.x).toBeGreaterThan(500);
   expect(closest).toBeGreaterThanOrEqual(ENEMY_AVOIDANCE.clearance);
   expect(rock.radius).toBe(shape.radius);
+});
+
+it("keeps navigation absent when no obstacle reaches the canonical prediction range", () => {
+  const definition = enemyCatalog.frigate;
+  const enemy = createEnemy(
+    definition,
+    { archetype: "frigate", id: "empty-navigation", packId: null, phase: 0 },
+    { x: 0, y: 0 },
+  );
+  expect(
+    worldNavigationQuery({ drawnOf: scenerySilhouette, frameOf: () => 0 }, [], definition, {
+      ...enemy,
+      radius: CONTENT.tuning.flight.shipRadius * definition.sizeRatio,
+    }),
+  ).toBeUndefined();
 });
