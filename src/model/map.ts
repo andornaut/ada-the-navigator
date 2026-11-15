@@ -121,7 +121,8 @@ export interface LandmarkChart {
 /** No landmarks yet: the slot the landmark model fills. */
 export const NO_LANDMARKS: LandmarkChart = { charted: [], total: 0 };
 
-export type MapPlaceKind = "destination" | "holodisk" | "job" | "landmark" | "station";
+export type MapPlaceKind =
+  "destination" | "holodisk" | "hostileStation" | "job" | "landmark" | "station";
 
 /**
  * A place's map symbol (art/map.md "Symbols"): a station, galaxy one's three outposts by name,
@@ -132,6 +133,7 @@ export type MapSymbol =
   | "destination"
   | "growers"
   | "holodisk"
+  | "hostileStation"
   | "job"
   | "nebula"
   | "salvagers"
@@ -153,6 +155,7 @@ const PLACE_TYPES: Readonly<Record<MapSymbol, MapPlaceType | null>> = {
   destination: "story",
   growers: "outpost",
   holodisk: "holodisk",
+  hostileStation: "station",
   job: null,
   nebula: "nebula",
   salvagers: "outpost",
@@ -170,7 +173,10 @@ export function placeType(place: Pick<MapPlace, "symbol">): MapPlaceType | null 
  * A place the map shows. Destinations and stations offer Travel here; landmarks and a job's own
  * spot do not.
  */
+export type HostileStationMapStatus = "present" | "disabled" | "removed" | "unresolved";
+
 export interface MapPlace {
+  readonly hostileStationStatus?: HostileStationMapStatus;
   readonly id: string;
   /** Whether it is the held job's target. */
   readonly job: boolean;
@@ -184,6 +190,16 @@ export interface MapPlace {
   readonly travel: boolean;
   readonly x: number;
   readonly y: number;
+}
+
+/** Model-composed geographic rows, with no travel or station-service permission. */
+export interface KnownHostileStationMapPlace extends MapPlace {
+  readonly hostileStationStatus: HostileStationMapStatus;
+  readonly job: false;
+  readonly kind: "hostileStation";
+  readonly objective: false;
+  readonly symbol: "hostileStation";
+  readonly travel: false;
 }
 
 /**
@@ -240,6 +256,7 @@ export interface LocalMap {
 }
 
 export interface MapContext extends StationPlacementContext {
+  readonly knownHostileStationPlaces?: readonly KnownHostileStationMapPlace[];
   /** Known procedural POIs, separate from the bounded authored survey and its credit. */
   readonly chartedPois?: readonly MapLandmark[];
   /** Taken from the active flight topology, never inferred from the current build. */
@@ -416,6 +433,12 @@ export function localMap(context: MapContext): LocalMap {
       x,
       y,
     });
+  }
+  for (const place of context.knownHostileStationPlaces ?? []) {
+    if (!present.has(place.id)) {
+      present.add(place.id);
+      places.push(place);
+    }
   }
   const { job } = context;
   const marked = places.map((entry) => (entry.id === job?.id ? { ...entry, job: true } : entry));

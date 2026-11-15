@@ -118,6 +118,7 @@ import {
 import { flightEncounterSeed, flightWorldContext } from "./flightTopology.ts";
 import { initializeGalaxyGeography } from "./galaxyGeography.ts";
 import { liveEnemy } from "./geography.ts";
+import { hostileStationMapPlaces } from "./hostileStationMap.ts";
 import {
   INDICATOR_SOURCES,
   type IndicatorTarget,
@@ -2599,6 +2600,7 @@ export class GameModel {
         ? (f.objects.find((o) => o.kind === "destination" && o.id === "holodisk") ?? null)
         : null,
       job: this.jobMapTarget(f),
+      knownHostileStationPlaces: hostileStationMapPlaces(f, this.current),
       label: (id, kind) =>
         kind === "holodisk" ? this.label("mapHolodiskWaypoint") : (labels.get(id) ?? id),
       landmarks: {
