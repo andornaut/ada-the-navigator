@@ -1,4 +1,4 @@
-import type { Rect } from "@andornaut/game-kit/rect";
+import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import type { ScanOutcome, ScanQuestIdentity } from "../model/scanOutcomes.ts";
 import type { Vec } from "../model/types.ts";
