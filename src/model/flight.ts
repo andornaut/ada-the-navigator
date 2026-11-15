@@ -1801,9 +1801,9 @@ function guardPatrolFrame(
 /**
  * The first time each flight Ada comes within Talk range of a destination its guard still blocks
  * (gameplay/rules.md "Space encounters and feedback"), the guard is cued: a dormant retained
- * guard loads, and each blocking guard is summoned toward Ada, holding fire until it is inside the
- * current play view (releaseSummonedGuards) and marked at the edge while off screen
- * (edgeMarkers.ts). The game has Astra say a guard line on the event.
+ * guard loads. Quest frigates and their surviving followers remain local to the exact site.
+ * Other blocking encounters retain their existing summon and play-view handoff.
+ * The cue event and stable marker identity are unchanged.
  */
 function cueGuards(content: GameContent, flight: FlightState, events: FlightEvent[]): void {
   const cued = flight.objects.filter(

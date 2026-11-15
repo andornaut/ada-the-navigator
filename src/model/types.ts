@@ -142,6 +142,8 @@ export interface FlightState {
   combat?: {
     initialPackSizes: Record<string, number>;
     routeEncounters: string[];
+    /** Authored route IDs whose complete guard plan selected zero formations. */
+    emptyRoutePlans?: string[];
     /** Whale destinations whose hunting pack has been placed this flight. */
     huntingPacks?: string[];
     unloadedPackMembers?: Record<string, number>;
