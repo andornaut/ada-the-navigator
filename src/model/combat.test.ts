@@ -177,30 +177,76 @@ function partPosition(object: SpaceObject, id: string): Vec {
 
 describe("integrated combat", () => {
   it("fires bolts and missiles from independent capital hardpoints and preserves saved futures", () => {
-    // Needle (position 3): a capital with missiles and no Scattershot, whose dots fall short of
-    // Ada here; every mount fires its weapon's level 1 volley at once.
+    // Needle (position 3): a real capital loadout with missiles and no short-range Scattershot.
     const flight = createFlight(CONTENT, 4, 173, progress);
     flight.objects = [];
-    const id = loadoutId("capital", 4, (loadout) => {
-      const weapons = [...loadout.values()];
+    const id = Array.from({ length: 128 }, (_, index) => `target:${index}`).find((candidate) => {
+      const weapons = [...heavyLoadout("capital", 3, candidate)!.values()];
       return weapons.includes("rapidMissile") && !weapons.includes("scattershot");
     });
-    const target = ship("capital", { x: 400, y: 0 }, enemyDefinition(4, "capital", id), id);
+    if (!id) {
+      throw new Error("No valid bolt-and-missile capital loadout in bounded fixture search");
+    }
+    const definition = enemyDefinition(4, "capital", id);
+    const target = ship("capital", { x: 400, y: 0 }, definition, id);
+    const ordered = definition.mounts!.fill.flatMap((mount) =>
+      definition.hardpoints.flatMap((part) =>
+        part.kind === "weapon" && part.id === mount ? [part] : [],
+      ),
+    );
+    const dt = 0.01;
     flight.objects.push(target);
-    stepFlight(CONTENT, 0.01, idle, flight);
+    stepFlight(CONTENT, dt, idle, flight);
+    expect(target.enemy!.firePhasesInitialized).toBe(true);
+    expect(flight.shots.map((shot) => shot.projectile)).toEqual(
+      ordered[0]!.fire.angles.map(() => ordered[0]!.fire.projectile),
+    );
+    ordered.forEach((part, index) => {
+      const initial = (index === 0 ? 1 : index / ordered.length) * part.fire.interval;
+      expect(target.enemy!.hardpoints.find((value) => value.id === part.id)!.cooldown).toBeCloseTo(
+        initial - dt,
+        9,
+      );
+    });
+    const resumed = JSON.parse(JSON.stringify(flight)) as FlightState;
+    expect(resumed.objects[0]!.enemy!.firePhasesInitialized).toBe(true);
+    expect(resumed.objects[0]!.enemy!.hardpoints).toEqual(target.enemy!.hardpoints);
+    const lastPhase = Math.max(
+      ...ordered.map((part, index) => (index / ordered.length) * part.fire.interval),
+    );
+    for (let remaining = lastPhase; remaining > 1e-9;) {
+      const slice = Math.min(dt, remaining);
+      stepFlight(CONTENT, slice, idle, flight);
+      stepFlight(CONTENT, slice, idle, resumed);
+      expect(resumed).toEqual(flight);
+      remaining -= slice;
+    }
+    // Mixed periods can repeat before another mount's first phase; retain every due volley.
     const kinds = flight.shots.map((shot) => shot.projectile);
-    const expected = [...heavyLoadout("capital", 3, id)!.values()].flatMap(volley);
-    expect(kinds.filter((kind) => kind === "bolt")).toHaveLength(
-      expected.filter((kind) => kind === "bolt").length,
-    );
-    expect(kinds.filter((kind) => kind === "missile")).toHaveLength(
-      expected.filter((kind) => kind === "missile").length,
-    );
+    const horizon = lastPhase + dt;
+    const expected = ordered.flatMap((part, index) => {
+      const phase = (index / ordered.length) * part.fire.interval;
+      let volleys = 0;
+      for (let at = phase; at < horizon - 1e-9; at += part.fire.interval) {
+        volleys++;
+      }
+      expect(volleys).toBeGreaterThan(0);
+      expect(target.enemy!.hardpoints.find((value) => value.id === part.id)!.cooldown).toBeCloseTo(
+        phase + volleys * part.fire.interval - horizon,
+        9,
+      );
+      return Array.from({ length: volleys }, () =>
+        part.fire.angles.map(() => part.fire.projectile),
+      ).flat();
+    });
+    expect(expected).toContain("bolt");
+    expect(expected).toContain("missile");
+    expect([...kinds].sort()).toEqual([...expected].sort());
     const missile = flight.shots.find((shot) => shot.projectile === "missile")!;
     const velocity = { ...missile.velocity };
     const position = { x: missile.x, y: missile.y };
     flight.player.y = 200;
-    const resumed = JSON.parse(JSON.stringify(flight)) as FlightState;
+    resumed.player.y = 200;
     stepFlight(CONTENT, 0.1, idle, flight);
     stepFlight(CONTENT, 0.1, idle, resumed);
     expect(resumed).toEqual(flight);
