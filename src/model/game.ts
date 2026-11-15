@@ -109,6 +109,7 @@ import {
 } from "./flight.ts";
 import { flightEncounterSeed, flightWorldContext } from "./flightTopology.ts";
 import { initializeGalaxyGeography } from "./galaxyGeography.ts";
+import { liveEnemy } from "./geography.ts";
 import {
   INDICATOR_SOURCES,
   type IndicatorTarget,
@@ -2133,6 +2134,20 @@ export class GameModel {
     const mapped: string[] = this.scannedLandmarks.splice(0);
     const stationsDiscovered: string[] = [];
     for (const event of events) {
+      if (event.type === "guardCue") {
+        const store = this.markerStore(f);
+        for (const guard of f.objects) {
+          if (
+            guard.routeId === event.id &&
+            liveEnemy(guard) &&
+            !guard.enemy?.disabled &&
+            guard.enemy?.escortOf == null &&
+            store.get(guard.id) !== "identified"
+          ) {
+            store.set(guard.id, "sensed");
+          }
+        }
+      }
       if (
         event.type === "enemyDestroyed" ||
         event.type === "collected" ||

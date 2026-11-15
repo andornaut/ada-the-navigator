@@ -7,7 +7,7 @@ import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
 import { createEnemy } from "./enemyAi.ts";
-import { createFlight } from "./flight.ts";
+import { createFlight, ensureDestinationAt, spawnChapterEnemy } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { markerKnowledgeStore } from "./markerBindings.ts";
 import type { SpaceObject } from "./types.ts";
@@ -47,6 +47,43 @@ function boss(id: string, archetype: "capital" | "fighter" | "frigate" | "platfo
 }
 
 describe("production unified marker facade", () => {
+  it.each([false, true])(
+    "binds the actual destination cue to only its stable direct guard (already identified=%s)",
+    (identified) => {
+      const { flight, model, store } = fixture();
+      flight.objects = [];
+      ensureDestinationAt(CONTENT, "quest", { x: 0, y: 0 }, flight);
+      const guard = spawnChapterEnemy(CONTENT, "frigate", "cued-guard", { x: 2000, y: 0 }, flight, {
+        routeId: "quest",
+      })!;
+      const escort = spawnChapterEnemy(
+        CONTENT,
+        "fighter",
+        "uncued-escort",
+        { x: 2100, y: 0 },
+        flight,
+        { escortOf: guard.id },
+      )!;
+      if (identified) {
+        store.set(guard.id, "identified");
+      }
+      model.step(0.01, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false });
+      expect(model.flightEvents).toContainEqual({ id: "quest", type: "guardCue" });
+      expect(flight.guardCues).toContain("quest");
+      delete flight.summonedGuards;
+      expect(store.get(guard.id)).toBe(identified ? "identified" : "sensed");
+      expect(store.get(escort.id)).toBeUndefined();
+      expect(model.targetMarkers(GAME_AREA).find(({ id }) => id === guard.id)).toMatchObject({
+        identified,
+      });
+      guard.x = 5001;
+      guard.y = 0;
+      expect(model.targetMarkers(GAME_AREA).some(({ id }) => id === guard.id)).toBe(false);
+      guard.x = 5000;
+      expect(model.targetMarkers(GAME_AREA).some(({ id }) => id === guard.id)).toBe(true);
+    },
+  );
+
   it("identifies the retained facade target only after actual display", () => {
     const { cache, model, store } = fixture();
     store.set(cache.id, "sensed");
