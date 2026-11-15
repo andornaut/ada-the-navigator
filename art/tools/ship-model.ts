@@ -380,6 +380,40 @@ export function engineOpeningGeometry(sign: number) {
   return { original, points, centre, housing, linearScale: ENGINE_OPENING_SCALE };
 }
 
+/** Centred normal-exhaust station on the actual luminous rear aperture plane. */
+export function normalJetStation(sign: number) {
+  const v = vertices();
+  const wing = sign < 0 ? v.tipL : v.tipR;
+  const notch = sign < 0 ? v.notchL : v.notchR;
+  const tailMidpoint: Point = [
+    (notch[0] + v.tail[0]) / 2,
+    (notch[1] + v.tail[1]) / 2,
+    (notch[2] + v.tail[2]) / 2,
+  ];
+  const opening = engineOpeningGeometry(sign);
+  const half: Point = [
+    wing[0] - opening.centre[0],
+    wing[1] - opening.centre[1],
+    wing[2] - opening.centre[2],
+  ];
+  const width = 2 * Math.abs(half[0]);
+  const openingWidth =
+    Math.max(...opening.points.map((point) => point[0])) -
+    Math.min(...opening.points.map((point) => point[0]));
+  return {
+    middle: opening.centre,
+    half,
+    width,
+    coreWidth: openingWidth / width,
+    opening,
+    wing,
+    notch,
+    tail: v.tail,
+    tailMidpoint,
+    referenceSpan: Math.abs(wing[0] - tailMidpoint[0]),
+  };
+}
+
 function mouth(sign: number): Point[] {
   return engineOpeningGeometry(sign).points;
 }
@@ -865,7 +899,11 @@ export function mouthOccluders(
     projectAt(
       pivot,
       pivot,
-      place({ yaw }, [middle[0] + w! * half[0], middle[1] + w! * half[1] + l!, middle[2]]),
+      place({ yaw }, [
+        middle[0] + w! * half[0],
+        middle[1] + w! * half[1] + l!,
+        middle[2] + w! * half[2],
+      ]),
     ),
   );
   const sign2 =
@@ -883,7 +921,11 @@ export function mouthOccluders(
       normal: Point = [(sign2 * dy) / n, (-sign2 * dx) / n, 0];
     return { normal, distance: normal[0] * a[0] + normal[1] * a[1] };
   });
-  const boundary: CutPlane = { normal: [0, 0, 1], distance: middle[2] };
+  const slope = half[2] / half[0];
+  const boundary: CutPlane = {
+    normal: [-slope, 0, 1],
+    distance: middle[2] - slope * middle[0],
+  };
   return geometry(classic.paint).surfaces.flatMap((surface) => {
     if (!station && surface.kind === `mouth-${sign}`) return [];
     const points = split(boundary, surface.points).front;
