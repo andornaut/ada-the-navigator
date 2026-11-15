@@ -57,6 +57,12 @@ import { SAFE_MARGIN, safeRect } from "./layout/playView.ts";
 import { questTextParts } from "./layout/questPages.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
+import {
+  type MapChromeGroup,
+  type MapChromeLeaf,
+  type MapChromeSchema,
+  mapChromeTrees,
+} from "./mapChromeTree.ts";
 import { drawMapFog as fogOver } from "./mapFog.ts";
 import {
   type MapPanelGroup,
@@ -934,17 +940,13 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   pips.setAttribute("aria-hidden", "true");
   const column = document.createElement("span");
   column.className = "ada-map-column";
-  column.append(percent, pips);
   const headerRow = document.createElement("div");
   headerRow.className = "ada-map-header-row";
-  headerRow.append(galaxy, divider, column);
-  header.append(headerRow);
   const surveyInfo = document.createElement("p");
   surveyInfo.className = "ada-map-survey-info";
   surveyInfo.setAttribute("role", "note");
   surveyInfo.textContent = labels.mapSurveyInfo ?? "";
   surveyInfo.hidden = !labels.mapSurveyInfo;
-  header.append(surveyInfo);
   const galaxyInk = document.createElement("span");
   const percentInk = document.createElement("span");
   const noteInk = document.createElement("span");
@@ -976,7 +978,6 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     disc.style.setProperty("--glyph", `url('${ICONS}${glyph}.svg')`);
     button.append(disc);
     toolButtons.set(id, button);
-    tools.append(button);
   }
   // The place panel.
   const panel = document.createElement("div");
@@ -1052,7 +1053,6 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   galaxies.setAttribute("aria-haspopup", "dialog");
   const closeButton = createButton(labels.close, "primary");
   closeButton.dataset.action = "map-close";
-  hudRow.append(questsButton, galaxies, closeButton);
   // The Quests modal over the whole map.
   const questsModal = document.createElement("div");
   questsModal.className = "ada-modal ada-map-quests";
@@ -1076,9 +1076,69 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   questNext.dataset.action = "quest-next";
   const questPageCount = document.createElement("output");
   questPageCount.setAttribute("aria-live", "polite");
-  questPager.append(questPrevious, questPageCount, questNext);
-  questsCard.body.append(questLines, questPager);
-  questsModal.append(questsCard.frame);
+  const chromeGroups: Readonly<Record<MapChromeGroup, HTMLElement>> = {
+    column,
+    header,
+    headerRow,
+    navigation: hudRow,
+    pager: questPager,
+    questsModal,
+    tools,
+  };
+  const chromeLeaves: Readonly<Record<MapChromeLeaf, HTMLElement>> = {
+    close: closeButton,
+    divider,
+    galaxies,
+    galaxy,
+    lines: questLines,
+    next: questNext,
+    pageCount: questPageCount,
+    percent,
+    pips,
+    previous: questPrevious,
+    quests: questsButton,
+    recentre: toolButtons.get("recentre")!,
+    surveyInfo,
+    zoomIn: toolButtons.get("zoomIn")!,
+    zoomOut: toolButtons.get("zoomOut")!,
+  };
+  const chromeLayouts = mapChromeTrees(MAP_TOOLS.map(({ id }) => id)).map((tree) =>
+    mountLayout<MapChromeSchema>(
+      {
+        components: {
+          card: {
+            create: () => ({
+              dispose() {},
+              element: questsCard.frame,
+              slots: { body: questsCard.body },
+              update() {},
+            }),
+            slots: ["body"],
+          },
+          group: {
+            create: (name) => ({
+              dispose() {},
+              element: chromeGroups[name],
+              slots: { content: chromeGroups[name] },
+              update() {},
+            }),
+            slots: ["content"],
+          },
+          leaf: {
+            create: (name) => ({
+              dispose() {},
+              element: chromeLeaves[name],
+              slots: {},
+              update() {},
+            }),
+            slots: [],
+          },
+        },
+        host: screen,
+      },
+      tree,
+    ),
+  );
   screen.append(fog, placesLayer, adaLayer, header, hudRow, tools, panel, questsModal);
   root.append(screen);
 
@@ -1884,6 +1944,9 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       document.fonts.removeEventListener("loadingdone", refit);
       window.removeEventListener(VIEW_SCALE_EVENT, refit);
       window.removeEventListener("resize", refit);
+      for (const layout of chromeLayouts) {
+        layout.dispose();
+      }
       questsCard.dispose();
       panelLayout.dispose();
       shipMarker.dispose();
