@@ -1,7 +1,11 @@
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 
+import { applyAdaControlTheme, presentAdaButton } from "./buttonPresentation.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
-import { createActions, createButton, createCard, isTap } from "./modal.ts";
+import { mountAdaLayout } from "./layoutTree.ts";
+import { isTap } from "./modal.ts";
+import { enterPressView, inCurrentView } from "./pressScope.ts";
+import { type RestartAction, restartTree } from "./restartTree.ts";
 
 export interface RestartLabels {
   readonly cancel: string;
@@ -25,39 +29,55 @@ export function createRestartCard(
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
-  const card = createCard({
-    closeAction: "close-restart",
-    closeLabel: labels.close,
-    size: "small",
-    title: labels.title,
-  });
-  card.card.dataset.dialog = "restart";
-  const cancel = createButton(labels.cancel);
-  cancel.dataset.action = "restart-cancel";
-  const confirm = createButton(labels.restart, "primary");
-  confirm.dataset.action = "restart-confirm";
-  card.body.append(
-    createActions([
-      { button: cancel, role: "secondary" },
-      { button: confirm, role: "primary" },
-    ]),
-  );
-  modal.append(card.frame);
   root.append(modal);
+  applyAdaControlTheme(modal);
+  let disposed = false;
+  let leaveView: (() => void) | undefined;
   const setOpen = (open: boolean) => {
+    if (disposed) {
+      return;
+    }
     modal.hidden = !open;
     root.classList.toggle("ada-restart-open", open);
     if (open) {
-      card.fit();
+      leaveView ??= enterPressView(root, frame);
+    } else {
+      leaveView?.();
+      leaveView = undefined;
+    }
+    layout.update(restartTree(labels));
+    if (open) {
+      layout.fit();
       focusTarget(cancel);
     }
   };
-  cancel.addEventListener("click", () => setOpen(false));
-  card.close.addEventListener("click", () => setOpen(false));
-  confirm.addEventListener("click", () => {
-    setOpen(false);
-    options.onRestart();
-  });
+  const cancelRestart = () => setOpen(false);
+  const actions: ReadonlyMap<RestartAction, () => void> = new Map([
+    ["close-restart", cancelRestart],
+    ["restart-cancel", cancelRestart],
+    [
+      "restart-confirm",
+      () => {
+        setOpen(false);
+        options.onRestart();
+      },
+    ],
+  ]);
+  const layout = mountAdaLayout(
+    {
+      actions,
+      availability: () =>
+        disposed || modal.hidden || !inCurrentView(root, frame)
+          ? { kind: "omitted" }
+          : { kind: "available" },
+      presentButton: presentAdaButton,
+    },
+    { artReady: Promise.resolve(), host: modal },
+    restartTree(labels),
+  );
+  const frame = modal.querySelector<HTMLElement>('[role="dialog"]')!;
+  frame.querySelector<HTMLElement>(".ada-card")!.dataset.dialog = "restart";
+  const cancel = modal.querySelector<HTMLButtonElement>('[data-action="restart-cancel"]')!;
   let outside: { readonly x: number; readonly y: number } | undefined;
   modal.addEventListener("pointerdown", (event) => {
     outside = event.target === modal ? { x: event.clientX, y: event.clientY } : undefined;
@@ -75,11 +95,15 @@ export function createRestartCard(
   return {
     close: () => setOpen(false),
     dispose(): void {
-      card.dispose();
+      disposed = true;
+      leaveView?.();
+      leaveView = undefined;
+      layout.dispose();
       root.classList.remove("ada-restart-open");
       modal.remove();
     },
-    isOpen: () => !modal.hidden,
+    isOpen: () => !disposed && !modal.hidden,
     open: () => setOpen(true),
+    settle: layout.settle,
   };
 }

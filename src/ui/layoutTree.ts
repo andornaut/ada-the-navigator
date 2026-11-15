@@ -1,5 +1,3 @@
-import "@andornaut/game-kit/runtime/web/ui/dom/layoutTree.css";
-
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 import {
   type ControlAvailability,
@@ -26,6 +24,8 @@ import {
 import { createProse } from "./prose.ts";
 
 export interface AdaCardProps<A extends string> {
+  /** Footer-only confirmations omit the empty content slot without reserving a gap. */
+  readonly body?: boolean;
   readonly closeAction: A;
   readonly closeLabel: string;
   readonly footerAction: "back" | "close";
@@ -136,6 +136,7 @@ export function createAdaLayoutPorts<A extends string>(context: AdaLayoutContext
         const body = parts.body.ownerDocument.createElement("div");
         body.style.alignSelf = "stretch";
         body.style.minWidth = "0";
+        body.hidden = initial.body === false;
         const footer = createActions([]);
         setFooterAction(initial.footerAction, footer);
         parts.body.append(body, footer);
@@ -160,6 +161,7 @@ export function createAdaLayoutPorts<A extends string>(context: AdaLayoutContext
           slots: { body, footer, header: parts.header },
           update(next) {
             current = next;
+            body.hidden = next.body === false;
             parts.title.textContent = next.title;
             parts.frame.setAttribute("aria-label", next.title);
             parts.frame.dataset.cardSize = next.size;
@@ -236,6 +238,11 @@ export function mountAdaLayout<A extends string>(
       generation++;
       ready = false;
       mounted.dispose();
+    },
+    fit() {
+      if (!disposed) {
+        ports.fit();
+      }
     },
     inspect(viewport: Rect) {
       if (disposed) {

@@ -1,3 +1,5 @@
+import layoutTreeCss from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree.css?raw";
+
 import { ACHIEVEMENTS_STYLE } from "./achievementsCard.ts";
 import { COMPLETION_INDICATOR_STYLE } from "./completionIndicator.ts";
 import { CONTROL_HELP_STYLE } from "./controlHelp.ts";
@@ -30,6 +32,7 @@ import { WEAPON_STYLE } from "./weapons.ts";
 // box first, then the controls layer and its shared card styles (SETTINGS_STYLE holds the modal's),
 // then the cards that refine them, the storybook after the shared card styles it refines.
 export const UI_STYLESHEET = [
+  layoutTreeCss,
   COMPLETION_INDICATOR_STYLE,
   LOADING_STYLE,
   CONVERSATION_STYLE,

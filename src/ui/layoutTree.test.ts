@@ -172,6 +172,7 @@ it("retains native title and sibling body/footer slots without fitting before de
   card.update({ ...initial, closeAction: "second", footerAction: "back", title: "Detail" });
   expect(card.slots).toBe(slots);
   expect(slots.body.style.alignSelf).toBe("stretch");
+  expect(slots.body.hidden).toBe(false);
   expect((slots.body as unknown as Element).children).toEqual([child]);
   expect((slots.header as unknown as Element).children[0]!.textContent).toBe("Detail");
   expect(slots.footer.dataset.footerAction).toBe("back");

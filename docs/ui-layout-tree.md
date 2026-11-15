@@ -11,12 +11,20 @@ job/activity Drop confirmation and the isolated component fixture. Other station
 views retain their existing production components. The confirmation preserves its
 small card, authored labels, secondary Cancel and primary Drop actions.
 
+`restartTree` in [src/ui/restartTree.ts](../src/ui/restartTree.ts) supplies the
+Restart confirmation through the same card and button ports. The small card keeps
+its secondary Cancel and primary Restart actions. A footer-only card sets `body:
+false` to omit the empty content slot. Restart's caller retains dismissal, focus,
+press scope and the original restart callback; callbacks are not stored in tree data.
+
 Runtime and fixture callers supply the same data, production styles, fonts, skins,
 view-unit bridge and action availability. `presentAdaButton` supplies the actual
 button presentation; the published availability binding guards execution.
 `settle()` waits for fonts, explicit art readiness and image decoding before fitting
 updated descendants. The caller's active-view predicate blocks dormant actions.
-Reconciliation retains keyed component and slot identities.
+Reconciliation retains keyed component and slot identities. `fit()` requests the
+native card fit for an already shown view; it does not make physical inspection
+ready. Call `settle()` before interpreting the measurement report.
 
 ```ts
 const detail = mountStationDropDetails(
