@@ -1,278 +1,194 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { ECONOMY } from "../data/economy.ts";
-import { enemyCatalog } from "../data/enemyCatalog.ts";
+import { ENEMY_AVOIDANCE } from "../data/enemyNavigation.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
-import { markerEdges, markerModel } from "../testing/markerModel.ts";
-import { GAME_AREA, gameAreaPoint, inGameArea } from "./edgeMarkers.ts";
+import { markerModel } from "../testing/markerModel.ts";
+import { GAME_AREA } from "./edgeMarkers.ts";
 import {
   createFlight,
-  ensureDestination,
-  ensureDestinationAt,
-  ensureRouteEncounter,
-  ensureStation,
+  questFrigateHome,
+  questGuardPlacementContext,
   routeBlocked,
+  spawnQuestFrigateAt,
   stepFlight,
   syncFlightRegion,
 } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { ACTIVE_CHUNK_RADIUS } from "./geography.ts";
-import { stationsNear } from "./stations.ts";
-import type {
-  FlightEvent,
-  FlightInput,
-  FlightState,
-  GalaxyProgress,
-  SpaceObject,
-} from "./types.ts";
+import { newProgress } from "./progress.ts";
+import { questGuardAnchor, questGuardHomePorts } from "./questGuardPlacement.ts";
+import type { FlightInput, FlightState, SpaceObject } from "./types.ts";
 import { worldCellKey, worldCellsNear, worldGrid } from "./worldCells.ts";
 import { worldDistance, worldPoint } from "./worldContacts.ts";
 
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
-const progress: GalaxyProgress = {
-  charted: [],
-  deposited: 0,
-  destroyedEnemies: 0,
-  discoveries: 0,
-  donated: {},
-  explored: [],
-  greetings: {},
-  holodisk: false,
-  introduced: false,
-  known: [],
-  opened: false,
-  questComplete: false,
-  questItem: null,
-  resolved: false,
-  revealed: [],
-  stage: 0,
-  stations: [],
-};
 const cue = { id: "quest", type: "guardCue" } as const;
 
-function moveGuard(flight: FlightState, guard: SpaceObject, at: { x: number; y: number }): void {
-  const delta = { x: at.x - guard.x, y: at.y - guard.y };
-  for (const member of flight.objects.filter(
-    (object) => object.id === guard.id || object.enemy?.escortOf === guard.id,
-  )) {
-    member.x += delta.x;
-    member.y += delta.y;
-    member.enemy!.home = { x: member.x, y: member.y };
-    member.enemy!.position = { x: member.x, y: member.y };
-  }
-}
-
-/** A galaxy one flight with Ada at the quest destination and its guard `away` units east. */
-function guarded(away: number): { flight: FlightState; guard: SpaceObject } {
-  const flight = createFlight(CONTENT, 1, 173, progress);
-  flight.objects = [];
-  const destination = ensureDestination(CONTENT, "quest", flight);
-  const guard = ensureRouteEncounter(CONTENT, "quest", flight)!;
-  const at = { x: destination.x + away, y: destination.y };
-  moveGuard(flight, guard, at);
-  guard.enemy!.home = { ...at };
-  guard.enemy!.position = { ...at };
-  flight.player = { x: destination.x, y: destination.y };
-  return { flight, guard };
-}
-const onScreen = (flight: FlightState, object: SpaceObject) =>
-  inGameArea(
-    gameAreaPoint(flight.player, worldPoint(flightWorldContext(flight), flight.player, object)),
-  );
-
-/** Motion fixtures define their active cells explicitly rather than generating unrelated scenery. */
 function emptyMotionCells(flight: FlightState): void {
   const grid = worldGrid(flightWorldContext(flight), CONTENT.tuning.chunkSize);
   const cells = [flight.player, ...flight.objects].flatMap((point) =>
     Array.from(worldCellsNear(grid, CONTENT.tuning.chunkSize * ACTIVE_CHUNK_RADIUS, point)),
   );
   flight.chunks = [
-    ...new Set([...flight.chunks, ...Array.from(cells, (cell) => worldCellKey(grid, cell))]),
+    ...new Set([...flight.chunks, ...cells.map((cell) => worldCellKey(grid, cell))]),
   ];
 }
 
-describe("a blocking guard's cue", () => {
-  it("cues once per flight when Ada reaches the destination without disclosing the unseen guard", () => {
-    const { flight, guard } = guarded(1200);
-    expect(onScreen(flight, guard)).toBe(false);
-    expect(stepFlight(CONTENT, 0.05, idle, flight)).toContainEqual(cue);
-    expect(flight.guardCues).toEqual(["quest"]);
-    expect(flight.summonedGuards).toEqual(expect.arrayContaining([guard.id]));
-    expect(markerEdges(markerModel(flight)).filter((marker) => marker.id === guard.id)).toEqual([]);
-    // It flies in until it is on screen, firing nothing on the way, then fights as usual.
-    let seconds = 0;
-    let events: FlightEvent[] = [];
-    while (flight.summonedGuards && seconds < 60) {
-      events = [...events, ...stepFlight(CONTENT, 0.05, idle, flight)];
-      expect(flight.shots.some((shot) => shot.enemy)).toBe(false);
-      seconds += 0.05;
-    }
-    expect(flight.summonedGuards).toBeUndefined();
-    expect(onScreen(flight, guard)).toBe(true);
-    expect(guard.enemy!.engaged).toBe(true);
-    // Leaving and coming back in the same flight does not cue it again.
-    const destination = flight.objects.find((object) => object.id === "quest")!;
-    flight.player = { x: destination.x - 2000, y: destination.y };
-    stepFlight(CONTENT, 0.05, idle, flight);
-    flight.player = { x: destination.x, y: destination.y };
-    events = [...events, ...stepFlight(CONTENT, 0.05, idle, flight)];
-    expect(events).not.toContainEqual(cue);
-    expect(flight.guardCues).toEqual(["quest"]);
-  });
+/** Explicitly admit the required leader at a geometry-valid site, independent of ambient draws. */
+function guarded(wrapped = false) {
+  const flight = createFlight(CONTENT, 2, 173, newProgress());
+  flight.objects = [];
+  flight.world = { notables: {}, version: 1 };
+  const site: SpaceObject = {
+    hp: 1,
+    id: "quest",
+    kind: "destination",
+    radius: 30,
+    x: wrapped ? GALAXY_SIDE / 2 - 20 : 10000,
+    y: 10000,
+  };
+  flight.objects.push(site);
+  flight.player = { x: site.x, y: site.y };
+  const home = questFrigateHome(CONTENT, flight, "route:quest", site.id);
+  expect(home).not.toBeNull();
+  const guard = spawnQuestFrigateAt(CONTENT, flight, "route:quest", site.id, home!)!;
+  expect(guard).not.toBeNull();
+  const followers = flight.objects.filter((object) => object.enemy?.escortOf === guard.id);
+  emptyMotionCells(flight);
+  return { flight, followers, guard, site };
+}
 
-  it("hands a distant summoned guard into combat without returning to its dormant anchor", () => {
-    const { flight, guard } = guarded(enemyCatalog.frigate.pursuit.homeRadius + 600);
-    syncFlightRegion(CONTENT, flight);
-    expect(flight.world.notables[guard.id]).toBe(guard);
-    expect(stepFlight(CONTENT, 0.05, idle, flight)).toContainEqual(cue);
-    let steps = 0;
-    while (flight.summonedGuards && steps++ < 1000) {
-      stepFlight(CONTENT, 0.05, idle, flight);
-    }
-    expect(flight.summonedGuards).toBeUndefined();
-    expect(onScreen(flight, guard)).toBe(true);
-    // Leave the destination's safe area toward the arriving guard, without firing.
-    const destination = flight.objects.find((object) => object.id === "quest")!;
-    flight.player = { x: destination.x + CONTENT.tuning.safeRadius + 10, y: destination.y };
-    stepFlight(CONTENT, 0.05, idle, flight);
-    expect(guard.enemy!.returning).toBe(false);
-    expect(guard.enemy!.engaged).toBe(true);
-    for (let step = 0; step < 40; step++) {
-      stepFlight(CONTENT, 0.05, idle, flight);
-      expect(guard.enemy!.returning).toBe(false);
-      expect(onScreen(flight, guard)).toBe(true);
-    }
-    expect(routeBlocked("quest", flight)).toBe(true);
-    expect(flight.objects.filter((object) => object.id === guard.id)).toEqual([guard]);
-    // Safety still breaks sight and ends the ordinary finite pursuit after the handoff.
-    flight.player = { x: destination.x, y: destination.y };
-    for (let step = 0; !guard.enemy!.returning && step < 160; step++) {
-      stepFlight(CONTENT, 0.05, idle, flight);
-    }
-    expect(guard.enemy!.returning).toBe(true);
-    expect(routeBlocked("quest", flight)).toBe(true);
-  });
-
-  it("summons across the world seam using the same nearby image for movement and its marker", () => {
-    const { flight, guard } = guarded(1200);
-    flight.topology = { kind: "torus", side: GALAXY_SIDE, version: 1 };
-    const destination = flight.objects.find((object) => object.id === "quest")!;
-    Object.assign(destination, { x: GALAXY_SIDE / 2 - 200, y: 0 });
-    flight.player = { x: destination.x, y: destination.y };
-    moveGuard(flight, guard, { x: -GALAXY_SIDE / 2 + 1000, y: 0 });
-    Object.assign(guard.enemy!, {
-      home: { x: guard.x, y: guard.y },
-      position: { x: guard.x, y: guard.y },
-    });
-    emptyMotionCells(flight);
-    const context = flightWorldContext(flight);
-    const tracker = markerModel(flight);
-    tracker.markerTargetDisplayed(guard.id);
-    expect(worldDistance(context, flight.player, guard)).toBeCloseTo(1200, 0);
-    expect(stepFlight(CONTENT, 0.05, idle, flight)).toContainEqual(cue);
-    const marker = tracker.targetMarkers(GAME_AREA).find(({ id }) => id === guard.id)!;
-    expect(marker).toMatchObject({ id: guard.id, symbol: "guard" });
-    expect(marker.x).toBeCloseTo(guard.x + GALAXY_SIDE, 0);
-    expect(marker.y).toBeCloseTo(guard.y, 0);
-    expect(marker.x - flight.player.x).toBeGreaterThan(0);
-    expect(worldDistance(context, flight.player, marker)).toBeLessThan(TARGET_MARKER_RANGE);
-    const initial = worldDistance(context, flight.player, guard);
-    for (let step = 0; flight.summonedGuards && step < 500; step++) {
-      stepFlight(CONTENT, 0.05, idle, flight);
-      expect(flight.objects.filter(({ id }) => id === guard.id)).toHaveLength(1);
-    }
-    expect(worldDistance(context, flight.player, guard)).toBeLessThan(initial / 2);
+function patrol(flight: FlightState, guard: SpaceObject, steps: number): void {
+  const context = flightWorldContext(flight);
+  const home = { ...guard.enemy!.home };
+  for (let step = 0; step < steps; step++) {
+    stepFlight(CONTENT, 1 / 30, idle, flight);
+    expect(flight.objects.filter(({ id }) => id === guard.id)).toHaveLength(1);
     expect(flight.summonedGuards ?? []).not.toContain(guard.id);
-    expect(onScreen(flight, guard)).toBe(true);
-    expect(tracker.targetMarkers(GAME_AREA).some(({ id }) => id === guard.id)).toBe(false);
-    expect(routeBlocked("quest", flight)).toBe(true);
-  });
+    expect(guard.enemy!.home).toEqual(home);
+    const anchor = questGuardAnchor(questGuardPlacementContext(CONTENT, flight), guard)!;
+    expect(worldDistance(context, anchor.center, guard)).toBeGreaterThanOrEqual(
+      anchor.clearanceRadius,
+    );
+    expect(flight.shots.some((shot) => shot.enemy)).toBe(false);
+  }
+}
 
-  it("brings a summoned guard around a station without crossing its protected area", () => {
-    const flight = createFlight(CONTENT, 1, 173, progress);
-    flight.objects = [];
-    const site = stationsNear(ECONOMY, 1, 20000, { x: 0, y: 0 })[0]!;
-    const station = ensureStation(CONTENT, site.id, flight)!;
-    const destination = ensureDestinationAt(
-      CONTENT,
-      "quest",
-      { x: site.x - 1000, y: site.y },
-      flight,
-    );
-    const guard = ensureRouteEncounter(CONTENT, "quest", flight)!;
-    moveGuard(flight, guard, { x: site.x + 800, y: site.y });
-    Object.assign(guard.enemy!, {
-      home: { x: guard.x, y: guard.y },
-      position: { x: guard.x, y: guard.y },
-    });
-    flight.player = { x: destination.x, y: destination.y };
-    flight.objects = flight.objects.filter(
-      (object) =>
-        object === station ||
-        object === destination ||
-        object === guard ||
-        object.enemy?.escortOf === guard.id,
-    );
-    emptyMotionCells(flight);
-    expect(stepFlight(CONTENT, 0.05, idle, flight)).toContainEqual(cue);
-    const shield = flight.shield;
-    for (let step = 0; flight.summonedGuards && step < 1200; step++) {
-      stepFlight(CONTENT, 0.05, idle, flight);
-      expect(worldDistance(flightWorldContext(flight), station, guard)).toBeGreaterThanOrEqual(
-        ECONOMY.station.safeRadius + guard.radius,
-      );
-      expect(flight.shots.some((shot) => shot.enemy)).toBe(false);
-    }
+describe("a blocking guard's cue", () => {
+  it("cues once at its site without remotely summoning or rebasing the required frigate", () => {
+    const { flight, followers, guard, site } = guarded();
+    const before = { ...guard.enemy!.home };
+    expect(routeBlocked(site.id, flight)).toBe(true);
+    const tracker = markerModel(flight);
+    tracker.step(1 / 30, idle);
+    expect(tracker.flightEvents).toContainEqual(cue);
+    expect(flight.guardCues).toEqual([site.id]);
     expect(flight.summonedGuards).toBeUndefined();
-    expect(onScreen(flight, guard)).toBe(true);
+    expect(guard.enemy!.home).toEqual(before);
+    expect(followers.every((member) => !(flight.summonedGuards ?? []).includes(member.id))).toBe(
+      true,
+    );
+    expect(flight.markerActors?.knowledge[guard.id]).toBe("sensed");
+    expect(stepFlight(CONTENT, 1 / 30, idle, flight)).not.toContainEqual(cue);
+    expect(flight.guardCues).toEqual([site.id]);
+  });
+
+  it("patrols the associated site without changing home when Ada moves away and returns", () => {
+    const { flight, guard, site } = guarded();
+    const start = { x: guard.x, y: guard.y };
+    const shield = flight.shield;
+    patrol(flight, guard, 180);
+    expect(worldDistance(flightWorldContext(flight), start, guard)).toBeGreaterThan(20);
+    flight.player = { x: site.x - CONTENT.tuning.safeRadius / 2, y: site.y };
+    patrol(flight, guard, 60);
+    flight.player = { x: site.x, y: site.y };
+    patrol(flight, guard, 60);
     expect(flight.shield).toBeGreaterThanOrEqual(shield);
+    expect(routeBlocked(site.id, flight)).toBe(true);
+  });
+
+  it("uses the shortest wrapped site image consistently for patrol and its disclosed marker", () => {
+    const { flight, guard, site } = guarded(true);
+    const context = flightWorldContext(flight);
+    const before = { x: guard.x, y: guard.y };
+    const tracker = markerModel(flight);
+    tracker.step(1 / 30, idle);
+    expect(tracker.flightEvents).toContainEqual(cue);
+    flight.player = { x: site.x - 2000, y: site.y };
+    const marker = tracker.targetMarkers(GAME_AREA).find(({ id }) => id === guard.id)!;
+    const point = worldPoint(context, flight.player, guard);
+    expect(marker).toMatchObject({ id: guard.id, symbol: "guard" });
+    expect(marker.x).toBeCloseTo(point.x, 0);
+    expect(marker.y).toBeCloseTo(point.y, 0);
+    expect(worldDistance(context, flight.player, marker)).toBeLessThan(TARGET_MARKER_RANGE);
+    flight.player = { x: site.x, y: site.y };
+    patrol(flight, guard, 180);
+    expect(worldDistance(context, before, guard)).toBeGreaterThan(20);
     expect(routeBlocked("quest", flight)).toBe(true);
   });
 
-  it("holds a summoned guard's fire until it is inside the current play view", () => {
-    // East of Ada beyond the 720x360 base view but inside a view twice as wide.
-    const narrow = guarded(600);
-    stepFlight(CONTENT, 0.05, idle, narrow.flight);
-    stepFlight(CONTENT, 0.05, idle, narrow.flight);
-    expect(onScreen(narrow.flight, narrow.guard)).toBe(false);
-    expect(narrow.flight.summonedGuards).toContain(narrow.guard.id);
-    const wide = guarded(600);
+  it("keeps the patrol outside the site's actual protected hull clearance", () => {
+    const { flight, guard, site } = guarded();
+    const shield = flight.shield;
+    const anchor = questGuardAnchor(questGuardPlacementContext(CONTENT, flight), guard)!;
+    const homeRadius = worldDistance(flightWorldContext(flight), site, guard.enemy!.home);
+    expect(homeRadius).toBeGreaterThan(anchor.clearanceRadius);
+    patrol(flight, guard, 360);
+    expect(flight.shield).toBeGreaterThanOrEqual(shield);
+    expect(routeBlocked(site.id, flight)).toBe(true);
+    expect(worldDistance(flightWorldContext(flight), site, guard)).toBeLessThan(
+      homeRadius + ENEMY_AVOIDANCE.clearance * 2,
+    );
+  });
+
+  it("does not turn a wider play view into a remote frigate summon", () => {
+    const { flight, guard } = guarded();
+    const home = { ...guard.enemy!.home };
     const wider: FlightInput = { ...idle, viewportWidth: 1440 };
-    stepFlight(CONTENT, 0.05, wider, wide.flight);
-    expect(wide.flight.summonedGuards).toContain(wide.guard.id);
-    stepFlight(CONTENT, 0.05, wider, wide.flight);
-    expect(wide.flight.summonedGuards ?? []).not.toContain(wide.guard.id);
+    expect(stepFlight(CONTENT, 1 / 30, wider, flight)).toContainEqual(cue);
+    expect(flight.summonedGuards).toBeUndefined();
+    expect(guard.enemy!.home).toEqual(home);
+    expect(routeBlocked("quest", flight)).toBe(true);
   });
 
-  it("does not cue outside Talk range, for an open route, or once the guard is disabled", () => {
-    const outside = guarded(1200);
-    const quest = outside.flight.objects.find((object) => object.id === "quest")!;
-    outside.flight.player = { x: quest.x - CONTENT.tuning.talkRange - 1, y: quest.y };
-    expect(stepFlight(CONTENT, 0.05, idle, outside.flight)).not.toContainEqual(cue);
-    const disabled = guarded(1200);
-    disabled.guard.enemy!.disabled = true;
-    expect(routeBlocked("quest", disabled.flight)).toBe(false);
-    expect(stepFlight(CONTENT, 0.05, idle, disabled.flight)).not.toContainEqual(cue);
-    expect(disabled.flight.summonedGuards).toBeUndefined();
+  it("does not cue outside Talk range or once the required guard is disabled", () => {
+    const { flight, guard, site } = guarded();
+    flight.player = { x: site.x - CONTENT.tuning.talkRange - 1, y: site.y };
+    expect(stepFlight(CONTENT, 1 / 30, idle, flight)).not.toContainEqual(cue);
+    guard.enemy!.disabled = true;
+    expect(routeBlocked(site.id, flight)).toBe(false);
+    flight.player = { x: site.x, y: site.y };
+    expect(stepFlight(CONTENT, 1 / 30, idle, flight)).not.toContainEqual(cue);
+    expect(flight.summonedGuards).toBeUndefined();
   });
 
-  it("loads a dormant retained guard and keeps it loaded while it flies in", () => {
-    const { flight, guard } = guarded((ACTIVE_CHUNK_RADIUS + 3) * CONTENT.tuning.chunkSize);
+  it("retains a dormant site guard and reactivates the same leader and surviving followers locally", () => {
+    const { flight, followers, guard, site } = guarded();
+    const home = { ...guard.enemy!.home };
+    const lost = followers[0]!;
+    flight.objects = flight.objects.filter((object) => object !== lost);
+    flight.world.notables[lost.id] = null;
+    flight.player = { x: site.x - CONTENT.tuning.chunkSize * (ACTIVE_CHUNK_RADIUS + 3), y: site.y };
+    emptyMotionCells(flight);
     syncFlightRegion(CONTENT, flight);
     expect(flight.objects).not.toContain(guard);
     expect(flight.world.notables[guard.id]).toBe(guard);
-    expect(routeBlocked("quest", flight)).toBe(true);
-    expect(stepFlight(CONTENT, 0.05, idle, flight)).toContainEqual(cue);
+    expect(routeBlocked(site.id, flight)).toBe(true);
+    flight.player = { x: site.x, y: site.y };
+    expect(stepFlight(CONTENT, 1 / 30, idle, flight)).toContainEqual(cue);
     expect(flight.objects).toContain(guard);
-    expect(flight.summonedGuards).toEqual(expect.arrayContaining([guard.id]));
-    const start = guard.x;
-    for (let step = 0; step < 100; step++) {
-      stepFlight(CONTENT, 0.05, idle, flight);
-    }
-    // Still loaded, five seconds closer.
-    expect(flight.objects).toContain(guard);
-    expect(guard.x).toBeLessThan(start - 100);
+    expect(flight.objects.some((object) => object.id === lost.id)).toBe(false);
+    expect(guard.enemy!.home).toEqual(home);
+    expect(
+      questGuardHomePorts(questGuardPlacementContext(CONTENT, flight)).validHome(
+        flightWorldContext(flight),
+        site,
+        guard,
+        home,
+      ),
+    ).toBe(true);
+    patrol(flight, guard, 60);
   });
 });

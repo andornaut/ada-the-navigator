@@ -11,32 +11,53 @@ import { createEnemy } from "./enemyAi.ts";
 import { enemyHull } from "./enemyBody.ts";
 import {
   createFlight,
-  ensureDestinationAt,
+  questFrigateHome,
+  questGuardPlacementContext,
   routeBlocked,
-  spawnChapterEnemy,
+  spawnQuestFrigateAt,
   stepFlight,
 } from "./flight.ts";
+import { flightWorldContext } from "./flightTopology.ts";
 import { ACTIVE_CHUNK_RADIUS } from "./geography.ts";
 import { newProgress } from "./progress.ts";
+import { questGuardAnchor } from "./questGuardPlacement.ts";
 import type { SpaceObject } from "./types.ts";
+import { worldCellKey, worldCellsNear, worldGrid } from "./worldCells.ts";
+import { worldDistance } from "./worldContacts.ts";
 
 it.each([false, true])(
-  "flies a marked frigate past an asteroid with hull clearance (turning=%s)",
+  "patrols a marked site-local frigate past an asteroid with hull clearance (turning=%s)",
   (turning) => {
-    const flight = createFlight(CONTENT, 1, 173, newProgress());
+    const flight = createFlight(CONTENT, 2, 173, newProgress());
     flight.objects = [];
-    const destination = ensureDestinationAt(CONTENT, "quest", { x: 800, y: 0 }, flight);
-    const guard = spawnChapterEnemy(CONTENT, "frigate", "route:quest", { x: -800, y: 0 }, flight, {
-      routeId: "quest",
-    })!;
-    // Keep the canonical guard and escorts, isolating this one obstacle from seeded ambient layout.
-    flight.objects = flight.objects.filter(
-      (object) =>
-        object.id === destination.id ||
-        object.id === guard.id ||
-        object.enemy?.escortOf === guard.id,
-    );
-    const shape = [...ASTEROID_SHAPES.values()].find((s) => s.size === "large")!;
+    flight.world = { notables: {}, version: 1 };
+    const destination: SpaceObject = {
+      hp: 1,
+      id: "quest",
+      kind: "destination",
+      radius: 30,
+      x: 10000,
+      y: 10000,
+    };
+    flight.objects.push(destination);
+    flight.player = { x: destination.x, y: destination.y };
+    const home = questFrigateHome(CONTENT, flight, "route:quest", destination.id)!;
+    expect(home).not.toBeNull();
+    const guard = spawnQuestFrigateAt(CONTENT, flight, "route:quest", destination.id, home)!;
+    expect(guard).not.toBeNull();
+    const grid = worldGrid(flightWorldContext(flight), CONTENT.tuning.chunkSize);
+    flight.chunks = [
+      ...new Set([
+        ...flight.chunks,
+        ...[flight.player, ...flight.objects].flatMap((point) =>
+          Array.from(
+            worldCellsNear(grid, CONTENT.tuning.chunkSize * ACTIVE_CHUNK_RADIUS, point),
+            (cell) => worldCellKey(grid, cell),
+          ),
+        ),
+      ]),
+    ];
+    const shape = [...ASTEROID_SHAPES.values()].find((shape) => shape.size === "large")!;
     const rock: SpaceObject = {
       asteroid: shape.id,
       hp: CONTENT.tuning.flight.rockHp,
@@ -44,65 +65,51 @@ it.each([false, true])(
       kind: "rock",
       radius: shape.radius,
       spinStart: 0,
-      x: 0,
-      y: 0,
+      x: guard.x,
+      y: guard.y + 350,
     };
     flight.objects.push(rock);
-    flight.player = { x: destination.x, y: destination.y };
+    const start = { x: guard.x, y: guard.y };
     guard.enemy!.facing = turning ? { x: 0, y: -1 } : { x: 1, y: 0 };
     if (turning) {
       guard.enemy!.velocity = { x: 0, y: -enemyCatalog.frigate.physics.maxSpeed };
     }
     const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, reducedMotion: true, use: false };
-    expect(stepFlight(CONTENT, 1 / 30, idle, flight)).toContainEqual({
-      id: "quest",
-      type: "guardCue",
-    });
     const tracker = markerModel(flight);
-    tracker.markerTargetDisplayed(guard.id);
-    expect(tracker.targetMarkers(GAME_AREA).some(({ id }) => id === guard.id)).toBe(true);
+    tracker.step(1 / 30, idle);
+    expect(tracker.flightEvents).toContainEqual({ id: "quest", type: "guardCue" });
+    expect(flight.markerActors?.knowledge[guard.id]).toBe("sensed");
     const radius = guard.radius;
+    const hp = guard.hp;
     let closest = Infinity;
-    let steps = 0;
-    while (flight.summonedGuards && steps++ < 1350) {
+    for (let step = 0; step < 600; step++) {
       stepFlight(CONTENT, 1 / 30, idle, flight);
       expect(flight.objects.filter(({ id }) => id === guard.id)).toHaveLength(1);
+      expect(flight.summonedGuards ?? []).not.toContain(guard.id);
       expect(flight.shots.some((shot) => shot.enemy)).toBe(false);
       expect(worldSceneryBodyContact({}, rock, guard, enemyHull(guard.enemy!)!, 0)).toBeNull();
       closest = Math.min(closest, actualGap(rock, guard, guard.enemy!.facing));
-      tracker.targetMarkers(GAME_AREA);
+      const anchor = questGuardAnchor(questGuardPlacementContext(CONTENT, flight), guard)!;
+      expect(worldDistance(flightWorldContext(flight), destination, guard)).toBeGreaterThanOrEqual(
+        anchor.clearanceRadius,
+      );
     }
     console.info(
       "AI_NAVIGATION_METRICS",
-      JSON.stringify({
-        actualHullGap: closest,
-        passageGap: ENEMY_AVOIDANCE.passageClearance,
-        physicalRadius: radius,
-        preferredGap: ENEMY_AVOIDANCE.clearance,
-        steps,
-        turning,
-      }),
+      JSON.stringify({ actualHullGap: closest, steps: 600, turning }),
     );
-    expect(flight.summonedGuards).toBeUndefined();
     expect(closest).toBeGreaterThanOrEqual(ENEMY_AVOIDANCE.clearance);
+    expect(closest).toBeLessThan(350);
+    expect(worldDistance(flightWorldContext(flight), start, guard)).toBeGreaterThan(100);
+    expect(guard.enemy!.home).toEqual(home);
     expect(guard.radius).toBe(radius);
     expect(rock.radius).toBe(shape.radius);
-    expect(routeBlocked("quest", flight)).toBe(true);
-    expect(tracker.targetMarkers(GAME_AREA).some(({ id }) => id === guard.id)).toBe(false);
-    expect(inGameArea(gameAreaPoint(flight.player, guard))).toBe(true);
-    const hp = guard.hp;
-    const policy = enemyDefinition(flight.galaxy, "frigate", guard.id).pursuit;
-    const returnBound = Math.ceil((policy.maxSeconds + policy.unseenSeconds) * 30);
-    let returning = 0;
-    while (!guard.enemy!.returning && returning++ < returnBound) {
-      stepFlight(CONTENT, 1 / 30, idle, flight);
-      expect(flight.objects.filter(({ id }) => id === guard.id)).toHaveLength(1);
-    }
-    expect(guard.enemy!.returning).toBe(true);
     expect(guard.hp).toBe(hp);
     expect(routeBlocked("quest", flight)).toBe(true);
+    flight.player = { x: destination.x - 2000, y: destination.y };
+    expect(tracker.targetMarkers(GAME_AREA).some(({ id }) => id === guard.id)).toBe(true);
+    expect(guard.enemy!.home).toEqual(home);
   },
-  10000,
 );
 
 it("retains an ordinary pursuing frigate while visible and unloads it only beyond the active region", () => {
