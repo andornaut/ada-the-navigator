@@ -73,7 +73,7 @@ describe("actual Pause/Menu entry", () => {
     expect(menu).toHaveBeenCalledTimes(expected === "menu" ? 1 : 0);
     const button = entry.button as unknown as Node;
     expect(button.attributes.get("aria-label")).toBe(expected === "pause" ? "Pause" : "Menu");
-    expect(button.children[0]!.children[0]!.children).toHaveLength(3);
-    expect(button.children[0]!.hidden).toBe(expected !== "menu");
+    expect(button.children).toHaveLength(0);
+    expect(button.dataset.navigation).toBe(expected);
   });
 });
