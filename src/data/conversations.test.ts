@@ -255,7 +255,7 @@ describe("in-flight conversations", () => {
       cooldownSeconds: 20,
       lineSeconds: 5,
       pennyIntervalSeconds: 60,
-      pennyRange: 1500,
+      pennyRange: 5000,
       quietSeconds: 60,
       shieldLowFraction: 0.25,
     });
