@@ -112,9 +112,14 @@ export function drawBackdropLayer(scene: BackdropContext, galaxy: GalaxyNumber |
  * sky, the far items and planets, the plates, the stars and the dust streaks, for the camera at
  * Ada's world position. The fixed layers draw with drawBackdropLayer.
  */
-export function drawBackdropLayers(scene: BackdropContext, flight: FlightState | null): void {
+export function drawBackdropLayers(
+  scene: BackdropContext,
+  flight: FlightState | null,
+  presentationGalaxy: GalaxyNumber | null = null,
+): void {
   const rules = scene.backdropRules;
-  const backdrop = flight ? scene.galaxyBackdrops.get(flight.galaxy) : undefined;
+  const galaxy = flight?.galaxy ?? presentationGalaxy;
+  const backdrop = galaxy === null ? undefined : scene.galaxyBackdrops.get(galaxy);
   scene.skyImage?.setVisible(false);
   scene.plateInk?.multiply.clear();
   scene.plateInk?.screen.clear();
@@ -123,11 +128,11 @@ export function drawBackdropLayers(scene: BackdropContext, flight: FlightState |
     image.setVisible(false);
   }
   const used = new Set<string>();
-  if (flight && rules && backdrop) {
-    const camera = [flight.player.x, flight.player.y] as const;
-    drawSky(scene, flight.galaxy, backdrop);
-    drawFarItems(scene, rules, flight.galaxy, backdrop, camera, used);
-    drawDecorations(scene, flight.galaxy, backdrop, camera, used);
+  if (galaxy !== null && rules && backdrop) {
+    const camera = flight ? ([flight.player.x, flight.player.y] as const) : ([0, 0] as const);
+    drawSky(scene, galaxy, backdrop);
+    drawFarItems(scene, rules, galaxy, backdrop, camera, used);
+    drawDecorations(scene, galaxy, backdrop, camera, used);
     drawPlates(scene, rules, backdrop, camera);
     drawStars(scene, rules, backdrop, camera);
     drawStreaks(scene, rules, backdrop, camera);

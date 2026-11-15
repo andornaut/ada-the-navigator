@@ -128,6 +128,7 @@ import { FALLBACK_SPACE_PALETTE, type SpacePalette } from "./spacePalette.ts";
 import { spriteOwner, staleSpriteKeys } from "./spriteKeys.ts";
 import { type StardustArt } from "./stardustArt.ts";
 import { type GalaxyStationArt, type StationArt } from "./stationArt.ts";
+import { aboardGalaxy } from "./storyPresentation.ts";
 import { SvgRasters } from "./svgRasters.ts";
 import { fileFilter } from "./textures.ts";
 import { preloadTouchChrome } from "./touchChrome.ts";
@@ -741,8 +742,19 @@ export class GameScene extends Scene {
       rock.sprite?.setVisible(false);
     }
     this.ship.setVisible(Boolean(flight) && this.model.state.mode === "space" && !this.warpCover);
-    drawBackdropLayer(this, flight && this.model.state.mode === "space" ? flight.galaxy : null);
-    drawBackdropLayers(this, flight && this.model.state.mode === "space" ? flight : null);
+    const presentationGalaxy = aboardGalaxy(this.model.state, this.model.storyView?.page);
+    if (presentationGalaxy !== null) {
+      loadGalaxyArt(this, presentationGalaxy);
+    }
+    drawBackdropLayer(
+      this,
+      flight && this.model.state.mode === "space" ? flight.galaxy : presentationGalaxy,
+    );
+    drawBackdropLayers(
+      this,
+      flight && this.model.state.mode === "space" ? flight : null,
+      presentationGalaxy,
+    );
     if (!flight || this.model.state.mode !== "space") {
       this.needleRenderer?.clear();
       // Leaving the flight forgets every seen object.

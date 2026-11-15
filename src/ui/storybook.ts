@@ -41,6 +41,8 @@ import {
   transitionStepsForBackgrounds,
 } from "./storyArt.ts";
 import { storyOverlayCrop } from "./storyCompositions.ts";
+import type { TitleScreenArt } from "./titleScreen.ts";
+import { titleShipView } from "./titleShipView.ts";
 
 export interface StoryLabels {
   readonly next: string;
@@ -50,6 +52,8 @@ export interface StoryLabels {
 
 export interface StoryPageView {
   readonly background: Background;
+  /** Existing homepage ship composition over the scene-owned galaxy backdrop. */
+  readonly aboard?: { readonly art: TitleScreenArt; readonly paint: string | null };
   /** The chapter's panel title, heading the text on opening, resolution and closing pages. */
   readonly heading?: string;
   readonly speaker?: string;
@@ -265,6 +269,12 @@ const CHOICE_WIDTH = `clamp(${units(choiceColumn.min)}, calc((100% - ${units(col
 const { tab } = CONVERSATION_BOX;
 
 export const STORYBOOK_STYLE = `
+.ada-controls .ada-story-ship{
+  position:absolute;
+  inset:0;
+  pointer-events:none
+}
+
 .ada-controls .ada-story-background{
   position:absolute;
   inset:0;
@@ -533,6 +543,10 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   incoming.style.opacity = "0";
   // Overlays draw over the base image, by id: a composite's at full, the overnight's as it plays.
   const overlays = new Map<string, HTMLDivElement>();
+  const aboardShip = document.createElement("div");
+  aboardShip.className = "ada-story-ship";
+  aboardShip.hidden = true;
+  background.append(aboardShip);
   const panel = document.createElement("section");
   panel.className = "ada-card ada-story-panel";
   panel.setAttribute("role", "region");
@@ -813,9 +827,9 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   const setBackground = (key: Background, anchored: boolean) => {
     shownKey = key;
     background.dataset.background = key;
-    base.style.backgroundImage = image(art.backgrounds[key]);
+    base.style.backgroundImage = rendered?.aboard ? "" : image(art.backgrounds[key]);
     place(base, key, anchored);
-    showOverlays(art.composites[key] ?? [], 1);
+    showOverlays(rendered?.aboard ? [] : (art.composites[key] ?? []), 1);
   };
   // The overnight sequence's running animations and step timer.
   let nightTimer: ReturnType<typeof setTimeout> | undefined;
@@ -992,6 +1006,10 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     exit: StoryOverlay | null = null,
   ) => {
     rendered = page;
+    aboardShip.hidden = !page?.aboard;
+    aboardShip.replaceChildren(
+      ...(page?.aboard ? titleShipView(page.aboard.art, page.aboard.paint) : []),
+    );
     backdropShown = backdrop;
     layer.hidden = page === null && backdrop === null;
     skip.hidden = page === null || !page.canSkip;

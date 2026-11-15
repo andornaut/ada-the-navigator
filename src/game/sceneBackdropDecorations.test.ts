@@ -59,7 +59,7 @@ function fixture() {
     ) => void,
     image,
     item,
-    layers: context.drawBackdropLayers as (s: unknown, f: unknown) => void,
+    layers: context.drawBackdropLayers as (s: unknown, f: unknown, g?: unknown) => void,
     scene,
     view,
   };
@@ -108,5 +108,15 @@ describe("production rare decoration drawing", () => {
     f.layers(f.scene, { galaxy: 1, player: { x: 0, y: 0 } });
     expect(f.image.destroy).toHaveBeenCalledOnce();
     expect(f.scene.backdropItems.size).toBe(0);
+  });
+  it("renders the selected ABOARD galaxy with the existing layers at a stationary camera without a flight", () => {
+    const f = fixture();
+    const backdrop = {};
+    f.scene.galaxyBackdrops.set(4, backdrop);
+    f.layers(f.scene, null, 4);
+    expect(f.view).toHaveBeenCalledWith(backdrop, [0, 0]);
+    expect(f.image.setVisible).toHaveBeenCalledWith(true);
+    f.layers(f.scene, null);
+    expect(f.image.destroy).toHaveBeenCalledOnce();
   });
 });

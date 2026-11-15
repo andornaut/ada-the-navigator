@@ -51,7 +51,7 @@ import { aboardLabel, type ShipView } from "../ui/shipCard.ts";
 import { createStationView } from "../ui/station.ts";
 import { stardustCount } from "../ui/statusPill.ts";
 import { createStorybook, storyPageView } from "../ui/storybook.ts";
-import { readTitleScreen } from "../ui/titleScreen.ts";
+import { readTitleScreen, type TitleScreenArt } from "../ui/titleScreen.ts";
 import { type CoreManifest, galaxyManifestKey, readGalaxyManifest } from "./artManifest.ts";
 import { readDestruction, readShards } from "./destructionArt.ts";
 import { EDGE_MARKER_DEPTH } from "./drawOrder.ts";
@@ -69,6 +69,7 @@ import {
   loadAsteroidArt,
   loadShipFrames,
   materialShipFrames,
+  materialShipHeading,
   materialShipSwatch,
   materialWarpPoses,
   paintInUse,
@@ -90,6 +91,7 @@ import {
 import { readStardustArt } from "./stardustArt.ts";
 import { staticShipJets } from "./staticShipJets.ts";
 import { readOutpostArt, readStationArt } from "./stationArt.ts";
+import { aboardGalaxy } from "./storyPresentation.ts";
 import { RASTER_SCALE_EVENT } from "./svgRasters.ts";
 import { readUpgradePickup } from "./upgradePickup.ts";
 import {
@@ -102,6 +104,8 @@ import {
 
 const pennyLayers = new WeakMap<object, ReturnType<typeof createPennyMarkerLayer>>();
 const interactionCards = new WeakMap<object, ReturnType<typeof createInteractionCard>>();
+const titleArts = new WeakMap<object, TitleScreenArt | null>();
+
 const shieldOreFlights = new WeakMap<object, FlightState | null>();
 
 /** The scene state and methods this module's functions use. */
@@ -399,13 +403,23 @@ export function buildScene(scene: UiContext): void {
   });
   // The start screen's art: its field, wordmark, each paint's ship frame and the speed jets at
   // Engine level 1.
-  scene.shell.setTitleArt(
-    readTitleScreen(
-      manifest?.assets ?? [],
-      scene.shipJets && engineJets(scene.shipJets, 1),
-      scene.cache.json.get(TITLE_SCREEN_KEY),
-    ),
+  const titleArt = readTitleScreen(
+    (manifest?.assets ?? []).map((asset) => {
+      const heading = materialShipHeading(asset);
+      return heading === undefined
+        ? asset
+        : {
+            ...asset,
+            path:
+              materialShipFrames(scene, manifest?.assets ?? [], asset.paint ?? null)[heading] ??
+              asset.path,
+          };
+    }),
+    scene.shipJets && engineJets(scene.shipJets, 1),
+    scene.cache.json.get(TITLE_SCREEN_KEY),
   );
+  titleArts.set(scene, titleArt);
+  scene.shell.setTitleArt(titleArt);
   scene.controls = createControls(scene, {
     aboardResource: () => {
       const aboard = scene.model.aboard;
@@ -1192,7 +1206,9 @@ export function refreshScene(scene: UiContext): void {
       legacy.hidden = true;
     }
   }
-  const flightGalaxy = state.mode === "space" ? state.flight?.galaxy : undefined;
+  const flightGalaxy =
+    (state.mode === "space" ? state.flight?.galaxy : undefined) ??
+    aboardGalaxy(state, scene.model.storyView?.page);
   scene.palette = (flightGalaxy && scene.galaxyPalettes.get(flightGalaxy)) || scene.basePalette;
   const background = scene.palette.background;
   if (background !== scene.spaceBackground) {
@@ -1205,6 +1221,9 @@ export function refreshScene(scene: UiContext): void {
     story && {
       ...storyPageView(story.page, story.choices, story.canGoBack, story.canSkip),
       run: story.run,
+      ...(aboardGalaxy(state, story.page) !== null && titleArts.get(scene)
+        ? { aboard: { art: titleArts.get(scene)!, paint: state.economy.paint } }
+        : {}),
     },
     null,
   );
