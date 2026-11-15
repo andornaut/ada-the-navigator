@@ -1,4 +1,5 @@
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
+import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { CONTENT } from "../data/content.ts";
 import { EXCHANGE_COPY } from "../data/exchangeCopy.ts";
@@ -27,6 +28,11 @@ import { enterPressView, inCurrentView } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
 import { mountStationDropDetails } from "./stationDropDetails.ts";
 import { createStationItemIcon, type ItemGlyph, setStationItemTitle } from "./stationItemIcon.ts";
+import {
+  type StationMenuButton,
+  type StationMenuSchema,
+  stationMenuTree,
+} from "./stationMenuTree.ts";
 import { applyButtonSkin } from "./uiSkin.ts";
 
 // The station card, the shop, the job board and their confirms (art/shop.md,
@@ -294,17 +300,55 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   const stationBalance = document.createElement("div");
   stationBalance.className = "ada-balance";
   stationBalance.dataset.inkTop = "0";
-  const undock = createButton(labels.undock);
-  undock.dataset.action = "undock";
-  const openShop = createButton(labels.shop, "primary");
-  openShop.dataset.action = "open-shop";
-  const openJobs = createButton(labels.jobs);
-  openJobs.dataset.action = "open-jobs";
-  for (const button of [undock, openShop, openJobs]) {
-    button.classList.add("ada-story-button");
-  }
-  const nextGreeting = createButton(labels.nextLine);
-  nextGreeting.classList.add("ada-story-button");
+  const menuButtons = new Map<StationMenuButton, HTMLButtonElement>();
+  const menuLayout = mountLayout<StationMenuSchema>(
+    {
+      components: {
+        balance: {
+          create() {
+            return { dispose() {}, element: stationBalance, slots: {}, update() {} };
+          },
+          slots: [],
+        },
+        button: {
+          create(initial) {
+            const button = createButton(initial.label, initial.role);
+            if (initial.actionId !== undefined) {
+              button.dataset.action = initial.actionId;
+            }
+            button.classList.add("ada-story-button");
+            menuButtons.set(initial.id, button);
+            return {
+              dispose() {},
+              element: button,
+              slots: {},
+              update(data) {
+                button.textContent = data.label;
+              },
+            };
+          },
+          slots: [],
+        },
+        stationMenu: {
+          create() {
+            return {
+              dispose() {},
+              element: stationCard.frame,
+              slots: { choices: stationCard.choices, controls: stationCard.controls },
+              update() {},
+            };
+          },
+          slots: ["choices", "controls"],
+        },
+      },
+      host: modal,
+    },
+    stationMenuTree(labels),
+  );
+  const undock = menuButtons.get("undock")!;
+  const openShop = menuButtons.get("shop")!;
+  const openJobs = menuButtons.get("jobs")!;
+  const nextGreeting = menuButtons.get("nextGreeting")!;
   const keeper = {
     render(greeting: StationGreeting | null) {
       const welcome = stationWelcome(labels.station, greeting);
@@ -344,8 +388,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       focusTarget(openShop);
     }
   });
-  stationCard.choices.append(stationBalance, openJobs, openShop);
-  stationCard.controls.append(nextGreeting, undock);
 
   const shopCard = createCard({
     closeAction: "shop-back",
@@ -1172,6 +1214,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       window.removeEventListener("resize", refit);
       window.removeEventListener(VIEW_SCALE_EVENT, refit);
       exchange?.dispose();
+      menuLayout.dispose();
       stationCard.dispose();
       shopCard.dispose();
       jobsCard.dispose();
