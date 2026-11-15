@@ -50,8 +50,8 @@ import {
 } from "../ui/layout/playView.ts";
 import { stickTargets, useDiscLayout, usePressed } from "../ui/layout/touchControls.ts";
 import { createViewScaleBridge, type PlayLayout } from "../ui/layout/viewScale.ts";
-import { pauseButtonShown } from "../ui/pause.ts";
-import { createPauseButton } from "../ui/pauseButton.ts";
+import { createMenuCard } from "../ui/menuCard.ts";
+import { activateNavigation, createNavigationButton } from "../ui/navigationButton.ts";
 import { createPauseCards, type PauseLabels, type PauseState } from "../ui/pauseCard.ts";
 import { createResourceCard } from "../ui/resourceCard.ts";
 import {
@@ -97,6 +97,7 @@ export interface ControlsOptions {
   readonly onPauseChange?: (paused: boolean) => void;
   readonly pause: {
     readonly buttonLabel: string;
+    readonly menuLabel?: string;
     readonly labels: PauseLabels;
     readonly onBackToTitle: () => void;
     /** Return to Earth, which the Map offers. */
@@ -160,6 +161,7 @@ export interface Controls {
   // Shows the start screen's Exit where the game offers to leave.
   setExitButton(shown: boolean): void;
   setPause(state: PauseState): void;
+  navigationCovered(): boolean;
   // The status pill's shield and Stardust count.
   resetShieldOreSpent(total?: number): void;
   setStatus(view: StatusView): void;
@@ -205,6 +207,22 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   let useShown = false;
   let visibility = { aim: true, move: true };
   let reducedMotion = false;
+  let returnToMenu: (() => void) | undefined;
+  let returnFromCheats: (() => void) | undefined;
+  let returningToParent = false;
+  function restoreParent(parent: () => void): void {
+    returningToParent = true;
+    queueMicrotask(() => {
+      if (disposed) {
+        returningToParent = false;
+        return;
+      }
+      parent();
+      returningToParent = false;
+      syncModal();
+    });
+  }
+  let menuContext: "start" | "nonplay" = "nonplay";
   const settings = createSettings(parent, {
     build: BUILD_LABEL,
     install: options.install,
@@ -215,9 +233,13 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     },
     onOpenChange(open) {
       options.onStartCover?.("settings", open);
-      if (!open && returnToPause && !cheatsOpening) {
+      if (!open && returnToMenu && !cheatsOpening) {
+        const reopen = returnToMenu;
+        returnToMenu = undefined;
+        restoreParent(reopen);
+      } else if (!open && returnToPause && !cheatsOpening) {
         returnToPause = false;
-        pause.open();
+        pause.restorePaused("settings");
       }
       syncModal();
     },
@@ -232,15 +254,31 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const cheats = createCheats(settings.root, settings.actions, {
     ...options.cheats,
     beforeOpen: () => {
+      const opener =
+        document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
+      returnFromCheats = () => {
+        settings.open();
+        if (opener?.isConnected) {
+          focusTarget(opener);
+        }
+      };
       cheatsOpening = true;
       settings.close();
       cheatsOpening = false;
     },
     onOpenChange: (open) => {
       options.onStartCover?.("cheats", open);
-      if (!open && returnToPause) {
+      if (!open && returnFromCheats) {
+        const parent = returnFromCheats;
+        returnFromCheats = undefined;
+        restoreParent(parent);
+      } else if (!open && returnToMenu) {
+        const reopen = returnToMenu;
+        returnToMenu = undefined;
+        restoreParent(reopen);
+      } else if (!open && returnToPause) {
         returnToPause = false;
-        pause.open();
+        pause.restorePaused("settings");
       }
       syncModal();
     },
@@ -264,6 +302,11 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     onOpenChange: (open) => {
       options.onStartCover?.("achievements", open);
       achievementsButton.setAttribute("aria-expanded", String(open));
+      if (!open && returnToMenu) {
+        const reopen = returnToMenu;
+        returnToMenu = undefined;
+        restoreParent(reopen);
+      }
       syncModal();
     },
   });
@@ -302,19 +345,70 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     exitButton.addEventListener("click", onExit);
     settings.openButton.after(exitButton);
   }
-  const pauseButton = createPauseButton(settings.root, options.pause.buttonLabel, () =>
-    pause.open(),
+  const menu = createMenuCard(settings.root, {
+    closeLabel: options.pause.labels.close,
+    labels: { achievements: options.achievements.title, settings: options.pause.labels.settings },
+    onAction: (action, reopen) => {
+      returnToMenu = reopen;
+      if (action === "settings") {
+        settings.open();
+      } else {
+        achievements.open();
+      }
+    },
+    onOpenChange: () => syncModal(),
+    title: options.pause.menuLabel ?? "Menu",
+  });
+  const openNavigation = () =>
+    activateNavigation(
+      {
+        mapOpen: pause.mapOpen(),
+        menu: menu.open,
+        pausable,
+        pause: () => pause.open(),
+      },
+      pauseButton,
+    );
+  const navigation = createNavigationButton(
+    settings.root,
+    {
+      menu: options.pause.menuLabel ?? "Menu",
+      pause: options.pause.buttonLabel,
+    },
+    openNavigation,
   );
-  const modalOpen = (): boolean =>
+  const pauseButton = navigation.button;
+  const navigationCovered = (): boolean =>
+    returningToParent ||
+    Boolean(returnToMenu || returnFromCheats || returnToPause) ||
+    menu.isOpen() ||
     settings.isOpen() ||
     cheats.isOpen() ||
-    pause.isOpen() ||
     achievements.isOpen() ||
     resource.isOpen() ||
     weaponDetail.isOpen() ||
     (update?.isOpen() ?? false);
+  const modalOpen = (): boolean => navigationCovered() || pause.isOpen();
+  const syncNavigationEntry = () => {
+    navigation.setMode(pausable && !pause.mapOpen() ? "pause" : "menu");
+    const mapOnly = pause.mapOpen() && !navigationCovered();
+    pauseButton.hidden = modalOpen() && !mapOnly;
+  };
   function syncModal(): void {
     const open = modalOpen();
+    syncNavigationEntry();
+    const active = document.activeElement;
+    const foreground =
+      active instanceof HTMLElement ? active.closest<HTMLElement>(".ada-modal") : null;
+    if (
+      foreground &&
+      !foreground.hidden &&
+      foreground.parentElement === settings.root &&
+      foreground !== settings.root.lastElementChild
+    ) {
+      settings.root.append(foreground);
+      focusTarget(active as HTMLElement);
+    }
     desktop.reset();
     settings.root.classList.toggle("ada-modal-open", open);
     if (open) {
@@ -605,6 +699,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     }),
     backStack.register({ back: () => pause.closeMap(), isOpen: () => pause.mapOpen() }),
     backStack.register({ back: () => pause.closeShip(), isOpen: () => pause.shipOpen() }),
+    backStack.register({ back: menu.close, isOpen: menu.isOpen }),
     backStack.register({ back: () => cheats.close(), isOpen: () => cheats.isOpen() }),
     backStack.register({ back: () => achievements.close(), isOpen: () => achievements.isOpen() }),
     backStack.register({
@@ -618,7 +713,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   }
   // Back with nothing open opens the Paused card where it opens.
   const onBack = () => {
-    pressBack(backStack, pausable, () => pause.open());
+    pressBack(backStack, true, openNavigation);
   };
   const reset = () => {
     state.reset();
@@ -630,7 +725,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       event.code === "KeyQ" &&
       !event.repeat &&
       exitButton &&
-      !exitButton.hidden &&
+      menuContext === "start" &&
       !backStack.anyOpen() &&
       !(event.target instanceof Element && event.target.closest("input,textarea,select"))
     ) {
@@ -641,8 +736,8 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     if (event.code === "Escape") {
       event.preventDefault();
       if (!event.repeat) {
-        if (!backStack.back() && pausable) {
-          pause.open();
+        if (!backStack.back()) {
+          openNavigation();
         }
       }
       return;
@@ -683,7 +778,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       !desktopBinding.active() &&
       (touchControlsActive(window, enabled, modalOpen()) ||
         (enabled && !modalOpen() && desktopBinding.touchActive()));
-    pauseButton.hidden = !pauseButtonShown(coarsePointer(window), pausable, modalOpen());
+    syncNavigationEntry();
     // The pill remains beside Pause and hides under a card.
     status.setShown(enabled && !modalOpen());
     notices.update(performance.now(), enabled && !modalOpen(), noticePlaces());
@@ -755,6 +850,11 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       stopPointers();
       desktopBinding.dispose();
       state.setEnabled(false);
+      returnToMenu = undefined;
+      returnFromCheats = undefined;
+      returnToPause = false;
+      returningToParent = false;
+      menu.dispose();
       resource.dispose();
       weaponDetail.dispose();
       status.dispose();
@@ -792,6 +892,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     },
     focusGalaxies: () => pause.focusGalaxies(),
     layout: () => layout,
+    navigationCovered,
     openAchievements: () => achievements.open(),
     openSettings: () => {
       cheats.close();
@@ -813,8 +914,8 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
         : touch;
     },
     setAchievements: (entries) => achievements.setEntries(entries),
-    setAchievementsButton(shown) {
-      achievementsButton.hidden = !shown;
+    setAchievementsButton() {
+      achievementsButton.hidden = true;
     },
     setContext(next) {
       state.setUseAvailable(next !== undefined);
@@ -838,10 +939,10 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       state.setEnabled(value);
       weapons.setEnabled(value && !modalOpen());
     },
-    setExitButton(shown) {
+    setExitButton() {
       if (exitButton) {
-        exitButton.hidden = !shown;
-        settings.root.toggleAttribute(EXIT_SHOWN_ATTRIBUTE, shown);
+        exitButton.hidden = true;
+        settings.root.toggleAttribute(EXIT_SHOWN_ATTRIBUTE, false);
       }
     },
     setGains(gains) {
@@ -858,12 +959,15 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       }
     },
     setPause(view) {
-      pausable = view.place !== null;
+      pausable = view.navigation === undefined ? view.place !== null : view.navigation === "pause";
+      menuContext = view.menuContext ?? "nonplay";
+      menu.setContext(menuContext);
       pause.setState(view);
+      syncNavigationEntry();
     },
-    setSettingsButton(shown) {
-      settings.openButton.hidden = !shown;
-      settings.root.classList.toggle("ada-no-settings-button", !shown);
+    setSettingsButton() {
+      settings.openButton.hidden = true;
+      settings.root.classList.toggle("ada-no-settings-button", true);
     },
     setStatus(view) {
       statusView = view;

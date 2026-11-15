@@ -811,3 +811,21 @@ it("returns held cargo quest details directly to the same Ship", () => {
   expect(pause.shipOpen()).toBe(true);
   expect(focused()).toBe(origin);
 });
+
+it("retains the Pause ancestor through Settings until Resume", () => {
+  const { body, modal, options, pause } = cards();
+  pause.setState(state());
+  pause.open();
+  button(body.children[0]!, "pause-settings").click();
+  expect(options.onSettings).toHaveBeenCalledOnce();
+  expect(modal.hidden).toBe(true);
+  expect(pause.isOpen()).toBe(true);
+  expect(options.onOpenChange.mock.calls).toEqual([[true]]);
+  pause.restorePaused("settings");
+  expect(focused()).toBe(button(body.children[0]!, "pause-settings"));
+  expect(modal.hidden).toBe(false);
+  expect(pause.isOpen()).toBe(true);
+  button(body.children[0]!, "pause-resume").click();
+  expect(pause.isOpen()).toBe(false);
+  expect(options.onOpenChange.mock.calls).toEqual([[true], [false]]);
+});

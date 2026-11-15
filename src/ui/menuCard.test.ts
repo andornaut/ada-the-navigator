@@ -129,3 +129,21 @@ it.each(["footer", "x"])("uses the same Menu dismissal and origin focus through 
   expect(onOpenChange.mock.calls).toEqual([[true], [false]]);
   expect(origin.focus).toHaveBeenCalledOnce();
 });
+
+it("opens the child before reporting the parent hidden so pause ownership never drops", () => {
+  const { menu, onAction, onOpenChange, rows } = setup();
+  let childOpen = false;
+  const held: boolean[] = [];
+  onAction.mockImplementation(() => {
+    childOpen = true;
+  });
+  onOpenChange.mockImplementation(() => held.push(menu.isOpen() || childOpen));
+  menu.setContext("nonplay");
+  menu.open();
+  rows()[1]!.dispatchEvent(new Event("click"));
+  expect(childOpen).toBe(true);
+  expect(held).toEqual([true, true]);
+  expect(onAction.mock.invocationCallOrder[0]!).toBeLessThan(
+    onOpenChange.mock.invocationCallOrder[1]!,
+  );
+});

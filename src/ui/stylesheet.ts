@@ -8,6 +8,7 @@ import { ITEM_NOTICE_STYLE } from "./itemNotice.ts";
 import { KEEPER_STYLE } from "./keeperBlock.ts";
 import { ADA_CONTROL_PRESENTATION_STYLE } from "./layout/controlPresentation.ts";
 import { DETAIL_CARD_STYLE } from "./layout/detailCard.ts";
+import { NAVIGATION_BUTTON_STYLE } from "./layout/navigationButton.ts";
 import { PAUSE_GRID_STYLE } from "./layout/pauseCard.ts";
 import { QUESTS_SCREEN_STYLE } from "./layout/questsScreen.ts";
 import { SHIP_CARD_STYLE } from "./layout/shipCard.ts";
@@ -34,6 +35,7 @@ export const UI_STYLESHEET = [
   CONVERSATION_STYLE,
   CONTROL_HELP_STYLE,
   SETTINGS_STYLE,
+  NAVIGATION_BUTTON_STYLE,
   ADA_CONTROL_PRESENTATION_STYLE,
   NOTICE_STYLE,
   START_SCREEN_STYLE,

@@ -1251,9 +1251,11 @@ beacon light. Welcome!"
   {paint}; Weapons: each owned weapon with its ammunition count. Equipment and
   weapon names append [{n}] above level one; level-one names have no suffix. Full
   accessible level descriptions retain Level {n} of 3. Cargo and paint have no level.
-- Pause: Pause (button label), Paused, Map, Ship, Settings, Back to title, Resume. On Ada's room page: Settings, Back to title.
-- Start screen top right: Achievements, Settings, Exit (label and accessible
-  name Exit).
+- Pause: Pause (button label), Paused, Map, Ship, Settings, Back to title, Resume.
+  Pause is used only during active pausable gameplay.
+- Start and Earth/story Menu: Menu (three-line entry), Achievements, Settings,
+  Close. Menu uses the same entry position as Pause; Settings has no standalone
+  icon. Closing Menu or its children preserves the exact underlying context.
 - Update offer: title "Update available", with Cancel and Update now.
 - Settings rows, each with its note:
   - Move controls: "Touch still works when hidden"

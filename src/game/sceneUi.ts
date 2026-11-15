@@ -42,6 +42,7 @@ import { VIEW_HOST_ID } from "../ui/layout/css.ts";
 import { fogColor } from "../ui/layout/mapScreen.ts";
 import { safeGameArea } from "../ui/layout/playView.ts";
 import { type MapField, mapScreenLabels } from "../ui/mapScreen.ts";
+import { navigationEntry } from "../ui/navigationEntry.ts";
 import { BOX_OCCUPANT, boxOccupant } from "../ui/notice.ts";
 import { galaxiesAvailable } from "../ui/pause.ts";
 import { createPennyMarkerLayer } from "../ui/pennyMarkers.ts";
@@ -522,6 +523,7 @@ export function buildScene(scene: UiContext): void {
         shipRows: CONTENT.labels,
         title: CONTENT.labels.pauseTitle ?? "",
       },
+      menuLabel: CONTENT.labels.menu ?? "Menu",
       // The start screen needs no quantum jump; it covers the flight at once.
       onBackToTitle: () => {
         if (!scene.jumping) {
@@ -901,7 +903,9 @@ export function buildScene(scene: UiContext): void {
     scene.controls.registerBack({
       back: closeGalaxyMap,
       isOpen: () =>
-        scene.galaxies.isOpen() && (scene.model.galaxyMapShownInFlight || !scene.settingsOpen),
+        scene.galaxies.isOpen() &&
+        !scene.controls.navigationCovered() &&
+        (scene.model.galaxyMapShownInFlight || !scene.settingsOpen),
     }),
     scene.controls.registerBack({
       back: () => scene.restartCard.close(),
@@ -1142,10 +1146,20 @@ export function refreshScene(scene: UiContext): void {
     keepScreenOn(playing);
   }
   armBack(scene);
-  scene.controls.setSettingsButton(start);
-  scene.controls.setAchievementsButton(start);
-  scene.controls.setExitButton(start);
+  scene.controls.setSettingsButton(false);
+  scene.controls.setAchievementsButton(false);
+  scene.controls.setExitButton(false);
   const pauseModel: GameModel & { readonly pauseMapAvailable?: boolean } = scene.model;
+  const entry = navigationEntry({
+    background: document.hidden,
+    dialogue: Boolean(state.dialogue),
+    docked: Boolean(state.docked),
+    flight: state.flight,
+    jumping: scene.jumping,
+    mandatoryStory: Boolean(scene.model.storyView),
+    mapOpen: scene.model.galaxyMapOpen,
+    mode: state.mode,
+  });
   scene.controls.setPause({
     canMap: pauseModel.pauseMapAvailable === true,
     carrying: scene.model.carrying,
@@ -1154,12 +1168,9 @@ export function refreshScene(scene: UiContext): void {
     inDanger: scene.model.inDanger,
     job: scene.model.jobObjective,
     map: scene.model.map,
-    place:
-      screen === "space" || screen === "story" || screen === "selector"
-        ? state.mode === "space" && state.flight
-          ? "flight"
-          : "room"
-        : null,
+    menuContext: start ? "start" : "nonplay",
+    navigation: entry,
+    place: entry === "pause" ? "flight" : null,
     questEntries: scene.model.quests,
     ship: state.mode === "space" && state.flight ? shipView(scene) : null,
     towing: scene.model.towing,

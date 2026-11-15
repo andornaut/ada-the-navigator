@@ -49,7 +49,7 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
   let disposed = false;
   let leave: (() => void) | undefined;
   let layer: ReturnType<typeof createModalLayer> | undefined;
-  const hide = () => {
+  const hide = (notify = true) => {
     if (modal.hidden) {
       return;
     }
@@ -58,7 +58,9 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
     layer?.dispose();
     layer = undefined;
     modal.hidden = true;
-    options.onOpenChange(false);
+    if (notify) {
+      options.onOpenChange(false);
+    }
   };
   const close = () => {
     if (modal.hidden) {
@@ -76,6 +78,7 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
     if (opener) {
       origin = opener;
     }
+    root.append(modal);
     modal.hidden = false;
     actions.replaceChildren();
     let focus = closeButton;
@@ -90,8 +93,12 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
           return;
         }
         returnAction = action;
-        hide();
-        options.onAction(action, () => open());
+        hide(false);
+        try {
+          options.onAction(action, () => open());
+        } finally {
+          options.onOpenChange(false);
+        }
       });
       actions.append(button);
     }

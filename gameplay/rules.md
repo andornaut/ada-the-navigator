@@ -67,10 +67,11 @@ and new ones unlock with progress.
 
 Player-visible labels use "Earth" for travel to Ada's room and "title" for the
 start screen; story dialogue may still call Ada's house home. Every arrival on
-Earth lands in Ada's room. Ada's room page has the pause button at the top left,
-opening the Paused card with Settings and Back to title; its close
-X, an outside tap, back and Escape close it. Back to title opens the start
-screen, where Continue resumes as above.
+Earth lands in Ada's room. Nonpausable story pages use the three-line Menu at the
+same position as Pause. Start and story Menu share the smallest modal preset,
+with Achievements, Settings and primary Close last. Opening or closing Menu or
+its children preserves the exact story page, dialogue, choices, progress and
+locks. Closing a child returns to the same Menu and opener.
 
 Restart asks first on a card with Restart and Cancel, as in Chibi; back and Escape
 cancel. Confirming clears all story progress, unlocked galaxies, holodisks, seen
@@ -793,14 +794,16 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   here and Galaxies stay visible but disabled, refuse with the shared refusal feedback, and the local map
   shows "Unavailable while you are in danger." The close X, an outside tap, back
   and Escape resume. Settings opened from the pause card returns to it when closed.
-  On the start screen, Settings opens from its own button, as in Chibi, and
-  Achievements sits immediately left of it in the same form. Exit, as in Archie,
-  sits right of Settings, at the far top right, where it can act: in an installed app the platform lets
-  close (Chrome's Android app, Chrome and Edge desktop app windows) it closes the
-  app, and in a browser tab it goes to the site's home page. Installed apps that
-  cannot close hide it. Q exits wherever Exit shows. The start card
-  holds only Start, or Continue and Restart. Achievements is on the start
-  screen only.
+  Settings is nested in Pause or Menu, with no standalone Settings icon. Pause is
+  available only during active pausable gameplay, determined from model state and
+  its guards. Other contexts use the three-line Menu in the same entry position,
+  including Start, maps and nonpausable story. Start and Earth/story use the same
+  smallest shared modal preset: Achievements, Settings, then primary Close. The
+  title remains centered and unobscured. Active gameplay retains the approved
+  two-column Pause action order and primary Resume. Existing map navigation is
+  retained under Menu. Closing nested Settings or Achievements restores the same
+  Menu and parent context without advancing story or changing choices. The start
+  card retains Start, or Continue and Restart. No mute toggle is added to Ada.
 - Weapon and pause controls use icons inspired by Chibi, with accessible labels.
 - As in Chibi, wherever player text names an on-screen control (the left stick,
   the right stick, Use), that control's icon follows its name inline at text

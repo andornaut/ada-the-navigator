@@ -58,6 +58,8 @@ export interface PauseOptions {
 }
 
 export interface PauseState {
+  readonly navigation?: "pause" | "menu";
+  readonly menuContext?: "start" | "nonplay";
   /** Canonical model permission; omitted permission keeps Map hidden. */
   readonly canMap?: boolean;
   readonly galaxy?: GalaxyNumber;
@@ -440,7 +442,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       show("ship");
     } else if (id === "settings") {
       // Settings opens in the Paused card's place; closing it returns here (reopen).
-      setOpen(false);
+      hidePause();
       options.onSettings();
     } else {
       setOpen(false);
@@ -538,6 +540,17 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     open: () => setOpen(true),
     openQuest,
     openQuests,
+    restorePaused: (opener: PauseAction) => {
+      if (open) {
+        show("paused");
+      } else {
+        setOpen(true);
+      }
+      const target = buttons.get(opener);
+      if (target && !target.hidden) {
+        focusTarget(target);
+      }
+    },
     setState(next: PauseState): void {
       state = next;
       renderAll();

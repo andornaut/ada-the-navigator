@@ -31,8 +31,8 @@ function evaluate(text: string, context: object): unknown {
   );
 }
 
-describe("title Settings controls adapter", () => {
-  it("shows only on explicit title eligibility and hides again without removing the button", () => {
+describe("nested Settings controls adapter", () => {
+  it("keeps the standalone button hidden even on title eligibility", () => {
     const classes = new Set(["ada-no-settings-button"]);
     const button = { hidden: true };
     const settings = {
@@ -51,8 +51,8 @@ describe("title Settings controls adapter", () => {
       shown: boolean,
     ) => void;
     show(true);
-    expect(button.hidden).toBe(false);
-    expect(classes.has("ada-no-settings-button")).toBe(false);
+    expect(button.hidden).toBe(true);
+    expect(classes.has("ada-no-settings-button")).toBe(true);
     show(false);
     expect(button.hidden).toBe(true);
     expect(classes.has("ada-no-settings-button")).toBe(true);

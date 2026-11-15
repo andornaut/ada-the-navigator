@@ -18,6 +18,7 @@ import { readStory, relaunch } from "../testing/launch.ts";
 import { cheatGroups, type CheatSessionOptions, createCheatSession } from "../ui/cheatActions.ts";
 import { VIEW_HOST_ID } from "../ui/layout/css.ts";
 import { NO_INSETS, safeGameArea } from "../ui/layout/playView.ts";
+import { navigationEntry } from "../ui/navigationEntry.ts";
 import { BOX_OCCUPANT, boxOccupant } from "../ui/notice.ts";
 import { galaxiesAvailable } from "../ui/pause.ts";
 import type { PauseState } from "../ui/pauseCard.ts";
@@ -78,17 +79,32 @@ function controlArgument(name: string): string {
   }).outputText;
 }
 function pauseView(model: GameModel, screen: string = model.screen): PauseState {
-  return runInContext(
-    controlArgument("setPause"),
-    createContext({
-      mapField: () => null,
-      pauseModel: model,
-      scene: { model },
-      screen,
-      shipView: () => ({ name: "current ship" }),
-      state: model.state,
-    }),
-  ) as PauseState;
+  const context = createContext({
+    document: { hidden: false },
+    mapField: () => null,
+    navigationEntry,
+    pauseModel: model,
+    scene: { jumping: false, model },
+    screen,
+    shipView: () => ({ name: "current ship" }),
+    start: screen === "start",
+    state: model.state,
+  });
+  const refresh = source.statements.find(
+    (node) => ts.isFunctionDeclaration(node) && node.name?.text === "refreshScene",
+  ) as ts.FunctionDeclaration;
+  const entry = refresh
+    .body!.statements.flatMap((node) =>
+      ts.isVariableStatement(node) ? [...node.declarationList.declarations] : [],
+    )
+    .find((node) => node.name.getText(source) === "entry")!;
+  runInContext(
+    ts.transpileModule(`const entry = ${entry.initializer!.getText(source)};`, {
+      compilerOptions: { target: ts.ScriptTarget.ES2023 },
+    }).outputText,
+    context,
+  );
+  return runInContext(controlArgument("setPause"), context) as PauseState;
 }
 
 function flight() {
@@ -255,19 +271,19 @@ describe("station service caller", () => {
 });
 
 describe("universal pause caller", () => {
-  it("keeps Pause absent on the title and loading screens, with Settings only on the title", () => {
+  it("keeps Pause absent on the title and loading screens, with Settings nested in navigation", () => {
     const model = new GameModel(CONTENT);
     expect(pauseView(model).place).toBeNull();
     expect(pauseView(model, "loading").place).toBeNull();
     expect(runInContext(controlArgument("setSettingsButton"), createContext({ start: true }))).toBe(
-      true,
+      false,
     );
     expect(
       runInContext(controlArgument("setSettingsButton"), createContext({ start: false })),
     ).toBe(false);
   });
 
-  it("keeps Pause and the ship available during flight dialogue and docking", () => {
+  it("uses Menu during nonpausable flight dialogue and docking", () => {
     const model = flight();
     for (const blocked of ["dialogue", "docked"] as const) {
       model.state.dialogue =
@@ -281,7 +297,8 @@ describe("universal pause caller", () => {
           : null;
       model.state.docked = blocked === "docked" ? "station" : null;
       const view = pauseView(model);
-      expect(view.place).toBe("flight");
+      expect(view.place).toBeNull();
+      expect(view.navigation).toBe("menu");
       expect(view.ship).not.toBeNull();
     }
   });
@@ -296,14 +313,15 @@ describe("universal pause caller", () => {
     expect(pauseView(model).canMap).toBe(false);
   });
 
-  it("offers Pause on each Earth story page without advancing or answering its choice", () => {
+  it("offers Menu on each Earth story page without advancing or answering its choice", () => {
     const model = new GameModel(CONTENT);
     model.start();
     const pages: string[] = [];
     let choice = false;
     for (let turn = 0; turn < 60 && model.screen === "story"; turn++) {
       const before = structuredClone(model.storyView);
-      expect(pauseView(model).place).toBe("room");
+      expect(pauseView(model).place).toBeNull();
+      expect(pauseView(model).navigation).toBe("menu");
       expect(model.storyView).toEqual(before);
       pages.push(model.storyView!.page.id);
       if (model.storyView!.choices.length) {
@@ -334,7 +352,8 @@ describe("universal pause caller", () => {
     const open = runInContext(callback("scene.openGalaxies"), context) as () => void;
     const close = runInContext(callback("closeGalaxyMap"), context) as () => void;
     expect(pauseView(model).canMap).toBe(true);
-    expect(pauseView(model).place).toBe("room");
+    expect(pauseView(model).place).toBeNull();
+    expect(pauseView(model).navigation).toBe("menu");
     open();
     expect(model.screen).toBe("selector");
     expect(model.state.flight).toBeNull();
@@ -378,7 +397,8 @@ describe("universal pause caller", () => {
     });
     const open = runInContext(callback("scene.openGalaxies"), context) as () => void;
     const leave = runInContext(callback("onBackToTitle"), context) as () => void;
-    expect(pauseView(model).place).toBe("room");
+    expect(pauseView(model).place).toBeNull();
+    expect(pauseView(model).navigation).toBe("menu");
     expect(pauseView(model).canMap).toBe(false);
     open();
     expect(snapshot()).toEqual(before);
@@ -407,13 +427,15 @@ describe("universal pause caller", () => {
       scene: { jumping: false, model },
     });
     const leave = runInContext(callback("onBackToTitle"), context) as () => void;
-    expect(pauseView(model).place).toBe("flight");
+    expect(pauseView(model).place).toBeNull();
+    expect(pauseView(model).navigation).toBe("menu");
     leave();
     expect(model.screen).toBe("start");
     expect(pauseView(model).place).toBeNull();
     model.continueGame();
     expect(model.state.dialogue).toEqual(dialogue);
-    expect(pauseView(model).place).toBe("flight");
+    expect(pauseView(model).place).toBeNull();
+    expect(pauseView(model).navigation).toBe("menu");
   });
 });
 
