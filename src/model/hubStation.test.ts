@@ -4,6 +4,7 @@ import { ACTIVITIES } from "../data/activities.ts";
 import { CONTENT } from "../data/content.ts";
 import { questReward } from "../data/questRewards.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
+import { visitCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
 import { playOpening } from "../testing/launch.ts";
 import { ensureDestination } from "./flight.ts";
 import { GameModel } from "./game.ts";
@@ -16,16 +17,19 @@ const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function atHub(resolved = false): GameModel {
   const model = new GameModel(CONTENT);
   Object.assign(model.state, { prologueSeen: true, started: true, unlocked: [1, 2] });
+  const progress = model.state.progress[2];
+  if (resolved) {
+    Object.assign(progress, { introduced: true, questComplete: true, resolved: true, stage: 5 });
+  }
   model.startGalaxy(2);
   playOpening(model);
   model.state.dialogue = null;
-  const progress = model.state.progress[2];
-  Object.assign(progress, { introduced: true, stage: Math.max(1, progress.stage) });
-  if (resolved) {
-    Object.assign(progress, { questComplete: true, resolved: true, stage: 5 });
-  }
   const f = model.state.flight!;
-  const hub = ensureDestination(CONTENT, HUB_STATION, f);
+  const hub = resolved
+    ? ensureDestination(CONTENT, HUB_STATION, f)
+    : visitCartwheelHubFixture(CONTENT, model);
+  model.state.dialogue = null;
+  Object.assign(progress, { introduced: true, stage: Math.max(1, progress.stage) });
   progress.known = [...new Set([...progress.known, HUB_STATION])];
   progress.stations = [...new Set([...progress.stations, HUB_STATION])];
   f.objects = f.objects.filter((object) => !object.enemy);

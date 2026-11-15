@@ -6,6 +6,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { LANDMARK_TUNING } from "../data/jobs.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { activateCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
 import { playOpening } from "../testing/launch.ts";
 import { ensureDestination } from "./flight.ts";
 import { galaxyRoute, GameModel } from "./game.ts";
@@ -519,6 +520,7 @@ describe("galaxy map", () => {
     model.state.unlocked = [1, 2];
     model.startGalaxy(2);
     model.state.dialogue = null;
+    activateCartwheelHubFixture(CONTENT, model);
     const flight = model.state.flight!;
     for (const id of ["miner", "visitors"]) {
       ensureDestination(CONTENT, id, flight);
@@ -560,6 +562,7 @@ describe("galaxy map", () => {
     model.state.unlocked = [1, 2];
     model.startGalaxy(2);
     model.state.dialogue = null;
+    activateCartwheelHubFixture(CONTENT, model);
     model.state.progress[2].known = ["hub"];
     ensureDestination(CONTENT, "hub", model.state.flight!);
     expect(model.map?.places.find(({ id }) => id === "hub")).toMatchObject({

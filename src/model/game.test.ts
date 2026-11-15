@@ -105,8 +105,8 @@ it("offers Salvage beside a disabled heavy and salvages it on Use", () => {
 });
 function arrive(model: GameModel, id: string) {
   const f = model.state.flight!;
-  if (f.galaxy === 3 && readRequiredRolePlan(f, id)) {
-    const progress = model.state.progress[3];
+  if ((f.galaxy === 2 || f.galaxy === 3) && readRequiredRolePlan(f, id)) {
+    const progress = model.state.progress[f.galaxy];
     f.freshDistance = Math.max(
       f.freshDistance,
       CONTENT.tuning.introFreshDistance + progress.stage * CONTENT.tuning.encounterFreshDistance,
@@ -118,7 +118,7 @@ function arrive(model: GameModel, id: string) {
   f.player = { x: target.x, y: target.y };
   // Direct test travel settles the active region as production travel does.
   syncFlightRegion(CONTENT, f);
-  if (f.galaxy === 3) {
+  if (f.galaxy === 2 || f.galaxy === 3) {
     const guard = stationPopulationObjects(f).find((actor) => actor.routeId === id);
     if (guard?.enemy) {
       const definition = enemyEquipmentDefinition(f.galaxy, guard.enemy);

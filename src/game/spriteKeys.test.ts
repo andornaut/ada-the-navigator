@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
-import { ensureDestination } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { storyShips } from "../model/storyShips.ts";
+import { activateCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
 import {
   BEACON_SUFFIX,
   hubBayKey,
@@ -20,7 +20,7 @@ describe("object sprite keys", () => {
     model.state.unlocked = [1, 2];
     model.startGalaxy(2);
     const flight = model.state.flight!;
-    const hub = ensureDestination(CONTENT, "hub", flight);
+    const hub = activateCartwheelHubFixture(CONTENT, model);
     // Every craft the scenes draw: the waiting pair, and the blocking scene's cast.
     const ships = [
       ...storyShips(hub, { stage: 2 }, { bay: false, noses: {} }, undefined, 0),

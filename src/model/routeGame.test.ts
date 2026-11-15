@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { activateCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
 import { ensureDestination } from "./flight.ts";
 import { galaxyRoute, GameModel } from "./game.ts";
@@ -15,7 +16,9 @@ function approach(galaxy: GalaxyNumber) {
   playOpening(model);
   const flight = model.state.flight!;
   flight.objects = [];
-  if (galaxy === 3) {
+  if (galaxy === 2) {
+    activateCartwheelHubFixture(CONTENT, model);
+  } else if (galaxy === 3) {
     flight.freshDistance = CONTENT.tuning.introFreshDistance;
     model.step(1 / 60, idle);
   }
