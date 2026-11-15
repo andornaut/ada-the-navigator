@@ -27,7 +27,15 @@ const offline = vi.hoisted(() => {
   };
 });
 vi.mock("@andornaut/game-kit/runtime/web/pwa/dom/offlinePlay", () => ({
-  browserOfflinePage: () => ({}),
+  browserOfflinePage: () => ({
+    container: navigator.serviceWorker,
+    eventTarget: window,
+    now: () => Date.now(),
+    online: () => true,
+    reload: vi.fn(),
+    session: undefined,
+    visibilitySource: document,
+  }),
   startOfflinePlay: offline.start,
 }));
 const wakeLock = vi.hoisted(() => {
@@ -76,7 +84,15 @@ function stubDevice({
   standalone = false,
   userAgent = CHROME,
 }: Device): EventTarget {
-  const navigator = { maxTouchPoints, standalone, userAgent };
+  const navigator = {
+    maxTouchPoints,
+    serviceWorker: Object.assign(new EventTarget(), {
+      controller: null,
+      getRegistration: vi.fn(async () => undefined),
+    }),
+    standalone,
+    userAgent,
+  };
   const page = Object.assign(new EventTarget(), {
     close: vi.fn(),
     location: { assign: vi.fn() },
@@ -88,7 +104,7 @@ function stubDevice({
   vi.stubGlobal("CloseWatcher", closeWatcher ? EventTarget : undefined);
   vi.stubGlobal("window", page);
   vi.stubGlobal("navigator", navigator);
-  vi.stubGlobal("document", { visibilityState: "visible" });
+  vi.stubGlobal("document", Object.assign(new EventTarget(), { visibilityState: "visible" }));
   stubHistory();
   return page;
 }
@@ -129,8 +145,11 @@ describe("offline play", () => {
     ]);
     expect(options.serviceWorkerUrl).toBe("/sw.js");
     expect(offline.play.registrationReady).not.toHaveBeenCalled();
+    expect(navigator.serviceWorker.getRegistration).not.toHaveBeenCalled();
     pwa.gameShown();
+    await Promise.resolve();
     expect(offline.play.registrationReady).toHaveBeenCalledOnce();
+    expect(navigator.serviceWorker.getRegistration).toHaveBeenCalledOnce();
   });
 
   it.each(["continue", "blocked", "reloading"] as const)(
