@@ -62,6 +62,13 @@ class FakeElement {
       node.parentElement = this;
     }
   }
+  prepend(...nodes: FakeElement[]): void {
+    for (const node of nodes) {
+      node.parentElement?.children.splice(node.parentElement.children.indexOf(node), 1);
+      node.parentElement = this;
+    }
+    this.children.unshift(...nodes);
+  }
   click(): void {
     for (const listener of this.listeners.get("click") ?? []) {
       listener();
@@ -835,3 +842,36 @@ it("retains the Pause ancestor through Settings until Resume", () => {
   expect(pause.isOpen()).toBe(false);
   expect(options.onOpenChange.mock.calls).toEqual([[true], [false]]);
 });
+
+it.each([1, 2])(
+  "returns %i contextual quests to gameplay without a hidden Map ancestor",
+  (count) => {
+    const { options, pause, root } = cards();
+    const entries = Array.from({ length: count }, (_, index) => ({
+      galaxy: 1 as const,
+      id: `story:1:${index}`,
+      line: { kind: "story" as const, target: null, text: `Known objective ${index}` },
+      locations: [],
+    }));
+    pause.setState(state({ galaxy: 1, questEntries: entries }));
+    expect(pause.openContextQuests({ quests: entries, targetId: "known" })).toBe(true);
+    const quests = root.children.find((node) => node.className.includes("ada-quests-screen"))!;
+    const find = (action: string) =>
+      quests.querySelectorAll().find((node) => node.dataset.action === action)!;
+    expect(pause.mapOpen()).toBe(false);
+    if (count === 2) {
+      quests
+        .querySelectorAll()
+        .find((node) => node.dataset.questId === entries[0]!.id)!
+        .click();
+      find("quest-back").click();
+      expect(pause.isOpen()).toBe(true);
+      expect(quests.querySelectorAll().filter((node) => node.dataset.questId)).toHaveLength(2);
+    }
+    find("quest-close").click();
+    expect(pause.isOpen()).toBe(false);
+    expect(pause.mapOpen()).toBe(false);
+    expect(options.onOpenChange.mock.calls).toEqual([[true], [false]]);
+    pause.dispose();
+  },
+);

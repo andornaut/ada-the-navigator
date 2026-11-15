@@ -46,6 +46,7 @@ import { navigationEntry } from "../ui/navigationEntry.ts";
 import { BOX_OCCUPANT, boxOccupant } from "../ui/notice.ts";
 import { galaxiesAvailable } from "../ui/pause.ts";
 import { createPennyMarkerLayer } from "../ui/pennyMarkers.ts";
+import { questContextIcon } from "../ui/questsScreen.ts";
 import { createRestartCard } from "../ui/restartCard.ts";
 import { aboardLabel, type ShipView } from "../ui/shipCard.ts";
 import { createStationView } from "../ui/station.ts";
@@ -466,6 +467,7 @@ export function buildScene(scene: UiContext): void {
       onSave: () => apply(() => {}),
       run: () => (scene.model.state.mode === "space" ? scene.model.state.flight : null),
     },
+    contextQuestDetails: () => scene.model.contextQuestDetails,
     exit: exitShown() ? { label: CONTENT.labels.exit ?? "", onExit: exitGame } : undefined,
     install: {
       port: {
@@ -1141,7 +1143,14 @@ export function refreshScene(scene: UiContext): void {
     scene.controls.reset();
   }
   const action = enabled ? scene.model.contextAction : undefined;
-  scene.controls.setContext(action && { action, label: scene.model.contextLabel ?? "" });
+  const questIcon = enabled && !action ? questContextIcon(scene.model.contextQuestDetails) : null;
+  scene.controls.setContext(
+    action
+      ? { action, label: scene.model.contextLabel ?? "" }
+      : questIcon
+        ? { action: "use", label: CONTENT.labels.quests ?? "", questIcon }
+        : undefined,
+  );
   scene.controls.setWeapons(scene.model.weapons());
   noticeGains(scene);
   renderStatus(scene);

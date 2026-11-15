@@ -66,3 +66,12 @@ Each detail has one Objectives checklist, contextual description and a separate 
 ## Contextual quest route port
 
 `createQuestsScreen.openContext({ targetId, quests })` consumes only the active quest entries already selected by the canonical model resolver. It does not infer object links, ranges or availability from location labels. One quest opens details with Close to gameplay. Multiple quests open a filtered existing list; detail Back and X return to that list, and list Close and X dismiss to gameplay. Normal station/list entry remains unfiltered. `questContextIcon` supplies an existing canonical icon without a question-mark fallback. This route port does not wire contextual Use or adopt an unchecked model getter.
+
+Accepted Use samples read `GameModel.contextQuestDetails` again before opening a
+quest view. A null getter forwards the original Use sample to the model, so
+current real actions, including every Dock visit, retain priority. A successful
+quest open consumes that sample and clears movement/fire for the opening frame.
+Both single and filtered plural routes have gameplay as their outer return;
+plural detail Back returns to its filtered list. The existing Use ring displays
+the canonical quest target icon at its rendered centre without a new action ID
+or world pointer target.

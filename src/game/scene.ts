@@ -595,7 +595,10 @@ export class GameScene extends Scene {
         viewportHeight: this.cameras.main.height / this.cameras.main.zoom,
         viewportWidth: this.cameras.main.width / this.cameras.main.zoom,
       };
-      this.model.step(Math.min(milliseconds / 1000, 0.05), input);
+      // Use can open a quest modal while this frame consumes its input.
+      if (!this.settingsOpen) {
+        this.model.step(Math.min(milliseconds / 1000, 0.05), input);
+      }
       observeFeedback(this);
       startRockBreaks(this, time);
       startZips(this, time);

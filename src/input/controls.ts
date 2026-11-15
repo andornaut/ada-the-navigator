@@ -24,6 +24,7 @@ import {
   useDiscFrame,
 } from "../game/touchChrome.ts";
 import type { ItemGain } from "../model/itemGains.ts";
+import type { ContextQuestDetails } from "../model/questObjectLinks.ts";
 import { weaponName } from "../model/shop.ts";
 import type { UseAction } from "../model/types.ts";
 import { PHONE_EVENTS } from "../pwa/events.ts";
@@ -36,6 +37,7 @@ import {
 import { type BackLayer, createBackStack, pressBack } from "../ui/backStack.ts";
 import type { CheatAction } from "../ui/cheatActions.ts";
 import { type CheatLabels, createCheats } from "../ui/cheats.ts";
+import { consumeContextQuestUse, createContextQuestIcon } from "../ui/contextQuestUse.ts";
 import { bindAdaHoldActions } from "../ui/holdActionsAdapter.ts";
 import { createItemNotices, type NoticePlaces } from "../ui/itemNotice.ts";
 import { units, VIEW_HOST_ID } from "../ui/layout/css.ts";
@@ -76,6 +78,7 @@ import { bindDesktopInput, DesktopControlState, type DesktopFrame } from "./desk
 import { type ControlSample, ControlState } from "./state.ts";
 
 export interface ControlsOptions {
+  readonly contextQuestDetails?: () => ContextQuestDetails | null;
   readonly aboardResource?: () => {
     readonly questId?: string;
     readonly title: string;
@@ -128,6 +131,7 @@ export interface ControlsOptions {
 /** What Use does here and the action's name, the Use disc's accessible name. */
 export interface UseContext {
   readonly action: UseAction;
+  readonly questIcon?: string;
   readonly label: string;
 }
 
@@ -557,6 +561,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     ring: createTouchChrome(scene, options.rasterScale, kind)?.setDepth(STICK_DEPTHS.ring),
   });
   const sticks = { aim: stick("aim"), move: stick("move") };
+  const questUseIcon = createContextQuestIcon(settings.useButton);
   const useDisc = createUseDisc(scene, options.rasterScale).setDepth(STICK_DEPTHS.ring);
   const stickParts = [
     ...[sticks.move, sticks.aim]
@@ -803,7 +808,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
           ? "press"
           : "held"
         : "rest";
-      useDisc.setFrame(useDiscFrame(context.action, held));
+      useDisc.setFrame(useDiscFrame(context.questIcon ? "quest" : context.action, held));
     }
     const size = canvasSize(sceneFit(scene));
     const views = stickViews(
@@ -911,11 +916,17 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     },
     sample(frame) {
       const touch = state.sample();
-      return frame &&
+      const sample =
+        frame &&
         !desktopBinding.touchActive() &&
         (desktopBinding.active() || !coarsePointer(window))
-        ? { ...desktop.sample(frame), use: touch.use }
-        : touch;
+          ? { ...desktop.sample(frame), use: touch.use }
+          : touch;
+      return consumeContextQuestUse(
+        () => options.contextQuestDetails?.() ?? null,
+        (context) => pause.openContextQuests(context),
+        sample,
+      );
     },
     setAchievements: (entries) => achievements.setEntries(entries),
     setAchievementsButton() {
@@ -923,10 +934,15 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     },
     setContext(next) {
       state.setUseAvailable(next !== undefined);
-      if (next?.action === context?.action && next?.label === context?.label) {
+      if (
+        next?.action === context?.action &&
+        next?.label === context?.label &&
+        next?.questIcon === context?.questIcon
+      ) {
         return;
       }
       context = next;
+      questUseIcon.set(next?.questIcon ?? null);
       if (next) {
         settings.useButton.dataset.use = next.action;
         settings.useButton.setAttribute("aria-label", next.label);

@@ -5,6 +5,7 @@ import type { GalaxyNumber } from "../data/types.ts";
 import { weaponDetailLines } from "../data/weaponDetails.ts";
 import type { LocalMap } from "../model/map.ts";
 import type { QuestEntry } from "../model/questDetails.ts";
+import type { ContextQuestDetails } from "../model/questObjectLinks.ts";
 import { bindAdaAction } from "./actionBinding.ts";
 import { compactLevelName } from "./compactLevelName.ts";
 import { SCROLL } from "./layout/contentCard.ts";
@@ -567,6 +568,15 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     isOpen: () => open,
     mapOpen,
     open: () => setOpen(true),
+    openContextQuests(context: ContextQuestDetails): boolean {
+      if (!context.quests.length) {
+        return false;
+      }
+      questRoot = "flight";
+      setOpen(true);
+      hidePause();
+      return quests.openContext(context);
+    },
     openQuest,
     openQuests,
     restorePaused: (opener: PauseAction) => {

@@ -197,14 +197,15 @@ export function showTouchChrome(sprite: GameObjects.Sprite, tag: TouchChromePose
 const USE_DISC_KEY = "touch-chrome-use";
 
 /** The Use disc frame for an action and pose. */
-export const useDiscFrame = (action: UseAction, pose: UseDiscPose): string => `${action}-${pose}`;
+export const useDiscFrame = (action: UseAction | "quest", pose: UseDiscPose): string =>
+  `${action}-${pose}`;
 
 // The Use disc: every action's symbol in every pose, painted procedurally like the rings at scale
 // texels per logical px, as one sprite that shows the frame useDiscFrame names.
 export function createUseDisc(scene: Scene, scale: number): GameObjects.Sprite {
   if (!scene.textures.exists(USE_DISC_KEY)) {
     const frames = new Map<string, ReturnType<typeof useDiscLayers>>();
-    for (const action of Object.keys(USE_SYMBOLS) as UseAction[]) {
+    for (const action of [...Object.keys(USE_SYMBOLS), "quest"] as (UseAction | "quest")[]) {
       for (const pose of USE_DISC_POSES) {
         frames.set(useDiscFrame(action, pose), useDiscLayers(TOUCH_CHROME_COLOURS, action, pose));
       }

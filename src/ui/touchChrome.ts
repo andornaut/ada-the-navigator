@@ -290,7 +290,7 @@ const SALVAGE_GAPS = [
  */
 export function useDiscLayers(
   colours: TouchChromeColours,
-  action: UseAction,
+  action: UseAction | "quest",
   pose: UseDiscPose,
 ): readonly TouchChromeLayer[] {
   const core = pose === "rest" ? colours.cream : colours.white;
@@ -299,7 +299,7 @@ export function useDiscLayers(
     { centre: CENTRE, colour: colours.ink, inner: outer - 5, kind: "ring", outer },
     { centre: CENTRE, colour: core, inner: outer - 4, kind: "ring", outer: outer - 1 },
   ];
-  const parts = USE_SYMBOLS[action];
+  const parts = action === "quest" ? [] : USE_SYMBOLS[action];
   const paint = (part: SymbolPart, colour: number, grow: number): TouchChromeLayer =>
     part.kind === "disc"
       ? { centre: part.centre, colour, kind: "disc", radius: part.radius + grow }
