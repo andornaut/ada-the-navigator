@@ -8,6 +8,7 @@ class Element extends EventTarget {
   dataset: Record<string, string> = {};
   hidden = false;
   disabled = false;
+  style = { alignSelf: "", minWidth: "" };
   textContent = "";
   firstChild = { nodeType: 3, nodeValue: "" };
   attributes = new Map<string, string>();
@@ -152,6 +153,7 @@ it("retains native title and sibling body/footer slots without fitting before de
   (slots.body as unknown as Element).append(child);
   card.update({ ...initial, closeAction: "second", footerAction: "back", title: "Detail" });
   expect(card.slots).toBe(slots);
+  expect(slots.body.style.alignSelf).toBe("stretch");
   expect((slots.body as unknown as Element).children).toEqual([child]);
   expect((slots.header as unknown as Element).children[0]!.textContent).toBe("Detail");
   expect(slots.footer.dataset.footerAction).toBe("back");
@@ -176,8 +178,9 @@ describe("shared production prose", () => {
     const part = f.ports.components.text.create({ text: "First" });
     const node = part.element;
     expect(node.className).toBe("ada-prose");
-    part.update({ text: "Second" });
+    part.update({ className: "ada-card-note", text: "Second" });
     expect(part.element).toBe(node);
     expect(node.textContent).toBe("Second");
+    expect(node.className).toBe("ada-prose ada-card-note");
   });
 });

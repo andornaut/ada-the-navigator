@@ -9,427 +9,31 @@ import type { StationServices } from "../model/stationServices.ts";
 import { createDialoguePanel, type DialogueSpeaker } from "./dialoguePanel.ts";
 import { createExchangeView, type ExchangePort } from "./exchange.ts";
 import { keeperName } from "./keeperBlock.ts";
-import { CARD_CLOSE } from "./layout/cardFrame.ts";
 import { cardPages } from "./layout/cardPages.ts";
-import { BUTTON_SLICE, FOCUS_RING, PILL, TEXT_BUTTON } from "./layout/controls.ts";
-import { font, safeEdge, slice, units } from "./layout/css.ts";
+import { FOCUS_RING } from "./layout/controls.ts";
+import { units } from "./layout/css.ts";
 import {
-  BALANCE,
   CONFIRM_ITEM,
-  EXCHANGE_FIELD,
-  SHOP_ROW,
   shopColumns,
   shopListWidth,
   shopRowHeight,
   shopRowWidth,
 } from "./layout/shopCard.ts";
-import { SPACING, TYPE } from "./layout/tokens.ts";
+import { STATION_SPRITES } from "./layout/stationStyle.ts";
+import { SPACING } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
-import {
-  createActions,
-  createButton,
-  createCard,
-  FOCUS_STYLE,
-  isTap,
-  TEXT_TOKENS,
-} from "./modal.ts";
+import { createActions, createButton, createCard, isTap } from "./modal.ts";
 import { refuse } from "./refusal.ts";
-import { buttonProperty } from "./uiSkin.ts";
+import { mountStationDropDetails } from "./stationDropDetails.ts";
+import { applyButtonSkin } from "./uiSkin.ts";
 
 // The station card, the shop, the job board and their confirms (art/shop.md,
 // gameplay/quests.md "Job board") on the shared card builder; every size comes from src/ui/layout
 // (layout.md "Shop item row").
 
-const SPRITES = "/art/ui/sprites/";
-const { bottom, left, right, top } = BUTTON_SLICE;
-const TILE_SLICE = `${top} ${right} ${bottom} ${left}`;
-const TILE_WIDTHS = `${slice(top)} ${slice(right)} ${slice(bottom)} ${slice(left)}`;
-const ROW_SIDE = `calc(${units(SHOP_ROW.inset)} - ${slice(left)})`;
-// The row's content centres on each state's face: the normal face over the lip, the pressed face
-// sunk into it, the disabled face over the full height.
-const NORMAL_BOTTOM = `calc(${units(TEXT_BUTTON.lipHeight)} + ${slice(top)} - ${slice(bottom)})`;
-const PRESSED_BOTTOM = `calc(${units(TEXT_BUTTON.lipHeight - TEXT_BUTTON.pressedSink)} + ${slice(
-  top,
-)} - ${slice(bottom)})`;
-const FLAT_TOP = `calc(${slice(bottom)} - ${slice(top)})`;
-const RING_OUT = SHOP_ROW.selection.outset + SHOP_ROW.selection.band;
-// A glyph size at the well's scale: 1 in rows, CONFIRM_ITEM.glyphScale in the confirm.
-const scaled = (size: number) => `calc(${units(size)} * var(--glyph-scale,1))`;
+const SPRITES = STATION_SPRITES;
 
-export const STATION_STYLE = `
-.ada-controls .ada-dialogue-frame.ada-station-frame > .ada-story-skip{
-  right:${safeEdge("right", SPACING.pageInset + CARD_CLOSE.hit.width + SPACING.gap)}
-}
-
-.ada-controls .ada-dialogue-panel[data-dialog="station"] .ada-story-tab{
-  width:fit-content;
-  max-width:100%;
-  height:auto;
-  white-space:normal;
-  overflow-wrap:anywhere
-}
-
-.ada-controls .ada-exchange{
-  max-width:100%;
-  text-align:left
-}
-.ada-controls .ada-exchange label{
-  display:flex;
-  align-items:center;
-  flex-wrap:wrap;
-  gap:${units(SPACING.gap)}
-}
-.ada-controls .ada-exchange input{
-  box-sizing:border-box;
-  width:${units(EXCHANGE_FIELD.width)};
-  max-width:100%;
-  font:inherit;
-  color:inherit;
-  background:transparent;
-  border:${units(EXCHANGE_FIELD.edge)} solid currentColor
-}
-.ada-controls .ada-exchange p{
-  overflow-wrap:anywhere
-}
-
-.ada-controls .ada-balance,
-.ada-controls .ada-confirm-price{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:${units(BALANCE.markGap)};
-  font:${font(TYPE.label)};
-  color:${TEXT_TOKENS.label}
-}
-.ada-controls .ada-balance{
-  height:${units(BALANCE.line)}
-}
-.ada-controls .ada-confirm-price{
-  font:${font(CONFIRM_ITEM.price.text)}
-}
-.ada-controls .ada-balance::before,
-.ada-controls .ada-confirm-price::before{
-  content:"";
-  flex:none;
-  width:${units(BALANCE.icon)};
-  height:${units(BALANCE.icon)};
-  background:url('${SPRITES}icon-stardust-20.png') 0 0 / 100% 100% no-repeat;
-  image-rendering:pixelated
-}
-
-.ada-controls .ada-card .ada-confirm-about{
-  color:${TEXT_TOKENS.label}
-}
-
-/* Paged rows retain space for focus and selection rings. */
-.ada-controls .ada-shop-list{
-  box-sizing:border-box;
-  display:grid;
-  align-content:start;
-  justify-items:center;
-  gap:${units(SPACING.gap)};
-  padding:${units(FOCUS_RING.outset)};
-  align-self:center
-}
-
-.ada-controls .ada-shop-group{
-  display:grid;
-  grid-template-columns:repeat(var(--shop-columns,2),var(--shop-row-width,max-content));
-  column-gap:${units(SHOP_ROW.columnGap)};
-  row-gap:${units(SHOP_ROW.rowGap)}
-}
-.ada-controls .ada-shop-paint{
-  display:grid;
-  gap:${units(SHOP_ROW.paintHeading.gap)}
-}
-
-.ada-controls .ada-paint-heading{
-  justify-self:start;
-  display:flex;
-  align-items:center;
-  gap:${units(SHOP_ROW.markGap)};
-  height:${units(SHOP_ROW.paintHeading.line)};
-  font:${font(TYPE.label)};
-  color:${TEXT_TOKENS.title}
-}
-.ada-controls .ada-paint-heading::before{
-  content:"";
-  flex:none;
-  width:${units(SHOP_ROW.paintHeading.icon)};
-  height:${units(SHOP_ROW.paintHeading.icon)};
-  background:url('${SPRITES}icon-shop-ship-paint.png') 0 0 / 200% 100% no-repeat;
-  image-rendering:pixelated
-}
-
-/* An item row: a ui-button-tile at the action height; the whole row is one control. */
-.ada-controls .ada-shop-row{
-  position:relative;
-  box-sizing:border-box;
-  width:var(--shop-row-width,max-content);
-  height:${units(SHOP_ROW.height)};
-  min-width:0;
-  min-height:${units(SHOP_ROW.height)};
-  margin:0;
-  padding:0 ${ROW_SIDE} ${NORMAL_BOTTOM};
-  display:flex;
-  align-items:center;
-  gap:${units(SHOP_ROW.nameGap)};
-  font:${font(TYPE.body)};
-  text-align:left;
-  color:${TEXT_TOKENS.label};
-  background:#46425e;
-  border-style:solid;
-  border-color:#46425e #46425e #2f2d3d;
-  border-width:${TILE_WIDTHS};
-  border-radius:0;
-  border-image:var(${buttonProperty("ui-button-tile", "normal")}) ${TILE_SLICE} fill / ${TILE_WIDTHS};
-  image-rendering:pixelated;
-  cursor:pointer;
-  pointer-events:auto;
-  scroll-margin:${units(FOCUS_RING.outset)}
-}
-.ada-controls .ada-shop-row:active:not([data-state=unaffordable]){
-  padding:${units(TEXT_BUTTON.pressedSink)} ${ROW_SIDE} ${PRESSED_BOTTOM};
-  border-image-source:var(${buttonProperty("ui-button-tile", "pressed")})
-}
-/* Unaffordable: the flat disabled frame over the full height, still focusable and pressable. */
-.ada-controls .ada-shop-row[data-state=unaffordable]{
-  padding:${FLAT_TOP} ${ROW_SIDE} 0;
-  color:${TEXT_TOKENS.rowDisabled};
-  background:#2f2d3d;
-  border-color:#2f2d3d;
-  border-image-source:var(${buttonProperty("ui-button-tile", "disabled")});
-  cursor:default
-}
-/* In use: the cream selection ring outside the row's drawn rectangle. */
-.ada-controls .ada-shop-row[data-state=inUse]::after{
-  content:"";
-  position:absolute;
-  top:calc(${units(-RING_OUT)} - ${slice(top)});
-  right:calc(${units(-RING_OUT)} - ${slice(right)});
-  bottom:calc(${units(-RING_OUT)} - ${slice(bottom)});
-  left:calc(${units(-RING_OUT)} - ${slice(left)});
-  border:${units(SHOP_ROW.selection.band)} solid #ead4aa;
-  pointer-events:none
-}
-.ada-controls .ada-shop-row:focus-visible{${FOCUS_STYLE}
-}
-
-/* The item well: an ink edge with clear corner pixels, a navy face; glyphs centre in it. */
-.ada-controls .ada-well{
-  flex:none;
-  box-sizing:border-box;
-  width:${units(SHOP_ROW.well)};
-  height:${units(SHOP_ROW.well)};
-  display:grid;
-  place-items:center;
-  background:#262b44;
-  border:${units(SHOP_ROW.wellEdge)} solid #181425;
-  border-radius:${units(SHOP_ROW.wellEdge)};
-  color:${TEXT_TOKENS.label}
-}
-.ada-controls [data-state=unaffordable] .ada-well{
-  background:#2f2d3d;
-  color:${TEXT_TOKENS.disabledLabel}
-}
-.ada-controls .ada-well.ada-large{
-  width:${units(CONFIRM_ITEM.well)};
-  height:${units(CONFIRM_ITEM.well)}
-}
-
-/* Sheets hold the normal frame then the disabled one; glyphs scale by nearest neighbour. */
-.ada-controls .ada-glyph{
-  width:${scaled(SHOP_ROW.glyph.icon)};
-  height:${scaled(SHOP_ROW.glyph.icon)};
-  image-rendering:pixelated
-}
-.ada-controls .ada-glyph-sprite{
-  background:var(--sheet) 0 0 / 200% 100% no-repeat
-}
-.ada-controls [data-state=unaffordable] .ada-glyph-sprite,
-.ada-controls [data-state=unaffordable] .ada-glyph-badge{
-  background-position:100% 0
-}
-.ada-controls .ada-glyph-upgrade{
-  position:relative;
-  width:${scaled(SHOP_ROW.glyph.upgrade)};
-  height:${scaled(SHOP_ROW.glyph.upgrade)}
-}
-.ada-controls .ada-glyph-upgrade > .ada-glyph{
-  position:absolute;
-  left:0;
-  top:${scaled(SHOP_ROW.upgrade.weaponY)}
-}
-.ada-controls .ada-glyph-badge{
-  position:absolute;
-  left:${scaled(SHOP_ROW.upgrade.badgeX)};
-  top:0;
-  width:${scaled(SHOP_ROW.upgrade.badge)};
-  height:${scaled(SHOP_ROW.upgrade.badge)};
-  background:url('${SPRITES}icon-shop-upgrade-badge.png') 0 0 / 200% 100% no-repeat;
-  image-rendering:pixelated
-}
-.ada-controls .ada-glyph-swatch{
-  width:${units(SHOP_ROW.glyph.swatch)};
-  height:${units(SHOP_ROW.glyph.swatch)};
-  image-rendering:pixelated
-}
-.ada-controls .ada-well.ada-large .ada-glyph-swatch{
-  width:${units(CONFIRM_ITEM.swatch)};
-  height:${units(CONFIRM_ITEM.swatch)}
-}
-
-.ada-controls .ada-shop-name{
-  flex:1;
-  min-width:0;
-  display:grid;
-  line-height:${units(SHOP_ROW.nameLine)};
-  white-space:normal;
-  overflow-wrap:anywhere
-}
-.ada-controls .ada-shop-level{
-  color:${TEXT_TOKENS.rowSupporting}
-}
-.ada-controls [data-state=unaffordable] .ada-shop-level{
-  color:${TEXT_TOKENS.rowDisabled}
-}
-
-.ada-controls .ada-shop-slot{
-  flex:none;
-  min-width:var(--shop-slot-width,auto);
-  display:flex;
-  justify-content:flex-end
-}
-.ada-controls .ada-price{
-  box-sizing:border-box;
-  min-width:var(--shop-pill-width,auto);
-  height:${units(SHOP_ROW.pill.pill.height)};
-  padding:0 ${units(PILL.padding)};
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:${units(SHOP_ROW.markGap)};
-  border-radius:${units(PILL.radius)};
-  background:#181425;
-  font:${font(PILL.text)};
-  color:${TEXT_TOKENS.label};
-  white-space:nowrap
-}
-/* The row's disabled text colour, which the refusal cue tints red with the name. */
-.ada-controls [data-state=unaffordable] .ada-price{
-  color:inherit
-}
-.ada-controls .ada-price::before{
-  content:"";
-  flex:none;
-  width:${units(SHOP_ROW.pill.icon)};
-  height:${units(SHOP_ROW.pill.icon)};
-  background:url('${SPRITES}icon-stardust.png') 0 0 / 100% 100% no-repeat;
-  image-rendering:pixelated
-}
-.ada-controls .ada-owned{
-  display:flex;
-  align-items:center;
-  gap:${units(SHOP_ROW.markGap)};
-  font:${font(TYPE.label)};
-  color:${TEXT_TOKENS.rowSupporting};
-  white-space:nowrap
-}
-.ada-controls [data-state=inUse] .ada-owned{
-  color:${TEXT_TOKENS.label}
-}
-.ada-controls .ada-owned::before{
-  content:"";
-  flex:none;
-  width:${units(SHOP_ROW.check.width)};
-  height:${units(SHOP_ROW.check.height)};
-  background:url('${SPRITES}icon-shop-check.png') 0 0 / 100% 100% no-repeat;
-  image-rendering:pixelated
-}
-
-/* The job board packs measured rows into the available width, then pages them. */
-.ada-controls .ada-job-list{
-  box-sizing:border-box;
-  display:grid;
-  grid-template-columns:1fr;
-  justify-content:center;
-  align-content:start;
-  row-gap:${units(SHOP_ROW.rowGap)};
-  padding:${units(FOCUS_RING.outset)};
-  align-self:center
-}
-.ada-controls .ada-job-row{
-  width:100%;
-  justify-self:stretch
-}
-.ada-controls .ada-job-row .ada-shop-slot{
-  gap:${units(SHOP_ROW.markGap)};
-  align-items:center
-}
-/* The compact row action (art/controls.md "Compact row action"): drawn inside the row, which
-   stays one control, so it takes no press of its own and sinks with the row. Every row's action
-   is one width. In a busy row it is the flat disabled frame, its label at 4 in row disabled. */
-.ada-controls .ada-job-action.ada-compact{
-  min-width:var(--job-action-width,${units(TEXT_BUTTON.compactWidth)});
-  pointer-events:none;
-  cursor:inherit
-}
-.ada-controls .ada-shop-row:active .ada-job-action.ada-compact:not(.ada-primary){
-  border-image-source:var(--ui-button-normal)
-}
-.ada-controls .ada-shop-row:active .ada-job-action.ada-compact.ada-primary{
-  border-image-source:var(--ui-button-primary-normal)
-}
-.ada-controls [data-state=unaffordable] .ada-job-action.ada-compact{
-  align-items:flex-start;
-  padding-top:${units(TEXT_BUTTON.pressedSink)};
-  color:${TEXT_TOKENS.rowDisabled};
-  border-image-source:var(--ui-button-disabled)
-}
-.ada-controls [data-state=unaffordable] .ada-job-action.ada-compact.ada-primary{
-  border-image-source:var(--ui-button-primary-disabled)
-}
-
-/* Measuring: rows at their natural widths, off screen. */
-.ada-controls .ada-shop-measure{
-  position:absolute;
-  visibility:hidden;
-  pointer-events:none;
-  height:auto;
-  width:max-content
-}
-.ada-controls .ada-shop-measure .ada-shop-row{
-  width:max-content
-}
-.ada-controls .ada-shop-measure .ada-shop-name{
-  flex:none;
-  white-space:nowrap
-}
-.ada-controls .ada-job-page-row{
-  display:grid;
-  grid-template-columns:repeat(var(--shop-columns,1),var(--shop-row-width,max-content));
-  column-gap:${units(SHOP_ROW.columnGap)}
-}
-.ada-controls .ada-station-pager{
-  display:grid;
-  grid-template-columns:1fr auto 1fr;
-  align-items:center;
-  gap:${units(SPACING.gap)}
-}
-.ada-controls .ada-station-previous{
-  grid-column:1;
-  grid-row:1
-}
-.ada-controls .ada-station-next{
-  grid-column:3;
-  grid-row:1
-}
-.ada-controls .ada-station-pager p{
-  grid-column:2;
-  grid-row:1;
-  margin:0
-}
-`;
+export { STATION_STYLE } from "./layout/stationStyle.ts";
 
 export interface StationLabels {
   readonly close: string;
@@ -905,19 +509,16 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     return currentPage;
   };
 
-  const dropCancel = createButton(labels.jobDropCancel);
-  dropCancel.dataset.action = "drop-cancel";
-  const drop = createButton(labels.jobDrop, "primary");
-  drop.dataset.action = "drop-job";
-  const dropActions = createActions([
-    { button: dropCancel, role: "secondary" },
-    { button: drop, role: "primary" },
-  ]);
+  const dropHost = document.createElement("div");
+  dropHost.hidden = true;
+  let dropDetails: ReturnType<typeof mountStationDropDetails> | undefined;
+  let dropOrigin: HTMLElement | null = null;
 
   modal.append(stationCard.frame, shopCard.frame, jobsCard.frame);
-  confirmModal.append(confirmCard.frame);
+  confirmModal.append(confirmCard.frame, dropHost);
   parent.append(modal, confirmModal);
 
+  let disposed = false;
   let open = false;
   let view: StationView = "card";
   let tab: StationTab | null = null;
@@ -1271,6 +872,8 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
 
   const openConfirm = (row: StationRow, request: Extract<StationRequest, { kind: "confirm" }>) => {
     confirm = { key: row.key };
+    confirmCard.frame.hidden = false;
+    dropHost.hidden = true;
     confirmCard.title.textContent = request.title;
     confirmCard.frame.setAttribute("aria-label", request.title);
     const item = well(row.glyph, true);
@@ -1297,17 +900,75 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   // Drop asks first, naming the held job or the active activity.
   const openDrop = (job: StationJob): void => {
     confirm = { drop: true };
+    dropOrigin =
+      [...jobList.querySelectorAll<HTMLElement>(".ada-job-row")].find(
+        (row) => row.dataset.job === job.id,
+      ) ?? null;
     const title = job.kind === "activity" ? labels.activityDrop : labels.jobDropTitle;
-    confirmCard.title.textContent = title;
-    confirmCard.frame.setAttribute("aria-label", title);
-    confirmCard.body.replaceChildren(prose("ada-confirm-about", job.title), dropActions);
+    const data = {
+      cancelLabel: labels.jobDropCancel,
+      closeLabel: labels.close,
+      dropLabel: labels.jobDrop,
+      subject: job.title,
+      title,
+    };
+    if (dropDetails) {
+      dropDetails.update(data);
+    } else {
+      dropDetails = mountStationDropDetails(
+        {
+          artReady: applyButtonSkin(parent),
+          availability: () =>
+            stationJobsShown(options.services())
+              ? { kind: "available" }
+              : { kind: "unavailable", reason: options.busyLine() },
+          onCancel: () => {
+            const origin = dropOrigin;
+            back();
+            if (origin?.isConnected && !origin.closest("[hidden]")) {
+              focusTarget(origin);
+            }
+          },
+          onDrop: () => {
+            closeConfirm();
+            if (!stationJobsShown(options.services())) {
+              render();
+              return;
+            }
+            options.dropJob();
+            render();
+            focusTarget(
+              view === "jobs"
+                ? (jobList.querySelector<HTMLElement>("button") ?? jobsCard.close)
+                : openShop.hidden
+                  ? undock
+                  : openShop,
+            );
+          },
+        },
+        dropHost,
+        data,
+      );
+    }
+    confirmCard.frame.hidden = true;
+    dropHost.hidden = false;
     confirmModal.hidden = false;
-    confirmCard.fit();
-    focusTarget(dropCancel);
+    void dropDetails.settle().then(
+      () => {
+        if (!disposed && !confirmModal.hidden && confirm && "drop" in confirm) {
+          dropDetails?.focusCancel();
+        }
+      },
+      () => {
+        // Failed art readiness leaves physical inspection unavailable.
+      },
+    );
   };
   const closeConfirm = (): void => {
     confirm = null;
     confirmModal.hidden = true;
+    dropHost.hidden = true;
+    dropOrigin = null;
   };
 
   const back = (): void => {
@@ -1362,23 +1023,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     focusTarget(jobList.querySelector<HTMLElement>("button") ?? jobsCard.close);
   });
   jobsCard.close.addEventListener("click", back);
-  dropCancel.addEventListener("click", back);
-  drop.addEventListener("click", () => {
-    closeConfirm();
-    if (!stationJobsShown(options.services())) {
-      render();
-      return;
-    }
-    options.dropJob();
-    render();
-    focusTarget(
-      view === "jobs"
-        ? (jobList.querySelector<HTMLElement>("button") ?? jobsCard.close)
-        : openShop.hidden
-          ? undock
-          : openShop,
-    );
-  });
 
   undock.addEventListener("click", options.undock);
   openShop.addEventListener("click", () => {
@@ -1469,6 +1113,10 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
 
   return {
     dispose(): void {
+      if (disposed) {
+        return;
+      }
+      disposed = true;
       window.removeEventListener("resize", refit);
       window.removeEventListener(VIEW_SCALE_EVENT, refit);
       exchange?.dispose();
@@ -1476,9 +1124,13 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       shopCard.dispose();
       jobsCard.dispose();
       confirmCard.dispose();
+      dropDetails?.dispose();
+      dropOrigin = null;
       modal.remove();
       confirmModal.remove();
     },
+    inspectDetails: (viewport: import("@andornaut/game-kit/rect").Rect) =>
+      dropDetails?.inspect(viewport) ?? null,
     isOpen: () => open,
     /**
      * Back-stack layers: a confirm, the shop and the job board step back toward the station
@@ -1504,5 +1156,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
         focusTarget(openShop.hidden ? (openJobs.hidden ? undock : openJobs) : openShop);
       }
     },
+    settleDetails: () => dropDetails?.settle() ?? Promise.resolve(),
   };
 }

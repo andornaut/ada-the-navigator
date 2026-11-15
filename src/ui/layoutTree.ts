@@ -42,7 +42,7 @@ export interface AdaButtonProps<A extends string> {
 export type AdaLayoutSchema<A extends string> = {
   button: { props: AdaButtonProps<A>; slots: never };
   card: { props: AdaCardProps<A>; slots: "header" | "body" | "footer" };
-  text: { props: { readonly text: string }; slots: never };
+  text: { props: { readonly className?: string; readonly text: string }; slots: never };
 };
 
 /** Caller-owned DS bindings provide the shared reason placement, skin and sizing. */
@@ -97,6 +97,7 @@ export function createAdaLayoutPorts<A extends string>(context: AdaLayoutContext
         button.addEventListener("click", activate);
         const update = (next: AdaButtonProps<A>) => {
           current = next;
+          button.dataset.action = next.actionId;
           label.nodeValue = next.label;
           button.classList.toggle("ada-primary", next.role === "primary");
           presentation.update(next);
@@ -121,6 +122,8 @@ export function createAdaLayoutPorts<A extends string>(context: AdaLayoutContext
         let current = initial;
         const parts = createCard(initial);
         const body = parts.body.ownerDocument.createElement("div");
+        body.style.alignSelf = "stretch";
+        body.style.minWidth = "0";
         const footer = createActions([]);
         setFooterAction(initial.footerAction, footer);
         parts.body.append(body, footer);
@@ -151,14 +154,12 @@ export function createAdaLayoutPorts<A extends string>(context: AdaLayoutContext
     text: {
       create(initial) {
         const element = createProse(initial.text);
-        return {
-          dispose() {},
-          element,
-          slots: {},
-          update(next) {
-            element.textContent = next.text;
-          },
+        const update = (next: AdaLayoutSchema<A>["text"]["props"]) => {
+          element.className = ["ada-prose", next.className].filter(Boolean).join(" ");
+          element.textContent = next.text;
         };
+        update(initial);
+        return { dispose() {}, element, slots: {}, update };
       },
       slots: [],
     },
