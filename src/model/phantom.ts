@@ -17,6 +17,10 @@ import {
   spawnChapterEnemy,
 } from "./flight.ts";
 import { type PhantomAlly, type PhantomAllySpec, rotatePhantomAllies } from "./phantomAllies.ts";
+import {
+  type PendingPhantomEncounter,
+  validPendingPhantomEncounter,
+} from "./phantomRequiredPlans.ts";
 import { phantomSettlementCopy } from "./phantomSettlementCopy.ts";
 import type { DialogueState, FlightState, GalaxyProgress, SpaceObject, Vec } from "./types.ts";
 export interface PhantomProgress {
@@ -31,6 +35,7 @@ export interface PhantomDeparture extends Vec {
   age: number;
 }
 export interface PhantomFlight {
+  pendingEncounter?: PendingPhantomEncounter;
   departures?: PhantomDeparture[];
   phase: "blockades" | "approach" | "waves" | "flagship" | "salvaged";
   wave: number;
@@ -519,6 +524,8 @@ export function validPhantomFlight(value: unknown): value is PhantomFlight {
             ally.age >= 0 &&
             ally.age * 1000 < jumpData.durationMs,
         ))) &&
+    (state.pendingEncounter === undefined ||
+      validPendingPhantomEncounter(state, state.pendingEncounter)) &&
     ids(state.enemyIds) &&
     ids(state.resolvedIds) &&
     point(state.waypoint) &&

@@ -33,6 +33,7 @@ import { validExplored } from "./map.ts";
 import { markerObjectTracked, validMarkerActors, validTargetKnowledge } from "./markerKnowledge.ts";
 import { readNeedleChapterProgress, validNeedleFlight } from "./needleRuntime.ts";
 import { validPhantomFlight, validPhantomProgress } from "./phantom.ts";
+import { pendingPhantomEncounterUnshared } from "./phantomRequiredPlans.ts";
 import { requiredPlanConsistent, requiredPlanObjects } from "./requiredEncounterPlans.ts";
 import { requiredRolePlanConsistent } from "./requiredRolePlans.ts";
 import { namesStation, stationById } from "./stations.ts";
@@ -44,6 +45,7 @@ import type {
   AnyRequiredEncounterPlan,
   EconomyState,
   FlightState,
+  GalaxyProgress,
   GameState,
   PersistentWorldState,
   RequiredEncounterPlan,
@@ -960,6 +962,28 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
             ) {
               return null;
             }
+          }
+        }
+      }
+      const pending = (f as unknown as FlightState).phantom?.pendingEncounter;
+      if (pending !== undefined) {
+        const flight = f as unknown as FlightState;
+        if (
+          !pending.actors.every((actor) => spaceObject(6, routes, actor)) ||
+          !pendingPhantomEncounterUnshared(flight, pending)
+        ) {
+          return null;
+        }
+        if (pending.kind === "blockades") {
+          const broken =
+            (value.progress[value.selectedGalaxy as GalaxyNumber] as unknown as GalaxyProgress)
+              .phantom?.broken ?? [];
+          const expected = PHANTOM_DESTINATIONS.filter((id) => !broken.includes(id));
+          if (
+            Object.keys(pending.blockades).length !== expected.length ||
+            expected.some((id) => !Object.hasOwn(pending.blockades, id))
+          ) {
+            return null;
           }
         }
       }
