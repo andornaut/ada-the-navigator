@@ -12,7 +12,7 @@ const stop = await startLoading(
   CRASH_SCREEN,
   async () => {
     const { startGame } = await import("../main.ts");
-    await startGame();
+    return startGame;
   },
   app,
 );
