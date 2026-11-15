@@ -1,4 +1,5 @@
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
+import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { RESOURCE_DESCRIPTIONS } from "../data/resourceDescriptions.ts";
 import type { GalaxyNumber } from "../data/types.ts";
@@ -14,6 +15,7 @@ import { createMapScreen, type MapField, type MapScreenLabels } from "./mapScree
 import { createButton, createCard, isTap } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { type PauseAction, pauseActions, type PausePlace } from "./pause.ts";
+import { type PauseLayoutSchema, pauseTree, type PauseTreeAction } from "./pauseTree.ts";
 import { createQuestsScreen, type QuestOrigin } from "./questsScreen.ts";
 import { refuse } from "./refusal.ts";
 import { createResourceCard } from "./resourceCard.ts";
@@ -146,17 +148,6 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
-  const paused = createCard({
-    closeAction: "close-pause",
-    closeLabel: labels.close,
-    size: "medium",
-    title: labels.title,
-  });
-  paused.card.dataset.dialog = "pause";
-  const actions = stack();
-  const others = grid();
-  actions.append(others);
-  const buttons = new Map<PauseAction, HTMLButtonElement>();
   const text: Record<PauseAction, string> = {
     backToTitle: labels.backToTitle,
     map: labels.map,
@@ -165,14 +156,62 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     settings: labels.settings,
     ship: labels.ship,
   };
-  // Every action is built once in flight reading order; each place shows its own actions.
-  for (const { id, role } of pauseActions("flight")) {
-    const button = createButton(text[id], role);
-    button.dataset.action = `pause-${id}`;
-    buttons.set(id, button);
-    others.append(button);
-  }
+  const initialActions: readonly PauseTreeAction[] = pauseActions("flight").map((action) => ({
+    ...action,
+    hidden: false,
+    label: text[action.id],
+  }));
+  const initialTree = pauseTree({
+    actions: initialActions,
+    closeLabel: labels.close,
+    place: "flight",
+    title: labels.title,
+  });
+  const paused = createCard(initialTree.props);
+  paused.card.dataset.dialog = "pause";
+  const actions = stack();
+  const others = grid();
+  const buttons = new Map<PauseAction, HTMLButtonElement>();
   paused.body.append(actions);
+  // Every action is built once in flight reading order; each place shows its own actions.
+  const pauseLayout = mountLayout<PauseLayoutSchema>(
+    {
+      components: {
+        actionGrid: {
+          create(initial) {
+            const update = (data: PauseLayoutSchema["actionGrid"]["props"]) => {
+              others.dataset.place = data.place;
+            };
+            update(initial);
+            return { dispose() {}, element: others, slots: { buttons: others }, update };
+          },
+          slots: ["buttons"],
+        },
+        pause: {
+          create() {
+            return { dispose() {}, element: paused.frame, slots: { actions }, update() {} };
+          },
+          slots: ["actions"],
+        },
+        pauseButton: {
+          create(initial) {
+            const button = createButton(initial.label, initial.role);
+            button.dataset.action = `pause-${initial.id}`;
+            buttons.set(initial.id, button);
+            const update = (data: PauseTreeAction) => {
+              button.hidden = data.hidden;
+              setAvailable(button, data.available);
+            };
+            update(initial);
+            return { dispose() {}, element: button, slots: {}, update };
+          },
+          slots: [],
+        },
+      },
+      host: modal,
+    },
+    initialTree,
+  );
   const ship = createCard({
     closeAction: "close-ship",
     closeLabel: labels.close,
@@ -393,16 +432,23 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       towing: state.towing,
     });
     const signature = JSON.stringify([state.place, state.canMap]);
-    others.dataset.place = state.place ?? "flight";
     if (signature === shown) {
       return;
     }
     shown = signature;
     const here = new Map(actionsHere().map((view) => [view.id, view]));
-    for (const [id, button] of buttons) {
-      button.hidden = !here.has(id);
-      setAvailable(button, here.get(id)?.available ?? true);
-    }
+    pauseLayout.update(
+      pauseTree({
+        actions: initialActions.map((action) => ({
+          ...action,
+          available: here.get(action.id)?.available ?? true,
+          hidden: !here.has(action.id),
+        })),
+        closeLabel: labels.close,
+        place: state.place ?? "flight",
+        title: labels.title,
+      }),
+    );
     if (open && !mapScreen.isOpen()) {
       paused.fit();
     }
@@ -551,6 +597,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
         disposeShipSections(shipRows);
       }
       layer?.dispose();
+      pauseLayout.dispose();
       paused.dispose();
       shipResource.dispose();
       shipWeapon.dispose();

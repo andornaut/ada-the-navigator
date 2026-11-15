@@ -957,3 +957,29 @@ it("retains a real label node through native presentation moves and action queri
   expect(footer.querySelector('[data-action="dismiss-resource"]')).toBe(button);
   expect(presentation.firstChild).toBe(label);
 });
+
+it("retains native Pause button identities across place and Map permission updates", () => {
+  const { body, options, pause } = cards();
+  pause.setState(state());
+  pause.open();
+  const actions = body.children[0]!;
+  const initial = [...buttonsOf(actions)];
+  pause.setState(state({ canMap: false, place: "room" }));
+  expect(buttonsOf(actions)).toEqual(initial);
+  expect(shownActions(actions)).toEqual([
+    "pause-map",
+    "pause-settings",
+    "pause-backToTitle",
+    "pause-resume",
+  ]);
+  expect(button(actions, "pause-map").getAttribute("aria-disabled")).toBe("true");
+  pause.setState(state());
+  expect(buttonsOf(actions)).toEqual(initial);
+  expect(button(actions, "pause-map").getAttribute("aria-disabled")).toBeNull();
+  button(actions, "pause-backToTitle").click();
+  expect(options.onBackToTitle).toHaveBeenCalledOnce();
+  pause.dispose();
+  for (const control of initial) {
+    expect(control.listeners.get("click")).toEqual([]);
+  }
+});
