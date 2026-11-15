@@ -15,21 +15,48 @@ class Element extends EventTarget {
   dataset: Record<string, string> = {};
   hidden = false;
   parent: Element | null = null;
-  style = {};
+  contains(node: unknown): boolean {
+    return node === this || this.children.some((child) => child.contains(node));
+  }
+  readonly nodeType = 1;
+  get ownerDocument() {
+    return document;
+  }
+  get parentNode() {
+    return this.parent;
+  }
+  get firstChild() {
+    return this.children[0] ?? null;
+  }
+  get nextSibling() {
+    return this.parent?.children[this.parent.children.indexOf(this) + 1] ?? null;
+  }
+  readonly style = { removeProperty() {} };
+  removeAttribute(): void {}
+  insertBefore(node: Element, before: Element | null): void {
+    if (node === before) {
+      return;
+    }
+    node.remove();
+    node.parent = this;
+    this.children.splice(
+      before === null ? this.children.length : this.children.indexOf(before),
+      0,
+      node,
+    );
+  }
   textContent = "";
   type = "";
   setAttribute(): void {}
   append(...nodes: Element[]): void {
-    this.children.push(...nodes);
-    nodes.forEach((node) => {
-      node.parent = this;
-    });
+    for (const node of nodes) {
+      this.insertBefore(node, null);
+    }
   }
   prepend(...nodes: Element[]): void {
-    this.children.unshift(...nodes);
-    nodes.forEach((node) => {
-      node.parent = this;
-    });
+    for (const node of [...nodes].reverse()) {
+      this.insertBefore(node, this.firstChild);
+    }
   }
   replaceChildren(...nodes: Element[]): void {
     this.children = [];
@@ -38,6 +65,7 @@ class Element extends EventTarget {
   remove(): void {
     if (this.parent) {
       this.parent.children = this.parent.children.filter((node) => node !== this);
+      this.parent = null;
     }
   }
   querySelectorAll(selector: string): Element[] {

@@ -1,7 +1,10 @@
+import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
+
 import { font, fromAreaLeft, units } from "./layout/css.ts";
 import { START_SCREEN, type StartAction } from "./layout/startScreen.ts";
 import { TYPE } from "./layout/tokens.ts";
 import { createButton, TEXT_TOKENS } from "./modal.ts";
+import { type StartScreenSchema, startScreenTree } from "./startScreenTree.ts";
 import type { TitleScreenArt } from "./titleScreen.ts";
 import { TITLE_SHIP_STYLE, titleShipView } from "./titleShipView.ts";
 import { applyButtonSkin } from "./uiSkin.ts";
@@ -138,28 +141,58 @@ export function createStartScreen(
   }
   const row = document.createElement("div");
   row.className = "ada-start-actions";
-  const buttons = content.actions.map(({ action, label, role, run }) => {
-    const button = createButton(label, role);
-    button.dataset.action = action;
-    button.addEventListener("click", run);
-    row.append(button);
-    return button;
-  });
-  root.append(...parts, title, row);
-  if (content.note) {
-    const note = document.createElement("p");
-    note.className = "ada-start-note";
-    note.setAttribute("role", "status");
-    note.textContent = content.note;
-    root.append(note);
-  }
+  const callbacks = new Map(content.actions.map(({ action, run }) => [action, run]));
+  const buttons: HTMLButtonElement[] = [];
+  root.append(...parts, title);
+  const layout = mountLayout<StartScreenSchema>(
+    {
+      components: {
+        action: {
+          create(initial) {
+            const button = createButton(initial.label, initial.role);
+            button.dataset.action = initial.action;
+            const run = callbacks.get(initial.action)!;
+            button.addEventListener("click", run);
+            buttons.push(button);
+            return {
+              dispose: () => button.removeEventListener("click", run),
+              element: button,
+              slots: {},
+              update() {},
+            };
+          },
+          slots: [],
+        },
+        note: {
+          create(text) {
+            const element = document.createElement("p");
+            element.className = "ada-start-note";
+            element.setAttribute("role", "status");
+            element.textContent = text;
+            return { dispose() {}, element, slots: {}, update() {} };
+          },
+          slots: [],
+        },
+        row: {
+          create: () => ({ dispose() {}, element: row, slots: { actions: row }, update() {} }),
+          slots: ["actions"],
+        },
+        start: {
+          create: () => ({ dispose() {}, element: root, slots: { content: root }, update() {} }),
+          slots: ["content"],
+        },
+      },
+      host: parent,
+    },
+    startScreenTree(content),
+  );
   // First in the play area, so its actions are the first Tab stops, before the HUD row's discs.
   parent.prepend(root);
   // Art's button faces, as the controls overlay takes them.
   void applyButtonSkin(root).catch(() => undefined);
   return {
     buttons,
-    dispose: () => root.remove(),
+    dispose: () => layout.dispose(),
     root,
   };
 }

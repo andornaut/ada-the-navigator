@@ -6,27 +6,123 @@ import type { TitleScreenArt } from "./titleScreen.ts";
 vi.mock("./uiSkin.ts", () => ({ applyButtonSkin: vi.fn().mockResolvedValue(undefined) }));
 
 class Element {
-  children: Element[] = [];
-  attributes = new Map<string, string>();
-  className = "";
-  classList = {
-    add: (...names: string[]) => {
-      this.className += ` ${names.join(" ")}`;
-    },
-  };
-  style = {};
   readonly tag: string;
-  constructor(tag: string) {
+  constructor(tag = "div") {
     this.tag = tag;
   }
-  setAttribute(name: string, value: string): void {
+  prepend(...nodes: Element[]) {
+    for (const node of [...nodes].reverse()) {
+      this.insertBefore(node, this.firstChild);
+    }
+  }
+  readonly attributes = new Map<string, string>();
+  readonly children: Element[] = [];
+  get parentElement(): Element | null {
+    return this.parent ?? null;
+  }
+  readonly nodeType = 1;
+  readonly isConnected = true;
+  get parentNode(): Element | null {
+    return this.parent ?? null;
+  }
+  get nextSibling(): Element | null {
+    return this.parent?.children[this.parent.children.indexOf(this) + 1] ?? null;
+  }
+  get firstElementChild(): Element | null {
+    return this.children[0] ?? null;
+  }
+  get firstChild(): Element | null {
+    return this.firstElementChild;
+  }
+  get ownerDocument() {
+    return document;
+  }
+  contains(node: unknown): boolean {
+    return (
+      node === this ||
+      (node instanceof Element && Boolean(node.parent) && this.contains(node.parent))
+    );
+  }
+  className = "";
+  readonly classList = {
+    add: vi.fn((...names: string[]) => {
+      this.className = [...new Set([...this.className.split(" "), ...names])]
+        .filter(Boolean)
+        .join(" ");
+    }),
+    remove: vi.fn((name: string) => {
+      this.className = this.className
+        .split(" ")
+        .filter((item) => item !== name)
+        .join(" ");
+    }),
+  };
+  readonly dataset: Record<string, string> = {};
+  hidden = false;
+  parent: Element | undefined;
+  readonly listeners = new Map<string, (() => void)[]>();
+  readonly properties = new Map<string, string>();
+  readonly style = {
+    getPropertyValue: (name: string) => this.properties.get(name) ?? "",
+    removeProperty: (name: string) => {
+      const value = this.properties.get(name) ?? "";
+      this.properties.delete(name);
+      return value;
+    },
+    setProperty: vi.fn((name: string, value: string) => this.properties.set(name, value)),
+  };
+  textContent = "";
+  addEventListener(type: string, listener: () => void) {
+    this.listeners.set(type, [...(this.listeners.get(type) ?? []), listener]);
+  }
+  removeEventListener(type: string, listener: () => void) {
+    this.listeners.set(
+      type,
+      (this.listeners.get(type) ?? []).filter((item) => item !== listener),
+    );
+  }
+  append(...nodes: Element[]) {
+    for (const node of nodes) {
+      node.parent?.children.splice(node.parent.children.indexOf(node), 1);
+      node.parent = this;
+      this.children.push(node);
+    }
+  }
+  click() {
+    this.listeners.get("click")?.forEach((listener) => listener());
+  }
+  closest(): Element | null {
+    return this.hidden ? this : (this.parent?.closest() ?? null);
+  }
+  get lastElementChild() {
+    return this.children.at(-1);
+  }
+  insertBefore(node: Element, before: Element | null) {
+    if (node === before) {
+      return;
+    }
+    node.remove();
+    node.parent = this;
+    this.children.splice(
+      before === null ? this.children.length : this.children.indexOf(before),
+      0,
+      node,
+    );
+  }
+  querySelectorAll() {
+    return [];
+  }
+  remove() {
+    if (this.parent) {
+      this.parent.children.splice(this.parent.children.indexOf(this), 1);
+    }
+    this.parent = undefined;
+  }
+  removeAttribute(name: string) {
+    this.attributes.delete(name);
+  }
+  setAttribute(name: string, value: string) {
     this.attributes.set(name, value);
-  }
-  append(...nodes: Element[]): void {
-    this.children.push(...nodes);
-  }
-  prepend(...nodes: Element[]): void {
-    this.children.unshift(...nodes);
   }
 }
 
@@ -50,6 +146,7 @@ function render(masked: boolean): Element {
   vi.stubGlobal("document", {
     createElement: (tag: string) => new Element(tag),
     createElementNS: (_: string, tag: string) => new Element(tag),
+    defaultView: { HTMLElement: Element, Node: Element },
   });
   const art: TitleScreenArt = {
     background: "#292734",
@@ -103,4 +200,47 @@ describe("title plume draw layers", () => {
     const other = render(true).children[3]!.children[0]!.children[0]!;
     expect(other.attributes.get("id")).not.toBe(mask.attributes.get("id"));
   });
+});
+
+it("retains supplied action order, labels, roles and callbacks with the status note after the row", () => {
+  vi.stubGlobal("document", {
+    createElement: (tag: string) => new Element(tag),
+    defaultView: { HTMLElement: Element, Node: Element },
+  });
+  const restart = vi.fn();
+  const proceed = vi.fn();
+  const host = new Element("main");
+  const existing = new Element("nav");
+  host.append(existing);
+  const view = createStartScreen(host as unknown as HTMLElement, null, {
+    actions: [
+      { action: "restart", label: "New", role: "secondary", run: restart },
+      { action: "continue", label: "Continue", role: "primary", run: proceed },
+    ],
+    note: "Saved progress",
+    paint: null,
+    title: "Ada",
+  });
+  const root = view.root as unknown as Element;
+  expect(host.children).toEqual([root, existing]);
+  expect(root.children.map(({ tag }) => tag)).toEqual(["h1", "div", "p"]);
+  expect(root.children[2]!.textContent).toBe("Saved progress");
+  expect(root.children[2]!.attributes.get("role")).toBe("status");
+  const buttons = view.buttons as unknown as Element[];
+  expect(root.children[1]!.children).toEqual(buttons);
+  expect(
+    buttons.map(({ className, dataset, textContent }) => [dataset.action, textContent, className]),
+  ).toEqual([
+    ["restart", "New", "ada-button"],
+    ["continue", "Continue", "ada-button ada-primary"],
+  ]);
+  buttons[0]!.click();
+  buttons[1]!.click();
+  expect(restart).toHaveBeenCalledTimes(1);
+  expect(proceed).toHaveBeenCalledTimes(1);
+  view.dispose();
+  view.dispose();
+  buttons[1]!.click();
+  expect(proceed).toHaveBeenCalledTimes(1);
+  expect(host.children).toEqual([existing]);
 });
