@@ -965,7 +965,7 @@ export function stepEnemy(
     context.targetable &&
     context.visibility === "visible" &&
     distance <= definition.engagement;
-  const phasedHeavy = state.archetype === "frigate" || state.archetype === "capital";
+  const phasedHeavy = definition.fireClockPolicy === "staggered-and-paused";
   if (phasedHeavy && canFire && !state.firePhasesInitialized) {
     // A legacy active clock or burst resumes as saved rather than receiving a second phase.
     const resumed = state.hardpoints.some((part) => part.cooldown > 0 || (part.burst ?? 0) > 0);

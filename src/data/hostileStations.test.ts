@@ -1,8 +1,9 @@
 import { expect, it } from "vitest";
 
 import { enemyActorDefinition } from "./enemyActorDefinition.ts";
-import { enemyCatalog, enemyDefinition } from "./enemyCatalog.ts";
+import { enemyCatalog, enemyDefinition, enemyFire } from "./enemyCatalog.ts";
 import { ROUTE } from "./galaxies.ts";
+import { hostileStationDefinition } from "./hostileStations.ts";
 
 it("keeps approved station hulls and all-weapon prefixes with one Ring and all other Rapid", () => {
   for (const [galaxy, count, hp, partHp] of [
@@ -57,4 +58,16 @@ it("preserves ship profiles and rejects unsupported station definitions before m
   for (const galaxy of ROUTE.slice(0, 3)) {
     expect(() => enemyActorDefinition(galaxy, "hostileStation")).toThrow(RangeError);
   }
+});
+
+it("keeps station clocks continuous even when the supplied base is phased", () => {
+  const definition = hostileStationDefinition(
+    {
+      base: { ...enemyCatalog.platform, fireClockPolicy: "staggered-and-paused" },
+      fire: (weapon) => enemyFire("platform", { level: 2, weapon }),
+      partHp: 7,
+    },
+    { galaxy: 5, weaponLevel: 2 },
+  );
+  expect(definition.fireClockPolicy).toBe("continuous");
 });

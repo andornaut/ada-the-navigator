@@ -69,6 +69,7 @@ export function hostileStationDefinition(
     ...context.base,
     assetKey: "hostileStation",
     fire: fire(signature.fill[0]),
+    fireClockPolicy: "continuous",
     hardpoints: signature.fill.flatMap((id) =>
       tier.mounts[id]
         ? [

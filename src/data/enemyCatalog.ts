@@ -140,6 +140,7 @@ export interface EnemyDefinition {
   escortFallback: Extract<Behaviour, { kind: "hitAndRun" }>;
   engagement: number;
   fire: FireProfile;
+  fireClockPolicy: "continuous" | "staggered-and-paused";
   hardpoints: HardpointDefinition[];
   hp: number;
   /** A disable-only ship retains this hull HP after any hit. */
@@ -467,6 +468,7 @@ const base: Omit<EnemyDefinition, "physics"> = {
   engagement: 360,
   escortFallback: { burstVolleys: 3, kind: "hitAndRun" },
   fire: enemyFire("fighter", SMALL_CRAFT_WEAPONS.fighter),
+  fireClockPolicy: "continuous",
   hardpoints: [],
   hp: 4,
   morale: { individualHpRatio: 0.3, packLossRatio: 0.5 },
@@ -485,6 +487,7 @@ export const enemyCatalog = {
     ...base,
     behaviour: siege,
     engagement: 750,
+    fireClockPolicy: "staggered-and-paused",
     // Five Ada widths across: hit areas stay apart and the whole hull reads on screen.
     hardpoints: [
       command,
@@ -509,6 +512,7 @@ export const enemyCatalog = {
     ...base,
     behaviour: siege,
     engagement: 500,
+    fireClockPolicy: "staggered-and-paused",
     hardpoints: [
       engine("engine", 0, 0.3),
       ...mountedHardpoints("frigate", frigateMounts, frigateMounts.tiers[0], 3),

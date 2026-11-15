@@ -209,11 +209,11 @@ describe("heavy fire clocks", () => {
     expect(restoreSave(saved)).not.toBeNull();
   });
 
-  it("leaves platform clocks outside the frigate/capital phasing policy", () => {
-    const definition = enemyDefinition(6, "platform", "platform-clock");
+  it.each(["platform", "hostileStation"] as const)("leaves %s clocks continuous", (archetype) => {
+    const definition = enemyDefinition(6, archetype, "continuous-clock");
     const state = createEnemy(
       definition,
-      { archetype: "platform", id: "platform-clock", packId: null, phase: 0 },
+      { archetype, id: "continuous-clock", packId: null, phase: 0 },
       { x: 300, y: 0 },
     );
     for (const part of state.hardpoints) {
