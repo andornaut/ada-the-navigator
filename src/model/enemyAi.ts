@@ -12,6 +12,7 @@ import {
 } from "../data/enemyCatalog.ts";
 import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
 import { MUZZLE_ART, muzzleArtForDefinition, muzzleLayout } from "../data/enemyMuzzles.ts";
+import { ENEMY_STRAFE } from "../data/enemyNavigation.ts";
 import { SHARED_SHIP_PHYSICS } from "../data/shipPhysics.ts";
 import type { WeaponLevel } from "../data/types.ts";
 import type { NavigationQuery } from "./ai/navigationQuery.ts";
@@ -509,13 +510,6 @@ function escorted(context: EnemyContext, state: EnemyState): EnemyState | undefi
     : context.peers.find((peer) => peer.id === state.escortOf && peer.hp > 0 && !peer.disabled);
 }
 
-/** A strafe's approach aims this many pass distances beside Ada, so momentum keeps it clear. */
-const STRAFE_PASS_OFFSET = 2;
-/** A strafe starts its pass, holding its course, within this many pass distances of Ada. */
-const STRAFE_PASS_ENTRY = 2.5;
-/** A pass whose course would come within this many pass distances of Ada bends away from her. */
-const STRAFE_FLOOR_MARGIN = 1.8;
-
 /** The side a ship circles or passes Ada on, +1 or -1, fixed for the ship by its phase. */
 const circlingSide = (state: EnemyState): number => (Math.cos(state.phase) >= 0 ? 1 : -1);
 
@@ -605,7 +599,7 @@ function nextTactic(
       return enter("retreat");
     }
   } else if (behaviour.kind === "strafe") {
-    if (tactic.phase === "attack" && distance <= behaviour.passDistance * STRAFE_PASS_ENTRY) {
+    if (tactic.phase === "attack" && distance <= behaviour.passDistance * ENEMY_STRAFE.passEntry) {
       return enter("pass");
     }
     if (tactic.phase === "pass" && distance >= behaviour.loopDistance) {
@@ -728,12 +722,12 @@ function steering(
         };
         const gap = magnitude(miss);
         const away = gap > 1e-9 ? { x: -miss.x / gap, y: -miss.y / gap } : { x: -aim.x, y: -aim.y };
-        const margin = floor * STRAFE_FLOOR_MARGIN;
+        const margin = floor * ENEMY_STRAFE.floorMargin;
         const bend = Math.max(0, Math.min(1, (margin - gap) / (margin - floor * 0.8))) * 2;
         return unit({ x: course.x + away.x * bend, y: course.y + away.y * bend });
       }
       // The approach aims beside Ada, so the pass goes by rather than at her.
-      const offset = floor * STRAFE_PASS_OFFSET * side;
+      const offset = floor * ENEMY_STRAFE.passOffset * side;
       return unit({
         x: aim.x * distance - aim.y * offset + push.x,
         y: aim.y * distance + aim.x * offset + push.y,
