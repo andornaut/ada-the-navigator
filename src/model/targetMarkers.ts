@@ -4,6 +4,7 @@ import type { EdgeMarkerKind } from "../data/edgeMarkers.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import { gameAreaPoint } from "./edgeMarkers.ts";
 import type { MapSymbol } from "./map.ts";
+import { recordTargetKnowledge } from "./targetKnowledgeStore.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
 import { worldPoint } from "./worldContacts.ts";
 
@@ -54,13 +55,27 @@ export interface TargetMarker extends Vec {
   readonly identified: boolean;
   readonly symbol: TargetSymbol;
 }
-export interface TargetRegistryContext {
+interface TargetRegistryView {
   readonly area: Rect;
-  readonly knowledge: TargetKnowledgeRecord;
   readonly player: Vec;
   readonly resolve: (id: string) => TargetResolution;
   readonly worldSide?: number;
 }
+export interface TargetKnowledgeStore {
+  readonly scope: object;
+  get(id: string): TargetKnowledge | undefined;
+  ids(): readonly string[];
+  remove(id: string): void;
+  set(id: string, knowledge: TargetKnowledge): void;
+}
+export interface TargetRegistryContext extends TargetRegistryView {
+  readonly knowledge: TargetKnowledgeRecord;
+}
+export interface TargetRegistryStoreContext extends TargetRegistryView {
+  readonly store: TargetKnowledgeStore;
+}
+export type TargetKnowledgeContext =
+  Pick<TargetRegistryContext, "knowledge"> | Pick<TargetRegistryStoreContext, "store">;
 export interface TargetRegistryEntry {
   readonly contributors: Set<TargetContributor>;
   readonly id: string;
@@ -69,37 +84,45 @@ export interface TargetRegistryEntry {
 
 /** One identity survives range, narration and materialization changes in the same galaxy. */
 export class TargetMarkerRegistry {
-  private knowledge: TargetKnowledgeRecord | null = null;
+  private scope: object | null = null;
   private readonly targets = new Map<string, TargetRegistryEntry>();
 
   entries(): readonly TargetRegistryEntry[] {
     return [...this.targets.values()];
   }
 
+  /** Explicit destruction/removal uses the same ledger and does not depend on a UI read. */
+  forget(context: TargetKnowledgeContext, id: string): void {
+    this.bind(context).remove(id);
+    this.targets.delete(id);
+  }
+
+  private bind(context: TargetKnowledgeContext): TargetKnowledgeStore {
+    const store = "store" in context ? context.store : recordTargetKnowledge(context.knowledge);
+    if (store.scope !== this.scope) {
+      this.targets.clear();
+      this.scope = store.scope;
+    }
+    return store;
+  }
+
   evaluate(
-    context: TargetRegistryContext,
+    context: TargetRegistryContext | TargetRegistryStoreContext,
     contributions: readonly TargetContribution[],
   ): TargetMarker[] {
-    if (context.knowledge !== this.knowledge) {
-      this.targets.clear();
-      this.knowledge = context.knowledge;
-    }
+    const store = this.bind(context);
     const grouped = new Map<string, TargetContribution[]>();
     for (const contribution of contributions) {
       const group = grouped.get(contribution.id) ?? [];
       group.push(contribution);
       grouped.set(contribution.id, group);
     }
-    const ids = new Set([
-      ...Object.keys(context.knowledge),
-      ...this.targets.keys(),
-      ...grouped.keys(),
-    ]);
+    const ids = new Set([...store.ids(), ...this.targets.keys(), ...grouped.keys()]);
     const markers: TargetMarker[] = [];
     for (const id of ids) {
       const resolution = context.resolve(id);
       if (resolution.state === "removed") {
-        delete context.knowledge[id];
+        store.remove(id);
         this.targets.delete(id);
         continue;
       }
@@ -109,11 +132,14 @@ export class TargetMarkerRegistry {
         ({ disclosed, source }) => disclosed && (source === "quest" || source === "encounter"),
       );
       const seen = resolution.state === "present" && resolution.identified;
-      if (!context.knowledge[id] && !sensed && !disclosed && !seen) {
+      const known = store.get(id);
+      if (!known && !sensed && !disclosed && !seen) {
         continue;
       }
-      context.knowledge[id] =
-        context.knowledge[id] === "identified" || disclosed || seen ? "identified" : "sensed";
+      const knowledge = known === "identified" || disclosed || seen ? "identified" : "sensed";
+      if (knowledge !== known) {
+        store.set(id, knowledge);
+      }
       let entry = this.targets.get(id);
       if (!entry) {
         entry = { contributors: new Set(), id, marker: null };
@@ -153,7 +179,7 @@ export class TargetMarkerRegistry {
       }
       entry.marker = {
         id,
-        identified: context.knowledge[id] === "identified",
+        identified: store.get(id) === "identified",
         symbol: resolution.symbol,
         x: point.x,
         y: point.y,
