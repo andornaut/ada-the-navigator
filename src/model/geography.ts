@@ -1,7 +1,7 @@
 import { ECONOMY } from "../data/economy.ts";
 import type { GameContent } from "../data/types.ts";
 import { enemyDefeated } from "./enemyAi.ts";
-import { markerActorTracked } from "./markerKnowledge.ts";
+import { markerObjectTracked } from "./markerKnowledge.ts";
 import { worldStationById } from "./stations.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
 import { chunkCoordinates } from "./visited.ts";
@@ -220,7 +220,7 @@ export function worldRecordObjectRemoval(
   object: SpaceObject,
   flight: FlightState,
 ): void {
-  if (!persistentObject(object) && !markerActorTracked(flight, object.id)) {
+  if (!persistentObject(object) && !markerObjectTracked(flight, object)) {
     return;
   }
   const previous = Object.hasOwn(flight.world.notables, object.id)
@@ -238,7 +238,7 @@ export function recordUnloadedPackMember(object: SpaceObject, flight: FlightStat
   if (
     !liveEnemy(object) ||
     persistentObject(object) ||
-    markerActorTracked(flight, object.id) ||
+    markerObjectTracked(flight, object) ||
     !packId ||
     !state ||
     !Object.hasOwn(state.initialPackSizes, packId)
@@ -276,7 +276,7 @@ export function worldSyncFlightRegion(
     }
     removed.add(object.id);
     if (
-      (persistentObject(object) || markerActorTracked(flight, object.id)) &&
+      (persistentObject(object) || markerObjectTracked(flight, object)) &&
       !derivedStation(context, flight, object)
     ) {
       if (object.hp > 0 && !(object.kind === "enemy" && !liveEnemy(object))) {

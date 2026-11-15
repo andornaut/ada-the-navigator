@@ -1,6 +1,7 @@
+import { carriesStardust } from "./drops.ts";
 import { flightEncounterSeed } from "./flightTopology.ts";
 import type { TargetKnowledgeRecord } from "./targetMarkers.ts";
-import type { FlightState } from "./types.ts";
+import type { FlightState, SpaceObject } from "./types.ts";
 
 export function validTargetKnowledge(value: unknown): value is TargetKnowledgeRecord {
   return (
@@ -44,5 +45,21 @@ export function markerActorTracked(
     actors.encounterSeed === flightEncounterSeed(flight) &&
     Object.hasOwn(actors.knowledge, id) &&
     (actors.knowledge[id] === "sensed" || actors.knowledge[id] === "identified")
+  );
+}
+
+/** Only encounter actors and sensed discovery Stardust use tracked-object retention. */
+export function markerObjectTracked(
+  flight: Pick<FlightState, "seed" | "encounterSeed" | "markerActors">,
+  object: SpaceObject,
+): boolean {
+  return (
+    markerActorTracked(flight, object.id) &&
+    ((object.kind === "enemy" && object.enemy !== undefined) ||
+      (object.kind === "pickup" &&
+        object.role === "discovery" &&
+        carriesStardust(object) &&
+        !object.upgrade &&
+        !object.ammoPack))
   );
 }

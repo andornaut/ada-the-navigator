@@ -24,7 +24,7 @@ import { adoptLegacyGeography, validGalaxyGeography } from "./galaxyGeography.ts
 import { ACTIVE_CHUNK_RADIUS, encounterOf, liveEnemy, persistentObject } from "./geography.ts";
 import { isLandmark } from "./landmarks.ts";
 import { validExplored } from "./map.ts";
-import { markerActorTracked, validMarkerActors, validTargetKnowledge } from "./markerKnowledge.ts";
+import { markerObjectTracked, validMarkerActors, validTargetKnowledge } from "./markerKnowledge.ts";
 import { readNeedleChapterProgress, validNeedleFlight } from "./needleRuntime.ts";
 import { validPhantomFlight, validPhantomProgress } from "./phantom.ts";
 import { namesStation, stationById } from "./stations.ts";
@@ -325,12 +325,7 @@ function persistentWorld(
       !spaceObject(galaxy, routes, object) ||
       object.id !== id ||
       (!persistentObject(object) &&
-        !(
-          object.kind === "enemy" &&
-          object.enemy &&
-          liveEnemy(object) &&
-          markerActorTracked(flight, id)
-        )) ||
+        !(markerObjectTracked(flight, object) && (object.kind !== "enemy" || liveEnemy(object)))) ||
       object.hp <= 0 ||
       object.kind === "destination" ||
       object.id.startsWith("whale-debris:") ||
