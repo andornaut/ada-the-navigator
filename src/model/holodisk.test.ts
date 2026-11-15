@@ -11,8 +11,12 @@ import {
   ensureDestination,
   routeBlocked,
   routeGuardPlanResult,
+  syncFlightRegion,
 } from "./flight.ts";
+import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
+import { worldRecordObjectRemoval } from "./geography.ts";
+import { stationPopulationObjects } from "./hostileStations.ts";
 import { restoreSave } from "./save.ts";
 import { shipTouches } from "./shipBody.ts";
 import type { FlightState, GalaxyProgress } from "./types.ts";
@@ -32,6 +36,14 @@ function disableStoryGuard(content: GameContent, flight: FlightState, id: string
     throw new Error(`Expected the actual required frigate for ${id}`);
   }
   guard.enemy.disabled = true;
+}
+
+/** Test support: defeat the real holodisk leader in the active or retained world. */
+function defeatHolodiskGuard(flight: FlightState): void {
+  const leader = stationPopulationObjects(flight).find((actor) => actor.routeId === "holodisk");
+  expect(leader?.enemy?.archetype).toBe(HOLODISKS.guard.leader);
+  worldRecordObjectRemoval(flightWorldContext(flight), CONTENT, leader!, flight);
+  flight.objects = flight.objects.filter((actor) => actor.id !== leader!.id);
 }
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -264,7 +276,7 @@ describe("new galaxy announcement", () => {
       playOpening(model);
       model.step(0.01, idle);
       const f = model.state.flight!;
-      f.objects = f.objects.filter((o) => o.routeId !== "holodisk");
+      defeatHolodiskGuard(f);
       const disk = f.objects.find((o) => o.id === "holodisk")!;
       f.player = { x: disk.x, y: disk.y };
       model.step(0.01, idle);
@@ -397,9 +409,11 @@ describe("galaxy three's holodisk", () => {
     const f = model.state.flight!;
     const disk = f.objects.find((o) => o.kind === "destination" && o.id === "holodisk")!;
     expect(disk).toBeDefined();
-    const leader = f.objects.find((o) => o.routeId === "holodisk")!;
+    const population = stationPopulationObjects(f);
+    const leader = population.find((o) => o.routeId === "holodisk")!;
+    expect(leader).toBeDefined();
     expect(leader.enemy?.archetype).toBe(HOLODISKS.guard.leader);
-    const pack = f.objects.filter((o) => o.enemy?.packId === "route:holodisk:pack");
+    const pack = population.filter((o) => o.enemy?.packId === "route:holodisk:pack");
     expect(pack.map((o) => o.enemy?.archetype)).toEqual(
       Array(HOLODISKS.guard.packSize).fill(HOLODISKS.guard.pack),
     );
@@ -410,10 +424,13 @@ describe("galaxy three's holodisk", () => {
     // A guarded holodisk is never a travel destination and cannot be reached early.
     expect(model.destinations().map(({ id }) => id)).not.toContain("holodisk");
     f.player = { x: disk.x, y: disk.y };
+    syncFlightRegion(CONTENT, f);
+    expect(f.objects).toContain(leader);
+    expect(pack.every((member) => f.objects.includes(member))).toBe(true);
     model.step(0.01, idle);
     expect(model.state.progress[3].holodisk).toBe(false);
     // Winning the fight against the leader opens the way.
-    f.objects = f.objects.filter((o) => o !== leader);
+    defeatHolodiskGuard(f);
     f.player = { x: disk.x, y: disk.y };
     f.dangerFor = 0;
     model.step(0.01, idle);
@@ -434,7 +451,7 @@ describe("galaxy three's holodisk", () => {
     const model = questDone(3, ["whale", "family"]);
     model.step(0.01, idle);
     const f = model.state.flight!;
-    f.objects = f.objects.filter((o) => o.routeId !== "holodisk");
+    defeatHolodiskGuard(f);
     f.dangerFor = 0;
     const disk = f.objects.find((o) => o.id === "holodisk")!;
     const at = { x: disk.x, y: disk.y };
@@ -477,7 +494,7 @@ describe("galaxy three's holodisk", () => {
       const model = questDone(3, ["whale", "family"]);
       model.step(0.01, idle);
       const f = model.state.flight!;
-      f.objects = f.objects.filter((o) => o.routeId !== "holodisk");
+      defeatHolodiskGuard(f);
       f.dangerFor = 0;
       f.levels = { ...noLevels(), tractor: level };
       const disk = f.objects.find((o) => o.id === "holodisk")!;
