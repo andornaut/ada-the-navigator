@@ -116,6 +116,7 @@ import {
   questGuardFormationReach,
   questGuardHomePorts,
 } from "./questGuardPlacement.ts";
+import { routeGuardEvidence } from "./routeGuardEvidence.ts";
 import { type PickupObstacle, stardustDiamond, stardustDropOffsets } from "./stardustPlacement.ts";
 import { stationFormationClear } from "./stationPlacement.ts";
 import { type ImpactFamily, impactFamily, type WeaponImpact } from "./weaponImpacts.ts";
@@ -1755,6 +1756,28 @@ function placeGuards(content: GameContent, guards: SpaceObject[], flight: Flight
 
 export { relocateRouteGuards as settleRouteEncounters };
 
+/** Exact route-frigate identity also covers surviving followers without copying route IDs. */
+function localGuardMember(flight: FlightState, guard: SpaceObject): boolean {
+  const leader = guard.enemy?.escortOf
+    ? (flight.objects.find((object) => object.id === guard.enemy!.escortOf) ??
+      flight.world.notables[guard.enemy.escortOf])
+    : guard;
+  return leader?.enemy?.archetype === "frigate" && leader.routeId !== undefined;
+}
+
+function clearLocalGuardSummons(flight: FlightState): void {
+  if (!flight.summonedGuards) {
+    return;
+  }
+  flight.summonedGuards = flight.summonedGuards.filter((id) => {
+    const guard = flight.objects.find((object) => object.id === id) ?? flight.world.notables[id];
+    return guard == null || !localGuardMember(flight, guard);
+  });
+  if (!flight.summonedGuards.length) {
+    delete flight.summonedGuards;
+  }
+}
+
 /** Navigation accepts canonical geometry validity but never selects or applies a home. */
 function guardPatrolFrame(
   content: GameContent,
@@ -1800,6 +1823,7 @@ function cueGuards(content: GameContent, flight: FlightState, events: FlightEven
     for (const guard of flight.objects) {
       if (
         guard.kind === "enemy" &&
+        !localGuardMember(flight, guard) &&
         (guard.routeId === destination.id ||
           (guard.enemy?.escortOf != null && ids.has(guard.enemy.escortOf))) &&
         guard.hp > 0 &&
@@ -1848,6 +1872,17 @@ function releaseSummonedGuards(viewportWidth: number, flight: FlightState): void
   if (!flight.summonedGuards.length) {
     delete flight.summonedGuards;
   }
+}
+
+export type RouteGuardPlanResult =
+  { readonly status: "empty" } | ReturnType<typeof routeGuardEvidence>;
+
+/** A zero plan is a completed authoring outcome, separate from admission and enemy defeat. */
+export function routeGuardPlanResult(flight: FlightState, id: string): RouteGuardPlanResult {
+  if (flight.combat?.emptyRoutePlans?.includes(id)) {
+    return { status: "empty" };
+  }
+  return routeGuardEvidence(flight, id);
 }
 
 /** A guard blocks its route until it is disabled or destroyed (gameplay/rules.md). */
@@ -1975,7 +2010,8 @@ export function ensureRouteEncounter(
   if (
     isHeld(id, flight) ||
     Object.hasOwn(flight.world.notables, `route:${id}`) ||
-    combat(flight).routeEncounters.includes(id)
+    combat(flight).routeEncounters.includes(id) ||
+    combat(flight).emptyRoutePlans?.includes(id)
   ) {
     return null;
   }
@@ -1994,12 +2030,11 @@ export function ensureRouteEncounter(
   if (archetype === "frigate") {
     const guardId = `route:${id}`;
     const home = questFrigateHome(content, flight, guardId, id);
-    if (!home) {
-      return null;
-    }
-    const guard = spawnQuestFrigateAt(content, flight, guardId, id, home);
+    const guard = home ? spawnQuestFrigateAt(content, flight, guardId, id, home) : null;
     if (guard) {
       combat(flight).routeEncounters.push(id);
+    } else {
+      (combat(flight).emptyRoutePlans ??= []).push(id);
     }
     return guard;
   }
@@ -4432,6 +4467,7 @@ export function stepFlight(
   worldSyncFlightRegion(flightWorldContext(flight), content, flight);
   // Settle capitals that the region sync just paged in from dormant chunks.
   settleResumedCapitals(content, flight);
+  clearLocalGuardSummons(flight);
   const ship = shipTuning(ECONOMY, content, flight.levels);
   const oreBefore = flight.shieldOreSpent ?? 0;
   let remaining = dt;
