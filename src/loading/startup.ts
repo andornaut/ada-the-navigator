@@ -1,12 +1,17 @@
 import {
   createLoadingAttempts,
   type LoadingAttempt,
+  type LoadingAttemptState,
   type RequiredLoading,
 } from "@andornaut/game-kit/runtime/load/loadingAttempts";
 import type { ProgressHandle } from "@andornaut/game-kit/runtime/progressState";
 import type { CrashScreen } from "@andornaut/game-kit/runtime/web/crash/dom/crashScreen";
 import { mountLoadingFailure } from "@andornaut/game-kit/runtime/web/progress/dom/loadingFailure";
 
+import {
+  type InstallationPresentation,
+  observeInstallation,
+} from "../pwa/installationPresentation.ts";
 import { LOADING_LAYER } from "../ui/loadingBar.ts";
 import { loadingProgress, mountLoading } from "./progress.ts";
 
@@ -28,11 +33,16 @@ export async function startLoading(
 ): Promise<() => void> {
   const stop = mountLoading(root);
   let game: RequiredGame | undefined;
+  let installation: InstallationPresentation | undefined;
   const failure = mountLoadingFailure(
     {
       async onRetry() {
         try {
-          await required.retry();
+          if (required.state.kind === "ready" && installation?.state.kind === "failed") {
+            await installation.retry();
+          } else {
+            await required.retry();
+          }
         } catch (error) {
           dispose();
           reportError(error);
@@ -41,6 +51,11 @@ export async function startLoading(
     },
     root.ownerDocument.body,
   );
+  // Required entry and offline installation have independent attempt number domains.
+  let presentationRevision = 0;
+  const showFailure = (state: LoadingAttemptState) => {
+    failure.update({ ...state, attempt: ++presentationRevision });
+  };
   for (const [property, value] of Object.entries({
     left: "50%",
     "max-height": "calc(100vh - 2rem)",
@@ -119,7 +134,13 @@ export async function startLoading(
       pending?.finish();
       pending = undefined;
     }
-    failure.update(state);
+    showFailure(state.kind === "ready" && installation !== undefined ? installation.state : state);
+  });
+  const stopInstallation = observeInstallation((view) => {
+    installation = view;
+    if (required.state.kind === "ready") {
+      showFailure(view.state);
+    }
   });
   let disposed = false;
   const dispose = () => {
@@ -130,6 +151,7 @@ export async function startLoading(
     stopPrepare();
     stopCommit();
     unsubscribe();
+    stopInstallation();
     moduleAttempt.dispose();
     gameAttempt.dispose();
     game?.dispose();

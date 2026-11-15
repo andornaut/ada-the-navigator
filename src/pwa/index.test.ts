@@ -121,6 +121,7 @@ describe("offline play", () => {
     const options = offline.start.mock.calls[0]![0];
     expect(Object.keys(options).sort()).toEqual([
       "onDownloadProgress",
+      "onInstallationState",
       "onOfflineActivity",
       "onRequireNewer",
       "onUpdateShown",

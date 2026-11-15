@@ -27,6 +27,7 @@ import {
 } from "@andornaut/game-kit/runtime/web/pwa/dom/installFlow";
 import {
   browserOfflinePage,
+  type InstallationState,
   type LaunchResult,
   type OfflinePlay,
   startOfflinePlay,
@@ -50,6 +51,7 @@ import {
   updateActivationActivity,
 } from "../loading/progress.ts";
 import { dispatchPhoneEvent, PHONE_EVENTS } from "./events.ts";
+import { presentInstallation } from "./installationPresentation.ts";
 import {
   createUpdateOffer,
   type StartCover,
@@ -116,9 +118,30 @@ function setupOfflinePlay(): void {
   if (page === undefined) {
     return;
   }
+  let installation: InstallationState | undefined;
+  const reportInstallation = () => {
+    if (offlinePlay !== play || installation === undefined) {
+      return;
+    }
+    presentInstallation({
+      async retry() {
+        if (offlinePlay === play) {
+          await play.retryInstallation();
+        }
+      },
+      state: installation,
+    });
+  };
   const play = startOfflinePlay(
     {
       onDownloadProgress: offlineDownloadProgress,
+      onInstallationState(state) {
+        installation = state;
+        // The initial report can precede assignment of this installation owner.
+        if (offlinePlay !== undefined) {
+          queueMicrotask(reportInstallation);
+        }
+      },
       onOfflineActivity: offlineActivity,
       onRequireNewer: requiredUpdate,
       onUpdateShown: updateOffer.setVisible,
@@ -127,6 +150,7 @@ function setupOfflinePlay(): void {
     page,
   );
   offlinePlay = play;
+  reportInstallation();
   startScreen = trackStartScreen(play.flow);
 }
 

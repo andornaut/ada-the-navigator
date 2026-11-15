@@ -29,6 +29,7 @@ vi.mock("@andornaut/game-kit/runtime/web/progress/dom/loadingFailure", () => ({
     };
   },
 }));
+import { presentInstallation } from "../pwa/installationPresentation.ts";
 import { type RequiredGame, startLoading, startupFence } from "./startup.ts";
 const root = () =>
   ({
@@ -204,4 +205,46 @@ it("keeps real pending progress after scene loading until a late required image 
   expect(handle.finish).toHaveBeenCalledOnce();
   expect(progress.mount).toHaveBeenCalledOnce();
   stop();
+});
+
+it("retries optional offline installation through the same presenter without reentering the game", async () => {
+  const required = createRequiredLoading(),
+    entry = game();
+  const stop = await startLoading(
+    required,
+    { stopGameOnCrash: vi.fn() },
+    async () => entry,
+    root(),
+  );
+  await settle();
+  const identity = { attempt: 1, operationId: "install-1", version: "build-1" };
+  const retry = vi.fn(async () => {
+    presentInstallation({ retry, state: { ...identity, kind: "loading", stage: "registering" } });
+    presentInstallation({ retry, state: { ...identity, kind: "ready", stage: "installed" } });
+  });
+  presentInstallation({
+    retry,
+    state: { ...identity, error: new Error("503"), kind: "failed", stage: "installation" },
+  });
+  expect(view.update).toHaveBeenLastCalledWith(
+    expect.objectContaining({ kind: "failed", operationId: "install-1" }),
+  );
+  expect(required.state.kind).toBe("ready");
+  const priorRevision = view.update.mock.calls.at(-2)![0].attempt;
+  expect(view.update.mock.calls.at(-1)![0].attempt).toBeGreaterThan(priorRevision);
+  await view.retry!();
+  expect(retry).toHaveBeenCalledOnce();
+  expect(entry.commit).toHaveBeenCalledOnce();
+  expect(entry.load).toHaveBeenCalledOnce();
+  expect(progress.mount).toHaveBeenCalledOnce();
+  expect(view.update).toHaveBeenLastCalledWith(
+    expect.objectContaining({ kind: "ready", stage: "installed" }),
+  );
+  stop();
+  const calls = view.update.mock.calls.length;
+  presentInstallation({
+    retry,
+    state: { ...identity, error: new Error("late"), kind: "failed", stage: "registration" },
+  });
+  expect(view.update).toHaveBeenCalledTimes(calls);
 });
