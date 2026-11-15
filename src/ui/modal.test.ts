@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync } from "node:fs";
 
+import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CARD_CLOSE } from "./layout/cardFrame.ts";
@@ -21,7 +22,7 @@ import {
   TEXT_TOKENS,
   UI_SCOPE,
 } from "./modal.ts";
-import { buttonFrames, buttonProperty } from "./uiSkin.ts";
+import { buttonProperty } from "./uiSkin.ts";
 
 const json = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public/art/ui/${path}`, import.meta.url), "utf8"));
@@ -97,7 +98,12 @@ describe("modal buttons", () => {
     "cuts %s's normal, pressed and disabled frames with its manifest slice",
     (key) => {
       expect(entry(key).slice).toEqual(BUTTON_SLICE);
-      const frames = buttonFrames(json(entry(key).json) as Parameters<typeof buttonFrames>[0]);
+      const sheet = json(entry(key).json) as AsepriteSheet & {
+        frames: Readonly<Record<string, { frame: { h: number; w: number; x: number; y: number } }>>;
+      };
+      const frames = Object.fromEntries(
+        [...sheetTags(sheet)].map(([tag, frames]) => [tag, sheet.frames[frames[0]!.frame]!.frame]),
+      );
       expect(Object.keys(frames).sort()).toEqual(["disabled", "normal", "pressed"]);
       expect(frames.normal).toEqual({ h: 28, w: 16, x: 0, y: 0 });
       expect(frames.pressed?.x).toBe(16);

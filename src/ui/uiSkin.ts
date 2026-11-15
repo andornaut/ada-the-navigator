@@ -10,33 +10,6 @@ export const BUTTON_SHEETS = ["ui-button", "ui-button-primary", "ui-button-tile"
 const BUTTON_TAGS: readonly ButtonTag[] = ["normal", "pressed", "disabled"];
 const UI_ROOT = "/art/ui/";
 
-interface Rect {
-  readonly h: number;
-  readonly w: number;
-  readonly x: number;
-  readonly y: number;
-}
-
-interface FramedSheet {
-  readonly frames: Readonly<Record<string, { readonly frame: Rect }>>;
-  readonly meta: {
-    readonly frameTags?: readonly { readonly from: number; readonly name: string }[];
-  };
-}
-
-// Each button tag's first frame in the sheet, by the sheet's own frame order.
-export function buttonFrames(sheet: FramedSheet): Partial<Record<ButtonTag, Rect>> {
-  const frames = Object.values(sheet.frames);
-  const rects: Partial<Record<ButtonTag, Rect>> = {};
-  for (const tag of sheet.meta.frameTags ?? []) {
-    const frame = frames[tag.from]?.frame;
-    if (frame && (BUTTON_TAGS as readonly string[]).includes(tag.name)) {
-      rects[tag.name as ButtonTag] = frame;
-    }
-  }
-  return rects;
-}
-
 // The custom property a sheet's tag sets.
 export function buttonProperty(sheet: (typeof BUTTON_SHEETS)[number], tag: ButtonTag): string {
   return buttonSkinProperty(sheet, tag);
