@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
+import { BACKGROUND_ART, OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import { jumpHomeScene } from "../model/storybook.ts";
 import {
   type ArtAsset,
@@ -16,10 +16,12 @@ import {
   storyBackgrounds,
   storyComposites,
 } from "./storyArt.ts";
+import { readStoryCompositionAssets } from "./storyCompositions.ts";
 
 const publicFile = (path: string) => new URL(`../../public${path}`, import.meta.url);
 const manifest = JSON.parse(readFileSync(publicFile("/art/manifest.json"), "utf8")) as {
   assets: ArtAsset[];
+  storyCompositions: string;
   storyOvernight: string;
 };
 const data = JSON.parse(readFileSync(publicFile(manifest.storyOvernight), "utf8")) as {
@@ -39,8 +41,18 @@ describe("Art's overnight room", () => {
 
   it("keeps environment aliases and draws no story figure composites", () => {
     const backgrounds = storyBackgrounds(manifest.assets);
-    expect(backgrounds.adaRoomNight).toBe("/art/story/ada-room-night.png");
-    expect(backgrounds.adaRoomMorning).toBe("/art/story/ada-room-morning.png");
+    const composed = readStoryCompositionAssets(
+      manifest.assets,
+      JSON.parse(readFileSync(publicFile(manifest.storyCompositions), "utf8")),
+    );
+    expect(composed).toBeDefined();
+    expect(backgrounds.adaRoomNight).toBe(
+      composed?.find(({ id }) => id === BACKGROUND_ART.adaRoomNight)?.path,
+    );
+    expect(backgrounds.adaRoomMorning).toBe(
+      composed?.find(({ id }) => id === BACKGROUND_ART.adaRoomMorning)?.path,
+    );
+    expect(backgrounds.adaRoomNight).not.toBe(backgrounds.adaRoomMorning);
     expect(backgrounds.adaRoomSleep).toBe(backgrounds.adaRoomNight);
     expect(backgrounds.adaRoomMorningCats).toBe(backgrounds.adaRoomMorning);
     expect(storyComposites(manifest.assets)).toEqual({});
