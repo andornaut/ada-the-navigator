@@ -11,7 +11,15 @@ import { TEXT_BUTTON } from "./layout/controls.ts";
 import { units } from "./layout/css.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
-import { createButton, createCard, isTap, TEXT_TOKENS, UI_SCOPE } from "./modal.ts";
+import {
+  createActions,
+  createButton,
+  createCard,
+  isTap,
+  setFooterAction,
+  TEXT_TOKENS,
+  UI_SCOPE,
+} from "./modal.ts";
 import { enterPressView } from "./pressScope.ts";
 
 // The Achievements card (gameplay/quests.md "Achievements"), in Chibi's shape and spacing: every
@@ -240,7 +248,22 @@ export function createAchievementsCard(
   const pageCount = document.createElement("p");
   const next = createButton(labels.next);
   next.dataset.action = "achievements-next";
-  card.body.append(list, pager);
+  const dismiss = createButton(labels.close, "primary");
+  dismiss.dataset.action = "achievements-close-footer";
+  const actions = createActions([{ button: dismiss, role: "primary" }]);
+  setFooterAction("close", actions);
+  actions.style.gridColumn = "3";
+  actions.style.gridRow = "1";
+  actions.style.justifySelf = "end";
+  const footer = document.createElement("div");
+  footer.style.display = "grid";
+  footer.style.gridTemplateColumns = "1fr auto 1fr";
+  footer.style.alignItems = "center";
+  footer.style.width = "100%";
+  pager.style.gridColumn = "2";
+  pager.style.gridRow = "1";
+  footer.append(pager, actions);
+  card.body.append(list, footer);
   modal.append(card.frame);
   root.append(modal);
   const mounted = mountLayout<AchievementsLayoutSchema>(
@@ -369,7 +392,9 @@ export function createAchievementsCard(
     page = Math.min(achievementPages(entries.length, perPage) - 1, page + 1);
     render();
   });
-  register(card.close, () => setOpen(false));
+  const close = () => setOpen(false);
+  register(card.close, close);
+  register(dismiss, close);
   let outside: { readonly x: number; readonly y: number } | undefined;
   modal.addEventListener("pointerdown", (event) => {
     outside = event.target === modal ? { x: event.clientX, y: event.clientY } : undefined;

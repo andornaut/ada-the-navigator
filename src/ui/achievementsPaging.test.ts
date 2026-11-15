@@ -135,12 +135,13 @@ function setup() {
   const modal = root.children[0]!;
   const frame = modal.children[0]!;
   const body = frame.children[0]!.children[0]!;
-  const pager = body.children[1]!;
+  const pager = body.children[1]!.children[0]!;
   const [previous, count, next] = pager.children;
   return {
     card,
     close: frame.children[1]!,
     count: count!,
+    dismiss: body.children[1]!.children[1]!.children[0]!,
     next: next!,
     onOpenChange,
     pager,
@@ -200,5 +201,23 @@ describe("Achievements page actions", () => {
     for (const control of [previous, next, close]) {
       expect(control.listeners.get("click")).toEqual([]);
     }
+  });
+  it("keeps the footer Close on every page and uses the same close lifecycle once", () => {
+    const { card, close, dismiss, next, onOpenChange } = setup();
+    expect(dismiss.textContent).toBe("Close");
+    expect(dismiss.hidden).toBe(false);
+    next.click();
+    expect(dismiss.hidden).toBe(false);
+    dismiss.click();
+    dismiss.click();
+    expect(card.isOpen()).toBe(false);
+    expect(onOpenChange.mock.calls).toEqual([[true], [false]]);
+    card.open();
+    close.click();
+    expect(onOpenChange.mock.calls).toEqual([[true], [false], [true], [false]]);
+    card.dispose();
+    expect(dismiss.listeners.get("click")).toEqual([]);
+    dismiss.click();
+    expect(onOpenChange).toHaveBeenCalledTimes(4);
   });
 });
