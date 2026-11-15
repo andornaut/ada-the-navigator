@@ -119,6 +119,7 @@ import { flightEncounterSeed, flightWorldContext } from "./flightTopology.ts";
 import { initializeGalaxyGeography } from "./galaxyGeography.ts";
 import { liveEnemy } from "./geography.ts";
 import { hostileStationMapPlaces } from "./hostileStationMap.ts";
+import { acknowledgeHostileStationIdentification } from "./hostileStationPersistence.ts";
 import {
   INDICATOR_SOURCES,
   type IndicatorTarget,
@@ -632,6 +633,7 @@ export class GameModel {
     if (!f || this.screen !== "space" || this.state.dialogue || this.state.docked) {
       return;
     }
+    acknowledgeHostileStationIdentification(this.state.progress[f.galaxy], f, id);
     const store = this.markerStore(f);
     if (store.get(id) === "identified") {
       return;
