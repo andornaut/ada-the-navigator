@@ -290,8 +290,8 @@ ${hudDiscStyle(".ada-controls .ada-exit-open", ".ada-disc")}
 }
 .ada-controls .ada-settings-rows[data-columns="1"] > .ada-page-divider{display:none}
 .ada-controls [data-dialog=settings] .ada-settings-actions{
-  align-self:center;
-  justify-content:center
+  align-self:flex-end;
+  justify-content:flex-end
 }
 .ada-controls [data-dialog=settings] .ada-build{align-self:stretch}
 
