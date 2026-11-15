@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { createCheats } from "./cheats.ts";
 
 let installed = false;
@@ -12,7 +13,7 @@ class Element extends EventTarget {
   disabled = false;
   isConnected = true;
   get ownerDocument() {
-    return document;
+    return { ...document, defaultView: { HTMLElement: Element, Node: Element } };
   }
   get parentElement(): Element | null {
     return this.parent ?? null;
@@ -28,6 +29,9 @@ class Element extends EventTarget {
   }
   getClientRects() {
     return [1];
+  }
+  closest(): Element | null {
+    return this.hidden ? this : (this.parent?.closest() ?? null);
   }
   focus() {}
   contains(node: unknown): boolean {
@@ -70,7 +74,13 @@ vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
   focusTarget: (node: Element) => node.focus(),
 }));
 
+vi.mock("./layout/viewScale.ts", () => ({ readViewUnit: () => 1 }));
 vi.mock("./modal.ts", () => ({
+  createActions: (items: { button: Element }[]) => {
+    const row = new Element();
+    row.append(...items.map((item) => item.button));
+    return row;
+  },
   createButton: (label: string) => Object.assign(new Element(), { textContent: label }),
   createCard: () => {
     const body = new Element(),
@@ -80,6 +90,9 @@ vi.mock("./modal.ts", () => ({
     card.append(body);
     frame.append(card, close);
     return { body, card, close, dispose: vi.fn(), fit: vi.fn(), frame };
+  },
+  setFooterAction: (action: string, row: Element) => {
+    row.dataset.footerAction = action;
   },
 }));
 
@@ -105,6 +118,7 @@ function setup() {
   const close = Object.assign(new Element(), { className: "ada-primary", textContent: "Close" });
   actions.append(close);
   const run = {};
+  const changed = vi.fn();
   const cheats = createCheats(root as unknown as HTMLElement, actions as unknown as HTMLElement, {
     actions: [],
     beforeOpen: vi.fn(),
@@ -118,12 +132,12 @@ function setup() {
       savePersistence: "Saved",
       title: "Cheats",
     },
-    onOpenChange: vi.fn(),
+    onOpenChange: changed,
     onSave: vi.fn(),
     restoreFocus: vi.fn(),
     run: () => run,
   });
-  return { actions, cheats, close };
+  return { actions, changed, cheats, close, root };
 }
 
 describe("Settings cheat launcher", () => {
@@ -229,4 +243,24 @@ it("keeps group order, executes actions once and unregisters on disposal", async
   cheats.dispose();
   buttons[0]!.dispatchEvent(new Event("click"));
   expect(save).toHaveBeenCalledOnce();
+});
+
+it("gives header and footer one registered close path with foreground and disposal guards", () => {
+  const f = setup();
+  const footer = descendants(f.root).find((node) => node.dataset.footerAction === "close")!;
+  const dismiss = footer.children[0]!;
+  expect(dismiss.textContent).toBe("Close");
+  expect(dismiss.dataset.action).toBe("dismiss-cheats");
+  expect(resolveAdaHoldAction(f.root as unknown as HTMLElement, dismiss)?.available()).toBe(false);
+  f.actions.children[0]!.dispatchEvent(new Event("click"));
+  const held = resolveAdaHoldAction(f.root as unknown as HTMLElement, dismiss)!;
+  expect(held.available()).toBe(true);
+  held.activate();
+  dismiss.dispatchEvent(new Event("click"));
+  expect(f.changed.mock.calls).toEqual([[true], [false]]);
+  f.actions.children[0]!.dispatchEvent(new Event("click"));
+  f.cheats.dispose();
+  held.activate();
+  dismiss.dispatchEvent(new Event("click"));
+  expect(f.changed.mock.calls).toEqual([[true], [false], [true], [false]]);
 });

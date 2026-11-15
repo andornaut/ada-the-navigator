@@ -14,8 +14,8 @@ it("retains caller group and item order with stable scoped keys and presentation
       scope: "run" as const,
     },
   ];
-  const tree = cheatsTree(groups);
-  validateLayoutTree({ group: ["items"], groups: ["groups"], item: [] }, tree);
+  const tree = cheatsTree("Close", groups);
+  validateLayoutTree({ footer: [], group: ["items"], groups: ["groups"], item: [] }, tree);
   expect(tree).toEqual({
     component: "groups",
     key: "cheats",
@@ -37,8 +37,12 @@ it("retains caller group and item order with stable scoped keys and presentation
             })),
           },
         },
+        { component: "footer", key: "dismiss", kind: "component", props: { label: "Close" } },
       ],
     },
   });
-  expect(cheatsTree([])).toMatchObject({ key: "cheats", slots: { groups: [] } });
+  expect(cheatsTree("Close", [])).toMatchObject({
+    key: "cheats",
+    slots: { groups: [{ component: "footer", key: "dismiss", props: { label: "Close" } }] },
+  });
 });

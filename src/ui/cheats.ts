@@ -1,10 +1,14 @@
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
+import { bindAdaAction } from "./actionBinding.ts";
 import { type CheatAction, cheatGroups, createCheatSession } from "./cheatActions.ts";
 import { type CheatsSchema, cheatsTree } from "./cheatsTree.ts";
-import { createButton, createCard } from "./modal.ts";
+import { SCROLL } from "./layout/contentCard.ts";
+import { readViewUnit } from "./layout/viewScale.ts";
+import { createActions, createButton, createCard, setFooterAction } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
+import { inCurrentView } from "./pressScope.ts";
 
 export interface CheatLabels {
   readonly close: string;
@@ -53,10 +57,38 @@ export function createCheats(
     title: options.labels.title,
   });
   const { body, card, close, frame } = parts;
+  const dismiss = createButton(options.labels.close, "primary");
+  dismiss.dataset.action = "dismiss-cheats";
+  const footer = createActions([{ button: dismiss, role: "primary" }]);
+  setFooterAction("close", footer);
+  const dismissAction = () => setOpen(false);
+  const closeBindings = [close, dismiss].map((element) =>
+    bindAdaAction(
+      {
+        click: {
+          availability: () => (open ? { kind: "available" } : { kind: "omitted" }),
+          run: dismissAction,
+        },
+        current: () => !disposed && open && inCurrentView(parent, element),
+        slopPx: () => SCROLL.dragThreshold * readViewUnit(element),
+      },
+      element,
+    ),
+  );
   const buttons: HTMLButtonElement[] = [];
   const mounted = mountLayout<CheatsSchema>(
     {
       components: {
+        footer: {
+          create(data) {
+            const update = (next: CheatsSchema["footer"]["props"]) => {
+              dismiss.textContent = next.label;
+            };
+            update(data);
+            return { dispose() {}, element: footer, slots: {}, update };
+          },
+          slots: [],
+        },
         group: {
           create(data) {
             const section = document.createElement("section");
@@ -79,7 +111,12 @@ export function createCheats(
         },
         groups: {
           create() {
-            return { dispose() {}, element: body, slots: { groups: body }, update() {} };
+            return {
+              dispose() {},
+              element: body,
+              slots: { groups: body },
+              update() {},
+            };
           },
           slots: ["groups"],
         },
@@ -129,6 +166,7 @@ export function createCheats(
       host: card,
     },
     cheatsTree(
+      options.labels.close,
       cheatGroups(options.actions).map((scope) => ({
         actions: options.actions
           .filter((action) => action.scope === scope)
@@ -170,7 +208,7 @@ export function createCheats(
     options.onOpenChange(value);
     if (value) {
       layer = createModalLayer(modal);
-      leaveLayer = layer.open({ close: () => setOpen(false), focus: close }, card);
+      leaveLayer = layer.open({ close: dismissAction, focus: close, live: [close] }, card);
     } else if (previousFocus?.isConnected && previousFocus.getClientRects().length > 0) {
       focusTarget(previousFocus);
     } else {
@@ -197,7 +235,6 @@ export function createCheats(
     setOpen(true);
     refresh();
   });
-  close.addEventListener("click", () => setOpen(false));
   modal.addEventListener("pointerdown", (event) => {
     event.stopPropagation();
     if (event.target === modal) {
@@ -213,7 +250,7 @@ export function createCheats(
   document.addEventListener("visibilitychange", refresh);
   refresh();
   return {
-    close: () => setOpen(false),
+    close: dismissAction,
     dispose(): void {
       if (disposed) {
         return;
@@ -225,6 +262,9 @@ export function createCheats(
       window.removeEventListener("pageshow", refresh);
       document.removeEventListener("visibilitychange", refresh);
       layer?.dispose();
+      for (const binding of closeBindings) {
+        binding.dispose();
+      }
       mounted.dispose();
       parts.dispose();
       modal.remove();
