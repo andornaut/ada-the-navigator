@@ -87,7 +87,8 @@ it("loads the canonical store before constructing the scene and preserves the co
       return loading;
     });
   });
-  const pending = import("./main.ts");
+  const { startGame } = await import("./main.ts");
+  const pending = startGame();
   const result = { save: { pendingInteraction: { galaxy: 1 }, version: 12 }, status: "loaded" };
   try {
     await Promise.race([enteredLoad, pending]);
@@ -104,7 +105,7 @@ it("loads the canonical store before constructing the scene and preserves the co
 });
 it("does not read or construct the old game after a staged version switch", async () => {
   boot.launch.mockResolvedValue("reloading");
-  await import("./main.ts");
+  await (await import("./main.ts")).startGame();
   expect(boot.load).not.toHaveBeenCalled();
   expect(boot.game).not.toHaveBeenCalled();
 });
@@ -119,7 +120,8 @@ it("permanently fences writes and prevents construction when a crash occurs duri
       return loading;
     });
   });
-  const pending = import("./main.ts");
+  const { startGame } = await import("./main.ts");
+  const pending = startGame();
   try {
     await Promise.race([enteredLoad, pending]);
     expect(boot.load).toHaveBeenCalledOnce();
@@ -133,7 +135,7 @@ it("permanently fences writes and prevents construction when a crash occurs duri
   expect(boot.game).not.toHaveBeenCalled();
 });
 it("keeps the same crash fence after boot and pauses the running game", async () => {
-  await import("./main.ts");
+  await (await import("./main.ts")).startGame();
   boot.crash!();
   expect(boot.blockWrites).toHaveBeenCalledWith("game crashed");
   expect(boot.pause).toHaveBeenCalledOnce();
@@ -141,10 +143,24 @@ it("keeps the same crash fence after boot and pauses the running game", async ()
 
 it("does not load a save or construct the game after a crash during module download", async () => {
   boot.startup.crashed = true;
-  await import("./main.ts");
+  await (await import("./main.ts")).startGame();
   expect(boot.blockWrites).toHaveBeenCalledWith("game crashed");
   expect(boot.launch).not.toHaveBeenCalled();
   expect(boot.load).not.toHaveBeenCalled();
   expect(boot.scene).not.toHaveBeenCalled();
   expect(boot.game).not.toHaveBeenCalled();
+});
+
+it("defers storage and construction until explicit entry and coalesces cached-module callers", async () => {
+  const module = await import("./main.ts");
+  expect(boot.load).not.toHaveBeenCalled();
+  expect(boot.game).not.toHaveBeenCalled();
+  const first = module.startGame();
+  const second = module.startGame();
+  expect(second).toBe(first);
+  await first;
+  expect((await import("./main.ts")).startGame()).toBe(first);
+  expect(boot.launch).toHaveBeenCalledOnce();
+  expect(boot.load).toHaveBeenCalledOnce();
+  expect(boot.game).toHaveBeenCalledOnce();
 });

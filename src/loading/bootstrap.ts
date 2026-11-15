@@ -8,7 +8,14 @@ const app = document.getElementById("app");
 if (!app) {
   throw new Error("Missing application mount");
 }
-const stop = await startLoading(CRASH_SCREEN, () => import("../main.ts"), app);
+const stop = await startLoading(
+  CRASH_SCREEN,
+  async () => {
+    const { startGame } = await import("../main.ts");
+    await startGame();
+  },
+  app,
+);
 if (import.meta.hot) {
   import.meta.hot.dispose(stop);
 }
