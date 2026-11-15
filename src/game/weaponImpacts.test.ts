@@ -86,8 +86,13 @@ describe("weapon impact families", () => {
       );
       const fill = shapes.find((shape) => shape.kind === "ellipse" && shape.stroke === undefined);
       expect(rings).toHaveLength(2);
-      if (rings[0]?.kind !== "ellipse" || rings[1]?.kind !== "ellipse" || fill?.kind !== "ellipse")
-        {throw Error("shockwave layers missing");}
+      if (
+        rings[0]?.kind !== "ellipse" ||
+        rings[1]?.kind !== "ellipse" ||
+        fill?.kind !== "ellipse"
+      ) {
+        throw Error("shockwave layers missing");
+      }
       expect(rings[1].halfWidth).toBeLessThan(rings[0].halfWidth);
       expect(fill.halfWidth).toBe(rings[0].halfWidth);
       expect(fill.alpha).toBeGreaterThan(0);
