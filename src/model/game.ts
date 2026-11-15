@@ -77,6 +77,7 @@ import {
 } from "./conversations.ts";
 import { inCurrent } from "./currents.ts";
 import { carriesStardust, dropRandom } from "./drops.ts";
+import { edgeMarkerKind } from "./edgeMarkers.ts";
 import {
   confirmExchange,
   type ExchangeOrder,
@@ -144,9 +145,11 @@ import {
   recordExplored,
   withinChartingRadius,
 } from "./map.ts";
+import { markerKnowledgeStore } from "./markerBindings.ts";
+import { markerActorTracked } from "./markerKnowledge.ts";
 import { needleCourses, setNeedleActivity, stepNeedleCourse } from "./needle.ts";
 import { clearNeedleEnemies, ensureNeedleDebris } from "./needleFlight.ts";
-import { type PennyMarker, PennyMarkers, type PennyPoint } from "./pennyMarkers.ts";
+import { type PennyMarker, type PennyPoint } from "./pennyMarkers.ts";
 import { type PhantomContext, phantomWaypoint } from "./phantom.ts";
 import { phantomAllyRoster, type PhantomAllySpec } from "./phantomAllies.ts";
 import { HUNT_GLINT } from "./pickupBody.ts";
@@ -220,6 +223,13 @@ import {
 } from "./storybook.ts";
 import { readStoryCursor, storyCursor, type StorySceneReference } from "./storyCursor.ts";
 import { referenceStoryScene, resolveStoryScene } from "./storyScenes.ts";
+import {
+  resolveTargetObject,
+  type TargetContribution,
+  type TargetKnowledgeStore,
+  TargetMarkerRegistry,
+  type TargetResolution,
+} from "./targetMarkers.ts";
 import type {
   Aboard,
   DialogueState,
@@ -409,7 +419,7 @@ export interface AchievementView {
 export type PickupFeedback = Extract<ItemGain, { readonly kind: "ammo" }>;
 
 export class GameModel {
-  private readonly pennyTracking = new PennyMarkers();
+  private readonly markerRegistry = new TargetMarkerRegistry();
   private scannedLandmarks: string[] = [];
   state: GameState;
   /** The last flight step's events, for view effects; empty when no step ran. */
@@ -594,80 +604,203 @@ export class GameModel {
     const prefix = `penny:${f.galaxy}:`;
     const instance = key.slice(0, key.lastIndexOf(":"));
     if (instance.startsWith(prefix)) {
-      this.pennyTracking.displayed(f, instance.slice(prefix.length));
+      const id = instance.slice(prefix.length);
+      const store = this.markerStore(f);
+      if (this.markerPoint(f, id) && store.get(id) !== "identified") {
+        store.set(id, "sensed");
+      }
     }
   }
 
-  /** Transient off-screen hints, without granting discovery or changing the saved chart. */
-  pennyMarkers(area: Rect, litCaches?: ReadonlySet<string>): PennyMarker[] {
+  /** Marker identification is a renderer acknowledgment, separate from chart and story progress. */
+  markerTargetDisplayed(id: string, litCaches?: ReadonlySet<string>): void {
     const f = this.state.flight;
-    if (!f || this.screen !== "space") {
-      return [];
+    if (!f || this.screen !== "space" || this.state.dialogue || this.state.docked) {
+      return;
     }
-    const points: PennyPoint[] = [];
-    for (const id of this.pennyTracking.ids(f)) {
-      const object = f.objects.find((entry) => entry.id === id) ?? f.world.notables[id];
-      const landmark = flightLandmarkSites(f).find((site) => site.id === id);
-      const station = worldStationById(flightStationContext(f), ECONOMY, f.galaxy, id);
-      const held = this.held;
-      const hunt = held?.type === "hunt" && `job:${held.id}` === id ? held.spot : null;
-      const point = object ?? station ?? landmark ?? hunt;
-      if (!point || (object && object.hp <= 0)) {
-        continue;
+    const store = this.markerStore(f);
+    if (store.get(id) === "identified") {
+      return;
+    }
+    const point = this.markerPoint(f, id, litCaches);
+    if (!point || point.identifiable === false) {
+      return;
+    }
+    store.set(id, "identified");
+  }
+
+  /** The active hunt's actual glint uses the same stable target as its sensed contribution. */
+  markerGlintDisplayed(): void {
+    const held = this.held;
+    if (held?.type === "hunt" && this.jobScenery.glint) {
+      this.markerTargetDisplayed(`job:${held.id}`);
+    }
+  }
+
+  private markerStore(f: FlightState): TargetKnowledgeStore {
+    const progress = this.state.progress[f.galaxy];
+    return markerKnowledgeStore(progress, f, (id) => {
+      if (Object.hasOwn(progress.markerKnowledge ?? {}, id)) {
+        return true;
       }
-      points.push({
-        category:
-          station ||
-          object?.kind === "station" ||
-          (object?.kind === "destination" && deliveryDestination(id))
-            ? "station"
-            : landmark || (object?.kind === "pickup" && object.role === "discovery")
-              ? "discovery"
-              : "objective",
-        id,
-        identifiable: hunt
-          ? worldDistance(flightWorldContext(f), hunt, f.player) <= JOB_TUNING.hunt.glint
-          : object?.kind === "pickup" && object.role === "discovery"
-            ? litCaches?.has(id) === true
-            : true,
-        known:
-          this.current.known.includes(id) ||
-          this.current.stations.includes(id) ||
-          this.current.charted.includes(id),
-        symbol:
-          station || object?.kind === "station"
+      if (markerActorTracked(f, id)) {
+        return false;
+      }
+      const resolved = resolveTargetObject(f, id);
+      if (
+        resolved.state === "present" &&
+        (resolved.object.kind === "destination" || resolved.object.kind === "station")
+      ) {
+        return true;
+      }
+      return (
+        Boolean(worldStationById(flightStationContext(f), ECONOMY, f.galaxy, id)) ||
+        flightLandmarkSites(f).some((site) => site.id === id)
+      );
+    });
+  }
+
+  private markerPoint(
+    f: FlightState,
+    id: string,
+    litCaches?: ReadonlySet<string>,
+  ): PennyPoint | null {
+    const progress = this.state.progress[f.galaxy];
+    const resolved = resolveTargetObject(f, id);
+    if (resolved.state === "removed") {
+      return null;
+    }
+    const object = resolved.state === "present" ? resolved.object : undefined;
+    const landmark = object ? undefined : flightLandmarkSites(f).find((site) => site.id === id);
+    const station = object
+      ? undefined
+      : worldStationById(flightStationContext(f), ECONOMY, f.galaxy, id);
+    const held = this.held;
+    const hunt = held?.type === "hunt" && `job:${held.id}` === id ? held.spot : null;
+    const point = object ?? station ?? landmark ?? hunt;
+    if (!point || (object && object.hp <= 0)) {
+      return null;
+    }
+    return {
+      category:
+        station ||
+        object?.kind === "station" ||
+        (object?.kind === "destination" && deliveryDestination(id))
+          ? "station"
+          : landmark || (object?.kind === "pickup" && object.role === "discovery")
+            ? "discovery"
+            : "objective",
+      id,
+      identifiable: hunt
+        ? worldDistance(flightWorldContext(f), hunt, f.player) <= JOB_TUNING.hunt.glint
+        : object?.kind === "pickup" && object.role === "discovery"
+          ? litCaches?.has(id) === true
+          : true,
+      known:
+        progress.known.includes(id) ||
+        progress.stations.includes(id) ||
+        progress.charted.includes(id),
+      symbol: hunt
+        ? "job"
+        : object?.kind === "enemy"
+          ? (edgeMarkerKind(object) ?? "enemy")
+          : station || object?.kind === "station"
             ? "station"
             : landmark
               ? landmark.kind
               : id === "holodisk"
                 ? "holodisk"
                 : (DESTINATIONS[id]?.mapKind ?? "destination"),
-        x: point.x,
-        y: point.y,
-        ...(hunt ? { jobType: "hunt" as const } : {}),
-        ...(object?.kind === "pickup" && object.role === "discovery"
-          ? { item: "stardust" as const }
-          : {}),
-      });
+      x: point.x,
+      y: point.y,
+      ...(hunt ? { jobType: "hunt" as const } : {}),
+      ...(object?.kind === "pickup" && object.role === "discovery"
+        ? { item: "stardust" as const }
+        : {}),
+    };
+  }
+
+  /** One merged registry for ordinary, sensed, quest and active encounter targets. */
+  targetMarkers(area: Rect, litCaches?: ReadonlySet<string>): PennyMarker[] {
+    const f = this.state.flight;
+    if (!f || this.screen !== "space") {
+      return [];
     }
-    return this.pennyTracking.targets(
-      f,
-      area,
-      new Set(
-        this.indicatorTargets
-          .filter(
-            (target) =>
-              target.kind !== "station" &&
-              (target.kind !== "job" ||
-                this.held?.type !== "hunt" ||
-                target.id !== `job:${this.held.id}`),
-          )
-          .map(({ id }) => id),
+    const progress = this.state.progress[f.galaxy];
+    const store = this.markerStore(f);
+    const known = [
+      ...new Set([
+        ...progress.known,
+        ...progress.stations,
+        ...progress.charted,
+        ...store.ids().filter((id) => store.get(id) === "identified"),
+      ]),
+    ];
+    const candidates = new Set([
+      ...known,
+      ...store.ids(),
+      ...this.indicatorTargets.map(({ id }) => id),
+      ...(f.summonedGuards ?? []),
+    ]);
+    const task = this.state.tasks[f.galaxy];
+    const questContext = {
+      galaxy: f.galaxy,
+      knownIds: known,
+      quests: task || (progress.introduced && !progress.resolved) ? this.quests : [],
+      storyTargets: [this.objectiveId(f.galaxy), questItemDestination(progress)].filter(
+        (id): id is string => typeof id === "string",
       ),
-      flightWorldContext(f).worldSide,
-      f.player,
-      points,
-    );
+      ...(task ? { task } : {}),
+    };
+    const contributions: TargetContribution[] = known.map((id) => ({ id, source: "ordinary" }));
+    for (const id of candidates) {
+      if (questsForObject(questContext, id).length > 0) {
+        contributions.push({ id, source: "quest" });
+      }
+      if (f.summonedGuards?.includes(id)) {
+        const resolved = resolveTargetObject(f, id);
+        if (
+          resolved.state === "present" &&
+          resolved.object.enemy &&
+          !resolved.object.enemy.disabled &&
+          !resolved.object.enemy.salvaged
+        ) {
+          const kind = edgeMarkerKind(resolved.object);
+          if (kind === "guard" || kind === "heavy") {
+            contributions.push({ disclosed: true, distant: true, id, source: "encounter" });
+          }
+        }
+      }
+    }
+    const points = new Map<string, PennyPoint>();
+    const resolve = (id: string): TargetResolution => {
+      const resolved = resolveTargetObject(f, id);
+      if (resolved.state === "removed") {
+        return { state: "removed" };
+      }
+      const point = this.markerPoint(f, id, litCaches);
+      if (!point) {
+        return { state: "unresolved" };
+      }
+      points.set(id, point);
+      return {
+        identified: point.known || store.get(id) === "identified",
+        point,
+        state: "present",
+        symbol: point.symbol,
+      };
+    };
+    return this.markerRegistry
+      .evaluate({ area, player: f.player, resolve, store, ...flightWorldContext(f) }, contributions)
+      .flatMap((marker) => {
+        const point = points.get(marker.id);
+        return point ? [{ ...point, ...marker }] : [];
+      });
+  }
+
+  /** Retained presentation facade; all targets now use the same registry. */
+  pennyMarkers(area: Rect, litCaches?: ReadonlySet<string>): PennyMarker[] {
+    return this.targetMarkers(area, litCaches);
   }
   /** A tap on the conversation box: the next line, or the box closes after the last. */
   advanceConversation(): void {
@@ -1932,6 +2065,7 @@ export class GameModel {
     p.holodisk = true;
     const f = this.state.flight;
     if (f) {
+      this.markerRegistry.forget({ store: this.markerStore(f) }, "holodisk");
       f.objects = f.objects.filter(
         (object) => !(object.kind === "destination" && object.id === "holodisk"),
       );
@@ -1992,6 +2126,14 @@ export class GameModel {
     const mapped: string[] = this.scannedLandmarks.splice(0);
     const stationsDiscovered: string[] = [];
     for (const event of events) {
+      if (
+        event.type === "enemyDestroyed" ||
+        event.type === "collected" ||
+        event.type === "debrisCleared" ||
+        event.type === "asteroidDestroyed"
+      ) {
+        this.markerRegistry.forget({ store: this.markerStore(f) }, event.id);
+      }
       if (event.type === "depleted") {
         this.jumpHome();
         return;
@@ -2132,7 +2274,17 @@ export class GameModel {
         .map(({ id }) => id),
     });
     this.flushNeedleTalk();
-    recordSensed(this.state.achievements, this.talk.takeSensed());
+    const sensed = this.talk.takeSensed();
+    recordSensed(this.state.achievements, sensed);
+    const prefix = `penny:${f.galaxy}:`;
+    for (const instance of sensed) {
+      if (instance.startsWith(prefix)) {
+        const id = instance.slice(prefix.length);
+        if (this.markerPoint(f, id) && this.markerStore(f).get(id) !== "identified") {
+          this.markerStore(f).set(id, "sensed");
+        }
+      }
+    }
     this.syncAchievements();
     // One achievement notice at a time, each once the notice slot is free.
     const unlocked = this.state.notice ? undefined : this.achievementNotices.shift();
@@ -3125,6 +3277,9 @@ export class GameModel {
       return;
     }
     const reward = completeJob(this.jobContext(flight), this.jobStation(held), this.state);
+    if (this.held?.id !== held.id) {
+      this.markerRegistry.forget({ store: this.markerStore(flight) }, `job:${held.id}`);
+    }
     delete flight.tow;
     this.state.economy.stardust += reward;
     this.notify(fill(this.label("jobComplete"), { amount: reward }));

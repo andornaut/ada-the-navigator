@@ -3,6 +3,7 @@ import { JOB_LORE } from "./jobs.ts";
 import { LANDMARK_SCAN_COPY } from "./landmarkScanCopy.ts";
 import { NEEDLE_COPY } from "./needleCopy.ts";
 import { PHANTOM_COPY } from "./phantom.ts";
+import { TARGET_MARKER_RANGE } from "./targetMarkers.ts";
 import type { GalaxyNumber } from "./types.ts";
 
 // In-flight conversations (gameplay/rules.md "Astra and Penny in flight"; words from
@@ -161,7 +162,7 @@ export const CONVERSATION_TUNING = {
   /** Seconds after Penny senses something before she can again; points found meanwhile pass. */
   pennyIntervalSeconds: 60,
   /** An undiscovered point of interest within this many world units, even off screen. */
-  pennyRange: 1500,
+  pennyRange: TARGET_MARKER_RANGE,
   /** Seconds without danger that make a quiet stretch. */
   quietSeconds: 60,
   /** The shield fraction at or below which, in a fight, Astra warns once. */

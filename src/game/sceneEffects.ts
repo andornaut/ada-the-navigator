@@ -31,7 +31,6 @@ export type EffectsContext = Scene &
     | "destruction"
     | "drawnTops"
     | "edgeMarkerInk"
-    | "edgeMarkers"
     | "enemyArt"
     | "enemySprites"
     | "familyArts"

@@ -1,4 +1,5 @@
 import type { EnemyArchetype } from "./enemyCatalog.ts";
+import { TARGET_MARKER_RANGE } from "./targetMarkers.ts";
 
 // Edge markers (gameplay/rules.md "Space encounters and feedback"): where seen off-screen
 // enemies, heavies, route guards and stations are, at the game area's edge.
@@ -12,8 +13,8 @@ export const EDGE_MARKERS = {
    * the safe game area (safeGameArea).
    */
   gap: 1,
-  /** A marked object past this many world units from Ada is forgotten, for every kind. */
-  range: 1400,
+  /** Compatibility view of the shared ordinary range; leaving range hides without forgetting. */
+  range: TARGET_MARKER_RANGE,
 } as const;
 
 /**

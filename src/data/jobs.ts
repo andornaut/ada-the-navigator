@@ -1,4 +1,5 @@
 import type { RoutePosition } from "./galaxies.ts";
+import { TARGET_MARKER_RANGE } from "./targetMarkers.ts";
 import type { GalaxyNumber } from "./types.ts";
 
 // Station jobs and the landmarks surveys chart (gameplay/quests.md). Every number is Gameplay's
@@ -25,7 +26,7 @@ export const JOB_TUNING = {
    * A lost item's search area: its centre's distance from the station and its radius; Penny
    * senses the item and it glints within their ranges.
    */
-  hunt: { glint: 160, max: 7000, min: 3000, penny: 1500, radius: 900 },
+  hunt: { glint: 160, max: 7000, min: 3000, penny: TARGET_MARKER_RANGE, radius: 900 },
   /** A stranded craft's distance from the issuing station, in world units. */
   rescue: { max: 7000, min: 3000 },
   /** Tow handling: attach reach, line length, the safe-place radius and Ada's handling. */

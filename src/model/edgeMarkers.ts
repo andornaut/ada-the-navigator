@@ -3,21 +3,14 @@ import type { Rect } from "@andornaut/game-kit/rect";
 import { deliveryDestination } from "../data/destinations.ts";
 import {
   BLOCKING_MARKER_KINDS,
-  EDGE_MARKERS,
   type EdgeMarkerKind,
   ENEMY_MARKER_KINDS,
 } from "../data/edgeMarkers.ts";
 import { SCREEN } from "../data/screen.ts";
-import type { GalaxyNumber } from "../data/types.ts";
 import type { SpaceObject, Vec } from "./types.ts";
-import { nearestImage } from "./worldGeometry.ts";
 
-// Edge markers (gameplay/rules.md "Space encounters and feedback"): an enemy, heavy, guard or
-// station gets a marker only once it has been in the game area and left it. The marker stays
-// while the object is within EDGE_MARKERS.range of Ada; past it the object is forgotten until it
-// is in the game area again. Destruction, unloading, a new flight or galaxy and a reload clear
-// the state, which is never saved. A direction indicator on the same object draws instead. A
-// summoned guard (flight.ts cueGuards) is marked while off screen whether or not it was seen.
+// Shared kind metadata, isometric projection and safe edge anchors. Knowledge and lifetime
+// are owned by the unified target registry.
 
 export interface EdgeMarker {
   /** A route guard retains the same full-strength bar after it is disabled. */
@@ -86,89 +79,4 @@ export function edgePoint(area: Rect, inset: number, from: Vec, to: Vec): Vec {
     room(dy, from.y, area.y, area.height),
   );
   return Number.isFinite(scale) ? { x: from.x + dx * scale, y: from.y + dy * scale } : from;
-}
-
-/** The flight the tracker follows: its identity, galaxy, player, objects and summoned guards. */
-export interface EdgeMarkerFlight {
-  readonly objects: readonly SpaceObject[];
-  readonly player: Vec;
-  readonly galaxy: GalaxyNumber;
-  readonly summonedGuards?: readonly string[];
-}
-
-/**
- * The seen state across frames. update takes the flight each frame, or null outside one, the ids
- * a direction indicator marks and the time in ms; it returns the objects to mark this frame.
- */
-export function createEdgeMarkerTracker(context?: {
-  readonly worldSide?: () => number | undefined;
-}): {
-  update(
-    flight: EdgeMarkerFlight | null,
-    indicated: ReadonlySet<string>,
-    now?: number,
-  ): EdgeMarker[];
-} {
-  // Each tracked object: in the game area now, or seen and since left.
-  const seen = new Map<string, "inside" | "left">();
-  let following: EdgeMarkerFlight | null = null;
-  let galaxy: GalaxyNumber | null = null;
-  return {
-    update(flight, indicated) {
-      if (flight === null || flight !== following || flight.galaxy !== galaxy) {
-        // A new flight, a galaxy change, or no flight at all: nothing is remembered.
-        seen.clear();
-        following = flight;
-        galaxy = flight?.galaxy ?? null;
-      }
-      if (flight === null) {
-        return [];
-      }
-      const markers: EdgeMarker[] = [];
-      const worldSide = context?.worldSide?.();
-      const image = (point: Vec) =>
-        worldSide === undefined ? point : nearestImage(worldSide, flight.player, point).point;
-      const present = new Set<string>();
-      const summoned = new Set(flight.summonedGuards);
-      /** Visual route identity survives disabling; no timing or motion setting changes its icon. */
-      const marker = (object: SpaceObject, kind: EdgeMarkerKind): EdgeMarker => {
-        const { x, y } = image(object);
-        return kind === "guard"
-          ? { bar: 1, id: object.id, kind, x, y }
-          : { id: object.id, kind, x, y };
-      };
-      for (const object of flight.objects) {
-        const kind = edgeMarkerKind(object);
-        if (kind === null) {
-          continue;
-        }
-        present.add(object.id);
-        const point = image(object);
-        const away = Math.hypot(point.x - flight.player.x, point.y - flight.player.y);
-        if (inGameArea(gameAreaPoint(flight.player, point))) {
-          seen.set(object.id, "inside");
-        } else if (summoned.has(object.id)) {
-          if (!indicated.has(object.id)) {
-            markers.push(marker(object, kind));
-          }
-        } else if (seen.has(object.id)) {
-          if (away > EDGE_MARKERS.range) {
-            seen.delete(object.id);
-          } else {
-            seen.set(object.id, "left");
-            if (!indicated.has(object.id)) {
-              markers.push(marker(object, kind));
-            }
-          }
-        }
-      }
-      // Destroyed and unloaded objects are no longer in the flight's objects.
-      for (const id of seen.keys()) {
-        if (!present.has(id)) {
-          seen.delete(id);
-        }
-      }
-      return markers;
-    },
-  };
 }

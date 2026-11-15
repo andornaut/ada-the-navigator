@@ -2,13 +2,10 @@
 // Functions over the scene's HudContext.
 import { GameObjects, Math as PhaserMath, ScaleModes, type Scene, Textures } from "phaser";
 
-import { EDGE_MARKER_GLYPHS, edgeMarkerInset } from "../data/edgeMarkers.ts";
+import { EDGE_MARKER_GLYPHS } from "../data/edgeMarkers.ts";
 import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
 import { SCREEN } from "../data/screen.ts";
-import { edgePoint } from "../model/edgeMarkers.ts";
-import { pennyIndicatorTargets } from "../model/pennyMarkers.ts";
 import type { FlightState, Vec } from "../model/types.ts";
-import { safeGameArea } from "../ui/layout/playView.ts";
 import { USE_CALLOUT_FADE_MS, useCalloutAlpha, useCalloutLift } from "../ui/touchChrome.ts";
 import { USE_CALLOUT_DEPTH } from "./drawOrder.ts";
 import { type FeedbackPulse } from "./feedback.ts";
@@ -46,7 +43,6 @@ export type HudContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
     | "destruction"
     | "drawnTops"
     | "edgeMarkerInk"
-    | "edgeMarkers"
     | "enemyArt"
     | "enemySprites"
     | "familyArts"
@@ -335,7 +331,7 @@ export function keylineEdges(
 }
 
 /** Both discovered and nearby undiscovered stations use the same canonical border icon. */
-function drawStationEdgeMarker(scene: HudContext, at: Vec): void {
+export function drawStationEdgeMarker(scene: HudContext, at: Vec): void {
   const outline = LIGHT_FIELD.markerOutline;
   const { diamond, stroke } = EDGE_MARKER_GLYPHS.station;
   // The stroke sits inside the diamond's extent.
@@ -354,117 +350,18 @@ function drawStationEdgeMarker(scene: HudContext, at: Vec): void {
   scene.edgeMarkerInk.strokePoints(points, true, true);
 }
 
-/**
- * A marker at the game area's edge toward each seen enemy, heavy and station off screen and
- * within range (model/edgeMarkers.ts); a direction indicator on the same object wins. Discs in
- * the palette's threat, the station diamond in pointOfInterest; a light field adds an ink outline
- * (lightField.markerOutline) under each, as the indicators' ink does.
- */
-export function drawEdgeMarkers(
-  scene: HudContext & Pick<GameScene, "litCaches">,
-  flight: FlightState,
-): void {
-  const indicated = new Set(scene.model.indicatorTargets.map(({ id }) => id));
-  const centre = scene.project(flight.player);
-  const outline = LIGHT_FIELD.markerOutline;
-  const { insets, view } = scene.controls.layout();
-  // Inside the safe game area: never under a notch, a curved corner or the home bar.
-  const area = safeGameArea(insets, view);
-  for (const marker of scene.model.pennyMarkers(area, scene.litCaches)) {
-    indicated.add(marker.id);
-  }
-  for (const marker of scene.edgeMarkers.update(flight, indicated, scene.time.now)) {
-    // The outermost drawn pixel, the ink outline included on a light field, sits 1 in.
-    const at = edgePoint(
-      area,
-      edgeMarkerInset(scene.light ? outline : 0, marker.kind),
-      centre,
-      scene.project(marker),
-    );
-    if (marker.kind === "station") {
-      drawStationEdgeMarker(scene, at);
+/** In-world holodisk beacon only; all off-screen target icons share the DOM marker layer. */
+export function drawIndicators(scene: HudContext): void {
+  for (const target of scene.model.indicatorTargets) {
+    if (target.kind !== "holodisk") {
       continue;
     }
-    const radius = EDGE_MARKER_GLYPHS[marker.kind].disc / 2;
-    if (scene.light) {
-      scene.edgeMarkerInk.fillStyle(scene.edgeInk ?? LIGHT_FIELD.ink, 1);
-      scene.edgeMarkerInk.fillCircle(at.x, at.y, radius + outline);
-    }
-    scene.edgeMarkerInk.fillStyle(scene.palette.threat, 1);
-    scene.edgeMarkerInk.fillCircle(at.x, at.y, radius);
-    // Blocking and disabled route guards share one icon, independently of reduced motion.
-    if (marker.kind === "guard") {
-      const { height, width } = EDGE_MARKER_GLYPHS.guard.bar;
-      scene.edgeMarkerInk.fillStyle(LIGHT_FIELD.ink, 1);
-      scene.edgeMarkerInk.fillRect(at.x - width / 2, at.y - height / 2, width, height);
-    }
-  }
-}
-
-/**
- * An arrow at the view's edge toward each marked place off screen, at any distance
- * (model/indicators.ts), and the holodisk's placeholder beacon ring while it is on screen.
- */
-export function drawIndicators(scene: HudContext & Pick<GameScene, "litCaches">): void {
-  const cx = SCREEN.width / 2;
-  const cy = SCREEN.height / 2;
-  const { insets, view } = scene.controls.layout();
-  const penny = new Set(
-    scene.model.pennyMarkers(safeGameArea(insets, view), scene.litCaches).map(({ id }) => id),
-  );
-  for (const target of pennyIndicatorTargets(penny, scene.model.indicatorTargets)) {
     const point = scene.project(target);
-    const onScreen =
-      point.x >= 0 && point.y >= 0 && point.x <= SCREEN.width && point.y <= SCREEN.height;
-    if (onScreen) {
-      if (target.kind === "holodisk") {
-        // Placeholder until Art's beacon ring sprite.
-        const pulse = (scene.time.now / 1000) % 1;
-        scene.overlay.lineStyle(2, scene.palette.pointOfInterest, 0.9 - pulse * 0.6);
-        scene.overlay.strokeCircle(point.x, point.y, 24 + pulse * 16);
-      }
-      continue;
+    if (point.x >= 0 && point.y >= 0 && point.x <= SCREEN.width && point.y <= SCREEN.height) {
+      const pulse = (scene.time.now / 1000) % 1;
+      scene.overlay.lineStyle(2, scene.palette.pointOfInterest, 0.9 - pulse * 0.6);
+      scene.overlay.strokeCircle(point.x, point.y, 24 + pulse * 16);
     }
-    if (target.kind === "station") {
-      const area = safeGameArea(insets, view);
-      drawStationEdgeMarker(
-        scene,
-        edgePoint(
-          area,
-          edgeMarkerInset(scene.light ? LIGHT_FIELD.markerOutline : 0, "station"),
-          { x: cx, y: cy },
-          point,
-        ),
-      );
-      continue;
-    }
-    const dx = point.x - cx;
-    const dy = point.y - cy;
-    const length = Math.hypot(dx, dy);
-    const ux = dx / length;
-    const uy = dy / length;
-    const scale = Math.min((cx - 44) / Math.abs(dx), (cy - 100) / Math.abs(dy));
-    const x = cx + dx * Math.max(0, scale);
-    const y = cy + dy * Math.max(0, scale);
-    const arrow = [
-      { x: x + ux * 8, y: y + uy * 8 },
-      { x: x - ux * 5 - uy * 6, y: y - uy * 5 + ux * 6 },
-      { x: x - ux * 5 + uy * 6, y: y - uy * 5 - ux * 6 },
-    ] as const;
-    const ring = { x: x - ux * 13, y: y - uy * 13 };
-    if (scene.light) {
-      drawIndicatorInk(scene, arrow, ring);
-    }
-    scene.overlay.lineStyle(2, scene.palette.pointOfInterest, 0.8);
-    scene.overlay.strokeTriangle(
-      arrow[0].x,
-      arrow[0].y,
-      arrow[1].x,
-      arrow[1].y,
-      arrow[2].x,
-      arrow[2].y,
-    );
-    scene.overlay.strokeCircle(ring.x, ring.y, 3);
   }
 }
 

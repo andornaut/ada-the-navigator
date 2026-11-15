@@ -1,10 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { type EdgeMarker, gameAreaPoint } from "../model/edgeMarkers.ts";
+import { gameAreaPoint } from "../model/edgeMarkers.ts";
 import type { IndicatorKind } from "../model/indicators.ts";
-import type { FlightState } from "../model/types.ts";
-import { LIGHT_FIELD } from "./lightField.ts";
-import { drawEdgeMarkers, drawIndicators } from "./sceneHud.ts";
+import { drawIndicators } from "./sceneHud.ts";
 
 vi.mock("phaser", () => ({
   GameObjects: {},
@@ -66,7 +64,6 @@ function fixture(kind: IndicatorKind = "objective", light = false, reducedMotion
   const edge = new Ink(),
     overlay = new Ink(),
     indicator = new Ink();
-  const markers: EdgeMarker[] = [];
   const scene = {
     controls: {
       layout: () => ({
@@ -75,7 +72,6 @@ function fixture(kind: IndicatorKind = "objective", light = false, reducedMotion
       }),
     },
     edgeMarkerInk: edge,
-    edgeMarkers: { update: () => markers },
     indicatorInk: indicator,
     light,
     litCaches: new Map(),
@@ -89,80 +85,21 @@ function fixture(kind: IndicatorKind = "objective", light = false, reducedMotion
   return {
     at,
     edge,
-    flight: { player } as FlightState,
     indicator,
-    markers,
     overlay,
     scene: scene as unknown as Parameters<typeof drawIndicators>[0],
   };
 }
 
 describe("canonical marker rendering", () => {
-  it.each([
-    [undefined, LIGHT_FIELD.ink],
-    [0, 0],
-    [0x235689, 0x235689],
-  ])(
-    "preserves the supplied foreground ink in both station paths, edgeInk=%s",
-    (edgeInk, expected) => {
-      const seen = fixture("station", true);
-      Object.assign(seen.scene, { edgeInk });
-      seen.markers.push({ ...seen.at, id: "station", kind: "station" });
-      drawEdgeMarkers(seen.scene, seen.flight);
-      const nearby = fixture("station", true);
-      Object.assign(nearby.scene, { edgeInk });
-      drawIndicators(nearby.scene);
-      expect(nearby.edge.calls).toEqual(seen.edge.calls);
-      expect(seen.edge.calls[0]).toEqual(["lineStyle", expect.any(Number), expected, 1]);
-    },
-  );
-
-  it.each([false, true])(
-    "uses exactly the same station draw path before and after discovery, light=%s",
-    (light) => {
-      const seen = fixture("station", light);
-      seen.markers.push({ ...seen.at, id: "station", kind: "station" });
-      drawEdgeMarkers(seen.scene, seen.flight);
-      const nearby = fixture("station", light);
-      drawIndicators(nearby.scene);
-      expect(nearby.edge.calls).toEqual(seen.edge.calls);
-      expect(nearby.overlay.calls).toEqual([]);
-    },
-  );
-
-  it.each([false, true])(
-    "keeps blocking and disabled guard icons identical under reduced motion, light=%s",
-    (light) => {
-      const normal = fixture("objective", light, false);
-      normal.markers.push({ ...normal.at, bar: 1, id: "guard", kind: "guard" });
-      drawEdgeMarkers(normal.scene, normal.flight);
-      const reduced = fixture("objective", light, true);
-      reduced.markers.push({ ...reduced.at, bar: 0.2, id: "guard", kind: "guard" });
-      drawEdgeMarkers(reduced.scene, reduced.flight);
-      expect(reduced.edge.calls).toEqual(normal.edge.calls);
-      expect(normal.edge.calls.some((call) => call[0] === "fillCircle" && call[3] === 6)).toBe(
-        true,
-      );
-      expect(normal.edge.calls.at(-2)).toEqual(["fillStyle", expect.any(Number), 1]);
-    },
-  );
-
-  it.each([false, true])(
-    "shares one direction icon for all quest target kinds, light=%s",
-    (light) => {
-      const baseline = fixture("objective", light);
-      drawIndicators(baseline.scene);
-      for (const kind of ["holodisk", "questItem", "job"] as const) {
-        const other = fixture(kind, light, true);
-        drawIndicators(other.scene);
-        expect(other.overlay.calls).toEqual(baseline.overlay.calls);
-        expect(other.indicator.calls).toEqual(baseline.indicator.calls);
-      }
-      const triangle = baseline.overlay.calls
-        .find((call) => call[0] === "strokeTriangle")!
-        .slice(1) as number[];
-      const ys = [triangle[1]!, triangle[3]!, triangle[5]!];
-      expect(Math.max(...ys) - Math.min(...ys)).toBeGreaterThanOrEqual(12);
+  it.each(["station", "objective", "holodisk", "questItem", "job"] as const)(
+    "does not draw a duplicate offscreen %s marker in the canvas HUD",
+    (kind) => {
+      const f = fixture(kind);
+      drawIndicators(f.scene);
+      expect(f.edge.calls).toEqual([]);
+      expect(f.overlay.calls).toEqual([]);
+      expect(f.indicator.calls).toEqual([]);
     },
   );
 

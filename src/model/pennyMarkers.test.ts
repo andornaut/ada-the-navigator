@@ -1,135 +1,137 @@
 import { describe, expect, it } from "vitest";
 
-import { CONVERSATION_TUNING } from "../data/conversations.ts";
+import { CONTENT } from "../data/content.ts";
+import { enemyDefinition } from "../data/enemyCatalog.ts";
+import { JOB_TUNING } from "../data/jobs.ts";
+import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
-import { pennyIndicatorTargets, PennyMarkers, type PennyPoint } from "./pennyMarkers.ts";
+import { createEnemy } from "./enemyAi.ts";
+import { createFlight } from "./flight.ts";
+import { GameModel } from "./game.ts";
+import { markerKnowledgeStore } from "./markerBindings.ts";
+import type { SpaceObject } from "./types.ts";
 
-const player = { x: 0, y: 0 };
-const point = (id: string, x = 1450): PennyPoint => ({
-  category: "discovery",
-  id,
-  known: false,
-  symbol: "wreck",
-  x,
-  y: 0,
-});
+function fixture() {
+  const model = new GameModel(CONTENT);
+  const flight = createFlight(CONTENT, 1, 7, { known: [] });
+  flight.player = { x: 0, y: 0 };
+  const cache: SpaceObject = {
+    amount: 3,
+    hp: 1,
+    id: "cache:a",
+    kind: "pickup",
+    radius: 5,
+    role: "discovery",
+    x: 2000,
+    y: 0,
+  };
+  flight.objects = [cache];
+  Object.assign(model.state, { flight, mode: "space", prologueSeen: true, started: true });
+  const progress = model.state.progress[1];
+  const store = markerKnowledgeStore(progress, flight, (id) => id === "workshop");
+  return { cache, flight, model, progress, store };
+}
+function boss(id: string, archetype: "capital" | "fighter"): SpaceObject {
+  const definition = enemyDefinition(1, archetype, id);
+  return {
+    enemy: createEnemy(definition, { archetype, id, packId: null, phase: 0 }, { x: 8000, y: 0 }),
+    hp: definition.hp,
+    id,
+    kind: "enemy",
+    radius: 10,
+    routeId: "workshop",
+    x: 8000,
+    y: 0,
+  };
+}
 
-describe("Penny's displayed target markers", () => {
-  it("admits only displayed targets and never substitutes a nearer queued point", () => {
-    const tracker = new PennyMarkers(),
-      flight = {};
-    const points = [point("displayed"), point("queued", 500)];
-    expect(tracker.targets(flight, GAME_AREA, new Set(), undefined, player, points)).toEqual([]);
-    tracker.displayed(flight, "displayed");
-    expect(tracker.targets(flight, GAME_AREA, new Set(), undefined, player, points)).toMatchObject([
-      { id: "displayed", identified: false, x: 1450 },
+describe("production unified marker facade", () => {
+  it("identifies the retained facade target only after actual display", () => {
+    const { cache, model, store } = fixture();
+    store.set(cache.id, "sensed");
+    expect(model.pennyMarkers(GAME_AREA)).toEqual(model.targetMarkers(GAME_AREA));
+    expect(model.targetMarkers(GAME_AREA)).toMatchObject([{ id: cache.id, identified: false }]);
+    cache.x = 100;
+    expect(model.targetMarkers(GAME_AREA, new Set([cache.id]))).toEqual([]);
+    expect(store.get(cache.id)).toBe("sensed");
+    model.markerTargetDisplayed(cache.id, new Set([cache.id]));
+    cache.x = 2000;
+    expect(model.targetMarkers(GAME_AREA)).toMatchObject([
+      { id: cache.id, identified: true, item: "stardust" },
     ]);
-    // No conversation is needed to keep the same target after its notice fades.
-    expect(
-      tracker.targets(flight, GAME_AREA, new Set(), undefined, player, points.slice().reverse())[0]
-        ?.id,
-    ).toBe("displayed");
+    expect(model.state.progress[1].charted).toEqual([]);
+    expect(model.state.progress[1].known).toEqual([]);
   });
-
-  it("identifies only after visible or known, retaining identity beyond the old 1400 cutoff", () => {
-    const tracker = new PennyMarkers(),
-      flight = {};
-    tracker.displayed(flight, "a");
-    const narrow = { height: 200, width: 500, x: 100, y: 80 };
-    expect(
-      tracker.targets(flight, narrow, new Set(), undefined, player, [point("a", 250)])[0]
-        ?.identified,
-    ).toBe(false);
-    expect(
-      tracker.targets(flight, GAME_AREA, new Set(), undefined, player, [point("a", 200)]),
-    ).toEqual([]);
-    expect(
-      tracker.targets(flight, GAME_AREA, new Set(), undefined, player, [point("a")])[0]?.identified,
-    ).toBe(true);
-    const other = new PennyMarkers();
-    other.displayed(flight, "known");
-    expect(
-      other.targets(flight, GAME_AREA, new Set(), undefined, player, [
-        { ...point("known"), known: true },
-      ])[0]?.identified,
-    ).toBe(true);
+  it("uses inclusive5000, hides outside it and restores the same target without narration or1400 cutoff", () => {
+    const { cache, model, store } = fixture();
+    store.set(cache.id, "sensed");
+    cache.x = TARGET_MARKER_RANGE;
+    expect(model.targetMarkers(GAME_AREA).map(({ id }) => id)).toEqual([cache.id]);
+    cache.x++;
+    expect(model.targetMarkers(GAME_AREA)).toEqual([]);
+    expect(store.get(cache.id)).toBe("sensed");
+    cache.x = 1450;
+    model.state.notice = "Another notice";
+    expect(model.targetMarkers(GAME_AREA).map(({ id }) => id)).toEqual([cache.id]);
+    expect(JOB_TUNING.hunt.penny).toBe(TARGET_MARKER_RANGE);
   });
-
-  it("clears reached, removed and out-of-range targets without reviving on later lines", () => {
-    for (const replacement of [[], [point("a", 100)], [point("a", 1501)]]) {
-      const tracker = new PennyMarkers(),
-        flight = {};
-      tracker.displayed(flight, "a");
-      expect(tracker.targets(flight, GAME_AREA, new Set(), undefined, player, replacement)).toEqual(
-        [],
-      );
-      tracker.displayed(flight, "a");
-      expect(
-        tracker.targets(flight, GAME_AREA, new Set(), undefined, player, [point("a")]),
-      ).toEqual([]);
-    }
+  it("does not replace an existing marker with a nearer target and represents both sensed IDs", () => {
+    const { cache, flight, model, store } = fixture();
+    store.set(cache.id, "sensed");
+    const other = { ...cache, id: "cache:near", x: 1000 };
+    flight.objects.push(other);
+    expect(model.targetMarkers(GAME_AREA).map(({ id }) => id)).toEqual([cache.id]);
+    store.set(other.id, "sensed");
+    expect(model.targetMarkers(GAME_AREA).map(({ id }) => id)).toEqual([cache.id, other.id]);
   });
-
-  it("gives reserved indicators priority without losing target identity", () => {
-    const tracker = new PennyMarkers(),
-      flight = {};
-    tracker.displayed(flight, "a");
-    expect(
-      tracker.targets(flight, GAME_AREA, new Set(["a"]), undefined, player, [point("a")]),
-    ).toEqual([]);
-    expect(
-      tracker.targets(flight, GAME_AREA, new Set(), undefined, player, [point("a")])[0]?.id,
-    ).toBe("a");
-    expect(tracker.targets({}, GAME_AREA, new Set(), undefined, player, [point("a")])).toEqual([]);
+  it("hides on screen without identifying and never treats absence as explicit removal", () => {
+    const { cache, flight, model, store } = fixture();
+    store.set(cache.id, "sensed");
+    cache.x = 100;
+    expect(model.targetMarkers(GAME_AREA)).toEqual([]);
+    expect(store.get(cache.id)).toBe("sensed");
+    flight.objects = [];
+    expect(model.targetMarkers(GAME_AREA)).toEqual([]);
+    expect(store.get(cache.id)).toBe("sensed");
+    cache.x = 2000;
+    flight.world.notables[cache.id] = cache;
+    expect(model.targetMarkers(GAME_AREA)).toMatchObject([{ id: cache.id, identified: false }]);
+    flight.world.notables[cache.id] = null;
+    expect(model.targetMarkers(GAME_AREA)).toEqual([]);
+    expect(store.get(cache.id)).toBeUndefined();
   });
-
-  it("uses the nearest wrapped image and the ordinary inclusive 1500 boundary", () => {
-    const tracker = new PennyMarkers(),
-      flight = {};
-    tracker.displayed(flight, "seam");
-    const markers = tracker.targets(flight, GAME_AREA, new Set(), 10000, { x: 4900, y: 0 }, [
-      point("seam", -3600),
+  it("does not reveal a hidden destination because an accepted quest references it", () => {
+    const { flight, model, progress } = fixture();
+    progress.introduced = true;
+    progress.stage = 1;
+    flight.objects = [{ hp: 1, id: "workshop", kind: "destination", radius: 10, x: 2000, y: 0 }];
+    const before = structuredClone(progress);
+    expect(model.targetMarkers(GAME_AREA)).toEqual([]);
+    expect(progress).toEqual(before);
+    model.markerTargetDisplayed("workshop");
+    expect(model.targetMarkers(GAME_AREA)).toMatchObject([
+      { id: "workshop", identified: true, symbol: "workshop" },
     ]);
-    expect(CONVERSATION_TUNING.pennyRange).toBe(1500);
-    expect(markers).toMatchObject([{ id: "seam", identified: false, x: 6400 }]);
+    expect(progress.known).toEqual(before.known);
+    expect(progress.charted).toEqual(before.charted);
+    expect(progress.stage).toBe(before.stage);
   });
-});
-
-it("does not identify a geometrically on-screen item while its actual glint is hidden", () => {
-  const tracker = new PennyMarkers(),
-    flight = {};
-  tracker.displayed(flight, "hidden");
-  const markers = tracker.targets(flight, GAME_AREA, new Set(), undefined, player, [
-    { ...point("hidden", 200), identifiable: false },
-  ]);
-  expect(markers).toMatchObject([{ id: "hidden", identified: false }]);
-});
-
-it("retains an identified station after visiting it, including 1450 away", () => {
-  const tracker = new PennyMarkers(),
-    flight = {};
-  tracker.displayed(flight, "station");
-  expect(
-    tracker.targets(flight, GAME_AREA, new Set(), undefined, player, [
-      { ...point("station", 100), known: true, symbol: "station" },
-    ]),
-  ).toEqual([]);
-  expect(
-    tracker.targets(flight, GAME_AREA, new Set(), undefined, player, [
-      { ...point("station"), known: true, symbol: "station" },
-    ]),
-  ).toMatchObject([{ id: "station", identified: true }]);
-});
-
-it("removes replaced station and hunt arrows while preserving objective, quest and holodisk priority", () => {
-  const targets = [
-    { id: "station", kind: "station" as const, x: 0, y: 0 },
-    { id: "hunt", kind: "job" as const, x: 0, y: 0 },
-    { id: "objective", kind: "objective" as const, x: 0, y: 0 },
-    { id: "quest", kind: "questItem" as const, x: 0, y: 0 },
-    { id: "holodisk", kind: "holodisk" as const, x: 0, y: 0 },
-  ];
-  expect(pennyIndicatorTargets(new Set(targets.map(({ id }) => id)), targets)).toEqual(
-    targets.slice(2),
-  );
+  it("merges known quest targets and ordinary knowledge without duplicate target identities", () => {
+    const { flight, model, progress } = fixture();
+    progress.introduced = true;
+    progress.stage = 1;
+    progress.known.push("workshop");
+    flight.objects = [{ hp: 1, id: "workshop", kind: "destination", radius: 10, x: 2000, y: 0 }];
+    expect(model.targetMarkers(GAME_AREA).filter(({ id }) => id === "workshop")).toHaveLength(1);
+  });
+  it("limits the distant exception to the actual triggered boss, ending it with the trigger", () => {
+    const { flight, model } = fixture();
+    flight.objects = [boss("boss", "capital"), boss("escort", "fighter")];
+    flight.summonedGuards = ["boss", "escort"];
+    expect(model.targetMarkers(GAME_AREA).map(({ id }) => id)).toEqual(["boss"]);
+    delete flight.summonedGuards;
+    expect(model.targetMarkers(GAME_AREA)).toEqual([]);
+    flight.objects[0]!.x = 4000;
+    expect(model.targetMarkers(GAME_AREA).map(({ id }) => id)).toEqual(["boss"]);
+  });
 });

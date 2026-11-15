@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { CONTENT } from "../data/content.ts";
 import {
   BLOCKING_MARKER_KINDS,
   EDGE_MARKER_GLYPHS,
@@ -10,18 +11,12 @@ import {
 import { type EnemyArchetype, enemyCatalog } from "../data/enemyCatalog.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { displayMarkerFixtures, markerEdges, markerModel } from "../testing/markerModel.ts";
 import { logicalView, NO_INSETS, playView, safeGameArea } from "../ui/layout/playView.ts";
-import {
-  createEdgeMarkerTracker,
-  type EdgeMarkerFlight,
-  edgeMarkerKind,
-  edgePoint,
-  GAME_AREA,
-  gameAreaPoint,
-  inGameArea,
-} from "./edgeMarkers.ts";
+import { edgeMarkerKind, edgePoint, GAME_AREA } from "./edgeMarkers.ts";
 import { createEnemy } from "./enemyAi.ts";
-import type { SpaceObject, Vec } from "./types.ts";
+import { createFlight } from "./flight.ts";
+import type { FlightState, SpaceObject, Vec } from "./types.ts";
 
 const { gap, range } = EDGE_MARKERS;
 // The heavy disc's dark-field inset, which the ray tests below use.
@@ -38,13 +33,12 @@ function enemy(archetype: EnemyArchetype, at: Vec, id = "drone"): SpaceObject {
   };
 }
 
-/** A flight the test moves its objects through, with Ada at the origin. */
-interface TestFlight extends EdgeMarkerFlight {
-  objects: SpaceObject[];
-  summonedGuards?: string[];
-}
+type TestFlight = FlightState;
 function flight(objects: SpaceObject[], galaxy: GalaxyNumber = 1): TestFlight {
-  return { galaxy, objects, player: { x: 0, y: 0 } };
+  const state = createFlight(CONTENT, galaxy, 7, { known: [] });
+  state.objects = objects;
+  state.player = { x: 0, y: 0 };
+  return state;
 }
 
 // World offsets from Ada: 100 east is on screen; 600 east is off it but within range.
@@ -99,7 +93,7 @@ describe("edge marker kinds", () => {
       heavy: { disc: 12 },
       station: { diamond: 12, stroke: 2 },
     });
-    expect(range).toBe(1400);
+    expect(range).toBe(5000);
     expect(gap).toBe(1);
     // Half the drawn extent, plus the outline, plus 1.
     expect(edgeMarkerInset(0, "enemy")).toBe(4);
@@ -111,139 +105,91 @@ describe("edge marker kinds", () => {
   });
 });
 
-describe("edge marker lifecycle", () => {
-  it("marks an object only after it has been in the game area and left it", () => {
-    const tracker = createEdgeMarkerTracker();
-    const drone = enemy("fighter", NEAR);
-    const state = flight([drone]);
-    expect(inGameArea(gameAreaPoint(state.player, drone))).toBe(true);
-    expect(tracker.update(state, new Set())).toEqual([]);
+describe("canonical edge marker lifecycle", () => {
+  it("uses actual display knowledge, hides the edge icon on screen and restores it off screen", () => {
+    const drone = enemy("fighter", NEAR),
+      state = flight([drone]),
+      model = markerModel(state);
+    expect(markerEdges(model)).toEqual([]);
+    displayMarkerFixtures(model);
     Object.assign(drone, OFF);
-    expect(inGameArea(gameAreaPoint(state.player, drone))).toBe(false);
-    expect(tracker.update(state, new Set())).toEqual([{ id: "drone", kind: "enemy", ...OFF }]);
-    // Back in the game area, the object itself shows and the marker goes.
+    expect(markerEdges(model)).toEqual([{ id: "drone", kind: "enemy", ...OFF }]);
     Object.assign(drone, NEAR);
-    expect(tracker.update(state, new Set())).toEqual([]);
+    expect(markerEdges(model)).toEqual([]);
   });
-
-  it("marks a summoned guard off screen before it is seen, until it reaches the game area", () => {
-    const tracker = createEdgeMarkerTracker();
+  it("merges known and triggered boss contributions before the boss reaches view", () => {
     const guard = { ...enemy("capital", { x: range + 500, y: 0 }, "guard"), routeId: "quest" };
-    const state = flight([guard]);
-    expect(tracker.update(state, new Set())).toEqual([]);
-    state.summonedGuards = ["guard"];
-    // Past the range and never seen, it is still marked, as a guard.
-    expect(tracker.update(state, new Set())).toEqual([
-      { bar: 1, id: "guard", kind: "guard", x: range + 500, y: 0 },
-    ]);
-    // A direction indicator on it still draws instead.
-    expect(tracker.update(state, new Set(["guard"]))).toEqual([]);
+    const state = flight([guard]),
+      model = markerModel(state);
+    expect(markerEdges(model)).toEqual([]);
+    state.summonedGuards = [guard.id];
+    const expected = [{ bar: 1, id: "guard", kind: "guard", x: range + 500, y: 0 }];
+    expect(markerEdges(model)).toEqual(expected);
+    expect(markerEdges(model)).toEqual(expected);
     Object.assign(guard, NEAR);
-    expect(tracker.update(state, new Set())).toEqual([]);
-    // Released once seen, it follows the usual rule: seen, then left, so marked.
+    expect(markerEdges(model)).toEqual([]);
     delete state.summonedGuards;
     Object.assign(guard, OFF);
-    expect(tracker.update(state, new Set())).toEqual([
-      { bar: 1, id: "guard", kind: "guard", ...OFF },
-    ]);
+    expect(markerEdges(model)).toEqual([{ bar: 1, id: "guard", kind: "guard", ...OFF }]);
   });
-
-  it("retains the identical blocking icon at every time after a guard is disabled", () => {
-    const tracker = createEdgeMarkerTracker();
+  it("retains the identical blocking icon after a guard is disabled, independent of time", () => {
     const guard = { ...enemy("frigate", NEAR, "guard"), routeId: "quest" };
-    const state = flight([guard]);
-    tracker.update(state, new Set(), 900);
+    const state = flight([guard]),
+      model = markerModel(state);
+    displayMarkerFixtures(model);
     Object.assign(guard, OFF);
     const expected = [{ bar: 1, id: "guard", kind: "guard", ...OFF }];
-    expect(tracker.update(state, new Set(), 1000)).toEqual(expected);
+    expect(markerEdges(model)).toEqual(expected);
     guard.enemy!.disabled = true;
-    expect(guard.hp).toBeGreaterThan(0);
     for (const now of [1000, 1075, 1120, 1150, 100000]) {
-      expect(tracker.update(state, new Set(), now)).toEqual(expected);
+      state.time = now / 1000;
+      expect(markerEdges(model)).toEqual(expected);
     }
   });
-
-  it("never marks an object that was never in the game area", () => {
-    const tracker = createEdgeMarkerTracker();
-    const state = flight([enemy("frigate", OFF)]);
+  it("does not identify an ordinary target it has not displayed", () => {
+    const model = markerModel(flight([enemy("frigate", OFF)]));
     for (let frame = 0; frame < 3; frame++) {
-      expect(tracker.update(state, new Set())).toEqual([]);
+      expect(markerEdges(model)).toEqual([]);
     }
   });
-
-  it("forgets an object past the range, and marks it again only after it is seen again", () => {
-    const tracker = createEdgeMarkerTracker();
-    const drone = enemy("swarm", NEAR);
-    const state = flight([drone]);
-    tracker.update(state, new Set());
+  it("hides outside5000 and restores within range without a second sighting", () => {
+    const drone = enemy("swarm", NEAR),
+      state = flight([drone]),
+      model = markerModel(state);
+    displayMarkerFixtures(model);
     Object.assign(drone, { x: range - 1, y: 0 });
-    expect(tracker.update(state, new Set())).toHaveLength(1);
-    Object.assign(drone, { x: range + 1, y: 0 });
-    expect(tracker.update(state, new Set())).toEqual([]);
-    // Back within range, but not seen since: no marker.
+    expect(markerEdges(model)).toHaveLength(1);
+    drone.x = range + 1;
+    expect(markerEdges(model)).toEqual([]);
     Object.assign(drone, OFF);
-    expect(tracker.update(state, new Set())).toEqual([]);
-    Object.assign(drone, NEAR);
-    tracker.update(state, new Set());
+    expect(markerEdges(model)).toHaveLength(1);
+  });
+  it("clears authoritative destruction but retains unloaded knowledge and restores it from full state", () => {
+    const drone = enemy("fighter", NEAR),
+      state = flight([drone]),
+      model = markerModel(state);
+    displayMarkerFixtures(model);
     Object.assign(drone, OFF);
-    expect(tracker.update(state, new Set())).toHaveLength(1);
+    expect(markerEdges(model)).toHaveLength(1);
+    state.objects = [];
+    expect(markerEdges(model)).toEqual([]);
+    state.world.notables[drone.id] = drone;
+    expect(markerEdges(model)).toHaveLength(1);
+    state.world.notables[drone.id] = null;
+    expect(markerEdges(model)).toEqual([]);
+    state.objects = [drone];
+    expect(markerEdges(model)).toEqual([]);
   });
-
-  it("clears on destruction, unloading, a galaxy change, leaving the flight and a new flight", () => {
-    const seenThenLeft = (state: TestFlight) => {
-      const tracker = createEdgeMarkerTracker();
-      const drone = state.objects[0]!;
-      Object.assign(drone, NEAR);
-      tracker.update(state, new Set());
-      Object.assign(drone, OFF);
-      expect(tracker.update(state, new Set())).toHaveLength(1);
-      return { drone, tracker };
-    };
-    {
-      const state = flight([enemy("fighter", NEAR)]);
-      const { drone, tracker } = seenThenLeft(state);
-      drone.hp = 0;
-      tracker.update(state, new Set());
-      drone.hp = 1;
-      expect(tracker.update(state, new Set())).toEqual([]);
-    }
-    {
-      const state = flight([enemy("fighter", NEAR)]);
-      const { drone, tracker } = seenThenLeft(state);
-      state.objects = [];
-      tracker.update(state, new Set());
-      state.objects = [drone];
-      expect(tracker.update(state, new Set())).toEqual([]);
-    }
-    {
-      const state = flight([enemy("fighter", NEAR)]);
-      const { tracker } = seenThenLeft(state);
-      expect(tracker.update({ ...state, galaxy: 2 }, new Set())).toEqual([]);
-    }
-    {
-      const state = flight([enemy("fighter", NEAR)]);
-      const { tracker } = seenThenLeft(state);
-      tracker.update(null, new Set());
-      expect(tracker.update(state, new Set())).toEqual([]);
-    }
-    {
-      // A reload builds a new flight from the save; the tracker starts empty for it.
-      const state = flight([enemy("fighter", NEAR)]);
-      const { tracker } = seenThenLeft(state);
-      expect(tracker.update(structuredClone(state), new Set())).toEqual([]);
-    }
-  });
-
-  it("lets a direction indicator on the same object draw instead of the marker", () => {
-    const tracker = createEdgeMarkerTracker();
-    const station: SpaceObject = { hp: 1, id: "station:1:4", kind: "station", radius: 30, ...NEAR };
-    const state = flight([station]);
-    tracker.update(state, new Set());
-    Object.assign(station, OFF);
-    expect(tracker.update(state, new Set(["station:1:4"]))).toEqual([]);
-    expect(tracker.update(state, new Set())).toEqual([
-      { id: "station:1:4", kind: "station", ...OFF },
-    ]);
+  it("reconstructs recorded actors on Continue while a fresh flight has its own empty knowledge", () => {
+    const drone = enemy("fighter", NEAR),
+      state = flight([drone]),
+      model = markerModel(state);
+    displayMarkerFixtures(model);
+    Object.assign(drone, OFF);
+    expect(markerEdges(model)).toHaveLength(1);
+    expect(markerEdges(markerModel(structuredClone(state)))).toHaveLength(1);
+    expect(markerEdges(markerModel(flight([enemy("fighter", OFF)])))).toEqual([]);
+    expect(markerEdges(markerModel(flight([enemy("fighter", OFF)], 2)))).toEqual([]);
   });
 });
 
@@ -365,21 +311,26 @@ describe("edge markers inside the safe game area", () => {
   });
 });
 
-it("retains one seen identity across a seam using the explicit factory context", () => {
+it("retains one identity across a seam only with actual topology metadata", () => {
   const side = 1_152_000;
   const object = enemy("fighter", { x: -side / 2 + 50, y: 0 });
   const current = flight([object]);
-  Object.assign(current.player, { x: side / 2 - 50, y: 0 });
-  const periodic = createEdgeMarkerTracker({ worldSide: () => side });
-  expect(periodic.update(current, new Set())).toEqual([]);
+  current.player.x = side / 2 - 200;
+  current.topology = { kind: "torus", side, version: 1 };
+  const periodic = markerModel(current);
+  displayMarkerFixtures(periodic);
+  expect(markerEdges(periodic)).toEqual([]);
   object.x += 600;
-  expect(periodic.update(current, new Set())).toEqual([
+  expect(markerEdges(periodic)).toEqual([
     { id: object.id, kind: "enemy", x: object.x + side, y: 0 },
   ]);
-  expect(periodic.update(current, new Set([object.id]))).toEqual([]);
-  const legacy = createEdgeMarkerTracker();
-  expect(legacy.update(current, new Set())).toEqual([]);
-  object.x += 100;
-  expect(legacy.update(current, new Set())).toEqual([]);
-  expect(object.x).toBe(-side / 2 + 750);
+  expect(markerEdges(periodic)).toHaveLength(1);
+  const legacy = flight([{ ...object }]);
+  legacy.player.x = current.player.x;
+  const model = markerModel(legacy);
+  displayMarkerFixtures(model);
+  expect(markerEdges(model)).toEqual([]);
+  legacy.objects[0]!.x += 100;
+  expect(markerEdges(model)).toEqual([]);
+  expect(legacy.objects[0]!.x).toBe(-side / 2 + 750);
 });

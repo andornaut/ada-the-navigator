@@ -61,7 +61,6 @@ export type EnemiesContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> 
     | "destruction"
     | "drawnTops"
     | "edgeMarkerInk"
-    | "edgeMarkers"
     | "enemyArt"
     | "enemyJets"
     | "enemyPlaceholders"

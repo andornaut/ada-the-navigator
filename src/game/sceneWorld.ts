@@ -67,7 +67,6 @@ export type WorldContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
     | "destruction"
     | "drawnTops"
     | "edgeMarkerInk"
-    | "edgeMarkers"
     | "enemyArt"
     | "enemyJets"
     | "enemySprites"

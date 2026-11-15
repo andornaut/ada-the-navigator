@@ -4,8 +4,9 @@ import { CONTENT } from "../data/content.ts";
 import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import { ENEMY_AVOIDANCE } from "../data/enemyNavigation.ts";
 import { actualGap } from "../testing/aiGeometry.ts";
+import { markerModel } from "../testing/markerModel.ts";
 import { ASTEROID_SHAPES, worldSceneryBodyContact } from "./asteroids.ts";
-import { createEdgeMarkerTracker, gameAreaPoint, inGameArea } from "./edgeMarkers.ts";
+import { GAME_AREA, gameAreaPoint, inGameArea } from "./edgeMarkers.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { enemyHull } from "./enemyBody.ts";
 import {
@@ -57,8 +58,8 @@ it.each([false, true])(
       id: "quest",
       type: "guardCue",
     });
-    const tracker = createEdgeMarkerTracker();
-    expect(tracker.update(flight, new Set()).some(({ id }) => id === guard.id)).toBe(true);
+    const tracker = markerModel(flight);
+    expect(tracker.targetMarkers(GAME_AREA).some(({ id }) => id === guard.id)).toBe(true);
     const radius = guard.radius;
     let closest = Infinity;
     let steps = 0;
@@ -68,7 +69,7 @@ it.each([false, true])(
       expect(flight.shots.some((shot) => shot.enemy)).toBe(false);
       expect(worldSceneryBodyContact({}, rock, guard, enemyHull(guard.enemy!)!, 0)).toBeNull();
       closest = Math.min(closest, actualGap(rock, guard, guard.enemy!.facing));
-      tracker.update(flight, new Set());
+      tracker.targetMarkers(GAME_AREA);
     }
     console.info(
       "AI_NAVIGATION_METRICS",
@@ -86,7 +87,7 @@ it.each([false, true])(
     expect(guard.radius).toBe(radius);
     expect(rock.radius).toBe(shape.radius);
     expect(routeBlocked("quest", flight)).toBe(true);
-    expect(tracker.update(flight, new Set()).some(({ id }) => id === guard.id)).toBe(false);
+    expect(tracker.targetMarkers(GAME_AREA).some(({ id }) => id === guard.id)).toBe(false);
     expect(inGameArea(gameAreaPoint(flight.player, guard))).toBe(true);
     const hp = guard.hp;
     const policy = enemyDefinition(flight.galaxy, "frigate", guard.id).pursuit;

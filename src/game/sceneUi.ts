@@ -42,6 +42,7 @@ import { VIEW_HOST_ID } from "../ui/layout/css.ts";
 import { fogColor } from "../ui/layout/mapScreen.ts";
 import { safeGameArea } from "../ui/layout/playView.ts";
 import { type MapField, mapScreenLabels } from "../ui/mapScreen.ts";
+import { markerFootprints } from "../ui/markerFootprints.ts";
 import { navigationEntry } from "../ui/navigationEntry.ts";
 import { BOX_OCCUPANT, boxOccupant } from "../ui/notice.ts";
 import { galaxiesAvailable } from "../ui/pause.ts";
@@ -1014,24 +1015,6 @@ export function renderConversation(scene: UiContext): void {
   const covered = !emergency && (scene.settingsOpen || Boolean(dialogue) || Boolean(docked));
   const line = emergency ?? (covered ? null : scene.model.conversation);
   scene.conversationBox.render(line, !coarsePointer(window), scene.reducedMotion);
-  if (line && !covered && !emergency) {
-    scene.model.pennyNoticeDisplayed(line.key);
-  }
-  const { insets, view } = scene.controls.layout();
-  const area = safeGameArea(insets, view);
-  const flight = scene.model.state.flight;
-  pennyLayers.get(scene)?.place(
-    flight?.player ?? { x: 0, y: 0 },
-    area,
-    {
-      color: `#${scene.palette.pointOfInterest.toString(16).padStart(6, "0")}`,
-      ...(scene.edgeInk === undefined
-        ? {}
-        : { edge: `#${scene.edgeInk.toString(16).padStart(6, "0")}` }),
-      light: scene.light,
-    },
-    !covered && !emergency && flight ? scene.model.pennyMarkers(area, scene.litCaches) : [],
-  );
   // One box at a time: a line, else the game notice, else the save status (notice.ts). A card
   // over the play view covers the line or notice under it, which frees the slot for the save
   // status, drawn above cards.
@@ -1050,6 +1033,23 @@ export function renderConversation(scene: UiContext): void {
       host?.removeAttribute(BOX_OCCUPANT);
     }
   }
+  const { insets, view } = scene.controls.layout();
+  const area = safeGameArea(insets, view);
+  const flight = scene.model.state.flight;
+  pennyLayers.get(scene)?.place(
+    flight?.player ?? { x: 0, y: 0 },
+    area,
+    {
+      blocked: markerFootprints(document, document.getElementById(VIEW_HOST_ID)),
+      color: `#${scene.palette.pointOfInterest.toString(16).padStart(6, "0")}`,
+      ...(scene.edgeInk === undefined
+        ? {}
+        : { edge: `#${scene.edgeInk.toString(16).padStart(6, "0")}` }),
+      light: scene.light,
+      threat: `#${scene.palette.threat.toString(16).padStart(6, "0")}`,
+    },
+    !covered && !emergency && flight ? scene.model.targetMarkers(area, scene.litCaches) : [],
+  );
 }
 
 export function observeFeedback(scene: UiContext): void {

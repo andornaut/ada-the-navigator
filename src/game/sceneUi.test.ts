@@ -151,7 +151,7 @@ describe("conversation exposure under covering cards", () => {
       x: 1450,
       y: 0,
     };
-    const markers = vi.spyOn(model, "pennyMarkers").mockReturnValue([marker]);
+    const markers = vi.spyOn(model, "targetMarkers").mockReturnValue([marker]);
     const place = vi.fn();
     const read = vi.fn(() => line);
     Object.defineProperty(model, "conversation", { get: read });
@@ -165,7 +165,7 @@ describe("conversation exposure under covering cards", () => {
       light: false,
       litCaches: new Set<string>(),
       model,
-      palette: { pointOfInterest: 0x65c9bf },
+      palette: { pointOfInterest: 0x65c9bf, threat: 0xffffff },
       reducedMotion: false,
       savingUnavailable: true,
       settingsOpen: kind === "settings",
@@ -177,6 +177,7 @@ describe("conversation exposure under covering cards", () => {
       boxOccupant,
       coarsePointer: () => false,
       document: { getElementById: () => null },
+      markerFootprints: () => [],
       pennyLayers,
       safeGameArea,
       window: {},
@@ -216,10 +217,7 @@ describe("conversation exposure under covering cards", () => {
       ui.update();
       expect(ui.read).toHaveBeenCalledOnce();
       expect(ui.render).toHaveBeenLastCalledWith(ui.line, true, false);
-      expect(ui.acknowledge).toHaveBeenCalledExactlyOnceWith(ui.line.key);
-      expect(ui.render.mock.invocationCallOrder.at(-1)).toBeLessThan(
-        ui.acknowledge.mock.invocationCallOrder[0]!,
-      );
+      expect(ui.acknowledge).not.toHaveBeenCalled();
       expect(ui.markers).toHaveBeenCalledExactlyOnceWith(
         safeGameArea(NO_INSETS, SCREEN),
         ui.scene.litCaches,

@@ -4,7 +4,8 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
-import { createEdgeMarkerTracker, gameAreaPoint, inGameArea } from "./edgeMarkers.ts";
+import { markerEdges, markerModel } from "../testing/markerModel.ts";
+import { GAME_AREA, gameAreaPoint, inGameArea } from "./edgeMarkers.ts";
 import {
   createFlight,
   ensureDestination,
@@ -87,11 +88,9 @@ describe("a blocking guard's cue", () => {
     expect(flight.guardCues).toEqual(["quest"]);
     expect(flight.summonedGuards).toEqual(expect.arrayContaining([guard.id]));
     // Its guard marker shows though Ada has never seen it.
-    expect(
-      createEdgeMarkerTracker()
-        .update(flight, new Set())
-        .filter((marker) => marker.id === guard.id),
-    ).toEqual([{ bar: 1, id: guard.id, kind: "guard", x: guard.x, y: guard.y }]);
+    expect(markerEdges(markerModel(flight)).filter((marker) => marker.id === guard.id)).toEqual([
+      { bar: 1, id: guard.id, kind: "guard", x: guard.x, y: guard.y },
+    ]);
     // It flies in until it is on screen, firing nothing on the way, then fights as usual.
     let seconds = 0;
     let events: FlightEvent[] = [];
@@ -158,10 +157,10 @@ describe("a blocking guard's cue", () => {
       position: { x: guard.x, y: guard.y },
     });
     const context = flightWorldContext(flight);
-    const tracker = createEdgeMarkerTracker({ worldSide: () => flight.topology?.side });
+    const tracker = markerModel(flight);
     expect(stepFlight(CONTENT, 0.05, idle, flight)).toContainEqual(cue);
-    const marker = tracker.update(flight, new Set()).find(({ id }) => id === guard.id)!;
-    expect(marker).toMatchObject({ id: guard.id, kind: "guard" });
+    const marker = tracker.targetMarkers(GAME_AREA).find(({ id }) => id === guard.id)!;
+    expect(marker).toMatchObject({ id: guard.id, symbol: "guard" });
     expect(marker.x - flight.player.x).toBeCloseTo(1200, 0);
     const initial = worldDistance(context, flight.player, guard);
     for (let step = 0; flight.summonedGuards && step < 500; step++) {
@@ -171,7 +170,7 @@ describe("a blocking guard's cue", () => {
     expect(worldDistance(context, flight.player, guard)).toBeLessThan(initial / 2);
     expect(flight.summonedGuards ?? []).not.toContain(guard.id);
     expect(onScreen(flight, guard)).toBe(true);
-    expect(tracker.update(flight, new Set()).some(({ id }) => id === guard.id)).toBe(false);
+    expect(tracker.targetMarkers(GAME_AREA).some(({ id }) => id === guard.id)).toBe(false);
     expect(routeBlocked("quest", flight)).toBe(true);
   });
 

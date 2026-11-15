@@ -109,7 +109,7 @@ describe("Penny's actual presentation acknowledgement", () => {
       "cache:displayed",
     ]);
     expect(pennyPoints({ known: [], stations: [] }, false, [], flight)).toEqual([]);
-    expect(JOB_TUNING.hunt.penny).toBe(1500);
+    expect(JOB_TUNING.hunt.penny).toBe(5000);
   });
 });
 
@@ -118,10 +118,9 @@ it("keeps a cache unknown until the actual renderer has lit it, then retains the
   talk.step(0.05, false, facts);
   model.pennyNoticeDisplayed(model.conversation!.key);
   flight.player = { x: 1200, y: 0 };
-  expect(model.pennyMarkers(GAME_AREA, new Set())).toMatchObject([
-    { id: "cache:displayed", identified: false },
-  ]);
+  expect(model.pennyMarkers(GAME_AREA, new Set())).toEqual([]);
   expect(model.pennyMarkers(GAME_AREA, new Set(["cache:displayed"]))).toEqual([]);
+  model.markerTargetDisplayed("cache:displayed", new Set(["cache:displayed"]));
   flight.player = { x: 0, y: 0 };
   expect(model.pennyMarkers(GAME_AREA, new Set(["cache:displayed"]))).toMatchObject([
     { id: "cache:displayed", identified: true, item: "stardust" },

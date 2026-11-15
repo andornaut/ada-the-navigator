@@ -13,7 +13,6 @@ import { createControls } from "../input/controls.ts";
 import { loadingProgress, type WaitedLoad } from "../loading/progress.ts";
 import { heldActivity } from "../model/activities.ts";
 import { type Current } from "../model/currents.ts";
-import { createEdgeMarkerTracker } from "../model/edgeMarkers.ts";
 import { activeBeamFlashes, activeWeaponImpacts, shipSpeedFraction } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { type GainSnapshot } from "../model/itemGains.ts";
@@ -93,7 +92,6 @@ import { drawRockBreaks, drawZips, startRockBreaks, startZips } from "./sceneEff
 import { drawEffect, drawEnemyWeapons, enemyWeaponsView } from "./sceneEnemies.ts";
 import {
   drawCompromisedShield,
-  drawEdgeMarkers,
   drawFeedback,
   drawIndicators,
   drawKeylines,
@@ -106,6 +104,7 @@ import { createNeedleRenderer, needleRenderFrame } from "./sceneNeedle.ts";
 import { drawGuidedCalf, drawObject } from "./sceneObjects.ts";
 import { drawPhantomAllies, drawPhantomFlagship, drawPhantomSettlement } from "./scenePhantom.ts";
 import { type Asset, DESTRUCTION_PATH, screenToWorld, TITLE_SCREEN_KEY } from "./sceneShared.ts";
+import { acknowledgeTargetDraws } from "./sceneTargetMarkers.ts";
 import {
   buildScene,
   flushScene,
@@ -193,8 +192,6 @@ export class GameScene extends Scene {
   light = false;
   fieldLight = false;
   edgeInk = LIGHT_FIELD.ink;
-  // Which seen enemies, heavies and stations are off screen and marked (model/edgeMarkers.ts).
-  readonly edgeMarkers = createEdgeMarkerTracker();
   keyed: {
     depth: number | undefined;
     key: string;
@@ -760,8 +757,6 @@ export class GameScene extends Scene {
     );
     if (!flight || this.model.state.mode !== "space") {
       this.needleRenderer?.clear();
-      // Leaving the flight forgets every seen object.
-      this.edgeMarkers.update(null, new Set());
       drawKeylines(this);
       drawUseCallout(this, undefined);
       this.bannerLayer?.place([]);
@@ -828,6 +823,7 @@ export class GameScene extends Scene {
         drawObject(this, object);
       }
     }
+    acknowledgeTargetDraws(this);
     this.shell.setEnemyArt(this.enemyPlaceholders === 0);
     drawStoryShips(this, flight);
     drawGuidedCalf(this);
@@ -931,7 +927,6 @@ export class GameScene extends Scene {
         this.overlay.lineBetween(tail.x, tail.y, point.x, point.y);
       }
     }
-    drawEdgeMarkers(this, flight);
     drawIndicators(this);
     drawFeedback(this);
     this.ship.setPosition(SCREEN.width / 2, SCREEN.height / 2);
