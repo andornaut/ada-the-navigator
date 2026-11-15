@@ -112,6 +112,8 @@ import {
   stationPopulationObjects,
 } from "./hostileStations.ts";
 import { phantomSongSpeed, stepPhantomAllies } from "./phantomAllies.ts";
+import { phantomRequiredActors } from "./phantomRequiredOccupants.ts";
+import { readPendingPhantomEncounter } from "./phantomRequiredPlans.ts";
 import { playerWeaponCoverage, type PlayerWeaponCoverageContext } from "./playerWeaponCoverage.ts";
 import { protectedRadius } from "./protectedPlaces.ts";
 import {
@@ -134,6 +136,7 @@ import { requiredRouteGeometry } from "./requiredRouteGeometry.ts";
 import {
   type OptionalWorldFootprint,
   requiredWorldOccupantsPlacementClear,
+  requiredWorldOccupantsPopulation,
   requiredWorldPlacementClear,
   requiredWorldPopulation,
   type RequiredWorldReservation,
@@ -287,6 +290,14 @@ function pendingRequiredRoutes(flight: FlightState): readonly RequiredWorldReser
   );
 }
 
+/** Optional capacity counts canonical pending hulls once without treating home proxies as actors. */
+function requiredPopulation(flight: FlightState): readonly SpaceObject[] {
+  return requiredWorldOccupantsPopulation(flight, [
+    ...pendingRequiredRoutes(flight).map(({ guard }) => guard),
+    ...(readPendingPhantomEncounter(flight)?.actors ?? []),
+  ]);
+}
+
 function requiredFootprintClear(
   content: GameContent,
   flight: FlightState,
@@ -294,7 +305,10 @@ function requiredFootprintClear(
 ): boolean {
   const context = { ...flightWorldContext(flight), content, galaxy: flight.galaxy };
   const authored =
-    flight.galaxy === 2 || flight.galaxy === 3 || (flight.galaxy === 4 && flight.needle)
+    flight.galaxy === 2 ||
+    flight.galaxy === 3 ||
+    flight.galaxy === 6 ||
+    (flight.galaxy === 4 && flight.needle)
       ? stationPopulationObjects(flight)
       : [];
   return (
@@ -302,15 +316,18 @@ function requiredFootprintClear(
     requiredWorldOccupantsPlacementClear(
       context,
       {
-        actors: authored.filter(
-          (object) =>
-            liveEnemy(object) &&
-            (flight.galaxy === 4
-              ? object.enemy?.packId === "needle:exit"
-              : object.routeId !== undefined ||
-                object.enemy?.packId?.startsWith("route:") ||
-                object.enemy?.escortOf?.startsWith("route:")),
-        ),
+        actors: [
+          ...phantomRequiredActors(flight),
+          ...authored.filter(
+            (object) =>
+              liveEnemy(object) &&
+              (flight.galaxy === 4
+                ? object.enemy?.packId === "needle:exit"
+                : object.routeId !== undefined ||
+                  object.enemy?.packId?.startsWith("route:") ||
+                  object.enemy?.escortOf?.startsWith("route:")),
+          ),
+        ],
         sites: [
           ...authored.filter((object) => object.kind === "destination"),
           ...cartwheelSiteGeometry(flight),
@@ -1380,7 +1397,7 @@ export function spawnPlannedHostileStation(
   plan: PlannedHostileStation,
 ): StationMaterialization {
   const reservations = pendingRequiredRoutes(flight);
-  const population = requiredWorldPopulation(flight, reservations);
+  const population = requiredPopulation(flight);
   const placement = {
     ...flight,
     objects: [...population, ...reservations.map(({ site }) => site)],
@@ -1657,7 +1674,7 @@ function generateRegion(content: GameContent, x: number, y: number, flight: Flig
           policy,
           stage,
           content.tuning.flight.shipRadius,
-          requiredWorldPopulation(flight, pendingRequiredRoutes(flight)),
+          requiredPopulation(flight),
           center,
           countRoll,
           archetypeRoll,
@@ -1709,7 +1726,7 @@ function generateRegion(content: GameContent, x: number, y: number, flight: Flig
       policy,
       stage,
       content.tuning.flight.shipRadius,
-      requiredWorldPopulation(flight, pendingRequiredRoutes(flight)),
+      requiredPopulation(flight),
       center,
       plan,
     )
@@ -3345,7 +3362,7 @@ function enemies(
   const admissions = worldRegionalEngagementAdmissions(
     hostileStationContext(flight),
     SPAWNER_POLICIES[flight.galaxy],
-    requiredWorldPopulation(flight, pendingRequiredRoutes(flight)),
+    requiredPopulation(flight),
     eligible,
     flight.player,
   );
