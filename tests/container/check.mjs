@@ -7,7 +7,10 @@ import {
   readdirSync,
   readFileSync,
   symlinkSync,
+  writeFileSync,
 } from "node:fs";
+
+import { restoreCheckSourceIdentity } from "./sourceIdentity.mjs";
 
 // The project's check recipes, in Archie's shape: Make launches the container, which runs a
 // category here, and the native npm aliases call the same recipes in the current environment.
@@ -39,7 +42,7 @@ if (
   process.exit(2);
 }
 // The build's commit for the kit's gameViteConfig: a deploy gate's own WORKERS_CI_COMMIT_SHA, else
-// the checked revision, since the container has no Git metadata.
+// the checked revision. A source-only legacy copy still cannot qualify a full build identity.
 if (!process.env.WORKERS_CI_COMMIT_SHA && process.env.CHECK_REVISION) {
   process.env.WORKERS_CI_COMMIT_SHA = process.env.CHECK_REVISION;
 }
@@ -100,6 +103,19 @@ if (!existsSync("node_modules")) {
     }
   }
 }
+if (process.env.CHECK_SOURCE_IDENTITY || process.env.CHECK_SOURCE_IDENTITY_DIR) {
+  if (!process.env.CHECK_SOURCE_IDENTITY || !process.env.CHECK_SOURCE_IDENTITY_DIR) {
+    throw new Error("Incomplete check source identity evidence");
+  }
+  const expected = JSON.parse(process.env.CHECK_SOURCE_IDENTITY);
+  const status = await restoreCheckSourceIdentity(
+    { artifactDir: process.env.CHECK_SOURCE_IDENTITY_DIR, workRoot: process.cwd() },
+    expected,
+  );
+  mkdirSync(evidence, { recursive: true });
+  writeFileSync(`${evidence}/source-identity-status.json`, JSON.stringify(status));
+}
+
 // The hook proof makes its own scratch repository; ESLint and Prettier read .git/info/exclude.
 if (["check", "lint", "lint-only"].includes(category)) {
   if (!existsSync(".git")) {

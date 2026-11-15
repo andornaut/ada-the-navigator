@@ -38,8 +38,8 @@ test` replays one world.
 
 ## Container profile and CI
 
-The byte-identical canonical `tests/container/run` has SHA-256
-`3e63f48cff28d8ebbb2738f942417c7f2ed7e68f6fe313d48765517f29f14e17`.
+The project launcher `tests/container/run` has SHA-256
+`c7907b817e6bc0ec37359769d4f4f3acac1a4dc5b029d6659ef82b8d3de51bf2`.
 It builds the repository's custom dependency-cache image from the explicit
 `tests/container/context` inputs. The Node.js 24.22.2 Dockerfile, dependency
 cache, scratch ownership, writable Vite caches and inner categories are unchanged.
@@ -101,6 +101,24 @@ dispatches the same inner checks. The kit copies the read-only checkout into `/t
 dependencies as UID 19001, disconnects networking and runs the three configured
 `tests/container/check` categories directly. Native and scheduled lint both use
 `lint-only`, including ShellCheck. No runtime download provisions ShellCheck.
+
+## Source identity in isolated checks
+
+The published DeliveryKit source-identity API supplies the exact commit, shallow
+HEAD and index for independently copied working files. The producer uses the
+public module from the prepared locked image in temporary scratch, so resident
+host dependencies and Git configuration remain untouched. Complete safety-approved
+tracked inventory is required before capture. Copied edits, deletions and
+untracked source remain dirty; restoration does not repair them.
+
+Both detached checks and the native Make profile pass pinned commit, tree and
+artifact digest to the inner copy boundary. Make opts in with
+`CHECK_SOURCE_IDENTITY`. The check restores identity before the lint placeholder
+repository can be initialized and verifies its identity between categories.
+GameKit independently withholds a full build ID for dirty source or a CI mismatch.
+
+The DeliveryKit stock gate is a separate source consumer. Publishing the API or
+pinning its package does not adopt that runner's producer or runtime binding.
 
 ## Detached receipt compatibility
 

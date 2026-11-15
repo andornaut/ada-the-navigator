@@ -20,4 +20,5 @@ COPY --chown=19001:19001 package.json package-lock.json /opt/check/
 RUN npm ci --ignore-scripts --no-audit --no-fund
 COPY --chown=19001:19001 tests/container/check /opt/check/run
 COPY --chown=19001:19001 tests/container/check.mjs /opt/check/check.mjs
+COPY --chown=19001:19001 tests/container/sourceIdentity.mjs /opt/check/sourceIdentity.mjs
 WORKDIR /work

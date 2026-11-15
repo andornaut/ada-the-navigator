@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import {
   closeSync,
+  copyFileSync,
   lstatSync,
   mkdirSync,
   mkdtempSync,
@@ -12,8 +13,8 @@ import {
   writeFileSync,
 } from "node:fs";
 import { loadavg, tmpdir } from "node:os";
-import { join, relative, resolve, sep } from "node:path";
-import { fileURLToPath } from "node:url";
+import { basename, join, relative, resolve, sep } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const results = resolve(root, ".check-results");
@@ -33,9 +34,21 @@ function run(command, args) {
   return result.stdout.trim();
 }
 
-export function snapshot() {
-  const candidates = run("git", ["ls-files", "-z", "--cached", "--others", "--exclude-standard"])
-    .split("\0")
+export function snapshot(checkout = root) {
+  const candidates = [
+    ...new Set([
+      ...run("git", [
+        "-C",
+        checkout,
+        "ls-files",
+        "-z",
+        "--cached",
+        "--others",
+        "--exclude-standard",
+      ]).split("\0"),
+      ...run("git", ["-C", checkout, "ls-tree", "-r", "--name-only", "-z", "HEAD"]).split("\0"),
+    ]),
+  ]
     .filter(Boolean)
     .filter((name) => !name.startsWith(".check-results/"));
   const rootNames = new Set([
@@ -102,11 +115,13 @@ export function snapshot() {
   if (unsupported.length) {
     throw new Error(`Unsupported source paths: ${unsupported.join(", ")}`);
   }
-  const head = run("git", ["rev-parse", "HEAD"]);
+  const head = run("git", ["-C", checkout, "rev-parse", "HEAD"]);
   const hash = createHash("sha256");
   hash.update(head);
   hash.update(
     run("git", [
+      "-C",
+      checkout,
       "status",
       "--porcelain=v1",
       "-z",
@@ -119,10 +134,10 @@ export function snapshot() {
   for (const name of files) {
     hash.update(name);
     try {
-      if (!lstatSync(resolve(root, name)).isFile()) {
+      if (!lstatSync(resolve(checkout, name)).isFile()) {
         throw new Error(`Non-regular source: ${name}`);
       }
-      hash.update(readFileSync(resolve(root, name)));
+      hash.update(readFileSync(resolve(checkout, name)));
     } catch (error) {
       if (error.code !== "ENOENT") {
         throw error;
@@ -131,6 +146,63 @@ export function snapshot() {
     }
   }
   return { head, files, fingerprint: hash.digest("hex") };
+}
+
+/** Caller approval covers every tracked path before the public API reads tree blobs. */
+export async function captureSourceIdentity(context, source) {
+  const checkout = context.sourceRoot ?? root;
+  const tracked = run("git", ["-C", checkout, "ls-tree", "-r", "--name-only", "-z", source.head])
+    .split("\0")
+    .filter(Boolean);
+  const approved = new Set(source.files);
+  if (tracked.some((path) => !approved.has(path))) {
+    throw new Error("Source identity requires the complete approved tracked inventory");
+  }
+  const { snapshotSourceIdentity } = await import(pathToFileURL(context.sdkModule).href);
+  const manifest = snapshotSourceIdentity(
+    { artifactDir: context.artifactDir, sourceRoot: checkout },
+    { approvedPaths: tracked, expectedCommit: source.head },
+  );
+  if (snapshot(checkout).fingerprint !== source.fingerprint) {
+    throw new Error("Source changed during identity capture");
+  }
+  return manifest;
+}
+
+/** Export the installed public bundle, not the resident host dependency or Git metadata. */
+async function prepareSourceIdentity(context, source) {
+  const name = `ada-source-sdk-${randomUUID()}`;
+  const sdkModule = join(context.scratch, "source-identity.mjs");
+  const container = run("docker", [
+    "create",
+    "--name",
+    name,
+    "--cpus",
+    "4",
+    "--memory",
+    "4g",
+    "--user",
+    "19001:19001",
+    "--network",
+    "none",
+    "--entrypoint",
+    "node",
+    context.image,
+    "--version",
+  ]);
+  try {
+    run("docker", [
+      "cp",
+      `${container}:/opt/check/node_modules/@andornaut/delivery-kit/dist/source-identity.js`,
+      sdkModule,
+    ]);
+  } finally {
+    run("docker", ["rm", container]);
+  }
+  return captureSourceIdentity(
+    { artifactDir: join(context.scratch, "identity"), sdkModule, sourceRoot: root },
+    source,
+  );
 }
 
 export function guard(ci) {
@@ -255,7 +327,7 @@ writeFileSync('/tmp/evidence/result.json',JSON.stringify({code})+'\\n');
 process.exitCode=code;
 `;
 
-function start(mode, ci) {
+async function start(mode, ci) {
   if (!["all", "lint", "test"].includes(mode)) {
     throw new Error("Unknown check mode");
   }
@@ -282,13 +354,32 @@ function start(mode, ci) {
     const { image, tag } = prepareImage();
     receipt.image = image;
     receipt.imageTag = tag;
-    receipt.stage = "create";
+    receipt.stage = "identity";
     saveReceipt();
     guard(ci);
+    receipt.identityScratch = mkdtempSync(join(tmpdir(), "ada-check-identity-"));
+    const identity = await prepareSourceIdentity(
+      { image, scratch: receipt.identityScratch },
+      source,
+    );
+    Object.assign(receipt, {
+      sourceIdentity: {
+        commit: identity.commit,
+        digest: identity.digest,
+        tree: identity.tree,
+      },
+    });
+    copyFileSync(
+      join(receipt.identityScratch, "identity", "identity.json"),
+      resolve(directory, "source-identity.json"),
+    );
+    saveReceipt();
     // The file list goes in a file beside the receipt: as an argument it outgrows the kernel's
     // per-argument limit.
     const sourceList = resolve(directory, "source-files.json");
     writeFileSync(sourceList, JSON.stringify(source.files));
+    receipt.stage = "create";
+    saveReceipt();
     const containerId = run("docker", [
       "create",
       "--name",
@@ -313,6 +404,12 @@ function start(mode, ci) {
       "nofile=256:256",
       "--mount",
       `type=bind,source=${root},target=/checkout,readonly`,
+      "--mount",
+      `type=bind,source=${join(receipt.identityScratch, "identity")},target=/source-identity,readonly`,
+      "--env",
+      `CHECK_SOURCE_IDENTITY=${JSON.stringify(receipt.sourceIdentity)}`,
+      "--env",
+      "CHECK_SOURCE_IDENTITY_DIR=/source-identity",
       "--env",
       "HOME=/tmp",
       "--env",
@@ -342,13 +439,12 @@ function start(mode, ci) {
     saveReceipt();
   } catch (error) {
     receipt.error = error.message;
-    if (receipt.stage === "image") {
+    if (["image", "identity"].includes(receipt.stage)) {
       receipt.cleanup = "not-created";
     }
-    let recovery =
-      receipt.stage === "image"
-        ? "No container was created; retry start after the image builds."
-        : `Creation is unconfirmed; inspect container name ${name} before retrying.`;
+    let recovery = ["image", "identity"].includes(receipt.stage)
+      ? "No check container was created; fix the image or identity input before retrying."
+      : `Creation is unconfirmed; inspect container name ${name} before retrying.`;
     if (receipt.containerId) {
       recovery = `Container retained; collect with: node tools/checks.mjs collect ${name}`;
       try {
@@ -455,6 +551,16 @@ function collect(name) {
     `${JSON.stringify(verification, null, 2)}\n`,
   );
   run("docker", ["rm", name]);
+  const startup = JSON.parse(readFileSync(resolve(directory, "startup.json"), "utf8"));
+  if (startup.identityScratch) {
+    const identityName = basename(startup.identityScratch);
+    if (
+      /^ada-check-identity-[A-Za-z0-9]{6}$/.test(identityName) &&
+      join(tmpdir(), identityName) === startup.identityScratch
+    ) {
+      rmSync(startup.identityScratch, { recursive: true });
+    }
+  }
   console.log(directory);
   if (!stable) {
     throw new Error("Source changed during checks: discard results");
@@ -466,11 +572,22 @@ if (resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
   try {
     const [command, argument, flag] = process.argv.slice(2);
     if (command === "start") {
-      start(argument ?? "all", flag === "--ci");
+      await start(argument ?? "all", flag === "--ci");
+    } else if (command === "identity") {
+      const source = snapshot();
+      const identity = await prepareSourceIdentity(
+        { image: argument, scratch: resolve(flag) },
+        source,
+      );
+      console.log(
+        JSON.stringify({ commit: identity.commit, digest: identity.digest, tree: identity.tree }),
+      );
     } else if (command === "collect") {
       collect(argument);
     } else {
-      throw new Error("Usage: node tools/checks.mjs start [all|lint|test] [--ci] | collect <name>");
+      throw new Error(
+        "Usage: node tools/checks.mjs start [all|lint|test] [--ci] | collect <name> | identity <image> <scratch>",
+      );
     }
   } catch (error) {
     console.error(error.message);

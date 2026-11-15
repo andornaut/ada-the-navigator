@@ -9,21 +9,32 @@ import { describe, expect, it } from "vitest";
 const root = fileURLToPath(new URL("../..", import.meta.url));
 const containerId = "c".repeat(64);
 const imageId = "d".repeat(64);
+const sdkId = "e".repeat(64);
 const fakeDocker = `#!${process.execPath}
-const { appendFileSync, readFileSync, writeFileSync } = require('node:fs');
+const { appendFileSync, copyFileSync, readFileSync, writeFileSync } = require('node:fs');
 const args = process.argv.slice(2);
 const command = args[0];
 const scenario = process.env.CHECK_STARTUP_CASE;
 const entry = {command, target: command === 'create' ? null : args.at(-1)};
-if (command === 'create') { entry.image = args.at(-5); entry.network = args[args.indexOf('--network') + 1]; }
+const sdk = command === 'create'
+  ? args[args.indexOf('--name') + 1].startsWith('ada-source-sdk-')
+  : args.some(value => value.startsWith('${sdkId}'));
+if (sdk) entry.sdk = true;
+if (command === 'create') {
+  entry.image = sdk ? args[args.indexOf('--entrypoint') + 2] : args.at(-5);
+  entry.network = args[args.indexOf('--network') + 1];
+}
 appendFileSync(process.env.PROOF_COMMANDS, JSON.stringify(entry) + '\\n');
 if (command === 'build') {
   readFileSync(0);
   if (scenario === 'build-fails') { console.error('fixture build failure'); process.exit(31); }
   writeFileSync(args[args.indexOf('--iidfile') + 1], 'sha256:${imageId}\\n');
 } else if (command === 'create') {
-  if (scenario === 'create-fails') { console.error('fixture create failure'); process.exit(17); }
-  console.log('${containerId}');
+  if (!sdk && scenario === 'create-fails') { console.error('fixture create failure'); process.exit(17); }
+  console.log(sdk ? '${sdkId}' : '${containerId}');
+} else if (command === 'cp') {
+  if (scenario === 'identity-fails') { console.error('fixture SDK transfer failure'); process.exit(44); }
+  copyFileSync(process.env.PROOF_IDENTITY_MODULE, args.at(-1));
 } else if (command === 'start') {
   if (scenario !== 'success') { console.error('fixture start failure'); process.exit(23); }
   console.log('${containerId}');
@@ -36,7 +47,7 @@ if (command === 'build') {
     startedAt:running||exited?'2026-11-10T00:00:00Z':'0001-01-01T00:00:00Z'
   }));
 } else if (command === 'rm') {
-  if (scenario === 'remove-fails') { console.error('fixture removal failure'); process.exit(43); }
+  if (!sdk && scenario === 'remove-fails') { console.error('fixture removal failure'); process.exit(43); }
 } else { throw new Error('Unexpected Docker command: ' + command); }
 `;
 
@@ -100,6 +111,9 @@ syncBuiltinESMExports();`;
         CHECK_STARTUP_CASE: scenario,
         PATH: `${scratch}:${process.env.PATH}`,
         PROOF_COMMANDS: commandsPath,
+        PROOF_IDENTITY_MODULE: fileURLToPath(
+          import.meta.resolve("@andornaut/delivery-kit/source-identity"),
+        ),
       },
       timeout: 10000,
     },
@@ -115,12 +129,12 @@ syncBuiltinESMExports();`;
   const commands = readFileSync(commandsPath, "utf8")
     .split("\n")
     .filter(Boolean)
-    .map((line) => JSON.parse(line) as { command: string; target: string | null });
+    .map((line) => JSON.parse(line) as { command: string; target: string | null; sdk?: boolean });
   return { commands, receipt, result };
 }
 
-function containerCommands(commands: { command: string; target: string | null }[]) {
-  return commands.filter(({ command }) => command !== "build");
+function containerCommands(commands: { command: string; target: string | null; sdk?: boolean }[]) {
+  return commands.filter(({ command, sdk }) => command !== "build" && !sdk);
 }
 
 describe("isolated check startup ownership", () => {
@@ -131,11 +145,31 @@ describe("isolated check startup ownership", () => {
     expect(receipt.containerId).toBe(containerId);
     expect(receipt.stage).toBe("started");
     expect(receipt.image).toBe(`sha256:${imageId}`);
-    expect(commands).toEqual([
+    expect(receipt.sourceIdentity.commit).toMatch(/^[a-f0-9]{40}$/);
+    expect(receipt.sourceIdentity.tree).toMatch(/^[a-f0-9]{40}$/);
+    expect(receipt.sourceIdentity.digest).toMatch(/^[a-f0-9]{64}$/);
+    expect(commands.filter((command) => command.sdk).map((command) => command.command)).toEqual([
+      "create",
+      "cp",
+      "rm",
+    ]);
+    expect(commands.filter((command) => command.sdk).at(-1)?.target).toBe(sdkId);
+    expect(commands.filter((command) => !command.sdk)).toEqual([
       { command: "build", target: "-" },
       { command: "create", image: `sha256:${imageId}`, network: "none", target: null },
       { command: "start", target: containerId },
     ]);
+  });
+
+  it("starts no check container when the public SDK transfer fails", () => {
+    const { commands, receipt, result } = attempt("identity-fails");
+    expect(result.status).toBe(44);
+    expect(result.stderr).toContain("fixture SDK transfer failure");
+    expect(receipt.stage).toBe("identity");
+    expect(receipt.containerId).toBeNull();
+    expect(receipt.cleanup).toBe("not-created");
+    expect(containerCommands(commands)).toEqual([]);
+    expect(commands.at(-1)).toEqual({ command: "rm", sdk: true, target: sdkId });
   });
 
   it("creates nothing when the check image cannot be built", () => {
@@ -191,7 +225,7 @@ describe("isolated check startup ownership", () => {
       expect(result.status).toBe(23);
       expect(receipt.cleanup).toBe("retained");
       expect(receipt.recovery).toContain(`collect ${receipt.name}`);
-      expect(commands.some(({ command }) => command === "rm")).toBe(false);
+      expect(containerCommands(commands).some(({ command }) => command === "rm")).toBe(false);
     },
   );
 
