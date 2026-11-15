@@ -131,6 +131,26 @@ describe("hidden required encounter storage", () => {
     expect(progress.known).toEqual([]);
   });
 
+  it("rejects disabled pending leaders while retaining disabled materialized hulls", () => {
+    const { flight, model, plan, progress } = fixture();
+    storeRequiredPlan(progress, flight, plan);
+    const invalid = model.saveDocument();
+    invalid.flight!.requiredPlans!.growers!.leader.enemy!.disabled = true;
+    expect(restoreSave(invalid)).toBeNull();
+
+    const materialized = takeRequiredPlan(flight, "growers")!;
+    materialized.leader.enemy!.disabled = true;
+    flight.objects.push(materialized.site, materialized.leader);
+    flight.combat!.routeEncounters.push(materialized.site.id);
+    expect(restoreSave(model.save())).toEqual(model.state);
+
+    const pending = fixture();
+    pending.plan.leader.enemy!.disabled = true;
+    expect(() => storeRequiredPlan(pending.progress, pending.flight, pending.plan)).toThrow(
+      "Invalid required encounter plan",
+    );
+  });
+
   it("rejects malformed roles, level or coordinate changes and all duplicate or removed ownership", () => {
     const { flight, model, plan, progress } = fixture(1);
     storeRequiredPlan(progress, flight, plan);

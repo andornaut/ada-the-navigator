@@ -43,6 +43,7 @@ export function requiredPlanConsistent(plan: RequiredEncounterPlan): boolean {
     leader.routeId === site.id &&
     leader.id === `route:${site.id}` &&
     !leader.enemy.salvaged &&
+    !leader.enemy.disabled &&
     support.length <= 2 &&
     new Set(ids).size === ids.length &&
     support.every(
