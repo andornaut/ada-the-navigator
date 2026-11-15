@@ -22,24 +22,116 @@ const fixture = vi.hoisted(() => {
     closest(): Node | null {
       return this.hidden ? this : (this.parentElement?.closest() ?? null);
     }
-    children: Node[] = [];
+    nodeType = 1;
+    readonly childNodes: Node[] = [];
+    private data = "";
+    get children(): Node[] {
+      return this.childNodes.filter((node) => node.nodeType === 1);
+    }
+    get parentNode(): Node | null {
+      return this.parentElement;
+    }
+    get nextSibling(): Node | null {
+      const siblings = this.parentElement?.childNodes;
+      return siblings?.[siblings.indexOf(this) + 1] ?? null;
+    }
+    get firstChild(): Node | null {
+      return this.childNodes[0] ?? null;
+    }
+    get nodeValue(): string | null {
+      return this.nodeType === 3 ? this.data : null;
+    }
+    set nodeValue(value: string | null) {
+      if (this.nodeType === 3) {
+        this.data = value ?? "";
+      }
+    }
+    get textContent(): string {
+      return this.nodeType === 3
+        ? this.data
+        : this.childNodes.map((node) => node.textContent).join("");
+    }
+    set textContent(value: string) {
+      if (this.nodeType === 3) {
+        this.data = value;
+      } else {
+        this.replaceChildren(
+          ...(value ? [Object.assign(new Node(), { nodeType: 3, nodeValue: value })] : []),
+        );
+      }
+    }
     className = "";
+    readonly classList = {
+      add: (name: string) => {
+        this.className += ` ${name}`;
+      },
+      toggle: (name: string, on: boolean) => {
+        const names = new Set(this.className.split(" ").filter(Boolean));
+        if (on) {
+          names.add(name);
+        } else {
+          names.delete(name);
+        }
+        this.className = [...names].join(" ");
+      },
+    };
     dataset: Record<string, string> = {};
+    readonly attributes = new Map<string, string>();
+    style = { getPropertyValue: () => "", removeProperty: vi.fn(), setProperty: vi.fn() };
     hidden = false;
-    textContent = "";
     focus = vi.fn();
-    remove = vi.fn();
+    setAttribute(name: string, value: string) {
+      this.attributes.set(name, value);
+    }
+    removeAttribute(name: string) {
+      this.attributes.delete(name);
+    }
+    getAttribute(name: string) {
+      return this.attributes.get(name) ?? null;
+    }
+    querySelector(selector: string): Node | null {
+      const action = /data-action="([^"]+)"/.exec(selector)?.[1];
+      for (const child of this.children) {
+        if (action !== undefined && child.dataset.action === action) {
+          return child;
+        }
+        const found = child.querySelector(selector);
+        if (found) {
+          return found;
+        }
+      }
+      return null;
+    }
+    remove() {
+      if (this.parentElement) {
+        const siblings = this.parentElement.childNodes;
+        siblings.splice(siblings.indexOf(this), 1);
+        this.parentElement = null;
+      }
+    }
+    insertBefore(node: Node, before: Node | null) {
+      if (node === before) {
+        return node;
+      }
+      node.remove();
+      node.parentElement = this;
+      this.childNodes.splice(
+        before ? this.childNodes.indexOf(before) : this.childNodes.length,
+        0,
+        node,
+      );
+      return node;
+    }
     append(...nodes: Node[]) {
       for (const node of nodes) {
-        node.parentElement = this;
+        this.insertBefore(node, null);
       }
-      this.children.push(...nodes);
     }
     replaceChildren(...nodes: Node[]) {
-      for (const node of nodes) {
-        node.parentElement = this;
+      for (const child of [...this.childNodes]) {
+        child.remove();
       }
-      this.children = nodes;
+      this.append(...nodes);
     }
   }
   const card = {
@@ -81,14 +173,20 @@ afterEach(() => {
   }
   vi.unstubAllGlobals();
   vi.clearAllMocks();
-  fixture.card.body.children = [];
+  fixture.card.body.replaceChildren();
   fixture.requests.length = 0;
 });
 
 function setup() {
   vi.stubGlobal("document", {
     createElement: () => new fixture.Node(),
-    defaultView: { HTMLElement: fixture.Node, Node: fixture.Node },
+    createTextNode: (text: string) =>
+      Object.assign(new fixture.Node(), { nodeType: 3, nodeValue: text }),
+    defaultView: {
+      HTMLElement: fixture.Node,
+      Node: fixture.Node,
+      getComputedStyle: () => ({ getPropertyValue: () => "1" }),
+    },
   });
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
   fixture.card.frame.replaceChildren(fixture.card.body, fixture.card.close);
@@ -108,7 +206,7 @@ function setup() {
     onAction,
     onOpenChange,
     root,
-    rows: () => fixture.card.body.children[0]!.children,
+    rows: () => fixture.card.body.children[0]!.children.map((node) => node.children[0]!),
   };
 }
 
@@ -128,7 +226,7 @@ describe("production Menu consumer", () => {
           ? ["Achievements", "Settings", "Close"]
           : ["Achievements", "Settings", "Back to title", "Close"],
       );
-      expect(rows().map((node) => node.className)).toEqual(
+      expect(rows().map((node) => node.className.split(" ")[0])).toEqual(
         context === "start"
           ? ["secondary", "secondary", "primary"]
           : ["secondary", "secondary", "secondary", "primary"],

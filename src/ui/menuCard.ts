@@ -1,24 +1,22 @@
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
+import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { bindAdaAction } from "./actionBinding.ts";
+import { presentAdaButton } from "./buttonPresentation.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
-import { createButton, createCard } from "./modal.ts";
+import { createAdaLayoutPorts } from "./layoutTree.ts";
+import {
+  type MenuAction,
+  type MenuContext,
+  type MenuControlAction,
+  type MenuLayoutSchema,
+  menuTree,
+} from "./menuTree.ts";
+import { createCard } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 
-export type MenuAction = "achievements" | "backToTitle" | "settings";
-export type MenuContext = "start" | "nonplay";
-
-const MENU_ACTIONS: readonly MenuAction[] = ["achievements", "settings"];
-const NONPLAY_ACTIONS: readonly MenuAction[] = [...MENU_ACTIONS, "backToTitle"];
-
-/** Nonplay navigation returns to title before its primary dismissal; Start omits that action. */
-export function menuActions(context: MenuContext): readonly MenuAction[] {
-  if (context !== "start" && context !== "nonplay") {
-    throw new Error("Unknown Menu context");
-  }
-  return context === "start" ? MENU_ACTIONS : NONPLAY_ACTIONS;
-}
+export { type MenuAction, menuActions, type MenuContext } from "./menuTree.ts";
 
 export interface MenuOptions {
   readonly closeLabel: string;
@@ -33,25 +31,19 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
-  const card = createCard({
-    closeAction: "close-menu",
-    closeLabel: options.closeLabel,
-    size: "small",
-    title: options.title,
-  });
+  const initialTree = menuTree({ ...options, context: "nonplay" });
+  const card = createCard(initialTree.props);
   card.card.dataset.dialog = "menu";
   const actions = document.createElement("div");
   actions.className = "ada-actions ada-stack";
   card.body.append(actions);
   modal.append(card.frame);
   root.append(modal);
-  const closeButton = createButton(options.closeLabel, "primary");
-  closeButton.dataset.action = "menu-close";
   let context: MenuContext = "nonplay";
   let origin: HTMLElement | undefined;
   let returnAction: MenuAction | undefined;
   let disposed = false;
-  const generatedBindings: ReturnType<typeof bindAdaAction>[] = [];
+  let layout: ReturnType<typeof mountLayout<MenuLayoutSchema>> | undefined;
   const register = (element: HTMLElement, run: () => void) =>
     bindAdaAction(
       {
@@ -94,47 +86,61 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
     }
     root.append(modal);
     modal.hidden = false;
-    for (const binding of generatedBindings) {
-      binding.dispose();
-    }
-    generatedBindings.length = 0;
-    actions.replaceChildren();
-    let focus = closeButton;
-    for (const action of menuActions(context)) {
-      const button = createButton(options.labels[action]);
-      button.dataset.action = `menu-${action}`;
-      if (returnAction === action) {
-        focus = button;
-      }
-      generatedBindings.push(
-        register(button, () => {
-          if (disposed || modal.hidden) {
-            return;
-          }
-          returnAction = action;
-          hide(false);
-          try {
-            options.onAction(action, () => open());
-          } finally {
-            options.onOpenChange(false);
-          }
-        }),
-      );
-      actions.append(button);
-    }
-    actions.append(closeButton);
+    layout?.dispose();
+    layout = mountLayout<MenuLayoutSchema>(
+      {
+        components: {
+          ...ports.components,
+          menu: {
+            create() {
+              return { dispose() {}, element: card.frame, slots: { actions }, update() {} };
+            },
+            slots: ["actions"],
+          },
+        },
+        host: modal,
+      },
+      menuTree({ ...options, context }),
+    );
+    const focus =
+      actions.querySelector<HTMLButtonElement>(`[data-action="menu-${returnAction ?? "close"}"]`) ??
+      actions.querySelector<HTMLButtonElement>('[data-action="menu-close"]')!;
     card.fit();
     layer = createModalLayer(modal);
     leave = layer.open({ close, focus }, card.frame);
     options.onOpenChange(true);
   };
-  const fixedBindings = [register(closeButton, close), register(card.close, close)];
+  const choose = (action: MenuAction) => {
+    if (disposed || modal.hidden) {
+      return;
+    }
+    returnAction = action;
+    hide(false);
+    try {
+      options.onAction(action, () => open());
+    } finally {
+      options.onOpenChange(false);
+    }
+  };
+  const ports = createAdaLayoutPorts<MenuControlAction>({
+    actions: new Map<MenuControlAction, () => void>([
+      ["close-menu", close],
+      ["menu-close", close],
+      ["menu-achievements", () => choose("achievements")],
+      ["menu-settings", () => choose("settings")],
+      ["menu-backToTitle", () => choose("backToTitle")],
+    ]),
+    availability: () => (disposed || modal.hidden ? { kind: "omitted" } : { kind: "available" }),
+    presentButton: presentAdaButton,
+  });
+  const fixedBindings = [register(card.close, close)];
   return {
     close,
     dispose() {
       hide();
       disposed = true;
-      for (const binding of [...generatedBindings, ...fixedBindings]) {
+      layout?.dispose();
+      for (const binding of fixedBindings) {
         binding.dispose();
       }
       card.dispose();
