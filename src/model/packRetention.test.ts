@@ -418,7 +418,11 @@ describe("per-role encounter restore", () => {
         y: 4 * content.tuning.chunkSize,
       };
       stepFlight(content, 0.001, idle, flight);
-      const escort = flight.objects.find((object) => object.enemy?.escortOf);
+      const escort = flight.objects.find(
+        (object) =>
+          flight.objects.find((parent) => parent.id === object.enemy?.escortOf)?.enemy
+            ?.archetype === "capital",
+      );
       if (escort?.enemy?.packId) {
         const model = new GameModel(content);
         model.state.flight = flight;

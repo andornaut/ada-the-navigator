@@ -110,6 +110,11 @@ describe("required chapter encounters", () => {
       { hp: 1, id: "site", kind: "destination", radius: 30, x: 0, y: 0 },
     ];
     spawnChapterEnemy(CONTENT, "frigate", "chapter:clear", { x: 0, y: 0 }, flight);
-    expect(flight.objects.map((o) => o.id)).toEqual(["site", "chapter:clear"]);
+    expect(flight.objects.map((o) => o.id)).toEqual([
+      "site",
+      "chapter:clear",
+      "chapter:clear:escort:0",
+      "chapter:clear:escort:1",
+    ]);
   });
 });

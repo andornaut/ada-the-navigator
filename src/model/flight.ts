@@ -13,6 +13,7 @@ import {
   enemyEncounterTuning,
   enemyOnly,
   escortTuning,
+  FRIGATE_ESCORT_COUNT,
   LANCE_TELL,
   MINE_LAYER,
   PHASER_AIM_SECONDS,
@@ -71,6 +72,12 @@ import {
   stepEnemy,
 } from "./enemyAi.ts";
 import { flightWorldContext } from "./flightTopology.ts";
+import {
+  createFrigateEscorts,
+  FRIGATE_ESCORT_ROLE,
+  frigateEscortStation,
+  requiredFrigateEscortId,
+} from "./frigateEscorts.ts";
 import {
   ACTIVE_CHUNK_RADIUS,
   beginFlightStep,
@@ -925,6 +932,53 @@ function spawnEnemy(
   };
 }
 
+function activateFrigateEscorts(
+  content: GameContent,
+  flight: FlightState,
+  leader: SpaceObject,
+): void {
+  if (leader.enemy?.archetype !== "frigate") {
+    return;
+  }
+  for (let index = 0; index < FRIGATE_ESCORT_COUNT; index++) {
+    const retained = flight.world.notables[requiredFrigateEscortId(leader.id, index)];
+    if (retained) {
+      worldActivateFlightRegion(flightWorldContext(flight), content, retained, flight);
+    }
+  }
+}
+
+function installFrigateEscorts(
+  content: GameContent,
+  flight: FlightState,
+  leader: SpaceObject,
+): void {
+  if (leader.enemy?.archetype !== "frigate") {
+    return;
+  }
+  const packId = escortPackId(leader.enemy.packId ?? leader.id);
+  const followers = createFrigateEscorts(
+    {
+      galaxy: flight.galaxy,
+      id: (index) => requiredFrigateEscortId(leader.id, index),
+      packId,
+      persistent: true,
+      shipRadius: content.tuning.flight.shipRadius,
+    },
+    leader,
+  );
+  for (const follower of followers) {
+    clearLayoutObjects(
+      (other) => other.kind === "destination" || clearOf(flight, follower.radius, follower, other),
+      flight,
+    );
+    canonicalObject(flight, follower);
+    flight.objects.push(follower);
+  }
+  const sizes = combat(flight).initialPackSizes;
+  sizes[packId] = (sizes[packId] ?? 0) + followers.length;
+}
+
 /** A required chapter encounter uses canonical enemy state and persists beyond the active region. */
 export function spawnChapterEnemy(
   content: GameContent,
@@ -944,6 +998,7 @@ export function spawnChapterEnemy(
   worldActivateFlightRegion(flightWorldContext(flight), content, point, flight);
   const existing = flight.objects.find((object) => object.id === id);
   if (existing) {
+    activateFrigateEscorts(content, flight, existing);
     return existing.kind === "enemy" ? existing : null;
   }
   const object = spawnEnemy(
@@ -973,6 +1028,7 @@ export function spawnChapterEnemy(
     const sizes = combat(flight).initialPackSizes;
     sizes[options.packId] = (sizes[options.packId] ?? 0) + 1;
   }
+  installFrigateEscorts(content, flight, object);
   return object;
 }
 
@@ -1112,15 +1168,22 @@ function generateRegion(content: GameContent, x: number, y: number, flight: Flig
   const policy = SPAWNER_POLICIES[flight.galaxy];
   const stage = worldSpawnerStage(flightWorldContext(flight), policy, center);
   const previous = flight.objects.find((object) => object.enemy?.packId === packId)?.enemy;
-  const escort = flight.objects.find((object) => object.enemy?.escortOf === `${packId}:0`)?.enemy;
+  const escortObject = flight.objects.find(
+    (object) => object.enemy?.packId === escortPackId(packId),
+  );
+  const escort = escortObject?.enemy;
   const initialized = Object.hasOwn(combat(flight).initialPackSizes, packId);
   // A represented pack keeps its original composition across geographic region changes.
   const plan =
     initialized && (previous || escort)
       ? {
-          archetype: previous?.archetype ?? ("capital" as const),
+          archetype:
+            previous?.archetype ??
+            (escortObject?.role === FRIGATE_ESCORT_ROLE
+              ? ("frigate" as const)
+              : ("capital" as const)),
           count: combat(flight).initialPackSizes[packId] ?? 0,
-          ...(previous?.archetype === "capital" || escort
+          ...(previous?.archetype === "capital" || previous?.archetype === "frigate" || escort
             ? {
                 escorts: {
                   archetype: escort?.archetype ?? ("fighter" as const),
@@ -1184,6 +1247,58 @@ function generateRegion(content: GameContent, x: number, y: number, flight: Flig
   ) {
     return;
   }
+  if (archetype === "frigate" && !initialized) {
+    const leaders = Array.from({ length: count }, (_, index) => {
+      const leader = spawnEnemy(
+        content,
+        flight.galaxy,
+        "frigate",
+        `${packId}:${index}`,
+        memberPosition(policy.memberSpacing, count, center, index),
+        packId,
+        next() * Math.PI * 2,
+      );
+      leader.persistent = false;
+      return leader;
+    });
+    const followers = leaders.flatMap((leader, leaderIndex) =>
+      createFrigateEscorts(
+        {
+          galaxy: flight.galaxy,
+          id: (index) => `${escortPackId(packId)}:${leaderIndex * FRIGATE_ESCORT_COUNT + index}`,
+          packId: escortPackId(packId),
+          persistent: false,
+          shipRadius: content.tuning.flight.shipRadius,
+        },
+        leader,
+      ),
+    );
+    const whole = [...leaders, ...followers];
+    if (
+      whole.some(
+        (member) =>
+          safe(content, member, flight) ||
+          needleChannelContains({ radius: member.radius }, flight, member) ||
+          flight.objects.some((other) => !clearOf(flight, member.radius, member, other)),
+      )
+    ) {
+      return;
+    }
+    if (
+      whole.some((member, index) =>
+        whole.slice(index + 1).some((other) => !clearOf(flight, member.radius, member, other)),
+      )
+    ) {
+      return;
+    }
+    for (const member of whole) {
+      canonicalObject(flight, member);
+      flight.objects.push(member);
+    }
+    combat(flight).initialPackSizes[packId] = leaders.length;
+    combat(flight).initialPackSizes[escortPackId(packId)] = followers.length;
+    return;
+  }
   admitGroup(content, flight, next, { archetype, count, escortOf: null, packId }, (index) =>
     memberPosition(policy.memberSpacing, count, center, index),
   );
@@ -1196,7 +1311,15 @@ function generateRegion(content: GameContent, x: number, y: number, flight: Flig
       content,
       flight,
       next,
-      { ...escorts, escortOf: `${packId}:0`, packId: escortPackId(packId) },
+      {
+        ...escorts,
+        escortOf:
+          archetype === "frigate"
+            ? (index: number) => `${packId}:${Math.floor(index / FRIGATE_ESCORT_COUNT)}`
+            : `${packId}:0`,
+        packId: escortPackId(packId),
+        ...(archetype === "frigate" ? { role: FRIGATE_ESCORT_ROLE } : {}),
+      },
       (_, phase) => ({ x: center.x + Math.cos(phase) * gap, y: center.y + Math.sin(phase) * gap }),
     );
   }
@@ -1210,7 +1333,13 @@ function admitGroup(
   content: GameContent,
   flight: FlightState,
   next: () => number,
-  group: { archetype: EnemyArchetype; count: number; escortOf: string | null; packId: string },
+  group: {
+    archetype: EnemyArchetype;
+    count: number;
+    escortOf: string | null | ((index: number) => string);
+    packId: string;
+    role?: string;
+  },
   place: (index: number, phase: number) => Vec,
 ): void {
   if (flight.galaxy === 6 && flight.phantom?.phase === "salvaged") {
@@ -1236,8 +1365,11 @@ function admitGroup(
       place(i, phase),
       packId,
       phase,
-      escortOf,
+      typeof escortOf === "function" ? escortOf(i) : escortOf,
     );
+    if (group.role) {
+      object.role = group.role;
+    }
     if (persistentObject(object)) {
       object.persistent = false;
     }
@@ -1466,10 +1598,14 @@ function cueGuards(content: GameContent, flight: FlightState, events: FlightEven
   for (const destination of cued) {
     (flight.guardCues ??= []).push(destination.id);
     worldActivateRouteEncounter(flightWorldContext(flight), content, destination.id, flight);
+    const leaders = flight.objects.filter((guard) => guard.routeId === destination.id);
+    leaders.forEach((leader) => activateFrigateEscorts(content, flight, leader));
+    const ids = new Set(leaders.map((leader) => leader.id));
     for (const guard of flight.objects) {
       if (
         guard.kind === "enemy" &&
-        guard.routeId === destination.id &&
+        (guard.routeId === destination.id ||
+          (guard.enemy?.escortOf != null && ids.has(guard.enemy.escortOf))) &&
         guard.hp > 0 &&
         !guard.enemy?.disabled &&
         !flight.summonedGuards?.includes(guard.id)
@@ -1680,6 +1816,7 @@ export function ensureRouteEncounter(
     guardPack(content, point, flight);
   }
   relocateRouteGuards(content, flight);
+  installFrigateEscorts(content, flight, object);
   combat(flight).routeEncounters.push(id);
   return object;
 }
@@ -2394,6 +2531,13 @@ function enemies(
     const targetable = !safe(content, flight.player, flight) && !safe(content, object, flight);
     const visible = visibility.get(object.id)!;
     const before = { x: object.x, y: object.y };
+    const escortLeader =
+      object.role === FRIGATE_ESCORT_ROLE
+        ? flight.objects.find(
+            (other) => other.id === state.escortOf && other.hp > 0 && !other.enemy?.disabled,
+          )
+        : undefined;
+    const approach = escortLeader ? frigateEscortStation(escortLeader, state.phase) : flight.player;
     const intent = stepEnemy(
       definition,
       {
@@ -2416,7 +2560,7 @@ function enemies(
                   const radius = protectedRadius(content, other);
                   return radius === null ? [] : [{ radius, x: other.x, y: other.y }];
                 }),
-                flight.player,
+                approach,
                 object,
               ),
             }

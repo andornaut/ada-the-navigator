@@ -87,7 +87,7 @@ and firing, and backs off when she comes inside it. They never press in to ram.
 | `swarm`     | Holds its band with erratic wobble and peer separation, so a pack rings Ada at range.        |
 | `flee`      | Bounded morale retreat after low hull or pack losses, followed by gated recovery.            |
 | `retaliate` | Patrols without attacking Ada until hit, then switches to its attack behaviour.              |
-| `escort`    | Stays near its capital and intercepts Ada when she comes close to it.                        |
+| `escort`    | Stays near its leader and intercepts Ada when she comes close to it.                         |
 | `siege`     | Advances slowly on Ada while its hardpoint turrets fire; used by frigates and capitals.      |
 
 Provisional parameters: `hitAndRun` retreats after 3 volleys or a hit, using
@@ -99,14 +99,14 @@ Recovery requires actual line of sight, perception, engagement admission and the
 home leash; otherwise fixed last-seen investigation gives way to home patrol
 ([Retreat policy](enemies.md#bounded-retreat-follow-up)). `strafe` passes no closer
 than 150 world units and loops back beyond 420; `siege`
-advances at half top speed; `escort` holds station 60 beyond its capital's hull,
-intercepts Ada within 600 and falls back to `hitAndRun` without its capital.
+advances at half top speed; `escort` holds station 60 beyond its leader's hull,
+intercepts Ada within 600 and falls back to `hitAndRun` without its leader.
 A ship that touches Ada still bounces off without damage. Finite pursuit and
 return home still apply.
 When an encounter regenerates, its survivors are restored by role, so a destroyed
 capital never returns as an escort or the reverse. The first galaxy is mildly
 more aggressive than the base catalog, and difficulty rises along the route (see
-[Difficulty](#difficulty)). Escorts also fall back when their capital is disabled.
+[Difficulty](#difficulty)). Escorts also fall back when their leader is disabled.
 
 ## Difficulty
 
@@ -292,6 +292,18 @@ qualify. Encounter weights, frequency, HP and rewards are unchanged.
 
 Other groups and all mandatory escorts remain atomic: unaffordable groups are
 excluded rather than trimmed, and admission never raises the cap.
+
+Every newly created frigate has two mandatory fighter escorts, including ambient,
+chapter and route frigates. One frigate formation counts as three hulls; a pair
+counts as six. Ambient admission must fit the complete formation, including every
+member's footprint, within the existing population and archetype limits, or wait.
+It never trims mandatory fighters or raises a cap. Chapter and route followers
+use stable persistent ids tied to their leader and are not independent route
+blockers. A disabled or destroyed leader triggers the existing escort fallback.
+Saving and restoring preserves surviving followers and casualties; revisits must
+not replace lost fighters or duplicate survivors. Legacy frigates are not
+retrofitted with escorts, rerolled or moved. Capital formations and their escort
+counts remain unchanged.
 
 Encounter frequency uses a baseline of 1.725, which is 15% above 1.5, multiplied
 by the route factors below. The route increments are additive: 100%, 110%,

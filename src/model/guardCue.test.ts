@@ -49,6 +49,18 @@ const progress: GalaxyProgress = {
 };
 const cue = { id: "quest", type: "guardCue" } as const;
 
+function moveGuard(flight: FlightState, guard: SpaceObject, at: { x: number; y: number }): void {
+  const delta = { x: at.x - guard.x, y: at.y - guard.y };
+  for (const member of flight.objects.filter(
+    (object) => object.id === guard.id || object.enemy?.escortOf === guard.id,
+  )) {
+    member.x += delta.x;
+    member.y += delta.y;
+    member.enemy!.home = { x: member.x, y: member.y };
+    member.enemy!.position = { x: member.x, y: member.y };
+  }
+}
+
 /** A galaxy one flight with Ada at the quest destination and its guard `away` units east. */
 function guarded(away: number): { flight: FlightState; guard: SpaceObject } {
   const flight = createFlight(CONTENT, 1, 173, progress);
@@ -56,7 +68,7 @@ function guarded(away: number): { flight: FlightState; guard: SpaceObject } {
   const destination = ensureDestination(CONTENT, "quest", flight);
   const guard = ensureRouteEncounter(CONTENT, "quest", flight)!;
   const at = { x: destination.x + away, y: destination.y };
-  Object.assign(guard, at);
+  moveGuard(flight, guard, at);
   guard.enemy!.home = { ...at };
   guard.enemy!.position = { ...at };
   flight.player = { x: destination.x, y: destination.y };
@@ -73,11 +85,13 @@ describe("a blocking guard's cue", () => {
     expect(onScreen(flight, guard)).toBe(false);
     expect(stepFlight(CONTENT, 0.05, idle, flight)).toContainEqual(cue);
     expect(flight.guardCues).toEqual(["quest"]);
-    expect(flight.summonedGuards).toEqual([guard.id]);
+    expect(flight.summonedGuards).toEqual(expect.arrayContaining([guard.id]));
     // Its guard marker shows though Ada has never seen it.
-    expect(createEdgeMarkerTracker().update(flight, new Set())).toEqual([
-      { bar: 1, id: guard.id, kind: "guard", x: guard.x, y: guard.y },
-    ]);
+    expect(
+      createEdgeMarkerTracker()
+        .update(flight, new Set())
+        .filter((marker) => marker.id === guard.id),
+    ).toEqual([{ bar: 1, id: guard.id, kind: "guard", x: guard.x, y: guard.y }]);
     // It flies in until it is on screen, firing nothing on the way, then fights as usual.
     let seconds = 0;
     let events: FlightEvent[] = [];
@@ -138,7 +152,7 @@ describe("a blocking guard's cue", () => {
     const destination = flight.objects.find((object) => object.id === "quest")!;
     Object.assign(destination, { x: GALAXY_SIDE / 2 - 200, y: 0 });
     flight.player = { x: destination.x, y: destination.y };
-    Object.assign(guard, { x: -GALAXY_SIDE / 2 + 1000, y: 0 });
+    moveGuard(flight, guard, { x: -GALAXY_SIDE / 2 + 1000, y: 0 });
     Object.assign(guard.enemy!, {
       home: { x: guard.x, y: guard.y },
       position: { x: guard.x, y: guard.y },
@@ -155,7 +169,7 @@ describe("a blocking guard's cue", () => {
       expect(flight.objects.filter(({ id }) => id === guard.id)).toHaveLength(1);
     }
     expect(worldDistance(context, flight.player, guard)).toBeLessThan(initial / 2);
-    expect(flight.summonedGuards).toBeUndefined();
+    expect(flight.summonedGuards ?? []).not.toContain(guard.id);
     expect(onScreen(flight, guard)).toBe(true);
     expect(tracker.update(flight, new Set()).some(({ id }) => id === guard.id)).toBe(false);
     expect(routeBlocked("quest", flight)).toBe(true);
@@ -173,7 +187,7 @@ describe("a blocking guard's cue", () => {
       flight,
     );
     const guard = ensureRouteEncounter(CONTENT, "quest", flight)!;
-    Object.assign(guard, { x: site.x + 800, y: site.y });
+    moveGuard(flight, guard, { x: site.x + 800, y: site.y });
     Object.assign(guard.enemy!, {
       home: { x: guard.x, y: guard.y },
       position: { x: guard.x, y: guard.y },
@@ -200,13 +214,13 @@ describe("a blocking guard's cue", () => {
     stepFlight(CONTENT, 0.05, idle, narrow.flight);
     stepFlight(CONTENT, 0.05, idle, narrow.flight);
     expect(onScreen(narrow.flight, narrow.guard)).toBe(false);
-    expect(narrow.flight.summonedGuards).toEqual([narrow.guard.id]);
+    expect(narrow.flight.summonedGuards).toContain(narrow.guard.id);
     const wide = guarded(600);
     const wider: FlightInput = { ...idle, viewportWidth: 1440 };
     stepFlight(CONTENT, 0.05, wider, wide.flight);
-    expect(wide.flight.summonedGuards).toEqual([wide.guard.id]);
+    expect(wide.flight.summonedGuards).toContain(wide.guard.id);
     stepFlight(CONTENT, 0.05, wider, wide.flight);
-    expect(wide.flight.summonedGuards).toBeUndefined();
+    expect(wide.flight.summonedGuards ?? []).not.toContain(wide.guard.id);
   });
 
   it("does not cue outside Talk range, for an open route, or once the guard is disabled", () => {
@@ -229,7 +243,7 @@ describe("a blocking guard's cue", () => {
     expect(routeBlocked("quest", flight)).toBe(true);
     expect(stepFlight(CONTENT, 0.05, idle, flight)).toContainEqual(cue);
     expect(flight.objects).toContain(guard);
-    expect(flight.summonedGuards).toEqual([guard.id]);
+    expect(flight.summonedGuards).toEqual(expect.arrayContaining([guard.id]));
     const start = guard.x;
     for (let step = 0; step < 100; step++) {
       stepFlight(CONTENT, 0.05, idle, flight);

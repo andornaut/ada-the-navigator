@@ -3,6 +3,7 @@ import {
   type EnemyArchetype,
   enemyCatalog,
   escortTuning,
+  FRIGATE_ESCORT_COUNT,
 } from "../data/enemyCatalog.ts";
 import {
   FIGHTER_GROUP_TARGET,
@@ -58,7 +59,11 @@ export function groupReach(policy: SpawnerPolicy, shipRadius: number, plan: Enco
   const hull = enemyCatalog[plan.archetype].sizeRatio * shipRadius;
   const line = (Math.max(0, plan.count - 1) * policy.memberSpacing) / 2 + hull;
   const escort = plan.escorts
-    ? hull + escortTuning.stationGap + enemyCatalog[plan.escorts.archetype].sizeRatio * shipRadius
+    ? Math.hypot(
+        plan.archetype === "frigate" ? (Math.max(0, plan.count - 1) * policy.memberSpacing) / 2 : 0,
+        hull + escortTuning.stationGap,
+      ) +
+      enemyCatalog[plan.escorts.archetype].sizeRatio * shipRadius
     : 0;
   return Math.max(line, escort);
 }
@@ -163,7 +168,11 @@ export function worldSelectEncounter(
       const plan = {
         archetype: entry.archetype,
         count,
-        ...(entry.escorts ? { escorts: entry.escorts } : {}),
+        ...(entry.archetype === "frigate"
+          ? { escorts: { archetype: "fighter" as const, count: count * FRIGATE_ESCORT_COUNT } }
+          : entry.escorts
+            ? { escorts: entry.escorts }
+            : {}),
       };
       if (worldFitsEncounter(context, policy, stage, shipRadius, objects, centre, plan)) {
         plans.push(plan);

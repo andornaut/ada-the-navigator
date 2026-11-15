@@ -809,6 +809,9 @@ export function encounterTable(galaxy: GalaxyNumber): readonly EncounterEntry[] 
   const { groupBonus, heavyShare } = difficultyOf(galaxy);
   return byPosition(galaxyEncounters, galaxy).map((entry) => ({
     ...entry,
+    ...(entry.archetype === "frigate"
+      ? { escorts: { archetype: "fighter" as const, count: FRIGATE_ESCORT_COUNT } }
+      : {}),
     groupSize:
       entry.archetype === "swarm" || entry.archetype === "fighter"
         ? [entry.groupSize[0] + groupBonus, entry.groupSize[1] + groupBonus]
@@ -869,6 +872,8 @@ export const ENEMY_AIM = {
 };
 
 /** Capital battle escorts, in world units. */
+export const FRIGATE_ESCORT_COUNT = 2;
+
 export const escortTuning: EscortTuning = { interceptRadius: 600, stationGap: 60 };
 
 /** Small encounters separated by quiet travel; the adapter owns seeded placement. */
