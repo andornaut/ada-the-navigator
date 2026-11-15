@@ -36,6 +36,7 @@ import {
 import { type BackLayer, createBackStack, pressBack } from "../ui/backStack.ts";
 import type { CheatAction } from "../ui/cheatActions.ts";
 import { type CheatLabels, createCheats } from "../ui/cheats.ts";
+import { bindAdaHoldActions } from "../ui/holdActionsAdapter.ts";
 import { createItemNotices, type NoticePlaces } from "../ui/itemNotice.ts";
 import { units, VIEW_HOST_ID } from "../ui/layout/css.ts";
 import {
@@ -53,6 +54,7 @@ import { createViewScaleBridge, type PlayLayout } from "../ui/layout/viewScale.t
 import { createMenuCard } from "../ui/menuCard.ts";
 import { activateNavigation, createNavigationButton } from "../ui/navigationButton.ts";
 import { createPauseCards, type PauseLabels, type PauseState } from "../ui/pauseCard.ts";
+import { rootPressGuard } from "../ui/pressScope.ts";
 import { createResourceCard } from "../ui/resourceCard.ts";
 import {
   createSettings,
@@ -247,6 +249,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       visibility = value;
     },
   });
+  const stopHoldActions = bindAdaHoldActions(rootPressGuard(settings.root), settings.root);
   // Settings opened from the Paused card, and the cheats card opened from that Settings, return
   // to the Paused card when they close.
   let returnToPause = false;
@@ -847,6 +850,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
         return;
       }
       disposed = true;
+      stopHoldActions();
       stopPointers();
       desktopBinding.dispose();
       state.setEnabled(false);
