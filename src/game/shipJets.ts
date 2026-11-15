@@ -16,6 +16,8 @@ export function shipJetDirection(facing: Vec, velocity: Vec): "forward" | "rever
 export interface JetMouth {
   /** Projected mouth midpoint. */
   anchor: Vec;
+  /** Centered aperture profile: core base width as a fraction of the full opening. */
+  normalAperture?: { readonly coreWidth: number };
   /** Art selects the upper or near underside corner anchoring the whole visible jet group. */
   outerCorner?: Vec;
   /** Uses the selected outer/core geometry to move the canonical core outboard within its outer. */
@@ -257,6 +259,16 @@ function readMouths(value: unknown): JetMouth[] | undefined {
     const malformedClip = mouth?.rearClip !== undefined && (!outerCorner || !rearClip);
     const malformedCore =
       mouth?.coreOutboard !== undefined && (mouth.coreOutboard !== true || !outerCorner);
+    const aperture = fields(mouth?.normalAperture);
+    const coreWidth = aperture?.coreWidth;
+    const normalAperture =
+      finite(coreWidth) && coreWidth > 0 && coreWidth < 1 ? { coreWidth } : undefined;
+    const malformedAperture =
+      mouth?.normalAperture !== undefined &&
+      (!normalAperture ||
+        mouth.outerCorner !== undefined ||
+        mouth.coreOutboard !== undefined ||
+        mouth.rearClip !== undefined);
     const occluders = mouth?.occluders === undefined ? undefined : readOccluders(mouth.occluders);
     if (
       !anchor ||
@@ -265,6 +277,7 @@ function readMouths(value: unknown): JetMouth[] | undefined {
       malformedCorner ||
       malformedClip ||
       malformedCore ||
+      malformedAperture ||
       (mouth!.occluders !== undefined && occluders === undefined) ||
       (mouth!.hardpoint !== undefined && typeof mouth!.hardpoint !== "string")
     ) {
@@ -274,6 +287,7 @@ function readMouths(value: unknown): JetMouth[] | undefined {
       anchor,
       axis,
       half,
+      ...(normalAperture ? { normalAperture } : {}),
       ...(outerCorner ? { outerCorner } : {}),
       ...(mouth!.coreOutboard === true ? { coreOutboard: true as const } : {}),
       ...(rearClip ? { rearClip } : {}),

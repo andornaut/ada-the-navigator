@@ -18,6 +18,7 @@ export interface JetShapeMouth {
   anchor: JetPoint;
   axis: JetPoint;
   half: JetPoint;
+  normalAperture?: { readonly coreWidth: number };
   outerCorner?: JetPoint;
   coreOutboard?: true;
   rearClip?: { readonly constant: number; readonly normal: JetPoint };
@@ -82,6 +83,76 @@ function clipRear(
   return out;
 }
 
+/** Centered, nested triangles rooted at the complete physical engine opening. */
+function normalAperturePolygons(
+  mouth: JetShapeMouth,
+  layers: readonly JetShapeLayer[],
+  length: number,
+  fraction: number,
+): JetShapePolygon[] {
+  const coreWidth = mouth.normalAperture!.coreWidth;
+  if (
+    !Number.isFinite(coreWidth) ||
+    coreWidth <= 0 ||
+    coreWidth >= 1 ||
+    mouth.outerCorner !== undefined ||
+    mouth.coreOutboard !== undefined ||
+    mouth.rearClip !== undefined
+  ) {
+    return [];
+  }
+  const cores = layers.filter((layer) => layer.name === "core");
+  if (cores.length > 1) {
+    return [];
+  }
+  const core = cores[0];
+  const polygons: JetShapePolygon[] = [];
+  let previousWidth = 1;
+  let previousLength = Infinity;
+  for (const [layerIndex, layer] of layers.entries()) {
+    if (
+      !Number.isFinite(layer.width) ||
+      layer.width <= 0 ||
+      !Number.isFinite(layer.length) ||
+      layer.length <= 0
+    ) {
+      return [];
+    }
+    const width =
+      layer.name === "core"
+        ? coreWidth
+        : layerIndex === 0
+          ? 1
+          : core && core.width > 0
+            ? (coreWidth * layer.width) / core.width
+            : NaN;
+    if (
+      !Number.isFinite(width) ||
+      width <= 0 ||
+      width > previousWidth ||
+      layer.length > previousLength
+    ) {
+      return [];
+    }
+    previousWidth = width;
+    previousLength = layer.length;
+    if (layerAlpha(layer, fraction) <= 0) {
+      continue;
+    }
+    const { anchor, axis, half } = mouth;
+    const tip = length * layer.length;
+    polygons.push({
+      layerIndex,
+      points: [
+        { x: anchor.x + half.x * width, y: anchor.y + half.y * width },
+        { x: anchor.x + axis.x * tip, y: anchor.y + axis.y * tip },
+        { x: anchor.x - half.x * width, y: anchor.y - half.y * width },
+      ],
+    });
+  }
+  return polygons;
+}
+
 /** Visible layer polygons in authored order, before colour and display mapping. */
 export function jetShapePolygons(
   mouth: JetShapeMouth,
@@ -92,6 +163,9 @@ export function jetShapePolygons(
   const fraction = Math.min(1, f);
   if (!(fraction > 0)) {
     return [];
+  }
+  if (mouth.normalAperture !== undefined) {
+    return normalAperturePolygons(mouth, layers, length, fraction);
   }
   const polygons: JetShapePolygon[] = [];
   const { axis, coreOutboard, half, outerCorner, rearClip } = mouth;
