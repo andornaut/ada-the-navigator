@@ -1,3 +1,8 @@
+import {
+  type LayoutComponentPorts,
+  mountLayout,
+} from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
+
 import { ECONOMY } from "../data/economy.ts";
 import { GALAXY_COUNT } from "../data/galaxies.ts";
 import type { Weapon } from "../data/types.ts";
@@ -11,9 +16,11 @@ import { compactLevelName } from "./compactLevelName.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { TEXT_TOKENS } from "./modal.ts";
+import { type ShipHeadings, shipItemKey, type ShipLayoutSchema, shipTree } from "./shipTree.ts";
 import { stardustCount } from "./statusPill.ts";
 
 export { SHIP_CARD, SHIP_CARD_STYLE } from "./layout/shipCard.ts";
+export { shipItemKey } from "./shipTree.ts";
 
 // Cargo, Equipment and Weapons occupy three inventory columns.
 
@@ -53,10 +60,6 @@ export type ShipItem =
   | { readonly kind: "cargo"; readonly id: "aboard" | "holodisks" }
   | { readonly kind: "equipment"; readonly id: "engine" | "paint" | "shield" | "tractor" }
   | { readonly kind: "weapon"; readonly id: Weapon };
-
-export function shipItemKey(item: ShipItem): string {
-  return `${item.kind}:${item.id}`;
-}
 
 /** One row: its icon, label, and a count or a level, with a weapon's ammunition last. */
 export interface ShipRow {
@@ -176,99 +179,112 @@ export function shipIconNode(icon: ShipIcon): HTMLSpanElement {
   return node;
 }
 
-function rowNode(
-  onItem: (row: ShipRow, origin: HTMLButtonElement) => void,
-  bindings: ReturnType<typeof bindAdaAction>[],
-  row: ShipRow,
-): HTMLButtonElement {
+function rowPart(onItem: (row: ShipRow, origin: HTMLButtonElement) => void, initial: ShipRow) {
+  let row = initial;
+  let disposed = false;
   const line = document.createElement("button");
   line.type = "button";
-  line.dataset.item = shipItemKey(row.item);
-  bindings.push(
-    bindAdaAction(
-      {
-        click: { availability: () => ({ kind: "available" }), run: () => onItem(row, line) },
-        current: () => true,
-        slopPx: () => SCROLL.dragThreshold * readViewUnit(line),
-      },
-      line,
-    ),
+  const binding = bindAdaAction(
+    {
+      click: { availability: () => ({ kind: "available" }), run: () => onItem(row, line) },
+      current: () => !disposed,
+      slopPx: () => SCROLL.dragThreshold * readViewUnit(line),
+    },
+    line,
   );
-  line.className = "ada-ship-row";
-  const label = document.createElement("span");
-  label.className = "ada-ship-label";
-  label.textContent = compactLevelName(row.tier, row.label);
-  line.setAttribute(
-    "aria-label",
-    [row.label, row.level, row.count, row.ammo].filter(Boolean).join(", "),
-  );
-  if (row.tier !== undefined) {
-    line.dataset.level = String(row.tier);
-  }
-  const content = document.createElement("span");
-  content.className = "ada-ship-text";
-  content.append(label);
-  line.append(shipIconNode(row.icon), content);
-  for (const [part, text] of [
-    ["count", row.count],
-    ["ammo", row.ammo],
-  ] as const) {
-    if (text !== undefined) {
-      const value = document.createElement("span");
-      value.className = `ada-ship-${part}`;
-      value.textContent = text;
-      content.append(value);
+  const update = (next: ShipRow) => {
+    row = next;
+    line.dataset.item = shipItemKey(row.item);
+    line.replaceChildren();
+    if (row.tier === undefined) {
+      delete line.dataset.level;
     }
-  }
-  return line;
+    line.className = "ada-ship-row";
+    const label = document.createElement("span");
+    label.className = "ada-ship-label";
+    label.textContent = compactLevelName(row.tier, row.label);
+    line.setAttribute(
+      "aria-label",
+      [row.label, row.level, row.count, row.ammo].filter(Boolean).join(", "),
+    );
+    if (row.tier !== undefined) {
+      line.dataset.level = String(row.tier);
+    }
+    const content = document.createElement("span");
+    content.className = "ada-ship-text";
+    content.append(label);
+    line.append(shipIconNode(row.icon), content);
+    for (const [part, text] of [
+      ["count", row.count],
+      ["ammo", row.ammo],
+    ] as const) {
+      if (text !== undefined) {
+        const value = document.createElement("span");
+        value.className = `ada-ship-${part}`;
+        value.textContent = text;
+        content.append(value);
+      }
+    }
+  };
+  update(initial);
+  return {
+    dispose() {
+      disposed = true;
+      binding.dispose();
+    },
+    element: line,
+    slots: {},
+    update,
+  };
 }
 
-const sectionBindings = new WeakMap<HTMLElement, ReturnType<typeof bindAdaAction>[]>();
+const sectionLayouts = new WeakMap<HTMLElement, ReturnType<typeof mountLayout<ShipLayoutSchema>>>();
 
 /** Release retained row callbacks before a view replaces or disposes these sections. */
 export function disposeShipSections(root: HTMLElement): void {
-  for (const binding of sectionBindings.get(root) ?? []) {
-    binding.dispose();
-  }
-  sectionBindings.delete(root);
+  sectionLayouts.get(root)?.dispose();
+  sectionLayouts.delete(root);
 }
 
-/** Three inventory columns with canonical shared dividers and inline weapon ammunition. */
+/** Three inventory columns composed by the published renderer from the shared Ship tree. */
 export function renderShipSections(
-  headings: {
-    readonly ammo: string;
-    readonly cargo: string;
-    readonly equipment: string;
-    readonly weapons: string;
-  },
+  headings: ShipHeadings,
   sections: ShipSections,
   onItem: (row: ShipRow, origin: HTMLButtonElement) => void = () => undefined,
 ): HTMLDivElement {
-  const root = document.createElement("div");
-  root.className = "ada-ship-sections";
-  const bindings: ReturnType<typeof bindAdaAction>[] = [];
-  sectionBindings.set(root, bindings);
+  const host = document.createElement("div");
+  const components: LayoutComponentPorts<ShipLayoutSchema> = {
+    inventoryColumn: {
+      create(initial) {
+        const section = document.createElement("section");
+        section.className = "ada-ship-section";
+        const heading = document.createElement("h3");
+        const grid = document.createElement("div");
+        grid.className = "ada-ship-grid";
+        section.append(heading, grid);
+        const update = (next: ShipLayoutSchema["inventoryColumn"]["props"]) => {
+          section.dataset.section = next.id;
+          section.setAttribute("aria-label", next.heading);
+          heading.textContent = next.heading;
+        };
+        update(initial);
+        return { dispose() {}, element: section, slots: { rows: grid }, update };
+      },
+      slots: ["rows"],
+    },
+    inventoryRow: { create: (row) => rowPart(onItem, row), slots: [] },
+    pageDivider: {
+      create() {
+        return { dispose() {}, element: createAdaPageDivider(document), slots: {}, update() {} };
+      },
+      slots: [],
+    },
+  };
+  const layout = mountLayout({ components, host }, shipTree(headings, sections));
+  const root = host.firstElementChild as HTMLDivElement;
+  root.classList.add("ada-ship-sections");
   root.dataset.inkTop = "0";
   applyAdaControlTheme(root);
-  for (const [key, rows] of [
-    ["cargo", sections.cargo],
-    ["equipment", sections.equipment[0]],
-    ["weapons", sections.equipment[1]],
-  ] as const) {
-    if (root.children.length) {
-      root.append(createAdaPageDivider(document));
-    }
-    const section = document.createElement("section");
-    section.className = "ada-ship-section";
-    section.dataset.section = key;
-    section.setAttribute("aria-label", headings[key]);
-    const heading = document.createElement("h3");
-    heading.textContent = headings[key];
-    const grid = document.createElement("div");
-    grid.className = "ada-ship-grid";
-    grid.append(...rows.map((row) => rowNode(onItem, bindings, row)));
-    section.append(heading, grid);
-    root.append(section);
-  }
+  sectionLayouts.set(root, layout);
   return root;
 }

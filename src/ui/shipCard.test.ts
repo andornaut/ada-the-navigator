@@ -123,16 +123,53 @@ class ShipElement extends EventTarget {
     );
   }
   readonly classList = { add: vi.fn() };
+  get parentNode() {
+    return this.parentElement;
+  }
+  get firstElementChild() {
+    return this.children[0] ?? null;
+  }
+  get nextSibling() {
+    const siblings = this.parentElement?.children;
+    return siblings?.[siblings.indexOf(this) + 1] ?? null;
+  }
+  remove() {
+    if (this.parentElement) {
+      const siblings = this.parentElement.children;
+      siblings.splice(siblings.indexOf(this), 1);
+      this.parentElement = null;
+    }
+  }
+  insertBefore(node: ShipElement, before: ShipElement | null) {
+    node.remove();
+    node.parentElement = this;
+    const index = before ? this.children.indexOf(before) : this.children.length;
+    this.children.splice(index, 0, node);
+    return node;
+  }
+  replaceChildren(...nodes: ShipElement[]) {
+    for (const child of [...this.children]) {
+      child.remove();
+    }
+    this.append(...nodes);
+  }
+  removeAttribute(name: string) {
+    this.attributes.delete(name);
+  }
   children: ShipElement[] = [];
   className = "";
   dataset: Record<string, string> = {};
-  style = { background: "", getPropertyValue: () => "", setProperty: vi.fn() };
+  style = {
+    background: "",
+    getPropertyValue: () => "",
+    removeProperty: vi.fn(),
+    setProperty: vi.fn(),
+  };
   textContent = "";
   append(...nodes: ShipElement[]): void {
     for (const node of nodes) {
-      node.parentElement = this;
+      this.insertBefore(node, null);
     }
-    this.children.push(...nodes);
   }
   readonly attributes = new Map<string, string>();
   setAttribute(name: string, value: string): void {

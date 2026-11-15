@@ -10,9 +10,6 @@ export const SHIP_CARD = {
 
 export const SHIP_CARD_STYLE = `
 ${UI_SCOPE} .ada-ship-sections{
-  display:grid;
-  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto max-content;
-  column-gap:${units(SPACING.panelPadding)};
   width:100%;
   max-width:100%;
   flex:none;
