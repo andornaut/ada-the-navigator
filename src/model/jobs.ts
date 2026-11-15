@@ -122,9 +122,9 @@ function jobTarget(
   const pool = JOB_POOL[context.galaxy]!;
   if (type === "survey") {
     const taken = surveyed(context.galaxy, book);
-    // One of the three nearest uncharted landmarks no other survey names.
+    // One of the three nearest landmarks no other survey names; recorded scans remain valid.
     const open = (context.landmarks ?? landmarkSites(context.galaxy))
-      .filter((site) => !context.progress.charted.includes(site.id) && !taken.has(site.id))
+      .filter((site) => !taken.has(site.id))
       .sort((a, b) => distance(a, station) - distance(b, station))
       .slice(0, 3);
     const site = pick(next, open);
@@ -204,8 +204,8 @@ function makeOffer(
 }
 
 /**
- * A station's board in slot order, made or topped up as needed. A survey offer whose landmark
- * was charted since is replaced; the held job keeps its slot until it completes.
+ * A station's board in slot order, made or topped up as needed. Recorded scans do not expire
+ * survey offers; the held job keeps its slot until it completes.
  */
 export function stationBoard(
   context: BoardContext,
@@ -237,9 +237,8 @@ export function stationBoard(
 }
 
 /**
- * Whether a board's offer still stands (quests.md "Job boards"): a survey whose landmark is now
- * charted is not, nor one whose target the held job or an earlier offer in the galaxy already
- * uses, the boards read in station order.
+ * Whether a board's target remains eligible and is not already used by the held job or an
+ * earlier offer in the galaxy, the boards read in station order.
  */
 function offerValid(
   context: BoardContext,
@@ -250,9 +249,8 @@ function offerValid(
 ): boolean {
   if (
     offer.type === "survey" &&
-    (context.progress.charted.includes(offer.target.id) ||
-      (context.landmarks !== undefined &&
-        !context.landmarks.some(({ id }) => id === offer.target.id)))
+    context.landmarks !== undefined &&
+    !context.landmarks.some(({ id }) => id === offer.target.id)
   ) {
     return false;
   }

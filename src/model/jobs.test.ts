@@ -376,7 +376,7 @@ describe("job boards", () => {
     }
   });
 
-  it("stop offering surveys once every landmark is charted, replacing a stale survey", () => {
+  it("keeps valid survey offers after charting without accepting them or changing board diversity", () => {
     const station = firstStation();
     const book = emptyBook();
     const board = stationBoard(context(), book, station);
@@ -384,8 +384,11 @@ describe("job boards", () => {
     const slot = board.indexOf(survey);
     const charted = landmarkSites(1).map(({ id }) => id);
     const after = stationBoard(context(1, charted), book, station);
-    expect(after.some(({ type }) => type === "survey")).toBe(false);
-    expect(after[slot]?.id).not.toBe(survey.id);
+    expect(after.some(({ type }) => type === "survey")).toBe(true);
+    expect(after[slot]?.id).toBe(survey.id);
+    expect(after).toHaveLength(JOB_TUNING.boardSize);
+    expect(new Set(after.map(({ type }) => type)).size).toBe(after.length);
+    expect(book.tasks[1]).toBeUndefined();
   });
 
   it("hold one job per galaxy, refuse others while held and return a dropped job", () => {

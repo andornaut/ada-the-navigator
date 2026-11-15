@@ -173,6 +173,7 @@ import {
 import { questDetails, type QuestEntry } from "./questDetails.ts";
 import { type ContextQuestDetails, questsForObject } from "./questObjectLinks.ts";
 import { restoreGameSave, restoreSave, SAVE_VERSION } from "./save.ts";
+import { immutableScanOutcome, type ScanCompletion, type ScanOutcome } from "./scanOutcomes.ts";
 import { canRechargeShield } from "./shieldRecharge.ts";
 import { SHIP_REACH } from "./shipBody.ts";
 import {
@@ -247,6 +248,7 @@ import type {
   HeldJob,
   JobOffer,
   JobTarget,
+  OptionalTask,
   ShipState,
   SpaceObject,
   UseAction,
@@ -424,6 +426,7 @@ export type PickupFeedback = Extract<ItemGain, { readonly kind: "ammo" }>;
 export class GameModel {
   private readonly markerRegistry = new TargetMarkerRegistry();
   private scannedLandmarks: string[] = [];
+  private scanOutcomes: ScanOutcome[] = [];
   state: GameState;
   /** The last flight step's events, for view effects; empty when no step ran. */
   flightEvents: FlightEvent[] = [];
@@ -837,6 +840,7 @@ export class GameModel {
   }
   private beginConversations(): void {
     this.scannedLandmarks = [];
+    this.scanOutcomes = [];
     // The line pools shuffle from the flight's own seed, so they never draw on launch seeds.
     this.talk.beginFlight(
       this.state.selectedGalaxy,
@@ -1291,6 +1295,66 @@ export class GameModel {
     const feedback = this.pickupFeedback;
     this.pickupFeedback = [];
     return feedback;
+  }
+  /** Immutable scan facts leave once; presentation never reconstructs quest completion. */
+  drainScanOutcomes(): readonly ScanOutcome[] {
+    const outcomes = Object.freeze([...this.scanOutcomes]);
+    this.scanOutcomes = [];
+    return outcomes;
+  }
+  private emitScanOutcome(
+    flight: FlightState,
+    targetId: string,
+    source: ScanOutcome["source"],
+    completions: readonly ScanCompletion[],
+  ): void {
+    const site = landmarkById(flight.galaxy, targetId);
+    if (!site) {
+      return;
+    }
+    this.scanOutcomes.push(
+      immutableScanOutcome({
+        completions,
+        galaxy: flight.galaxy,
+        source,
+        target: {
+          id: site.id,
+          name: landmarkLabel((key) => this.label(key), site),
+          symbol: site.kind,
+        },
+        targetId,
+      }),
+    );
+  }
+  private taskQuestId(galaxy: GalaxyNumber, task: OptionalTask): string {
+    return `${task.kind}:${galaxy}:${task.id}`;
+  }
+  /** Credit only the accepted survey's actual target through the ordinary completion pipeline. */
+  private reconcileScannedSurvey(
+    flight: FlightState,
+    source: ScanOutcome["source"],
+    scannedId?: string,
+  ): boolean {
+    const held = this.held;
+    if (
+      !held ||
+      held.type !== "survey" ||
+      (scannedId !== undefined && held.target.id !== scannedId) ||
+      !this.state.progress[flight.galaxy].charted.includes(held.target.id)
+    ) {
+      return false;
+    }
+    const quest = {
+      icon: { jobType: held.type, symbol: "job" as const },
+      id: this.taskQuestId(flight.galaxy, held),
+      name: this.jobTextIn(flight.galaxy, held).title,
+    };
+    this.finishJob(flight);
+    if (this.held?.id === held.id) {
+      return false;
+    }
+    this.emitScanOutcome(flight, held.target.id, source, [{ kind: "quest", quest }]);
+    return true;
   }
   /**
    * Gives an upgrade pickup's gift, chosen from what Ada can use as she collects it and seeded
@@ -2729,6 +2793,9 @@ export class GameModel {
         id: scan.id,
         kind: "landmarkCharted",
       });
+      if (!this.reconcileScannedSurvey(this.state.flight, "scan", scan.id)) {
+        this.emitScanOutcome(this.state.flight, scan.id, "scan", []);
+      }
       this.stepJob(this.state.flight);
       return;
     }
@@ -3025,7 +3092,11 @@ export class GameModel {
       this.takeActivity(station);
       return heldActivity(f.galaxy, this.state) ? "accepted" : "missing";
     }
-    return acceptJob(f.galaxy, station, id, this.state);
+    const accepted = acceptJob(f.galaxy, station, id, this.state);
+    if (accepted === "accepted") {
+      this.reconcileScannedSurvey(f, "remembered");
+    }
+    return accepted;
   }
   /**
    * The galaxy's activity a docked station offers on its board, with its reward: the hub's
@@ -3154,7 +3225,7 @@ export class GameModel {
       if (task && text) {
         entries.push({
           galaxy,
-          id: `${task.kind}:${galaxy}:${task.id}`,
+          id: this.taskQuestId(galaxy, task),
           ...(task.kind === "job" ? { jobType: task.type } : {}),
           line: { ...details.jobDetails, kind: "job", target: null, text },
           locations,
@@ -3324,7 +3395,7 @@ export class GameModel {
       return;
     }
     if (held.type === "survey" && this.current.charted.includes(held.target.id)) {
-      this.finishJob(f);
+      this.reconcileScannedSurvey(f, "remembered");
     } else if (held.type === "rescue" && f.tow) {
       pullTow(f.player, f.tow);
       const place = nearestSafePlace(this.towPlaces(f), null, f.tow);
@@ -3614,6 +3685,9 @@ export class GameModel {
       const chapter = this.chapterContext();
       if (chapter) {
         chapterRuntime(chapter.flight.galaxy)?.init?.(chapter);
+      }
+      if (flight) {
+        this.reconcileScannedSurvey(flight, "remembered");
       }
       if (this.resumeHeldStory()) {
         return;
