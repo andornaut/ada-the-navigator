@@ -47,3 +47,8 @@ export function flightWorldContext(flight: Pick<FlightState, "topology">): World
   }
   return context;
 }
+
+/** Continue preserves the stored value; legacy flights keep their exact existing identity. */
+export function flightEncounterSeed(flight: Pick<FlightState, "seed" | "encounterSeed">): number {
+  return flight.encounterSeed ?? flight.seed;
+}

@@ -147,6 +147,8 @@ export interface FlightState {
   };
   galaxy: GalaxyNumber;
   seed: number;
+  /** Independent enemy identity seed; absent legacy flights use their existing seed. */
+  encounterSeed?: number;
   time: number;
   /** Cartwheel's story ship scene started this flight, if any. */
   storyScene?: { at: number; id: StorySceneId; lineDue: boolean };
@@ -192,7 +194,15 @@ export interface FlightState {
   freshDistance: number;
   nextId: number;
 }
+export interface GalaxyGeography {
+  readonly version: 1;
+  seed: number | null;
+  readonly sitePolicy: "legacy-fixed" | "seeded";
+}
+
 export interface GalaxyProgress {
+  /** Persistent geography; null seed explicitly records unavailable legacy history. */
+  geography?: GalaxyGeography;
   andromeda?: AndromedaProgress;
   needle?: NeedleChapterProgress;
   phantom?: PhantomProgress;
