@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
+import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { ORE_FIELD_LAYOUTS, oreFieldLayout } from "../data/oreFieldLayouts.ts";
@@ -229,7 +230,7 @@ describe("ore fields", () => {
     expect(platform.enemy?.facing).toEqual(PLATFORM_FACING);
     expect(shipDirection(16, PLATFORM_FACING)).toBe(0);
     expect(platform.enemy?.hardpoints.map((part) => part.hp)).toEqual([7, 7]);
-    expect(platform.radius).toBe(CONTENT.tuning.flight.shipRadius * 3);
+    expect(platform.radius).toBe(CONTENT.tuning.flight.shipRadius * ENEMY_SIZE_RATIOS.platform);
   });
 });
 

@@ -20,6 +20,7 @@ import {
   enemyStardust,
   HEAVIES,
 } from "../data/enemyCatalog.ts";
+import { INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { byPosition } from "../data/galaxies.ts";
 import { RESOURCE_ROCKS } from "../data/resourceRocks.ts";
 import { SCREEN } from "../data/screen.ts";
@@ -615,7 +616,10 @@ describe("Stardust drops", () => {
       spread: timing.spread,
     });
     for (const [archetype, timing] of Object.entries(art.archetypes)) {
-      expect(ECONOMY.destruction[archetype as EnemyArchetype]).toEqual({
+      const actor = INDUSTRIAL_BODY_KEYS.some((key) => key === archetype)
+        ? "retaliator"
+        : (archetype as EnemyArchetype);
+      expect(ECONOMY.destruction[actor]).toEqual({
         ...seconds(timing),
         reduced: seconds(timing.reduced),
       });

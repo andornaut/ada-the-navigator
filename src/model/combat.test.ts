@@ -18,6 +18,7 @@ import {
   galaxyEncounters,
   heavyLoadout,
 } from "../data/enemyCatalog.ts";
+import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
 import { byPosition, ROUTE_POSITION } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { EnemyWeapon, GalaxyNumber, Weapon } from "../data/types.ts";
@@ -932,7 +933,7 @@ describe("galaxy encounters", () => {
     const packId = leader!.enemy!.packId!;
     expect(packId).toBe("pack:24,24");
     expect(leader!.id).toBe(`${packId}:0`);
-    expect(leader!.radius).toBe(50);
+    expect(leader!.radius).toBe(ENEMY_SIZE_RATIOS.capital * CONTENT.tuning.flight.shipRadius);
     const escorts = flight.objects.filter((object) => object.enemy?.packId === `${packId}:escorts`);
     expect(escorts).toHaveLength(4);
     expect(flight.combat!.initialPackSizes).toMatchObject({
@@ -1340,18 +1341,19 @@ it("settles a translated route guard after destination relocation without resett
   guard.enemy!.pursuitSeconds = 1.25;
   const saved = structuredClone(guard.enemy!);
   const old = { x: destination.x, y: destination.y };
+  const relocated = placeDestinationAhead(CONTENT, destination.id, flight);
+  const dx = relocated.x - old.x;
+  const dy = relocated.y - old.y;
+  // Place a protected site at the actual translated position, independent of destination search.
   const friendly: SpaceObject = {
     hp: 1,
     id: "friendly",
     kind: "destination",
     radius: 30,
-    x: CONTENT.tuning.storySpacing + guard.x - old.x,
-    y: -1024 + guard.y - old.y,
+    x: guard.x + dx,
+    y: guard.y + dy,
   };
   flight.objects.push(friendly);
-  const relocated = placeDestinationAhead(CONTENT, destination.id, flight);
-  const dx = relocated.x - old.x;
-  const dy = relocated.y - old.y;
   guard.x += dx;
   guard.y += dy;
   guard.enemy!.position.x += dx;
