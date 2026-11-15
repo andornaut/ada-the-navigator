@@ -117,6 +117,11 @@ import {
   questGuardFormationReach,
   questGuardHomePorts,
 } from "./questGuardPlacement.ts";
+import {
+  requiredWorldPlacementClear,
+  requiredWorldPopulation,
+  type RequiredWorldReservation,
+} from "./requiredWorldReservations.ts";
 import { routeGuardEvidence } from "./routeGuardEvidence.ts";
 import { type PickupObstacle, stardustDiamond, stardustDropOffsets } from "./stardustPlacement.ts";
 import { stationFormationClear } from "./stationPlacement.ts";
@@ -260,6 +265,32 @@ function chunk(flight: FlightState, content: GameContent, point: Vec): string {
 }
 
 /** Whether a point lies inside an existing friendly protected place. */
+const requiredRouteStorage = new WeakMap<FlightState, RequiredRouteStorage>();
+
+/** Fresh entry and Continue bind the same saved reservation facade before world generation. */
+export function bindRequiredRouteStorage(storage: RequiredRouteStorage, flight: FlightState): void {
+  requiredRouteStorage.set(flight, storage);
+}
+
+function pendingRequiredRoutes(flight: FlightState): readonly RequiredWorldReservation[] {
+  return requiredRouteStorage.get(flight)?.read(flight) ?? [];
+}
+
+function requiredPlacementClear(
+  content: GameContent,
+  flight: FlightState,
+  object: SpaceObject,
+): boolean {
+  return requiredWorldPlacementClear(
+    { ...flightWorldContext(flight), content, galaxy: flight.galaxy },
+    pendingRequiredRoutes(flight),
+    {
+      center: object.orbit ?? object,
+      radius: placementRadius(object) + (object.orbit?.radius ?? 0),
+    },
+  );
+}
+
 function safe(content: GameContent, point: Vec, flight: FlightState): boolean {
   return (
     needleChannelContains({}, flight, point) ||
@@ -290,6 +321,7 @@ function clearOf(flight: FlightState, clearance: number, point: Vec, object: Spa
  */
 function clearOfSafeAreas(content: GameContent, object: SpaceObject, flight: FlightState) {
   return (
+    requiredPlacementClear(content, flight, object) &&
     flight.objects.every((o) => {
       const radius = protectedRadius(content, o);
       return radius === null || clearOf(flight, radius, o, object);
@@ -1195,6 +1227,108 @@ export function planRequiredWorld(
   }
 }
 
+export interface RequiredRouteStorage {
+  read(flight: FlightState): readonly RequiredWorldReservation[];
+  install(flight: FlightState, reservations: readonly RequiredWorldReservation[]): void;
+  consumeSite(flight: FlightState, siteId: string): void;
+}
+
+export type RequiredRouteActivation =
+  | { readonly status: "created" | "existing"; readonly guard: SpaceObject }
+  | { readonly status: "resolved" | "blocked" | "unplanned" };
+
+/** Existing authored eligibility activates exact reserved actors, with no reward or discovery mutation. */
+export function activateRequiredRoute(
+  content: GameContent,
+  storage: RequiredRouteStorage,
+  siteId: string,
+  flight: FlightState,
+): RequiredRouteActivation {
+  const evidence = routeGuardEvidence(flight, siteId);
+  if (evidence.status === "admitted") {
+    return { guard: evidence.guard, status: "existing" };
+  }
+  if (evidence.status === "resolved") {
+    return { status: "resolved" };
+  }
+  if (evidence.admissionRecorded) {
+    return { status: "unplanned" };
+  }
+  const reservations = storage.read(flight);
+  const group = reservations.filter(({ site }) => site.id === siteId);
+  const leader = group.find(
+    ({ guard }) => guard.routeId === siteId && guard.enemy?.archetype === "frigate",
+  );
+  if (!leader) {
+    return { status: "unplanned" };
+  }
+  const support = group.filter(({ guard }) => guard.enemy?.escortOf === leader.guard.id);
+  if (group.length !== support.length + 1 || support.length > FRIGATE_ESCORT_COUNT) {
+    return { status: "blocked" };
+  }
+  const actual = stationPopulationObjects(flight);
+  const site = actual.find((object) => object.id === siteId);
+  if (
+    (Object.hasOwn(flight.world.notables, siteId) && flight.world.notables[siteId] === null) ||
+    (site &&
+      (site.kind !== leader.site.kind ||
+        worldDistance(flightWorldContext(flight), site, leader.site) !== 0))
+  ) {
+    return { status: "blocked" };
+  }
+  const actors = [leader, ...support].map(({ guard }) => structuredClone(guard));
+  if (
+    actors.some(
+      (actor) =>
+        actual.some((other) => other.id === actor.id) ||
+        Object.hasOwn(flight.world.notables, actor.id),
+    )
+  ) {
+    return { status: "blocked" };
+  }
+  const otherReservations = reservations.filter(({ site }) => site.id !== siteId);
+  const population = requiredWorldPopulation(flight, otherReservations);
+  const projection = {
+    ...flight,
+    objects: [...population, ...reservations.map(({ site }) => site)],
+  };
+  const context = questGuardPlacementContext(content, projection);
+  const policy = SPAWNER_POLICIES[flight.galaxy];
+  if (
+    !stationFormationClear(context, actors) ||
+    !worldFitsEncounter(
+      hostileStationContext(flight),
+      policy,
+      worldSpawnerStage(flightWorldContext(flight), policy, leader.guard),
+      content.tuning.flight.shipRadius,
+      population,
+      leader.guard,
+      {
+        archetype: "frigate",
+        count: 1,
+        ...(support.length
+          ? { escorts: { archetype: "fighter" as const, count: support.length } }
+          : {}),
+      },
+      questGuardFormationReach(context, actors),
+    )
+  ) {
+    return { status: "blocked" };
+  }
+  if (!site) {
+    const destination = structuredClone(leader.site);
+    canonicalObject(flight, destination);
+    flight.objects.push(destination);
+  }
+  actors.forEach((actor) => canonicalObject(flight, actor));
+  flight.objects.push(...actors);
+  const state = combat(flight);
+  state.routeEncounters.push(siteId);
+  state.initialPackSizes[escortPackId(leader.guard.id)] = support.length;
+  storage.consumeSite(flight, siteId);
+  return { guard: actors.find((actor) => actor.id === leader.guard.id)!, status: "created" };
+}
+
 /** Caller-supplied station plans have no implicit site, defender count, reward or replenishment. */
 export function spawnPlannedHostileStation(
   content: GameContent,
@@ -1442,6 +1576,13 @@ function generateRegion(content: GameContent, x: number, y: number, flight: Flig
       const id = `ballistic:${x},${y}:${i}`;
       if (
         !safe(content, point, flight) &&
+        requiredPlacementClear(content, flight, {
+          ...point,
+          hp: 1,
+          id,
+          kind: "debris",
+          radius: content.tuning.flight.rockRadius,
+        }) &&
         !flight.objects.some((object) => object.id === id) &&
         !Object.hasOwn(flight.world.notables, id)
       ) {
@@ -1494,7 +1635,7 @@ function generateRegion(content: GameContent, x: number, y: number, flight: Flig
           policy,
           stage,
           content.tuning.flight.shipRadius,
-          flight.objects,
+          requiredWorldPopulation(flight, pendingRequiredRoutes(flight)),
           center,
           countRoll,
           archetypeRoll,
@@ -1537,7 +1678,7 @@ function generateRegion(content: GameContent, x: number, y: number, flight: Flig
       policy,
       stage,
       content.tuning.flight.shipRadius,
-      flight.objects,
+      requiredWorldPopulation(flight, pendingRequiredRoutes(flight)),
       center,
       plan,
     )
@@ -1576,6 +1717,7 @@ function generateRegion(content: GameContent, x: number, y: number, flight: Flig
       whole.some(
         (member) =>
           safe(content, member, flight) ||
+          !requiredPlacementClear(content, flight, member) ||
           needleChannelContains({ radius: member.radius }, flight, member) ||
           flight.objects.some((other) => !clearOf(flight, member.radius, member, other)),
       )
@@ -1673,6 +1815,7 @@ function admitGroup(
     }
     if (
       !safe(content, object, flight) &&
+      requiredPlacementClear(content, flight, object) &&
       !needleChannelContains({ radius: object.radius }, flight, object) &&
       !flight.objects.some((other) => other.id === object.id) &&
       !Object.hasOwn(flight.world.notables, object.id)
@@ -2442,6 +2585,29 @@ export function populateFlight(
   worldSyncFlightRegion(flightWorldContext(flight), content, flight);
 }
 
+export function populateRequiredFlight(
+  content: GameContent,
+  storage: RequiredRouteStorage,
+  progress: Pick<GalaxyProgress, "known">,
+  siteIds: readonly string[],
+  flight: FlightState,
+): RequiredRoutePlanningResult {
+  const result = planRequiredWorld(content, flight, siteIds);
+  if (result.status !== "planned") {
+    return result;
+  }
+  storage.install(
+    flight,
+    result.plans.flatMap((plan) => {
+      const site = result.sites.find((candidate) => candidate.id === plan.siteId)!;
+      return [plan.leader, ...plan.support].map((guard) => ({ guard, site }));
+    }),
+  );
+  bindRequiredRouteStorage(storage, flight);
+  populateFlight(content, progress, flight);
+  return result;
+}
+
 export function createFlight(
   content: GameContent,
   galaxy: GalaxyNumber,
@@ -2909,7 +3075,7 @@ function enemies(
   const admissions = worldRegionalEngagementAdmissions(
     hostileStationContext(flight),
     SPAWNER_POLICIES[flight.galaxy],
-    objects,
+    requiredWorldPopulation(flight, pendingRequiredRoutes(flight)),
     eligible,
     flight.player,
   );

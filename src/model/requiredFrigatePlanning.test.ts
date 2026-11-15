@@ -2,14 +2,23 @@ import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
+import { placementRadius } from "./asteroids.ts";
 import {
+  activateRequiredRoute,
   createFlight,
   createUnpopulatedFlight,
   planRequiredFrigate,
   planRequiredRouteReservations,
   planRequiredWorld,
+  populateRequiredFlight,
+  type RequiredRouteStorage,
   spawnQuestFrigateAt,
+  stepFlight,
 } from "./flight.ts";
+import {
+  requiredWorldPlacementClear,
+  type RequiredWorldReservation,
+} from "./requiredWorldReservations.ts";
 import { worldFitsEncounter, worldSpawnerStage } from "./spawner.ts";
 import type { SpaceObject } from "./types.ts";
 
@@ -117,4 +126,89 @@ it("plans canonical required sites and leaders before the first optional chunk w
   expect(flight.chunks).toEqual([]);
   expect(flight.objects).toEqual([]);
   expect(flight.world.notables).toEqual({});
+});
+
+it("activates a reserved site once without replacing destroyed support or treating absence as defeat", () => {
+  const flight = createUnpopulatedFlight(CONTENT, 1, 173);
+  const planned = planRequiredWorld(CONTENT, flight, ["growers", "workshop", "salvagers"]);
+  if (planned.status !== "planned") {
+    throw new Error(planned.siteId);
+  }
+  let reservations: readonly RequiredWorldReservation[] = planned.plans.flatMap((plan) =>
+    [plan.leader, ...plan.support].map((guard) => ({
+      guard,
+      site: planned.sites.find((site) => site.id === plan.siteId)!,
+    })),
+  );
+  const storage: RequiredRouteStorage = {
+    consumeSite: (_flight, id) => {
+      reservations = reservations.filter(({ site }) => site.id !== id);
+    },
+    install: (_flight, next) => {
+      reservations = next;
+    },
+    read: () => reservations,
+  };
+  expect(flight.objects).toEqual([]);
+  const created = activateRequiredRoute(CONTENT, storage, "growers", flight);
+  expect(created.status).toBe("created");
+  expect(reservations.some(({ site }) => site.id === "growers")).toBe(false);
+  const after = structuredClone(flight);
+  expect(activateRequiredRoute(CONTENT, storage, "growers", flight).status).toBe("existing");
+  expect(flight).toEqual(after);
+  if (created.status !== "created") {
+    throw new Error(created.status);
+  }
+  flight.objects = flight.objects.filter((object) => object.id !== created.guard.id);
+  flight.world.notables[created.guard.id] = null;
+  const casualty = structuredClone(flight);
+  expect(activateRequiredRoute(CONTENT, storage, "growers", flight).status).toBe("resolved");
+  expect(flight).toEqual(casualty);
+  expect(activateRequiredRoute(CONTENT, storage, "absent-site", flight).status).toBe("unplanned");
+});
+
+it("generates optional content around hidden required footprints and retains capacity for activation", () => {
+  const flight = createUnpopulatedFlight(CONTENT, 1, 173);
+  let reservations: readonly RequiredWorldReservation[] = [];
+  const storage: RequiredRouteStorage = {
+    consumeSite: (_flight, id) => {
+      reservations = reservations.filter(({ site }) => site.id !== id);
+    },
+    install: (_flight, next) => {
+      reservations = next;
+    },
+    read: () => reservations,
+  };
+  const progress = { known: [] as string[] };
+  const planned = populateRequiredFlight(
+    CONTENT,
+    storage,
+    progress,
+    ["growers", "workshop", "salvagers"],
+    flight,
+  );
+  expect(planned.status).toBe("planned");
+  expect(reservations).toHaveLength(3);
+  expect(progress.known).toEqual([]);
+  expect(flight.objects.some((actor) => actor.routeId || progress.known.includes(actor.id))).toBe(
+    false,
+  );
+  const site = reservations.find(({ site }) => site.id === "growers")!.site;
+  flight.player = { x: site.x, y: site.y };
+  stepFlight(CONTENT, 1 / 120, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false }, flight);
+  const optional = flight.objects.filter((actor) =>
+    ["rock", "resource", "debris", "enemy"].includes(actor.kind),
+  );
+  expect(optional.length).toBeGreaterThan(0);
+  expect(
+    optional.every((actor) =>
+      requiredWorldPlacementClear({ content: CONTENT, galaxy: flight.galaxy }, reservations, {
+        center: actor.orbit ?? actor,
+        radius: placementRadius(actor) + (actor.orbit?.radius ?? 0),
+      }),
+    ),
+  ).toBe(true);
+  expect(activateRequiredRoute(CONTENT, storage, "growers", flight).status).toBe("created");
+  expect(flight.combat?.emptyRoutePlans).toBeUndefined();
+  expect(progress.known).toEqual([]);
 });
