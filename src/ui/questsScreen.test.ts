@@ -108,3 +108,17 @@ it("uses the canonical holodisk notice icon only for the revealed current item",
     ),
   ).toBeNull();
 });
+
+it("presents only canonical supplied quest identities and never uses a label dictionary as links", async () => {
+  const { questContextIcon } = await import("./questsScreen.ts");
+  expect(questContextIcon(null)).toBeNull();
+  expect(questContextIcon({ quests: [] })).toBeNull();
+  expect(questContextIcon({ quests: [{ ...entry, jobType: "survey" }] })).toBe(
+    "/art/ui/icons/map-job-survey.svg",
+  );
+  expect(questContextIcon({ quests: [entry, { ...entry, id: "other" }] })).toBe(
+    "/art/ui/icons/map-destination.svg",
+  );
+  const unknown = { ...entry, line: { kind: "story" as const, target: null, text: "Explore" } };
+  expect(questContextIcon({ quests: [unknown] })).toBe("/art/ui/icons/map-destination.svg");
+});

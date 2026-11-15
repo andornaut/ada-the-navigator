@@ -62,3 +62,7 @@ same detail components.
 ## Quest details
 
 Each detail has one Objectives checklist, contextual description and a separate Reward. The first unchecked row is the next action. Checklist facts retain known completed deliveries and actual deposit quantities. Hunt collection completes the job without adding a return step. Unknown locations do not supply identity icons. Known targets use canonical map or inventory icons beside the shared read-only completion indicator. The existing two-column detail card and return actions are retained. Reward sits below Objectives while the contextual description and route span both rows.
+
+## Contextual quest route port
+
+`createQuestsScreen.openContext({ targetId, quests })` consumes only the active quest entries already selected by the canonical model resolver. It does not infer object links, ranges or availability from location labels. One quest opens details with Close to gameplay. Multiple quests open a filtered existing list; detail Back and X return to that list, and list Close and X dismiss to gameplay. Normal station/list entry remains unfiltered. `questContextIcon` supplies an existing canonical icon without a question-mark fallback. This route port does not wire contextual Use or adopt an unchecked model getter.

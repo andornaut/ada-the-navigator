@@ -1,7 +1,7 @@
 import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 
 import type { GalaxyNumber } from "../data/types.ts";
-import type { MapPlace } from "../model/map.ts";
+import type { MapPlace, MapSymbol } from "../model/map.ts";
 import type { QuestEntry, QuestObjective } from "../model/questDetails.ts";
 import { createCompletionIndicator } from "./completionIndicator.ts";
 import { gainNotice } from "./itemNotice.ts";
@@ -70,6 +70,29 @@ export function questObjectiveIcon(entry: QuestEntry, objective: QuestObjective)
   return null;
 }
 
+/** Presentation only: the canonical model has already selected these active quests. */
+export function questContextIcon(
+  context: { readonly quests: readonly QuestEntry[] } | null,
+): string | null {
+  if (!context?.quests.length) {
+    return null;
+  }
+  const [entry] = context.quests;
+  if (context.quests.length === 1 && entry) {
+    if (entry.jobType) {
+      return `/art/ui/icons/${chipGlyph({ jobType: entry.jobType, symbol: "job" })}.svg`;
+    }
+    const step = questChecklist(entry).find((row) => !row.checked);
+    if (step) {
+      const path = questObjectiveIcon(entry, step);
+      if (path) {
+        return path;
+      }
+    }
+  }
+  return `/art/ui/icons/${chipGlyph({ symbol: "destination" })}.svg`;
+}
+
 export function createQuestsScreen(
   root: HTMLElement,
   options: {
@@ -93,6 +116,7 @@ export function createQuestsScreen(
   modal.append(card.frame);
   root.append(modal);
   let entries: readonly QuestEntry[] = [];
+  let contextEntries: readonly QuestEntry[] | null = null;
   let places: readonly MapPlace[] = [];
   let selected: string | null = null;
   let galaxy: GalaxyNumber | undefined;
@@ -109,28 +133,28 @@ export function createQuestsScreen(
   };
   const hide = () => {
     release();
+    contextEntries = null;
     modal.hidden = true;
   };
-  const icon = (
-    entry: QuestEntry,
-    symbol = entry.locations.find((location) => location.symbol)?.symbol,
-    job = Boolean(entry.jobType),
-  ) => {
-    if (!symbol && !entry.jobType) {
-      return null;
-    }
+  const icon = (entry: QuestEntry, symbol?: MapSymbol, job = Boolean(entry.jobType)) => {
     const image = document.createElement("img");
     image.className = "ada-quest-icon";
     image.alt = "";
     const shape = {
       job,
       ...(job && entry.jobType ? { jobType: entry.jobType } : {}),
-      symbol: symbol ?? ("station" as const),
+      symbol: symbol ?? (job ? "job" : "destination"),
     };
     image.style.background = chipFace(shape);
-    const glyph = chipGlyph(shape);
-    if (glyph) {
-      image.src = `/art/ui/icons/${glyph}.svg`;
+    const glyph = symbol === undefined ? null : chipGlyph(shape);
+    const path =
+      symbol === undefined
+        ? questContextIcon({ quests: [entry] })
+        : glyph
+          ? `/art/ui/icons/${glyph}.svg`
+          : null;
+    if (path) {
+      image.src = path;
     }
     return image;
   };
@@ -146,7 +170,8 @@ export function createQuestsScreen(
   card.close.addEventListener("click", back);
   function render(): void {
     release();
-    const entry = entries.find((entry) => entry.id === selected);
+    const visibleEntries = contextEntries ?? entries;
+    const entry = visibleEntries.find((entry) => entry.id === selected);
     if (!entry) {
       selected = null;
     }
@@ -264,7 +289,7 @@ export function createQuestsScreen(
         line.reward ?? line.outcome ?? labels.questStoryProgress,
       );
       reward.className = "ada-quest-reward";
-      if (origin === "flight") {
+      if (origin === "flight" && contextEntries === null) {
         const others = createButton(labels.questOtherQuests ?? "", "secondary");
         others.dataset.action = "quest-other";
         others.addEventListener("click", () => {
@@ -275,8 +300,8 @@ export function createQuestsScreen(
       }
     } else {
       const ordered = [
-        ...entries.filter((entry) => entry.line.kind === "story"),
-        ...entries.filter((entry) => entry.line.kind === "job"),
+        ...visibleEntries.filter((entry) => entry.line.kind === "story"),
+        ...visibleEntries.filter((entry) => entry.line.kind === "job"),
       ];
       const pages = Math.max(1, Math.ceil(ordered.length / QUEST_LIST_PAGE_SIZE));
       listPage = Math.min(listPage, pages - 1);
@@ -324,7 +349,7 @@ export function createQuestsScreen(
           .replace("{pages}", String(pages));
         footer.append(count);
       }
-      if (!entries.length) {
+      if (!visibleEntries.length) {
         const text = document.createElement("p");
         text.textContent = labels.questsEmpty;
         body.append(text);
@@ -362,9 +387,24 @@ export function createQuestsScreen(
     },
     isOpen: () => !modal.hidden,
     open(id: string | null = null, from: QuestOrigin = "list"): void {
+      contextEntries = null;
       selected = id;
       origin = from;
       render();
+    },
+    /** Entries come from the canonical model getter; no object association is inferred here. */
+    openContext(
+      context: { readonly targetId: string; readonly quests: readonly QuestEntry[] } | null,
+    ): boolean {
+      if (!context?.quests.length) {
+        return false;
+      }
+      contextEntries = [...context.quests];
+      selected = contextEntries.length === 1 ? contextEntries[0]!.id : null;
+      origin = contextEntries.length === 1 ? "flight" : "list";
+      listPage = 0;
+      render();
+      return true;
     },
     setState(
       next: readonly QuestEntry[],
@@ -375,6 +415,16 @@ export function createQuestsScreen(
       galaxy = currentGalaxy;
       entries = next;
       places = knownPlaces;
+      if (contextEntries) {
+        const ids = new Set(contextEntries.map(({ id }) => id));
+        contextEntries = next.filter(({ id }) => ids.has(id));
+        if (contextEntries.length === 0 && !modal.hidden) {
+          hide();
+          signature = revision;
+          options.onClose();
+          return;
+        }
+      }
       if (signature !== revision && !modal.hidden) {
         render();
       }
