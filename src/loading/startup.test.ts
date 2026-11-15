@@ -3,12 +3,17 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 const failure = vi.hoisted(() => ({
   dispose: vi.fn(),
   retry: undefined as (() => void | PromiseLike<void>) | undefined,
+  style: vi.fn(),
   update: vi.fn(),
 }));
 vi.mock("@andornaut/game-kit/web/progress/dom/loadingFailure", () => ({
   mountLoadingFailure: (context: { onRetry: () => void | PromiseLike<void> }) => {
     failure.retry = context.onRetry;
-    return { dispose: failure.dispose, update: failure.update };
+    return {
+      dispose: failure.dispose,
+      element: { style: { setProperty: failure.style } },
+      update: failure.update,
+    };
   },
 }));
 

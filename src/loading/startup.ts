@@ -2,6 +2,7 @@ import { createLoadingAttempts } from "@andornaut/game-kit/load/loadingAttempts"
 import type { CrashScreen } from "@andornaut/game-kit/web/crash/dom/crashScreen";
 import { mountLoadingFailure } from "@andornaut/game-kit/web/progress/dom/loadingFailure";
 
+import { LOADING_LAYER } from "../ui/loadingBar.ts";
 import { loadingProgress, mountLoading } from "./progress.ts";
 
 /** A crash during module download remains fenced when the game module later evaluates. */
@@ -34,6 +35,20 @@ export async function startLoading(
     },
     root.ownerDocument.body,
   );
+  // This parent stays outside the boot splash and its eventual inert image-reveal root.
+  for (const [property, value] of Object.entries({
+    left: "50%",
+    "max-height": "calc(100vh - 2rem)",
+    "max-width": "calc(100vw - 2rem)",
+    overflow: "auto",
+    padding: "1rem",
+    position: "fixed",
+    top: "50%",
+    transform: "translate(-50%, -50%)",
+    "z-index": String(LOADING_LAYER - 1),
+  })) {
+    failure.element.style.setProperty(property, value, "important");
+  }
   const attempts = createLoadingAttempts({
     async load(attempt) {
       const entry = await loadGame();
