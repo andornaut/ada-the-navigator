@@ -6,6 +6,7 @@ import {
   pressedArea,
 } from "@andornaut/game-kit/runtime/ui/hitAreas";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
+import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import JOBS from "../../public/art/jobs.json" with { type: "json" };
 import { readMapArea } from "../game/jobArt.ts";
@@ -57,6 +58,12 @@ import { questTextParts } from "./layout/questPages.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import { drawMapFog as fogOver } from "./mapFog.ts";
+import {
+  type MapPanelGroup,
+  type MapPanelLeaf,
+  type MapPanelSchema,
+  mapPanelTree,
+} from "./mapPanelTree.ts";
 import {
   createMapPresentationRevision,
   createMapRenderQueue,
@@ -987,10 +994,8 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   for (const line of detail) {
     line.className = "ada-map-detail";
   }
-  text.append(name, ...detail);
   const travel = createButton(labels.travelHere, "secondary");
   travel.dataset.action = "map-travel";
-  row.append(panelChip, text, travel);
   const reason = document.createElement("div");
   reason.className = "ada-map-reason";
   const reasons = {
@@ -1001,11 +1006,40 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   reasons.danger.textContent = labels.travelUnavailable;
   reasons.towing.textContent = labels.towTravel;
   reasons.carrying.textContent = labels.carryTravel;
-  reason.append(reasons.danger, reasons.towing, reasons.carrying);
   const empty = document.createElement("p");
   empty.className = "ada-map-empty";
   empty.textContent = labels.travelEmpty;
-  panel.append(row, reason, empty);
+  const panelGroups: Readonly<Record<MapPanelGroup, HTMLElement>> = { panel, reason, row, text };
+  const panelLeaves: Readonly<Record<MapPanelLeaf, HTMLElement>> = {
+    ...reasons,
+    chip: panelChip,
+    detail0: detail[0]!,
+    detail1: detail[1]!,
+    empty,
+    name,
+    travel,
+  };
+  const panelLayout = mountLayout<MapPanelSchema>(
+    {
+      components: {
+        group: {
+          create: (name) => ({
+            dispose() {},
+            element: panelGroups[name],
+            slots: { content: panelGroups[name] },
+            update() {},
+          }),
+          slots: ["content"],
+        },
+        leaf: {
+          create: (name) => ({ dispose() {}, element: panelLeaves[name], slots: {}, update() {} }),
+          slots: [],
+        },
+      },
+      host: screen,
+    },
+    mapPanelTree(),
+  );
   // Quests, then Galaxies, on the HUD row; Galaxies opens the galaxy map with no confirm, as for
   // Travel here.
   const hudRow = document.createElement("div");
@@ -1851,6 +1885,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       window.removeEventListener(VIEW_SCALE_EVENT, refit);
       window.removeEventListener("resize", refit);
       questsCard.dispose();
+      panelLayout.dispose();
       shipMarker.dispose();
       screen.remove();
     },
