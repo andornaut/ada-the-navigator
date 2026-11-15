@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { expect, it } from "vitest";
 
 import { EDGE_MARKER_GLYPHS } from "../data/edgeMarkers.ts";
-import { MAP_FACES, MAP_GLYPHS, MAP_SYMBOL,mapGlyphSize } from "./layout/mapScreen.ts";
+import { MAP_FACES, MAP_GLYPHS, MAP_SYMBOL, mapGlyphSize } from "./layout/mapScreen.ts";
 import { chipFace, chipGlyph, travelState } from "./mapScreen.ts";
 
 it("uses the native hostile-station asset while retaining friendly station identity", () => {
