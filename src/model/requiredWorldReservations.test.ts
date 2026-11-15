@@ -9,6 +9,8 @@ import { enemyPhysicalBody } from "./enemyBody.ts";
 import { createFlight } from "./flight.ts";
 import { newGameState } from "./game.ts";
 import {
+  requiredWorldOccupantsPlacementClear,
+  requiredWorldOccupantsPopulation,
   requiredWorldPlacementClear,
   requiredWorldPopulation,
 } from "./requiredWorldReservations.ts";
@@ -141,5 +143,107 @@ describe("required world reservations", () => {
     expect(stage.maxNearbyArchetypes).toBe(1);
     expect(flight.objects).toEqual([]);
     expect(flight.combat?.routeEncounters).toEqual([]);
+  });
+});
+
+describe("independent required world occupants", () => {
+  function swarm() {
+    const point = { x: 2000, y: 0 };
+    const definition = enemyDefinition(4, "swarm", "needle:exit:0");
+    return {
+      ...point,
+      enemy: createEnemy(
+        definition,
+        { archetype: "swarm", id: "needle:exit:0", packId: "needle:exit", phase: 0 },
+        point,
+      ),
+      hp: definition.hp,
+      id: "needle:exit:0",
+      kind: "enemy" as const,
+      radius: definition.sizeRatio * CONTENT.tuning.flight.shipRadius,
+    };
+  }
+
+  it("supports protected sites without actors and authored swarm hulls without a route association", () => {
+    const { site } = fixture();
+    const actor = swarm();
+    const needle = { content: CONTENT, galaxy: 4 as const };
+    expect(
+      requiredWorldOccupantsPlacementClear(
+        needle,
+        { actors: [], sites: [site] },
+        {
+          center: site,
+          radius: 1,
+        },
+      ),
+    ).toBe(false);
+    expect(
+      requiredWorldOccupantsPlacementClear(
+        needle,
+        { actors: [actor], sites: [] },
+        {
+          center: actor,
+          radius: 1,
+        },
+      ),
+    ).toBe(false);
+    const reach = partsReach(worldParts(enemyPhysicalBody(3, actor.enemy)!));
+    expect(
+      requiredWorldOccupantsPlacementClear(
+        needle,
+        { actors: [actor], sites: [site] },
+        {
+          center: { x: actor.x + reach + 11, y: actor.y },
+          radius: 10,
+        },
+      ),
+    ).toBe(true);
+    expect(actor).not.toHaveProperty("routeId");
+    expect(actor.enemy.escortOf).toBeNull();
+  });
+
+  it("uses only canonical protected-place kinds, not an enemy sprite radius as site protection", () => {
+    const actor = swarm();
+    expect(
+      requiredWorldOccupantsPlacementClear(
+        { content: CONTENT, galaxy: 4 },
+        {
+          actors: [],
+          sites: [{ ...actor, radius: 9999 }],
+        },
+        { center: actor, radius: 1 },
+      ),
+    ).toBe(true);
+    expect(
+      requiredWorldOccupantsPlacementClear(
+        { content: CONTENT, galaxy: 4, worldSide: 10000 },
+        {
+          actors: [{ ...actor, x: 9999 }],
+          sites: [],
+        },
+        { center: { x: 1, y: 0 }, radius: 1 },
+      ),
+    ).toBe(false);
+  });
+
+  it("counts authored actors once while retaining loaded state, clocks and authoritative removals", () => {
+    const { flight } = fixture();
+    const actor = swarm();
+    expect(requiredWorldOccupantsPopulation(flight, [actor, actor])).toEqual([actor]);
+    const retained = structuredClone(actor);
+    retained.enemy.primaryCooldown = 0.75;
+    flight.world.notables[actor.id] = retained;
+    expect(requiredWorldOccupantsPopulation(flight, [actor])).toEqual([retained]);
+    const loaded = structuredClone(retained);
+    loaded.enemy.primaryCooldown = 0.25;
+    flight.objects.push(loaded);
+    const saved = structuredClone(flight);
+    expect(requiredWorldOccupantsPopulation(flight, [actor, actor])).toEqual([loaded]);
+    expect(flight).toEqual(saved);
+    flight.objects = [];
+    flight.world.notables[actor.id] = null;
+    expect(requiredWorldOccupantsPopulation(flight, [actor])).toEqual([]);
+    expect(flight.world.notables[actor.id]).toBeNull();
   });
 });

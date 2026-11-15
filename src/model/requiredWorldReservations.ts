@@ -25,10 +25,15 @@ export interface OptionalWorldFootprint {
   readonly radius: number;
 }
 
-/** Optional generation respects protected sites and the actual assembled required hulls. */
-export function requiredWorldPlacementClear(
+export interface RequiredWorldOccupants {
+  readonly sites: readonly SpaceObject[];
+  readonly actors: readonly SpaceObject[];
+}
+
+/** Independent authored sites and actors reserve their real geometry without route metadata. */
+export function requiredWorldOccupantsPlacementClear(
   context: RequiredWorldContext,
-  reservations: readonly RequiredWorldReservation[],
+  occupants: RequiredWorldOccupants,
   footprint: OptionalWorldFootprint,
 ): boolean {
   if (
@@ -39,39 +44,79 @@ export function requiredWorldPlacementClear(
   ) {
     return false;
   }
-  return reservations.every(({ guard, site }) => {
-    const protection = protectedRadius(context.content, site);
-    const body = guard.enemy && enemyPhysicalBody(ROUTE_POSITION[context.galaxy], guard.enemy);
-    return (
-      protection !== null &&
-      body !== undefined &&
-      body !== null &&
-      worldDistance(context, site, footprint.center) > protection + footprint.radius &&
-      outlineContact(
-        body,
-        guard,
-        worldPoint(context, guard, footprint.center),
-        footprint.radius,
-      ) === null
-    );
-  });
+  return (
+    occupants.sites.every((site) => {
+      const protection = protectedRadius(context.content, site);
+      return (
+        protection === null ||
+        worldDistance(context, site, footprint.center) > protection + footprint.radius
+      );
+    }) &&
+    occupants.actors.every((actor) => {
+      const body =
+        actor.kind === "enemy" &&
+        actor.enemy &&
+        enemyPhysicalBody(ROUTE_POSITION[context.galaxy], actor.enemy);
+      return (
+        body !== false &&
+        body !== undefined &&
+        body !== null &&
+        outlineContact(
+          body,
+          actor,
+          worldPoint(context, actor, footprint.center),
+          footprint.radius,
+        ) === null
+      );
+    })
+  );
+}
+
+/** Optional generation respects protected sites and the actual assembled required hulls. */
+export function requiredWorldPlacementClear(
+  context: RequiredWorldContext,
+  reservations: readonly RequiredWorldReservation[],
+  footprint: OptionalWorldFootprint,
+): boolean {
+  return (
+    reservations.every(({ site }) => protectedRadius(context.content, site) !== null) &&
+    requiredWorldOccupantsPlacementClear(
+      context,
+      {
+        actors: reservations.map(({ guard }) => guard),
+        sites: reservations.map(({ site }) => site),
+      },
+      footprint,
+    )
+  );
 }
 
 /** Count pending required hulls before optional admission, preserving actual actor ownership. */
-export function requiredWorldPopulation(
+export function requiredWorldOccupantsPopulation(
   flight: FlightState,
-  reservations: readonly RequiredWorldReservation[],
+  actors: readonly SpaceObject[],
 ): readonly SpaceObject[] {
   const actual = stationPopulationObjects(flight);
   const ids = new Set(actual.map(({ id }) => id));
   return [
     ...actual,
-    ...reservations.flatMap(({ guard }) => {
-      if (ids.has(guard.id) || Object.hasOwn(flight.world.notables, guard.id)) {
+    ...actors.flatMap((actor) => {
+      if (ids.has(actor.id) || Object.hasOwn(flight.world.notables, actor.id)) {
         return [];
       }
-      ids.add(guard.id);
-      return [guard];
+      ids.add(actor.id);
+      return [actor];
     }),
   ];
+}
+
+/** Paired route reservations share the independent-actor ownership and population rule. */
+export function requiredWorldPopulation(
+  flight: FlightState,
+  reservations: readonly RequiredWorldReservation[],
+): readonly SpaceObject[] {
+  return requiredWorldOccupantsPopulation(
+    flight,
+    reservations.map(({ guard }) => guard),
+  );
 }
