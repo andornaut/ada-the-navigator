@@ -1057,7 +1057,10 @@ export class GameScene extends Scene {
       if (travel === "forward") {
         tailRegions = normalJetTailRegions(activeJets, display, ship.directionIndex);
       }
-      const keyline = this.light && LIGHT_FIELD.keylined.includes("ship");
+      const keyline =
+        this.light &&
+        LIGHT_FIELD.keylined.includes("ship") &&
+        !(travel === "forward" && normalJetsInFront(activeJets, ship.directionIndex));
       for (const { alpha, color, points } of jetTriangles(
         activeJets,
         display,
