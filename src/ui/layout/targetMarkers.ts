@@ -1,128 +1,85 @@
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
+import { EDGE_MARKERS } from "../../data/edgeMarkers.ts";
 import { edgePoint, gameAreaPoint } from "../../model/edgeMarkers.ts";
 import type { TargetMarker } from "../../model/targetMarkers.ts";
 import type { Vec } from "../../model/types.ts";
-
 export interface TargetMarkerPlacement<T extends TargetMarker = TargetMarker> {
-  /** The actual direction is retained when collision layout displaces the badge. */
+  /** The displayed centre is the ship-to-target ray intersection, including under the HUD. */
   readonly anchor: Vec;
   readonly at: Vec;
   readonly crowded: boolean;
   readonly target: T;
 }
-export interface TargetMarkerLayout {
+export interface TargetMarkerExtent {
+  readonly height: number;
+  readonly width: number;
+  readonly offset?: Vec;
+}
+export interface TargetMarkerLayout<T extends TargetMarker = TargetMarker> {
   readonly area: Rect;
   /** Actual HUD and dialogue footprints, in the same logical coordinates as area. */
   readonly blocked: readonly Rect[];
+  /** Rendered visible bounds, including an emitted outline, in current logical units. */
+  readonly extent: (target: T) => TargetMarkerExtent;
   readonly gap: number;
-  readonly inset?: number;
   readonly player: Vec;
-  readonly size: number;
+  readonly raster?: {
+    readonly origin: Vec;
+    readonly pixelRatio?: number;
+    readonly scale: number;
+  };
 }
-const bounds = (size: number, at: Vec): Rect => ({
-  height: size,
-  width: size,
-  x: at.x - size / 2,
-  y: at.y - size / 2,
+const bounds = (size: TargetMarkerExtent, at: Vec): Rect => ({
+  height: size.height,
+  width: size.width,
+  x: at.x + (size.offset?.x ?? 0) - size.width / 2,
+  y: at.y + (size.offset?.y ?? 0) - size.height / 2,
 });
 const overlaps = (a: Rect, b: Rect): boolean =>
   a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
-function perimeter(rect: Rect, at: number): Vec {
-  const length = 2 * (rect.width + rect.height);
-  let position = ((at % length) + length) % length;
-  if (position <= rect.width) {
-    return { x: rect.x + position, y: rect.y };
-  }
-  position -= rect.width;
-  if (position <= rect.height) {
-    return { x: rect.x + rect.width, y: rect.y + position };
-  }
-  position -= rect.height;
-  if (position <= rect.width) {
-    return { x: rect.x + rect.width - position, y: rect.y + rect.height };
-  }
-  return { x: rect.x, y: rect.y + rect.height - (position - rect.width) };
-}
-function perimeterOffset(rect: Rect, point: Vec): number {
-  const edges = [
-    { distance: Math.abs(point.y - rect.y), offset: point.x - rect.x },
-    { distance: Math.abs(point.x - rect.x - rect.width), offset: rect.width + point.y - rect.y },
-    {
-      distance: Math.abs(point.y - rect.y - rect.height),
-      offset: rect.width + rect.height + rect.x + rect.width - point.x,
-    },
-    {
-      distance: Math.abs(point.x - rect.x),
-      offset: 2 * rect.width + rect.height + rect.y + rect.height - point.y,
-    },
-  ];
-  return edges.sort((a, b) => a.distance - b.distance)[0]!.offset;
-}
-
-/** One placement per stable target, avoiding actual UI footprints rather than full-width bands. */
+/** Overlap is diagnostic only: it never changes a target's displayed bearing. */
 export function layoutTargetMarkers<T extends TargetMarker>(
-  context: TargetMarkerLayout,
+  context: TargetMarkerLayout<T>,
   markers: readonly T[],
 ): TargetMarkerPlacement<T>[] {
-  const { area, gap, size } = context;
-  const firstInset = context.inset ?? size / 2;
-  if (size <= 0 || gap < 0 || firstInset < size / 2) {
-    throw new RangeError("Invalid target marker dimensions");
-  }
+  const { area } = context;
   const placed: Rect[] = [];
+  // Match the native CSS paint grid inward, then intersect the ray; never round its axes separately.
+  const snap = (axis: "x" | "y", value: number, high: boolean): number => {
+    const raster = context.raster;
+    if (!raster) {
+      return value;
+    }
+    const pixel = raster.pixelRatio ?? 1;
+    const physical = (raster.origin[axis] + value * raster.scale) / pixel;
+    const aligned = (high ? Math.floor(physical) : Math.ceil(physical)) * pixel;
+    return (aligned - raster.origin[axis]) / raster.scale;
+  };
+  const left = snap("x", area.x + EDGE_MARKERS.gap, false);
+  const top = snap("y", area.y + EDGE_MARKERS.gap, false);
+  const right = snap("x", area.x + area.width - EDGE_MARKERS.gap, true);
+  const bottom = snap("y", area.y + area.height - EDGE_MARKERS.gap, true);
   const centre = gameAreaPoint(context.player, context.player);
   return [...markers]
     .sort((a, b) => a.id.localeCompare(b.id))
     .map((target) => {
-      const destination = gameAreaPoint(context.player, target);
-      const anchor = edgePoint(area, firstInset, centre, destination);
-      const candidates: Vec[] = [anchor];
-      for (
-        let inset = firstInset;
-        2 * inset < Math.min(area.width, area.height);
-        inset += size + gap
-      ) {
-        const rect = {
-          height: area.height - 2 * inset,
-          width: area.width - 2 * inset,
-          x: area.x + inset,
-          y: area.y + inset,
-        };
-        const initial = edgePoint(area, inset, centre, destination);
-        const offset = perimeterOffset(rect, initial);
-        const steps = Math.ceil((2 * (rect.width + rect.height)) / (size + gap));
-        for (let step = 0; step <= steps; step++) {
-          for (const sign of [1, -1]) {
-            candidates.push(perimeter(rect, offset + sign * step * (size + gap)));
-          }
-        }
+      const size = context.extent(target);
+      if (!(size.width > 0 && size.height > 0) || !Number.isFinite(size.width + size.height)) {
+        throw new RangeError("Invalid visible target marker extent");
       }
-      const clear = (at: Vec) => {
-        const box = bounds(size, at);
-        return (
-          box.x >= area.x &&
-          box.y >= area.y &&
-          box.x + box.width <= area.x + area.width &&
-          box.y + box.height <= area.y + area.height &&
-          !context.blocked.some((block) => overlaps(box, block)) &&
-          !placed.some((other) =>
-            overlaps(
-              {
-                height: box.height + gap,
-                width: box.width + gap,
-                x: box.x - gap / 2,
-                y: box.y - gap / 2,
-              },
-              other,
-            ),
-          )
-        );
+      const offset = size.offset ?? { x: 0, y: 0 };
+      const rect = {
+        height: Math.max(0, bottom - top - size.height),
+        width: Math.max(0, right - left - size.width),
+        x: left + size.width / 2 - offset.x,
+        y: top + size.height / 2 - offset.y,
       };
-      const at = candidates.find(clear);
-      // Even a physically saturated viewport retains every target and its original direction.
-      const placement = at ?? anchor;
-      placed.push(bounds(size, placement));
-      return { anchor, at: placement, crowded: at === undefined, target };
+      const destination = gameAreaPoint(context.player, target);
+      const anchor = edgePoint(rect, 0, centre, destination);
+      const box = bounds(size, anchor);
+      const crowded = [...context.blocked, ...placed].some((other) => overlaps(box, other));
+      placed.push(box);
+      return { anchor, at: anchor, crowded, target };
     });
 }

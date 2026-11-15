@@ -1,18 +1,30 @@
 import { existsSync } from "node:fs";
 
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { edgePoint, gameAreaPoint } from "../model/edgeMarkers.ts";
+import { EDGE_MARKERS } from "../data/edgeMarkers.ts";
+import { LIGHT_FIELD } from "../game/lightField.ts";
 import type { PennyMarker } from "../model/pennyMarkers.ts";
 import { MAP_FACES } from "./layout/mapScreen.ts";
 import { PENNY_MARKER } from "./layout/pennyMarkers.ts";
+import { safeGameArea } from "./layout/playView.ts";
+import { layoutTargetMarkers } from "./layout/targetMarkers.ts";
+import { playLayout } from "./layout/viewScale.ts";
 import {
   createPennyMarkerLayer,
-  PENNY_MARKER_INSET,
   PENNY_MARKERS_STYLE,
   pennyGlyph,
+  pennyMarkerInkExtent,
 } from "./pennyMarkers.ts";
-
+let viewUnit = 1;
+beforeEach(() => {
+  viewUnit = 1;
+  vi.stubGlobal("devicePixelRatio", 1);
+  vi.stubGlobal("getComputedStyle", () => ({
+    getPropertyValue: (key: string) => (key === "--ada-unit" ? String(viewUnit) : "0px"),
+  }));
+});
+afterEach(() => vi.unstubAllGlobals());
 const marker: PennyMarker = {
   category: "discovery",
   id: "a",
@@ -22,7 +34,6 @@ const marker: PennyMarker = {
   x: 1450,
   y: 0,
 };
-
 describe("Penny's existing marker art", () => {
   it("uses the native hostile-station icon without revealing an unknown actor", () => {
     expect(pennyGlyph({ ...marker, identified: true, symbol: "hostileStation" })).toBe(
@@ -56,31 +67,119 @@ describe("Penny's existing marker art", () => {
     ).toBe("/art/ui/sprites/icon-stardust-20.png");
     expect(PENNY_MARKERS_STYLE).toContain("/art/ui/fonts/font-body.png");
   });
-
-  it("keeps the complete chip inside asymmetric safe bounds in every direction", () => {
-    const area = { height: 300, width: 640, x: 35, y: 22 },
-      player = { x: 0, y: 0 };
-    for (const x of [-1500, 0, 1500]) {
-      for (const y of [-1500, 0, 1500]) {
-        if (!x && !y) {
-          continue;
-        }
-        const at = edgePoint(
-          area,
-          PENNY_MARKER_INSET,
-          gameAreaPoint(player, player),
-          gameAreaPoint(player, { x, y }),
-        );
-        expect(at.x - PENNY_MARKER_INSET).toBeGreaterThanOrEqual(area.x);
-        expect(at.y - PENNY_MARKER_INSET).toBeGreaterThanOrEqual(area.y);
-        expect(at.x + PENNY_MARKER_INSET).toBeLessThanOrEqual(area.x + area.width);
-        expect(at.y + PENNY_MARKER_INSET).toBeLessThanOrEqual(area.y + area.height);
+  it("retains the opaque paint baseline; protruding native glyph alpha is handled by the caller", () => {
+    for (const symbol of ["wreck", "station", "hostileStation", "destination"] as const) {
+      for (const identified of [false, true]) {
+        expect(pennyMarkerInkExtent({ ...marker, identified, symbol }, true)).toEqual({
+          height: 24,
+          width: 24,
+        });
       }
     }
+    expect(pennyMarkerInkExtent({ ...marker, identified: true, item: "stardust" }, true)).toEqual({
+      height: 24,
+      width: 24,
+    });
+    for (const light of [false, true]) {
+      const outline = light ? 2 * LIGHT_FIELD.markerOutline : 0;
+      expect(pennyMarkerInkExtent({ ...marker, identified: true, symbol: "enemy" }, light)).toEqual(
+        { height: 6 + outline, width: 6 + outline },
+      );
+      for (const symbol of ["guard", "heavy"] as const) {
+        expect(pennyMarkerInkExtent({ ...marker, identified: true, symbol }, light)).toEqual({
+          height: 12 + outline,
+          width: 12 + outline,
+        });
+      }
+    }
+    expect(PENNY_MARKER.question.width).toBeLessThan(PENNY_MARKER.size);
+    expect(PENNY_MARKER.question.height).toBeLessThan(PENNY_MARKER.size);
+  });
+  it.each([
+    { height: 360, width: 720 },
+    { height: 320, width: 667 },
+    { height: 575, width: 1280 },
+  ])("uses the centered720 game area at the current view scale: %j", (css) => {
+    const layout = playLayout(css),
+      area = safeGameArea(layout.insets, layout.view);
+    expect(area).toEqual({ height: 360, width: 720, x: 0, y: 0 });
+    const ink = pennyMarkerInkExtent(marker, false);
+    const [placement] = layoutTargetMarkers(
+      { area, blocked: [], extent: () => ink, gap: 4, player: { x: 0, y: 0 } },
+      [{ ...marker, x: 4000, y: -4000 }],
+    );
+    expect((area.width - placement!.at.x - ink.width / 2) * layout.s).toBeCloseTo(
+      EDGE_MARKERS.gap * layout.s,
+      9,
+    );
   });
 });
-
 class ElementFixture {
+  complete = true;
+  naturalWidth = 24;
+  naturalHeight = 24;
+  onload: (() => void) | null = null;
+  src = "";
+  width = 24;
+  height = 24;
+  get firstElementChild() {
+    return this.children[0];
+  }
+  getBoundingClientRect(): DOMRect {
+    const number = (value: string) => Number(value.match(/-?\d+(?:\.\d+)?/u)?.[0] ?? 0);
+    let x = number(this.style.left),
+      y = number(this.style.top),
+      width = 24 * viewUnit,
+      height = width;
+    if (this.className === "ada-penny-marker" && this.dataset.identified === "true") {
+      if (this.dataset.symbol === "enemy") {
+        width = height = 6 * viewUnit;
+      }
+      if (["heavy", "guard"].includes(this.dataset.symbol!)) {
+        width = height = 12 * viewUnit;
+      }
+    }
+    if (this.className === "ada-penny-markers") {
+      width = 720 * viewUnit;
+      height = 360 * viewUnit;
+    }
+    if (this.className === "ada-penny-glyph" && this.parent) {
+      const body = this.parent.getBoundingClientRect();
+      width = (this.parent.dataset.symbol === "hostileStation" ? 24 : 20) * viewUnit;
+      height = width;
+      const border =
+        this.parent.dataset.identified === "true" &&
+        ["enemy", "guard", "heavy"].includes(this.parent.dataset.symbol!)
+          ? 0
+          : Math.max(1, Math.floor(viewUnit));
+      x = body.x + border + Math.max(0, (body.width - 2 * border - width) / 2);
+      y = body.y + border + Math.max(0, (body.height - 2 * border - height) / 2);
+    }
+    return {
+      bottom: y + height,
+      height,
+      left: x,
+      right: x + width,
+      top: y,
+      width,
+      x,
+      y,
+    } as DOMRect;
+  }
+  getContext() {
+    return {
+      drawImage: () => {},
+      getImageData: () => {
+        const data = new Uint8ClampedArray(this.width * this.height * 4);
+        for (let y = 4; y < Math.min(20, this.height); y++) {
+          for (let x = 0; x < this.width; x++) {
+            data[(y * this.width + x) * 4 + 3] = 255;
+          }
+        }
+        return { data };
+      },
+    };
+  }
   children: ElementFixture[] = [];
   className = "";
   dataset: Record<string, string> = {};
@@ -113,7 +212,6 @@ class ElementFixture {
     }
   }
 }
-
 it("reuses one DOM target through identification, clears obsolete nodes and releases the overlay", () => {
   const root = new ElementFixture();
   const doc = {
@@ -165,45 +263,149 @@ it("reuses one DOM target through identification, clears obsolete nodes and rele
   ui.destroy();
   expect(root.children).toEqual([]);
 });
-
-it.each([
-  { height: 360, width: 720 },
-  { height: 320, width: 667 },
-])(
-  "places distinct live target IDs through the shared layout around actual blocked rectangles: %j",
-  (size) => {
+it("renders two coincident IDs at their ray despite the blocking HUD and retains their native nodes", () => {
+  const root = new ElementFixture();
+  const doc = {
+    createElement: () => new ElementFixture(),
+    createElementNS: () => new ElementFixture(),
+  } as unknown as Document;
+  const ui = createPennyMarkerLayer(doc, root as unknown as HTMLElement);
+  const area = { height: 360, width: 720, x: 0, y: 0 };
+  const style = { blocked: [area], color: "#65c9bf", light: false };
+  const first = { ...marker, id: "a", x: 1336, y: 1336 },
+    second = { ...marker, id: "b", x: 2672, y: 2672 };
+  ui.place({ x: 0, y: 0 }, area, style, [first, second]);
+  const layer = root.children[0]!,
+    [a, b] = layer.children;
+  expect(layer.children.map((n) => n.dataset.target)).toEqual(["a", "b"]);
+  for (const node of layer.children) {
+    const bounds = node.getBoundingClientRect();
+    expect(bounds.x + bounds.width / 2).toBe(360);
+    expect(bounds.y + bounds.height / 2).toBe(347);
+    expect(node.dataset.crowded).toBe("true");
+  }
+  ui.place({ x: 0, y: 0 }, area, style, [second, first]);
+  expect(layer.children).toEqual([a, b]);
+  expect(a!.style.left).toBe(b!.style.left);
+  expect(a!.style.top).toBe(b!.style.top);
+  ui.place({ x: 0, y: 0 }, area, style, [second]);
+  expect(layer.children).toEqual([b]);
+  ui.destroy();
+});
+it("keeps actual displayed centres on cardinal/diagonal rays across unit and DPR resize", () => {
+  const root = new ElementFixture();
+  const doc = {
+    createElement: () => new ElementFixture(),
+    createElementNS: () => new ElementFixture(),
+  } as unknown as Document;
+  const ui = createPennyMarkerLayer(doc, root as unknown as HTMLElement);
+  const player = { x: 12000, y: -8000 },
+    area = { height: 360, width: 720, x: 0, y: 0 };
+  const directions = [
+    { screen: { x: 1, y: 0 }, world: { x: 1, y: -1 } },
+    { screen: { x: -1, y: 0 }, world: { x: -1, y: 1 } },
+    { screen: { x: 0, y: 1 }, world: { x: 1, y: 1 } },
+    { screen: { x: 0, y: -1 }, world: { x: -1, y: -1 } },
+    { screen: { x: 1, y: 1 }, world: { x: 3, y: 1 } },
+    { screen: { x: -1, y: -1 }, world: { x: -3, y: -1 } },
+    { screen: { x: 1, y: -1 }, world: { x: -1, y: -3 } },
+    { screen: { x: -1, y: 1 }, world: { x: 1, y: 3 } },
+  ];
+  for (const { dpr, unit } of [
+    { dpr: 1, unit: 1 },
+    { dpr: 2, unit: 0.5 },
+    { dpr: 1, unit: 8 / 9 },
+  ]) {
+    viewUnit = unit;
+    vi.stubGlobal("devicePixelRatio", dpr);
+    for (const { screen, world } of directions) {
+      const target = { ...marker, x: player.x + world.x * 1000, y: player.y + world.y * 1000 };
+      ui.place(player, area, { blocked: [area], color: "#65c9bf", light: false }, [target]);
+      const node = root.children[0]!.children[0]!,
+        bounds = node.getBoundingClientRect();
+      const x = (bounds.x + bounds.width / 2) / unit - 360,
+        y = (bounds.y + bounds.height / 2) / unit - 180;
+      expect(x * screen.y - y * screen.x).toBeCloseTo(0, 8);
+      expect(x * screen.x + y * screen.y).toBeGreaterThan(0);
+      expect(node.dataset.target).toBe(target.id);
+      expect(node.dataset.crowded).toBe("true");
+    }
+  }
+  ui.destroy();
+});
+it.each([false, true])(
+  "places actual caller ink on the perimeter while one ID changes from ? to known and light=%s",
+  (light) => {
     const root = new ElementFixture();
     const doc = {
       createElement: () => new ElementFixture(),
       createElementNS: () => new ElementFixture(),
     } as unknown as Document;
     const ui = createPennyMarkerLayer(doc, root as unknown as HTMLElement);
-    const area = { ...size, x: 0, y: 0 };
-    const style = {
-      blocked: [{ height: 110, width: size.width, x: 0, y: 250 }],
-      color: "#65c9bf",
-      light: false,
-    };
-    const second = { ...marker, id: "b" };
-    ui.place({ x: 0, y: 0 }, area, style, [marker, second]);
-    const layer = root.children[0]!;
-    const [a, b] = layer.children;
-    expect(layer.children.map((node) => node.dataset.target)).toEqual(["a", "b"]);
-    expect(new Set(layer.children.map((node) => `${node.style.left}:${node.style.top}`)).size).toBe(
-      2,
-    );
-    for (const node of layer.children) {
-      expect(node.dataset.crowded).toBe("false");
-      expect(Number(node.dataset.anchorY)).toBeGreaterThan(250);
-      const y = Number(node.style.top.match(/-?\d+(?:\.\d+)?/u)?.[0]);
-      expect(y + PENNY_MARKER.size / 2).toBeLessThanOrEqual(250);
+    const area = { height: 360, width: 720, x: 0, y: 0 };
+    const style = { color: "#65c9bf", light };
+    const target = { ...marker, x: 4000, y: -4000 };
+    ui.place({ x: 0, y: 0 }, area, style, [target]);
+    const node = root.children[0]!.children[0]!;
+    const left = () => Number(node.style.left.match(/-?\d+(?:\.\d+)?/u)?.[0]);
+    expect(left()).toBe(695);
+    expect(node.dataset.identified).toBe("false");
+    for (const symbol of ["enemy", "guard", "heavy", "hostileStation", "station"] as const) {
+      const known = { ...target, identified: true, symbol };
+      ui.place({ x: 0, y: 0 }, area, style, [known]);
+      expect(root.children[0]!.children[0]).toBe(node);
+      const body = symbol === "enemy" ? 6 : symbol === "guard" || symbol === "heavy" ? 12 : 24;
+      const outside =
+        symbol === "hostileStation"
+          ? 1
+          : ["enemy", "guard", "heavy"].includes(symbol) && light
+            ? LIGHT_FIELD.markerOutline
+            : 0;
+      expect(area.width - left() - body - outside).toBe(EDGE_MARKERS.gap);
+      expect(node.dataset.target).toBe(target.id);
+      expect(node.dataset.identified).toBe("true");
     }
-    ui.place({ x: 0, y: 0 }, area, style, [{ ...second, identified: true }, marker]);
-    expect(layer.children[0]).toBe(a);
-    expect(layer.children[1]).toBe(b);
-    expect(b!.dataset.identified).toBe("true");
-    ui.place({ x: 0, y: 0 }, area, style, [second]);
-    expect(layer.children).toEqual([b]);
     ui.destroy();
   },
 );
+it("unions actual native SVG alpha outside the badge and removes pending image callbacks on disposal", () => {
+  const root = new ElementFixture(),
+    images: ElementFixture[] = [];
+  const doc = {
+    createElement: (tag: string) => {
+      const node = new ElementFixture();
+      if (tag === "img") {
+        images.push(node);
+      }
+      return node;
+    },
+    createElementNS: () => new ElementFixture(),
+  } as unknown as Document;
+  const ui = createPennyMarkerLayer(doc, root as unknown as HTMLElement);
+  const target = {
+    ...marker,
+    identified: true,
+    symbol: "hostileStation" as const,
+    x: 4000,
+    y: -4000,
+  };
+  for (const unit of [1, 0.5]) {
+    viewUnit = unit;
+    vi.stubGlobal("devicePixelRatio", 1 / unit);
+    ui.place(
+      { x: 0, y: 0 },
+      { height: 360, width: 720, x: 0, y: 0 },
+      { color: "#65c9bf", light: true },
+      [target],
+    );
+    const node = root.children[0]!.children[0]!;
+    const left = Number.parseFloat(node.style.left) / unit;
+    const actualGlyphSupportRight = left + 24 + 1 / unit;
+    expect(720 - actualGlyphSupportRight).toBe(unit === 0.5 ? 2 : 1);
+    expect(node.dataset.target).toBe(target.id);
+  }
+  expect(images).toHaveLength(1);
+  expect(images[0]!.onload).not.toBeNull();
+  ui.destroy();
+  expect(images[0]!.onload).toBeNull();
+});
