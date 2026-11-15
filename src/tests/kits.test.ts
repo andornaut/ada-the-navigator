@@ -1,5 +1,5 @@
 import { type AtlasPolicy, packAtlas } from "@andornaut/art-kit/build/atlasLayout";
-import { validateRegistry } from "@andornaut/delivery-kit/registry";
+import { validateRegistry } from "@andornaut/delivery-kit/build/registry";
 import { describe, expect, it } from "vitest";
 
 const atlasPolicy: AtlasPolicy<string> = {

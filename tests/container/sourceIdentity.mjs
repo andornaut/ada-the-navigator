@@ -5,7 +5,7 @@ import { join } from "node:path";
 /** The copy boundary delegates object validation and raw-byte index restoration to the Kit. */
 export async function restoreCheckSourceIdentity(context, expected) {
   const marker = join(context.workRoot, ".git", "check-source-identity.json");
-  const { restoreSourceIdentity } = await import("@andornaut/delivery-kit/source-identity");
+  const { restoreSourceIdentity } = await import("@andornaut/delivery-kit/build/source-identity");
   let status;
   if (!existsSync(join(context.workRoot, ".git"))) {
     status = restoreSourceIdentity(context, {

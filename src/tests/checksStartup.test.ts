@@ -112,7 +112,7 @@ syncBuiltinESMExports();`;
         PATH: `${scratch}:${process.env.PATH}`,
         PROOF_COMMANDS: commandsPath,
         PROOF_IDENTITY_MODULE: fileURLToPath(
-          import.meta.resolve("@andornaut/delivery-kit/source-identity"),
+          import.meta.resolve("@andornaut/delivery-kit/build/source-identity"),
         ),
       },
       timeout: 10000,

@@ -8,7 +8,7 @@ import {
   restoreSourceIdentity,
   snapshotSourceIdentity,
   type SourceIdentityManifest,
-} from "@andornaut/delivery-kit/source-identity";
+} from "@andornaut/delivery-kit/build/source-identity";
 import { gitBuildMetadata } from "@andornaut/game-kit/build/gitHead";
 import { describe, expect, it } from "vitest";
 
@@ -38,7 +38,9 @@ const checkerUrl = new URL("../../tools/checks.mjs", import.meta.url).href;
 const restoreUrl = new URL("../../tests/container/sourceIdentity.mjs", import.meta.url).href;
 const checks = await import(checkerUrl);
 const { restoreCheckSourceIdentity } = await import(restoreUrl);
-const sdkModule = fileURLToPath(import.meta.resolve("@andornaut/delivery-kit/source-identity"));
+const sdkModule = fileURLToPath(
+  import.meta.resolve("@andornaut/delivery-kit/build/source-identity"),
+);
 function smallFixture(): Fixture {
   const parent = mkdtempSync(join(tmpdir(), "ada-source-identity-seed-"));
   const source = join(parent, "source"),
