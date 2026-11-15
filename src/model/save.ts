@@ -96,6 +96,10 @@ function enemyState(galaxy: GalaxyNumber, value: unknown): boolean {
     typeof value.archetype !== "string" ||
     !Object.hasOwn(enemyCatalog, value.archetype) ||
     typeof value.id !== "string" ||
+    (value.weaponLevel !== undefined &&
+      value.weaponLevel !== 1 &&
+      value.weaponLevel !== 2 &&
+      value.weaponLevel !== 3) ||
     !(value.packId === null || typeof value.packId === "string") ||
     !["disabled", "engaged", "fleeing", "returning", "salvaged"].every(
       (key) => typeof value[key] === "boolean",
@@ -723,6 +727,10 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
       }
       if (
         !Number.isSafeInteger(f.seed) ||
+        (f.encounterSeed !== undefined &&
+          (!Number.isInteger(f.encounterSeed) ||
+            (f.encounterSeed as number) < 0 ||
+            (f.encounterSeed as number) > 0xffffffff)) ||
         !Number.isSafeInteger(f.nextId) ||
         !(
           f.freshChunk === null ||
