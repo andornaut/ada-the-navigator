@@ -2,12 +2,11 @@
 
 - Rebuild with `node art/tools/quantum-jump.ts`. It writes the effect data
   `public/art/quantum-jump.json`, four sheets in `public/art/` (field, glow,
-  star and tunnel), the warp ship frames in `public/art/quantum-jump-ship/`,
+  star and tunnel), shared material pose data,
   the sheets' root [manifest](../public/art/manifest.json) entries and the
   manifest's `quantumJump` path. `--data-only` writes only the effect JSON,
-  without changing images, SVGs or manifest entries. `--paint-only` writes
-  only the five purchased paint pose sets, without changing Classic poses,
-  effect data, sheets or manifest entries.
+  without changing images, SVGs or manifest entries. Legacy `--paint-only`
+  leaves effect data, sheets and manifest entries unchanged; no retired pose SVGs are emitted.
 - Every quantum jump uses this one effect, the warp: galaxy jumps from the
   route map, Travel to discovered destinations, Return to Earth and Astra's
   emergency jump when the shield fails. Boarding from Ada's room is the rock's
@@ -24,8 +23,11 @@ length.
 The nine pose definitions share `art/tools/ship-poses.ts` with the
 [shared material geometry](ship.md#shared-material-geometry) exporter.
 `ship-materials.json` contains each pose's actual ordered material paths,
-with the same frame, pivot and transform. Coloured pose SVGs and the current
-effect/jet metadata remain available for paired loader adoption.
+with the same frame, pivot and transform. Pose paths remain logical metadata;
+54 physical coloured pose SVGs are retired and must not be emitted. Normal
+pose jets share the opening-centred `normalAperture` profile, opaque outer
+material and clear-front composition described in [speed jets](ship.md#speed-jets).
+The reverse profile is unchanged.
 
 ## Timeline
 
@@ -98,7 +100,7 @@ A step's `ship` names a `pose`, a `scale` and an optional `white`.
 | `settle-10`  |   10 |     1.1 |      1 | Yes    |
 | `settle-5`   |    5 |       1 |      1 | No     |
 
-- Every pose faces the arrival heading, 24 (`warp.heading`), the heading a
+- Every pose faces the arrival heading, 48 (`warp.heading`), the heading a
   flight starts on (facing (0, -1)), and draws from the shared ship model in
   all six paints: `quantum-jump-ship/{scheme}/{pose}.svg`, 256 frame px
   square, pivot at the centre, frame px times `warp.displayScale` (0.4375) at
@@ -106,8 +108,9 @@ A step's `ship` names a `pose`, a `scale` and an optional `white`.
   poses carry optional `jets` geometry instead of baked flame colours. Its
   version 1 geometry has the same 256 frame and one heading at index 0, with
   projected mouths for that exact bank, roll, stretch and squash.
-- The jet renderer uses the selected main engine/field layer array behind the
-  hull, including the visible-width attachment and outboard-core arrangement.
+- The jet renderer uses the selected main engine/field layers with the same
+  centred normal-aperture profile and solid outer as forward flight. Complete
+  triangles render in front of the hull, with empty surface masks.
   The static outer cue retains 16 model units; core and halo lengths are the
   canonical 0.55 and 1.1 ratios. The projected axis already includes the pose
   transform: do not normalize it or apply frame conversion or stretch again.
@@ -117,7 +120,7 @@ A step's `ship` names a `pose`, a `scale` and an optional `white`.
   existing ship step, and non-thrust poses retain no jets.
 - From the route map the charge steps draw the sprite at the jump centre,
   turning from the heading the route map ship shows.
-- A flight destination arrives with the ship at heading 24 at the jump centre,
+- A flight destination arrives with the ship at heading 48 at the jump centre,
   where the warp ship ends.
 - A destination without the ship (Ada's room after Return to Earth or the
   emergency jump) draws no warp ship from 520 ms: the ship leaves in the jump

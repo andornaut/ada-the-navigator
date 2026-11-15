@@ -74,6 +74,18 @@
           "level": 1,
           "layers": [
             {
+              "name": "halo",
+              "color": "#70ace8",
+              "width": 2.4,
+              "length": 1.1,
+              "alpha": {
+                "from": 0,
+                "to": 1,
+                "max": 0
+              },
+              "normalColor": "#3b4861"
+            },
+            {
               "name": "outer",
               "colors": ["#1767b3", "#1767b3"],
               "width": 1.6,
@@ -91,6 +103,18 @@
           "level": 2,
           "layers": [
             {
+              "name": "halo",
+              "color": "#e34a3c",
+              "width": 2.4,
+              "length": 1.1,
+              "alpha": {
+                "from": 0,
+                "to": 1,
+                "max": 0
+              },
+              "normalColor": "#583036"
+            },
+            {
               "name": "outer",
               "colors": ["#9e3027", "#9e3027"],
               "width": 1.6,
@@ -107,6 +131,18 @@
         {
           "level": 3,
           "layers": [
+            {
+              "name": "halo",
+              "color": "#e3b13f",
+              "width": 2.4,
+              "length": 1.1,
+              "alpha": {
+                "from": 0,
+                "to": 1,
+                "max": 0
+              },
+              "normalColor": "#584a37"
+            },
             {
               "name": "outer",
               "colors": ["#91620e", "#91620e"],

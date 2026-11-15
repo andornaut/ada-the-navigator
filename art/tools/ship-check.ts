@@ -14,6 +14,7 @@ import {
   FRAME,
   forwardJetMouths,
   jetAttachment,
+  normalJetStation,
   SCHEMES,
   UP,
 } from "./ship-model.ts";
@@ -216,22 +217,39 @@ test("engine openings use Classic luminous brightness and paint-derived hues wit
   }
 });
 
-test("authored group attachments use the near skirt bottom and retain the far upper corner", () => {
+test("normal apertures share flush opening centres and contained physical widths", () => {
   const jets = JSON.parse(readFileSync(new URL("ship-jets.json", assets), "utf8")) as {
     headings: {
       index: number;
-      mouths: { outerCorner: number[]; coreOutboard: boolean; rearClip?: unknown }[];
+      mouths: {
+        anchor: number[];
+        half: number[];
+        axis: number[];
+        normalAperture: { coreWidth: number };
+        occluders: unknown[];
+        outerCorner?: unknown;
+        coreOutboard?: unknown;
+        rearClip?: unknown;
+      }[];
     }[];
   };
   assert.equal(jetAttachment(worldView(135), -1).corner[2], 0);
   assert.equal(jetAttachment(worldView(135), 1).corner[2], 1.2);
-  for (const heading of jets.headings)
-    for (const mouth of heading.mouths) {
-      assert.equal(mouth.coreOutboard, true);
-      assert.equal(mouth.outerCorner.length, 2);
-      assert(mouth.outerCorner.every(Number.isFinite));
-      assert.equal(mouth.rearClip, undefined, "forward groups must not carry rear clipping");
+  for (const heading of jets.headings) {
+    for (const [index, mouth] of heading.mouths.entries()) {
+      const sign = index === 0 ? -1 : 1;
+      const station = normalJetStation({ yaw: heading.index }, sign);
+      assert.deepEqual(station.middle, engineOpeningGeometry(sign).centre);
+      assert(Math.abs(station.width - 18.72) < 1e-12);
+      assert(Math.abs(station.coreWidth * station.width - 6.875) < 1e-12);
+      assert(Math.abs(Math.abs(station.middle[0]) - 12.25) < 1e-12);
+      assert(Math.abs(mouth.normalAperture.coreWidth - 6.875 / 18.72) < 1e-12);
+      assert.deepEqual(mouth.occluders, [], "normal triangles must have no visible mask kink");
+      assert.equal(mouth.outerCorner, undefined);
+      assert.equal(mouth.coreOutboard, undefined);
+      assert.equal(mouth.rearClip, undefined);
     }
+  }
 });
 
 test("the luminous aperture grows 25 percent about its centre and stays inside its housing", () => {
@@ -324,7 +342,8 @@ test("warp poses publish projected uncut groups without scaling authored thrust 
       },
     ]);
     for (const mouth of pose.jets!.headings[0]!.mouths) {
-      assert.equal(mouth.coreOutboard, true);
+      assert(Math.abs(mouth.normalAperture.coreWidth - 6.875 / 18.72) < 1e-12);
+      assert.deepEqual(mouth.occluders, []);
       assert(!("rearClip" in mouth), "forward warp groups must remain uncut");
     }
   }

@@ -2,22 +2,21 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { editManifest } from "./manifest.ts";
-import { anchor, json, SHIP_HEADINGS, SHIP_HEADING_CONTRACT, vector } from "./projection.ts";
+import { anchor, json, SHIP_HEADINGS, SHIP_HEADING_CONTRACT } from "./projection.ts";
 import {
   classic,
   DISPLAY,
   drawn,
   FRAME,
   highlight,
-  jetAttachment,
-  mouthAxis,
-  mouthOccluders,
+  forwardJetMouths,
   nose,
   SCHEMES,
   type Scheme,
   UP,
 } from "./ship-model.ts";
-import { JET_LENGTH, JET_LEVELS, jetLayers } from "./ship-jet-layers.ts";
+import { JET_LENGTH, JET_LEVELS } from "./ship-jet-layers.ts";
+import { normalJetLayers } from "./ship-normal-materials.ts";
 import { svgPaths } from "./ship-paths.ts";
 import { forwardJetSvg } from "./ship-jet-svg.ts";
 import { writeShipMaterials } from "./ship-materials.ts";
@@ -35,45 +34,28 @@ function svg(yaw: number, thrust: boolean, scheme: Scheme = classic): string {
   return [
     '<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">',
     `  <title>Ship ${yaw}${thrust ? " thrust" : " idle"}${scheme === classic ? "" : ` ${scheme.name}`}</title>`,
-    ...(thrust ? forwardJetSvg(FRAME / 2, { yaw }).map((path) => `  ${path}`) : []),
     ...polygons,
+    ...(thrust ? forwardJetSvg(FRAME / 2, { yaw }).map((path) => `  ${path}`) : []),
     "</svg>",
     "",
   ].join("\n");
 }
 
-// Speed jets: Tech draws halo, outer and core triangles per mouth behind the idle frame, in the
-// layers of Ada's engine level.
+// Speed jets use centred, foreground normal apertures with the selected Engine-level materials.
 function jets(): string {
-  const layers = JET_LEVELS.flatMap(jetLayers);
-  const bounds = {
-    width: Math.max(...layers.map((l) => l.width)),
-    length: (JET_LENGTH.base + JET_LENGTH.scale) * Math.max(...layers.map((l) => l.length)),
-  };
   const headings = Array.from({ length: SHIP_HEADINGS }, (_, yaw) => ({
     index: yaw,
-    mouths: [-1, 1].map((sign) => {
-      const { half, middle } = mouthAxis(sign);
-      const { corner } = jetAttachment(yaw, sign);
-      const groupMiddle = corner.map(
-        (value, index) => value - half[index]! * bounds.width,
-      ) as unknown as readonly [number, number, number];
-      return {
-        anchor: anchor(SHIP_HEADINGS, 48, yaw, middle),
-        axis: vector(SHIP_HEADINGS, yaw, [0, 1, 0]),
-        outerCorner: anchor(SHIP_HEADINGS, 48, yaw, corner),
-        coreOutboard: true,
-        occluders: mouthOccluders(bounds, sign, yaw, FRAME / 2, { middle: groupMiddle, half }),
-        half: vector(SHIP_HEADINGS, yaw, half),
-      };
-    }),
+    mouths: forwardJetMouths(FRAME / 2, { yaw }),
   }));
   const contract = {
     version: 1,
     shipHeadings: SHIP_HEADING_CONTRACT,
     frame: 96,
     length: JET_LENGTH,
-    engineLevels: JET_LEVELS.map((entry) => ({ level: entry.level, layers: jetLayers(entry) })),
+    engineLevels: JET_LEVELS.map((entry) => ({
+      level: entry.level,
+      layers: normalJetLayers(entry),
+    })),
     headings,
   };
   return json(contract);

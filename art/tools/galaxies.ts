@@ -23,6 +23,8 @@ import {
   type Xy,
 } from "./paint.ts";
 import { json } from "./projection.ts";
+import { JET_LEVELS } from "./ship-jet-layers.ts";
+import { normalJetLayers } from "./ship-normal-materials.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 
@@ -129,11 +131,12 @@ const LIGHT_FIELD = {
   // Edge markers' ink outline, as the Scattershot dot's (space-palette.md, Edge markers).
   markerOutline: 1,
   jets: {
-    // Ada's light-field jets by engine level: a flat dark outer and a core gradient, no halo.
+    // The extra normal outer is opaque only for normal apertures; legacy reverse skips it.
     shipLevels: [
       {
         level: 1,
         layers: [
+          { ...normalJetLayers(JET_LEVELS[0]!)[0]!, alpha: { from: 0, to: 1, max: 0 } },
           { name: "outer", colors: ["#1767b3", "#1767b3"], width: 1.6, length: 1 },
           { name: "core", colors: ["#2585d0", "#64caff"], width: 0.8, length: 0.55 },
         ],
@@ -141,6 +144,7 @@ const LIGHT_FIELD = {
       {
         level: 2,
         layers: [
+          { ...normalJetLayers(JET_LEVELS[1]!)[0]!, alpha: { from: 0, to: 1, max: 0 } },
           { name: "outer", colors: ["#9e3027", "#9e3027"], width: 1.6, length: 1 },
           { name: "core", colors: ["#cf4935", "#ee7960"], width: 0.8, length: 0.55 },
         ],
@@ -148,6 +152,7 @@ const LIGHT_FIELD = {
       {
         level: 3,
         layers: [
+          { ...normalJetLayers(JET_LEVELS[2]!)[0]!, alpha: { from: 0, to: 1, max: 0 } },
           { name: "outer", colors: ["#91620e", "#91620e"], width: 1.6, length: 1 },
           { name: "core", colors: ["#d49b22", "#f2cf62"], width: 0.8, length: 0.55 },
         ],

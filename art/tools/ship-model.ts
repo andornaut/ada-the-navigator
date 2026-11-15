@@ -381,7 +381,7 @@ export function engineOpeningGeometry(sign: number) {
 }
 
 /** Centred normal-exhaust station on the actual luminous rear aperture plane. */
-export function normalJetStation(sign: number) {
+export function normalJetStation(pose: Pose, sign: number) {
   const v = vertices();
   const wing = sign < 0 ? v.tipL : v.tipR;
   const notch = sign < 0 ? v.notchL : v.notchR;
@@ -391,12 +391,14 @@ export function normalJetStation(sign: number) {
     (notch[2] + v.tail[2]) / 2,
   ];
   const opening = engineOpeningGeometry(sign);
+  const width = round(Math.abs(wing[0] - tailMidpoint[0]));
+  const attachment = jetAttachmentForPose(pose, sign).corner;
+  const spanScale = width / (2 * Math.abs(attachment[0] - opening.centre[0]));
   const half: Point = [
-    wing[0] - opening.centre[0],
-    wing[1] - opening.centre[1],
-    wing[2] - opening.centre[2],
+    (attachment[0] - opening.centre[0]) * spanScale,
+    (attachment[1] - opening.centre[1]) * spanScale,
+    (attachment[2] - opening.centre[2]) * spanScale,
   ];
-  const width = 2 * Math.abs(half[0]);
   const openingWidth =
     Math.max(...opening.points.map((point) => point[0])) -
     Math.min(...opening.points.map((point) => point[0]));
@@ -443,14 +445,13 @@ export function forwardJetMouths(pivot: number, pose: Pose) {
   const projected = (centre: number, point: Point) =>
     projectAt(centre, centre, place(pose, point)).map(round) as [number, number];
   return [-1, 1].map((sign) => {
-    const { middle, half } = mouthAxis(sign);
-    const { corner } = jetAttachmentForPose(pose, sign);
+    const { middle, half, coreWidth } = normalJetStation(pose, sign);
     return {
       anchor: projected(pivot, middle),
       axis: projected(0, [0, 1, 0]),
       half: projected(0, half),
-      outerCorner: projected(pivot, corner),
-      coreOutboard: true as const,
+      normalAperture: { coreWidth },
+      occluders: [],
     };
   });
 }

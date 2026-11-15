@@ -114,7 +114,7 @@
   above the skirt top, the top kept 0.6 under the wall's top edge, lifted 0.03
   off the wall. Compatibility thrust exports retain the authored 16-unit outer length and
   use the canonical three layers through the shared projected geometry helper.
-  Their visible group attaches at the selected wing corner with the core outboard;
+  Their normal group is centred on the rear opening, with a solid outer;
   aperture enlargement does not scale the flames.
 - All faces use one projection. The viewer looks from `+(1, 1, 1)`;
   outward normals determine visibility, and geometric depth partitioning handles
@@ -246,49 +246,47 @@ and all nine authored bank/stretch/squash poses. Their shared source is
 Jet geometry, collision, opening dimensions and all palette values remain
 independent of this material contract.
 
-<!-- CLEANUP (added 2026-11-14): Remove coloured compatibility exports only after paired shared-material loader, build and PWA adoption. -->
-
-The existing coloured ship and warp SVGs remain available alongside this
-additive contract.
+The shared contract supplies paid hulls, all nine jump poses and the idle up
+alias. Their 375 retired physical SVGs are not emitted. The 64 Classic idle
+frames remain for the local map; 65 Classic thrust fallbacks, the historical
+yellow archive and all 450 logical player manifest entries remain available.
 
 ## Speed jets
 
 `ship-jets.json` (version 1) drives jets that scale continuously with speed. Each
 mouth may include `occluders`, a list of polygons in the same 96px frame as its
-anchor. They contain actual surface fragments nearer than that mouth's
-horizontal exhaust plane, clipped to the maximum jet support. An empty list is
-clear; absence retains the legacy behind-sprite rendering. The title screen
-uses these polygons to attach each plume without covering nearer hull faces.
-The
-renderer draws them behind the idle `ship-{index}` frame; there are no jet frames.
+anchor. Legacy masks describe nearer surface fragments. Normal aperture mouths
+publish an empty list and draw their complete triangles in front of the idle
+`ship-{index}` frame. Legacy mouths without this profile retain their existing
+masking and compositing order; there are no animated jet frames.
 
 - `f` is current speed as a fraction of max speed. No jet at `f = 0`.
 - Jet length in ship units: `length.base + length.scale * f ^ length.exponent`
   (6 + 24 f²): about 2-3px at f = 0.25 and 13px at max on the 42px display.
-- `headings` holds all 64 ship headings, `headings[k].index` = `k`. Per
-  heading, each of the two `mouths` gives frame-px values in the 96 by 96
-  frame: `anchor` (legacy projected opening middle), `outerCorner` (the visible wing
-  corner controlling the whole group), `coreOutboard: true`, `axis` (projected rear
-  direction per ship unit) and `half` (projected half mouth width along the
-  trailing edge, local (±2.75, 0.83, 0)). Scale them
-  with the ship's display size.
-- At the current speed, find the widest selected layer with positive alpha and
-  set the common group anchor to `outerCorner - half * visibleWidth`. Every
-  layer receives the same group translation. Near wings attach to the actual
-  skirt-bottom corner at model z = 0; far wings retain the upper corner at
-  z = 1.2. Nearness follows the rotated model's viewer depth. Equal-depth wings
-  share the same lower attachment.
-- Draw halo, outer and core in their canonical order with unchanged widths,
-  lengths, colours and alpha. The approved outboard-core arrangement adds
-  `half * min(outer.width - core.width,
-outer.width * (1 - core.length / outer.length))` to the core's centre only.
-  This is 0.72 half-mouth units for the canonical layers. The core remains
-  contained by the outer triangle, with the darker band toward the hull.
-- Forward groups have no `rearClip`. The canonical opaque hull occludes them;
-  title occluders describe actual nearer hull fragments at the new group plane.
+- `headings` holds all 64 headings. Each normal mouth has `anchor`, `axis`,
+  `half` and `normalAperture: { coreWidth }`. `anchor` is the projected centre
+  of the actual luminous rear opening. The full physical mouth spans 18.72
+  model X units; the unchanged luminous core spans 6.875. Thus `coreWidth` is
+  `6.875 / 18.72`, independent of paint, heading and Engine level.
+- Every selected normal triangle has the same root centre and axis. The
+  outer width factor is 1; the canonical medium is 0.734508547 and the core
+  is 0.367254274. A core-only selection retains the physical core factor.
+  Layer widths and lengths must remain nonincreasing, so each triangle stays
+  inside the next. The new profile has no `outerCorner`, `coreOutboard` or
+  `rearClip` and does not translate individual layers.
+- The normal outer material is opaque. Its `normalColor` is derived from the
+  existing canonical material over the canonical space background at the
+  homepage reference fraction, using the shared raster compositor. This fixes
+  the visible dark shade without changing the canonical Engine RGB values or
+  the reverse material. Medium and core colours retain their existing rules.
+- Normal triangles render as complete three-edge polygons in front of the
+  hull, with explicit empty `occluders`. No hull mask cuts a facet or kink
+  into the visible outer triangle. The normal root direction reaches the
+  visible lower attachment corner; the outer covers that corner beyond the
+  medium layer. Hull geometry, housing and opening materials remain unchanged.
 - Colour is `color`, or `colors` interpolated linearly in sRGB by `f`. The halo
-  alpha is `max(0, (f - from) / (to - from)) * max`, skipped at zero; other layers
-  are opaque.
+  alpha is `max(0, (f - from) / (to - from)) * max` for legacy profiles.
+  The normal outer uses its opaque appearance policy; other layers are opaque.
 - `engineLevels` holds the layers for each engine level, `level` 1 to 3: draw
   Ada's jets in her level's `layers`. Only the colours change; widths, lengths
   and the halo's alpha ramp are the same at every level, on every paint scheme.
@@ -303,9 +301,15 @@ On a light field the jets take `lightField.jets.shipLevels` in
 [galaxies.json](../public/art/galaxies.json) for the same level
 ([Light fields](galaxies.md#light-fields)).
 
+Light-field normal apertures prepend the same solid normal outer to their
+existing medium/core materials. Its stored legacy alpha is zero, so reverse
+rendering skips that layer and retains its existing two visible materials.
+Only the normal-aperture appearance policy makes the added outer visible.
+
 Light fields keep Engine 1 blue. Engine 2 uses outer `#9e3027`, core
 `#cf4935` to `#ee7960`; Engine 3 uses outer `#91620e`, core `#d49b22` to
-`#f2cf62`. Both use the existing two-layer geometry without a halo.
+`#f2cf62`. Reverse and legacy mouths retain those two visible layers. Normal apertures
+include the solid normal outer described above.
 
 ### Retro jets
 
@@ -326,7 +330,7 @@ and forward/outward unit direction `(±sin(10°), -cos(10°), 0)`.
 forward group, at model x/y `(±21.44, 20.48)`. Each mouth's `outerCorner`
 is this selected point projected into its heading frame. The common anchor
 uses the widest currently visible selected layer, including a visible halo.
-`coreOutboard` applies the same contained outboard-core geometry as forward
+`coreOutboard` retains the contained outboard-core arrangement for reverse
 exhaust. The compatibility `anchor` uses the base engine's full-speed width.
 
 All layers, including the halo, stop at the wing's rear tip-to-notch plane.
@@ -343,7 +347,7 @@ Layer widths, relative lengths, colours and alpha ramps come from the selected
 main material. Retro rendering adds no wing-edge ink. Actual backward velocity
 relative to facing selects retro jets with the existing motion threshold;
 forward motion and reduced-motion behavior retain their contracts. Forward
-attachment uses the shared visible-corner rule without retro trimming.
+root stays centred on the rear opening, with no geometry trimming.
 
 `ship-retro-jets-yellow.json` is a static archive and is not rewritten by the
 active producer. It is not a Settings toggle.
