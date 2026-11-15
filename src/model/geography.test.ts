@@ -146,6 +146,7 @@ describe("regenerating ordinary chunks and persistent notables", () => {
   it("bounds ordinary objects, active chunk keys and pack metadata over long travel", () => {
     const flight = empty();
     const sizes: number[] = [];
+    const worldSizes: number[] = [];
     for (let index = 1; index <= 150; index++) {
       flight.player = { x: index * 4096, y: 0 };
       stepFlight(CONTENT, 0.001, idle, flight);
@@ -153,10 +154,15 @@ describe("regenerating ordinary chunks and persistent notables", () => {
       expect(flight.objects.length).toBeLessThan(250);
       expect(Object.keys(flight.combat?.initialPackSizes ?? {}).length).toBeLessThan(12);
       expect(flight.world.notables).toEqual({});
+      expect(flight.shots.every((shot) => shot.life > 0)).toBe(true);
       sizes.push(JSON.stringify(flight).length);
+      // Live volleys have independent lifetimes; world-history growth excludes their payload.
+      worldSizes.push(JSON.stringify({ ...flight, shots: [] }).length);
     }
     expect(Math.max(...sizes)).toBeLessThan(100000);
-    expect(Math.max(...sizes.slice(100))).toBeLessThan(Math.max(...sizes.slice(0, 50)) + 20000);
+    expect(Math.max(...worldSizes.slice(100))).toBeLessThan(
+      Math.max(...worldSizes.slice(0, 50)) + 20000,
+    );
     expect(Object.hasOwn(flight, "dormant")).toBe(false);
     expect(Object.hasOwn(flight, "exploredChunks")).toBe(false);
   });
