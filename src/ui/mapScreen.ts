@@ -36,6 +36,7 @@ import {
   MAP_SCREEN,
   MAP_SYMBOL,
   MAP_TOOLS,
+  mapGlyphSize,
   mapHeaderCap,
   mapImage,
   mapProjection,
@@ -382,8 +383,8 @@ export const MAP_SCREEN_STYLE = `
 }
 .ada-controls .ada-map-screen .ada-map-place::before{
   content:"";
-  width:${units(MAP_SYMBOL.glyph)};
-  height:${units(MAP_SYMBOL.glyph)};
+  width:var(--map-glyph-size, ${units(MAP_SYMBOL.glyph)});
+  height:var(--map-glyph-size, ${units(MAP_SYMBOL.glyph)});
   background:currentColor;
   -webkit-mask:var(--glyph) center / 100% 100% no-repeat;
   mask:var(--glyph) center / 100% 100% no-repeat
@@ -816,12 +817,16 @@ export function createMapShipMarker(image: () => HTMLImageElement = () => new Im
 
 // A place's chip node: its face, glyph, kind and marks.
 /** A chip's face colour: main's orange for a held job's target or spot, else its symbol's face. */
-export function chipFace(place: Pick<MapPlace, "job" | "symbol">): string {
+export function chipFace(
+  place: Pick<MapPlace, "job"> & { readonly symbol: keyof typeof MAP_FACES },
+): string {
   return place.job ? MAP_JOB_FACE : MAP_FACES[place.symbol];
 }
 
 /** A chip's glyph: a held job's own spot takes its job type's, every other place its symbol's. */
-export function chipGlyph(place: Pick<MapPlace, "jobType" | "symbol">): string | null {
+export function chipGlyph(
+  place: Pick<MapPlace, "jobType"> & { readonly symbol: keyof typeof MAP_GLYPHS },
+): string | null {
   return place.jobType ? `map-job-${place.jobType}` : MAP_GLYPHS[place.symbol];
 }
 
@@ -831,6 +836,7 @@ function dressChip(chip: HTMLElement, place: MapPlace): void {
   chip.dataset.kind = place.kind;
   chip.dataset.symbol = place.symbol;
   chip.style.setProperty("--face", chipFace(place));
+  chip.style.setProperty("--map-glyph-size", units(mapGlyphSize(place.symbol)));
   // A held job's own spot takes its job type's glyph (art/map.md "Symbols").
   const glyph = chipGlyph(place);
   if (place.jobType) {

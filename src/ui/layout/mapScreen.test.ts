@@ -99,7 +99,7 @@ describe("map screen tokens", () => {
       ...Object.values(MAP_GLYPHS).filter((glyph) => glyph !== null),
       ...MAP_TOOLS.map(({ glyph }) => glyph),
     ];
-    expect(new Set(glyphs).size).toBe(12);
+    expect(new Set(glyphs).size).toBe(13);
     for (const glyph of glyphs) {
       const svg = readFileSync(
         new URL(`../../../public/art/ui/icons/${glyph}.svg`, import.meta.url),

@@ -1,6 +1,7 @@
 import { clamp } from "@andornaut/game-kit/runtime/numbers";
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
+import { EDGE_MARKER_GLYPHS } from "../../data/edgeMarkers.ts";
 import {
   HUD_BUTTON,
   MAP_HUD_LABEL_WIDTHS,
@@ -61,26 +62,30 @@ export const MAP_COLORS = {
  * Each symbol's chip face. A held job's own spot keeps the job's orange, as does any place that is
  * the job's target (the faces of gameplay/quests.md's job marks).
  */
-export const MAP_FACES: Readonly<Record<MapSymbol, string>> = {
+const STATION_FACE = "#c4afcc";
+
+export const MAP_FACES: Readonly<Record<MapSymbol | "hostileStation", string>> = {
   beacon: "#ead4aa",
   destination: "#65c9bf",
   growers: "#9ccc5a",
   holodisk: "#e868c8",
+  hostileStation: STATION_FACE,
   job: "#feae34",
   nebula: "#ead4aa",
   salvagers: "#8f9cf0",
-  station: "#c4afcc",
+  station: STATION_FACE,
   workshop: "#f2d15a",
   wreck: "#ead4aa",
 };
 export const MAP_JOB_FACE = MAP_FACES.job;
 
 /** Each symbol's glyph: Art's map-*.svg masks (art/tools/map-icons.ts); a job spot has none. */
-export const MAP_GLYPHS: Readonly<Record<MapSymbol, string | null>> = {
+export const MAP_GLYPHS: Readonly<Record<MapSymbol | "hostileStation", string | null>> = {
   beacon: "map-beacon",
   destination: "map-destination",
   growers: "map-growers",
   holodisk: "map-holodisk",
+  hostileStation: "map-hostile-station",
   job: null,
   nebula: "map-nebula",
   salvagers: "map-salvagers",
@@ -88,6 +93,11 @@ export const MAP_GLYPHS: Readonly<Record<MapSymbol, string | null>> = {
   workshop: "map-workshop",
   wreck: "map-wreck",
 };
+
+/** Native hostile-station art keeps its authored extent; other Map glyphs retain their size. */
+export function mapGlyphSize(symbol: keyof typeof MAP_GLYPHS): number {
+  return symbol === "hostileStation" ? EDGE_MARKER_GLYPHS.hostileStation.icon : MAP_SYMBOL.glyph;
+}
 
 /** The compact tools, left to right, with their glyphs. */
 export const MAP_TOOLS = [
