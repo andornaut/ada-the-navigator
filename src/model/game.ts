@@ -120,6 +120,7 @@ import { initializeGalaxyGeography } from "./galaxyGeography.ts";
 import { liveEnemy } from "./geography.ts";
 import { hostileStationMapPlaces } from "./hostileStationMap.ts";
 import { acknowledgeHostileStationIdentification } from "./hostileStationPersistence.ts";
+import { materializeGeneratedHostileStations } from "./hostileStationRuntime.ts";
 import {
   INDICATOR_SOURCES,
   type IndicatorTarget,
@@ -1986,6 +1987,7 @@ export class GameModel {
       ensureNeedleDebris(this.content, context.flight);
       syncFlightRegion(this.content, context.flight);
     }
+    materializeGeneratedHostileStations(this.content, this.current, flight);
     this.reopenInteraction();
   }
   /** Records the chunk Ada is in to the galaxy's explored record, which the Map's fog reveals. */
@@ -2364,6 +2366,7 @@ export class GameModel {
         this.talk.chapter(key);
       }
     }
+    materializeGeneratedHostileStations(this.content, this.current, f);
     const jobMoments = this.jobMoments;
     this.jobMoments = [];
     const near = (range: number) => (object: { x: number; y: number }) =>
