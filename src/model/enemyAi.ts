@@ -16,6 +16,11 @@ import { SHARED_SHIP_PHYSICS } from "../data/shipPhysics.ts";
 import type { WeaponLevel } from "../data/types.ts";
 import type { NavigationQuery } from "./ai/navigationQuery.ts";
 import { avoidObstacles } from "./ai/obstacleNavigation.ts";
+import {
+  type StationGuardAnchor,
+  stationGuardPatrol,
+  stationGuardPatrolRadius,
+} from "./ai/stationGuardPatrol.ts";
 import { muzzleOffset } from "./muzzles.ts";
 import { fanHeading } from "./playerProjectiles.ts";
 import { direction, hullOffset, speedFraction, stepShipMotion, turnToward } from "./shipPhysics.ts";
@@ -100,6 +105,8 @@ export interface EnemyState {
   weaponLevel?: WeaponLevel;
 }
 export interface EnemyContext extends WorldContext {
+  /** Validated exact route-site frame for local guard home patrol and return only. */
+  stationGuardAnchor?: StationGuardAnchor;
   /** Optional hull-clearance steering, separate from perception and weapon intent. */
   navigationQuery?: NavigationQuery;
   /** Admission for new sight aggression only; damage, summons and existing pursuit bypass it. */
@@ -415,6 +422,7 @@ function arrive(
 function navigate(
   definition: EnemyDefinition,
   context: WorldContext,
+  stationAnchor: StationGuardAnchor | undefined,
   anchor: Point,
   searching: boolean,
   state: EnemyState,
@@ -422,6 +430,30 @@ function navigate(
   const tuning = definition.navigation;
   if (!tuning) {
     return { x: 0, y: 0 };
+  }
+  if (stationAnchor) {
+    const course = stationGuardPatrol(
+      context,
+      stationAnchor,
+      state.home,
+      seeded(state.id, 14) < 0.5 ? -1 : 1,
+      state.position,
+    );
+    const radius = stationGuardPatrolRadius(context, stationAnchor, state.home);
+    const fraction = Math.min(
+      1,
+      Math.abs(worldDistance(context, stationAnchor.center, state.position) - radius) /
+        tuning.approachRadius,
+    );
+    const approach = fraction * fraction * (3 - 2 * fraction);
+    const combatShare =
+      definition.behaviour.kind === "siege" ? definition.behaviour.speedFraction : 1;
+    const pace =
+      combatShare *
+      (searching
+        ? tuning.patrolShare + (tuning.searchShare - tuning.patrolShare) * approach
+        : tuning.patrolShare);
+    return { x: course.x * pace, y: course.y * pace };
   }
   const radius =
     tuning.patrolRadius[0] +
@@ -591,7 +623,7 @@ function steering(
 ): Point {
   if (state.returning) {
     return definition.navigation
-      ? navigate(definition, context, state.home, true, state)
+      ? navigate(definition, context, context.stationGuardAnchor, state.home, true, state)
       : arrive(definition, context, maxSpeed, state.home, state);
   }
   if (retreatActive(state)) {
@@ -605,6 +637,7 @@ function steering(
     return navigate(
       definition,
       context,
+      investigate ? undefined : context.stationGuardAnchor,
       investigate ? state.lastSeen! : state.home,
       investigate,
       state,
@@ -618,6 +651,7 @@ function steering(
       return navigate(
         definition,
         context,
+        state.lastSeen === null ? context.stationGuardAnchor : undefined,
         state.lastSeen ?? state.home,
         state.lastSeen !== null,
         state,

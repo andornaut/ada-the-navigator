@@ -9,6 +9,18 @@ export interface StationGuardAnchor {
   readonly clearanceRadius: number;
 }
 
+/** The existing valid home and canonical berth define the station patrol radius. */
+export function stationGuardPatrolRadius(
+  context: WorldContext,
+  anchor: StationGuardAnchor,
+  home: Vec,
+): number {
+  return Math.max(
+    worldDistance(context, anchor.center, home),
+    anchor.clearanceRadius + ENEMY_AVOIDANCE.clearance,
+  );
+}
+
 /** A site-centered course through a valid local home, outside its protected footprint. */
 export function stationGuardPatrol(
   context: WorldContext,
@@ -17,10 +29,7 @@ export function stationGuardPatrol(
   side: -1 | 1,
   position: Vec,
 ): Vec {
-  const radius = Math.max(
-    worldDistance(context, anchor.center, home),
-    anchor.clearanceRadius + ENEMY_AVOIDANCE.clearance,
-  );
+  const radius = stationGuardPatrolRadius(context, anchor, home);
   const offset = worldDelta(context, anchor.center, position);
   const distance = Math.hypot(offset.x, offset.y);
   const outward = direction(distance ? offset : worldDelta(context, anchor.center, home));
