@@ -116,6 +116,8 @@ export interface EnemyContext extends WorldContext {
   adaWidth: number;
   dt: number;
   initialPackSizes: Readonly<Record<string, number>>;
+  /** Pre-movement live loaded pack counts, including disabled survivors. */
+  loadedPackMembers?: Readonly<Record<string, number>>;
   /** The route position's lead (ENEMY_AIM.lead). */
   lead: number;
   peers: readonly EnemyState[];
@@ -782,7 +784,11 @@ export function stepEnemy(
   const fighting = observed && distance <= definition.engagement;
   const packSize = state.packId === null ? 0 : (context.initialPackSizes[state.packId] ?? 0);
   const alive =
-    context.peers.filter((peer) => peer.packId === state.packId && peer.hp > 0).length +
+    (context.loadedPackMembers === undefined
+      ? context.peers.filter((peer) => peer.packId === state.packId && peer.hp > 0).length
+      : state.packId === null
+        ? 0
+        : (context.loadedPackMembers[state.packId] ?? 0)) +
     (state.packId === null ? 0 : (context.dormantPackMembers?.[state.packId] ?? 0));
   const packFlee = packSize > 1 && 1 - alive / packSize >= definition.morale.packLossRatio;
   const next: EnemyState = {
