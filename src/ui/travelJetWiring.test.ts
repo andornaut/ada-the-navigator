@@ -58,6 +58,8 @@ function dom() {
     hidden = false;
     style = { backgroundImage: "", removeProperty() {}, setProperty() {} };
     width = 0;
+    textContent = "";
+    readonly attributes = new Map<string, string>();
     readonly tag: string;
     constructor(tag: string) {
       this.tag = tag;
@@ -67,15 +69,48 @@ function dom() {
     append(...elements: ElementFake[]) {
       this.children.push(...elements);
     }
+    cloneNode(deep = false): ElementFake {
+      const clone = new ElementFake(this.tag);
+      clone.className = this.className;
+      clone.dataset = { ...this.dataset };
+      clone.height = this.height;
+      clone.hidden = this.hidden;
+      clone.textContent = this.textContent;
+      clone.width = this.width;
+      Object.assign(clone.style, this.style);
+      for (const [name, value] of this.attributes) {
+        clone.attributes.set(name, value);
+      }
+      if (deep) {
+        clone.append(...this.children.map((child) => child.cloneNode(true)));
+      }
+      return clone;
+    }
+    querySelector(selector: string): ElementFake | null {
+      for (const child of this.children) {
+        if (selector.startsWith(".") && child.className.split(/\s+/u).includes(selector.slice(1))) {
+          return child;
+        }
+        const match = child.querySelector(selector);
+        if (match) {
+          return match;
+        }
+      }
+      return null;
+    }
     getContext() {
       return context;
     }
     remove() {}
-    removeAttribute() {}
+    removeAttribute(name: string) {
+      this.attributes.delete(name);
+    }
     replaceChildren(...elements: ElementFake[]) {
       this.children = elements;
     }
-    setAttribute() {}
+    setAttribute(name: string, value: string) {
+      this.attributes.set(name, value);
+    }
     toggleAttribute() {}
   }
   const document = {
@@ -248,6 +283,16 @@ it("draws route thrust below the painted hull and hides it under reduced motion"
     reducedMotion: () => reduced,
   };
   const map = createGalaxyMap(fixture.host, options);
+  const firstMarker = fixture.nodes.find((node) => node.dataset.position === "1")!;
+  const earthMarker = fixture.nodes.find((node) => node.dataset.position === "earth")!;
+  expect(earthMarker.className).toBe(firstMarker.className);
+  expect(earthMarker.dataset).not.toBe(firstMarker.dataset);
+  expect(earthMarker.querySelector(".ada-route-disc")).not.toBe(
+    firstMarker.querySelector(".ada-route-disc"),
+  );
+  expect(earthMarker.querySelector(".ada-route-disc")!.textContent).toBe("");
+  expect(firstMarker.querySelector(".ada-route-disc")!.textContent).toBe("1");
+  expect(earthMarker.attributes.get("aria-label")).toBe("Earth");
   const provider = vi.fn(() => staticShipJets(main, LIGHT_FIELD.jets.shipLevels, 3));
   map.setArt({
     figures: [],
