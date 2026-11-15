@@ -12,7 +12,7 @@ import { galaxyProjects } from "../data/projects.ts";
 import { RESOURCE_ROCKS } from "../data/resourceRocks.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
-import type { GalaxyNumber, GameContent, Weapon } from "../data/types.ts";
+import type { GalaxyNumber, GameContent, Weapon, WeaponLevel } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
 import { validActivity } from "./activities.ts";
 import { validAndromedaProgress } from "./andromeda.ts";
@@ -126,6 +126,7 @@ function enemyState(galaxy: GalaxyNumber, value: unknown): boolean {
     galaxy,
     value.archetype as keyof typeof enemyCatalog,
     value.id as string,
+    (value.weaponLevel ?? 1) as WeaponLevel,
   );
   const hardpoints: unknown[] = value.hardpoints;
   return (

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import * as enemyCatalogModule from "../data/enemyCatalog.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import type { WeaponLevel } from "../data/types.ts";
 import { playOpening } from "../testing/launch.ts";
@@ -53,6 +54,7 @@ describe("saved equipped enemy levels", () => {
         if (level !== undefined) {
           Object.assign(enemy, { weaponLevel: level });
         }
+        const definition = vi.spyOn(enemyCatalogModule, "enemyDefinition");
         const random = vi.spyOn(crypto, "getRandomValues");
         random.mockClear();
         try {
@@ -60,8 +62,10 @@ describe("saved equipped enemy levels", () => {
           expect(restored).toEqual(saved);
           expect(restored!.version).toBe(SAVE_VERSION);
           expect(random).not.toHaveBeenCalled();
+          expect(definition).toHaveBeenCalledWith(1, "capital", "guard", level ?? 1);
           expect(restored!.flight).not.toBe(saved.flight);
         } finally {
+          definition.mockRestore();
           random.mockRestore();
         }
       }
