@@ -1,5 +1,6 @@
 import { type Background, BACKGROUND_ART } from "../data/storybook.ts";
 import { STORY_BACKGROUND, type SubjectBand } from "./layout/storyPage.ts";
+import { readStoryCompositionAssets, validStorySourceRect } from "./storyCompositions.ts";
 
 // Art's storybook environments, their compatibility aliases, the rock glow transitions, the overnight
 // sequence (art/storybook.md) and the holodisk moment aboard (art/aboard.md), read from the root
@@ -7,13 +8,22 @@ import { STORY_BACKGROUND, type SubjectBand } from "./layout/storyPage.ts";
 
 export const ART_MANIFEST_URL = "/art/manifest.json";
 
+export interface StorySourceRect {
+  readonly height: number;
+  readonly width: number;
+  readonly x: number;
+  readonly y: number;
+}
+
 export interface ArtAsset {
   /** A composite background's base: the background its pages are placed as. */
   readonly base?: string;
   readonly displayHeight?: number;
   readonly displayWidth?: number;
+  readonly height?: number;
   readonly id: string;
   readonly path: string;
+  readonly sourceRect?: StorySourceRect;
   /** An overlay's top-left on the background canvas, in logical px. */
   readonly at?: { readonly x: number; readonly y: number };
   /** A composite background's overlay entries, drawn over its path in order. */
@@ -26,6 +36,7 @@ export interface ArtAsset {
 export interface StoryArtManifest {
   readonly aboardHolodisk?: string;
   readonly assets?: readonly ArtAsset[];
+  readonly storyCompositions?: string;
   readonly storyOvernight?: string;
   readonly storyTransition?: string;
 }
@@ -43,6 +54,11 @@ export interface StoryOverlay {
   readonly box: CanvasBox;
   readonly id: string;
   readonly url: string;
+  readonly source?: {
+    readonly height: number;
+    readonly rect: StorySourceRect;
+    readonly width: number;
+  };
 }
 
 /**
@@ -299,7 +315,25 @@ function canvasBox(entry: ArtAsset): CanvasBox | null {
 export function readOverlay(assets: readonly ArtAsset[], id: string): StoryOverlay | null {
   const entry = assets.find((asset) => asset.id === id);
   const box = entry && canvasBox(entry);
-  return entry && box ? { box, id, url: entry.path } : null;
+  if (!entry || !box) {
+    return null;
+  }
+  if (entry.sourceRect) {
+    if (
+      entry.width === undefined ||
+      entry.height === undefined ||
+      !validStorySourceRect({ height: entry.height, width: entry.width }, entry.sourceRect)
+    ) {
+      return null;
+    }
+    return {
+      box,
+      id,
+      source: { height: entry.height, rect: entry.sourceRect, width: entry.width },
+      url: entry.path,
+    };
+  }
+  return { box, id, url: entry.path };
 }
 
 /**
@@ -519,14 +553,18 @@ const fetchJson = async (url: string): Promise<unknown> => {
  */
 export async function loadStoryArt(): Promise<StoryArt> {
   const manifest = (await fetchJson(ART_MANIFEST_URL).catch(() => ({}))) as StoryArtManifest;
-  const assets = manifest.assets ?? [];
+  const originalAssets = manifest.assets ?? [];
   const linked = (url: string | undefined) =>
     url ? fetchJson(url).catch(() => ({})) : Promise.resolve({});
-  const [transition, overnight, holodisk] = await Promise.all([
+  const [transition, overnight, holodisk, compositions] = await Promise.all([
     linked(manifest.storyTransition),
     linked(manifest.storyOvernight),
     linked(manifest.aboardHolodisk),
+    linked(manifest.storyCompositions),
   ]);
+  const assets = manifest.storyCompositions
+    ? (readStoryCompositionAssets(originalAssets, compositions) ?? [])
+    : originalAssets;
   return {
     backgrounds: storyBackgrounds(assets),
     bases: storyBases(assets),

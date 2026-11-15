@@ -40,6 +40,7 @@ import {
   type TransitionStep,
   transitionStepsForBackgrounds,
 } from "./storyArt.ts";
+import { storyOverlayCrop } from "./storyCompositions.ts";
 
 export interface StoryLabels {
   readonly next: string;
@@ -776,6 +777,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     const { box } = overlay;
     Object.assign(node.style, {
       backgroundImage: image(overlay.url),
+      ...storyOverlayCrop(overlay.source),
       height: `${box.height}%`,
       left: `${box.left}%`,
       top: `${box.top}%`,
