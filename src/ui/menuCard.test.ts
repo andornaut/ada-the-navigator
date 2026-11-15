@@ -25,13 +25,16 @@ const fixture = vi.hoisted(() => {
     frame: new Node(),
   };
   const layer = { dispose: vi.fn(), open: vi.fn(() => vi.fn()) };
-  return { Node, card, layer };
+  return { Node, card, layer, requests: [] as unknown[] };
 });
 vi.mock("./modal.ts", async (original) => ({
   ...(await original<typeof import("./modal.ts")>()),
   createButton: (label: string, role = "secondary") =>
     Object.assign(new fixture.Node(), { className: role, textContent: label }),
-  createCard: () => fixture.card,
+  createCard: (options: unknown) => {
+    fixture.requests.push(options);
+    return fixture.card;
+  },
 }));
 vi.mock("@andornaut/game-kit/web/ui/dom/modalLayer", () => ({
   createModalLayer: () => fixture.layer,
@@ -47,6 +50,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.clearAllMocks();
   fixture.card.body.children = [];
+  fixture.requests.length = 0;
 });
 
 function setup() {
@@ -56,7 +60,7 @@ function setup() {
   const onOpenChange = vi.fn();
   const menu = createMenuCard(root as unknown as HTMLElement, {
     closeLabel: "Close",
-    labels: { achievements: "Achievements", exit: "Exit", settings: "Settings" },
+    labels: { achievements: "Achievements", settings: "Settings" },
     onAction,
     onOpenChange,
     title: "Menu",
@@ -65,43 +69,39 @@ function setup() {
 }
 
 describe("production Menu consumer", () => {
-  it("puts primary Close last, focuses it initially and restores the entry on dismissal", () => {
-    const { menu, rows } = setup();
-    const origin = new fixture.Node();
-    menu.setContext("start", true);
-    menu.open(origin as unknown as HTMLElement);
-    expect(rows().map((node) => node.textContent)).toEqual([
-      "Achievements",
-      "Settings",
-      "Exit",
-      "Close",
-    ]);
-    expect(rows().map((node) => node.className)).toEqual([
-      "secondary",
-      "secondary",
-      "secondary",
-      "primary",
-    ]);
-    expect(fixture.layer.open).toHaveBeenLastCalledWith(
-      expect.objectContaining({ focus: rows().at(-1) }),
-      fixture.card.frame,
-    );
-    rows().at(-1)!.dispatchEvent(new Event("click"));
-    expect(menu.isOpen()).toBe(false);
-    expect(origin.focus).toHaveBeenCalledOnce();
-  });
+  it.each(["start", "nonplay"] as const)(
+    "uses the small preset and primary Close last (%s)",
+    (context) => {
+      const { menu, rows } = setup();
+      const origin = new fixture.Node();
+      menu.setContext(context);
+      expect(fixture.requests.at(-1)).toEqual(
+        expect.objectContaining({ size: "small", title: "Menu" }),
+      );
+      menu.open(origin as unknown as HTMLElement);
+      expect(rows().map((node) => node.textContent)).toEqual(["Achievements", "Settings", "Close"]);
+      expect(rows().map((node) => node.className)).toEqual(["secondary", "secondary", "primary"]);
+      expect(fixture.layer.open).toHaveBeenLastCalledWith(
+        expect.objectContaining({ focus: rows().at(-1) }),
+        fixture.card.frame,
+      );
+      rows().at(-1)!.dispatchEvent(new Event("click"));
+      expect(menu.isOpen()).toBe(false);
+      expect(origin.focus).toHaveBeenCalledOnce();
+    },
+  );
   it("returns from a child to the same Menu action without invoking navigation or story actions", () => {
     const { menu, onAction, rows } = setup();
-    menu.setContext("nonplay", true);
+    menu.setContext("nonplay");
     menu.open();
-    expect(rows().map((node) => node.textContent)).toEqual(["Settings", "Close"]);
-    rows()[0]!.dispatchEvent(new Event("click"));
+    expect(rows().map((node) => node.textContent)).toEqual(["Achievements", "Settings", "Close"]);
+    rows()[1]!.dispatchEvent(new Event("click"));
     expect(menu.isOpen()).toBe(false);
     expect(onAction).toHaveBeenCalledExactlyOnceWith("settings", expect.any(Function));
     onAction.mock.calls[0]![1]();
     expect(menu.isOpen()).toBe(true);
     expect(fixture.layer.open).toHaveBeenLastCalledWith(
-      expect.objectContaining({ focus: rows()[0] }),
+      expect.objectContaining({ focus: rows()[1] }),
       fixture.card.frame,
     );
     menu.dispose();
@@ -116,4 +116,16 @@ describe("production Menu consumer", () => {
       ]).map(({ id }) => id),
     ).toEqual(["secondary", "primary"]);
   });
+});
+
+it.each(["footer", "x"])("uses the same Menu dismissal and origin focus through %s", (path) => {
+  const { menu, onOpenChange, rows } = setup();
+  const origin = new fixture.Node();
+  menu.setContext("nonplay");
+  menu.open(origin as unknown as HTMLElement);
+  const target = path === "x" ? fixture.card.close : rows().at(-1)!;
+  target.dispatchEvent(new Event("click"));
+  expect(menu.isOpen()).toBe(false);
+  expect(onOpenChange.mock.calls).toEqual([[true], [false]]);
+  expect(origin.focus).toHaveBeenCalledOnce();
 });

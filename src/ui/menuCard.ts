@@ -3,14 +3,17 @@ import { createModalLayer } from "@andornaut/game-kit/web/ui/dom/modalLayer";
 
 import { createButton, createCard } from "./modal.ts";
 
-export type MenuAction = "achievements" | "settings" | "exit";
+export type MenuAction = "achievements" | "settings";
 export type MenuContext = "start" | "nonplay";
 
-/** Product policy stays in the caller; the generic modal does not infer game actions. */
-export function menuActions(context: MenuContext, exit: boolean): readonly MenuAction[] {
-  return context === "start"
-    ? ["achievements", "settings", ...(exit ? (["exit"] as const) : [])]
-    : ["settings"];
+const MENU_ACTIONS: readonly MenuAction[] = ["achievements", "settings"];
+
+/** Start and nonpausable story share one approved action list. */
+export function menuActions(context: MenuContext): readonly MenuAction[] {
+  if (context !== "start" && context !== "nonplay") {
+    throw new Error("Unknown Menu context");
+  }
+  return MENU_ACTIONS;
 }
 
 export interface MenuOptions {
@@ -29,7 +32,7 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
   const card = createCard({
     closeAction: "close-menu",
     closeLabel: options.closeLabel,
-    size: "medium",
+    size: "small",
     title: options.title,
   });
   card.card.dataset.dialog = "menu";
@@ -41,7 +44,6 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
   const closeButton = createButton(options.closeLabel, "primary");
   closeButton.dataset.action = "menu-close";
   let context: MenuContext = "nonplay";
-  let exit = false;
   let origin: HTMLElement | undefined;
   let returnAction: MenuAction | undefined;
   let disposed = false;
@@ -77,7 +79,7 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
     modal.hidden = false;
     actions.replaceChildren();
     let focus = closeButton;
-    for (const action of menuActions(context, exit)) {
+    for (const action of menuActions(context)) {
       const button = createButton(options.labels[action]);
       button.dataset.action = `menu-${action}`;
       if (returnAction === action) {
@@ -111,9 +113,9 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
     },
     isOpen: () => !modal.hidden,
     open,
-    setContext(next: MenuContext, exitAvailable: boolean) {
+    setContext(next: MenuContext) {
       context = next;
-      exit = exitAvailable;
+      card.card.dataset.menuContext = next;
     },
   };
 }

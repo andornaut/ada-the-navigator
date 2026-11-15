@@ -31,8 +31,9 @@ describe("caller-owned Pause/Menu policy", () => {
     expect(navigationEntry({ ...active, ...facts })).toBe("menu");
   });
   it("keeps Start actions bounded and story Menu free of flight navigation", () => {
-    expect(menuActions("start", false)).toEqual(["achievements", "settings"]);
-    expect(menuActions("start", true)).toEqual(["achievements", "settings", "exit"]);
-    expect(menuActions("nonplay", true)).toEqual(["settings"]);
+    expect(menuActions("start")).toEqual(["achievements", "settings"]);
+    expect(menuActions("start")).toEqual(["achievements", "settings"]);
+    expect(menuActions("nonplay")).toEqual(["achievements", "settings"]);
+    expect(menuActions("start")).toBe(menuActions("nonplay"));
   });
 });
