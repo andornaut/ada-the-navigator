@@ -121,16 +121,12 @@ export const EARTH_PANEL = {
   title: "Earth",
 } as const;
 
-export function destinationAction(earth: boolean, view: GalaxyMapView, stay: string): string {
-  if (earth ? view.atEarth : view.stay) {
-    return stay;
+export function destinationAction(earth: boolean, view: GalaxyMapView): string {
+  if (earth) {
+    return view.atEarth ? "Stay on Earth" : `Jump to ${EARTH_PANEL.title}`;
   }
   const galaxy = view.galaxies[view.panel - 1]!;
-  return earth
-    ? `Jump to ${EARTH_PANEL.title}`
-    : galaxy.unlocked
-      ? `Jump to ${galaxy.name}`
-      : "Jump";
+  return view.stay && galaxy.unlocked ? `Stay in ${galaxy.name}` : `Jump to ${galaxy.name}`;
 }
 
 const { colors, label, marker, path, ship: SHIP } = GALAXY_MAP;
@@ -346,7 +342,8 @@ export const GALAXY_MAP_STYLE = `
 }
 .ada-controls .ada-route-flight-actions{
   position:absolute;
-  left:${safeEdge("left", SAFE_MARGIN.page)};
+  left:50%;
+  transform:translateX(-50%);
   bottom:${safeEdge("bottom", SAFE_MARGIN.page)};
   display:flex;
   gap:${units(SPACING.panelPadding)}
@@ -355,7 +352,6 @@ export const GALAXY_MAP_STYLE = `
 /* A quantum jump from the map: the panel, actions and close X go, then the warp ship covers Ada's. */
 .ada-controls .ada-route[data-jumping] .ada-route-panel,
 .ada-controls .ada-route[data-jumping] .ada-route-action,
-.ada-controls .ada-route[data-jumping] .ada-map-navigation,
 .ada-controls .ada-route[data-ship-covered] .ada-route-ship{
   visibility:hidden
 }
@@ -528,18 +524,13 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   earthName.textContent = EARTH_PANEL.title;
   earthName.style.left = units((GALAXY_MAP.centres[0]!.x + GALAXY_MAP.centres.at(-1)!.x) / 2);
   chart.append(earth, earthName);
-  const jump = createButton(labels.jump, "secondary");
+  const jump = createButton(labels.jump, "primary");
   jump.classList.add("ada-route-action");
   jump.dataset.action = "galaxy-jump";
-  const back = createButton(labels.back ?? labels.close, "primary");
-  back.dataset.action = "close-galaxies";
-  const navigation = document.createElement("div");
-  navigation.className = "ada-map-navigation";
-  navigation.append(back);
   const flightActions = document.createElement("div");
   flightActions.className = "ada-route-flight-actions";
   flightActions.append(jump);
-  screen.append(sky, rules, ground, chart, panel, flightActions, navigation);
+  screen.append(sky, rules, ground, chart, panel, flightActions);
   root.append(screen);
 
   let view: GalaxyMapView | null = null;
@@ -645,7 +636,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     if (!view) {
       return;
     }
-    jump.textContent = destinationAction(viewingEarth, view, labels.stay);
+    jump.textContent = destinationAction(viewingEarth, view);
     if (viewingEarth) {
       number.textContent = EARTH_PANEL.kicker;
       name.textContent = EARTH_PANEL.title;
@@ -867,21 +858,31 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   };
   earth.addEventListener("click", selectEarth);
   earth.addEventListener("focus", selectEarth);
-  back.addEventListener("click", () => options.onClose());
   jump.addEventListener("click", () => {
-    if (viewingEarth && view && !unlock) {
-      options.onEarth();
+    if (!view || unlock) {
       return;
     }
-    const galaxy = view?.galaxies[view.panel - 1];
+    if (viewingEarth) {
+      if (view.atEarth) {
+        options.onClose();
+      } else {
+        options.onEarth();
+      }
+      return;
+    }
+    const galaxy = view.galaxies[view.panel - 1];
     if (galaxy?.unlocked) {
-      options.onJump();
+      if (view.stay) {
+        options.onClose();
+      } else {
+        options.onJump();
+      }
     } else {
       refuse(jump, reduced());
     }
   });
   // The arrows walk the route wherever focus is; Tab stays on the map, markers in route order,
-  // then Earth, Jump and the close X.
+  // then Earth and the single destination action.
   screen.addEventListener("keydown", (event) => {
     if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
       event.preventDefault();
@@ -894,7 +895,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     if (event.key !== "Tab") {
       return;
     }
-    const order = [...markers.map(({ button }) => button), earth, jump, back];
+    const order = [...markers.map(({ button }) => button), earth, jump];
     event.preventDefault();
     const at = order.indexOf(document.activeElement as HTMLButtonElement);
     const step = event.shiftKey ? -1 : 1;

@@ -49,7 +49,7 @@ an additional header icon does not move or replace the row's icon.
 
 ## Galaxy selector
 
-Earth is a selectable marker centered inside the route arc, aligned vertically with Sunflower. Its panel uses the canonical `story-ada-room` asset, Home kicker and Earth title. The destination action names Earth or the selected galaxy; the current location uses Stay here. Earth activation retains the existing return-home callback, and galaxy activation retains the existing unlock and travel checks.
+Earth is a selectable marker centered inside the route arc, aligned vertically with Sunflower. Its panel uses the canonical `story-ada-room` asset, Home kicker and Earth title. One centered primary action names the selected destination: Jump to Earth, Jump to the galaxy, Stay on Earth or Stay in the current galaxy. There is no separate Back action. A current-location action invokes the contextual close callback without travel; other destinations retain the existing return-home/jump callbacks and unlock checks. Locked destination actions retain their refusal behavior while naming the destination.
 
 ## Detail actions
 
