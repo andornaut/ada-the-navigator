@@ -1,7 +1,7 @@
 import { validateLayoutTree } from "@andornaut/game-kit/runtime/ui/layoutTree";
 import { describe, expect, it } from "vitest";
 
-import { resourceFooterTree } from "./resourceTree.ts";
+import { resourceFooterTree, resourceTree } from "./resourceTree.ts";
 
 const slots = { button: [], card: ["header", "body", "footer"], text: [] } as const;
 
@@ -45,4 +45,27 @@ describe("resource detail footer configuration", () => {
       validateLayoutTree(slots, node);
     }
   });
+});
+
+it("retains the native content port and both footer keys without putting callbacks in data", () => {
+  const data = {
+    closeLabel: "Close",
+    description: "Approved ore description",
+    quantity: "0",
+    title: "Ore",
+  };
+  const tree = resourceTree(data);
+  validateLayoutTree({ ...slots, resource: ["footer"] }, tree);
+  expect(tree).toMatchObject({
+    component: "resource",
+    key: "resource",
+    kind: "component",
+    props: data,
+  });
+  if (tree.kind !== "component" || tree.component !== "resource") {
+    throw Error("Expected native Resource port");
+  }
+  expect(tree.slots?.footer?.map((node) => node.key)).toEqual(["quests", "dismiss"]);
+  const next = resourceTree({ ...data, quantity: "123 HP", questsLabel: "Quests" });
+  expect(next).toMatchObject({ props: { quantity: "123 HP", questsLabel: "Quests" } });
 });

@@ -36,3 +36,27 @@ export function resourceFooterTree(
     },
   ];
 }
+
+export interface ResourceLayoutData extends ResourceFooterData {
+  readonly title: string;
+  readonly description: string;
+  readonly quantity?: string;
+}
+
+export type ResourceLayoutSchema = AdaLayoutSchema<ResourceAction> & {
+  resource: { props: ResourceLayoutData; slots: "footer" };
+};
+
+/** The caller's native card/content port keeps its existing nodes and icon ownership. */
+export function resourceTree(data: ResourceLayoutData): LayoutNode<ResourceLayoutSchema> {
+  return {
+    component: "resource",
+    key: "resource",
+    kind: "component",
+    props: data,
+    slots: {
+      // Keep the hidden contextual button keyed across openings, as the native card does.
+      footer: resourceFooterTree({ ...data, questsLabel: data.questsLabel ?? "" }),
+    },
+  };
+}

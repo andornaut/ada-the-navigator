@@ -83,8 +83,11 @@ export function createAdaLayoutPorts<A extends string>(context: AdaLayoutContext
         let current = initial;
         let disposed = false;
         const button = createButton(initial.label, initial.role);
-        const label = button.firstChild;
-        if (!label || label.nodeType !== 3) {
+        const label = button.firstChild ?? button.ownerDocument.createTextNode("");
+        if (!button.firstChild) {
+          button.append(label);
+        }
+        if (label.nodeType !== 3) {
           throw new Error("Button label text binding is unavailable");
         }
         const presentation = context.presentButton(button, label, initial);

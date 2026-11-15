@@ -1,9 +1,83 @@
 import { afterEach, expect, it, vi } from "vitest";
 
+import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { createResourceCard } from "./resourceCard.ts";
 
 const fixture = vi.hoisted(() => {
   class Node extends EventTarget {
+    nodeType = 1;
+    parentElement: Node | null = null;
+    private detached = false;
+    get isConnected(): boolean {
+      return this.parentElement?.isConnected ?? !this.detached;
+    }
+    set isConnected(value: boolean) {
+      this.detached = !value;
+    }
+    get ownerDocument() {
+      return { ...document, defaultView: { HTMLElement: Node, Node } };
+    }
+    get parentNode() {
+      return this.parentElement;
+    }
+    get nextSibling(): Node | null {
+      return this.parentElement?.children[this.parentElement.children.indexOf(this) + 1] ?? null;
+    }
+    get firstChild() {
+      const getText = () => this.textContent;
+      const setText = (value: string) => {
+        this.textContent = value;
+      };
+      return {
+        nodeType: 3,
+        get nodeValue() {
+          return getText();
+        },
+        set nodeValue(value: string) {
+          setText(value);
+        },
+      };
+    }
+    classList = {
+      toggle: (name: string, on: boolean) => {
+        const names = new Set(this.className.split(" ").filter(Boolean));
+        if (on) {
+          names.add(name);
+        } else {
+          names.delete(name);
+        }
+        this.className = [...names].join(" ");
+      },
+    };
+    contains(node: unknown): boolean {
+      return node === this || this.children.some((child) => child.contains(node));
+    }
+    closest(): Node | null {
+      return this.hidden ? this : (this.parentElement?.closest() ?? null);
+    }
+    insertBefore(node: Node, before: Node | null) {
+      node.remove();
+      node.parentElement = this;
+      node.isConnected = this.isConnected;
+      this.children.splice(
+        before === null ? this.children.length : this.children.indexOf(before),
+        0,
+        node,
+      );
+    }
+    querySelector(selector: string): Node | null {
+      const action = /data-action="([^"]+)"/.exec(selector)?.[1];
+      for (const child of this.children) {
+        if (action !== undefined && child.dataset.action === action) {
+          return child;
+        }
+        const found = child.querySelector(selector);
+        if (found) {
+          return found;
+        }
+      }
+      return null;
+    }
     children: Node[] = [];
     className = "";
     dataset: Record<string, string> = {};
@@ -12,12 +86,23 @@ const fixture = vi.hoisted(() => {
     attributes: Record<string, string> = {};
     style: Record<string, string> = {};
     focus = vi.fn();
-    remove = vi.fn();
+    remove = vi.fn(() => {
+      if (this.parentElement) {
+        this.parentElement.children.splice(this.parentElement.children.indexOf(this), 1);
+      }
+      this.parentElement = null;
+      this.isConnected = false;
+    });
     append(...nodes: Node[]) {
-      this.children.push(...nodes);
+      for (const node of nodes) {
+        this.insertBefore(node, null);
+      }
     }
     replaceChildren(...nodes: Node[]) {
-      this.children = nodes;
+      for (const child of [...this.children]) {
+        child.remove();
+      }
+      this.append(...nodes);
     }
     removeAttribute(name: string) {
       delete this.attributes[name];
@@ -52,11 +137,23 @@ vi.mock("./modal.ts", () => ({
     button.dataset.role = role;
     return button;
   },
-  createCard: () => fixture.card,
+  createCard: () => {
+    fixture.card.card.replaceChildren(fixture.card.title, fixture.card.body);
+    fixture.card.frame.replaceChildren(fixture.card.card, fixture.card.close);
+    return fixture.card;
+  },
   isTap: () => true,
   setFooterAction: (action: string, row: { dataset: Record<string, string> }) => {
     row.dataset.footerAction = action;
   },
+}));
+vi.mock("./buttonPresentation.ts", () => ({
+  presentAdaButton: (button: InstanceType<typeof fixture.Node>) => ({
+    dispose() {},
+    element: button,
+    reason: new fixture.Node(),
+    update() {},
+  }),
 }));
 vi.mock("./layout/viewScale.ts", () => ({ readViewUnit: () => 1 }));
 vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
@@ -205,4 +302,44 @@ it("shows shield identity in the header and formatted HP below while preserving 
   detail.open("Ore", "Resource copy", origin as unknown as HTMLElement, { count: 9 });
   expect(quantity.children.at(-1)!.textContent).toBe("9");
   detail.dispose();
+});
+
+it("retains footer nodes, resolves the current Quests closure and unregisters disposed actions", () => {
+  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  const root = new fixture.Node();
+  const origin = new fixture.Node();
+  const first = vi.fn(),
+    second = vi.fn(),
+    onOpenChange = vi.fn();
+  const detail = createResourceCard(root as unknown as HTMLElement, {
+    closeLabel: "Close",
+    onOpenChange,
+  });
+  detail.open("Toolkit", "First", origin as unknown as HTMLElement, {
+    quests: { label: "Quests", onOpen: first },
+  });
+  const footer = fixture.card.body.children[2]!;
+  const [quests, dismiss] = footer.children;
+  const captured = resolveAdaHoldAction(root as unknown as HTMLElement, quests!);
+  expect(captured?.available()).toBe(true);
+  detail.open("Toolkit", "Second", origin as unknown as HTMLElement, {
+    quests: { label: "Current quests", onOpen: second },
+  });
+  expect(footer.children).toEqual([quests, dismiss]);
+  captured?.activate();
+  expect(first).not.toHaveBeenCalled();
+  expect(second).toHaveBeenCalledOnce();
+  expect(onOpenChange.mock.calls).toEqual([[true], [true], [false]]);
+  detail.open("Ore", "No quests", origin as unknown as HTMLElement);
+  expect(quests!.hidden).toBe(true);
+  expect(captured?.available()).toBe(false);
+  captured?.activate();
+  expect(second).toHaveBeenCalledOnce();
+  const dismissal = resolveAdaHoldAction(root as unknown as HTMLElement, dismiss!);
+  expect(dismissal?.available()).toBe(true);
+  detail.dispose();
+  expect(resolveAdaHoldAction(root as unknown as HTMLElement, dismiss!)).toBeNull();
+  dismissal?.activate();
+  dismiss!.dispatchEvent(new Event("click"));
+  expect(onOpenChange.mock.calls).toEqual([[true], [true], [false], [true]]);
 });

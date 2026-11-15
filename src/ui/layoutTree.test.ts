@@ -17,6 +17,7 @@ class Element extends EventTarget {
   attributes = new Map<string, string>();
   ownerDocument = {
     createElement: () => new Element(),
+    createTextNode: (nodeValue: string) => ({ nodeType: 3, nodeValue }),
     defaultView: { HTMLElement: Element, Node: Element },
   };
   closest(): Element | null {
@@ -34,6 +35,9 @@ class Element extends EventTarget {
       node.parentElement = this;
     }
     this.children.push(...nodes);
+    if (!this.firstChild && nodes[0]) {
+      this.firstChild = nodes[0] as unknown as typeof this.firstChild;
+    }
   }
   setAttribute(name: string, value: string) {
     this.attributes.set(name, value);
@@ -52,6 +56,9 @@ vi.mock("./modal.ts", () => ({
   createButton: (label: string) => {
     const button = new Element();
     button.firstChild.nodeValue = label;
+    if (label === "") {
+      Object.defineProperty(button, "firstChild", { value: null, writable: true });
+    }
     return button;
   },
   createCard: () => {
@@ -225,4 +232,22 @@ it("registers held activation against updated action identity and removes it wit
   expect(f.second).toHaveBeenCalledOnce();
   part.dispose();
   expect(resolve()).toBeNull();
+});
+
+it("creates and retains the native text binding for an initially empty button label", () => {
+  const f = fixture();
+  const part = f.ports.components.button.create({
+    actionId: "first",
+    label: "",
+    role: "secondary",
+  });
+  const label = f.button().firstChild;
+  expect(label.nodeType).toBe(3);
+  expect(label.nodeValue).toBe("");
+  part.update({ actionId: "second", label: "Quests", role: "secondary" });
+  expect(f.button().firstChild).toBe(label);
+  expect(label.nodeValue).toBe("Quests");
+  f.button().click();
+  expect(f.second).toHaveBeenCalledOnce();
+  part.dispose();
 });

@@ -17,6 +17,13 @@ its secondary Cancel and primary Restart actions. A footer-only card sets `body:
 false` to omit the empty content slot. Restart's caller retains dismissal, focus,
 press scope and the original restart callback; callbacks are not stored in tree data.
 
+`resourceTree` in [src/ui/resourceTree.ts](../src/ui/resourceTree.ts) drives Resource
+content and footer reconciliation through a native card component port. The existing
+card, prose, quantity and footer nodes are retained. Caller-owned icon nodes,
+count formatting, current Quests callbacks, pause transitions and focus return
+stay outside configuration data. The shared footer rule counts native buttons
+and their canonical presentation wrappers when centering a sole Close action.
+
 Runtime and fixture callers supply the same data, production styles, fonts, skins,
 view-unit bridge and action availability. `presentAdaButton` supplies the actual
 button presentation; the published availability binding guards execution.

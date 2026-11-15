@@ -447,7 +447,10 @@ ${UI_SCOPE} .ada-pause:focus-visible{${FOCUS_STYLE}
 }
 
 /* A sole visible Close centers; explicit Back and multiple actions retain their own layout. */
-${UI_SCOPE} [data-footer-action="close"]:not(:has(>button:not([hidden])~button:not([hidden]))){
+${UI_SCOPE} [data-footer-action="close"]:not(:has(
+  > :is(button,.ada-button-presentation):not([hidden])
+  ~ :is(button,.ada-button-presentation):not([hidden])
+)){
   align-self:center;justify-content:center;width:max-content;max-width:100%
 }
 
