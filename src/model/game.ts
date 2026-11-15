@@ -165,6 +165,7 @@ import {
   worldChanges,
 } from "./projects.ts";
 import { questDetails, type QuestEntry } from "./questDetails.ts";
+import { type ContextQuestDetails, questsForObject } from "./questObjectLinks.ts";
 import { restoreGameSave, restoreSave, SAVE_VERSION } from "./save.ts";
 import { canRechargeShield } from "./shieldRecharge.ts";
 import { SHIP_REACH } from "./shipBody.ts";
@@ -1003,6 +1004,54 @@ export class GameModel {
     }
     const id = action === "scan" ? this.nearestScan()?.id : this.nearest();
     return id === undefined ? undefined : { action, id };
+  }
+  /** Read-only Use fallback. Every available interaction takes priority on every visit. */
+  get contextQuestDetails(): ContextQuestDetails | null {
+    const flight = this.state.flight;
+    if (
+      this.screen !== "space" ||
+      !flight ||
+      this.state.dialogue ||
+      this.state.docked ||
+      this.suspendedInteraction ||
+      this.contextAction !== undefined ||
+      this.nearest() !== undefined
+    ) {
+      return null;
+    }
+    const progress = this.current;
+    const task = this.state.tasks[flight.galaxy];
+    const context = {
+      galaxy: flight.galaxy,
+      knownIds: [...progress.known, ...progress.stations, ...progress.charted],
+      quests: this.quests,
+      storyTargets: [this.objectiveId(flight.galaxy), questItemDestination(progress)].filter(
+        (id): id is string => typeof id === "string",
+      ),
+      ...(task ? { task } : {}),
+    };
+    const world = flightWorldContext(flight);
+    const candidates = [
+      ...flight.objects.map((object) => ({ gap: distance(flight.player, object), object })),
+      ...flightLandmarkSites(flight).map((object) => ({
+        gap: worldDistance(world, flight.player, object),
+        object,
+      })),
+    ]
+      .filter(
+        ({ gap, object }) =>
+          context.knownIds.includes(object.id) &&
+          !routeBlocked(object.id, flight) &&
+          gap <= this.content.tuning.talkRange,
+      )
+      .sort((a, b) => a.gap - b.gap);
+    for (const { object: candidate } of candidates) {
+      const quests = questsForObject(context, candidate.id);
+      if (quests.length > 0) {
+        return { quests, targetId: candidate.id };
+      }
+    }
+    return null;
   }
   /** The Use action's name, the disc's accessible name. */
   get contextLabel(): string | undefined {
