@@ -212,7 +212,10 @@ describe("regenerating ordinary chunks and persistent notables", () => {
     const destination = ensureDestination(CONTENT, "growers", flight);
     const guard = ensureRouteEncounter(CONTENT, destination.id, flight)!;
     guard.enemy!.hp = 0;
-    expect(stepFlight(CONTENT, 0.001, idle, flight)).toContainEqual({ type: "enemyDestroyed" });
+    expect(stepFlight(CONTENT, 0.001, idle, flight)).toContainEqual({
+      id: guard.id,
+      type: "enemyDestroyed",
+    });
     expect(flight.world.notables[guard.id]).toBeNull();
     expect(routeBlocked(destination.id, flight)).toBe(false);
     flight.player = { x: 12000, y: 0 };
@@ -230,9 +233,9 @@ describe("regenerating ordinary chunks and persistent notables", () => {
     const far = enemy("far", 5000, "swarm", "pack");
     flight.objects.push(near, far);
     flight.combat = { initialPackSizes: { pack: 2 }, routeEncounters: [] };
-    expect(stepFlight(CONTENT, 0.001, idle, flight)).not.toContainEqual({
-      type: "enemyDestroyed",
-    });
+    const events = stepFlight(CONTENT, 0.001, idle, flight);
+    expect(events).not.toContainEqual({ id: near.id, type: "enemyDestroyed" });
+    expect(events).not.toContainEqual({ id: far.id, type: "enemyDestroyed" });
     expect(near.enemy!.fleeing).toBe(false);
     expect(flight.combat.initialPackSizes.pack).toBe(2);
     expect(flight.combat.unloadedPackMembers?.pack).toBe(1);

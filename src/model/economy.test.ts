@@ -580,7 +580,7 @@ describe("Stardust drops", () => {
     value.objects.push(target);
     value.shots.push(killShot(target));
     const events = stepFlight(CONTENT, 1 / 60, idle, value);
-    expect(events).toContainEqual({ type: "enemyDestroyed" });
+    expect(events).toContainEqual({ id: target.id, type: "enemyDestroyed" });
     expect(value.objects.some((object) => object.id === "target")).toBe(false);
     const wreck = value.objects.find((object) => object.kind === "wreck");
     expect(wreck?.wreck?.archetype).toBe("fighter");

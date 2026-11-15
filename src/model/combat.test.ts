@@ -297,7 +297,7 @@ describe("integrated combat", () => {
     }
     const disabling = stepFlight(CONTENT, 0.01, idle, flight);
     expect(disabling).toContainEqual({ id: "target", type: "enemyDisabled" });
-    expect(disabling).not.toContainEqual({ type: "enemyDestroyed" });
+    expect(disabling).not.toContainEqual({ id: target.id, type: "enemyDestroyed" });
     expect(hullHp).toBeGreaterThan(0);
     expect(target.enemy).toMatchObject({ disabled: true, hp: hullHp });
     for (const id of ["weapon-left", "weapon-right", "weapon-rear-left", "weapon-rear-right"]) {
@@ -315,7 +315,10 @@ describe("integrated combat", () => {
     expect(Math.hypot(target.enemy!.velocity.x, target.enemy!.velocity.y)).toBeLessThan(0.01);
     // Destroying the command still cannot spill into the hull.
     destroyPart("command");
-    expect(stepFlight(CONTENT, 0.01, idle, flight)).not.toContainEqual({ type: "enemyDestroyed" });
+    expect(stepFlight(CONTENT, 0.01, idle, flight)).not.toContainEqual({
+      id: target.id,
+      type: "enemyDestroyed",
+    });
     expect(target.enemy!.hardpoints.find((part) => part.id === "command")!.hp).toBe(0);
     expect(target.enemy!.hp).toBe(hullHp);
     // A separate hit on the exposed hull damages only the hull, then the final hit destroys it.
@@ -324,9 +327,13 @@ describe("integrated combat", () => {
     const remainingHull = hullHp - CONTENT.tuning.flight.playerShotDamage;
     expect(target.enemy!.hp).toBe(remainingHull);
     hit(flight, partPosition(target, "command"), remainingHull);
-    expect(stepFlight(CONTENT, 0.01, idle, flight)).toContainEqual({ type: "enemyDestroyed" });
+    expect(stepFlight(CONTENT, 0.01, idle, flight)).toContainEqual({
+      id: target.id,
+      type: "enemyDestroyed",
+    });
     expect(flight.objects).not.toContain(target);
     expect(stepFlight(CONTENT, 0.01, idle, flight)).not.toContainEqual({
+      id: target.id,
       type: "enemyDestroyed",
     });
   });
@@ -1153,7 +1160,10 @@ describe("combat admission and subframe firing", () => {
       expect(members[2]!.enemy!.fleeing).toBe(false);
       expect(members[3]!.enemy!.fleeing).toBe(false);
       hit(flight, members[2]!, 2);
-      expect(stepFlight(CONTENT, 0.001, idle, flight)).toContainEqual({ type: "enemyDestroyed" });
+      expect(stepFlight(CONTENT, 0.001, idle, flight)).toContainEqual({
+        id: members[2]!.id,
+        type: "enemyDestroyed",
+      });
       expect(flight.combat!.initialPackSizes.roster).toBe(4);
       expect(flight.combat!.unloadedPackMembers?.roster).toBe(2);
       stepFlight(CONTENT, 0.001, idle, flight);
