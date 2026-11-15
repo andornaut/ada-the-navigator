@@ -16,6 +16,7 @@ import { grantAllWeapons } from "../model/cheats.ts";
 import type { ExchangePreview, ExchangeQuote } from "../model/exchange.ts";
 import { GameModel } from "../model/game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
+import { landmarkById } from "../model/landmarks.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 import { fill, itemAbout, itemName, type ShopItem } from "../model/shop.ts";
 import type { FlightState } from "../model/types.ts";
@@ -51,6 +52,7 @@ import { galaxiesAvailable } from "../ui/pause.ts";
 import { createPennyMarkerLayer } from "../ui/pennyMarkers.ts";
 import { questContextIcon } from "../ui/questsScreen.ts";
 import { createRestartCard } from "../ui/restartCard.ts";
+import { createScanFeedbackView } from "../ui/scanFeedbackView.ts";
 import { aboardLabel, type ShipView } from "../ui/shipCard.ts";
 import { createStationView } from "../ui/station.ts";
 import { stardustCount } from "../ui/statusPill.ts";
@@ -105,6 +107,15 @@ import {
   HOLODISK_FRAMES,
   readLoopArt,
 } from "./worldArt.ts";
+
+const scanViews = new WeakMap<
+  object,
+  {
+    view: ReturnType<typeof createScanFeedbackView>;
+    state: GameModel["state"];
+    time: number;
+  }
+>();
 
 const pennyLayers = new WeakMap<object, ReturnType<typeof createPennyMarkerLayer>>();
 const interactionCards = new WeakMap<object, ReturnType<typeof createInteractionCard>>();
@@ -185,6 +196,7 @@ export type UiContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
     | "palette"
     | "partAssets"
     | "partLoads"
+    | "project"
     | "projectArt"
     | "quantum"
     | "rasters"
@@ -608,6 +620,12 @@ export function buildScene(scene: UiContext): void {
     },
   });
   partial.push(() => scene.controls.dispose());
+  const scanView = createScanFeedbackView(scene.controls.overlay);
+  scanViews.set(scene, { state: scene.model.state, time: scene.time.now, view: scanView });
+  partial.push(() => {
+    scanView.dispose();
+    scanViews.delete(scene);
+  });
   const labels = CONTENT.labels;
   const label = (key: string): string => labels[key] ?? "";
   const amount = (value: number): string => fill(label("stardustAmount"), { amount: value });
@@ -1078,6 +1096,41 @@ export function renderConversation(scene: UiContext): void {
   const { insets, view } = scene.controls.layout();
   const area = safeGameArea(insets, view);
   const flight = scene.model.state.flight;
+  const scan = scanViews.get(scene);
+  if (scan) {
+    if (scan.state !== scene.model.state) {
+      scan.view.reset();
+      scan.state = scene.model.state;
+    }
+    scan.view.enqueue(scene.model.drainScanOutcomes());
+    const elapsed = Math.max(0, Math.min(50, scene.time.now - scan.time));
+    scan.time = scene.time.now;
+    scan.view.render(
+      {
+        area,
+        blocked: markerFootprints(document, document.getElementById(VIEW_HOST_ID)),
+        covered:
+          covered ||
+          Boolean(emergency) ||
+          scene.controls.navigationCovered() ||
+          scene.jumping ||
+          scene.startShown ||
+          !scene.enabled ||
+          document.hidden ||
+          scene.model.state.mode !== "space" ||
+          !flight,
+        reducedMotion: scene.reducedMotion,
+        resolveAnchor: (outcome) => {
+          if (flight?.galaxy !== outcome.galaxy) {
+            return undefined;
+          }
+          const target = landmarkById(outcome.galaxy, outcome.targetId);
+          return target ? scene.project(target) : undefined;
+        },
+      },
+      elapsed,
+    );
+  }
   pennyLayers.get(scene)?.place(
     flight?.player ?? { x: 0, y: 0 },
     area,
