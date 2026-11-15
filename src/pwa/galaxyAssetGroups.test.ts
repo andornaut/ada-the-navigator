@@ -214,3 +214,20 @@ it("retries a failed ensure from actual durable state rather than treating settl
   f.groups.dispose();
   f.stop();
 });
+
+it("shows an initial group-state timeout and clears it only after verified readiness", async () => {
+  const f = fixture();
+  f.setResult({ reason: "timeout", status: "unavailable" });
+  await f.groups.start();
+  expect(f.states.at(-1)).toMatchObject({
+    error: { reason: "timeout", status: "unavailable" },
+    kind: "failed",
+  });
+  expect(f.requests).toEqual([[]]);
+  f.setResult(undefined);
+  await f.groups.resume();
+  expect(f.states.at(-1)?.kind).toBe("ready");
+  expect(f.requests).toEqual([[], []]);
+  f.groups.dispose();
+  f.stop();
+});

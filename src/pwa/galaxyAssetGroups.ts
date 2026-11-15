@@ -83,7 +83,10 @@ export function createGalaxyDownloads(page: GroupPage) {
       }
       if (state.status !== "available") {
         // Before the first group transaction, missing registration belongs to installation.
-        if (presentationAttempt > 0) {
+        const awaitingInstallation =
+          state.status === "unavailable" &&
+          ["no-worker", "unsupported", "wrong-build"].includes(state.reason);
+        if (presentationAttempt > 0 || !awaitingInstallation) {
           page.onState?.({ attempt: ++presentationAttempt, error: state, kind: "failed" });
         }
         continue;
