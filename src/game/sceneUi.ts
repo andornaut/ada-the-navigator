@@ -1197,6 +1197,7 @@ export function refreshScene(scene: UiContext): void {
   scene.galaxies.show(
     selected !== null && panel !== null && ship !== null
       ? {
+          atEarth: !scene.model.galaxyMapShownInFlight,
           flight: scene.model.routeFlight,
           galaxies: scene.routeGalaxies(),
           panel,

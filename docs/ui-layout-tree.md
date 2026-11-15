@@ -46,3 +46,7 @@ Shop offer rows and purchase-detail headers share `createStationItemIcon` from
 item descriptor selects the canonical sprite, weapon upgrade composite or paint
 swatch. Header icons are decorative and preserve the visible item name. Rendering
 an additional header icon does not move or replace the row's icon.
+
+## Galaxy selector
+
+Earth is a selectable marker centered inside the route arc, aligned vertically with Sunflower. Its panel uses the canonical `story-ada-room` asset, Home kicker and Earth title. The destination action names Earth or the selected galaxy; the current location uses Stay here. Earth activation retains the existing return-home callback, and galaxy activation retains the existing unlock and travel checks.

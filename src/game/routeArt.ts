@@ -1,5 +1,5 @@
 import { byGalaxy } from "../data/galaxies.ts";
-import { type GalaxyCard, galaxyPreview } from "../data/storybook.ts";
+import { BACKGROUND_ART, type GalaxyCard, galaxyPreview } from "../data/storybook.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 import type { GalaxyMapArt } from "../ui/galaxyMap.ts";
@@ -86,7 +86,14 @@ export function readRouteArt(
         ]
       : [];
   });
-  return { figures, ground: ground.path, locked: markers.locked, ship, sky: sky.path };
+  return {
+    figures,
+    ground: ground.path,
+    homePreview: assets.find(({ id }) => id === BACKGROUND_ART.adaRoom)?.path ?? "",
+    locked: markers.locked,
+    ship,
+    sky: sky.path,
+  };
 }
 
 /** A galaxy's marker hue, or the locked grey until Art gives it one. */

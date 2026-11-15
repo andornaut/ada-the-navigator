@@ -66,6 +66,8 @@ export interface GalaxyMapEntry {
 }
 
 export interface GalaxyMapView {
+  /** The existing boarding selector is at Earth; an in-flight selector is not. */
+  readonly atEarth?: boolean;
   readonly flight: RouteFlight | null;
   /** Every galaxy, in route order. */
   readonly galaxies: readonly GalaxyMapEntry[];
@@ -79,6 +81,7 @@ export interface GalaxyMapView {
 
 /** The route sky, its ground and figures, and Ada's ship frames by heading. */
 export interface GalaxyMapArt {
+  readonly homePreview?: string;
   /** Current selected main material and fixed-length static travel geometry. */
   readonly jets?: () => ShipJets | undefined;
   readonly figures: readonly {
@@ -110,6 +113,24 @@ export interface GalaxyMapOptions {
   /** A tap or focus on a marker. */
   readonly onView: (position: RoutePosition) => void;
   readonly reducedMotion: () => boolean;
+}
+
+export const EARTH_PANEL = {
+  description: "Ada’s life on Earth. Time here stands still while she’s aboard the ship.",
+  kicker: "Home",
+  title: "Earth",
+} as const;
+
+export function destinationAction(earth: boolean, view: GalaxyMapView, stay: string): string {
+  if (earth ? view.atEarth : view.stay) {
+    return stay;
+  }
+  const galaxy = view.galaxies[view.panel - 1]!;
+  return earth
+    ? `Jump to ${EARTH_PANEL.title}`
+    : galaxy.unlocked
+      ? `Jump to ${galaxy.name}`
+      : "Jump";
 }
 
 const { colors, label, marker, path, ship: SHIP } = GALAXY_MAP;
@@ -198,6 +219,12 @@ export const GALAXY_MAP_STYLE = `
   width:${units(2 * marker.backing.radius)};
   height:${units(2 * marker.backing.radius)};
   background:${inkAt(marker.backing.alpha)}
+}
+.ada-controls .ada-route-marker[data-earth] .ada-route-disc{
+  background:#65aedd;
+  background-image:
+    radial-gradient(ellipse at 30% 30%,#8ab86b 0 23%,transparent 25%),
+    radial-gradient(ellipse at 70% 65%,#8ab86b 0 26%,transparent 28%)
 }
 .ada-controls .ada-route-frame{
   width:${units(marker.frame)};
@@ -383,6 +410,7 @@ interface Move {
 
 export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   const { labels } = options;
+  let viewingEarth = false;
   const screen = document.createElement("div");
   screen.className = "ada-route";
   screen.dataset.dialog = "galaxies";
@@ -426,10 +454,18 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     const ring = document.createElement("span");
     ring.className = "ada-route-ring";
     button.append(backing, ring, frame, disc);
-    button.addEventListener("click", () => options.onView(position));
+    button.addEventListener("click", () => {
+      viewingEarth = false;
+      options.onView(position);
+      drawPanel();
+      drawChart();
+    });
     button.addEventListener("focus", () => {
       if (!unlock) {
+        viewingEarth = false;
         options.onView(position);
+        drawPanel();
+        drawChart();
       }
     });
     const name = document.createElement("span");
@@ -480,9 +516,18 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   development.textContent = labels.development;
   text.append(number, name, flavor, development);
   panel.append(shot, text);
-  const earth = createButton(labels.home);
-  earth.classList.add("ada-route-action");
-  earth.dataset.action = "galaxy-home";
+  const earth = markers[0]!.button.cloneNode(true) as HTMLButtonElement;
+  earth.dataset.position = "earth";
+  earth.dataset.earth = "";
+  earth.setAttribute("aria-label", EARTH_PANEL.title);
+  earth.style.left = units(
+    (GALAXY_MAP.centres[0]!.x + GALAXY_MAP.centres.at(-1)!.x) / 2 - GALAXY_MAP.press / 2,
+  );
+  earth.querySelector(".ada-route-disc")!.textContent = "";
+  const earthName = markers[0]!.name.cloneNode(true) as HTMLElement;
+  earthName.textContent = EARTH_PANEL.title;
+  earthName.style.left = units((GALAXY_MAP.centres[0]!.x + GALAXY_MAP.centres.at(-1)!.x) / 2);
+  chart.append(earth, earthName);
   const jump = createButton(labels.jump, "secondary");
   jump.classList.add("ada-route-action");
   jump.dataset.action = "galaxy-jump";
@@ -493,7 +538,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   navigation.append(back);
   const flightActions = document.createElement("div");
   flightActions.className = "ada-route-flight-actions";
-  flightActions.append(earth, jump);
+  flightActions.append(jump);
   screen.append(sky, rules, ground, chart, panel, flightActions, navigation);
   root.append(screen);
 
@@ -579,8 +624,12 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
         "aria-label",
         `${labels.number.replace("{number}", String(position))}, ${open ? galaxy.name : labels.locked}`,
       );
-      button.toggleAttribute("data-selected", !unlock && !move && position === view.ship);
+      button.toggleAttribute(
+        "data-selected",
+        !unlock && !move && !viewingEarth && position === view.panel,
+      );
     }
+    earth.toggleAttribute("data-selected", viewingEarth);
     for (const [index, group] of legGroups.entries()) {
       const destination = (index + 2) as RoutePosition;
       if (unlock?.flight.opened.includes(destination) && !reduced()) {
@@ -596,6 +645,19 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     if (!view) {
       return;
     }
+    jump.textContent = destinationAction(viewingEarth, view, labels.stay);
+    if (viewingEarth) {
+      number.textContent = EARTH_PANEL.kicker;
+      name.textContent = EARTH_PANEL.title;
+      flavor.textContent = EARTH_PANEL.description;
+      development.hidden = true;
+      text.removeAttribute("data-locked");
+      screen.setAttribute("aria-label", EARTH_PANEL.title);
+      shot.style.backgroundImage = art?.homePreview ? `url('${art.homePreview}')` : "none";
+      jump.classList.remove("ada-unavailable");
+      jump.removeAttribute("aria-disabled");
+      return;
+    }
     const galaxy = view.galaxies[view.panel - 1]!;
     const title = labels.number.replace("{number}", String(view.panel));
     number.textContent = title;
@@ -606,7 +668,6 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     development.hidden = !(galaxy.unlocked && galaxy.placeholder);
     const preview = galaxy.unlocked ? galaxy.preview.open : galaxy.preview.locked;
     shot.style.backgroundImage = preview ? `url('${preview}')` : "none";
-    jump.textContent = view.stay ? labels.stay : labels.jump;
     jump.classList.toggle("ada-unavailable", !galaxy.unlocked);
     if (galaxy.unlocked) {
       jump.removeAttribute("aria-disabled");
@@ -713,6 +774,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     screen.dataset.flight = "";
     drawnLocked = new Set(flight.opened);
     restShip(flight.from);
+    earth.toggleAttribute("data-selected", viewingEarth);
     for (const [index, group] of legGroups.entries()) {
       if (flight.opened.includes((index + 2) as RoutePosition)) {
         group.dashes.style.display = "";
@@ -795,9 +857,22 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     true,
   );
 
-  earth.addEventListener("click", () => options.onEarth());
+  const selectEarth = () => {
+    if (!view || unlock) {
+      return;
+    }
+    viewingEarth = true;
+    drawPanel();
+    drawChart();
+  };
+  earth.addEventListener("click", selectEarth);
+  earth.addEventListener("focus", selectEarth);
   back.addEventListener("click", () => options.onClose());
   jump.addEventListener("click", () => {
+    if (viewingEarth && view && !unlock) {
+      options.onEarth();
+      return;
+    }
     const galaxy = view?.galaxies[view.panel - 1];
     if (galaxy?.unlocked) {
       options.onJump();
@@ -810,7 +885,10 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   screen.addEventListener("keydown", (event) => {
     if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
       event.preventDefault();
+      viewingEarth = false;
       options.onStep(event.key === "ArrowRight" ? 1 : -1);
+      drawPanel();
+      drawChart();
       return;
     }
     if (event.key !== "Tab") {
@@ -854,6 +932,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
           return element;
         }),
       );
+      drawPanel();
       frame = -1;
       if (view && !unlock && !move) {
         restShip(view.ship);
@@ -876,6 +955,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
       view = next;
       screen.hidden = view === null;
       if (!view) {
+        viewingEarth = false;
         stop();
         unlock = null;
         delete screen.dataset.flight;

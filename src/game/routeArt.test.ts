@@ -51,6 +51,7 @@ describe("route map art", () => {
         { height: 28, url: "/art/story/penny-sitting.png", width: 23, x: 228, y: 84 },
       ],
       ground: "/art/route-ground.png",
+      homePreview: CORE_MANIFEST.assets.find(({ id }) => id === "story-ada-room")!.path,
       locked: "#8B8B8B",
       sky: "/art/route-sky.png",
     });
