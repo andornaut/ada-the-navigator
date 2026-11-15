@@ -150,6 +150,7 @@ export function drawEnemy(scene: EnemiesContext, point: Vec, object: SpaceObject
           { x: point.x - object.radius, y: point.y - object.radius },
           { x: point.x + object.radius, y: point.y - object.radius },
         ],
+        strokeWidth: 1.5,
       },
       object.id,
     );
@@ -217,7 +218,7 @@ export function drawEnemy(scene: EnemiesContext, point: Vec, object: SpaceObject
   acknowledgePrimitiveTarget(
     scene,
     scene.ink,
-    { closed: true, filled: true, kind: "path", points: polygon },
+    { closed: true, filled: true, kind: "path", points: polygon, strokeWidth: 1.5 },
     object.id,
   );
   if (large) {

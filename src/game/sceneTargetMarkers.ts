@@ -97,6 +97,7 @@ export type PrimitiveTargetShape =
       readonly filled: boolean;
       readonly height: number;
       readonly kind: "ellipse";
+      readonly strokeWidth?: 1 | 1.5 | 2;
       readonly width: number;
     }
   | {
@@ -104,6 +105,7 @@ export type PrimitiveTargetShape =
       readonly filled: boolean;
       readonly kind: "path";
       readonly points: readonly Vec[];
+      readonly strokeWidth?: 1 | 1.5 | 2;
     };
 
 interface DrawVisibility {
@@ -166,14 +168,98 @@ function contains(points: readonly Vec[], point: Vec): boolean {
   }
   return inside;
 }
-/** Intersection uses the emitted geometry, including shapes whose origin is outside the view. */
-export function primitiveTargetInView(shape: PrimitiveTargetShape): boolean {
-  const corners = [
+function distanceToViewSquared(point: Vec): number {
+  const x = Math.max(0, -point.x, point.x - SCREEN.width);
+  const y = Math.max(0, -point.y, point.y - SCREEN.height);
+  return x * x + y * y;
+}
+
+/** Euclidean distance to an axis-aligned ellipse, including points inside its boundary. */
+function ellipseDistance(center: Vec, width: number, height: number, point: Vec): number {
+  const horizontal = width >= height;
+  const a = Math.max(width, height) / 2,
+    b = Math.min(width, height) / 2;
+  const x = Math.abs(horizontal ? point.x - center.x : point.y - center.y);
+  const y = Math.abs(horizontal ? point.y - center.y : point.x - center.x);
+  if (a === b) {
+    return Math.abs(Math.hypot(x, y) - a);
+  }
+  if (y === 0) {
+    const at = (a * x) / (a * a - b * b);
+    if (at >= 1) {
+      return Math.abs(x - a);
+    }
+    return Math.hypot(a * at - x, b * Math.sqrt(1 - at * at));
+  }
+  let low = -b * b + b * y;
+  let high = Math.max(0, Math.hypot(a * x, b * y));
+  for (let i = 0; i < 64; i++) {
+    const mid = (low + high) / 2;
+    const value = ((a * x) / (mid + a * a)) ** 2 + ((b * y) / (mid + b * b)) ** 2;
+    if (value > 1) {
+      low = mid;
+    } else {
+      high = mid;
+    }
+  }
+  const t = (low + high) / 2;
+  return Math.hypot((a * a * x) / (t + a * a) - x, (b * b * y) / (t + b * b) - y);
+}
+
+function pathInView(points: readonly Vec[], closed: boolean, filled: boolean): boolean {
+  if (points.length < 2) {
+    return false;
+  }
+  const count = closed ? points.length : points.length - 1;
+  for (let i = 0; i < count; i++) {
+    if (segmentInView(points[i]!, points[(i + 1) % points.length]!)) {
+      return true;
+    }
+  }
+  return filled && viewCorners().some((corner) => contains(points, corner));
+}
+function viewCorners(): Vec[] {
+  return [
     { x: 0, y: 0 },
     { x: SCREEN.width, y: 0 },
     { x: SCREEN.width, y: SCREEN.height },
     { x: 0, y: SCREEN.height },
   ];
+}
+
+/** Current WebGL strokes are at most two pixels wide and use butt-ended segment quads. */
+function strokePathInView(points: readonly Vec[], closed: boolean, width: number): boolean {
+  const count = closed ? points.length : points.length - 1;
+  for (let i = 0; i < count; i++) {
+    const a = points[i]!,
+      b = points[(i + 1) % points.length]!;
+    const length = Math.hypot(b.x - a.x, b.y - a.y);
+    if (length === 0) {
+      continue;
+    }
+    const x = ((b.y - a.y) * width) / (2 * length),
+      y = ((a.x - b.x) * width) / (2 * length);
+    if (
+      pathInView(
+        [
+          { x: a.x + x, y: a.y + y },
+          { x: a.x - x, y: a.y - y },
+          { x: b.x - x, y: b.y - y },
+          { x: b.x + x, y: b.y + y },
+        ],
+        true,
+        true,
+      )
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/** Intersection uses the emitted geometry, including shapes whose origin is outside the view. */
+export function primitiveTargetInView(shape: PrimitiveTargetShape): boolean {
+  const corners = viewCorners();
   if (shape.kind === "ellipse") {
     if (!(shape.width > 0 && shape.height > 0)) {
       return false;
@@ -185,21 +271,33 @@ export function primitiveTargetInView(shape: PrimitiveTargetShape): boolean {
       x: Math.max(0, Math.min(SCREEN.width, center.x)),
       y: Math.max(0, Math.min(SCREEN.height, center.y)),
     };
-    return (
-      distance(nearest) <= 1 && (shape.filled || corners.some((corner) => distance(corner) >= 1))
-    );
-  }
-  if (shape.points.length < 2) {
-    return false;
-  }
-  const count = shape.closed ? shape.points.length : shape.points.length - 1;
-  for (let i = 0; i < count; i++) {
-    if (segmentInView(shape.points[i]!, shape.points[(i + 1) % shape.points.length]!)) {
+    if (
+      distance(nearest) <= 1 &&
+      (shape.filled || corners.some((corner) => distance(corner) >= 1))
+    ) {
       return true;
     }
+    if (!shape.strokeWidth) {
+      return false;
+    }
+    const half = shape.strokeWidth / 2;
+    const extremes = [
+      { x: center.x - width / 2, y: center.y },
+      { x: center.x + width / 2, y: center.y },
+      { x: center.x, y: center.y - height / 2 },
+      { x: center.x, y: center.y + height / 2 },
+    ];
+    return (
+      extremes.some((point) => distanceToViewSquared(point) < half * half) ||
+      corners.some((point) => ellipseDistance(center, width, height, point) < half)
+    );
   }
-  return shape.filled && corners.some((corner) => contains(shape.points, corner));
+  return (
+    pathInView(shape.points, shape.closed, shape.filled) ||
+    Boolean(shape.strokeWidth && strokePathInView(shape.points, shape.closed, shape.strokeWidth))
+  );
 }
+
 function primitiveDisplayed(
   context: PrimitiveDrawContext,
   ink: DrawVisibility,

@@ -479,7 +479,7 @@ export function drawJobs(scene: WorldContext): void {
       acknowledgePrimitiveTarget(
         scene,
         scene.ink,
-        { closed: true, filled: false, kind: "path", points: hull },
+        { closed: true, filled: false, kind: "path", points: hull, strokeWidth: 2 },
         key,
       );
     } else {
@@ -501,6 +501,7 @@ export function drawJobs(scene: WorldContext): void {
           filled: false,
           height: 2 * (10 + pulse * 18),
           kind: "ellipse",
+          strokeWidth: 1,
           width: 2 * (10 + pulse * 18),
         },
         key,
@@ -600,6 +601,7 @@ export function drawJobs(scene: WorldContext): void {
           { x: glint.x - size, y: glint.y },
           { x: glint.x + size, y: glint.y },
         ],
+        strokeWidth: 2,
       });
       acknowledgePrimitiveGlint(scene, scene.overlay, {
         closed: false,
@@ -609,6 +611,7 @@ export function drawJobs(scene: WorldContext): void {
           { x: glint.x, y: glint.y - size },
           { x: glint.x, y: glint.y + size },
         ],
+        strokeWidth: 2,
       });
     }
   }

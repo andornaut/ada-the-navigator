@@ -1,4 +1,6 @@
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
 import { createContext, runInContext } from "node:vm";
 
 import ts from "typescript";
@@ -14,7 +16,7 @@ import { createEnemy } from "../model/enemyAi.ts";
 import { enemyEquipmentDefinition } from "../model/enemyEquipment.ts";
 import { GameModel } from "../model/game.ts";
 import { hullOffset } from "../model/shipPhysics.ts";
-import type { SpaceObject } from "../model/types.ts";
+import type { SpaceObject, Vec } from "../model/types.ts";
 import {
   acknowledgePrimitiveGlint,
   acknowledgePrimitiveTarget,
@@ -112,6 +114,213 @@ function fixture() {
 }
 
 describe("emitted primitive marker geometry", () => {
+  it("includes two-pixel stroke fringes without extending butt-ended segments or their AABBs", () => {
+    const points = [
+      { x: 10, y: -0.5 },
+      { x: 30, y: -0.5 },
+    ];
+    expect(
+      primitiveTargetInView({ closed: false, filled: false, kind: "path", points, strokeWidth: 2 }),
+    ).toBe(true);
+    expect(
+      primitiveTargetInView({
+        closed: false,
+        filled: false,
+        kind: "path",
+        points: [
+          { x: -10, y: -0.5 },
+          { x: -0.5, y: -0.5 },
+        ],
+        strokeWidth: 2,
+      }),
+    ).toBe(false);
+    expect(
+      primitiveTargetInView({
+        closed: false,
+        filled: false,
+        kind: "path",
+        points: [
+          { x: -10, y: 2 },
+          { x: 2, y: -10 },
+        ],
+        strokeWidth: 2,
+      }),
+    ).toBe(false);
+  });
+  it("checks the curved ellipse fringe, including inner edges and corner rejection", () => {
+    expect(
+      primitiveTargetInView({
+        center: { x: -10.5, y: 50 },
+        filled: false,
+        height: 10,
+        kind: "ellipse",
+        strokeWidth: 2,
+        width: 20,
+      }),
+    ).toBe(true);
+    expect(
+      primitiveTargetInView({
+        center: { x: -11.1, y: 50 },
+        filled: false,
+        height: 10,
+        kind: "ellipse",
+        strokeWidth: 2,
+        width: 20,
+      }),
+    ).toBe(false);
+    expect(
+      primitiveTargetInView({
+        center: { x: -8, y: -8 },
+        filled: false,
+        height: 20,
+        kind: "ellipse",
+        strokeWidth: 2,
+        width: 20,
+      }),
+    ).toBe(false);
+    expect(
+      primitiveTargetInView({
+        center: { x: -7.4, y: -7.4 },
+        filled: false,
+        height: 20,
+        kind: "ellipse",
+        strokeWidth: 2,
+        width: 20,
+      }),
+    ).toBe(true);
+    const diameter = 2 * (Math.hypot(360, 180) + 0.5);
+    expect(
+      primitiveTargetInView({
+        center: { x: 360, y: 180 },
+        filled: false,
+        height: diameter,
+        kind: "ellipse",
+        strokeWidth: 2,
+        width: diameter,
+      }),
+    ).toBe(true);
+  });
+  it("checks an unequal-axis ellipse's curved corner rather than a dilated ellipse or AABB", () => {
+    const q = { x: 10 / Math.sqrt(2), y: 5 / Math.sqrt(2) };
+    const normal = { x: 1 / Math.sqrt(5), y: 2 / Math.sqrt(5) };
+    for (const [offset, expected] of [
+      [0.5, true],
+      [1.1, false],
+    ] as const) {
+      expect(
+        primitiveTargetInView({
+          center: { x: -q.x - offset * normal.x, y: -q.y - offset * normal.y },
+          filled: false,
+          height: 10,
+          kind: "ellipse",
+          strokeWidth: 2,
+          width: 20,
+        }),
+      ).toBe(expected);
+    }
+    expect(
+      primitiveTargetInView({
+        center: { x: 360, y: 180 },
+        filled: false,
+        height: 1000,
+        kind: "ellipse",
+        strokeWidth: 2,
+        width: 2000,
+      }),
+    ).toBe(false);
+  });
+  it("matches installed Phaser's actual WebGL segment quads at stroke-only viewport edges", () => {
+    const path = join(
+      dirname(createRequire(import.meta.url).resolve("phaser/package.json")),
+      "src/renderer/webgl/renderNodes/DrawLine.js",
+    );
+    const source = ts.createSourceFile(
+      path,
+      readFileSync(path, "utf8"),
+      ts.ScriptTarget.Latest,
+      true,
+    );
+    let body: ts.FunctionExpression | undefined;
+    const visit = (node: ts.Node): void => {
+      if (
+        ts.isPropertyAssignment(node) &&
+        node.name.getText(source) === "run" &&
+        ts.isFunctionExpression(node.initializer)
+      ) {
+        body = node.initializer;
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+    expect(body).toBeDefined();
+    const run = runInContext(`(${body!.getText(source)})`, createContext({})) as (
+      ...args: unknown[]
+    ) => void;
+    for (const [a, b] of [
+      [
+        { x: 10, y: -0.5 },
+        { x: 30, y: -0.5 },
+      ],
+      [
+        { x: -10, y: -0.5 },
+        { x: -0.5, y: -0.5 },
+      ],
+      [
+        { x: -10, y: 2 },
+        { x: 2, y: -10 },
+      ],
+    ]) {
+      const vertices: number[] = [];
+      run.call(
+        { onRunBegin() {}, onRunEnd() {} },
+        null,
+        null,
+        a!.x,
+        a!.y,
+        b!.x,
+        b!.y,
+        1,
+        1,
+        vertices,
+      );
+      const quad: Vec[] = [];
+      for (let i = 0; i < vertices.length; i += 2) {
+        quad.push({ x: vertices[i]!, y: vertices[i + 1]! });
+      }
+      expect(
+        primitiveTargetInView({
+          closed: false,
+          filled: false,
+          kind: "path",
+          points: [a!, b!],
+          strokeWidth: 2,
+        }),
+      ).toBe(primitiveTargetInView({ closed: true, filled: true, kind: "path", points: quad }));
+    }
+  });
+  it("identifies a destination when only its emitted 1.5-pixel ellipse stroke crosses the viewport", () => {
+    const f = fixture();
+    const code = production("./sceneObjects.ts", ["drawDestination"], f.globals);
+    code.drawDestination(f.scene, f.target, { x: -20.5, y: 100 }, 20);
+    expect(f.displayed).toHaveBeenCalledWith("target", f.scene.litCaches);
+    f.displayed.mockClear();
+    code.drawDestination(f.scene, f.target, { x: -20.9, y: 100 }, 20);
+    expect(f.displayed).not.toHaveBeenCalled();
+  });
+  it("identifies a station from its two-pixel hull stroke only, never its safety halo", () => {
+    const f = fixture();
+    const code = production(
+      "./sceneObjects.ts",
+      ["drawStation", "drawStationPlaceholder"],
+      f.globals,
+    );
+    code.drawStation(f.scene, f.target, { x: -24.5, y: 100 }, 20);
+    expect(f.displayed).toHaveBeenCalledWith("target", f.scene.litCaches);
+    f.displayed.mockClear();
+    code.drawStation(f.scene, f.target, { x: -25.1, y: 100 }, 20);
+    expect(f.displayed).not.toHaveBeenCalled();
+  });
+
   it("clips the actual ellipse rather than identifying its bounding-box corner", () => {
     expect(
       primitiveTargetInView({

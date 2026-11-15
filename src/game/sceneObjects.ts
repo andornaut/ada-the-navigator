@@ -281,7 +281,14 @@ export function drawStation(
     acknowledgePrimitiveTarget(
       scene,
       scene.ink,
-      { center: point, filled: true, height: radius * 1.2, kind: "ellipse", width: radius * 2.4 },
+      {
+        center: point,
+        filled: true,
+        height: radius * 1.2,
+        kind: "ellipse",
+        strokeWidth: 2,
+        width: radius * 2.4,
+      },
       object.id,
     );
     return;
@@ -542,7 +549,14 @@ export function drawDestination(
   acknowledgePrimitiveTarget(
     scene,
     scene.ink,
-    { center: point, filled: false, height: radius, kind: "ellipse", width: radius * 2 },
+    {
+      center: point,
+      filled: false,
+      height: radius,
+      kind: "ellipse",
+      strokeWidth: 1.5,
+      width: radius * 2,
+    },
     object.id,
   );
   acknowledgePrimitiveTarget(
@@ -553,6 +567,7 @@ export function drawDestination(
       filled: false,
       height: radius * 0.6,
       kind: "ellipse",
+      strokeWidth: 1.5,
       width: radius,
     },
     object.id,
