@@ -103,7 +103,13 @@ describe("story quest facts", () => {
       }
     }
     expect(p.questComplete).toBe(true);
-    expect(questDetails(context(), snapshot(model))).not.toHaveProperty("storyDetails");
+    expect(questDetails(context(), snapshot(model)).storyDetails?.objectives).toEqual(
+      ["Food", "Tool kit", "Spare parts"].map((item) => ({
+        checked: true,
+        itemKind: "carrying",
+        label: `deliver:${item}`,
+      })),
+    );
   });
 
   it("does not add unapproved details before introduction, after resolution or in other chapters", () => {
@@ -339,5 +345,87 @@ describe("actual named quest requirements", () => {
     expect(details.storyDetails?.requirements).toEqual([
       { count: `2/${CONTENT.tuning.miningMilestones[0]}`, label: label("questOreDeposited") },
     ]);
+  });
+});
+
+describe("revealed objective checklist facts", () => {
+  it("retains completed exchanges without exposing the next exchange", () => {
+    const model = flight();
+    Object.assign(model.state.progress[1], { introduced: true, questItem: "food", stage: 1 });
+    const first = questDetails(context(), snapshot(model)).storyDetails!.objectives!;
+    expect(first.map(({ checked, label }) => [checked, label])).toEqual([
+      [true, "collect:Food"],
+      [false, "deliver:Food"],
+    ]);
+    expect(JSON.stringify(first)).not.toMatch(/Tool kit|Spare parts/u);
+    Object.assign(model.state.progress[1], { questItem: null, stage: 3 });
+    expect(
+      questDetails(context(), snapshot(model)).storyDetails!.objectives!.map(
+        ({ checked, label }) => [checked, label],
+      ),
+    ).toEqual([
+      [true, "deliver:Food"],
+      [true, "deliver:Tool kit"],
+      [false, "collect:Spare parts"],
+      [false, "deliver:Spare parts"],
+    ]);
+  });
+
+  it("derives hunt search completion from entered state and never invents a return", () => {
+    const state = snapshot(flight(), job("hunt"));
+    const before = structuredClone(state);
+    expect(
+      questDetails(context(), state).jobDetails!.objectives!.map((row) => row.checked),
+    ).toEqual([false, false]);
+    const entered = questDetails(context(), { ...state, task: { ...job("hunt"), entered: true } })
+      .jobDetails!.objectives!;
+    expect(entered).toEqual([
+      { checked: true, label: "Find the search area" },
+      { checked: false, itemKind: "carrying", label: "collect:Seeds" },
+    ]);
+    expect(state).toEqual(before);
+  });
+
+  it("keeps deposit quantities and collected completion while cargo is empty", () => {
+    const state = snapshot(flight(), {
+      deposited: MINING_CONTRACT_DEPOSITS - 1,
+      id: "miningContract",
+      kind: "activity",
+      place: "hub",
+      reward: 1,
+    });
+    const rows = questDetails(context(2), { ...state, flight: { cargo: 0 } }).jobDetails!
+      .objectives!;
+    expect(rows[0]!.checked).toBe(true);
+    expect(rows[1]).toMatchObject({
+      checked: false,
+      count: `${MINING_CONTRACT_DEPOSITS - 1}/${MINING_CONTRACT_DEPOSITS}`,
+      itemKind: "ore",
+      label: `deliver:${label("ore")}`,
+    });
+  });
+
+  it("retains the attached tow and found calf as checked actions", () => {
+    const model = flight();
+    const rescue = questDetails(context(), {
+      ...snapshot(model, job("rescue")),
+      flight: { cargo: 0, tow: { x: 0, y: 0 } },
+    }).jobDetails!.objectives!;
+    expect(rescue.map((row) => row.checked)).toEqual([true, false]);
+    const calf = questDetails(context(3), {
+      ...snapshot(model, { id: "guideCalf", kind: "activity", place: "family", reward: 1 }),
+      flight: { calf: { following: true }, cargo: 0 },
+    }).jobDetails!.objectives!;
+    expect(calf.map((row) => row.checked)).toEqual([true, false]);
+  });
+
+  it("does not include a hidden survey target identity", () => {
+    const state = snapshot(flight(), job("survey"));
+    const hidden = questDetails(context(), state).jobDetails!.objectives![0]!;
+    expect(hidden).not.toHaveProperty("location");
+    const known = { ...state, progress: { ...state.progress, known: [job("survey").target.id] } };
+    expect(questDetails(context(), known).jobDetails!.objectives![0]!.location).toBe(
+      job("survey").target.id,
+    );
   });
 });

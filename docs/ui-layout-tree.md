@@ -58,3 +58,7 @@ chevrons to indicate click or tap. Retain their action targets, accessible names
 keyboard activation and focus. Directional controls and meaningful navigation or
 route arrows retain their existing meaning. Production and mock callers use the
 same detail components.
+
+## Quest details
+
+Each detail has one Objectives checklist, contextual description and a separate Reward. The first unchecked row is the next action. Checklist facts retain known completed deliveries and actual deposit quantities. Hunt collection completes the job without adding a return step. Unknown locations do not supply identity icons. Known targets use canonical map or inventory icons beside the shared read-only completion indicator. The existing two-column detail card and return actions are retained. Reward sits below Objectives while the contextual description and route span both rows.

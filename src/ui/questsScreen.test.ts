@@ -55,3 +55,56 @@ describe("quest detail routes", () => {
     ).toBe("Workshop");
   });
 });
+
+describe("quest objective presentation", () => {
+  it("keeps the current revealed action for every legacy quest without generating future steps", async () => {
+    const { questChecklist } = await import("./questsScreen.ts");
+    for (const kind of ["story", "job"] as const) {
+      const current = { ...entry, line: { kind, target: null, text: "Find the known signal" } };
+      expect(questChecklist(current)).toEqual([{ checked: false, label: "Find the known signal" }]);
+    }
+  });
+
+  it("retains supplied completion and quantities and uses the same canonical identity icons", async () => {
+    const { questChecklist, questObjectiveIcon } = await import("./questsScreen.ts");
+    const { CARGO_ICONS } = await import("./statusPill.ts");
+    const objectives = [
+      { checked: true, itemKind: "ore" as const, label: "Collect Ore" },
+      { checked: false, count: "35 / 100", itemKind: "ore" as const, label: "Deliver Ore" },
+    ];
+    const current = { ...entry, line: { ...entry.line, objectives } };
+    expect(questChecklist(current)).toBe(objectives);
+    expect(questObjectiveIcon(current, objectives[0]!)).toBe(CARGO_ICONS.ore);
+    expect(
+      questObjectiveIcon(current, { checked: false, label: "Visit", location: "growers" }),
+    ).toBe("/art/ui/icons/map-growers.svg");
+    expect(
+      questObjectiveIcon(current, { checked: false, label: "Visit", location: "unrevealed" }),
+    ).toBeNull();
+  });
+});
+
+it("uses the canonical holodisk notice icon only for the revealed current item", async () => {
+  const { questChecklist, questObjectiveIcon } = await import("./questsScreen.ts");
+  const { gainNotice } = await import("./itemNotice.ts");
+  const current = {
+    ...entry,
+    line: {
+      currentItemKind: "holodisk" as const,
+      kind: "story" as const,
+      target: null,
+      text: "Find the holodisk",
+    },
+  };
+  const row = questChecklist(current)[0]!;
+  const { icon } = gainNotice({}, { kind: "holodisk" });
+  expect(questObjectiveIcon(current, row)).toBe(
+    "sprite" in icon ? `/art/ui/sprites/${icon.sprite}.png` : icon.mask,
+  );
+  expect(
+    questObjectiveIcon(
+      { ...current, line: { kind: "story", target: null, text: "Explore" } },
+      { checked: false, label: "Explore" },
+    ),
+  ).toBeNull();
+});

@@ -2,12 +2,14 @@ import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 
 import type { GalaxyNumber } from "../data/types.ts";
 import type { MapPlace } from "../model/map.ts";
-import type { QuestEntry } from "../model/questDetails.ts";
+import type { QuestEntry, QuestObjective } from "../model/questDetails.ts";
 import { createCompletionIndicator } from "./completionIndicator.ts";
+import { gainNotice } from "./itemNotice.ts";
 import { QUEST_LIST_PAGE_SIZE, QUEST_ROUTE_ARROW } from "./layout/questsScreen.ts";
 import { chipFace, chipGlyph, type MapScreenLabels } from "./mapScreen.ts";
 import { createButton, createCard, setFooterAction, setScrollGroup } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
+import { CARGO_ICONS } from "./statusPill.ts";
 
 export type QuestOrigin = "flight" | "list" | "ship";
 
@@ -25,6 +27,47 @@ export function questRoute(entry: QuestEntry, places: readonly MapPlace[]) {
     location: entry.locations.find((location) => location.id === id) ?? null,
     place: places.find((place) => place.id === id) ?? null,
   }));
+}
+
+/** Only supplied, revealed steps are rendered; a legacy quest retains its current action. */
+export function questChecklist(entry: QuestEntry): readonly QuestObjective[] {
+  const current: QuestObjective = {
+    checked: false,
+    label: entry.line.nextStep ?? entry.line.text,
+    ...(entry.line.currentItemKind ? { itemKind: entry.line.currentItemKind } : {}),
+    ...(entry.line.progress ? { count: entry.line.progress } : {}),
+  };
+  if (entry.line.objectives?.length) {
+    return entry.line.objectives.some((row) => !row.checked)
+      ? entry.line.objectives
+      : [...entry.line.objectives, current];
+  }
+  return [
+    ...(entry.line.requirements ?? []).map((row) => ({ ...row, checked: row.checked === true })),
+    current,
+  ];
+}
+
+/** Existing inventory or known map identity, independent of completion state. */
+export function questObjectiveIcon(entry: QuestEntry, objective: QuestObjective): string | null {
+  if (objective.itemKind === "holodisk") {
+    const { icon } = gainNotice({}, { kind: "holodisk" });
+    return "sprite" in icon ? `/art/ui/sprites/${icon.sprite}.png` : icon.mask;
+  }
+  if (objective.itemKind) {
+    return CARGO_ICONS[objective.itemKind];
+  }
+  const location = entry.locations.find(
+    ({ id }) => id === (objective.location ?? entry.line.destination ?? entry.line.target),
+  );
+  if (location?.symbol) {
+    const glyph = chipGlyph({ symbol: location.symbol });
+    return glyph ? `/art/ui/icons/${glyph}.svg` : null;
+  }
+  if (objective.location === undefined && entry.jobType) {
+    return `/art/ui/icons/map-job-${entry.jobType}.svg`;
+  }
+  return null;
 }
 
 export function createQuestsScreen(
@@ -127,14 +170,8 @@ export function createQuestsScreen(
       return section;
     };
     if (entry) {
-      const line = entry.line as QuestEntry["line"] & {
-        readonly requirements?: readonly {
-          readonly label: string;
-          readonly checked?: boolean;
-          readonly count?: string;
-        }[];
-      };
-      const objective = section(labels.questObjective, line.text);
+      const line = entry.line;
+      const objective = section(undefined, line.text);
       objective.className = "ada-quest-objective";
       if (line.description && line.description !== line.text) {
         const description = document.createElement("p");
@@ -142,7 +179,31 @@ export function createQuestsScreen(
         description.textContent = line.description;
         objective.append(description);
       }
-      const next = section(labels.questNextAction, line.nextStep);
+      const checklist = section("Objectives");
+      checklist.className = "ada-quest-objectives";
+      for (const step of questChecklist(entry)) {
+        const row = document.createElement("div");
+        row.className = "ada-quest-requirement";
+        row.append(createCompletionIndicator(step.label, step.checked));
+        const iconPath = questObjectiveIcon(entry, step);
+        if (iconPath) {
+          const image = document.createElement("img");
+          image.className = "ada-quest-icon";
+          image.alt = "";
+          image.src = iconPath;
+          image.setAttribute("aria-hidden", "true");
+          row.append(image);
+        }
+        const text = document.createElement("span");
+        text.textContent = step.label;
+        row.append(text);
+        if (step.count) {
+          const count = document.createElement("strong");
+          count.textContent = step.count;
+          row.append(count);
+        }
+        checklist.append(row);
+      }
       const endpoints = questRoute(entry, entry.galaxy === galaxy ? places : []);
       if (line.source !== undefined || line.destination !== undefined || line.target !== null) {
         const route = document.createElement("div");
@@ -196,33 +257,13 @@ export function createQuestsScreen(
           }
           route.append(button);
         }
-        next.append(route);
+        objective.append(route);
       }
       const reward = section(
         line.outcome && !line.reward ? labels.questOutcome : labels.questReward,
         line.reward ?? line.outcome ?? labels.questStoryProgress,
       );
       reward.className = "ada-quest-reward";
-      const progress = section(
-        labels.questProgressLabel,
-        line.requirements?.length ? undefined : line.progress,
-      );
-      for (const requirement of line.requirements ?? []) {
-        const row = document.createElement("div");
-        row.className = "ada-quest-requirement";
-        if (requirement.checked !== undefined) {
-          row.append(createCompletionIndicator(requirement.label, requirement.checked));
-        }
-        const text = document.createElement("span");
-        text.textContent = requirement.label;
-        row.append(text);
-        if (requirement.count) {
-          const count = document.createElement("strong");
-          count.textContent = requirement.count;
-          row.append(count);
-        }
-        progress.append(row);
-      }
       if (origin === "flight") {
         const others = createButton(labels.questOtherQuests ?? "", "secondary");
         others.dataset.action = "quest-other";

@@ -32,6 +32,8 @@ export const QUESTS_SCREEN_STYLE = `
   width:1px;
   background:#777186}
 .ada-controls .ada-quest-content section{min-width:0}
+.ada-controls .ada-quest-objective{grid-row:1 / span 2}
+.ada-controls .ada-quest-reward{grid-column:2}
 .ada-controls .ada-quest-content h3,.ada-controls .ada-quest-content p{font:inherit;
   margin:0;
   overflow-wrap:anywhere}
@@ -100,7 +102,9 @@ export const QUESTS_SCREEN_STYLE = `
   white-space:normal;
   text-align:left;
   flex:none}
-.ada-controls .ada-quest-requirement{display:flex;align-items:center;gap:${units(6)}}
+.ada-controls .ada-quest-requirement{display:flex;align-items:center;gap:${units(6)};margin-top:${units(4)}}
+.ada-controls .ada-quest-requirement>span:not(.ada-completion){min-width:0;overflow-wrap:anywhere}
+.ada-controls .ada-quest-requirement>strong{margin-left:auto;white-space:nowrap}
 .ada-controls .ada-quest-list h3{font:inherit;margin:0;color:#b8b3c9}
 .ada-controls .ada-quests-screen .ada-card header h2{color:#ead4aa}
 .ada-controls .ada-quest-content p{color:#ead4aa}
