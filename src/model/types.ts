@@ -149,7 +149,10 @@ export interface FlightState {
   combat?: {
     initialPackSizes: Record<string, number>;
     routeEncounters: string[];
-    /** Authored route IDs whose complete guard plan selected zero formations. */
+    /**
+     * CLEANUP (added 2026-11-15): Retain only empty legacy journals until supported saves
+     * omit this obsolete field at the v1 compatibility boundary.
+     */
     emptyRoutePlans?: string[];
     /** Whale destinations whose hunting pack has been placed this flight. */
     huntingPacks?: string[];

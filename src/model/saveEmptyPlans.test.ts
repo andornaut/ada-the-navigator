@@ -1,29 +1,45 @@
 import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { playOpening } from "../testing/launch.ts";
+import { ensureDestination, ensureRouteEncounter } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 
-it("retains an explicit empty route plan and rejects invalid or admitted outcomes", () => {
+it("rejects obsolete nonempty route journals while preserving valid active saves", () => {
   const model = new GameModel(CONTENT);
   model.startGalaxy(1);
-  playOpening(model);
-  const document = model.saveDocument();
-  const flight = document.flight!;
-  const original = flight.combat ?? { initialPackSizes: {}, routeEncounters: [] };
-  flight.combat = { ...original, routeEncounters: [] };
-  const saved = JSON.parse(JSON.stringify(document));
-  saved.flight.combat.emptyRoutePlans = ["growers"];
+  const flight = model.state.flight!;
+  ensureDestination(CONTENT, "growers", flight);
+  const guard = ensureRouteEncounter(CONTENT, "growers", flight)!;
+  expect(guard).not.toBeNull();
+  expect(guard.enemy!.hp).toBeGreaterThan(0);
+  expect(flight.combat!.routeEncounters).toContain("growers");
+  expect(flight.combat!.routeEncounters).not.toContain("workshop");
+  const saved = model.saveDocument();
+  expect(restoreSave(saved)).toEqual(saved);
+  saved.flight!.combat!.emptyRoutePlans = [];
   expect(restoreSave(saved)).toEqual(saved);
   expect(restoreSave(JSON.stringify(saved))).toEqual(saved);
-  for (const empty of [["growers", "growers"], ["unknown"], [3], "growers", null]) {
-    const invalid = structuredClone(saved);
-    invalid.flight.combat.emptyRoutePlans = empty;
-    expect(restoreSave(invalid)).toBeNull();
+
+  const invalid = structuredClone(saved);
+  invalid.flight!.combat!.emptyRoutePlans = ["workshop"];
+  expect(restoreSave(invalid)).toBeNull();
+  const reset = new GameModel(CONTENT, invalid);
+  expect(reset.state.flight).toBeNull();
+  expect(reset.state.mode).toBe("home");
+
+  for (const journal of [
+    ["growers"],
+    ["workshop", "workshop"],
+    ["unknown"],
+    [3],
+    "growers",
+    null,
+  ]) {
+    const malformed = JSON.parse(JSON.stringify(saved));
+    malformed.flight.combat.emptyRoutePlans = journal;
+    expect(restoreSave(malformed)).toBeNull();
   }
-  saved.flight.combat.routeEncounters = ["growers"];
-  expect(restoreSave(saved)).toBeNull();
-  delete saved.flight.combat.emptyRoutePlans;
-  expect(restoreSave(saved)).not.toBeNull();
+  delete saved.flight!.combat!.emptyRoutePlans;
+  expect(restoreSave(saved)).toEqual(saved);
 });

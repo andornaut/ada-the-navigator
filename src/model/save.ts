@@ -205,12 +205,7 @@ function combatState(
     strings(value.routeEncounters) &&
     (value.routeEncounters as string[]).every((id) => routes.includes(id)) &&
     (value.emptyRoutePlans === undefined ||
-      (strings(value.emptyRoutePlans) &&
-        new Set(value.emptyRoutePlans as string[]).size ===
-          (value.emptyRoutePlans as string[]).length &&
-        (value.emptyRoutePlans as string[]).every(
-          (id) => routes.includes(id) && !(value.routeEncounters as string[]).includes(id),
-        ))) &&
+      (Array.isArray(value.emptyRoutePlans) && value.emptyRoutePlans.length === 0)) &&
     (value.huntingPacks === undefined ||
       (strings(value.huntingPacks) &&
         (value.huntingPacks as string[]).every((id) => HUNTING_PACKS.destinations.includes(id))))
