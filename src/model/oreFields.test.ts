@@ -274,15 +274,24 @@ describe("platform", () => {
     expect(state.position).toEqual({ x: 0, y: 0 });
   });
 
-  it("fires two-bolt bursts 0.15 s apart every 1.4 s from each live turret", () => {
-    const { shots } = fly(300, 4.4);
+  it("fires two-bolt bursts 0.15 s apart at each live turret's canonical interval", () => {
+    const first = definition.hardpoints.find((part) => part.kind === "weapon");
+    if (first?.kind !== "weapon") {
+      throw new Error("Expected a platform weapon");
+    }
+    const { shots } = fly(300, 4 * first.fire.interval);
     for (const turret of ["port", "starboard"]) {
+      const part = definition.hardpoints.find((part) => part.id === turret);
+      if (part?.kind !== "weapon") {
+        throw new Error("Expected the equipped platform turret");
+      }
+      expect(part.fire.burst).toEqual({ count: 2, gap: 0.15 });
       const times = shots.filter((shot) => shot.hardpoint === turret).map((shot) => shot.at);
       expect(times).toHaveLength(8);
       for (let index = 0; index < times.length; index += 2) {
         expect(times[index + 1]! - times[index]!).toBeCloseTo(0.15, 9);
         if (index >= 2) {
-          expect(times[index]! - times[index - 2]!).toBeCloseTo(1.4, 9);
+          expect(times[index]! - times[index - 2]!).toBeCloseTo(part.fire.interval, 9);
         }
       }
     }

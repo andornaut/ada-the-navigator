@@ -482,8 +482,13 @@ describe("enemy rules", () => {
     expect(first.fire.find((shot) => shot.weapon === "heavyMissile")?.projectile).toBe("missile");
     const cooldown = (mount: string) =>
       first.state.hardpoints.find((part) => part.id === mount)?.cooldown;
-    expect(cooldown(mountOf("laser"))).toBeCloseTo(1.4 / 1.88 - 1 / 60);
-    expect(cooldown(mountOf("heavyMissile"))).toBeCloseTo(4 / 1.88 - 1 / 60);
+    for (const weapon of ["laser", "heavyMissile"]) {
+      const part = definition.hardpoints.find((part) => part.id === mountOf(weapon));
+      if (part?.kind !== "weapon") {
+        throw new Error("Expected an equipped weapon hardpoint");
+      }
+      expect(cooldown(part.id)).toBeCloseTo(part.fire.interval - observation(state).dt, 9);
+    }
     const ready = {
       ...first.state,
       hardpoints: first.state.hardpoints.map((part) => ({
@@ -678,7 +683,7 @@ describe("enemy ship physics and hull rotation", () => {
     expect(pick("capital")).toEqual({ behaviour: "siege", engagement: 750, hp: 18, sizeRatio: 5 });
     expect(enemyCatalog.retaliator.fire).toMatchObject({
       angles: [-8, 0, 8],
-      interval: 2.2,
+      interval: WEAPON_CATALOG.multiLaser[0].intervalSeconds,
       weapon: "multiLaser",
     });
     expect(enemyCatalog.retaliator.aggression).toBe("retaliate");
@@ -968,17 +973,18 @@ describe("enemy aim", () => {
   const angleOf = (vector: { x: number; y: number }) => Math.atan2(vector.y, vector.x);
   /**
    * A platform's shots after the first second while Ada circles it 300 units out at 100 units
-   * per second, so every shot meets the same geometry: each shot's turret, aim angle, angle
+   * per second. Each sample retains its actual muzzle's intercept geometry, aim angle, angle
    * ahead of the line to Ada and firing time.
    */
   function platformShots(
     seconds: number,
     lead = 1,
-  ): { ahead: number; angle: number; part: string; time: number }[] {
+  ): { ahead: number; aimError: number; angle: number; part: string; time: number }[] {
     let state = { ...spawn("platform"), engaged: true, id: "platform:aim" };
     const radius = 300;
     const rate = 100 / radius;
-    const shots: { ahead: number; angle: number; part: string; time: number }[] = [];
+    const shots: { ahead: number; aimError: number; angle: number; part: string; time: number }[] =
+      [];
     const dt = 1 / 60;
     for (let frame = 0; frame < seconds / dt; frame++) {
       const time = frame * dt;
@@ -993,7 +999,25 @@ describe("enemy aim", () => {
       for (const shot of result.fire) {
         const angle = angleOf(shot.aim);
         const line = angleOf({ x: player.x - shot.origin.x, y: player.y - shot.origin.y });
-        shots.push({ ahead: angle - line, angle, part: shot.hardpointId!, time });
+        const intercept = leadPoint(
+          shot.origin,
+          player,
+          playerVelocity,
+          shot.speed,
+          leadSkill(lead, state.id),
+        );
+        const interceptAngle = angleOf({
+          x: intercept.x - shot.origin.x,
+          y: intercept.y - shot.origin.y,
+        });
+        const error = angle - interceptAngle;
+        shots.push({
+          ahead: angle - line,
+          aimError: Math.atan2(Math.sin(error), Math.cos(error)),
+          angle,
+          part: shot.hardpointId!,
+          time,
+        });
       }
       state = result.state;
     }
@@ -1034,7 +1058,10 @@ describe("enemy aim", () => {
       for (const value of ahead) {
         expect(value).toBeGreaterThan(0);
       }
-      expect(Math.max(...ahead) - Math.min(...ahead)).toBeLessThan(
+      // Muzzle offsets change the intercept angle as Ada circles; bound tracking error
+      // around that intercept rather than the raw angle ahead of her current position.
+      const error = shots.filter((shot) => shot.part === part).map((shot) => shot.aimError);
+      expect(Math.max(...error) - Math.min(...error)).toBeLessThan(
         2 * ENEMY_AIM.driftRadians + 0.01,
       );
     }
