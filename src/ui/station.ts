@@ -4,10 +4,12 @@ import { CONTENT } from "../data/content.ts";
 import { EXCHANGE_COPY } from "../data/exchangeCopy.ts";
 import type { StationGreeting } from "../model/keepers.ts";
 import type { StationServices } from "../model/stationServices.ts";
+import { bindAdaAction } from "./actionBinding.ts";
 import { createDialoguePanel, type DialogueSpeaker } from "./dialoguePanel.ts";
 import { createExchangeView, type ExchangePort } from "./exchange.ts";
 import { keeperName } from "./keeperBlock.ts";
 import { cardPages } from "./layout/cardPages.ts";
+import { SCROLL } from "./layout/contentCard.ts";
 import { FOCUS_RING } from "./layout/controls.ts";
 import { units } from "./layout/css.ts";
 import {
@@ -21,6 +23,7 @@ import { STATION_SPRITES } from "./layout/stationStyle.ts";
 import { SPACING } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import { createActions, createButton, createCard, isTap } from "./modal.ts";
+import { enterPressView, inCurrentView } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
 import { mountStationDropDetails } from "./stationDropDetails.ts";
 import { createStationItemIcon, type ItemGlyph, setStationItemTitle } from "./stationItemIcon.ts";
@@ -242,6 +245,36 @@ function prose(className: string, text: string): HTMLParagraphElement {
  */
 export function createStationView(parent: HTMLElement, options: StationOptions) {
   const { labels } = options;
+  let disposed = false;
+  const bindings: ReturnType<typeof bindAdaAction>[] = [];
+  const shopBindings: ReturnType<typeof bindAdaAction>[] = [];
+  const jobBindings: ReturnType<typeof bindAdaAction>[] = [];
+  const clearBindings = (group: typeof bindings) => {
+    for (const binding of group.splice(0)) {
+      binding.dispose();
+    }
+  };
+  const register = (element: HTMLButtonElement, run: () => void, group = bindings) => {
+    group.push(
+      bindAdaAction(
+        {
+          click: {
+            availability: () => (element.disabled ? { kind: "omitted" } : { kind: "available" }),
+            run,
+          },
+          current: () =>
+            !disposed &&
+            open &&
+            parent.contains(element) &&
+            inCurrentView(parent, element) &&
+            !element.hidden &&
+            !element.closest("[hidden], [inert]"),
+          slopPx: () => SCROLL.dragThreshold * readViewUnit(element),
+        },
+        element,
+      ),
+    );
+  };
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.dataset.station = "";
@@ -283,14 +316,14 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       stationCard.fit();
     },
   };
-  nextGreeting.addEventListener("click", () => {
+  register(nextGreeting, () => {
     options.advanceGreeting();
     keeper.render(options.greeting());
     if (nextGreeting.hidden) {
       focusTarget(openShop);
     }
   });
-  stationCard.skip.addEventListener("click", () => {
+  register(stationCard.skip, () => {
     const initial = options.greeting();
     if (!initial || !stationGreetingCanSkip(initial)) {
       return;
@@ -485,12 +518,30 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   confirmModal.append(confirmCard.frame, dropHost);
   parent.append(modal, confirmModal);
 
-  let disposed = false;
   let open = false;
   let view: StationView = "card";
   let tab: StationTab | null = null;
   const shownTabs = () => stationTabs(options.services());
   let confirm: { readonly key: string } | { readonly drop: true } | null = null;
+  let pressDialog: HTMLElement | undefined;
+  let leavePress: (() => void) | undefined;
+  const syncPressView = () => {
+    const next =
+      !open || disposed
+        ? undefined
+        : confirm
+          ? confirmModal
+          : view === "shop"
+            ? shopCard.frame
+            : view === "jobs"
+              ? jobsCard.frame
+              : stationCard.frame;
+    if (next !== pressDialog) {
+      leavePress?.();
+      pressDialog = next;
+      leavePress = next ? enterPressView(parent, next) : undefined;
+    }
+  };
 
   const renderBalances = (): void => {
     const balance = options.balance();
@@ -499,7 +550,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     jobsBalance.textContent = String(balance.amount);
   };
 
-  const rowElement = (row: StationRow): HTMLButtonElement => {
+  const rowElement = (row: StationRow, interactive = true): HTMLButtonElement => {
     const node = document.createElement("button");
     node.type = "button";
     node.className = "ada-shop-row";
@@ -533,40 +584,53 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       "aria-label",
       [row.name, row.level, trailing.textContent].filter(Boolean).join(", "),
     );
-    node.addEventListener("click", () => {
-      if (tab === null || !shownTabs().includes(tab)) {
-        render();
-        return;
-      }
-      const action = rowAction(row.state);
-      if (action === "select") {
-        options.select(row.key);
-        render();
-        const selected = [...list.querySelectorAll<HTMLElement>(".ada-shop-row")].find(
-          (entry) => entry.dataset.item === row.key,
-        );
-        if (selected) {
-          focusTarget(selected);
-        }
-        return;
-      }
-      if (action === "none") {
-        return;
-      }
-      const request = options.request(row.key);
-      if (request.kind === "refused") {
-        refuse(node, options.reducedMotion());
-        return;
-      }
-      openConfirm(row, request);
-    });
+    if (interactive) {
+      register(
+        node,
+        () => {
+          if (tab === null || !shownTabs().includes(tab)) {
+            render();
+            return;
+          }
+          const liveRow = options
+            .rows(tab as Exclude<StationTab, "exchange">)
+            .find((item) => item.key === row.key);
+          if (!liveRow) {
+            render();
+            return;
+          }
+          const action = rowAction(liveRow.state);
+          if (action === "select") {
+            options.select(row.key);
+            render();
+            const selected = [...list.querySelectorAll<HTMLElement>(".ada-shop-row")].find(
+              (entry) => entry.dataset.item === row.key,
+            );
+            if (selected) {
+              focusTarget(selected);
+            }
+            return;
+          }
+          if (action === "none") {
+            return;
+          }
+          const request = options.request(row.key);
+          if (request.kind === "refused") {
+            refuse(node, options.reducedMotion());
+            return;
+          }
+          openConfirm(liveRow, request);
+        },
+        shopBindings,
+      );
+    }
     return node;
   };
 
   const groupElement = (rows: readonly StationRow[]): HTMLDivElement => {
     const group = document.createElement("div");
     group.className = "ada-shop-group";
-    group.append(...rows.map(rowElement));
+    group.append(...rows.map((row) => rowElement(row)));
     return group;
   };
 
@@ -595,6 +659,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
 
   // Measure the complete catalogs at natural widths, then bound rows before measuring heights.
   const fitList = (): void => {
+    clearBindings(shopBindings);
     if (tab === null) {
       list.hidden = true;
       exchange.root.hidden = true;
@@ -620,7 +685,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     measure.append(
       ...shownTabs()
         .filter((id) => id !== "exchange")
-        .flatMap((id) => options.rows(id).map(rowElement)),
+        .flatMap((id) => options.rows(id).map((row) => rowElement(row, false))),
     );
     card.append(measure);
     const widest = (selector: string) =>
@@ -696,44 +761,54 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
         action.textContent,
       ].join(", "),
     );
-    node.addEventListener("click", () => {
-      const services = options.services();
-      if (!stationJobsShown(services) || (job.state !== "held" && !services?.jobs)) {
-        render();
-        return;
-      }
-      if (jobAction(job.state) === "drop") {
-        openDrop(job);
-        return;
-      }
-      if (!options.acceptJob(job.id)) {
-        jobsBusy.textContent = options.busyLine();
-        jobsBusy.hidden = false;
-        renderJobs();
-        jobsCard.fit();
-        const replacement = [...jobList.querySelectorAll<HTMLElement>(".ada-job-row")].find(
-          (row) => row.dataset.job === job.id,
-        );
-        if (replacement) {
-          focusTarget(replacement);
-          refuse(replacement, options.reducedMotion());
-        } else {
-          focusPage(jobsCard, jobList, jobsPager);
+    register(
+      node,
+      () => {
+        const services = options.services();
+        const liveJob = options.jobs().find((item) => item.id === job.id);
+        if (
+          !liveJob ||
+          !stationJobsShown(services) ||
+          (liveJob.state !== "held" && !services?.jobs)
+        ) {
+          render();
+          return;
         }
-        return;
-      }
-      jobsBusy.hidden = true;
-      jobsPage = 0;
-      render();
-      const inUse = jobList.querySelector<HTMLElement>("[data-state=inUse]");
-      if (inUse) {
-        focusTarget(inUse);
-      }
-    });
+        if (jobAction(liveJob.state) === "drop") {
+          openDrop(liveJob);
+          return;
+        }
+        if (!options.acceptJob(job.id)) {
+          jobsBusy.textContent = options.busyLine();
+          jobsBusy.hidden = false;
+          renderJobs();
+          jobsCard.fit();
+          const replacement = [...jobList.querySelectorAll<HTMLElement>(".ada-job-row")].find(
+            (row) => row.dataset.job === job.id,
+          );
+          if (replacement) {
+            focusTarget(replacement);
+            refuse(replacement, options.reducedMotion());
+          } else {
+            focusPage(jobsCard, jobList, jobsPager);
+          }
+          return;
+        }
+        jobsBusy.hidden = true;
+        jobsPage = 0;
+        render();
+        const inUse = jobList.querySelector<HTMLElement>("[data-state=inUse]");
+        if (inUse) {
+          focusTarget(inUse);
+        }
+      },
+      jobBindings,
+    );
     return node;
   };
 
   const renderJobs = (): void => {
+    clearBindings(jobBindings);
     const unit = readViewUnit(jobsCard.card);
     const measure = document.createElement("div");
     measure.className = "ada-shop-measure";
@@ -807,6 +882,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     } else {
       stationCard.fit();
     }
+    syncPressView();
   };
 
   for (const [pager, kind] of [
@@ -817,7 +893,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       [pager.previous, -1],
       [pager.next, 1],
     ] as const) {
-      button.addEventListener("click", () => {
+      register(button, () => {
         if (button.hidden || pager.node.hidden) {
           return;
         }
@@ -861,6 +937,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     buy.textContent = request.action;
     confirmCard.body.replaceChildren(...parts);
     confirmModal.hidden = false;
+    syncPressView();
     confirmCard.fit();
     focusTarget(buy);
   };
@@ -921,6 +998,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     confirmCard.frame.hidden = true;
     dropHost.hidden = false;
     confirmModal.hidden = false;
+    syncPressView();
     void dropDetails.settle().then(
       () => {
         if (!disposed && !confirmModal.hidden && confirm && "drop" in confirm) {
@@ -937,6 +1015,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     confirmModal.hidden = true;
     dropHost.hidden = true;
     dropOrigin = null;
+    syncPressView();
   };
 
   const back = (): void => {
@@ -980,7 +1059,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   window.addEventListener("resize", refit);
   window.addEventListener(VIEW_SCALE_EVENT, refit);
 
-  openJobs.addEventListener("click", () => {
+  register(openJobs, () => {
     if (!stationJobsShown(options.services())) {
       return;
     }
@@ -990,10 +1069,10 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     render();
     focusTarget(jobList.querySelector<HTMLElement>("button") ?? jobsCard.close);
   });
-  jobsCard.close.addEventListener("click", back);
+  register(jobsCard.close, back);
 
-  undock.addEventListener("click", options.undock);
-  openShop.addEventListener("click", () => {
+  register(undock, options.undock);
+  register(openShop, () => {
     if (shownTabs().length === 0) {
       return;
     }
@@ -1005,7 +1084,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     }
   });
   for (const [id, button] of tabButtons) {
-    button.addEventListener("click", () => {
+    register(button, () => {
       if (!shownTabs().includes(id)) {
         return;
       }
@@ -1015,11 +1094,11 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       render();
     });
   }
-  stationCard.close.addEventListener("click", back);
-  shopCard.close.addEventListener("click", back);
-  confirmCard.close.addEventListener("click", back);
-  cancel.addEventListener("click", back);
-  buy.addEventListener("click", () => {
+  register(stationCard.close, back);
+  register(shopCard.close, back);
+  register(confirmCard.close, back);
+  register(cancel, back);
+  register(buy, () => {
     const pending = confirm;
     const available = tab !== null && shownTabs().includes(tab);
     closeConfirm();
@@ -1085,6 +1164,11 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
         return;
       }
       disposed = true;
+      leavePress?.();
+      leavePress = undefined;
+      clearBindings(bindings);
+      clearBindings(shopBindings);
+      clearBindings(jobBindings);
       window.removeEventListener("resize", refit);
       window.removeEventListener(VIEW_SCALE_EVENT, refit);
       exchange?.dispose();

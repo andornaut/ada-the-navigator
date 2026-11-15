@@ -2,7 +2,11 @@ import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 
 import { EXCHANGE_COPY } from "../data/exchangeCopy.ts";
 import type { ExchangeOrder, ExchangePreview, ExchangeQuote } from "../model/exchange.ts";
+import { bindAdaAction } from "./actionBinding.ts";
+import { SCROLL } from "./layout/contentCard.ts";
+import { readViewUnit } from "./layout/viewScale.ts";
 import { createActions, createButton } from "./modal.ts";
+import { inCurrentView } from "./pressScope.ts";
 import { stardustCount } from "./statusPill.ts";
 
 export interface ExchangePort {
@@ -62,6 +66,23 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
   status.setAttribute("role", "status");
   root.append(help, editor, confirmation, status);
   parent.append(root);
+  let disposed = false;
+  const bindings: ReturnType<typeof bindAdaAction>[] = [];
+  const register = (element: HTMLButtonElement, run: () => void, active: () => boolean) => {
+    bindings.push(
+      bindAdaAction(
+        {
+          click: {
+            availability: () => (element.disabled ? { kind: "omitted" } : { kind: "available" }),
+            run,
+          },
+          current: () => !disposed && !root.hidden && active() && inCurrentView(parent, element),
+          slopPx: () => SCROLL.dragThreshold * readViewUnit(element),
+        },
+        element,
+      ),
+    );
+  };
   let direction: ExchangeOrder["direction"] = "buy";
   let pending: ExchangeQuote | undefined;
   const line = (target: HTMLElement, quote: ExchangeQuote): void => {
@@ -118,49 +139,69 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
     [buy, "buy"],
     [sell, "sell"],
   ] as const) {
-    button.addEventListener("click", () => {
-      direction = next;
-      render();
-    });
+    register(
+      button,
+      () => {
+        direction = next;
+        render();
+      },
+      () => !editor.hidden,
+    );
   }
   amount.addEventListener("input", render);
-  action.addEventListener("click", () => {
-    const quote = port.preview({ amount: Number(amount.value), direction });
-    if (quote.kind !== "quote") {
-      render();
-      return;
-    }
-    pending = quote;
-    line(summary, quote);
-    editor.hidden = true;
-    confirmation.hidden = false;
-    status.textContent = "";
-    focusTarget(confirm);
-  });
-  cancel.addEventListener("click", back);
-  confirm.addEventListener("click", () => {
-    const quote = pending;
-    if (!quote) {
-      return;
-    }
-    pending = undefined;
-    confirm.disabled = true;
-    try {
-      const result = port.confirm(quote);
-      confirmation.hidden = true;
-      editor.hidden = false;
-      onChange();
-      render();
-      status.textContent = refusal(result);
-      focusTarget(action);
-    } finally {
-      confirm.disabled = false;
-    }
-  });
+  register(
+    action,
+    () => {
+      const quote = port.preview({ amount: Number(amount.value), direction });
+      if (quote.kind !== "quote") {
+        render();
+        return;
+      }
+      pending = quote;
+      line(summary, quote);
+      editor.hidden = true;
+      confirmation.hidden = false;
+      status.textContent = "";
+      focusTarget(confirm);
+    },
+    () => !editor.hidden,
+  );
+  register(cancel, back, () => !confirmation.hidden);
+  register(
+    confirm,
+    () => {
+      const quote = pending;
+      if (!quote) {
+        return;
+      }
+      pending = undefined;
+      confirm.disabled = true;
+      try {
+        const result = port.confirm(quote);
+        confirmation.hidden = true;
+        editor.hidden = false;
+        onChange();
+        render();
+        status.textContent = refusal(result);
+        focusTarget(action);
+      } finally {
+        confirm.disabled = false;
+      }
+    },
+    () => !confirmation.hidden && pending !== undefined,
+  );
   render();
   return {
     back,
-    dispose: () => root.remove(),
+    dispose() {
+      disposed = true;
+      for (const binding of bindings) {
+        binding.dispose();
+      }
+      bindings.length = 0;
+      amount.removeEventListener("input", render);
+      root.remove();
+    },
     isConfirming: () => pending !== undefined,
     render,
     root,

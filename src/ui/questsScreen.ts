@@ -3,12 +3,16 @@ import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { MapPlace, MapSymbol } from "../model/map.ts";
 import type { QuestEntry, QuestObjective } from "../model/questDetails.ts";
+import { bindAdaAction } from "./actionBinding.ts";
 import { createCompletionIndicator } from "./completionIndicator.ts";
 import { gainNotice } from "./itemNotice.ts";
+import { SCROLL } from "./layout/contentCard.ts";
 import { QUEST_LIST_PAGE_SIZE, QUEST_ROUTE_ARROW } from "./layout/questsScreen.ts";
+import { readViewUnit } from "./layout/viewScale.ts";
 import { chipFace, chipGlyph, type MapScreenLabels } from "./mapScreen.ts";
 import { createButton, createCard, setFooterAction, setScrollGroup } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
+import { inCurrentView } from "./pressScope.ts";
 import { CARGO_ICONS } from "./statusPill.ts";
 
 export type QuestOrigin = "flight" | "list" | "ship";
@@ -115,6 +119,24 @@ export function createQuestsScreen(
   card.card.dataset.dialog = "quests";
   modal.append(card.frame);
   root.append(modal);
+  let disposed = false;
+  const bindings: ReturnType<typeof bindAdaAction>[] = [];
+  const renderedBindings: ReturnType<typeof bindAdaAction>[] = [];
+  const register = (element: HTMLButtonElement, run: () => void, rendered = true) => {
+    (rendered ? renderedBindings : bindings).push(
+      bindAdaAction(
+        {
+          click: {
+            availability: () => (element.disabled ? { kind: "omitted" } : { kind: "available" }),
+            run,
+          },
+          current: () => !disposed && !modal.hidden && inCurrentView(root, element),
+          slopPx: () => SCROLL.dragThreshold * readViewUnit(element),
+        },
+        element,
+      ),
+    );
+  };
   let entries: readonly QuestEntry[] = [];
   let contextEntries: readonly QuestEntry[] | null = null;
   let places: readonly MapPlace[] = [];
@@ -167,8 +189,11 @@ export function createQuestsScreen(
       options.onClose();
     }
   };
-  card.close.addEventListener("click", back);
+  register(card.close, back, false);
   function render(): void {
+    for (const binding of renderedBindings.splice(0)) {
+      binding.dispose();
+    }
     release();
     const visibleEntries = contextEntries ?? entries;
     const entry = visibleEntries.find((entry) => entry.id === selected);
@@ -275,7 +300,7 @@ export function createQuestsScreen(
               "aria-label",
               `${labels.questLocate ?? ""}: ${endpoint.location.label}`,
             );
-            button.addEventListener("click", () => {
+            register(button, () => {
               hide();
               options.onLocate(endpoint.place!.id);
             });
@@ -292,7 +317,7 @@ export function createQuestsScreen(
       if (origin === "flight" && contextEntries === null) {
         const others = createButton(labels.questOtherQuests ?? "", "secondary");
         others.dataset.action = "quest-other";
-        others.addEventListener("click", () => {
+        register(others, () => {
           selected = null;
           render();
         });
@@ -325,7 +350,7 @@ export function createQuestsScreen(
           if (image) {
             button.prepend(image);
           }
-          button.addEventListener("click", () => {
+          register(button, () => {
             selected = item.id;
             origin = "list";
             render();
@@ -337,7 +362,7 @@ export function createQuestsScreen(
         for (const direction of [-1, 1]) {
           const button = createButton(direction < 0 ? labels.previous : labels.next, "secondary");
           button.disabled = listPage + direction < 0 || listPage + direction >= pages;
-          button.addEventListener("click", () => {
+          register(button, () => {
             listPage += direction;
             render();
           });
@@ -360,7 +385,7 @@ export function createQuestsScreen(
       "primary",
     );
     close.dataset.action = entry && origin === "list" ? "quest-back" : "quest-close";
-    close.addEventListener("click", back);
+    register(close, back);
     footer.append(close);
     setFooterAction(entry && origin === "list" ? "back" : "close", footer);
     card.body.replaceChildren(body, footer);
@@ -378,6 +403,12 @@ export function createQuestsScreen(
     back,
     close: hide,
     dispose(): void {
+      disposed = true;
+      for (const binding of [...bindings, ...renderedBindings]) {
+        binding.dispose();
+      }
+      bindings.length = 0;
+      renderedBindings.length = 0;
       hide();
       card.dispose();
       modal.remove();

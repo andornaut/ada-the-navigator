@@ -7,6 +7,10 @@ import { createExchangeView } from "./exchange.ts";
 const dom = vi.hoisted(() => {
   class Node extends EventTarget {
     children: Node[] = [];
+    parentElement: Node | null = null;
+    contains(node: Node): boolean {
+      return node === this || this.children.some((child) => child.contains(node));
+    }
     dataset: Record<string, string> = {};
     attributes: Record<string, string> = {};
     hidden = false;
@@ -18,6 +22,9 @@ const dom = vi.hoisted(() => {
     remove = vi.fn();
     append(...nodes: Node[]) {
       this.children.push(...nodes);
+      for (const node of nodes) {
+        node.parentElement = this;
+      }
     }
     replaceChildren(...nodes: Node[]) {
       this.children = nodes;
@@ -168,4 +175,28 @@ describe("Exchange preview and confirmation", () => {
     expect(f.view.back()).toBe(false);
     expect(f.commit).not.toHaveBeenCalled();
   });
+});
+
+it("does not execute disabled preview callbacks or hidden confirmation callbacks", () => {
+  const f = fixture();
+  f.amount("0");
+  f.click("exchange-preview");
+  f.click("exchange-confirm");
+  expect(f.view.isConfirming()).toBe(false);
+  expect(f.commit).not.toHaveBeenCalled();
+  f.amount("1");
+  f.click("exchange-preview");
+  f.click("exchange-cancel");
+  f.click("exchange-confirm");
+  expect(f.commit).not.toHaveBeenCalled();
+});
+
+it("unregisters retained native callbacks and input rendering on disposal", () => {
+  const f = fixture();
+  f.click("exchange-preview");
+  const retained = f.action("exchange-confirm");
+  f.view.dispose();
+  retained.dispatchEvent(new Event("click"));
+  expect(f.commit).not.toHaveBeenCalled();
+  expect(f.onChange).not.toHaveBeenCalled();
 });
