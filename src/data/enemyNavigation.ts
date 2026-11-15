@@ -15,7 +15,8 @@ export const ENEMY_AVOIDANCE = {
   predictionSteps: 6,
 } as const;
 
-/** Swarm steering oscillation frequency, independent of its catalog amplitude. */
+/** Existing steering thresholds and frequency, independent of catalog speed and amplitude. */
 export const ENEMY_STEERING = {
+  arrivalRadius: 5,
   swarmWobbleRadiansPerSecond: 3,
 } as const;

@@ -412,7 +412,7 @@ function arrive(
 ): Point {
   const offset = worldDelta(context, state.position, goal);
   const distance = magnitude(offset);
-  if (distance <= 5) {
+  if (distance <= ENEMY_STEERING.arrivalRadius) {
     return { x: 0, y: 0 };
   }
   const arrival = Math.min(
@@ -852,7 +852,10 @@ export function stepEnemy(
       (!recovering || admitted) &&
       returnSeconds >= pursuit.rearmSeconds &&
       !leashed;
-    const settled = homeDistance <= 5 && observed && playerHomeDistance > definition.perception;
+    const settled =
+      homeDistance <= ENEMY_STEERING.arrivalRadius &&
+      observed &&
+      playerHomeDistance > definition.perception;
     if (rearm || settled) {
       next.returning = false;
       next.pursuitSeconds = 0;
@@ -911,7 +914,10 @@ export function stepEnemy(
   }
   if (
     effects.defeated ||
-    (next.returning && !definition.navigation && homeDistance <= 5 && !effects.movementStopped)
+    (next.returning &&
+      !definition.navigation &&
+      homeDistance <= ENEMY_STEERING.arrivalRadius &&
+      !effects.movementStopped)
   ) {
     next.velocity = { x: 0, y: 0 };
     next.heading = null;
