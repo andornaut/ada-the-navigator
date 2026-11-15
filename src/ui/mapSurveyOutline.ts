@@ -3,7 +3,7 @@ import type { Rect } from "@andornaut/game-kit/rect";
 import { CHARTING_ORIGIN, CHARTING_RADIUS } from "../model/map.ts";
 import { MAP_COLORS, type MapView, toScreen } from "./layout/mapScreen.ts";
 
-/** The progress area is an outline over the fog, clipped below the map chrome. */
+/** The progress outline uses the full canvas; the separate UI layers occlude only their own ink. */
 export function drawMapSurveyOutline(
   context: CanvasRenderingContext2D,
   inner: Rect,
@@ -14,7 +14,7 @@ export function drawMapSurveyOutline(
   const rx = CHARTING_RADIUS * Math.SQRT2 * view.scale * px;
   context.save();
   context.beginPath();
-  context.rect(inner.x * px, inner.y * px, inner.width * px, inner.height * px);
+  context.rect(0, 0, context.canvas.width, context.canvas.height);
   context.clip();
   context.filter = "none";
   context.globalCompositeOperation = "source-over";

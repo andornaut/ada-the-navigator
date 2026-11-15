@@ -8,6 +8,7 @@ import { FALLBACK_SPACE_PALETTE, readGalaxyFields } from "../../game/spacePalett
 import {
   adaAngle,
   chipRect,
+  containedMapHeader,
   fitRegion,
   fogColor,
   fogReveal,
@@ -131,7 +132,18 @@ describe("map projection and fit", () => {
     expect(mapCloseRect(phone, BASE)).toEqual({ height: 48, width: 98, x: 579, y: 293 });
     expect(MAP_TOOLS.map(({ id }) => id)).toEqual(["zoomOut", "zoomIn", "recentre"]);
     expect(toolColumnLeft(NO_INSETS, BASE)).toBe(542);
-    expect(mapHeaderCap(NO_INSETS, BASE)).toBe(518);
+    expect(mapHeaderCap(NO_INSETS, BASE)).toBe(360);
+  });
+
+  it("fits all 200 landmark pips inside half the viewport without changing the text widths", () => {
+    const cap = mapHeaderCap(NO_INSETS, BASE);
+    const header = containedMapHeader(cap, 100, 65, 200, 300, 1);
+    expect(header.width).toBe(360);
+    expect(header.pipScale).toBeGreaterThan(0);
+    expect(header.pipScale).toBeLessThan(1);
+    const pips = ((200 - 1) * MAP_SCREEN.header.pipPitch + MAP_SCREEN.header.pip) * header.pipScale;
+    expect(100 + MAP_SCREEN.header.divider.width + 65 + pips + 5 * header.gap).toBeCloseTo(360);
+    expect(containedMapHeader(cap, 100, 65, 12, 300, 1).pipScale).toBe(1);
   });
 
   it("uses one equal ink gap for title, divider, percent, pips and both outer edges", () => {

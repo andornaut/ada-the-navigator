@@ -19,6 +19,7 @@ import { font, pixels, safeEdge, slice, units, VIEW_PROPERTIES } from "./layout/
 import {
   chipRect,
   clampView,
+  containedMapHeader,
   fitRegion,
   innerRegion,
   keepClear,
@@ -30,7 +31,7 @@ import {
   MAP_SCREEN,
   MAP_SYMBOL,
   MAP_TOOLS,
-  mapHeaderGeometry,
+  mapHeaderCap,
   mapImage,
   mapProjection,
   type MapTool,
@@ -484,7 +485,7 @@ export const MAP_SCREEN_STYLE = `
   flex:none;
   width:${units(MAP_SCREEN.header.divider.width)};
   height:${units(MAP_SCREEN.header.divider.height)};
-  background:${MAP_COLORS.divider}
+  background:${TEXT_TOKENS.supporting}
 }
 .ada-controls .ada-map-column{
   display:flex;
@@ -1223,7 +1224,14 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     const nameWidth = measureInk(galaxy, galaxyInk);
     const percentWidth = measureInk(percent, percentInk);
     const noteWidth = measureInk(noteInk, noteInk);
-    const geometry = mapHeaderGeometry(nameWidth, percentWidth, total, noteWidth, pixelUnit);
+    const geometry = containedMapHeader(
+      mapHeaderCap(insets, size),
+      nameWidth,
+      percentWidth,
+      total,
+      noteWidth,
+      pixelUnit,
+    );
     const page = safeRect(insets, SPACING.pageInset, size);
     header.style.left = pixels(Math.round(page.x * pixelUnit) / density);
     header.style.top = pixels(Math.round(page.y * pixelUnit) / density);
@@ -1235,16 +1243,22 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     pips.style.height = pixels(diameter / density);
     pips.style.width = pixels(
       total > 0
-        ? (Math.round((total - 1) * MAP_SCREEN.header.pipPitch * pixelUnit) + diameter) / density
+        ? ((Math.round((total - 1) * MAP_SCREEN.header.pipPitch * pixelUnit) + diameter) *
+            geometry.pipScale) /
+            density
         : 0,
     );
     for (const [index, pip] of [...pips.children].entries()) {
       const style = (pip as HTMLElement).style;
       style.position = "absolute";
-      style.left = pixels(Math.round(index * MAP_SCREEN.header.pipPitch * pixelUnit) / density);
+      style.left = pixels(
+        (Math.round(index * MAP_SCREEN.header.pipPitch * pixelUnit) * geometry.pipScale) / density,
+      );
       style.width = pixels(diameter / density);
       style.height = pixels(diameter / density);
       style.borderWidth = pixels(Math.round(MAP_SCREEN.header.pipRing * pixelUnit) / density);
+      style.transformOrigin = "top left";
+      style.transform = geometry.pipScale === 1 ? "" : `scaleX(${geometry.pipScale})`;
     }
     // Chips, kept by id and placed in reading order so Tab follows it.
     const shown = places().map((place) => ({

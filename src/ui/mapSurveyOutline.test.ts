@@ -13,6 +13,7 @@ function canvas() {
   const commands: { args: unknown[]; name: string }[] = [];
   const context = {
     beginPath: () => commands.push({ args: [], name: "beginPath" }),
+    canvas: { height: 360, width: 720 },
     clip: () => commands.push({ args: [], name: "clip" }),
     ellipse: (...args: number[]) => commands.push({ args, name: "ellipse" }),
     fill: vi.fn(),
@@ -54,9 +55,12 @@ describe("central survey outline", () => {
       const edge = toScreen(INNER, view, boundary);
       expect(((edge.x * px - x!) / rx!) ** 2 + ((edge.y * px - y!) / ry!) ** 2).toBeCloseTo(1, 10);
     }
-    expect(commands.find(({ name }) => name === "rect")?.args).toEqual(
-      [INNER.x, INNER.y, INNER.width, INNER.height].map((value) => value * px),
-    );
+    expect(commands.find(({ name }) => name === "rect")?.args).toEqual([
+      0,
+      0,
+      context.canvas.width,
+      context.canvas.height,
+    ]);
     expect(commands.find(({ name }) => name === "dash")?.args).toEqual([6 * px, 4 * px]);
     expect(commands.filter(({ name }) => name === "stroke").map(({ args }) => args)).toEqual([
       [3 * px, MAP_COLORS.ink],
@@ -64,6 +68,20 @@ describe("central survey outline", () => {
     ]);
     expect(commands.at(-1)?.name).toBe("restore");
     expect(context.fill).not.toHaveBeenCalled();
+  });
+
+  it.each([0, 360])("keeps the canvas clip when panning the oval across row boundary %s", (y) => {
+    const { commands, context } = canvas();
+    drawMapSurveyOutline(
+      context as unknown as CanvasRenderingContext2D,
+      INNER,
+      { centre: { x: 0, y }, scale: 0.01 },
+      1,
+    );
+    expect(commands.find(({ name }) => name === "rect")?.args).toEqual([0, 0, 720, 360]);
+    const ellipse = commands.find(({ name }) => name === "ellipse")!.args as number[];
+    expect(ellipse[2]).toBeCloseTo(CHARTING_RADIUS * Math.SQRT2 * 0.01);
+    expect(ellipse[3]).toBeCloseTo(ellipse[2]! / 2);
   });
 
   it("uses the same periodic origin image as map places", () => {
