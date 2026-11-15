@@ -86,6 +86,7 @@ import {
   quoteExchange,
 } from "./exchange.ts";
 import {
+  activateRequiredCartwheelRoute,
   activateRequiredWhirlpoolRoute,
   activateRouteEncounter,
   carryPickup,
@@ -99,6 +100,7 @@ import {
   pickupTouched,
   placeDestinationAhead,
   placeHuntingPack,
+  planRequiredCartwheelRoute,
   planRequiredWhirlpoolRoutes,
   populateFlight,
   populateRequiredChapterFlight,
@@ -1923,6 +1925,10 @@ export class GameModel {
       if (populateRequiredFlight(this.content, this.current, sites, flight).status === "blocked") {
         return;
       }
+    } else if (flight.galaxy === 2) {
+      populateRequiredChapterFlight(this.content, this.current, flight, () => {
+        planRequiredCartwheelRoute(this.content, this.current, flight);
+      });
     } else if (flight.galaxy === 3) {
       populateRequiredChapterFlight(this.content, this.current, flight, () => {
         for (const id of this.current.known) {
@@ -2439,7 +2445,10 @@ export class GameModel {
       !this.current.introduced &&
       f.freshDistance >= this.content.tuning.introFreshDistance
     ) {
-      if (f.galaxy !== 3 || activateRequiredWhirlpoolRoute(this.content, this.current, f, opener)) {
+      if (
+        (f.galaxy !== 3 || activateRequiredWhirlpoolRoute(this.content, this.current, f, opener)) &&
+        activateRequiredCartwheelRoute(this.content, this.current, f, opener)
+      ) {
         ensureDestination(this.content, opener, f);
       }
       if (f.freshDistance > previousFreshDistance && !this.current.known.includes(opener)) {
@@ -2724,7 +2733,7 @@ export class GameModel {
     if (!f) {
       return;
     }
-    if ((f.galaxy === 1 || f.galaxy === 3) && this.current.requiredSites?.[id]) {
+    if ((f.galaxy === 1 || f.galaxy === 2 || f.galaxy === 3) && this.current.requiredSites?.[id]) {
       ensureDestination(this.content, id, f);
       return;
     }

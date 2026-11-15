@@ -80,6 +80,7 @@ import {
 } from "./enemyAi.ts";
 import { enemyEquipmentDefinition, rollEnemyWeaponLevel } from "./enemyEquipment.ts";
 export { rollEncounter } from "./encounterRoll.ts";
+import { cartwheelRequiredSites } from "./cartwheelRequiredSites.ts";
 import { flightEncounterSeed, flightWorldContext } from "./flightTopology.ts";
 import {
   createFrigateEscorts,
@@ -293,7 +294,7 @@ function requiredFootprintClear(
 ): boolean {
   const context = { ...flightWorldContext(flight), content, galaxy: flight.galaxy };
   const authored =
-    flight.galaxy === 3 || (flight.galaxy === 4 && flight.needle)
+    flight.galaxy === 2 || flight.galaxy === 3 || (flight.galaxy === 4 && flight.needle)
       ? stationPopulationObjects(flight)
       : [];
   return (
@@ -310,7 +311,10 @@ function requiredFootprintClear(
                 object.enemy?.packId?.startsWith("route:") ||
                 object.enemy?.escortOf?.startsWith("route:")),
         ),
-        sites: authored.filter((object) => object.kind === "destination"),
+        sites: [
+          ...authored.filter((object) => object.kind === "destination"),
+          ...cartwheelSiteGeometry(flight),
+        ],
       },
       footprint,
     )
@@ -2737,6 +2741,72 @@ export function planRequiredWhirlpoolRoutes(
   } finally {
     planningRequiredWorld.delete(projection);
   }
+}
+
+/** Future held buoy sites reserve geometry without adding actors, markers or population. */
+function cartwheelSiteGeometry(flight: FlightState): readonly SpaceObject[] {
+  if (flight.galaxy !== 2) {
+    return [];
+  }
+  const hub =
+    readRequiredRolePlan(flight, CARTWHEEL_STORY_SHIPS.station)?.site ??
+    stationPopulationObjects(flight).find(
+      (object) => object.kind === "destination" && object.id === CARTWHEEL_STORY_SHIPS.station,
+    );
+  if (!hub) {
+    return [];
+  }
+  return cartwheelRequiredSites(flightWorldContext(flight), hub, ["miner", "visitors"]).map(
+    (site) => ({ ...hub, ...site }),
+  );
+}
+
+/** Cartwheel reserves its sole authored capital; held regulars are geometry-only sites. */
+export function planRequiredCartwheelRoute(
+  content: GameContent,
+  progress: GalaxyProgress,
+  flight: FlightState,
+): void {
+  if (flight.galaxy !== 2 || readRequiredRolePlan(flight, CARTWHEEL_STORY_SHIPS.station)) {
+    return;
+  }
+  const id = CARTWHEEL_STORY_SHIPS.station;
+  const projection = structuredClone(flight);
+  planningRequiredWorld.add(projection);
+  try {
+    const point = progress.requiredSites?.[id];
+    const site = point
+      ? ensureDestinationAt(content, id, point, projection)
+      : ensureDestination(content, id, projection);
+    if (
+      progress.questComplete ||
+      progress.known.includes(id) ||
+      flight.combat?.routeEncounters.includes(id) ||
+      Object.hasOwn(flight.world.notables, `route:${id}`)
+    ) {
+      ensureDestinationAt(content, id, site, flight);
+      return;
+    }
+    const leader = ensureRouteEncounter(content, id, projection);
+    if (!leader) {
+      throw new Error("Required Cartwheel capital was not constructed");
+    }
+    storeRequiredRolePlan(progress, flight, { actors: [leader], role: "cartwheel-capital", site });
+  } finally {
+    planningRequiredWorld.delete(projection);
+  }
+}
+
+/** Uses the same prevalidated full-state transfer as the other authored role plans. */
+export function activateRequiredCartwheelRoute(
+  content: GameContent,
+  progress: GalaxyProgress,
+  flight: FlightState,
+  id: string,
+): boolean {
+  return flight.galaxy === 2 && id === CARTWHEEL_STORY_SHIPS.station
+    ? activateRequiredWhirlpoolRoute(content, progress, flight, id)
+    : true;
 }
 
 /** Authored model eligibility transfers reserved full states once after geometry validation. */
