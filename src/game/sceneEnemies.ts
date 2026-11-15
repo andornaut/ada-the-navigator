@@ -39,6 +39,7 @@ import { familyArt, filterTexture } from "./sceneAssets.ts";
 import { keylineSilhouette, keylineSprite } from "./sceneHud.ts";
 import { type Asset } from "./sceneShared.ts";
 import { drawTaper, objectSprite } from "./sceneSprites.ts";
+import { acknowledgePrimitiveTarget } from "./sceneTargetMarkers.ts";
 import { type EffectShape } from "./weaponEffects.ts";
 
 /** The scene state and methods this module's functions use. */
@@ -89,6 +90,9 @@ export type EnemiesContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> 
     | "loads"
     | "manifest"
     | "mineInk"
+    | "litCaches"
+    | "settingsOpen"
+    | "warpCover"
     | "model"
     | "overlay"
     | "paintAssets"
@@ -133,6 +137,21 @@ export function drawEnemy(scene: EnemiesContext, point: Vec, object: SpaceObject
       point.y - object.radius,
       point.x + object.radius,
       point.y - object.radius,
+    );
+    acknowledgePrimitiveTarget(
+      scene,
+      scene.ink,
+      {
+        closed: true,
+        filled: false,
+        kind: "path",
+        points: [
+          { x: point.x, y: point.y + object.radius },
+          { x: point.x - object.radius, y: point.y - object.radius },
+          { x: point.x + object.radius, y: point.y - object.radius },
+        ],
+      },
+      object.id,
     );
     return;
   }
@@ -195,6 +214,12 @@ export function drawEnemy(scene: EnemiesContext, point: Vec, object: SpaceObject
   scene.ink.fillPoints(polygon, true);
   scene.ink.lineStyle(1.5, scene.palette.obstacle);
   scene.ink.strokePoints(polygon, true);
+  acknowledgePrimitiveTarget(
+    scene,
+    scene.ink,
+    { closed: true, filled: true, kind: "path", points: polygon },
+    object.id,
+  );
   if (large) {
     const a = local(-0.16, -0.5);
     const b = local(-0.16, 0.5);

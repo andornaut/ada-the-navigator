@@ -26,6 +26,7 @@ import type { GameScene } from "./scene.ts";
 import { keylineSprite } from "./sceneHud.ts";
 import { LANDMARK_DEPTH, STORY_SHIP } from "./sceneShared.ts";
 import { objectSprite } from "./sceneSprites.ts";
+import { acknowledgePrimitiveGlint, acknowledgePrimitiveTarget } from "./sceneTargetMarkers.ts";
 import { hubBuoyKey, hubStoryKey, partKey } from "./spriteKeys.ts";
 import { stationFrame } from "./stationArt.ts";
 import {
@@ -95,6 +96,8 @@ export type WorldContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
     | "load"
     | "loads"
     | "manifest"
+    | "litCaches"
+    | "warpCover"
     | "model"
     | "overlay"
     | "paintAssets"
@@ -444,6 +447,24 @@ export function drawJobs(scene: WorldContext): void {
       scene.ink.fillEllipse(point.x, point.y, 220, 110);
       scene.ink.fillEllipse(point.x + 46, point.y - 16, 130, 64);
       scene.ink.fillEllipse(point.x - 52, point.y + 12, 110, 52);
+      for (const [x, y, width, height] of [
+        [point.x, point.y, 220, 110],
+        [point.x + 46, point.y - 16, 130, 64],
+        [point.x - 52, point.y + 12, 110, 52],
+      ]) {
+        acknowledgePrimitiveTarget(
+          scene,
+          scene.ink,
+          {
+            center: { x: x!, y: y! },
+            filled: true,
+            height: height!,
+            kind: "ellipse",
+            width: width!,
+          },
+          key,
+        );
+      }
     } else if (landmark.kind === "wreck") {
       scene.ink.lineStyle(2, scene.palette.environmentDetail, 0.9);
       const hull = [
@@ -455,11 +476,35 @@ export function drawJobs(scene: WorldContext): void {
         [-6, 16],
       ].map(([x, y]) => new PhaserMath.Vector2(point.x + x!, point.y + y!));
       scene.ink.strokePoints(hull, true);
+      acknowledgePrimitiveTarget(
+        scene,
+        scene.ink,
+        { closed: true, filled: false, kind: "path", points: hull },
+        key,
+      );
     } else {
       scene.ink.fillStyle(scene.palette.pointOfInterest, 0.9);
       scene.ink.fillCircle(point.x, point.y, 4);
+      acknowledgePrimitiveTarget(
+        scene,
+        scene.ink,
+        { center: point, filled: true, height: 8, kind: "ellipse", width: 8 },
+        key,
+      );
       scene.ink.lineStyle(1, scene.palette.pointOfInterest, 0.7 - pulse * 0.5);
       scene.ink.strokeCircle(point.x, point.y, 10 + pulse * 18);
+      acknowledgePrimitiveTarget(
+        scene,
+        scene.ink,
+        {
+          center: point,
+          filled: false,
+          height: 2 * (10 + pulse * 18),
+          kind: "ellipse",
+          width: 2 * (10 + pulse * 18),
+        },
+        key,
+      );
     }
     if (!scene.settingsOpen) {
       const sprites = [...scene.landmarkSprites].filter(
@@ -547,6 +592,24 @@ export function drawJobs(scene: WorldContext): void {
       scene.overlay.lineStyle(2, scene.palette.active, 1 - pulse * 0.5);
       scene.overlay.lineBetween(glint.x - size, glint.y, glint.x + size, glint.y);
       scene.overlay.lineBetween(glint.x, glint.y - size, glint.x, glint.y + size);
+      acknowledgePrimitiveGlint(scene, scene.overlay, {
+        closed: false,
+        filled: false,
+        kind: "path",
+        points: [
+          { x: glint.x - size, y: glint.y },
+          { x: glint.x + size, y: glint.y },
+        ],
+      });
+      acknowledgePrimitiveGlint(scene, scene.overlay, {
+        closed: false,
+        filled: false,
+        kind: "path",
+        points: [
+          { x: glint.x, y: glint.y - size },
+          { x: glint.x, y: glint.y + size },
+        ],
+      });
     }
   }
 }

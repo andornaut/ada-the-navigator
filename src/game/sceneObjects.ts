@@ -52,6 +52,7 @@ import { keylineEdges, keylineSilhouette, keylineSprite } from "./sceneHud.ts";
 import { sceneryDetail } from "./scenery.ts";
 import { type Asset } from "./sceneShared.ts";
 import { objectSprite } from "./sceneSprites.ts";
+import { acknowledgePrimitiveTarget } from "./sceneTargetMarkers.ts";
 import { shipDirection } from "./shipArt.ts";
 import { spaceObjectColor } from "./spacePalette.ts";
 import { BEACON_SUFFIX, FLASH_SUFFIX, hubBayKey, partKey } from "./spriteKeys.ts";
@@ -133,6 +134,8 @@ export type ObjectsContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> 
     | "loads"
     | "manifest"
     | "mineInk"
+    | "settingsOpen"
+    | "warpCover"
     | "model"
     | "outpostArt"
     | "overlay"
@@ -275,6 +278,12 @@ export function drawStation(
   }
   if (!scene.stationArt) {
     drawStationPlaceholder(scene, point, radius);
+    acknowledgePrimitiveTarget(
+      scene,
+      scene.ink,
+      { center: point, filled: true, height: radius * 1.2, kind: "ellipse", width: radius * 2.4 },
+      object.id,
+    );
     return;
   }
   drawBlink(scene, scene.stationArt, "station", object, point);
@@ -524,6 +533,30 @@ export function drawDestination(
   scene.ink.fillEllipse(point.x, point.y, radius * 2, radius);
   scene.ink.strokeEllipse(point.x, point.y, radius * 2, radius);
   scene.ink.strokeEllipse(point.x, point.y - 7, radius, radius * 0.6);
+  acknowledgePrimitiveTarget(
+    scene,
+    scene.ink,
+    { center: point, filled: true, height: radius, kind: "ellipse", width: radius * 2 },
+    object.id,
+  );
+  acknowledgePrimitiveTarget(
+    scene,
+    scene.ink,
+    { center: point, filled: false, height: radius, kind: "ellipse", width: radius * 2 },
+    object.id,
+  );
+  acknowledgePrimitiveTarget(
+    scene,
+    scene.ink,
+    {
+      center: { x: point.x, y: point.y - 7 },
+      filled: false,
+      height: radius * 0.6,
+      kind: "ellipse",
+      width: radius,
+    },
+    object.id,
+  );
 }
 
 /**
@@ -705,6 +738,14 @@ export function drawStardust(
   if (!art || !flight) {
     scene.ink.fillStyle(scene.palette.active);
     scene.ink.fillCircle(point.x, point.y, radius / 2);
+    if (isDiscoveryCache(object)) {
+      acknowledgePrimitiveTarget(
+        scene,
+        scene.ink,
+        { center: point, filled: true, height: radius, kind: "ellipse", width: radius },
+        object.id,
+      );
+    }
     return;
   }
   const at = stardustDrawn(
