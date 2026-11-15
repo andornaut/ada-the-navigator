@@ -1,4 +1,5 @@
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
+import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import type { GalaxyNumber } from "../data/types.ts";
 import type { MapPlace, MapSymbol } from "../model/map.ts";
@@ -13,6 +14,12 @@ import { chipFace, chipGlyph, type MapScreenLabels } from "./mapScreen.ts";
 import { createButton, createCard, setFooterAction, setScrollGroup } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
+import {
+  type QuestFooterAction,
+  type QuestFooterData,
+  type QuestsFooterSchema,
+  questsTree,
+} from "./questsTree.ts";
 import { CARGO_ICONS } from "./statusPill.ts";
 
 export type QuestOrigin = "flight" | "list" | "ship";
@@ -122,6 +129,7 @@ export function createQuestsScreen(
   let disposed = false;
   const bindings: ReturnType<typeof bindAdaAction>[] = [];
   const renderedBindings: ReturnType<typeof bindAdaAction>[] = [];
+  let footerLayout: ReturnType<typeof mountLayout<QuestsFooterSchema>> | undefined;
   const register = (element: HTMLButtonElement, run: () => void, rendered = true) => {
     (rendered ? renderedBindings : bindings).push(
       bindAdaAction(
@@ -195,6 +203,7 @@ export function createQuestsScreen(
       binding.dispose();
     }
     release();
+    footerLayout?.dispose();
     const visibleEntries = contextEntries ?? entries;
     const entry = visibleEntries.find((entry) => entry.id === selected);
     if (!entry) {
@@ -204,6 +213,9 @@ export function createQuestsScreen(
     body.className = entry ? "ada-quest-content" : "ada-quest-list";
     const footer = document.createElement("footer");
     footer.className = "ada-quest-footer";
+    const footerActions = new Map<QuestFooterAction, () => void>();
+    let other: QuestFooterData["other"];
+    let pager: QuestFooterData["pager"];
     const section = (name: string | undefined, text?: string) => {
       const section = document.createElement("section");
       if (name) {
@@ -315,13 +327,11 @@ export function createQuestsScreen(
       );
       reward.className = "ada-quest-reward";
       if (origin === "flight" && contextEntries === null) {
-        const others = createButton(labels.questOtherQuests ?? "", "secondary");
-        others.dataset.action = "quest-other";
-        register(others, () => {
+        other = { label: labels.questOtherQuests ?? "" };
+        footerActions.set("other", () => {
           selected = null;
           render();
         });
-        footer.append(others);
       }
     } else {
       const ordered = [
@@ -360,19 +370,18 @@ export function createQuestsScreen(
       }
       if (pages > 1) {
         for (const direction of [-1, 1]) {
-          const button = createButton(direction < 0 ? labels.previous : labels.next, "secondary");
-          button.disabled = listPage + direction < 0 || listPage + direction >= pages;
-          register(button, () => {
+          footerActions.set(direction < 0 ? "previous" : "next", () => {
             listPage += direction;
             render();
           });
-          footer.append(button);
         }
-        const count = document.createElement("output");
-        count.textContent = labels.page
-          .replace("{page}", String(listPage + 1))
-          .replace("{pages}", String(pages));
-        footer.append(count);
+        pager = {
+          count: labels.page
+            .replace("{page}", String(listPage + 1))
+            .replace("{pages}", String(pages)),
+          next: { disabled: listPage + 1 < 0 || listPage + 1 >= pages, label: labels.next },
+          previous: { disabled: listPage - 1 < 0 || listPage - 1 >= pages, label: labels.previous },
+        };
       }
       if (!visibleEntries.length) {
         const text = document.createElement("p");
@@ -380,14 +389,69 @@ export function createQuestsScreen(
         body.append(text);
       }
     }
-    const close = createButton(
-      entry && origin === "list" ? (labels.questBack ?? labels.close) : labels.close,
-      "primary",
+    const footerData: QuestFooterData = {
+      dismiss: {
+        actionId: entry && origin === "list" ? "quest-back" : "quest-close",
+        intent: entry && origin === "list" ? "back" : "close",
+        label: entry && origin === "list" ? (labels.questBack ?? labels.close) : labels.close,
+      },
+      ...(other === undefined ? {} : { other }),
+      ...(pager === undefined ? {} : { pager }),
+    };
+    footerActions.set("dismiss", back);
+    let close!: HTMLButtonElement;
+    footerLayout = mountLayout<QuestsFooterSchema>(
+      {
+        components: {
+          button: {
+            create(initial) {
+              const button = createButton(initial.label, initial.role);
+              if (initial.action === "dismiss") {
+                close = button;
+              }
+              const update = (data: QuestsFooterSchema["button"]["props"]) => {
+                button.textContent = data.label;
+                button.disabled = data.disabled ?? false;
+                if (data.actionId !== undefined) {
+                  button.dataset.action = data.actionId;
+                }
+              };
+              update(initial);
+              const run = footerActions.get(initial.action);
+              if (!run) {
+                throw new Error("Unregistered Quest footer action");
+              }
+              register(button, run);
+              return { dispose() {}, element: button, slots: {}, update };
+            },
+            slots: [],
+          },
+          count: {
+            create(initial) {
+              const count = document.createElement("output");
+              const update = (data: QuestsFooterSchema["count"]["props"]) => {
+                count.textContent = data.text;
+              };
+              update(initial);
+              return { dispose() {}, element: count, slots: {}, update };
+            },
+            slots: [],
+          },
+          footer: {
+            create(initial) {
+              const update = (data: QuestsFooterSchema["footer"]["props"]) => {
+                setFooterAction(data.intent, footer);
+              };
+              update(initial);
+              return { dispose() {}, element: footer, slots: { controls: footer }, update };
+            },
+            slots: ["controls"],
+          },
+        },
+        host: card.body,
+      },
+      questsTree(footerData),
     );
-    close.dataset.action = entry && origin === "list" ? "quest-back" : "quest-close";
-    register(close, back);
-    footer.append(close);
-    setFooterAction(entry && origin === "list" ? "back" : "close", footer);
     card.body.replaceChildren(body, footer);
     if (!entry) {
       setScrollGroup(card, body);
@@ -410,6 +474,7 @@ export function createQuestsScreen(
       bindings.length = 0;
       renderedBindings.length = 0;
       hide();
+      footerLayout?.dispose();
       card.dispose();
       modal.remove();
     },
