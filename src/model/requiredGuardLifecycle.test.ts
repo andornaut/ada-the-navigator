@@ -2,11 +2,13 @@ import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
+import { HOLODISKS } from "../data/holodisks.ts";
 import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
 import { relaunch } from "../testing/launch.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
 import { routeBlocked } from "./flight.ts";
 import { GameModel } from "./game.ts";
+import { stationPopulationObjects } from "./hostileStations.ts";
 import { readRequiredPlan } from "./requiredEncounterPlans.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -100,4 +102,36 @@ it("preserves hidden full states through Continue and retains site coordinates a
     })),
   ).toEqual(Object.values(plans ?? {}).map(({ site }) => ({ id: site.id, x: site.x, y: site.y })));
   expect(next.combat?.emptyRoutePlans).toBeUndefined();
+});
+
+it("keeps the real G3 holodisk leader and pack outside Sunflower required-site planning", () => {
+  const model = new GameModel(CONTENT);
+  model.state.unlocked = [1, 3];
+  model.state.prologueSeen = true;
+  model.state.progress[1].holodisk = true;
+  Object.assign(model.state.progress[3], {
+    introduced: true,
+    known: ["whale", "family"],
+    opened: true,
+    questComplete: true,
+    stage: 5,
+  });
+  model.state.seenConversations.push(...CONVERSATIONS.map(({ id }) => id));
+  model.startGalaxy(3);
+  model.state.dialogue = null;
+  const flight = model.state.flight!;
+  expect(flight.galaxy).toBe(3);
+  expect(flight.requiredPlans).toBeUndefined();
+  model.step(SIMULATION_STEP_SECONDS, idle);
+  expect(flight.objects.some(({ id }) => id === "holodisk")).toBe(true);
+  const population = stationPopulationObjects(flight);
+  const leader = population.find((actor) => actor.routeId === "holodisk");
+  expect(leader?.enemy?.archetype).toBe(HOLODISKS.guard.leader);
+  const pack = population.filter((actor) => actor.enemy?.packId === "route:holodisk:pack");
+  expect(pack).toHaveLength(HOLODISKS.guard.packSize);
+  expect(
+    pack.every((actor) => actor.enemy?.archetype === HOLODISKS.guard.pack && actor.persistent),
+  ).toBe(true);
+  expect(routeBlocked("holodisk", flight)).toBe(true);
+  expect(relaunch(CONTENT, model.save()).state).toEqual(model.state);
 });

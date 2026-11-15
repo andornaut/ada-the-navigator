@@ -2428,6 +2428,9 @@ export class GameModel {
       ensureDestination(this.content, "holodisk", f);
     }
     this.ensureRequiredApproaches();
+    if (this.holodiskWaypoint) {
+      syncFlightRegion(this.content, f);
+    }
     ensureHuntingPacks(this.content, f);
     this.ensureWhaleDebris();
     // A scene cut short by an earlier flight's end replays once Ada reaches the hub.

@@ -2293,7 +2293,7 @@ export function ensureRouteEncounter(
     : flight.galaxy === 1
       ? "frigate"
       : "capital";
-  if (archetype === "frigate") {
+  if (archetype === "frigate" && flight.galaxy === 1 && !holodisk) {
     if (flight.requiredPlans) {
       const activated = activateRequiredRoute(content, id, flight);
       return activated.status === "created" || activated.status === "existing"
@@ -2332,6 +2332,13 @@ export function ensureRouteEncounter(
   }
   relocateRouteGuards(content, flight);
   installFrigateEscorts(content, flight, object);
+  if (holodisk && object.enemy) {
+    const ports = questGuardHomePorts(questGuardPlacementContext(content, flight));
+    const home = ports.recoveryHome(flightWorldContext(flight), destination, object);
+    if (home) {
+      object.enemy.home = { x: home.x, y: home.y };
+    }
+  }
   combat(flight).routeEncounters.push(id);
   return object;
 }
