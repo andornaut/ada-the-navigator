@@ -1,15 +1,8 @@
 import { ECONOMY } from "../data/economy.ts";
-import { encounterTable } from "../data/enemyCatalog.ts";
 import { NEEDLE, NEEDLE_PLACES } from "../data/needle.ts";
 import { NEEDLE_COPY, NEEDLE_LEARNING } from "../data/needleCopy.ts";
 import type { ChapterContext, ChapterResult } from "./chapterProtocol.ts";
-import { dropRandom } from "./drops.ts";
-import {
-  ensureDestination,
-  ensureDestinationAt,
-  rollEncounter,
-  spawnChapterEnemy,
-} from "./flight.ts";
+import { ensureDestination, ensureDestinationAt, spawnChapterEnemy } from "./flight.ts";
 import {
   type NeedleApproach,
   needleCourses,
@@ -18,6 +11,7 @@ import {
   readNeedleProgress,
   stepNeedleCourse,
 } from "./needle.ts";
+import { planNeedleExit } from "./needleExitPlan.ts";
 import type {
   DialogueChoice,
   DialogueState,
@@ -78,26 +72,11 @@ export function initNeedle(context: ChapterContext): void {
     ensureDestinationAt(context.content, "holodisk", layout.eye.holodisk, context.flight);
   }
   if (!state.exitPackPlaced && !context.progress.holodisk) {
-    const next = dropRandom(context.flight.seed, "needle:exit");
-    const pack = rollEncounter(
-      encounterTable(4).filter((entry) => entry.archetype === "swarm"),
-      next(),
-      next(),
-    );
-    for (let index = 0; index < pack.count; index++) {
-      const angle = (index * Math.PI * 2) / pack.count;
-      const point = {
-        x: layout.eye.pack.x + Math.cos(angle) * NEEDLE.exitPackRadius,
-        y: layout.eye.pack.y + Math.sin(angle) * NEEDLE.exitPackRadius,
-      };
-      spawnChapterEnemy(
-        context.content,
-        pack.archetype,
-        `needle:exit:${index}`,
-        point,
-        context.flight,
-        { home: layout.eye.pack, packId: "needle:exit" },
-      );
+    for (const actor of planNeedleExit(context.flight.seed, layout.eye.pack)) {
+      spawnChapterEnemy(context.content, actor.archetype, actor.id, actor.point, context.flight, {
+        home: actor.home,
+        packId: actor.packId,
+      });
     }
     state.exitPackPlaced = true;
   }
