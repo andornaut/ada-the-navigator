@@ -38,13 +38,36 @@ export function layerAlpha(layer: JetShapeLayer, f: number): number {
 }
 
 /** The normal aperture's widest authored layer is solid at any positive thrust. */
-export function jetLayerAlpha(
+export function jetShapeLayerAlpha(
   mouth: Pick<JetShapeMouth, "normalAperture">,
   layer: JetShapeLayer,
   layerIndex: number,
   f: number,
 ): number {
-  return mouth.normalAperture && layerIndex === 0 ? (f > 0 ? 1 : 0) : layerAlpha(layer, f);
+  if (f <= 0) {
+    return 0;
+  }
+  return mouth.normalAperture && layerIndex === 0 && layer.name !== "core"
+    ? 1
+    : layerAlpha(layer, f);
+}
+
+/** Compatibility name for existing normal aperture consumers. */
+export const jetLayerAlpha = jetShapeLayerAlpha;
+
+/** Art supplies authored colours; runtime supplies its existing interpolated fallback. */
+export function jetShapeLayerColor<C>(
+  mouth: Pick<JetShapeMouth, "normalAperture">,
+  layer: { name?: string; normalColor?: C },
+  layerIndex: number,
+  fallback: C,
+): C {
+  return mouth.normalAperture &&
+    layerIndex === 0 &&
+    layer.name !== "core" &&
+    layer.normalColor !== undefined
+    ? layer.normalColor
+    : fallback;
 }
 
 /** Outboard displacement in signed half-mouth units, bounded by outer/core containment. */
@@ -146,7 +169,7 @@ function normalAperturePolygons(
     }
     previousWidth = width;
     previousLength = layer.length;
-    if (jetLayerAlpha(mouth, layer, layerIndex, fraction) <= 0) {
+    if (jetShapeLayerAlpha(mouth, layer, layerIndex, fraction) <= 0) {
       continue;
     }
     const { anchor, axis, half } = mouth;

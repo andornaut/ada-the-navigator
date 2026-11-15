@@ -1,5 +1,11 @@
-import { jetLayerAlpha, jetShapePolygons } from "./jetGeometry.ts";
-export { coreOutboardOffset, jetLayerAlpha, layerAlpha } from "./jetGeometry.ts";
+import { jetShapeLayerAlpha, jetShapeLayerColor, jetShapePolygons } from "./jetGeometry.ts";
+export {
+  coreOutboardOffset,
+  jetLayerAlpha,
+  jetShapeLayerAlpha,
+  jetShapeLayerColor,
+  layerAlpha,
+} from "./jetGeometry.ts";
 
 import { readShipHeadingContract, SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
 import type { Vec } from "../model/types.ts";
@@ -41,6 +47,8 @@ export interface JetLayer {
   alpha?: { from: number; max: number; to: number };
   /** Colours at f = 0 and f = 1; a single colour repeats. */
   colors: readonly [number, number];
+  /** Opaque normal-aperture outer colour authored by the material compositor. */
+  normalColor?: number;
   /** Multiple of the jet length. */
   length: number;
   /** Multiple of the half mouth width. */
@@ -123,8 +131,13 @@ function readLayer(value: unknown): JetLayer | undefined {
   if (from === undefined || to === undefined) {
     return undefined;
   }
+  const normalColor = layer.normalColor === undefined ? undefined : readColor(layer.normalColor);
+  if (layer.normalColor !== undefined && normalColor === undefined) {
+    return undefined;
+  }
   const result: JetLayer = {
     colors: [from, to],
+    ...(normalColor === undefined ? {} : { normalColor }),
     length: layer.length,
     width: layer.width,
     ...(typeof layer.name === "string" ? { name: layer.name } : {}),
@@ -430,14 +443,14 @@ export function jetTriangles(
       fraction,
     )) {
       const layer = jets.layers[layerIndex]!;
-      const alpha = jetLayerAlpha(mouth, layer, layerIndex, fraction);
+      const alpha = jetShapeLayerAlpha(mouth, layer, layerIndex, fraction);
       for (let i = 1; i + 1 < clipped.length; i++) {
         const a = clipped[0]!,
           b = clipped[i]!,
           c = clipped[i + 1]!;
         triangles.push({
           alpha,
-          color: layerColor(layer, fraction),
+          color: jetShapeLayerColor(mouth, layer, layerIndex, layerColor(layer, fraction)),
           ...(displayOccluders === undefined ? {} : { occluders: displayOccluders }),
           points: [toDisplay(a.x, a.y), toDisplay(b.x, b.y), toDisplay(c.x, c.y)],
         });
