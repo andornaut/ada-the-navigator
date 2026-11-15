@@ -1,6 +1,6 @@
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { PHANTOM_TUNING } from "../data/phantom.ts";
-import { partsReach, worldParts } from "./convex.ts";
+import { type Parts, partsReach, worldParts } from "./convex.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { stationFormationClear, type StationPlacementContext } from "./stationPlacement.ts";
@@ -38,10 +38,26 @@ export function placePhantomEncounter(
     return [];
   }
   const world = flightWorldContext(context.flight);
+  // One synchronous placement search changes positions only, so assembled bodies stay exact.
+  const bodies = new Map<string, Parts | null>();
+  const inheritedBodyOf = context.bodyOf;
+  const bodyOf = (actor: SpaceObject): Parts | null => {
+    if (!bodies.has(actor.id)) {
+      bodies.set(
+        actor.id,
+        inheritedBodyOf
+          ? inheritedBodyOf(actor)
+          : actor.enemy
+            ? enemyPhysicalBody(ROUTE_POSITION[context.flight.galaxy], actor.enemy)
+            : null,
+      );
+    }
+    return bodies.get(actor.id)!;
+  };
+  const preparedContext = { ...context, bodyOf };
   const reaches = new Map<SpaceObject, number>();
   for (const actor of actors) {
-    const body =
-      actor.enemy && enemyPhysicalBody(ROUTE_POSITION[context.flight.galaxy], actor.enemy);
+    const body = bodyOf(actor);
     if (!body) {
       return null;
     }
@@ -53,17 +69,31 @@ export function placePhantomEncounter(
         worldDistance(world, context.waypoint, actor) + reaches.get(original[index]!)! <=
         PHANTOM_TUNING.battleReach,
     );
-  if (withinArena(actors, actors) && stationFormationClear(context, actors)) {
+  if (withinArena(actors, actors) && stationFormationClear(preparedContext, actors)) {
     return actors;
   }
   const placed = new Map<number, readonly SpaceObject[]>();
   const settled: SpaceObject[] = [];
+  // Settled groups already passed admission; candidates still collide against their full hulls.
+  const clearCandidate = (candidate: readonly SpaceObject[]) => {
+    const ignoreIds = context.ignoreIds
+      ? new Set([...context.ignoreIds].filter((id) => !settled.some((actor) => actor.id === id)))
+      : undefined;
+    return stationFormationClear(
+      {
+        ...preparedContext,
+        ...(ignoreIds ? { ignoreIds } : {}),
+        flight: { ...context.flight, objects: [...context.flight.objects, ...settled] },
+      },
+      candidate,
+    );
+  };
   // A fixed actor fixes its entire explicit group; no label-based follower inference is needed.
   for (const [index, group] of groups.entries()) {
     if (!group.some(({ id }) => context.fixedIds.has(id))) {
       continue;
     }
-    if (!withinArena(group, group) || !stationFormationClear(context, [...settled, ...group])) {
+    if (!withinArena(group, group) || !clearCandidate(group)) {
       return null;
     }
     placed.set(index, group);
@@ -74,7 +104,7 @@ export function placePhantomEncounter(
     if (placed.has(index)) {
       continue;
     }
-    if (withinArena(group, group) && stationFormationClear(context, [...settled, ...group])) {
+    if (withinArena(group, group) && clearCandidate(group)) {
       placed.set(index, group);
       settled.push(...group);
     }
@@ -104,10 +134,7 @@ export function placePhantomEncounter(
             : {}),
         };
       });
-      if (
-        !withinArena(group, candidate) ||
-        !stationFormationClear(context, [...settled, ...candidate])
-      ) {
+      if (!withinArena(group, candidate) || !clearCandidate(candidate)) {
         continue;
       }
       placed.set(index, candidate);

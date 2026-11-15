@@ -1,7 +1,7 @@
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import type { GameContent } from "../data/types.ts";
 import { type Silhouette, worldSceneryBodyContact } from "./asteroids.ts";
-import { outlineContact, outlinesContact, partsReach, worldParts } from "./convex.ts";
+import { outlineContact, outlinesContact, type Parts, partsReach, worldParts } from "./convex.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
@@ -12,6 +12,7 @@ import { worldDistance, worldPoint } from "./worldContacts.ts";
 
 export interface StationPlacementContext {
   readonly checkPlayer?: boolean;
+  readonly bodyOf?: (object: SpaceObject) => Parts | null;
   readonly ignoreIds?: ReadonlySet<string>;
   readonly arrivals: readonly Vec[];
   readonly content: GameContent;
@@ -27,11 +28,15 @@ export function stationFormationClear(
 ): boolean {
   const { content, flight } = context;
   const world = flightWorldContext(flight);
+  const bodyOf =
+    context.bodyOf ??
+    ((object: SpaceObject) =>
+      object.enemy ? enemyPhysicalBody(ROUTE_POSITION[flight.galaxy], object.enemy) : null);
   const objects = stationPopulationObjects(flight).filter(
     (object) => object.hp > 0 && !context.ignoreIds?.has(object.id),
   );
   for (const [index, actor] of actors.entries()) {
-    const body = actor.enemy && enemyPhysicalBody(ROUTE_POSITION[flight.galaxy], actor.enemy);
+    const body = bodyOf(actor);
     if (!body) {
       return false;
     }
@@ -57,7 +62,7 @@ export function stationFormationClear(
         return false;
       }
       if (other.kind === "enemy" && other.enemy) {
-        const obstacle = enemyPhysicalBody(ROUTE_POSITION[flight.galaxy], other.enemy);
+        const obstacle = bodyOf(other);
         if (!obstacle || outlinesContact(obstacle, point, body, actor)) {
           return false;
         }

@@ -7,12 +7,14 @@ import { GameModel } from "./game.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
 import { initPhantom } from "./phantom.ts";
 import { phantomRequiredActors } from "./phantomRequiredOccupants.ts";
+import { readPendingPhantomEncounter } from "./phantomRequiredPlans.ts";
 
-it("constructs only the authored initial Phantom blockades before optional chunks", () => {
+it("activates initial Phantom blockades and reserves the next hidden wave before optional chunks", () => {
   const model = new GameModel(CONTENT);
   const progress = model.state.progress[6];
   const flight = createUnpopulatedFlight(CONTENT, 6, 173, model.state.economy, 301);
   let ids: string[] = [];
+  let reserved: string[] = [];
   populateRequiredChapterFlight(CONTENT, progress, flight, () => {
     expect(flight.chunks).toEqual([]);
     initPhantom({ content: CONTENT, flight, progress });
@@ -20,7 +22,15 @@ it("constructs only the authored initial Phantom blockades before optional chunk
     expect(flight.phantom!.wave).toBe(0);
     expect(flight.phantom!.enemyIds).toEqual([]);
     expect(Object.keys(flight.phantom!.blockades)).toEqual([...PHANTOM_DESTINATIONS]);
-    ids = phantomRequiredActors(flight).map(({ id }) => id);
+    const pending = readPendingPhantomEncounter(flight)!;
+    expect(pending).toMatchObject({ kind: "wave", wave: 1 });
+    reserved = pending.actors.map(({ id }) => id);
+    expect(reserved.length).toBeGreaterThan(0);
+    const active = new Set(stationPopulationObjects(flight).map(({ id }) => id));
+    expect(reserved.every((id) => !active.has(id))).toBe(true);
+    ids = phantomRequiredActors(flight)
+      .filter(({ id }) => active.has(id))
+      .map(({ id }) => id);
     expect(ids.length).toBeGreaterThan(0);
     expect(ids.some((id) => id.startsWith("phantom:wave:"))).toBe(false);
     expect(progress.known).toEqual([]);
@@ -31,7 +41,8 @@ it("constructs only the authored initial Phantom blockades before optional chunk
     phantomRequiredActors(flight)
       .map(({ id }) => id)
       .sort(),
-  ).toEqual(ids.sort());
+  ).toEqual([...ids, ...reserved].sort());
+  expect(reserved.every((id) => !represented.has(id))).toBe(true);
 });
 
 it("keeps disabled initial members in required population and respects explicit removal", () => {

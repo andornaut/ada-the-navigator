@@ -239,7 +239,13 @@ function departAllies(state: PhantomFlight): void {
 /** Only the next phase is constructed; the original per-wave stream and draw order are unchanged. */
 export function prepareNextPhantomEncounter(context: PhantomContext): void {
   const state = stateOf(context);
-  if (!state || context.progress.questComplete || readPendingPhantomEncounter(context.flight)) {
+  if (
+    !state ||
+    context.progress.questComplete ||
+    state.phase === "flagship" ||
+    state.phase === "salvaged" ||
+    readPendingPhantomEncounter(context.flight)
+  ) {
     return;
   }
   const projection = structuredClone(context.flight);
