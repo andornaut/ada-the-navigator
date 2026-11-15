@@ -14,7 +14,7 @@ import { loadingProgress, type WaitedLoad } from "../loading/progress.ts";
 import { heldActivity } from "../model/activities.ts";
 import { type Current } from "../model/currents.ts";
 import { createEdgeMarkerTracker } from "../model/edgeMarkers.ts";
-import { activeBeamFlashes, activeBlastFlashes, shipSpeedFraction } from "../model/flight.ts";
+import { activeBeamFlashes, activeWeaponImpacts, shipSpeedFraction } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { type GainSnapshot } from "../model/itemGains.ts";
 import { SHIP_HEADINGS, shipHeading } from "../model/nose.ts";
@@ -133,13 +133,12 @@ import { type StrandedCraftArt, type TowLine } from "./towArt.ts";
 import { type UpgradePickupArt } from "./upgradePickup.ts";
 import {
   AMBER_BEAM_GLOW,
-  blast as blastEffect,
   glowingBeam,
   heavyMissile,
+  impactEffect,
   missileFrame,
   missileKind,
   rapidMissile,
-  spark as sparkEffect,
 } from "./weaponEffects.ts";
 import { type WhaleArt } from "./whaleArt.ts";
 import { type WhirlpoolProjects } from "./whirlpoolProjects.ts";
@@ -814,33 +813,29 @@ export class GameScene extends Scene {
     drawRockBreaks(this);
     drawZips(this);
     startRockLoads(this);
-    // Art's missile blasts, each with its one flash (art/weapons.md "Missile blasts").
-    for (const flash of activeBlastFlashes(flight)) {
-      const shapes = blastEffect(
-        this.project(flash),
-        flash.radius,
-        this.reducedMotion,
-        flash.age * 1000,
+    for (const impact of activeWeaponImpacts(flight)) {
+      const shapes = impactEffect(
+        { at: this.project(impact), reducedMotion: this.reducedMotion },
+        impact,
       );
-      // A light field edges only the ring stroke and the flash's outline, never the tint.
-      const edged =
-        this.light &&
-        ["blastRing", "blastFlash"].some((kind) => LIGHT_FIELD.effects.includes(kind));
-      drawEffect(this, shapes, edged ? blastEdges(this.edgeInk, LIGHT_FIELD.keyline, shapes) : []);
+      const edges =
+        impact.family === "missile"
+          ? this.light &&
+            ["blastRing", "blastFlash"].some((kind) => LIGHT_FIELD.effects.includes(kind))
+            ? blastEdges(this.edgeInk, LIGHT_FIELD.keyline, shapes)
+            : []
+          : keylineEdges(this, ["hitSpark"], shapes);
+      drawEffect(this, shapes, edges);
     }
-    // Art's Phaser beam from the nose, and a hit's spark at the contact.
+    // Preserve the Phaser body; its contact now uses the family dispatcher above.
     for (const flash of activeBeamFlashes(flight)) {
       const from = this.project(flash.from);
       const to = this.project(flash.to);
-      const ms = flash.age * 1000;
-      // On a light field the beam's outer glow and bloom are ink.
       const glow = this.light ? { ...LIGHT_FIELD.phaser, colour: this.edgeInk } : AMBER_BEAM_GLOW;
-      drawEffect(this, glowingBeam(glow, from, to, flash.hit, this.reducedMotion, ms));
-      if (flash.hit) {
-        const angle = Math.atan2(to.y - from.y, to.x - from.x);
-        const spark = sparkEffect(to, angle, this.reducedMotion, ms);
-        drawEffect(this, spark, keylineEdges(this, ["hitSpark"], spark));
-      }
+      drawEffect(
+        this,
+        glowingBeam(glow, from, to, flash.hit, this.reducedMotion, flash.age * 1000),
+      );
     }
     drawEnemyWeapons(this, enemyWeaponsView(flight));
     // Ring burst bolts draw as Art's darts with the enemy weapons.

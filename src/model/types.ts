@@ -97,6 +97,8 @@ export interface SpaceObject extends Vec {
   release?: PickupRelease;
 }
 export interface Shot extends Vec {
+  /** Optional visual provenance retained when the selected weapon changes. */
+  effectFamily?: import("./weaponImpacts.ts").ImpactFamily;
   projectile?: "bolt" | "missile" | "dot";
   /** An enemy-only weapon's bolt, which draws as its own. */
   enemyWeapon?: "ringBurst";

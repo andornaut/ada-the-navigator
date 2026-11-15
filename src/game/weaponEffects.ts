@@ -1,5 +1,6 @@
 import { BEAM, WEAPON_CATALOG } from "../data/weaponCatalog.ts";
 import type { Vec } from "../model/types.ts";
+import type { WeaponImpact } from "../model/weaponImpacts.ts";
 
 // Art's weapon effects (art/weapons.md) as screen-space shapes in logical px, for the scene to
 // fill and stroke. Each shape is a plain record, so the geometry and timing are testable.
@@ -286,8 +287,16 @@ const ground = (at: Vec, r: number) => ({
  * and tint at `R`, fading.
  */
 export function blast(at: Vec, radius: number, reducedMotion: boolean, t: number): EffectShape[] {
-  const kind = missileKind(radius);
-  const spec = BLASTS[kind];
+  return blastWithRecipe(BLASTS[missileKind(radius)], at, radius, reducedMotion, t);
+}
+
+function blastWithRecipe(
+  spec: (typeof BLASTS)[keyof typeof BLASTS],
+  at: Vec,
+  radius: number,
+  reducedMotion: boolean,
+  t: number,
+): EffectShape[] {
   const { amber, cream, white } = EFFECT_COLOURS;
   if (reducedMotion) {
     if (t >= spec.reduced.ms) {
@@ -621,4 +630,135 @@ export function spark(at: Vec, angle: number, reducedMotion: boolean, t: number)
     }
   }
   return shapes;
+}
+
+/** Presentation coefficients only; no collision or weapon tuning is derived here. */
+export const IMPACT_STYLE = {
+  compact: { alpha: 0.8, duration: 0.8, scale: 0.75 },
+  compactBright: { alpha: 1, duration: 1, scale: 0.75 },
+  lance: { duration: 1, length: 18, width: 2 },
+  pellet: { alpha: 0.8, duration: 0.4, scale: 0.35 },
+  ripple: { duration: 1, radius: 12 },
+  shockwave: { duration: 1.8, radius: 16 },
+} as const;
+
+function scaleImpact(at: Vec, scale: number, alpha: number, shape: EffectShape): EffectShape {
+  const point = (p: Vec): Vec => ({
+    x: at.x + (p.x - at.x) * scale,
+    y: at.y + (p.y - at.y) * scale,
+  });
+  if (shape.kind === "line") {
+    return {
+      ...shape,
+      alpha: shape.alpha * alpha,
+      from: point(shape.from),
+      to: point(shape.to),
+      width: shape.width * scale,
+    };
+  }
+  if (shape.kind === "disc") {
+    return {
+      ...shape,
+      alpha: shape.alpha * alpha,
+      at: point(shape.at),
+      radius: shape.radius * scale,
+    };
+  }
+  if (shape.kind === "ellipse") {
+    return {
+      ...shape,
+      alpha: shape.alpha * alpha,
+      at: point(shape.at),
+      halfHeight: shape.halfHeight * scale,
+      halfWidth: shape.halfWidth * scale,
+      ...(shape.stroke === undefined ? {} : { stroke: shape.stroke * scale }),
+    };
+  }
+  if (shape.kind === "polygon") {
+    return { ...shape, alpha: shape.alpha * alpha, points: shape.points.map(point) };
+  }
+  return {
+    ...shape,
+    head: {
+      ...shape.head,
+      alpha: shape.head.alpha * alpha,
+      at: point(shape.head.at),
+      width: shape.head.width * scale,
+    },
+    tail: {
+      ...shape.tail,
+      alpha: shape.tail.alpha * alpha,
+      at: point(shape.tail.at),
+      width: shape.tail.width * scale,
+    },
+  };
+}
+
+/** Existing procedural shapes for a contact; projects direction once and never infers family. */
+export function impactEffect(
+  context: { readonly at: Vec; readonly reducedMotion: boolean },
+  impact: WeaponImpact,
+): EffectShape[] {
+  const { at, reducedMotion } = context;
+  const t = impact.age * 1000;
+  if (!Number.isFinite(t) || t < 0) {
+    return [];
+  }
+  if (impact.family === "missile") {
+    return impact.blastRadius !== undefined && impact.blastRadius > 0
+      ? blastWithRecipe(BLASTS.heavy, at, impact.blastRadius, reducedMotion, t)
+      : [];
+  }
+  const angle = impact.direction ? screenAngle(impact.direction) : 0;
+  if (
+    impact.family === "compact" ||
+    impact.family === "compactBright" ||
+    impact.family === "pellet"
+  ) {
+    const style = IMPACT_STYLE[impact.family];
+    return spark(at, angle, reducedMotion, t / style.duration).map((shape) =>
+      scaleImpact(at, style.scale, style.alpha, shape),
+    );
+  }
+  if (impact.family === "lance") {
+    if (!impact.direction || t >= SPARK_MS * IMPACT_STYLE.lance.duration) {
+      return [];
+    }
+    const alpha = 1 - t / (SPARK_MS * IMPACT_STYLE.lance.duration);
+    if (reducedMotion) {
+      return spark(at, angle, true, t);
+    }
+    const point = frame(at, angle);
+    return [
+      {
+        alpha,
+        colour: EFFECT_COLOURS.white,
+        from: point(-IMPACT_STYLE.lance.length * alpha, 0),
+        kind: "line",
+        round: true,
+        to: point(4 * alpha, 0),
+        width: IMPACT_STYLE.lance.width * alpha,
+      },
+      { alpha, at, colour: EFFECT_COLOURS.cream, kind: "disc", radius: 2 * alpha },
+    ];
+  }
+  if (impact.family === "ripple" || impact.family === "shockwave") {
+    const style = IMPACT_STYLE[impact.family];
+    const p = t / (SPARK_MS * style.duration);
+    if (p >= 1) {
+      return [];
+    }
+    const radius = (impact.blastRadius ?? style.radius) * (reducedMotion ? 1 : 0.2 + 0.8 * p);
+    return [
+      {
+        ...ground(at, radius),
+        alpha: 1 - p,
+        colour: EFFECT_COLOURS.amber,
+        kind: "ellipse",
+        part: "ring",
+        stroke: 1.5,
+      },
+    ];
+  }
+  return [];
 }

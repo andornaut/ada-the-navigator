@@ -97,6 +97,7 @@ import { guardApproach } from "./guardApproach.ts";
 import { phantomSongSpeed, stepPhantomAllies } from "./phantomAllies.ts";
 import { playerWeaponCoverage, type PlayerWeaponCoverageContext } from "./playerWeaponCoverage.ts";
 import { type PickupObstacle, stardustDiamond, stardustDropOffsets } from "./stardustPlacement.ts";
+import { type ImpactFamily, impactFamily, type WeaponImpact } from "./weaponImpacts.ts";
 import { worldCellAt, worldCellKey, worldCellsNear, worldGrid } from "./worldCells.ts";
 import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
 import { wrapPoint } from "./worldGeometry.ts";
@@ -2102,6 +2103,7 @@ function fire(
 ): void {
   ensureOwnedWeapons(flight);
   const definition = weaponAt(flight.weapon, flight.levels.weapons[flight.weapon]);
+  const family = impactFamily(flight.weapon);
   // One shot uses one; emptying the weapon switches to Laser after this shot.
   if (spendShot(flight)) {
     events.push({ type: "outOfAmmo" });
@@ -2117,6 +2119,7 @@ function fire(
   flight.fireCooldown += releaseFriendlyVolley(
     coverage,
     flight.velocity,
+    family,
     content,
     definition,
     origin,
@@ -2131,6 +2134,7 @@ function fire(
 function releaseFriendlyVolley(
   coverage: PlayerWeaponCoverageContext | undefined,
   inheritedVelocity: Vec | undefined,
+  family: ImpactFamily,
   content: GameContent,
   definition: WeaponDefinition,
   origin: Vec,
@@ -2152,6 +2156,7 @@ function releaseFriendlyVolley(
   for (const projectile of volley.projectiles) {
     const shot: Shot = {
       ...projectile,
+      effectFamily: family,
       enemy: false,
       hitIds: [],
       id: `shot:${flight.nextId++}`,
@@ -2679,6 +2684,7 @@ function enemies(
         ...fire.origin,
         ...(shared?.blastRadius ? { blast: shared.blastRadius } : {}),
         damage: amount,
+        effectFamily: impactFamily(fire.weapon),
         enemy: true,
         ...(fire.weapon === "ringBurst" ? { enemyWeapon: "ringBurst" as const } : {}),
         ...reach,
@@ -3035,6 +3041,18 @@ function shots(
  * damages Ada within its radius, and a direct hit damages her; either way, once.
  */
 function enemyImpact(content: GameContent, shot: Shot, struck: boolean, flight: FlightState): void {
+  if (shot.blast === undefined && shot.effectFamily && shot.life <= 0) {
+    const impacts = projectileImpacts.get(flight) ?? [];
+    impacts.push({
+      ...shot,
+      age: 0,
+      direction: { ...shot.velocity },
+      family: shot.effectFamily,
+      id: shot.id,
+      targetId: "",
+    });
+    projectileImpacts.set(flight, impacts);
+  }
   if (shot.blast !== undefined) {
     const blasts = blastFlashes.get(flight) ?? [];
     blasts.push({ age: 0, radius: shot.blast, x: shot.x, y: shot.y });
@@ -3155,7 +3173,13 @@ function strike(
     const part = hitPart(content, flight, partReach(content), shotRadius(shot), shot, object);
     const at = projectileContact(flight, object, shot, shotRadius(shot), from, part);
     const impacts = projectileImpacts.get(flight) ?? [];
-    impacts.push({ ...at, age: 0, id: `${shot.id}:${object.id}`, targetId: object.id });
+    impacts.push({
+      ...at,
+      age: 0,
+      id: `${shot.id}:${object.id}`,
+      targetId: object.id,
+      ...(shot.effectFamily ? { direction: { ...shot.velocity }, family: shot.effectFamily } : {}),
+    });
     projectileImpacts.set(flight, impacts);
     hit(content, shot.damage, part, object, flight, events);
     if (shot.blast !== undefined) {
@@ -3438,6 +3462,8 @@ export interface BlastFlash extends Vec {
   age: number;
 }
 export interface ProjectileImpact extends Vec {
+  readonly family?: ImpactFamily;
+  readonly direction?: Vec;
   readonly id: string;
   readonly targetId: string;
   age: number;
@@ -3454,6 +3480,45 @@ export const BLAST_FLASH_SECONDS = 0.34;
 /** The flight's beam flashes still showing. */
 export function activeBeamFlashes(flight: FlightState): readonly BeamFlash[] {
   return beamFlashes.get(flight) ?? [];
+}
+
+const impactViewIds = new WeakMap<object, string>();
+let nextImpactViewId = 0;
+function impactViewId(entry: object): string {
+  let id = impactViewIds.get(entry);
+  if (id === undefined) {
+    id = `impact:${nextImpactViewId++}`;
+    impactViewIds.set(entry, id);
+  }
+  return id;
+}
+
+/** Explicit family snapshots for the existing contact renderer and Art's procedural fixture. */
+export function activeWeaponImpacts(flight: FlightState): readonly WeaponImpact[] {
+  return [
+    ...activeProjectileImpacts(flight).flatMap((impact): WeaponImpact[] =>
+      impact.family && impact.family !== "missile" ? [{ ...impact, family: impact.family }] : [],
+    ),
+    ...activeBlastFlashes(flight).map((flash): WeaponImpact => ({
+      ...flash,
+      blastRadius: flash.radius,
+      family: "missile",
+      id: impactViewId(flash),
+    })),
+    ...activeBeamFlashes(flight).flatMap((flash): WeaponImpact[] =>
+      flash.hit
+        ? [
+            {
+              ...flash.to,
+              age: flash.age,
+              direction: { x: flash.to.x - flash.from.x, y: flash.to.y - flash.from.y },
+              family: "compactBright",
+              id: impactViewId(flash),
+            },
+          ]
+        : [],
+    ),
+  ];
 }
 
 /** The flight's blast flashes still showing. */
@@ -4193,6 +4258,7 @@ export function stepFlight(
         releaseFriendlyVolley(
           undefined,
           undefined,
+          impactFamily(intent.weapon),
           content,
           weaponAt(intent.weapon, intent.level),
           intent.from,
