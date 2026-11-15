@@ -282,14 +282,23 @@ function requiredFootprintClear(
   footprint: OptionalWorldFootprint,
 ): boolean {
   const context = { ...flightWorldContext(flight), content, galaxy: flight.galaxy };
-  const authored = flight.galaxy === 4 && flight.needle ? stationPopulationObjects(flight) : [];
+  const authored =
+    flight.galaxy === 3 || (flight.galaxy === 4 && flight.needle)
+      ? stationPopulationObjects(flight)
+      : [];
   return (
     requiredWorldPlacementClear(context, requiredRouteGeometry(content, flight), footprint) &&
     requiredWorldOccupantsPlacementClear(
       context,
       {
         actors: authored.filter(
-          (object) => object.enemy?.packId === "needle:exit" && liveEnemy(object),
+          (object) =>
+            liveEnemy(object) &&
+            (flight.galaxy === 4
+              ? object.enemy?.packId === "needle:exit"
+              : object.routeId !== undefined ||
+                object.enemy?.packId?.startsWith("route:") ||
+                object.enemy?.escortOf?.startsWith("route:")),
         ),
         sites: authored.filter((object) => object.kind === "destination"),
       },

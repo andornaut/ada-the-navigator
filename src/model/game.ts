@@ -1921,6 +1921,18 @@ export class GameModel {
       if (populateRequiredFlight(this.content, this.current, sites, flight).status === "blocked") {
         return;
       }
+    } else if (flight.galaxy === 3) {
+      populateRequiredChapterFlight(this.content, this.current, flight, () => {
+        for (const id of this.current.known) {
+          ensureDestination(this.content, id, flight);
+        }
+        if (this.current.questComplete && !this.current.holodisk) {
+          ensureDestination(this.content, "holodisk", flight);
+          if (!this.current.known.includes("holodisk")) {
+            ensureRouteEncounter(this.content, "holodisk", flight);
+          }
+        }
+      });
     } else if (flight.galaxy === 4) {
       populateRequiredChapterFlight(this.content, this.current, flight, () => {
         chapterRuntime(flight.galaxy)?.init?.({
