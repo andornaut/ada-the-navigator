@@ -3,42 +3,27 @@ import { describe, expect, it } from "vitest";
 import { CARD_WIDTH_CAPS } from "./contentCard.ts";
 import { settingsColumns, settingsTitleInkTop } from "./settings.ts";
 
-const context = { actionsWidth: 0, availableWidth: 688, landscape: true, overflowing: true };
+const context = { availableWidth: 700 };
 
 describe("Settings compact width", () => {
   it("aligns visible icon ink to the title using its loaded font metrics", () => {
     expect(settingsTitleInkTop({ ascent: 15, descent: 5, inkAscent: 11, lineHeight: 20 })).toBe(8);
     expect(settingsTitleInkTop({ ascent: 18, descent: 6, inkAscent: 12, lineHeight: 24 })).toBe(10);
   });
-  it("widens an overflowing landscape card only enough for both control columns", () => {
-    const fitted = settingsColumns(context, [190, 200]);
-    expect(fitted.columns).toBe(2);
-    expect(fitted.minimumWidth).toBe(497);
-    expect(fitted.minimumWidth).toBeLessThan(CARD_WIDTH_CAPS.medium);
+  it("uses two columns without waiting for a single column to overflow", () => {
+    expect(settingsColumns(context, [190, 200])).toEqual({ columns: 2, minimumWidth: 497 });
+    expect(settingsColumns(context, [290])).toEqual({ columns: 2, minimumWidth: 677 });
+    expect(settingsColumns(context, [290]).minimumWidth).toBeLessThan(CARD_WIDTH_CAPS.large);
   });
-
-  it("uses the scrolling fallback when the footer pair cannot fit the fixed Medium", () => {
-    expect(settingsColumns({ ...context, actionsWidth: 270 }, [230])).toEqual({
+  it("keeps a single readable column when labels cannot fit inside the actual available width", () => {
+    expect(settingsColumns({ availableWidth: 450 }, [200])).toEqual({
       columns: 1,
       minimumWidth: 0,
     });
-  });
-
-  it("retains a fitted single column when its controls already fit", () => {
-    expect(settingsColumns({ ...context, overflowing: false }, [230])).toEqual({
+    expect(settingsColumns({ availableWidth: 900 }, [310])).toEqual({
       columns: 1,
       minimumWidth: 0,
     });
+    expect(settingsColumns(context, [])).toEqual({ columns: 1, minimumWidth: 0 });
   });
-
-  it.each([
-    [{ ...context, availableWidth: 499 }, 230],
-    [{ ...context, availableWidth: 900 }, 310],
-    [{ ...context, landscape: false }, 230],
-  ] as const)(
-    "retains scrolling when the controls cannot pair inside the available cap: %o",
-    (view, rowWidth) => {
-      expect(settingsColumns(view, [rowWidth])).toEqual({ columns: 1, minimumWidth: 0 });
-    },
-  );
 });

@@ -1,5 +1,6 @@
 import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 
+import { CONTENT } from "../data/content.ts";
 import { SETTINGS_STATE_LABELS } from "../data/settingsCopy.ts";
 import type { InstallStepsKind } from "../pwa/index.ts";
 import { bindAdaAction } from "./actionBinding.ts";
@@ -14,14 +15,13 @@ import {
 } from "./deviceSettings.ts";
 import { type InstallPort, startInstall, watchInstallRow } from "./installRow.ts";
 import { UI_FONT_FACE } from "./layout/cardFrame.ts";
-import { CARD_WIDTH_CAPS, SCROLL } from "./layout/contentCard.ts";
+import { CARD_CONTENT, SCROLL } from "./layout/contentCard.ts";
 import { CONTROL_ROW, WHOLE_PX_EDGES } from "./layout/controls.ts";
 import { font, fromHudEdge, pixels, units, viewStyle } from "./layout/css.ts";
 import { hudButtonTarget, type StartNavButton, startNavOrder } from "./layout/playView.ts";
 import {
   SETTINGS_COLUMN_GAP,
   SETTINGS_OUTER_PADDING,
-  SETTINGS_SECTION_GAP,
   SETTINGS_TITLE_INK_TOP,
   settingsColumns,
   settingsTitleInkTop,
@@ -267,39 +267,30 @@ ${hudDiscStyle(".ada-controls .ada-exit-open", ".ada-disc")}
   box-sizing:border-box
 }
 
-/* This build's version and commit, the Settings card's last line as in Chibi: body text in the
-   supporting colour. */
+/* Independent columns keep each switch and its help together at their natural height. */
+.ada-controls .ada-settings-column{
+  display:grid;
+  align-content:start;
+  row-gap:${units(CARD_CONTENT.rowGap)};
+  min-width:0
+}
 .ada-controls .ada-rows[data-columns="2"]{
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  column-gap:${units(SETTINGS_COLUMN_GAP)}
+  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+  column-gap:${units(SETTINGS_COLUMN_GAP / 2)}
 }
 .ada-controls .ada-rows[data-columns="2"] > .ada-page-divider{
-  grid-column:1 / -1;
-  grid-row:1 / 4;
+  grid-column:2;
+  grid-row:1;
   justify-self:center;
   align-self:stretch;
   pointer-events:none
 }
-.ada-controls .ada-rows[data-columns="2"] > :nth-child(1){grid-column:1;grid-row:1}
-.ada-controls .ada-rows[data-columns="2"] > :nth-child(2){grid-column:2;grid-row:1}
-.ada-controls .ada-rows[data-columns="2"] > :nth-child(3){grid-column:1;grid-row:2}
-.ada-controls .ada-rows[data-columns="2"] > :nth-child(4){grid-column:2;grid-row:2}
-.ada-controls .ada-rows[data-columns="2"] > .ada-install-row{grid-column:1;grid-row:3}
-.ada-controls .ada-rows[data-columns="2"] > .ada-install-row,
-.ada-controls .ada-rows[data-columns="2"] > .ada-settings-actions{
-  margin-top:${units(SETTINGS_SECTION_GAP - SPACING.rowGap)}
+.ada-controls .ada-rows[data-columns="1"] > .ada-page-divider{display:none}
+.ada-controls [data-dialog=settings] .ada-settings-actions{
+  align-self:center;
+  justify-content:center
 }
-.ada-controls .ada-rows[data-columns="2"] > .ada-settings-actions{
-  grid-column:2;
-  grid-row:3;
-  justify-self:end;
-  align-self:center
-}
-.ada-controls .ada-rows[data-columns="2"] > .ada-settings-actions:not(:has(>button:not([hidden])~button:not([hidden]))){
-  grid-column:1 / -1;
-  grid-row:4;
-  justify-self:center
-}
+.ada-controls [data-dialog=settings] .ada-build{align-self:stretch}
 
 .ada-controls .ada-build{
   margin:0;
@@ -369,7 +360,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     closeAction: "close-settings",
     closeLabel: options.labels.close,
     fontRole: FONT_ROLES.heading,
-    size: "medium",
+    size: "large",
     title: options.labels.settings,
   });
   const { body: card, close: closeButton, frame: cardFrame } = settingsCard;
@@ -430,23 +421,33 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   rows.className = "ada-rows";
   // The first row's label line sits centred in its row.
   rows.dataset.inkTop = String((CONTROL_ROW.height - TYPE.body.lineHeight) / 2);
-  rows.append(
+  const leftColumn = document.createElement("div");
+  leftColumn.className = "ada-settings-column";
+  leftColumn.dataset.settingsColumn = "left";
+  const rightColumn = document.createElement("div");
+  rightColumn.className = "ada-settings-column";
+  rightColumn.dataset.settingsColumn = "right";
+  leftColumn.append(
     switchRow("move", options.labels.moveControls, options.labels.controlsNote),
     switchRow("aim", options.labels.aimControls, options.labels.controlsNote),
+  );
+  rightColumn.append(
     switchRow("sound", options.labels.sound, options.labels.soundNote),
     switchRow("reducedMotion", options.labels.reducedMotion, options.labels.motionNote),
   );
+  const divider = createAdaPageDivider(document);
+  divider.hidden = true;
+  rows.append(leftColumn, divider, rightColumn);
   // The build line, after the rows as in Chibi: plain text screen readers read with the card.
-  const dismiss = createButton(options.labels.close, "primary");
+  const dismiss = createButton(CONTENT.labels.questBack!, "primary");
   dismiss.dataset.action = "settings-close";
   const actions = createActions([{ button: dismiss, role: "primary" }]);
   actions.classList.add("ada-settings-actions");
-  setFooterAction("close", actions);
+  setFooterAction("back", actions);
   const build = document.createElement("p");
   build.className = "ada-build";
   build.textContent = options.build;
   card.append(rows, build, actions);
-  setScrollGroup(settingsCard, rows);
   // The Install row, as in Archie: its label and note, and a button that asks for the browser's
   // prompt or opens that browser's menu steps in the Settings card's place.
   const installRow = document.createElement("div");
@@ -467,10 +468,6 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   installRow.append(settingsIcon(SETTING_ICONS.install), installText, installButton);
   // The whole row presses its button, as every control row does.
 
-  rows.append(installRow);
-  const divider = createAdaPageDivider(document);
-  divider.hidden = true;
-  rows.append(divider);
   const stepsParts = createCard({
     closeAction: "close-install-steps",
     closeLabel: options.labels.close,
@@ -509,10 +506,6 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     if (!open || disposed) {
       return;
     }
-    rows.dataset.columns = card.dataset.settingsColumns = "1";
-    divider.hidden = true;
-    card.append(actions);
-    settingsCard.card.style.minWidth = "";
     const unit = readViewUnit(rows);
     const stacks = [...rows.querySelectorAll<HTMLElement>(".ada-setting-toggle")];
     for (const stack of stacks) {
@@ -525,8 +518,6 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     for (const stack of stacks) {
       stack.style.width = units(stackWidth);
     }
-    settingsCard.fit();
-    const needsCompactLayout = rows.scrollHeight > rows.clientHeight;
     const switches = [...rows.querySelectorAll<HTMLElement>("[role=switch]")];
     const widths = switches.map((row) => {
       const text = row.querySelector<HTMLElement>(".ada-setting-text")!;
@@ -546,32 +537,13 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     const availableWidth =
       (modal.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)) / unit;
     const fitted = settingsColumns(
-      {
-        actionsWidth: actions.getBoundingClientRect().width / unit,
-        availableWidth,
-        landscape: modal.clientWidth > modal.clientHeight,
-        overflowing: needsCompactLayout,
-      },
+      { availableWidth },
       widths.map((width) => width / unit),
     );
     rows.dataset.columns = card.dataset.settingsColumns = String(fitted.columns);
     divider.hidden = fitted.columns !== 2;
-    if (fitted.columns === 2) {
-      rows.append(actions);
-      settingsCard.card.style.minWidth = units(fitted.minimumWidth);
-    }
+    cardFrame.dataset.cardSize = fitted.columns === 2 ? "large" : "medium";
     settingsCard.fit();
-    if (fitted.columns === 2 && rows.scrollHeight > rows.clientHeight) {
-      settingsCard.card.style.minWidth = units(Math.min(availableWidth, CARD_WIDTH_CAPS.medium));
-      settingsCard.fit();
-      if (rows.scrollHeight > rows.clientHeight) {
-        rows.dataset.columns = card.dataset.settingsColumns = "1";
-        divider.hidden = true;
-        card.append(actions);
-        settingsCard.card.style.minWidth = "";
-        settingsCard.fit();
-      }
-    }
     for (const row of rows.querySelectorAll<HTMLElement>(".ada-row")) {
       const caption = row.querySelector<HTMLElement>(".ada-setting-text")?.firstElementChild;
       if (!caption || !textMeasure || row.getClientRects().length === 0) {
@@ -631,6 +603,13 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   const stopInstallRow = options.install
     ? watchInstallRow(options.install.port, (shown) => {
         installRow.hidden = !shown;
+        if (shown) {
+          if (installRow.parentElement !== leftColumn) {
+            leftColumn.append(installRow);
+          }
+        } else {
+          installRow.remove();
+        }
         fitSettings();
         if (!shown) {
           closeSteps();

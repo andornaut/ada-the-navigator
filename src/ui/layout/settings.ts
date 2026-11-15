@@ -25,24 +25,15 @@ export function settingsTitleInkTop(metrics: {
   );
 }
 
-/** The smallest two-column Settings card that preserves each control's label and action. */
+/** Pair controls whenever their labels fit the clamped large card; footer width is independent. */
 export function settingsColumns(
-  context: {
-    readonly actionsWidth: number;
-    readonly availableWidth: number;
-    readonly landscape: boolean;
-    readonly overflowing: boolean;
-  },
+  context: { readonly availableWidth: number },
   rowWidths: readonly number[],
 ): { readonly columns: 1 | 2; readonly minimumWidth: number } {
   const minimumWidth =
-    2 * Math.max(context.actionsWidth, 0, ...rowWidths) +
-    SETTINGS_COLUMN_GAP +
-    2 * SETTINGS_OUTER_PADDING;
-  const paired =
-    context.landscape &&
-    context.overflowing &&
-    rowWidths.length > 0 &&
-    minimumWidth <= Math.min(context.availableWidth, CARD_WIDTH_CAPS.medium);
-  return paired ? { columns: 2, minimumWidth } : { columns: 1, minimumWidth: 0 };
+    2 * Math.max(0, ...rowWidths) + SETTINGS_COLUMN_GAP + 2 * SETTINGS_OUTER_PADDING;
+  return rowWidths.length > 0 &&
+    minimumWidth <= Math.min(context.availableWidth, CARD_WIDTH_CAPS.large)
+    ? { columns: 2, minimumWidth }
+    : { columns: 1, minimumWidth: 0 };
 }

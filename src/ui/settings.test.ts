@@ -68,7 +68,12 @@ class Element {
   querySelectorAll() {
     return [];
   }
-  remove() {}
+  remove() {
+    if (this.parent) {
+      this.parent.children.splice(this.parent.children.indexOf(this), 1);
+    }
+    this.parent = undefined;
+  }
   setAttribute(name: string, value: string) {
     this.attributes.set(name, value);
   }
@@ -119,8 +124,9 @@ function setup(copy: SettingsLabels = labels) {
     onOpenChange: vi.fn(),
     onVisibilityChange,
   });
-  const rows = (settings.card as unknown as Element).children[0]!.children;
-  return { onFeedbackChange, onVisibilityChange, rows, settings };
+  const columns = (settings.card as unknown as Element).children[0]!.children;
+  const rows = [...columns[0]!.children, ...columns[2]!.children];
+  return { columns, onFeedbackChange, onVisibilityChange, rows, settings };
 }
 
 const toggleStack = (row: Element) =>
@@ -138,9 +144,9 @@ describe("Settings current-state labels", () => {
     }
     settings.dispose();
   });
-  it("uses the shared native divider and inherited tokens without changing control or install row order", () => {
-    const { rows, settings } = setup();
-    const dividers = rows.filter((row) => row.attributes.get("aria-orientation") === "vertical");
+  it("retains control instances in independent columns with the shared native divider", () => {
+    const { columns, rows, settings } = setup();
+    const dividers = columns.filter((row) => row.attributes.get("aria-orientation") === "vertical");
     expect(dividers).toHaveLength(1);
     expect(dividers[0]!.hidden).toBe(true);
     expect(dividers[0]!.properties.size).toBe(0);
@@ -150,7 +156,12 @@ describe("Settings current-state labels", () => {
       "top",
       "top",
     ]);
-    expect(rows[4]!.className).toBe("ada-row ada-install-row");
+    expect(columns[0]!.children.map((row) => row.dataset.setting)).toEqual(["move", "aim"]);
+    expect(columns[2]!.children.map((row) => row.dataset.setting)).toEqual([
+      "sound",
+      "reducedMotion",
+    ]);
+    expect(rows).toHaveLength(4);
     const root = settings.root as unknown as Element;
     expect(root.properties.get("--ui-page-divider-thickness")).toBe(
       String(PAGE_DIVIDER_STYLE.thickness),
@@ -167,21 +178,23 @@ describe("Settings current-state labels", () => {
     settings.dispose();
   });
 
-  it("provides a primary Close in the shared launcher actions without renaming it", () => {
+  it("provides one canonical Back in its own centered footer without changing the close action", () => {
     const { settings } = setup();
     const actions = settings.actions as unknown as Element;
-    expect(actions.dataset.footerAction).toBe("close");
-    expect(actions.children.map((button) => button.textContent)).toEqual([labels.close]);
+    expect(actions.dataset.footerAction).toBe("back");
+    expect(actions.children.map((button) => button.textContent)).toEqual([
+      CONTENT.labels.questBack,
+    ]);
     expect(actions.children[0]!.dataset.action).toBe("settings-close");
     expect(actions.children[0]!.className).toContain("ada-primary");
     settings.dispose();
   });
-  it("fits Settings and install steps within the shared medium cap", () => {
+  it("uses the large Settings cap while retaining the medium install-steps card", () => {
     const { settings } = setup();
     const root = settings.root as unknown as Element;
     const modal = root.children.find((node) => node.className === "ada-modal")!;
     const [card, steps] = modal.children;
-    expect(card!.dataset.cardSize).toBe("medium");
+    expect(card!.dataset.cardSize).toBe("large");
     expect(card!.dataset.dialog).toBe("settings");
     expect(card!.attributes.get("aria-label")).toBe(labels.settings);
     expect(steps!.dataset.cardSize).toBe("medium");
@@ -207,7 +220,7 @@ describe("Settings current-state labels", () => {
       expect(row.attributes.get("aria-describedby")).toBe(`ada-note-${row.dataset.setting}`);
       expect(state(row).attributes.get("aria-hidden")).toBe("true");
     }
-    expect(rows[4]!.hidden).toBe(true);
+    expect(rows).toHaveLength(4);
     settings.dispose();
   });
 
