@@ -7,8 +7,9 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const view = vi.hoisted(() => ({
   dispose: vi.fn(),
-  layout: undefined as unknown,
+  presentation: undefined as unknown,
   retry: undefined as (() => void | PromiseLike<void>) | undefined,
+  setPresentation: vi.fn(),
   style: vi.fn(),
   update: vi.fn(),
 }));
@@ -21,12 +22,16 @@ vi.mock("./progress.ts", () => ({
   mountLoading: progress.mount,
 }));
 vi.mock("@andornaut/game-kit/runtime/web/progress/dom/loadingFailure", () => ({
-  mountLoadingFailure: (context: { layout?: unknown; onRetry: () => void | PromiseLike<void> }) => {
-    view.layout = context.layout;
+  mountLoadingFailure: (context: {
+    presentation?: unknown;
+    onRetry: () => void | PromiseLike<void>;
+  }) => {
+    view.presentation = context.presentation;
     view.retry = context.onRetry;
     return {
       dispose: view.dispose,
       element: { style: { setProperty: view.style } },
+      setPresentation: view.setPresentation,
       update: view.update,
     };
   },
@@ -37,7 +42,10 @@ const root = (size = { height: 360, width: 720 }) =>
   ({
     clientHeight: size.height,
     clientWidth: size.width,
-    ownerDocument: { body: {} },
+    ownerDocument: {
+      body: { append: vi.fn() },
+      createElement: () => ({ className: "", remove: vi.fn(), style: {} }),
+    },
     querySelector: () => ({ remove: vi.fn() }),
   }) as unknown as HTMLElement;
 async function settle() {
@@ -256,7 +264,7 @@ it("retries optional offline installation through the same presenter without ree
 it.each([
   { height: 844, width: 390 },
   { height: 390, width: 844 },
-])("uses the shared fallback layout with a physical minimum at $width x $height", async (size) => {
+])("keeps fixed typography and normal action fit at $width x $height", async (size) => {
   const required = createRequiredLoading(),
     entry = game();
   const stop = await startLoading(
@@ -266,14 +274,45 @@ it.each([
     root(size),
   );
   const unit = Math.min(size.width / 720, size.height / 360);
-  expect(view.layout).toEqual({
-    actionAlign: "start",
-    gapPx: 8 * unit,
-    minActionSizePx: Math.max(48, 48 * unit),
-    paddingPx: 16 * unit,
+  expect(view.presentation).toMatchObject({
+    action: { heightPx: 48 * unit, widthPx: 128 * unit },
+    palette: { action: "#bfa06f", actionText: "#181425", panel: "#3b3850", text: "#ead4aa" },
+    panel: { bodyActionGapPx: 24, maxWidthPx: 328, safeInsetPx: 16, titleBodyGapPx: 16 },
+    text: {
+      action: { lineHeight: 1.2, sizePx: 18, weight: 700 },
+      body: { lineHeight: 1.45, sizePx: 18, weight: 400 },
+      title: { lineHeight: 1.2, sizePx: 24, weight: 700 },
+    },
   });
-  expect(view.style.mock.calls.some(([property]) => property === "padding")).toBe(false);
+  expect(
+    view.style.mock.calls.some(([property]) =>
+      ["padding", "max-width", "max-height", "overflow"].includes(property),
+    ),
+  ).toBe(false);
   stop();
+});
+
+it("updates the same pending presenter on scale and removes both resize listeners", async () => {
+  const required = createRequiredLoading(),
+    events = new EventTarget();
+  const host = root();
+  Object.defineProperty(host.ownerDocument, "defaultView", { value: events });
+  const load = vi.fn().mockRejectedValue(new Error("import failed"));
+  const stop = await startLoading(required, { stopGameOnCrash: vi.fn() }, load, host);
+  const retry = view.retry;
+  Object.defineProperty(host, "clientWidth", { value: 1440 });
+  Object.defineProperty(host, "clientHeight", { value: 720 });
+  events.dispatchEvent(new Event("resize"));
+  events.dispatchEvent(new Event("ada-view-scale"));
+  expect(view.setPresentation).toHaveBeenCalledTimes(2);
+  expect(view.setPresentation.mock.lastCall?.[0]).toMatchObject({
+    action: { heightPx: 96, widthPx: 256 },
+  });
+  expect(view.retry).toBe(retry);
+  expect(progress.mount).toHaveBeenCalledOnce();
+  stop();
+  events.dispatchEvent(new Event("resize"));
+  expect(view.setPresentation).toHaveBeenCalledTimes(2);
 });
 
 it("keeps required and installation errors ahead of galaxy Retry in the same presenter", async () => {

@@ -6,15 +6,20 @@ import {
 } from "@andornaut/game-kit/runtime/load/loadingAttempts";
 import type { ProgressHandle } from "@andornaut/game-kit/runtime/progressState";
 import type { CrashScreen } from "@andornaut/game-kit/runtime/web/crash/dom/crashScreen";
-import { mountLoadingFailure } from "@andornaut/game-kit/runtime/web/progress/dom/loadingFailure";
+import {
+  type LoadingFailurePresentation,
+  mountLoadingFailure,
+} from "@andornaut/game-kit/runtime/web/progress/dom/loadingFailure";
 
-import { SPACING, TEXT_BUTTON } from "../data/layout.ts";
+import { FRAME_LINE, TEXT_BUTTON } from "../data/layout.ts";
 import {
   type BackgroundLoadingPresentation,
   observeInstallation,
 } from "../pwa/installationPresentation.ts";
 import { viewScale } from "../ui/layout/playView.ts";
+import { VIEW_SCALE_EVENT } from "../ui/layout/viewScale.ts";
 import { LOADING_LAYER } from "../ui/loadingBar.ts";
+import { TEXT_TOKENS } from "../ui/modal.ts";
 import { loadingProgress, mountLoading } from "./progress.ts";
 
 export const startupFence = { crashed: false };
@@ -36,16 +41,54 @@ export async function startLoading(
   const stop = mountLoading(root);
   let game: RequiredGame | undefined;
   let background: BackgroundLoadingPresentation | undefined;
-  const scale = viewScale({ height: root.clientHeight, width: root.clientWidth });
-  const unit = Number.isFinite(scale) && scale > 0 ? scale : 1;
+  const presentation = (): LoadingFailurePresentation => {
+    const scale = viewScale({ height: root.clientHeight, width: root.clientWidth });
+    const unit = Number.isFinite(scale) && scale > 0 ? scale : 1;
+    return {
+      action: {
+        borderWidthPx: FRAME_LINE * unit,
+        heightPx: TEXT_BUTTON.height * unit,
+        highlightHeightPx: FRAME_LINE * unit,
+        paddingBottomPx: TEXT_BUTTON.lipHeight * unit,
+        paddingXPx: TEXT_BUTTON.inset * unit,
+        shadeHeightPx: TEXT_BUTTON.lipHeight * unit,
+        widthPx: 128 * unit,
+      },
+      palette: {
+        action: "#bfa06f",
+        actionText: TEXT_TOKENS.buttonLabel,
+        border: "#181425",
+        highlight: "#d2b886",
+        lip: "#2f2d3d",
+        panel: "#3b3850",
+        shade: "#8a7148",
+        shadow: "#181425",
+        text: TEXT_TOKENS.label,
+      },
+      panel: {
+        bodyActionGapPx: 24,
+        borderWidthPx: 1,
+        lipHeightPx: 4,
+        maxWidthPx: 328,
+        paddingBottomPx: 16,
+        paddingTopPx: 24,
+        paddingXPx: 16,
+        safeInsetPx: 16,
+        shadowOffsetPx: 4,
+        titleBodyGapPx: 16,
+      },
+      text: {
+        action: { lineHeight: 1.2, sizePx: 18, weight: 700 },
+        body: { lineHeight: 1.45, sizePx: 18, weight: 400 },
+        title: { lineHeight: 1.2, sizePx: 24, weight: 700 },
+      },
+    };
+  };
+  const frame = root.ownerDocument.createElement("div");
+  frame.className = "ada-loading-failure-frame";
+  root.ownerDocument.body.append(frame);
   const failure = mountLoadingFailure(
     {
-      layout: {
-        actionAlign: "start",
-        gapPx: SPACING.gap * unit,
-        minActionSizePx: Math.max(TEXT_BUTTON.height, TEXT_BUTTON.height * unit),
-        paddingPx: SPACING.pageInset * unit,
-      },
       async onRetry() {
         try {
           if (required.state.kind === "ready" && background?.state.kind === "failed") {
@@ -58,26 +101,28 @@ export async function startLoading(
           reportError(error);
         }
       },
+      presentation: presentation(),
     },
-    root.ownerDocument.body,
+    frame,
   );
+  const onScale = () => failure.setPresentation(presentation());
+  const events = root.ownerDocument.defaultView;
+  events?.addEventListener("resize", onScale);
+  events?.addEventListener(VIEW_SCALE_EVENT, onScale);
   // Required entry and offline installation have independent attempt number domains.
   let presentationRevision = 0;
   const showFailure = (state: LoadingAttemptState) => {
     failure.update({ ...state, attempt: ++presentationRevision });
   };
-  for (const [property, value] of Object.entries({
-    left: "50%",
-    "max-height": "calc(100vh - 2rem)",
-    "max-width": "calc(100vw - 2rem)",
-    overflow: "auto",
+  Object.assign(frame.style, {
+    alignItems: "center",
+    display: "flex",
+    inset: "0",
+    justifyContent: "center",
+    pointerEvents: "none",
     position: "fixed",
-    top: "50%",
-    transform: "translate(-50%, -50%)",
-    "z-index": String(LOADING_LAYER - 1),
-  })) {
-    failure.element.style.setProperty(property, value, "important");
-  }
+    zIndex: String(LOADING_LAYER - 1),
+  });
   const moduleAttempt = createLoadingAttempts({
     async load(attempt) {
       const loaded = await loadGame();
@@ -168,7 +213,10 @@ export async function startLoading(
     unobserveModule();
     unobserveGame?.();
     pending?.finish();
+    events?.removeEventListener("resize", onScale);
+    events?.removeEventListener(VIEW_SCALE_EVENT, onScale);
     failure.dispose();
+    frame.remove();
     stop();
   };
   crash.stopGameOnCrash(() => {
