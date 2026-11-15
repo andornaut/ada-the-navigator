@@ -4,8 +4,10 @@ import { CONTENT } from "../data/content.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { relaunch } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
+import { createUnpopulatedFlight } from "./flight.ts";
 import { flightEncounterSeed } from "./flightTopology.ts";
 import { createFrigateEscorts, requiredFrigateEscortId } from "./frigateEscorts.ts";
+import { freshGalaxyGeography } from "./galaxyGeography.ts";
 import { GameModel } from "./game.ts";
 import { escortPackId } from "./geography.ts";
 import {
@@ -19,13 +21,13 @@ import type { RequiredEncounterPlan, SpaceObject } from "./types.ts";
 
 function fixture(supportCount = 0) {
   const model = new GameModel(CONTENT);
-  model.startGalaxy(1);
-  model.state.dialogue = null;
-  const flight = model.state.flight!;
-  flight.objects = [];
-  flight.world = { notables: {}, version: 1 };
-  flight.combat = { initialPackSizes: {}, routeEncounters: [] };
   const progress = model.state.progress[1];
+  progress.geography = freshGalaxyGeography(173);
+  const flight = createUnpopulatedFlight(CONTENT, 1, 173, model.state.economy, 197);
+  model.state.flight = flight;
+  model.state.mode = "space";
+  model.state.started = true;
+  flight.combat = { initialPackSizes: {}, routeEncounters: [] };
   const site: SpaceObject = {
     hp: 1,
     id: "growers",
@@ -125,8 +127,15 @@ describe("hidden required encounter storage", () => {
     model.returnHome();
     expect(model.state.mode).toBe("home");
     model.startGalaxy(1);
-    expect(model.state.progress[1].requiredSites).toEqual({ growers: { x: 10000, y: 10000 } });
-    expect(model.state.flight!.requiredPlans).toBeUndefined();
+    expect(model.state.progress[1].requiredSites).toMatchObject({
+      growers: { x: 10000, y: 10000 },
+    });
+    const freshPlan = readRequiredPlan(model.state.flight!, "growers")!;
+    expect(freshPlan).not.toBeNull();
+    expect(freshPlan).not.toBe(readRequiredPlan(flight, "growers"));
+    expect(freshPlan.site).toMatchObject({ id: "growers", x: 10000, y: 10000 });
+    expect(freshPlan.leader.enemy!.hardpoints[0]!.cooldown).toBe(0);
+    expect(readRequiredPlan(flight, "growers")!.leader.enemy!.hardpoints[0]!.cooldown).toBe(1.25);
     expect(flightEncounterSeed(model.state.flight!)).not.toBe(seed);
     expect(progress.known).toEqual([]);
   });

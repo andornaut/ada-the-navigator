@@ -100,6 +100,9 @@ function combatSnapshot() {
   if (!model.state.flight) {
     throw new Error("Expected launched flight");
   }
+  // This hand-authored interrupted legacy snapshot predates hidden required plans.
+  delete model.state.flight.requiredPlans;
+  delete model.state.progress[1].requiredSites;
   const enemy = createEnemy(
     enemyCatalog.capital,
     { archetype: "capital", id: "guard", packId: "pack", phase: -0.7 },

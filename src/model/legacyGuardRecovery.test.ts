@@ -24,6 +24,9 @@ function fixture(retained = false) {
   game.startGalaxy(1);
   playOpening(game);
   const flight = game.state.flight!;
+  // The remote formation is a legacy snapshot with no required-first planning records.
+  delete flight.requiredPlans;
+  delete game.state.progress[1].requiredSites;
   const site: SpaceObject = {
     hp: 1,
     id: "growers",
