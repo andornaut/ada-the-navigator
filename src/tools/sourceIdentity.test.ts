@@ -9,7 +9,7 @@ import {
   snapshotSourceIdentity,
   type SourceIdentityManifest,
 } from "@andornaut/delivery-kit/source-identity";
-import { gitBuildMetadata } from "@andornaut/game-kit/web/build/vite/gitHead";
+import { gitBuildMetadata } from "@andornaut/game-kit/build/gitHead";
 import { describe, expect, it } from "vitest";
 
 // The proof runner supplies an immutable real commit and its public-API artifact, not mock Git.
