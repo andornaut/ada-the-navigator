@@ -7,12 +7,12 @@ import {
   worldSceneryContact,
 } from "../asteroids.ts";
 import {
+  closestOnSegment,
   type Contact,
   grown,
   inside,
   outlineContact,
   outlinesContact,
-  partContact,
   type Parts,
   partsReach,
   worldParts,
@@ -28,6 +28,26 @@ export interface NavigationWorld extends WorldContext {
   readonly drawnOf: (object: SpaceObject) => Silhouette | null;
   readonly frameOf: (object: SpaceObject) => number;
 }
+
+/** Bounds follow immutable outline identity; positions, frames and poses are not cached. */
+const bounded = new WeakMap<
+  Parts,
+  {
+    edges: {
+      a: Parts[number][number];
+      b: Parts[number][number];
+      left: number;
+      right: number;
+      top: number;
+      bottom: number;
+    }[];
+    part: Parts[number];
+    left: number;
+    right: number;
+    top: number;
+    bottom: number;
+  }[]
+>();
 
 /** Scenery berth uses authored geometry; protected-area routing and physical collision stay separate. */
 export function worldNavigationQuery(
@@ -74,21 +94,22 @@ export function worldNavigationQuery(
       bodyReach = body ? partsReach(worldParts(body)) : enemy.radius;
     }
   };
-  const bounded = new Map<
-    Parts,
-    {
-      part: Parts[number];
-      left: number;
-      right: number;
-      top: number;
-      bottom: number;
-    }[]
-  >();
   const overlaps = (parts: Parts, x: number, y: number, margin: number): boolean => {
     let bounds = bounded.get(parts);
     if (!bounds) {
       bounds = parts.map((part) => ({
         bottom: Math.max(...part.map((point) => point.y)),
+        edges: part.map((a, index) => {
+          const b = part[(index + 1) % part.length]!;
+          return {
+            a,
+            b,
+            bottom: Math.max(a.y, b.y),
+            left: Math.min(a.x, b.x),
+            right: Math.max(a.x, b.x),
+            top: Math.min(a.y, b.y),
+          };
+        }),
         left: Math.min(...part.map((point) => point.x)),
         part,
         right: Math.max(...part.map((point) => point.x)),
@@ -97,11 +118,28 @@ export function worldNavigationQuery(
       bounded.set(parts, bounds);
     }
     const center = { x, y };
-    return bounds.some(({ bottom, left, part, right, top }) => {
+    return bounds.some(({ bottom, edges, left, part, right, top }) => {
       if (x < left - margin || x > right + margin || y < top - margin || y > bottom + margin) {
         return false;
       }
-      return margin > 0 ? partContact(part, center, margin) !== null : inside(part, center);
+      if (x >= left && x <= right && y >= top && y <= bottom && inside(part, center)) {
+        return true;
+      }
+      return (
+        margin > 0 &&
+        edges.some((edge) => {
+          if (
+            x < edge.left - margin ||
+            x > edge.right + margin ||
+            y < edge.top - margin ||
+            y > edge.bottom + margin
+          ) {
+            return false;
+          }
+          const nearest = closestOnSegment(center, edge.a, edge.b);
+          return Math.hypot(center.x - nearest.x, center.y - nearest.y) < margin;
+        })
+      );
     });
   };
   const contact = (
