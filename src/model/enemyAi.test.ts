@@ -447,7 +447,16 @@ describe("enemy rules", () => {
     expect(Math.hypot(result.velocity.x, result.velocity.y)).toBeLessThan(Math.hypot(30, 10));
     expect(result.velocity.y * 30).toBeCloseTo(result.velocity.x * 10, 6);
     expect(result.effects.defeated).toBe(false);
-    expect(result.fire.map((shot) => shot.hardpointId)).toEqual(["starboard"]);
+    expect(result.state.firePhasesInitialized).toBe(true);
+    expect(result.fire).toEqual([]);
+    const wait = result.state.hardpoints.find((part) => part.id === "starboard")!.cooldown;
+    expect(wait).toBeGreaterThan(0);
+    const ready = stepEnemy(
+      definition,
+      { ...observation(result.state), dt: wait + 1e-6 },
+      result.state,
+    );
+    expect(ready.fire.map((shot) => shot.hardpointId)).toEqual(["starboard"]);
   });
 
   it("fires each hardpoint's projectiles at its profile's speed", () => {
@@ -471,7 +480,8 @@ describe("enemy rules", () => {
     const loadout = heavyLoadout("capital", 4, id)!;
     const mountOf = (weapon: string) => [...loadout].find(([, carried]) => carried === weapon)![0];
     const definition = enemyDefinition(5, "capital", id);
-    const state = spawn("capital", definition);
+    // Initialized ongoing clocks isolate per-mount cooldowns from first-entry phasing.
+    const state = { ...spawn("capital", definition), firePhasesInitialized: true as const };
     const first = stepEnemy(definition, observation(state), state);
     const fired = first.fire.map((shot) => `${shot.hardpointId} ${shot.weapon} ${shot.level}`);
     expect([...new Set(fired)]).toEqual(
@@ -510,7 +520,12 @@ describe("enemy rules", () => {
     (archetype) => {
       // An Andromeda capital that fires bolts and missiles and no dots.
       const positioned = enemyDefinition(5, archetype, loadoutId(4, ["laser", "rapidMissile"]));
-      const state = { ...spawn(archetype, positioned), position: { x: 110, y: -75 } };
+      // An initialized readiness snapshot exercises every muzzle and fan together.
+      const state = {
+        ...spawn(archetype, positioned),
+        firePhasesInitialized: true as const,
+        position: { x: 110, y: -75 },
+      };
       const context = { ...observation(state), player: { x: 390, y: 145 } };
       const angles = [-20, 0, 35];
       const definition = {
@@ -578,7 +593,8 @@ describe("enemy rules", () => {
 
   it("disables a heavy once its weapons are destroyed and destroys it only at 0 hull", () => {
     const definition = enemyCatalog.capital;
-    let state = spawn("capital");
+    // This existing engagement tests disable and hull routing, not first-entry timing.
+    let state: EnemyState = { ...spawn("capital"), firePhasesInitialized: true };
     // Two Lasers and two three-bolt Multi-Lasers.
     expect(stepEnemy(definition, observation(state), state).fire).toHaveLength(8);
     for (const part of definition.hardpoints.filter((part) => part.kind === "weapon")) {
