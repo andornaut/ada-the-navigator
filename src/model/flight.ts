@@ -118,7 +118,12 @@ import {
   questGuardFormationReach,
   questGuardHomePorts,
 } from "./questGuardPlacement.ts";
-import { readRequiredPlan, storeRequiredPlan, takeRequiredPlan } from "./requiredEncounterPlans.ts";
+import {
+  readRequiredPlan,
+  requiredPlanActors,
+  storeRequiredPlan,
+  takeRequiredPlan,
+} from "./requiredEncounterPlans.ts";
 import { requiredRouteGeometry } from "./requiredRouteGeometry.ts";
 import {
   type OptionalWorldFootprint,
@@ -271,8 +276,8 @@ function chunk(flight: FlightState, content: GameContent, point: Vec): string {
 
 /** Whether a point lies inside an existing friendly protected place. */
 function pendingRequiredRoutes(flight: FlightState): readonly RequiredWorldReservation[] {
-  return Object.values(flight.requiredPlans ?? {}).flatMap(({ leader, site, support }) =>
-    [leader, ...support].map((guard) => ({ guard, site })),
+  return Object.values(flight.requiredPlans ?? {}).flatMap((plan) =>
+    requiredPlanActors(plan).map((guard) => ({ guard, site: plan.site })),
   );
 }
 

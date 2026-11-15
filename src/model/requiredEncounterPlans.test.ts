@@ -144,7 +144,7 @@ describe("hidden required encounter storage", () => {
     const { flight, model, plan, progress } = fixture();
     storeRequiredPlan(progress, flight, plan);
     const invalid = model.saveDocument();
-    invalid.flight!.requiredPlans!.growers!.leader.enemy!.disabled = true;
+    readRequiredPlan(invalid.flight!, "growers")!.leader.enemy!.disabled = true;
     expect(restoreSave(invalid)).toBeNull();
 
     const materialized = takeRequiredPlan(flight, "growers")!;
@@ -166,25 +166,25 @@ describe("hidden required encounter storage", () => {
     const original = model.saveDocument();
     const edits = [
       (save: typeof original) => {
-        save.flight!.requiredPlans!.growers!.support[0]!.enemy!.packId = "wrong-pack";
+        readRequiredPlan(save.flight!, "growers")!.support[0]!.enemy!.packId = "wrong-pack";
       },
       (save: typeof original) => {
-        save.flight!.requiredPlans!.growers!.support[0]!.role = "discovery";
+        readRequiredPlan(save.flight!, "growers")!.support[0]!.role = "discovery";
       },
       (save: typeof original) => {
         save.flight!.combat!.routeEncounters.push("growers");
       },
       (save: typeof original) => {
-        save.flight!.requiredPlans!.growers!.support.push(...plan.support, ...plan.support);
+        readRequiredPlan(save.flight!, "growers")!.support.push(...plan.support, ...plan.support);
       },
       (save: typeof original) => {
-        save.flight!.requiredPlans!.growers!.leader.routeId = "workshop";
+        readRequiredPlan(save.flight!, "growers")!.leader.routeId = "workshop";
       },
       (save: typeof original) => {
-        save.flight!.requiredPlans!.growers!.leader.enemy!.weaponLevel = 4 as never;
+        readRequiredPlan(save.flight!, "growers")!.leader.enemy!.weaponLevel = 4 as never;
       },
       (save: typeof original) => {
-        save.flight!.requiredPlans!.growers!.site.x++;
+        readRequiredPlan(save.flight!, "growers")!.site.x++;
       },
       (save: typeof original) => {
         save.flight!.objects.push(structuredClone(plan.leader));

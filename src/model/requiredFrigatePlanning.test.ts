@@ -15,7 +15,11 @@ import {
   stepFlight,
 } from "./flight.ts";
 import { newGameState } from "./game.ts";
-import { readRequiredPlan, storeRequiredPlan } from "./requiredEncounterPlans.ts";
+import {
+  readRequiredPlan,
+  requiredPlanActors,
+  storeRequiredPlan,
+} from "./requiredEncounterPlans.ts";
 import {
   requiredWorldPlacementClear,
   type RequiredWorldReservation,
@@ -173,7 +177,7 @@ it("generates optional content around hidden required footprints and retains cap
   expect(planned.status).toBe("planned");
   const reservations: RequiredWorldReservation[] = Object.values(
     flight.requiredPlans ?? {},
-  ).flatMap(({ leader, site, support }) => [leader, ...support].map((guard) => ({ guard, site })));
+  ).flatMap((plan) => requiredPlanActors(plan).map((guard) => ({ guard, site: plan.site })));
   expect(reservations).toHaveLength(3);
   expect(progress.known).toEqual([]);
   expect(flight.objects.some((actor) => actor.routeId || progress.known.includes(actor.id))).toBe(

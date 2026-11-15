@@ -137,8 +137,15 @@ export interface RequiredEncounterPlan {
   leader: SpaceObject;
   support: SpaceObject[];
 }
+/** G3 authored encounters retain their source ordering and complete individual actor states. */
+export interface RequiredRoleEncounterPlan {
+  role: "whirlpool-capital" | "whirlpool-holodisk";
+  site: SpaceObject;
+  actors: readonly SpaceObject[];
+}
+export type AnyRequiredEncounterPlan = RequiredEncounterPlan | RequiredRoleEncounterPlan;
 export interface FlightState {
-  requiredPlans?: Record<string, RequiredEncounterPlan>;
+  requiredPlans?: Record<string, AnyRequiredEncounterPlan>;
   topology?: FlightTopology;
   needle?: NeedleFlight;
   phantom?: PhantomFlight;

@@ -1,6 +1,13 @@
 import { FRIGATE_ESCORT_ROLE, requiredFrigateEscortId } from "./frigateEscorts.ts";
 import { escortPackId } from "./geography.ts";
-import type { FlightState, GalaxyProgress, RequiredEncounterPlan, Vec } from "./types.ts";
+import type {
+  AnyRequiredEncounterPlan,
+  FlightState,
+  GalaxyProgress,
+  RequiredEncounterPlan,
+  SpaceObject,
+  Vec,
+} from "./types.ts";
 
 /** Existing canonical coordinates always win over a later planning proposal. */
 export function rememberRequiredSite(progress: GalaxyProgress, id: string, point: Vec): Vec {
@@ -20,9 +27,11 @@ export function rememberRequiredSite(progress: GalaxyProgress, id: string, point
 }
 
 export function readRequiredPlan(flight: FlightState, id: string): RequiredEncounterPlan | null {
-  return flight.requiredPlans && Object.hasOwn(flight.requiredPlans, id)
-    ? flight.requiredPlans[id]!
-    : null;
+  const plan =
+    flight.requiredPlans && Object.hasOwn(flight.requiredPlans, id)
+      ? flight.requiredPlans[id]
+      : undefined;
+  return plan && !("role" in plan) ? plan : null;
 }
 
 /** Identity and role constraints shared by the trusted writer and the save boundary. */
@@ -77,11 +86,7 @@ export function storeRequiredPlan(
     throw new RangeError("Invalid required encounter plan");
   }
   const ids = new Set([plan.site.id, plan.leader.id, ...plan.support.map(({ id }) => id)]);
-  const pending = Object.values(flight.requiredPlans ?? {}).flatMap((entry) => [
-    entry.site,
-    entry.leader,
-    ...entry.support,
-  ]);
+  const pending = Object.values(flight.requiredPlans ?? {}).flatMap(requiredPlanObjects);
   if (
     flight.combat?.routeEncounters.includes(plan.site.id) ||
     [...flight.objects, ...pending].some(({ id }) => ids.has(id)) ||
@@ -105,4 +110,14 @@ export function takeRequiredPlan(flight: FlightState, id: string): RequiredEncou
     delete flight.requiredPlans![id];
   }
   return plan;
+}
+
+/** One actor view for typed role plans and the existing Sunflower formation schema. */
+export function requiredPlanActors(plan: AnyRequiredEncounterPlan): readonly SpaceObject[] {
+  return "role" in plan ? plan.actors : [plan.leader, ...plan.support];
+}
+
+/** Full-state ownership includes the site without assigning it enemy or route semantics. */
+export function requiredPlanObjects(plan: AnyRequiredEncounterPlan): SpaceObject[] {
+  return [plan.site, ...requiredPlanActors(plan)];
 }

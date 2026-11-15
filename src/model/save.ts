@@ -29,18 +29,21 @@ import { validExplored } from "./map.ts";
 import { markerObjectTracked, validMarkerActors, validTargetKnowledge } from "./markerKnowledge.ts";
 import { readNeedleChapterProgress, validNeedleFlight } from "./needleRuntime.ts";
 import { validPhantomFlight, validPhantomProgress } from "./phantom.ts";
-import { requiredPlanConsistent } from "./requiredEncounterPlans.ts";
+import { requiredPlanConsistent, requiredPlanObjects } from "./requiredEncounterPlans.ts";
+import { requiredRolePlanConsistent } from "./requiredRolePlans.ts";
 import { namesStation, stationById } from "./stations.ts";
 import { currentPage } from "./storybook.ts";
 import { readStoryCursor } from "./storyCursor.ts";
 import { resolveStoryScene } from "./storyScenes.ts";
 import type {
   AmmoCounts,
+  AnyRequiredEncounterPlan,
   EconomyState,
   FlightState,
   GameState,
   PersistentWorldState,
   RequiredEncounterPlan,
+  RequiredRoleEncounterPlan,
   SpaceObject,
   UpgradeLevels,
 } from "./types.ts";
@@ -880,30 +883,54 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
             !routes.includes(id) ||
             !record(rawPlan) ||
             Object.keys(rawPlan).length !== 3 ||
-            !spaceObject(value.selectedGalaxy as GalaxyNumber, routes, rawPlan.site) ||
-            !spaceObject(value.selectedGalaxy as GalaxyNumber, routes, rawPlan.leader) ||
-            !Array.isArray(rawPlan.support) ||
-            !rawPlan.support.every((actor) =>
-              spaceObject(value.selectedGalaxy as GalaxyNumber, routes, actor),
-            )
+            !spaceObject(value.selectedGalaxy as GalaxyNumber, routes, rawPlan.site)
           ) {
             return null;
           }
-          const plan = rawPlan as unknown as RequiredEncounterPlan;
+          let plan: AnyRequiredEncounterPlan;
+          if (Object.hasOwn(rawPlan, "role")) {
+            if (
+              !Array.isArray(rawPlan.actors) ||
+              !rawPlan.actors.every((actor) =>
+                spaceObject(value.selectedGalaxy as GalaxyNumber, routes, actor),
+              )
+            ) {
+              return null;
+            }
+            const rolePlan = rawPlan as unknown as RequiredRoleEncounterPlan;
+            if (!requiredRolePlanConsistent(value.selectedGalaxy as number, rolePlan)) {
+              return null;
+            }
+            plan = rolePlan;
+          } else {
+            if (
+              !spaceObject(value.selectedGalaxy as GalaxyNumber, routes, rawPlan.leader) ||
+              !Array.isArray(rawPlan.support) ||
+              !rawPlan.support.every((actor) =>
+                spaceObject(value.selectedGalaxy as GalaxyNumber, routes, actor),
+              )
+            ) {
+              return null;
+            }
+            const legacyPlan = rawPlan as unknown as RequiredEncounterPlan;
+            if (!requiredPlanConsistent(legacyPlan)) {
+              return null;
+            }
+            plan = legacyPlan;
+          }
           const point = sites[id];
           if (
             plan.site.id !== id ||
             (record(f.combat) &&
               Array.isArray(f.combat.routeEncounters) &&
               f.combat.routeEncounters.includes(id)) ||
-            !requiredPlanConsistent(plan) ||
             !record(point) ||
             plan.site.x !== point.x ||
             plan.site.y !== point.y
           ) {
             return null;
           }
-          for (const actor of [plan.site, plan.leader, ...plan.support]) {
+          for (const actor of requiredPlanObjects(plan)) {
             if (owned.has(actor.id)) {
               return null;
             }
