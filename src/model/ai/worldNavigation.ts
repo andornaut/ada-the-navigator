@@ -8,8 +8,12 @@ import {
 } from "../asteroids.ts";
 import {
   type Contact,
+  grown,
+  inside,
   outlineContact,
   outlinesContact,
+  partContact,
+  type Parts,
   partsReach,
   worldParts,
 } from "../convex.ts";
@@ -63,16 +67,49 @@ export function worldNavigationQuery(
   let previousPose: NavigationPose | undefined;
   let body: ReturnType<typeof enemyHull> = null;
   let bodyReach = enemy.radius;
-  const contact = (
-    pose: NavigationPose,
-    clearance: number,
-    obstacle: (typeof obstacles)[number],
-  ): Contact | null => {
+  const bodyAt = (pose: NavigationPose): void => {
     if (previousPose !== pose) {
       previousPose = pose;
       body = enemyHull({ archetype: enemy.archetype, facing: pose.facing });
       bodyReach = body ? partsReach(worldParts(body)) : enemy.radius;
     }
+  };
+  const bounded = new Map<
+    Parts,
+    {
+      part: Parts[number];
+      left: number;
+      right: number;
+      top: number;
+      bottom: number;
+    }[]
+  >();
+  const overlaps = (parts: Parts, x: number, y: number, margin: number): boolean => {
+    let bounds = bounded.get(parts);
+    if (!bounds) {
+      bounds = parts.map((part) => ({
+        bottom: Math.max(...part.map((point) => point.y)),
+        left: Math.min(...part.map((point) => point.x)),
+        part,
+        right: Math.max(...part.map((point) => point.x)),
+        top: Math.min(...part.map((point) => point.y)),
+      }));
+      bounded.set(parts, bounds);
+    }
+    const center = { x, y };
+    return bounds.some(({ bottom, left, part, right, top }) => {
+      if (x < left - margin || x > right + margin || y < top - margin || y > bottom + margin) {
+        return false;
+      }
+      return margin > 0 ? partContact(part, center, margin) !== null : inside(part, center);
+    });
+  };
+  const contact = (
+    pose: NavigationPose,
+    clearance: number,
+    obstacle: (typeof obstacles)[number],
+  ): Contact | null => {
+    bodyAt(pose);
     const { drawn, frame, object, outline, reach } = obstacle;
     const image = worldPoint(context, pose.position, object);
     const bound = outline
@@ -98,7 +135,29 @@ export function worldNavigationQuery(
   };
   return {
     clear(pose, clearance) {
-      return !obstacles.some((object) => contact(pose, clearance, object) !== null);
+      bodyAt(pose);
+      return !obstacles.some((obstacle) => {
+        const { object, outline } = obstacle;
+        if (!outline) {
+          return contact(pose, clearance, obstacle) !== null;
+        }
+        const image = worldPoint(context, pose.position, object);
+        if (
+          Math.hypot(pose.position.x - image.x, pose.position.y - image.y) >=
+          obstacle.reach + bodyReach + clearance
+        ) {
+          return false;
+        }
+        const shape = worldParts(outline);
+        const parts = body ? grown(shape, worldParts(body)) : shape;
+        // Boolean admission needs no exit normal or depth. Existing primitives retain exact contact boundaries.
+        return overlaps(
+          parts,
+          pose.position.x - image.x,
+          pose.position.y - image.y,
+          body ? clearance : enemy.radius + clearance,
+        );
+      });
     },
     escape(pose, clearance) {
       let deepest: Contact | null = null;

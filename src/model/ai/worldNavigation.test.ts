@@ -42,18 +42,20 @@ it("matches authored hull contacts across wrapped positions, headings, frames an
     for (let heading = 0; heading < 16; heading++) {
       const facing = { x: Math.cos((heading * Math.PI) / 8), y: Math.sin((heading * Math.PI) / 8) };
       for (const x of [-990, -850, 700, 980, 1200]) {
-        const pose = { facing, position: { x, y: 35 } };
-        for (const clearance of [0, 40, 80]) {
-          const drawn = scenerySilhouette(rock)!;
-          const hit = outlinesContact(
-            drawn.frames[frame % drawn.frames.length]!,
-            worldPoint(context, pose.position, rock),
-            enemyHull({ archetype: "frigate", facing })!,
-            pose.position,
-            clearance,
-          );
-          expect(query.clear(pose, clearance)).toBe(hit === null);
-          expect(query.escape(pose, clearance)).toEqual(hit?.normal ?? null);
+        for (const y of [-80, 0, 35, 120]) {
+          const pose = { facing, position: { x, y } };
+          for (const clearance of [0, 40, 80]) {
+            const drawn = scenerySilhouette(rock)!;
+            const hit = outlinesContact(
+              drawn.frames[frame % drawn.frames.length]!,
+              worldPoint(context, pose.position, rock),
+              enemyHull({ archetype: "frigate", facing })!,
+              pose.position,
+              clearance,
+            );
+            expect(query.clear(pose, clearance)).toBe(hit === null);
+            expect(query.escape(pose, clearance)).toEqual(hit?.normal ?? null);
+          }
         }
       }
     }
