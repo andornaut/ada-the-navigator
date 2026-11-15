@@ -58,6 +58,7 @@ describe("atomic 64-heading player package", () => {
     expect(manifest.shipHeadings).toEqual(SHIP_HEADING_CONTRACT);
     expect(forward.headings).toHaveLength(64);
     expect(reverse.headings).toHaveLength(64);
+    expect(reverse.reverseStyle).toBe("centered-main");
     expect(readEngineJets(yellowArchive)).toBeUndefined();
     expect(yellowArchive.headings).toHaveLength(32);
   });
@@ -113,7 +114,12 @@ describe("atomic 64-heading player package", () => {
             expect(mouth.normalAperture.coreWidth).toBeLessThan(1);
           } else {
             expect(mouth.outerCorner).toBeDefined();
-            expect(mouth.coreOutboard).toBe(true);
+            if (jets === reverse) {
+              expect(mouth.coreOutboard).toBeUndefined();
+              expect(mouth.normalAperture).toBeUndefined();
+            } else {
+              expect(mouth.coreOutboard).toBe(true);
+            }
           }
 
           const triangles = jetTriangles(

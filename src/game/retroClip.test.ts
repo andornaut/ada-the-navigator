@@ -18,25 +18,76 @@ const retro = readEngineJets(retroArt)!;
 const display = { displayHeight: 96, displayWidth: 96, pivot: { x: 0, y: 0 } };
 describe("retro material selection", () => {
   it.each(paint.schemes.map(({ id }) => id))(
-    "uses the exact main material for %s at every engine and field",
+    "uses the centered opaque main material recipe for %s at every engine and field",
     () => {
       for (const field of [undefined, LIGHT_FIELD.jets.shipLevels]) {
         for (const level of [1, 2, 3]) {
           const forward = travelJets(main, retro, field, level, "forward")!;
           const reverse = travelJets(main, retro, field, level, "reverse")!;
-          expect(reverse.layers).toBe(forward.layers);
-          expect(reverse.layers).toBe((field ?? main.engineLevels)[level - 1]);
+          const canonical = (field ?? main.engineLevels)[level - 1]!;
+          const dark = main.engineLevels[level - 1]!.find(
+            (layer) => layer.normalColor !== undefined,
+          )!.normalColor!;
+          const outer = canonical.find((layer) => layer.name === "outer")!;
+          const core = canonical.find((layer) => layer.name === "core")!;
+          expect(forward.layers).toBe(canonical);
+          expect(reverse.layers.map((layer) => layer.colors)).toEqual([
+            [dark, dark],
+            outer.colors,
+            core.colors,
+          ]);
+          expect(reverse.layers.map((layer) => layer.width)).toEqual([2.4, 1.85625, 0.928125]);
+          expect(reverse.layers.map((layer) => layer.length)).toEqual([1.1, 1, 0.55]);
+          expect(reverse.layers.every((layer) => layer.alpha === undefined)).toBe(true);
           expect(reverse.headings).toBe(retro.headings);
           expect(forward.headings).toBe(main.headings);
           for (const speed of [0.2, 0.65, 1]) {
-            expect(reverse.layers.map((layer) => layerColor(layer, speed))).toEqual(
-              forward.layers.map((layer) => layerColor(layer, speed)),
+            const expected = [[dark, dark], outer.colors, core.colors].map(([from, to]) =>
+              [16, 8, 0].reduce((rgb, shift) => {
+                const start = (from! >> shift) & 255;
+                const end = (to! >> shift) & 255;
+                return rgb + Math.round(start + (end - start) * speed) * 2 ** shift;
+              }, 0),
             );
+            expect(reverse.layers.map((layer) => layerColor(layer, speed))).toEqual(expected);
+            expect(reverse.layers.map((layer) => layerAlpha(layer, speed))).toEqual([1, 1, 1]);
+            const triangles = jetTriangles(reverse, display, 52, speed);
+            expect(new Set(triangles.map((triangle) => triangle.color))).toEqual(new Set(expected));
+            expect(triangles.every((triangle) => triangle.alpha === 1)).toBe(true);
           }
         }
       }
     },
   );
+  it("retains descriptor-absent selected materials and explicit outboard legacy mouths", () => {
+    const raw = structuredClone(retroArt);
+    Reflect.deleteProperty(raw, "reverseStyle");
+    for (const heading of raw.headings) {
+      for (const mouth of heading.mouths) {
+        Reflect.set(mouth, "coreOutboard", true);
+      }
+    }
+    const legacy = readEngineJets(raw)!;
+    expect(legacy).not.toHaveProperty("reverseStyle");
+    expect(legacy.headings).toHaveLength(64);
+    for (const mouths of legacy.headings) {
+      for (const mouth of mouths) {
+        expect(mouth.coreOutboard).toBe(true);
+      }
+    }
+    for (const field of [undefined, LIGHT_FIELD.jets.shipLevels]) {
+      for (const level of [1, 2, 3]) {
+        const selected = (field ?? main.engineLevels)[level - 1]!;
+        const reverse = travelJets(main, legacy, field, level, "reverse")!;
+        expect(reverse.layers).toBe(selected);
+        for (const f of [0.2, 0.65, 1]) {
+          expect(reverse.layers.map((layer) => layerColor(layer, f))).toEqual(
+            selected.map((layer) => layerColor(layer, f)),
+          );
+        }
+      }
+    }
+  });
   it("never substitutes a fixed retro palette when the main or reverse recipe is missing", () => {
     expect(travelJets(undefined, retro, undefined, 1, "reverse")).toBeUndefined();
     expect(travelJets(main, undefined, undefined, 1, "reverse")).toBeUndefined();
@@ -56,7 +107,9 @@ describe("approved calibrated rear clipping", () => {
           expect(mouths).toHaveLength(2);
           for (const speed of [0.2, 0.65, 1]) {
             for (const mouth of mouths) {
-              expect(mouth.coreOutboard).toBe(true);
+              expect(retro.reverseStyle).toBe("centered-main");
+              expect(mouth.coreOutboard).toBeUndefined();
+              expect(mouth.normalAperture).toBeUndefined();
               expect(mouth.outerCorner).toBeDefined();
               expect(mouth.rearClip).toBeDefined();
               const single = { ...jets, headings: [[mouth]] };
