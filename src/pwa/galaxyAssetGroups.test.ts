@@ -1,3 +1,4 @@
+import type { LoadingAttemptState } from "@andornaut/game-kit/runtime/load/loadingAttempts";
 import { createProgressState } from "@andornaut/game-kit/runtime/progressState";
 import type { AssetGroupsResult } from "@andornaut/game-kit/runtime/web/pwa/assetGroups";
 import { expect, it, vi } from "vitest";
@@ -14,6 +15,7 @@ async function settle() {
 }
 function fixture() {
   const requests: string[][] = [];
+  const states: LoadingAttemptState[] = [];
   const ports: MessagePort[] = [];
   let available: string[] = ["sunflower", "whirlpool"];
   let result: AssetGroupsResult | undefined;
@@ -65,6 +67,7 @@ function fixture() {
     buildId: "1".repeat(40),
     container,
     eventTarget,
+    onState: (state) => states.push(state),
     progress,
     requestTimeoutMs: 1000,
     visibilitySource,
@@ -86,6 +89,7 @@ function fixture() {
       result = next;
     },
     snapshots,
+    states,
     stop,
     visibilitySource,
   };
@@ -196,12 +200,15 @@ it("retries a failed ensure from actual durable state rather than treating settl
   f.groups.setUnlocked([1, 3]);
   await f.groups.start();
   expect(f.requests.filter((ids) => ids.length)).toHaveLength(1);
+  expect(f.states.map(({ kind }) => kind)).toEqual(["loading", "failed"]);
+  expect(f.snapshots.at(-1)?.active).toBe(false);
   f.setEnsureResult(undefined);
   await f.groups.resume();
   expect(f.requests.filter((ids) => ids.length)).toEqual([
     ["needle", "sunflower", "whirlpool"],
     ["needle", "sunflower", "whirlpool"],
   ]);
+  expect(f.states.at(-1)?.kind).toBe("ready");
   await f.groups.resume();
   expect(f.requests.filter((ids) => ids.length)).toHaveLength(2);
   f.groups.dispose();

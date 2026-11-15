@@ -31,7 +31,7 @@ vi.mock("@andornaut/game-kit/runtime/web/progress/dom/loadingFailure", () => ({
     };
   },
 }));
-import { presentInstallation } from "../pwa/installationPresentation.ts";
+import { presentGalaxyDownload, presentInstallation } from "../pwa/installationPresentation.ts";
 import { type RequiredGame, startLoading, startupFence } from "./startup.ts";
 const root = (size = { height: 360, width: 720 }) =>
   ({
@@ -273,5 +273,68 @@ it.each([
     paddingPx: 16 * unit,
   });
   expect(view.style.mock.calls.some(([property]) => property === "padding")).toBe(false);
+  stop();
+});
+
+it("keeps required and installation errors ahead of galaxy Retry in the same presenter", async () => {
+  const required = createRequiredLoading(),
+    entry = game();
+  const identity = { attempt: 1, operationId: "root-install", version: "document-version" };
+  const rootRetry = vi.fn(async () => {
+    presentInstallation({
+      retry: rootRetry,
+      state: { ...identity, kind: "ready", stage: "installed" },
+    });
+  });
+  presentInstallation({
+    retry: rootRetry,
+    state: { ...identity, kind: "ready", stage: "installed" },
+  });
+  const stop = await startLoading(
+    required,
+    { stopGameOnCrash: vi.fn() },
+    async () => entry,
+    root(),
+  );
+  await settle();
+  const groupError = new Error("group unavailable"),
+    rootError = new Error("install unavailable");
+  const groupRetry = vi.fn(async () => {
+    presentGalaxyDownload({ retry: groupRetry, state: { attempt: 1, kind: "ready" } });
+  });
+  presentGalaxyDownload({
+    retry: groupRetry,
+    state: { attempt: 1, error: groupError, kind: "failed" },
+  });
+  presentInstallation({
+    retry: rootRetry,
+    state: { ...identity, error: rootError, kind: "failed", stage: "installation" },
+  });
+  expect(view.update).toHaveBeenLastCalledWith(
+    expect.objectContaining({ error: rootError, kind: "failed" }),
+  );
+  let pending = true;
+  required.observe({
+    retry() {
+      pending = false;
+      required.invalidate();
+    },
+    status: () => (pending ? "failed" : "ready"),
+  });
+  expect(view.update.mock.calls.at(-1)![0].error).not.toBe(rootError);
+  await view.retry!();
+  expect(rootRetry).not.toHaveBeenCalled();
+  expect(groupRetry).not.toHaveBeenCalled();
+  expect(view.update).toHaveBeenLastCalledWith(expect.objectContaining({ error: rootError }));
+  await view.retry!();
+  expect(rootRetry).toHaveBeenCalledOnce();
+  expect(groupRetry).not.toHaveBeenCalled();
+  expect(view.update).toHaveBeenLastCalledWith(expect.objectContaining({ error: groupError }));
+  await view.retry!();
+  expect(groupRetry).toHaveBeenCalledOnce();
+  expect(view.update).toHaveBeenLastCalledWith(expect.objectContaining({ kind: "ready" }));
+  expect(entry.commit).toHaveBeenCalledOnce();
+  expect(progress.mount).toHaveBeenCalledOnce();
+  expect(required.state.kind).toBe("ready");
   stop();
 });

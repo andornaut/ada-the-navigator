@@ -1,3 +1,4 @@
+import type { LoadingAttemptState } from "@andornaut/game-kit/runtime/load/loadingAttempts";
 import type { ProgressHandle } from "@andornaut/game-kit/runtime/progressState";
 import type { AssetGroupsResult } from "@andornaut/game-kit/runtime/web/pwa/assetGroups";
 import { isBuildId } from "@andornaut/game-kit/runtime/web/pwa/buildIdentity";
@@ -17,6 +18,7 @@ interface GroupPage {
   readonly buildId: string | undefined;
   readonly container: AssetGroupsOptions["container"] & EventTarget;
   readonly eventTarget: EventTarget;
+  readonly onState?: (state: LoadingAttemptState) => void;
   readonly progress: { begin(): ProgressHandle };
   readonly requestTimeoutMs: number;
   readonly visibilitySource: VisibilitySource;
@@ -32,6 +34,7 @@ export function createGalaxyDownloads(page: GroupPage) {
     queued = false;
   let desired = galaxyDownloadGroups([]),
     signature = JSON.stringify(desired);
+  let presentationAttempt = 0;
   let flight: Promise<void> | undefined;
   let operation: { key?: string; handle?: ProgressHandle } | undefined;
   const client = createAssetGroups({
@@ -79,11 +82,27 @@ export function createGalaxyDownloads(page: GroupPage) {
         return;
       }
       if (state.status !== "available") {
+        // Before the first group transaction, missing registration belongs to installation.
+        if (presentationAttempt > 0) {
+          page.onState?.({ attempt: ++presentationAttempt, error: state, kind: "failed" });
+        }
         continue;
       }
       if (!wanted.every((id) => state.readyGroups.includes(id))) {
+        const attempt = ++presentationAttempt;
+        page.onState?.({ attempt, kind: "loading" });
         // eslint-disable-next-line no-await-in-loop
-        await request(() => client.ensureGroups(wanted));
+        const result = await request(() => client.ensureGroups(wanted));
+        if (disposed) {
+          return;
+        }
+        page.onState?.(
+          result.status === "available" && wanted.every((id) => result.readyGroups.includes(id))
+            ? { attempt, kind: "ready" }
+            : { attempt, error: result, kind: "failed" },
+        );
+      } else if (presentationAttempt > 0) {
+        page.onState?.({ attempt: presentationAttempt, kind: "ready" });
       }
       // Durability/version validation belongs to the published client. A failed result is retried
       // only on another durable signature or explicit readiness/resume event, never on a timer.
@@ -129,6 +148,7 @@ export function createGalaxyDownloads(page: GroupPage) {
     page.eventTarget.removeEventListener("online", ready);
     page.eventTarget.removeEventListener("pagehide", hide);
     client.dispose();
+    page.onState?.({ attempt: presentationAttempt, kind: "disposed" });
     operation?.handle?.finish();
     if (operation) {
       delete operation.handle;

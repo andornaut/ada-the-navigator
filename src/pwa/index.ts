@@ -55,7 +55,7 @@ import {
 } from "../loading/progress.ts";
 import { dispatchPhoneEvent, PHONE_EVENTS } from "./events.ts";
 import { createGalaxyDownloads } from "./galaxyAssetGroups.ts";
-import { presentInstallation } from "./installationPresentation.ts";
+import { presentGalaxyDownload, presentInstallation } from "./installationPresentation.ts";
 import {
   createUpdateOffer,
   type StartCover,
@@ -168,6 +168,14 @@ function setupOfflinePlay(): void {
       buildId: __BUILD_ID__,
       container: navigator.serviceWorker,
       eventTarget: page.eventTarget,
+      onState(state) {
+        presentGalaxyDownload({
+          async retry() {
+            await galaxyDownloads?.resume();
+          },
+          state,
+        });
+      },
       progress: galaxyProgress,
       requestTimeoutMs: LOADER_CONFIG.timeout * (LOADER_CONFIG.maxRetries + 1),
       visibilitySource: page.visibilitySource,

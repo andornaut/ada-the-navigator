@@ -10,7 +10,7 @@ import { mountLoadingFailure } from "@andornaut/game-kit/runtime/web/progress/do
 
 import { SPACING, TEXT_BUTTON } from "../data/layout.ts";
 import {
-  type InstallationPresentation,
+  type BackgroundLoadingPresentation,
   observeInstallation,
 } from "../pwa/installationPresentation.ts";
 import { viewScale } from "../ui/layout/playView.ts";
@@ -35,7 +35,7 @@ export async function startLoading(
 ): Promise<() => void> {
   const stop = mountLoading(root);
   let game: RequiredGame | undefined;
-  let installation: InstallationPresentation | undefined;
+  let background: BackgroundLoadingPresentation | undefined;
   const scale = viewScale({ height: root.clientHeight, width: root.clientWidth });
   const unit = Number.isFinite(scale) && scale > 0 ? scale : 1;
   const failure = mountLoadingFailure(
@@ -48,8 +48,8 @@ export async function startLoading(
       },
       async onRetry() {
         try {
-          if (required.state.kind === "ready" && installation?.state.kind === "failed") {
-            await installation.retry();
+          if (required.state.kind === "ready" && background?.state.kind === "failed") {
+            await background.retry();
           } else {
             await required.retry();
           }
@@ -143,10 +143,10 @@ export async function startLoading(
       pending?.finish();
       pending = undefined;
     }
-    showFailure(state.kind === "ready" && installation !== undefined ? installation.state : state);
+    showFailure(state.kind === "ready" && background !== undefined ? background.state : state);
   });
   const stopInstallation = observeInstallation((view) => {
-    installation = view;
+    background = view;
     if (required.state.kind === "ready") {
       showFailure(view.state);
     }
