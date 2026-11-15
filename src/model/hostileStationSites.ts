@@ -1,5 +1,5 @@
-import type { Rect } from "@andornaut/game-kit/rect";
 import { randomStream } from "@andornaut/game-kit/runtime/random";
+import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import { GALAXY_ID } from "../data/galaxies.ts";
 import { HOSTILE_STATION_PLACEMENT } from "../data/hostileStationPlacement.ts";
