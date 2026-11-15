@@ -19,10 +19,14 @@ import type { SpaceObject, Vec } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
-function travel(model: GameModel, point: Vec): void {
+function placePlayer(model: GameModel, point: Vec): void {
   const flight = model.state.flight!;
   flight.player = { x: point.x, y: point.y };
   activateFlightRegion(CONTENT, flight.player, flight);
+}
+
+function travel(model: GameModel, point: Vec): void {
+  placePlayer(model, point);
   model.step(0.000001, idle);
 }
 
@@ -33,12 +37,16 @@ function represented(model: GameModel, id: string): SpaceObject | null | undefin
 
 /** Deterministic impact fixtures exercise collision and damage, without measuring combat balance. */
 function defeat(model: GameModel, id: string): void {
+  const initial = represented(model, id);
+  if (!initial || initial.hp <= 0 || initial.enemy?.disabled) {
+    return;
+  }
+  placePlayer(model, { x: initial.x + 600, y: initial.y });
   for (let impact = 0; impact < 32; impact++) {
     const object = represented(model, id);
     if (!object || object.hp <= 0 || object.enemy?.disabled) {
       return;
     }
-    travel(model, { x: object.x + 600, y: object.y });
     const target = represented(model, id)!;
     const enemy = target.enemy!;
     const before = enemyIntegrity(enemy);

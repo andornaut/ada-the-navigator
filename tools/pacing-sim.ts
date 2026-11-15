@@ -386,6 +386,9 @@ export interface WorldOptions {
   encounters: readonly EncounterEntry[];
 }
 
+// Only simulation-owned worlds enroll here; public generator callers may change their options.
+const flightPlans = new WeakMap<WorldOptions, Map<string, ReturnType<typeof planChunk>>>();
+
 /**
  * Gameplay's typical income per route position (gameplay/economy.md): Stardust per minute without
  * jobs, as this simulation measures it. Every pacing target is a price divided by it.
@@ -458,23 +461,28 @@ export function generateChunk(
       }
     }
   }
-  const plan = planChunk(CHUNK_CATALOG, {
-    asteroidDensity: flight.asteroidDensity,
-    asteroids: {
-      field: byPosition(ASTEROID_FIELDS, galaxy),
-      shapes: [...ASTEROID_SHAPES.values()],
-    },
-    clearance: flight.shipRadius,
-    objectsPerChunk: flight.objectsPerChunk,
-    rockRadius: flight.rockRadius,
-    galaxy,
-    seed,
-    shipRadius: flight.shipRadius,
-    size,
-    spawnWeights: options.spawnWeights,
-    x,
-    y,
-  });
+  const plans = flightPlans.get(options);
+  const key = `${x},${y}`;
+  const plan =
+    plans?.get(key) ??
+    planChunk(CHUNK_CATALOG, {
+      asteroidDensity: flight.asteroidDensity,
+      asteroids: {
+        field: byPosition(ASTEROID_FIELDS, galaxy),
+        shapes: [...ASTEROID_SHAPES.values()],
+      },
+      clearance: flight.shipRadius,
+      objectsPerChunk: flight.objectsPerChunk,
+      rockRadius: flight.rockRadius,
+      galaxy,
+      seed,
+      shipRadius: flight.shipRadius,
+      size,
+      spawnWeights: options.spawnWeights,
+      x,
+      y,
+    });
+  plans?.set(key, plan);
   for (const placement of plan.placements) {
     // A drifting asteroid keeps clear of Ada and safe areas over its whole path, a drawn rock by
     // its silhouette radius, as in flight.ts.
@@ -787,6 +795,8 @@ export function simulate(input: SimulationInput): RunResult {
       seed: flightSeed,
       spawnWeights: input.spawnWeights,
     };
+    // Plans are immutable for this flight; player clearance and mutable pickups rebuild per visit.
+    flightPlans.set(world, new Map());
     chunks = new Map();
     position = { x: 0, y: 0 };
     target = null;
