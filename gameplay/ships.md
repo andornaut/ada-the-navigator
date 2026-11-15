@@ -204,6 +204,13 @@ absolute enemy intervals and position fire curve; the old values do not stack.
 Platform bursts retain two shots 0.15 seconds apart. Warning times are unchanged.
 Enemy-only weapons retain their own base intervals and position fire curve.
 
+Frigate and capital weapon clocks initialize on their first eligible firing
+step, in stable mount fill order excluding engine, command and capped mounts.
+Mount index i of N starts after (i / N) times its own final interval. Ineligible
+time pauses cooldowns and burst positions. Disabling a mount never reindexes
+the others. Initialized clocks and burst state persist through saves; later
+coincident shots are allowed. Platforms and stations do not use these phases.
+
 Shared weapon damage is 100% of the player's damage at the equipped level.
 Blast, spread and reach use that level's canonical weapon definition; more fan
 bolts do not add physical mounts. Projectile speed stays at 0.6 times the

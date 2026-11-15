@@ -112,6 +112,7 @@ function enemyState(galaxy: GalaxyNumber, value: unknown): boolean {
     ) ||
     !(value.returnSeconds === undefined || nonnegative(value.returnSeconds)) ||
     !(value.retreat === undefined || retreatState(value.age as number, value.retreat)) ||
+    !(value.firePhasesInitialized === undefined || value.firePhasesInitialized === true) ||
     !finite(value.phase) ||
     !vector(value.facing) ||
     !nullableVector(value.heading) ||

@@ -66,6 +66,8 @@ export interface EnemyState {
   facing: Point;
   fleeing: boolean;
   hardpoints: HardpointState[];
+  /** Heavy mount phases have started; existing cooldowns and burst positions are authoritative. */
+  firePhasesInitialized?: true;
   /** Smoothed movement heading; null at rest or with no movement request. */
   heading: Point | null;
   home: Point;
@@ -705,6 +707,10 @@ function steering(
   return { x: advance.x * behaviour.speedFraction, y: advance.y * behaviour.speedFraction };
 }
 
+function firingInterval(profile: Pick<FireProfile, "interval">): number {
+  return Math.max(0.01, profile.interval);
+}
+
 /** Pure rules: positions are supplied by the runtime after collision resolution. */
 export function stepEnemy(
   definition: EnemyDefinition,
@@ -913,6 +919,25 @@ export function stepEnemy(
     context.targetable &&
     context.visibility === "visible" &&
     distance <= definition.engagement;
+  const phasedHeavy = state.archetype === "frigate" || state.archetype === "capital";
+  if (phasedHeavy && canFire && !state.firePhasesInitialized) {
+    // A legacy active clock or burst resumes as saved rather than receiving a second phase.
+    const resumed = state.hardpoints.some((part) => part.cooldown > 0 || (part.burst ?? 0) > 0);
+    if (!resumed) {
+      const fill = definition.mounts?.fill ?? definition.hardpoints.map((part) => part.id);
+      const weapons = fill.flatMap((id) => {
+        const part = definition.hardpoints.find((part) => part.id === id);
+        return part?.kind === "weapon" ? [part] : [];
+      });
+      weapons.forEach((part, index) => {
+        const value = next.hardpoints.find((value) => value.id === part.id);
+        if (value) {
+          value.cooldown = (index / weapons.length) * firingInterval(part.fire);
+        }
+      });
+    }
+    next.firePhasesInitialized = true;
+  }
   const skill = leadSkill(context.lead, state.id);
   const drift = aimDrift(state.id, state.age);
   /**
@@ -954,11 +979,13 @@ export function stepEnemy(
     cooldown: number,
     burst = 0,
   ): { burst: number; cooldown: number } => {
-    const interval = Math.max(0.01, profile.interval);
+    const interval = firingInterval(profile);
     const count = Math.max(1, profile.burst?.count ?? 1);
     const gap = Math.min(interval / count, Math.max(0, profile.burst?.gap ?? 0));
     if (!canFire) {
-      return { burst: 0, cooldown: Math.max(0, cooldown - context.dt) };
+      return phasedHeavy
+        ? { burst, cooldown }
+        : { burst: 0, cooldown: Math.max(0, cooldown - context.dt) };
     }
     let delay = Math.max(0, cooldown);
     let bolt = Math.min(burst, count - 1);
