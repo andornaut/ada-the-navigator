@@ -1,4 +1,5 @@
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
+import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { CONTENT } from "../data/content.ts";
 import { SETTINGS_STATE_LABELS } from "../data/settingsCopy.ts";
@@ -20,7 +21,6 @@ import { CONTROL_ROW, WHOLE_PX_EDGES } from "./layout/controls.ts";
 import { font, fromHudEdge, pixels, units, viewStyle } from "./layout/css.ts";
 import { hudButtonTarget, type StartNavButton, startNavOrder } from "./layout/playView.ts";
 import {
-  SETTINGS_COLUMN_GAP,
   SETTINGS_OUTER_PADDING,
   SETTINGS_TITLE_INK_TOP,
   settingsColumns,
@@ -43,6 +43,7 @@ import {
 } from "./modal.ts";
 import { enterPressView } from "./pressScope.ts";
 import { SETTING_ICONS, settingsIcon, showIcon, STEPS_GLYPHS } from "./settingsIcons.ts";
+import { type SettingsLayoutSchema, type SettingsNative, settingsTree } from "./settingsTree.ts";
 import { applyButtonSkin } from "./uiSkin.ts";
 import { hudDiscStyle } from "./weapons.ts";
 
@@ -262,30 +263,32 @@ ${hudDiscStyle(".ada-controls .ada-exit-open", ".ada-disc")}
     var(--setting-title-ink-top,${units(SETTINGS_TITLE_INK_TOP)}) - var(--setting-icon-ink-top,0px)
   )
 }
-.ada-controls [data-dialog=settings] .ada-rows{
+.ada-controls [data-dialog=settings] .ada-settings-rows{
   padding:0 ${units(SETTINGS_OUTER_PADDING - SPACING.panelPadding)};
-  box-sizing:border-box
+  box-sizing:border-box;
+  grid-auto-rows:max-content;
+  align-self:stretch
 }
 
 /* Independent columns keep each switch and its help together at their natural height. */
 .ada-controls .ada-settings-column{
   display:grid;
   align-content:start;
+  align-self:stretch;
   row-gap:${units(CARD_CONTENT.rowGap)};
   min-width:0
 }
-.ada-controls .ada-rows[data-columns="2"]{
-  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
-  column-gap:${units(SETTINGS_COLUMN_GAP / 2)}
+.ada-controls [data-dialog=settings] .ada-settings-rows.ui-layout-stack{
+  grid-template-columns:minmax(0,1fr)
 }
-.ada-controls .ada-rows[data-columns="2"] > .ada-page-divider{
+.ada-controls .ada-settings-rows[data-columns="2"] > .ada-page-divider{
   grid-column:2;
   grid-row:1;
   justify-self:center;
   align-self:stretch;
   pointer-events:none
 }
-.ada-controls .ada-rows[data-columns="1"] > .ada-page-divider{display:none}
+.ada-controls .ada-settings-rows[data-columns="1"] > .ada-page-divider{display:none}
 .ada-controls [data-dialog=settings] .ada-settings-actions{
   align-self:center;
   justify-content:center
@@ -417,27 +420,24 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     });
     return row;
   };
-  const rows = document.createElement("div");
-  rows.className = "ada-rows";
-  // The first row's label line sits centred in its row.
-  rows.dataset.inkTop = String((CONTROL_ROW.height - TYPE.body.lineHeight) / 2);
   const leftColumn = document.createElement("div");
   leftColumn.className = "ada-settings-column";
   leftColumn.dataset.settingsColumn = "left";
   const rightColumn = document.createElement("div");
   rightColumn.className = "ada-settings-column";
   rightColumn.dataset.settingsColumn = "right";
-  leftColumn.append(
-    switchRow("move", options.labels.moveControls, options.labels.controlsNote),
-    switchRow("aim", options.labels.aimControls, options.labels.controlsNote),
-  );
-  rightColumn.append(
-    switchRow("sound", options.labels.sound, options.labels.soundNote),
-    switchRow("reducedMotion", options.labels.reducedMotion, options.labels.motionNote),
-  );
+  const switches = {
+    aim: switchRow("aim", options.labels.aimControls, options.labels.controlsNote),
+    move: switchRow("move", options.labels.moveControls, options.labels.controlsNote),
+    reducedMotion: switchRow(
+      "reducedMotion",
+      options.labels.reducedMotion,
+      options.labels.motionNote,
+    ),
+    sound: switchRow("sound", options.labels.sound, options.labels.soundNote),
+  };
   const divider = createAdaPageDivider(document);
   divider.hidden = true;
-  rows.append(leftColumn, divider, rightColumn);
   // The build line, after the rows as in Chibi: plain text screen readers read with the card.
   const dismiss = createButton(CONTENT.labels.questBack!, "primary");
   dismiss.dataset.action = "settings-close";
@@ -447,7 +447,6 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   const build = document.createElement("p");
   build.className = "ada-build";
   build.textContent = options.build;
-  card.append(rows, build, actions);
   // The Install row, as in Archie: its label and note, and a button that asks for the browser's
   // prompt or opens that browser's menu steps in the Settings card's place.
   const installRow = document.createElement("div");
@@ -493,7 +492,6 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   setScrollGroup(stepsParts, stepsLine);
   options.onFeedbackChange?.(feedback());
   options.onVisibilityChange(visibility());
-  modal.append(cardFrame, stepsFrame);
   root.append(...joystickTargets, openButton, useButton, modal);
   parent.append(root);
   void applyButtonSkin(root).catch(() => undefined);
@@ -502,6 +500,58 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   let leaveSettingsPressView: (() => void) | undefined;
   let leaveStepsPressView: (() => void) | undefined;
   let previousFocus: HTMLElement | undefined;
+  let arrangementColumns: 1 | 2 = 1;
+  let installVisible = false;
+  const nativeNodes: Readonly<Record<SettingsNative, HTMLElement>> = {
+    ...switches,
+    actions,
+    build,
+    divider,
+    install: installRow,
+  };
+  const arrangement = mountLayout<SettingsLayoutSchema>(
+    {
+      components: {
+        column: {
+          create: (side) => {
+            const element = side === "left" ? leftColumn : rightColumn;
+            return { dispose() {}, element, slots: { rows: element }, update() {} };
+          },
+          slots: ["rows"],
+        },
+        native: {
+          create: (name) => ({ dispose() {}, element: nativeNodes[name], slots: {}, update() {} }),
+          slots: [],
+        },
+        settings: {
+          create: () => ({ dispose() {}, element: cardFrame, slots: { body: card }, update() {} }),
+          slots: ["body"],
+        },
+      },
+      host: modal,
+    },
+    settingsTree({ columns: arrangementColumns, install: installVisible }),
+  );
+  let rows: HTMLElement;
+  const bindRows = () => {
+    rows = card.firstElementChild as HTMLElement;
+    rows.classList.add("ada-settings-rows");
+    rows.dataset.inkTop = String((CONTROL_ROW.height - TYPE.body.lineHeight) / 2);
+    rows.dataset.columns = String(arrangementColumns);
+    if (stepsFrame.parentElement === modal && stepsFrame.nextSibling) {
+      modal.append(stepsFrame);
+    }
+  };
+  bindRows();
+  modal.append(stepsFrame);
+  const updateArrangement = () => {
+    const focused = document.activeElement as HTMLElement | null;
+    arrangement.update(settingsTree({ columns: arrangementColumns, install: installVisible }));
+    bindRows();
+    if (focused && root.contains(focused) && focused !== document.activeElement) {
+      focusTarget(focused);
+    }
+  };
   function fitSettings(): void {
     if (!open || disposed) {
       return;
@@ -540,6 +590,10 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       { availableWidth },
       widths.map((width) => width / unit),
     );
+    if (arrangementColumns !== fitted.columns) {
+      arrangementColumns = fitted.columns;
+      updateArrangement();
+    }
     rows.dataset.columns = card.dataset.settingsColumns = String(fitted.columns);
     divider.hidden = fitted.columns !== 2;
     cardFrame.dataset.cardSize = fitted.columns === 2 ? "large" : "medium";
@@ -603,13 +657,8 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   const stopInstallRow = options.install
     ? watchInstallRow(options.install.port, (shown) => {
         installRow.hidden = !shown;
-        if (shown) {
-          if (installRow.parentElement !== leftColumn) {
-            leftColumn.append(installRow);
-          }
-        } else {
-          installRow.remove();
-        }
+        installVisible = shown;
+        updateArrangement();
         fitSettings();
         if (!shown) {
           closeSteps();
@@ -723,6 +772,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       stopInstallRow();
       window.removeEventListener("resize", fitSettings);
       window.removeEventListener(VIEW_SCALE_EVENT, fitSettings);
+      arrangement.dispose();
       settingsCard.dispose();
       stepsParts.dispose();
       root.remove();

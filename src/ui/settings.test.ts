@@ -15,7 +15,20 @@ class Element {
   get parentElement(): Element | null {
     return this.parent ?? null;
   }
+  readonly nodeType = 1;
   readonly isConnected = true;
+  get parentNode(): Element | null {
+    return this.parent ?? null;
+  }
+  get nextSibling(): Element | null {
+    return this.parent?.children[this.parent.children.indexOf(this) + 1] ?? null;
+  }
+  get firstElementChild(): Element | null {
+    return this.children[0] ?? null;
+  }
+  get firstChild(): Element | null {
+    return this.firstElementChild;
+  }
   get ownerDocument() {
     return document;
   }
@@ -26,7 +39,19 @@ class Element {
     );
   }
   className = "";
-  readonly classList = { add: vi.fn(), remove: vi.fn() };
+  readonly classList = {
+    add: vi.fn((...names: string[]) => {
+      this.className = [...new Set([...this.className.split(" "), ...names])]
+        .filter(Boolean)
+        .join(" ");
+    }),
+    remove: vi.fn((name: string) => {
+      this.className = this.className
+        .split(" ")
+        .filter((item) => item !== name)
+        .join(" ");
+    }),
+  };
   readonly dataset: Record<string, string> = {};
   hidden = false;
   parent: Element | undefined;
@@ -34,6 +59,11 @@ class Element {
   readonly properties = new Map<string, string>();
   readonly style = {
     getPropertyValue: (name: string) => this.properties.get(name) ?? "",
+    removeProperty: (name: string) => {
+      const value = this.properties.get(name) ?? "";
+      this.properties.delete(name);
+      return value;
+    },
     setProperty: vi.fn((name: string, value: string) => this.properties.set(name, value)),
   };
   textContent = "";
@@ -62,8 +92,17 @@ class Element {
   get lastElementChild() {
     return this.children.at(-1);
   }
-  insertBefore(node: Element, before: Element) {
-    this.children.splice(this.children.indexOf(before), 0, node);
+  insertBefore(node: Element, before: Element | null) {
+    if (node === before) {
+      return;
+    }
+    node.remove();
+    node.parent = this;
+    this.children.splice(
+      before === null ? this.children.length : this.children.indexOf(before),
+      0,
+      node,
+    );
   }
   querySelectorAll() {
     return [];
@@ -73,6 +112,9 @@ class Element {
       this.parent.children.splice(this.parent.children.indexOf(this), 1);
     }
     this.parent = undefined;
+  }
+  removeAttribute(name: string) {
+    this.attributes.delete(name);
   }
   setAttribute(name: string, value: string) {
     this.attributes.set(name, value);
@@ -170,11 +212,11 @@ describe("Settings current-state labels", () => {
       `#${PAGE_DIVIDER_STYLE.colour.toString(16)}`,
     );
     const rule = SETTINGS_STYLE.match(
-      /\.ada-rows\[data-columns="2"\] > \.ada-page-divider\{([^}]+)\}/u,
+      /\.ada-settings-rows\[data-columns="2"\] > \.ada-page-divider\{([^}]+)\}/u,
     )?.[1];
     expect(rule).toBeDefined();
     expect(rule).not.toMatch(/background|width:|border/u);
-    expect(SETTINGS_STYLE).not.toContain('.ada-rows[data-columns="2"]::before');
+    expect(SETTINGS_STYLE).not.toContain('.ada-settings-rows[data-columns="2"]::before');
     settings.dispose();
   });
 
@@ -312,4 +354,51 @@ it("registers the actual Settings switch callback for held activation and remove
   expect(state(row).textContent).toBe("Shown");
   settings.dispose();
   expect(resolveAdaHoldAction(settings.root, row as unknown as HTMLElement)).toBeNull();
+});
+
+it("retains native widgets while the entire Install row leaves and rejoins the tree", () => {
+  let installed = false;
+  let notify: (() => void) | undefined;
+  const stop = vi.fn();
+  const settings = createSettings(new Element() as unknown as HTMLElement, {
+    build: "test-build",
+    install: {
+      port: {
+        install: async () => "dismissed",
+        offers: () => !installed,
+        onChange: (listener) => {
+          notify = () => listener(installed ? "installed" : "prompt");
+          return stop;
+        },
+        state: () => "prompt",
+        stepsKind: () => "other",
+      },
+      steps: CONTENT.installSteps,
+    },
+    labels,
+    onOpenChange: vi.fn(),
+    onVisibilityChange: vi.fn(),
+  });
+  const nodes = (node: Element): Element[] => [node, ...node.children.flatMap(nodes)];
+  const modal = (settings.root as unknown as Element).children.find(
+    (node) => node.className === "ada-modal",
+  )!;
+  const frame = modal.children[0];
+  const initial = nodes(settings.card as unknown as Element);
+  const install = initial.find((node) => node.className.includes("ada-install-row"))!;
+  const move = initial.find((node) => node.dataset.setting === "move")!;
+  expect(install).toBeDefined();
+  installed = true;
+  notify!();
+  expect(nodes(settings.card as unknown as Element)).not.toContain(install);
+  expect(nodes(settings.card as unknown as Element)).toContain(move);
+  installed = false;
+  notify!();
+  expect(nodes(settings.card as unknown as Element)).toContain(install);
+  expect(nodes(settings.card as unknown as Element)).toContain(move);
+  expect(move.listeners.get("click")).toHaveLength(1);
+  expect(modal.children[0]).toBe(frame);
+  settings.dispose();
+  expect(stop).toHaveBeenCalledOnce();
+  expect(move.listeners.get("click")).toHaveLength(0);
 });

@@ -1,5 +1,7 @@
+import type { LayoutColumnSizing } from "@andornaut/game-kit/runtime/ui/layoutTree";
+
 import { capTop } from "./cardFrame.ts";
-import { CARD_WIDTH_CAPS } from "./contentCard.ts";
+import { CARD_CONTENT, CARD_WIDTH_CAPS } from "./contentCard.ts";
 import { PAGE_DIVIDER_STYLE } from "./controlPresentation.ts";
 import { CONTROL_ROW } from "./controls.ts";
 import { SPACING, TYPE } from "./tokens.ts";
@@ -36,4 +38,22 @@ export function settingsColumns(
     minimumWidth <= Math.min(context.availableWidth, CARD_WIDTH_CAPS.large)
     ? { columns: 2, minimumWidth }
     : { columns: 1, minimumWidth: 0 };
+}
+
+/** Match the native row spacing and the shared divider's intrinsic middle track. */
+export function settingsColumnArrangement(
+  columns: 1 | 2,
+):
+  | { readonly gap: number; readonly kind: "stack" }
+  | { readonly gap: number; readonly kind: "columns"; readonly sizing: LayoutColumnSizing } {
+  return columns === 2
+    ? {
+        gap: SETTINGS_COLUMN_GAP / 2,
+        kind: "columns",
+        sizing: {
+          mode: "tracks",
+          tracks: [{ kind: "fraction" }, { kind: "intrinsic" }, { kind: "fraction" }],
+        },
+      }
+    : { gap: CARD_CONTENT.rowGap, kind: "stack" };
 }
