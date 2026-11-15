@@ -98,14 +98,18 @@ export interface TransitionStep {
   readonly fadeMs: number;
   readonly holdMs: number;
   readonly url: string;
+  /** Layers belonging to this complete incoming background. */
+  readonly overlays?: readonly StoryOverlay[];
 }
 
 /** A transition between two backgrounds' images, with its reduced-motion replacement. */
 export interface StoryTransition {
   readonly from: string;
+  readonly fromId: string;
   readonly reducedMotion: readonly TransitionStep[];
   readonly steps: readonly TransitionStep[];
   readonly to: string;
+  readonly toId: string;
 }
 
 export interface StoryArt {
@@ -179,6 +183,7 @@ export function storySubjects(
 }
 
 function readSteps(
+  assets: readonly ArtAsset[],
   byId: ReadonlyMap<string, string>,
   value: unknown,
 ): readonly TransitionStep[] | null {
@@ -193,7 +198,14 @@ function readSteps(
       typeof holdMs === "number" &&
       fadeMs >= 0 &&
       holdMs >= 0
-      ? { fadeMs, holdMs, url }
+      ? {
+          fadeMs,
+          holdMs,
+          url,
+          ...(typeof background === "string" && backgroundOverlays(assets, background).length > 0
+            ? { overlays: backgroundOverlays(assets, background) }
+            : {}),
+        }
       : null;
   });
   return steps.every((step) => step !== null) ? steps : null;
@@ -215,11 +227,22 @@ export function readStoryTransitions(
     }
     const record = value as Record<string, unknown>;
     const from = typeof record.from === "string" ? byId.get(record.from) : undefined;
-    const steps = readSteps(byId, record.steps);
-    const reducedMotion = readSteps(byId, record.reducedMotion);
+    const steps = readSteps(assets, byId, record.steps);
+    const reducedMotion = readSteps(assets, byId, record.reducedMotion);
     const to = steps?.at(-1)?.url;
-    return from && steps && reducedMotion && to && reducedMotion.at(-1)?.url === to
-      ? [{ from, reducedMotion, steps, to }]
+    const lastId = (value: unknown): string | undefined => {
+      const last = Array.isArray(value) ? (value.at(-1) as { background?: unknown }) : undefined;
+      return typeof last?.background === "string" ? last.background : undefined;
+    };
+    const toId = lastId(record.steps);
+    return from &&
+      typeof record.from === "string" &&
+      steps &&
+      reducedMotion &&
+      to &&
+      toId &&
+      lastId(record.reducedMotion) === toId
+      ? [{ from, fromId: record.from, reducedMotion, steps, to, toId }]
       : [];
   });
 }
@@ -233,6 +256,25 @@ export function transitionSteps(
 ): readonly TransitionStep[] | null {
   const transition = transitions.find((entry) => entry.from === from && entry.to === to);
   return transition ? (reducedMotion ? transition.reducedMotion : transition.steps) : null;
+}
+
+/** Select a logical scene's transition even when several scenes share one image URL. */
+export function transitionStepsForBackgrounds(
+  art: Pick<StoryArt, "bases" | "transitions">,
+  reducedMotion: boolean,
+  scenes: { readonly from: Background; readonly to: Background },
+): readonly TransitionStep[] | null {
+  const ids = (key: Background) => [BACKGROUND_ART[key], BACKGROUND_ART[art.bases[key] ?? key]];
+  const destinations = ids(scenes.to);
+  for (const fromId of ids(scenes.from)) {
+    const transition = art.transitions.find(
+      (entry) => entry.fromId === fromId && destinations.includes(entry.toId),
+    );
+    if (transition) {
+      return reducedMotion ? transition.reducedMotion : transition.steps;
+    }
+  }
+  return null;
 }
 
 /**

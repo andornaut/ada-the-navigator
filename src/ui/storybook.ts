@@ -38,7 +38,7 @@ import {
   storyBackgroundKey,
   type StoryOverlay,
   type TransitionStep,
-  transitionSteps,
+  transitionStepsForBackgrounds,
 } from "./storyArt.ts";
 
 export interface StoryLabels {
@@ -956,6 +956,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     fade?.cancel();
     fade = undefined;
     incoming.style.backgroundImage = "";
+    showIncomingOverlays([]);
   };
   // Each step cross-fades linearly to its image over fadeMs (0 cuts), then holds for holdMs, at
   // the outgoing page's placement; the incoming page then cuts to its own.
@@ -968,6 +969,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     if (step.fadeMs > 0) {
       incoming.style.backgroundImage = image(step.url);
       incoming.style.top = base.style.top;
+      showIncomingOverlays(step.overlays ?? []);
       fade = incoming.animate([{ opacity: 0 }, { opacity: 1 }], {
         duration: step.fadeMs,
         easing: "linear",
@@ -976,6 +978,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     }
     timer = setTimeout(() => {
       base.style.backgroundImage = image(step.url);
+      showOverlays(step.overlays ?? [], 1);
       stop();
       play(steps, done, index + 1);
     }, step.fadeMs + step.holdMs);
@@ -1050,12 +1053,10 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     lastPage = page;
     const steps =
       from && page
-        ? transitionSteps(
-            art.transitions,
-            art.backgrounds[bedroomBackground(from.run?.pages, from.background)],
-            art.backgrounds[bedroomBackground(page.run?.pages, page.background)],
-            options.reducedMotion(),
-          )
+        ? transitionStepsForBackgrounds(art, options.reducedMotion(), {
+            from: bedroomBackground(from.run?.pages, from.background),
+            to: bedroomBackground(page.run?.pages, page.background),
+          })
         : null;
     if (!steps) {
       render(page, backdrop, focusFirst, exit);
@@ -1073,7 +1074,12 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       ...Object.values(art.composites).flatMap((shown) => shown.map((overlay) => overlay.url)),
       ...(art.overnight?.overlays.map((overlay) => overlay.url) ?? []),
       ...(art.holodisk?.overlays.map((overlay) => overlay.url) ?? []),
-      ...art.transitions.flatMap(({ steps }) => steps.map((step) => step.url)),
+      ...art.transitions.flatMap(({ reducedMotion, steps }) =>
+        [...steps, ...reducedMotion].flatMap((step) => [
+          step.url,
+          ...(step.overlays?.map((overlay) => overlay.url) ?? []),
+        ]),
+      ),
     ])) {
       new Image().src = url;
     }

@@ -15,6 +15,7 @@ import {
   storyBases,
   storySubjects,
   transitionSteps,
+  transitionStepsForBackgrounds,
 } from "./storyArt.ts";
 import { STORYBOOK_STYLE } from "./storybook.ts";
 
@@ -203,5 +204,67 @@ describe("storybook art", () => {
     }
     expect(BACKGROUND_ART.aboard).toBe("aboard");
     expect(BACKGROUND_ART.aboardEmergency).toBe("aboard-emergency");
+  });
+});
+
+describe("shared story background transitions", () => {
+  const assets: ArtAsset[] = [
+    { id: "story-ada-room", path: "/day.webp" },
+    { id: "story-ada-room-recorder", path: "/day.webp" },
+    { id: "glow", overlays: ["recorder"], path: "/day.webp" },
+    {
+      at: { x: 12, y: 24 },
+      displayHeight: 10,
+      displayWidth: 20,
+      id: "recorder",
+      path: "/recorder.webp",
+    },
+    { id: "aboard", path: "/aboard.webp" },
+  ];
+  const data = {
+    ordinary: {
+      from: "story-ada-room",
+      reducedMotion: [{ background: "aboard", fadeMs: 400, holdMs: 0 }],
+      steps: [{ background: "aboard", fadeMs: 160, holdMs: 0 }],
+    },
+    recorder: {
+      from: "story-ada-room-recorder",
+      reducedMotion: [{ background: "aboard", fadeMs: 400, holdMs: 0 }],
+      steps: [
+        { background: "glow", fadeMs: 160, holdMs: 240 },
+        { background: "aboard", fadeMs: 0, holdMs: 0 },
+      ],
+    },
+  };
+  const art = { bases: {}, transitions: readStoryTransitions(assets, data) };
+
+  it("keeps recorder layers and timing when the ordinary room shares its base URL", () => {
+    const steps = transitionStepsForBackgrounds(art, false, {
+      from: "adaRoomRecorder",
+      to: "aboard",
+    });
+    expect(steps).toHaveLength(2);
+    expect(steps?.[0]).toMatchObject({
+      fadeMs: 160,
+      holdMs: 240,
+      overlays: [{ id: "recorder", url: "/recorder.webp" }],
+      url: "/day.webp",
+    });
+    expect(
+      transitionStepsForBackgrounds(art, false, { from: "adaRoom", to: "aboard" }),
+    ).toHaveLength(1);
+    expect(
+      transitionStepsForBackgrounds(art, true, { from: "adaRoomRecorder", to: "aboard" }),
+    ).toEqual([{ fadeMs: 400, holdMs: 0, url: "/aboard.webp" }]);
+  });
+
+  it("resolves an existing compatibility alias without selecting another room's transition", () => {
+    expect(
+      transitionStepsForBackgrounds(
+        { ...art, bases: { adaRoomRecorderDad: "adaRoomRecorder" } },
+        false,
+        { from: "adaRoomRecorderDad", to: "aboard" },
+      ),
+    ).toHaveLength(2);
   });
 });
