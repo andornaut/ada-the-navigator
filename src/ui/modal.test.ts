@@ -294,11 +294,16 @@ it("keeps original action nodes and roles while marking the footer for one share
   );
 });
 
-it("aligns only a sole visible Close right while retaining native and presented button counting", () => {
-  const selector = `${UI_SCOPE} [data-footer-action="close"]:not(:has(
-  > :is(button,.ada-button-presentation):not([hidden])
-  ~ :is(button,.ada-button-presentation):not([hidden])
+it("centers one visible native or presented button without role or dismissal exceptions", () => {
+  const button = ":is(button,.ada-button-presentation):not([hidden])";
+  const selector = `${UI_SCOPE} :is(.ada-actions,[data-footer-action],.ada-ship-back):has(
+  > ${button}
+):not(:has(
+  > ${button}
+  ~ ${button}
 ))`;
-  expect(rule(selector)).toContain("align-self:flex-end;justify-content:end");
+  expect(rule(selector)).toContain("align-self:center;justify-content:center");
   expect(rule(selector)).toContain("width:max-content;max-width:100%");
+  expect(selector).not.toContain("primary");
+  expect(selector).not.toContain('footer-action="close"');
 });

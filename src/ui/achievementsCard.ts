@@ -252,9 +252,7 @@ export function createAchievementsCard(
   dismiss.dataset.action = "achievements-close-footer";
   const actions = createActions([{ button: dismiss, role: "primary" }]);
   setFooterAction("close", actions);
-  actions.style.gridColumn = "3";
   actions.style.gridRow = "1";
-  actions.style.justifySelf = "end";
   const footer = document.createElement("div");
   footer.style.display = "grid";
   footer.style.gridTemplateColumns = "1fr auto 1fr";
@@ -273,6 +271,8 @@ export function createAchievementsCard(
           create(initial) {
             const update = (data: AchievementsLayoutSchema["achievements"]["props"]) => {
               pager.hidden = data.pagerHidden;
+              actions.style.gridColumn = data.pagerHidden ? "1 / -1" : "3";
+              actions.style.justifySelf = data.pagerHidden ? "center" : "end";
             };
             update(initial);
             return { dispose() {}, element: card.frame, slots: { entries: list, pager }, update };

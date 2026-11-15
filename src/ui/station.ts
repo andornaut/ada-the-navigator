@@ -540,7 +540,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   ] as const) {
     const footer = createActions([{ button, role: "primary" }]);
     setFooterAction("back", footer);
-    footer.style.alignSelf = "flex-end";
     parts.body.append(footer);
   }
   let shopPage = 0;

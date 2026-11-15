@@ -220,4 +220,17 @@ describe("Achievements page actions", () => {
     dismiss.click();
     expect(onOpenChange).toHaveBeenCalledTimes(4);
   });
+  it("centers the single Close row and retains the right action beside visible pager buttons", () => {
+    const { card, dismiss, pager } = setup();
+    const actions = dismiss.parent!;
+    expect(pager.hidden).toBe(false);
+    expect(actions.style).toMatchObject({ gridColumn: "3", justifySelf: "end" });
+    card.setEntries(entries(1));
+    expect(pager.hidden).toBe(true);
+    expect(actions.style).toMatchObject({ gridColumn: "1 / -1", justifySelf: "center" });
+    card.setEntries(entries(7));
+    expect(pager.hidden).toBe(false);
+    expect(actions.style).toMatchObject({ gridColumn: "3", justifySelf: "end" });
+    card.dispose();
+  });
 });

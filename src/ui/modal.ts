@@ -446,12 +446,14 @@ ${UI_SCOPE} .ada-pause[data-pose=held]::before{
 ${UI_SCOPE} .ada-pause:focus-visible{${FOCUS_STYLE}
 }
 
-/* A sole visible Close aligns right; explicit Back and multiple actions retain their layout. */
-${UI_SCOPE} [data-footer-action="close"]:not(:has(
+/* A row with one visible button centers independently of its role or native presentation. */
+${UI_SCOPE} :is(.ada-actions,[data-footer-action],.ada-ship-back):has(
+  > :is(button,.ada-button-presentation):not([hidden])
+):not(:has(
   > :is(button,.ada-button-presentation):not([hidden])
   ~ :is(button,.ada-button-presentation):not([hidden])
 )){
-  align-self:flex-end;justify-content:end;width:max-content;max-width:100%
+  align-self:center;justify-content:center;width:max-content;max-width:100%
 }
 
 /* An action row shares one width, the widest label plus the insets, BUTTON_GAP apart, centred. */

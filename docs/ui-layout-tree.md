@@ -21,7 +21,7 @@ content and footer reconciliation through a native card component port. The exis
 card, prose, quantity and footer nodes are retained. Caller-owned icon nodes,
 count formatting, current Quests callbacks, pause transitions and focus return
 stay outside configuration data. The shared footer rule counts native buttons
-and their canonical presentation wrappers when aligning a sole Close action right.
+and their canonical presentation wrappers when centering a single visible button regardless of its role.
 
 ## Current composition boundaries
 
