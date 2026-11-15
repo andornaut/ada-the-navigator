@@ -281,14 +281,19 @@ run_category() {
         --env "CHECK_WRITABLE=$([[ ${category} == exec ]] && printf 1 || printf 0)" \
         --entrypoint /bin/sh "${image}" -ec '
             mkdir -p /scratch/home
-            if [ "$CHECK_WRITABLE" = 0 ]; then tar --extract --file /source.tar --directory /work --no-same-owner; fi
-            cd /work
+            workspace=/work
+            if [ "$CHECK_WRITABLE" = 0 ]; then
+                workspace=/work/source
+                mkdir -p "$workspace"
+                tar --extract --file /source.tar --directory "$workspace" --no-same-owner
+            fi
+            cd "$workspace"
             if [ "$CHECK_WRITABLE" = 1 ]; then export HUSKY=0; fi
             if [ "$CHECK_EXPORT" = 1 ]; then
                 /opt/check/run "$@" >&2
                 if [ "$1" = test ]; then set -- $TEST_OUTPUTS; else set -- $BUILD_OUTPUTS; fi
                 for output in "$@"; do
-                    case "$(realpath -e "$output")" in /work/*) ;; *) printf "Build output escapes work directory: %s\n" "$output" >&2; exit 2 ;; esac
+                    case "$(realpath -e "$output")" in "$workspace"/*) ;; *) printf "Build output escapes work directory: %s\n" "$output" >&2; exit 2 ;; esac
                     if [ -n "$(find "$output" ! -type f ! -type d -print -quit)" ]; then
                         printf "Build output is not a regular file or directory: %s\n" "$output" >&2
                         exit 2

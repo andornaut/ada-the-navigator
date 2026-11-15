@@ -8,11 +8,13 @@ directly in the calling environment, without Make. CI uses the Make profile
 because the repository has a custom Dockerfile with its required dependency
 cache and inner dispatcher.
 
-`tests/container/run` matches the canonical source byte-for-byte, SHA-256
-`3e63f48cff28d8ebbb2738f942417c7f2ed7e68f6fe313d48765517f29f14e17`.
+`tests/container/run` has SHA-256
+`6284cfd5252877bcc863fabcb8d2f68f7b5375e26f27717c7ed134a751b63968`.
 The image build, dependency installation, literal command handling, exports,
 network profile, resource admission callback and provenance rules are unchanged.
-There is no separate native-command container interface.
+Read-only Make categories use `/work/source` inside the existing writable `/work`
+tmpfs, so identity staging remains on that filesystem. Writable exec retains
+`/work`. There is no separate native-command container interface.
 
 ## Runner and hook compatibility
 

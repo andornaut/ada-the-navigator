@@ -39,10 +39,13 @@ test` replays one world.
 ## Container profile and CI
 
 The project launcher `tests/container/run` has SHA-256
-`c7907b817e6bc0ec37359769d4f4f3acac1a4dc5b029d6659ef82b8d3de51bf2`.
+`6284cfd5252877bcc863fabcb8d2f68f7b5375e26f27717c7ed134a751b63968`.
 It builds the repository's custom dependency-cache image from the explicit
 `tests/container/context` inputs. The Node.js 24.22.2 Dockerfile, dependency
 cache, scratch ownership, writable Vite caches and inner categories are unchanged.
+Read-only Make categories extract into `/work/source` on the existing `/work`
+tmpfs. Its writable parent permits atomic source-identity restoration without
+writing to the read-only container root. Writable exec retains `/work`.
 
 Make exports the category list, build/test output paths and resource admission
 callback. The launcher calls `tests/container/admit` before every image and

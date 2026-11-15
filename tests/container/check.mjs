@@ -36,9 +36,11 @@ if (
   contained &&
   (process.getuid?.() !== 19001 ||
     !existsSync("/.dockerenv") ||
-    !["/work", "/tmp/work"].includes(process.cwd()))
+    !["/work", "/work/source", "/tmp/work"].includes(process.cwd()))
 ) {
-  console.error("Checks require UID 19001 inside the isolated container at /work or /tmp/work.");
+  console.error(
+    "Checks require UID 19001 inside the isolated container at /work, /work/source or /tmp/work.",
+  );
   process.exit(2);
 }
 // The build's commit for the kit's gameViteConfig: a deploy gate's own WORKERS_CI_COMMIT_SHA, else
