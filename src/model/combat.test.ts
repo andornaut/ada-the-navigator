@@ -872,19 +872,18 @@ describe("rotating hulls", () => {
 
 describe("galaxy encounters", () => {
   it("generates a capital battle as a capital pack and a four-fighter escort pack on station", () => {
-    const flight = empty();
-    flight.galaxy = 5;
-    let leader: SpaceObject | undefined;
-    for (let index = 1; index <= 400 && !leader; index++) {
-      flight.player = { x: index * 4096, y: (index % 7) * 4096 };
-      stepFlight(CONTENT, 0.001, idle, flight);
-      leader = flight.objects.find(
-        (object) =>
-          object.enemy?.archetype === "capital" && object.enemy.packId?.startsWith("pack:"),
-      );
-    }
+    // This seeded middle-region cell admits a capital and its four escorts in one step.
+    const flight = createFlight(CONTENT, 5, 0, progress);
+    flight.player = {
+      x: 24 * CONTENT.tuning.chunkSize,
+      y: 24 * CONTENT.tuning.chunkSize,
+    };
+    stepFlight(CONTENT, 0.001, idle, flight);
+    const leader = flight.objects.find((object) => object.id === "pack:24,24:0");
     expect(leader).toBeDefined();
+    expect(leader!.enemy?.archetype).toBe("capital");
     const packId = leader!.enemy!.packId!;
+    expect(packId).toBe("pack:24,24");
     expect(leader!.id).toBe(`${packId}:0`);
     expect(leader!.radius).toBe(50);
     const escorts = flight.objects.filter((object) => object.enemy?.packId === `${packId}:escorts`);
