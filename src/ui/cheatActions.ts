@@ -1,4 +1,4 @@
-import { type AppWindowHost, runsInAppWindow } from "@andornaut/game-kit/web/pwa/appWindow";
+import { type AppWindowHost, runsInAppWindow } from "@andornaut/game-kit/runtime/web/pwa/appWindow";
 
 export interface CheatExecution {
   /** Deferred actions must put their mutation inside this eligibility-checked callback. */

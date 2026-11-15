@@ -1,4 +1,4 @@
-import { createModalInputGate } from "@andornaut/game-kit/input/modalInput";
+import { createModalInputGate } from "@andornaut/game-kit/runtime/input/modalInput";
 import { expect, it } from "vitest";
 
 import { type AdaUiPressScope, createAdaUiPressGuard } from "./actionPressGuard.ts";

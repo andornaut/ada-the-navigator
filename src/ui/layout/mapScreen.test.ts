@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import { HIT_RULE, hitAround, pressedArea } from "@andornaut/game-kit/ui/hitAreas";
+import { HIT_RULE, hitAround, pressedArea } from "@andornaut/game-kit/runtime/ui/hitAreas";
 import { describe, expect, it } from "vitest";
 
 import type { GalaxyNumber } from "../../data/types.ts";

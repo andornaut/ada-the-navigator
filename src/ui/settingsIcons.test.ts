@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { inflateSync } from "node:zlib";
 
-import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
+import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/runtime/art/aseprite";
 import { describe, expect, it } from "vitest";
 
 import { SETTING_ICON_INK_TOP, SETTING_ICONS, STEPS_GLYPHS } from "./settingsIcons.ts";

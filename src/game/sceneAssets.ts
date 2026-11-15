@@ -1,7 +1,7 @@
 // The scene's art loading: galaxy, rock, enemy, whale and ship textures and SVG rasters.
 // Functions over the scene's AssetsContext.
-import { setTextureFilters } from "@andornaut/game-kit/view/phaser/textureFilter";
-import { MAX_RENDER_SCALE } from "@andornaut/game-kit/view/renderScale";
+import { setTextureFilters } from "@andornaut/game-kit/runtime/view/phaser/textureFilter";
+import { MAX_RENDER_SCALE } from "@andornaut/game-kit/runtime/view/renderScale";
 import { GameObjects, Loader } from "phaser";
 
 import { ASTEROID_ART, type AsteroidArt, readResourceRocks } from "../data/asteroidCatalog.ts";

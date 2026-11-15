@@ -2,8 +2,8 @@
 // install prompt where it gives one, otherwise that browser's own install steps, and hidden once
 // installed. It imports only the kit's install modules, so the landing page loads none of the game
 // and registers no service worker.
-import { wireInstallButton } from "@andornaut/game-kit/web/pwa/dom/installButton";
-import { watchInstall } from "@andornaut/game-kit/web/pwa/dom/installFlow";
+import { wireInstallButton } from "@andornaut/game-kit/runtime/web/pwa/dom/installButton";
+import { watchInstall } from "@andornaut/game-kit/runtime/web/pwa/dom/installFlow";
 
 // Elements in pages/index.html. The steps dialog holds one section per InstallStepsKind, each
 // marked data-steps with its kind and titled by its h2, and its close button, its only button.

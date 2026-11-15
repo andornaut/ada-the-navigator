@@ -1,4 +1,4 @@
-import type { UpdateFlow } from "@andornaut/game-kit/web/pwa/dom/updateReady";
+import type { UpdateFlow } from "@andornaut/game-kit/runtime/web/pwa/dom/updateReady";
 
 // The update offer, as in Chibi: the kit's update flow owns waiting workers and the dismissal,
 // which lasts until the next arrival at the start screen; this bridge guards the visible

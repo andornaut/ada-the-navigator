@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createCheats } from "./cheats.ts";
 
 let installed = false;
-vi.mock("@andornaut/game-kit/web/pwa/appWindow", () => ({
+vi.mock("@andornaut/game-kit/runtime/web/pwa/appWindow", () => ({
   runsInAppWindow: () => installed,
 }));
 

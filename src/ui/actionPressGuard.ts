@@ -1,4 +1,4 @@
-import type { PressGuard } from "@andornaut/game-kit/web/ui/dom/domPress";
+import type { PressGuard } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
 
 /** The UI owner changes the token on every active-view transition, including re-entry. */
 export interface AdaUiPressScope {

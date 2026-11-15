@@ -1,8 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { hashedIconUrl } from "@andornaut/game-kit/web/pwa/hashedIcons";
-import { webManifestIconUrls } from "@andornaut/game-kit/web/pwa/precacheList";
+import { hashedIconUrl } from "@andornaut/game-kit/build/hashedIcons";
+import { webManifestIconUrls } from "@andornaut/game-kit/build/precacheList";
 import { describe, expect, it } from "vitest";
 
 import { CACHE_POLICY } from "./cachePolicy.ts";

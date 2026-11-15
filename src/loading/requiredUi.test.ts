@@ -1,5 +1,5 @@
-import { LOADER_CONFIG } from "@andornaut/game-kit/load/loaderConfig";
-import { createRequiredLoading } from "@andornaut/game-kit/load/loadingAttempts";
+import { LOADER_CONFIG } from "@andornaut/game-kit/runtime/load/loaderConfig";
+import { createRequiredLoading } from "@andornaut/game-kit/runtime/load/loadingAttempts";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { requireBootUi } from "./requiredUi.ts";

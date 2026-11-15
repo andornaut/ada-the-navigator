@@ -1,6 +1,6 @@
-import { saveStore } from "@andornaut/game-kit/save/saveStore";
-import type { SaveFormat } from "@andornaut/game-kit/save/versionedSave";
-import { localSaveStorage } from "@andornaut/game-kit/web/save/dom/localSaveStorage";
+import { saveStore } from "@andornaut/game-kit/runtime/save/saveStore";
+import type { SaveFormat } from "@andornaut/game-kit/runtime/save/versionedSave";
+import { localSaveStorage } from "@andornaut/game-kit/runtime/web/save/dom/localSaveStorage";
 
 import { newGameState } from "../model/game.ts";
 import { restoreSave, SAVE_VERSION } from "../model/save.ts";

@@ -1,4 +1,7 @@
-import { type VisibilitySource, watchVisibility } from "@andornaut/game-kit/web/pwa/dom/visibility";
+import {
+  type VisibilitySource,
+  watchVisibility,
+} from "@andornaut/game-kit/runtime/web/pwa/dom/visibility";
 
 export interface LoopControl {
   sleep(): void;

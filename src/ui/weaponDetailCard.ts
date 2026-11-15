@@ -1,4 +1,4 @@
-import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 
 import type { Weapon } from "../data/types.ts";
 import { WEAPON_DETAIL_LABELS } from "../data/weaponDetails.ts";

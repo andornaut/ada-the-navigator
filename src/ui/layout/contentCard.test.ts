@@ -1,4 +1,4 @@
-import { HIT_RULE, hitAround } from "@andornaut/game-kit/ui/hitAreas";
+import { HIT_RULE, hitAround } from "@andornaut/game-kit/runtime/ui/hitAreas";
 import { describe, expect, it } from "vitest";
 
 import { CARD_CLOSE, CARD_CONTENT, cardHeaderLayout, cardTitleReserve } from "./cardFrame.ts";

@@ -1,7 +1,7 @@
 import {
   createLoadingAttempts,
   createRequiredLoading,
-} from "@andornaut/game-kit/load/loadingAttempts";
+} from "@andornaut/game-kit/runtime/load/loadingAttempts";
 import { expect, it, vi } from "vitest";
 
 import { requiredSceneFile, requireSceneFiles } from "./requiredFiles.ts";

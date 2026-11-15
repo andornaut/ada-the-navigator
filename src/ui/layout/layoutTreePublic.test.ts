@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { layoutReport, validateLayoutTree } from "@andornaut/game-kit/ui/layoutTree";
-import { mountLayout } from "@andornaut/game-kit/web/ui/dom/layoutTree";
+import { layoutReport, validateLayoutTree } from "@andornaut/game-kit/runtime/ui/layoutTree";
+import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 import { describe, expect, it } from "vitest";
 
 const viewport = { height: 360, width: 720, x: 0, y: 0 };
@@ -11,7 +11,7 @@ describe("published layout-tree consumer API", () => {
   it("resolves the declared DOM renderer and its published stylesheet", () => {
     expect(mountLayout).toBeTypeOf("function");
     const css = readFileSync(
-      fileURLToPath(import.meta.resolve("@andornaut/game-kit/web/ui/dom/layoutTree.css")),
+      fileURLToPath(import.meta.resolve("@andornaut/game-kit/runtime/web/ui/dom/layoutTree.css")),
       "utf8",
     );
     expect(css.length).toBeGreaterThan(0);

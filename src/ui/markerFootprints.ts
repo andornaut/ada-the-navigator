@@ -1,4 +1,4 @@
-import type { Rect } from "@andornaut/game-kit/rect";
+import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import { VIEW_PROPERTIES } from "./layout/css.ts";
 import { readViewUnit } from "./layout/viewScale.ts";

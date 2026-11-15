@@ -1,4 +1,4 @@
-import { pageToGame } from "@andornaut/game-kit/view/pagePoint";
+import { pageToGame } from "@andornaut/game-kit/runtime/view/pagePoint";
 import { describe, expect, it } from "vitest";
 
 import { TOUCH_STICK } from "../ui/layout/touchControls.ts";

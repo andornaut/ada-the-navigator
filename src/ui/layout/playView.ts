@@ -1,5 +1,5 @@
-import type { Rect } from "@andornaut/game-kit/rect";
-import { HIT_RULE, hitAround } from "@andornaut/game-kit/ui/hitAreas";
+import type { Rect } from "@andornaut/game-kit/runtime/rect";
+import { HIT_RULE, hitAround } from "@andornaut/game-kit/runtime/ui/hitAreas";
 
 import {
   CONTROLS_BOTTOM,

@@ -48,7 +48,7 @@ vi.mock("./modal.ts", () => ({
   },
 }));
 vi.mock("./layout/viewScale.ts", () => ({ readViewUnit: () => 1 }));
-vi.mock("@andornaut/game-kit/web/ui/dom/focusModality", () => ({
+vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
   focusTarget: (node: { focus(): void }) => node.focus(),
 }));
 afterEach(() => {

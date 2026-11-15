@@ -1,4 +1,4 @@
-import { startOfflinePlay } from "@andornaut/game-kit/web/pwa/dom/offlinePlay";
+import { startOfflinePlay } from "@andornaut/game-kit/runtime/web/pwa/dom/offlinePlay";
 import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";

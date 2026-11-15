@@ -1,6 +1,6 @@
 // Drawing flight objects: rocks, stations, outposts, destinations, pickups and wrecks.
 // Functions over the scene's ObjectsContext.
-import { densityTexels } from "@andornaut/game-kit/view/renderScale";
+import { densityTexels } from "@andornaut/game-kit/runtime/view/renderScale";
 import { Math as PhaserMath, type Scene, TintModes } from "phaser";
 
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";

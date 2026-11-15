@@ -1,4 +1,4 @@
-import { densityTexels } from "@andornaut/game-kit/view/renderScale";
+import { densityTexels } from "@andornaut/game-kit/runtime/view/renderScale";
 
 // How textures sample and at what density (art/layout.md "Coordinates and scale"). The game's
 // config leaves every texture nearest unless the scene sets it linear.

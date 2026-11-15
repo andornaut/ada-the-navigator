@@ -1,4 +1,4 @@
-import type { Rect } from "@andornaut/game-kit/rect";
+import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import { CONVERSATION_BOX, SAFE_MARGIN } from "../../data/layout.ts";
 import { hudRect, type Insets, playView, safeRect, type Size } from "./playView.ts";

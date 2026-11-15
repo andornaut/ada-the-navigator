@@ -12,7 +12,7 @@ import { drawShipJets } from "./shipJetCanvas.ts";
 
 const events = vi.hoisted(() => [] as string[]);
 vi.mock("./shipJetCanvas.ts", () => ({ drawShipJets: vi.fn(() => events.push("jets")) }));
-vi.mock("@andornaut/game-kit/web/ui/dom/focusModality", () => ({ focusTarget: vi.fn() }));
+vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({ focusTarget: vi.fn() }));
 
 const main = readEngineJets(mainData)!;
 const display = { height: 64, width: 64 };

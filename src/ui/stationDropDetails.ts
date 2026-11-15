@@ -1,7 +1,7 @@
-import type { Rect } from "@andornaut/game-kit/rect";
-import type { ControlAvailability } from "@andornaut/game-kit/ui/controlPresentation";
-import type { LayoutNode } from "@andornaut/game-kit/ui/layoutTree";
-import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+import type { Rect } from "@andornaut/game-kit/runtime/rect";
+import type { ControlAvailability } from "@andornaut/game-kit/runtime/ui/controlPresentation";
+import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
+import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 
 import { applyAdaControlTheme, presentAdaButton } from "./buttonPresentation.ts";
 import { readViewUnit } from "./layout/viewScale.ts";

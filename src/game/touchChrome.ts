@@ -3,9 +3,9 @@ import {
   type AsepriteSheet,
   sheetTags,
   tagRepeat,
-} from "@andornaut/game-kit/art/aseprite";
-import { setTextureFilters } from "@andornaut/game-kit/view/phaser/textureFilter";
-import { densityTexels } from "@andornaut/game-kit/view/renderScale";
+} from "@andornaut/game-kit/runtime/art/aseprite";
+import { setTextureFilters } from "@andornaut/game-kit/runtime/view/phaser/textureFilter";
+import { densityTexels } from "@andornaut/game-kit/runtime/view/renderScale";
 import { GameObjects, Scene, Textures } from "phaser";
 
 import type { UseAction } from "../model/types.ts";

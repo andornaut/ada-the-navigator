@@ -1,6 +1,6 @@
 // Drawing enemies, salvaged hulks and enemy weapons.
 // Functions over the scene's EnemiesContext.
-import { densityTexels } from "@andornaut/game-kit/view/renderScale";
+import { densityTexels } from "@andornaut/game-kit/runtime/view/renderScale";
 import { Math as PhaserMath, type Scene, TintModes } from "phaser";
 
 import { CONTENT } from "../data/content.ts";

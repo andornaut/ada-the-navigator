@@ -1,4 +1,4 @@
-import { offersInstall } from "@andornaut/game-kit/web/pwa/installState";
+import { offersInstall } from "@andornaut/game-kit/runtime/web/pwa/installState";
 import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";

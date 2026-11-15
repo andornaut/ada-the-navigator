@@ -58,10 +58,10 @@ vi.mock("./modal.ts", async (original) => ({
     return fixture.card;
   },
 }));
-vi.mock("@andornaut/game-kit/web/ui/dom/modalLayer", () => ({
+vi.mock("@andornaut/game-kit/runtime/web/ui/dom/modalLayer", () => ({
   createModalLayer: () => fixture.layer,
 }));
-vi.mock("@andornaut/game-kit/web/ui/dom/focusModality", () => ({
+vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
   focusTarget: (node: { focus(): void }) => node.focus(),
 }));
 

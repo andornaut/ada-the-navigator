@@ -1,7 +1,7 @@
 import { EventEmitter } from "node:events";
 import { readFileSync } from "node:fs";
 
-import { createLoadingAttempts } from "@andornaut/game-kit/load/loadingAttempts";
+import { createLoadingAttempts } from "@andornaut/game-kit/runtime/load/loadingAttempts";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const boot = vi.hoisted(() => ({
@@ -113,13 +113,13 @@ vi.mock("./loading/startup.ts", () => ({ startupFence: boot.startup }));
 vi.mock("./loading/bootReveal.ts", () => ({ prepareBootReveal: () => boot.reveal }));
 vi.mock("./lifecycle.ts", () => ({ followPageVisibility: () => boot.stopVisibility }));
 vi.mock("./view/frameTurn.ts", () => ({ FRAME_TURN: {} }));
-vi.mock("@andornaut/game-kit/web/ui/dom/focusModality", () => ({
+vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
   trackInputModality: vi.fn(),
 }));
-vi.mock("@andornaut/game-kit/web/view/dom/watchFrameTurn", () => ({
+vi.mock("@andornaut/game-kit/runtime/web/view/dom/watchFrameTurn", () => ({
   lockGameOrientation: vi.fn(),
 }));
-vi.mock("@andornaut/game-kit/web/view/phaser/followFrameTurn", () => ({
+vi.mock("@andornaut/game-kit/runtime/web/view/phaser/followFrameTurn", () => ({
   followFrameTurn: () => boot.stopFrame,
 }));
 async function settle() {

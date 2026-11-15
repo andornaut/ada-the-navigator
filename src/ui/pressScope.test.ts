@@ -9,7 +9,7 @@ const published = vi.hoisted(() => ({
   leave: vi.fn(),
   open: vi.fn(),
 }));
-vi.mock("@andornaut/game-kit/web/ui/dom/modalLayer", () => ({
+vi.mock("@andornaut/game-kit/runtime/web/ui/dom/modalLayer", () => ({
   createModalLayer: () => ({
     ...published,
     open: (...args: unknown[]) => {

@@ -5,7 +5,7 @@
 // art, painted at the scene's SVG raster scale (texels per logical px) with antialiased edges and
 // shown TOUCH_CHROME_ALPHA opaque.
 
-import { clamp01 } from "@andornaut/game-kit/numbers";
+import { clamp01 } from "@andornaut/game-kit/runtime/numbers";
 
 import { TOUCH_CHROME_FRAME } from "../data/layout.ts";
 import type { UseAction } from "../model/types.ts";

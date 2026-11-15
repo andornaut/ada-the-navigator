@@ -1,5 +1,5 @@
-import { clamp } from "@andornaut/game-kit/numbers";
-import type { Rect } from "@andornaut/game-kit/rect";
+import { clamp } from "@andornaut/game-kit/runtime/numbers";
+import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import {
   HUD_BUTTON,

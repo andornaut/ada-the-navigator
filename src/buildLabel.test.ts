@@ -1,8 +1,8 @@
-/// <reference types="@andornaut/game-kit/web/build/vite/buildInfo" />
+/// <reference types="@andornaut/game-kit/build/buildInfo" />
 import { readFileSync } from "node:fs";
 
-import { buildLabel } from "@andornaut/game-kit/web/build/buildLabel";
-import { CI_COMMIT_VARIABLE } from "@andornaut/game-kit/web/build/buildVersion";
+import { CI_COMMIT_VARIABLE } from "@andornaut/game-kit/build/buildVersion";
+import { buildLabel } from "@andornaut/game-kit/runtime/web/buildLabel";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { BUILD_LABEL } from "./buildLabel.ts";

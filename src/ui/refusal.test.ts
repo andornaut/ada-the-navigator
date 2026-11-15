@@ -2,7 +2,7 @@ import {
   REFUSAL_ATTRIBUTES,
   REFUSAL_SHAKE,
   REFUSAL_SHAKE_MS,
-} from "@andornaut/game-kit/web/ui/dom/refusalCue";
+} from "@andornaut/game-kit/runtime/web/ui/dom/refusalCue";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { REFUSAL, refuse } from "./refusal.ts";

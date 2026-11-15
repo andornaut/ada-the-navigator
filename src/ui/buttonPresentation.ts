@@ -3,11 +3,11 @@ import {
   setButtonRole,
   setButtonSize,
   setControlPlacement,
-} from "@andornaut/game-kit/web/ui/dom/buttonLayout";
+} from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import {
   createPageDivider,
   setPageDivider,
-} from "@andornaut/game-kit/web/ui/dom/controlPresentation";
+} from "@andornaut/game-kit/runtime/web/ui/dom/controlPresentation";
 
 import { PAGE_DIVIDER_STYLE } from "./layout/controlPresentation.ts";
 import { BUTTON_METRICS, TEXT_BUTTON } from "./layout/controls.ts";

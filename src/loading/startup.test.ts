@@ -2,7 +2,7 @@ import {
   createRequiredLoading,
   type LoadingAttempt,
   type RequiredLoading,
-} from "@andornaut/game-kit/load/loadingAttempts";
+} from "@andornaut/game-kit/runtime/load/loadingAttempts";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const view = vi.hoisted(() => ({
@@ -19,7 +19,7 @@ vi.mock("./progress.ts", () => ({
   loadingProgress: { begin: progress.begin },
   mountLoading: progress.mount,
 }));
-vi.mock("@andornaut/game-kit/web/progress/dom/loadingFailure", () => ({
+vi.mock("@andornaut/game-kit/runtime/web/progress/dom/loadingFailure", () => ({
   mountLoadingFailure: (context: { onRetry: () => void | PromiseLike<void> }) => {
     view.retry = context.onRetry;
     return {

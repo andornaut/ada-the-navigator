@@ -1,18 +1,18 @@
-import "@andornaut/game-kit/web/progress/dom/progressBar.css";
+import "@andornaut/game-kit/runtime/web/progress/dom/progressBar.css";
 
-import type { ProgressBarStyle } from "@andornaut/game-kit/progress";
+import type { ProgressBarStyle } from "@andornaut/game-kit/runtime/progress";
 import {
   createLayeredProgress,
   createProgressState,
   type ProgressHandle,
-} from "@andornaut/game-kit/progressState";
+} from "@andornaut/game-kit/runtime/progressState";
 import {
   createDomProgressBar,
   type DomProgressTiming,
-} from "@andornaut/game-kit/web/progress/dom/progressBar";
-import type { OfflineActivity } from "@andornaut/game-kit/web/pwa/dom/offlinePlay";
-import type { DownloadProgress } from "@andornaut/game-kit/web/pwa/downloadProgress";
-import type { RequiredUpdateState } from "@andornaut/game-kit/web/pwa/updateReady";
+} from "@andornaut/game-kit/runtime/web/progress/dom/progressBar";
+import type { OfflineActivity } from "@andornaut/game-kit/runtime/web/pwa/dom/offlinePlay";
+import type { DownloadProgress } from "@andornaut/game-kit/runtime/web/pwa/downloadProgress";
+import type { RequiredUpdateState } from "@andornaut/game-kit/runtime/web/pwa/updateReady";
 
 import { SCREEN } from "../data/screen.ts";
 import { VIEW_SCALE_EVENT } from "../ui/layout/viewScale.ts";

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import type { Rect } from "@andornaut/game-kit/rect";
+import type { Rect } from "@andornaut/game-kit/runtime/rect";
 import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 

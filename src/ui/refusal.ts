@@ -1,5 +1,8 @@
 // The game-owned refusal timing and colour, drawn by the published DOM cue stylesheet.
-import { type RefusalCue, refuse as playRefusal } from "@andornaut/game-kit/web/ui/dom/refusalCue";
+import {
+  type RefusalCue,
+  refuse as playRefusal,
+} from "@andornaut/game-kit/runtime/web/ui/dom/refusalCue";
 
 export const REFUSAL = { color: "#e4574e", durationMs: 320, shakePx: 3, stepMs: 80 } as const;
 

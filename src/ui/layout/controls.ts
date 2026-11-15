@@ -1,4 +1,4 @@
-import type { ButtonMetrics } from "@andornaut/game-kit/ui/buttonLayout";
+import type { ButtonMetrics } from "@andornaut/game-kit/runtime/ui/buttonLayout";
 
 import { BUTTON_SLICE, CARD_SLICE, FRAME_LINE, TEXT_BUTTON } from "../../data/layout.ts";
 

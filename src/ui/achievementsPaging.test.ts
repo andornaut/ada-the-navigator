@@ -45,7 +45,7 @@ class Element {
   }
 }
 
-vi.mock("@andornaut/game-kit/web/ui/dom/focusModality", () => ({
+vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
   focusTarget: (node: Element) => {
     active = node;
   },

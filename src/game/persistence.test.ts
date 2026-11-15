@@ -1,6 +1,6 @@
-import { saveStore } from "@andornaut/game-kit/save/saveStore";
-import type { SaveStorage } from "@andornaut/game-kit/save/storage";
-import { localSaveStorage } from "@andornaut/game-kit/web/save/dom/localSaveStorage";
+import { saveStore } from "@andornaut/game-kit/runtime/save/saveStore";
+import type { SaveStorage } from "@andornaut/game-kit/runtime/save/storage";
+import { localSaveStorage } from "@andornaut/game-kit/runtime/web/save/dom/localSaveStorage";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";

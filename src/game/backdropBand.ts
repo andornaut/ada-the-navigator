@@ -1,4 +1,4 @@
-import { seededRandom } from "@andornaut/game-kit/random";
+import { seededRandom } from "@andornaut/game-kit/runtime/random";
 
 import { SCREEN } from "../data/screen.ts";
 

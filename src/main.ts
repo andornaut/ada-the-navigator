@@ -1,17 +1,20 @@
 // The crash screen listens before any other module runs (src/crash/install.ts).
 import "./crash/install.ts";
-import "@andornaut/game-kit/web/view/frameTurnLandscapeGame.css";
+import "@andornaut/game-kit/runtime/web/view/frameTurnLandscapeGame.css";
 import "./style.css";
-import "@andornaut/game-kit/web/ui/dom/ui.css";
+import "@andornaut/game-kit/runtime/web/ui/dom/ui.css";
 // The HTML interface's stylesheet (src/ui/stylesheet.ts, served by src/tools/uiStylePlugin.ts).
 import "virtual:ada-ui.css";
 
-import { LOADER_CONFIG } from "@andornaut/game-kit/load/loaderConfig";
-import type { LoadingAttempt, RequiredLoading } from "@andornaut/game-kit/load/loadingAttempts";
-import { MAX_RENDER_SCALE } from "@andornaut/game-kit/view/renderScale";
-import { trackInputModality } from "@andornaut/game-kit/web/ui/dom/focusModality";
-import { lockGameOrientation } from "@andornaut/game-kit/web/view/dom/watchFrameTurn";
-import { followFrameTurn } from "@andornaut/game-kit/web/view/phaser/followFrameTurn";
+import { LOADER_CONFIG } from "@andornaut/game-kit/runtime/load/loaderConfig";
+import type {
+  LoadingAttempt,
+  RequiredLoading,
+} from "@andornaut/game-kit/runtime/load/loadingAttempts";
+import { MAX_RENDER_SCALE } from "@andornaut/game-kit/runtime/view/renderScale";
+import { trackInputModality } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
+import { lockGameOrientation } from "@andornaut/game-kit/runtime/web/view/dom/watchFrameTurn";
+import { followFrameTurn } from "@andornaut/game-kit/runtime/web/view/phaser/followFrameTurn";
 import { Core, Game, Scale, Scenes, WEBGL } from "phaser";
 
 import { CRASH_SCREEN } from "./crash/crashScreen.ts";

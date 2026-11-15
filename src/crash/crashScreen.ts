@@ -3,12 +3,12 @@
 // the save, whose in-memory state may be corrupt, and a crash stops the game's own saving
 // (src/main.ts), so the next launch resumes from the last save. src/crash/install.ts imports this
 // module before any other.
-import "@andornaut/game-kit/web/crash/dom/crash.css";
+import "@andornaut/game-kit/runtime/web/crash/dom/crash.css";
 
 import {
   type CrashColours,
   installCrashScreen,
-} from "@andornaut/game-kit/web/crash/dom/crashScreen";
+} from "@andornaut/game-kit/runtime/web/crash/dom/crashScreen";
 
 import { BUILD_LABEL } from "../buildLabel.ts";
 import { CRASH_COPY } from "../data/crashCopy.ts";

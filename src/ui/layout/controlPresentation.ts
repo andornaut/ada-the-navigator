@@ -1,5 +1,5 @@
-import controlPresentationCss from "@andornaut/game-kit/web/ui/dom/controlPresentation.css?raw";
-import controlsCss from "@andornaut/game-kit/web/ui/dom/controls.css?raw";
+import controlPresentationCss from "@andornaut/game-kit/runtime/web/ui/dom/controlPresentation.css?raw";
+import controlsCss from "@andornaut/game-kit/runtime/web/ui/dom/controls.css?raw";
 
 import { STORY_PANEL } from "../../data/layout.ts";
 import { TEXT_TOKENS } from "../modal.ts";

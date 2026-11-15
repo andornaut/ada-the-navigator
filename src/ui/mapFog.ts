@@ -1,4 +1,4 @@
-import type { Rect } from "@andornaut/game-kit/rect";
+import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import type { LocalMap } from "../model/map.ts";
 import { type FogStampBounds, fogStampBounds } from "./layout/mapFog.ts";

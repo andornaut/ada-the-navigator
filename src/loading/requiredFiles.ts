@@ -2,7 +2,7 @@ import {
   createLoadingAttempts,
   type LoadingAttempt,
   type RequiredLoading,
-} from "@andornaut/game-kit/load/loadingAttempts";
+} from "@andornaut/game-kit/runtime/load/loadingAttempts";
 
 import { SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
 import { TOUCH_CHROME_SHEETS } from "../ui/touchChrome.ts";

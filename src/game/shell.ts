@@ -1,5 +1,5 @@
-import type { RequiredUpdateState } from "@andornaut/game-kit/web/pwa/updateReady";
-import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+import type { RequiredUpdateState } from "@andornaut/game-kit/runtime/web/pwa/updateReady";
+import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";

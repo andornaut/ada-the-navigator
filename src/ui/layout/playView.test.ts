@@ -1,5 +1,5 @@
-import type { Rect } from "@andornaut/game-kit/rect";
-import { HIT_RULE } from "@andornaut/game-kit/ui/hitAreas";
+import type { Rect } from "@andornaut/game-kit/runtime/rect";
+import { HIT_RULE } from "@andornaut/game-kit/runtime/ui/hitAreas";
 import { describe, expect, it } from "vitest";
 
 import { TOUCH_STICK as CANONICAL_TOUCH_STICK } from "../../data/layout.ts";

@@ -1,17 +1,17 @@
-import "@andornaut/game-kit/web/ui/dom/layoutTree.css";
+import "@andornaut/game-kit/runtime/web/ui/dom/layoutTree.css";
 
-import type { Rect } from "@andornaut/game-kit/rect";
+import type { Rect } from "@andornaut/game-kit/runtime/rect";
 import {
   type ControlAvailability,
   invokeControl,
-} from "@andornaut/game-kit/ui/controlPresentation";
-import type { LayoutNode } from "@andornaut/game-kit/ui/layoutTree";
-import { bindButtonAvailability } from "@andornaut/game-kit/web/ui/dom/controlPresentation";
+} from "@andornaut/game-kit/runtime/ui/controlPresentation";
+import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
+import { bindButtonAvailability } from "@andornaut/game-kit/runtime/web/ui/dom/controlPresentation";
 import {
   type LayoutComponentPorts,
   type LayoutOptions,
   mountLayout,
-} from "@andornaut/game-kit/web/ui/dom/layoutTree";
+} from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { bindAdaAction } from "./actionBinding.ts";
 import { type CardSize, SCROLL } from "./layout/contentCard.ts";

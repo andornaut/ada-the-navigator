@@ -2,7 +2,7 @@ import {
   type ButtonSkin,
   buttonSkinProperty,
   createButtonSkin,
-} from "@andornaut/game-kit/web/ui/dom/buttonSkin";
+} from "@andornaut/game-kit/runtime/web/ui/dom/buttonSkin";
 
 import type { ButtonTag } from "./modal.ts";
 

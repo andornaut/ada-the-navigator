@@ -1,4 +1,4 @@
-import type { Rect } from "@andornaut/game-kit/rect";
+import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import { START_SCREEN } from "../../data/layout.ts";
 import { playView, type Size } from "./playView.ts";

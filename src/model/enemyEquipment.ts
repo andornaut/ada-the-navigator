@@ -1,4 +1,4 @@
-import { randomStream } from "@andornaut/game-kit/random";
+import { randomStream } from "@andornaut/game-kit/runtime/random";
 
 import { enemyActorDefinition } from "../data/enemyActorDefinition.ts";
 import type { EnemyActorKind } from "../data/enemyActors.ts";

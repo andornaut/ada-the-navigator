@@ -1,7 +1,7 @@
 import {
   createModalLayer as createPublishedModalLayer,
   type ModalLayer,
-} from "@andornaut/game-kit/web/ui/dom/modalLayer";
+} from "@andornaut/game-kit/runtime/web/ui/dom/modalLayer";
 
 import { enterPressView } from "./pressScope.ts";
 

@@ -1,7 +1,7 @@
 // Node types for this config file only, so browser code type-checks without Node globals.
 /// <reference types="node" />
 
-import { gameViteConfig } from "@andornaut/game-kit/web/build/vite/gameConfig";
+import { gameViteConfig } from "@andornaut/game-kit/build/gameConfig";
 
 import type * as ConfigModules from "./src/tools/viteConfigModules.ts";
 import { downloadSizeAssetsPlugin } from "./tools/download-size-assets.mjs";

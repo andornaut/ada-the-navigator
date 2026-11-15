@@ -1,4 +1,4 @@
-import type { Rect } from "@andornaut/game-kit/rect";
+import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import { EDGE_MARKER_GLYPHS } from "../data/edgeMarkers.ts";
 import { LIGHT_FIELD } from "../game/lightField.ts";

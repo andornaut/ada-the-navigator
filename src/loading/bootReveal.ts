@@ -1,9 +1,9 @@
-import type { RequiredLoading } from "@andornaut/game-kit/load/loadingAttempts";
+import type { RequiredLoading } from "@andornaut/game-kit/runtime/load/loadingAttempts";
 import {
   createImageCache,
   PENDING_ATTRIBUTE,
   revealWhenDecoded,
-} from "@andornaut/game-kit/web/ui/dom/imageReady";
+} from "@andornaut/game-kit/runtime/web/ui/dom/imageReady";
 
 import { requireBootFonts } from "./requiredFonts.ts";
 import { requireBootUi } from "./requiredUi.ts";

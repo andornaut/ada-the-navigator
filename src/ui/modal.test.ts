@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from "node:fs";
 
-import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
+import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/runtime/art/aseprite";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CARD_CLOSE } from "./layout/cardFrame.ts";

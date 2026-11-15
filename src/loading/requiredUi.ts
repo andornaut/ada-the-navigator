@@ -1,8 +1,8 @@
-import { LOADER_CONFIG } from "@andornaut/game-kit/load/loaderConfig";
+import { LOADER_CONFIG } from "@andornaut/game-kit/runtime/load/loaderConfig";
 import {
   createLoadingAttempts,
   type RequiredLoading,
-} from "@andornaut/game-kit/load/loadingAttempts";
+} from "@andornaut/game-kit/runtime/load/loadingAttempts";
 
 interface UiPage {
   readonly document: Pick<Document, "baseURI" | "createElement">;

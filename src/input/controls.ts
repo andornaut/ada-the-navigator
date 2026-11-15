@@ -1,10 +1,10 @@
-import { pageToGame } from "@andornaut/game-kit/view/pagePoint";
+import { pageToGame } from "@andornaut/game-kit/runtime/view/pagePoint";
 import {
   listenPagePresses,
   onPageControl,
   type PagePointerEvent,
-} from "@andornaut/game-kit/web/input/dom/pagePresses";
-import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+} from "@andornaut/game-kit/runtime/web/input/dom/pagePresses";
+import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import type { GameObjects, Scene } from "phaser";
 
 import { BUILD_LABEL } from "../buildLabel.ts";

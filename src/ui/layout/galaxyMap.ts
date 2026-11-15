@@ -1,4 +1,4 @@
-import type { Rect } from "@andornaut/game-kit/rect";
+import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import { GALAXY_COUNT, type RoutePosition } from "../../data/galaxies.ts";
 import {

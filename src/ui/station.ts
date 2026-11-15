@@ -1,4 +1,4 @@
-import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 
 import { CONTENT } from "../data/content.ts";
 import { EXCHANGE_COPY } from "../data/exchangeCopy.ts";
@@ -1181,7 +1181,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       modal.remove();
       confirmModal.remove();
     },
-    inspectDetails: (viewport: import("@andornaut/game-kit/rect").Rect) =>
+    inspectDetails: (viewport: import("@andornaut/game-kit/runtime/rect").Rect) =>
       dropDetails?.inspect(viewport) ?? null,
     isOpen: () => open,
     /**

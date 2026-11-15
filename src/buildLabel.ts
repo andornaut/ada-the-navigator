@@ -1,5 +1,5 @@
-/// <reference types="@andornaut/game-kit/web/build/vite/buildInfo" />
-import { buildLabel } from "@andornaut/game-kit/web/build/buildLabel";
+/// <reference types="@andornaut/game-kit/build/buildInfo" />
+import { buildLabel } from "@andornaut/game-kit/runtime/web/buildLabel";
 
 // This build's label, from the version and commit the kit's gameViteConfig defines.
 export const BUILD_LABEL = buildLabel(__APP_VERSION__, __COMMIT__);

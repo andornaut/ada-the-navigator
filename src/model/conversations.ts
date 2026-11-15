@@ -1,4 +1,4 @@
-import { type Random, seededRandom, shuffled } from "@andornaut/game-kit/random";
+import { type Random, seededRandom, shuffled } from "@andornaut/game-kit/runtime/random";
 
 import {
   ANDROMEDA_CONVERSATIONS,

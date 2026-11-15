@@ -1,4 +1,4 @@
-import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 
 import { CAST, castFrames, type CastKey, castSheet, STORY_CAST } from "../data/cast.ts";
 import { GENERAL_NAMED, type Speaker, SPEAKERS } from "../data/conversations.ts";

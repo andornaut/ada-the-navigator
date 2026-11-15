@@ -1,5 +1,5 @@
-import { controlPresentation } from "@andornaut/game-kit/ui/controlPresentation";
-import type { HoldAction } from "@andornaut/game-kit/web/input/dom/holdActions";
+import { controlPresentation } from "@andornaut/game-kit/runtime/ui/controlPresentation";
+import type { HoldAction } from "@andornaut/game-kit/runtime/web/input/dom/holdActions";
 
 import { activateAdaAction, type AdaActionBinding } from "./actionActivation.ts";
 

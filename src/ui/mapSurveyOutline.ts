@@ -1,4 +1,4 @@
-import type { Rect } from "@andornaut/game-kit/rect";
+import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import { CHARTING_ORIGIN, CHARTING_RADIUS } from "../model/map.ts";
 import { MAP_COLORS, type MapView, toScreen } from "./layout/mapScreen.ts";

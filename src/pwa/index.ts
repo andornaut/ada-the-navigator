@@ -6,39 +6,42 @@
 // Before game construction or save access, launchPhoneApp checks a build already staged at
 // document launch. Later updates activate through Update now; a newer save is the automatic
 // exception (requireNewerVersion). First visits register only after the prepared reveal.
-import { appCannotClose } from "@andornaut/game-kit/web/pwa/appWindow";
+import { appCannotClose } from "@andornaut/game-kit/runtime/web/pwa/appWindow";
 import {
   backCloseWatcher,
   backGuardState,
   isBackGuardState,
-} from "@andornaut/game-kit/web/pwa/backNavigation";
+} from "@andornaut/game-kit/runtime/web/pwa/backNavigation";
 import {
   browserCloseWatcher,
   type CloseWatcherFactory,
   guardBackNavigation,
   type HistoryLike,
-} from "@andornaut/game-kit/web/pwa/dom/backNavigation";
-import { browserExitPage, exitApp } from "@andornaut/game-kit/web/pwa/dom/exitApp";
+} from "@andornaut/game-kit/runtime/web/pwa/dom/backNavigation";
+import { browserExitPage, exitApp } from "@andornaut/game-kit/runtime/web/pwa/dom/exitApp";
 import {
   type InstallFlow,
   type InstallOutcome,
   pageRunsAsApp,
   watchInstall,
-} from "@andornaut/game-kit/web/pwa/dom/installFlow";
+} from "@andornaut/game-kit/runtime/web/pwa/dom/installFlow";
 import {
   browserOfflinePage,
   type LaunchResult,
   type OfflinePlay,
   startOfflinePlay,
-} from "@andornaut/game-kit/web/pwa/dom/offlinePlay";
+} from "@andornaut/game-kit/runtime/web/pwa/dom/offlinePlay";
 import {
   createScreenWakeLock,
   type ScreenWakeLock,
-} from "@andornaut/game-kit/web/pwa/dom/wakeLock";
-import type { InstallState, InstallStepsKind } from "@andornaut/game-kit/web/pwa/installState";
-import { serviceWorkerUrl } from "@andornaut/game-kit/web/pwa/serviceWorkerUrl";
-import { requestPersistentStorage } from "@andornaut/game-kit/web/pwa/storagePersistence";
-import type { RequiredUpdateState } from "@andornaut/game-kit/web/pwa/updateReady";
+} from "@andornaut/game-kit/runtime/web/pwa/dom/wakeLock";
+import type {
+  InstallState,
+  InstallStepsKind,
+} from "@andornaut/game-kit/runtime/web/pwa/installState";
+import { serviceWorkerUrl } from "@andornaut/game-kit/runtime/web/pwa/serviceWorkerUrl";
+import { requestPersistentStorage } from "@andornaut/game-kit/runtime/web/pwa/storagePersistence";
+import type { RequiredUpdateState } from "@andornaut/game-kit/runtime/web/pwa/updateReady";
 
 import {
   offlineActivity,
@@ -55,12 +58,12 @@ import {
 } from "./updateOffer.ts";
 
 export { PHONE_EVENTS } from "./events.ts";
-export type { InstallOutcome } from "@andornaut/game-kit/web/pwa/dom/installFlow";
+export type { InstallOutcome } from "@andornaut/game-kit/runtime/web/pwa/dom/installFlow";
 export {
   type InstallState,
   type InstallStepsKind,
   offersInstall,
-} from "@andornaut/game-kit/web/pwa/installState";
+} from "@andornaut/game-kit/runtime/web/pwa/installState";
 
 const SERVICE_WORKER_URL = "/sw.js";
 // The history state key of the extra entry that back pops instead of leaving the game.

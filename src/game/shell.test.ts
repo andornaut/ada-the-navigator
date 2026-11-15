@@ -1,4 +1,4 @@
-import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
@@ -7,7 +7,7 @@ import { GameModel } from "../model/game.ts";
 import { StoryShell } from "./shell.ts";
 
 vi.mock("../ui/uiSkin.ts", () => ({ applyButtonSkin: vi.fn().mockResolvedValue(undefined) }));
-vi.mock("@andornaut/game-kit/web/ui/dom/focusModality", () => ({ focusTarget: vi.fn() }));
+vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({ focusTarget: vi.fn() }));
 
 class Element extends EventTarget {
   children: Element[] = [];

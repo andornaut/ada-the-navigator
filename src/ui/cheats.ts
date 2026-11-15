@@ -1,4 +1,4 @@
-import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 
 import { type CheatAction, cheatGroups, createCheatSession } from "./cheatActions.ts";
 import { createButton, createCard } from "./modal.ts";

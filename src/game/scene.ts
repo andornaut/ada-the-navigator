@@ -1,5 +1,5 @@
-import { type LoaderWatch, watchLoader } from "@andornaut/game-kit/load/phaser/watchLoader";
-import type { StoreLoadResult } from "@andornaut/game-kit/save/saveStore";
+import { type LoaderWatch, watchLoader } from "@andornaut/game-kit/runtime/load/phaser/watchLoader";
+import type { StoreLoadResult } from "@andornaut/game-kit/runtime/save/saveStore";
 import { GameObjects, Loader, Scene, Scenes } from "phaser";
 
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";

@@ -1,5 +1,5 @@
-import type { PrecacheGroups } from "@andornaut/game-kit/web/pwa/precacheGroups";
-import type { HashedFiles } from "@andornaut/game-kit/web/pwa/vite/precachePlugin";
+import type { HashedFiles } from "@andornaut/game-kit/build/precachePlugin";
+import type { PrecacheGroups } from "@andornaut/game-kit/runtime/web/pwa/precacheGroups";
 
 import { ECONOMY } from "../data/economy.ts";
 import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";

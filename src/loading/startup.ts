@@ -2,10 +2,10 @@ import {
   createLoadingAttempts,
   type LoadingAttempt,
   type RequiredLoading,
-} from "@andornaut/game-kit/load/loadingAttempts";
-import type { ProgressHandle } from "@andornaut/game-kit/progressState";
-import type { CrashScreen } from "@andornaut/game-kit/web/crash/dom/crashScreen";
-import { mountLoadingFailure } from "@andornaut/game-kit/web/progress/dom/loadingFailure";
+} from "@andornaut/game-kit/runtime/load/loadingAttempts";
+import type { ProgressHandle } from "@andornaut/game-kit/runtime/progressState";
+import type { CrashScreen } from "@andornaut/game-kit/runtime/web/crash/dom/crashScreen";
+import { mountLoadingFailure } from "@andornaut/game-kit/runtime/web/progress/dom/loadingFailure";
 
 import { LOADING_LAYER } from "../ui/loadingBar.ts";
 import { loadingProgress, mountLoading } from "./progress.ts";

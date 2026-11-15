@@ -1,8 +1,8 @@
 // The service worker's entry, built to /sw.js by precachePlugin: the kit's worker with the game's
 // cache policy. It imports only modules with no browser globals at load, so the build emits it as
 // one classic script with no imports.
-import { runServiceWorker } from "@andornaut/game-kit/web/pwa/dom/serviceWorker";
-import type { PrecacheManifest } from "@andornaut/game-kit/web/pwa/precacheList";
+import { runServiceWorker } from "@andornaut/game-kit/runtime/web/pwa/dom/serviceWorker";
+import type { PrecacheManifest } from "@andornaut/game-kit/runtime/web/pwa/precacheManifest";
 
 import { CACHE_POLICY } from "./cachePolicy.ts";
 

@@ -11,7 +11,7 @@
 
 Vite builds the HTML inputs in [`pages/`](../pages/) and serves the landing page at
 `/` and the game at `/play/`. [`vite.config.ts`](../vite.config.ts) uses game-kit's
-`gameViteConfig` (`@andornaut/game-kit/web/build/vite/gameConfig`) with the plugin
+`gameViteConfig` (`@andornaut/game-kit/build/gameConfig`) with the plugin
 inputs in [`src/tools/viteConfigModules.ts`](tools/viteConfigModules.ts): the
 dev server's `/play` redirect (`sitePages`), hashed icons and the service worker's
 precache. Build and deployment commands are in the [root README](../README.md).

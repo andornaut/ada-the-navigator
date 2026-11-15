@@ -1,8 +1,8 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { validatePrecacheGroups } from "@andornaut/game-kit/web/pwa/precacheGroups";
-import type { HashedFiles } from "@andornaut/game-kit/web/pwa/vite/precachePlugin";
+import type { HashedFiles } from "@andornaut/game-kit/build/precachePlugin";
+import { validatePrecacheGroups } from "@andornaut/game-kit/runtime/web/pwa/precacheGroups";
 import { describe, expect, it, vi } from "vitest";
 
 import platform from "../../public/art/cartwheel/enemies/platform-hardpoints.json";

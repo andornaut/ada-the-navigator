@@ -1,6 +1,11 @@
-import type { Rect } from "@andornaut/game-kit/rect";
-import { HIT_RULE, hitAround, type PressArea, pressedArea } from "@andornaut/game-kit/ui/hitAreas";
-import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+import type { Rect } from "@andornaut/game-kit/runtime/rect";
+import {
+  HIT_RULE,
+  hitAround,
+  type PressArea,
+  pressedArea,
+} from "@andornaut/game-kit/runtime/ui/hitAreas";
+import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 
 import JOBS from "../../public/art/jobs.json" with { type: "json" };
 import { readMapArea } from "../game/jobArt.ts";

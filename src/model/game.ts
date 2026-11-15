@@ -1,5 +1,5 @@
-import { randomStream } from "@andornaut/game-kit/random";
-import type { Rect } from "@andornaut/game-kit/rect";
+import { randomStream } from "@andornaut/game-kit/runtime/random";
+import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import { ACHIEVEMENTS, PENNY_FIND_RANGE } from "../data/achievements.ts";
 import { ACTIVITIES, MINING_CONTRACT_DEPOSITS, SUPPLY_ITEMS } from "../data/activities.ts";

@@ -1,4 +1,4 @@
-import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 
 import { EXCHANGE_COPY } from "../data/exchangeCopy.ts";
 import type { ExchangeOrder, ExchangePreview, ExchangeQuote } from "../model/exchange.ts";

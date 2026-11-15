@@ -1,4 +1,4 @@
-import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 
 import { bindAdaAction } from "./actionBinding.ts";
 import { SCROLL } from "./layout/contentCard.ts";

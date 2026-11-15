@@ -1,4 +1,4 @@
-import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createActions, createButton, createCard, isTap } from "./modal.ts";

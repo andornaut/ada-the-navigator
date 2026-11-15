@@ -1,6 +1,6 @@
 // The space backdrop: sky, far items, plates, stars and streaks.
 // Functions over the scene's BackdropContext.
-import { MAX_RENDER_SCALE } from "@andornaut/game-kit/view/renderScale";
+import { MAX_RENDER_SCALE } from "@andornaut/game-kit/runtime/view/renderScale";
 import { BlendModes, Math as PhaserMath } from "phaser";
 
 import { SCREEN } from "../data/screen.ts";

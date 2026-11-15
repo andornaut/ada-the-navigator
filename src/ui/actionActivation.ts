@@ -1,7 +1,7 @@
 import {
   type ControlAvailability,
   invokeControl,
-} from "@andornaut/game-kit/ui/controlPresentation";
+} from "@andornaut/game-kit/runtime/ui/controlPresentation";
 
 export interface AdaAction {
   readonly availability: () => ControlAvailability;

@@ -1,5 +1,5 @@
-import { bindHoldActions } from "@andornaut/game-kit/web/input/dom/holdActions";
-import type { PressGuard } from "@andornaut/game-kit/web/ui/dom/domPress";
+import { bindHoldActions } from "@andornaut/game-kit/runtime/web/input/dom/holdActions";
+import type { PressGuard } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
 
 import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { inCurrentView } from "./pressScope.ts";

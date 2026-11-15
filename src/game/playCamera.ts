@@ -1,10 +1,10 @@
-import type { Point, Rect } from "@andornaut/game-kit/rect";
+import type { Point, Rect } from "@andornaut/game-kit/runtime/rect";
 import {
   MAX_RENDER_SCALE,
   type RenderFit,
   renderFit,
   renderScale,
-} from "@andornaut/game-kit/view/renderScale";
+} from "@andornaut/game-kit/runtime/view/renderScale";
 import type { Cameras, Scene } from "phaser";
 
 import { SCREEN } from "../data/screen.ts";

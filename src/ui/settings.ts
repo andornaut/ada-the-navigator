@@ -1,4 +1,4 @@
-import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 
 import { CONTENT } from "../data/content.ts";
 import { SETTINGS_STATE_LABELS } from "../data/settingsCopy.ts";

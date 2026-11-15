@@ -1,7 +1,11 @@
-import { MODAL_CONTENT } from "@andornaut/game-kit/modalLayout";
-import type { Rect } from "@andornaut/game-kit/rect";
-import { HIT_RULE } from "@andornaut/game-kit/ui/hitAreas";
-import { BUTTON_GAP, SMALL_BUTTON_GAP, STACK_BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
+import { MODAL_CONTENT } from "@andornaut/game-kit/runtime/modalLayout";
+import type { Rect } from "@andornaut/game-kit/runtime/rect";
+import { HIT_RULE } from "@andornaut/game-kit/runtime/ui/hitAreas";
+import {
+  BUTTON_GAP,
+  SMALL_BUTTON_GAP,
+  STACK_BUTTON_GAP,
+} from "@andornaut/game-kit/runtime/ui/spacing";
 
 import { SCREEN } from "./screen.ts";
 

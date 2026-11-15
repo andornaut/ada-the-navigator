@@ -1,4 +1,4 @@
-import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 
 import { GALAXY_COUNT, type RoutePosition } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";

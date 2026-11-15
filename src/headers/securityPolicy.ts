@@ -1,11 +1,7 @@
 // The security headers the build writes to dist/_headers, which Cloudflare serves with every
 // static asset. securityHeadersPlugin adds the hashes of each page's inline <script> and <style>
 // blocks to its rule's policy, so this module names only the sources a page loads.
-import type {
-  Directives,
-  HeaderList,
-  PageRule,
-} from "@andornaut/game-kit/web/headers/securityHeaders";
+import type { Directives, HeaderList, PageRule } from "@andornaut/game-kit/build/securityHeaders";
 
 // Where the build writes its content-hashed files, as a _headers path pattern.
 export const HASHED_ASSET_PATH = "/assets/*";

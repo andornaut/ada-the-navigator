@@ -1,5 +1,5 @@
-import { createRequiredLoading } from "@andornaut/game-kit/load/loadingAttempts";
-import { startOfflinePlay } from "@andornaut/game-kit/web/pwa/dom/offlinePlay";
+import { createRequiredLoading } from "@andornaut/game-kit/runtime/load/loadingAttempts";
+import { startOfflinePlay } from "@andornaut/game-kit/runtime/web/pwa/dom/offlinePlay";
 import { afterEach, expect, it, vi } from "vitest";
 vi.mock("./requiredFonts.ts", () => ({ requireBootFonts: () => () => {} }));
 import { prepareBootReveal } from "./bootReveal.ts";

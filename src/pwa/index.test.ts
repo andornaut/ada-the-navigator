@@ -26,7 +26,7 @@ const offline = vi.hoisted(() => {
     ),
   };
 });
-vi.mock("@andornaut/game-kit/web/pwa/dom/offlinePlay", () => ({
+vi.mock("@andornaut/game-kit/runtime/web/pwa/dom/offlinePlay", () => ({
   browserOfflinePage: () => ({}),
   startOfflinePlay: offline.start,
 }));
@@ -38,10 +38,10 @@ const wakeLock = vi.hoisted(() => {
   });
   return { create, lock };
 });
-vi.mock("@andornaut/game-kit/web/pwa/dom/wakeLock", () => ({
+vi.mock("@andornaut/game-kit/runtime/web/pwa/dom/wakeLock", () => ({
   createScreenWakeLock: wakeLock.create,
 }));
-vi.mock("@andornaut/game-kit/web/pwa/storagePersistence", () => ({
+vi.mock("@andornaut/game-kit/runtime/web/pwa/storagePersistence", () => ({
   requestPersistentStorage: vi.fn(() => Promise.resolve("unsupported")),
 }));
 
@@ -278,7 +278,7 @@ describe("offline play", () => {
 
   it.each([false, true])("asks for persistent storage as the installed app: %s", async (app) => {
     const { requestPersistentStorage } =
-      await import("@andornaut/game-kit/web/pwa/storagePersistence");
+      await import("@andornaut/game-kit/runtime/web/pwa/storagePersistence");
     stubDevice({ app });
     const pwa = await import("./index.ts");
     pwa.setupPhoneApp();

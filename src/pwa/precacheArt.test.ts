@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { isHashedAssetUrl } from "@andornaut/game-kit/web/pwa/cachePolicy";
+import { isHashedAssetUrl } from "@andornaut/game-kit/runtime/web/pwa/cachePolicy";
 import { describe, expect, it } from "vitest";
 
 import { ECONOMY } from "../data/economy.ts";

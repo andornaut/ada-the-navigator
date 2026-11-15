@@ -1,5 +1,10 @@
-import { MODAL_CONTENT } from "@andornaut/game-kit/modalLayout";
-import { HIT_RULE, hitAround, hitMargin, pressedArea } from "@andornaut/game-kit/ui/hitAreas";
+import { MODAL_CONTENT } from "@andornaut/game-kit/runtime/modalLayout";
+import {
+  HIT_RULE,
+  hitAround,
+  hitMargin,
+  pressedArea,
+} from "@andornaut/game-kit/runtime/ui/hitAreas";
 import { describe, expect, it } from "vitest";
 
 import { CARD_CONTENT } from "./cardFrame.ts";

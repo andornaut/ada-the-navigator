@@ -1,15 +1,15 @@
-import type { Rect } from "@andornaut/game-kit/rect";
+import type { Rect } from "@andornaut/game-kit/runtime/rect";
 import {
   type LayoutMeasurement,
   type LayoutObservation,
   type LayoutPath,
   layoutReport,
   type LayoutSchema,
-} from "@andornaut/game-kit/ui/layoutTree";
+} from "@andornaut/game-kit/runtime/ui/layoutTree";
 import type {
   LayoutMeasureContext,
   MountedLayout,
-} from "@andornaut/game-kit/web/ui/dom/layoutTree";
+} from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 interface PhysicalNode {
   readonly element: HTMLElement;

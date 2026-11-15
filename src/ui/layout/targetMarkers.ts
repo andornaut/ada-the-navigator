@@ -1,4 +1,4 @@
-import type { Rect } from "@andornaut/game-kit/rect";
+import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import { edgePoint, gameAreaPoint } from "../../model/edgeMarkers.ts";
 import type { TargetMarker } from "../../model/targetMarkers.ts";

@@ -8,7 +8,7 @@
  */
 import { pathToFileURL } from "node:url";
 
-import type { Rect } from "@andornaut/game-kit/rect";
+import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import * as cardFrame from "../src/ui/layout/cardFrame.ts";
 import * as contentCard from "../src/ui/layout/contentCard.ts";

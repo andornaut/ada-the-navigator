@@ -1,7 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
 
-import { precachePlugin as kitPrecachePlugin } from "@andornaut/game-kit/web/pwa/vite/precachePlugin";
+import { precachePlugin as kitPrecachePlugin } from "@andornaut/game-kit/build/precachePlugin";
 import type { Plugin } from "vite";
 
 import { CACHE_POLICY } from "./cachePolicy.ts";

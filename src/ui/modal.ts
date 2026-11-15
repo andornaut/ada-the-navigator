@@ -1,5 +1,5 @@
-import { HIT_RULE, hitMargin } from "@andornaut/game-kit/ui/hitAreas";
-import { setControlPlacement } from "@andornaut/game-kit/web/ui/dom/buttonLayout";
+import { HIT_RULE, hitMargin } from "@andornaut/game-kit/runtime/ui/hitAreas";
+import { setControlPlacement } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 
 import { SCREEN } from "../data/screen.ts";
 import {

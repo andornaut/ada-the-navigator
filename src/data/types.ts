@@ -1,4 +1,4 @@
-import type { InstallStepsKind } from "@andornaut/game-kit/web/pwa/installState";
+import type { InstallStepsKind } from "@andornaut/game-kit/runtime/web/pwa/installState";
 
 import type { ShipPhysics } from "./shipPhysics.ts";
 

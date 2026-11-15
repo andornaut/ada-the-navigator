@@ -1,4 +1,7 @@
-import { createModalInputGate, type ModalInputScope } from "@andornaut/game-kit/input/modalInput";
+import {
+  createModalInputGate,
+  type ModalInputScope,
+} from "@andornaut/game-kit/runtime/input/modalInput";
 
 import { TOUCH_STICK } from "../ui/layout/touchControls.ts";
 

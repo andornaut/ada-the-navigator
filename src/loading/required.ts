@@ -1,4 +1,4 @@
-import { createRequiredLoading } from "@andornaut/game-kit/load/loadingAttempts";
+import { createRequiredLoading } from "@andornaut/game-kit/runtime/load/loadingAttempts";
 
 export type RequiredReady = () => boolean;
 

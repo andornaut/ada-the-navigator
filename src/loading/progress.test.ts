@@ -1,4 +1,4 @@
-import type { ProgressSnapshot } from "@andornaut/game-kit/progressState";
+import type { ProgressSnapshot } from "@andornaut/game-kit/runtime/progressState";
 import { describe, expect, it } from "vitest";
 
 import {

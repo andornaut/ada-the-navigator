@@ -1,5 +1,8 @@
-import { createModalInputGate, type ModalInputScope } from "@andornaut/game-kit/input/modalInput";
-import type { PressGuard } from "@andornaut/game-kit/web/ui/dom/domPress";
+import {
+  createModalInputGate,
+  type ModalInputScope,
+} from "@andornaut/game-kit/runtime/input/modalInput";
+import type { PressGuard } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
 
 interface View {
   readonly dialog: HTMLElement;
