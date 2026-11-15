@@ -2,13 +2,14 @@ import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
+import type { WeaponLevel } from "../data/types.ts";
 import { playOpening } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave, SAVE_VERSION } from "./save.ts";
 import type { SpaceObject } from "./types.ts";
 
-function snapshot(retained = false) {
+function snapshot(retained = false, weaponLevel?: WeaponLevel) {
   const model = new GameModel(CONTENT);
   model.startGalaxy(1);
   playOpening(model);
@@ -16,7 +17,13 @@ function snapshot(retained = false) {
   const definition = enemyDefinition(1, "capital", "guard");
   const enemy = createEnemy(
     definition,
-    { archetype: "capital", id: "guard", packId: null, phase: 0.75 },
+    {
+      ...(weaponLevel === undefined ? {} : { weaponLevel }),
+      archetype: "capital",
+      id: "guard",
+      packId: null,
+      phase: 0.75,
+    },
     { x: 20, y: 30 },
   );
   enemy.age = 12;
@@ -38,7 +45,7 @@ function snapshot(retained = false) {
 }
 
 describe("saved equipped enemy levels", () => {
-  it.each([undefined, 1, 2, 3])(
+  it.each([undefined, 1, 2, 3] as const)(
     "retains level %s and exact live/retained flight clocks without random draws",
     (level) => {
       for (const retained of [false, true]) {
