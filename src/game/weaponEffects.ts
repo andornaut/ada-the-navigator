@@ -639,7 +639,7 @@ export const IMPACT_STYLE = {
   lance: { duration: 1, length: 18, width: 2 },
   pellet: { alpha: 0.8, duration: 0.4, scale: 0.35 },
   ripple: { duration: 1, radius: 12 },
-  shockwave: { duration: 1.8, radius: 16 },
+  shockwave: { duration: 1.8, fillAlpha: 0.12, innerAlpha: 0.55, innerRadius: 0.65, radius: 16 },
 } as const;
 
 function scaleImpact(at: Vec, scale: number, alpha: number, shape: EffectShape): EffectShape {
@@ -749,14 +749,31 @@ export function impactEffect(
       return [];
     }
     const radius = (impact.blastRadius ?? style.radius) * (reducedMotion ? 1 : 0.2 + 0.8 * p);
+    const outer: EllipseShape = {
+      ...ground(at, radius),
+      alpha: 1 - p,
+      colour: EFFECT_COLOURS.amber,
+      kind: "ellipse",
+      part: "ring",
+      stroke: 1.5,
+    };
+    if (impact.family === "ripple") {
+      return [outer];
+    }
+    const shockwave = IMPACT_STYLE.shockwave;
     return [
       {
         ...ground(at, radius),
-        alpha: 1 - p,
+        alpha: shockwave.fillAlpha * (1 - p) ** 2,
         colour: EFFECT_COLOURS.amber,
         kind: "ellipse",
-        part: "ring",
-        stroke: 1.5,
+      },
+      outer,
+      {
+        ...outer,
+        ...ground(at, radius * shockwave.innerRadius),
+        alpha: shockwave.innerAlpha * (1 - p),
+        stroke: 1,
       },
     ];
   }

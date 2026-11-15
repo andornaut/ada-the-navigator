@@ -716,7 +716,10 @@ function minePop(
             family: "shockwave",
           },
         );
-  return { edged: shapes, shapes };
+  return {
+    edged: shapes.filter((shape) => shape.kind !== "ellipse" || shape.stroke !== undefined),
+    shapes,
+  };
 }
 
 // ---------------------------------------------------------------------------------------------

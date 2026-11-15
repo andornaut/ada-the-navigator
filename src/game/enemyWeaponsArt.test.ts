@@ -146,7 +146,7 @@ describe("mine", () => {
     expect(ring.halfWidth).toBeCloseTo(IMPACT_STYLE.shockwave.radius * 0.6 * Math.SQRT2, 9);
     expect(pop(20).shapes.filter((shape) => shape.kind === "disc")).toHaveLength(0);
     expect(pop(220).shapes).toEqual([]);
-    expect(pop(100, true).shapes).toHaveLength(1);
+    expect(pop(100, true).shapes).toHaveLength(3);
     expect(pop(200, true).shapes).toEqual([]);
   });
 });

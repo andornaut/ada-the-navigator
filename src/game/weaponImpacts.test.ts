@@ -74,6 +74,27 @@ describe("weapon impact families", () => {
     }
   });
 
+  it("distinguishes Mine's two fronts and subtle fill from Ring's single ripple", () => {
+    for (const reducedMotion of [false, true]) {
+      const render = (family: "ripple" | "shockwave") =>
+        impactEffect({ ...context, reducedMotion }, { ...contact, age: 0.04, family });
+      expect(render("ripple")).toHaveLength(1);
+      const shapes = render("shockwave");
+      expect(shapes).toHaveLength(3);
+      const rings = shapes.filter(
+        (shape) => shape.kind === "ellipse" && shape.stroke !== undefined,
+      );
+      const fill = shapes.find((shape) => shape.kind === "ellipse" && shape.stroke === undefined);
+      expect(rings).toHaveLength(2);
+      if (rings[0]?.kind !== "ellipse" || rings[1]?.kind !== "ellipse" || fill?.kind !== "ellipse")
+        {throw Error("shockwave layers missing");}
+      expect(rings[1].halfWidth).toBeLessThan(rings[0].halfWidth);
+      expect(fill.halfWidth).toBe(rings[0].halfWidth);
+      expect(fill.alpha).toBeGreaterThan(0);
+      expect(fill.alpha).toBeLessThan(rings[1].alpha);
+    }
+  });
+
   it("ends every family and refuses effects before contact", () => {
     for (const family of [
       "missile",

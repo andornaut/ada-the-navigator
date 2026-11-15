@@ -47,18 +47,20 @@ describe("shared enemy hit hooks", () => {
       mine(art, at, { ageMs: 3000, end: { ageMs, kind: "pop" }, lifeMs: 20000 }, reduced);
     const early = pop(0).shapes;
     const later = pop(MINE_POP_MS / 2).shapes;
-    expect(early).toHaveLength(1);
-    expect(later).toHaveLength(1);
-    if (early[0]?.kind !== "ellipse" || later[0]?.kind !== "ellipse")
-      {throw Error("shockwave missing");}
+    expect(early).toHaveLength(3);
+    expect(later).toHaveLength(3);
+    if (early[0]?.kind !== "ellipse" || later[0]?.kind !== "ellipse") {
+      throw Error("shockwave missing");
+    }
     expect(early[0].at).toEqual(at);
     expect(later[0].halfWidth).toBeGreaterThan(early[0].halfWidth);
     expect(pop(MINE_POP_MS).shapes).toEqual([]);
     expect(pop(art.mine.reducedPop.ms, true).shapes).toEqual([]);
     const held = pop(0, true).shapes[0];
     const faded = pop(art.mine.reducedPop.ms / 2, true).shapes[0];
-    if (held?.kind !== "ellipse" || faded?.kind !== "ellipse")
-      {throw Error("reduced shockwave missing");}
+    if (held?.kind !== "ellipse" || faded?.kind !== "ellipse") {
+      throw Error("reduced shockwave missing");
+    }
     expect(held.halfWidth).toBe(faded.halfWidth);
     expect(faded.alpha).toBeLessThan(held.alpha);
   });
