@@ -16,7 +16,7 @@ import {
   tunnelScale,
   warpPoseSize,
 } from "../game/quantumJump.ts";
-import type { ShipJets } from "../game/shipJets.ts";
+import { normalJetsInFront, type ShipJets } from "../game/shipJets.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 import type { Vec } from "../model/types.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -228,30 +228,35 @@ export function createJumpOverlay(
     const x = options.centre.x - size / 2;
     const y = options.centre.y - size / 2;
     context.imageSmoothingEnabled = true;
-    if (image === pose) {
-      const geometry = warp.poses.find(({ id }) => id === options.pose)?.jets;
-      const material = paint?.jets?.();
-      if (geometry && material) {
+    const geometry =
+      image === pose ? warp.poses.find(({ id }) => id === options.pose)?.jets : undefined;
+    const material = image === pose ? paint?.jets?.() : undefined;
+    const jets = geometry && material ? { ...geometry, layers: material.layers } : undefined;
+    const front = normalJetsInFront(jets, 0);
+    const drawJets = () => {
+      if (jets) {
         drawShipJets(
           context,
-          { ...geometry, layers: material.layers },
-          {
-            displayHeight: size,
-            displayWidth: size,
-            pivot: { x: 0.5, y: 0.5 },
-          },
+          jets,
+          { displayHeight: size, displayWidth: size, pivot: { x: 0.5, y: 0.5 } },
           0,
           options.centre,
           options.alpha,
           options.white,
         );
       }
+    };
+    if (!front) {
+      drawJets();
     }
     context.globalAlpha = options.alpha;
     context.drawImage(raster(image, size * options.pixels, false), x, y, size, size);
     if (options.white > 0) {
       context.globalAlpha = options.alpha * options.white;
       context.drawImage(raster(image, size * options.pixels, true), x, y, size, size);
+    }
+    if (front) {
+      drawJets();
     }
     context.globalAlpha = 1;
     return true;

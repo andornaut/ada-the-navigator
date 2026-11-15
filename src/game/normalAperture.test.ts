@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import art from "../../public/art/ship-jets.json";
-import { type JetShapeMouth, jetShapePolygons } from "./jetGeometry.ts";
+import { jetLayerAlpha, type JetShapeMouth, jetShapePolygons } from "./jetGeometry.ts";
 import { LIGHT_FIELD } from "./lightField.ts";
 import { engineJets, jetTriangles, readEngineJets } from "./shipJets.ts";
 
@@ -80,13 +80,10 @@ describe("centered normal aperture geometry", () => {
     expect(core[0]!.x - mouth.anchor.x).toBeCloseTo(6.875 / 2, 12);
   });
 
-  it("keeps first-authored normalization when the halo is transparent", () => {
+  it("keeps the widest normal layer solid before the legacy halo ramp", () => {
     const polygons = jetShapePolygons(mouth, layers, 30, 0.4);
-    expect(polygons.map((polygon) => polygon.layerIndex)).toEqual([1, 2]);
-    expect(polygons[0]!.points[0]!.x).toBeCloseTo(
-      mouth.anchor.x + mouth.half.x * coreWidth * 2,
-      12,
-    );
+    expect(polygons.map((polygon) => polygon.layerIndex)).toEqual([0, 1, 2]);
+    expect(polygons[0]!.points[0]!.x).toBeCloseTo(mouth.anchor.x + mouth.half.x, 12);
   });
 
   it("preserves the physical core aperture when only the core is selected", () => {
@@ -124,7 +121,7 @@ describe("centered normal aperture geometry", () => {
       );
       for (const [index, triangle] of triangles.entries()) {
         expect(triangle.color).toBe(material[index]!.colors[1]);
-        expect(triangle.alpha).toBe(material[index]!.alpha?.max ?? 1);
+        expect(triangle.alpha).toBe(index === 0 ? 1 : (material[index]!.alpha?.max ?? 1));
         expect(triangle.points[1]!.y).toBeCloseTo(17 + 30 * material[index]!.length, 12);
       }
     }
@@ -139,6 +136,25 @@ describe("centered normal aperture geometry", () => {
     ].map((selected) => ({ selected })),
   )("rejects uncontained or invalid layer geometry %#", ({ selected }) => {
     expect(jetShapePolygons(mouth, selected, 30, 1)).toEqual([]);
+  });
+
+  it("shares opaque normal alpha across polygon and material consumers without changing legacy ramps", () => {
+    const parsed = readEngineJets(metadata({ coreWidth }))!;
+    const selected = { ...engineJets(parsed, 1), headings: [[mouth]] };
+    for (const f of [0.01, 0.4, 0.8, 1]) {
+      const triangles = jetTriangles(
+        selected,
+        { displayHeight: 96, displayWidth: 96, pivot: { x: 0, y: 0 } },
+        0,
+        f,
+      );
+      expect(triangles).toHaveLength(3);
+      expect(triangles[0]!.alpha).toBe(1);
+      expect(jetLayerAlpha(mouth, layers[0]!, 0, f)).toBe(1);
+    }
+    expect(jetLayerAlpha(mouth, layers[0]!, 0, 0)).toBe(0);
+    expect(jetLayerAlpha({}, layers[0]!, 0, 0.4)).toBe(0);
+    expect(jetLayerAlpha({}, layers[0]!, 0, 1)).toBe(0.5);
   });
 
   it("remains hidden at zero thrust", () => {

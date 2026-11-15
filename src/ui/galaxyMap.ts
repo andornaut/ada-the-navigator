@@ -2,7 +2,7 @@ import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModalit
 
 import { GALAXY_COUNT, type RoutePosition } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
-import type { ShipJets } from "../game/shipJets.ts";
+import { normalJetsInFront, type ShipJets } from "../game/shipJets.ts";
 import type { RouteFlight } from "../model/game.ts";
 import { CARD_SLICE } from "./layout/controls.ts";
 import { font, fromAreaLeft, safeEdge, slice, units } from "./layout/css.ts";
@@ -565,6 +565,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     }
     const jets = thrust && !reduced() ? art?.jets?.() : undefined;
     jetCanvas.hidden = !jets;
+    jetCanvas.style.zIndex = normalJetsInFront(jets, heading) ? "1" : "";
     if (jets) {
       const pixels = Math.max(
         1,

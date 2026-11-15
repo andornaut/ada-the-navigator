@@ -121,6 +121,7 @@ import { hasShipHeadings, loadsOnDemand, selectPaintedShipAsset } from "./shipAr
 import {
   type EngineJets,
   jetTriangles,
+  normalJetsInFront,
   readEngineJets,
   shipJetDirection,
   travelJets,
@@ -1086,7 +1087,10 @@ export class GameScene extends Scene {
         }
       }
     }
-    this.placeAda(flames);
+    this.placeAda(
+      flames,
+      travel === "forward" && normalJetsInFront(activeJets, ship?.directionIndex ?? -1),
+    );
     const activeIds = new Set(flight.objects.map((object) => object.id));
     for (const ally of flight.phantom?.allies ?? []) {
       activeIds.add(`phantomAlly:${ally.id}`);
@@ -1123,14 +1127,14 @@ export class GameScene extends Scene {
 
   /**
    * Ada's depth: her pivot's, raised above any fly-through object her hull and jet flames
-   * overlap, with her jets, their keyline and her tow line just beneath her.
+   * overlap. Normal aperture jets draw above her hull; legacy jets and the tow line stay below.
    */
-  private placeAda(flames: readonly Vec[]): void {
+  private placeAda(flames: readonly Vec[], normalFront = false): void {
     const pivot = playDepth(this.ship.y);
     const depth = adaDepth(this.passable, boxWith(drawnBox(this.ship), flames), pivot);
     this.ship.setDepth(depth);
-    this.jets.setDepth(depth + ADA_LAYERS.jets);
-    this.jetKeyline.setDepth(depth + ADA_LAYERS.jetKeyline);
+    this.jets.setDepth(depth + (normalFront ? -ADA_LAYERS.jetKeyline : ADA_LAYERS.jets));
+    this.jetKeyline.setDepth(depth + (normalFront ? -ADA_LAYERS.jets : ADA_LAYERS.jetKeyline));
     if (this.towDepth !== undefined) {
       // Lifted, the line rides above what Ada overlaps; otherwise behind both of its ends.
       this.towInk.setDepth(

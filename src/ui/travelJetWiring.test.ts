@@ -4,7 +4,7 @@ import data from "../../public/art/quantum-jump.json";
 import mainData from "../../public/art/ship-jets.json";
 import { LIGHT_FIELD } from "../game/lightField.ts";
 import { type QuantumJump, readQuantumJump } from "../game/quantumJump.ts";
-import { readEngineJets } from "../game/shipJets.ts";
+import { type JetGeometry, readEngineJets } from "../game/shipJets.ts";
 import { staticShipJets } from "../game/staticShipJets.ts";
 import { createGalaxyMap, type GalaxyMapView } from "./galaxyMap.ts";
 import { createJumpOverlay, type SheetArt } from "./jumpOverlay.ts";
@@ -56,7 +56,7 @@ function dom() {
     dataset: Record<string, string> = {};
     height = 0;
     hidden = false;
-    style = { backgroundImage: "", removeProperty() {}, setProperty() {} };
+    style = { backgroundImage: "", removeProperty() {}, setProperty() {}, zIndex: "" };
     width = 0;
     textContent = "";
     readonly attributes = new Map<string, string>();
@@ -169,6 +169,21 @@ function effect(pose = "bank-16"): QuantumJump {
   };
 }
 
+function apertureGeometry(geometry: JetGeometry): JetGeometry {
+  return {
+    ...geometry,
+    headings: geometry.headings.map((mouths) =>
+      mouths.map(({ anchor, axis, half }) => ({
+        anchor,
+        axis,
+        half,
+        normalAperture: { coreWidth: 6.875 / 18.72 },
+        occluders: [],
+      })),
+    ),
+  };
+}
+
 function play(reducedMotion = false) {
   const scene = { center: { x: 480, y: 270 }, heading: 0, specks: [] };
   return {
@@ -218,6 +233,37 @@ describe("warp material wiring", () => {
     expect(running.onCover).toHaveBeenCalledTimes(1);
     overlay.dispose();
     expect(fixture.callbacks.size).toBe(0);
+  });
+
+  it("draws complete normal aperture warp triangles after the hull", () => {
+    const fixture = dom();
+    const jump = effect();
+    const overlay = createJumpOverlay(fixture.host, {
+      field: sheet,
+      glow: sheet,
+      jump: {
+        ...jump,
+        warp: {
+          ...jump.warp,
+          poses: jump.warp.poses.map((pose) => ({
+            ...pose,
+            ...(pose.jets ? { jets: apertureGeometry(pose.jets) } : {}),
+          })),
+        },
+      },
+      star: sheet,
+      tunnel: sheet,
+    });
+    overlay.setPaint({
+      jets: () => staticShipJets(main, undefined, 1),
+      scheme: "classic",
+      sprites: Array.from({ length: 64 }, () => "idle.svg"),
+    });
+    overlay.play(play());
+    fixture.tick(10);
+    expect(drawShipJets).toHaveBeenCalled();
+    expect(events.lastIndexOf("jets")).toBeGreaterThan(events.lastIndexOf("image"));
+    overlay.dispose();
   });
 
   it.each([false, true])(
@@ -293,7 +339,11 @@ it("draws route thrust below the painted hull and hides it under reduced motion"
   expect(earthMarker.querySelector(".ada-route-disc")!.textContent).toBe("");
   expect(firstMarker.querySelector(".ada-route-disc")!.textContent).toBe("1");
   expect(earthMarker.attributes.get("aria-label")).toBe("Earth");
-  const provider = vi.fn(() => staticShipJets(main, LIGHT_FIELD.jets.shipLevels, 3));
+  let normal = false;
+  const normalMain = { ...main, ...apertureGeometry(main) };
+  const provider = vi.fn(() =>
+    staticShipJets(normal ? normalMain : main, LIGHT_FIELD.jets.shipLevels, 3),
+  );
   map.setArt({
     figures: [],
     ground: "",
@@ -309,6 +359,13 @@ it("draws route thrust below the painted hull and hides it under reduced motion"
   const ship = fixture.nodes.find(({ className }) => className === "ada-route-ship")!;
   expect(ship.children[0]!.tag).toBe("canvas");
   expect(ship.children[1]!.style.backgroundImage).toContain("cobalt-");
+  expect(ship.children[0]!.style.zIndex).toBe("");
+  normal = true;
+  fixture.tick(550);
+  expect(ship.children[0]!.style.zIndex).toBe("1");
+  normal = false;
+  fixture.tick(575);
+  expect(ship.children[0]!.style.zIndex).toBe("");
   const calls = vi.mocked(drawShipJets).mock.calls.length;
   reduced = true;
   fixture.tick(600);

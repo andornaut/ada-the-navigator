@@ -37,6 +37,16 @@ export function layerAlpha(layer: JetShapeLayer, f: number): number {
   return Math.min(1, Math.max(0, (f - from) / (to - from))) * max;
 }
 
+/** The normal aperture's widest authored layer is solid at any positive thrust. */
+export function jetLayerAlpha(
+  mouth: Pick<JetShapeMouth, "normalAperture">,
+  layer: JetShapeLayer,
+  layerIndex: number,
+  f: number,
+): number {
+  return mouth.normalAperture && layerIndex === 0 ? (f > 0 ? 1 : 0) : layerAlpha(layer, f);
+}
+
 /** Outboard displacement in signed half-mouth units, bounded by outer/core containment. */
 export function coreOutboardOffset(layers: readonly JetShapeLayer[]): number | undefined {
   const outer = layers.find((layer) => layer.name === "outer");
@@ -136,7 +146,7 @@ function normalAperturePolygons(
     }
     previousWidth = width;
     previousLength = layer.length;
-    if (layerAlpha(layer, fraction) <= 0) {
+    if (jetLayerAlpha(mouth, layer, layerIndex, fraction) <= 0) {
       continue;
     }
     const { anchor, axis, half } = mouth;

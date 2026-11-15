@@ -1,7 +1,7 @@
 import { type JetDisplay, jetTriangles, type ShipJets } from "../game/shipJets.ts";
 import type { Vec } from "../model/types.ts";
 
-/** Draws the shared projected polygons in logical canvas coordinates, behind the hull. */
+/** Draws the shared projected polygons in logical canvas coordinates at the caller-selected hull order. */
 export function drawShipJets(
   context: CanvasRenderingContext2D,
   jets: ShipJets,

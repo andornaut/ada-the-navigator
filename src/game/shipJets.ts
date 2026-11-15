@@ -1,5 +1,5 @@
-import { jetShapePolygons, layerAlpha } from "./jetGeometry.ts";
-export { coreOutboardOffset, layerAlpha } from "./jetGeometry.ts";
+import { jetLayerAlpha, jetShapePolygons } from "./jetGeometry.ts";
+export { coreOutboardOffset, jetLayerAlpha, layerAlpha } from "./jetGeometry.ts";
 
 import { readShipHeadingContract, SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
 import type { Vec } from "../model/types.ts";
@@ -370,6 +370,16 @@ export function readEngineJets(value: unknown): EngineJets | undefined {
     : undefined;
 }
 
+/** Only explicitly normal aperture mouths draw their complete triangles in front of the hull. */
+export function normalJetsInFront(jets: JetGeometry | undefined, heading: number): boolean {
+  const mouths = jets?.headings[heading];
+  return (
+    mouths !== undefined &&
+    mouths.length > 0 &&
+    mouths.every((mouth) => mouth.normalAperture !== undefined)
+  );
+}
+
 /** Jet length in ship units at speed fraction f. */
 export function jetLength(jets: JetGeometry, f: number): number {
   return jets.length.base + jets.length.scale * f ** jets.length.exponent;
@@ -420,7 +430,7 @@ export function jetTriangles(
       fraction,
     )) {
       const layer = jets.layers[layerIndex]!;
-      const alpha = layerAlpha(layer, fraction);
+      const alpha = jetLayerAlpha(mouth, layer, layerIndex, fraction);
       for (let i = 1; i + 1 < clipped.length; i++) {
         const a = clipped[0]!,
           b = clipped[i]!,
