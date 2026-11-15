@@ -71,8 +71,10 @@ function takeContract(model: GameModel): void {
 function atPlace(galaxy: GalaxyNumber, place: string, resolved = true) {
   const model = new GameModel(CONTENT);
   model.state.unlocked = [1, 2, 3];
-  model.startGalaxy(galaxy);
-  playOpening(model);
+  if (galaxy !== 3) {
+    model.startGalaxy(galaxy);
+    playOpening(model);
+  }
   const progress = model.state.progress[galaxy];
   Object.assign(progress, {
     holodisk: true,
@@ -82,6 +84,10 @@ function atPlace(galaxy: GalaxyNumber, place: string, resolved = true) {
     stage: galaxy === 1 ? 4 : 5,
   });
   progress.known = [...new Set([...progress.known, place])];
+  if (galaxy === 3) {
+    model.startGalaxy(galaxy);
+    playOpening(model);
+  }
   model.state.dialogue = null;
   const flight = model.state.flight!;
   flight.objects = [];

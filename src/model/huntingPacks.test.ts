@@ -4,6 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { HUNTING_PACKS } from "../data/galaxyFeatures.ts";
 import {
+  activateRequiredWhirlpoolRoute,
   createFlight,
   ensureDestination,
   ensureHuntingPacks,
@@ -79,6 +80,9 @@ describe("hunting packs", () => {
     model.state.dialogue = null;
     const flight = model.state.flight!;
     flight.velocity = { x: 1, y: 0 };
+    expect(activateRequiredWhirlpoolRoute(CONTENT, model.state.progress[3], flight, "family")).toBe(
+      true,
+    );
     const family = ensureDestination(CONTENT, "family", flight);
     flight.player = { x: family.x + 200, y: family.y };
     ensureHuntingPacks(CONTENT, flight);

@@ -121,7 +121,7 @@ it("keeps the real G3 holodisk leader and pack outside Sunflower required-site p
   model.state.dialogue = null;
   const flight = model.state.flight!;
   expect(flight.galaxy).toBe(3);
-  expect(flight.requiredPlans).toBeUndefined();
+  expect(Object.keys(flight.requiredPlans ?? {})).toEqual([]);
   model.step(SIMULATION_STEP_SECONDS, idle);
   expect(flight.objects.some(({ id }) => id === "holodisk")).toBe(true);
   const population = stationPopulationObjects(flight);

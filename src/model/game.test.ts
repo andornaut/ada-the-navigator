@@ -10,19 +10,26 @@ import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import { playOpening, readStory, relaunch } from "../testing/launch.ts";
 import { nearestSettlerStation } from "./andromedaPlaces.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
-import { createEnemy } from "./enemyAi.ts";
+import { createEnemy, damageEnemy } from "./enemyAi.ts";
+import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
 import {
   activateRequiredRoute,
   ensureDestination,
+  ensureHuntingPacks,
   ensureRouteEncounter,
   ensureStation,
+  populateFlight,
   routeBlocked,
   routeGuardPlanResult,
   syncFlightRegion,
 } from "./flight.ts";
+import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
+import { worldRecordObjectRemoval } from "./geography.ts";
+import { stationPopulationObjects } from "./hostileStations.ts";
 import { needleCourses } from "./needle.ts";
 import { rememberRequiredSite } from "./requiredEncounterPlans.ts";
+import { readRequiredRolePlan } from "./requiredRolePlans.ts";
 import type { FlightState } from "./types.ts";
 import { collectWeapon } from "./weapons.ts";
 
@@ -98,11 +105,32 @@ it("offers Salvage beside a disabled heavy and salvages it on Use", () => {
 });
 function arrive(model: GameModel, id: string) {
   const f = model.state.flight!;
+  if (f.galaxy === 3 && readRequiredRolePlan(f, id)) {
+    const progress = model.state.progress[3];
+    f.freshDistance = Math.max(
+      f.freshDistance,
+      CONTENT.tuning.introFreshDistance + progress.stage * CONTENT.tuning.encounterFreshDistance,
+    );
+    model.step(0.001, idle);
+  }
   ensureDestination(CONTENT, id, f);
   const target = f.objects.find((o) => o.id === id)!;
   f.player = { x: target.x, y: target.y };
   // Direct test travel settles the active region as production travel does.
   syncFlightRegion(CONTENT, f);
+  if (f.galaxy === 3) {
+    const guard = stationPopulationObjects(f).find((actor) => actor.routeId === id);
+    if (guard?.enemy) {
+      const definition = enemyEquipmentDefinition(f.galaxy, guard.enemy);
+      for (const part of definition.hardpoints.filter((part) => part.kind === "weapon")) {
+        guard.enemy = damageEnemy(
+          definition,
+          { amount: part.hp, hardpointId: part.id },
+          guard.enemy,
+        );
+      }
+    }
+  }
   if (
     f.galaxy === 1 &&
     (f.requiredPlans?.[id] || routeGuardPlanResult(f, id).status !== "unknown")
@@ -585,10 +613,30 @@ it("places whale debris offscreen and preserves pre-introduction clearing", () =
   for (const obstruction of debris) {
     f.player = { x: obstruction.x - 300, y: obstruction.y };
     f.velocity = { x: 0, y: 0 };
+    populateFlight(CONTENT, model.state.progress[3], f);
+    ensureHuntingPacks(CONTENT, f);
+    for (const actor of stationPopulationObjects(f).filter((actor) => actor.kind === "enemy")) {
+      worldRecordObjectRemoval(flightWorldContext(f), CONTENT, actor, f);
+    }
+    f.objects = f.objects.filter(
+      (object) => object.kind === "destination" || object.id.startsWith("whale-debris:"),
+    );
     for (let i = 0; i < 400 && f.objects.some((o) => o.id === obstruction.id); i++) {
       model.step(0.05, { ...idle, aim: { x: 1, y: 0 } });
     }
-    expect(f.objects.some((o) => o.id === obstruction.id)).toBe(false);
+    expect(
+      f.objects.some((o) => o.id === obstruction.id),
+      JSON.stringify({
+        dialogue: model.state.dialogue?.context,
+        hp: obstruction.hp,
+        mode: model.state.mode,
+        player: f.player,
+        screen: model.screen,
+        shield: f.shield,
+        target: obstruction,
+        time: f.time,
+      }),
+    ).toBe(false);
   }
   expect(model.state.progress[3].introduced).toBe(false);
   expect(model.state.progress[3].stage).toBe(2);
@@ -605,7 +653,7 @@ it("places whale debris offscreen and preserves pre-introduction clearing", () =
   expect(restored.state.progress[3].questComplete).toBe(true);
 });
 
-it("keeps remaining whale debris aligned when an unknown encounter is placed ahead again", () => {
+it("keeps remaining whale debris aligned at its fixed required site as Ada explores", () => {
   const model = new GameModel(CONTENT);
   model.state.unlocked.push(2, 3);
   launch(model, 3);
@@ -621,7 +669,8 @@ it("keeps remaining whale debris aligned when an unknown encounter is placed ahe
   f.freshChunk = `${Math.floor(f.player.x / chunkSize)},${Math.floor(f.player.y / chunkSize)}`;
   model.step(0.01, { ...idle, move: { x: 1, y: 0 } });
   const relocated = f.objects.find((o) => o.id === "whale")!;
-  expect(relocated.x).not.toBe(whale.x);
+  expect({ x: relocated.x, y: relocated.y }).toEqual(model.state.progress[3].requiredSites!.whale);
+  expect(relocated).toBe(whale);
   debris.forEach((o, i) => {
     expect(o.x - relocated.x).toBeCloseTo(offsets[i]!.x);
     expect(o.y - relocated.y).toBeCloseTo(offsets[i]!.y);

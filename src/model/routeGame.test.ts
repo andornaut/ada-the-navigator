@@ -15,6 +15,10 @@ function approach(galaxy: GalaxyNumber) {
   playOpening(model);
   const flight = model.state.flight!;
   flight.objects = [];
+  if (galaxy === 3) {
+    flight.freshDistance = CONTENT.tuning.introFreshDistance;
+    model.step(1 / 60, idle);
+  }
   const target = ensureDestination(CONTENT, galaxyRoute(galaxy)[0]!, flight);
   flight.player = { x: target.x, y: target.y };
   model.step(1 / 60, idle);
