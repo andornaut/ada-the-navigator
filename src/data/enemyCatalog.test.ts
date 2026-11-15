@@ -88,6 +88,12 @@ describe("heavy weapon mounts", () => {
 });
 
 describe("enemy weapon damage", () => {
+  it("uses approved six damage for Lance without changing Mine or Ring", () => {
+    expect(fireDamageRatio({ level: 1, weapon: "chargedLance" })).toBe(6);
+    expect(fireDamageRatio({ level: 1, weapon: "mineLayer" })).toBe(3);
+    expect(fireDamageRatio({ level: 1, weapon: "ringBurst" })).toBe(1.5);
+  });
+
   it("deals Ada's level 1 damage with every shared weapon, no exceptions", () => {
     for (const weapon of Object.keys(WEAPON_CATALOG) as Weapon[]) {
       expect(fireDamageRatio({ level: 1, weapon }), weapon).toBe(weaponAt(weapon, 1).damageRatio);

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   ENEMY_AIM,
+  ENEMY_ONLY_DAMAGE,
   type EnemyArchetype,
   enemyCatalog,
   type EnemyDefinition,
@@ -1152,7 +1153,9 @@ describe("enemy damage", () => {
     expect(fireDamageRatio({ level: 1, weapon: "laser" })).toBe(1);
     expect(fireDamageRatio({ level: 1, weapon: "ringBurst" })).toBe(1.5);
     expect(fireDamageRatio({ level: 1, weapon: "mineLayer" })).toBe(3);
-    expect(fireDamageRatio({ level: 1, weapon: "chargedLance" })).toBe(3);
+    expect(fireDamageRatio({ level: 1, weapon: "chargedLance" })).toBe(
+      ENEMY_ONLY_DAMAGE.chargedLance,
+    );
   });
 
   it("fires each volley with its profile's damage", () => {

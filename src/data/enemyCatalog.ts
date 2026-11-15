@@ -829,10 +829,10 @@ export function encounterTable(galaxy: GalaxyNumber): readonly EncounterEntry[] 
 
 /**
  * The enemy-only weapons' damage per hit as multiples of base shot damage (gameplay/ships.md
- * "Enemy weapons"): a ring burst bolt 1.5, a mine 3 and a charged lance 3.
+ * "Enemy weapons"): a ring burst bolt 1.5, a mine 3 and a charged lance 6.
  */
 export const ENEMY_ONLY_DAMAGE: Readonly<Record<EnemyOnlyWeapon, number>> = {
-  chargedLance: 3,
+  chargedLance: 6,
   mineLayer: 3,
   ringBurst: 1.5,
 };

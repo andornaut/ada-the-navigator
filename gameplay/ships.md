@@ -260,7 +260,7 @@ Projectile speeds are world units per second. The three enemy-only weapons:
   destroy mines (1 HP), and mines vanish after 20 seconds.
 - **Charged lance:** every 6 seconds, a beam as long as the game area is wide.
   A thin line tracks Ada for 0.7 seconds, then holds still for 0.3 seconds, then
-  the beam fires along it for 3 damage. It stops at the first obstacle, like the Phaser.
+  the beam fires along it for 6 damage per hit. It stops at the first obstacle, like the Phaser.
 
 Tell lines (the lance's tracking and locked lines and the Phaser's aim line) stop
 at the first obstacle, as their beams do, so cover reads. The ring burst has no
