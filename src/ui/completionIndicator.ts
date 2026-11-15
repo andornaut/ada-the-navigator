@@ -1,3 +1,4 @@
+import { FRAME_LINE } from "./layout/controls.ts";
 import { units } from "./layout/css.ts";
 import { UI_SCOPE } from "./modal.ts";
 import { STATUS_COLOURS } from "./statusPill.ts";
@@ -16,7 +17,7 @@ ${UI_SCOPE} .ada-completion{
   flex:none;
   width:${units(COMPLETION_INDICATOR.size)};
   height:${units(COMPLETION_INDICATOR.size)};
-  border:${units(2)} solid ${COMPLETION_INDICATOR.incomplete};
+  border:${units(FRAME_LINE)} solid ${COMPLETION_INDICATOR.incomplete};
   background:transparent;
   color:#181425;
   font:bold ${units(COMPLETION_INDICATOR.size)} / 1 sans-serif

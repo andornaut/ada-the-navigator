@@ -21,7 +21,7 @@ function production(name: string) {
     compilerOptions: { target: ts.ScriptTarget.ES2023 },
   }).outputText;
 }
-function fixture(light: boolean) {
+function fixture(light: boolean, reducedMotion = false) {
   const overlay = {
     arc: vi.fn(),
     beginPath: vi.fn(),
@@ -36,11 +36,13 @@ function fixture(light: boolean) {
     palette: { obstacle: 0x123456 },
     project: () => ({ x: 100, y: 150 }),
     quantum: null,
+    reducedMotion,
   };
   const context = createContext({ EMERGENCY_RETURN, LIGHT_FIELD });
   context.drawPulse = runInContext(production("drawPulse"), context);
   const draw = runInContext(production("drawCompromisedShield"), context) as (
     scene: unknown,
+    elapsed: number,
   ) => void;
   return {
     draw,
@@ -50,30 +52,39 @@ function fixture(light: boolean) {
   };
 }
 
-describe("frozen compromised shield", () => {
-  it.each([false, true])(
-    "reuses the damage outline at a static radius with a dark damaged sector (light:%s)",
-    (light) => {
-      const { draw, overlay, scene } = fixture(light);
-      draw(scene);
-      expect(overlay.strokeCircle).toHaveBeenLastCalledWith(100, 150, 23);
-      expect(overlay.lineStyle).toHaveBeenCalledWith(3, 0xe43b44, 1);
-      expect(overlay.lineStyle).toHaveBeenLastCalledWith(3, 0x300c14, 1);
-      expect(overlay.arc).toHaveBeenCalledWith(100, 150, 23, (-3 * Math.PI) / 4, -Math.PI / 4);
-      expect(overlay.strokePath).toHaveBeenCalledOnce();
-      expect(overlay.lineBetween).toHaveBeenCalledTimes(light ? 4 : 2);
-      if (light) {
-        expect(overlay.lineStyle).toHaveBeenCalledWith(
-          3 + 2 * LIGHT_FIELD.keyline,
-          LIGHT_FIELD.ink,
-          1,
-        );
-      }
-      const first = overlay.strokeCircle.mock.calls.slice();
-      draw(scene);
-      expect(overlay.strokeCircle.mock.calls.slice(first.length)).toEqual(first);
-    },
-  );
+describe("compromised shield presentation", () => {
+  it.each([
+    { light: false, reducedMotion: false },
+    { light: true, reducedMotion: false },
+    { light: false, reducedMotion: true },
+    { light: true, reducedMotion: true },
+  ])("animates the damage outline except with reduced motion (%j)", ({ light, reducedMotion }) => {
+    const { draw, overlay, scene } = fixture(light, reducedMotion);
+    draw(scene, 0);
+    expect(overlay.strokeCircle).toHaveBeenLastCalledWith(100, 150, 23);
+    expect(overlay.lineStyle).toHaveBeenCalledWith(3, 0xe43b44, 1);
+    expect(overlay.lineStyle).toHaveBeenLastCalledWith(3, 0x300c14, 1);
+    expect(overlay.arc).toHaveBeenCalledWith(100, 150, 23, (-3 * Math.PI) / 4, -Math.PI / 4);
+    expect(overlay.strokePath).toHaveBeenCalledOnce();
+    expect(overlay.lineBetween).toHaveBeenCalledTimes(light ? 4 : 2);
+    if (light) {
+      expect(overlay.lineStyle).toHaveBeenCalledWith(
+        3 + 2 * LIGHT_FIELD.keyline,
+        LIGHT_FIELD.ink,
+        1,
+      );
+    }
+    draw(scene, 1);
+    const radius = reducedMotion ? 23 : 78;
+    expect(overlay.strokeCircle).toHaveBeenLastCalledWith(100, 150, radius);
+    expect(overlay.arc).toHaveBeenLastCalledWith(
+      100,
+      150,
+      radius,
+      (-3 * Math.PI) / 4,
+      -Math.PI / 4,
+    );
+  });
 
   it("retains normal damage's fading feedback instead of applying the held shield style globally", () => {
     const { overlay, pulse, scene } = fixture(false);
