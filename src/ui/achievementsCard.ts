@@ -1,6 +1,8 @@
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
+import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { SCREEN } from "../data/screen.ts";
+import { type AchievementsLayoutSchema, achievementsTree } from "./achievementsTree.ts";
 import { bindAdaAction } from "./actionBinding.ts";
 import { COMPLETION_INDICATOR, createCompletionIndicator } from "./completionIndicator.ts";
 import { listCardHeader } from "./layout/cardFrame.ts";
@@ -160,8 +162,11 @@ ${UI_SCOPE} .ada-achievement-pager > p{
 }
 `;
 
-function entryNode(labels: AchievementsLabels, entry: AchievementEntry): HTMLElement {
-  const node = document.createElement("li");
+function entryNode(
+  labels: AchievementsLabels,
+  entry: AchievementEntry,
+  node: HTMLElement = document.createElement("li"),
+): HTMLElement {
   node.className = "ada-achievement";
   node.dataset.unlocked = String(entry.unlocked);
   const badge = createCompletionIndicator(entry.name, entry.unlocked);
@@ -176,7 +181,7 @@ function entryNode(labels: AchievementsLabels, entry: AchievementEntry): HTMLEle
   const condition = document.createElement("span");
   condition.className = "ada-achievement-condition";
   condition.textContent = entry.condition;
-  node.append(badge, name, count, condition);
+  node.replaceChildren(badge, name, count, condition);
   return node;
 }
 
@@ -210,13 +215,16 @@ export function createAchievementsCard(
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
-  const card = createCard({
-    closeAction: "close-achievements",
-    closeLabel: labels.close,
-    list: true,
-    size: "large",
-    title: labels.title,
+  const initialTree = achievementsTree({
+    entries: [],
+    entryOffset: 0,
+    labels,
+    nextHidden: true,
+    pageText: fillPage(labels.page, 1, 1),
+    pagerHidden: true,
+    previousHidden: true,
   });
+  const card = createCard(initialTree.props.card);
   card.card.dataset.dialog = "achievements";
   const list = document.createElement("ul");
   list.className = "ada-achievement-list";
@@ -232,10 +240,63 @@ export function createAchievementsCard(
   const pageCount = document.createElement("p");
   const next = createButton(labels.next);
   next.dataset.action = "achievements-next";
-  pager.append(previous, pageCount, next);
   card.body.append(list, pager);
   modal.append(card.frame);
   root.append(modal);
+  const mounted = mountLayout<AchievementsLayoutSchema>(
+    {
+      components: {
+        achievements: {
+          create(initial) {
+            const update = (data: AchievementsLayoutSchema["achievements"]["props"]) => {
+              pager.hidden = data.pagerHidden;
+            };
+            update(initial);
+            return { dispose() {}, element: card.frame, slots: { entries: list, pager }, update };
+          },
+          slots: ["entries", "pager"],
+        },
+        entry: {
+          create(initial) {
+            const node = entryNode(initial.labels, initial.entry);
+            return {
+              dispose() {},
+              element: node,
+              slots: {},
+              update: (data) => {
+                entryNode(data.labels, data.entry, node);
+              },
+            };
+          },
+          slots: [],
+        },
+        pageCount: {
+          create(initial) {
+            const update = (data: AchievementsLayoutSchema["pageCount"]["props"]) => {
+              pageCount.textContent = data.text;
+            };
+            update(initial);
+            return { dispose() {}, element: pageCount, slots: {}, update };
+          },
+          slots: [],
+        },
+        pagerAction: {
+          create(initial) {
+            const button = initial.actionId === "achievements-previous" ? previous : next;
+            const update = (data: AchievementsLayoutSchema["pagerAction"]["props"]) => {
+              button.textContent = data.label;
+              button.hidden = data.hidden;
+            };
+            update(initial);
+            return { dispose() {}, element: button, slots: {}, update };
+          },
+          slots: [],
+        },
+      },
+      host: modal,
+    },
+    initialTree,
+  );
   let entries: readonly AchievementEntry[] = [];
   let page = 0;
   let perPage = ACHIEVEMENTS_PER_PAGE;
@@ -261,13 +322,17 @@ export function createAchievementsCard(
       "--ada-achievement-rows",
       String(Math.ceil(Math.min(perPage, entries.length) / columns)),
     );
-    list.replaceChildren(
-      ...achievementPage(entries, page, perPage).map((entry) => entryNode(labels, entry)),
+    mounted.update(
+      achievementsTree({
+        entries: achievementPage(entries, page, perPage),
+        entryOffset: page * perPage,
+        labels,
+        nextHidden: page === pages - 1,
+        pageText: fillPage(labels.page, page + 1, pages),
+        pagerHidden: pages === 1,
+        previousHidden: page === 0,
+      }),
     );
-    pager.hidden = pages === 1;
-    pageCount.textContent = fillPage(labels.page, page + 1, pages);
-    previous.hidden = page === 0;
-    next.hidden = page === pages - 1;
     if (!modal.hidden) {
       card.fit();
       if ((focused === previous && previous.hidden) || (focused === next && next.hidden)) {
@@ -329,6 +394,7 @@ export function createAchievementsCard(
         binding.dispose();
       }
       window.removeEventListener(VIEW_SCALE_EVENT, render);
+      mounted.dispose();
       card.dispose();
       modal.remove();
     },

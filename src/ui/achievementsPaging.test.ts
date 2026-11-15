@@ -13,7 +13,7 @@ class Element {
   hidden = false;
   readonly listeners = new Map<string, (() => void)[]>();
   parent: Element | undefined;
-  readonly style = { setProperty: vi.fn() };
+  readonly style = { getPropertyValue: () => "", removeProperty: vi.fn(), setProperty: vi.fn() };
   textContent = "";
   addEventListener(type: string, callback: () => void) {
     this.listeners.set(type, [...(this.listeners.get(type) ?? []), callback]);
@@ -24,10 +24,30 @@ class Element {
       (this.listeners.get(type) ?? []).filter((item) => item !== callback),
     );
   }
+  get ownerDocument() {
+    return document;
+  }
+  get parentNode(): Element | null {
+    return this.parent ?? null;
+  }
+  get nextSibling(): Element | null {
+    return this.parent?.children[this.parent.children.indexOf(this) + 1] ?? null;
+  }
+  contains(node: unknown): boolean {
+    return node === this || this.children.some((child) => child.contains(node));
+  }
+  insertBefore(node: Element, before: Element | null): Element {
+    if (node === before) {
+      return node;
+    }
+    node.remove();
+    node.parent = this;
+    this.children.splice(before ? this.children.indexOf(before) : this.children.length, 0, node);
+    return node;
+  }
   append(...nodes: Element[]) {
     for (const node of nodes) {
-      node.parent = this;
-      this.children.push(node);
+      this.insertBefore(node, null);
     }
   }
   click() {
@@ -35,10 +55,16 @@ class Element {
   }
   remove() {
     this.parent?.children.splice(this.parent.children.indexOf(this), 1);
+    this.parent = undefined;
   }
   replaceChildren(...nodes: Element[]) {
-    this.children.splice(0);
+    for (const child of [...this.children]) {
+      child.remove();
+    }
     this.append(...nodes);
+  }
+  removeAttribute(key: string) {
+    this.attributes.delete(key);
   }
   setAttribute(key: string, value: string) {
     this.attributes.set(key, value);
