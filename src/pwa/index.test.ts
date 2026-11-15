@@ -120,6 +120,7 @@ describe("offline play", () => {
     pwa.setupPhoneApp();
     const options = offline.start.mock.calls[0]![0];
     expect(Object.keys(options).sort()).toEqual([
+      "onDownloadProgress",
       "onOfflineActivity",
       "onRequireNewer",
       "onUpdateShown",

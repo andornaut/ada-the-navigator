@@ -11,6 +11,7 @@ import {
   type DomProgressTiming,
 } from "@andornaut/game-kit/web/progress/dom/progressBar";
 import type { OfflineActivity } from "@andornaut/game-kit/web/pwa/dom/offlinePlay";
+import type { DownloadProgress } from "@andornaut/game-kit/web/pwa/downloadProgress";
 import type { RequiredUpdateState } from "@andornaut/game-kit/web/pwa/updateReady";
 
 import { SCREEN } from "../data/screen.ts";
@@ -58,6 +59,30 @@ const FRAME = { height: LOADING_BAR.fillHeight, width: SCREEN.width, x: 0, y: 0 
 // Offline installation and forced updates share the bar while either still runs.
 const background = new Set<"activation" | "offline" | "required">();
 let install: ProgressHandle | undefined;
+let download: DownloadProgress | undefined;
+const retiredDownloads = new Set<string>();
+const downloadKey = (value: DownloadProgress) => JSON.stringify([value.operationId, value.version]);
+
+/** Only the kit's worker-scoped precache/update reports measure the background band. */
+export function offlineDownloadProgress(snapshot: DownloadProgress): void {
+  const key = downloadKey(snapshot);
+  if (
+    retiredDownloads.has(key) ||
+    (download?.operationId === snapshot.operationId && download.version !== snapshot.version)
+  ) {
+    return;
+  }
+  if (download && downloadKey(download) !== key) {
+    retiredDownloads.add(downloadKey(download));
+  }
+  download = snapshot;
+  if (background.has("offline")) {
+    install?.progress(snapshot.value);
+  }
+  if (snapshot.phase === "complete" || snapshot.phase === "failed") {
+    retiredDownloads.add(key);
+  }
+}
 
 function showBackground(reason: "activation" | "offline" | "required", shown: boolean): void {
   if (shown) {
@@ -75,7 +100,20 @@ function showBackground(reason: "activation" | "offline" | "required", shown: bo
 
 /** Offline installation uses the existing bar until precaching or updating ends. */
 export function offlineActivity(activity: OfflineActivity): void {
-  showBackground("offline", activity !== "idle");
+  if (activity === "idle") {
+    if (download) {
+      retiredDownloads.add(downloadKey(download));
+      download = undefined;
+    }
+    showBackground("offline", false);
+    // Activation and a required update remain pending work of unobserved size.
+    install?.progress(undefined);
+  } else {
+    showBackground("offline", true);
+    if (download) {
+      install?.progress(download.value);
+    }
+  }
 }
 
 /** Explicit Update now keeps the bar visible through activation, independently of installation. */

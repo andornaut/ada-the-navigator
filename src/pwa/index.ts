@@ -42,6 +42,7 @@ import type { RequiredUpdateState } from "@andornaut/game-kit/web/pwa/updateRead
 
 import {
   offlineActivity,
+  offlineDownloadProgress,
   requiredUpdateActivity,
   updateActivationActivity,
 } from "../loading/progress.ts";
@@ -114,6 +115,7 @@ function setupOfflinePlay(): void {
   }
   const play = startOfflinePlay(
     {
+      onDownloadProgress: offlineDownloadProgress,
       onOfflineActivity: offlineActivity,
       onRequireNewer: requiredUpdate,
       onUpdateShown: updateOffer.setVisible,

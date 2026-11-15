@@ -5,7 +5,9 @@ import {
   installProgress,
   loadingProgress,
   offlineActivity,
+  offlineDownloadProgress,
   requiredUpdateActivity,
+  updateActivationActivity,
 } from "./progress.ts";
 
 describe("the loading bar's background layer", () => {
@@ -63,5 +65,52 @@ it("leaves measured foreground loading intact while an offline update begins and
   offlineActivity("idle");
   expect(snapshots.at(-1)).toEqual({ active: true, value: 0.4 });
   load.finish();
+  stop();
+});
+
+it("uses measured worker progress on the existing background handle and leaves other work pending", () => {
+  const snapshots: ProgressSnapshot[] = [];
+  const stop = installProgress.subscribe((snapshot) => snapshots.push(snapshot));
+  const report = (phase: "checking" | "downloading" | "verifying" | "complete", value?: number) =>
+    offlineDownloadProgress({ operationId: "measured-worker", phase, value, version: "build-one" });
+  report("checking");
+  expect(snapshots.at(-1)!.active).toBe(false);
+  offlineActivity("precaching");
+  report("downloading", 0.4);
+  expect(snapshots.at(-1)).toEqual({ active: true, value: 0.4 });
+  report("verifying");
+  expect(snapshots.at(-1)).toEqual({ active: true, value: undefined });
+  report("complete", 1);
+  expect(snapshots.at(-1)).toEqual({ active: true, value: 1 });
+  updateActivationActivity(true);
+  offlineActivity("idle");
+  expect(snapshots.at(-1)).toEqual({ active: true, value: undefined });
+  updateActivationActivity(false);
+  expect(snapshots.at(-1)!.active).toBe(false);
+  stop();
+});
+
+it("ignores retired operations and mismatched versions without completing a newer wait", () => {
+  const snapshots: ProgressSnapshot[] = [];
+  const stop = installProgress.subscribe((snapshot) => snapshots.push(snapshot));
+  offlineActivity("updating");
+  const report = (
+    operationId: string,
+    version: string,
+    value: number,
+    phase: "downloading" | "complete" = "downloading",
+  ) => offlineDownloadProgress({ operationId, phase, value, version });
+  report("stale-worker", "old", 0.2);
+  report("new-worker", "new", 0.3);
+  report("stale-worker", "old", 1, "complete");
+  report("new-worker", "wrong", 0.9);
+  expect(snapshots.at(-1)).toEqual({ active: true, value: 0.3 });
+  report("new-worker", "new", 0.6);
+  expect(snapshots.at(-1)).toEqual({ active: true, value: 0.6 });
+  offlineActivity("idle");
+  requiredUpdateActivity("updating");
+  report("new-worker", "new", 1, "complete");
+  expect(snapshots.at(-1)).toEqual({ active: true, value: undefined });
+  requiredUpdateActivity("unavailable");
   stop();
 });
