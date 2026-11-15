@@ -46,17 +46,41 @@ export function worldNavigationQuery(
   if (!candidates.length) {
     return undefined;
   }
+  // Frames and silhouettes are fixed for this query's simulation slice.
+  const obstacles = candidates.map((object) => {
+    const drawn = context.drawnOf(object);
+    const frame = context.frameOf(object);
+    const outline =
+      drawn?.frames[((frame % drawn.frames.length) + drawn.frames.length) % drawn.frames.length];
+    return {
+      drawn,
+      frame,
+      object,
+      outline,
+      reach: outline ? partsReach(worldParts(outline)) : 0,
+    };
+  });
+  let previousPose: NavigationPose | undefined;
+  let body: ReturnType<typeof enemyHull> = null;
+  let bodyReach = enemy.radius;
   const contact = (
     pose: NavigationPose,
     clearance: number,
-    object: SpaceObject,
+    obstacle: (typeof obstacles)[number],
   ): Contact | null => {
-    const body = enemyHull({ archetype: enemy.archetype, facing: pose.facing });
-    const drawn = context.drawnOf(object);
-    const frame = context.frameOf(object);
+    if (previousPose !== pose) {
+      previousPose = pose;
+      body = enemyHull({ archetype: enemy.archetype, facing: pose.facing });
+      bodyReach = body ? partsReach(worldParts(body)) : enemy.radius;
+    }
+    const { drawn, frame, object, outline, reach } = obstacle;
     const image = worldPoint(context, pose.position, object);
-    const outline =
-      drawn?.frames[((frame % drawn.frames.length) + drawn.frames.length) % drawn.frames.length];
+    const bound = outline
+      ? reach + bodyReach + clearance
+      : sceneryBound(object, bodyReach + clearance, drawn);
+    if (Math.hypot(pose.position.x - image.x, pose.position.y - image.y) >= bound) {
+      return null;
+    }
     return outline
       ? body
         ? outlinesContact(outline, image, body, pose.position, clearance)
@@ -74,11 +98,11 @@ export function worldNavigationQuery(
   };
   return {
     clear(pose, clearance) {
-      return !candidates.some((object) => contact(pose, clearance, object) !== null);
+      return !obstacles.some((object) => contact(pose, clearance, object) !== null);
     },
     escape(pose, clearance) {
       let deepest: Contact | null = null;
-      for (const object of candidates) {
+      for (const object of obstacles) {
         const hit = contact(pose, clearance, object);
         if (hit && (!deepest || hit.depth > deepest.depth)) {
           deepest = hit;
