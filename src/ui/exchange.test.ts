@@ -6,6 +6,25 @@ import { createExchangeView } from "./exchange.ts";
 
 const dom = vi.hoisted(() => {
   class Node extends EventTarget {
+    nodeType = 1;
+    get ownerDocument() {
+      return document;
+    }
+    get parentNode(): Node | null {
+      return this.parentElement;
+    }
+    get nextSibling(): Node | null {
+      return this.parentElement?.children[this.parentElement.children.indexOf(this) + 1] ?? null;
+    }
+    insertBefore(node: Node, before: Node | null) {
+      node.remove();
+      node.parentElement = this;
+      this.children.splice(
+        before === null ? this.children.length : this.children.indexOf(before),
+        0,
+        node,
+      );
+    }
     children: Node[] = [];
     parentElement: Node | null = null;
     contains(node: Node): boolean {
@@ -19,7 +38,12 @@ const dom = vi.hoisted(() => {
     textContent = "";
     value = "";
     focus = vi.fn();
-    remove = vi.fn();
+    remove = vi.fn(() => {
+      if (this.parentElement) {
+        this.parentElement.children.splice(this.parentElement.children.indexOf(this), 1);
+      }
+      this.parentElement = null;
+    });
     append(...nodes: Node[]) {
       this.children.push(...nodes);
       for (const node of nodes) {
@@ -199,4 +223,18 @@ it("unregisters retained native callbacks and input rendering on disposal", () =
   retained.dispatchEvent(new Event("click"));
   expect(f.commit).not.toHaveBeenCalled();
   expect(f.onChange).not.toHaveBeenCalled();
+});
+
+it("retains the exact native amount and control identities through editor, confirm, Back and refresh", () => {
+  const f = fixture();
+  const amount = f.action("exchange-amount"),
+    buy = f.action("exchange-preview");
+  f.amount("007");
+  f.click("exchange-preview");
+  expect(f.view.back()).toBe(true);
+  f.view.render();
+  expect(f.action("exchange-amount")).toBe(amount);
+  expect(amount.value).toBe("007");
+  expect(f.action("exchange-preview")).toBe(buy);
+  expect(f.commit).not.toHaveBeenCalled();
 });

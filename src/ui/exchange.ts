@@ -1,8 +1,15 @@
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
+import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { EXCHANGE_COPY } from "../data/exchangeCopy.ts";
 import type { ExchangeOrder, ExchangePreview, ExchangeQuote } from "../model/exchange.ts";
 import { bindAdaAction } from "./actionBinding.ts";
+import {
+  type ExchangeContainer,
+  type ExchangePart,
+  type ExchangeSchema,
+  exchangeTree,
+} from "./exchangeTree.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createActions, createButton } from "./modal.ts";
@@ -27,10 +34,7 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
   const sell = createButton(EXCHANGE_COPY.sellOre);
   buy.dataset.action = "exchange-buy";
   sell.dataset.action = "exchange-sell";
-  const directions = createActions([
-    { button: buy, role: "secondary" },
-    { button: sell, role: "secondary" },
-  ]);
+  const directions = createActions([]);
   const label = document.createElement("label");
   label.textContent = EXCHANGE_COPY.amount;
   const amount = document.createElement("input");
@@ -44,7 +48,7 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
   preview.dataset.exchange = "preview";
   const action = createButton(EXCHANGE_COPY.buyOre);
   action.dataset.action = "exchange-preview";
-  editor.append(directions, label, preview, createActions([{ button: action, role: "primary" }]));
+  const previewActions = createActions([]);
   const confirmation = document.createElement("div");
   confirmation.hidden = true;
   confirmation.setAttribute("role", "group");
@@ -55,17 +59,57 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
   confirm.dataset.action = "exchange-confirm";
   const cancel = createButton(EXCHANGE_COPY.cancel);
   cancel.dataset.action = "exchange-cancel";
-  confirmation.append(
-    summary,
-    createActions([
-      { button: cancel, role: "secondary" },
-      { button: confirm, role: "primary" },
-    ]),
-  );
+  const confirmActions = createActions([]);
   const status = document.createElement("p");
   status.setAttribute("role", "status");
-  root.append(help, editor, confirmation, status);
-  parent.append(root);
+  const containers: Record<ExchangeContainer, HTMLElement> = {
+    confirmActions,
+    confirmation,
+    directions,
+    editor,
+    previewActions,
+    root,
+  };
+  const parts: Record<ExchangePart, HTMLElement> = {
+    action,
+    amountLabel: label,
+    buy,
+    cancel,
+    confirm,
+    help,
+    preview,
+    sell,
+    status,
+    summary,
+  };
+  const mounted = mountLayout<ExchangeSchema>(
+    {
+      components: {
+        container: {
+          create(data) {
+            const element = containers[data.id];
+            return { dispose() {}, element, slots: { content: element }, update() {} };
+          },
+          slots: ["content"],
+        },
+        native: {
+          create(data) {
+            const element = parts[data.id];
+            const update = (next: ExchangeSchema["native"]["props"]) => {
+              if (next.text !== undefined) {
+                element.textContent = next.text;
+              }
+            };
+            update(data);
+            return { dispose() {}, element, slots: {}, update };
+          },
+          slots: [],
+        },
+      },
+      host: parent,
+    },
+    exchangeTree(EXCHANGE_COPY),
+  );
   let disposed = false;
   const bindings: ReturnType<typeof bindAdaAction>[] = [];
   const register = (element: HTMLButtonElement, run: () => void, active: () => boolean) => {
@@ -200,7 +244,7 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
       }
       bindings.length = 0;
       amount.removeEventListener("input", render);
-      root.remove();
+      mounted.dispose();
     },
     isConfirming: () => pending !== undefined,
     render,
