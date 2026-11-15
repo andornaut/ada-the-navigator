@@ -21,9 +21,10 @@ import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { holodisksHeld } from "./conversations.ts";
 import { enemyDefeated } from "./enemyAi.ts";
 import { adoptLegacyGeography, validGalaxyGeography } from "./galaxyGeography.ts";
-import { ACTIVE_CHUNK_RADIUS, encounterOf, persistentObject } from "./geography.ts";
+import { ACTIVE_CHUNK_RADIUS, encounterOf, liveEnemy, persistentObject } from "./geography.ts";
 import { isLandmark } from "./landmarks.ts";
 import { validExplored } from "./map.ts";
+import { markerActorTracked, validMarkerActors, validTargetKnowledge } from "./markerKnowledge.ts";
 import { readNeedleChapterProgress, validNeedleFlight } from "./needleRuntime.ts";
 import { validPhantomFlight, validPhantomProgress } from "./phantom.ts";
 import { namesStation, stationById } from "./stations.ts";
@@ -296,6 +297,7 @@ function spaceObject(
 function persistentWorld(
   galaxy: GalaxyNumber,
   routes: readonly string[],
+  flight: Pick<FlightState, "seed" | "encounterSeed" | "markerActors">,
   active: readonly SpaceObject[],
   value: unknown,
 ): value is PersistentWorldState {
@@ -322,7 +324,13 @@ function persistentWorld(
     if (
       !spaceObject(galaxy, routes, object) ||
       object.id !== id ||
-      !persistentObject(object) ||
+      (!persistentObject(object) &&
+        !(
+          object.kind === "enemy" &&
+          object.enemy &&
+          liveEnemy(object) &&
+          markerActorTracked(flight, id)
+        )) ||
       object.hp <= 0 ||
       object.kind === "destination" ||
       object.id.startsWith("whale-debris:") ||
@@ -643,6 +651,7 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
       if (
         !record(p) ||
         (p.geography !== undefined && !validGalaxyGeography(p.geography)) ||
+        (p.markerKnowledge !== undefined && !validTargetKnowledge(p.markerKnowledge)) ||
         (p.andromeda !== undefined && (id !== 5 || !validAndromedaProgress(p.andromeda))) ||
         (p.needle !== undefined && (id !== 4 || !readNeedleChapterProgress(p.needle))) ||
         (p.phantom !== undefined &&
@@ -754,6 +763,10 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
       if (geography !== undefined && geography.seed !== f.seed) {
         return null;
       }
+      const markerContext = f as unknown as FlightState;
+      if (f.markerActors !== undefined && !validMarkerActors(markerContext, f.markerActors)) {
+        return null;
+      }
       const routes = destinationIds[value.selectedGalaxy as number] ?? [];
       if (f.combat !== undefined && !combatState(routes, f.combat)) {
         return null;
@@ -832,7 +845,15 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
       ) {
         return null;
       }
-      if (!persistentWorld(value.selectedGalaxy as GalaxyNumber, routes, f.objects, f.world)) {
+      if (
+        !persistentWorld(
+          value.selectedGalaxy as GalaxyNumber,
+          routes,
+          markerContext,
+          f.objects,
+          f.world,
+        )
+      ) {
         return null;
       }
       if (f.combat !== undefined && !unloadedPackState(f.objects, f.world, f.combat)) {

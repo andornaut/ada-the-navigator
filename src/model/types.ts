@@ -13,6 +13,7 @@ import type { NeedleChapterProgress, NeedleFlight } from "./needleRuntime.ts";
 import type { PhantomFlight, PhantomProgress } from "./phantom.ts";
 import type { ProjectileFade } from "./playerProjectiles.ts";
 import type { StoryCursor } from "./storyCursor.ts";
+import type { TargetKnowledgeRecord } from "./targetMarkers.ts";
 
 /** What Use does here: the disc's symbol, and its name the disc's accessible name. */
 export type UseAction =
@@ -149,6 +150,7 @@ export interface FlightState {
   seed: number;
   /** Independent enemy identity seed; absent legacy flights use their existing seed. */
   encounterSeed?: number;
+  markerActors?: { encounterSeed: number; knowledge: TargetKnowledgeRecord };
   time: number;
   /** Cartwheel's story ship scene started this flight, if any. */
   storyScene?: { at: number; id: StorySceneId; lineDue: boolean };
@@ -201,6 +203,7 @@ export interface GalaxyGeography {
 }
 
 export interface GalaxyProgress {
+  markerKnowledge?: TargetKnowledgeRecord;
   /** Persistent geography; null seed explicitly records unavailable legacy history. */
   geography?: GalaxyGeography;
   andromeda?: AndromedaProgress;
