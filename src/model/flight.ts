@@ -25,6 +25,7 @@ import { JOB_TUNING, LANDMARK_TUNING } from "../data/jobs.ts";
 import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP, PHANTOM_TUNING } from "../data/phantom.ts";
 import { RESOURCE_ROCKS } from "../data/resourceRocks.ts";
 import { SCREEN } from "../data/screen.ts";
+import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
 import { SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { GalaxyNumber, GameContent, Weapon } from "../data/types.ts";
@@ -4230,7 +4231,7 @@ export function stepFlight(
   const oreBefore = flight.shieldOreSpent ?? 0;
   let remaining = dt;
   while (remaining > 1e-9 && flight.shield > 0) {
-    const slice = Math.min(remaining, 1 / 60);
+    const slice = Math.min(remaining, SIMULATION_STEP_SECONDS);
     remaining -= slice;
     flight.time += slice;
     flight.sinceDamage += slice;

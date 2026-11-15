@@ -84,3 +84,67 @@ it("keeps navigation absent when no obstacle reaches the canonical prediction ra
     }),
   ).toBeUndefined();
 });
+
+it("bounds tiny-step prediction while checking the exact first runtime pose", () => {
+  const definition = enemyCatalog.frigate;
+  const state = createEnemy(
+    definition,
+    { archetype: "frigate", id: "tiny-step", packId: null, phase: 0.4 },
+    { x: 0, y: 0 },
+  );
+  state.facing = { x: 1, y: 0 };
+  state.velocity = { x: 30, y: 0 };
+  const dt = 0.000001;
+  const poses: { facing: { x: number; y: number }; position: { x: number; y: number } }[] = [];
+  const query = {
+    clear(pose: (typeof poses)[number]) {
+      poses.push(pose);
+      return true;
+    },
+    escape() {
+      return null;
+    },
+  };
+  const request = avoidObstacles(
+    definition.physics,
+    query,
+    dt,
+    definition.physics.maxSpeed,
+    state,
+    { x: 1, y: 0 },
+  );
+  const motion = stepShipMotion(
+    definition.physics,
+    dt,
+    { maxSpeed: definition.physics.maxSpeed, restHeading: state.facing },
+    { direction: { x: 1, y: 0 }, speed: definition.physics.maxSpeed },
+    { heading: state.heading, velocity: state.velocity },
+  );
+  const first = poses.find((pose) => pose.position.x !== 0)!;
+  expect(first.position).toEqual({ x: motion.velocity.x * dt, y: motion.velocity.y * dt });
+  expect(first.facing).toEqual(
+    turnToward(dt, SHARED_SHIP_PHYSICS.hullTurnSeconds, motion.velocity, state.facing),
+  );
+  expect(request).toEqual({ x: 1, y: 0 });
+  expect(poses.length).toBeLessThan(500);
+  let blockedQueries = 0;
+  expect(
+    avoidObstacles(
+      definition.physics,
+      {
+        clear(pose) {
+          blockedQueries++;
+          return pose.position.x <= 0;
+        },
+        escape() {
+          return null;
+        },
+      },
+      dt,
+      definition.physics.maxSpeed,
+      state,
+      { x: 1, y: 0 },
+    ),
+  ).toEqual({ x: 0, y: 0 });
+  expect(blockedQueries).toBeLessThan(100);
+});

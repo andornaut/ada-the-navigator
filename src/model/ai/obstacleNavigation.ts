@@ -1,6 +1,7 @@
 import type { Point } from "../../data/enemyCatalog.ts";
 import { ENEMY_AVOIDANCE } from "../../data/enemyNavigation.ts";
 import { SHARED_SHIP_PHYSICS, type ShipPhysics } from "../../data/shipPhysics.ts";
+import { SIMULATION_STEP_SECONDS } from "../../data/simulation.ts";
 import type { EnemyState } from "../enemyAi.ts";
 import { direction, stepShipMotion, turnToward } from "../shipPhysics.ts";
 import { magnitude, rotate } from "./course.ts";
@@ -30,7 +31,10 @@ export function avoidObstacles(
   }
   const desired = direction(request);
   const firstStep = Math.min(horizon, stepSeconds);
-  const samples = Math.max(ENEMY_AVOIDANCE.predictionSteps, Math.ceil(horizon / stepSeconds));
+  // A tiny valid runtime slice adds its exact first pose, not inverse-dt horizon work.
+  const samples =
+    Math.max(ENEMY_AVOIDANCE.predictionSteps, Math.ceil(horizon / SIMULATION_STEP_SECONDS)) +
+    (firstStep < SIMULATION_STEP_SECONDS ? 1 : 0);
   const predictionStep = (horizon - firstStep) / (samples - 1);
   const safe = (course: Point, clearance: number): boolean => {
     let position = { ...state.position };
