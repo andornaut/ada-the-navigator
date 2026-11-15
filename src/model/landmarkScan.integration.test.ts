@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { LANDMARK_SCAN_COPY } from "../data/landmarkScanCopy.ts";
 import { GameModel } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { stationsNear } from "./stations.ts";
@@ -92,5 +93,30 @@ describe("explicit landmark Scan", () => {
     model.step(0.01, idle);
     expect(model.state.economy.stardust - before).toBe(offer.reward);
     expect(model.state.achievements.jobs).toBe(1);
+  });
+
+  it("fulfills a queued Scan lesson on success and retains charting and dialogue through Continue", () => {
+    const { model, site } = fixture();
+    model.landmarkDisplayed(site.id);
+    const before = structuredClone(model.state.economy);
+    model.interact();
+    expect(model.state.progress[1].charted).toEqual([site.id]);
+    expect(model.state.achievements.charted[1]).toEqual([site.id]);
+    expect(model.state.seenConversations.filter((id) => id === "lesson:scan")).toHaveLength(1);
+    expect(model.state.economy).toEqual(before);
+    expect(model.state.dialogue).toBeNull();
+    expect(model.conversation?.text).not.toBe(LANDMARK_SCAN_COPY.instruction);
+    model.step(0.01, idle);
+    expect(model.conversation?.text).not.toBe(LANDMARK_SCAN_COPY.instruction);
+    const save = model.save();
+    const restored = new GameModel(CONTENT, save);
+    restored.continueGame();
+    restored.landmarkDisplayed(site.id);
+    restored.step(0.01, idle);
+    expect(restored.conversation?.text).not.toBe(LANDMARK_SCAN_COPY.instruction);
+    expect(restored.state.progress[1].charted).toEqual([site.id]);
+    expect(restored.state.achievements.charted[1]).toEqual([site.id]);
+    expect(restored.state.economy).toEqual(before);
+    expect(restored.state.seenConversations.filter((id) => id === "lesson:scan")).toHaveLength(1);
   });
 });

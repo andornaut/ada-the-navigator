@@ -77,4 +77,56 @@ describe("visible landmark Scan tutorial", () => {
     expect(talk.showing?.line.text).toBe(LANDMARK_SCAN_COPY.instruction);
     expect(heard.filter((id) => id === "lesson:scan")).toHaveLength(1);
   });
+
+  it("drops a target that becomes charted before exposure without spending an unheard lesson", () => {
+    const { heard, talk } = fixture();
+    let uncharted = true;
+    talk.requestScanLesson(() => uncharted);
+    talk.step(0.01, true, calm);
+    uncharted = false;
+    expect(talk.pending("lesson:scan")).toBe(false);
+    talk.step(0.01, false, calm);
+    expect(talk.showing).toBeNull();
+    expect(heard).not.toContain("lesson:scan");
+    talk.requestScanLesson(() => true);
+    talk.step(0.01, false, calm);
+    expect(talk.showing?.line.text).toBe(LANDMARK_SCAN_COPY.instruction);
+  });
+
+  it("cancels only the deferred lesson after Scan and preserves the Penny exchange", () => {
+    const { heard, talk } = fixture([], true);
+    talk.step(0.01, false, { ...calm, pennyPoints: ["landmark:1:0"] });
+    const penny = talk.showing;
+    expect(penny?.instance).toContain("penny:");
+    talk.requestScanLesson(() => true);
+    talk.completeScanLesson();
+    expect(talk.showing).toEqual(penny);
+    for (let i = 0; i < 8 && talk.showing?.instance.startsWith("penny:"); i++) {
+      talk.advance();
+    }
+    talk.step(CONVERSATION_TUNING.cooldownSeconds + 0.01, false, calm);
+    expect(talk.showing).toBeNull();
+    expect(heard.filter((id) => id === "lesson:scan")).toHaveLength(1);
+    const restored = fixture([...heard]);
+    restored.talk.requestScanLesson();
+    restored.talk.step(0.01, false, calm);
+    expect(restored.talk.showing).toBeNull();
+  });
+
+  it("does not resume stale Scan instruction after an unrelated warning", () => {
+    const { talk } = fixture();
+    let uncharted = true;
+    talk.requestScanLesson(() => uncharted);
+    talk.step(0.01, false, calm);
+    expect(talk.showing?.line.text).toBe(LANDMARK_SCAN_COPY.instruction);
+    talk.chapterCue({ speaker: "astra", text: "Existing warning" });
+    talk.step(0.01, false, calm);
+    expect(talk.showing?.line.text).toBe("Existing warning");
+    uncharted = false;
+    expect(talk.pending("lesson:scan")).toBe(false);
+    expect(talk.showing?.line.text).toBe("Existing warning");
+    talk.advance();
+    talk.step(CONVERSATION_TUNING.cooldownSeconds + 0.01, false, calm);
+    expect(talk.showing).toBeNull();
+  });
 });

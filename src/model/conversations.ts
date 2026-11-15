@@ -270,6 +270,7 @@ export class ConversationDirector {
   private readonly seen: string[];
   private shieldWarned = false;
   private scanLessonAfterPenny = false;
+  private scanLessonValid: () => boolean = () => true;
   private eligibilityReader: (() => ConversationEligibilityFacts) | undefined;
   private latestFacts: ConversationFacts | undefined;
 
@@ -311,6 +312,9 @@ export class ConversationDirector {
       return false;
     }
     const trigger = conversation.trigger;
+    if (trigger.kind === "lesson" && trigger.lesson === "scan") {
+      return !this.done.scan && this.scanLessonValid();
+    }
     return (
       trigger.kind !== "general" ||
       (trigger.held === facts.holodisks &&
@@ -372,7 +376,14 @@ export class ConversationDirector {
   }
 
   /** An actually visible landmark requests the saved once-only Scan lesson. */
-  requestScanLesson(): void {
+  requestScanLesson(valid?: () => boolean): void {
+    if (valid) {
+      this.scanLessonValid = valid;
+    }
+    if (!this.scanLessonValid() || this.done.scan) {
+      this.revalidate();
+      return;
+    }
     if (this.seen.includes("lesson:scan")) {
       return;
     }
@@ -384,6 +395,16 @@ export class ConversationDirector {
       return;
     }
     this.request((trigger) => trigger.kind === "lesson" && trigger.lesson === "scan");
+  }
+
+  /** A successful Scan fulfills the instruction, including deferred and resumed requests. */
+  completeScanLesson(): void {
+    this.done.scan = true;
+    this.scanLessonAfterPenny = false;
+    if (!this.seen.includes("lesson:scan")) {
+      this.seen.push("lesson:scan");
+    }
+    this.revalidate();
   }
 
   /** A funded project's thank-you line, which waits its turn in the queue. */
@@ -886,6 +907,7 @@ export class ConversationDirector {
     this.quietFor = 0;
     this.shieldWarned = false;
     this.scanLessonAfterPenny = false;
+    this.scanLessonValid = () => true;
   }
 }
 

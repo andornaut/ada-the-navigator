@@ -921,7 +921,9 @@ export class GameModel {
     ) {
       return;
     }
-    this.talk.requestScanLesson();
+    this.talk.requestScanLesson(
+      () => this.state.flight === f && !this.current.charted.includes(id),
+    );
   }
 
   private nearestScan() {
@@ -2495,6 +2497,7 @@ export class GameModel {
     const scan = this.nearestScan();
     if (scan) {
       this.current.charted.push(scan.id);
+      this.talk.completeScanLesson();
       this.scannedLandmarks.push(scan.id);
       this.recordAchievement({
         galaxy: this.state.flight.galaxy,
