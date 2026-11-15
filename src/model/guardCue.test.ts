@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
+import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { markerEdges, markerModel } from "../testing/markerModel.ts";
 import { GAME_AREA, gameAreaPoint, inGameArea } from "./edgeMarkers.ts";
@@ -156,10 +157,14 @@ describe("a blocking guard's cue", () => {
     const context = flightWorldContext(flight);
     const tracker = markerModel(flight);
     tracker.markerTargetDisplayed(guard.id);
+    expect(worldDistance(context, flight.player, guard)).toBeCloseTo(1200, 0);
     expect(stepFlight(CONTENT, 0.05, idle, flight)).toContainEqual(cue);
     const marker = tracker.targetMarkers(GAME_AREA).find(({ id }) => id === guard.id)!;
     expect(marker).toMatchObject({ id: guard.id, symbol: "guard" });
-    expect(marker.x - flight.player.x).toBeCloseTo(1200, 0);
+    expect(marker.x).toBeCloseTo(guard.x + GALAXY_SIDE, 0);
+    expect(marker.y).toBeCloseTo(guard.y, 0);
+    expect(marker.x - flight.player.x).toBeGreaterThan(0);
+    expect(worldDistance(context, flight.player, marker)).toBeLessThan(TARGET_MARKER_RANGE);
     const initial = worldDistance(context, flight.player, guard);
     for (let step = 0; flight.summonedGuards && step < 500; step++) {
       stepFlight(CONTENT, 0.05, idle, flight);
