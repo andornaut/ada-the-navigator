@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { PHANTOM_DESTINATIONS } from "../data/phantom.ts";
+import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import { createUnpopulatedFlight, populateRequiredChapterFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
@@ -44,4 +44,24 @@ it("keeps disabled initial members in required population and respects explicit 
   expect(phantomRequiredActors(flight).some(({ id }) => id === actor.id)).toBe(true);
   actor.hp = actor.enemy!.hp = 0;
   expect(phantomRequiredActors(flight).some(({ id }) => id === actor.id)).toBe(false);
+});
+
+it("reserves completed hulk geometry while represented and respects canonical paging removal", () => {
+  const model = new GameModel(CONTENT);
+  const progress = model.state.progress[6];
+  progress.questComplete = true;
+  const flight = createUnpopulatedFlight(CONTENT, 6, 173, model.state.economy, 301);
+  populateRequiredChapterFlight(CONTENT, progress, flight, () => {
+    initPhantom({ content: CONTENT, flight, progress });
+    expect(phantomRequiredActors(flight).map(({ id }) => id)).toEqual([PHANTOM_FLAGSHIP]);
+    expect(phantomRequiredActors(flight)[0]!.enemy).toMatchObject({ hp: 1, salvaged: true });
+    expect(flight.phantom).toMatchObject({
+      blockades: {},
+      enemyIds: [],
+      phase: "salvaged",
+      wave: 0,
+    });
+  });
+  expect(flight.world.notables[PHANTOM_FLAGSHIP]).toBeNull();
+  expect(phantomRequiredActors(flight)).toEqual([]);
 });
