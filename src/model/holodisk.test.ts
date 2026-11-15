@@ -4,14 +4,35 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { BUILT } from "../data/galaxies.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
-import type { GalaxyNumber } from "../data/types.ts";
+import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import { playOpening, readStory, relaunch } from "../testing/launch.ts";
-import { ensureDestination, routeBlocked } from "./flight.ts";
+import {
+  activateRequiredRoute,
+  ensureDestination,
+  routeBlocked,
+  routeGuardPlanResult,
+} from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { shipTouches } from "./shipBody.ts";
-import type { GalaxyProgress } from "./types.ts";
+import type { FlightState, GalaxyProgress } from "./types.ts";
 import { noLevels, shipTuning } from "./upgrades.ts";
+
+/** Test support: admit the saved required encounter, then disable its actual noncombat-fixture guard. */
+function disableStoryGuard(content: GameContent, flight: FlightState, id: string): void {
+  const encounter = activateRequiredRoute(content, id, flight);
+  if (encounter.status === "resolved") {
+    return;
+  }
+  if (encounter.status !== "created" && encounter.status !== "existing") {
+    throw new Error(`Expected the saved required guard for ${id}, got ${encounter.status}`);
+  }
+  const guard = encounter.guard;
+  if (guard.routeId !== id || guard.enemy?.archetype !== "frigate") {
+    throw new Error(`Expected the actual required frigate for ${id}`);
+  }
+  guard.enemy.disabled = true;
+}
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const inserted = [
@@ -56,6 +77,12 @@ function arrive(model: GameModel, id: string) {
   const f = model.state.flight!;
   const target = ensureDestination(CONTENT, id, f);
   f.player = { x: target.x, y: target.y };
+  if (
+    f.galaxy === 1 &&
+    (f.requiredPlans?.[id] || routeGuardPlanResult(f, id).status !== "unknown")
+  ) {
+    disableStoryGuard(CONTENT, f, id);
+  }
   f.dangerFor = 0;
 }
 const handover = "We found this drifting near our outposts. Take it. And thank you.";
@@ -154,6 +181,7 @@ describe("galaxy one's handover", () => {
     // A reload during the handover resumes it and continues to the insertion's first page aboard.
     const resumed = relaunch(CONTENT, model.save());
     resumed.continueGame();
+    expect(resumed.state.dialogue).not.toBeNull();
     resumed.choose("continue");
     expect(resumed.storyView?.page).toMatchObject({ holodisk: true, id: "holodisk:0" });
     expect(resumed.storyView?.page.text).toBe(inserted[0]);

@@ -6,22 +6,40 @@ import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
-import type { GalaxyNumber } from "../data/types.ts";
+import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import { playOpening, readStory, relaunch } from "../testing/launch.ts";
 import { nearestSettlerStation } from "./andromedaPlaces.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { createEnemy } from "./enemyAi.ts";
 import {
+  activateRequiredRoute,
   ensureDestination,
   ensureRouteEncounter,
   ensureStation,
   routeBlocked,
+  routeGuardPlanResult,
   syncFlightRegion,
 } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { needleCourses } from "./needle.ts";
-import type { SpaceObject } from "./types.ts";
+import type { FlightState, SpaceObject } from "./types.ts";
 import { collectWeapon } from "./weapons.ts";
+
+/** Test support: admit the saved required encounter, then disable its actual noncombat-fixture guard. */
+function disableStoryGuard(content: GameContent, flight: FlightState, id: string): void {
+  const encounter = activateRequiredRoute(content, id, flight);
+  if (encounter.status === "resolved") {
+    return;
+  }
+  if (encounter.status !== "created" && encounter.status !== "existing") {
+    throw new Error(`Expected the saved required guard for ${id}, got ${encounter.status}`);
+  }
+  const guard = encounter.guard;
+  if (guard.routeId !== id || guard.enemy?.archetype !== "frigate") {
+    throw new Error(`Expected the actual required frigate for ${id}`);
+  }
+  guard.enemy.disabled = true;
+}
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function launch(model: GameModel, galaxy: GalaxyNumber = 1) {
@@ -84,6 +102,12 @@ function arrive(model: GameModel, id: string) {
   f.player = { x: target.x, y: target.y };
   // Direct test travel settles the active region as production travel does.
   syncFlightRegion(CONTENT, f);
+  if (
+    f.galaxy === 1 &&
+    (f.requiredPlans?.[id] || routeGuardPlanResult(f, id).status !== "unknown")
+  ) {
+    disableStoryGuard(CONTENT, f, id);
+  }
   if (!model.state.progress[f.galaxy].known.includes(id)) {
     model.state.progress[f.galaxy].known.push(id);
   }
@@ -93,6 +117,7 @@ function arrive(model: GameModel, id: string) {
 function talk(model: GameModel, id: string) {
   arrive(model, id);
   model.interact();
+  expect(model.state.dialogue).not.toBeNull();
   model.choose("continue");
 }
 /** Returns home and reads the waiting scenes, taking each choice page's `choice`. */
@@ -242,6 +267,7 @@ function recoverHolodisk(model: GameModel) {
 function introduce(model: GameModel, id: string) {
   arrive(model, id);
   model.step(0.01, idle);
+  expect(model.state.dialogue).not.toBeNull();
   model.choose("continue");
 }
 
