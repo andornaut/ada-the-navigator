@@ -971,6 +971,7 @@ function questFrigateFormation(
   id: string,
   siteId: string,
   point: Vec,
+  supportCount = FRIGATE_ESCORT_COUNT,
 ) {
   const leader = spawnEnemy(content, flight, "frigate", id, point);
   leader.routeId = siteId;
@@ -985,7 +986,7 @@ function questFrigateFormation(
       shipRadius: content.tuning.flight.shipRadius,
     },
     leader,
-  );
+  ).slice(0, supportCount);
   return { followers, leader };
 }
 
@@ -995,13 +996,21 @@ export function questFrigateHome(
   flight: FlightState,
   id: string,
   siteId: string,
+  supportCount = FRIGATE_ESCORT_COUNT,
 ): Vec | null {
   const context = questGuardPlacementContext(content, flight);
   const site = questGuardHomePorts(context).resolveSite(flight, siteId);
   if (!site) {
     return null;
   }
-  const { followers, leader } = questFrigateFormation(content, flight, id, siteId, site);
+  const { followers, leader } = questFrigateFormation(
+    content,
+    flight,
+    id,
+    siteId,
+    site,
+    supportCount,
+  );
   return questGuardHomePorts({
     ...context,
     flight: { ...flight, objects: [...flight.objects, ...followers] },
@@ -1015,7 +1024,11 @@ export function spawnQuestFrigateAt(
   id: string,
   siteId: string,
   point: Vec,
+  supportCount = FRIGATE_ESCORT_COUNT,
 ): SpaceObject | null {
+  if (!Number.isInteger(supportCount) || supportCount < 0 || supportCount > FRIGATE_ESCORT_COUNT) {
+    return null;
+  }
   const represented = stationPopulationObjects(flight);
   const existing = represented.find((object) => object.id === id);
   if (existing) {
@@ -1030,7 +1043,14 @@ export function spawnQuestFrigateAt(
   if (!site) {
     return null;
   }
-  const { followers, leader } = questFrigateFormation(content, flight, id, siteId, point);
+  const { followers, leader } = questFrigateFormation(
+    content,
+    flight,
+    id,
+    siteId,
+    point,
+    supportCount,
+  );
   const packId = escortPackId(id);
   if (
     followers.some(
@@ -1060,7 +1080,9 @@ export function spawnQuestFrigateAt(
       {
         archetype: "frigate",
         count: 1,
-        escorts: { archetype: "fighter", count: FRIGATE_ESCORT_COUNT },
+        ...(supportCount
+          ? { escorts: { archetype: "fighter" as const, count: supportCount } }
+          : {}),
       },
       questGuardFormationReach(context, actors),
     ) ||
@@ -1072,6 +1094,39 @@ export function spawnQuestFrigateAt(
   flight.objects.push(...actors);
   combat(flight).initialPackSizes[packId] = followers.length;
   return leader;
+}
+
+export interface RequiredFrigatePlan {
+  readonly siteId: string;
+  readonly leader: SpaceObject;
+  readonly support: readonly SpaceObject[];
+}
+
+/** Required leaders are never optional; only their support uses the remaining local budget. */
+export function planRequiredFrigate(
+  content: GameContent,
+  flight: FlightState,
+  id: string,
+  siteId: string,
+): RequiredFrigatePlan | null {
+  for (let count = FRIGATE_ESCORT_COUNT; count >= 0; count--) {
+    const home = questFrigateHome(content, flight, id, siteId, count);
+    if (!home) {
+      continue;
+    }
+    const projection = structuredClone(flight);
+    const leader = spawnQuestFrigateAt(content, projection, id, siteId, home, count);
+    if (leader) {
+      return {
+        leader,
+        siteId,
+        support: stationPopulationObjects(projection).filter(
+          (actor) => actor.enemy?.escortOf === leader.id,
+        ),
+      };
+    }
+  }
+  return null;
 }
 
 /** Caller-supplied station plans have no implicit site, defender count, reward or replenishment. */
