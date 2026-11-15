@@ -86,6 +86,7 @@ import {
   quoteExchange,
 } from "./exchange.ts";
 import {
+  activateRequiredWhirlpoolRoute,
   activateRouteEncounter,
   carryPickup,
   createUnpopulatedFlight,
@@ -98,6 +99,7 @@ import {
   pickupTouched,
   placeDestinationAhead,
   placeHuntingPack,
+  planRequiredWhirlpoolRoutes,
   populateFlight,
   populateRequiredChapterFlight,
   populateRequiredFlight,
@@ -1926,7 +1928,19 @@ export class GameModel {
         for (const id of this.current.known) {
           ensureDestination(this.content, id, flight);
         }
-        if (this.current.questComplete && !this.current.holodisk) {
+        planRequiredWhirlpoolRoutes(this.content, this.current, flight, [
+          ...(this.current.questComplete
+            ? []
+            : galaxyRoute(3).filter((id) => !this.current.known.includes(id))),
+          ...(!this.current.holodisk && !this.current.known.includes("holodisk")
+            ? ["holodisk"]
+            : []),
+        ]);
+        if (
+          this.current.questComplete &&
+          !this.current.holodisk &&
+          activateRequiredWhirlpoolRoute(this.content, this.current, flight, "holodisk")
+        ) {
           ensureDestination(this.content, "holodisk", flight);
           if (!this.current.known.includes("holodisk")) {
             ensureRouteEncounter(this.content, "holodisk", flight);
@@ -2425,7 +2439,9 @@ export class GameModel {
       !this.current.introduced &&
       f.freshDistance >= this.content.tuning.introFreshDistance
     ) {
-      ensureDestination(this.content, opener, f);
+      if (f.galaxy !== 3 || activateRequiredWhirlpoolRoute(this.content, this.current, f, opener)) {
+        ensureDestination(this.content, opener, f);
+      }
       if (f.freshDistance > previousFreshDistance && !this.current.known.includes(opener)) {
         this.placePending(opener);
       }
@@ -2438,14 +2454,20 @@ export class GameModel {
           this.current.stage * this.content.tuning.encounterFreshDistance
     ) {
       const id = required[f.galaxy]?.[this.current.stage];
-      if (id) {
+      if (
+        id &&
+        (f.galaxy !== 3 || activateRequiredWhirlpoolRoute(this.content, this.current, f, id))
+      ) {
         ensureDestination(this.content, id, f);
         if (f.freshDistance > previousFreshDistance && !this.current.known.includes(id)) {
           this.placePending(id);
         }
       }
     }
-    if (this.holodiskWaypoint) {
+    if (
+      this.holodiskWaypoint &&
+      activateRequiredWhirlpoolRoute(this.content, this.current, f, "holodisk")
+    ) {
       ensureDestination(this.content, "holodisk", f);
     }
     this.ensureRequiredApproaches();
@@ -2702,7 +2724,7 @@ export class GameModel {
     if (!f) {
       return;
     }
-    if (f.galaxy === 1 && this.current.requiredSites?.[id]) {
+    if ((f.galaxy === 1 || f.galaxy === 3) && this.current.requiredSites?.[id]) {
       ensureDestination(this.content, id, f);
       return;
     }

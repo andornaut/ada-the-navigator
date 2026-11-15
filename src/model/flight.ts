@@ -124,6 +124,11 @@ import {
   storeRequiredPlan,
   takeRequiredPlan,
 } from "./requiredEncounterPlans.ts";
+import {
+  readRequiredRolePlan,
+  storeRequiredRolePlan,
+  takeRequiredRolePlan,
+} from "./requiredRolePlans.ts";
 import { requiredRouteGeometry } from "./requiredRouteGeometry.ts";
 import {
   type OptionalWorldFootprint,
@@ -2270,11 +2275,28 @@ export function ensureHuntingPacks(content: GameContent, flight: FlightState): v
   }
 }
 
+function requiredSiteSpan(content: GameContent, reach: number): number {
+  return Math.max(
+    content.tuning.chunkSize * 2,
+    content.tuning.flight.arrivalCalm +
+      content.tuning.safeRadius +
+      reach * 2 +
+      ENEMY_AVOIDANCE.clearance,
+  );
+}
+
+function routeArchetype(galaxy: GalaxyNumber, id: string): EnemyArchetype {
+  return id === "holodisk" ? HOLODISKS.guard.leader : galaxy === 1 ? "frigate" : "capital";
+}
+
 export function ensureRouteEncounter(
   content: GameContent,
   id: string,
   flight: FlightState,
 ): SpaceObject | null {
+  if (readRequiredRolePlan(flight, id)) {
+    return null;
+  }
   const existing = flight.objects.find(
     (object) => object.kind === "enemy" && object.routeId === id,
   );
@@ -2295,11 +2317,7 @@ export function ensureRouteEncounter(
     return null;
   }
   const holodisk = id === "holodisk";
-  const archetype: EnemyArchetype = holodisk
-    ? HOLODISKS.guard.leader
-    : flight.galaxy === 1
-      ? "frigate"
-      : "capital";
+  const archetype = routeArchetype(flight.galaxy, id);
   if (archetype === "frigate" && flight.galaxy === 1 && !holodisk) {
     if (flight.requiredPlans) {
       const activated = activateRequiredRoute(content, id, flight);
@@ -2359,6 +2377,10 @@ export function ensureDestination(
   if (existing) {
     return existing;
   }
+  const rolePlan = readRequiredRolePlan(flight, id);
+  if (rolePlan) {
+    return rolePlan.site;
+  }
   const pending = readRequiredPlan(flight, id);
   if (pending && !planningRequiredWorld.has(flight)) {
     activateRequiredRoute(content, id, flight);
@@ -2381,18 +2403,18 @@ export function ensureDestination(
   const baseSpan = content.tuning.chunkSize * 2;
   const leaderReach = planningRequiredWorld.has(flight)
     ? questGuardFormationReach(questGuardPlacementContext(content, flight), [
-        spawnEnemy(content, flight, "frigate", `route:${id}`, flight.player),
+        spawnEnemy(
+          content,
+          flight,
+          routeArchetype(flight.galaxy, id),
+          `route:${id}`,
+          flight.player,
+        ),
       ])
     : 0;
   // A new planned site's inward guard edge also stays outside the existing launch calm area.
   const span = planningRequiredWorld.has(flight)
-    ? Math.max(
-        baseSpan,
-        content.tuning.flight.arrivalCalm +
-          content.tuning.safeRadius +
-          leaderReach * 2 +
-          ENEMY_AVOIDANCE.clearance,
-      )
+    ? requiredSiteSpan(content, leaderReach)
     : baseSpan;
   const index = flight.objects.filter((o) => o.kind === "destination").length;
   const spacing = content.tuning.storySpacing;
@@ -2634,6 +2656,123 @@ export function populateRequiredChapterFlight(
     initializingRequiredChapter.delete(flight);
   }
   populateFlight(content, progress, flight);
+}
+
+/** Reserve the existing G3 route roles on a detached world before optional population. */
+export function planRequiredWhirlpoolRoutes(
+  content: GameContent,
+  progress: GalaxyProgress,
+  flight: FlightState,
+  siteIds: readonly string[],
+): void {
+  const projection = structuredClone(flight);
+  planningRequiredWorld.add(projection);
+  try {
+    const sites = siteIds
+      .filter((id) => !readRequiredRolePlan(flight, id))
+      .map((id) => {
+        const point = progress.requiredSites?.[id];
+        return point
+          ? ensureDestinationAt(content, id, point, projection)
+          : ensureDestination(content, id, projection);
+      });
+    for (const site of sites) {
+      ensureRouteEncounter(content, site.id, projection);
+    }
+    placeGuards(
+      content,
+      projection.objects.filter((actor) => actor.enemy?.packId === "route:holodisk:pack"),
+      projection,
+    );
+    const population = stationPopulationObjects(projection);
+    for (const site of sites) {
+      const leader = population.find((actor) => actor.id === `route:${site.id}`)!;
+      const actors = [
+        leader,
+        ...population.filter(
+          (actor) =>
+            actor.id !== leader.id &&
+            (actor.enemy?.escortOf === leader.id ||
+              (site.id === "holodisk" && actor.enemy?.packId === "route:holodisk:pack")),
+        ),
+      ];
+      if (!progress.requiredSites?.[site.id]) {
+        const reach = questGuardFormationReach(
+          questGuardPlacementContext(content, projection),
+          actors,
+        );
+        const span = requiredSiteSpan(content, reach);
+        const heading = direction(length(flight.facing) ? flight.facing : { x: 0, y: -1 });
+        const offset = worldDelta(flightWorldContext(flight), flight.player, site);
+        const distance = Math.max(0, span - offset.x * heading.x - offset.y * heading.y);
+        const delta = { x: heading.x * distance, y: heading.y * distance };
+        site.x += delta.x;
+        site.y += delta.y;
+        canonicalObject(flight, site);
+        for (const actor of actors) {
+          actor.x += delta.x;
+          actor.y += delta.y;
+          if (actor.enemy) {
+            actor.enemy.position.x += delta.x;
+            actor.enemy.position.y += delta.y;
+            actor.enemy.home.x += delta.x;
+            actor.enemy.home.y += delta.y;
+          }
+          canonicalObject(flight, actor);
+        }
+      }
+      storeRequiredRolePlan(progress, flight, {
+        actors,
+        role: site.id === "holodisk" ? "whirlpool-holodisk" : "whirlpool-capital",
+        site,
+      });
+    }
+  } finally {
+    planningRequiredWorld.delete(projection);
+  }
+}
+
+/** Authored model eligibility transfers reserved full states once after geometry validation. */
+export function activateRequiredWhirlpoolRoute(
+  content: GameContent,
+  progress: GalaxyProgress,
+  flight: FlightState,
+  id: string,
+): boolean {
+  const plan = readRequiredRolePlan(flight, id);
+  if (!plan) {
+    return true;
+  }
+  const otherPlans = Object.values(flight.requiredPlans ?? {}).filter((entry) => entry !== plan);
+  const projection = {
+    ...flight,
+    objects: [
+      ...stationPopulationObjects(flight),
+      plan.site,
+      ...otherPlans.flatMap((entry) => [entry.site, ...requiredPlanActors(entry)]),
+    ],
+  };
+  if (!stationFormationClear(questGuardPlacementContext(content, projection), plan.actors)) {
+    return false;
+  }
+  const transferred = takeRequiredRolePlan(progress, flight, id);
+  if (!transferred) {
+    return false;
+  }
+  for (const actor of [transferred.site, ...transferred.actors]) {
+    canonicalObject(flight, actor);
+    flight.objects.push(actor);
+  }
+  const state = combat(flight);
+  state.routeEncounters.push(id);
+  for (const actor of transferred.actors) {
+    const pack = actor.enemy?.packId;
+    if (pack) {
+      state.initialPackSizes[pack] = (state.initialPackSizes[pack] ?? 0) + 1;
+    }
+  }
+  worldSyncFlightRegion(flightWorldContext(flight), content, flight);
+  return true;
 }
 
 export function populateRequiredFlight(
