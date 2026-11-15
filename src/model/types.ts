@@ -409,7 +409,7 @@ export type FlightEvent =
   /** Actual ore paid this step and its persisted cumulative total, for each ten-ore HUD tick. */
   | { type: "shieldOreSpent"; amount: number; total: number }
   | { type: "stationDiscovered"; id: string }
-  | { type: "enemyDestroyed" }
+  | { id: string; type: "enemyDestroyed" }
   /** Ada collected an upgrade pickup. */
   | { id: string; type: "upgradeCollected" }
   | { id: string; type: "ammoCollected" }

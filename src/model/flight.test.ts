@@ -207,7 +207,7 @@ describe("flight boundaries", () => {
     flight.weapon = "laser";
     const events = stepFlight(CONTENT, 1.5, { ...idle, aim: { x: 1, y: 0 } }, flight);
     expect(events).toContainEqual({ id: "debris", type: "debrisCleared" });
-    expect(events).toContainEqual({ type: "enemyDestroyed" });
+    expect(events).toContainEqual({ id: "enemy", type: "enemyDestroyed" });
     expect(flight.objects.filter((o) => o.role === "cargo")).toHaveLength(
       rollAsteroidLoot(ASTEROID_LOOT, "small", dropRandom(flight.seed, "resource")).ore,
     );

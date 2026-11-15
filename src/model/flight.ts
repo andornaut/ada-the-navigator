@@ -2600,7 +2600,7 @@ function enemies(
     object.enemy = intent.state;
     if (intent.effects.defeated) {
       destroyEnemy(object, flight);
-      events.push({ type: "enemyDestroyed" });
+      events.push({ id: object.id, type: "enemyDestroyed" });
       continue;
     }
     let velocity = intent.velocity;
@@ -3334,7 +3334,7 @@ function hit(
   }
   if (object.kind === "enemy") {
     destroyEnemy(object, flight);
-    events.push({ type: "enemyDestroyed" });
+    events.push({ id: object.id, type: "enemyDestroyed" });
   }
   if (object.asteroid) {
     events.push({
