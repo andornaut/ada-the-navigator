@@ -22,7 +22,7 @@ function createDocument() {
       Object.assign(new FakeElement(), { tagName: tagName.toUpperCase() }),
     createElementNS: (): FakeElement => new FakeElement(),
     createTextNode: (text: string): FakeElement =>
-      Object.assign(new FakeElement(), { textContent: text }),
+      Object.assign(new FakeElement(), { nodeType: 3, nodeValue: text }),
     defaultView: null,
     fonts: Object.assign(new EventTarget(), { status: "loaded" }),
   });
@@ -32,7 +32,35 @@ let PAGE = createDocument();
 // A stand-in for the few DOM members the pause cards and the map screen's construction use.
 class FakeElement {
   readonly attributes = new Map<string, string>();
-  children: FakeElement[] = [];
+  nodeType = 1;
+  readonly childNodes: FakeElement[] = [];
+  private data = "";
+  get children(): FakeElement[] {
+    return this.childNodes.filter((node) => node.nodeType === 1);
+  }
+  get firstChild(): FakeElement | null {
+    return this.childNodes[0] ?? null;
+  }
+  get nodeValue(): string | null {
+    return this.nodeType === 3 ? this.data : null;
+  }
+  set nodeValue(value: string | null) {
+    if (this.nodeType === 3) {
+      this.data = value ?? "";
+    }
+  }
+  get textContent(): string {
+    return this.nodeType === 3
+      ? this.data
+      : this.childNodes.map((node) => node.textContent).join("");
+  }
+  set textContent(value: string) {
+    if (this.nodeType === 3) {
+      this.data = value;
+    } else {
+      this.replaceChildren(...(value ? [PAGE.createTextNode(value)] : []));
+    }
+  }
   parentElement: FakeElement | null = null;
   tabIndex = 0;
   tagName = "DIV";
@@ -54,7 +82,6 @@ class FakeElement {
     removeProperty: vi.fn(),
     setProperty: vi.fn(),
   };
-  textContent = "";
   type = "";
   addEventListener(type: string, listener: () => void): void {
     this.listeners.set(type, [...(this.listeners.get(type) ?? []), listener]);
@@ -72,7 +99,7 @@ class FakeElement {
     return this.children[0] ?? null;
   }
   get nextSibling(): FakeElement | null {
-    const siblings = this.parentElement?.children;
+    const siblings = this.parentElement?.childNodes;
     return siblings?.[siblings.indexOf(this) + 1] ?? null;
   }
   insertBefore(node: FakeElement, before: FakeElement | null): FakeElement {
@@ -81,7 +108,11 @@ class FakeElement {
     }
     node.remove();
     node.parentElement = this;
-    this.children.splice(before ? this.children.indexOf(before) : this.children.length, 0, node);
+    this.childNodes.splice(
+      before ? this.childNodes.indexOf(before) : this.childNodes.length,
+      0,
+      node,
+    );
     return node;
   }
   append(...nodes: FakeElement[]): void {
@@ -90,7 +121,7 @@ class FakeElement {
     }
   }
   prepend(...nodes: FakeElement[]): void {
-    const before = this.firstElementChild;
+    const before = this.firstChild;
     for (const node of nodes) {
       this.insertBefore(node, before);
     }
@@ -110,7 +141,7 @@ class FakeElement {
     return this.parentElement?.closest(selector) ?? null;
   }
   contains(node: unknown): boolean {
-    return this === node || this.children.some((child) => child.contains(node));
+    return this === node || this.childNodes.some((child) => child.contains(node));
   }
   getAttributeNames(): string[] {
     return [...this.attributes.keys()];
@@ -129,13 +160,16 @@ class FakeElement {
   getAttribute(name: string): string | null {
     return this.attributes.get(name) ?? null;
   }
-  querySelector(): null {
-    return null;
+  querySelector(selector: string): FakeElement | null {
+    return this.querySelectorAll(selector)[0] ?? null;
   }
-  querySelectorAll(): FakeElement[] {
+  querySelectorAll(selector?: string): FakeElement[] {
+    const action = /data-action="([^"]+)"/.exec(selector ?? "")?.[1];
     return this.children.flatMap((child) => [
-      ...(child.type === "button" ? [child] : []),
-      ...child.querySelectorAll(),
+      ...((action === undefined ? child.type === "button" : child.dataset.action === action)
+        ? [child]
+        : []),
+      ...child.querySelectorAll(selector),
     ]);
   }
   cloneNode(): FakeElement {
@@ -143,7 +177,7 @@ class FakeElement {
   }
   remove(): void {
     if (this.parentElement) {
-      const siblings = this.parentElement.children;
+      const siblings = this.parentElement.childNodes;
       siblings.splice(siblings.indexOf(this), 1);
       this.parentElement = null;
     }
@@ -152,7 +186,7 @@ class FakeElement {
     this.attributes.delete(name);
   }
   replaceChildren(...nodes: FakeElement[]): void {
-    for (const node of [...this.children]) {
+    for (const node of [...this.childNodes]) {
       node.remove();
     }
     this.append(...nodes);
@@ -901,3 +935,25 @@ it.each([1, 2])(
     pause.dispose();
   },
 );
+
+it("retains a real label node through native presentation moves and action queries", () => {
+  const button = PAGE.createElement("button");
+  button.dataset.action = "dismiss-resource";
+  button.textContent = "Close";
+  const label = button.firstChild!;
+  expect(label.nodeType).toBe(3);
+  const icon = PAGE.createElement("img");
+  button.prepend(icon);
+  expect(button.childNodes).toEqual([icon, label]);
+  expect(button.children).toEqual([icon]);
+  const presentation = PAGE.createElement("span");
+  presentation.append(label);
+  button.append(presentation);
+  label.nodeValue = "Back";
+  expect(button.textContent).toBe("Back");
+  expect(button.contains(label)).toBe(true);
+  const footer = PAGE.createElement("div");
+  footer.append(button);
+  expect(footer.querySelector('[data-action="dismiss-resource"]')).toBe(button);
+  expect(presentation.firstChild).toBe(label);
+});
