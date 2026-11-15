@@ -5,8 +5,11 @@ import { fileURLToPath } from "node:url";
 import { isHashedAssetUrl } from "@andornaut/game-kit/web/pwa/cachePolicy";
 import { describe, expect, it } from "vitest";
 
+import { ECONOMY } from "../data/economy.ts";
 import { GALAXY_ID } from "../data/galaxies.ts";
 import { GALAXIES, galaxyPreview } from "../data/storybook.ts";
+import { SHIP_HEADINGS } from "../model/nose.ts";
+import { SHIPPED_SHIP_SOURCES } from "../testing/shippedShipSources.ts";
 import { CACHE_POLICY } from "./cachePolicy.ts";
 import { ART_DIRECTORY, artUrls, PREVIEW_DIRECTORY, previewUrls } from "./precacheArt.ts";
 
@@ -46,16 +49,68 @@ describe("artUrls", () => {
     expect(artUrls(artFiles).filter((url) => isHashedAssetUrl(CACHE_POLICY, url))).toEqual([]);
   });
 
-  it("lists every file the art manifest and the UI manifest name", () => {
+  it("lists required network files and resolves exact generated ship references", () => {
     const urls = artUrls(artFiles);
-    const manifest = read("/art/manifest.json") as { ui: { basePath: string; manifest: string } };
+    const manifest = read("/art/manifest.json") as {
+      assets: { id: string; path: string; directionIndex?: number; paint?: string }[];
+      quantumJump: string;
+      shipMaterials?: string;
+      ui: { basePath: string; manifest: string };
+    };
+    let generatedHulls = 0;
+    const assets = manifest.assets.map((asset) => {
+      const heading = asset.directionIndex;
+      const generatedId = asset.paint ? `ship-${asset.paint}-${heading}` : "ship";
+      if (
+        !SHIPPED_SHIP_SOURCES ||
+        typeof heading !== "number" ||
+        !Number.isInteger(heading) ||
+        asset.id !== generatedId
+      ) {
+        return asset;
+      }
+      const source = SHIPPED_SHIP_SOURCES.ship(asset.paint ?? ECONOMY.defaultPaint, heading);
+      expect(source, asset.id).toBeDefined();
+      generatedHulls++;
+      return { ...asset, path: source!.url };
+    });
+    expect(generatedHulls).toBe(
+      SHIPPED_SHIP_SOURCES ? (ECONOMY.paintOrder.length - 1) * SHIP_HEADINGS + 1 : 0,
+    );
+    // Classic headings remain real network assets for the current local map.
+    for (let heading = 0; heading < SHIP_HEADINGS; heading++) {
+      expect(urls).toContain(`/art/ship-${heading}.svg`);
+    }
+    const jump = read(manifest.quantumJump) as {
+      warp: { poses: { id: string; paths: Record<string, string> }[] };
+    };
+    let generatedPoses = 0;
+    const poses = jump.warp.poses.map((pose) => ({
+      ...pose,
+      paths: Object.fromEntries(
+        Object.entries(pose.paths).map(([scheme, path]) => {
+          if (!SHIPPED_SHIP_SOURCES) {
+            return [scheme, path];
+          }
+          const source = SHIPPED_SHIP_SOURCES.pose(scheme, pose.id);
+          expect(source, `${scheme}:${pose.id}`).toBeDefined();
+          generatedPoses++;
+          return [scheme, source!.url];
+        }),
+      ),
+    }));
+    expect(generatedPoses).toBe(
+      SHIPPED_SHIP_SOURCES ? ECONOMY.paintOrder.length * jump.warp.poses.length : 0,
+    );
     const ui = read(manifest.ui.manifest) as {
       fonts: { fnt: string; png: string }[];
       sprites: { json: string; png: string }[];
     };
     const named = [
       "/art/manifest.json",
-      ...namedArtUrls(manifest).filter((url) => url !== manifest.ui.basePath),
+      ...namedArtUrls({ ...manifest, assets }).filter((url) => url !== manifest.ui.basePath),
+      ...namedArtUrls({ ...jump, warp: { ...jump.warp, poses } }),
+      ...(manifest.shipMaterials ? namedArtUrls(read(manifest.shipMaterials)) : []),
       ...[
         ...ui.fonts.flatMap(({ fnt, png }) => [fnt, png]),
         ...ui.sprites.flatMap(({ json, png }) => [json, png]),
