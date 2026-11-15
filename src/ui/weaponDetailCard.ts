@@ -1,12 +1,32 @@
+import type { ControlAvailability } from "@andornaut/game-kit/runtime/ui/controlPresentation";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
+import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import type { Weapon } from "../data/types.ts";
 import { WEAPON_DETAIL_LABELS } from "../data/weaponDetails.ts";
 import { ammoShopSheet, weaponGlyphPath } from "../data/weaponGlyphs.ts";
+import { bindAdaAction } from "./actionBinding.ts";
+import { presentAdaButton } from "./buttonPresentation.ts";
 import { compactLevelName } from "./compactLevelName.ts";
 import { detailCount, renderDetailQuantity } from "./detailQuantity.ts";
+import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
-import { createActions, createButton, createCard, isTap, setFooterAction } from "./modal.ts";
+import { createAdaLayoutPorts } from "./layoutTree.ts";
+import { createActions, createCard, isTap, setFooterAction } from "./modal.ts";
+import { enterPressView, inCurrentView } from "./pressScope.ts";
+import {
+  type WeaponDetailAction,
+  type WeaponDetailData,
+  type WeaponDetailSchema,
+  weaponDetailTree,
+} from "./weaponDetailTree.ts";
+
+type WeaponDetailIdentity = {
+  readonly id: Weapon;
+  readonly level?: number;
+  readonly ammo?: number | null;
+  readonly ammoLabel?: string;
+};
 
 /** Weapon details use the shared card frame and modal pause lifecycle. */
 export function createWeaponDetailCard(
@@ -25,30 +45,132 @@ export function createWeaponDetailCard(
   card.card.dataset.dialog = "weapon-detail";
   const description = document.createElement("p");
   description.className = "ada-prose";
-  const dismiss = createButton(options.closeLabel, "primary");
-  dismiss.dataset.action = "dismiss-weapon-detail";
   const quantity = document.createElement("div");
   quantity.hidden = true;
-  const actions = createActions([{ button: dismiss, role: "primary" }]);
+  const actions = createActions([]);
   actions.className += " ada-detail-actions";
   setFooterAction("close", actions);
   card.body.append(description, quantity, actions);
   modal.append(card.frame);
   root.append(modal);
+  let disposed = false;
+  let visible = false;
+  let leaveView: (() => void) | undefined;
+  let currentIdentity: WeaponDetailIdentity | undefined;
   let returnFocus: HTMLElement | null = null;
   const close = () => {
     if (modal.hidden) {
       return;
     }
+    visible = false;
     modal.hidden = true;
+    leaveView?.();
+    leaveView = undefined;
     options.onOpenChange(false);
     if (returnFocus) {
       focusTarget(returnFocus);
     }
     returnFocus = null;
   };
-  card.close.addEventListener("click", close);
-  dismiss.addEventListener("click", close);
+  const availability = (): ControlAvailability =>
+    disposed || !visible || !inCurrentView(root, card.frame)
+      ? { kind: "omitted" }
+      : { kind: "available" };
+  const headerBinding = bindAdaAction(
+    {
+      click: { availability, run: close },
+      current: () => !disposed && !modal.hidden && inCurrentView(root, card.close),
+      slopPx: () => SCROLL.dragThreshold * readViewUnit(card.close),
+    },
+    card.close,
+  );
+  const ports = createAdaLayoutPorts<WeaponDetailAction>({
+    actions: new Map([
+      ["close-weapon-detail", close],
+      ["dismiss-weapon-detail", close],
+    ]),
+    availability,
+    presentButton: presentAdaButton,
+  });
+  const renderContent = (data: WeaponDetailData) => {
+    const { lines, title } = data;
+    const identity = currentIdentity;
+    card.title.textContent = compactLevelName(identity?.level, title);
+    if (identity) {
+      const label = document.createElement("span");
+      label.textContent = compactLevelName(identity.level, title);
+      const icon = document.createElement("span");
+      icon.className = "ada-weapon";
+      icon.dataset.weapon = identity.id;
+      icon.dataset.state = "idle";
+      if (identity.level !== undefined) {
+        icon.dataset.level = String(identity.level);
+      }
+      icon.setAttribute("aria-hidden", "true");
+      icon.style.pointerEvents = "none";
+      const disc = document.createElement("span");
+      disc.className = "ada-disc";
+      disc.style.setProperty("--glyph", `url('${weaponGlyphPath(identity.id)}')`);
+      const pips = document.createElement("span");
+      pips.className = "ada-pips";
+      if (identity.level !== undefined && identity.level > 1) {
+        pips.append(
+          ...Array.from({ length: identity.level }, () => document.createElement("span")),
+        );
+      }
+      icon.append(disc, pips);
+      card.title.className = "ada-detail-header";
+      card.title.replaceChildren(icon, label);
+    }
+    card.frame.setAttribute("aria-label", compactLevelName(identity?.level, title));
+    let ammoIcon: HTMLElement | undefined;
+    let amount: string | undefined;
+    if (identity?.ammo !== undefined) {
+      ammoIcon = document.createElement("span");
+      if (identity.id === "laser") {
+        ammoIcon.className = "ada-detail-unlimited-icon";
+        ammoIcon.style.setProperty("--glyph", `url('${weaponGlyphPath(identity.id)}')`);
+      } else {
+        ammoIcon.className = "ada-detail-ammo-icon";
+        ammoIcon.style.backgroundImage = `url('/art/ui/sprites/${ammoShopSheet(identity.id)}.png')`;
+      }
+      amount =
+        identity.ammo === null ? WEAPON_DETAIL_LABELS.detailUnlimited : detailCount(identity.ammo);
+    }
+    renderDetailQuantity(quantity, ammoIcon, amount, identity?.ammoLabel);
+    description.replaceChildren(
+      ...lines.map((line) => {
+        const paragraph = document.createElement("span");
+        paragraph.style.display = "block";
+        paragraph.textContent = line;
+        return paragraph;
+      }),
+    );
+  };
+  const mounted = mountLayout<WeaponDetailSchema>(
+    {
+      components: {
+        ...ports.components,
+        weaponDetail: {
+          create(data) {
+            renderContent(data);
+            return {
+              dispose: card.dispose,
+              element: card.frame,
+              slots: { footer: actions },
+              update: renderContent,
+            };
+          },
+          slots: ["footer"],
+        },
+      },
+      host: modal,
+    },
+    weaponDetailTree({ closeLabel: options.closeLabel, lines: [], title: "" }),
+  );
+  const dismiss = actions.querySelector<HTMLButtonElement>(
+    '[data-action="dismiss-weapon-detail"]',
+  )!;
   modal.addEventListener("keydown", (event) => {
     if (event.key === "Tab") {
       event.preventDefault();
@@ -72,7 +194,11 @@ export function createWeaponDetailCard(
   return {
     close,
     dispose() {
-      card.dispose();
+      disposed = true;
+      leaveView?.();
+      leaveView = undefined;
+      headerBinding.dispose();
+      mounted.dispose();
       modal.remove();
       returnFocus = null;
     },
@@ -81,67 +207,13 @@ export function createWeaponDetailCard(
       title: string,
       lines: readonly string[],
       origin: HTMLElement,
-      identity?: {
-        readonly id: Weapon;
-        readonly level?: number;
-        readonly ammo?: number | null;
-        readonly ammoLabel?: string;
-      },
+      identity?: WeaponDetailIdentity,
     ) {
       returnFocus = origin;
-      card.title.textContent = compactLevelName(identity?.level, title);
-      if (identity) {
-        const label = document.createElement("span");
-        label.textContent = compactLevelName(identity.level, title);
-        const icon = document.createElement("span");
-        icon.className = "ada-weapon";
-        icon.dataset.weapon = identity.id;
-        icon.dataset.state = "idle";
-        if (identity.level !== undefined) {
-          icon.dataset.level = String(identity.level);
-        }
-        icon.setAttribute("aria-hidden", "true");
-        icon.style.pointerEvents = "none";
-        const disc = document.createElement("span");
-        disc.className = "ada-disc";
-        disc.style.setProperty("--glyph", `url('${weaponGlyphPath(identity.id)}')`);
-        const pips = document.createElement("span");
-        pips.className = "ada-pips";
-        if (identity.level !== undefined && identity.level > 1) {
-          pips.append(
-            ...Array.from({ length: identity.level }, () => document.createElement("span")),
-          );
-        }
-        icon.append(disc, pips);
-        card.title.className = "ada-detail-header";
-        card.title.replaceChildren(icon, label);
-      }
-      card.frame.setAttribute("aria-label", compactLevelName(identity?.level, title));
-      let ammoIcon: HTMLElement | undefined;
-      let amount: string | undefined;
-      if (identity?.ammo !== undefined) {
-        ammoIcon = document.createElement("span");
-        if (identity.id === "laser") {
-          ammoIcon.className = "ada-detail-unlimited-icon";
-          ammoIcon.style.setProperty("--glyph", `url('${weaponGlyphPath(identity.id)}')`);
-        } else {
-          ammoIcon.className = "ada-detail-ammo-icon";
-          ammoIcon.style.backgroundImage = `url('/art/ui/sprites/${ammoShopSheet(identity.id)}.png')`;
-        }
-        amount =
-          identity.ammo === null
-            ? WEAPON_DETAIL_LABELS.detailUnlimited
-            : detailCount(identity.ammo);
-      }
-      renderDetailQuantity(quantity, ammoIcon, amount, identity?.ammoLabel);
-      description.replaceChildren(
-        ...lines.map((line) => {
-          const paragraph = document.createElement("span");
-          paragraph.style.display = "block";
-          paragraph.textContent = line;
-          return paragraph;
-        }),
-      );
+      currentIdentity = identity;
+      visible = true;
+      leaveView ??= enterPressView(root, card.frame);
+      mounted.update(weaponDetailTree({ closeLabel: options.closeLabel, lines, title }));
       modal.hidden = false;
       options.onOpenChange(true);
       card.fit();

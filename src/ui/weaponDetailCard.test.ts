@@ -1,26 +1,120 @@
 import { afterEach, expect, it, vi } from "vitest";
 
 import { WEAPON_DETAIL_LABELS, weaponDetailLines } from "../data/weaponDetails.ts";
+import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { compactLevelName } from "./compactLevelName.ts";
+import { enterPressView, rootPressGuard } from "./pressScope.ts";
 import { createWeaponDetailCard } from "./weaponDetailCard.ts";
 
 const fixture = vi.hoisted(() => {
   class Node extends EventTarget {
+    nodeType = 1;
+    parentElement: Node | null = null;
+    private detached = false;
+    get isConnected(): boolean {
+      return this.parentElement?.isConnected ?? !this.detached;
+    }
+    set isConnected(value: boolean) {
+      this.detached = !value;
+    }
+    get ownerDocument() {
+      return { ...document, defaultView: { HTMLElement: Node, Node } };
+    }
+    get parentNode() {
+      return this.parentElement;
+    }
+    get nextSibling(): Node | null {
+      return this.parentElement?.children[this.parentElement.children.indexOf(this) + 1] ?? null;
+    }
+    get firstChild() {
+      const getText = () => this.textContent;
+      const setText = (value: string) => {
+        this.textContent = value;
+      };
+      return {
+        nodeType: 3,
+        get nodeValue() {
+          return getText();
+        },
+        set nodeValue(value: string) {
+          setText(value);
+        },
+      };
+    }
+    classList = {
+      toggle: (name: string, on: boolean) => {
+        const names = new Set(this.className.split(" ").filter(Boolean));
+        if (on) {
+          names.add(name);
+        } else {
+          names.delete(name);
+        }
+        this.className = [...names].join(" ");
+      },
+    };
+    contains(node: unknown): boolean {
+      return node === this || this.children.some((child) => child.contains(node));
+    }
+    closest(): Node | null {
+      return this.hidden ? this : (this.parentElement?.closest() ?? null);
+    }
+    insertBefore(node: Node, before: Node | null) {
+      node.remove();
+      node.parentElement = this;
+      node.isConnected = this.isConnected;
+      this.children.splice(
+        before === null ? this.children.length : this.children.indexOf(before),
+        0,
+        node,
+      );
+    }
+    querySelector(selector: string): Node | null {
+      const action = /data-action="([^"]+)"/.exec(selector)?.[1];
+      for (const child of this.children) {
+        if (action !== undefined && child.dataset.action === action) {
+          return child;
+        }
+        const found = child.querySelector(selector);
+        if (found) {
+          return found;
+        }
+      }
+      return null;
+    }
     children: Node[] = [];
     className = "";
     dataset: Record<string, string> = {};
     hidden = false;
     textContent = "";
+    attributes: Record<string, string> = {};
     style = { display: "", setProperty: vi.fn() };
-    replaceChildren(...nodes: Node[]) {
-      this.children = nodes;
-    }
-    setAttribute() {}
-    removeAttribute() {}
     focus = vi.fn();
-    remove = vi.fn();
+    remove = vi.fn(() => {
+      if (this.parentElement) {
+        this.parentElement.children.splice(this.parentElement.children.indexOf(this), 1);
+      }
+      this.parentElement = null;
+      this.isConnected = false;
+    });
     append(...nodes: Node[]) {
-      this.children.push(...nodes);
+      for (const node of nodes) {
+        this.insertBefore(node, null);
+      }
+    }
+    replaceChildren(...nodes: Node[]) {
+      for (const child of [...this.children]) {
+        child.remove();
+      }
+      this.append(...nodes);
+    }
+    removeAttribute(name: string) {
+      delete this.attributes[name];
+    }
+    cloneNode(): Node {
+      return Object.assign(new Node(), { className: this.className });
+    }
+    setAttribute(name: string, value: string) {
+      this.attributes[name] = value;
     }
   }
   const card = {
@@ -35,17 +129,34 @@ const fixture = vi.hoisted(() => {
   return { Node, card };
 });
 vi.mock("./modal.ts", () => ({
-  createActions: (actions: { button: InstanceType<typeof fixture.Node> }[]) => {
-    const node = new fixture.Node();
-    node.append(...actions.map((action) => action.button));
-    return node;
+  createActions: (actions: { button: InstanceType<typeof fixture.Node>; role: string }[]) => {
+    const row = new fixture.Node();
+    row.append(...actions.map(({ button }) => button));
+    return row;
   },
-  createButton: () => new fixture.Node(),
-  createCard: () => fixture.card,
+  createButton: (label: string, role: string) => {
+    const button = new fixture.Node();
+    button.textContent = label;
+    button.dataset.role = role;
+    return button;
+  },
+  createCard: () => {
+    fixture.card.card.replaceChildren(fixture.card.title, fixture.card.body);
+    fixture.card.frame.replaceChildren(fixture.card.card, fixture.card.close);
+    return fixture.card;
+  },
   isTap: () => true,
   setFooterAction: (action: string, row: { dataset: Record<string, string> }) => {
     row.dataset.footerAction = action;
   },
+}));
+vi.mock("./buttonPresentation.ts", () => ({
+  presentAdaButton: (button: InstanceType<typeof fixture.Node>) => ({
+    dispose() {},
+    element: button,
+    reason: new fixture.Node(),
+    update() {},
+  }),
 }));
 vi.mock("./layout/viewScale.ts", () => ({ readViewUnit: () => 1 }));
 vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
@@ -187,4 +298,68 @@ it("renders basic Laser's existing glyph and Unlimited row without a level-one s
   expect(row.hidden).toBe(true);
   expect(row.children).toEqual([]);
   detail.dispose();
+});
+
+it("retains native content nodes and original close actions across current view, reopen and disposal", () => {
+  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  const root = new fixture.Node(),
+    origin = new fixture.Node();
+  const guard = rootPressGuard(root as unknown as HTMLElement);
+  const beforeOpen = guard.gate.capture();
+  const onOpenChange = vi.fn();
+  const detail = createWeaponDetailCard(root as unknown as HTMLElement, {
+    closeLabel: "Close",
+    onOpenChange,
+  });
+  const [description, quantity, footer] = fixture.card.body.children;
+  detail.open(
+    "Rapid Missile",
+    weaponDetailLines("rapidMissile", 3),
+    origin as unknown as HTMLElement,
+    { ammo: 0, ammoLabel: "Ammo", id: "rapidMissile", level: 3 },
+  );
+  expect(beforeOpen()).toBe(false);
+  const dismiss = footer!.children[0]!;
+  const headerAction = resolveAdaHoldAction(root as unknown as HTMLElement, fixture.card.close);
+  const dismissAction = resolveAdaHoldAction(root as unknown as HTMLElement, dismiss);
+  expect(headerAction?.available()).toBe(true);
+  expect(dismissAction?.available()).toBe(true);
+  const openCapture = guard.gate.capture();
+  headerAction?.activate();
+  expect(onOpenChange.mock.calls).toEqual([[true], [false]]);
+  expect(origin.focus).toHaveBeenCalledOnce();
+  expect(openCapture()).toBe(false);
+  detail.open("Laser", weaponDetailLines("laser", 1), origin as unknown as HTMLElement, {
+    ammo: null,
+    ammoLabel: "Ammo",
+    id: "laser",
+    level: 1,
+  });
+  expect(fixture.card.body.children).toEqual([description, quantity, footer]);
+  expect(footer!.children[0]).toBe(dismiss);
+  expect(quantity!.children[1]!.textContent).toBe("Unlimited");
+  const cover = new fixture.Node();
+  root.append(cover);
+  const leaveCover = enterPressView(
+    root as unknown as HTMLElement,
+    cover as unknown as HTMLElement,
+  );
+  expect(headerAction?.available()).toBe(false);
+  expect(dismissAction?.available()).toBe(false);
+  headerAction?.activate();
+  dismissAction?.activate();
+  expect(onOpenChange.mock.calls).toEqual([[true], [false], [true]]);
+  leaveCover();
+  expect(dismissAction?.available()).toBe(true);
+  const beforeDispose = guard.gate.capture();
+  detail.dispose();
+  expect(beforeDispose()).toBe(false);
+  expect(resolveAdaHoldAction(root as unknown as HTMLElement, fixture.card.close)).toBeNull();
+  expect(resolveAdaHoldAction(root as unknown as HTMLElement, dismiss)).toBeNull();
+  headerAction?.activate();
+  dismissAction?.activate();
+  dismiss.dispatchEvent(new Event("click"));
+  fixture.card.close.dispatchEvent(new Event("click"));
+  expect(onOpenChange.mock.calls).toEqual([[true], [false], [true]]);
+  expect(fixture.card.dispose).toHaveBeenCalledOnce();
 });
