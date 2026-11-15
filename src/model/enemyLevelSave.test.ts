@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import * as enemyCatalogModule from "../data/enemyCatalog.ts";
+import * as enemyActorModule from "../data/enemyActorDefinition.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import type { WeaponLevel } from "../data/types.ts";
 import { playOpening } from "../testing/launch.ts";
@@ -54,7 +54,7 @@ describe("saved equipped enemy levels", () => {
         if (level !== undefined) {
           Object.assign(enemy, { weaponLevel: level });
         }
-        const definition = vi.spyOn(enemyCatalogModule, "enemyDefinition");
+        const definition = vi.spyOn(enemyActorModule, "enemyActorDefinition");
         const random = vi.spyOn(crypto, "getRandomValues");
         random.mockClear();
         try {

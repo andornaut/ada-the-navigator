@@ -3,10 +3,16 @@ import capital from "../../public/art/enemies/capital-hardpoints.json" with { ty
 import fighter from "../../public/art/enemies/fighter-jets.json" with { type: "json" };
 import frigate from "../../public/art/enemies/frigate-hardpoints.json" with { type: "json" };
 import gadget from "../../public/art/enemies/gadget-hardpoints.json" with { type: "json" };
+import station from "../../public/art/enemies/hostileStation-hardpoints.json" with { type: "json" };
 import interceptor from "../../public/art/enemies/interceptor-jets.json" with { type: "json" };
 import retaliator from "../../public/art/enemies/retaliator-jets.json" with { type: "json" };
+import cargoParts from "../../public/art/enemies/retaliatorCargoHauler-hardpoints.json" with { type: "json" };
+import cargoJets from "../../public/art/enemies/retaliatorCargoHauler-jets.json" with { type: "json" };
+import miningParts from "../../public/art/enemies/retaliatorMiningFreighter-hardpoints.json" with { type: "json" };
+import miningJets from "../../public/art/enemies/retaliatorMiningFreighter-jets.json" with { type: "json" };
 import swarm from "../../public/art/enemies/swarm-jets.json" with { type: "json" };
-import { type EnemyArchetype, heavyLoadout } from "../data/enemyCatalog.ts";
+import { enemyActorLoadout } from "../data/enemyActorDefinition.ts";
+import { type EnemyAssetKey, enemyAssetKey } from "../data/enemyIdentity.ts";
 import { ENEMY_DISPLAY_SCALE } from "../data/enemyMuzzles.ts";
 import type { RoutePosition } from "../data/galaxies.ts";
 import type { Parts } from "./convex.ts";
@@ -23,6 +29,7 @@ type RawParts = readonly (readonly (readonly number[])[])[];
  * mount), its top's pivot per heading and the top it carries at every tier, or null.
  */
 interface HardpointOutline {
+  readonly damageable: boolean;
   readonly bases: readonly {
     readonly capped?: Parts;
     readonly destroyed: Parts;
@@ -76,7 +83,7 @@ interface JetsFile {
 
 interface HardpointsFile {
   frame: number;
-  hardpoints: { id: string; top: string | null }[];
+  hardpoints: { id: string; states?: string[]; top: string | null }[];
   headings: {
     index: number;
     collision?: RawParts;
@@ -122,8 +129,11 @@ function smallOutline(file: JetsFile): EnemyOutline | undefined {
   );
 }
 
-function heavyOutline(file: HardpointsFile): EnemyOutline | undefined {
-  const hull = hulls(file.frame, file.headings);
+function heavyOutline(file: HardpointsFile, jets?: JetsFile): EnemyOutline | undefined {
+  if (jets && jets.frame !== file.frame) {
+    return undefined;
+  }
+  const hull = hulls(file.frame, jets?.headings ?? file.headings);
   if (!hull) {
     return undefined;
   }
@@ -136,18 +146,24 @@ function heavyOutline(file: HardpointsFile): EnemyOutline | undefined {
   const cappable = new Set(
     tiers.flatMap((tier) => [...tier.mounts].flatMap(([id, armed]) => (armed ? [] : [id]))),
   );
-  for (const { id, top } of file.hardpoints) {
+  for (const { id, states, top } of file.hardpoints) {
+    const damageable = states?.includes("destroyed") ?? true;
     const bases: { capped?: Parts; destroyed: Parts; intact: Parts }[] = [];
     const pivots: (Vec | null)[] = [];
     for (const heading of file.headings) {
       const part = heading.hardpoints.find((entry) => entry.id === id);
       const { capped, destroyed, intact } = part?.collision ?? {};
-      if (!part || !intact?.length || !destroyed?.length || (cappable.has(id) && !capped?.length)) {
+      if (
+        !part ||
+        !intact?.length ||
+        (damageable && !destroyed?.length) ||
+        (cappable.has(id) && !capped?.length)
+      ) {
         return undefined;
       }
       bases[heading.index] = {
         ...(capped?.length ? { capped: display(centre, capped) } : {}),
-        destroyed: display(centre, destroyed),
+        destroyed: display(centre, destroyed ?? intact!),
         intact: display(centre, intact),
       };
       pivots[heading.index] = part.pivot
@@ -157,7 +173,7 @@ function heavyOutline(file: HardpointsFile): EnemyOutline | undefined {
           }
         : null;
     }
-    hardpoints.set(id, { bases, pivots, top });
+    hardpoints.set(id, { bases, damageable, pivots, top });
   }
   const tops = new Map<string, Parts[]>();
   for (const [name, aims] of Object.entries(file.tops)) {
@@ -205,7 +221,7 @@ function carriedTop(
   return (weapon && outline.weaponTops.get(weapon)) || null;
 }
 
-const OUTLINES: Partial<Record<EnemyArchetype | "gadget", EnemyOutline>> = {};
+const OUTLINES: Partial<Record<EnemyAssetKey, EnemyOutline>> = {};
 for (const [archetype, outline] of [
   ["swarm", smallOutline(swarm as JetsFile)],
   ["fighter", smallOutline(fighter as JetsFile)],
@@ -214,7 +230,13 @@ for (const [archetype, outline] of [
   ["frigate", heavyOutline(frigate as HardpointsFile)],
   ["capital", heavyOutline(capital as HardpointsFile)],
   ["gadget", heavyOutline(gadget as HardpointsFile)],
+  ["hostileStation", heavyOutline(station as HardpointsFile)],
   ["platform", heavyOutline(platform as HardpointsFile)],
+  ["retaliatorCargoHauler", heavyOutline(cargoParts as HardpointsFile, cargoJets as JetsFile)],
+  [
+    "retaliatorMiningFreighter",
+    heavyOutline(miningParts as HardpointsFile, miningJets as JetsFile),
+  ],
 ] as const) {
   if (outline) {
     OUTLINES[archetype] = outline;
@@ -231,8 +253,33 @@ function index16(direction: Vec): number {
  * An enemy's hull as drawn for its facing, in screen px from its position, or null for an
  * archetype without Art's outline, which keeps its hull circle.
  */
-export function enemyHull(enemy: Pick<EnemyState, "archetype" | "facing">): Parts | null {
-  return OUTLINES[enemy.archetype]?.hulls[index16(enemy.facing)] ?? null;
+export function enemyHull(
+  enemy: Pick<EnemyState, "archetype" | "facing"> & Partial<Pick<EnemyState, "id" | "aim">>,
+): Parts | null {
+  const key = enemyAssetKey(enemy);
+  const outline = OUTLINES[key];
+  if (!outline) {
+    return null;
+  }
+  const heading = index16(enemy.facing);
+  const mounts = [...outline.hardpoints].filter(([, part]) => !part.damageable);
+  return mounts.length
+    ? [
+        ...outline.hulls[heading]!,
+        ...mounts.flatMap(([id, part]) =>
+          composedPart(
+            key,
+            outline,
+            part,
+            id,
+            heading,
+            true,
+            part.top ? { aft: false, top: part.top } : null,
+            index16(enemy.aim ?? enemy.facing),
+          ),
+        ),
+      ]
+    : outline.hulls[heading]!;
 }
 
 const PART_OUTLINES = new Map<string, Parts>();
@@ -246,13 +293,13 @@ export function enemyPartOutline(
   enemy: Pick<EnemyState, "aim" | "archetype" | "facing" | "hardpoints" | "id">,
   id: string,
 ): Parts | null {
-  const outline = OUTLINES[enemy.archetype];
+  const outline = OUTLINES[enemyAssetKey(enemy)];
   const hardpoint = outline?.hardpoints.get(id);
   if (!outline || !hardpoint) {
     return null;
   }
   const heading = index16(enemy.facing);
-  const weapon = heavyLoadout(enemy.archetype, position, enemy.id)?.get(id);
+  const weapon = enemyActorLoadout(enemy.archetype, position, enemy.id)?.get(id);
   const carried = carriedTop(outline, position, id, hardpoint.top, weapon);
   if (carried === "capped") {
     return hardpoint.bases[heading]!.capped!;
@@ -269,7 +316,22 @@ export function enemyPartOutline(
         ? (heading + HEADINGS / 2) % HEADINGS
         : index16(state?.aim ?? enemy.aim ?? enemy.facing)
       : -1;
-  const key = `${enemy.archetype}:${id}:${heading}:${intact ? 1 : 0}:${carried?.top}:${aim}`;
+  return composedPart(enemyAssetKey(enemy), outline, hardpoint, id, heading, intact, carried, aim);
+}
+
+function composedPart(
+  assetKey: EnemyAssetKey,
+  outline: EnemyOutline,
+  hardpoint: HardpointOutline,
+  id: string,
+  heading: number,
+  intact: boolean,
+  carried: MountTop | null,
+  aim: number,
+): Parts {
+  const pivot = hardpoint.pivots[heading];
+  const tops = carried === null || !intact ? undefined : outline.tops.get(carried.top);
+  const key = `${assetKey}:${id}:${heading}:${intact ? 1 : 0}:${carried?.top}:${aim}`;
   let parts = PART_OUTLINES.get(key);
   if (!parts) {
     const base = hardpoint.bases[heading]!;
@@ -281,4 +343,22 @@ export function enemyPartOutline(
     PART_OUTLINES.set(key, parts);
   }
   return parts;
+}
+
+/** Complete current assembled footprint for placement, including capped and damaged parts. */
+export function enemyPhysicalBody(
+  position: RoutePosition,
+  enemy: Pick<EnemyState, "aim" | "archetype" | "facing" | "hardpoints" | "id">,
+): Parts | null {
+  const hull = enemyHull(enemy);
+  const outline = OUTLINES[enemyAssetKey(enemy)];
+  if (!hull || !outline) {
+    return null;
+  }
+  return [
+    ...hull,
+    ...[...outline.hardpoints].flatMap(([id, part]) =>
+      part.damageable ? (enemyPartOutline(position, enemy, id) ?? []) : [],
+    ),
+  ];
 }

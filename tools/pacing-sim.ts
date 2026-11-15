@@ -25,6 +25,7 @@ import { ASTEROID_LOOT } from "../src/data/asteroidLoot.ts";
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../src/data/chunkCatalog.ts";
 import { CONTENT } from "../src/data/content.ts";
 import { ECONOMY, type EconomyCatalog, type UpgradeWeapon } from "../src/data/economy.ts";
+import type { EnemyActorKind } from "../src/data/enemyActors.ts";
 import {
   type EncounterEntry,
   encounterTable,
@@ -1558,7 +1559,7 @@ export interface RealLoopResult {
   depleted: number;
   stations: number;
   /** Packs that engaged Ada, by archetype. */
-  engaged: Partial<Record<EnemyArchetype, number>>;
+  engaged: Partial<Record<EnemyActorKind, number>>;
 }
 
 /**

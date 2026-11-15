@@ -24,6 +24,7 @@ import {
   type EnemyArt,
   enemyArt,
   type EnemyFrame,
+  enemyFrameKey,
   enemyFrameSets,
   enemyHardpointsPath,
   enemyJetsPath,
@@ -47,6 +48,21 @@ const json = (path: string): unknown => {
   const url = new URL(`../../public${path}`, import.meta.url);
   return existsSync(url) ? JSON.parse(readFileSync(url, "utf8")) : undefined;
 };
+function nativePartFrames(directory: string, archetype: string): number {
+  const file = json(`${directory + archetype}-hardpoints.json`) as {
+    hardpoints: { capped?: boolean; states: string[]; top: string | null }[];
+    weaponTops?: Record<string, { top: string }>;
+  };
+  const tops = new Set([
+    ...file.hardpoints.flatMap((part) => part.top ?? []),
+    ...Object.values(file.weaponTops ?? {}).map(({ top }) => top),
+  ]);
+  const bases = file.hardpoints.reduce(
+    (sum, part) => sum + part.states.length + (part.capped ? 1 : 0),
+    0,
+  );
+  return (bases + tops.size) * 16;
+}
 const files: Record<string, unknown> = {
   capital: capitalJets,
   fighter: fighterJets,
@@ -61,9 +77,12 @@ const layouts: Record<string, unknown> = {
   frigate: frigateHardpoints,
   gadget: gadgetHardpoints,
 };
-const build = (frames: readonly EnemyFrame[], layout = (name: string) => layouts[name]) =>
+const build = (
+  frames: readonly EnemyFrame[],
+  layout = (name: string) => layouts[name] ?? json(`/art/enemies/${name}-hardpoints.json`),
+) =>
   enemyArt(
-    (archetype) => files[archetype],
+    (archetype) => files[archetype] ?? json(`/art/enemies/${archetype}-jets.json`),
     layout,
     composedArchetypes(assets),
     frames,
@@ -83,8 +102,11 @@ describe("enemy frame sets", () => {
       "fighter",
       "frigate",
       "gadget",
+      "hostileStation",
       "interceptor",
       "retaliator",
+      "retaliatorCargoHauler",
+      "retaliatorMiningFreighter",
       "swarm",
     ]);
     const sizes = Object.fromEntries(
@@ -96,26 +118,38 @@ describe("enemy frame sets", () => {
     );
     expect(sizes).toEqual({
       capital: 210,
-      fighter: 42,
-      frigate: 168,
+      fighter: 45.5,
+      frigate: 189,
       gadget: 245,
+      hostileStation: 175,
       interceptor: 38.5,
       retaliator: 84,
+      retaliatorCargoHauler: 84,
+      retaliatorMiningFreighter: 84,
       swarm: 35,
     });
   });
 
-  it("frames every catalog archetype but the platform, with parts only for the heavies", () => {
-    // CLEANUP (added 2026-11-11): the platform draws its vector placeholder until Art lands.
+  it("frames core roles and composed industrial craft while the platform stays in its family", () => {
+    // The fixed platform belongs to the Claim family rather than the core frame set.
     expect(Object.keys(enemyCatalog).filter((name) => !art.has(name))).toEqual(["platform"]);
-    expect([...art].filter(([, set]) => set.parts).map(([name]) => name)).toEqual([
-      "frigate",
+    expect(
+      [...art]
+        .filter(([, set]) => set.parts)
+        .map(([name]) => name)
+        .sort(),
+    ).toEqual([
       "capital",
+      "frigate",
       "gadget",
+      "hostileStation",
+      "retaliator",
+      "retaliatorCargoHauler",
+      "retaliatorMiningFreighter",
     ]);
   });
 
-  it("validates Gadget's capital, its jets and its capital tiers, though no encounter spawns it", () => {
+  it("keeps Gadget as flagship art without introducing a separate gameplay archetype", () => {
     const gadget = art.get("gadget")!;
     expect(gadget.jets?.headings).toHaveLength(16);
     expect(gadget.parts!.layout.frame).toBe(560);
@@ -130,30 +164,15 @@ describe("enemy frame sets", () => {
     // top design, as its hardpoints file and tiers list them.
     const sets = new Set(
       parts.map(
-        (asset) => `${asset.path!.slice(0, asset.path!.lastIndexOf("/") + 1)}|${asset.archetype}`,
+        (asset) =>
+          `${asset.path!.slice(0, asset.path!.lastIndexOf("/") + 1)}|${enemyFrameKey(asset)}`,
       ),
     );
     const expected = [...sets].reduce((sum, key) => {
       const [dir, archetype] = key.split("|") as [string, string];
-      const file = json(`${dir}${archetype}-hardpoints.json`) as {
-        hardpoints: { capped?: boolean; states: string[]; top: string | null }[];
-        weaponTops?: Record<string, { top: string }>;
-      };
-      const tops = new Set([
-        ...file.hardpoints.flatMap((part) => part.top ?? []),
-        ...Object.values(file.weaponTops ?? {}).map(({ top }) => top),
-      ]);
-      const bases = file.hardpoints.reduce(
-        (n, part) => n + part.states.length + (part.capped ? 1 : 0),
-        0,
-      );
-      return sum + (bases + tops.size) * 16;
+      return sum + nativePartFrames(dir, archetype);
     }, 0);
     expect(parts).toHaveLength(expected);
-    // The coral and claim families' tiered heavies with Gadget's capital, and each recoloured
-    // family's tiered frigate and capital.
-    const recoloured = GALAXY_FAMILIES.filter(({ wired }) => !wired.has("platform")).length;
-    expect(expected).toBe(2288 + 832 * recoloured);
     expect(parts.some((asset) => /^enemy-[a-z]+-\d+$/i.test(asset.id))).toBe(false);
   });
 
@@ -192,10 +211,10 @@ describe("enemy frame selection", () => {
 describe("enemy jets", () => {
   it.each([
     ["swarm", 1, 80],
-    ["fighter", 2, 96],
+    ["fighter", 2, 104],
     ["interceptor", 1, 88],
     ["retaliator", 3, 192],
-    ["frigate", 2, 384],
+    ["frigate", 2, 432],
     ["capital", 2, 480],
   ] as const)("draws %s with %i mouths of two haloless layers", (name, mouths, frame) => {
     const set = galaxy(name);
@@ -320,7 +339,7 @@ describe("enemy art fallback", () => {
   it("keeps a heavy's vector placeholder without a valid layout or every part frame", () => {
     expect(build(assets, () => undefined).has("frigate")).toBe(false);
     expect(build(assets, () => undefined).has("swarm")).toBe(true);
-    const noTop = assets.filter((asset) => asset.id !== "enemy-capital-gun-top-9");
+    const noTop = assets.filter((asset) => asset.id !== "enemy-capital-lance-top-9");
     expect(build(noTop).has("capital")).toBe(false);
     expect(build(noTop).has("frigate")).toBe(true);
     const noStump = assets.filter((asset) => asset.id !== "enemy-frigate-port-destroyed-4");
@@ -356,7 +375,7 @@ describe("enemy art fallback", () => {
     ]);
     expect(layout.tiers[0]!.mounts.get("spine")).toBe(false);
     expect(layout.tiers[2]!.mounts.get("bow")).toBe(true);
-    expect(layout.weaponTops.get("chargedLance")).toEqual({ aim: "target", top: "lance" });
+    expect(layout.weaponTops.get("heavyMissile")).toEqual({ aim: "target", top: "rail" });
     expect(layout.hardpoints.filter((part) => part.capped).map((part) => part.id)).toEqual([
       "spine",
       "bow",
@@ -365,14 +384,7 @@ describe("enemy art fallback", () => {
       x: frigateHardpoints.headings[5]!.banner[0],
       y: frigateHardpoints.headings[5]!.banner[1],
     });
-    expect([...layout.tops.keys()].sort()).toEqual([
-      "gun",
-      "lance",
-      "pod",
-      "rail",
-      "spread",
-      "triple",
-    ]);
+    expect([...layout.tops.keys()].sort()).toEqual(["gun", "rail"]);
   });
 
   it("rejects tiers that miss a mount or cap one without plates, and an unknown top aim", () => {
@@ -384,7 +396,7 @@ describe("enemy art fallback", () => {
     (uncapped.tiers[0]!.mounts as Record<string, unknown>).port = null;
     expect(readHardpointLayout("frigate", uncapped)).toBeUndefined();
     const aim = copy();
-    aim.weaponTops.chargedLance = { ...aim.weaponTops.chargedLance, aim: "up" };
+    aim.weaponTops.heavyMissile = { ...aim.weaponTops.heavyMissile, aim: "up" };
     expect(readHardpointLayout("frigate", aim)).toBeUndefined();
     const unarmed = copy();
     (unarmed.tiers[2]!.mounts as Record<string, unknown>).bow = { armed: false };
@@ -399,7 +411,7 @@ describe("enemy art fallback", () => {
     (banner.headings[2] as { banner: unknown }).banner = [1];
     expect(readHardpointLayout("frigate", banner)).toBeUndefined();
     const noLanceAims = copy();
-    noLanceAims.tops.lance = noLanceAims.tops.lance.slice(0, 15);
+    noLanceAims.tops.rail = noLanceAims.tops.rail.slice(0, 15);
     expect(readHardpointLayout("frigate", noLanceAims)).toBeUndefined();
   });
 
@@ -422,19 +434,20 @@ describe("enemy art fallback", () => {
 const world = (degrees: number) => at(degrees);
 /** A loadout for every frigate and capital mount; a heavy's tops follow its weapons. */
 const LOADOUT: Readonly<Record<string, string>> = {
-  bow: "chargedLance",
-  "claw-left": "phaser",
-  "claw-right": "heavyMissile",
-  port: "laser",
-  spine: "rapidMissile",
+  bow: "laser",
+  "claw-left": "scattershot",
+  "claw-right": "scattershot",
+  port: "heavyMissile",
+  spine: "laser",
   starboard: "laser",
-  "stern-left": "ringBurst",
-  "stern-right": "mineLayer",
-  "weapon-left": "laser",
-  "weapon-rear-left": "rapidMissile",
-  "weapon-rear-right": "rapidMissile",
-  "weapon-right": "laser",
+  "stern-left": "scattershot",
+  "stern-right": "scattershot",
+  "weapon-left": "chargedLance",
+  "weapon-rear-left": "scattershot",
+  "weapon-rear-right": "scattershot",
+  "weapon-right": "scattershot",
 };
+const MINE_LOADOUT = { ...LOADOUT, "stern-right": "mineLayer", "weapon-left": "scattershot" };
 const pose = (
   destroyed: readonly string[] = [],
   aim = world(0),
@@ -504,28 +517,32 @@ describe("composed heavies", () => {
         .filter((part) => part.layer === "top")
         .map((part) => part.frame.id);
       expect(tops.sort()).toEqual([
-        "enemy-capital-gun-top-9",
-        "enemy-capital-gun-top-9",
-        "enemy-capital-pod-top-9",
-        "enemy-capital-pod-top-9",
+        "enemy-capital-lance-top-9",
+        "enemy-capital-spread-top-9",
+        "enemy-capital-spread-top-9",
+        "enemy-capital-spread-top-9",
       ]);
     }
   });
 
   it("draws each tier's tops, the mine layer's hopper held aft of the hull heading", () => {
     for (const heading of [0, 5, 12]) {
-      const sprites = composeEnemy(capital, pose([], world(22.5 * 9), 5), capital.frames[heading]!);
+      const sprites = composeEnemy(
+        capital,
+        pose([], world(22.5 * 9), 5, MINE_LOADOUT),
+        capital.frames[heading]!,
+      );
       const top = (id: string) =>
         sprites.find((part) => part.hardpoint === id && part.layer === "top")?.frame.id;
       expect(Object.fromEntries(capitalHardpoints.fill.map((id) => [id, top(id)]))).toEqual({
-        "claw-left": "enemy-capital-dish-top-9",
-        "claw-right": "enemy-capital-rail-top-9",
-        "stern-left": "enemy-capital-dome-top-9",
+        "claw-left": "enemy-capital-spread-top-9",
+        "claw-right": "enemy-capital-spread-top-9",
+        "stern-left": "enemy-capital-spread-top-9",
         "stern-right": `enemy-capital-hopper-top-${(heading + 8) % 16}`,
-        "weapon-left": "enemy-capital-gun-top-9",
-        "weapon-rear-left": "enemy-capital-pod-top-9",
-        "weapon-rear-right": "enemy-capital-pod-top-9",
-        "weapon-right": "enemy-capital-gun-top-9",
+        "weapon-left": "enemy-capital-spread-top-9",
+        "weapon-rear-left": "enemy-capital-spread-top-9",
+        "weapon-rear-right": "enemy-capital-spread-top-9",
+        "weapon-right": "enemy-capital-spread-top-9",
       });
     }
     // A capped plate never draws a top, whatever its hardpoint state.
@@ -549,18 +566,23 @@ describe("composed heavies", () => {
     const pivot = capitalHardpoints.headings[2]!.hardpoints.find(
       (part) => part.id === "weapon-right",
     )!.pivot!;
-    const muzzles = capitalHardpoints.tops.triple[3]!.muzzles;
-    const triple = pose([], world(22.5 * 3), 1, { "weapon-right": "multiLaser" });
+    const muzzles = capitalHardpoints.tops.spread[3]!.muzzles;
+    const triple = pose([], world(22.5 * 3), 1, { "weapon-right": "scattershot" });
     const tips = turretMuzzles(capital, triple, hull, "weapon-right");
-    expect(tips).toHaveLength(3);
+    expect(tips).toHaveLength(5);
     expect(tips[1]!.x).toBeCloseTo((pivot[0]! + muzzles[1]![0]! - 240) * scale, 9);
     expect(tips[1]!.y).toBeCloseTo((pivot[1]! + muzzles[1]![1]! - 240) * scale, 9);
     expect(turretMuzzles(capital, pose(["weapon-right"]), hull, "weapon-right")).toEqual([]);
     expect(turretMuzzles(capital, pose(), hull, "command")).toEqual([]);
     // Tier tops: the claw's capped plate has none, the rear mount's pod has its own.
     expect(turretMuzzles(capital, pose(), hull, "claw-left")).toEqual([]);
-    const pod = capitalHardpoints.tops.pod[3]!.muzzles;
-    const rear = turretMuzzles(capital, pose([], world(22.5 * 3), 5), hull, "weapon-rear-left");
+    const pod = capitalHardpoints.tops.hopper[3]!.muzzles;
+    const rear = turretMuzzles(
+      capital,
+      pose([], world(22.5 * 3), 5, { "weapon-rear-left": "mineLayer" }),
+      hull,
+      "weapon-rear-left",
+    );
     expect(rear).toHaveLength(pod.length);
   });
 
@@ -617,25 +639,41 @@ describe("composed heavies", () => {
 });
 
 describe("enemy SVGs", () => {
-  it("finds every heavy SVG declared at its display size, its viewBox in frame px", () => {
+  it("reads composed SVG dimensions and native industrial hulls with exact raw viewBoxes", () => {
+    const composed = new Set([
+      "capital",
+      "frigate",
+      "gadget",
+      "hostileStation",
+      "platform",
+      "retaliator",
+      "retaliatorCargoHauler",
+      "retaliatorMiningFreighter",
+    ]);
     const heavies = (
       manifest.assets as (EnemyFrame & { height: number; path: string; width: number })[]
-    ).filter(({ archetype }) =>
-      ["capital", "frigate", "gadget", "platform"].includes(archetype ?? ""),
+    ).filter((asset) => composed.has(enemyFrameKey(asset) ?? ""));
+    const groups = new Map<string, { directory: string; archetype: string }>();
+    for (const asset of heavies) {
+      const directory = asset.path.slice(0, asset.path.lastIndexOf("/") + 1);
+      const archetype = enemyFrameKey(asset)!;
+      groups.set(directory + archetype, { archetype, directory });
+    }
+    const expected = [...groups.values()].reduce(
+      (sum, { archetype, directory }) =>
+        sum + nativePartFrames(directory, archetype) + (archetype === "platform" ? 1 : 16),
+      0,
     );
-    // The coral and claim frigates (304 frames each) and capitals (560 each), Gadget's 560, the
-    // claim platform's 81, and each recoloured family's frigate (304) and capital (560).
-    const recoloured = GALAXY_FAMILIES.filter(({ wired }) => !wired.has("platform")).length;
-    expect(heavies).toHaveLength((304 + 560) * (2 + recoloured) + 560 + 81);
+    expect(heavies).toHaveLength(expected);
     for (const asset of heavies) {
       const svg = readFileSync(new URL(`../../public${asset.path}`, import.meta.url), "utf8");
       const root = /<svg\b[^>]*>/u.exec(svg)?.[0] ?? "";
       const size = (name: string) =>
         Number(new RegExp(`\\b${name}="([\\d.]+)"`, "u").exec(root)?.[1]);
-      expect([size("width"), size("height")], asset.path).toEqual([
-        asset.displayWidth,
-        asset.displayHeight,
-      ]);
+      const nativeHull = asset.archetype === "retaliator" && !enemyPartFrame(asset);
+      expect([size("width"), size("height")], asset.path).toEqual(
+        nativeHull ? [asset.width, asset.height] : [asset.displayWidth, asset.displayHeight],
+      );
       expect(root, asset.path).toContain(`viewBox="0 0 ${asset.width} ${asset.height}"`);
     }
   });
@@ -654,7 +692,18 @@ describe("claim jumper art", () => {
 
   it("reads the claim family apart from the coral one, with ember jets", () => {
     expect([...sets.keys()].sort()).toEqual(
-      ["capital", "fighter", "frigate", "interceptor", "platform", "retaliator", "swarm"].sort(),
+      [
+        "capital",
+        "fighter",
+        "frigate",
+        "hostileStation",
+        "interceptor",
+        "platform",
+        "retaliator",
+        "retaliatorCargoHauler",
+        "retaliatorMiningFreighter",
+        "swarm",
+      ].sort(),
     );
     for (const name of ["swarm", "fighter", "interceptor", "retaliator"]) {
       expect(sets.get(name)!.every((frame) => frame.id.startsWith(`enemy-claim-${name}-`))).toBe(
@@ -670,7 +719,12 @@ describe("claim jumper art", () => {
     const platform = claim.get("platform")!;
     expect(platform.frames.map((frame) => frame.id)).toEqual(["enemy-claim-platform"]);
     expect(platform.jets).toBeUndefined();
-    const pose: PartPose = { aim: () => ({ x: 0, y: 1 }), intact: () => true, position: 5 };
+    const pose: PartPose = {
+      aim: () => ({ x: 0, y: 1 }),
+      intact: () => true,
+      position: 5,
+      weapon: () => "laser",
+    };
     for (const degrees of [0, 90, 200, 315]) {
       const hull = selectEnemyFrame(platform, at(degrees));
       expect(hull.id).toBe("enemy-claim-platform");
@@ -679,6 +733,7 @@ describe("claim jumper art", () => {
       expect(sprites.map((sprite) => sprite.frame.id).sort()).toEqual(
         [
           "enemy-claim-platform",
+          "enemy-claim-platform-aft-capped-0",
           "enemy-claim-platform-port-intact-0",
           "enemy-claim-platform-starboard-intact-0",
           `enemy-claim-platform-turret-top-${aimIndex({ x: 0, y: 1 })}`,
@@ -692,6 +747,7 @@ describe("claim jumper art", () => {
       aim: (id) => (id === "port" ? { x: -1, y: 0 } : { x: 1, y: 0 }),
       intact: () => true,
       position: 5,
+      weapon: () => "laser",
     };
     const tops = composeEnemy(platform, split, platform.frames[0]!)
       .filter((sprite) => sprite.layer === "top")
@@ -706,7 +762,7 @@ describe("claim jumper art", () => {
       expect(art.frames).toHaveLength(16);
       expect(art.parts).toBeDefined();
       const hull = art.frames[3]!;
-      const live = { aim: () => ({ x: 1, y: 0 }), intact: () => true, position: 5 };
+      const live = pose([], { x: 1, y: 0 }, 5);
       const intact = composeEnemy(art, live, hull);
       const wrecked = composeEnemy(art, { ...live, intact: () => false }, hull);
       const ids = (sprites: typeof intact) => sprites.map((sprite) => sprite.frame.id);

@@ -1,7 +1,6 @@
+import type { EnemyActorKind } from "../data/enemyActors.ts";
 import {
   ENEMY_AIM,
-  type EnemyArchetype,
-  enemyCatalog,
   type EnemyDefinition,
   escortTuning,
   fireDamageRatio,
@@ -11,7 +10,8 @@ import {
   type RetreatPolicy,
   RING_BOLTS,
 } from "../data/enemyCatalog.ts";
-import { MUZZLE_ART, muzzleLayout } from "../data/enemyMuzzles.ts";
+import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
+import { MUZZLE_ART, muzzleArtForDefinition, muzzleLayout } from "../data/enemyMuzzles.ts";
 import { SHARED_SHIP_PHYSICS } from "../data/shipPhysics.ts";
 import type { WeaponLevel } from "../data/types.ts";
 import type { NavigationQuery } from "./ai/navigationQuery.ts";
@@ -21,7 +21,7 @@ import {
   stationGuardPatrol,
   stationGuardPatrolRadius,
 } from "./ai/stationGuardPatrol.ts";
-import { muzzleOffset } from "./muzzles.ts";
+import { hardpointAnchorOffset, muzzleOffset } from "./muzzles.ts";
 import { fanHeading } from "./playerProjectiles.ts";
 import { direction, hullOffset, speedFraction, stepShipMotion, turnToward } from "./shipPhysics.ts";
 import { type WorldContext, worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
@@ -58,7 +58,7 @@ export interface EnemyState {
   age: number;
   /** Smoothed hull-weapon aim; null until the ship first has a target direction. */
   aim: Point | null;
-  archetype: EnemyArchetype;
+  archetype: EnemyActorKind;
   /**
    * A heavy with every weapon hardpoint destroyed: it stops attacking and steering, coasts to
    * rest and no longer counts for battle (gameplay/ships.md "Heavy hull and disabling").
@@ -257,6 +257,12 @@ export function hardpointOffset(
   facing: Point,
   part: Pick<HardpointDefinition, "offset">,
 ): Point {
+  if ("id" in part && typeof part.id === "string") {
+    const anchor = hardpointAnchorOffset(muzzleArtForDefinition(definition), part.id, facing);
+    if (anchor) {
+      return anchor;
+    }
+  }
   const width = definition.sizeRatio * adaWidth;
   return hullOffset(facing, { x: part.offset.x * width, y: part.offset.y * width });
 }
@@ -299,7 +305,7 @@ export function enemyEffects(definition: EnemyDefinition, state: EnemyState): En
 export function createEnemy(
   definition: EnemyDefinition,
   identity: {
-    archetype: EnemyArchetype;
+    archetype: EnemyActorKind;
     escortOf?: string | null;
     id: string;
     packId: string | null;
@@ -680,7 +686,7 @@ function steering(
   const capital = escorted(context, state);
   if (capital) {
     // Escorts hold a station beside the capital and intercept Ada when she comes close to it.
-    const hull = (enemyCatalog[capital.archetype].sizeRatio * context.adaWidth) / 2;
+    const hull = (ENEMY_SIZE_RATIOS[capital.archetype] * context.adaWidth) / 2;
     const reach = worldDistance(context, capital.position, context.player);
     if (reach <= escortTuning.interceptRadius + hull) {
       return hold();
@@ -995,10 +1001,12 @@ export function stepEnemy(
   // A turret whose art defines muzzles fires from the drawn barrel tip of the hull's drawn
   // heading and the top's drawn aim frame, cycling barrels by volley; the shot still flies along
   // the continuous aim. Other weapons fire from the model origin.
-  const layout = muzzleLayout(definition, MUZZLE_ART[state.archetype]);
+  const layout = muzzleLayout(
+    definition,
+    muzzleArtForDefinition(definition) ?? MUZZLE_ART[state.archetype],
+  );
   const spawn = (origin: Point, turret: string | null, muzzleAim: Point, volley: number) => {
-    const offset =
-      turret === null ? undefined : muzzleOffset(layout, turret, state.facing, muzzleAim, volley);
+    const offset = muzzleOffset(layout, turret, state.facing, muzzleAim, volley);
     return offset ? { x: state.position.x + offset.x, y: state.position.y + offset.y } : origin;
   };
   /**

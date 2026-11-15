@@ -6,6 +6,7 @@ import { GameObjects, Loader } from "phaser";
 
 import { ASTEROID_ART, type AsteroidArt, readResourceRocks } from "../data/asteroidCatalog.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { enemyAssetKey, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import {
@@ -43,6 +44,7 @@ import {
   enemyShardsPath,
   GALAXY_FAMILIES,
   galaxyFamily,
+  mergeEnemyAssets,
 } from "./enemyArt.ts";
 import { readJobArt } from "./jobArt.ts";
 import { sceneFit } from "./playCamera.ts";
@@ -335,13 +337,16 @@ function queueGalaxyAssets(
     scene.manifest = {
       ...scene.manifest,
       ...manifest.links,
-      assets: [...scene.manifest.assets, ...manifest.assets],
+      assets: mergeEnemyAssets(scene.manifest.assets, manifest.assets),
     };
     for (const { family } of GALAXY_FAMILIES) {
-      scene.familyParts.set(family, [
-        ...(scene.familyParts.get(family) ?? []),
-        ...manifest.assets.filter((asset) => enemyPartFrame(asset) && asset.family === family),
-      ]);
+      scene.familyParts.set(
+        family,
+        mergeEnemyAssets(
+          scene.familyParts.get(family) ?? [],
+          manifest.assets.filter((asset) => enemyPartFrame(asset) && asset.family === family),
+        ),
+      );
     }
   }
   const assets = familySubset
@@ -367,7 +372,13 @@ function queueGalaxyAssets(
         scene.load.json(`${family}-jets-${archetype}`, enemyJetsPath(archetype, frames[0]!));
       }
       // Shards, as in coral, for the archetypes Art's destruction data covers.
-      if (scene.destruction && Object.hasOwn(scene.destruction.archetypes, archetype)) {
+      if (
+        scene.destruction &&
+        Object.hasOwn(
+          scene.destruction.archetypes,
+          INDUSTRIAL_BODY_KEYS.some((key) => key === archetype) ? "retaliator" : archetype,
+        )
+      ) {
         scene.load.json(`${family}-shards-${archetype}`, enemyShardsPath(archetype, frames[0]!));
       }
       if (composedArchetypes(scene.familyParts.get(family) ?? []).has(archetype)) {
@@ -649,11 +660,17 @@ export function familyOf(scene: AssetsContext, archetype: string): EnemyFamily |
 }
 
 /** A craft's art in its galaxy's family, while that family's frames are loaded. */
-export function familyArt(scene: AssetsContext, archetype: string): EnemyArt<Asset> | undefined {
-  const family = familyOf(scene, archetype);
-  return family
-    ? scene.familyArts.get(family.family)?.get(archetype)
-    : scene.enemyArt.get(archetype);
+export function familyArt(
+  scene: AssetsContext,
+  archetype: string,
+  id?: string,
+): EnemyArt<Asset> | undefined {
+  const key =
+    archetype === "capital" || archetype === "retaliator"
+      ? enemyAssetKey({ archetype, ...(id === undefined ? {} : { id }) })
+      : archetype;
+  const family = familyOf(scene, key);
+  return family ? scene.familyArts.get(family.family)?.get(key) : scene.enemyArt.get(key);
 }
 
 /** Source-family metadata uses the scene's canonical manifest cache and loader, without world art. */

@@ -5,6 +5,7 @@ import { GameObjects, Loader, Scene, Scenes } from "phaser";
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import { SCREEN } from "../data/screen.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
@@ -496,7 +497,7 @@ export class GameScene extends Scene {
         path: data.flash.path,
         size: (scale) => ({ scale }),
       });
-      for (const archetype of Object.keys(data.archetypes)) {
+      for (const archetype of [...Object.keys(data.archetypes), ...INDUSTRIAL_BODY_KEYS]) {
         this.load.json(`shards-${archetype}`, `/art/enemies/${archetype}-shards.json`);
       }
     });

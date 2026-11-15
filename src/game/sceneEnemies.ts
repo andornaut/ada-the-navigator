@@ -4,7 +4,8 @@ import { densityTexels } from "@andornaut/game-kit/view/renderScale";
 import { Math as PhaserMath, type Scene, TintModes } from "phaser";
 
 import { CONTENT } from "../data/content.ts";
-import { enemyCatalog, heavyLoadout, MINE_LAYER } from "../data/enemyCatalog.ts";
+import { enemyActorLoadout } from "../data/enemyActorDefinition.ts";
+import { MINE_LAYER } from "../data/enemyCatalog.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { enemySpeedFraction } from "../model/enemyAi.ts";
 import { enemyEquipmentDefinition } from "../model/enemyEquipment.ts";
@@ -136,7 +137,7 @@ export function drawEnemy(scene: EnemiesContext, point: Vec, object: SpaceObject
     return;
   }
   const definition = enemyEquipmentDefinition(scene.model.state.flight!.galaxy, enemy);
-  const art = familyArt(scene, enemy.archetype);
+  const art = familyArt(scene, enemy.archetype, enemy.id);
   if (art) {
     drawEnemySprite(scene, art, point, object.id, enemy);
     return;
@@ -275,7 +276,7 @@ export function drawEnemySprite(
   const galaxy = scene.model.state.flight?.galaxy;
   const position = galaxy === undefined ? 1 : ROUTE_POSITION[galaxy];
   // A heavy's loadout picks each mount's weapon, so its top (heavyLoadout).
-  const loadout = heavyLoadout(enemy.archetype, position, enemy.id);
+  const loadout = enemyActorLoadout(enemy.archetype, position, enemy.id);
   const pose: PartPose = {
     aim: (hardpoint) => state(hardpoint)?.aim ?? enemy.aim ?? enemy.facing,
     intact: (hardpoint) => (state(hardpoint)?.hp ?? 1) > 0,
@@ -308,7 +309,10 @@ export function drawEnemySprite(
       sprite.setTint(0xffffff).setTintMode(TintModes.FILL);
     }
   });
-  const speed = enemySpeedFraction(enemyCatalog[enemy.archetype], enemy);
+  const speed = enemySpeedFraction(
+    enemyEquipmentDefinition(scene.model.state.flight!.galaxy, enemy),
+    enemy,
+  );
   // A light field swaps in Art's dark enemy jet layers.
   const jets =
     (scene.fieldLight ?? scene.light) && art.jets

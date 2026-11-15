@@ -1,14 +1,18 @@
 import { expect, it } from "vitest";
 
-import { enemyActorAvailable, isEnemyActorKind } from "./enemyActors.ts";
+import { enemyActorAvailable, isEnemyActorKind, shipCatalogEntry } from "./enemyActors.ts";
 import { type EnemyArchetype, enemyCatalog } from "./enemyCatalog.ts";
 import { ROUTE } from "./galaxies.ts";
 
 it("recognizes the station actor without adding an economy-bearing ship type", () => {
   const keys = Object.keys(enemyCatalog);
   expect(isEnemyActorKind("hostileStation")).toBe(true);
-  for (const key of keys) {
+  expect(shipCatalogEntry("hostileStation")).toBeUndefined();
+  for (const [key, definition] of Object.entries(enemyCatalog)) {
     expect(isEnemyActorKind(key)).toBe(true);
+    if (isEnemyActorKind(key)) {
+      expect(shipCatalogEntry(key)).toBe(definition);
+    }
   }
   for (const invalid of [
     null,

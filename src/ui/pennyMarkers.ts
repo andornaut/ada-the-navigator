@@ -37,6 +37,8 @@ box-shadow:0 0 0 ${units(LIGHT_FIELD.markerOutline)} ${MAP_COLORS.ink}}
 .ada-penny-marker[data-identified="true"][data-symbol="guard"] .ada-penny-glyph{
 display:block;width:${units(EDGE_MARKER_GLYPHS.guard.bar.width)};height:${units(EDGE_MARKER_GLYPHS.guard.bar.height)};
 mask:none;-webkit-mask:none;background:${MAP_COLORS.ink}}
+.ada-penny-marker[data-identified="true"][data-symbol="hostileStation"] .ada-penny-glyph{
+width:${units(EDGE_MARKER_GLYPHS.hostileStation.icon)};height:${units(EDGE_MARKER_GLYPHS.hostileStation.icon)}}
 .ada-penny-marker[data-identified="false"] .ada-penny-glyph{
 width:${units(BODY_QUESTION.width)};height:${units(BODY_QUESTION.height)};
 background:${MAP_COLORS.ink};mask-image:url('/art/ui/fonts/font-body.png');
@@ -53,6 +55,9 @@ const threatSymbol = (symbol: PennyMarker["symbol"]): symbol is "enemy" | "guard
 export function pennyGlyph(marker: PennyMarker): string | null {
   if (!marker.identified || threatSymbol(marker.symbol)) {
     return null;
+  }
+  if (marker.symbol === "hostileStation") {
+    return "/art/ui/icons/map-hostile-station.svg";
   }
   if (marker.item === "stardust") {
     return "/art/ui/sprites/icon-stardust-20.png";
@@ -132,11 +137,13 @@ export function createPennyMarkerLayer(
         node.style.top = units(at.y);
         node.style.background = !marker.identified
           ? MAP_FACES.destination
-          : threatSymbol(marker.symbol)
+          : marker.symbol === "hostileStation"
             ? (style.threat ?? style.color)
-            : marker.item === "stardust"
-              ? MAP_FACES.beacon
-              : chipFace({ job: Boolean(marker.jobType), symbol: marker.symbol });
+            : threatSymbol(marker.symbol)
+              ? (style.threat ?? style.color)
+              : marker.item === "stardust"
+                ? MAP_FACES.beacon
+                : chipFace({ job: Boolean(marker.jobType), symbol: marker.symbol });
         const glyph = pennyGlyph(marker);
         if (glyph) {
           node.style.setProperty("--glyph", `url('${glyph}')`);

@@ -10,11 +10,8 @@ import {
   enemyStardust,
   fireDamageRatio,
   type FireProfile,
-  HEAVY_POOLS,
-  HEAVY_TYPES,
   heavyLoadout,
   PHANTOM_FLAGSHIP_ID,
-  SINGLE_MOUNT_WEAPONS,
   type WeaponMounts,
 } from "./enemyCatalog.ts";
 import { ROUTE_POSITION, type RoutePosition } from "./galaxies.ts";
@@ -129,48 +126,37 @@ describe("enemy fire profiles", () => {
     }
   });
 
-  it("arms each heavy's mounts with up to three of its position's pool, seeded by the ship", () => {
-    const ids = Array.from({ length: 200 }, (_, index) => `ship:${index}`);
-    const counts = { capital: [4, 6, 8], frigate: [2, 3, 4] } as const;
-    for (const archetype of ["capital", "frigate"] as const) {
-      for (const position of ROUTE_POSITIONS) {
-        const band = Math.ceil(position / 2) - 1;
-        const pool = HEAVY_POOLS[archetype][band]!;
-        const seen = new Set<string>();
-        for (const id of ids) {
+  it("assigns exactly two signature types without changing armed mount counts", () => {
+    for (const position of ROUTE_POSITIONS) {
+      for (const archetype of ["capital", "frigate"] as const) {
+        const mounts = HEAVY_MOUNTS[archetype];
+        const tier = tiersAt(mounts, position)[0]!;
+        const active = mounts.fill.filter((id) => tier.mounts[id]);
+        for (const id of ["ship:0", "ship:1"]) {
           const loadout = heavyLoadout(archetype, position, id)!;
-          const weapons = [...loadout.values()];
-          // Its tier's armed mounts, every one armed, each from the pool.
-          expect(loadout.size).toBe(counts[archetype][band]);
-          expect(weapons.every((weapon) => pool.includes(weapon))).toBe(true);
-          expect(new Set(weapons).size).toBeLessThanOrEqual(Math.min(HEAVY_TYPES, pool.length));
-          for (const single of SINGLE_MOUNT_WEAPONS) {
-            expect(weapons.filter((weapon) => weapon === single).length).toBeLessThanOrEqual(1);
-          }
-          // The same ship draws the same loadout on every call, so after save and resume.
+          expect([...loadout.keys()]).toEqual(active);
+          expect(new Set(loadout.values()).size).toBe(2);
+          const special =
+            archetype === "frigate"
+              ? "heavyMissile"
+              : position < 5 || loadout.get("weapon-left") === "chargedLance"
+                ? "chargedLance"
+                : "mineLayer";
+          expect([...loadout.values()].filter((weapon) => weapon === special)).toHaveLength(1);
+          expect(
+            loadout.get(
+              archetype === "frigate"
+                ? "port"
+                : special === "mineLayer"
+                  ? "stern-right"
+                  : "weapon-left",
+            ),
+          ).toBe(special);
           expect([...heavyLoadout(archetype, position, id)!]).toEqual([...loadout]);
-          weapons.forEach((weapon) => seen.add(weapon));
         }
-        // Over many ships the whole pool shows.
-        expect([...seen].sort(), `${archetype} ${position}`).toEqual([...pool].sort());
       }
     }
     expect(heavyLoadout("fighter", 3, "ship:0")).toBeNull();
-  });
-
-  it("deals a heavy's mounts in turn among its types, a single-mount weapon on one at most", () => {
-    // A capital at position 5 whose types include a single-mount weapon.
-    const id = Array.from({ length: 200 }, (_, index) => `ship:${index}`).find((ship) =>
-      [...heavyLoadout("capital", 5, ship)!.values()].includes("phaser"),
-    )!;
-    const loadout = [...heavyLoadout("capital", 5, id)!.values()];
-    const types = [...new Set(loadout)];
-    expect(types.length).toBe(3);
-    expect(loadout.filter((weapon) => weapon === "phaser")).toHaveLength(1);
-    // Each repeatable type takes a fair share of the rest.
-    const repeatable = types.filter((weapon) => !SINGLE_MOUNT_WEAPONS.has(weapon));
-    const shares = repeatable.map((weapon) => loadout.filter((at) => at === weapon).length);
-    expect(Math.max(...shares) - Math.min(...shares)).toBeLessThanOrEqual(1);
   });
 
   it("arms a heavy's definition with the ship's loadout, every weapon at level 1", () => {
@@ -184,7 +170,7 @@ describe("enemy fire profiles", () => {
         enemyDefinition(galaxy, "platform").hardpoints.map((part) =>
           part.kind === "weapon" ? `${part.id} ${part.fire.weapon} ${part.fire.level}` : part.id,
         ),
-      ).toEqual(["port laser 1", "starboard laser 1"]);
+      ).toEqual(["port laser 1", "starboard laser 1", ...(galaxy === 6 ? ["aft laser 1"] : [])]);
     }
     // Engines and command stay; every hardpoint takes the position's HP.
     const capital = enemyDefinition(6, "capital").hardpoints;
@@ -203,15 +189,15 @@ describe("enemy fire profiles", () => {
     };
     // Sunflower and Whirlpool share 25%, Needle 30%, and Phantom 35% of the player rate.
     expect(fire(1, "swarm")).toEqual(["laser", 1, 0.3 / (0.25 * (7 / 9)), 300]);
-    expect(fire(1, "fighter")).toEqual(["laser", 1, 0.3 / 0.25, 300]);
-    expect(fire(1, "interceptor")).toEqual(["laser", 1, 0.3 / 0.25, 300]);
-    expect(fire(1, "retaliator")).toEqual(["multiLaser", 1, 0.3 / 0.25, 240]);
+    expect(fire(1, "fighter")).toEqual(["multiLaser", 1, 0.3 / 0.25, 240]);
+    expect(fire(1, "interceptor")).toEqual(["phaser", 1, 1 / 0.25, 0]);
+    expect(fire(1, "retaliator")).toEqual(["rapidMissile", 1, 0.3 / (0.25 * 1.25), 300]);
     expect(fire(4, "swarm")).toEqual(["laser", 1, 0.3 / (0.3 * (7 / 9)), 300]);
-    expect(fire(4, "fighter")).toEqual(["rapidMissile", 1, 0.3 / 0.3, 300]);
-    expect(fire(4, "interceptor")).toEqual(["multiLaser", 1, 0.3 / 0.3, 240]);
-    expect(fire(4, "retaliator")).toEqual(["multiLaser", 1, 0.3 / 0.3, 240]);
-    expect(fire(6, "fighter")).toEqual(["rapidMissile", 1, 0.3 / 0.35, 300]);
-    expect(fire(6, "interceptor")).toEqual(["multiLaser", 1, 0.3 / 0.35, 240]);
+    expect(fire(4, "fighter")).toEqual(["multiLaser", 1, 0.3 / 0.3, 240]);
+    expect(fire(4, "interceptor")).toEqual(["phaser", 1, 1 / 0.3, 0]);
+    expect(fire(4, "retaliator")).toEqual(["rapidMissile", 1, 0.3 / (0.3 * 1.25), 300]);
+    expect(fire(6, "fighter")).toEqual(["multiLaser", 1, 0.3 / 0.35, 240]);
+    expect(fire(6, "interceptor")).toEqual(["phaser", 1, 1 / 0.35, 0]);
     expect(enemyFire("frigate", { level: 1, weapon: "heavyMissile" }).interval).toBe(
       weaponAt("heavyMissile", 1).intervalSeconds,
     );

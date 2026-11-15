@@ -1,0 +1,89 @@
+{
+  "version": 1,
+  "frame": 400,
+  "length": {
+    "base": 12.247,
+    "scale": 48.99,
+    "exponent": 2
+  },
+  "layers": [
+    {
+      "name": "outer",
+      "colors": ["#bc4524", "#fa6d38"],
+      "width": 1.6,
+      "length": 1
+    },
+    {
+      "name": "core",
+      "colors": ["#fa6d38", "#ffebda"],
+      "width": 0.8,
+      "length": 0.55
+    }
+  ],
+  "headings": [
+    {
+      "index": 0,
+      "mouths": []
+    },
+    {
+      "index": 1,
+      "mouths": []
+    },
+    {
+      "index": 2,
+      "mouths": []
+    },
+    {
+      "index": 3,
+      "mouths": []
+    },
+    {
+      "index": 4,
+      "mouths": []
+    },
+    {
+      "index": 5,
+      "mouths": []
+    },
+    {
+      "index": 6,
+      "mouths": []
+    },
+    {
+      "index": 7,
+      "mouths": []
+    },
+    {
+      "index": 8,
+      "mouths": []
+    },
+    {
+      "index": 9,
+      "mouths": []
+    },
+    {
+      "index": 10,
+      "mouths": []
+    },
+    {
+      "index": 11,
+      "mouths": []
+    },
+    {
+      "index": 12,
+      "mouths": []
+    },
+    {
+      "index": 13,
+      "mouths": []
+    },
+    {
+      "index": 14,
+      "mouths": []
+    },
+    {
+      "index": 15,
+      "mouths": []
+    }
+  ]
+}

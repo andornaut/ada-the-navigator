@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
+import { shipCatalogEntry } from "../data/enemyActors.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
 import { SPAWNER_POLICIES, spawnerStage } from "../data/spawnerCatalog.ts";
 import { relaunch } from "../testing/launch.ts";
@@ -442,7 +443,7 @@ describe("per-role encounter restore", () => {
     throw new Error("No capital battle fixture");
   }
   const destroy = (model: GameModel, object: SpaceObject) => {
-    const definition = enemyCatalog[object.enemy!.archetype];
+    const definition = shipCatalogEntry(object.enemy!.archetype)!;
     for (const part of definition.hardpoints) {
       object.enemy = damageEnemy(definition, { amount: 99, hardpointId: part.id }, object.enemy!);
     }

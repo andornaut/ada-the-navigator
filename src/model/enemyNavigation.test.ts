@@ -1,5 +1,6 @@
 import { expect, it } from "vitest";
 
+import { shipCatalogEntry } from "../data/enemyActors.ts";
 import { ENEMY_NAVIGATION, type EnemyArchetype, enemyCatalog } from "../data/enemyCatalog.ts";
 import { createEnemy, type EnemyContext, type EnemyState, stepEnemy } from "./enemyAi.ts";
 
@@ -20,7 +21,7 @@ const context = (state: EnemyState): EnemyContext => ({
   visibility: "occluded",
 });
 function advance(state: EnemyState, observation = context(state)): EnemyState {
-  const intent = stepEnemy(enemyCatalog[state.archetype], observation, state);
+  const intent = stepEnemy(shipCatalogEntry(state.archetype)!, observation, state);
   expect(intent.fire).toEqual([]);
   return {
     ...intent.state,

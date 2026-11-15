@@ -6,6 +6,7 @@ import PROJECTS_FILE from "../../public/art/projects.json" with { type: "json" }
 import { CHEAT_COPY } from "../data/cheatCopy.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { BUILT, ROUTE } from "../data/galaxies.ts";
 import { galaxyCard } from "../data/storybook.ts";
 import { coarsePointer } from "../input/coarsePointer.ts";
@@ -329,7 +330,10 @@ export function buildScene(scene: UiContext): void {
   };
   scene.beaconArt = readLoopArt(scene.shipAssets, "holodisk-beacon", BEACON_FRAMES);
   scene.destruction = readDestruction(scene.cache.json.get("destruction"));
-  for (const archetype of Object.keys(scene.destruction?.archetypes ?? {})) {
+  for (const archetype of [
+    ...Object.keys(scene.destruction?.archetypes ?? {}),
+    ...INDUSTRIAL_BODY_KEYS,
+  ]) {
     const shards = readShards(scene.cache.json.get(`shards-${archetype}`));
     if (shards) {
       scene.shards.set(archetype, shards);

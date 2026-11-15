@@ -1,3 +1,4 @@
+import { INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import type { Vec } from "../model/types.ts";
 import { shipDirection } from "./shipArt.ts";
 import { type JetTriangle, jetTriangles, readShipJets, type ShipJets } from "./shipJets.ts";
@@ -96,12 +97,14 @@ export const CLAIM = "enemy-claim-";
 
 /** The claim archetypes Cartwheel draws in the claim family: all seven. */
 export const CLAIM_WIRED: ReadonlySet<string> = new Set([
+  "hostileStation",
   "capital",
   "fighter",
   "frigate",
   "interceptor",
   "platform",
   "retaliator",
+  ...INDUSTRIAL_BODY_KEYS,
   "swarm",
 ]);
 
@@ -117,6 +120,7 @@ const RECOLOURED: ReadonlySet<string> = new Set([
   "frigate",
   "interceptor",
   "retaliator",
+  ...INDUSTRIAL_BODY_KEYS,
   "swarm",
 ]);
 
@@ -131,9 +135,11 @@ export interface EnemyFamily {
 }
 
 /** Each galaxy's own enemy family; every other galaxy flies Gadget's coral family. */
+const GARNET_WIRED: ReadonlySet<string> = new Set([...RECOLOURED, "hostileStation"]);
+
 export const GALAXY_FAMILIES: readonly EnemyFamily[] = [
   { family: "claim", galaxy: "cartwheel", prefix: CLAIM, wired: CLAIM_WIRED },
-  { family: "garnet", galaxy: "andromeda", prefix: GARNET, wired: RECOLOURED },
+  { family: "garnet", galaxy: "andromeda", prefix: GARNET, wired: GARNET_WIRED },
   { family: "needle", galaxy: "needle", prefix: NEEDLE, wired: RECOLOURED },
 ];
 
@@ -142,7 +148,25 @@ export function galaxyFamily(
   galaxy: string | undefined,
   archetype: string,
 ): EnemyFamily | undefined {
-  return GALAXY_FAMILIES.find((entry) => entry.galaxy === galaxy && entry.wired.has(archetype));
+  return GALAXY_FAMILIES.find(
+    (entry) =>
+      (entry.galaxy === galaxy ||
+        (galaxy === "phantom" && archetype === "platform" && entry.family === "claim")) &&
+      entry.wired.has(archetype),
+  );
+}
+
+export function enemyFrameKey(asset: Pick<EnemyFrame, "archetype" | "id">): string | undefined {
+  return asset.archetype === "retaliator"
+    ? (INDUSTRIAL_BODY_KEYS.find((key) => asset.id.includes(`${key}-`)) ?? asset.archetype)
+    : asset.archetype;
+}
+
+export function mergeEnemyAssets<T extends { id: string }>(
+  existing: readonly T[],
+  incoming: readonly T[],
+): T[] {
+  return [...new Map([...existing, ...incoming].map((asset) => [asset.id, asset])).values()];
 }
 
 /**
@@ -179,7 +203,7 @@ export function enemyFrameSets<T extends EnemyFrame>(
     const frames = groups.get(archetype) ?? [];
     groups.set(archetype, frames);
     if (
-      asset.archetype !== archetype ||
+      enemyFrameKey(asset) !== archetype ||
       asset.directionIndex !== index ||
       !(asset.displayWidth! > 0) ||
       !(asset.displayHeight! > 0) ||
@@ -235,12 +259,14 @@ export function enemyPartsToLoad<T extends EnemyFrame>(
   parts: readonly T[],
   archetype: string,
 ): readonly T[] | null {
-  return known ? parts.filter((part) => part.archetype === archetype && !loaded(part.id)) : null;
+  return known
+    ? parts.filter((part) => enemyFrameKey(part) === archetype && !loaded(part.id))
+    : null;
 }
 
 /** Archetypes whose manifest entries include hardpoint bases or turret tops. */
 export function composedArchetypes(assets: readonly EnemyFrame[]): Set<string> {
-  return new Set(assets.filter(enemyPartFrame).flatMap((asset) => asset.archetype ?? []));
+  return new Set(assets.filter(enemyPartFrame).flatMap((asset) => enemyFrameKey(asset) ?? []));
 }
 
 /** An archetype's data file sits beside its frames as `{archetype}-{name}.json`. */
@@ -305,7 +331,8 @@ export function readHardpointLayout(
   const root = fields(value);
   if (
     root?.version !== 1 ||
-    root.archetype !== archetype ||
+    root.archetype !==
+      (INDUSTRIAL_BODY_KEYS.some((key) => key === archetype) ? "retaliator" : archetype) ||
     typeof root.frame !== "number" ||
     !(root.frame > 0) ||
     !Array.isArray(root.hardpoints)
@@ -540,7 +567,7 @@ export function readPartArt<T extends EnemyFrame>(
   assets: readonly T[],
   prefix = CORAL,
 ): PartArt<T> | undefined {
-  const own = assets.filter((asset) => asset.archetype === archetype);
+  const own = assets.filter((asset) => enemyFrameKey(asset) === archetype);
   const bases = new Map<string, Map<string, T[]>>();
   for (const part of layout.hardpoints) {
     const states = new Map<string, T[]>();

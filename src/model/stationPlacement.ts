@@ -1,0 +1,79 @@
+import { ROUTE_POSITION } from "../data/galaxies.ts";
+import type { GameContent } from "../data/types.ts";
+import { type Silhouette, worldSceneryBodyContact } from "./asteroids.ts";
+import { outlineContact, outlinesContact, partsReach, worldParts } from "./convex.ts";
+import { enemyPhysicalBody } from "./enemyBody.ts";
+import { flightWorldContext } from "./flightTopology.ts";
+import { stationPopulationObjects } from "./hostileStations.ts";
+import { protectedRadius } from "./protectedPlaces.ts";
+import { shipBody } from "./shipBody.ts";
+import type { FlightState, SpaceObject, Vec } from "./types.ts";
+import { worldDistance, worldPoint } from "./worldContacts.ts";
+
+interface StationPlacementContext {
+  readonly arrivals: readonly Vec[];
+  readonly content: GameContent;
+  readonly drawnOf: (object: SpaceObject) => Silhouette | null;
+  readonly flight: FlightState;
+  readonly frameOf: (object: SpaceObject) => number;
+}
+
+/** Admission uses assembled geometry; it does not enlarge any actor's physical collider. */
+export function stationFormationClear(
+  context: StationPlacementContext,
+  actors: readonly SpaceObject[],
+): boolean {
+  const { content, flight } = context;
+  const world = flightWorldContext(flight);
+  const objects = stationPopulationObjects(flight).filter((object) => object.hp > 0);
+  for (const [index, actor] of actors.entries()) {
+    const body = actor.enemy && enemyPhysicalBody(ROUTE_POSITION[flight.galaxy], actor.enemy);
+    if (!body) {
+      return false;
+    }
+    const reach = partsReach(worldParts(body));
+    if (
+      context.arrivals.some(
+        (point) => worldDistance(world, point, actor) < content.tuning.flight.arrivalCalm + reach,
+      ) ||
+      outlinesContact(
+        shipBody(flight.facing),
+        flight.player,
+        body,
+        worldPoint(world, flight.player, actor),
+      )
+    ) {
+      return false;
+    }
+    for (const other of [...objects, ...actors.slice(index + 1)]) {
+      const point = worldPoint(world, actor, other);
+      const protection = protectedRadius(content, other);
+      if (protection !== null && worldDistance(world, actor, other) <= protection + reach) {
+        return false;
+      }
+      if (other.kind === "enemy" && other.enemy) {
+        const obstacle = enemyPhysicalBody(ROUTE_POSITION[flight.galaxy], other.enemy);
+        if (!obstacle || outlinesContact(obstacle, point, body, actor)) {
+          return false;
+        }
+      } else if (["rock", "resource", "debris"].includes(other.kind)) {
+        if (
+          worldSceneryBodyContact(
+            world,
+            other,
+            actor,
+            body,
+            context.frameOf(other),
+            0,
+            context.drawnOf(other),
+          )
+        ) {
+          return false;
+        }
+      } else if (outlineContact(body, actor, point, other.radius)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}

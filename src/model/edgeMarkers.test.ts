@@ -46,11 +46,19 @@ const NEAR = { x: 100, y: 0 };
 const OFF = { x: 600, y: 0 };
 
 describe("edge marker kinds", () => {
+  it("maps native hostile station actors without a friendly station or route-guard substitution", () => {
+    const kind = ENEMY_MARKER_KINDS.hostileStation;
+    expect(kind).toBe("hostileStation");
+    expect(BLOCKING_MARKER_KINDS[kind]).toBeUndefined();
+    expect(edgeMarkerInset(0, kind)).toBe(13);
+  });
+
   it("marks small enemies as enemy, the large ships as heavy, stations and outposts as station", () => {
     expect(ENEMY_MARKER_KINDS).toEqual({
       capital: "heavy",
       fighter: "enemy",
       frigate: "heavy",
+      hostileStation: "hostileStation",
       interceptor: "enemy",
       platform: "heavy",
       retaliator: "enemy",
@@ -91,6 +99,7 @@ describe("edge marker kinds", () => {
       enemy: { disc: 6 },
       guard: { bar: { height: 2, width: 7 }, disc: 12 },
       heavy: { disc: 12 },
+      hostileStation: { icon: 24 },
       station: { diamond: 12, stroke: 2 },
     });
     expect(range).toBe(5000);

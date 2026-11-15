@@ -2,7 +2,9 @@ import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import { CONTENT } from "../data/content.ts";
 import { deliveryDestination } from "../data/destinations.ts";
 import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
-import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
+import { enemyActorDefinition } from "../data/enemyActorDefinition.ts";
+import { enemyActorAvailable, isEnemyActorKind } from "../data/enemyActors.ts";
+import { enemyCatalog } from "../data/enemyCatalog.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { HUNTING_PACKS } from "../data/galaxyFeatures.ts";
 import { JOB_TYPES } from "../data/jobs.ts";
@@ -95,8 +97,8 @@ function nonnegative(value: unknown): boolean {
 function enemyState(galaxy: GalaxyNumber, value: unknown): boolean {
   if (
     !record(value) ||
-    typeof value.archetype !== "string" ||
-    !Object.hasOwn(enemyCatalog, value.archetype) ||
+    !isEnemyActorKind(value.archetype) ||
+    !enemyActorAvailable(galaxy, value.archetype) ||
     typeof value.id !== "string" ||
     (value.weaponLevel !== undefined &&
       value.weaponLevel !== 1 &&
@@ -124,9 +126,9 @@ function enemyState(galaxy: GalaxyNumber, value: unknown): boolean {
   ) {
     return false;
   }
-  const definition = enemyDefinition(
+  const definition = enemyActorDefinition(
     galaxy,
-    value.archetype as keyof typeof enemyCatalog,
+    value.archetype,
     value.id as string,
     (value.weaponLevel ?? 1) as WeaponLevel,
   );

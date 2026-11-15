@@ -47,7 +47,7 @@
     "swarm": {
       "durationMs": 430,
       "releaseMs": 140,
-      "flashWidth": 27.72,
+      "flashWidth": 27.593,
       "spread": 16.8,
       "reduced": {
         "durationMs": 350,
@@ -58,7 +58,7 @@
     "fighter": {
       "durationMs": 450,
       "releaseMs": 150,
-      "flashWidth": 41.58,
+      "flashWidth": 42.451,
       "spread": 19.2,
       "reduced": {
         "durationMs": 360,
@@ -69,7 +69,7 @@
     "interceptor": {
       "durationMs": 440,
       "releaseMs": 150,
-      "flashWidth": 19.8,
+      "flashWidth": 38.61,
       "spread": 18,
       "reduced": {
         "durationMs": 350,
@@ -80,7 +80,29 @@
     "retaliator": {
       "durationMs": 600,
       "releaseMs": 190,
-      "flashWidth": 85.14,
+      "flashWidth": 127.354,
+      "spread": 33.6,
+      "reduced": {
+        "durationMs": 450,
+        "releaseMs": 300,
+        "spread": 13.44
+      }
+    },
+    "retaliatorCargoHauler": {
+      "durationMs": 600,
+      "releaseMs": 190,
+      "flashWidth": 127.354,
+      "spread": 33.6,
+      "reduced": {
+        "durationMs": 450,
+        "releaseMs": 300,
+        "spread": 13.44
+      }
+    },
+    "retaliatorMiningFreighter": {
+      "durationMs": 600,
+      "releaseMs": 190,
+      "flashWidth": 116.515,
       "spread": 33.6,
       "reduced": {
         "durationMs": 450,

@@ -1,11 +1,11 @@
-import type { EnemyArchetype } from "./enemyCatalog.ts";
+import type { EnemyActorKind } from "./enemyActors.ts";
 import { TARGET_MARKER_RANGE } from "./targetMarkers.ts";
 
 // Edge markers (gameplay/rules.md "Space encounters and feedback"): where seen off-screen
 // enemies, heavies, route guards and stations are, at the game area's edge.
 
-/** The four marker kinds, each with its own look. */
-export type EdgeMarkerKind = "enemy" | "guard" | "heavy" | "station";
+/** Marker kinds retain each actor's native identity. */
+export type EdgeMarkerKind = "enemy" | "guard" | "heavy" | "hostileStation" | "station";
 
 export const EDGE_MARKERS = {
   /**
@@ -28,6 +28,7 @@ export const EDGE_MARKER_GLYPHS = {
   enemy: { disc: 6 },
   guard: { bar: { height: 2, width: 7 }, disc: 12 },
   heavy: { disc: 12 },
+  hostileStation: { icon: 24 },
   station: { diamond: 12, stroke: 2 },
 } as const;
 
@@ -36,8 +37,9 @@ export const EDGE_MARKER_GLYPHS = {
  * plus the ink `outline` drawn around it (0 on a dark field), plus EDGE_MARKERS.gap.
  */
 export function edgeMarkerInset(outline: number, kind: EdgeMarkerKind): number {
-  const glyph: { readonly diamond?: number; readonly disc?: number } = EDGE_MARKER_GLYPHS[kind];
-  return (glyph.disc ?? glyph.diamond ?? 0) / 2 + outline + EDGE_MARKERS.gap;
+  const glyph: { readonly diamond?: number; readonly disc?: number; readonly icon?: number } =
+    EDGE_MARKER_GLYPHS[kind];
+  return (glyph.disc ?? glyph.diamond ?? glyph.icon ?? 0) / 2 + outline + EDGE_MARKERS.gap;
 }
 
 /**
@@ -49,10 +51,11 @@ export const BLOCKING_MARKER_KINDS: Readonly<Partial<Record<EdgeMarkerKind, Edge
 };
 
 /** Each enemy archetype's kind: the large ships are heavies, every other enemy an enemy. */
-export const ENEMY_MARKER_KINDS: Readonly<Record<EnemyArchetype, EdgeMarkerKind>> = {
+export const ENEMY_MARKER_KINDS: Readonly<Record<EnemyActorKind, EdgeMarkerKind>> = {
   capital: "heavy",
   fighter: "enemy",
   frigate: "heavy",
+  hostileStation: "hostileStation",
   interceptor: "enemy",
   platform: "heavy",
   retaliator: "enemy",

@@ -7,9 +7,11 @@ import {
   enemyCatalog,
   type EnemyDefinition,
   enemyDefinition,
+  enemyFire,
+  enemyFireRate,
   fireDamageRatio,
-  heavyLoadout,
 } from "../data/enemyCatalog.ts";
+import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
 import { SHARED_SHIP_PHYSICS, SHIP_PHYSICS } from "../data/shipPhysics.ts";
 import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
 import {
@@ -36,15 +38,25 @@ const rotate = (vector: { x: number; y: number }, angle: number) => ({
   y: vector.x * Math.sin(angle) + vector.y * Math.cos(angle),
 });
 
-/** The first ship id `ship:n` whose capital loadout at `position` carries every one of `weapons`. */
-function loadoutId(position: 4, weapons: readonly string[]): string {
-  for (let index = 0; ; index++) {
-    const id = `ship:${index}`;
-    const carried = new Set(heavyLoadout("capital", position, id)!.values());
-    if (weapons.every((weapon) => carried.has(weapon as never)) && !carried.has("scattershot")) {
-      return id;
-    }
-  }
+/** Controlled mixed-profile unit fixture, not an ambient capital roster or spawn claim. */
+function mixedMechanismDefinition(): EnemyDefinition {
+  const base = enemyDefinition(5, "capital", "mechanism:mixed-capital");
+  const weapons = ["laser", "multiLaser", "heavyMissile"] as const;
+  let index = 0;
+  return {
+    ...base,
+    hardpoints: base.hardpoints.map((part) => {
+      if (part.kind !== "weapon") {
+        return part;
+      }
+      const weapon = weapons[index++ % weapons.length]!;
+      const fire = enemyFire("capital", { level: 1, weapon });
+      return {
+        ...part,
+        fire: { ...fire, interval: fire.interval / enemyFireRate(5, "capital", weapon) },
+      };
+    }),
+  };
 }
 const spawn = (
   archetype: EnemyArchetype,
@@ -200,10 +212,9 @@ describe("enemy rules", () => {
     const result = stepEnemy(definition, context, state);
     expect(result.state.returning).toBe(true);
     expect(result.state.lastSeen).toEqual({ x: 300, y: 0 });
-    // The aim takes the last-seen line, turned by the ship's slow drift.
-    const drift = rotate({ x: 1, y: 0 }, aimDrift(state.id, state.age));
-    expect(result.aim.x).toBeCloseTo(drift.x, 12);
-    expect(result.aim.y).toBeCloseTo(drift.y, 12);
+    // The interceptor's beam aims directly along its last-seen line, without projectile drift.
+    expect(result.aim.x).toBeCloseTo(1, 12);
+    expect(result.aim.y).toBeCloseTo(0, 12);
     expect(result.fire).toEqual([]);
   });
 
@@ -426,11 +437,7 @@ describe("enemy rules", () => {
     const hit = damageEnemy(definition, { amount: 1, hardpointId: null }, state);
     expect(
       stepEnemy(definition, observation(hit), hit).fire.map((shot) => [shot.weapon, shot.level]),
-    ).toEqual([
-      ["multiLaser", 1],
-      ["multiLaser", 1],
-      ["multiLaser", 1],
-    ]);
+    ).toEqual([["rapidMissile", 1]]);
     const unknown = { ...observation(hit), visibility: "unknown" as const };
     expect(stepEnemy(definition, unknown, hit).fire).toEqual([]);
     expect(stepEnemy(definition, unknown, hit).state.lastSeen).toBeNull();
@@ -475,11 +482,13 @@ describe("enemy rules", () => {
   });
 
   it("fires each hardpoint's own weapon and level with independent cooldowns", () => {
-    // Andromeda (position 4): a capital with Lasers, Multi-Lasers and a Heavy Missile, level 1.
-    const id = loadoutId(4, ["laser", "multiLaser", "heavyMissile"]);
-    const loadout = heavyLoadout("capital", 4, id)!;
+    const definition = mixedMechanismDefinition();
+    const loadout = new Map(
+      definition.hardpoints.flatMap((part) =>
+        part.kind === "weapon" ? [[part.id, part.fire.weapon] as const] : [],
+      ),
+    );
     const mountOf = (weapon: string) => [...loadout].find(([, carried]) => carried === weapon)![0];
-    const definition = enemyDefinition(5, "capital", id);
     // Initialized ongoing clocks isolate per-mount cooldowns from first-entry phasing.
     const state = { ...spawn("capital", definition), firePhasesInitialized: true as const };
     const first = stepEnemy(definition, observation(state), state);
@@ -518,8 +527,7 @@ describe("enemy rules", () => {
   it.each(["capital"] as const)(
     "aims every %s bolt and missile from its own muzzle before applying spread",
     (archetype) => {
-      // An Andromeda capital that fires bolts and missiles and no dots.
-      const positioned = enemyDefinition(5, archetype, loadoutId(4, ["laser", "rapidMissile"]));
+      const positioned = mixedMechanismDefinition();
       // An initialized readiness snapshot exercises every muzzle and fan together.
       const state = {
         ...spawn(archetype, positioned),
@@ -544,10 +552,8 @@ describe("enemy rules", () => {
         const shots = result.fire.filter((shot) => shot.hardpointId === part.id);
         expect(shots).toHaveLength(angles.length);
         // The turret aims from its hardpoint; every shot of a volley leaves one drawn muzzle.
-        const mount = {
-          x: state.position.x + part.offset.x * definition.sizeRatio * context.adaWidth,
-          y: state.position.y + part.offset.y * definition.sizeRatio * context.adaWidth,
-        };
+        const offset = hardpointOffset(definition, context.adaWidth, state.facing, part);
+        const mount = { x: state.position.x + offset.x, y: state.position.y + offset.y };
         for (const [index, shot] of shots.entries()) {
           expect(shot.origin).toEqual(shots[0]!.origin);
           const dx = context.player.x - mount.x;
@@ -595,8 +601,10 @@ describe("enemy rules", () => {
     const definition = enemyCatalog.capital;
     // This existing engagement tests disable and hull routing, not first-entry timing.
     let state: EnemyState = { ...spawn("capital"), firePhasesInitialized: true };
-    // Two Lasers and two three-bolt Multi-Lasers.
-    expect(stepEnemy(definition, observation(state), state).fire).toHaveLength(8);
+    const volleys = definition.hardpoints.flatMap((part) =>
+      part.kind === "weapon" ? part.fire.angles : [],
+    );
+    expect(stepEnemy(definition, observation(state), state).fire).toHaveLength(volleys.length);
     for (const part of definition.hardpoints.filter((part) => part.kind === "weapon")) {
       expect(state.disabled).toBe(false);
       state = damageEnemy(definition, { amount: part.hp, hardpointId: part.id }, state);
@@ -677,31 +685,46 @@ describe("enemy ship physics and hull rotation", () => {
         sizeRatio: definition.sizeRatio,
       };
     };
-    expect(pick("swarm")).toEqual({ behaviour: "swarm", engagement: 360, hp: 2, sizeRatio: 0.65 });
+    expect(pick("swarm")).toEqual({
+      behaviour: "swarm",
+      engagement: 360,
+      hp: 2,
+      sizeRatio: ENEMY_SIZE_RATIOS.swarm,
+    });
     expect(pick("fighter")).toEqual({
       behaviour: "hitAndRun",
       engagement: 360,
       hp: 4,
-      sizeRatio: 1,
+      sizeRatio: ENEMY_SIZE_RATIOS.fighter,
     });
     expect(pick("interceptor")).toEqual({
       behaviour: "strafe",
       engagement: 260,
       hp: 3,
-      sizeRatio: 0.75,
+      sizeRatio: ENEMY_SIZE_RATIOS.interceptor,
     });
     expect(pick("retaliator")).toEqual({
       behaviour: "chase",
       engagement: 360,
       hp: 8,
-      sizeRatio: 2,
+      sizeRatio: ENEMY_SIZE_RATIOS.retaliator,
     });
-    expect(pick("frigate")).toEqual({ behaviour: "siege", engagement: 500, hp: 10, sizeRatio: 4 });
-    expect(pick("capital")).toEqual({ behaviour: "siege", engagement: 750, hp: 18, sizeRatio: 5 });
+    expect(pick("frigate")).toEqual({
+      behaviour: "siege",
+      engagement: 500,
+      hp: 10,
+      sizeRatio: ENEMY_SIZE_RATIOS.frigate,
+    });
+    expect(pick("capital")).toEqual({
+      behaviour: "siege",
+      engagement: 750,
+      hp: 18,
+      sizeRatio: ENEMY_SIZE_RATIOS.capital,
+    });
     expect(enemyCatalog.retaliator.fire).toMatchObject({
-      angles: [-8, 0, 8],
-      interval: WEAPON_CATALOG.multiLaser[0].intervalSeconds,
-      weapon: "multiLaser",
+      angles: [0],
+      interval: WEAPON_CATALOG.rapidMissile[0].intervalSeconds,
+      weapon: "rapidMissile",
     });
     expect(enemyCatalog.retaliator.aggression).toBe("retaliate");
     expect(enemyCatalog.swarm.steering).toEqual({ separation: 85, wobble: 0.65 });
@@ -876,26 +899,24 @@ describe("enemy ship physics and hull rotation", () => {
     expect(result.state.facing).toEqual({ x: 1, y: 0 });
   });
 
-  it("rotates hardpoint offsets with the hull at exactly 90 degrees", () => {
+  it("rotates legacy fraction offsets with the canonical hull span at exactly 90 degrees", () => {
     const definition = enemyCatalog.capital;
     const facing = { x: 1, y: 0 };
     const offset = (id: string) =>
-      hardpointOffset(
-        definition,
-        20,
-        facing,
-        definition.hardpoints.find((part) => part.id === id)!,
-      );
-    // Hull width is 100. Facing east, forward is +x and port is -y.
-    expect(offset("weapon-left").x).toBeCloseTo(0.3 * 100, 9);
-    expect(offset("weapon-left").y).toBeCloseTo(-0.35 * 100, 9);
-    expect(offset("weapon-right").x).toBeCloseTo(0.3 * 100, 9);
-    expect(offset("weapon-right").y).toBeCloseTo(0.35 * 100, 9);
+      hardpointOffset(definition, 20, facing, {
+        offset: definition.hardpoints.find((part) => part.id === id)!.offset,
+      });
+    // Omitting an id selects the legacy fallback; raw metadata anchors are covered separately.
+    const width = definition.sizeRatio * 20;
+    expect(offset("weapon-left").x).toBeCloseTo(0.3 * width, 9);
+    expect(offset("weapon-left").y).toBeCloseTo(-0.35 * width, 9);
+    expect(offset("weapon-right").x).toBeCloseTo(0.3 * width, 9);
+    expect(offset("weapon-right").y).toBeCloseTo(0.35 * width, 9);
     const engine = hardpointOffset(definition, 20, facing, {
       offset: { x: 0.3, y: 0.35 },
     });
-    expect(engine.x).toBeCloseTo(-35, 9);
-    expect(engine.y).toBeCloseTo(30, 9);
+    expect(engine.x).toBeCloseTo(-0.35 * width, 9);
+    expect(engine.y).toBeCloseTo(0.3 * width, 9);
   });
 
   it("aims weapons independently of the hull with aimTurnSeconds", () => {
@@ -915,19 +936,31 @@ describe("enemy ship physics and hull rotation", () => {
       state.hardpoints.find((value) => value.id === id)!.aim!;
     const turned = stepEnemy(definition, context, aimed).state;
     const drift = aimDrift(aimed.id, aimed.age);
-    // Facing up, starboard sits at (24, 0) and port at (-24, 0).
-    const wanted = rotate({ x: -24, y: 3000 }, drift);
+    const wantedFor = (id: string, facing = aimed.facing) => {
+      const offset = hardpointOffset(
+        definition,
+        context.adaWidth,
+        facing,
+        definition.hardpoints.find((value) => value.id === id)!,
+      );
+      return rotate(
+        {
+          x: aimed.lastSeen.x - aimed.position.x - offset.x,
+          y: aimed.lastSeen.y - aimed.position.y - offset.y,
+        },
+        drift,
+      );
+    };
+    const wanted = wantedFor("starboard");
     expect(degreesBetween(part(turned, "starboard"), wanted)).toBeCloseTo(
       degreesBetween({ x: 1, y: 0 }, wanted) * Math.exp(-context.dt / response),
       6,
     );
     // A weapon with no previous aim acquires its drifted target line directly.
-    expect(degreesBetween(part(turned, "port"), rotate({ x: 24, y: 3000 }, drift))).toBeLessThan(
-      1e-9,
-    );
-    // Facing east moves the starboard muzzle to (0, 24); its aim still turns from east.
+    expect(degreesBetween(part(turned, "port"), wantedFor("port"))).toBeLessThan(1e-9);
+    // Changing hull facing rotates the anchor; the weapon still turns from its own prior aim.
     const rotated = stepEnemy(definition, context, { ...aimed, facing: { x: 1, y: 0 } }).state;
-    const south = rotate({ x: 0, y: 1 }, drift);
+    const south = wantedFor("starboard", { x: 1, y: 0 });
     expect(degreesBetween(part(rotated, "starboard"), south)).toBeCloseTo(
       degreesBetween({ x: 1, y: 0 }, south) * Math.exp(-context.dt / response),
       6,
@@ -940,10 +973,14 @@ describe("enemy ship physics and hull rotation", () => {
     const state = { ...spawn("fighter"), aim: { x: 0, y: 1 }, engaged: true };
     const context = observation(state);
     const result = stepEnemy(definition, context, state);
-    expect(result.fire).toHaveLength(1);
-    expect(result.fire[0]!.aim).toEqual(result.state.aim);
+    expect(result.fire).toHaveLength(definition.fire.angles.length);
+    const centre = result.fire[definition.fire.angles.indexOf(0)]!;
+    expect(centre.aim).toEqual(result.state.aim);
+    for (const [index, shot] of result.fire.entries()) {
+      expect(shot.aim).toEqual(fanHeading(result.state.aim!, definition.fire.angles[index]!));
+    }
     const wanted = rotate({ x: 1, y: 0 }, aimDrift(state.id, state.age));
-    expect(degreesBetween(result.fire[0]!.aim, wanted)).toBeCloseTo(
+    expect(degreesBetween(centre.aim, wanted)).toBeCloseTo(
       degreesBetween({ x: 0, y: 1 }, wanted) *
         Math.exp(-context.dt / definition.physics.aimTurnSeconds),
       6,
@@ -1016,18 +1053,32 @@ describe("enemy aim", () => {
       for (const shot of result.fire) {
         const angle = angleOf(shot.aim);
         const line = angleOf({ x: player.x - shot.origin.x, y: player.y - shot.origin.y });
+        const modelPart = enemyCatalog.platform.hardpoints.find(
+          (part) => part.id === shot.hardpointId,
+        )!;
+        const offset = hardpointOffset(
+          enemyCatalog.platform,
+          observation(state).adaWidth,
+          state.facing,
+          modelPart,
+        );
+        const origin = { x: state.position.x + offset.x, y: state.position.y + offset.y };
         const intercept = leadPoint(
-          shot.origin,
+          origin,
           player,
           playerVelocity,
           shot.speed,
           leadSkill(lead, state.id),
         );
-        const interceptAngle = angleOf({
-          x: intercept.x - shot.origin.x,
-          y: intercept.y - shot.origin.y,
-        });
-        const error = angle - interceptAngle;
+        const wanted =
+          Math.atan2(intercept.y - origin.y, intercept.x - origin.x) +
+          aimDrift(state.id, state.age);
+        const previous = state.hardpoints.find((part) => part.id === shot.hardpointId)!.aim;
+        const previousAngle = previous ? angleOf(previous) : wanted;
+        const turn = Math.atan2(Math.sin(wanted - previousAngle), Math.cos(wanted - previousAngle));
+        const expectedAngle =
+          previousAngle + turn * (1 - Math.exp(-dt / enemyCatalog.platform.physics.aimTurnSeconds));
+        const error = angle - expectedAngle;
         shots.push({
           ahead: angle - line,
           aimError: Math.atan2(Math.sin(error), Math.cos(error)),
@@ -1075,9 +1126,11 @@ describe("enemy aim", () => {
       for (const value of ahead) {
         expect(value).toBeGreaterThan(0);
       }
-      // Muzzle offsets change the intercept angle as Ada circles; bound tracking error
-      // around that intercept rather than the raw angle ahead of her current position.
+      // The canonical anchor and aim time constant define the per-frame intercept track.
       const error = shots.filter((shot) => shot.part === part).map((shot) => shot.aimError);
+      for (const value of error) {
+        expect(Math.abs(value)).toBeLessThan(1e-9);
+      }
       expect(Math.max(...error) - Math.min(...error)).toBeLessThan(
         2 * ENEMY_AIM.driftRadians + 0.01,
       );
@@ -1175,15 +1228,12 @@ describe("enemy damage", () => {
   });
 
   it("fires each volley with its profile's damage", () => {
-    const definition = {
-      ...enemyCatalog.fighter,
-      fire: { ...enemyCatalog.fighter.fire, level: 3 as const },
-    };
-    const state = spawn("fighter");
+    const definition = enemyDefinition(2, "fighter", "damage-profile", 3);
+    const state = { ...spawn("fighter", definition), weaponLevel: 3 as const };
     const result = stepEnemy(definition, observation(state), state);
     expect(result.fire.length).toBeGreaterThan(0);
     for (const shot of result.fire) {
-      expect(shot.damageRatio).toBe(WEAPON_CATALOG.laser[2].damageRatio);
+      expect(shot.damageRatio).toBe(WEAPON_CATALOG.multiLaser[2].damageRatio);
     }
   });
 });

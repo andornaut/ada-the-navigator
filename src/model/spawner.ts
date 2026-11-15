@@ -1,3 +1,4 @@
+import type { EnemyActorKind } from "../data/enemyActors.ts";
 import {
   type EncounterEntry,
   type EnemyArchetype,
@@ -87,18 +88,20 @@ export function worldLocalCap(
   stage: SpawnerStage,
   reach: number,
   centre: Vec,
-  includesCapital: boolean,
+  includesHostileAnchor: boolean,
   objects: readonly SpaceObject[],
 ): number {
   const qualifies =
-    includesCapital ||
+    includesHostileAnchor ||
     neighbours(context, policy, reach, centre, objects).some(
       (object) =>
         object.hp > 0 &&
         ((object.kind === "enemy" &&
           object.enemy?.archetype === "capital" &&
           !object.enemy.salvaged) ||
-          (object.kind === "station" && context.hostileStationIds?.has(object.id) === true)),
+          ((object.kind === "station" ||
+            (object.kind === "enemy" && object.enemy?.archetype === "hostileStation")) &&
+            context.hostileStationIds?.has(object.id) === true)),
     );
   return stage.localCap + (qualifies ? HOSTILE_LOCAL_ALLOWANCE : 0);
 }
@@ -117,24 +120,75 @@ export function worldFitsEncounter(
   centre: Vec,
   plan: EncounterPlan,
 ): boolean {
-  const reach = groupReach(policy, shipRadius, plan);
-  const nearby = neighbours(context, policy, reach, centre, liveOccupants(objects));
-  const count = plan.count + (plan.escorts?.count ?? 0);
-  const types = new Set(nearby.map((object) => object.enemy?.archetype ?? "fighter"));
-  types.add(plan.archetype);
-  if (plan.escorts?.count) {
-    types.add(plan.escorts.archetype);
-  }
+  return fitsPopulation(context, policy, stage, objects, centre, {
+    archetypes: [plan.archetype, ...(plan.escorts?.count ? [plan.escorts.archetype] : [])],
+    capitals:
+      (plan.archetype === "capital" ? plan.count : 0) +
+      (plan.escorts?.archetype === "capital" ? plan.escorts.count : 0),
+    count: plan.count + (plan.escorts?.count ?? 0),
+    includesHostileAnchor: plan.archetype === "capital",
+    reach: groupReach(policy, shipRadius, plan),
+  });
+}
+
+interface PopulationFootprint {
+  readonly archetypes: readonly EnemyActorKind[];
+  readonly capitals: number;
+  readonly count: number;
+  readonly includesHostileAnchor: boolean;
+  readonly reach: number;
+}
+
+function fitsPopulation(
+  context: SpawnerContext,
+  policy: SpawnerPolicy,
+  stage: SpawnerStage,
+  objects: readonly SpaceObject[],
+  centre: Vec,
+  footprint: PopulationFootprint,
+): boolean {
+  const nearby = neighbours(context, policy, footprint.reach, centre, liveOccupants(objects));
+  const types = new Set<EnemyActorKind>(
+    nearby.map((object) => object.enemy?.archetype ?? "fighter"),
+  );
+  footprint.archetypes.forEach((kind) => types.add(kind));
   const capitals =
-    nearby.filter((object) => object.enemy?.archetype === "capital").length +
-    (plan.archetype === "capital" ? plan.count : 0) +
-    (plan.escorts?.archetype === "capital" ? plan.escorts.count : 0);
+    nearby.filter((object) => object.enemy?.archetype === "capital").length + footprint.capitals;
   return (
-    nearby.length + count <=
-      worldLocalCap(context, policy, stage, reach, centre, plan.archetype === "capital", objects) &&
+    nearby.length + footprint.count <=
+      worldLocalCap(
+        context,
+        policy,
+        stage,
+        footprint.reach,
+        centre,
+        footprint.includesHostileAnchor,
+        objects,
+      ) &&
     types.size <= stage.maxNearbyArchetypes &&
     capitals <= policy.maxNearbyCapitals
   );
+}
+
+/** Explicit station plans use the same local population accounting as other formations. */
+export function worldFitsHostileStation(
+  context: SpawnerContext,
+  policy: SpawnerPolicy,
+  stage: SpawnerStage,
+  objects: readonly SpaceObject[],
+  centre: Vec,
+  plan: { readonly id: string; readonly defenders: number; readonly reach: number },
+): boolean {
+  if (context.hostileStationIds?.has(plan.id) !== true) {
+    return false;
+  }
+  return fitsPopulation(context, policy, stage, objects, centre, {
+    archetypes: ["hostileStation", ...(plan.defenders > 0 ? ["swarm" as const] : [])],
+    capitals: 0,
+    count: 1 + plan.defenders,
+    includesHostileAnchor: true,
+    reach: plan.reach,
+  });
 }
 
 /**

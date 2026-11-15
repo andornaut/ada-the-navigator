@@ -9,7 +9,7 @@
           "role": "engine"
         },
         {
-          "fire": "bolt",
+          "fire": "missile",
           "id": "port",
           "offset": [-0.3, 0],
           "order": 1,
@@ -35,7 +35,7 @@
           "role": "turret"
         }
       ],
-      "sizeRatio": 4
+      "sizeRatio": 5
     },
     "capital": {
       "hardpoints": [
@@ -58,28 +58,28 @@
           "role": "engine"
         },
         {
-          "fire": "bolt",
+          "fire": "beam",
           "id": "weapon-left",
           "offset": [-0.35, -0.3],
           "order": 3,
           "role": "turret"
         },
         {
-          "fire": "bolt",
+          "fire": "dot",
           "id": "weapon-right",
           "offset": [0.35, -0.3],
           "order": 4,
           "role": "turret"
         },
         {
-          "fire": "bolt",
+          "fire": "dot",
           "id": "weapon-rear-left",
           "offset": [-0.42, 0.08],
           "order": 5,
           "role": "turret"
         },
         {
-          "fire": "bolt",
+          "fire": "dot",
           "id": "weapon-rear-right",
           "offset": [0.42, 0.08],
           "order": 6,
@@ -110,19 +110,19 @@
           "role": "turret"
         }
       ],
-      "sizeRatio": 5
+      "sizeRatio": 6
     },
     "retaliator": {
       "hardpoints": [
         {
-          "fire": "bolt",
+          "fire": "missile",
           "id": "turret",
           "offset": [0, 0],
           "order": 0,
           "role": "turret"
         }
       ],
-      "sizeRatio": 2
+      "sizeRatio": 3
     },
     "platform": {
       "hardpoints": [
@@ -139,9 +139,15 @@
           "offset": [0.29, 0],
           "order": 1,
           "role": "turret"
+        },
+        {
+          "id": "aft",
+          "offset": [0, 0.29],
+          "order": 2,
+          "role": "turret"
         }
       ],
-      "sizeRatio": 3
+      "sizeRatio": 4
     }
   },
   "version": 1

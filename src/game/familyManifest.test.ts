@@ -6,6 +6,7 @@ import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
 import cartwheel from "../../public/art/cartwheel/manifest.json";
+import { INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import {
   galaxyLoadsAtOnce,
@@ -24,6 +25,7 @@ import {
   enemyPartsToLoad,
   enemyShardsPath,
   GALAXY_FAMILIES,
+  mergeEnemyAssets,
 } from "./enemyArt.ts";
 
 const claim = GALAXY_FAMILIES.find(({ family }) => family === "claim")!;
@@ -77,6 +79,7 @@ function fixture(family: EnemyFamily | undefined = claim) {
     GALAXY_FAMILIES,
     GALAXY_ID,
     GALAXY_NUMBERS,
+    INDUSTRIAL_BODY_KEYS,
     Loader: { Events: { COMPLETE: "complete" } },
     composedArchetypes,
     craftFrameSets,
@@ -91,6 +94,7 @@ function fixture(family: EnemyFamily | undefined = claim) {
     galaxyManifestKey,
     galaxyTowKey,
     loadSvg: svg,
+    mergeEnemyAssets,
     queueBackdrop: backdrop,
     readEnemyArt: readArt,
     readGalaxyArt: readArt,

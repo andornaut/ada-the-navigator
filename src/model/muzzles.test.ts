@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import capitalFile from "../../public/art/enemies/capital-hardpoints.json";
 import frigateFile from "../../public/art/enemies/frigate-hardpoints.json";
+import cargoFile from "../../public/art/enemies/retaliatorCargoHauler-hardpoints.json";
 import {
   enemyCatalog,
   type EnemyDefinition,
@@ -72,7 +73,7 @@ describe("drawn muzzles", () => {
   it("places a shot at the pivot of the hull's drawn heading plus the drawn aim's muzzle", () => {
     const heading = frigateFile.headings[6]!;
     const pivot = heading.hardpoints.find((part) => part.id === "port")!.pivot!;
-    const [tip] = frigateFile.tops.gun[11]!.muzzles;
+    const [tip] = frigateFile.tops.rail[11]!.muzzles;
     const half = frigateFile.frame / 2;
     const expected = world(
       (pivot[0]! + tip![0]! - half) * ENEMY_DISPLAY_SCALE,
@@ -90,13 +91,13 @@ describe("drawn muzzles", () => {
   });
 
   it("cycles a triple top's barrels by volley", () => {
-    const tips = capitalFile.tops.triple[3]!.muzzles;
+    const tips = cargoFile.tops.turret[3]!.muzzles;
     expect(tips).toHaveLength(3);
-    const layout = muzzleLayout(armed({ "weapon-left": "multiLaser" }), MUZZLE_ART.capital)!;
-    const first = muzzleOffset(layout, "weapon-left", at(0), at(3 * 22.5), 0)!;
-    const second = muzzleOffset(layout, "weapon-left", at(0), at(3 * 22.5), 1)!;
+    const layout = muzzleLayout(enemyCatalog.retaliator, MUZZLE_ART.retaliatorCargoHauler)!;
+    const first = muzzleOffset(layout, null, at(0), at(3 * 22.5), 0)!;
+    const second = muzzleOffset(layout, null, at(0), at(3 * 22.5), 1)!;
     expect(second).not.toEqual(first);
-    expect(muzzleOffset(layout, "weapon-left", at(0), at(3 * 22.5), 3)).toEqual(first);
+    expect(muzzleOffset(layout, null, at(0), at(3 * 22.5), 3)).toEqual(first);
   });
 
   it("defines no muzzle for a turretless part, an unknown turret or a ship without that art", () => {
@@ -108,16 +109,16 @@ describe("drawn muzzles", () => {
   it("fires each weapon from the top it draws on its mount, the mine layer's held aft", () => {
     const layout = muzzleLayout(
       armed({
-        "claw-left": "phaser",
+        "claw-left": "scattershot",
         "stern-right": "mineLayer",
-        "weapon-rear-left": "multiLaser",
+        "weapon-rear-left": "scattershot",
       }),
       MUZZLE_ART.capital,
     )!;
     const tips = (top: string, aim: number) =>
       capitalFile.tops[top as keyof typeof capitalFile.tops][aim]!.muzzles.length;
-    expect(layout.turrets.get("claw-left")!.tips[4]).toHaveLength(tips("dish", 4));
-    expect(layout.turrets.get("weapon-rear-left")!.tips[4]).toHaveLength(tips("triple", 4));
+    expect(layout.turrets.get("claw-left")!.tips[4]).toHaveLength(tips("spread", 4));
+    expect(layout.turrets.get("weapon-rear-left")!.tips[4]).toHaveLength(tips("spread", 4));
     expect(layout.turrets.get("stern-right")!.aft).toBe(true);
     // Whatever the aim, the hopper's chute is the aim frame opposite the hull heading.
     const heading = 3;
@@ -135,10 +136,14 @@ describe("drawn muzzles", () => {
       expect(offset.x).toBeCloseTo(expected.x, 9);
       expect(offset.y).toBeCloseTo(expected.y, 9);
     }
-    // A loadout's weapon on a mount Art's tiers give another fires from its own top there.
-    const moved = muzzleLayout(armed({ "claw-left": "mineLayer" }), MUZZLE_ART.capital)!;
-    expect(moved.turrets.get("claw-left")!.aft).toBe(true);
-    expect(moved.turrets.get("claw-left")!.tips[4]).toHaveLength(tips("hopper", 4));
+    const lance = muzzleLayout(
+      armed({ "claw-left": "scattershot", "weapon-left": "chargedLance" }),
+      MUZZLE_ART.capital,
+    )!;
+    expect(lance.turrets.get("weapon-left")!.aft).toBe(false);
+    expect(lance.turrets.get("weapon-left")!.tips[4]).toHaveLength(tips("lance", 4));
+    expect(lance.turrets.has("stern-right")).toBe(false);
+    expect(layout.turrets.has("weapon-left")).toBe(false);
   });
 
   it("fires a heavy turret from its drawn muzzle along the continuous smoothed aim", () => {
@@ -159,7 +164,7 @@ describe("drawn muzzles", () => {
   });
 
   it("keeps the model origin for ships whose art defines no muzzles", () => {
-    for (const archetype of ["fighter", "retaliator"] as const) {
+    for (const archetype of ["fighter"] as const) {
       // A hit engages the ship at once, so it fires on this step.
       const hit = damageEnemy(
         enemyCatalog[archetype],

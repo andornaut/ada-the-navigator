@@ -24,6 +24,13 @@ const marker: PennyMarker = {
 };
 
 describe("Penny's existing marker art", () => {
+  it("uses the native hostile-station icon without revealing an unknown actor", () => {
+    expect(pennyGlyph({ ...marker, identified: true, symbol: "hostileStation" })).toBe(
+      "/art/ui/icons/map-hostile-station.svg",
+    );
+    expect(pennyGlyph({ ...marker, identified: false, symbol: "hostileStation" })).toBeNull();
+    expect(PENNY_MARKERS_STYLE).toContain('data-symbol="hostileStation"');
+  });
   it("uses canonical real target glyphs while keeping unknown targets anonymous", () => {
     expect(pennyGlyph(marker)).toBeNull();
     for (const [symbol, glyph] of [

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { shipCatalogEntry } from "../data/enemyActors.ts";
 import {
   DIFFICULTY_SCALE,
   encounterQuiet,
@@ -67,7 +68,7 @@ function run(
     const peers = ships.map((ship) => ({ ...ship }));
     ships.forEach((ship, index) => {
       const result = stepEnemy(
-        enemyCatalog[ship.archetype],
+        shipCatalogEntry(ship.archetype)!,
         (options.context ?? context)(peers),
         ship,
       );

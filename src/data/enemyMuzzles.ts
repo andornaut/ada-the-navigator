@@ -2,7 +2,12 @@ import platform from "../../public/art/cartwheel/enemies/platform-hardpoints.jso
 import capital from "../../public/art/enemies/capital-hardpoints.json" with { type: "json" };
 import frigate from "../../public/art/enemies/frigate-hardpoints.json" with { type: "json" };
 import gadget from "../../public/art/enemies/gadget-hardpoints.json" with { type: "json" };
-import type { EnemyArchetype, EnemyDefinition, Point } from "./enemyCatalog.ts";
+import station from "../../public/art/enemies/hostileStation-hardpoints.json" with { type: "json" };
+import retaliator from "../../public/art/enemies/retaliator-hardpoints.json" with { type: "json" };
+import cargo from "../../public/art/enemies/retaliatorCargoHauler-hardpoints.json" with { type: "json" };
+import mining from "../../public/art/enemies/retaliatorMiningFreighter-hardpoints.json" with { type: "json" };
+import type { EnemyDefinition, Point } from "./enemyCatalog.ts";
+import { type EnemyAssetKey } from "./enemyIdentity.ts";
 
 /** One turret's drawn pivot per hull heading and its top design's barrel tips. */
 export interface MuzzleTurret {
@@ -17,6 +22,7 @@ export interface MuzzleTurret {
 /** An archetype's drawn turrets in hull frame px; display px are `frame * ENEMY_DISPLAY_SCALE`. */
 export interface MuzzleLayout {
   frame: number;
+  primary?: MuzzleTurret;
   turrets: ReadonlyMap<string, MuzzleTurret>;
 }
 
@@ -31,6 +37,7 @@ interface CarriedTop {
  * tips, each hardpoint's own top and the top each weapon draws on an armed mount.
  */
 export interface MuzzleArt {
+  anchors: ReadonlyMap<string, readonly Point[]>;
   frame: number;
   own: ReadonlyMap<string, CarriedTop>;
   pivots: ReadonlyMap<string, readonly Point[]>;
@@ -44,7 +51,7 @@ export const ENEMY_DISPLAY_SCALE = 0.4375;
 interface HardpointsFile {
   fill?: string[];
   frame: number;
-  headings: { hardpoints: { id: string; pivot?: number[] }[]; index: number }[];
+  headings: { hardpoints: { id: string; pivot?: number[]; anchor?: number[] }[]; index: number }[];
   hardpoints: { id: string; top: string | null }[];
   tops: Record<string, { index: number; muzzles: number[][] }[]>;
   weaponTops?: Record<string, { aim: string; top: string }>;
@@ -56,6 +63,7 @@ const point = ([x, y]: readonly number[]): Point => ({ x: x!, y: y! });
 export function readMuzzleArt(file: HardpointsFile): MuzzleArt {
   const half = file.frame / 2;
   const own = new Map<string, CarriedTop>();
+  const anchors = new Map<string, Point[]>();
   for (const part of file.hardpoints) {
     if (part.top) {
       own.set(part.id, { aft: false, top: part.top });
@@ -68,7 +76,19 @@ export function readMuzzleArt(file: HardpointsFile): MuzzleArt {
     ]),
   );
   const pivots = new Map<string, Point[]>();
-  for (const id of new Set([...own.keys(), ...(file.fill ?? [])])) {
+  for (const id of new Set([
+    ...own.keys(),
+    ...(file.fill ?? []),
+    ...file.hardpoints.map((part) => part.id),
+  ])) {
+    const placedAnchors: Point[] = [];
+    for (const heading of file.headings) {
+      const anchor = heading.hardpoints.find((entry) => entry.id === id)?.anchor;
+      if (anchor) {
+        placedAnchors[heading.index] = { x: anchor[0]! - half, y: anchor[1]! - half };
+      }
+    }
+    anchors.set(id, placedAnchors);
     const placed: Point[] = [];
     for (const heading of file.headings) {
       const pivot = heading.hardpoints.find((entry) => entry.id === id)?.pivot;
@@ -86,16 +106,26 @@ export function readMuzzleArt(file: HardpointsFile): MuzzleArt {
     }
     tops.set(design, tips);
   }
-  return { frame: file.frame, own, pivots, tops, weaponTops };
+  return { anchors, frame: file.frame, own, pivots, tops, weaponTops };
 }
 
 /** Art's drawn mounts for every archetype with a hardpoints file, Gadget's capital included. */
-export const MUZZLE_ART: Partial<Record<EnemyArchetype | "gadget", MuzzleArt>> = {
+export const MUZZLE_ART: Partial<Record<EnemyAssetKey, MuzzleArt>> = {
   capital: readMuzzleArt(capital),
   frigate: readMuzzleArt(frigate),
   gadget: readMuzzleArt(gadget),
+  hostileStation: readMuzzleArt(station),
   platform: readMuzzleArt(platform),
+  retaliator: readMuzzleArt(retaliator),
+  retaliatorCargoHauler: readMuzzleArt(cargo),
+  retaliatorMiningFreighter: readMuzzleArt(mining),
 };
+
+export function muzzleArtForDefinition(
+  definition: Pick<EnemyDefinition, "assetKey">,
+): MuzzleArt | undefined {
+  return definition.assetKey === undefined ? undefined : MUZZLE_ART[definition.assetKey];
+}
 
 const LAYOUTS = new WeakMap<object, Map<MuzzleArt, MuzzleLayout>>();
 /**
@@ -124,7 +154,14 @@ export function muzzleLayout(
       turrets.set(part.id, { aft: carried.aft, pivots: art.pivots.get(part.id)!, tips });
     }
   }
-  const layout = { frame: art.frame, turrets };
+  const primary =
+    definition.hardpoints.length === 0 && art.own.size === 1
+      ? [...art.own].flatMap(([id, carried]) => {
+          const tips = art.tops.get(carried.top);
+          return tips ? [{ aft: carried.aft, pivots: art.pivots.get(id)!, tips }] : [];
+        })[0]
+      : undefined;
+  const layout = { frame: art.frame, ...(primary ? { primary } : {}), turrets };
   const byArt = LAYOUTS.get(definition) ?? new Map<MuzzleArt, MuzzleLayout>();
   LAYOUTS.set(definition, byArt.set(art, layout));
   return layout;

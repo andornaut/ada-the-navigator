@@ -1,6 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { type EnemyActorKind, shipCatalogEntry } from "../data/enemyActors.ts";
+import * as enemyCatalogModule from "../data/enemyCatalog.ts";
 import {
   encounterQuiet,
   encounterTable,
@@ -9,6 +11,8 @@ import {
   enemyCatalog,
   type EnemyDefinition,
   enemyDefinition,
+  enemyFire,
+  enemyFireRate,
   enemyStardust,
   escortTuning,
   galaxyEncounters,
@@ -89,12 +93,15 @@ function loadoutId(
   galaxy: GalaxyNumber,
   accepts: (loadout: ReadonlyMap<string, EnemyWeapon>) => boolean,
 ): string {
-  for (let index = 0; ; index++) {
+  for (let index = 0; index < 128; index++) {
     const id = `target:${index}`;
     if (accepts(heavyLoadout(archetype, ROUTE_POSITION[galaxy], id)!)) {
       return id;
     }
   }
+  throw new Error(
+    `No matching actual ${archetype} signature in galaxy ${galaxy} after 128 candidates`,
+  );
 }
 /** A heavy whose loadout carries `weapon`, every hardpoint's fire held but that mount's. */
 function armedWith(
@@ -176,19 +183,19 @@ function partPosition(object: SpaceObject, id: string): Vec {
 }
 
 describe("integrated combat", () => {
-  it("fires bolts and missiles from independent capital hardpoints and preserves saved futures", () => {
-    // Needle (position 3): a real capital loadout with missiles and no short-range Scattershot.
+  it("fires bolts and missiles from independent frigate hardpoints and preserves saved futures", () => {
+    // Needle (position 3): a real frigate loadout with missiles and no short-range Scattershot.
     const flight = createFlight(CONTENT, 4, 173, progress);
     flight.objects = [];
     const id = Array.from({ length: 128 }, (_, index) => `target:${index}`).find((candidate) => {
-      const weapons = [...heavyLoadout("capital", 3, candidate)!.values()];
-      return weapons.includes("rapidMissile") && !weapons.includes("scattershot");
+      const weapons = [...heavyLoadout("frigate", 3, candidate)!.values()];
+      return weapons.includes("heavyMissile") && !weapons.includes("scattershot");
     });
     if (!id) {
-      throw new Error("No valid bolt-and-missile capital loadout in bounded fixture search");
+      throw new Error("No valid bolt-and-missile frigate loadout in bounded fixture search");
     }
-    const definition = enemyDefinition(4, "capital", id);
-    const target = ship("capital", { x: 400, y: 0 }, definition, id);
+    const definition = enemyDefinition(4, "frigate", id);
+    const target = ship("frigate", { x: 400, y: 0 }, definition, id);
     const ordered = definition.mounts!.fill.flatMap((mount) =>
       definition.hardpoints.flatMap((part) =>
         part.kind === "weapon" && part.id === mount ? [part] : [],
@@ -539,12 +546,17 @@ describe("integrated combat", () => {
   });
 
   it("fires an enemy Phaser along its fixed aim line 0.4 s after it appears", () => {
-    // Phantom (position 6): a capital whose loadout carries the canonical Phaser.
+    // Phantom: the actual interceptor signature carries its solo canonical Phaser.
     const fixture = () => {
       const flight = createFlight(CONTENT, 6, 173, progress);
       flight.objects = [];
       flight.player = { x: 0, y: 0 };
-      const { target } = armedWith("capital", 6, "phaser", { x: 220, y: 0 });
+      const target = ship(
+        "interceptor",
+        { x: 220, y: 0 },
+        enemyDefinition(6, "interceptor", "phaser-proof"),
+        "phaser-proof",
+      );
       flight.objects.push(target);
       stepFlight(CONTENT, 1 / 60, idle, flight);
       return flight;
@@ -578,7 +590,12 @@ describe("integrated combat", () => {
     const flight = createFlight(CONTENT, 6, 173, progress);
     flight.objects = [];
     flight.player = { x: 0, y: 0 };
-    const { target } = armedWith("capital", 6, "phaser", { x: 220, y: 0 });
+    const target = ship(
+      "interceptor",
+      { x: 220, y: 0 },
+      enemyDefinition(6, "interceptor", "phaser-proof"),
+      "phaser-proof",
+    );
     flight.objects.push(target);
     stepFlight(CONTENT, 1 / 60, idle, flight);
     // A rock rolls between them after the line appears: the line and beam stop at it.
@@ -591,33 +608,56 @@ describe("integrated combat", () => {
   });
 
   it("fires a ring burst's eight bolts outward from the hull's edge, evenly around it", () => {
-    // Phantom (position 6): a capital whose loadout carries the ring burst, 1.5 damage a bolt.
+    // Controlled Ring mechanism only, not ambient roster or hostile-station admission proof.
     const flight = emptyIn(6);
-    const { target } = armedWith("capital", 6, "ringBurst", { x: 220, y: 0 });
-    flight.objects.push(target);
-    stepFlight(CONTENT, 1 / 60, idle, flight);
-    const bolts = flight.shots.filter((shot) => shot.enemyWeapon === "ringBurst");
-    expect(bolts).toHaveLength(8);
-    for (const [index, bolt] of bolts.entries()) {
-      expect(bolt).toMatchObject({ damage: 1.5, enemy: true, projectile: "bolt" });
-      const speed = Math.hypot(bolt.velocity.x, bolt.velocity.y);
-      expect(speed).toBeCloseTo(240, 9);
-      const turn = Math.atan2(bolt.velocity.y, bolt.velocity.x);
-      expect(Math.cos(turn - (index * Math.PI) / 4)).toBeCloseTo(1, 9);
+    const id = "mechanism:ring-not-roster";
+    const base = enemyDefinition(6, "capital", id);
+    const mount = base.hardpoints.find((part) => part.kind === "weapon")!.id;
+    const fire = enemyFire("capital", { level: 1, weapon: "ringBurst" });
+    const definition: EnemyDefinition = {
+      ...base,
+      hardpoints: base.hardpoints.map((part) =>
+        part.kind === "weapon" && part.id === mount
+          ? {
+              ...part,
+              fire: { ...fire, interval: fire.interval / enemyFireRate(6, "capital", "ringBurst") },
+            }
+          : part,
+      ),
+    };
+    const original = enemyCatalogModule.enemyDefinition;
+    const stub = vi
+      .spyOn(enemyCatalogModule, "enemyDefinition")
+      .mockImplementation((...args) => (args[2] === id ? definition : original(...args)));
+    try {
+      const target = only(ship("capital", { x: 220, y: 0 }, definition, id), mount);
+      flight.objects.push(target);
+      stepFlight(CONTENT, 1 / 60, idle, flight);
+      const bolts = flight.shots.filter((shot) => shot.enemyWeapon === "ringBurst");
+      expect(bolts).toHaveLength(8);
+      for (const [index, bolt] of bolts.entries()) {
+        expect(bolt).toMatchObject({ damage: 1.5, enemy: true, projectile: "bolt" });
+        const speed = Math.hypot(bolt.velocity.x, bolt.velocity.y);
+        expect(speed).toBeCloseTo(240, 9);
+        const turn = Math.atan2(bolt.velocity.y, bolt.velocity.x);
+        expect(Math.cos(turn - (index * Math.PI) / 4)).toBeCloseTo(1, 9);
+      }
+      const [ring] = activeRingEmissions(flight);
+      expect(ring!.origins).toHaveLength(8);
+      expect(ring!.spawnRadius).toBe(target.radius);
+      for (const origin of ring!.origins) {
+        expect(Math.hypot(origin.x - ring!.at.x, origin.y - ring!.at.y)).toBeCloseTo(
+          target.radius,
+          9,
+        );
+      }
+      // The emission shows for 180 ms, then goes.
+      flight.objects = [];
+      stepFlight(CONTENT, 0.2, idle, flight);
+      expect(activeRingEmissions(flight)).toEqual([]);
+    } finally {
+      stub.mockRestore();
     }
-    const [ring] = activeRingEmissions(flight);
-    expect(ring!.origins).toHaveLength(8);
-    expect(ring!.spawnRadius).toBe(target.radius);
-    for (const origin of ring!.origins) {
-      expect(Math.hypot(origin.x - ring!.at.x, origin.y - ring!.at.y)).toBeCloseTo(
-        target.radius,
-        9,
-      );
-    }
-    // The emission shows for 180 ms, then goes.
-    flight.objects = [];
-    stepFlight(CONTENT, 0.2, idle, flight);
-    expect(activeRingEmissions(flight)).toEqual([]);
   });
 
   it("lays at most four mines, each bursting on Ada for 3 or fading after 20 seconds", () => {
@@ -657,11 +697,11 @@ describe("integrated combat", () => {
     expect(flight.shots).toEqual([]);
   });
 
-  it("tracks Ada with a frigate's charged lance, holds still, then fires across the game area", () => {
-    // Cartwheel (position 5): a frigate whose loadout carries the charged lance.
+  it("tracks Ada with a capital's charged lance, holds still, then fires across the game area", () => {
+    // Cartwheel: select an actual capital Lance profile, excluding the alternate Mine profile.
     const fixture = () => {
       const flight = emptyIn(2);
-      const { target } = armedWith("frigate", 2, "chargedLance", { x: 200, y: 0 });
+      const { target } = armedWith("capital", 2, "chargedLance", { x: 200, y: 0 });
       flight.objects.push(target);
       stepFlight(CONTENT, 1 / 60, idle, flight);
       return { flight, target };
@@ -699,9 +739,9 @@ describe("integrated combat", () => {
     expect(Math.hypot(along.x - along.y, (along.x + along.y) / 2)).toBeCloseTo(SCREEN.width, 6);
   });
 
-  it("puts out a charged lance whose frigate is disabled before it fires", () => {
+  it("puts out a charged lance whose capital is disabled before it fires", () => {
     const flight = emptyIn(2);
-    const { target } = armedWith("frigate", 2, "chargedLance", { x: 200, y: 0 });
+    const { target } = armedWith("capital", 2, "chargedLance", { x: 200, y: 0 });
     flight.objects.push(target);
     stepFlight(CONTENT, 1 / 60, idle, flight);
     expect(activeEnemyBeams(flight)).toHaveLength(1);
@@ -745,7 +785,7 @@ describe("integrated combat", () => {
       const destination = ensureDestination(CONTENT, "quest", flight);
       const guard = ensureRouteEncounter(CONTENT, "quest", flight)!;
       // Its weapons go: every weapon hardpoint destroyed disables it.
-      const weapons = enemyCatalog[guard.enemy!.archetype].hardpoints.filter(
+      const weapons = shipCatalogEntry(guard.enemy!.archetype)!.hardpoints.filter(
         ({ kind }) => kind === "weapon",
       );
       expect(weapons.length).toBeGreaterThan(0);
@@ -1041,7 +1081,7 @@ describe("galaxy encounter tables", () => {
 
   it("generates only galaxy one's roster and group sizes in galaxy one", () => {
     const flight = empty();
-    const packs = new Map<string, Set<EnemyArchetype>>();
+    const packs = new Map<string, Set<EnemyActorKind>>();
     for (let i = 1; i <= 30; i++) {
       flight.player = { x: i * 4096, y: (i % 3) * 4096 };
       ensureDestination(CONTENT, `scan:${i}`, flight);
@@ -1053,7 +1093,9 @@ describe("galaxy encounter tables", () => {
         }
       }
     }
-    const ranges = new Map(encounterTable(1).map((entry) => [entry.archetype, entry.groupSize]));
+    const ranges = new Map<EnemyActorKind, readonly [number, number]>(
+      encounterTable(1).map((entry) => [entry.archetype, entry.groupSize]),
+    );
     expect(packs.size).toBeGreaterThan(3);
     for (const [id, archetypes] of packs) {
       expect(archetypes.size).toBe(1);
@@ -1350,7 +1392,7 @@ function silence(object: SpaceObject): void {
 }
 
 function stopEngines(object: SpaceObject): void {
-  const definition = enemyCatalog[object.enemy!.archetype];
+  const definition = shipCatalogEntry(object.enemy!.archetype)!;
   for (const part of object.enemy!.hardpoints) {
     if (definition.hardpoints.some((entry) => entry.id === part.id && entry.kind === "engine")) {
       part.hp = 0;

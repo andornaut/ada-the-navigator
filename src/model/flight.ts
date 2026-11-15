@@ -3,13 +3,14 @@ import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
 import { SCENERY_IMPACT_SECONDS, sceneryImpactDamage } from "../data/collisionDamage.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { enemyActorDefinition } from "../data/enemyActorDefinition.ts";
+import type { EnemyActorKind } from "../data/enemyActors.ts";
 import {
   type EncounterEntry,
   encounterRate,
   ENEMY_AIM,
   type EnemyArchetype,
   enemyCatalog,
-  enemyDefinition,
   enemyEncounterTuning,
   enemyOnly,
   escortTuning,
@@ -18,6 +19,8 @@ import {
   MINE_LAYER,
   PHASER_AIM_SECONDS,
 } from "../data/enemyCatalog.ts";
+import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
+import { WRECK_ID_PREFIX } from "../data/enemyIdentity.ts";
 import { byPosition, ROUTE_POSITION, type RoutePosition } from "../data/galaxies.ts";
 import { CURRENTS, HUNTING_PACKS, ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
@@ -97,9 +100,17 @@ import {
   worldSyncFlightRegion,
 } from "./geography.ts";
 import { guardApproach } from "./guardApproach.ts";
+import {
+  hostileStationContext,
+  materializeHostileStation,
+  type PlannedHostileStation,
+  type StationMaterialization,
+} from "./hostileStations.ts";
 import { phantomSongSpeed, stepPhantomAllies } from "./phantomAllies.ts";
 import { playerWeaponCoverage, type PlayerWeaponCoverageContext } from "./playerWeaponCoverage.ts";
+import { protectedRadius } from "./protectedPlaces.ts";
 import { type PickupObstacle, stardustDiamond, stardustDropOffsets } from "./stardustPlacement.ts";
+import { stationFormationClear } from "./stationPlacement.ts";
 import { type ImpactFamily, impactFamily, type WeaponImpact } from "./weaponImpacts.ts";
 import { worldCellAt, worldCellKey, worldCellsNear, worldGrid } from "./worldCells.ts";
 import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
@@ -238,14 +249,8 @@ function chunk(flight: FlightState, content: GameContent, point: Vec): string {
   const grid = worldGrid(flightWorldContext(flight), content.tuning.chunkSize);
   return worldCellKey(grid, worldCellAt(grid, point));
 }
-/** Destinations and stations are safe areas; other objects protect nothing. */
-function protectedRadius(content: GameContent, object: SpaceObject): number | null {
-  return object.kind === "destination"
-    ? content.tuning.safeRadius
-    : object.kind === "station"
-      ? ECONOMY.station.safeRadius
-      : null;
-}
+
+/** Whether a point lies inside an existing friendly protected place. */
 function safe(content: GameContent, point: Vec, flight: FlightState): boolean {
   return (
     needleChannelContains({}, flight, point) ||
@@ -379,7 +384,7 @@ export function bounceShips(content: GameContent, flight: FlightState, object: S
   }
   const { normal } = contact;
   const inward = { x: -normal.x, y: -normal.y };
-  const mass = enemyCatalog[enemy.archetype].sizeRatio ** 2;
+  const mass = ENEMY_SIZE_RATIOS[enemy.archetype] ** 2;
   const adaShare = mass / (1 + mass);
   const enemyShare = 1 - adaShare;
   const ada = bounce(sceneryRestitution, sceneryRecoil, normal, enemy.velocity, flight.velocity);
@@ -918,7 +923,7 @@ function combat(flight: FlightState) {
 function spawnEnemy(
   content: GameContent,
   flight: FlightState,
-  archetype: EnemyArchetype,
+  archetype: EnemyActorKind,
   id: string,
   point: Vec,
   packId: string | null = null,
@@ -929,7 +934,7 @@ function spawnEnemy(
     { encounterSeed: flightEncounterSeed(flight), galaxy: flight.galaxy },
     id,
   );
-  const definition = enemyDefinition(flight.galaxy, archetype, id, weaponLevel);
+  const definition = enemyActorDefinition(flight.galaxy, archetype, id, weaponLevel);
   return {
     ...point,
     enemy: createEnemy(definition, { archetype, escortOf, id, packId, phase, weaponLevel }, point),
@@ -938,6 +943,37 @@ function spawnEnemy(
     kind: "enemy",
     radius: content.tuning.flight.shipRadius * definition.sizeRatio,
   };
+}
+
+/** Caller-supplied station plans have no implicit site, defender count, reward or replenishment. */
+export function spawnPlannedHostileStation(
+  content: GameContent,
+  flight: FlightState,
+  plan: PlannedHostileStation,
+): StationMaterialization {
+  return materializeHostileStation(
+    {
+      canPlace: (actors) =>
+        stationFormationClear(
+          {
+            arrivals: arrivalPoints(flight),
+            content,
+            drawnOf: (object) => drawnOf(flight, object),
+            flight,
+            frameOf: (object) => frameOf(flight, object),
+          },
+          actors,
+        ),
+      content,
+      create: (kind, actor, packId) => {
+        const object = spawnEnemy(content, flight, kind, actor.id, actor.point, packId);
+        canonicalObject(flight, object);
+        return object;
+      },
+      flight,
+    },
+    plan,
+  );
 }
 
 function activateFrigateEscorts(
@@ -1091,7 +1127,7 @@ export function encounterSpacing(content: GameContent, galaxy: GalaxyNumber): nu
 }
 
 /** Ships too heavy to drift with a current, and the fixed platform. */
-const DRIFT_PROOF: readonly EnemyArchetype[] = ["frigate", "capital", "platform"];
+const DRIFT_PROOF: readonly EnemyActorKind[] = ["frigate", "capital", "platform", "hostileStation"];
 
 /** Flight starts and Travel arrivals, which encounters keep clear of. */
 function arrivalPoints(flight: FlightState): Vec[] {
@@ -1187,7 +1223,7 @@ function generateRegion(content: GameContent, x: number, y: number, flight: Flig
     initialized && (previous || escort)
       ? {
           archetype:
-            previous?.archetype ??
+            (previous?.archetype === "hostileStation" ? undefined : previous?.archetype) ??
             (escortObject?.role === FRIGATE_ESCORT_ROLE
               ? ("frigate" as const)
               : ("capital" as const)),
@@ -1195,14 +1231,16 @@ function generateRegion(content: GameContent, x: number, y: number, flight: Flig
           ...(previous?.archetype === "capital" || previous?.archetype === "frigate" || escort
             ? {
                 escorts: {
-                  archetype: escort?.archetype ?? ("fighter" as const),
+                  archetype:
+                    (escort?.archetype === "hostileStation" ? undefined : escort?.archetype) ??
+                    ("fighter" as const),
                   count: combat(flight).initialPackSizes[escortPackId(packId)] ?? 0,
                 },
               }
             : {}),
         }
       : worldSelectEncounter(
-          flightWorldContext(flight),
+          hostileStationContext(flight),
           policy,
           stage,
           content.tuning.flight.shipRadius,
@@ -1245,7 +1283,7 @@ function generateRegion(content: GameContent, x: number, y: number, flight: Flig
   if (
     !initialized &&
     !worldFitsEncounter(
-      flightWorldContext(flight),
+      hostileStationContext(flight),
       policy,
       stage,
       content.tuning.flight.shipRadius,
@@ -1449,7 +1487,7 @@ function hullReach(object: SpaceObject, anyHeading: boolean): number {
     : [enemy?.facing ?? { x: 1, y: 0 }];
   let reach = 0;
   for (const facing of facings) {
-    const hull = enemy ? enemyHull({ archetype: enemy.archetype, facing }) : null;
+    const hull = enemy ? enemyHull({ ...enemy, facing }) : null;
     if (!hull) {
       return object.radius * 2;
     }
@@ -2481,8 +2519,7 @@ function enemies(
       object.enemy.hp = object.hp;
     }
     // Hit circles follow the catalog, so saves from earlier sizes adopt the current ones.
-    object.radius =
-      content.tuning.flight.shipRadius * enemyCatalog[object.enemy.archetype].sizeRatio;
+    object.radius = content.tuning.flight.shipRadius * ENEMY_SIZE_RATIOS[object.enemy.archetype];
   }
   const peers = objects.flatMap((object) => (object.enemy ? [object.enemy] : []));
   const visibility = new Map(
@@ -2519,7 +2556,7 @@ function enemies(
       .map((object) => object.id),
   );
   const admissions = worldRegionalEngagementAdmissions(
-    flightWorldContext(flight),
+    hostileStationContext(flight),
     SPAWNER_POLICIES[flight.galaxy],
     objects,
     eligible,
@@ -4003,12 +4040,17 @@ function stepRingEmissions(dt: number, flight: FlightState): void {
 
 /** The id of the wreck that replaces a destroyed enemy. */
 export function wreckId(enemyId: string): string {
-  return `wreck:${enemyId}`;
+  return `${WRECK_ID_PREFIX}${enemyId}`;
 }
 
 /** A defeated enemy is replaced by a wreck that breaks apart, then releases its drops. */
 function destroyEnemy(object: SpaceObject, flight: FlightState): void {
   object.hp = 0;
+  const archetype = object.enemy?.archetype ?? "fighter";
+  // CLEANUP (added 2026-11-15): Bind station wreck/reward effects only after its policy is supplied.
+  if (archetype === "hostileStation") {
+    return;
+  }
   const id = wreckId(object.id);
   if (flight.objects.some((other) => other.id === id)) {
     return;
@@ -4020,7 +4062,7 @@ function destroyEnemy(object: SpaceObject, flight: FlightState): void {
     radius: object.radius,
     wreck: {
       age: 0,
-      archetype: object.enemy?.archetype ?? "fighter",
+      archetype,
       facing: { ...(object.enemy?.facing ?? { x: 0, y: -1 }) },
     },
     x: object.x,
@@ -4082,6 +4124,7 @@ export function salvageTarget(content: GameContent, flight: FlightState): SpaceO
         object.kind === "enemy" &&
         object.hp > 0 &&
         object.enemy?.disabled === true &&
+        object.enemy.archetype !== "hostileStation" &&
         !object.enemy.salvaged &&
         worldDistance(flightWorldContext(flight), object, flight.player) <=
           content.tuning.talkRange,
@@ -4100,7 +4143,7 @@ export function salvageTarget(content: GameContent, flight: FlightState): SpaceO
 export function salvage(content: GameContent, flight: FlightState): boolean {
   const object = salvageTarget(content, flight);
   const enemy = object?.enemy;
-  if (!object || !enemy) {
+  if (!object || !enemy || enemy.archetype === "hostileStation") {
     return false;
   }
   enemy.salvaged = true;

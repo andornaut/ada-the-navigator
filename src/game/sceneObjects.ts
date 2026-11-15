@@ -8,6 +8,8 @@ import { CONTENT } from "../data/content.ts";
 import { destinationDrawn } from "../data/destinations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
+import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
+import { enemyAssetKey, wreckEnemyId } from "../data/enemyIdentity.ts";
 import { resourceArtId } from "../data/resourceRocks.ts";
 import { SCREEN } from "../data/screen.ts";
 import { rockFrame, scenerySilhouette } from "../model/asteroids.ts";
@@ -735,12 +737,11 @@ export function drawWreck(scene: ObjectsContext, object: SpaceObject, point: Vec
     return;
   }
   const data = scene.destruction;
-  const family = familyOf(scene, wreck.archetype);
-  const shards = (family ? scene.familyShards.get(family.family) : scene.shards)?.get(
-    wreck.archetype,
-  );
+  const key = enemyAssetKey({ archetype: wreck.archetype, id: wreckEnemyId(object.id) });
+  const family = familyOf(scene, key);
+  const shards = (family ? scene.familyShards.get(family.family) : scene.shards)?.get(key);
   const timing = data?.archetypes[wreck.archetype];
-  const art = familyArt(scene, wreck.archetype);
+  const art = familyArt(scene, wreck.archetype, wreckEnemyId(object.id));
   if (!data || !shards || !timing || !art) {
     drawWreckPlaceholder(scene, wreck, point);
     return;
@@ -828,14 +829,15 @@ export function drawWreckPlaceholder(
 
 export function drawObject(scene: ObjectsContext, object: SpaceObject): void {
   // A heavy anywhere in the loaded region starts loading its parts before it comes into view.
-  const family = (object.enemy && familyOf(scene, object.enemy.archetype)?.family) ?? "coral";
-  if (object.enemy && !scene.partLoads.has(`${family}:${object.enemy.archetype}`)) {
-    loadEnemyParts(scene, object.enemy.archetype);
+  const assetKey = object.enemy && enemyAssetKey(object.enemy);
+  const family = (assetKey && familyOf(scene, assetKey)?.family) ?? "coral";
+  if (assetKey && !scene.partLoads.has(`${family}:${assetKey}`)) {
+    loadEnemyParts(scene, assetKey);
   }
   const point = scene.project(object);
-  const definition = object.enemy ? enemyCatalog[object.enemy.archetype] : undefined;
-  const radius = definition
-    ? Math.max(object.radius, definition.sizeRatio * CONTENT.tuning.flight.shipRadius * 2)
+  const ratio = object.enemy ? ENEMY_SIZE_RATIOS[object.enemy.archetype] : undefined;
+  const radius = ratio
+    ? Math.max(object.radius, ratio * CONTENT.tuning.flight.shipRadius * 2)
     : object.radius;
   const rock = object.asteroid ? rockArt(object.asteroid) : undefined;
   // Art's rocks reach past their footprint; cull by the drawn silhouette's reach.

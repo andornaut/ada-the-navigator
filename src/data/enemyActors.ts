@@ -1,4 +1,4 @@
-import { type EnemyArchetype, enemyCatalog } from "./enemyCatalog.ts";
+import { type EnemyArchetype, enemyCatalog, type EnemyDefinition } from "./enemyCatalog.ts";
 import { HOSTILE_STATION_SIGNATURE } from "./enemySignatures.ts";
 import { ROUTE_POSITION } from "./galaxies.ts";
 import type { GalaxyNumber } from "./types.ts";
@@ -18,4 +18,9 @@ export function enemyActorAvailable(galaxy: GalaxyNumber, kind: EnemyActorKind):
     kind !== "hostileStation" ||
     HOSTILE_STATION_SIGNATURE.tiers.some(({ position }) => position === ROUTE_POSITION[galaxy])
   );
+}
+
+/** Existing unscaled ship definitions, distinct from station actor profiles and economy policy. */
+export function shipCatalogEntry(kind: EnemyActorKind): EnemyDefinition | undefined {
+  return kind === "hostileStation" ? undefined : enemyCatalog[kind];
 }

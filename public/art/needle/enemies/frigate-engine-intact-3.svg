@@ -1,8 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 80 80">
+<svg xmlns="http://www.w3.org/2000/svg" width="49" height="49" viewBox="0 0 112 112">
   <title>Frigate engine intact 3</title>
-  <polygon fill="#75313a" points="4.88,44.61 59.19,57.60 59.19,63.60 4.88,50.61"/>
-  <polygon fill="#a14350" points="59.19,57.60 75.12,35.39 75.12,41.39 59.19,63.60"/>
-  <polygon fill="#d65b6c" points="59.19,57.60 4.88,44.61 20.81,22.40 75.12,35.39"/>
-  <polygon fill="#d7cfc9" points="58.41,51.29 42.57,47.50 51.94,34.44 67.79,38.23"/>
-  <polygon fill="#d7cfc9" points="28.99,44.26 13.15,40.47 22.53,27.40 38.37,31.19"/>
+  <polygon fill="#75313a" points="2.21,63.06 85.39,82.95 85.39,92.14 2.21,72.25"/>
+  <polygon fill="#a14350" points="85.39,82.95 109.79,48.94 109.79,58.13 85.39,92.14"/>
+  <polygon fill="#d65b6c" points="85.39,82.95 2.21,63.06 26.61,29.05 109.79,48.94"/>
+  <polygon fill="#d7cfc9" points="84.20,73.29 59.94,67.49 74.29,47.48 98.55,53.28"/>
+  <polygon fill="#d7cfc9" points="39.14,62.52 14.88,56.72 29.24,36.71 53.50,42.51"/>
 </svg>

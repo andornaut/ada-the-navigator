@@ -1,5 +1,6 @@
 import { expect, it } from "vitest";
 
+import { shipCatalogEntry } from "../data/enemyActors.ts";
 import { ENEMY_RETREAT, type EnemyArchetype, enemyCatalog } from "../data/enemyCatalog.ts";
 import { createEnemy, type EnemyContext, type EnemyState, stepEnemy } from "./enemyAi.ts";
 
@@ -25,7 +26,7 @@ const context = (state: EnemyState): EnemyContext => ({
   visibility: "visible",
 });
 const step = (state: EnemyState, observation = context(state)) =>
-  stepEnemy(enemyCatalog[state.archetype], observation, state);
+  stepEnemy(shipCatalogEntry(state.archetype)!, observation, state);
 
 it("ends a blocked tactical retreat at the time limit without needing to pass the firing band", () => {
   let state = spawn("fighter");

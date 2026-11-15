@@ -1,3 +1,4 @@
+import { enemyRandom } from "./enemyRandom.ts";
 import type { RoutePosition } from "./galaxies.ts";
 import type { EnemyWeapon, Weapon } from "./types.ts";
 
@@ -64,22 +65,10 @@ export const HOSTILE_STATION_SIGNATURE = {
   ],
 } as const;
 
-/** One dedicated FNV-1a and mulberry32 draw, independent of all encounter random streams. */
-function firstDraw(key: string): number {
-  let state = 2166136261;
-  for (let index = 0; index < key.length; index++) {
-    state = Math.imul(state ^ key.charCodeAt(index), 16777619);
-  }
-  state = (state + 0x6d2b79f5) | 0;
-  let mix = Math.imul(state ^ (state >>> 15), 1 | state);
-  mix = (mix + Math.imul(mix ^ (mix >>> 7), 61 | mix)) ^ mix;
-  return ((mix ^ (mix >>> 14)) >>> 0) / 4294967296;
-}
-
 export function capitalProfile(position: RoutePosition, shipId: string): "lance" | "mine" {
   const { lanceWeight, mineFromPosition, mineWeight } = CAPITAL_PROFILE_SELECTION;
   return position >= mineFromPosition &&
-    firstDraw(`capital-profile:${position}:${shipId}`) < mineWeight / (mineWeight + lanceWeight)
+    enemyRandom(`capital-profile:${position}:${shipId}`)() < mineWeight / (mineWeight + lanceWeight)
     ? "mine"
     : "lance";
 }

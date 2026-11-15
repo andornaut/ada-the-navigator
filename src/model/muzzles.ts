@@ -1,5 +1,5 @@
 import type { Point } from "../data/enemyCatalog.ts";
-import { ENEMY_DISPLAY_SCALE, type MuzzleLayout } from "../data/enemyMuzzles.ts";
+import { ENEMY_DISPLAY_SCALE, type MuzzleArt, type MuzzleLayout } from "../data/enemyMuzzles.ts";
 
 /** Art's sixteen hull headings and turret aim frames. */
 export const DRAWN_DIRECTIONS = 16;
@@ -25,12 +25,12 @@ function screenToWorld(screen: Point): Point {
  */
 export function muzzleOffset(
   layout: MuzzleLayout | undefined,
-  turret: string,
+  turret: string | null,
   facing: Point,
   aim: Point,
   volley: number,
 ): Point | undefined {
-  const part = layout?.turrets.get(turret);
+  const part = turret === null ? layout?.primary : layout?.turrets.get(turret);
   const heading = drawnIndex(facing);
   const pivot = part?.pivots[heading];
   const tips =
@@ -43,4 +43,16 @@ export function muzzleOffset(
     x: (pivot.x + tip.x) * ENEMY_DISPLAY_SCALE,
     y: (pivot.y + tip.y) * ENEMY_DISPLAY_SCALE,
   });
+}
+
+/** The actual drawn base anchor, converted once from raw frame px into world axes. */
+export function hardpointAnchorOffset(
+  art: MuzzleArt | undefined,
+  id: string,
+  facing: Point,
+): Point | undefined {
+  const anchor = art?.anchors.get(id)?.[drawnIndex(facing)];
+  return anchor
+    ? screenToWorld({ x: anchor.x * ENEMY_DISPLAY_SCALE, y: anchor.y * ENEMY_DISPLAY_SCALE })
+    : undefined;
 }

@@ -1,10 +1,8 @@
 import { randomStream } from "@andornaut/game-kit/random";
 
-import {
-  type EnemyArchetype,
-  type EnemyDefinition,
-  enemyDefinition,
-} from "../data/enemyCatalog.ts";
+import { enemyActorDefinition } from "../data/enemyActorDefinition.ts";
+import type { EnemyActorKind } from "../data/enemyActors.ts";
+import type { EnemyDefinition } from "../data/enemyCatalog.ts";
 import { selectEnemyWeaponLevel } from "../data/enemyWeaponLevels.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import type { GalaxyNumber, WeaponLevel } from "../data/types.ts";
@@ -15,7 +13,7 @@ export interface EnemyEquipmentContext {
 }
 
 export interface EquippedEnemyIdentity {
-  readonly archetype: EnemyArchetype;
+  readonly archetype: EnemyActorKind;
   readonly id: string;
   /** Absent on legacy enemies, which keep their existing level-one equipment. */
   readonly weaponLevel?: WeaponLevel;
@@ -32,5 +30,5 @@ export function enemyEquipmentDefinition(
   galaxy: GalaxyNumber,
   enemy: EquippedEnemyIdentity,
 ): EnemyDefinition {
-  return enemyDefinition(galaxy, enemy.archetype, enemy.id, enemy.weaponLevel ?? 1);
+  return enemyActorDefinition(galaxy, enemy.archetype, enemy.id, enemy.weaponLevel ?? 1);
 }

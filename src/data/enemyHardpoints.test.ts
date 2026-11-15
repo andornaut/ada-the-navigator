@@ -4,7 +4,7 @@ import capitalFile from "../../public/art/enemies/capital-hardpoints.json";
 import frigateFile from "../../public/art/enemies/frigate-hardpoints.json";
 import gadgetFile from "../../public/art/enemies/gadget-hardpoints.json";
 import exported from "../../tools/enemy-hardpoints.json";
-import { enemyCatalog, type EnemyDefinition, HEAVY_POOLS } from "./enemyCatalog.ts";
+import { enemyCatalog, type EnemyDefinition } from "./enemyCatalog.ts";
 import { exportHardpoints } from "./enemyHardpoints.ts";
 
 interface ArtFile {
@@ -27,7 +27,7 @@ describe("hardpoint export for Art", () => {
 
   it("gives the retaliator's aimed gun a turret mount the model does not track", () => {
     expect(exportHardpoints().archetypes.retaliator).toEqual({
-      hardpoints: [{ fire: "bolt", id: "turret", offset: [0, 0], order: 0, role: "turret" }],
+      hardpoints: [{ fire: "missile", id: "turret", offset: [0, 0], order: 0, role: "turret" }],
       sizeRatio: enemyCatalog.retaliator.sizeRatio,
     });
     expect(enemyCatalog.retaliator.hardpoints).toEqual([]);
@@ -94,10 +94,12 @@ describe("hardpoint export for Art", () => {
           );
         }
       });
-      // A heavy's loadout may put any weapon of its position's pool on any armed mount.
-      expect(Object.keys(file.weaponTops).sort()).toEqual(
-        [...new Set(HEAVY_POOLS[archetype].flat())].sort(),
-      );
+      // Every runtime signature needs a drawn top, including the late aft mine variant.
+      const required =
+        archetype === "capital"
+          ? ["scattershot", "chargedLance", "mineLayer"]
+          : ["laser", "heavyMissile"];
+      expect(Object.keys(file.weaponTops)).toEqual(expect.arrayContaining(required));
     },
   );
 

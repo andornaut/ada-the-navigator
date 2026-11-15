@@ -96,7 +96,7 @@ describe("placeholder galaxies under an explicit incomplete-roster fixture", () 
       expect(kinds.has("destination")).toBe(false);
       expect(objects.some((object) => object.river)).toBe(false);
       // Enemies come from the tuning table it reads, the built galaxy before it on the route.
-      const roster = new Set(
+      const roster = new Set<string>(
         byPosition(galaxyEncounters, galaxy).map(({ archetype }) => archetype),
       );
       for (const object of objects.filter(({ kind }) => kind === "enemy")) {

@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 80 80">
+<svg xmlns="http://www.w3.org/2000/svg" width="49" height="49" viewBox="0 0 112 112">
   <title>Frigate engine intact 10</title>
-  <polygon fill="#823643" points="10.61,52.02 69.39,52.02 69.39,58.02 10.61,58.02"/>
-  <polygon fill="#e47485" points="10.61,27.98 69.39,27.98 69.39,52.02 10.61,52.02"/>
-  <polygon fill="#deb7b6" points="15.51,33.64 32.65,33.64 32.65,47.78 15.51,47.78"/>
-  <polygon fill="#deb7b6" points="47.35,33.64 64.49,33.64 64.49,47.78 47.35,47.78"/>
+  <polygon fill="#823643" points="10.99,74.41 101.01,74.41 101.01,83.60 10.99,83.60"/>
+  <polygon fill="#e47485" points="10.99,37.59 101.01,37.59 101.01,74.41 10.99,74.41"/>
+  <polygon fill="#deb7b6" points="18.49,46.25 44.75,46.25 44.75,67.91 18.49,67.91"/>
+  <polygon fill="#deb7b6" points="67.25,46.25 93.51,46.25 93.51,67.91 67.25,67.91"/>
 </svg>
