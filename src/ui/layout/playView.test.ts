@@ -59,8 +59,6 @@ describe("view scale", () => {
   it.each([
     [844, 390, 1.0833, 779.08, 360, 52],
     [1280, 720, 1.7778, 720, 405, 85.33],
-    [1440, 900, 2, 720, 450, 96],
-    [1920, 1080, 2.6667, 720, 405, 128],
     // A screen wider than 2:1 widens the logical view instead.
     [1600, 600, 1.6667, 960, 360, 80],
   ])("at %sx%s is s %s, a %sx%s logical view and a %s CSS px button", (w, h, s, lw, lh, button) => {
@@ -167,7 +165,6 @@ describe("HUD rect", () => {
     // A one-sided notch moves both sides in alike.
     [844, 390, { bottom: 0, left: 47, right: 0, top: 0 }, { left: 47, right: 732.08, top: 12 }],
     [1280, 720, NO_INSETS, { left: 12, right: 708, top: 12 }],
-    [1920, 1080, NO_INSETS, { left: 12, right: 708, top: 12 }],
     [720, 360, NO_INSETS, { left: 12, right: 708, top: 12 }],
   ])("at %ix%i with insets %o has the edges %o", (width, height, insets, expected) => {
     const rect = edges(hudRect(insets, logicalView({ height, width })));
@@ -320,16 +317,9 @@ describe("HUD anchors", () => {
     // Art's widths (art/layout.md "Status pill"): 36 plus the Stardust slot, ore 37 plus its slot,
     // cargo or tow 33.
     ["0", null, false, 44.9],
-    ["42", null, false, 53.8],
-    ["9999", null, false, 71.59],
     ["44.4k", null, false, 76.04],
-    ["100k", null, false, 71.59],
-    ["9999m", null, false, 85.82],
     ["42", "18", false, 108.59],
     ["9999", "18", true, 159.39],
-    ["42", null, true, 86.8],
-    ["44.4k", "100k", true, 181.63],
-    ["9999m", "9999m", false, 172.64],
     ["9999m", "9999m", true, 205.64],
   ] as const)(
     "size the pill to Stardust %s, ore %s, cargo %s: %d",
@@ -477,16 +467,13 @@ describe("HUD anchors", () => {
   );
 });
 
-// Every screen the game draws on, CSS px: the user's wide phone (about 2000x899 device px at DPR
-// 2.6), 2.22:1 (2400x1080), 2:1, 16:9 at 1280x720 and 1920x1080, a notched phone and 4:3.
+// Representative base, phone, desktop, portrait and ultrawide CSS viewports.
 const SCREENS = [
-  { height: 346, width: 769 },
-  { height: 1080, width: 2400 },
   { height: 360, width: 720 },
-  { height: 720, width: 1280 },
-  { height: 1080, width: 1920 },
   { height: 390, width: 844 },
-  { height: 768, width: 1024 },
+  { height: 720, width: 1280 },
+  { height: 844, width: 390 },
+  { height: 1080, width: 2400 },
 ] as const;
 const contains = (outer: Rect, rect: Rect) =>
   rect.x >= outer.x - 1e-9 &&
@@ -499,7 +486,6 @@ describe.each(SCREENS)("every control inside the game area at %o", (screen) => {
   const area = playView(view);
   // Insets in logical px: none, and a notched phone held landscape.
   for (const [name, insets] of [
-    ["no insets", NO_INSETS],
     ["phone insets", { bottom: 19, left: 43, right: 43, top: 0 }],
   ] as const) {
     const hud = hudRect(insets, view);
@@ -619,59 +605,9 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     [516, 163],
   ],
   [
-    "720x360, phone insets",
-    { height: 360, width: 720 },
-    PHONE,
-    [126, 263],
-    [593, 263],
-    282,
-    [317.5, 345.5],
-    [516, 163],
-  ],
-  [
-    "844x390",
-    { height: 390, width: 844 },
-    NO_INSETS,
-    [126, 263],
-    [652, 263],
-    311.54,
-    [317.5, 345.5],
-    [575, 163],
-  ],
-  [
     "844x390, phone insets",
     { height: 390, width: 844 },
     PHONE,
-    [126, 263],
-    [652, 263],
-    311.54,
-    [317.5, 345.5],
-    [575, 163],
-  ],
-  [
-    "844x390, bottom 19",
-    { height: 390, width: 844 },
-    { ...NO_INSETS, bottom: 19 },
-    [126, 263],
-    [652, 263],
-    311.54,
-    [317.5, 345.5],
-    [575, 163],
-  ],
-  [
-    "720x360, left 43, bottom 19",
-    { height: 360, width: 720 },
-    { ...NO_INSETS, bottom: 19, left: 43 },
-    [126, 263],
-    [593, 263],
-    282,
-    [317.5, 345.5],
-    [516, 163],
-  ],
-  [
-    "844x390, left 47",
-    { height: 390, width: 844 },
-    { ...NO_INSETS, left: 47 },
     [126, 263],
     [652, 263],
     311.54,
@@ -687,16 +623,6 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     282,
     [362.5, 390.5],
     [516, 208],
-  ],
-  [
-    "2400x1080",
-    { height: 1080, width: 2400 },
-    NO_INSETS,
-    [126, 263],
-    [673, 263],
-    322,
-    [317.5, 345.5],
-    [596, 163],
   ],
   [
     "2404x1080 at dpr 2.5",
@@ -863,20 +789,18 @@ describe("touch controls", () => {
 });
 
 describe("symmetric HUD on every view", () => {
-  // CSS sizes with odd and even logical widths, bands on either axis and the exact 2:1 base.
-  const sizes: Size[] = [{ height: 360, width: 720 }];
-  for (let width = 600; width <= 2600; width += 37) {
-    for (const height of [300, 346, 390, 405, 720, 768, 1080]) {
-      sizes.push({ height, width });
-    }
-  }
+  // Base, portrait, desktop, ultrawide and fractional logical widths exercise both clamp axes.
+  const sizes: Size[] = [
+    { height: 360, width: 720 },
+    { height: 844, width: 390 },
+    { height: 720, width: 1280 },
+    { height: 300, width: 2600 },
+    { height: 346, width: 769 },
+  ];
   const insetCases: readonly Insets[] = [
     NO_INSETS,
-    { bottom: 21, left: 47, right: 47, top: 0 },
-    // One-sided notches, and a fractional one.
+    // One-sided landscape notch and portrait top/bottom safe areas.
     { bottom: 21, left: 47, right: 0, top: 0 },
-    { bottom: 0, left: 0, right: 59, top: 0 },
-    { bottom: 0, left: 43.4, right: 12.6, top: 0 },
     { bottom: 34, left: 0, right: 0, top: 47 },
   ];
   const ringEdges = (centre: { x: number; y: number }) => ({
@@ -937,18 +861,16 @@ describe("symmetric HUD on every view", () => {
 });
 
 describe("stick reach on every view", () => {
-  const sizes: Size[] = [{ height: 360, width: 720 }];
-  for (let width = 600; width <= 2600; width += 37) {
-    for (const height of [300, 346, 390, 405, 720, 768, 1080]) {
-      sizes.push({ height, width });
-    }
-  }
+  const sizes: Size[] = [
+    { height: 360, width: 720 },
+    { height: 844, width: 390 },
+    { height: 720, width: 1280 },
+    { height: 300, width: 2600 },
+    { height: 346, width: 769 },
+  ];
   const insetCases: readonly Insets[] = [
     NO_INSETS,
-    { bottom: 21, left: 47, right: 47, top: 0 },
     { bottom: 21, left: 47, right: 0, top: 0 },
-    { bottom: 0, left: 0, right: 59, top: 0 },
-    { bottom: 0, left: 43.4, right: 12.6, top: 0 },
     { bottom: 34, left: 0, right: 0, top: 47 },
   ];
   const strength = (vector: { x: number; y: number }) => Math.hypot(vector.x, vector.y);

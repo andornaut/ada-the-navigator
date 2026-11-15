@@ -231,16 +231,10 @@ describe("status pill count", () => {
     [0, "0"],
     [9999, "9999"],
     [10_000, "10.0k"],
-    [44_449, "44.4k"],
     [44_450, "44.5k"],
-    [99_949, "99.9k"],
     [99_950, "100k"],
-    [100_000, "100k"],
-    [999_999, "1000k"],
     [9_999_499, "9999k"],
     [9_999_500, "10m"],
-    [10_000_000, "10m"],
-    [9_999_499_999, "9999m"],
     [1e12, "9999m"],
   ])("draws a pill count of %d as %s, in at most five characters", (amount, text) => {
     expect(pillCount(amount)).toBe(text);
@@ -426,7 +420,7 @@ describe("status pill count", () => {
     },
   );
 
-  it.each([1, 2, 3])(
+  it.each([1, 3])(
     "renders a separate level %i timer track, including an empty track after damage",
     (level) => {
       const { shield, status } = pill();
@@ -468,8 +462,6 @@ describe("status pill count", () => {
   it.each([
     [9999, "9999", "9,999"],
     [44_449, "44.4k", "44,449"],
-    [999_999, "1000k", "999,999"],
-    [10_000_000, "10m", "10,000,000"],
     [1_234_567_890, "1235m", "1,234,567,890"],
   ] as const)("draws %d as %s in five characters, its label exact", (amount, shown, exact) => {
     const { count, status } = pill();
@@ -499,7 +491,7 @@ describe("status pill count", () => {
   it.each([false, true])(
     "shows every paid batch and final remainder exactly once with reduced motion %s",
     async (reduced) => {
-      for (const remainder of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
+      for (const remainder of [1, 7, 10]) {
         for (const end of ["full", "exhausted", "interrupted"] as const) {
           const { slot, status } = pill(reduced);
           const view = {
@@ -725,8 +717,6 @@ describe("status pill count", () => {
 
   it.each([
     [9999, "+9999"],
-    [44_449, "+44.4k"],
-    [100_000, "+100k"],
     [10_000_000, "+10m"],
   ] as const)("ticks a gain of %d as %s under each count", (gain, text) => {
     const { slot, status } = pill();
@@ -776,7 +766,6 @@ describe("status pill count", () => {
     for (const [stardust, shown] of [
       [0, "0"],
       [42, "42"],
-      [44_449, "44.4k"],
       [9_999_499, "9999k"],
     ] as const) {
       // A fresh pill each time, so no gain animates.

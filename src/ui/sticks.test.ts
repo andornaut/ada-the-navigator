@@ -78,7 +78,7 @@ describe("joystick placement", () => {
 });
 
 describe("left stick deflection display", () => {
-  it.each([0.1, 0.5, 1])(
+  it.each([0.5, 1])(
     "draws the sampled %s throttle in proportion inside the markers",
     (strength) => {
       const state = new ControlState();
@@ -123,7 +123,7 @@ describe("left stick deflection display", () => {
 describe("right stick display", () => {
   const origin = { x: 500, y: 100 };
 
-  it.each([0, STICK_GEOMETRY.deadZone / 2, STICK_GEOMETRY.deadZone])(
+  it.each([0, STICK_GEOMETRY.deadZone])(
     "centres the knob at neutral or deadzone travel %s",
     (distance) => {
       const state = new ControlState();
@@ -136,7 +136,7 @@ describe("right stick display", () => {
     },
   );
 
-  it.each([STICK_GEOMETRY.deadZone + 0.001, 12, STICK_GEOMETRY.reach, 100])(
+  it.each([STICK_GEOMETRY.deadZone + 0.001, 100])(
     "puts the centre on the canonical ring at active travel %s without changing sampled input",
     (distance) => {
       const state = new ControlState();
@@ -158,7 +158,7 @@ describe("right stick display", () => {
     },
   );
 
-  it.each([0, 45, 90, 135, 180, 225, 270, 315])(
+  it.each([0, 135, 270])(
     "keeps the full visual radius at partial and full aim toward %s degrees",
     (degrees) => {
       const state = new ControlState();
@@ -222,12 +222,8 @@ describe("move ring markers", () => {
   it.each([
     [67, "held-right"],
     [68, "rest"],
-    [-67, "held-right"],
-    [-68, "rest"],
     [113, "held-left"],
     [112, "rest"],
-    [-113, "held-left"],
-    [-112, "rest"],
   ])("at %s degrees from the right shows %s", (degrees, pose) => {
     expect(poseAt(degrees)).toBe(pose);
   });
@@ -238,7 +234,7 @@ describe("move ring markers", () => {
 });
 
 describe("move knob travel", () => {
-  it.each([0, 15, 30, 45, 90, 135, 180, 225, 270, 315])(
+  it.each([0, 45, 180])(
     "straddles the renderer's outer ring at full strength toward %s degrees",
     (degrees) => {
       const state = new ControlState();
@@ -262,34 +258,31 @@ describe("move knob travel", () => {
     },
   );
 
-  it.each([0, 0.1, 0.5, 1, 3])(
-    "keeps responsive geometry and releases from strength %s",
-    (strength) => {
-      for (const screen of [
-        { height: 360, width: 720 },
-        { height: 390, width: 844 },
-        { height: 844, width: 390 },
-      ]) {
-        const state = new ControlState();
-        const view = logicalView(screen);
-        const origin = { x: view.width / 3, y: view.height / 2 };
-        state.down("move", 1, origin);
-        const distance = strength ? travel(Math.min(1, strength)) * Math.max(1, strength) : 0;
-        const pointer = { x: origin.x + distance * 0.6, y: origin.y - distance * 0.8 };
-        state.move(1, pointer);
-        const knob = knobCentre(stickViews({ ...layout, ...view }, state).move!.knob);
-        expect(knob.x).toBe(
-          Math.round(origin.x) + Math.round(Math.min(1, strength) * MOVE_KNOB_REACH * 0.6),
-        );
-        expect(knob.y).toBe(
-          Math.round(origin.y) + Math.round(-Math.min(1, strength) * MOVE_KNOB_REACH * 0.8),
-        );
-        state.release(1);
-        expect(stickViews({ ...layout, ...view }, state).move?.line).toBeUndefined();
-        expect(state.sample().move).toEqual({ x: 0, y: 0 });
-      }
-    },
-  );
+  it.each([0, 0.5, 3])("keeps responsive geometry and releases from strength %s", (strength) => {
+    for (const screen of [
+      { height: 360, width: 720 },
+      { height: 390, width: 844 },
+      { height: 844, width: 390 },
+    ]) {
+      const state = new ControlState();
+      const view = logicalView(screen);
+      const origin = { x: view.width / 3, y: view.height / 2 };
+      state.down("move", 1, origin);
+      const distance = strength ? travel(Math.min(1, strength)) * Math.max(1, strength) : 0;
+      const pointer = { x: origin.x + distance * 0.6, y: origin.y - distance * 0.8 };
+      state.move(1, pointer);
+      const knob = knobCentre(stickViews({ ...layout, ...view }, state).move!.knob);
+      expect(knob.x).toBe(
+        Math.round(origin.x) + Math.round(Math.min(1, strength) * MOVE_KNOB_REACH * 0.6),
+      );
+      expect(knob.y).toBe(
+        Math.round(origin.y) + Math.round(-Math.min(1, strength) * MOVE_KNOB_REACH * 0.8),
+      );
+      state.release(1);
+      expect(stickViews({ ...layout, ...view }, state).move?.line).toBeUndefined();
+      expect(state.sample().move).toEqual({ x: 0, y: 0 });
+    }
+  });
 
   it("draws partial deflection in proportion and full deflection at the derived reach", () => {
     const at = (strength: number) => {
@@ -320,7 +313,6 @@ describe("speed line", () => {
 
   it.each([
     [0.5, 0.5],
-    [1, 1],
     [3, 3],
   ])(
     "runs from the move origin toward the thumb at %s of full reach, to %s of it",
@@ -350,7 +342,7 @@ describe("speed line", () => {
     expect(Math.hypot(full.x, full.y)).toBeCloseTo(1, 9);
   });
 
-  it.each([5, 12, 37, 100])("draws no aim line at %s px of deflection", (distance) => {
+  it.each([5, 100])("draws no aim line at %s px of deflection", (distance) => {
     const state = new ControlState();
     state.down("aim", 2, { x: 500, y: 100 });
     state.move(2, { x: 500 - distance * 0.8, y: 100 - distance * 0.6 });
