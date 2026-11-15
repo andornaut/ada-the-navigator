@@ -3,20 +3,12 @@ import controlsCss from "@andornaut/game-kit/web/ui/dom/controls.css?raw";
 
 import { STORY_PANEL } from "../../data/layout.ts";
 import { TEXT_TOKENS } from "../modal.ts";
-import { CONTROL_ROW, FRAME_LINE } from "./controls.ts";
 import { font, units } from "./css.ts";
 import { SPACING, TYPE } from "./tokens.ts";
 
 export const PAGE_DIVIDER_STYLE = {
   colour: Number.parseInt(STORY_PANEL.rule.colour.slice(1), 16),
   thickness: STORY_PANEL.rule.width,
-};
-
-export const DETAILS_DISCLOSURE_STYLE = {
-  colour: Number.parseInt(TEXT_TOKENS.supporting.slice(1), 16),
-  height: CONTROL_ROW.icon,
-  strokeWidth: FRAME_LINE,
-  width: CONTROL_ROW.icon,
 };
 
 export const ADA_CONTROL_PRESENTATION_STYLE = `${controlsCss}\n${controlPresentationCss}

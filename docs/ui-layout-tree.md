@@ -50,3 +50,11 @@ an additional header icon does not move or replace the row's icon.
 ## Galaxy selector
 
 Earth is a selectable marker centered inside the route arc, aligned vertically with Sunflower. Its panel uses the canonical `story-ada-room` asset, Home kicker and Earth title. The destination action names Earth or the selected galaxy; the current location uses Stay here. Earth activation retains the existing return-home callback, and galaxy activation retains the existing unlock and travel checks.
+
+## Detail actions
+
+Ada detail rows do not display decorative right-angle brackets or disclosure
+chevrons to indicate click or tap. Retain their action targets, accessible names,
+keyboard activation and focus. Directional controls and meaningful navigation or
+route arrows retain their existing meaning. Production and mock callers use the
+same detail components.

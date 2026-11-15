@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   applyAdaControlTheme,
-  createAdaDisclosure,
   createAdaPageDivider,
   PAGE_DIVIDER_STYLE,
   presentAdaButton,
@@ -180,7 +179,7 @@ describe("actual typed-layout button presentation", () => {
     expect(root.removed).toBe(true);
   });
 
-  it("uses published divider and disclosure factories with one inherited page token", () => {
+  it("uses the published page divider with one inherited token", () => {
     const document = new FixtureDocument();
     const root = document.createElement("div");
     applyAdaControlTheme(root as unknown as HTMLElement);
@@ -194,9 +193,5 @@ describe("actual typed-layout button presentation", () => {
     expect(root.properties.get("--ui-page-divider-colour")).toBe(
       `#${PAGE_DIVIDER_STYLE.colour.toString(16)}`,
     );
-    const icon = createAdaDisclosure(document as unknown as Document) as unknown as Element;
-    expect(icon.tagName).toBe("svg");
-    expect(icon.classList.contains("ui-disclosure-icon")).toBe(true);
-    expect(icon.children.length).toBeGreaterThan(0);
   });
 });

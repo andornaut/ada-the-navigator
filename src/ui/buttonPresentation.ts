@@ -5,14 +5,13 @@ import {
   setControlPlacement,
 } from "@andornaut/game-kit/web/ui/dom/buttonLayout";
 import {
-  createDisclosure,
   createPageDivider,
   setPageDivider,
 } from "@andornaut/game-kit/web/ui/dom/controlPresentation";
 
-import { DETAILS_DISCLOSURE_STYLE, PAGE_DIVIDER_STYLE } from "./layout/controlPresentation.ts";
+import { PAGE_DIVIDER_STYLE } from "./layout/controlPresentation.ts";
 import { BUTTON_METRICS, TEXT_BUTTON } from "./layout/controls.ts";
-export { DETAILS_DISCLOSURE_STYLE, PAGE_DIVIDER_STYLE } from "./layout/controlPresentation.ts";
+export { PAGE_DIVIDER_STYLE } from "./layout/controlPresentation.ts";
 import type { AdaButtonPresentation, AdaButtonProps } from "./layoutTree.ts";
 
 /** Apply once on the shared page/modal root used by production and mocks. */
@@ -31,11 +30,6 @@ export function createAdaPageDivider(
   divider.dataset.axis = axis;
   divider.setAttribute("aria-orientation", axis);
   return divider;
-}
-
-/** Details/navigation rows opt in explicitly; action buttons receive no disclosure automatically. */
-export function createAdaDisclosure(document: Document): SVGSVGElement {
-  return createDisclosure(document, DETAILS_DISCLOSURE_STYLE);
 }
 
 /** Presentation only. The published adapter retains availability guards and caller action dispatch. */
