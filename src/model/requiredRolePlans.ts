@@ -22,13 +22,12 @@ function pendingActor(actor: SpaceObject): boolean {
   );
 }
 
-/** Only the existing G3 capital routes and authored holodisk formation belong to this port. */
+/** Hidden authored route roles retain their complete states until caller-authorized activation. */
 export function requiredRolePlanConsistent(
   galaxy: number,
   plan: RequiredRoleEncounterPlan,
 ): boolean {
   if (
-    galaxy !== 3 ||
     plan.site.kind !== "destination" ||
     plan.site.hp <= 0 ||
     !plan.actors.length ||
@@ -45,6 +44,17 @@ export function requiredRolePlanConsistent(
     leader.enemy.packId !== null ||
     new Set(requiredPlanObjects(plan).map(({ id }) => id)).size !== plan.actors.length + 1
   ) {
+    return false;
+  }
+  if (plan.role === "cartwheel-capital") {
+    return (
+      galaxy === 2 &&
+      plan.site.id === "hub" &&
+      plan.actors.length === 1 &&
+      leader.enemy.archetype === "capital"
+    );
+  }
+  if (galaxy !== 3) {
     return false;
   }
   if (plan.role === "whirlpool-capital") {

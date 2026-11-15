@@ -21,21 +21,22 @@ import {
 import { restoreSave } from "./save.ts";
 import type { RequiredRoleEncounterPlan, SpaceObject } from "./types.ts";
 
-function fixture(id: "whale" | "family" | "holodisk") {
+function fixture(id: "whale" | "family" | "holodisk" | "hub") {
+  const galaxy = id === "hub" ? 2 : 3;
   const model = new GameModel(CONTENT);
-  model.state.selectedGalaxy = 3;
-  model.state.unlocked = [1, 3];
+  model.state.selectedGalaxy = galaxy;
+  model.state.unlocked = [1, galaxy];
   model.state.started = true;
   model.state.mode = "space";
-  const progress = model.state.progress[3];
+  const progress = model.state.progress[galaxy];
   progress.geography = freshGalaxyGeography(173);
-  const flight = createUnpopulatedFlight(CONTENT, 3, 173, model.state.economy, 197);
+  const flight = createUnpopulatedFlight(CONTENT, galaxy, 173, model.state.economy, 197);
   model.state.flight = flight;
   flight.combat = { initialPackSizes: {}, routeEncounters: [] };
   const site: SpaceObject = { hp: 1, id, kind: "destination", radius: 30, x: 10000, y: 10000 };
   const archetype = id === "holodisk" ? HOLODISKS.guard.leader : "capital";
   const leaderId = `route:${id}`;
-  const definition = enemyDefinition(3, archetype, leaderId, 2);
+  const definition = enemyDefinition(galaxy, archetype, leaderId, 2);
   const point = { x: 10500, y: 10000 };
   const leader: SpaceObject = {
     ...point,
@@ -88,11 +89,10 @@ function fixture(id: "whale" | "family" | "holodisk") {
       ),
     );
   }
-  const plan: RequiredRoleEncounterPlan = {
-    actors,
-    role: id === "holodisk" ? "whirlpool-holodisk" : "whirlpool-capital",
-    site,
-  };
+  const plan: RequiredRoleEncounterPlan =
+    id === "hub"
+      ? { actors: [leader], role: "cartwheel-capital", site }
+      : { actors, role: id === "holodisk" ? "whirlpool-holodisk" : "whirlpool-capital", site };
   return { flight, model, plan, progress };
 }
 
@@ -208,5 +208,90 @@ describe("G3 hidden authored encounter storage", () => {
     expect(progress.requiredSites!.whale).toEqual({ x: 10000, y: 10000 });
     expect(readRequiredRolePlan(flight, "whale")).toEqual(plan);
     expect(flightEncounterSeed(fresh)).not.toBe(flightEncounterSeed(flight));
+  });
+});
+
+describe("G2 hidden hub capital storage", () => {
+  it("preserves Continue and first-store state without activation, discovery or random draws", () => {
+    const { flight, model, plan, progress } = fixture("hub");
+    const before = structuredClone({
+      combat: flight.combat,
+      known: progress.known,
+      markers: flight.markerActors,
+      notables: flight.world.notables,
+    });
+    const stored = storeRequiredRolePlan(progress, flight, plan);
+    const random = vi.spyOn(crypto, "getRandomValues");
+    random.mockClear();
+    try {
+      const changed = structuredClone(plan);
+      changed.actors[0]!.enemy!.age = 0;
+      expect(storeRequiredRolePlan(progress, flight, changed)).toBe(stored);
+      expect(readRequiredRolePlan(flight, "hub")).toBe(stored);
+      expect(relaunch(CONTENT, model.save()).state).toEqual(model.state);
+      expect(takeRequiredRolePlan(progress, flight, "hub")).toBe(stored);
+      expect(takeRequiredRolePlan(progress, flight, "hub")).toBeNull();
+      expect(random).not.toHaveBeenCalled();
+    } finally {
+      random.mockRestore();
+    }
+    expect(flight.objects).toEqual([]);
+    expect({
+      combat: flight.combat,
+      known: progress.known,
+      markers: flight.markerActors,
+      notables: flight.world.notables,
+    }).toEqual(before);
+  });
+  it("rejects non-hub routes, wrong galaxy, malformed full states and shared ownership", () => {
+    const { flight, model, plan, progress } = fixture("hub");
+    expect(requiredRolePlanConsistent(3, plan)).toBe(false);
+    for (const id of ["miner", "visitors"]) {
+      const other = structuredClone(plan);
+      other.site.id = id;
+      other.actors[0]!.id = `route:${id}`;
+      other.actors[0]!.enemy!.id = `route:${id}`;
+      other.actors[0]!.routeId = id;
+      expect(requiredRolePlanConsistent(2, other)).toBe(false);
+      expect(() => storeRequiredRolePlan(progress, flight, other)).toThrow(
+        "Invalid required role plan",
+      );
+    }
+    storeRequiredRolePlan(progress, flight, plan);
+    const saved = model.saveDocument();
+    for (const mutation of [
+      (actor: SpaceObject) => {
+        actor.enemy!.disabled = true;
+      },
+      (actor: SpaceObject) => {
+        actor.enemy!.weaponLevel = 4 as never;
+      },
+      (actor: SpaceObject) => {
+        actor.routeId = "miner";
+      },
+    ]) {
+      const invalid = structuredClone(saved);
+      mutation(readRequiredRolePlan(invalid.flight!, "hub")!.actors[0]!);
+      expect(restoreSave(invalid)).toBeNull();
+    }
+    for (const id of ["miner", "visitors"]) {
+      const invalid = structuredClone(saved);
+      const pending = readRequiredRolePlan(invalid.flight!, "hub")!;
+      delete invalid.flight!.requiredPlans!.hub;
+      pending.site.id = id;
+      pending.actors[0]!.id = `route:${id}`;
+      pending.actors[0]!.enemy!.id = `route:${id}`;
+      pending.actors[0]!.routeId = id;
+      invalid.flight!.requiredPlans![id] = pending;
+      invalid.progress[2].requiredSites![id] = { x: pending.site.x, y: pending.site.y };
+      expect(restoreSave(invalid)).toBeNull();
+    }
+    const duplicate = structuredClone(saved);
+    duplicate.flight!.objects.push(structuredClone(plan.actors[0]!));
+    expect(restoreSave(duplicate)).toBeNull();
+    flight.world.notables[plan.actors[0]!.id] = null;
+    expect(restoreSave(model.save())).toBeNull();
+    expect(() => takeRequiredRolePlan(progress, flight, "hub")).toThrow("already owned");
+    expect(readRequiredRolePlan(flight, "hub")).not.toBeNull();
   });
 });

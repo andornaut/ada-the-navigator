@@ -138,11 +138,19 @@ export interface RequiredEncounterPlan {
   support: SpaceObject[];
 }
 /** G3 authored encounters retain their source ordering and complete individual actor states. */
-export interface RequiredRoleEncounterPlan {
+export interface WhirlpoolRequiredRoleEncounterPlan {
   role: "whirlpool-capital" | "whirlpool-holodisk";
   site: SpaceObject;
   actors: readonly SpaceObject[];
 }
+/** The hub is Cartwheel's only authored guarded destination. */
+export interface CartwheelRequiredRoleEncounterPlan {
+  role: "cartwheel-capital";
+  site: SpaceObject;
+  actors: readonly [SpaceObject];
+}
+export type RequiredRoleEncounterPlan =
+  WhirlpoolRequiredRoleEncounterPlan | CartwheelRequiredRoleEncounterPlan;
 export type AnyRequiredEncounterPlan = RequiredEncounterPlan | RequiredRoleEncounterPlan;
 export interface HostileStationSiteState {
   point: Vec;
