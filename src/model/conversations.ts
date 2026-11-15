@@ -24,6 +24,8 @@ import {
 import { BUILT } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { phantomSettlementCopy } from "./phantomSettlementCopy.ts";
+import type { ScanOutcome } from "./scanOutcomes.ts";
+import { scanOutcomeLines } from "./scanOutcomeSpeech.ts";
 import type { FlightState, GalaxyProgress, SpaceObject, Vec } from "./types.ts";
 import { nearestImage } from "./worldGeometry.ts";
 
@@ -273,6 +275,8 @@ export class ConversationDirector {
   private scanLessonValid: () => boolean = () => true;
   private eligibilityReader: (() => ConversationEligibilityFacts) | undefined;
   private latestFacts: ConversationFacts | undefined;
+  private readonly handledScanOutcomes = new WeakSet<ScanOutcome>();
+  private scanOutcomeSequence = 0;
 
   /**
    * seen is the saved list, which the director extends as conversations show; random shuffles the
@@ -458,10 +462,31 @@ export class ConversationDirector {
       return;
     }
     const id = `chapter:cue:${galaxy}:${line.speaker}:${line.text}`;
+    this.eventCue([line], id);
+  }
+
+  /** One receipt per actual immutable outcome; distinct same-worded events remain distinct. */
+  scanOutcome(outcome: ScanOutcome): void {
+    if (outcome.galaxy !== this.galaxy || this.handledScanOutcomes.has(outcome)) {
+      return;
+    }
+    this.handledScanOutcomes.add(outcome);
+    this.scanOutcomeSequence += 1;
+    this.eventCue(
+      scanOutcomeLines(outcome),
+      `chapter:cue:scan:${outcome.galaxy}:${this.scanOutcomeSequence}`,
+    );
+  }
+
+  private eventCue(lines: readonly ConversationLine[], id: string): void {
+    const galaxy = this.galaxy;
+    if (galaxy === null) {
+      return;
+    }
     this.enqueue({
       conversation: {
         id,
-        lines: [line],
+        lines,
         priority: "warning",
         repeat: "always",
         trigger: { galaxy, id, kind: "chapter" },

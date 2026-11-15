@@ -1314,19 +1314,19 @@ export class GameModel {
     if (!site) {
       return;
     }
-    this.scanOutcomes.push(
-      immutableScanOutcome({
-        completions,
-        galaxy: flight.galaxy,
-        source,
-        target: {
-          id: site.id,
-          name: landmarkLabel((key) => this.label(key), site),
-          symbol: site.kind,
-        },
-        targetId,
-      }),
-    );
+    const outcome = immutableScanOutcome({
+      completions,
+      galaxy: flight.galaxy,
+      source,
+      target: {
+        id: site.id,
+        name: landmarkLabel((key) => this.label(key), site),
+        symbol: site.kind,
+      },
+      targetId,
+    });
+    this.scanOutcomes.push(outcome);
+    this.talk.scanOutcome(outcome);
   }
   private taskQuestId(galaxy: GalaxyNumber, task: OptionalTask): string {
     return `${task.kind}:${galaxy}:${task.id}`;
