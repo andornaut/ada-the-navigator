@@ -27,6 +27,7 @@ import type {
   GalaxyProgress,
   SpaceObject,
 } from "./types.ts";
+import { worldCellKey, worldCellsNear, worldGrid } from "./worldCells.ts";
 import { worldDistance, worldPoint } from "./worldContacts.ts";
 
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -80,6 +81,17 @@ const onScreen = (flight: FlightState, object: SpaceObject) =>
   inGameArea(
     gameAreaPoint(flight.player, worldPoint(flightWorldContext(flight), flight.player, object)),
   );
+
+/** Motion fixtures define their active cells explicitly rather than generating unrelated scenery. */
+function emptyMotionCells(flight: FlightState): void {
+  const grid = worldGrid(flightWorldContext(flight), CONTENT.tuning.chunkSize);
+  const cells = [flight.player, ...flight.objects].flatMap((point) =>
+    Array.from(worldCellsNear(grid, CONTENT.tuning.chunkSize * ACTIVE_CHUNK_RADIUS, point)),
+  );
+  flight.chunks = [
+    ...new Set([...flight.chunks, ...Array.from(cells, (cell) => worldCellKey(grid, cell))]),
+  ];
+}
 
 describe("a blocking guard's cue", () => {
   it("cues once per flight when Ada reaches the destination without disclosing the unseen guard", () => {
@@ -154,6 +166,7 @@ describe("a blocking guard's cue", () => {
       home: { x: guard.x, y: guard.y },
       position: { x: guard.x, y: guard.y },
     });
+    emptyMotionCells(flight);
     const context = flightWorldContext(flight);
     const tracker = markerModel(flight);
     tracker.markerTargetDisplayed(guard.id);
@@ -195,6 +208,14 @@ describe("a blocking guard's cue", () => {
       position: { x: guard.x, y: guard.y },
     });
     flight.player = { x: destination.x, y: destination.y };
+    flight.objects = flight.objects.filter(
+      (object) =>
+        object === station ||
+        object === destination ||
+        object === guard ||
+        object.enemy?.escortOf === guard.id,
+    );
+    emptyMotionCells(flight);
     expect(stepFlight(CONTENT, 0.05, idle, flight)).toContainEqual(cue);
     const shield = flight.shield;
     for (let step = 0; flight.summonedGuards && step < 1200; step++) {
