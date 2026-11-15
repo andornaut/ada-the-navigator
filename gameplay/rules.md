@@ -1122,15 +1122,30 @@ Completed deliveries remain completed.
 
 ## Persistence and regeneration
 
-Each galaxy's fixed seed places its stations, outposts, currents, ore fields and
-landmarks, so they stay in the same places on every flight. Each flight
-generates a new layout seed that regenerates rocks, enemies and pickups. Story
-progress, known destinations, deposited resources and achievements persist.
-Known destinations remain usable despite regeneration.
+Each galaxy keeps its geography for the playthrough. Initialize its procedural
+seed on first entry and reuse it after Earth, shield failure and travel to another
+galaxy. Discovered locations, station coordinates, explored paths, map completion
+and story progress remain. Restart clears the playthrough's geography; first entry
+in the new game receives a fresh seed.
+
+Fresh entry creates a separate encounter identity and resets the enemy population,
+including heavy ships, hostile stations, escorts, damage, casualties, wreck outcomes
+and enemy retention records. Required guards still follow the current story gates;
+resolved story encounters do not return. Within a flight, paging and Continue retain
+the existing enemy state and equipped weapon levels. Uncollected pickups remain
+run-local as specified below.
+
+The supported prior save format preserves its exact active flight seed, coordinates
+and flight state. Migrated stations and landmarks keep their legacy fixed-site
+policy. A home save without a recoverable procedural seed retains its discovered
+IDs, fixed coordinates, explored path and story; initialize only that missing seed
+on first entry. Never reroll known locations or resolved story during migration.
 
 Closing the game or Back to title is not leaving the galaxy: resume the same
 flight with exact important state and current nearby space, cargo, owned and
-selected weapons and shield. Disposed ordinary history is not part of that
+selected weapons and shield, including enemy clocks, burst progress and phases.
+Continue neither initializes a new encounter identity nor resets the flight.
+Disposed ordinary history is not part of that
 exact-resume guarantee. Held story pages retain their page, question history,
 Previous trail and elapsed sleep time as specified in [Earth scenes](#earth-scenes).
 Save durable milestones as they occur.
@@ -1143,7 +1158,8 @@ holodisks, seen conversations and greetings.
 
 | State                               | Closing the app | Back to title | Earth                           | Shield-failure jump             | Jump                            | Restart |
 | ----------------------------------- | --------------- | ------------- | ------------------------------- | ------------------------------- | ------------------------------- | ------- |
-| Flight layout                       | Resumes         | Resumes       | New next flight                 | New next flight                 | New next flight                 | Cleared |
+| Galaxy geography                    | Resumes         | Resumes       | Kept                            | Kept                            | Kept                            | Cleared |
+| Enemy population and combat state   | Resumes         | Resumes       | Reset on fresh entry            | Reset on fresh entry            | Reset on fresh entry            | Cleared |
 | Stardust                            | Kept            | Kept          | Kept                            | Kept                            | Kept                            | Cleared |
 | Owned weapons, upgrades, ammunition | Kept            | Kept          | Kept                            | Kept                            | Kept                            | Cleared |
 | Held job and its carried item       | Resumes         | Resumes       | Kept with the job in its galaxy | Kept with the job in its galaxy | Kept with the job in its galaxy | Cleared |
@@ -1178,10 +1194,12 @@ remain exact even when ordinary contents regenerate. Revisits never count as fre
 exploration. Compact visited information can grow with visited chunks; meaningful
 persistent history can also grow with interactions and important encounters.
 
-Retain frigates and capital ships independently of disposable chunks, including
-mutable hardpoints, AI state and destroyed-ship tombstones. Interacted NPC state,
-story, quests, routes and destinations also persist independently of those chunks.
-Important guards must not reroll or disappear to bypass a required fight.
+Within one flight, retain frigates and capital ships independently of disposable
+chunks, including mutable hardpoints, AI state and destroyed-ship tombstones.
+Interacted NPC state, story, quests, routes and destinations also persist
+independently of those chunks. Important guards must not reroll or disappear on
+paging or Continue to bypass a required fight. Fresh entry resets enemy retention
+while preserving the galaxy's geography and story gates.
 
 Retained inactive AI and debris freeze without advancing movement or cooldowns.
 Reactivation applies no catch-up damage or elapsed-time simulation. Projectiles

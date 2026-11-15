@@ -103,8 +103,9 @@ advances at half top speed; `escort` holds station 60 beyond its leader's hull,
 intercepts Ada within 600 and falls back to `hitAndRun` without its leader.
 A ship that touches Ada still bounces off without damage. Finite pursuit and
 return home still apply.
-When an encounter regenerates, its survivors are restored by role, so a destroyed
-capital never returns as an escort or the reverse. The first galaxy is mildly
+When an encounter pages back into the same flight, its survivors are restored by
+role, so a destroyed capital never returns as an escort or the reverse. Fresh entry
+resets enemy populations; Continue preserves the existing flight. The first galaxy is mildly
 more aggressive than the base catalog, and difficulty rises along the route (see
 [Difficulty](#difficulty)). Escorts also fall back when their leader is disabled.
 
@@ -295,8 +296,9 @@ Frigates, capitals and platforms have hull HP and hardpoints.
 - **Mounts:** Art draws each heavy class once, with every weapon mount it can
   carry, and a turret for each weapon a mount can hold. A mount the position
   leaves unused is drawn as a capped plate with no hardpoint. Admiral Archie's flagship has its own, more threatening design.
-- **State:** hull HP, hardpoints, disabled and salvaged states are retained like
-  other heavy state until the galaxy regenerates. A salvaged heavy stays where
+- **State:** hull HP, hardpoints, disabled and salvaged states persist within the
+  flight, across paging and Continue. Fresh galaxy entry resets enemy populations
+  without reopening resolved story. Within the flight, a salvaged heavy stays where
   Ada left it: like a destroyed one, it no longer holds the spacing kept between
   capital ships, and nothing moves it.
 
@@ -489,9 +491,10 @@ turrets fire while it advances, with no speed to advance.
   a two-shot burst of the position's Laser, 0.15 seconds between shots, every 1.4
   seconds before the position's fire rate while Ada is within 520 world units.
   It stops firing beyond 520 and never pursues.
-- **State:** retained like a frigate, so destroyed turrets and a disabled,
-  salvaged or destroyed platform persist until the galaxy regenerates. Ada
-  bounces off it on contact until it is salvaged. It drops Stardust by the heavy
+- **State:** retained like a frigate within one flight and across Continue, so
+  destroyed turrets and a disabled, salvaged or destroyed platform remain exact.
+  Fresh entry resets the platform with the enemy population while retaining its
+  ore-field geography. Ada bounces off it on contact until it is salvaged. It drops Stardust by the heavy
   rule and has the heavy upgrade chance.
 
 ## Phantom roster
