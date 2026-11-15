@@ -6,17 +6,18 @@ import { readViewUnit } from "./layout/viewScale.ts";
 import { createButton, createCard } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 
-export type MenuAction = "achievements" | "settings";
+export type MenuAction = "achievements" | "backToTitle" | "settings";
 export type MenuContext = "start" | "nonplay";
 
 const MENU_ACTIONS: readonly MenuAction[] = ["achievements", "settings"];
+const NONPLAY_ACTIONS: readonly MenuAction[] = [...MENU_ACTIONS, "backToTitle"];
 
-/** Start and nonpausable story share one approved action list. */
+/** Nonplay navigation returns to title before its primary dismissal; Start omits that action. */
 export function menuActions(context: MenuContext): readonly MenuAction[] {
   if (context !== "start" && context !== "nonplay") {
     throw new Error("Unknown Menu context");
   }
-  return MENU_ACTIONS;
+  return context === "start" ? MENU_ACTIONS : NONPLAY_ACTIONS;
 }
 
 export interface MenuOptions {

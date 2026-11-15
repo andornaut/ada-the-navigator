@@ -1,3 +1,7 @@
+import { readFileSync } from "node:fs";
+import { runInNewContext } from "node:vm";
+
+import ts from "typescript";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const fixture = vi.hoisted(() => {
@@ -93,7 +97,7 @@ function setup() {
   const onOpenChange = vi.fn();
   const menu = createMenuCard(root as unknown as HTMLElement, {
     closeLabel: "Close",
-    labels: { achievements: "Achievements", settings: "Settings" },
+    labels: { achievements: "Achievements", backToTitle: "Back to title", settings: "Settings" },
     onAction,
     onOpenChange,
     title: "Menu",
@@ -119,8 +123,16 @@ describe("production Menu consumer", () => {
         expect.objectContaining({ size: "small", title: "Menu" }),
       );
       menu.open(origin as unknown as HTMLElement);
-      expect(rows().map((node) => node.textContent)).toEqual(["Achievements", "Settings", "Close"]);
-      expect(rows().map((node) => node.className)).toEqual(["secondary", "secondary", "primary"]);
+      expect(rows().map((node) => node.textContent)).toEqual(
+        context === "start"
+          ? ["Achievements", "Settings", "Close"]
+          : ["Achievements", "Settings", "Back to title", "Close"],
+      );
+      expect(rows().map((node) => node.className)).toEqual(
+        context === "start"
+          ? ["secondary", "secondary", "primary"]
+          : ["secondary", "secondary", "secondary", "primary"],
+      );
       expect(fixture.layer.open).toHaveBeenLastCalledWith(
         expect.objectContaining({ focus: rows().at(-1) }),
         fixture.card.frame,
@@ -134,7 +146,12 @@ describe("production Menu consumer", () => {
     const { menu, onAction, rows } = setup();
     menu.setContext("nonplay");
     menu.open();
-    expect(rows().map((node) => node.textContent)).toEqual(["Achievements", "Settings", "Close"]);
+    expect(rows().map((node) => node.textContent)).toEqual([
+      "Achievements",
+      "Settings",
+      "Back to title",
+      "Close",
+    ]);
     rows()[1]!.dispatchEvent(new Event("click"));
     expect(menu.isOpen()).toBe(false);
     expect(onAction).toHaveBeenCalledExactlyOnceWith("settings", expect.any(Function));
@@ -203,4 +220,74 @@ it("routes a held Menu action through the original caller and unregisters rebuil
   const current = rows()[1]!;
   menu.dispose();
   expect(resolveAdaHoldAction(root as unknown as HTMLElement, current)).toBeNull();
+});
+
+it("invokes Back to title once and keeps Close as the primary dismissal", () => {
+  const { menu, onAction, rows } = setup();
+  menu.setContext("nonplay");
+  menu.open();
+  const back = rows().at(-2)!;
+  expect(back.dataset.action).toBe("menu-backToTitle");
+  expect(rows().at(-1)!.textContent).toBe("Close");
+  back.dispatchEvent(new Event("click"));
+  back.dispatchEvent(new Event("click"));
+  expect(onAction).toHaveBeenCalledExactlyOnceWith("backToTitle", expect.any(Function));
+  expect(menu.isOpen()).toBe(false);
+});
+
+it("forwards the actual controls callback and clears the old Menu return before title navigation", () => {
+  const source = ts.createSourceFile(
+    "controls.ts",
+    readFileSync(new URL("../input/controls.ts", import.meta.url), "utf8"),
+    ts.ScriptTarget.Latest,
+    true,
+  );
+  let callback: ts.Expression | undefined;
+  const visit = (node: ts.Node) => {
+    if (ts.isCallExpression(node) && node.expression.getText(source) === "createMenuCard") {
+      const options = node.arguments[1];
+      if (options && ts.isObjectLiteralExpression(options)) {
+        const property = options.properties.find(
+          (p) => ts.isPropertyAssignment(p) && p.name.getText(source) === "onAction",
+        );
+        if (property && ts.isPropertyAssignment(property)) {
+          callback = property.initializer;
+        }
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  expect(callback).toBeDefined();
+  const settings = { open: vi.fn() },
+    achievements = { open: vi.fn() };
+  const context = {
+    achievements,
+    options: {
+      pause: { onBackToTitle: vi.fn(() => expect(context.returnToMenu).toBeUndefined()) },
+    },
+    returnToMenu: vi.fn(),
+    settings,
+  };
+  const js = ts.transpileModule(`(${callback!.getText(source)})`, {
+    compilerOptions: { target: ts.ScriptTarget.ES2023 },
+  }).outputText;
+  const handler = runInNewContext(js, context) as (action: string, reopen: () => void) => void;
+  const reopen = vi.fn();
+  handler("settings", reopen);
+  expect(settings.open).toHaveBeenCalledOnce();
+  expect(context.returnToMenu).toBe(reopen);
+  handler("achievements", reopen);
+  expect(achievements.open).toHaveBeenCalledOnce();
+  const { menu, onAction, rows } = setup();
+  onAction.mockImplementation(handler);
+  menu.setContext("nonplay");
+  menu.open();
+  const back = rows().at(-2)!;
+  back.dispatchEvent(new Event("click"));
+  back.dispatchEvent(new Event("click"));
+  expect(context.options.pause.onBackToTitle).toHaveBeenCalledOnce();
+  expect(context.returnToMenu).toBeUndefined();
+  expect(settings.open).toHaveBeenCalledTimes(1);
+  expect(achievements.open).toHaveBeenCalledTimes(1);
 });

@@ -357,8 +357,17 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   }
   const menu = createMenuCard(settings.root, {
     closeLabel: options.pause.labels.close,
-    labels: { achievements: options.achievements.title, settings: options.pause.labels.settings },
+    labels: {
+      achievements: options.achievements.title,
+      backToTitle: options.pause.labels.backToTitle,
+      settings: options.pause.labels.settings,
+    },
     onAction: (action, reopen) => {
+      if (action === "backToTitle") {
+        returnToMenu = undefined;
+        options.pause.onBackToTitle();
+        return;
+      }
       returnToMenu = reopen;
       if (action === "settings") {
         settings.open();

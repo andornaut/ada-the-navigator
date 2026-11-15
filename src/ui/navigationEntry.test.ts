@@ -30,10 +30,8 @@ describe("caller-owned Pause/Menu policy", () => {
   ] satisfies Partial<NavigationActivity>[])("uses Menu in nonpausable context %j", (facts) => {
     expect(navigationEntry({ ...active, ...facts })).toBe("menu");
   });
-  it("keeps Start actions bounded and story Menu free of flight navigation", () => {
+  it("keeps Start bounded and nonplay Back to title immediately before dismissal", () => {
     expect(menuActions("start")).toEqual(["achievements", "settings"]);
-    expect(menuActions("start")).toEqual(["achievements", "settings"]);
-    expect(menuActions("nonplay")).toEqual(["achievements", "settings"]);
-    expect(menuActions("start")).toBe(menuActions("nonplay"));
+    expect(menuActions("nonplay")).toEqual(["achievements", "settings", "backToTitle"]);
   });
 });
