@@ -11,6 +11,31 @@ import { STORY_PORTRAITS, storyPortrait, storyPortraitFrame, storyTabColour } fr
 class Element {
   readonly attributes = new Map<string, string>();
   children: Element[] = [];
+  parent: Element | null = null;
+  get ownerDocument() {
+    return document;
+  }
+  get parentNode() {
+    return this.parent;
+  }
+  get nextSibling(): Element | null {
+    return this.parent?.children[this.parent.children.indexOf(this) + 1] ?? null;
+  }
+  contains(node: unknown): boolean {
+    return node === this || this.children.some((child) => child.contains(node));
+  }
+  insertBefore(node: Element, before: Element | null) {
+    if (node === before) {
+      return;
+    }
+    node.remove();
+    node.parent = this;
+    this.children.splice(
+      before === null ? this.children.length : this.children.indexOf(before),
+      0,
+      node,
+    );
+  }
   className = "";
   readonly classList = {
     add: (...names: string[]) => {
@@ -27,7 +52,9 @@ class Element {
     this.listeners.set(type, [...(this.listeners.get(type) ?? []), callback]);
   }
   append(...nodes: Element[]) {
-    this.children.push(...nodes);
+    for (const node of nodes) {
+      this.insertBefore(node, null);
+    }
   }
   readonly setPointerCapture = vi.fn();
   dispatch(type: string, values: Partial<PointerEvent> = {}) {
@@ -65,9 +92,17 @@ class Element {
   all(): Element[] {
     return this.children.flatMap((node) => [node, ...node.all()]);
   }
-  remove() {}
+  remove() {
+    if (this.parent) {
+      this.parent.children.splice(this.parent.children.indexOf(this), 1);
+    }
+    this.parent = null;
+  }
   replaceChildren(...nodes: Element[]) {
-    this.children = nodes;
+    for (const child of [...this.children]) {
+      child.remove();
+    }
+    this.append(...nodes);
   }
   toggleAttribute(name: string, on: boolean) {
     if (on) {
@@ -81,7 +116,11 @@ class Element {
   }
 }
 afterEach(() => vi.unstubAllGlobals());
-const setup = () => vi.stubGlobal("document", { createElement: (tag: string) => new Element(tag) });
+const setup = () =>
+  vi.stubGlobal("document", {
+    activeElement: null,
+    createElement: (tag: string) => new Element(tag),
+  });
 
 describe("shared Earth and space dialogue presentation", () => {
   it("resolves every authored cast member to their own existing sheet and tab", () => {
@@ -299,6 +338,7 @@ describe("shared Earth and space dialogue presentation", () => {
     (speaker) => {
       const host = new Element("div");
       vi.stubGlobal("document", {
+        activeElement: null,
         createElement: (tag: string) => new Element(tag),
         getElementById: () => host,
       });
@@ -335,6 +375,7 @@ describe("shared Earth and space dialogue presentation", () => {
   it.each(["pointercancel", "lostpointercapture"])("cancels a held message press on %s", (type) => {
     const host = new Element("div");
     vi.stubGlobal("document", {
+      activeElement: null,
       createElement: (tag: string) => new Element(tag),
       getElementById: () => host,
     });
@@ -357,6 +398,7 @@ describe("shared Earth and space dialogue presentation", () => {
   it("has no separate ambient Skip button and retains the existing tap advance route", () => {
     const host = new Element("div");
     vi.stubGlobal("document", {
+      activeElement: null,
       createElement: (tag: string) => new Element(tag),
       getElementById: () => host,
     });

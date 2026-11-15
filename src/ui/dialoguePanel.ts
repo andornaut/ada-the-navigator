@@ -1,4 +1,12 @@
+import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
+
 import { CONTENT } from "../data/content.ts";
+import {
+  type DialoguePanelContainer,
+  type DialoguePanelNative,
+  type DialoguePanelSchema,
+  dialoguePanelTree,
+} from "./dialoguePanelTree.ts";
 import { storySpeakerName } from "./dialoguePortraits.ts";
 import { font, safeEdge, units } from "./layout/css.ts";
 import { STORY_PANEL } from "./layout/storyPage.ts";
@@ -65,21 +73,16 @@ export function createDialoguePanel(options: {
   portrait.setAttribute("aria-hidden", "true");
   const face = document.createElement("span");
   face.className = "ada-story-portrait";
-  portrait.append(face);
   const speaker = document.createElement("p");
   speaker.className = "ada-story-tab";
   const words = document.createElement("p");
   words.className = "ada-story-paragraph";
-  body.append(title, portrait, speaker, words);
-  copy.append(body);
   const column = document.createElement("div");
   column.className = "ada-story-choice-column";
   const choices = document.createElement("div");
   choices.className = "ada-story-choices";
   const controls = document.createElement("div");
   controls.className = "ada-story-controls ada-dialogue-controls";
-  column.append(choices, controls);
-  card.append(copy, column);
   const close = document.createElement("button");
   close.className = "ada-close";
   close.type = "button";
@@ -89,14 +92,52 @@ export function createDialoguePanel(options: {
   skip.classList.add("ada-compact", "ada-story-skip");
   skip.dataset.action = "dialogue-skip";
   skip.hidden = true;
-  frame.append(card, skip, close);
+  const containers: Readonly<Record<DialoguePanelContainer, HTMLElement>> = {
+    body,
+    card,
+    column,
+    copy,
+    frame,
+    portrait,
+  };
+  const nativeNodes: Readonly<Record<DialoguePanelNative, HTMLElement>> = {
+    choices,
+    close,
+    controls,
+    face,
+    skip,
+    speaker,
+    title,
+    words,
+  };
+  const arrangement = mountLayout<DialoguePanelSchema>(
+    {
+      components: {
+        container: {
+          create: (id) => ({
+            dispose() {},
+            element: containers[id],
+            slots: { children: containers[id] },
+            update() {},
+          }),
+          slots: ["children"],
+        },
+        native: {
+          create: (id) => ({ dispose() {}, element: nativeNodes[id], slots: {}, update() {} }),
+          slots: [],
+        },
+      },
+      host: document.createElement("div"),
+    },
+    dialoguePanelTree(),
+  );
   return {
     body,
     card,
     choices,
     close,
     controls,
-    dispose: () => frame.remove(),
+    dispose: () => arrangement.dispose(),
     fit(): void {
       const scrolls = copy.scrollHeight > copy.clientHeight + 1;
       copy.classList.toggle("ada-story-scrolls", scrolls);
