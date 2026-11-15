@@ -4,6 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import {
   encounterQuiet,
   encounterTable,
+  ENEMY_ONLY_DAMAGE,
   type EnemyArchetype,
   enemyCatalog,
   type EnemyDefinition,
@@ -590,7 +591,7 @@ describe("integrated combat", () => {
   });
 
   it("tracks Ada with a frigate's charged lance, holds still, then fires across the game area", () => {
-    // Cartwheel (position 5): a frigate whose loadout carries the lance, 3 damage.
+    // Cartwheel (position 5): a frigate whose loadout carries the charged lance.
     const fixture = () => {
       const flight = emptyIn(2);
       const { target } = armedWith("frigate", 2, "chargedLance", { x: 200, y: 0 });
@@ -615,7 +616,10 @@ describe("integrated combat", () => {
     const shield = flight.shield;
     stepFlight(CONTENT, 0.2, idle, flight);
     expect(tell).toMatchObject({ fired: true, stopped: true });
-    expect(flight.shield).toBeCloseTo(shield - 3, 9);
+    expect(flight.shield).toBeCloseTo(
+      shield - ENEMY_ONLY_DAMAGE.chargedLance * CONTENT.tuning.flight.playerShotDamage,
+      9,
+    );
     // Ada leaving the locked line takes nothing; the beam runs the game area's width on screen.
     const dodged = fixture().flight;
     const [missed] = activeEnemyBeams(dodged);
