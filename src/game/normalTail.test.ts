@@ -96,7 +96,7 @@ describe("normal painted-tail foreground", () => {
     const image = {
       destroy: vi.fn(),
       enableFilters: vi.fn(),
-      filters: { internal: { addMask: vi.fn() } },
+      filters: { internal: { addMask: vi.fn(), camera: { id: "painted-tail-filter" } } },
       setAlpha: vi.fn(),
       setDepth: vi.fn(),
       setDisplaySize: vi.fn(),
@@ -163,7 +163,11 @@ describe("normal painted-tail foreground", () => {
     ) as (this: object, regions: readonly (readonly { x: number; y: number }[])[]) => void;
     const owner = { ...scene, ship };
     draw.call(owner, normalJetTailRegions(jets, display, 0));
-    expect(image.filters.internal.addMask).toHaveBeenCalledWith(shape, false, camera);
+    expect(image.filters.internal.addMask).toHaveBeenCalledWith(
+      shape,
+      false,
+      image.filters.internal.camera,
+    );
     expect(image.setTexture).toHaveBeenCalledWith("ship-cobalt-52", 0);
     expect(image.setDepth.mock.calls[0]![0]).toBeGreaterThan(ship.depth + 2e-6);
     expect(shape.moveTo).toHaveBeenCalledWith(-8, -8);

@@ -1149,7 +1149,7 @@ export class GameScene extends Scene {
       const image = this.add.image(ship.x, ship.y, ship.texture.key).setVisible(false);
       const shape = this.make.graphics({ x: 0, y: 0 }, false);
       image.enableFilters();
-      image.filters!.internal.addMask(shape, false, this.cameras.main);
+      image.filters!.internal.addMask(shape, false, image.filters!.internal.camera);
       this.normalTail = { image, shape };
     }
     const { image, shape } = this.normalTail;
