@@ -24,7 +24,7 @@
     "phaser": "^4.2.1"
   },
   "devDependencies": {
-    "@andornaut/art-kit": "https://github.com/andornaut/art-kit/releases/download/v0.23.0/art-kit-0.23.0.tgz",
+    "@andornaut/art-kit": "https://github.com/andornaut/art-kit/releases/download/v0.27.0/art-kit-0.27.0.tgz",
     "@andornaut/delivery-kit": "https://github.com/andornaut/delivery-kit/releases/download/v4.0.0/delivery-kit-4.0.0.tgz",
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.6.6",

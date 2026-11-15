@@ -1,4 +1,4 @@
-import { type AtlasPolicy, packAtlas } from "@andornaut/art-kit/atlasLayout";
+import { type AtlasPolicy, packAtlas } from "@andornaut/art-kit/build/atlasLayout";
 import { validateRegistry } from "@andornaut/delivery-kit/registry";
 import { describe, expect, it } from "vitest";
 
