@@ -9,7 +9,7 @@ import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createAdaLayoutPorts } from "./layoutTree.ts";
 import { createActions, createCard, isTap, setFooterAction } from "./modal.ts";
-import { inCurrentView } from "./pressScope.ts";
+import { enterPressView, inCurrentView } from "./pressScope.ts";
 import { createProse } from "./prose.ts";
 import {
   type ResourceAction,
@@ -51,6 +51,7 @@ export function createResourceCard(
   root.append(modal);
   let disposed = false;
   let visible = false;
+  let leaveView: (() => void) | undefined;
   let headerIcon: HTMLElement | undefined;
   let quantityIcon: HTMLElement | undefined;
   let returnFocus: HTMLElement | null = null;
@@ -61,6 +62,8 @@ export function createResourceCard(
     }
     visible = false;
     modal.hidden = true;
+    leaveView?.();
+    leaveView = undefined;
     options.onOpenChange(false);
     if (returnFocus) {
       focusTarget(returnFocus);
@@ -156,6 +159,8 @@ export function createResourceCard(
     close,
     dispose() {
       disposed = true;
+      leaveView?.();
+      leaveView = undefined;
       headerBinding.dispose();
       mounted.dispose();
       modal.remove();
@@ -174,6 +179,7 @@ export function createResourceCard(
         details.quantity ?? (details.count === undefined ? undefined : detailCount(details.count));
       openQuests = details.quests?.onOpen;
       visible = true;
+      leaveView ??= enterPressView(root, card.frame);
       mounted.update(
         resourceTree({
           closeLabel: options.closeLabel,

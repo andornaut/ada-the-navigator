@@ -1,7 +1,8 @@
 import { afterEach, expect, it, vi } from "vitest";
 
-import { resolveAdaHoldAction } from "./actionBinding.ts";
-import { enterPressView } from "./pressScope.ts";
+import { bindAdaAction, resolveAdaHoldAction } from "./actionBinding.ts";
+import { SCROLL } from "./layout/contentCard.ts";
+import { currentView, enterPressView, inCurrentView, rootPressGuard } from "./pressScope.ts";
 import { createResourceCard } from "./resourceCard.ts";
 
 const fixture = vi.hoisted(() => {
@@ -399,4 +400,147 @@ it("rejects background header clicks and removes the registered X callback on di
   x.dispatchEvent(new Event("click"));
   action?.activate();
   expect(onOpenChange.mock.calls).toEqual([[true]]);
+});
+
+it("reports Resource scope and excludes a registered background action", () => {
+  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  const root = new fixture.Node(),
+    background = new fixture.Node(),
+    origin = new fixture.Node();
+  root.append(background);
+  const host = root as unknown as HTMLElement;
+  const guard = rootPressGuard(host),
+    beforeOpen = guard.gate.capture(),
+    run = vi.fn();
+  const binding = bindAdaAction(
+    {
+      click: { availability: () => ({ kind: "available" }), run },
+      current: () => inCurrentView(host, background as unknown as HTMLElement),
+      slopPx: () => SCROLL.dragThreshold,
+    },
+    background as unknown as HTMLElement,
+  );
+  const action = resolveAdaHoldAction(host, background);
+  expect(action?.available()).toBe(true);
+  const detail = createResourceCard(host, { closeLabel: "Close", onOpenChange: vi.fn() });
+  try {
+    detail.open("Ore", "Current", origin as unknown as HTMLElement, {
+      count: 0,
+      quests: { label: "Quests", onOpen: vi.fn() },
+    });
+    expect(inCurrentView(host, background as unknown as HTMLElement)).toBe(false);
+    expect(beforeOpen()).toBe(false);
+    expect(currentView(host) === (fixture.card.frame as unknown as HTMLElement)).toBe(true);
+    expect(guard.gate.accepts()).toBe(true);
+    expect(action?.available()).toBe(false);
+    action?.activate();
+    expect(run).not.toHaveBeenCalled();
+    const footer = fixture.card.body.children[2]!;
+    for (const node of [fixture.card.close, ...footer.children]) {
+      expect(inCurrentView(host, node as unknown as HTMLElement)).toBe(true);
+      expect(resolveAdaHoldAction(host, node)?.available()).toBe(true);
+    }
+  } finally {
+    detail.dispose();
+    binding.dispose();
+  }
+});
+
+it("releases Resource scope before parent restore and invalidates close/reopen/dispose captures", () => {
+  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  const root = new fixture.Node(),
+    parent = new fixture.Node(),
+    origin = new fixture.Node();
+  root.append(parent);
+  parent.append(origin);
+  const host = root as unknown as HTMLElement;
+  const guard = rootPressGuard(host);
+  let leaveParent: (() => void) | undefined = enterPressView(
+    host,
+    parent as unknown as HTMLElement,
+  );
+  const releaseParent = () => {
+    leaveParent?.();
+    leaveParent = undefined;
+  };
+  const parentPress = guard.gate.capture();
+  releaseParent();
+  expect(parentPress()).toBe(false);
+  const afterParentDismissal = guard.gate.capture(),
+    transitions: boolean[] = [];
+  const detail = createResourceCard(host, {
+    closeLabel: "Close",
+    onOpenChange(open) {
+      transitions.push(open);
+      if (!open) {
+        expect(currentView(host) === host).toBe(true);
+        leaveParent = enterPressView(host, parent as unknown as HTMLElement);
+      }
+    },
+  });
+  try {
+    detail.open("Ore", "Current", origin as unknown as HTMLElement);
+    expect(afterParentDismissal()).toBe(false);
+    const resourcePress = guard.gate.capture();
+    const dismiss = fixture.card.body.children[2]!.children[1]!;
+    resolveAdaHoldAction(host, dismiss)?.activate();
+    expect(resourcePress()).toBe(false);
+    expect(transitions).toEqual([true, false]);
+    expect(currentView(host) === (parent as unknown as HTMLElement)).toBe(true);
+    expect(origin.focus).toHaveBeenCalledOnce();
+    releaseParent();
+    const beforeReopen = guard.gate.capture();
+    detail.open("Shield", "Current", origin as unknown as HTMLElement, { quantity: "12 / 20" });
+    expect(beforeReopen()).toBe(false);
+    const beforeDispose = guard.gate.capture();
+    detail.dispose();
+    expect(beforeDispose()).toBe(false);
+    expect(currentView(host) === host).toBe(true);
+    expect(transitions).toEqual([true, false, true]);
+    expect(origin.focus).toHaveBeenCalledOnce();
+  } finally {
+    detail.dispose();
+    releaseParent();
+  }
+});
+
+it("releases only its own Resource scope after Quests has opened a child", () => {
+  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  const root = new fixture.Node(),
+    child = new fixture.Node(),
+    origin = new fixture.Node();
+  root.append(child);
+  const host = root as unknown as HTMLElement,
+    guard = rootPressGuard(host);
+  const transitions: string[] = [];
+  let leaveChild: (() => void) | undefined;
+  const detail = createResourceCard(host, {
+    closeLabel: "Close",
+    onOpenChange: (open) => transitions.push(open ? "resource-open" : "resource-close"),
+  });
+  try {
+    detail.open("Toolkit", "Current", origin as unknown as HTMLElement, {
+      quests: {
+        label: "Quests",
+        onOpen: () => {
+          transitions.push("child-open");
+          leaveChild = enterPressView(host, child as unknown as HTMLElement);
+        },
+      },
+    });
+    const resourcePress = guard.gate.capture();
+    resolveAdaHoldAction(host, fixture.card.body.children[2]!.children[0]!)?.activate();
+    expect(resourcePress()).toBe(false);
+    expect(transitions).toEqual(["resource-open", "child-open", "resource-close"]);
+    expect(currentView(host) === (child as unknown as HTMLElement)).toBe(true);
+    expect(guard.gate.accepts()).toBe(true);
+    expect(origin.focus).not.toHaveBeenCalled();
+    const childPress = guard.gate.capture();
+    detail.dispose();
+    expect(childPress()).toBe(true);
+    expect(currentView(host) === (child as unknown as HTMLElement)).toBe(true);
+  } finally {
+    detail.dispose();
+    leaveChild?.();
+  }
 });
