@@ -11,6 +11,7 @@ import {
   createFlight,
   ensureDestination,
   ensureRouteEncounter,
+  routeGuardPlanResult,
   stepFlight,
   syncFlightRegion,
 } from "./flight.ts";
@@ -205,7 +206,11 @@ describe("casualty-preserving pack retention", () => {
           y: 0,
         });
         expect(ensureRouteEncounter(content, "growers", flight)).toBeNull();
-        expect(flight.combat!.emptyRoutePlans).toContain("growers");
+        expect(routeGuardPlanResult(flight, "growers")).toEqual({
+          admissionRecorded: false,
+          status: "unknown",
+        });
+        expect(flight.combat!.emptyRoutePlans).toBeUndefined();
         expect(flight.combat!.routeEncounters).not.toContain("growers");
         expect(members(model, packId)).toEqual(expectedSurvivors);
       }
