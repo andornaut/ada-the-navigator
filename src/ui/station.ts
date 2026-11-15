@@ -29,6 +29,12 @@ import { refuse } from "./refusal.ts";
 import { mountStationDropDetails } from "./stationDropDetails.ts";
 import { createStationItemIcon, type ItemGlyph, setStationItemTitle } from "./stationItemIcon.ts";
 import {
+  type StationJobRowSchema,
+  stationJobRowTree,
+  type StationJobsSchema,
+  stationJobsTree,
+} from "./stationJobsTree.ts";
+import {
   type StationMenuButton,
   type StationMenuSchema,
   stationMenuTree,
@@ -795,56 +801,76 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     shopPage = fitPages(shopCard, list, shopPager, tabContent(tab, columns), shopPage);
   };
 
+  const jobLayouts: { dispose(): void }[] = [];
   const jobElement = (job: StationJob): HTMLButtonElement => {
     const node = document.createElement("button");
-    node.type = "button";
-    node.className = "ada-shop-row ada-job-row";
-    node.dataset.job = job.id;
-    // The held job wears the selection ring; a refused offer the disabled face.
-    node.dataset.state = { busy: "unaffordable", held: "inUse", offer: "forSale" }[job.state];
-    // The job type's icon-job sheet, normal then disabled; every activity shares one.
-    const glyph = document.createElement("span");
-    glyph.className = "ada-glyph ada-glyph-sprite ada-job-glyph";
-    glyph.dataset.type = job.kind === "activity" ? "activity" : job.type;
-    glyph.style.setProperty("--sheet", `url('${SPRITES}icon-job-${glyph.dataset.type}.png')`);
-    glyph.setAttribute("aria-hidden", "true");
-    const jobWell = document.createElement("span");
-    jobWell.className = "ada-well";
-    jobWell.append(glyph);
-    const name = document.createElement("span");
-    name.className = "ada-shop-name";
-    const title = document.createElement("span");
-    title.textContent = job.title;
-    const detail = document.createElement("span");
-    detail.className = "ada-shop-level";
-    detail.textContent = job.detail;
-    name.append(title, detail);
-    const slot = document.createElement("span");
-    slot.className = "ada-shop-slot";
-    const action = document.createElement("span");
-    action.className = `ada-button ada-compact ada-job-action${
-      job.state === "held" ? "" : " ada-primary"
-    }`;
-    const mark = document.createElement("span");
-    if (job.state === "held") {
-      mark.className = "ada-owned";
-      mark.textContent = labels.jobActive;
-      action.textContent = labels.jobDrop;
-    } else {
-      mark.className = "ada-price";
-      mark.textContent = String(job.reward);
-      action.textContent = labels.jobAccept;
-    }
-    slot.append(mark, action);
-    node.append(jobWell, name, slot);
-    node.setAttribute(
-      "aria-label",
-      [
-        job.title,
-        job.detail,
-        job.state === "held" ? labels.jobActive : job.rewardText,
-        action.textContent,
-      ].join(", "),
+    const host = document.createElement("div");
+    jobLayouts.push(
+      mountLayout<StationJobRowSchema>(
+        {
+          components: {
+            action: {
+              create(initial) {
+                const slot = document.createElement("span");
+                slot.className = "ada-shop-slot";
+                const action = document.createElement("span");
+                action.className = `ada-button ada-compact ada-job-action${initial.primary ? " ada-primary" : ""}`;
+                action.textContent = initial.label;
+                const mark = document.createElement("span");
+                mark.className = initial.markClass;
+                mark.textContent = initial.mark;
+                slot.append(mark, action);
+                return { dispose() {}, element: slot, slots: {}, update() {} };
+              },
+              slots: [],
+            },
+            name: {
+              create(initial) {
+                const name = document.createElement("span");
+                name.className = "ada-shop-name";
+                const title = document.createElement("span");
+                title.textContent = initial.title;
+                const detail = document.createElement("span");
+                detail.className = "ada-shop-level";
+                detail.textContent = initial.detail;
+                name.append(title, detail);
+                return { dispose() {}, element: name, slots: {}, update() {} };
+              },
+              slots: [],
+            },
+            row: {
+              create(initial) {
+                node.type = "button";
+                node.className = "ada-shop-row ada-job-row";
+                node.dataset.job = initial.id;
+                node.dataset.state = initial.state;
+                node.setAttribute("aria-label", initial.ariaLabel);
+                return { dispose() {}, element: node, slots: { parts: node }, update() {} };
+              },
+              slots: ["parts"],
+            },
+            well: {
+              create(initial) {
+                const glyph = document.createElement("span");
+                glyph.className = "ada-glyph ada-glyph-sprite ada-job-glyph";
+                glyph.dataset.type = initial.glyphType;
+                glyph.style.setProperty(
+                  "--sheet",
+                  `url('${SPRITES}icon-job-${glyph.dataset.type}.png')`,
+                );
+                glyph.setAttribute("aria-hidden", "true");
+                const jobWell = document.createElement("span");
+                jobWell.className = "ada-well";
+                jobWell.append(glyph);
+                return { dispose() {}, element: jobWell, slots: {}, update() {} };
+              },
+              slots: [],
+            },
+          },
+          host,
+        },
+        stationJobRowTree(labels, job),
+      ),
     );
     register(
       node,
@@ -894,6 +920,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
 
   const renderJobs = (): void => {
     clearBindings(jobBindings);
+    const previousLayouts = jobLayouts.splice(0);
     const unit = readViewUnit(jobsCard.card);
     const measure = document.createElement("div");
     measure.className = "ada-shop-measure";
@@ -923,14 +950,34 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     jobList.style.setProperty("--shop-row-width", units(width));
     jobList.style.width = units(shopListWidth(columns, width) + 2 * FOCUS_RING.outset);
     const chunks: HTMLElement[] = [];
-    for (let index = 0; index < rows.length; index += columns) {
-      const chunk = document.createElement("div");
-      chunk.className = "ada-job-page-row";
-      chunk.append(...rows.slice(index, index + columns));
+    for (const tree of stationJobsTree({ columns }, rows.length)) {
+      let chunk!: HTMLDivElement;
+      jobLayouts.push(
+        mountLayout<StationJobsSchema>(
+          {
+            components: {
+              group: {
+                create(initial) {
+                  chunk = document.createElement("div");
+                  chunk.className = "ada-job-page-row";
+                  chunk.append(...initial.indices.map((index) => rows[index]!));
+                  return { dispose() {}, element: chunk, slots: {}, update() {} };
+                },
+                slots: [],
+              },
+            },
+            host: measure,
+          },
+          tree,
+        ),
+      );
       chunks.push(chunk);
     }
     measure.remove();
     jobsPage = fitPages(jobsCard, jobList, jobsPager, chunks, jobsPage);
+    for (const layout of previousLayouts) {
+      layout.dispose();
+    }
   };
 
   const renderShop = (): void => {
@@ -1257,6 +1304,9 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       window.removeEventListener("resize", refit);
       window.removeEventListener(VIEW_SCALE_EVENT, refit);
       exchange?.dispose();
+      for (const layout of jobLayouts) {
+        layout.dispose();
+      }
       menuLayout.dispose();
       for (const pagerLayout of pagerLayouts) {
         pagerLayout.dispose();
