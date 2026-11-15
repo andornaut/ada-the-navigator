@@ -510,10 +510,6 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
         }
         resource.open(details.title, details.text, origin, {
           ...(icon ? { icon } : {}),
-          quests: {
-            label: options.pause.labels.mapScreen.quests,
-            onOpen: () => pause.openQuests(),
-          },
         });
       } else {
         resource.open(CONTENT.labels[kind] ?? "", RESOURCE_DESCRIPTIONS[kind], origin, {
