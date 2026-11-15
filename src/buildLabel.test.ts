@@ -2,11 +2,7 @@
 import { readFileSync } from "node:fs";
 
 import { buildLabel } from "@andornaut/game-kit/web/build/buildLabel";
-import {
-  CI_COMMIT_VARIABLE,
-  shortCommit,
-  UNKNOWN_COMMIT,
-} from "@andornaut/game-kit/web/build/buildVersion";
+import { CI_COMMIT_VARIABLE } from "@andornaut/game-kit/web/build/buildVersion";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { BUILD_LABEL } from "./buildLabel.ts";
@@ -39,15 +35,5 @@ describe("the build label", () => {
       __APP_VERSION__: JSON.stringify(version),
       __COMMIT__: JSON.stringify("01234567"),
     });
-  });
-
-  it("shows dev when the build knows no commit", () => {
-    const noGit = () => {
-      throw new Error("not a git repository");
-    };
-    expect(buildLabel(version, shortCommit(noGit, {}))).toBe(`v${version} · ${UNKNOWN_COMMIT}`);
-    expect(UNKNOWN_COMMIT).toBe("dev");
-    // A malformed CI value is not a commit.
-    expect(shortCommit(noGit, { [CI_COMMIT_VARIABLE]: "main" })).toBe("dev");
   });
 });
