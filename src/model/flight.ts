@@ -3079,7 +3079,15 @@ function enemies(
     // Hit circles follow the catalog, so saves from earlier sizes adopt the current ones.
     object.radius = content.tuning.flight.shipRadius * ENEMY_SIZE_RATIOS[object.enemy.archetype];
   }
-  const peers = objects.flatMap((object) => (object.enemy ? [object.enemy] : []));
+  const loadedPeers = objects.flatMap((object) => (object.enemy ? [object.enemy] : []));
+  const loadedPackMembers: Record<string, number> = Object.create(null);
+  for (const peer of loadedPeers) {
+    if (peer.hp > 0 && peer.packId !== null) {
+      loadedPackMembers[peer.packId] = (loadedPackMembers[peer.packId] ?? 0) + 1;
+    }
+  }
+  Object.freeze(loadedPackMembers);
+  const peers = loadedPeers.filter((peer) => peer.hp > 0 && !peer.disabled);
   const visibility = new Map(
     objects.map((object) => {
       const visible = !flight.objects.some(
@@ -3170,6 +3178,7 @@ function enemies(
         engagementAdmitted: admissions.has(object.id),
         initialPackSizes: combat(flight).initialPackSizes,
         lead: ENEMY_AIM.lead[ROUTE_POSITION[flight.galaxy]],
+        loadedPackMembers,
         ...(navigationQuery ? { navigationQuery } : {}),
         peers,
         player: flight.player,

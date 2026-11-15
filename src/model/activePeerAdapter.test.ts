@@ -1,0 +1,93 @@
+import { afterEach, expect, it, vi } from "vitest";
+
+import { CONTENT } from "../data/content.ts";
+import { enemyDefinition } from "../data/enemyCatalog.ts";
+import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
+import * as enemyAi from "./enemyAi.ts";
+import { stepFlight } from "./flight.ts";
+import { flightWorldContext } from "./flightTopology.ts";
+import { GameModel } from "./game.ts";
+import { worldRecordObjectRemoval } from "./geography.ts";
+import type { SpaceObject } from "./types.ts";
+
+const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
+afterEach(() => vi.restoreAllMocks());
+
+function fixture() {
+  const model = new GameModel(CONTENT);
+  model.state.prologueSeen = true;
+  model.state.progress[1].opened = true;
+  model.startGalaxy(1);
+  const flight = model.state.flight!;
+  flight.objects = [];
+  flight.world = { notables: {}, version: 1 };
+  const actors = (["swarm", "frigate"] as const).map((kind, index): SpaceObject => {
+    const id = `peer-proof:${kind}`;
+    const point = { x: 200 + index * 400, y: 200 };
+    const definition = enemyDefinition(1, kind, id);
+    let state = enemyAi.createEnemy(
+      definition,
+      { archetype: kind, id, packId: "peer-proof", phase: 0 },
+      point,
+    );
+    if (kind === "frigate") {
+      for (const part of definition.hardpoints.filter((part) => part.kind === "weapon")) {
+        state = enemyAi.damageEnemy(definition, { amount: part.hp, hardpointId: part.id }, state);
+      }
+      expect(state.disabled).toBe(true);
+      state.velocity = { x: 10, y: 0 };
+    }
+    return {
+      ...point,
+      enemy: state,
+      hp: state.hp,
+      id,
+      kind: "enemy",
+      persistent: true,
+      radius: definition.sizeRatio * CONTENT.tuning.flight.shipRadius,
+    };
+  });
+  flight.objects.push(...actors);
+  flight.combat!.initialPackSizes["peer-proof"] = actors.length;
+  return { active: actors[0]!, disabled: actors[1]!, flight, model };
+}
+
+it("excludes a disabled hull from active observations while preserving morale and coasting", () => {
+  const { active, disabled, flight } = fixture();
+  const before = { hp: disabled.hp, x: disabled.x };
+  const spy = vi.spyOn(enemyAi, "stepEnemy");
+  const events = stepFlight(CONTENT, SIMULATION_STEP_SECONDS, idle, flight);
+  const observations = spy.mock.calls
+    .filter(([, , state]) => [active.id, disabled.id].includes(state.id))
+    .map(([, context]) => context);
+  expect(observations).toHaveLength(2);
+  for (const context of observations) {
+    expect(context.peers.map(({ id }) => id)).toEqual([active.id]);
+    expect(context.loadedPackMembers?.["peer-proof"]).toBe(2);
+    expect(context.loadedPackMembers).toBe(observations[0]!.loadedPackMembers);
+    expect(Object.isFrozen(context.loadedPackMembers)).toBe(true);
+  }
+  expect(active.enemy!.fleeing).toBe(false);
+  expect(disabled.enemy!.disabled).toBe(true);
+  expect(disabled.hp).toBe(before.hp);
+  expect(disabled.x).toBeGreaterThan(before.x);
+  expect(events.some(({ type }) => type === "enemyDestroyed")).toBe(false);
+  expect(flight).not.toHaveProperty("loadedPackMembers");
+});
+
+it("retains disabled survivors on Continue and counts an authoritative removal as a pack loss", () => {
+  const { active, disabled, flight, model } = fixture();
+  stepFlight(CONTENT, SIMULATION_STEP_SECONDS, idle, flight);
+  const resumed = new GameModel(CONTENT, model.save());
+  resumed.continueGame();
+  expect(resumed.state.flight).toEqual(flight);
+  worldRecordObjectRemoval(flightWorldContext(flight), CONTENT, disabled, flight);
+  flight.objects = flight.objects.filter(({ id }) => id !== disabled.id);
+  const spy = vi.spyOn(enemyAi, "stepEnemy");
+  stepFlight(CONTENT, SIMULATION_STEP_SECONDS, idle, flight);
+  const context = spy.mock.calls.find(([, , state]) => state.id === active.id)![1];
+  expect(context.loadedPackMembers?.["peer-proof"]).toBe(1);
+  expect(context.initialPackSizes["peer-proof"]).toBe(2);
+  expect(active.enemy!.fleeing).toBe(true);
+  expect(flight.world.notables[disabled.id]).toBeNull();
+});
