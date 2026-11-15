@@ -50,14 +50,13 @@ describe("reviewed rules", () => {
   });
 
   it("deals bump damage from generated play rocks of every kind, 1 a bump, at most every 0.5 s", () => {
-    // Launch seeds whose nearest generated scenery is a small rock, a large irregular rock, a
-    // resource rock and traveling debris.
+    // Stable IDs select actual generated small, large, resource and moving debris fixtures.
     const kinds = new Set<string>();
-    for (const [seed, pick] of [
-      [173, 0],
-      [174, 1],
-      [176, 3],
-      [177, 4],
+    for (const [seed, id, expectedKind] of [
+      [173, "chunk:0,0:0", "rock:small"],
+      [174, "chunk:0,0:feature", "rock:large"],
+      [176, "chunk:0,-1:0", "resource:medium"],
+      [182, "ballistic:0,0:0", "drifting"],
     ] as const) {
       seedLaunches(seed);
       const model = new GameModel(CONTENT);
@@ -65,15 +64,17 @@ describe("reviewed rules", () => {
       playOpening(model);
       const flight = model.state.flight!;
       model.step(1 / 60, idle);
-      const target = flight.objects
-        .filter((object) => ["debris", "resource", "rock"].includes(object.kind) && object.hp > 0)
-        .sort(
-          (a, b) =>
-            Math.hypot(a.x - flight.player.x, a.y - flight.player.y) -
-            Math.hypot(b.x - flight.player.x, b.y - flight.player.y),
-        )[pick]!;
+      expect(flight.seed).toBe(seed);
+      const target = flight.objects.find((object) => object.id === id)!;
+      expect(target).toBeDefined();
+      expect(target.hp).toBeGreaterThan(0);
       const size = target.asteroid ? ASTEROID_SHAPES.get(target.asteroid)?.size : undefined;
-      kinds.add(target.velocity ? "drifting" : `${target.kind}:${size}`);
+      const kind = target.velocity ? "drifting" : `${target.kind}:${size}`;
+      expect(kind).toBe(expectedKind);
+      if (expectedKind === "drifting") {
+        expect(Math.hypot(target.velocity!.x, target.velocity!.y)).toBeGreaterThan(0);
+      }
+      kinds.add(kind);
       const drops: number[] = [];
       for (let frame = 0; frame < 600 && model.state.mode === "space"; frame++) {
         const dx = target.x - flight.player.x;
