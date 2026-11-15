@@ -139,7 +139,7 @@ it("creates a new quest route frigate at the canonical local home without projec
   const guard = ensureRouteEncounter(CONTENT, site.id, flight)!;
   expect(guard).not.toBeNull();
   expect({ x: guard.x, y: guard.y }).toEqual(home);
-  expect({ x: guard.enemy!.home.x, y: guard.enemy!.home.y }).toEqual(home);
+  expect(guard.enemy!.home).toEqual(home);
   expect(guard.routeId).toBe(site.id);
   const followers = flight.objects.filter((actor) => actor.enemy?.escortOf === guard.id);
   expect(followers).toHaveLength(2);

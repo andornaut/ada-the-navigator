@@ -1007,7 +1007,7 @@ function questFrigateFormation(
   point: Vec,
   supportCount = FRIGATE_ESCORT_COUNT,
 ) {
-  const leader = spawnEnemy(content, flight, "frigate", id, point);
+  const leader = spawnEnemy(content, flight, "frigate", id, { x: point.x, y: point.y });
   leader.routeId = siteId;
   leader.persistent = true;
   const followers = createFrigateEscorts(
