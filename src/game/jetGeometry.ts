@@ -70,6 +70,45 @@ export function jetShapeLayerColor<C>(
     : fallback;
 }
 
+/** Centered reverse shape roles retain descending authored widths and relative lengths. */
+export function validCenteredReverseShapes(shapes: readonly JetShapeLayer[]): boolean {
+  const roles = ["halo", "outer", "core"];
+  return (
+    shapes.length === roles.length &&
+    shapes.every(
+      (layer, i) =>
+        layer.name === roles[i] &&
+        Number.isFinite(layer.width) &&
+        layer.width > 0 &&
+        Number.isFinite(layer.length) &&
+        layer.length > 0 &&
+        (i === 0 || (layer.width <= shapes[i - 1]!.width && layer.length <= shapes[i - 1]!.length)),
+    )
+  );
+}
+
+/** Reuses selected main materials on authored centered, opaque reverse shapes. */
+export function centeredReverseLayers<C>(
+  main: readonly (JetShapeLayer & { colors: readonly [C, C]; normalColor?: C })[],
+  selected: readonly (JetShapeLayer & { colors: readonly [C, C] })[],
+  shapes: readonly JetShapeLayer[],
+): (JetShapeLayer & { colors: readonly [C, C] })[] | undefined {
+  const dark = main.find(
+    (layer) => layer.name !== "core" && layer.normalColor !== undefined,
+  )?.normalColor;
+  const outer = selected.find((layer) => layer.name === "outer");
+  const core = selected.find((layer) => layer.name === "core");
+  if (dark === undefined || !outer || !core || !validCenteredReverseShapes(shapes)) {
+    return undefined;
+  }
+  return shapes.map((layer, i) => ({
+    colors: i === 0 ? [dark, dark] : (i === 1 ? outer : core).colors,
+    length: layer.length,
+    name: layer.name!,
+    width: layer.width,
+  }));
+}
+
 /** Outboard displacement in signed half-mouth units, bounded by outer/core containment. */
 export function coreOutboardOffset(layers: readonly JetShapeLayer[]): number | undefined {
   const outer = layers.find((layer) => layer.name === "outer");

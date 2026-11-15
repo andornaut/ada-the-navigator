@@ -62,21 +62,28 @@ describe("velocity-directed ship jets", () => {
 });
 
 describe("canonical reverse jet data", () => {
-  it("reads the approved geometry and canonical main-exhaust fallback layers", () => {
+  it("reads the approved B geometry and centered canonical main-exhaust shape recipe", () => {
     expect(retro).toBeDefined();
     expect(retro.headings).toHaveLength(SHIP_HEADINGS);
     expect(retro.headings.every((mouths) => mouths.length === 2)).toBe(true);
     expect(retro.frame).toBe(rear.frame);
-    expect(retro.length.base).toBeCloseTo(rear.length.base * 1.1);
-    expect(retro.length.scale).toBeCloseTo(rear.length.scale * 1.1);
-    expect(retro.length.exponent).toBe(rear.length.exponent);
-    const rawMain = rear.engineLevels.map((layers) =>
-      layers.map((layer) => {
-        const raw = { ...layer };
+    const oldFullLength = (rear.length.base + rear.length.scale) * 1.1;
+    expect(retro.reverseStyle).toBe("centered-main");
+    expect(retro.length.base).toBeCloseTo(oldFullLength * 0.45);
+    expect(retro.length.scale).toBeCloseTo(oldFullLength * 0.7);
+    expect(retro.length.exponent).toBe(1);
+    const rawMain = rear.engineLevels.map((layers) => {
+      const core = layers.find((layer) => layer.name === "core")!;
+      return layers.map((layer, index) => {
+        const raw = {
+          ...layer,
+          width:
+            index === 0 ? layer.width : (layers[0]!.width * 0.38671875 * layer.width) / core.width,
+        };
         Reflect.deleteProperty(raw, "normalColor");
         return raw;
-      }),
-    );
+      });
+    });
     expect(retro.engineLevels).toEqual(rawMain);
     for (const level of [1, 2, 3]) {
       expect(engineJets(retro, level).layers).toEqual(rawMain[level - 1]);

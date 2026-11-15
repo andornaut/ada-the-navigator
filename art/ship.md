@@ -24,8 +24,8 @@
   not a reason to deform the flame or change the hull. Do not create a connector
   or move roots onto the underside of the skirt.
   Retain the opening's physical width for the core where it fits the root span.
-- Reverse exhaust retains its separately approved corner attachment, outboard
-  core, rear-plane trim, selected materials and compositing contract below.
+- Reverse exhaust uses centered, opaque nested bands with its approved corner
+  attachment, rear-plane trim and hull-over-flame compositing contract below.
 
 ## Canonical exports and geometry
 
@@ -294,8 +294,9 @@ anchor. Legacy masks describe nearer surface fragments. For normal aperture
 mouths, these polygons identify the exact visible tail-side region. Draw complete
 triangles above the base hull, then the same painted tail region above the flames.
 Select it from the already loaded hull image; do not recolour or reconstruct it.
-Legacy and reverse mouths retain their existing metadata and compositing order;
-there are no animated jet frames.
+Legacy mouths retain their existing metadata and compositing order. Reverse
+exhaust keeps hull-over-flame ordering under its profile below; there are no
+animated jet frames.
 
 - `f` is current speed as a fraction of max speed. No jet at `f = 0`.
 - Jet length in ship units: `length.base + length.scale * f ^ length.exponent`
@@ -322,8 +323,8 @@ there are no animated jet frames.
 - The normal outer material is opaque. Its `normalColor` is derived from the
   existing canonical material over the canonical space background at the
   homepage reference fraction, using the shared raster compositor. This fixes
-  the visible dark shade without changing the canonical Engine RGB values or
-  the reverse material. Engine 1 then multiplies the derived shade's Oklab
+  the visible dark shade without changing the canonical Engine RGB values.
+  The centered reverse profile reuses this derived shade. Engine 1 multiplies its Oklab
   lightness by 0.55 and chroma by 0.9 at the same hue, with sRGB clipping and
   half-even rounding, yielding solid blue-black `#101a2e`. Engine 2/3 colours
   remain unchanged. Medium and core colours retain their existing rules.
@@ -351,14 +352,14 @@ On a light field the jets take `lightField.jets.shipLevels` in
 ([Light fields](galaxies.md#light-fields)).
 
 Light-field normal apertures prepend the same solid normal outer to their
-existing medium/core materials. Its stored legacy alpha is zero, so reverse
-rendering skips that layer and retains its existing two visible materials.
-Only the normal-aperture appearance policy makes the added outer visible.
+existing medium/core materials. Its stored legacy alpha is zero, so
+descriptor-absent reverse rendering skips that layer. Normal apertures and the
+centered reverse adapter supply their opaque outer through the shared helpers.
 
 Light fields keep Engine 1 blue. Engine 2 uses outer `#9e3027`, core
 `#cf4935` to `#ee7960`; Engine 3 uses outer `#91620e`, core `#d49b22` to
-`#f2cf62`. Reverse and legacy mouths retain those two visible layers. Normal apertures
-include the solid normal outer described above.
+`#f2cf62`. Legacy mouths retain those two visible layers. Normal apertures and
+the centered reverse profile include their solid outer as described below.
 
 ### Verification contract
 
@@ -381,20 +382,23 @@ version 1 engine-jet geometry with all 64 headings in the same 96 px frame
 and pivot as the ship. Its compatibility `engineLevels` derive from the
 same `JET_LEVELS` source as `ship-jets.json`.
 
-Every paint uses the exact main-exhaust layers selected for its Engine level
-and field: the forward engine material on dark fields, or the corresponding
-`lightField.jets.shipLevels` entry on light fields. The consumer applies that
-same layer array to retro geometry; paint does not define another exhaust
-palette.
+The root `reverseStyle: "centered-main"` selects the shared reverse-material
+adapter. Its opaque dark band derives from the main engine level's authored
+`normalColor`; medium and core interpolate the selected main or
+`lightField.jets.shipLevels` material. Paint does not define another exhaust
+palette. Descriptor-absent recipes retain the legacy material path.
 
 `retroMouthAxis` derives each wing's half-mouth vector `(±2.75, 0, 0)`
 and forward/outward unit direction `(±sin(10°), -cos(10°), 0)`.
 `jetAttachment` independently selects the near underside or far upper corner
 for reverse exhaust, at model x/y `(±21.44, 20.48)`. Each mouth's `outerCorner`
 is this selected point projected into its heading frame. The common anchor
-uses the widest currently visible selected layer, including a visible halo.
-`coreOutboard` retains the contained outboard-core arrangement for reverse
-exhaust. The compatibility `anchor` uses the base engine's full-speed width.
+uses the widest selected shape, which is opaque at every positive strength.
+All three authored root segments are centered on that same anchor. The width
+ratios are `1 / 0.7734375 / 0.38671875`, derived from the normal core proportion;
+raw widths are `2.4 / 1.85625 / 0.928125`. Relative lengths remain
+`1.1 / 1 / 0.55`. The centered descriptor excludes `coreOutboard` and
+`normalAperture`. The compatibility `anchor` retains the widest base-engine width.
 
 All layers, including the halo, stop at the wing's rear tip-to-notch plane.
 With side `sign` equal to -1 or 1 and local positive Y pointing rearward, keep
@@ -405,9 +409,11 @@ triangles. Apply it consistently through the jet display's pivot and scale;
 the selected visible attachment corner remains fixed. Only the portion behind
 this true rear boundary is removed; there is no additional attachment crop.
 
-The retro length curve is `6.6 + 26.4 f²`, 1.10 times the main curve.
-Layer widths, relative lengths, colours and alpha ramps come from the selected
-main material. Retro rendering adds no wing-edge ink. Actual backward velocity
+Zero strength is off. At positive strength, the retro base reach is
+`33 × (0.45 + 0.70 f)`, or `14.85 + 23.1 f` model units. The active reach floor
+is 45% of the reference full length and full strength reaches 115%; apply each
+layer's relative length once. All adapted bands are opaque, without alpha ramps
+or an outboard-core offset. Retro rendering adds no wing-edge ink. Actual backward velocity
 relative to facing selects retro jets with the existing motion threshold;
 forward motion and reduced-motion behavior retain their contracts. Forward
 roots share the physical rear-wall midpoint above the skirt and collinear base edge,

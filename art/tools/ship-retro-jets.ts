@@ -3,11 +3,23 @@ import { fileURLToPath } from "node:url";
 
 import { anchor, json, round, SHIP_HEADINGS, SHIP_HEADING_CONTRACT, vector } from "./projection.ts";
 import { JET_LENGTH, JET_LEVELS, jetLayers } from "./ship-jet-layers.ts";
-import { FRAME, jetAttachment, retroMouthAxis } from "./ship-model.ts";
+import { FRAME, jetAttachment, normalJetStation, retroMouthAxis } from "./ship-model.ts";
 
-// Compatibility layers derive from the same source as the forward exhaust. Runtime selects
-// the forward engine/field material and anchors the whole group by its widest visible layer.
-const engineLevels = JET_LEVELS.map((entry) => ({ level: entry.level, layers: jetLayers(entry) }));
+// Shape proportions match the normal flame. Runtime derives opaque reverse materials from
+// the selected main engine/field layers and anchors the whole group at the existing corner.
+const coreRatio = normalJetStation({ yaw: 0, thrust: false }, 1).coreWidth;
+const engineLevels = JET_LEVELS.map((entry) => {
+  const layers = jetLayers(entry);
+  const core = layers.find((layer) => layer.name === "core")!;
+  return {
+    level: entry.level,
+    layers: layers.map((layer, index) => ({
+      ...layer,
+      width: index === 0 ? layer.width : (layers[0]!.width * coreRatio * layer.width) / core.width,
+    })),
+  };
+});
+const fullLength = round((JET_LENGTH.base + JET_LENGTH.scale) * 1.1);
 const fallbackWidth = Math.max(...engineLevels[0]!.layers.map((layer) => layer.width));
 const headings = Array.from({ length: SHIP_HEADINGS }, (_, yaw) => ({
   index: yaw,
@@ -32,7 +44,6 @@ const headings = Array.from({ length: SHIP_HEADINGS }, (_, yaw) => ({
       axis,
       half,
       outerCorner,
-      coreOutboard: true,
       rearClip: {
         normal,
         constant: normal[0]! * outerCorner[0] + normal[1]! * outerCorner[1],
@@ -42,12 +53,13 @@ const headings = Array.from({ length: SHIP_HEADINGS }, (_, yaw) => ({
 }));
 const contract = {
   version: 1,
+  reverseStyle: "centered-main",
   shipHeadings: SHIP_HEADING_CONTRACT,
   frame: FRAME,
   length: {
-    base: round(JET_LENGTH.base * 1.1),
-    scale: round(JET_LENGTH.scale * 1.1),
-    exponent: JET_LENGTH.exponent,
+    base: round(fullLength * 0.45),
+    scale: round(fullLength * 0.7),
+    exponent: 1,
   },
   engineLevels,
   headings,

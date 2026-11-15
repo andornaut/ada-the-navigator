@@ -1,4 +1,10 @@
-import { jetShapeLayerAlpha, jetShapeLayerColor, jetShapePolygons } from "./jetGeometry.ts";
+import {
+  centeredReverseLayers,
+  jetShapeLayerAlpha,
+  jetShapeLayerColor,
+  jetShapePolygons,
+  validCenteredReverseShapes,
+} from "./jetGeometry.ts";
 export {
   coreOutboardOffset,
   jetLayerAlpha,
@@ -73,6 +79,8 @@ export interface ShipJets extends JetGeometry {
 
 /** Art's ship-jets.json for Ada: the geometry and her layers by Engine level. */
 export interface EngineJets extends JetGeometry {
+  /** Reverse-only centered opaque shapes using selected main exhaust materials. */
+  reverseStyle?: "centered-main";
   /** Layers by Engine level, index 0 for level 1 (`engineLevels`), never empty. */
   engineLevels: readonly (readonly JetLayer[])[];
 }
@@ -215,7 +223,7 @@ export function engineJets(jets: EngineJets, level: number): ShipJets {
   };
 }
 
-/** Geometry follows travel; material always follows the main exhaust's selected level and field. */
+/** Travel selects geometry; explicit reverse style adapts selected main material to its shapes. */
 export function travelJets(
   main: EngineJets | undefined,
   reverse: EngineJets | undefined,
@@ -227,10 +235,16 @@ export function travelJets(
   if (!main || !geometry) {
     return undefined;
   }
-  return {
-    ...engineJets(geometry, level),
-    layers: levelLayers(fieldLevels ?? main.engineLevels, level),
-  };
+  const selected = levelLayers(fieldLevels ?? main.engineLevels, level);
+  const layers =
+    direction === "reverse" && geometry.reverseStyle === "centered-main"
+      ? centeredReverseLayers(
+          levelLayers(main.engineLevels, level),
+          selected,
+          levelLayers(geometry.engineLevels, level),
+        )
+      : selected;
+  return layers ? { ...engineJets(geometry, level), layers } : undefined;
 }
 
 function readOccluders(value: unknown): Vec[][] | undefined {
@@ -375,11 +389,30 @@ export function readEngineJets(value: unknown): EngineJets | undefined {
   const root = fields(value);
   const geometry = readJetGeometry(root);
   const engineLevels = readLevelLayers(root?.engineLevels);
+  const reverseStyle = root?.reverseStyle;
+  if (
+    reverseStyle !== undefined &&
+    (reverseStyle !== "centered-main" ||
+      !geometry ||
+      !engineLevels ||
+      geometry.headings.some((mouths) =>
+        mouths.some(
+          (mouth) =>
+            !mouth.outerCorner ||
+            !mouth.rearClip ||
+            mouth.coreOutboard !== undefined ||
+            mouth.normalAperture !== undefined,
+        ),
+      ) ||
+      engineLevels.some((layers) => !validCenteredReverseShapes(layers)))
+  ) {
+    return undefined;
+  }
   return geometry &&
     engineLevels &&
     readShipHeadingContract(root?.shipHeadings) &&
     geometry.headings.length === SHIP_HEADINGS
-    ? { ...geometry, engineLevels }
+    ? { ...geometry, engineLevels, ...(reverseStyle === undefined ? {} : { reverseStyle }) }
     : undefined;
 }
 
