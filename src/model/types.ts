@@ -364,8 +364,8 @@ export interface DialogueState {
   context: string;
 }
 export interface GameState {
-  /** The save format; a save of another version is reset, not migrated. */
-  version: 12;
+  /** Current save format; only the explicitly supported prior geography format migrates. */
+  version: 13;
   mode: "home" | "space";
   selectedGalaxy: GalaxyNumber;
   unlocked: GalaxyNumber[];

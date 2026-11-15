@@ -106,7 +106,8 @@ import {
   teleport as teleportFlight,
   undockFlight,
 } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
+import { flightEncounterSeed, flightWorldContext } from "./flightTopology.ts";
+import { freshGalaxyGeography, initializeGalaxyGeography } from "./galaxyGeography.ts";
 import {
   INDICATOR_SOURCES,
   type IndicatorTarget,
@@ -268,10 +269,15 @@ export function newGameState(): GameState {
     jobs: { boards: {}, made: 0 },
     mode: "home",
     notice: "",
-    progress: Object.fromEntries(GALAXY_NUMBERS.map((id) => [id, progress()])) as Record<
-      GalaxyNumber,
-      GalaxyProgress
-    >,
+    progress: Object.fromEntries(
+      GALAXY_NUMBERS.map((id) => [
+        id,
+        {
+          ...progress(),
+          geography: freshGalaxyGeography(crypto.getRandomValues(new Uint32Array(1))[0] ?? 1),
+        },
+      ]),
+    ) as Record<GalaxyNumber, GalaxyProgress>,
     prologueSeen: false,
     seenConversations: [],
     selectedGalaxy: 1,
@@ -1643,12 +1649,17 @@ export class GameModel {
     const randomSeed = crypto.getRandomValues(new Uint32Array(1))[0] ?? 1;
     const seed = randomSeed === this.previousSeed ? (randomSeed + 1) >>> 0 : randomSeed;
     this.previousSeed = seed;
+    const geography = initializeGalaxyGeography(
+      () => crypto.getRandomValues(new Uint32Array(1))[0] ?? 1,
+      this.current,
+    );
     this.state.flight = createFlight(
       this.content,
       this.state.selectedGalaxy,
-      seed,
+      geography.seed,
       this.current,
       this.state.economy,
+      seed,
     );
     delete this.state.economy.cargo;
     this.state.mode = "space";
@@ -1722,7 +1733,14 @@ export class GameModel {
       this.current.replayScene = scene.id;
     }
     this.pullLoadout();
-    this.previousSeed = this.state.flight?.seed ?? this.previousSeed;
+    if (this.state.flight) {
+      this.previousSeed = flightEncounterSeed(this.state.flight);
+      this.current.geography ??= {
+        seed: this.state.flight.seed,
+        sitePolicy: "legacy-fixed",
+        version: 1,
+      };
+    }
     this.talk.endFlight();
     this.state.mode = "home";
     this.state.flight = null;

@@ -21,12 +21,12 @@ describe("save boundary", () => {
     expect(restored).toEqual(model.state);
     expect(restored?.flight).not.toBe(model.state.flight);
   });
-  it("keeps schema 12 flat and rejects explicit periodic metadata before its atomic reader release", () => {
+  it("keeps the current schema flat and rejects explicit periodic metadata before its atomic reader release", () => {
     const model = new GameModel(CONTENT);
     model.startGalaxy(1);
     playOpening(model);
     const original = model.saveDocument();
-    expect(original.version).toBe(12);
+    expect(original.version).toBe(SAVE_VERSION);
     expect(restoreSave(original)).toEqual(original);
     original.flight!.topology = { kind: "torus", side: GALAXY_SIDE, version: 1 };
     expect(restoreSave(original)).toBeNull();

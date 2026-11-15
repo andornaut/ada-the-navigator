@@ -2012,9 +2012,11 @@ export function createFlight(
     ownedWeapons: [],
     weapon: "laser",
   },
+  encounterSeed?: number,
 ): FlightState {
   const levels = structuredClone(loadout.levels);
   const flight: FlightState = {
+    ...(encounterSeed === undefined ? {} : { encounterSeed }),
     ammo: clampAmmo(ECONOMY, loadout.ammo),
     cargo: loadout.cargo ?? 0,
     ...(loadout.shieldRechargeCredit === undefined

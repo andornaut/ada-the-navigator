@@ -20,6 +20,7 @@ import { settlementById } from "./andromedaPlaces.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { holodisksHeld } from "./conversations.ts";
 import { enemyDefeated } from "./enemyAi.ts";
+import { adoptLegacyGeography, validGalaxyGeography } from "./galaxyGeography.ts";
 import { ACTIVE_CHUNK_RADIUS, encounterOf, persistentObject } from "./geography.ts";
 import { isLandmark } from "./landmarks.ts";
 import { validExplored } from "./map.ts";
@@ -43,7 +44,7 @@ import { chunkCoordinates, validVisitedPages } from "./visited.ts";
 import { clampAmmo, UPGRADE_WEAPONS } from "./weapons.ts";
 
 /** The save format this build writes and reads. */
-export const SAVE_VERSION: GameState["version"] = 12;
+export const SAVE_VERSION: GameState["version"] = 13;
 
 function record(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -574,8 +575,8 @@ function optionalTasks(value: unknown): boolean {
 }
 
 /**
- * Restores a complete snapshot of the current save version, or null. A save of any other
- * version, or one with a missing or malformed field, is rejected whole: a partial restore can
+ * Restores the current format or explicitly migrates the previous geography format. Unsupported
+ * versions and missing or malformed fields are rejected whole: a partial restore can
  * invalidate quest state. The result shares no references with `saved`.
  */
 export function restoreSave(saved: unknown): GameState | null {
@@ -585,6 +586,29 @@ export function restoreSave(saved: unknown): GameState | null {
 export function restoreGameSave(content: GameContent, saved: unknown): GameState | null {
   try {
     const value: unknown = typeof saved === "string" ? JSON.parse(saved) : structuredClone(saved);
+    if (record(value) && value.version === 12) {
+      if (
+        !record(value.progress) ||
+        !GALAXY_NUMBERS.every(
+          (galaxy) =>
+            record(value.progress) &&
+            record(value.progress[galaxy]) &&
+            !Object.hasOwn(value.progress[galaxy], "geography"),
+        ) ||
+        (value.flight !== null &&
+          (!record(value.flight) ||
+            !GALAXY_NUMBERS.includes(value.flight.galaxy as GalaxyNumber) ||
+            !Number.isSafeInteger(value.flight.seed) ||
+            !nonnegative(value.flight.seed)))
+      ) {
+        return null;
+      }
+      adoptLegacyGeography(
+        value.progress as unknown as GameState["progress"],
+        value.flight as GameState["flight"],
+      );
+      value.version = SAVE_VERSION;
+    }
     if (
       !record(value) ||
       value.version !== SAVE_VERSION ||
@@ -616,6 +640,7 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
       const p = value.progress[id];
       if (
         !record(p) ||
+        (p.geography !== undefined && !validGalaxyGeography(p.geography)) ||
         (p.andromeda !== undefined && (id !== 5 || !validAndromedaProgress(p.andromeda))) ||
         (p.needle !== undefined && (id !== 4 || !readNeedleChapterProgress(p.needle))) ||
         (p.phantom !== undefined &&
@@ -685,7 +710,7 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
       const f = value.flight;
       if (
         !record(f) ||
-        // Version 12 never reads a partially integrated periodic chart.
+        // Save migration never opts a legacy chart into periodic geometry.
         f.topology !== undefined ||
         (f.needle !== undefined && (f.galaxy !== 4 || !validNeedleFlight(f.needle))) ||
         (f.phantom !== undefined && (f.galaxy !== 6 || !validPhantomFlight(f.phantom))) ||

@@ -71,6 +71,7 @@ describe("saved equipped enemy levels", () => {
 
   it("roundtrips independent encounter seed bounds without inserting one in legacy flights", () => {
     const { saved } = snapshot();
+    delete saved.flight!.encounterSeed;
     expect(restoreSave(saved)).toEqual(saved);
     expect(Object.hasOwn(restoreSave(saved)!.flight!, "encounterSeed")).toBe(false);
     for (const encounterSeed of [0, 0xffffffff]) {
