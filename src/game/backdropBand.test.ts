@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import { describe, expect, it } from "vitest";
 
 import { GALAXY_MANIFESTS, publicJson } from "../testing/publicArt.ts";
@@ -15,6 +17,19 @@ const file = publicJson(needle.links.needleBand!);
 const band = readBackdropBand(file)!;
 
 describe("Needle's band", () => {
+  it("preserves the complete fixed-seed render-layer star arrays", () => {
+    for (const [index, [stars, count, digest]] of (
+      [
+        [band.specks, 439, "dfb3338a49eeccf5f4f1bf4f74db5af941f9f488903facd12451d1eba8678e0f"],
+        [band.stars, 4, "7082c3ba001e5181c58c533066bd113ed9c0ac70ce19407dffde67cdbd5809e6"],
+      ] as const
+    ).entries()) {
+      const placed = bandStars(band, stars, BAND_AREA, BAND_SEED + index);
+      expect(placed).toHaveLength(count);
+      expect(createHash("sha256").update(JSON.stringify(placed)).digest("hex")).toBe(digest);
+    }
+  });
+
   it("reads Art's band: -6 degrees through (0.5, 0.4) of the play view, three layers", () => {
     expect(band).toMatchObject({ angle: -6, color: "#CFC5BD", through: [0.5, 0.4] });
     expect(band.profile.map(({ sigma }) => sigma)).toEqual([30, 7, 1.2]);

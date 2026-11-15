@@ -1,3 +1,5 @@
+import { seededRandom } from "@andornaut/game-kit/random";
+
 import { SCREEN } from "../data/screen.ts";
 
 // Needle's edge-on band (art/needle.md "Space look"): one thin line across the sky at a fixed
@@ -123,18 +125,6 @@ export interface BandStar {
   readonly y: number;
 }
 
-// A fixed-seed generator (mulberry32), so the band looks the same on every flight.
-function random(seed: number): () => number {
-  let state = seed >>> 0;
-  return () => {
-    state = (state + 0x6d2b79f5) >>> 0;
-    let t = state;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
 /** The fixed seed of every band's stars. */
 export const BAND_SEED = 20261112;
 
@@ -166,7 +156,7 @@ export function bandStars(
   area: { readonly height: number; readonly width: number; readonly x: number; readonly y: number },
   seed: number,
 ): BandStar[] {
-  const next = random(seed);
+  const next = seededRandom(seed);
   const { direction, point } = bandLine(band, area);
   const length = area.width / Math.abs(direction.x);
   const count = Math.round(length / stars.spacing);
