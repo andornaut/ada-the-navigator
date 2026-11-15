@@ -917,6 +917,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     } else {
       dropDetails = mountStationDropDetails(
         {
+          active: () => open && !disposed && confirm !== null && "drop" in confirm,
           artReady: applyButtonSkin(parent),
           availability: () =>
             stationJobsShown(options.services())

@@ -61,6 +61,7 @@ export function stationDropTree(
 
 export function mountStationDropDetails(
   context: {
+    readonly active?: () => boolean;
     readonly artReady: Promise<void>;
     readonly availability: () => ControlAvailability;
     readonly onCancel: () => void;
@@ -83,7 +84,11 @@ export function mountStationDropDetails(
     {
       actions,
       availability: (action) =>
-        action === "drop-confirm" ? context.availability() : { kind: "available" },
+        context.active?.() === false
+          ? { kind: "omitted" }
+          : action === "drop-confirm"
+            ? context.availability()
+            : { kind: "available" },
       presentButton: presentAdaButton,
     },
     { artReady: context.artReady, host, measure: inspector.measure },

@@ -15,10 +15,15 @@ Runtime and fixture callers supply the same data, production styles, fonts, skin
 view-unit bridge and action availability. `presentAdaButton` supplies the actual
 button presentation; the published availability binding guards execution.
 `settle()` waits for fonts, explicit art readiness and image decoding before fitting
-updated descendants. Reconciliation retains keyed component and slot identities.
+updated descendants. The caller's active-view predicate blocks dormant actions.
+Reconciliation retains keyed component and slot identities.
 
 ```ts
-const detail = mountStationDropDetails({ artReady, availability, onCancel, onDrop }, host, data);
+const detail = mountStationDropDetails(
+  { active, artReady, availability, onCancel, onDrop },
+  host,
+  data,
+);
 await detail.settle();
 const evidence = detail.inspect(viewport);
 ```
