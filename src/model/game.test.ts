@@ -22,7 +22,8 @@ import {
 } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { needleCourses } from "./needle.ts";
-import type { FlightState, SpaceObject } from "./types.ts";
+import { rememberRequiredSite } from "./requiredEncounterPlans.ts";
+import type { FlightState } from "./types.ts";
 import { collectWeapon } from "./weapons.ts";
 
 /** Test support: admit the saved required encounter, then disable its actual noncombat-fixture guard. */
@@ -628,78 +629,79 @@ it("keeps remaining whale debris aligned when an unknown encounter is placed ahe
   });
 });
 
-it("discovers a cleared required approach after reversing away from its first location", () => {
+it("discovers a cleared required approach at its fixed canonical site", () => {
   const content = structuredClone(CONTENT);
   content.tuning.introFreshDistance = 8;
   content.tuning.flight.objectsPerChunk = 0;
   const model = new GameModel(content);
   launch(model);
   const flight = model.state.flight!;
-  for (let i = 0; i < 100 && !flight.objects.some((o) => o.id === "growers"); i++) {
-    model.step(0.1, { ...idle, move: { x: 1, y: 0 } });
-  }
-  const pending = flight.objects.find((o) => o.id === "growers");
-  expect(pending).toBeDefined();
-  const guard = flight.objects.find((object) => object.routeId === "growers")!;
-  expect(guard.enemy).toBeDefined();
-  guard.enemy!.hp = 0;
-  const originalX = pending!.x;
-  expect(originalX - flight.player.x).toBeGreaterThan(content.tuning.chunkSize);
+  const pending = ensureDestination(content, "growers", flight);
+  const guard = ensureRouteEncounter(content, "growers", flight);
+  expect(guard?.enemy).toBeDefined();
+  guard!.enemy!.disabled = true;
+  const point = { x: pending.x, y: pending.y };
+  expect(model.state.progress[1].requiredSites?.growers).toEqual(point);
+  flight.player = { x: point.x + content.tuning.chunkSize * 2, y: point.y };
+  flight.velocity = { x: 0, y: 0 };
+  expect(flight.player.x - point.x).toBeGreaterThan(content.tuning.chunkSize);
   expect(model.state.progress[1].known).toEqual([]);
   expect(model.state.dialogue).toBeNull();
   for (let i = 0; i < 300 && !model.state.dialogue; i++) {
-    model.step(0.1, { ...idle, move: { x: -1, y: 0 } });
+    const delta = { x: point.x - flight.player.x, y: point.y - flight.player.y };
+    const gap = Math.hypot(delta.x, delta.y);
+    model.step(0.1, { ...idle, move: { x: delta.x / gap, y: delta.y / gap } });
   }
   const discovered = flight.objects.find((o) => o.id === "growers")!;
-  expect(discovered.x).toBeLessThan(originalX);
+  expect({ x: discovered.x, y: discovered.y }).toEqual(point);
+  expect(model.state.progress[1].requiredSites?.growers).toEqual(point);
   expect(model.state.progress[1].known).toEqual(["growers"]);
   expect(model.state.progress[1].discoveries).toBe(1);
   expect(model.state.progress[1].introduced).toBe(true);
+  expect(model.state.dialogue).not.toBeNull();
   expect(model.state.dialogue?.text).toBe(content.chapters[1]!.dialogue.grower?.text);
   expect(model.state.dialogue?.context).toBe("grower");
 });
 
-it("wakes an inactive guard before relocating its pending destination", () => {
+it("retains the full inactive formation at its canonical site through Continue and a visit", () => {
   const content = structuredClone(CONTENT);
   content.tuning.introFreshDistance = 0;
   content.tuning.flight.objectsPerChunk = 0;
   const model = new GameModel(content);
+  const point = { x: content.tuning.chunkSize * 20, y: 0 };
+  rememberRequiredSite(model.state.progress[1], "growers", point);
   launch(model);
   const flight = model.state.flight!;
-  flight.objects = [];
   const target = ensureDestination(content, "growers", flight);
   const guard = ensureRouteEncounter(content, "growers", flight)!;
-  const shift = content.tuning.chunkSize * 20;
-  target.x += shift;
-  guard.x += shift;
-  guard.enemy!.position.x += shift;
-  guard.enemy!.home.x += shift;
+  expect(guard?.enemy).toBeDefined();
+  expect({ x: target.x, y: target.y }).toEqual(point);
   guard.enemy!.hardpoints[1]!.hp = 1;
   guard.enemy!.hardpoints[1]!.cooldown = 1.25;
-  const parts = structuredClone(guard.enemy!.hardpoints);
-  const previousTarget = { x: target.x, y: target.y };
-  const previousGuard = { x: guard.x, y: guard.y };
-  flight.objects = [target];
-  flight.world.notables[guard.id] = guard;
+  const formation = flight.objects.filter(
+    (actor) => actor.id === guard.id || actor.enemy?.escortOf === guard.id,
+  );
+  expect(formation.length).toBeGreaterThanOrEqual(1);
+  expect(formation.length).toBeLessThanOrEqual(3);
+  const before = structuredClone(formation);
+  syncFlightRegion(content, flight);
+  expect(flight.objects).not.toContain(guard);
+  expect(flight.world.notables[guard.id]).toEqual(before.find((actor) => actor.id === guard.id));
   const resumed = relaunch(content, model.save());
   expect(resumed.state).toEqual(model.state);
-  resumed.step(0.05, { ...idle, move: { x: 1, y: 0 } });
   const next = resumed.state.flight!;
-  const movedTarget = next.objects.find((object) => object.id === "growers")!;
-  const retained = [
-    ...next.objects,
-    ...Object.values(next.world.notables).filter(
-      (object): object is SpaceObject => object !== null,
-    ),
-  ];
-  const guards = retained.filter((object) => object.id === guard.id);
-  expect(guards).toHaveLength(1);
-  const movedGuard = guards[0]!;
-  expect(movedTarget.x).toBeLessThan(previousTarget.x);
-  expect(movedGuard).toBeDefined();
-  expect(movedGuard.enemy!.hardpoints).toEqual(parts);
-  expect(movedGuard.x - previousGuard.x).toBeCloseTo(movedTarget.x - previousTarget.x);
-  expect(movedGuard.y - previousGuard.y).toBeCloseTo(movedTarget.y - previousTarget.y);
+  expect(resumed.state.progress[1].requiredSites?.growers).toEqual(point);
+  next.player = { ...point };
+  syncFlightRegion(content, next);
+  const restored = before.map(({ id }) => next.objects.find((actor) => actor.id === id));
+  expect(restored).toEqual(before);
+  expect(next.objects.filter((actor) => actor.id === guard.id)).toHaveLength(1);
+  const currentTarget = next.objects.find((actor) => actor.id === "growers")!;
+  expect({ x: currentTarget.x, y: currentTarget.y }).toEqual(point);
+  expect(routeBlocked("growers", next)).toBe(true);
+  expect(resumed.state.progress[1].introduced).toBe(false);
+  resumed.step(0.05, idle);
+  expect(resumed.state.progress[1].requiredSites?.growers).toEqual(point);
   expect(routeBlocked("growers", next)).toBe(true);
   expect(resumed.state.progress[1].introduced).toBe(false);
   expect(relaunch(content, resumed.save()).state).toEqual(resumed.state);
