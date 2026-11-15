@@ -4,9 +4,9 @@ import { describe, expect, it } from "vitest";
 
 import { ASTEROID_SIZES } from "../data/asteroidCatalog.ts";
 import { ASTEROID_LOOT } from "../data/asteroidLoot.ts";
-import { oreBundleMix, rollAsteroidLoot } from "./asteroidLoot.ts";
+import { oreQuantityScale, rollAsteroidLoot } from "./asteroidLoot.ts";
 
-const rawContext = { ...ASTEROID_LOOT, oreBundleMultiplier: 1 };
+const rawContext = { ...ASTEROID_LOOT, oreQuantityMultiplier: 1 };
 
 /** Partitions every classified unit outcome and every residual interval, without sampling. */
 function distributionProof() {
@@ -14,7 +14,8 @@ function distributionProof() {
   for (const size of ASTEROID_SIZES) {
     const { minimum, weights } = ASTEROID_LOOT.totals[size];
     const cap = minimum + weights.length - 1;
-    const mix = oreBundleMix(ASTEROID_LOOT, size);
+    const scale = { huge: 74 / 99, large: 29 / 39, medium: 14 / 19, small: 3 / 4 }[size];
+    expect(oreQuantityScale(ASTEROID_LOOT, size)).toBeCloseTo(scale, 12);
     const p = ASTEROID_LOOT.oreChance;
     const expectedTotal = { huge: 5, large: 4, medium: 3, small: 2 }[size];
     let start = 0,
@@ -45,10 +46,9 @@ function distributionProof() {
         beforeAppearance += probability * Number(ore >= 5);
         beforeSingles += probability * (ore % 5);
         beforeMax += probability * Number(total === cap);
-        const lower = Math.max(Math.floor(ore / 5) * 5, minimum - stardust);
-        const upper = (Math.floor(ore / 5) + 1) * 5;
-        const eligible = lower < ore && upper + stardust <= cap;
-        const intervals = eligible ? [0, (mix * (ore - lower)) / (upper - lower), mix, 1] : [0, 1];
+        const protectedOne = minimum === 1 && ore === 1 && stardust === 0;
+        const target = protectedOne ? 1 : ore * scale;
+        const intervals = [0, target - Math.floor(target), 1];
         let conditionalOre = 0;
         for (let segment = 1; segment < intervals.length; segment++) {
           const width = intervals[segment]! - intervals[segment - 1]!;
@@ -78,9 +78,7 @@ function distributionProof() {
           const actualTotal = actual.ore + actual.stardust;
           expect(actualTotal).toBeGreaterThanOrEqual(minimum);
           expect(actualTotal).toBeLessThanOrEqual(cap);
-          if (size === "small") {
-            expect(actual).toEqual(original);
-          }
+          expect(actual.ore).toBeLessThanOrEqual(original.ore);
           conditionalOre += width * actual.ore;
           const joint = probability * width;
           mass += joint;
@@ -92,27 +90,14 @@ function distributionProof() {
           afterMax += joint * Number(actualTotal === cap);
           support.add(actualTotal);
         }
-        expect(conditionalOre).toBeCloseTo(ore, 12);
+        expect(conditionalOre).toBeCloseTo(target, 12);
       }
     }
     expect(mass).toBeCloseTo(1, 12);
-    expect(oreMean).toBeCloseTo(expectedTotal * 0.75, 12);
+    expect(oreMean).toBeCloseTo(expectedTotal * 0.75 * 0.75, 12);
     expect(stardustMean).toBeCloseTo(expectedTotal * 0.25, 12);
-    expect(afterBundles).toBeCloseTo(beforeBundles * 2, 12);
     expect(afterSingles).toBeCloseTo(oreMean - 5 * afterBundles, 12);
-    expect(afterSingles).toBeLessThanOrEqual(beforeSingles);
-    if (size !== "small") {
-      expect(afterSingles).toBeLessThan(beforeSingles);
-    }
-    expect(mix).toBeCloseTo(
-      {
-        huge: 0.7412009429308717,
-        large: 0.5410030465466034,
-        medium: 0.12789137127970318,
-        small: 0,
-      }[size],
-      12,
-    );
+    expect(afterBundles).toBeLessThanOrEqual(beforeBundles);
     rows.push({
       afterAppearance,
       afterBundles,
@@ -124,8 +109,8 @@ function distributionProof() {
       beforeSingles,
       cap,
       minimum,
-      mix,
       oreMean,
+      scale,
       size,
       stardustMean,
       support: [...support].sort((a, b) => a - b),
@@ -135,14 +120,14 @@ function distributionProof() {
   return rows;
 }
 
-describe("compensated five-ore distribution", () => {
-  it("doubles expected pickup count with exact conditional ore means and identical Stardust and draw counts", () => {
+describe("reduced ore quantity distribution", () => {
+  it("reduces each class ore mean by 25% with identical Stardust and draw counts", () => {
     const rows = distributionProof();
-    const output = process.env.ORE_BUNDLE_PROOF_OUTPUT;
+    const output = process.env.ORE_QUANTITY_PROOF_OUTPUT;
     if (output) {
       const proof = {
         method: "Exact weighted masks and residual intervals; no random or pacing simulation.",
-        metric: "Five-unit pickup count per resource outcome; Huge ten-ore outcomes count twice.",
+        metric: "Ore quantity per resource outcome; five-unit pickups are packing only.",
         rows,
       };
       writeFileSync(output, `${JSON.stringify(proof, null, 2)}\n`);
@@ -150,14 +135,14 @@ describe("compensated five-ore distribution", () => {
   });
 
   it("rejects invalid or infeasible targets rather than silently increasing ore or missing the target", () => {
-    for (const multiplier of [-1, 0, NaN, Infinity]) {
+    for (const multiplier of [-1, NaN, Infinity, 2]) {
       expect(() =>
-        oreBundleMix({ ...ASTEROID_LOOT, oreBundleMultiplier: multiplier }, "huge"),
+        oreQuantityScale({ ...ASTEROID_LOOT, oreQuantityMultiplier: multiplier }, "huge"),
       ).toThrow(RangeError);
     }
-    expect(() => oreBundleMix({ ...ASTEROID_LOOT, oreBundleMultiplier: 100 }, "huge")).toThrow(
-      /exceeds/,
-    );
-    expect(oreBundleMix(rawContext, "huge")).toBe(0);
+    expect(() =>
+      oreQuantityScale({ ...ASTEROID_LOOT, oreQuantityMultiplier: 0 }, "medium"),
+    ).toThrow(/minimum/);
+    expect(oreQuantityScale(rawContext, "huge")).toBe(1);
   });
 });

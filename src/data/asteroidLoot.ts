@@ -1,10 +1,10 @@
 import type { AsteroidSize } from "./asteroidCatalog.ts";
 
 export interface AsteroidLootContext {
-  /** Expected five-unit pickup count relative to the original ore roll. */
-  readonly oreBundleMultiplier: number;
+  /** Expected ore quantity relative to the original ore roll. */
+  readonly oreQuantityMultiplier: number;
   readonly oreChance: number;
-  /** Relative original total-yield weights, before ore redistribution. */
+  /** Relative original total-yield weights, before ore quantity reduction. */
   readonly totals: Readonly<
     Record<
       AsteroidSize,
@@ -16,10 +16,10 @@ export interface AsteroidLootContext {
   >;
 }
 
-/** Original units split independently; ore redistribution preserves conditional expected ore. */
+/** Raw units split independently before the class-wide ore quantity reduction. */
 export const ASTEROID_LOOT: AsteroidLootContext = {
-  oreBundleMultiplier: 2,
   oreChance: 0.75,
+  oreQuantityMultiplier: 0.75,
   totals: {
     huge: { minimum: 1, weights: [5, 8, 12, 36, 14, 2, 2, 2, 3, 16] },
     large: { minimum: 1, weights: [10, 14, 19, 20, 16, 10, 3, 8] },

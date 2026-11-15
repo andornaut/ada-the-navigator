@@ -66,7 +66,7 @@ wreck never pays again.
 Discovery caches are rare. Resource-yield asteroids first roll a total using
 these relative weights. Each array follows the listed total-unit range in
 ascending order and sums to 100. The maximum chances in this table describe
-only that initial roll, before ore redistribution.
+only that initial roll, before ore quantity reduction.
 
 | Size   | Initial resource units | Relative weights                 | Initial chance of maximum |
 | ------ | ---------------------- | -------------------------------- | ------------------------- |
@@ -77,33 +77,26 @@ only that initial roll, before ore redistribution.
 
 Each initial resource unit independently becomes ore with probability 0.75 or
 Stardust with probability 0.25. `ASTEROID_LOOT.oreChance` defines that split.
-After the ore redistribution below, expected units per resource outcome are:
+Ore quantity is then reduced by 25% in expectation for every size class.
+`ASTEROID_LOOT.oreQuantityMultiplier` is 0.75, independent of the initial split.
+Expected units per resource outcome are:
 
-| Size   | Ore  | Stardust | Total |
-| ------ | ---- | -------- | ----- |
-| Small  | 1.5  | 0.5      | 2     |
-| Medium | 2.25 | 0.75     | 3     |
-| Large  | 3    | 1        | 4     |
-| Huge   | 3.75 | 1.25     | 5     |
+| Size   | Ore    | Stardust | Total  |
+| ------ | ------ | -------- | ------ |
+| Small  | 1.125  | 0.5      | 1.625  |
+| Medium | 1.6875 | 0.75     | 2.4375 |
+| Large  | 2.25   | 1        | 3.25   |
+| Huge   | 2.8125 | 1.25     | 4.0625 |
 
-`ASTEROID_LOOT.oreBundleMultiplier` is 2: for medium, large and huge rocks,
-redistribute ore to double the expected number of five-ore pickups relative to
-these same initial weights with redistribution disabled. This is not a target
-of doubling the chance of seeing at least one pickup. Huge ten-ore outcomes
-count as two five-ore pickups. Small rocks have no redistribution and cannot
-produce a five-ore pickup under their four-unit cap.
-
-For an original ore amount K and Stardust amount S, the lower ore endpoint is
-`max(5 * floor(K / 5), minimum - S)` and the upper endpoint is the next multiple
-of five above K. Redistribution is eligible only when `upper + S <= cap`.
-Within the derived mix, choose the upper endpoint with probability
-`(K - lower) / (upper - lower)`, otherwise the lower endpoint; outside that mix,
-keep K. `oreBundleMix` derives the bounded mix from the size weights and bundle
-multiplier, rather than storing separate per-size tuning constants. The sampler
-uses the residual uniform value from the last classified resource unit without
-an extra random draw. Expected ore is preserved for every original K/S pair;
-Stardust stays unchanged on each event. Final event totals can differ from the
-initial total, while preserving the size cap, minimum and expected total.
+A non-small raw ore-only-one payout stays one. For each size, let Y be the
+expected raw ore and p the probability of that protected payout. Derive the
+remaining ore scale as `(0.75 * Y - p) / (Y - p)`; small rocks have p = 0.
+Otherwise multiply the raw ore by that scale and round to an integer without
+bias, using the last unit's conditional uniform residual without another random
+draw. The derived scales are 3/4, 14/19, 29/39 and 74/99 from small to huge.
+Stardust is unchanged on every event. All non-small scales exceed one half, so
+ore-only payouts of at least two cannot round to zero. Size caps and the
+non-small minimum remain unchanged. Five-unit pickups have no selection bias.
 Ammo remains an exclusive outcome under its own rules.
 
 Group the resulting ore into pickups worth 5 ore each, with any remainder as
@@ -112,16 +105,6 @@ same fungible ore, collected by normal contact and the tractor beam. The size
 cap counts resource units, not pickup sprites. There is no additive ore bonus
 or extra Stardust burst. Enemy loot, discovery caches and job rewards keep
 their own rules.
-
-The final distribution per resource outcome is below. Probabilities are
-rounded for display; the canonical sampler and exact enumeration define them.
-
-| Size   | Expected five-ore pickup count | Chance of at least one five-ore pickup | Final chance of maximum total |
-| ------ | ------------------------------ | -------------------------------------- | ----------------------------- |
-| Small  | 0                              | 0%                                     | 2%                            |
-| Medium | 0.0759375                      | 7.59375%                               | 5.89949%                      |
-| Large  | 0.369898681641                 | 36.9898681641%                         | 9.05836%                      |
-| Huge   | 0.542278289795                 | 52.9722835395%                         | 16.45245%                     |
 
 A drop splits its Stardust into whole-Stardust pickups, as evenly as possible with
 the larger pieces first, so one pickup can carry more than 1 Stardust. The number

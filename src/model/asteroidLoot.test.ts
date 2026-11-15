@@ -5,11 +5,13 @@ import { ASTEROID_LOOT } from "../data/asteroidLoot.ts";
 import { rollAsteroidLoot } from "./asteroidLoot.ts";
 import { dropRandom } from "./drops.ts";
 
+const rawContext = { ...ASTEROID_LOOT, oreQuantityMultiplier: 1 };
+
 describe("asteroid destruction loot", () => {
-  it("uses the approved size weights and 75/25 per-unit split", () => {
+  it("keeps the accepted raw class weights and separate split and quantity controls", () => {
     expect(ASTEROID_LOOT).toEqual({
-      oreBundleMultiplier: 2,
       oreChance: 0.75,
+      oreQuantityMultiplier: 0.75,
       totals: {
         huge: { minimum: 1, weights: [5, 8, 12, 36, 14, 2, 2, 2, 3, 16] },
         large: { minimum: 1, weights: [10, 14, 19, 20, 16, 10, 3, 8] },
@@ -19,79 +21,25 @@ describe("asteroid destruction loot", () => {
     });
   });
 
-  it.each(ASTEROID_SIZES)(
-    "selects every original %s total when redistribution is not selected",
-    (size) => {
+  it("retains every raw weighted total boundary and original draw count", () => {
+    for (const size of ASTEROID_SIZES) {
       const { minimum, weights } = ASTEROID_LOOT.totals[size];
       const sum = weights.reduce((a, b) => a + b, 0);
-      expect(sum).toBe(100);
-      expect(weights.at(-1)).toBe({ huge: 16, large: 8, medium: 4, small: 2 }[size]);
       let start = 0;
       weights.forEach((weight, index) => {
-        for (const fraction of [
-          start / sum,
-          (start + weight / 2) / sum,
-          (start + weight) / sum - 1e-8,
-        ]) {
+        for (const fraction of [start / sum, (start + weight) / sum - 1e-8]) {
           let calls = 0;
-          const result = rollAsteroidLoot(ASTEROID_LOOT, size, () =>
-            calls++ === 0 ? fraction : 0.75 - Number.EPSILON,
-          );
-          expect(result, `${size}:${fraction}`).toEqual({ ore: minimum + index, stardust: 0 });
+          expect(
+            rollAsteroidLoot(rawContext, size, () => (calls++ === 0 ? fraction : 0.5)),
+          ).toEqual({ ore: minimum + index, stardust: 0 });
           expect(calls).toBe(minimum + index + 1);
         }
         start += weight;
       });
-    },
-  );
+    }
+  });
 
-  it.each(ASTEROID_SIZES)(
-    "retains the original %s split outside the redistribution intervals",
-    (size) => {
-      const { minimum, weights } = ASTEROID_LOOT.totals[size];
-      let start = 0,
-        expectedOre = 0,
-        expectedStardust = 0,
-        expectedTotal = 0,
-        mass = 0;
-      weights.forEach((weight, index) => {
-        const total = minimum + index;
-        const fraction = (start + weight / 2) / 100;
-        let zeroOre = 0,
-          allOre = 0;
-        for (let mask = 0; mask < 2 ** total; mask++) {
-          let calls = 0,
-            ore = 0,
-            probability = weight / 100;
-          const result = rollAsteroidLoot(ASTEROID_LOOT, size, () => {
-            if (calls++ === 0) {
-              return fraction;
-            }
-            const isOre = (mask & (1 << (calls - 2))) !== 0;
-            ore += Number(isOre);
-            probability *= isOre ? 0.75 : 0.25;
-            return isOre ? 0.75 - Number.EPSILON : 1 - Number.EPSILON;
-          });
-          expect(result).toEqual({ ore, stardust: total - ore });
-          expect(calls).toBe(total + 1);
-          expectedOre += result.ore * probability;
-          expectedStardust += result.stardust * probability;
-          mass += probability;
-          zeroOre += Number(ore === 0);
-          allOre += Number(ore === total);
-        }
-        expect(zeroOre).toBe(1);
-        expect(allOre).toBe(1);
-        expectedTotal += (total * weight) / 100;
-        start += weight;
-      });
-      expect(mass).toBeCloseTo(1, 12);
-      expect(expectedOre).toBeCloseTo(expectedTotal * 0.75, 12);
-      expect(expectedStardust).toBeCloseTo(expectedTotal * 0.25, 12);
-    },
-  );
-
-  it("allows an empty small drop without consuming unit draws and guarantees other sizes at least one", () => {
+  it("preserves empty small drops, non-small ore-only-one and seeded identity", () => {
     let calls = 0;
     expect(
       rollAsteroidLoot(ASTEROID_LOOT, "small", () => {
@@ -101,22 +49,13 @@ describe("asteroid destruction loot", () => {
     ).toEqual({ ore: 0, stardust: 0 });
     expect(calls).toBe(1);
     for (const size of ["medium", "large", "huge"] as const) {
-      expect(rollAsteroidLoot(ASTEROID_LOOT, size, () => 0.999999)).toEqual({
-        ore: 0,
-        stardust: ASTEROID_LOOT.totals[size].weights.length,
-      });
       expect(rollAsteroidLoot(ASTEROID_LOOT, size, () => 0)).toEqual({ ore: 1, stardust: 0 });
     }
-  });
-
-  it("repeats a destruction's payout from its seed and identity without changing tuning", () => {
     const before = structuredClone(ASTEROID_LOOT);
     const first = rollAsteroidLoot(ASTEROID_LOOT, "huge", dropRandom(77, "loot:asteroid-1"));
     expect(rollAsteroidLoot(ASTEROID_LOOT, "huge", dropRandom(77, "loot:asteroid-1"))).toEqual(
       first,
     );
     expect(ASTEROID_LOOT).toEqual(before);
-    expect(first.ore + first.stardust).toBeGreaterThanOrEqual(1);
-    expect(first.ore + first.stardust).toBeLessThanOrEqual(10);
   });
 });

@@ -428,7 +428,7 @@ Player text calls resource rocks "ore rocks" and their pieces "ore". Resource
 rocks come in medium and large classes, colliding and taking hits
 like asteroids. A medium rock has 3 HP and a large rock 5 HP; two of every three
 are medium. Ore rocks use the same size-based asteroid yields, 75% initial ore
-split and mean-preserving five-ore pickup redistribution in
+split and 25% expected ore quantity reduction in
 [Economy](economy.md#earning-stardust), including the exclusive ammo outcome.
 Cartwheel has no damaging hazards.
 
@@ -1355,10 +1355,11 @@ their current positions without a position jump, with HP and drops unchanged.
 Asteroid resource-yield caps are 4, 6, 8 and 10 units for small, medium, large and
 huge rocks. Small rocks may yield zero; all larger sizes guarantee at least one
 reward, including an ammo-only outcome. An asteroid that drops ammo drops nothing
-else. Initial resource units split 75% ore and 25% Stardust. Mean-preserving ore
-redistribution doubles the expected count of five-ore pickups for medium, large
-and huge rocks, not the chance of seeing at least one. Resulting ore groups into
-five-unit chunks and remainder singles within the size cap, never as a bonus.
+else. Initial resource units split 75% ore and 25% Stardust. Expected ore quantity
+is then reduced by 25% for every size, with Stardust unchanged on each event and
+non-small rocks still giving at least one resource. Resulting ore groups into
+five-unit chunks and remainder singles within the size cap, with no forced bundle
+selection or bonus.
 Chunks use normal contact and tractor collection and count as ordinary fungible
 ore. Larger rocks are more likely to yield larger totals and five-ore chunks,
 but no chunk is guaranteed. Exact weights are in [Economy](economy.md#earning-stardust).
