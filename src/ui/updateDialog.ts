@@ -1,8 +1,17 @@
+import type { ControlAvailability } from "@andornaut/game-kit/runtime/ui/controlPresentation";
+import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
+
 import type { UpdateOffer } from "../pwa/updateOffer.ts";
+import { bindAdaAction } from "./actionBinding.ts";
+import { presentAdaButton } from "./buttonPresentation.ts";
+import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
-import { createActions, createButton, createCard, isTap } from "./modal.ts";
+import { createAdaLayoutPorts } from "./layoutTree.ts";
+import { createActions, createCard, isTap } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
+import { inCurrentView } from "./pressScope.ts";
 import { FONT_ROLES } from "./settings.ts";
+import { type UpdateAction, type UpdateSchema, updateTree } from "./updateTree.ts";
 
 export interface UpdateLabels {
   readonly accept: string;
@@ -36,35 +45,73 @@ export function createUpdateDialog(
   });
   const { body, card, close, frame } = parts;
   card.dataset.dialog = "update";
-  const cancel = createButton(labels.cancel);
-  cancel.dataset.action = "cancel-update";
-  const accept = createButton(labels.accept, "primary");
-  accept.dataset.action = "accept-update";
-  body.append(
-    createActions([
-      { button: accept, role: "primary" },
-      { button: cancel, role: "secondary" },
-    ]),
-  );
+  const actions = createActions([]);
+  body.append(actions);
   modal.append(frame);
   root.append(modal);
   let layer: ReturnType<typeof createModalLayer> | undefined;
   let leaveLayer: (() => void) | undefined;
   let open = false;
+  let disposed = false;
+  const defer = () => offer.defer();
+  const availability = (): ControlAvailability =>
+    disposed || !open || (layer !== undefined && !inCurrentView(root, card))
+      ? { kind: "omitted" }
+      : { kind: "available" };
+  const headerBinding = bindAdaAction(
+    {
+      click: { availability, run: defer },
+      current: () => !disposed && open && inCurrentView(root, close),
+      slopPx: () => SCROLL.dragThreshold * readViewUnit(close),
+    },
+    close,
+  );
+  const ports = createAdaLayoutPorts<UpdateAction>({
+    actions: new Map([
+      ["close-update", defer],
+      ["cancel-update", defer],
+      ["accept-update", () => offer.accept()],
+    ]),
+    availability,
+    presentButton: presentAdaButton,
+  });
+  const tree = updateTree(labels);
+  const mounted = mountLayout<UpdateSchema>(
+    {
+      components: {
+        ...ports.components,
+        update: {
+          create() {
+            return {
+              dispose: parts.dispose,
+              element: frame,
+              slots: { footer: actions },
+              update() {},
+            };
+          },
+          slots: ["footer"],
+        },
+      },
+      host: modal,
+    },
+    tree,
+  );
+  const accept = actions.querySelector<HTMLButtonElement>('[data-action="accept-update"]')!;
   const stop = offer.subscribe((visible) => {
-    if (visible === open) {
+    if (disposed || visible === open) {
       return;
     }
     open = visible;
     // Read before hiding: a hidden card drops its focus to the page.
     const focused = modal.contains(document.activeElement);
     modal.hidden = !visible;
+    mounted.update(tree);
     if (visible) {
       parts.fit();
     }
     if (visible) {
       layer = createModalLayer(modal);
-      leaveLayer = layer.open({ close: () => offer.defer(), focus: accept }, card);
+      leaveLayer = layer.open({ close: defer, focus: accept, live: [close] }, card);
     } else {
       leaveLayer?.();
       leaveLayer = undefined;
@@ -76,16 +123,12 @@ export function createUpdateDialog(
     }
     onOpenChange(visible);
   });
-  const defer = () => offer.defer();
-  close.addEventListener("click", defer);
-  cancel.addEventListener("click", defer);
-  accept.addEventListener("click", () => offer.accept());
   // A full outside tap defers; dragging out of the card does not.
   let outside: { readonly x: number; readonly y: number } | undefined;
-  modal.addEventListener("pointerdown", (event) => {
+  const pointerdown = (event: PointerEvent) => {
     outside = event.target === modal ? { x: event.clientX, y: event.clientY } : undefined;
-  });
-  modal.addEventListener("click", (event) => {
+  };
+  const outsideClick = (event: MouseEvent) => {
     if (
       outside &&
       event.target === modal &&
@@ -94,13 +137,22 @@ export function createUpdateDialog(
       defer();
     }
     outside = undefined;
-  });
+  };
+  modal.addEventListener("pointerdown", pointerdown);
+  modal.addEventListener("click", outsideClick);
   return {
     defer,
     dispose(): void {
+      if (disposed) {
+        return;
+      }
+      disposed = true;
       stop();
       layer?.dispose();
-      parts.dispose();
+      headerBinding.dispose();
+      mounted.dispose();
+      modal.removeEventListener("pointerdown", pointerdown);
+      modal.removeEventListener("click", outsideClick);
       modal.remove();
     },
     isOpen: () => open,
