@@ -1953,7 +1953,7 @@ export class GameModel {
           }
         }
       });
-    } else if (flight.galaxy === 4) {
+    } else if (flight.galaxy === 4 || flight.galaxy === 5) {
       populateRequiredChapterFlight(this.content, this.current, flight, () => {
         chapterRuntime(flight.galaxy)?.init?.({
           content: this.content,
