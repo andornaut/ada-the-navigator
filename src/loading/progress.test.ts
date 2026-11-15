@@ -114,3 +114,22 @@ it("ignores retired operations and mismatched versions without completing a newe
   requiredUpdateActivity("unavailable");
   stop();
 });
+
+it("keeps galaxy transactions separate from root installation and required-update handles", async () => {
+  const { galaxyProgress } = await import("./progress.ts");
+  const root: ProgressSnapshot[] = [],
+    group: ProgressSnapshot[] = [];
+  const stopRoot = installProgress.subscribe((value) => root.push(value));
+  const stopGroup = galaxyProgress.subscribe((value) => group.push(value));
+  offlineActivity("precaching");
+  const handle = galaxyProgress.begin();
+  handle.progress(0.75);
+  const rootCount = root.length;
+  handle.finish();
+  expect(root).toHaveLength(rootCount);
+  expect(root.at(-1)!.active).toBe(true);
+  expect(group.at(-1)!.active).toBe(false);
+  offlineActivity("idle");
+  stopRoot();
+  stopGroup();
+});

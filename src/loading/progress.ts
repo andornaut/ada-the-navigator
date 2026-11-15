@@ -33,6 +33,8 @@ export type WaitedLoad = "boot" | "galaxy";
 export const loadingProgress = createProgressState();
 /** The background work, of unknown total: offline installation and forced updates. */
 export const installProgress = createProgressState();
+/** Optional galaxy transactions own a separate operation on the same background band. */
+export const galaxyProgress = createProgressState();
 
 const colour = (hex: string) => Number.parseInt(hex.slice(1), 16);
 /** The kit's bar style: the frame never shows; the track at its alpha under the cream fill. */
@@ -172,15 +174,21 @@ export function mountLoading(parent: HTMLElement): () => void {
   if (name) {
     bar.element.setAttribute("aria-label", name);
   }
+  const groupedBackground = createLayeredProgress(
+    window,
+    { fullMs: 0 },
+    { background: galaxyProgress, foreground: installProgress },
+  );
   const layered = createLayeredProgress(
     window,
     { fadeMs: BAR_TIMING.fadeMs ?? 0, fullMs: BAR_TIMING.fullMs },
-    { background: installProgress, foreground: loadingProgress },
+    { background: groupedBackground, foreground: loadingProgress },
   );
   const unsubscribe = layered.subscribe(bar.report);
   const stop = () => {
     unsubscribe();
     layered.dispose();
+    groupedBackground.dispose();
     bar.remove();
   };
   return () => {

@@ -30,9 +30,19 @@ describe("the build label", () => {
   it("builds with the deploy gate's commit, shortened to 8 characters", async () => {
     vi.stubEnv(CI_COMMIT_VARIABLE, SHA);
     const { default: pending } = await import("../vite.config.ts");
-    const config = await pending;
+    const config = await pending({ command: "serve", mode: "test" });
+    const devPrecache = (config.plugins as { name: string; apply?: unknown }[]).find(
+      (plugin) => plugin.name === "game-kit-precache",
+    );
+    expect(devPrecache?.apply).toBe("build");
+    const production = await pending({ command: "build", mode: "production" });
+    const grouped = (production.plugins as { name: string; apply?: unknown }[]).find(
+      (plugin) => plugin.name === "game-kit-precache",
+    );
+    expect(typeof grouped?.apply).toBe("function");
     expect(config.define).toMatchObject({
       __APP_VERSION__: JSON.stringify(version),
+      __BUILD_ID__: "undefined",
       __COMMIT__: JSON.stringify("01234567"),
     });
   });

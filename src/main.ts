@@ -28,7 +28,13 @@ import { requiredLoading, requiredReady } from "./loading/required.ts";
 import { validateBootCore } from "./loading/requiredCore.ts";
 import { requireSceneFiles } from "./loading/requiredFiles.ts";
 import { startupFence } from "./loading/startup.ts";
-import { gameShown, launchPhoneApp, requireNewerVersion, setupPhoneApp } from "./pwa/index.ts";
+import {
+  gameShown,
+  launchPhoneApp,
+  recordGalaxyUnlocks,
+  requireNewerVersion,
+  setupPhoneApp,
+} from "./pwa/index.ts";
 import { FRAME_TURN } from "./view/frameTurn.ts";
 
 const mount = document.getElementById("game-canvas");
@@ -92,6 +98,9 @@ export async function prepareGame(
   const initial = await saved;
   if (!attempt.isCurrent() || crashed) {
     return;
+  }
+  if (initial.status === "loaded") {
+    recordGalaxyUnlocks(initial.save.unlocked);
   }
   // A newer-save update must remain available while required fonts or artwork are blocked.
   if (initial.status === "newer") {

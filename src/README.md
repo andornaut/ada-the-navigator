@@ -111,6 +111,20 @@ switches to it and reloads, and Cancel keeps the current version for that visit.
 Otherwise it takes over on a later launch, after every page the old one controls
 has closed. The landing page at `/` is not precached.
 
+Production precaching partitions the complete emitted URL/hash inventory into a
+mandatory shared base and optional galaxy groups. A new install includes Sunflower
+and Whirlpool. Durable saved unlocks stage the route through one galaxy ahead;
+map previews do not schedule downloads. The published worker preserves already
+downloaded groups across updates, including conservative full-cache migration.
+The page and worker share one clean, full Git build identity; missing or dirty
+identity rejects a production build. Development omits group configuration and
+the group client.
+
+Galaxy staging uses the existing bar with its own progress operation. Required
+foreground loads and root installation/update work retain priority. Failed group
+requests retry on durable unlock changes or readiness/resume events, without
+polling or changing registration, activation or save policy.
+
 The play page's lightweight HTML shell shows the existing ship and the kit's
 pending loading bar before game modules download. The live bar covers module,
 update-check and save-read waits, then reports actual loader progress. Image

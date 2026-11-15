@@ -3,6 +3,7 @@
 // as the app does.
 export { securityHeadersPlugin } from "../headers/securityHeadersPlugin.ts";
 export { homePagePlugin, webManifestPlugin } from "../home-page/html.ts";
+export { galaxyPrecacheGroups } from "../pwa/galaxyPrecacheGroups.ts";
 export { ICONS } from "../pwa/icons.ts";
 export { precachePlugin } from "../pwa/precachePlugin.ts";
 export { PHASER_BUILD } from "./phaserBuild.ts";

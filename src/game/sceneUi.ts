@@ -29,6 +29,7 @@ import {
   keepScreenOn,
   offersInstall,
   onInstallStateChange,
+  recordGalaxyUnlocks,
   requireNewerVersion,
   setBackArmed,
   startScreenShown,
@@ -1393,7 +1394,12 @@ export async function flushScene(scene: UiContext): Promise<void> {
   }
   const admitted = scene.entryCurrent;
   const generation = requiredLoading.state.attempt;
-  const result = await saves.save(scene.model.saveDocument());
+  const document = scene.model.saveDocument();
+  const unlocked = [...document.unlocked];
+  const result = await saves.save(document);
+  if (result.status === "saved") {
+    recordGalaxyUnlocks(unlocked);
+  }
   if (
     !admitted() ||
     !requiredReady() ||

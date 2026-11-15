@@ -6,6 +6,7 @@
 // Before game construction or save access, launchPhoneApp checks a build already staged at
 // document launch. Later updates activate through Update now; a newer save is the automatic
 // exception (requireNewerVersion). First visits register only after the prepared reveal.
+import { LOADER_CONFIG } from "@andornaut/game-kit/runtime/load/loaderConfig";
 import { appCannotClose } from "@andornaut/game-kit/runtime/web/pwa/appWindow";
 import {
   backCloseWatcher,
@@ -44,13 +45,16 @@ import { serviceWorkerUrl } from "@andornaut/game-kit/runtime/web/pwa/serviceWor
 import { requestPersistentStorage } from "@andornaut/game-kit/runtime/web/pwa/storagePersistence";
 import type { RequiredUpdateState } from "@andornaut/game-kit/runtime/web/pwa/updateReady";
 
+import type { GalaxyNumber } from "../data/types.ts";
 import {
+  galaxyProgress,
   offlineActivity,
   offlineDownloadProgress,
   requiredUpdateActivity,
   updateActivationActivity,
 } from "../loading/progress.ts";
 import { dispatchPhoneEvent, PHONE_EVENTS } from "./events.ts";
+import { createGalaxyDownloads } from "./galaxyAssetGroups.ts";
 import { presentInstallation } from "./installationPresentation.ts";
 import {
   createUpdateOffer,
@@ -72,6 +76,8 @@ const SERVICE_WORKER_URL = "/sw.js";
 const BACK_GUARD_KEY = "adaBackGuard";
 let flow: InstallFlow | undefined;
 let offlinePlay: OfflinePlay | undefined;
+let galaxyDownloads: ReturnType<typeof createGalaxyDownloads> | undefined;
+let durableUnlocked: readonly GalaxyNumber[] = [];
 let startScreen: StartScreen | undefined;
 let screenWakeLock: ScreenWakeLock | undefined;
 // The forced update's state once a newer save requires it, and who hears it.
@@ -142,7 +148,12 @@ function setupOfflinePlay(): void {
           queueMicrotask(reportInstallation);
         }
       },
-      onOfflineActivity: offlineActivity,
+      onOfflineActivity(activity) {
+        offlineActivity(activity);
+        if (activity === "idle") {
+          void galaxyDownloads?.resume();
+        }
+      },
       onRequireNewer: requiredUpdate,
       onUpdateShown: updateOffer.setVisible,
       serviceWorkerUrl: serviceWorkerUrl(SERVICE_WORKER_URL, undefined),
@@ -152,6 +163,17 @@ function setupOfflinePlay(): void {
   offlinePlay = play;
   reportInstallation();
   startScreen = trackStartScreen(play.flow);
+  if (typeof __BUILD_ID__ === "string" && galaxyDownloads === undefined) {
+    galaxyDownloads = createGalaxyDownloads({
+      buildId: __BUILD_ID__,
+      container: navigator.serviceWorker,
+      eventTarget: page.eventTarget,
+      progress: galaxyProgress,
+      requestTimeoutMs: LOADER_CONFIG.timeout * (LOADER_CONFIG.maxRetries + 1),
+      visibilitySource: page.visibilitySource,
+    });
+    galaxyDownloads.setUnlocked(durableUnlocked);
+  }
 }
 
 // Whether back stays on the game. The start screen with nothing open releases it; flight or an
@@ -308,6 +330,7 @@ export function launchPhoneApp(): Promise<LaunchResult> {
 // worker now.
 export function gameShown(): void {
   offlinePlay?.registrationReady();
+  void galaxyDownloads?.start();
 }
 
 // "installed" while it runs as an installed app, otherwise "prompt" while the browser holds its
@@ -341,4 +364,14 @@ export function startScreenShown(shown: boolean): void {
 // Settings or the cheats card covering the start screen suppress the offer without deferring it.
 export function coverStartScreen(what: StartCover, covering: boolean): void {
   startScreen?.cover(what, covering);
+}
+
+/** Durable save/load facts only; map preview and transient selection never schedule groups. */
+export function recordGalaxyUnlocks(unlocked: readonly GalaxyNumber[]): void {
+  durableUnlocked = [...unlocked];
+  galaxyDownloads?.setUnlocked(durableUnlocked);
+}
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => galaxyDownloads?.dispose());
 }

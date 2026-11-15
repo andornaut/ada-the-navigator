@@ -1,7 +1,11 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
 
-import { precachePlugin as kitPrecachePlugin } from "@andornaut/game-kit/build/precachePlugin";
+import {
+  type HashedFiles,
+  precachePlugin as kitPrecachePlugin,
+} from "@andornaut/game-kit/build/precachePlugin";
+import type { PrecacheGroups } from "@andornaut/game-kit/runtime/web/pwa/precacheGroups";
 import type { Plugin } from "vite";
 
 import { CACHE_POLICY } from "./cachePolicy.ts";
@@ -12,6 +16,11 @@ interface PrecachePluginOptions {
   // The game page's file name in the build output, which is its path under Vite's root, e.g.
   // "play/index.html".
   pageHtmlFile: string;
+  readonly buildId?: string | undefined;
+  readonly groups?: (
+    context: { readonly readJson: (url: string) => unknown },
+    files: HashedFiles,
+  ) => PrecacheGroups;
   // The service worker's entry module (serviceWorker.ts), as an absolute path.
   serviceWorkerSource: string;
 }
@@ -23,10 +32,13 @@ interface PrecachePluginOptions {
 // public/art/, and every preview in public/previews/, into the build output at its own path, for
 // the kit's to name.
 export function precachePlugin({
+  buildId,
+  groups,
   pageHtmlFile,
   serviceWorkerSource,
 }: PrecachePluginOptions): Plugin[] {
   let urls: string[] = [];
+  let emitted: ((url: string) => Uint8Array | undefined) | undefined;
   const emitArt: Plugin = {
     apply: "build",
     async generateBundle() {
@@ -59,7 +71,28 @@ export function precachePlugin({
   return [
     emitArt,
     kitPrecachePlugin({
-      hashedFiles: () => ({ sounds: {}, urls }),
+      ...(groups === undefined
+        ? {}
+        : {
+            buildId,
+            groups: (files) =>
+              groups(
+                {
+                  readJson(url) {
+                    const source = emitted?.(url);
+                    if (!source) {
+                      throw new Error(`Grouped precache JSON is not emitted: ${url}`);
+                    }
+                    return JSON.parse(new TextDecoder().decode(source));
+                  },
+                },
+                files,
+              ),
+          }),
+      hashedFiles: (bundleFile) => {
+        emitted = bundleFile;
+        return { sounds: {}, urls };
+      },
       pageHtmlFile,
       policy: CACHE_POLICY,
       serviceWorkerSource,
