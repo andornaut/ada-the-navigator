@@ -151,3 +151,45 @@ it("reuses one DOM target through identification, clears obsolete nodes and rele
   ui.destroy();
   expect(root.children).toEqual([]);
 });
+
+it.each([
+  { height: 360, width: 720 },
+  { height: 320, width: 667 },
+])(
+  "places distinct live target IDs through the shared layout around actual blocked rectangles: %j",
+  (size) => {
+    const root = new ElementFixture();
+    const doc = {
+      createElement: () => new ElementFixture(),
+      createElementNS: () => new ElementFixture(),
+    } as unknown as Document;
+    const ui = createPennyMarkerLayer(doc, root as unknown as HTMLElement);
+    const area = { ...size, x: 0, y: 0 };
+    const style = {
+      blocked: [{ height: 110, width: size.width, x: 0, y: 250 }],
+      color: "#65c9bf",
+      light: false,
+    };
+    const second = { ...marker, id: "b" };
+    ui.place({ x: 0, y: 0 }, area, style, [marker, second]);
+    const layer = root.children[0]!;
+    const [a, b] = layer.children;
+    expect(layer.children.map((node) => node.dataset.target)).toEqual(["a", "b"]);
+    expect(new Set(layer.children.map((node) => `${node.style.left}:${node.style.top}`)).size).toBe(
+      2,
+    );
+    for (const node of layer.children) {
+      expect(node.dataset.crowded).toBe("false");
+      expect(Number(node.dataset.anchorY)).toBeGreaterThan(250);
+      const y = Number(node.style.top.match(/-?\d+(?:\.\d+)?/u)?.[0]);
+      expect(y + PENNY_MARKER.size / 2).toBeLessThanOrEqual(250);
+    }
+    ui.place({ x: 0, y: 0 }, area, style, [{ ...second, identified: true }, marker]);
+    expect(layer.children[0]).toBe(a);
+    expect(layer.children[1]).toBe(b);
+    expect(b!.dataset.identified).toBe("true");
+    ui.place({ x: 0, y: 0 }, area, style, [second]);
+    expect(layer.children).toEqual([b]);
+    ui.destroy();
+  },
+);

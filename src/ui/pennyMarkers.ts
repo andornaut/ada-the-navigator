@@ -1,11 +1,12 @@
 import type { Rect } from "@andornaut/game-kit/rect";
 
-import { edgePoint, gameAreaPoint } from "../model/edgeMarkers.ts";
 import type { PennyMarker } from "../model/pennyMarkers.ts";
 import type { Vec } from "../model/types.ts";
 import { fromAreaLeft, units } from "./layout/css.ts";
 import { MAP_COLORS, MAP_FACES, MAP_SYMBOL } from "./layout/mapScreen.ts";
 import { PENNY_MARKER } from "./layout/pennyMarkers.ts";
+import { layoutTargetMarkers } from "./layout/targetMarkers.ts";
+import { SPACING } from "./layout/tokens.ts";
 
 const { question: BODY_QUESTION, size: SIZE } = PENNY_MARKER;
 export const PENNY_MARKER_INSET = PENNY_MARKER.inset;
@@ -39,6 +40,7 @@ export function pennyGlyph(marker: PennyMarker): string | null {
 }
 
 interface DirectionStyle {
+  readonly blocked?: readonly Rect[];
   readonly color: string;
   readonly edge?: string | undefined;
   readonly light: boolean;
@@ -70,7 +72,18 @@ export function createPennyMarkerLayer(
         light: false,
       };
       const shown = new Set<string>();
-      for (const marker of markers) {
+      const placements = layoutTargetMarkers(
+        {
+          area,
+          blocked: style.blocked ?? [],
+          gap: SPACING.rowGap,
+          inset: PENNY_MARKER_INSET,
+          player,
+          size: SIZE,
+        },
+        markers,
+      );
+      for (const { anchor, at, crowded, target: marker } of placements) {
         let node = nodes.get(marker.id);
         if (!node) {
           node = doc.createElement("div");
@@ -81,9 +94,9 @@ export function createPennyMarkerLayer(
           layer.append(node);
           nodes.set(marker.id, node);
         }
-        const target = gameAreaPoint(player, marker);
-        const centre = gameAreaPoint(player, player);
-        const at = edgePoint(area, PENNY_MARKER_INSET, centre, target);
+        node.dataset.anchorX = String(anchor.x);
+        node.dataset.anchorY = String(anchor.y);
+        node.dataset.crowded = String(crowded);
         node.dataset.target = marker.id;
         node.dataset.identified = String(marker.identified);
         node.dataset.light = String(style.light);

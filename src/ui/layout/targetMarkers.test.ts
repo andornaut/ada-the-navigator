@@ -63,6 +63,14 @@ describe("unified marker placement", () => {
     expect(result!.anchor.x).toBe(708);
     expect(result!.target.id).toBe("east");
   });
+  it("retains an explicit existing renderer inset instead of placing collision candidates closer to the edge", () => {
+    const [placement] = layoutTargetMarkers({ ...context, blocked: [], inset: 28 }, [
+      marker("a", 4000, -4000),
+    ]);
+    expect(placement!.anchor.x).toBe(692);
+    expect(placement!.at).toEqual(placement!.anchor);
+  });
+
   it("retains all identities with an explicit crowding result when UI occupies the entire area", () => {
     const results = layoutTargetMarkers({ ...context, blocked: [context.area] }, [
       marker("a"),

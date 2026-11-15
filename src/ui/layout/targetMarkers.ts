@@ -4,18 +4,19 @@ import { edgePoint, gameAreaPoint } from "../../model/edgeMarkers.ts";
 import type { TargetMarker } from "../../model/targetMarkers.ts";
 import type { Vec } from "../../model/types.ts";
 
-export interface TargetMarkerPlacement {
+export interface TargetMarkerPlacement<T extends TargetMarker = TargetMarker> {
   /** The actual direction is retained when collision layout displaces the badge. */
   readonly anchor: Vec;
   readonly at: Vec;
   readonly crowded: boolean;
-  readonly target: TargetMarker;
+  readonly target: T;
 }
 export interface TargetMarkerLayout {
   readonly area: Rect;
   /** Actual HUD and dialogue footprints, in the same logical coordinates as area. */
   readonly blocked: readonly Rect[];
   readonly gap: number;
+  readonly inset?: number;
   readonly player: Vec;
   readonly size: number;
 }
@@ -60,12 +61,13 @@ function perimeterOffset(rect: Rect, point: Vec): number {
 }
 
 /** One placement per stable target, avoiding actual UI footprints rather than full-width bands. */
-export function layoutTargetMarkers(
+export function layoutTargetMarkers<T extends TargetMarker>(
   context: TargetMarkerLayout,
-  markers: readonly TargetMarker[],
-): TargetMarkerPlacement[] {
+  markers: readonly T[],
+): TargetMarkerPlacement<T>[] {
   const { area, gap, size } = context;
-  if (size <= 0 || gap < 0) {
+  const firstInset = context.inset ?? size / 2;
+  if (size <= 0 || gap < 0 || firstInset < size / 2) {
     throw new RangeError("Invalid target marker dimensions");
   }
   const placed: Rect[] = [];
@@ -74,10 +76,10 @@ export function layoutTargetMarkers(
     .sort((a, b) => a.id.localeCompare(b.id))
     .map((target) => {
       const destination = gameAreaPoint(context.player, target);
-      const anchor = edgePoint(area, size / 2, centre, destination);
+      const anchor = edgePoint(area, firstInset, centre, destination);
       const candidates: Vec[] = [anchor];
       for (
-        let inset = size / 2;
+        let inset = firstInset;
         2 * inset < Math.min(area.width, area.height);
         inset += size + gap
       ) {
