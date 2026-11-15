@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { SETTINGS_STATE_LABELS } from "../data/settingsCopy.ts";
+import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { DEVICE_STORAGE_KEYS } from "./deviceSettings.ts";
 import { PAGE_DIVIDER_STYLE } from "./layout/controlPresentation.ts";
 import { createSettings, SETTINGS_STYLE, type SettingsLabels } from "./settings.ts";
@@ -11,6 +12,19 @@ vi.mock("./uiSkin.ts", () => ({ applyButtonSkin: vi.fn().mockResolvedValue(undef
 class Element {
   readonly attributes = new Map<string, string>();
   readonly children: Element[] = [];
+  get parentElement(): Element | null {
+    return this.parent ?? null;
+  }
+  readonly isConnected = true;
+  get ownerDocument() {
+    return document;
+  }
+  contains(node: unknown): boolean {
+    return (
+      node === this ||
+      (node instanceof Element && Boolean(node.parent) && this.contains(node.parent))
+    );
+  }
   className = "";
   readonly classList = { add: vi.fn(), remove: vi.fn() };
   readonly dataset: Record<string, string> = {};
@@ -26,6 +40,12 @@ class Element {
   addEventListener(type: string, listener: () => void) {
     this.listeners.set(type, [...(this.listeners.get(type) ?? []), listener]);
   }
+  removeEventListener(type: string, listener: () => void) {
+    this.listeners.set(
+      type,
+      (this.listeners.get(type) ?? []).filter((item) => item !== listener),
+    );
+  }
   append(...nodes: Element[]) {
     for (const node of nodes) {
       node.parent?.children.splice(node.parent.children.indexOf(node), 1);
@@ -36,8 +56,8 @@ class Element {
   click() {
     this.listeners.get("click")?.forEach((listener) => listener());
   }
-  closest() {
-    return null;
+  closest(): Element | null {
+    return this.hidden ? this : (this.parent?.closest() ?? null);
   }
   get lastElementChild() {
     return this.children.at(-1);
@@ -76,7 +96,11 @@ beforeEach(() => {
     getItem: (key: string) => stored.get(key) ?? null,
     setItem: (key: string, value: string) => stored.set(key, value),
   });
-  vi.stubGlobal("document", { createElement: () => new Element() });
+  vi.stubGlobal("document", {
+    createElement: () => new Element(),
+    defaultView: { HTMLElement: Element, Node: Element },
+  });
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
   vi.stubGlobal("window", {
     addEventListener: vi.fn(),
     matchMedia: () => ({ matches: false }),
@@ -256,4 +280,23 @@ describe("Settings current-state labels", () => {
     expect(onVisibilityChange).toHaveBeenCalledTimes(1);
     settings.dispose();
   });
+});
+
+it("registers the actual Settings switch callback for held activation and removes it on disposal", () => {
+  const { onVisibilityChange, rows, settings } = setup();
+  const row = rows[0]!;
+  // Expose retained component nodes without a layout or browser claim.
+  for (let parent: Element | undefined = row; parent; parent = parent.parent) {
+    parent.hidden = false;
+  }
+  const action = resolveAdaHoldAction(settings.root, row as unknown as HTMLElement);
+  expect(action?.rule.holdMs).toBe(500);
+  expect(action?.available()).toBe(true);
+  action?.activate();
+  expect(state(row).textContent).toBe("Hidden");
+  expect(onVisibilityChange).toHaveBeenLastCalledWith({ aim: true, move: false });
+  row.click();
+  expect(state(row).textContent).toBe("Shown");
+  settings.dispose();
+  expect(resolveAdaHoldAction(settings.root, row as unknown as HTMLElement)).toBeNull();
 });

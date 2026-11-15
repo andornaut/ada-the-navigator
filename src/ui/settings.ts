@@ -2,6 +2,7 @@ import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 
 import { SETTINGS_STATE_LABELS } from "../data/settingsCopy.ts";
 import type { InstallStepsKind } from "../pwa/index.ts";
+import { bindAdaAction } from "./actionBinding.ts";
 import { applyAdaControlTheme, createAdaPageDivider } from "./buttonPresentation.ts";
 import {
   type ControlVisibility,
@@ -13,7 +14,7 @@ import {
 } from "./deviceSettings.ts";
 import { type InstallPort, startInstall, watchInstallRow } from "./installRow.ts";
 import { UI_FONT_FACE } from "./layout/cardFrame.ts";
-import { CARD_WIDTH_CAPS } from "./layout/contentCard.ts";
+import { CARD_WIDTH_CAPS, SCROLL } from "./layout/contentCard.ts";
 import { CONTROL_ROW, WHOLE_PX_EDGES } from "./layout/controls.ts";
 import { font, fromHudEdge, pixels, units, viewStyle } from "./layout/css.ts";
 import { hudButtonTarget, type StartNavButton, startNavOrder } from "./layout/playView.ts";
@@ -40,6 +41,7 @@ import {
   setScrollGroup,
   TEXT_TOKENS,
 } from "./modal.ts";
+import { enterPressView } from "./pressScope.ts";
 import { SETTING_ICONS, settingsIcon, showIcon, STEPS_GLYPHS } from "./settingsIcons.ts";
 import { applyButtonSkin } from "./uiSkin.ts";
 import { hudDiscStyle } from "./weapons.ts";
@@ -342,6 +344,24 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     );
     return target;
   });
+  const actionBindings: ReturnType<typeof bindAdaAction>[] = [];
+  const registerAction = (
+    element: HTMLElement,
+    run: () => void,
+    beforeClick?: (event: MouseEvent) => boolean | void,
+  ) => {
+    actionBindings.push(
+      bindAdaAction(
+        {
+          ...(beforeClick ? { beforeClick } : {}),
+          click: { availability: () => ({ kind: "available" }), run },
+          current: () => !disposed,
+          slopPx: () => SCROLL.dragThreshold * readViewUnit(element),
+        },
+        element,
+      ),
+    );
+  };
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
@@ -393,7 +413,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
             : (options.labels.stateOff ?? SETTINGS_STATE_LABELS.off);
     };
     update();
-    row.addEventListener("click", () => {
+    registerAction(row, () => {
       settings[setting] = !settings[setting];
       update();
       writeSetting(storage, setting, settings[setting]);
@@ -446,11 +466,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   installButton.setAttribute("aria-label", options.labels.install);
   installRow.append(settingsIcon(SETTING_ICONS.install), installText, installButton);
   // The whole row presses its button, as every control row does.
-  installRow.addEventListener("click", (event) => {
-    if (event.target !== installButton) {
-      installButton.click();
-    }
-  });
+
   rows.append(installRow);
   const divider = createAdaPageDivider(document);
   divider.hidden = true;
@@ -486,6 +502,8 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   void applyButtonSkin(root).catch(() => undefined);
   let disposed = false;
   let open = false;
+  let leaveSettingsPressView: (() => void) | undefined;
+  let leaveStepsPressView: (() => void) | undefined;
   let previousFocus: HTMLElement | undefined;
   function fitSettings(): void {
     if (!open || disposed) {
@@ -581,6 +599,8 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   const stepsOpen = () => !stepsFrame.hidden;
   const closeSteps = () => {
     if (stepsOpen()) {
+      leaveStepsPressView?.();
+      leaveStepsPressView = undefined;
       stepsFrame.hidden = true;
       cardFrame.hidden = false;
       fitSettings();
@@ -603,6 +623,8 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     stepsFrame.setAttribute("aria-label", words.title);
     cardFrame.hidden = true;
     stepsFrame.hidden = false;
+    leaveStepsPressView?.();
+    leaveStepsPressView = enterPressView(root, stepsFrame);
     stepsParts.fit();
     focusTarget(stepsClose);
   };
@@ -615,13 +637,19 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
         }
       })
     : () => undefined;
-  installButton.addEventListener("click", () => {
+  const requestInstall = () => {
     if (options.install) {
       void startInstall(options.install.port, openSteps, () => open && !disposed);
     }
-  });
+  };
+  registerAction(installButton, requestInstall);
+  registerAction(
+    installRow,
+    requestInstall,
+    (event) => !(event.target instanceof Node && installButton.contains(event.target)),
+  );
   for (const button of [stepsX, stepsClose]) {
-    button.addEventListener("click", closeSteps);
+    registerAction(button, closeSteps);
   }
   const setOpen = (value: boolean) => {
     if (disposed || value === open) {
@@ -631,6 +659,10 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       stepsFrame.hidden = true;
       cardFrame.hidden = false;
     }
+    leaveStepsPressView?.();
+    leaveStepsPressView = undefined;
+    leaveSettingsPressView?.();
+    leaveSettingsPressView = value ? enterPressView(root, cardFrame) : undefined;
     open = value;
     modal.hidden = !open;
     if (open) {
@@ -646,9 +678,9 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     }
     options.onOpenChange(open);
   };
-  openButton.addEventListener("click", () => setOpen(true));
-  closeButton.addEventListener("click", () => setOpen(false));
-  dismiss.addEventListener("click", () => setOpen(false));
+  registerAction(openButton, () => setOpen(true));
+  registerAction(closeButton, () => setOpen(false));
+  registerAction(dismiss, () => setOpen(false));
   // A full outside click closes the card; dragging out of the card does not.
   let outsidePress: { readonly id: number; readonly x: number; readonly y: number } | undefined;
   modal.addEventListener("pointerdown", (event) => {
@@ -706,6 +738,9 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       }
       setOpen(false);
       disposed = true;
+      for (const binding of actionBindings) {
+        binding.dispose();
+      }
       stopInstallRow();
       window.removeEventListener("resize", fitSettings);
       window.removeEventListener(VIEW_SCALE_EVENT, fitSettings);
