@@ -40,9 +40,9 @@ it("keeps development ungrouped only when its caller explicitly omits group conf
   expect(captured.options!.buildId).toBeUndefined();
 });
 it("preserves the public production rejection for missing clean Git identity", async () => {
-  const actual = await vi.importActual<
-    typeof import("@andornaut/game-kit/build/precachePlugin")
-  >("@andornaut/game-kit/build/precachePlugin");
+  const actual = await vi.importActual<typeof import("@andornaut/game-kit/build/precachePlugin")>(
+    "@andornaut/game-kit/build/precachePlugin",
+  );
   const plugin = actual.precachePlugin({
     groups: () => ({ initial: [], urls: {} }),
     pageHtmlFile: "play/index.html",
