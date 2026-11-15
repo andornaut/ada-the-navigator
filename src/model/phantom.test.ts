@@ -4,7 +4,13 @@ import { CONTENT } from "../data/content.ts";
 import { encounterTable, enemyDefinition, PHANTOM_FLAGSHIP_ID } from "../data/enemyCatalog.ts";
 import { PHANTOM_DESTINATIONS, PHANTOM_TUNING } from "../data/phantom.ts";
 import { createEnemy, damageEnemy } from "./enemyAi.ts";
-import { activateRouteEncounter, createFlight, routeBlocked, syncFlightRegion } from "./flight.ts";
+import {
+  activateRouteEncounter,
+  createFlight,
+  questGuardPlacementContext,
+  routeBlocked,
+  syncFlightRegion,
+} from "./flight.ts";
 import {
   afterStepPhantom,
   beforeStepPhantom,
@@ -26,6 +32,8 @@ import {
   rotatePhantomAllies,
   stepPhantomAllies,
 } from "./phantomAllies.ts";
+import { readPendingPhantomEncounter } from "./phantomRequiredPlans.ts";
+import { stationFormationClear } from "./stationPlacement.ts";
 import type { FlightState, GalaxyProgress } from "./types.ts";
 function fixture(): PhantomContext {
   const progress: GalaxyProgress = {
@@ -67,12 +75,41 @@ const progress = (context: PhantomContext) =>
   ).phantom;
 const object = (context: PhantomContext, id: string) =>
   context.flight.objects.find((object) => object.id === id) ?? context.flight.world.notables[id];
+/** The chapter fixture clears Ada from the fixed spawn slot before requesting final admission. */
+function clearFinalePlayer(context: PhantomContext): void {
+  const pending = readPendingPhantomEncounter(context.flight);
+  if (pending?.kind !== "flagship") {
+    return;
+  }
+  const center = state(context).waypoint;
+  for (const direction of [
+    { x: 1, y: 0 },
+    { x: -1, y: 0 },
+    { x: 0, y: 1 },
+    { x: 0, y: -1 },
+  ]) {
+    const player = {
+      x: center.x + direction.x * CONTENT.tuning.chunkSize,
+      y: center.y + direction.y * CONTENT.tuning.chunkSize,
+    };
+    const flight = { ...context.flight, player };
+    if (stationFormationClear(questGuardPlacementContext(CONTENT, flight), pending.actors)) {
+      context.flight.player = player;
+      return;
+    }
+  }
+  throw new Error("No clear player approach beside the fixed flagship slot");
+}
+
 function disable(context: PhantomContext, ids: readonly string[]) {
   for (const id of ids) {
     const target = object(context, id);
     if (target?.enemy) {
       target.enemy.disabled = true;
     }
+  }
+  if (state(context).phase === "waves" && state(context).wave === PHANTOM_TUNING.waves) {
+    clearFinalePlayer(context);
   }
 }
 function freeSettlements(context: PhantomContext) {
@@ -250,6 +287,8 @@ describe("Phantom chapter", () => {
     const flagship = object(context, PHANTOM_FLAGSHIP_ID)!;
     expect(usePhantom(context, PHANTOM_FLAGSHIP_ID)).toBeUndefined();
     flagship.enemy!.disabled = true;
+    context.flight.player = { x: flagship.x, y: flagship.y };
+    syncFlightRegion(CONTENT, context.flight);
     afterStepPhantom(context);
     const panel = usePhantom(context, PHANTOM_FLAGSHIP_ID)!.dialogue!;
     expect(choosePhantom(context, panel, "invalid")).toEqual({});
@@ -299,6 +338,9 @@ describe("Phantom chapter", () => {
       expect(state(context).phase).toBe("flagship");
       expect(state(context).wave).toBe(PHANTOM_TUNING.waves);
       object(context, PHANTOM_FLAGSHIP_ID)!.enemy!.disabled = true;
+      const flagship = object(context, PHANTOM_FLAGSHIP_ID)!;
+      context.flight.player = { x: flagship.x, y: flagship.y };
+      syncFlightRegion(CONTENT, context.flight);
       afterStepPhantom(context);
       const panel = usePhantom(context, PHANTOM_FLAGSHIP_ID)!.dialogue!;
       expect(choosePhantom(context, panel, "continue")).toEqual({ complete: true, holodisk: {} });

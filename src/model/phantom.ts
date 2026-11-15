@@ -11,17 +11,27 @@ import { dropRandom } from "./drops.ts";
 import {
   activateRouteEncounter,
   ensureDestination,
+  questGuardPlacementContext,
   rollEncounter,
   salvage,
   salvageTarget,
   spawnChapterEnemy,
+  syncFlightRegion,
 } from "./flight.ts";
+import { stationPopulationObjects } from "./hostileStations.ts";
 import { type PhantomAlly, type PhantomAllySpec, rotatePhantomAllies } from "./phantomAllies.ts";
+import { placePhantomEncounter } from "./phantomEncounterPlacement.ts";
+import { phantomFutureFlagshipGeometry } from "./phantomRequiredOccupants.ts";
 import {
   type PendingPhantomEncounter,
+  readPendingPhantomEncounter,
+  storePendingPhantomEncounter,
+  takePendingPhantomEncounter,
   validPendingPhantomEncounter,
 } from "./phantomRequiredPlans.ts";
 import { phantomSettlementCopy } from "./phantomSettlementCopy.ts";
+import { protectedRadius } from "./protectedPlaces.ts";
+import { stationFormationClear } from "./stationPlacement.ts";
 import type { DialogueState, FlightState, GalaxyProgress, SpaceObject, Vec } from "./types.ts";
 export interface PhantomProgress {
   broken: string[];
@@ -88,6 +98,7 @@ function spawnGroup(
   home: Vec,
   routeId?: string,
   escortOf?: string,
+  actors?: SpaceObject[],
 ): string[] {
   const ids: string[] = [];
   for (let index = 0; index < count; index++) {
@@ -95,12 +106,18 @@ function spawnGroup(
     const angle = (index * Math.PI * 2) / count;
     const ring = count > 1 ? Math.max(110, 110 / (2 * Math.sin(Math.PI / count))) : 0;
     const point = { x: center.x + Math.cos(angle) * ring, y: center.y + Math.sin(angle) * ring };
-    spawnChapterEnemy(context.content, archetype, id, point, context.flight, {
+    const spawned = spawnChapterEnemy(context.content, archetype, id, point, context.flight, {
       ...(escortOf === undefined ? {} : { escortOf }),
       home,
       packId: pack,
       ...(routeId === undefined ? {} : { routeId }),
     });
+    if (actors && spawned) {
+      actors.push(
+        spawned,
+        ...stationPopulationObjects(context.flight).filter((actor) => actor.enemy?.escortOf === id),
+      );
+    }
     ids.push(id);
   }
   return ids;
@@ -180,6 +197,7 @@ export function initPhantom(context: PhantomContext): void {
     }
     state.blockades[settlement.id] = ids;
   }
+  prepareNextPhantomEncounter(context);
 }
 function retained(context: ChapterContext, id: string): SpaceObject | null | undefined {
   return (
@@ -218,34 +236,154 @@ function departAllies(state: PhantomFlight): void {
     ...state.allies.map((ally) => ({ age: 0, id: ally.id, x: ally.x, y: ally.y })),
   ].slice(-T.allies * 4);
 }
-function nextWave(context: PhantomContext): void {
-  const state = stateOf(context)!;
-  departAllies(state);
-  state.wave++;
-  state.allyTurn = state.wave - 1;
-  state.allies = rotatePhantomAllies(context.allies ?? [], state.allyTurn, context.flight.player);
-  const table = encounterTable(6).filter((entry) => entry.archetype !== "capital");
-  const next = dropRandom(context.flight.seed, `phantom:wave:${state.wave}`);
-  state.enemyIds = [];
-  for (let group = 0; group < T.encountersPerWave; group++) {
-    const entry = rollEncounter(table, next(), next());
-    const angle = next() * Math.PI * 2;
-    const center = {
-      x: state.waypoint.x + Math.cos(angle) * 700,
-      y: state.waypoint.y + Math.sin(angle) * 700,
-    };
-    state.enemyIds.push(
+/** Only the next phase is constructed; the original per-wave stream and draw order are unchanged. */
+export function prepareNextPhantomEncounter(context: PhantomContext): void {
+  const state = stateOf(context);
+  if (!state || context.progress.questComplete || readPendingPhantomEncounter(context.flight)) {
+    return;
+  }
+  const projection = structuredClone(context.flight);
+  projection.objects = [];
+  projection.world = { notables: {}, version: 1 };
+  delete projection.combat;
+  delete projection.phantom!.pendingEncounter;
+  const projected = { ...context, flight: projection };
+  const actors: SpaceObject[] = [];
+  const groups: SpaceObject[][] = [];
+  const enemyIds: string[] = [];
+  let pending: PendingPhantomEncounter;
+  if (state.wave < T.waves) {
+    const wave = state.wave + 1;
+    const table = encounterTable(6).filter((entry) => entry.archetype !== "capital");
+    const next = dropRandom(context.flight.seed, `phantom:wave:${wave}`);
+    for (let group = 0; group < T.encountersPerWave; group++) {
+      const entry = rollEncounter(table, next(), next());
+      const angle = next() * Math.PI * 2;
+      const center = {
+        x: state.waypoint.x + Math.cos(angle) * 700,
+        y: state.waypoint.y + Math.sin(angle) * 700,
+      };
+      const first = actors.length;
+      enemyIds.push(
+        ...spawnGroup(
+          projected,
+          entry.archetype,
+          entry.count,
+          `phantom:wave:${wave}:${group}`,
+          center,
+          state.waypoint,
+          undefined,
+          undefined,
+          actors,
+        ),
+      );
+      groups.push(actors.slice(first));
+    }
+    pending = { actors, enemyIds, kind: "wave", wave };
+  } else if (state.phase === "waves") {
+    const leader = spawnChapterEnemy(
+      context.content,
+      "capital",
+      PHANTOM_FLAGSHIP,
+      state.waypoint,
+      projection,
+      { home: state.waypoint },
+    );
+    if (!leader) {
+      throw new Error("Required flagship construction failed");
+    }
+    actors.push(leader);
+    groups.push([leader]);
+    enemyIds.push(
+      PHANTOM_FLAGSHIP,
       ...spawnGroup(
-        context,
-        entry.archetype,
-        entry.count,
-        `phantom:wave:${state.wave}:${group}`,
-        center,
+        projected,
+        "fighter",
+        T.escorts,
+        "phantom:flagship:escorts",
+        { x: state.waypoint.x, y: state.waypoint.y + 200 },
         state.waypoint,
+        undefined,
+        PHANTOM_FLAGSHIP,
+        actors,
       ),
     );
+    groups.push(actors.slice(1));
+    pending = { actors, enemyIds, kind: "flagship" };
+  } else {
+    return;
   }
-  state.phase = "waves";
+  const represented = stationPopulationObjects(context.flight);
+  const fixed =
+    pending.kind === "flagship"
+      ? []
+      : phantomFutureFlagshipGeometry(context.content, context.flight);
+  const placementFlight = (objects: readonly SpaceObject[]): FlightState => ({
+    ...context.flight,
+    objects: [...objects, ...fixed],
+    world: { notables: {}, version: 1 },
+  });
+  const placement = (objects: readonly SpaceObject[], checkPlayer: boolean) => ({
+    ...questGuardPlacementContext(context.content, placementFlight(objects)),
+    checkPlayer,
+    fixedIds: new Set([PHANTOM_FLAGSHIP]),
+    waypoint: state.waypoint,
+  });
+  const placed =
+    placePhantomEncounter(placement(represented, false), groups) ??
+    placePhantomEncounter(
+      placement(
+        represented.filter((actor) => protectedRadius(context.content, actor) !== null),
+        false,
+      ),
+      groups,
+    );
+  if (placed) {
+    storePendingPhantomEncounter(context.flight, { ...pending, actors: placed });
+  }
+}
+
+/** Fit is proved before removing hidden ownership or changing any chapter phase metadata. */
+function activateNextPhantomEncounter(context: PhantomContext): boolean {
+  prepareNextPhantomEncounter(context);
+  const pending = readPendingPhantomEncounter(context.flight);
+  if (
+    !pending ||
+    pending.kind === "blockades" ||
+    !stationFormationClear(
+      questGuardPlacementContext(context.content, context.flight),
+      pending.actors,
+    )
+  ) {
+    return false;
+  }
+  const batch = pending;
+  if (takePendingPhantomEncounter(context.flight) !== batch) {
+    throw new Error("Pending Phantom ownership changed during synchronous activation");
+  }
+  const state = stateOf(context)!;
+  departAllies(state);
+  context.flight.objects.push(...batch.actors);
+  const combat = (context.flight.combat ??= { initialPackSizes: {}, routeEncounters: [] });
+  for (const actor of batch.actors) {
+    const pack = actor.enemy?.packId;
+    if (pack) {
+      combat.initialPackSizes[pack] = (combat.initialPackSizes[pack] ?? 0) + 1;
+    }
+  }
+  if (batch.kind === "wave") {
+    state.wave = batch.wave;
+    state.allyTurn = state.wave - 1;
+    state.phase = "waves";
+  } else {
+    state.allyTurn = T.waves;
+    state.phase = "flagship";
+  }
+  state.enemyIds = [...batch.enemyIds];
+  state.allies = rotatePhantomAllies(context.allies ?? [], state.allyTurn, context.flight.player);
+  syncFlightRegion(context.content, context.flight);
+  prepareNextPhantomEncounter(context);
+  return true;
 }
 export function beforeStepPhantom(context: PhantomContext, seconds = 0): void {
   const state = stateOf(context);
@@ -255,6 +393,7 @@ export function beforeStepPhantom(context: PhantomContext, seconds = 0): void {
     }
     state.departures = state.departures.filter((ally) => ally.age * 1000 < jumpData.durationMs);
   }
+  prepareNextPhantomEncounter(context);
   if (!state || context.progress.questComplete || !progressOf(context).flagshipKnown) {
     return;
   }
@@ -262,8 +401,9 @@ export function beforeStepPhantom(context: PhantomContext, seconds = 0): void {
     state.phase === "approach" &&
     distance(context.flight.player, state.waypoint) <= T.battleReach
   ) {
-    nextWave(context);
-    state.chatter.push(state.allies.length ? "battleAllies" : "battleAlone");
+    if (activateNextPhantomEncounter(context)) {
+      state.chatter.push(state.allies.length ? "battleAllies" : "battleAlone");
+    }
   }
 }
 export function afterStepPhantom(context: PhantomContext): ChapterResult | undefined {
@@ -292,41 +432,12 @@ export function afterStepPhantom(context: PhantomContext): ChapterResult | undef
     }
   }
   if (state.phase === "waves" && finished(context, state.enemyIds, state.waypoint, T.battleReach)) {
-    if (state.wave < T.waves) {
-      nextWave(context);
-    } else {
-      departAllies(state);
-      state.phase = "flagship";
-      state.allyTurn = T.waves;
-      state.allies = rotatePhantomAllies(
-        context.allies ?? [],
-        state.allyTurn,
-        context.flight.player,
-      );
-      spawnChapterEnemy(
-        context.content,
-        "capital",
-        PHANTOM_FLAGSHIP,
-        state.waypoint,
-        context.flight,
-        { home: state.waypoint },
-      );
-      state.enemyIds = [
-        PHANTOM_FLAGSHIP,
-        ...spawnGroup(
-          context,
-          "fighter",
-          T.escorts,
-          "phantom:flagship:escorts",
-          { x: state.waypoint.x, y: state.waypoint.y + 200 },
-          state.waypoint,
-          undefined,
-          PHANTOM_FLAGSHIP,
-        ),
-      ];
+    const flagship = state.wave === T.waves;
+    if (activateNextPhantomEncounter(context) && flagship) {
       state.chatter.push("flagshipAttack");
     }
   }
+
   if (
     state.phase === "flagship" &&
     !state.disabledCued &&

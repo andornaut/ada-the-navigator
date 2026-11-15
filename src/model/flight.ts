@@ -113,7 +113,11 @@ import {
   stationPopulationObjects,
 } from "./hostileStations.ts";
 import { phantomSongSpeed, stepPhantomAllies } from "./phantomAllies.ts";
-import { phantomRequiredActors } from "./phantomRequiredOccupants.ts";
+import {
+  nextPhantomBatchReserved,
+  phantomFutureFlagshipGeometry,
+  phantomRequiredActors,
+} from "./phantomRequiredOccupants.ts";
 import { readPendingPhantomEncounter } from "./phantomRequiredPlans.ts";
 import { playerWeaponCoverage, type PlayerWeaponCoverageContext } from "./playerWeaponCoverage.ts";
 import { protectedRadius } from "./protectedPlaces.ts";
@@ -319,6 +323,7 @@ function requiredFootprintClear(
       {
         actors: [
           ...phantomRequiredActors(flight),
+          ...phantomFutureFlagshipGeometry(content, flight),
           ...authored.filter(
             (object) =>
               liveEnemy(object) &&
@@ -824,7 +829,11 @@ const planningRequiredWorld = new WeakSet<FlightState>();
 const initializingRequiredChapter = new WeakSet<FlightState>();
 
 function generate(content: GameContent, point: Vec, flight: FlightState): void {
-  if (planningRequiredWorld.has(flight) || initializingRequiredChapter.has(flight)) {
+  if (
+    planningRequiredWorld.has(flight) ||
+    initializingRequiredChapter.has(flight) ||
+    !nextPhantomBatchReserved(flight)
+  ) {
     return;
   }
   worldActivateFlightRegion(flightWorldContext(flight), content, point, flight);
@@ -1401,7 +1410,11 @@ export function spawnPlannedHostileStation(
   const population = requiredPopulation(flight);
   const placement = {
     ...flight,
-    objects: [...population, ...reservations.map(({ site }) => site)],
+    objects: [
+      ...population,
+      ...reservations.map(({ site }) => site),
+      ...phantomFutureFlagshipGeometry(content, flight),
+    ],
   };
   return materializeHostileStation(
     {
