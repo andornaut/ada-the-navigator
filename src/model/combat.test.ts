@@ -21,6 +21,7 @@ import {
 import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
 import { byPosition, ROUTE_POSITION } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
+import { SPAWNER_POLICIES, SPAWNER_REGIONS } from "../data/spawnerCatalog.ts";
 import type { EnemyWeapon, GalaxyNumber, Weapon } from "../data/types.ts";
 import { weaponAt } from "../data/weaponCatalog.ts";
 import { sceneryBodyContact } from "./asteroids.ts";
@@ -34,6 +35,7 @@ import {
   activeRingEmissions,
   bounceShips,
   createFlight,
+  createUnpopulatedFlight,
   ensureDestination,
   ensureRouteEncounter,
   placeDestinationAhead,
@@ -73,6 +75,20 @@ function empty(): FlightState {
   flight.objects = [];
   return flight;
 }
+/** An isolated outer-region site admits the full required frigate and its support. */
+function formationDestination(flight: FlightState): SpaceObject {
+  const site: SpaceObject = {
+    hp: 1,
+    id: "quest",
+    kind: "destination",
+    radius: 30,
+    x: SPAWNER_REGIONS.centerDistances[2] + SPAWNER_POLICIES[1].localRadius * 2,
+    y: 0,
+  };
+  flight.objects.push(site);
+  return site;
+}
+
 function ship(
   archetype: EnemyArchetype,
   point: Vec,
@@ -379,8 +395,8 @@ describe("integrated combat", () => {
   });
 
   it("unblocks a route once its guard is disabled, salvaged or not", () => {
-    const flight = empty();
-    ensureDestination(CONTENT, "quest", flight);
+    const flight = createUnpopulatedFlight(CONTENT, 1, 173);
+    formationDestination(flight);
     const guard = ensureRouteEncounter(CONTENT, "quest", flight)!;
     expect(routeBlocked("quest", flight)).toBe(true);
     guard.enemy!.disabled = true;
@@ -781,9 +797,10 @@ describe("integrated combat", () => {
   it.each([1, 2, 3] as const)(
     "opens a galaxy %i route once its guard is disabled, though its hull still stands",
     (galaxy) => {
-      const flight = empty();
+      const flight = galaxy === 1 ? createUnpopulatedFlight(CONTENT, 1, 173) : empty();
       flight.galaxy = galaxy;
-      const destination = ensureDestination(CONTENT, "quest", flight);
+      const destination =
+        galaxy === 1 ? formationDestination(flight) : ensureDestination(CONTENT, "quest", flight);
       const guard = ensureRouteEncounter(CONTENT, "quest", flight)!;
       // Its weapons go: every weapon hardpoint destroyed disables it.
       const weapons = shipCatalogEntry(guard.enemy!.archetype)!.hardpoints.filter(
@@ -809,10 +826,11 @@ describe("integrated combat", () => {
   it.each([1, 2, 3] as const)(
     "guards a galaxy %i route outside the safezone without respawn after defeat",
     (galaxy) => {
-      const flight = empty();
+      const flight = galaxy === 1 ? createUnpopulatedFlight(CONTENT, 1, 173) : empty();
       flight.galaxy = galaxy;
       expect(routeBlocked("quest", flight)).toBe(false);
-      const destination = ensureDestination(CONTENT, "quest", flight);
+      const destination =
+        galaxy === 1 ? formationDestination(flight) : ensureDestination(CONTENT, "quest", flight);
       const guard = ensureRouteEncounter(CONTENT, "quest", flight)!;
       const archetype = galaxy === 1 ? "frigate" : "capital";
       expect(guard.enemy?.archetype).toBe(archetype);
@@ -1167,6 +1185,10 @@ describe("combat admission and subframe firing", () => {
     "keeps %s clearance separate from a later combat casualty",
     (clearance) => {
       const flight = empty();
+      // Capital guard clearance removes layout occupants; required frigate planning does not.
+      if (clearance === "guard") {
+        flight.galaxy = 2;
+      }
       const points =
         clearance === "destination"
           ? [

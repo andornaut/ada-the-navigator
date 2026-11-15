@@ -2,11 +2,11 @@ import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
-import { SPAWNER_POLICIES, spawnerStage } from "../data/spawnerCatalog.ts";
+import { SPAWNER_POLICIES, SPAWNER_REGIONS, spawnerStage } from "../data/spawnerCatalog.ts";
 import { createEnemy, stepEnemy } from "./enemyAi.ts";
 import {
   createFlight,
-  ensureDestinationAt,
+  createUnpopulatedFlight,
   ensureRouteEncounter,
   routeBlocked,
   spawnChapterEnemy,
@@ -25,9 +25,16 @@ const followers = (objects: readonly SpaceObject[], id: string) =>
   objects.filter((object) => object.enemy?.escortOf === id);
 
 it("creates two required escorts once and keeps the frigate as the only route blocker", () => {
-  const flight = createFlight(CONTENT, 1, 231, newProgress());
-  flight.objects = [];
-  const site = ensureDestinationAt(CONTENT, "quest", { x: 1000, y: 0 }, flight);
+  const flight = createUnpopulatedFlight(CONTENT, 1, 231);
+  const site: SpaceObject = {
+    hp: 1,
+    id: "quest",
+    kind: "destination",
+    radius: 30,
+    x: SPAWNER_REGIONS.centerDistances[2] + SPAWNER_POLICIES[1].localRadius * 2,
+    y: 0,
+  };
+  flight.objects.push(site);
   const leader = ensureRouteEncounter(CONTENT, "quest", flight)!;
   const escort = followers(flight.objects, leader.id);
   expect(escort).toHaveLength(2);
@@ -40,13 +47,19 @@ it("creates two required escorts once and keeps the frigate as the only route bl
   expect(followers(flight.objects, leader.id).map((object) => object.id)).toEqual(
     escort.map((object) => object.id),
   );
+  const home = { ...leader.enemy!.home };
   flight.player = { x: site.x, y: site.y };
   expect(stepFlight(CONTENT, 0.001, idle, flight)).toContainEqual({
     id: site.id,
     type: "guardCue",
   });
-  expect(flight.summonedGuards).toEqual(
-    expect.arrayContaining([leader.id, ...escort.map((object) => object.id)]),
+  for (const member of [leader, ...escort]) {
+    expect(flight.objects.find((object) => object.id === member.id)).toBe(member);
+    expect(flight.summonedGuards ?? []).not.toContain(member.id);
+  }
+  expect(leader.enemy!.home).toEqual(home);
+  expect(followers(flight.objects, leader.id).map((object) => object.id)).toEqual(
+    escort.map((object) => object.id),
   );
   leader.enemy!.disabled = true;
   expect(routeBlocked(site.id, flight)).toBe(false);
