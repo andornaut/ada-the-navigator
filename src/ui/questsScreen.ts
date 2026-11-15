@@ -14,6 +14,7 @@ import { chipFace, chipGlyph, type MapScreenLabels } from "./mapScreen.ts";
 import { createButton, createCard, setFooterAction, setScrollGroup } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
+import { type QuestsBodyData, type QuestsBodySchema, questsBodyTree } from "./questsBodyTree.ts";
 import {
   type QuestFooterAction,
   type QuestFooterData,
@@ -129,6 +130,7 @@ export function createQuestsScreen(
   let disposed = false;
   const bindings: ReturnType<typeof bindAdaAction>[] = [];
   const renderedBindings: ReturnType<typeof bindAdaAction>[] = [];
+  let bodyLayout: ReturnType<typeof mountLayout<QuestsBodySchema>> | undefined;
   let footerLayout: ReturnType<typeof mountLayout<QuestsFooterSchema>> | undefined;
   const register = (element: HTMLButtonElement, run: () => void, rendered = true) => {
     (rendered ? renderedBindings : bindings).push(
@@ -204,6 +206,7 @@ export function createQuestsScreen(
     }
     release();
     footerLayout?.dispose();
+    bodyLayout?.dispose();
     const visibleEntries = contextEntries ?? entries;
     const entry = visibleEntries.find((entry) => entry.id === selected);
     if (!entry) {
@@ -216,116 +219,28 @@ export function createQuestsScreen(
     const footerActions = new Map<QuestFooterAction, () => void>();
     let other: QuestFooterData["other"];
     let pager: QuestFooterData["pager"];
-    const section = (name: string | undefined, text?: string) => {
-      const section = document.createElement("section");
-      if (name) {
-        const heading = document.createElement("h3");
-        heading.textContent = name;
-        section.append(heading);
-      }
-      if (text) {
-        const p = document.createElement("p");
-        p.textContent = text;
-        section.append(p);
-      }
-      body.append(section);
-      return section;
-    };
+    let bodyData: QuestsBodyData;
     if (entry) {
       const line = entry.line;
-      const objective = section(undefined, line.text);
-      objective.className = "ada-quest-objective";
-      if (line.description && line.description !== line.text) {
-        const description = document.createElement("p");
-        description.className = "ada-quest-description";
-        description.textContent = line.description;
-        objective.append(description);
-      }
-      const checklist = section("Objectives");
-      checklist.className = "ada-quest-objectives";
-      for (const step of questChecklist(entry)) {
-        const row = document.createElement("div");
-        row.className = "ada-quest-requirement";
-        row.append(createCompletionIndicator(step.label, step.checked));
-        const iconPath = questObjectiveIcon(entry, step);
-        if (iconPath) {
-          const image = document.createElement("img");
-          image.className = "ada-quest-icon";
-          image.alt = "";
-          image.src = iconPath;
-          image.setAttribute("aria-hidden", "true");
-          row.append(image);
-        }
-        const text = document.createElement("span");
-        text.textContent = step.label;
-        row.append(text);
-        if (step.count) {
-          const count = document.createElement("strong");
-          count.textContent = step.count;
-          row.append(count);
-        }
-        checklist.append(row);
-      }
       const endpoints = questRoute(entry, entry.galaxy === galaxy ? places : []);
-      if (line.source !== undefined || line.destination !== undefined || line.target !== null) {
-        const route = document.createElement("div");
-        route.className = "ada-quest-route";
-        if (endpoints.length === 1) {
-          route.style.gridTemplateColumns = "1fr";
-        }
-        for (const endpoint of endpoints) {
-          if (route.childElementCount) {
-            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            svg.setAttribute("viewBox", QUEST_ROUTE_ARROW.viewBox);
-            svg.setAttribute("class", "ada-quest-arrow");
-            svg.setAttribute("aria-hidden", "true");
-            for (const d of [QUEST_ROUTE_ARROW.shaft, QUEST_ROUTE_ARROW.head]) {
-              const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-              path.setAttribute("d", d);
-              path.setAttribute("fill", "#b8b3c9");
-              svg.append(path);
-            }
-            route.append(svg);
-          }
-          const button = document.createElement("button");
-          button.type = "button";
-          button.className = "ada-quest-endpoint";
-          button.disabled =
-            origin === "ship" || endpoint.location === null || endpoint.place === null;
-          if (endpoint.location?.symbol) {
-            const image = icon(entry, endpoint.location.symbol, false);
-            if (image) {
-              button.append(image);
-            }
-          }
-          const text = document.createElement("span");
-          const small = document.createElement("small");
-          small.textContent =
-            (endpoint.kind === "source" ? labels.questFrom : labels.questTo) ?? "";
-          text.append(
-            small,
-            document.createTextNode(endpoint.location?.label ?? labels.questExplore ?? ""),
-          );
-          button.append(text);
-          if (origin !== "ship" && endpoint.location && endpoint.place) {
-            button.setAttribute(
-              "aria-label",
-              `${labels.questLocate ?? ""}: ${endpoint.location.label}`,
-            );
-            register(button, () => {
-              hide();
-              options.onLocate(endpoint.place!.id);
-            });
-          }
-          route.append(button);
-        }
-        objective.append(route);
-      }
-      const reward = section(
-        line.outcome && !line.reward ? labels.questOutcome : labels.questReward,
-        line.reward ?? line.outcome ?? labels.questStoryProgress,
-      );
-      reward.className = "ada-quest-reward";
+      bodyData = {
+        mode: "detail",
+        text: line.text,
+        ...(line.description && line.description !== line.text
+          ? { description: line.description }
+          : {}),
+        objectives: questChecklist(entry).map((step) => ({
+          iconPath: questObjectiveIcon(entry, step),
+          step,
+        })),
+        ...(line.source !== undefined || line.destination !== undefined || line.target !== null
+          ? { route: endpoints.map((endpoint) => ({ endpoint, entry })) }
+          : {}),
+        reward: {
+          name: line.outcome && !line.reward ? labels.questOutcome : labels.questReward,
+          text: line.reward ?? line.outcome ?? labels.questStoryProgress,
+        },
+      };
       if (origin === "flight" && contextEntries === null) {
         other = { label: labels.questOtherQuests ?? "" };
         footerActions.set("other", () => {
@@ -344,29 +259,16 @@ export function createQuestsScreen(
         listPage * QUEST_LIST_PAGE_SIZE,
         (listPage + 1) * QUEST_LIST_PAGE_SIZE,
       );
+      const groups: Extract<QuestsBodyData, { mode: "list" }>["groups"][number][] = [];
       for (const kind of ["story", "job"] as const) {
         const group = visible.filter((entry) => entry.line.kind === kind);
         if (!group.length) {
           continue;
         }
-        const heading = document.createElement("h3");
-        heading.textContent =
-          (kind === "story" ? labels.questsStoryHeading : labels.questsJobsHeading) ?? "";
-        body.append(heading);
-        for (const item of group) {
-          const button = createButton(item.line.text, "secondary");
-          button.dataset.questId = item.id;
-          const image = icon(item);
-          if (image) {
-            button.prepend(image);
-          }
-          register(button, () => {
-            selected = item.id;
-            origin = "list";
-            render();
-          });
-          body.append(button);
-        }
+        groups.push({
+          entries: group,
+          heading: (kind === "story" ? labels.questsStoryHeading : labels.questsJobsHeading) ?? "",
+        });
       }
       if (pages > 1) {
         for (const direction of [-1, 1]) {
@@ -383,12 +285,166 @@ export function createQuestsScreen(
           previous: { disabled: listPage - 1 < 0 || listPage - 1 >= pages, label: labels.previous },
         };
       }
-      if (!visibleEntries.length) {
-        const text = document.createElement("p");
-        text.textContent = labels.questsEmpty;
-        body.append(text);
-      }
+      bodyData = {
+        groups,
+        mode: "list",
+        ...(!visibleEntries.length ? { emptyText: labels.questsEmpty } : {}),
+      };
     }
+    bodyLayout = mountLayout<QuestsBodySchema>(
+      {
+        components: {
+          body: {
+            create() {
+              return { dispose() {}, element: body, slots: { content: body }, update() {} };
+            },
+            slots: ["content"],
+          },
+          heading: {
+            create(initial) {
+              const heading = document.createElement("h3");
+              heading.textContent = initial.text;
+              return { dispose() {}, element: heading, slots: {}, update() {} };
+            },
+            slots: [],
+          },
+          objective: {
+            create(initial) {
+              const { iconPath, step } = initial;
+              const row = document.createElement("div");
+              row.className = "ada-quest-requirement";
+              row.append(createCompletionIndicator(step.label, step.checked));
+              if (iconPath) {
+                const image = document.createElement("img");
+                image.className = "ada-quest-icon";
+                image.alt = "";
+                image.src = iconPath;
+                image.setAttribute("aria-hidden", "true");
+                row.append(image);
+              }
+              const text = document.createElement("span");
+              text.textContent = step.label;
+              row.append(text);
+              if (step.count) {
+                const count = document.createElement("strong");
+                count.textContent = step.count;
+                row.append(count);
+              }
+
+              return { dispose() {}, element: row, slots: {}, update() {} };
+            },
+            slots: [],
+          },
+          paragraph: {
+            create(initial) {
+              const text = document.createElement("p");
+              if (initial.className) {
+                text.className = initial.className;
+              }
+              text.textContent = initial.text;
+              return { dispose() {}, element: text, slots: {}, update() {} };
+            },
+            slots: [],
+          },
+          quest: {
+            create(initial) {
+              const item = initial.entry;
+              const button = createButton(item.line.text, "secondary");
+              button.dataset.questId = item.id;
+              const image = icon(item);
+              if (image) {
+                button.prepend(image);
+              }
+              register(button, () => {
+                selected = item.id;
+                origin = "list";
+                render();
+              });
+              return { dispose() {}, element: button, slots: {}, update() {} };
+            },
+            slots: [],
+          },
+          route: {
+            create(initial) {
+              const route = document.createElement("div");
+              route.className = "ada-quest-route";
+              if (initial.endpoints.length === 1) {
+                route.style.gridTemplateColumns = "1fr";
+              }
+              for (const { endpoint, entry } of initial.endpoints) {
+                if (route.childElementCount) {
+                  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                  svg.setAttribute("viewBox", QUEST_ROUTE_ARROW.viewBox);
+                  svg.setAttribute("class", "ada-quest-arrow");
+                  svg.setAttribute("aria-hidden", "true");
+                  for (const d of [QUEST_ROUTE_ARROW.shaft, QUEST_ROUTE_ARROW.head]) {
+                    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    path.setAttribute("d", d);
+                    path.setAttribute("fill", "#b8b3c9");
+                    svg.append(path);
+                  }
+                  route.append(svg);
+                }
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "ada-quest-endpoint";
+                button.disabled =
+                  origin === "ship" || endpoint.location === null || endpoint.place === null;
+                if (endpoint.location?.symbol) {
+                  const image = icon(entry, endpoint.location.symbol, false);
+                  if (image) {
+                    button.append(image);
+                  }
+                }
+                const text = document.createElement("span");
+                const small = document.createElement("small");
+                small.textContent =
+                  (endpoint.kind === "source" ? labels.questFrom : labels.questTo) ?? "";
+                text.append(
+                  small,
+                  document.createTextNode(endpoint.location?.label ?? labels.questExplore ?? ""),
+                );
+                button.append(text);
+                if (origin !== "ship" && endpoint.location && endpoint.place) {
+                  button.setAttribute(
+                    "aria-label",
+                    `${labels.questLocate ?? ""}: ${endpoint.location.label}`,
+                  );
+                  register(button, () => {
+                    hide();
+                    options.onLocate(endpoint.place!.id);
+                  });
+                }
+                route.append(button);
+              }
+
+              return { dispose() {}, element: route, slots: {}, update() {} };
+            },
+            slots: [],
+          },
+          section: {
+            create(initial) {
+              const section = document.createElement("section");
+              section.className = initial.className;
+              if (initial.name) {
+                const heading = document.createElement("h3");
+                heading.textContent = initial.name;
+                section.append(heading);
+              }
+              if (initial.text) {
+                const p = document.createElement("p");
+                p.textContent = initial.text;
+                section.append(p);
+              }
+              return { dispose() {}, element: section, slots: { content: section }, update() {} };
+            },
+            slots: ["content"],
+          },
+        },
+        host: card.body,
+      },
+      questsBodyTree(bodyData),
+    );
     const footerData: QuestFooterData = {
       dismiss: {
         actionId: entry && origin === "list" ? "quest-back" : "quest-close",
@@ -475,6 +531,7 @@ export function createQuestsScreen(
       renderedBindings.length = 0;
       hide();
       footerLayout?.dispose();
+      bodyLayout?.dispose();
       card.dispose();
       modal.remove();
     },
