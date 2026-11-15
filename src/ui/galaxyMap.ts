@@ -1,9 +1,16 @@
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
+import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { GALAXY_COUNT, type RoutePosition } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
 import { normalJetsInFront, normalJetTailRegions, type ShipJets } from "../game/shipJets.ts";
 import type { RouteFlight } from "../model/game.ts";
+import {
+  type GalaxyPanelGroup,
+  type GalaxyPanelLeaf,
+  type GalaxyPanelSchema,
+  galaxyPanelTree,
+} from "./galaxyPanelTree.ts";
 import { CARD_SLICE } from "./layout/controls.ts";
 import { font, fromAreaLeft, safeEdge, slice, units } from "./layout/css.ts";
 import {
@@ -524,8 +531,6 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   const development = document.createElement("p");
   development.className = "ada-route-development";
   development.textContent = labels.development;
-  text.append(number, name, flavor, development);
-  panel.append(shot, text);
   const earth = markers[0]!.button.cloneNode(true) as HTMLButtonElement;
   earth.dataset.position = "earth";
   earth.dataset.earth = "";
@@ -543,9 +548,42 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   jump.dataset.action = "galaxy-jump";
   const flightActions = document.createElement("div");
   flightActions.className = "ada-route-flight-actions";
-  flightActions.append(jump);
-  screen.append(sky, rules, ground, chart, panel, flightActions);
-  root.append(screen);
+  screen.append(sky, rules, ground, chart);
+  const panelGroups: Readonly<Record<GalaxyPanelGroup, HTMLElement>> = {
+    footer: flightActions,
+    panel,
+    screen,
+    text,
+  };
+  const panelLeaves: Readonly<Record<GalaxyPanelLeaf, HTMLElement>> = {
+    development,
+    flavor,
+    jump,
+    name,
+    number,
+    shot,
+  };
+  const panelLayout = mountLayout<GalaxyPanelSchema>(
+    {
+      components: {
+        group: {
+          create: (name) => ({
+            dispose() {},
+            element: panelGroups[name],
+            slots: { content: panelGroups[name] },
+            update() {},
+          }),
+          slots: ["content"],
+        },
+        leaf: {
+          create: (name) => ({ dispose() {}, element: panelLeaves[name], slots: {}, update() {} }),
+          slots: [],
+        },
+      },
+      host: root,
+    },
+    galaxyPanelTree(),
+  );
 
   let view: GalaxyMapView | null = null;
   let art: GalaxyMapArt | null = null;
@@ -935,7 +973,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     },
     dispose(): void {
       stop();
-      screen.remove();
+      panelLayout.dispose();
     },
     isOpen: () => view !== null,
     /** A quantum jump begins: the panel, Earth, Jump and the close X hide until the map closes. */

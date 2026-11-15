@@ -52,6 +52,32 @@ function dom() {
   };
   class ElementFake {
     children: ElementFake[] = [];
+    readonly nodeType = 1;
+    parentNode: ElementFake | null = null;
+    get ownerDocument() {
+      return document;
+    }
+    get firstChild() {
+      return this.children[0] ?? null;
+    }
+    get nextSibling() {
+      return this.parentNode?.children[this.parentNode.children.indexOf(this) + 1] ?? null;
+    }
+    contains(node: unknown): boolean {
+      return node === this || this.children.some((child) => child.contains(node));
+    }
+    insertBefore(node: ElementFake, before: ElementFake | null): void {
+      if (node === before) {
+        return;
+      }
+      node.remove();
+      node.parentNode = this;
+      this.children.splice(
+        before === null ? this.children.length : this.children.indexOf(before),
+        0,
+        node,
+      );
+    }
     className = "";
     classList = { add() {}, remove() {}, toggle() {} };
     clientHeight = 540;
@@ -70,7 +96,9 @@ function dom() {
     }
     addEventListener() {}
     append(...elements: ElementFake[]) {
-      this.children.push(...elements);
+      for (const element of elements) {
+        this.insertBefore(element, null);
+      }
     }
     cloneNode(deep = false): ElementFake {
       const clone = new ElementFake(this.tag);
@@ -104,12 +132,20 @@ function dom() {
     getContext() {
       return context;
     }
-    remove() {}
+    remove() {
+      if (this.parentNode) {
+        this.parentNode.children.splice(this.parentNode.children.indexOf(this), 1);
+        this.parentNode = null;
+      }
+    }
     removeAttribute(name: string) {
       this.attributes.delete(name);
     }
     replaceChildren(...elements: ElementFake[]) {
-      this.children = elements;
+      for (const child of [...this.children]) {
+        child.remove();
+      }
+      this.append(...elements);
     }
     setAttribute(name: string, value: string) {
       this.attributes.set(name, value);
