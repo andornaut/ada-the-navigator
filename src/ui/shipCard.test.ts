@@ -258,6 +258,8 @@ it("routes clickable inventory identities without reading labels", () => {
     onItem,
   ) as unknown as ShipElement;
   const row = root.children[4]!.children[1]!.children[0]!;
+  expect(row.children).toHaveLength(2);
+  expect(row.attributes.get("aria-label")).toContain("Laser");
   row.dispatchEvent(new Event("click"));
   expect(onItem).toHaveBeenCalledExactlyOnceWith(
     expect.objectContaining({ item: { id: "laser", kind: "weapon" } }),

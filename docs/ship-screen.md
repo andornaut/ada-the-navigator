@@ -15,7 +15,8 @@ Equipment and weapon names append a bracketed level above level one. Level-one
 names have no suffix. Cargo, currencies and paint have no level. Accessible level
 text retains the full level description.
 
-Column separators and detail disclosures use the shared control-presentation
-factories. Ship does not define separator colors, thicknesses or disclosure art.
+Column separators use the shared control-presentation factory. Ship does not
+define separator colors or thicknesses. Item rows have no decorative detail
+chevrons; their buttons, accessible labels and detail routing remain available.
 Inventory and detail views do not change purchases, ownership, quest progress or
 story state.

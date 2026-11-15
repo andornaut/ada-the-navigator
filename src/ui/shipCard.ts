@@ -5,11 +5,7 @@ import { WEAPON_LEVEL_COUNT } from "../data/weaponCatalog.ts";
 import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import { fill, weaponName } from "../model/shop.ts";
 import type { Aboard } from "../model/types.ts";
-import {
-  applyAdaControlTheme,
-  createAdaDisclosure,
-  createAdaPageDivider,
-} from "./buttonPresentation.ts";
+import { applyAdaControlTheme, createAdaPageDivider } from "./buttonPresentation.ts";
 import { compactLevelName } from "./compactLevelName.ts";
 import { TEXT_TOKENS } from "./modal.ts";
 import { stardustCount } from "./statusPill.ts";
@@ -199,7 +195,7 @@ function rowNode(
   const content = document.createElement("span");
   content.className = "ada-ship-text";
   content.append(label);
-  line.append(shipIconNode(row.icon), content, createAdaDisclosure(document));
+  line.append(shipIconNode(row.icon), content);
   for (const [part, text] of [
     ["count", row.count],
     ["ammo", row.ammo],
