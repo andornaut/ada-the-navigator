@@ -3039,8 +3039,15 @@ export class GameModel {
     if (this.dropHeldActivity(this.state.selectedGalaxy)) {
       return true;
     }
+    const held = this.held;
     const dropped = dropJob(this.state.selectedGalaxy, this.state);
     if (dropped && this.state.flight) {
+      if (held && this.state.flight.galaxy === this.state.selectedGalaxy) {
+        this.markerRegistry.forget(
+          { store: this.markerStore(this.state.flight) },
+          `job:${held.id}`,
+        );
+      }
       delete this.state.flight.tow;
     }
     return dropped;

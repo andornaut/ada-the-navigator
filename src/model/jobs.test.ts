@@ -31,6 +31,7 @@ import {
   stationBoard,
 } from "./jobs.ts";
 import { chartLandmarks, landmarkSites } from "./landmarks.ts";
+import { markerKnowledgeStore } from "./markerBindings.ts";
 import { retainedLandmarkSites } from "./retainedLandmarks.ts";
 import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
@@ -460,6 +461,46 @@ describe("tow handling", () => {
 });
 
 describe("jobs in play", () => {
+  it("forgets only a successfully dropped hunt's synthetic marker without a render read", () => {
+    const { flight, model } = docked();
+    const held = take(model, "hunt");
+    const store = markerKnowledgeStore(
+      model.state.progress[1],
+      flight,
+      (id) => id === held.target.id,
+    );
+    const id = `job:${held.id}`;
+    store.set(id, "sensed");
+    store.set(held.target.id, "identified");
+    const money = model.state.economy.stardust;
+    expect(model.saveDocument().flight?.markerActors?.knowledge).toEqual({
+      [id]: "sensed",
+    });
+    expect(model.dropJob()).toBe(true);
+    expect(model.state.tasks[1]).toBeUndefined();
+    expect(store.get(id)).toBeUndefined();
+    expect(model.saveDocument().flight?.markerActors?.knowledge).toEqual({});
+    expect(model.saveDocument().progress[1].markerKnowledge).toEqual({
+      [held.target.id]: "identified",
+    });
+    expect(model.state.economy.stardust).toBe(money);
+    expect(model.dropJob()).toBe(false);
+    expect(store.get(held.target.id)).toBe("identified");
+  });
+
+  it("does not forget matching flight knowledge when dropping another galaxy's task", () => {
+    const { flight, model } = docked();
+    const held = take(model, "hunt");
+    model.state.tasks[3] = { ...held, id: "other-galaxy-job" };
+    const store = markerKnowledgeStore(model.state.progress[1], flight, () => false);
+    const id = "job:other-galaxy-job";
+    store.set(id, "identified");
+    model.state.selectedGalaxy = 3;
+    expect(model.dropJob()).toBe(true);
+    expect(model.state.tasks[1]?.id).toBe(held.id);
+    expect(store.get(id)).toBe("identified");
+  });
+
   it("show the held job at the top of every board in its galaxy, marked Active", () => {
     const { model } = docked();
     const held = take(model, "survey");
