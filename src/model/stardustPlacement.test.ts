@@ -68,29 +68,26 @@ describe("ordinary Stardust placement", () => {
     expect(flight.objects.some((object) => object.id === removed)).toBe(false);
   });
 
-  it("keeps full-glint radial bounds apart in the tighter projected diamond", () => {
-    const origin = { x: 700, y: -800 };
-    const points = stardustDiamond(ECONOMY, origin).map((point) =>
-      toScreen({ x: point.x - origin.x, y: point.y - origin.y }),
-    );
-    expect(points).toHaveLength(4);
-    expect(Math.max(...points.map((point) => Math.abs(point.x)))).toBe(11);
-    const step =
-      Math.ceil(Math.SQRT2 * (ECONOMY.stardustPickupRadius + GALAXIES_FILE.lightField.keyline)) +
-      ECONOMY.stardustPickupGap;
-    expect(points).toEqual([
-      { x: 0, y: -step },
-      { x: step, y: 0 },
-      { x: 0, y: step },
-      { x: -step, y: 0 },
-    ]);
-    const diameter = 2 * (ECONOMY.stardustPickupRadius + GALAXIES_FILE.lightField.keyline);
-    for (const [a, first] of points.entries()) {
-      for (const second of points.slice(a + 1)) {
-        expect(
-          Math.hypot(first.x - second.x, first.y - second.y) - diameter,
-        ).toBeGreaterThanOrEqual(ECONOMY.stardustPickupGap);
-      }
+  it("contracts only the four-pickup diamond by exactly one quarter around its projected centroid", () => {
+    for (const origin of [
+      { x: 0, y: 0 },
+      { x: 700, y: -800 },
+    ]) {
+      const points = stardustDiamond(ECONOMY, origin).map((point) =>
+        toScreen({ x: point.x - origin.x, y: point.y - origin.y }),
+      );
+      expect(points).toEqual([
+        { x: 0, y: -8.25 },
+        { x: 8.25, y: 0 },
+        { x: 0, y: 8.25 },
+        { x: -8.25, y: 0 },
+      ]);
+      expect(points.reduce((sum, p) => sum + p.x, 0)).toBe(0);
+      expect(points.reduce((sum, p) => sum + p.y, 0)).toBe(0);
+      const ordinaryStep =
+        Math.ceil(Math.SQRT2 * (ECONOMY.stardustPickupRadius + GALAXIES_FILE.lightField.keyline)) +
+        ECONOMY.stardustPickupGap;
+      expect(Math.hypot(points[0]!.x, points[0]!.y) / ordinaryStep).toBe(0.75);
     }
   });
 

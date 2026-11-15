@@ -12,11 +12,12 @@ type StardustSpacing = Pick<EconomyCatalog, "stardustPickupGap" | "stardustPicku
   readonly obstacles?: readonly PickupObstacle[];
 };
 
-/** A compact projected diamond, clear of the full glint's pickup-diameter bounds. */
+/** Four pickups at three quarters of the ordinary projected diamond spacing. */
 export function stardustDiamond(context: StardustSpacing, point: Vec): Vec[] {
   const step =
-    Math.ceil(Math.SQRT2 * (context.stardustPickupRadius + GALAXIES_FILE.lightField.keyline)) +
-    context.stardustPickupGap;
+    (Math.ceil(Math.SQRT2 * (context.stardustPickupRadius + GALAXIES_FILE.lightField.keyline)) +
+      context.stardustPickupGap) *
+    0.75;
   return [
     { x: 0, y: -step },
     { x: step, y: 0 },
