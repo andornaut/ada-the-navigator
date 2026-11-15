@@ -37,7 +37,8 @@ const [
   { CONTENT },
   { playOpening },
   { restoreSave },
-  { enemyDefinition },
+  { enemyActorDefinition },
+  { enemyActorAvailable },
   { createEnemy },
   { readAsteroidCatalog },
   asteroidArt,
@@ -47,7 +48,8 @@ const [
   import(new URL("../src/data/content.ts", import.meta.url)),
   import(new URL("../src/testing/launch.ts", import.meta.url)),
   import(new URL("../src/model/save.ts", import.meta.url)),
-  import(new URL("../src/data/enemyCatalog.ts", import.meta.url)),
+  import(new URL("../src/data/enemyActorDefinition.ts", import.meta.url)),
+  import(new URL("../src/data/enemyActors.ts", import.meta.url)),
   import(new URL("../src/model/enemyAi.ts", import.meta.url)),
   import(new URL("../src/data/asteroidCatalog.ts", import.meta.url)),
   import(new URL("../src/game/asteroidArt.ts", import.meta.url)),
@@ -177,13 +179,18 @@ function heavyFixture(galaxy, heavies, pickups = []) {
   flight.shots = [];
   flight.mines = [];
   const origin = { ...flight.player };
-  for (const { archetype, fire = [], screen, setup } of heavies) {
-    const definition = enemyDefinition(galaxy, archetype);
+  for (const { archetype, fire = [], id, screen, setup, weaponLevel = 1 } of heavies) {
+    const actorId = id ?? `browser-art:${archetype}:${screen.x}`;
+    assert.ok(
+      enemyActorAvailable(galaxy, archetype),
+      "Fixture actor must be available in its galaxy",
+    );
+    const definition = enemyActorDefinition(galaxy, archetype, actorId, weaponLevel);
     const offset = toWorld(screen);
     const at = { x: origin.x + offset.x, y: origin.y + offset.y };
     const enemy = createEnemy(
       definition,
-      { archetype, id: `browser-art:${archetype}:${screen.x}`, packId: null, phase: 0 },
+      { archetype, id: actorId, packId: null, phase: 0, weaponLevel },
       at,
     );
     enemy.engaged = true;
@@ -191,6 +198,9 @@ function heavyFixture(galaxy, heavies, pickups = []) {
       part.cooldown = fire.includes(part.id) ? 0.6 : 999;
     }
     setup?.(enemy);
+    assert.equal(enemy.id, actorId, "Supply fixture identity before setup");
+    assert.equal(enemy.archetype, archetype, "Fixture setup must preserve its archetype");
+    assert.equal(enemy.weaponLevel ?? 1, weaponLevel, "Supply fixture weaponLevel before setup");
     flight.objects.push({
       ...at,
       enemy,
