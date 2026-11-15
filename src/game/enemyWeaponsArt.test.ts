@@ -15,7 +15,12 @@ import {
   ringDart,
   ringEmission,
 } from "./enemyWeaponsArt.ts";
-import type { EffectShape, LineShape, TaperShape } from "./weaponEffects.ts";
+import {
+  type EffectShape,
+  IMPACT_STYLE,
+  type LineShape,
+  type TaperShape,
+} from "./weaponEffects.ts";
 
 const art = readEnemyWeaponsArt(file)!;
 const CORAL = 0xd68b72;
@@ -138,10 +143,10 @@ describe("mine", () => {
     const ring = pop(110).shapes.find(
       (shape) => shape.kind === "ellipse" && shape.stroke !== undefined,
     ) as { halfWidth: number };
-    expect(ring.halfWidth).toBeCloseTo(16, 9);
-    expect(pop(20).shapes.filter((shape) => shape.kind === "disc").length).toBe(8);
+    expect(ring.halfWidth).toBeCloseTo(IMPACT_STYLE.shockwave.radius * 0.6 * Math.SQRT2, 9);
+    expect(pop(20).shapes.filter((shape) => shape.kind === "disc")).toHaveLength(0);
     expect(pop(220).shapes).toEqual([]);
-    expect(pop(100, true).shapes).toHaveLength(2);
+    expect(pop(100, true).shapes).toHaveLength(1);
     expect(pop(200, true).shapes).toEqual([]);
   });
 });

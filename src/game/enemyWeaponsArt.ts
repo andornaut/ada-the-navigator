@@ -1,6 +1,15 @@
 import { BEAM } from "../data/weaponCatalog.ts";
+import { fromScreen } from "../model/convex.ts";
 import type { Vec } from "../model/types.ts";
-import { type EffectShape, headingFactor, type LineShape, screenAngle } from "./weaponEffects.ts";
+import {
+  type EffectShape,
+  headingFactor,
+  IMPACT_STYLE,
+  impactEffect,
+  type LineShape,
+  screenAngle,
+  SPARK_MS,
+} from "./weaponEffects.ts";
 
 // Art's enemy-only weapon effects and the enemy Phaser (art/weapons.md "Enemy Phaser" and
 // "Enemy-only weapons") from public/art/enemy-weapons.json, as screen-space shapes in logical px
@@ -696,82 +705,18 @@ function minePop(
   t: number,
   reducedMotion: boolean,
 ): EnemyEffect {
-  const { obstacle, plate, white } = art.colours;
-  if (reducedMotion) {
-    const pop = art.mine.reducedPop;
-    if (t >= pop.ms) {
-      return NONE;
-    }
-    const a = 1 - t / pop.ms;
-    const ring: EffectShape = {
-      alpha: 0.9 * a,
-      at: centre,
-      colour: obstacle,
-      halfHeight: pop.radius / 2,
-      halfWidth: pop.radius,
-      kind: "ellipse",
-      stroke: pop.stroke,
-    };
-    return {
-      edged: [ring],
-      shapes: [
-        {
-          alpha: pop.fill * a,
-          at: centre,
-          colour: obstacle,
-          halfHeight: pop.radius / 2,
-          halfWidth: pop.radius,
-          kind: "ellipse",
-        },
-        ring,
-      ],
-    };
-  }
-  if (t >= MINE_POP_MS) {
-    return NONE;
-  }
-  const g = Math.min(1, t / 110);
-  const radius = 5 + 11 * (1 - (1 - g) ** 3);
-  const ring: EffectShape = {
-    alpha: t <= 110 ? 1 : 1 - (t - 110) / 110,
-    at: centre,
-    colour: obstacle,
-    halfHeight: radius / 2,
-    halfWidth: radius,
-    kind: "ellipse",
-    stroke: lerp(2, 1, t / MINE_POP_MS),
-  };
-  const tint: EffectShape = {
-    alpha: 0.14 * (1 - t / MINE_POP_MS) ** 2,
-    at: centre,
-    colour: obstacle,
-    halfHeight: radius / 2,
-    halfWidth: radius,
-    kind: "ellipse",
-  };
-  const sparks =
-    t < 180
-      ? flecks(centre, obstacle, 20, 1.1, 4 + 9 * (1 - (1 - t / 180) ** 2), 0.6, 1 - t / 180)
-      : [];
-  const step = t < 40 ? { q: 0.95, scale: 1 } : t < 80 ? { q: 0.6, scale: 0.55 } : undefined;
-  const flash: EffectShape[] = step
-    ? [
-        [1.25, obstacle, 0.3],
-        [1, obstacle, 0.85],
-        [0.66, plate, 1],
-        [0.36, white, 1],
-      ].map(([scale, colour, alpha]) => ({
-        alpha: (alpha as number) * step.q,
-        at: centre,
-        colour: colour as number,
-        kind: "disc" as const,
-        radius: 6 * step.scale * (scale as number),
-      }))
-    : [];
-  return {
-    edged: [ring, ...sparks, ...flash.slice(0, 1)],
-    shapes: [tint, ring, ...sparks, ...flash],
-  };
+  const duration = reducedMotion ? art.mine.reducedPop.ms : MINE_POP_MS;
+  const shapes =
+    t < 0 || t >= duration
+      ? []
+      : impactEffect(
+          { at: centre, reducedMotion },
+          {
+            age: ((t / duration) * SPARK_MS * IMPACT_STYLE.shockwave.duration) / 1000,
+            family: "shockwave",
+          },
+        );
+  return { edged: shapes, shapes };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -1051,15 +996,18 @@ export function lance(
   if (!view.stopped) {
     return { edged: [], shapes };
   }
-  const spark = enemySpark(
-    art,
-    spec,
-    end,
-    Math.atan2(end.y - muzzle.y, end.x - muzzle.x),
-    reducedMotion,
-    beamMs,
-  );
-  return { edged: spark.edged, shapes: [...shapes, ...spark.shapes] };
+  const hitShapes =
+    beamMs < 0 || beamMs >= spec.spark.ms
+      ? []
+      : impactEffect(
+          { at: end, reducedMotion },
+          {
+            age: ((beamMs / spec.spark.ms) * SPARK_MS * IMPACT_STYLE.lance.duration) / 1000,
+            direction: fromScreen({ x: end.x - muzzle.x, y: end.y - muzzle.y }),
+            family: "lance",
+          },
+        );
+  return { edged: hitShapes, shapes: [...shapes, ...hitShapes] };
 }
 
 /** How long a lance draws from the start of its tell. */
@@ -1144,15 +1092,18 @@ export function enemyPhaser(
   if (!view.stopped) {
     return { edged: [], shapes };
   }
-  const spark = enemySpark(
-    art,
-    spec,
-    end,
-    Math.atan2(end.y - muzzle.y, end.x - muzzle.x),
-    reducedMotion,
-    beamMs,
-  );
-  return { edged: spark.edged, shapes: [...shapes, ...spark.shapes] };
+  const hitShapes =
+    beamMs < 0 || beamMs >= spec.spark.ms
+      ? []
+      : impactEffect(
+          { at: end, reducedMotion },
+          {
+            age: ((beamMs / spec.spark.ms) * SPARK_MS * IMPACT_STYLE.compactBright.duration) / 1000,
+            direction: fromScreen({ x: end.x - muzzle.x, y: end.y - muzzle.y }),
+            family: "compactBright",
+          },
+        );
+  return { edged: hitShapes, shapes: [...shapes, ...hitShapes] };
 }
 
 // ---------------------------------------------------------------------------------------------

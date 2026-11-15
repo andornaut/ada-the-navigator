@@ -697,7 +697,7 @@ function scaleImpact(at: Vec, scale: number, alpha: number, shape: EffectShape):
 /** Existing procedural shapes for a contact; projects direction once and never infers family. */
 export function impactEffect(
   context: { readonly at: Vec; readonly reducedMotion: boolean },
-  impact: WeaponImpact,
+  impact: Pick<WeaponImpact, "age" | "blastRadius" | "direction" | "family">,
 ): EffectShape[] {
   const { at, reducedMotion } = context;
   const t = impact.age * 1000;
