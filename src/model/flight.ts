@@ -39,6 +39,7 @@ import {
   weaponAt,
   type WeaponDefinition,
 } from "../data/weaponCatalog.ts";
+import type { StationGuardAnchor } from "./ai/stationGuardPatrol.ts";
 import { worldNavigationQuery } from "./ai/worldNavigation.ts";
 import { rollAsteroidLoot } from "./asteroidLoot.ts";
 import {
@@ -110,7 +111,11 @@ import {
 import { phantomSongSpeed, stepPhantomAllies } from "./phantomAllies.ts";
 import { playerWeaponCoverage, type PlayerWeaponCoverageContext } from "./playerWeaponCoverage.ts";
 import { protectedRadius } from "./protectedPlaces.ts";
-import { questGuardFormationReach, questGuardHomePorts } from "./questGuardPlacement.ts";
+import {
+  questGuardAnchor,
+  questGuardFormationReach,
+  questGuardHomePorts,
+} from "./questGuardPlacement.ts";
 import { type PickupObstacle, stardustDiamond, stardustDropOffsets } from "./stardustPlacement.ts";
 import { stationFormationClear } from "./stationPlacement.ts";
 import { type ImpactFamily, impactFamily, type WeaponImpact } from "./weaponImpacts.ts";
@@ -1750,6 +1755,26 @@ function placeGuards(content: GameContent, guards: SpaceObject[], flight: Flight
 
 export { relocateRouteGuards as settleRouteEncounters };
 
+/** Navigation accepts canonical geometry validity but never selects or applies a home. */
+function guardPatrolFrame(
+  content: GameContent,
+  flight: FlightState,
+  guard: SpaceObject,
+): StationGuardAnchor | undefined {
+  if (guard.enemy?.archetype !== "frigate" || guard.routeId === undefined) {
+    return undefined;
+  }
+  const context = questGuardPlacementContext(content, flight);
+  const ports = questGuardHomePorts(context);
+  const site = ports.resolveSite(flight, guard.routeId);
+  const world = flightWorldContext(flight);
+  if (!site || !ports.validHome(world, site, guard, guard.enemy.home)) {
+    return undefined;
+  }
+  const anchor = questGuardAnchor(context, guard);
+  return anchor ? { ...anchor, center: worldPoint(world, guard, anchor.center) } : undefined;
+}
+
 /**
  * The first time each flight Ada comes within Talk range of a destination its guard still blocks
  * (gameplay/rules.md "Space encounters and feedback"), the guard is cued: a dormant retained
@@ -2736,6 +2761,7 @@ function enemies(
       definition,
       { ...state, position: before, radius: object.radius },
     );
+    const stationGuardAnchor = guardPatrolFrame(content, flight, object);
     const intent = stepEnemy(
       definition,
       {
@@ -2750,6 +2776,7 @@ function enemies(
         peers,
         player: flight.player,
         playerVelocity: aimVelocity,
+        ...(stationGuardAnchor ? { stationGuardAnchor } : {}),
         summoned: flight.summonedGuards?.includes(object.id) ?? false,
         ...(flight.summonedGuards?.includes(object.id)
           ? {
