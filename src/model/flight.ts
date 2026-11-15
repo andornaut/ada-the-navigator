@@ -105,10 +105,12 @@ import {
   materializeHostileStation,
   type PlannedHostileStation,
   type StationMaterialization,
+  stationPopulationObjects,
 } from "./hostileStations.ts";
 import { phantomSongSpeed, stepPhantomAllies } from "./phantomAllies.ts";
 import { playerWeaponCoverage, type PlayerWeaponCoverageContext } from "./playerWeaponCoverage.ts";
 import { protectedRadius } from "./protectedPlaces.ts";
+import { questGuardFormationReach, questGuardHomePorts } from "./questGuardPlacement.ts";
 import { type PickupObstacle, stardustDiamond, stardustDropOffsets } from "./stardustPlacement.ts";
 import { stationFormationClear } from "./stationPlacement.ts";
 import { type ImpactFamily, impactFamily, type WeaponImpact } from "./weaponImpacts.ts";
@@ -943,6 +945,127 @@ function spawnEnemy(
     kind: "enemy",
     radius: content.tuning.flight.shipRadius * definition.sizeRatio,
   };
+}
+
+/** Canonical scenery and arrivals for read-only guard planning and explicit formation admission. */
+export function questGuardPlacementContext(content: GameContent, flight: FlightState) {
+  return {
+    arrivals: arrivalPoints(flight),
+    content,
+    drawnOf: (object: SpaceObject) => drawnOf(flight, object),
+    flight,
+    frameOf: (object: SpaceObject) => frameOf(flight, object),
+  };
+}
+
+/** Detached templates resolve the same canonical levels and identities without consuming shared draws. */
+function questFrigateFormation(
+  content: GameContent,
+  flight: FlightState,
+  id: string,
+  siteId: string,
+  point: Vec,
+) {
+  const leader = spawnEnemy(content, flight, "frigate", id, point);
+  leader.routeId = siteId;
+  leader.persistent = true;
+  const followers = createFrigateEscorts(
+    {
+      encounterSeed: flightEncounterSeed(flight),
+      galaxy: flight.galaxy,
+      id: (index) => requiredFrigateEscortId(id, index),
+      packId: escortPackId(id),
+      persistent: true,
+      shipRadius: content.tuning.flight.shipRadius,
+    },
+    leader,
+  );
+  return { followers, leader };
+}
+
+/** Read-only local selection for a newly authored formation, independent of Ada and random streams. */
+export function questFrigateHome(
+  content: GameContent,
+  flight: FlightState,
+  id: string,
+  siteId: string,
+): Vec | null {
+  const context = questGuardPlacementContext(content, flight);
+  const site = questGuardHomePorts(context).resolveSite(flight, siteId);
+  if (!site) {
+    return null;
+  }
+  const { followers, leader } = questFrigateFormation(content, flight, id, siteId, site);
+  return questGuardHomePorts({
+    ...context,
+    flight: { ...flight, objects: [...flight.objects, ...followers] },
+  }).recoveryHome(flightWorldContext(flight), site, leader);
+}
+
+/** An explicit local quest formation is appended atomically, without clearing any scenery. */
+export function spawnQuestFrigateAt(
+  content: GameContent,
+  flight: FlightState,
+  id: string,
+  siteId: string,
+  point: Vec,
+): SpaceObject | null {
+  const represented = stationPopulationObjects(flight);
+  const existing = represented.find((object) => object.id === id);
+  if (existing) {
+    return existing.enemy?.archetype === "frigate" && existing.routeId === siteId ? existing : null;
+  }
+  if (Object.hasOwn(flight.world.notables, id)) {
+    return null;
+  }
+  const context = questGuardPlacementContext(content, flight);
+  const ports = questGuardHomePorts(context);
+  const site = ports.resolveSite(flight, siteId);
+  if (!site) {
+    return null;
+  }
+  const { followers, leader } = questFrigateFormation(content, flight, id, siteId, point);
+  const packId = escortPackId(id);
+  if (
+    followers.some(
+      (actor) =>
+        represented.some((other) => other.id === actor.id) ||
+        Object.hasOwn(flight.world.notables, actor.id),
+    )
+  ) {
+    return null;
+  }
+  const planFlight = { ...flight, objects: [...flight.objects, ...followers] };
+  const plannedPorts = questGuardHomePorts({ ...context, flight: planFlight });
+  if (!plannedPorts.validHome(flightWorldContext(flight), site, leader, point)) {
+    return null;
+  }
+  const actors = [leader, ...followers];
+  const policy = SPAWNER_POLICIES[flight.galaxy];
+  const world = hostileStationContext(flight);
+  if (
+    !worldFitsEncounter(
+      world,
+      policy,
+      worldSpawnerStage(world, policy, point),
+      content.tuning.flight.shipRadius,
+      represented,
+      point,
+      {
+        archetype: "frigate",
+        count: 1,
+        escorts: { archetype: "fighter", count: FRIGATE_ESCORT_COUNT },
+      },
+      questGuardFormationReach(context, actors),
+    ) ||
+    !stationFormationClear(context, actors)
+  ) {
+    return null;
+  }
+  actors.forEach((actor) => canonicalObject(flight, actor));
+  flight.objects.push(...actors);
+  combat(flight).initialPackSizes[packId] = followers.length;
+  return leader;
 }
 
 /** Caller-supplied station plans have no implicit site, defender count, reward or replenishment. */
@@ -1843,6 +1966,18 @@ export function ensureRouteEncounter(
     : flight.galaxy === 1
       ? "frigate"
       : "capital";
+  if (archetype === "frigate") {
+    const guardId = `route:${id}`;
+    const home = questFrigateHome(content, flight, guardId, id);
+    if (!home) {
+      return null;
+    }
+    const guard = spawnQuestFrigateAt(content, flight, guardId, id, home);
+    if (guard) {
+      combat(flight).routeEncounters.push(id);
+    }
+    return guard;
+  }
   worldActivateFlightRegion(flightWorldContext(flight), content, destination, flight);
   const radius = enemyCatalog[archetype].sizeRatio * content.tuning.flight.shipRadius;
   const heading = direction(worldDelta(flightWorldContext(flight), destination, flight.player));

@@ -10,7 +10,9 @@ import { shipBody } from "./shipBody.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
 import { worldDistance, worldPoint } from "./worldContacts.ts";
 
-interface StationPlacementContext {
+export interface StationPlacementContext {
+  readonly checkPlayer?: boolean;
+  readonly ignoreIds?: ReadonlySet<string>;
   readonly arrivals: readonly Vec[];
   readonly content: GameContent;
   readonly drawnOf: (object: SpaceObject) => Silhouette | null;
@@ -25,7 +27,9 @@ export function stationFormationClear(
 ): boolean {
   const { content, flight } = context;
   const world = flightWorldContext(flight);
-  const objects = stationPopulationObjects(flight).filter((object) => object.hp > 0);
+  const objects = stationPopulationObjects(flight).filter(
+    (object) => object.hp > 0 && !context.ignoreIds?.has(object.id),
+  );
   for (const [index, actor] of actors.entries()) {
     const body = actor.enemy && enemyPhysicalBody(ROUTE_POSITION[flight.galaxy], actor.enemy);
     if (!body) {
@@ -36,12 +40,13 @@ export function stationFormationClear(
       context.arrivals.some(
         (point) => worldDistance(world, point, actor) < content.tuning.flight.arrivalCalm + reach,
       ) ||
-      outlinesContact(
-        shipBody(flight.facing),
-        flight.player,
-        body,
-        worldPoint(world, flight.player, actor),
-      )
+      (context.checkPlayer !== false &&
+        outlinesContact(
+          shipBody(flight.facing),
+          flight.player,
+          body,
+          worldPoint(world, flight.player, actor),
+        ))
     ) {
       return false;
     }

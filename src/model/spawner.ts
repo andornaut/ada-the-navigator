@@ -119,6 +119,7 @@ export function worldFitsEncounter(
   objects: readonly SpaceObject[],
   centre: Vec,
   plan: EncounterPlan,
+  actualReach = 0,
 ): boolean {
   return fitsPopulation(context, policy, stage, objects, centre, {
     archetypes: [plan.archetype, ...(plan.escorts?.count ? [plan.escorts.archetype] : [])],
@@ -127,7 +128,7 @@ export function worldFitsEncounter(
       (plan.escorts?.archetype === "capital" ? plan.escorts.count : 0),
     count: plan.count + (plan.escorts?.count ?? 0),
     includesHostileAnchor: plan.archetype === "capital",
-    reach: groupReach(policy, shipRadius, plan),
+    reach: Math.max(groupReach(policy, shipRadius, plan), actualReach),
   });
 }
 
