@@ -153,6 +153,10 @@ export function createQuestsScreen(
   let selected: string | null = null;
   let galaxy: GalaxyNumber | undefined;
   let origin: QuestOrigin = "list";
+  let rootDismissal: Pick<QuestFooterData["dismiss"], "intent" | "label"> = {
+    intent: "close",
+    label: labels.close,
+  };
   let signature = "";
   let listPage = 0;
   let layer: ReturnType<typeof createModalLayer> | undefined;
@@ -448,8 +452,9 @@ export function createQuestsScreen(
     const footerData: QuestFooterData = {
       dismiss: {
         actionId: entry && origin === "list" ? "quest-back" : "quest-close",
-        intent: entry && origin === "list" ? "back" : "close",
-        label: entry && origin === "list" ? (labels.questBack ?? labels.close) : labels.close,
+        intent: entry && origin === "list" ? "back" : rootDismissal.intent,
+        label:
+          entry && origin === "list" ? (labels.questBack ?? labels.close) : rootDismissal.label,
       },
       ...(other === undefined ? {} : { other }),
       ...(pager === undefined ? {} : { pager }),
@@ -539,7 +544,12 @@ export function createQuestsScreen(
       focusTarget(card.body.querySelector<HTMLButtonElement>(".ada-primary") ?? card.close);
     },
     isOpen: () => !modal.hidden,
-    open(id: string | null = null, from: QuestOrigin = "list"): void {
+    open(
+      id: string | null = null,
+      from: QuestOrigin = "list",
+      dismissal?: Pick<QuestFooterData["dismiss"], "intent" | "label">,
+    ): void {
+      rootDismissal = dismissal ?? { intent: "close", label: labels.close };
       contextEntries = null;
       selected = id;
       origin = from;
@@ -552,6 +562,7 @@ export function createQuestsScreen(
       if (!context?.quests.length) {
         return false;
       }
+      rootDismissal = { intent: "close", label: labels.close };
       contextEntries = [...context.quests];
       selected = contextEntries.length === 1 ? contextEntries[0]!.id : null;
       origin = contextEntries.length === 1 ? "flight" : "list";

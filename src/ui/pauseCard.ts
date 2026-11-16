@@ -243,6 +243,10 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   });
   let questRoot: "map" | "flight" | "pause" | "ship" = "map";
   let shipDetailOrigin: HTMLElement | undefined;
+  const questParentDismissal = {
+    intent: "back" as const,
+    label: labels.mapScreen.questBack ?? labels.close,
+  };
   const quests = createQuestsScreen(root, {
     labels: labels.mapScreen,
     onClose: () => {
@@ -363,7 +367,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       state.questEntries?.some(({ id }) => id === view.aboardQuestId)
     ) {
       questRoot = "ship";
-      quests.open(view.aboardQuestId, "ship");
+      quests.open(view.aboardQuestId, "ship", questParentDismissal);
     } else {
       const text =
         row.item.kind === "resource"
@@ -478,7 +482,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     } else {
       hidePause();
     }
-    quests.open(null, "list");
+    quests.open(null, "list", questParentDismissal);
   }
   function openQuest(id: string, origin: QuestOrigin): void {
     questRoot = origin === "flight" ? "flight" : "map";
@@ -488,7 +492,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     } else if (!mapScreen.isOpen()) {
       show("map");
     }
-    quests.open(id, origin);
+    quests.open(id, origin, questRoot === "flight" ? undefined : questParentDismissal);
   }
   const act = (id: PauseAction) => {
     const button = buttons.get(id)!;

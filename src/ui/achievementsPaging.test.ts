@@ -233,4 +233,22 @@ describe("Achievements page actions", () => {
     expect(actions.style).toMatchObject({ gridColumn: "3", justifySelf: "end" });
     card.dispose();
   });
+  it("labels an actual parent return Back while root opening remains Close and X stays equivalent", () => {
+    const { card, close, dismiss, onOpenChange } = setup();
+    expect(dismiss.textContent).toBe("Close");
+    card.close();
+    card.open({ intent: "back", label: "Back" });
+    expect(dismiss.textContent).toBe("Back");
+    expect(dismiss.parent!.dataset.footerAction).toBe("back");
+    dismiss.click();
+    expect(card.isOpen()).toBe(false);
+    card.open({ intent: "back", label: "Back" });
+    close.click();
+    expect(card.isOpen()).toBe(false);
+    expect(onOpenChange.mock.calls).toEqual([[true], [false], [true], [false], [true], [false]]);
+    card.open();
+    expect(dismiss.textContent).toBe("Close");
+    expect(dismiss.parent!.dataset.footerAction).toBe("close");
+    card.dispose();
+  });
 });

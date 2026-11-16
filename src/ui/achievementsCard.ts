@@ -424,7 +424,11 @@ export function createAchievementsCard(
       modal.remove();
     },
     isOpen: () => !modal.hidden,
-    open: () => setOpen(true),
+    open(dismissal?: { readonly intent: "back" | "close"; readonly label: string }): void {
+      dismiss.textContent = dismissal?.label ?? labels.close;
+      setFooterAction(dismissal?.intent ?? "close", actions);
+      setOpen(true);
+    },
     /** The entries to list; an open card redraws its page. */
     setEntries(next: readonly AchievementEntry[]): void {
       if (JSON.stringify(next) === JSON.stringify(entries)) {

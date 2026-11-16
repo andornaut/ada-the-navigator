@@ -276,6 +276,10 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       settings.close();
       cheatsOpening = false;
     },
+    footer: {
+      intent: "back",
+      label: options.pause.labels.mapScreen.questBack ?? options.pause.labels.close,
+    },
     onOpenChange: (open) => {
       options.onStartCover?.("cheats", open);
       if (!open && returnFromCheats) {
@@ -372,7 +376,10 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       if (action === "settings") {
         settings.open();
       } else {
-        achievements.open();
+        achievements.open({
+          intent: "back",
+          label: options.pause.labels.mapScreen.questBack ?? options.pause.labels.close,
+        });
       }
     },
     onOpenChange: () => syncModal(),

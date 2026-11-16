@@ -24,6 +24,7 @@ interface CheatOptions {
   readonly actions: readonly CheatAction[];
   readonly beforeOpen: () => void;
   readonly canExecute: () => boolean;
+  readonly footer?: { readonly intent: "back" | "close"; readonly label: string };
   readonly labels: CheatLabels;
   readonly onOpenChange: (open: boolean) => void;
   readonly onSave: () => void;
@@ -57,10 +58,10 @@ export function createCheats(
     title: options.labels.title,
   });
   const { body, card, close, frame } = parts;
-  const dismiss = createButton(options.labels.close, "primary");
+  const dismiss = createButton(options.footer?.label ?? options.labels.close, "primary");
   dismiss.dataset.action = "dismiss-cheats";
   const footer = createActions([{ button: dismiss, role: "primary" }]);
-  setFooterAction("close", footer);
+  setFooterAction(options.footer?.intent ?? "close", footer);
   const dismissAction = () => setOpen(false);
   const closeBindings = [close, dismiss].map((element) =>
     bindAdaAction(
@@ -166,7 +167,7 @@ export function createCheats(
       host: card,
     },
     cheatsTree(
-      options.labels.close,
+      options.footer?.label ?? options.labels.close,
       cheatGroups(options.actions).map((scope) => ({
         actions: options.actions
           .filter((action) => action.scope === scope)

@@ -539,9 +539,12 @@ it("opens the existing Quests route directly from carried cargo and preserves pa
     openQuests,
     questsOpen: () => questsOpen,
   }));
-  const { options, pause } = cards();
+  const { options, pause, root } = cards();
   pause.setState(state({ carrying: true }));
   pause.openQuests();
+  expect(
+    root.querySelectorAll().find((node) => node.dataset.action === "quest-close")!.textContent,
+  ).toBe("Back");
   expect(pause.isOpen()).toBe(true);
   expect(pause.mapOpen()).toBe(true);
   expect(openQuests).not.toHaveBeenCalled();
@@ -583,6 +586,9 @@ it("opens Quests from the pause menu and keeps pause through both back layers un
     pause.setState(state({ map: { ...MAP, quests: [] } }));
     pause.open();
     button(body.children[0]!, "pause-quests").click();
+    expect(
+      root.querySelectorAll().find((node) => node.dataset.action === "quest-close")!.textContent,
+    ).toBe("Back");
     expect(openQuests).not.toHaveBeenCalled();
     expect(
       root.children.find((child) => child.className.includes("ada-quests-screen"))?.hidden,
@@ -660,6 +666,7 @@ it("opens a held quest directly, returns All quests to its list, and resumes onl
   const find = (action: string) =>
     quests.querySelectorAll().find((button) => button.dataset.action === action)!;
   expect(find("quest-other").textContent).toBe("All quests");
+  expect(find("quest-close").textContent).toBe("Close");
   find("quest-other").click();
   const row = quests.querySelectorAll().find((button) => button.dataset.questId === entry.id)!;
   row.click();
@@ -876,6 +883,9 @@ it("returns held cargo quest details directly to the same Ship", () => {
   origin.click();
   expect(modal.hidden).toBe(true);
   const detail = root.children.find((node) => node.className.includes("ada-quests-screen"))!;
+  expect(
+    detail.querySelectorAll().find((node) => node.dataset.action === "quest-close")!.textContent,
+  ).toBe("Back");
   expect(detail.querySelectorAll().some((node) => node.dataset.action === "quest-other")).toBe(
     false,
   );
@@ -919,12 +929,15 @@ it.each([1, 2])(
     const find = (action: string) =>
       quests.querySelectorAll().find((node) => node.dataset.action === action)!;
     expect(pause.mapOpen()).toBe(false);
+    expect(find("quest-close").textContent).toBe("Close");
     if (count === 2) {
       quests
         .querySelectorAll()
         .find((node) => node.dataset.questId === entries[0]!.id)!
         .click();
+      expect(find("quest-back").textContent).toBe("Back");
       find("quest-back").click();
+      expect(find("quest-close").textContent).toBe("Close");
       expect(pause.isOpen()).toBe(true);
       expect(quests.querySelectorAll().filter((node) => node.dataset.questId)).toHaveLength(2);
     }

@@ -112,7 +112,7 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
-function setup() {
+function setup(footer?: { readonly intent: "back" | "close"; readonly label: string }) {
   const root = new Element();
   const actions = new Element();
   const close = Object.assign(new Element(), { className: "ada-primary", textContent: "Close" });
@@ -123,6 +123,7 @@ function setup() {
     actions: [],
     beforeOpen: vi.fn(),
     canExecute: () => true,
+    ...(footer ? { footer } : {}),
     labels: {
       close: "Close",
       open: "Open cheats",
@@ -263,4 +264,19 @@ it("gives header and footer one registered close path with foreground and dispos
   held.activate();
   dismiss.dispatchEvent(new Event("click"));
   expect(f.changed.mock.calls).toEqual([[true], [false], [true], [false]]);
+});
+
+it("uses a supplied parent Back only for the footer and preserves one dismissal path", () => {
+  const f = setup({ intent: "back", label: "Back" });
+  const footer = descendants(f.root).find((node) => node.dataset.footerAction === "back")!;
+  const dismiss = footer.children[0]!;
+  expect(dismiss.textContent).toBe("Back");
+  f.actions.children[0]!.dispatchEvent(new Event("click"));
+  dismiss.dispatchEvent(new Event("click"));
+  dismiss.dispatchEvent(new Event("click"));
+  expect(f.changed.mock.calls).toEqual([[true], [false]]);
+  f.cheats.dispose();
+  expect(resolveAdaHoldAction(f.root as unknown as HTMLElement, dismiss)?.available()).not.toBe(
+    true,
+  );
 });

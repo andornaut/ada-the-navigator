@@ -362,7 +362,10 @@ it("forwards the actual controls callback and clears the old Menu return before 
   const context = {
     achievements,
     options: {
-      pause: { onBackToTitle: vi.fn(() => expect(context.returnToMenu).toBeUndefined()) },
+      pause: {
+        labels: { close: "Close", mapScreen: { questBack: "Back" } },
+        onBackToTitle: vi.fn(() => expect(context.returnToMenu).toBeUndefined()),
+      },
     },
     returnToMenu: vi.fn(),
     settings,
@@ -377,6 +380,7 @@ it("forwards the actual controls callback and clears the old Menu return before 
   expect(context.returnToMenu).toBe(reopen);
   handler("achievements", reopen);
   expect(achievements.open).toHaveBeenCalledOnce();
+  expect(achievements.open).toHaveBeenCalledWith({ intent: "back", label: "Back" });
   const { menu, onAction, rows } = setup();
   onAction.mockImplementation(handler);
   menu.setContext("nonplay");
