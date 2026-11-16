@@ -43,6 +43,7 @@ class Element extends EventTarget {
   inert = false;
   disabled = false;
   connected = true;
+  readonly attributes = new Map<string, string>();
   readonly ownerDocument: FixtureDocument;
   constructor(ownerDocument: FixtureDocument) {
     super();
@@ -66,8 +67,8 @@ class Element extends EventTarget {
   matches(selector: string) {
     return selector === ":disabled" && this.disabled;
   }
-  getAttribute() {
-    return null;
+  getAttribute(name: string) {
+    return this.attributes.get(name) ?? null;
   }
 }
 class FixtureDocument extends EventTarget {
@@ -187,6 +188,7 @@ it("keeps the actual travel refusal and rechecks travel eligibility for click an
     travelNow: () => ({ offered: true, reason: danger ? "danger" : null }),
   });
   f.execute(actual("travel"));
+  f.button.attributes.set("aria-disabled", "true");
   f.down();
   f.up();
   f.click();
@@ -195,10 +197,11 @@ it("keeps the actual travel refusal and rechecks travel eligibility for click an
   f.down();
   vi.advanceTimersByTime(600);
   f.up();
-  expect(f.click().defaultPrevented).toBe(true);
+  expect(f.click().defaultPrevented).toBe(false);
   expect(refuse).toHaveBeenCalledTimes(2);
   expect(onTravel).not.toHaveBeenCalled();
   danger = false;
+  f.button.attributes.delete("aria-disabled");
   f.click(0);
   expect(onTravel).toHaveBeenCalledExactlyOnceWith("station");
 });
