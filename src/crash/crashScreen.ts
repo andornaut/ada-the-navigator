@@ -7,6 +7,7 @@ import "@andornaut/game-kit/runtime/web/crash/dom/crash.css";
 
 import {
   type CrashColours,
+  type CrashScreen,
   installCrashScreen,
 } from "@andornaut/game-kit/runtime/web/crash/dom/crashScreen";
 import type { HoldActionBinding } from "@andornaut/game-kit/runtime/web/input/dom/holdActions";
@@ -91,10 +92,31 @@ if (import.meta.hot) {
   import.meta.hot.dispose(disposeRecovery);
 }
 
-export const CRASH_SCREEN = installCrashScreen(window, {
+const pageCrash = installCrashScreen(window, {
   bindHoldAction,
   buildLabel: BUILD_LABEL,
   colours: CRASH_COLOURS,
   dev: new URLSearchParams(window.location.search).get("dev") === "1",
   words: CRASH_COPY,
 });
+
+// Save fencing runs before the earlier loading teardown; the Kit owns crash admission/rendering.
+const crashStops = new Set<() => void>();
+pageCrash.stopGameOnCrash(() => {
+  const errors: unknown[] = [];
+  for (const stop of [...crashStops].reverse()) {
+    try {
+      stop();
+    } catch (error) {
+      errors.push(error);
+    }
+  }
+  if (errors.length > 0) {
+    throw new AggregateError(errors, "Crash cleanup failed");
+  }
+});
+export const CRASH_SCREEN: CrashScreen = {
+  stopGameOnCrash(stop) {
+    crashStops.add(stop);
+  },
+};
