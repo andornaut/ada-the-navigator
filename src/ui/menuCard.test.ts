@@ -4,7 +4,8 @@ import { runInNewContext } from "node:vm";
 import ts from "typescript";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { fixtureActionRoot } from "./actionRootFixture.ts";
+import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
+import { rootPressGuard } from "./pressScope.ts";
 
 const fixture = vi.hoisted(() => {
   class Node extends EventTarget {
@@ -205,9 +206,13 @@ import { actionOrder } from "./modal.ts";
 
 const menus: ReturnType<typeof createMenuCard>[] = [];
 
+const rootReleases: (() => void)[] = [];
 afterEach(() => {
   for (const menu of menus.splice(0)) {
     menu.dispose();
+  }
+  for (const stop of rootReleases.splice(0).reverse()) {
+    stop();
   }
   vi.unstubAllGlobals();
   vi.clearAllMocks();
@@ -216,21 +221,36 @@ afterEach(() => {
 });
 
 function setup(exit?: { label: string; onExit: () => void }) {
-  vi.stubGlobal("document", {
+  const doc = Object.assign(new EventTarget(), {
     createElement: (tag: string) =>
       Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
     createTextNode: (text: string) =>
       Object.assign(new fixture.Node(), { nodeType: 3, nodeValue: text }),
-    defaultView: {
+    defaultView: Object.assign(new EventTarget(), {
       HTMLElement: fixture.Node,
       Node: fixture.Node,
+      clearTimeout,
       getComputedStyle: () => ({ getPropertyValue: () => "1" }),
-    },
+      performance,
+      setTimeout,
+    }),
+    elementFromPoint: (): InstanceType<typeof fixture.Node> | null => doc.hitTarget,
+    hitTarget: null as InstanceType<typeof fixture.Node> | null,
   });
+  vi.stubGlobal("document", doc);
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
   fixture.card.frame.replaceChildren(fixture.card.body, fixture.card.close);
   const root = new fixture.Node();
-  fixtureActionRoot(root);
+  const attached = bindAdaActionRoot(
+    {
+      guard: rootPressGuard(root as unknown as HTMLElement),
+      pointerRelease: { resolvePointer: () => undefined },
+      requiredReady: () => true,
+      subscribeRequired: () => () => {},
+    },
+    root as unknown as HTMLElement,
+  );
+  rootReleases.push(attached.dispose);
   const onAction = vi.fn();
   const onOpenChange = vi.fn();
   const menu = createMenuCard(root as unknown as HTMLElement, {
@@ -243,6 +263,7 @@ function setup(exit?: { label: string; onExit: () => void }) {
   });
   menus.push(menu);
   return {
+    doc,
     menu,
     onAction,
     onOpenChange,
@@ -438,7 +459,7 @@ it("forwards the actual controls callback and clears the old Menu return before 
 it.each(["start", "nonplay"] as const)(
   "dismisses the actual %s Menu backdrop once and restores its opener",
   (context) => {
-    const { menu, onOpenChange, root } = setup();
+    const { doc, menu, onOpenChange, root } = setup();
     const origin = new fixture.Node();
     menu.setContext(context);
     menu.open(origin as unknown as HTMLElement);
@@ -449,10 +470,23 @@ it.each(["start", "nonplay"] as const)(
         button: { value: 0 },
         clientX: { value: 0 },
         clientY: { value: 0 },
+        detail: { value: type === "click" ? 1 : 0 },
+        isPrimary: { value: true },
         pointerId: { value: 1 },
         target: { value: target },
       });
-      modal.dispatchEvent(event);
+      doc.hitTarget = target;
+      if (type === "pointerdown") {
+        doc.dispatchEvent(event);
+        root.dispatchEvent(event);
+      } else if (type === "click") {
+        root.dispatchEvent(event);
+        if (!event.defaultPrevented) {
+          modal.dispatchEvent(event);
+        }
+      } else {
+        doc.dispatchEvent(event);
+      }
     };
     event("pointerdown", fixture.card.body);
     event("pointerup");

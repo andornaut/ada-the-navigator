@@ -1,7 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 
 import { resolveAdaHoldAction } from "./actionBinding.ts";
-import { fixtureActionRoot } from "./actionRootFixture.ts";
+import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
 import { rootPressGuard } from "./pressScope.ts";
 import { createUpdateDialog } from "./updateDialog.ts";
 const fixture = vi.hoisted(() => {
@@ -19,7 +19,7 @@ const fixture = vi.hoisted(() => {
       this.detached = !value;
     }
     get ownerDocument() {
-      return { ...document, defaultView: { HTMLElement: Node, Node } };
+      return document;
     }
     get parentNode() {
       return this.parentElement;
@@ -195,7 +195,11 @@ vi.mock("./layout/viewScale.ts", () => ({ readViewUnit: () => 1 }));
 vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
   focusTarget: (node: { focus(): void }) => node.focus(),
 }));
+const rootReleases: (() => void)[] = [];
 afterEach(() => {
+  for (const stop of rootReleases.splice(0).reverse()) {
+    stop();
+  }
   vi.unstubAllGlobals();
   vi.clearAllMocks();
   fixture.card.body.children = [];
@@ -222,14 +226,33 @@ const labels = {
 };
 function setup(initial = false) {
   const root = new fixture.Node();
-  fixtureActionRoot(root);
-  const doc = {
+  const doc = Object.assign(new EventTarget(), {
     activeElement: null as unknown,
     createElement: (tag: string) =>
       Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
-  };
+    defaultView: Object.assign(new EventTarget(), {
+      HTMLElement: fixture.Node,
+      Node: fixture.Node,
+      clearTimeout,
+      performance,
+      setTimeout,
+    }),
+    elementFromPoint: (): InstanceType<typeof fixture.Node> | null => doc.hitTarget,
+    hitTarget: null as InstanceType<typeof fixture.Node> | null,
+  });
   vi.stubGlobal("document", doc);
   const guard = rootPressGuard(root as unknown as HTMLElement);
+  rootReleases.push(
+    bindAdaActionRoot(
+      {
+        guard,
+        pointerRelease: { resolvePointer: () => undefined },
+        requiredReady: () => true,
+        subscribeRequired: () => () => {},
+      },
+      root as unknown as HTMLElement,
+    ).dispose,
+  );
   let notify: (visible: boolean) => void = vi.fn();
   const stop = vi.fn();
   const offer = {
@@ -334,9 +357,33 @@ it("requires an outside pointer origin and a tap, refusing inside-origin release
   const f = setup(true);
   const modal = f.root.children[0]!;
   const event = (type: string, x: number) => {
-    const e = new Event(type);
-    Object.assign(e, { button: 0, clientX: x, clientY: 0, pointerId: 1 });
-    modal.dispatchEvent(e);
+    const e = new Event(type, { cancelable: true });
+    Object.defineProperties(
+      e,
+      Object.fromEntries(
+        Object.entries({
+          button: 0,
+          clientX: x,
+          clientY: 0,
+          detail: type === "click" ? 1 : 0,
+          isPrimary: true,
+          pointerId: 1,
+          target: modal,
+        }).map(([key, value]) => [key, { value }]),
+      ),
+    );
+    f.doc.hitTarget = modal;
+    if (type === "pointerdown") {
+      f.doc.dispatchEvent(e);
+      f.root.dispatchEvent(e);
+    } else if (type === "click") {
+      f.root.dispatchEvent(e);
+      if (!e.defaultPrevented) {
+        modal.dispatchEvent(e);
+      }
+    } else {
+      f.doc.dispatchEvent(e);
+    }
   };
   event("click", 0);
   expect(f.offer.defer).not.toHaveBeenCalled();

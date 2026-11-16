@@ -1,14 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { resolveAdaHoldAction } from "./actionBinding.ts";
-import { fixtureActionRoot } from "./actionRootFixture.ts";
+import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
 import { enterPressView, rootPressGuard } from "./pressScope.ts";
 import { createRestartCard } from "./restartCard.ts";
 
-let doc: {
+let doc: EventTarget & {
+  hitTarget: Element | null;
+  elementFromPoint: () => Element | null;
   activeElement: Element | null;
   createElement: (tag: string) => Element;
-  defaultView: { HTMLElement: typeof Element; Node: typeof Element };
+  defaultView: EventTarget & {
+    HTMLElement: typeof Element;
+    Node: typeof Element;
+    clearTimeout: typeof clearTimeout;
+    setTimeout: typeof setTimeout;
+    performance: typeof performance;
+  };
   fonts: { ready: Promise<void> };
 };
 class Element extends EventTarget {
@@ -74,6 +82,9 @@ class Element extends EventTarget {
     }
     this.parentElement = null;
     this.isConnected = false;
+  }
+  getAttribute(name: string) {
+    return this.attributes.get(name) ?? null;
   }
   contains(node: unknown): boolean {
     return node === this || this.children.some((child) => child.contains(node));
@@ -184,24 +195,46 @@ vi.mock("@andornaut/game-kit/web/ui/dom/focusModality", () => ({
 
 beforeEach(() => {
   native.tap.mockReturnValue(true);
-  doc = {
+  doc = Object.assign(new EventTarget(), {
     activeElement: null,
     createElement: (tag: string) => new Element(tag),
-    defaultView: { HTMLElement: Element, Node: Element },
+    defaultView: Object.assign(new EventTarget(), {
+      HTMLElement: Element,
+      Node: Element,
+      clearTimeout,
+      performance,
+      setTimeout,
+    }),
+    elementFromPoint: () => doc.hitTarget,
     fonts: { ready: Promise.resolve() },
-  };
+    hitTarget: null as Element | null,
+  });
   vi.stubGlobal("document", doc);
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
 });
+const rootReleases: (() => void)[] = [];
 afterEach(() => {
+  for (const stop of rootReleases.splice(0).reverse()) {
+    stop();
+  }
   vi.unstubAllGlobals();
   vi.clearAllMocks();
 });
 function fixture() {
   const root = new Element(),
     onRestart = vi.fn();
-  fixtureActionRoot(root);
   const guard = rootPressGuard(root as unknown as HTMLElement);
+  rootReleases.push(
+    bindAdaActionRoot(
+      {
+        guard,
+        pointerRelease: { resolvePointer: () => undefined },
+        requiredReady: () => true,
+        subscribeRequired: () => () => {},
+      },
+      root as unknown as HTMLElement,
+    ).dispose,
+  );
   const card = createRestartCard(root as unknown as HTMLElement, {
     labels: { cancel: "Cancel", close: "Close", restart: "Restart", title: "Restart?" },
     onRestart,
@@ -281,19 +314,46 @@ describe("Restart's configured production binding", () => {
   it("delegates outside dismissal to the native tap guard without restarting", () => {
     const f = fixture();
     f.card.open();
-    native.tap.mockReturnValueOnce(false).mockReturnValueOnce(true);
-    const event = (type: string, x: number) =>
-      Object.assign(new Event(type), { button: 0, clientX: x, clientY: 0, pointerId: 1 });
-    f.modal.dispatchEvent(event("pointerdown", 0));
-    f.modal.dispatchEvent(event("pointerup", 30));
-    f.modal.dispatchEvent(event("click", 30));
+    const event = (type: string, x: number) => {
+      const e = new Event(type, { cancelable: true });
+      Object.defineProperties(
+        e,
+        Object.fromEntries(
+          Object.entries({
+            button: 0,
+            clientX: x,
+            clientY: 0,
+            detail: type === "click" ? 1 : 0,
+            isPrimary: true,
+            pointerId: 1,
+            target: f.modal,
+          }).map(([key, value]) => [key, { value }]),
+        ),
+      );
+      doc.hitTarget = f.modal;
+      if (type === "pointerdown") {
+        doc.dispatchEvent(e);
+        f.root.dispatchEvent(e);
+      } else if (type === "click") {
+        f.root.dispatchEvent(e);
+        if (!e.defaultPrevented) {
+          f.modal.dispatchEvent(e);
+        }
+      } else {
+        doc.dispatchEvent(e);
+      }
+      return e;
+    };
+    event("pointerdown", 0);
+    event("pointerup", 30);
+    const dragClick = event("click", 30);
     expect(f.card.isOpen()).toBe(true);
-    f.modal.dispatchEvent(event("pointerdown", 0));
-    f.modal.dispatchEvent(event("pointerup", 1));
-    f.modal.dispatchEvent(event("click", 1));
+    event("pointerdown", 0);
+    event("pointerup", 1);
+    const tapClick = event("click", 1);
     expect(f.card.isOpen()).toBe(false);
-    expect(native.tap).toHaveBeenNthCalledWith(1, 1, { x: 0, y: 0 }, { x: 30, y: 0 });
-    expect(native.tap).toHaveBeenNthCalledWith(2, 1, { x: 0, y: 0 }, { x: 1, y: 0 });
+    expect(dragClick.defaultPrevented).toBe(true);
+    expect(tapClick.defaultPrevented).toBe(true);
     expect(f.onRestart).not.toHaveBeenCalled();
     f.card.dispose();
     expect(native.dispose).toHaveBeenCalledOnce();
