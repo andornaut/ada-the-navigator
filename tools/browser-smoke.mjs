@@ -206,7 +206,7 @@ try {
   const response = await page.goto("http://ada-preview:4173/");
   assert.equal(response.status(), 200);
   // The preview serves dist/_headers as Cloudflare does: each page's CSP, styles from its own
-  // origin only, scripts and connections from it and Cloudflare's injected analytics beacon alone,
+  // origin only, with optional platform analytics permitted only on the landing page,
   // and the wake lock allowed.
   const pageHeaders = await Promise.all(
     ["/", "/play/"].map(async (pagePath) => [
@@ -215,6 +215,7 @@ try {
     ]),
   );
   for (const [pagePath, headers] of pageHeaders) {
+    const landing = pagePath === "/";
     const policy = headers["content-security-policy"] ?? "";
     const directives = Object.fromEntries(
       policy.split("; ").map((directive) => {
@@ -225,13 +226,13 @@ try {
     assert.deepEqual(directives["style-src"], ["'self'"], `${pagePath} styles from its origin`);
     assert.deepEqual(
       directives["script-src"],
-      ["'self'", "https://static.cloudflareinsights.com"],
-      `${pagePath} scripts from its origin and the analytics beacon`,
+      ["'self'", ...(landing ? ["https://static.cloudflareinsights.com"] : [])],
+      `${pagePath} scripts follow its page-specific analytics scope`,
     );
     assert.deepEqual(
       directives["connect-src"],
-      ["'self'", "https://cloudflareinsights.com"],
-      `${pagePath} connects to its origin and the analytics endpoint`,
+      ["'self'", ...(landing ? ["https://cloudflareinsights.com"] : [])],
+      `${pagePath} connections follow its page-specific analytics scope`,
     );
     // No other origin anywhere in the policy.
     assert.deepEqual(
@@ -239,8 +240,8 @@ try {
         .flat()
         .filter((source) => /^https?:/.test(source))
         .sort(),
-      ["https://cloudflareinsights.com", "https://static.cloudflareinsights.com"],
-      `${pagePath} allows only Cloudflare's analytics beyond its own origin`,
+      landing ? ["https://cloudflareinsights.com", "https://static.cloudflareinsights.com"] : [],
+      `${pagePath} permits no external origins except landing-page analytics`,
     );
     assert.doesNotMatch(policy, /unsafe-inline/, `${pagePath} allows no inline code`);
     assert.match(headers["permissions-policy"] ?? "", /screen-wake-lock=\(self\)/);

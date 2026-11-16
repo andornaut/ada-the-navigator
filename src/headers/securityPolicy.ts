@@ -42,7 +42,7 @@ export const FILE_RULES = [
 ] as const;
 
 // Optional Cloudflare Web Analytics on the landing page. Game HTML excludes edge injection;
-// these remain the only external script and report origins permitted by the shared policy.
+// only its page rule permits these external script and report origins.
 export const ANALYTICS = {
   beacon: "https://static.cloudflareinsights.com",
   report: "https://cloudflareinsights.com",
@@ -52,7 +52,7 @@ export const ANALYTICS = {
 // SVG art among them, through blob: URLs and its default textures as data: URIs.
 export const BASE_DIRECTIVES: Directives = {
   "base-uri": ["'self'"],
-  "connect-src": ["'self'", ANALYTICS.report],
+  "connect-src": ["'self'"],
   "default-src": ["'self'"],
   "font-src": ["'self'"],
   "form-action": ["'self'"],
@@ -61,7 +61,7 @@ export const BASE_DIRECTIVES: Directives = {
   "manifest-src": ["'self'"],
   "media-src": ["'self'", "blob:"],
   "object-src": ["'none'"],
-  "script-src": ["'self'", ANALYTICS.beacon],
+  "script-src": ["'self'"],
   "style-src": ["'self'"],
   "worker-src": ["'self'"],
 };
@@ -69,6 +69,13 @@ export const BASE_DIRECTIVES: Directives = {
 // Each built or public HTML page must match exactly one of these, or the build fails: two
 // matching policies would join into one header and the browser would enforce both.
 export const PAGE_RULES: readonly PageRule[] = [
-  { comment: "The landing page.", directives: {}, path: "/" },
-  { comment: "The game.", directives: {}, path: "/play/*" },
+  {
+    comment: "The landing page with optional platform analytics.",
+    directives: {
+      "connect-src": [ANALYTICS.report],
+      "script-src": [ANALYTICS.beacon],
+    },
+    path: "/",
+  },
+  { comment: "The game without analytics.", directives: {}, path: "/play/*" },
 ];

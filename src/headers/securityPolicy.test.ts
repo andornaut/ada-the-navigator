@@ -1,3 +1,4 @@
+import { pageRules, renderPolicy } from "@andornaut/game-kit/build/securityHeaders";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -9,23 +10,37 @@ import {
 } from "./securityPolicy.ts";
 
 describe("the security headers", () => {
-  it("gives each page one policy that runs and styles only same-origin files and the beacon", () => {
+  it("keeps analytics only on the landing page under the published additive policy merge", () => {
     expect(PAGE_RULES.map(({ path }) => path)).toEqual(["/", "/play/*"]);
-    for (const { directives } of PAGE_RULES) {
-      expect({ ...BASE_DIRECTIVES, ...directives }).toMatchObject({
-        "connect-src": ["'self'", "https://cloudflareinsights.com"],
-        "frame-ancestors": ["'none'"],
-        "object-src": ["'none'"],
-        "script-src": ["'self'", "https://static.cloudflareinsights.com"],
-        "style-src": ["'self'"],
-      });
-    }
+    const policies = pageRules(
+      BASE_DIRECTIVES,
+      PAGE_RULES,
+      new Map([
+        ["/", { scriptHashes: [], styleHashes: [] }],
+        ["/play/", { scriptHashes: [], styleHashes: [] }],
+      ]),
+    );
+    const policyAt = (path: string) =>
+      new Map(policies.find((rule) => rule.path === path)!.headers).get("Content-Security-Policy")!;
+    expect(policyAt("/")).toContain(`script-src 'self' ${ANALYTICS.beacon}`);
+    expect(policyAt("/")).toContain(`connect-src 'self' ${ANALYTICS.report}`);
+    expect(policyAt("/play/*")).toBe(renderPolicy(BASE_DIRECTIVES));
+    expect(policyAt("/play/*")).not.toContain("cloudflareinsights");
+    expect(BASE_DIRECTIVES).toMatchObject({
+      "connect-src": ["'self'"],
+      "frame-ancestors": ["'none'"],
+      "img-src": ["'self'", "data:", "blob:"],
+      "object-src": ["'none'"],
+      "script-src": ["'self'"],
+      "style-src": ["'self'"],
+      "worker-src": ["'self'"],
+    });
     expect(Object.values(BASE_DIRECTIVES).flat()).not.toContain("'unsafe-inline'");
-    // Cloudflare's analytics are the only origins beyond the page's own.
-    const origins = Object.values(BASE_DIRECTIVES)
-      .flat()
-      .filter((source) => source.startsWith("https:"));
-    expect(origins.sort()).toEqual([ANALYTICS.report, ANALYTICS.beacon].sort());
+    expect(
+      Object.values(BASE_DIRECTIVES)
+        .flat()
+        .filter((source) => source.startsWith("https:")),
+    ).toEqual([]);
   });
 
   it("allows the screen wake lock the game holds during play, and no device access", () => {
