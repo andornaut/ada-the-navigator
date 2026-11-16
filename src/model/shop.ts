@@ -23,6 +23,8 @@ export const SHOP_TABS: readonly ShopTab[] = ["weapons", "ship"];
 export const SHIP_TRACKS: readonly UpgradeTrack[] = ["shield", "engine", "tractor"];
 
 export interface ShopRow {
+  /** Visible stock that cannot be bought until this weapon is owned. */
+  requiresWeapon?: UpgradeWeapon;
   item: ShopItem;
   /** Owned weapons and paints, and fully upgraded tracks, are no longer for sale. */
   owned: boolean;
@@ -128,6 +130,9 @@ export type ShopRowState = "forSale" | "unaffordable" | "selectable" | "owned" |
  * item for sale opens the confirm, and one Ada cannot afford refuses.
  */
 export function shopRowState(stardust: number, row: ShopRow): ShopRowState {
+  if (row.requiresWeapon) {
+    return "unaffordable";
+  }
   if (row.inUse) {
     return "inUse";
   }
@@ -183,6 +188,87 @@ export function shopRows(
           ...catalog.paintOrder.map((scheme): ShopItem => ({ kind: "paint", scheme })),
         ];
   return items.map((item) => shopRow(catalog, economy, item));
+}
+
+export const STATION_STOCK_SLOTS = { ammo: 2, equipment: 2, weapons: 2 } as const;
+export interface StationStock {
+  readonly ammo: readonly UpgradeWeapon[];
+  readonly equipment: readonly Extract<ShopItem, { kind: "track" | "paint" }>[];
+  readonly weapons: readonly Weapon[];
+}
+
+/** Canonical catalogue order and route position select stock without consuming random draws. */
+function stockSlice<T>(items: readonly T[], position: RoutePosition, count: number): T[] {
+  return Array.from(
+    { length: Math.min(count, items.length) },
+    (_, index) => items[(position - 1 + index) % items.length]!,
+  );
+}
+export function stationStock(catalog: EconomyCatalog, position: RoutePosition): StationStock {
+  const eligible = unlockedWeapons(position);
+  const equipment: Extract<ShopItem, { kind: "track" | "paint" }>[] = [
+    ...SHIP_TRACKS.map((track): Extract<ShopItem, { kind: "track" }> => ({ kind: "track", track })),
+    ...catalog.paintOrder
+      .filter((scheme) => scheme !== catalog.defaultPaint)
+      .map((scheme): Extract<ShopItem, { kind: "paint" }> => ({ kind: "paint", scheme })),
+  ];
+  return {
+    ammo: stockSlice(eligible, position, STATION_STOCK_SLOTS.ammo),
+    equipment: stockSlice(equipment, position, STATION_STOCK_SLOTS.equipment),
+    weapons: stockSlice<Weapon>(["laser", ...eligible], position, STATION_STOCK_SLOTS.weapons),
+  };
+}
+
+/** Stock identity never changes when ownership, money, ammunition or upgrade levels change. */
+export function stationShopRows(
+  catalog: EconomyCatalog,
+  economy: EconomyState,
+  position: RoutePosition,
+  tab: ShopTab,
+): ShopRow[] {
+  const stock = stationStock(catalog, position);
+  if (tab === "ship") {
+    return stock.equipment.map((item) => shopRow(catalog, economy, item));
+  }
+  return [
+    ...stock.ammo.map((weapon): ShopRow => ({
+      ...shopRow(catalog, economy, { kind: "ammo", weapon }),
+      ...(!weaponOwned(economy, weapon) ? { requiresWeapon: weapon } : {}),
+    })),
+    ...stock.weapons.map((weapon) =>
+      shopRow(
+        catalog,
+        economy,
+        weaponOwned(economy, weapon)
+          ? { kind: "weaponUpgrade", weapon }
+          : { kind: "weapon", weapon: weapon as UpgradeWeapon },
+      ),
+    ),
+  ];
+}
+export function stationStocks(
+  catalog: EconomyCatalog,
+  position: RoutePosition,
+  item: ShopItem,
+): boolean {
+  const stock = stationStock(catalog, position);
+  switch (item.kind) {
+    case "ammo":
+      return stock.ammo.includes(item.weapon);
+    case "weapon":
+    case "weaponUpgrade":
+      return stock.weapons.includes(item.weapon);
+    case "track":
+      return stock.equipment.some(
+        (candidate) => candidate.kind === "track" && candidate.track === item.track,
+      );
+    case "paint":
+      return stock.equipment.some(
+        (candidate) => candidate.kind === "paint" && candidate.scheme === item.scheme,
+      );
+    default:
+      return false;
+  }
 }
 
 /** A confirm with the balance left after, or a refusal; a refusal never opens a confirm. */

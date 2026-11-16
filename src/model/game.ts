@@ -80,9 +80,12 @@ import { carriesStardust, dropRandom } from "./drops.ts";
 import { edgeMarkerKind } from "./edgeMarkers.ts";
 import {
   confirmExchange,
+  exchangeImmediately,
   type ExchangeOrder,
   type ExchangePreview,
   type ExchangeQuote,
+  type ImmediateExchangeOrder,
+  type ImmediateExchangeResult,
   quoteExchange,
 } from "./exchange.ts";
 import {
@@ -196,8 +199,9 @@ import {
   selectPaint,
   type ShopItem,
   type ShopRow,
-  shopRows,
   type ShopTab,
+  stationShopRows,
+  stationStocks,
 } from "./shop.ts";
 import { stationDisplayName } from "./stationIdentity.ts";
 import {
@@ -1460,9 +1464,13 @@ export class GameModel {
     if (!services) {
       return false;
     }
-    return item.kind === "weapon" || item.kind === "weaponUpgrade" || item.kind === "ammo"
-      ? services.weaponsAmmo
-      : services.equipment;
+    const available =
+      item.kind === "weapon" || item.kind === "weaponUpgrade" || item.kind === "ammo"
+        ? services.weaponsAmmo
+        : services.equipment;
+    return (
+      available && (item.kind === "holodisk" || stationStocks(ECONOMY, this.shopPosition, item))
+    );
   }
   shopRows(tab: ShopTab): ShopRow[] {
     const services = this.stationServices;
@@ -1473,7 +1481,7 @@ export class GameModel {
     const holodisk = tab === "ship" ? this.holodiskRow() : null;
     return [
       ...(holodisk ? [holodisk] : []),
-      ...shopRows(ECONOMY, this.state.economy, this.shopPosition, tab),
+      ...stationShopRows(ECONOMY, this.state.economy, this.shopPosition, tab),
     ];
   }
   /** The route position of the galaxy whose shop Ada is at, which sets what it sells. */
@@ -1633,6 +1641,23 @@ export class GameModel {
       quote,
     );
     if (result.kind === "quote") {
+      flight.cargo = result.after.ore;
+      this.state.economy.stardust = result.after.stardust;
+    }
+    return result;
+  }
+  /** Fixed-quantity station exchange applies current balances synchronously with no pickup event. */
+  exchangeImmediately(order: ImmediateExchangeOrder): ImmediateExchangeResult {
+    const flight = this.state.flight;
+    if (this.state.mode !== "space" || !flight || !this.state.docked || this.state.dialogue) {
+      return { kind: "refused", reason: "unavailable" };
+    }
+    const result = exchangeImmediately(
+      EXCHANGE_RATES,
+      { ore: flight.cargo, stardust: this.state.economy.stardust },
+      order,
+    );
+    if (result.kind === "exchanged") {
       flight.cargo = result.after.ore;
       this.state.economy.stardust = result.after.stardust;
     }

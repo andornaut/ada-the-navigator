@@ -108,3 +108,25 @@ export function confirmExchange(
   }
   return fresh;
 }
+
+export const EXCHANGE_AMOUNTS = [1, 10, 100] as const;
+export type ExchangeAmount = (typeof EXCHANGE_AMOUNTS)[number];
+export interface ImmediateExchangeOrder {
+  readonly amount: ExchangeAmount;
+  readonly direction: ExchangeOrder["direction"];
+}
+export type ImmediateExchangeResult =
+  (Omit<ExchangeQuote, "kind"> & { readonly kind: "exchanged" }) | ExchangeRefusal;
+
+/** Recompute the current transaction once; there is no pending quote to confirm or replay. */
+export function exchangeImmediately(
+  rates: ExchangeRates,
+  balances: ExchangeBalances,
+  order: ImmediateExchangeOrder,
+): ImmediateExchangeResult {
+  if (!EXCHANGE_AMOUNTS.includes(order.amount)) {
+    return { kind: "refused", reason: "invalidAmount" };
+  }
+  const result = quoteExchange(rates, balances, order);
+  return result.kind === "refused" ? result : { ...result, kind: "exchanged" };
+}
