@@ -278,7 +278,7 @@ it("uses existing pagination copy without adding quest-specific player strings",
   expect(LABELS.page).toBe(CONTENT.labels.achievementsPage);
 });
 
-it("predecodes canonical headings and retains a ready ship while the next frame loads", async () => {
+it("decodes only requested canonical headings and retains a ready ship while the next frame loads", async () => {
   const element = {
     className: "",
     dataset: {} as Record<string, string>,
@@ -299,13 +299,7 @@ it("predecodes canonical headings and retains a ready ship while the next frame 
       loads.push({ frame, reject, resolve });
       return frame;
     });
-    expect(loads).toHaveLength(64);
-    expect(loads.map(({ frame }) => frame.src)).toEqual(
-      Array.from({ length: 64 }, (_, heading) => `/art/ship-${heading}.svg`),
-    );
-    expect(
-      loads.every(({ frame }) => frame.loading === "eager" && frame.alt === "" && !frame.draggable),
-    ).toBe(true);
+    expect(loads).toHaveLength(0);
     marker.setFacing({ x: 1, y: 0 });
     loads[0]!.resolve();
     await Promise.resolve();
@@ -313,23 +307,112 @@ it("predecodes canonical headings and retains a ready ship while the next frame 
     const before = element.replaceChildren.mock.calls.length;
     marker.setFacing({ x: 0, y: 1 });
     expect(element.replaceChildren).toHaveBeenCalledTimes(before);
-    loads[16]!.resolve();
+    loads[1]!.resolve();
     await Promise.resolve();
-    expect(element.replaceChildren).toHaveBeenLastCalledWith(loads[16]!.frame);
+    expect(element.replaceChildren).toHaveBeenLastCalledWith(loads[1]!.frame);
     marker.setFacing({ x: -1, y: 0 });
-    loads[32]!.reject();
+    loads[2]!.reject();
     await Promise.resolve();
     await Promise.resolve();
-    expect(element.replaceChildren).toHaveBeenLastCalledWith(loads[16]!.frame);
+    expect(element.replaceChildren).toHaveBeenLastCalledWith(loads[1]!.frame);
     marker.setFacing({ x: 1, y: 1 });
     marker.setFacing({ x: 0, y: 1 });
-    loads[8]!.resolve();
+    loads[3]!.resolve();
     await Promise.resolve();
-    expect(element.replaceChildren).toHaveBeenLastCalledWith(loads[16]!.frame);
+    expect(element.replaceChildren).toHaveBeenLastCalledWith(loads[1]!.frame);
+    marker.setFacing({ x: 0, y: -1 });
+    expect(loads).toHaveLength(5);
+    expect(loads.map(({ frame }) => frame.src)).toEqual(
+      [0, 16, 32, 8, 48].map((heading) => `/art/ship-${heading}.svg`),
+    );
+    expect(
+      loads.every(({ frame }) => frame.loading === "eager" && frame.alt === "" && !frame.draggable),
+    ).toBe(true);
     marker.dispose();
-    loads[48]!.resolve();
+    loads[4]!.resolve();
     await Promise.resolve();
     expect(element.replaceChildren).toHaveBeenLastCalledWith();
+    marker.setFacing({ x: 1, y: -1 });
+    expect(loads).toHaveLength(5);
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});
+
+it("deduplicates pending and ready headings and never displays stale initial completions", async () => {
+  const element = {
+    className: "",
+    dataset: {} as Record<string, string>,
+    replaceChildren: vi.fn(),
+    setAttribute: vi.fn(),
+  };
+  vi.stubGlobal("document", { createElement: () => element });
+  const loads: {
+    frame: HTMLImageElement;
+    decode: ReturnType<typeof vi.fn>;
+    resolve: () => void;
+  }[] = [];
+  try {
+    const marker = createMapShipMarker(() => {
+      let resolve!: () => void;
+      const promise = new Promise<void>((yes) => {
+        resolve = yes;
+      });
+      const decode = vi.fn(() => promise);
+      const frame = { decode } as unknown as HTMLImageElement;
+      loads.push({ decode, frame, resolve });
+      return frame;
+    });
+    marker.setFacing({ x: 0, y: 1 });
+    marker.setFacing({ x: 0, y: 1 });
+    expect(loads).toHaveLength(1);
+    expect(loads[0]!.decode).toHaveBeenCalledOnce();
+    marker.setFacing({ x: 1, y: 0 });
+    loads[0]!.resolve();
+    await Promise.resolve();
+    expect(element.replaceChildren).not.toHaveBeenCalled();
+    loads[1]!.resolve();
+    await Promise.resolve();
+    expect(element.replaceChildren).toHaveBeenLastCalledWith(loads[1]!.frame);
+    marker.setFacing({ x: 0, y: 1 });
+    expect(element.replaceChildren).toHaveBeenLastCalledWith(loads[0]!.frame);
+    expect(loads).toHaveLength(2);
+    marker.dispose();
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});
+
+it("requests the canonical path for every actual heading without prefetching its neighbors", async () => {
+  const element = {
+    className: "",
+    dataset: {} as Record<string, string>,
+    replaceChildren: vi.fn(),
+    setAttribute: vi.fn(),
+  };
+  vi.stubGlobal("document", { createElement: () => element });
+  const frames: HTMLImageElement[] = [];
+  try {
+    const marker = createMapShipMarker(() => {
+      const frame = { decode: vi.fn(() => Promise.resolve()) } as unknown as HTMLImageElement;
+      frames.push(frame);
+      return frame;
+    });
+    expect(frames).toHaveLength(0);
+    for (let heading = 0; heading < 64; heading++) {
+      const angle = (heading * Math.PI * 2) / 64;
+      marker.setFacing({ x: Math.cos(angle), y: Math.sin(angle) });
+      // Observe each decoded heading before requesting the next one.
+      // eslint-disable-next-line no-await-in-loop
+      await Promise.resolve();
+      expect(frames).toHaveLength(heading + 1);
+      expect(frames[heading]!.src).toBe(`/art/ship-${heading}.svg`);
+      expect(element.dataset.heading).toBe(String(heading));
+    }
+    marker.setFacing({ x: 1, y: -1e-10 });
+    expect(element.dataset.heading).toBe("0");
+    expect(frames).toHaveLength(64);
+    marker.dispose();
   } finally {
     vi.unstubAllGlobals();
   }

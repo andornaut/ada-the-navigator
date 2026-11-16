@@ -17,7 +17,7 @@ import {
   placeType,
   type QuestLine,
 } from "../model/map.ts";
-import { SHIP_HEADINGS, shipHeading } from "../model/nose.ts";
+import { shipHeading } from "../model/nose.ts";
 import type { Vec } from "../model/types.ts";
 import { cardPages } from "./layout/cardPages.ts";
 import { CARD_SLICE, FOCUS_RING, TEXT_BUTTON } from "./layout/controls.ts";
@@ -780,12 +780,13 @@ function objectiveIndicator(): SVGSVGElement {
   return svg;
 }
 
-/** Canonical ship frames are decoded eagerly; heading changes retain the last ready frame. */
+/** Decode only requested canonical headings, retaining the last ready frame during loading. */
 export function createMapShipMarker(image: () => HTMLImageElement = () => new Image()) {
   const element = document.createElement("div");
   element.className = "ada-map-ship";
   element.setAttribute("aria-hidden", "true");
   const ready = new Set<number>();
+  const frames = new Map<number, HTMLImageElement>();
   let wanted = 0;
   let shown: number | null = null;
   let disposed = false;
@@ -793,15 +794,19 @@ export function createMapShipMarker(image: () => HTMLImageElement = () => new Im
     if (disposed || !ready.has(wanted) || shown === wanted) {
       return;
     }
-    element.replaceChildren(frames[wanted]!);
+    element.replaceChildren(frames.get(wanted)!);
     element.dataset.heading = String(wanted);
     shown = wanted;
   };
-  const frames = Array.from({ length: SHIP_HEADINGS }, (_, heading) => {
+  const request = (heading: number) => {
+    if (frames.has(heading)) {
+      return;
+    }
     const frame = image();
     frame.alt = "";
     frame.draggable = false;
     frame.loading = "eager";
+    frames.set(heading, frame);
     frame.src = `/art/ship-${heading}.svg`;
     void frame
       .decode()
@@ -813,8 +818,7 @@ export function createMapShipMarker(image: () => HTMLImageElement = () => new Im
         show();
       })
       .catch(() => {});
-    return frame;
-  });
+  };
   return {
     dispose() {
       disposed = true;
@@ -822,7 +826,11 @@ export function createMapShipMarker(image: () => HTMLImageElement = () => new Im
     },
     element,
     setFacing(facing: Vec) {
+      if (disposed) {
+        return;
+      }
       wanted = shipHeading(facing);
+      request(wanted);
       show();
     },
   };
