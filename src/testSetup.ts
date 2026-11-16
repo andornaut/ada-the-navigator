@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, type MockInstance, vi } from "vitest";
 
-import { pinnedRandomValues, seedLaunches } from "./testing/launch.ts";
+import { pinnedRandomValues, seedLaunches } from "./testing/launchSeeds.ts";
 import { seedIndependentTest } from "./testing/worlds.ts";
 
 // Every test launches from the same seed sequence, so a flight's world, and the scenery, caches
