@@ -11,6 +11,7 @@ import type { Plugin } from "vite";
 import { CACHE_POLICY } from "./cachePolicy.ts";
 import { FILE_READ_CONCURRENCY, mapBounded } from "./mapBounded.ts";
 import { ART_DIRECTORY, artUrls, PREVIEW_DIRECTORY, previewUrls } from "./precacheArt.ts";
+import { verifiedJsonFamilies } from "./verifiedJsonFamilies.ts";
 
 interface PrecachePluginOptions {
   // The game page's file name in the build output, which is its path under Vite's root, e.g.
@@ -88,6 +89,7 @@ export function precachePlugin({
                 },
                 files,
               ),
+            verifiedJsonBodies: verifiedJsonFamilies,
           }),
       hashedFiles: (bundleFile) => {
         emitted = bundleFile;

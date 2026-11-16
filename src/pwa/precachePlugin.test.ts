@@ -28,6 +28,7 @@ it("forwards full build identity and complete post-emission discovery to the exi
   });
   const options = captured.options!;
   expect(options.buildId).toBe(full);
+  expect(options.verifiedJsonBodies).toBeTypeOf("function");
   options.hashedFiles!((url) =>
     url === "/art/manifest.json" ? new TextEncoder().encode('{"value":1}') : undefined,
   );
@@ -38,6 +39,7 @@ it("keeps development ungrouped only when its caller explicitly omits group conf
   precachePlugin({ pageHtmlFile: "play/index.html", serviceWorkerSource: "/source/worker.ts" });
   expect(captured.options!.groups).toBeUndefined();
   expect(captured.options!.buildId).toBeUndefined();
+  expect(captured.options!.verifiedJsonBodies).toBeUndefined();
 });
 it("preserves the public production rejection for missing clean Git identity", async () => {
   const actual = await vi.importActual<typeof import("@andornaut/game-kit/build/precachePlugin")>(
