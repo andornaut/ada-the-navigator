@@ -14,7 +14,14 @@ class Element extends EventTarget {
   className = "";
   dataset: Record<string, string> = {};
   hidden = false;
+  inert = false;
   parent: Element | null = null;
+  get parentElement(): Element | null {
+    return this.parent;
+  }
+  get isConnected(): boolean {
+    return this === (document.body as unknown) || (this.parent?.isConnected ?? false);
+  }
   contains(node: unknown): boolean {
     return node === this || this.children.some((child) => child.contains(node));
   }
@@ -79,8 +86,11 @@ class Element extends EventTarget {
   querySelector(selector: string): Element | null {
     return this.querySelectorAll(selector)[0] ?? null;
   }
-  closest(): null {
-    return null;
+  closest(selector: string): Element | null {
+    return (selector.includes("[hidden]") && this.hidden) ||
+      (selector.includes("[inert]") && this.inert)
+      ? this
+      : (this.parent?.closest(selector) ?? null);
   }
   click(): void {
     this.dispatchEvent(new Event("click"));
