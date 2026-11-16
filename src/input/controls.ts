@@ -426,7 +426,8 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const syncNavigationEntry = () => {
     navigation.setMode(pausable && !pause.mapOpen() ? "pause" : "menu");
     const mapOnly = pause.mapOpen() && !navigationCovered();
-    pauseButton.hidden = modalOpen() && !mapOnly;
+    pauseButton.hidden = false;
+    pauseButton.inert = modalOpen() && !mapOnly;
   };
   function syncModal(): void {
     const open = modalOpen();
@@ -451,7 +452,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       state.closeModal();
     }
     weapons.setEnabled(enabled && !open);
-    status.setShown(enabled && !open);
+    status.setShown(enabled);
     options.onPauseChange?.(open);
   }
   const weapons = createWeaponSelector(settings.root, {
@@ -811,15 +812,16 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     cheats.refresh();
     const touch =
       !desktopBinding.active() &&
-      (touchControlsActive(window, enabled, modalOpen()) ||
-        (enabled && !modalOpen() && desktopBinding.touchActive()));
+      (touchControlsActive(window, enabled, false) || (enabled && desktopBinding.touchActive()));
     syncNavigationEntry();
-    // The pill remains beside Pause and hides under a card.
-    status.setShown(enabled && !modalOpen());
-    notices.update(performance.now(), enabled && !modalOpen(), noticePlaces());
-    weapons.updateFeedback(performance.now(), enabled && !modalOpen());
+    // Modal covers affect input eligibility, not the underlying scene paint.
+    status.setShown(enabled);
+    notices.update(performance.now(), enabled, noticePlaces());
+    weapons.setShown(enabled);
+    weapons.updateFeedback(performance.now(), enabled);
     for (const target of settings.joystickTargets) {
       target.hidden = !touch;
+      target.inert = modalOpen();
     }
     // Use is a touch control, as in Chibi: shown on a touch screen while an action is in reach;
     // on desktop the Use key acts.
@@ -828,6 +830,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       usePress = undefined;
     }
     settings.useButton.hidden = !useShown;
+    settings.useButton.inert = modalOpen();
     useDisc.setVisible(useShown);
     if (context) {
       const held = usePress

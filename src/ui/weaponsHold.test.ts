@@ -271,3 +271,23 @@ it("falls back to ordinary weapon selection exactly once when no Details overrid
   f.selector.dispose();
   f.stop();
 });
+
+it("keeps the covered weapon group painted without accepting a held or released action", () => {
+  const f = setup();
+  f.selector.setShown(true);
+  f.selector.setEnabled(false);
+  expect(f.host.children[0]!.hidden).toBe(false);
+  f.down();
+  vi.advanceTimersByTime(600);
+  f.up();
+  f.click();
+  expect(f.onSelect).not.toHaveBeenCalled();
+  expect(f.onHold).not.toHaveBeenCalled();
+  f.selector.setShown(false);
+  expect(f.host.children[0]!.hidden).toBe(true);
+  f.selector.setEnabled(true);
+  expect(f.host.children[0]!.hidden).toBe(true);
+  f.selector.setShown(true);
+  f.click();
+  expect(f.onSelect).toHaveBeenCalledOnce();
+});

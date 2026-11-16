@@ -334,13 +334,14 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
   const buttons = new Map<Weapon, HTMLButtonElement>();
   let choices: readonly WeaponChoice[] = [];
   let enabled = false;
+  let shown: boolean | undefined;
   let disposed = false;
   const actionBindings = new Map<Weapon, ReturnType<typeof bindAdaAction>>();
   const feedback = new AmmoFeedbackQueue();
   let lastFeedbackTime: number | undefined;
 
   const render = (): void => {
-    root.hidden = !enabled || choices.length === 0;
+    root.hidden = !(shown ?? enabled) || choices.length === 0;
     const ids = new Set(choices.map((choice) => choice.id));
     for (const [id, entry] of buttons) {
       if (!ids.has(id)) {
@@ -490,6 +491,11 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
       if (root.dataset.field !== field) {
         root.dataset.field = field;
       }
+    },
+    /** Controls paint independently of the existing input gate. */
+    setShown(value: boolean): void {
+      shown = value;
+      root.hidden = !value || choices.length === 0;
     },
     setWeapons(value: readonly WeaponChoice[]): void {
       choices = value;
