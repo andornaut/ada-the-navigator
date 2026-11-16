@@ -432,3 +432,20 @@ it.each(["start", "nonplay"] as const)(
     expect(onOpenChange.mock.calls).toEqual([[true], [false]]);
   },
 );
+
+it("keeps a child-covered Menu painted but semantically closed and restores the original parent", () => {
+  const { menu, onAction, root, rows } = setup();
+  menu.open();
+  const modal = root.children[0]!;
+  const originalFrame = modal.children[0];
+  rows()[0]!.dispatchEvent(new Event("click"));
+  expect(menu.isOpen()).toBe(false);
+  expect(modal.hidden).toBe(true);
+  expect(modal.getAttribute("data-ada-modal-underlay")).toBe("");
+  expect(modal.getAttribute("inert")).toBe("");
+  expect(modal.children[0]).toBe(originalFrame);
+  onAction.mock.calls[0]![1]();
+  expect(menu.isOpen()).toBe(true);
+  expect(modal.getAttribute("data-ada-modal-underlay")).toBeNull();
+  expect(modal.getAttribute("inert")).toBeNull();
+});

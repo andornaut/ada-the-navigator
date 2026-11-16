@@ -18,6 +18,7 @@ import { readStory, relaunch } from "../testing/launch.ts";
 import { cheatGroups, type CheatSessionOptions, createCheatSession } from "../ui/cheatActions.ts";
 import { VIEW_HOST_ID } from "../ui/layout/css.ts";
 import { NO_INSETS, safeGameArea } from "../ui/layout/playView.ts";
+import { createCoveredPaint } from "../ui/modalScenePaint.ts";
 import { navigationEntry } from "../ui/navigationEntry.ts";
 import { BOX_OCCUPANT, boxOccupant } from "../ui/notice.ts";
 import { galaxiesAvailable } from "../ui/pause.ts";
@@ -176,6 +177,8 @@ describe("conversation exposure under covering cards", () => {
       VIEW_HOST_ID,
       boxOccupant,
       coarsePointer: () => false,
+      coveredScenePaint: new WeakMap(),
+      createCoveredPaint,
       document: { getElementById: () => null },
       markerFootprints: () => [],
       pennyLayers,
@@ -201,7 +204,7 @@ describe("conversation exposure under covering cards", () => {
     };
   }
 
-  it.each(["settings", "dialogue", "docked"] as const)(
+  it.each(["dialogue", "docked"] as const)(
     "does not read or expose hidden chatter behind %s",
     (kind) => {
       const ui = covered(kind, false);
@@ -227,6 +230,22 @@ describe("conversation exposure under covering cards", () => {
       expect(ui.scene.boxOccupant).toBe("line");
     },
   );
+
+  it("retains already painted chatter and markers under UI without advancing knowledge", () => {
+    const ui = covered("settings", false);
+    ui.scene.settingsOpen = false;
+    ui.update();
+    expect(ui.markers).toHaveBeenCalledOnce();
+    expect(ui.read).toHaveBeenCalledOnce();
+    ui.scene.settingsOpen = true;
+    ui.update();
+    expect(ui.markers).toHaveBeenCalledOnce();
+    expect(ui.read).toHaveBeenCalledOnce();
+    expect(ui.acknowledge).not.toHaveBeenCalled();
+    expect(ui.render).toHaveBeenLastCalledWith(ui.line, true, false);
+    expect(ui.place.mock.lastCall?.at(-1)).toEqual([ui.marker]);
+    expect(ui.scene.boxOccupant).toBe("line");
+  });
 
   it.each(["settings", "dialogue", "docked"] as const)(
     "preserves the emergency overlay above %s without reading ordinary chatter",

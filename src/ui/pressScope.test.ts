@@ -12,18 +12,22 @@ import {
 
 const published = vi.hoisted(() => ({
   back: vi.fn(() => true),
+  create: vi.fn(),
   dispose: vi.fn(),
   leave: vi.fn(),
   open: vi.fn(),
 }));
 vi.mock("@andornaut/game-kit/runtime/web/ui/dom/modalLayer", () => ({
-  createModalLayer: () => ({
-    ...published,
-    open: (...args: unknown[]) => {
-      published.open(...args);
-      return published.leave;
-    },
-  }),
+  createModalLayer: (root: HTMLElement) => {
+    published.create(root);
+    return {
+      ...published,
+      open: (...args: unknown[]) => {
+        published.open(...args);
+        return published.leave;
+      },
+    };
+  },
 }));
 function node(parentElement: HTMLElement | null = null): HTMLElement {
   const element = Object.assign(new EventTarget(), {
@@ -263,4 +267,29 @@ it("notifies modal enter, leave and explicit revisions synchronously without ret
   stop();
   invalidatePressScope(root);
   expect(notify).toHaveBeenCalledTimes(3);
+});
+
+it("shares the published sibling root and preserves the remaining top modal on owner disposal", () => {
+  published.create.mockClear();
+  published.dispose.mockClear();
+  const root = node(),
+    firstRoot = node(root),
+    secondRoot = node(root);
+  const firstDialog = node(firstRoot),
+    secondDialog = node(secondRoot);
+  rootPressGuard(root);
+  const first = createModalLayer(firstRoot),
+    second = createModalLayer(secondRoot);
+  first.open({}, firstDialog);
+  const leave = second.open({}, secondDialog);
+  expect(published.create).toHaveBeenCalledExactlyOnceWith(root);
+  first.dispose();
+  expect(published.dispose).not.toHaveBeenCalled();
+  expect(currentView(root)).toBe(secondDialog);
+  leave();
+  second.dispose();
+  expect(currentView(root)).toBe(root);
+  expect(published.dispose).toHaveBeenCalledOnce();
+  second.open({}, secondDialog);
+  expect(currentView(root)).toBe(root);
 });

@@ -15,6 +15,7 @@ import {
 } from "./menuTree.ts";
 import { createCard } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
+import { retainModalUnderlay } from "./modalUnderlay.ts";
 
 export { type MenuAction, menuActions, type MenuContext } from "./menuTree.ts";
 
@@ -43,6 +44,7 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
   let origin: HTMLElement | undefined;
   let returnAction: MenuAction | undefined;
   let disposed = false;
+  let releaseUnderlay: (() => void) | undefined;
   let layout: ReturnType<typeof mountLayout<MenuLayoutSchema>> | undefined;
   const register = (element: HTMLElement, run: () => void) =>
     bindAdaAction(
@@ -81,6 +83,8 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
     if (disposed || !modal.hidden) {
       return;
     }
+    releaseUnderlay?.();
+    releaseUnderlay = undefined;
     if (opener) {
       origin = opener;
     }
@@ -115,6 +119,10 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
       return;
     }
     returnAction = action;
+    if (action !== "backToTitle") {
+      releaseUnderlay?.();
+      releaseUnderlay = retainModalUnderlay(modal);
+    }
     hide(false);
     try {
       options.onAction(action, () => open());
@@ -137,6 +145,8 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
   return {
     close,
     dispose() {
+      releaseUnderlay?.();
+      releaseUnderlay = undefined;
       hide();
       disposed = true;
       layout?.dispose();

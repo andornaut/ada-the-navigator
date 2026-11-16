@@ -47,6 +47,7 @@ import { fogColor } from "../ui/layout/mapScreen.ts";
 import { safeGameArea } from "../ui/layout/playView.ts";
 import { type MapField, mapScreenLabels } from "../ui/mapScreen.ts";
 import { markerFootprints } from "../ui/markerFootprints.ts";
+import { createCoveredPaint } from "../ui/modalScenePaint.ts";
 import { navigationEntry } from "../ui/navigationEntry.ts";
 import { BOX_OCCUPANT, boxOccupant } from "../ui/notice.ts";
 import { galaxiesAvailable } from "../ui/pause.ts";
@@ -1104,19 +1105,39 @@ export function confirmStationExchange(
   return result;
 }
 
+const coveredScenePaint = new WeakMap<
+  object,
+  {
+    conversation: ReturnType<typeof createCoveredPaint<GameModel["conversation"]>>;
+    markers: ReturnType<typeof createCoveredPaint<ReturnType<GameModel["targetMarkers"]>[number]>>;
+  }
+>();
+
 /** The conversation box, in the desktop wording without a coarse pointer. */
 export function renderConversation(scene: UiContext): void {
   const emergency = scene.emergencyReturn.line;
   const { dialogue, docked, notice } = scene.model.state;
   const covered = !emergency && (scene.settingsOpen || Boolean(dialogue) || Boolean(docked));
-  const line = emergency ?? (covered ? null : scene.model.conversation);
+  const sceneCovered = !emergency && (Boolean(dialogue) || Boolean(docked));
+  let paint = coveredScenePaint.get(scene);
+  if (!paint) {
+    paint = { conversation: createCoveredPaint(), markers: createCoveredPaint() };
+    coveredScenePaint.set(scene, paint);
+  }
+  const line =
+    emergency ??
+    paint.conversation(
+      scene.model.state.flight ?? scene.model.state,
+      scene.settingsOpen,
+      !sceneCovered && !emergency,
+      () => [scene.model.conversation],
+    )[0] ??
+    null;
   scene.conversationBox.render(line, !coarsePointer(window), scene.reducedMotion);
-  // One box at a time: a line, else the game notice, else the save status (notice.ts). A card
-  // over the play view covers the line or notice under it, which frees the slot for the save
-  // status, drawn above cards.
+  // UI covers retain the scene box beneath their scrim; actual interaction replaces it.
   const occupant = boxOccupant({
-    line: line !== null && !covered,
-    notice: notice !== "" && !covered,
+    line: line !== null && !sceneCovered,
+    notice: notice !== "" && !sceneCovered,
     saveStatus: scene.savingUnavailable,
   });
   // Written only on a change: an attribute write restyles the whole play area.
@@ -1180,7 +1201,9 @@ export function renderConversation(scene: UiContext): void {
       light: scene.light,
       threat: `#${scene.palette.threat.toString(16).padStart(6, "0")}`,
     },
-    !covered && !emergency && flight ? scene.model.targetMarkers(area, scene.litCaches) : [],
+    paint.markers(flight, scene.settingsOpen, !sceneCovered && !emergency, () =>
+      scene.model.targetMarkers(area, scene.litCaches),
+    ),
   );
 }
 

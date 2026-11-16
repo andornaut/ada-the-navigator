@@ -14,6 +14,7 @@ import { readViewUnit } from "./layout/viewScale.ts";
 import { createMapScreen, type MapField, type MapScreenLabels } from "./mapScreen.ts";
 import { createButton, createCard } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
+import { retainModalUnderlay } from "./modalUnderlay.ts";
 import { type PauseAction, pauseActions, type PausePlace } from "./pause.ts";
 import { type PauseLayoutSchema, pauseTree, type PauseTreeAction } from "./pauseTree.ts";
 import { createQuestsScreen, type QuestOrigin } from "./questsScreen.ts";
@@ -287,6 +288,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   };
   let layer: ReturnType<typeof createModalLayer> | undefined;
   let leaveLayer: (() => void) | undefined;
+  let releaseUnderlay: (() => void) | undefined;
   const actionsHere = () =>
     pauseActions(state.place ?? "flight").map((action) => ({
       ...action,
@@ -296,6 +298,8 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   const shipOpen = () => open && !ship.frame.hidden;
   // The map shows in the cards' and the dim's place; the Ship card in the Paused card's.
   const show = (view: "map" | "paused" | "ship") => {
+    releaseUnderlay?.();
+    releaseUnderlay = undefined;
     leaveLayer?.();
     leaveLayer = undefined;
     layer?.dispose();
@@ -303,6 +307,13 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     modal.hidden = view === "map";
     paused.frame.hidden = view !== "paused";
     ship.frame.hidden = view !== "ship";
+    for (const frame of [paused.frame, ship.frame]) {
+      if (frame.hidden) {
+        frame.setAttribute("inert", "");
+      } else {
+        frame.removeAttribute("inert");
+      }
+    }
     if (view === "map") {
       mapScreen.open();
       return;
@@ -347,7 +358,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       return;
     }
     shipDetailOrigin = origin;
-    hidePause();
+    hidePause(true);
     if (row.item.kind === "weapon") {
       const id = row.item.id;
       const weapon = view.weapons.find((weapon) => weapon.id === id);
@@ -404,6 +415,12 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       return;
     }
     open = value;
+    if (!value) {
+      releaseUnderlay?.();
+      releaseUnderlay = undefined;
+      paused.frame.removeAttribute("inert");
+      ship.frame.removeAttribute("inert");
+    }
     modal.hidden = !value;
     shown = undefined;
     shipShown = undefined;
@@ -463,7 +480,11 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       renderShip();
     }
   };
-  function hidePause(): void {
+  function hidePause(retain = false): void {
+    if (retain && !modal.hidden) {
+      releaseUnderlay?.();
+      releaseUnderlay = retainModalUnderlay(modal);
+    }
     leaveLayer?.();
     leaveLayer = undefined;
     layer?.dispose();
@@ -480,7 +501,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
         show("map");
       }
     } else {
-      hidePause();
+      hidePause(true);
     }
     quests.open(null, "list", questParentDismissal);
   }
@@ -515,7 +536,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       show("ship");
     } else if (id === "settings") {
       // Settings opens in the Paused card's place; closing it returns here (reopen).
-      hidePause();
+      hidePause(true);
       options.onSettings();
     } else {
       setOpen(false);
@@ -574,6 +595,8 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     closeMap,
     closeShip,
     dispose(): void {
+      releaseUnderlay?.();
+      releaseUnderlay = undefined;
       disposed = true;
       for (const binding of actionBindings) {
         binding.dispose();

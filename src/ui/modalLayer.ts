@@ -5,40 +5,60 @@ import {
 
 import { enterPressView } from "./pressScope.ts";
 
-/** Adds UI press-scope reporting without replacing the published layer's behavior. */
+interface SharedLayer {
+  readonly layer: ModalLayer;
+  users: number;
+}
+const parents = new WeakMap<HTMLElement, SharedLayer>();
+
+/** Shares published focus/inert ownership across modal siblings of one controls overlay. */
 export function createModalLayer(root: HTMLElement): ModalLayer {
-  const layer = createPublishedModalLayer(root);
-  const scopes = new Set<() => void>();
+  const parent = root.parentElement ?? root;
+  let shared = parents.get(parent);
+  if (!shared) {
+    shared = { layer: createPublishedModalLayer(parent), users: 0 };
+    parents.set(parent, shared);
+  }
+  const owned = shared;
+  owned.users++;
+  const scopes = new Map<() => void, () => void>();
   let disposed = false;
   return {
-    back: () => layer.back(),
+    back: () => !disposed && owned.layer.back(),
     dispose() {
-      if (!disposed) {
-        disposed = true;
-        for (const release of scopes) {
-          release();
+      if (disposed) {
+        return;
+      }
+      disposed = true;
+      owned.users--;
+      for (const [release, leave] of scopes) {
+        release();
+        if (owned.users > 0) {
+          leave();
         }
-        scopes.clear();
-        layer.dispose();
+      }
+      scopes.clear();
+      if (owned.users === 0) {
+        owned.layer.dispose();
+        parents.delete(parent);
       }
     },
     open(options, dialog) {
       if (disposed) {
-        return layer.open(options, dialog);
+        return () => {};
       }
       const release = enterPressView(
-        root.parentElement ?? root,
+        parent,
         dialog,
         options.live,
         options.close ? { backdrop: root, close: options.close } : undefined,
       );
-      scopes.add(release);
       let leave: () => void;
       try {
-        leave = layer.open(options, dialog);
+        leave = owned.layer.open(options, dialog);
+        scopes.set(release, leave);
       } catch (error) {
         release();
-        scopes.delete(release);
         throw error;
       }
       return () => {

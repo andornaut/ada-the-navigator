@@ -604,6 +604,9 @@ ${UI_SCOPE} .ada-close:focus-visible{${FOCUS_STYLE}
 ${UI_SCOPE} [hidden]{
   display:none!important
 }
+${UI_SCOPE} .ada-modal[data-ada-modal-underlay][hidden]{
+  display:flex!important
+}
 `;
 
 export interface CardParts {

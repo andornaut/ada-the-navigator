@@ -5,6 +5,7 @@ import ts from "typescript";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { VIEW_PROPERTIES } from "../ui/layout/css.ts";
+import { createCoveredPaint } from "../ui/modalScenePaint.ts";
 import { scanFeedbackFootprints } from "../ui/scanFeedbackView.ts";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -55,6 +56,8 @@ it("retains production scan receipts under cover and resolves only the receipt g
     VIEW_HOST_ID: "app",
     boxOccupant: () => null,
     coarsePointer: () => false,
+    coveredScenePaint: new WeakMap(),
+    createCoveredPaint,
     document: { getElementById: () => host, hidden: false, querySelectorAll },
     landmarkById,
     markerFootprints: () => [{ height: 30, width: 100, x: 0, y: 0 }],
