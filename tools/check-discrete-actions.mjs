@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 
@@ -5,28 +6,41 @@ import { scanDiscreteActionBindings } from "../src/testing/discreteActionArchite
 
 const root = process.cwd();
 const findings = [];
+const inputs = [];
 function inspect(directory) {
-  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+  for (const entry of readdirSync(directory, { withFileTypes: true }).sort((a, b) =>
+    a.name.localeCompare(b.name),
+  )) {
     const file = join(directory, entry.name);
     if (entry.isDirectory()) {
       inspect(file);
     } else if (entry.isFile() && entry.name.endsWith(".ts") && !entry.name.endsWith(".test.ts")) {
-      findings.push(
-        ...scanDiscreteActionBindings(relative(root, file), readFileSync(file, "utf8")),
-      );
+      const text = readFileSync(file, "utf8");
+      const path = relative(root, file);
+      inputs.push({ path, sha256: createHash("sha256").update(text).digest("hex") });
+      findings.push(...scanDiscreteActionBindings(path, text));
     }
   }
 }
 inspect(join(root, "src"));
 const counts = Object.fromEntries(
-  ["raw-discrete", "gesture-review", "unresolved-event", "legacy-root"].map((kind) => [
-    kind,
-    findings.filter((finding) => finding.kind === kind).length,
-  ]),
+  [
+    "raw-discrete",
+    "gesture-review",
+    "unresolved-event",
+    "legacy-root",
+    "unbound-discrete",
+    "non-action",
+  ].map((kind) => [kind, findings.filter((finding) => finding.kind === kind).length]),
 );
+const blocking = findings.filter((finding) => finding.kind !== "non-action");
+const status = blocking.length ? "OPEN" : "CLOSED_LOCAL_STATIC_CHECKS";
 const report = process.argv.indexOf("--report");
 if (report >= 0) {
-  writeFileSync(process.argv[report + 1], `${JSON.stringify({ counts, findings }, null, 2)}\n`);
+  writeFileSync(
+    process.argv[report + 1],
+    `${JSON.stringify({ status, counts, blocking: blocking.length, inputs, findings }, null, 2)}\n`,
+  );
 }
-console.log(JSON.stringify(counts));
-process.exitCode = findings.some((finding) => finding.kind !== "gesture-review") ? 1 : 0;
+console.log(JSON.stringify({ status, counts, blocking: blocking.length }));
+process.exitCode = blocking.length ? 1 : 0;
