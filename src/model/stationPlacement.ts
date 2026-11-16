@@ -13,6 +13,7 @@ import { worldDistance, worldPoint } from "./worldContacts.ts";
 export interface StationPlacementContext {
   readonly checkPlayer?: boolean;
   readonly bodyOf?: (object: SpaceObject) => Parts | null;
+  readonly overlapOf?: (obstacle: Parts, origin: Vec, body: Parts, position: Vec) => boolean;
   readonly ignoreIds?: ReadonlySet<string>;
   readonly arrivals: readonly Vec[];
   readonly content: GameContent;
@@ -32,6 +33,10 @@ export function stationFormationClear(
     context.bodyOf ??
     ((object: SpaceObject) =>
       object.enemy ? enemyPhysicalBody(ROUTE_POSITION[flight.galaxy], object.enemy) : null);
+  const overlaps =
+    context.overlapOf ??
+    ((obstacle: Parts, origin: Vec, body: Parts, position: Vec) =>
+      Boolean(outlinesContact(obstacle, origin, body, position)));
   const objects = stationPopulationObjects(flight).filter(
     (object) => object.hp > 0 && !context.ignoreIds?.has(object.id),
   );
@@ -46,7 +51,7 @@ export function stationFormationClear(
         (point) => worldDistance(world, point, actor) < content.tuning.flight.arrivalCalm + reach,
       ) ||
       (context.checkPlayer !== false &&
-        outlinesContact(
+        overlaps(
           shipBody(flight.facing),
           flight.player,
           body,
@@ -63,7 +68,7 @@ export function stationFormationClear(
       }
       if (other.kind === "enemy" && other.enemy) {
         const obstacle = bodyOf(other);
-        if (!obstacle || outlinesContact(obstacle, point, body, actor)) {
+        if (!obstacle || overlaps(obstacle, point, body, actor)) {
           return false;
         }
       } else if (["rock", "resource", "debris"].includes(other.kind)) {

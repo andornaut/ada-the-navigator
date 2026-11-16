@@ -3,6 +3,7 @@ import { PHANTOM_TUNING } from "../data/phantom.ts";
 import { type Parts, partsReach, worldParts } from "./convex.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
 import { flightWorldContext } from "./flightTopology.ts";
+import { placementOutlinesOverlap } from "./placementOverlap.ts";
 import { stationFormationClear, type StationPlacementContext } from "./stationPlacement.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 import { worldDelta, worldDistance } from "./worldContacts.ts";
@@ -54,7 +55,11 @@ export function placePhantomEncounter(
     }
     return bodies.get(actor.id)!;
   };
-  const preparedContext = { ...context, bodyOf };
+  const preparedContext = {
+    ...context,
+    bodyOf,
+    overlapOf: context.overlapOf ?? placementOutlinesOverlap,
+  };
   const reaches = new Map<SpaceObject, number>();
   for (const actor of actors) {
     const body = bodyOf(actor);
