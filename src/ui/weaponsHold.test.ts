@@ -288,6 +288,8 @@ it("keeps the covered weapon group painted without accepting a held or released 
   f.selector.setEnabled(true);
   expect(f.host.children[0]!.hidden).toBe(true);
   f.selector.setShown(true);
+  f.down();
+  f.up();
   f.click();
   expect(f.onSelect).toHaveBeenCalledOnce();
 });

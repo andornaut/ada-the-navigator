@@ -6,6 +6,7 @@ import { CAST, castSheet } from "../data/cast.ts";
 import { CONTENT } from "../data/content.ts";
 import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { registerAdaActionRoot } from "./actionRegistry.ts";
+import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { createConversationBox, createInteractionCard } from "./conversation.ts";
 import { createDialoguePanel } from "./dialoguePanel.ts";
 import { enterPressView } from "./pressScope.ts";
@@ -570,6 +571,7 @@ it("keeps the original refusal callback then redraw and denies native disabled a
   setup();
   const parent = new Element("div"),
     choose = vi.fn();
+  fixtureActionRoot(parent);
   const cue = vi.spyOn(refusal, "refuse").mockReturnValue(() => {});
   const interaction = createInteractionCard(parent as unknown as HTMLElement, {
     choose,
@@ -612,6 +614,7 @@ it("binds native Skip and Close once with current callbacks and disposes their r
   setup();
   const parent = new Element("div"),
     options = { choose: vi.fn(), close: vi.fn(), skip: vi.fn() };
+  fixtureActionRoot(parent);
   const interaction = createInteractionCard(parent as unknown as HTMLElement, options);
   const resolve = (node: Element) =>
     resolveAdaHoldAction(parent as unknown as HTMLElement, node as unknown as EventTarget);
