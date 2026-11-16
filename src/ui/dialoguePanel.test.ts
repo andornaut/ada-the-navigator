@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
 
+import { createRequiredLoading } from "@andornaut/game-kit/runtime/load/loadingAttempts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CAST, castSheet } from "../data/cast.ts";
@@ -32,6 +33,12 @@ class Element {
   }
   get nextSibling(): Element | null {
     return this.parent?.children[this.parent.children.indexOf(this) + 1] ?? null;
+  }
+  dispatchEvent(event: Event): boolean {
+    for (const listener of this.listeners.get(event.type) ?? []) {
+      listener(event as PointerEvent);
+    }
+    return !event.defaultPrevented;
   }
   contains(node: unknown): boolean {
     return node === this || this.children.some((child) => child.contains(node));
@@ -152,6 +159,7 @@ afterEach(() => {
   if (typeof document !== "undefined") {
     document.body?.replaceChildren();
   }
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -160,15 +168,115 @@ const setup = (host?: Element) => {
   if (host) {
     body.append(host);
   }
-  vi.stubGlobal("document", {
-    activeElement: null,
-    body,
-    createElement: (tag: string) => new Element(tag),
-    defaultView: Object.assign(new EventTarget(), { HTMLElement: Element, Node: Element }),
-    getElementById: () => host ?? null,
-  });
+  vi.stubGlobal(
+    "document",
+    Object.assign(new EventTarget(), {
+      activeElement: null,
+      body,
+      createElement: (tag: string) => new Element(tag),
+      defaultView: Object.assign(new EventTarget(), {
+        HTMLElement: Element,
+        Node: Element,
+        clearTimeout: (id: ReturnType<typeof setTimeout>) => clearTimeout(id),
+        performance: { now: () => Date.now() },
+        setTimeout: (callback: () => void, delay: number) => setTimeout(callback, delay),
+      }),
+      getElementById: () => host ?? null,
+      hidden: false,
+    }),
+  );
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
 };
+const ambientLine = {
+  elapsed: 0,
+  key: "instance:0",
+  mood: "neutral",
+  name: "Penny",
+  named: false,
+  side: "left",
+  speaker: "penny",
+  text: "A line",
+} as const;
+function ambientFixture(onSkip?: () => void) {
+  vi.useFakeTimers();
+  const host = new Element("div");
+  setup(host);
+  let physical: Element | null = null;
+  Object.assign(document, { elementFromPoint: () => physical });
+  let status: "ready" | "loading" = "ready";
+  const required = createRequiredLoading([{ retry() {}, status: () => status }]);
+  const root = host as unknown as HTMLElement;
+  const attachment = bindAdaActionRoot(
+    {
+      allowNonPrimaryTouch: true,
+      guard: rootPressGuard(root),
+      pointerRelease: { resolvePointer: () => undefined },
+      requiredReady: () => required.state.kind === "ready",
+      subscribeRequired: (invalidate) => required.subscribe(invalidate),
+    },
+    root,
+  );
+  const advance = vi.fn();
+  const box = createConversationBox(advance, onSkip);
+  box.render(ambientLine, true, true);
+  const button = host.children[0]!;
+  physical = button;
+  const event = (type: string, values: Record<string, unknown> = {}) => {
+    const result = new Event(type, { cancelable: true });
+    for (const [key, value] of Object.entries({
+      button: 0,
+      clientX: 0,
+      clientY: 0,
+      detail: type === "click" ? 1 : 0,
+      isPrimary: false,
+      pointerId: 7,
+      pointerType: "touch",
+      target: button,
+      ...values,
+    })) {
+      Object.defineProperty(result, key, { value });
+    }
+    return result;
+  };
+  const down = (values = {}) => {
+    const e = event("pointerdown", values);
+    document.dispatchEvent(e);
+    host.dispatchEvent(e);
+  };
+  const up = (values = {}) => document.dispatchEvent(event("pointerup", values));
+  const click = (values = {}) => {
+    const e = event("click", values);
+    host.dispatchEvent(e);
+    if (!e.defaultPrevented) {
+      button.dispatchEvent(e);
+    }
+    return e;
+  };
+  return {
+    advance,
+    box,
+    button,
+    click,
+    dispose: () => {
+      box.dispose();
+      attachment.dispose();
+      required.dispose();
+    },
+    down,
+    event,
+    host,
+    ready: (value: boolean) => {
+      status = value ? "ready" : "loading";
+      required.invalidate();
+    },
+    resolve: () => resolveAdaHoldAction(root, button as unknown as EventTarget),
+    setPhysical: (element: Element | null) => {
+      physical = element;
+    },
+    up,
+  };
+}
+
 function connectedParent(): Element {
   const parent = new Element("div");
   document.body.append(parent as unknown as HTMLElement);
@@ -392,10 +500,8 @@ describe("shared Earth and space dialogue presentation", () => {
   it.each(["ada", "penny"] as const)(
     "advances %s on a secondary touch without relying on a synthesized click",
     (speaker) => {
-      const host = new Element("div");
-      setup(host);
-      const advance = vi.fn();
-      const box = createConversationBox(advance);
+      const f = ambientFixture();
+      const { advance, box, button } = f;
       box.render(
         {
           elapsed: 0,
@@ -410,45 +516,38 @@ describe("shared Earth and space dialogue presentation", () => {
         true,
         true,
       );
-      const button = host.children[0]!;
-      button.dispatch("pointerdown");
-      expect(button.setPointerCapture).toHaveBeenCalledWith(7);
+      f.down();
+      expect(f.resolve()?.element).toBe(button);
       expect(advance).not.toHaveBeenCalled();
-      button.dispatch("pointerup");
+      f.up();
       expect(advance).toHaveBeenCalledTimes(1);
-      button.dispatch("click");
+      f.click();
       expect(advance).toHaveBeenCalledTimes(1);
-      button.click();
+      f.click({ detail: 0 });
       expect(advance).toHaveBeenCalledTimes(2);
-      box.dispose();
+      f.dispose();
     },
   );
 
   it.each(["pointercancel", "lostpointercapture"])("cancels a held message press on %s", (type) => {
-    const host = new Element("div");
-    setup(host);
-    const advance = vi.fn();
-    const box = createConversationBox(advance);
-    const button = host.children[0]!;
-    button.dispatch("pointerdown");
-    button.dispatch(type);
-    button.dispatch("pointerup");
-    button.dispatch("click");
-    expect(advance).not.toHaveBeenCalled();
-    button.dispatch("pointerdown", { isPrimary: true });
-    button.dispatch("pointerup", { isPrimary: true });
-    expect(advance).not.toHaveBeenCalled();
-    button.dispatch("click", { isPrimary: true });
-    expect(advance).toHaveBeenCalledTimes(1);
-    box.dispose();
+    const f = ambientFixture();
+    f.down();
+    document.dispatchEvent(f.event(type));
+    f.up();
+    f.click();
+    expect(f.advance).not.toHaveBeenCalled();
+    f.down({ isPrimary: true });
+    f.up({ isPrimary: true });
+    expect(f.advance).toHaveBeenCalledTimes(1);
+    f.click({ isPrimary: true });
+    expect(f.advance).toHaveBeenCalledTimes(1);
+    f.dispose();
   });
 
   it("has no separate ambient Skip button and retains the existing tap advance route", () => {
-    const host = new Element("div");
-    setup(host);
-    const advance = vi.fn();
     const legacySkip = vi.fn();
-    const box = createConversationBox(advance, legacySkip);
+    const f = ambientFixture(legacySkip);
+    const { advance, box, host } = f;
     box.render(
       {
         elapsed: 0,
@@ -468,7 +567,7 @@ describe("shared Earth and space dialogue presentation", () => {
     host.children[0]!.click();
     expect(advance).toHaveBeenCalledTimes(1);
     expect(legacySkip).not.toHaveBeenCalled();
-    box.dispose();
+    f.dispose();
   });
 });
 
@@ -757,4 +856,167 @@ it("requires a connected owning tree for native dialogue actions", () => {
     interaction.dispose();
     stopRoot();
   }
+});
+
+describe("ambient App-root action generations", () => {
+  it("holds once, retains the same line identity across visual refresh and suppresses release click", () => {
+    const f = ambientFixture();
+    try {
+      const first = f.resolve()!;
+      f.down();
+      f.box.render({ ...ambientLine, elapsed: 0.25, name: "Current name" }, true, true);
+      expect(f.resolve()!.identity).toBe(first.identity);
+      vi.advanceTimersByTime(500);
+      expect(f.advance).toHaveBeenCalledOnce();
+      f.up();
+      f.click();
+      expect(f.advance).toHaveBeenCalledOnce();
+      expect([...f.button.listeners.keys()].filter((key) => key.startsWith("pointer"))).toEqual([]);
+    } finally {
+      f.dispose();
+    }
+  });
+  it("does not advance a replacement line from an old captured press or its compatibility click", () => {
+    const f = ambientFixture();
+    try {
+      const old = f.resolve()!;
+      f.down();
+      f.box.render({ ...ambientLine, key: "instance:1" }, true, true);
+      expect(f.resolve()!.identity).not.toBe(old.identity);
+      old.activate();
+      f.up();
+      f.click();
+      expect(f.advance).not.toHaveBeenCalled();
+      f.down();
+      f.up();
+      f.click();
+      expect(f.advance).toHaveBeenCalledOnce();
+    } finally {
+      f.dispose();
+    }
+  });
+  it("retains the hold witness when advancing synchronously renders the next line", () => {
+    const f = ambientFixture();
+    try {
+      f.advance.mockImplementation(() =>
+        f.box.render({ ...ambientLine, key: "instance:1" }, true, true),
+      );
+      f.down();
+      vi.advanceTimersByTime(500);
+      f.up();
+      f.click();
+      expect(f.advance).toHaveBeenCalledOnce();
+      f.click({ detail: 0 });
+      expect(f.advance).toHaveBeenCalledTimes(2);
+    } finally {
+      f.dispose();
+    }
+  });
+  it.each(["required", "modal", "foreground"] as const)(
+    "requires a fresh gesture after captured %s changes",
+    (kind) => {
+      const f = ambientFixture();
+      try {
+        f.down();
+        if (kind === "required") {
+          f.ready(false);
+          f.ready(true);
+        }
+        if (kind === "modal") {
+          const dialog = new Element("section");
+          f.host.append(dialog);
+          const leave = enterPressView(
+            f.host as unknown as HTMLElement,
+            dialog as unknown as HTMLElement,
+          );
+          leave();
+          dialog.remove();
+        }
+        if (kind === "foreground") {
+          Object.assign(document, { hidden: true });
+          document.dispatchEvent(new Event("visibilitychange"));
+          Object.assign(document, { hidden: false });
+          document.dispatchEvent(new Event("visibilitychange"));
+        }
+        vi.advanceTimersByTime(500);
+        f.up();
+        f.click();
+        expect(f.advance).not.toHaveBeenCalled();
+        f.down();
+        f.up();
+        f.click();
+        expect(f.advance).toHaveBeenCalledOnce();
+      } finally {
+        f.dispose();
+      }
+    },
+  );
+  it("uses the canonical scroll slop and current physical target without retargeting to a text field", () => {
+    const f = ambientFixture();
+    try {
+      f.down();
+      document.dispatchEvent(f.event("pointermove", { clientX: 9 }));
+      f.up({ clientX: 9 });
+      f.click({ clientX: 9 });
+      expect(f.advance).not.toHaveBeenCalled();
+      f.down();
+      document.dispatchEvent(f.event("pointermove", { clientX: 8 }));
+      f.up({ clientX: 8 });
+      f.click({ clientX: 8 });
+      expect(f.advance).toHaveBeenCalledOnce();
+      f.advance.mockClear();
+      const input = new Element("input");
+      f.host.append(input);
+      f.down();
+      f.setPhysical(input);
+      document.dispatchEvent(f.event("pointermove", { target: f.button }));
+      f.up();
+      f.click();
+      expect(f.advance).not.toHaveBeenCalled();
+    } finally {
+      f.dispose();
+    }
+  });
+  it("does not own a primary canvas press and permits the separate secondary touch on the bark", () => {
+    const f = ambientFixture();
+    try {
+      const canvas = new Element("canvas");
+      f.host.append(canvas);
+      f.setPhysical(canvas);
+      f.down({ isPrimary: true, pointerId: 1, target: canvas });
+      expect(f.advance).not.toHaveBeenCalled();
+      f.setPhysical(f.button);
+      f.down();
+      f.up();
+      f.click();
+      expect(f.advance).toHaveBeenCalledOnce();
+      document.dispatchEvent(
+        f.event("pointerup", { isPrimary: true, pointerId: 1, target: canvas }),
+      );
+      expect(f.advance).toHaveBeenCalledOnce();
+    } finally {
+      f.dispose();
+    }
+  });
+  it("clears hidden generations and disposes the native binding without re-registering on later render", () => {
+    const f = ambientFixture();
+    try {
+      const first = f.resolve()!;
+      f.down();
+      f.box.render(null, true, true);
+      f.up();
+      f.click();
+      expect(f.advance).not.toHaveBeenCalled();
+      expect(f.resolve()!.available()).toBe(false);
+      f.box.render(ambientLine, true, true);
+      expect(f.resolve()!.identity).not.toBe(first.identity);
+      f.box.dispose();
+      f.box.render({ ...ambientLine, key: "instance:2" }, true, true);
+      expect(f.resolve()).toBeNull();
+      expect(f.button.listeners.get("click")).toHaveLength(0);
+      expect(f.host.children).not.toContain(f.button);
+    } finally {
+      f.dispose();
+    }
+  });
 });
