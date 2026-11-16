@@ -100,6 +100,33 @@ class Element extends EventTarget {
   remove() {
     this.removed = true;
   }
+  matches(selector: string): boolean {
+    return selector.split(",").some((part) => {
+      const value = part.trim();
+      if (value === "[data-action]") {
+        return this.dataset.action !== undefined || this.attributes.has("data-action");
+      }
+      if (value.startsWith(".")) {
+        return this.className.split(" ").includes(value.slice(1));
+      }
+      const input = /^input\[type=["'](button|submit|reset)["']\]$/.exec(value);
+      if (input) {
+        return this.tagName === "input" && this.attributes.get("type") === input[1];
+      }
+      const role = /^\[role=["']([^"']+)["']\]$/.exec(value);
+      if (role) {
+        return this.attributes.get("role") === role[1];
+      }
+      return this.tagName === value;
+    });
+  }
+  querySelectorAll(selector: string): Element[] {
+    return this.children.flatMap((child) =>
+      child instanceof Element
+        ? [...(child.matches(selector) ? [child] : []), ...child.querySelectorAll(selector)]
+        : [],
+    );
+  }
   click() {
     this.dispatchEvent(new Event("click", { cancelable: true }));
   }
