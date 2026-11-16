@@ -541,3 +541,21 @@ it("suppresses a canceled native compatibility click after eligibility remains a
   binding.dispose();
   f.stop();
 });
+
+it("uses captured native-click eligibility even when the current guard accepts again before a short release", () => {
+  const f = setup();
+  const binding = bindAdaAction(f.options, f.element);
+  f.down();
+  f.changeScope();
+  f.up();
+  expect(f.click().defaultPrevented).toBe(true);
+  expect(f.run).not.toHaveBeenCalled();
+  f.click(0);
+  expect(f.run).toHaveBeenCalledOnce();
+  f.down();
+  f.up();
+  expect(f.click().defaultPrevented).toBe(false);
+  expect(f.run).toHaveBeenCalledTimes(2);
+  binding.dispose();
+  f.stop();
+});

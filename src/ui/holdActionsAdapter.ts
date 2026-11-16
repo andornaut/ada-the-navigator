@@ -1,5 +1,5 @@
 import { bindHoldActions } from "@andornaut/game-kit/runtime/web/input/dom/holdActions";
-import type { PressGuard } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
+import { guardClicks, type PressGuard } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
 
 import type { RequiredReady } from "../loading/required.ts";
 import { assertAdaActionBindings, resolveAdaHoldAction } from "./actionBinding.ts";
@@ -21,9 +21,14 @@ export interface AdaActionRootOptions {
 /** One owned root uses the published dispatcher and canonical readiness subscription. */
 export function bindAdaActionRoot(options: AdaActionRootOptions, root: HTMLElement) {
   const document = root.ownerDocument;
+  let disposed = false;
   const scope = rootPressGuard(root);
   const eligible = () =>
-    root.isConnected && !document.hidden && options.requiredReady() && options.guard.gate.accepts();
+    !disposed &&
+    root.isConnected &&
+    !document.hidden &&
+    options.requiredReady() &&
+    options.guard.gate.accepts();
   const guard: PressGuard = {
     gate: {
       accepts: () => eligible() && scope.gate.accepts(),
@@ -46,7 +51,6 @@ export function bindAdaActionRoot(options: AdaActionRootOptions, root: HTMLEleme
     },
     root,
   );
-  let disposed = false;
   const stop = bindHoldActions(
     {
       guard,
@@ -57,6 +61,7 @@ export function bindAdaActionRoot(options: AdaActionRootOptions, root: HTMLEleme
     },
     root,
   );
+  const stopClicks = guardClicks(guard, root);
   const stopScope = subscribePressScope(() => stop.cancel(), root);
   const invalidate = () => {
     if (!disposed) {
@@ -77,6 +82,7 @@ export function bindAdaActionRoot(options: AdaActionRootOptions, root: HTMLEleme
       unregister();
       stopScope();
       stopRequired();
+      stopClicks();
       stop();
       document.removeEventListener("visibilitychange", invalidate);
       document.defaultView?.removeEventListener("pagehide", invalidate);
