@@ -8,6 +8,7 @@ import type { ProgressHandle } from "@andornaut/game-kit/runtime/progressState";
 import type { CrashScreen } from "@andornaut/game-kit/runtime/web/crash/dom/crashScreen";
 import {
   type LoadingFailurePresentation,
+  type LoadingFailurePresentationView,
   mountLoadingFailure,
 } from "@andornaut/game-kit/runtime/web/progress/dom/loadingFailure";
 
@@ -16,10 +17,14 @@ import {
   type BackgroundLoadingPresentation,
   observeInstallation,
 } from "../pwa/installationPresentation.ts";
+import { createAdaFactoryHoldBinding } from "../ui/actionBinding.ts";
+import { bindAdaRecoveryActionRoot } from "../ui/holdActionsAdapter.ts";
+import { SCROLL } from "../ui/layout/contentCard.ts";
 import { viewScale } from "../ui/layout/playView.ts";
 import { VIEW_SCALE_EVENT } from "../ui/layout/viewScale.ts";
 import { LOADING_LAYER } from "../ui/loadingBar.ts";
 import { TEXT_TOKENS } from "../ui/modal.ts";
+import { rootPressGuard } from "../ui/pressScope.ts";
 import { EntryReloadRequired } from "./entryRecovery.ts";
 import { loadingProgress, mountLoading } from "./progress.ts";
 
@@ -42,13 +47,16 @@ export async function startLoading(
   const stop = mountLoading(root);
   let game: RequiredGame | undefined;
   let background: BackgroundLoadingPresentation | undefined;
-  const presentation = (): LoadingFailurePresentation => {
+  const recoveryUnit = () => {
     const viewport = root.ownerDocument.defaultView;
     const scale = viewScale({
       height: viewport?.innerHeight ?? root.clientHeight,
       width: viewport?.innerWidth ?? root.clientWidth,
     });
-    const unit = Number.isFinite(scale) && scale > 0 ? scale : 1;
+    return Number.isFinite(scale) && scale > 0 ? scale : 1;
+  };
+  const presentation = (): LoadingFailurePresentation => {
+    const unit = recoveryUnit();
     return {
       action: {
         borderWidthPx: FRAME_LINE * unit,
@@ -92,42 +100,67 @@ export async function startLoading(
   const frame = root.ownerDocument.createElement("div");
   frame.className = "ada-loading-failure-frame";
   root.ownerDocument.body.append(frame);
-  const failure = mountLoadingFailure(
-    {
-      async onRetry() {
-        if (disposed || startupFence.crashed) {
-          return;
-        }
-        try {
-          const needsDocument = [moduleAttempt.state, gameAttempt.state].some(
-            (state) => state.kind === "failed" && state.error instanceof EntryReloadRequired,
-          );
-          if (needsDocument) {
-            dispose();
-            root.ownerDocument.defaultView!.location.reload();
-            return;
-          }
-          if (required.state.kind === "ready" && background?.state.kind === "failed") {
-            await background.retry();
-          } else {
-            await required.retry();
-          }
-        } catch (error) {
-          dispose();
-          reportError(error);
-        }
-      },
-      presentation: presentation(),
-    },
+  const recovery = bindAdaRecoveryActionRoot({ guard: rootPressGuard(frame) }, frame);
+  const stopRecoveryRequired = required.subscribe(() => recovery.invalidate());
+  const bindHoldAction = createAdaFactoryHoldBinding(
+    { current: () => frame.isConnected, slopPx: () => SCROLL.dragThreshold * recoveryUnit() },
     frame,
   );
-  const onScale = () => failure.setPresentation(presentation());
+  const failure = (() => {
+    let view: LoadingFailurePresentationView | undefined;
+    try {
+      view = mountLoadingFailure(
+        {
+          bindHoldAction,
+          async onRetry() {
+            if (disposed || startupFence.crashed) {
+              return;
+            }
+            try {
+              const needsDocument = [moduleAttempt.state, gameAttempt.state].some(
+                (state) => state.kind === "failed" && state.error instanceof EntryReloadRequired,
+              );
+              if (needsDocument) {
+                dispose();
+                root.ownerDocument.defaultView!.location.reload();
+                return;
+              }
+              if (required.state.kind === "ready" && background?.state.kind === "failed") {
+                await background.retry();
+              } else {
+                await required.retry();
+              }
+            } catch (error) {
+              dispose();
+              reportError(error);
+            }
+          },
+          presentation: presentation(),
+        },
+        frame,
+      );
+      recovery.assertBindings();
+      return view;
+    } catch (error) {
+      stopRecoveryRequired();
+      recovery.dispose();
+      view?.dispose();
+      frame.remove();
+      stop();
+      throw error;
+    }
+  })();
+  const onScale = () => {
+    recovery.invalidate();
+    failure.setPresentation(presentation());
+  };
   const events = root.ownerDocument.defaultView;
   events?.addEventListener("resize", onScale);
   events?.addEventListener(VIEW_SCALE_EVENT, onScale);
   // Required entry and offline installation have independent attempt number domains.
   let presentationRevision = 0;
   const showFailure = (state: LoadingAttemptState) => {
+    recovery.invalidate();
     failure.update({ ...state, attempt: ++presentationRevision });
   };
   Object.assign(frame.style, {
@@ -218,6 +251,8 @@ export async function startLoading(
       return;
     }
     disposed = true;
+    stopRecoveryRequired();
+    recovery.dispose();
     stopPrepare();
     stopCommit();
     unsubscribe();

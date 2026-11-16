@@ -6,6 +6,7 @@ import {
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const view = vi.hoisted(() => ({
+  bindHoldAction: undefined as unknown,
   dispose: vi.fn(),
   presentation: undefined as unknown,
   retry: undefined as (() => void | PromiseLike<void>) | undefined,
@@ -13,6 +14,28 @@ const view = vi.hoisted(() => ({
   style: vi.fn(),
   update: vi.fn(),
 }));
+const recovery = vi.hoisted(() => ({
+  assertBindings: vi.fn(),
+  bind: vi.fn(),
+  dispose: vi.fn(),
+  host: undefined as HTMLElement | undefined,
+  invalidate: vi.fn(),
+  options: undefined as unknown,
+}));
+vi.mock("../ui/actionBinding.ts", () => ({
+  createAdaFactoryHoldBinding: (_options: unknown, host: HTMLElement) => {
+    recovery.host = host;
+    return recovery.bind;
+  },
+}));
+vi.mock("../ui/holdActionsAdapter.ts", () => ({
+  bindAdaRecoveryActionRoot: (options: unknown, host: HTMLElement) => {
+    recovery.options = options;
+    recovery.host = host;
+    return recovery;
+  },
+}));
+vi.mock("../ui/pressScope.ts", () => ({ rootPressGuard: () => ({ gate: {} }) }));
 const progress = vi.hoisted(() => ({
   begin: vi.fn(() => ({ finish: vi.fn(), progress: vi.fn() })),
   mount: vi.fn(() => vi.fn()),
@@ -23,9 +46,11 @@ vi.mock("./progress.ts", () => ({
 }));
 vi.mock("@andornaut/game-kit/runtime/web/progress/dom/loadingFailure", () => ({
   mountLoadingFailure: (context: {
+    bindHoldAction?: unknown;
     presentation?: unknown;
     onRetry: () => void | PromiseLike<void>;
   }) => {
+    view.bindHoldAction = context.bindHoldAction;
     view.presentation = context.presentation;
     view.retry = context.onRetry;
     return {
@@ -427,4 +452,48 @@ it("sizes recovery from the viewport when failed boot CSS leaves the app unlaid 
   const stop = await startLoading(required, { stopGameOnCrash: vi.fn() }, async () => game(), host);
   expect(view.presentation).toMatchObject({ action: { heightPx: 48, widthPx: 128 } });
   stop();
+});
+
+it("owns a narrow recovery root and cancels on the same registry without fencing Retry on readiness", async () => {
+  const required = createRequiredLoading();
+  let status: "failed" | "ready" = "failed";
+  required.observe({
+    retry: () => {
+      status = "ready";
+      required.invalidate();
+    },
+    status: () => status,
+  });
+  const entry = game(),
+    host = root();
+  const stop = await startLoading(required, { stopGameOnCrash: vi.fn() }, async () => entry, host);
+  expect(required.state.kind).toBe("failed");
+  expect(recovery.host).not.toBe(host);
+  expect(recovery.host).not.toBe(host.ownerDocument.body);
+  expect(view.bindHoldAction).toBe(recovery.bind);
+  expect(recovery.options).not.toHaveProperty("requiredReady");
+  expect(recovery.assertBindings).toHaveBeenCalledOnce();
+  await view.retry!();
+  await settle();
+  expect(entry.commit).toHaveBeenCalledOnce();
+  expect(recovery.invalidate.mock.invocationCallOrder.at(-1)).toBeLessThan(
+    view.update.mock.invocationCallOrder.at(-1)!,
+  );
+  stop();
+  stop();
+  expect(recovery.dispose).toHaveBeenCalledOnce();
+});
+it("releases the recovery root and presenter if factory construction audit fails", async () => {
+  recovery.assertBindings.mockImplementationOnce(() => {
+    throw new Error("factory binding missing");
+  });
+  const required = createRequiredLoading();
+  await expect(
+    startLoading(required, { stopGameOnCrash: vi.fn() }, async () => game(), root()),
+  ).rejects.toThrow("factory binding missing");
+  expect(recovery.dispose).toHaveBeenCalledOnce();
+  expect(view.dispose).toHaveBeenCalledOnce();
+  const calls = recovery.invalidate.mock.calls.length;
+  required.dispose();
+  expect(recovery.invalidate).toHaveBeenCalledTimes(calls);
 });
