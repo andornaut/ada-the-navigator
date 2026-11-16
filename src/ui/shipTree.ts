@@ -24,7 +24,7 @@ export function shipItemKey(item: ShipItem): string {
   return `${item.kind}:${item.id}`;
 }
 
-/** Runtime and physical fixtures share the existing five mixed tracks and inventory order. */
+/** Three equal content tracks retain the two intrinsic dividers and inventory order. */
 export function shipTree(
   headings: ShipHeadings,
   sections: ShipSections,
@@ -71,7 +71,7 @@ export function shipTree(
         { kind: "intrinsic" },
         { kind: "fraction" },
         { kind: "intrinsic" },
-        { kind: "intrinsic" },
+        { kind: "fraction" },
       ],
     },
   };

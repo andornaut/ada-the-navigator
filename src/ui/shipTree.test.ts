@@ -15,7 +15,7 @@ const row: ShipRow = {
 const sections: ShipSections = { cargo: [row], equipment: [[], []] };
 
 describe("production Ship configuration", () => {
-  it("uses published mixed tracks with the established shared gap and divider order", () => {
+  it("uses three equal content tracks with the established shared gap and intrinsic divider order", () => {
     const tree = shipTree(headings, sections);
     validateLayoutTree({ inventoryColumn: ["rows"], inventoryRow: [], pageDivider: [] }, tree);
     expect(tree).toMatchObject({
@@ -29,7 +29,7 @@ describe("production Ship configuration", () => {
           { kind: "intrinsic" },
           { kind: "fraction" },
           { kind: "intrinsic" },
-          { kind: "intrinsic" },
+          { kind: "fraction" },
         ],
       },
     });
