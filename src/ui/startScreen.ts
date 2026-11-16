@@ -1,7 +1,7 @@
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { SCROLL } from "../data/layout.ts";
-import { bindAdaAction } from "./actionBinding.ts";
+import { assertAdaActionBindings, bindAdaAction } from "./actionBinding.ts";
 import { font, fromAreaLeft, units } from "./layout/css.ts";
 import { START_SCREEN, type StartAction } from "./layout/startScreen.ts";
 import { TYPE } from "./layout/tokens.ts";
@@ -204,6 +204,7 @@ export function createStartScreen(
   );
   // First in the play area, so its actions are the first Tab stops, before the HUD row's discs.
   parent.prepend(root);
+  assertAdaActionBindings(root);
   // Art's button faces, as the controls overlay takes them.
   void applyButtonSkin(root).catch(() => undefined);
   return {

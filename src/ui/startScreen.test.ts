@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { resolveAdaHoldAction } from "./actionBinding.ts";
-import { registerAdaActionRoot } from "./actionRegistry.ts";
+import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
+import { rootPressGuard } from "./pressScope.ts";
 import { createStartScreen } from "./startScreen.ts";
 import type { TitleScreenArt } from "./titleScreen.ts";
 
@@ -112,8 +113,20 @@ class Element {
       node,
     );
   }
-  querySelectorAll() {
-    return [];
+  matches(selector: string): boolean {
+    return selector.split(",").some((part) => {
+      const token = part.trim();
+      return (
+        (token === "button" && this.tag === "button") ||
+        (token === '[role="button"]' && this.attributes.get("role") === "button") ||
+        (token === "[data-action]" && this.dataset.action !== undefined)
+      );
+    });
+  }
+  querySelectorAll(selector: string): Element[] {
+    return this.children
+      .flatMap((node) => [node, ...node.querySelectorAll(selector)])
+      .filter((node) => node.matches(selector));
   }
   remove() {
     if (this.parent) {
@@ -127,6 +140,31 @@ class Element {
   setAttribute(name: string, value: string) {
     this.attributes.set(name, value);
   }
+}
+
+function installDocument() {
+  vi.stubGlobal(
+    "document",
+    Object.assign(new EventTarget(), {
+      createElement: (tag: string) => new Element(tag),
+      createElementNS: (_: string, tag: string) => new Element(tag),
+      defaultView: Object.assign(new EventTarget(), {
+        HTMLElement: Element,
+        Node: Element,
+        clearTimeout: (id: ReturnType<typeof setTimeout>) => clearTimeout(id),
+        performance: { now: () => Date.now() },
+        setTimeout: (callback: () => void, delay: number) => setTimeout(callback, delay),
+      }),
+      hidden: false,
+    }),
+  );
+}
+function attachRoot(host: Element, requiredReady = () => true) {
+  const root = host as unknown as HTMLElement;
+  return bindAdaActionRoot(
+    { guard: rootPressGuard(root), requiredReady, subscribeRequired: () => () => {} },
+    root,
+  ).dispose;
 }
 
 const triangle = {
@@ -146,11 +184,7 @@ const occluders = [
   ],
 ];
 function render(masked: boolean): Element {
-  vi.stubGlobal("document", {
-    createElement: (tag: string) => new Element(tag),
-    createElementNS: (_: string, tag: string) => new Element(tag),
-    defaultView: { HTMLElement: Element, Node: Element },
-  });
+  installDocument();
   const art: TitleScreenArt = {
     background: "#292734",
     field: { at: { x: -120, y: 0 }, height: 540, url: "/field.png", width: 960 },
@@ -206,16 +240,13 @@ describe("title plume draw layers", () => {
 });
 
 it("retains supplied action order, labels, roles and callbacks with the status note after the row", () => {
-  vi.stubGlobal("document", {
-    createElement: (tag: string) => new Element(tag),
-    defaultView: { HTMLElement: Element, Node: Element },
-  });
+  installDocument();
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
   const restart = vi.fn();
   const proceed = vi.fn();
   const host = new Element("main");
   let allowed = true;
-  const release = registerAdaActionRoot({ permits: () => allowed }, host as unknown as HTMLElement);
+  const release = attachRoot(host, () => allowed);
   const existing = new Element("nav");
   host.append(existing);
   const view = createStartScreen(host as unknown as HTMLElement, null, {
@@ -272,4 +303,41 @@ it("retains supplied action order, labels, roles and callbacks with the status n
   buttons[1]!.click();
   expect(proceed).toHaveBeenCalledTimes(2);
   expect(host.children).toEqual([existing]);
+});
+
+it.each(["hidden", "disabled"] as const)(
+  "checks a lazy unbound %s button in the completed Start subtree",
+  (property) => {
+    installDocument();
+    const host = new Element("main");
+    const release = attachRoot(host);
+    const append = host.prepend.bind(host);
+    host.prepend = (...nodes) => {
+      append(...nodes);
+      const lazy = new Element("button");
+      lazy[property] = true;
+      nodes[0]!.append(lazy);
+    };
+    try {
+      expect(() =>
+        createStartScreen(host as unknown as HTMLElement, null, {
+          actions: [{ action: "continue", label: "Continue", role: "primary", run: vi.fn() }],
+          paint: null,
+          title: "Ada",
+        }),
+      ).toThrow("Discrete action control has no registered action binding");
+    } finally {
+      release();
+    }
+  },
+);
+it("requires the actual parent action root for registered Start buttons", () => {
+  installDocument();
+  expect(() =>
+    createStartScreen(new Element("main") as unknown as HTMLElement, null, {
+      actions: [{ action: "continue", label: "Continue", role: "primary", run: vi.fn() }],
+      paint: null,
+      title: "Ada",
+    }),
+  ).toThrow("Discrete action control has no live action root");
 });
