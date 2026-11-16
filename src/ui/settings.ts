@@ -40,7 +40,7 @@ import {
   setScrollGroup,
   TEXT_TOKENS,
 } from "./modal.ts";
-import { enterPressView } from "./pressScope.ts";
+import { createModalLayer } from "./modalLayer.ts";
 import { SETTING_ICONS, settingsIcon, showIcon, STEPS_GLYPHS } from "./settingsIcons.ts";
 import { type SettingsLayoutSchema, type SettingsNative, settingsTree } from "./settingsTree.ts";
 import { applyButtonSkin } from "./uiSkin.ts";
@@ -482,6 +482,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   root.append(...joystickTargets, openButton, useButton, modal);
   parent.append(root);
   void applyButtonSkin(root).catch(() => undefined);
+  const layer = createModalLayer(modal);
   let disposed = false;
   let open = false;
   let leaveSettingsPressView: (() => void) | undefined;
@@ -617,7 +618,16 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       stepsFrame.hidden = true;
       cardFrame.hidden = false;
       fitSettings();
-      focusTarget(installButton);
+      leaveSettingsPressView = layer.open(
+        {
+          backdrop: modal,
+          close: () => setOpen(false),
+          focus: installButton,
+          isolation: "dialog",
+          restore: () => previousFocus,
+        },
+        cardFrame,
+      );
     }
   };
   const openSteps = (kind: InstallStepsKind) => {
@@ -634,15 +644,22 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       showIcon(stepsGlyph, glyph);
     }
     stepsFrame.setAttribute("aria-label", words.title);
+    leaveStepsPressView?.();
+    leaveSettingsPressView?.();
+    leaveSettingsPressView = undefined;
     cardFrame.hidden = true;
     stepsFrame.hidden = false;
-    leaveStepsPressView?.();
-    leaveStepsPressView = enterPressView(root, stepsFrame, [], {
-      backdrop: modal,
-      close: closeSteps,
-    });
     stepsParts.fit();
-    focusTarget(stepsClose);
+    leaveStepsPressView = layer.open(
+      {
+        backdrop: modal,
+        close: closeSteps,
+        focus: stepsClose,
+        isolation: "dialog",
+        restore: () => installButton,
+      },
+      stepsFrame,
+    );
   };
   const stopInstallRow = options.install
     ? watchInstallRow(options.install.port, (shown) => {
@@ -680,9 +697,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     leaveStepsPressView?.();
     leaveStepsPressView = undefined;
     leaveSettingsPressView?.();
-    leaveSettingsPressView = value
-      ? enterPressView(root, cardFrame, [], { backdrop: modal, close: () => setOpen(false) })
-      : undefined;
+    leaveSettingsPressView = undefined;
     open = value;
     modal.hidden = !open;
     if (open) {
@@ -692,8 +707,17 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     if (open) {
       previousFocus =
         document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
-      focusTarget(closeButton);
-    } else if (previousFocus) {
+      leaveSettingsPressView = layer.open(
+        {
+          backdrop: modal,
+          close: () => setOpen(false),
+          focus: closeButton,
+          isolation: "dialog",
+          restore: () => previousFocus,
+        },
+        cardFrame,
+      );
+    } else if (previousFocus && document.activeElement !== previousFocus) {
       focusTarget(previousFocus);
     }
     options.onOpenChange(open);
@@ -701,27 +725,6 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   registerAction(openButton, () => setOpen(true));
   registerAction(closeButton, () => setOpen(false));
   registerAction(dismiss, () => setOpen(false));
-  modal.addEventListener("keydown", (event) => {
-    if (event.key === "Tab") {
-      const shown = stepsOpen() ? stepsFrame : cardFrame;
-      const targets = [...shown.querySelectorAll<HTMLElement>("button")].filter(
-        (target) => target.offsetParent !== null,
-      );
-      const first = targets[0];
-      const last = targets.at(-1);
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        if (last) {
-          focusTarget(last);
-        }
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        if (first) {
-          focusTarget(first);
-        }
-      }
-    }
-  });
   return {
     actions,
     card,
@@ -733,6 +736,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       }
       setOpen(false);
       disposed = true;
+      layer.dispose();
       for (const binding of actionBindings) {
         binding.dispose();
       }

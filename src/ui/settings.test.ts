@@ -6,6 +6,7 @@ import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { DEVICE_STORAGE_KEYS } from "./deviceSettings.ts";
 import { PAGE_DIVIDER_STYLE } from "./layout/controlPresentation.ts";
+import { currentView, rootPressGuard } from "./pressScope.ts";
 import { createSettings, SETTINGS_STYLE, type SettingsLabels } from "./settings.ts";
 
 vi.mock("./uiSkin.ts", () => ({ applyButtonSkin: vi.fn().mockResolvedValue(undefined) }));
@@ -17,6 +18,27 @@ class Element {
     return this.parent ?? null;
   }
   readonly nodeType = 1;
+  tagName = "DIV";
+  tabIndex = 0;
+  clientWidth = 720;
+  focus() {
+    (document as unknown as { activeElement: Element | null }).activeElement = this;
+  }
+  getClientRects() {
+    return [];
+  }
+  getBoundingClientRect() {
+    return { bottom: 20, height: 20, left: 0, right: 100, top: 0, width: 100, x: 0, y: 0 };
+  }
+  hasAttribute(name: string) {
+    return name === "hidden" ? this.hidden : this.attributes.has(name);
+  }
+  getAttribute(name: string) {
+    return this.attributes.get(name) ?? null;
+  }
+  getAttributeNames() {
+    return [...this.attributes.keys()];
+  }
   readonly isConnected = true;
   get parentNode(): Element | null {
     return this.parent ?? null;
@@ -56,7 +78,7 @@ class Element {
   readonly dataset: Record<string, string> = {};
   hidden = false;
   parent: Element | undefined;
-  readonly listeners = new Map<string, (() => void)[]>();
+  readonly listeners = new Map<string, ((event: Event) => void)[]>();
   readonly properties = new Map<string, string>();
   readonly style = {
     getPropertyValue: (name: string) => this.properties.get(name) ?? "",
@@ -68,10 +90,10 @@ class Element {
     setProperty: vi.fn((name: string, value: string) => this.properties.set(name, value)),
   };
   textContent = "";
-  addEventListener(type: string, listener: () => void) {
+  addEventListener(type: string, listener: (event: Event) => void) {
     this.listeners.set(type, [...(this.listeners.get(type) ?? []), listener]);
   }
-  removeEventListener(type: string, listener: () => void) {
+  removeEventListener(type: string, listener: (event: Event) => void) {
     this.listeners.set(
       type,
       (this.listeners.get(type) ?? []).filter((item) => item !== listener),
@@ -84,11 +106,22 @@ class Element {
       this.children.push(node);
     }
   }
-  click() {
-    this.listeners.get("click")?.forEach((listener) => listener());
+  dispatchEvent(event: Event) {
+    for (const listener of this.listeners.get(event.type) ?? []) {
+      listener(event);
+    }
+    return !event.defaultPrevented;
   }
-  closest(): Element | null {
-    return this.hidden ? this : (this.parent?.closest() ?? null);
+  click() {
+    const event = new Event("click", { cancelable: true });
+    Object.defineProperty(event, "target", { value: this });
+    this.dispatchEvent(event);
+  }
+  closest(selector = "[hidden]"): Element | null {
+    return (selector.includes("hidden") && this.hidden) ||
+      (selector.includes("inert") && this.attributes.has("inert"))
+      ? this
+      : (this.parent?.closest(selector) ?? null);
   }
   get lastElementChild() {
     return this.children.at(-1);
@@ -105,8 +138,22 @@ class Element {
       node,
     );
   }
-  querySelectorAll() {
-    return [];
+  querySelectorAll(selector: string): Element[] {
+    const matches = (node: Element) =>
+      selector.includes("button")
+        ? node.tagName === "BUTTON"
+        : selector.startsWith(".")
+          ? node.className.split(" ").includes(selector.slice(1))
+          : selector === "[role=switch]"
+            ? node.attributes.get("role") === "switch"
+            : false;
+    return this.children.flatMap((child) => [
+      ...(matches(child) ? [child] : []),
+      ...child.querySelectorAll(selector),
+    ]);
+  }
+  querySelector(selector: string): Element | null {
+    return this.querySelectorAll(selector)[0] ?? null;
   }
   remove() {
     if (this.parent) {
@@ -144,11 +191,32 @@ beforeEach(() => {
     getItem: (key: string) => stored.get(key) ?? null,
     setItem: (key: string, value: string) => stored.set(key, value),
   });
-  vi.stubGlobal("document", {
-    createElement: () => new Element(),
-    defaultView: { HTMLElement: Element, Node: Element },
-  });
-  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
+  vi.stubGlobal("HTMLElement", Element);
+  vi.stubGlobal("Node", Element);
+  vi.stubGlobal(
+    "document",
+    Object.assign(new EventTarget(), {
+      activeElement: null as Element | null,
+      createElement: (tag: string) => Object.assign(new Element(), { tagName: tag.toUpperCase() }),
+      defaultView: {
+        HTMLElement: Element,
+        MutationObserver: class {
+          disconnect() {}
+          observe() {}
+          takeRecords() {
+            return [];
+          }
+        },
+        Node: Element,
+      },
+    }),
+  );
+  vi.stubGlobal("getComputedStyle", () => ({
+    columnGap: "0",
+    getPropertyValue: () => "1",
+    paddingLeft: "0",
+    paddingRight: "0",
+  }));
   vi.stubGlobal("window", {
     addEventListener: vi.fn(),
     matchMedia: () => ({ matches: false }),
@@ -418,4 +486,73 @@ it("retains native widgets while the entire Install row leaves and rejoins the t
   settings.dispose();
   expect(stop).toHaveBeenCalledOnce();
   expect(move.listeners.get("click")).toHaveLength(0);
+});
+
+it("isolates Settings, releases its foreground once and restores the original opener", () => {
+  const { settings } = setup();
+  const origin = settings.openButton as unknown as Element;
+  origin.focus();
+  const guard = rootPressGuard(settings.root);
+  const before = guard.gate.capture();
+  settings.open();
+  expect(before()).toBe(false);
+  const modal = (settings.root as unknown as Element).children.find(
+    (node) => node.className === "ada-modal",
+  )!;
+  const frame = modal.children[0]!;
+  expect(currentView(settings.root)).toBe(frame);
+  expect(frame.getAttribute("aria-modal")).toBe("true");
+  expect(frame.contains(document.activeElement)).toBe(true);
+  const opened = guard.gate.capture();
+  settings.close();
+  expect(opened()).toBe(false);
+  expect(modal.hidden).toBe(true);
+  expect(currentView(settings.root)).toBe(settings.root);
+  expect(document.activeElement).toBe(origin);
+  settings.close();
+  settings.dispose();
+});
+
+it("replaces Settings with Install Steps and returns to the same native Settings frame", async () => {
+  const onOpenChange = vi.fn();
+  const settings = createSettings(new Element() as unknown as HTMLElement, {
+    build: "test-build",
+    install: {
+      port: {
+        install: async () => "steps",
+        offers: () => true,
+        onChange: () => () => {},
+        state: () => "prompt",
+        stepsKind: () => "other",
+      },
+      steps: CONTENT.installSteps,
+    },
+    labels,
+    onOpenChange,
+    onVisibilityChange: vi.fn(),
+  });
+  fixtureActionRoot(settings.root);
+  settings.open();
+  const root = settings.root as unknown as Element;
+  const modal = root.children.find((node) => node.className === "ada-modal")!;
+  const [frame, steps] = modal.children;
+  const all = (node: Element): Element[] => [node, ...node.children.flatMap(all)];
+  const install = all(frame!).find((node) => node.dataset.action === "install")!;
+  install.click();
+  await Promise.resolve();
+  expect(settings.stepsOpen()).toBe(true);
+  expect(frame!.hidden).toBe(true);
+  expect(steps!.hidden).toBe(false);
+  expect(currentView(settings.root)).toBe(steps);
+  expect(steps!.contains(document.activeElement)).toBe(true);
+  settings.closeSteps();
+  expect(frame!.hidden).toBe(false);
+  expect(steps!.hidden).toBe(true);
+  expect(currentView(settings.root)).toBe(frame);
+  expect(document.activeElement).toBe(install);
+  expect(onOpenChange.mock.calls).toEqual([[true]]);
+  const captured = rootPressGuard(settings.root).gate.capture();
+  settings.dispose();
+  expect(captured()).toBe(false);
+  expect(onOpenChange.mock.calls).toEqual([[true], [false]]);
 });
