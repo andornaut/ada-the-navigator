@@ -36,6 +36,8 @@ import {
   requireNewerVersion,
   setupPhoneApp,
 } from "./pwa/index.ts";
+import { bindAdaActionRoot } from "./ui/holdActionsAdapter.ts";
+import { rootPressGuard } from "./ui/pressScope.ts";
 import { FRAME_TURN } from "./view/frameTurn.ts";
 
 const mount = document.getElementById("game-canvas");
@@ -48,6 +50,14 @@ if (!application) {
   throw new Error("Missing application mount");
 }
 const ui: HTMLElement = application;
+const appActions = bindAdaActionRoot(
+  {
+    guard: rootPressGuard(ui),
+    requiredReady,
+    subscribeRequired: (invalidate) => requiredLoading.subscribe(invalidate),
+  },
+  ui,
+);
 
 // Script focus as screens open shows the focus ring only after keyboard input (focusTarget).
 trackInputModality(document);
@@ -61,9 +71,11 @@ CRASH_SCREEN.stopGameOnCrash(() => {
   saves.blockWrites("game crashed");
   crashed = true;
   startupFence.crashed = true;
+  appActions.dispose();
   game?.pause();
 });
 if (crashed) {
+  appActions.dispose();
   saves.blockWrites("game crashed");
 }
 let entry: Promise<void> | undefined;
@@ -130,6 +142,7 @@ export function commitGame(): void {
 }
 
 export function disposeGame(): void {
+  appActions.dispose();
   cancelGame?.();
   boot?.dispose();
   boot = undefined;

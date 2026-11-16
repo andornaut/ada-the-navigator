@@ -4,7 +4,13 @@ import { readFileSync } from "node:fs";
 import { createLoadingAttempts } from "@andornaut/game-kit/runtime/load/loadingAttempts";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
+import type { AdaActionRootOptions } from "./ui/holdActionsAdapter.ts";
+
 const boot = vi.hoisted(() => ({
+  app: {},
+  appDispose: vi.fn(),
+  appGuard: { gate: { accepts: () => true, capture: () => () => true } },
+  appRoot: vi.fn(),
   blockWrites: vi.fn(),
   constructorThrows: false,
   crash: undefined as (() => void) | undefined,
@@ -30,6 +36,13 @@ const boot = vi.hoisted(() => ({
   stopVisibility: vi.fn(),
 }));
 vi.mock("virtual:ada-ui.css", () => ({}));
+vi.mock("./ui/holdActionsAdapter.ts", () => ({
+  bindAdaActionRoot: (options: AdaActionRootOptions, root: HTMLElement) => {
+    boot.appRoot(options, root);
+    return { dispose: boot.appDispose };
+  },
+}));
+vi.mock("./ui/pressScope.ts", () => ({ rootPressGuard: () => boot.appGuard }));
 vi.mock("./crash/install.ts", () => ({}));
 vi.mock("./crash/crashScreen.ts", () => ({
   CRASH_SCREEN: {
@@ -141,7 +154,7 @@ beforeEach(() => {
   boot.manifest = JSON.parse(readFileSync("public/art/manifest.json", "utf8"));
   boot.launch.mockResolvedValue("continue");
   boot.load.mockResolvedValue({ save: { version: 12 }, status: "loaded" });
-  vi.stubGlobal("document", { getElementById: () => ({}) });
+  vi.stubGlobal("document", { getElementById: (id: string) => (id === "app" ? boot.app : {}) });
   vi.stubGlobal("screen", {});
   vi.stubGlobal("window", {});
 });
@@ -222,6 +235,10 @@ it("revokes a retained successful game's resources synchronously on page disposa
   module.disposeGame();
   module.disposeGame();
   expect(instance.destroy).toHaveBeenCalledOnce();
+  expect(boot.appDispose).toHaveBeenCalled();
+  expect(boot.appDispose.mock.invocationCallOrder[0]).toBeLessThan(
+    instance.destroy.mock.invocationCallOrder[0]!,
+  );
   expect(boot.stopFrame).toHaveBeenCalledOnce();
   expect(boot.stopVisibility).toHaveBeenCalledOnce();
   expect(boot.blockWrites).not.toHaveBeenCalled();
@@ -320,4 +337,40 @@ it("retains the crash write fence and pauses the actual owned instance after suc
   expect(boot.blockWrites).toHaveBeenCalledWith("game crashed");
   expect(boot.instances[0]!.pause).toHaveBeenCalledOnce();
   expect(boot.game).toHaveBeenCalledOnce();
+});
+
+it("owns one App root before game construction with the actual required registry ports", async () => {
+  const { attempt, module } = await entry();
+  const { requiredLoading, requiredReady } = await import("./loading/required.ts");
+  expect(boot.appRoot).toHaveBeenCalledOnce();
+  const [options, root] = boot.appRoot.mock.calls[0] as [AdaActionRootOptions, HTMLElement];
+  expect(root).toBe(boot.app);
+  expect(options.guard).toBe(boot.appGuard);
+  expect(options.requiredReady).toBe(requiredReady);
+  const subscribe = vi.spyOn(requiredLoading, "subscribe");
+  const invalidate = vi.fn();
+  const stop = options.subscribeRequired(invalidate);
+  expect(subscribe).toHaveBeenCalledWith(invalidate);
+  expect(options.requiredReady()).toBe(requiredLoading.state.kind === "ready");
+  stop();
+  subscribe.mockRestore();
+  await attempt.start();
+  expect(boot.appRoot.mock.invocationCallOrder[0]).toBeLessThan(
+    boot.scene.mock.invocationCallOrder[0]!,
+  );
+  module.disposeGame();
+  expect(boot.appRoot).toHaveBeenCalledOnce();
+});
+it("revokes App actions on both existing and subsequent crash fences", async () => {
+  const module = await import("./main.ts");
+  expect(boot.appDispose).not.toHaveBeenCalled();
+  boot.crash!();
+  expect(boot.appDispose).toHaveBeenCalledOnce();
+  expect(boot.startup.crashed).toBe(true);
+  module.disposeGame();
+  vi.resetModules();
+  boot.appDispose.mockClear();
+  await import("./main.ts");
+  expect(boot.appDispose).toHaveBeenCalledOnce();
+  expect(boot.game).not.toHaveBeenCalled();
 });
