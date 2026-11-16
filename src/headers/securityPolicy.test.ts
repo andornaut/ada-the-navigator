@@ -41,11 +41,15 @@ describe("the security headers", () => {
     ]);
   });
 
-  it("caches content-hashed build output for a year, and nothing else", () => {
+  it("keeps hashed assets immutable and game HTML byte-stable without changing worker revalidation", () => {
     expect(FILE_RULES).toEqual([
       expect.objectContaining({
         headers: [["Cache-Control", "public, max-age=31536000, immutable"]],
         path: "/assets/*",
+      }),
+      expect.objectContaining({
+        headers: [["Cache-Control", "public, max-age=0, must-revalidate, no-transform"]],
+        path: "/play/*",
       }),
     ]);
     expect(COMMON_RULE.headers.map(([name]) => name)).not.toContain("Cache-Control");

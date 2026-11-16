@@ -6,9 +6,7 @@ import type { Directives, HeaderList, PageRule } from "@andornaut/game-kit/build
 // Where the build writes its content-hashed files, as a _headers path pattern.
 export const HASHED_ASSET_PATH = "/assets/*";
 
-// On every response. No Cache-Control: every file but FILE_RULES' hashed build output keeps the
-// platform default (max-age=0, must-revalidate), which the service worker relies on to see a new
-// /sw.js on the next launch.
+// Responses without a specific file rule retain platform revalidation, including /sw.js.
 export const COMMON_RULE = {
   comment:
     "Every response. The game may request fullscreen and holds a screen wake lock during play; " +
@@ -25,7 +23,7 @@ export const COMMON_RULE = {
   path: "/*",
 } as const;
 
-// Headers for files rather than pages. Cloudflare sets a header a rule names, replacing its own.
+// Cloudflare replaces its default with each explicitly configured cache policy.
 export const FILE_RULES = [
   {
     comment:
@@ -34,10 +32,17 @@ export const FILE_RULES = [
     headers: [["Cache-Control", "public, max-age=31536000, immutable"]] satisfies HeaderList,
     path: HASHED_ASSET_PATH,
   },
+  {
+    comment: "Byte-pinned offline game HTML: revalidate without edge-injected scripts.",
+    headers: [
+      ["Cache-Control", "public, max-age=0, must-revalidate, no-transform"],
+    ] satisfies HeaderList,
+    path: "/play/*",
+  },
 ] as const;
 
-// Cloudflare's Web Analytics, which Cloudflare injects into each page at its edge: the beacon
-// script and the endpoint it reports to. The only origins the policy allows beyond 'self'.
+// Optional Cloudflare Web Analytics on the landing page. Game HTML excludes edge injection;
+// these remain the only external script and report origins permitted by the shared policy.
 export const ANALYTICS = {
   beacon: "https://static.cloudflareinsights.com",
   report: "https://cloudflareinsights.com",
