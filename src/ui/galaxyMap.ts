@@ -55,6 +55,7 @@ export interface GalaxyMapLabels {
   readonly home: string;
   readonly jump: string;
   readonly locked: string;
+  readonly lockedAction: string;
   /** "Galaxy {number}". */
   readonly number: string;
   /** Jump's label on the galaxy Ada is flying in, opened in flight. */
@@ -131,12 +132,19 @@ export const EARTH_PANEL = {
   title: "Earth",
 } as const;
 
-export function destinationAction(earth: boolean, view: GalaxyMapView): string {
+export function destinationAction(
+  labels: Pick<GalaxyMapLabels, "lockedAction">,
+  earth: boolean,
+  view: GalaxyMapView,
+): string {
   if (earth) {
     return view.atEarth ? "Stay on Earth" : `Jump to ${EARTH_PANEL.title}`;
   }
   const galaxy = view.galaxies[view.panel - 1]!;
-  return view.stay && galaxy.unlocked ? `Stay in ${galaxy.name}` : `Jump to ${galaxy.name}`;
+  if (!galaxy.unlocked) {
+    return labels.lockedAction;
+  }
+  return view.stay ? `Stay in ${galaxy.name}` : `Jump to ${galaxy.name}`;
 }
 
 const { colors, label, marker, path, ship: SHIP } = GALAXY_MAP;
@@ -700,7 +708,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     if (!view) {
       return;
     }
-    jump.textContent = destinationAction(viewingEarth, view);
+    jump.textContent = destinationAction(labels, viewingEarth, view);
     if (viewingEarth) {
       number.textContent = EARTH_PANEL.kicker;
       name.textContent = EARTH_PANEL.title;

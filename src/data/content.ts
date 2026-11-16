@@ -417,6 +417,7 @@ export const CONTENT: GameContent = {
     galaxies: "Galaxies",
     galaxyInDevelopment: "Story in development.",
     galaxyLocked: "...",
+    galaxyLockedAction: "Progress the story to unlock",
     galaxyNumber: "Galaxy {number}",
     holodisk: "Holodisk",
     holodiskAbout: "Restores part of Astra's memory.",

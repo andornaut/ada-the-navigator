@@ -891,6 +891,7 @@ export function buildScene(scene: UiContext): void {
       home: label("homeButton"),
       jump: label("jump"),
       locked: label("galaxyLocked"),
+      lockedAction: label("galaxyLockedAction"),
       number: label("galaxyNumber"),
       stay: label("stayHere"),
     },

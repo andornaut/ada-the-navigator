@@ -1,5 +1,6 @@
 import { expect, it } from "vitest";
 
+import { CONTENT } from "../data/content.ts";
 import { GALAXY_MAP_STYLE } from "./galaxyMap.ts";
 
 it("leaves the galaxy selector unframed while retaining the information panel frame", () => {
@@ -18,18 +19,41 @@ it("names the selected destination and preserves current-location actions", asyn
   const galaxies = [
     { name: "Sunflower", unlocked: true },
   ] as unknown as import("./galaxyMap.ts").GalaxyMapView["galaxies"];
+  const labels = { lockedAction: CONTENT.labels.galaxyLockedAction! };
   const view = { flight: null, galaxies, panel: 1, ship: 1, stay: false } as const;
-  expect(destinationAction(true, view)).toBe("Jump to Earth");
-  expect(destinationAction(false, view)).toBe("Jump to Sunflower");
-  expect(destinationAction(false, { ...view, stay: true })).toBe("Stay in Sunflower");
-  expect(destinationAction(true, { ...view, atEarth: true })).toBe("Stay on Earth");
-  expect(destinationAction(true, { ...view, stay: true })).toBe("Jump to Earth");
+  expect(destinationAction(labels, true, view)).toBe("Jump to Earth");
+  expect(destinationAction(labels, false, view)).toBe("Jump to Sunflower");
+  expect(destinationAction(labels, false, { ...view, stay: true })).toBe("Stay in Sunflower");
+  expect(destinationAction(labels, true, { ...view, atEarth: true })).toBe("Stay on Earth");
+  expect(destinationAction(labels, true, { ...view, stay: true })).toBe("Jump to Earth");
   expect(
-    destinationAction(false, { ...view, galaxies: [{ ...galaxies[0]!, unlocked: false }] }),
-  ).toBe("Jump to Sunflower");
+    destinationAction(labels, false, { ...view, galaxies: [{ ...galaxies[0]!, unlocked: false }] }),
+  ).toBe("Progress the story to unlock");
   expect(EARTH_PANEL).toEqual({
     description: "Ada’s life on Earth. Time here stands still while she’s aboard the ship.",
     kicker: "Home",
     title: "Earth",
   });
 });
+
+it.each(["Sunflower", "Phantom"])(
+  "does not name locked %s in either Jump or Stay state",
+  async (name) => {
+    const { destinationAction } = await import("./galaxyMap.ts");
+    const labels = { lockedAction: CONTENT.labels.galaxyLockedAction! };
+    for (const stay of [false, true]) {
+      const galaxies = [
+        { name, unlocked: false },
+      ] as unknown as import("./galaxyMap.ts").GalaxyMapView["galaxies"];
+      const result = destinationAction(labels, false, {
+        flight: null,
+        galaxies,
+        panel: 1,
+        ship: 1,
+        stay,
+      });
+      expect(result).toBe("Progress the story to unlock");
+      expect(result).not.toContain(name);
+    }
+  },
+);
