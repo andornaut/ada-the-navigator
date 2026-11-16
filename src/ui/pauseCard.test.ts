@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { ControlState } from "../input/state.ts";
 import type { LocalMap } from "../model/map.ts";
+import { fixtureActionRoot } from "./actionRootFixture.ts";
 import * as mapUI from "./mapScreen.ts";
 import { mapScreenLabels } from "./mapScreen.ts";
 import { createPauseCards, type PauseLabels, type PauseState } from "./pauseCard.ts";
@@ -18,6 +19,7 @@ let lastFocusOptions: unknown;
 function createDocument() {
   return Object.assign(new EventTarget(), {
     activeElement: null as FakeElement | null,
+    body: null as FakeElement | null,
     createElement: (tagName: string): FakeElement =>
       Object.assign(new FakeElement(), { tagName: tagName.toUpperCase() }),
     createElementNS: (): FakeElement => new FakeElement(),
@@ -64,7 +66,9 @@ class FakeElement {
   parentElement: FakeElement | null = null;
   tabIndex = 0;
   tagName = "DIV";
-  isConnected = true;
+  get isConnected(): boolean {
+    return this === PAGE.body || (this.parentElement?.isConnected ?? false);
+  }
   className = "";
   readonly classList = {
     add: (name: string) => this.classes.add(name),
@@ -246,6 +250,7 @@ const SHIP: ShipView = {
 
 beforeEach(() => {
   PAGE = createDocument();
+  PAGE.body = new FakeElement();
   vi.stubGlobal("HTMLElement", FakeElement);
   vi.stubGlobal(
     "MutationObserver",
@@ -290,8 +295,14 @@ const state = (change: Partial<PauseState> = {}): PauseState => ({
   ...change,
 });
 
+function mountedRoot() {
+  const root = fixtureActionRoot(new FakeElement());
+  PAGE.body!.append(root);
+  return root;
+}
+
 function cards() {
-  const root = new FakeElement();
+  const root = mountedRoot();
   const options = {
     labels: LABELS,
     onBackToTitle: vi.fn(),
@@ -328,7 +339,7 @@ const texts = (node: FakeElement): string[] => [
 
 it("keeps a standalone Map footer Close and invokes its direct caller once", () => {
   const { options, pause } = cards();
-  const root = new FakeElement();
+  const root = mountedRoot();
   const onClose = vi.fn();
   const map = mapUI.createMapScreen(root as unknown as HTMLElement, {
     labels: options.labels.mapScreen,

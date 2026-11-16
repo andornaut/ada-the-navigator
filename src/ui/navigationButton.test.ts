@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { activateNavigation, createNavigationButton } from "./navigationButton.ts";
 import { type NavigationActivity, navigationEntry } from "./navigationEntry.ts";
 
@@ -9,13 +10,27 @@ class Node extends EventTarget {
   dataset: Record<string, string> = {};
   hidden = false;
   disabled = false;
-  isConnected = true;
-  closest() {
-    return this.hidden ? this : null;
+  parentElement: Node | null = null;
+  get isConnected(): boolean {
+    return (this as unknown) === document.body || (this.parentElement?.isConnected ?? false);
+  }
+  closest(): Node | null {
+    return this.hidden ? this : (this.parentElement?.closest() ?? null);
   }
   readonly attributes = new Map<string, string>();
   append(...nodes: Node[]) {
-    this.children.push(...nodes);
+    for (const node of nodes) {
+      node.remove();
+      node.parentElement = this;
+      this.children.push(node);
+    }
+  }
+  remove() {
+    if (this.parentElement) {
+      const siblings = this.parentElement.children;
+      siblings.splice(siblings.indexOf(this), 1);
+      this.parentElement = null;
+    }
   }
   setAttribute(key: string, value: string) {
     this.attributes.set(key, value);
@@ -54,6 +69,7 @@ describe("actual Pause/Menu entry", () => {
     },
   ] as const)("routes an actual entry click for $name", ({ expected, facts }) => {
     vi.stubGlobal("document", {
+      body: new Node(),
       createElement: () => new Node(),
       createElementNS: () => new Node(),
     });
@@ -61,7 +77,8 @@ describe("actual Pause/Menu entry", () => {
     const pause = vi.fn();
     const menu = vi.fn();
     const mode = navigationEntry(facts);
-    const root = new Node();
+    const root = fixtureActionRoot(new Node());
+    document.body.append(root as unknown as HTMLElement);
     const entry = createNavigationButton(
       root as unknown as HTMLElement,
       { menu: "Menu", pause: "Pause" },
