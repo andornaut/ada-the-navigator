@@ -262,6 +262,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   });
   const actionRoot = bindAdaActionRoot(
     {
+      allowNonPrimaryTouch: true,
       guard: rootPressGuard(settings.root),
       pointerRelease: {
         onPressChange: (element) => {

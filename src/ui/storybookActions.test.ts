@@ -420,15 +420,20 @@ function useFixture() {
     useAction: ReturnType<typeof bindAdaAction>;
     resolveUsePointer: (event: PointerEvent) => HTMLElement | null | undefined;
   };
-  const event = (type: string, target: Element = canvas, at = layout.centre) => {
+  const event = (
+    type: string,
+    target: Element = canvas,
+    at = layout.centre,
+    touch = { id: 7, primary: true },
+  ) => {
     const e = new Event(type, { cancelable: true });
     for (const [key, value] of Object.entries({
       button: 0,
       clientX: at.x,
       clientY: at.y,
       detail: type === "click" ? 1 : 0,
-      isPrimary: true,
-      pointerId: 7,
+      isPrimary: touch.primary,
+      pointerId: touch.id,
       pointerType: "touch",
       target,
     })) {
@@ -464,6 +469,7 @@ function useFixture() {
     event,
     hud,
     layout,
+    pointerAccept: (event: PointerEvent) => pointerAccept(event),
     request,
     sandbox,
     setPhysical: (target: Element | null) => {
@@ -562,6 +568,34 @@ it("keeps native sleep routing, stale page identity and modal denial without red
     f.click();
     expect(f.request).not.toHaveBeenCalled();
     leave();
+  } finally {
+    f.useAction.dispose();
+    f.actionRoot.dispose();
+    f.story.dispose();
+  }
+});
+
+it("preserves a moving primary joystick while the canonical Controls root handles secondary touch Use", () => {
+  const f = useFixture();
+  try {
+    f.down(f.canvas, { x: 40, y: 60 });
+    f.state.move(7, { x: 65, y: 45 });
+    const move = f.state.sample().move;
+    expect(Math.hypot(move.x, move.y)).toBeGreaterThan(0);
+    const second = { id: 8, primary: false };
+    const down = f.event("pointerdown", f.canvas, f.layout.centre, second);
+    expect(f.pointerAccept(down)).toBe(false);
+    document.dispatchEvent(down);
+    expect(f.request).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(500);
+    expect(f.request).toHaveBeenCalledOnce();
+    document.dispatchEvent(f.event("pointerup", f.canvas, f.layout.centre, second));
+    const click = f.event("click", f.useButton, f.layout.centre, second);
+    f.host.dispatchEvent(click);
+    if (!click.defaultPrevented) {f.useButton.dispatchEvent(click);}
+    expect(click.defaultPrevented).toBe(true);
+    expect(f.request).toHaveBeenCalledOnce();
+    expect(f.state.sample().move).toEqual(move);
   } finally {
     f.useAction.dispose();
     f.actionRoot.dispose();
