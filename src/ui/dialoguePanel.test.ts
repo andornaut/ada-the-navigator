@@ -9,7 +9,8 @@ import { registerAdaActionRoot } from "./actionRegistry.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { createConversationBox, createInteractionCard } from "./conversation.ts";
 import { createDialoguePanel } from "./dialoguePanel.ts";
-import { enterPressView } from "./pressScope.ts";
+import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
+import { enterPressView, rootPressGuard } from "./pressScope.ts";
 import * as refusal from "./refusal.ts";
 import { STORY_PORTRAITS, storyPortrait, storyPortraitFrame, storyTabColour } from "./storybook.ts";
 
@@ -63,6 +64,9 @@ class Element {
       (selector.includes("[inert]") && this.inert)
       ? this
       : (this.parent?.closest(selector) ?? null);
+  }
+  matches(selector: string): boolean {
+    return selector === ":disabled" && this.disabled;
   }
   readonly listeners = new Map<string, ((event: Partial<PointerEvent>) => void)[]>();
   readonly style: Record<string, string> = {};
@@ -139,6 +143,9 @@ class Element {
   }
   setAttribute(name: string, value: string) {
     this.attributes.set(name, value);
+  }
+  getAttribute(name: string): string | null {
+    return this.attributes.get(name) ?? null;
   }
 }
 afterEach(() => {
@@ -472,7 +479,26 @@ it("uses the existing Use close callback only for a current backdrop tap", () =>
     close = vi.fn(),
     choose = vi.fn(),
     skip = vi.fn();
-  fixtureActionRoot(parent);
+  let physical: Element | null = parent;
+  const doc = Object.assign(new EventTarget(), document, {
+    elementFromPoint: () => physical,
+    hidden: false,
+  });
+  Object.assign(doc.defaultView!, {
+    clearTimeout: (id: ReturnType<typeof setTimeout>) => clearTimeout(id),
+    performance: { now: () => performance.now() },
+    setTimeout: (callback: () => void, delay: number) => setTimeout(callback, delay),
+  });
+  vi.stubGlobal("document", doc);
+  const actionRoot = bindAdaActionRoot(
+    {
+      guard: rootPressGuard(parent as unknown as HTMLElement),
+      pointerRelease: { pointerTarget: doc, resolvePointer: () => undefined },
+      requiredReady: () => true,
+      subscribeRequired: () => () => {},
+    },
+    parent as unknown as HTMLElement,
+  );
   const interaction = createInteractionCard(parent as unknown as HTMLElement, {
     choose,
     close,
@@ -486,44 +512,72 @@ it("uses the existing Use close callback only for a current backdrop tap", () =>
   });
   const modal = parent.children[0]!,
     card = modal.children[0]!;
-  const down = (target = modal, clientX = 0) =>
-    modal.dispatch("pointerdown", {
+  const event = (type: string, target = modal, clientX = 0) => {
+    const value = new Event(type, { cancelable: true });
+    Object.defineProperties(
+      value,
+      Object.fromEntries(
+        Object.entries({
+          button: 0,
+          clientX,
+          clientY: 0,
+          detail: type === "click" ? 1 : 0,
+          isPrimary: true,
+          pointerId: 7,
+          pointerType: "mouse",
+          target,
+        }).map(([key, property]) => [key, { value: property }]),
+      ),
+    );
+    return value;
+  };
+  const down = (target = modal, clientX = 0) => {
+    physical = target;
+    doc.dispatchEvent(event("pointerdown", target, clientX));
+    parent.dispatch("pointerdown", {
       clientX,
       isPrimary: true,
+      pointerType: "mouse",
       target: target as unknown as EventTarget,
     });
+  };
   const click = (clientX = 0) => {
-    modal.dispatch("pointerup", {
+    physical = modal.hidden ? parent : modal;
+    doc.dispatchEvent(event("pointerup", modal, clientX));
+    parent.dispatch("click", {
       clientX,
-      isPrimary: true,
+      detail: 1,
       target: modal as unknown as EventTarget,
     });
-    modal.dispatch("click", { clientX, target: modal as unknown as EventTarget });
   };
-  down(card);
-  click();
-  down();
-  click(100);
-  down();
-  modal.dispatch("pointercancel");
-  click();
-  const cover = new Element("div");
-  parent.append(cover);
-  const leave = enterPressView(parent as unknown as HTMLElement, cover as unknown as HTMLElement);
-  down();
-  click();
-  leave();
-  expect(close).not.toHaveBeenCalled();
-  down();
-  click();
-  expect(close).toHaveBeenCalledOnce();
-  expect(choose).not.toHaveBeenCalled();
-  expect(skip).not.toHaveBeenCalled();
-  interaction.show(1, null);
-  down();
-  click();
-  expect(close).toHaveBeenCalledOnce();
-  interaction.dispose();
+  try {
+    down(card);
+    click();
+    down();
+    click(100);
+    down();
+    doc.dispatchEvent(event("pointercancel"));
+    click();
+    const cover = new Element("div");
+    parent.append(cover);
+    const leave = enterPressView(parent as unknown as HTMLElement, cover as unknown as HTMLElement);
+    down();
+    click();
+    leave();
+    expect(close).not.toHaveBeenCalled();
+    down();
+    click();
+    expect(close).toHaveBeenCalledOnce();
+    expect(choose).not.toHaveBeenCalled();
+    expect(skip).not.toHaveBeenCalled();
+    interaction.show(1, null);
+    down();
+    click();
+    expect(close).toHaveBeenCalledOnce();
+  } finally {
+    interaction.dispose();
+    actionRoot.dispose();
+  }
 });
 
 it("registers native material choices with default hold dispatch, live callbacks and redraw cleanup", () => {
