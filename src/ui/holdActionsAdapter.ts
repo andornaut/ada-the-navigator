@@ -11,6 +11,7 @@ import { registerAdaActionRoot } from "./actionRegistry.ts";
 import {
   inCurrentView,
   invalidatePressScope,
+  isCurrentViewBackdrop,
   rootPressGuard,
   subscribePressScope,
 } from "./pressScope.ts";
@@ -107,11 +108,15 @@ function bindRoot(policy: RootPolicy, root: HTMLElement) {
         pointerTarget: pointer.pointerTarget,
         resolvePointer: (event) => {
           const element = pointer.resolvePointer(event);
-          return resolve(
+          const action = resolve(
             element === undefined
               ? document.elementFromPoint(event.clientX, event.clientY)
               : element,
           );
+          return action &&
+            !(event.isPrimary === false && isCurrentViewBackdrop(root, action.element))
+            ? action
+            : null;
         },
       }
     : shared;

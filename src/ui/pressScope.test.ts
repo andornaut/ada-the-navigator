@@ -1,5 +1,6 @@
-import { expect, it, vi } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
 
+import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import {
   currentView,
@@ -29,19 +30,71 @@ vi.mock("@andornaut/game-kit/runtime/web/ui/dom/modalLayer", () => ({
     };
   },
 }));
-function node(parentElement: HTMLElement | null = null): HTMLElement {
-  const element = Object.assign(new EventTarget(), {
-    contains(other: HTMLElement): boolean {
-      if (other === element) {
-        return true;
-      }
-      const parent = other.parentElement;
-      return parent !== null && element.contains(parent);
-    },
-    isConnected: true,
-    parentElement,
+class FixtureDocument extends EventTarget {
+  hitTarget: HTMLElement | null = null;
+  readonly defaultView = Object.assign(new EventTarget(), {
+    HTMLElement: FixtureNode,
+    Node: FixtureNode,
+    clearTimeout: (id: ReturnType<typeof setTimeout>) => clearTimeout(id),
+    performance: { now: () => Date.now() },
+    setTimeout: (fn: () => void, delay: number) => setTimeout(fn, delay),
   });
-  return element as unknown as HTMLElement;
+  elementFromPoint() {
+    return this.hitTarget;
+  }
+}
+class FixtureNode extends EventTarget {
+  readonly ownerDocument: FixtureDocument;
+  readonly parentElement: FixtureNode | null;
+  constructor(parent: FixtureNode | null) {
+    super();
+    this.parentElement = parent;
+    this.ownerDocument = parent?.ownerDocument ?? new FixtureDocument();
+  }
+  get isConnected(): boolean {
+    return this.parentElement?.isConnected ?? true;
+  }
+  contains(other: FixtureNode): boolean {
+    return other === this || (other.parentElement !== null && this.contains(other.parentElement));
+  }
+  getAttribute() {
+    return null;
+  }
+  closest() {
+    return null;
+  }
+  matches() {
+    return false;
+  }
+}
+const attached = new Set<() => void>();
+afterEach(() => {
+  for (const stop of attached) {
+    stop();
+  }
+  attached.clear();
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
+function node(parentElement: HTMLElement | null = null): HTMLElement {
+  const element = new FixtureNode(parentElement as unknown as FixtureNode | null);
+  const host = element as unknown as HTMLElement;
+  if (!parentElement) {
+    const binding = bindAdaActionRoot(
+      {
+        guard: rootPressGuard(host),
+        pointerRelease: {
+          pointerTarget: element.ownerDocument as unknown as Document,
+          resolvePointer: () => undefined,
+        },
+        requiredReady: () => true,
+        subscribeRequired: () => () => {},
+      },
+      host,
+    );
+    attached.add(binding.dispose);
+  }
+  return host;
 }
 
 it("invalidates captures across nested open and dismissal while keeping modal actions eligible", () => {
@@ -127,11 +180,28 @@ function gesture(
     button: { value: 0 },
     clientX: { value: x },
     clientY: { value: 0 },
+    detail: { value: type === "click" ? 1 : 0 },
     isPrimary: { value: isPrimary },
     pointerId: { value: pointerId },
     target: { value: target },
   });
-  element.dispatchEvent(event);
+  const document = element.ownerDocument as unknown as FixtureDocument;
+  document.hitTarget = target;
+  let root = element;
+  while (root.parentElement) {
+    root = root.parentElement;
+  }
+  if (type === "pointerdown") {
+    document.dispatchEvent(event);
+    root.dispatchEvent(event);
+  } else if (type === "click") {
+    root.dispatchEvent(event);
+    if (!event.defaultPrevented) {
+      element.dispatchEvent(event);
+    }
+  } else {
+    document.dispatchEvent(event);
+  }
   return event;
 }
 
@@ -240,11 +310,11 @@ it.each(["card-up", "missing-up", "different-pointer", "secondary-up", "differen
       );
     }
     gesture(backdrop, "click", 1, backdrop, kind === "different-click" ? 2 : 1);
-    expect(close).not.toHaveBeenCalled();
+    expect(close).toHaveBeenCalledTimes(kind === "different-click" ? 1 : 0);
     gesture(backdrop, "pointerdown");
     gesture(backdrop, "pointerup");
     gesture(backdrop, "click");
-    expect(close).toHaveBeenCalledOnce();
+    expect(close).toHaveBeenCalledTimes(kind === "different-click" ? 2 : 1);
     leave();
     vi.unstubAllGlobals();
   },
@@ -348,4 +418,77 @@ it("keeps inherited child guards connection-sensitive and independent roots isol
   expect(recoveryPress()).toBe(true);
   expect(recoveryGuard.gate.accepts()).toBe(true);
   leave();
+});
+
+it("holds only the current backdrop once, never child text or a mandatory overlay", () => {
+  vi.useFakeTimers();
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
+  const root = node(),
+    backdrop = node(root),
+    card = node(backdrop),
+    text = node(card);
+  const close = vi.fn();
+  const leave = enterPressView(root, card, [], { backdrop, close });
+  expect(inCurrentView(root, backdrop)).toBe(true);
+  gesture(backdrop, "pointerdown", 0, text);
+  vi.advanceTimersByTime(530);
+  gesture(backdrop, "pointerup", 0, text);
+  gesture(backdrop, "click", 0, text);
+  expect(close).not.toHaveBeenCalled();
+  const leaveMandatory = enterPressView(root, card);
+  expect(inCurrentView(root, backdrop)).toBe(false);
+  gesture(backdrop, "pointerdown");
+  vi.advanceTimersByTime(530);
+  gesture(backdrop, "pointerup");
+  gesture(backdrop, "click");
+  expect(close).not.toHaveBeenCalled();
+  leaveMandatory();
+  gesture(backdrop, "pointerdown");
+  vi.advanceTimersByTime(530);
+  expect(close).toHaveBeenCalledOnce();
+  gesture(backdrop, "pointerup");
+  gesture(backdrop, "click");
+  expect(close).toHaveBeenCalledOnce();
+  leave();
+});
+
+it("does not reuse a held logical view after closing and reopening the same descriptor and DOM", () => {
+  vi.useFakeTimers();
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
+  const root = node(),
+    backdrop = node(root),
+    card = node(backdrop);
+  const close = vi.fn();
+  const descriptor = { backdrop, close };
+  const leave = enterPressView(root, card, [], descriptor);
+  gesture(backdrop, "pointerdown");
+  leave();
+  const leaveAgain = enterPressView(root, card, [], descriptor);
+  vi.advanceTimersByTime(530);
+  gesture(backdrop, "pointerup");
+  gesture(backdrop, "click");
+  expect(close).not.toHaveBeenCalled();
+  gesture(backdrop, "pointerdown");
+  gesture(backdrop, "pointerup");
+  gesture(backdrop, "click");
+  expect(close).toHaveBeenCalledOnce();
+  leaveAgain();
+});
+
+it("does not assign synthetic keyboard clicks a backdrop dismissal while preserving modal navigation", () => {
+  const root = node(),
+    backdrop = node(root),
+    card = node(backdrop);
+  const close = vi.fn();
+  const layer = createModalLayer(backdrop);
+  const leave = layer.open({ close }, card);
+  const event = new Event("click", { cancelable: true });
+  Object.defineProperties(event, { detail: { value: 0 }, target: { value: backdrop } });
+  root.dispatchEvent(event);
+  backdrop.dispatchEvent(event);
+  expect(close).not.toHaveBeenCalled();
+  expect(layer.back()).toBe(true);
+  expect(published.back).toHaveBeenCalled();
+  leave();
+  layer.dispose();
 });

@@ -4,8 +4,9 @@ import {
 } from "@andornaut/game-kit/runtime/input/modalInput";
 import type { PressGuard } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
 
+import { SCROLL } from "../data/layout.ts";
+import { bindAdaAction } from "./actionBinding.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
-import { isTap } from "./modal.ts";
 
 export interface ViewDismissal {
   readonly backdrop: HTMLElement;
@@ -14,12 +15,14 @@ export interface ViewDismissal {
 
 interface View {
   readonly dialog: HTMLElement;
+  readonly dismissal: ViewDismissal | undefined;
   readonly live: readonly HTMLElement[];
   readonly scope: ModalInputScope;
 }
 function createState(root: HTMLElement) {
   const gate = createModalInputGate();
   const views: View[] = [];
+  const dismissals = new Map<HTMLElement, { readonly dispose: () => void; users: number }>();
   const listeners = new Set<() => void>();
   const active = () => views.at(-1)?.scope ?? gate;
   const guard: PressGuard = {
@@ -31,7 +34,7 @@ function createState(root: HTMLElement) {
       },
     },
   };
-  return { gate, guard, listeners, views };
+  return { dismissals, gate, guard, listeners, views };
 }
 const roots = new WeakMap<HTMLElement, ReturnType<typeof createState>>();
 function state(root: HTMLElement) {
@@ -92,11 +95,17 @@ export function currentView(root: HTMLElement): HTMLElement {
 export function inCurrentView(root: HTMLElement, element: HTMLElement): boolean {
   const view = state(owner(root)).views.at(-1);
   return view
-    ? [view.dialog, ...view.live].some((part) => part.contains(element))
+    ? element === view.dismissal?.backdrop ||
+        [view.dialog, ...view.live].some((part) => part.contains(element))
     : root.contains(element);
 }
 
-/** Scope reporting only: the published layer retains navigation, focus and inert ownership. */
+/** Backdrop dismissal retains primary-pointer ownership even when other controls allow touch chords. */
+export function isCurrentViewBackdrop(root: HTMLElement, element: HTMLElement): boolean {
+  return state(owner(root)).views.at(-1)?.dismissal?.backdrop === element;
+}
+
+/** Registers top-only dismissal metadata; the published layer retains focus and navigation. */
 export function enterPressView(
   root: HTMLElement,
   dialog: HTMLElement,
@@ -104,84 +113,44 @@ export function enterPressView(
   dismissal?: ViewDismissal,
 ): () => void {
   const shared = state(owner(root));
-  const view: View = { dialog, live, scope: shared.gate.open() };
+  const view: View = { dialog, dismissal, live, scope: shared.gate.open() };
   shared.views.push(view);
   notify(shared);
-  let outside:
-    | {
-        readonly id: number;
-        readonly valid: () => boolean;
-        readonly x: number;
-        readonly y: number;
-        released: boolean;
-      }
-    | undefined;
-  const current = () => shared.views.at(-1) === view && root.isConnected;
-  const primary = (event: PointerEvent) => event.isPrimary !== false && event.button === 0;
-  const pointerdown = (event: PointerEvent) => {
-    outside =
-      current() && event.target === dismissal?.backdrop && primary(event)
-        ? {
-            id: event.pointerId,
-            released: false,
-            valid: view.scope.capture(),
-            x: event.clientX,
-            y: event.clientY,
-          }
-        : undefined;
-  };
-  const cancel = () => {
-    outside = undefined;
-  };
-  const pointerup = (event: PointerEvent) => {
-    if (
-      outside &&
-      dismissal &&
-      current() &&
-      outside.valid() &&
-      primary(event) &&
-      event.pointerId === outside.id &&
-      event.target === dismissal.backdrop &&
-      isTap(
-        readViewUnit(dismissal.backdrop),
-        { x: outside.x, y: outside.y },
-        { x: event.clientX, y: event.clientY },
-      )
-    ) {
-      outside.released = true;
-    } else {
-      cancel();
+  if (dismissal) {
+    const backdrop = dismissal.backdrop;
+    let metadata = shared.dismissals.get(backdrop);
+    if (!metadata) {
+      const current = () =>
+        root.isConnected && shared.views.at(-1)?.dismissal?.backdrop === backdrop;
+      const binding = bindAdaAction(
+        {
+          click: {
+            availability: () => (current() ? { kind: "available" } : { kind: "omitted" }),
+            run: () => shared.views.at(-1)?.dismissal?.close(),
+          },
+          current,
+          hitTarget: "self",
+          // The root's published pointer-release dispatcher owns both tap and hold activation.
+          nativeClickOwner: "factory",
+          slopPx: () => SCROLL.dragThreshold * readViewUnit(backdrop),
+        },
+        backdrop,
+      );
+      metadata = { dispose: binding.dispose, users: 0 };
+      shared.dismissals.set(backdrop, metadata);
     }
-  };
-  const click = (event: MouseEvent) => {
-    const from = outside;
-    outside = undefined;
-    if (
-      dismissal &&
-      from?.released &&
-      from.valid() &&
-      current() &&
-      event.target === dismissal.backdrop &&
-      (!("pointerId" in event) || event.pointerId === from.id)
-    ) {
-      // Consume before the callback can restore a parent view on the same backdrop.
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      dismissal.close();
-    }
-  };
-  dismissal?.backdrop.addEventListener("pointerdown", pointerdown, true);
-  dismissal?.backdrop.addEventListener("pointerup", pointerup, true);
-  dismissal?.backdrop.addEventListener("pointercancel", cancel, true);
-  dismissal?.backdrop.addEventListener("click", click, true);
+    metadata.users++;
+  }
   return () => {
     const index = shared.views.indexOf(view);
     if (index >= 0) {
-      cancel();
-      dismissal?.backdrop.removeEventListener("pointerdown", pointerdown, true);
-      dismissal?.backdrop.removeEventListener("pointerup", pointerup, true);
-      dismissal?.backdrop.removeEventListener("pointercancel", cancel, true);
-      dismissal?.backdrop.removeEventListener("click", click, true);
+      if (dismissal) {
+        const metadata = shared.dismissals.get(dismissal.backdrop);
+        if (metadata && --metadata.users === 0) {
+          metadata.dispose();
+          shared.dismissals.delete(dismissal.backdrop);
+        }
+      }
       shared.views.splice(index, 1);
       view.scope.close();
       notify(shared);
