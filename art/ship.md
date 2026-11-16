@@ -347,19 +347,18 @@ animated jet frames.
 |       2, red | `#e34a3c`    | `#a62c22`, `#e74b35` | `#f0895d`, `#ffcab0` |
 |     3, amber | `#e3b13f`    | `#b77d22`, `#e8ba3c` | `#f3d46c`, `#fff0a6` |
 
-On a light field the jets take `lightField.jets.shipLevels` in
+Legacy mouths on a light field take `lightField.jets.shipLevels` in
 [galaxies.json](../public/art/galaxies.json) for the same level
 ([Light fields](galaxies.md#light-fields)).
 
-Light-field normal apertures prepend the same solid normal outer to their
-existing medium/core materials. Its stored legacy alpha is zero, so
-descriptor-absent reverse rendering skips that layer. Normal apertures and the
-centered reverse adapter supply their opaque outer through the shared helpers.
+Explicit normal apertures use the canonical main engine level on both light and
+dark fields. Centered reverse profiles reuse its medium/core materials and
+`normalColor`, with their authored reverse widths. The stored zero-alpha
+light-field outer remains invisible to legacy profiles.
 
 Light fields keep Engine 1 blue. Engine 2 uses outer `#9e3027`, core
 `#cf4935` to `#ee7960`; Engine 3 uses outer `#91620e`, core `#d49b22` to
-`#f2cf62`. Legacy mouths retain those two visible layers. Normal apertures and
-the centered reverse profile include their solid outer as described below.
+`#f2cf62`. Legacy mouths retain those two visible layers.
 
 ### Verification contract
 
@@ -384,8 +383,8 @@ same `JET_LEVELS` source as `ship-jets.json`.
 
 The root `reverseStyle: "centered-main"` selects the shared reverse-material
 adapter. Its opaque dark band derives from the main engine level's authored
-`normalColor`; medium and core interpolate the selected main or
-`lightField.jets.shipLevels` material. Paint does not define another exhaust
+`normalColor`; medium and core interpolate the canonical main engine level on
+both light and dark fields. Paint does not define another exhaust
 palette. Descriptor-absent recipes retain the legacy material path.
 
 `retroMouthAxis` derives each wing's half-mouth vector `(±2.75, 0, 0)`
