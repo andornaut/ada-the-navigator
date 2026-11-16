@@ -90,7 +90,7 @@ export interface ShieldBarView {
   readonly flash: { readonly from: number; readonly to: number } | null;
   readonly pulse: number;
   // The recharge-delay strip's fill from 0 to 1 while the delay runs; null while the shield is
-  // full or regenerating, when it is hidden.
+  // full or the delay has elapsed, when it is hidden.
   readonly recharge: number | null;
   readonly tone: ShieldTone;
 }
@@ -138,12 +138,11 @@ export class ShieldBar {
         ? { from: at(shield), to: at(this.delayMark) }
         : null;
     const flash = this.flash ? { from: at(this.flash.from), to: at(this.flash.to) } : null;
+    const coolingDown = input.rechargeDelay > 0 && input.sinceDamage < input.rechargeDelay;
     const recharge =
-      shield >= capacity || input.recharging
+      shield >= capacity || input.recharging || !coolingDown
         ? null
-        : input.rechargeDelay > 0
-          ? Math.max(0, Math.min(1, input.sinceDamage / input.rechargeDelay))
-          : 1;
+        : Math.max(0, Math.min(1, input.sinceDamage / input.rechargeDelay));
     return {
       delay,
       edge: input.recharging && shield > 0 && shield < capacity,

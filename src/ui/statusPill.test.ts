@@ -2,6 +2,10 @@ import { existsSync } from "node:fs";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { CONTENT } from "../data/content.ts";
+import { ECONOMY } from "../data/economy.ts";
+import { canRechargeShield } from "../model/shieldRecharge.ts";
+import { noLevels, shipTuning } from "../model/upgrades.ts";
 import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { fromHudEdge, pixels, units } from "./layout/css.ts";
 import { countSlot, SHIELD_PILL, STATUS_PILL } from "./layout/playView.ts";
@@ -108,10 +112,10 @@ describe("status pill shield bar", () => {
   it("fills the recharge-delay strip while the delay runs, hidden when full or regenerating", () => {
     const fraction = (change: Partial<typeof full>) =>
       new ShieldBar().update({ ...full, ...change }, 0, false).recharge;
-    // Damage empties it; it fills with the time since, full as recharge starts.
+    // Damage empties it; it fills until the delay ends. Ore does not extend the delay.
     expect(fraction({ shield: 60, sinceDamage: 0 })).toBe(0);
     expect(fraction({ shield: 60, sinceDamage: 12 })).toBeCloseTo(0.4, 9);
-    expect(fraction({ shield: 60, sinceDamage: 30 })).toBe(1);
+    expect(fraction({ shield: 60, sinceDamage: 30 })).toBeNull();
     expect(fraction({ shield: 0, sinceDamage: 15 })).toBeCloseTo(0.5, 9);
     // Hidden while the shield is full or regenerating, with or without reduced motion.
     expect(fraction({})).toBeNull();
@@ -126,9 +130,73 @@ describe("status pill shield bar", () => {
     const bar = new ShieldBar();
     expect(bar.update({ ...full, shield: 60, sinceDamage: 15 }, 0, true).recharge).toBe(0.5);
     expect(bar.update({ ...full, shield: 50, sinceDamage: 0 }, 16, true).recharge).toBe(0);
-    expect(bar.update({ ...full, shield: 50, sinceDamage: 30 }, 30_016, true).recharge).toBe(1);
+    expect(bar.update({ ...full, shield: 50, sinceDamage: 30 }, 30_016, true).recharge).toBeNull();
     expect(
       bar.update({ ...full, recharging: true, shield: 51, sinceDamage: 31 }, 31_016, true).recharge,
+    ).toBeNull();
+  });
+
+  it.each([false, true])(
+    "shows only the canonical post-hit delay regardless of ore (%s reduced)",
+    (reduced) => {
+      const ship = shipTuning(ECONOMY, CONTENT, noLevels());
+      expect(ship.shieldRechargeDelay).toBe(30);
+      const state = {
+        cargo: 0,
+        shield: ship.shieldMax * 0.6,
+        shieldRechargeCredit: 0,
+        sinceDamage: ship.shieldRechargeDelay,
+      };
+      const bar = new ShieldBar();
+      const view = () =>
+        bar.update(
+          {
+            capacity: ship.shieldMax,
+            level: 1,
+            rechargeDelay: ship.shieldRechargeDelay,
+            recharging:
+              canRechargeShield(ship, state) && state.sinceDamage >= ship.shieldRechargeDelay,
+            shield: state.shield,
+            sinceDamage: state.sinceDamage,
+          },
+          0,
+          reduced,
+        );
+      expect(view().recharge).toBeNull();
+      state.cargo = 1;
+      expect(view().recharge).toBeNull();
+      state.cargo = 0;
+      expect(view().recharge).toBeNull();
+      state.shield -= 1;
+      state.sinceDamage = 0;
+      expect(view().recharge).toBe(0);
+      state.sinceDamage = ship.shieldRechargeDelay / 2;
+      expect(view().recharge).toBe(0.5);
+      state.cargo = 1;
+      expect(view().recharge).toBe(0.5);
+      state.cargo = 0;
+      expect(view().recharge).toBe(0.5);
+      state.sinceDamage = ship.shieldRechargeDelay - 0.001;
+      expect(view().recharge).toBeGreaterThan(0.99);
+      state.sinceDamage = ship.shieldRechargeDelay;
+      expect(view().recharge).toBeNull();
+      state.sinceDamage += 1;
+      expect(view().recharge).toBeNull();
+      expect(state.cargo).toBe(0);
+      state.shield = ship.shieldMax;
+      state.sinceDamage = 0;
+      expect(view().recharge).toBeNull();
+      state.shield = 0;
+      expect(view().recharge).toBe(0);
+      state.sinceDamage = ship.shieldRechargeDelay;
+      expect(view().recharge).toBeNull();
+    },
+  );
+
+  it("hides a zero-delay timer instead of displaying an ore-blocked full strip", () => {
+    expect(
+      new ShieldBar().update({ ...full, rechargeDelay: 0, shield: 60, sinceDamage: 0 }, 0, false)
+        .recharge,
     ).toBeNull();
   });
 
@@ -398,12 +466,15 @@ describe("status pill count", () => {
     status.setStatus({ ...view, shield: 60, sinceDamage: 0 }, 2000);
     expect(part("timer-fill").getAttribute("width")).toBe("0");
     expect(part("timer-border").getAttribute("d")).not.toBe("");
-    status.setStatus({ ...view, shield: 60, sinceDamage: 30 }, 2500);
+    status.setStatus({ ...view, shield: 60, sinceDamage: full.rechargeDelay - 0.001 }, 2500);
     expect(part("timer-fill").getAttribute("x")).toBe("28");
     expect(part("timer-fill").getAttribute("width")).toBe("120");
     expect(part("timer-fill").getAttribute("data-capacity-end")).toBe("148");
     expect(part("fill").getAttribute("data-capacity-start")).toBe("30");
     expect(part("fill").getAttribute("data-capacity-end")).toBe("146");
+    status.setStatus({ ...view, shield: 60, sinceDamage: full.rechargeDelay }, 2600);
+    expect(part("timer-fill").getAttribute("width")).toBe("0");
+    expect(part("timer-border").getAttribute("d")).toBe("");
     status.setStatus({ ...view, shield: 100 }, 3000);
     expect(part("timer-border").getAttribute("d")).toBe("");
     status.setStatus({ ...view, recharging: true, shield: 61 }, 4000);
@@ -440,6 +511,45 @@ describe("status pill count", () => {
       expect(delay!.hidden).toBe(true);
       expect(flash!.hidden).toBe(true);
       expect(edge!.hidden).toBe(false);
+    },
+  );
+
+  it.each([false, true])(
+    "hides elapsed ore-blocked HUD tracks and restores only a new hit timer (%s reduced)",
+    (reduced) => {
+      const { shield, status } = pill(reduced);
+      const view = {
+        ...full,
+        aboard: null,
+        lightField: false,
+        ore: 0,
+        oreLabel: "Ore",
+        shield: 60,
+        shieldOreSpent: 0,
+        sinceDamage: 31,
+        stardust: 0,
+        stardustLabel: "Stardust",
+      };
+      const track = shield.children.find((node) => node.className === "ada-status-recharge-track")!;
+      status.setStatus(view, 0);
+      expect(track.hidden).toBe(true);
+      status.setStatus({ ...view, ore: 1, recharging: true }, 1);
+      expect(track.hidden).toBe(true);
+      status.setStatus(view, 2);
+      expect(track.hidden).toBe(true);
+      status.setStatus({ ...view, shield: 59, sinceDamage: 0 }, 3);
+      expect(track.hidden).toBe(false);
+      expect(track.children[0]!.style.width).toBe(pixels(0));
+      status.setStatus({ ...view, shield: 59, sinceDamage: 12 }, 4);
+      expect(track.hidden).toBe(false);
+      const width = track.children[0]!.style.width;
+      status.setStatus({ ...view, ore: 1, shield: 59, sinceDamage: 12 }, 5);
+      expect(track.children[0]!.style.width).toBe(width);
+      status.setStatus({ ...view, shield: 59, sinceDamage: 12 }, 6);
+      expect(track.children[0]!.style.width).toBe(width);
+      status.setStatus({ ...view, shield: 59, sinceDamage: full.rechargeDelay }, 7);
+      expect(track.hidden).toBe(true);
+      status.dispose();
     },
   );
 
