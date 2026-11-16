@@ -1,3 +1,4 @@
+import { bindButtonAvailability } from "@andornaut/game-kit/runtime/web/ui/dom/controlPresentation";
 import { afterEach, expect, it, vi } from "vitest";
 
 import {
@@ -37,12 +38,19 @@ class Element extends EventTarget {
   matches(selector: string) {
     return selector === ":disabled" && this.disabled;
   }
-  closest(_selector: string): Element | null {
-    return this.hidden ||
-      this.inert ||
-      this.attributes.get("aria-disabled")?.toLowerCase() === "true"
+  setAttribute(name: string, value: string) {
+    this.attributes.set(name, value);
+  }
+  removeAttribute(name: string) {
+    this.attributes.delete(name);
+  }
+  closest(selector: string): Element | null {
+    return (selector.includes("[hidden]") && this.hidden) ||
+      (selector.includes("[inert]") && this.inert) ||
+      (selector.includes("aria-disabled") &&
+        this.attributes.get("aria-disabled")?.toLowerCase() === "true")
       ? this
-      : (this.parentElement?.closest(_selector) ?? null);
+      : (this.parentElement?.closest(selector) ?? null);
   }
 }
 class FixtureDocument extends EventTarget {
@@ -278,9 +286,21 @@ it("shares required readiness and foreground eligibility across click and defaul
   binding.dispose();
 });
 
-it("refuses disabled and aria-disabled clicks and holds, cancels moved and other-pointer releases", () => {
+it("blocks unavailable mutation and native-disabled input while preserving movement and pointer identity", () => {
   const f = setup();
-  const binding = bindAdaAction(f.options, f.element);
+  const binding = bindAdaAction(
+    {
+      ...f.options,
+      click: {
+        ...f.options.click,
+        availability: () =>
+          f.button.attributes.has("aria-disabled")
+            ? { kind: "unavailable", reason: "Unavailable" }
+            : { kind: "available" },
+      },
+    },
+    f.element,
+  );
   for (const disabled of ["native", "aria"] as const) {
     f.button.disabled = disabled === "native";
     if (disabled === "aria") {
@@ -322,4 +342,116 @@ it("rejects an unbound newly constructed action control and a missing root, acce
   expect(() => assertAdaActionBindings(f.host)).toThrow("no live action root");
   binding.dispose();
   expect(() => assertAdaActionBindings(f.host)).toThrow("no registered action binding");
+});
+
+it("keeps Pause refusal feedback and denies inherited aria-disabled hold", () => {
+  const f = setup();
+  const refused = vi.fn(),
+    mutate = vi.fn();
+  let allowed = false;
+  f.root.attributes.set("aria-disabled", "true");
+  const binding = bindAdaAction(
+    {
+      ...f.options,
+      click: {
+        ...f.options.click,
+        run: () => {
+          if (!allowed) {
+            refused();
+            return;
+          }
+          mutate();
+        },
+      },
+    },
+    f.element,
+  );
+  f.click(0);
+  expect(refused).toHaveBeenCalledOnce();
+  expect(mutate).not.toHaveBeenCalled();
+  f.down();
+  vi.advanceTimersByTime(500);
+  expect(refused).toHaveBeenCalledOnce();
+  expect(mutate).not.toHaveBeenCalled();
+  f.up();
+  f.root.attributes.delete("aria-disabled");
+  allowed = true;
+  f.down();
+  vi.advanceTimersByTime(500);
+  expect(mutate).toHaveBeenCalledOnce();
+  f.up();
+  expect(f.click().defaultPrevented).toBe(true);
+  expect(mutate).toHaveBeenCalledOnce();
+  binding.dispose();
+  f.stop();
+});
+
+it("keeps the published soft-unavailable feedback guard reachable before normal action listeners", () => {
+  const f = setup();
+  const refused = vi.fn();
+  let allowed = false;
+  const availability = () =>
+    allowed
+      ? { kind: "available" as const }
+      : { kind: "unavailable" as const, reason: "Needs fuel" };
+  const reason = { hidden: true, textContent: "" };
+  const presentation = bindButtonAvailability(
+    {
+      getAvailability: availability,
+      onUnavailable: refused,
+      reason: reason as unknown as HTMLElement,
+    },
+    f.element as HTMLButtonElement,
+  );
+  const binding = bindAdaAction({ ...f.options, click: { availability, run: f.run } }, f.element);
+  f.click(0);
+  expect(refused).toHaveBeenCalledWith("Needs fuel");
+  expect(reason.textContent).toBe("Needs fuel");
+  expect(f.run).not.toHaveBeenCalled();
+  f.down();
+  vi.advanceTimersByTime(500);
+  expect(refused).toHaveBeenCalledOnce();
+  expect(f.run).not.toHaveBeenCalled();
+  f.up();
+  allowed = true;
+  presentation.refresh();
+  f.click(0);
+  expect(f.run).toHaveBeenCalledOnce();
+  binding.dispose();
+  presentation.dispose();
+  f.stop();
+});
+
+it("dispatches keyboard activation through current click policy independently of hold availability", () => {
+  const f = setup(),
+    hold = vi.fn();
+  const binding = bindAdaAction(
+    {
+      ...f.options,
+      hold: {
+        availability: () => ({ kind: "unavailable", reason: "Hold unavailable" }),
+        run: hold,
+      },
+    },
+    f.element,
+  );
+  expect(binding.activate()).toBe(true);
+  expect(f.run).toHaveBeenCalledOnce();
+  expect(hold).not.toHaveBeenCalled();
+  binding.update({
+    ...f.options,
+    click: {
+      availability: () => ({ kind: "unavailable", reason: "Click unavailable" }),
+      run: f.run,
+    },
+    hold: { ...f.options.click, run: hold },
+  });
+  expect(binding.activate()).toBe(false);
+  expect(f.run).toHaveBeenCalledOnce();
+  f.down();
+  vi.advanceTimersByTime(500);
+  expect(hold).toHaveBeenCalledOnce();
+  binding.dispose();
+  expect(binding.activate()).toBe(false);
+  f.stop();
 });

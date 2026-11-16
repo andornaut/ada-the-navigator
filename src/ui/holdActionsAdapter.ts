@@ -36,7 +36,7 @@ export function bindAdaActionRoot(options: AdaActionRootOptions, root: HTMLEleme
         guard.gate.accepts() &&
         element.isConnected &&
         !element.matches(":disabled") &&
-        element.closest('[hidden], [inert], [aria-disabled="true" i]') === null &&
+        element.closest("[hidden], [inert]") === null &&
         inCurrentView(root, element),
     },
     root,

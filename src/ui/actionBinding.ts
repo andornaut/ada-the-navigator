@@ -16,6 +16,7 @@ export interface AdaActionOptions extends AdaActionBinding {
 }
 
 interface Entry {
+  readonly activate: () => boolean;
   options: AdaActionOptions;
 }
 const bindings = new WeakMap<HTMLElement, Entry>();
@@ -25,17 +26,21 @@ export function bindAdaAction(options: AdaActionOptions, element: HTMLElement) {
   if (bindings.has(element)) {
     throw new Error("Ada action already registered");
   }
-  const entry: Entry = { options };
+  const entry: Entry = { activate, options };
   bindings.set(element, entry);
   const current = () =>
     bindings.get(element) === entry && adaActionRootAllows(element) && entry.options.current();
+  function activate(): boolean {
+    return current() && activateAdaAction(entry.options, "click");
+  }
   const click = (event: MouseEvent) => {
     if (current() && entry.options.beforeClick?.(event) !== false) {
-      activateAdaAction(entry.options, "click");
+      entry.activate();
     }
   };
   element.addEventListener("click", click);
   return {
+    activate: entry.activate,
     dispose() {
       if (bindings.get(element) === entry) {
         bindings.delete(element);
@@ -74,7 +79,7 @@ export function resolveAdaHoldAction(
       return {
         activate: () => {
           if (current()) {
-            activateAdaAction(entry.options, "click");
+            entry.activate();
           }
         },
         available: () =>
