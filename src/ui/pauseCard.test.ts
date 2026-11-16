@@ -895,6 +895,37 @@ it("returns held cargo quest details directly to the same Ship", () => {
   expect(focused()).toBe(origin);
 });
 
+it("does not route cargo to a quest absent from current membership and retains Ship focus", () => {
+  const { body, modal, pause, root, ship } = cards();
+  pause.setState(
+    state({
+      questEntries: [],
+      ship: { ...SHIP, aboard: { kind: "carrying", name: "Supplies" }, aboardQuestId: "expired" },
+    }),
+  );
+  pause.open();
+  button(body.children[0]!, "pause-ship").click();
+  const origin = ship.querySelectorAll().find((node) => node.dataset.item === "cargo:aboard")!;
+  origin.click();
+  expect(modal.hidden).toBe(true);
+  expect(
+    root.children.some((node) => node.className.includes("ada-quests-screen") && !node.hidden),
+  ).toBe(false);
+  expect(
+    root.children.some(
+      (node) =>
+        node.className === "ada-modal" &&
+        !node.hidden &&
+        node.querySelectorAll().some((button) => button.dataset.action === "close-resource"),
+    ),
+  ).toBe(true);
+  pause.closeShip();
+  expect(modal.hidden).toBe(false);
+  expect(pause.shipOpen()).toBe(true);
+  expect(focused()).toBe(origin);
+  pause.dispose();
+});
+
 it("retains the Pause ancestor through Settings until Resume", () => {
   const { body, modal, options, pause } = cards();
   pause.setState(state());

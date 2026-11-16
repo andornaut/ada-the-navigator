@@ -64,6 +64,8 @@ export type ShipItem =
 /** One row: its icon, label, and a count or a level, with a weapon's ammunition last. */
 export interface ShipRow {
   readonly item: ShipItem;
+  /** Live quest identity supplied by the inventory fact, independent of its display label. */
+  readonly questId?: string;
   readonly icon: ShipIcon;
   readonly label: string;
   readonly count?: string;
@@ -124,6 +126,7 @@ export function shipSections(labels: Labels, view: ShipView): ShipSections {
       icon: sprite(view.aboard.kind === "towing" ? "icon-tow-20" : "icon-cargo-20"),
       item: { id: "aboard", kind: "cargo" },
       label: aboardLabel(labels, view.aboard),
+      ...(view.aboardQuestId ? { questId: view.aboardQuestId } : {}),
     });
   }
   const left: ShipRow[] = [

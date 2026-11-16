@@ -362,12 +362,11 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       });
     } else if (
       row.item.kind === "cargo" &&
-      row.item.id === "aboard" &&
-      view.aboardQuestId &&
-      state.questEntries?.some(({ id }) => id === view.aboardQuestId)
+      row.questId &&
+      state.questEntries?.some(({ id }) => id === row.questId)
     ) {
       questRoot = "ship";
-      quests.open(view.aboardQuestId, "ship", questParentDismissal);
+      quests.open(row.questId, "ship", questParentDismissal);
     } else {
       const text =
         row.item.kind === "resource"

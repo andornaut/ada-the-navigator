@@ -31,6 +31,15 @@ const VIEW: ShipView = {
 const labels = (rows: readonly { readonly label: string }[]) => rows.map(({ label }) => label);
 
 describe("Ship card", () => {
+  it("uses the canonical empty cargo copy in both existing status templates", () => {
+    expect(aboardLabel(LABELS, { kind: "carrying", name: LABELS.shipNothing! })).toBe(
+      "Carrying: Nothing",
+    );
+    expect(aboardLabel(LABELS, { kind: "towing", name: LABELS.shipNothing! })).toBe(
+      "Towing: Nothing",
+    );
+  });
+
   it("fills canonical upgrade, weapon and chapter totals in parameterized labels", () => {
     const sections = shipSections(
       { ...LABELS, shipHolodisks: "Holodisks: {n} of {total}", shipLevel: "Level {n} of {max}" },
@@ -75,6 +84,17 @@ describe("Ship card", () => {
       item: { id: "aboard", kind: "cargo" },
       label: "Towing: Sleepy Tug",
     });
+  });
+
+  it("retains the supplied cargo quest identity independently of its visible name", () => {
+    const row = shipSections(LABELS, {
+      ...VIEW,
+      aboard: { kind: "carrying", name: "A different visible label" },
+      aboardQuestId: "live-held-job",
+    }).cargo.at(-1)!;
+    expect(row.questId).toBe("live-held-job");
+    expect(row.label).toBe("Carrying: A different visible label");
+    expect(shipSections(LABELS, VIEW).cargo.every((row) => !row.questId)).toBe(true);
   });
 
   it("keeps the systems and paint data with Engine first, and weapons in HUD order", () => {

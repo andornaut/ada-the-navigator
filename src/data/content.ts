@@ -661,6 +661,7 @@ export const CONTENT: GameContent = {
     shipCarrying: "Carrying: {item}",
     shipHolodisks: "Holodisks: {n} of {total}",
     shipLevel: "Level {n} of {max}",
+    shipNothing: "Nothing",
     shipPaint: "Ship paint",
     shipPaintName: "Paint: {paint}",
     shipTowing: "Towing: {craft}",
