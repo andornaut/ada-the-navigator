@@ -6,7 +6,11 @@ import type { UpgradeWeapon } from "../data/economy.ts";
 import { EXCHANGE_COPY } from "../data/exchangeCopy.ts";
 import type { StationGreeting } from "../model/keepers.ts";
 import type { StationServices } from "../model/stationServices.ts";
-import { bindAdaAction } from "./actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  bindAdaAction,
+} from "./actionBinding.ts";
 import { createDialoguePanel, type DialogueSpeaker } from "./dialoguePanel.ts";
 import { createExchangeView, type ExchangePort } from "./exchange.ts";
 import { keeperName } from "./keeperBlock.ts";
@@ -269,6 +273,17 @@ function prose(className: string, text: string): HTMLParagraphElement {
 export function createStationView(parent: HTMLElement, options: StationOptions) {
   const { labels } = options;
   let disposed = false;
+  const audit = (scope: HTMLElement) => {
+    try {
+      assertAdaActionMetadata(scope);
+      if (scope.isConnected) {
+        assertAdaActionBindings(scope);
+      }
+    } catch (error) {
+      scope.hidden = true;
+      throw error;
+    }
+  };
   const bindings: ReturnType<typeof bindAdaAction>[] = [];
   const shopBindings: ReturnType<typeof bindAdaAction>[] = [];
   const jobBindings: ReturnType<typeof bindAdaAction>[] = [];
@@ -616,6 +631,15 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       button.hidden = unavailable;
     }
     group.replaceChildren(...pages[currentPage]!.map((index) => chunks[index]!));
+    try {
+      for (const chunk of chunks) {
+        audit(chunk);
+      }
+      audit(parts.frame);
+    } catch (error) {
+      parts.frame.hidden = true;
+      throw error;
+    }
     if (restoreFocus) {
       focusPage(parts, group, pager, pager.node.contains(focused) ? focused : undefined);
     }
@@ -658,6 +682,9 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
           ? (dropHost.querySelector<HTMLElement>(".ada-card-frame") ?? undefined)
           : confirmCard.frame;
     if (next !== pressDialog) {
+      if (next) {
+        audit(next);
+      }
       leaveConfirmation?.();
       leaveConfirmation = undefined;
       confirmationDialog = undefined;
@@ -668,6 +695,9 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
         : undefined;
     }
     if (nextConfirmation !== confirmationDialog) {
+      if (nextConfirmation === confirmCard.frame) {
+        audit(nextConfirmation);
+      }
       leaveConfirmation?.();
       confirmationDialog = nextConfirmation;
       leaveConfirmation = nextConfirmation
@@ -1166,6 +1196,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     parts.push(confirmActions);
     buy.textContent = request.action;
     confirmCard.body.replaceChildren(...parts);
+    audit(confirmCard.frame);
     confirmModal.hidden = false;
     syncPressView();
     confirmCard.fit();
@@ -1372,7 +1403,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     }
   }
 
-  return {
+  const station = {
     dispose(): void {
       if (disposed) {
         return;
@@ -1436,4 +1467,19 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     },
     settleDetails: () => dropDetails?.settle() ?? Promise.resolve(),
   };
+  try {
+    for (const scope of [
+      stationCard.frame,
+      shopCard.frame,
+      jobsCard.frame,
+      confirmCard.frame,
+      confirmActions,
+    ]) {
+      audit(scope);
+    }
+  } catch (error) {
+    station.dispose();
+    throw error;
+  }
+  return station;
 }
