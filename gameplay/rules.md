@@ -44,6 +44,11 @@ brown-skinned 12-year-old girl. Use Chibi as the settings dialog, positioning,
 fonts, joystick and general UI reference. These explicit reuse permissions apply to
 the game; do not modify the source games.
 
+All UI fits the centered 720-logical-pixel-wide game area. Backgrounds may bleed
+across the phone display. Intersect the actual game area with device-safe insets
+for the common UI rectangle; preserve existing 700/500/400 widths, padding and
+reflow. Do not mask or clip text or buttons to conceal overflow.
+
 ## Start, Home and Space
 
 The game has two halves: Home, the storybook scenes on Earth, and Space, the
@@ -149,6 +154,17 @@ answer, repeat completed scene effects or restart the sleep scene. Saves keep
 canonical scene, page and question references and navigation state, not embedded
 authored text; the runtime resolves those references against its current story
 content under the existing save compatibility guards.
+
+### Earth return and replay status
+
+The current Earth action restores Earth rather than replaying boarding: a flight
+return processes pending new Earth scenes before the room; Stay on Earth does
+not board. Welcome back, Navigator follows the rock/boarding action. Story
+choices retain the current material-choice guards and Previous/Next focus.
+Optional room chapter replay remains approved design only, not new runtime
+authority: preserve progress, saved choices and rewards without duplication,
+return to the room on Skip, and do not consume pending mandatory story.
+Replay feasibility, implementation and acceptance remain pending.
 
 ### Aboard and the galaxy map
 
@@ -731,14 +747,20 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   "Back to title", primary "Resume". Earth uses an equal-size vertical stack.
   Space places "Quests" and "Ship" above the shared actions in its two-column
   grid, with "Resume" at the bottom right. Map stays hidden before it unlocks
-  and during mandatory story beats or unresolved material choices. "Resume" remains primary and focused when the card opens. Ship opens a card titled "Ship" with a primary "Back" at the bottom right and a close
-  X, back to the pause card, in two sections. "Cargo" lists Stardust, ore
-  carried this flight, "Holodisks: {n} of 6", and the carried job or story item or towed
-  craft when there is one. "Equipment" lists the shield, engine and tractor
-  beam, each with its level ("Level {n} of 3"); every owned weapon in
-  the weapon icons' order with its level and, apart from Laser, its ammunition;
-  and the ship paint. The pause card shows no objective text, and neither does space;
-  in flight the direction indicator is the objective cue.
+  and during mandatory story beats or unresolved material choices. "Resume" remains primary and focused when the card opens. Ship opens a card titled "Ship" with Back and X returning to Pause.
+  Cargo, Equipment and Weapons content columns are equal width, excluding shared
+  divider/gap tracks; content does not size a column. A sole visible footer
+  button is centered. Equipment lists Engine, Shield, Tractor beam and Paint;
+  Weapons lists owned weapons and their actual ammunition. Preserve current
+  compact upgraded-level names and accessible full level descriptions.
+  Cargo always includes Carrying and Towing independently: all actual story,
+  job and activity items appear, or "Carrying: Nothing"; towing shows the craft
+  or "Towing: Nothing". Towing never hides cargo. Each carried item with an
+  explicit live quest identity opens its matching details and returns to Ship;
+  fallback nonquest details do not invent a quest link. Empty rows are not
+  interactive. Existing icons/detail routing remain. This presentation adds
+  no cargo concurrency, capacity, reward or HUD rules. Source is integrated;
+  source presence alone is not rendered or device acceptance.
   The local map's header shows the galaxy name with its landmark pips and
   "{percent}% mapped" below them, then a "Quests" button and "Galaxies".
   Quests opens an icon-and-summary list of all accepted story quests, station
@@ -1079,7 +1101,13 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
 ## Interactions and navigation
 
 Use is one contextual control, Chibi's touch disc beside the aim stick, visible
-only when an interaction is available. It shows the action's symbol with no text;
+only when an interaction is available. Available real actions, including
+repeatable Dock on every visit, precede Quest details. Details is a fallback
+only when no real action remains on a nearby quest-linked object. Use retains
+its existing proximity/input guards and centered actual quest icon. World
+objects are not click/tap inspection targets; station quests and All quests stay
+unchanged. Return paths follow
+[Scan feedback](scan-feedback.md#quest-details-through-contextual-use). It shows the action's symbol with no text;
 the action's name is its accessible name. On desktop the disc is hidden, as in
 Chibi, and the Use key still acts. Where the disc's press area overlaps the
 conversation box, the box takes the press. Resources collect on contact. Mining cargo has no capacity limit.
@@ -1275,54 +1303,38 @@ return and the first disabled heavy each flight) has a pool of variants on one
 theme and draws them in a shuffled order, never the same variant twice in a row,
 starting a new shuffle once all have played.
 
-Penny rides in the second seat and never barks aloud. When an undiscovered point
-of interest comes within 1500 world units of Ada, even off screen,
-one conversation shows Penny's "Woof! Woof!" and then Ada's reaction; it plays
-once per point of interest, at most once per 60 seconds. Exact lines are in
+Penny rides in the second seat and never barks aloud. Sensing uses the approved
+shared 5,000-world-unit range. Her conversation is narration only: it does not
+create, expire or replace a target marker. Penny's "Woof! Woof!" and Ada's
+reaction remain once per sensed point of interest, with the existing provisional
+60-second ordinary narration interval; hunt narration retains its own exception.
+Target knowledge, real icons versus
+`?`, persistence and placement follow [Unified target markers](marker-design.md).
+Exact narration lines are in
 [the player copy](player-copy.md#in-flight-conversations).
-Ordinary point-of-interest sensing and hunt lost-item sensing both use a
-1500-world-unit range. Their existing once-per-target and cooldown rules remain
-separate and unchanged.
-
-When Penny's notice is actually displayed, its exact target gets a direction
-marker; do not bind the marker to the current nearest object or an enqueued
-notice. Show a question mark until the target has actually been identified on
-screen, then use its matching real map, location or item glyph. Sensing alone
-does not discover the target or advance a quest. An unknown-target marker
-remains until the target is reached, removed or outside Penny's 1500-world-unit
-range; dialogue fading does not clear it. After identification, keep the real
-icon under the ordinary known-object rules, except that this sensed target
-retains the full 1500 range rather than being cut off at 1400. Show only one
-marker for the target. Compute direction and range using the shortest wrapped
-path and keep this marker clear of the HUD.
 
 ## Space encounters and feedback
 
 Combat occurs in small groups separated by quiet stretches. Terrain mixes open
 areas, asteroid clusters and narrow passages. There is no spawn warning;
 Astra's drone-arrival line is the only cue.
-Direction indicators are rare. They mark only the current objective's
-destination, a quest item or quest event, the holodisk waypoint and an
-undiscovered station within range, plus the exact target of a displayed Penny
-sense notice under the rules above. Optional discovery caches and ordinary
-resource rocks otherwise get none. A discovery
-cache lights when Ada comes within 160 world units. The holodisk is collected on
-contact, like other pickups. The pause menu's Map (the local map) is the only map of a galaxy; there is no minimap.
-Edge markers show where off-screen objects Ada has already seen are. Four kinds
-each have their own look: enemy (swarms, fighters, interceptors and
-retaliators), heavy (frigates, capital ships, platforms and Admiral Archie),
-guard and station (stations and outposts). A guard is a heavy that still blocks
-a route: it shows the guard marker, its own image, in place of the heavy marker,
-and switches to the heavy marker once it is disabled. Friendly objects she flies through (story ships,
-whales, wrecks and landmarks) get none. An object gets a marker only after it
-has been on Ada's screen and then left it. The marker stays while the object is
-within 1400 world units of Ada, except for the Penny-sensed target's 1500 range
-above; past its applicable range the object is
-forgotten until it is on screen again. Destroying the object, leaving the zone
-or galaxy, and saving and reloading clear markers. A marker sits where the line
-from Ada to the object meets the game area's edge, its outermost drawn pixel 1 logical pixel in
-from the edge, and may sit under the HUD. Where a direction
-indicator marks the same object, only the indicator shows.
+All eligible off-screen targets use the [unified marker contract](marker-design.md):
+one target, one marker, a shared 5,000-world-unit range, persistent knowledge,
+and bearing-first near-edge placement. Marker centers remain on the projected
+Ada-to-target ray; temporary HUD/dialogue or marker overlap does not justify
+tangential or inward displacement. Visible-art inset is approximately one or two
+logical pixels, retaining fractional paint rounding and the three-logical-pixel
+small-marker half-scale corner exception, not a universal exact-one-pixel rule.
+Leaving range hides without forgetting;
+Continue does not erase knowledge. Destroyed or removed targets clear their
+markers. Triggered distant boss contributions are explicit exceptions, not
+permission to reveal hidden targets. Map and Quests retain long-range guidance.
+Known enemies, heavies, guards and stations retain their distinct marker art;
+a disabled route guard uses its heavy marker once it stops blocking the route.
+The local map is the only galaxy map; there is no minimap. Discovery caches
+light within 160 world units; the holodisk collects on contact like other pickups.
+These are approved design rules; source presence does not establish rendered
+acceptance or delivery.
 Discovery rewards use cargo and Stardust pickups; a discovery cache holds 4
 Stardust as four ordinary pickups worth 1 each, arranged in a diamond. Each uses
 normal contact collection and the tractor beam, with no aggregate collider or
@@ -1420,13 +1432,48 @@ shots. No missile homes.
 
 Enemy speeds are fixed in world units and the same in every galaxy (see
 [Ships](ships.md#values)); pursuit range is finite. Frigates and capital ships can
-block required quest routes in the first five galaxies. A guard stops blocking
-its route once it is disabled or destroyed. The first time each flight that Ada
-comes within Talk range of a destination its guard still blocks, Astra says a
-guard line, the guard gets its guard edge marker even if Ada has not seen it yet,
-and the guard wakes and flies toward Ada, holding fire until it is inside the
-current play view (the visible game area, not a fixed 720 by 360), then fights
-as usual.
+block required quest routes in the first five galaxies. A required story or quest
+guard frigate must always be present and blocks its route until defeated or
+disabled. Only its support fighters may number zero to two, within existing
+caps. General ambient frigates retain two mandatory escorts; see
+[Ships](ships.md#required-guard-frigates-and-support-fighters).
+
+Plan actual required sites, guard hulls and protected footprints before optional
+rocks or ambient encounters. Reserve required guard frigates before allocating
+their support. Failed placement remains an explicit blocked planning condition,
+not a whole empty route plan or story bypass. Preserve existing caps and
+required-guard assertions. Planning must not reveal hidden targets or grant a
+marker exception. Spawn guards near their station/objective outside protected
+clearance and patrol there, never remotely summon them toward Ada. Existing
+approved marker eligibility remains separate. Factory/world reservation interfaces are present at the inspected source;
+production lifecycle checks and acceptance are not established by this rule.
+
+### Hostile station sites and map knowledge
+
+Approved implementation policy. Policy configuration and runtime/map entry
+points are present in the inspected source; production lifecycle checks, delivery
+and acceptance remain unverified here. Andromeda, Cartwheel and Phantom have seeded stable
+hostile station geographic sites, 10,000 to 100,000 world units from the galaxy
+center by shortest wrapped distance. Density is an expected one site per
+625,000,000 world units of area (25,000 by 25,000), not a fixed site count.
+Required sites/routes and protected footprints take precedence over placement.
+Do not convert friendly stations, remove required guards or create cap exceptions.
+Engineering owns the candidate algorithm while preserving existing random
+streams, geography and required routes.
+
+Only actual on-screen identification adds a site to persistent map knowledge;
+sensing or explored chunks alone do not identify it. Label the known site
+"Hostile station". Seeded geographic identity, position and knowledge persist
+separately from each encounter's combat actors and casualties. Resolve current
+status from the canonical loaded actor, then authoritative retained actor state.
+Unloaded does not mean destroyed.
+Report unresolved when the current body cannot be resolved; never infer defeat or reuse a prior encounter outcome.
+These sites offer no Dock, shop or jump action.
+
+Defenders and combat retention follow
+[Ships](ships.md#hostile-station-defenders-and-encounter-lifetime); payouts follow
+[Economy](economy.md#earning-stardust). These approvals resolve these placement,
+defender, reward and map clauses only; independent guards remain in force.
 
 ## Verification priorities
 

@@ -51,7 +51,10 @@ layout regeneration like stations. Restart clears jobs and boards.
 
 - **Survey**: chart one uncharted landmark for Astra's map (see
   [Landmarks](#landmarks)). The indicator marks the landmark, and charting
-  it completes the job.
+  it completes the job. A valid accepted quest immediately credits its already
+  scanned target without a revisit; scanning alone never accepts a quest. Survey
+  emits only its actual quest completion, not a synthetic task. Once-only rewards
+  and notices follow [Scan feedback](scan-feedback.md#remembered-scan-credit).
 - **Delivery**: carry cargo or a message from the issuing station to another
   known station or outpost in the galaxy at least 3000 world units away,
   preferring the nearest, with no upper limit. The job names the destination by

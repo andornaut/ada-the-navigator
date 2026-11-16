@@ -1215,8 +1215,19 @@ beacon light. Welcome!"
 - Galaxy map Earth button: Earth.
 - Earth with nothing new: Narration: "Penny thumps her tail. Ready for another adventure?" then Pick up the rock.
 - Use actions, each the disc's accessible name and drawn as a symbol: Talk,
-  Deliver, Deposit, Tow, Salvage, Dock, Scan, and Use for any other interaction.
+  Deliver, Deposit, Tow, Salvage, Dock, Scan, Quest details, and Use for any other
+  interaction. Available real actions, including repeatable Dock, take priority.
 - Conversation buttons: Continue, Ask more.
+- Shop ammunition lock reason: key `requiresWeapon`, exact text
+  "Requires {weapon}". Substitute the canonical current weapon display name for
+  `ShopRow.requiresWeapon`, without an inferred level or alternate nickname.
+  Show it on the selected ammunition row only when that field is present;
+  otherwise show no reason. Keep the locked row visible and preserve the
+  existing purchase guard, prices, unlocks, rates and quantities. Runtime
+  placement remains with the existing shop consumer.
+- Exchange: Buy ore and Sell ore offer immediate amounts 1, 10 and 100.
+  No amount input or confirmation. Rates remain buy 2 and sell 1 Stardust per ore.
+- Scan outcome copy follows [Scan feedback](scan-feedback.md#canonical-astra-outcome-copy).
 - Disabled heavy banner: Disabled.
 - Status labels: Shield, Cargo, Stardust, Ore.
 - Weapon detail header: the existing compact weapon name, with no suffix at
@@ -1246,11 +1257,15 @@ beacon light. Welcome!"
   "+ {weapon} level {n}", "+ Shield level {n}", "+ Engine level {n}", "+ Tractor
   beam level {n}", "+ {paint} paint", "+ {weapon} ammo" and "+ {craft}" for a towed craft; merged repeats add
   " ×{n}".
-- Ship card: Ship; Cargo: Stardust, Ore, Holodisks: {n} of 6, Carrying:
-  {item}, Towing: {craft}; Equipment: Engine, Shield, Tractor beam and Paint:
-  {paint}; Weapons: each owned weapon with its ammunition count. Equipment and
-  weapon names append [{n}] above level one; level-one names have no suffix. Full
-  accessible level descriptions retain Level {n} of 3. Cargo and paint have no level.
+- Ship card: Ship; Cargo: Stardust, Ore, Holodisks: {n} of 6,
+  Carrying: {item} for each actual carried item, or Carrying: Nothing, and independently
+  Towing: {craft name} or Towing: Nothing. Both are always represented; multiple
+  actual carried items retain separate rows and explicit live quest links.
+  Empty rows offer no action. Equipment: Engine, Shield, Tractor beam and
+  Paint: {paint}; Weapons: owned weapons with their actual ammunition. All three
+  content columns have equal width, excluding divider/gap tracks. Names append
+  [{n}] above level one; accessible level descriptions retain Level {n} of 3.
+  Cargo and paint have no level. Existing icons and detail return paths remain.
 - Pause: Pause (button label), Paused, Map, Ship, Settings, Back to title, Resume.
   Pause is used only during active pausable gameplay.
 - Start and Earth/story Menu: Menu (three-line entry), Achievements, Settings,
@@ -1267,7 +1282,8 @@ beacon light. Welcome!"
   Narration: "Ada's rock glows softly on her desk." then Pick up the rock.
 - Galaxy map: Galaxy {number}, Earth, Jump, Stay here (on the galaxy Ada is
   flying in); Previous and Next as the
-  accessible labels for Left and Right. A locked galaxy's name and text: ... A
+  accessible labels for Left and Right. A locked selection action reads "Progress the story to unlock" exactly; the
+  unlock guard and unlocked named Jump/Stay actions remain. A locked galaxy's name and text: ... A
   placeholder galaxy: its name and flavor text, then Story in development.
 - Galaxy names and flavor text, in route order:
   - Sunflower: "Scattered outposts grow, build and salvage, each on

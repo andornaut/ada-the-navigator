@@ -312,6 +312,26 @@ has no hull floor: zero hull destroys it, and disabling every weapon disables it
 Friendly stations retain one HP. Existing ship hull HP and the flagship hull floor
 remain unchanged.
 
+## Hostile station defenders and encounter lifetime
+
+The approved hostile station formation is one body and two `swarm` defenders.
+All three actors count toward existing population, archetype and footprint caps,
+using only the existing single nonstacking +2 allowance. Admit the complete
+formation atomically or defer it; never trim defenders or raise a cap.
+
+Do not replenish defenders within a flight. Continue retains existing actors,
+HP, weapon rolls, clocks and defender casualties. Fresh galaxy entry resets
+combat actors and casualties while preserving seeded site geography and known
+sites. Site identity and knowledge are separate from encounter-epoch actor state.
+
+Keep the existing size ratio 7, hull HP 72/98/112 in Andromeda/Cartwheel/Phantom,
+active weapon parts 6/7/8, and approved part HP, weapon mix and rates unchanged.
+See [Rules](rules.md#hostile-station-sites-and-map-knowledge) for geography and
+map knowledge, and [Economy](economy.md#earning-stardust) for the station payout.
+These policies are approved and their policy primitives are present in the
+inspected source. Production checks, delivery and acceptance are not established
+by this contract.
+
 ## Ambient admission
 
 Ambient encounters use a 900-world-unit local admission radius. Whole groups,
@@ -332,17 +352,22 @@ qualify. Encounter weights, frequency, HP and rewards are unchanged.
 Other groups and all mandatory escorts remain atomic: unaffordable groups are
 excluded rather than trimmed, and admission never raises the cap.
 
-Every newly created frigate has two mandatory fighter escorts, including ambient,
-chapter and route frigates. One frigate formation counts as three hulls; a pair
-counts as six. Ambient admission must fit the complete formation, including every
-member's footprint, within the existing population and archetype limits, or wait.
-It never trims mandatory fighters or raises a cap. Chapter and route followers
-use stable persistent ids tied to their leader and are not independent route
-blockers. A disabled or destroyed leader triggers the existing escort fallback.
-Saving and restoring preserves surviving followers and casualties; revisits must
-not replace lost fighters or duplicate survivors. Legacy frigates are not
-retrofitted with escorts, rerolled or moved. Capital formations and their escort
-counts remain unchanged.
+### Required guard frigates and support fighters
+
+General ambient frigates retain two mandatory fighter escorts. One ambient
+formation counts as three hulls; a pair counts as six. Admit the complete
+formation within existing population, archetype and footprint caps or wait.
+Required story/quest guard frigates are always present; only their support
+fighters may number zero to two. Reserve actual required sites, hulls and
+protected footprints before optional rocks/ambient encounters, then fit support
+under existing caps. Never turn failed placement into an empty route plan,
+raise caps, remotely summon a guard toward Ada or reveal hidden targets.
+Guards patrol near their station/objective outside protected clearance and block
+the route until defeated or disabled. Support is not an independent blocker.
+Persistent identities, surviving followers and casualties do not replenish or
+duplicate on revisit/Continue. A disabled or destroyed leader retains the
+existing escort fallback. Capital formations and legacy compatibility remain
+unchanged. Existing required-guard assertions remain required.
 
 Encounter frequency uses a baseline of 1.725, which is 15% above 1.5, multiplied
 by the route factors below. The route increments are additive: 100%, 110%,

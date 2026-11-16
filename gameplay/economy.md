@@ -1,7 +1,8 @@
 # Economy
 
 Stardust is the game's one currency. It is shimmering dust released by destroyed
-ships and asteroids, and every station trades in it. Stardust and purchases persist
+ships and asteroids, and friendly stations trade in it. Hostile stations offer
+no Dock, shop or jump action. Stardust and purchases persist
 across flights with story progress. All amounts, prices and rates are provisional
 tuning toward one typical income per route position, Stardust per minute
 without jobs as the pacing simulation measures it:
@@ -24,6 +25,16 @@ and ore-income simulations remain deferred.
 Exploring finds a station every few minutes.
 
 ## Earning Stardust
+
+A hostile station pays 100 Stardust in Andromeda, 150 in Cartwheel and 200 in
+Phantom, once on its first disable or destruction in that encounter. Destruction
+after disable pays nothing further, and Continue must not duplicate the payout.
+Defenders retain their ordinary drops; no other reward override is approved.
+This station-specific reward policy is approved and its constants are present in
+the inspected source; production payout acceptance remains unverified. Site and
+encounter lifetimes follow
+[Rules](rules.md#hostile-station-sites-and-map-knowledge) and
+[Ships](ships.md#hostile-station-defenders-and-encounter-lifetime).
 
 Destroyed enemy ships release Stardust as small glinting pickups. Destroyed
 asteroids release either an eligible ammo pack alone or a size-weighted resource
@@ -266,7 +277,15 @@ matches its level 2 upgrade:
 
 Enemy speeds are fixed, so engine tuning lets Ada keep pace with the
 interceptor and outrun every other enemy at level 2, and outrun all of them at
-level 3. The shop follows Archie's Pet shop pattern: tabs, owned
+level 3. Stock follows canonical catalogue order and galaxy route position,
+independently of inventory. Existing specialties remain. Where offered, stock
+contains two equipment offers, two weapon identities and up to two eligible
+ammunition types. Owned weapons retain upgrade rows; maxed items remain visible
+without replacing stock. Unowned ammunition remains visible with the exact
+"Requires {weapon}" reason and existing purchase guard, using the canonical
+current weapon name. Prices, unlocks, rates and quantities do not change.
+
+The shop follows Archie's Pet shop pattern: tabs, owned
 items marked Owned, and a purchase confirm with Buy and Cancel. The shop's close X, an
 outside tap, back and Escape return to the station card. An item Ada cannot
 afford stays visible with a flat disabled face, stays focusable and tappable,
@@ -536,10 +555,9 @@ Every station shop has a separate Exchange tab with Buy ore and Sell ore.
 One ore costs 2 Stardust to buy and returns 1 Stardust when sold. Buying and
 selling the same amount therefore loses 1 Stardust per ore.
 
-Choose a positive whole amount. The preview shows the amount, total price and
-resulting ore and Stardust balances. Confirm applies the exchange; Cancel
-returns without changing either balance. Confirmation rechecks current balances
-and rates, so an outdated preview cannot apply a different transaction.
+Buy or sell 1, 10 or 100 ore directly, with no amount input or confirmation.
+Each action checks current balances and rates, then applies both balances
+atomically or refuses without change. There is no pending quote to replay.
 
 Ore is one fungible balance regardless of origin. Buying ore is an exchange,
 not a pickup or mining event. All carried ore follows the existing shield-fuel,

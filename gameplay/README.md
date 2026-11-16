@@ -7,7 +7,10 @@ defines version one's rules and [the player copy](player-copy.md) its text.
 [enemy rule interface](enemies.md) the enemy AI's rules. [Quests](quests.md) defines station jobs, the landmarks surveys chart, repeatable activities and achievements. [Cheats](cheats.md)
 defines the browser-tab cheats. [Economy](economy.md) defines Stardust, stations and
 the shop. [Ideas](ideas.md) contains proposals outside the
-current version. These documents describe design, not implementation.
+current version. [Unified target markers](marker-design.md) and
+[scan feedback and contextual Use](scan-feedback.md) retain the paired contracts
+and source evidence. Approved design, source presence, checks, delivery and
+acceptance are separate states. Optional Earth chapter replay remains a plan.
 
 The [cross-game policies](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md) define shared settings, updates,
 product consistency, saves, cheats and proposal handling. The documents here
