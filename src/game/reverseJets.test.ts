@@ -100,7 +100,8 @@ describe("canonical reverse jet data", () => {
       expect(jetTriangles(engineJets(retro, 1), display, heading, 0)).toEqual([]);
       const triangles = jetTriangles(engineJets(retro, 1), display, heading, 1);
       expect(triangles.length).toBeGreaterThanOrEqual(
-        retro.headings[heading]!.length * retro.engineLevels[0]!.length,
+        retro.headings[heading]!.length *
+          retro.engineLevels[0]!.filter((layer) => layer.name !== "core").length,
       );
       expect(
         triangles.every(({ points }) =>

@@ -71,8 +71,13 @@ export interface JetGeometry {
   length: { base: number; exponent: number; scale: number };
 }
 
+/** Largest logical player-frame dimension that omits the authored central core. */
+export const SMALL_JET_CORE_MAX_DISPLAY = 42;
+
 /** A craft's jets: the geometry and one set of layers, as an enemy's or composed craft's file. */
 export interface ShipJets extends JetGeometry {
+  /** Authored reverse profile retained for render-only size policy. */
+  reverseStyle?: "centered-main";
   /** Triangles per mouth in draw order. */
   layers: readonly JetLayer[];
 }
@@ -219,6 +224,7 @@ export function engineJets(jets: EngineJets, level: number): ShipJets {
     frame: jets.frame,
     headings: jets.headings,
     layers: levelLayers(jets.engineLevels, level),
+    ...(jets.reverseStyle === undefined ? {} : { reverseStyle: jets.reverseStyle }),
     length: jets.length,
   };
 }
@@ -503,6 +509,13 @@ export function jetTriangles(
       fraction,
     )) {
       const layer = jets.layers[layerIndex]!;
+      if (
+        layer.name === "core" &&
+        (mouth.normalAperture !== undefined || jets.reverseStyle === "centered-main") &&
+        Math.max(display.displayWidth, display.displayHeight) <= SMALL_JET_CORE_MAX_DISPLAY
+      ) {
+        continue;
+      }
       const alpha = jetShapeLayerAlpha(mouth, layer, layerIndex, fraction);
       for (let i = 1; i + 1 < clipped.length; i++) {
         const a = clipped[0]!,
