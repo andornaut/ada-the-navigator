@@ -412,3 +412,19 @@ it.each(["module-import", "unavailable-retirement"] as const)(
     expect(view.dispose).toHaveBeenCalledOnce();
   },
 );
+
+it("sizes recovery from the viewport when failed boot CSS leaves the app unlaid out", async () => {
+  const required = createRequiredLoading();
+  const host = root({ height: 18, width: 1264 });
+  Object.defineProperty(host.ownerDocument, "defaultView", {
+    value: {
+      addEventListener: vi.fn(),
+      innerHeight: 360,
+      innerWidth: 720,
+      removeEventListener: vi.fn(),
+    },
+  });
+  const stop = await startLoading(required, { stopGameOnCrash: vi.fn() }, async () => game(), host);
+  expect(view.presentation).toMatchObject({ action: { heightPx: 48, widthPx: 128 } });
+  stop();
+});

@@ -116,20 +116,6 @@ const navPlace = (button: StartNavButton, exit: boolean): string => {
 };
 
 export const SETTINGS_STYLE = `
-@font-face{
-  font-family:AdaUI;
-  src:url('/art/ui/fonts/liberation/LiberationSans-Regular.woff2') format('woff2');
-  font-weight:400;
-  font-display:swap
-}
-
-@font-face{
-  font-family:AdaUI;
-  src:url('/art/ui/fonts/liberation/LiberationSans-Bold.woff2') format('woff2');
-  font-weight:700;
-  font-display:swap
-}
-
 ${viewStyle(WHOLE_PX_EDGES)}
 
 .ada-controls{

@@ -1,3 +1,4 @@
+@import "./fontFaces.css";
 @import "@andornaut/game-kit/runtime/web/progress/dom/progressBar.css";
 
 html,

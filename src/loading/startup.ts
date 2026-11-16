@@ -43,7 +43,11 @@ export async function startLoading(
   let game: RequiredGame | undefined;
   let background: BackgroundLoadingPresentation | undefined;
   const presentation = (): LoadingFailurePresentation => {
-    const scale = viewScale({ height: root.clientHeight, width: root.clientWidth });
+    const viewport = root.ownerDocument.defaultView;
+    const scale = viewScale({
+      height: viewport?.innerHeight ?? root.clientHeight,
+      width: viewport?.innerWidth ?? root.clientWidth,
+    });
     const unit = Number.isFinite(scale) && scale > 0 ? scale : 1;
     return {
       action: {

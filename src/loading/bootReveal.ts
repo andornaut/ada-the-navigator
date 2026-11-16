@@ -8,11 +8,16 @@ import {
 import { requireBootFonts } from "./requiredFonts.ts";
 import { requireBootUi, type RequiredUi } from "./requiredUi.ts";
 
+export interface RequiredBootResources {
+  readonly stopFonts: () => void;
+  readonly ui: RequiredUi;
+}
+
 interface BootPage {
   readonly document: Document;
   readonly required: RequiredLoading;
   readonly ui: HTMLElement;
-  readonly uiAssets?: RequiredUi;
+  readonly resources?: RequiredBootResources;
   readonly window: Pick<
     Window,
     | "cancelAnimationFrame"
@@ -58,11 +63,13 @@ function screenImages(
 export function prepareBootReveal(page: BootPage, root: HTMLElement, onRevealed: () => void) {
   page.ui.inert = true;
   const cache = createImageCache(page.document);
-  const stopFonts = requireBootFonts(page.required, {
-    document: page.document,
-    timer: page.window,
-  });
-  const ui = page.uiAssets ?? requireBootUi(page.required, page);
+  const stopFonts =
+    page.resources?.stopFonts ??
+    requireBootFonts(page.required, {
+      document: page.document,
+      timer: page.window,
+    });
+  const ui = page.resources?.ui ?? requireBootUi(page.required, page);
   let release!: (urls: readonly string[]) => void;
   const pending = new Promise<readonly string[]>((resolve) => {
     release = resolve;
@@ -110,8 +117,10 @@ export function prepareBootReveal(page: BootPage, root: HTMLElement, onRevealed:
       if (frame !== undefined) {
         page.window.cancelAnimationFrame(frame);
       }
-      stopFonts();
-      ui.dispose();
+      if (page.resources === undefined) {
+        stopFonts();
+        ui.dispose();
+      }
     },
     images: cache,
     get uiManifest(): unknown {

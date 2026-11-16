@@ -23,12 +23,11 @@ import { saves } from "./game/persistence.ts";
 import { GameScene } from "./game/scene.ts";
 import { flushScene, refreshScene } from "./game/sceneUi.ts";
 import { followPageVisibility } from "./lifecycle.ts";
-import { prepareBootReveal } from "./loading/bootReveal.ts";
+import { prepareBootReveal, type RequiredBootResources } from "./loading/bootReveal.ts";
 import { EntryReloadRequired } from "./loading/entryRecovery.ts";
 import { requiredLoading, requiredReady } from "./loading/required.ts";
 import { validateBootCore } from "./loading/requiredCore.ts";
 import { requireSceneFiles } from "./loading/requiredFiles.ts";
-import type { RequiredUi } from "./loading/requiredUi.ts";
 import { startupFence } from "./loading/startup.ts";
 import {
   gameShown,
@@ -78,13 +77,13 @@ let cancelGame: (() => void) | undefined;
 export async function prepareGame(
   required: RequiredLoading,
   attempt: LoadingAttempt,
-  uiAssets?: RequiredUi,
+  resources?: RequiredBootResources,
 ): Promise<void> {
   if (!attempt.isCurrent() || crashed) {
     return;
   }
   boot ??= prepareBootReveal(
-    { document, required, ui, ...(uiAssets ? { uiAssets } : {}), window },
+    { document, required, ui, ...(resources ? { resources } : {}), window },
     parent,
     () => {
       if (!game || crashed || !requiredReady()) {

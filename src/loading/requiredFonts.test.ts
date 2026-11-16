@@ -12,7 +12,7 @@ async function settle() {
   }
 }
 
-function fixture() {
+function fixture(stylesheet?: HTMLLinkElement) {
   const active = new Set<Face>();
   const pending: { face: Face; resolve: () => void; reject: () => void }[] = [];
   class Face {
@@ -95,6 +95,7 @@ function fixture() {
   const required = createRequiredLoading();
   const dispose = requireBootFonts(required, {
     document,
+    ...(stylesheet ? { stylesheets: [stylesheet] } : {}),
     timer: globalThis as unknown as Window,
   });
   return { active, check, dispose, fonts, pending, required, sheet };
@@ -185,4 +186,65 @@ it("keeps entry failed if the rebuilt regular face fails, even when check return
   expect(enter).not.toHaveBeenCalled();
   f.required.dispose();
   f.dispose();
+});
+
+it("retries only a failed early stylesheet before starting both required font resources", async () => {
+  const replacement = { onerror: null, onload: null as (() => void) | null, remove: vi.fn() };
+  const stylesheet = {
+    before: vi.fn(),
+    cloneNode: () => replacement,
+    remove: vi.fn(),
+    sheet: { cssRules: [] },
+  } as unknown as HTMLLinkElement;
+  const f = fixture(stylesheet),
+    enter = vi.fn();
+  f.required.wait(enter);
+  await settle();
+  expect(f.required.state.kind).toBe("failed");
+  expect(f.pending).toHaveLength(0);
+  const retry = f.required.retry();
+  await settle();
+  expect(stylesheet.before).toHaveBeenCalledWith(replacement);
+  expect(enter).not.toHaveBeenCalled();
+  replacement.onload!();
+  await settle();
+  expect(f.pending.map(({ face }) => face.weight)).toEqual(["400", "700"]);
+  f.pending.forEach(({ resolve }) => resolve());
+  await retry;
+  await settle();
+  expect(f.required.state.kind).toBe("ready");
+  expect(enter).toHaveBeenCalledOnce();
+  expect(stylesheet.remove).toHaveBeenCalledOnce();
+  expect(replacement.remove).not.toHaveBeenCalled();
+  f.required.dispose();
+  f.dispose();
+  f.dispose();
+});
+
+it("cancels pending stylesheet Retry without starting fonts from a stale load event", async () => {
+  vi.useFakeTimers();
+  const replacement = { onerror: null, onload: null as (() => void) | null, remove: vi.fn() };
+  const stylesheet = {
+    before: vi.fn(),
+    cloneNode: () => replacement,
+    remove: vi.fn(),
+    sheet: null,
+  } as unknown as HTMLLinkElement;
+  const f = fixture(stylesheet),
+    enter = vi.fn();
+  f.required.wait(enter);
+  await settle();
+  const retry = f.required.retry();
+  await settle();
+  const late = replacement.onload!;
+  f.required.dispose();
+  f.dispose();
+  late();
+  await retry;
+  await settle();
+  expect(replacement.remove).toHaveBeenCalledOnce();
+  expect(stylesheet.remove).not.toHaveBeenCalled();
+  expect(f.pending).toHaveLength(0);
+  expect(enter).not.toHaveBeenCalled();
+  expect(vi.getTimerCount()).toBe(0);
 });

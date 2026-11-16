@@ -346,9 +346,17 @@ it("requires sibling CSS backgrounds and border images while preserving successf
 it("retains an earlier required UI provider through reveal without fetching its manifest again", async () => {
   const f = fixture();
   const uiAssets = requireBootUi(f.required, { document: f.document, window: f.window });
+  const stopFonts = vi.fn();
+  const disposeUi = vi.spyOn(uiAssets, "dispose");
   await settle();
   const boot = prepareBootReveal(
-    { document: f.document, required: f.required, ui: f.ui, uiAssets, window: f.window },
+    {
+      document: f.document,
+      required: f.required,
+      resources: { stopFonts, ui: uiAssets },
+      ui: f.ui,
+      window: f.window,
+    },
     f.root,
     vi.fn(),
   );
@@ -362,6 +370,11 @@ it("retains an earlier required UI provider through reveal without fetching its 
   expect(f.ui.inert).toBe(false);
   boot.dispose();
   boot.dispose();
+  expect(stopFonts).not.toHaveBeenCalled();
+  expect(disposeUi).not.toHaveBeenCalled();
+  stopFonts();
   uiAssets.dispose();
+  expect(stopFonts).toHaveBeenCalledOnce();
+  expect(disposeUi).toHaveBeenCalledOnce();
   f.required.dispose();
 });

@@ -6,6 +6,7 @@ import {
 
 interface FontPage {
   readonly document: Pick<Document, "fonts" | "styleSheets">;
+  readonly stylesheets?: readonly HTMLLinkElement[];
   readonly timer: Pick<Window, "clearTimeout" | "setTimeout">;
 }
 
@@ -14,6 +15,8 @@ const familyName = (family: string) => family.replaceAll(/["']/gu, "").trim();
 /** Required stylesheet faces use independent retry resources without duplicate font sources. */
 export function requireBootFonts(required: RequiredLoading, page: FontPage): () => void {
   const releases: (() => void)[] = [];
+  const starts: (() => void)[] = [];
+  let disposed = false;
   for (const weight of [400, 700]) {
     const validationWeights = new Set([weight]);
     const attempts = createLoadingAttempts({
@@ -110,7 +113,79 @@ export function requireBootFonts(required: RequiredLoading, page: FontPage): () 
       unobserve();
       attempts.dispose();
     });
-    void attempts.start();
+    starts.push(() => void attempts.start());
   }
-  return () => releases.forEach((release) => release());
+  const startFonts = () => {
+    if (!disposed) {
+      starts.forEach((start) => start());
+    }
+  };
+  // A failed CSS response can expose an empty stylesheet object.
+  const pendingStylesheets = new Set(
+    page.stylesheets?.filter((link) => !link.sheet?.cssRules.length),
+  );
+  for (const stylesheet of pendingStylesheets) {
+    const source = createLoadingAttempts({
+      async load(attempt) {
+        if (attempt.id === 1) {
+          throw new Error("Required font stylesheet could not load");
+        }
+        await new Promise<void>((resolve, reject) => {
+          const replacement = stylesheet.cloneNode() as HTMLLinkElement;
+          const clear = () => {
+            page.timer.clearTimeout(timer);
+            replacement.onload = null;
+            replacement.onerror = null;
+          };
+          attempt.onCancel(() => {
+            clear();
+            replacement.remove();
+          });
+          replacement.onload = () => {
+            if (attempt.isCurrent()) {
+              clear();
+              stylesheet.remove();
+              resolve();
+            }
+          };
+          replacement.onerror = () => reject(new Error("Required font stylesheet could not load"));
+          const timer = page.timer.setTimeout(
+            () => reject(new Error("Required font stylesheet timed out")),
+            LOADER_CONFIG.timeout,
+          );
+          stylesheet.before(replacement);
+        });
+      },
+      onReady() {
+        pendingStylesheets.delete(stylesheet);
+        if (pendingStylesheets.size === 0) {
+          startFonts();
+        }
+      },
+      onState() {
+        required.invalidate();
+      },
+    });
+    const unobserve = required.observe({
+      retry: () => source.retry(),
+      status: () => {
+        const { kind } = source.state;
+        return kind === "ready" ? "ready" : kind === "failed" ? "failed" : "loading";
+      },
+    });
+    releases.push(() => {
+      unobserve();
+      source.dispose();
+    });
+    void source.start();
+  }
+  if (pendingStylesheets.size === 0) {
+    startFonts();
+  }
+  return () => {
+    if (!disposed) {
+      disposed = true;
+      releases.forEach((release) => release());
+    }
+  };
 }
