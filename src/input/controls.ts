@@ -9,7 +9,6 @@ import type { GameObjects, Scene } from "phaser";
 
 import { BUILD_LABEL } from "../buildLabel.ts";
 import { CONTENT } from "../data/content.ts";
-import { SCROLL } from "../data/layout.ts";
 import { RESOURCE_DESCRIPTIONS } from "../data/resourceDescriptions.ts";
 import type { Weapon } from "../data/types.ts";
 import { weaponDetailLines } from "../data/weaponDetails.ts";
