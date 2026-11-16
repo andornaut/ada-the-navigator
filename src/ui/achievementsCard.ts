@@ -425,6 +425,9 @@ export function createAchievementsCard(
     },
     isOpen: () => !modal.hidden,
     open(dismissal?: { readonly intent: "back" | "close"; readonly label: string }): void {
+      if (!modal.hidden) {
+        return;
+      }
       dismiss.textContent = dismissal?.label ?? labels.close;
       setFooterAction(dismissal?.intent ?? "close", actions);
       setOpen(true);

@@ -240,6 +240,8 @@ describe("Achievements page actions", () => {
     card.open({ intent: "back", label: "Back" });
     expect(dismiss.textContent).toBe("Back");
     expect(dismiss.parent!.dataset.footerAction).toBe("back");
+    card.open();
+    expect(dismiss.textContent).toBe("Back");
     dismiss.click();
     expect(card.isOpen()).toBe(false);
     card.open({ intent: "back", label: "Back" });
