@@ -47,6 +47,7 @@ import {
   stepFlight,
   teleport,
 } from "./flight.ts";
+import { playerWeaponCoverage } from "./playerWeaponCoverage.ts";
 import { shipBody, shipCircleContact } from "./shipBody.ts";
 import type { FlightInput, FlightState, GalaxyProgress, SpaceObject, Vec } from "./types.ts";
 
@@ -1262,8 +1263,18 @@ describe("combat admission and subframe firing", () => {
     expect(shot).toBeDefined();
     expect(shot.x).toBeCloseTo(300 + shot.velocity.x * elapsed, 10);
     expect(shot.y).toBeCloseTo(shot.velocity.y * elapsed, 10);
-    // A Laser bolt reaches 370 whoever fires it: its lifetime is that over its speed.
-    expect(shot.life).toBeCloseTo(370 / Math.hypot(shot.velocity.x, shot.velocity.y) - elapsed, 10);
+    const weaponVelocity = {
+      x: shot.velocity.x - target.enemy!.velocity.x,
+      y: shot.velocity.y - target.enemy!.velocity.y,
+    };
+    const range = playerWeaponCoverage(
+      { centre: { x: 300, y: 0 }, viewportHeight: SCREEN.height, viewportWidth: SCREEN.width },
+      { direction: weaponVelocity, origin: { x: 300, y: 0 } },
+    );
+    expect(shot.life).toBeCloseTo(
+      range / Math.hypot(weaponVelocity.x, weaponVelocity.y) - elapsed,
+      10,
+    );
     const before = { life: shot.life, x: shot.x, y: shot.y };
     stepFlight(CONTENT, dt, idle, flight);
     expect(shot.x).toBeCloseTo(before.x + shot.velocity.x * dt, 10);

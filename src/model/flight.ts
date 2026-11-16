@@ -173,6 +173,7 @@ import {
   splitStardust,
 } from "./drops.ts";
 import { enemyHull, enemyPartOutline, enemyPhysicalBody } from "./enemyBody.ts";
+import { enemyBeamReach, planEnemyProjectile } from "./enemyProjectiles.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { MINE_REACH, mineParts, mineSpin, mineTouches } from "./mineShape.ts";
 import {
@@ -187,7 +188,7 @@ import {
 import { nosePoint } from "./nose.ts";
 import { worldClearOfOreFields, worldOreFieldsNear } from "./oreFields.ts";
 import { orePickupSize, pickupOutline } from "./pickupBody.ts";
-import { planPlayerVolley, projectileReach } from "./playerProjectiles.ts";
+import { planPlayerVolley } from "./playerProjectiles.ts";
 import { impactEntry, impactSurface } from "./projectileImpact.ts";
 import { SceneryFrames } from "./sceneryFrames.ts";
 import { sceneryImpact } from "./sceneryImpact.ts";
@@ -3284,6 +3285,7 @@ export function dronesNear(content: GameContent, flight: FlightState): boolean {
 }
 
 function enemies(
+  viewport: Readonly<Pick<PlayerWeaponCoverageContext, "viewportHeight" | "viewportWidth">>,
   content: GameContent,
   dt: number,
   flight: FlightState,
@@ -3463,6 +3465,7 @@ function enemies(
       },
       { ...state, position: { x: object.x, y: object.y } },
     );
+    const launchVelocity = { ...intent.velocity };
     object.enemy = intent.state;
     if (intent.effects.defeated) {
       queueHostileStationReward(flight, events, object);
@@ -3549,12 +3552,20 @@ function enemies(
     canonicalPosition(flight, object);
     object.enemy.position = { x: object.x, y: object.y };
     bounceShips(content, flight, object);
+    const coverage = { ...viewport, centre: before };
     const rings = new Map<number, Vec[]>();
     for (const fire of intent.fire) {
       const amount = content.tuning.flight.playerShotDamage * fire.damageRatio;
       const shared = enemyOnly(fire.weapon) ? null : weaponAt(fire.weapon, fire.level);
       if (fire.projectile === "beam") {
-        chargeEnemyBeam(amount, shared?.beamRange ?? 0, before, fire, object.id, flight);
+        chargeEnemyBeam(
+          amount,
+          shared ? enemyBeamReach(coverage, fire) : 0,
+          before,
+          fire,
+          object.id,
+          flight,
+        );
         continue;
       }
       if (fire.projectile === "mine") {
@@ -3568,20 +3579,26 @@ function enemies(
       shotDelays.set(id, fire.delay);
       // A shared weapon keeps its range, fade and blast whoever fires it.
       const lifetime = content.tuning.flight.enemyProjectileLifetime;
-      const reach = shared ? projectileReach(shared, fire.speed, lifetime) : { life: lifetime };
+      const launch = planEnemyProjectile(
+        {
+          baseLifetime: lifetime,
+          coverage,
+          definition: shared,
+          inheritedVelocity: launchVelocity,
+        },
+        fire,
+      );
       flight.shots.push({
         ...fire.origin,
-        ...(shared?.blastRadius ? { blast: shared.blastRadius } : {}),
+        ...launch,
         damage: amount,
         effectFamily: impactFamily(fire.weapon),
         enemy: true,
         ...(fire.weapon === "ringBurst" ? { enemyWeapon: "ringBurst" as const } : {}),
-        ...reach,
         hitIds: [],
         id,
         piercing: false,
         projectile: fire.projectile,
-        velocity: { x: fire.aim.x * fire.speed, y: fire.aim.y * fire.speed },
       });
     }
     for (const [delay, origins] of rings) {
@@ -5144,7 +5161,14 @@ export function stepFlight(
     }
     const shotDelays = new Map<string, number>();
     const viewportWidth = input.viewportWidth ?? SCREEN.width;
-    enemies(content, slice, flight, events, shotDelays);
+    enemies(
+      { viewportHeight: input.viewportHeight ?? SCREEN.height, viewportWidth },
+      content,
+      slice,
+      flight,
+      events,
+      shotDelays,
+    );
     clearNeedleEnemies(flight);
     if (flight.phantom?.phase !== "salvaged") {
       stepEnemyBeams(content, slice, viewportWidth, flight);
