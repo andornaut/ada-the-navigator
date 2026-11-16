@@ -215,7 +215,9 @@ function render(masked: boolean): Element {
 }
 const renderRoots: (() => void)[] = [];
 afterEach(() => {
-  for (const dispose of renderRoots.splice(0).reverse()) {dispose();}
+  for (const dispose of renderRoots.splice(0).reverse()) {
+    dispose();
+  }
   vi.unstubAllGlobals();
 });
 
