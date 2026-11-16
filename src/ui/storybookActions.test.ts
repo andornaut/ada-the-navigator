@@ -268,3 +268,41 @@ it("rebuilds choices with their original indexes, current callbacks and no stale
     f.unregister();
   }
 });
+
+it("owns sleep background activation with one current page identity and no parallel native listener", () => {
+  const f = setup();
+  try {
+    const sleep = { ...page, canSkip: false, sleep: true };
+    f.story.show(sleep);
+    const background = f.host.all().find((node) => node.className === "ada-story-background")!;
+    const action = f.resolve(background)!;
+    expect(action.available()).toBe(true);
+    expect(action.rule.holdMs).toBe(500);
+    background.dispatchEvent(new Event("click"));
+    expect(f.options.onNext).toHaveBeenCalledOnce();
+    const current = vi.fn();
+    f.options.onNext = current;
+    action.activate();
+    expect(current).toHaveBeenCalledOnce();
+    f.story.show({ ...sleep });
+    expect(f.resolve(background)!.identity).toBe(action.identity);
+    f.story.show({ ...sleep, text: "Another actual page" });
+    const replacement = f.resolve(background)!;
+    expect(replacement.identity).not.toBe(action.identity);
+    action.activate();
+    expect(current).toHaveBeenCalledOnce();
+    replacement.activate();
+    expect(current).toHaveBeenCalledTimes(2);
+    f.deny();
+    replacement.activate();
+    background.dispatchEvent(new Event("click"));
+    expect(current).toHaveBeenCalledTimes(2);
+    f.story.show(page);
+    expect(f.resolve(background)).toBeNull();
+    background.dispatchEvent(new Event("click"));
+    expect(current).toHaveBeenCalledTimes(2);
+  } finally {
+    f.story.dispose();
+    f.unregister();
+  }
+});

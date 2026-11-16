@@ -699,12 +699,8 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     bindStoryAction(next, () => options.onNext()),
   ];
   let choiceActions: ReturnType<typeof bindAdaAction>[] = [];
-  // On the sleep scene a tap anywhere moves on; the model ignores one before its skip delay.
-  background.addEventListener("click", () => {
-    if (rendered?.sleep) {
-      options.onNext();
-    }
-  });
+  // The model owns the overnight skip delay; each displayed page owns its action identity.
+  let sleepAction: ReturnType<typeof bindAdaAction> | undefined;
   let art: StoryArt = {
     backgrounds: {},
     bases: {},
@@ -1139,6 +1135,23 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     exit: StoryOverlay | null = null,
   ) => {
     rendered = page;
+    sleepAction?.dispose();
+    sleepAction = page?.sleep
+      ? bindAdaAction(
+          {
+            click: {
+              availability: () =>
+                rendered === page && !background.closest("[hidden], [inert]")
+                  ? { kind: "available" }
+                  : { kind: "omitted" },
+              run: () => options.onNext(),
+            },
+            current: () => !disposed && rendered === page && background.isConnected,
+            slopPx: () => SCROLL.dragThreshold * readViewUnit(background),
+          },
+          background,
+        )
+      : undefined;
     layer.classList.toggle("ada-story-half", Boolean(page && !page.sleep));
     aboardShip.hidden = !page?.aboard;
     aboardShip.style.height = page?.aboard && !page.sleep ? "50%" : "";
@@ -1205,6 +1218,8 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     }
     const focusFirst = shown !== "" && page !== null;
     shown = signature;
+    sleepAction?.dispose();
+    sleepAction = undefined;
     const from = lastPage;
     const exit = from?.holodisk && !page?.holodisk ? holodiskFrame() : null;
     stop();
@@ -1256,6 +1271,8 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   return {
     dispose(): void {
       disposed = true;
+      sleepAction?.dispose();
+      sleepAction = undefined;
       for (const action of [...navigationActions, ...choiceActions]) {
         action.dispose();
       }
