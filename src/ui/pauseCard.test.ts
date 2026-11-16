@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { ControlState } from "../input/state.ts";
 import type { LocalMap } from "../model/map.ts";
+import * as actionBinding from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 import * as mapUI from "./mapScreen.ts";
 import { mapScreenLabels } from "./mapScreen.ts";
@@ -153,8 +154,32 @@ class FakeElement {
   hasAttribute(name: string): boolean {
     return this.attributes.has(name);
   }
-  matches(): boolean {
-    return this.type === "button";
+  matches(selector = "button"): boolean {
+    return selector.split(",").some((part) => {
+      const rule = part.trim();
+      if (rule === ":disabled") {
+        return Boolean((this as unknown as HTMLButtonElement).disabled);
+      }
+      if (rule.startsWith(".")) {
+        return this.classes.has(rule.slice(1)) || this.className.split(" ").includes(rule.slice(1));
+      }
+      const attribute = /^\[([^=\]]+)(?:="([^"]*)")?\]$/.exec(rule);
+      if (attribute) {
+        const name = attribute[1]!;
+        const value = name.startsWith("data-")
+          ? this.dataset[name.slice(5)]
+          : this.getAttribute(name);
+        return attribute[2] === undefined
+          ? value !== undefined && value !== null
+          : value === attribute[2];
+      }
+      const tag = /^(\w+)(?:\[type="([^"]+)"\])?$/.exec(rule);
+      return Boolean(
+        tag &&
+        this.tagName.toLowerCase() === tag[1] &&
+        (tag[2] === undefined || this.type === tag[2]),
+      );
+    });
   }
   focus(options?: unknown): void {
     PAGE.activeElement = this;
@@ -168,14 +193,12 @@ class FakeElement {
     return this.querySelectorAll(selector)[0] ?? null;
   }
   querySelectorAll(selector?: string): FakeElement[] {
-    const action = /data-action="([^"]+)"/.exec(selector ?? "")?.[1];
     return this.children.flatMap((child) => [
-      ...((action === undefined ? child.type === "button" : child.dataset.action === action)
-        ? [child]
-        : []),
+      ...(child.matches(selector) ? [child] : []),
       ...child.querySelectorAll(selector),
     ]);
   }
+
   cloneNode(): FakeElement {
     return Object.assign(new FakeElement(), { className: this.className });
   }
@@ -269,6 +292,7 @@ beforeEach(() => {
 
 afterEach(async () => {
   await Promise.resolve();
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 
@@ -1123,4 +1147,50 @@ it("retains native Pause button identities across place and Map permission updat
   for (const control of initial) {
     expect(control.listeners.get("click")).toEqual([]);
   }
+});
+
+it("audits completed Ship rows after parent attachment and only when sections change", () => {
+  const { body, pause, root } = cards();
+  const original = actionBinding.assertAdaActionBindings;
+  const audit = vi.spyOn(actionBinding, "assertAdaActionBindings").mockImplementation((scope) => {
+    expect(scope.isConnected).toBe(true);
+    expect(root.contains(scope)).toBe(true);
+    expect(scope.classList).toBeDefined();
+    original(scope);
+  });
+  pause.setState(state());
+  pause.open();
+  button(body.children[0]!, "pause-ship").click();
+  expect(audit).toHaveBeenCalledTimes(1);
+  pause.setState(state());
+  expect(audit).toHaveBeenCalledTimes(1);
+  pause.setState(state({ ship: { ...SHIP, stardust: 7 } }));
+  expect(audit).toHaveBeenCalledTimes(2);
+  expect(focused()?.dataset.action).toBe("back-ship");
+  pause.dispose();
+});
+
+it("rejects attached Ship rows outside an owning root before parent focus", () => {
+  const { body, pause } = cards();
+  pause.setState(state());
+  pause.open();
+  const shipButton = button(body.children[0]!, "pause-ship");
+  const focusBefore = focused();
+  const outside = new FakeElement();
+  PAGE.body!.append(outside);
+  // Move only the next completed Ship sections into a connected but unregistered tree.
+  const original = FakeElement.prototype.replaceChildren;
+  vi.spyOn(FakeElement.prototype, "replaceChildren").mockImplementation(function (
+    this: FakeElement,
+    ...nodes
+  ) {
+    original.apply(this, nodes);
+    if (nodes.length === 1 && nodes[0]?.classes.has("ada-ship-sections")) {
+      outside.append(nodes[0]);
+    }
+  });
+  expect(() => shipButton.click()).toThrow("no live action root");
+  expect(focused()).toBe(focusBefore);
+  expect(outside.isConnected).toBe(true);
+  pause.dispose();
 });

@@ -7,7 +7,7 @@ import { weaponDetailLines } from "../data/weaponDetails.ts";
 import type { LocalMap } from "../model/map.ts";
 import type { QuestEntry } from "../model/questDetails.ts";
 import type { ContextQuestDetails } from "../model/questObjectLinks.ts";
-import { bindAdaAction } from "./actionBinding.ts";
+import { assertAdaActionBindings, bindAdaAction } from "./actionBinding.ts";
 import { compactLevelName } from "./compactLevelName.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -407,6 +407,9 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
         ? renderShipSections(labels.shipHeadings, sections, openShipItem)
         : undefined;
       ship.body.replaceChildren(...(shipRows ? [shipRows] : []));
+      if (shipRows) {
+        assertAdaActionBindings(shipRows);
+      }
     }
     ship.fit();
   };
