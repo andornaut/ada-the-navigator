@@ -66,9 +66,22 @@ export function subscribePressScope(listener: () => void, root: HTMLElement): ()
   return () => shared.listeners.delete(listener);
 }
 
-/** Register the stable overlay before constructing its child modal layers. */
+/** Register the parent UI root first so child roots share its modal scope and revisions. */
 export function rootPressGuard(root: HTMLElement): PressGuard {
-  return state(root).guard;
+  const owned = owner(root);
+  const shared = state(owned).guard;
+  if (owned === root) {
+    return shared;
+  }
+  return {
+    gate: {
+      accepts: () => root.isConnected && shared.gate.accepts(),
+      capture() {
+        const captured = shared.gate.capture();
+        return () => root.isConnected && captured();
+      },
+    },
+  };
 }
 
 export function currentView(root: HTMLElement): HTMLElement {

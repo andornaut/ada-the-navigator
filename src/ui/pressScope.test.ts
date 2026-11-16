@@ -293,3 +293,59 @@ it("shares the published sibling root and preserves the remaining top modal on o
   second.open({}, secondDialog);
   expect(currentView(root)).toBe(root);
 });
+
+it("shares child modal coverage and synchronous revisions with a parent-first application root", () => {
+  const app = node(),
+    controls = node(app),
+    start = node(app),
+    dialog = node(controls),
+    live = node(controls);
+  const appGuard = rootPressGuard(app);
+  const childGuard = rootPressGuard(controls);
+  const appPress = appGuard.gate.capture();
+  const childPress = childGuard.gate.capture();
+  const appChanged = vi.fn(),
+    childChanged = vi.fn();
+  const stopApp = subscribePressScope(appChanged, app);
+  const stopChild = subscribePressScope(childChanged, controls);
+  const leave = enterPressView(controls, dialog, [live]);
+  expect(currentView(app)).toBe(dialog);
+  expect(currentView(controls)).toBe(dialog);
+  expect(inCurrentView(app, start)).toBe(false);
+  expect(inCurrentView(app, dialog)).toBe(true);
+  expect(inCurrentView(controls, live)).toBe(true);
+  expect(appPress()).toBe(false);
+  expect(childPress()).toBe(false);
+  expect(appChanged).toHaveBeenCalledTimes(1);
+  expect(childChanged).toHaveBeenCalledTimes(1);
+  const modalPress = appGuard.gate.capture();
+  leave();
+  expect(modalPress()).toBe(false);
+  expect(inCurrentView(app, start)).toBe(true);
+  expect(appChanged).toHaveBeenCalledTimes(2);
+  expect(childChanged).toHaveBeenCalledTimes(2);
+  invalidatePressScope(controls);
+  expect(appChanged).toHaveBeenCalledTimes(3);
+  expect(childChanged).toHaveBeenCalledTimes(3);
+  stopChild();
+  stopApp();
+});
+
+it("keeps inherited child guards connection-sensitive and independent roots isolated", () => {
+  const app = node(),
+    controls = node(app),
+    recovery = node();
+  const appGuard = rootPressGuard(app);
+  const childGuard = rootPressGuard(controls);
+  const recoveryGuard = rootPressGuard(recovery);
+  const childPress = childGuard.gate.capture();
+  const recoveryPress = recoveryGuard.gate.capture();
+  Object.defineProperty(controls, "isConnected", { value: false });
+  expect(childGuard.gate.accepts()).toBe(false);
+  expect(childPress()).toBe(false);
+  expect(appGuard.gate.accepts()).toBe(true);
+  const leave = enterPressView(app, node(app));
+  expect(recoveryPress()).toBe(true);
+  expect(recoveryGuard.gate.accepts()).toBe(true);
+  leave();
+});

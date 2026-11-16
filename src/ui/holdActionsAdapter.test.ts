@@ -755,3 +755,83 @@ it("rejects unregistered coordinate hits and preserves native target fallback", 
   binding.dispose();
   f.stop();
 });
+
+it("cancels a sibling app hold synchronously when a child modal opens and arms the modal action once", () => {
+  vi.useFakeTimers();
+  const document = new FixtureDocument();
+  const app = new Element(document),
+    controls = new Element(document),
+    start = new Element(document),
+    dialog = new Element(document),
+    button = new Element(document);
+  controls.parentElement = app;
+  start.parentElement = app;
+  dialog.parentElement = controls;
+  button.parentElement = dialog;
+  const html = (element: Element) => element as unknown as HTMLElement;
+  const gate = { accepts: () => true, capture: () => () => true };
+  const options = { guard: { gate }, requiredReady: () => true, subscribeRequired: () => () => {} };
+  const outer = bindAdaActionRoot(options, html(app));
+  const inner = bindAdaActionRoot(options, html(controls));
+  const background = vi.fn(),
+    foreground = vi.fn();
+  const bind = (run: () => void, element: Element) =>
+    bindAdaAction(
+      {
+        click: { availability: () => ({ kind: "available" }), run },
+        current: () => true,
+        slopPx: () => 8,
+      },
+      html(element),
+    );
+  const a = bind(background, start),
+    b = bind(foreground, button);
+  const event = (type: string, target: Element) => {
+    const value = new Event(type, { cancelable: true });
+    Object.defineProperties(
+      value,
+      Object.fromEntries(
+        Object.entries({
+          button: 0,
+          clientX: 0,
+          clientY: 0,
+          detail: type === "click" ? 1 : 0,
+          isPrimary: true,
+          pointerId: 7,
+          target,
+        }).map(([key, property]) => [key, { value: property }]),
+      ),
+    );
+    return value;
+  };
+  document.dispatchEvent(event("pointerdown", start));
+  app.dispatchEvent(event("pointerdown", start));
+  const leave = enterPressView(html(controls), html(dialog));
+  vi.advanceTimersByTime(500);
+  expect(background).not.toHaveBeenCalled();
+  document.dispatchEvent(event("pointerup", start));
+  const stale = event("click", start);
+  app.dispatchEvent(stale);
+  expect(stale.defaultPrevented).toBe(true);
+  expect(resolveAdaHoldAction(html(app), html(button))).toBeNull();
+  document.dispatchEvent(event("pointerdown", button));
+  app.dispatchEvent(event("pointerdown", button));
+  controls.dispatchEvent(event("pointerdown", button));
+  vi.advanceTimersByTime(500);
+  expect(foreground).toHaveBeenCalledTimes(1);
+  document.dispatchEvent(event("pointerup", button));
+  const released = event("click", button);
+  app.dispatchEvent(released);
+  if (!released.defaultPrevented) {
+    controls.dispatchEvent(released);
+  }
+  expect(released.defaultPrevented).toBe(true);
+  expect(foreground).toHaveBeenCalledTimes(1);
+  leave();
+  expect(a.activate()).toBe(true);
+  expect(background).toHaveBeenCalledTimes(1);
+  a.dispose();
+  b.dispose();
+  inner.dispose();
+  outer.dispose();
+});
