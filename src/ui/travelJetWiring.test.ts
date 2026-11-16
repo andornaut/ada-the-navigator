@@ -94,7 +94,15 @@ function dom() {
       this.tag = tag;
       nodes.push(this);
     }
-    addEventListener() {}
+    readonly listeners = new Map<string, (() => void)[]>();
+    addEventListener(type: string, callback: () => void) {
+      this.listeners.set(type, [...(this.listeners.get(type) ?? []), callback]);
+    }
+    click() {
+      for (const callback of this.listeners.get("click") ?? []) {
+        callback();
+      }
+    }
     append(...elements: ElementFake[]) {
       for (const element of elements) {
         this.insertBefore(element, null);
@@ -440,3 +448,41 @@ it("draws route thrust below the painted hull and hides it under reduced motion"
   map.dispose();
   expect(fixture.callbacks.size).toBe(0);
 });
+
+it.each([false, true])(
+  "routes the Earth primary action through onEarth when atEarth is %s",
+  (atEarth) => {
+    const fixture = dom();
+    const onClose = vi.fn();
+    const onEarth = vi.fn();
+    const map = createGalaxyMap(fixture.host, {
+      labels: {
+        close: "Close",
+        development: "",
+        home: "Home",
+        jump: "Jump",
+        locked: "Locked",
+        number: "{number}",
+        stay: "Stay",
+      },
+      onClose,
+      onEarth,
+      onFlightEnd() {},
+      onJump() {},
+      onStep() {},
+      onView() {},
+      reducedMotion: () => true,
+    });
+    map.show({ ...mapView(null), atEarth, stay: true });
+    const primary = fixture.nodes.find((node) => node.dataset.action === "galaxy-jump")!;
+    primary.click();
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onEarth).not.toHaveBeenCalled();
+    fixture.nodes.find((node) => node.dataset.position === "earth")!.click();
+    expect(primary.textContent).toBe(atEarth ? "Stay on Earth" : "Jump to Earth");
+    primary.click();
+    expect(onEarth).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    map.dispose();
+  },
+);

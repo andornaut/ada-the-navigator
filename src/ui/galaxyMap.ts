@@ -927,11 +927,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
       return;
     }
     if (viewingEarth) {
-      if (view.atEarth) {
-        options.onClose();
-      } else {
-        options.onEarth();
-      }
+      options.onEarth();
       return;
     }
     const galaxy = view.galaxies[view.panel - 1];
