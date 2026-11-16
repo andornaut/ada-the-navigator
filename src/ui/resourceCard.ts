@@ -9,7 +9,8 @@ import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createAdaLayoutPorts } from "./layoutTree.ts";
 import { createActions, createCard, setFooterAction } from "./modal.ts";
-import { enterPressView, inCurrentView } from "./pressScope.ts";
+import { createModalLayer } from "./modalLayer.ts";
+import { inCurrentView } from "./pressScope.ts";
 import { createProse } from "./prose.ts";
 import {
   type ResourceAction,
@@ -51,6 +52,7 @@ export function createResourceCard(
   root.append(modal);
   let disposed = false;
   let visible = false;
+  const layer = createModalLayer(modal);
   let leaveView: (() => void) | undefined;
   let headerIcon: HTMLElement | undefined;
   let quantityIcon: HTMLElement | undefined;
@@ -65,7 +67,7 @@ export function createResourceCard(
     leaveView?.();
     leaveView = undefined;
     options.onOpenChange(false);
-    if (returnFocus) {
+    if (returnFocus && document.activeElement !== returnFocus) {
       focusTarget(returnFocus);
     }
     returnFocus = null;
@@ -130,23 +132,14 @@ export function createResourceCard(
     },
     resourceTree({ closeLabel: options.closeLabel, description: "", title: "" }),
   );
-  const quests = actions.querySelector<HTMLButtonElement>('[data-action="resource-quests"]')!;
   const dismiss = actions.querySelector<HTMLButtonElement>('[data-action="dismiss-resource"]')!;
-  modal.addEventListener("keydown", (event) => {
-    if (event.key === "Tab") {
-      event.preventDefault();
-      const controls = [card.close, ...(!quests.hidden ? [quests] : []), dismiss];
-      const current = controls.indexOf(document.activeElement as HTMLButtonElement);
-      const next = (current + (event.shiftKey ? controls.length - 1 : 1)) % controls.length;
-      focusTarget(controls[next]!);
-    }
-  });
   return {
     close,
     dispose() {
       disposed = true;
       leaveView?.();
       leaveView = undefined;
+      layer.dispose();
       headerBinding.dispose();
       mounted.dispose();
       modal.remove();
@@ -165,7 +158,6 @@ export function createResourceCard(
         details.quantity ?? (details.count === undefined ? undefined : detailCount(details.count));
       openQuests = details.quests?.onOpen;
       visible = true;
-      leaveView ??= enterPressView(root, card.frame, [], { backdrop: modal, close });
       mounted.update(
         resourceTree({
           closeLabel: options.closeLabel,
@@ -176,9 +168,16 @@ export function createResourceCard(
         }),
       );
       modal.hidden = false;
-      options.onOpenChange(true);
       card.fit();
-      focusTarget(dismiss);
+      leaveView ??= layer.open({
+        backdrop: modal,
+        close,
+        focus: dismiss,
+        isolation: "dialog",
+        restore: () => returnFocus,
+      }, card.frame);
+      if (document.activeElement !== dismiss) focusTarget(dismiss);
+      options.onOpenChange(true);
     },
   };
 }

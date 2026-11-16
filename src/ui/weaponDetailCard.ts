@@ -13,7 +13,8 @@ import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createAdaLayoutPorts } from "./layoutTree.ts";
 import { createActions, createCard, setFooterAction } from "./modal.ts";
-import { enterPressView, inCurrentView } from "./pressScope.ts";
+import { createModalLayer } from "./modalLayer.ts";
+import { inCurrentView } from "./pressScope.ts";
 import {
   type WeaponDetailAction,
   type WeaponDetailData,
@@ -55,6 +56,7 @@ export function createWeaponDetailCard(
   root.append(modal);
   let disposed = false;
   let visible = false;
+  const layer = createModalLayer(modal);
   let leaveView: (() => void) | undefined;
   let currentIdentity: WeaponDetailIdentity | undefined;
   let returnFocus: HTMLElement | null = null;
@@ -67,7 +69,7 @@ export function createWeaponDetailCard(
     leaveView?.();
     leaveView = undefined;
     options.onOpenChange(false);
-    if (returnFocus) {
+    if (returnFocus && document.activeElement !== returnFocus) {
       focusTarget(returnFocus);
     }
     returnFocus = null;
@@ -171,18 +173,13 @@ export function createWeaponDetailCard(
   const dismiss = actions.querySelector<HTMLButtonElement>(
     '[data-action="dismiss-weapon-detail"]',
   )!;
-  modal.addEventListener("keydown", (event) => {
-    if (event.key === "Tab") {
-      event.preventDefault();
-      focusTarget(document.activeElement === card.close ? dismiss : card.close);
-    }
-  });
   return {
     close,
     dispose() {
       disposed = true;
       leaveView?.();
       leaveView = undefined;
+      layer.dispose();
       headerBinding.dispose();
       mounted.dispose();
       modal.remove();
@@ -198,12 +195,18 @@ export function createWeaponDetailCard(
       returnFocus = origin;
       currentIdentity = identity;
       visible = true;
-      leaveView ??= enterPressView(root, card.frame, [], { backdrop: modal, close });
       mounted.update(weaponDetailTree({ closeLabel: options.closeLabel, lines, title }));
       modal.hidden = false;
-      options.onOpenChange(true);
       card.fit();
-      focusTarget(dismiss);
+      leaveView ??= layer.open({
+        backdrop: modal,
+        close,
+        focus: dismiss,
+        isolation: "dialog",
+        restore: () => returnFocus,
+      }, card.frame);
+      if (document.activeElement !== dismiss) focusTarget(dismiss);
+      options.onOpenChange(true);
     },
   };
 }

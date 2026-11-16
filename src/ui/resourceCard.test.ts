@@ -18,7 +18,24 @@ const fixture = vi.hoisted(() => {
       this.detached = !value;
     }
     get ownerDocument() {
-      return { ...document, defaultView: { HTMLElement: Node, Node } };
+      const doc = document as unknown as {
+        activeElement?: Node | null;
+        addEventListener?: EventTarget["addEventListener"];
+        removeEventListener?: EventTarget["removeEventListener"];
+        defaultView?: object;
+      };
+      if (!doc.addEventListener) {
+        const events = new EventTarget();
+        doc.addEventListener = events.addEventListener.bind(events);
+        doc.removeEventListener = events.removeEventListener.bind(events);
+      }
+      doc.activeElement ??= null;
+      doc.defaultView ??= { HTMLElement: Node, MutationObserver: class {
+        disconnect() {}
+        observe() {}
+        takeRecords() { return []; }
+      }, Node };
+      return document;
     }
     get parentNode() {
       return this.parentElement;
@@ -56,7 +73,7 @@ const fixture = vi.hoisted(() => {
       return node === this || this.children.some((child) => child.contains(node));
     }
     closest(): Node | null {
-      return this.hidden ? this : (this.parentElement?.closest() ?? null);
+      return this.hidden || "inert" in this.attributes ? this : (this.parentElement?.closest() ?? null);
     }
     insertBefore(node: Node, before: Node | null) {
       node.remove();
@@ -88,7 +105,22 @@ const fixture = vi.hoisted(() => {
     textContent = "";
     attributes: Record<string, string> = {};
     style: Record<string, string> = {};
-    focus = vi.fn();
+    tabIndex = 0;
+    focus = vi.fn(() => {
+      (document as unknown as { activeElement: Node | null }).activeElement = this;
+    });
+    hasAttribute(name: string) {
+      return name === "hidden" ? this.hidden : name in this.attributes;
+    }
+    getAttribute(name: string) {
+      return this.attributes[name] ?? null;
+    }
+    querySelectorAll(selector: string): Node[] {
+      const descendants = this.children.flatMap(child => [child, ...child.querySelectorAll(selector)]);
+      return selector.includes("button")
+        ? descendants.filter(child => child.dataset.role !== undefined || child === card.close)
+        : [];
+    }
     remove = vi.fn(() => {
       if (this.parentElement) {
         this.parentElement.children.splice(this.parentElement.children.indexOf(this), 1);
@@ -159,7 +191,8 @@ vi.mock("./buttonPresentation.ts", () => ({
   }),
 }));
 vi.mock("./layout/viewScale.ts", () => ({ readViewUnit: () => 1 }));
-vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
+vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", async (original) => ({
+  ...await original<typeof import("@andornaut/game-kit/runtime/web/ui/dom/focusModality")>(),
   focusTarget: (node: { focus(): void }) => node.focus(),
 }));
 afterEach(() => {
@@ -208,7 +241,8 @@ it("reopens with current content and traps Tab on the close control", () => {
   resource.open("Stardust", "Second", origin as unknown as HTMLElement);
   const event = new Event("keydown", { cancelable: true });
   Object.defineProperty(event, "key", { value: "Tab" });
-  root.children[0]!.dispatchEvent(event);
+  Object.defineProperty(event, "target", { value: document.activeElement });
+  root.dispatchEvent(event);
   expect(event.defaultPrevented).toBe(true);
   expect(fixture.card.title.textContent).toBe("Stardust");
   expect(fixture.card.body.children[0]!.textContent).toBe("Second");
