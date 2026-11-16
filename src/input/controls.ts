@@ -35,12 +35,14 @@ import {
   type AchievementsLabels,
   createAchievementsCard,
 } from "../ui/achievementsCard.ts";
+import { bindAdaAction } from "../ui/actionBinding.ts";
 import { type BackLayer, createBackStack, pressBack } from "../ui/backStack.ts";
 import type { CheatAction } from "../ui/cheatActions.ts";
 import { type CheatLabels, createCheats } from "../ui/cheats.ts";
 import { consumeContextQuestUse, createContextQuestIcon } from "../ui/contextQuestUse.ts";
 import { bindAdaActionRoot } from "../ui/holdActionsAdapter.ts";
 import { createItemNotices, type NoticePlaces } from "../ui/itemNotice.ts";
+import { SCROLL } from "../ui/layout/contentCard.ts";
 import { units, VIEW_HOST_ID } from "../ui/layout/css.ts";
 import {
   HUD_BUTTON,
@@ -53,7 +55,7 @@ import {
   statusPillWidth,
 } from "../ui/layout/playView.ts";
 import { stickTargets, useDiscLayout, usePressed } from "../ui/layout/touchControls.ts";
-import { createViewScaleBridge, type PlayLayout } from "../ui/layout/viewScale.ts";
+import { createViewScaleBridge, type PlayLayout, readViewUnit } from "../ui/layout/viewScale.ts";
 import { createMenuCard } from "../ui/menuCard.ts";
 import { activateNavigation, createNavigationButton } from "../ui/navigationButton.ts";
 import { createPauseCards, type PauseLabels, type PauseState } from "../ui/pauseCard.ts";
@@ -345,15 +347,32 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   achievementsDisc.className = "ada-disc";
   achievementsDisc.setAttribute("aria-hidden", "true");
   achievementsButton.append(achievementsDisc);
-  achievementsButton.addEventListener("click", () => achievements.open());
+  const achievementsAction = bindAdaAction(
+    {
+      click: {
+        availability: () =>
+          achievementsButton.disabled || achievementsButton.closest("[hidden], [inert]")
+            ? { kind: "omitted" }
+            : { kind: "available" },
+        run: () => achievements.open(),
+      },
+      current: () =>
+        !disposed &&
+        achievementsButton.isConnected &&
+        inCurrentView(settings.root, achievementsButton),
+      slopPx: () => SCROLL.dragThreshold * readViewUnit(achievementsButton),
+    },
+    achievementsButton,
+  );
   // Title navigation tabs through Achievements, Settings, then Exit where offered.
   settings.openButton.before(achievementsButton);
   settings.openButton.hidden = true;
   settings.root.classList.add("ada-no-settings-button");
   // Exit keeps its existing far-right position after Settings.
   const exitButton = options.exit ? document.createElement("button") : undefined;
+  let exitAction: ReturnType<typeof bindAdaAction> | undefined;
   if (exitButton && options.exit) {
-    const { label, onExit } = options.exit;
+    const { label } = options.exit;
     exitButton.type = "button";
     exitButton.className = "ada-exit-open";
     exitButton.dataset.action = "exit";
@@ -364,7 +383,21 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     exitDisc.className = "ada-disc";
     exitDisc.setAttribute("aria-hidden", "true");
     exitButton.append(exitDisc);
-    exitButton.addEventListener("click", onExit);
+    exitAction = bindAdaAction(
+      {
+        click: {
+          availability: () =>
+            exitButton.disabled || exitButton.closest("[hidden], [inert]")
+              ? { kind: "omitted" }
+              : { kind: "available" },
+          run: () => options.exit?.onExit(),
+        },
+        current: () =>
+          !disposed && exitButton.isConnected && inCurrentView(settings.root, exitButton),
+        slopPx: () => SCROLL.dragThreshold * readViewUnit(exitButton),
+      },
+      exitButton,
+    );
     settings.openButton.after(exitButton);
   }
   const menu = createMenuCard(settings.root, {
@@ -906,6 +939,8 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       weapons.dispose();
       cheats.dispose();
       update?.dispose();
+      achievementsAction.dispose();
+      exitAction?.dispose();
       achievements.dispose();
       pause.dispose();
       settings.dispose();
