@@ -5,7 +5,7 @@ import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import type { ExchangeQuote } from "../model/exchange.ts";
+import type { ImmediateExchangeOrder } from "../model/exchange.ts";
 import { GameModel } from "../model/game.ts";
 import { gainSnapshot } from "../model/itemGains.ts";
 import { ModelFeedback } from "./feedback.ts";
@@ -44,25 +44,30 @@ function bridge() {
   const context = createContext({ flushScene: flush, gainSnapshot, refreshScene: refresh });
   const confirm = runInContext(code, context) as (
     scene: object,
-    quote: ExchangeQuote,
+    order: ImmediateExchangeOrder,
   ) => { kind: string; reason?: string };
-  const quoted = model.previewExchange({ amount: 2, direction: "buy" });
-  if (quoted.kind !== "quote") {
-    throw Error(quoted.reason);
-  }
-  return { confirm: () => confirm(scene, quoted), feedback, flush, model, refresh, scene };
+  const exchange = vi.spyOn(model, "exchangeImmediately");
+  return {
+    confirm: () => confirm(scene, { amount: 10, direction: "buy" }),
+    exchange,
+    feedback,
+    flush,
+    model,
+    refresh,
+    scene,
+  };
 }
 
 describe("station Exchange caller", () => {
   it("flushes and refreshes one applied trade without a synthetic flight pickup", () => {
-    const { confirm, feedback, flush, model, refresh, scene } = bridge();
-    expect(confirm().kind).toBe("quote");
+    const { confirm, exchange, feedback, flush, model, refresh, scene } = bridge();
+    expect(confirm().kind).toBe("exchanged");
     expect(flush).toHaveBeenCalledExactlyOnceWith(scene);
     expect(refresh).toHaveBeenCalledExactlyOnceWith(scene);
     expect(scene.controls.reset).toHaveBeenCalledTimes(1);
     expect(feedback.pulses).toEqual([]);
     expect(feedback.observe(20, model.state)).toEqual([]);
-    expect(confirm()).toMatchObject({ kind: "refused", reason: "stale" });
+    expect(exchange).toHaveBeenCalledExactlyOnceWith({ amount: 10, direction: "buy" });
     expect(flush).toHaveBeenCalledTimes(1);
     expect(refresh).toHaveBeenCalledTimes(1);
     model.state.flight!.cargo += 1;
@@ -78,4 +83,15 @@ describe("station Exchange caller", () => {
     expect(flush).not.toHaveBeenCalled();
     expect(refresh).not.toHaveBeenCalled();
   });
+});
+
+it("refuses against changed live balances without synchronization or mutation", () => {
+  const { confirm, flush, model, refresh, scene } = bridge();
+  model.state.economy.stardust = 1;
+  const before = model.save();
+  expect(confirm()).toMatchObject({ kind: "refused", reason: "cantAfford" });
+  expect(model.save()).toBe(before);
+  expect(flush).not.toHaveBeenCalled();
+  expect(refresh).not.toHaveBeenCalled();
+  expect(scene.controls.reset).not.toHaveBeenCalled();
 });

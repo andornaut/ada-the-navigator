@@ -56,3 +56,36 @@ describe("native Shop configuration", () => {
     expect(stationShopTree({ columns, paintHeading: "Paint" }, [])).toEqual([]);
   });
 });
+
+it("shows the caller requirement on a retained locked ammo row instead of a price", () => {
+  const tree = stationShopRowTree(labels, {
+    ...row,
+    group: "ammo",
+    price: null,
+    reason: "Caller requirement",
+    requiresWeapon: "rapidMissile",
+    state: "unaffordable",
+  });
+  expect(tree.props).toMatchObject({
+    ariaLabel: "Item, [2], Caller requirement",
+    requiresWeapon: "rapidMissile",
+    state: "unaffordable",
+  });
+  expect(tree.slots!.parts![2]).toMatchObject({
+    props: { className: "", text: "" },
+  });
+});
+
+it("keeps pack/level information alongside requirement text in the native name port", () => {
+  const tree = stationShopRowTree(labels, {
+    ...row,
+    group: "ammo",
+    price: null,
+    reason: "Caller requirement",
+    requiresWeapon: "rapidMissile",
+    state: "unaffordable",
+  });
+  expect(tree.slots!.parts![1]).toMatchObject({
+    props: { level: "[2]", reason: "Caller requirement", title: "Item" },
+  });
+});

@@ -46,6 +46,7 @@ export function stationRow(
   labels: Readonly<Record<string, string>>,
   stardust: number,
   row: ShopRow,
+  requirementText?: (weapon: NonNullable<ShopRow["requiresWeapon"]>) => string,
 ): StationRow {
   return {
     glyph: itemGlyph(catalog, row.item),
@@ -61,6 +62,12 @@ export function stationRow(
           : "",
     name: itemName(catalog, labels, row.item),
     price: row.price,
+    ...(row.requiresWeapon === undefined
+      ? {}
+      : {
+          requiresWeapon: row.requiresWeapon,
+          ...(requirementText ? { reason: requirementText(row.requiresWeapon) } : {}),
+        }),
     state: shopRowState(stardust, row),
   };
 }

@@ -1,7 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { EXCHANGE_RATES } from "../data/exchange.ts";
-import { confirmExchange, quoteExchange } from "../model/exchange.ts";
+import {
+  EXCHANGE_AMOUNTS,
+  exchangeImmediately,
+  type ImmediateExchangeOrder,
+  quoteExchange,
+} from "../model/exchange.ts";
 import { createExchangeView } from "./exchange.ts";
 
 const dom = vi.hoisted(() => {
@@ -84,9 +89,9 @@ function fixture() {
   vi.stubGlobal("document", { createElement: () => new dom.Node() });
   const root = new dom.Node();
   let balances = { ore: 20, stardust: 100 };
-  const commit = vi.fn((quote: Parameters<typeof confirmExchange>[2]) => {
-    const result = confirmExchange(EXCHANGE_RATES, balances, quote);
-    if (result.kind === "quote") {
+  const commit = vi.fn((order: ImmediateExchangeOrder) => {
+    const result = exchangeImmediately(EXCHANGE_RATES, balances, order);
+    if (result.kind === "exchanged") {
       balances = { ...result.after };
     }
     return result;
@@ -95,7 +100,7 @@ function fixture() {
   const view = createExchangeView(
     root as unknown as HTMLElement,
     {
-      confirm: commit,
+      exchangeImmediately: commit,
       preview: (order) => quoteExchange(EXCHANGE_RATES, balances, order),
     },
     onChange,
@@ -106,22 +111,13 @@ function fixture() {
   ];
   const action = (id: string) => nodes().find((node) => node.dataset.action === id)!;
   const click = (id: string) => action(id).dispatchEvent(new Event("click"));
-  const amount = (value: string) => {
-    action("exchange-amount").value = value;
-    action("exchange-amount").dispatchEvent(new Event("input"));
-  };
-  const preview = () =>
-    nodes()
-      .find((node) => node.dataset.exchange === "preview")!
-      .children.map((node) => node.textContent);
   return {
     action,
-    amount,
     balances: () => balances,
     click,
     commit,
+    nodes,
     onChange,
-    preview,
     setBalances: (next: typeof balances) => {
       balances = next;
     },
@@ -129,112 +125,76 @@ function fixture() {
   };
 }
 
-describe("Exchange preview and confirmation", () => {
-  it("shows approved buy totals and both balances, cancelling without a transaction", () => {
+describe("immediate fixed Exchange actions", () => {
+  it("offers only model-exported quantities in both directions with no input or confirmation", () => {
     const f = fixture();
-    f.amount("10");
-    expect(f.preview()).toEqual([
-      "Buy ore: 10",
-      "Total price: 20 Stardust",
-      "Ore after: 30",
-      "Stardust after: 80",
-    ]);
-    f.click("exchange-preview");
-    expect(f.view.isConfirming()).toBe(true);
-    expect(f.action("exchange-confirm").focus).toHaveBeenCalledOnce();
-    expect(f.balances()).toEqual({ ore: 20, stardust: 100 });
-    f.click("exchange-cancel");
+    expect(
+      f
+        .nodes()
+        .filter((node) => node.dataset.action)
+        .map((node) => node.dataset.action),
+    ).toEqual(
+      (["buy", "sell"] as const).flatMap((direction) =>
+        EXCHANGE_AMOUNTS.map((amount) => `exchange-${direction}-${amount}`),
+      ),
+    );
+    expect(
+      f
+        .nodes()
+        .some((node) =>
+          ["exchange-amount", "exchange-confirm", "exchange-cancel"].includes(
+            node.dataset.action ?? "",
+          ),
+        ),
+    ).toBe(false);
+    expect(f.view.back()).toBe(false);
     expect(f.view.isConfirming()).toBe(false);
     expect(f.commit).not.toHaveBeenCalled();
-    expect(f.action("exchange-preview").focus).toHaveBeenCalledOnce();
   });
-
-  it("commits approved buy or sell exactly once despite repeated confirm events", () => {
+  it("buys and sells immediately with canonical totals, one transaction and notification per activation", () => {
     const f = fixture();
-    f.amount("10");
-    f.click("exchange-preview");
-    f.click("exchange-confirm");
-    f.click("exchange-confirm");
-    expect(f.commit).toHaveBeenCalledOnce();
+    f.click("exchange-buy-10");
+    expect(f.commit).toHaveBeenCalledExactlyOnceWith({ amount: 10, direction: "buy" });
     expect(f.balances()).toEqual({ ore: 30, stardust: 80 });
-    f.click("exchange-sell");
-    f.amount("10");
-    expect(f.preview()).toEqual([
-      "Sell ore: 10",
-      "Total price: 10 Stardust",
-      "Ore after: 20",
-      "Stardust after: 90",
-    ]);
-    f.click("exchange-preview");
-    f.click("exchange-confirm");
+    expect(f.onChange).toHaveBeenCalledOnce();
+    expect(f.action("exchange-buy-10").focus).toHaveBeenCalledOnce();
+    f.click("exchange-sell-10");
     expect(f.balances()).toEqual({ ore: 20, stardust: 90 });
     expect(f.onChange).toHaveBeenCalledTimes(2);
   });
-
-  it("rejects stale balance previews rather than applying local arithmetic", () => {
+  it("keeps unaffordable fixed actions visible but refuses direct disabled activation", () => {
     const f = fixture();
-    f.amount("10");
-    f.click("exchange-preview");
-    f.setBalances({ ore: 21, stardust: 100 });
-    f.click("exchange-confirm");
-    expect(f.balances()).toEqual({ ore: 21, stardust: 100 });
-    expect(f.view.isConfirming()).toBe(false);
-    expect(f.commit.mock.results[0]!.value).toEqual({ kind: "refused", reason: "stale" });
-  });
-
-  it("disables invalid or unaffordable amounts and preserves the back stack", () => {
-    const f = fixture();
-    for (const amount of ["0", "-1", "0.5", "51", ""]) {
-      f.amount(amount);
-      expect(f.action("exchange-preview").disabled).toBe(true);
-      f.click("exchange-preview");
-      expect(f.view.isConfirming()).toBe(false);
-    }
-    f.click("exchange-sell");
-    f.amount("21");
-    expect(f.action("exchange-preview").disabled).toBe(true);
-    f.amount("20");
-    f.click("exchange-preview");
-    expect(f.view.back()).toBe(true);
-    expect(f.view.back()).toBe(false);
+    expect(f.action("exchange-buy-100").disabled).toBe(true);
+    expect(f.action("exchange-buy-100").hidden).toBe(false);
+    expect(f.action("exchange-sell-100").disabled).toBe(true);
+    f.click("exchange-buy-100");
+    f.click("exchange-sell-100");
     expect(f.commit).not.toHaveBeenCalled();
   });
-});
-
-it("does not execute disabled preview callbacks or hidden confirmation callbacks", () => {
-  const f = fixture();
-  f.amount("0");
-  f.click("exchange-preview");
-  f.click("exchange-confirm");
-  expect(f.view.isConfirming()).toBe(false);
-  expect(f.commit).not.toHaveBeenCalled();
-  f.amount("1");
-  f.click("exchange-preview");
-  f.click("exchange-cancel");
-  f.click("exchange-confirm");
-  expect(f.commit).not.toHaveBeenCalled();
-});
-
-it("unregisters retained native callbacks and input rendering on disposal", () => {
-  const f = fixture();
-  f.click("exchange-preview");
-  const retained = f.action("exchange-confirm");
-  f.view.dispose();
-  retained.dispatchEvent(new Event("click"));
-  expect(f.commit).not.toHaveBeenCalled();
-  expect(f.onChange).not.toHaveBeenCalled();
-});
-
-it("retains the exact native amount and control identities through editor, confirm, Back and refresh", () => {
-  const f = fixture();
-  const amount = f.action("exchange-amount"),
-    buy = f.action("exchange-preview");
-  f.amount("007");
-  f.click("exchange-preview");
-  expect(f.view.back()).toBe(true);
-  f.view.render();
-  expect(f.action("exchange-amount")).toBe(amount);
-  expect(amount.value).toBe("007");
-  expect(f.action("exchange-preview")).toBe(buy);
-  expect(f.commit).not.toHaveBeenCalled();
+  it("revalidates live balances at the model transaction rather than spending an old preview", () => {
+    const f = fixture();
+    f.setBalances({ ore: 20, stardust: 0 });
+    f.click("exchange-buy-10");
+    expect(f.commit.mock.results[0]!.value).toMatchObject({
+      kind: "refused",
+      reason: "cantAfford",
+    });
+    expect(f.balances()).toEqual({ ore: 20, stardust: 0 });
+    expect(f.onChange).not.toHaveBeenCalled();
+    expect(f.action("exchange-buy-10").disabled).toBe(true);
+  });
+  it("retains button identities and ignores hidden or disposed callbacks", () => {
+    const f = fixture();
+    const retained = f.action("exchange-buy-1");
+    f.view.render();
+    expect(f.action("exchange-buy-1")).toBe(retained);
+    f.view.root.hidden = true;
+    retained.dispatchEvent(new Event("click"));
+    expect(f.commit).not.toHaveBeenCalled();
+    f.view.root.hidden = false;
+    f.view.dispose();
+    retained.dispatchEvent(new Event("click"));
+    expect(f.commit).not.toHaveBeenCalled();
+    expect(f.onChange).not.toHaveBeenCalled();
+  });
 });

@@ -1,17 +1,17 @@
 import { validateLayoutTree } from "@andornaut/game-kit/runtime/ui/layoutTree";
 import { expect, it } from "vitest";
 
+import { EXCHANGE_AMOUNTS } from "../model/exchange.ts";
 import { exchangeTree } from "./exchangeTree.ts";
-it("composes stable native editor, confirmation and status ports without values or transaction facts", () => {
-  const copy = {
-    buyOre: "Buy",
-    cancel: "Cancel",
-    confirm: "Confirm",
-    help: "Help",
-    sellOre: "Sell",
-  };
-  const tree = exchangeTree(copy);
-  validateLayoutTree({ container: ["content"], native: [] }, tree);
+it("composes caller fixed-action facts without an editor or confirmation controller", () => {
+  const actions = (direction: "buy" | "sell") =>
+    EXCHANGE_AMOUNTS.map((amount) => ({
+      amount,
+      direction,
+      label: `Caller ${direction} ${amount}`,
+    }));
+  const tree = exchangeTree({ buy: actions("buy"), sell: actions("sell") });
+  validateLayoutTree({ action: [], container: ["content"], native: [] }, tree);
   const ids: string[] = [];
   const visit = (node: typeof tree) => {
     ids.push(node.key);
@@ -25,25 +25,16 @@ it("composes stable native editor, confirmation and status ports without values 
   expect(ids).toEqual([
     "root",
     "help",
-    "editor",
-    "directions",
     "buy",
+    "buy-1",
+    "buy-10",
+    "buy-100",
     "sell",
-    "amountLabel",
-    "preview",
-    "previewActions",
-    "action",
-    "confirmation",
-    "summary",
-    "confirmActions",
-    "cancel",
-    "confirm",
+    "sell-1",
+    "sell-10",
+    "sell-100",
+    "result",
     "status",
   ]);
-  expect(JSON.stringify(tree)).not.toMatch(
-    /"(?:amount|value|direction|quote|totalPrice|after|disabled)":/,
-  );
-  expect(JSON.stringify(exchangeTree({ ...copy, buyOre: "Caller buy" }))).toContain(
-    '"text":"Caller buy"',
-  );
+  expect(JSON.stringify(tree)).not.toMatch(/"(?:value|quote|totalPrice|after|disabled)":/);
 });

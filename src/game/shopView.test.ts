@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { shopRows } from "../model/shop.ts";
+import { type ShopRow, shopRows } from "../model/shop.ts";
 import { newEconomy } from "../model/upgrades.ts";
 import { SHIPPED_SHIP_SOURCES } from "../testing/shippedShipSources.ts";
 import { itemGlyph, paintSwatchPath, stationRow } from "./shopView.ts";
@@ -93,4 +93,33 @@ describe("shop rows on the station view", () => {
       ["paint", "Amber", "unaffordable"],
     ]);
   });
+});
+
+it("retains selected unsupported ammunition with caller-supplied requirement text", () => {
+  const economy = newEconomy(ECONOMY);
+  const row = {
+    inUse: false,
+    item: { kind: "ammo" as const, weapon: "rapidMissile" as const },
+    level: null,
+    owned: false,
+    price: null,
+    requiresWeapon: "rapidMissile" as const,
+  };
+  const view = stationRow(
+    ECONOMY,
+    CONTENT.labels,
+    economy.stardust,
+    row,
+    (weapon) => `Caller requirement: ${weapon}`,
+  );
+  expect(view).toMatchObject({
+    group: "ammo",
+    price: null,
+    reason: "Caller requirement: rapidMissile",
+    requiresWeapon: "rapidMissile",
+    state: "unaffordable",
+  });
+  const supported: ShopRow = { ...row };
+  delete supported.requiresWeapon;
+  expect(stationRow(ECONOMY, CONTENT.labels, economy.stardust, supported).reason).toBeUndefined();
 });

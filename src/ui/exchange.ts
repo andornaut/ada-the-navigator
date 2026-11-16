@@ -2,14 +2,14 @@ import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModalit
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { EXCHANGE_COPY } from "../data/exchangeCopy.ts";
-import type { ExchangeOrder, ExchangePreview, ExchangeQuote } from "../model/exchange.ts";
-import { bindAdaAction } from "./actionBinding.ts";
 import {
-  type ExchangeContainer,
-  type ExchangePart,
-  type ExchangeSchema,
-  exchangeTree,
-} from "./exchangeTree.ts";
+  EXCHANGE_AMOUNTS,
+  type ExchangePreview,
+  type ImmediateExchangeOrder,
+  type ImmediateExchangeResult,
+} from "../model/exchange.ts";
+import { bindAdaAction } from "./actionBinding.ts";
+import { type ExchangeActionData, type ExchangeSchema, exchangeTree } from "./exchangeTree.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createActions, createButton } from "./modal.ts";
@@ -17,11 +17,11 @@ import { inCurrentView } from "./pressScope.ts";
 import { stardustCount } from "./statusPill.ts";
 
 export interface ExchangePort {
-  readonly confirm: (quote: ExchangeQuote) => ExchangePreview;
-  readonly preview: (order: ExchangeOrder) => ExchangePreview;
+  readonly exchangeImmediately: (order: ImmediateExchangeOrder) => ImmediateExchangeResult;
+  readonly preview: (order: ImmediateExchangeOrder) => ExchangePreview;
 }
 
-/** The station owns balances; this view only requests previews and confirmed transactions. */
+/** Fixed actions use live model validation and a single atomic transaction per activation. */
 export function createExchangeView(parent: HTMLElement, port: ExchangePort, onChange: () => void) {
   const root = document.createElement("section");
   root.className = "ada-exchange";
@@ -29,62 +29,90 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
   root.setAttribute("aria-label", EXCHANGE_COPY.title);
   const help = document.createElement("p");
   help.textContent = EXCHANGE_COPY.help;
-  const editor = document.createElement("div");
-  const buy = createButton(EXCHANGE_COPY.buyOre);
-  const sell = createButton(EXCHANGE_COPY.sellOre);
-  buy.dataset.action = "exchange-buy";
-  sell.dataset.action = "exchange-sell";
-  const directions = createActions([]);
-  const label = document.createElement("label");
-  label.textContent = EXCHANGE_COPY.amount;
-  const amount = document.createElement("input");
-  amount.type = "number";
-  amount.min = "1";
-  amount.step = "1";
-  amount.value = "1";
-  amount.dataset.action = "exchange-amount";
-  label.append(amount);
-  const preview = document.createElement("div");
-  preview.dataset.exchange = "preview";
-  const action = createButton(EXCHANGE_COPY.buyOre);
-  action.dataset.action = "exchange-preview";
-  const previewActions = createActions([]);
-  const confirmation = document.createElement("div");
-  confirmation.hidden = true;
-  confirmation.setAttribute("role", "group");
-  confirmation.setAttribute("aria-label", EXCHANGE_COPY.confirm);
-  const summary = document.createElement("div");
-  summary.dataset.exchange = "confirmation";
-  const confirm = createButton(EXCHANGE_COPY.confirm);
-  confirm.dataset.action = "exchange-confirm";
-  const cancel = createButton(EXCHANGE_COPY.cancel);
-  cancel.dataset.action = "exchange-cancel";
-  const confirmActions = createActions([]);
+  const result = document.createElement("div");
+  result.dataset.exchange = "result";
   const status = document.createElement("p");
   status.setAttribute("role", "status");
-  const containers: Record<ExchangeContainer, HTMLElement> = {
-    confirmActions,
-    confirmation,
-    directions,
-    editor,
-    previewActions,
-    root,
+  const containers = { buy: createActions([]), root, sell: createActions([]) };
+  const parts = { help, result, status };
+  let disposed = false;
+  const actions: { button: HTMLButtonElement; order: ImmediateExchangeOrder }[] = [];
+  const bindings: ReturnType<typeof bindAdaAction>[] = [];
+  const refusal = (value: ExchangePreview | ImmediateExchangeResult): string =>
+    value.kind !== "refused"
+      ? ""
+      : value.reason === "cantAfford"
+        ? EXCHANGE_COPY.cantAfford
+        : value.reason === "notEnoughOre"
+          ? EXCHANGE_COPY.notEnoughOre
+          : value.reason === "invalidAmount"
+            ? EXCHANGE_COPY.invalidAmount
+            : value.reason === "stale"
+              ? EXCHANGE_COPY.stale
+              : EXCHANGE_COPY.unavailable;
+  const render = () => {
+    for (const { button, order } of actions) {
+      button.disabled = port.preview(order).kind === "refused";
+    }
   };
-  const parts: Record<ExchangePart, HTMLElement> = {
-    action,
-    amountLabel: label,
-    buy,
-    cancel,
-    confirm,
-    help,
-    preview,
-    sell,
-    status,
-    summary,
+  const execute = (button: HTMLButtonElement, order: ImmediateExchangeOrder) => {
+    const outcome = port.exchangeImmediately(order);
+    if (outcome.kind === "exchanged") {
+      const directionLabel =
+        outcome.direction === "buy" ? EXCHANGE_COPY.buyOre : EXCHANGE_COPY.sellOre;
+      result.replaceChildren(
+        ...[
+          `${directionLabel}: ${stardustCount(outcome.amount)}`,
+          `${EXCHANGE_COPY.totalPrice}: ${stardustCount(outcome.totalPrice)} Stardust`,
+          `${EXCHANGE_COPY.oreAfter}: ${stardustCount(outcome.after.ore)}`,
+          `${EXCHANGE_COPY.stardustAfter}: ${stardustCount(outcome.after.stardust)}`,
+        ].map((text) => {
+          const line = document.createElement("p");
+          line.textContent = text;
+          return line;
+        }),
+      );
+      onChange();
+    }
+    status.textContent = refusal(outcome);
+    render();
+    focusTarget(button);
   };
+  const data = (direction: "buy" | "sell"): readonly ExchangeActionData[] =>
+    EXCHANGE_AMOUNTS.map((amount) => ({
+      amount,
+      direction,
+      label: `${direction === "buy" ? EXCHANGE_COPY.buyOre : EXCHANGE_COPY.sellOre} ${stardustCount(amount)}`,
+    }));
   const mounted = mountLayout<ExchangeSchema>(
     {
       components: {
+        action: {
+          create(initial) {
+            const button = createButton(initial.label);
+            const order: ImmediateExchangeOrder = {
+              amount: initial.amount,
+              direction: initial.direction,
+            };
+            button.dataset.action = `exchange-${order.direction}-${order.amount}`;
+            const binding = bindAdaAction(
+              {
+                click: {
+                  availability: () =>
+                    button.disabled ? { kind: "omitted" } : { kind: "available" },
+                  run: () => execute(button, order),
+                },
+                current: () => !disposed && !root.hidden && inCurrentView(parent, button),
+                slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
+              },
+              button,
+            );
+            actions.push({ button, order });
+            bindings.push(binding);
+            return { dispose() {}, element: button, slots: {}, update() {} };
+          },
+          slots: [],
+        },
         container: {
           create(data) {
             const element = containers[data.id];
@@ -94,159 +122,27 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
         },
         native: {
           create(data) {
-            const element = parts[data.id];
-            const update = (next: ExchangeSchema["native"]["props"]) => {
-              if (next.text !== undefined) {
-                element.textContent = next.text;
-              }
-            };
-            update(data);
-            return { dispose() {}, element, slots: {}, update };
+            return { dispose() {}, element: parts[data.id], slots: {}, update() {} };
           },
           slots: [],
         },
       },
       host: parent,
     },
-    exchangeTree(EXCHANGE_COPY),
-  );
-  let disposed = false;
-  const bindings: ReturnType<typeof bindAdaAction>[] = [];
-  const register = (element: HTMLButtonElement, run: () => void, active: () => boolean) => {
-    bindings.push(
-      bindAdaAction(
-        {
-          click: {
-            availability: () => (element.disabled ? { kind: "omitted" } : { kind: "available" }),
-            run,
-          },
-          current: () => !disposed && !root.hidden && active() && inCurrentView(parent, element),
-          slopPx: () => SCROLL.dragThreshold * readViewUnit(element),
-        },
-        element,
-      ),
-    );
-  };
-  let direction: ExchangeOrder["direction"] = "buy";
-  let pending: ExchangeQuote | undefined;
-  const line = (target: HTMLElement, quote: ExchangeQuote): void => {
-    target.replaceChildren(
-      ...[
-        `${quote.direction === "buy" ? EXCHANGE_COPY.buyOre : EXCHANGE_COPY.sellOre}: ${stardustCount(quote.amount)}`,
-        `${EXCHANGE_COPY.totalPrice}: ${stardustCount(quote.totalPrice)} Stardust`,
-        `${EXCHANGE_COPY.oreAfter}: ${stardustCount(quote.after.ore)}`,
-        `${EXCHANGE_COPY.stardustAfter}: ${stardustCount(quote.after.stardust)}`,
-      ].map((text) => {
-        const row = document.createElement("p");
-        row.textContent = text;
-        return row;
-      }),
-    );
-  };
-  const refusal = (result: ExchangePreview): string =>
-    result.kind === "quote"
-      ? ""
-      : result.reason === "cantAfford"
-        ? EXCHANGE_COPY.cantAfford
-        : result.reason === "notEnoughOre"
-          ? EXCHANGE_COPY.notEnoughOre
-          : result.reason === "invalidAmount"
-            ? EXCHANGE_COPY.invalidAmount
-            : result.reason === "stale"
-              ? EXCHANGE_COPY.stale
-              : EXCHANGE_COPY.unavailable;
-  const render = (): void => {
-    buy.setAttribute("aria-pressed", String(direction === "buy"));
-    sell.setAttribute("aria-pressed", String(direction === "sell"));
-    action.textContent = direction === "buy" ? EXCHANGE_COPY.buyOre : EXCHANGE_COPY.sellOre;
-    const quote = port.preview({ amount: Number(amount.value), direction });
-    action.disabled = quote.kind === "refused";
-    status.textContent = refusal(quote);
-    if (quote.kind === "quote") {
-      line(preview, quote);
-    } else {
-      preview.replaceChildren();
-    }
-  };
-  const back = (): boolean => {
-    if (!pending) {
-      return false;
-    }
-    pending = undefined;
-    confirmation.hidden = true;
-    editor.hidden = false;
-    render();
-    focusTarget(action);
-    return true;
-  };
-  for (const [button, next] of [
-    [buy, "buy"],
-    [sell, "sell"],
-  ] as const) {
-    register(
-      button,
-      () => {
-        direction = next;
-        render();
-      },
-      () => !editor.hidden,
-    );
-  }
-  amount.addEventListener("input", render);
-  register(
-    action,
-    () => {
-      const quote = port.preview({ amount: Number(amount.value), direction });
-      if (quote.kind !== "quote") {
-        render();
-        return;
-      }
-      pending = quote;
-      line(summary, quote);
-      editor.hidden = true;
-      confirmation.hidden = false;
-      status.textContent = "";
-      focusTarget(confirm);
-    },
-    () => !editor.hidden,
-  );
-  register(cancel, back, () => !confirmation.hidden);
-  register(
-    confirm,
-    () => {
-      const quote = pending;
-      if (!quote) {
-        return;
-      }
-      pending = undefined;
-      confirm.disabled = true;
-      try {
-        const result = port.confirm(quote);
-        confirmation.hidden = true;
-        editor.hidden = false;
-        onChange();
-        render();
-        status.textContent = refusal(result);
-        focusTarget(action);
-      } finally {
-        confirm.disabled = false;
-      }
-    },
-    () => !confirmation.hidden && pending !== undefined,
+    exchangeTree({ buy: data("buy"), sell: data("sell") }),
   );
   render();
   return {
-    back,
+    back: () => false,
     dispose() {
       disposed = true;
       for (const binding of bindings) {
         binding.dispose();
       }
       bindings.length = 0;
-      amount.removeEventListener("input", render);
       mounted.dispose();
     },
-    isConfirming: () => pending !== undefined,
+    isConfirming: () => false,
     render,
     root,
   };

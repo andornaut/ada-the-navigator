@@ -10,11 +10,19 @@ export type StationShopSchema = {
 };
 export type StationShopRowSchema = {
   row: {
-    props: { readonly id: string; readonly state: string; readonly ariaLabel: string };
+    props: {
+      readonly id: string;
+      readonly state: string;
+      readonly ariaLabel: string;
+      readonly requiresWeapon?: StationRow["requiresWeapon"];
+    };
     slots: "parts";
   };
   well: { props: { readonly glyph: StationRow["glyph"] }; slots: never };
-  name: { props: { readonly title: string; readonly level: string }; slots: never };
+  name: {
+    props: { readonly title: string; readonly level: string; readonly reason?: string };
+    slots: never;
+  };
   trailing: { props: { readonly className: string; readonly text: string }; slots: never };
 };
 export function stationShopRowTree(
@@ -22,23 +30,27 @@ export function stationShopRowTree(
   row: StationRow,
 ): Extract<ComponentNode<StationShopRowSchema>, { component: "row" }> {
   const owned = row.state === "owned" || row.state === "selectable" || row.state === "inUse";
-  const text = owned
-    ? row.state === "inUse"
-      ? labels.inUse
-      : row.project
-        ? labels.projectFunded
-        : labels.owned
-    : row.price === null
+  const text =
+    row.requiresWeapon !== undefined
       ? ""
-      : String(row.price);
+      : owned
+        ? row.state === "inUse"
+          ? labels.inUse
+          : row.project
+            ? labels.projectFunded
+            : labels.owned
+        : row.price === null
+          ? ""
+          : String(row.price);
   return {
     component: "row",
     key: row.key,
     kind: "component",
     props: {
-      ariaLabel: [row.name, row.level, text].filter(Boolean).join(", "),
+      ariaLabel: [row.name, row.level, row.reason, text].filter(Boolean).join(", "),
       id: row.key,
       state: row.state,
+      ...(row.requiresWeapon === undefined ? {} : { requiresWeapon: row.requiresWeapon }),
     },
     slots: {
       parts: [
@@ -47,13 +59,20 @@ export function stationShopRowTree(
           component: "name",
           key: "name",
           kind: "component",
-          props: { level: row.level, title: row.name },
+          props: {
+            level: row.level,
+            title: row.name,
+            ...(row.reason === undefined ? {} : { reason: row.reason }),
+          },
         },
         {
           component: "trailing",
           key: "trailing",
           kind: "component",
-          props: { className: owned ? "ada-owned" : "ada-price", text },
+          props: {
+            className: row.requiresWeapon !== undefined ? "" : owned ? "ada-owned" : "ada-price",
+            text,
+          },
         },
       ],
     },

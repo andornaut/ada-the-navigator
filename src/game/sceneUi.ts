@@ -13,7 +13,7 @@ import { coarsePointer } from "../input/coarsePointer.ts";
 import { createControls } from "../input/controls.ts";
 import { requiredLoading, requiredReady } from "../loading/required.ts";
 import { grantAllWeapons } from "../model/cheats.ts";
-import type { ExchangePreview, ExchangeQuote } from "../model/exchange.ts";
+import type { ImmediateExchangeOrder, ImmediateExchangeResult } from "../model/exchange.ts";
 import { GameModel } from "../model/game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
 import { landmarkById } from "../model/landmarks.ts";
@@ -718,7 +718,7 @@ export function buildScene(scene: UiContext): void {
       }),
     dropJob: () => apply(() => scene.model.dropJob()),
     exchange: {
-      confirm: (quote) => confirmStationExchange(scene, quote),
+      exchangeImmediately: (order) => confirmStationExchange(scene, order),
       preview: (order) => scene.model.previewExchange(order),
     },
     greeting: () => scene.model.stationGreeting,
@@ -1070,12 +1070,15 @@ export function buildScene(scene: UiContext): void {
 }
 
 /** A station trade updates its status without fabricating flight pickup feedback. */
-export function confirmStationExchange(scene: UiContext, quote: ExchangeQuote): ExchangePreview {
+export function confirmStationExchange(
+  scene: UiContext,
+  order: ImmediateExchangeOrder,
+): ImmediateExchangeResult {
   if (scene.emergencyReturn.active) {
     return { kind: "refused", reason: "unavailable" };
   }
-  const result = scene.model.confirmExchange(quote);
-  if (result.kind === "quote") {
+  const result = scene.model.exchangeImmediately(order);
+  if (result.kind === "exchanged") {
     scene.controls.reset();
     scene.feedback.baseline(scene.model.state);
     const flight = scene.model.state.flight;

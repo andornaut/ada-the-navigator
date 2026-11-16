@@ -2,6 +2,7 @@ import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModalit
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { CONTENT } from "../data/content.ts";
+import type { UpgradeWeapon } from "../data/economy.ts";
 import { EXCHANGE_COPY } from "../data/exchangeCopy.ts";
 import type { StationGreeting } from "../model/keepers.ts";
 import type { StationServices } from "../model/stationServices.ts";
@@ -146,6 +147,8 @@ export interface StationRow {
   readonly level: string;
   readonly name: string;
   readonly price: number | null;
+  readonly requiresWeapon?: UpgradeWeapon;
+  readonly reason?: string;
   readonly state: StationRowState;
 }
 
@@ -679,6 +682,12 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
                 level.textContent = initial.level;
                 name.append(level);
               }
+              if (initial.reason) {
+                const reason = document.createElement("span");
+                reason.className = "ada-shop-level";
+                reason.textContent = initial.reason;
+                name.append(reason);
+              }
               return { dispose() {}, element: name, slots: {}, update() {} };
             },
             slots: [],
@@ -689,6 +698,8 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
               node.className = "ada-shop-row";
               node.dataset.item = initial.id;
               node.dataset.state = initial.state;
+              node.disabled = initial.requiresWeapon !== undefined;
+              node.setAttribute("aria-disabled", String(node.disabled));
               node.setAttribute("aria-label", initial.ariaLabel);
               return { dispose() {}, element: node, slots: { parts: node }, update() {} };
             },
@@ -731,6 +742,9 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
             .find((item) => item.key === row.key);
           if (!liveRow) {
             render();
+            return;
+          }
+          if (liveRow.requiresWeapon !== undefined) {
             return;
           }
           const action = rowAction(liveRow.state);
