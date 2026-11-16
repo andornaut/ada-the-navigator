@@ -14,7 +14,9 @@ import * as refusal from "./refusal.ts";
 import { STORY_PORTRAITS, storyPortrait, storyPortraitFrame, storyTabColour } from "./storybook.ts";
 
 class Element {
-  readonly isConnected = true;
+  get isConnected(): boolean {
+    return this === (document.body as unknown as Element) || (this.parent?.isConnected ?? false);
+  }
   get parentElement() {
     return this.parent;
   }
@@ -140,17 +142,31 @@ class Element {
   }
 }
 afterEach(() => {
+  if (typeof document !== "undefined") {
+    document.body?.replaceChildren();
+  }
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
-const setup = () => {
+const setup = (host?: Element) => {
+  const body = new Element("body");
+  if (host) {
+    body.append(host);
+  }
   vi.stubGlobal("document", {
     activeElement: null,
+    body,
     createElement: (tag: string) => new Element(tag),
     defaultView: Object.assign(new EventTarget(), { HTMLElement: Element, Node: Element }),
+    getElementById: () => host ?? null,
   });
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
 };
+function connectedParent(): Element {
+  const parent = new Element("div");
+  document.body.append(parent as unknown as HTMLElement);
+  return parent;
+}
 
 describe("shared Earth and space dialogue presentation", () => {
   it("resolves every authored cast member to their own existing sheet and tab", () => {
@@ -244,7 +260,8 @@ describe("shared Earth and space dialogue presentation", () => {
 
   it("separates neutral topics from navigation and keeps Skip in the shared Earth top slot", () => {
     setup();
-    const parent = new Element("div");
+    const parent = connectedParent();
+    fixtureActionRoot(parent);
     const interaction = createInteractionCard(parent as unknown as HTMLElement, {
       choose: vi.fn(),
       close: vi.fn(),
@@ -290,9 +307,10 @@ describe("shared Earth and space dialogue presentation", () => {
   });
   it("hides Skip at material decisions and cannot bypass or select an outcome", () => {
     setup();
-    const parent = new Element("div");
+    const parent = connectedParent();
     const choose = vi.fn(),
       skip = vi.fn();
+    fixtureActionRoot(parent);
     const interaction = createInteractionCard(parent as unknown as HTMLElement, {
       choose,
       close: vi.fn(),
@@ -327,7 +345,8 @@ describe("shared Earth and space dialogue presentation", () => {
 
   it("returns from a selected background answer to essential dialogue without reopening the menu", () => {
     setup();
-    const parent = new Element("div");
+    const parent = connectedParent();
+    fixtureActionRoot(parent);
     const interaction = createInteractionCard(parent as unknown as HTMLElement, {
       choose: vi.fn(),
       close: vi.fn(),
@@ -367,11 +386,7 @@ describe("shared Earth and space dialogue presentation", () => {
     "advances %s on a secondary touch without relying on a synthesized click",
     (speaker) => {
       const host = new Element("div");
-      vi.stubGlobal("document", {
-        activeElement: null,
-        createElement: (tag: string) => new Element(tag),
-        getElementById: () => host,
-      });
+      setup(host);
       const advance = vi.fn();
       const box = createConversationBox(advance);
       box.render(
@@ -404,11 +419,7 @@ describe("shared Earth and space dialogue presentation", () => {
 
   it.each(["pointercancel", "lostpointercapture"])("cancels a held message press on %s", (type) => {
     const host = new Element("div");
-    vi.stubGlobal("document", {
-      activeElement: null,
-      createElement: (tag: string) => new Element(tag),
-      getElementById: () => host,
-    });
+    setup(host);
     const advance = vi.fn();
     const box = createConversationBox(advance);
     const button = host.children[0]!;
@@ -427,11 +438,7 @@ describe("shared Earth and space dialogue presentation", () => {
 
   it("has no separate ambient Skip button and retains the existing tap advance route", () => {
     const host = new Element("div");
-    vi.stubGlobal("document", {
-      activeElement: null,
-      createElement: (tag: string) => new Element(tag),
-      getElementById: () => host,
-    });
+    setup(host);
     const advance = vi.fn();
     const legacySkip = vi.fn();
     const box = createConversationBox(advance, legacySkip);
@@ -461,10 +468,11 @@ describe("shared Earth and space dialogue presentation", () => {
 it("uses the existing Use close callback only for a current backdrop tap", () => {
   setup();
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
-  const parent = new Element("div"),
+  const parent = connectedParent(),
     close = vi.fn(),
     choose = vi.fn(),
     skip = vi.fn();
+  fixtureActionRoot(parent);
   const interaction = createInteractionCard(parent as unknown as HTMLElement, {
     choose,
     close,
@@ -520,9 +528,8 @@ it("uses the existing Use close callback only for a current backdrop tap", () =>
 
 it("registers native material choices with default hold dispatch, live callbacks and redraw cleanup", () => {
   setup();
-  const parent = new Element("div"),
+  const parent = connectedParent(),
     options = { choose: vi.fn(), close: vi.fn(), skip: vi.fn() };
-  const interaction = createInteractionCard(parent as unknown as HTMLElement, options);
   const resolve = (node: Element) =>
     resolveAdaHoldAction(parent as unknown as HTMLElement, node as unknown as EventTarget);
   let permitted = true;
@@ -530,6 +537,7 @@ it("registers native material choices with default hold dispatch, live callbacks
     { permits: () => permitted },
     parent as unknown as HTMLElement,
   );
+  const interaction = createInteractionCard(parent as unknown as HTMLElement, options);
   try {
     interaction.show(1, {
       choices: [
@@ -569,7 +577,7 @@ it("registers native material choices with default hold dispatch, live callbacks
 
 it("keeps the original refusal callback then redraw and denies native disabled actions", () => {
   setup();
-  const parent = new Element("div"),
+  const parent = connectedParent(),
     choose = vi.fn();
   fixtureActionRoot(parent);
   const cue = vi.spyOn(refusal, "refuse").mockReturnValue(() => {});
@@ -612,7 +620,7 @@ it("keeps the original refusal callback then redraw and denies native disabled a
 
 it("binds native Skip and Close once with current callbacks and disposes their retained nodes", () => {
   setup();
-  const parent = new Element("div"),
+  const parent = connectedParent(),
     options = { choose: vi.fn(), close: vi.fn(), skip: vi.fn() };
   fixtureActionRoot(parent);
   const interaction = createInteractionCard(parent as unknown as HTMLElement, options);
@@ -653,4 +661,46 @@ it("binds native Skip and Close once with current callbacks and disposes their r
   close.click();
   expect(closeCallback).toHaveBeenCalledOnce();
   expect(replacement).toHaveBeenCalledOnce();
+});
+
+it("requires a connected owning tree for native dialogue actions", () => {
+  setup();
+  const parent = new Element("div");
+  const choose = vi.fn();
+  const stopRoot = registerAdaActionRoot({ permits: () => true }, parent as unknown as HTMLElement);
+  const interaction = createInteractionCard(parent as unknown as HTMLElement, {
+    choose,
+    close: vi.fn(),
+    skip: vi.fn(),
+  });
+  try {
+    interaction.show(1, {
+      choices: [
+        { id: "accept", label: "Accept" },
+        { id: "decline", label: "Decline" },
+      ],
+      context: "test-decision",
+      text: "Decision",
+      title: "Rivet",
+    });
+    const accept = parent
+      .all()
+      .find((node) => node.tag === "button" && node.textContent === "Accept")!;
+    expect(parent.isConnected).toBe(false);
+    expect(accept.isConnected).toBe(false);
+    accept.click();
+    expect(choose).not.toHaveBeenCalled();
+    document.body.append(parent as unknown as HTMLElement);
+    expect(accept.isConnected).toBe(true);
+    parent.remove();
+    expect(accept.isConnected).toBe(false);
+    accept.click();
+    expect(choose).not.toHaveBeenCalled();
+    document.body.append(parent as unknown as HTMLElement);
+    accept.click();
+    expect(choose).toHaveBeenCalledExactlyOnceWith("accept");
+  } finally {
+    interaction.dispose();
+    stopRoot();
+  }
 });
