@@ -2,6 +2,7 @@ import { controlPresentation } from "@andornaut/game-kit/runtime/ui/controlPrese
 import type { HoldAction } from "@andornaut/game-kit/runtime/web/input/dom/holdActions";
 
 import { activateAdaAction, type AdaActionBinding } from "./actionActivation.ts";
+import { adaActionHasRoot, adaActionRootAllows } from "./actionRegistry.ts";
 
 /** Shared with the weapon detail override; duration is independent of display scale. */
 export const ADA_ACTION_HOLD_MS = 500;
@@ -26,7 +27,8 @@ export function bindAdaAction(options: AdaActionOptions, element: HTMLElement) {
   }
   const entry: Entry = { options };
   bindings.set(element, entry);
-  const current = () => bindings.get(element) === entry && entry.options.current();
+  const current = () =>
+    bindings.get(element) === entry && adaActionRootAllows(element) && entry.options.current();
   const click = (event: MouseEvent) => {
     if (current() && entry.options.beforeClick?.(event) !== false) {
       activateAdaAction(entry.options, "click");
@@ -67,6 +69,7 @@ export function resolveAdaHoldAction(
         owned.isConnected &&
         root.contains(owned) &&
         owned.closest("[hidden], [inert]") === null &&
+        adaActionRootAllows(owned) &&
         entry.options.current();
       return {
         activate: () => {
@@ -94,4 +97,22 @@ export function resolveAdaHoldAction(
     element = element.parentElement;
   }
   return null;
+}
+
+/** Audit completed control construction, including disabled controls that can later become active. */
+export function assertAdaActionBindings(root: HTMLElement): void {
+  const selector =
+    'button, input[type="button"], input[type="submit"], input[type="reset"], [role="button"], [data-action]';
+  const controls = [...root.querySelectorAll<HTMLElement>(selector)];
+  if (root.matches(selector)) {
+    controls.unshift(root);
+  }
+  for (const element of controls) {
+    if (!bindings.has(element)) {
+      throw new Error("Discrete action control has no registered action binding");
+    }
+    if (!adaActionHasRoot(element)) {
+      throw new Error("Discrete action control has no live action root");
+    }
+  }
 }

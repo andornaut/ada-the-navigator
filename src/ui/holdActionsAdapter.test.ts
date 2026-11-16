@@ -1,7 +1,12 @@
 import { afterEach, expect, it, vi } from "vitest";
 
-import { type AdaActionOptions, bindAdaAction, resolveAdaHoldAction } from "./actionBinding.ts";
-import { bindAdaHoldActions } from "./holdActionsAdapter.ts";
+import {
+  type AdaActionOptions,
+  assertAdaActionBindings,
+  bindAdaAction,
+  resolveAdaHoldAction,
+} from "./actionBinding.ts";
+import { bindAdaActionRoot, bindAdaHoldActions } from "./holdActionsAdapter.ts";
 
 class Element extends EventTarget {
   parentElement: Element | null = null;
@@ -33,7 +38,11 @@ class Element extends EventTarget {
     return selector === ":disabled" && this.disabled;
   }
   closest(_selector: string): Element | null {
-    return this.hidden || this.inert ? this : (this.parentElement?.closest(_selector) ?? null);
+    return this.hidden ||
+      this.inert ||
+      this.attributes.get("aria-disabled")?.toLowerCase() === "true"
+      ? this
+      : (this.parentElement?.closest(_selector) ?? null);
   }
 }
 class FixtureDocument extends EventTarget {
@@ -45,7 +54,10 @@ class FixtureDocument extends EventTarget {
     setTimeout: (fn: () => void, delay: number) => setTimeout(fn, delay),
   });
 }
-function setup() {
+function setup(readiness?: {
+  ready: () => boolean;
+  subscribe: (invalidate: () => void) => () => void;
+}) {
   vi.useFakeTimers();
   const document = new FixtureDocument();
   const root = new Element(document),
@@ -63,7 +75,13 @@ function setup() {
       return () => captured === generation;
     },
   };
-  const stop = bindAdaHoldActions({ gate }, host);
+  const attachment = readiness
+    ? bindAdaActionRoot(
+        { guard: { gate }, requiredReady: readiness.ready, subscribeRequired: readiness.subscribe },
+        host,
+      )
+    : undefined;
+  const stop = attachment?.dispose ?? bindAdaHoldActions({ gate }, host);
   const event = (type: string, target: Element = label, extra = {}) => {
     const e = new Event(type, { cancelable: true });
     Object.defineProperties(
@@ -211,4 +229,97 @@ it("excludes unregistered controls and refuses hidden or disposed bindings witho
   f.stop();
   f.stop();
   expect(vi.getTimerCount()).toBe(0);
+});
+
+it("shares required readiness and foreground eligibility across click and default hold, then rearms", () => {
+  let ready = true;
+  let invalidate = () => {};
+  const unsubscribe = vi.fn();
+  const f = setup({
+    ready: () => ready,
+    subscribe: (notify) => {
+      invalidate = notify;
+      return unsubscribe;
+    },
+  });
+  const binding = bindAdaAction(f.options, f.element);
+  f.down();
+  ready = false;
+  invalidate();
+  f.click(0);
+  vi.advanceTimersByTime(500);
+  expect(f.run).not.toHaveBeenCalled();
+  ready = true;
+  invalidate();
+  vi.advanceTimersByTime(500);
+  expect(f.run).not.toHaveBeenCalled();
+  f.document.dispatchEvent(f.event("pointercancel"));
+  f.down();
+  Object.assign(f.document, { hidden: true });
+  f.document.dispatchEvent(new Event("visibilitychange"));
+  f.click(0);
+  Object.assign(f.document, { hidden: false });
+  f.document.dispatchEvent(new Event("visibilitychange"));
+  vi.advanceTimersByTime(500);
+  expect(f.run).not.toHaveBeenCalled();
+  f.document.dispatchEvent(f.event("pointercancel"));
+  f.down();
+  vi.advanceTimersByTime(499);
+  expect(f.run).not.toHaveBeenCalled();
+  vi.advanceTimersByTime(1);
+  expect(f.run).toHaveBeenCalledOnce();
+  f.up();
+  f.click();
+  expect(f.run).toHaveBeenCalledOnce();
+  f.stop();
+  f.click(0);
+  expect(f.run).toHaveBeenCalledOnce();
+  expect(unsubscribe).toHaveBeenCalledOnce();
+  binding.dispose();
+});
+
+it("refuses disabled and aria-disabled clicks and holds, cancels moved and other-pointer releases", () => {
+  const f = setup();
+  const binding = bindAdaAction(f.options, f.element);
+  for (const disabled of ["native", "aria"] as const) {
+    f.button.disabled = disabled === "native";
+    if (disabled === "aria") {
+      f.button.attributes.set("aria-disabled", "TRUE");
+    }
+    f.down();
+    vi.advanceTimersByTime(500);
+    f.up();
+    f.click(0);
+    expect(f.run).not.toHaveBeenCalled();
+    f.button.disabled = false;
+    f.button.attributes.delete("aria-disabled");
+  }
+  f.down();
+  f.document.dispatchEvent(f.event("pointermove", f.button, { clientX: 9 }));
+  vi.advanceTimersByTime(500);
+  expect(f.run).not.toHaveBeenCalled();
+  f.up();
+  f.down();
+  f.document.dispatchEvent(f.event("pointerup", f.button, { pointerId: 8 }));
+  vi.advanceTimersByTime(500);
+  expect(f.run).toHaveBeenCalledOnce();
+  f.up();
+  expect(f.click().defaultPrevented).toBe(true);
+  f.stop();
+  binding.dispose();
+});
+
+it("rejects an unbound newly constructed action control and a missing root, accepting registered overrides", () => {
+  const f = setup();
+  Object.assign(f.root, { querySelectorAll: () => [f.element] });
+  expect(() => assertAdaActionBindings(f.host)).toThrow("no registered action binding");
+  const binding = bindAdaAction(
+    { ...f.options, hold: { ...f.options.click, run: vi.fn() } },
+    f.element,
+  );
+  expect(() => assertAdaActionBindings(f.host)).not.toThrow();
+  f.stop();
+  expect(() => assertAdaActionBindings(f.host)).toThrow("no live action root");
+  binding.dispose();
+  expect(() => assertAdaActionBindings(f.host)).toThrow("no registered action binding");
 });
