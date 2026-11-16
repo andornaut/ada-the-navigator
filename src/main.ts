@@ -52,6 +52,7 @@ if (!application) {
 const ui: HTMLElement = application;
 const appActions = bindAdaActionRoot(
   {
+    allowNonPrimaryTouch: true,
     guard: rootPressGuard(ui),
     requiredReady,
     subscribeRequired: (invalidate) => requiredLoading.subscribe(invalidate),
