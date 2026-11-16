@@ -38,6 +38,7 @@ function harness(required?: () => boolean) {
     reset: vi.fn(),
     sample: vi.fn(() => ({ aim: { x: 1, y: 0 }, fire: true, move: { x: 0, y: 1 }, turn: 1 })),
   };
+  const actionRoot = { invalidate: vi.fn() };
   const weapons = { setEnabled: vi.fn() };
   const editable = { closest: () => true };
   class Element {
@@ -49,6 +50,7 @@ function harness(required?: () => boolean) {
   const sandbox = createContext({
     CONTROL_KEYS: new Set(["KeyW", "Space"]),
     Element,
+    actionRoot,
     backStack: { anyOpen: () => false, back },
     coarsePointer: () => true,
     consumeContextQuestUse: vi.fn(
@@ -86,7 +88,7 @@ function harness(required?: () => boolean) {
     adapter.keyDown(event);
     return event;
   };
-  return { adapter, back, desktop, editable, exit, key, navigation, state, weapons };
+  return { actionRoot, adapter, back, desktop, editable, exit, key, navigation, state, weapons };
 }
 
 describe("required-entry controls fence", () => {
@@ -167,4 +169,49 @@ describe("required-entry controls fence", () => {
     h.key("KeyW");
     expect(h.adapter.sample().move.y).toBe(-1);
   });
+});
+
+it("attaches one UI-scoped root with the canonical readiness ports independently of gameplay acceptance", () => {
+  let ready = false;
+  const subscribe = vi.fn(() => () => {});
+  const root = {};
+  const uiGuard = {};
+  const bind = vi.fn(() => ({}));
+  const sandbox = createContext({
+    bindAdaActionRoot: bind,
+    options: { requiredReady: () => ready, subscribeRequired: subscribe },
+    rootPressGuard: (element: unknown) => {
+      expect(element).toBe(root);
+      return uiGuard;
+    },
+    settings: { root },
+    state: { accepts: () => false },
+  });
+  runInContext(
+    ts.transpileModule(`const ${actual("requiredReady")}; const ${actual("actionRoot")};`, {
+      compilerOptions: { target: ts.ScriptTarget.ES2023 },
+    }).outputText,
+    sandbox,
+  );
+  expect(bind).toHaveBeenCalledOnce();
+  const [policy, element] = bind.mock.calls[0] as unknown as [
+    { guard: unknown; requiredReady: () => boolean; subscribeRequired: typeof subscribe },
+    unknown,
+  ];
+  expect(element).toBe(root);
+  expect(policy.guard).toBe(uiGuard);
+  expect(policy.subscribeRequired).toBe(subscribe);
+  expect(policy.requiredReady()).toBe(false);
+  ready = true;
+  expect(policy.requiredReady()).toBe(true);
+});
+
+it("invalidates the existing UI capture scope on reset and enabled-state transitions", () => {
+  const h = harness(() => true);
+  h.adapter.setEnabled(false);
+  expect(h.actionRoot.invalidate).toHaveBeenCalledOnce();
+  h.adapter.setEnabled(false);
+  expect(h.actionRoot.invalidate).toHaveBeenCalledOnce();
+  h.adapter.setEnabled(true);
+  expect(h.actionRoot.invalidate).toHaveBeenCalledTimes(2);
 });

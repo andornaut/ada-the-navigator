@@ -39,7 +39,7 @@ import { type BackLayer, createBackStack, pressBack } from "../ui/backStack.ts";
 import type { CheatAction } from "../ui/cheatActions.ts";
 import { type CheatLabels, createCheats } from "../ui/cheats.ts";
 import { consumeContextQuestUse, createContextQuestIcon } from "../ui/contextQuestUse.ts";
-import { bindAdaHoldActions } from "../ui/holdActionsAdapter.ts";
+import { bindAdaActionRoot } from "../ui/holdActionsAdapter.ts";
 import { createItemNotices, type NoticePlaces } from "../ui/itemNotice.ts";
 import { units, VIEW_HOST_ID } from "../ui/layout/css.ts";
 import {
@@ -80,6 +80,7 @@ import { type ControlSample, ControlState } from "./state.ts";
 
 export interface ControlsOptions {
   readonly requiredReady?: RequiredReady;
+  readonly subscribeRequired?: (invalidate: () => void) => () => void;
   readonly contextQuestDetails?: () => ContextQuestDetails | null;
   readonly aboardResource?: () => {
     readonly questId?: string;
@@ -256,7 +257,14 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       visibility = value;
     },
   });
-  const stopHoldActions = bindAdaHoldActions(rootPressGuard(settings.root), settings.root);
+  const actionRoot = bindAdaActionRoot(
+    {
+      guard: rootPressGuard(settings.root),
+      requiredReady,
+      subscribeRequired: options.subscribeRequired ?? (() => () => {}),
+    },
+    settings.root,
+  );
   // Settings opened from the Paused card, and the cheats card opened from that Settings, return
   // to the Paused card when they close.
   let returnToPause = false;
@@ -739,6 +747,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     pressBack(backStack, true, openNavigation);
   };
   const reset = () => {
+    actionRoot.invalidate();
     state.reset();
     desktop.reset();
   };
@@ -873,7 +882,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
         return;
       }
       disposed = true;
-      stopHoldActions();
+      actionRoot.dispose();
       stopPointers();
       desktopBinding.dispose();
       state.setEnabled(false);
@@ -976,6 +985,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     setEnabled(value) {
       const nextEnabled = value && requiredReady();
       if (enabled !== nextEnabled) {
+        actionRoot.invalidate();
         desktop.reset();
       }
       enabled = nextEnabled;
