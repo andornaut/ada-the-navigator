@@ -11,6 +11,8 @@ import { adaActionHasRoot, adaActionOwnedBy, adaActionRootAllows } from "./actio
 export const ADA_ACTION_HOLD_MS = 500;
 
 export interface AdaActionOptions extends AdaActionBinding {
+  /** Only this control may expose its guarded refusal action while announcing aria-disabled. */
+  readonly ownAriaDisabled?: HoldAction["ownAriaDisabled"];
   /** Self ownership excludes card/text descendants from both native click and hold resolution. */
   readonly hitTarget?: "self" | "descendants";
   /** Factory mode registers hold metadata while the factory retains its native click listener. */
@@ -118,12 +120,24 @@ export function resolveAdaHoldAction(
             entry.activate();
           }
         },
-        available: () =>
-          current() &&
-          controlPresentation((entry.options.hold ?? entry.options.click).availability())
-            .executable,
+        available: () => {
+          if (!current()) {
+            return false;
+          }
+          const action = entry.options.hold ?? entry.options.click;
+          const availability = action.availability();
+          return (
+            controlPresentation(availability).executable ||
+            (entry.options.ownAriaDisabled === "refusal-feedback" &&
+              availability.kind === "unavailable" &&
+              action.refuse !== undefined)
+          );
+        },
         element: owned,
         identity: entry,
+        ...(entry.options.ownAriaDisabled === undefined
+          ? {}
+          : { ownAriaDisabled: entry.options.ownAriaDisabled }),
         rule: { holdMs: ADA_ACTION_HOLD_MS, slopPx: entry.options.slopPx() },
         ...(entry.options.hold
           ? {

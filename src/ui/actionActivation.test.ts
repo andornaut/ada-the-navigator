@@ -56,3 +56,28 @@ it("rechecks current availability for either trigger and refuses omitted and unm
   expect(activateAdaAction(binding, "hold")).toBe(true);
   expect(run).toHaveBeenCalledOnce();
 });
+
+it("dispatches explicit refusal feedback without mutation and preserves omitted/override policy", () => {
+  const run = vi.fn(),
+    refuse = vi.fn(),
+    other = vi.fn();
+  const binding: AdaActionBinding = {
+    click: { availability: () => ({ kind: "unavailable", reason: "Need fuel" }), refuse, run },
+    hold: {
+      availability: () => ({ kind: "unavailable", reason: "Need tool" }),
+      refuse: other,
+      run,
+    },
+  };
+  expect(activateAdaAction(binding, "click")).toBe(false);
+  expect(refuse).toHaveBeenCalledExactlyOnceWith("Need fuel");
+  expect(activateAdaAction(binding, "hold")).toBe(false);
+  expect(other).toHaveBeenCalledExactlyOnceWith("Need tool");
+  expect(run).not.toHaveBeenCalled();
+  const omitted: AdaActionBinding = {
+    click: { availability: () => ({ kind: "omitted" }), refuse, run },
+  };
+  activateAdaAction(omitted, "click");
+  expect(refuse).toHaveBeenCalledTimes(1);
+  expect(run).not.toHaveBeenCalled();
+});

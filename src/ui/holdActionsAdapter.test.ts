@@ -76,6 +76,7 @@ function setup(
   },
   recovery = false,
   pointerRelease?: AdaPointerReleaseOptions,
+  allowNonPrimaryTouch?: boolean,
 ) {
   vi.useFakeTimers();
   const document = new FixtureDocument();
@@ -99,6 +100,7 @@ function setup(
     : readiness
       ? bindAdaActionRoot(
           {
+            ...(allowNonPrimaryTouch === undefined ? {} : { allowNonPrimaryTouch }),
             guard: { gate },
             ...(pointerRelease ? { pointerRelease } : {}),
             requiredReady: readiness.ready,
@@ -854,5 +856,156 @@ it("requires an exact self target for native clicks and hold construction, witho
   expect(() => binding.update(f.options)).toThrow("hit target cannot change");
   binding.dispose();
   outer.dispose();
+  f.stop();
+});
+
+it.each([false, true])(
+  "opts non-primary touch into the same published lifecycle (release mode %s)",
+  (release) => {
+    const f = setup(
+      { ready: () => true, subscribe: () => () => {} },
+      false,
+      release ? { resolvePointer: () => undefined } : undefined,
+      true,
+    );
+    const binding = bindAdaAction(f.options, f.element);
+    const down = (pointerType: string, button = 0) => {
+      f.document.dispatchEvent(
+        f.event("pointerdown", f.label, { button, isPrimary: false, pointerId: 8, pointerType }),
+      );
+      f.root.dispatchEvent(
+        f.event("pointerdown", f.label, { button, isPrimary: false, pointerId: 8, pointerType }),
+      );
+    };
+    down("mouse");
+    vi.advanceTimersByTime(500);
+    expect(f.run).not.toHaveBeenCalled();
+    down("touch", 1);
+    vi.advanceTimersByTime(500);
+    expect(f.run).not.toHaveBeenCalled();
+    down("touch");
+    vi.advanceTimersByTime(500);
+    expect(f.run).toHaveBeenCalledTimes(1);
+    f.document.dispatchEvent(
+      f.event("pointerup", f.label, { isPrimary: false, pointerId: 8, pointerType: "touch" }),
+    );
+    const clicked = f.event("click", f.label, { pointerId: 8 });
+    f.root.dispatchEvent(clicked);
+    expect(clicked.defaultPrevented).toBe(true);
+    expect(f.run).toHaveBeenCalledTimes(1);
+    binding.dispose();
+    f.stop();
+  },
+);
+
+it("keeps non-primary touch disabled without the explicit root option", () => {
+  const f = setup({ ready: () => true, subscribe: () => () => {} });
+  const binding = bindAdaAction(f.options, f.element);
+  f.document.dispatchEvent(
+    f.event("pointerdown", f.label, { isPrimary: false, pointerType: "touch" }),
+  );
+  f.root.dispatchEvent(f.event("pointerdown", f.label, { isPrimary: false, pointerType: "touch" }));
+  vi.advanceTimersByTime(500);
+  expect(f.run).not.toHaveBeenCalled();
+  binding.dispose();
+  f.stop();
+});
+
+it("routes own-ARIA refusal once without mutation and never exempts native/inert/ancestor/root blocks", () => {
+  const f = setup();
+  const refuse = vi.fn();
+  f.button.setAttribute("aria-disabled", "true");
+  const binding = bindAdaAction(
+    {
+      ...f.options,
+      click: {
+        availability: () => ({ kind: "unavailable", reason: "Need fuel" }),
+        refuse,
+        run: f.run,
+      },
+      ownAriaDisabled: "refusal-feedback",
+    },
+    f.element,
+  );
+  expect(resolveAdaHoldAction(f.host, f.element)?.ownAriaDisabled).toBe("refusal-feedback");
+  f.down();
+  vi.advanceTimersByTime(500);
+  f.up();
+  f.click();
+  expect(refuse).toHaveBeenCalledExactlyOnceWith("Need fuel");
+  expect(f.run).not.toHaveBeenCalled();
+  const block = (change: () => void, restore: () => void) => {
+    change();
+    f.down();
+    vi.advanceTimersByTime(500);
+    f.up();
+    restore();
+  };
+  block(
+    () => {
+      f.button.disabled = true;
+    },
+    () => {
+      f.button.disabled = false;
+    },
+  );
+  block(
+    () => {
+      f.button.inert = true;
+    },
+    () => {
+      f.button.inert = false;
+    },
+  );
+  block(
+    () => f.root.setAttribute("aria-disabled", "true"),
+    () => f.root.removeAttribute("aria-disabled"),
+  );
+  f.label.parentElement = f.button;
+  const ancestor = new Element(f.document);
+  ancestor.parentElement = f.root;
+  f.button.parentElement = ancestor;
+  block(
+    () => ancestor.setAttribute("aria-disabled", "true"),
+    () => ancestor.removeAttribute("aria-disabled"),
+  );
+  expect(refuse).toHaveBeenCalledTimes(1);
+  expect(f.run).not.toHaveBeenCalled();
+  binding.dispose();
+  f.stop();
+});
+
+it("does not promote unavailable or omitted actions without the exact registered refusal policy", () => {
+  const f = setup();
+  const refuse = vi.fn();
+  const binding = bindAdaAction(
+    {
+      ...f.options,
+      click: {
+        availability: () => ({ kind: "unavailable", reason: "Need fuel" }),
+        refuse,
+        run: f.run,
+      },
+    },
+    f.element,
+  );
+  expect(resolveAdaHoldAction(f.host, f.element)?.available()).toBe(false);
+  binding.update({
+    ...f.options,
+    click: { availability: () => ({ kind: "omitted" }), refuse, run: f.run },
+    ownAriaDisabled: "refusal-feedback",
+  });
+  expect(resolveAdaHoldAction(f.host, f.element)?.available()).toBe(false);
+  binding.update({
+    ...f.options,
+    click: { availability: () => ({ kind: "unavailable", reason: "Need fuel" }), run: f.run },
+    ownAriaDisabled: "refusal-feedback",
+  });
+  expect(resolveAdaHoldAction(f.host, f.element)?.available()).toBe(false);
+  f.down();
+  vi.advanceTimersByTime(500);
+  expect(refuse).not.toHaveBeenCalled();
+  expect(f.run).not.toHaveBeenCalled();
+  binding.dispose();
   f.stop();
 });

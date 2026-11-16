@@ -23,6 +23,7 @@ export interface AdaPointerReleaseOptions {
 }
 
 export interface AdaActionRootOptions {
+  readonly allowNonPrimaryTouch?: HoldActionsOptions["allowNonPrimaryTouch"];
   /** Opt in only when the caller removes its parallel pointer-release activation. */
   readonly pointerRelease?: AdaPointerReleaseOptions;
   readonly guard: PressGuard;
@@ -32,6 +33,7 @@ export interface AdaActionRootOptions {
 }
 
 export interface AdaRecoveryActionRootOptions {
+  readonly allowNonPrimaryTouch?: HoldActionsOptions["allowNonPrimaryTouch"];
   readonly guard: PressGuard;
 }
 
@@ -90,19 +92,25 @@ function bindRoot(policy: RootPolicy, root: HTMLElement) {
     return action && inCurrentView(root, action.element) ? action : null;
   };
   const pointer = policy.kind === "game" ? policy.options.pointerRelease : undefined;
+  const shared: HoldActionsOptions = {
+    ...(options.allowNonPrimaryTouch === undefined
+      ? {}
+      : { allowNonPrimaryTouch: options.allowNonPrimaryTouch }),
+    guard,
+    resolve,
+  };
   const dispatch: HoldActionsOptions | PointerReleaseHoldActionsOptions = pointer
     ? {
+        ...shared,
         activation: "pointer-release",
-        guard,
         onPressChange: (action) => pointer.onPressChange?.(action?.element ?? null),
         pointerTarget: pointer.pointerTarget,
-        resolve,
         resolvePointer: (event) => {
           const element = pointer.resolvePointer(event);
           return resolve(element === undefined ? event.target : element);
         },
       }
-    : { guard, resolve };
+    : shared;
   const stop = bindHoldActions(dispatch, root);
   const stopClicks = guardClicks(guard, root);
   const stopScope = subscribePressScope(() => stop.cancel(), root);
