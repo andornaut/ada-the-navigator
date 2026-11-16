@@ -602,6 +602,7 @@ export function buildScene(scene: UiContext): void {
     rasterScale: scene.rasters.scale,
     requiredReady,
     shieldLabel: CONTENT.labels.shield ?? "",
+    subscribeRequired: (invalidate) => requiredLoading.subscribe(invalidate),
     update: {
       labels: {
         accept: CONTENT.update.accept,
