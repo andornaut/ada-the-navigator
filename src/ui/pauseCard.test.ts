@@ -247,6 +247,16 @@ const SHIP: ShipView = {
 beforeEach(() => {
   PAGE = createDocument();
   vi.stubGlobal("HTMLElement", FakeElement);
+  vi.stubGlobal(
+    "MutationObserver",
+    class {
+      disconnect() {}
+      observe() {}
+      takeRecords() {
+        return [];
+      }
+    },
+  );
   vi.stubGlobal("Image", FakeImage);
   vi.stubGlobal("document", PAGE);
   vi.stubGlobal("window", { addEventListener: vi.fn(), removeEventListener: vi.fn() });
