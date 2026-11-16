@@ -156,6 +156,7 @@ vi.mock("./modal.ts", () => ({
       header.append(new Element("button"));
     }
     frame.append(header, body, close);
+    fixtureActionRoot(frame);
     return { body, close, dispose: factories.dispose, fit: factories.fit, frame, header, title };
   },
   setFooterAction: (intent: string, element: Element) => {

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { fixtureActionRoot } from "./actionRootFixture.ts";
 import {
   applyAdaControlTheme,
   createAdaPageDivider,
@@ -27,6 +28,10 @@ class Element extends EventTarget {
   hidden = false;
   parentElement: Element | null = null;
   removed = false;
+  connected = false;
+  get isConnected(): boolean {
+    return !this.removed && (this.connected || this.parentElement?.isConnected === true);
+  }
   readonly ownerDocument: FixtureDocument;
   readonly tagName: string;
   readonly properties = new Map<string, string>();
@@ -134,6 +139,9 @@ describe("actual typed-layout button presentation", () => {
     const initial = { actionId: "buy", label: "Buy equipment", role: "secondary" as const };
     const part = ports.components.button.create(initial);
     const root = part.element as unknown as Element;
+    const host = fixtureActionRoot(document.createElement("div"));
+    host.connected = true;
+    host.append(root);
     const button = root.children[0] as Element;
     const labelFace = button.children[0] as Element;
     const label = labelFace.children[0] as TextNode;
