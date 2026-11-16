@@ -555,13 +555,13 @@ function semanticRefusalFixture(onUnavailable?: (reason: string) => void) {
     part.element,
   );
   inputReleases.push(input.dispose);
-  const event = (type: string) => {
+  const event = (type: string, detail = 1) => {
     const e = new Event(type, { cancelable: true });
     Object.defineProperties(e, {
       button: { value: 0 },
       clientX: { value: 0 },
       clientY: { value: 0 },
-      detail: { value: type === "click" ? 1 : 0 },
+      detail: { value: type === "click" ? detail : 0 },
       isPrimary: { value: true },
       pointerId: { value: 7 },
       target: { value: f.button() },
@@ -585,9 +585,7 @@ function semanticRefusalFixture(onUnavailable?: (reason: string) => void) {
 it("gives an explicit semantic unavailable callback the same current refusal on hold once before release", () => {
   const onUnavailable = vi.fn();
   const f = semanticRefusalFixture(onUnavailable);
-  f.event("pointerdown");
-  f.event("pointerup");
-  f.event("click");
+  f.event("click", 0);
   expect(onUnavailable).toHaveBeenCalledExactlyOnceWith("Need fuel");
   expect(f.first).not.toHaveBeenCalled();
   const nativeCallbackContext = onUnavailable.mock.contexts[0];
