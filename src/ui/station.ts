@@ -25,7 +25,8 @@ import { STATION_SPRITES } from "./layout/stationStyle.ts";
 import { SPACING } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import { createActions, createButton, createCard, isTap, setFooterAction } from "./modal.ts";
-import { enterPressView, inCurrentView } from "./pressScope.ts";
+import { createModalLayer } from "./modalLayer.ts";
+import { inCurrentView } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
 import { mountStationDropDetails } from "./stationDropDetails.ts";
 import { createStationItemIcon, type ItemGlyph, setStationItemTitle } from "./stationItemIcon.ts";
@@ -629,6 +630,8 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   modal.append(stationCard.frame, shopCard.frame, jobsCard.frame);
   confirmModal.append(confirmCard.frame, dropHost);
   parent.append(modal, confirmModal);
+  const stationLayer = createModalLayer(modal);
+  const confirmationLayer = createModalLayer(confirmModal);
 
   let open = false;
   let view: StationView = "card";
@@ -642,7 +645,9 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       !open || disposed
         ? undefined
         : confirm
-          ? confirmModal
+          ? "drop" in confirm
+            ? (dropHost.querySelector<HTMLElement>(".ada-card-frame") ?? undefined)
+            : confirmCard.frame
           : view === "shop"
             ? shopCard.frame
             : view === "jobs"
@@ -652,10 +657,18 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       leavePress?.();
       pressDialog = next;
       leavePress = next
-        ? enterPressView(parent, next, [], {
-            backdrop: confirm ? confirmModal : modal,
-            close: () => back(),
-          })
+        ? (confirm ? confirmationLayer : stationLayer).open(
+            {
+              backdrop: confirm ? confirmModal : modal,
+              close: () => back(),
+              ...(document.activeElement instanceof HTMLElement &&
+              next.contains(document.activeElement)
+                ? { focus: document.activeElement }
+                : {}),
+              isolation: "dialog",
+            },
+            next,
+          )
         : undefined;
     }
   };
@@ -1359,7 +1372,8 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
         return;
       }
       disposed = true;
-      leavePress?.();
+      stationLayer.dispose();
+      confirmationLayer.dispose();
       leavePress = undefined;
       clearBindings(bindings);
       clearBindings(shopBindings);
