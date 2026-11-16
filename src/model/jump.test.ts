@@ -2,12 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY, type UpgradeWeapon } from "../data/economy.ts";
+import { GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
 import { bedroomBackground } from "../ui/bedroom.ts";
 import { stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
+import { stationStock } from "./shop.ts";
 import { stationsNear } from "./stations.ts";
 import { type StationService, stationSpecialty } from "./stationServices.ts";
 import type { FlightInput, FlightState, GameState } from "./types.ts";
@@ -557,7 +559,26 @@ describe("shop through the model", () => {
   });
 
   it("applies an owned paint scheme at once and saves it with purchases", () => {
-    const model = docked();
+    const galaxy = GALAXY_NUMBERS.find((galaxy) =>
+      stationStock(ECONOMY, ROUTE_POSITION[galaxy]).equipment.some(
+        (item) => item.kind === "paint" && item.scheme === "iris",
+      ),
+    );
+    if (galaxy === undefined) {
+      throw new Error("No canonical station offers Iris");
+    }
+    const model = new GameModel(CONTENT);
+    model.state.unlocked = [...GALAXY_NUMBERS];
+    model.startGalaxy(galaxy);
+    playOpening(model);
+    const site = stationsNear(ECONOMY, galaxy, 40000, model.state.flight!.player).find(
+      (site) => stationSpecialty(galaxy, site.id) === "equipment",
+    )!;
+    model.state.docked = site.id;
+    expect(model.shopRows("ship").map(({ item }) => item)).toContainEqual({
+      kind: "paint",
+      scheme: "iris",
+    });
     model.state.economy.stardust = 1500;
     expect(model.buy({ kind: "paint", scheme: "iris" })).toEqual({ kind: "bought", price: 1500 });
     expect(model.selectPaint("classic")).toBe(true);
