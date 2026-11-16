@@ -7835,7 +7835,7 @@
     },
     {
       "id": "quantum-jump-field",
-      "path": "/art/quantum-jump-field.png",
+      "path": "/art/quantum-jump-field.webp",
       "width": 960,
       "height": 3780,
       "displayWidth": 960,
@@ -7898,7 +7898,7 @@
     },
     {
       "id": "quantum-jump-tunnel",
-      "path": "/art/quantum-jump-tunnel.png",
+      "path": "/art/quantum-jump-tunnel.webp",
       "width": 960,
       "height": 3780,
       "displayWidth": 960,

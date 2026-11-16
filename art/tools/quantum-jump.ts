@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import { ellipse, line } from "@andornaut/art-kit/build/draw";
 import { blankImage } from "@andornaut/art-kit/build/rgbaImage";
+import { encodeLosslessWebp } from "@andornaut/art-kit/build/webp";
 import { format, resolveConfig } from "prettier";
 
 import { linkData, placeEntries } from "./manifest.ts";
@@ -218,14 +219,32 @@ const glowSheet = sheet(
   LEVELS.length,
 );
 const starImage = star();
-if (!dataOnly && !paintOnly) writePng(`${art}quantum-jump-field.png`, fieldSheet, true);
+if (!dataOnly && !paintOnly) {
+  // RGB PNG output made every pixel opaque without compositing its stored RGB channels.
+  writeFileSync(
+    `${art}quantum-jump-field.webp`,
+    await encodeLosslessWebp({
+      ...fieldSheet,
+      data: fieldSheet.data.map((channel, index) => (index % 4 === 3 ? 255 : channel)),
+    }),
+  );
+}
 if (!dataOnly && !paintOnly) writePng(`${art}quantum-jump-glow.png`, glowSheet);
 if (!dataOnly && !paintOnly) writePng(`${art}quantum-jump-star.png`, starImage);
 const tunnelSheet = sheet(
   TUNNEL_SHEET.map(([, image]) => image),
   1,
 );
-if (!dataOnly && !paintOnly) writePng(`${art}quantum-jump-tunnel.png`, tunnelSheet, true);
+if (!dataOnly && !paintOnly) {
+  // RGB PNG output made every pixel opaque without compositing its stored RGB channels.
+  writeFileSync(
+    `${art}quantum-jump-tunnel.webp`,
+    await encodeLosslessWebp({
+      ...tunnelSheet,
+      data: tunnelSheet.data.map((channel, index) => (index % 4 === 3 ? 255 : channel)),
+    }),
+  );
+}
 
 // Warp ship poses at the arrival heading, drawn from the shared ship model in every paint: banks
 // (roll, degrees), a stretch along the hull and a squash across it, about the pivot. "sprite" in a
@@ -243,7 +262,9 @@ const entry = (
   names: readonly string[],
 ) => ({
   id,
-  path: `/art/${id}.png`,
+  path: `/art/${id}.${
+    id === "quantum-jump-field" || id === "quantum-jump-tunnel" ? "webp" : "png"
+  }`,
   width: image.width,
   height: image.height,
   displayWidth: frameWidth,
