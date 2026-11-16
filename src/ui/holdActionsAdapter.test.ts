@@ -8,6 +8,7 @@ import {
   resolveAdaHoldAction,
 } from "./actionBinding.ts";
 import { bindAdaActionRoot, bindAdaHoldActions } from "./holdActionsAdapter.ts";
+import { enterPressView, invalidatePressScope } from "./pressScope.ts";
 
 class Element extends EventTarget {
   parentElement: Element | null = null;
@@ -453,5 +454,90 @@ it("dispatches keyboard activation through current click policy independently of
   expect(hold).toHaveBeenCalledOnce();
   binding.dispose();
   expect(binding.activate()).toBe(false);
+  f.stop();
+});
+
+it("synchronously cancels root/readiness ownership and suppresses only its matching release", () => {
+  let notify = () => {};
+  const f = setup({
+    ready: () => true,
+    subscribe: (invalidate) => {
+      notify = invalidate;
+      return () => {};
+    },
+  });
+  const binding = bindAdaAction(f.options, f.element);
+  f.down();
+  expect(vi.getTimerCount()).toBe(1);
+  notify();
+  expect(vi.getTimerCount()).toBe(0);
+  f.up();
+  expect(f.click().defaultPrevented).toBe(true);
+  expect(f.run).not.toHaveBeenCalled();
+  f.click(0);
+  expect(f.run).toHaveBeenCalledOnce();
+  f.down();
+  invalidatePressScope(f.host);
+  expect(vi.getTimerCount()).toBe(0);
+  vi.advanceTimersByTime(500);
+  expect(f.run).toHaveBeenCalledOnce();
+  f.up();
+  expect(f.click().defaultPrevented).toBe(true);
+  binding.dispose();
+  f.stop();
+});
+
+it("cancels reentrant modal changes during a hold without double activation on release", () => {
+  const f = setup();
+  const dialog = new Element(f.document);
+  dialog.parentElement = f.root;
+  let leave = () => {};
+  const opened = vi.fn(() => {
+    leave = enterPressView(f.host, dialog as unknown as HTMLElement);
+  });
+  const binding = bindAdaAction(
+    { ...f.options, click: { ...f.options.click, run: opened } },
+    f.element,
+  );
+  f.down();
+  vi.advanceTimersByTime(500);
+  expect(opened).toHaveBeenCalledOnce();
+  expect(vi.getTimerCount()).toBe(0);
+  f.up();
+  expect(f.click().defaultPrevented).toBe(true);
+  expect(opened).toHaveBeenCalledOnce();
+  leave();
+  f.down();
+  vi.advanceTimersByTime(500);
+  expect(opened).toHaveBeenCalledTimes(2);
+  leave();
+  binding.dispose();
+  f.stop();
+});
+
+it("suppresses a canceled native compatibility click after eligibility remains available for the entire press", () => {
+  const f = setup();
+  const binding = bindAdaAction(f.options, f.element);
+  const legacyClick = () => {
+    const event = new Event("click", { cancelable: true });
+    Object.defineProperties(event, { detail: { value: 1 }, target: { value: f.button } });
+    f.root.dispatchEvent(event);
+    if (!event.defaultPrevented) {
+      f.button.dispatchEvent(f.event("click", f.button));
+    }
+    return event;
+  };
+  f.down();
+  invalidatePressScope(f.host);
+  vi.advanceTimersByTime(530);
+  expect(f.run).not.toHaveBeenCalled();
+  f.up();
+  expect(legacyClick().defaultPrevented).toBe(true);
+  expect(f.run).not.toHaveBeenCalled();
+  f.down();
+  f.up();
+  expect(legacyClick().defaultPrevented).toBe(false);
+  expect(f.run).toHaveBeenCalledOnce();
+  binding.dispose();
   f.stop();
 });

@@ -4,7 +4,12 @@ import type { PressGuard } from "@andornaut/game-kit/runtime/web/ui/dom/domPress
 import type { RequiredReady } from "../loading/required.ts";
 import { assertAdaActionBindings, resolveAdaHoldAction } from "./actionBinding.ts";
 import { registerAdaActionRoot } from "./actionRegistry.ts";
-import { inCurrentView, invalidatePressScope, rootPressGuard } from "./pressScope.ts";
+import {
+  inCurrentView,
+  invalidatePressScope,
+  rootPressGuard,
+  subscribePressScope,
+} from "./pressScope.ts";
 
 export interface AdaActionRootOptions {
   readonly guard: PressGuard;
@@ -41,7 +46,7 @@ export function bindAdaActionRoot(options: AdaActionRootOptions, root: HTMLEleme
     },
     root,
   );
-  const invalidate = () => invalidatePressScope(root);
+  let disposed = false;
   const stop = bindHoldActions(
     {
       guard,
@@ -52,19 +57,25 @@ export function bindAdaActionRoot(options: AdaActionRootOptions, root: HTMLEleme
     },
     root,
   );
+  const stopScope = subscribePressScope(() => stop.cancel(), root);
+  const invalidate = () => {
+    if (!disposed) {
+      invalidatePressScope(root);
+    }
+  };
   const stopRequired = options.subscribeRequired(invalidate);
   document.addEventListener("visibilitychange", invalidate);
   document.defaultView?.addEventListener("pagehide", invalidate);
-  let disposed = false;
   return {
     assertBindings: () => assertAdaActionBindings(root),
     dispose() {
       if (disposed) {
         return;
       }
-      disposed = true;
       invalidate();
+      disposed = true;
       unregister();
+      stopScope();
       stopRequired();
       stop();
       document.removeEventListener("visibilitychange", invalidate);

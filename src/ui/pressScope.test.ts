@@ -7,6 +7,7 @@ import {
   inCurrentView,
   invalidatePressScope,
   rootPressGuard,
+  subscribePressScope,
 } from "./pressScope.ts";
 
 const published = vi.hoisted(() => ({
@@ -244,3 +245,22 @@ it.each(["card-up", "missing-up", "different-pointer", "secondary-up", "differen
     vi.unstubAllGlobals();
   },
 );
+
+it("notifies modal enter, leave and explicit revisions synchronously without retaining disposed subscribers", () => {
+  const root = node(),
+    dialog = node(root);
+  rootPressGuard(root);
+  const notify = vi.fn();
+  const stop = subscribePressScope(notify, root);
+  const leave = enterPressView(root, dialog);
+  expect(notify).toHaveBeenCalledOnce();
+  invalidatePressScope(root);
+  expect(notify).toHaveBeenCalledTimes(2);
+  leave();
+  expect(notify).toHaveBeenCalledTimes(3);
+  leave();
+  expect(notify).toHaveBeenCalledTimes(3);
+  stop();
+  invalidatePressScope(root);
+  expect(notify).toHaveBeenCalledTimes(3);
+});

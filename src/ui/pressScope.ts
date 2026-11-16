@@ -20,6 +20,7 @@ interface View {
 function createState(root: HTMLElement) {
   const gate = createModalInputGate();
   const views: View[] = [];
+  const listeners = new Set<() => void>();
   const active = () => views.at(-1)?.scope ?? gate;
   const guard: PressGuard = {
     gate: {
@@ -30,7 +31,7 @@ function createState(root: HTMLElement) {
       },
     },
   };
-  return { gate, guard, views };
+  return { gate, guard, listeners, views };
 }
 const roots = new WeakMap<HTMLElement, ReturnType<typeof createState>>();
 function state(root: HTMLElement) {
@@ -48,6 +49,21 @@ function owner(root: HTMLElement): HTMLElement {
     }
   }
   return root;
+}
+
+function notify(shared: ReturnType<typeof createState>): void {
+  for (const listener of [...shared.listeners]) {
+    if (shared.listeners.has(listener)) {
+      listener();
+    }
+  }
+}
+
+/** Reports actual modal and capture revisions synchronously to the owning input binding. */
+export function subscribePressScope(listener: () => void, root: HTMLElement): () => void {
+  const shared = state(owner(root));
+  shared.listeners.add(listener);
+  return () => shared.listeners.delete(listener);
 }
 
 /** Register the stable overlay before constructing its child modal layers. */
@@ -77,6 +93,7 @@ export function enterPressView(
   const shared = state(owner(root));
   const view: View = { dialog, live, scope: shared.gate.open() };
   shared.views.push(view);
+  notify(shared);
   let outside:
     | {
         readonly id: number;
@@ -154,6 +171,7 @@ export function enterPressView(
       dismissal?.backdrop.removeEventListener("click", click, true);
       shared.views.splice(index, 1);
       view.scope.close();
+      notify(shared);
     }
   };
 }
@@ -163,4 +181,5 @@ export function invalidatePressScope(root: HTMLElement): void {
   const shared = state(owner(root));
   const interruption = shared.gate.open();
   interruption.close();
+  notify(shared);
 }
