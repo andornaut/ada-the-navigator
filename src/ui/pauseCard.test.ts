@@ -926,6 +926,51 @@ it("does not route cargo to a quest absent from current membership and retains S
   pause.dispose();
 });
 
+it.each([
+  ["cargo:carrying:story-item:1:map", "story:1:held"],
+  ["cargo:carrying:job:1:delivery", "job:1:delivery"],
+  ["cargo:towing:job:1:rescue", "job:1:rescue"],
+])("routes %s to its own quest and returns to the same Ship row", (item, questId) => {
+  const { body, modal, options, pause, root, ship } = cards();
+  pause.setState(
+    state({
+      questEntries: ["story:1:held", "job:1:delivery", "job:1:rescue"].map((id) => ({
+        galaxy: 1,
+        id,
+        line: { kind: "job" as const, reward: "17 Stardust", target: null, text: `Quest ${id}` },
+        locations: [],
+      })),
+      ship: {
+        ...SHIP,
+        aboardQuestId: "wrong-legacy-id",
+        carrying: [
+          { id: "story-item:1:map", name: "Supplies", questId: "story:1:held" },
+          { id: "job:1:delivery", name: "Supplies", questId: "job:1:delivery" },
+        ],
+        towing: { id: "job:1:rescue", name: "Sleepy Tug", questId: "job:1:rescue" },
+      },
+    }),
+  );
+  pause.open();
+  button(body.children[0]!, "pause-ship").click();
+  const origin = ship.querySelectorAll().find((node) => node.dataset.item === item)!;
+  expect(origin).toBeDefined();
+  origin.click();
+  const detail = root.children.find((node) => node.className.includes("ada-quests-screen"))!;
+  expect(modal.hidden).toBe(true);
+  expect(detail.hidden).toBe(false);
+  expect(detail.textContent).toContain(`Quest ${questId}`);
+  expect(
+    detail.querySelectorAll().find((node) => node.dataset.action === "quest-close")!.textContent,
+  ).toBe("Back");
+  pause.closeShip();
+  expect(modal.hidden).toBe(false);
+  expect(pause.shipOpen()).toBe(true);
+  expect(focused()).toBe(origin);
+  expect(options.onBackToTitle).not.toHaveBeenCalled();
+  pause.dispose();
+});
+
 it("retains the Pause ancestor through Settings until Resume", () => {
   const { body, modal, options, pause } = cards();
   pause.setState(state());

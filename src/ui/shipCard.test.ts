@@ -56,12 +56,26 @@ describe("Ship card", () => {
 
   it("lists Stardust and ore with exact grouped counts, then the holodisks, under Cargo", () => {
     const { cargo } = shipSections(LABELS, VIEW);
-    expect(labels(cargo)).toEqual(["Stardust", "Ore", "Holodisks: 3 of 6"]);
-    expect(cargo.map((row) => row.count)).toEqual(["1,234,567", "12,500", undefined]);
+    expect(labels(cargo)).toEqual([
+      "Stardust",
+      "Ore",
+      "Holodisks: 3 of 6",
+      "Carrying: Nothing",
+      "Towing: Nothing",
+    ]);
+    expect(cargo.map((row) => row.count)).toEqual([
+      "1,234,567",
+      "12,500",
+      undefined,
+      undefined,
+      undefined,
+    ]);
     expect(cargo.map((row) => row.icon)).toEqual([
       { frames: 1, sprite: "icon-stardust-20" },
       { frames: 1, sprite: "icon-ore-20" },
       { frames: 1, sprite: "icon-holodisk-20" },
+      { frames: 1, sprite: "icon-cargo-20" },
+      { frames: 1, sprite: "icon-tow-20" },
     ]);
   });
 
@@ -69,7 +83,7 @@ describe("Ship card", () => {
     const carrying = shipSections(LABELS, {
       ...VIEW,
       aboard: { kind: "carrying", name: "Spare parts" },
-    }).cargo.at(-1);
+    }).cargo.at(-2);
     expect(carrying).toEqual({
       icon: { frames: 1, sprite: "icon-cargo-20" },
       item: { id: "aboard", kind: "cargo" },
@@ -91,10 +105,56 @@ describe("Ship card", () => {
       ...VIEW,
       aboard: { kind: "carrying", name: "A different visible label" },
       aboardQuestId: "live-held-job",
-    }).cargo.at(-1)!;
+    }).cargo.at(-2)!;
     expect(row.questId).toBe("live-held-job");
     expect(row.label).toBe("Carrying: A different visible label");
     expect(shipSections(LABELS, VIEW).cargo.every((row) => !row.questId)).toBe(true);
+  });
+
+  it("lists simultaneous distinct cargo identities and towing with exact live quest links", () => {
+    const view = {
+      ...VIEW,
+      aboard: { kind: "towing" as const, name: "Legacy tow" },
+      carrying: [
+        { id: "story-item:1:map", name: "Supplies", questId: "story:1:held" },
+        { id: "job:1:delivery", name: "Supplies", questId: "job:1:delivery" },
+        { id: "story-item:1:map", name: "Duplicate", questId: "not-used" },
+      ],
+      towing: { id: "job:1:rescue", name: "Sleepy Tug", questId: "job:1:rescue" },
+    };
+    const before = structuredClone(view);
+    const rows = shipSections(LABELS, view).cargo.slice(3);
+    expect(rows.map(({ label }) => label)).toEqual([
+      "Carrying: Supplies",
+      "Carrying: Supplies",
+      "Towing: Sleepy Tug",
+    ]);
+    expect(rows.map(({ item }) => shipItemKey(item))).toEqual([
+      "cargo:carrying:story-item:1:map",
+      "cargo:carrying:job:1:delivery",
+      "cargo:towing:job:1:rescue",
+    ]);
+    expect(rows.map(({ questId }) => questId)).toEqual([
+      "story:1:held",
+      "job:1:delivery",
+      "job:1:rescue",
+    ]);
+    expect(view).toEqual(before);
+  });
+
+  it("uses independent empty facts rather than the HUD fallback priority", () => {
+    const rows = shipSections(LABELS, {
+      ...VIEW,
+      aboard: { kind: "carrying", name: "HUD only" },
+      carrying: [],
+      towing: null,
+    }).cargo.slice(3);
+    expect(rows.map(({ label }) => label)).toEqual(["Carrying: Nothing", "Towing: Nothing"]);
+    expect(rows.map(({ item }) => shipItemKey(item))).toEqual([
+      "cargo:carrying:empty",
+      "cargo:towing:empty",
+    ]);
+    expect(rows.every((row) => row.interactive === false && row.questId === undefined)).toBe(true);
   });
 
   it("keeps the systems and paint data with Engine first, and weapons in HUD order", () => {
@@ -235,6 +295,8 @@ describe("Ship sections rendering", () => {
       ["Stardust", "1,234,567"],
       ["Ore", "12,500"],
       ["Holodisks: 3 of 6"],
+      ["Carrying: Nothing"],
+      ["Towing: Nothing"],
     ]);
   });
 
@@ -277,7 +339,7 @@ describe("Ship sections rendering", () => {
     expect(root.children[4]!.children[0]!.textContent).toBe("Weapons");
     expect(root.children[4]!.children[1]!.children).toHaveLength(0);
     const cargo = root.children[0]!.children[1]!;
-    expect(rowText(cargo.children.at(-1)!)).toEqual([
+    expect(rowText(cargo.children.at(-2)!)).toEqual([
       "Carrying: A very long cargo name that must wrap",
     ]);
     const empty = rendered({ ...sections, cargo: [] });
@@ -349,4 +411,29 @@ it("routes clickable inventory identities without reading labels", () => {
   disposeShipSections(root as unknown as HTMLElement);
   row.dispatchEvent(new Event("click"));
   expect(onItem).toHaveBeenCalledTimes(1);
+});
+
+it("keeps both empty status rows inert for click and registered hold activation", () => {
+  vi.stubGlobal("document", {
+    createElement: () => new ShipElement(),
+    createElementNS: () => new ShipElement(),
+    defaultView: { HTMLElement: ShipElement, Node: ShipElement },
+  });
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
+  const onItem = vi.fn();
+  const root = renderShipSections(
+    { ammo: "Ammo", cargo: "Cargo", equipment: "Equipment", weapons: "Weapons" },
+    shipSections(LABELS, { ...VIEW, carrying: [], towing: null }),
+    onItem,
+  ) as unknown as ShipElement;
+  const rows = root.children[0]!.children[1]!.children.slice(3);
+  expect(rows).toHaveLength(2);
+  for (const row of rows) {
+    expect((row as unknown as HTMLButtonElement).disabled).toBe(true);
+    expect((row as unknown as HTMLButtonElement).tabIndex).toBe(-1);
+    row.dispatchEvent(new Event("click"));
+    resolveAdaHoldAction(root as unknown as HTMLElement, row)?.activate();
+  }
+  expect(onItem).not.toHaveBeenCalled();
+  disposeShipSections(root as unknown as HTMLElement);
 });

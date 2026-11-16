@@ -9,7 +9,7 @@ import type { Weapon } from "../data/types.ts";
 import { WEAPON_LEVEL_COUNT } from "../data/weaponCatalog.ts";
 import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import { fill, weaponName } from "../model/shop.ts";
-import type { Aboard } from "../model/types.ts";
+import type { Aboard, ShipItemFact } from "../model/types.ts";
 import { bindAdaAction } from "./actionBinding.ts";
 import { applyAdaControlTheme, createAdaPageDivider } from "./buttonPresentation.ts";
 import { compactLevelName } from "./compactLevelName.ts";
@@ -35,6 +35,9 @@ export interface ShipWeapon {
 
 export interface ShipView {
   readonly aboard: Aboard | null;
+  /** Independent model facts; omitted only by legacy component callers. */
+  readonly carrying?: readonly ShipItemFact[];
+  readonly towing?: ShipItemFact | null;
   /** Canonical held quest identity for cargo details, when one exists. */
   readonly aboardQuestId?: string;
   readonly engine: number;
@@ -57,7 +60,7 @@ export type ShipIcon =
 /** Canonical inventory identities route details without reading player-facing labels. */
 export type ShipItem =
   | { readonly kind: "resource"; readonly id: "ore" | "stardust" }
-  | { readonly kind: "cargo"; readonly id: "aboard" | "holodisks" }
+  | { readonly kind: "cargo"; readonly id: string }
   | { readonly kind: "equipment"; readonly id: "engine" | "paint" | "shield" | "tractor" }
   | { readonly kind: "weapon"; readonly id: Weapon };
 
@@ -66,6 +69,8 @@ export interface ShipRow {
   readonly item: ShipItem;
   /** Live quest identity supplied by the inventory fact, independent of its display label. */
   readonly questId?: string;
+  /** Empty status rows have no details action. */
+  readonly interactive?: boolean;
   readonly icon: ShipIcon;
   readonly label: string;
   readonly count?: string;
@@ -121,14 +126,40 @@ export function shipSections(labels: Labels, view: ShipView): ShipSections {
       label: fill(labels.shipHolodisks ?? "", { n: view.holodisks, total: GALAXY_COUNT }),
     },
   ];
-  if (view.aboard) {
-    cargo.push({
-      icon: sprite(view.aboard.kind === "towing" ? "icon-tow-20" : "icon-cargo-20"),
-      item: { id: "aboard", kind: "cargo" },
-      label: aboardLabel(labels, view.aboard),
-      ...(view.aboardQuestId ? { questId: view.aboardQuestId } : {}),
-    });
-  }
+  const legacy = view.aboard
+    ? {
+        id: "aboard",
+        name: view.aboard.name,
+        ...(view.aboardQuestId ? { questId: view.aboardQuestId } : {}),
+      }
+    : null;
+  const carrying = view.carrying ?? (view.aboard?.kind === "carrying" && legacy ? [legacy] : []);
+  const towing =
+    view.towing === undefined ? (view.aboard?.kind === "towing" ? legacy : null) : view.towing;
+  const seen = new Set<string>();
+  const carried = carrying.filter(({ id }) => {
+    if (seen.has(id)) {
+      return false;
+    }
+    seen.add(id);
+    return true;
+  });
+  const status = (kind: Aboard["kind"], fact: ShipItemFact | null): ShipRow => ({
+    icon: sprite(kind === "towing" ? "icon-tow-20" : "icon-cargo-20"),
+    item: {
+      id: fact?.id === "aboard" ? "aboard" : `${kind}:${fact?.id ?? "empty"}`,
+      kind: "cargo",
+    },
+    label: aboardLabel(labels, { kind, name: fact?.name ?? labels.shipNothing ?? "" }),
+    ...(fact?.questId ? { questId: fact.questId } : {}),
+    ...(!fact ? { interactive: false } : {}),
+  });
+  cargo.push(
+    ...(carried.length
+      ? carried.map((fact) => status("carrying", fact))
+      : [status("carrying", null)]),
+  );
+  cargo.push(status("towing", towing));
   const left: ShipRow[] = [
     {
       icon: sprite("icon-shop-engine-tuning", 2),
@@ -189,7 +220,10 @@ function rowPart(onItem: (row: ShipRow, origin: HTMLButtonElement) => void, init
   line.type = "button";
   const binding = bindAdaAction(
     {
-      click: { availability: () => ({ kind: "available" }), run: () => onItem(row, line) },
+      click: {
+        availability: () => ({ kind: row.interactive === false ? "omitted" : "available" }),
+        run: () => onItem(row, line),
+      },
       current: () => !disposed,
       slopPx: () => SCROLL.dragThreshold * readViewUnit(line),
     },
@@ -198,6 +232,8 @@ function rowPart(onItem: (row: ShipRow, origin: HTMLButtonElement) => void, init
   const update = (next: ShipRow) => {
     row = next;
     line.dataset.item = shipItemKey(row.item);
+    line.disabled = row.interactive === false;
+    line.tabIndex = row.interactive === false ? -1 : 0;
     line.replaceChildren();
     if (row.tier === undefined) {
       delete line.dataset.level;
