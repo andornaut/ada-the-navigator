@@ -1,6 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 
 import { bindAdaAction, resolveAdaHoldAction } from "./actionBinding.ts";
+import { registerAdaActionRoot } from "./actionRegistry.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { currentView, enterPressView, inCurrentView, rootPressGuard } from "./pressScope.ts";
@@ -13,12 +14,10 @@ const fixture = vi.hoisted(() => {
     disabled = false;
     nodeType = 1;
     parentElement: Node | null = null;
-    private detached = false;
     get isConnected(): boolean {
-      return this.parentElement?.isConnected ?? !this.detached;
-    }
-    set isConnected(value: boolean) {
-      this.detached = !value;
+      return (
+        this === (document.body as unknown as Node) || (this.parentElement?.isConnected ?? false)
+      );
     }
     get ownerDocument() {
       const doc = document as unknown as {
@@ -89,7 +88,6 @@ const fixture = vi.hoisted(() => {
     insertBefore(node: Node, before: Node | null) {
       node.remove();
       node.parentElement = this;
-      node.isConnected = this.isConnected;
       this.children.splice(
         before === null ? this.children.length : this.children.indexOf(before),
         0,
@@ -169,7 +167,6 @@ const fixture = vi.hoisted(() => {
         this.parentElement.children.splice(this.parentElement.children.indexOf(this), 1);
       }
       this.parentElement = null;
-      this.isConnected = false;
     });
     append(...nodes: Node[]) {
       for (const node of nodes) {
@@ -239,10 +236,26 @@ vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", async (original)
   focusTarget: (node: { focus(): void }) => node.focus(),
 }));
 afterEach(() => {
+  if (typeof document !== "undefined") {
+    document.body?.replaceChildren();
+  }
   vi.unstubAllGlobals();
   vi.clearAllMocks();
   fixture.card.body.children = [];
 });
+
+function attach(root: InstanceType<typeof fixture.Node>) {
+  if (!document.body) {
+    Object.assign(document, { body: Object.assign(new fixture.Node(), { tagName: "BODY" }) });
+  }
+  document.body.append(root as unknown as HTMLElement);
+  return root;
+}
+function attachedActionRoot(root = new fixture.Node()) {
+  attach(root);
+  fixtureActionRoot(root);
+  return root;
+}
 
 it("uses the shared card and reports exactly one pause/close transition, restoring origin focus", () => {
   vi.stubGlobal("document", {
@@ -250,7 +263,7 @@ it("uses the shared card and reports exactly one pause/close transition, restori
       Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
   });
   const root = new fixture.Node();
-  fixtureActionRoot(root);
+  attachedActionRoot(root);
   const origin = new fixture.Node();
   const onOpenChange = vi.fn();
   const resource = createResourceCard(root as unknown as HTMLElement, {
@@ -279,7 +292,7 @@ it("reopens with current content and traps Tab on the close control", () => {
       Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
   });
   const root = new fixture.Node();
-  fixtureActionRoot(root);
+  attachedActionRoot(root);
   const origin = new fixture.Node();
   const resource = createResourceCard(root as unknown as HTMLElement, {
     closeLabel: "Close",
@@ -304,7 +317,7 @@ it("shows canonical supplied content and secondary Quests before primary Close w
       Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
   });
   const root = new fixture.Node();
-  fixtureActionRoot(root);
+  attachedActionRoot(root);
   const origin = new fixture.Node();
   const icon = new fixture.Node();
   const lifecycle: string[] = [];
@@ -345,7 +358,7 @@ it("shows current resource quantities including zero separately and updates them
     createElement: (tag: string) =>
       Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
   });
-  const detail = createResourceCard(new fixture.Node() as unknown as HTMLElement, {
+  const detail = createResourceCard(attachedActionRoot() as unknown as HTMLElement, {
     closeLabel: "Close",
     onOpenChange: vi.fn(),
   });
@@ -382,7 +395,7 @@ it("shows shield identity in the header and formatted HP below while preserving 
     createElement: (tag: string) =>
       Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
   });
-  const detail = createResourceCard(new fixture.Node() as unknown as HTMLElement, {
+  const detail = createResourceCard(attachedActionRoot() as unknown as HTMLElement, {
     closeLabel: "Close",
     onOpenChange: vi.fn(),
   });
@@ -408,7 +421,7 @@ it("retains footer nodes, resolves the current Quests closure and unregisters di
       Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
   });
   const root = new fixture.Node();
-  fixtureActionRoot(root);
+  attachedActionRoot(root);
   const origin = new fixture.Node();
   const first = vi.fn(),
     second = vi.fn(),
@@ -452,7 +465,7 @@ it("registers one native header click and closes once through the shared default
       Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
   });
   const root = new fixture.Node();
-  fixtureActionRoot(root);
+  attachedActionRoot(root);
   const origin = new fixture.Node();
   const onOpenChange = vi.fn();
   const listen = vi.spyOn(fixture.card.close, "addEventListener");
@@ -484,7 +497,7 @@ it("rejects background header clicks and removes the registered X callback on di
       Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
   });
   const root = new fixture.Node();
-  fixtureActionRoot(root);
+  attachedActionRoot(root);
   const origin = new fixture.Node();
   const onOpenChange = vi.fn();
   const detail = createResourceCard(root as unknown as HTMLElement, {
@@ -518,7 +531,7 @@ it("reports Resource scope and excludes a registered background action", () => {
   const root = new fixture.Node(),
     background = new fixture.Node(),
     origin = new fixture.Node();
-  fixtureActionRoot(root);
+  attachedActionRoot(root);
   root.append(background);
   const host = root as unknown as HTMLElement;
   const guard = rootPressGuard(host),
@@ -566,7 +579,7 @@ it("releases Resource scope before parent restore and invalidates close/reopen/d
   const root = new fixture.Node(),
     parent = new fixture.Node(),
     origin = new fixture.Node();
-  fixtureActionRoot(root);
+  attachedActionRoot(root);
   root.append(parent);
   parent.append(origin);
   const host = root as unknown as HTMLElement;
@@ -628,7 +641,7 @@ it("releases only its own Resource scope after Quests has opened a child", () =>
   const root = new fixture.Node(),
     child = new fixture.Node(),
     origin = new fixture.Node();
-  fixtureActionRoot(root);
+  attachedActionRoot(root);
   root.append(child);
   const host = root as unknown as HTMLElement,
     guard = rootPressGuard(host);
@@ -662,5 +675,72 @@ it("releases only its own Resource scope after Quests has opened a child", () =>
   } finally {
     detail.dispose();
     leaveChild?.();
+  }
+});
+
+it("audits the completed dynamic tree before opening or focusing an unbound control", () => {
+  vi.stubGlobal("document", {
+    createElement: (tag: string) =>
+      Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
+  });
+  const root = attachedActionRoot();
+  const onOpenChange = vi.fn();
+  const detail = createResourceCard(root as unknown as HTMLElement, {
+    closeLabel: "Close",
+    onOpenChange,
+  });
+  const modal = root.children[0]!;
+  const rogue = Object.assign(new fixture.Node(), {
+    disabled: true,
+    hidden: true,
+    tagName: "BUTTON",
+    type: "button",
+  });
+  modal.append(rogue);
+  try {
+    expect(() =>
+      detail.open("Ore", "Approved description", new fixture.Node() as unknown as HTMLElement),
+    ).toThrow("no registered action binding");
+    expect(modal.hidden).toBe(true);
+    expect(fixture.card.fit).not.toHaveBeenCalled();
+    expect(onOpenChange).not.toHaveBeenCalled();
+  } finally {
+    rogue.remove();
+    detail.dispose();
+  }
+});
+
+it("requires connected ownership at open without querying the root policy", () => {
+  vi.stubGlobal("document", {
+    createElement: (tag: string) =>
+      Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
+  });
+  const root = attach(new fixture.Node());
+  const onOpenChange = vi.fn();
+  const detail = createResourceCard(root as unknown as HTMLElement, {
+    closeLabel: "Close",
+    onOpenChange,
+  });
+  const origin = new fixture.Node() as unknown as HTMLElement;
+  const open = () => detail.open("Ore", "Approved description", origin);
+  const permits = vi.fn(() => {
+    throw new Error("Audit must not query eligibility");
+  });
+  let release = () => {};
+  try {
+    expect(() => open()).toThrow("no live action root");
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(fixture.card.fit).not.toHaveBeenCalled();
+    release = registerAdaActionRoot({ permits }, root as unknown as HTMLElement);
+    expect(() => open()).not.toThrow();
+    expect(permits).not.toHaveBeenCalled();
+    detail.close();
+    root.remove();
+    expect(root.isConnected).toBe(false);
+    expect(() => open()).toThrow("no live action root");
+    expect(permits).not.toHaveBeenCalled();
+  } finally {
+    detail.dispose();
+    release();
   }
 });

@@ -5,7 +5,11 @@ import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 import type { Weapon } from "../data/types.ts";
 import { WEAPON_DETAIL_LABELS } from "../data/weaponDetails.ts";
 import { ammoShopSheet, weaponGlyphPath } from "../data/weaponGlyphs.ts";
-import { bindAdaAction } from "./actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  bindAdaAction,
+} from "./actionBinding.ts";
 import { presentAdaButton } from "./buttonPresentation.ts";
 import { compactLevelName } from "./compactLevelName.ts";
 import { detailCount, renderDetailQuantity } from "./detailQuantity.ts";
@@ -170,6 +174,7 @@ export function createWeaponDetailCard(
     },
     weaponDetailTree({ closeLabel: options.closeLabel, lines: [], title: "" }),
   );
+  assertAdaActionMetadata(modal);
   const dismiss = actions.querySelector<HTMLButtonElement>(
     '[data-action="dismiss-weapon-detail"]',
   )!;
@@ -195,6 +200,8 @@ export function createWeaponDetailCard(
       currentIdentity = identity;
       visible = true;
       mounted.update(weaponDetailTree({ closeLabel: options.closeLabel, lines, title }));
+      assertAdaActionMetadata(modal);
+      assertAdaActionBindings(modal);
       modal.hidden = false;
       card.fit();
       leaveView ??= layer.open(

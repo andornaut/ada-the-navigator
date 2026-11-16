@@ -2,6 +2,7 @@ import { afterEach, expect, it, vi } from "vitest";
 
 import { WEAPON_DETAIL_LABELS, weaponDetailLines } from "../data/weaponDetails.ts";
 import { resolveAdaHoldAction } from "./actionBinding.ts";
+import { registerAdaActionRoot } from "./actionRegistry.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { compactLevelName } from "./compactLevelName.ts";
 import { enterPressView, rootPressGuard } from "./pressScope.ts";
@@ -14,12 +15,10 @@ const fixture = vi.hoisted(() => {
     disabled = false;
     nodeType = 1;
     parentElement: Node | null = null;
-    private detached = false;
     get isConnected(): boolean {
-      return this.parentElement?.isConnected ?? !this.detached;
-    }
-    set isConnected(value: boolean) {
-      this.detached = !value;
+      return (
+        this === (document.body as unknown as Node) || (this.parentElement?.isConnected ?? false)
+      );
     }
     get ownerDocument() {
       const doc = document as unknown as {
@@ -90,7 +89,6 @@ const fixture = vi.hoisted(() => {
     insertBefore(node: Node, before: Node | null) {
       node.remove();
       node.parentElement = this;
-      node.isConnected = this.isConnected;
       this.children.splice(
         before === null ? this.children.length : this.children.indexOf(before),
         0,
@@ -170,7 +168,6 @@ const fixture = vi.hoisted(() => {
         this.parentElement.children.splice(this.parentElement.children.indexOf(this), 1);
       }
       this.parentElement = null;
-      this.isConnected = false;
     });
     append(...nodes: Node[]) {
       for (const node of nodes) {
@@ -239,11 +236,27 @@ vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
   focusTarget: (node: { focus(): void }) => node.focus(),
 }));
 afterEach(() => {
+  if (typeof document !== "undefined") {
+    document.body?.replaceChildren();
+  }
   vi.unstubAllGlobals();
   vi.clearAllMocks();
   fixture.card.body.children = [];
   fixture.card.title.children = [];
 });
+
+function attach(root: InstanceType<typeof fixture.Node>) {
+  if (!document.body) {
+    Object.assign(document, { body: Object.assign(new fixture.Node(), { tagName: "BODY" }) });
+  }
+  document.body.append(root as unknown as HTMLElement);
+  return root;
+}
+function attachedActionRoot(root = new fixture.Node()) {
+  attach(root);
+  fixtureActionRoot(root);
+  return root;
+}
 
 it("uses the shared card and reports exactly one pause/close transition, restoring origin focus", () => {
   vi.stubGlobal("document", {
@@ -251,7 +264,7 @@ it("uses the shared card and reports exactly one pause/close transition, restori
       Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
   });
   const root = new fixture.Node();
-  fixtureActionRoot(root);
+  attachedActionRoot(root);
   const origin = new fixture.Node();
   const onOpenChange = vi.fn();
   const resource = createWeaponDetailCard(root as unknown as HTMLElement, {
@@ -280,7 +293,7 @@ it("reopens with current content and traps Tab on the close control", () => {
       Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
   });
   const root = new fixture.Node();
-  fixtureActionRoot(root);
+  attachedActionRoot(root);
   const origin = new fixture.Node();
   const resource = createWeaponDetailCard(root as unknown as HTMLElement, {
     closeLabel: "Close",
@@ -306,7 +319,7 @@ it.each([1, 2, 3])(
       createElement: (tag: string) =>
         Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
     });
-    const detail = createWeaponDetailCard(new fixture.Node() as unknown as HTMLElement, {
+    const detail = createWeaponDetailCard(attachedActionRoot() as unknown as HTMLElement, {
       closeLabel: "Close",
       onOpenChange: vi.fn(),
     });
@@ -340,7 +353,7 @@ it("keeps an unowned preview unnumbered without inventing owned level metadata",
     createElement: (tag: string) =>
       Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
   });
-  const detail = createWeaponDetailCard(new fixture.Node() as unknown as HTMLElement, {
+  const detail = createWeaponDetailCard(attachedActionRoot() as unknown as HTMLElement, {
     closeLabel: "Close",
     onOpenChange: vi.fn(),
   });
@@ -365,7 +378,7 @@ it("renders basic Laser's existing glyph and Unlimited row without a level-one s
     createElement: (tag: string) =>
       Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
   });
-  const detail = createWeaponDetailCard(new fixture.Node() as unknown as HTMLElement, {
+  const detail = createWeaponDetailCard(attachedActionRoot() as unknown as HTMLElement, {
     closeLabel: "Close",
     onOpenChange: vi.fn(),
   });
@@ -401,7 +414,7 @@ it("retains native content nodes and original close actions across current view,
   });
   const root = new fixture.Node(),
     origin = new fixture.Node();
-  fixtureActionRoot(root);
+  attachedActionRoot(root);
   const guard = rootPressGuard(root as unknown as HTMLElement);
   const beforeOpen = guard.gate.capture();
   const onOpenChange = vi.fn();
@@ -460,4 +473,71 @@ it("retains native content nodes and original close actions across current view,
   fixture.card.close.dispatchEvent(new Event("click"));
   expect(onOpenChange.mock.calls).toEqual([[true], [false], [true]]);
   expect(fixture.card.dispose).toHaveBeenCalledOnce();
+});
+
+it("audits the completed dynamic tree before opening or focusing an unbound control", () => {
+  vi.stubGlobal("document", {
+    createElement: (tag: string) =>
+      Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
+  });
+  const root = attachedActionRoot();
+  const onOpenChange = vi.fn();
+  const detail = createWeaponDetailCard(root as unknown as HTMLElement, {
+    closeLabel: "Close",
+    onOpenChange,
+  });
+  const modal = root.children[0]!;
+  const rogue = Object.assign(new fixture.Node(), {
+    disabled: true,
+    hidden: true,
+    tagName: "BUTTON",
+    type: "button",
+  });
+  modal.append(rogue);
+  try {
+    expect(() =>
+      detail.open("Laser", ["Approved description"], new fixture.Node() as unknown as HTMLElement),
+    ).toThrow("no registered action binding");
+    expect(modal.hidden).toBe(true);
+    expect(fixture.card.fit).not.toHaveBeenCalled();
+    expect(onOpenChange).not.toHaveBeenCalled();
+  } finally {
+    rogue.remove();
+    detail.dispose();
+  }
+});
+
+it("requires connected ownership at open without querying the root policy", () => {
+  vi.stubGlobal("document", {
+    createElement: (tag: string) =>
+      Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
+  });
+  const root = attach(new fixture.Node());
+  const onOpenChange = vi.fn();
+  const detail = createWeaponDetailCard(root as unknown as HTMLElement, {
+    closeLabel: "Close",
+    onOpenChange,
+  });
+  const origin = new fixture.Node() as unknown as HTMLElement;
+  const open = () => detail.open("Laser", ["Approved description"], origin);
+  const permits = vi.fn(() => {
+    throw new Error("Audit must not query eligibility");
+  });
+  let release = () => {};
+  try {
+    expect(() => open()).toThrow("no live action root");
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(fixture.card.fit).not.toHaveBeenCalled();
+    release = registerAdaActionRoot({ permits }, root as unknown as HTMLElement);
+    expect(() => open()).not.toThrow();
+    expect(permits).not.toHaveBeenCalled();
+    detail.close();
+    root.remove();
+    expect(root.isConnected).toBe(false);
+    expect(() => open()).toThrow("no live action root");
+    expect(permits).not.toHaveBeenCalled();
+  } finally {
+    detail.dispose();
+    release();
+  }
 });

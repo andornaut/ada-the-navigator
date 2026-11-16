@@ -2,7 +2,11 @@ import type { ControlAvailability } from "@andornaut/game-kit/runtime/ui/control
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import { bindAdaAction } from "./actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  bindAdaAction,
+} from "./actionBinding.ts";
 import { presentAdaButton } from "./buttonPresentation.ts";
 import { detailCount, renderDetailQuantity } from "./detailQuantity.ts";
 import { SCROLL } from "./layout/contentCard.ts";
@@ -132,6 +136,7 @@ export function createResourceCard(
     },
     resourceTree({ closeLabel: options.closeLabel, description: "", title: "" }),
   );
+  assertAdaActionMetadata(modal);
   const dismiss = actions.querySelector<HTMLButtonElement>('[data-action="dismiss-resource"]')!;
   return {
     close,
@@ -166,6 +171,8 @@ export function createResourceCard(
           ...(details.quests ? { questsLabel: details.quests.label } : {}),
         }),
       );
+      assertAdaActionMetadata(modal);
+      assertAdaActionBindings(modal);
       modal.hidden = false;
       card.fit();
       leaveView ??= layer.open(
