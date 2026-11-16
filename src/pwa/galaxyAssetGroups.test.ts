@@ -1,6 +1,11 @@
+import { setImmediate as nextTurn } from "node:timers/promises";
+
 import type { LoadingAttemptState } from "@andornaut/game-kit/runtime/load/loadingAttempts";
 import { createProgressState } from "@andornaut/game-kit/runtime/progressState";
-import type { AssetGroupsResult } from "@andornaut/game-kit/runtime/web/pwa/assetGroups";
+import type {
+  AssetGroupsRequest,
+  AssetGroupsResult,
+} from "@andornaut/game-kit/runtime/web/pwa/assetGroups";
 import { expect, it, vi } from "vitest";
 
 import { createGalaxyDownloads } from "./galaxyAssetGroups.ts";
@@ -15,6 +20,7 @@ async function settle() {
 }
 function fixture() {
   const requests: string[][] = [];
+  const messages: AssetGroupsRequest[] = [];
   const states: LoadingAttemptState[] = [];
   const ports: MessagePort[] = [];
   let available: string[] = ["sunflower", "whirlpool"];
@@ -25,8 +31,9 @@ function fixture() {
     snapshots: { active: boolean; value: number | undefined }[] = [];
   const stop = progress.subscribe((value) => snapshots.push(value));
   const worker = {
-    postMessage(message: { groups: readonly string[] }, transfer: Transferable[]) {
+    postMessage(message: AssetGroupsRequest, transfer: Transferable[]) {
       requests.push([...message.groups]);
+      messages.push(message);
       const port = transfer[0] as MessagePort;
       ports.push(port);
       port.postMessage({
@@ -76,6 +83,7 @@ function fixture() {
     container,
     eventTarget,
     groups,
+    messages,
     ports,
     progress,
     requests,
@@ -230,4 +238,60 @@ it("shows an initial group-state timeout and clears it only after verified readi
   expect(f.requests).toEqual([[], []]);
   f.groups.dispose();
   f.stop();
+});
+
+it("uses verified worker activity to survive the former absolute deadline without advancing the bar", async () => {
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+  const f = fixture();
+  try {
+    f.setHold(true);
+    const pending = f.groups.start();
+    await nextTurn();
+    await nextTurn();
+    expect(f.messages[0]?.activity).toBe(true);
+    const count = f.snapshots.length;
+    await vi.advanceTimersByTimeAsync(600);
+    f.ports[0]!.postMessage({
+      buildId: f.messages[0]!.buildId,
+      operationId: "operation-1",
+      sequence: 1,
+      type: "activity",
+      version: "document-version",
+    });
+    await nextTurn();
+    await nextTurn();
+    expect(f.snapshots).toHaveLength(count);
+    await vi.advanceTimersByTimeAsync(600);
+    expect(f.states.some((state) => state.kind === "failed")).toBe(false);
+    expect(f.snapshots.at(-1)?.active).toBe(true);
+    f.ports[0]!.postMessage({
+      result: {
+        readyGroups: ["sunflower", "whirlpool"],
+        status: "available",
+        version: "document-version",
+      },
+      type: "result",
+    });
+    await nextTurn();
+    await nextTurn();
+    await pending;
+    expect(f.requests).toHaveLength(1);
+    expect(f.snapshots.at(-1)?.active).toBe(false);
+
+    const silent = f.groups.resume();
+    await nextTurn();
+    await nextTurn();
+    await vi.advanceTimersByTimeAsync(1000);
+    await silent;
+    expect(f.states.at(-1)).toMatchObject({
+      error: { reason: "timeout", status: "unavailable" },
+      kind: "failed",
+    });
+    expect(f.snapshots.at(-1)?.active).toBe(false);
+    expect(f.requests).toHaveLength(2);
+  } finally {
+    f.groups.dispose();
+    f.stop();
+    vi.useRealTimers();
+  }
 });

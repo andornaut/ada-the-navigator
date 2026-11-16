@@ -54,6 +54,7 @@ export function createGalaxyDownloads(page: GroupPage) {
       current.handle.progress(snapshot.value);
     },
     requestTimeoutMs: page.requestTimeoutMs,
+    timeoutMode: "inactivity",
   });
   const request = async (run: () => Promise<AssetGroupsResult>) => {
     const current: { key?: string; handle?: ProgressHandle } = {};
