@@ -316,8 +316,27 @@ const texts = (node: FakeElement): string[] => [
   ...node.children.flatMap(texts),
 ];
 
+it("keeps a standalone Map footer Close and invokes its direct caller once", () => {
+  const { options, pause } = cards();
+  const root = new FakeElement();
+  const onClose = vi.fn();
+  const map = mapUI.createMapScreen(root as unknown as HTMLElement, {
+    labels: options.labels.mapScreen,
+    onClose,
+    onGalaxies: () => {},
+    onTravel: () => {},
+    reducedMotion: () => true,
+  });
+  const footer = root.querySelectorAll().find((node) => node.dataset.action === "map-close")!;
+  expect(footer.textContent).toBe("Close");
+  footer.click();
+  expect(onClose).toHaveBeenCalledOnce();
+  map.dispose();
+  pause.dispose();
+});
+
 describe("Paused card", () => {
-  it("Close leaves the local map for gameplay and clears held input through the modal lifecycle", () => {
+  it("Back returns the local map to Pause and keeps held input blocked until Resume", () => {
     const original = mapUI.createMapScreen;
     let mapOpen = false;
     const spy = vi.spyOn(mapUI, "createMapScreen").mockImplementation((...args) => ({
@@ -347,11 +366,15 @@ describe("Paused card", () => {
       button(body.children[0]!, "pause-map").click();
       expect(pause.mapOpen()).toBe(true);
       expect(controls.accepts()).toBe(false);
-      root
-        .querySelectorAll()
-        .find((entry) => entry.dataset.action === "map-close")!
-        .click();
+      const footer = root.querySelectorAll().find((entry) => entry.dataset.action === "map-close")!;
+      expect(footer.textContent).toBe("Back");
+      footer.click();
       expect(pause.mapOpen()).toBe(false);
+      expect(pause.isOpen()).toBe(true);
+      expect(controls.accepts()).toBe(false);
+      expect(options.onOpenChange.mock.calls).toEqual([[true]]);
+      expect(focused()).toBe(button(body.children[0]!, "pause-map"));
+      button(body.children[0]!, "pause-resume").click();
       expect(pause.isOpen()).toBe(false);
       expect(controls.accepts()).toBe(true);
       expect(controls.sample()).toMatchObject({ move: { x: 0, y: 0 }, use: false });

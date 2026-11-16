@@ -26,7 +26,12 @@ export function createModalLayer(root: HTMLElement): ModalLayer {
       if (disposed) {
         return layer.open(options, dialog);
       }
-      const release = enterPressView(root, dialog, options.live);
+      const release = enterPressView(
+        root.parentElement ?? root,
+        dialog,
+        options.live,
+        options.close ? { backdrop: root, close: options.close } : undefined,
+      );
       scopes.add(release);
       let leave: () => void;
       try {

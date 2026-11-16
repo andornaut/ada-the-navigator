@@ -651,7 +651,12 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     if (next !== pressDialog) {
       leavePress?.();
       pressDialog = next;
-      leavePress = next ? enterPressView(parent, next) : undefined;
+      leavePress = next
+        ? enterPressView(parent, next, [], {
+            backdrop: confirm ? confirmModal : modal,
+            close: () => back(),
+          })
+        : undefined;
     }
   };
 
@@ -1315,24 +1320,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     }
     render();
   });
-
-  // A full outside tap goes back, as the Paused card's does; a drag out does not.
-  for (const layer of [modal, confirmModal]) {
-    let outside: { readonly x: number; readonly y: number } | undefined;
-    layer.addEventListener("pointerdown", (event) => {
-      outside = event.target === layer ? { x: event.clientX, y: event.clientY } : undefined;
-    });
-    layer.addEventListener("click", (event) => {
-      if (
-        outside &&
-        event.target === layer &&
-        isTap(readViewUnit(layer), outside, { x: event.clientX, y: event.clientY })
-      ) {
-        back();
-      }
-      outside = undefined;
-    });
-  }
 
   // A drag across a page must not activate the row where the gesture started.
   for (const group of [list, jobList]) {

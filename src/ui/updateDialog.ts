@@ -7,7 +7,7 @@ import { presentAdaButton } from "./buttonPresentation.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createAdaLayoutPorts } from "./layoutTree.ts";
-import { createActions, createCard, isTap } from "./modal.ts";
+import { createActions, createCard } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
 import { FONT_ROLES } from "./settings.ts";
@@ -123,23 +123,6 @@ export function createUpdateDialog(
     }
     onOpenChange(visible);
   });
-  // A full outside tap defers; dragging out of the card does not.
-  let outside: { readonly x: number; readonly y: number } | undefined;
-  const pointerdown = (event: PointerEvent) => {
-    outside = event.target === modal ? { x: event.clientX, y: event.clientY } : undefined;
-  };
-  const outsideClick = (event: MouseEvent) => {
-    if (
-      outside &&
-      event.target === modal &&
-      isTap(readViewUnit(modal), outside, { x: event.clientX, y: event.clientY })
-    ) {
-      defer();
-    }
-    outside = undefined;
-  };
-  modal.addEventListener("pointerdown", pointerdown);
-  modal.addEventListener("click", outsideClick);
   return {
     defer,
     dispose(): void {
@@ -151,8 +134,6 @@ export function createUpdateDialog(
       layer?.dispose();
       headerBinding.dispose();
       mounted.dispose();
-      modal.removeEventListener("pointerdown", pointerdown);
-      modal.removeEventListener("click", outsideClick);
       modal.remove();
     },
     isOpen: () => open,

@@ -1,7 +1,13 @@
 import { expect, it, vi } from "vitest";
 
 import { createModalLayer } from "./modalLayer.ts";
-import { currentView, inCurrentView, invalidatePressScope, rootPressGuard } from "./pressScope.ts";
+import {
+  currentView,
+  enterPressView,
+  inCurrentView,
+  invalidatePressScope,
+  rootPressGuard,
+} from "./pressScope.ts";
 
 const published = vi.hoisted(() => ({
   back: vi.fn(() => true),
@@ -19,7 +25,7 @@ vi.mock("@andornaut/game-kit/runtime/web/ui/dom/modalLayer", () => ({
   }),
 }));
 function node(parentElement: HTMLElement | null = null): HTMLElement {
-  const element = {
+  const element = Object.assign(new EventTarget(), {
     contains(other: HTMLElement): boolean {
       if (other === element) {
         return true;
@@ -29,8 +35,8 @@ function node(parentElement: HTMLElement | null = null): HTMLElement {
     },
     isConnected: true,
     parentElement,
-  };
-  return element as HTMLElement;
+  });
+  return element as unknown as HTMLElement;
 }
 
 it("invalidates captures across nested open and dismissal while keeping modal actions eligible", () => {
@@ -101,4 +107,73 @@ it("invalidates a disabled group press without changing the foreground view", ()
   expect(guard.gate.accepts()).toBe(true);
   leave();
   layer.dispose();
+});
+
+function gesture(element: HTMLElement, type: string, x = 0, target: HTMLElement = element) {
+  const event = new Event(type, { cancelable: true });
+  Object.defineProperties(event, {
+    clientX: { value: x },
+    clientY: { value: 0 },
+    target: { value: target },
+  });
+  element.dispatchEvent(event);
+  return event;
+}
+
+it("dismisses only the top view and cannot dismiss its restored parent on the same click", () => {
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
+  const root = node(),
+    backdrop = node(root),
+    parent = node(backdrop),
+    child = node(backdrop);
+  rootPressGuard(root);
+  const parentClose = vi.fn();
+  const leaveParent = enterPressView(root, parent, [], { backdrop, close: parentClose });
+  const childClose = vi.fn(() => leaveChild());
+  const leaveChild = enterPressView(root, child, [], { backdrop, close: childClose });
+  gesture(backdrop, "pointerdown");
+  const event = gesture(backdrop, "click");
+  expect(event.defaultPrevented).toBe(true);
+  expect(childClose).toHaveBeenCalledOnce();
+  expect(parentClose).not.toHaveBeenCalled();
+  expect(currentView(root)).toBe(parent);
+  gesture(backdrop, "pointerdown");
+  gesture(backdrop, "click");
+  expect(parentClose).toHaveBeenCalledOnce();
+  leaveParent();
+  vi.unstubAllGlobals();
+});
+
+it("rejects card-origin drags, cancelled gestures, stale view captures and disposed listeners", () => {
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
+  const root = node(),
+    backdrop = node(root),
+    card = node(backdrop),
+    cover = node(root);
+  const close = vi.fn();
+  const leave = enterPressView(root, card, [], { backdrop, close });
+  gesture(backdrop, "pointerdown", 0, card);
+  gesture(backdrop, "click");
+  gesture(backdrop, "pointerdown");
+  gesture(backdrop, "click", 100);
+  gesture(backdrop, "pointerdown");
+  gesture(backdrop, "pointercancel");
+  gesture(backdrop, "click");
+  gesture(backdrop, "pointerdown");
+  const leaveCover = enterPressView(root, cover);
+  gesture(backdrop, "click");
+  leaveCover();
+  gesture(backdrop, "click");
+  gesture(backdrop, "pointerdown");
+  const leaveTransient = enterPressView(root, cover);
+  leaveTransient();
+  gesture(backdrop, "click");
+  expect(close).not.toHaveBeenCalled();
+  gesture(backdrop, "pointerdown");
+  leave();
+  gesture(backdrop, "click");
+  gesture(backdrop, "pointerdown");
+  gesture(backdrop, "click");
+  expect(close).not.toHaveBeenCalled();
+  vi.unstubAllGlobals();
 });

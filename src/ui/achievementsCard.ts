@@ -15,7 +15,6 @@ import {
   createActions,
   createButton,
   createCard,
-  isTap,
   setFooterAction,
   TEXT_TOKENS,
   UI_SCOPE,
@@ -369,7 +368,9 @@ export function createAchievementsCard(
       return;
     }
     leavePressView?.();
-    leavePressView = open ? enterPressView(root, card.frame) : undefined;
+    leavePressView = open
+      ? enterPressView(root, card.frame, [], { backdrop: modal, close: () => setOpen(false) })
+      : undefined;
     modal.hidden = !open;
     if (open) {
       page = 0;
@@ -395,20 +396,6 @@ export function createAchievementsCard(
   const close = () => setOpen(false);
   register(card.close, close);
   register(dismiss, close);
-  let outside: { readonly x: number; readonly y: number } | undefined;
-  modal.addEventListener("pointerdown", (event) => {
-    outside = event.target === modal ? { x: event.clientX, y: event.clientY } : undefined;
-  });
-  modal.addEventListener("click", (event) => {
-    if (
-      outside &&
-      event.target === modal &&
-      isTap(readViewUnit(modal), outside, { x: event.clientX, y: event.clientY })
-    ) {
-      setOpen(false);
-    }
-    outside = undefined;
-  });
   return {
     close: () => setOpen(false),
     dispose(): void {

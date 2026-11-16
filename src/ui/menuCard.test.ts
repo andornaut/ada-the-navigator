@@ -393,3 +393,34 @@ it("forwards the actual controls callback and clears the old Menu return before 
   expect(settings.open).toHaveBeenCalledTimes(1);
   expect(achievements.open).toHaveBeenCalledTimes(1);
 });
+
+it.each(["start", "nonplay"] as const)(
+  "dismisses the actual %s Menu backdrop once and restores its opener",
+  (context) => {
+    const { menu, onOpenChange, root } = setup();
+    const origin = new fixture.Node();
+    menu.setContext(context);
+    menu.open(origin as unknown as HTMLElement);
+    const modal = root.children[0]!;
+    const event = (type: string, target = modal) => {
+      const event = new Event(type, { cancelable: true });
+      Object.defineProperties(event, {
+        clientX: { value: 0 },
+        clientY: { value: 0 },
+        target: { value: target },
+      });
+      modal.dispatchEvent(event);
+    };
+    event("pointerdown", fixture.card.body);
+    event("click");
+    expect(menu.isOpen()).toBe(true);
+    event("pointerdown");
+    event("click");
+    expect(menu.isOpen()).toBe(false);
+    expect(onOpenChange.mock.calls).toEqual([[true], [false]]);
+    expect(origin.focus).toHaveBeenCalledOnce();
+    event("pointerdown");
+    event("click");
+    expect(onOpenChange.mock.calls).toEqual([[true], [false]]);
+  },
+);

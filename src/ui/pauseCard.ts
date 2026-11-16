@@ -12,7 +12,7 @@ import { compactLevelName } from "./compactLevelName.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createMapScreen, type MapField, type MapScreenLabels } from "./mapScreen.ts";
-import { createButton, createCard, isTap } from "./modal.ts";
+import { createButton, createCard } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { type PauseAction, pauseActions, type PausePlace } from "./pause.ts";
 import { type PauseLayoutSchema, pauseTree, type PauseTreeAction } from "./pauseTree.ts";
@@ -230,8 +230,9 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   modal.append(paused.frame, ship.frame);
   root.append(modal);
   const mapScreen = createMapScreen(root, {
+    closeLabel: labels.mapScreen.questBack ?? labels.close,
     labels: labels.mapScreen,
-    onClose: () => setOpen(false),
+    onClose: () => closeMap(),
     // The galaxy map opens over the local map, which stays open beneath it.
     onGalaxies: () => options.onGalaxies(),
     onQuests: () => openQuests(),
@@ -562,25 +563,6 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       }
     }
   }
-  // A full outside tap resumes from the Paused card and returns to it from Map and Ship.
-  let outside: { readonly x: number; readonly y: number } | undefined;
-  modal.addEventListener("pointerdown", (event) => {
-    outside = event.target === modal ? { x: event.clientX, y: event.clientY } : undefined;
-  });
-  modal.addEventListener("click", (event) => {
-    if (
-      outside &&
-      event.target === modal &&
-      isTap(readViewUnit(modal), outside, { x: event.clientX, y: event.clientY })
-    ) {
-      if (shipOpen()) {
-        closeShip();
-      } else {
-        setOpen(false);
-      }
-    }
-    outside = undefined;
-  });
   return {
     close: () => {
       if (quests.isOpen()) {

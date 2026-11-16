@@ -35,7 +35,6 @@ import {
   createCard,
   createSwitchRow,
   FOCUS_STYLE,
-  isTap,
   MODAL_STYLE,
   setFooterAction,
   setScrollGroup,
@@ -652,7 +651,10 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     cardFrame.hidden = true;
     stepsFrame.hidden = false;
     leaveStepsPressView?.();
-    leaveStepsPressView = enterPressView(root, stepsFrame);
+    leaveStepsPressView = enterPressView(root, stepsFrame, [], {
+      backdrop: modal,
+      close: closeSteps,
+    });
     stepsParts.fit();
     focusTarget(stepsClose);
   };
@@ -692,7 +694,9 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     leaveStepsPressView?.();
     leaveStepsPressView = undefined;
     leaveSettingsPressView?.();
-    leaveSettingsPressView = value ? enterPressView(root, cardFrame) : undefined;
+    leaveSettingsPressView = value
+      ? enterPressView(root, cardFrame, [], { backdrop: modal, close: () => setOpen(false) })
+      : undefined;
     open = value;
     modal.hidden = !open;
     if (open) {
@@ -711,31 +715,6 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   registerAction(openButton, () => setOpen(true));
   registerAction(closeButton, () => setOpen(false));
   registerAction(dismiss, () => setOpen(false));
-  // A full outside click closes the card; dragging out of the card does not.
-  let outsidePress: { readonly id: number; readonly x: number; readonly y: number } | undefined;
-  modal.addEventListener("pointerdown", (event) => {
-    outsidePress =
-      event.target === modal
-        ? { id: event.pointerId, x: event.clientX, y: event.clientY }
-        : undefined;
-  });
-  modal.addEventListener("pointercancel", () => {
-    outsidePress = undefined;
-  });
-  modal.addEventListener("click", (event) => {
-    if (
-      outsidePress &&
-      event.target === modal &&
-      isTap(readViewUnit(modal), outsidePress, { x: event.clientX, y: event.clientY })
-    ) {
-      if (stepsOpen()) {
-        closeSteps();
-      } else {
-        setOpen(false);
-      }
-    }
-    outsidePress = undefined;
-  });
   modal.addEventListener("keydown", (event) => {
     if (event.key === "Tab") {
       const shown = stepsOpen() ? stepsFrame : cardFrame;

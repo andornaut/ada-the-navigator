@@ -4,6 +4,14 @@ import {
 } from "@andornaut/game-kit/runtime/input/modalInput";
 import type { PressGuard } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
 
+import { readViewUnit } from "./layout/viewScale.ts";
+import { isTap } from "./modal.ts";
+
+export interface ViewDismissal {
+  readonly backdrop: HTMLElement;
+  readonly close: () => void;
+}
+
 interface View {
   readonly dialog: HTMLElement;
   readonly live: readonly HTMLElement[];
@@ -64,13 +72,57 @@ export function enterPressView(
   root: HTMLElement,
   dialog: HTMLElement,
   live: readonly HTMLElement[] = [],
+  dismissal?: ViewDismissal,
 ): () => void {
   const shared = state(owner(root));
   const view: View = { dialog, live, scope: shared.gate.open() };
   shared.views.push(view);
+  let outside:
+    { readonly x: number; readonly y: number; readonly valid: () => boolean } | undefined;
+  const current = () => shared.views.at(-1) === view && root.isConnected;
+  const pointerdown = (event: PointerEvent) => {
+    outside =
+      current() &&
+      event.target === dismissal?.backdrop &&
+      event.isPrimary !== false &&
+      (!event.button || event.button === 0)
+        ? { valid: view.scope.capture(), x: event.clientX, y: event.clientY }
+        : undefined;
+  };
+  const cancel = () => {
+    outside = undefined;
+  };
+  const click = (event: MouseEvent) => {
+    const from = outside;
+    outside = undefined;
+    if (
+      dismissal &&
+      from &&
+      from.valid() &&
+      current() &&
+      event.target === dismissal.backdrop &&
+      isTap(
+        readViewUnit(dismissal.backdrop),
+        { x: from.x, y: from.y },
+        { x: event.clientX, y: event.clientY },
+      )
+    ) {
+      // Consume before the callback can restore a parent view on the same backdrop.
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      dismissal.close();
+    }
+  };
+  dismissal?.backdrop.addEventListener("pointerdown", pointerdown, true);
+  dismissal?.backdrop.addEventListener("pointercancel", cancel, true);
+  dismissal?.backdrop.addEventListener("click", click, true);
   return () => {
     const index = shared.views.indexOf(view);
     if (index >= 0) {
+      cancel();
+      dismissal?.backdrop.removeEventListener("pointerdown", pointerdown, true);
+      dismissal?.backdrop.removeEventListener("pointercancel", cancel, true);
+      dismissal?.backdrop.removeEventListener("click", click, true);
       shared.views.splice(index, 1);
       view.scope.close();
     }

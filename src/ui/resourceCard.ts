@@ -8,7 +8,7 @@ import { detailCount, renderDetailQuantity } from "./detailQuantity.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createAdaLayoutPorts } from "./layoutTree.ts";
-import { createActions, createCard, isTap, setFooterAction } from "./modal.ts";
+import { createActions, createCard, setFooterAction } from "./modal.ts";
 import { enterPressView, inCurrentView } from "./pressScope.ts";
 import { createProse } from "./prose.ts";
 import {
@@ -141,20 +141,6 @@ export function createResourceCard(
       focusTarget(controls[next]!);
     }
   });
-  let outside: { x: number; y: number } | undefined;
-  modal.addEventListener("pointerdown", (event) => {
-    outside = event.target === modal ? { x: event.clientX, y: event.clientY } : undefined;
-  });
-  modal.addEventListener("click", (event) => {
-    if (
-      event.target === modal &&
-      outside &&
-      isTap(readViewUnit(modal), outside, { x: event.clientX, y: event.clientY })
-    ) {
-      close();
-    }
-    outside = undefined;
-  });
   return {
     close,
     dispose() {
@@ -179,7 +165,7 @@ export function createResourceCard(
         details.quantity ?? (details.count === undefined ? undefined : detailCount(details.count));
       openQuests = details.quests?.onOpen;
       visible = true;
-      leaveView ??= enterPressView(root, card.frame);
+      leaveView ??= enterPressView(root, card.frame, [], { backdrop: modal, close });
       mounted.update(
         resourceTree({
           closeLabel: options.closeLabel,

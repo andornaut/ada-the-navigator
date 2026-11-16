@@ -1,9 +1,7 @@
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 
 import { applyAdaControlTheme, presentAdaButton } from "./buttonPresentation.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
 import { mountAdaLayout } from "./layoutTree.ts";
-import { isTap } from "./modal.ts";
 import { enterPressView, inCurrentView } from "./pressScope.ts";
 import { type RestartAction, restartTree } from "./restartTree.ts";
 
@@ -40,7 +38,10 @@ export function createRestartCard(
     modal.hidden = !open;
     root.classList.toggle("ada-restart-open", open);
     if (open) {
-      leaveView ??= enterPressView(root, frame);
+      leaveView ??= enterPressView(root, frame, [], {
+        backdrop: modal,
+        close: () => setOpen(false),
+      });
     } else {
       leaveView?.();
       leaveView = undefined;
@@ -78,20 +79,6 @@ export function createRestartCard(
   const frame = modal.querySelector<HTMLElement>('[role="dialog"]')!;
   frame.querySelector<HTMLElement>(".ada-card")!.dataset.dialog = "restart";
   const cancel = modal.querySelector<HTMLButtonElement>('[data-action="restart-cancel"]')!;
-  let outside: { readonly x: number; readonly y: number } | undefined;
-  modal.addEventListener("pointerdown", (event) => {
-    outside = event.target === modal ? { x: event.clientX, y: event.clientY } : undefined;
-  });
-  modal.addEventListener("click", (event) => {
-    if (
-      outside &&
-      event.target === modal &&
-      isTap(readViewUnit(modal), outside, { x: event.clientX, y: event.clientY })
-    ) {
-      setOpen(false);
-    }
-    outside = undefined;
-  });
   return {
     close: () => setOpen(false),
     dispose(): void {

@@ -231,6 +231,8 @@ export interface MapScreenState {
 }
 
 export interface MapScreenOptions {
+  /** Caller-owned dismissal label; standalone maps retain Close. */
+  readonly closeLabel?: string;
   readonly onQuests?: () => void;
   readonly labels: MapScreenLabels;
   readonly onClose: () => void;
@@ -1059,7 +1061,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   const galaxies = createButton(labels.galaxies, "secondary");
   galaxies.dataset.action = "map-galaxies";
   galaxies.setAttribute("aria-haspopup", "dialog");
-  const closeButton = createButton(labels.close, "primary");
+  const closeButton = createButton(options.closeLabel ?? labels.close, "primary");
   closeButton.dataset.action = "map-close";
   // The Quests modal over the whole map.
   const questsModal = document.createElement("div");
