@@ -17,7 +17,7 @@ import {
 
 export interface AdaPointerReleaseOptions {
   readonly pointerTarget?: HTMLElement | Document;
-  /** Return a registered control, null to reject, or undefined to use its native event target. */
+  /** Return a registered control, null to reject, or undefined to hit-test its current physical point. */
   readonly resolvePointer: (event: PointerEvent) => HTMLElement | null | undefined;
   readonly onPressChange?: (element: HTMLElement | null) => void;
 }
@@ -107,7 +107,11 @@ function bindRoot(policy: RootPolicy, root: HTMLElement) {
         pointerTarget: pointer.pointerTarget,
         resolvePointer: (event) => {
           const element = pointer.resolvePointer(event);
-          return resolve(element === undefined ? event.target : element);
+          return resolve(
+            element === undefined
+              ? document.elementFromPoint(event.clientX, event.clientY)
+              : element,
+          );
         },
       }
     : shared;

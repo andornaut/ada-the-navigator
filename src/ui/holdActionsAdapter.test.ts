@@ -61,6 +61,10 @@ class Element extends EventTarget {
   }
 }
 class FixtureDocument extends EventTarget {
+  hitTarget: Element | null = null;
+  elementFromPoint() {
+    return this.hitTarget;
+  }
   defaultView = Object.assign(new EventTarget(), {
     HTMLElement: Element,
     Node: Element,
@@ -85,6 +89,7 @@ function setup(
     label = new Element(document);
   button.parentElement = root;
   label.parentElement = button;
+  document.hitTarget = label;
   const element = button as unknown as HTMLElement;
   const host = root as unknown as HTMLElement;
   let generation = 0;
@@ -739,7 +744,7 @@ it("uses the public coordinate release lifecycle with registered current actions
   f.stop();
 });
 
-it("rejects unregistered coordinate hits and preserves native target fallback", () => {
+it("rejects unregistered coordinate hits and uses physical target fallback", () => {
   let hit: HTMLElement | null | undefined;
   const f = setup({ ready: () => true, subscribe: () => () => {} }, false, {
     resolvePointer: () => hit,
@@ -1006,6 +1011,54 @@ it("does not promote unavailable or omitted actions without the exact registered
   vi.advanceTimersByTime(500);
   expect(refuse).not.toHaveBeenCalled();
   expect(f.run).not.toHaveBeenCalled();
+  binding.dispose();
+  f.stop();
+});
+
+it("revalidates physical self ownership at move, timer and release despite captured targets", () => {
+  const f = setup({ ready: () => true, subscribe: () => () => {} }, false, {
+    resolvePointer: () => undefined,
+  });
+  const binding = bindAdaAction({ ...f.options, hitTarget: "self" }, f.element);
+  f.document.hitTarget = f.button;
+  const down = () => {
+    f.document.dispatchEvent(f.event("pointerdown", f.button));
+    f.root.dispatchEvent(f.event("pointerdown", f.button));
+  };
+  const up = () => {
+    f.document.dispatchEvent(f.event("pointerup", f.button));
+    const click = f.event("click", f.button);
+    f.root.dispatchEvent(click);
+    if (!click.defaultPrevented) {
+      f.button.dispatchEvent(click);
+    }
+  };
+  down();
+  f.document.hitTarget = f.label;
+  f.document.dispatchEvent(f.event("pointermove", f.button, { clientX: 1 }));
+  vi.advanceTimersByTime(530);
+  up();
+  expect(f.run).not.toHaveBeenCalled();
+  f.document.hitTarget = f.button;
+  down();
+  f.document.hitTarget = f.label;
+  vi.advanceTimersByTime(530);
+  up();
+  expect(f.run).not.toHaveBeenCalled();
+  f.document.hitTarget = f.button;
+  down();
+  f.document.hitTarget = null;
+  up();
+  expect(f.run).not.toHaveBeenCalled();
+  f.document.hitTarget = f.button;
+  down();
+  vi.advanceTimersByTime(530);
+  expect(f.run).toHaveBeenCalledTimes(1);
+  up();
+  expect(f.run).toHaveBeenCalledTimes(1);
+  down();
+  up();
+  expect(f.run).toHaveBeenCalledTimes(2);
   binding.dispose();
   f.stop();
 });
