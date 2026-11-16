@@ -2,6 +2,7 @@ import { afterEach, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import * as asteroids from "./asteroids.ts";
+import * as debris from "./debrisBody.ts";
 import { debrisFrameOf, debrisSilhouette } from "./debrisBody.ts";
 import { createFlight, stepFlight } from "./flight.ts";
 import { newProgress } from "./progress.ts";
@@ -116,4 +117,47 @@ it("deduplicates frame hashing in the actual capital encounter AI and projectile
     JSON.stringify([seed, reduced, id, time, start]),
   );
   expect(new Set(keys).size).toBe(keys.length);
+});
+
+it("invalidates a same-object same-time rock entry when canonical shape metadata is replaced", () => {
+  const cache = new SceneryFrames();
+  const flight = context();
+  const object = rock();
+  const shapes = asteroids.ASTEROID_SHAPES as Map<string, asteroids.AsteroidShape>;
+  const original = shapes.get(object.asteroid!)!;
+  for (flight.time = 0; flight.time < original.frames.length; flight.time++) {
+    if (reference(flight, false, object) !== 0) {
+      break;
+    }
+  }
+  const before = cache.frame(flight, false, object);
+  expect(before).not.toBe(0);
+  try {
+    shapes.set(object.asteroid!, { ...original, spin: false });
+    expect(cache.frame(flight, false, object)).toBe(0);
+    expect(cache.frame(flight, false, object)).not.toBe(before);
+  } finally {
+    shapes.set(object.asteroid!, original);
+  }
+  expect(cache.frame(flight, false, object)).toBe(before);
+});
+
+it("never reuses a traveling-debris result across replacement of its live frame provider", () => {
+  const cache = new SceneryFrames();
+  const flight = { ...context(), galaxy: 3 as const };
+  const object: SpaceObject = {
+    hp: 1,
+    id: "live-debris",
+    kind: "debris",
+    radius: 20,
+    velocity: { x: 2, y: 0 },
+    x: 0,
+    y: 0,
+  };
+  const before = cache.frame(flight, false, object);
+  const replacement = (before + 1) % debrisSilhouette(flight.galaxy, object)!.frames.length;
+  const provider = vi.spyOn(debris, "debrisFrameOf").mockReturnValue(replacement);
+  expect(cache.frame(flight, false, object)).toBe(replacement);
+  expect(cache.frame(flight, false, object)).toBe(replacement);
+  expect(provider).toHaveBeenCalledTimes(2);
 });
