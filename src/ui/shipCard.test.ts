@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import * as actionBinding from "./actionBinding.ts";
 import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 import {
@@ -188,7 +189,28 @@ describe("Ship card", () => {
 // Only the element members used by the Ship renderer; geometry is checked in browser captures.
 class ShipElement extends EventTarget {
   parentElement: ShipElement | null = null;
-  readonly isConnected = true;
+  attached = false;
+  get isConnected(): boolean {
+    return this.parentElement?.isConnected ?? this.attached;
+  }
+  readonly tag: string;
+  constructor(tag = "div") {
+    super();
+    this.tag = tag;
+  }
+  matches(selector: string): boolean {
+    return selector === ":disabled"
+      ? Boolean((this as unknown as HTMLButtonElement).disabled)
+      : this.tag === "button" ||
+          this.attributes.has("data-action") ||
+          this.attributes.get("role") === "button";
+  }
+  querySelectorAll(selector: string): ShipElement[] {
+    return this.children.flatMap((child) => [
+      ...(child.matches(selector) ? [child] : []),
+      ...child.querySelectorAll(selector),
+    ]);
+  }
   get ownerDocument() {
     return document;
   }
@@ -207,10 +229,10 @@ class ShipElement extends EventTarget {
   get parentNode() {
     return this.parentElement;
   }
-  get firstElementChild() {
+  get firstElementChild(): ShipElement | null {
     return this.children[0] ?? null;
   }
-  get nextSibling() {
+  get nextSibling(): ShipElement | null {
     const siblings = this.parentElement?.children;
     return siblings?.[siblings.indexOf(this) + 1] ?? null;
   }
@@ -260,7 +282,7 @@ class ShipElement extends EventTarget {
 
 function rendered(sections: ReturnType<typeof shipSections>): ShipElement {
   vi.stubGlobal("document", {
-    createElement: () => new ShipElement(),
+    createElement: (tag: string) => new ShipElement(tag),
     createElementNS: () => new ShipElement(),
     defaultView: { HTMLElement: ShipElement, Node: ShipElement },
   });
@@ -272,7 +294,10 @@ function rendered(sections: ReturnType<typeof shipSections>): ShipElement {
 
 const rowText = (row: ShipElement) => row.children[1]!.children.map((part) => part.textContent);
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 describe("Ship sections rendering", () => {
   it("places Cargo, Equipment and Weapons in three columns with shared dividers", () => {
@@ -389,7 +414,7 @@ it("keeps canonical detail identities when display labels collide or change", ()
 
 it("routes clickable inventory identities without reading labels", () => {
   vi.stubGlobal("document", {
-    createElement: () => new ShipElement(),
+    createElement: (tag: string) => new ShipElement(tag),
     createElementNS: () => new ShipElement(),
     defaultView: { HTMLElement: ShipElement, Node: ShipElement },
   });
@@ -401,6 +426,8 @@ it("routes clickable inventory identities without reading labels", () => {
     sections,
     onItem,
   ) as unknown as ShipElement;
+  root.remove();
+  root.attached = true;
   fixtureActionRoot(root);
   const row = root.children[4]!.children[1]!.children[0]!;
   expect(row.children).toHaveLength(2);
@@ -417,7 +444,7 @@ it("routes clickable inventory identities without reading labels", () => {
 
 it("keeps both empty status rows inert for click and registered hold activation", () => {
   vi.stubGlobal("document", {
-    createElement: () => new ShipElement(),
+    createElement: (tag: string) => new ShipElement(tag),
     createElementNS: () => new ShipElement(),
     defaultView: { HTMLElement: ShipElement, Node: ShipElement },
   });
@@ -428,6 +455,8 @@ it("keeps both empty status rows inert for click and registered hold activation"
     shipSections(LABELS, { ...VIEW, carrying: [], towing: null }),
     onItem,
   ) as unknown as ShipElement;
+  root.remove();
+  root.attached = true;
   fixtureActionRoot(root);
   const rows = root.children[0]!.children[1]!.children.slice(3);
   expect(rows).toHaveLength(2);
@@ -438,5 +467,33 @@ it("keeps both empty status rows inert for click and registered hold activation"
     resolveAdaHoldAction(root as unknown as HTMLElement, row)?.activate();
   }
   expect(onItem).not.toHaveBeenCalled();
+  disposeShipSections(root as unknown as HTMLElement);
+});
+
+it("audits completed detached Ship rows and rejects a missing semantic binding", () => {
+  rendered(shipSections(LABELS, VIEW));
+  const bind = vi.spyOn(actionBinding, "bindAdaAction").mockImplementationOnce(() => ({
+    activate: () => false,
+    dispose() {},
+    update() {},
+  }));
+  expect(() => rendered(shipSections(LABELS, VIEW))).toThrow("no registered action binding");
+  expect(bind).toHaveBeenCalled();
+});
+
+it("audits detached empty Ship status rows without invoking runtime policy", () => {
+  const original = actionBinding.bindAdaAction;
+  const policy = vi.fn(() => {
+    throw Error("construction evaluated runtime policy");
+  });
+  vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((options, element) =>
+    original(
+      { ...options, click: { ...options.click, availability: policy }, current: policy },
+      element,
+    ),
+  );
+  const root = rendered(shipSections(LABELS, { ...VIEW, carrying: [], towing: null }));
+  expect(root.isConnected).toBe(false);
+  expect(policy).not.toHaveBeenCalled();
   disposeShipSections(root as unknown as HTMLElement);
 });

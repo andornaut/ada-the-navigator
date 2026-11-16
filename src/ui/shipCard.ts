@@ -10,7 +10,7 @@ import { WEAPON_LEVEL_COUNT } from "../data/weaponCatalog.ts";
 import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import { fill, weaponName } from "../model/shop.ts";
 import type { Aboard, ShipItemFact } from "../model/types.ts";
-import { bindAdaAction } from "./actionBinding.ts";
+import { assertAdaActionMetadata, bindAdaAction } from "./actionBinding.ts";
 import { applyAdaControlTheme, createAdaPageDivider } from "./buttonPresentation.ts";
 import { compactLevelName } from "./compactLevelName.ts";
 import { SCROLL } from "./layout/contentCard.ts";
@@ -324,6 +324,7 @@ export function renderShipSections(
   root.classList.add("ada-ship-sections");
   root.dataset.inkTop = "0";
   applyAdaControlTheme(root);
+  assertAdaActionMetadata(root);
   sectionLayouts.set(root, layout);
   return root;
 }

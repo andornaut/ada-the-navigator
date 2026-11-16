@@ -1,8 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { CONTENT } from "../data/content.ts";
 import type { MapPlace } from "../model/map.ts";
 import type { QuestEntry } from "../model/questDetails.ts";
-import { questRoute } from "./questsScreen.ts";
+import * as actionBinding from "./actionBinding.ts";
+import { fixtureActionRoot } from "./actionRootFixture.ts";
+import { mapScreenLabels } from "./mapScreen.ts";
+import { createQuestsScreen, questRoute } from "./questsScreen.ts";
 
 const entry: QuestEntry = {
   galaxy: 1,
@@ -121,4 +125,182 @@ it("presents only canonical supplied quest identities and never uses a label dic
   );
   const unknown = { ...entry, line: { kind: "story" as const, target: null, text: "Explore" } };
   expect(questContextIcon({ quests: [unknown] })).toBe("/art/ui/icons/map-destination.svg");
+});
+
+class QuestNode extends EventTarget {
+  parentElement: QuestNode | null = null;
+  children: QuestNode[] = [];
+  readonly attributes = new Map<string, string>();
+  readonly dataset: Record<string, string> = {};
+  readonly style = { removeProperty: vi.fn(), setProperty: vi.fn() };
+  readonly classList = { add: vi.fn(), remove: vi.fn() };
+  attached = false;
+  className = "";
+  disabled = false;
+  hidden = false;
+  textContent = "";
+  readonly tag: string;
+  constructor(tag = "div") {
+    super();
+    this.tag = tag;
+  }
+  get ownerDocument() {
+    return document;
+  }
+  get parentNode() {
+    return this.parentElement;
+  }
+  get isConnected(): boolean {
+    return this.parentElement?.isConnected ?? this.attached;
+  }
+  get firstElementChild(): QuestNode | null {
+    return this.children[0] ?? null;
+  }
+  get childElementCount() {
+    return this.children.length;
+  }
+  get nextSibling(): QuestNode | null {
+    return this.parentElement?.children[this.parentElement.children.indexOf(this) + 1] ?? null;
+  }
+  matches(selector: string): boolean {
+    return selector === ":disabled"
+      ? this.disabled
+      : this.tag === "button" || this.attributes.has("data-action");
+  }
+  querySelectorAll(selector: string): QuestNode[] {
+    return this.children.flatMap((child) => [
+      ...(child.matches(selector) ? [child] : []),
+      ...child.querySelectorAll(selector),
+    ]);
+  }
+  contains(target: unknown): boolean {
+    return target === this || this.children.some((child) => child.contains(target));
+  }
+  remove() {
+    if (this.parentElement) {
+      this.parentElement.children.splice(this.parentElement.children.indexOf(this), 1);
+      this.parentElement = null;
+    }
+  }
+  insertBefore(node: QuestNode, before: QuestNode | null) {
+    node.remove();
+    node.parentElement = this;
+    this.children.splice(before ? this.children.indexOf(before) : this.children.length, 0, node);
+    return node;
+  }
+  append(...nodes: QuestNode[]) {
+    for (const node of nodes) {
+      this.insertBefore(node, null);
+    }
+  }
+  prepend(node: QuestNode) {
+    this.insertBefore(node, this.firstElementChild);
+  }
+  replaceChildren(...nodes: QuestNode[]) {
+    for (const node of [...this.children]) {
+      node.remove();
+    }
+    this.append(...nodes);
+  }
+  setAttribute(name: string, value: string) {
+    this.attributes.set(name, value);
+  }
+  getAttribute(name: string) {
+    return this.attributes.get(name) ?? null;
+  }
+  removeAttribute(name: string) {
+    this.attributes.delete(name);
+  }
+}
+
+const producer = vi.hoisted(() => ({ fit: vi.fn(), reveal: vi.fn() }));
+vi.mock("./modal.ts", async (load) => ({
+  ...(await load<typeof import("./modal.ts")>()),
+  createButton: (label: string) => Object.assign(new QuestNode("button"), { textContent: label }),
+  createCard: () => {
+    const frame = new QuestNode();
+    const card = new QuestNode();
+    const body = new QuestNode();
+    const close = new QuestNode("button");
+    card.append(body);
+    frame.append(card, close);
+    return { body, card, close, dispose() {}, fit: producer.fit, frame };
+  },
+  setScrollGroup: vi.fn(),
+}));
+vi.mock("./modalLayer.ts", () => ({
+  createModalLayer: () => ({ dispose() {}, open: producer.reveal.mockReturnValue(() => {}) }),
+}));
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+  producer.reveal.mockClear();
+});
+function screenFixture(owned = true) {
+  vi.stubGlobal("document", {
+    createElement: (tag: string) => new QuestNode(tag),
+    createElementNS: (_namespace: string, tag: string) => new QuestNode(tag),
+    createTextNode: (text: string) => Object.assign(new QuestNode("#text"), { textContent: text }),
+    defaultView: { HTMLElement: QuestNode, Node: QuestNode },
+  });
+  const root = new QuestNode();
+  if (owned) {
+    fixtureActionRoot(root);
+  }
+  root.attached = true;
+  const screen = createQuestsScreen(root as unknown as HTMLElement, {
+    labels: mapScreenLabels(CONTENT.labels),
+    onClose: vi.fn(),
+    onLocate: vi.fn(),
+  });
+  return { root, screen };
+}
+
+it("audits completed Quests rows on semantic changes, including disabled routes, before reveal", () => {
+  const audit = vi.spyOn(actionBinding, "assertAdaActionBindings");
+  const original = actionBinding.bindAdaAction;
+  const policy = vi.fn(() => {
+    throw Error("construction evaluated runtime policy");
+  });
+  vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((options, node) =>
+    original(
+      { ...options, click: { ...options.click, availability: policy }, current: policy },
+      node,
+    ),
+  );
+  const { screen } = screenFixture();
+  screen.setState([entry], [], 1);
+  screen.open();
+  expect(audit).toHaveBeenCalledTimes(1);
+  screen.setState([entry], [], 1);
+  expect(audit).toHaveBeenCalledTimes(1);
+  screen.setState([entry, { ...entry, id: "other" }], [], 1);
+  expect(audit).toHaveBeenCalledTimes(2);
+  screen.open(entry.id, "ship");
+  expect(audit).toHaveBeenCalledTimes(3);
+  expect(policy).not.toHaveBeenCalled();
+  expect(producer.reveal).toHaveBeenCalledTimes(3);
+  screen.dispose();
+});
+
+it("rejects a missing dynamic Quests row binding before reveal", () => {
+  const { screen } = screenFixture();
+  screen.setState([entry], [], 1);
+  vi.spyOn(actionBinding, "bindAdaAction").mockImplementationOnce(() => ({
+    activate: () => false,
+    dispose() {},
+    update() {},
+  }));
+  expect(() => screen.open()).toThrow("no registered action binding");
+  expect(producer.reveal).not.toHaveBeenCalled();
+  screen.dispose();
+});
+
+it("rejects an unowned connected Quests subtree before reveal without evaluating readiness", () => {
+  const { screen } = screenFixture(false);
+  screen.setState([entry], [], 1);
+  expect(() => screen.open()).toThrow("no live action root");
+  expect(producer.reveal).not.toHaveBeenCalled();
+  screen.dispose();
 });

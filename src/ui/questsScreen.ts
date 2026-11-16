@@ -4,7 +4,11 @@ import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { MapPlace, MapSymbol } from "../model/map.ts";
 import type { QuestEntry, QuestObjective } from "../model/questDetails.ts";
-import { bindAdaAction } from "./actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  bindAdaAction,
+} from "./actionBinding.ts";
 import { createCompletionIndicator } from "./completionIndicator.ts";
 import { gainNotice } from "./itemNotice.ts";
 import { SCROLL } from "./layout/contentCard.ts";
@@ -414,11 +418,11 @@ export function createQuestsScreen(
                     "aria-label",
                     `${labels.questLocate ?? ""}: ${endpoint.location.label}`,
                   );
-                  register(button, () => {
-                    hide();
-                    options.onLocate(endpoint.place!.id);
-                  });
                 }
+                register(button, () => {
+                  hide();
+                  options.onLocate(endpoint.place!.id);
+                });
                 route.append(button);
               }
 
@@ -513,7 +517,10 @@ export function createQuestsScreen(
       },
       questsTree(footerData),
     );
+    assertAdaActionMetadata(body);
+    assertAdaActionMetadata(footer);
     card.body.replaceChildren(body, footer);
+    assertAdaActionBindings(card.frame);
     if (!entry) {
       setScrollGroup(card, body);
     } else {
