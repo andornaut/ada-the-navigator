@@ -9,6 +9,7 @@ import type { GameObjects, Scene } from "phaser";
 
 import { BUILD_LABEL } from "../buildLabel.ts";
 import { CONTENT } from "../data/content.ts";
+import { SCROLL } from "../data/layout.ts";
 import { RESOURCE_DESCRIPTIONS } from "../data/resourceDescriptions.ts";
 import type { Weapon } from "../data/types.ts";
 import { weaponDetailLines } from "../data/weaponDetails.ts";
@@ -214,8 +215,8 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   let pausable = false;
   let disposed = false;
   let context: UseContext | undefined;
-  // The pointer pressing the Use disc and when it went down, for the press frame.
-  let usePress: { readonly id: number; readonly since: number } | undefined;
+  // The shared dispatcher supplies the Use press timestamp for its visual frames.
+  let usePress: { readonly since: number } | undefined;
   let useShown = false;
   let visibility = { aim: true, move: true };
   let reducedMotion = false;
@@ -262,6 +263,13 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const actionRoot = bindAdaActionRoot(
     {
       guard: rootPressGuard(settings.root),
+      pointerRelease: {
+        onPressChange: (element) => {
+          usePress = element === settings.useButton ? { since: performance.now() } : undefined;
+        },
+        pointerTarget: document,
+        resolvePointer: (event) => resolveUsePointer(event),
+      },
       requiredReady,
       subscribeRequired: options.subscribeRequired ?? (() => () => {}),
     },
@@ -694,6 +702,38 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     const found = target instanceof Element ? target.closest("[data-control]") : null;
     return found && settings.root.contains(found) ? found : null;
   };
+  const resolveUsePointer = (
+    event: Pick<PointerEvent, "clientX" | "clientY" | "target">,
+  ): HTMLElement | null | undefined => {
+    const native = event.target instanceof Node && settings.useButton.contains(event.target);
+    const surface =
+      event.target === canvas || event.target === parent || joystickTarget(event.target) !== null;
+    if (!native && (!surface || onPageControl(event.target))) {
+      return undefined;
+    }
+    if (useShown && state.accepts() && usePressed(useLayout, point(event))) {
+      return settings.useButton;
+    }
+    return native ? null : undefined;
+  };
+  const useAction = bindAdaAction(
+    {
+      beforeClick: (event) => event.detail === 0 || resolveUsePointer(event) === settings.useButton,
+      click: {
+        availability: () =>
+          state.accepts() &&
+          context !== undefined &&
+          useShown &&
+          !settings.useButton.closest("[hidden], [inert]")
+            ? { kind: "available" }
+            : { kind: "omitted" },
+        run: () => state.requestUse(),
+      },
+      current: () => !disposed && settings.useButton.isConnected,
+      slopPx: () => SCROLL.dragThreshold * readViewUnit(settings.useButton),
+    },
+    settings.useButton,
+  );
   // Where the item notice's chip and destinations sit now, in HUD rect px.
   const noticePlaces = (): NoticePlaces => {
     const view = canvasSize(sceneFit(scene));
@@ -720,16 +760,11 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       ),
     };
   };
-  const release = (pointerId: number) => {
-    if (usePress?.id === pointerId) {
-      usePress = undefined;
-    } else {
-      state.release(pointerId);
-    }
-  };
+  const release = (pointerId: number) => state.release(pointerId);
   const stopPointers = listenPagePresses(
     (event) =>
       state.accepts() &&
+      resolveUsePointer(event) !== settings.useButton &&
       (event.pointerType === "touch" || joystickTarget(event.target) !== null) &&
       !onPageControl(event.target) &&
       (event.target === canvas || event.target === parent || joystickTarget(event.target) !== null),
@@ -737,18 +772,10 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       cancel: ({ pointerId }) => release(pointerId),
       down: ({ pointerId }, event) => {
         const at = point(event);
-        // Use's press circle takes a press first; the rest of the view starts a stick.
-        if (useShown && !usePress && usePressed(useLayout, at)) {
-          usePress = { id: pointerId, since: performance.now() };
-          state.requestUse();
-          return;
-        }
         state.down(at.x < canvasSize(sceneFit(scene)).width / 2 ? "move" : "aim", pointerId, at);
       },
       move: ({ pointerId }, event) => {
-        if (usePress?.id !== pointerId) {
-          state.move(pointerId, point(event));
-        }
+        state.move(pointerId, point(event));
       },
       up: ({ pointerId }) => release(pointerId),
     },
@@ -835,8 +862,6 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       reset();
     }
   };
-  const use = () => state.requestUse();
-  settings.useButton.addEventListener("click", use);
   window.addEventListener(PHONE_EVENTS.backPressed, onBack);
   window.addEventListener("keydown", keyDown);
   window.addEventListener("keyup", keyUp);
@@ -923,6 +948,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       }
       disposed = true;
       actionRoot.dispose();
+      useAction.dispose();
       navigation.dispose();
       stopPointers();
       desktopBinding.dispose();

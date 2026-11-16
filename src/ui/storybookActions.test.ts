@@ -1,7 +1,18 @@
+import { readFileSync } from "node:fs";
+import { createContext, runInContext } from "node:vm";
+
+import ts from "typescript";
 import { afterEach, expect, it, vi } from "vitest";
 
-import { resolveAdaHoldAction } from "./actionBinding.ts";
+import { SCROLL } from "../data/layout.ts";
+import { ControlState } from "../input/state.ts";
+import { bindAdaAction, resolveAdaHoldAction } from "./actionBinding.ts";
 import { registerAdaActionRoot } from "./actionRegistry.ts";
+import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
+import { NO_INSETS } from "./layout/playView.ts";
+import { useDiscLayout, usePressed } from "./layout/touchControls.ts";
+import { readViewUnit } from "./layout/viewScale.ts";
+import { enterPressView, rootPressGuard } from "./pressScope.ts";
 import { createStorybook, type StoryPageView } from "./storybook.ts";
 
 vi.mock("./storyArt.ts", async (original) => ({
@@ -64,6 +75,9 @@ class Element extends EventTarget {
       }
     },
   };
+  matches(selector: string): boolean {
+    return selector === ":disabled" && this.disabled;
+  }
   contains(node: unknown): boolean {
     return node === this || this.children.some((child) => child.contains(node));
   }
@@ -147,7 +161,13 @@ const page: StoryPageView = {
   text: "Existing page facts",
 };
 function setup() {
-  const win = Object.assign(new EventTarget(), { HTMLElement: Element, Node: Element });
+  const win = Object.assign(new EventTarget(), {
+    HTMLElement: Element,
+    Node: Element,
+    clearTimeout: (id: ReturnType<typeof setTimeout>) => clearTimeout(id),
+    performance: { now: () => Date.now() },
+    setTimeout: (callback: () => void, delay: number) => setTimeout(callback, delay),
+  });
   const doc = Object.assign(new EventTarget(), {
     activeElement: null,
     createElement: () => new Element(),
@@ -157,6 +177,8 @@ function setup() {
   vi.stubGlobal("document", doc);
   vi.stubGlobal("window", win);
   vi.stubGlobal("HTMLElement", Element);
+  vi.stubGlobal("Node", Element);
+  vi.stubGlobal("Element", Element);
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
   const host = new Element();
   host.attached = true;
@@ -190,7 +212,10 @@ function setup() {
     unregister,
   };
 }
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
 it("registers native navigation with default holds and current callbacks", () => {
   const f = setup();
   try {
@@ -304,5 +329,216 @@ it("owns sleep background activation with one current page identity and no paral
   } finally {
     f.story.dispose();
     f.unregister();
+  }
+});
+
+const controlsSource = ts.createSourceFile(
+  "controls.ts",
+  readFileSync(new URL("../input/controls.ts", import.meta.url), "utf8"),
+  ts.ScriptTarget.Latest,
+  true,
+);
+function controlsDeclaration(name: string): string {
+  let declaration: ts.VariableDeclaration | undefined;
+  const visit = (node: ts.Node) => {
+    if (ts.isVariableDeclaration(node) && node.name.getText(controlsSource) === name)
+      {declaration = node;}
+    ts.forEachChild(node, visit);
+  };
+  visit(controlsSource);
+  if (!declaration) {throw new Error(`Missing actual Controls declaration ${name}`);}
+  return declaration.getText(controlsSource);
+}
+function useFixture() {
+  vi.useFakeTimers();
+  const f = setup();
+  f.unregister();
+  const useButton = new Element();
+  f.host.append(useButton);
+  const canvas = new Element(),
+    parent = new Element();
+  canvas.attached = true;
+  parent.append(canvas);
+  const hud = f.button("story-next");
+  const layout = useDiscLayout({ height: 360, width: 720 }, NO_INSETS);
+  const state = new ControlState();
+  state.setUseAvailable(true);
+  const request = vi.spyOn(state, "requestUse");
+  let pointerAccept!: (event: PointerEvent) => boolean;
+  let pointerHandlers!: { down: (press: { pointerId: number }, event: PointerEvent) => void };
+  const sandbox = createContext({
+    Node: Element,
+    SCROLL,
+    bindAdaAction,
+    bindAdaActionRoot,
+    canvas,
+    canvasSize: () => ({ height: 360, width: 720 }),
+    context: { action: "dock", label: "Dock" },
+    disposed: false,
+    document,
+    joystickTarget: () => null,
+    listenPagePresses: (accept: typeof pointerAccept, handlers: typeof pointerHandlers) => {
+      pointerAccept = accept;
+      pointerHandlers = handlers;
+      return () => {};
+    },
+    onPageControl: (target: unknown) => target !== canvas && target !== parent,
+    options: { subscribeRequired: () => () => {} },
+    parent,
+    performance: { now: () => Date.now() },
+    point: (event: PointerEvent) => ({ x: event.clientX, y: event.clientY }),
+    readViewUnit,
+    release: (pointerId: number) => state.release(pointerId),
+    requiredReady: () => true,
+    rootPressGuard,
+    scene: {},
+    sceneFit: () => ({}),
+    settings: { root: f.host, useButton },
+    state,
+    useLayout: layout,
+    usePress: undefined,
+    usePressed,
+    useShown: true,
+    window,
+  });
+  const declarations = ["resolveUsePointer", "useAction", "actionRoot", "stopPointers"];
+  const actual = runInContext(
+    ts.transpileModule(
+      `${declarations.map((name) => `const ${controlsDeclaration(name)};`).join("\n") 
+        }\n({actionRoot,useAction,resolveUsePointer});`,
+      { compilerOptions: { target: ts.ScriptTarget.ES2023 } },
+    ).outputText,
+    sandbox,
+  ) as {
+    actionRoot: ReturnType<typeof bindAdaActionRoot>;
+    useAction: ReturnType<typeof bindAdaAction>;
+    resolveUsePointer: (event: PointerEvent) => HTMLElement | null | undefined;
+  };
+  const event = (type: string, target: Element = canvas, at = layout.centre) => {
+    const e = new Event(type, { cancelable: true });
+    for (const [key, value] of Object.entries({
+      button: 0,
+      clientX: at.x,
+      clientY: at.y,
+      detail: type === "click" ? 1 : 0,
+      isPrimary: true,
+      pointerId: 7,
+      pointerType: "touch",
+      target,
+    }))
+      {Object.defineProperty(e, key, { value });}
+    return e as PointerEvent;
+  };
+  const down = (target = canvas, at = layout.centre) => {
+    const e = event("pointerdown", target, at);
+    document.dispatchEvent(e);
+    if (pointerAccept(e)) {pointerHandlers.down({ pointerId: 7 }, e);}
+  };
+  const up = (target = canvas, at = layout.centre) =>
+    document.dispatchEvent(event("pointerup", target, at));
+  const click = (target = useButton, at = layout.centre) => {
+    const e = event("click", target, at);
+    f.host.dispatchEvent(e);
+    if (!e.defaultPrevented) {target.dispatchEvent(e);}
+    return e;
+  };
+  return {
+    ...f,
+    ...actual,
+    canvas,
+    click,
+    down,
+    event,
+    hud,
+    layout,
+    request,
+    sandbox,
+    state,
+    up,
+    useButton,
+  };
+}
+it("pairs the actual Controls Use resolver with one short/hold release and no joystick or click duplicate", () => {
+  const f = useFixture();
+  try {
+    expect(f.resolveUsePointer(f.event("pointerdown"))).toBe(f.useButton);
+    f.down();
+    expect(f.request).not.toHaveBeenCalled();
+    f.up();
+    expect(f.request).toHaveBeenCalledOnce();
+    expect(f.click().defaultPrevented).toBe(true);
+    expect(f.request).toHaveBeenCalledOnce();
+    expect(f.state.sample().move).toEqual({ x: 0, y: 0 });
+    expect(f.state.sample().aim).toEqual({ x: 0, y: 0 });
+    f.down();
+    vi.advanceTimersByTime(500);
+    expect(f.request).toHaveBeenCalledTimes(2);
+    expect(f.sandbox.usePress).toBeDefined();
+    f.up();
+    f.click();
+    expect(f.request).toHaveBeenCalledTimes(2);
+    expect(f.sandbox.usePress).toBeUndefined();
+    const invalid = { x: -100, y: -100 };
+    expect(f.resolveUsePointer(f.event("pointerdown", f.useButton, invalid))).toBeNull();
+    f.down(f.useButton, invalid);
+    f.up(f.useButton, invalid);
+    f.click(f.useButton, invalid);
+    expect(f.request).toHaveBeenCalledTimes(2);
+    const keyboard = new Event("click");
+    Object.defineProperty(keyboard, "detail", { value: 0 });
+    f.useButton.dispatchEvent(keyboard);
+    expect(f.request).toHaveBeenCalledTimes(3);
+    f.state.setEnabled(false);
+    f.useButton.dispatchEvent(keyboard);
+    expect(f.request).toHaveBeenCalledTimes(3);
+  } finally {
+    f.useAction.dispose();
+    f.actionRoot.dispose();
+    f.story.dispose();
+  }
+});
+it("keeps native sleep routing, stale page identity and modal denial without redirecting HUD to Use", () => {
+  const f = useFixture();
+  try {
+    const sleep = { ...page, canSkip: false, sleep: true };
+    f.story.show(sleep);
+    const background = f.host.all().find((node) => node.className === "ada-story-background")!;
+    expect(f.resolveUsePointer(f.event("pointerdown", background))).toBeUndefined();
+    f.down(background);
+    f.up(background);
+    f.click(background);
+    expect(f.options.onNext).toHaveBeenCalledOnce();
+    expect(f.request).not.toHaveBeenCalled();
+    f.down(background);
+    vi.advanceTimersByTime(500);
+    f.up(background);
+    f.click(background);
+    expect(f.options.onNext).toHaveBeenCalledTimes(2);
+    f.down(background);
+    f.story.show({ ...sleep, text: "Replacement page" });
+    f.up(background);
+    f.click(background);
+    expect(f.options.onNext).toHaveBeenCalledTimes(2);
+    expect(f.resolveUsePointer(f.event("pointerdown", f.hud))).toBeUndefined();
+    f.down(f.hud);
+    f.up(f.hud);
+    f.click(f.hud);
+    expect(f.request).not.toHaveBeenCalled();
+    const dialog = new Element();
+    f.host.append(dialog);
+    const leave = enterPressView(
+      f.host as unknown as HTMLElement,
+      dialog as unknown as HTMLElement,
+    );
+    f.down();
+    vi.advanceTimersByTime(500);
+    f.up();
+    f.click();
+    expect(f.request).not.toHaveBeenCalled();
+    leave();
+  } finally {
+    f.useAction.dispose();
+    f.actionRoot.dispose();
+    f.story.dispose();
   }
 });

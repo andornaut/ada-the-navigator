@@ -179,6 +179,7 @@ it("attaches one UI-scoped root with the canonical readiness ports independently
   const bind = vi.fn(() => ({}));
   const sandbox = createContext({
     bindAdaActionRoot: bind,
+    document: {},
     options: { requiredReady: () => ready, subscribeRequired: subscribe },
     rootPressGuard: (element: unknown) => {
       expect(element).toBe(root);
