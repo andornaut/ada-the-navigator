@@ -7,11 +7,20 @@ import { createRestartCard } from "./restartCard.ts";
 
 let doc: {
   activeElement: Element | null;
-  createElement: () => Element;
+  createElement: (tag: string) => Element;
   defaultView: { HTMLElement: typeof Element; Node: typeof Element };
   fonts: { ready: Promise<void> };
 };
 class Element extends EventTarget {
+  readonly tagName: string;
+  type = "";
+  constructor(tag = "div") {
+    super();
+    this.tagName = tag.toUpperCase();
+    if (tag === "button") {
+      this.type = "button";
+    }
+  }
   nodeType = 1;
   parentElement: Element | null = null;
   children: Element[] = [];
@@ -81,17 +90,38 @@ class Element extends EventTarget {
   querySelector(selector: string): Element | null {
     return this.querySelectorAll(selector)[0] ?? null;
   }
+  matches(selector: string): boolean {
+    return selector.split(",").some((part) => {
+      const value = part.trim();
+      if (value === ":disabled") {
+        return this.disabled;
+      }
+      if (value === "button" || value === "img") {
+        return this.tagName === value.toUpperCase();
+      }
+      if (value.startsWith(".")) {
+        return this.className.split(" ").includes(value.slice(1));
+      }
+      if (value === "[data-action]") {
+        return this.dataset.action !== undefined || this.attributes.has("data-action");
+      }
+      const input = /^input\[type=["'](button|submit|reset)["']\]$/.exec(value);
+      if (input) {
+        return this.tagName === "INPUT" && (this.attributes.get("type") ?? this.type) === input[1];
+      }
+      const role = /^\[role=["']([^"']+)["']\]$/.exec(value);
+      if (role) {
+        return this.attributes.get("role") === role[1];
+      }
+      const action = /^\[data-action=["']([^"']+)["']\]$/.exec(value);
+      return (
+        action !== null && (this.dataset.action ?? this.attributes.get("data-action")) === action[1]
+      );
+    });
+  }
   querySelectorAll(selector: string): Element[] {
-    const matches = (node: Element) =>
-      selector === "img"
-        ? false
-        : selector.startsWith(".")
-          ? node.className.split(" ").includes(selector.slice(1))
-          : selector.startsWith("[role=")
-            ? node.attributes.get("role") === "dialog"
-            : node.dataset.action === /data-action="([^"]+)"/.exec(selector)?.[1];
     return this.children.flatMap((child) => [
-      ...(matches(child) ? [child] : []),
+      ...(child.matches(selector) ? [child] : []),
       ...child.querySelectorAll(selector),
     ]);
   }
@@ -107,7 +137,7 @@ const native = vi.hoisted(() => ({ dispose: vi.fn(), fit: vi.fn(), tap: vi.fn() 
 vi.mock("./modal.ts", () => ({
   createActions: () => new Element(),
   createButton: (label: string) => {
-    const button = new Element();
+    const button = new Element("button");
     button.firstChild.nodeValue = label;
     return button;
   },
@@ -117,7 +147,7 @@ vi.mock("./modal.ts", () => ({
       body = new Element(),
       header = new Element(),
       title = new Element(),
-      close = new Element();
+      close = new Element("button");
     frame.setAttribute("role", "dialog");
     card.className = "ada-card";
     body.className = "ada-card-body";
@@ -156,7 +186,7 @@ beforeEach(() => {
   native.tap.mockReturnValue(true);
   doc = {
     activeElement: null,
-    createElement: () => new Element(),
+    createElement: (tag: string) => new Element(tag),
     defaultView: { HTMLElement: Element, Node: Element },
     fonts: { ready: Promise.resolve() },
   };

@@ -8,6 +8,9 @@ import { createResourceCard } from "./resourceCard.ts";
 
 const fixture = vi.hoisted(() => {
   class Node extends EventTarget {
+    tagName = "DIV";
+    type = "";
+    disabled = false;
     nodeType = 1;
     parentElement: Node | null = null;
     private detached = false;
@@ -123,14 +126,43 @@ const fixture = vi.hoisted(() => {
     getAttribute(name: string) {
       return this.attributes[name] ?? null;
     }
+    matches(selector: string): boolean {
+      if (this.nodeType !== 1) {
+        return false;
+      }
+      return selector.split(",").some((part) => {
+        const value = part.trim();
+        if (value === ":disabled") {
+          return this.disabled;
+        }
+        if (value === "button" || value === "img") {
+          return this.tagName === value.toUpperCase();
+        }
+        if (value.startsWith(".")) {
+          return this.className.split(" ").includes(value.slice(1));
+        }
+        if (value === "[data-action]") {
+          return this.dataset.action !== undefined || this.getAttribute("data-action") !== null;
+        }
+        const input = /^input\[type=["'](button|submit|reset)["']\]$/.exec(value);
+        if (input) {
+          return this.tagName === "INPUT" && (this.getAttribute("type") ?? this.type) === input[1];
+        }
+        const role = /^\[role=["']([^"']+)["']\]$/.exec(value);
+        if (role) {
+          return this.getAttribute("role") === role[1];
+        }
+        const action = /^\[data-action=["']([^"']+)["']\]$/.exec(value);
+        return (
+          action !== null && (this.dataset.action ?? this.getAttribute("data-action")) === action[1]
+        );
+      });
+    }
     querySelectorAll(selector: string): Node[] {
-      const descendants = this.children.flatMap((child) => [
-        child,
+      return this.children.flatMap((child) => [
+        ...(child.matches(selector) ? [child] : []),
         ...child.querySelectorAll(selector),
       ]);
-      return selector.includes("button")
-        ? descendants.filter((child) => child.dataset.role !== undefined || child === card.close)
-        : [];
     }
     remove = vi.fn(() => {
       if (this.parentElement) {
@@ -163,7 +195,7 @@ const fixture = vi.hoisted(() => {
   const card = {
     body: new Node(),
     card: new Node(),
-    close: new Node(),
+    close: Object.assign(new Node(), { tagName: "BUTTON", type: "button" }),
     dispose: vi.fn(),
     fit: vi.fn(),
     frame: new Node(),
@@ -178,7 +210,7 @@ vi.mock("./modal.ts", () => ({
     return row;
   },
   createButton: (label: string, role: string) => {
-    const button = new fixture.Node();
+    const button = Object.assign(new fixture.Node(), { tagName: "BUTTON", type: "button" });
     button.textContent = label;
     button.dataset.role = role;
     return button;
@@ -213,7 +245,10 @@ afterEach(() => {
 });
 
 it("uses the shared card and reports exactly one pause/close transition, restoring origin focus", () => {
-  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  vi.stubGlobal("document", {
+    createElement: (tag: string) =>
+      Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
+  });
   const root = new fixture.Node();
   fixtureActionRoot(root);
   const origin = new fixture.Node();
@@ -239,7 +274,10 @@ it("uses the shared card and reports exactly one pause/close transition, restori
 });
 
 it("reopens with current content and traps Tab on the close control", () => {
-  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  vi.stubGlobal("document", {
+    createElement: (tag: string) =>
+      Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
+  });
   const root = new fixture.Node();
   fixtureActionRoot(root);
   const origin = new fixture.Node();
@@ -261,7 +299,10 @@ it("reopens with current content and traps Tab on the close control", () => {
 });
 
 it("shows canonical supplied content and secondary Quests before primary Close without a resume gap", () => {
-  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  vi.stubGlobal("document", {
+    createElement: (tag: string) =>
+      Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
+  });
   const root = new fixture.Node();
   fixtureActionRoot(root);
   const origin = new fixture.Node();
@@ -300,7 +341,10 @@ it("shows canonical supplied content and secondary Quests before primary Close w
 });
 
 it("shows current resource quantities including zero separately and updates them on reopening", () => {
-  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  vi.stubGlobal("document", {
+    createElement: (tag: string) =>
+      Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
+  });
   const detail = createResourceCard(new fixture.Node() as unknown as HTMLElement, {
     closeLabel: "Close",
     onOpenChange: vi.fn(),
@@ -334,7 +378,10 @@ it("shows current resource quantities including zero separately and updates them
 });
 
 it("shows shield identity in the header and formatted HP below while preserving resource reuse", () => {
-  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  vi.stubGlobal("document", {
+    createElement: (tag: string) =>
+      Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
+  });
   const detail = createResourceCard(new fixture.Node() as unknown as HTMLElement, {
     closeLabel: "Close",
     onOpenChange: vi.fn(),
@@ -356,7 +403,10 @@ it("shows shield identity in the header and formatted HP below while preserving 
 });
 
 it("retains footer nodes, resolves the current Quests closure and unregisters disposed actions", () => {
-  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  vi.stubGlobal("document", {
+    createElement: (tag: string) =>
+      Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
+  });
   const root = new fixture.Node();
   fixtureActionRoot(root);
   const origin = new fixture.Node();
@@ -397,7 +447,10 @@ it("retains footer nodes, resolves the current Quests closure and unregisters di
 });
 
 it("registers one native header click and closes once through the shared default hold", () => {
-  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  vi.stubGlobal("document", {
+    createElement: (tag: string) =>
+      Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
+  });
   const root = new fixture.Node();
   fixtureActionRoot(root);
   const origin = new fixture.Node();
@@ -426,7 +479,10 @@ it("registers one native header click and closes once through the shared default
 });
 
 it("rejects background header clicks and removes the registered X callback on disposal", () => {
-  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  vi.stubGlobal("document", {
+    createElement: (tag: string) =>
+      Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
+  });
   const root = new fixture.Node();
   fixtureActionRoot(root);
   const origin = new fixture.Node();
@@ -455,7 +511,10 @@ it("rejects background header clicks and removes the registered X callback on di
 });
 
 it("reports Resource scope and excludes a registered background action", () => {
-  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  vi.stubGlobal("document", {
+    createElement: (tag: string) =>
+      Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
+  });
   const root = new fixture.Node(),
     background = new fixture.Node(),
     origin = new fixture.Node();
@@ -500,7 +559,10 @@ it("reports Resource scope and excludes a registered background action", () => {
 });
 
 it("releases Resource scope before parent restore and invalidates close/reopen/dispose captures", () => {
-  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  vi.stubGlobal("document", {
+    createElement: (tag: string) =>
+      Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
+  });
   const root = new fixture.Node(),
     parent = new fixture.Node(),
     origin = new fixture.Node();
@@ -559,7 +621,10 @@ it("releases Resource scope before parent restore and invalidates close/reopen/d
 });
 
 it("releases only its own Resource scope after Quests has opened a child", () => {
-  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  vi.stubGlobal("document", {
+    createElement: (tag: string) =>
+      Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
+  });
   const root = new fixture.Node(),
     child = new fixture.Node(),
     origin = new fixture.Node();

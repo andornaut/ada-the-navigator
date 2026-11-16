@@ -11,7 +11,11 @@ import {
   mountLayout,
 } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import { bindAdaAction } from "./actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  bindAdaAction,
+} from "./actionBinding.ts";
 import { type CardSize, SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import {
@@ -117,6 +121,15 @@ export function createAdaLayoutPorts<A extends string>(context: AdaLayoutContext
           presentation.element.hidden = !binding.refresh().visible;
         };
         update(initial);
+        try {
+          assertAdaActionMetadata(presentation.element);
+        } catch (error) {
+          disposed = true;
+          registered.dispose();
+          binding.dispose();
+          presentation.dispose();
+          throw error;
+        }
         return {
           dispose() {
             disposed = true;
@@ -153,6 +166,26 @@ export function createAdaLayoutPorts<A extends string>(context: AdaLayoutContext
           },
           parts.close,
         );
+        const update = (next: AdaCardProps<A>) => {
+          current = next;
+          body.hidden = next.body === false;
+          parts.title.textContent = next.title;
+          parts.frame.setAttribute("aria-label", next.title);
+          parts.frame.dataset.cardSize = next.size;
+          parts.close.setAttribute("aria-label", next.closeLabel);
+          parts.close.dataset.action = next.closeAction;
+          setFooterAction(next.footerAction, footer);
+        };
+        update(initial);
+        try {
+          assertAdaActionMetadata(parts.frame);
+        } catch (error) {
+          disposed = true;
+          registered.dispose();
+          fits.delete(parts.fit);
+          parts.dispose();
+          throw error;
+        }
         return {
           dispose() {
             disposed = true;
@@ -162,16 +195,7 @@ export function createAdaLayoutPorts<A extends string>(context: AdaLayoutContext
           },
           element: parts.frame,
           slots: { body, footer, header: parts.header },
-          update(next) {
-            current = next;
-            body.hidden = next.body === false;
-            parts.title.textContent = next.title;
-            parts.frame.setAttribute("aria-label", next.title);
-            parts.frame.dataset.cardSize = next.size;
-            parts.close.setAttribute("aria-label", next.closeLabel);
-            parts.close.dataset.action = next.closeAction;
-            setFooterAction(next.footerAction, footer);
-          },
+          update,
         };
       },
       slots: ["header", "body", "footer"],
@@ -209,7 +233,19 @@ export function mountAdaLayout<A extends string>(
   tree: LayoutNode<AdaLayoutSchema<A>>,
 ) {
   const ports = createAdaLayoutPorts(context);
+  const audit = () => {
+    assertAdaActionMetadata(options.host);
+    if (options.host.isConnected) {
+      assertAdaActionBindings(options.host);
+    }
+  };
   const mounted = mountLayout({ ...options, components: ports.components }, tree);
+  try {
+    audit();
+  } catch (error) {
+    mounted.dispose();
+    throw error;
+  }
   let disposed = false;
   let generation = 0;
   let ready = false;
@@ -273,6 +309,13 @@ export function mountAdaLayout<A extends string>(
       ready = false;
       generation++;
       mounted.update(next);
+      try {
+        audit();
+      } catch (error) {
+        disposed = true;
+        mounted.dispose();
+        throw error;
+      }
       currentTree = next;
     },
   };

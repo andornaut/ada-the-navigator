@@ -9,6 +9,9 @@ import { createWeaponDetailCard } from "./weaponDetailCard.ts";
 
 const fixture = vi.hoisted(() => {
   class Node extends EventTarget {
+    tagName = "DIV";
+    type = "";
+    disabled = false;
     nodeType = 1;
     parentElement: Node | null = null;
     private detached = false;
@@ -124,14 +127,43 @@ const fixture = vi.hoisted(() => {
     getAttribute(name: string) {
       return this.attributes[name] ?? null;
     }
+    matches(selector: string): boolean {
+      if (this.nodeType !== 1) {
+        return false;
+      }
+      return selector.split(",").some((part) => {
+        const value = part.trim();
+        if (value === ":disabled") {
+          return this.disabled;
+        }
+        if (value === "button" || value === "img") {
+          return this.tagName === value.toUpperCase();
+        }
+        if (value.startsWith(".")) {
+          return this.className.split(" ").includes(value.slice(1));
+        }
+        if (value === "[data-action]") {
+          return this.dataset.action !== undefined || this.getAttribute("data-action") !== null;
+        }
+        const input = /^input\[type=["'](button|submit|reset)["']\]$/.exec(value);
+        if (input) {
+          return this.tagName === "INPUT" && (this.getAttribute("type") ?? this.type) === input[1];
+        }
+        const role = /^\[role=["']([^"']+)["']\]$/.exec(value);
+        if (role) {
+          return this.getAttribute("role") === role[1];
+        }
+        const action = /^\[data-action=["']([^"']+)["']\]$/.exec(value);
+        return (
+          action !== null && (this.dataset.action ?? this.getAttribute("data-action")) === action[1]
+        );
+      });
+    }
     querySelectorAll(selector: string): Node[] {
-      const descendants = this.children.flatMap((child) => [
-        child,
+      return this.children.flatMap((child) => [
+        ...(child.matches(selector) ? [child] : []),
         ...child.querySelectorAll(selector),
       ]);
-      return selector.includes("button")
-        ? descendants.filter((child) => child.dataset.role !== undefined || child === card.close)
-        : [];
     }
     remove = vi.fn(() => {
       if (this.parentElement) {
@@ -164,7 +196,7 @@ const fixture = vi.hoisted(() => {
   const card = {
     body: new Node(),
     card: new Node(),
-    close: new Node(),
+    close: Object.assign(new Node(), { tagName: "BUTTON", type: "button" }),
     dispose: vi.fn(),
     fit: vi.fn(),
     frame: new Node(),
@@ -179,7 +211,7 @@ vi.mock("./modal.ts", () => ({
     return row;
   },
   createButton: (label: string, role: string) => {
-    const button = new fixture.Node();
+    const button = Object.assign(new fixture.Node(), { tagName: "BUTTON", type: "button" });
     button.textContent = label;
     button.dataset.role = role;
     return button;
@@ -214,7 +246,10 @@ afterEach(() => {
 });
 
 it("uses the shared card and reports exactly one pause/close transition, restoring origin focus", () => {
-  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  vi.stubGlobal("document", {
+    createElement: (tag: string) =>
+      Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
+  });
   const root = new fixture.Node();
   fixtureActionRoot(root);
   const origin = new fixture.Node();
@@ -240,7 +275,10 @@ it("uses the shared card and reports exactly one pause/close transition, restori
 });
 
 it("reopens with current content and traps Tab on the close control", () => {
-  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  vi.stubGlobal("document", {
+    createElement: (tag: string) =>
+      Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
+  });
   const root = new fixture.Node();
   fixtureActionRoot(root);
   const origin = new fixture.Node();
@@ -264,7 +302,10 @@ it("reopens with current content and traps Tab on the close control", () => {
 it.each([1, 2, 3])(
   "shows canonical icon and level %s in the owned title instead of a description row",
   (level) => {
-    vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+    vi.stubGlobal("document", {
+      createElement: (tag: string) =>
+        Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
+    });
     const detail = createWeaponDetailCard(new fixture.Node() as unknown as HTMLElement, {
       closeLabel: "Close",
       onOpenChange: vi.fn(),
@@ -295,7 +336,10 @@ it.each([1, 2, 3])(
 );
 
 it("keeps an unowned preview unnumbered without inventing owned level metadata", () => {
-  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  vi.stubGlobal("document", {
+    createElement: (tag: string) =>
+      Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
+  });
   const detail = createWeaponDetailCard(new fixture.Node() as unknown as HTMLElement, {
     closeLabel: "Close",
     onOpenChange: vi.fn(),
@@ -317,7 +361,10 @@ it("keeps an unowned preview unnumbered without inventing owned level metadata",
 });
 
 it("renders basic Laser's existing glyph and Unlimited row without a level-one suffix or repeated ammo prose", () => {
-  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  vi.stubGlobal("document", {
+    createElement: (tag: string) =>
+      Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
+  });
   const detail = createWeaponDetailCard(new fixture.Node() as unknown as HTMLElement, {
     closeLabel: "Close",
     onOpenChange: vi.fn(),
@@ -348,7 +395,10 @@ it("renders basic Laser's existing glyph and Unlimited row without a level-one s
 });
 
 it("retains native content nodes and original close actions across current view, reopen and disposal", () => {
-  vi.stubGlobal("document", { createElement: () => new fixture.Node() });
+  vi.stubGlobal("document", {
+    createElement: (tag: string) =>
+      Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
+  });
   const root = new fixture.Node(),
     origin = new fixture.Node();
   fixtureActionRoot(root);

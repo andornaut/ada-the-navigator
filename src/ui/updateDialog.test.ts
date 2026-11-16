@@ -6,6 +6,9 @@ import { rootPressGuard } from "./pressScope.ts";
 import { createUpdateDialog } from "./updateDialog.ts";
 const fixture = vi.hoisted(() => {
   class Node extends EventTarget {
+    tagName = "DIV";
+    type = "";
+    disabled = false;
     nodeType = 1;
     parentElement: Node | null = null;
     private detached = false;
@@ -66,18 +69,46 @@ const fixture = vi.hoisted(() => {
         node,
       );
     }
-    querySelector(selector: string): Node | null {
-      const action = /data-action="([^"]+)"/.exec(selector)?.[1];
-      for (const child of this.children) {
-        if (action !== undefined && child.dataset.action === action) {
-          return child;
-        }
-        const found = child.querySelector(selector);
-        if (found) {
-          return found;
-        }
+    matches(selector: string): boolean {
+      if (this.nodeType !== 1) {
+        return false;
       }
-      return null;
+      return selector.split(",").some((part) => {
+        const value = part.trim();
+        if (value === ":disabled") {
+          return this.disabled;
+        }
+        if (value === "button" || value === "img") {
+          return this.tagName === value.toUpperCase();
+        }
+        if (value.startsWith(".")) {
+          return this.className.split(" ").includes(value.slice(1));
+        }
+        if (value === "[data-action]") {
+          return this.dataset.action !== undefined || this.getAttribute("data-action") !== null;
+        }
+        const input = /^input\[type=["'](button|submit|reset)["']\]$/.exec(value);
+        if (input) {
+          return this.tagName === "INPUT" && (this.getAttribute("type") ?? this.type) === input[1];
+        }
+        const role = /^\[role=["']([^"']+)["']\]$/.exec(value);
+        if (role) {
+          return this.getAttribute("role") === role[1];
+        }
+        const action = /^\[data-action=["']([^"']+)["']\]$/.exec(value);
+        return (
+          action !== null && (this.dataset.action ?? this.getAttribute("data-action")) === action[1]
+        );
+      });
+    }
+    querySelectorAll(selector: string): Node[] {
+      return this.children.flatMap((child) => [
+        ...(child.matches(selector) ? [child] : []),
+        ...child.querySelectorAll(selector),
+      ]);
+    }
+    querySelector(selector: string): Node | null {
+      return this.querySelectorAll(selector)[0] ?? null;
     }
     children: Node[] = [];
     className = "";
@@ -111,6 +142,9 @@ const fixture = vi.hoisted(() => {
     cloneNode(): Node {
       return Object.assign(new Node(), { className: this.className });
     }
+    getAttribute(name: string) {
+      return this.attributes[name] ?? null;
+    }
     setAttribute(name: string, value: string) {
       this.attributes[name] = value;
     }
@@ -118,7 +152,7 @@ const fixture = vi.hoisted(() => {
   const card = {
     body: new Node(),
     card: new Node(),
-    close: new Node(),
+    close: Object.assign(new Node(), { tagName: "BUTTON", type: "button" }),
     dispose: vi.fn(),
     fit: vi.fn(),
     frame: new Node(),
@@ -133,7 +167,7 @@ vi.mock("./modal.ts", () => ({
     return row;
   },
   createButton: (label: string, role: string) => {
-    const button = new fixture.Node();
+    const button = Object.assign(new fixture.Node(), { tagName: "BUTTON", type: "button" });
     button.textContent = label;
     button.dataset.role = role;
     return button;
@@ -189,7 +223,11 @@ const labels = {
 function setup(initial = false) {
   const root = new fixture.Node();
   fixtureActionRoot(root);
-  const doc = { activeElement: null as unknown, createElement: () => new fixture.Node() };
+  const doc = {
+    activeElement: null as unknown,
+    createElement: (tag: string) =>
+      Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
+  };
   vi.stubGlobal("document", doc);
   const guard = rootPressGuard(root as unknown as HTMLElement);
   let notify: (visible: boolean) => void = vi.fn();
