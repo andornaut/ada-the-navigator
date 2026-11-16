@@ -11,6 +11,8 @@ import { adaActionHasRoot, adaActionOwnedBy, adaActionRootAllows } from "./actio
 export const ADA_ACTION_HOLD_MS = 500;
 
 export interface AdaActionOptions extends AdaActionBinding {
+  /** Self ownership excludes card/text descendants from both native click and hold resolution. */
+  readonly hitTarget?: "self" | "descendants";
   /** Factory mode registers hold metadata while the factory retains its native click listener. */
   readonly nativeClickOwner?: "registry" | "factory";
   /** Client CSS pixels, derived from the current logical drag threshold and view unit. */
@@ -32,6 +34,7 @@ export function bindAdaAction(options: AdaActionOptions, element: HTMLElement) {
     throw new Error("Ada action already registered");
   }
   const nativeClickOwner = options.nativeClickOwner ?? "registry";
+  const hitTarget = options.hitTarget ?? "descendants";
   if (nativeClickOwner === "factory" && options.beforeClick) {
     throw new Error("Factory-owned native click cannot use a registry event hook");
   }
@@ -43,7 +46,11 @@ export function bindAdaAction(options: AdaActionOptions, element: HTMLElement) {
     return current() && activateAdaAction(entry.options, "click");
   }
   const click = (event: MouseEvent) => {
-    if (current() && entry.options.beforeClick?.(event) !== false) {
+    if (
+      (hitTarget !== "self" || event.target === element) &&
+      current() &&
+      entry.options.beforeClick?.(event) !== false
+    ) {
       entry.activate();
     }
   };
@@ -68,6 +75,9 @@ export function bindAdaAction(options: AdaActionOptions, element: HTMLElement) {
         ) {
           throw new Error("Native click ownership cannot change during a binding lifetime");
         }
+        if ((next.hitTarget ?? "descendants") !== hitTarget) {
+          throw new Error("Action hit target cannot change during a binding lifetime");
+        }
         entry.options = next;
       }
     },
@@ -87,7 +97,10 @@ export function resolveAdaHoldAction(
   while (element && root.contains(element)) {
     const entry = bindings.get(element);
     if (entry) {
-      if (!adaActionOwnedBy(root, element)) {
+      if (
+        (entry.options.hitTarget === "self" && target !== element) ||
+        !adaActionOwnedBy(root, element)
+      ) {
         return null;
       }
       const owned = element;

@@ -158,6 +158,7 @@ function setup(
     event,
     host,
     invalidate: attachment?.invalidate,
+    label,
     options,
     root,
     run,
@@ -834,4 +835,24 @@ it("cancels a sibling app hold synchronously when a child modal opens and arms t
   b.dispose();
   inner.dispose();
   outer.dispose();
+});
+
+it("requires an exact self target for native clicks and hold construction, without ancestor fallback", () => {
+  const f = setup();
+  const outer = bindAdaAction({ ...f.options, nativeClickOwner: "factory" }, f.host);
+  const binding = bindAdaAction({ ...f.options, hitTarget: "self" }, f.element);
+  expect(resolveAdaHoldAction(f.host, f.button)).not.toBeNull();
+  expect(resolveAdaHoldAction(f.host, f.label)).toBeNull();
+  f.down();
+  vi.advanceTimersByTime(500);
+  expect(f.run).not.toHaveBeenCalled();
+  f.document.dispatchEvent(f.event("pointercancel"));
+  f.click(0);
+  expect(f.run).not.toHaveBeenCalled();
+  f.button.dispatchEvent(f.event("click", f.button, { detail: 0 }));
+  expect(f.run).toHaveBeenCalledTimes(1);
+  expect(() => binding.update(f.options)).toThrow("hit target cannot change");
+  binding.dispose();
+  outer.dispose();
+  f.stop();
 });
