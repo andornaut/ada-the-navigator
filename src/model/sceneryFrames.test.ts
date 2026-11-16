@@ -1,0 +1,119 @@
+import { afterEach, expect, it, vi } from "vitest";
+
+import { CONTENT } from "../data/content.ts";
+import * as asteroids from "./asteroids.ts";
+import { debrisFrameOf, debrisSilhouette } from "./debrisBody.ts";
+import { createFlight, stepFlight } from "./flight.ts";
+import { newProgress } from "./progress.ts";
+import { SceneryFrames } from "./sceneryFrames.ts";
+import type { FlightState, SpaceObject } from "./types.ts";
+
+afterEach(() => vi.restoreAllMocks());
+const context = (): Pick<FlightState, "galaxy" | "seed" | "time"> => ({
+  galaxy: 1,
+  seed: 173,
+  time: 12,
+});
+const rock = (): SpaceObject => ({
+  asteroid: "asteroid-s1",
+  hp: 10,
+  id: "frame-rock",
+  kind: "rock",
+  radius: 30,
+  x: 0,
+  y: 0,
+});
+function reference(flight: ReturnType<typeof context>, reduced: boolean, object: SpaceObject) {
+  const shape = asteroids.sceneryShape(object);
+  return debrisSilhouette(flight.galaxy, object)
+    ? debrisFrameOf(flight.galaxy, object, reduced, flight.time)
+    : shape
+      ? asteroids.rockFrame(shape, flight.seed, reduced, object.id, flight.time, object.spinStart)
+      : 0;
+}
+
+it("evaluates canonical spinning geometry once for repeated collision and visibility reads", () => {
+  const cache = new SceneryFrames();
+  const flight = context();
+  const object = rock();
+  const expected = reference(flight, false, object);
+  const before = structuredClone({ flight, object });
+  const compute = vi.spyOn(asteroids, "rockFrame");
+  for (let read = 0; read < 20; read++) {
+    expect(cache.frame(flight, false, object)).toBe(expected);
+  }
+  expect(compute).toHaveBeenCalledTimes(1);
+  flight.time += 1 / 60;
+  cache.frame(flight, false, object);
+  expect(compute).toHaveBeenCalledTimes(2);
+  expect(object).toEqual(before.object);
+});
+
+it("matches canonical frames across time, identity, shape, motion settings and debris classification changes", () => {
+  const cache = new SceneryFrames();
+  const flight = context();
+  const object = rock();
+  let reduced = false;
+  const changes = [
+    () => {},
+    () => {
+      flight.time = 27;
+    },
+    () => {
+      flight.seed = 22;
+    },
+    () => {
+      object.id = "other-piece";
+    },
+    () => {
+      object.spinStart = 5;
+    },
+    () => {
+      object.asteroid = "asteroid-m2";
+    },
+    () => {
+      reduced = true;
+    },
+    () => {
+      reduced = false;
+      flight.galaxy = 3;
+      object.kind = "debris";
+      delete object.asteroid;
+      object.velocity = { x: 5, y: 0 };
+    },
+    () => {
+      object.orbit = { phase: 0, radius: 10, rate: 1, x: 0, y: 0 };
+    },
+    () => {
+      delete object.orbit;
+      delete object.velocity;
+    },
+    () => {
+      object.velocity = { x: 0, y: 3 };
+    },
+    () => {
+      flight.galaxy = 2;
+    },
+  ];
+  for (const change of changes) {
+    change();
+    const expected = reference(flight, reduced, object);
+    expect(cache.frame(flight, reduced, object)).toBe(expected);
+    expect(cache.frame(flight, reduced, object)).toBe(expected);
+  }
+});
+
+it("deduplicates frame hashing in the actual capital encounter AI and projectile slice", () => {
+  const flight = createFlight(CONTENT, 5, 0, newProgress());
+  flight.player = { x: 24 * CONTENT.tuning.chunkSize, y: 24 * CONTENT.tuning.chunkSize };
+  const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
+  stepFlight(CONTENT, 1 / 60, idle, flight);
+  expect(flight.objects.some((o) => o.enemy?.archetype === "capital")).toBe(true);
+  const compute = vi.spyOn(asteroids, "rockFrame");
+  stepFlight(CONTENT, 1 / 60, idle, flight);
+  expect(compute).toHaveBeenCalled();
+  const keys = compute.mock.calls.map(([, seed, reduced, id, time, start]) =>
+    JSON.stringify([seed, reduced, id, time, start]),
+  );
+  expect(new Set(keys).size).toBe(keys.length);
+});

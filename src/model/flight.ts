@@ -50,9 +50,7 @@ import {
   orbitMotion,
   placementRadius,
   reflectDirection,
-  rockFrame,
   sceneryBound,
-  sceneryShape,
   scenerySilhouette,
   type Silhouette,
   worldSceneryBlocksSegment,
@@ -163,7 +161,7 @@ import {
   partsReach,
   worldParts,
 } from "./convex.ts";
-import { debrisFrameOf, debrisSilhouette } from "./debrisBody.ts";
+import { debrisSilhouette } from "./debrisBody.ts";
 import {
   carriesStardust,
   dropRandom,
@@ -190,6 +188,7 @@ import { worldClearOfOreFields, worldOreFieldsNear } from "./oreFields.ts";
 import { orePickupSize, pickupOutline } from "./pickupBody.ts";
 import { planPlayerVolley, projectileReach } from "./playerProjectiles.ts";
 import { impactEntry, impactSurface } from "./projectileImpact.ts";
+import { SceneryFrames } from "./sceneryFrames.ts";
 import { sceneryImpact } from "./sceneryImpact.ts";
 import { rechargeShield } from "./shieldRecharge.ts";
 import { shipBody, shipCircleContact, shipNearSegment, shipTouches } from "./shipBody.ts";
@@ -255,21 +254,9 @@ function drawnOf(flight: FlightState, object: SpaceObject): Silhouette | null {
  * The frame a scenery object shows and collides with now: traveling debris's tumble frame, a
  * rock's spin frame, or 0 when it is still.
  */
+const sceneryFrames = new SceneryFrames();
 function frameOf(flight: FlightState, object: SpaceObject): number {
-  if (debrisSilhouette(flight.galaxy, object)) {
-    return debrisFrameOf(flight.galaxy, object, reducedMotions.get(flight) ?? false, flight.time);
-  }
-  const shape = sceneryShape(object);
-  return shape
-    ? rockFrame(
-        shape,
-        flight.seed,
-        reducedMotions.get(flight) ?? false,
-        object.id,
-        flight.time,
-        object.spinStart,
-      )
-    : 0;
+  return sceneryFrames.frame(flight, reducedMotions.get(flight) ?? false, object);
 }
 function hash(seed: number, x: number, y: number): number {
   let n = seed ^ Math.imul(x, 374761393) ^ Math.imul(y, 668265263);
