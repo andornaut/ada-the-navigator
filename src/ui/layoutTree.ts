@@ -95,19 +95,33 @@ export function createAdaLayoutPorts<A extends string>(context: AdaLayoutContext
           throw new Error("Button label text binding is unavailable");
         }
         const presentation = context.presentButton(button, label, initial);
-        const binding = bindButtonAvailability(
-          {
-            getAvailability: () => context.availability(current.actionId),
-            reason: presentation.reason,
-            ...(context.onUnavailable ? { onUnavailable: context.onUnavailable } : {}),
-          },
-          button,
-        );
+        const availabilityContext = {
+          getAvailability: () => context.availability(current.actionId),
+          ...(context.onUnavailable ? { onUnavailable: context.onUnavailable } : {}),
+          reason: presentation.reason,
+        };
+        const binding = bindButtonAvailability(availabilityContext, button);
         const activate = () => dispatch(current.actionId);
         const registered = bindAdaAction(
           {
-            click: { availability: () => context.availability(current.actionId), run: activate },
+            click: {
+              availability: () => context.availability(current.actionId),
+              ...(availabilityContext.onUnavailable
+                ? {
+                    refuse: () => {
+                      const refreshed = binding.refresh();
+                      if (refreshed.reason !== undefined) {
+                        availabilityContext.onUnavailable?.(refreshed.reason);
+                      }
+                    },
+                  }
+                : {}),
+              run: activate,
+            },
             current: () => !disposed,
+            ...(availabilityContext.onUnavailable
+              ? { ownAriaDisabled: "refusal-feedback" as const }
+              : {}),
             slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
           },
           button,

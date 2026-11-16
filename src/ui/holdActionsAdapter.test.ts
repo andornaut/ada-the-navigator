@@ -1428,3 +1428,53 @@ it("keeps the existing native click owner when the pointer route accepted no ges
   expect(f.run).toHaveBeenCalledOnce();
   f.teardown();
 });
+
+it.each(["unavailable without handler", "omitted", "unavailable own refusal"])(
+  "does not use click refusal as an explicit %s hold override",
+  (kind) => {
+    const f = setup({ ready: () => true, subscribe: () => () => {} }, false, {
+      resolvePointer: () => undefined,
+    });
+    const clickRefuse = vi.fn(),
+      holdRefuse = vi.fn(),
+      holdRun = vi.fn();
+    f.button.setAttribute("aria-disabled", "true");
+    const binding = bindAdaAction(
+      {
+        ...f.options,
+        click: {
+          availability: () => ({ kind: "unavailable", reason: "Click reason" }),
+          refuse: clickRefuse,
+          run: f.run,
+        },
+        hold: {
+          availability: () =>
+            kind === "omitted"
+              ? { kind: "omitted" }
+              : { kind: "unavailable", reason: "Hold reason" },
+          ...(kind === "unavailable own refusal" ? { refuse: holdRefuse } : {}),
+          run: holdRun,
+        },
+        ownAriaDisabled: "refusal-feedback",
+      },
+      f.element,
+    );
+    f.down();
+    vi.advanceTimersByTime(530);
+    expect(clickRefuse).not.toHaveBeenCalled();
+    expect(f.run).not.toHaveBeenCalled();
+    expect(holdRun).not.toHaveBeenCalled();
+    if (kind === "unavailable own refusal") {
+      expect(holdRefuse).toHaveBeenCalledExactlyOnceWith("Hold reason");
+      f.up();
+      expect(f.click().defaultPrevented).toBe(true);
+      expect(clickRefuse).not.toHaveBeenCalled();
+      expect(holdRefuse).toHaveBeenCalledOnce();
+    } else {
+      expect(holdRefuse).not.toHaveBeenCalled();
+      f.document.dispatchEvent(f.event("pointercancel"));
+    }
+    binding.dispose();
+    f.stop();
+  },
+);

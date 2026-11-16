@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { bindAdaAction, resolveAdaHoldAction } from "./actionBinding.ts";
 import { registerAdaActionRoot } from "./actionRegistry.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
+import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
 import {
   type AdaButtonProps,
   type AdaCardProps,
@@ -11,6 +12,7 @@ import {
   createAdaLayoutPorts,
   mountAdaLayout,
 } from "./layoutTree.ts";
+import { enterPressView, rootPressGuard } from "./pressScope.ts";
 
 class Element extends EventTarget {
   readonly nodeType = 1;
@@ -27,6 +29,7 @@ class Element extends EventTarget {
   className = "";
   dataset: Record<string, string> = {};
   hidden = false;
+  inert = false;
   disabled = false;
   type = "";
   style = { alignSelf: "", minWidth: "" };
@@ -50,8 +53,10 @@ class Element extends EventTarget {
   get nextSibling(): Element | null {
     return this.parentElement?.children[this.parentElement.children.indexOf(this) + 1] ?? null;
   }
-  closest(): Element | null {
-    return this.hidden ? this : (this.parentElement?.closest() ?? null);
+  closest(selector = "[hidden]"): Element | null {
+    return this.hidden || (selector.includes("[inert]") && this.inert)
+      ? this
+      : (this.parentElement?.closest(selector) ?? null);
   }
   contains(node: unknown): boolean {
     return (
@@ -123,6 +128,9 @@ class Element extends EventTarget {
       ...child.querySelectorAll(selector),
     ]);
   }
+  getAttribute(name: string) {
+    return this.attributes.get(name) ?? null;
+  }
   setAttribute(name: string, value: string) {
     this.attributes.set(name, value);
   }
@@ -164,13 +172,18 @@ vi.mock("./modal.ts", () => ({
   },
 }));
 
+const inputReleases: (() => void)[] = [];
 afterEach(() => {
+  for (const stop of inputReleases.splice(0).reverse()) {
+    stop();
+  }
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.clearAllMocks();
   factories.unboundCard = false;
 });
 
-function fixture() {
+function fixture(onUnavailable?: (reason: string) => void, actualInput = false) {
   const first = vi.fn(),
     second = vi.fn(),
     dispose = vi.fn(),
@@ -185,11 +198,14 @@ function fixture() {
       ["second", second],
     ]),
     availability: () => state,
+    ...(onUnavailable ? { onUnavailable } : {}),
     presentButton(actual) {
       button = actual as unknown as Element;
       reason = new Element();
       const root = new Element();
-      fixtureActionRoot(root);
+      if (!actualInput) {
+        fixtureActionRoot(root);
+      }
       root.append(button, reason);
       return {
         dispose,
@@ -504,4 +520,214 @@ it("structurally audits custom native host controls without evaluating runtime p
   mounted.dispose();
   action.dispose();
   release();
+});
+
+function semanticRefusalFixture(onUnavailable?: (reason: string) => void) {
+  vi.useFakeTimers();
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
+  const f = fixture(onUnavailable, true);
+  f.setState({ kind: "unavailable", reason: "Need fuel" });
+  const part = f.ports.components.button.create({
+    actionId: "first",
+    label: "First",
+    role: "secondary",
+  });
+  const root = part.element as unknown as Element;
+  const document = Object.assign(new EventTarget(), root.ownerDocument, {
+    defaultView: Object.assign(new EventTarget(), root.ownerDocument.defaultView, {
+      clearTimeout: (id: ReturnType<typeof setTimeout>) => clearTimeout(id),
+      performance: { now: () => Date.now() },
+      setTimeout: (fn: () => void, delay: number) => setTimeout(fn, delay),
+    }),
+    elementFromPoint: () => f.button() as unknown as HTMLElement,
+    hidden: false,
+  });
+  for (const node of [root, f.button(), f.reason()]) {
+    node.ownerDocument = document;
+  }
+  const input = bindAdaActionRoot(
+    {
+      guard: rootPressGuard(part.element),
+      pointerRelease: { resolvePointer: () => undefined },
+      requiredReady: () => true,
+      subscribeRequired: () => () => {},
+    },
+    part.element,
+  );
+  inputReleases.push(input.dispose);
+  const event = (type: string) => {
+    const e = new Event(type, { cancelable: true });
+    Object.defineProperties(e, {
+      button: { value: 0 },
+      clientX: { value: 0 },
+      clientY: { value: 0 },
+      detail: { value: type === "click" ? 1 : 0 },
+      isPrimary: { value: true },
+      pointerId: { value: 7 },
+      target: { value: f.button() },
+    });
+    if (type === "pointerdown") {
+      document.dispatchEvent(e);
+      root.dispatchEvent(e);
+    } else if (type === "click") {
+      root.dispatchEvent(e);
+      if (!e.defaultPrevented) {
+        f.button().dispatchEvent(e);
+      }
+    } else {
+      document.dispatchEvent(e);
+    }
+    return e;
+  };
+  return { ...f, document, event, input, part, root };
+}
+
+it("gives an explicit semantic unavailable callback the same current refusal on hold once before release", () => {
+  const onUnavailable = vi.fn();
+  const f = semanticRefusalFixture(onUnavailable);
+  f.event("pointerdown");
+  f.event("pointerup");
+  f.event("click");
+  expect(onUnavailable).toHaveBeenCalledExactlyOnceWith("Need fuel");
+  expect(f.first).not.toHaveBeenCalled();
+  const nativeCallbackContext = onUnavailable.mock.contexts[0];
+  onUnavailable.mockClear();
+  f.event("pointerdown");
+  f.part.update({ actionId: "second", label: "Second", role: "primary" });
+  f.setState({ kind: "unavailable", reason: "Need current supplies" });
+  expect(f.reason().textContent).toBe("Need fuel");
+  vi.advanceTimersByTime(530);
+  expect(onUnavailable).toHaveBeenCalledExactlyOnceWith("Need current supplies");
+  expect(onUnavailable.mock.contexts[0]).toBe(nativeCallbackContext);
+  expect(f.reason().textContent).toBe("Need current supplies");
+  expect(f.button().getAttribute("aria-description")).toBe("Need current supplies");
+  expect(f.button().getAttribute("aria-disabled")).toBe("true");
+  f.event("pointerup");
+  expect(f.event("click").defaultPrevented).toBe(true);
+  expect(onUnavailable).toHaveBeenCalledTimes(1);
+  expect(f.first).not.toHaveBeenCalled();
+  expect(f.second).not.toHaveBeenCalled();
+  f.setState({ kind: "available" });
+  f.part.update({ actionId: "second", label: "Second", role: "primary" });
+  f.event("pointerdown");
+  vi.advanceTimersByTime(530);
+  f.event("pointerup");
+  f.event("click");
+  expect(f.second).toHaveBeenCalledOnce();
+  f.part.dispose();
+});
+
+it("does not opt unavailable semantic controls into hold when no refusal callback exists", () => {
+  const f = semanticRefusalFixture();
+  const action = resolveAdaHoldAction(f.part.element, f.button() as unknown as HTMLElement);
+  expect(action?.ownAriaDisabled).toBeUndefined();
+  expect(action?.available()).toBe(false);
+  f.event("pointerdown");
+  vi.advanceTimersByTime(530);
+  f.event("pointerup");
+  f.event("click");
+  expect(f.first).not.toHaveBeenCalled();
+  expect(f.second).not.toHaveBeenCalled();
+  f.part.dispose();
+});
+
+it.each(["native disabled", "inert", "ancestor ARIA", "root ARIA", "covered", "disposed"])(
+  "does not let the semantic refusal flag bypass %s for a held action",
+  (kind) => {
+    const onUnavailable = vi.fn();
+    const f = semanticRefusalFixture(onUnavailable);
+    let leave = () => {};
+    if (kind === "native disabled") {
+      f.button().disabled = true;
+    }
+    if (kind === "inert") {
+      f.root.inert = true;
+    }
+    if (kind === "root ARIA") {
+      f.root.setAttribute("aria-disabled", "true");
+    }
+    if (kind === "ancestor ARIA") {
+      const ancestor = new Element();
+      ancestor.ownerDocument = f.document;
+      f.root.insertBefore(ancestor, f.button());
+      ancestor.append(f.button());
+      ancestor.setAttribute("aria-disabled", "true");
+    }
+    if (kind === "covered") {
+      const dialog = new Element();
+      dialog.ownerDocument = f.document;
+      f.root.append(dialog);
+      leave = enterPressView(f.part.element, dialog as unknown as HTMLElement);
+    }
+    if (kind === "disposed") {
+      f.part.dispose();
+    }
+    f.event("pointerdown");
+    vi.advanceTimersByTime(530);
+    f.event("pointerup");
+    expect(onUnavailable).not.toHaveBeenCalled();
+    expect(f.first).not.toHaveBeenCalled();
+    expect(f.second).not.toHaveBeenCalled();
+    if (kind === "native disabled") {
+      expect(f.button().disabled).toBe(true);
+    }
+    leave();
+    if (kind !== "disposed") {
+      f.part.dispose();
+    }
+  },
+);
+
+it("cancels reentrant semantic refusal ownership without repeating it after a modal returns", () => {
+  const onUnavailable = vi.fn((): void => {
+    const dialog = new Element();
+    dialog.ownerDocument = f.document;
+    f.root.append(dialog);
+    const leave = enterPressView(f.part.element, dialog as unknown as HTMLElement);
+    leave();
+  });
+  const f = semanticRefusalFixture(onUnavailable);
+  f.event("pointerdown");
+  vi.advanceTimersByTime(530);
+  expect(onUnavailable).toHaveBeenCalledOnce();
+  f.event("pointerup");
+  expect(f.event("click").defaultPrevented).toBe(true);
+  expect(onUnavailable).toHaveBeenCalledOnce();
+  expect(f.first).not.toHaveBeenCalled();
+  f.part.dispose();
+});
+
+it("does not add a refusal callback to a card close without an original native refusal binding", () => {
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
+  const onUnavailable = vi.fn();
+  const f = fixture(onUnavailable);
+  f.setState({ kind: "unavailable", reason: "Blocked" });
+  const part = f.ports.components.card.create({
+    closeAction: "first",
+    closeLabel: "Close",
+    footerAction: "close",
+    size: "small",
+    title: "Card",
+  });
+  const close = (part.element as unknown as Element).children[2]!;
+  const action = resolveAdaHoldAction(part.element, close as unknown as HTMLElement);
+  expect(action?.ownAriaDisabled).toBeUndefined();
+  expect(action?.available()).toBe(false);
+  close.click();
+  expect(onUnavailable).not.toHaveBeenCalled();
+  expect(f.first).not.toHaveBeenCalled();
+  part.dispose();
+});
+
+it("removes a semantic refusal binding before a pending hold can invoke its caller", () => {
+  const onUnavailable = vi.fn();
+  const f = semanticRefusalFixture(onUnavailable);
+  f.event("pointerdown");
+  f.part.dispose();
+  vi.advanceTimersByTime(530);
+  f.event("pointerup");
+  f.event("click");
+  expect(onUnavailable).not.toHaveBeenCalled();
+  expect(f.first).not.toHaveBeenCalled();
+  expect(f.second).not.toHaveBeenCalled();
 });
