@@ -7,7 +7,9 @@ import {
   bindAdaAction,
   createAdaFactoryHoldBinding,
   resolveAdaHoldAction,
+  resolveAdaPointerTarget,
 } from "./actionBinding.ts";
+import { registerAdaActionRoot } from "./actionRegistry.ts";
 import {
   type AdaPointerReleaseOptions,
   bindAdaActionRoot,
@@ -61,6 +63,7 @@ class Element extends EventTarget {
   }
 }
 class FixtureDocument extends EventTarget {
+  hidden = false;
   hitTarget: Element | null = null;
   elementFromPoint() {
     return this.hitTarget;
@@ -1061,4 +1064,367 @@ it("revalidates physical self ownership at move, timer and release despite captu
   expect(f.run).toHaveBeenCalledTimes(2);
   binding.dispose();
   f.stop();
+});
+
+function spatialFixture(
+  outer: AdaPointerReleaseOptions["resolvePointer"] = () => undefined,
+  ready: () => boolean = () => true,
+) {
+  const f = setup({ ready, subscribe: () => () => {} }, false, { resolvePointer: outer });
+  const surface = new Element(f.document),
+    paint = new Element(f.document);
+  surface.parentElement = f.root;
+  paint.parentElement = surface;
+  f.button.parentElement = surface;
+  f.document.hitTarget = paint;
+  let target: HTMLElement | null | undefined = f.element;
+  const router = vi.fn(() => target);
+  const surfaceOptions: AdaActionOptions = {
+    ...f.options,
+    click: { ...f.options.click, run: vi.fn() },
+    hitTarget: "self",
+    nativeClickOwner: "factory",
+    resolvePointerTarget: router,
+  };
+  const fieldBinding = bindAdaAction(surfaceOptions, surface as unknown as HTMLElement);
+  const binding = bindAdaAction(f.options, f.element);
+  const send = (type: string, eventTarget: Element = paint) => {
+    const event = f.event(type, eventTarget);
+    if (type === "pointerdown") {
+      f.document.dispatchEvent(event);
+      f.root.dispatchEvent(event);
+    } else if (type === "click") {
+      f.root.dispatchEvent(event);
+      if (!event.defaultPrevented) {
+        eventTarget.dispatchEvent(event);
+      }
+    } else {
+      f.document.dispatchEvent(event);
+    }
+    return event;
+  };
+  return {
+    ...f,
+    binding,
+    fieldBinding,
+    paint,
+    route: () =>
+      resolveAdaPointerTarget(
+        { physicalTarget: paint as unknown as HTMLElement, root: f.host },
+        f.event("pointerdown", paint) as PointerEvent,
+      ),
+    router,
+    send,
+    setTarget: (next: HTMLElement | null | undefined) => {
+      target = next;
+    },
+    surface,
+    surfaceOptions,
+    teardown: () => {
+      binding.dispose();
+      fieldBinding.dispose();
+      f.stop();
+    },
+  };
+}
+
+it("uses the declared same-root field target through the public hold lifecycle without a release duplicate", () => {
+  const f = spatialFixture();
+  const before = resolveAdaHoldAction(f.host, f.element);
+  f.send("pointerdown");
+  expect(f.router).toHaveBeenCalledWith(
+    { physicalTarget: f.paint },
+    expect.objectContaining({ type: "pointerdown" }),
+  );
+  vi.advanceTimersByTime(530);
+  expect(f.run).toHaveBeenCalledOnce();
+  f.send("pointerup");
+  f.send("click");
+  expect(f.run).toHaveBeenCalledOnce();
+  expect(f.surfaceOptions.click.run).not.toHaveBeenCalled();
+  f.send("pointerdown");
+  f.send("pointerup");
+  f.send("click");
+  expect(f.run).toHaveBeenCalledTimes(2);
+  f.router.mockClear();
+  const after = resolveAdaHoldAction(f.host, f.element);
+  expect(after?.identity).toBe(before?.identity);
+  expect(f.router).not.toHaveBeenCalled();
+  f.click(0);
+  expect(f.run).toHaveBeenCalledTimes(3);
+  f.teardown();
+});
+
+it.each(["null", "explicit target"])(
+  "preserves outer %s precedence without invoking field routing",
+  (kind) => {
+    let target: HTMLElement | null = null;
+    const f = spatialFixture(() => target);
+    if (kind === "explicit target") {
+      f.button.parentElement = f.root;
+      target = f.element;
+    }
+    f.send("pointerdown");
+    vi.advanceTimersByTime(530);
+    f.send("pointerup");
+    f.send("click");
+    expect(f.router).not.toHaveBeenCalled();
+    expect(f.run).toHaveBeenCalledTimes(kind === "explicit target" ? 1 : 0);
+    f.teardown();
+  },
+);
+
+it("treats field null as a veto and undefined as native glyph fallback", () => {
+  const f = spatialFixture();
+  f.setTarget(null);
+  expect(f.route()).toBeNull();
+  f.send("pointerdown");
+  f.send("pointerup");
+  f.send("click");
+  expect(f.run).not.toHaveBeenCalled();
+  expect(f.surfaceOptions.click.run).not.toHaveBeenCalled();
+  f.document.hitTarget = f.label;
+  f.setTarget(undefined);
+  f.down();
+  f.up();
+  f.click();
+  expect(f.run).toHaveBeenCalledOnce();
+  f.down();
+  vi.advanceTimersByTime(530);
+  f.up();
+  f.click();
+  expect(f.run).toHaveBeenCalledTimes(2);
+  f.click(0);
+  expect(f.run).toHaveBeenCalledTimes(3);
+  f.teardown();
+});
+
+it.each([
+  "foreign",
+  "disposed host",
+  "nested root",
+  "disposed ancestor",
+  "stale host",
+  "covered",
+  "unready",
+  "hidden",
+  "inert",
+  "hidden document",
+])("never invokes a %s field router", (kind) => {
+  let ready = true;
+  const f = spatialFixture(
+    () => undefined,
+    () => ready,
+  );
+  let cleanup = () => {};
+  if (kind === "foreign") {
+    f.surface.parentElement = new Element(f.document);
+  }
+  if (kind === "disposed host") {
+    f.fieldBinding.dispose();
+  }
+  if (kind === "nested root") {
+    cleanup = registerAdaActionRoot({ permits: () => true }, f.surface as unknown as HTMLElement);
+  }
+  if (kind === "disposed ancestor") {
+    f.stop();
+  }
+  if (kind === "stale host") {
+    f.fieldBinding.update({ ...f.surfaceOptions, current: () => false });
+  }
+  if (kind === "covered") {
+    const dialog = new Element(f.document);
+    dialog.parentElement = f.root;
+    cleanup = enterPressView(f.host, dialog as unknown as HTMLElement);
+  }
+  if (kind === "unready") {
+    ready = false;
+  }
+  if (kind === "hidden document") {
+    f.document.hidden = true;
+  }
+  if (kind === "hidden") {
+    f.surface.hidden = true;
+  }
+  if (kind === "inert") {
+    f.surface.inert = true;
+  }
+  f.route();
+  f.send("pointerdown");
+  vi.advanceTimersByTime(530);
+  f.send("pointerup");
+  f.send("click");
+  expect(f.router).not.toHaveBeenCalled();
+  expect(f.run).not.toHaveBeenCalled();
+  cleanup();
+  f.teardown();
+});
+
+it.each([
+  "outside surface",
+  "unregistered glyph",
+  "foreign target root",
+  "disposed binding",
+  "disabled",
+  "hidden",
+  "inert",
+  "detached",
+  "stale",
+])("rejects a routed target that is %s without native ancestor fallback", (kind) => {
+  const f = spatialFixture();
+  let cleanup = () => {};
+  if (kind === "outside surface") {
+    f.button.parentElement = f.root;
+  }
+  if (kind === "unregistered glyph") {
+    f.setTarget(f.label as unknown as HTMLElement);
+  }
+  if (kind === "foreign target root") {
+    cleanup = registerAdaActionRoot({ permits: () => true }, f.element);
+  }
+  if (kind === "disposed binding") {
+    f.binding.dispose();
+  }
+  if (kind === "disabled") {
+    f.button.disabled = true;
+  }
+  if (kind === "hidden") {
+    f.button.hidden = true;
+  }
+  if (kind === "inert") {
+    f.button.inert = true;
+  }
+  if (kind === "detached") {
+    f.button.connected = false;
+  }
+  if (kind === "stale") {
+    f.binding.update({ ...f.options, current: () => false });
+  }
+  expect(f.route()).toBeNull();
+  f.send("pointerdown");
+  vi.advanceTimersByTime(530);
+  f.send("pointerup");
+  f.send("click");
+  expect(f.run).not.toHaveBeenCalled();
+  cleanup();
+  f.teardown();
+});
+
+it.each(["timer", "release"])(
+  "revalidates the captured original target and binding at %s",
+  (stage) => {
+    const f = spatialFixture();
+    f.send("pointerdown");
+    f.binding.dispose();
+    const replacement = vi.fn();
+    const rebound = bindAdaAction(
+      { ...f.options, click: { ...f.options.click, run: replacement } },
+      f.element,
+    );
+    if (stage === "timer") {
+      vi.advanceTimersByTime(530);
+    }
+    f.send("pointerup");
+    f.send("click");
+    expect(f.run).not.toHaveBeenCalled();
+    expect(replacement).not.toHaveBeenCalled();
+    f.send("pointerdown");
+    f.send("pointerup");
+    f.send("click");
+    expect(replacement).toHaveBeenCalledOnce();
+    rebound.dispose();
+    f.teardown();
+  },
+);
+
+it.each(["timer", "release"])("does not substitute another logical element before %s", (stage) => {
+  const f = spatialFixture();
+  const other = new Element(f.document);
+  other.parentElement = f.surface;
+  const run = vi.fn();
+  const otherBinding = bindAdaAction(
+    { ...f.options, click: { ...f.options.click, run } },
+    other as unknown as HTMLElement,
+  );
+  f.send("pointerdown");
+  f.setTarget(other as unknown as HTMLElement);
+  if (stage === "timer") {
+    vi.advanceTimersByTime(530);
+  }
+  f.send("pointerup");
+  f.send("click");
+  expect(f.run).not.toHaveBeenCalled();
+  expect(run).not.toHaveBeenCalled();
+  f.send("pointerdown");
+  f.send("pointerup");
+  expect(run).toHaveBeenCalledOnce();
+  otherBinding.dispose();
+  f.teardown();
+});
+
+it("revalidates host lifetime after a router disposes its own binding", () => {
+  const f = spatialFixture();
+  f.router.mockImplementation(() => {
+    f.fieldBinding.dispose();
+    return f.element;
+  });
+  expect(f.route()).toBeNull();
+  expect(f.run).not.toHaveBeenCalled();
+  f.teardown();
+});
+
+it("uses current routing and action callbacks while retaining the same target identity", () => {
+  const f = spatialFixture();
+  f.send("pointerdown");
+  const route = vi.fn(() => f.element),
+    newer = vi.fn();
+  f.fieldBinding.update({ ...f.surfaceOptions, resolvePointerTarget: route });
+  f.binding.update({ ...f.options, click: { ...f.options.click, run: newer } });
+  vi.advanceTimersByTime(530);
+  f.send("pointerup");
+  f.send("click");
+  expect(newer).toHaveBeenCalledOnce();
+  expect(f.run).not.toHaveBeenCalled();
+  expect(route).toHaveBeenCalled();
+  f.teardown();
+});
+
+it("resolves the registered surface itself as the empty-field action without adding a native click owner", () => {
+  const f = spatialFixture();
+  f.setTarget(f.surface as unknown as HTMLElement);
+  f.send("pointerdown");
+  f.send("pointerup");
+  f.send("click");
+  expect(f.surfaceOptions.click.run).toHaveBeenCalledOnce();
+  f.send("pointerdown");
+  vi.advanceTimersByTime(530);
+  f.send("pointerup");
+  f.send("click");
+  expect(f.surfaceOptions.click.run).toHaveBeenCalledTimes(2);
+  expect(f.run).not.toHaveBeenCalled();
+  f.teardown();
+});
+
+it("does not consult an ancestor surface after the nearest declared host becomes stale", () => {
+  const f = spatialFixture();
+  const outerRouter = vi.fn(() => f.element);
+  const outer = bindAdaAction({ ...f.surfaceOptions, resolvePointerTarget: outerRouter }, f.host);
+  f.fieldBinding.update({ ...f.surfaceOptions, current: () => false });
+  expect(f.route()).toBeUndefined();
+  expect(f.router).not.toHaveBeenCalled();
+  expect(outerRouter).not.toHaveBeenCalled();
+  outer.dispose();
+  f.teardown();
+});
+
+it("keeps the existing native click owner when the pointer route accepted no gesture", () => {
+  const f = spatialFixture();
+  f.document.hitTarget = f.label;
+  f.setTarget(null);
+  f.down();
+  f.up();
+  expect(f.run).not.toHaveBeenCalled();
+  f.click();
+  expect(f.run).toHaveBeenCalledOnce();
+  f.teardown();
 });

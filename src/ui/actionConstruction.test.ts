@@ -86,6 +86,7 @@ function fixture() {
       run: vi.fn(),
     },
     current: vi.fn(() => false),
+    resolvePointerTarget: vi.fn(() => undefined),
     slopPx: vi.fn(() => 8),
   };
   return { button, document, options, root, scope };
@@ -101,6 +102,7 @@ it("audits detached metadata without requiring an attached root or evaluating ac
   expect(() => assertAdaActionBindings(html(f.scope))).toThrow("no live action root");
   expect(f.options.current).not.toHaveBeenCalled();
   expect(f.options.slopPx).not.toHaveBeenCalled();
+  expect(f.options.resolvePointerTarget).not.toHaveBeenCalled();
   expect(f.options.click.availability).not.toHaveBeenCalled();
   expect(f.options.click.refuse).not.toHaveBeenCalled();
   expect(f.options.click.run).not.toHaveBeenCalled();

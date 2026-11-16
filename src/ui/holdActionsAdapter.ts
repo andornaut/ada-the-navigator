@@ -6,7 +6,11 @@ import {
 import { guardClicks, type PressGuard } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
 
 import type { RequiredReady } from "../loading/required.ts";
-import { assertAdaActionBindings, resolveAdaHoldAction } from "./actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  resolveAdaHoldAction,
+  resolveAdaPointerTarget,
+} from "./actionBinding.ts";
 import { registerAdaActionRoot } from "./actionRegistry.ts";
 import {
   inCurrentView,
@@ -108,11 +112,15 @@ function bindRoot(policy: RootPolicy, root: HTMLElement) {
         pointerTarget: pointer.pointerTarget,
         resolvePointer: (event) => {
           const element = pointer.resolvePointer(event);
-          const action = resolve(
+          const physical =
             element === undefined
               ? document.elementFromPoint(event.clientX, event.clientY)
-              : element,
-          );
+              : element;
+          const target =
+            element === undefined && physical !== null
+              ? resolveAdaPointerTarget({ physicalTarget: physical, root }, event)
+              : undefined;
+          const action = resolve(target === undefined ? physical : target);
           return action &&
             !(event.isPrimary === false && isCurrentViewBackdrop(root, action.element))
             ? action

@@ -13,6 +13,11 @@ export const ADA_ACTION_HOLD_MS = 500;
 export interface AdaActionOptions extends AdaActionBinding {
   /** Only this control may expose its guarded refusal action while announcing aria-disabled. */
   readonly ownAriaDisabled?: HoldAction["ownAriaDisabled"];
+  /** Maps an owned physical field to an existing registered target; undefined retains native routing. */
+  readonly resolvePointerTarget?: (
+    context: { readonly physicalTarget: Element },
+    event: PointerEvent,
+  ) => HTMLElement | null | undefined;
   /** Self ownership excludes card/text descendants from both native click and hold resolution. */
   readonly hitTarget?: "self" | "descendants";
   /** Factory mode registers hold metadata while the factory retains its native click listener. */
@@ -157,6 +162,68 @@ export function resolveAdaHoldAction(
     element = element.parentElement;
   }
   return null;
+}
+
+function livePointerEntry(root: HTMLElement, entry: Entry, element: HTMLElement): boolean {
+  return (
+    bindings.get(element) === entry &&
+    element.isConnected &&
+    root.contains(element) &&
+    adaActionHasRoot(element) &&
+    adaActionOwnedBy(root, element) &&
+    !element.matches(":disabled") &&
+    element.closest("[hidden], [inert]") === null &&
+    adaActionRootAllows(element) &&
+    entry.options.current() &&
+    bindings.get(element) === entry
+  );
+}
+
+/** Consults only the nearest declared surface in the current owning root, without adding a dispatcher. */
+export function resolveAdaPointerTarget(
+  context: { readonly physicalTarget: Element; readonly root: HTMLElement },
+  event: PointerEvent,
+): HTMLElement | null | undefined {
+  const { physicalTarget, root } = context;
+  const view = root.ownerDocument.defaultView;
+  if (!view || !(physicalTarget instanceof view.Node) || !root.contains(physicalTarget)) {
+    return null;
+  }
+  let element =
+    physicalTarget instanceof view.HTMLElement ? physicalTarget : physicalTarget.parentElement;
+  if (
+    !element ||
+    !element.isConnected ||
+    !adaActionHasRoot(element) ||
+    !adaActionOwnedBy(root, element) ||
+    element.closest("[hidden], [inert]") !== null ||
+    !adaActionRootAllows(element)
+  ) {
+    return null;
+  }
+  while (element && root.contains(element)) {
+    const entry = bindings.get(element);
+    if (entry?.options.resolvePointerTarget) {
+      const surface = element;
+      if (!livePointerEntry(root, entry, surface)) {
+        return undefined;
+      }
+      const target = entry.options.resolvePointerTarget?.({ physicalTarget }, event);
+      if (!livePointerEntry(root, entry, surface)) {
+        return null;
+      }
+      if (target === null || target === undefined) {
+        return target;
+      }
+      if (!(target instanceof view.HTMLElement) || !surface.contains(target)) {
+        return null;
+      }
+      const targetEntry = bindings.get(target);
+      return targetEntry && livePointerEntry(root, targetEntry, target) ? target : null;
+    }
+    element = element.parentElement;
+  }
+  return undefined;
 }
 
 function actionControls(completedSubtree: HTMLElement): HTMLElement[] {
