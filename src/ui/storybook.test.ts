@@ -2,7 +2,9 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { CONTENT } from "../data/content.ts";
 import { GENERAL_NAMED } from "../data/conversations.ts";
+import { openingScene } from "../model/storybook.ts";
 import { AWAITING_TAB, SPEAKING_FRAME_MS, TAB_COLOURS } from "./conversation.ts";
 import { TEXT_BUTTON } from "./layout/controls.ts";
 import { font, fromHudEdge, safeEdge, units } from "./layout/css.ts";
@@ -20,6 +22,7 @@ import {
   STORY_PORTRAITS,
   STORY_TAB_COLOURS,
   STORYBOOK_STYLE,
+  storyChoicePreviousInHud,
   storyControlsLayout,
   storyPageView,
   storyPortrait,
@@ -341,4 +344,19 @@ describe("story page portraits", () => {
 it("caps Earth content to the canonical game width while retaining full-width half-panel paint", () => {
   expect(rule(".ada-controls .ada-story .ada-story-panel")).toContain("720px");
   expect(rule(".ada-controls .ada-story.ada-story-half .ada-story-panel")).toContain("width:100%");
+});
+
+it("keeps overflowing chapter choices visible without occupying Skip or displacing Next", () => {
+  const page = openingScene(CONTENT, 1, true).pages.find(({ id }) => id === "opening")!;
+  const view = storyPageView(page, page.choices!, true, false);
+  expect(view.choices?.[1]?.label).toBe("I'd like to meet the organizer.");
+  expect(storyChoicePreviousInHud(true, view)).toBe(true);
+  expect(storyChoicePreviousInHud(false, view)).toBe(false);
+  expect(storyChoicePreviousInHud(true, { ...view, canSkip: true })).toBe(false);
+  expect(storyChoicePreviousInHud(true, { ...view, next: true })).toBe(false);
+  expect(storyChoicePreviousInHud(true, { ...view, canGoBack: false })).toBe(false);
+  expect(storyChoicePreviousInHud(true, { ...view, choices: [] })).toBe(false);
+  expect(rule(".ada-controls .ada-story .ada-button.ada-story-choice-previous")).toContain(
+    "position:absolute",
+  );
 });

@@ -24,9 +24,10 @@ import {
   TAB_COLOURS,
 } from "./dialoguePortraits.ts";
 import { SCROLL } from "./layout/contentCard.ts";
+import { STORY_BUTTON } from "./layout/controls.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { font, fromHudEdge, safeEdge, slice, units } from "./layout/css.ts";
-import { STORY_PANEL_TOP, STORY_ROOM_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
+import { HUD_ROW, STORY_PANEL_TOP, STORY_ROOM_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
 import {
   STORY_BACKGROUND,
   STORY_PANEL,
@@ -527,7 +528,23 @@ ${STORY_PORTRAIT_RULES}
 .ada-controls.ada-no-settings-button .ada-story-skip{
   right:${fromHudEdge("right", STORY_SKIP.right.corner)}
 }
+.ada-controls .ada-story .ada-button.ada-story-choice-previous{
+  position:absolute;
+  top:${fromHudEdge("top", HUD_ROW.centre - STORY_BUTTON.height / 2)};
+  right:${fromHudEdge("right", STORY_SKIP.right.besideSettings)}
+}
+.ada-controls.ada-no-settings-button .ada-story .ada-story-choice-previous{
+  right:${fromHudEdge("right", STORY_SKIP.right.corner)}
+}
+
 `;
+
+/** Choice pages can reuse Skip's free HUD slot when page navigation would conceal choices. */
+export function storyChoicePreviousInHud(overflows: boolean, page: StoryPageView): boolean {
+  return (
+    overflows && Boolean(page.choices?.length) && page.canGoBack && !page.next && !page.canSkip
+  );
+}
 
 /** How a page's Previous and primary share the choice column's bottom. */
 export type StoryControlsLayout = "below" | "beside" | "halves";
@@ -766,6 +783,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     // else on the column's full row below it. Each face is measured at its label's width; the
     // press area's pseudo-element overflows the face, so the face's own box is measured.
     controls.classList.remove("ada-story-beside", "ada-story-wide");
+    previous.classList.remove("ada-story-choice-previous");
     controls.replaceChildren(previous, next);
     let layout: StoryControlsLayout = "halves";
     if (page.canGoBack && page.next && page.action !== undefined) {
@@ -788,7 +806,16 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     choices.classList.remove("ada-story-scrolls");
     const overflows =
       controls.getBoundingClientRect().bottom > column.getBoundingClientRect().bottom + 0.5;
-    choices.classList.toggle("ada-story-scrolls", overflows);
+    const previousInHud = storyChoicePreviousInHud(overflows, page);
+    if (previousInHud) {
+      layer.append(previous);
+      previous.classList.add("ada-story-choice-previous");
+      controls.hidden = true;
+    }
+    choices.classList.toggle(
+      "ada-story-scrolls",
+      previousInHud ? choices.scrollHeight > column.clientHeight + 1 : overflows,
+    );
     // Only the text column scrolls, focusable while it does, past the panel's top cap.
     copy.classList.remove("ada-story-scrolls");
     const scrolls = copy.scrollHeight > copy.clientHeight + 1;
@@ -1099,6 +1126,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     placePanelContent();
     skip.hidden = page === null || !page.canSkip;
     if (!page) {
+      previous.hidden = true;
       panel.hidden = true;
       stopPortrait();
       if (backdrop) {
