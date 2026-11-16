@@ -2,9 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
+import type { CheatAction } from "./cheatActions.ts";
 import { createCheats } from "./cheats.ts";
+import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
+import { rootPressGuard } from "./pressScope.ts";
 
 let installed = false;
+const roots: ReturnType<typeof bindAdaActionRoot>[] = [];
 vi.mock("@andornaut/game-kit/runtime/web/pwa/appWindow", () => ({
   runsInAppWindow: () => installed,
 }));
@@ -14,7 +18,7 @@ class Element extends EventTarget {
   disabled = false;
   isConnected = true;
   get ownerDocument() {
-    return { ...document, defaultView: { HTMLElement: Element, Node: Element } };
+    return document;
   }
   get parentElement(): Element | null {
     return this.parent ?? null;
@@ -34,6 +38,13 @@ class Element extends EventTarget {
   closest(): Element | null {
     return this.hidden ? this : (this.parent?.closest() ?? null);
   }
+  getAttribute(name: string) {
+    return this.attributes.get(name) ?? null;
+  }
+  matches(selector: string) {
+    return selector === ":disabled" && this.disabled;
+  }
+  readonly attributes = new Map<string, string>();
   focus() {}
   contains(node: unknown): boolean {
     return node === this || this.children.some((child) => child.contains(node));
@@ -64,8 +75,11 @@ class Element extends EventTarget {
   }
   remove() {
     this.parent?.children.splice(this.parent.children.indexOf(this), 1);
+    this.parent = undefined;
   }
-  setAttribute() {}
+  setAttribute(name: string, value: string) {
+    this.attributes.set(name, value);
+  }
 }
 
 vi.mock("./modalLayer.ts", () => ({
@@ -100,29 +114,63 @@ vi.mock("./modal.ts", () => ({
 beforeEach(() => {
   installed = false;
   vi.stubGlobal("HTMLElement", Element);
-  vi.stubGlobal("document", {
-    addEventListener: vi.fn(),
-    createElement: () => new Element(),
-    removeEventListener: vi.fn(),
-  });
-  vi.stubGlobal("window", {
-    addEventListener: vi.fn(),
+  const viewport = Object.assign(new EventTarget(), {
+    HTMLElement: Element,
+    Node: Element,
+    clearTimeout: (id: ReturnType<typeof setTimeout>) => clearTimeout(id),
     matchMedia: () => ({ addEventListener: vi.fn(), removeEventListener: vi.fn() }),
-    removeEventListener: vi.fn(),
+    performance: { now: () => Date.now() },
+    reportError: vi.fn(),
+    setTimeout: (callback: () => void, delay: number) => setTimeout(callback, delay),
   });
+  vi.stubGlobal(
+    "document",
+    Object.assign(new EventTarget(), {
+      createElement: () => new Element(),
+      defaultView: viewport,
+      hidden: false,
+    }),
+  );
+  vi.stubGlobal("window", viewport);
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  for (const root of roots.splice(0)) {
+    root.dispose();
+  }
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
 
-function setup(footer?: { readonly intent: "back" | "close"; readonly label: string }) {
+function setup(
+  footer?: { readonly intent: "back" | "close"; readonly label: string },
+  actionList: readonly CheatAction[] = [],
+  hold = false,
+) {
   const root = new Element();
-  fixtureActionRoot(root);
+  if (hold) {
+    const html = root as unknown as HTMLElement;
+    roots.push(
+      bindAdaActionRoot(
+        {
+          guard: rootPressGuard(html),
+          requiredReady: () => true,
+          subscribeRequired: () => () => {},
+        },
+        html,
+      ),
+    );
+  } else {
+    fixtureActionRoot(root);
+  }
   const actions = new Element();
+  root.append(actions);
   const close = Object.assign(new Element(), { className: "ada-primary", textContent: "Close" });
   actions.append(close);
   const run = {};
   const changed = vi.fn();
+  const onSave = vi.fn();
   const cheats = createCheats(root as unknown as HTMLElement, actions as unknown as HTMLElement, {
-    actions: [],
+    actions: actionList,
     beforeOpen: vi.fn(),
     canExecute: () => true,
     ...(footer ? { footer } : {}),
@@ -136,11 +184,11 @@ function setup(footer?: { readonly intent: "back" | "close"; readonly label: str
       title: "Cheats",
     },
     onOpenChange: changed,
-    onSave: vi.fn(),
+    onSave,
     restoreFocus: vi.fn(),
     run: () => run,
   });
-  return { actions, changed, cheats, close, root };
+  return { actions, changed, cheats, close, onSave, root };
 }
 
 describe("Settings cheat launcher", () => {
@@ -176,6 +224,7 @@ it("keeps group order, executes actions once and unregisters on disposal", async
   const root = new Element(),
     launcher = new Element();
   fixtureActionRoot(root);
+  root.append(launcher);
   const save = vi.fn(),
     runEffect = vi.fn(),
     onSave = vi.fn();
@@ -282,4 +331,102 @@ it("uses a supplied parent Back only for the footer and preserves one dismissal 
   expect(resolveAdaHoldAction(f.root as unknown as HTMLElement, dismiss)?.available()).not.toBe(
     true,
   );
+});
+
+it("holds launcher and execute once while preserving busy and deferred installed-app refusal", async () => {
+  vi.useFakeTimers();
+  const finish: (() => void)[] = [];
+  const effect = vi.fn();
+  const execute = vi.fn(async ({ commit }: Parameters<CheatAction["execute"]>[0]) => {
+    await new Promise<void>((resolve) => {
+      finish.push(resolve);
+    });
+    commit(effect);
+  });
+  const f = setup(
+    undefined,
+    [{ description: "Save description", execute, id: "save", label: "Save action", scope: "save" }],
+    true,
+  );
+  const launcher = f.actions.children[0]!;
+  const button = descendants(f.root).find((node) => node.dataset.cheat === "save")!;
+  const event = (type: string, target: Element) => {
+    const value = new Event(type, { cancelable: true });
+    Object.defineProperties(
+      value,
+      Object.fromEntries(
+        Object.entries({
+          button: 0,
+          clientX: 0,
+          clientY: 0,
+          detail: type === "click" ? 1 : 0,
+          isPrimary: true,
+          pointerId: 7,
+          target,
+        }).map(([key, property]) => [key, { value: property }]),
+      ),
+    );
+    return value;
+  };
+  const down = (target: Element) => {
+    document.dispatchEvent(event("pointerdown", target));
+    f.root.dispatchEvent(event("pointerdown", target));
+  };
+  const release = (target: Element) => {
+    document.dispatchEvent(event("pointerup", target));
+    const click = event("click", target);
+    f.root.dispatchEvent(click);
+    if (!click.defaultPrevented) {
+      target.dispatchEvent(event("click", target));
+    }
+    return click;
+  };
+  const settle = async () => {
+    for (let n = 0; n < 10; n++) {
+      // Each turn settles the session commit and native refresh boundary.
+      // eslint-disable-next-line no-await-in-loop
+      await Promise.resolve();
+    }
+  };
+  down(launcher);
+  vi.advanceTimersByTime(499);
+  expect(f.cheats.isOpen()).toBe(false);
+  vi.advanceTimersByTime(1);
+  expect(f.cheats.isOpen()).toBe(true);
+  expect(release(launcher).defaultPrevented).toBe(true);
+  expect(f.changed.mock.calls).toEqual([[true]]);
+  down(button);
+  vi.advanceTimersByTime(500);
+  expect(execute).toHaveBeenCalledOnce();
+  expect(button.disabled).toBe(true);
+  expect(release(button).defaultPrevented).toBe(true);
+  button.dispatchEvent(new Event("click"));
+  expect(execute).toHaveBeenCalledOnce();
+  finish.shift()!();
+  await settle();
+  expect(effect).toHaveBeenCalledOnce();
+  expect(f.onSave).toHaveBeenCalledOnce();
+  expect(button.disabled).toBe(false);
+  down(button);
+  vi.advanceTimersByTime(500);
+  release(button);
+  expect(execute).toHaveBeenCalledTimes(2);
+  installed = true;
+  finish.shift()!();
+  await settle();
+  expect(effect).toHaveBeenCalledOnce();
+  expect(f.onSave).toHaveBeenCalledOnce();
+  expect(f.cheats.isOpen()).toBe(false);
+  expect(launcher.hidden).toBe(true);
+  installed = false;
+  f.cheats.refresh();
+  down(launcher);
+  f.cheats.dispose();
+  vi.advanceTimersByTime(500);
+  expect(resolveAdaHoldAction(f.root as unknown as HTMLElement, launcher)).toBeNull();
+  expect(resolveAdaHoldAction(f.root as unknown as HTMLElement, button)).toBeNull();
+  launcher.dispatchEvent(new Event("click"));
+  button.dispatchEvent(new Event("click"));
+  expect(execute).toHaveBeenCalledTimes(2);
+  expect(f.changed.mock.calls).toEqual([[true], [false]]);
 });

@@ -146,14 +146,28 @@ export function createCheats(
                 .catch((error: unknown) => window.reportError(error))
                 .finally(refresh);
             };
-            button.addEventListener("click", activate);
+            const action = bindAdaAction(
+              {
+                click: {
+                  availability: () =>
+                    session.available() && !button.disabled
+                      ? { kind: "available" }
+                      : { kind: "omitted" },
+                  run: activate,
+                },
+                current: () =>
+                  !disposed && open && button.isConnected && inCurrentView(parent, button),
+                slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
+              },
+              button,
+            );
             const item = document.createElement("div");
             item.className = "ada-cheat-item";
             item.append(button, description);
             buttons.push(button);
             return {
               dispose() {
-                button.removeEventListener("click", activate);
+                action.dispose();
                 buttons.splice(buttons.indexOf(button), 1);
               },
               element: item,
@@ -232,10 +246,21 @@ export function createCheats(
       button.disabled = session.busy() || !session.available();
     }
   }
-  launcher.addEventListener("click", () => {
-    setOpen(true);
-    refresh();
-  });
+  const launcherBinding = bindAdaAction(
+    {
+      click: {
+        availability: () =>
+          session.eligible() && !launcher.hidden ? { kind: "available" } : { kind: "omitted" },
+        run: () => {
+          setOpen(true);
+          refresh();
+        },
+      },
+      current: () => !disposed && launcher.isConnected && inCurrentView(parent, launcher),
+      slopPx: () => SCROLL.dragThreshold * readViewUnit(launcher),
+    },
+    launcher,
+  );
   modal.addEventListener("pointerdown", (event) => {
     event.stopPropagation();
     if (event.target === modal) {
@@ -259,6 +284,7 @@ export function createCheats(
       setOpen(false);
       disposed = true;
       session.dispose();
+      launcherBinding.dispose();
       media.removeEventListener("change", refresh);
       window.removeEventListener("pageshow", refresh);
       document.removeEventListener("visibilitychange", refresh);
