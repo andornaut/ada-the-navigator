@@ -267,11 +267,13 @@ function strictStation() {
     confirm: null,
     confirmCard,
     confirmModal,
+    confirmationDialog: undefined,
     confirmationLayer,
     disposed: false,
     document: doc,
     dropHost,
     jobsCard,
+    leaveConfirmation: undefined,
     leavePress: undefined,
     modal,
     open: true,
@@ -352,6 +354,7 @@ it("uses the actual purchase or drop card as the strict dialog rather than its b
   f.stationCard.frame.hidden = true;
   f.jobsCard.frame.hidden = false;
   f.sync();
+  f.jobsCard.close.focus();
   const before = rootPressGuard(f.parent).gate.capture();
   f.context.confirm = { key: "offer" };
   f.confirmModal.hidden = false;
@@ -370,5 +373,6 @@ it("uses the actual purchase or drop card as the strict dialog rather than its b
   f.confirmModal.hidden = true;
   f.sync();
   expect(currentView(f.parent)).toBe(f.jobsCard.frame);
+  expect(f.doc.activeElement).toBe(f.jobsCard.close);
   expect(f.back).not.toHaveBeenCalled();
 });

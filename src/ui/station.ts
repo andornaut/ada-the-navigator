@@ -639,35 +639,41 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   const shownTabs = () => stationTabs(options.services());
   let confirm: { readonly key: string } | { readonly drop: true } | null = null;
   let pressDialog: HTMLElement | undefined;
+  let confirmationDialog: HTMLElement | undefined;
   let leavePress: (() => void) | undefined;
+  let leaveConfirmation: (() => void) | undefined;
   const syncPressView = () => {
     const next =
       !open || disposed
         ? undefined
-        : confirm
-          ? "drop" in confirm
-            ? (dropHost.querySelector<HTMLElement>(".ada-card-frame") ?? undefined)
-            : confirmCard.frame
-          : view === "shop"
-            ? shopCard.frame
-            : view === "jobs"
-              ? jobsCard.frame
-              : stationCard.frame;
+        : view === "shop"
+          ? shopCard.frame
+          : view === "jobs"
+            ? jobsCard.frame
+            : stationCard.frame;
+    const nextConfirmation =
+      !open || disposed || !confirm
+        ? undefined
+        : "drop" in confirm
+          ? (dropHost.querySelector<HTMLElement>(".ada-card-frame") ?? undefined)
+          : confirmCard.frame;
     if (next !== pressDialog) {
+      leaveConfirmation?.();
+      leaveConfirmation = undefined;
+      confirmationDialog = undefined;
       leavePress?.();
       pressDialog = next;
       leavePress = next
-        ? (confirm ? confirmationLayer : stationLayer).open(
-            {
-              backdrop: confirm ? confirmModal : modal,
-              close: () => back(),
-              ...(document.activeElement instanceof HTMLElement &&
-              next.contains(document.activeElement)
-                ? { focus: document.activeElement }
-                : {}),
-              isolation: "dialog",
-            },
-            next,
+        ? stationLayer.open({ backdrop: modal, close: () => back(), isolation: "dialog" }, next)
+        : undefined;
+    }
+    if (nextConfirmation !== confirmationDialog) {
+      leaveConfirmation?.();
+      confirmationDialog = nextConfirmation;
+      leaveConfirmation = nextConfirmation
+        ? confirmationLayer.open(
+            { backdrop: confirmModal, close: () => back(), isolation: "dialog" },
+            nextConfirmation,
           )
         : undefined;
     }
@@ -1375,6 +1381,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       stationLayer.dispose();
       confirmationLayer.dispose();
       leavePress = undefined;
+      leaveConfirmation = undefined;
       clearBindings(bindings);
       clearBindings(shopBindings);
       clearBindings(jobBindings);
