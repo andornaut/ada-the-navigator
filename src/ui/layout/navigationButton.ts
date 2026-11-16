@@ -20,6 +20,9 @@ export const NAVIGATION_BUTTON_STYLE = `
 ${UI_SCOPE} .ada-pause[data-navigation=menu]{
   z-index:${MODAL_LAYER + 1}
 }
+${UI_SCOPE}.ada-modal-open .ada-pause[inert]{
+  z-index:${MODAL_LAYER - 1}
+}
 ${UI_SCOPE} .ada-pause[data-navigation=menu]::before{
   background-image:${menu(rest)}
 }
