@@ -281,7 +281,7 @@ it.each([
     palette: { action: "#bfa06f", actionText: "#181425", panel: "#3b3850", text: "#ead4aa" },
     panel: { bodyActionGapPx: 24, maxWidthPx: 328, safeInsetPx: 16, titleBodyGapPx: 16 },
     text: {
-      action: { lineHeight: 1.2, sizePx: 18, weight: 700 },
+      action: { lineHeight: 1.2, sizePx: 18, synthesis: "weight", weight: 900 },
       body: { lineHeight: 1.45, sizePx: 18, weight: 400 },
       title: { lineHeight: 1.2, sizePx: 24, weight: 700 },
     },

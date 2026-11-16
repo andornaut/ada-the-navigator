@@ -79,7 +79,7 @@ export async function startLoading(
         titleBodyGapPx: 16,
       },
       text: {
-        action: { lineHeight: 1.2, sizePx: 18, weight: 700 },
+        action: { lineHeight: 1.2, sizePx: 18, synthesis: "weight", weight: 900 },
         body: { lineHeight: 1.45, sizePx: 18, weight: 400 },
         title: { lineHeight: 1.2, sizePx: 24, weight: 700 },
       },
