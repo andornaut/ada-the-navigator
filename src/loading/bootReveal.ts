@@ -6,12 +6,13 @@ import {
 } from "@andornaut/game-kit/runtime/web/ui/dom/imageReady";
 
 import { requireBootFonts } from "./requiredFonts.ts";
-import { requireBootUi } from "./requiredUi.ts";
+import { requireBootUi, type RequiredUi } from "./requiredUi.ts";
 
 interface BootPage {
   readonly document: Document;
   readonly required: RequiredLoading;
   readonly ui: HTMLElement;
+  readonly uiAssets?: RequiredUi;
   readonly window: Pick<
     Window,
     | "cancelAnimationFrame"
@@ -61,7 +62,7 @@ export function prepareBootReveal(page: BootPage, root: HTMLElement, onRevealed:
     document: page.document,
     timer: page.window,
   });
-  const ui = requireBootUi(page.required, page);
+  const ui = page.uiAssets ?? requireBootUi(page.required, page);
   let release!: (urls: readonly string[]) => void;
   const pending = new Promise<readonly string[]>((resolve) => {
     release = resolve;
@@ -113,5 +114,8 @@ export function prepareBootReveal(page: BootPage, root: HTMLElement, onRevealed:
       ui.dispose();
     },
     images: cache,
+    get uiManifest(): unknown {
+      return ui.manifest;
+    },
   };
 }

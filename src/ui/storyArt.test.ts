@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { BACKGROUND_ART } from "../data/storybook.ts";
@@ -9,6 +9,7 @@ import { boardingScene, prologueScene } from "../model/storybook.ts";
 import { STORY_BACKGROUND } from "./layout/storyPage.ts";
 import {
   type ArtAsset,
+  loadStoryArt,
   readStoryTransitions,
   storyBackgroundKey,
   storyBackgrounds,
@@ -281,4 +282,36 @@ describe("shared story background transitions", () => {
       ),
     ).toHaveLength(2);
   });
+});
+
+it("reads the same story compositions from the caller's core manifest without fetching it again", async () => {
+  const fetch = vi.fn(async (url: string) => ({
+    json: async () => JSON.parse(readFileSync(publicFile(url), "utf8")),
+    ok: true,
+  }));
+  vi.stubGlobal("fetch", fetch);
+  try {
+    const standalone = await loadStoryArt();
+    const supplied = await loadStoryArt(manifest);
+    expect(supplied).toEqual(standalone);
+    expect(fetch.mock.calls.filter(([url]) => url === "/art/manifest.json")).toHaveLength(1);
+    expect(supplied.backgrounds.adaRoomUnpolished).toBeTruthy();
+    expect(Object.values(supplied.composites).some((layers) => layers.length > 0)).toBe(true);
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});
+
+it("keeps failed story sidecars optional when its root manifest is already available", async () => {
+  const fetch = vi.fn(async () => ({ ok: false, status: 503 }));
+  vi.stubGlobal("fetch", fetch);
+  try {
+    const supplied = await loadStoryArt(manifest);
+    expect(supplied.transitions).toEqual([]);
+    expect(supplied.holodisk).toBeNull();
+    expect(supplied.overnight).toBeNull();
+    expect(fetch).not.toHaveBeenCalledWith("/art/manifest.json");
+  } finally {
+    vi.unstubAllGlobals();
+  }
 });

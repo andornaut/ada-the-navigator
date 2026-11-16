@@ -3,6 +3,7 @@ import { startOfflinePlay } from "@andornaut/game-kit/runtime/web/pwa/dom/offlin
 import { afterEach, expect, it, vi } from "vitest";
 vi.mock("./requiredFonts.ts", () => ({ requireBootFonts: () => () => {} }));
 import { prepareBootReveal } from "./bootReveal.ts";
+import { requireBootUi } from "./requiredUi.ts";
 async function settle() {
   for (let n = 0; n < 30; n++) {
     // eslint-disable-next-line no-await-in-loop
@@ -339,5 +340,28 @@ it("requires sibling CSS backgrounds and border images while preserving successf
   expect(shown).toHaveBeenCalledOnce();
   expect(f.images.filter((image) => image.src.endsWith("/required-field.svg"))).toHaveLength(1);
   boot.dispose();
+  f.required.dispose();
+});
+
+it("retains an earlier required UI provider through reveal without fetching its manifest again", async () => {
+  const f = fixture();
+  const uiAssets = requireBootUi(f.required, { document: f.document, window: f.window });
+  await settle();
+  const boot = prepareBootReveal(
+    { document: f.document, required: f.required, ui: f.ui, uiAssets, window: f.window },
+    f.root,
+    vi.fn(),
+  );
+  boot.collect();
+  f.required.wait(() => boot.commit());
+  expect(f.window.fetch).toHaveBeenCalledOnce();
+  expect(boot.uiManifest).toBe(uiAssets.manifest);
+  f.images.forEach((image) => image.resolve());
+  await settle();
+  expect(f.required.state.kind).toBe("ready");
+  expect(f.ui.inert).toBe(false);
+  boot.dispose();
+  boot.dispose();
+  uiAssets.dispose();
   f.required.dispose();
 });

@@ -551,8 +551,9 @@ const fetchJson = async (url: string): Promise<unknown> => {
  * Fetches the manifest and its story transition, overnight and holodisk files; no art, no
  * transitions, no overnight sequence or no holodisk moment past a failure.
  */
-export async function loadStoryArt(): Promise<StoryArt> {
-  const manifest = (await fetchJson(ART_MANIFEST_URL).catch(() => ({}))) as StoryArtManifest;
+export async function loadStoryArt(supplied?: StoryArtManifest): Promise<StoryArt> {
+  const manifest =
+    supplied ?? ((await fetchJson(ART_MANIFEST_URL).catch(() => ({}))) as StoryArtManifest);
   const originalAssets = manifest.assets ?? [];
   const linked = (url: string | undefined) =>
     url ? fetchJson(url).catch(() => ({})) : Promise.resolve({});

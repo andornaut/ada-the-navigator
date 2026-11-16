@@ -28,6 +28,7 @@ import { EntryReloadRequired } from "./loading/entryRecovery.ts";
 import { requiredLoading, requiredReady } from "./loading/required.ts";
 import { validateBootCore } from "./loading/requiredCore.ts";
 import { requireSceneFiles } from "./loading/requiredFiles.ts";
+import type { RequiredUi } from "./loading/requiredUi.ts";
 import { startupFence } from "./loading/startup.ts";
 import {
   gameShown,
@@ -77,20 +78,25 @@ let cancelGame: (() => void) | undefined;
 export async function prepareGame(
   required: RequiredLoading,
   attempt: LoadingAttempt,
+  uiAssets?: RequiredUi,
 ): Promise<void> {
   if (!attempt.isCurrent() || crashed) {
     return;
   }
-  boot ??= prepareBootReveal({ document, required, ui, window }, parent, () => {
-    if (!game || crashed || !requiredReady()) {
-      return;
-    }
-    const scene = game.scene.getScene("game") as GameScene;
-    scene.enabled = undefined;
-    refreshScene(scene);
-    scene.controls.reset();
-    gameShown();
-  });
+  boot ??= prepareBootReveal(
+    { document, required, ui, ...(uiAssets ? { uiAssets } : {}), window },
+    parent,
+    () => {
+      if (!game || crashed || !requiredReady()) {
+        return;
+      }
+      const scene = game.scene.getScene("game") as GameScene;
+      scene.enabled = undefined;
+      refreshScene(scene);
+      scene.controls.reset();
+      gameShown();
+    },
+  );
   launched ??= launchPhoneApp();
   if ((await launched) === "reloading" || !attempt.isCurrent() || crashed) {
     return;
@@ -146,6 +152,7 @@ async function enterGame(attempt: LoadingAttempt): Promise<void> {
     return;
   }
   const scene = new GameScene(initialSave);
+  scene.bootUiManifest = boot?.uiManifest;
   let owned: Game | undefined;
   let constructScene: (() => void) | undefined;
   scene.entryCreate = (create) => {

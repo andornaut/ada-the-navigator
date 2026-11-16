@@ -11,6 +11,8 @@ interface UiPage {
 
 /** The UI manifest and its required bitmap sheets retain successful resources across Retry. */
 export function requireBootUi(required: RequiredLoading, page: UiPage) {
+  let disposed = false;
+  let validatedManifest: unknown;
   const urls = new Set<string>();
   const images = new Set<HTMLImageElement>();
   const elements = new WeakSet<HTMLImageElement>();
@@ -126,6 +128,7 @@ export function requireBootUi(required: RequiredLoading, page: UiPage) {
           return url.href;
         });
         paths.forEach((url) => requireImage(url));
+        validatedManifest = data;
       };
       try {
         await Promise.race([load(), deadline]);
@@ -148,6 +151,10 @@ export function requireBootUi(required: RequiredLoading, page: UiPage) {
   void manifest.start();
   return {
     dispose() {
+      if (disposed) {
+        return;
+      }
+      disposed = true;
       unobserve();
       manifest.dispose();
       releases.forEach((release) => release());
@@ -155,8 +162,13 @@ export function requireBootUi(required: RequiredLoading, page: UiPage) {
       images.clear();
       finishManifest();
     },
+    get manifest(): unknown {
+      return validatedManifest;
+    },
     manifestReady,
     requireImage,
     urls,
   };
 }
+
+export type RequiredUi = ReturnType<typeof requireBootUi>;

@@ -397,6 +397,8 @@ export class GameScene extends Scene {
   disposeEntryResources: (() => void) | undefined;
 
   readonly initialSave: StoreLoadResult<GameSave>;
+  bootUiManifest?: unknown;
+
   constructor(initialSave: StoreLoadResult<GameSave>) {
     super("game");
     this.initialSave = initialSave;
@@ -557,7 +559,7 @@ export class GameScene extends Scene {
     this.load.json("destruction", DESTRUCTION_PATH);
     this.load.json("ship-jets", "/art/ship-jets.json");
     this.load.json("ship-retro-jets", "/art/ship-retro-jets.json");
-    preloadTouchChrome(this);
+    preloadTouchChrome(this, this.bootUiManifest);
   }
 
   // The first screen, always the start screen, shows at once from the version on disk. A save

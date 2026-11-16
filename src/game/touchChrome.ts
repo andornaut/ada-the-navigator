@@ -52,16 +52,22 @@ interface UiManifest {
 const SHEET_KEYS = [...new Set(Object.values(TOUCH_CHROME_SHEETS))];
 
 // Queues the UI manifest and, once it loads, the joystick sheets it lists.
-export function preloadTouchChrome(scene: Scene): void {
-  scene.load.once(`filecomplete-json-${UI_MANIFEST_KEY}`, () => {
+export function preloadTouchChrome(scene: Scene, supplied?: unknown): void {
+  const queueSheets = () => {
     const manifest = scene.cache.json.get(UI_MANIFEST_KEY) as UiManifest | undefined;
     for (const sprite of manifest?.sprites ?? []) {
       if (SHEET_KEYS.includes(sprite.key)) {
         scene.load.json(sprite.key, `${UI_ROOT}${sprite.json}`);
       }
     }
-  });
-  scene.load.json(UI_MANIFEST_KEY, UI_MANIFEST_PATH);
+  };
+  if (supplied !== undefined) {
+    scene.cache.json.add(UI_MANIFEST_KEY, supplied);
+    queueSheets();
+  } else {
+    scene.load.once(`filecomplete-json-${UI_MANIFEST_KEY}`, queueSheets);
+    scene.load.json(UI_MANIFEST_KEY, UI_MANIFEST_PATH);
+  }
 }
 
 type Size = { readonly height: number; readonly width: number };

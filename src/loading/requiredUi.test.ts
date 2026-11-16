@@ -67,12 +67,14 @@ it("rejects malformed manifest and retries its body before discovering all requi
   await settle();
   expect(f.required.state.kind).toBe("failed");
   expect(f.images).toHaveLength(0);
+  expect(ui.manifest).toBeUndefined();
   const retry = f.required.retry();
   await settle();
   expect(f.images).toHaveLength(2);
   f.images.forEach((i) => i.resolve());
   await retry;
   expect(f.required.state.kind).toBe("ready");
+  expect(ui.manifest).toBe(manifest);
   f.required.dispose();
   ui.dispose();
 });

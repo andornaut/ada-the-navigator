@@ -946,7 +946,7 @@ export function buildScene(scene: UiContext): void {
   if (routeArt) {
     scene.galaxies.setArt({ ...routeArt, jets: travelMaterial });
   }
-  void loadStoryArt().then(
+  void loadStoryArt(manifest).then(
     (home) => {
       if (disposedPartial || !scene.entryCurrent()) {
         return;
