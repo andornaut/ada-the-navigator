@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type AchievementEntry, createAchievementsCard } from "./achievementsCard.ts";
+import { fixtureActionRoot } from "./actionRootFixture.ts";
 
 let active: Element | null = null;
+const mountedRoots = new Set<Element>();
 class Element {
   readonly attributes = new Map<string, string>();
   readonly children: Element[] = [];
@@ -26,6 +28,12 @@ class Element {
   }
   get ownerDocument() {
     return document;
+  }
+  get parentElement(): Element | null {
+    return this.parent ?? null;
+  }
+  get isConnected(): boolean {
+    return this.parent?.isConnected ?? mountedRoots.has(this);
   }
   get parentNode(): Element | null {
     return this.parent ?? null;
@@ -108,7 +116,10 @@ beforeEach(() => {
     paddingTop: "16",
   }));
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  mountedRoots.clear();
+  vi.unstubAllGlobals();
+});
 
 const entries = (count: number): AchievementEntry[] =>
   Array.from({ length: count }, (_, index) => ({
@@ -117,7 +128,8 @@ const entries = (count: number): AchievementEntry[] =>
     unlocked: false,
   }));
 function setup() {
-  const root = new Element();
+  const root = fixtureActionRoot(new Element());
+  mountedRoots.add(root);
   const onOpenChange = vi.fn();
   const card = createAchievementsCard(root as unknown as HTMLElement, {
     labels: {

@@ -7,13 +7,18 @@ import {
   type ImmediateExchangeOrder,
   quoteExchange,
 } from "../model/exchange.ts";
+import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { createExchangeView } from "./exchange.ts";
 
 const dom = vi.hoisted(() => {
+  const mountedRoots = new Set<Node>();
   class Node extends EventTarget {
     nodeType = 1;
     get ownerDocument() {
       return document;
+    }
+    get isConnected(): boolean {
+      return this.parentElement?.isConnected ?? mountedRoots.has(this);
     }
     get parentNode(): Node | null {
       return this.parentElement;
@@ -50,19 +55,21 @@ const dom = vi.hoisted(() => {
       this.parentElement = null;
     });
     append(...nodes: Node[]) {
-      this.children.push(...nodes);
       for (const node of nodes) {
-        node.parentElement = this;
+        this.insertBefore(node, null);
       }
     }
     replaceChildren(...nodes: Node[]) {
-      this.children = nodes;
+      for (const child of [...this.children]) {
+        child.remove();
+      }
+      this.append(...nodes);
     }
     setAttribute(name: string, value: string) {
       this.attributes[name] = value;
     }
   }
-  return { Node };
+  return { Node, mountedRoots };
 });
 vi.mock("./modal.ts", () => ({
   FOCUS_STYLE: "",
@@ -81,13 +88,15 @@ vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
   focusTarget: (node: { focus(): void }) => node.focus(),
 }));
 afterEach(() => {
+  dom.mountedRoots.clear();
   vi.unstubAllGlobals();
   vi.clearAllMocks();
 });
 
 function fixture() {
   vi.stubGlobal("document", { createElement: () => new dom.Node() });
-  const root = new dom.Node();
+  const root = fixtureActionRoot(new dom.Node());
+  dom.mountedRoots.add(root);
   let balances = { ore: 20, stardust: 100 };
   const commit = vi.fn((order: ImmediateExchangeOrder) => {
     const result = exchangeImmediately(EXCHANGE_RATES, balances, order);

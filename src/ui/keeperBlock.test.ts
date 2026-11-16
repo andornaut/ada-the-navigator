@@ -4,6 +4,7 @@ import { GENERAL_NAMED } from "../data/conversations.ts";
 import { KEEPERS } from "../data/keepers.ts";
 import type { StationGreeting } from "../model/keepers.ts";
 import { resolveAdaHoldAction } from "./actionBinding.ts";
+import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { COMPACT_PORTRAITS, portraitFrame, TAB_COLOURS } from "./dialoguePortraits.ts";
 import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
 import { createKeeperBlock, KEEPER_STYLE } from "./keeperBlock.ts";
@@ -144,7 +145,9 @@ function mounted(greeting: StationGreeting | null) {
   };
   const block = createKeeperBlock(actions);
   const body = new FakeElement("div");
-  mountedRoots.add(body);
+  const application = fixtureActionRoot(new FakeElement("div"));
+  mountedRoots.add(application);
+  application.append(body);
   disposals.push(block.dispose);
   body.append(block.element() as unknown as FakeElement);
   block.render(shown);
