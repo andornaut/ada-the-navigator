@@ -1,6 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 
 import { resolveAdaHoldAction } from "./actionBinding.ts";
+import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { rootPressGuard } from "./pressScope.ts";
 import { createUpdateDialog } from "./updateDialog.ts";
 const fixture = vi.hoisted(() => {
@@ -187,6 +188,7 @@ const labels = {
 };
 function setup(initial = false) {
   const root = new fixture.Node();
+  fixtureActionRoot(root);
   const doc = { activeElement: null as unknown, createElement: () => new fixture.Node() };
   vi.stubGlobal("document", doc);
   const guard = rootPressGuard(root as unknown as HTMLElement);

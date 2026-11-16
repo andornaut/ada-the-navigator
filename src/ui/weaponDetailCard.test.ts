@@ -2,6 +2,7 @@ import { afterEach, expect, it, vi } from "vitest";
 
 import { WEAPON_DETAIL_LABELS, weaponDetailLines } from "../data/weaponDetails.ts";
 import { resolveAdaHoldAction } from "./actionBinding.ts";
+import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { compactLevelName } from "./compactLevelName.ts";
 import { enterPressView, rootPressGuard } from "./pressScope.ts";
 import { createWeaponDetailCard } from "./weaponDetailCard.ts";
@@ -172,6 +173,7 @@ afterEach(() => {
 it("uses the shared card and reports exactly one pause/close transition, restoring origin focus", () => {
   vi.stubGlobal("document", { createElement: () => new fixture.Node() });
   const root = new fixture.Node();
+  fixtureActionRoot(root);
   const origin = new fixture.Node();
   const onOpenChange = vi.fn();
   const resource = createWeaponDetailCard(root as unknown as HTMLElement, {
@@ -197,6 +199,7 @@ it("uses the shared card and reports exactly one pause/close transition, restori
 it("reopens with current content and traps Tab on the close control", () => {
   vi.stubGlobal("document", { createElement: () => new fixture.Node() });
   const root = new fixture.Node();
+  fixtureActionRoot(root);
   const origin = new fixture.Node();
   const resource = createWeaponDetailCard(root as unknown as HTMLElement, {
     closeLabel: "Close",
@@ -304,6 +307,7 @@ it("retains native content nodes and original close actions across current view,
   vi.stubGlobal("document", { createElement: () => new fixture.Node() });
   const root = new fixture.Node(),
     origin = new fixture.Node();
+  fixtureActionRoot(root);
   const guard = rootPressGuard(root as unknown as HTMLElement);
   const beforeOpen = guard.gate.capture();
   const onOpenChange = vi.fn();

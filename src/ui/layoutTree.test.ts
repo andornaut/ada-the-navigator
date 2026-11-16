@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { resolveAdaHoldAction } from "./actionBinding.ts";
+import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { type AdaButtonProps, type AdaCardProps, createAdaLayoutPorts } from "./layoutTree.ts";
 
 class Element extends EventTarget {
@@ -100,6 +101,7 @@ function fixture() {
       button = actual as unknown as Element;
       reason = new Element();
       const root = new Element();
+      fixtureActionRoot(root);
       root.append(button, reason);
       return {
         dispose,

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { resolveAdaHoldAction } from "./actionBinding.ts";
+import { fixtureActionRoot } from "./actionRootFixture.ts";
 import {
   aboardLabel,
   disposeShipSections,
@@ -400,6 +401,7 @@ it("routes clickable inventory identities without reading labels", () => {
     sections,
     onItem,
   ) as unknown as ShipElement;
+  fixtureActionRoot(root);
   const row = root.children[4]!.children[1]!.children[0]!;
   expect(row.children).toHaveLength(2);
   expect(row.attributes.get("aria-label")).toContain("Laser");
@@ -426,6 +428,7 @@ it("keeps both empty status rows inert for click and registered hold activation"
     shipSections(LABELS, { ...VIEW, carrying: [], towing: null }),
     onItem,
   ) as unknown as ShipElement;
+  fixtureActionRoot(root);
   const rows = root.children[0]!.children[1]!.children.slice(3);
   expect(rows).toHaveLength(2);
   for (const row of rows) {

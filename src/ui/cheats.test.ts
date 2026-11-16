@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { resolveAdaHoldAction } from "./actionBinding.ts";
+import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { createCheats } from "./cheats.ts";
 
 let installed = false;
@@ -114,6 +115,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 function setup(footer?: { readonly intent: "back" | "close"; readonly label: string }) {
   const root = new Element();
+  fixtureActionRoot(root);
   const actions = new Element();
   const close = Object.assign(new Element(), { className: "ada-primary", textContent: "Close" });
   actions.append(close);
@@ -173,6 +175,7 @@ function descendants(root: Element): Element[] {
 it("keeps group order, executes actions once and unregisters on disposal", async () => {
   const root = new Element(),
     launcher = new Element();
+  fixtureActionRoot(root);
   const save = vi.fn(),
     runEffect = vi.fn(),
     onSave = vi.fn();

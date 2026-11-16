@@ -7,6 +7,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { canRechargeShield } from "../model/shieldRecharge.ts";
 import { noLevels, shipTuning } from "../model/upgrades.ts";
 import { resolveAdaHoldAction } from "./actionBinding.ts";
+import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { fromHudEdge, pixels, units } from "./layout/css.ts";
 import { countSlot, SHIELD_PILL, STATUS_PILL } from "./layout/playView.ts";
 import { shieldRasterGeometry } from "./layout/shieldGeometry.ts";
@@ -393,6 +394,7 @@ describe("status pill count", () => {
       defaultView: { HTMLElement: FakeNode, Node: FakeNode },
     });
     const parent = new FakeNode();
+    fixtureActionRoot(parent);
     const status = createStatusPill(parent as unknown as HTMLElement, {
       ...(onResource ? { onResource } : {}),
       ...(onShield ? { onShield } : {}),

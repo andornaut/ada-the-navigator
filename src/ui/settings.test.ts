@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { SETTINGS_STATE_LABELS } from "../data/settingsCopy.ts";
 import { resolveAdaHoldAction } from "./actionBinding.ts";
+import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { DEVICE_STORAGE_KEYS } from "./deviceSettings.ts";
 import { PAGE_DIVIDER_STYLE } from "./layout/controlPresentation.ts";
 import { createSettings, SETTINGS_STYLE, type SettingsLabels } from "./settings.ts";
@@ -166,6 +167,7 @@ function setup(copy: SettingsLabels = labels) {
     onOpenChange: vi.fn(),
     onVisibilityChange,
   });
+  fixtureActionRoot(settings.root);
   const columns = (settings.card as unknown as Element).children[0]!.children;
   const rows = [...columns[0]!.children, ...columns[2]!.children];
   return { columns, onFeedbackChange, onVisibilityChange, rows, settings };
@@ -393,6 +395,7 @@ it("retains native widgets while the entire Install row leaves and rejoins the t
     onOpenChange: vi.fn(),
     onVisibilityChange: vi.fn(),
   });
+  fixtureActionRoot(settings.root);
   const nodes = (node: Element): Element[] => [node, ...node.children.flatMap(nodes)];
   const modal = (settings.root as unknown as Element).children.find(
     (node) => node.className === "ada-modal",

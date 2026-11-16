@@ -4,6 +4,8 @@ import { runInNewContext } from "node:vm";
 import ts from "typescript";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { fixtureActionRoot } from "./actionRootFixture.ts";
+
 const fixture = vi.hoisted(() => {
   class Node extends EventTarget {
     parentElement: Node | null = null;
@@ -191,6 +193,7 @@ function setup() {
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
   fixture.card.frame.replaceChildren(fixture.card.body, fixture.card.close);
   const root = new fixture.Node();
+  fixtureActionRoot(root);
   const onAction = vi.fn();
   const onOpenChange = vi.fn();
   const menu = createMenuCard(root as unknown as HTMLElement, {

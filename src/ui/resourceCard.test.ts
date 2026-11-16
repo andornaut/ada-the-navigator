@@ -1,6 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 
 import { bindAdaAction, resolveAdaHoldAction } from "./actionBinding.ts";
+import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { currentView, enterPressView, inCurrentView, rootPressGuard } from "./pressScope.ts";
 import { createResourceCard } from "./resourceCard.ts";
@@ -170,6 +171,7 @@ afterEach(() => {
 it("uses the shared card and reports exactly one pause/close transition, restoring origin focus", () => {
   vi.stubGlobal("document", { createElement: () => new fixture.Node() });
   const root = new fixture.Node();
+  fixtureActionRoot(root);
   const origin = new fixture.Node();
   const onOpenChange = vi.fn();
   const resource = createResourceCard(root as unknown as HTMLElement, {
@@ -195,6 +197,7 @@ it("uses the shared card and reports exactly one pause/close transition, restori
 it("reopens with current content and traps Tab on the close control", () => {
   vi.stubGlobal("document", { createElement: () => new fixture.Node() });
   const root = new fixture.Node();
+  fixtureActionRoot(root);
   const origin = new fixture.Node();
   const resource = createResourceCard(root as unknown as HTMLElement, {
     closeLabel: "Close",
@@ -215,6 +218,7 @@ it("reopens with current content and traps Tab on the close control", () => {
 it("shows canonical supplied content and secondary Quests before primary Close without a resume gap", () => {
   vi.stubGlobal("document", { createElement: () => new fixture.Node() });
   const root = new fixture.Node();
+  fixtureActionRoot(root);
   const origin = new fixture.Node();
   const icon = new fixture.Node();
   const lifecycle: string[] = [];
@@ -309,6 +313,7 @@ it("shows shield identity in the header and formatted HP below while preserving 
 it("retains footer nodes, resolves the current Quests closure and unregisters disposed actions", () => {
   vi.stubGlobal("document", { createElement: () => new fixture.Node() });
   const root = new fixture.Node();
+  fixtureActionRoot(root);
   const origin = new fixture.Node();
   const first = vi.fn(),
     second = vi.fn(),
@@ -349,6 +354,7 @@ it("retains footer nodes, resolves the current Quests closure and unregisters di
 it("registers one native header click and closes once through the shared default hold", () => {
   vi.stubGlobal("document", { createElement: () => new fixture.Node() });
   const root = new fixture.Node();
+  fixtureActionRoot(root);
   const origin = new fixture.Node();
   const onOpenChange = vi.fn();
   const listen = vi.spyOn(fixture.card.close, "addEventListener");
@@ -377,6 +383,7 @@ it("registers one native header click and closes once through the shared default
 it("rejects background header clicks and removes the registered X callback on disposal", () => {
   vi.stubGlobal("document", { createElement: () => new fixture.Node() });
   const root = new fixture.Node();
+  fixtureActionRoot(root);
   const origin = new fixture.Node();
   const onOpenChange = vi.fn();
   const detail = createResourceCard(root as unknown as HTMLElement, {
@@ -407,6 +414,7 @@ it("reports Resource scope and excludes a registered background action", () => {
   const root = new fixture.Node(),
     background = new fixture.Node(),
     origin = new fixture.Node();
+  fixtureActionRoot(root);
   root.append(background);
   const host = root as unknown as HTMLElement;
   const guard = rootPressGuard(host),
@@ -451,6 +459,7 @@ it("releases Resource scope before parent restore and invalidates close/reopen/d
   const root = new fixture.Node(),
     parent = new fixture.Node(),
     origin = new fixture.Node();
+  fixtureActionRoot(root);
   root.append(parent);
   parent.append(origin);
   const host = root as unknown as HTMLElement;
@@ -509,6 +518,7 @@ it("releases only its own Resource scope after Quests has opened a child", () =>
   const root = new fixture.Node(),
     child = new fixture.Node(),
     origin = new fixture.Node();
+  fixtureActionRoot(root);
   root.append(child);
   const host = root as unknown as HTMLElement,
     guard = rootPressGuard(host);

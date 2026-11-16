@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { resolveAdaHoldAction } from "./actionBinding.ts";
+import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { enterPressView, rootPressGuard } from "./pressScope.ts";
 import { createRestartCard } from "./restartCard.ts";
 
@@ -169,6 +170,7 @@ afterEach(() => {
 function fixture() {
   const root = new Element(),
     onRestart = vi.fn();
+  fixtureActionRoot(root);
   const guard = rootPressGuard(root as unknown as HTMLElement);
   const card = createRestartCard(root as unknown as HTMLElement, {
     labels: { cancel: "Cancel", close: "Close", restart: "Restart", title: "Restart?" },

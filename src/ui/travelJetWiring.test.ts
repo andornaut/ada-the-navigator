@@ -7,6 +7,7 @@ import { type QuantumJump, readQuantumJump } from "../game/quantumJump.ts";
 import { type JetGeometry, readEngineJets } from "../game/shipJets.ts";
 import { staticShipJets } from "../game/staticShipJets.ts";
 import { resolveAdaHoldAction } from "./actionBinding.ts";
+import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { createGalaxyMap, type GalaxyMapView } from "./galaxyMap.ts";
 import { createJumpOverlay, type SheetArt } from "./jumpOverlay.ts";
 import { drawShipJets, drawShipTail } from "./shipJetCanvas.ts";
@@ -202,7 +203,7 @@ function dom() {
   vi.spyOn(performance, "now").mockReturnValue(0);
   return {
     callbacks,
-    host: new ElementFake("host") as unknown as HTMLElement,
+    host: fixtureActionRoot(new ElementFake("host")) as unknown as HTMLElement,
     nodes,
     tick(now: number) {
       const current = [...callbacks.values()];
