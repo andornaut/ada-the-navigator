@@ -11,7 +11,7 @@ import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { createConversationBox, createInteractionCard } from "./conversation.ts";
 import { createDialoguePanel } from "./dialoguePanel.ts";
 import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
-import { enterPressView, rootPressGuard } from "./pressScope.ts";
+import { currentView, enterPressView, rootPressGuard } from "./pressScope.ts";
 import * as refusal from "./refusal.ts";
 import { STORY_PORTRAITS, storyPortrait, storyPortraitFrame, storyTabColour } from "./storybook.ts";
 
@@ -65,7 +65,22 @@ class Element {
   readonly dataset: Record<string, string> = {};
   hidden = false;
   disabled = false;
-  inert = false;
+  tabIndex = 0;
+  get inert() {
+    return this.attributes.has("inert");
+  }
+  set inert(value: boolean) {
+    this.toggleAttribute("inert", value);
+  }
+  hasAttribute(name: string) {
+    return name === "hidden" ? this.hidden : this.attributes.has(name);
+  }
+  removeAttribute(name: string) {
+    this.attributes.delete(name);
+  }
+  getAttributeNames() {
+    return [...this.attributes.keys()];
+  }
   closest(selector: string): Element | null {
     return (selector.includes("[hidden]") && this.hidden) ||
       (selector.includes("[inert]") && this.inert)
@@ -112,7 +127,12 @@ class Element {
   click() {
     this.dispatch("click", { detail: 0 });
   }
-  focus() {}
+  focus() {
+    (document as unknown as { activeElement: Element | null }).activeElement = this;
+  }
+  querySelectorAll(selector: string): Element[] {
+    return selector.includes("button") ? this.all().filter((node) => node.tag === "button") : [];
+  }
   querySelector(selector: string): Element | null {
     return (
       this.all().find((node) =>
@@ -176,6 +196,13 @@ const setup = (host?: Element) => {
       createElement: (tag: string) => new Element(tag),
       defaultView: Object.assign(new EventTarget(), {
         HTMLElement: Element,
+        MutationObserver: class {
+          disconnect() {}
+          observe() {}
+          takeRecords() {
+            return [];
+          }
+        },
         Node: Element,
         clearTimeout: (id: ReturnType<typeof setTimeout>) => clearTimeout(id),
         performance: { now: () => Date.now() },
@@ -825,7 +852,7 @@ it("requires a connected owning tree for native dialogue actions", () => {
     skip: vi.fn(),
   });
   try {
-    interaction.show(1, {
+    const panel = {
       choices: [
         { id: "accept", label: "Accept" },
         { id: "decline", label: "Decline" },
@@ -833,7 +860,8 @@ it("requires a connected owning tree for native dialogue actions", () => {
       context: "test-decision",
       text: "Decision",
       title: "Rivet",
-    });
+    };
+    interaction.show(1, panel);
     const accept = parent
       .all()
       .find((node) => node.tag === "button" && node.textContent === "Accept")!;
@@ -848,6 +876,7 @@ it("requires a connected owning tree for native dialogue actions", () => {
     accept.click();
     expect(choose).not.toHaveBeenCalled();
     document.body.append(parent as unknown as HTMLElement);
+    interaction.show(1, panel);
     accept.click();
     expect(choose).toHaveBeenCalledExactlyOnceWith("accept");
   } finally {
@@ -1017,4 +1046,80 @@ describe("ambient App-root action generations", () => {
       f.dispose();
     }
   });
+});
+
+it("enters strict Interaction focus after drawing and restores its opener across hide and reopen", () => {
+  setup();
+  const parent = connectedParent(),
+    origin = new Element("button");
+  parent.append(origin);
+  fixtureActionRoot(parent);
+  origin.focus();
+  const callbacks = { choose: vi.fn(), close: vi.fn(), skip: vi.fn() };
+  const interaction = createInteractionCard(parent as unknown as HTMLElement, callbacks);
+  const panel = {
+    choices: [{ id: "continue", label: CONTENT.labels.next! }],
+    context: "deliveryComplete",
+    text: "",
+    title: "Rivet",
+  };
+  const guard = rootPressGuard(parent as unknown as HTMLElement),
+    before = guard.gate.capture();
+  try {
+    interaction.show(1, panel);
+    const modal = parent.children.find((node) => node.className.includes("ada-interaction-modal"))!,
+      frame = modal.children[0]!;
+    expect(before()).toBe(false);
+    expect(currentView(parent as unknown as HTMLElement)).toBe(frame);
+    expect(frame.getAttribute("aria-modal")).toBe("true");
+    expect(frame.contains(document.activeElement)).toBe(true);
+    const opened = guard.gate.capture();
+    interaction.show(1, null);
+    expect(opened()).toBe(false);
+    expect(currentView(parent as unknown as HTMLElement)).toBe(parent);
+    expect(document.activeElement).toBe(origin);
+    interaction.show(1, panel);
+    expect(opened()).toBe(false);
+    expect(frame.contains(document.activeElement)).toBe(true);
+    const beforeDispose = guard.gate.capture();
+    interaction.dispose();
+    expect(beforeDispose()).toBe(false);
+    expect(currentView(parent as unknown as HTMLElement)).toBe(parent);
+    interaction.show(1, panel);
+    expect(parent.children).not.toContain(modal);
+    expect(callbacks.choose).not.toHaveBeenCalled();
+    expect(callbacks.close).not.toHaveBeenCalled();
+    expect(callbacks.skip).not.toHaveBeenCalled();
+  } finally {
+    interaction.dispose();
+  }
+});
+
+it("keeps a refused Interaction Close under the caller's policy without choosing an outcome", () => {
+  setup();
+  const parent = connectedParent(),
+    callbacks = { choose: vi.fn(), close: vi.fn(), skip: vi.fn() };
+  fixtureActionRoot(parent);
+  const interaction = createInteractionCard(parent as unknown as HTMLElement, callbacks);
+  try {
+    interaction.show(1, {
+      choices: [
+        { id: "accept", label: "Accept" },
+        { id: "decline", label: "Decline" },
+      ],
+      context: "test-decision",
+      text: "Decision",
+      title: "Rivet",
+    });
+    const frame = currentView(parent as unknown as HTMLElement);
+    interaction.back();
+    expect(callbacks.close).toHaveBeenCalledOnce();
+    expect(callbacks.choose).not.toHaveBeenCalled();
+    expect(callbacks.skip).not.toHaveBeenCalled();
+    expect(interaction.isOpen()).toBe(true);
+    expect(currentView(parent as unknown as HTMLElement)).toBe(frame);
+    expect(frame.contains(document.activeElement)).toBe(true);
+  } finally {
+    interaction.dispose();
+  }
 });

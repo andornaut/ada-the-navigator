@@ -7,7 +7,7 @@ import { InteractionConversation, interactionCopy } from "../model/conversations
 import { bindAdaAction } from "./actionBinding.ts";
 import { createDialoguePanel, DIALOGUE_PANEL_STYLE } from "./dialoguePanel.ts";
 import { COMPACT_PORTRAITS, portraitFrame, TAB_COLOURS } from "./dialoguePortraits.ts";
-import { enterPressView } from "./pressScope.ts";
+import { createModalLayer } from "./modalLayer.ts";
 export {
   AWAITING_TAB,
   COMPACT_PORTRAITS,
@@ -312,6 +312,7 @@ export function createInteractionCard(
   card.card.dataset.dialog = "conversation";
   modal.append(card.frame);
   parent.append(modal);
+  const layer = createModalLayer(modal);
   let disposed = false;
   const bindAction = (button: HTMLButtonElement, run: () => void) =>
     bindAdaAction(
@@ -330,6 +331,7 @@ export function createInteractionCard(
     );
   let actions: ReturnType<typeof bindAdaAction>[] = [];
   let leaveView: (() => void) | undefined;
+  let returnFocus: HTMLElement | null = null;
   const state = new InteractionConversation();
   let signature = "";
   const draw = (): void => {
@@ -400,22 +402,6 @@ export function createInteractionCard(
     draw();
   };
   const closeAction = bindAction(card.close, close);
-  modal.addEventListener("keydown", (event) => {
-    if (event.key !== "Tab") {
-      return;
-    }
-    const buttons = [...modal.querySelectorAll<HTMLButtonElement>("button")];
-    const first = buttons[0];
-    const last = buttons.at(-1);
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last?.focus();
-    }
-    if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first?.focus();
-    }
-  });
   return {
     back: close,
     dispose() {
@@ -424,7 +410,8 @@ export function createInteractionCard(
         action.dispose();
       }
       actions = [];
-      leaveView?.();
+      returnFocus = null;
+      layer.dispose();
       leaveView = undefined;
       card.dispose();
       modal.remove();
@@ -434,15 +421,24 @@ export function createInteractionCard(
       context: import("../model/conversations.ts").InteractionContext,
       panel: import("../model/types.ts").DialogueState | null,
     ) {
+      if (disposed) {
+        return;
+      }
+      if (panel && !leaveView) {
+        returnFocus =
+          document.activeElement instanceof (document.defaultView?.HTMLElement ?? HTMLElement)
+            ? document.activeElement
+            : null;
+      }
       modal.hidden = panel === null;
       if (!panel) {
         leaveView?.();
         leaveView = undefined;
+        returnFocus = null;
         state.reset();
         signature = "";
         return;
       }
-      leaveView ??= enterPressView(parent, card.frame, [], { backdrop: modal, close });
       const copy = interactionCopy(context, panel);
       state.show(copy, panel);
       const next = JSON.stringify(panel);
@@ -452,6 +448,22 @@ export function createInteractionCard(
         card.frame.setAttribute("aria-label", state.party);
         draw();
       }
+      if (!card.frame.isConnected) {
+        return;
+      }
+      leaveView ??= layer.open(
+        {
+          backdrop: modal,
+          close,
+          focus:
+            card.choices.querySelector<HTMLButtonElement>("button") ??
+            card.controls.querySelector<HTMLButtonElement>("button") ??
+            card.close,
+          isolation: "dialog",
+          restore: () => returnFocus,
+        },
+        card.frame,
+      );
     },
   };
 }
