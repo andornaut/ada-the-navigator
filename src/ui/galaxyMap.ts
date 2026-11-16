@@ -369,6 +369,11 @@ export const GALAXY_MAP_STYLE = `
   gap:${units(SPACING.panelPadding)}
 }
 .ada-controls .ada-route-action{width:${units(GALAXY_MAP_ACTIONS.width)}}
+.ada-controls .ada-route-action.ada-unavailable{
+  min-width:${units(GALAXY_MAP_ACTIONS.width)};
+  width:max-content;
+  max-width:${units(GALAXY_MAP_PANEL.width)}
+}
 /* A quantum jump from the map: the panel, actions and close X go, then the warp ship covers Ada's. */
 .ada-controls .ada-route[data-jumping] .ada-route-panel,
 .ada-controls .ada-route[data-jumping] .ada-route-action,
