@@ -3,13 +3,35 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GENERAL_NAMED } from "../data/conversations.ts";
 import { KEEPERS } from "../data/keepers.ts";
 import type { StationGreeting } from "../model/keepers.ts";
+import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { COMPACT_PORTRAITS, portraitFrame, TAB_COLOURS } from "./dialoguePortraits.ts";
+import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
 import { createKeeperBlock, KEEPER_STYLE } from "./keeperBlock.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { units } from "./layout/css.ts";
+import { rootPressGuard } from "./pressScope.ts";
 
 // A stand-in for the few DOM members the block uses.
-class FakeElement {
+class FakeElement extends EventTarget {
+  disabled = false;
+  get parentElement() {
+    return this.parent;
+  }
+  get isConnected(): boolean {
+    return this.parent?.isConnected ?? mountedRoots.has(this);
+  }
+  contains(target: unknown): boolean {
+    return target === this || this.children.some((child) => child.contains(target));
+  }
+  matches(selector: string) {
+    return selector === ":disabled" && this.disabled;
+  }
+  closest(selector: string): FakeElement | null {
+    return (selector.includes("[hidden]") && this.hasAttribute("hidden")) ||
+      (selector.includes("[inert]") && this.hasAttribute("inert"))
+      ? this
+      : (this.parent?.closest(selector) ?? null);
+  }
   readonly attributes = new Map<string, string>();
   children: FakeElement[] = [];
   className = "";
@@ -18,9 +40,9 @@ class FakeElement {
   parent: FakeElement | null = null;
   readonly tag: string;
   type = "";
-  private readonly listeners: (() => void)[] = [];
   private text = "";
   constructor(tag: string) {
+    super();
     this.tag = tag;
   }
   get ownerDocument() {
@@ -32,9 +54,6 @@ class FakeElement {
   set textContent(value: string) {
     this.text = value;
   }
-  addEventListener(_type: string, listener: () => void): void {
-    this.listeners.push(listener);
-  }
   append(...nodes: FakeElement[]): void {
     for (const node of nodes) {
       node.parent?.children.splice(node.parent.children.indexOf(node), 1);
@@ -43,9 +62,7 @@ class FakeElement {
     }
   }
   click(): void {
-    for (const listener of this.listeners) {
-      listener();
-    }
+    this.dispatchEvent(new Event("click"));
   }
   find(className: string): FakeElement {
     const found = this.children
@@ -92,11 +109,20 @@ class FakeElement {
     }
   }
 }
+const mountedRoots = new Set<FakeElement>();
+const disposals: (() => void)[] = [];
 // An event target, where the kit's focusTarget tracks the last input.
 const fakeDocument = Object.assign(new EventTarget(), {
   activeElement: null as FakeElement | null,
   createElement: (tag: string) => new FakeElement(tag),
-  defaultView: null,
+  defaultView: Object.assign(new EventTarget(), {
+    HTMLElement: FakeElement,
+    Node: FakeElement,
+    clearTimeout: (id: ReturnType<typeof setTimeout>) => clearTimeout(id),
+    performance: { now: () => Date.now() },
+    setTimeout: (callback: () => void, delay: number) => setTimeout(callback, delay),
+  }),
+  hidden: false,
 });
 
 const WELCOME = "Welcome aboard. Trade your Stardust, or take a job.";
@@ -106,7 +132,7 @@ const LINES = KEEPERS[1]!.greetings.first;
 function mounted(greeting: StationGreeting | null) {
   let shown = greeting;
   const shop = new FakeElement("button");
-  const block = createKeeperBlock({
+  const actions = {
     advance: () => {
       if (shown && shown.index < shown.count - 1) {
         shown = { ...shown, index: shown.index + 1, line: LINES[shown.index + 1]! };
@@ -115,8 +141,11 @@ function mounted(greeting: StationGreeting | null) {
     },
     focusAfter: () => shop as unknown as HTMLElement,
     labels: { nextLine: "Next line", welcome: WELCOME },
-  });
+  };
+  const block = createKeeperBlock(actions);
   const body = new FakeElement("div");
+  mountedRoots.add(body);
+  disposals.push(block.dispose);
   body.append(block.element() as unknown as FakeElement);
   block.render(shown);
   const element = () => block.element() as unknown as FakeElement;
@@ -124,15 +153,21 @@ function mounted(greeting: StationGreeting | null) {
     element()
       .find("ada-keeper-pips")
       .children.map((pip) => pip.hasAttribute("data-shown"));
-  return { body, element, pips, shop };
+  return { actions, block, body, element, pips, shop };
 }
 
 beforeEach(() => {
   fakeDocument.activeElement = null;
   vi.stubGlobal("document", fakeDocument);
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
 });
 
 afterEach(() => {
+  for (const dispose of disposals.splice(0).reverse()) {
+    dispose();
+  }
+  mountedRoots.clear();
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 
@@ -253,4 +288,74 @@ describe("the keeper block", () => {
       expect(KEEPER_STYLE).toContain(`[data-keeper="${key}"] .ada-keeper-name`);
     }
   });
+});
+
+it("uses the existing root hold once per line and unregisters the terminal and disposed keeper action", () => {
+  vi.useFakeTimers();
+  const f = mounted({
+    count: 3,
+    displayName: "Saffron",
+    index: 0,
+    keeper: "saffron",
+    line: LINES[0],
+  });
+  const currentAdvance = vi.fn(f.actions.advance);
+  f.actions.advance = currentAdvance;
+  const root = f.body as unknown as HTMLElement;
+  const binding = bindAdaActionRoot(
+    { guard: rootPressGuard(root), requiredReady: () => true, subscribeRequired: () => () => {} },
+    root,
+  );
+  disposals.push(binding.dispose);
+  const button = f.element();
+  const event = (type: string) => {
+    const value = new Event(type, { cancelable: true });
+    Object.defineProperties(
+      value,
+      Object.fromEntries(
+        Object.entries({
+          button: 0,
+          clientX: 0,
+          clientY: 0,
+          detail: type === "click" ? 1 : 0,
+          isPrimary: true,
+          pointerId: 7,
+          target: button,
+        }).map(([key, property]) => [key, { value: property }]),
+      ),
+    );
+    return value;
+  };
+  fakeDocument.dispatchEvent(event("pointerdown"));
+  f.body.dispatchEvent(event("pointerdown"));
+  vi.advanceTimersByTime(499);
+  expect(f.pips()).toEqual([true, false, false]);
+  vi.advanceTimersByTime(1);
+  expect(f.element()).toBe(button);
+  expect(f.pips()).toEqual([true, true, false]);
+  expect(currentAdvance).toHaveBeenCalledOnce();
+  fakeDocument.dispatchEvent(event("pointerup"));
+  const click = event("click");
+  f.body.dispatchEvent(click);
+  if (!click.defaultPrevented) {
+    button.dispatchEvent(event("click"));
+  }
+  expect(click.defaultPrevented).toBe(true);
+  expect(f.pips()).toEqual([true, true, false]);
+  button.focus();
+  button.click();
+  expect(f.element().tag).toBe("div");
+  expect(fakeDocument.activeElement).toBe(f.shop);
+  expect(resolveAdaHoldAction(root, button)).toBeNull();
+  button.click();
+  expect(f.pips()).toEqual([true, true, true]);
+  f.block.render({ count: 3, displayName: "Saffron", index: 0, keeper: "saffron", line: LINES[0] });
+  fakeDocument.dispatchEvent(event("pointerdown"));
+  f.body.dispatchEvent(event("pointerdown"));
+  f.block.dispose();
+  vi.advanceTimersByTime(500);
+  expect(resolveAdaHoldAction(root, button)).toBeNull();
+  button.click();
+  expect(f.pips()).toEqual([true, false, false]);
+  expect(currentAdvance).toHaveBeenCalledTimes(2);
 });

@@ -4,10 +4,13 @@ import { CAST, CAST_FRAMES, castSheet } from "../data/cast.ts";
 import { GENERAL_NAMED } from "../data/conversations.ts";
 import { KEEPERS } from "../data/keepers.ts";
 import type { KeeperKey, StationGreeting } from "../model/keepers.ts";
+import { bindAdaAction } from "./actionBinding.ts";
 import { COMPACT_PORTRAITS, portraitFrame, TAB_COLOURS } from "./dialoguePortraits.ts";
+import { SCROLL } from "./layout/contentCard.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { font, units } from "./layout/css.ts";
 import { KEEPER_BLOCK } from "./layout/stationCard.ts";
+import { readViewUnit } from "./layout/viewScale.ts";
 import { FOCUS_STYLE, TEXT_TOKENS } from "./modal.ts";
 import { PANEL_BACKGROUND } from "./notice.ts";
 
@@ -190,6 +193,8 @@ ${GENERAL_RULES}
 `;
 
 export interface KeeperBlock {
+  /** Unregisters the advance action; the caller retains the mounted presentation. */
+  dispose(): void;
   /** The block as it is now in the card: a button while lines are to come, a status otherwise. */
   readonly element: () => HTMLElement;
   /** Shows greeting, or the generic welcome for null. */
@@ -241,13 +246,40 @@ export function createKeeperBlock(options: {
   const name = document.createElement("span");
   name.className = "ada-keeper-name";
   button.setAttribute("aria-describedby", line.id);
-  button.addEventListener("click", options.advance);
   let current: HTMLElement = status;
+  let disposed = false;
+  let advancing = false;
+  let advanceAction: ReturnType<typeof bindAdaAction> | undefined;
   status.append(frame, body, name);
   return {
+    dispose() {
+      disposed = true;
+      advanceAction?.dispose();
+      advanceAction = undefined;
+    },
     element: () => current,
     render(greeting) {
-      const advancing = greeting !== null && greeting.index < greeting.count - 1;
+      if (disposed) {
+        return;
+      }
+      advancing = greeting !== null && greeting.index < greeting.count - 1;
+      if (advancing) {
+        advanceAction ??= bindAdaAction(
+          {
+            click: {
+              availability: () =>
+                advancing && !button.disabled ? { kind: "available" } : { kind: "omitted" },
+              run: () => options.advance(),
+            },
+            current: () => !disposed && current === button && button.isConnected,
+            slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
+          },
+          button,
+        );
+      } else {
+        advanceAction?.dispose();
+        advanceAction = undefined;
+      }
       const next = advancing ? button : status;
       if (next !== current) {
         const focused = document.activeElement === current;
