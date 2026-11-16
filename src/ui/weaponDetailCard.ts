@@ -177,9 +177,8 @@ export function createWeaponDetailCard(
     close,
     dispose() {
       disposed = true;
-      leaveView?.();
-      leaveView = undefined;
       layer.dispose();
+      leaveView = undefined;
       headerBinding.dispose();
       mounted.dispose();
       modal.remove();
@@ -198,14 +197,19 @@ export function createWeaponDetailCard(
       mounted.update(weaponDetailTree({ closeLabel: options.closeLabel, lines, title }));
       modal.hidden = false;
       card.fit();
-      leaveView ??= layer.open({
-        backdrop: modal,
-        close,
-        focus: dismiss,
-        isolation: "dialog",
-        restore: () => returnFocus,
-      }, card.frame);
-      if (document.activeElement !== dismiss) focusTarget(dismiss);
+      leaveView ??= layer.open(
+        {
+          backdrop: modal,
+          close,
+          focus: dismiss,
+          isolation: "dialog",
+          restore: () => returnFocus,
+        },
+        card.frame,
+      );
+      if (document.activeElement !== dismiss) {
+        focusTarget(dismiss);
+      }
       options.onOpenChange(true);
     },
   };

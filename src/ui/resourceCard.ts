@@ -137,9 +137,8 @@ export function createResourceCard(
     close,
     dispose() {
       disposed = true;
-      leaveView?.();
-      leaveView = undefined;
       layer.dispose();
+      leaveView = undefined;
       headerBinding.dispose();
       mounted.dispose();
       modal.remove();
@@ -169,14 +168,19 @@ export function createResourceCard(
       );
       modal.hidden = false;
       card.fit();
-      leaveView ??= layer.open({
-        backdrop: modal,
-        close,
-        focus: dismiss,
-        isolation: "dialog",
-        restore: () => returnFocus,
-      }, card.frame);
-      if (document.activeElement !== dismiss) focusTarget(dismiss);
+      leaveView ??= layer.open(
+        {
+          backdrop: modal,
+          close,
+          focus: dismiss,
+          isolation: "dialog",
+          restore: () => returnFocus,
+        },
+        card.frame,
+      );
+      if (document.activeElement !== dismiss) {
+        focusTarget(dismiss);
+      }
       options.onOpenChange(true);
     },
   };

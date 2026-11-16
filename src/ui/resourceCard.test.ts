@@ -30,11 +30,17 @@ const fixture = vi.hoisted(() => {
         doc.removeEventListener = events.removeEventListener.bind(events);
       }
       doc.activeElement ??= null;
-      doc.defaultView ??= { HTMLElement: Node, MutationObserver: class {
-        disconnect() {}
-        observe() {}
-        takeRecords() { return []; }
-      }, Node };
+      doc.defaultView ??= {
+        HTMLElement: Node,
+        MutationObserver: class {
+          disconnect() {}
+          observe() {}
+          takeRecords() {
+            return [];
+          }
+        },
+        Node,
+      };
       return document;
     }
     get parentNode() {
@@ -73,7 +79,9 @@ const fixture = vi.hoisted(() => {
       return node === this || this.children.some((child) => child.contains(node));
     }
     closest(): Node | null {
-      return this.hidden || "inert" in this.attributes ? this : (this.parentElement?.closest() ?? null);
+      return this.hidden || "inert" in this.attributes
+        ? this
+        : (this.parentElement?.closest() ?? null);
     }
     insertBefore(node: Node, before: Node | null) {
       node.remove();
@@ -116,9 +124,12 @@ const fixture = vi.hoisted(() => {
       return this.attributes[name] ?? null;
     }
     querySelectorAll(selector: string): Node[] {
-      const descendants = this.children.flatMap(child => [child, ...child.querySelectorAll(selector)]);
+      const descendants = this.children.flatMap((child) => [
+        child,
+        ...child.querySelectorAll(selector),
+      ]);
       return selector.includes("button")
-        ? descendants.filter(child => child.dataset.role !== undefined || child === card.close)
+        ? descendants.filter((child) => child.dataset.role !== undefined || child === card.close)
         : [];
     }
     remove = vi.fn(() => {
@@ -192,7 +203,7 @@ vi.mock("./buttonPresentation.ts", () => ({
 }));
 vi.mock("./layout/viewScale.ts", () => ({ readViewUnit: () => 1 }));
 vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", async (original) => ({
-  ...await original<typeof import("@andornaut/game-kit/runtime/web/ui/dom/focusModality")>(),
+  ...(await original<typeof import("@andornaut/game-kit/runtime/web/ui/dom/focusModality")>()),
   focusTarget: (node: { focus(): void }) => node.focus(),
 }));
 afterEach(() => {

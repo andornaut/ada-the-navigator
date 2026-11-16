@@ -31,11 +31,17 @@ const fixture = vi.hoisted(() => {
         doc.removeEventListener = events.removeEventListener.bind(events);
       }
       doc.activeElement ??= null;
-      doc.defaultView ??= { HTMLElement: Node, MutationObserver: class {
-        disconnect() {}
-        observe() {}
-        takeRecords() { return []; }
-      }, Node };
+      doc.defaultView ??= {
+        HTMLElement: Node,
+        MutationObserver: class {
+          disconnect() {}
+          observe() {}
+          takeRecords() {
+            return [];
+          }
+        },
+        Node,
+      };
       return document;
     }
     get parentNode() {
@@ -74,7 +80,9 @@ const fixture = vi.hoisted(() => {
       return node === this || this.children.some((child) => child.contains(node));
     }
     closest(): Node | null {
-      return this.hidden || "inert" in this.attributes ? this : (this.parentElement?.closest() ?? null);
+      return this.hidden || "inert" in this.attributes
+        ? this
+        : (this.parentElement?.closest() ?? null);
     }
     insertBefore(node: Node, before: Node | null) {
       node.remove();
@@ -117,9 +125,12 @@ const fixture = vi.hoisted(() => {
       return this.attributes[name] ?? null;
     }
     querySelectorAll(selector: string): Node[] {
-      const descendants = this.children.flatMap(child => [child, ...child.querySelectorAll(selector)]);
+      const descendants = this.children.flatMap((child) => [
+        child,
+        ...child.querySelectorAll(selector),
+      ]);
       return selector.includes("button")
-        ? descendants.filter(child => child.dataset.role !== undefined || child === card.close)
+        ? descendants.filter((child) => child.dataset.role !== undefined || child === card.close)
         : [];
     }
     remove = vi.fn(() => {
@@ -242,7 +253,8 @@ it("reopens with current content and traps Tab on the close control", () => {
   resource.open("Stardust", ["Second"], origin as unknown as HTMLElement);
   const event = new Event("keydown", { cancelable: true });
   Object.defineProperty(event, "key", { value: "Tab" });
-  root.children[0]!.dispatchEvent(event);
+  Object.defineProperty(event, "target", { value: document.activeElement });
+  root.dispatchEvent(event);
   expect(event.defaultPrevented).toBe(true);
   expect(fixture.card.title.textContent).toBe("Stardust");
   expect(fixture.card.body.children[0]!.children[0]!.textContent).toBe("Second");
