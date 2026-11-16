@@ -5,6 +5,9 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import type { Screen } from "../model/game.ts";
 import type { GameState } from "../model/types.ts";
+import { bindAdaAction } from "../ui/actionBinding.ts";
+import { SCROLL } from "../ui/layout/contentCard.ts";
+import { readViewUnit } from "../ui/layout/viewScale.ts";
 import { refuse } from "../ui/refusal.ts";
 import { createStartScreen } from "../ui/startScreen.ts";
 import type { TitleScreenArt } from "../ui/titleScreen.ts";
@@ -18,11 +21,10 @@ export interface ShellActions {
   start: () => void;
 }
 
-function button(label: string, action: () => void): HTMLButtonElement {
+function button(label: string): HTMLButtonElement {
   const node = document.createElement("button");
   node.type = "button";
   node.textContent = label;
-  node.addEventListener("click", action);
   return node;
 }
 
@@ -31,6 +33,9 @@ export class StoryShell {
   private readonly status = document.createElement("div");
   private readonly panel = document.createElement("section");
   private signature = "";
+  private disposed = false;
+  private readonly choiceDisposals: (() => void)[] = [];
+  private readonly noticeAction: ReturnType<typeof bindAdaAction>;
   // A newer save's forced update, while it runs: Start stays closed.
   private requiredUpdate: RequiredUpdateState | undefined;
   private startScreen: ReturnType<typeof createStartScreen> | undefined;
@@ -49,7 +54,18 @@ export class StoryShell {
     this.status.setAttribute("role", "status");
     this.status.setAttribute("aria-live", "polite");
     // The notice's box is its press area: a tap dismisses it, otherwise it clears on its own.
-    this.status.addEventListener("click", () => this.actions.dismissNotice());
+    this.noticeAction = bindAdaAction(
+      {
+        click: {
+          availability: () =>
+            this.status.textContent ? { kind: "available" } : { kind: "omitted" },
+          run: () => this.actions.dismissNotice(),
+        },
+        current: () => !this.disposed && this.status.isConnected,
+        slopPx: () => SCROLL.dragThreshold * readViewUnit(this.status),
+      },
+      this.status,
+    );
     this.panel.className = "story-panel";
     document.getElementById("app")?.append(this.status, this.savingStatus, this.panel);
   }
@@ -77,6 +93,7 @@ export class StoryShell {
     const focusedChoice = active?.dataset.choice;
     this.startScreen?.dispose();
     this.startScreen = undefined;
+    this.clearChoices();
     this.panel.replaceChildren();
     // The panel holds space dialogue; the start screen and storybook pages draw their own.
     this.panel.hidden = !(screen === "space" && state.dialogue);
@@ -90,12 +107,28 @@ export class StoryShell {
       for (const choice of state.dialogue.choices) {
         // A refused choice looks disabled but stays enabled, focusable and tappable, so a tap
         // plays the shared refusal; aria-disabled would announce it as unusable.
-        const node = button(choice.label, () => {
-          if (choice.refused) {
-            refuse(node, this.actions.reducedMotion());
-          } else {
-            this.actions.choose(choice.id);
-          }
+        const node = button(choice.label);
+        let stopRefusal: (() => void) | undefined;
+        const action = bindAdaAction(
+          {
+            click: {
+              availability: () => (node.disabled ? { kind: "omitted" } : { kind: "available" }),
+              run: () => {
+                if (choice.refused) {
+                  stopRefusal = refuse(node, this.actions.reducedMotion());
+                } else {
+                  this.actions.choose(choice.id);
+                }
+              },
+            },
+            current: () => !this.disposed && !this.panel.hidden && node.isConnected,
+            slopPx: () => SCROLL.dragThreshold * readViewUnit(node),
+          },
+          node,
+        );
+        this.choiceDisposals.push(() => {
+          action.dispose();
+          stopRefusal?.();
         });
         if (choice.refused) {
           node.dataset.refused = "true";
@@ -213,7 +246,16 @@ export class StoryShell {
     }
   }
 
+  private clearChoices(): void {
+    for (const dispose of this.choiceDisposals.splice(0)) {
+      dispose();
+    }
+  }
+
   dispose(): void {
+    this.disposed = true;
+    this.clearChoices();
+    this.noticeAction.dispose();
     this.startScreen?.dispose();
     this.savingStatus.remove();
     this.status.remove();

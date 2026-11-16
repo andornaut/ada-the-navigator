@@ -4,6 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import { GameModel } from "../model/game.ts";
+import { resolveAdaHoldAction } from "../ui/actionBinding.ts";
+import { bindAdaActionRoot } from "../ui/holdActionsAdapter.ts";
+import { rootPressGuard } from "../ui/pressScope.ts";
 import { StoryShell } from "./shell.ts";
 
 vi.mock("../ui/uiSkin.ts", () => ({ applyButtonSkin: vi.fn().mockResolvedValue(undefined) }));
@@ -11,6 +14,9 @@ vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({ focusTa
 
 class Element extends EventTarget {
   children: Element[] = [];
+  disabled = false;
+  id = "";
+  readonly attributes = new Map<string, string>();
   className = "";
   dataset: Record<string, string> = {};
   hidden = false;
@@ -38,8 +44,23 @@ class Element extends EventTarget {
   get nextSibling() {
     return this.parent?.children[this.parent.children.indexOf(this) + 1] ?? null;
   }
-  readonly style = { removeProperty() {} };
-  removeAttribute(): void {}
+  readonly style = { removeProperty() {}, setProperty() {} };
+  removeAttribute(name: string): void {
+    this.attributes.delete(name);
+  }
+  getAttribute(name: string) {
+    return this.attributes.get(name) ?? null;
+  }
+  toggleAttribute(name: string, enabled: boolean) {
+    if (enabled) {
+      this.attributes.set(name, "");
+    } else {
+      this.attributes.delete(name);
+    }
+  }
+  matches(selector: string) {
+    return selector === ":disabled" && this.disabled;
+  }
   insertBefore(node: Element, before: Element | null): void {
     if (node === before) {
       return;
@@ -54,7 +75,9 @@ class Element extends EventTarget {
   }
   textContent = "";
   type = "";
-  setAttribute(): void {}
+  setAttribute(name: string, value: string): void {
+    this.attributes.set(name, value);
+  }
   append(...nodes: Element[]): void {
     for (const node of nodes) {
       this.insertBefore(node, null);
@@ -99,6 +122,7 @@ class Element extends EventTarget {
 
 let host: Element;
 let shell: StoryShell;
+let actionRoot: ReturnType<typeof bindAdaActionRoot> | undefined;
 function setup(model = new GameModel(CONTENT)) {
   const actions = {
     choose: vi.fn(),
@@ -116,15 +140,30 @@ function setup(model = new GameModel(CONTENT)) {
 beforeEach(() => {
   vi.clearAllMocks();
   host = new Element();
-  vi.stubGlobal("document", {
-    activeElement: null,
-    body: host,
-    createElement: () => new Element(),
-    getElementById: () => host,
-  });
+  actionRoot = undefined;
+  vi.stubGlobal(
+    "document",
+    Object.assign(new EventTarget(), {
+      activeElement: null,
+      body: host,
+      createElement: () => new Element(),
+      defaultView: Object.assign(new EventTarget(), {
+        HTMLElement: Element,
+        Node: Element,
+        clearTimeout: (id: ReturnType<typeof setTimeout>) => clearTimeout(id),
+        performance: { now: () => Date.now() },
+        setTimeout: (callback: () => void, delay: number) => setTimeout(callback, delay),
+      }),
+      getElementById: () => host,
+      hidden: false,
+    }),
+  );
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
 });
 afterEach(() => {
   shell.dispose();
+  actionRoot?.dispose();
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 
@@ -268,4 +307,120 @@ describe("held story title consumer", () => {
     active.storyTick(OVERNIGHT_SLEEP.seconds, OVERNIGHT_SLEEP.seconds / 2);
     expect(active.storyView?.page.id).toBe("morning");
   });
+});
+
+function holdFixture() {
+  vi.useFakeTimers();
+  const ui = setup();
+  const root = host as unknown as HTMLElement;
+  actionRoot = bindAdaActionRoot(
+    { guard: rootPressGuard(root), requiredReady: () => true, subscribeRequired: () => () => {} },
+    root,
+  );
+  const event = (type: string, target: Element) => {
+    const value = new Event(type, { cancelable: true });
+    Object.defineProperties(
+      value,
+      Object.fromEntries(
+        Object.entries({
+          button: 0,
+          clientX: 0,
+          clientY: 0,
+          detail: type === "click" ? 1 : 0,
+          isPrimary: true,
+          pointerId: 7,
+          target,
+        }).map(([key, property]) => [key, { value: property }]),
+      ),
+    );
+    return value;
+  };
+  const down = (target: Element) => {
+    document.dispatchEvent(event("pointerdown", target));
+    host.dispatchEvent(event("pointerdown", target));
+  };
+  const release = (target: Element) => {
+    document.dispatchEvent(event("pointerup", target));
+    const click = event("click", target);
+    host.dispatchEvent(click);
+    if (!click.defaultPrevented) {
+      target.dispatchEvent(event("click", target));
+    }
+    return click;
+  };
+  const dialogue = (id = "choice", refused = false) => {
+    ui.model.state.dialogue = {
+      choices: [{ id, label: "Choice", refused }],
+      context: "fixture",
+      text: "Text",
+      title: "Title",
+    };
+    ui.shell.render(ui.model.state, "space");
+    return ui.buttons()[0]!;
+  };
+  return {
+    ...ui,
+    dialogue,
+    down,
+    release,
+    resolve: (node: Element) => resolveAdaHoldAction(root, node),
+  };
+}
+it("holds the current dialogue callback once and keeps keyboard activation and refusal feedback", () => {
+  const f = holdFixture(),
+    button = f.dialogue();
+  f.down(button);
+  vi.advanceTimersByTime(499);
+  expect(f.actions.choose).not.toHaveBeenCalled();
+  const current = vi.fn();
+  f.actions.choose = current;
+  vi.advanceTimersByTime(1);
+  expect(current).toHaveBeenCalledExactlyOnceWith("choice");
+  expect(f.release(button).defaultPrevented).toBe(true);
+  expect(current).toHaveBeenCalledOnce();
+  button.click();
+  expect(current).toHaveBeenCalledTimes(2);
+  const refused = f.dialogue("locked", true);
+  expect(f.resolve(refused)?.available()).toBe(true);
+  f.down(refused);
+  vi.advanceTimersByTime(500);
+  expect(f.release(refused).defaultPrevented).toBe(true);
+  expect(current).toHaveBeenCalledTimes(2);
+  expect(refused.attributes.size).toBeGreaterThan(0);
+});
+it("unregisters replaced dialogue choices and disposed notice actions without replaying stale captures", () => {
+  const f = holdFixture(),
+    old = f.dialogue("old");
+  f.down(old);
+  const next = f.dialogue("next");
+  expect(f.resolve(old)).toBeNull();
+  vi.advanceTimersByTime(500);
+  f.release(old);
+  old.click();
+  expect(f.actions.choose).not.toHaveBeenCalled();
+  f.down(next);
+  vi.advanceTimersByTime(500);
+  f.release(next);
+  expect(f.actions.choose).toHaveBeenCalledExactlyOnceWith("next");
+  f.model.state.notice = "Current notice";
+  f.shell.render(f.model.state, "space");
+  const status = host.children.find((node) => node.id === "game-status")!;
+  f.down(status);
+  const dismiss = vi.fn();
+  f.actions.dismissNotice = dismiss;
+  vi.advanceTimersByTime(500);
+  expect(dismiss).toHaveBeenCalledOnce();
+  expect(f.release(status).defaultPrevented).toBe(true);
+  f.model.state.notice = "";
+  f.shell.render(f.model.state, "space");
+  expect(f.resolve(status)?.available()).toBe(false);
+  status.click();
+  expect(dismiss).toHaveBeenCalledOnce();
+  f.shell.dispose();
+  expect(f.resolve(status)).toBeNull();
+  expect(f.resolve(next)).toBeNull();
+  status.click();
+  next.click();
+  expect(dismiss).toHaveBeenCalledOnce();
+  expect(f.actions.choose).toHaveBeenCalledOnce();
 });
