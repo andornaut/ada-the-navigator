@@ -7,7 +7,11 @@ import { weaponDetailLines } from "../data/weaponDetails.ts";
 import type { LocalMap } from "../model/map.ts";
 import type { QuestEntry } from "../model/questDetails.ts";
 import type { ContextQuestDetails } from "../model/questObjectLinks.ts";
-import { assertAdaActionBindings, bindAdaAction } from "./actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  bindAdaAction,
+} from "./actionBinding.ts";
 import { compactLevelName } from "./compactLevelName.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -321,10 +325,12 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     mapScreen.close();
     if (view === "ship") {
       renderShip();
+      assertAdaActionBindings(ship.frame);
       layer = createModalLayer(modal);
       leaveLayer = layer.open({ close: closeShip, focus: shipBack }, ship.frame);
       return;
     }
+    assertAdaActionBindings(paused.frame);
     paused.fit();
     // Focus starts on the primary Resume, else the first action shown.
     const focus =
@@ -587,6 +593,8 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       }
     }
   }
+  assertAdaActionMetadata(paused.frame);
+  assertAdaActionMetadata(ship.frame);
   return {
     close: () => {
       if (quests.isOpen()) {

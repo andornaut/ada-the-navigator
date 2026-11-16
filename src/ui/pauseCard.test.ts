@@ -325,8 +325,8 @@ function mountedRoot() {
   return root;
 }
 
-function cards() {
-  const root = mountedRoot();
+function cards(detached = false) {
+  const root = detached ? new FakeElement() : mountedRoot();
   const options = {
     labels: LABELS,
     onBackToTitle: vi.fn(),
@@ -1152,7 +1152,11 @@ it("retains native Pause button identities across place and Map permission updat
 it("audits completed Ship rows after parent attachment and only when sections change", () => {
   const { body, pause, root } = cards();
   const original = actionBinding.assertAdaActionBindings;
-  const audit = vi.spyOn(actionBinding, "assertAdaActionBindings").mockImplementation((scope) => {
+  const audit = vi.fn();
+  vi.spyOn(actionBinding, "assertAdaActionBindings").mockImplementation((scope) => {
+    if ((scope as unknown as FakeElement).classes.has("ada-ship-sections")) {
+      audit(scope);
+    }
     expect(scope.isConnected).toBe(true);
     expect(root.contains(scope)).toBe(true);
     expect(scope.classList).toBeDefined();
@@ -1192,5 +1196,47 @@ it("rejects attached Ship rows outside an owning root before parent focus", () =
   expect(() => shipButton.click()).toThrow("no live action root");
   expect(focused()).toBe(focusBefore);
   expect(outside.isConnected).toBe(true);
+  pause.dispose();
+});
+
+it.each(["pause-resume", "close-ship"])(
+  "rejects a missing static Pause binding %s at semantic completion",
+  (id) => {
+    const original = actionBinding.bindAdaAction;
+    vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((options, element) =>
+      element.dataset.action === id
+        ? { activate: () => false, dispose() {}, update() {} }
+        : original(options, element),
+    );
+    expect(() => cards()).toThrow("no registered action binding");
+  },
+);
+
+it("audits completed Pause frames at construction without reading runtime policy", () => {
+  const original = actionBinding.bindAdaAction;
+  const policy = vi.fn(() => {
+    throw Error("construction evaluated runtime policy");
+  });
+  vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((options, element) =>
+    original(
+      { ...options, click: { ...options.click, availability: policy }, current: policy },
+      element,
+    ),
+  );
+  const { pause, root } = cards(true);
+  expect(root.isConnected).toBe(false);
+  expect(policy).not.toHaveBeenCalled();
+  pause.dispose();
+});
+
+it("audits Pause entry once while layout updates do not audit completed frames", () => {
+  const { pause, root } = cards();
+  const audit = vi.spyOn(actionBinding, "assertAdaActionBindings");
+  pause.setState(state());
+  pause.open();
+  expect(audit).toHaveBeenCalledTimes(1);
+  expect(audit.mock.calls[0]![0]).not.toBe(root);
+  pause.setState(state({ inDanger: true }));
+  expect(audit).toHaveBeenCalledTimes(1);
   pause.dispose();
 });

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { SETTINGS_STATE_LABELS } from "../data/settingsCopy.ts";
+import * as actionBinding from "./actionBinding.ts";
 import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { DEVICE_STORAGE_KEYS } from "./deviceSettings.ts";
@@ -39,7 +40,10 @@ class Element {
   getAttributeNames() {
     return [...this.attributes.keys()];
   }
-  readonly isConnected = true;
+  attached = false;
+  get isConnected(): boolean {
+    return this.parent?.isConnected ?? this.attached;
+  }
   get parentNode(): Element | null {
     return this.parent ?? null;
   }
@@ -138,17 +142,36 @@ class Element {
       node,
     );
   }
+  matches(selector: string): boolean {
+    return selector.split(",").some((part) => {
+      const rule = part.trim();
+      if (rule === ":disabled") {
+        return Boolean((this as unknown as HTMLButtonElement).disabled);
+      }
+      if (rule.startsWith(".")) {
+        return this.className.split(" ").includes(rule.slice(1));
+      }
+      const attribute = /^\[([^=\]]+)(?:=["']?([^"'\]]+)["']?)?\]$/.exec(rule);
+      if (attribute) {
+        const name = attribute[1]!;
+        const value = name.startsWith("data-")
+          ? this.dataset[name.slice(5)]
+          : this.getAttribute(name);
+        return attribute[2] === undefined
+          ? value !== undefined && value !== null
+          : value === attribute[2];
+      }
+      const tag = /^(\w+)(?:\[type="([^"]+)"\])?$/.exec(rule);
+      return Boolean(
+        tag &&
+        this.tagName.toLowerCase() === tag[1] &&
+        (tag[2] === undefined || this.getAttribute("type") === tag[2]),
+      );
+    });
+  }
   querySelectorAll(selector: string): Element[] {
-    const matches = (node: Element) =>
-      selector.includes("button")
-        ? node.tagName === "BUTTON"
-        : selector.startsWith(".")
-          ? node.className.split(" ").includes(selector.slice(1))
-          : selector === "[role=switch]"
-            ? node.attributes.get("role") === "switch"
-            : false;
     return this.children.flatMap((child) => [
-      ...(matches(child) ? [child] : []),
+      ...(child.matches(selector) ? [child] : []),
       ...child.querySelectorAll(selector),
     ]);
   }
@@ -223,18 +246,29 @@ beforeEach(() => {
     removeEventListener: vi.fn(),
   });
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
+function fixtureParent(): HTMLElement {
+  const parent = fixtureActionRoot(new Element());
+  parent.attached = true;
+  return parent as unknown as HTMLElement;
+}
 
-function setup(copy: SettingsLabels = labels) {
+function setup(copy: SettingsLabels = labels, detached = false) {
   const onFeedbackChange = vi.fn();
   const onVisibilityChange = vi.fn();
-  const settings = createSettings(new Element() as unknown as HTMLElement, {
-    build: "test-build",
-    labels: copy,
-    onFeedbackChange,
-    onOpenChange: vi.fn(),
-    onVisibilityChange,
-  });
+  const settings = createSettings(
+    detached ? (new Element() as unknown as HTMLElement) : fixtureParent(),
+    {
+      build: "test-build",
+      labels: copy,
+      onFeedbackChange,
+      onOpenChange: vi.fn(),
+      onVisibilityChange,
+    },
+  );
   fixtureActionRoot(settings.root);
   const columns = (settings.card as unknown as Element).children[0]!.children;
   const rows = [...columns[0]!.children, ...columns[2]!.children];
@@ -444,7 +478,7 @@ it("retains native widgets while the entire Install row leaves and rejoins the t
   let installed = false;
   let notify: (() => void) | undefined;
   const stop = vi.fn();
-  const settings = createSettings(new Element() as unknown as HTMLElement, {
+  const settings = createSettings(fixtureParent(), {
     build: "test-build",
     install: {
       port: {
@@ -515,7 +549,7 @@ it("isolates Settings, releases its foreground once and restores the original op
 
 it("replaces Settings with Install Steps and returns to the same native Settings frame", async () => {
   const onOpenChange = vi.fn();
-  const settings = createSettings(new Element() as unknown as HTMLElement, {
+  const settings = createSettings(fixtureParent(), {
     build: "test-build",
     install: {
       port: {
@@ -555,4 +589,89 @@ it("replaces Settings with Install Steps and returns to the same native Settings
   settings.dispose();
   expect(captured()).toBe(false);
   expect(onOpenChange.mock.calls).toEqual([[true], [false]]);
+});
+
+it.each(["close-settings", "close-install-steps"])(
+  "rejects missing Settings semantic metadata %s before return",
+  (id) => {
+    const original = actionBinding.bindAdaAction;
+    vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((options, element) =>
+      element.dataset.action === id
+        ? { activate: () => false, dispose() {}, update() {} }
+        : original(options, element),
+    );
+    expect(() => setup()).toThrow("no registered action binding");
+  },
+);
+
+it("audits completed Settings metadata without reading policy or requiring external Use binding", () => {
+  const original = actionBinding.bindAdaAction;
+  const policy = vi.fn(() => {
+    throw Error("construction evaluated runtime policy");
+  });
+  vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((options, element) =>
+    original(
+      { ...options, click: { ...options.click, availability: policy }, current: policy },
+      element,
+    ),
+  );
+  const { settings } = setup(labels, true);
+  expect(settings.root.isConnected).toBe(false);
+  expect(policy).not.toHaveBeenCalled();
+  settings.dispose();
+});
+
+it("rejects an externally inserted unbound Settings launcher before entry focus", () => {
+  const { settings } = setup();
+  const launcher = document.createElement("button");
+  settings.card.append(launcher);
+  const focusedBefore = document.activeElement;
+  expect(() => settings.open()).toThrow("no registered action binding");
+  expect(document.activeElement).toBe(focusedBefore);
+  settings.dispose();
+});
+
+it("audits Settings and Install Steps entry scopes while retaining external binding ownership", async () => {
+  const settings = createSettings(fixtureParent(), {
+    build: "test-build",
+    install: {
+      port: {
+        install: async () => "steps",
+        offers: () => true,
+        onChange: () => () => {},
+        state: () => "prompt",
+        stepsKind: () => "other",
+      },
+      steps: CONTENT.installSteps,
+    },
+    labels,
+    onOpenChange: vi.fn(),
+    onVisibilityChange: vi.fn(),
+  });
+  const launcher = document.createElement("button");
+  settings.card.append(launcher);
+  const external = actionBinding.bindAdaAction(
+    {
+      click: { availability: () => ({ kind: "available" }), run: vi.fn() },
+      current: () => true,
+      slopPx: () => 8,
+    },
+    launcher,
+  );
+  const audit = vi.spyOn(actionBinding, "assertAdaActionBindings");
+  settings.open();
+  const modal = (settings.root as unknown as Element).children.find(
+    (node) => node.className === "ada-modal",
+  )!;
+  const [card, steps] = modal.children;
+  expect(audit.mock.calls.map(([scope]) => scope)).toEqual([card]);
+  const install = (settings.card as unknown as Element).querySelector('[data-action="install"]')!;
+  install.click();
+  await Promise.resolve();
+  expect(audit.mock.calls.map(([scope]) => scope)).toEqual([card, steps]);
+  settings.closeSteps();
+  expect(audit.mock.calls.map(([scope]) => scope)).toEqual([card, steps, card]);
+  expect(audit.mock.calls.every(([scope]) => scope !== settings.root)).toBe(true);
+  external.dispose();
+  settings.dispose();
 });

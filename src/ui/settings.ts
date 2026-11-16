@@ -4,7 +4,11 @@ import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 import { CONTENT } from "../data/content.ts";
 import { SETTINGS_STATE_LABELS } from "../data/settingsCopy.ts";
 import type { InstallStepsKind } from "../pwa/index.ts";
-import { bindAdaAction } from "./actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  bindAdaAction,
+} from "./actionBinding.ts";
 import { applyAdaControlTheme, createAdaPageDivider } from "./buttonPresentation.ts";
 import {
   type ControlVisibility,
@@ -618,6 +622,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       stepsFrame.hidden = true;
       cardFrame.hidden = false;
       fitSettings();
+      assertAdaActionBindings(cardFrame);
       leaveSettingsPressView = layer.open(
         {
           backdrop: modal,
@@ -650,6 +655,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     cardFrame.hidden = true;
     stepsFrame.hidden = false;
     stepsParts.fit();
+    assertAdaActionBindings(stepsFrame);
     leaveStepsPressView = layer.open(
       {
         backdrop: modal,
@@ -707,6 +713,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     if (open) {
       previousFocus =
         document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
+      assertAdaActionBindings(cardFrame);
       leaveSettingsPressView = layer.open(
         {
           backdrop: modal,
@@ -725,6 +732,8 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   registerAction(openButton, () => setOpen(true));
   registerAction(closeButton, () => setOpen(false));
   registerAction(dismiss, () => setOpen(false));
+  assertAdaActionMetadata(cardFrame);
+  assertAdaActionMetadata(stepsFrame);
   return {
     actions,
     card,
