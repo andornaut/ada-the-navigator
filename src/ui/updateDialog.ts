@@ -2,7 +2,11 @@ import type { ControlAvailability } from "@andornaut/game-kit/runtime/ui/control
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import type { UpdateOffer } from "../pwa/updateOffer.ts";
-import { bindAdaAction } from "./actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  bindAdaAction,
+} from "./actionBinding.ts";
 import { presentAdaButton } from "./buttonPresentation.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -96,6 +100,7 @@ export function createUpdateDialog(
     },
     tree,
   );
+  assertAdaActionMetadata(modal);
   const accept = actions.querySelector<HTMLButtonElement>('[data-action="accept-update"]')!;
   const stop = offer.subscribe((visible) => {
     if (disposed || visible === open) {
@@ -104,8 +109,12 @@ export function createUpdateDialog(
     open = visible;
     // Read before hiding: a hidden card drops its focus to the page.
     const focused = modal.contains(document.activeElement);
-    modal.hidden = !visible;
     mounted.update(tree);
+    assertAdaActionMetadata(modal);
+    if (visible) {
+      assertAdaActionBindings(modal);
+    }
+    modal.hidden = !visible;
     if (visible) {
       parts.fit();
     }

@@ -5,7 +5,11 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import type { Screen } from "../model/game.ts";
 import type { GameState } from "../model/types.ts";
-import { bindAdaAction } from "../ui/actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  bindAdaAction,
+} from "../ui/actionBinding.ts";
 import { SCROLL } from "../ui/layout/contentCard.ts";
 import { readViewUnit } from "../ui/layout/viewScale.ts";
 import { refuse } from "../ui/refusal.ts";
@@ -68,6 +72,12 @@ export class StoryShell {
     );
     this.panel.className = "story-panel";
     document.getElementById("app")?.append(this.status, this.savingStatus, this.panel);
+    for (const element of [this.status, this.panel]) {
+      assertAdaActionMetadata(element);
+      if (element.isConnected) {
+        assertAdaActionBindings(element);
+      }
+    }
   }
 
   render(state: GameState, screen: Screen, canContinue = state.started): void {
@@ -75,7 +85,14 @@ export class StoryShell {
     this.status.dataset.mode = state.mode;
     this.status.dataset.x = String(flight?.player.x ?? 0);
     this.status.dataset.y = String(flight?.player.y ?? 0);
+    const noticeChanged = this.status.textContent !== state.notice;
     this.status.textContent = state.notice;
+    if (noticeChanged) {
+      assertAdaActionMetadata(this.status);
+      if (this.status.isConnected) {
+        assertAdaActionBindings(this.status);
+      }
+    }
     const nextSignature = JSON.stringify([
       screen,
       canContinue,
@@ -174,6 +191,10 @@ export class StoryShell {
         paint: paint === ECONOMY.defaultPaint ? null : paint,
         title: CONTENT.labels.home ?? "",
       });
+    }
+    assertAdaActionMetadata(this.panel);
+    if (this.panel.isConnected) {
+      assertAdaActionBindings(this.panel);
     }
     const shown = this.startScreen?.root ?? this.panel;
     const restore = [...shown.querySelectorAll<HTMLButtonElement>("button")].find((node) =>

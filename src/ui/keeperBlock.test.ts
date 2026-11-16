@@ -24,8 +24,33 @@ class FakeElement extends EventTarget {
   contains(target: unknown): boolean {
     return target === this || this.children.some((child) => child.contains(target));
   }
-  matches(selector: string) {
-    return selector === ":disabled" && this.disabled;
+  matches(selector: string): boolean {
+    return selector.split(",").some((entry) => {
+      const value = entry.trim();
+      if (value === ":disabled") {
+        return this.disabled;
+      }
+      if (value.startsWith("button")) {
+        return (
+          this.tag.toUpperCase() === "BUTTON" &&
+          (!value.includes("ada-primary") || this.className.includes("ada-primary")) &&
+          (!value.includes(":not([hidden])") || !this.hasAttribute("hidden"))
+        );
+      }
+      if (value === "[data-action]") {
+        return this.dataset.action !== undefined || this.getAttribute("data-action") !== null;
+      }
+      const role = /^\[role=["']([^"']+)["']\]$/.exec(value);
+      if (role) {
+        return this.getAttribute("role") === role[1];
+      }
+      const input = /^input\[type=["'](button|submit|reset)["']\]$/.exec(value);
+      return (
+        input !== null &&
+        this.tag.toUpperCase() === "INPUT" &&
+        (this.getAttribute("type") ?? this.type) === input[1]
+      );
+    });
   }
   closest(selector: string): FakeElement | null {
     return (selector.includes("[hidden]") && this.hasAttribute("hidden")) ||
@@ -65,6 +90,12 @@ class FakeElement extends EventTarget {
   click(): void {
     this.dispatchEvent(new Event("click"));
   }
+  querySelectorAll(selector: string): FakeElement[] {
+    return this.children.flatMap((node) => [
+      ...(node.matches(selector) ? [node] : []),
+      ...node.querySelectorAll(selector),
+    ]);
+  }
   find(className: string): FakeElement {
     const found = this.children
       .map((child) => (child.className === className ? child : child.tryFind(className)))
@@ -87,7 +118,10 @@ class FakeElement extends EventTarget {
     this.attributes.delete(name);
   }
   replaceWith(node: FakeElement): void {
-    const parent = this.parent!;
+    const parent = this.parent;
+    if (!parent) {
+      return;
+    }
     parent.children[parent.children.indexOf(this)] = node;
     node.parent = parent;
     this.parent = null;
@@ -361,4 +395,50 @@ it("uses the existing root hold once per line and unregisters the terminal and d
   button.click();
   expect(f.pips()).toEqual([true, false, false]);
   expect(currentAdvance).toHaveBeenCalledTimes(2);
+});
+
+it("audits the final rendered subtree before the terminal focus handoff", () => {
+  const greeting: StationGreeting = {
+    count: 3,
+    displayName: "Saffron",
+    index: 0,
+    keeper: "saffron",
+    line: LINES[0],
+  };
+  const f = mounted(greeting);
+  const rogue = new FakeElement("button");
+  rogue.disabled = true;
+  rogue.setAttribute("hidden", "");
+  f.element().find("ada-keeper-body").append(rogue);
+  f.element().focus();
+  const focusAfter = vi.spyOn(f.actions, "focusAfter");
+  expect(() => f.block.render({ ...greeting, index: 2, line: LINES[2] })).toThrow(
+    "no registered action binding",
+  );
+  expect(focusAfter).not.toHaveBeenCalled();
+});
+
+it("allows detached render and checks ownership only after caller attachment", () => {
+  const advance = vi.fn();
+  const block = createKeeperBlock({
+    advance,
+    focusAfter: () => new FakeElement("button") as unknown as HTMLElement,
+    labels: { nextLine: "Next line", welcome: WELCOME },
+  });
+  disposals.push(block.dispose);
+  const greeting: StationGreeting = {
+    count: 3,
+    displayName: "Saffron",
+    index: 0,
+    keeper: "saffron",
+    line: LINES[0],
+  };
+  expect(() => block.render(greeting)).not.toThrow();
+  const root = new FakeElement("div");
+  mountedRoots.add(root);
+  root.append(block.element() as unknown as FakeElement);
+  expect(() => block.render(greeting)).toThrow("no live action root");
+  fixtureActionRoot(root);
+  expect(() => block.render(greeting)).not.toThrow();
+  expect(advance).not.toHaveBeenCalled();
 });

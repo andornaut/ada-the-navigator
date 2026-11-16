@@ -15,6 +15,7 @@ vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({ focusTa
 class Element extends EventTarget {
   children: Element[] = [];
   disabled = false;
+  tagName = "DIV";
   id = "";
   readonly attributes = new Map<string, string>();
   className = "";
@@ -51,6 +52,9 @@ class Element extends EventTarget {
   getAttribute(name: string) {
     return this.attributes.get(name) ?? null;
   }
+  hasAttribute(name: string): boolean {
+    return name === "hidden" ? this.hidden : this.attributes.has(name);
+  }
   toggleAttribute(name: string, enabled: boolean) {
     if (enabled) {
       this.attributes.set(name, "");
@@ -58,8 +62,33 @@ class Element extends EventTarget {
       this.attributes.delete(name);
     }
   }
-  matches(selector: string) {
-    return selector === ":disabled" && this.disabled;
+  matches(selector: string): boolean {
+    return selector.split(",").some((entry) => {
+      const value = entry.trim();
+      if (value === ":disabled") {
+        return this.disabled;
+      }
+      if (value.startsWith("button")) {
+        return (
+          this.tagName === "BUTTON" &&
+          (!value.includes("ada-primary") || this.className.includes("ada-primary")) &&
+          (!value.includes(":not([hidden])") || !this.hasAttribute("hidden"))
+        );
+      }
+      if (value === "[data-action]") {
+        return this.dataset.action !== undefined || this.getAttribute("data-action") !== null;
+      }
+      const role = /^\[role=["']([^"']+)["']\]$/.exec(value);
+      if (role) {
+        return this.getAttribute("role") === role[1];
+      }
+      const input = /^input\[type=["'](button|submit|reset)["']\]$/.exec(value);
+      return (
+        input !== null &&
+        this.tagName === "INPUT" &&
+        (this.getAttribute("type") ?? this.type) === input[1]
+      );
+    });
   }
   insertBefore(node: Element, before: Element | null): void {
     if (node === before) {
@@ -89,7 +118,9 @@ class Element extends EventTarget {
     }
   }
   replaceChildren(...nodes: Element[]): void {
-    this.children = [];
+    for (const node of [...this.children]) {
+      node.remove();
+    }
     this.append(...nodes);
   }
   remove(): void {
@@ -99,12 +130,10 @@ class Element extends EventTarget {
     }
   }
   querySelectorAll(selector: string): Element[] {
-    const all = this.children.flatMap((node) => [node, ...node.querySelectorAll("button")]);
-    return all.filter(
-      (node) =>
-        node.type === "button" &&
-        (!selector.includes("ada-primary") || node.className.includes("ada-primary")),
-    );
+    return this.children.flatMap((node) => [
+      ...(node.matches(selector) ? [node] : []),
+      ...node.querySelectorAll(selector),
+    ]);
   }
   querySelector(selector: string): Element | null {
     return this.querySelectorAll(selector)[0] ?? null;
@@ -146,7 +175,7 @@ beforeEach(() => {
     Object.assign(new EventTarget(), {
       activeElement: null,
       body: host,
-      createElement: () => new Element(),
+      createElement: (tag: string) => Object.assign(new Element(), { tagName: tag.toUpperCase() }),
       defaultView: Object.assign(new EventTarget(), {
         HTMLElement: Element,
         Node: Element,
@@ -168,6 +197,7 @@ beforeEach(() => {
 afterEach(() => {
   shell.dispose();
   actionRoot?.dispose();
+  vi.restoreAllMocks();
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
@@ -424,4 +454,58 @@ it("unregisters replaced dialogue choices and disposed notice actions without re
   next.click();
   expect(dismiss).toHaveBeenCalledOnce();
   expect(f.actions.choose).toHaveBeenCalledOnce();
+});
+
+it("checks constructor-owned notice controls after semantic registration", () => {
+  const create = document.createElement.bind(document);
+  let divs = 0;
+  vi.spyOn(document, "createElement").mockImplementation((tag: string) => {
+    const node = create(tag);
+    if (tag === "div" && ++divs === 2) {
+      node.append(
+        Object.assign(new Element(), {
+          tagName: "BUTTON",
+          type: "button",
+        }) as unknown as HTMLElement,
+      );
+    }
+    return node;
+  });
+  expect(() => setup()).toThrow("no registered action binding");
+  expect(focusTarget).not.toHaveBeenCalled();
+});
+
+it("checks complete choice rebuilding before focus and retains original callback ownership", () => {
+  const f = setup();
+  const panel = host.children.find((node) => node.className === "story-panel")!;
+  const append = panel.append.bind(panel);
+  const rogue = Object.assign(new Element(), {
+    disabled: true,
+    hidden: true,
+    tagName: "BUTTON",
+    type: "button",
+  });
+  vi.spyOn(panel, "append").mockImplementation((...nodes) => {
+    append(...nodes);
+    if (nodes.some((node) => node.type === "button")) {
+      append(rogue);
+    }
+  });
+  f.model.state.dialogue = {
+    choices: [{ id: "choice", label: "Choice" }],
+    context: "fixture",
+    text: "Text",
+    title: "Title",
+  };
+  expect(() => f.shell.render(f.model.state, "space")).toThrow("no registered action binding");
+  expect(focusTarget).not.toHaveBeenCalled();
+  expect(f.actions.choose).not.toHaveBeenCalled();
+});
+
+it("checks notice reconciliation against the actual live App root", () => {
+  const f = setup();
+  actionRoot!.dispose();
+  f.model.state.notice = "Current notice";
+  expect(() => f.shell.render(f.model.state, "space")).toThrow("no live action root");
+  expect(f.actions.dismissNotice).not.toHaveBeenCalled();
 });

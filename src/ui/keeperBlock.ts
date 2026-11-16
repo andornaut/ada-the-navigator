@@ -4,7 +4,11 @@ import { CAST, CAST_FRAMES, castSheet } from "../data/cast.ts";
 import { GENERAL_NAMED } from "../data/conversations.ts";
 import { KEEPERS } from "../data/keepers.ts";
 import type { KeeperKey, StationGreeting } from "../model/keepers.ts";
-import { bindAdaAction } from "./actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  bindAdaAction,
+} from "./actionBinding.ts";
 import { COMPACT_PORTRAITS, portraitFrame, TAB_COLOURS } from "./dialoguePortraits.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
@@ -251,6 +255,7 @@ export function createKeeperBlock(options: {
   let advancing = false;
   let advanceAction: ReturnType<typeof bindAdaAction> | undefined;
   status.append(frame, body, name);
+  assertAdaActionMetadata(status);
   return {
     dispose() {
       disposed = true;
@@ -280,6 +285,7 @@ export function createKeeperBlock(options: {
         advanceAction?.dispose();
         advanceAction = undefined;
       }
+      let restoreFocus = false;
       const next = advancing ? button : status;
       if (next !== current) {
         const focused = document.activeElement === current;
@@ -287,7 +293,7 @@ export function createKeeperBlock(options: {
         current.replaceWith(next);
         current = next;
         if (focused && !advancing) {
-          focusTarget(options.focusAfter());
+          restoreFocus = true;
         }
       }
       line.textContent = greeting?.line ?? options.labels.welcome;
@@ -305,6 +311,13 @@ export function createKeeperBlock(options: {
       discs.forEach((disc, index) => {
         disc.toggleAttribute("data-shown", counted && index <= greeting.index);
       });
+      assertAdaActionMetadata(current);
+      if (current.isConnected) {
+        assertAdaActionBindings(current);
+      }
+      if (restoreFocus) {
+        focusTarget(options.focusAfter());
+      }
     },
   };
 }

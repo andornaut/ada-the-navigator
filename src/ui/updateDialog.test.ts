@@ -11,12 +11,10 @@ const fixture = vi.hoisted(() => {
     disabled = false;
     nodeType = 1;
     parentElement: Node | null = null;
-    private detached = false;
     get isConnected(): boolean {
-      return this.parentElement?.isConnected ?? !this.detached;
-    }
-    set isConnected(value: boolean) {
-      this.detached = !value;
+      return (
+        this === (document.body as unknown as Node) || (this.parentElement?.isConnected ?? false)
+      );
     }
     get ownerDocument() {
       return document;
@@ -62,7 +60,6 @@ const fixture = vi.hoisted(() => {
     insertBefore(node: Node, before: Node | null) {
       node.remove();
       node.parentElement = this;
-      node.isConnected = this.isConnected;
       this.children.splice(
         before === null ? this.children.length : this.children.indexOf(before),
         0,
@@ -123,7 +120,6 @@ const fixture = vi.hoisted(() => {
         this.parentElement.children.splice(this.parentElement.children.indexOf(this), 1);
       }
       this.parentElement = null;
-      this.isConnected = false;
     });
     append(...nodes: Node[]) {
       for (const node of nodes) {
@@ -228,6 +224,7 @@ function setup(initial = false) {
   const root = new fixture.Node();
   const doc = Object.assign(new EventTarget(), {
     activeElement: null as unknown,
+    body: new fixture.Node(),
     createElement: (tag: string) =>
       Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
     defaultView: Object.assign(new EventTarget(), {
@@ -241,6 +238,7 @@ function setup(initial = false) {
     hitTarget: null as InstanceType<typeof fixture.Node> | null,
   });
   vi.stubGlobal("document", doc);
+  doc.body.append(root);
   const guard = rootPressGuard(root as unknown as HTMLElement);
   rootReleases.push(
     bindAdaActionRoot(
@@ -402,4 +400,38 @@ it("requires an outside pointer origin and a tap, refusing inside-origin release
   event("pointerup", 0);
   event("click", 0);
   expect(f.offer.defer).toHaveBeenCalledOnce();
+});
+
+it("checks completed offer reconciliation before exposing unbound controls", () => {
+  const f = setup();
+  const modal = f.root.children[0]!;
+  const rogue = Object.assign(new fixture.Node(), {
+    disabled: true,
+    hidden: true,
+    tagName: "BUTTON",
+    type: "button",
+  });
+  modal.append(rogue);
+  try {
+    expect(() => f.notify(true)).toThrow("no registered action binding");
+    expect(modal.hidden).toBe(true);
+    expect(fixture.opened).not.toHaveBeenCalled();
+    expect(f.changed).not.toHaveBeenCalled();
+  } finally {
+    rogue.remove();
+    f.dialog.dispose();
+  }
+});
+
+it("requires live connected ownership before an offer opens", () => {
+  const f = setup();
+  f.root.remove();
+  expect(f.root.isConnected).toBe(false);
+  try {
+    expect(() => f.notify(true)).toThrow("no live action root");
+    expect(fixture.opened).not.toHaveBeenCalled();
+    expect(f.changed).not.toHaveBeenCalled();
+  } finally {
+    f.dialog.dispose();
+  }
 });
