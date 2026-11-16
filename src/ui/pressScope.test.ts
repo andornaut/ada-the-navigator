@@ -109,11 +109,21 @@ it("invalidates a disabled group press without changing the foreground view", ()
   layer.dispose();
 });
 
-function gesture(element: HTMLElement, type: string, x = 0, target: HTMLElement = element) {
+function gesture(
+  element: HTMLElement,
+  type: string,
+  x = 0,
+  target: HTMLElement = element,
+  pointerId = 1,
+  isPrimary = true,
+) {
   const event = new Event(type, { cancelable: true });
   Object.defineProperties(event, {
+    button: { value: 0 },
     clientX: { value: x },
     clientY: { value: 0 },
+    isPrimary: { value: isPrimary },
+    pointerId: { value: pointerId },
     target: { value: target },
   });
   element.dispatchEvent(event);
@@ -132,12 +142,14 @@ it("dismisses only the top view and cannot dismiss its restored parent on the sa
   const childClose = vi.fn(() => leaveChild());
   const leaveChild = enterPressView(root, child, [], { backdrop, close: childClose });
   gesture(backdrop, "pointerdown");
+  gesture(backdrop, "pointerup");
   const event = gesture(backdrop, "click");
   expect(event.defaultPrevented).toBe(true);
   expect(childClose).toHaveBeenCalledOnce();
   expect(parentClose).not.toHaveBeenCalled();
   expect(currentView(root)).toBe(parent);
   gesture(backdrop, "pointerdown");
+  gesture(backdrop, "pointerup");
   gesture(backdrop, "click");
   expect(parentClose).toHaveBeenCalledOnce();
   leaveParent();
@@ -153,27 +165,82 @@ it("rejects card-origin drags, cancelled gestures, stale view captures and dispo
   const close = vi.fn();
   const leave = enterPressView(root, card, [], { backdrop, close });
   gesture(backdrop, "pointerdown", 0, card);
+  gesture(backdrop, "pointerup");
   gesture(backdrop, "click");
   gesture(backdrop, "pointerdown");
+  gesture(backdrop, "pointerup", 100);
   gesture(backdrop, "click", 100);
   gesture(backdrop, "pointerdown");
   gesture(backdrop, "pointercancel");
+  gesture(backdrop, "pointerup");
   gesture(backdrop, "click");
   gesture(backdrop, "pointerdown");
   const leaveCover = enterPressView(root, cover);
+  gesture(backdrop, "pointerup");
   gesture(backdrop, "click");
   leaveCover();
+  gesture(backdrop, "pointerup");
   gesture(backdrop, "click");
   gesture(backdrop, "pointerdown");
   const leaveTransient = enterPressView(root, cover);
   leaveTransient();
+  gesture(backdrop, "pointerup");
   gesture(backdrop, "click");
   expect(close).not.toHaveBeenCalled();
   gesture(backdrop, "pointerdown");
   leave();
+  gesture(backdrop, "pointerup");
   gesture(backdrop, "click");
   gesture(backdrop, "pointerdown");
+  gesture(backdrop, "pointerup");
   gesture(backdrop, "click");
   expect(close).not.toHaveBeenCalled();
   vi.unstubAllGlobals();
 });
+
+it("does not route a backdrop event after the UI root unmounts", () => {
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
+  const root = node(),
+    backdrop = node(root),
+    dialog = node(backdrop),
+    close = vi.fn();
+  const leave = enterPressView(root, dialog, [], { backdrop, close });
+  gesture(backdrop, "pointerdown");
+  Object.defineProperty(root, "isConnected", { value: false });
+  gesture(backdrop, "pointerup");
+  gesture(backdrop, "click");
+  expect(close).not.toHaveBeenCalled();
+  leave();
+  vi.unstubAllGlobals();
+});
+
+it.each(["card-up", "missing-up", "different-pointer", "secondary-up", "different-click"])(
+  "rejects %s while retaining the next complete primary backdrop tap",
+  (kind) => {
+    vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
+    const root = node(),
+      backdrop = node(root),
+      card = node(backdrop),
+      close = vi.fn();
+    const leave = enterPressView(root, card, [], { backdrop, close });
+    gesture(backdrop, "pointerdown");
+    if (kind !== "missing-up") {
+      gesture(
+        backdrop,
+        "pointerup",
+        1,
+        kind === "card-up" ? card : backdrop,
+        kind === "different-pointer" ? 2 : 1,
+        kind !== "secondary-up",
+      );
+    }
+    gesture(backdrop, "click", 1, backdrop, kind === "different-click" ? 2 : 1);
+    expect(close).not.toHaveBeenCalled();
+    gesture(backdrop, "pointerdown");
+    gesture(backdrop, "pointerup");
+    gesture(backdrop, "click");
+    expect(close).toHaveBeenCalledOnce();
+    leave();
+    vi.unstubAllGlobals();
+  },
+);

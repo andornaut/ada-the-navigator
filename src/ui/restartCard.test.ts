@@ -251,11 +251,13 @@ describe("Restart's configured production binding", () => {
     f.card.open();
     native.tap.mockReturnValueOnce(false).mockReturnValueOnce(true);
     const event = (type: string, x: number) =>
-      Object.assign(new Event(type), { clientX: x, clientY: 0 });
+      Object.assign(new Event(type), { button: 0, clientX: x, clientY: 0, pointerId: 1 });
     f.modal.dispatchEvent(event("pointerdown", 0));
+    f.modal.dispatchEvent(event("pointerup", 30));
     f.modal.dispatchEvent(event("click", 30));
     expect(f.card.isOpen()).toBe(true);
     f.modal.dispatchEvent(event("pointerdown", 0));
+    f.modal.dispatchEvent(event("pointerup", 1));
     f.modal.dispatchEvent(event("click", 1));
     expect(f.card.isOpen()).toBe(false);
     expect(native.tap).toHaveBeenNthCalledWith(1, 1, { x: 0, y: 0 }, { x: 30, y: 0 });

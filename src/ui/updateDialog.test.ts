@@ -295,21 +295,24 @@ it("requires an outside pointer origin and a tap, refusing inside-origin release
   const modal = f.root.children[0]!;
   const event = (type: string, x: number) => {
     const e = new Event(type);
-    Object.assign(e, { clientX: x, clientY: 0 });
+    Object.assign(e, { button: 0, clientX: x, clientY: 0, pointerId: 1 });
     modal.dispatchEvent(e);
   };
   event("click", 0);
   expect(f.offer.defer).not.toHaveBeenCalled();
   event("pointerdown", 0);
+  event("pointerup", 30);
   event("click", 30);
   expect(f.offer.defer).not.toHaveBeenCalled();
   event("pointerdown", 0);
+  event("pointerup", 2);
   event("click", 2);
   expect(f.offer.defer).toHaveBeenCalledOnce();
   event("click", 2);
   expect(f.offer.defer).toHaveBeenCalledOnce();
   f.dialog.dispose();
   event("pointerdown", 0);
+  event("pointerup", 0);
   event("click", 0);
   expect(f.offer.defer).toHaveBeenCalledOnce();
 });

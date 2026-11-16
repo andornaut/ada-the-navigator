@@ -76,8 +76,9 @@ import {
   mapPresentationContext,
 } from "./mapRenderQueue.ts";
 import { drawMapSurveyOutline } from "./mapSurveyOutline.ts";
-import { createButton, createCard, isTap, TEXT_TOKENS } from "./modal.ts";
+import { createButton, createCard, TEXT_TOKENS } from "./modal.ts";
 import { galaxiesAvailable, mapShowsEmpty } from "./pause.ts";
+import { enterPressView } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
 import { hudDiscStyle } from "./weapons.ts";
 
@@ -1547,8 +1548,11 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     }
     return line.kind === "jobBoards" ? labels.questsJobBoards : labels.questsStoryComplete;
   };
+  let leaveQuestsView: (() => void) | undefined;
   const closeQuests = () => {
     if (questsOpen()) {
+      leaveQuestsView?.();
+      leaveQuestsView = undefined;
       questsModal.hidden = true;
       focusTarget(questsButton);
     }
@@ -1744,6 +1748,10 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       questPageIndex = 0;
     }
     questsModal.hidden = false;
+    leaveQuestsView ??= enterPressView(root, questsCard.frame, [], {
+      backdrop: questsModal,
+      close: closeQuests,
+    });
     questsCard.fit();
     paginateQuests();
     focusTarget(questLines.querySelector<HTMLButtonElement>("button") ?? questsCard.close);
@@ -1752,24 +1760,6 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     options.onQuests ? options.onQuests() : openQuests(),
   );
   questsCard.close.addEventListener("click", closeQuests);
-  // A full outside tap closes it.
-  let outside: Point | undefined;
-  questsModal.addEventListener("pointerdown", (event) => {
-    outside = event.target === questsModal ? { x: event.clientX, y: event.clientY } : undefined;
-  });
-  questsModal.addEventListener("click", (event) => {
-    if (
-      outside &&
-      event.target === questsModal &&
-      isTap(readViewUnit(questsModal), outside, {
-        x: event.clientX,
-        y: event.clientY,
-      })
-    ) {
-      closeQuests();
-    }
-    outside = undefined;
-  });
   galaxies.addEventListener("click", () => {
     if (!galaxiesAvailable(state?.inDanger ?? false)) {
       refuse(galaxies, options.reducedMotion());
@@ -1939,6 +1929,8 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     close(): void {
       renderQueue.cancel();
       presentation.clear();
+      leaveQuestsView?.();
+      leaveQuestsView = undefined;
       questsModal.hidden = true;
       screen.hidden = true;
       selected = null;
@@ -1949,6 +1941,8 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     /** Closes the Quests modal, back to the map. */
     closeQuests,
     dispose(): void {
+      leaveQuestsView?.();
+      leaveQuestsView = undefined;
       renderQueue.dispose();
       presentation.clear();
       document.fonts.removeEventListener("loadingdone", refit);

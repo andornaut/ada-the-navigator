@@ -78,34 +78,61 @@ export function enterPressView(
   const view: View = { dialog, live, scope: shared.gate.open() };
   shared.views.push(view);
   let outside:
-    { readonly x: number; readonly y: number; readonly valid: () => boolean } | undefined;
+    | {
+        readonly id: number;
+        readonly valid: () => boolean;
+        readonly x: number;
+        readonly y: number;
+        released: boolean;
+      }
+    | undefined;
   const current = () => shared.views.at(-1) === view && root.isConnected;
+  const primary = (event: PointerEvent) => event.isPrimary !== false && event.button === 0;
   const pointerdown = (event: PointerEvent) => {
     outside =
-      current() &&
-      event.target === dismissal?.backdrop &&
-      event.isPrimary !== false &&
-      (!event.button || event.button === 0)
-        ? { valid: view.scope.capture(), x: event.clientX, y: event.clientY }
+      current() && event.target === dismissal?.backdrop && primary(event)
+        ? {
+            id: event.pointerId,
+            released: false,
+            valid: view.scope.capture(),
+            x: event.clientX,
+            y: event.clientY,
+          }
         : undefined;
   };
   const cancel = () => {
     outside = undefined;
+  };
+  const pointerup = (event: PointerEvent) => {
+    if (
+      outside &&
+      dismissal &&
+      current() &&
+      outside.valid() &&
+      primary(event) &&
+      event.pointerId === outside.id &&
+      event.target === dismissal.backdrop &&
+      isTap(
+        readViewUnit(dismissal.backdrop),
+        { x: outside.x, y: outside.y },
+        { x: event.clientX, y: event.clientY },
+      )
+    ) {
+      outside.released = true;
+    } else {
+      cancel();
+    }
   };
   const click = (event: MouseEvent) => {
     const from = outside;
     outside = undefined;
     if (
       dismissal &&
-      from &&
+      from?.released &&
       from.valid() &&
       current() &&
       event.target === dismissal.backdrop &&
-      isTap(
-        readViewUnit(dismissal.backdrop),
-        { x: from.x, y: from.y },
-        { x: event.clientX, y: event.clientY },
-      )
+      (!("pointerId" in event) || event.pointerId === from.id)
     ) {
       // Consume before the callback can restore a parent view on the same backdrop.
       event.preventDefault();
@@ -114,6 +141,7 @@ export function enterPressView(
     }
   };
   dismissal?.backdrop.addEventListener("pointerdown", pointerdown, true);
+  dismissal?.backdrop.addEventListener("pointerup", pointerup, true);
   dismissal?.backdrop.addEventListener("pointercancel", cancel, true);
   dismissal?.backdrop.addEventListener("click", click, true);
   return () => {
@@ -121,6 +149,7 @@ export function enterPressView(
     if (index >= 0) {
       cancel();
       dismissal?.backdrop.removeEventListener("pointerdown", pointerdown, true);
+      dismissal?.backdrop.removeEventListener("pointerup", pointerup, true);
       dismissal?.backdrop.removeEventListener("pointercancel", cancel, true);
       dismissal?.backdrop.removeEventListener("click", click, true);
       shared.views.splice(index, 1);

@@ -6,9 +6,14 @@ import { CAST, castSheet } from "../data/cast.ts";
 import { CONTENT } from "../data/content.ts";
 import { createConversationBox, createInteractionCard } from "./conversation.ts";
 import { createDialoguePanel } from "./dialoguePanel.ts";
+import { enterPressView } from "./pressScope.ts";
 import { STORY_PORTRAITS, storyPortrait, storyPortraitFrame, storyTabColour } from "./storybook.ts";
 
 class Element {
+  readonly isConnected = true;
+  get parentElement() {
+    return this.parent;
+  }
   readonly attributes = new Map<string, string>();
   children: Element[] = [];
   parent: Element | null = null;
@@ -51,6 +56,12 @@ class Element {
   addEventListener(type: string, callback: (event: Partial<PointerEvent>) => void) {
     this.listeners.set(type, [...(this.listeners.get(type) ?? []), callback]);
   }
+  removeEventListener(type: string, callback: (event: Partial<PointerEvent>) => void) {
+    this.listeners.set(
+      type,
+      (this.listeners.get(type) ?? []).filter((listener) => listener !== callback),
+    );
+  }
   append(...nodes: Element[]) {
     for (const node of nodes) {
       this.insertBefore(node, null);
@@ -67,6 +78,7 @@ class Element {
       pointerId: 7,
       pointerType: "touch",
       preventDefault: vi.fn(),
+      stopImmediatePropagation: vi.fn(),
       stopPropagation: vi.fn(),
       ...values,
     };
@@ -426,4 +438,64 @@ describe("shared Earth and space dialogue presentation", () => {
     expect(legacySkip).not.toHaveBeenCalled();
     box.dispose();
   });
+});
+
+it("uses the existing Use close callback only for a current backdrop tap", () => {
+  setup();
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
+  const parent = new Element("div"),
+    close = vi.fn(),
+    choose = vi.fn(),
+    skip = vi.fn();
+  const interaction = createInteractionCard(parent as unknown as HTMLElement, {
+    choose,
+    close,
+    skip,
+  });
+  interaction.show(1, {
+    choices: [{ id: "continue", label: CONTENT.labels.next! }],
+    context: "deliveryComplete",
+    text: "",
+    title: "Rivet",
+  });
+  const modal = parent.children[0]!,
+    card = modal.children[0]!;
+  const down = (target = modal, clientX = 0) =>
+    modal.dispatch("pointerdown", {
+      clientX,
+      isPrimary: true,
+      target: target as unknown as EventTarget,
+    });
+  const click = (clientX = 0) => {
+    modal.dispatch("pointerup", {
+      clientX,
+      isPrimary: true,
+      target: modal as unknown as EventTarget,
+    });
+    modal.dispatch("click", { clientX, target: modal as unknown as EventTarget });
+  };
+  down(card);
+  click();
+  down();
+  click(100);
+  down();
+  modal.dispatch("pointercancel");
+  click();
+  const cover = new Element("div");
+  parent.append(cover);
+  const leave = enterPressView(parent as unknown as HTMLElement, cover as unknown as HTMLElement);
+  down();
+  click();
+  leave();
+  expect(close).not.toHaveBeenCalled();
+  down();
+  click();
+  expect(close).toHaveBeenCalledOnce();
+  expect(choose).not.toHaveBeenCalled();
+  expect(skip).not.toHaveBeenCalled();
+  interaction.show(1, null);
+  down();
+  click();
+  expect(close).toHaveBeenCalledOnce();
+  interaction.dispose();
 });

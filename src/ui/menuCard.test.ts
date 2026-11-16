@@ -405,21 +405,26 @@ it.each(["start", "nonplay"] as const)(
     const event = (type: string, target = modal) => {
       const event = new Event(type, { cancelable: true });
       Object.defineProperties(event, {
+        button: { value: 0 },
         clientX: { value: 0 },
         clientY: { value: 0 },
+        pointerId: { value: 1 },
         target: { value: target },
       });
       modal.dispatchEvent(event);
     };
     event("pointerdown", fixture.card.body);
+    event("pointerup");
     event("click");
     expect(menu.isOpen()).toBe(true);
     event("pointerdown");
+    event("pointerup");
     event("click");
     expect(menu.isOpen()).toBe(false);
     expect(onOpenChange.mock.calls).toEqual([[true], [false]]);
     expect(origin.focus).toHaveBeenCalledOnce();
     event("pointerdown");
+    event("pointerup");
     event("click");
     expect(onOpenChange.mock.calls).toEqual([[true], [false]]);
   },

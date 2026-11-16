@@ -6,6 +6,7 @@ import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
 import { InteractionConversation, interactionCopy } from "../model/conversations.ts";
 import { createDialoguePanel, DIALOGUE_PANEL_STYLE } from "./dialoguePanel.ts";
 import { COMPACT_PORTRAITS, portraitFrame, TAB_COLOURS } from "./dialoguePortraits.ts";
+import { enterPressView } from "./pressScope.ts";
 export {
   AWAITING_TAB,
   COMPACT_PORTRAITS,
@@ -337,6 +338,7 @@ export function createInteractionCard(
   card.card.dataset.dialog = "conversation";
   modal.append(card.frame);
   parent.append(modal);
+  let leaveView: (() => void) | undefined;
   const state = new InteractionConversation();
   let signature = "";
   const draw = (): void => {
@@ -401,11 +403,6 @@ export function createInteractionCard(
     draw();
   };
   card.close.addEventListener("click", close);
-  modal.addEventListener("click", (event) => {
-    if (event.target === modal) {
-      close();
-    }
-  });
   modal.addEventListener("keydown", (event) => {
     if (event.key !== "Tab") {
       return;
@@ -425,6 +422,8 @@ export function createInteractionCard(
   return {
     back: close,
     dispose() {
+      leaveView?.();
+      leaveView = undefined;
       card.dispose();
       modal.remove();
     },
@@ -435,10 +434,13 @@ export function createInteractionCard(
     ) {
       modal.hidden = panel === null;
       if (!panel) {
+        leaveView?.();
+        leaveView = undefined;
         state.reset();
         signature = "";
         return;
       }
+      leaveView ??= enterPressView(parent, card.frame, [], { backdrop: modal, close });
       const copy = interactionCopy(context, panel);
       state.show(copy, panel);
       const next = JSON.stringify(panel);
