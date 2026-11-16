@@ -605,6 +605,7 @@ ${UI_SCOPE} [hidden]{
   display:none!important
 }
 ${UI_SCOPE} .ada-modal[data-ada-modal-underlay][hidden]{
+  z-index:${MODAL_LAYER - 1};
   display:flex!important
 }
 `;

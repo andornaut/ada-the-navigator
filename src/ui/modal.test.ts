@@ -213,6 +213,12 @@ describe("modal text", () => {
 });
 
 describe("modal stacking", () => {
+  it("keeps retained parent paint below an active modal regardless of sibling order", () => {
+    const underlay = rule(`${UI_SCOPE} .ada-modal[data-ada-modal-underlay][hidden]`);
+    expect(underlay).toContain(`z-index:${MODAL_LAYER - 1}`);
+    expect(underlay).toContain("display:flex!important");
+  });
+
   it("draws an open modal above every other control in its layer", () => {
     const modal = MODAL_STYLE.slice(MODAL_STYLE.indexOf(`${UI_SCOPE} .ada-modal{`));
     expect(modal.slice(0, modal.indexOf("}"))).toContain(`z-index:${MODAL_LAYER}`);
