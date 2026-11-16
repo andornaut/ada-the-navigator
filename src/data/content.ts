@@ -643,6 +643,7 @@ export const CONTENT: GameContent = {
     questsStoryComplete: "Story complete.",
     questsStoryHeading: "Story quests",
     reducedMotion: "Reduced motion",
+    requiresWeapon: "Requires {weapon}",
     rescueAbout: "Its engine stopped. Towing makes you slow.",
     rescueTitle: "Tow {craft} to safety",
     restart: "Restart",

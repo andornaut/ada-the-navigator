@@ -18,7 +18,7 @@ import { GameModel } from "../model/game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
 import { landmarkById } from "../model/landmarks.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
-import { fill, itemAbout, itemName, type ShopItem } from "../model/shop.ts";
+import { fill, itemAbout, itemName, type ShopItem, weaponName } from "../model/shop.ts";
 import type { FlightState } from "../model/types.ts";
 import {
   coverStartScreen,
@@ -812,7 +812,13 @@ export function buildScene(scene: UiContext): void {
                 : "unaffordable",
           }))
         : scene.model.shopRows(tab).map((row) => {
-            const view = stationRow(ECONOMY, labels, scene.model.state.economy.stardust, row);
+            const view = stationRow(
+              ECONOMY,
+              labels,
+              scene.model.state.economy.stardust,
+              row,
+              (weapon) => fill(label("requiresWeapon"), { weapon: weaponName(labels, weapon) }),
+            );
             const path =
               row.item.kind === "paint" ? materialShipSwatch(scene, row.item.scheme) : undefined;
             return path ? { ...view, glyph: { kind: "swatch" as const, path } } : view;
