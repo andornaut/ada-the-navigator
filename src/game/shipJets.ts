@@ -235,7 +235,16 @@ export function travelJets(
   if (!main || !geometry) {
     return undefined;
   }
-  const selected = levelLayers(fieldLevels ?? main.engineLevels, level);
+  const authoredMaterial =
+    (direction === "reverse" && geometry.reverseStyle === "centered-main") ||
+    (direction === "forward" &&
+      geometry.headings.some((mouths) =>
+        mouths.some((mouth) => mouth.normalAperture !== undefined),
+      ));
+  const selected = levelLayers(
+    authoredMaterial ? main.engineLevels : (fieldLevels ?? main.engineLevels),
+    level,
+  );
   const layers =
     direction === "reverse" && geometry.reverseStyle === "centered-main"
       ? centeredReverseLayers(

@@ -24,7 +24,7 @@ describe("retro material selection", () => {
         for (const level of [1, 2, 3]) {
           const forward = travelJets(main, retro, field, level, "forward")!;
           const reverse = travelJets(main, retro, field, level, "reverse")!;
-          const canonical = (field ?? main.engineLevels)[level - 1]!;
+          const canonical = main.engineLevels[level - 1]!;
           const dark = main.engineLevels[level - 1]!.find(
             (layer) => layer.normalColor !== undefined,
           )!.normalColor!;

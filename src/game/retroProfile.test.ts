@@ -75,10 +75,7 @@ describe("explicit centered reverse material", () => {
     (light) => {
       const reverse = readEngineJets(profile())!;
       for (const level of [1, 2, 3]) {
-        const selected = levelLayers(
-          light ? LIGHT_FIELD.jets.shipLevels : main.engineLevels,
-          level,
-        );
+        const selected = levelLayers(main.engineLevels, level);
         const forward = levelLayers(main.engineLevels, level);
         const jets = travelJets(
           main,
@@ -173,6 +170,35 @@ describe("explicit centered reverse material", () => {
         );
         expect(travelJets(main, undefined, field, level, "reverse")).toBeUndefined();
       }
+    }
+  });
+
+  it("keeps explicit normal material field-independent and legacy forward material field-selected", () => {
+    const oldMain = {
+      ...main,
+      headings: main.headings.map((mouths) =>
+        mouths.map((mouth) => {
+          const copy = { ...mouth };
+          delete copy.normalAperture;
+          return copy;
+        }),
+      ),
+    };
+    for (const level of [1, 2, 3]) {
+      const dark = travelJets(main, legacy, undefined, level, "forward")!;
+      const light = travelJets(main, legacy, LIGHT_FIELD.jets.shipLevels, level, "forward")!;
+      expect(light).toEqual(dark);
+      expect(light.layers).toEqual(levelLayers(main.engineLevels, level));
+      for (const heading of [32, 40]) {
+        for (const fraction of [0, 0.8, 0.97, 1]) {
+          expect(jetTriangles(light, display, heading, fraction)).toEqual(
+            jetTriangles(dark, display, heading, fraction),
+          );
+        }
+      }
+      expect(
+        travelJets(oldMain, legacy, LIGHT_FIELD.jets.shipLevels, level, "forward")!.layers,
+      ).toEqual(levelLayers(LIGHT_FIELD.jets.shipLevels, level));
     }
   });
 

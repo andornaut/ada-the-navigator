@@ -1061,7 +1061,8 @@ export class GameScene extends Scene {
       const keyline =
         this.light &&
         LIGHT_FIELD.keylined.includes("ship") &&
-        !(travel === "forward" && normalJetsInFront(activeJets, ship.directionIndex));
+        !(travel === "forward" && normalJetsInFront(activeJets, ship.directionIndex)) &&
+        !(travel === "reverse" && this.shipRetroJets?.reverseStyle === "centered-main");
       for (const { alpha, color, points } of jetTriangles(
         activeJets,
         display,
