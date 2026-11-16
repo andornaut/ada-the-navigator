@@ -155,19 +155,35 @@ export function resolveAdaHoldAction(
   return null;
 }
 
-/** Audit completed control construction, including disabled controls that can later become active. */
-export function assertAdaActionBindings(root: HTMLElement): void {
+function actionControls(completedSubtree: HTMLElement): HTMLElement[] {
   const selector =
     'button, input[type="button"], input[type="submit"], input[type="reset"], [role="button"], [data-action]';
-  const controls = [...root.querySelectorAll<HTMLElement>(selector)];
-  if (root.matches(selector)) {
-    controls.unshift(root);
+  const controls = [...completedSubtree.querySelectorAll<HTMLElement>(selector)];
+  if (completedSubtree.matches(selector)) {
+    controls.unshift(completedSubtree);
   }
+  return controls;
+}
+
+function assertControlMetadata(controls: readonly HTMLElement[]): void {
   for (const element of controls) {
     if (!bindings.has(element)) {
       throw new Error("Discrete action control has no registered action binding");
     }
-    if (!adaActionHasRoot(element)) {
+  }
+}
+
+/** Audits completed semantic construction even while detached, hidden or unavailable. */
+export function assertAdaActionMetadata(completedSubtree: HTMLElement): void {
+  assertControlMetadata(actionControls(completedSubtree));
+}
+
+/** Audits attached construction without evaluating runtime action or eligibility policy. */
+export function assertAdaActionBindings(completedSubtree: HTMLElement): void {
+  const controls = actionControls(completedSubtree);
+  assertControlMetadata(controls);
+  for (const element of [completedSubtree, ...controls]) {
+    if (!element.isConnected || !adaActionHasRoot(element)) {
       throw new Error("Discrete action control has no live action root");
     }
   }

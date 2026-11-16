@@ -32,15 +32,19 @@ export function adaActionRootAllows(element: HTMLElement): boolean {
   return true;
 }
 
-/** Construction checks require a live owning dispatcher, not just a click callback. */
+/** Structural ownership requires an owning root and every registered ancestor to remain live. */
 export function adaActionHasRoot(element: HTMLElement): boolean {
+  let found = false;
   for (let owner: HTMLElement | null = element; owner; owner = owner.parentElement) {
     const entry = roots.get(owner);
     if (entry) {
-      return entry.active;
+      found = true;
+      if (!entry.active) {
+        return false;
+      }
     }
   }
-  return false;
+  return found;
 }
 
 /** A nested registered root owns its subtree, including while disposed. */

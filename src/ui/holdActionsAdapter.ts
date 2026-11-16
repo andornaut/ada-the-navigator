@@ -124,7 +124,15 @@ function bindRoot(policy: RootPolicy, root: HTMLElement) {
   document.addEventListener("visibilitychange", invalidate);
   document.defaultView?.addEventListener("pagehide", invalidate);
   return {
-    assertBindings: () => assertAdaActionBindings(root),
+    assertBindings(completedSubtree: HTMLElement = root) {
+      if (disposed) {
+        throw new Error("Action root has been disposed");
+      }
+      if (!root.contains(completedSubtree)) {
+        throw new Error("Completed construction is outside this action root");
+      }
+      assertAdaActionBindings(completedSubtree);
+    },
     dispose() {
       if (disposed) {
         return;
