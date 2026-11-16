@@ -1,4 +1,8 @@
-import { bindHoldActions } from "@andornaut/game-kit/runtime/web/input/dom/holdActions";
+import {
+  bindHoldActions,
+  type HoldActionsOptions,
+  type PointerReleaseHoldActionsOptions,
+} from "@andornaut/game-kit/runtime/web/input/dom/holdActions";
 import { guardClicks, type PressGuard } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
 
 import type { RequiredReady } from "../loading/required.ts";
@@ -11,7 +15,16 @@ import {
   subscribePressScope,
 } from "./pressScope.ts";
 
+export interface AdaPointerReleaseOptions {
+  readonly pointerTarget?: HTMLElement | Document;
+  /** Return a registered control, null to reject, or undefined to use its native event target. */
+  readonly resolvePointer: (event: PointerEvent) => HTMLElement | null | undefined;
+  readonly onPressChange?: (element: HTMLElement | null) => void;
+}
+
 export interface AdaActionRootOptions {
+  /** Opt in only when the caller removes its parallel pointer-release activation. */
+  readonly pointerRelease?: AdaPointerReleaseOptions;
   readonly guard: PressGuard;
   readonly requiredReady: RequiredReady;
   /** Subscribe to the same required-resource registry used by requiredReady. */
@@ -72,16 +85,25 @@ function bindRoot(policy: RootPolicy, root: HTMLElement) {
     },
     root,
   );
-  const stop = bindHoldActions(
-    {
-      guard,
-      resolve: (target) => {
-        const action = resolveAdaHoldAction(root, target);
-        return action && inCurrentView(root, action.element) ? action : null;
-      },
-    },
-    root,
-  );
+  const resolve = (target: EventTarget | null) => {
+    const action = resolveAdaHoldAction(root, target);
+    return action && inCurrentView(root, action.element) ? action : null;
+  };
+  const pointer = policy.kind === "game" ? policy.options.pointerRelease : undefined;
+  const dispatch: HoldActionsOptions | PointerReleaseHoldActionsOptions = pointer
+    ? {
+        activation: "pointer-release",
+        guard,
+        onPressChange: (action) => pointer.onPressChange?.(action?.element ?? null),
+        pointerTarget: pointer.pointerTarget,
+        resolve,
+        resolvePointer: (event) => {
+          const element = pointer.resolvePointer(event);
+          return resolve(element === undefined ? event.target : element);
+        },
+      }
+    : { guard, resolve };
+  const stop = bindHoldActions(dispatch, root);
   const stopClicks = guardClicks(guard, root);
   const stopScope = subscribePressScope(() => stop.cancel(), root);
   const invalidate = () => {

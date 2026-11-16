@@ -9,6 +9,7 @@ import {
   resolveAdaHoldAction,
 } from "./actionBinding.ts";
 import {
+  type AdaPointerReleaseOptions,
   bindAdaActionRoot,
   bindAdaHoldActions,
   bindAdaRecoveryActionRoot,
@@ -74,6 +75,7 @@ function setup(
     subscribe: (invalidate: () => void) => () => void;
   },
   recovery = false,
+  pointerRelease?: AdaPointerReleaseOptions,
 ) {
   vi.useFakeTimers();
   const document = new FixtureDocument();
@@ -98,6 +100,7 @@ function setup(
       ? bindAdaActionRoot(
           {
             guard: { gate },
+            ...(pointerRelease ? { pointerRelease } : {}),
             requiredReady: readiness.ready,
             subscribeRequired: readiness.subscribe,
           },
@@ -678,5 +681,77 @@ it("requires construction-time native ownership and refuses foreign factory elem
       f.host,
     )({ activate: f.run, available: () => true, element: foreign }),
   ).toThrow("recovery root");
+  f.stop();
+});
+
+it("uses the public coordinate release lifecycle with registered current actions and no native duplicate", () => {
+  let hit: HTMLElement | null = null;
+  const pressed = vi.fn();
+  const f = setup({ ready: () => true, subscribe: () => () => {} }, false, {
+    onPressChange: pressed,
+    resolvePointer: () => hit,
+  });
+  hit = f.element;
+  const binding = bindAdaAction(f.options, f.element);
+  f.document.dispatchEvent(f.event("pointerdown", f.root));
+  f.root.dispatchEvent(f.event("pointerdown", f.root));
+  f.up();
+  f.click();
+  expect(f.run).toHaveBeenCalledTimes(1);
+  expect(pressed.mock.calls.map(([element]) => element)).toEqual([f.element, null]);
+  f.down();
+  vi.advanceTimersByTime(500);
+  f.up();
+  f.click();
+  expect(f.run).toHaveBeenCalledTimes(2);
+  f.down();
+  hit = null;
+  f.document.dispatchEvent(f.event("pointermove"));
+  hit = f.element;
+  f.up();
+  f.click();
+  expect(f.run).toHaveBeenCalledTimes(2);
+  f.down();
+  const newer = vi.fn();
+  binding.update({ ...f.options, click: { ...f.options.click, run: newer } });
+  f.up();
+  f.click();
+  expect(newer).toHaveBeenCalledTimes(1);
+  f.down();
+  binding.dispose();
+  const replacement = bindAdaAction(f.options, f.element);
+  f.up();
+  f.click();
+  expect(f.run).toHaveBeenCalledTimes(2);
+  f.down();
+  f.invalidate!();
+  expect(pressed).toHaveBeenLastCalledWith(null);
+  vi.advanceTimersByTime(500);
+  f.up();
+  f.click();
+  expect(f.run).toHaveBeenCalledTimes(2);
+  f.click(0);
+  expect(f.run).toHaveBeenCalledTimes(3);
+  replacement.dispose();
+  f.stop();
+});
+
+it("rejects unregistered coordinate hits and preserves native target fallback", () => {
+  let hit: HTMLElement | null | undefined;
+  const f = setup({ ready: () => true, subscribe: () => () => {} }, false, {
+    resolvePointer: () => hit,
+  });
+  const binding = bindAdaAction(f.options, f.element);
+  hit = f.root as unknown as HTMLElement;
+  f.down();
+  vi.advanceTimersByTime(500);
+  f.up();
+  expect(f.run).not.toHaveBeenCalled();
+  hit = undefined;
+  f.down();
+  f.up();
+  f.click();
+  expect(f.run).toHaveBeenCalledTimes(1);
+  binding.dispose();
   f.stop();
 });
