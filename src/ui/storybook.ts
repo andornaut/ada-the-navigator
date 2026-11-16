@@ -6,6 +6,7 @@ import { GENERAL_NAMED, type Speaker, SPEAKERS } from "../data/conversations.ts"
 import { SCREEN } from "../data/screen.ts";
 import type { Background } from "../data/storybook.ts";
 import type { StoryChoice, StoryPage } from "../model/storybook.ts";
+import { bindAdaAction } from "./actionBinding.ts";
 import { bedroomBackground, bedroomTop } from "./bedroom.ts";
 import {
   type StoryPanelContainer,
@@ -676,9 +677,28 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   // The page goes first in the controls layer, so the HUD's settings button draws and presses
   // above it. Its style follows the shared card styles it refines (src/ui/stylesheet.ts).
   root.prepend(layer);
-  skip.addEventListener("click", () => options.onSkip());
-  previous.addEventListener("click", () => options.onPrevious());
-  next.addEventListener("click", () => options.onNext());
+  let disposed = false;
+  const bindStoryAction = (button: HTMLButtonElement, run: () => void) =>
+    bindAdaAction(
+      {
+        click: {
+          availability: () =>
+            button.disabled || button.closest("[hidden], [inert]")
+              ? { kind: "omitted" }
+              : { kind: "available" },
+          run,
+        },
+        current: () => !disposed && button.isConnected,
+        slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
+      },
+      button,
+    );
+  const navigationActions = [
+    bindStoryAction(skip, () => options.onSkip()),
+    bindStoryAction(previous, () => options.onPrevious()),
+    bindStoryAction(next, () => options.onNext()),
+  ];
+  let choiceActions: ReturnType<typeof bindAdaAction>[] = [];
   // On the sleep scene a tap anywhere moves on; the model ignores one before its skip delay.
   background.addEventListener("click", () => {
     if (rendered?.sleep) {
@@ -763,12 +783,16 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       delete face.dataset.speaker;
     }
     panel.setAttribute("aria-label", page.heading ?? page.speaker ?? page.text);
+    for (const action of choiceActions) {
+      action.dispose();
+    }
+    choiceActions = [];
     const buttons = (page.choices ?? []).map(({ label }, index) => {
       const button = createButton(label);
       button.classList.add("ada-story-button");
       button.dataset.action = "story-choice";
       button.dataset.choice = String(index);
-      button.addEventListener("click", () => options.onChoose(index));
+      choiceActions.push(bindStoryAction(button, () => options.onChoose(index)));
       return button;
     });
     choices.replaceChildren(...buttons);
@@ -1231,6 +1255,11 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   });
   return {
     dispose(): void {
+      disposed = true;
+      for (const action of [...navigationActions, ...choiceActions]) {
+        action.dispose();
+      }
+      choiceActions = [];
       stop();
       stopNight();
       stopPortrait();
