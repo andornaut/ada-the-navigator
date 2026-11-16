@@ -244,3 +244,118 @@ it("requires live attachment even for an empty completed subtree", () => {
   expect(() => assertAdaActionBindings(html(f.scope))).toThrow("no live action root");
   stop();
 });
+
+it.each(["native click", "direct activation"])(
+  "requires connected structural ownership for %s after reparenting",
+  (kind) => {
+    const f = fixture();
+    const run = vi.fn();
+    const current = vi.fn(() => true);
+    const availability = vi.fn(() => ({ kind: "available" as const }));
+    const options = { ...f.options, click: { availability, run }, current };
+    const binding = bindAdaAction(options, html(f.button));
+    const disposeRoot = registerAdaActionRoot({ permits: () => true }, html(f.root));
+    const activate = () => {
+      if (kind === "direct activation") {
+        return binding.activate();
+      }
+      return f.button.dispatchEvent(new Event("click"));
+    };
+    activate();
+    expect(run).toHaveBeenCalledTimes(1);
+    const outside = new NodeFixture(f.document);
+    outside.connected = true;
+    outside.append(f.scope);
+    current.mockClear();
+    availability.mockClear();
+    activate();
+    expect(run).toHaveBeenCalledTimes(1);
+    expect(current).not.toHaveBeenCalled();
+    expect(availability).not.toHaveBeenCalled();
+    f.scope.remove();
+    activate();
+    expect(run).toHaveBeenCalledTimes(1);
+    expect(current).not.toHaveBeenCalled();
+    const newer = vi.fn();
+    binding.update({ ...options, click: { availability, run: newer } });
+    f.root.append(f.scope);
+    activate();
+    expect(newer).toHaveBeenCalledOnce();
+    f.root.connected = false;
+    activate();
+    expect(newer).toHaveBeenCalledOnce();
+    f.root.connected = true;
+    activate();
+    expect(newer).toHaveBeenCalledTimes(2);
+    disposeRoot();
+    activate();
+    expect(newer).toHaveBeenCalledTimes(2);
+    binding.dispose();
+  },
+);
+
+it("retains runtime readiness, hidden/inert and disposed-ancestor fences for direct activation", () => {
+  const f = fixture();
+  let ready = false;
+  const outer = bindAdaActionRoot(
+    {
+      guard: { gate: { accepts: () => true, capture: () => () => true } },
+      requiredReady: () => ready,
+      subscribeRequired: () => () => {},
+    },
+    html(f.root),
+  );
+  const inner = registerAdaActionRoot({ permits: () => true }, html(f.scope));
+  const run = vi.fn();
+  const binding = bindAdaAction(
+    {
+      ...f.options,
+      click: { availability: () => ({ kind: "available" }), run },
+      current: () => true,
+    },
+    html(f.button),
+  );
+  expect(binding.activate()).toBe(false);
+  ready = true;
+  f.scope.hidden = true;
+  expect(binding.activate()).toBe(false);
+  f.scope.hidden = false;
+  f.scope.inert = true;
+  expect(binding.activate()).toBe(false);
+  f.scope.inert = false;
+  expect(binding.activate()).toBe(true);
+  expect(run).toHaveBeenCalledOnce();
+  outer.dispose();
+  expect(binding.activate()).toBe(false);
+  expect(run).toHaveBeenCalledOnce();
+  inner();
+  binding.dispose();
+});
+
+it("preserves factory-owned native clicks while fencing the shared activation facade", () => {
+  const f = fixture();
+  const shared = vi.fn(),
+    original = vi.fn();
+  f.button.addEventListener("click", original);
+  const binding = bindAdaAction(
+    {
+      ...f.options,
+      click: { availability: () => ({ kind: "available" }), run: shared },
+      current: () => true,
+      nativeClickOwner: "factory",
+    },
+    html(f.button),
+  );
+  const disposeRoot = registerAdaActionRoot({ permits: () => true }, html(f.root));
+  f.button.dispatchEvent(new Event("click"));
+  expect(original).toHaveBeenCalledOnce();
+  expect(shared).not.toHaveBeenCalled();
+  expect(binding.activate()).toBe(true);
+  f.scope.remove();
+  expect(binding.activate()).toBe(false);
+  expect(shared).toHaveBeenCalledOnce();
+  binding.dispose();
+  f.button.dispatchEvent(new Event("click"));
+  expect(original).toHaveBeenCalledTimes(2);
+  disposeRoot();
+});

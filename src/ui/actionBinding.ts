@@ -43,7 +43,11 @@ export function bindAdaAction(options: AdaActionOptions, element: HTMLElement) {
   const entry: Entry = { activate, options };
   bindings.set(element, entry);
   const current = () =>
-    bindings.get(element) === entry && adaActionRootAllows(element) && entry.options.current();
+    bindings.get(element) === entry &&
+    element.isConnected &&
+    adaActionHasRoot(element) &&
+    adaActionRootAllows(element) &&
+    entry.options.current();
   function activate(): boolean {
     return current() && activateAdaAction(entry.options, "click");
   }
