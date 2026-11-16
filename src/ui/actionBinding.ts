@@ -1,5 +1,8 @@
 import { controlPresentation } from "@andornaut/game-kit/runtime/ui/controlPresentation";
-import type { HoldAction } from "@andornaut/game-kit/runtime/web/input/dom/holdActions";
+import type {
+  HoldAction,
+  HoldActionBinding,
+} from "@andornaut/game-kit/runtime/web/input/dom/holdActions";
 
 import { activateAdaAction, type AdaActionBinding } from "./actionActivation.ts";
 import { adaActionHasRoot, adaActionOwnedBy, adaActionRootAllows } from "./actionRegistry.ts";
@@ -8,6 +11,8 @@ import { adaActionHasRoot, adaActionOwnedBy, adaActionRootAllows } from "./actio
 export const ADA_ACTION_HOLD_MS = 500;
 
 export interface AdaActionOptions extends AdaActionBinding {
+  /** Factory mode registers hold metadata while the factory retains its native click listener. */
+  readonly nativeClickOwner?: "registry" | "factory";
   /** Client CSS pixels, derived from the current logical drag threshold and view unit. */
   readonly slopPx: () => number;
   readonly current: () => boolean;
@@ -26,6 +31,10 @@ export function bindAdaAction(options: AdaActionOptions, element: HTMLElement) {
   if (bindings.has(element)) {
     throw new Error("Ada action already registered");
   }
+  const nativeClickOwner = options.nativeClickOwner ?? "registry";
+  if (nativeClickOwner === "factory" && options.beforeClick) {
+    throw new Error("Factory-owned native click cannot use a registry event hook");
+  }
   const entry: Entry = { activate, options };
   bindings.set(element, entry);
   const current = () =>
@@ -38,17 +47,27 @@ export function bindAdaAction(options: AdaActionOptions, element: HTMLElement) {
       entry.activate();
     }
   };
-  element.addEventListener("click", click);
+  if (nativeClickOwner === "registry") {
+    element.addEventListener("click", click);
+  }
   return {
     activate: entry.activate,
     dispose() {
       if (bindings.get(element) === entry) {
         bindings.delete(element);
-        element.removeEventListener("click", click);
+        if (nativeClickOwner === "registry") {
+          element.removeEventListener("click", click);
+        }
       }
     },
     update(next: AdaActionOptions) {
       if (bindings.get(element) === entry) {
+        if (
+          (next.nativeClickOwner ?? "registry") !== nativeClickOwner ||
+          (nativeClickOwner === "factory" && next.beforeClick)
+        ) {
+          throw new Error("Native click ownership cannot change during a binding lifetime");
+        }
         entry.options = next;
       }
     },
@@ -125,4 +144,34 @@ export function assertAdaActionBindings(root: HTMLElement): void {
       throw new Error("Discrete action control has no live action root");
     }
   }
+}
+
+export interface AdaFactoryHoldOptions {
+  readonly current: () => boolean;
+  readonly slopPx: () => number;
+}
+
+/** Uses the factory's original guarded action and availability without another native listener. */
+export function createAdaFactoryHoldBinding(
+  options: AdaFactoryHoldOptions,
+  root: HTMLElement,
+): HoldActionBinding {
+  return (action) => {
+    if (!root.contains(action.element)) {
+      throw new Error("Factory action must belong to its recovery root");
+    }
+    const binding = bindAdaAction(
+      {
+        click: {
+          availability: () => (action.available() ? { kind: "available" } : { kind: "omitted" }),
+          run: action.activate,
+        },
+        current: () => root.contains(action.element) && options.current(),
+        nativeClickOwner: "factory",
+        slopPx: options.slopPx,
+      },
+      action.element,
+    );
+    return binding.dispose;
+  };
 }

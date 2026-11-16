@@ -5,9 +5,14 @@ import {
   type AdaActionOptions,
   assertAdaActionBindings,
   bindAdaAction,
+  createAdaFactoryHoldBinding,
   resolveAdaHoldAction,
 } from "./actionBinding.ts";
-import { bindAdaActionRoot, bindAdaHoldActions } from "./holdActionsAdapter.ts";
+import {
+  bindAdaActionRoot,
+  bindAdaHoldActions,
+  bindAdaRecoveryActionRoot,
+} from "./holdActionsAdapter.ts";
 import { enterPressView, invalidatePressScope } from "./pressScope.ts";
 
 class Element extends EventTarget {
@@ -63,10 +68,13 @@ class FixtureDocument extends EventTarget {
     setTimeout: (fn: () => void, delay: number) => setTimeout(fn, delay),
   });
 }
-function setup(readiness?: {
-  ready: () => boolean;
-  subscribe: (invalidate: () => void) => () => void;
-}) {
+function setup(
+  readiness?: {
+    ready: () => boolean;
+    subscribe: (invalidate: () => void) => () => void;
+  },
+  recovery = false,
+) {
   vi.useFakeTimers();
   const document = new FixtureDocument();
   const root = new Element(document),
@@ -84,12 +92,18 @@ function setup(readiness?: {
       return () => captured === generation;
     },
   };
-  const attachment = readiness
-    ? bindAdaActionRoot(
-        { guard: { gate }, requiredReady: readiness.ready, subscribeRequired: readiness.subscribe },
-        host,
-      )
-    : undefined;
+  const attachment = recovery
+    ? bindAdaRecoveryActionRoot({ guard: { gate } }, host)
+    : readiness
+      ? bindAdaActionRoot(
+          {
+            guard: { gate },
+            requiredReady: readiness.ready,
+            subscribeRequired: readiness.subscribe,
+          },
+          host,
+        )
+      : undefined;
   const stop = attachment?.dispose ?? bindAdaHoldActions({ gate }, host);
   const event = (type: string, target: Element = label, extra = {}) => {
     const e = new Event(type, { cancelable: true });
@@ -140,6 +154,7 @@ function setup(readiness?: {
     element,
     event,
     host,
+    invalidate: attachment?.invalidate,
     options,
     root,
     run,
@@ -590,4 +605,78 @@ it("assigns a nested control to one nearest binder and invalidates replaced entr
   expect(resolveAdaHoldAction(outerHost, f.element)).toBeNull();
   replacement.dispose();
   stopOuter();
+});
+
+it("keeps factory native ownership exclusive while recovery works before game readiness", () => {
+  const gameFixture = setup({ ready: () => false, subscribe: () => () => {} });
+  const game = bindAdaAction(gameFixture.options, gameFixture.element);
+  expect(game.activate()).toBe(false);
+  game.dispose();
+  gameFixture.stop();
+  const f = setup(undefined, true);
+  let alive = true;
+  let busy = false;
+  const guardedFactoryClick = vi.fn(() => {
+    if (alive && !busy) {
+      f.run();
+    }
+  });
+  f.button.addEventListener("click", guardedFactoryClick);
+  const listen = vi.spyOn(f.button, "addEventListener");
+  const unlisten = vi.spyOn(f.button, "removeEventListener");
+  const register = createAdaFactoryHoldBinding({ current: () => alive, slopPx: () => 8 }, f.host);
+  const dispose = register({
+    activate: guardedFactoryClick,
+    available: () => alive && !busy,
+    element: f.element,
+  });
+  expect(listen).not.toHaveBeenCalled();
+  f.click(0);
+  expect(f.run).toHaveBeenCalledTimes(1);
+  f.down();
+  vi.advanceTimersByTime(500);
+  f.up();
+  f.click();
+  expect(f.run).toHaveBeenCalledTimes(2);
+  busy = true;
+  f.down();
+  vi.advanceTimersByTime(500);
+  f.up();
+  f.click();
+  expect(f.run).toHaveBeenCalledTimes(2);
+  busy = false;
+  f.down();
+  alive = false;
+  f.invalidate!();
+  alive = true;
+  f.up();
+  f.click();
+  expect(f.run).toHaveBeenCalledTimes(2);
+  dispose();
+  expect(unlisten).not.toHaveBeenCalled();
+  expect(resolveAdaHoldAction(f.host, f.element)).toBeNull();
+  f.click(0);
+  expect(f.run).toHaveBeenCalledTimes(3);
+  f.stop();
+});
+
+it("requires construction-time native ownership and refuses foreign factory elements", () => {
+  const f = setup();
+  const factory = bindAdaAction({ ...f.options, nativeClickOwner: "factory" }, f.element);
+  expect(() => factory.update(f.options)).toThrow("ownership cannot change");
+  factory.dispose();
+  expect(() =>
+    bindAdaAction(
+      { ...f.options, beforeClick: () => true, nativeClickOwner: "factory" },
+      f.element,
+    ),
+  ).toThrow("registry event hook");
+  const foreign = new Element(f.document) as unknown as HTMLElement;
+  expect(() =>
+    createAdaFactoryHoldBinding(
+      { current: () => true, slopPx: () => 8 },
+      f.host,
+    )({ activate: f.run, available: () => true, element: foreign }),
+  ).toThrow("recovery root");
+  f.stop();
 });

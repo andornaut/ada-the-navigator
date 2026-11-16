@@ -18,8 +18,29 @@ export interface AdaActionRootOptions {
   readonly subscribeRequired: (invalidate: () => void) => () => void;
 }
 
-/** One owned root uses the published dispatcher and canonical readiness subscription. */
+export interface AdaRecoveryActionRootOptions {
+  readonly guard: PressGuard;
+}
+
+type RootPolicy =
+  | { readonly kind: "game"; readonly options: AdaActionRootOptions }
+  | { readonly kind: "recovery"; readonly options: AdaRecoveryActionRootOptions };
+
+/** Game controls remain fenced by the canonical required-resource registry. */
 export function bindAdaActionRoot(options: AdaActionRootOptions, root: HTMLElement) {
+  return bindRoot({ kind: "game", options }, root);
+}
+
+/** Recovery is governed by its own root lifetime and factory action availability, not game readiness. */
+export function bindAdaRecoveryActionRoot(
+  options: AdaRecoveryActionRootOptions,
+  root: HTMLElement,
+) {
+  return bindRoot({ kind: "recovery", options }, root);
+}
+
+function bindRoot(policy: RootPolicy, root: HTMLElement) {
+  const options = policy.options;
   const document = root.ownerDocument;
   let disposed = false;
   const scope = rootPressGuard(root);
@@ -27,7 +48,7 @@ export function bindAdaActionRoot(options: AdaActionRootOptions, root: HTMLEleme
     !disposed &&
     root.isConnected &&
     !document.hidden &&
-    options.requiredReady() &&
+    (policy.kind === "recovery" || policy.options.requiredReady()) &&
     options.guard.gate.accepts();
   const guard: PressGuard = {
     gate: {
@@ -68,7 +89,8 @@ export function bindAdaActionRoot(options: AdaActionRootOptions, root: HTMLEleme
       invalidatePressScope(root);
     }
   };
-  const stopRequired = options.subscribeRequired(invalidate);
+  const stopRequired =
+    policy.kind === "game" ? policy.options.subscribeRequired(invalidate) : undefined;
   document.addEventListener("visibilitychange", invalidate);
   document.defaultView?.addEventListener("pagehide", invalidate);
   return {
@@ -81,7 +103,7 @@ export function bindAdaActionRoot(options: AdaActionRootOptions, root: HTMLEleme
       disposed = true;
       unregister();
       stopScope();
-      stopRequired();
+      stopRequired?.();
       stopClicks();
       stop();
       document.removeEventListener("visibilitychange", invalidate);
