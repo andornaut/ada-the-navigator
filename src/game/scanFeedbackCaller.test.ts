@@ -2,7 +2,12 @@ import { readFileSync } from "node:fs";
 import { createContext, runInContext } from "node:vm";
 
 import ts from "typescript";
-import { expect, it, vi } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
+
+import { VIEW_PROPERTIES } from "../ui/layout/css.ts";
+import { scanFeedbackFootprints } from "../ui/scanFeedbackView.ts";
+
+afterEach(() => vi.unstubAllGlobals());
 it("retains production scan receipts under cover and resolves only the receipt galaxy's actual target", () => {
   const source = ts.createSourceFile(
     "sceneUi.ts",
@@ -32,16 +37,30 @@ it("retains production scan receipts under cover and resolves only the receipt g
     time: { now: 20 },
   };
   const landmarkById = vi.fn().mockReturnValue(site);
+  const host = { getBoundingClientRect: () => ({ left: 0, top: 0 }) };
+  const occupied = {
+    closest: () => null,
+    getBoundingClientRect: () => ({ height: 30, left: 0, top: 0, width: 100 }),
+    getClientRects: () => [{}],
+  };
+  const querySelectorAll = vi.fn(() => [occupied]);
+  vi.stubGlobal("getComputedStyle", () => ({
+    display: "block",
+    getPropertyValue: (name: string) => (name === VIEW_PROPERTIES.unit ? "1" : "0"),
+    opacity: "1",
+    visibility: "visible",
+  }));
   const context = createContext({
     BOX_OCCUPANT: "data-box-occupant",
     VIEW_HOST_ID: "app",
     boxOccupant: () => null,
     coarsePointer: () => false,
-    document: { getElementById: () => null, hidden: false },
+    document: { getElementById: () => host, hidden: false, querySelectorAll },
     landmarkById,
     markerFootprints: () => [{ height: 30, width: 100, x: 0, y: 0 }],
     pennyLayers: { get: () => undefined },
     safeGameArea: () => ({ height: 360, width: 720, x: 0, y: 0 }),
+    scanFeedbackFootprints,
     scanViews: { get: () => scan },
     window: {},
   });
@@ -58,7 +77,11 @@ it("retains production scan receipts under cover and resolves only the receipt g
   const first = view.render.mock.calls[0]!;
   expect(first[0].covered).toBe(true);
   expect(first[1]).toBe(20);
+  expect(first[0].time).toBe(20);
   expect(first[0].blocked).toEqual([{ height: 30, width: 100, x: 0, y: 0 }]);
+  expect(querySelectorAll).toHaveBeenCalledWith(
+    expect.stringContaining(":not(.ada-conversation, .ada-conversation *)"),
+  );
   expect(first[0].resolveAnchor(receipt)).toEqual({ x: 330, y: 220 });
   expect(landmarkById).toHaveBeenCalledWith(1, "actual-landmark");
   expect(scene.project).toHaveBeenCalledWith(site);
@@ -68,6 +91,7 @@ it("retains production scan receipts under cover and resolves only the receipt g
   scene.time.now = 40;
   render(scene);
   expect(view.render.mock.calls[1]![0].covered).toBe(false);
+  expect(view.render.mock.calls[1]![0].time).toBe(40);
   expect(view.reset).not.toHaveBeenCalled();
   scene.model.state = { ...state };
   render(scene);
