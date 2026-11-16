@@ -7,6 +7,7 @@ import { ITEM_NOTICE } from "./layout/itemNotice.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { markerFootprints } from "./markerFootprints.ts";
+import { TEXT_TOKENS } from "./modal.ts";
 import {
   type ScanFeedbackContent,
   type ScanFeedbackContext,
@@ -35,6 +36,9 @@ export function createScanFeedbackView(parent: HTMLElement) {
   panel.setAttribute("aria-atomic", "true");
   Object.assign(panel.style, {
     alignItems: "center",
+    backgroundColor: TEXT_TOKENS.buttonLabel,
+    border: `${units(ITEM_NOTICE.rim)} solid var(--notice-accent)`,
+    borderRadius: units(ITEM_NOTICE.radius),
     boxSizing: "border-box",
     color: STATUS_COLOURS.count,
     display: "none",

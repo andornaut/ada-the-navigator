@@ -626,7 +626,9 @@ export function buildScene(scene: UiContext): void {
     },
   });
   partial.push(() => scene.controls.dispose());
-  const scanView = createScanFeedbackView(scene.controls.overlay);
+  const scanView = createScanFeedbackView(
+    document.getElementById(VIEW_HOST_ID) ?? scene.controls.overlay,
+  );
   scanViews.set(scene, { state: scene.model.state, time: scene.time.now, view: scanView });
   partial.push(() => {
     scanView.dispose();
@@ -1160,6 +1162,7 @@ export function renderConversation(scene: UiContext): void {
           const target = landmarkById(outcome.galaxy, outcome.targetId);
           return target ? scene.project(target) : undefined;
         },
+        time: scene.time.now,
       },
       elapsed,
     );

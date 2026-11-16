@@ -81,6 +81,8 @@ export interface ScanFeedbackContext {
     readonly width: number;
   };
   readonly reducedMotion: boolean;
+  /** Native caller clock: repeated refreshes in one scene frame reuse the displayed position. */
+  readonly time?: number;
   /** The caller uses the existing authoritative target resolver and scene projection. */
   readonly resolveAnchor: (outcome: ScanOutcome) => Vec | undefined;
 }
@@ -89,6 +91,8 @@ interface Pending {
   elapsed: number;
   anchor?: Vec;
   path?: ScanFeedbackPath;
+  sampledAt?: number;
+  sampledElapsed?: number;
 }
 /** Transient UI ownership begins after drain; cover and failed placement never consume receipts. */
 export class ScanFeedbackQueue {
@@ -121,10 +125,12 @@ export class ScanFeedbackQueue {
     if (!next) {
       return null;
     }
+    const sameTime = context.time !== undefined && next.sampledAt === context.time;
+    const elapsed = sameTime ? next.sampledElapsed! : next.elapsed;
     const duration =
       NOTICE_TIMING.holdMs +
       (context.reducedMotion ? NOTICE_TIMING.reducedFadeMs : NOTICE_TIMING.fadeMs);
-    if (next.elapsed >= duration) {
+    if (elapsed >= duration) {
       this.pending.shift();
       return this.frame(context, 0);
     }
@@ -161,13 +167,17 @@ export class ScanFeedbackQueue {
       blocked: context.blocked,
       height: path.from.height,
       path,
-      progress: next.elapsed === 0 ? 0 : EASE_OUT(Math.min(1, next.elapsed / NOTICE_TIMING.holdMs)),
+      progress: elapsed === 0 ? 0 : EASE_OUT(Math.min(1, elapsed / NOTICE_TIMING.holdMs)),
       reducedMotion: context.reducedMotion,
       width: path.from.width,
     })!;
     const fade = context.reducedMotion ? NOTICE_TIMING.reducedFadeMs : NOTICE_TIMING.fadeMs;
-    const opacity = Math.max(0, 1 - Math.max(0, next.elapsed - NOTICE_TIMING.holdMs) / fade);
-    if (Number.isFinite(milliseconds) && milliseconds > 0) {
+    const opacity = Math.max(0, 1 - Math.max(0, elapsed - NOTICE_TIMING.holdMs) / fade);
+    if (context.time !== undefined) {
+      next.sampledAt = context.time;
+      next.sampledElapsed = elapsed;
+    }
+    if (!sameTime && Number.isFinite(milliseconds) && milliseconds > 0) {
       next.elapsed += milliseconds;
     }
     return { anchor, content: next.content, opacity, rect };

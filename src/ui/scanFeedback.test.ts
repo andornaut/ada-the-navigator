@@ -136,6 +136,16 @@ describe("authoritative scan presentation receipts", () => {
     reference.frame(context, 200);
     expect(third.rect).toEqual(reference.frame(context, 0)!.rect);
   });
+  it("does not advance on repeated native refreshes at the same scene time", () => {
+    const queue = new ScanFeedbackQueue();
+    queue.enqueue([receipt()]);
+    queue.frame({ ...context, time: 0 }, 0);
+    const frame = queue.frame({ ...context, time: 16 }, 16)!;
+    expect(queue.frame({ ...context, time: 16 }, 0)).toEqual(frame);
+    const next = queue.frame({ ...context, time: 32 }, 16)!;
+    expect(next.rect.y).toBeLessThan(frame.rect.y);
+    expect(queue.frame({ ...context, time: 32 }, 0)).toEqual(next);
+  });
   it("keeps the retained receipt inside a resized viewport", () => {
     const queue = new ScanFeedbackQueue();
     queue.enqueue([receipt()]);
