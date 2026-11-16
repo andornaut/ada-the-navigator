@@ -1,4 +1,4 @@
-import { createPauseButton } from "./pauseButton.ts";
+import { createPauseButton, disposePauseButton } from "./pauseButton.ts";
 
 /** The same Pause hit target carries the three-line Menu glyph outside pausable play. */
 export function createNavigationButton(
@@ -10,6 +10,7 @@ export function createNavigationButton(
   button.setAttribute("aria-haspopup", "dialog");
   return {
     button,
+    dispose: () => disposePauseButton(button),
     setMode(mode: "pause" | "menu") {
       button.dataset.navigation = mode;
       button.dataset.action = mode;

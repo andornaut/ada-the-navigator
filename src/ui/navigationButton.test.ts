@@ -8,6 +8,11 @@ class Node extends EventTarget {
   className = "";
   dataset: Record<string, string> = {};
   hidden = false;
+  disabled = false;
+  isConnected = true;
+  closest() {
+    return this.hidden ? this : null;
+  }
   readonly attributes = new Map<string, string>();
   append(...nodes: Node[]) {
     this.children.push(...nodes);
@@ -67,6 +72,7 @@ describe("actual Pause/Menu entry", () => {
         ),
     );
     entry.setMode(mode);
+    entry.button.hidden = false;
     entry.button.dispatchEvent(new Event("click"));
     expect(mode).toBe(expected);
     expect(pause).toHaveBeenCalledTimes(expected === "pause" ? 1 : 0);
@@ -75,5 +81,9 @@ describe("actual Pause/Menu entry", () => {
     expect(button.attributes.get("aria-label")).toBe(expected === "pause" ? "Pause" : "Menu");
     expect(button.children).toHaveLength(0);
     expect(button.dataset.navigation).toBe(expected);
+    entry.dispose();
+    entry.button.dispatchEvent(new Event("click"));
+    expect(pause).toHaveBeenCalledTimes(expected === "pause" ? 1 : 0);
+    expect(menu).toHaveBeenCalledTimes(expected === "menu" ? 1 : 0);
   });
 });

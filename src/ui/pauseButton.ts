@@ -1,4 +1,13 @@
+import { SCROLL } from "../data/layout.ts";
+import { bindAdaAction } from "./actionBinding.ts";
+import { readViewUnit } from "./layout/viewScale.ts";
 import { type PauseFrame, pauseFrames, pausePose } from "./pause.ts";
+
+const disposers = new WeakMap<HTMLButtonElement, () => void>();
+
+export function disposePauseButton(button: HTMLButtonElement): void {
+  disposers.get(button)?.();
+}
 
 const UI_ROOT = "/art/ui/";
 
@@ -18,6 +27,7 @@ export function createPauseButton(
   button.title = label;
   button.hidden = true;
   root.append(button);
+  let disposed = false;
   let frames: Readonly<Record<"held" | "press" | "rest", readonly PauseFrame[]>> | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
   const showFrame = (frame: PauseFrame | undefined) => {
@@ -45,9 +55,32 @@ export function createPauseButton(
   for (const type of ["pointerup", "pointercancel", "pointerleave"] as const) {
     button.addEventListener(type, rest);
   }
-  button.addEventListener("click", () => {
-    rest();
-    onPause();
+  const action = bindAdaAction(
+    {
+      click: {
+        availability: () =>
+          button.disabled || button.closest("[hidden], [inert]")
+            ? { kind: "omitted" }
+            : { kind: "available" },
+        run: () => {
+          rest();
+          onPause();
+        },
+      },
+      current: () => !disposed && button.isConnected,
+      slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
+    },
+    button,
+  );
+  disposers.set(button, () => {
+    disposed = true;
+    action.dispose();
+    clearTimeout(timer);
+    button.removeEventListener("pointerdown", press);
+    for (const type of ["pointerup", "pointercancel", "pointerleave"] as const) {
+      button.removeEventListener(type, rest);
+    }
+    disposers.delete(button);
   });
   void fetch(`${UI_ROOT}manifest.json`)
     .then((response) => response.json() as Promise<{ sprites?: { json: string; key: string }[] }>)
@@ -58,7 +91,7 @@ export function createPauseButton(
         : undefined;
     })
     .then((sheet: unknown) => {
-      if (sheet) {
+      if (sheet && !disposed) {
         frames = pauseFrames(sheet as Parameters<typeof pauseFrames>[0]);
         rest();
       }
