@@ -1,8 +1,11 @@
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
+import { SCROLL } from "../data/layout.ts";
+import { bindAdaAction } from "./actionBinding.ts";
 import { font, fromAreaLeft, units } from "./layout/css.ts";
 import { START_SCREEN, type StartAction } from "./layout/startScreen.ts";
 import { TYPE } from "./layout/tokens.ts";
+import { readViewUnit } from "./layout/viewScale.ts";
 import { createButton, TEXT_TOKENS } from "./modal.ts";
 import { type StartScreenSchema, startScreenTree } from "./startScreenTree.ts";
 import type { TitleScreenArt } from "./titleScreen.ts";
@@ -111,6 +114,7 @@ export function createStartScreen(
   art: TitleScreenArt | null,
   content: StartScreenContent,
 ): { readonly buttons: readonly HTMLButtonElement[]; readonly root: HTMLElement; dispose(): void } {
+  let disposed = false;
   const root = document.createElement("section");
   root.className = START_SCREEN_CLASS;
   root.setAttribute("aria-label", content.title);
@@ -151,11 +155,23 @@ export function createStartScreen(
           create(initial) {
             const button = createButton(initial.label, initial.role);
             button.dataset.action = initial.action;
-            const run = callbacks.get(initial.action)!;
-            button.addEventListener("click", run);
+            const action = bindAdaAction(
+              {
+                click: {
+                  availability: () =>
+                    button.disabled || button.closest("[hidden], [inert]")
+                      ? { kind: "omitted" }
+                      : { kind: "available" },
+                  run: () => callbacks.get(initial.action)!(),
+                },
+                current: () => !disposed && button.isConnected,
+                slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
+              },
+              button,
+            );
             buttons.push(button);
             return {
-              dispose: () => button.removeEventListener("click", run),
+              dispose: action.dispose,
               element: button,
               slots: {},
               update() {},
@@ -192,7 +208,10 @@ export function createStartScreen(
   void applyButtonSkin(root).catch(() => undefined);
   return {
     buttons,
-    dispose: () => layout.dispose(),
+    dispose: () => {
+      disposed = true;
+      layout.dispose();
+    },
     root,
   };
 }

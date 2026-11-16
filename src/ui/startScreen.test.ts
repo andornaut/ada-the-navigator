@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { resolveAdaHoldAction } from "./actionBinding.ts";
+import { registerAdaActionRoot } from "./actionRegistry.ts";
 import { createStartScreen } from "./startScreen.ts";
 import type { TitleScreenArt } from "./titleScreen.ts";
 
@@ -59,6 +61,7 @@ class Element {
   };
   readonly dataset: Record<string, string> = {};
   hidden = false;
+  disabled = false;
   parent: Element | undefined;
   readonly listeners = new Map<string, (() => void)[]>();
   readonly properties = new Map<string, string>();
@@ -207,9 +210,12 @@ it("retains supplied action order, labels, roles and callbacks with the status n
     createElement: (tag: string) => new Element(tag),
     defaultView: { HTMLElement: Element, Node: Element },
   });
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
   const restart = vi.fn();
   const proceed = vi.fn();
   const host = new Element("main");
+  let allowed = true;
+  const release = registerAdaActionRoot({ permits: () => allowed }, host as unknown as HTMLElement);
   const existing = new Element("nav");
   host.append(existing);
   const view = createStartScreen(host as unknown as HTMLElement, null, {
@@ -238,9 +244,32 @@ it("retains supplied action order, labels, roles and callbacks with the status n
   buttons[1]!.click();
   expect(restart).toHaveBeenCalledTimes(1);
   expect(proceed).toHaveBeenCalledTimes(1);
-  view.dispose();
-  view.dispose();
+  const held = resolveAdaHoldAction(
+    host as unknown as HTMLElement,
+    buttons[1] as unknown as EventTarget,
+  )!;
+  expect(held.rule.holdMs).toBe(500);
+  expect(held.available()).toBe(true);
+  held.activate();
+  expect(proceed).toHaveBeenCalledTimes(2);
+  allowed = false;
+  held.activate();
   buttons[1]!.click();
-  expect(proceed).toHaveBeenCalledTimes(1);
+  expect(proceed).toHaveBeenCalledTimes(2);
+  allowed = true;
+  buttons[1]!.disabled = true;
+  expect(held.available()).toBe(false);
+  buttons[1]!.click();
+  expect(proceed).toHaveBeenCalledTimes(2);
+  buttons[1]!.disabled = false;
+  view.dispose();
+  view.dispose();
+  held.activate();
+  expect(
+    resolveAdaHoldAction(host as unknown as HTMLElement, buttons[1] as unknown as EventTarget),
+  ).toBeNull();
+  release();
+  buttons[1]!.click();
+  expect(proceed).toHaveBeenCalledTimes(2);
   expect(host.children).toEqual([existing]);
 });
