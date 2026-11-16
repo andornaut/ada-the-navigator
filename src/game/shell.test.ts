@@ -159,6 +159,11 @@ beforeEach(() => {
     }),
   );
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
+  const root = host as unknown as HTMLElement;
+  actionRoot = bindAdaActionRoot(
+    { guard: rootPressGuard(root), requiredReady: () => true, subscribeRequired: () => () => {} },
+    root,
+  );
 });
 afterEach(() => {
   shell.dispose();
@@ -313,10 +318,6 @@ function holdFixture() {
   vi.useFakeTimers();
   const ui = setup();
   const root = host as unknown as HTMLElement;
-  actionRoot = bindAdaActionRoot(
-    { guard: rootPressGuard(root), requiredReady: () => true, subscribeRequired: () => () => {} },
-    root,
-  );
   const event = (type: string, target: Element) => {
     const value = new Event(type, { cancelable: true });
     Object.defineProperties(
