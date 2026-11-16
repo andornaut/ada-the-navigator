@@ -91,6 +91,7 @@ const TYPES = {
   ".svg": "image/svg+xml",
   ".ttf": "font/ttf",
   ".webmanifest": "application/manifest+json",
+  ".woff2": "font/woff2",
 };
 
 // Serves the dist as built; a capture page overrides the field data it needs.

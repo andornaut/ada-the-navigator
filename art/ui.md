@@ -54,9 +54,20 @@ BMFont XML names are Liberation Sans Regular (body) and Liberation Sans Bold
 (title), both size 16, lineHeight 20 and base 15. Their single PNG pages are
 256x64 and 256x128 respectively; page filenames stay relative to the FNT.
 For DOM text, use family Liberation Sans with weight 400 from
-`/art/ui/fonts/liberation/LiberationSans-Regular.ttf` and weight 700 from
-`/art/ui/fonts/liberation/LiberationSans-Bold.ttf`. Ring and knob are procedural
+`/art/ui/fonts/liberation/LiberationSans-Regular.woff2` and weight 700 from
+`/art/ui/fonts/liberation/LiberationSans-Bold.woff2`, served as `font/woff2`.
+Both fonts retain the full glyph set, outlines, hinting, metrics and kerning.
+The original TTF files and OFL remain source assets, not a second required web format.
+Ring and knob are procedural
 and require no raster asset.
+
+`node art/tools/ui-fonts.ts [output-directory]` regenerates both WOFF2 files from
+the preserved TTFs, using published `@andornaut/art-kit/build/woff2` and its optional
+`wawoff2@2.0.1` producer peer. Provision the encoder in an isolated toolchain;
+the game does not require the peer at runtime. Inputs are
+`art/sources/fonts/liberation/LiberationSans-{Regular,Bold}.ttf`; only WOFF2 outputs
+are written. Omit the output directory to write under `public/art/ui/fonts/liberation/`.
+Regular is 147,036 bytes and Bold is 148,612 bytes.
 
 ## Dark lavender recolour
 
@@ -134,6 +145,8 @@ where listed. The card icons are in [Settings row icons](settings-icons.md).
 copyright notices. No separate font copyright file is present. The source
 checkout and tracked tree contain no project LICENSE file. Project sprites are
 reused with the project owner's explicit authorization.
+Original TTF bytes are preserved in `art/sources/fonts/liberation/`; their
+checksums below use the upstream paths. The public OFL file remains unchanged.
 
 ## SHA-256 provenance
 
