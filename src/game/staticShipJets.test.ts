@@ -31,11 +31,25 @@ describe("static travel jet selection", () => {
     expect(main.length).toEqual({ base: 6, exponent: 2, scale: 24 });
   });
 
-  it("uses the same selected light-field object and disables missing geometry without fixed-blue fallback", () => {
+  it("preserves authored main materials and legacy field selection without a missing-geometry fallback", () => {
+    const legacy = {
+      ...main,
+      headings: main.headings.map((mouths) =>
+        mouths.map((mouth) => {
+          const copy = { ...mouth };
+          delete copy.normalAperture;
+          return copy;
+        }),
+      ),
+    };
     for (const level of [1, 2, 3]) {
       expect(staticShipJets(main, LIGHT_FIELD.jets.shipLevels, level)?.layers).toBe(
+        main.engineLevels[level - 1],
+      );
+      expect(staticShipJets(legacy, LIGHT_FIELD.jets.shipLevels, level)?.layers).toBe(
         LIGHT_FIELD.jets.shipLevels[level - 1],
       );
+      expect(staticShipJets(legacy, undefined, level)?.layers).toBe(main.engineLevels[level - 1]);
     }
     expect(staticShipJets(undefined, LIGHT_FIELD.jets.shipLevels, 3)).toBeUndefined();
   });

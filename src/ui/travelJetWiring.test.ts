@@ -300,7 +300,22 @@ describe("warp material wiring", () => {
       sprites,
     });
     fixture.tick(30);
+    expect(vi.mocked(drawShipJets).mock.lastCall![1].layers).toBe(main.engineLevels[1]);
+    const legacyMain = { ...main, ...legacyGeometry(main) };
+    overlay.setPaint({
+      jets: () => staticShipJets(legacyMain, LIGHT_FIELD.jets.shipLevels, 2),
+      scheme: "classic",
+      sprites,
+    });
+    fixture.tick(40);
     expect(vi.mocked(drawShipJets).mock.lastCall![1].layers).toBe(LIGHT_FIELD.jets.shipLevels[1]);
+    overlay.setPaint({
+      jets: () => staticShipJets(legacyMain, undefined, 2),
+      scheme: "classic",
+      sprites,
+    });
+    fixture.tick(50);
+    expect(vi.mocked(drawShipJets).mock.lastCall![1].layers).toBe(main.engineLevels[1]);
     expect(running.onCover).toHaveBeenCalledTimes(1);
     overlay.dispose();
     expect(fixture.callbacks.size).toBe(0);
