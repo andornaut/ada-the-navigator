@@ -2,7 +2,7 @@ import { controlPresentation } from "@andornaut/game-kit/runtime/ui/controlPrese
 import type { HoldAction } from "@andornaut/game-kit/runtime/web/input/dom/holdActions";
 
 import { activateAdaAction, type AdaActionBinding } from "./actionActivation.ts";
-import { adaActionHasRoot, adaActionRootAllows } from "./actionRegistry.ts";
+import { adaActionHasRoot, adaActionOwnedBy, adaActionRootAllows } from "./actionRegistry.ts";
 
 /** Shared with the weapon detail override; duration is independent of display scale. */
 export const ADA_ACTION_HOLD_MS = 500;
@@ -68,11 +68,15 @@ export function resolveAdaHoldAction(
   while (element && root.contains(element)) {
     const entry = bindings.get(element);
     if (entry) {
+      if (!adaActionOwnedBy(root, element)) {
+        return null;
+      }
       const owned = element;
       const current = () =>
         bindings.get(owned) === entry &&
         owned.isConnected &&
         root.contains(owned) &&
+        adaActionOwnedBy(root, owned) &&
         owned.closest("[hidden], [inert]") === null &&
         adaActionRootAllows(owned) &&
         entry.options.current();
@@ -87,6 +91,7 @@ export function resolveAdaHoldAction(
           controlPresentation((entry.options.hold ?? entry.options.click).availability())
             .executable,
         element: owned,
+        identity: entry,
         rule: { holdMs: ADA_ACTION_HOLD_MS, slopPx: entry.options.slopPx() },
         ...(entry.options.hold
           ? {

@@ -559,3 +559,35 @@ it("uses captured native-click eligibility even when the current guard accepts a
   binding.dispose();
   f.stop();
 });
+
+it("assigns a nested control to one nearest binder and invalidates replaced entry identities", () => {
+  const f = setup();
+  const outer = new Element(f.document);
+  f.root.parentElement = outer;
+  const outerHost = outer as unknown as HTMLElement;
+  const stopOuter = bindAdaHoldActions(
+    { gate: { accepts: () => true, capture: () => () => true } },
+    outerHost,
+  );
+  const first = bindAdaAction(f.options, f.element);
+  expect(resolveAdaHoldAction(outerHost, f.element)).toBeNull();
+  const captured = resolveAdaHoldAction(f.host, f.element)!;
+  expect(captured).not.toBeNull();
+  f.down();
+  outer.dispatchEvent(f.event("pointerdown"));
+  vi.advanceTimersByTime(500);
+  expect(f.run).toHaveBeenCalledTimes(1);
+  f.up();
+  f.run.mockClear();
+  first.update({ ...f.options, click: { ...f.options.click, run: f.run } });
+  expect(resolveAdaHoldAction(f.host, f.element)?.identity).toBe(captured.identity);
+  first.dispose();
+  const replacement = bindAdaAction(f.options, f.element);
+  expect(resolveAdaHoldAction(f.host, f.element)?.identity).not.toBe(captured.identity);
+  captured.activate();
+  expect(f.run).not.toHaveBeenCalled();
+  f.stop();
+  expect(resolveAdaHoldAction(outerHost, f.element)).toBeNull();
+  replacement.dispose();
+  stopOuter();
+});

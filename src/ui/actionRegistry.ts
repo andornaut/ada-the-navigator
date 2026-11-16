@@ -42,3 +42,14 @@ export function adaActionHasRoot(element: HTMLElement): boolean {
   }
   return false;
 }
+
+/** A nested registered root owns its subtree, including while disposed. */
+export function adaActionOwnedBy(root: HTMLElement, element: HTMLElement): boolean {
+  for (let owner: HTMLElement | null = element; owner; owner = owner.parentElement) {
+    const entry = roots.get(owner);
+    if (entry) {
+      return owner === root && entry.active;
+    }
+  }
+  return false;
+}
