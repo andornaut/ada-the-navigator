@@ -24,7 +24,10 @@ class Element {
     return this.parent ?? null;
   }
   readonly nodeType = 1;
-  readonly isConnected = true;
+  attached = false;
+  get isConnected(): boolean {
+    return this.parent?.isConnected ?? this.attached;
+  }
   get parentNode(): Element | null {
     return this.parent ?? null;
   }
@@ -160,6 +163,7 @@ function installDocument() {
   );
 }
 function attachRoot(host: Element, requiredReady = () => true) {
+  host.attached = true;
   const root = host as unknown as HTMLElement;
   return bindAdaActionRoot(
     { guard: rootPressGuard(root), requiredReady, subscribeRequired: () => () => {} },
@@ -201,13 +205,19 @@ function render(masked: boolean): Element {
     ships: new Map([[null, "/ship.png"]]),
     wordmark: { height: 102, url: "/wordmark.svg", width: 270 },
   };
-  return createStartScreen(new Element("main") as unknown as HTMLElement, art, {
+  const host = new Element("main");
+  renderRoots.push(attachRoot(host));
+  return createStartScreen(host as unknown as HTMLElement, art, {
     actions: [],
     paint: null,
     title: "Ada",
   }).root as unknown as Element;
 }
-afterEach(() => vi.unstubAllGlobals());
+const renderRoots: (() => void)[] = [];
+afterEach(() => {
+  for (const dispose of renderRoots.splice(0).reverse()) {dispose();}
+  vi.unstubAllGlobals();
+});
 
 describe("title plume draw layers", () => {
   it("keeps old-data plumes behind the complete ship without an unmasked foreground layer", () => {
@@ -333,11 +343,32 @@ it.each(["hidden", "disabled"] as const)(
 );
 it("requires the actual parent action root for registered Start buttons", () => {
   installDocument();
+  const host = new Element("main");
+  host.attached = true;
   expect(() =>
-    createStartScreen(new Element("main") as unknown as HTMLElement, null, {
+    createStartScreen(host as unknown as HTMLElement, null, {
       actions: [{ action: "continue", label: "Continue", role: "primary", run: vi.fn() }],
       paint: null,
       title: "Ada",
     }),
   ).toThrow("Discrete action control has no live action root");
+});
+
+it("checks Start construction metadata without probing runtime readiness", () => {
+  installDocument();
+  const host = new Element("main");
+  const ready = vi.fn(() => false),
+    release = attachRoot(host, ready);
+  try {
+    const view = createStartScreen(host as unknown as HTMLElement, null, {
+      actions: [{ action: "continue", label: "Continue", role: "primary", run: vi.fn() }],
+      paint: null,
+      title: "Ada",
+    });
+    expect(view.buttons).toHaveLength(1);
+    expect(ready).not.toHaveBeenCalled();
+    view.dispose();
+  } finally {
+    release();
+  }
 });
