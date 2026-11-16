@@ -499,6 +499,9 @@ export function jetTriangles(
   const length = jetLength(jets, fraction);
   const triangles: JetTriangle[] = [];
   for (const mouth of mouths) {
+    const smallProfile =
+      (mouth.normalAperture !== undefined || jets.reverseStyle === "centered-main") &&
+      Math.max(display.displayWidth, display.displayHeight) <= SMALL_JET_CORE_MAX_DISPLAY;
     const displayOccluders = display.includeOccluders
       ? mouth.occluders?.map((polygon) => polygon.map(({ x, y }) => toDisplay(x, y)))
       : undefined;
@@ -509,11 +512,7 @@ export function jetTriangles(
       fraction,
     )) {
       const layer = jets.layers[layerIndex]!;
-      if (
-        layer.name === "core" &&
-        (mouth.normalAperture !== undefined || jets.reverseStyle === "centered-main") &&
-        Math.max(display.displayWidth, display.displayHeight) <= SMALL_JET_CORE_MAX_DISPLAY
-      ) {
+      if (layer.name === "core" && smallProfile) {
         continue;
       }
       const alpha = jetShapeLayerAlpha(mouth, layer, layerIndex, fraction);
@@ -523,7 +522,12 @@ export function jetTriangles(
           c = clipped[i + 1]!;
         triangles.push({
           alpha,
-          color: jetShapeLayerColor(mouth, layer, layerIndex, layerColor(layer, fraction)),
+          color: jetShapeLayerColor(
+            mouth,
+            layer,
+            layerIndex,
+            smallProfile && layer.name === "outer" ? layer.colors[0] : layerColor(layer, fraction),
+          ),
           ...(displayOccluders === undefined ? {} : { occluders: displayOccluders }),
           points: [toDisplay(a.x, a.y), toDisplay(b.x, b.y), toDisplay(c.x, c.y)],
         });

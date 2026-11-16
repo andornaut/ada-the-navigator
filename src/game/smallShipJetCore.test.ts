@@ -23,13 +23,14 @@ const display = (size: number) => ({
 
 describe("small player jet cores", () => {
   it.each(["forward", "reverse"] as const)(
-    "omits only the derived core for %s at small logical sizes",
+    "omits the derived core and keeps the canonical medium start color for small %s profiles",
     (direction) => {
       expect(SMALL_JET_CORE_MAX_DISPLAY).toBe(42);
       for (const level of [1, 2, 3]) {
         const jets = travelJets(main, reverse, LIGHT_FIELD.jets.shipLevels, level, direction)!;
         const original = structuredClone(jets);
         const core = jets.layers.find((layer) => layer.name === "core")!;
+        const outer = main.engineLevels[level - 1]!.find((layer) => layer.name === "outer")!;
         for (const fraction of [0.8, 0.97, 1]) {
           const large = jetTriangles(jets, display(84), 56, fraction);
           const coreColor = layerColor(core, fraction);
@@ -43,9 +44,12 @@ describe("small player jet cores", () => {
             const small = jetTriangles(jets, display(size), 56, fraction);
             const retained = large.filter((triangle) => triangle.color !== coreColor);
             expect(small).toHaveLength(retained.length);
+            expect(small.some((triangle) => triangle.color === outer.colors[0])).toBe(true);
             small.forEach((triangle, index) => {
               const expected = retained[index]!;
-              expect(triangle.color).toBe(expected.color);
+              expect(triangle.color).toBe(
+                expected.color === layerColor(outer, fraction) ? outer.colors[0] : expected.color,
+              );
               expect(triangle.alpha).toBe(expected.alpha);
               triangle.points.forEach((point, corner) => {
                 expect(point.x).toBeCloseTo((expected.points[corner]!.x * size) / 84, 12);
@@ -74,20 +78,26 @@ describe("small player jet cores", () => {
     const legacyReverse = { ...reverse };
     delete legacyReverse.reverseStyle;
     for (const direction of ["forward", "reverse"] as const) {
-      const jets = travelJets(
-        legacyMain,
-        legacyReverse,
-        LIGHT_FIELD.jets.shipLevels,
-        1,
-        direction,
-      )!;
-      const coreColor = layerColor(
-        jets.layers.find((layer) => layer.name === "core")!,
-        1,
-      );
-      expect(
-        jetTriangles(jets, display(24), 56, 1).some((triangle) => triangle.color === coreColor),
-      ).toBe(true);
+      for (const field of [undefined, LIGHT_FIELD.jets.shipLevels]) {
+        const jets = travelJets(legacyMain, legacyReverse, field, 1, direction)!;
+        const coreColor = layerColor(
+          jets.layers.find((layer) => layer.name === "core")!,
+          1,
+        );
+        expect(
+          jetTriangles(jets, display(24), 56, 1).some((triangle) => triangle.color === coreColor),
+        ).toBe(true);
+        expect(
+          jetTriangles(jets, display(24), 56, 1).some(
+            (triangle) =>
+              triangle.color ===
+              layerColor(
+                jets.layers.find((layer) => layer.name === "outer")!,
+                1,
+              ),
+          ),
+        ).toBe(true);
+      }
     }
   });
 
@@ -118,6 +128,9 @@ describe("small player jet cores", () => {
         1,
       );
       expect(fills.includes(`#${core.toString(16).padStart(6, "0")}`)).toBe(size > 42);
+      const outer = jets.layers.find((layer) => layer.name === "outer")!;
+      const medium = size <= 42 ? outer.colors[0] : layerColor(outer, 1);
+      expect(fills).toContain(`#${medium.toString(16).padStart(6, "0")}`);
       expect(fills.length).toBeGreaterThan(0);
     }
   });
