@@ -592,7 +592,9 @@ it("preserves a moving primary joystick while the canonical Controls root handle
     document.dispatchEvent(f.event("pointerup", f.canvas, f.layout.centre, second));
     const click = f.event("click", f.useButton, f.layout.centre, second);
     f.host.dispatchEvent(click);
-    if (!click.defaultPrevented) {f.useButton.dispatchEvent(click);}
+    if (!click.defaultPrevented) {
+      f.useButton.dispatchEvent(click);
+    }
     expect(click.defaultPrevented).toBe(true);
     expect(f.request).toHaveBeenCalledOnce();
     expect(f.state.sample().move).toEqual(move);
