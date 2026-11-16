@@ -7,12 +7,22 @@ import {
   type ImmediateExchangeOrder,
   quoteExchange,
 } from "../model/exchange.ts";
+import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { createExchangeView } from "./exchange.ts";
 
 const dom = vi.hoisted(() => {
   const mountedRoots = new Set<Node>();
   class Node extends EventTarget {
+    readonly tagName: string;
+    type = "";
+    constructor(tag = "div") {
+      super();
+      this.tagName = tag.toUpperCase();
+      if (tag === "button") {
+        this.type = "button";
+      }
+    }
     nodeType = 1;
     get ownerDocument() {
       return document;
@@ -37,6 +47,18 @@ const dom = vi.hoisted(() => {
     }
     children: Node[] = [];
     parentElement: Node | null = null;
+    closest(selector: string): Node | null {
+      const matches = selector
+        .split(",")
+        .some((part) =>
+          part.trim() === "[hidden]"
+            ? this.hidden
+            : part.trim() === "[inert]"
+              ? this.attributes.inert !== undefined
+              : this.matches(part.trim()),
+        );
+      return matches ? this : (this.parentElement?.closest(selector) ?? null);
+    }
     contains(node: Node): boolean {
       return node === this || this.children.some((child) => child.contains(node));
     }
@@ -64,22 +86,72 @@ const dom = vi.hoisted(() => {
         child.remove();
       }
       this.append(...nodes);
+      if (this.dataset.exchange === "result" && state.corruptResult) {
+        const unbound = new Node("button");
+        unbound.disabled = true;
+        this.append(unbound);
+      }
+    }
+    matches(selector: string): boolean {
+      if (this.nodeType !== 1) {
+        return false;
+      }
+      return selector.split(",").some((part) => {
+        const value = part.trim();
+        if (value === ":disabled") {
+          return this.disabled;
+        }
+        if (value === "button" || value === "img") {
+          return this.tagName === value.toUpperCase();
+        }
+        if (value.startsWith(".")) {
+          return this.className.split(" ").includes(value.slice(1));
+        }
+        if (value === "[data-action]") {
+          return this.dataset.action !== undefined || this.getAttribute("data-action") !== null;
+        }
+        const input = /^input\[type=["'](button|submit|reset)["']\]$/.exec(value);
+        if (input) {
+          return this.tagName === "INPUT" && (this.getAttribute("type") ?? this.type) === input[1];
+        }
+        const role = /^\[role=["']([^"']+)["']\]$/.exec(value);
+        if (role) {
+          return this.getAttribute("role") === role[1];
+        }
+        const action = /^\[data-action=["']([^"']+)["']\]$/.exec(value);
+        return (
+          action !== null && (this.dataset.action ?? this.getAttribute("data-action")) === action[1]
+        );
+      });
+    }
+    querySelectorAll(selector: string): Node[] {
+      return this.children.flatMap((child) => [
+        ...(child.matches(selector) ? [child] : []),
+        ...child.querySelectorAll(selector),
+      ]);
+    }
+    getAttribute(name: string) {
+      return this.attributes[name] ?? null;
     }
     setAttribute(name: string, value: string) {
       this.attributes[name] = value;
     }
   }
-  return { Node, mountedRoots };
+  const state = { corruptFactory: false, corruptResult: false };
+  return { Node, mountedRoots, state };
 });
 vi.mock("./modal.ts", () => ({
   FOCUS_STYLE: "",
   createActions: (actions: { button: InstanceType<typeof dom.Node> }[]) => {
     const node = new dom.Node();
     node.append(...actions.map(({ button }) => button));
+    if (dom.state.corruptFactory) {
+      node.append(new dom.Node("button"));
+    }
     return node;
   },
   createButton: (label: string) => {
-    const node = new dom.Node();
+    const node = new dom.Node("button");
     node.textContent = label;
     return node;
   },
@@ -89,14 +161,27 @@ vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
 }));
 afterEach(() => {
   dom.mountedRoots.clear();
+  dom.state.corruptFactory = false;
+  dom.state.corruptResult = false;
   vi.unstubAllGlobals();
   vi.clearAllMocks();
 });
 
-function fixture() {
-  vi.stubGlobal("document", { createElement: () => new dom.Node() });
-  const root = fixtureActionRoot(new dom.Node());
-  dom.mountedRoots.add(root);
+function fixture(placement: "connected" | "detached" | "unowned" = "connected") {
+  vi.stubGlobal("document", {
+    createElement: (tag: string) => new dom.Node(tag),
+    defaultView: { HTMLElement: dom.Node, Node: dom.Node },
+  });
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
+  const root = new dom.Node();
+  if (placement === "connected") {
+    fixtureActionRoot(root);
+  }
+  if (placement !== "detached") {
+    dom.mountedRoots.add(root);
+  }
+  const foreign = new dom.Node("button");
+  root.append(foreign);
   let balances = { ore: 20, stardust: 100 };
   const commit = vi.fn((order: ImmediateExchangeOrder) => {
     const result = exchangeImmediately(EXCHANGE_RATES, balances, order);
@@ -127,6 +212,7 @@ function fixture() {
     commit,
     nodes,
     onChange,
+    root,
     setBalances: (next: typeof balances) => {
       balances = next;
     },
@@ -206,4 +292,73 @@ describe("immediate fixed Exchange actions", () => {
     expect(f.commit).not.toHaveBeenCalled();
     expect(f.onChange).not.toHaveBeenCalled();
   });
+});
+
+it("rejects incomplete Exchange action construction without auditing other Shop controls", () => {
+  dom.state.corruptFactory = true;
+  expect(() => fixture()).toThrow("no registered action binding");
+  dom.state.corruptFactory = false;
+  const f = fixture();
+  expect(f.root.children[0]!.tagName).toBe("BUTTON");
+  expect(f.commit).not.toHaveBeenCalled();
+  f.view.dispose();
+});
+
+it("audits detached Exchange metadata but rejects a connected section without ownership", () => {
+  expect(() => fixture("unowned")).toThrow("no live action root");
+  const f = fixture("detached");
+  expect(f.view.root.isConnected).toBe(false);
+  expect(f.commit).not.toHaveBeenCalled();
+  f.view.dispose();
+});
+
+it("rejects late unregistered Exchange controls before a transaction", () => {
+  const f = fixture();
+  const unbound = new dom.Node("button");
+  unbound.hidden = true;
+  unbound.disabled = true;
+  (f.view.root as unknown as InstanceType<typeof dom.Node>).append(unbound);
+  const activate = () =>
+    resolveAdaHoldAction(
+      f.root as unknown as HTMLElement,
+      f.action("exchange-buy-1") as unknown as HTMLElement,
+    )!.activate();
+  expect(activate).toThrow("no registered action binding");
+  expect(f.commit).not.toHaveBeenCalled();
+  expect(f.onChange).not.toHaveBeenCalled();
+  expect(f.view.root.hidden).toBe(true);
+  f.view.dispose();
+});
+
+it("audits newly reconciled Exchange result nodes without replaying the committed transaction", () => {
+  const f = fixture();
+  dom.state.corruptResult = true;
+  const button = f.action("exchange-buy-1");
+  const activate = () =>
+    resolveAdaHoldAction(
+      f.root as unknown as HTMLElement,
+      button as unknown as HTMLElement,
+    )!.activate();
+  expect(activate).toThrow("no registered action binding");
+  expect(f.commit).toHaveBeenCalledExactlyOnceWith({ amount: 1, direction: "buy" });
+  expect(f.onChange).toHaveBeenCalledOnce();
+  expect(f.balances()).toEqual({ ore: 21, stardust: 98 });
+  expect(button.focus).not.toHaveBeenCalled();
+  expect(f.view.root.hidden).toBe(true);
+  f.view.dispose();
+});
+
+it("does not rescan unchanged Exchange node graphs during balance refresh", () => {
+  const f = fixture();
+  const queries = vi.spyOn(
+    f.view.root as unknown as InstanceType<typeof dom.Node>,
+    "querySelectorAll",
+  );
+  f.view.render();
+  f.setBalances({ ore: 0, stardust: 0 });
+  f.view.render();
+  expect(queries).not.toHaveBeenCalled();
+  expect(f.action("exchange-buy-1").disabled).toBe(true);
+  expect(f.action("exchange-sell-1").disabled).toBe(true);
+  f.view.dispose();
 });

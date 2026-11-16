@@ -1,7 +1,11 @@
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import { bindAdaAction } from "./actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  bindAdaAction,
+} from "./actionBinding.ts";
 import { type CheatAction, cheatGroups, createCheatSession } from "./cheatActions.ts";
 import { type CheatsSchema, cheatsTree } from "./cheatsTree.ts";
 import { SCROLL } from "./layout/contentCard.ts";
@@ -200,11 +204,20 @@ export function createCheats(
   let open = false;
   let disposed = false;
   let previousFocus: HTMLElement | null = null;
+  const audit = () => {
+    for (const scope of [launcher, modal]) {
+      assertAdaActionMetadata(scope);
+      if (scope.isConnected) {
+        assertAdaActionBindings(scope);
+      }
+    }
+  };
   const setOpen = (value: boolean): void => {
     if (disposed || (value && !session.eligible()) || value === open) {
       return;
     }
     if (value) {
+      audit();
       previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       options.beforeOpen();
     }
@@ -261,6 +274,21 @@ export function createCheats(
     },
     launcher,
   );
+  try {
+    audit();
+  } catch (error) {
+    disposed = true;
+    session.dispose();
+    launcherBinding.dispose();
+    for (const binding of closeBindings) {
+      binding.dispose();
+    }
+    mounted.dispose();
+    parts.dispose();
+    modal.remove();
+    launcher.remove();
+    throw error;
+  }
   modal.addEventListener("pointerdown", (event) => {
     event.stopPropagation();
     if (event.target === modal) {

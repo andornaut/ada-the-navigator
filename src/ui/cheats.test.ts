@@ -7,6 +7,8 @@ import { createCheats } from "./cheats.ts";
 import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
 import { rootPressGuard } from "./pressScope.ts";
 
+const corruption = vi.hoisted(() => ({ factory: false }));
+const mountedRoots = new Set<Element>();
 let installed = false;
 const roots: ReturnType<typeof bindAdaActionRoot>[] = [];
 vi.mock("@andornaut/game-kit/runtime/web/pwa/appWindow", () => ({
@@ -14,9 +16,20 @@ vi.mock("@andornaut/game-kit/runtime/web/pwa/appWindow", () => ({
 }));
 
 class Element extends EventTarget {
+  readonly tagName: string;
+  type = "";
+  constructor(tag = "div") {
+    super();
+    this.tagName = tag.toUpperCase();
+    if (tag === "button") {
+      this.type = "button";
+    }
+  }
   nodeType = 1;
   disabled = false;
-  isConnected = true;
+  get isConnected(): boolean {
+    return this.parent?.isConnected ?? mountedRoots.has(this);
+  }
   get ownerDocument() {
     return document;
   }
@@ -41,8 +54,43 @@ class Element extends EventTarget {
   getAttribute(name: string) {
     return this.attributes.get(name) ?? null;
   }
-  matches(selector: string) {
-    return selector === ":disabled" && this.disabled;
+  matches(selector: string): boolean {
+    if (this.nodeType !== 1) {
+      return false;
+    }
+    return selector.split(",").some((part) => {
+      const value = part.trim();
+      if (value === ":disabled") {
+        return this.disabled;
+      }
+      if (value === "button" || value === "img") {
+        return this.tagName === value.toUpperCase();
+      }
+      if (value.startsWith(".")) {
+        return this.className.split(" ").includes(value.slice(1));
+      }
+      if (value === "[data-action]") {
+        return this.dataset.action !== undefined || this.getAttribute("data-action") !== null;
+      }
+      const input = /^input\[type=["'](button|submit|reset)["']\]$/.exec(value);
+      if (input) {
+        return this.tagName === "INPUT" && (this.getAttribute("type") ?? this.type) === input[1];
+      }
+      const role = /^\[role=["']([^"']+)["']\]$/.exec(value);
+      if (role) {
+        return this.getAttribute("role") === role[1];
+      }
+      const action = /^\[data-action=["']([^"']+)["']\]$/.exec(value);
+      return (
+        action !== null && (this.dataset.action ?? this.getAttribute("data-action")) === action[1]
+      );
+    });
+  }
+  querySelectorAll(selector: string): Element[] {
+    return this.children.flatMap((child) => [
+      ...(child.matches(selector) ? [child] : []),
+      ...child.querySelectorAll(selector),
+    ]);
   }
   readonly attributes = new Map<string, string>();
   focus() {}
@@ -96,14 +144,20 @@ vi.mock("./modal.ts", () => ({
     row.append(...items.map((item) => item.button));
     return row;
   },
-  createButton: (label: string) => Object.assign(new Element(), { textContent: label }),
+  createButton: (label: string) => Object.assign(new Element("button"), { textContent: label }),
   createCard: () => {
     const body = new Element(),
       card = new Element(),
-      close = new Element(),
+      close = new Element("button"),
       frame = new Element();
     card.append(body);
     frame.append(card, close);
+    if (corruption.factory) {
+      const unbound = new Element("button");
+      unbound.hidden = true;
+      unbound.disabled = true;
+      frame.append(unbound);
+    }
     return { body, card, close, dispose: vi.fn(), fit: vi.fn(), frame };
   },
   setFooterAction: (action: string, row: Element) => {
@@ -113,6 +167,8 @@ vi.mock("./modal.ts", () => ({
 
 beforeEach(() => {
   installed = false;
+  corruption.factory = false;
+  mountedRoots.clear();
   vi.stubGlobal("HTMLElement", Element);
   const viewport = Object.assign(new EventTarget(), {
     HTMLElement: Element,
@@ -126,7 +182,7 @@ beforeEach(() => {
   vi.stubGlobal(
     "document",
     Object.assign(new EventTarget(), {
-      createElement: () => new Element(),
+      createElement: (tag: string) => new Element(tag),
       defaultView: viewport,
       hidden: false,
     }),
@@ -145,6 +201,7 @@ function setup(
   footer?: { readonly intent: "back" | "close"; readonly label: string },
   actionList: readonly CheatAction[] = [],
   hold = false,
+  placement: "connected" | "detached" | "unowned" = "connected",
 ) {
   const root = new Element();
   if (hold) {
@@ -159,19 +216,26 @@ function setup(
         html,
       ),
     );
-  } else {
+  } else if (placement === "connected") {
     fixtureActionRoot(root);
+  }
+  if (placement !== "detached") {
+    mountedRoots.add(root);
   }
   const actions = new Element();
   root.append(actions);
-  const close = Object.assign(new Element(), { className: "ada-primary", textContent: "Close" });
+  const close = Object.assign(new Element("button"), {
+    className: "ada-primary",
+    textContent: "Close",
+  });
   actions.append(close);
   const run = {};
   const changed = vi.fn();
   const onSave = vi.fn();
+  const beforeOpen = vi.fn();
   const cheats = createCheats(root as unknown as HTMLElement, actions as unknown as HTMLElement, {
     actions: actionList,
-    beforeOpen: vi.fn(),
+    beforeOpen,
     canExecute: () => true,
     ...(footer ? { footer } : {}),
     labels: {
@@ -188,7 +252,7 @@ function setup(
     restoreFocus: vi.fn(),
     run: () => run,
   });
-  return { actions, changed, cheats, close, onSave, root };
+  return { actions, beforeOpen, changed, cheats, close, onSave, root };
 }
 
 describe("Settings cheat launcher", () => {
@@ -224,6 +288,7 @@ it("keeps group order, executes actions once and unregisters on disposal", async
   const root = new Element(),
     launcher = new Element();
   fixtureActionRoot(root);
+  mountedRoots.add(root);
   root.append(launcher);
   const save = vi.fn(),
     runEffect = vi.fn(),
@@ -429,4 +494,60 @@ it("holds launcher and execute once while preserving busy and deferred installed
   button.dispatchEvent(new Event("click"));
   expect(execute).toHaveBeenCalledTimes(2);
   expect(f.changed.mock.calls).toEqual([[true], [false]]);
+});
+
+it("rejects an unregistered hidden disabled control in the completed Cheats modal", () => {
+  corruption.factory = true;
+  expect(() => setup()).toThrow("no registered action binding");
+});
+
+it("rechecks Cheats before opening while ignoring unowned Settings siblings", () => {
+  const f = setup();
+  const modal = f.root.children.find((node) => node.className === "ada-modal")!;
+  const unbound = new Element("button");
+  unbound.hidden = true;
+  unbound.setAttribute("aria-disabled", "true");
+  modal.append(unbound);
+  const launcher = f.actions.children[0]!;
+  const activate = () =>
+    resolveAdaHoldAction(
+      f.root as unknown as HTMLElement,
+      launcher as unknown as HTMLElement,
+    )!.activate();
+  expect(() => activate()).toThrow("no registered action binding");
+  expect(f.cheats.isOpen()).toBe(false);
+  expect(f.beforeOpen).not.toHaveBeenCalled();
+  expect(f.changed).not.toHaveBeenCalled();
+  unbound.remove();
+  activate();
+  expect(f.cheats.isOpen()).toBe(true);
+  expect(f.beforeOpen).toHaveBeenCalledOnce();
+  expect(
+    resolveAdaHoldAction(f.root as unknown as HTMLElement, f.close as unknown as HTMLElement),
+  ).toBeNull();
+  f.cheats.dispose();
+});
+
+it("accepts detached Cheats metadata but rejects a connected launcher without ownership", () => {
+  expect(() => setup(undefined, [], false, "unowned")).toThrow("no live action root");
+  const f = setup(undefined, [], false, "detached");
+  expect(f.cheats.isOpen()).toBe(false);
+  expect(f.actions.isConnected).toBe(false);
+  f.cheats.dispose();
+});
+
+it("does not rescan unchanged Cheats node graphs during eligibility refresh", () => {
+  const f = setup();
+  const modal = f.root.children.find((node) => node.className === "ada-modal")!;
+  const launcher = f.actions.children[0]!;
+  const modalQueries = vi.spyOn(modal, "querySelectorAll");
+  const launcherQueries = vi.spyOn(launcher, "querySelectorAll");
+  f.cheats.refresh();
+  installed = true;
+  f.cheats.refresh();
+  installed = false;
+  f.cheats.refresh();
+  expect(modalQueries).not.toHaveBeenCalled();
+  expect(launcherQueries).not.toHaveBeenCalled();
+  f.cheats.dispose();
 });

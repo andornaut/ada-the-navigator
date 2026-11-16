@@ -8,7 +8,11 @@ import {
   type ImmediateExchangeOrder,
   type ImmediateExchangeResult,
 } from "../model/exchange.ts";
-import { bindAdaAction } from "./actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  bindAdaAction,
+} from "./actionBinding.ts";
 import { type ExchangeActionData, type ExchangeSchema, exchangeTree } from "./exchangeTree.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -50,12 +54,24 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
             : value.reason === "stale"
               ? EXCHANGE_COPY.stale
               : EXCHANGE_COPY.unavailable;
+  const audit = () => {
+    try {
+      assertAdaActionMetadata(root);
+      if (root.isConnected) {
+        assertAdaActionBindings(root);
+      }
+    } catch (error) {
+      root.hidden = true;
+      throw error;
+    }
+  };
   const render = () => {
     for (const { button, order } of actions) {
       button.disabled = port.preview(order).kind === "refused";
     }
   };
   const execute = (button: HTMLButtonElement, order: ImmediateExchangeOrder) => {
+    audit();
     const outcome = port.exchangeImmediately(order);
     if (outcome.kind === "exchanged") {
       const directionLabel =
@@ -73,6 +89,7 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
         }),
       );
       onChange();
+      audit();
     }
     status.textContent = refusal(outcome);
     render();
@@ -131,6 +148,17 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
     },
     exchangeTree({ buy: data("buy"), sell: data("sell") }),
   );
+  try {
+    audit();
+  } catch (error) {
+    disposed = true;
+    for (const binding of bindings) {
+      binding.dispose();
+    }
+    bindings.length = 0;
+    mounted.dispose();
+    throw error;
+  }
   render();
   return {
     back: () => false,
