@@ -1,4 +1,5 @@
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
+import type { ControlAvailability } from "@andornaut/game-kit/runtime/ui/controlPresentation";
 import {
   HIT_RULE,
   hitAround,
@@ -19,6 +20,7 @@ import {
 } from "../model/map.ts";
 import { shipHeading } from "../model/nose.ts";
 import type { Vec } from "../model/types.ts";
+import { bindAdaAction } from "./actionBinding.ts";
 import { cardPages } from "./layout/cardPages.ts";
 import { CARD_SLICE, FOCUS_RING, TEXT_BUTTON } from "./layout/controls.ts";
 import { font, pixels, safeEdge, slice, units, VIEW_PROPERTIES } from "./layout/css.ts";
@@ -78,7 +80,7 @@ import {
 import { drawMapSurveyOutline } from "./mapSurveyOutline.ts";
 import { createButton, createCard, TEXT_TOKENS } from "./modal.ts";
 import { galaxiesAvailable, mapShowsEmpty } from "./pause.ts";
-import { enterPressView } from "./pressScope.ts";
+import { enterPressView, inCurrentView } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
 import { hudDiscStyle } from "./weapons.ts";
 
@@ -926,6 +928,32 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   screen.setAttribute("aria-modal", "true");
   screen.setAttribute("aria-label", labels.map);
   screen.hidden = true;
+  let disposed = false;
+  const actionBindings = new Set<ReturnType<typeof bindAdaAction>>();
+  const registerAction = (action: { readonly run: () => void }, element: HTMLButtonElement) => {
+    const availability = (): ControlAvailability =>
+      element.disabled || element.closest("[hidden], [inert]")
+        ? { kind: "omitted" }
+        : { kind: "available" };
+    const binding = bindAdaAction(
+      {
+        click: { availability, run: action.run },
+        current: () => !disposed && !screen.hidden && inCurrentView(root, element),
+        slopPx: () => MAP_SCREEN.dragThreshold * readViewUnit(screen),
+      },
+      element,
+    );
+    actionBindings.add(binding);
+    return binding;
+  };
+  const forgetAction = (binding: ReturnType<typeof bindAdaAction> | undefined) => {
+    if (binding) {
+      binding.dispose();
+      actionBindings.delete(binding);
+    }
+  };
+  const chipBindings = new Map<string, ReturnType<typeof bindAdaAction>>();
+  const questBindings: ReturnType<typeof bindAdaAction>[] = [];
   const fog = document.createElement("canvas");
   fog.className = "ada-map-fog";
   fog.setAttribute("aria-hidden", "true");
@@ -1384,6 +1412,8 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     const ids = new Set(shown.map(({ place }) => place.id));
     for (const [id, chip] of chips) {
       if (!ids.has(id)) {
+        forgetAction(chipBindings.get(id));
+        chipBindings.delete(id);
         chip.remove();
         chips.delete(id);
       }
@@ -1394,7 +1424,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
         chip = document.createElement("button");
         chip.type = "button";
         const id = place.id;
-        chip.addEventListener("click", () => select(id));
+        chipBindings.set(id, registerAction({ run: () => select(id) }, chip));
         chip.addEventListener("focus", () => {
           if (view && state) {
             const target = places().find((entry) => entry.id === id);
@@ -1507,35 +1537,43 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     const { fit } = layout();
     return { x: fit.x + fit.width / 2, y: fit.y + fit.height / 2 };
   };
-  closeButton.addEventListener("click", () => options.onClose());
-  toolButtons
-    .get("zoomIn")!
-    .addEventListener("click", () =>
-      zoom(MAP_SCREEN.zoomStep, fitCentre(), toolButtons.get("zoomIn")),
-    );
-  toolButtons
-    .get("zoomOut")!
-    .addEventListener("click", () =>
-      zoom(1 / MAP_SCREEN.zoomStep, fitCentre(), toolButtons.get("zoomOut")),
-    );
-  toolButtons.get("recentre")!.addEventListener("click", () => {
-    if (view && state) {
-      view = recentreView(layout().inner, limit(), state.map.player, view);
-      render();
-    }
-  });
-  travel.addEventListener("click", () => {
-    const place = selectedPlace();
-    const now = travelNow();
-    if (!place || !now.offered) {
-      return;
-    }
-    if (now.reason !== null) {
-      refuse(travel, options.reducedMotion());
-      return;
-    }
-    options.onTravel(place.id);
-  });
+  registerAction({ run: () => options.onClose() }, closeButton);
+  registerAction(
+    { run: () => zoom(MAP_SCREEN.zoomStep, fitCentre(), toolButtons.get("zoomIn")) },
+    toolButtons.get("zoomIn")!,
+  );
+  registerAction(
+    { run: () => zoom(1 / MAP_SCREEN.zoomStep, fitCentre(), toolButtons.get("zoomOut")) },
+    toolButtons.get("zoomOut")!,
+  );
+  registerAction(
+    {
+      run: () => {
+        if (view && state) {
+          view = recentreView(layout().inner, limit(), state.map.player, view);
+          render();
+        }
+      },
+    },
+    toolButtons.get("recentre")!,
+  );
+  registerAction(
+    {
+      run: () => {
+        const place = selectedPlace();
+        const now = travelNow();
+        if (!place || !now.offered) {
+          return;
+        }
+        if (now.reason !== null) {
+          refuse(travel, options.reducedMotion());
+          return;
+        }
+        options.onTravel(place.id);
+      },
+    },
+    travel,
+  );
   // The Quests modal: each line, built as it opens; a mapped line's press centres and selects its
   // chip. The X, an outside tap, back and Escape close it, leaving the view and selection.
   const questsOpen = () => !questsModal.hidden;
@@ -1649,18 +1687,31 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       }
     }
   };
-  questPrevious.addEventListener("click", () => {
-    questPageIndex = Math.max(0, questPageIndex - 1);
-    showQuestPage(true);
-  });
-  questNext.addEventListener("click", () => {
-    questPageIndex = Math.min(questPageBlocks.length - 1, questPageIndex + 1);
-    showQuestPage(true);
-  });
+  registerAction(
+    {
+      run: () => {
+        questPageIndex = Math.max(0, questPageIndex - 1);
+        showQuestPage(true);
+      },
+    },
+    questPrevious,
+  );
+  registerAction(
+    {
+      run: () => {
+        questPageIndex = Math.min(questPageBlocks.length - 1, questPageIndex + 1);
+        showQuestPage(true);
+      },
+    },
+    questNext,
+  );
   let questRevision = "";
   const openQuests = (preservePage = false) => {
     const lines = state?.map.quests ?? [];
     questRevision = JSON.stringify([lines, places()]);
+    for (const binding of questBindings.splice(0)) {
+      forgetAction(binding);
+    }
     questLines.replaceChildren(
       ...lines.map((line) => {
         const entry = document.createElement("section");
@@ -1714,7 +1765,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
               button.setAttribute("aria-label", `${labels.questLocate}: ${label.textContent}`);
             }
             button.replaceChildren(chip, label);
-            button.addEventListener("click", () => goTo(place));
+            questBindings.push(registerAction({ run: () => goTo(place) }, button));
             endpoints.append(button);
           }
           if (line.reward) {
@@ -1756,17 +1807,23 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     paginateQuests();
     focusTarget(questLines.querySelector<HTMLButtonElement>("button") ?? questsCard.close);
   };
-  questsButton.addEventListener("click", () =>
-    options.onQuests ? options.onQuests() : openQuests(),
+  registerAction(
+    { run: () => (options.onQuests ? options.onQuests() : openQuests()) },
+    questsButton,
   );
-  questsCard.close.addEventListener("click", closeQuests);
-  galaxies.addEventListener("click", () => {
-    if (!galaxiesAvailable(state?.inDanger ?? false)) {
-      refuse(galaxies, options.reducedMotion());
-      return;
-    }
-    options.onGalaxies();
-  });
+  registerAction({ run: closeQuests }, questsCard.close);
+  registerAction(
+    {
+      run: () => {
+        if (!galaxiesAvailable(state?.inDanger ?? false)) {
+          refuse(galaxies, options.reducedMotion());
+          return;
+        }
+        options.onGalaxies();
+      },
+    },
+    galaxies,
+  );
 
   // Field presses: a press within dragThreshold selects what pressedArea gives; more pans; two
   // pointers pinch. The header, tools and panel take their own presses first.
@@ -1941,6 +1998,16 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     /** Closes the Quests modal, back to the map. */
     closeQuests,
     dispose(): void {
+      if (disposed) {
+        return;
+      }
+      disposed = true;
+      for (const binding of actionBindings) {
+        binding.dispose();
+      }
+      actionBindings.clear();
+      chipBindings.clear();
+      questBindings.length = 0;
       leaveQuestsView?.();
       leaveQuestsView = undefined;
       renderQueue.dispose();

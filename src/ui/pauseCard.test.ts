@@ -350,9 +350,12 @@ it("keeps a standalone Map footer Close and invokes its direct caller once", () 
   });
   const footer = root.querySelectorAll().find((node) => node.dataset.action === "map-close")!;
   expect(footer.textContent).toBe("Close");
+  map.open();
   footer.click();
   expect(onClose).toHaveBeenCalledOnce();
   map.dispose();
+  footer.click();
+  expect(onClose).toHaveBeenCalledOnce();
   pause.dispose();
 });
 
@@ -360,16 +363,21 @@ describe("Paused card", () => {
   it("Back returns the local map to Pause and keeps held input blocked until Resume", () => {
     const original = mapUI.createMapScreen;
     let mapOpen = false;
-    const spy = vi.spyOn(mapUI, "createMapScreen").mockImplementation((...args) => ({
-      ...original(...args),
-      close: () => {
-        mapOpen = false;
-      },
-      isOpen: () => mapOpen,
-      open: () => {
-        mapOpen = true;
-      },
-    }));
+    const spy = vi.spyOn(mapUI, "createMapScreen").mockImplementation((...args) => {
+      const map = original(...args);
+      return {
+        ...map,
+        close: () => {
+          map.element.hidden = true;
+          mapOpen = false;
+        },
+        isOpen: () => mapOpen,
+        open: () => {
+          map.element.hidden = false;
+          mapOpen = true;
+        },
+      };
+    });
     try {
       const controls = new ControlState();
       controls.keyDown("KeyD");
