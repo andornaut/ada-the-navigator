@@ -1163,7 +1163,9 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     panel.hidden = rendered.sleep === true;
     const buttons = fill(rendered);
     place(base, rendered.background, true);
-    if (focused?.closest(".ada-story-panel")) {
+    if (focused === previous && !previous.hidden) {
+      focusTarget(previous);
+    } else if (focused?.closest(".ada-story-panel")) {
       const choice = focused instanceof HTMLElement ? focused.dataset.choice : undefined;
       focusTarget(choice === undefined ? next : (buttons[Number(choice)] ?? next));
     }

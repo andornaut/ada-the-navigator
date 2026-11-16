@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { compileFunction } from "node:vm";
 
 import { describe, expect, it } from "vitest";
 
@@ -360,3 +361,56 @@ it("keeps overflowing chapter choices visible without occupying Skip or displaci
     "position:absolute",
   );
 });
+
+it.each([true, false])(
+  "preserves refit focus for HUD Previous without stealing unrelated focus: %s",
+  (focusPrevious) => {
+    class FocusNode {
+      hidden = false;
+      dataset = {};
+      closest() {
+        return null;
+      }
+    }
+    const previous = new FocusNode();
+    const outside = new FocusNode();
+    const body = new FocusNode();
+    const document = { activeElement: focusPrevious ? previous : outside };
+    const restored: FocusNode[] = [];
+    const bindings = {
+      HTMLElement: FocusNode,
+      backdropShown: null,
+      base: {},
+      document,
+      fill: () => [],
+      focusTarget: (node: FocusNode) => {
+        restored.push(node);
+        document.activeElement = node;
+      },
+      measureRun: () => {
+        if (document.activeElement === previous) {
+          document.activeElement = body;
+        }
+      },
+      measuredRun: "run",
+      next: new FocusNode(),
+      panel: { hidden: false },
+      place() {},
+      placePanelContent() {},
+      previous,
+      rendered: { background: "grandmaGarden", sleep: false },
+    };
+    const source = readFileSync(new URL("./storybook.ts", import.meta.url), "utf8");
+    const start = source.indexOf("  const relayout = () => {");
+    const end = source.indexOf("  window.addEventListener(VIEW_SCALE_EVENT, relayout)", start);
+    expect(start).toBeGreaterThan(0);
+    expect(end).toBeGreaterThan(start);
+    const relayout = compileFunction(
+      `${source.slice(start, end)} return relayout;`,
+      Object.keys(bindings),
+    )(...Object.values(bindings)) as () => void;
+    relayout();
+    expect(restored).toEqual(focusPrevious ? [previous] : []);
+    expect(document.activeElement).toBe(focusPrevious ? previous : outside);
+  },
+);
