@@ -54,6 +54,7 @@ const appActions = bindAdaActionRoot(
   {
     allowNonPrimaryTouch: true,
     guard: rootPressGuard(ui),
+    pointerRelease: { resolvePointer: () => undefined },
     requiredReady,
     subscribeRequired: (invalidate) => requiredLoading.subscribe(invalidate),
   },

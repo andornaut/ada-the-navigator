@@ -346,6 +346,8 @@ it("owns one App root before game construction with the actual required registry
   const [options, root] = boot.appRoot.mock.calls[0] as [AdaActionRootOptions, HTMLElement];
   expect(root).toBe(boot.app);
   expect(options.allowNonPrimaryTouch).toBe(true);
+  expect(options.pointerRelease?.resolvePointer).toBeTypeOf("function");
+  expect(Reflect.apply(options.pointerRelease!.resolvePointer, undefined, [])).toBeUndefined();
   expect(options.guard).toBe(boot.appGuard);
   expect(options.requiredReady).toBe(requiredReady);
   const subscribe = vi.spyOn(requiredLoading, "subscribe");
