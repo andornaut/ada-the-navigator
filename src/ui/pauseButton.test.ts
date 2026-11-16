@@ -2,6 +2,7 @@ import { afterEach, expect, it, vi } from "vitest";
 
 import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
 import { activateNavigation, createNavigationButton } from "./navigationButton.ts";
+import { enterPressView } from "./pressScope.ts";
 class Element extends EventTarget {
   dataset: Record<string, string> = {};
   className = "";
@@ -148,10 +149,22 @@ it("holds the actual navigation button once and suppresses release click using t
   vi.advanceTimersByTime(500);
   expect(menu).toHaveBeenCalledOnce();
   button.hidden = false;
+  const dialog = new Element(document);
+  root.append(dialog);
+  const leave = enterPressView(root as unknown as HTMLElement, dialog as unknown as HTMLElement);
+  down();
+  vi.advanceTimersByTime(500);
+  expect(menu).toHaveBeenCalledOnce();
+  leave();
   const keyboard = new Event("click");
   button.dispatchEvent(keyboard);
   expect(menu).toHaveBeenCalledTimes(2);
+  const remove = vi.spyOn(button, "removeEventListener");
   navigation.dispose();
+  for (const type of ["click", "pointerdown", "pointerup", "pointercancel", "pointerleave"]) {
+    expect(remove).toHaveBeenCalledWith(type, expect.any(Function));
+  }
+  expect(vi.getTimerCount()).toBe(0);
   button.dispatchEvent(new Event("click"));
   expect(menu).toHaveBeenCalledTimes(2);
   attachment.dispose();

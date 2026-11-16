@@ -883,6 +883,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       }
       disposed = true;
       actionRoot.dispose();
+      navigation.dispose();
       stopPointers();
       desktopBinding.dispose();
       state.setEnabled(false);
