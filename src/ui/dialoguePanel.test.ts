@@ -4,9 +4,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CAST, castSheet } from "../data/cast.ts";
 import { CONTENT } from "../data/content.ts";
+import { resolveAdaHoldAction } from "./actionBinding.ts";
+import { registerAdaActionRoot } from "./actionRegistry.ts";
 import { createConversationBox, createInteractionCard } from "./conversation.ts";
 import { createDialoguePanel } from "./dialoguePanel.ts";
 import { enterPressView } from "./pressScope.ts";
+import * as refusal from "./refusal.ts";
 import { STORY_PORTRAITS, storyPortrait, storyPortraitFrame, storyTabColour } from "./storybook.ts";
 
 class Element {
@@ -50,6 +53,14 @@ class Element {
   };
   readonly dataset: Record<string, string> = {};
   hidden = false;
+  disabled = false;
+  inert = false;
+  closest(selector: string): Element | null {
+    return (selector.includes("[hidden]") && this.hidden) ||
+      (selector.includes("[inert]") && this.inert)
+      ? this
+      : (this.parent?.closest(selector) ?? null);
+  }
   readonly listeners = new Map<string, ((event: Partial<PointerEvent>) => void)[]>();
   readonly style: Record<string, string> = {};
   textContent = "";
@@ -127,12 +138,18 @@ class Element {
     this.attributes.set(name, value);
   }
 }
-afterEach(() => vi.unstubAllGlobals());
-const setup = () =>
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+const setup = () => {
   vi.stubGlobal("document", {
     activeElement: null,
     createElement: (tag: string) => new Element(tag),
+    defaultView: Object.assign(new EventTarget(), { HTMLElement: Element, Node: Element }),
   });
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
+};
 
 describe("shared Earth and space dialogue presentation", () => {
   it("resolves every authored cast member to their own existing sheet and tab", () => {
@@ -498,4 +515,139 @@ it("uses the existing Use close callback only for a current backdrop tap", () =>
   click();
   expect(close).toHaveBeenCalledOnce();
   interaction.dispose();
+});
+
+it("registers native material choices with default hold dispatch, live callbacks and redraw cleanup", () => {
+  setup();
+  const parent = new Element("div"),
+    options = { choose: vi.fn(), close: vi.fn(), skip: vi.fn() };
+  const interaction = createInteractionCard(parent as unknown as HTMLElement, options);
+  const resolve = (node: Element) =>
+    resolveAdaHoldAction(parent as unknown as HTMLElement, node as unknown as EventTarget);
+  let permitted = true;
+  const stopRoot = registerAdaActionRoot(
+    { permits: () => permitted },
+    parent as unknown as HTMLElement,
+  );
+  try {
+    interaction.show(1, {
+      choices: [
+        { id: "accept", label: "Accept" },
+        { id: "decline", label: "Decline" },
+      ],
+      context: "test-decision",
+      text: "Decision",
+      title: "Rivet",
+    });
+    const choices = parent.all().find((node) => node.className === "ada-story-choices")!;
+    const accept = choices.children[0]!,
+      binding = resolve(accept)!;
+    expect(choices.children.map((node) => node.textContent)).toEqual(["Accept", "Decline"]);
+    expect(binding.hold).toBeUndefined();
+    const current = vi.fn(() => expect(parent.contains(accept)).toBe(true));
+    options.choose = current;
+    permitted = false;
+    binding.activate();
+    expect(current).not.toHaveBeenCalled();
+    permitted = true;
+    binding.activate();
+    expect(current).toHaveBeenCalledExactlyOnceWith("accept");
+    expect(resolve(accept)).toBeNull();
+    binding.activate();
+    accept.click();
+    expect(current).toHaveBeenCalledOnce();
+    const skip = parent.all().find((node) => node.dataset.action === "dialogue-skip")!;
+    expect(resolve(skip)!.available()).toBe(false);
+    resolve(skip)!.activate();
+    expect(options.skip).not.toHaveBeenCalled();
+  } finally {
+    interaction.dispose();
+    stopRoot();
+  }
+});
+
+it("keeps the original refusal callback then redraw and denies native disabled actions", () => {
+  setup();
+  const parent = new Element("div"),
+    choose = vi.fn();
+  const cue = vi.spyOn(refusal, "refuse").mockReturnValue(() => {});
+  const interaction = createInteractionCard(parent as unknown as HTMLElement, {
+    choose,
+    close: vi.fn(),
+    skip: vi.fn(),
+  });
+  try {
+    interaction.show(1, {
+      choices: [
+        { id: "accept", label: "Accept", refused: true },
+        { id: "decline", label: "Decline" },
+      ],
+      context: "test-decision",
+      text: "Decision",
+      title: "Rivet",
+    });
+    const choices = parent.all().find((node) => node.className === "ada-story-choices")!,
+      button = choices.children[0]!;
+    const binding = resolveAdaHoldAction(
+      parent as unknown as HTMLElement,
+      button as unknown as EventTarget,
+    )!;
+    button.disabled = true;
+    binding.activate();
+    expect(cue).not.toHaveBeenCalled();
+    button.disabled = false;
+    button.click();
+    expect(cue).toHaveBeenCalledExactlyOnceWith(choices, false);
+    expect(choose).not.toHaveBeenCalled();
+    expect(
+      resolveAdaHoldAction(parent as unknown as HTMLElement, button as unknown as EventTarget),
+    ).toBeNull();
+    expect(choices.children.map((node) => node.textContent)).toEqual(["Accept", "Decline"]);
+  } finally {
+    interaction.dispose();
+  }
+});
+
+it("binds native Skip and Close once with current callbacks and disposes their retained nodes", () => {
+  setup();
+  const parent = new Element("div"),
+    options = { choose: vi.fn(), close: vi.fn(), skip: vi.fn() };
+  const interaction = createInteractionCard(parent as unknown as HTMLElement, options);
+  const resolve = (node: Element) =>
+    resolveAdaHoldAction(parent as unknown as HTMLElement, node as unknown as EventTarget);
+  interaction.show(1, {
+    choices: [{ id: "continue", label: CONTENT.labels.next! }],
+    context: "deliveryComplete",
+    text: "",
+    title: "Rivet",
+  });
+  const skip = parent.all().find((node) => node.dataset.action === "dialogue-skip")!,
+    close = parent.all().find((node) => node.dataset.action === "conversation-close")!;
+  const replacement = vi.fn();
+  options.skip = replacement;
+  expect(resolve(skip)!.hold).toBeUndefined();
+  resolve(skip)!.activate();
+  expect(replacement).toHaveBeenCalledOnce();
+  const closeCallback = vi.fn();
+  options.close = closeCallback;
+  const captured = resolve(close)!;
+  interaction.show(1, null);
+  expect(captured.available()).toBe(false);
+  captured.activate();
+  expect(closeCallback).not.toHaveBeenCalled();
+  interaction.show(1, {
+    choices: [{ id: "continue", label: CONTENT.labels.next! }],
+    context: "deliveryComplete",
+    text: "",
+    title: "Rivet",
+  });
+  captured.activate();
+  expect(closeCallback).toHaveBeenCalledOnce();
+  interaction.dispose();
+  expect(resolve(skip)).toBeNull();
+  expect(resolve(close)).toBeNull();
+  skip.click();
+  close.click();
+  expect(closeCallback).toHaveBeenCalledOnce();
+  expect(replacement).toHaveBeenCalledOnce();
 });

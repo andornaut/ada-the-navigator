@@ -4,6 +4,7 @@ import { CONTROL_WORDS } from "../data/controlWords.ts";
 import { type Mood, type Speaker } from "../data/conversations.ts";
 import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
 import { InteractionConversation, interactionCopy } from "../model/conversations.ts";
+import { bindAdaAction } from "./actionBinding.ts";
 import { createDialoguePanel, DIALOGUE_PANEL_STYLE } from "./dialoguePanel.ts";
 import { COMPACT_PORTRAITS, portraitFrame, TAB_COLOURS } from "./dialoguePortraits.ts";
 import { enterPressView } from "./pressScope.ts";
@@ -15,6 +16,7 @@ export {
   TAB_COLOURS,
 } from "./dialoguePortraits.ts";
 import { controlHelpText, createControlHelp } from "./controlHelp.ts";
+import { SCROLL } from "./layout/contentCard.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { font, units, VIEW_HOST_ID } from "./layout/css.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -338,21 +340,44 @@ export function createInteractionCard(
   card.card.dataset.dialog = "conversation";
   modal.append(card.frame);
   parent.append(modal);
+  let disposed = false;
+  const bindAction = (button: HTMLButtonElement, run: () => void) =>
+    bindAdaAction(
+      {
+        click: {
+          availability: () =>
+            button.disabled || button.closest("[hidden], [inert]")
+              ? { kind: "omitted" }
+              : { kind: "available" },
+          run,
+        },
+        current: () => !disposed && button.isConnected,
+        slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
+      },
+      button,
+    );
+  let actions: ReturnType<typeof bindAdaAction>[] = [];
   let leaveView: (() => void) | undefined;
   const state = new InteractionConversation();
   let signature = "";
   const draw = (): void => {
     const line = state.line;
     card.showLine(line?.speaker, line?.text ?? "");
+    for (const action of actions) {
+      action.dispose();
+    }
+    actions = [];
     card.choices.replaceChildren();
     card.controls.replaceChildren();
     const add = (label: string, callback: () => void, choice = false, primary = false) => {
       const button = createButton(label, primary ? "primary" : "secondary");
       button.classList.add("ada-story-button");
-      button.addEventListener("click", () => {
-        callback();
-        draw();
-      });
+      actions.push(
+        bindAction(button, () => {
+          callback();
+          draw();
+        }),
+      );
       (choice ? card.choices : card.controls).append(button);
     };
     for (const [index, topic] of state.topics.entries()) {
@@ -386,7 +411,7 @@ export function createInteractionCard(
       card.controls.querySelector<HTMLButtonElement>("button")
     )?.focus({ preventScroll: true });
   };
-  card.skip.addEventListener("click", () => {
+  const skipAction = bindAction(card.skip, () => {
     if (state.atChoice) {
       return;
     }
@@ -402,7 +427,7 @@ export function createInteractionCard(
     options.close();
     draw();
   };
-  card.close.addEventListener("click", close);
+  const closeAction = bindAction(card.close, close);
   modal.addEventListener("keydown", (event) => {
     if (event.key !== "Tab") {
       return;
@@ -422,6 +447,11 @@ export function createInteractionCard(
   return {
     back: close,
     dispose() {
+      disposed = true;
+      for (const action of [skipAction, closeAction, ...actions]) {
+        action.dispose();
+      }
+      actions = [];
       leaveView?.();
       leaveView = undefined;
       card.dispose();
