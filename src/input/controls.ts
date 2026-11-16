@@ -57,7 +57,7 @@ import { createViewScaleBridge, type PlayLayout } from "../ui/layout/viewScale.t
 import { createMenuCard } from "../ui/menuCard.ts";
 import { activateNavigation, createNavigationButton } from "../ui/navigationButton.ts";
 import { createPauseCards, type PauseLabels, type PauseState } from "../ui/pauseCard.ts";
-import { rootPressGuard } from "../ui/pressScope.ts";
+import { inCurrentView, rootPressGuard } from "../ui/pressScope.ts";
 import { createResourceCard } from "../ui/resourceCard.ts";
 import {
   createSettings,
@@ -425,9 +425,10 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const modalOpen = (): boolean => navigationCovered() || pause.isOpen();
   const syncNavigationEntry = () => {
     navigation.setMode(pausable && !pause.mapOpen() ? "pause" : "menu");
-    const mapOnly = pause.mapOpen() && !navigationCovered();
+    const mapOnly =
+      pause.mapOpen() && !navigationCovered() && inCurrentView(settings.root, pauseButton);
     pauseButton.hidden = false;
-    pauseButton.inert = modalOpen() && !mapOnly;
+    pauseButton.inert = !inCurrentView(settings.root, pauseButton) || (modalOpen() && !mapOnly);
   };
   function syncModal(): void {
     const open = modalOpen();

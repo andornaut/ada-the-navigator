@@ -26,7 +26,7 @@ function actual(name: string): ts.ArrowFunction {
   }
   return found;
 }
-function render(enabled: boolean, covered: boolean, coarse = true, map = false) {
+function render(enabled: boolean, covered: boolean, coarse = true, map = false, foreground = true) {
   const target = { hidden: false, inert: false };
   const button = { hidden: false, inert: false };
   const navigation = { setMode: vi.fn() };
@@ -41,6 +41,7 @@ function render(enabled: boolean, covered: boolean, coarse = true, map = false) 
     context: { action: "dock" },
     desktopBinding: { active: () => false, touchActive: () => false },
     enabled,
+    inCurrentView: () => foreground,
     modalOpen: () => covered,
     navigation,
     navigationCovered: () => covered && !map,
@@ -112,4 +113,15 @@ describe("actual controls paint under modal covers", () => {
     expect(view.target.hidden).toBe(true);
     expect(view.button.hidden).toBe(true);
   });
+});
+
+it("does not exempt Map navigation when an actual child foreground covers it", () => {
+  const view = render(true, true, true, true, false);
+  expect(view.navigation.setMode).toHaveBeenCalledWith("menu");
+  expect(view.pauseButton).toEqual({ hidden: false, inert: true });
+});
+
+it("keeps navigation inactive behind direct modal scopes outside the controls modal flag", () => {
+  const view = render(false, false, false, false, false);
+  expect(view.pauseButton).toEqual({ hidden: false, inert: true });
 });
