@@ -818,9 +818,67 @@ describe("status pill count", () => {
     expect(count("ore").children[0]!.data).toBe("0");
   });
 
+  it("registers every HUD hit alias with the same stable resource origin and disposes them", () => {
+    const onResource = vi.fn();
+    const { count, parent, root, slot, status } = pill(true, onResource);
+    status.setShown(true);
+    status.setStatus(
+      {
+        ...full,
+        aboard: { kind: "carrying", label: "Carrying: Supplies" },
+        lightField: false,
+        ore: 1,
+        oreLabel: "Ore",
+        stardust: 0,
+        stardustLabel: "Stardust",
+      },
+      0,
+    );
+    const aliases = [
+      ["stardust", root.children[0]!, count("stardust")],
+      ["stardust", slot("stardust"), count("stardust")],
+      ["stardust", count("stardust"), count("stardust")],
+      [
+        "ore",
+        root.children.find((node) => node.className.includes("ada-status-ore"))!,
+        count("ore"),
+      ],
+      ["ore", slot("ore"), count("ore")],
+      ["ore", count("ore"), count("ore")],
+      ["aboard", root.children.at(-1)!, root.children.at(-1)!],
+    ] as const;
+    for (const [kind, target, origin] of aliases) {
+      const action = resolveAdaHoldAction(parent as unknown as HTMLElement, target)!;
+      expect(action.available()).toBe(true);
+      expect(action.hold).toBeUndefined();
+      action.activate();
+      expect(onResource).toHaveBeenLastCalledWith(kind, origin);
+    }
+    expect(onResource).toHaveBeenCalledTimes(aliases.length);
+    status.dispose();
+    for (const [, target] of aliases) {
+      target.dispatchEvent(new Event("click"));
+      expect(resolveAdaHoldAction(parent as unknown as HTMLElement, target)).toBeNull();
+    }
+    expect(onResource).toHaveBeenCalledTimes(aliases.length);
+  });
+
   it("activates each resource once and consumes HUD pointer/key events", () => {
     const onResource = vi.fn();
-    const { count, root, slot } = pill(true, onResource);
+    const { count, root, slot, status } = pill(true, onResource);
+    status.setShown(true);
+    status.setStatus(
+      {
+        ...full,
+        aboard: { kind: "carrying", label: "Carrying: Supplies" },
+        lightField: false,
+        ore: 1,
+        oreLabel: "Ore",
+        stardust: 0,
+        stardustLabel: "Stardust",
+      },
+      0,
+    );
     for (const kind of ["ore", "stardust", "aboard"] as const) {
       const action = kind === "aboard" ? root.children.at(-1)! : count(kind);
       const target = kind === "aboard" ? action : slot(kind);

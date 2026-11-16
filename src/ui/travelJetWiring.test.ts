@@ -6,6 +6,7 @@ import { LIGHT_FIELD } from "../game/lightField.ts";
 import { type QuantumJump, readQuantumJump } from "../game/quantumJump.ts";
 import { type JetGeometry, readEngineJets } from "../game/shipJets.ts";
 import { staticShipJets } from "../game/staticShipJets.ts";
+import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { createGalaxyMap, type GalaxyMapView } from "./galaxyMap.ts";
 import { createJumpOverlay, type SheetArt } from "./jumpOverlay.ts";
 import { drawShipJets, drawShipTail } from "./shipJetCanvas.ts";
@@ -51,6 +52,15 @@ function dom() {
     stroke() {},
   };
   class ElementFake {
+    readonly isConnected = true;
+    get parentElement() {
+      return this.parentNode;
+    }
+    closest(): ElementFake | null {
+      return this.hidden || this.attributes.has("inert")
+        ? this
+        : (this.parentNode?.closest() ?? null);
+    }
     children: ElementFake[] = [];
     readonly nodeType = 1;
     parentNode: ElementFake | null = null;
@@ -97,6 +107,12 @@ function dom() {
     readonly listeners = new Map<string, (() => void)[]>();
     addEventListener(type: string, callback: () => void) {
       this.listeners.set(type, [...(this.listeners.get(type) ?? []), callback]);
+    }
+    removeEventListener(type: string, callback: () => void) {
+      this.listeners.set(
+        type,
+        (this.listeners.get(type) ?? []).filter((value) => value !== callback),
+      );
     }
     click() {
       for (const callback of this.listeners.get("click") ?? []) {
@@ -163,6 +179,7 @@ function dom() {
   const document = {
     createElement: (tag: string) => new ElementFake(tag),
     createElementNS: (_namespace: string, tag: string) => new ElementFake(tag),
+    defaultView: { HTMLElement: ElementFake, Node: ElementFake },
     hidden: false,
   };
   vi.stubGlobal("document", document);
@@ -503,3 +520,62 @@ it.each([false, true])(
     map.dispose();
   },
 );
+
+it("registers native route actions once and releases selection callbacks on dispose", () => {
+  const fixture = dom();
+  const onView = vi.fn(),
+    onJump = vi.fn(),
+    onEarth = vi.fn(),
+    onClose = vi.fn();
+  const map = createGalaxyMap(fixture.host, {
+    labels: {
+      close: "Close",
+      development: "",
+      home: "Earth",
+      jump: "Jump",
+      locked: "...",
+      lockedAction: "Progress the story to unlock",
+      number: "Galaxy {number}",
+      stay: "Stay",
+    },
+    onClose,
+    onEarth,
+    onFlightEnd() {},
+    onJump,
+    onStep() {},
+    onView,
+    reducedMotion: () => true,
+  });
+  map.show(mapView(null));
+  const marker = fixture.nodes.find((node) => node.dataset.position === "2")!;
+  const primary = fixture.nodes.find((node) => node.dataset.action === "galaxy-jump")!;
+  const action = resolveAdaHoldAction(fixture.host, marker as unknown as HTMLElement)!;
+  expect(action.available()).toBe(true);
+  expect(action.hold).toBeUndefined();
+  action.activate();
+  expect(onView).toHaveBeenCalledExactlyOnceWith(2);
+  for (const callback of marker.listeners.get("focus") ?? []) {
+    callback();
+  }
+  expect(onView).toHaveBeenCalledTimes(2);
+  const jump = resolveAdaHoldAction(fixture.host, primary as unknown as HTMLElement)!;
+  jump.activate();
+  expect(onJump).toHaveBeenCalledOnce();
+  fixture.nodes.find((node) => node.dataset.position === "earth")!.click();
+  jump.activate();
+  expect(onEarth).toHaveBeenCalledOnce();
+  map.show(null);
+  expect(action.available()).toBe(false);
+  map.show({ ...mapView(null), stay: true });
+  jump.activate();
+  expect(onClose).toHaveBeenCalledOnce();
+  map.dispose();
+  expect(action.available()).toBe(false);
+  action.activate();
+  marker.click();
+  for (const callback of marker.listeners.get("focus") ?? []) {
+    callback();
+  }
+  expect(onView).toHaveBeenCalledTimes(2);
+  expect(resolveAdaHoldAction(fixture.host, primary as unknown as HTMLElement)).toBeNull();
+});

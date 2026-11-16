@@ -630,6 +630,8 @@ export function createStatusPill(
 ) {
   let disposed = false;
   let shieldBinding: ReturnType<typeof bindAdaAction> | undefined;
+  const resourceBindings: ReturnType<typeof bindAdaAction>[] = [];
+  const leaveResourceInputs: (() => void)[] = [];
   const root = document.createElement("div");
   root.className = "ada-status";
   root.hidden = true;
@@ -716,21 +718,35 @@ export function createStatusPill(
       action.setAttribute("aria-haspopup", "dialog");
       action.dataset.action = `resource-${kind}`;
       const activate = () => options.onResource?.(kind, action);
-      for (const node of nodes) {
+      let keyboardBinding: ReturnType<typeof bindAdaAction> | undefined;
+      for (const node of new Set([...nodes, action])) {
         node.classList.add("ada-resource-target");
-        node.addEventListener("pointerdown", (event) => event.stopPropagation());
-        node.addEventListener("click", (event) => {
-          event.stopPropagation();
-          activate();
-        });
+        const pointerdown = (event: PointerEvent) => event.stopPropagation();
+        node.addEventListener("pointerdown", pointerdown);
+        leaveResourceInputs.push(() => node.removeEventListener("pointerdown", pointerdown));
+        const binding = bindAdaAction(
+          {
+            beforeClick: (event) => event.stopPropagation(),
+            click: { availability: () => ({ kind: "available" }), run: activate },
+            current: () => !disposed,
+            slopPx: () => SCROLL.dragThreshold * readViewUnit(node),
+          },
+          node,
+        );
+        resourceBindings.push(binding);
+        if (node === action) {
+          keyboardBinding = binding;
+        }
       }
-      action.addEventListener("keydown", (event) => {
+      const keydown = (event: KeyboardEvent) => {
         if ((event.key === "Enter" || event.key === " ") && !event.repeat) {
           event.preventDefault();
           event.stopPropagation();
-          activate();
+          keyboardBinding?.activate();
         }
-      });
+      };
+      action.addEventListener("keydown", keydown);
+      leaveResourceInputs.push(() => action.removeEventListener("keydown", keydown));
     }
   }
 
@@ -771,6 +787,12 @@ export function createStatusPill(
     dispose: () => {
       disposed = true;
       shieldBinding?.dispose();
+      for (const binding of resourceBindings) {
+        binding.dispose();
+      }
+      for (const leave of leaveResourceInputs) {
+        leave();
+      }
       globalThis.removeEventListener?.(VIEW_SCALE_EVENT, invalidateRaster);
       globalThis.removeEventListener?.("resize", invalidateRaster);
       ore.clearSpend();

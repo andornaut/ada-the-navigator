@@ -5,12 +5,14 @@ import { GALAXY_COUNT, type RoutePosition } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
 import { normalJetsInFront, normalJetTailRegions, type ShipJets } from "../game/shipJets.ts";
 import type { RouteFlight } from "../model/game.ts";
+import { bindAdaAction } from "./actionBinding.ts";
 import {
   type GalaxyPanelGroup,
   type GalaxyPanelLeaf,
   type GalaxyPanelSchema,
   galaxyPanelTree,
 } from "./galaxyPanelTree.ts";
+import { SCROLL } from "./layout/contentCard.ts";
 import { CARD_SLICE } from "./layout/controls.ts";
 import { font, fromAreaLeft, safeEdge, slice, units } from "./layout/css.ts";
 import {
@@ -36,6 +38,7 @@ import { SAFE_MARGIN } from "./layout/playView.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createButton, FOCUS_STYLE, MODAL_LAYER } from "./modal.ts";
+import { invalidatePressScope } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
 import { drawShipJets } from "./shipJetCanvas.ts";
 import { createShipTailView } from "./shipTailView.ts";
@@ -432,6 +435,26 @@ interface Move {
 export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   const { labels } = options;
   let viewingEarth = false;
+  let disposed = false;
+  const bindings: ReturnType<typeof bindAdaAction>[] = [];
+  const leaveFocus: (() => void)[] = [];
+  const register = (element: HTMLElement, run: () => void) => {
+    bindings.push(
+      bindAdaAction(
+        {
+          click: { availability: () => ({ kind: "available" }), run },
+          current: () =>
+            !disposed &&
+            view !== null &&
+            unlock === null &&
+            !swallow &&
+            !("jumping" in screen.dataset),
+          slopPx: () => SCROLL.dragThreshold * readViewUnit(element),
+        },
+        element,
+      ),
+    );
+  };
   const screen = document.createElement("div");
   screen.className = "ada-route";
   screen.dataset.dialog = "galaxies";
@@ -475,20 +498,22 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     const ring = document.createElement("span");
     ring.className = "ada-route-ring";
     button.append(backing, ring, frame, disc);
-    button.addEventListener("click", () => {
+    register(button, () => {
       viewingEarth = false;
       options.onView(position);
       drawPanel();
       drawChart();
     });
-    button.addEventListener("focus", () => {
+    const selectOnFocus = () => {
       if (!unlock) {
         viewingEarth = false;
         options.onView(position);
         drawPanel();
         drawChart();
       }
-    });
+    };
+    button.addEventListener("focus", selectOnFocus);
+    leaveFocus.push(() => button.removeEventListener("focus", selectOnFocus));
     const name = document.createElement("span");
     name.className = "ada-route-label";
     name.style.left = units(centre.x);
@@ -838,6 +863,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   }
 
   function beginUnlock(flight: RouteFlight): void {
+    invalidatePressScope(root);
     unlock = { flight, start: performance.now() };
     screen.dataset.flight = "";
     drawnLocked = new Set(flight.opened);
@@ -869,6 +895,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
       return;
     }
     const { flight } = unlock;
+    invalidatePressScope(root);
     unlock = null;
     delete screen.dataset.flight;
     drawnLocked = new Set();
@@ -933,9 +960,10 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     drawPanel();
     drawChart();
   };
-  earth.addEventListener("click", selectEarth);
+  register(earth, selectEarth);
   earth.addEventListener("focus", selectEarth);
-  jump.addEventListener("click", () => {
+  leaveFocus.push(() => earth.removeEventListener("focus", selectEarth));
+  register(jump, () => {
     if (!view || unlock) {
       return;
     }
@@ -981,12 +1009,20 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
       screen.dataset.shipCovered = "";
     },
     dispose(): void {
+      disposed = true;
+      for (const binding of bindings) {
+        binding.dispose();
+      }
+      for (const leave of leaveFocus) {
+        leave();
+      }
       stop();
       panelLayout.dispose();
     },
     isOpen: () => view !== null,
     /** A quantum jump begins: the panel, Earth, Jump and the close X hide until the map closes. */
     jump(): void {
+      invalidatePressScope(root);
       screen.dataset.jumping = "";
     },
     /** The sky, ground, figures and ship frames, once loaded. */
@@ -1026,6 +1062,9 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
       }
       shown = signature;
       const previous = view;
+      if ((previous === null) !== (next === null)) {
+        invalidatePressScope(root);
+      }
       view = next;
       screen.hidden = view === null;
       if (!view) {
