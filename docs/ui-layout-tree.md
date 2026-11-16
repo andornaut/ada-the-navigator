@@ -1,6 +1,7 @@
 # Typed layout consumers
 
-GameKit 0.50.1 supplies the typed tree and DOM reconciler. The local adapter wraps
+The public GameKit release pinned in [package.json](../package.json) supplies the
+typed tree and DOM reconciler. The local adapter wraps
 `createCard`, `createButton`, `createActions` and `createProse`; it does not interpret
 expressions or implement another renderer. Action registries, current availability,
 modal lifecycle and return context stay outside tree data.
@@ -92,9 +93,32 @@ item descriptor selects the canonical sprite, weapon upgrade composite or paint
 swatch. Header icons are decorative and preserve the visible item name. Rendering
 an additional header icon does not move or replace the row's icon.
 
+## Registered actions and completed producers
+
+[Action metadata](../src/ui/actionBinding.ts) registers each discrete control and
+its original availability and callback. `assertAdaActionMetadata` checks completed
+producers while detached; `assertAdaActionBindings` additionally requires attached
+controls beneath live registered roots. These structural checks do not invoke
+availability or execution policy.
+
+[Action roots](../src/ui/holdActionsAdapter.ts) own published tap/hold dispatch and
+nearest-root eligibility. The current Ada hold duration is 500 ms, independent of
+display scale. A hold uses its registered override or falls back to the tap action.
+Factory bindings register metadata only: the factory keeps its original guarded
+callback and native click listener. A `pointerRelease` root is the sole semantic
+pointer-release owner; callers remove parallel release activation. Captured presses
+are persistently cancelled by view, readiness, visibility and lifetime invalidation,
+so eligibility returning does not restore the old gesture.
+
+Shared roots, Start, loading/crash recovery, Menu, Achievements, Quests, Ship,
+Resource and Weapon detail have integrated action wiring and their applicable
+completed-producer checks. This is not universal control closure: additional domain
+hooks, spatial controls and ambient controls remain open. Structural coverage does
+not establish physical fit, native interaction acceptance or Art acceptance.
+
 ## Galaxy selector
 
-Earth is a selectable marker centered inside the route arc, aligned vertically with Sunflower. Its panel uses the canonical `story-ada-room` asset, Home kicker and Earth title. One centered primary action names the selected destination: Jump to Earth, Jump to the galaxy, Stay on Earth or Stay in the current galaxy. There is no separate Back action. A current-location action invokes the contextual close callback without travel; other destinations retain the existing return-home/jump callbacks and unlock checks. Locked destination actions retain their refusal behavior while naming the destination.
+Earth is a selectable marker centered inside the route arc, aligned vertically with Sunflower. Its panel uses the canonical `story-ada-room` asset, Home kicker and Earth title. One centered primary action names the selected destination: Jump to Earth, Jump to the galaxy, Stay on Earth or Stay in the current galaxy. There is no separate Back action. A current-location action invokes the contextual close callback without travel; other destinations retain the existing return-home/jump callbacks and unlock checks. Locked destination actions display “Progress the story to unlock” and retain their guarded refusal behavior.
 
 ## Detail actions
 

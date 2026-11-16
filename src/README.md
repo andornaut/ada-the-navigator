@@ -56,6 +56,11 @@ describes their implementation.
   `public/art/`. [`src/tests/`](tests/) holds the repository-level tests (hooks,
   check startup, kit consumption, page lifecycle).
 
+Discrete UI actions use registered metadata and owning roots, with detached metadata
+and attached binding checks at completed producer boundaries. The shared dispatcher
+owns tap/hold gestures; factory callbacks retain native click ownership. See the
+[current action contract and scoped coverage](../docs/ui-layout-tree.md#registered-actions-and-completed-producers).
+
 ### Assets and build
 
 - **Shared kits:** game-kit, art-kit and delivery-kit are installed from their
