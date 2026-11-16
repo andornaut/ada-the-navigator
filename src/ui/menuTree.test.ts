@@ -57,3 +57,27 @@ describe("production Menu tree", () => {
     expect(JSON.stringify(tree)).not.toContain("onAction");
   });
 });
+
+it("offers the existing capability-qualified Exit only on Start, before primary Close", () => {
+  const tree = menuTree({ ...data, context: "start", exitLabel: "Exit" });
+  expect(tree.slots!.actions!.map((node) => node.key)).toEqual([
+    "achievements",
+    "settings",
+    "exit",
+    "close",
+  ]);
+  expect(tree.slots!.actions!.at(-2)).toEqual({
+    component: "button",
+    key: "exit",
+    kind: "component",
+    props: { actionId: "menu-exit", label: "Exit", role: "secondary" },
+  });
+  expect(
+    menuTree({ ...data, context: "nonplay", exitLabel: "Exit" }).slots!.actions!.some(
+      (node) => node.key === "exit",
+    ),
+  ).toBe(false);
+  expect(
+    menuTree({ ...data, context: "start" }).slots!.actions!.some((node) => node.key === "exit"),
+  ).toBe(false);
+});

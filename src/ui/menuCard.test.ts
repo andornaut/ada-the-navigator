@@ -179,7 +179,7 @@ afterEach(() => {
   fixture.requests.length = 0;
 });
 
-function setup() {
+function setup(exit?: { label: string; onExit: () => void }) {
   vi.stubGlobal("document", {
     createElement: () => new fixture.Node(),
     createTextNode: (text: string) =>
@@ -198,6 +198,7 @@ function setup() {
   const onOpenChange = vi.fn();
   const menu = createMenuCard(root as unknown as HTMLElement, {
     closeLabel: "Close",
+    ...(exit ? { exit } : {}),
     labels: { achievements: "Achievements", backToTitle: "Back to title", settings: "Settings" },
     onAction,
     onOpenChange,
@@ -448,4 +449,23 @@ it("keeps a child-covered Menu painted but semantically closed and restores the 
   expect(menu.isOpen()).toBe(true);
   expect(modal.getAttribute("data-ada-modal-underlay")).toBeNull();
   expect(modal.getAttribute("inert")).toBeNull();
+});
+
+it("uses the original Exit callback from the actual Start action and retires it on rebuild/disposal", () => {
+  const onExit = vi.fn();
+  const { menu, rows } = setup({ label: "Exit", onExit });
+  menu.setContext("start");
+  menu.open();
+  const exit = rows().find((node) => node.textContent === "Exit")!;
+  exit.dispatchEvent(new Event("click"));
+  expect(onExit).toHaveBeenCalledOnce();
+  menu.close();
+  exit.dispatchEvent(new Event("click"));
+  expect(onExit).toHaveBeenCalledOnce();
+  menu.setContext("nonplay");
+  menu.open();
+  expect(rows().some((node) => node.textContent === "Exit")).toBe(false);
+  menu.dispose();
+  exit.dispatchEvent(new Event("click"));
+  expect(onExit).toHaveBeenCalledOnce();
 });

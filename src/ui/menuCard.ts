@@ -21,6 +21,7 @@ export { type MenuAction, menuActions, type MenuContext } from "./menuTree.ts";
 
 export interface MenuOptions {
   readonly closeLabel: string;
+  readonly exit?: { readonly label: string; readonly onExit: () => void };
   readonly labels: Readonly<Record<MenuAction, string>>;
   readonly onAction: (action: MenuAction, returnToMenu: () => void) => void;
   readonly onOpenChange: (open: boolean) => void;
@@ -32,7 +33,12 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
-  const initialTree = menuTree({ ...options, context: "nonplay" });
+  const treeData = (context: MenuContext) => ({
+    ...options,
+    context,
+    ...(options.exit ? { exitLabel: options.exit.label } : {}),
+  });
+  const initialTree = menuTree(treeData("nonplay"));
   const card = createCard(initialTree.props);
   card.card.dataset.dialog = "menu";
   const actions = document.createElement("div");
@@ -104,7 +110,7 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
         },
         host: modal,
       },
-      menuTree({ ...options, context }),
+      menuTree(treeData(context)),
     );
     const focus =
       actions.querySelector<HTMLButtonElement>(`[data-action="menu-${returnAction ?? "close"}"]`) ??
@@ -134,6 +140,14 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
     actions: new Map<MenuControlAction, () => void>([
       ["close-menu", close],
       ["menu-close", close],
+      [
+        "menu-exit",
+        () => {
+          if (context === "start") {
+            options.exit?.onExit();
+          }
+        },
+      ],
       ["menu-achievements", () => choose("achievements")],
       ["menu-settings", () => choose("settings")],
       ["menu-backToTitle", () => choose("backToTitle")],

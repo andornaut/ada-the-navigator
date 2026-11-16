@@ -369,6 +369,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   }
   const menu = createMenuCard(settings.root, {
     closeLabel: options.pause.labels.close,
+    ...(options.exit ? { exit: options.exit } : {}),
     labels: {
       achievements: options.achievements.title,
       backToTitle: options.pause.labels.backToTitle,

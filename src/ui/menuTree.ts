@@ -4,7 +4,7 @@ import type { AdaCardProps, AdaLayoutSchema } from "./layoutTree.ts";
 
 export type MenuAction = "achievements" | "backToTitle" | "settings";
 export type MenuContext = "start" | "nonplay";
-export type MenuControlAction = `menu-${MenuAction}` | "menu-close" | "close-menu";
+export type MenuControlAction = `menu-${MenuAction}` | "menu-close" | "close-menu" | "menu-exit";
 
 const MENU_ACTIONS: readonly MenuAction[] = ["achievements", "settings"];
 const NONPLAY_ACTIONS: readonly MenuAction[] = [...MENU_ACTIONS, "backToTitle"];
@@ -20,6 +20,7 @@ export function menuActions(context: MenuContext): readonly MenuAction[] {
 export interface MenuTreeData {
   readonly closeLabel: string;
   readonly context: MenuContext;
+  readonly exitLabel?: string;
   readonly labels: Readonly<Record<MenuAction, string>>;
   readonly title: string;
 }
@@ -55,6 +56,20 @@ export function menuTree(
             role: "secondary" as const,
           },
         })),
+        ...(data.context === "start" && data.exitLabel !== undefined
+          ? [
+              {
+                component: "button" as const,
+                key: "exit",
+                kind: "component" as const,
+                props: {
+                  actionId: "menu-exit" as const,
+                  label: data.exitLabel,
+                  role: "secondary" as const,
+                },
+              },
+            ]
+          : []),
         {
           component: "button",
           key: "close",
