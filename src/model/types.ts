@@ -314,8 +314,16 @@ export interface Aboard {
   kind: "carrying" | "towing";
   name: string;
 }
+/** A derived carried/towed identity and its currently live quest, never saved separately. */
+export interface ShipItemFact {
+  readonly id: string;
+  readonly name: string;
+  readonly questId?: string;
+}
 /** The Ship card's facts (gameplay/rules.md "Pause"): what Ada carries and how she is fitted. */
 export interface ShipState {
+  readonly carrying: readonly ShipItemFact[];
+  readonly towing: ShipItemFact | null;
   aboard: Aboard | null;
   engine: number;
   /** Holodisks recovered across the galaxies. */

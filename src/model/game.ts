@@ -263,6 +263,7 @@ import type {
   JobOffer,
   JobTarget,
   OptionalTask,
+  ShipItemFact,
   ShipState,
   SpaceObject,
   UseAction,
@@ -3382,18 +3383,68 @@ export class GameModel {
     }
     return null;
   }
+  /** Independent Ship rows do not inherit the HUD's single-item display priority. */
+  private get shipItemFacts(): { carrying: ShipItemFact[]; towing: ShipItemFact | null } {
+    const flight = this.state.flight;
+    const carrying: ShipItemFact[] = [];
+    if (this.state.mode !== "space" || !flight) {
+      return { carrying, towing: null };
+    }
+    const galaxy = flight.galaxy,
+      progress = this.state.progress[galaxy];
+    let live: ReadonlySet<string> | undefined;
+    const fact = (id: string, name: string, questId: string): ShipItemFact => {
+      live ??= new Set(this.quests.map(({ id }) => id));
+      return { id, name, ...(live.has(questId) ? { questId } : {}) };
+    };
+    const story = progress.questItem;
+    if (story !== null && STORY_ITEM_NAMES[story] !== undefined) {
+      carrying.push(
+        fact(
+          `story-item:${galaxy}:${story}`,
+          STORY_ITEM_NAMES[story]!,
+          `story:${galaxy}:${progress.stage}`,
+        ),
+      );
+    }
+    const held = heldJob(galaxy, this.state);
+    if (held?.carrying) {
+      const id = this.taskQuestId(galaxy, held);
+      carrying.push(fact(id, carriedItemName(held.item), id));
+    }
+    const activity = heldActivity(galaxy, this.state);
+    if (activity?.id === "supplyRun" && activity.carrying) {
+      const item = SUPPLY_ITEMS[activity.place];
+      if (item !== undefined) {
+        const id = this.taskQuestId(galaxy, activity);
+        carrying.push(fact(id, carriedItemName(item), id));
+      }
+    }
+    const towing =
+      flight.tow && held?.type === "rescue"
+        ? fact(
+            this.taskQuestId(galaxy, held),
+            carriedItemName(held.item),
+            this.taskQuestId(galaxy, held),
+          )
+        : null;
+    return { carrying, towing };
+  }
   /** The Ship card's facts: what Ada carries this flight and her ship's levels and weapons. */
   get ship(): ShipState {
     const { economy, flight } = this.state;
+    const { carrying, towing } = this.shipItemFacts;
     const levels = (this.state.mode === "space" && flight?.levels) || economy.levels;
     return {
       aboard: this.aboard,
+      carrying,
       engine: levels.engine,
       holodisks: Object.values(this.state.progress).filter((progress) => progress.holodisk).length,
       ore: this.state.mode === "space" ? (flight?.cargo ?? 0) : 0,
       paint: economy.paint,
       shield: levels.shield,
       stardust: economy.stardust,
+      towing,
       tractor: levels.tractor,
       weapons: this.weapons().map((choice) => ({
         ammo: choice.ammo,
