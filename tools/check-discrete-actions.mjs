@@ -2,10 +2,10 @@ import { createHash } from "node:crypto";
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 
-import { scanDiscreteActionBindings } from "../src/testing/discreteActionArchitecture.ts";
+import { scanDiscreteActionProject } from "../src/testing/discreteActionArchitecture.ts";
 
 const root = process.cwd();
-const findings = [];
+const sources = [];
 const inputs = [];
 function inspect(directory) {
   for (const entry of readdirSync(directory, { withFileTypes: true }).sort((a, b) =>
@@ -18,11 +18,12 @@ function inspect(directory) {
       const text = readFileSync(file, "utf8");
       const path = relative(root, file);
       inputs.push({ path, sha256: createHash("sha256").update(text).digest("hex") });
-      findings.push(...scanDiscreteActionBindings(path, text));
+      sources.push({ path, text });
     }
   }
 }
 inspect(join(root, "src"));
+const { factoryAssociations, findings, runtimeAssertions } = scanDiscreteActionProject(sources);
 const counts = Object.fromEntries(
   [
     "raw-discrete",
@@ -31,15 +32,30 @@ const counts = Object.fromEntries(
     "legacy-root",
     "unbound-discrete",
     "non-action",
+    "registered-action",
   ].map((kind) => [kind, findings.filter((finding) => finding.kind === kind).length]),
 );
-const blocking = findings.filter((finding) => finding.kind !== "non-action");
+const blocking = findings.filter(
+  (finding) => !["non-action", "registered-action"].includes(finding.kind),
+);
 const status = blocking.length ? "OPEN" : "CLOSED_LOCAL_STATIC_CHECKS";
 const report = process.argv.indexOf("--report");
 if (report >= 0) {
   writeFileSync(
     process.argv[report + 1],
-    `${JSON.stringify({ status, counts, blocking: blocking.length, inputs, findings }, null, 2)}\n`,
+    `${JSON.stringify(
+      {
+        status,
+        counts,
+        blocking: blocking.length,
+        inputs,
+        findings,
+        factoryAssociations,
+        runtimeAssertions,
+      },
+      null,
+      2,
+    )}\n`,
   );
 }
 console.log(JSON.stringify({ status, counts, blocking: blocking.length }));

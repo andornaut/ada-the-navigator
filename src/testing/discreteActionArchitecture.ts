@@ -1,3 +1,5 @@
+import { posix } from "node:path";
+
 import ts from "typescript";
 
 export interface ActionBindingFinding {
@@ -7,17 +9,42 @@ export interface ActionBindingFinding {
     | "unresolved-event"
     | "legacy-root"
     | "unbound-discrete"
-    | "non-action";
-  readonly classification?: "suppressor" | "drag-state" | "editing-state" | "unclassified";
+    | "non-action"
+    | "registered-action";
+  readonly classification?:
+    | "suppressor"
+    | "drag-state"
+    | "editing-state"
+    | "unclassified"
+    | "keyboard-focus"
+    | "registered-keyboard"
+    | "continuous-state";
   readonly evidence?: string;
   readonly line: number;
   readonly path: string;
   readonly source: string;
 }
 
-/** Reports bypasses without grandfathering existing consumer files. */
-export function scanDiscreteActionBindings(path: string, text: string): ActionBindingFinding[] {
-  const source = ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true);
+export interface DiscreteActionSource {
+  readonly path: string;
+  readonly text: string;
+}
+
+export interface FactoryAssociation {
+  readonly exportName: string;
+  readonly line: number;
+  readonly members: readonly string[];
+  readonly path: string;
+}
+
+interface ScanContext {
+  readonly factories: Map<string, ReadonlySet<string>>;
+  readonly sources: ReadonlyMap<string, ts.SourceFile>;
+}
+
+function scanSource(context: ScanContext, path: string, text: string) {
+  const source =
+    context.sources.get(path) ?? ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true);
   const strings = (node: ts.Expression, seen = new Set<string>()): string[] => {
     if (ts.isStringLiteralLike(node)) {
       return [node.text];
@@ -46,6 +73,12 @@ export function scanDiscreteActionBindings(path: string, text: string): ActionBi
   const declarations: ts.NamedDeclaration[] = [];
   const index = (node: ts.Node): void => {
     if (
+      ts.isImportSpecifier(node) ||
+      ts.isImportClause(node) ||
+      ts.isNamespaceImport(node) ||
+      ts.isClassDeclaration(node) ||
+      ts.isClassExpression(node) ||
+      ts.isEnumDeclaration(node) ||
       ts.isVariableDeclaration(node) ||
       ts.isBindingElement(node) ||
       ts.isParameter(node) ||
@@ -57,7 +90,14 @@ export function scanDiscreteActionBindings(path: string, text: string): ActionBi
   };
   index(source);
   const scope = (node: ts.Node): ts.Node => {
+    const functionScoped =
+      ts.isVariableDeclaration(node) &&
+      ts.isVariableDeclarationList(node.parent) &&
+      !(node.parent.flags & (ts.NodeFlags.Const | ts.NodeFlags.Let));
     for (let parent = node.parent; parent; parent = parent.parent) {
+      if (functionScoped && !ts.isFunctionLike(parent) && !ts.isSourceFile(parent)) {
+        continue;
+      }
       if (
         ts.isBlock(parent) ||
         ts.isForOfStatement(parent) ||
@@ -86,23 +126,377 @@ export function scanDiscreteActionBindings(path: string, text: string): ActionBi
     }
     return undefined;
   };
-  const reference = (node: ts.Expression): string => {
+  const reference = (node: ts.Expression, seen = new Set<ts.Node>()): string => {
     if (
       ts.isAsExpression(node) ||
       ts.isParenthesizedExpression(node) ||
       ts.isNonNullExpression(node)
     ) {
-      return reference(node.expression);
+      return reference(node.expression, seen);
     }
     if (ts.isIdentifier(node)) {
-      return `${declaration(node)?.pos ?? `external@${scope(node).pos}`}:${node.text}`;
+      const value = declaration(node);
+      if (
+        value &&
+        !seen.has(value) &&
+        ts.isVariableDeclaration(value) &&
+        value.initializer &&
+        ts.isVariableDeclarationList(value.parent) &&
+        value.parent.flags & ts.NodeFlags.Const &&
+        (ts.isIdentifier(value.initializer) || ts.isPropertyAccessExpression(value.initializer))
+      ) {
+        return reference(value.initializer, new Set([...seen, value]));
+      }
+      return `${value?.pos ?? `external@${scope(node).pos}`}:${node.text}`;
     }
     if (ts.isPropertyAccessExpression(node)) {
-      return `${reference(node.expression)}.${node.name.text}`;
+      return `${reference(node.expression, seen)}.${node.name.text}`;
+    }
+    if (ts.isElementAccessExpression(node) && node.argumentExpression) {
+      const keys = strings(node.argumentExpression);
+      if (keys.length === 1) {
+        return `${reference(node.expression, seen)}.${keys[0]}`;
+      }
     }
     return `expression:${node.pos}`;
   };
-  const bound = new Set<string>();
+  const phase = (node: ts.Node): ts.Node => {
+    for (let at = node.parent; at; at = at.parent) {
+      if (ts.isFunctionLike(at)) {
+        return at;
+      }
+    }
+    return source;
+  };
+  const writes = new Set<string>();
+  const invalidLifetimes = new Set<string>();
+  const lifecycleCalls: { readonly key: string; readonly phase: ts.Node }[] = [];
+  const effects = (node: ts.Node): void => {
+    let target: ts.Expression | undefined;
+    if (
+      ts.isBinaryExpression(node) &&
+      node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+      node.operatorToken.kind <= ts.SyntaxKind.LastAssignment
+    ) {
+      target = node.left;
+    }
+    if (ts.isDeleteExpression(node)) {
+      target = node.expression;
+    }
+    if (
+      ts.isPostfixUnaryExpression(node) ||
+      (ts.isPrefixUnaryExpression(node) &&
+        [ts.SyntaxKind.PlusPlusToken, ts.SyntaxKind.MinusMinusToken].includes(node.operator))
+    ) {
+      target = node.operand;
+    }
+    if (target) {
+      writes.add(reference(target));
+      if (ts.isElementAccessExpression(target) && !strings(target.argumentExpression).length) {
+        writes.add(reference(target.expression));
+      }
+    }
+    if (
+      ts.isVariableDeclaration(node) &&
+      node.initializer &&
+      ts.isVariableDeclarationList(node.parent) &&
+      !(node.parent.flags & ts.NodeFlags.Const) &&
+      (ts.isIdentifier(node.initializer) || ts.isPropertyAccessExpression(node.initializer))
+    ) {
+      writes.add(reference(node.initializer));
+    }
+    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
+      const key = reference(node.expression);
+      if (/\.(dispose|remove)$/.test(key)) {
+        lifecycleCalls.push({ key: key.replace(/\.(dispose|remove)$/, ""), phase: phase(node) });
+      }
+    }
+    if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {
+      const callee = node.expression;
+      if (["dispose", "remove"].includes(callee.name.text)) {
+        lifecycleCalls.push({ key: reference(callee.expression), phase: phase(node) });
+      }
+      if (
+        ts.isIdentifier(callee.expression) &&
+        ["Object", "Reflect"].includes(callee.expression.text) &&
+        ["assign", "defineProperty", "set", "setPrototypeOf"].includes(callee.name.text) &&
+        node.arguments[0]
+      ) {
+        writes.add(reference(node.arguments[0]));
+      }
+    }
+    ts.forEachChild(node, effects);
+  };
+  effects(source);
+  const overlaps = (key: string, changed: string, descendants = false) =>
+    key === changed ||
+    key.startsWith(`${changed}.`) ||
+    (descendants && changed.startsWith(`${key}.`));
+  const clean = (key: string, descendants = false): boolean =>
+    ![...writes, ...invalidLifetimes].some((changed) => overlaps(key, changed, descendants));
+  const origin = (
+    node: ts.Expression,
+    seen = new Set<ts.Node>(),
+  ): ts.NamedDeclaration | undefined => {
+    if (!ts.isIdentifier(node)) {
+      return undefined;
+    }
+    const value = declaration(node);
+    if (
+      value &&
+      !seen.has(value) &&
+      ts.isVariableDeclaration(value) &&
+      value.initializer &&
+      ts.isVariableDeclarationList(value.parent) &&
+      value.parent.flags & ts.NodeFlags.Const &&
+      ts.isIdentifier(value.initializer)
+    ) {
+      return origin(value.initializer, new Set([...seen, value]));
+    }
+    return value;
+  };
+  const stable = (node: ts.Expression, descendants = false): boolean => {
+    if (!clean(reference(node), descendants)) {
+      return false;
+    }
+    if (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node)) {
+      return stable(node.expression);
+    }
+    if (ts.isIdentifier(node)) {
+      const alias = declaration(node);
+      if (
+        alias &&
+        ts.isVariableDeclaration(alias) &&
+        alias.initializer &&
+        ts.isPropertyAccessExpression(alias.initializer) &&
+        !stable(alias.initializer)
+      ) {
+        return false;
+      }
+    }
+    const value = origin(node);
+    return Boolean(
+      value &&
+      (ts.isImportSpecifier(value) ||
+        ts.isFunctionDeclaration(value) ||
+        ts.isParameter(value) ||
+        (ts.isVariableDeclaration(value) &&
+          ts.isVariableDeclarationList(value.parent) &&
+          value.parent.flags & ts.NodeFlags.Const)),
+    );
+  };
+  const carries = (node: ts.Expression, key: string): boolean => {
+    if (reference(node) === key) {
+      return true;
+    }
+    if (
+      ts.isAsExpression(node) ||
+      ts.isParenthesizedExpression(node) ||
+      ts.isNonNullExpression(node)
+    ) {
+      return carries(node.expression, key);
+    }
+    if (ts.isObjectLiteralExpression(node)) {
+      return node.properties.some((property) =>
+        ts.isPropertyAssignment(property)
+          ? carries(property.initializer, key)
+          : ts.isShorthandPropertyAssignment(property)
+            ? carries(property.name, key)
+            : ts.isSpreadAssignment(property)
+              ? carries(property.expression, key)
+              : false,
+      );
+    }
+    if (ts.isArrayLiteralExpression(node)) {
+      return node.elements.some((element) =>
+        ts.isSpreadElement(element) ? carries(element.expression, key) : carries(element, key),
+      );
+    }
+    if (ts.isConditionalExpression(node)) {
+      return carries(node.whenTrue, key) || carries(node.whenFalse, key);
+    }
+    return false;
+  };
+  const escaped = (key: string): boolean => {
+    let found = false;
+    const inspect = (node: ts.Node): void => {
+      if (
+        (ts.isCallExpression(node) || ts.isNewExpression(node)) &&
+        node.arguments?.some((argument) => carries(argument, key))
+      ) {
+        found = true;
+      }
+      if (ts.isReturnStatement(node) && node.expression && carries(node.expression, key)) {
+        found = true;
+      }
+      if (
+        ts.isVariableDeclaration(node) &&
+        !ts.isIdentifier(node.name) &&
+        node.initializer &&
+        carries(node.initializer, key)
+      ) {
+        found = true;
+      }
+      ts.forEachChild(node, inspect);
+    };
+    inspect(source);
+    return found;
+  };
+  const importedFactories = new Map<string, ReadonlySet<string>>();
+  const focusFunctions = new Set<string>();
+  for (const statement of source.statements) {
+    if (
+      !ts.isImportDeclaration(statement) ||
+      !ts.isStringLiteral(statement.moduleSpecifier) ||
+      statement.moduleSpecifier.text !== "@andornaut/game-kit/runtime/web/ui/dom/focusModality"
+    ) {
+      continue;
+    }
+    const imports = statement.importClause?.namedBindings;
+    if (imports && ts.isNamedImports(imports)) {
+      for (const item of imports.elements) {
+        if ((item.propertyName?.text ?? item.name.text) === "focusTarget") {
+          focusFunctions.add(reference(item.name));
+        }
+      }
+    }
+  }
+  for (const statement of source.statements) {
+    if (
+      !ts.isImportDeclaration(statement) ||
+      !ts.isStringLiteral(statement.moduleSpecifier) ||
+      !statement.moduleSpecifier.text.startsWith(".")
+    ) {
+      continue;
+    }
+    const importedPath = posix.normalize(
+      posix.join(posix.dirname(path), statement.moduleSpecifier.text),
+    );
+    const imports = statement.importClause?.namedBindings;
+    if (!imports || !ts.isNamedImports(imports)) {
+      continue;
+    }
+    for (const item of imports.elements) {
+      const proof = context.factories.get(
+        `${importedPath}#${item.propertyName?.text ?? item.name.text}`,
+      );
+      if (proof) {
+        importedFactories.set(reference(item.name), proof);
+      }
+    }
+  }
+  const synchronousCallable = (
+    node: ts.FunctionDeclaration | ts.FunctionExpression | ts.ArrowFunction,
+  ): boolean =>
+    !node.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.AsyncKeyword) &&
+    !((ts.isFunctionDeclaration(node) || ts.isFunctionExpression(node)) && node.asteriskToken);
+  const immediateWrapperCall = (
+    call: ts.CallExpression,
+    owner: ts.FunctionDeclaration | ts.FunctionExpression | ts.ArrowFunction | ts.SourceFile,
+  ): boolean => {
+    if (!ts.isSourceFile(owner) && (!synchronousCallable(owner) || !owner.body)) {
+      return false;
+    }
+    const body = ts.isSourceFile(owner) ? owner : owner.body!;
+    const deferred = (node: ts.Node): boolean =>
+      ts.isFunctionLike(node) ||
+      ts.isClassLike(node) ||
+      ts.isConditionalExpression(node) ||
+      ts.isIfStatement(node) ||
+      ts.isIterationStatement(node, false) ||
+      ts.isSwitchStatement(node) ||
+      ts.isTryStatement(node) ||
+      ts.isAwaitExpression(node) ||
+      ts.isYieldExpression(node) ||
+      Boolean(node.flags & ts.NodeFlags.OptionalChain) ||
+      (ts.isBinaryExpression(node) &&
+        [
+          ts.SyntaxKind.AmpersandAmpersandToken,
+          ts.SyntaxKind.BarBarToken,
+          ts.SyntaxKind.QuestionQuestionToken,
+        ].includes(node.operatorToken.kind));
+    if (!(ts.isBlock(body) || ts.isSourceFile(body)) && deferred(body)) {
+      return false;
+    }
+    let current: ts.Node = call;
+    while (current !== body && current.parent !== body) {
+      if (current === owner || deferred(current) || !current.parent) {
+        return false;
+      }
+      current = current.parent;
+    }
+    if (deferred(current)) {
+      return false;
+    }
+    if (ts.isBlock(body) || ts.isSourceFile(body)) {
+      const index = body.statements.findIndex((statement) => statement === current);
+      if (
+        index < 0 ||
+        !(
+          ts.isVariableStatement(current) ||
+          ts.isExpressionStatement(current) ||
+          ts.isReturnStatement(current)
+        )
+      ) {
+        return false;
+      }
+      let exits = false;
+      const inspectExit = (node: ts.Node): void => {
+        if (ts.isFunctionLike(node)) {
+          return;
+        }
+        if (ts.isReturnStatement(node) || ts.isThrowStatement(node)) {
+          exits = true;
+        }
+        ts.forEachChild(node, inspectExit);
+      };
+      for (const statement of body.statements.slice(0, index)) {
+        inspectExit(statement);
+      }
+      if (exits) {
+        return false;
+      }
+    }
+    return true;
+  };
+  const factoryFor = (callee: ts.Identifier): ReadonlySet<string> | undefined => {
+    if (!stable(callee)) {
+      return undefined;
+    }
+    const value = origin(callee);
+    if (value && ts.isImportSpecifier(value)) {
+      return importedFactories.get(reference(callee));
+    }
+    return value &&
+      ts.isFunctionDeclaration(value) &&
+      synchronousCallable(value) &&
+      value.parent === source &&
+      value.name
+      ? context.factories.get(`${path}#${value.name.text}`)
+      : undefined;
+  };
+  type BindingProof = { readonly owner: ts.Node; readonly end: number };
+  const bound = new Map<string, BindingProof[]>();
+  const immediateInvocation = (call: ts.CallExpression): boolean => {
+    const owner = phase(call);
+    if (ts.isSourceFile(owner)) {
+      return immediateWrapperCall(call, owner);
+    }
+    return (
+      (ts.isFunctionDeclaration(owner) ||
+        ts.isFunctionExpression(owner) ||
+        ts.isArrowFunction(owner)) &&
+      immediateWrapperCall(call, owner)
+    );
+  };
+  const addBinding = (key: string, call: ts.CallExpression): void => {
+    if (!immediateInvocation(call)) {
+      return;
+    }
+    const proofs = bound.get(key) ?? [];
+    proofs.push({ end: call.end, owner: phase(call) });
+    bound.set(key, proofs);
+  };
   const wrappers = new Map<string, Set<number>>();
   const collectBindings = (node: ts.Node): void => {
     if (
@@ -111,7 +505,7 @@ export function scanDiscreteActionBindings(path: string, text: string): ActionBi
       node.expression.text === "bindAdaAction" &&
       node.arguments[1]
     ) {
-      bound.add(reference(node.arguments[1]));
+      addBinding(reference(node.arguments[1]), node);
       for (let owner: ts.Node | undefined = node.parent; owner; owner = owner.parent) {
         if (
           !ts.isArrowFunction(owner) &&
@@ -119,6 +513,9 @@ export function scanDiscreteActionBindings(path: string, text: string): ActionBi
           !ts.isFunctionDeclaration(owner)
         ) {
           continue;
+        }
+        if (!immediateWrapperCall(node, owner)) {
+          break;
         }
         const position = owner.parameters.findIndex(
           (parameter) =>
@@ -131,7 +528,14 @@ export function scanDiscreteActionBindings(path: string, text: string): ActionBi
           : ts.isVariableDeclaration(owner.parent)
             ? owner.parent.name
             : undefined;
-        if (position >= 0 && name && ts.isIdentifier(name)) {
+        if (
+          position >= 0 &&
+          name &&
+          ts.isIdentifier(name) &&
+          stable(name) &&
+          node.arguments[1] &&
+          stable(node.arguments[1])
+        ) {
           const ports = wrappers.get(reference(name)) ?? new Set<number>();
           ports.add(position);
           wrappers.set(reference(name), ports);
@@ -144,16 +548,371 @@ export function scanDiscreteActionBindings(path: string, text: string): ActionBi
   collectBindings(source);
   const collectWrapperCalls = (node: ts.Node): void => {
     if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
-      for (const position of wrappers.get(reference(node.expression)) ?? []) {
+      for (const position of stable(node.expression)
+        ? (wrappers.get(reference(node.expression)) ?? [])
+        : []) {
         const argument = node.arguments[position];
         if (argument) {
-          bound.add(reference(argument));
+          addBinding(reference(argument), node);
         }
       }
     }
     ts.forEachChild(node, collectWrapperCalls);
   };
   collectWrapperCalls(source);
+  const bindingControls = new Map<string, string[]>();
+  const bindingOwners = (node: ts.Node): void => {
+    if (
+      ts.isVariableDeclaration(node) &&
+      ts.isIdentifier(node.name) &&
+      node.initializer &&
+      ts.isCallExpression(node.initializer) &&
+      ts.isIdentifier(node.initializer.expression)
+    ) {
+      const call = node.initializer;
+      const positions =
+        call.expression.getText(source) === "bindAdaAction"
+          ? [1]
+          : [...(wrappers.get(reference(call.expression)) ?? [])];
+      bindingControls.set(
+        reference(node.name),
+        positions.flatMap((position) =>
+          call.arguments[position] ? [reference(call.arguments[position]!)] : [],
+        ),
+      );
+    }
+    ts.forEachChild(node, bindingOwners);
+  };
+  bindingOwners(source);
+  for (const [entry, controls] of bindingControls) {
+    if (controls.length && escaped(entry)) {
+      invalidLifetimes.add(entry);
+      for (const control of controls) {
+        invalidLifetimes.add(control);
+      }
+    }
+  }
+  const callers = new Map<ts.Node, Set<ts.Node>>();
+  const storedWithoutInvocation = (call: ts.CallExpression): boolean => {
+    if (!ts.isPropertyAccessExpression(call.expression)) {
+      return false;
+    }
+    const callee = call.expression;
+    const value = origin(callee.expression);
+    if (
+      !value ||
+      !ts.isVariableDeclaration(value) ||
+      !value.initializer ||
+      !stable(callee.expression) ||
+      !clean(`${reference(callee.expression)}.${callee.name.text}`, true)
+    ) {
+      return false;
+    }
+    if (
+      ts.isNewExpression(value.initializer) &&
+      ts.isIdentifier(value.initializer.expression) &&
+      ["Map", "WeakMap"].includes(value.initializer.expression.text) &&
+      !declaration(value.initializer.expression) &&
+      callee.name.text === "set"
+    ) {
+      return true;
+    }
+    return (
+      ts.isArrayLiteralExpression(value.initializer) &&
+      ["push", "unshift"].includes(callee.name.text)
+    );
+  };
+  const callbackValue = (expression: ts.Expression, parent: ts.Node): void => {
+    if (ts.isParenthesizedExpression(expression) || ts.isAsExpression(expression)) {
+      callbackValue(expression.expression, parent);
+      return;
+    }
+    const value = origin(expression);
+    const fn =
+      ts.isArrowFunction(expression) || ts.isFunctionExpression(expression)
+        ? expression
+        : value && ts.isFunctionDeclaration(value)
+          ? value
+          : value &&
+              ts.isVariableDeclaration(value) &&
+              value.initializer &&
+              (ts.isArrowFunction(value.initializer) || ts.isFunctionExpression(value.initializer))
+            ? value.initializer
+            : undefined;
+    if (fn) {
+      const parents = callers.get(fn) ?? new Set<ts.Node>();
+      parents.add(parent);
+      callers.set(fn, parents);
+    }
+    const key = reference(expression);
+    if (/\.(dispose|remove)$/.test(key)) {
+      lifecycleCalls.push({ key: key.replace(/\.(dispose|remove)$/, ""), phase: parent });
+    }
+    if (ts.isObjectLiteralExpression(expression)) {
+      for (const property of expression.properties) {
+        if (ts.isPropertyAssignment(property)) {
+          callbackValue(property.initializer, parent);
+        }
+        if (ts.isShorthandPropertyAssignment(property)) {
+          callbackValue(property.name, parent);
+        }
+      }
+    }
+    if (ts.isArrayLiteralExpression(expression)) {
+      for (const element of expression.elements) {
+        callbackValue(element, parent);
+      }
+    }
+  };
+  const localCalls = (node: ts.Node): void => {
+    if (ts.isCallExpression(node)) {
+      callbackValue(node.expression, phase(node));
+      if (!storedWithoutInvocation(node)) {
+        for (const argument of node.arguments) {
+          callbackValue(argument, phase(node));
+        }
+      }
+    }
+    ts.forEachChild(node, localCalls);
+  };
+  localCalls(source);
+  const reaches = (from: ts.Node, to: ts.Node, seen = new Set<ts.Node>()): boolean => {
+    if (from === to) {
+      return true;
+    }
+    if (seen.has(from)) {
+      return false;
+    }
+    return [...(callers.get(from) ?? [])].some((parent) =>
+      reaches(parent, to, new Set([...seen, from])),
+    );
+  };
+  for (const call of lifecycleCalls) {
+    const position = /^(-?\d+):/.exec(call.key)?.[1];
+    const owner =
+      position === undefined
+        ? undefined
+        : declarations.find((value) => value.pos === Number(position));
+    if (!owner || reaches(call.phase, phase(owner))) {
+      invalidLifetimes.add(call.key);
+      for (const control of bindingControls.get(call.key) ?? []) {
+        invalidLifetimes.add(control);
+      }
+    }
+  }
+  const hasBinding = (
+    node: ts.Expression,
+    construction = false,
+    owner = phase(node),
+    position = node.pos,
+  ): boolean =>
+    stable(node) &&
+    (bound.get(reference(node)) ?? []).some(
+      (proof) => proof.owner === owner && (construction || proof.end <= position),
+    );
+  const inheritFactoryBindings = (node: ts.Node): void => {
+    if (
+      ts.isVariableDeclaration(node) &&
+      node.initializer &&
+      ts.isCallExpression(node.initializer) &&
+      ts.isIdentifier(node.initializer.expression)
+    ) {
+      const factory = factoryFor(node.initializer.expression);
+      if (factory && ts.isIdentifier(node.name)) {
+        for (const member of factory) {
+          addBinding(`${reference(node.name)}${member ? `.${member}` : ""}`, node.initializer);
+        }
+      }
+      if (factory && ts.isObjectBindingPattern(node.name)) {
+        for (const element of node.name.elements) {
+          if (
+            ts.isIdentifier(element.name) &&
+            factory.has(element.propertyName?.getText(source) ?? element.name.text)
+          ) {
+            addBinding(reference(element.name), node.initializer);
+          }
+        }
+      }
+    }
+    ts.forEachChild(node, inheritFactoryBindings);
+  };
+  inheritFactoryBindings(source);
+  const factoryAssociations: FactoryAssociation[] = [];
+  for (const statement of source.statements) {
+    if (
+      !ts.isFunctionDeclaration(statement) ||
+      !synchronousCallable(statement) ||
+      !statement.name ||
+      !statement.body ||
+      !clean(reference(statement.name)) ||
+      !statement.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword) ||
+      !statement.body.statements.length ||
+      !ts.isReturnStatement(statement.body.statements.at(-1)!)
+    ) {
+      continue;
+    }
+    const guaranteed = new Map<string, number>();
+    const unconditional = (node: ts.Node, end: number): void => {
+      if (
+        ts.isFunctionLike(node) ||
+        ts.isConditionalExpression(node) ||
+        (ts.isBinaryExpression(node) &&
+          [
+            ts.SyntaxKind.AmpersandAmpersandToken,
+            ts.SyntaxKind.BarBarToken,
+            ts.SyntaxKind.QuestionQuestionToken,
+          ].includes(node.operatorToken.kind)) ||
+        (ts.isCallExpression(node) && node.questionDotToken)
+      ) {
+        return;
+      }
+      if (
+        ts.isCallExpression(node) &&
+        ts.isIdentifier(node.expression) &&
+        node.expression.text === "bindAdaAction" &&
+        node.arguments[1]
+      ) {
+        guaranteed.set(reference(node.arguments[1]), end);
+      }
+      ts.forEachChild(node, (child) => unconditional(child, end));
+    };
+    for (const item of statement.body.statements) {
+      if (ts.isVariableStatement(item)) {
+        for (const declaration of item.declarationList.declarations) {
+          if (declaration.initializer) {
+            unconditional(declaration.initializer, item.end);
+          }
+          if (
+            item.declarationList.flags & ts.NodeFlags.Const &&
+            ts.isIdentifier(declaration.name) &&
+            declaration.initializer &&
+            ts.isCallExpression(declaration.initializer) &&
+            ts.isIdentifier(declaration.initializer.expression)
+          ) {
+            const factory = factoryFor(declaration.initializer.expression);
+            for (const member of factory ?? []) {
+              guaranteed.set(
+                `${reference(declaration.name)}${member ? `.${member}` : ""}`,
+                item.end,
+              );
+            }
+          }
+        }
+      } else if (ts.isExpressionStatement(item)) {
+        unconditional(item.expression, item.end);
+      }
+    }
+    const returns: ts.ReturnStatement[] = [];
+    let disposed = false;
+    const collectReturns = (node: ts.Node): void => {
+      if (node !== statement && ts.isFunctionLike(node)) {
+        return;
+      }
+      if (ts.isReturnStatement(node)) {
+        returns.push(node);
+      }
+      if (
+        ts.isCallExpression(node) &&
+        ts.isPropertyAccessExpression(node.expression) &&
+        ["dispose", "remove"].includes(node.expression.name.text)
+      ) {
+        disposed = true;
+      }
+      ts.forEachChild(node, collectReturns);
+    };
+    collectReturns(statement.body);
+    if (disposed || !returns.length) {
+      continue;
+    }
+    const stableReturn = (expression: ts.Expression): boolean => {
+      if (ts.isIdentifier(expression)) {
+        const value = declaration(expression);
+        return Boolean(
+          value &&
+          ts.isVariableDeclaration(value) &&
+          ts.isVariableDeclarationList(value.parent) &&
+          value.parent.flags & ts.NodeFlags.Const,
+        );
+      }
+      return false;
+    };
+    const returnedBinding = (expression: ts.Expression, position: number): boolean =>
+      hasBinding(expression, false, statement, position) &&
+      (guaranteed.get(reference(expression)) ?? Infinity) <= position;
+    const members = (expression: ts.Expression | undefined, position: number): Set<string> => {
+      if (!expression) {
+        return new Set();
+      }
+      if (stableReturn(expression) && returnedBinding(expression, position)) {
+        return new Set([""]);
+      }
+      if (ts.isIdentifier(expression) && stableReturn(expression) && stable(expression)) {
+        const prefix = `${reference(expression)}.`;
+        return new Set(
+          [...guaranteed.keys()].flatMap((key) => {
+            if (!key.startsWith(prefix)) {
+              return [];
+            }
+            const member = key.slice(prefix.length);
+            if (member.includes(".")) {
+              return [];
+            }
+            const value = ts.factory.createElementAccessExpression(
+              expression,
+              ts.factory.createStringLiteral(member),
+            );
+            return returnedBinding(value, position) ? [member] : [];
+          }),
+        );
+      }
+      if (ts.isObjectLiteralExpression(expression)) {
+        if (
+          expression.properties.some(
+            (property) =>
+              ts.isSpreadAssignment(property) ||
+              (property.name && ts.isComputedPropertyName(property.name)),
+          )
+        ) {
+          return new Set();
+        }
+        const result = new Set<string>();
+        for (const property of expression.properties) {
+          const name = property.name;
+          if (
+            !name ||
+            (!ts.isIdentifier(name) && !ts.isStringLiteralLike(name) && !ts.isNumericLiteral(name))
+          ) {
+            return new Set();
+          }
+          const key = ts.isNumericLiteral(name) ? String(Number(name.text)) : name.text;
+          // An explicit later property replaces an earlier data value, including accessors and methods.
+          result.delete(key);
+          const value = ts.isShorthandPropertyAssignment(property)
+            ? property.name
+            : ts.isPropertyAssignment(property)
+              ? property.initializer
+              : undefined;
+          if (value && returnedBinding(value, position)) {
+            result.add(key);
+          }
+        }
+        return result;
+      }
+      return new Set();
+    };
+    const candidates = returns.map((value) => members(value.expression, value.pos));
+    const common = [...candidates[0]!].filter((member) =>
+      candidates.every((candidate) => candidate.has(member)),
+    );
+    if (common.length) {
+      factoryAssociations.push({
+        exportName: statement.name.text,
+        line: source.getLineAndCharacterOfPosition(statement.getStart(source)).line + 1,
+        members: common.sort(),
+        path,
+      });
+    }
+  }
   // These categories prove only local callback effects. Unresolved helper calls stay reviewable.
   const callbackFacts = (argument: ts.Expression | undefined) => {
     const declared = argument && ts.isIdentifier(argument) ? declaration(argument) : undefined;
@@ -174,6 +933,50 @@ export function scanDiscreteActionBindings(path: string, text: string): ActionBi
     ) {
       return undefined;
     }
+    let focus = false,
+      registered = false,
+      sampled = false;
+    const arrayValue = (node: ts.Expression): boolean => {
+      if (ts.isArrayLiteralExpression(node)) {
+        return true;
+      }
+      const value = origin(node);
+      return Boolean(
+        stable(node, true) &&
+        !escaped(reference(node)) &&
+        value &&
+        ts.isVariableDeclaration(value) &&
+        value.initializer &&
+        ts.isArrayLiteralExpression(value.initializer),
+      );
+    };
+    const setValue = (node: ts.Expression): boolean => {
+      const value = origin(node);
+      return Boolean(
+        stable(node, true) &&
+        !escaped(reference(node)) &&
+        value &&
+        ts.isVariableDeclaration(value) &&
+        value.initializer &&
+        ts.isNewExpression(value.initializer) &&
+        ts.isIdentifier(value.initializer.expression) &&
+        value.initializer.expression.text === "Set",
+      );
+    };
+    const registeredValue = (node: ts.Expression): boolean => {
+      const value = origin(node);
+      return Boolean(
+        !escaped(reference(node)) &&
+        stable(node, true) &&
+        !escaped(reference(node)) &&
+        value &&
+        ts.isVariableDeclaration(value) &&
+        value.initializer &&
+        ts.isCallExpression(value.initializer) &&
+        ts.isIdentifier(value.initializer.expression) &&
+        value.initializer.expression.text === "bindAdaAction",
+      );
+    };
     let writesOuter = false;
     let unknown = false,
       suppression = false,
@@ -197,6 +1000,8 @@ export function scanDiscreteActionBindings(path: string, text: string): ActionBi
       if (
         ts.isNewExpression(node) ||
         ts.isPostfixUnaryExpression(node) ||
+        (ts.isPrefixUnaryExpression(node) &&
+          [ts.SyntaxKind.PlusPlusToken, ts.SyntaxKind.MinusMinusToken].includes(node.operator)) ||
         ts.isDeleteExpression(node) ||
         ts.isAwaitExpression(node)
       ) {
@@ -216,6 +1021,34 @@ export function scanDiscreteActionBindings(path: string, text: string): ActionBi
           )
         ) {
           suppression = true;
+        } else if (ts.isIdentifier(callee) && focusFunctions.has(reference(callee))) {
+          focus = true;
+        } else if (
+          ts.isPropertyAccessExpression(callee) &&
+          callee.name.text === "focus" &&
+          hasBinding(callee.expression) &&
+          clean(`${reference(callee.expression)}.focus`, true)
+        ) {
+          focus = true;
+        } else if (
+          ts.isPropertyAccessExpression(callee) &&
+          callee.name.text === "activate" &&
+          registeredValue(callee.expression)
+        ) {
+          registered = true;
+        } else if (
+          ts.isPropertyAccessExpression(callee) &&
+          ["indexOf", "at", "includes"].includes(callee.name.text) &&
+          arrayValue(callee.expression)
+        ) {
+          // Read-only native array operations do not invoke an action callback.
+        } else if (
+          ts.isPropertyAccessExpression(callee) &&
+          ["add", "delete", "clear"].includes(callee.name.text) &&
+          setValue(callee.expression)
+        ) {
+          sampled = true;
+          writesOuter = true;
         } else {
           unknown = true;
         }
@@ -257,9 +1090,14 @@ export function scanDiscreteActionBindings(path: string, text: string): ActionBi
       ts.forEachChild(node, inspect);
     };
     inspect(callback.body);
-    return { coordinates, editing, suppression, unknown, writesOuter };
+    return { coordinates, editing, focus, registered, sampled, suppression, unknown, writesOuter };
   };
   const findings: ActionBindingFinding[] = [];
+  const runtimeAssertions: {
+    readonly line: number;
+    readonly path: string;
+    readonly source: string;
+  }[] = [];
   const record = (
     kind: ActionBindingFinding["kind"],
     node: ts.Node,
@@ -286,6 +1124,13 @@ export function scanDiscreteActionBindings(path: string, text: string): ActionBi
   const visit = (node: ts.Node): void => {
     if (ts.isCallExpression(node)) {
       const callee = node.expression;
+      if (ts.isPropertyAccessExpression(callee) && callee.name.text === "assertBindings") {
+        runtimeAssertions.push({
+          line: source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1,
+          path,
+          source: node.getText(source),
+        });
+      }
       if (ts.isIdentifier(callee) && callee.text === "bindAdaHoldActions") {
         record("legacy-root", node);
       }
@@ -301,14 +1146,40 @@ export function scanDiscreteActionBindings(path: string, text: string): ActionBi
           /^(pointer|touch|mouse|wheel|keydown|keyup)/.test(name),
         );
         const editing = names.some((name) => ["input", "change", "beforeinput"].includes(name));
-        if (
+        const keyboard =
+          names.length > 0 && names.every((name) => ["keydown", "keyup"].includes(name));
+        if (keyboard && facts && !facts.unknown && !facts.writesOuter && facts.registered) {
+          record(
+            "registered-action",
+            node,
+            "registered-keyboard",
+            "Keyboard dispatch invokes the actual canonical binding entry",
+          );
+        } else if (
+          keyboard &&
+          facts &&
+          !facts.unknown &&
+          !facts.writesOuter &&
+          facts.focus &&
+          !facts.registered
+        ) {
+          record(
+            "non-action",
+            node,
+            "keyboard-focus",
+            "Only native focus/public focusTarget and event suppression; no action callback",
+          );
+        } else if (
           (discrete || pointer || editing) &&
           facts &&
           !facts.unknown &&
           facts.suppression &&
           !facts.writesOuter &&
           !facts.coordinates &&
-          !facts.editing
+          !facts.editing &&
+          !facts.focus &&
+          !facts.registered &&
+          !facts.sampled
         ) {
           record(
             "non-action",
@@ -324,14 +1195,22 @@ export function scanDiscreteActionBindings(path: string, text: string): ActionBi
           record(
             "gesture-review",
             node,
-            facts && !facts.unknown && facts.coordinates ? "drag-state" : "unclassified",
+            facts && !facts.unknown && facts.coordinates
+              ? "drag-state"
+              : facts && !facts.unknown && facts.sampled
+                ? "continuous-state"
+                : "unclassified",
             "Pointer callbacks remain blocking until their state/effects and discrete release paths are resolved",
           );
         } else if (editing) {
           record(
-            facts && !facts.unknown && facts.editing ? "non-action" : "unresolved-event",
+            facts && !facts.unknown && facts.editing && !facts.registered && !facts.sampled
+              ? "non-action"
+              : "unresolved-event",
             node,
-            facts && !facts.unknown && facts.editing ? "editing-state" : "unclassified",
+            facts && !facts.unknown && facts.editing && !facts.registered && !facts.sampled
+              ? "editing-state"
+              : "unclassified",
           );
         } else if (!names.length) {
           record("unresolved-event", node);
@@ -349,7 +1228,7 @@ export function scanDiscreteActionBindings(path: string, text: string): ActionBi
           ts.isVariableDeclaration(node.parent) && ts.isIdentifier(node.parent.name)
             ? node.parent.name
             : node;
-        if (!bound.has(reference(target))) {
+        if (!hasBinding(target, true)) {
           record(
             "unbound-discrete",
             node,
@@ -365,7 +1244,7 @@ export function scanDiscreteActionBindings(path: string, text: string): ActionBi
         node.arguments[1] &&
         strings(node.arguments[0]).includes("role") &&
         strings(node.arguments[1]).includes("button") &&
-        !bound.has(reference(callee.expression))
+        !hasBinding(callee.expression)
       ) {
         record(
           "unbound-discrete",
@@ -379,7 +1258,7 @@ export function scanDiscreteActionBindings(path: string, text: string): ActionBi
         callee.name.text === "setAttribute" &&
         node.arguments[0] &&
         node.arguments[1] &&
-        !bound.has(reference(callee.expression))
+        !hasBinding(callee.expression)
       ) {
         const names = strings(node.arguments[0]);
         const values = strings(node.arguments[1]);
@@ -424,7 +1303,7 @@ export function scanDiscreteActionBindings(path: string, text: string): ActionBi
           isActionId && ts.isPropertyAccessExpression(left.expression)
             ? left.expression.expression
             : left.expression;
-        if ((isActionType || isActionId) && !bound.has(reference(target))) {
+        if ((isActionType || isActionId) && !hasBinding(target)) {
           record(
             "unbound-discrete",
             node,
@@ -446,5 +1325,45 @@ export function scanDiscreteActionBindings(path: string, text: string): ActionBi
     ts.forEachChild(node, visit);
   };
   visit(source);
-  return findings;
+  return { factoryAssociations, findings, runtimeAssertions };
+}
+
+/** Reports bypasses without grandfathering existing consumer files. */
+export function scanDiscreteActionBindings(path: string, text: string): ActionBindingFinding[] {
+  return scanSource({ factories: new Map(), sources: new Map() }, path, text).findings;
+}
+
+/** Only exported returned nodes with actual binding associations propagate across module imports. */
+export function scanDiscreteActionProject(inputs: readonly DiscreteActionSource[]) {
+  const context: ScanContext = {
+    factories: new Map(),
+    sources: new Map(
+      inputs.map(({ path, text }) => [
+        path,
+        ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true),
+      ]),
+    ),
+  };
+  for (let pass = 0; pass <= inputs.length; pass++) {
+    let changed = false;
+    for (const input of inputs) {
+      for (const proof of scanSource(context, input.path, input.text).factoryAssociations) {
+        const key = `${proof.path}#${proof.exportName}`;
+        const previous = context.factories.get(key);
+        if (!previous || proof.members.some((member) => !previous.has(member))) {
+          context.factories.set(key, new Set([...(previous ?? []), ...proof.members]));
+          changed = true;
+        }
+      }
+    }
+    if (!changed) {
+      break;
+    }
+  }
+  const scans = inputs.map((input) => scanSource(context, input.path, input.text));
+  return {
+    factoryAssociations: scans.flatMap((scan) => scan.factoryAssociations),
+    findings: scans.flatMap((scan) => scan.findings),
+    runtimeAssertions: scans.flatMap((scan) => scan.runtimeAssertions),
+  };
 }
