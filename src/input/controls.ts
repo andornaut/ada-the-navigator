@@ -452,7 +452,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       state.closeModal();
     }
     weapons.setEnabled(enabled && !open);
-    status.setShown(enabled);
+    status.setShown(enabled && !pause.mapOpen());
     options.onPauseChange?.(open);
   }
   const weapons = createWeaponSelector(settings.root, {
@@ -810,15 +810,17 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   document.addEventListener("visibilitychange", onVisibility);
   const draw = () => {
     cheats.refresh();
+    const flightShown = enabled && !pause.mapOpen();
     const touch =
       !desktopBinding.active() &&
-      (touchControlsActive(window, enabled, false) || (enabled && desktopBinding.touchActive()));
+      (touchControlsActive(window, flightShown, false) ||
+        (flightShown && desktopBinding.touchActive()));
     syncNavigationEntry();
     // Modal covers affect input eligibility, not the underlying scene paint.
-    status.setShown(enabled);
-    notices.update(performance.now(), enabled, noticePlaces());
-    weapons.setShown(enabled);
-    weapons.updateFeedback(performance.now(), enabled);
+    status.setShown(enabled && !pause.mapOpen());
+    notices.update(performance.now(), flightShown, noticePlaces());
+    weapons.setShown(flightShown);
+    weapons.updateFeedback(performance.now(), flightShown);
     for (const target of settings.joystickTargets) {
       target.hidden = !touch;
       target.inert = modalOpen();

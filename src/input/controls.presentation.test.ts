@@ -107,5 +107,9 @@ describe("actual controls paint under modal covers", () => {
     const view = render(true, true, true, true);
     expect(view.navigation.setMode).toHaveBeenCalledWith("menu");
     expect(view.pauseButton).toEqual({ hidden: false, inert: false });
+    expect(view.status.setShown).toHaveBeenCalledWith(false);
+    expect(view.weapons.setShown).toHaveBeenCalledWith(false);
+    expect(view.target.hidden).toBe(true);
+    expect(view.button.hidden).toBe(true);
   });
 });
