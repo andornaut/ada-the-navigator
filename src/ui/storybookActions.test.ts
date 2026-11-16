@@ -341,12 +341,15 @@ const controlsSource = ts.createSourceFile(
 function controlsDeclaration(name: string): string {
   let declaration: ts.VariableDeclaration | undefined;
   const visit = (node: ts.Node) => {
-    if (ts.isVariableDeclaration(node) && node.name.getText(controlsSource) === name)
-      {declaration = node;}
+    if (ts.isVariableDeclaration(node) && node.name.getText(controlsSource) === name) {
+      declaration = node;
+    }
     ts.forEachChild(node, visit);
   };
   visit(controlsSource);
-  if (!declaration) {throw new Error(`Missing actual Controls declaration ${name}`);}
+  if (!declaration) {
+    throw new Error(`Missing actual Controls declaration ${name}`);
+  }
   return declaration.getText(controlsSource);
 }
 function useFixture() {
@@ -360,6 +363,8 @@ function useFixture() {
   canvas.attached = true;
   parent.append(canvas);
   const hud = f.button("story-next");
+  let physical: Element | null = canvas;
+  Object.assign(document, { elementFromPoint: () => physical });
   const layout = useDiscLayout({ height: 360, width: 720 }, NO_INSETS);
   const state = new ControlState();
   state.setUseAvailable(true);
@@ -404,8 +409,9 @@ function useFixture() {
   const declarations = ["resolveUsePointer", "useAction", "actionRoot", "stopPointers"];
   const actual = runInContext(
     ts.transpileModule(
-      `${declarations.map((name) => `const ${controlsDeclaration(name)};`).join("\n") 
-        }\n({actionRoot,useAction,resolveUsePointer});`,
+      `${declarations
+        .map((name) => `const ${controlsDeclaration(name)};`)
+        .join("\n")}\n({actionRoot,useAction,resolveUsePointer});`,
       { compilerOptions: { target: ts.ScriptTarget.ES2023 } },
     ).outputText,
     sandbox,
@@ -425,21 +431,28 @@ function useFixture() {
       pointerId: 7,
       pointerType: "touch",
       target,
-    }))
-      {Object.defineProperty(e, key, { value });}
+    })) {
+      Object.defineProperty(e, key, { value });
+    }
     return e as PointerEvent;
   };
   const down = (target = canvas, at = layout.centre) => {
+    physical = target;
     const e = event("pointerdown", target, at);
     document.dispatchEvent(e);
-    if (pointerAccept(e)) {pointerHandlers.down({ pointerId: 7 }, e);}
+    if (pointerAccept(e)) {
+      pointerHandlers.down({ pointerId: 7 }, e);
+    }
   };
   const up = (target = canvas, at = layout.centre) =>
     document.dispatchEvent(event("pointerup", target, at));
   const click = (target = useButton, at = layout.centre) => {
+    physical = target;
     const e = event("click", target, at);
     f.host.dispatchEvent(e);
-    if (!e.defaultPrevented) {target.dispatchEvent(e);}
+    if (!e.defaultPrevented) {
+      target.dispatchEvent(e);
+    }
     return e;
   };
   return {
@@ -453,6 +466,9 @@ function useFixture() {
     layout,
     request,
     sandbox,
+    setPhysical: (target: Element | null) => {
+      physical = target;
+    },
     state,
     up,
     useButton,
@@ -484,6 +500,15 @@ it("pairs the actual Controls Use resolver with one short/hold release and no jo
     f.up(f.useButton, invalid);
     f.click(f.useButton, invalid);
     expect(f.request).toHaveBeenCalledTimes(2);
+    f.down(f.useButton);
+    f.setPhysical(f.hud);
+    document.dispatchEvent(f.event("pointermove", f.useButton));
+    vi.advanceTimersByTime(500);
+    f.up(f.useButton);
+    expect(f.request).toHaveBeenCalledTimes(2);
+    f.setPhysical(null);
+    expect(f.resolveUsePointer(f.event("pointerdown"))).toBeNull();
+    f.setPhysical(f.useButton);
     const keyboard = new Event("click");
     Object.defineProperty(keyboard, "detail", { value: 0 });
     f.useButton.dispatchEvent(keyboard);
@@ -503,6 +528,7 @@ it("keeps native sleep routing, stale page identity and modal denial without red
     const sleep = { ...page, canSkip: false, sleep: true };
     f.story.show(sleep);
     const background = f.host.all().find((node) => node.className === "ada-story-background")!;
+    f.setPhysical(background);
     expect(f.resolveUsePointer(f.event("pointerdown", background))).toBeUndefined();
     f.down(background);
     f.up(background);

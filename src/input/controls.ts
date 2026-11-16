@@ -705,16 +705,20 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const resolveUsePointer = (
     event: Pick<PointerEvent, "clientX" | "clientY" | "target">,
   ): HTMLElement | null | undefined => {
-    const native = event.target instanceof Node && settings.useButton.contains(event.target);
-    const surface =
-      event.target === canvas || event.target === parent || joystickTarget(event.target) !== null;
-    if (!native && (!surface || onPageControl(event.target))) {
-      return undefined;
+    const target = document.elementFromPoint(event.clientX, event.clientY);
+    if (target === null) {
+      return null;
+    }
+    const capturedUse = event.target instanceof Node && settings.useButton.contains(event.target);
+    const native = settings.useButton.contains(target);
+    const surface = target === canvas || target === parent || joystickTarget(target) !== null;
+    if (!native && (!surface || onPageControl(target))) {
+      return capturedUse ? null : undefined;
     }
     if (useShown && state.accepts() && usePressed(useLayout, point(event))) {
       return settings.useButton;
     }
-    return native ? null : undefined;
+    return native || capturedUse ? null : undefined;
   };
   const useAction = bindAdaAction(
     {
