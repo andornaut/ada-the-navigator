@@ -5,6 +5,7 @@ import type { SHIP_PHYSICS } from "./shipPhysics.ts";
 export const PHANTOM_FLAGSHIP_ID = "phantomFlagship";
 export const WRECK_ID_PREFIX = "wreck:";
 export const INDUSTRIAL_BODY_KEYS = ["retaliatorCargoHauler", "retaliatorMiningFreighter"] as const;
+export type IndustrialBodyKey = (typeof INDUSTRIAL_BODY_KEYS)[number];
 export type EnemyAssetKey =
   | Exclude<keyof typeof SHIP_PHYSICS, "ada">
   | "gadget"
@@ -20,12 +21,17 @@ export function enemyAssetKey(identity: EnemyIdentity): EnemyAssetKey {
   if (identity.archetype === "capital" && identity.id === PHANTOM_FLAGSHIP_ID) {
     return "gadget";
   }
-  if (identity.archetype === "retaliator" && identity.id !== undefined && identity.id !== "") {
-    return INDUSTRIAL_BODY_KEYS[
-      Math.floor(enemyRandom(`retaliator-body:${identity.id}`)() * INDUSTRIAL_BODY_KEYS.length)
-    ]!;
+  return retaliatorVariant(identity) ?? identity.archetype;
+}
+
+/** Shares the rendering identity stream with idle navigation. */
+export function retaliatorVariant(identity: EnemyIdentity): IndustrialBodyKey | undefined {
+  if (identity.archetype !== "retaliator" || !identity.id) {
+    return undefined;
   }
-  return identity.archetype;
+  return INDUSTRIAL_BODY_KEYS[
+    Math.floor(enemyRandom(`retaliator-body:${identity.id}`)() * INDUSTRIAL_BODY_KEYS.length)
+  ];
 }
 
 export function wreckEnemyId(id: string): string {
