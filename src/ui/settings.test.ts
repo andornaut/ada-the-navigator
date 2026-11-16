@@ -231,6 +231,20 @@ describe("Settings current-state labels", () => {
     expect(actions.children[0]!.className).toContain("ada-primary");
     settings.dispose();
   });
+  it("labels install-guide return Back while retaining the independent header Close", () => {
+    const { settings } = setup();
+    const root = settings.root as unknown as Element;
+    const modal = root.children.find((node) => node.className === "ada-modal")!;
+    const guide = modal.children[1]!;
+    const section = guide.children[0]!;
+    const body = section.children[1]!;
+    const footer = body.children[1]!;
+    expect(footer.dataset.footerAction).toBe("back");
+    expect(footer.children[0]!.textContent).toBe(CONTENT.labels.questBack);
+    expect(footer.children[0]!.dataset.action).toBe("close-install-steps");
+    expect(guide.children[1]!.attributes.get("aria-label")).toBe(labels.close);
+    settings.dispose();
+  });
   it("uses the large Settings cap while retaining the medium install-steps card", () => {
     const { settings } = setup();
     const root = settings.root as unknown as Element;

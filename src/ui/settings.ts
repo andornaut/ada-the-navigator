@@ -486,9 +486,11 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   const stepsText = document.createElement("p");
   const stepsInstallGlyph = settingsIcon(SETTING_ICONS.install);
   stepsLine.append(stepsGlyph, stepsInstallGlyph, stepsText);
-  const stepsClose = createButton(options.labels.close);
+  const stepsClose = createButton(CONTENT.labels.questBack!);
   stepsClose.dataset.action = "close-install-steps";
-  stepsBody.append(stepsLine, createActions([{ button: stepsClose, role: "secondary" }]));
+  const stepsActions = createActions([{ button: stepsClose, role: "secondary" }]);
+  setFooterAction("back", stepsActions);
+  stepsBody.append(stepsLine, stepsActions);
   setScrollGroup(stepsParts, stepsLine);
   options.onFeedbackChange?.(feedback());
   options.onVisibilityChange(visibility());
