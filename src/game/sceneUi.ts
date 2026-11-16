@@ -278,7 +278,11 @@ export function buildScene(scene: UiContext): void {
   );
   scene.cameras.main.setBackgroundColor(background);
   scene.spaceBackground = background;
-  fitPlayCamera(scene);
+  fitPlayCamera(
+    scene,
+    scene.cameras.main,
+    () => aboardGalaxy(scene.model.state, scene.model.storyView?.page) !== null,
+  );
   // SVGs, and the touch chrome on RASTER_SCALE_EVENT, rasterise again once a resize moves the
   // camera's zoom far enough (svgRasters.ts).
   const followZoom = (): void => {

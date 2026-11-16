@@ -337,3 +337,8 @@ describe("story page portraits", () => {
     }
   });
 });
+
+it("caps Earth content to the canonical game width while retaining full-width half-panel paint", () => {
+  expect(rule(".ada-controls .ada-story .ada-story-panel")).toContain("720px");
+  expect(rule(".ada-controls .ada-story.ada-story-half .ada-story-panel")).toContain("width:100%");
+});

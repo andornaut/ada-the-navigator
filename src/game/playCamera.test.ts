@@ -28,11 +28,17 @@ function fitAt(css: { height: number; width: number }, r: number) {
 // A scene whose scale manager emits resize, and a camera recording what it was set to.
 function fakeScene(css: { height: number; width: number }, r: number) {
   const listeners = new Map<string, () => void>();
-  let shutdown = (): void => undefined;
+  const shutdown: (() => void)[] = [];
+  const events = new Map<string, () => void>();
   const camera = {
     origin: [0.5, 0.5],
+    scroll: [0, 0],
     setOrigin(x: number, y: number) {
       camera.origin = [x, y];
+      return camera;
+    },
+    setScroll(x: number, y: number) {
+      camera.scroll = [x, y];
       return camera;
     },
     setViewport(x: number, y: number, width: number, height: number) {
@@ -54,9 +60,11 @@ function fakeScene(css: { height: number; width: number }, r: number) {
   const scene = {
     cameras: { main: camera },
     events: {
+      off: (event: string) => events.delete(event),
+      on: (event: string, listener: () => void) => events.set(event, listener),
       once: (event: string, listener: () => void) => {
         expect(event).toBe("shutdown");
-        shutdown = listener;
+        shutdown.push(listener);
       },
     },
     scale,
@@ -65,7 +73,15 @@ function fakeScene(css: { height: number; width: number }, r: number) {
     Object.assign(scale, deviceScale(next, nextR));
     listeners.get("resize")?.();
   };
-  return { camera, listeners, resize, scene, shutdown: () => shutdown() };
+  return {
+    camera,
+    events,
+    listeners,
+    resize,
+    scene,
+    shutdown: () => shutdown.forEach((fn) => fn()),
+    tick: () => events.get("preupdate")?.(),
+  };
 }
 
 // The scene and camera types are Pick<> views of Phaser's; the fakes cover exactly those.
@@ -156,3 +172,29 @@ describe("play cameras", () => {
     expect(fake.listeners.has("resize")).toBe(false);
   });
 });
+
+it.each([1, 2])(
+  "expands only Earth presentation without moving canonical game coordinates at DPR%s",
+  (r) => {
+    let aboard = false;
+    const fake = fakeScene({ height: 575, width: 1280 }, r);
+    fitPlayCamera(fake.scene as unknown as Scene, fake.camera as unknown as Camera, () => aboard);
+    const beforeX = fake.camera.viewport[0]! + 360 * fake.camera.zoom;
+    const zoom = fake.camera.zoom;
+    aboard = true;
+    fake.tick();
+    expect(fake.camera.viewport).toEqual([0, 0, 1280 * r, 575 * r]);
+    expect((360 - fake.camera.scroll[0]!) * fake.camera.zoom).toBeCloseTo(beforeX, 9);
+    expect(fake.camera.zoom).toBe(zoom);
+    fake.resize({ height: 844, width: 390 }, r);
+    expect(fake.camera.viewport).toEqual([0, 0, 390 * r, 844 * r]);
+    expect(fake.camera.scroll[0]).toBeCloseTo(0, 9);
+    aboard = false;
+    fake.tick();
+    expect(fake.camera.viewport).toEqual([0, 0, 390 * r, 195 * r]);
+    expect(fake.camera.scroll).toEqual([0, 0]);
+    fake.shutdown();
+    expect(fake.listeners.size).toBe(0);
+    expect(fake.events.size).toBe(0);
+  },
+);

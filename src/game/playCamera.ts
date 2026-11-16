@@ -75,24 +75,54 @@ type FitCamera = Pick<Cameras.Scene2D.Camera, "setViewport">;
 // Keeps camera's viewport at rectOf the canvas's fit, at the fit's zoom with its origin at the
 // top-left, now and on every resize, until scene shuts down. It reads the scale manager rather
 // than the resize event's size, since one refit fires several.
-function keepViewport(scene: FitScene, camera: FitCamera, rectOf: (fit: RenderFit) => Rect): void {
+function keepViewport(
+  scene: FitScene,
+  camera: FitCamera,
+  rectOf: (fit: RenderFit) => Rect,
+  scrollOf?: (fit: RenderFit) => Point,
+): () => void {
   const fit = (): void => {
     const at = sceneFit(scene);
     const { height, width, x, y } = rectOf(at);
-    camera.setViewport(x, y, width, height).setOrigin(0, 0).setZoom(at.zoom);
+    const fitted = camera.setViewport(x, y, width, height).setOrigin(0, 0).setZoom(at.zoom);
+    const scroll = scrollOf?.(at);
+    if (scroll) {
+      fitted.setScroll(scroll.x, scroll.y);
+    }
   };
   fit();
   // Phaser's Scale.Events.RESIZE and Scenes.Events.SHUTDOWN.
   scene.scale.on("resize", fit);
   scene.events.once("shutdown", () => scene.scale.off("resize", fit));
+  return fit;
 }
 
 // Keeps camera (scene's main camera by default) on the game area (playViewport).
 export function fitPlayCamera(
   scene: FitScene & Pick<Scene, "cameras">,
   camera: FitCamera = scene.cameras.main,
+  fullBleed?: () => boolean,
 ): void {
-  keepViewport(scene, camera, playViewport);
+  if (!fullBleed) {
+    keepViewport(scene, camera, playViewport);
+    return;
+  }
+  const refresh = keepViewport(
+    scene,
+    camera,
+    (fit) => (fullBleed() ? { ...fit.backing, x: 0, y: 0 } : playViewport(fit)),
+    (fit) => ({ x: fullBleed() ? -viewShift(fit).x : 0, y: 0 }),
+  );
+  let wide = fullBleed();
+  const modeChanged = () => {
+    const next = fullBleed();
+    if (next !== wide) {
+      wide = next;
+      refresh();
+    }
+  };
+  scene.events.on("preupdate", modeChanged);
+  scene.events.once("shutdown", () => scene.events.off("preupdate", modeChanged));
 }
 
 // Keeps camera on the whole canvas, for controls placed anywhere in it.

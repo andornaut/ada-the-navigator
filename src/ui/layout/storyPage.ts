@@ -1,5 +1,8 @@
+import type { Rect } from "@andornaut/game-kit/runtime/rect";
+
 import { SAFE_MARGIN, SPACING, STORY_BACKGROUND, STORY_PANEL } from "../../data/layout.ts";
-import { type Insets, safeRect, type Size } from "./playView.ts";
+import { SCREEN } from "../../data/screen.ts";
+import { type Insets, playView, safeRect, type Size } from "./playView.ts";
 export { STORY_BACKGROUND, STORY_PANEL } from "../../data/layout.ts";
 
 /** A background's subject band: the canvas rows its key objects span (art/storybook.md). */
@@ -35,7 +38,7 @@ export function storyChoiceWidth(inner: number): number {
 /** The panel and its columns for a logical view and its logical safe insets. */
 export function storyPanelLayout(insets: Insets, view: Size): StoryPanelLayout {
   const available = safeRect(insets, SAFE_MARGIN.page, view);
-  const width = Math.min(available.width, STORY_PANEL.maxWidth);
+  const width = Math.min(available.width, SCREEN.width);
   const x = available.x + (available.width - width) / 2;
   const { columnGap, padding, rule } = STORY_PANEL;
   const inner = width - 2 * padding;
@@ -89,4 +92,23 @@ export function storyHalfArtOffset(
     storyBackgroundScale(view) * centre -
     (room ? SPACING.panelPadding : 0)
   );
+}
+
+/** Full-width paint retains text and actions inside the canonical game area's padded sides. */
+export function storyContentPadding(view: Size): { readonly left: number; readonly right: number } {
+  const area = playView(view);
+  return {
+    left: area.x + STORY_PANEL.padding,
+    right: view.width - area.x - area.width + STORY_PANEL.padding,
+  };
+}
+
+/** Cover the Earth art window with an existing backdrop, keeping its canonical game-area centre. */
+export function storyBackdropRect(view: Size, image: Size): Rect {
+  const centre = playView(view).x + SCREEN.width / 2;
+  const horizontal = 2 * Math.max(centre, view.width - centre);
+  const scale = Math.max(1, horizontal / image.width, view.height / image.height);
+  const width = image.width * scale;
+  const height = image.height * scale;
+  return { height, width, x: SCREEN.width / 2 - width / 2, y: SCREEN.height / 2 - height / 2 };
 }

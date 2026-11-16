@@ -841,6 +841,7 @@ export class GameScene extends Scene {
     drawBackdropLayer(
       this,
       flight && this.model.state.mode === "space" ? flight.galaxy : presentationGalaxy,
+      presentationGalaxy !== null,
     );
     drawBackdropLayers(
       this,

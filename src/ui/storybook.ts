@@ -3,6 +3,7 @@ import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { CAST, castFrames, type CastKey, castSheet, STORY_CAST } from "../data/cast.ts";
 import { GENERAL_NAMED, type Speaker, SPEAKERS } from "../data/conversations.ts";
+import { SCREEN } from "../data/screen.ts";
 import type { Background } from "../data/storybook.ts";
 import type { StoryChoice, StoryPage } from "../model/storybook.ts";
 import { bedroomBackground, bedroomTop } from "./bedroom.ts";
@@ -30,6 +31,7 @@ import {
   STORY_BACKGROUND,
   STORY_PANEL,
   storyBackgroundTop,
+  storyContentPadding,
   storyHalfArtOffset,
   type SubjectBand,
 } from "./layout/storyPage.ts";
@@ -349,6 +351,9 @@ export const STORYBOOK_STYLE = `
   align-items:stretch;
   gap:${units(columnGap)};
   pointer-events:auto
+}
+.ada-controls .ada-story .ada-story-panel{
+  width:min(${AVAILABLE_WIDTH}, ${units(SCREEN.width)})
 }
 .ada-controls .ada-story-panel.ada-story-room{
   max-height:${availableHeight(STORY_ROOM_PANEL_TOP)}
@@ -806,6 +811,16 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   };
   const panelTop = (unit: number) =>
     (panel.getBoundingClientRect().top - layer.getBoundingClientRect().top) / unit;
+  const placePanelContent = () => {
+    if (rendered && !rendered.sleep) {
+      const padding = storyContentPadding(viewSize());
+      panel.style.paddingLeft = `calc(${units(padding.left)} - ${slice(2)})`;
+      panel.style.paddingRight = `calc(${units(padding.right)} - ${slice(2)})`;
+    } else {
+      panel.style.paddingLeft = "";
+      panel.style.paddingRight = "";
+    }
+  };
   // The background a key is placed as: a composite's base, else itself.
   const anchorOf = (key: Background): Background => art.bases[key] ?? key;
   // Measures each page of the story run in the panel, keeping the highest panel top on each
@@ -1081,6 +1096,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     );
     backdropShown = backdrop;
     layer.hidden = page === null && backdrop === null;
+    placePanelContent();
     skip.hidden = page === null || !page.canSkip;
     if (!page) {
       panel.hidden = true;
@@ -1113,6 +1129,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       return;
     }
     const focused = document.activeElement;
+    placePanelContent();
     measuredRun = "";
     measureRun(rendered);
     panel.hidden = rendered.sleep === true;

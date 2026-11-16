@@ -6,6 +6,7 @@ import { BlendModes, Math as PhaserMath } from "phaser";
 import { SCREEN } from "../data/screen.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { FlightState } from "../model/types.ts";
+import { storyBackdropRect } from "../ui/layout/storyPage.ts";
 import { BACKDROP_FIELD, backdropRock, backdropTint, hexNumber } from "./asteroidArt.ts";
 import {
   type BackdropRules,
@@ -25,6 +26,7 @@ import {
   viewStreaks,
 } from "./backdropLayers.ts";
 import { BACKDROP_DEPTH } from "./drawOrder.ts";
+import { canvasSize, sceneFit } from "./playCamera.ts";
 import { viewDecorations } from "./rareDecorations.ts";
 import type { GameScene } from "./scene.ts";
 import { bakeScale, bakeTexture, rockTexture } from "./sceneAssets.ts";
@@ -92,18 +94,23 @@ export type BackdropContext = Pick<
 >;
 
 /** The flight's galaxy's fixed backdrop layer, on the play view's centre, or none. */
-export function drawBackdropLayer(scene: BackdropContext, galaxy: GalaxyNumber | null): void {
+export function drawBackdropLayer(
+  scene: BackdropContext,
+  galaxy: GalaxyNumber | null,
+  fullBleed = false,
+): void {
   const layer = galaxy === null ? undefined : scene.backdrops.get(galaxy);
   if (!layer) {
     scene.backdropImage?.setVisible(false);
     return;
   }
+  const rect = fullBleed ? storyBackdropRect(canvasSize(sceneFit(scene)), layer) : null;
   scene.backdropImage ??= scene.add.image(0, 0, layer.asset).setDepth(BACKDROP_DEPTH.fixed);
   scene.backdropImage
     .setTexture(layer.asset)
     .setOrigin(0.5, 0.5)
     .setPosition(SCREEN.width / 2, SCREEN.height / 2)
-    .setDisplaySize(layer.width, layer.height)
+    .setDisplaySize(rect?.width ?? layer.width, rect?.height ?? layer.height)
     .setVisible(true);
 }
 
@@ -130,7 +137,7 @@ export function drawBackdropLayers(
   const used = new Set<string>();
   if (galaxy !== null && rules && backdrop) {
     const camera = flight ? ([flight.player.x, flight.player.y] as const) : ([0, 0] as const);
-    drawSky(scene, galaxy, backdrop);
+    drawSky(scene, galaxy, backdrop, !flight && presentationGalaxy !== null);
     drawFarItems(scene, rules, galaxy, backdrop, camera, used);
     drawDecorations(scene, galaxy, backdrop, camera, used);
     drawPlates(scene, rules, backdrop, camera);
@@ -154,6 +161,7 @@ export function drawSky(
   scene: BackdropContext,
   galaxy: GalaxyNumber,
   backdrop: GalaxyBackdrop,
+  fullBleed = false,
 ): void {
   const key = `backdrop-sky-${galaxy}`;
   bakeTexture(scene, key, () => paintSky(backdrop.sky, 1 / 4));
@@ -162,10 +170,11 @@ export function drawSky(
     .setDepth(BACKDROP_DEPTH.sky)
     .setOrigin(0, 0)
     .setVertexRoundMode("off");
+  const rect = fullBleed ? storyBackdropRect(canvasSize(sceneFit(scene)), SKY_AREA) : SKY_AREA;
   scene.skyImage
     .setTexture(key)
-    .setPosition(SKY_AREA.x, SKY_AREA.y)
-    .setDisplaySize(SKY_AREA.width, SKY_AREA.height)
+    .setPosition(rect.x, rect.y)
+    .setDisplaySize(rect.width, rect.height)
     .setVisible(true);
 }
 
