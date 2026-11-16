@@ -24,6 +24,7 @@ import {
 } from "./ai/stationGuardPatrol.ts";
 import { hardpointAnchorOffset, muzzleOffset } from "./muzzles.ts";
 import { fanHeading } from "./playerProjectiles.ts";
+import { retaliatorNavigation, type RetaliatorNavigationContext } from "./retaliatorNavigation.ts";
 import { direction, hullOffset, speedFraction, stepShipMotion, turnToward } from "./shipPhysics.ts";
 import { type WorldContext, worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
 
@@ -108,6 +109,8 @@ export interface EnemyState {
 export interface EnemyContext extends WorldContext {
   /** Validated exact route-site frame for local guard home patrol and return only. */
   stationGuardAnchor?: StationGuardAnchor;
+  /** Bounded actual asteroid facts for industrial idle routes only. */
+  retaliatorNavigation?: Pick<RetaliatorNavigationContext, "asteroids" | "physicalReach">;
   /** Optional hull-clearance steering, separate from perception and weapon intent. */
   navigationQuery?: NavigationQuery;
   /** Admission for new sight aggression only; damage, summons and existing pursuit bypass it. */
@@ -636,11 +639,36 @@ function steering(
       state.retreat?.endedAt !== undefined &&
       state.lastSeen !== null &&
       state.lastSeenAge < definition.pursuit.unseenSeconds;
+    const industrial =
+      state.archetype === "retaliator" &&
+      !state.engaged &&
+      !state.fleeing &&
+      !investigate &&
+      !context.stationGuardAnchor &&
+      definition.navigation &&
+      context.retaliatorNavigation
+        ? retaliatorNavigation(
+            {
+              ...context.retaliatorNavigation,
+              navigation: definition.navigation,
+              pursuit: definition.pursuit,
+              ...(context.worldSide === undefined ? {} : { worldSide: context.worldSide }),
+            },
+            state,
+          )
+        : undefined;
+    const idleDefinition =
+      industrial && definition.navigation
+        ? {
+            ...definition,
+            navigation: { ...definition.navigation, patrolRadius: industrial.patrolRadius },
+          }
+        : definition;
     return navigate(
-      definition,
+      idleDefinition,
       context,
       investigate ? undefined : context.stationGuardAnchor,
-      investigate ? state.lastSeen! : state.home,
+      investigate ? state.lastSeen! : (industrial?.anchor ?? state.home),
       investigate,
       state,
     );

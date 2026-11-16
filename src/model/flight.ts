@@ -20,7 +20,7 @@ import {
   PHASER_AIM_SECONDS,
 } from "../data/enemyCatalog.ts";
 import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
-import { WRECK_ID_PREFIX } from "../data/enemyIdentity.ts";
+import { retaliatorVariant, WRECK_ID_PREFIX } from "../data/enemyIdentity.ts";
 import { ENEMY_AVOIDANCE } from "../data/enemyNavigation.ts";
 import { byPosition, ROUTE_POSITION, type RoutePosition } from "../data/galaxies.ts";
 import { CURRENTS, HUNTING_PACKS, ORE_FIELDS } from "../data/galaxyFeatures.ts";
@@ -144,6 +144,7 @@ import {
   requiredWorldPopulation,
   type RequiredWorldReservation,
 } from "./requiredWorldReservations.ts";
+import { retaliatorAsteroidQuery } from "./retaliatorAsteroids.ts";
 import { routeGuardEvidence } from "./routeGuardEvidence.ts";
 import { type PickupObstacle, stardustDiamond, stardustDropOffsets } from "./stardustPlacement.ts";
 import { stationFormationClear } from "./stationPlacement.ts";
@@ -171,7 +172,7 @@ import {
   rollSalvageDrop,
   splitStardust,
 } from "./drops.ts";
-import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
+import { enemyHull, enemyPartOutline, enemyPhysicalBody } from "./enemyBody.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { MINE_REACH, mineParts, mineSpin, mineTouches } from "./mineShape.ts";
 import {
@@ -3367,6 +3368,7 @@ function enemies(
     eligible,
     flight.player,
   );
+  let industrialAsteroids: ReturnType<typeof retaliatorAsteroidQuery> | undefined;
   for (const object of objects) {
     const state = object.enemy!;
     const base = enemyEquipmentDefinition(flight.galaxy, state);
@@ -3407,6 +3409,24 @@ function enemies(
       { ...state, position: before, radius: object.radius },
     );
     const stationGuardAnchor = guardPatrolFrame(content, flight, object);
+    const industrialVariant = retaliatorVariant(state);
+    const industrialBody = industrialVariant
+      ? enemyPhysicalBody(ROUTE_POSITION[flight.galaxy], state)
+      : null;
+    const industrialInput =
+      industrialVariant && definition.navigation && industrialBody
+        ? {
+            asteroids:
+              industrialVariant === "retaliatorMiningFreighter"
+                ? (industrialAsteroids ??= retaliatorAsteroidQuery(
+                    flightWorldContext(flight),
+                    content.tuning.chunkSize,
+                    flight.objects,
+                  ))(definition.pursuit.homeRadius, state.home)
+                : [],
+            physicalReach: partsReach(worldParts(industrialBody)),
+          }
+        : undefined;
     const intent = stepEnemy(
       definition,
       {
@@ -3422,6 +3442,7 @@ function enemies(
         peers,
         player: flight.player,
         playerVelocity: aimVelocity,
+        ...(industrialInput ? { retaliatorNavigation: industrialInput } : {}),
         ...(stationGuardAnchor ? { stationGuardAnchor } : {}),
         summoned: flight.summonedGuards?.includes(object.id) ?? false,
         ...(flight.summonedGuards?.includes(object.id)
