@@ -3,7 +3,11 @@ import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { SCREEN } from "../data/screen.ts";
 import { type AchievementsLayoutSchema, achievementsTree } from "./achievementsTree.ts";
-import { bindAdaAction } from "./actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  bindAdaAction,
+} from "./actionBinding.ts";
 import { COMPLETION_INDICATOR, createCompletionIndicator } from "./completionIndicator.ts";
 import { listCardHeader } from "./layout/cardFrame.ts";
 import { SCROLL } from "./layout/contentCard.ts";
@@ -222,6 +226,12 @@ export function createAchievementsCard(
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
+  const audit = () => {
+    assertAdaActionMetadata(modal);
+    if (modal.isConnected) {
+      assertAdaActionBindings(modal);
+    }
+  };
   const initialTree = achievementsTree({
     entries: [],
     entryOffset: 0,
@@ -355,6 +365,14 @@ export function createAchievementsCard(
         previousHidden: page === 0,
       }),
     );
+    try {
+      audit();
+    } catch (error) {
+      modal.hidden = true;
+      leavePressView?.();
+      leavePressView = undefined;
+      throw error;
+    }
     if (!modal.hidden) {
       card.fit();
       if ((focused === previous && previous.hidden) || (focused === next && next.hidden)) {
@@ -396,6 +414,18 @@ export function createAchievementsCard(
   const close = () => setOpen(false);
   register(card.close, close);
   register(dismiss, close);
+  try {
+    audit();
+  } catch (error) {
+    for (const binding of bindings) {
+      binding.dispose();
+    }
+    window.removeEventListener(VIEW_SCALE_EVENT, render);
+    mounted.dispose();
+    card.dispose();
+    modal.remove();
+    throw error;
+  }
   return {
     close: () => setOpen(false),
     dispose(): void {

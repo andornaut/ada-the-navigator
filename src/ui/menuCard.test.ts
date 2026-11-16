@@ -4,6 +4,7 @@ import { runInNewContext } from "node:vm";
 import ts from "typescript";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { registerAdaActionRoot } from "./actionRegistry.ts";
 import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
 import { rootPressGuard } from "./pressScope.ts";
 
@@ -13,7 +14,10 @@ const fixture = vi.hoisted(() => {
     type = "";
     disabled = false;
     parentElement: Node | null = null;
-    readonly isConnected = true;
+    connected = true;
+    get isConnected(): boolean {
+      return this.parentElement?.isConnected ?? this.connected;
+    }
     get ownerDocument() {
       return document;
     }
@@ -177,7 +181,7 @@ const fixture = vi.hoisted(() => {
     frame: new Node(),
   };
   const layer = { dispose: vi.fn(), open: vi.fn(() => vi.fn()) };
-  return { Node, card, layer, requests: [] as unknown[] };
+  return { Node, card, corruptFactory: false, layer, requests: [] as unknown[] };
 });
 vi.mock("./modal.ts", async (original) => ({
   ...(await original<typeof import("./modal.ts")>()),
@@ -190,6 +194,11 @@ vi.mock("./modal.ts", async (original) => ({
     }),
   createCard: (options: unknown) => {
     fixture.requests.push(options);
+    if (fixture.corruptFactory) {
+      fixture.card.frame.append(
+        Object.assign(new fixture.Node(), { disabled: true, hidden: true, tagName: "BUTTON" }),
+      );
+    }
     return fixture.card;
   },
 }));
@@ -218,6 +227,7 @@ afterEach(() => {
   vi.clearAllMocks();
   fixture.card.body.replaceChildren();
   fixture.requests.length = 0;
+  fixture.corruptFactory = false;
 });
 
 function setup(exit?: { label: string; onExit: () => void }) {
@@ -539,4 +549,61 @@ it("uses the original Exit callback from the actual Start action and retires it 
   menu.dispose();
   exit.dispatchEvent(new Event("click"));
   expect(onExit).toHaveBeenCalledOnce();
+});
+
+it("rejects an unregistered hidden disabled control in the completed Menu factory", () => {
+  fixture.corruptFactory = true;
+  expect(() => setup()).toThrow("no registered action binding");
+  expect(fixture.layer.open).not.toHaveBeenCalled();
+  expect(fixture.card.close.focus).not.toHaveBeenCalled();
+  expect(fixture.card.dispose).toHaveBeenCalledOnce();
+  expect(fixture.card.frame.parentElement?.parentElement).toBeNull();
+});
+
+it("audits each Menu rebuild before focus and rejects a native refusal bypass", () => {
+  const f = setup();
+  const unbound = Object.assign(new fixture.Node(), {
+    disabled: true,
+    hidden: true,
+    tagName: "BUTTON",
+  });
+  unbound.setAttribute("aria-disabled", "true");
+  const bypass = vi.fn();
+  unbound.addEventListener("click", bypass);
+  fixture.card.frame.append(unbound);
+  expect(() => f.menu.open()).toThrow("no registered action binding");
+  expect(f.menu.isOpen()).toBe(false);
+  expect(fixture.layer.open).not.toHaveBeenCalled();
+  expect(f.onOpenChange).not.toHaveBeenCalled();
+  expect(f.onAction).not.toHaveBeenCalled();
+  expect(bypass).not.toHaveBeenCalled();
+  unbound.remove();
+  f.menu.open();
+  expect(f.menu.isOpen()).toBe(true);
+  expect(fixture.layer.open).toHaveBeenCalledOnce();
+});
+
+it("audits detached Menu metadata and attached ownership without probing root eligibility", () => {
+  setup().menu.dispose();
+  const root = new fixture.Node();
+  root.connected = false;
+  const menu = createMenuCard(root as unknown as HTMLElement, {
+    closeLabel: "Close",
+    labels: { achievements: "Achievements", backToTitle: "Back to title", settings: "Settings" },
+    onAction: vi.fn(),
+    onOpenChange: vi.fn(),
+    title: "Menu",
+  });
+  menus.push(menu);
+  expect(menu.isOpen()).toBe(false);
+  root.connected = true;
+  expect(() => menu.open()).toThrow("no live action root");
+  expect(menu.isOpen()).toBe(false);
+  const permits = vi.fn(() => {
+    throw new Error("Policy must not be probed by construction");
+  });
+  rootReleases.push(registerAdaActionRoot({ permits }, root as unknown as HTMLElement));
+  expect(() => menu.open()).not.toThrow();
+  expect(permits).not.toHaveBeenCalled();
+  expect(menu.isOpen()).toBe(true);
 });

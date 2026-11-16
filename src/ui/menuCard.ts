@@ -1,7 +1,11 @@
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import { bindAdaAction } from "./actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  bindAdaAction,
+} from "./actionBinding.ts";
 import { presentAdaButton } from "./buttonPresentation.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -46,6 +50,12 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
   card.body.append(actions);
   modal.append(card.frame);
   root.append(modal);
+  const audit = () => {
+    assertAdaActionMetadata(modal);
+    if (modal.isConnected) {
+      assertAdaActionBindings(modal);
+    }
+  };
   let context: MenuContext = "nonplay";
   let origin: HTMLElement | undefined;
   let returnAction: MenuAction | undefined;
@@ -112,6 +122,14 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
       },
       menuTree(treeData(context)),
     );
+    try {
+      audit();
+    } catch (error) {
+      modal.hidden = true;
+      layout.dispose();
+      layout = undefined;
+      throw error;
+    }
     const focus =
       actions.querySelector<HTMLButtonElement>(`[data-action="menu-${returnAction ?? "close"}"]`) ??
       actions.querySelector<HTMLButtonElement>('[data-action="menu-close"]')!;
@@ -156,6 +174,16 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
     presentButton: presentAdaButton,
   });
   const fixedBindings = [register(card.close, close)];
+  try {
+    audit();
+  } catch (error) {
+    for (const binding of fixedBindings) {
+      binding.dispose();
+    }
+    card.dispose();
+    modal.remove();
+    throw error;
+  }
   return {
     close,
     dispose() {

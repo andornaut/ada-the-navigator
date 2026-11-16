@@ -1,11 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type AchievementEntry, createAchievementsCard } from "./achievementsCard.ts";
+import { registerAdaActionRoot } from "./actionRegistry.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 
+const corruption = vi.hoisted(() => ({ factory: false, row: false }));
 let active: Element | null = null;
 const mountedRoots = new Set<Element>();
 class Element {
+  readonly tagName: string;
+  type = "";
+  disabled = false;
+  constructor(tag = "div") {
+    this.tagName = tag.toUpperCase();
+    if (tag === "button") {
+      this.type = "button";
+    }
+  }
   readonly attributes = new Map<string, string>();
   readonly children: Element[] = [];
   className = "";
@@ -70,6 +81,50 @@ class Element {
       child.remove();
     }
     this.append(...nodes);
+    if (this.tagName === "LI" && corruption.row) {
+      const unbound = new Element("button");
+      unbound.hidden = true;
+      unbound.disabled = true;
+      this.append(unbound);
+    }
+  }
+  matches(selector: string): boolean {
+    return selector.split(",").some((part) => {
+      const value = part.trim();
+      if (value === ":disabled") {
+        return this.disabled;
+      }
+      if (value === "button" || value === "img") {
+        return this.tagName === value.toUpperCase();
+      }
+      if (value.startsWith(".")) {
+        return this.className.split(" ").includes(value.slice(1));
+      }
+      if (value === "[data-action]") {
+        return this.dataset.action !== undefined || this.getAttribute("data-action") !== null;
+      }
+      const input = /^input\[type=["'](button|submit|reset)["']\]$/.exec(value);
+      if (input) {
+        return this.tagName === "INPUT" && (this.getAttribute("type") ?? this.type) === input[1];
+      }
+      const role = /^\[role=["']([^"']+)["']\]$/.exec(value);
+      if (role) {
+        return this.getAttribute("role") === role[1];
+      }
+      const action = /^\[data-action=["']([^"']+)["']\]$/.exec(value);
+      return (
+        action !== null && (this.dataset.action ?? this.getAttribute("data-action")) === action[1]
+      );
+    });
+  }
+  querySelectorAll(selector: string): Element[] {
+    return this.children.flatMap((child) => [
+      ...(child.matches(selector) ? [child] : []),
+      ...child.querySelectorAll(selector),
+    ]);
+  }
+  getAttribute(key: string) {
+    return this.attributes.get(key) ?? null;
   }
   removeAttribute(key: string) {
     this.attributes.delete(key);
@@ -87,26 +142,34 @@ vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
 vi.mock("./layout/viewScale.ts", () => ({ VIEW_SCALE_EVENT: "scale", readViewUnit: () => 1 }));
 vi.mock("./modal.ts", async (original) => ({
   ...(await original<typeof import("./modal.ts")>()),
-  createButton: (label: string) => Object.assign(new Element(), { textContent: label }),
+  createButton: (label: string) => Object.assign(new Element("button"), { textContent: label }),
   createCard: (options: { closeAction: string }) => {
     const frame = new Element();
     const card = new Element();
     const body = new Element();
-    const close = new Element();
+    const close = new Element("button");
     close.dataset.action = options.closeAction;
     card.append(body);
     frame.append(card, close);
+    if (corruption.factory) {
+      const unbound = new Element("button");
+      unbound.hidden = true;
+      unbound.disabled = true;
+      frame.append(unbound);
+    }
     return { body, card, close, dispose: vi.fn(), fit: vi.fn(), frame };
   },
 }));
 
 beforeEach(() => {
   active = null;
+  corruption.factory = false;
+  corruption.row = false;
   vi.stubGlobal("document", {
     get activeElement() {
       return active;
     },
-    createElement: () => new Element(),
+    createElement: (tag: string) => new Element(tag),
   });
   vi.stubGlobal("window", { addEventListener: vi.fn(), removeEventListener: vi.fn() });
   vi.stubGlobal("getComputedStyle", () => ({
@@ -265,4 +328,69 @@ describe("Achievements page actions", () => {
     expect(dismiss.parent!.dataset.footerAction).toBe("close");
     card.dispose();
   });
+});
+
+const auditLabels = {
+  close: "Close",
+  next: "Next",
+  page: "{page}/{pages}",
+  previous: "Previous",
+  progress: "{have}/{need}",
+  title: "Achievements",
+};
+const auditReleases: (() => void)[] = [];
+afterEach(() => {
+  for (const release of auditReleases.splice(0)) {
+    release();
+  }
+});
+
+it("rejects unregistered hidden disabled controls in completed Achievements factories", () => {
+  corruption.factory = true;
+  const root = fixtureActionRoot(new Element());
+  mountedRoots.add(root);
+  const changed = vi.fn();
+  const create = () =>
+    createAchievementsCard(root as unknown as HTMLElement, {
+      labels: auditLabels,
+      onOpenChange: changed,
+    });
+  expect(create).toThrow("no registered action binding");
+  expect(root.children).toEqual([]);
+  expect(active).toBeNull();
+  expect(changed).not.toHaveBeenCalled();
+});
+
+it("audits completed Achievements entry reconciliation before refitting or moving focus", () => {
+  const f = setup();
+  const focused = active;
+  corruption.row = true;
+  expect(() => f.card.setEntries(entries(8))).toThrow("no registered action binding");
+  expect(f.card.isOpen()).toBe(false);
+  expect(active).toBe(focused);
+  expect(f.onOpenChange.mock.calls).toEqual([[true]]);
+  corruption.row = false;
+  f.card.dispose();
+});
+
+it("audits detached Achievements metadata and attached ownership without policy probes", () => {
+  const root = new Element();
+  const card = createAchievementsCard(root as unknown as HTMLElement, {
+    labels: auditLabels,
+    onOpenChange: vi.fn(),
+  });
+  card.setEntries(entries(7));
+  expect(card.isOpen()).toBe(false);
+  mountedRoots.add(root);
+  expect(() => card.open()).toThrow("no live action root");
+  expect(card.isOpen()).toBe(false);
+  expect(active).toBeNull();
+  const permits = vi.fn(() => {
+    throw new Error("Policy must not be probed by construction");
+  });
+  auditReleases.push(registerAdaActionRoot({ permits }, root as unknown as HTMLElement));
+  expect(() => card.open()).not.toThrow();
+  expect(permits).not.toHaveBeenCalled();
+  expect(card.isOpen()).toBe(true);
+  card.dispose();
 });
