@@ -3,9 +3,12 @@ import type { Rect } from "@andornaut/game-kit/runtime/rect";
 import type { ScanOutcome, ScanQuestIdentity } from "../model/scanOutcomes.ts";
 import type { Vec } from "../model/types.ts";
 import { EASE_OUT, NOTICE_TIMING } from "./itemNotice.ts";
-import { scanFeedbackRect } from "./layout/scanFeedback.ts";
+import {
+  type ScanFeedbackPath,
+  scanFeedbackPath,
+  scanFeedbackRect,
+} from "./layout/scanFeedback.ts";
 import { chipGlyph } from "./mapScreen.ts";
-
 export interface ScanFeedbackContent {
   readonly checkbox: boolean;
   readonly glyph: string | null;
@@ -14,7 +17,6 @@ export interface ScanFeedbackContent {
   readonly questId?: string;
   readonly text: string;
 }
-
 /** Format only the committed receipt. A Survey quest is never inferred to be a task. */
 export function scanFeedbackContents(outcome: ScanOutcome): readonly ScanFeedbackContent[] {
   const questGlyph = (quest: ScanQuestIdentity) => chipGlyph(quest.icon);
@@ -38,12 +40,20 @@ export function scanFeedbackContents(outcome: ScanOutcome): readonly ScanFeedbac
     text: completion.kind === "task" ? completion.task.text : completion.quest.name,
   }));
 }
-
 export type ScanFeedbackPart =
-  | { readonly checked: true; readonly kind: "checkbox"; readonly label: string }
-  | { readonly kind: "text"; readonly text: string }
-  | { readonly glyph: string | null; readonly kind: "quest-icon" | "target-icon" };
-
+  | {
+      readonly checked: true;
+      readonly kind: "checkbox";
+      readonly label: string;
+    }
+  | {
+      readonly kind: "text";
+      readonly text: string;
+    }
+  | {
+      readonly glyph: string | null;
+      readonly kind: "quest-icon" | "target-icon";
+    };
 /** The existing renderer receives explicit order, with no task icon on a quest completion. */
 export function scanFeedbackParts(content: ScanFeedbackContent): readonly ScanFeedbackPart[] {
   const text: ScanFeedbackPart = { kind: "text", text: content.text };
@@ -55,7 +65,6 @@ export function scanFeedbackParts(content: ScanFeedbackContent): readonly ScanFe
     ? [{ checked: true, kind: "checkbox", label: content.text }, text, icon]
     : [icon, text];
 }
-
 export interface ScanFeedbackFrame {
   readonly anchor: Vec;
   readonly content: ScanFeedbackContent;
@@ -78,18 +87,16 @@ export interface ScanFeedbackContext {
 interface Pending {
   readonly content: ScanFeedbackContent;
   elapsed: number;
-  previousTop?: number;
+  anchor?: Vec;
+  path?: ScanFeedbackPath;
 }
-
 /** Transient UI ownership begins after drain; cover and failed placement never consume receipts. */
 export class ScanFeedbackQueue {
   private pending: Pending[] = [];
   private received = new WeakSet<ScanOutcome>();
-
   get length(): number {
     return this.pending.length;
   }
-
   enqueue(outcomes: readonly ScanOutcome[]): void {
     for (const outcome of outcomes) {
       if (this.received.has(outcome)) {
@@ -101,13 +108,11 @@ export class ScanFeedbackQueue {
       );
     }
   }
-
   /** Reset only at an actual new/loaded model boundary, never when a covering card opens. */
   reset(): void {
     this.pending = [];
     this.received = new WeakSet();
   }
-
   frame(context: ScanFeedbackContext, milliseconds: number): ScanFeedbackFrame | null {
     if (context.covered) {
       return null;
@@ -123,25 +128,45 @@ export class ScanFeedbackQueue {
       this.pending.shift();
       return this.frame(context, 0);
     }
-    const anchor = context.resolveAnchor(next.content.outcome);
+    const anchor = next.anchor ?? context.resolveAnchor(next.content.outcome);
     if (!anchor) {
       return null;
     }
+    const retained = next.path?.area;
+    if (
+      !retained ||
+      retained.x !== context.area.x ||
+      retained.y !== context.area.y ||
+      retained.width !== context.area.width ||
+      retained.height !== context.area.height
+    ) {
+      const path = scanFeedbackPath({
+        anchor,
+        area: context.area,
+        blocked: context.blocked,
+        ...context.measure(next.content),
+        progress: 0,
+        reducedMotion: context.reducedMotion,
+      });
+      if (!path) {
+        return null;
+      }
+      next.anchor = { ...anchor };
+      next.path = path;
+    }
+    const path = next.path!;
     const rect = scanFeedbackRect({
       anchor,
       area: context.area,
       blocked: context.blocked,
-      ...context.measure(next.content),
-      ...(next.previousTop === undefined ? {} : { previousTop: next.previousTop }),
+      height: path.from.height,
+      path,
       progress: next.elapsed === 0 ? 0 : EASE_OUT(Math.min(1, next.elapsed / NOTICE_TIMING.holdMs)),
       reducedMotion: context.reducedMotion,
-    });
-    if (!rect) {
-      return null;
-    }
+      width: path.from.width,
+    })!;
     const fade = context.reducedMotion ? NOTICE_TIMING.reducedFadeMs : NOTICE_TIMING.fadeMs;
     const opacity = Math.max(0, 1 - Math.max(0, next.elapsed - NOTICE_TIMING.holdMs) / fade);
-    next.previousTop = rect.y;
     if (Number.isFinite(milliseconds) && milliseconds > 0) {
       next.elapsed += milliseconds;
     }

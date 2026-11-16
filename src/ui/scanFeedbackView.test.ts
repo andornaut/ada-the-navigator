@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { immutableScanOutcome, type ScanOutcome } from "../model/scanOutcomes.ts";
 import { NOTICE_TIMING } from "./itemNotice.ts";
-import { createScanFeedbackView } from "./scanFeedbackView.ts";
+import { createScanFeedbackView, scanFeedbackFootprints } from "./scanFeedbackView.ts";
 class Node {
   readonly style = Object.assign({ setProperty: vi.fn() }, {} as Record<string, string>);
   readonly dataset: Record<string, string> = {};
@@ -139,6 +139,35 @@ describe("native scan receipt view", () => {
       view.render(frame, 0);
       expect(Number(panel.style.opacity)).toBeCloseTo(0.5);
     }
+  });
+  it("retains its native node and x position as a dialogue opens, changes and closes", () => {
+    const { panel, view } = setup();
+    view.enqueue([receipt()]);
+    view.render(context, 100);
+    const left = panel.style.left;
+    let top = panel.style.top;
+    for (const blocked of [
+      [{ height: 140, width: 320, x: 200, y: 80 }],
+      [{ height: 200, width: 500, x: 100, y: 60 }],
+      [],
+    ]) {
+      view.render({ ...context, blocked }, 100);
+      expect(panel.style.left).toBe(left);
+      expect(panel.style.top).not.toBe(top);
+      expect(panel.style.zIndex).toBe("1");
+      top = panel.style.top;
+    }
+  });
+  it("uses canonical HUD selection with only conversation paint excluded", () => {
+    setup();
+    const querySelectorAll = vi.fn<(selector: string) => HTMLElement[]>(() => []);
+    scanFeedbackFootprints(
+      { querySelectorAll } as unknown as Document,
+      new Node() as unknown as HTMLElement,
+    );
+    const selector = querySelectorAll.mock.calls[0]![0];
+    expect(selector).toContain(".ada-shield:not(.ada-conversation, .ada-conversation *)");
+    expect(selector).toContain(".ada-conversation:not(.ada-conversation, .ada-conversation *)");
   });
   it("clears presentation at the model boundary and removes its native node on disposal", () => {
     const { panel, view } = setup();

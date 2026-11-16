@@ -53,7 +53,7 @@ import { galaxiesAvailable } from "../ui/pause.ts";
 import { createPennyMarkerLayer } from "../ui/pennyMarkers.ts";
 import { questContextIcon } from "../ui/questsScreen.ts";
 import { createRestartCard } from "../ui/restartCard.ts";
-import { createScanFeedbackView } from "../ui/scanFeedbackView.ts";
+import { createScanFeedbackView, scanFeedbackFootprints } from "../ui/scanFeedbackView.ts";
 import { aboardLabel, type ShipView } from "../ui/shipCard.ts";
 import { createStationView } from "../ui/station.ts";
 import { stardustCount } from "../ui/statusPill.ts";
@@ -1141,7 +1141,7 @@ export function renderConversation(scene: UiContext): void {
     scan.view.render(
       {
         area,
-        blocked: markerFootprints(document, document.getElementById(VIEW_HOST_ID)),
+        blocked: scanFeedbackFootprints(document, document.getElementById(VIEW_HOST_ID)),
         covered:
           covered ||
           Boolean(emergency) ||

@@ -8,7 +8,6 @@ import {
   scanFeedbackParts,
   ScanFeedbackQueue,
 } from "./scanFeedback.ts";
-
 const quest = {
   icon: { jobType: "survey" as const, symbol: "job" as const },
   id: "job:1:receipt",
@@ -115,6 +114,37 @@ describe("authoritative scan presentation receipts", () => {
     reduced.frame({ ...context, reducedMotion: true }, NOTICE_TIMING.reducedFadeMs);
     expect(reduced.frame({ ...context, reducedMotion: true }, 0)).toBeNull();
     expect(reduced.length).toBe(0);
+  });
+  it("retains one canonical anchor and vertical path as dialogue footprints and projection change", () => {
+    const queue = new ScanFeedbackQueue();
+    queue.enqueue([receipt()]);
+    const first = queue.frame(context, 100)!;
+    const changed = {
+      ...context,
+      blocked: [{ height: 140, width: 400, x: 160, y: 100 }],
+      resolveAnchor: () => ({ x: 500, y: 300 }),
+    };
+    const second = queue.frame(changed, 100)!;
+    const third = queue.frame(context, 0)!;
+    expect(second.anchor).toEqual(first.anchor);
+    expect(second.rect.x).toBe(first.rect.x);
+    expect(third.rect.x).toBe(first.rect.x);
+    expect(second.rect.y).toBeLessThan(first.rect.y);
+    expect(third.rect.y).toBeLessThan(second.rect.y);
+    const reference = new ScanFeedbackQueue();
+    reference.enqueue([receipt()]);
+    reference.frame(context, 200);
+    expect(third.rect).toEqual(reference.frame(context, 0)!.rect);
+  });
+  it("keeps the retained receipt inside a resized viewport", () => {
+    const queue = new ScanFeedbackQueue();
+    queue.enqueue([receipt()]);
+    queue.frame(context, 100);
+    const frame = queue.frame({ ...context, area: { height: 240, width: 300, x: 0, y: 0 } }, 0)!;
+    expect(frame.rect.x).toBeGreaterThanOrEqual(0);
+    expect(frame.rect.x + frame.rect.width).toBeLessThanOrEqual(300);
+    expect(frame.rect.y).toBeGreaterThanOrEqual(0);
+    expect(frame.rect.y + frame.rect.height).toBeLessThanOrEqual(240);
   });
   it("starts an actual new/loaded model presentation empty without reconstructing remembered completion", () => {
     const queue = new ScanFeedbackQueue();

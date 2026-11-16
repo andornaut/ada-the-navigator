@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { scanFeedbackRect } from "./scanFeedback.ts";
-
+import { scanFeedbackPath, scanFeedbackRect } from "./scanFeedback.ts";
 const context = {
   anchor: { x: 360, y: 240 },
   area: { height: 360, width: 720, x: 0, y: 0 },
@@ -29,13 +28,28 @@ describe("scan receipt placement", () => {
       scanFeedbackRect(context),
     );
   });
-  it("avoids occupied HUD and dialogue rectangles without reserving entire bands", () => {
+  it("chooses an initial position outside occupied HUD rectangles", () => {
     const blocked = [{ height: 80, width: 200, x: 260, y: 180 }];
     const box = scanFeedbackRect({ ...context, blocked })!;
     expect(
       box.x + box.width <= 260 || box.x >= 460 || box.y + box.height <= 180 || box.y >= 260,
     ).toBe(true);
     expect(box.y).toBeLessThanOrEqual(context.anchor.y);
+  });
+  it("rises continuously on one HUD-safe vertical corridor without jumping above an obstacle", () => {
+    const blocked = [{ height: 50, width: 200, x: 260, y: 50 }];
+    const path = scanFeedbackPath({ ...context, blocked })!;
+    expect(path.from.x).toBe(260);
+    expect(path.top).toBeGreaterThanOrEqual(100);
+    let previous = path.from.y;
+    for (let index = 0; index <= 100; index++) {
+      const box = scanFeedbackRect({ ...context, blocked, path, progress: index / 100 })!;
+      expect(box.x).toBe(path.from.x);
+      expect(box.y).toBeLessThanOrEqual(previous);
+      expect(box.y).toBeGreaterThanOrEqual(path.top);
+      expect(box.y).toBeGreaterThanOrEqual(100);
+      previous = box.y;
+    }
   });
   it("retains a receipt when the entire viewport is covered or text cannot fit", () => {
     expect(scanFeedbackRect({ ...context, blocked: [context.area] })).toBeNull();

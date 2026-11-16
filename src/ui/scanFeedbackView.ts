@@ -6,6 +6,7 @@ import { font, fromAreaLeft, units } from "./layout/css.ts";
 import { ITEM_NOTICE } from "./layout/itemNotice.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
+import { markerFootprints } from "./markerFootprints.ts";
 import {
   type ScanFeedbackContent,
   type ScanFeedbackContext,
@@ -13,6 +14,17 @@ import {
   ScanFeedbackQueue,
 } from "./scanFeedback.ts";
 import { STATUS_COLOURS } from "./statusPill.ts";
+/** Keep canonical HUD footprints; the conversation paints over the receipt instead of displacing it. */
+export function scanFeedbackFootprints(doc: Document, host: HTMLElement | null): Rect[] {
+  const querySelectorAll = ((selectors: string) =>
+    doc.querySelectorAll(
+      selectors
+        .split(",")
+        .map((selector) => `${selector}:not(.ada-conversation, .ada-conversation *)`)
+        .join(","),
+    )) as Document["querySelectorAll"];
+  return markerFootprints({ querySelectorAll }, host);
+}
 /** Native receipt presentation shares the map glyph identity and read-only completion control. */
 export function createScanFeedbackView(parent: HTMLElement) {
   const panel = parent.ownerDocument.createElement("div");
