@@ -13,6 +13,7 @@ import {
   worldCellKey,
   worldCellOrigin,
   worldCellsNear,
+  type WorldGrid,
   worldGrid,
 } from "./worldCells.ts";
 import { wrappedDelta } from "./worldGeometry.ts";
@@ -198,6 +199,14 @@ function activate(
     flight.objects.push(object);
   }
 }
+interface ActivationNeighbourhood {
+  readonly grid: WorldGrid;
+  readonly cell: Vec;
+  readonly radius: number;
+  readonly keys: readonly string[];
+}
+const activationNeighbourhoods = new WeakMap<FlightState, ActivationNeighbourhood>();
+
 export function worldActivateFlightRegion(
   context: GeographyContext,
   content: GameContent,
@@ -205,12 +214,36 @@ export function worldActivateFlightRegion(
   flight: FlightState,
 ): void {
   const grid = worldGrid(context, content.tuning.chunkSize);
-  const center = worldCellOrigin(grid, coordinates(context, content, point));
-  center.x += grid.pitch / 2;
-  center.y += grid.pitch / 2;
+  const cell = worldCellAt(grid, point);
+  let neighbourhood = activationNeighbourhoods.get(flight);
+  if (
+    !neighbourhood ||
+    neighbourhood.cell.x !== cell.x ||
+    neighbourhood.cell.y !== cell.y ||
+    neighbourhood.radius !== ACTIVE_CHUNK_RADIUS ||
+    neighbourhood.grid.worldSide !== grid.worldSide ||
+    neighbourhood.grid.nominalPitch !== grid.nominalPitch ||
+    neighbourhood.grid.pitch !== grid.pitch ||
+    neighbourhood.grid.phase !== grid.phase ||
+    neighbourhood.grid.periodCells !== grid.periodCells
+  ) {
+    const center = worldCellOrigin(grid, cell);
+    center.x += grid.pitch / 2;
+    center.y += grid.pitch / 2;
+    neighbourhood = {
+      cell,
+      grid,
+      keys: Array.from(worldCellsNear(grid, ACTIVE_CHUNK_RADIUS * grid.pitch, center), (at) =>
+        worldCellKey(grid, at),
+      ),
+      radius: ACTIVE_CHUNK_RADIUS,
+    };
+    activationNeighbourhoods.set(flight, neighbourhood);
+  }
   const index = indexWorld(context, content, flight);
-  for (const cell of worldCellsNear(grid, ACTIVE_CHUNK_RADIUS * grid.pitch, center)) {
-    for (const id of [...(index.chunks.get(worldCellKey(grid, cell)) ?? [])]) {
+  for (const key of neighbourhood.keys) {
+    // Only keys are cached: each invocation reads and snapshots the live membership.
+    for (const id of [...(index.chunks.get(key) ?? [])]) {
       activate(context, content, id, flight);
     }
   }
@@ -354,7 +387,7 @@ export function worldSyncFlightRegion(
   flight.objects = active;
   const grid = worldGrid(context, content.tuning.chunkSize);
   const seen = new Set<string>();
-  flight.chunks = flight.chunks.flatMap((value) => {
+  const chunks = flight.chunks.flatMap((value) => {
     const point = chunkCoordinates(value);
     if (point === null || !near(context, content, point, center)) {
       return [];
@@ -369,6 +402,12 @@ export function worldSyncFlightRegion(
     seen.add(identity);
     return [identity];
   });
+  if (
+    chunks.length !== flight.chunks.length ||
+    chunks.some((value, index) => value !== flight.chunks[index])
+  ) {
+    flight.chunks = chunks;
+  }
   worldPrunePackState(context, flight);
 }
 

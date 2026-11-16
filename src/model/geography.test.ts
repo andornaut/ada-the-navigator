@@ -22,6 +22,9 @@ import {
   ACTIVE_CHUNK_RADIUS,
   archivedObjectIds,
   persistentObject,
+  worldActivateFlightRegion,
+  worldRecordObjectRemoval,
+  worldSyncFlightRegion,
 } from "./geography.ts";
 import { stationById } from "./stations.ts";
 import type { FlightState, GalaxyProgress, SpaceObject } from "./types.ts";
@@ -420,4 +423,83 @@ it("retains every encountered notable instead of claiming constant total save si
   activateFlightRegion(CONTENT, encounters[0]!, flight);
   expect(flight.objects.filter((object) => object.id.startsWith("notable-"))).toHaveLength(1);
   expect(Object.keys(flight.world.notables)).toHaveLength(7);
+});
+
+describe("region key cache", () => {
+  const notable = (id: string, x: number, y = 0): SpaceObject => ({
+    hp: 1,
+    id,
+    kind: "pickup",
+    persistent: true,
+    radius: 5,
+    x,
+    y,
+  });
+
+  it("reads replaced dormant state and tombstones within the same cached neighbourhood", () => {
+    const flight = empty();
+    worldActivateFlightRegion({}, CONTENT, flight.player, flight);
+    const actor = notable("new-dormant", 0);
+    flight.world = { ...flight.world, notables: { [actor.id]: actor } };
+    worldActivateFlightRegion({}, CONTENT, flight.player, flight);
+    expect(flight.objects).toEqual([actor]);
+    expect(flight.world.notables).toEqual({});
+    flight.objects = [];
+    worldRecordObjectRemoval({}, CONTENT, actor, flight);
+    worldActivateFlightRegion({}, CONTENT, flight.player, flight);
+    expect(flight.objects).toEqual([]);
+    expect(flight.world.notables).toEqual({ [actor.id]: null });
+  });
+
+  it("invalidates keys when the centre cell, pitch or explicit topology changes", () => {
+    const flight = empty();
+    const size = CONTENT.tuning.chunkSize;
+    const far = notable("far", size * 12);
+    flight.world = { ...flight.world, notables: { [far.id]: far } };
+    worldActivateFlightRegion({}, CONTENT, { x: 0, y: 0 }, flight);
+    expect(flight.objects).toEqual([]);
+    worldActivateFlightRegion({}, CONTENT, far, flight);
+    expect(flight.objects).toEqual([far]);
+    flight.objects = [];
+    const edge = notable("edge", size * 4);
+    flight.world = { ...flight.world, notables: { [edge.id]: edge } };
+    worldActivateFlightRegion({}, CONTENT, { x: 0, y: 0 }, flight);
+    expect(flight.objects).toEqual([]);
+    const wider = { ...CONTENT, tuning: { ...CONTENT.tuning, chunkSize: size * 2 } };
+    // New world index matches the changed grid, as after a world restoration.
+    flight.world = structuredClone(flight.world);
+    worldActivateFlightRegion({}, wider, { x: 0, y: 0 }, flight);
+    expect(flight.objects).toEqual([edge]);
+    flight.objects = [];
+    const wrapped = notable("wrapped", size * 15);
+    flight.world = { ...flight.world, notables: { [wrapped.id]: wrapped } };
+    worldActivateFlightRegion({}, CONTENT, { x: 0, y: 0 }, flight);
+    expect(flight.objects).toEqual([]);
+    worldActivateFlightRegion({ worldSide: size * 16 }, CONTENT, { x: 0, y: 0 }, flight);
+    expect(flight.objects).toEqual([wrapped]);
+  });
+
+  it("preserves no-op chunk identity but rejects invalid keys and prunes distant cells", () => {
+    const flight = empty();
+    flight.chunks = ["0,0", "1,0"];
+    const before = flight.chunks;
+    worldSyncFlightRegion({}, CONTENT, flight);
+    expect(flight.chunks).toBe(before);
+    flight.chunks = ["0,0", "01,0", "bad", "100,100", "1,0"];
+    const dirty = flight.chunks;
+    worldSyncFlightRegion({}, CONTENT, flight);
+    expect(flight.chunks).not.toBe(dirty);
+    expect(flight.chunks).toEqual(["0,0", "1,0"]);
+  });
+
+  it("keeps wrapped key order and first occurrences while normalizing duplicates", () => {
+    const flight = empty();
+    flight.chunks = ["0,0", "16,0", "-1,0", "15,0"];
+    const context = { worldSide: CONTENT.tuning.chunkSize * 16 };
+    worldSyncFlightRegion(context, CONTENT, flight);
+    expect(flight.chunks).toEqual(["0,0", "-1,0"]);
+    const normalized = flight.chunks;
+    worldSyncFlightRegion(context, CONTENT, flight);
+    expect(flight.chunks).toBe(normalized);
+  });
 });
