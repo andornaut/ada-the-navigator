@@ -314,8 +314,11 @@ export const STATUS_PILL_STYLE = `
   --shield-pill:${units(shieldPillWidth(1))};
   --shield-bar:${units(shieldBarWidth(1))}
 }
+/* As a button the pill keeps its own 28 by its level's width, not the base button's 48 minimum. */
 .ada-controls button.ada-shield{
   appearance:none;
+  min-width:0;
+  min-height:0;
   border:0;
   pointer-events:auto;
   cursor:pointer

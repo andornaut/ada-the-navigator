@@ -287,6 +287,14 @@ describe("status pill shield bar", () => {
     expect(shield).toContain("pointer-events:none");
     expect(shield).toContain(`bottom:${fromHudEdge("top", STATUS_PILL.y)}`);
   });
+
+  it("keeps the shield pill button at its own size, clear of the base button's 48 minimum", () => {
+    const button = STATUS_PILL_STYLE.split("}").find((part) =>
+      part.includes(".ada-controls button.ada-shield{"),
+    );
+    expect(button).toContain("min-width:0");
+    expect(button).toContain("min-height:0");
+  });
 });
 
 describe("status pill count", () => {
