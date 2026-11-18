@@ -1329,10 +1329,11 @@ Ada's tab ("Ada", 42.23) starts 64 in and every other tab 8 in, the widest
 ### Galaxy selector
 
 A route map over the [route sky](route-sky.md), after Chibi's zone map: six
-galaxy markers left to right along one arc over the night sky, a panel for the
-chosen galaxy, and Earth and Jump below it.
+galaxy markers left to right along one arc over the night sky, an Earth marker
+inside the arc, a panel for the chosen destination, and one destination action
+below it. There is no close X or Back button.
 Constants: `GALAXY_MAP`, `GALAXY_MAP_PANEL`, `GALAXY_MAP_ACTIONS` and `GALAXY_MAP_MOVE`,
-`routeMap.ts`, to implement. Positions are logical px from the play view's
+`src/ui/layout/galaxyMap.ts`. Positions are logical px from the play view's
 top-left (add `playView.x`, 29 at 779 wide); "insets" means the phone insets 43
 left and right and 19 bottom at 720x360. Route order, numbers, names and
 flavour lines are Gameplay's; marker colours and previews are in
@@ -1342,35 +1343,35 @@ Chart (`GALAXY_MAP`):
 
 | Part           | Geometry                                                                                                                                                                                                                                                                                                                                                                                      |
 | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Backdrop       | `route-sky`, top-centre on the play view's top-centre, and `route-ground` with Ada and Penny, bottom on the view's bottom, at 1x under the insets ([route sky](route-sky.md)); no ink layer: the sky's guard holds it at relative luminance 0.028 or less behind every marker, label, leg and the close X                                                                                     |
+| Backdrop       | `route-sky`, top-centre on the play view's top-centre, and `route-ground` with Ada and Penny, bottom on the view's bottom, at 1x under the insets ([route sky](route-sky.md)); no ink layer: the sky's guard holds it at relative luminance 0.028 or less behind the six galaxy markers, their labels and every leg; the Earth marker and its label are outside the guard's footprint         |
 | Rules          | 1 px `#6B6685` on the available rect, and 1 px `#4A4660` 3 inside it, as Chibi's paper's inset rules (`GALAXY_MAP.rules`), over the sky and under the ground                                                                                                                                                                                                                                  |
 | Marker centres | On one circular arc through route positions 1 (96, 122) and 6 (624, 122) whose top is (360, 46): radius `(264² + 76²) / 152` = 496.53 about (360, 542.53), the six centres at equal angles from -32.12° to 32.12° off vertical, 12.85° apart: 1 (96, 122), 2 (196.12, 73.82), 3 (304.45, 49.12), 4 (415.55, 49.12), 5 (523.88, 73.82), 6 (624, 122), left to right in route order (`centres`) |
 | Marker         | 36 frame: disc radius 12 with a 1.5 ink edge, the route number in `TYPE.label` ink centred on it, over an ink backing disc radius 15 at 0.85 (`marker`)                                                                                                                                                                                                                                       |
-| Selected ring  | 2 px cream `#EAD4AA` ring at radius 17 (band 16 to 18) on the ship's galaxy (`marker.ring`)                                                                                                                                                                                                                                                                                                   |
+| Selected ring  | 2 px cream `#EAD4AA` ring at radius 17 (band 16 to 18) on the marker whose panel shows, Earth's included (`marker.ring`)                                                                                                                                                                                                                                                                      |
 | Route line     | The arc itself between consecutive markers, each leg 111.34 of arc; stamped every 0.5; stops 15 from each centre (`path`)                                                                                                                                                                                                                                                                     |
 | Line looks     | By the leg's destination: open 4 px solid cream; locked 2 px `#B8B3C9` dashes, 6 on and 4 off                                                                                                                                                                                                                                                                                                 |
 | Label          | Name in `TYPE.label` centred on an ink pill at 0.85: 20 high, label + 12 wide, radius 4, top at centre + 19 (`label`); the pill covers the 3 to 4 leg under it                                                                                                                                                                                                                                |
 | Ship           | Selected ship frame (`ship-N`) at 42 display, the game area's in-flight size, pivot at (centre x, centre y - 33) (`ship`)                                                                                                                                                                                                                                                                     |
 | Ship heading   | Of the 32 headings, the one whose nose angle (`ship-nose.json`) is nearest the arc's tangent at the marker, toward the next galaxy; at galaxy 6, the incoming leg's at its end. Rest headings 24, 25, 27, 29, 31 and 0 for galaxies 1 to 6                                                                                                                                                    |
-| Press area     | 48x48 centred on each marker (`HIT_RULE.minTarget`); centres are 111.1 apart, so press areas never overlap                                                                                                                                                                                                                                                                                    |
+| Earth marker   | A seventh marker centred at (360, 122), midway between markers 1 and 6, inside the arc: the galaxy marker's frame, backing and ring, its disc blue `#65AEDD` with two green `#8AB86B` patches and no number; label "Earth" on the same pill, top at 141                                                                                                                                       |
+| Press area     | 48x48 centred on each marker (`HIT_RULE.minTarget`); galaxy centres are 111.1 apart and Earth's is 91.64 or more from each (markers 3 and 4), so press areas never overlap                                                                                                                                                                                                                    |
 | Focus ring     | `ui-focus`, 44x44 centred on the marker (36 frame + `FOCUS_RING.outset` 4 a side)                                                                                                                                                                                                                                                                                                             |
 
 Route order runs left to right on screen, so Left and Right follow screen
 order.
 
-Panel and actions (`GALAXY_MAP_PANEL`, `GALAXY_MAP_ACTIONS`):
+Panel and action (`GALAXY_MAP_PANEL`, `GALAXY_MAP_ACTIONS`):
 
 | Part        | Geometry                                                                                                                                                                                                                                         |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Panel       | `ui-settings-card` face, 614x112, centred on the play view (x 53), bottom `SPACING.gap` above the actions; padding 8, the 2 px frame inside it (see Exceptions)                                                                                  |
+| Panel       | `ui-settings-card` face, 614x112, centred on the play view (x 53), bottom `SPACING.gap` above the action; padding 8, the 2 px frame inside it (see Exceptions)                                                                                   |
 | Capture     | The 180x90 [selector preview](galaxies.md#selector-preview) in a 1 px ink frame (182x92) at the inner top-left                                                                                                                                   |
 | Text column | 12 right of the capture frame, 404 wide, top-aligned: `Galaxy {number}` (`TYPE.body`), `SPACING.rowGap`, the name (`TYPE.heading`), `SPACING.rowGap`, flavour                                                                                    |
 | Flavour     | `TYPE.body`, wrapped to at most 2 lines (every Gameplay line fits 404 in 2); inner height `20 + 4 + 28 + 4 + 40 = 96`. A placeholder galaxy's line fits 404 in 1 (Needle 387.77, Andromeda 402.04), and "Story in development." takes the second |
-| Earth, Jump | `TEXT_BUTTON.height` faces 192 wide (Chibi's map actions), `BUTTON_GAP` (16) apart at play view x 160 and 368, Chibi's positions, centred on the play view; Earth secondary left, Jump primary right                                             |
-| Actions top | Available rect bottom - 48                                                                                                                                                                                                                       |
-| Close X     | `ui-close` 24 face, drawn from `map-close.svg` as every card's, its drawn top and right edges on the HUD rect's top-right corner at every inset, as every HUD top control's; press area `hitAround(face)` = 48 centred on the face               |
+| Action      | One primary `TEXT_BUTTON` (`galaxy-jump`), 48 high and 192 wide (`GALAXY_MAP_ACTIONS.width`), centred on the view across; its label names the selected destination. While unavailable it widens to its label, 192 to 614 (the panel's width)     |
+| Action top  | Available rect bottom - 48                                                                                                                                                                                                                       |
 
-The chart anchors to the play view's top; the panel and actions anchor to the
+The chart anchors to the play view's top; the panel and action anchor to the
 available rect's bottom, so a taller view opens the gap between them.
 
 | At 720x360     | No insets              | Phone insets           |
@@ -1379,27 +1380,18 @@ available rect's bottom, so a taller view opens the gap between them.
 | Panel          | (53, 176) 614x112      | (53, 173) 614x112      |
 | Capture frame  | (61, 184) 182x92       | (61, 181) 182x92       |
 | Text column    | x 255, top 184, w 404  | x 255, top 181, w 404  |
-| Earth          | (160, 296) 192x48      | (160, 293) 192x48      |
-| Jump           | (368, 296) 192x48      | (368, 293) 192x48      |
-| Close target   | (672, 0) 48x48         | (641, 0) 48x48         |
-| Close face     | (684, 12) 24x24        | (653, 12) 24x24        |
+| Action         | (264, 296) 192x48      | (264, 293) 192x48      |
 | End label gap  | 161 to 176: 15         | 161 to 173: 12         |
 
 Markers, labels, rules inside the frame and the ship are the same in both;
-markers 1 and 6's label pills end at 161, the chart's lowest mark. Across the
+the label pills of markers 1 and 6 and of Earth end at 161, the chart's lowest
+mark. Across the
 32 headings the ship's hull spans 11.8 above to 9.8 below its pivot at 42, so
 a resting hull ends 23.2 or more above its marker's centre, clear of the
 selected ring (radius 18) and the focus ring (22). Resting and in flight, the
 hull keeps 23.5 from every label pill, 18.8 from every leg's stroke and 6.1
 from the view's top. At markers 3 and 4 the resting hull starts at 10.3 and
 7.8, over the rules at 16 and 19, which draw under it.
-
-At 844x390 with the phone insets the HUD rect's right is 736.08, so the close
-face is (712.08, 12). Resting and in flight, the ship's hull keeps 56.91 from
-the close target at the 720 base and 1280x720, 35.61 with phone insets and
-56.19 at 844x390 with them; the target keeps 85.54 or more from every label
-pill (93 or more from markers 1 and 6's), 50 or more from every marker's
-press area and 70.26 or more from every leg.
 
 Marker faces:
 
@@ -1417,14 +1409,15 @@ sky every marker is 5.11:1 or more (the locked grey; the hues 9.97:1 or more).
 On the sky the cream line is 9.29:1 or more and the `#B8B3C9` dashes 6.62:1 or
 more ([route sky](route-sky.md#guard)).
 
-Panel states (the panel shows the ship's galaxy, or the locked galaxy last
-tapped or focused):
+Panel states (the panel shows the ship's galaxy, the locked galaxy last
+tapped or focused, or Earth while its marker is tapped or focused):
 
-| State       | `Galaxy {number}` | Name             | Flavour                                                            | Capture                                                     | Jump                                    |
-| ----------- | ----------------- | ---------------- | ------------------------------------------------------------------ | ----------------------------------------------------------- | --------------------------------------- |
-| Open        | `#B8B3C9`         | White, the name  | Cream, the flavour line                                            | Its own field                                               | Primary, live                           |
-| Placeholder | `#B8B3C9`         | White, the name  | Cream, the flavour line, then "Story in development." in `#B8B3C9` | Its [placeholder preview](galaxies.md#placeholder-previews) | Primary, live                           |
-| Locked      | `#B8B3C9`         | "...", `#B8B3C9` | "...", `#B8B3C9`                                                   | The locked greyscale                                        | Unavailable: disabled face, refusal cue |
+| State       | `Galaxy {number}` | Name             | Flavour                                                                           | Capture                                                     | Action                                                                         |
+| ----------- | ----------------- | ---------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Open        | `#B8B3C9`         | White, the name  | Cream, the flavour line                                                           | Its own field                                               | Live: "Jump to {galaxy}", or "Stay in {galaxy}" on the galaxy Ada is flying in |
+| Placeholder | `#B8B3C9`         | White, the name  | Cream, the flavour line, then "Story in development." in `#B8B3C9`                | Its [placeholder preview](galaxies.md#placeholder-previews) | As Open                                                                        |
+| Locked      | `#B8B3C9`         | "...", `#B8B3C9` | "...", `#B8B3C9`                                                                  | The locked greyscale                                        | Unavailable: "Progress the story to unlock", disabled face, refusal cue        |
+| Earth       | "Home", `#B8B3C9` | White, "Earth"   | Cream, "Ada’s life on Earth. Time here stands still while she’s aboard the ship." | Ada's room picture                                          | Live: "Jump to Earth", or "Stay on Earth" at boarding                          |
 
 Greyed text is the supporting colour `#B8B3C9`, 5.53:1 on the card face; the
 disabled label colour `#9A96AD` is 3.93:1 there, below 4.5:1. The panel keeps
@@ -1438,15 +1431,20 @@ Input and focus:
   d-pad) walk the route wherever focus is, and return the panel to the ship's
   galaxy.
 - Tapping an open marker moves the ship there. Tapping a locked
-  marker shows its panel face while the ship stays on its open galaxy; Jump is
-  then unavailable and refuses.
-- Tab focuses every marker in route order, then Earth, Jump and the close X.
-  Focus starts on Jump, the default action. A focused locked
-  marker shows its panel as a tap does; a focused open marker moves the ship
-  there. Enter, Space and the gamepad's confirm activate the focused control;
-  on a marker they act as a tap.
-- Earth, the close X, back and Escape leave galaxy selection and return Ada to
-  her room without a jump.
+  marker shows its panel face while the ship stays on its open galaxy; the
+  action is then unavailable and refuses. Tapping Earth shows Earth's panel.
+- Tab focuses every galaxy marker in route order, then Earth and the
+  destination action, and wraps. Focus starts on the action, the default. A
+  focused locked marker or Earth shows its panel as a tap does; a focused open
+  marker moves the ship there. Enter, Space and the gamepad's confirm activate
+  the focused control; on a marker they act as a tap.
+- The destination action leaves galaxy selection: "Jump to {galaxy}" quantum
+  jumps there, "Jump to Earth" jumps Ada home to her room, "Stay in {galaxy}"
+  returns to the local map and "Stay on Earth" returns her to her room, both
+  without a jump.
+- Back and Escape go one step back without a jump: in flight to the local
+  map, focus on its Galaxies; at boarding to the "Welcome back, Navigator."
+  page.
 
 Moves (`GALAXY_MAP_MOVE`):
 
@@ -1458,7 +1456,7 @@ Moves (`GALAXY_MAP_MOVE`):
 | 0 to 400 ms    | A 2 px ring in the farthest new marker's hue grows from radius 13 to 26, alpha 0.8 to 0                                                                                                                                                                                                           |
 | 400 ms         | The ship departs on its thrust frame (`ship-thrust-N`), the heading re-chosen each frame from the path tangent; it flies the legs to the farthest newly unlocked galaxy as one path at clamp(length / 180 px/s, 0.8, 2.0) s, easeInOutSine on arc length, so the whole unlock takes at most 2.4 s |
 | Timeline       | Sunflower to Whirlpool, one 111.34 leg: 800 ms of flight (the 0.8 s floor), arrival at 1200 ms. Whirlpool to Cartwheel, 334.02 over three legs: 1856 ms of flight, arrival at 2256 ms                                                                                                             |
-| Arrival        | The idle frame; the selected ring fades in over 120 ms; the panel crossfades to the new galaxy over 160 ms; focus moves to Jump                                                                                                                                                                   |
+| Arrival        | The idle frame; the selected ring fades in over 120 ms; the panel crossfades to the new galaxy over 160 ms; focus moves to the action                                                                                                                                                             |
 | Skip           | A tap, key or button press during the unlock jumps to the arrived state                                                                                                                                                                                                                           |
 | Reduced motion | No travel or pulse. Selection moves cut. The unlock fades the ship out over 150 ms, switches the markers and legs at 150 ms, then fades the ship in at the new galaxy over 150 ms: 300 ms in all                                                                                                  |
 

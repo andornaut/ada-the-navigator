@@ -150,8 +150,9 @@ action `map-close`), the map's only primary button. Constants:
 - Quests opens the [Quests modal](#quests-modal). It is always available, in
   danger and while towing too.
 - Galaxies: Gameplay's action, with no confirm. It opens the
-  [galaxy selector](layout.md#galaxy-selector), from which Earth returns Ada
-  to her room and Jump leaves for another galaxy. It stays available while
+  [galaxy selector](layout.md#galaxy-selector), whose one destination action
+  jumps to another galaxy or home to Earth, or returns here as "Stay in
+  {galaxy}", as back and Escape do. It stays available while
   towing; leaving the galaxy returns the towed craft to where it was
   stranded. In danger it shows the unavailable face
   (disabled face, focusable), activation plays the
