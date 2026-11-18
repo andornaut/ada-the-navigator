@@ -1,0 +1,26 @@
+---
+id: TBD
+title: Draw the galaxy cast and household portraits
+status: done
+approved: user, 2026-11-12
+design: art
+related: []
+---
+
+## Scope
+
+Draw the speaking cast for Sunflower, Whirlpool and Cartwheel, Grandma, General Gadget, Admiral Archie and the household cats.
+
+## Criteria
+
+- Each speaker has a neutral 32 px storybook sheet and a 22 px compact sheet in its galaxy's manifest, drawn from shared bust parts in `art/tools/bust.ts`.
+- Grandma and General Gadget are core portraits; Gadget is the black-furred cat in a red officer's cap, a faceless silhouette while unnamed.
+- Admiral Archie uses `unknown-*` frames while his tab reads Unknown voice and `named-*` frames after.
+
+## Decisions
+
+- The user approved the cast portraits and the Admiral Archie and cat corrections.
+
+## Outcome
+
+Shipped on `main` in 9da4444e and 267e7411.

@@ -1,0 +1,27 @@
+---
+id: TBD
+title: Draw tiered heavy weapon mounts and enemy weapon effects
+status: done
+approved: user, 2026-11-12
+design: art
+related: []
+---
+
+## Scope
+
+Draw every heavy mount by position tier with turret tops per weapon, the enemy-only weapon effects, and carry them to every galaxy's family.
+
+## Criteria
+
+- Each heavy draws the tier for the galaxy's route position: a capped mount shows its plate, a filled mount its tier's top.
+- Every class draws a top for each pooled weapon at 16 aims; each hardpoints file lists `weaponTops`.
+- `enemy-weapons.json` specifies the ring burst, mine, charged lance (beam to the game area's width) and enemy Phaser.
+- Andromeda's garnet and Needle's crimson families use the tiered mounts and coral silhouettes.
+
+## Decisions
+
+- The user approved the heavy mounts, Gadget's capital A, and the enemy weapon looks.
+
+## Outcome
+
+Shipped on `main` in 88a430df, 6a799c04, c7a8c80a, 7d85018b, c2a058e3 and 0653b831.

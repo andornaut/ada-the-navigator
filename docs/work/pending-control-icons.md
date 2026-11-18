@@ -1,0 +1,27 @@
+---
+id: TBD
+title: Draw the Settings row icons and 16 px control icons
+status: done
+approved: user, 2026-11-12
+design: art
+related: []
+---
+
+## Scope
+
+Add the Settings row icons and draw Move, Aim and Use as whole-pixel 16 px icons for Settings and inline text.
+
+## Criteria
+
+- Settings rows have Move, Aim, Sound, Reduced motion and Install icons in the 16 x 16 ink style.
+- Move and Aim draw the stick's ring as a 2-pixel ring around a 4 by 4 knob; `icon-use-control` draws the Use disc with the generic Use symbol.
+- Each glyph spans its frame and mirrors on both axes, so it centres exactly.
+- Inline controls sit 4 px after their names, nearest-neighbour at every density.
+
+## Decisions
+
+- The user approved the 16 px variants at every density.
+
+## Outcome
+
+Shipped on `main` in 1ff022ca and b4451853.

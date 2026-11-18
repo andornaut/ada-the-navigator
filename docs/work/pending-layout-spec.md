@@ -1,0 +1,27 @@
+---
+id: TBD
+title: Add the layout specification and its tokens
+status: done
+approved: Art, 2026-11-11
+design: art
+related: []
+---
+
+## Scope
+
+Write `art/layout.md`: the logical coordinate system, safe-margin clamp, spacing, control, modal and HUD tokens, and every card and HUD screen as data.
+
+## Criteria
+
+- Each token names its implementing constant, and the controls, shop and Stardust docs reference tokens instead of restating numbers.
+- The doc settles the scale mechanism, card floor, nine-slice edges and compact width.
+- Paging, galaxy exits, notices and the context Use button follow Gameplay's rulings.
+- Storybook panels are sized to each page's content.
+
+## Decisions
+
+- Layout numbers live in one spec so Tech implements constants from a single source.
+
+## Outcome
+
+Shipped on `main` in 181ffbb9, 43c6e684, 8ace41fc, eb289a0b, af6af636, 72fbae61 and fc0ea32f.

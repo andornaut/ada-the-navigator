@@ -1,0 +1,26 @@
+---
+id: TBD
+title: Write generated JSON in Prettier's layout through one writer
+status: done
+approved: Art, 2026-11-12
+design: art
+related: []
+---
+
+## Scope
+
+Make every producer write its JSON and PNG output through shared writers so reruns leave the tree unchanged and pass the lint gate.
+
+## Criteria
+
+- Sprite sheet, heavies, manifest and solid-tool JSON is written by one `json()` writer that matches Prettier's print width rules.
+- Storybook PNGs go through the shared paint helper and stay byte-identical.
+- Rerunning a producer on a clean tree produces no diff.
+
+## Decisions
+
+- Generators own their formatting, so formatted output is never hand-edited after a run.
+
+## Outcome
+
+Shipped on `main` in 8f229a65, fa554fc9, 66ba2477, 4121aa03 and 48561996.

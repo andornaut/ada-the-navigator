@@ -1,0 +1,27 @@
+---
+id: TBD
+title: Paint the storybook Earth scenes and Ada's family
+status: done
+approved: user, 2026-11-11
+design: art
+related: []
+---
+
+## Scope
+
+Build the isometric storybook Earth backgrounds, the overnight room sequence, the Needle and Andromeda home scenes, and Ada's family as storybook sprites.
+
+## Criteria
+
+- `art/tools/storybook.ts` builds the Earth locations on `diorama.ts` with treatment d, each a 960x540 logical canvas at 2x listed as `story-<location>`.
+- `story-overnight.json` holds the 2.5 s night, sleep and morning sequence and its reduced-motion replacement, ending on the morning page with the cats.
+- Needle gets the recorder room and concert hall; Andromeda gets Grandma's garden spilled and replanted.
+- Mom (Trista), Dad (Bin) and the cats Archie and Kiwi are pixel sprites; Ada's room has a door and the kitchen seats Dad.
+
+## Decisions
+
+- The user approved the night rooms, the home scenes and the family looks.
+
+## Outcome
+
+Shipped on `main` in 26db0a20, ebed0e98, 0540baac, cdd2393f, 1122081f and 6ebf5148.

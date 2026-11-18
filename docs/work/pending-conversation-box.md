@@ -1,0 +1,27 @@
+---
+id: TBD
+title: Specify the shared compact conversation box
+status: done
+approved: user, 2026-11-11
+design: art
+related: []
+---
+
+## Scope
+
+Specify the in-flight conversation box shared with Chibi: its slot, name tab, portrait and notice behaviour.
+
+## Criteria
+
+- The box is 480 x 60 with a 48 portrait slot in a 52 frame and up to two body lines; the box top sits 5 below the count pills.
+- The 20-high name tab overhangs the panel by 10 at the box's left end, past a left portrait frame.
+- One box shows at a time by Gameplay's priority; a tap dismisses a notice.
+- Speakers without a portrait give their text the slot's width; speaking loops run while that speaker's line shows.
+
+## Decisions
+
+- The user chose the overhanging name tab and conversation box fix A (tabs at the left end, +N on the pill's row).
+
+## Outcome
+
+Shipped on `main` in ab40522c, 089e9e2a, c5bcd2dc, 80ec745c, df5935ed, be1f1e50, bf13431f, 30d82f5e and bec0bd31.

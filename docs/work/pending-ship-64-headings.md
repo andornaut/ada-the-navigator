@@ -1,0 +1,27 @@
+---
+id: TBD
+title: Integrate the 64-heading player ship package
+status: done
+approved: user, 2026-11-14
+design: art
+related: [pending-ship-jets-headings.md]
+---
+
+## Scope
+
+Ship Ada's ship in 64 headings with shared material geometry, and retire the redundant paint assets.
+
+## Criteria
+
+- Ada's ship has 64 headings (`ship-{0..63}.svg`); enemy heading k faces ship heading 4k.
+- `ship.svg` and `ship-thrust.svg` are byte-identical aliases of index 40 (up).
+- `ship-materials.json` holds each pose's ordered material paths, and the game colours paints at runtime from it.
+- Coloured per-paint pose SVGs that duplicate the materials are retired.
+
+## Decisions
+
+- The user approved runtime colouring of the 64-heading ship and jump poses, which removes per-paint duplicate files.
+
+## Outcome
+
+Shipped on `main` in c4f09e7b, 6e09eb28 and 681dca16.

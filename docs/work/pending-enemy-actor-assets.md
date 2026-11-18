@@ -1,0 +1,26 @@
+---
+id: TBD
+title: Pair enemy actor profiles with reviewed enemy assets
+status: done
+approved: Art, 2026-11-15
+design: art
+related: []
+---
+
+## Scope
+
+Regenerate the enemy families' assets for the enemy actor profiles, adding the hostile station, retaliator variants and lance tops.
+
+## Criteria
+
+- Core, Cartwheel, Andromeda and Needle enemy folders hold the regenerated frames, jets and hardpoints.
+- The hostile station ships with hull frames, hardpoints, jets and capped, intact and destroyed weapon mounts.
+- The cargo hauler and mining freighter retaliator variants ship with jets, shards and turret sprites; the capital and Gadget have lance tops.
+
+## Decisions
+
+- Assets were reviewed by Art before Tech paired them with the runtime profiles.
+
+## Outcome
+
+Shipped on `main` in 27036ce1.

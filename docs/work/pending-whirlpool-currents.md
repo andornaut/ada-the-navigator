@@ -1,0 +1,27 @@
+---
+id: TBD
+title: Draw Whirlpool's currents, river debris and buoys
+status: done
+approved: user, 2026-11-11
+design: art
+related: []
+---
+
+## Scope
+
+Specify Whirlpool's current streaks and draw its coral-contoured river debris, nursery beacon and current-map buoys.
+
+## Criteria
+
+- `art/whirlpool.md` specifies the chevron streaks, each built in the tangent frame at its centre.
+- River debris draws inside a coral contour.
+- The nursery beacon and buoys ship with their placement data.
+- `art/README.md` lists Whirlpool's project art.
+
+## Decisions
+
+- The user approved chevron currents.
+
+## Outcome
+
+Shipped on `main` in 61a5689f, 45df368f, c064fb6c and 00c82693.

@@ -1,0 +1,27 @@
+---
+id: TBD
+title: Export the coral enemy family with destruction shards
+status: done
+approved: user, 2026-11-10
+design: art
+related: []
+---
+
+## Scope
+
+Export the four sector one drones in 16 headings with speed jets, General Gadget's claw insignia, hit circle ratios and destruction shards.
+
+## Criteria
+
+- Swarm, fighter, interceptor and retaliator have 16-heading idle frames, jet contracts and manifest entries from `art/tools/enemies.ts`.
+- Each drone wears the ink claw and amber disc insignia on its hull top, below plates, visors and turrets.
+- `destruction.json` holds per-heading shard polygons, timings, easing, flash phases, Stardust release and reduced motion.
+- `art/enemies.md` records each drone's hit circle ratio.
+
+## Decisions
+
+- One coral family reads as hostile against the pastel field and keeps the drones apart from Ada's blue.
+
+## Outcome
+
+Shipped on `main` in 802819d2, ee47e799, 11b9c661 and ff2bb1bc.

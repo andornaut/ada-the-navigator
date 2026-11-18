@@ -1,0 +1,26 @@
+---
+id: TBD
+title: Specify the Projects tab and draw project world changes
+status: done
+approved: user, 2026-11-11
+design: art
+related: []
+---
+
+## Scope
+
+Specify the station Projects tab, draw the project icons, and draw Sunflower's three funded world changes.
+
+## Criteria
+
+- The greenhouse ring is a replacement frame pair for the growers with the same pivot and dock entrance.
+- The workshop crane and salvage beacons are overlays placed by `public/art/projects.json`, keyed by project id.
+- Every community project has a 20 x 20 `icon-project-*` shop glyph in the UI manifest.
+
+## Decisions
+
+- The user approved the Projects tab and the greenhouse ring.
+
+## Outcome
+
+Shipped on `main` in b1ba7fa7 and 5eee2c74.
