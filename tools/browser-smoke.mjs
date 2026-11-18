@@ -1755,7 +1755,7 @@ try {
       "available in danger",
   );
   await page.screenshot({ path: `${output}/pause-flight-danger.png` });
-  // Ship opens its card in the Paused card's place, focus on its X; Escape and the X return to
+  // Ship opens its card in the Paused card's place, focus on its Back; Escape and the X return to
   // the Paused card on its Ship button.
   const shipCard = page.locator('[data-dialog="ship"]');
   const focusedAction = () =>
@@ -1780,7 +1780,7 @@ try {
       [CONTENT.labels.cargo, CONTENT.labels.equipment, CONTENT.labels.shopWeapons],
       "The Ship card shows Cargo, Equipment, then Weapons",
     );
-    assert.equal(await focusedAction(), "close-ship", "Focus starts on the Ship card's X");
+    assert.equal(await focusedAction(), "back-ship", "Focus starts on the Ship card's Back");
     if (close === "Escape") {
       await page.screenshot({ path: `${output}/pause-ship.png` });
       await page.keyboard.press("Escape");
