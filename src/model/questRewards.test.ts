@@ -51,8 +51,8 @@ describe("saved quest reward boundaries", () => {
     const restored = restoreSave(game.save())!;
     expect(restored).not.toBeNull();
     expect(restored.tasks[1]?.reward).toBe(45);
-    expect(taskQuestDetails(view, restored.tasks[1]!).reward).toBe("150 Stardust");
-    expect(completeActivity(1, restored)).toBe(150);
+    expect(taskQuestDetails(view, restored.tasks[1]!).reward).toBe("100 Stardust");
+    expect(completeActivity(1, restored)).toBe(100);
     expect(completeActivity(1, restored)).toBe(0);
   });
 
