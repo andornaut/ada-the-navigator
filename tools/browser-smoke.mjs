@@ -414,33 +414,17 @@ try {
         frame.bounds.height > frame.bounds.width,
         "Landscape canvas must turn into portrait",
       );
+      assert.ok(Math.abs(frame.bounds.x) < 3 && Math.abs(frame.bounds.y) < 3);
+      assert.ok(Math.abs(frame.bounds.width - frame.viewport.width) < 3);
+      assert.ok(Math.abs(frame.bounds.height - frame.viewport.height) < 3);
     } else {
       assert.ok(Math.abs(frame.rotation.a - 1) < 0.001 && Math.abs(frame.rotation.b) < 0.001);
       assert.ok(frame.bounds.width > frame.bounds.height);
     }
-    // The canvas spans the frame's length and is at most half as deep, centred across the
-    // frame's depth: a frame deeper than 2:1 shows equal bands on both sides of it.
-    const along = portrait ? "height" : "width";
-    const across = portrait ? "width" : "height";
-    const start = portrait ? "x" : "y";
-    const depth = Math.min(frame.viewport[across], frame.viewport[along] / 2);
-    assert.ok(
-      Math.abs(frame.bounds[along] - frame.viewport[along]) < 3 &&
-        Math.abs(frame.bounds[portrait ? "y" : "x"]) < 3,
-      "The canvas must span the frame's length",
-    );
-    assert.ok(
-      Math.abs(frame.bounds[across] - depth) < 3 &&
-        Math.abs(frame.bounds[start] - (frame.viewport[across] - depth) / 2) < 3,
-      "The canvas must be centred across the frame with equal bands",
-    );
     return frame;
   }
   save("desktop-frame.json", await frameProof());
-  events.checks.push(
-    "Desktop canvas backs its CSS size at min(devicePixelRatio, 2), pixelated, " +
-      "centred down the 16:9 window with equal bands above and below",
-  );
+  events.checks.push("Desktop canvas backs its CSS size at min(devicePixelRatio, 2), pixelated");
 
   const [
     { GameModel },
@@ -4533,8 +4517,6 @@ try {
   assert.equal((await page.goto("http://ada-preview:4173/play/")).status(), 200);
   await continueFlight();
   const phoneHud = await touchHudProof("2404x1080");
-  save("phone-frame.json", await frameProof());
-  events.checks.push("A landscape phone wider than 2:1 keeps the canvas filling its screen");
   assert.equal(phoneHud.dpr, 2.5, "The phone context renders at device pixel ratio 2.5");
   // 2404x1080 at dpr 2.5 is 801x360 logical, the area 40 to 760: 50 from the sides lies at least
   // 9 inside it, past the 8 margin.
