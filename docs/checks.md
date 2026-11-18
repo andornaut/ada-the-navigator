@@ -36,6 +36,10 @@ default-run guard fails if they consume a launch seed. This preserves every
 distinct test while avoiding identical world repeats. `ADA_LAUNCH_SEED=<n> npm
 test` replays one world.
 
+The test category also checks the UI font subsets: `src/tools/uiStrings.test.ts` reads
+every string the game page can set in AdaUI (the export `node tools/ui-strings.ts` writes
+for the font producer) and fails on a character the shipped WOFF2 files do not map.
+
 ## Container profile and CI
 
 The project launcher `tests/container/run` has SHA-256

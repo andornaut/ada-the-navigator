@@ -86,11 +86,12 @@ keeps the glyphs those characters reach through composites and default GSUB feat
 their outlines, advances, vertical metrics, hinting and GPOS kerning, and the Windows name
 records (copyright, licence and licence URL included). It drops the legacy `kern` table and
 the Mac name records, which browsers do not read when GPOS and Windows records exist.
-`node art/tools/ui-font-text.ts <ui-strings.json>` writes an interim export in the same
-shape from every string literal and template text in shipped `src/` TypeScript, quoted
-strings in `src/` CSS, `pages/play/index.html`, `public/art/**/manifest.json` keys and
-values, and `gameplay/player-copy.md`. It omits U+2713, which is set in generic
-sans-serif.
+`node tools/ui-strings.ts [output.json]` writes that export, to `var/ui-strings.json` by
+default, from every string literal and template text in shipped `src/` TypeScript, the
+game-kit modules and JSON it imports, quoted strings in `src/` CSS, `pages/play/index.html`
+and the keys and values of every `public/art/**/*.json` file. It omits U+2713, which is set
+in generic sans-serif. The test gate reads the same strings and fails when a shipped subset
+does not map one of their characters.
 
 A new character in a UI string needs a producer run before it ships.
 

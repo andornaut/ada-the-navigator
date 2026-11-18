@@ -57,6 +57,8 @@ it("repeats unaudited suites in all three worlds and excludes only the audited f
       "--exclude",
       "src/tools/phaserBuild.test.ts",
       "--exclude",
+      "src/tools/uiStrings.test.ts",
+      "--exclude",
       "src/ui/resourceCard.test.ts",
     ]);
   }

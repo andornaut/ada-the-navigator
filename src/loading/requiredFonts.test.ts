@@ -16,7 +16,7 @@ function fixture(stylesheet?: HTMLLinkElement) {
   const active = new Set<Face>();
   const pending: { face: Face; resolve: () => void; reject: () => void }[] = [];
   class Face {
-    family = "Liberation Sans";
+    family = "AdaUI";
     status = "unloaded";
     weight: string;
     constructor(weight: string) {
@@ -55,7 +55,7 @@ function fixture(stylesheet?: HTMLLinkElement) {
     }
     style = {
       getPropertyValue: (property: string) =>
-        ({ "font-family": '"Liberation Sans"', "font-weight": this.weight })[property] ?? "",
+        ({ "font-family": "AdaUI", "font-weight": this.weight })[property] ?? "",
     };
   }
   const sheet = {
@@ -136,8 +136,8 @@ it("revalidates both current faces after failed-weight rule replacement rebuilds
     { status: "loaded", weight: "700" },
   ]);
   expect(f.sheet.cssRules.map(({ weight }) => weight)).toEqual(["400", "700"]);
-  expect(f.check).toHaveBeenCalledWith('400 16px "Liberation Sans"');
-  expect(f.check).toHaveBeenCalledWith('700 16px "Liberation Sans"');
+  expect(f.check).toHaveBeenCalledWith("400 16px AdaUI");
+  expect(f.check).toHaveBeenCalledWith("700 16px AdaUI");
   f.required.dispose();
   f.dispose();
 });

@@ -27,7 +27,7 @@ export function requireBootFonts(required: RequiredLoading, page: FontPage): () 
             for (const rule of sheet.cssRules) {
               if (
                 rule instanceof CSSFontFaceRule &&
-                familyName(rule.style.getPropertyValue("font-family")) === "Liberation Sans" &&
+                familyName(rule.style.getPropertyValue("font-family")) === "AdaUI" &&
                 rule.style.getPropertyValue("font-weight") === String(wanted)
               ) {
                 source = rule;
@@ -38,8 +38,7 @@ export function requireBootFonts(required: RequiredLoading, page: FontPage): () 
         };
         const currentFace = (wanted: number) =>
           [...page.document.fonts].find(
-            (face) =>
-              familyName(face.family) === "Liberation Sans" && face.weight === String(wanted),
+            (face) => familyName(face.family) === "AdaUI" && face.weight === String(wanted),
           );
         if ([...validationWeights].some((wanted) => currentFace(wanted)?.status === "error")) {
           // Editing one rule can replace the stylesheet's other connected faces too. This
@@ -51,7 +50,7 @@ export function requireBootFonts(required: RequiredLoading, page: FontPage): () 
           const source = sourceRule(wanted);
           const face = currentFace(wanted);
           if (!source || !face) {
-            throw new Error(`Missing required Liberation Sans ${wanted} source`);
+            throw new Error(`Missing required AdaUI ${wanted} source`);
           }
           if (face.status === "error") {
             const sheet = source.parentStyleSheet!;
@@ -64,7 +63,7 @@ export function requireBootFonts(required: RequiredLoading, page: FontPage): () 
         attempt.onCancel(() => page.timer.clearTimeout(timer));
         const deadline = new Promise<never>((_, reject) => {
           timer = page.timer.setTimeout(() => {
-            reject(new Error(`Required Liberation Sans ${weight} timed out`));
+            reject(new Error(`Required AdaUI ${weight} timed out`));
           }, LOADER_CONFIG.timeout);
         });
         const load = async () => {
@@ -75,7 +74,7 @@ export function requireBootFonts(required: RequiredLoading, page: FontPage): () 
               if (!attempt.isCurrent()) {
                 return;
               }
-              const font = `${wanted} 16px "Liberation Sans"`;
+              const font = `${wanted} 16px AdaUI`;
               const loaded = await page.document.fonts.load(font);
               if (!attempt.isCurrent()) {
                 return;
@@ -87,7 +86,7 @@ export function requireBootFonts(required: RequiredLoading, page: FontPage): () 
                 !loaded.includes(current) ||
                 !page.document.fonts.check(font)
               ) {
-                throw new Error(`Required Liberation Sans ${wanted} is not usable`);
+                throw new Error(`Required AdaUI ${wanted} is not usable`);
               }
             }),
           );

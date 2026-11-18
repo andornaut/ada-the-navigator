@@ -82,7 +82,7 @@ export function font(role: {
   readonly size: number;
   readonly weight: number;
 }): string {
-  return `${role.weight} ${units(role.size)}/${units(role.lineHeight)} AdaUI,'Liberation Sans',sans-serif`;
+  return `${role.weight} ${units(role.size)}/${units(role.lineHeight)} AdaUI,sans-serif`;
 }
 
 // A nine-slice edge as whole CSS px: round(edge * s).

@@ -5,6 +5,7 @@ export const SEED_INDEPENDENT_TESTS = [
   "src/tests/hooksSafety.test.ts",
   "src/tools/pacingSim.test.ts",
   "src/tools/phaserBuild.test.ts",
+  "src/tools/uiStrings.test.ts",
   "src/ui/resourceCard.test.ts",
 ];
 
