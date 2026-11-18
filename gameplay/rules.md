@@ -76,10 +76,15 @@ and new ones unlock with progress.
 Player-visible labels use "Earth" for travel to Ada's room and "title" for the
 start screen; story dialogue may still call Ada's house home. Every arrival on
 Earth lands in Ada's room. Nonpausable story pages use the three-line Menu at the
-same position as Pause. Start and story Menu share the smallest modal preset,
-with Achievements, Settings and primary Close last. Every Menu outside Start,
-including Earth, story pages and maps, adds Back to title immediately above
-Close. Opening or closing Menu or
+same position as Pause. Pause and Menu are one modal; Menu uses the smallest
+modal preset. Its bottom button is primary: Close in Menu, Resume in Pause. Every
+Menu or Pause outside Start, including Earth, story pages and maps, has Back to
+title immediately above the bottom button. All other buttons are in alphabetical
+order by label. Start's Menu lists Achievements, Exit and Settings; Earth and
+story Menus list Achievements and Settings. Exit shows only on Start, and only
+where exiting closes the installed app in the current runtime, detected at
+runtime; it is hidden in plain browser tabs and never navigates elsewhere. Q
+exits from the bare start screen only where Exit shows. Opening or closing Menu or
 its children preserves the exact story page, dialogue, choices, progress and
 locks. Closing a child returns to the same Menu and opener.
 
@@ -770,12 +775,10 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   on a blocked route is excluded. Other ranges are their own values: tow attach
   120, and station discovery uses its own 320.
 - Pause is visible at the top left during gameplay, including story and dialogue,
-  except on the title screen and during initial loading. Settings opens only from
-  the pause menu. Pause opens a card titled "Paused" over the dimmed game without
-  advancing story or dialogue. Shared actions keep this order: "Map", "Settings",
-  "Back to title", primary "Resume". Earth uses an equal-size vertical stack.
-  Space places "Quests" and "Ship" above the shared actions in its two-column
-  grid, with "Resume" at the bottom right. Map stays hidden before it unlocks
+  except on the title screen and during initial loading. Settings opens from Pause
+  or Menu. Pause opens a card titled "Paused" over the dimmed game without
+  advancing story or dialogue, with "Map", "Quests", "Settings" and "Ship" in
+  that order, then "Back to title", then primary "Resume". Map stays hidden before it unlocks
   and during mandatory story beats or unresolved material choices. "Resume" remains primary and focused when the card opens. Ship opens a card titled "Ship" with Back and X returning to Pause.
   Cargo, Equipment and Weapons content columns are equal width, excluding shared
   divider/gap tracks; content does not size a column. A sole visible footer
@@ -852,11 +855,10 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   Settings is nested in Pause or Menu, with no standalone Settings icon. Pause is
   available only during active pausable gameplay, determined from model state and
   its guards. Other contexts use the three-line Menu in the same entry position,
-  including Start, maps and nonpausable story. Start and Earth/story use the same
-  smallest shared modal preset: Achievements, Settings, then primary Close. Every
-  Menu except Start's adds Back to title immediately above Close. The
-  title remains centered and unobscured. Active gameplay retains the approved
-  two-column Pause action order and primary Resume. Existing map navigation is
+  including Start, maps and nonpausable story, with the contents and order in
+  [Start, Home and Space](#start-home-and-space). The
+  title remains centered and unobscured. Active gameplay uses the Pause order
+  above, with primary Resume. Existing map navigation is
   retained under Menu. Closing nested Settings or Achievements restores the same
   Menu and parent context without advancing story or changing choices. The start
   card retains Start, or Continue and Restart. No mute toggle is added to Ada.

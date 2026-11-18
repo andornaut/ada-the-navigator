@@ -1270,10 +1270,11 @@ beacon light. Welcome!"
   content columns have equal width, excluding divider/gap tracks. Names append
   [{n}] above level one; accessible level descriptions retain Level {n} of 3.
   Cargo and paint have no level. Existing icons and detail return paths remain.
-- Pause: Pause (button label), Paused, Map, Ship, Settings, Back to title, Resume.
-  Pause is used only during active pausable gameplay.
-- Start and Earth/story Menu: Menu (three-line entry), Achievements, Settings,
-  Close. Every Menu except Start's adds Back to title immediately above Close.
+- Pause: Pause (button label), Paused, Map, Quests, Settings, Ship, Back to
+  title, Resume. Pause is used only during active pausable gameplay.
+- Start Menu: Menu (three-line entry), Achievements, Exit, Settings, Close.
+  Earth and story Menu: Achievements, Settings, Back to title, Close. Exit shows
+  only where it closes the installed app.
   Menu uses the same entry position as Pause; Settings has no standalone
   icon. Closing Menu or its children preserves the exact underlying context.
 - Update offer: title "Update available", with Cancel and Update now.
