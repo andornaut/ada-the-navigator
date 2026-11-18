@@ -2380,34 +2380,38 @@ try {
       "and no close X; Stay in and Escape return to the local map on the same flight with focus " +
       "on Galaxies, Jump to another galaxy flies there, and Earth ends the flight home",
   );
-  const roomPause = page.locator('[data-action="pause"]');
-  if (await roomPause.isVisible()) {
-    const box = await roomPause.boundingBox();
-    const game = await page.locator("canvas").first().boundingBox();
-    assert.ok(
-      box && game && box.x - game.x < game.width / 4 && box.y - game.y < game.height / 4,
-      "Ada's room page shows the pause button at the game area's top left",
-    );
-  }
-  await openPause();
-  assert.deepEqual(
-    await pauseActions().evaluateAll((buttons) => buttons.map((button) => button.dataset.action)),
-    ["pause-settings", "pause-backToTitle"],
-    "Ada's room page's Paused card holds Settings and Back to title",
+  // Ada's room page is not pausable: its entry is the Menu at the pause button's place, holding
+  // Achievements, Settings and Back to title above Close (gameplay/rules.md "Start, Home and Space").
+  const roomMenu = menuDisc();
+  await roomMenu.waitFor({ state: "visible" });
+  const roomMenuBox = await roomMenu.boundingBox();
+  const game = await page.locator("canvas").first().boundingBox();
+  assert.ok(
+    roomMenuBox &&
+      game &&
+      roomMenuBox.x - game.x < game.width / 4 &&
+      roomMenuBox.y - game.y < game.height / 4,
+    "Ada's room page shows the Menu at the game area's top left",
   );
-  await page.screenshot({ path: `${output}/pause-room.png` });
+  await openMenu();
+  assert.deepEqual(
+    await menuActionIds(),
+    ["menu-achievements", "menu-settings", "menu-backToTitle", "menu-close"],
+    "Ada's room page's Menu holds Achievements, Settings, Back to title, then Close",
+  );
+  await page.screenshot({ path: `${output}/menu-room.png` });
   await page.keyboard.press("Escape");
-  await page.locator('[data-dialog="pause"]').waitFor({ state: "hidden" });
-  await openPause();
-  await page.locator('[data-action="close-pause"]').click();
-  await page.locator('[data-dialog="pause"]').waitFor({ state: "hidden" });
-  await openPause();
-  await page.locator('[data-action="pause-backToTitle"]').click();
+  await menuCard().waitFor({ state: "hidden" });
+  await openMenu();
+  await menuCard().locator('[data-action="close-menu"]').click();
+  await menuCard().waitFor({ state: "hidden" });
+  await openMenu();
+  await menuCard().locator('[data-action="menu-backToTitle"]').click();
   await page.locator('[data-action="continue"]').waitFor({ state: "visible" });
   events.checks.push(
     "Back to title keeps a flight in danger with progress saved and no sleep scene, and " +
-      "Continue resumes it; the galaxy map's Earth lands on Ada's room page, which pauses to " +
-      "Settings and Back to title, closing on Escape and its X",
+      "Continue resumes it; the galaxy map's Earth lands on Ada's room page, whose Menu holds " +
+      "Achievements, Settings and Back to title above Close, closing on Escape and its X",
   );
   // The mining hub is a station: Use deposits the ore Ada carries, then docks, and once
   // Cartwheel's space quest is complete the shop's Ship tab heads with the holodisk.
