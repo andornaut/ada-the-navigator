@@ -243,15 +243,15 @@ in at most 2.4 seconds in all, then waits for the player's choice. The galaxy ma
 selection; there is no separate selection card. It opens at every boarding and,
 in flight, from the local map's Galaxies button. Opened in flight, the ship
 starts on the galaxy Ada is flying in, and while it sits there the action
-reads "Stay in {galaxy}": like the close X, it returns to the local map with no
+reads "Stay in {galaxy}": like back and Escape, it returns to the local map with no
 jump and no new layout. Jump to another galaxy ends the current flight, with
 story progress saved, and quantum jumps into the chosen galaxy; Jump to Earth
 ends the flight and jumps Ada home to her room. At boarding Ada is on Earth, so
 Earth's action reads "Stay on Earth" and returns her to her room with no jump.
-The galaxy map has the
-close X, which with back and Escape goes one step back, to the page Ada just
-left: the local map in flight, or the "Welcome back, Navigator." page at
-boarding. Stay on Earth is the way home from boarding.
+The galaxy map has no close X
+or Back button: Ada leaves it through the destination action, or with back and
+Escape, which go one step back, to the page Ada just left: the local map in
+flight, or the "Welcome back, Navigator." page at boarding. Stay on Earth is the way home from boarding.
 
 Galaxies are named after real galaxies' nicknames, in the route order above.
 Every unlocked galaxy stays replayable in any order. Its resolved story stays
@@ -807,7 +807,8 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   X, Escape and back always perform the same action as the current primary footer
   button. Detail never paginates, scrolls or truncates; only the list paginates.
   The local map has three tools, Zoom out, Zoom in and Center on Ada, and no
-  close X; a primary Close button in its footer dismisses it.
+  close X; the primary button in its footer dismisses it, reading "Back" when the
+  map was opened from Paused and "Close" otherwise.
   The local map shows the current galaxy: Ada's position, discovered destinations and
   stations, charted landmarks, the current objective's destination once mapped,
   a known holodisk waypoint until its holodisk is recovered, and how much of the
@@ -866,8 +867,8 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   covers the first-flight lessons and the landing page's mobile line. Keyboard
   text stays words.
 - [Shared product consistency policy](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#product-consistency) applies.
-  Every close X, the galaxy map's included, uses the same shared close icon, so
-  all close controls look the same.
+  Every close X uses the same shared close icon, so all close controls look
+  the same.
 - [Shared settings policy](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#settings) applies. Ada's rows, in order:
   - Move controls and Aim controls, as in Chibi: each shows or hides one on-screen
     joystick (left and right). Each is shown unless the player hides it. Hiding a
