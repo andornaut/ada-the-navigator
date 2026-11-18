@@ -189,7 +189,7 @@ still counts toward its story goal and an accepted Mining contract. Deposited
 ore is no longer aboard to fuel recharge.
 
 All existing Stardust quest-completion payouts use
-`questReward(base) = ceil(3 * base / 25) * 25`, including station jobs and
+`questReward(base) = ceil(2 * base / 25) * 25`, including station jobs and
 repeatable activities. Use the same final amount in offers, details, completion
 notices and payment, preserving saved base values and already paid balances.
 This does not change ordinary drops, discovery caches, prices, Exchange,
