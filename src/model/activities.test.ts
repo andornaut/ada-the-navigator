@@ -11,6 +11,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { HUNTING_PACKS } from "../data/galaxyFeatures.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
 import { questReward } from "../data/questRewards.ts";
+import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
 import {
@@ -45,14 +46,17 @@ function disableStoryGuard(content: GameContent, flight: FlightState, id: string
   guard.enemy.disabled = true;
 }
 
-/** The same held target is absent beyond 3000 and present just inside it, without advancing play. */
+/**
+ * The same held target is absent beyond TARGET_MARKER_RANGE and present just inside it, without
+ * advancing play.
+ */
 function expectJobIndicatorRange(model: GameModel, target: Vec & { id: string }): void {
   const flight = model.state.flight!;
   const before = flight.player;
   const match = expect.objectContaining({ id: target.id, kind: "job", x: target.x, y: target.y });
-  flight.player = { x: target.x + 3001, y: target.y };
+  flight.player = { x: target.x + TARGET_MARKER_RANGE + 1, y: target.y };
   expect(model.indicatorTargets).not.toContainEqual(match);
-  flight.player = { x: target.x + 2999, y: target.y };
+  flight.player = { x: target.x + TARGET_MARKER_RANGE - 1, y: target.y };
   expect(model.indicatorTargets).toContainEqual(match);
   flight.player = before;
 }

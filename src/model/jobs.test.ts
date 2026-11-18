@@ -17,6 +17,7 @@ import {
 } from "../data/jobs.ts";
 import { questReward } from "../data/questRewards.ts";
 import { galaxyCard } from "../data/storybook.ts";
+import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { relaunch } from "../testing/launch.ts";
 import { ensureStation, stepFlight, towing } from "./flight.ts";
@@ -38,14 +39,17 @@ import { stationsNear } from "./stations.ts";
 import type { FlightState, HeldJob, Vec } from "./types.ts";
 import { noLevels, shipTuning } from "./upgrades.ts";
 
-/** The same held target is absent beyond 3000 and present just inside it, without advancing play. */
+/**
+ * The same held target is absent beyond TARGET_MARKER_RANGE and present just inside it, without
+ * advancing play.
+ */
 function expectJobIndicatorRange(model: GameModel, target: Vec & { id: string }): void {
   const flight = model.state.flight!;
   const before = flight.player;
   const match = expect.objectContaining({ id: target.id, kind: "job", x: target.x, y: target.y });
-  flight.player = { x: target.x + 3001, y: target.y };
+  flight.player = { x: target.x + TARGET_MARKER_RANGE + 1, y: target.y };
   expect(model.indicatorTargets).not.toContainEqual(match);
-  flight.player = { x: target.x + 2999, y: target.y };
+  flight.player = { x: target.x + TARGET_MARKER_RANGE - 1, y: target.y };
   expect(model.indicatorTargets).toContainEqual(match);
   flight.player = before;
 }
