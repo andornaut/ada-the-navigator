@@ -300,11 +300,17 @@ export const STORYBOOK_STYLE = `
   bottom:auto;
   overflow:visible
 }
+/* The half spread paints the lower half at least, full width to the view's bottom, and grows over
+   the art window as tall as its page needs up to the light spread's top cap (art/layout.md
+   "Storybook page"), so every page within Gameplay's limits fits without scrolling. */
 .ada-controls .ada-story.ada-story-half .ada-story-panel{
-  top:50%;
   bottom:0;
   width:100%;
-  max-height:none
+  min-height:50%;
+  max-height:${availableHeight(STORY_PANEL_TOP)}
+}
+.ada-controls .ada-story.ada-story-half .ada-story-panel.ada-story-room{
+  max-height:${availableHeight(STORY_ROOM_PANEL_TOP)}
 }
 .ada-controls .ada-story-background{
   position:absolute;

@@ -347,6 +347,27 @@ it("caps Earth content to the canonical game width while retaining full-width ha
   expect(rule(".ada-controls .ada-story.ada-story-half .ada-story-panel")).toContain("width:100%");
 });
 
+it("grows the half spread past the lower half up to the light spread's top cap", () => {
+  const height = (top: number) =>
+    `max-height:calc(100% - ${fromHudEdge("top", top)} - ${safeEdge("bottom", SPACING.pageInset)})`;
+  const half = rule(".ada-controls .ada-story.ada-story-half .ada-story-panel");
+  expect(half).toContain("bottom:0;");
+  expect(half).toContain("min-height:50%;");
+  expect(half).toContain(height(STORY_PANEL_TOP));
+  expect(half).not.toMatch(/(^|[\s;{])(top|height):/u);
+  expect(rule(".ada-controls .ada-story.ada-story-half .ada-story-panel.ada-story-room")).toContain(
+    height(STORY_ROOM_PANEL_TOP),
+  );
+  // Astra's three one-line questions with the page controls (art/layout.md "Storybook page"):
+  // 3 * 36 + 2 * 24 + 24 + 36 = 216, 248 with the padding, above the 202.5 lower half of a
+  // 1280x720 window's 405-high view and under the 283.5 cap of a 360-high view (360 - 60.5 - 16;
+  // 280.5 with a 19 bottom inset).
+  const panel = 3 * 36 + 3 * SMALL_BUTTON_GAP + 36 + 2 * STORY_PANEL.padding;
+  expect(panel).toBe(248);
+  expect(panel).toBeGreaterThan(405 / 2);
+  expect(panel).toBeLessThanOrEqual(360 - (12 + STORY_PANEL_TOP) - SPACING.pageInset);
+});
+
 it("keeps overflowing chapter choices visible without occupying Skip or displacing Next", () => {
   const page = openingScene(CONTENT, 1, true).pages.find(({ id }) => id === "opening")!;
   const view = storyPageView(page, page.choices!, true, false);
