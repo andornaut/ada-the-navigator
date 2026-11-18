@@ -92,6 +92,6 @@ Reference: [art](../../art/README.md).
 | ada-0200 | Specify the shared weapon impact families                                 | [ada-0200.md](../work/ada-0200.md)                                   |
 | ada-0201 | Pair enemy actor profiles with reviewed enemy assets                      | [ada-0201.md](../work/ada-0201.md)                                   |
 | ada-0202 | Ship the full UI fonts as WOFF2                                           | [ada-0202.md](../work/ada-0202.md)                                   |
-| TBD      | Audit drawn-pixel padding on the remaining pills and buttons              | [pending-padding-audit.md](../work/pending-padding-audit.md)         |
-| TBD      | Mock up denser muted backdrops for every galaxy                           | [pending-denser-backdrops.md](../work/pending-denser-backdrops.md)   |
-| TBD      | Mock up full-screen cards and the conversation view for Use interactions  | [pending-full-screen-cards.md](../work/pending-full-screen-cards.md) |
+| ada-0278      | Audit drawn-pixel padding on the remaining pills and buttons              | [ada-0278.md](../work/ada-0278.md)         |
+| ada-0279      | Mock up denser muted backdrops for every galaxy                           | [ada-0279.md](../work/ada-0279.md)   |
+| ada-0280      | Mock up full-screen cards and the conversation view for Use interactions  | [ada-0280.md](../work/ada-0280.md) |
