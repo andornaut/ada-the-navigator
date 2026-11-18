@@ -14,8 +14,22 @@ Reference: [checks](../checks.md), [container adoption](../container-adoption.md
 
 ## Work items
 
-| ID       | Title                                                      | Link                               |
-| -------- | ---------------------------------------------------------- | ---------------------------------- |
-| ada-0002 | Prune test runtime per the testing policy                  | [ada-0002.md](../work/ada-0002.md) |
-| ada-0005 | Run only lint and attribution checks for docs-only changes | [ada-0005.md](../work/ada-0005.md) |
-| ada-0006 | Adopt design and work files                                | [ada-0006.md](../work/ada-0006.md) |
+| ID       | Title                                                                     | Link                               |
+| -------- | ------------------------------------------------------------------------- | ---------------------------------- |
+| ada-0002 | Prune test runtime per the testing policy                                 | [ada-0002.md](../work/ada-0002.md) |
+| ada-0005 | Run only lint and attribution checks for docs-only changes                | [ada-0005.md](../work/ada-0005.md) |
+| ada-0006 | Adopt design and work files                                               | [ada-0006.md](../work/ada-0006.md) |
+| ada-0018 | Set up the browser starter, kit smoke tests and isolated checks           | [ada-0018.md](../work/ada-0018.md) |
+| ada-0020 | Build for Cloudflare assets-only deployment with hourly delivery          | [ada-0020.md](../work/ada-0020.md) |
+| ada-0022 | Admit local checks on resource availability and run them through Make     | [ada-0022.md](../work/ada-0022.md) |
+| ada-0024 | Align staged checks, CI and lint tooling with the canonical configuration | [ada-0024.md](../work/ada-0024.md) |
+| ada-0034 | Precache for offline play with install and update offers                  | [ada-0034.md](../work/ada-0034.md) |
+| ada-0042 | Adopt published game-kit and art-kit releases                             | [ada-0042.md](../work/ada-0042.md) |
+| ada-0044 | Adopt published delivery-kit releases                                     | [ada-0044.md](../work/ada-0044.md) |
+| ada-0046 | Add the headless Stardust pacing simulation                               | [ada-0046.md](../work/ada-0046.md) |
+| ada-0051 | Harden the browser smoke harness                                          | [ada-0051.md](../work/ada-0051.md) |
+| ada-0071 | Close the three-game tooling gaps and show the build version              | [ada-0071.md](../work/ada-0071.md) |
+| ada-0075 | Allow the Web Analytics beacon in the CSP                                 | [ada-0075.md](../work/ada-0075.md) |
+| ada-0118 | Compact production JSON and precache galaxies progressively               | [ada-0118.md](../work/ada-0118.md) |
+| ada-0126 | Preserve committed source identity in isolated checks                     | [ada-0126.md](../work/ada-0126.md) |
+| ada-0131 | Permit optional analytics only on the landing page                        | [ada-0131.md](../work/ada-0131.md) |
