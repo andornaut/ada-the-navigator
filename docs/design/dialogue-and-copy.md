@@ -9,16 +9,16 @@ Reference: [design](../../gameplay/design.md), [player copy](../../gameplay/play
 
 ## Work items
 
-| ID       | Title                                                       | Link                                                                                           |
-| -------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| ada-0016 | Note that reduced motion also disables flashes              | [ada-0016.md](../work/ada-0016.md)                                                             |
-| TBD      | Define the cast, galaxies and holodisk memory arc           | [pending-define-cast-and-arc.md](../work/pending-define-cast-and-arc.md)                       |
-| TBD      | Write the chapter dialogue and objectives                   | [pending-write-chapter-dialogue.md](../work/pending-write-chapter-dialogue.md)                 |
-| TBD      | Define storybook Earth scenes and page controls             | [pending-define-storybook-earth.md](../work/pending-define-storybook-earth.md)                 |
-| TBD      | Turn flight lines into Chibi-style conversations            | [pending-define-in-flight-conversations.md](../work/pending-define-in-flight-conversations.md) |
-| TBD      | Apply the approved copy review                              | [pending-apply-copy-review.md](../work/pending-apply-copy-review.md)                           |
-| TBD      | Rename galaxy six from Black Eye to Phantom                 | [pending-rename-phantom.md](../work/pending-rename-phantom.md)                                 |
-| TBD      | Design the Phantom finale and the garden party              | [pending-design-phantom-finale.md](../work/pending-design-phantom-finale.md)                   |
-| TBD      | Expand the chapter dialogue with approved editorial wording | [pending-expand-dialogue.md](../work/pending-expand-dialogue.md)                               |
-| TBD      | Rename the antagonist Admiral Archie and the cat Gadget     | [pending-rename-antagonist.md](../work/pending-rename-antagonist.md)                           |
-| TBD      | Adopt the shared loading-failure presentation and copy      | [pending-adopt-shared-loading-failure.md](../work/pending-adopt-shared-loading-failure.md)     |
+| ID       | Title                                                       | Link                               |
+| -------- | ----------------------------------------------------------- | ---------------------------------- |
+| ada-0016 | Note that reduced motion also disables flashes              | [ada-0016.md](../work/ada-0016.md) |
+| ada-0213 | Define the cast, galaxies and holodisk memory arc           | [ada-0213.md](../work/ada-0213.md) |
+| ada-0214 | Write the chapter dialogue and objectives                   | [ada-0214.md](../work/ada-0214.md) |
+| ada-0234 | Define storybook Earth scenes and page controls             | [ada-0234.md](../work/ada-0234.md) |
+| ada-0235 | Turn flight lines into Chibi-style conversations            | [ada-0235.md](../work/ada-0235.md) |
+| ada-0249 | Apply the approved copy review                              | [ada-0249.md](../work/ada-0249.md) |
+| ada-0250 | Rename galaxy six from Black Eye to Phantom                 | [ada-0250.md](../work/ada-0250.md) |
+| ada-0251 | Design the Phantom finale and the garden party              | [ada-0251.md](../work/ada-0251.md) |
+| ada-0261 | Expand the chapter dialogue with approved editorial wording | [ada-0261.md](../work/ada-0261.md) |
+| ada-0262 | Rename the antagonist Admiral Archie and the cat Gadget     | [ada-0262.md](../work/ada-0262.md) |
+| ada-0275 | Adopt the shared loading-failure presentation and copy      | [ada-0275.md](../work/ada-0275.md) |

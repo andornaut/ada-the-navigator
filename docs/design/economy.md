@@ -6,18 +6,18 @@ Reference: [economy](../../gameplay/economy.md).
 
 ## Work items
 
-| ID       | Title                                                   | Link                                                                                 |
-| -------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| ada-0017 | Validate job-assisted pacing with the pacing simulation | [ada-0017.md](../work/ada-0017.md)                                                   |
-| TBD      | Define Stardust, stations and the shop                  | [pending-define-stardust-and-shop.md](../work/pending-define-stardust-and-shop.md)   |
-| TBD      | Set Stardust pacing, prices and typical incomes         | [pending-set-pacing-and-prices.md](../work/pending-set-pacing-and-prices.md)         |
-| TBD      | Sell and drop ammunition per weapon                     | [pending-add-ammunition.md](../work/pending-add-ammunition.md)                       |
-| TBD      | Define community projects and donations                 | [pending-define-community-projects.md](../work/pending-define-community-projects.md) |
-| TBD      | Drop upgrades one level at a time by category weight    | [pending-define-upgrade-drops.md](../work/pending-define-upgrade-drops.md)           |
-| TBD      | Open weapon, upgrade and shield detail cards            | [pending-add-detail-cards.md](../work/pending-add-detail-cards.md)                   |
-| TBD      | Fuel shield recharge with ore                           | [pending-fuel-shield-with-ore.md](../work/pending-fuel-shield-with-ore.md)           |
-| TBD      | Add Amber and price paint by purchase order             | [pending-price-paint-tiers.md](../work/pending-price-paint-tiers.md)                 |
-| TBD      | Give destroyed rocks Stardust bursts and ammo packs     | [pending-drop-from-rocks.md](../work/pending-drop-from-rocks.md)                     |
-| TBD      | Define size-weighted asteroid resource yields           | [pending-define-asteroid-yields.md](../work/pending-define-asteroid-yields.md)       |
-| TBD      | Add station services, keepers and the Exchange          | [pending-add-station-exchange.md](../work/pending-add-station-exchange.md)           |
-| TBD      | Pay quests at triple base, rounded up to 25             | [pending-reconcile-quest-payouts.md](../work/pending-reconcile-quest-payouts.md)     |
+| ID       | Title                                                   | Link                               |
+| -------- | ------------------------------------------------------- | ---------------------------------- |
+| ada-0017 | Validate job-assisted pacing with the pacing simulation | [ada-0017.md](../work/ada-0017.md) |
+| ada-0211 | Define Stardust, stations and the shop                  | [ada-0211.md](../work/ada-0211.md) |
+| ada-0227 | Set Stardust pacing, prices and typical incomes         | [ada-0227.md](../work/ada-0227.md) |
+| ada-0228 | Sell and drop ammunition per weapon                     | [ada-0228.md](../work/ada-0228.md) |
+| ada-0229 | Define community projects and donations                 | [ada-0229.md](../work/ada-0229.md) |
+| ada-0242 | Drop upgrades one level at a time by category weight    | [ada-0242.md](../work/ada-0242.md) |
+| ada-0243 | Open weapon, upgrade and shield detail cards            | [ada-0243.md](../work/ada-0243.md) |
+| ada-0244 | Fuel shield recharge with ore                           | [ada-0244.md](../work/ada-0244.md) |
+| ada-0245 | Add Amber and price paint by purchase order             | [ada-0245.md](../work/ada-0245.md) |
+| ada-0246 | Give destroyed rocks Stardust bursts and ammo packs     | [ada-0246.md](../work/ada-0246.md) |
+| ada-0256 | Define size-weighted asteroid resource yields           | [ada-0256.md](../work/ada-0256.md) |
+| ada-0257 | Add station services, keepers and the Exchange          | [ada-0257.md](../work/ada-0257.md) |
+| ada-0258 | Pay quests at triple base, rounded up to 25             | [ada-0258.md](../work/ada-0258.md) |

@@ -8,10 +8,10 @@ Reference: [quests](../../gameplay/quests.md).
 
 ## Work items
 
-| ID  | Title                                                    | Link                                                                                       |
-| --- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| TBD | Define station job boards and survey landmarks           | [pending-define-job-boards.md](../work/pending-define-job-boards.md)                       |
-| TBD | Define achievements and the Achievements card            | [pending-define-achievements.md](../work/pending-define-achievements.md)                   |
-| TBD | Define repeatable activities, rosters and the mining hub | [pending-define-repeatable-activities.md](../work/pending-define-repeatable-activities.md) |
-| TBD | Triple job and activity rewards                          | [pending-triple-job-pay.md](../work/pending-triple-job-pay.md)                             |
-| TBD | Chart landmarks with an explicit Use Scan                | [pending-chart-landmarks-with-scan.md](../work/pending-chart-landmarks-with-scan.md)       |
+| ID       | Title                                                    | Link                               |
+| -------- | -------------------------------------------------------- | ---------------------------------- |
+| ada-0230 | Define station job boards and survey landmarks           | [ada-0230.md](../work/ada-0230.md) |
+| ada-0231 | Define achievements and the Achievements card            | [ada-0231.md](../work/ada-0231.md) |
+| ada-0232 | Define repeatable activities, rosters and the mining hub | [ada-0232.md](../work/ada-0232.md) |
+| ada-0247 | Triple job and activity rewards                          | [ada-0247.md](../work/ada-0247.md) |
+| ada-0259 | Chart landmarks with an explicit Use Scan                | [ada-0259.md](../work/ada-0259.md) |

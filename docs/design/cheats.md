@@ -6,6 +6,6 @@ Reference: [cheats](../../gameplay/cheats.md).
 
 ## Work items
 
-| ID  | Title                                              | Link                                                         |
-| --- | -------------------------------------------------- | ------------------------------------------------------------ |
-| TBD | Define the browser-only cheats and run-only grants | [pending-define-cheats.md](../work/pending-define-cheats.md) |
+| ID       | Title                                              | Link                               |
+| -------- | -------------------------------------------------- | ---------------------------------- |
+| ada-0215 | Define the browser-only cheats and run-only grants | [ada-0215.md](../work/ada-0215.md) |
