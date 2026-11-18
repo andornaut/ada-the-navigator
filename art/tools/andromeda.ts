@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 
 import * as m from "./andromeda-models.ts";
 import { jetsFile } from "./crafts.ts";
-import { replaceEntries } from "./manifest.ts";
+import { mergeSidecars, replaceEntries } from "./manifest.ts";
 import { noses } from "./nose.ts";
 import { writeProjects } from "./projects.ts";
 import {
@@ -302,6 +302,9 @@ function writeCraft(craft: m.StoryCraft) {
 const isPip = (id: string) => /^craft-pip-\d+$/.test(id);
 replaceEntries("andromeda", isPip, []);
 replaceEntries("core", isPip, writeCraft(m.pip));
+const ownsPip = (craft: string) => craft === m.pip.name;
+mergeSidecars("andromeda", ownsPip, {});
+mergeSidecars("core", ownsPip, { [m.pip.name]: { jets: `${PATH}${m.pip.name}-jets.json` } });
 
 // ---------------------------------------------------------------- world changes
 

@@ -28726,5 +28726,58 @@
   "cartwheelDebris": "/art/cartwheel/debris.json",
   "oreField": "/art/cartwheel/ore-field.json",
   "backdrop": "/art/cartwheel/backdrop.json",
-  "tow": "/art/cartwheel/tow.json"
+  "tow": "/art/cartwheel/tow.json",
+  "sidecars": {
+    "blocker": {
+      "jets": "/art/cartwheel/blocker-jets.json"
+    },
+    "capital": {
+      "jets": "/art/cartwheel/enemies/capital-jets.json",
+      "hardpoints": "/art/cartwheel/enemies/capital-hardpoints.json"
+    },
+    "fighter": {
+      "jets": "/art/cartwheel/enemies/fighter-jets.json",
+      "shards": "/art/cartwheel/enemies/fighter-shards.json"
+    },
+    "frigate": {
+      "jets": "/art/cartwheel/enemies/frigate-jets.json",
+      "hardpoints": "/art/cartwheel/enemies/frigate-hardpoints.json"
+    },
+    "hostileStation": {
+      "jets": "/art/cartwheel/enemies/hostileStation-jets.json",
+      "hardpoints": "/art/cartwheel/enemies/hostileStation-hardpoints.json"
+    },
+    "interceptor": {
+      "jets": "/art/cartwheel/enemies/interceptor-jets.json",
+      "shards": "/art/cartwheel/enemies/interceptor-shards.json"
+    },
+    "platform": {
+      "hardpoints": "/art/cartwheel/enemies/platform-hardpoints.json"
+    },
+    "retaliator": {
+      "jets": "/art/cartwheel/enemies/retaliator-jets.json",
+      "hardpoints": "/art/cartwheel/enemies/retaliator-hardpoints.json",
+      "shards": "/art/cartwheel/enemies/retaliator-shards.json"
+    },
+    "retaliatorCargoHauler": {
+      "jets": "/art/cartwheel/enemies/retaliatorCargoHauler-jets.json",
+      "hardpoints": "/art/cartwheel/enemies/retaliatorCargoHauler-hardpoints.json",
+      "shards": "/art/cartwheel/enemies/retaliatorCargoHauler-shards.json"
+    },
+    "retaliatorMiningFreighter": {
+      "jets": "/art/cartwheel/enemies/retaliatorMiningFreighter-jets.json",
+      "hardpoints": "/art/cartwheel/enemies/retaliatorMiningFreighter-hardpoints.json",
+      "shards": "/art/cartwheel/enemies/retaliatorMiningFreighter-shards.json"
+    },
+    "swarm": {
+      "jets": "/art/cartwheel/enemies/swarm-jets.json",
+      "shards": "/art/cartwheel/enemies/swarm-shards.json"
+    },
+    "visitor1": {
+      "jets": "/art/cartwheel/visitor1-jets.json"
+    },
+    "visitor2": {
+      "jets": "/art/cartwheel/visitor2-jets.json"
+    }
+  }
 }

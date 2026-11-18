@@ -96,6 +96,29 @@ a write fails, leaving the files unchanged, when an id is in two manifests or
 the `galaxies` map lacks a galaxy. Generators that share an id prefix each own
 only their own crafts' ids. Reruns are byte-identical.
 
+A manifest that lists enemy or story craft frames has a top-level `sidecars`
+map from each craft to the public paths of its `jets`, `hardpoints` and
+`shards` data files. The key is the enemy frame key (the `archetype`, or the
+industrial stem such as `retaliatorCargoHauler`) or the story craft's name. A
+kind is present only when its file exists:
+
+```json
+"sidecars": {
+  "capital": {
+    "jets": "/art/needle/enemies/capital-jets.json",
+    "hardpoints": "/art/needle/enemies/capital-hardpoints.json"
+  }
+}
+```
+
+The paths are those of the files beside the craft's frames,
+`{craft}-{kind}.json`, in the manifest that lists the frames; Pip's scooter and
+the miner are in core with their files in their galaxies' folders. Generators
+write the map with `mergeSidecars` in `art/tools/manifest.ts`, each owning only
+its own crafts' kinds, so a rerun updates them in place and keeps every other
+generator's. Crafts sort by name and kinds follow `jets`, `hardpoints`,
+`shards`.
+
 Each asset has a stable semantic `id`, public `path`, intrinsic `width` and `height`,
 `facing`, and normalized `pivot`. Portrait sheets also define `frameWidth`,
 `frameHeight`, and zero-based named `frames`. Portrait dimensions describe the

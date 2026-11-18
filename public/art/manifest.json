@@ -43413,5 +43413,56 @@
     "version": 2
   },
   "shipMaterials": "/art/ship-materials.json",
-  "storyCompositions": "/art/story-compositions.json"
+  "storyCompositions": "/art/story-compositions.json",
+  "sidecars": {
+    "capital": {
+      "jets": "/art/enemies/capital-jets.json",
+      "hardpoints": "/art/enemies/capital-hardpoints.json"
+    },
+    "fighter": {
+      "jets": "/art/enemies/fighter-jets.json",
+      "shards": "/art/enemies/fighter-shards.json"
+    },
+    "frigate": {
+      "jets": "/art/enemies/frigate-jets.json",
+      "hardpoints": "/art/enemies/frigate-hardpoints.json"
+    },
+    "gadget": {
+      "jets": "/art/enemies/gadget-jets.json",
+      "hardpoints": "/art/enemies/gadget-hardpoints.json"
+    },
+    "hostileStation": {
+      "jets": "/art/enemies/hostileStation-jets.json",
+      "hardpoints": "/art/enemies/hostileStation-hardpoints.json"
+    },
+    "interceptor": {
+      "jets": "/art/enemies/interceptor-jets.json",
+      "shards": "/art/enemies/interceptor-shards.json"
+    },
+    "miner": {
+      "jets": "/art/cartwheel/miner-jets.json"
+    },
+    "pip": {
+      "jets": "/art/andromeda/pip-jets.json"
+    },
+    "retaliator": {
+      "jets": "/art/enemies/retaliator-jets.json",
+      "hardpoints": "/art/enemies/retaliator-hardpoints.json",
+      "shards": "/art/enemies/retaliator-shards.json"
+    },
+    "retaliatorCargoHauler": {
+      "jets": "/art/enemies/retaliatorCargoHauler-jets.json",
+      "hardpoints": "/art/enemies/retaliatorCargoHauler-hardpoints.json",
+      "shards": "/art/enemies/retaliatorCargoHauler-shards.json"
+    },
+    "retaliatorMiningFreighter": {
+      "jets": "/art/enemies/retaliatorMiningFreighter-jets.json",
+      "hardpoints": "/art/enemies/retaliatorMiningFreighter-hardpoints.json",
+      "shards": "/art/enemies/retaliatorMiningFreighter-shards.json"
+    },
+    "swarm": {
+      "jets": "/art/enemies/swarm-jets.json",
+      "shards": "/art/enemies/swarm-shards.json"
+    }
+  }
 }

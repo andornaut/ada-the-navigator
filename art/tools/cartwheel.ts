@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 import { hauler, HAULER_LEVELS, HAULER_MOUTH_WIDTH, HAULER_MOUTHS } from "./cartwheel-craft.ts";
 import { jetsFile } from "./crafts.ts";
 import { cube, hcyl, part, scaleGroups } from "./hull-shapes.ts";
-import { replaceEntries } from "./manifest.ts";
+import { mergeSidecars, replaceEntries } from "./manifest.ts";
 import { noses } from "./nose.ts";
 import { ORE_SOLID } from "./ore.ts";
 import {
@@ -937,6 +937,13 @@ replaceEntries(
   (id) => id.startsWith("cartwheel-debris-") || id.startsWith("craft-stranded-"),
 );
 replaceEntries("core", (id) => craftIds(SHARED).test(id), craftEntries.filter(isShared));
+// Each craft's jets sit beside its frames and are listed with them.
+const ownsCraft = (craft: string) => crafts.some(({ name }) => name === craft);
+const craftJets = (names: readonly string[]) =>
+  Object.fromEntries(names.map((name) => [name, { jets: `/art/cartwheel/${name}-jets.json` }]));
+const names = crafts.map(({ name }) => name);
+mergeSidecars("cartwheel", ownsCraft, craftJets(names.filter((name) => !SHARED.includes(name))));
+mergeSidecars("core", ownsCraft, craftJets(SHARED));
 
 const flag = process.argv.indexOf("--alternates");
 if (flag !== -1) {

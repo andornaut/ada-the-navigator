@@ -25074,5 +25074,46 @@
   ],
   "backdropHaze": "/art/andromeda/haze.json",
   "backdrop": "/art/andromeda/backdrop.json",
-  "tow": "/art/andromeda/tow.json"
+  "tow": "/art/andromeda/tow.json",
+  "sidecars": {
+    "capital": {
+      "jets": "/art/andromeda/enemies/capital-jets.json",
+      "hardpoints": "/art/andromeda/enemies/capital-hardpoints.json"
+    },
+    "fighter": {
+      "jets": "/art/andromeda/enemies/fighter-jets.json",
+      "shards": "/art/andromeda/enemies/fighter-shards.json"
+    },
+    "frigate": {
+      "jets": "/art/andromeda/enemies/frigate-jets.json",
+      "hardpoints": "/art/andromeda/enemies/frigate-hardpoints.json"
+    },
+    "hostileStation": {
+      "jets": "/art/andromeda/enemies/hostileStation-jets.json",
+      "hardpoints": "/art/andromeda/enemies/hostileStation-hardpoints.json"
+    },
+    "interceptor": {
+      "jets": "/art/andromeda/enemies/interceptor-jets.json",
+      "shards": "/art/andromeda/enemies/interceptor-shards.json"
+    },
+    "retaliator": {
+      "jets": "/art/andromeda/enemies/retaliator-jets.json",
+      "hardpoints": "/art/andromeda/enemies/retaliator-hardpoints.json",
+      "shards": "/art/andromeda/enemies/retaliator-shards.json"
+    },
+    "retaliatorCargoHauler": {
+      "jets": "/art/andromeda/enemies/retaliatorCargoHauler-jets.json",
+      "hardpoints": "/art/andromeda/enemies/retaliatorCargoHauler-hardpoints.json",
+      "shards": "/art/andromeda/enemies/retaliatorCargoHauler-shards.json"
+    },
+    "retaliatorMiningFreighter": {
+      "jets": "/art/andromeda/enemies/retaliatorMiningFreighter-jets.json",
+      "hardpoints": "/art/andromeda/enemies/retaliatorMiningFreighter-hardpoints.json",
+      "shards": "/art/andromeda/enemies/retaliatorMiningFreighter-shards.json"
+    },
+    "swarm": {
+      "jets": "/art/andromeda/enemies/swarm-jets.json",
+      "shards": "/art/andromeda/enemies/swarm-shards.json"
+    }
+  }
 }

@@ -11,7 +11,7 @@ import {
   jetsFile,
 } from "./crafts.ts";
 import { traceEnemyFills } from "./enemy-outline.ts";
-import { mergeEntries } from "./manifest.ts";
+import { mergeEntries, mergeSidecars } from "./manifest.ts";
 import { anchor, ENEMY_HEADINGS, project, vector } from "./projection.ts";
 import { type Fill, type V2 } from "./silhouette.ts";
 
@@ -101,6 +101,15 @@ function main() {
     "core",
     (id) => hull.test(id),
     crafts.flatMap(({ frame, name }) => hullEntries(name, frame)),
+  );
+  // These crafts' jets; heavies.ts writes the hardpoints and destruction.ts the shards.
+  const jetCrafts = new Set(crafts.map(({ name }) => name));
+  mergeSidecars(
+    "core",
+    (craft, kind) => kind === "jets" && jetCrafts.has(craft),
+    Object.fromEntries(
+      crafts.map(({ name }) => [name, { jets: `/art/enemies/${name}-jets.json` }]),
+    ),
   );
 }
 

@@ -15,6 +15,7 @@ import {
   type Plan,
 } from "./crafts.ts";
 import { sizeReceipts } from "./enemy-size.ts";
+import { mergeSidecars } from "./manifest.ts";
 import { ENEMY_HEADINGS, json, projectAt, rotate, round, vector } from "./projection.ts";
 
 type Kind = "hull" | "part" | "fleck";
@@ -292,6 +293,15 @@ async function main() {
   }
   await writeJson(`${output}destruction.json`, spec());
   writeFileSync(`${output}destruction-flash.svg`, flash());
+  // The coral shards; enemies.ts and heavies.ts write these crafts' other sidecars.
+  const names = new Set(crafts.map(({ name }) => name));
+  mergeSidecars(
+    "core",
+    (craft, kind) => kind === "shards" && names.has(craft),
+    Object.fromEntries(
+      crafts.map(({ name }) => [name, { shards: `/art/enemies/${name}-shards.json` }]),
+    ),
+  );
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

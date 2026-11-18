@@ -17983,5 +17983,45 @@
   "needleEye": "/art/needle/eye.json",
   "needleBand": "/art/needle/band.json",
   "backdrop": "/art/needle/backdrop.json",
-  "tow": "/art/needle/tow.json"
+  "tow": "/art/needle/tow.json",
+  "sidecars": {
+    "capital": {
+      "jets": "/art/needle/enemies/capital-jets.json",
+      "hardpoints": "/art/needle/enemies/capital-hardpoints.json"
+    },
+    "fighter": {
+      "jets": "/art/needle/enemies/fighter-jets.json",
+      "shards": "/art/needle/enemies/fighter-shards.json"
+    },
+    "frigate": {
+      "jets": "/art/needle/enemies/frigate-jets.json",
+      "hardpoints": "/art/needle/enemies/frigate-hardpoints.json"
+    },
+    "glider": {
+      "jets": "/art/needle/glider-jets.json"
+    },
+    "interceptor": {
+      "jets": "/art/needle/enemies/interceptor-jets.json",
+      "shards": "/art/needle/enemies/interceptor-shards.json"
+    },
+    "retaliator": {
+      "jets": "/art/needle/enemies/retaliator-jets.json",
+      "hardpoints": "/art/needle/enemies/retaliator-hardpoints.json",
+      "shards": "/art/needle/enemies/retaliator-shards.json"
+    },
+    "retaliatorCargoHauler": {
+      "jets": "/art/needle/enemies/retaliatorCargoHauler-jets.json",
+      "hardpoints": "/art/needle/enemies/retaliatorCargoHauler-hardpoints.json",
+      "shards": "/art/needle/enemies/retaliatorCargoHauler-shards.json"
+    },
+    "retaliatorMiningFreighter": {
+      "jets": "/art/needle/enemies/retaliatorMiningFreighter-jets.json",
+      "hardpoints": "/art/needle/enemies/retaliatorMiningFreighter-hardpoints.json",
+      "shards": "/art/needle/enemies/retaliatorMiningFreighter-shards.json"
+    },
+    "swarm": {
+      "jets": "/art/needle/enemies/swarm-jets.json",
+      "shards": "/art/needle/enemies/swarm-shards.json"
+    }
+  }
 }

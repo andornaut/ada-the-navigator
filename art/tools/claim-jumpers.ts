@@ -50,7 +50,7 @@ import {
   wreck,
 } from "./heavies.ts";
 import { normalizeHeavy } from "./enemy-size.ts";
-import { craftIds, mergeEntries } from "./manifest.ts";
+import { craftIds, mergeEntries, mergeSidecars, sidecarsIn } from "./manifest.ts";
 import { ENEMY_HEADINGS } from "./projection.ts";
 
 // ---------------------------------------------------------------- palette
@@ -438,6 +438,10 @@ async function main() {
     entries,
     (id) => id.startsWith("craft-"),
   );
+  const names = new Set(
+    [...crafts, ...heavies, ...industrialHeavies, platform].map(({ name }) => name),
+  );
+  mergeSidecars("cartwheel", (craft) => names.has(craft), sidecarsIn(PATH, files.keys()));
   console.log(`${files.size} files, ${entries.length} entries; offsets from ${offsetsPath}`);
 }
 

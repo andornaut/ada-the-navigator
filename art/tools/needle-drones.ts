@@ -36,7 +36,7 @@ import {
   scorch,
   scorchSide,
 } from "./heavies.ts";
-import { craftIds, mergeEntries } from "./manifest.ts";
+import { craftIds, mergeEntries, mergeSidecars, sidecarsIn } from "./manifest.ts";
 import { ENEMY_HEADINGS } from "./projection.ts";
 
 // Crimson lacquer at Oklab hue 14, redder than coral (39) and the claim jumpers' rust (50), with
@@ -172,4 +172,6 @@ mergeEntries(
   entries,
   (id) => id.startsWith("craft-"),
 );
+const names = new Set([...crafts, ...heavies, ...industrialHeavies].map(({ name }) => name));
+mergeSidecars("needle", (craft) => names.has(craft), sidecarsIn(PATH, files.keys()));
 console.log(`${files.size} files, ${entries.length} entries; offsets from ${offsetsPath}`);

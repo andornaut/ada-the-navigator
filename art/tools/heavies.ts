@@ -47,7 +47,7 @@ import {
 } from "./crafts.ts";
 import { traceEnemyFills } from "./enemy-outline.ts";
 import { ADA_MODEL_SPAN, enemySizeRatio, normalizeHeavy, sizeReceipts } from "./enemy-size.ts";
-import { mergeEntries } from "./manifest.ts";
+import { mergeEntries, mergeSidecars, type SidecarKind, sidecarsIn } from "./manifest.ts";
 import {
   anchor,
   depth,
@@ -1688,6 +1688,14 @@ const owns = (id: string) =>
       (source !== "enemies" || !new RegExp(`^enemy-${name}-\\d+$`).test(id)),
   );
 
+// Sidecars this tool owns: every drawn craft's hardpoints, and the jets of the hulls it draws
+// (enemies.ts writes the others' jets).
+const ownsSidecar = (craft: string, kind: SidecarKind) =>
+  drawn.some(
+    ({ name, source }) =>
+      name === craft && (kind === "hardpoints" || (kind === "jets" && source === "heavies")),
+  );
+
 async function main() {
   const args = process.argv.slice(2);
   const flag = (name: string) => {
@@ -1719,6 +1727,8 @@ async function main() {
   }
   if (out === undefined) {
     mergeEntries("core", owns, entries);
+    const files = results.flatMap((result) => [...result.files.keys()]);
+    mergeSidecars("core", ownsSidecar, sidecarsIn("/art/enemies/", files));
   } else {
     writeFileSync(`${dir}manifest-entries.json`, json(entries));
   }

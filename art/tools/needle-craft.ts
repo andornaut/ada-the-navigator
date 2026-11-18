@@ -4,7 +4,7 @@
 import { writeFileSync } from "node:fs";
 
 import { jetsFile, type JetColors } from "./crafts.ts";
-import { replaceEntries } from "./manifest.ts";
+import { mergeSidecars, replaceEntries } from "./manifest.ts";
 import { OUT, placed, PUBLIC, squareFrame, svgFile } from "./needle-common.ts";
 import { noses } from "./nose.ts";
 import { anchor, ENEMY_HEADINGS, type Point, rotate, round, vector } from "./projection.ts";
@@ -71,4 +71,7 @@ const entries = Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => {
 });
 
 replaceEntries("needle", (id) => id.startsWith(`craft-${NAME}-`), entries);
+mergeSidecars("needle", (craft) => craft === NAME, {
+  [NAME]: { jets: `${PUBLIC}${NAME}-jets.json` },
+});
 console.log(`${NAME} frame ${frame}, nose ${nose.map(({ distance }) => distance).join(" ")}`);
