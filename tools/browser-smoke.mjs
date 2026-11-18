@@ -350,9 +350,10 @@ try {
     assert.ok(canvas, "The game surface has a box");
     await page.touchscreen.tap(canvas.x + canvas.width * 0.3, canvas.y + canvas.height * 0.55);
   }
-  // Talk opens the Interaction card (src/ui/conversation.ts). Skip goes to its outcome, which ends
-  // the exchange where Continue is its only choice; otherwise Continue is taken there.
-  const interactionCard = () => page.locator('[data-dialog="conversation"]');
+  // Talk opens the Interaction card (src/ui/conversation.ts) in its own modal, Skip and the close X
+  // in its frame. Skip goes to its outcome, which ends the exchange where Continue is its only
+  // choice; otherwise Continue is taken there.
+  const interactionCard = () => page.locator(".ada-interaction-modal");
   async function leaveInteraction() {
     await interactionCard().locator('[data-action="dialogue-skip"]').click();
     const ended = await interactionCard()
