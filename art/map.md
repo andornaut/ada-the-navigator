@@ -246,31 +246,26 @@ do.".
    place panel, without the ring or indicator), `markGap`, then the line in
    `TYPE.label` as the button label. The chip overhangs the label's line box by
    4 above and below, so a one-line button is 48; each wrapped line adds 20.
-   The button counts at its full width and widens the card.
 2. Plain line: `TYPE.body`, supporting `#b8b3c9`, starting on the text column,
-   20 per line, wrapping as prose (it never widens the card). A line whose
+   20 per line, wrapping as prose. A line whose
    target is not yet mapped carries a 28 hollow ring in the chip slot, the
    uncharted pip's look, centred on the text and overhanging it by 4 each way.
    "Story complete." and the job-board line carry no ring. The ring is
    decorative: the line reads as its text.
 3. Empty note: one centred `TYPE.body` supporting line.
 
-- Width: `cardWidth` from the widest line button,
-  `16 + 28 + 6 + label + 16`, floor 360, capped at the available width (634
-  with phone insets, 688 at the 720 base); a button wider than the inner width
-  wraps.
+- Width: the Large family, 688 capped at the available width (634 with phone
+  insets, 688 at the 720 base); a button wider than the inner width wraps.
 - Height: `58 + lines + gaps + 16`. Every state fits the 325 available.
 
-| State at 720x360, phone insets                    | Lines                              | Card        |
-| ------------------------------------------------- | ---------------------------------- | ----------- |
-| Story target mapped, no job, a station discovered | Button 48, plain 20                | 439.9 x 150 |
-| Story and job targets mapped                      | Two buttons, 48 each               | 439.9 x 178 |
-| Story target unmapped, job target mapped          | Ringed plain wrapped to 40, button | 360 x 170   |
-| A job line wider than the 602 inner width         | Button 48, button wrapped to 68    | 634 x 198   |
-| Story complete, no job, a station discovered      | Two plain lines                    | 360 x 122   |
-| No lines                                          | Empty note                         | 360 x 94    |
-
-The 439.9 width is "Take food from the growers to the workshop." in a button.
+| State at 720x360, phone insets                    | Lines                           | Card                             |
+| ------------------------------------------------- | ------------------------------- | -------------------------------- |
+| Story target mapped, no job, a station discovered | Button 48, plain 20             | 634 x 150                        |
+| Story and job targets mapped                      | Two buttons, 48 each            | 634 x 178                        |
+| Story target unmapped, job target mapped          | Ringed plain, button            | 634 x 150, 170 if the line wraps |
+| A job line wider than the 602 inner width         | Button 48, button wrapped to 68 | 634 x 198                        |
+| Story complete, no job, a station discovered      | Two plain lines                 | 634 x 122                        |
+| No lines                                          | Empty note                      | 634 x 94                         |
 
 - Press: a mapped line closes the modal, pans so its chip sits at the fit
   region's centre at the current scale (clamped by the pan limit), applies the

@@ -57,7 +57,7 @@ face; the faces are 3.84:1 and 3.15:1 against the `#46425e` tile.
 
 ## Cards and modals
 
-Every modal uses the content-fitted card in
+Every modal uses its width family's card in
 [Layout](layout.md#modals); each screen's groups are listed in
 [Layout screens](layout.md#cards). Every modal dims the background behind it
 and receives input exclusively. Outside taps never activate controls

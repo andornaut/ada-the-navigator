@@ -195,6 +195,13 @@ the face of each state, never the press area.
   Cards keep the full type sizes; no font scales down to fit. A title wider than
   its slot wraps and grows the header. Large fills the 720-pixel game area to
   its 16-pixel margins when no larger safe-area inset applies.
+- Families: every modal takes one family's width, never a content-fitted
+  width. Large: Settings in two columns, Ship, Achievements, Quests, Map
+  Quests, the station Shop and Jobs. Medium: Paused, Cheats, Settings in one
+  column, install steps. Small: Menu, Restart, Update offer, resource and
+  weapon details, station drop, the buy confirm. A card created without a
+  family is Medium. Settings is Large when its rows fit two columns and
+  Medium when they take one.
 - Header balance: with line boxes, the title starts at 16 and the first group
   at `2 * 16 - 2 + 28 = 58`. DOM measures line boxes, not ink; canvas-drawn
   text measures ink. The close target's bottom (42) plus 8 never exceeds 58.
@@ -838,16 +845,16 @@ portraits identify Trista and Bin.
 
 ### Achievements card
 
-The start screen's Achievements opens a content-fitted card titled
+The start screen's Achievements opens a Large card titled
 "Achievements" with the close X, spaced as Chibi's (`chibis-way-home`
 `src/data/layout.ts` `ACHIEVEMENTS_CARD`, `src/ui/layout/achievementsCard.ts`).
 Constants: `ACHIEVEMENTS_CARD`, `achievements-card.ts`.
 
 | Part       | Geometry                                                                                                                                                                                                                                        |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Card       | `min(availableWidth, 2 * column + columnGap + 2 * CARD_CONTENT.padding)`, centred in the available rect; 672 where 688 is available                                                                                                             |
+| Card       | Large, `min(688, availableWidth)`, centred in the available rect                                                                                                                                                                                |
 | Header     | The list's top 50 below the card's top: the close X's press area bottom (42) plus `SPACING.gap`. The title's cap height sits midway between the frame's inner top (2) and the first name's cap top (54.54), so its 28 line box starts 14.2 down |
-| Columns    | Two, filled down each column then across; each `min(312, (availableWidth - 2 * CARD_CONTENT.padding - columnGap) / 2)` wide, badge included                                                                                                     |
+| Columns    | Two, filled down each column then across; each `(cardWidth - 2 * CARD_CONTENT.padding - columnGap) / 2` wide, badge included: 320 at 688                                                                                                        |
 | Column gap | `SPACING.panelPadding` 16                                                                                                                                                                                                                       |
 | Entry      | 60 high, fixed: three 20 body lines, the name's and two condition lines                                                                                                                                                                         |
 | Badge      | 16, centred on the name's 20 line (2 above and below), `SPACING.gap` 8 from the text column                                                                                                                                                     |
@@ -859,17 +866,17 @@ Constants: `ACHIEVEMENTS_CARD`, `achievements-card.ts`.
 
 | View                  | Available  | Card          | Column | Rows | Card top |
 | --------------------- | ---------- | ------------- | -----: | ---: | -------: |
-| 720x360               | 688x328    | 672x318, x 24 |    312 |    3 |       21 |
+| 720x360               | 688x328    | 688x318, x 16 |    320 |    3 |       21 |
 | 720x360, phone insets | 634x325    | 634x318, x 43 |    293 |    3 |     19.5 |
-| 844x390, insets 43    | 693.08x325 | 672x318       |    312 |    3 |     19.5 |
-| 1280x720 (720x405)    | 688x373    | 672x318, x 24 |    312 |    3 |     43.5 |
+| 844x390, insets 43    | 693.08x325 | 688x318       |    320 |    3 |     19.5 |
+| 1280x720 (720x405)    | 688x373    | 688x318, x 16 |    320 |    3 |     43.5 |
 
 Card height at three rows: `50 + 3 * 60 + 2 * 8 + 8 + 48 + 16` = 318, inside
 every available height, so the card never scrolls.
 
 - Where the available rect is narrower than 688, the columns narrow; the card
-  never scales, as a label never shrinks to fit (Chibi's view is a fixed
-  720x360 with no card insets, so its card is always 672). At 634 each column
+  never scales, as a label never shrinks to fit. At 688 each column is 320 and
+  its text column 296. At 634 each column
   is 293 and its text column 269: the widest name with a count, "Friends
   Everywhere" with "99/99", is 200.11, and the longest condition, "Make every
   optional ally: quest and project allies." (348.60), wraps to two lines, so
@@ -1063,9 +1070,9 @@ Constants: `SHOP_ROW` and the job list's style in `src/ui/station.ts`.
 | Row width      | inset + well + gap + widest title or detail + gap + slot + inset; one width for every row            |
 | List           | One column, rows `STACK_BUTTON_GAP` apart, the focus outset around it and the scroll reserve kept    |
 
-At 720x360 the widest Sunflower row, "Deliver spare parts to the salvagers'
-yard" with a two-digit reward, is about 495 wide and the card about 550, inside
-the 688 available; three offers fit without scrolling. At 844x390 with phone
+At 720x360 the Jobs card is Large, 688 (634 with phone insets); the widest
+Sunflower row, "Deliver spare parts to the salvagers' yard" with a two-digit
+reward, is about 495 wide and fits; three offers fit without scrolling. At 844x390 with phone
 insets a held job, three busy offers and the refusal line exceed the 325
 available, and the job list scrolls.
 
@@ -1515,9 +1522,9 @@ Tests:
   table above; a 48 button is 52 CSS px at 844x390.
 - `cardTitleReserve(true)` equals 50, derived from `hitAround` of the close
   face, not stored.
-- Card width equals game-kit `modalWidth` for content widths below, at and
-  above the floor, at 720 and 779 logical wide; the floor stays 360 (half the
-  fixed 720 base) at both widths.
+- Card width equals its family's width (Large 688, Medium 500, Small 400)
+  capped at the available width, at 720 and 779 logical wide, whatever the
+  content width.
 - Every action in a row shares one width and sits `BUTTON_GAP` apart; every
   pair of neighbouring standard faces is `STACK_BUTTON_GAP` apart stacked and
   `BUTTON_GAP` side by side, and `SMALL_BUTTON_GAP` in any direction when

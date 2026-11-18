@@ -1,7 +1,7 @@
 # Station and shop
 
 The station card, the shop, the buy confirm and the job board: their groups,
-states and art. Each is a modal on the content-fitted card in [Layout](layout.md#modals),
+states and art. Each is a modal on its width family's card in [Layout](layout.md#modals),
 and every distance and size, including the item row's, is in
 [Layout](layout.md#shop-item-row). Gameplay owns the strings, prices, item
 order and behaviour; the keys below are Gameplay's player string keys.
@@ -239,7 +239,7 @@ Escape and Cancel all cancel.
 
 The shared card layout takes precedence over these mock-up measurements:
 
-- Cards are content-fitted rather than fixed at 400, 640 and 340 wide, and
+- Cards take the shared width families rather than 400, 640 and 340 wide, and
   action groups and tabs share the widest label's width instead of filling or
   left-aligning in the card.
 - The shop balance is a centred group under the title, not inside the header's
