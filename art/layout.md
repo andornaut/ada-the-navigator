@@ -839,7 +839,11 @@ is absent while options are offered. Skip is absent at an unresolved material
 choice; it may omit optional background questions and never selects an answer.
 The small ambient in-flight conversation box has no separate Skip control. Each spoken line
 shows its actual speaker's existing portrait and name tab. The close X is the
-only Close control. Narration has no invented speaker or portrait. Mom and Dad
+only Close control. On the Interaction card the close X takes the Settings slot of the
+story-page HUD row: its 48 press area is the Settings target
+(`hudButtonTarget(0)`) and its 24 face centres in it, on the HUD row's centre
+line. Skip keeps its place beside Settings (`STORY_SKIP.right.besideSettings`,
+57 from the HUD rect's right), so the X never covers Skip. Narration has no invented speaker or portrait. Mom and Dad
 keep their authored family addresses in text; their name tabs and existing
 portraits identify Trista and Bin.
 
