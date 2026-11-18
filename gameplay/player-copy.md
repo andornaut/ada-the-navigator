@@ -1269,7 +1269,8 @@ beacon light. Welcome!"
 - Pause: Pause (button label), Paused, Map, Ship, Settings, Back to title, Resume.
   Pause is used only during active pausable gameplay.
 - Start and Earth/story Menu: Menu (three-line entry), Achievements, Settings,
-  Close. Menu uses the same entry position as Pause; Settings has no standalone
+  Close. Every Menu except Start's adds Back to title immediately above Close.
+  Menu uses the same entry position as Pause; Settings has no standalone
   icon. Closing Menu or its children preserves the exact underlying context.
 - Update offer: title "Update available", with Cancel and Update now.
 - Settings rows, each with its note:

@@ -74,7 +74,9 @@ Player-visible labels use "Earth" for travel to Ada's room and "title" for the
 start screen; story dialogue may still call Ada's house home. Every arrival on
 Earth lands in Ada's room. Nonpausable story pages use the three-line Menu at the
 same position as Pause. Start and story Menu share the smallest modal preset,
-with Achievements, Settings and primary Close last. Opening or closing Menu or
+with Achievements, Settings and primary Close last. Every Menu outside Start,
+including Earth, story pages and maps, adds Back to title immediately above
+Close. Opening or closing Menu or
 its children preserves the exact story page, dialogue, choices, progress and
 locks. Closing a child returns to the same Menu and opener.
 
@@ -836,7 +838,8 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   available only during active pausable gameplay, determined from model state and
   its guards. Other contexts use the three-line Menu in the same entry position,
   including Start, maps and nonpausable story. Start and Earth/story use the same
-  smallest shared modal preset: Achievements, Settings, then primary Close. The
+  smallest shared modal preset: Achievements, Settings, then primary Close. Every
+  Menu except Start's adds Back to title immediately above Close. The
   title remains centered and unobscured. Active gameplay retains the approved
   two-column Pause action order and primary Resume. Existing map navigation is
   retained under Menu. Closing nested Settings or Achievements restores the same
