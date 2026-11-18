@@ -106,3 +106,4 @@ Reference: [art](../../art/README.md).
 | ada-0291 | Fix the eleven padding mismatches from the drawn-pixel audit              | [ada-0291.md](../work/ada-0291.md) |
 | ada-0292 | Draw a maskable app icon with safe-zone padding                           | [ada-0292.md](../work/ada-0292.md) |
 | ada-0296 | Load enemy and story craft data files from each manifest's sidecars map   | [ada-0296.md](../work/ada-0296.md) |
+| ada-0297 | Draw the far rock depth and mute backdrop rocks opaquely                  | [ada-0297.md](../work/ada-0297.md) |
