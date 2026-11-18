@@ -56,18 +56,45 @@ BMFont XML names are Liberation Sans Regular (body) and Liberation Sans Bold
 For DOM text, use family Liberation Sans with weight 400 from
 `/art/ui/fonts/liberation/LiberationSans-Regular.woff2` and weight 700 from
 `/art/ui/fonts/liberation/LiberationSans-Bold.woff2`, served as `font/woff2`.
-Both fonts retain the full glyph set, outlines, hinting, metrics and kerning.
+Both fonts are subset to the UI glyph set below and retain those glyphs' outlines,
+hinting, metrics and kerning.
 The original TTF files and OFL remain source assets, not a second required web format.
 Ring and knob are procedural
 and require no raster asset.
 
-`node art/tools/ui-fonts.ts [output-directory]` regenerates both WOFF2 files from
-the preserved TTFs, using published `@andornaut/art-kit/build/woff2` and its optional
-`wawoff2@2.0.1` producer peer. Provision the encoder in an isolated toolchain;
-the game does not require the peer at runtime. Inputs are
+`node art/tools/ui-fonts.ts [--strings <ui-strings.json>] [output-directory]`
+regenerates both WOFF2 files from the preserved TTFs with `subsetWoff2` from published
+`@andornaut/art-kit/build/woff2` (0.30.0 or newer) and its optional producer peers
+`harfbuzzjs@1.6.4` and `wawoff2@2.0.1`. Provision the peers in an isolated toolchain;
+the game requires neither at runtime. Inputs are
 `art/sources/fonts/liberation/LiberationSans-{Regular,Bold}.ttf`; only WOFF2 outputs
 are written. Omit the output directory to write under `public/art/ui/fonts/liberation/`.
-Regular is 147,036 bytes and Bold is 148,612 bytes.
+Output is deterministic. Regular is 14,032 bytes and Bold is 13,600 bytes.
+
+### UI glyph set
+
+Each font keeps exactly the characters of the UI strings plus a safety set:
+
+- UI strings: the build's export of every string set in the UI fonts,
+  `var/ui-strings.json` by default, shaped `{ "strings": [{ "source", "text" }] }`.
+- Safety set: printable ASCII (U+0020 to U+007E) and U+00A0, covering digits, signs and
+  separators of numbers, percents, prices, counts, versions and the build label.
+
+`subsetWoff2` fails the run on any character the TTF does not map, naming it. HarfBuzz
+keeps the glyphs those characters reach through composites and default GSUB features,
+their outlines, advances, vertical metrics, hinting and GPOS kerning, and the Windows name
+records (copyright, licence and licence URL included). It drops the legacy `kern` table and
+the Mac name records, which browsers do not read when GPOS and Windows records exist.
+`node art/tools/ui-font-text.ts <ui-strings.json>` writes an interim export in the same
+shape from every string literal and template text in shipped `src/` TypeScript, quoted
+strings in `src/` CSS, `pages/play/index.html`, `public/art/**/manifest.json` keys and
+values, and `gameplay/player-copy.md`. It omits U+2713, which is set in generic
+sans-serif.
+
+A new character in a UI string needs a producer run before it ships.
+
+The OFL reserves the font names Liberation (Red Hat) and Arimo, Tinos and Cousine
+(Google). A subset is a Modified Version, so its primary font name must not use them.
 
 ## Dark lavender recolour
 
