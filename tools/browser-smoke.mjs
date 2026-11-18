@@ -2927,8 +2927,16 @@ try {
   const unit = await page
     .locator("#app")
     .evaluate((app) => Number(getComputedStyle(app).getPropertyValue("--ada-unit")));
-  // The shield sits apart in its 156x28 pill at the bottom centre, its Shield level 1 bar 120x12,
-  // centred across the canvas.
+  // The shield sits apart in its pill at the bottom centre (src/data/layout.ts SHIELD_PILL), its
+  // Shield level 1 bar inside it, centred across the canvas.
+  const shieldLayout = await import(new URL("../src/ui/layout/playView.ts", import.meta.url));
+  const { SPACING } = await import(new URL("../src/data/layout.ts", import.meta.url));
+  const shieldSize = {
+    barHeight: shieldLayout.SHIELD_PILL.bar.height,
+    barWidth: shieldLayout.shieldBarWidth(1),
+    pillHeight: shieldLayout.SHIELD_PILL.pill.height,
+    pillWidth: shieldLayout.shieldPillWidth(1),
+  };
   const canvasBox = await settledBox("#game-canvas > canvas");
   const shieldPill = await settledBox(".ada-shield");
   assert.ok(
@@ -2936,20 +2944,27 @@ try {
       pill &&
       canvasBox &&
       shieldPill &&
-      Math.abs(shieldPill.width - 156 * unit) <= 1 &&
-      Math.abs(shieldPill.height - 28 * unit) <= 1 &&
+      Math.abs(shieldPill.width - shieldSize.pillWidth * unit) <= 1 &&
+      Math.abs(shieldPill.height - shieldSize.pillHeight * unit) <= 1 &&
       bar.x > shieldPill.x &&
       bar.x + bar.width < shieldPill.x + shieldPill.width &&
       Math.abs(shieldPill.x + shieldPill.width / 2 - (canvasBox.x + canvasBox.width / 2)) <= 1 &&
-      Math.abs(bar.width - 120 * unit) <= 1 &&
-      Math.abs(bar.height - 12 * unit) <= 1 &&
-      Math.abs(pill.height - 28 * unit) <= 1 &&
+      Math.abs(bar.width - shieldSize.barWidth * unit) <= 1 &&
+      Math.abs(bar.height - shieldSize.barHeight * unit) <= 1 &&
+      Math.abs(pill.height - shieldSize.pillHeight * unit) <= 1 &&
       bar.y > canvasBox.y + canvasBox.height / 2,
-    "The shield meter must be the shield pill's 120x12 bar at the bottom centre",
+    `The shield meter must be the shield pill's bar at the bottom centre: ${JSON.stringify({
+      bar,
+      canvasBox,
+      pill,
+      shieldPill,
+      shieldSize,
+      unit,
+    })}`,
   );
   if (pauseBox && (await page.locator('[data-action="pause"]').isVisible())) {
     assert.ok(
-      Math.abs(pill.x - (pauseBox.x + pauseBox.width + 8 * unit)) <= 1,
+      Math.abs(pill.x - (pauseBox.x + pauseBox.width + SPACING.gap * unit)) <= 1,
       "The status pill must sit a gap right of the pause press area",
     );
   }
