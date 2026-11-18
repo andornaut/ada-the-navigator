@@ -365,11 +365,10 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     },
     achievementsButton,
   );
-  // Title navigation tabs through Achievements, Settings, then Exit where offered.
   settings.openButton.before(achievementsButton);
   settings.openButton.hidden = true;
   settings.root.classList.add("ada-no-settings-button");
-  // Exit keeps its existing far-right position after Settings.
+  // The start screen's Exit disc at the top right, where it shows; it follows the Menu in Tab order.
   const exitButton = options.exit ? document.createElement("button") : undefined;
   let exitAction: ReturnType<typeof bindAdaAction> | undefined;
   if (exitButton && options.exit) {
@@ -399,7 +398,6 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       },
       exitButton,
     );
-    settings.openButton.after(exitButton);
   }
   const menu = createMenuCard(settings.root, {
     closeLabel: options.pause.labels.close,
@@ -447,6 +445,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     openNavigation,
   );
   const pauseButton = navigation.button;
+  if (exitButton) {
+    pauseButton.after(exitButton);
+  }
   const navigationCovered = (): boolean =>
     returningToParent ||
     Boolean(returnToMenu || returnFromCheats || returnToPause) ||
@@ -464,6 +465,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       pause.mapOpen() && !navigationCovered() && inCurrentView(settings.root, pauseButton);
     pauseButton.hidden = false;
     pauseButton.inert = !inCurrentView(settings.root, pauseButton) || (modalOpen() && !mapOnly);
+    if (exitButton) {
+      exitButton.inert = modalOpen();
+    }
   };
   function syncModal(): void {
     const open = modalOpen();
@@ -1058,10 +1062,10 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       state.setEnabled(nextEnabled);
       weapons.setEnabled(nextEnabled && !modalOpen());
     },
-    setExitButton() {
+    setExitButton(shown) {
       if (exitButton) {
-        exitButton.hidden = true;
-        settings.root.toggleAttribute(EXIT_SHOWN_ATTRIBUTE, false);
+        exitButton.hidden = !shown;
+        settings.root.toggleAttribute(EXIT_SHOWN_ATTRIBUTE, shown);
       }
     },
     setGains(gains) {

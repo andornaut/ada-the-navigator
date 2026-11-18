@@ -47,13 +47,14 @@ function actualLeaves(): string {
     (n) =>
       variable(n, "exitButton") ||
       variable(n, "exitAction") ||
-      (ts.isIfStatement(n) && n.expression.getText(source) === "exitButton && options.exit"),
+      (ts.isIfStatement(n) && n.expression.getText(source) === "exitButton && options.exit") ||
+      (ts.isIfStatement(n) && n.expression.getText(source) === "exitButton"),
   );
   const cleanup =
     disposal?.body?.statements.filter((n) =>
       ["achievementsAction.dispose();", "exitAction?.dispose();"].includes(n.getText(source)),
     ) ?? [];
-  if (first < 0 || last < first || exit.length !== 3 || cleanup.length !== 2) {
+  if (first < 0 || last < first || exit.length !== 4 || cleanup.length !== 2) {
     throw Error("Missing actual top-button construction or owned disposal");
   }
   return [
@@ -173,6 +174,8 @@ function fixture(exit = true) {
       document,
       inCurrentView,
       options,
+      // The Menu, which Exit follows in the root.
+      pauseButton: openButton,
       readViewUnit,
       settings: { openButton, root },
     }),

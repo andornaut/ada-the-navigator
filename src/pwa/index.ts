@@ -7,7 +7,7 @@
 // document launch. Later updates activate through Update now; a newer save is the automatic
 // exception (requireNewerVersion). First visits register only after the prepared reveal.
 import { LOADER_CONFIG } from "@andornaut/game-kit/runtime/load/loaderConfig";
-import { appCannotClose } from "@andornaut/game-kit/runtime/web/pwa/appWindow";
+import { appCannotClose, runsInAppWindow } from "@andornaut/game-kit/runtime/web/pwa/appWindow";
 import {
   backCloseWatcher,
   backGuardState,
@@ -19,7 +19,6 @@ import {
   guardBackNavigation,
   type HistoryLike,
 } from "@andornaut/game-kit/runtime/web/pwa/dom/backNavigation";
-import { browserExitPage, exitApp } from "@andornaut/game-kit/runtime/web/pwa/dom/exitApp";
 import {
   type InstallFlow,
   type InstallOutcome,
@@ -188,8 +187,8 @@ function setupOfflinePlay(): void {
 // open card arms it again (setBackArmed).
 let backArmed = true;
 let backGuardInUse = () => false;
-// Whether the game offers to leave, read once at load (exitShown).
-let leaveOffered = false;
+// Whether Exit shows: an installed app window that can close, read once at load (exitShown).
+let exitOffered = false;
 
 // The page's history as the back guard sees it: while released the guard adds no entry.
 const guardHistory: HistoryLike = {
@@ -212,7 +211,7 @@ const guardHistory: HistoryLike = {
 function releasedBack(): void {
   if (backGuardInUse()) {
     history.back();
-  } else if (pageRunsAsApp(window)) {
+  } else if (runsInAppWindow(window)) {
     exitGame();
   } else {
     history.back();
@@ -222,15 +221,16 @@ function releasedBack(): void {
 // Keeps back on the game, as in Chibi: each back dispatches PHONE_EVENTS.backPressed on window.
 // Before the player's first input, while released, and where the browser cannot hand back to the
 // game, back is the browser's own. Read before the guard pushes any entry: an installed app that
-// cannot close its window (exitShown false) keeps its own back, as in Archie, so back never leaves
-// it on a blank page.
+// cannot close its window keeps its own back, as in Archie, so back never leaves it on a blank
+// page. A browser tab keeps the guard but never offers Exit.
 function guardBack(): void {
   const createCloseWatcher: CloseWatcherFactory | undefined = backCloseWatcher(
     navigator.userAgent,
     browserCloseWatcher(),
   );
-  leaveOffered = !appCannotClose(createCloseWatcher, window);
-  if (!leaveOffered) {
+  const closable = !appCannotClose(createCloseWatcher, window);
+  exitOffered = runsInAppWindow(window) && closable;
+  if (!closable) {
     return;
   }
   backGuardInUse = () => createCloseWatcher === undefined || history.length > 1;
@@ -298,17 +298,20 @@ export function keepScreenOn(on: boolean): void {
   }
 }
 
-// Whether the game offers to leave (the start screen's Exit, Q and released back), as read at
-// load: in a browser tab, which goes to the site's home page, and in an installed app that can
-// close its window, which closes; never in another installed app (the kit's appCannotClose: an
-// app whose platform never closes, or whose history holds more than the game's entry).
+// Whether the start screen offers Exit (its Exit, Q and released back), as read at load: only in
+// an installed app window that can close it (the kit's runsInAppWindow and appCannotClose), never
+// in a browser tab or in an app whose platform never closes or whose history holds more than the
+// game's entry.
 export function exitShown(): boolean {
-  return leaveOffered;
+  return exitOffered;
 }
 
-// Leaves the game: an installed app's window closes, a browser tab goes to the site's home page.
+// Closes the installed app's window where Exit shows; elsewhere it does nothing and never
+// navigates.
 export function exitGame(): void {
-  exitApp(browserExitPage());
+  if (exitShown()) {
+    window.close();
+  }
 }
 
 // A save written by a newer version: the game must update before it plays, so the kit installs

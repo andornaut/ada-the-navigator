@@ -1390,7 +1390,7 @@ export function refreshScene(scene: UiContext): void {
   armBack(scene);
   scene.controls.setSettingsButton(false);
   scene.controls.setAchievementsButton(false);
-  scene.controls.setExitButton(false);
+  scene.controls.setExitButton(start && exitShown());
   const pauseModel: GameModel & { readonly pauseMapAvailable?: boolean } = scene.model;
   const entry = navigationEntry({
     background: document.hidden,

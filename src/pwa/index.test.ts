@@ -357,11 +357,11 @@ const EDGE_DESKTOP =
 
 describe("exit", () => {
   // Each platform the kit's appPlatform names, as a browser tab and as an installed app: Exit
-  // shows in every tab and in the installed apps whose window a script can close.
+  // shows only in the installed app windows a script can close, never in a browser tab.
   const devices: readonly [string, Device, boolean][] = [
-    ["a desktop Chrome tab", {}, true],
-    ["an Android Chrome tab", { closeWatcher: true, userAgent: CHROME_ANDROID }, true],
-    ["an iPhone Safari tab", { maxTouchPoints: 5, userAgent: IPHONE }, true],
+    ["a desktop Chrome tab", {}, false],
+    ["an Android Chrome tab", { closeWatcher: true, userAgent: CHROME_ANDROID }, false],
+    ["an iPhone Safari tab", { maxTouchPoints: 5, userAgent: IPHONE }, false],
     ["Chrome's Android app", { app: true, closeWatcher: true, userAgent: CHROME_ANDROID }, true],
     ["a Chrome desktop app window", { app: true, closeWatcher: true }, true],
     [
@@ -399,25 +399,41 @@ describe("exit", () => {
     expect(pwa.exitShown()).toBe(true);
   });
 
-  it("closes an installed app's window and sends a browser tab to the site's home page", async () => {
+  it("closes an installed app's window and never navigates", async () => {
     const app = stubDevice({ app: true, closeWatcher: true }) as unknown as {
       close: () => void;
       location: { assign: (url: string) => void };
     };
     let pwa = await import("./index.ts");
+    pwa.setupPhoneApp();
     pwa.exitGame();
     expect(app.close).toHaveBeenCalledOnce();
     expect(app.location.assign).not.toHaveBeenCalled();
     vi.resetModules();
     const tab = stubDevice({}) as unknown as typeof app;
     pwa = await import("./index.ts");
+    pwa.setupPhoneApp();
     pwa.exitGame();
     expect(tab.close).not.toHaveBeenCalled();
-    expect(tab.location.assign).toHaveBeenCalledExactlyOnceWith("/");
+    expect(tab.location.assign).not.toHaveBeenCalled();
   });
 });
 
 describe("back gesture", () => {
+  it("guards back in a browser tab, which shows no Exit", async () => {
+    const page = stubDevice({});
+    const history = stubHistory();
+    const pwa = await import("./index.ts");
+    pwa.setupPhoneApp();
+    const backs = vi.fn();
+    page.addEventListener(pwa.PHONE_EVENTS.backPressed, backs);
+    page.dispatchEvent(new Event("pointerup"));
+    history.state = null;
+    page.dispatchEvent(new Event("popstate"));
+    expect(pwa.exitShown()).toBe(false);
+    expect(backs).toHaveBeenCalledOnce();
+  });
+
   it("leaves back to the browser until the player's first input", async () => {
     const page = stubDevice({});
     const history = stubHistory();

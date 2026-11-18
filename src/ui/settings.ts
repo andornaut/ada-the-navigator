@@ -23,7 +23,7 @@ import { UI_FONT_FACE } from "./layout/cardFrame.ts";
 import { CARD_CONTENT, SCROLL } from "./layout/contentCard.ts";
 import { CONTROL_ROW, WHOLE_PX_EDGES } from "./layout/controls.ts";
 import { font, fromHudEdge, pixels, units, viewStyle } from "./layout/css.ts";
-import { hudButtonTarget, type StartNavButton, startNavOrder } from "./layout/playView.ts";
+import { hudButtonTarget, startNavOrder } from "./layout/playView.ts";
 import {
   SETTINGS_OUTER_PADDING,
   SETTINGS_TITLE_INK_TOP,
@@ -109,13 +109,13 @@ export const EXIT_GLYPH = "/art/ui/icons/exit.svg";
 // Every start-screen disc while a press holds: the pause disc's held face and a white glyph.
 export const NAV_DISC_PRESSED = { face: "#3a4466", glyph: "#ffffff" } as const;
 
-// The start screen's discs where Exit shows: .ada-controls carries this attribute while it does.
+// The start screen while Exit shows: .ada-controls carries this attribute while it does.
 export const EXIT_SHOWN_ATTRIBUTE = "data-exit-shown";
 
-// A start-screen nav disc's place: its offsets from the HUD rect's right and top, at its index in
-// startNavOrder(exit) (hudButtonTarget's index).
-const navPlace = (button: StartNavButton, exit: boolean): string => {
-  const target = hudButtonTarget(startNavOrder(exit).indexOf(button));
+// A start-screen HUD disc's place at hudButtonTarget(index): its offsets from the HUD rect's
+// right and top.
+const navPlace = (index: number): string => {
+  const target = hudButtonTarget(index);
   return `right:${fromHudEdge("right", -(target.x + target.width))};top:${fromHudEdge("top", target.y)}`;
 };
 
@@ -155,39 +155,32 @@ ${viewStyle(WHOLE_PX_EDGES)}
   outline-offset:4px
 }
 
-/* The start screen's Settings: an idle HUD disc button on the HUD rect's top-right corner
-   (startNavOrder), its 20 gear a mask in the idle glyph colour. */
+/* The retired start-screen Settings disc, which never shows: an idle HUD disc button on the HUD
+   rect's top-right corner, its 20 gear a mask in the idle glyph colour. */
 .ada-controls .ada-settings-open{
   position:absolute;
-  ${navPlace("settings", false)};
+  ${navPlace(0)};
   --glyph:url('${SETTINGS_GLYPH}')
 }
 ${hudDiscStyle(".ada-controls .ada-settings-open", ".ada-disc")}
 
-/* The start screen's Achievements: the same HUD disc button one pitch left of Settings, its 20
-   trophy a mask in the idle glyph colour. */
+/* The retired start-screen Achievements disc, which never shows: the same HUD disc button one
+   pitch left of Settings, its 20 trophy a mask in the idle glyph colour. */
 .ada-controls .ada-achievements-open{
   position:absolute;
-  ${navPlace("achievements", false)};
+  ${navPlace(1)};
   --glyph:url('${ACHIEVEMENTS_GLYPH}')
 }
 ${hudDiscStyle(".ada-controls .ada-achievements-open", ".ada-disc")}
 
-/* The start screen's Exit, where it shows: the same HUD disc button at the far top right, Settings
-   and Achievements one pitch further left each. Where it does not show it is never made, so it
-   has no press area and the others keep their places. */
+/* The start screen's Exit, where it shows (startNavOrder): the same HUD disc button alone at the
+   far top right. Where it does not show it is never made, so it has no press area. */
 .ada-controls .ada-exit-open{
   position:absolute;
-  ${navPlace("exit", true)};
+  ${navPlace(startNavOrder(true).indexOf("exit"))};
   --glyph:url('${EXIT_GLYPH}')
 }
 ${hudDiscStyle(".ada-controls .ada-exit-open", ".ada-disc")}
-.ada-controls[${EXIT_SHOWN_ATTRIBUTE}] .ada-settings-open{
-  ${navPlace("settings", true)}
-}
-.ada-controls[${EXIT_SHOWN_ATTRIBUTE}] .ada-achievements-open{
-  ${navPlace("achievements", true)}
-}
 
 /* Pressed, on every start-screen disc: the pause disc's held face and a white glyph. */
 .ada-controls .ada-settings-open:active,

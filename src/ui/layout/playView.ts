@@ -172,12 +172,12 @@ export function hudButtonTarget(index: number): Rect {
   };
 }
 
-export type StartNavButton = "achievements" | "exit" | "settings";
+export type StartNavButton = "exit";
 
-// The start screen's HUD discs from the right (hudButtonTarget's index): Exit at the far top right
-// where it shows (exitShown), then Settings, then Achievements, which close up without it.
+// The start screen's HUD discs from the right (hudButtonTarget's index): Exit alone at the far top
+// right where it shows (exitShown), else none. The Menu takes the pause button's place instead.
 export function startNavOrder(exit: boolean): readonly StartNavButton[] {
-  return exit ? ["exit", "settings", "achievements"] : ["settings", "achievements"];
+  return exit ? ["exit"] : [];
 }
 
 // A HUD row of count buttons' width.

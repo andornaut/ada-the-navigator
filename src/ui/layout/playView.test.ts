@@ -262,26 +262,13 @@ describe("HUD anchors", () => {
     });
   }
 
-  it("put Exit at the far top right where it shows, the other discs one pitch left of it", () => {
-    // Each disc's face right edge from the HUD rect's right edge, right to left.
-    const faces = (exit: boolean) =>
-      startNavOrder(exit).map((button, index) => {
-        const target = hudButtonTarget(index);
-        return [button, target.x + HUD_BUTTON_INSET.disc + HUD_BUTTON.disc] as const;
-      });
-    expect(startNavOrder(true)).toEqual(["exit", "settings", "achievements"]);
-    expect(startNavOrder(false)).toEqual(["settings", "achievements"]);
-    // The rightmost face's right edge is the HUD rect's corner either way.
-    expect(faces(true)[0]).toEqual(["exit", 0]);
-    expect(faces(false)[0]).toEqual(["settings", 0]);
-    // Without Exit the others take its place; faces stay SMALL_BUTTON_GAP apart.
-    const pitch = HUD_BUTTON.disc + SMALL_BUTTON_GAP;
-    expect(Object.fromEntries(faces(true))).toEqual({
-      achievements: -2 * pitch,
-      exit: 0,
-      settings: -pitch,
-    });
-    expect(Object.fromEntries(faces(false))).toEqual({ achievements: -pitch, settings: 0 });
+  it("put Exit alone at the far top right where it shows, and no disc where it does not", () => {
+    expect(startNavOrder(true)).toEqual(["exit"]);
+    expect(startNavOrder(false)).toEqual([]);
+    // Exit's face right edge is the HUD rect's right edge.
+    const target = hudButtonTarget(startNavOrder(true).indexOf("exit"));
+    expect(target.x + HUD_BUTTON_INSET.disc + HUD_BUTTON.disc).toBe(0);
+    expect(target.y + HUD_BUTTON_INSET.disc).toBe(0);
   });
 
   it("draw Chibi's skill button: a 48 target, a 33 disc at 7.5, a 4 annulus and a 20 glyph at 14", () => {

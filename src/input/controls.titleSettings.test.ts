@@ -59,22 +59,38 @@ describe("nested Settings controls adapter", () => {
     expect(settings.openButton).toBe(button);
   });
 
-  it("keeps the Settings node between Achievements and Exit in the native tab order", () => {
-    const children = ["settings"];
+  it("keeps Achievements before the hidden Settings node and Exit right after the Menu", () => {
+    const children = ["settings", "menu"];
+    const insert = (anchor: string, offset: number) => (node: string) =>
+      children.splice(children.indexOf(anchor) + offset, 0, node);
     const settings = {
-      openButton: {
-        after: (node: string) => children.splice(children.indexOf("settings") + 1, 0, node),
-        before: (node: string) => children.splice(children.indexOf("settings"), 0, node),
-      },
+      openButton: { after: insert("settings", 1), before: insert("settings", 0) },
     };
-    for (const name of ["before", "after"]) {
-      const call = statement(
+    const pauseButton = { after: insert("menu", 1), before: insert("menu", 0) };
+    const context = {
+      achievementsButton: "achievements",
+      exitButton: "exit",
+      pauseButton,
+      settings,
+    };
+    evaluate(
+      statement(
         (node) =>
           ts.isCallExpression(node) &&
-          node.expression.getText(source) === `settings.openButton.${name}`,
-      );
-      evaluate(call, { achievementsButton: "achievements", exitButton: "exit", settings });
-    }
-    expect(children).toEqual(["achievements", "settings", "exit"]);
+          node.expression.getText(source) === "settings.openButton.before",
+      ),
+      context,
+    );
+    evaluate(
+      statement(
+        (node) =>
+          ts.isIfStatement(node) &&
+          node.expression.getText(source) === "exitButton" &&
+          node.thenStatement.getText(source).includes("pauseButton.after(exitButton)"),
+      ),
+      context,
+    );
+    expect(children).toEqual(["achievements", "settings", "menu", "exit"]);
+    expect(source.text).not.toContain("settings.openButton.after(");
   });
 });
