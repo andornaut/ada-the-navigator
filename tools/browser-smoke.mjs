@@ -2490,33 +2490,58 @@ try {
   towInput.state.dialogue = null;
   towInput.step(0.05, { ...still, use: true });
   assert.ok(towInput.towing, "The fixture is towing");
-  // Clear of the stranded site's hostiles, the tow line still attached. One step generates the
-  // space around the new spot, then its drones, hazards, drifting debris and shots go and danger
-  // resets, so no generated world can put Ada in danger before the Map opens.
-  for (const at of [towFlight.player, towFlight.tow]) {
-    at.x -= 2500;
-  }
-  towFlight.velocity = { x: 0, y: 0 };
-  towInput.step(0.05, still);
-  towFlight.objects = towFlight.objects.filter(
-    ({ kind }) => kind !== "enemy" && kind !== "hazard" && kind !== "debris",
-  );
-  towFlight.shots = towFlight.shots.filter((shot) => !shot.enemy);
-  towFlight.dangerFor = 0;
-  towInput.state.dialogue = null;
-  assert.ok(towInput.towing, "The fixture still tows after its calm step");
-  // As the calm launched world: the world holds no enemies to load or spawn, so danger cannot
-  // start while the browser resumes the flight and the Map opens, however long that takes.
-  const towCalm = JSON.parse(towInput.save());
-  for (const [id, object] of Object.entries(towCalm.flight.world.notables)) {
-    if (object?.kind === "enemy") {
-      delete towCalm.flight.world.notables[id];
+  // Clear of the stranded site's hostiles, the tow line still attached. The world comes from the
+  // launch's random seed, so a drone pack can patrol near any one spot: the fixture takes the
+  // first of several spots 2500 away where the flight, resumed from the calm save, stays out of
+  // danger for 10 s in the model, which steps the same world as the browser. At each, one step
+  // generates the space around the spot, then its drones, hazards, drifting debris and shots go,
+  // and the save holds no enemies to load, as the calm launched world.
+  const towBase = towInput.save();
+  const calmTowAt = ([dx, dy]) => {
+    const trial = relaunch(CONTENT, towBase);
+    const flight = trial.state.flight;
+    for (const at of [flight.player, flight.tow]) {
+      at.x += dx;
+      at.y += dy;
     }
-  }
-  if (towCalm.flight.combat) {
-    towCalm.flight.combat.initialPackSizes = {};
-    delete towCalm.flight.combat.unloadedPackMembers;
-  }
+    flight.velocity = { x: 0, y: 0 };
+    trial.step(0.05, still);
+    flight.objects = flight.objects.filter(
+      ({ kind }) => kind !== "enemy" && kind !== "hazard" && kind !== "debris",
+    );
+    flight.shots = flight.shots.filter((shot) => !shot.enemy);
+    flight.dangerFor = 0;
+    trial.state.dialogue = null;
+    const calm = JSON.parse(trial.save());
+    for (const [id, object] of Object.entries(calm.flight.world.notables)) {
+      if (object?.kind === "enemy") {
+        delete calm.flight.world.notables[id];
+      }
+    }
+    if (calm.flight.combat) {
+      calm.flight.combat.initialPackSizes = {};
+      delete calm.flight.combat.unloadedPackMembers;
+    }
+    const resumed = relaunch(CONTENT, JSON.stringify(calm));
+    const quiet = (steps) => {
+      if (steps === 0) {
+        return true;
+      }
+      resumed.state.dialogue = null;
+      resumed.step(0.05, still);
+      return !resumed.inDanger && quiet(steps - 1);
+    };
+    return trial.towing && quiet(200) ? calm : null;
+  };
+  const towCalm = [
+    [-2500, 0],
+    [2500, 0],
+    [0, -2500],
+    [0, 2500],
+    [-1800, -1800],
+    [1800, 1800],
+  ].reduce((found, offset) => found ?? calmTowAt(offset), null);
+  assert.ok(towCalm, "A spot 2500 from the stranded site keeps the towing flight out of danger");
   const towRestored = restoreCalm(towCalm);
   assert.ok(
     towRestored?.flight?.tow,
