@@ -3669,11 +3669,26 @@ try {
   for (const shot of missileShots) {
     assert.ok(shot.damage > CONTENT.tuning.flight.playerShotDamage);
   }
-  const triple = await heldVolley("multiLaser", "bolt", 3);
-  const bolts = triple.flight.shots.filter((shot) => !shot.enemy && shot.projectile === "bolt");
-  const newest = Math.max(...bolts.map((shot) => shot.life));
-  const angles = bolts
-    .filter((shot) => Math.abs(shot.life - newest) < 0.000001)
+  // One volley's bolts take consecutive shot ids. Each bolt's life follows its own heading's reach
+  // to the view's edge, so the bolts of one volley are grouped by id, not by life.
+  const { WEAPON_CATALOG } = await import(new URL("../src/data/weaponCatalog.ts", import.meta.url));
+  const fanDegrees = WEAPON_CATALOG.multiLaser[0].anglesDegrees;
+  const triple = await heldVolley("multiLaser", "bolt", fanDegrees.length);
+  const boltIds = triple.flight.shots
+    .filter((shot) => !shot.enemy && shot.projectile === "bolt")
+    .map((shot) => ({ number: Number(shot.id.split(":").at(-1)), shot }))
+    .sort((a, b) => b.number - a.number);
+  // The newest volley present in full: a run of consecutive ids as long as the fan.
+  const volleyStart = boltIds.findIndex(
+    ({ number }, index) =>
+      boltIds[index + fanDegrees.length - 1]?.number === number - fanDegrees.length + 1,
+  );
+  const volley =
+    volleyStart < 0
+      ? []
+      : boltIds.slice(volleyStart, volleyStart + fanDegrees.length).map(({ shot }) => shot);
+  // Headings on screen: the fan spreads in the projected view (src/model/playerProjectiles.ts).
+  const angles = volley
     .map(
       (shot) =>
         (Math.atan2((shot.velocity.x + shot.velocity.y) / 2, shot.velocity.x - shot.velocity.y) *
@@ -3683,15 +3698,18 @@ try {
     .sort((a, b) => a - b);
   assert.equal(
     angles.length,
-    3,
-    "A real level 1 Multi-Laser volley must emit three simultaneous bolts",
+    fanDegrees.length,
+    `A real level 1 Multi-Laser volley must emit ${fanDegrees.length} simultaneous bolts: ${JSON.stringify(
+      boltIds.map(({ number }) => number),
+    )}`,
   );
-  for (const [index, offset] of [-20, 0, 20].entries()) {
-    assert.ok(
-      Math.abs(angles[index] - angles[1] - offset) < 0.000001,
-      "The visible projected level 1 Multi-Laser volley must retain its approved ±20 degree spread",
-    );
-  }
+  const middle = angles[Math.floor(angles.length / 2)];
+  const offsets = angles.map((angle) => angle - middle);
+  const expectedOffsets = [...fanDegrees].sort((a, b) => a - b);
+  assert.ok(
+    offsets.every((offset, index) => Math.abs(offset - expectedOffsets[index]) < 0.000001),
+    `The level 1 Multi-Laser volley keeps its fan on screen: ${JSON.stringify({ expectedOffsets, offsets })}`,
+  );
   // A dot lives 100 / 600 s and the save lands once a second, so a snapshot rarely catches one
   // fading; the fade to nothing is covered in src/model/weaponProjectiles.test.ts.
   const scatter = await heldVolley("scattershot", "dot", 7);
@@ -3738,8 +3756,8 @@ try {
     scatter: dots,
   });
   events.checks.push(
-    "Actual held aim emits automatic straight missiles, triple ±20 degree bolts " +
-      "and 100 world-unit scatter particles",
+    "Actual held aim emits automatic straight missiles, the level 1 Multi-Laser's three-bolt " +
+      "fan and 100 world-unit scatter particles",
   );
 
   const cargoModel = new GameModel(CONTENT);
