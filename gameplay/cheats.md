@@ -62,5 +62,6 @@ Save-changing actions write the save at once.
 ## FPS counter
 
 The Cheats modal also has an FPS counter toggle, Off by default. When On, the
-game shows its frames per second in the bottom-right corner, inset from the
-safe area and above the game view. It is a display toggle, not a save change.
+game shows its frames per second in the bottom-right corner of the device
+viewport, inset from the safe area and drawn above everything, letterbox bands
+included, so on a wide phone it can sit in a band. It is a display toggle, not a save change.
