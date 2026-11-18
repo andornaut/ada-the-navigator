@@ -14,17 +14,14 @@ function room() {
 }
 
 describe("Pause Map permission", () => {
-  it("opens the existing galaxy selection from the idle room and closes to the exact page", () => {
+  it("offers no Map in Ada's room, whose Menu has none, and leaves the page as it is", () => {
     const model = room();
     const before = model.storyView;
-    expect(model.pauseMapAvailable).toBe(true);
-    expect(model.openGalaxyMap()).toBe(true);
-    expect(model.screen).toBe("selector");
-    expect(model.state.flight).toBeNull();
-    model.closeGalaxyMap();
+    expect(model.pauseMapAvailable).toBe(false);
+    expect(model.openGalaxyMap()).toBe(false);
+    expect(model.screen).toBe("story");
     expect(model.storyView).toEqual(before);
     expect(model.roomPage).toBe(true);
-    expect(model.pauseMapAvailable).toBe(true);
   });
 
   it("stays hidden before prologue completion and throughout boarding", () => {

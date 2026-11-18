@@ -947,11 +947,14 @@ export class GameModel {
         }
       : null;
   }
-  /** Ada's room page, with "Pick up the rock": the page whose pause card has Back to title. */
+  /** Ada's room page, with "Pick up the rock": back and Escape open its Menu, not Previous. */
   get roomPage(): boolean {
     return this.story !== null && this.screen === "story" && currentPage(this.story).id === "room";
   }
-  /** Pause navigation is separate from Pause visibility and cannot leave a mandatory page. */
+  /**
+   * Whether the Paused card shows Map: in flight only, separate from Pause visibility, and never
+   * during dialogue, docking, a suspended interaction or depleted shields.
+   */
   get pauseMapAvailable(): boolean {
     if (
       !this.state.prologueSeen ||
@@ -962,9 +965,7 @@ export class GameModel {
     ) {
       return false;
     }
-    return this.state.mode === "home"
-      ? this.roomPage
-      : this.screen === "space" && this.state.flight !== null && this.state.flight.shield > 0;
+    return this.screen === "space" && this.state.flight !== null && this.state.flight.shield > 0;
   }
   /** Whether the galaxy map shows: at boarding, or in flight over the local map. */
   get galaxyMapOpen(): boolean {
@@ -4015,10 +4016,6 @@ export class GameModel {
   openGalaxyMap(): boolean {
     if (this.reopenInteraction()) {
       return false;
-    }
-    if (this.state.mode === "home" && this.pauseMapAvailable && this.story) {
-      this.openSelection(this.story);
-      return true;
     }
     const f = this.state.flight;
     if (this.state.mode !== "space" || !f || this.state.dialogue || this.state.docked) {

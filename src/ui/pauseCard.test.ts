@@ -449,7 +449,7 @@ describe("Paused card", () => {
     expect(remove).toHaveBeenCalledWith("loadingdone", add.mock.calls[0]![1]);
   });
 
-  it("places six equal-grid actions with primary Resume beside Back to title, with no objective", () => {
+  it("sorts the grid by label, then full-width Back to title above primary Resume, with no objective", () => {
     const { body, pause } = cards();
     pause.setState(state({ job: "Chart the Sleepy Tug" }));
     expect(body.children).toHaveLength(1);
@@ -461,20 +461,26 @@ describe("Paused card", () => {
     expect(actions.children[0]!.children.at(-1)!.className).toContain("ada-primary");
     expect(shownActions(actions)).toEqual([
       "pause-map",
-      "pause-ship",
       "pause-quests",
       "pause-settings",
+      "pause-ship",
       "pause-backToTitle",
       "pause-resume",
     ]);
     expect(buttonsOf(actions).map((node) => node.textContent)).toEqual([
       "Map",
-      "Ship",
       "Quests",
       "Settings",
+      "Ship",
       "Back to title",
       "Resume",
     ]);
+    // Back to title and Resume each span the grid; the four others share its two columns.
+    expect(
+      buttonsOf(actions)
+        .filter((node) => node.classes.has("ada-pause-full"))
+        .map((node) => node.dataset.action),
+    ).toEqual(["pause-backToTitle", "pause-resume"]);
   });
 
   it("keeps every action, Back to title included, available in danger", () => {
@@ -490,21 +496,6 @@ describe("Paused card", () => {
       null,
     ]);
     button(body.children[0]!, "pause-backToTitle").click();
-    expect(options.onBackToTitle).toHaveBeenCalledOnce();
-  });
-
-  it("shows shared actions in a vertical Earth stack", () => {
-    const { body, options, pause } = cards();
-    const actions = body.children[0]!;
-    pause.setState(state({ place: "room" }));
-    expect(shownActions(actions)).toEqual([
-      "pause-map",
-      "pause-settings",
-      "pause-backToTitle",
-      "pause-resume",
-    ]);
-    expect(actions.children[0]!.dataset.place).toBe("room");
-    button(actions, "pause-backToTitle").click();
     expect(options.onBackToTitle).toHaveBeenCalledOnce();
   });
 
@@ -818,40 +809,27 @@ it.each(["close-quests", "quest-back", "Escape", "back"])(
   },
 );
 
-it.each(["room", "flight"] as const)(
-  "keeps Map visible but refuses navigation without canonical permission on %s",
-  (place) => {
-    const { body, options, pause } = cards();
-    const actions = body.children[0]!;
-    pause.setState(state({ canMap: false, place }));
-    expect(shownActions(actions)).toContain("pause-map");
-    expect(button(actions, "pause-map").getAttribute("aria-disabled")).toBe("true");
-    button(actions, "pause-map").click();
-    expect(pause.mapOpen()).toBe(false);
-    expect(options.onGalaxies).not.toHaveBeenCalled();
-    const { canMap: permission, ...withoutPermission } = state({ place });
-    expect(permission).toBe(true);
-    pause.setState(withoutPermission);
-    expect(shownActions(actions)).toContain("pause-map");
-    expect(button(actions, "pause-map").getAttribute("aria-disabled")).toBe("true");
-    button(actions, "pause-map").click();
-    expect(pause.mapOpen()).toBe(false);
-    expect(options.onGalaxies).not.toHaveBeenCalled();
-    pause.setState(state({ canMap: true, place }));
-    expect(shownActions(actions)).toContain("pause-map");
-    expect(button(actions, "pause-map").getAttribute("aria-disabled")).toBe(null);
-    pause.dispose();
-  },
-);
-
-it("routes Earth's permitted Map to the existing galaxy map without opening an empty local map", () => {
+it("hides Map without canonical permission and shows it once permitted", () => {
   const { body, options, pause } = cards();
-  pause.setState(state({ canMap: true, map: null, place: "room" }));
-  pause.open();
-  button(body.children[0]!, "pause-map").click();
-  expect(options.onGalaxies).toHaveBeenCalledOnce();
+  const actions = body.children[0]!;
+  pause.setState(state({ canMap: false }));
+  expect(shownActions(actions)).toEqual([
+    "pause-quests",
+    "pause-settings",
+    "pause-ship",
+    "pause-backToTitle",
+    "pause-resume",
+  ]);
+  button(actions, "pause-map").click();
   expect(pause.mapOpen()).toBe(false);
-  expect(pause.isOpen()).toBe(true);
+  expect(options.onGalaxies).not.toHaveBeenCalled();
+  const { canMap: permission, ...withoutPermission } = state();
+  expect(permission).toBe(true);
+  pause.setState(withoutPermission);
+  expect(shownActions(actions)).not.toContain("pause-map");
+  pause.setState(state({ canMap: true }));
+  expect(shownActions(actions)[0]).toBe("pause-map");
+  expect(button(actions, "pause-map").getAttribute("aria-disabled")).toBe(null);
   pause.dispose();
 });
 
@@ -1102,24 +1080,18 @@ it("retains a real label node through native presentation moves and action queri
   expect(presentation.firstChild).toBe(label);
 });
 
-it("retains native Pause button identities across place and Map permission updates", () => {
+it("retains native Pause button identities across Map permission updates", () => {
   const { body, options, pause } = cards();
   pause.setState(state());
   pause.open();
   const actions = body.children[0]!;
   const initial = [...buttonsOf(actions)];
-  pause.setState(state({ canMap: false, place: "room" }));
+  pause.setState(state({ canMap: false }));
   expect(buttonsOf(actions)).toEqual(initial);
-  expect(shownActions(actions)).toEqual([
-    "pause-map",
-    "pause-settings",
-    "pause-backToTitle",
-    "pause-resume",
-  ]);
-  expect(button(actions, "pause-map").getAttribute("aria-disabled")).toBe("true");
+  expect(button(actions, "pause-map").hidden).toBe(true);
   pause.setState(state());
   expect(buttonsOf(actions)).toEqual(initial);
-  expect(button(actions, "pause-map").getAttribute("aria-disabled")).toBeNull();
+  expect(button(actions, "pause-map").hidden).toBe(false);
   button(actions, "pause-backToTitle").click();
   expect(options.onBackToTitle).toHaveBeenCalledOnce();
   pause.dispose();

@@ -9,6 +9,7 @@ import {
   galaxiesAvailable,
   mapShowsEmpty,
   PAUSE_ART,
+  PAUSE_FULL_WIDTH,
   pauseActions,
   pauseButtonShown,
   pauseFrames,
@@ -19,23 +20,42 @@ const json = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public/art/ui/${path}`, import.meta.url), "utf8"));
 
 describe("Paused card", () => {
-  it("places Map above Quests and Ship above Settings, with primary Resume at bottom right", () => {
-    expect(pauseActions("flight")).toEqual([
+  const LABELS = {
+    backToTitle: "Back to title",
+    map: "Map",
+    quests: "Quests",
+    resume: "Resume",
+    settings: "Settings",
+    ship: "Ship",
+  };
+
+  it("sorts Map, Quests, Settings and Ship by label, then Back to title and primary Resume", () => {
+    expect(pauseActions(LABELS)).toEqual([
       { available: true, id: "map", role: "secondary" },
-      { available: true, id: "ship", role: "secondary" },
       { available: true, id: "quests", role: "secondary" },
       { available: true, id: "settings", role: "secondary" },
+      { available: true, id: "ship", role: "secondary" },
       { available: true, id: "backToTitle", role: "secondary" },
       { available: true, id: "resume", role: "primary" },
     ]);
+    expect(PAUSE_FULL_WIDTH).toEqual(["backToTitle", "resume"]);
   });
 
-  it("keeps shared action order and primary Resume on Earth", () => {
-    expect(pauseActions("room")).toEqual([
-      { available: true, id: "map", role: "secondary" },
-      { available: true, id: "settings", role: "secondary" },
-      { available: true, id: "backToTitle", role: "secondary" },
-      { available: true, id: "resume", role: "primary" },
+  it("sorts the grid by whatever its labels read, keeping the full-width rows last", () => {
+    const labels = {
+      ...LABELS,
+      map: "Carte",
+      quests: "Quêtes",
+      settings: "Options",
+      ship: "Vaisseau",
+    };
+    expect(pauseActions(labels).map(({ id }) => id)).toEqual([
+      "map",
+      "settings",
+      "quests",
+      "ship",
+      "backToTitle",
+      "resume",
     ]);
   });
 

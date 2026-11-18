@@ -5,45 +5,45 @@ import { pauseActions } from "./pause.ts";
 import { pauseTree } from "./pauseTree.ts";
 
 describe("production Pause configuration", () => {
-  it.each(["flight", "room"] as const)(
-    "arranges caller-provided %s actions without deriving policy",
-    (place) => {
-      const actions = pauseActions("flight").map((action) => ({
-        ...action,
-        hidden: !pauseActions(place).some((view) => view.id === action.id),
-        label: action.id,
-      }));
-      const tree = pauseTree({ actions, closeLabel: "Close", place, title: "Paused" });
-      validateLayoutTree({ actionGrid: ["buttons"], pause: ["actions"], pauseButton: [] }, tree);
-      expect(tree.props).toEqual({
-        closeAction: "close-pause",
-        closeLabel: "Close",
-        size: "medium",
-        title: "Paused",
-      });
-      const grid = tree.slots!.actions![0]!;
-      if (grid.kind !== "component" || grid.component !== "actionGrid") {
-        throw Error("Expected native grid");
-      }
-      expect(grid.props).toEqual({ place });
-      expect(grid.slots!.buttons!.map((node) => node.key)).toEqual([
-        "map",
-        "ship",
-        "quests",
-        "settings",
-        "backToTitle",
-        "resume",
-      ]);
-      expect(
-        grid.slots!.buttons!.map((node) =>
-          node.kind === "component" && node.component === "pauseButton" ? node.props : undefined,
-        ),
-      ).toEqual(actions);
-      expect(grid.slots!.buttons!.at(-1)).toMatchObject({
-        props: { id: "resume", role: "primary" },
-      });
-    },
-  );
+  it("arranges caller-provided actions without deriving policy", () => {
+    const actions = pauseActions({
+      backToTitle: "Back to title",
+      map: "Map",
+      quests: "Quests",
+      resume: "Resume",
+      settings: "Settings",
+      ship: "Ship",
+    }).map((action) => ({ ...action, hidden: action.id === "map", label: action.id }));
+    const tree = pauseTree({ actions, closeLabel: "Close", title: "Paused" });
+    validateLayoutTree({ actionGrid: ["buttons"], pause: ["actions"], pauseButton: [] }, tree);
+    expect(tree.props).toEqual({
+      closeAction: "close-pause",
+      closeLabel: "Close",
+      size: "medium",
+      title: "Paused",
+    });
+    const grid = tree.slots!.actions![0]!;
+    if (grid.kind !== "component" || grid.component !== "actionGrid") {
+      throw Error("Expected native grid");
+    }
+    expect(grid.props).toEqual({});
+    expect(grid.slots!.buttons!.map((node) => node.key)).toEqual([
+      "map",
+      "quests",
+      "settings",
+      "ship",
+      "backToTitle",
+      "resume",
+    ]);
+    expect(
+      grid.slots!.buttons!.map((node) =>
+        node.kind === "component" && node.component === "pauseButton" ? node.props : undefined,
+      ),
+    ).toEqual(actions);
+    expect(grid.slots!.buttons!.at(-1)).toMatchObject({
+      props: { id: "resume", role: "primary" },
+    });
+  });
   it("retains the exact supplied omission/availability/label facts, including empty labels", () => {
     const action = {
       available: false,
@@ -55,7 +55,6 @@ describe("production Pause configuration", () => {
     const tree = pauseTree({
       actions: [action],
       closeLabel: "Close",
-      place: "room",
       title: "Paused",
     });
     const grid = tree.slots!.actions![0]!;

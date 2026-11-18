@@ -19,7 +19,7 @@ import { createMapScreen, type MapField, type MapScreenLabels } from "./mapScree
 import { createButton, createCard } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { retainModalUnderlay } from "./modalUnderlay.ts";
-import { type PauseAction, pauseActions, type PausePlace } from "./pause.ts";
+import { PAUSE_FULL_WIDTH, type PauseAction, pauseActions, type PausePlace } from "./pause.ts";
 import { type PauseLayoutSchema, pauseTree, type PauseTreeAction } from "./pauseTree.ts";
 import { createQuestsScreen, type QuestOrigin } from "./questsScreen.ts";
 import { refuse } from "./refusal.ts";
@@ -83,7 +83,7 @@ export interface PauseState {
   readonly job: string | null;
   /** The current galaxy's map, or null outside a flight. */
   readonly map: LocalMap | null;
-  /** Where the card opens now: in flight, on Ada's room page, or nowhere. */
+  /** Where the card opens now: in flight, or nowhere. */
   readonly place: PausePlace | null;
   /** The Ship card's facts, or null outside a flight. */
   readonly ship: ShipView | null;
@@ -160,7 +160,8 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     settings: labels.settings,
     ship: labels.ship,
   };
-  const initialActions: readonly PauseTreeAction[] = pauseActions("flight").map((action) => ({
+  const ordered = pauseActions(text);
+  const initialActions: readonly PauseTreeAction[] = ordered.map((action) => ({
     ...action,
     hidden: false,
     label: text[action.id],
@@ -168,7 +169,6 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   const initialTree = pauseTree({
     actions: initialActions,
     closeLabel: labels.close,
-    place: "flight",
     title: labels.title,
   });
   const paused = createCard(initialTree.props);
@@ -182,12 +182,8 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     {
       components: {
         actionGrid: {
-          create(initial) {
-            const update = (data: PauseLayoutSchema["actionGrid"]["props"]) => {
-              others.dataset.place = data.place;
-            };
-            update(initial);
-            return { dispose() {}, element: others, slots: { buttons: others }, update };
+          create() {
+            return { dispose() {}, element: others, slots: { buttons: others }, update() {} };
           },
           slots: ["buttons"],
         },
@@ -201,6 +197,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
           create(initial) {
             const button = createButton(initial.label, initial.role);
             button.dataset.action = `pause-${initial.id}`;
+            button.classList.toggle("ada-pause-full", PAUSE_FULL_WIDTH.includes(initial.id));
             buttons.set(initial.id, button);
             const update = (data: PauseTreeAction) => {
               button.hidden = data.hidden;
@@ -292,11 +289,9 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   let layer: ReturnType<typeof createModalLayer> | undefined;
   let leaveLayer: (() => void) | undefined;
   let releaseUnderlay: (() => void) | undefined;
+  // Map is hidden, not disabled, while the model does not permit it.
   const actionsHere = () =>
-    pauseActions(state.place ?? "flight").map((action) => ({
-      ...action,
-      available: action.available && (action.id !== "map" || state.canMap === true),
-    }));
+    ordered.filter((action) => action.id !== "map" || state.canMap === true);
   const mapOpen = () => open && mapScreen.isOpen();
   const shipOpen = () => open && !ship.frame.hidden;
   // The map shows in the cards' and the dim's place; the Ship card in the Paused card's.
@@ -474,7 +469,6 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
           hidden: !here.has(action.id),
         })),
         closeLabel: labels.close,
-        place: state.place ?? "flight",
         title: labels.title,
       }),
     );
@@ -533,11 +527,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       setOpen(false);
     } else if (id === "map") {
       mapOpener = "map";
-      if (state.place === "room") {
-        options.onGalaxies();
-      } else {
-        show("map");
-      }
+      show("map");
     } else if (id === "quests") {
       openQuests("quests");
     } else if (id === "ship") {

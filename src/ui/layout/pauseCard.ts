@@ -3,7 +3,10 @@ import { CARD_CONTENT, SCROLL } from "./contentCard.ts";
 import { slice, units } from "./css.ts";
 import { BUTTON_GAP, SPACING, STACK_BUTTON_GAP } from "./tokens.ts";
 
-/** The Paused card's grid: six equal buttons, with primary Resume last at the bottom right. */
+/**
+ * The Paused card's grid: Map, Quests, Settings and Ship in two equal columns, then Back to title
+ * and the primary Resume, each across both columns, Resume at the bottom.
+ */
 export const PAUSE_GRID_STYLE = `
 ${UI_SCOPE} .ada-actions.ada-pause-grid{
   grid-auto-flow:row;
@@ -12,7 +15,7 @@ ${UI_SCOPE} .ada-actions.ada-pause-grid{
   row-gap:${units(STACK_BUTTON_GAP)};
   width:auto
 }
-${UI_SCOPE} .ada-actions.ada-pause-grid[data-place=room]{grid-template-columns:1fr}
+${UI_SCOPE} .ada-actions.ada-pause-grid > .ada-pause-full{grid-column:1 / -1}
 ${UI_SCOPE} .ada-ship-back{
   display:flex;
   justify-content:flex-end;

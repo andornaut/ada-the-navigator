@@ -1,10 +1,10 @@
-// Pause stays available during gameplay. Shared actions retain their order on Earth and in
-// space. Resume is primary and last.
+// Pause stays available during active flight. Its grid actions sort by label, then Back to title,
+// then the primary Resume last.
 
 export type PauseAction = "backToTitle" | "map" | "quests" | "resume" | "settings" | "ship";
 
-/** Where the Paused card opens: in flight, or on Ada's room page. */
-export type PausePlace = "flight" | "room";
+/** Where the Paused card opens: only in flight. */
+export type PausePlace = "flight";
 
 export interface PauseActionView {
   // Whether the action acts; an unavailable one shows the disabled face and refuses.
@@ -21,19 +21,22 @@ export function galaxiesAvailable(inDanger: boolean): boolean {
   return !inDanger;
 }
 
-// The Paused card's actions for its place, top to bottom: the primary Resume last, at the
-// bottom. Back to title stays available in danger; Map still opens, where Travel here and
-// Galaxies are unavailable instead.
-export function pauseActions(place: PausePlace): readonly PauseActionView[] {
+// The Paused card's actions that span the grid's full width, one per row, in this order at the
+// bottom: Back to title directly above the primary Resume.
+export const PAUSE_FULL_WIDTH: readonly PauseAction[] = ["backToTitle", "resume"];
+
+// The Paused card's actions in reading order: Map, Quests, Settings and Ship in the two-column
+// grid sorted by their labels, then Back to title and the primary Resume, each full width. Back to
+// title stays available in danger; Map still opens, where Travel here and Galaxies are
+// unavailable instead.
+export function pauseActions(
+  labels: Readonly<Record<PauseAction, string>>,
+): readonly PauseActionView[] {
+  const grid = (["map", "quests", "settings", "ship"] as const)
+    .map((id) => ({ available: true, id, role: "secondary" as const }))
+    .sort((a, b) => labels[a.id].localeCompare(labels[b.id]));
   return [
-    { available: true, id: "map", role: "secondary" },
-    ...(place === "flight"
-      ? ([
-          { available: true, id: "ship", role: "secondary" },
-          { available: true, id: "quests", role: "secondary" },
-        ] as const)
-      : []),
-    { available: true, id: "settings", role: "secondary" },
+    ...grid,
     { available: true, id: "backToTitle", role: "secondary" },
     { available: true, id: "resume", role: "primary" },
   ];
@@ -107,6 +110,14 @@ export const PAUSE_ART = {
 } as const;
 
 export type PausePose = keyof typeof PAUSE_ART;
+
+// The Menu button's vector art per pose (art/controls.md "Menu button"): the pause button's frame
+// and poses with three bars.
+export const MENU_ART: Readonly<Record<PausePose, string>> = {
+  held: "/art/ui/icons/menu-held.svg",
+  press: "/art/ui/icons/menu-press.svg",
+  rest: "/art/ui/icons/menu.svg",
+};
 
 // The pose a ui-pause sheet frame shows: frame 0 rest, frame 1 the press swell, frames 2 and 3
 // held.
