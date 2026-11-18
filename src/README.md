@@ -101,51 +101,47 @@ sound and reduced motion) are stored under their own keys
 
 ## Phone
 
-The production build writes `/sw.js`, a service worker scoped to `/` that
-precaches the game page at `/play/`, the build output it loads, the web app
-manifest and its icons, every file under `public/art/` except `app-icon/`, and
-the galaxy selector previews under `public/previews/`.
-The precache version is a hash of that content, so any change installs a new
-worker. Hashed `/assets/` files are served cache-first; the page, art and
-manifest are network-first, so an online load shows the latest deploy and an
-offline load uses the cached copy. A first visit registers the worker once the
-game has drawn. A launch the worker controls checks for a newer version first,
-holding the start screen for at most 4 seconds while it does. While a new worker
-waits, the start screen offers it: Update now
-switches to it and reloads, and Cancel keeps the current version for that visit.
-Otherwise it takes over on a later launch, after every page the old one controls
-has closed. The landing page at `/` is not precached.
+The production build writes `/sw.js`, the kit's router service worker scoped to
+`/`, and the build's manifest and pointer under `/.game-kit/`. The manifest lists
+every file with its SHA-256 and size: the game page at `/play/`, the build output
+it loads, the web app manifest and its icons, every file under `public/art/`
+except `app-icon/`, and the galaxy selector previews under `public/previews/`.
+`/.game-kit/build.json` is served `no-store` and each manifest as immutable
+([`src/headers/securityPolicy.ts`](headers/securityPolicy.ts)).
 
-Production precaching partitions the complete emitted URL/hash inventory into a
-mandatory shared base and optional galaxy groups. A new install includes Sunflower
-and Whirlpool. Durable saved unlocks stage the route through one galaxy ahead;
-map previews do not schedule downloads. The published worker preserves already
-downloaded groups across updates, including conservative full-cache migration.
-The page and worker share one clean, full Git build identity; missing or dirty
-identity rejects a production build. Development omits group configuration and
-the group client.
-
-Galaxy staging uses the existing bar with its own progress operation. Required
-foreground loads and root installation/update work retain priority. Failed group
-requests retry on durable unlock changes or readiness/resume events, without
-polling or changing registration, activation or save policy.
+The page's launch ([`src/pwa/index.ts`](pwa/index.ts)) runs from the boot shell
+before the game module downloads. A first visit installs the complete build
+under the one loading bar, verifying each file, then plays from the cache; a
+failed install shows Loading failed, and Retry resumes from the files already
+stored. The router downloads nothing: it serves each window its build from the
+cache. Later launches play at once and check the pointer in the background, at
+launch and on resume; an update fetches only the changed files and stages them
+apart from the active build. A complete staged build activates silently at the
+next launch, before game construction or save access. When staging completes
+during a session, the Update now card shows on any screen and pauses play:
+Update now saves, then switches with no download; Cancel continues play on the
+active build. The landing page at `/` registers the router without installing,
+so an app installed from it opens offline once the game has installed a build.
+The page and router share one clean, full Git build identity; missing or dirty
+identity rejects a production build.
 
 The play page's lightweight HTML shell shows the existing ship and the kit's
-pending loading bar before game modules download. The live bar covers module,
-update-check and save-read waits, then reports actual loader progress. Image
+pending loading bar before game modules download. The live bar shows the first
+install's download and the boot reads as one value, and covers module and
+save-read waits. Image
 decoding keeps it pending until the prepared screen replaces the splash. A crash
 during module download remains fenced when startup continues. Explicit Retry reloads
 one document after a game-module import rejection or startup without a reclaimable
-Phaser instance. Other required-file and background-download failures retry in place.
+Phaser instance. Other required-file and first-install failures retry in place.
 The reload preserves saved data and preferences and retains the normal launch/update
-fences; it does not activate a worker or modify asset URLs.
+fences; it does not activate a build or modify asset URLs.
 
 A loading bar along the view's top edge, above every other layer, shows the loads
 the player waits for. The boot preload and a galaxy's art as its first flight
 starts fill it left to right; it holds full for 250 ms and fades out over 150 ms,
-then its element is removed. While a first visit precaches the game, a segment
-30% of the width travels across it until that work ends; an update installs
-silently and resumes from the files it already stored. Art loaded on demand
+then its element is removed. While an update stages in the background it fills
+with the staging progress; Update now's switch and a forced update for a newer
+save show a segment 30% of the width travelling across it until that work ends. Art loaded on demand
 during play (scenery, rocks, ship parts, paint) shows nothing, and with nothing
 waited for there is no bar. Its cream fill and ink track sit on a 1 px ink rule,
 so it reads on every galaxy's field.
@@ -158,8 +154,8 @@ icon reaches an installed app; the source pages and manifest keep plain URLs.
 prompt and the browser whose own menu installs the game (iOS and Firefox for
 Android). The dev server registers no service worker. The landing page's
 Install button runs on `src/landing/main.ts`, which loads only the kit's
-install modules: it shows while the browser can install the game, opens the
-browser's prompt or that browser's menu steps, and registers no service worker.
+install and launch modules: it shows while the browser can install the game, and
+opens the browser's prompt or that browser's menu steps.
 
 ## Dev tools
 

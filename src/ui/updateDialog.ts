@@ -24,12 +24,12 @@ export interface UpdateLabels {
   readonly title: string;
 }
 
-// The start screen's update offer, as in Archie and Chibi: a compact card titled Update
-// available with no body text, secondary Cancel on the left, primary Update now on the right and
-// the close X. Only Update now switches versions; Cancel, the X, an outside tap and Escape
-// (through defer) keep the current version for this start-screen visit. Closing with focus in
-// the card hands it to restoreFocus, the start screen's default. Styled by Settings' sheet in
-// the same root.
+// The in-session update offer, on any screen, as in Archie and Chibi: a compact card titled
+// Update available with no body text, secondary Cancel on the left, primary Update now on the
+// right and the close X. The open card pauses play. Only Update now switches versions; Cancel,
+// the X, an outside tap and Escape (through defer) continue play on the current version, and the
+// next launch applies the update silently. Closing with focus in the card hands it to
+// restoreFocus. Styled by Settings' sheet in the same root.
 export function createUpdateDialog(
   root: HTMLElement,
   labels: UpdateLabels,

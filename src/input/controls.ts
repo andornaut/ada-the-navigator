@@ -29,7 +29,7 @@ import type { ContextQuestDetails } from "../model/questObjectLinks.ts";
 import { weaponName } from "../model/shop.ts";
 import type { UseAction } from "../model/types.ts";
 import { PHONE_EVENTS } from "../pwa/events.ts";
-import type { StartCover, UpdateOffer } from "../pwa/updateOffer.ts";
+import type { UpdateOffer } from "../pwa/updateOffer.ts";
 import {
   type AchievementEntry,
   type AchievementsLabels,
@@ -114,12 +114,11 @@ export interface ControlsOptions {
   // The scene's SVG raster scale when the controls are made; the scene emits
   // RASTER_SCALE_EVENT with each new one, and the touch chrome paints again at it.
   readonly rasterScale: number;
-  // Settings or the cheats card opening or closing over the start screen.
-  readonly onStartCover?: (what: StartCover, covering: boolean) => void;
+  // The in-session update offer, on any screen; its card pauses play while it shows.
   readonly update?: {
     readonly labels: UpdateLabels;
     readonly offer: UpdateOffer;
-    // Focuses the start screen's default button as the offer closes.
+    // Focuses the current screen's default control as the offer closes.
     readonly restoreFocus: () => void;
   };
   // Returns whether the switch was refused.
@@ -241,7 +240,6 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       options.onFeedbackChange?.(value);
     },
     onOpenChange(open) {
-      options.onStartCover?.("settings", open);
       if (!open && returnToMenu && !cheatsOpening) {
         const reopen = returnToMenu;
         returnToMenu = undefined;
@@ -292,7 +290,6 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       cheatsOpening = false;
     },
     onOpenChange: (open) => {
-      options.onStartCover?.("cheats", open);
       if (!open && returnFromCheats) {
         const parent = returnFromCheats;
         returnFromCheats = undefined;
@@ -325,7 +322,6 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const achievements = createAchievementsCard(settings.root, {
     labels: options.achievements,
     onOpenChange: (open) => {
-      options.onStartCover?.("achievements", open);
       achievementsButton.setAttribute("aria-expanded", String(open));
       if (!open && returnToMenu) {
         const reopen = returnToMenu;

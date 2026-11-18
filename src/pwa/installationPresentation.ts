@@ -1,52 +1,51 @@
 import type { LoadingAttemptState } from "@andornaut/game-kit/runtime/load/loadingAttempts";
-import type { InstallationState } from "@andornaut/game-kit/runtime/web/pwa/dom/offlinePlay";
+import type { LaunchFailure } from "@andornaut/game-kit/runtime/web/pwa/buildContract";
 
-export interface BackgroundLoadingPresentation {
+/** The first install's state for the page's one Loading failed presenter, and its Retry. */
+export interface InstallationPresentation {
   readonly state: LoadingAttemptState;
   readonly retry: () => Promise<void>;
 }
 
-export interface InstallationPresentation extends BackgroundLoadingPresentation {
-  readonly state: InstallationState;
-}
-
 let current: InstallationPresentation | undefined;
-let galaxy: BackgroundLoadingPresentation | undefined;
-const listeners = new Set<(view: BackgroundLoadingPresentation) => void>();
-const selected = () =>
-  current?.state.kind === "failed"
-    ? current
-    : galaxy?.state.kind === "failed" || galaxy?.state.kind === "loading"
-      ? galaxy
-      : (current ?? galaxy);
+let attempt = 0;
+const listeners = new Set<(view: InstallationPresentation) => void>();
 const notify = () => {
-  const view = selected();
-  if (view) {
+  if (current) {
     for (const listener of listeners) {
-      listener(view);
+      listener(current);
     }
   }
 };
 
-/** Relays the canonical installation owner to the page's existing failure presenter. */
-export function presentInstallation(view: InstallationPresentation): void {
-  current = view;
-  notify();
-}
-
-/** Optional galaxy failures share the presenter, never the required-entry registry. */
-export function presentGalaxyDownload(view: BackgroundLoadingPresentation): void {
-  galaxy = view;
+/**
+ * Relays a failed first install (the launch's onFailure) to the page's Loading failed presenter.
+ * Retry resumes the install from the files already stored; the install reports again only if it
+ * fails again. Background updates never come here: they report through UpdateState.
+ */
+export function presentInstallationFailure(failure: LaunchFailure): void {
+  attempt += 1;
+  const failed = attempt;
+  current = {
+    async retry() {
+      if (attempt !== failed || current?.state.kind !== "failed") {
+        return;
+      }
+      current = { retry: current.retry, state: { attempt: failed, kind: "loading" } };
+      notify();
+      failure.retry();
+    },
+    state: { attempt: failed, error: failure.reason, kind: "failed" },
+  };
   notify();
 }
 
 export function observeInstallation(
-  listener: (view: BackgroundLoadingPresentation) => void,
+  listener: (view: InstallationPresentation) => void,
 ): () => void {
   listeners.add(listener);
-  const view = selected();
-  if (view) {
-    listener(view);
+  if (current) {
+    listener(current);
   }
   return () => listeners.delete(listener);
 }

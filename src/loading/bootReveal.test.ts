@@ -1,5 +1,4 @@
 import { createRequiredLoading } from "@andornaut/game-kit/runtime/load/loadingAttempts";
-import { startOfflinePlay } from "@andornaut/game-kit/runtime/web/pwa/dom/offlinePlay";
 import { afterEach, expect, it, vi } from "vitest";
 vi.mock("./requiredFonts.ts", () => ({ requireBootFonts: () => () => {} }));
 import { prepareBootReveal } from "./bootReveal.ts";
@@ -209,89 +208,6 @@ it.each([0, 1])(
     f.required.dispose();
   },
 );
-
-function offline(controlled: boolean) {
-  const postMessage = vi.fn();
-  const waiting = Object.assign(new EventTarget(), { postMessage, state: "installed" });
-  const registration = Object.assign(new EventTarget(), {
-    active: controlled
-      ? Object.assign(new EventTarget(), { postMessage: vi.fn(), state: "activated" })
-      : null,
-    installing: null,
-    update: async () => {},
-    waiting: controlled ? waiting : null,
-  });
-  const register = vi.fn(async () => registration),
-    reload = vi.fn(),
-    onRequireNewer = vi.fn();
-  const container = Object.assign(new EventTarget(), {
-    controller: controlled ? ({} as unknown) : null,
-    getRegistration: async () => undefined,
-    register,
-  });
-  const play = startOfflinePlay(
-    { onRequireNewer, onUpdateShown: vi.fn(), serviceWorkerUrl: "/sw.js" },
-    {
-      container,
-      eventTarget: new EventTarget(),
-      now: () => 0,
-      online: () => true,
-      reload,
-      session: undefined,
-      visibilitySource: Object.assign(new EventTarget(), { visibilityState: "visible" as const }),
-    },
-  );
-  return { container, onRequireNewer, play, postMessage, register, reload, waiting };
-}
-it("keeps the real first-visit PWA registration after required reveal and both prepared paint turns", async () => {
-  const f = fixture(),
-    pwa = offline(false);
-  const boot = prepareBootReveal(
-    { document: f.document, required: f.required, ui: f.ui, window: f.window },
-    f.root,
-    pwa.play.registrationReady,
-  );
-  boot.collect();
-  f.required.wait(() => boot.commit());
-  await settle();
-  expect(pwa.register).not.toHaveBeenCalled();
-  f.images.forEach((i) => i.resolve());
-  await settle();
-  expect(pwa.register).not.toHaveBeenCalled();
-  f.paint();
-  expect(pwa.register).not.toHaveBeenCalled();
-  f.paint();
-  expect(pwa.register).toHaveBeenCalledExactlyOnceWith("/sw.js", { scope: "/" });
-  boot.dispose();
-  f.required.dispose();
-});
-it("keeps a controlled newer-save update independent of blocked required boot art", async () => {
-  const f = fixture(),
-    pwa = offline(true),
-    shown = vi.fn();
-  const boot = prepareBootReveal(
-    { document: f.document, required: f.required, ui: f.ui, window: f.window },
-    f.root,
-    shown,
-  );
-  boot.collect();
-  await pwa.play.launchReady();
-  await settle();
-  expect(f.ui.inert).toBe(true);
-  pwa.play.flow.requireNewer();
-  expect(pwa.onRequireNewer).toHaveBeenLastCalledWith("updating");
-  expect(pwa.postMessage).toHaveBeenCalledWith(
-    expect.objectContaining({ type: "skip-waiting" }),
-    expect.any(Array),
-  );
-  pwa.container.controller = pwa.waiting;
-  pwa.container.dispatchEvent(new Event("controllerchange"));
-  pwa.container.dispatchEvent(new Event("controllerchange"));
-  expect(pwa.reload).toHaveBeenCalledOnce();
-  expect(shown).not.toHaveBeenCalled();
-  boot.dispose();
-  f.required.dispose();
-});
 
 it("requires sibling CSS backgrounds and border images while preserving successful decodes on Retry", async () => {
   const f = fixture(),

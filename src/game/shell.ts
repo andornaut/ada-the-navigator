@@ -1,4 +1,4 @@
-import type { RequiredUpdateState } from "@andornaut/game-kit/runtime/web/pwa/updateReady";
+import type { RequiredUpdateState } from "@andornaut/game-kit/runtime/web/pwa/dom/launch";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 
 import { CONTENT } from "../data/content.ts";

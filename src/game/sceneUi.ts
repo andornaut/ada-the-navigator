@@ -22,7 +22,6 @@ import { SHIP_HEADINGS } from "../model/nose.ts";
 import { fill, itemAbout, itemName, type ShopItem, weaponName } from "../model/shop.ts";
 import type { FlightState, GameSave } from "../model/types.ts";
 import {
-  coverStartScreen,
   exitGame,
   exitShown,
   installApp,
@@ -30,10 +29,9 @@ import {
   keepScreenOn,
   offersInstall,
   onInstallStateChange,
-  recordGalaxyUnlocks,
   requireNewerVersion,
+  saveBeforeUpdate,
   setBackArmed,
-  startScreenShown,
   stepsKind,
   updateOffer,
 } from "../pwa/index.ts";
@@ -514,6 +512,8 @@ export function buildScene(scene: UiContext): void {
   }
   titleArts.set(scene, titleArt);
   scene.shell.setTitleArt(titleArt);
+  // Update now saves the game before it switches builds.
+  saveBeforeUpdate(() => flushScene(scene));
   scene.controls = createControls(scene, {
     aboardResource: () => {
       const aboard = scene.model.aboard;
@@ -606,7 +606,6 @@ export function buildScene(scene: UiContext): void {
       armBack(scene);
       flushScene(scene);
     },
-    onStartCover: coverStartScreen,
     onWeaponSelect: (weapon) => {
       const state = scene.model.state;
       let refused = false;
@@ -1388,13 +1387,9 @@ export function refreshScene(scene: UiContext, covered = false): void {
     renderStatus(scene);
   }
   scene.station.setOpen(state.mode === "space" && Boolean(state.docked));
-  // Each arrival at the start screen shows the offer there, which checks for a new version.
   const screen = scene.model.screen;
   const start = screen === "start";
-  if (start !== scene.startShown) {
-    scene.startShown = start;
-    startScreenShown(start);
-  }
+  scene.startShown = start;
   // Play keeps the screen on; the start screen and the Paused card let it sleep.
   const playing = !start && !scene.settingsOpen;
   if (playing !== scene.screenOn) {
@@ -1515,11 +1510,7 @@ export async function flushScene(scene: UiContext): Promise<void> {
   const admitted = scene.entryCurrent;
   const generation = requiredLoading.state.attempt;
   const document = scene.model.saveDocument();
-  const unlocked = [...document.unlocked];
   const result = await saves.save(document);
-  if (result.status === "saved") {
-    recordGalaxyUnlocks(unlocked);
-  }
   if (
     !admitted() ||
     !requiredReady() ||

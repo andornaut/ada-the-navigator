@@ -10,17 +10,20 @@ import {
   createDomProgressBar,
   type DomProgressTiming,
 } from "@andornaut/game-kit/runtime/web/progress/dom/progressBar";
-import type { OfflineActivity } from "@andornaut/game-kit/runtime/web/pwa/dom/offlinePlay";
-import type { DownloadProgress } from "@andornaut/game-kit/runtime/web/pwa/downloadProgress";
-import type { RequiredUpdateState } from "@andornaut/game-kit/runtime/web/pwa/updateReady";
+import type {
+  LaunchProgress,
+  UpdateState,
+} from "@andornaut/game-kit/runtime/web/pwa/buildContract";
+import type { RequiredUpdateState } from "@andornaut/game-kit/runtime/web/pwa/dom/launch";
 
 import { SCREEN } from "../data/screen.ts";
 import { VIEW_SCALE_EVENT } from "../ui/layout/viewScale.ts";
 import { LOADING_BAR } from "../ui/loadingBar.ts";
 
-// The loads the player waits for over the background work, shown as one loading bar along the
-// top edge of the play area (src/ui/loadingBar.ts): known progress fills, holds and fades, work
-// of unknown total travels, and nothing shows while idle.
+// The one loading bar along the top edge of the play area (src/ui/loadingBar.ts): the launch's
+// first install and boot in front, then the loads the player waits for, over the background work.
+// Known progress fills, holds and fades, work of unknown total travels, and nothing shows while
+// idle.
 
 /**
  * The loads the player waits for, which alone show the bar in the foreground: the boot preload
@@ -29,12 +32,39 @@ import { LOADING_BAR } from "../ui/loadingBar.ts";
  */
 export type WaitedLoad = "boot" | "galaxy";
 
+/** The launch: one determinate value over the first install's download and the boot reads. */
+export const launchProgress = createProgressState();
 /** The waited-for loads, each measured by the kit's loader watch (src/game/scene.ts). */
 export const loadingProgress = createProgressState();
-/** The background work, of unknown total: offline installation and forced updates. */
+/** The background work: a staging update, Update now's switch and forced updates. */
 export const installProgress = createProgressState();
-/** Optional galaxy transactions own a separate operation on the same background band. */
-export const galaxyProgress = createProgressState();
+
+// The boot reads' share, reported to the launch as the boot preload settles (reportBoot).
+let bootReport: ((value: number) => void) | undefined;
+
+/** Hears each settled share of the waited-for loads; the launch counts the first, the boot. */
+export function reportBoot(listener: ((value: number) => void) | undefined): void {
+  bootReport = listener;
+}
+
+/**
+ * The loader watch's progress (src/game/scene.ts): the waited-for loads, each share also told to
+ * reportBoot's listener, which the launch ignores once it has booted.
+ */
+export const waitedProgress = {
+  begin(): ProgressHandle {
+    const handle = loadingProgress.begin();
+    return {
+      finish: () => handle.finish(),
+      progress(value) {
+        handle.progress(value);
+        if (value !== undefined) {
+          bootReport?.(value);
+        }
+      },
+    };
+  },
+};
 
 const colour = (hex: string) => Number.parseInt(hex.slice(1), 16);
 /** The kit's bar style: the frame never shows; the track at its alpha under the cream fill. */
@@ -57,35 +87,24 @@ export const BAR_TIMING: DomProgressTiming = {
 // The kit's bar, the fill and track band; the host holds it and the rule below, the whole height.
 const FRAME = { height: LOADING_BAR.height, width: SCREEN.width, x: 0, y: 0 };
 
-// Offline installation and forced updates share the bar while either still runs.
-const background = new Set<"activation" | "offline" | "required">();
-let install: ProgressHandle | undefined;
-let download: DownloadProgress | undefined;
-const retiredDownloads = new Set<string>();
-const downloadKey = (value: DownloadProgress) => JSON.stringify([value.operationId, value.version]);
+let launch: ProgressHandle | undefined;
 
-/** Only the kit's worker-scoped precache/update reports measure the background band. */
-export function offlineDownloadProgress(snapshot: DownloadProgress): void {
-  const key = downloadKey(snapshot);
-  if (
-    retiredDownloads.has(key) ||
-    (download?.operationId === snapshot.operationId && download.version !== snapshot.version)
-  ) {
-    return;
-  }
-  if (download && downloadKey(download) !== key) {
-    retiredDownloads.add(downloadKey(download));
-  }
-  download = snapshot;
-  if (background.has("offline")) {
-    install?.progress(snapshot.value);
-  }
-  if (snapshot.phase === "complete" || snapshot.phase === "failed") {
-    retiredDownloads.add(key);
+/** The launch's progress (the kit's onProgress) fills the bar in front of every other load. */
+export function launchProgressReport(progress: LaunchProgress): void {
+  launch ??= launchProgress.begin();
+  launch.progress(progress.value);
+  if (progress.phase === "ready") {
+    launch.finish();
   }
 }
 
-function showBackground(reason: "activation" | "offline" | "required", shown: boolean): void {
+// A staging update, Update now's switch and a forced update share the background bar while any
+// still runs.
+const background = new Set<"activation" | "required" | "update">();
+let install: ProgressHandle | undefined;
+let staging: number | undefined;
+
+function showBackground(reason: "activation" | "required" | "update", shown: boolean): void {
   if (shown) {
     background.add(reason);
   } else {
@@ -93,31 +112,20 @@ function showBackground(reason: "activation" | "offline" | "required", shown: bo
   }
   if (background.size > 0) {
     install ??= installProgress.begin();
+    install.progress(background.size === 1 && background.has("update") ? staging : undefined);
   } else {
     install?.finish();
     install = undefined;
   }
 }
 
-/** Offline installation uses the existing bar until precaching or updating ends. */
-export function offlineActivity(activity: OfflineActivity): void {
-  if (activity === "idle") {
-    if (download) {
-      retiredDownloads.add(downloadKey(download));
-      download = undefined;
-    }
-    showBackground("offline", false);
-    // Activation and a required update remain pending work of unobserved size.
-    install?.progress(undefined);
-  } else {
-    showBackground("offline", true);
-    if (download) {
-      install?.progress(download.value);
-    }
-  }
+/** A background update (the kit's onUpdateState) fills the background bar while it stages. */
+export function updateStateActivity(state: UpdateState): void {
+  staging = state.phase === "staging" ? state.value : undefined;
+  showBackground("update", state.phase === "staging");
 }
 
-/** Explicit Update now keeps the bar visible through activation, independently of installation. */
+/** Explicit Update now keeps the bar visible through the switch, independently of staging. */
 export function updateActivationActivity(active: boolean): void {
   showBackground("activation", active);
 }
@@ -174,21 +182,20 @@ export function mountLoading(parent: HTMLElement): () => void {
   if (name) {
     bar.element.setAttribute("aria-label", name);
   }
-  const groupedBackground = createLayeredProgress(
-    window,
-    { fullMs: 0 },
-    { background: galaxyProgress, foreground: installProgress },
-  );
-  const layered = createLayeredProgress(
-    window,
-    { fadeMs: BAR_TIMING.fadeMs ?? 0, fullMs: BAR_TIMING.fullMs },
-    { background: groupedBackground, foreground: loadingProgress },
-  );
+  const hold = { fadeMs: BAR_TIMING.fadeMs ?? 0, fullMs: BAR_TIMING.fullMs };
+  const waited = createLayeredProgress(window, hold, {
+    background: installProgress,
+    foreground: loadingProgress,
+  });
+  const layered = createLayeredProgress(window, hold, {
+    background: waited,
+    foreground: launchProgress,
+  });
   const unsubscribe = layered.subscribe(bar.report);
   const stop = () => {
     unsubscribe();
     layered.dispose();
-    groupedBackground.dispose();
+    waited.dispose();
     bar.remove();
   };
   return () => {

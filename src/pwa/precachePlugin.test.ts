@@ -8,51 +8,51 @@ vi.mock("@andornaut/game-kit/build/precachePlugin", () => ({
     return { name: "public-precache-port" };
   },
 }));
-import { precachePlugin } from "./precachePlugin.ts";
-it("forwards full build identity and complete post-emission discovery to the existing producer", () => {
+import { bootUrls, precachePlugin } from "./precachePlugin.ts";
+
+it("forwards the build identity and boot files to the kit's producer", () => {
   const full = "1".repeat(40);
-  const groups = vi.fn((context: { readJson: (url: string) => unknown }, files: unknown) => {
-    expect(context.readJson("/art/manifest.json")).toEqual({ value: 1 });
-    expect(files).toBe(discovery);
-    return { initial: ["sunflower", "whirlpool"], urls: {} };
-  });
   const discovery = {
-    sounds: { mp3: ["/assets/sound.mp3"], ogg: ["/assets/sound.ogg"] },
-    urls: ["/assets/main.js", "/art/manifest.json"],
+    sounds: {},
+    urls: ["/art/a.svg", "/art/manifest.json", "/art/z.svg", "/assets/main.js", "/play/"],
   };
   precachePlugin({
     buildId: full,
-    groups,
     pageHtmlFile: "play/index.html",
     serviceWorkerSource: "/source/worker.ts",
   });
   const options = captured.options!;
   expect(options.buildId).toBe(full);
+  expect(options).not.toHaveProperty("groups");
   expect(options.verifiedJsonBodies).toBeUndefined();
   options.hashedFiles!((url) =>
-    url === "/art/manifest.json" ? new TextEncoder().encode('{"value":1}') : undefined,
+    url === "/art/manifest.json"
+      ? new TextEncoder().encode('{"assets":[{"path":"/art/a.svg"},{"path":"/art/gone.svg"}]}')
+      : undefined,
   );
-  expect(options.groups!(discovery)).toEqual({ initial: ["sunflower", "whirlpool"], urls: {} });
-  expect(groups).toHaveBeenCalledOnce();
+  expect(options.boot!(discovery)).toEqual(["/art/a.svg", "/art/manifest.json", "/assets/main.js"]);
 });
-it("keeps development ungrouped only when its caller explicitly omits group configuration", () => {
-  precachePlugin({ pageHtmlFile: "play/index.html", serviceWorkerSource: "/source/worker.ts" });
-  expect(captured.options!.groups).toBeUndefined();
-  expect(captured.options!.buildId).toBeUndefined();
-  expect(captured.options!.verifiedJsonBodies).toBeUndefined();
+
+it("weights boot by the build output, the core art manifest and the files core names", () => {
+  const read = vi.fn(() => ({ assets: [{ path: "/art/b.svg" }, { path: 3 }, {}] }));
+  expect(
+    bootUrls(read, { sounds: {}, urls: ["/art/b.svg", "/art/c.svg", "/assets/x.css"] }),
+  ).toEqual(["/art/b.svg", "/art/manifest.json", "/assets/x.css"]);
+  expect(read).toHaveBeenCalledWith("/art/manifest.json");
 });
+
 it("preserves the public production rejection for missing clean Git identity", async () => {
   const actual = await vi.importActual<typeof import("@andornaut/game-kit/build/precachePlugin")>(
     "@andornaut/game-kit/build/precachePlugin",
   );
   const plugin = actual.precachePlugin({
-    groups: () => ({ initial: [], urls: {} }),
+    buildId: "2".repeat(40),
     pageHtmlFile: "play/index.html",
     policy: { cacheNamePrefix: "test-", hashedAssetPrefix: "/assets/" },
     serviceWorkerSource: "/source/worker.ts",
   });
-  const hook = plugin.configResolved as (config: { root: string }) => void;
-  expect(() => hook({ root: "/tmp/no-release-git-identity" })).toThrow(
+  const hook = plugin.configResolved as (config: { root: string; define: object }) => void;
+  expect(() => hook({ define: {}, root: "/tmp/no-release-git-identity" })).toThrow(
     "matching clean source and full buildId",
   );
 });

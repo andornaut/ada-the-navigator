@@ -14,3 +14,6 @@ GEMINI.md
 
 .check-results/
 .cloudflare/
+
+# Candidate kit archive pinned by file: path until the release URL replaces it.
+/vendor/

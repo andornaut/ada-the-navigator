@@ -60,11 +60,14 @@ for (const file of files) {
     : file.path.split("/")[0];
   (families[family] ??= []).push(file);
 }
-const sw = await readFile(join(root, "sw.js"), "utf8");
-const candidates = [...sw.matchAll(/"urls":(\[[^\]]*\])/g)].map((match) => JSON.parse(match[1]));
-const urls = candidates.sort((a, b) => b.length - a.length)[0];
-if (!urls?.length) {
-  throw new Error("No embedded precache URL list found");
+// The build manifest the pointer names lists every file the complete build installs.
+const pointer = JSON.parse(await readFile(join(root, ".game-kit/build.json"), "utf8"));
+const manifest = JSON.parse(
+  await readFile(join(root, pointer.manifest.replace(/^\//, "")), "utf8"),
+);
+const urls = manifest.files.map((file) => file.url);
+if (!urls.length) {
+  throw new Error("The build manifest lists no files");
 }
 const precached = urls.map((url) => {
   const path = url === "/play/" ? "play/index.html" : url.replace(/^\//, "");

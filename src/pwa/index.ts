@@ -1,12 +1,12 @@
-// The game as an installable app that plays offline: the service worker, persistent storage, the
-// install offer, the update offer and the back gesture. setupPhoneApp runs once from main.ts as
-// the page loads; the Settings Install row reads the install functions below, and the start
-// screen the update offer and the back guard's arming.
+// The game as an installable app that plays offline: the launch that installs and updates the
+// build, persistent storage, the install offer, the update offer and the back gesture.
+// launchPhoneApp runs once from the boot shell before the game downloads; setupPhoneApp runs once
+// from main.ts as the page loads; the Settings Install row reads the install functions below.
 //
-// Before game construction or save access, launchPhoneApp checks a build already staged at
-// document launch. Later updates activate through Update now; a newer save is the automatic
-// exception (requireNewerVersion). First visits register only after the prepared reveal.
-import { LOADER_CONFIG } from "@andornaut/game-kit/runtime/load/loaderConfig";
+// The launch installs the complete build before first play under the one loading bar, then plays
+// from the cache. A complete staged update activates silently at the next launch, before game
+// construction or save access; during a session the staged version is offered through Update now
+// on any screen. A newer save is the automatic exception (requireNewerVersion).
 import {
   appCannotClose,
   canExitApp,
@@ -17,6 +17,7 @@ import {
   backGuardState,
   isBackGuardState,
 } from "@andornaut/game-kit/runtime/web/pwa/backNavigation";
+import type { LaunchResult } from "@andornaut/game-kit/runtime/web/pwa/buildContract";
 import {
   browserCloseWatcher,
   type CloseWatcherFactory,
@@ -30,12 +31,11 @@ import {
   watchInstall,
 } from "@andornaut/game-kit/runtime/web/pwa/dom/installFlow";
 import {
-  browserOfflinePage,
-  type InstallationState,
-  type LaunchResult,
-  type OfflinePlay,
-  startOfflinePlay,
-} from "@andornaut/game-kit/runtime/web/pwa/dom/offlinePlay";
+  browserLaunchContext,
+  createLaunch,
+  type Launch,
+  type RequiredUpdateState,
+} from "@andornaut/game-kit/runtime/web/pwa/dom/launch";
 import {
   createScreenWakeLock,
   type ScreenWakeLock,
@@ -44,27 +44,19 @@ import type {
   InstallState,
   InstallStepsKind,
 } from "@andornaut/game-kit/runtime/web/pwa/installState";
-import { serviceWorkerUrl } from "@andornaut/game-kit/runtime/web/pwa/serviceWorkerUrl";
 import { requestPersistentStorage } from "@andornaut/game-kit/runtime/web/pwa/storagePersistence";
-import type { RequiredUpdateState } from "@andornaut/game-kit/runtime/web/pwa/updateReady";
 
-import type { GalaxyNumber } from "../data/types.ts";
 import {
-  galaxyProgress,
-  offlineActivity,
-  offlineDownloadProgress,
+  launchProgressReport,
+  reportBoot,
   requiredUpdateActivity,
   updateActivationActivity,
+  updateStateActivity,
 } from "../loading/progress.ts";
+import { CACHE_POLICY } from "./cachePolicy.ts";
 import { dispatchPhoneEvent, PHONE_EVENTS } from "./events.ts";
-import { createGalaxyDownloads } from "./galaxyAssetGroups.ts";
-import { presentGalaxyDownload, presentInstallation } from "./installationPresentation.ts";
-import {
-  createUpdateOffer,
-  type StartCover,
-  type StartScreen,
-  trackStartScreen,
-} from "./updateOffer.ts";
+import { presentInstallationFailure } from "./installationPresentation.ts";
+import { createUpdateOffer } from "./updateOffer.ts";
 
 export { PHONE_EVENTS } from "./events.ts";
 export type { InstallOutcome } from "@andornaut/game-kit/runtime/web/pwa/dom/installFlow";
@@ -74,33 +66,26 @@ export {
   offersInstall,
 } from "@andornaut/game-kit/runtime/web/pwa/installState";
 
-const SERVICE_WORKER_URL = "/sw.js";
+// The router service worker, which the build writes (precachePlugin).
+export const SERVICE_WORKER_URL = "/sw.js";
 // The history state key of the extra entry that back pops instead of leaving the game.
 const BACK_GUARD_KEY = "adaBackGuard";
 let flow: InstallFlow | undefined;
-let offlinePlay: OfflinePlay | undefined;
-let galaxyDownloads: ReturnType<typeof createGalaxyDownloads> | undefined;
-let durableUnlocked: readonly GalaxyNumber[] = [];
-let startScreen: StartScreen | undefined;
+let launch: Launch | undefined;
+let launched: Promise<LaunchResult> | undefined;
 let screenWakeLock: ScreenWakeLock | undefined;
 // The forced update's state once a newer save requires it, and who hears it.
 let required: RequiredUpdateState | undefined;
 let onRequired: ((state: RequiredUpdateState) => void) | undefined;
+// The game's save, which Update now awaits before it switches builds (saveBeforeUpdate).
+let saveGame: () => void | PromiseLike<void> = () => undefined;
 
-// The start screen's update offer: Update now switches to the waiting version and reloads; a
-// defer keeps the current one until the next arrival at the start screen.
-export const updateOffer = createUpdateOffer(
-  () => {
-    const play = offlinePlay;
-    if (play === undefined) {
-      return;
-    }
-    // Installation is already idle when an offer appears; activation is a separate wait.
-    updateActivationActivity(true);
-    void play.flow.accept().finally(() => updateActivationActivity(false));
-  },
-  () => offlinePlay?.flow.dismissOffer(),
-);
+// The in-session update offer, on any screen: Update now saves, then switches to the staged
+// build; a defer keeps the active build until the next launch applies the update silently.
+export const updateOffer = createUpdateOffer({
+  save: () => saveGame(),
+  switching: updateActivationActivity,
+});
 
 // The page's install flow, created on first use. setupPhoneApp uses it as the page loads, since
 // the browser's install prompt can come before anything is drawn.
@@ -118,73 +103,24 @@ function requiredUpdate(state: RequiredUpdateState): void {
   onRequired?.(state);
 }
 
-// The production build only: the dev server has no sw.js, and a worker would serve stale modules
-// over hot reloads. Controlled pages register after launchReady snapshots any staged worker.
-// A first visit registers once the game shows (gameShown), so the precache does not compete
-// with the game's own downloads.
-function setupOfflinePlay(): void {
-  const page = import.meta.env.PROD ? browserOfflinePage() : undefined;
-  if (page === undefined) {
-    return;
+// The production build only, where the browser has service workers and Cache Storage: the dev
+// server has no sw.js, and a worker would serve stale modules over hot reloads.
+function createPhoneLaunch(): Launch | undefined {
+  const context = import.meta.env.PROD ? browserLaunchContext(CACHE_POLICY) : undefined;
+  if (context === undefined) {
+    return undefined;
   }
-  let installation: InstallationState | undefined;
-  const reportInstallation = () => {
-    if (offlinePlay !== play || installation === undefined) {
-      return;
-    }
-    presentInstallation({
-      async retry() {
-        if (offlinePlay === play) {
-          await play.retryInstallation();
-        }
-      },
-      state: installation,
-    });
-  };
-  const play = startOfflinePlay(
-    {
-      onDownloadProgress: offlineDownloadProgress,
-      onInstallationState(state) {
-        installation = state;
-        // The initial report can precede assignment of this installation owner.
-        if (offlinePlay !== undefined) {
-          queueMicrotask(reportInstallation);
-        }
-      },
-      onOfflineActivity(activity) {
-        offlineActivity(activity);
-        if (activity === "idle") {
-          void galaxyDownloads?.resume();
-        }
-      },
-      onRequireNewer: requiredUpdate,
-      onUpdateShown: updateOffer.setVisible,
-      serviceWorkerUrl: serviceWorkerUrl(SERVICE_WORKER_URL, undefined),
-    },
-    page,
-  );
-  offlinePlay = play;
-  reportInstallation();
-  startScreen = trackStartScreen(play.flow);
-  if (typeof __BUILD_ID__ === "string" && galaxyDownloads === undefined) {
-    galaxyDownloads = createGalaxyDownloads({
-      buildId: __BUILD_ID__,
-      container: navigator.serviceWorker,
-      eventTarget: page.eventTarget,
-      onState(state) {
-        presentGalaxyDownload({
-          async retry() {
-            await galaxyDownloads?.resume();
-          },
-          state,
-        });
-      },
-      progress: galaxyProgress,
-      requestTimeoutMs: LOADER_CONFIG.timeout * (LOADER_CONFIG.maxRetries + 1),
-      visibilitySource: page.visibilitySource,
-    });
-    galaxyDownloads.setUnlocked(durableUnlocked);
-  }
+  const created = createLaunch(context, {
+    onFailure: presentInstallationFailure,
+    onProgress: launchProgressReport,
+    onRequireNewer: requiredUpdate,
+    onUpdateReady: updateOffer.offer,
+    onUpdateState: updateStateActivity,
+    serviceWorkerUrl: SERVICE_WORKER_URL,
+  });
+  // The boot preload's settled share completes the launch's one progress value.
+  reportBoot((value) => created.bootProgress(value, 1));
+  return created;
 }
 
 // Whether back stays on the game. The start screen with nothing open releases it; flight or an
@@ -273,10 +209,9 @@ export function setBackArmed(armed: boolean): void {
   }
 }
 
-// Sets up offline play, the install offer, the back gesture and persistent storage.
+// Sets up the install offer, the back gesture and persistent storage.
 export function setupPhoneApp(): void {
   installFlow();
-  setupOfflinePlay();
   guardBack();
   // Asked once per launch of the installed app, never in a browser tab. Not waited for: the game
   // runs whatever the browser answers, or if it never does.
@@ -319,31 +254,35 @@ export function exitGame(): void {
 // A save written by a newer version: the game must update before it plays, so the kit installs
 // the newer version and reloads into it. The save stays untouched and Start stays closed.
 // onState hears the forced update's state now, if known, and on each change. Outside the
-// production build, with no service worker, the state is "unavailable" at once.
+// production build, with no launch, the state is "unavailable" at once.
 export function requireNewerVersion(onState: (state: RequiredUpdateState) => void): void {
   const known = required;
   onRequired = onState;
   if (known !== undefined) {
     onState(known);
   }
-  if (offlinePlay) {
-    offlinePlay.flow.requireNewer();
+  if (launch) {
+    launch.requireNewer();
   } else {
     requiredUpdate("unavailable");
   }
 }
 
-// Call once before constructing the game or touching its save. A blocked switch permits the
-// existing build to boot and leaves Update now available for retry; reloading prevents boot.
+// Installs or activates the build before the game downloads: call it first from the boot shell,
+// then again before constructing the game or touching its save; every call shares one run.
+// "reloading" means the page is reloading into another build, so the game must not start. A
+// failed first install stays pending until Loading failed's Retry resumes it.
 export function launchPhoneApp(): Promise<LaunchResult> {
-  return offlinePlay?.launchReady() ?? Promise.resolve("continue");
+  if (launched === undefined) {
+    launch = createPhoneLaunch();
+    launched = launch?.run() ?? Promise.resolve("play");
+  }
+  return launched;
 }
 
-// The game's first screen has drawn with its art loaded: a first visit registers the service
-// worker now.
-export function gameShown(): void {
-  offlinePlay?.registrationReady();
-  void galaxyDownloads?.start();
+// The game's save, which Update now awaits before it switches builds.
+export function saveBeforeUpdate(save: () => void | PromiseLike<void>): void {
+  saveGame = save;
 }
 
 // "installed" while it runs as an installed app, otherwise "prompt" while the browser holds its
@@ -368,23 +307,6 @@ export function stepsKind(): InstallStepsKind {
   return installFlow().stepsKind;
 }
 
-// Whether the start screen shows; the update offer appears only there, and each time it starts
-// showing is an arrival that offers a waiting version again.
-export function startScreenShown(shown: boolean): void {
-  startScreen?.shown(shown);
-}
-
-// Settings or the cheats card covering the start screen suppress the offer without deferring it.
-export function coverStartScreen(what: StartCover, covering: boolean): void {
-  startScreen?.cover(what, covering);
-}
-
-/** Durable save/load facts only; map preview and transient selection never schedule groups. */
-export function recordGalaxyUnlocks(unlocked: readonly GalaxyNumber[]): void {
-  durableUnlocked = [...unlocked];
-  galaxyDownloads?.setUnlocked(durableUnlocked);
-}
-
 if (import.meta.hot) {
-  import.meta.hot.dispose(() => galaxyDownloads?.dispose());
+  import.meta.hot.dispose(() => launch?.dispose());
 }

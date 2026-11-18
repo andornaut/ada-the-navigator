@@ -39,6 +39,18 @@ export const FILE_RULES = [
     ] satisfies HeaderList,
     path: "/play/*",
   },
+  {
+    comment:
+      "The build pointer the page reads at every launch and resume to find the deployed build: " +
+      "never stored by the browser or the edge.",
+    headers: [["Cache-Control", "no-store"]] satisfies HeaderList,
+    path: "/.game-kit/build.json",
+  },
+  {
+    comment: "Each build's manifest, named by its version, so its content never changes.",
+    headers: [["Cache-Control", "public, max-age=31536000, immutable"]] satisfies HeaderList,
+    path: "/.game-kit/manifest-*",
+  },
 ] as const;
 
 // Optional Cloudflare Web Analytics on the landing page. Game HTML excludes edge injection;

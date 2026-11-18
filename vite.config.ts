@@ -17,7 +17,8 @@ import { downloadSizeAssetsPlugin } from "./tools/download-size-assets.mjs";
 // hashedIconsPlugin writes each icon under a content-hashed name in /assets/ and points the built
 // pages and /manifest.webmanifest there (ICONS in src/pwa/icons.ts); webManifestPlugin then fills
 // the manifest's description, before precachePlugin reads it.
-// precachePlugin writes /sw.js, the service worker that precaches the game for offline play.
+// precachePlugin writes /sw.js, the router service worker, and the build manifest and pointer
+// under /.game-kit/ that the page installs from.
 // securityHeadersPlugin writes /_headers, the response headers with each page's CSP.
 export default ({ command }: ConfigEnv) =>
   gameViteConfig<typeof ConfigModules>({
@@ -37,9 +38,7 @@ export default ({ command }: ConfigEnv) =>
       modules.hashedIconsPlugin({ icons: modules.ICONS }),
       modules.webManifestPlugin(),
       ...modules.precachePlugin({
-        ...(command === "build"
-          ? { buildId: metadata.buildId, groups: modules.galaxyPrecacheGroups }
-          : {}),
+        ...(command === "build" ? { buildId: metadata.buildId } : {}),
         pageHtmlFile: "play/index.html",
         serviceWorkerSource: repoPath("src/pwa/serviceWorker.ts"),
       }),

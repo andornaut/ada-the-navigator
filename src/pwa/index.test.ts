@@ -1,42 +1,46 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const offline = vi.hoisted(() => {
-  const flow = {
-    accept: vi.fn(),
-    arriveHome: vi.fn(),
-    dismissOffer: vi.fn(),
+const kit = vi.hoisted(() => {
+  const launch = {
+    bootProgress: vi.fn(),
+    dispose: vi.fn(),
     requireNewer: vi.fn(),
-    setOfferVisible: vi.fn(),
+    run: vi.fn<() => Promise<"play" | "reloading">>(),
   };
-  const play = {
-    flow,
-    launchReady: vi.fn<() => Promise<"blocked" | "continue" | "reloading">>(),
-    registrationReady: vi.fn(),
-  };
+  const context = { policy: undefined as unknown };
   return {
-    play,
-    start: vi.fn(
-      (options: {
-        onRequireNewer: (state: "unavailable" | "updating") => void;
-        serviceWorkerUrl: string;
-      }) => {
+    context,
+    create: vi.fn(
+      (
+        value: unknown,
+        options: {
+          onFailure: (failure: { reason: string; retry: () => void }) => void;
+          onProgress: (progress: unknown) => void;
+          onRequireNewer: (state: "unavailable" | "updating") => void;
+          onUpdateReady: (offer: {
+            dismiss: () => void;
+            updateNow: (save: () => void | PromiseLike<void>) => Promise<void>;
+            version: string;
+          }) => void;
+          onUpdateState: (state: unknown) => void;
+          serviceWorkerUrl: string;
+        },
+      ) => {
+        void value;
         void options;
-        return play;
+        return launch;
       },
     ),
+    launch,
+    supported: true,
   };
 });
-vi.mock("@andornaut/game-kit/runtime/web/pwa/dom/offlinePlay", () => ({
-  browserOfflinePage: () => ({
-    container: navigator.serviceWorker,
-    eventTarget: window,
-    now: () => Date.now(),
-    online: () => true,
-    reload: vi.fn(),
-    session: undefined,
-    visibilitySource: document,
-  }),
-  startOfflinePlay: offline.start,
+vi.mock("@andornaut/game-kit/runtime/web/pwa/dom/launch", () => ({
+  browserLaunchContext: (policy: unknown) => {
+    kit.context.policy = policy;
+    return kit.supported ? kit.context : undefined;
+  },
+  createLaunch: kit.create,
 }));
 const wakeLock = vi.hoisted(() => {
   const lock = { isHeld: vi.fn(), start: vi.fn(), stop: vi.fn() };
@@ -121,179 +125,173 @@ beforeEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
   vi.stubEnv("PROD", true);
-  offline.play.launchReady.mockResolvedValue("continue");
-  offline.play.flow.accept.mockResolvedValue("reloading");
+  kit.supported = true;
+  kit.launch.run.mockResolvedValue("play");
 });
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
 });
 
-describe("offline play", () => {
-  it("registers /sw.js once a first visit's game shows, with no boot wait", async () => {
+const options = () => kit.create.mock.calls[0]![1];
+const staged = (
+  updateNow: (save: () => void | PromiseLike<void>) => Promise<void> = vi.fn(async () => undefined),
+) => ({
+  dismiss: vi.fn(),
+  updateNow,
+  version: "next",
+});
+
+describe("launch", () => {
+  it("creates one launch with the game's policy and router, shared by every call", async () => {
     stubDevice({});
     const pwa = await import("./index.ts");
-    pwa.setupPhoneApp();
-    const options = offline.start.mock.calls[0]![0];
-    expect(Object.keys(options).sort()).toEqual([
-      "onDownloadProgress",
-      "onInstallationState",
-      "onOfflineActivity",
+    const first = pwa.launchPhoneApp();
+    expect(pwa.launchPhoneApp()).toBe(first);
+    expect(await first).toBe("play");
+    expect(kit.create).toHaveBeenCalledOnce();
+    expect(kit.launch.run).toHaveBeenCalledOnce();
+    expect(kit.context.policy).toEqual({
+      cacheNamePrefix: "ada-the-navigator-",
+      hashedAssetPrefix: "/assets/",
+    });
+    expect(Object.keys(options()).sort()).toEqual([
+      "onFailure",
+      "onProgress",
       "onRequireNewer",
-      "onUpdateShown",
+      "onUpdateReady",
+      "onUpdateState",
       "serviceWorkerUrl",
     ]);
-    expect(options.serviceWorkerUrl).toBe("/sw.js");
-    expect(offline.play.registrationReady).not.toHaveBeenCalled();
-    expect(navigator.serviceWorker.getRegistration).not.toHaveBeenCalled();
-    const registration = new Promise<void>(() => {});
-    offline.play.registrationReady.mockReturnValueOnce(registration);
-    expect(pwa.gameShown()).toBeUndefined();
-    expect(offline.play.registrationReady).toHaveBeenCalledOnce();
+    expect(options().serviceWorkerUrl).toBe("/sw.js");
   });
 
-  it.each(["continue", "blocked", "reloading"] as const)(
-    "returns the kit launch result %s before registrationReady",
-    async (result) => {
-      stubDevice({});
-      offline.play.launchReady.mockResolvedValue(result);
-      const pwa = await import("./index.ts");
-      pwa.setupPhoneApp();
-      expect(await pwa.launchPhoneApp()).toBe(result);
-      expect(offline.play.launchReady).toHaveBeenCalledOnce();
-      expect(offline.play.registrationReady).not.toHaveBeenCalled();
-    },
-  );
-
-  it("continues without a service worker in development", async () => {
-    vi.stubEnv("PROD", false);
+  it("returns reloading from the kit so the game never starts", async () => {
     stubDevice({});
+    kit.launch.run.mockResolvedValue("reloading");
     const pwa = await import("./index.ts");
-    pwa.setupPhoneApp();
-    expect(await pwa.launchPhoneApp()).toBe("continue");
-    expect(offline.play.launchReady).not.toHaveBeenCalled();
+    expect(await pwa.launchPhoneApp()).toBe("reloading");
   });
 
-  it("wires the start screen and update offer to the kit's update flow", async () => {
+  it.each([
+    ["the development build", false, true],
+    ["a browser without service workers or Cache Storage", true, false],
+  ])("plays from the network in %s", async (_name, prod, supported) => {
+    vi.stubEnv("PROD", prod);
+    kit.supported = supported;
     stubDevice({});
     const pwa = await import("./index.ts");
-    pwa.setupPhoneApp();
-    const options = offline.start.mock.calls[0]![0] as unknown as {
-      onUpdateShown: (shown: boolean) => void;
-    };
-    const { flow } = offline.play;
-    pwa.startScreenShown(true);
-    expect(flow.setOfferVisible).toHaveBeenLastCalledWith(true);
-    pwa.coverStartScreen("settings", true);
-    expect(flow.setOfferVisible).toHaveBeenLastCalledWith(false);
-    pwa.coverStartScreen("settings", false);
-    options.onUpdateShown(true);
-    pwa.updateOffer.defer();
-    expect(flow.dismissOffer).toHaveBeenCalledOnce();
-    options.onUpdateShown(true);
+    expect(await pwa.launchPhoneApp()).toBe("play");
+    expect(kit.create).not.toHaveBeenCalled();
+    const states: string[] = [];
+    pwa.requireNewerVersion((state) => states.push(state));
+    expect(states).toEqual(["unavailable"]);
+  });
+
+  it("counts the boot preload's settled share into the launch's progress", async () => {
+    stubDevice({});
+    const pwa = await import("./index.ts");
+    const { waitedProgress } = await import("../loading/progress.ts");
+    await pwa.launchPhoneApp();
+    const handle = waitedProgress.begin();
+    handle.progress(0.25);
+    handle.progress(1);
+    expect(kit.launch.bootProgress.mock.calls).toEqual([
+      [0.25, 1],
+      [1, 1],
+    ]);
+  });
+
+  it("shows a failed first install's Loading failed and resumes it on Retry", async () => {
+    stubDevice({});
+    const pwa = await import("./index.ts");
+    const { observeInstallation } = await import("./installationPresentation.ts");
+    void pwa.launchPhoneApp();
+    const views: { kind: string }[] = [];
+    let latest: { retry: () => Promise<void> } | undefined;
+    observeInstallation((view) => {
+      views.push(view.state);
+      latest = view;
+    });
+    const retry = vi.fn();
+    options().onFailure({ reason: "network", retry });
+    expect(views.at(-1)).toMatchObject({ error: "network", kind: "failed" });
+    await latest!.retry();
+    expect(retry).toHaveBeenCalledOnce();
+    expect(views.at(-1)!.kind).toBe("loading");
+  });
+
+  it("offers a staged version on any screen; Update now saves, then switches", async () => {
+    stubDevice({});
+    const pwa = await import("./index.ts");
+    const { installProgress } = await import("../loading/progress.ts");
+    void pwa.launchPhoneApp();
+    const visible: boolean[] = [];
+    pwa.updateOffer.subscribe((shown) => visible.push(shown));
+    const save = vi.fn();
+    pwa.saveBeforeUpdate(save);
+    let active = false;
+    const stop = installProgress.subscribe((state) => {
+      active = state.active;
+    });
+    const update = staged(
+      vi.fn(async (before: () => void | PromiseLike<void>) => {
+        await before();
+      }),
+    );
+    options().onUpdateReady(update);
+    expect(visible).toEqual([false, true]);
     pwa.updateOffer.accept();
-    expect(flow.accept).toHaveBeenCalledOnce();
+    pwa.updateOffer.accept();
+    expect(visible).toEqual([false, true, false]);
+    expect(active).toBe(true);
+    await Promise.resolve();
+    expect(update.updateNow).toHaveBeenCalledOnce();
+    expect(save).toHaveBeenCalledOnce();
+    expect(update.dismiss).not.toHaveBeenCalled();
+    stop();
   });
 
-  it.each(["blocked", "reloading"] as const)(
-    "shows activation progress synchronously before accepting, then finishes on %s",
-    async (outcome) => {
-      stubDevice({});
-      const pwa = await import("./index.ts");
-      const { installProgress, offlineActivity } = await import("../loading/progress.ts");
-      pwa.setupPhoneApp();
-      const options = offline.start.mock.calls[0]![0] as unknown as {
-        onUpdateShown: (shown: boolean) => void;
-      };
-      let active = false;
-      const stop = installProgress.subscribe((state) => {
-        active = state.active;
-      });
-      let finish!: (result: "blocked" | "reloading") => void;
-      offline.play.flow.accept.mockImplementationOnce(() => {
-        expect(active).toBe(true);
-        return new Promise((resolve) => {
-          finish = resolve;
-        });
-      });
-      options.onUpdateShown(true);
-      pwa.updateOffer.accept();
-      pwa.updateOffer.accept();
-      expect(offline.play.flow.accept).toHaveBeenCalledOnce();
-      expect(active).toBe(true);
-      // An installation-idle report cannot end the independent activation wait.
-      offlineActivity("updating");
-      offlineActivity("idle");
-      expect(active).toBe(true);
-      finish(outcome);
-      await Promise.resolve();
-      expect(active).toBe(false);
-      if (outcome === "blocked") {
-        options.onUpdateShown(true);
-        pwa.updateOffer.accept();
-        expect(active).toBe(true);
-        expect(offline.play.flow.accept).toHaveBeenCalledTimes(2);
-        await Promise.resolve();
-        expect(active).toBe(false);
-      }
-      stop();
-    },
-  );
+  it("continues play when Update now finds the staged build gone", async () => {
+    stubDevice({});
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const pwa = await import("./index.ts");
+    const { installProgress } = await import("../loading/progress.ts");
+    void pwa.launchPhoneApp();
+    let active = true;
+    const stop = installProgress.subscribe((state) => {
+      active = state.active;
+    });
+    options().onUpdateReady(staged(vi.fn(async () => Promise.reject(new Error("gone")))));
+    pwa.updateOffer.accept();
+    await vi.waitFor(() => expect(active).toBe(false));
+    stop();
+  });
 
-  it("arrives home each time the start screen shows, never as a card over it closes", async () => {
+  it("dismisses once, keeping the active build until the next launch", async () => {
     stubDevice({});
     const pwa = await import("./index.ts");
-    pwa.setupPhoneApp();
-    const { flow } = offline.play;
-    // The first launch.
-    pwa.startScreenShown(true);
-    expect(flow.arriveHome).toHaveBeenCalledOnce();
-    for (const card of ["settings", "cheats", "achievements"] as const) {
-      pwa.coverStartScreen(card, true);
-      pwa.coverStartScreen(card, false);
-    }
-    pwa.startScreenShown(true);
-    expect(flow.arriveHome).toHaveBeenCalledOnce();
-    // Start, then Back to title.
-    pwa.startScreenShown(false);
-    expect(flow.arriveHome).toHaveBeenCalledOnce();
-    pwa.startScreenShown(true);
-    expect(flow.arriveHome).toHaveBeenCalledTimes(2);
-    expect(flow.setOfferVisible).toHaveBeenLastCalledWith(true);
+    void pwa.launchPhoneApp();
+    const update = staged();
+    options().onUpdateReady(update);
+    pwa.updateOffer.defer();
+    pwa.updateOffer.defer();
+    pwa.updateOffer.accept();
+    expect(update.dismiss).toHaveBeenCalledOnce();
+    expect(update.updateNow).not.toHaveBeenCalled();
   });
 
   it("requires the newer version for a newer save and reports its state as it changes", async () => {
     stubDevice({});
     const pwa = await import("./index.ts");
-    pwa.setupPhoneApp();
-    const options = offline.start.mock.calls[0]![0];
+    void pwa.launchPhoneApp();
     const states: string[] = [];
     pwa.requireNewerVersion((state) => states.push(state));
-    expect(offline.play.flow.requireNewer).toHaveBeenCalledOnce();
+    expect(kit.launch.requireNewer).toHaveBeenCalledOnce();
     expect(states).toEqual([]);
-    options.onRequireNewer("unavailable");
-    options.onRequireNewer("updating");
+    options().onRequireNewer("unavailable");
+    options().onRequireNewer("updating");
     expect(states).toEqual(["unavailable", "updating"]);
-  });
-
-  it("reports a newer save's update unavailable without a service worker", async () => {
-    vi.stubEnv("PROD", false);
-    stubDevice({});
-    const pwa = await import("./index.ts");
-    pwa.setupPhoneApp();
-    const states: string[] = [];
-    pwa.requireNewerVersion((state) => states.push(state));
-    expect(offline.play.flow.requireNewer).not.toHaveBeenCalled();
-    expect(states).toEqual(["unavailable"]);
-  });
-
-  it("starts no service worker outside the production build", async () => {
-    vi.stubEnv("PROD", false);
-    stubDevice({});
-    const pwa = await import("./index.ts");
-    pwa.setupPhoneApp();
-    pwa.gameShown();
-    expect(offline.start).not.toHaveBeenCalled();
   });
 
   it.each([false, true])("asks for persistent storage as the installed app: %s", async (app) => {

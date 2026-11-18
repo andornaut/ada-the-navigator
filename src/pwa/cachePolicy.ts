@@ -1,9 +1,8 @@
 import type { CachePolicy } from "@andornaut/game-kit/runtime/web/pwa/cachePolicy";
 
-// The game's caching rules (the kit's pwa/cachePolicy), which the service worker and the precache
-// build share. Content-hashed build output is under /assets/ and is served cache-first. The page
-// and every other precached file, the art under /art/ and the web app manifest among them, are
-// served network-first with the cached copy answering offline, so a deploy shows on the next load.
+// The game's caching rules (the kit's pwa/cachePolicy), which the router, the page's launch and
+// the build share. cacheNamePrefix scopes every build cache and record the kit writes for the
+// game; content-hashed build output is under /assets/.
 export const CACHE_POLICY: CachePolicy = {
   cacheNamePrefix: "ada-the-navigator-",
   hashedAssetPrefix: "/assets/",

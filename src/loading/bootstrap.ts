@@ -2,6 +2,7 @@
 import "../crash/install.ts";
 
 import { CRASH_SCREEN } from "../crash/crashScreen.ts";
+import { launchPhoneApp } from "../pwa/index.ts";
 import type { RequiredBootResources } from "./bootReveal.ts";
 import { EntryReloadRequired } from "./entryRecovery.ts";
 import { requiredLoading } from "./required.ts";
@@ -13,6 +14,9 @@ const app = document.getElementById("app");
 if (!app) {
   throw new Error("Missing application mount");
 }
+// The launch installs the complete build before the game downloads, under the one loading bar,
+// or activates a staged build; the game module loads from the installed build afterwards.
+const launched = launchPhoneApp();
 const resources: RequiredBootResources = {
   stopFonts: requireBootFonts(requiredLoading, {
     document,
@@ -33,6 +37,10 @@ try {
     requiredLoading,
     CRASH_SCREEN,
     async () => {
+      if ((await launched) === "reloading") {
+        // The page is reloading into another build: nothing of this document starts.
+        return new Promise<never>(() => {});
+      }
       const game = await import("../main.ts").catch((error: unknown) => {
         throw new EntryReloadRequired("module-import", error);
       });

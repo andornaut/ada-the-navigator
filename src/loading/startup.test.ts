@@ -61,7 +61,10 @@ vi.mock("@andornaut/game-kit/runtime/web/progress/dom/loadingFailure", () => ({
     };
   },
 }));
-import { presentGalaxyDownload, presentInstallation } from "../pwa/installationPresentation.ts";
+import {
+  observeInstallation,
+  presentInstallationFailure,
+} from "../pwa/installationPresentation.ts";
 import { type EntryRecoveryPhase, EntryReloadRequired } from "./entryRecovery.ts";
 import { type RequiredGame, startLoading, startupFence } from "./startup.ts";
 const root = (size = { height: 360, width: 720 }) =>
@@ -74,6 +77,14 @@ const root = (size = { height: 360, width: 720 }) =>
     },
     querySelector: () => ({ remove: vi.fn() }),
   }) as unknown as HTMLElement;
+// Leaves the shared installation presenter out of the failed state for the next test.
+async function observedRetry() {
+  let latest: { retry: () => Promise<void> } | undefined;
+  observeInstallation((view) => {
+    latest = view;
+  })();
+  await latest?.retry();
+}
 async function settle() {
   for (let n = 0; n < 24; n++) {
     // eslint-disable-next-line no-await-in-loop
@@ -246,46 +257,46 @@ it("keeps real pending progress after scene loading until a late required image 
   stop();
 });
 
-it("retries optional offline installation through the same presenter without reentering the game", async () => {
+it("shows a failed first install while the game waits and resumes it on Retry", async () => {
   const required = createRequiredLoading(),
     entry = game();
+  let release!: () => void;
+  const installed = new Promise<void>((resolve) => {
+    release = resolve;
+  });
   const stop = await startLoading(
     required,
     { stopGameOnCrash: vi.fn() },
-    async () => entry,
+    async () => {
+      await installed;
+      return entry;
+    },
     root(),
   );
   await settle();
-  const identity = { attempt: 1, operationId: "install-1", version: "build-1" };
-  const retry = vi.fn(async () => {
-    presentInstallation({ retry, state: { ...identity, kind: "loading", stage: "registering" } });
-    presentInstallation({ retry, state: { ...identity, kind: "ready", stage: "installed" } });
-  });
-  presentInstallation({
-    retry,
-    state: { ...identity, error: new Error("503"), kind: "failed", stage: "installation" },
-  });
+  expect(required.state.kind).toBe("loading");
+  const retry = vi.fn(() => release());
+  presentInstallationFailure({ reason: "network", retry });
   expect(view.update).toHaveBeenLastCalledWith(
-    expect.objectContaining({ kind: "failed", operationId: "install-1" }),
+    expect.objectContaining({ error: "network", kind: "failed" }),
   );
-  expect(required.state.kind).toBe("ready");
   const priorRevision = view.update.mock.calls.at(-2)![0].attempt;
   expect(view.update.mock.calls.at(-1)![0].attempt).toBeGreaterThan(priorRevision);
   await view.retry!();
   expect(retry).toHaveBeenCalledOnce();
-  expect(entry.commit).toHaveBeenCalledOnce();
+  await settle();
+  expect(view.update.mock.calls.at(-1)![0].kind).not.toBe("failed");
   expect(entry.load).toHaveBeenCalledOnce();
+  expect(entry.commit).toHaveBeenCalledOnce();
   expect(progress.mount).toHaveBeenCalledOnce();
-  expect(view.update).toHaveBeenLastCalledWith(
-    expect.objectContaining({ kind: "ready", stage: "installed" }),
-  );
+  // A second Retry of the same failure does nothing.
+  await view.retry!();
+  expect(retry).toHaveBeenCalledOnce();
   stop();
   const calls = view.update.mock.calls.length;
-  presentInstallation({
-    retry,
-    state: { ...identity, error: new Error("late"), kind: "failed", stage: "registration" },
-  });
+  presentInstallationFailure({ reason: "quota", retry });
   expect(view.update).toHaveBeenCalledTimes(calls);
+  await observedRetry();
 });
 
 it.each([
@@ -342,20 +353,9 @@ it("updates the same pending presenter on scale and removes both resize listener
   expect(view.setPresentation).toHaveBeenCalledTimes(2);
 });
 
-it("keeps required and installation errors ahead of galaxy Retry in the same presenter", async () => {
+it("retries a failed first install and a failed required load from one Retry", async () => {
   const required = createRequiredLoading(),
     entry = game();
-  const identity = { attempt: 1, operationId: "root-install", version: "document-version" };
-  const rootRetry = vi.fn(async () => {
-    presentInstallation({
-      retry: rootRetry,
-      state: { ...identity, kind: "ready", stage: "installed" },
-    });
-  });
-  presentInstallation({
-    retry: rootRetry,
-    state: { ...identity, kind: "ready", stage: "installed" },
-  });
   const stop = await startLoading(
     required,
     { stopGameOnCrash: vi.fn() },
@@ -363,45 +363,23 @@ it("keeps required and installation errors ahead of galaxy Retry in the same pre
     root(),
   );
   await settle();
-  const groupError = new Error("group unavailable"),
-    rootError = new Error("install unavailable");
-  const groupRetry = vi.fn(async () => {
-    presentGalaxyDownload({ retry: groupRetry, state: { attempt: 1, kind: "ready" } });
-  });
-  presentGalaxyDownload({
-    retry: groupRetry,
-    state: { attempt: 1, error: groupError, kind: "failed" },
-  });
-  presentInstallation({
-    retry: rootRetry,
-    state: { ...identity, error: rootError, kind: "failed", stage: "installation" },
-  });
-  expect(view.update).toHaveBeenLastCalledWith(
-    expect.objectContaining({ error: rootError, kind: "failed" }),
-  );
   let pending = true;
-  required.observe({
-    retry() {
-      pending = false;
-      required.invalidate();
-    },
-    status: () => (pending ? "failed" : "ready"),
+  const requiredRetry = vi.fn(() => {
+    pending = false;
+    required.invalidate();
   });
-  expect(view.update.mock.calls.at(-1)![0].error).not.toBe(rootError);
+  required.observe({ retry: requiredRetry, status: () => (pending ? "failed" : "ready") });
+  expect(view.update.mock.calls.at(-1)![0].kind).toBe("failed");
+  const installRetry = vi.fn();
+  presentInstallationFailure({ reason: "verification", retry: installRetry });
+  expect(view.update).toHaveBeenLastCalledWith(
+    expect.objectContaining({ error: "verification", kind: "failed" }),
+  );
   await view.retry!();
-  expect(rootRetry).not.toHaveBeenCalled();
-  expect(groupRetry).not.toHaveBeenCalled();
-  expect(view.update).toHaveBeenLastCalledWith(expect.objectContaining({ error: rootError }));
-  await view.retry!();
-  expect(rootRetry).toHaveBeenCalledOnce();
-  expect(groupRetry).not.toHaveBeenCalled();
-  expect(view.update).toHaveBeenLastCalledWith(expect.objectContaining({ error: groupError }));
-  await view.retry!();
-  expect(groupRetry).toHaveBeenCalledOnce();
-  expect(view.update).toHaveBeenLastCalledWith(expect.objectContaining({ kind: "ready" }));
-  expect(entry.commit).toHaveBeenCalledOnce();
-  expect(progress.mount).toHaveBeenCalledOnce();
+  expect(installRetry).toHaveBeenCalledOnce();
+  expect(requiredRetry).toHaveBeenCalledOnce();
   expect(required.state.kind).toBe("ready");
+  expect(view.update.mock.calls.at(-1)![0].kind).toBe("ready");
   stop();
 });
 

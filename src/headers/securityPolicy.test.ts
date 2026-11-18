@@ -56,7 +56,7 @@ describe("the security headers", () => {
     ]);
   });
 
-  it("keeps hashed assets immutable and game HTML byte-stable without changing worker revalidation", () => {
+  it("keeps hashed assets and build manifests immutable, the build pointer unstored and game HTML byte-stable", () => {
     expect(FILE_RULES).toEqual([
       expect.objectContaining({
         headers: [["Cache-Control", "public, max-age=31536000, immutable"]],
@@ -65,6 +65,14 @@ describe("the security headers", () => {
       expect.objectContaining({
         headers: [["Cache-Control", "public, max-age=0, must-revalidate, no-transform"]],
         path: "/play/*",
+      }),
+      expect.objectContaining({
+        headers: [["Cache-Control", "no-store"]],
+        path: "/.game-kit/build.json",
+      }),
+      expect.objectContaining({
+        headers: [["Cache-Control", "public, max-age=31536000, immutable"]],
+        path: "/.game-kit/manifest-*",
       }),
     ]);
     expect(COMMON_RULE.headers.map(([name]) => name)).not.toContain("Cache-Control");

@@ -5,7 +5,6 @@ import {
   type HashedFiles,
   precachePlugin as kitPrecachePlugin,
 } from "@andornaut/game-kit/build/precachePlugin";
-import type { PrecacheGroups } from "@andornaut/game-kit/runtime/web/pwa/precacheGroups";
 import type { Plugin } from "vite";
 
 import { CACHE_POLICY } from "./cachePolicy.ts";
@@ -17,28 +16,31 @@ interface PrecachePluginOptions {
   // "play/index.html".
   pageHtmlFile: string;
   readonly buildId?: string | undefined;
-  readonly groups?: (
-    context: { readonly readJson: (url: string) => unknown },
-    files: HashedFiles,
-  ) => PrecacheGroups;
   // The service worker's entry module (serviceWorker.ts), as an absolute path.
   serviceWorkerSource: string;
 }
 
-// The kit's precache plugin with the game's cache policy, building /sw.js from
-// serviceWorkerSource (serviceWorker.ts) to precache the game page at pageHtmlFile and what it
-// loads. The game loads its art at runtime rather than linking it, and the kit precaches only
-// build output beyond the page's links, so a first plugin emits every file artUrls lists from
-// public/art/, and every preview in public/previews/, into the build output at its own path, for
-// the kit's to name.
+// The kit's precache plugin with the game's cache policy, building /sw.js (the router) from
+// serviceWorkerSource (serviceWorker.ts) and writing the build's manifest and pointer under
+// /.game-kit/. The manifest lists the game page at pageHtmlFile, what it loads, and the art and
+// previews: the game loads its art at runtime rather than linking it, so a first plugin emits
+// every file artUrls lists from public/art/, and every preview in public/previews/, into the
+// build output at its own path, for the kit's to name. The complete build installs before first
+// play.
 export function precachePlugin({
   buildId,
-  groups,
   pageHtmlFile,
   serviceWorkerSource,
 }: PrecachePluginOptions): Plugin[] {
   let urls: string[] = [];
   let emitted: ((url: string) => Uint8Array | undefined) | undefined;
+  const readJson = (url: string): unknown => {
+    const source = emitted?.(url);
+    if (!source) {
+      throw new Error(`Boot JSON is not emitted: ${url}`);
+    }
+    return JSON.parse(new TextDecoder().decode(source));
+  };
   const emitArt: Plugin = {
     apply: "build",
     async generateBundle() {
@@ -71,24 +73,8 @@ export function precachePlugin({
   return [
     emitArt,
     kitPrecachePlugin({
-      ...(groups === undefined
-        ? {}
-        : {
-            buildId,
-            groups: (files) =>
-              groups(
-                {
-                  readJson(url) {
-                    const source = emitted?.(url);
-                    if (!source) {
-                      throw new Error(`Grouped precache JSON is not emitted: ${url}`);
-                    }
-                    return JSON.parse(new TextDecoder().decode(source));
-                  },
-                },
-                files,
-              ),
-          }),
+      boot: (files) => bootUrls(readJson, files),
+      buildId,
       hashedFiles: (bundleFile) => {
         emitted = bundleFile;
         return { sounds: {}, urls };
@@ -98,4 +84,24 @@ export function precachePlugin({
       serviceWorkerSource,
     }),
   ];
+}
+
+// The core art manifest, which the game reads at boot with the asset paths it names.
+const CORE_MANIFEST = "/art/manifest.json";
+
+// The files the game reads while booting after install, which weight the boot share of the one
+// loading bar: the build output under /assets/, the core art manifest and the files it names.
+// Core holds the boot set and the shared files (art/README.md); a few of its entries load on
+// demand, so the weight is close rather than exact.
+export function bootUrls(
+  readJson: (url: string) => unknown,
+  files: HashedFiles,
+): readonly string[] {
+  const listed = new Set(files.urls);
+  const core = readJson(CORE_MANIFEST) as { readonly assets?: readonly { path?: unknown }[] };
+  const named = (core.assets ?? []).flatMap(({ path }) =>
+    typeof path === "string" && listed.has(path) ? [path] : [],
+  );
+  const output = files.urls.filter((url) => url.startsWith(CACHE_POLICY.hashedAssetPrefix));
+  return [...new Set([...output, CORE_MANIFEST, ...named])].sort();
 }

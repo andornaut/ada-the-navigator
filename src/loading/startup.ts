@@ -14,7 +14,7 @@ import {
 
 import { FRAME_LINE, TEXT_BUTTON } from "../data/layout.ts";
 import {
-  type BackgroundLoadingPresentation,
+  type InstallationPresentation,
   observeInstallation,
 } from "../pwa/installationPresentation.ts";
 import { createAdaFactoryHoldBinding } from "../ui/actionBinding.ts";
@@ -46,7 +46,7 @@ export async function startLoading(
 ): Promise<() => void> {
   const stop = mountLoading(root);
   let game: RequiredGame | undefined;
-  let background: BackgroundLoadingPresentation | undefined;
+  let installation: InstallationPresentation | undefined;
   const recoveryUnit = () => {
     const viewport = root.ownerDocument.defaultView;
     const scale = viewScale({
@@ -125,9 +125,12 @@ export async function startLoading(
                 root.ownerDocument.defaultView!.location.reload();
                 return;
               }
-              if (required.state.kind === "ready" && background?.state.kind === "failed") {
-                await background.retry();
-              } else {
+              // One Retry resumes a failed first install and retries a failed required load.
+              const install = installation?.state.kind === "failed" ? installation : undefined;
+              if (install) {
+                await install.retry();
+              }
+              if (!install || required.state.kind === "failed") {
                 await required.retry();
               }
             } catch (error) {
@@ -157,7 +160,7 @@ export async function startLoading(
   const events = root.ownerDocument.defaultView;
   events?.addEventListener("resize", onScale);
   events?.addEventListener(VIEW_SCALE_EVENT, onScale);
-  // Required entry and offline installation have independent attempt number domains.
+  // Required entry and the first install have independent attempt number domains.
   let presentationRevision = 0;
   const showFailure = (state: LoadingAttemptState) => {
     recovery.invalidate();
@@ -237,13 +240,13 @@ export async function startLoading(
       pending?.finish();
       pending = undefined;
     }
-    showFailure(state.kind === "ready" && background !== undefined ? background.state : state);
+    showFailure(installation?.state.kind === "failed" ? installation.state : state);
   });
+  // A failed first install shows Loading failed while the game module waits for it; its Retry
+  // resumes the install.
   const stopInstallation = observeInstallation((view) => {
-    background = view;
-    if (required.state.kind === "ready") {
-      showFailure(view.state);
-    }
+    installation = view;
+    showFailure(view.state.kind === "failed" ? view.state : required.state);
   });
   let disposed = false;
   const dispose = () => {
