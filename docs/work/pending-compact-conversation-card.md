@@ -1,0 +1,22 @@
+---
+id: TBD
+title: Use one compact conversation card for every Use interaction
+status: approved
+approved: user, 2026-11-18, compact card only
+design: art
+related: [ada-0280, ada-0153, ada-0188]
+---
+
+## Scope
+
+Every Use interaction (station keepers, outposts, stranded craft, story characters) opens one compact conversation card with the speaker's portrait. Station greetings become pages, with Jobs, Undock and Shop on the last page. Page-control rows follow the row-fill and lone-primary rules from the ada-0280 mock-up. There is no full-screen mode; confirms and detail cards stay Small cards. Art specifies the layout; Tech implements it; Gameplay supplies strings.
+
+## Criteria
+
+- art/layout.md specifies the card, its pages, the row-fill and lone-primary rules and their tokens.
+- "Ask more" fits on one line at 720x360 with phone insets.
+- Rendered proofs at 1280x720, 844x390 and 720x360 with insets match the spec.
+
+## Decisions
+
+## Outcome
