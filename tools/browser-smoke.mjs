@@ -350,6 +350,24 @@ try {
     assert.ok(canvas, "The game surface has a box");
     await page.touchscreen.tap(canvas.x + canvas.width * 0.3, canvas.y + canvas.height * 0.55);
   }
+  // Talk opens the Interaction card (src/ui/conversation.ts). Skip goes to its outcome, which ends
+  // the exchange where Continue is its only choice; otherwise Continue is taken there.
+  const interactionCard = () => page.locator('[data-dialog="conversation"]');
+  async function leaveInteraction() {
+    await interactionCard().locator('[data-action="dialogue-skip"]').click();
+    const ended = await interactionCard()
+      .waitFor({ state: "hidden", timeout: 2000 })
+      .then(
+        () => true,
+        () => false,
+      );
+    if (!ended) {
+      await interactionCard()
+        .getByRole("button", { name: CONTENT.labels.continue, exact: true })
+        .click();
+      await interactionCard().waitFor({ state: "hidden" });
+    }
+  }
   async function tapUse(name) {
     const use = page.getByRole("button", { name, exact: true });
     await use.waitFor({ state: "visible" });
@@ -1571,22 +1589,22 @@ try {
     assert.equal(await warning.textContent(), CONTENT.labels.savingUnavailable);
     await touchSurface();
     await tapUse(CONTENT.labels.talk);
-    await page.locator('[data-action="dialogue-choice"]').first().waitFor({ state: "visible" });
+    await interactionCard().waitFor({ state: "visible" });
     await contextControlProof(0, "dialogue during save failure");
     assert.equal(
       await warning.textContent(),
       CONTENT.labels.savingUnavailable,
       "Dialogue rendering must not clear a failed-save warning",
     );
-    await page.locator('[data-action="dialogue-choice"][data-choice="continue"]').click();
+    await leaveInteraction();
     await page.locator(".ada-use").waitFor({ state: "visible" });
     await contextControlProof(1, "resumed flight");
     await page.evaluate(() => document.activeElement?.blur());
     // The keyboard's Use is E (or Enter); Space fires (src/input/desktop.ts).
     await page.keyboard.press("KeyE");
-    await page.locator('[data-action="dialogue-choice"]').first().waitFor({ state: "visible" });
+    await interactionCard().waitFor({ state: "visible" });
     await contextControlProof(0, "keyboard interaction dialogue");
-    await page.locator('[data-action="dialogue-choice"][data-choice="continue"]').click();
+    await leaveInteraction();
     assert.equal(await warning.textContent(), CONTENT.labels.savingUnavailable);
     assert.equal(
       await page.evaluate((key) => localStorage.getItem(key), storageKey),
