@@ -13,7 +13,7 @@ import {
   coral,
   coralRear,
   coralSide,
-  crafts,
+  exportCrafts as crafts,
   gadgetJets,
   hullEntries,
   ink,
@@ -30,6 +30,7 @@ import {
   burn,
   ember as wreckEmber,
   heavies,
+  industrialHeavies,
   place,
   readOffsets,
   scorch,
@@ -134,7 +135,7 @@ for (const craft of crafts) {
   files.set(`${craft.name}-shards.json`, shards(craft));
   entries.push(...hullEntries(craft.name, craft.frame).map(needleEntry));
 }
-for (const craft of heavies) {
+for (const craft of [...heavies, ...industrialHeavies]) {
   const result = build(craft, place(offsets, craft));
   for (const [file, content] of result.files) {
     files.set(file, content);

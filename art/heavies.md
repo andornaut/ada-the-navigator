@@ -21,14 +21,19 @@ each sprite's drawn silhouette ([Collision](#collision)).
 
 ## Crafts
 
-`display = frame * 0.4375`, as for every enemy. Spans and lengths are the drawn
-craft in Ada widths of 42.88 model units.
+Every canvas uses `display = frame * 0.4375` once. Physical size is the
+intact assembled local X span, including physical bases and source-oriented
+tops, relative to Ada's source-model span. Canonical body ratios come from
+`src/data/enemyDimensions.ts`: frigate 5, capital 6, Gadget flagship 6 and
+platform 4. Frames grow only when the actual parts and all turret aims require
+more canvas space. Damage and capped states inherit the intact transform.
 
-| Archetype | Frame | Display | `sizeRatio` | Span x length | Weapon mounts | Files |
-| --------- | ----: | ------: | ----------: | ------------- | ------------: | ----: |
-| `frigate` |   384 |     168 |           4 | 3.27 x 4.26   |             4 |   306 |
-| `capital` |   480 |     210 |           5 | 5.04 x 5.50   |             8 |   562 |
-| `gadget`  |   560 |     245 |           5 | 5.78 x 5.74   |             8 |   562 |
+Weapon pools and platform/station fill orders and tiers consume
+`src/data/enemySignatures.ts`. Frigate tops are Heavy Missile and Laser;
+capital-class tops are charged Lance, Scatter and an aft Mine launcher.
+Platform tiers use `port`, `starboard`, `aft`, with two active at position 5
+and three at position 6. Every platform part is a weapon base; unused bases
+have a capped state. Runtime selection and damage values remain consumer data.
 
 - Frigate: long hunter with twin prow tines, a raised `engine` block that caps
   the stern with two jet mouths, and four weapon mounts: one on each sponson
@@ -51,8 +56,10 @@ with its `offset`, and the hardpoints file publishes it. The catalog export
 `tools/enemy-hardpoints.json`, which Tech generates from Gameplay's catalog, may
 list a subset: every hardpoint it lists must match Art's id, role and offset
 exactly, and its `sizeRatio` must match, or the tool stops without writing.
-Mounts the export does not list yet are kept, so the catalog adopts them by
-copying Art's offsets.
+Mounts the export does not list yet are kept. Derived fractions are layout
+provenance, not world offsets. Runtime placement consumes raw heading anchors
+and top pivots relative to frame centre, with the common display scale once
+and the existing inverse projection.
 
 - Export format: `version` 1; `archetypes[a]` has `sizeRatio` and
   `hardpoints`, each with `id`, `role` (`command`, `engine` or `turret`),
@@ -67,11 +74,15 @@ copying Art's offsets.
 
 ## Mounts
 
-Each frigate and capital carries up to three weapon types from its position's
-pool, picked per ship ([enemy weapons](../gameplay/ships.md#enemy-weapons)), so
-a mount's weapon is the ship's, not the art's. Art fixes which mounts are armed
-at each position band: weapons fill mounts pairs first, and an odd count adds a
-centreline mount. Every armed mount can carry any weapon its class holds.
+Frigate carries Heavy Missile at `port` and Laser on its remaining active
+mounts. Capital-class Lance and Mine profiles each pair their special weapon
+with Scatter. The runtime selects the profile and active mounts from the
+canonical signature module; Art exports its allowed top designs. Early
+capital profiles use Lance at `weapon-left`; the Mine profile places its
+special top at `stern-right` with fixed aft aim.
+
+The following offsets are authoring coordinates before normalization, not
+runtime world offsets. Derived raw anchors and pivots are the placement contract.
 
 | Frigate mount        | Offset       | Positions 1 to 2 | 3 to 4 | 5 to 6 |
 | -------------------- | ------------ | ---------------- | ------ | ------ |
@@ -95,17 +106,16 @@ One top per weapon, the same design on every mount and class, so a turret reads
 its weapon and echoes the player weapon's glyph (`{a}-{t}-top-{i}`). Each class
 draws the tops of the weapons it can hold.
 
-| Weapon (`weapon`) | Top (`t`) | Look                                               | Aim      | Frigate | Capital, Gadget |
-| ----------------- | --------- | -------------------------------------------------- | -------- | :-----: | :-------------: |
-| `laser`           | `gun`     | One amber barrel on the turret head                | `target` |   yes   |       yes       |
-| `multiLaser`      | `triple`  | Three long thin barrels fanned from one origin     | `target` |   yes   |       yes       |
-| `rapidMissile`    | `pod`     | A squared pod with four amber missile caps         | `target` |   yes   |       yes       |
-| `heavyMissile`    | `rail`    | One plate missile on a rail, amber warhead, band   | `target` |   yes   |       yes       |
-| `scattershot`     | `spread`  | Wedge head, dark breech, five short fanned barrels | `target` |   yes   |       yes       |
-| `phaser`          | `dish`    | Round dish, dark lens, one long thin emitter       | `target` |         |       yes       |
-| `chargedLance`    | `lance`   | Twin plate rails, amber charge crystal between     | `target` |   yes   |                 |
-| `ringBurst`       | `dome`    | Twelve-sided dome with eight amber rim studs       | `target` |         |       yes       |
-| `mineLayer`       | `hopper`  | Hopper with two amber mines and a dark aft chute   | `aft`    |         |       yes       |
+| Weapon         | Top      | Frigate | Capital, Gadget |
+| -------------- | -------- | :-----: | :-------------: |
+| `laser`        | `gun`    |   yes   |                 |
+| `heavyMissile` | `rail`   |   yes   |                 |
+| `scattershot`  | `spread` |         |       yes       |
+| `chargedLance` | `lance`  |         |       yes       |
+| `mineLayer`    | `hopper` |         |       yes       |
+
+Rapid Missile `pod` and RingBurst `dome` remain reusable native designs for the
+hostile station contract. Its canonical body span is 7 Ada source widths.
 
 `aim` `target` turns with the turret's world aim; `aft` holds aim index
 `(k + 8) mod 16` for hull heading `k`. Every top's pivot sits on the collar,
@@ -201,8 +211,9 @@ like the hull frame.
   frame px relative to the pivot, for every top in `weaponTops` (or a
   hardpoint's `top`).
 
-The platform has no `fill`, `weaponTops` or `tiers`: its two turrets carry
-their `top` at every position.
+The platform exports canonical `fill`, `weaponTops` and single-position
+`tiers`: two Laser mounts at position 5 and three at position 6. Unused
+weapon bases draw their capped state.
 
 `art/tools/heavies.ts` fails unless `weaponTops` covers the class's weapons,
 every top has 16 aims each with a muzzle and collision, each band arms the
@@ -466,24 +477,50 @@ platform's rail track `#703921`.
 
 ### Turret platform
 
-A fixed ore-field guard: a rust wheel deck 3 Ada widths across (128.6 model
-units) with a steel-toothed rim, ember work lights on every other tooth, painted
-spokes, Gadget's claw on a steel hopper hub and a dark rail track. Two
-twin-barrel steel turrets ride the rail.
+An immobile rust wheel deck with a steel-toothed rim, ember work lights,
+painted spokes, Gadget's claw on a steel hopper hub and a dark rail track.
+Its assembled body spans 4 Ada source widths.
 
-- Archetype `platform`, `sizeRatio` 3, hull frame 176 (display 77). Hardpoints
-  `port` and `starboard`, role `turret`, offsets `[-0.29, 0]` and `[0.29, 0]`:
-  37.3 model units from the centre, on the rail between radii 24 and 50.
+- Archetype `platform`, body ratio 4, hull frame 248 (display 108.5).
+  Hardpoints `port`, `starboard`, `aft` are all `turret` role. Physical
+  origins and top pivots derive from the normalized assembly.
 - The hull never turns. One frame, `platform.svg` (`enemy-claim-platform`,
   `facing` `fixed`, no `directionIndex`), is the `hull` layer for every seeded
   facing `k`; `headings[k]` of `platform-hardpoints.json` places the turrets and
   orders the layers.
-- Bases `platform-{port,starboard}-{intact,destroyed}-{k}.svg` have frame 64
-  (display 28); the shared top `platform-turret-top-{i}.svg` has frame 96
-  (display 42) and two muzzles per aim. No jets file: the platform has no
-  engines.
-- Intact: a steel pad 1 unit high on the deck, a rust collar to 2.5 and the
-  aimed top, its head to 6 with the barrels just above. Destroyed: a scorched
-  pad, a soot stump with a breach and one ember, and burn paint on the deck.
+- Bases `platform-{port,starboard,aft}-{intact,destroyed,capped}-{k}.svg`
+  use frame 80 (display 35); shared top `platform-turret-top-{i}.svg` uses
+  frame 120 (display 52.5) and retains two muzzles per aim. There are no engines.
+- Intact bases have a steel pad and rust collar under the aimed top.
+  Destroyed bases have a soot stump, breach, ember and burn paint. Unused
+  bases keep a capped pad without a top.
 - The hardpoints and offsets come from the catalog's `platform` entry in
   `tools/enemy-hardpoints.json`, like every other craft's.
+
+## Hostile station
+
+`node art/tools/hostile-station-export.ts` exports the normalized station into
+three existing families: coral for Phantom, Garnet for Andromeda and Claim
+for Cartwheel. The stem is `hostileStation`; metadata remains
+`hostileStation-hardpoints.json`, version 1. The friendly station producer and
+assets remain separate.
+
+The complete intact physical assembly spans 7 Ada source widths, from the
+canonical dimensions module. One source transform scales the hull, physical
+bases, fixed weapon tops, damaged/capped parts, origins and muzzle tips.
+All sixteen headings and turret aims fit frame 400 (display canvas 175).
+Raw frame anchors and top pivots, centred at frame/2 and scaled by 0.4375
+once, remain authoritative for runtime placement.
+
+Stable IDs `weapon-0` through `weapon-7` are all weapon bases. Canonical
+single-position tiers arm the numeric prefixes 6, 7 and 8 at route positions
+4, 5 and 6. Unused bases are capped. `weapon-5` has the RingBurst dome;
+every other active base has a Rapid Missile pod. The native designs retain
+eight RingBurst tips and four Rapid Missile tips per aim. The station has
+no engine or command parts. Runtime hull/part HP and selection remain Tech data.
+
+The UI mask `public/art/ui/icons/map-hostile-station.svg` uses the complete
+native eight-mount silhouette in a 24px viewport. The map consumes its direct
+path with key `map-hostile-station`; no shared manifest entry is added.
+`--icon-only` updates that file without rerunning the family body exporters.
+Friendly station assets and UI caller wiring remain separate.

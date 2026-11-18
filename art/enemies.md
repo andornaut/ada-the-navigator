@@ -8,8 +8,8 @@
   [art/tools/projection.ts](tools/projection.ts) holds the rotation, culling,
   depth and projection shared with [ship geometry](ship.md).
 - Enemy craft and their destruction shards use 16 headings (`ENEMY_HEADINGS`)
-  in 22.5 degree world steps; enemy heading `k` faces ship heading `2k` of
-  Ada's 32.
+  in 22.5 degree world steps; enemy heading `k` faces ship heading `4k` of
+  Ada's 64.
 - The frigate and the capital follow the [heavies](heavies.md)
   contract.
 - Exports per archetype: `{archetype}-{0..15}.svg` idle frames and
@@ -29,19 +29,26 @@ One salvage-craft family reads as hostile against Ada's white and blue ship:
 
 ## Crafts
 
-Frame and display sizes share one scale, `display = frame * 0.4375`, the same as
-Ada's 96px frame at 42px. Extents are model units over Ada's 42.88-unit wingspan.
+Canvas display sizes use `display = frame * 0.4375` exactly once. Canvas padding
+is not physical size. `src/data/enemyDimensions.ts` owns the body ratios.
+Normalization measures the intact assembled local X span before yaw/projection,
+including physical hardpoints and their source-oriented tops. Ada's reference
+span is derived from the ship model's wing corners. Jets, effects and padding
+are excluded. Broken and capped parts inherit the intact assembly transform.
 
-| Archetype     | Frame | Display | Span (Ada widths) | Length (Ada widths) | Mouths | Shape                                   |
-| ------------- | ----: | ------: | ----------------: | ------------------: | -----: | --------------------------------------- |
-| `swarm`       |    80 |      35 |              0.65 |                0.84 |      1 | Small beetle, forward mandibles         |
-| `fighter`     |    96 |      42 |              0.98 |                1.26 |      2 | Horseshoe pincers, gun at each claw     |
-| `interceptor` |    88 |    38.5 |              0.47 |                1.07 |      1 | Long needle, twin tines, centre gun     |
-| `retaliator`  |   192 |      84 |              2.01 |                1.59 |      3 | Broad slab, plates, three-barrel turret |
+| Archetype     | Body span (Ada widths) | Geometry                                                 |
+| ------------- | ---------------------: | -------------------------------------------------------- |
+| `swarm`       |                   0.65 | Small beetle, forward mandibles                          |
+| `fighter`     |                      1 | Horseshoe pincers, claw guns                             |
+| `interceptor` |                      1 | Broad hostile diamond, cosmetic amber wingtip guns       |
+| `retaliator`  |                      3 | Cargo hauler or mining freighter, aimed missile launcher |
 
-Hit circles use Gameplay's `sizeRatio` in Ada widths: swarm 0.65, fighter 1,
-interceptor 0.75 and retaliator 2. The interceptor's ratio sits near the mean of
-its drawn length and width, so the narrow hull keeps a forgiving hit area.
+Industrial asset stems are `retaliatorCargoHauler` and
+`retaliatorMiningFreighter`, under each existing family prefix. Both retain
+archetype `retaliator` and sixteen headings. Each stem has jets/collision,
+shards and hardpoint metadata from the same normalized geometry. The existing
+launcher retains three tips and one non-destructible aimed mount. Variant
+selection belongs to the runtime consumer.
 
 ## Insignia
 
@@ -62,8 +69,8 @@ General Gadget's portrait ([Conversation portraits](conversation.md)).
 | ------------- | ---------- | --: | -------------: | --------------------------------------- |
 | `swarm`       | (0, 6.5)   | 5.5 |         4.8 px | Behind the amber hatch                  |
 | `fighter`     | (7.5, 3.5) | 5.2 |         4.6 px | Right shoulder, opposite the left plate |
-| `interceptor` | (0, 10)    | 4.6 |         4.0 px | Behind the visor                        |
-| `retaliator`  | (0, 20.5)  |   7 |         6.1 px | Behind the turret                       |
+| `interceptor` | (0, 13)    | 4.6 |         4.0 px | Behind the visor                        |
+| `retaliator`  | (-34, -21) |   7 |         6.1 px | Behind the turret                       |
 
 ## Frames
 
@@ -102,23 +109,11 @@ archetype's frame, pivot at the frame centre. It has the schema of the ship's
 `collision[k]` and the asteroids' `frames[k].collision`; offsets from the
 pivot times 0.4375 give display px.
 
-- `art/tools/enemies.ts` traces each frame's fills with the
-  [shared tracer](ship.md#shared-tracer). The frames have no strokes, so the
-  drawing is not grown. Douglas-Peucker runs at 0.4 frame px: at 0.5 swarm
-  heading 10 (0.9798) and interceptor heading 10 (0.9771) fall below the
-  0.98 floor. Their shortfall comes from the cell grid, not the
-  simplification: 0.75 and 0.5 keep the same vertices on those frames.
-- The archetypes have no paints or variants: one set per heading.
-- Notch tips occur between the interceptor's tines and guns (10 tips) and
-  among the retaliator's barrels and plates (21 tips); the frames draw them
-  ([Frames](#frames)).
-- Checked against the fills plus the tips: every part strictly convex, every
-  boundary within 0.25 frame px of the drawing, and intersection over union
-  as below (librsvg renders at 4 px per frame px agree within 0.0004).
-
-| Archetype     | Parts per heading | Intersection over union |
-| ------------- | ----------------: | ----------------------: |
-| `swarm`       |            2 to 4 |          0.987 to 0.991 |
-| `fighter`     |           8 to 12 |          0.988 to 0.992 |
-| `interceptor` |            3 to 9 |          0.985 to 0.993 |
-| `retaliator`  |           9 to 16 |          0.995 to 0.997 |
+- Native solid-model fills drive each heading's convex collision parts.
+  The shared checker requires strictly convex parts, its boundary-distance
+  limit and intersection-over-union floor. Enemy tracing uses the same
+  enclosed-aperture policy as that checker; thresholds are unchanged.
+- Cargo and mining variants have separate sixteen-heading hull, collision,
+  jet and aimed-top exports. Their gameplay archetype remains `retaliator`.
+- Traced notch tips, when present, are drawn into the corresponding SVG.
+  Collision excludes jets, effects and padding.

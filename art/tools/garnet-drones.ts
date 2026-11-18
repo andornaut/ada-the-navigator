@@ -12,7 +12,7 @@ import {
   coral,
   coralRear,
   coralSide,
-  crafts,
+  exportCrafts as crafts,
   gadgetJets,
   hullEntries,
   ink,
@@ -29,6 +29,7 @@ import {
   burn,
   ember as wreckEmber,
   heavies,
+  industrialHeavies,
   place,
   readOffsets,
   scorch,
@@ -107,6 +108,11 @@ function swapColours(
   return result;
 }
 
+export const recolourGarnet = (file: string, text: string): string =>
+  swapColours(swap, family, file, text);
+export const recolourGarnetJets = (file: string, text: string): string =>
+  swapColours(jetSwap, jetFamily, file, text);
+
 // ---------------------------------------------------------------- export
 
 type Entry = Record<string, unknown> & { id: string; path?: string };
@@ -144,7 +150,7 @@ async function main() {
     files.set(`${craft.name}-shards.json`, shards(craft));
     entries.push(...hullEntries(craft.name, craft.frame).map(garnetEntry));
   }
-  for (const craft of heavies) {
+  for (const craft of [...heavies, ...industrialHeavies]) {
     const result = build(craft, place(offsets, craft));
     for (const [file, content] of result.files) {
       files.set(file, content);

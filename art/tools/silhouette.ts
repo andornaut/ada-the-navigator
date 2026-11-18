@@ -335,7 +335,7 @@ export function strictlyConvex(part: readonly V2[]): boolean {
 }
 
 // The mask with enclosed background filled, as the traced outline drops holes.
-function solid(mask: Mask): Mask {
+export function solid(mask: Mask): Mask {
   const { cells, height: H, width: W } = mask;
   const outside = new Uint8Array(W * H);
   const stack: number[] = [];

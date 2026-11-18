@@ -8,12 +8,13 @@ import {
   coral,
   coralRear,
   coralSide,
-  crafts,
+  exportCrafts as crafts,
   drawOrder,
   faces,
   type Part,
   type Plan,
 } from "./crafts.ts";
+import { sizeReceipts } from "./enemy-size.ts";
 import { ENEMY_HEADINGS, json, projectAt, rotate, round, vector } from "./projection.ts";
 
 type Kind = "hull" | "part" | "fleck";
@@ -237,18 +238,19 @@ function flash(): string {
 function spec(): string {
   const archetypes = Object.fromEntries(
     crafts.map((craft) => {
-      const reduced = byFrame(craft.frame, 360, 450);
+      const sourceFrame = sizeReceipts.get(craft.name)!.frameBefore;
+      const reduced = byFrame(sourceFrame, 360, 450);
       return [
         craft.name,
         {
-          durationMs: byFrame(craft.frame, 450, 600),
-          releaseMs: byFrame(craft.frame, 150, 190),
+          durationMs: byFrame(sourceFrame, 450, 600),
+          releaseMs: byFrame(sourceFrame, 150, 190),
           flashWidth: round(halfSpan(craft) * 1.98),
-          spread: spread(craft.frame, 19.2, 33.6),
+          spread: spread(sourceFrame, 19.2, 33.6),
           reduced: {
             durationMs: reduced,
             releaseMs: Math.round((reduced * 2) / 3 / 10) * 10,
-            spread: spread(craft.frame, 7.68, 13.44),
+            spread: spread(sourceFrame, 7.68, 13.44),
           },
         },
       ];

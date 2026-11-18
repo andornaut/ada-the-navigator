@@ -7,6 +7,8 @@ import { fileURLToPath } from "node:url";
 
 import { format, resolveConfig } from "prettier";
 
+import { PLATFORM_SIGNATURE } from "../../src/data/enemySignatures.ts";
+
 import {
   amber,
   amberSide,
@@ -14,7 +16,7 @@ import {
   coral,
   coralRear,
   coralSide,
-  crafts,
+  exportCrafts as crafts,
   gadgetJets,
   hullEntries,
   ink,
@@ -36,14 +38,18 @@ import {
   type HeavyCraft,
   type HeavyPart,
   heavies,
+  industrialHeavies,
   type Model,
   place,
+  PLATFORM_FILL,
+  PLATFORM_TIERS,
   readOffsets,
   ring,
   scorch,
   scorchSide,
   wreck,
 } from "./heavies.ts";
+import { normalizeHeavy } from "./enemy-size.ts";
 import { replaceEntries } from "./manifest.ts";
 import { ENEMY_HEADINGS } from "./projection.ts";
 
@@ -260,6 +266,7 @@ function platformTurret(): Model {
   const stump = { key: "stump", z: DECK + 2.2 };
   return {
     role: "turret",
+    capped: [{ plan: padPlan, z0: DECK, z1: pad, top: claim.steelSide, side: claim.rustRear }],
     z: DECK,
     intact: [
       { plan: padPlan, z0: DECK, z1: pad, top: claim.steelSide, side: claim.rustRear },
@@ -303,7 +310,7 @@ function platformTurret(): Model {
   };
 }
 
-export const platform: HeavyCraft = {
+export const platform: HeavyCraft = normalizeHeavy({
   name: "platform",
   title: "Platform",
   frame: 176,
@@ -311,12 +318,23 @@ export const platform: HeavyCraft = {
   hullTop: DECK,
   hull: platformHull,
   sizeRatio: 3,
-  hardpoints: [
-    { id: "port", offset: [-0.29, 0], model: platformTurret() },
-    { id: "starboard", offset: [0.29, 0], model: platformTurret() },
-  ],
+  hardpoints: PLATFORM_FILL.map((id, index) => {
+    const model = platformTurret();
+    delete model.top;
+    const offsets: [number, number][] = [
+      [-0.29, 0],
+      [0.29, 0],
+      [0, 0.29],
+    ];
+    return { id, offset: offsets[index]!, model };
+  }),
+  mounts: {
+    fill: PLATFORM_FILL,
+    tiers: PLATFORM_TIERS,
+    weapons: { [PLATFORM_SIGNATURE.weapon]: { top: platformTurret().top!, aim: "target" } },
+  },
   fixed: true,
-};
+});
 
 // ---------------------------------------------------------------- export
 
@@ -366,7 +384,7 @@ async function main() {
     files.set(`${craft.name}-shards.json`, shards(craft));
     entries.push(...hullEntries(craft.name, craft.frame).map(claimEntry));
   }
-  for (const craft of heavies) {
+  for (const craft of [...heavies, ...industrialHeavies]) {
     const result = build(craft, place(offsets, craft));
     for (const [file, content] of result.files) {
       files.set(file, content);

@@ -1,3 +1,5 @@
+import { industrialRetaliators } from "./retaliator-models.ts";
+import { normalizeCraft, sizeReceipts } from "./enemy-size.ts";
 import {
   depth,
   ENEMY_HEADINGS,
@@ -24,14 +26,17 @@ export type Part = {
   decal?: true;
   // Part of an aimed turret top: heavies.ts draws it as its own sprite set.
   turret?: true;
+  muzzle?: true;
 };
 export type Craft = {
   name: string;
   title: string;
+  variant?: "cargo" | "mining";
   frame: number;
   parts: Part[];
   mouths: [number, number][];
   mouthWidth: number;
+  mouthZ?: number;
   // Destruction wedge cut angles in degrees, plan atan2(y, x); forward is -90.
   cuts: number[];
 };
@@ -105,7 +110,7 @@ export function insignia(cx: number, cy: number, r: number, z: number): Part[] {
   ];
 }
 
-export const crafts: Craft[] = [
+const sourceCrafts: Craft[] = [
   {
     // Small beetle with forward mandibles.
     name: "swarm",
@@ -172,37 +177,61 @@ export const crafts: Craft[] = [
     cuts: [-90, -25, 55, 125, 205],
   },
   {
-    // Long narrow needle with twin forward tines.
+    // Broad diamond with a forked nose and cosmetic amber guns on the wing tips.
     name: "interceptor",
     title: "Interceptor",
     frame: 88,
     parts: [
       {
         plan: mirror([
-          [1.5, -12],
-          [3.5, -30],
-          [6, -30],
-          [6, -6],
-          [10, 10],
-          [5, 16],
+          [0, -24],
+          [2.75, -30],
+          [5.5, -24],
+          [19.5, 1],
+          [16, 9],
+          [5, 20],
+          [4, 22],
         ]),
         z0: 0,
-        z1: 3.5,
+        z1: 4,
         top: coral,
         side: coralSide,
         rear: coralRear,
       },
-      { plan: box(-2.5, -6, 2.5, 4), z0: 3.5, z1: 5.5, top: visor, side: visorSide, loose: true },
-      { plan: box(-1, -30, 1, -14), z0: 1.5, z1: 3, top: amber, side: amberSide, loose: true },
-      // Insignia on bare hull top.
-      ...insignia(0, 10, 4.6, 3.5),
+      ...[-1, 1].map((side): Part => {
+        const wing: Plan = [
+          [7, -15],
+          [18.5, 1],
+          [10, 13],
+          [3, 8],
+        ].map(([x, y]) => [side * x!, y!] as const);
+        return {
+          plan: side < 0 ? wing.toReversed() : wing,
+          z0: 4,
+          z1: 4.8,
+          top: plate,
+          side: coralSide,
+        };
+      }),
+      { plan: box(-3, -8, 3, 5), z0: 4, z1: 6.5, top: visor, side: visorSide, loose: true },
+      // Visual barrels only; the existing central fire stream gains no mounts or muzzles.
+      {
+        plan: box(-21.44, -9, -18.44, 5),
+        z0: 1.5,
+        z1: 5,
+        top: amber,
+        side: amberSide,
+        loose: true,
+      },
+      { plan: box(18.44, -9, 21.44, 5), z0: 1.5, z1: 5, top: amber, side: amberSide, loose: true },
+      ...insignia(0, 13, 4.6, 4),
     ],
-    mouths: [[0, 16]],
+    mouths: [[0, 22]],
     mouthWidth: 6,
     cuts: [-90, -20, 70, 110, 200],
   },
   {
-    // Broad heavy workshop slab with a three-barrel turret.
+    // Broad industrial workshop slab with three missile launch tubes.
     name: "retaliator",
     title: "Retaliator",
     frame: 192,
@@ -240,19 +269,20 @@ export const crafts: Craft[] = [
         loose: true,
         turret: true,
       },
-      // Barrels follow the gameplay spread angles -0.2, 0 and 0.2 radians.
+      // Existing three launch tips retain the authored spread angles.
       ...[-0.2, 0, 0.2].map((angle): Part => {
         const c = Math.cos(angle);
         const s = Math.sin(angle);
         const r = (x: number, y: number) => [x * c - y * s, x * s + y * c] as const;
         return {
-          plan: [r(-2.2, -6), r(2.2, -6), r(2.2, -40), r(-2.2, -40)],
+          plan: [r(-3.6, -6), r(3.6, -6), r(3.6, -24), r(-3.6, -24)],
           z0: 9,
           z1: 11.5,
-          top: amber,
-          side: amberSide,
+          top: visor,
+          side: visorSide,
           loose: true,
           turret: true,
+          muzzle: true,
         };
       }),
       // Insignia on bare hull top.
@@ -267,6 +297,35 @@ export const crafts: Craft[] = [
     cuts: [-90, -35, 20, 90, 160, 215],
   },
 ];
+
+const industrial = industrialRetaliators(
+  { box, dark: visor, insignia, plate, rear: coralRear, side: coralSide },
+  sourceCrafts.find(({ name }) => name === "retaliator")!,
+);
+export const retaliatorVariants = {
+  cargo: normalizeCraft(industrial.cargo),
+  mining: normalizeCraft(industrial.mining),
+};
+export const crafts: Craft[] = sourceCrafts.map((craft) =>
+  craft.name === "retaliator" ? retaliatorVariants.cargo : normalizeCraft(craft),
+);
+
+export const INDUSTRIAL_STEMS = {
+  cargo: "retaliatorCargoHauler",
+  mining: "retaliatorMiningFreighter",
+} as const;
+export const enemyArchetype = (name: string): string =>
+  Object.values(INDUSTRIAL_STEMS).some((stem) => stem === name) ? "retaliator" : name;
+export const industrialCrafts: Craft[] = Object.entries(INDUSTRIAL_STEMS).map(([variant, name]) => {
+  const source = retaliatorVariants[variant as keyof typeof retaliatorVariants];
+  sizeReceipts.set(name, sizeReceipts.get(`retaliator:${variant}`)!);
+  return { ...source, name };
+});
+// Aimed launchers are separate physical layers rather than baked into the hull.
+export const exportCrafts = [...crafts, ...industrialCrafts].map((craft) => ({
+  ...craft,
+  parts: craft.parts.filter((part) => !part.turret),
+}));
 
 // Visible sides in plan order, then the top. Rear-facing hull edges use the rear shade.
 export function faces(yaw: number, part: Part): Face[] {
@@ -372,6 +431,6 @@ export function hullEntries(name: string, frame: number) {
     facing: `world-${yaw}`,
     directionIndex: yaw,
     pivot: { x: 0.5, y: 0.5 },
-    archetype: name,
+    archetype: enemyArchetype(name),
   }));
 }

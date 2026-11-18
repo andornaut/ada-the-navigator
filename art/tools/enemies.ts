@@ -3,20 +3,20 @@ import { fileURLToPath } from "node:url";
 
 import {
   type Craft,
-  crafts,
+  exportCrafts as crafts,
   drawOrder,
   faces,
   gadgetJets,
   hullEntries,
   jetsFile,
 } from "./crafts.ts";
+import { traceEnemyFills } from "./enemy-outline.ts";
 import { replaceEntries } from "./manifest.ts";
 import { anchor, ENEMY_HEADINGS, project, vector } from "./projection.ts";
-import { type Fill, traceFills, type V2 } from "./silhouette.ts";
+import { type Fill, type V2 } from "./silhouette.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const output = `${art}enemies/`;
-const MOUTH_Z = 2;
 // Douglas-Peucker tolerance for the hull silhouettes, in frame px. At 0.5 the small swarm and
 // interceptor frames fall below the intersection-over-union floor.
 const SILHOUETTE_TOLERANCE = 0.4;
@@ -54,7 +54,7 @@ export function svg(craft: Craft, yaw: number, tips: readonly Fill[] = []): stri
 // (no strokes, so no growth), and its notch tips.
 export function silhouettes(craft: Craft): { collision: V2[][]; tips: Fill[] }[] {
   return Array.from({ length: ENEMY_HEADINGS }, (_, yaw) =>
-    traceFills(
+    traceEnemyFills(
       `${craft.name} ${yaw}`,
       drawn(craft, yaw),
       [craft.frame, craft.frame],
@@ -71,7 +71,7 @@ export function jets(craft: Craft, collision?: (yaw: number) => V2[][]): string 
     craft.frame,
     (yaw) =>
       craft.mouths.map(([x, y]) => ({
-        anchor: anchor(ENEMY_HEADINGS, centre, yaw, [x, y, MOUTH_Z]),
+        anchor: anchor(ENEMY_HEADINGS, centre, yaw, [x, y, craft.mouthZ ?? 2]),
         axis: vector(ENEMY_HEADINGS, yaw, [0, 1, 0]),
         half: vector(ENEMY_HEADINGS, yaw, [-half, 0, 0]),
       })),
