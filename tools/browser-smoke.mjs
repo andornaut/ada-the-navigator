@@ -380,7 +380,38 @@ try {
       };
       const skip = modal.querySelector('[data-action="dialogue-skip"]');
       const close = modal.querySelector('[data-action="conversation-close"]');
-      return { close: box(close), closeHits: hits(close), skip: box(skip), skipHits: hits(skip) };
+      // The inputs the HUD rect comes from, as the view-scale bridge set them.
+      const property = (element, name) => getComputedStyle(element).getPropertyValue(name).trim();
+      const canvas = document.querySelector("#game-canvas > canvas").getBoundingClientRect();
+      const inputs = {
+        app: [origin.width, origin.height],
+        canvas: [canvas.width, canvas.height],
+        devicePixelRatio: window.devicePixelRatio,
+        inner: [window.innerWidth, window.innerHeight],
+        insets: Object.fromEntries(
+          ["top", "right", "bottom", "left"].map((side) => [
+            side,
+            [
+              property(document.documentElement, `--inset-${side}`),
+              property(app, `--ada-safe-${side}`),
+            ],
+          ]),
+        ),
+        properties: Object.fromEntries(
+          ["--ada-area-left", "--ada-hud-left", "--ada-hud-right", "--ada-hud-top"].map((name) => [
+            name,
+            property(app, name),
+          ]),
+        ),
+        unit,
+      };
+      return {
+        close: box(close),
+        closeHits: hits(close),
+        inputs,
+        skip: box(skip),
+        skipHits: hits(skip),
+      };
     });
     await page.screenshot({ path: `${output}/${name}.png` });
     assert.ok(
@@ -1630,38 +1661,6 @@ try {
     await tapUse(CONTENT.labels.talk);
     await interactionCard().waitFor({ state: "visible" });
     await contextControlProof(0, "dialogue during save failure");
-    // The card at 1280x720, 844x390 and 720x360 with the phone insets set (the full-viewport
-    // policy keeps hardware insets zero, so they move nothing).
-    const interactionViewport = page.viewportSize();
-    const interactionRows = {
-      "1280x720": await interactionHudProof("interaction-hud-1280x720"),
-    };
-    await page.setViewportSize({ height: 390, width: 844 });
-    await page.waitForTimeout(250);
-    interactionRows["844x390"] = await interactionHudProof("interaction-hud-844x390");
-    await page.setViewportSize({ height: 360, width: 720 });
-    await page.evaluate(() => {
-      const unit = Number(
-        getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
-      );
-      for (const [side, value] of Object.entries({ bottom: 19, left: 43, right: 43, top: 0 })) {
-        document.documentElement.style.setProperty(`--inset-${side}`, `${value * unit}px`);
-      }
-    });
-    await page.waitForTimeout(250);
-    interactionRows["720x360-insets"] = await interactionHudProof("interaction-hud-720x360-insets");
-    await page.evaluate(() => {
-      for (const side of ["bottom", "left", "right", "top"]) {
-        document.documentElement.style.removeProperty(`--inset-${side}`);
-      }
-    });
-    await page.setViewportSize(interactionViewport);
-    await page.waitForTimeout(250);
-    save("interaction-hud-proof.json", interactionRows);
-    events.checks.push(
-      "The Interaction card's close X takes the Settings slot with Skip beside it, their press " +
-        "areas apart, at 1280x720, 844x390 and 720x360 with insets",
-    );
     assert.equal(
       await warning.textContent(),
       CONTENT.labels.savingUnavailable,
@@ -1703,6 +1702,43 @@ try {
   // The keyboard Use above switched flight to the desktop controls; a touch brings the disc back.
   await touchSurface();
   await contextControlProof(1, "recovered flight");
+  // With saving restored the notice slot is free, and Talk opens the Interaction card again.
+  assert.equal(await page.locator("#save-status").textContent(), "", "Saving works again");
+  await tapUse(CONTENT.labels.talk);
+  await interactionCard().waitFor({ state: "visible" });
+  // The card at 1280x720, 844x390 and 720x360 with the phone insets set (the full-viewport
+  // policy keeps hardware insets zero, so they move nothing).
+  const interactionViewport = page.viewportSize();
+  const interactionRows = {
+    "1280x720": await interactionHudProof("interaction-hud-1280x720"),
+  };
+  await page.setViewportSize({ height: 390, width: 844 });
+  await page.waitForTimeout(250);
+  interactionRows["844x390"] = await interactionHudProof("interaction-hud-844x390");
+  await page.setViewportSize({ height: 360, width: 720 });
+  await page.evaluate(() => {
+    const unit = Number(
+      getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
+    );
+    for (const [side, value] of Object.entries({ bottom: 19, left: 43, right: 43, top: 0 })) {
+      document.documentElement.style.setProperty(`--inset-${side}`, `${value * unit}px`);
+    }
+  });
+  await page.waitForTimeout(250);
+  interactionRows["720x360-insets"] = await interactionHudProof("interaction-hud-720x360-insets");
+  await page.evaluate(() => {
+    for (const side of ["bottom", "left", "right", "top"]) {
+      document.documentElement.style.removeProperty(`--inset-${side}`);
+    }
+  });
+  await page.setViewportSize(interactionViewport);
+  await page.waitForTimeout(250);
+  save("interaction-hud-proof.json", interactionRows);
+  events.checks.push(
+    "The Interaction card's close X takes the Settings slot with Skip beside it, their press " +
+      "areas apart, at 1280x720, 844x390 and 720x360 with insets",
+  );
+  await leaveInteraction();
   events.checks.push(
     "Blocked browser storage preserves gameplay and last save; " +
       "status survives dialogue and clears after successful write",
@@ -1834,15 +1870,15 @@ try {
     ["zoomOut", "zoomIn", "recentre"],
     "The map's tools are zoom out, zoom in and recentre, top to bottom",
   );
-  // No close X: a primary Close in the footer dismisses the map.
+  // No close X: the footer's primary dismisses the map, Back since it returns to the Paused card.
   assert.deepEqual(
     await mapScreen.locator('[data-action="map-close"]').evaluate((close) => ({
       primary: close.classList.contains("ada-primary"),
       text: close.textContent?.trim(),
       tool: close.classList.contains("ada-map-tool"),
     })),
-    { primary: true, text: CONTENT.labels.close, tool: false },
-    "The map's Close is its footer primary, not a tool",
+    { primary: true, text: CONTENT.labels.questBack, tool: false },
+    "The map's footer primary, not a tool, returns to the Paused card as Back",
   );
   assert.deepEqual(
     await mapScreen
