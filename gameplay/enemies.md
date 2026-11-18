@@ -17,16 +17,21 @@ separation, firing patterns,
 morale, hardpoints and pursuit leashes. [Ships](ships.md) lists sizes, physics and
 each galaxy's archetypes, and its [Difficulty](ships.md#difficulty) section
 sets hit points, weapon mounts and enemy weapons by route position. Frigates have
-one engine and two to four weapons. A capital hull is about 5 Ada widths across and
-covers at most a sixth of the screen. Capital command parts never fire. Each weapon carries its own typed fire profile, interval, spread and
+one engine and two to four weapons. Canonical assembled-body size ratios are 5
+for frigates and 6 for capitals, relative to Ada's source-model lateral hull
+span. Drawn heading metadata supplies their geometry. Capital command parts
+never fire. Each weapon carries its own typed fire profile, interval, spread and
 projectile speed. Missile profiles travel straight; there is no homing rule.
 
 `createEnemy(definition, identity, position)` creates JSON-serializable state. Identity
-includes a stable ID, archetype, nullable pack ID and seeded phase in radians. Use a
-named spawn RNG stream in the adapter. The rules consume no randomness and do not
-mutate supplied state. Serialize phase, age, engagement, flee latch, velocity, hull
-HP, hardpoint HP, cooldowns, home position, last-seen position and age, pursuit
-elapsed time and returning latch. The optional retreat record preserves its kind,
+includes a stable ID, actor kind, nullable pack ID, seeded phase in radians and
+an optional equipped weapon level. The adapter resolves one equipped level at
+spawn through its dedicated per-ship stream. An absent saved level means level 1;
+reconstructing a saved definition does not reroll it. The rules consume no
+randomness and do not mutate supplied state. Serialize phase, age, engagement, flee latch, velocity, hull
+HP, hardpoint HP, cooldowns, burst positions, initialized fire phases, home
+position, last-seen position and age, pursuit elapsed time, returning latch and
+time since return began. The optional retreat record preserves its kind,
 origin, fixed away direction, start age and completion age through save/load.
 Preserve initial pack sizes separately through losses
 and save/load. No functions, maps, clocks or runtime objects belong in saved state.
@@ -58,16 +63,26 @@ use positive dimensions, nonnegative speeds and stable unique entity/part IDs.
 Only positive finite dt advances rules. Unknown or occluded visibility grants no
 chase or fire permission. It does not classify space as safe or unreachable.
 The adapter must supply actual observation and safe-zone permission, not infer them
-from hidden runtime state. Peers include self exactly once; preserve initial pack
-counts even when survivors are unloaded. Do not count unloading as a loss.
+from hidden runtime state. Active peers contain live, nonsalvaged, enabled
+actors, including self exactly once for an active actor. Disabled hulls remain
+physical and saved but do not influence steering or escort observation.
+The adapter supplies transient `loadedPackMembers` counts from the full live,
+nonsalvaged pre-movement snapshot, including disabled survivors. Morale adds the
+existing dormant survivor counts. If the loaded count field is absent, pure
+callers retain the peer-count fallback; a supplied map with no pack entry means
+zero loaded survivors. Preserve initial pack counts through unloading and
+Continue. Neither unloading nor disablement is a casualty.
 
 The result contains updated state, desired velocity, aim, fire intents and effects.
 State position is deliberately unchanged. Steering and velocity response are rules;
 collision resolution and position integration are runtime responsibilities. Commit
 resolved position and velocity back into the next saved state. Separation reads only
-the supplied snapshot, avoiding array-order feedback. Catalog offsets are
-fractions of hull width in the hull's local frame. Hulls rotate to face their
-movement, and hardpoint collision and muzzle offsets rotate with them.
+the supplied snapshot, avoiding array-order feedback. Authored heading anchors
+and turret pivots determine hardpoint and muzzle positions when available.
+Their frame offsets use the canonical display scale once, then the existing
+inverse projection. Fractional catalog offsets are a fallback when authored
+metadata is absent. Hulls rotate to face their movement; collision and muzzle
+positions follow the drawn hull and turret headings.
 
 Sight aggression latches on visible perception. Retaliators patrol without
 attacking until hit.
@@ -77,14 +92,24 @@ without erratic jitter or query-dependent RNG.
 Flee direction is away from the observed or last-seen player position. Safe-zone collision policy
 must still reject unsafe movement. There is no pathfinder or reachability oracle.
 
-Fire intents contain world-space origin, normalized aim, projectile speed, weapon ID,
-profile ID, projectile kind (bolt or missile) and delay within the slice.
-Hardpoint ID identifies the emitting weapon; a null ID identifies the hull weapon. Cooldowns persist even outside engagement. Catch-up shots
-have explicit delays; advance each new projectile for only `dt - delay`, or schedule
-it at that offset. Fixed small slices bound work and integration error. There is
-no spawn warning; Astra's drone-arrival line is the only cue. Pattern spread, projectile speed and intervals provide tuning
-for readable attacks without adding a warning phase. Disabling a weapon prevents
-future fire, but does not delete already emitted projectiles.
+Fire intents contain world-space origin, normalized aim, projectile speed, weapon
+ID, equipped level, damage ratio, projectile kind and delay within the slice.
+Hardpoint ID identifies the emitting weapon; a null ID identifies the hull
+weapon. `fireClockPolicy` is `staggered-and-paused` for frigates and capitals:
+weapon clocks initialize on first firing eligibility in stable active-mount fill
+order, with phase `(i / N) * ownInterval`. Ineligible time preserves cooldowns and
+burst positions; disabling a mount never reindexes survivors. Other actors,
+including platforms and hostile stations, use `continuous` clocks. Initialized
+phases, cooldowns and burst positions survive Continue.
+
+Catch-up shots have explicit delays; advance each new projectile for only
+`dt - delay`, or schedule it at that offset. Fixed small slices bound work and
+integration error. There is no spawn warning; Astra's drone-arrival line is the
+arrival cue. Weapon-specific tells are separate: Phaser uses a fixed 0.4-second
+aim line; charged lance tracks for 0.7 seconds and locks for 0.3 seconds
+before firing. Tell lines and beams stop at obstacles. Each fired beam damages
+Ada at most once. Disabling a weapon prevents future fire and cancels an active
+lance tell, but does not delete already emitted projectiles.
 
 `stepDebris(dt, debris)` advances position by constant velocity times dt. Debris has
 no AI, pursuit, morale, aim or weapon. The adapter owns seeded region placement and

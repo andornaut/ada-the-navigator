@@ -218,36 +218,34 @@ bolts do not add physical mounts. Projectile speed stays at 0.6 times the
 player's level-1 speed for that weapon, without level speed scaling. Enemies
 carry no ammunition.
 
-| Archetype     | Positions 1–2 | Positions 3–4 | Positions 5–6 |
-| ------------- | ------------- | ------------- | ------------- |
-| `swarm`       | Laser         | Laser         | Laser         |
-| `fighter`     | Laser         | Rapid Missile | Rapid Missile |
-| `interceptor` | Laser         | Multi-Laser   | Multi-Laser   |
-| `retaliator`  | Multi-Laser   | Multi-Laser   | Multi-Laser   |
-| `platform`    | 2 × Laser     | 2 × Laser     | 2 × Laser     |
+| Archetype       | Weapon signature                                            |
+| --------------- | ----------------------------------------------------------- |
+| `swarm`         | Laser                                                       |
+| `fighter`       | Multi-Laser                                                 |
+| `interceptor`   | One Phaser                                                  |
+| `retaliator`    | Rapid Missile                                               |
+| `frigate`       | One Heavy Missile on `port`; other active mounts Laser      |
+| `capital`       | One charged lance or mine layer; other mounts Scattershot   |
+| `platform`      | Laser on every active mount                                 |
+| Hostile station | Ring burst on `weapon-5`; other active mounts Rapid Missile |
 
-Small craft carry only Laser, Multi-Laser and Rapid Missile. Heavy Missile,
-Phaser and Scattershot are reserved for frigates and capitals; a heavy's
-Scattershot is point defense against craft that come close, and Ada avoids it
-by keeping her distance.
+A capital uses charged lance on `weapon-left` at route positions 1–4. In
+Cartwheel and Phantom, an independent stable per-ship profile gives equal weight
+to Scattershot plus charged lance and Scattershot plus mine layer. The mine
+variant places its single mine layer on `stern-right`. Each capital carries
+exactly two weapon types, never both specialized weapons together. Profile
+selection uses a dedicated stream keyed by route position and ship ID, separate
+from the equipped-level roll.
 
-Each frigate and capital carries at most three weapon types, picked from its
-position's pool and seeded by the ship, so a ship keeps its weapons across save
-and resume. The enemy-only weapons count as types. Its weapon mounts (the
-Heavies table's weapon count) are shared out in turn among its types, with at
-most one mount each of Heavy Missile, Phaser, ring burst, mine layer and charged
-lance; extra mounts go to its other types. A pool smaller than three gives every
-type in it.
+Platform active mounts are `port` and `starboard` in Cartwheel, plus `aft` in
+Phantom. Hostile stations use the first six, seven or eight mounts of the
+`weapon-0` through `weapon-7` fill order in Andromeda, Cartwheel and Phantom,
+respectively. Mount counts and capped mounts are defined by their position
+tiers; extra fan bolts do not add mounts.
 
-| Heavy     | Positions 1–2                     | Positions 3–4                                                 | Positions 5–6                                                                    |
-| --------- | --------------------------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `frigate` | Laser, Multi-Laser, Rapid Missile | Laser, Multi-Laser, Rapid Missile, Scattershot                | Laser, Rapid Missile, Scattershot, Heavy Missile, charged lance                  |
-| `capital` | Laser, Multi-Laser, Rapid Missile | Laser, Multi-Laser, Rapid Missile, Heavy Missile, Scattershot | Laser, Rapid Missile, Heavy Missile, Phaser, Scattershot, ring burst, mine layer |
-
-Heavy Missile and Phaser hits are large, so an
-enemy Heavy Missile flies slowly and its Phaser shows a thin aim line for 0.4
-seconds before the beam fires. The aim line stays where it started, so Ada can
-move off it.
+An enemy Heavy Missile flies slowly. The interceptor's Phaser shows a thin aim
+line for 0.4 seconds before the beam fires. The aim line stays where it started,
+so Ada can move off it.
 
 | Enemy weapon  | Projectile speed | Notes                                               |
 | ------------- | ---------------: | --------------------------------------------------- |
@@ -545,7 +543,7 @@ Admiral Archie's flagship is a `capital` in his own design, the only crewed ship
 his fleet.
 
 - **Hull and parts:** 160 hull HP; command, two engines and 8 weapon mounts, each
-  hardpoint 8 HP. Its weapons come from the position 6 capital pool, as for any
+  hardpoint 8 HP. Its weapons follow the capital signature at position 6, as for any
   capital ([Enemy weapons](#enemy-weapons)). Its hull never drops below 1 HP, so
   it is beaten only by disabling.
 - **Movement:** `siege` at a quarter of its top speed, staying within 800 world
