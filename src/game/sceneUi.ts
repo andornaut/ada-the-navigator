@@ -887,12 +887,18 @@ export function buildScene(scene: UiContext): void {
     labels: {
       back: label("questBack"),
       development: label("galaxyInDevelopment"),
+      earthKicker: label("galaxyEarthKicker"),
+      earthTitle: label("galaxyEarthTitle"),
       home: label("homeButton"),
       jump: label("jump"),
+      jumpEarth: label("galaxyJumpEarth"),
+      jumpTo: label("galaxyJumpTo"),
       locked: label("galaxyLocked"),
       lockedAction: label("galaxyLockedAction"),
       number: label("galaxyNumber"),
       stay: label("stayHere"),
+      stayEarth: label("galaxyStayEarth"),
+      stayIn: label("galaxyStayIn"),
     },
     // In flight, the local map it opened from; at boarding, the Welcome back page.
     onClose: closeGalaxyMap,

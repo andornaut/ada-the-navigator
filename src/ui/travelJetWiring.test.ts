@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import data from "../../public/art/quantum-jump.json";
 import mainData from "../../public/art/ship-jets.json";
+import { CONTENT } from "../data/content.ts";
 import { LIGHT_FIELD } from "../game/lightField.ts";
 import { type QuantumJump, readQuantumJump } from "../game/quantumJump.ts";
 import { type JetGeometry, readEngineJets } from "../game/shipJets.ts";
@@ -20,6 +21,15 @@ vi.mock("./shipJetCanvas.ts", () => ({
 vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({ focusTarget: vi.fn() }));
 
 const main = readEngineJets(mainData)!;
+// The galaxy map's Earth and destination strings as the scene reads them from content.
+const destinationLabels = {
+  earthKicker: CONTENT.labels.galaxyEarthKicker!,
+  earthTitle: CONTENT.labels.galaxyEarthTitle!,
+  jumpEarth: CONTENT.labels.galaxyJumpEarth!,
+  jumpTo: CONTENT.labels.galaxyJumpTo!,
+  stayEarth: CONTENT.labels.galaxyStayEarth!,
+  stayIn: CONTENT.labels.galaxyStayIn!,
+};
 const display = { height: 64, width: 64 };
 const sheet: SheetArt = {
   ...display,
@@ -418,6 +428,7 @@ it("draws route thrust below the painted hull and hides it under reduced motion"
   let reduced = false;
   const options = {
     labels: {
+      ...destinationLabels,
       development: "",
       home: "",
       jump: "",
@@ -490,6 +501,7 @@ it.each([false, true])(
     const onEarth = vi.fn();
     const map = createGalaxyMap(fixture.host, {
       labels: {
+        ...destinationLabels,
         development: "",
         home: "Home",
         jump: "Jump",
@@ -528,6 +540,7 @@ it("registers native route actions once and releases selection callbacks on disp
     onClose = vi.fn();
   const map = createGalaxyMap(fixture.host, {
     labels: {
+      ...destinationLabels,
       development: "",
       home: "Earth",
       jump: "Jump",

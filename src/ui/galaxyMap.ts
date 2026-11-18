@@ -56,14 +56,26 @@ export interface GalaxyMapLabels {
   readonly back?: string;
   /** A placeholder galaxy's line under its flavour line. */
   readonly development: string;
+  /** The Earth panel's kicker. */
+  readonly earthKicker: string;
+  /** Earth's marker label and panel title. */
+  readonly earthTitle: string;
   readonly home: string;
   readonly jump: string;
+  /** The destination action on Earth when Ada is away from it. */
+  readonly jumpEarth: string;
+  /** "Jump to {galaxy}". */
+  readonly jumpTo: string;
   readonly locked: string;
   readonly lockedAction: string;
   /** "Galaxy {number}". */
   readonly number: string;
   /** Jump's label on the galaxy Ada is flying in, opened in flight. */
   readonly stay: string;
+  /** The destination action on Earth at boarding. */
+  readonly stayEarth: string;
+  /** "Stay in {galaxy}": the destination action on the galaxy Ada is flying in. */
+  readonly stayIn: string;
 }
 
 /** One route position's galaxy, in route order. */
@@ -132,23 +144,21 @@ export interface GalaxyMapOptions {
 
 export const EARTH_PANEL = {
   description: "Ada’s life on Earth. Time here stands still while she’s aboard the ship.",
-  kicker: "Home",
-  title: "Earth",
 } as const;
 
 export function destinationAction(
-  labels: Pick<GalaxyMapLabels, "lockedAction">,
+  labels: Pick<GalaxyMapLabels, "jumpEarth" | "jumpTo" | "lockedAction" | "stayEarth" | "stayIn">,
   earth: boolean,
   view: GalaxyMapView,
 ): string {
   if (earth) {
-    return view.atEarth ? "Stay on Earth" : `Jump to ${EARTH_PANEL.title}`;
+    return view.atEarth ? labels.stayEarth : labels.jumpEarth;
   }
   const galaxy = view.galaxies[view.panel - 1]!;
   if (!galaxy.unlocked) {
     return labels.lockedAction;
   }
-  return view.stay ? `Stay in ${galaxy.name}` : `Jump to ${galaxy.name}`;
+  return (view.stay ? labels.stayIn : labels.jumpTo).replace("{galaxy}", galaxy.name);
 }
 
 const { colors, label, marker, path, ship: SHIP } = GALAXY_MAP;
@@ -574,13 +584,13 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   const earth = markers[0]!.button.cloneNode(true) as HTMLButtonElement;
   earth.dataset.position = "earth";
   earth.dataset.earth = "";
-  earth.setAttribute("aria-label", EARTH_PANEL.title);
+  earth.setAttribute("aria-label", labels.earthTitle);
   earth.style.left = units(
     (GALAXY_MAP.centres[0]!.x + GALAXY_MAP.centres.at(-1)!.x) / 2 - GALAXY_MAP.press / 2,
   );
   earth.querySelector(".ada-route-disc")!.textContent = "";
   const earthName = markers[0]!.name.cloneNode(true) as HTMLElement;
-  earthName.textContent = EARTH_PANEL.title;
+  earthName.textContent = labels.earthTitle;
   earthName.style.left = units((GALAXY_MAP.centres[0]!.x + GALAXY_MAP.centres.at(-1)!.x) / 2);
   chart.append(earth, earthName);
   const jump = createButton(labels.jump, "primary");
@@ -742,12 +752,12 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     }
     jump.textContent = destinationAction(labels, viewingEarth, view);
     if (viewingEarth) {
-      number.textContent = EARTH_PANEL.kicker;
-      name.textContent = EARTH_PANEL.title;
+      number.textContent = labels.earthKicker;
+      name.textContent = labels.earthTitle;
       flavor.textContent = EARTH_PANEL.description;
       development.hidden = true;
       text.removeAttribute("data-locked");
-      screen.setAttribute("aria-label", EARTH_PANEL.title);
+      screen.setAttribute("aria-label", labels.earthTitle);
       setStoryScenePreview(art?.homeScene, art?.homePreview, shot);
       jump.classList.remove("ada-unavailable");
       jump.removeAttribute("aria-disabled");

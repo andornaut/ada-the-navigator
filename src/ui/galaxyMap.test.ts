@@ -14,12 +14,20 @@ it("leaves the galaxy selector unframed while retaining the information panel fr
   expect(panel).toContain("border-image:");
 });
 
+// The destination actions as the scene reads them from content.
+const labels = {
+  jumpEarth: CONTENT.labels.galaxyJumpEarth!,
+  jumpTo: CONTENT.labels.galaxyJumpTo!,
+  lockedAction: CONTENT.labels.galaxyLockedAction!,
+  stayEarth: CONTENT.labels.galaxyStayEarth!,
+  stayIn: CONTENT.labels.galaxyStayIn!,
+};
+
 it("names the selected destination and preserves current-location actions", async () => {
   const { EARTH_PANEL, destinationAction } = await import("./galaxyMap.ts");
   const galaxies = [
     { name: "Sunflower", unlocked: true },
   ] as unknown as import("./galaxyMap.ts").GalaxyMapView["galaxies"];
-  const labels = { lockedAction: CONTENT.labels.galaxyLockedAction! };
   const view = { flight: null, galaxies, panel: 1, ship: 1, stay: false } as const;
   expect(destinationAction(labels, true, view)).toBe("Jump to Earth");
   expect(destinationAction(labels, false, view)).toBe("Jump to Sunflower");
@@ -31,16 +39,15 @@ it("names the selected destination and preserves current-location actions", asyn
   ).toBe("Progress the story to unlock");
   expect(EARTH_PANEL).toEqual({
     description: "Ada’s life on Earth. Time here stands still while she’s aboard the ship.",
-    kicker: "Home",
-    title: "Earth",
   });
+  expect(CONTENT.labels.galaxyEarthKicker).toBe("Home");
+  expect(CONTENT.labels.galaxyEarthTitle).toBe("Earth");
 });
 
 it.each(["Sunflower", "Phantom"])(
   "does not name locked %s in either Jump or Stay state",
   async (name) => {
     const { destinationAction } = await import("./galaxyMap.ts");
-    const labels = { lockedAction: CONTENT.labels.galaxyLockedAction! };
     for (const stay of [false, true]) {
       const galaxies = [
         { name, unlocked: false },
