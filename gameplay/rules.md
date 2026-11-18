@@ -958,13 +958,13 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   at the object's pivot. A friendly blast damages enemies within its radius, never Ada. An enemy
   missile's blast damages Ada, never enemies.
 - Damage and hit points share one unit: 1 damage removes 1 HP, and a level 1
-  Laser shot deals 1 damage. Enemies fire the same weapons, always at level 1
-  with Ada's level 1 damage, blast, spread and reach, plus three enemy-only
-  weapons; each enemy
-  keeps its own cadence, and enemy projectiles fly at 0.6 times Ada's level 1
-  speed for the weapon (see [Ships](ships.md#enemy-weapons)). An enemy fires
-  only while it is inside the visible game area. An enemy Heavy
-  Missile hit (8) removes 8 HP from a base shield, so it fires rarely.
+  Laser shot deals 1 damage. Enemies fire the same six weapons at their
+  equipped weapon level, with that level's damage, blast, spread and reach,
+  plus three enemy-only weapons at level 1. Equipped levels, fire-rate shares
+  and projectile speeds are in [Ships](ships.md#enemy-weapons); enemy
+  projectiles fly at 0.6 times Ada's level 1 speed for the weapon. An enemy
+  fires only while it is inside the visible game area. An enemy Heavy Missile
+  hit removes 8, 12 or 16 HP at levels 1, 2 and 3, so it fires rarely.
 - Laser bolts travel at 500, 600 and 700 world units per second at weapon
   levels 1, 2 and 3; Multi-Laser bolts at 400, 500 and 600. Ada's bolts and Phaser use the same fire-time rounded coverage envelope,
   half-width 380 and half-height 260 at the 720 x 360 base view. The canonical
