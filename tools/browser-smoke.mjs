@@ -2823,8 +2823,9 @@ try {
   await missileButton.click();
   // The next switch waits after this one: an immediate second switch plays the refusal cue.
   await page.locator('[data-weapon="multiLaser"]').click();
+  // The kit's refusal cue marks the pressed icon red with its data-ui-refusal-red attribute.
   await page.waitForFunction(
-    () => document.querySelector('[data-weapon="multiLaser"]')?.style.color !== "",
+    () => document.querySelector('[data-weapon="multiLaser"]')?.hasAttribute("data-ui-refusal-red"),
     null,
     { timeout: 2000 },
   );
