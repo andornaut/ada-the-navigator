@@ -447,6 +447,35 @@ describe("shared Earth and space dialogue presentation", () => {
     ).toBeLessThanOrEqual(1);
     interaction.dispose();
   });
+  it("puts the primary rightmost in the controls row and focuses it", () => {
+    setup();
+    const parent = connectedParent();
+    fixtureActionRoot(parent);
+    const interaction = createInteractionCard(parent as unknown as HTMLElement, {
+      choose: vi.fn(),
+      close: vi.fn(),
+      skip: vi.fn(),
+    });
+    interaction.show(1, {
+      choices: [{ id: "continue", label: CONTENT.labels.next! }],
+      context: "deliveryComplete",
+      text: "",
+      title: "Rivet",
+    });
+    const navigation = parent
+      .all()
+      .find((node) => node.className.includes("ada-dialogue-controls"))!;
+    // Ask more, secondary, shares the row on the left; the primary is rightmost.
+    expect(navigation.children.map((node) => node.textContent)).toEqual([
+      "Ask more",
+      CONTENT.labels.next,
+    ]);
+    const primary = navigation.children.at(-1)!;
+    expect(primary.className.split(" ")).toContain("ada-primary");
+    expect(navigation.children[0]!.className.split(" ")).not.toContain("ada-primary");
+    expect(document.activeElement).toBe(primary);
+    interaction.dispose();
+  });
   it("hides Skip at material decisions and cannot bypass or select an outcome", () => {
     setup();
     const parent = connectedParent();

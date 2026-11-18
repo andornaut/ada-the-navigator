@@ -375,6 +375,16 @@ export function createInteractionCard(
   let returnFocus: HTMLElement | null = null;
   const state = new InteractionConversation();
   let signature = "";
+  // The controls row's primary button, if it has one.
+  const controlsPrimary = (): HTMLButtonElement | null =>
+    ([...card.controls.children] as HTMLButtonElement[]).find((node) =>
+      node.className.split(" ").includes("ada-primary"),
+    ) ?? null;
+  // Focus starts on the first choice, else the controls' primary, else their first.
+  const defaultFocus = (): HTMLButtonElement | null =>
+    card.choices.querySelector<HTMLButtonElement>("button") ??
+    controlsPrimary() ??
+    card.controls.querySelector<HTMLButtonElement>("button");
   const draw = (): void => {
     const line = state.line;
     card.showLine(line?.speaker, line?.text ?? "");
@@ -393,7 +403,12 @@ export function createInteractionCard(
           draw();
         }),
       );
-      (choice ? card.choices : card.controls).append(button);
+      if (choice) {
+        card.choices.append(button);
+      } else {
+        // The controls share a row with the primary rightmost: a secondary goes before it.
+        card.controls.insertBefore(button, primary ? null : controlsPrimary());
+      }
     };
     for (const [index, topic] of state.topics.entries()) {
       add(topic.label, () => state.topic(index), true);
@@ -421,10 +436,7 @@ export function createInteractionCard(
     }
     card.skip.hidden = state.atChoice;
     card.fit();
-    (
-      card.choices.querySelector<HTMLButtonElement>("button") ??
-      card.controls.querySelector<HTMLButtonElement>("button")
-    )?.focus({ preventScroll: true });
+    defaultFocus()?.focus({ preventScroll: true });
   };
   const skipAction = bindAction(card.skip, () => {
     if (state.atChoice) {
@@ -496,10 +508,7 @@ export function createInteractionCard(
         {
           backdrop: modal,
           close,
-          focus:
-            card.choices.querySelector<HTMLButtonElement>("button") ??
-            card.controls.querySelector<HTMLButtonElement>("button") ??
-            card.close,
+          focus: defaultFocus() ?? card.close,
           isolation: "dialog",
           restore: () => returnFocus,
         },
