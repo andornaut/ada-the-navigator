@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { SUPPLY_ITEMS } from "../data/activities.ts";
 import { CONTENT } from "../data/content.ts";
 import { carriedItemName } from "../data/itemNames.ts";
 import { questReward } from "../data/questRewards.ts";
@@ -99,6 +100,30 @@ describe("GameModel map quest detail integration", () => {
     expect(from?.location?.id).toBe("growers");
     expect(to).toEqual({ kind: "target", location: null, place: null });
     expect(CONTENT.labels.questExplore).toBe("Explore to locate");
+  });
+
+  it("names an unmapped supply source and destination by sentence name; both endpoints stay unlocated", () => {
+    const model = modelAt(1);
+    model.state.tasks[1] = {
+      carrying: true,
+      id: "supplyRun",
+      kind: "activity",
+      place: "workshop",
+      reward: 50,
+      target: { id: "station:receiver", x: 6000, y: 7000 },
+    };
+    model.state.progress[1].known = [];
+    model.state.progress[1].stations = [];
+    const entry = model.quests.find(({ line }) => line.kind === "job")!;
+    expect(entry.line.text).toBe(`Carry ${SUPPLY_ITEMS.workshop} to the station.`);
+    expect(entry.line.description).toBe(
+      `Carry ${SUPPLY_ITEMS.workshop} from the workshop to the station. ` +
+        "The station is waiting for these supplies.",
+    );
+    expect(questRoute(entry, model.map!.places)).toEqual([
+      { kind: "source", location: null, place: null },
+      { kind: "target", location: null, place: null },
+    ]);
   });
 
   it("uses current mining cargo and deposits through the public map getter", () => {

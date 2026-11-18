@@ -235,7 +235,7 @@ describe("accepted optional task facts", () => {
     model.state.progress[1].known.push(task.place);
     const view = questDetails(context(), snapshot(model, task)).jobDetails!;
     expect(view.description).toBe(
-      `${SUPPLY_ITEMS[task.place]}|known:${task.place}|${label("questExplore")}`,
+      `${SUPPLY_ITEMS[task.place]}|known:${task.place}|known:${task.target.id}`,
     );
     expect(view.reward).toBe(`${questReward(task.reward)} Stardust`);
     expect(view.destination).toBeNull();

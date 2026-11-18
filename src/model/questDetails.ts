@@ -41,8 +41,8 @@ export interface QuestDetailContext {
   readonly galaxy: GalaxyNumber;
   readonly label: (key: string) => string;
   /**
-   * Existing sentence-name resolver: for discovered locations, and for a delivery job's
-   * destination in its description whether or not the place is mapped.
+   * Existing sentence-name resolver: for discovered locations, and for the places a delivery or
+   * supply run description names whether or not they are mapped.
    */
   readonly placeLabel: (id: string) => string;
   readonly jobText: (job: Readonly<HeldJob>) => { readonly detail: string; readonly title: string };
@@ -84,8 +84,6 @@ export function questDetails(
     fill(context.label(key), tokens);
   const known = (id: string) => progress.known.includes(id) || progress.stations.includes(id);
   const visible = (id: string): string | null => (known(id) ? id : null);
-  const place = (id: string) =>
-    known(id) ? context.placeLabel(id) : context.label("questExplore");
   const count = (current: number, required: number) => text("questProgress", { current, required });
   const carrying = (item: string, carried: boolean) =>
     text(carried ? "questDeliver" : "questCollect", { item });
@@ -260,10 +258,11 @@ export function questDetails(
       const item = SUPPLY_ITEMS[task.place];
       if (item !== undefined) {
         jobDetails = {
+          // Sentence names, as in the objective; only the endpoint lines withhold unmapped places.
           description: text("questSupplyDetail", {
-            destination: task.target ? place(task.target.id) : context.label("questExplore"),
+            destination: context.placeLabel(task.target?.id ?? ""),
             item,
-            source: place(task.place),
+            source: context.placeLabel(task.place),
           }),
           destination: task.target ? visible(task.target.id) : null,
           nextStep: carrying(carriedItemName(item), task.carrying === true),
