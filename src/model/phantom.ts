@@ -1,4 +1,4 @@
-import jumpData from "../../public/art/quantum-jump.json";
+import jumpData from "../../public/art/quantum-jump.json" with { type: "json" };
 import { encounterTable, type EnemyArchetype } from "../data/enemyCatalog.ts";
 import {
   PHANTOM_COPY,

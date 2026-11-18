@@ -1,4 +1,4 @@
-import jumpData from "../../public/art/quantum-jump.json";
+import jumpData from "../../public/art/quantum-jump.json" with { type: "json" };
 import { CONTENT } from "../data/content.ts";
 import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP, PHANTOM_TUNING as T } from "../data/phantom.ts";
 import type { PhantomFlight } from "../model/phantom.ts";

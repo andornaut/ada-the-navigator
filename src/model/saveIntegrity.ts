@@ -1,4 +1,4 @@
-import packageInfo from "../../package.json";
+import packageInfo from "../../package.json" with { type: "json" };
 import { galaxyRoute } from "./game.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
 import { routeGuardEvidence } from "./routeGuardEvidence.ts";
