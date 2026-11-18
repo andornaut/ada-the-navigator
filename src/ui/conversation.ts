@@ -1,3 +1,5 @@
+import type { Rect } from "@andornaut/game-kit/runtime/rect";
+
 import { castFrames, castSheet, SPEAKER_CAST } from "../data/cast.ts";
 import { CONTENT } from "../data/content.ts";
 import { CONTROL_WORDS } from "../data/controlWords.ts";
@@ -16,9 +18,11 @@ export {
   TAB_COLOURS,
 } from "./dialoguePortraits.ts";
 import { controlHelpText, createControlHelp } from "./controlHelp.ts";
+import { CARD_CLOSE } from "./layout/cardFrame.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
-import { font, units, VIEW_HOST_ID } from "./layout/css.ts";
+import { font, fromHudEdge, units, VIEW_HOST_ID } from "./layout/css.ts";
+import { hudButtonTarget, STORY_SKIP } from "./layout/playView.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createButton, FOCUS_STYLE } from "./modal.ts";
 import { CONVERSATION_SLOT, PANEL_BACKGROUND } from "./notice.ts";
@@ -84,7 +88,44 @@ const TAB_RULES = Object.entries(TAB_COLOURS)
   )
   .join("");
 
-export const INTERACTION_STYLE = DIALOGUE_PANEL_STYLE;
+/**
+ * The Interaction card's HUD row (art/layout.md "Storybook page"): the close X takes the story
+ * page's Settings slot, its press area the Settings target and its face centred in it on the HUD
+ * row's centre line, and Skip keeps its place beside Settings. Rects are relative to the HUD
+ * rect's top-right corner, x growing rightward; skipRight is Skip's offset in from its right.
+ */
+export function interactionHudRow(): {
+  readonly close: Rect;
+  readonly closeFace: Rect;
+  readonly skipRight: number;
+} {
+  const close = hudButtonTarget(0);
+  const { height, width } = CARD_CLOSE.art;
+  return {
+    close,
+    closeFace: {
+      height,
+      width,
+      x: close.x + (close.width - width) / 2,
+      y: close.y + (close.height - height) / 2,
+    },
+    skipRight: STORY_SKIP.right.besideSettings,
+  };
+}
+
+const INTERACTION_ROW = interactionHudRow();
+
+export const INTERACTION_STYLE = `${DIALOGUE_PANEL_STYLE}
+.ada-controls .ada-interaction-modal .ada-dialogue-frame > .ada-close{
+  top:${fromHudEdge("top", INTERACTION_ROW.close.y)};
+  right:${fromHudEdge("right", -(INTERACTION_ROW.close.x + INTERACTION_ROW.close.width))};
+  width:${units(INTERACTION_ROW.close.width)};
+  height:${units(INTERACTION_ROW.close.height)}
+}
+.ada-controls .ada-interaction-modal .ada-dialogue-frame:has(> .ada-close:not([hidden])) > .ada-story-skip{
+  right:${fromHudEdge("right", INTERACTION_ROW.skipRight)}
+}
+`;
 
 export const CONVERSATION_STYLE = `
 .ada-conversation{${CONVERSATION_SLOT};

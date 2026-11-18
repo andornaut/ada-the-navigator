@@ -6,16 +6,20 @@ import { CAST, castSheet, SPEAKER_CAST } from "../data/cast.ts";
 import { SPEAKERS } from "../data/conversations.ts";
 import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
 import { GALAXY_ID } from "../data/galaxies.ts";
+import { TEXT_BUTTON } from "../data/layout.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_MANIFESTS } from "../testing/publicArt.ts";
 import {
   COMPACT_PORTRAITS,
   CONVERSATION_STYLE,
+  INTERACTION_STYLE,
+  interactionHudRow,
   portraitFrame,
   SPEAKING_FRAME_MS,
   TAB_COLOURS,
 } from "./conversation.ts";
-import { units } from "./layout/css.ts";
+import { fromHudEdge, units } from "./layout/css.ts";
+import { hudRect, logicalView, NO_INSETS, STORY_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
 import { BOX_OCCUPANT, boxOccupant, NOTICE_STYLE } from "./notice.ts";
 
 // The box's rules, by selector, from its stylesheet.
@@ -299,5 +303,54 @@ describe("notice style", () => {
     expect(shared?.[1]).toContain("pointer-events:none");
     expect(shared?.[1]).toContain(`padding:0${squash(units(8))}`);
     expect(shared?.[1]).toContain(`height:${squash(units(60))}`);
+  });
+});
+
+describe("Interaction card HUD row", () => {
+  // A rect relative to the HUD rect's top-right corner, as view x0..x1 and y0..y1.
+  const inView = (
+    hud: { x: number; y: number; width: number },
+    rect: { x: number; y: number; width: number; height: number },
+  ) => [
+    hud.x + hud.width + rect.x,
+    hud.x + hud.width + rect.x + rect.width,
+    hud.y + rect.y,
+    hud.y + rect.y + rect.height,
+  ];
+
+  it("puts the close X in the Settings slot and Skip beside it at 1280x720", () => {
+    const hud = hudRect(NO_INSETS, logicalView({ height: 720, width: 1280 }));
+    const { close, closeFace, skipRight } = interactionHudRow();
+    expect(inView(hud, close)).toEqual([667.5, 715.5, 4.5, 52.5]);
+    expect(inView(hud, closeFace)).toEqual([679.5, 703.5, 16.5, 40.5]);
+    expect(skipRight).toBe(STORY_SKIP.right.besideSettings);
+    const skip = [
+      hud.x + hud.width - skipRight - TEXT_BUTTON.compactWidth,
+      hud.x + hud.width - skipRight,
+      hud.y + STORY_SKIP.top,
+      hud.y + STORY_SKIP.top + TEXT_BUTTON.compactHeight,
+    ];
+    // Beside Settings: 57 in from the HUD rect's right (708), so its face ends at 651.
+    expect(skip).toEqual([579, 651, 14.5, 42.5]);
+    // The press areas never overlap, and both end above the panel's top cap.
+    expect(skip[1]).toBeLessThanOrEqual(inView(hud, close)[0]!);
+    expect(Math.max(skip[3]!, inView(hud, close)[3]!)).toBeLessThanOrEqual(hud.y + STORY_PANEL_TOP);
+  });
+
+  it("places the X and moves Skip beside it through the Interaction card's styles", () => {
+    const { close, skipRight } = interactionHudRow();
+    expect(INTERACTION_STYLE).toContain(
+      `.ada-interaction-modal .ada-dialogue-frame > .ada-close{
+  top:${fromHudEdge("top", close.y)};
+  right:${fromHudEdge("right", -(close.x + close.width))};
+  width:${units(close.width)};
+  height:${units(close.height)}
+}`,
+    );
+    expect(INTERACTION_STYLE).toContain(
+      `.ada-dialogue-frame:has(> .ada-close:not([hidden])) > .ada-story-skip{
+  right:${fromHudEdge("right", skipRight)}
+}`,
+    );
   });
 });
