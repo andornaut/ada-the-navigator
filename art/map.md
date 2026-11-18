@@ -54,8 +54,8 @@ galactic center.". Strings are Gameplay's (`gameplay/player-copy.md`).
   rule: 62.75 at the 720 base, 93.75 with phone insets. Without the pause
   button the header's left is the page rect's left. Top: the page rect's top.
 - Row: every part centred on the 36 row. One equal gap `g` spans both outer
-  edges and each pair of neighbouring parts (name, divider, percent, pips): 5
-  gaps with pips, 4 without (`mapHeaderGeometry`). `g` is at least
+  edges and each pair of neighbouring parts (name, divider, percent, pips), so
+  5 gaps (`mapHeaderGeometry`). `g` is at least
   `SPACING.gap` and grows so the header is at least the note plus
   `2 * padding` wide. Measure ink, not line boxes.
 - Note: one line, starting `padding` in from the header's left. It never
