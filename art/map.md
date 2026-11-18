@@ -21,51 +21,54 @@ Every part anchors to the page rect, `safeRect(insets, SPACING.pageInset, view)`
 base it spans 16 to 704 across and 16 to 344 down; with phone insets (left and
 right 43, bottom 19) 43 to 677 and 16 to 341.
 
-| Part   | Anchor                                                                                                                    |
-| ------ | ------------------------------------------------------------------------------------------------------------------------- |
-| Field  | The whole logical view, in the galaxy's `background` with the fog over it                                                 |
-| Header | Left and top on the page rect's top-left corner (`mapRowTop`)                                                             |
-| Tools  | One row of three `HUD_BUTTON` targets, the last target's right and every target's top on the page rect's top-right corner |
-| Footer | Quests, Galaxies, then Close, the last's right and every button's bottom on the page rect's bottom-right corner           |
-| Panel  | Left and bottom on the page rect's bottom-left corner                                                                     |
-| Fit    | The region left for the map: see [Projection and fit](#projection-and-fit)                                                |
-| Quests | A modal card over the map: see [Quests modal](#quests-modal)                                                              |
+| Part   | Anchor                                                                                                                        |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| Field  | The whole logical view, in the galaxy's `background` with the fog over it                                                     |
+| Header | Top on the page rect's top; left `SPACING.gap` right of the pause press area while the pause button shows, as the status pill |
+| Tools  | One row of three `HUD_BUTTON` targets, the last target's right and every target's top on the page rect's top-right corner     |
+| Footer | Quests, Galaxies, then Close, the last's right and every button's bottom on the page rect's bottom-right corner               |
+| Panel  | Left and bottom on the page rect's bottom-left corner                                                                         |
+| Fit    | The region left for the map: see [Projection and fit](#projection-and-fit)                                                    |
+| Quests | A modal card over the map: see [Quests modal](#quests-modal)                                                                  |
 
 ### Header
 
-One ink panel holding, left to right: the galaxy name (`TYPE.heading`, white),
-a divider, then a column of one pip per landmark over "{percent}% mapped"
-(`TYPE.label`, cream). Strings are Gameplay's: the galaxy names and
-"{percent}% mapped" (`gameplay/player-copy.md`).
+One ink panel in two lines. The row holds, left to right: the galaxy name
+(`TYPE.heading`, white), a divider, "{percent}% mapped" (`TYPE.label`, cream),
+then one pip per landmark. Under it, the survey note `mapSurveyInfo`
+(`TYPE.body`, supporting `#b8b3c9`), "Mapping progress only tracks the
+galactic center.". Strings are Gameplay's (`gameplay/player-copy.md`).
 
-| Token                          | Value | Rule                                                                                                   |
-| ------------------------------ | ----- | ------------------------------------------------------------------------------------------------------ |
-| `MAP_SCREEN.header.height`     | 64    | The name row (`rowHeight` 36: the 28 heading line plus `2 * SPACING.rowGap`), a 20 line, `SPACING.gap` |
-| `MAP_SCREEN.header.radius`     | 4     | As `PILL`                                                                                              |
-| `MAP_SCREEN.header.alpha`      | 0.65  | Ink `#181425` panel, the HUD panel alpha                                                               |
-| `MAP_SCREEN.header.padding`    | 16    | At each end                                                                                            |
-| `MAP_SCREEN.header.nameTop`    | 10    | The name's 28 line box top, centring it in the row                                                     |
-| `MAP_SCREEN.header.dividerGap` | 12    | Name, 12, a 1x16 divider `#57536e` centred on the row, 12, the column                                  |
-| `MAP_SCREEN.header.stackTop`   | 9     | The column's top: `(48 - 30) / 2` for the 6 pips, the gap and the 20 line; to implement                |
-| `MAP_SCREEN.header.stackGap`   | 4     | Pips to the percent's line box (`SPACING.rowGap`), which tops at 19; to implement                      |
-| `MAP_SCREEN.header.labelTop`   | 14    | The percent's 20 line box top when the galaxy has no landmarks                                         |
-| `MAP_SCREEN.header.pip`        | 6     | Pip diameter                                                                                           |
-| `MAP_SCREEN.header.pipPitch`   | 8     | Pip centre to centre (2 apart)                                                                         |
+| Token                        | Value | Rule                                                                                                   |
+| ---------------------------- | ----- | ------------------------------------------------------------------------------------------------------ |
+| `MAP_SCREEN.header.height`   | 64    | The name row (`rowHeight` 36: the 28 heading line plus `2 * SPACING.rowGap`), a 20 line, `SPACING.gap` |
+| `MAP_SCREEN.header.radius`   | 4     | As `PILL`                                                                                              |
+| `MAP_SCREEN.header.alpha`    | 0.65  | Ink `#181425` panel, the HUD panel alpha                                                               |
+| `MAP_SCREEN.header.padding`  | 16    | The note's inset at each end                                                                           |
+| `MAP_SCREEN.header.divider`  | 1x16  | Supporting `#b8b3c9`, centred on the row                                                               |
+| `MAP_SCREEN.header.pip`      | 6     | Pip diameter                                                                                           |
+| `MAP_SCREEN.header.pipPitch` | 8     | Pip centre to centre (2 apart)                                                                         |
 
-- The pips and the percent both start at the column's left. With no
-  landmarks the pip row is absent and the percent centres on the row
-  (`labelTop`).
-- Width: `2 * padding + name + 12 + 1 + 12 + column`, where `column` is
-  `max(percent, 8 * n - 2)` for `n` landmarks. The widest is 279.8:
-  "Sunflower" (116.0), "100% mapped" (106.8) and 12 pips (94).
+- Left: the pause press area's right plus `SPACING.gap`, the status pill's
+  rule: 62.75 at the 720 base, 93.75 with phone insets. Without the pause
+  button the header's left is the page rect's left. Top: the page rect's top.
+- Row: every part centred on the 36 row. One equal gap `g` spans both outer
+  edges and each pair of neighbouring parts (name, divider, percent, pips): 5
+  gaps with pips, 4 without (`mapHeaderGeometry`). `g` is at least
+  `SPACING.gap` and grows so the header is at least the note plus
+  `2 * padding` wide. Measure ink, not line boxes.
+- Note: one line, starting `padding` in from the header's left. It never
+  passes the header's right inset: at about 346 wide it sets the header to
+  about 378.
 - A charted landmark's pip is a filled cream `#ead4aa` disc. An uncharted
   landmark's pip is a 1 px `#b8b3c9` ring of the same diameter, hollow, so the
   two read apart by shape as well as colour.
 - The header's width is capped at `mapHeaderCap`:
-  `min(view width / 2, toolColumnLeft - SPACING.gap - page left)`, 360 at the
-  720 base and with phone insets (the second term is 518 and 464). A header
-  wider than the cap keeps its text widths and scales the pip row to fit
-  (`containedMapHeader`).
+  `toolColumnLeft - SPACING.gap - header left`, 471.25 at the 720 base
+  (`542 - 8 - 62.75`) and 413.25 with phone insets (`515 - 8 - 93.75`), so it
+  always ends `SPACING.gap` left of the tools and clears the pause disc. A
+  header wider than the cap keeps its text widths and scales the pip row to
+  fit (`containedMapHeader`).
 - The fit region's top is `SPACING.gap` below the header's 64.
 - The header takes no input. Its accessible text is the name and the percent;
   the pips are decorative.
@@ -212,8 +215,9 @@ unavailable.
   width `clamp(floor, maxWidth, text + 32)`.
 - Reason-only panel, in danger with nothing selected: the danger line alone,
   left-aligned, height `16 + 20 + 16` = 52, width
-  `clamp(floor, maxWidth, reason + 32)`. With no places it follows the empty
-  note, `reasonGap` apart: 80 high.
+  `clamp(floor, maxWidth, reason + 32)`. With no places the empty note comes
+  first and the danger line follows it, `reasonGap` apart, both centred: 80
+  high.
 - Travel here unavailable: the disabled face, focusable; activation plays the
   refusal cue ([Controls](controls.md#buttons)). The reason is "Unavailable
   while you are in danger." or "Unavailable while towing." (Gameplay). One
