@@ -1,9 +1,11 @@
 # Cheats
 
-Gameplay owns the browser-tab cheats in [cheats](../../gameplay/cheats.md).
+Ada opens the browser-tab cheats through Settings. The approved Run action, Grant all weapons, adds every weapon to the current flight's loadout only, without changing permanent ownership, levels or Stardust.
 
 Reference: [cheats](../../gameplay/cheats.md).
 
 ## Work items
 
-No work items yet.
+| ID  | Title                                              | Link                                                         |
+| --- | -------------------------------------------------- | ------------------------------------------------------------ |
+| TBD | Define the browser-only cheats and run-only grants | [pending-define-cheats.md](../work/pending-define-cheats.md) |

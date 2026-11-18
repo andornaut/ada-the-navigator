@@ -1,0 +1,30 @@
+---
+id: TBD
+title: Mark off-screen targets at the game area's edge
+status: done
+approved: user, 2026-11-12 (inferred from handoff history)
+design: flight-rules
+related: [pending-unify-target-markers]
+---
+
+## Scope
+
+Space has no in-world name labels. Seen off-screen enemies, heavies, stations and route guards get
+edge markers 1 logical px inside the game area, a blocking guard is cued by Astra, and indicators
+show only within 3000 world units.
+
+## Criteria
+
+- `gameplay/rules.md` states the rule on `main`.
+- The companion docs it touched (`gameplay/economy.md`, `gameplay/player-copy.md`,
+  `gameplay/prototype-copy.md`, `gameplay/prototype.md`) agree with it.
+
+## Decisions
+
+- Recorded as the current approved rule; values marked provisional stay tunable.
+
+## Outcome
+
+Landed in `54b5f47f`, `39457d65`, `dd6e4222`, `9779a6c2`, `ae44b613`, `9839a2e4`, `5074649c`
+(2026-11-11 to 2026-11-12). Main paths: `gameplay/economy.md`, `gameplay/player-copy.md`,
+`gameplay/prototype-copy.md`, `gameplay/prototype.md`, `gameplay/rules.md`.

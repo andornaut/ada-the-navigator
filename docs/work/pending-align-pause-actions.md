@@ -1,0 +1,29 @@
+---
+id: TBD
+title: Align the shared Pause and Menu actions
+status: done
+approved: unrecorded (Gameplay-shipped, 2026-11-13)
+design: flight-rules
+related: []
+supersedes: pending-define-back-navigation
+---
+
+## Scope
+
+Pause lists Quests, and an equal-sized Resume sits beside Back to title. Map is guarded by model
+permission, modals stack by the shared rule, Ship navigation is contextual, and Pause and Menu open
+from activity while keeping nested callers.
+
+## Criteria
+
+- `gameplay/rules.md` states the rule on `main`.
+- The companion docs it touched (`gameplay/player-copy.md`) agree with it.
+
+## Decisions
+
+- Replaces pending-define-back-navigation: Resume placement.
+
+## Outcome
+
+Landed in `e7e483d3`, `79005ef5`, `d05076ec`, `8002f5c3`, `cad47581` (2026-11-13 to 2026-11-14).
+Main paths: `gameplay/player-copy.md`, `gameplay/rules.md`.

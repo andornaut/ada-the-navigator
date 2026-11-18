@@ -1,0 +1,32 @@
+---
+id: TBD
+title: Define the status pill, item notices and shield bar
+status: done
+approved: user, 2026-11-11 (inferred from handoff history)
+design: flight-rules
+related: [pending-define-shield-recharge]
+---
+
+## Scope
+
+The top-left pill shows Stardust, ore and carried items in at most five characters, with gain ticks.
+Item notices read "+ {item}" and merge repeats. The shield is a bottom-centre bar whose length grows
+with capacity, low shield is signalled without relying on colour, and weapon icons and jets take the
+upgrade level colour.
+
+## Criteria
+
+- `gameplay/rules.md` states the rule on `main`.
+- The companion docs it touched (`gameplay/economy.md`, `gameplay/player-copy.md`,
+  `gameplay/quests.md`, `gameplay/ships.md`) agree with it.
+
+## Decisions
+
+- Recorded as the current approved rule; values marked provisional stay tunable.
+
+## Outcome
+
+Landed in `9bbbd107`, `c9416edb`, `8da8ac28`, `e60948d4`, `e3fd5083`, `d23941d6`, `7e0db8e6`,
+`32bc1cc8`, `11374c8b`, `ba96a485`, `85750979`, `c87047e4`, `8d6fd5fe` (2026-11-11 to 2026-11-12).
+Main paths: `gameplay/economy.md`, `gameplay/player-copy.md`, `gameplay/quests.md`,
+`gameplay/rules.md`, `gameplay/ships.md`.
