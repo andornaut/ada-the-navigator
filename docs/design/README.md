@@ -1,0 +1,18 @@
+# Design
+
+Each area has a short design summary and an index of its work items. The topic docs in
+[docs/](..), [src/](../../src/README.md), [art/](../../art/README.md) and
+[gameplay/](../../gameplay/README.md) remain the detailed reference. Work items and their
+convention are in [docs/work/](../work/README.md).
+
+| Area                                      | Covers                                                                                            | Topic docs                                                                                                                                                         |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [tooling](tooling.md)                     | Checks, the container profile, CI, the build, download size, deployment and the docs              | [checks](../checks.md), [container adoption](../container-adoption.md), [download size](../download-size.md), [README](../../README.md#developing)                 |
+| [ui](ui.md)                               | The HTML interface, typed layout trees, modals, inventory, completion indicators and phone layout | [UI layout tree](../ui-layout-tree.md), [ship screen](../ship-screen.md), [completion indicators](../completion-indicators.md), [phone](../../src/README.md#phone) |
+| [art](art.md)                             | Art rules, assets, layout specifications and the pipeline                                         | [art](../../art/README.md)                                                                                                                                         |
+| [flight-rules](flight-rules.md)           | Version one stories, mechanics, presentation and persistence rules                                | [rules](../../gameplay/rules.md)                                                                                                                                   |
+| [economy](economy.md)                     | Stardust, stations, prices and pacing                                                             | [economy](../../gameplay/economy.md)                                                                                                                               |
+| [quests](quests.md)                       | Station jobs, surveyed landmarks, repeatable activities and achievements                          | [quests](../../gameplay/quests.md)                                                                                                                                 |
+| [ships-and-enemies](ships-and-enemies.md) | Ship physics, enemy rosters and the enemy rule interface                                          | [ships](../../gameplay/ships.md), [enemies](../../gameplay/enemies.md)                                                                                             |
+| [dialogue-and-copy](dialogue-and-copy.md) | The premise, characters, story arc, dialogue and player text                                      | [player copy](../../gameplay/player-copy.md), [design](../../gameplay/design.md)                                                                                   |
+| [cheats](cheats.md)                       | The browser-tab cheats                                                                            | [cheats](../../gameplay/cheats.md)                                                                                                                                 |
