@@ -1072,7 +1072,8 @@ Constants: `SHOP_ROW` and the job list's style in `src/ui/station.ts`.
 
 At 720x360 the Jobs card is Large, 688 (634 with phone insets); the widest
 Sunflower row, "Deliver spare parts to the salvagers' yard" with a two-digit
-reward, is about 495 wide and fits; three offers fit without scrolling. At 844x390 with phone
+reward, is about 495 wide; the job list keeps that row width, centred in the
+card. Three offers fit without scrolling. At 844x390 with phone
 insets a held job, three busy offers and the refusal line exceed the 325
 available, and the job list scrolls.
 

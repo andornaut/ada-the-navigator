@@ -258,14 +258,14 @@ do.".
   insets, 688 at the 720 base); a button wider than the inner width wraps.
 - Height: `58 + lines + gaps + 16`. Every state fits the 325 available.
 
-| State at 720x360, phone insets                    | Lines                           | Card                             |
-| ------------------------------------------------- | ------------------------------- | -------------------------------- |
-| Story target mapped, no job, a station discovered | Button 48, plain 20             | 634 x 150                        |
-| Story and job targets mapped                      | Two buttons, 48 each            | 634 x 178                        |
-| Story target unmapped, job target mapped          | Ringed plain, button            | 634 x 150, 170 if the line wraps |
-| A job line wider than the 602 inner width         | Button 48, button wrapped to 68 | 634 x 198                        |
-| Story complete, no job, a station discovered      | Two plain lines                 | 634 x 122                        |
-| No lines                                          | Empty note                      | 634 x 94                         |
+| State at 720x360, phone insets                    | Lines                           | Card      |
+| ------------------------------------------------- | ------------------------------- | --------- |
+| Story target mapped, no job, a station discovered | Button 48, plain 20             | 634 x 150 |
+| Story and job targets mapped                      | Two buttons, 48 each            | 634 x 178 |
+| Story target unmapped, job target mapped          | Ringed plain, button            | 634 x 150 |
+| A job line wider than the 602 inner width         | Button 48, button wrapped to 68 | 634 x 198 |
+| Story complete, no job, a station discovered      | Two plain lines                 | 634 x 122 |
+| No lines                                          | Empty note                      | 634 x 94  |
 
 - Press: a mapped line closes the modal, pans so its chip sits at the fit
   region's centre at the current scale (clamped by the pan limit), applies the
