@@ -37,3 +37,4 @@ Reference: [checks](../checks.md), [container adoption](../container-adoption.md
 | ada-0276 | Pin delivery-kit 5.0.1 and coordination-kit 1.0.1                         | [ada-0276.md](../work/ada-0276.md) |
 | ada-0288 | Pin game-kit 0.58.1 so Android Chrome installs complete                   | [ada-0288.md](../work/ada-0288.md) |
 | ada-0293 | Pin game-kit 0.58.2, delivery-kit 5.0.2 and coordination-kit 1.0.2        | [ada-0293.md](../work/ada-0293.md) |
+| ada-0294 | Pin delivery-kit 6.0.0 and coordination-kit 1.2.0                         | [ada-0294.md](../work/ada-0294.md) |
