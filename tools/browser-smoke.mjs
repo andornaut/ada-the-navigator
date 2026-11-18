@@ -2513,6 +2513,47 @@ try {
       "panel, left of the footer, and the selected target pans clear of the panel's " +
       "rendered height",
   );
+  // The survey pips at 35% surveyed (art/map.md "Header"): three cream discs, then seven rings.
+  // Galaxy one's survey counts about 53 places, so its percent steps 33, 35, 37 and never reads 34;
+  // 35 is the first at or above it. The safe fixture charts what lies in range of Ada first, so
+  // the flight charts nothing more before the map opens, then charts survey landmarks in catalog
+  // order until the header reads 35.
+  const [{ chartLandmarks, landmarkSites }, { withinChartingRadius }] = await Promise.all([
+    import(new URL("../src/model/landmarks.ts", import.meta.url)),
+    import(new URL("../src/model/map.ts", import.meta.url)),
+  ]);
+  const pipsInput = relaunch(CONTENT, safeSerialized);
+  const pipsGalaxy = pipsInput.state.flight.galaxy;
+  const pipsProgress = pipsInput.state.progress[pipsGalaxy];
+  chartLandmarks(pipsGalaxy, pipsProgress, pipsInput.state.flight.player);
+  for (const site of landmarkSites(pipsGalaxy).filter(withinChartingRadius)) {
+    if (pipsInput.map.mapped >= 35) {
+      break;
+    }
+    if (!pipsProgress.charted.includes(site.id)) {
+      pipsProgress.charted.push(site.id);
+    }
+  }
+  assert.equal(pipsInput.map.mapped, 35, "The pip fixture's survey reads 35%");
+  await seedOnce(pipsInput.save(), "ada-browser.map-pips-35.v1");
+  await openPause();
+  await page.locator('[data-action="pause-map"]').click();
+  await page.locator('[data-dialog="map"]').waitFor({ state: "visible" });
+  await proofsAt("map-pips-35", checkMapHeader);
+  assert.deepEqual(
+    ["map-pips-35-1280x720", "map-pips-35-720x360-insets"].map((name) => mapHeaders[name].pips),
+    ["map-pips-35-1280x720", "map-pips-35-720x360-insets"].map((name) => ({
+      ...mapHeaders[name].pips,
+      filled: 3,
+      percent: 35,
+    })),
+    "At 35% surveyed the header fills three pips and leaves seven rings",
+  );
+  save("map-header-proof.json", mapHeaders);
+  events.checks.push(
+    "At 35% surveyed the map header shows three cream pips and seven rings at 1280x720 and at " +
+      "720x360 with phone insets",
+  );
   // Back to title from a flight in danger: the start screen with the flight kept and saved, no
   // sleep scene; Continue resumes that flight exactly (rules.md "What each event keeps").
   await seedOnce(dangerInput.save(), "ada-browser.danger-title.v1");
