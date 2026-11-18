@@ -107,6 +107,8 @@ export async function prepareGame(
       scene.enabled = undefined;
       refreshScene(scene);
       scene.controls.reset();
+      // The first screen rendered while the play area was inert, so its default focus missed.
+      scene.shell.focusUnfocusedDefault();
       gameShown();
     },
   );

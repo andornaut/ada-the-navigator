@@ -225,6 +225,34 @@ describe("title Continue permission", () => {
     expect(model.state.flight).toBeNull();
   });
 
+  it("gives Continue its default focus once the page shows, where the first focus missed", () => {
+    const { buttons, model, shell } = setup();
+    // The boot reveal holds the play area inert, so the render's focus call does not land.
+    shell.render(model.state, "start", true);
+    const resume = buttons().find((node) => node.dataset.action === "continue")!;
+    expect(focusTarget).toHaveBeenCalledTimes(1);
+    shell.focusUnfocusedDefault();
+    expect(focusTarget).toHaveBeenCalledTimes(2);
+    expect(focusTarget).toHaveBeenLastCalledWith(resume);
+  });
+
+  it("leaves focus where a player or card has put it", () => {
+    const { buttons, model, shell } = setup();
+    shell.render(model.state, "start", true);
+    vi.mocked(focusTarget).mockClear();
+    (document as unknown as { activeElement: unknown }).activeElement = buttons()[0];
+    shell.focusUnfocusedDefault();
+    expect(focusTarget).not.toHaveBeenCalled();
+  });
+
+  it("gives no default focus where the shown screen takes none", () => {
+    const { model, shell } = setup();
+    shell.render(model.state, "space");
+    vi.mocked(focusTarget).mockClear();
+    shell.focusUnfocusedDefault();
+    expect(focusTarget).not.toHaveBeenCalled();
+  });
+
   it("redraws when only Continue permission changes and preserves unchanged controls", () => {
     const { buttons, ids, model, shell } = setup();
     shell.render(model.state, "start", false);

@@ -45,6 +45,8 @@ export class StoryShell {
   private startScreen: ReturnType<typeof createStartScreen> | undefined;
   // Art's title art, once the scene has read it; the start screen draws without it until then.
   private titleArt: TitleScreenArt | null = null;
+  // Whether the shown screen takes a default focus: the start screen or a dialogue.
+  private focusesDefault = false;
 
   private readonly actions: ShellActions;
 
@@ -105,6 +107,7 @@ export class StoryShell {
       return;
     }
     this.signature = nextSignature;
+    this.focusesDefault = screen === "start" || Boolean(state.dialogue);
     const active = document.activeElement as HTMLElement | null;
     const focusedAction = active?.dataset.action;
     const focusedChoice = active?.dataset.choice;
@@ -209,14 +212,31 @@ export class StoryShell {
     }
     if (restore) {
       focusTarget(restore);
-    } else if (screen === "start" || state.dialogue) {
-      // Focus starts on the primary action, else the first.
-      const first =
-        shown.querySelector<HTMLButtonElement>("button.ada-primary:not([hidden])") ??
-        shown.querySelector<HTMLButtonElement>("button");
-      if (first) {
-        focusTarget(first);
-      }
+    } else if (this.focusesDefault) {
+      this.focusShownDefault();
+    }
+  }
+
+  /**
+   * Gives the shown start screen or dialogue its default focus where focus has fallen to the page.
+   * A focus call while the play area is inert, as it is until the boot reveal shows the first
+   * screen, does not land, and nothing else moves focus there afterwards.
+   */
+  focusUnfocusedDefault(): void {
+    const active = document.activeElement;
+    if (this.focusesDefault && (active === null || active === document.body)) {
+      this.focusShownDefault();
+    }
+  }
+
+  // Focus starts on the primary action, else the first.
+  private focusShownDefault(): void {
+    const shown = this.startScreen?.root ?? this.panel;
+    const first =
+      shown.querySelector<HTMLButtonElement>("button.ada-primary:not([hidden])") ??
+      shown.querySelector<HTMLButtonElement>("button");
+    if (first) {
+      focusTarget(first);
     }
   }
 
