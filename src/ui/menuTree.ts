@@ -29,10 +29,34 @@ export type MenuLayoutSchema = AdaLayoutSchema<MenuControlAction> & {
   menu: { props: AdaCardProps<MenuControlAction>; slots: "actions" };
 };
 
-/** Native card/actions slots retain the approved stack geometry; callers own navigation. */
+type MenuButton = Extract<ComponentNode<MenuLayoutSchema>, { component: "button" }>;
+
+function menuButton(
+  key: string,
+  actionId: MenuControlAction,
+  label: string,
+  role: "primary" | "secondary",
+): MenuButton {
+  return { component: "button", key, kind: "component", props: { actionId, label, role } };
+}
+
+/**
+ * Native card/actions slots retain the approved stack geometry; callers own navigation. The
+ * buttons sort by label (Exit among them on Start where it shows), then Back to title outside
+ * Start, then primary Close.
+ */
 export function menuTree(
   data: MenuTreeData,
 ): Extract<ComponentNode<MenuLayoutSchema>, { component: "menu" }> {
+  const actions = menuActions(data.context);
+  const sorted = [
+    ...actions
+      .filter((action) => action !== "backToTitle")
+      .map((action) => menuButton(action, `menu-${action}`, data.labels[action], "secondary")),
+    ...(data.context === "start" && data.exitLabel !== undefined
+      ? [menuButton("exit", "menu-exit", data.exitLabel, "secondary")]
+      : []),
+  ].sort((a, b) => a.props.label.localeCompare(b.props.label));
   return {
     component: "menu",
     key: "menu",
@@ -46,36 +70,11 @@ export function menuTree(
     },
     slots: {
       actions: [
-        ...menuActions(data.context).map((action) => ({
-          component: "button" as const,
-          key: action,
-          kind: "component" as const,
-          props: {
-            actionId: `menu-${action}` as const,
-            label: data.labels[action],
-            role: "secondary" as const,
-          },
-        })),
-        ...(data.context === "start" && data.exitLabel !== undefined
-          ? [
-              {
-                component: "button" as const,
-                key: "exit",
-                kind: "component" as const,
-                props: {
-                  actionId: "menu-exit" as const,
-                  label: data.exitLabel,
-                  role: "secondary" as const,
-                },
-              },
-            ]
+        ...sorted,
+        ...(actions.includes("backToTitle")
+          ? [menuButton("backToTitle", "menu-backToTitle", data.labels.backToTitle, "secondary")]
           : []),
-        {
-          component: "button",
-          key: "close",
-          kind: "component",
-          props: { actionId: "menu-close", label: data.closeLabel, role: "primary" },
-        },
+        menuButton("close", "menu-close", data.closeLabel, "primary"),
       ],
     },
   };
