@@ -882,7 +882,9 @@ try {
     "Galaxy selection is the route map over the route sky",
   );
   assert.equal(await selector().locator(".ada-route-figure").count(), 2);
-  assert.equal(await selector().locator(".ada-route-marker").count(), 6);
+  // Six galaxy markers and the Earth marker, a route marker carrying data-earth.
+  assert.equal(await selector().locator(".ada-route-marker:not([data-earth])").count(), 6);
+  assert.equal(await selector().locator(".ada-route-marker[data-earth]").count(), 1);
   // Galaxy one is unlocked, so its preview is the tinted capture; it must be served.
   const preview = await selector()
     .locator(".ada-galaxy-shot")
@@ -3586,7 +3588,8 @@ try {
   // locked galaxies; the galaxy map's close X comes last in Tab order, and Escape, as its X, goes
   // one step back to the story page the map opened from (here the prologue's last, since this
   // fixture has not seen it; a boarding from Ada's room returns to "Welcome back, Navigator.").
-  const routeMarkers = selector().locator(".ada-route-marker");
+  // The galaxy markers, in route order; the Earth marker sits apart from the route.
+  const routeMarkers = selector().locator(".ada-route-marker:not([data-earth])");
   const markerLefts = await routeMarkers.evaluateAll((markers) =>
     markers.map((marker) => marker.getBoundingClientRect().left),
   );
@@ -3619,7 +3622,9 @@ try {
       .waitForFunction(
         ({ index, label }) => {
           const route = document.querySelector('.ada-route[data-dialog="galaxies"]');
-          const markers = [...(route?.querySelectorAll(".ada-route-marker") ?? [])];
+          const markers = [
+            ...(route?.querySelectorAll(".ada-route-marker:not([data-earth])") ?? []),
+          ];
           return (
             route?.querySelector("h2")?.textContent?.trim() === label &&
             markers.findIndex((marker) => marker.hasAttribute("data-selected")) === index
