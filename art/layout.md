@@ -949,7 +949,7 @@ the title, close X and Back stay fixed.
 Map, from the Paused card, is a full-screen map rather than a card: the
 galaxy's field under the insets, with every part on the page rect
 (`safeRect(insets, SPACING.pageInset, view)`): a header panel on its top-left
-(the name, then the pips over the percent), a row of three `HUD_BUTTON` tools
+(the name, the percent, then ten survey pips), a row of three `HUD_BUTTON` tools
 (zoom out, zoom in, recentre) on its top-right, the place panel on its
 bottom-left, and the footer of Quests, Galaxies and Close (primary) on its
 bottom-right. Quests opens a Quests modal card over it. Its tokens

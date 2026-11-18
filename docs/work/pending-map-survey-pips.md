@@ -1,0 +1,24 @@
+---
+id: TBD
+title: Show map survey progress as ten fixed pips
+status: approved
+approved: user, 2026-11-18, ten pips
+design: art
+related: [ada-0004, ada-0014]
+---
+
+## Scope
+
+Replace the map header's one-pip-per-landmark row with ten fixed survey pips, so the row stays legible at any landmark count.
+
+## Criteria
+
+- The header row holds exactly ten pips (`MAP_SCREEN.header.pips`), 6 in diameter at an 8 pitch, 78 wide, drawn at full size with no scaling.
+- The first `floor(percent / 10)` pips are cream `#ead4aa` discs and the rest are 1 px `#b8b3c9` hollow rings, using the header's displayed percent.
+- The header stays within `mapHeaderCap` at 720x360, 844x390 and 1280x720, with and without phone insets.
+
+## Decisions
+
+- Ten fixed pips replace the scaled pip row from ada-0014: with up to 200 landmarks per galaxy, scaled pips fall below a pixel and charted and uncharted no longer read apart.
+
+## Outcome

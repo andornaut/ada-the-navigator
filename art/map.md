@@ -35,7 +35,7 @@ right 43, bottom 19) 43 to 677 and 16 to 341.
 
 One ink panel in two lines. The row holds, left to right: the galaxy name
 (`TYPE.heading`, white), a divider, "{percent}% mapped" (`TYPE.label`, cream),
-then one pip per landmark. Under it, the survey note `mapSurveyInfo`
+then a row of ten survey pips. Under it, the survey note `mapSurveyInfo`
 (`TYPE.body`, supporting `#b8b3c9`), "Mapping progress only tracks the
 galactic center.". Strings are Gameplay's (`gameplay/player-copy.md`).
 
@@ -48,6 +48,7 @@ galactic center.". Strings are Gameplay's (`gameplay/player-copy.md`).
 | `MAP_SCREEN.header.divider`  | 1x16  | Supporting `#b8b3c9`, centred on the row                                                               |
 | `MAP_SCREEN.header.pip`      | 6     | Pip diameter                                                                                           |
 | `MAP_SCREEN.header.pipPitch` | 8     | Pip centre to centre (2 apart)                                                                         |
+| `MAP_SCREEN.header.pips`     | 10    | Pips in the row, one per tenth of the survey; the row is 78 wide (`9 * pipPitch + pip`)                |
 
 - Left: the pause press area's right plus `SPACING.gap`, the status pill's
   rule: 62.75 at the 720 base, 93.75 with phone insets. Without the pause
@@ -60,15 +61,18 @@ galactic center.". Strings are Gameplay's (`gameplay/player-copy.md`).
 - Note: one line, starting `padding` in from the header's left. It never
   passes the header's right inset: at about 346 wide it sets the header to
   about 378.
-- A charted landmark's pip is a filled cream `#ead4aa` disc. An uncharted
-  landmark's pip is a 1 px `#b8b3c9` ring of the same diameter, hollow, so the
-  two read apart by shape as well as colour.
+- Each pip stands for one tenth of the survey. The first
+  `floor(percent / 10)` pips are filled cream `#ead4aa` discs, where `percent`
+  is the header's displayed whole percent; the rest are 1 px `#b8b3c9` rings of
+  the same diameter, hollow, so the two read apart by shape as well as colour.
+  0 to 9% fills none, 100% fills all ten.
 - The header's width is capped at `mapHeaderCap`:
   `toolColumnLeft - SPACING.gap - header left`, 471.25 at the 720 base
   (`542 - 8 - 62.75`) and 413.25 with phone insets (`515 - 8 - 93.75`), so it
-  always ends `SPACING.gap` left of the tools and clears the pause disc. A
-  header wider than the cap keeps its text widths and scales the pip row to
-  fit (`containedMapHeader`).
+  always ends `SPACING.gap` left of the tools and clears the pause disc. The
+  pips always draw at full size, never scaled: the widest header, the longest
+  galaxy name with "100% mapped" and the 78 pip row, stays under 413.25, and
+  the note sets its minimum width (about 378).
 - The fit region's top is `SPACING.gap` below the header's 64.
 - The header takes no input. Its accessible text is the name and the percent;
   the pips are decorative.
