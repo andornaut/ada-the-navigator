@@ -14,8 +14,8 @@ bottom primary button.
 
 ## Cheat session
 
-Using any cheat starts a cheat session. From then on nothing is saved, earned
-or banked: story progress, unlocks, ownership, levels, Stardust, ore, jobs,
+Using any cheat first saves play up to that moment, then starts a cheat
+session. From then on nothing is saved, earned or banked: story progress, unlocks, ownership, levels, Stardust, ore, jobs,
 achievements and statistics all stay as they were in the save before the first
 cheat. Returning to the start screen, by Back to title or by closing and
 reopening the game, ends the session; Continue then loads the save as it was
