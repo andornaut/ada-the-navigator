@@ -420,9 +420,9 @@ Quests closes back to the paused map through its existing navigation.
   motion to every pickup.
 - Tabular figures (`font-variant-numeric: tabular-nums`) keep every digit one
   advance, so a count changes width only when its digit count or suffix does.
-  The label font, Liberation Sans Bold, has no `tnum` feature, but its default
-  digits are already tabular (each 1139/2048 em, 8.90 at 16 px); the property
-  keeps fallback fonts tabular too.
+  The label font, AdaUI Bold (subset from Liberation Sans Bold), has no `tnum`
+  feature, but its default digits are already tabular (each 1139/2048 em, 8.90
+  at 16 px); the property keeps fallback fonts tabular too.
 - The minimum slot is one digit wide, so "0" keeps its icon and gap.
 
 | Stardust | Ore     | Cargo or tow |  Width |

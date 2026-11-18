@@ -23,7 +23,7 @@ const { positionals, values } = parseArgs({
 if (positionals.length > 1) {
   throw new Error(USAGE);
 }
-const output = positionals[0] ? resolve(positionals[0]) : `${root}public/art/ui/fonts/liberation`;
+const output = positionals[0] ? resolve(positionals[0]) : `${root}public/art/ui/fonts/adaui`;
 const stringsPath = resolve(values.strings ?? `${root}var/ui-strings.json`);
 
 // The build's export of every string set in the UI fonts: { strings: [{ source, text }] }.
@@ -47,13 +47,25 @@ if (
 }
 const strings = [SAFETY_TEXT, ...(exported.strings as { text: string }[]).map(({ text }) => text)];
 
+// The OFL header reserves these font names, and a subset is a Modified Version, so each
+// subset is renamed AdaUI. Copyright (0), version (5) and licence (13, 14) records stay.
+const RESERVED = ["Liberation", "Arimo", "Tinos", "Cousine"];
+
 // subsetWoff2 throws naming every character the TTF does not map, so an exported string the
-// font cannot draw fails the run instead of shipping a fallback.
+// font cannot draw fails the run instead of shipping a fallback. It also throws when a
+// replaced name still contains a reserved name.
 const fonts = [];
 for (const weight of ["Regular", "Bold"]) {
-  const name = `LiberationSans-${weight}`;
-  const font = readFileSync(`${source}/${name}.ttf`);
-  fonts.push({ name, bytes: await subsetWoff2({ label: name, strings }, font) });
+  const name = `AdaUI-${weight}`;
+  const font = readFileSync(`${source}/LiberationSans-${weight}.ttf`);
+  const names = {
+    family: "AdaUI",
+    fullName: `AdaUI ${weight}`,
+    postScriptName: name,
+    reserved: RESERVED,
+    uniqueId: `AdaUI ${weight} 2.1.5 subset`,
+  };
+  fonts.push({ name, bytes: await subsetWoff2({ label: name, names, strings }, font) });
 }
 
 mkdirSync(output, { recursive: true });

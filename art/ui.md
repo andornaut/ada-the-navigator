@@ -53,23 +53,24 @@ centre is (2,4,12,18) within (0,0,16,28).
 BMFont XML names are Liberation Sans Regular (body) and Liberation Sans Bold
 (title), both size 16, lineHeight 20 and base 15. Their single PNG pages are
 256x64 and 256x128 respectively; page filenames stay relative to the FNT.
-For DOM text, use family Liberation Sans with weight 400 from
-`/art/ui/fonts/liberation/LiberationSans-Regular.woff2` and weight 700 from
-`/art/ui/fonts/liberation/LiberationSans-Bold.woff2`, served as `font/woff2`.
-Both fonts are subset to the UI glyph set below and retain those glyphs' outlines,
-hinting, metrics and kerning.
-The original TTF files and OFL remain source assets, not a second required web format.
+For DOM text, use family AdaUI with weight 400 from
+`/art/ui/fonts/adaui/AdaUI-Regular.woff2` and weight 700 from
+`/art/ui/fonts/adaui/AdaUI-Bold.woff2`, served as `font/woff2`. They are Liberation Sans
+Regular and Bold subset to the UI glyph set below and renamed, retaining those glyphs'
+outlines, hinting, metrics and kerning. `OFL.txt` ships beside them.
+The original TTF files remain source assets, not a second required web format.
 Ring and knob are procedural
 and require no raster asset.
 
 `node art/tools/ui-fonts.ts [--strings <ui-strings.json>] [output-directory]`
 regenerates both WOFF2 files from the preserved TTFs with `subsetWoff2` from published
-`@andornaut/art-kit/build/woff2` (0.30.0 or newer) and its optional producer peers
+`@andornaut/art-kit/build/woff2` (0.31.0 or newer) and its optional producer peers
 `harfbuzzjs@1.6.4` and `wawoff2@2.0.1`. Provision the peers in an isolated toolchain;
 the game requires neither at runtime. Inputs are
 `art/sources/fonts/liberation/LiberationSans-{Regular,Bold}.ttf`; only WOFF2 outputs
-are written. Omit the output directory to write under `public/art/ui/fonts/liberation/`.
-Output is deterministic. Regular is 14,032 bytes and Bold is 13,600 bytes.
+are written, as `AdaUI-{Regular,Bold}.woff2`. Omit the output directory to write under
+`public/art/ui/fonts/adaui/`. Output is deterministic. Regular is 13,980 bytes and Bold
+is 13,668 bytes.
 
 ### UI glyph set
 
@@ -93,8 +94,22 @@ sans-serif.
 
 A new character in a UI string needs a producer run before it ships.
 
+### Names
+
 The OFL reserves the font names Liberation (Red Hat) and Arimo, Tinos and Cousine
 (Google). A subset is a Modified Version, so its primary font name must not use them.
+`subsetWoff2`'s `names` option renames each subset and fails the run if a replaced name
+still contains a reserved name:
+
+| Name ID | Regular                      | Bold                      |
+| ------- | ---------------------------- | ------------------------- |
+| 1       | `AdaUI`                      | `AdaUI`                   |
+| 3       | `AdaUI Regular 2.1.5 subset` | `AdaUI Bold 2.1.5 subset` |
+| 4       | `AdaUI Regular`              | `AdaUI Bold`              |
+| 6       | `AdaUI-Regular`              | `AdaUI-Bold`              |
+
+Subfamily (2), version (5, `Version 2.1.5`), copyright (0), trademark notice (7),
+designer and description records (8 to 12) and licence (13, 14) are unchanged.
 
 ## Dark lavender recolour
 
@@ -168,12 +183,13 @@ where listed. The card icons are in [Settings row icons](settings-icons.md).
 
 ## Licensing
 
-`fonts/liberation/OFL.txt` preserves the SIL OFL 1.1 and Google/Red Hat
+`fonts/adaui/OFL.txt` preserves the SIL OFL 1.1 and Google/Red Hat
 copyright notices. No separate font copyright file is present. The source
 checkout and tracked tree contain no project LICENSE file. Project sprites are
 reused with the project owner's explicit authorization.
 Original TTF bytes are preserved in `art/sources/fonts/liberation/`; their
-checksums below use the upstream paths. The public OFL file remains unchanged.
+checksums below use the upstream paths. The public `fonts/adaui/OFL.txt` is
+byte-identical to the upstream `fonts/liberation/OFL.txt` row.
 
 ## SHA-256 provenance
 
