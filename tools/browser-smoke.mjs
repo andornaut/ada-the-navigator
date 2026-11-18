@@ -343,6 +343,31 @@ try {
   events.checks.push("Real renderer and accessible home status");
   // Use is Chibi's touch disc, drawn on the canvas: its accessible button takes no pointer input,
   // so a thumb taps the canvas at the disc's centre, where the press circle takes it.
+  // Art review proofs of what shows now: at 1280x720, then at 720x360 with the phone insets set
+  // (the full-viewport policy keeps hardware insets zero). The insets are set before the resize, so
+  // the screens that lay out in script read them on the resize's refit; both are undone after.
+  async function proofsAt(name) {
+    const viewport = page.viewportSize();
+    await page.setViewportSize({ height: 720, width: 1280 });
+    await page.waitForTimeout(250);
+    await page.screenshot({ path: `${output}/${name}-1280x720.png` });
+    // In CSS px, which are logical px at 720x360, where the unit is 1.
+    await page.evaluate(() => {
+      for (const [side, value] of Object.entries({ bottom: 19, left: 43, right: 43, top: 0 })) {
+        document.documentElement.style.setProperty(`--inset-${side}`, `${value}px`);
+      }
+    });
+    await page.setViewportSize({ height: 360, width: 720 });
+    await page.waitForTimeout(250);
+    await page.screenshot({ path: `${output}/${name}-720x360-insets.png` });
+    await page.evaluate(() => {
+      for (const side of ["bottom", "left", "right", "top"]) {
+        document.documentElement.style.removeProperty(`--inset-${side}`);
+      }
+    });
+    await page.setViewportSize(viewport);
+    await page.waitForTimeout(250);
+  }
   // Earth on the galaxy map: its marker selects it, and the single destination action reads Jump to
   // Earth in flight or Stay on Earth at boarding (gameplay/player-copy.md); pressing it goes home.
   async function chooseEarth(map, label) {
@@ -1931,6 +1956,8 @@ try {
       close: box('[data-action="map-close"]'),
       galaxies: box('[data-action="map-galaxies"]'),
       header: box(".ada-map-header"),
+      // The navigation disc at the pause button's place, over the map.
+      navigation: document.querySelector(".ada-controls [data-navigation]").getBoundingClientRect(),
       quests: box('[data-action="map-quests"]'),
       tools: box(".ada-map-tools"),
       unit,
@@ -1964,6 +1991,12 @@ try {
     hudRow.header.right <= hudRow.tools.left - 8 * hudRow.unit + 0.5,
     `The header stays SPACING.gap short of the tools: ${JSON.stringify(hudRow)}`,
   );
+  // The header's left takes the status pill's rule, SPACING.gap right of the pause press area, so
+  // the navigation disc never covers it (art/map.md "Header").
+  assert.ok(
+    Math.abs(hudRow.header.left - (hudRow.navigation.right + 8 * hudRow.unit)) <= 1,
+    `The header starts SPACING.gap right of the navigation disc: ${JSON.stringify(hudRow)}`,
+  );
   assert.equal(await mapEarth.getAttribute("aria-disabled"), "true", "It is disabled in danger");
   const reasonOnly = await mapScreen.evaluate((screen) => {
     const panel = screen.querySelector(".ada-map-panel");
@@ -1977,6 +2010,18 @@ try {
       reason: [...panel.querySelectorAll(".ada-map-reason [data-shown]")].map(
         (line) => line.textContent,
       ),
+      // With no places the empty note comes first and the reason follows, both centred.
+      order: (() => {
+        const empty = panel.querySelector(".ada-map-empty");
+        const reason = panel.querySelector(".ada-map-reason");
+        return empty.hidden
+          ? null
+          : {
+              centred: [empty, reason].map((node) => getComputedStyle(node).textAlign),
+              emptyAbove:
+                empty.getBoundingClientRect().bottom <= reason.getBoundingClientRect().top + 0.5,
+            };
+      })(),
       row: panel.querySelector(".ada-map-row").hidden,
       width: Math.round((box.width / unit) * 10) / 10,
     };
@@ -1988,6 +2033,7 @@ try {
     {
       height: emptyMap ? 80 : 52,
       hidden: false,
+      order: emptyMap ? { centred: ["center", "center"], emptyAbove: true } : null,
       reason: [CONTENT.labels.travelUnavailable],
       row: true,
       // maxWidth: Quests' left less SPACING.gap and the page inset (378 - 8 - 16).
@@ -1996,28 +2042,9 @@ try {
     "In danger with nothing selected the reason-only panel is 354 by 52, or 80 with the empty note",
   );
   await page.screenshot({ path: `${output}/map-earth-danger.png` });
-  // Map proofs: the local map with its tools, place panel and footer at 1280x720, and at 720x360
-  // with the phone insets set (the full-viewport policy keeps hardware insets zero).
-  await page.screenshot({ path: `${output}/map-local-1280x720.png` });
-  const mapViewport = page.viewportSize();
-  await page.setViewportSize({ height: 360, width: 720 });
-  await page.evaluate(() => {
-    const unit = Number(
-      getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
-    );
-    for (const [side, value] of Object.entries({ bottom: 19, left: 43, right: 43, top: 0 })) {
-      document.documentElement.style.setProperty(`--inset-${side}`, `${value * unit}px`);
-    }
-  });
-  await page.waitForTimeout(250);
-  await page.screenshot({ path: `${output}/map-local-720x360-insets.png` });
-  await page.evaluate(() => {
-    for (const side of ["bottom", "left", "right", "top"]) {
-      document.documentElement.style.removeProperty(`--inset-${side}`);
-    }
-  });
-  await page.setViewportSize(mapViewport);
-  await page.waitForTimeout(250);
+  // Map proofs: the local map in danger with nothing mapped, its header, tools, empty panel and
+  // footer.
+  await proofsAt("map-local");
   // Tab order: the tools, the places in reading order, Travel here where offered, Quests,
   // Galaxies, then Close, wrapping at either end; from Close, Tab starts over at the tools.
   await mapScreen.locator('[data-action="map-close"]').focus();
@@ -2071,7 +2098,7 @@ try {
     { inCard: true, primary: true, text: CONTENT.labels.questBack },
     "Quests opened from the map focuses its primary Back",
   );
-  await page.screenshot({ path: `${output}/map-quests.png` });
+  await proofsAt("map-quests");
   await page.keyboard.press("Escape");
   await questsCard.waitFor({ state: "hidden" });
   assert.ok(await mapScreen.isVisible(), "Escape closes Quests back to the map");
@@ -2374,6 +2401,15 @@ try {
   await page.locator('[data-action="pause-map"]').click();
   await localMap.locator('[data-action="map-galaxies"]').click();
   await galaxyMap.waitFor({ state: "visible" });
+  // The galaxy map proof with Earth selected, its marker and the destination action Jump to Earth.
+  await galaxyMap.locator(".ada-route-marker[data-earth]").click();
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector('.ada-route[data-dialog="galaxies"] [data-action="galaxy-jump"]')
+        ?.textContent?.trim() === "Jump to Earth",
+  );
+  await proofsAt("galaxy-map-earth");
   await chooseEarth(galaxyMap, "Jump to Earth");
   await page
     .locator(".ada-story-panel:not(.ada-dialogue-panel):not([hidden])")
