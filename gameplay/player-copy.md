@@ -1213,9 +1213,9 @@ beacon light. Welcome!"
   Restart.
 - Restart card: Restart? with Restart and Cancel.
 - Cheats (browser tab only): Open Cheats (Settings button); the Cheats modal
-  with Run-only and Save-changing headings, the action labels in
-  [Cheats](cheats.md), FPS counter (On or Off) and Close. Reset save card:
-  Reset save? with Reset and Cancel.
+  with the action labels in [Cheats](cheats.md), Show tips again, FPS counter
+  (On or Off), Reset save and Close. Reset save card: Reset save? with Reset and
+  Cancel.
 - Galaxy map Earth button: Earth.
 - Earth with nothing new: Narration: "Penny thumps her tail. Ready for another adventure?" then Pick up the rock.
 - Use actions, each the disc's accessible name and drawn as a symbol: Talk,
