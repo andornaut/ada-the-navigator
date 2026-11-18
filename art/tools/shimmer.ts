@@ -81,7 +81,7 @@ export function shimmer(view: View, { contrast = 1, phase = 0, sparkle = true }:
   return image;
 }
 
-interface Spot {
+export interface Spot {
   x: number;
   y: number;
   r: number;
@@ -94,7 +94,7 @@ interface Spot {
 // 26 glows and 40 sparkles in the design frame (seed 7, as approved); the area a view adds
 // outside it takes the same density from seed 17. A sparkle's colour draw happens only while
 // it is lit, so the sequence depends on the phase.
-function sparkles(view: View, phase: number): Spot[] {
+export function sparkles(view: View, phase: number): Spot[] {
   const frame = draw(new Random(7), [0, 0, DESIGN.width, DESIGN.height], [26, 40], phase);
   const x1 = view.x0 + view.width / view.scale;
   const y1 = view.y0 + view.height / view.scale;

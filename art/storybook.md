@@ -56,8 +56,9 @@ this package does not alter its logical canvas or the bedroom/run camera math.
 ## Canvas
 
 Every storybook background, like the aboard backdrop, is a 960 by 540 logical px canvas
-at 2x: a 1920 by 1080 opaque PNG with `displayWidth` 960 and `displayHeight` 540
-and the pivot at the centre. Non-bedroom backgrounds draw at display size under
+with `displayWidth` 960 and `displayHeight` 540 and the pivot at the centre: a
+1920 by 1080 opaque PNG at 2x, or for the [aboard backdrop](aboard.md) an SVG
+of 960 by 540 user units. Non-bedroom backgrounds draw at display size under
 the insets, centred across and offset by the [run anchor](layout.md#storybook-page),
 which places their [subject bands](#subject-bands) in the strip above the story panel;
 a backdrop without a panel stays centred. It covers every view up to 960 by 540
