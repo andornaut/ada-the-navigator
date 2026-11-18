@@ -1,12 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { TEXT_BUTTON } from "../data/layout.ts";
 import type { MapPlace } from "../model/map.ts";
 import type { QuestEntry } from "../model/questDetails.ts";
 import * as actionBinding from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
-import { QUESTS_SCREEN_STYLE } from "./layout/questsScreen.ts";
-import { mapScreenLabels } from "./mapScreen.ts";
+import { MAP_SCREEN } from "./layout/mapScreen.ts";
+import { QUEST_ICON, QUESTS_SCREEN_STYLE } from "./layout/questsScreen.ts";
+import { MAP_SCREEN_STYLE, mapScreenLabels } from "./mapScreen.ts";
 import { createQuestsScreen, questRoute } from "./questsScreen.ts";
 
 const entry: QuestEntry = {
@@ -313,4 +315,26 @@ it("left-aligns a quest line button's chip and label from the button's inset", (
   )?.[1];
   expect(rule).toContain("justify-content:flex-start");
   expect(rule).toContain("text-align:left");
+});
+
+it("starts mapped and plain quest lines on the 50 text column", () => {
+  // art/map.md "Quests modal": the 28 chip slot from the face's inset, markGap, then the text.
+  const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+  // A declaration's logical length, from the ruleset whose whole selector is the one given.
+  const length = (css: string, selector: string, property: string) => {
+    const rule = new RegExp(`${escape(selector)}\\{([^}]+)\\}`, "u").exec(css)?.[1] ?? "";
+    const value = `(?:0 )?${escape("calc(var(--ada-unit) * ")}([\\d.]+)px\\)`;
+    return Number(new RegExp(`(?:^|[\\s;])${property}:${value}`, "u").exec(rule)?.[1]);
+  };
+  const list = ".ada-controls .ada-quest-list .ada-button";
+  const gap = length(QUESTS_SCREEN_STYLE, list, "gap");
+  const margin = length(QUESTS_SCREEN_STYLE, `${list}>.ada-quest-icon`, "margin");
+  expect({
+    gap,
+    mapped: TEXT_BUTTON.inset + margin + QUEST_ICON + margin + gap,
+    plain: length(MAP_SCREEN_STYLE, ".ada-controls .ada-map-quest-text", "padding-left"),
+    slot: margin + QUEST_ICON + margin,
+    visibleGap: margin + gap,
+  }).toEqual({ gap: 6, mapped: 50, plain: 50, slot: 28, visibleGap: 8 });
+  expect(MAP_SCREEN.quests.textColumn).toBe(50);
 });

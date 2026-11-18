@@ -2378,8 +2378,51 @@ try {
     { inCard: true, primary: true, text: CONTENT.labels.questBack },
     "Quests opened from the map focuses its primary Back",
   );
-  await proofsAt("map-quests", checkMapHeader);
+  // Each quest line's 24 disc centres in the 28 chip slot from the face's inset, so its label
+  // starts on the text column (art/map.md "Quests modal").
+  const questColumns = {};
+  async function checkQuestColumn(insets, view, name) {
+    const lines = await page.evaluate(() => {
+      const app = document.querySelector("#app");
+      const unit = Number(getComputedStyle(app).getPropertyValue("--ada-unit"));
+      const logical = (px) => Math.round((px / unit) * 100) / 100;
+      return [...document.querySelectorAll(".ada-quests-screen .ada-quest-list .ada-button")].map(
+        (button) => {
+          const face = button.getBoundingClientRect();
+          const icon = button.querySelector(".ada-quest-icon")?.getBoundingClientRect();
+          const text = [...button.childNodes].find((node) => node.nodeType === Node.TEXT_NODE);
+          const range = document.createRange();
+          range.selectNodeContents(text);
+          return {
+            icon: icon ? [logical(icon.left - face.left), logical(icon.right - face.left)] : null,
+            text: logical(range.getClientRects()[0].left - face.left),
+          };
+        },
+      );
+    });
+    questColumns[name] = lines;
+    assert.ok(
+      lines.length > 0 &&
+        lines.every(
+          ({ icon, text }) =>
+            Math.abs(text - mapLayout.MAP_SCREEN.quests.textColumn) <= 0.5 &&
+            (icon === null || near(icon, [18, 42], 0.5)),
+        ),
+      `${name}: each quest line's disc spans 18 to 42 and its label starts at 50: ${JSON.stringify(
+        lines,
+      )}`,
+    );
+  }
+  await proofsAt("map-quests", async (insets, view, name) => {
+    await checkMapHeader(insets, view, name);
+    await checkQuestColumn(insets, view, name);
+  });
   save("map-header-proof.json", mapHeaders);
+  save("quest-column-proof.json", questColumns);
+  events.checks.push(
+    "Each quest line's disc centres in its 28 chip slot and its label starts on the 50 text " +
+      "column at 1280x720 and at 720x360 with phone insets",
+  );
   events.checks.push(
     "The map header starts SPACING.gap right of the pause press area and stays in its cap at " +
       "1280x720 and at 720x360 with phone insets, behind Quests too, with ten unscaled survey " +
