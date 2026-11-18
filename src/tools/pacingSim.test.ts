@@ -209,6 +209,25 @@ describe("pacing simulation runs", () => {
     expect(stations(ECONOMY.station.indicatorRange)).toBeGreaterThan(2 * stations(0));
   });
 
+  it("keeps heading for an indicated station however long the trip takes", () => {
+    // Cruise slowly enough that crossing the indicator range takes 90 seconds.
+    const speedFraction = ECONOMY.station.indicatorRange / (CONTENT.tuning.physics.maxSpeed * 90);
+    const behaviour = {
+      ...DEFAULT_BEHAVIOUR,
+      asteroidsPerMinute: 0,
+      cacheChase: 0,
+      depletionChance: 0,
+      fightChance: 0,
+      retaliatorFightChance: 0,
+      speedFraction,
+    };
+    const scenario = { behaviour: {}, description: "", economy: {}, name: "slow", prices: {} };
+    const { runs } = runScenario({ ...options, behaviour, minutes: 10, scenario, seeds: 6 });
+    for (const run of runs) {
+      expect(run.stationSeconds.length, `seed ${run.seed}`).toBeGreaterThan(0);
+    }
+  });
+
   it("collects upgrade pickups from destroyed small craft and salvaged heavies as gifts", () => {
     const { runs, summary } = runScenario({
       ...options,

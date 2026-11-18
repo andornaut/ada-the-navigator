@@ -85,7 +85,7 @@ import { newEconomy } from "../src/model/upgrades.ts";
 import { addPacks, addWorldAmmo, noAmmo } from "../src/model/weapons.ts";
 
 export interface Behaviour {
-  /** Cruise speed while exploring, as a fraction of Ada's 200 world units per second. */
+  /** Cruise speed while exploring, as a fraction of Ada's base maximum speed (SHIP_PHYSICS.ada). */
   speedFraction: number;
   /** Seconds between exploration heading changes, inclusive range. */
   headingSeconds: [number, number];
@@ -1249,7 +1249,10 @@ export function simulate(input: SimulationInput): RunResult {
         }
       }
     }
-    if (target && time - target.since > (target.kind === "station" ? 60 : 20)) {
+    // A station detour lasts until Ada docks, as the direction indicator keeps marking the nearest
+    // undiscovered station. A pickup detour is given up once fights or shooting have delayed it
+    // well past the few seconds an on-screen pickup takes to reach.
+    if (target && target.kind !== "station" && time - target.since > 20) {
       declined.add(target.id);
       target = null;
     }
