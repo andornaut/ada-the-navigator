@@ -1,6 +1,4 @@
-import { GALAXY_NUMBERS } from "../data/galaxies.ts";
-import type { GalaxyNumber } from "../data/types.ts";
-import type { FlightState, GalaxyGeography, GalaxyProgress } from "./types.ts";
+import type { GalaxyGeography, GalaxyProgress } from "./types.ts";
 
 const uint32 = (value: unknown): value is number =>
   Number.isInteger(value) && (value as number) >= 0 && (value as number) <= 0xffffffff;
@@ -44,18 +42,4 @@ export function initializeGalaxyGeography(
   }
   progress.geography = geography;
   return geography as GalaxyGeography & { seed: number };
-}
-
-/** Preserve the exact active legacy seed without inferring a lost historical seed. */
-export function adoptLegacyGeography(
-  progress: Record<GalaxyNumber, GalaxyProgress>,
-  flight: Pick<FlightState, "galaxy" | "seed"> | null,
-): void {
-  for (const galaxy of GALAXY_NUMBERS) {
-    progress[galaxy].geography = {
-      seed: flight?.galaxy === galaxy ? flight.seed : null,
-      sitePolicy: "legacy-fixed",
-      version: 1,
-    };
-  }
 }

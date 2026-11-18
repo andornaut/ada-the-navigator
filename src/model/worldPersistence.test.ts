@@ -1,7 +1,6 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { ECONOMY } from "../data/economy.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { relaunch } from "../testing/launch.ts";
@@ -9,7 +8,6 @@ import { createEnemy } from "./enemyAi.ts";
 import { flightEncounterSeed } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave, SAVE_VERSION } from "./save.ts";
-import { flightStationContext, stationsNear, worldStationById } from "./stations.ts";
 import type { SpaceObject } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -26,7 +24,7 @@ function model() {
 }
 function legacy(game: GameModel) {
   const saved = JSON.parse(game.save());
-  saved.version = 12;
+  saved.version = SAVE_VERSION - 1;
   for (const galaxy of GALAXY_NUMBERS) {
     delete saved.progress[galaxy].geography;
   }
@@ -36,58 +34,18 @@ function legacy(game: GameModel) {
   return saved;
 }
 
-it("migrates an active v12 save without changing its flight, coordinates, clocks or story", () => {
+it("resets prior-version active and home saves instead of migrating them", () => {
   const game = model();
-  const saved = legacy(game);
-  saved.flight.time = 12.5;
-  const before = structuredClone(saved);
-  const random = vi.spyOn(crypto, "getRandomValues");
-  random.mockClear();
-  try {
-    const restored = restoreSave(saved)!;
-    expect(restored.version).toBe(SAVE_VERSION);
-    expect(restored.flight).toEqual(before.flight);
-    expect(restored.progress[1]).toEqual({
-      ...before.progress[1],
-      geography: { seed: before.flight.seed, sitePolicy: "legacy-fixed", version: 1 },
-    });
-    expect(restored.progress[3].geography).toEqual({
-      seed: null,
-      sitePolicy: "legacy-fixed",
-      version: 1,
-    });
-    expect(saved).toEqual(before);
-    expect(random).not.toHaveBeenCalled();
-    const continued = relaunch(CONTENT, saved);
-    expect(continued.state.flight).toEqual(before.flight);
-  } finally {
-    random.mockRestore();
-  }
-});
-
-it("migrates home charts with legacy fixed stations and initializes missing procedural history once", () => {
-  const game = model();
-  const site = stationsNear(ECONOMY, 1, 12000, { x: 0, y: 0 })[0]!;
-  expect(site).toBeDefined();
-  game.state.progress[1].stations.push(site.id);
+  expect(restoreSave(game.save())).not.toBeNull();
+  const active = legacy(game);
+  expect(active.version).toBe(SAVE_VERSION - 1);
+  expect(restoreSave(active)).toBeNull();
   game.returnHome();
-  const saved = legacy(game);
-  const charts = structuredClone(saved.progress[1]);
-  const restored = restoreSave(saved)!;
-  expect(restored.flight).toBeNull();
-  expect(restored.progress[1]).toEqual({
-    ...charts,
-    geography: { seed: null, sitePolicy: "legacy-fixed", version: 1 },
-  });
-  const resumed = new GameModel(CONTENT, saved);
-  resumed.startGalaxy(1);
-  const first = resumed.state.flight!;
-  expect(worldStationById(flightStationContext(first), ECONOMY, 1, site.id)).toEqual(site);
-  const seed = first.seed;
-  resumed.returnHome();
-  resumed.startGalaxy(1);
-  expect(resumed.state.flight!.seed).toBe(seed);
-  expect(resumed.state.progress[1].resolved).toBe(true);
+  const home = legacy(game);
+  expect(restoreSave(home)).toBeNull();
+  const restarted = relaunch(CONTENT, home);
+  expect(restarted.state.flight).toBeNull();
+  expect(restarted.state.progress[1].resolved).toBe(false);
 });
 
 describe("persistent geography fresh entry", () => {

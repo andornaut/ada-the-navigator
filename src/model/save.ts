@@ -22,7 +22,7 @@ import { settlementById } from "./andromedaPlaces.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { holodisksHeld } from "./conversations.ts";
 import { enemyDefeated } from "./enemyAi.ts";
-import { adoptLegacyGeography, validGalaxyGeography } from "./galaxyGeography.ts";
+import { validGalaxyGeography } from "./galaxyGeography.ts";
 import { ACTIVE_CHUNK_RADIUS, encounterOf, liveEnemy, persistentObject } from "./geography.ts";
 import {
   validHostileStationEncounters,
@@ -595,9 +595,9 @@ function optionalTasks(value: unknown): boolean {
 }
 
 /**
- * Restores the current format or explicitly migrates the previous geography format. Unsupported
- * versions and missing or malformed fields are rejected whole: a partial restore can
- * invalidate quest state. The result shares no references with `saved`.
+ * Restores the current format only; before version 1 an older save is not migrated. Other
+ * versions and missing or malformed fields are rejected whole, so the store resets them: a partial
+ * restore can invalidate quest state. The result shares no references with `saved`.
  */
 export function restoreSave(saved: unknown): GameState | null {
   return restoreGameSave(CONTENT, saved);
@@ -606,29 +606,6 @@ export function restoreSave(saved: unknown): GameState | null {
 export function restoreGameSave(content: GameContent, saved: unknown): GameState | null {
   try {
     const value: unknown = typeof saved === "string" ? JSON.parse(saved) : structuredClone(saved);
-    if (record(value) && value.version === 12) {
-      if (
-        !record(value.progress) ||
-        !GALAXY_NUMBERS.every(
-          (galaxy) =>
-            record(value.progress) &&
-            record(value.progress[galaxy]) &&
-            !Object.hasOwn(value.progress[galaxy], "geography"),
-        ) ||
-        (value.flight !== null &&
-          (!record(value.flight) ||
-            !GALAXY_NUMBERS.includes(value.flight.galaxy as GalaxyNumber) ||
-            !Number.isSafeInteger(value.flight.seed) ||
-            !nonnegative(value.flight.seed)))
-      ) {
-        return null;
-      }
-      adoptLegacyGeography(
-        value.progress as unknown as GameState["progress"],
-        value.flight as GameState["flight"],
-      );
-      value.version = SAVE_VERSION;
-    }
     if (
       !record(value) ||
       value.version !== SAVE_VERSION ||

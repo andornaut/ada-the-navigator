@@ -22,25 +22,27 @@ function fixture(raw: string | null, version = "0.0.1") {
   };
   return { port, store: createAdaSaves(port, version), values };
 }
-it.each(["{broken", "{}", JSON.stringify({ ...newGameState(), version: SAVE_VERSION + 1 })])(
-  "backs up and resets only pre-v1 invalid/incompatible data: %s",
-  async (raw) => {
-    const f = fixture(raw),
-      loaded = await f.store.load();
-    expect(loaded.status).toBe("loaded");
-    expect(loaded.save).toEqual(newGameState());
-    expect(f.port.write.mock.calls).toEqual([
-      [SAVE_KEYS.backup, raw],
-      [SAVE_KEYS.save, JSON.stringify(newGameState())],
-    ]);
-    expect(f.values.get(SAVE_KEYS.backup)).toBe(raw);
-    expect(f.values.get("ada.preferences")).toBe("keep");
-    expect(f.values.get("unrelated.save")).toBe("keep");
-    expect(await f.store.load()).toEqual(loaded);
-    expect(f.port.write).toHaveBeenCalledTimes(2);
-    expect(await f.store.save(loaded.save)).toEqual({ status: "saved" });
-  },
-);
+it.each([
+  "{broken",
+  "{}",
+  JSON.stringify({ ...newGameState(), version: SAVE_VERSION - 1 }),
+  JSON.stringify({ ...newGameState(), version: SAVE_VERSION + 1 }),
+])("backs up and resets only pre-v1 invalid/incompatible data: %s", async (raw) => {
+  const f = fixture(raw),
+    loaded = await f.store.load();
+  expect(loaded.status).toBe("loaded");
+  expect(loaded.save).toEqual(newGameState());
+  expect(f.port.write.mock.calls).toEqual([
+    [SAVE_KEYS.backup, raw],
+    [SAVE_KEYS.save, JSON.stringify(newGameState())],
+  ]);
+  expect(f.values.get(SAVE_KEYS.backup)).toBe(raw);
+  expect(f.values.get("ada.preferences")).toBe("keep");
+  expect(f.values.get("unrelated.save")).toBe("keep");
+  expect(await f.store.load()).toEqual(loaded);
+  expect(f.port.write).toHaveBeenCalledTimes(2);
+  expect(await f.store.save(loaded.save)).toEqual({ status: "saved" });
+});
 it("retains actual required plans and complete flight clocks through valid Continue without repair", async () => {
   const model = new GameModel(CONTENT);
   model.startGalaxy(1);
@@ -56,15 +58,6 @@ it("retains actual required plans and complete flight clocks through valid Conti
   const invalid = fixture(JSON.stringify(document));
   expect((await invalid.store.load()).save).toEqual(newGameState());
   expect(invalid.values.get(SAVE_KEYS.backup)).toBe(JSON.stringify(document));
-});
-it("normalizes a supported legacy save for decoding without rewriting its original bytes", async () => {
-  const raw = JSON.stringify({ ...newGameState(), version: SAVE_VERSION - 1 }),
-    f = fixture(raw);
-  const result = await f.store.load();
-  expect(result.status).toBe("loaded");
-  expect(result.save.version).toBe(SAVE_VERSION);
-  expect(f.values.get(SAVE_KEYS.save)).toBe(raw);
-  expect(f.port.write).not.toHaveBeenCalled();
 });
 it("keeps first-visit storage absent and the v1 true-newer write fence intact", async () => {
   const first = fixture(null);

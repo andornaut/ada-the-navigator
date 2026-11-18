@@ -1,46 +1,20 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { GALAXY_NUMBERS } from "../data/galaxies.ts";
-import type { GalaxyNumber } from "../data/types.ts";
 import { flightEncounterSeed } from "./flightTopology.ts";
 import {
-  adoptLegacyGeography,
   freshGalaxyGeography,
   initializeGalaxyGeography,
   validGalaxyGeography,
 } from "./galaxyGeography.ts";
 import { newProgress } from "./progress.ts";
-import type { GalaxyProgress } from "./types.ts";
-
-const progress = () =>
-  Object.fromEntries(GALAXY_NUMBERS.map((galaxy) => [galaxy, newProgress()])) as Record<
-    GalaxyNumber,
-    GalaxyProgress
-  >;
 
 describe("persistent galaxy seed contract", () => {
-  it("keeps the active legacy seed and fixed-site policy without inventing inactive history", () => {
-    const galaxies = progress();
-    galaxies[1].known = ["growers"];
-    galaxies[1].stations = ["station:3,4"];
-    galaxies[1].charted = ["landmark:1:0"];
-    galaxies[1].explored = ["0,0"];
-    galaxies[1].questComplete = galaxies[1].resolved = true;
-    const before = structuredClone(galaxies[1]);
-    adoptLegacyGeography(galaxies, { galaxy: 1, seed: Number.MAX_SAFE_INTEGER });
-    expect(galaxies[1]).toEqual({
-      ...before,
-      geography: { seed: Number.MAX_SAFE_INTEGER, sitePolicy: "legacy-fixed", version: 1 },
-    });
-    expect(galaxies[3].geography).toEqual({ seed: null, sitePolicy: "legacy-fixed", version: 1 });
-  });
-
   it("initializes an absent legacy home seed only once without changing its site policy", () => {
-    const galaxies = progress();
-    adoptLegacyGeography(galaxies, null);
+    const galaxy = newProgress();
+    galaxy.geography = { seed: null, sitePolicy: "legacy-fixed", version: 1 };
     const next = vi.fn(() => 42);
-    const first = initializeGalaxyGeography(next, galaxies[1]);
-    expect(initializeGalaxyGeography(next, galaxies[1])).toBe(first);
+    const first = initializeGalaxyGeography(next, galaxy);
+    expect(initializeGalaxyGeography(next, galaxy)).toBe(first);
     expect(first).toEqual({ seed: 42, sitePolicy: "legacy-fixed", version: 1 });
     expect(next).toHaveBeenCalledOnce();
   });
