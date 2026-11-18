@@ -510,8 +510,8 @@ name, and every Andromeda settlement a settler who greets Ada. A keeper's stable
 identity derives from its station id and is saved across revisits and reloads.
 Portrait ids are separate from keeper identities: a finite species portrait
 roster may be reused without cycling the same three NPC identities through
-stations. Tech owns serialization, deterministic name-collision handling and
-migration, preserving saved identities. Cartwheel's mining hub remains Quartz's;
+stations. Tech owns serialization and deterministic name-collision handling,
+preserving saved identities. Cartwheel's mining hub remains Quartz's;
 other named story roles retain their identities.
 
 The existing keeper names below identify the finite portrait reference roster,
@@ -537,7 +537,7 @@ saves and revisits; nine given/family combinations are not a limit on station
 count or permission to reuse a full name. Do not expose raw coordinates or an
 unreviewed numeric NPC id as the qualifier. Existing named characters keep their
 identities; portrait reuse does not turn them into a new keeper. Tech owns the
-representation, deterministic collision handling and migration; stability does
+representation and deterministic collision handling; stability does
 not require a new save field.
 
 Generic station labels use "{galaxyName} {stationWords} Station". Encode the full
@@ -558,7 +558,7 @@ coordinates or numeric ids. These words are a label code, not new NPC stories.
 Named story destinations and Quartz's mining hub retain their existing labels.
 Generic legacy keeper keys remain portrait references only; reusing a face does
 not reuse an NPC identity. Labels and full keeper names are purely identity-derived;
-Tech owns migration without rewriting saved identities.
+Saved identities are never rewritten.
 
 The model supplies `StationGreeting.displayName` separately from
 `keeper: KeeperKey`, which selects the existing portrait. Its
@@ -1198,6 +1198,12 @@ and flight state. Migrated stations and landmarks keep their legacy fixed-site
 policy. A home save without a recoverable procedural seed retains its discovered
 IDs, fixed coordinates, explored path and story; initialize only that missing seed
 on first entry. Never reroll known locations or resolved story during migration.
+
+Saves reset before version 1. While the game's version is below 1, a stored save
+that is invalid, incompatible or ambiguous resets to a new game through the
+new-game path; the replaced data is kept as the backup save. No other save
+migrations are added before version 1. Font and network loading failures leave
+the save untouched.
 
 Closing the game or Back to title is not leaving the galaxy: resume the same
 flight with exact important state and current nearby space, cargo, owned and
