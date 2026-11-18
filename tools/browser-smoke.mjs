@@ -2252,8 +2252,9 @@ try {
   await galaxyMap.waitFor({ state: "visible" });
   assert.equal(
     (await galaxyMap.locator('[data-action="galaxy-jump"]').textContent())?.trim(),
-    CONTENT.labels.stayHere,
-    "The galaxy map opened in flight offers Stay here on the galaxy Ada is flying in",
+    // Gameplay's "Stay in {galaxy}" (gameplay/player-copy.md).
+    "Stay in Sunflower",
+    "The galaxy map opened in flight offers Stay in on the galaxy Ada is flying in",
   );
   assert.equal(
     (await galaxyMap.locator("h2").textContent())?.trim(),
