@@ -457,6 +457,8 @@ try {
     import(new URL("../src/model/save.ts", import.meta.url)),
     import(new URL("../src/data/achievements.ts", import.meta.url)),
   ]);
+  // The storybook panel is .ada-story-panel:not(.ada-dialogue-panel): the conversation and station
+  // cards share its class inside their own modals, which stay hidden rather than the panel.
   // Reads storybook pages (the default choice, else Next or its named action) until galaxy
   // selection opens or flight begins, and returns each page's background, its image and text,
   // and, just after its press, the transition frame fading in and whether the panel hid.
@@ -465,10 +467,12 @@ try {
     await page.waitForFunction(
       () =>
         document.querySelector("#game-status")?.dataset.mode === "space" ||
-        document.querySelector('.ada-story-panel:not([hidden]) [data-action="story-next"]') ||
+        document.querySelector(
+          '.ada-story-panel:not(.ada-dialogue-panel):not([hidden]) [data-action="story-next"]',
+        ) ||
         document.querySelector('.ada-route[data-dialog="galaxies"]:not([hidden])'),
     );
-    const panel = page.locator(".ada-story-panel:not([hidden])");
+    const panel = page.locator(".ada-story-panel:not(.ada-dialogue-panel):not([hidden])");
     if (!(await panel.count())) {
       return pages;
     }
@@ -546,8 +550,9 @@ try {
       await page.waitForFunction(
         (frame) =>
           Number(
-            document.querySelector(".ada-story-panel:not([hidden]) .ada-story-portrait")?.dataset
-              .frame,
+            document.querySelector(
+              ".ada-story-panel:not(.ada-dialogue-panel):not([hidden]) .ada-story-portrait",
+            )?.dataset.frame,
           ) !== frame,
         current.portrait?.frame,
       );
@@ -562,7 +567,8 @@ try {
       button.click();
       return {
         incoming: document.querySelectorAll(".ada-story-art")[1]?.style.backgroundImage ?? "",
-        panelHidden: document.querySelector(".ada-story-panel")?.hidden ?? false,
+        panelHidden:
+          document.querySelector(".ada-story-panel:not(.ada-dialogue-panel)")?.hidden ?? false,
       };
     });
     return readStory(remaining - 1, pages);
@@ -730,7 +736,9 @@ try {
     "The start screen lets the screen sleep",
   );
   await page.locator('[data-action="start"]').click();
-  await page.locator(".ada-story-panel:not([hidden])").waitFor({ state: "visible" });
+  await page
+    .locator(".ada-story-panel:not(.ada-dialogue-panel):not([hidden])")
+    .waitFor({ state: "visible" });
   await page.waitForFunction(() => window.adaWakeLock.held === 1);
   await page.screenshot({ path: `${output}/story-opening.png` });
   const launchPages = await readStory();
@@ -1929,7 +1937,7 @@ try {
     "Back to title keeps the flight saved for Continue",
   );
   assert.equal(
-    await page.locator(".ada-story-panel:not([hidden])").count(),
+    await page.locator(".ada-story-panel:not(.ada-dialogue-panel):not([hidden])").count(),
     0,
     "Back to title shows the start screen, not the jump-home page or the sleep scene",
   );
@@ -2099,7 +2107,7 @@ try {
   await galaxyMap.waitFor({ state: "visible" });
   await galaxyMap.locator('[data-action="galaxy-home"]').click();
   await page
-    .locator(".ada-story-panel:not([hidden])")
+    .locator(".ada-story-panel:not(.ada-dialogue-panel):not([hidden])")
     .getByText(CONTENT.labels.pickUpRock, { exact: true })
     .waitFor({ state: "visible" });
   const roomSaved = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey);
@@ -2244,7 +2252,7 @@ try {
   await towGalaxyMap.waitFor({ state: "visible" });
   await towGalaxyMap.locator('[data-action="galaxy-home"]').click();
   await page
-    .locator(".ada-story-panel:not([hidden])")
+    .locator(".ada-story-panel:not(.ada-dialogue-panel):not([hidden])")
     .getByText(CONTENT.labels.pickUpRock, { exact: true })
     .waitFor({ state: "visible" });
   const towed = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey);
@@ -2866,7 +2874,10 @@ try {
   // lands aboard in the emergency red, the sleep page plays the figures, the rock's breath and the
   // cross-fade, with Ada's waking sprite fading in with the morning, and morning follows.
   await seedOnce(breakingSave, "ada-browser.overnight.v1");
-  const storyNext = () => page.locator('.ada-story-panel:not([hidden]) [data-action="story-next"]');
+  const storyNext = () =>
+    page.locator(
+      '.ada-story-panel:not(.ada-dialogue-panel):not([hidden]) [data-action="story-next"]',
+    );
   const roomShows = (background) =>
     page
       .locator(`.ada-story-background[data-background="${background}"]`)
@@ -2894,7 +2905,7 @@ try {
     return {
       figures: opacity("story-ada-room-sleep-figures"),
       glow: opacity("story-ada-room-sleep-glow"),
-      panelHidden: document.querySelector(".ada-story-panel").hidden,
+      panelHidden: document.querySelector(".ada-story-panel:not(.ada-dialogue-panel)").hidden,
     };
   });
   await page.screenshot({ path: `${output}/overnight-sleep.png` });
@@ -2995,7 +3006,7 @@ try {
   // Skip hidden.
   await seedOnce(new GameModel(CONTENT).save(), "ada-browser.story-run.v1");
   await page.locator('[data-action="start"]').click();
-  const storyPanel = page.locator(".ada-story-panel:not([hidden])");
+  const storyPanel = page.locator(".ada-story-panel:not(.ada-dialogue-panel):not([hidden])");
   const storyButton = (action) => storyPanel.locator(`[data-action="story-${action}"]`);
   const storyPage = async () => ({
     background: await page.locator(".ada-story-background").getAttribute("data-background"),
@@ -3528,7 +3539,9 @@ try {
   await page.screenshot({ path: `${output}/resolution.png` });
   await choices.nth(1).click();
   await page.getByText(CONTENT.chapters[1].resolutionBranches[1], { exact: true }).waitFor();
-  await page.locator('.ada-story-panel:not([hidden]) [data-action="story-next"]').click();
+  await page
+    .locator('.ada-story-panel:not(.ada-dialogue-panel):not([hidden]) [data-action="story-next"]')
+    .click();
   await page.getByText(CONTENT.chapters[1].closing, { exact: true }).waitFor();
   assert.equal(await choices.count(), 0, "The closing is an ordinary page");
   const homePages = await readStory();
@@ -3642,8 +3655,9 @@ try {
   const escapedBack = await page
     .waitForFunction(
       (text) =>
-        document.querySelector(".ada-story-panel:not([hidden]) .ada-story-paragraph")
-          ?.textContent === text,
+        document.querySelector(
+          ".ada-story-panel:not(.ada-dialogue-panel):not([hidden]) .ada-story-paragraph",
+        )?.textContent === text,
       openedFrom,
       { timeout: 10000 },
     )
@@ -3657,7 +3671,9 @@ try {
     .waitForFunction(
       () =>
         document.activeElement?.dataset.action === "story-next" &&
-        Boolean(document.activeElement.closest(".ada-story-panel:not([hidden])")),
+        Boolean(
+          document.activeElement.closest(".ada-story-panel:not(.ada-dialogue-panel):not([hidden])"),
+        ),
       null,
       { timeout: 5000 },
     )
