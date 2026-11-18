@@ -429,7 +429,7 @@ try {
   const [
     { GameModel },
     { CONTENT },
-    { ensureDestination },
+    { ensureDestination, routeBlocked },
     { playOpening, relaunch },
     { SAVE_VERSION, restoreSave: restoreCalm },
     { ACHIEVEMENTS },
@@ -1367,6 +1367,18 @@ try {
   const friendly = ensureDestination(CONTENT, "growers", safeInput.state.flight);
   safeInput.teleport("growers");
   assert.deepEqual(safeInput.state.flight.player, { x: friendly.x, y: friendly.y });
+  // Chapter one's stage places a quest guard on the Growers route; with its weapons stopped it no
+  // longer blocks the way in (routeBlocked in src/model/flight.ts), so Talk is offered there.
+  for (const guard of safeInput.state.flight.objects) {
+    if (guard.kind === "enemy" && guard.routeId === "growers") {
+      guard.enemy.disabled = true;
+    }
+  }
+  assert.equal(
+    routeBlocked("growers", safeInput.state.flight),
+    false,
+    "The safe input fixture's Growers route is open",
+  );
   assert.equal(safeInput.state.flight.freshChunk, null);
   const safeSerialized = safeInput.save();
   assert.deepEqual(relaunch(CONTENT, safeSerialized).state, safeInput.state);
