@@ -434,20 +434,28 @@ try {
     );
     return row;
   }
+  // Skip ends the exchange, or reaches its last page, which Continue closes. Either can take a
+  // while under load, so this waits for one or the other rather than for a fixed time.
   async function leaveInteraction() {
     await interactionCard().locator('[data-action="dialogue-skip"]').click();
-    const ended = await interactionCard()
-      .waitFor({ state: "hidden", timeout: 2000 })
-      .then(
+    const continueButton = interactionCard().getByRole("button", {
+      name: CONTENT.labels.continue,
+      exact: true,
+    });
+    // Each wait settles either way, so the one that loses the race cannot reject unhandled.
+    const settles = (wait) =>
+      wait.then(
         () => true,
         () => false,
       );
-    if (!ended) {
-      await interactionCard()
-        .getByRole("button", { name: CONTENT.labels.continue, exact: true })
-        .click();
-      await interactionCard().waitFor({ state: "hidden" });
+    await Promise.race([
+      settles(interactionCard().waitFor({ state: "hidden" })),
+      settles(continueButton.waitFor({ state: "visible" })),
+    ]);
+    if (await continueButton.isVisible()) {
+      await continueButton.click();
     }
+    await interactionCard().waitFor({ state: "hidden" });
   }
   async function tapUse(name) {
     const use = page.getByRole("button", { name, exact: true });
