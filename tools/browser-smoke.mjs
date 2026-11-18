@@ -428,6 +428,14 @@ try {
         (value) => Math.round((value / unit) * 100) / 100,
       );
     }, selector);
+  // The logical view the bridge lays out now, from the canvas's CSS size.
+  const currentView = async () =>
+    viewScale.playLayout(
+      await page.evaluate(() => {
+        const canvas = document.querySelector("#game-canvas > canvas").getBoundingClientRect();
+        return { height: canvas.height, width: canvas.width };
+      }),
+    ).view;
   // Art review proofs of what shows now: at 1280x720, then at 720x360 with the phone insets. Each
   // runs check(insets, view) on what it shows; both are undone after.
   async function proofsAt(name, check = async () => {}) {
@@ -435,7 +443,7 @@ try {
     await page.setViewportSize({ height: 720, width: 1280 });
     await page.waitForTimeout(250);
     await page.screenshot({ path: `${output}/${name}-1280x720.png` });
-    await check(insetLayout.NO_INSETS, { height: 360, width: 720 }, `${name}-1280x720`);
+    await check(insetLayout.NO_INSETS, await currentView(), `${name}-1280x720`);
     await page.setViewportSize({ height: 360, width: 720 });
     const phone = await setPhoneInsets();
     await page.screenshot({ path: `${output}/${name}-720x360-insets.png` });
@@ -1887,7 +1895,7 @@ try {
   interactionRows["720x360-insets"] = await interactionHudProof("interaction-hud-720x360-insets");
   await assertPhoneInsets("interaction-hud-720x360-insets");
   await interactionInsets.restore();
-  // 1280x720 is the same 720x360 logical view, so the row moves by the HUD rect's right edge alone.
+  // 1280x720 is the same 720 logical width, so the row moves by the HUD rect's right edge alone.
   const hudRight = (insets) => {
     const hud = insetLayout.hudRect(insets, interactionInsets.view);
     return interactionInsets.view.width - hud.x - hud.width;
@@ -2448,19 +2456,6 @@ try {
     0,
     "The galaxy map has no close X or Back",
   );
-  // The galaxy map at 844x390, without and with phone insets.
-  const viewportBefore = page.viewportSize();
-  await page.setViewportSize({ height: 390, width: 844 });
-  await page.waitForTimeout(250);
-  await page.screenshot({ path: `${output}/galaxy-map-844.png` });
-  const galaxyInsets = await setPhoneInsets();
-  await page.screenshot({ path: `${output}/galaxy-map-844-insets.png` });
-  await assertPhoneInsets("galaxy-map-844-insets");
-  await checkGalaxyMap(PHONE_INSETS, galaxyInsets.view, "galaxy-map-844-insets");
-  await galaxyInsets.restore();
-  if (viewportBefore) {
-    await page.setViewportSize(viewportBefore);
-  }
   // Stay in {galaxy}: the destination action on the galaxy Ada is flying in returns to the local
   // map the galaxy map opened from, focus on its Galaxies, the same flight kept with no jump.
   await galaxyMap.locator('[data-action="galaxy-jump"]').click();
@@ -4055,7 +4050,7 @@ try {
     const state = JSON.parse(localStorage.getItem(key));
     return state?.progress[1].resolved && state.unlocked.includes(3);
   }, storageKey);
-  // The galaxy map proof with Earth selected: its marker and the destination action Stay on Earth.
+  // The galaxy map proofs with Earth selected: its marker and the destination action Stay on Earth.
   // Taken at boarding, with no flight held under the map, so the resizes stay inside the browser's
   // memory ceiling; Whirlpool is selected again after.
   const destinationReads = (text) =>
@@ -4069,9 +4064,22 @@ try {
   await selector().locator(".ada-route-marker[data-earth]").click();
   await destinationReads("Stay on Earth");
   await proofsAt("galaxy-map-earth", checkGalaxyMap);
+  // The galaxy map at 844x390, without and with phone insets, also at boarding.
+  const boardingViewport = page.viewportSize();
+  await page.setViewportSize({ height: 390, width: 844 });
+  await page.waitForTimeout(250);
+  await page.screenshot({ path: `${output}/galaxy-map-844.png` });
+  await checkGalaxyMap(insetLayout.NO_INSETS, await currentView(), "galaxy-map-844");
+  const galaxyInsets = await setPhoneInsets();
+  await page.screenshot({ path: `${output}/galaxy-map-844-insets.png` });
+  await assertPhoneInsets("galaxy-map-844-insets");
+  await checkGalaxyMap(PHONE_INSETS, galaxyInsets.view, "galaxy-map-844-insets");
+  await galaxyInsets.restore();
+  await page.setViewportSize(boardingViewport);
+  await page.waitForTimeout(250);
   events.checks.push(
-    "The galaxy map's panel and one destination action sit as galaxyMapRects at 1280x720 and at " +
-      "720x360 with phone insets",
+    "The galaxy map's panel and one destination action sit as galaxyMapRects at 1280x720, at " +
+      "720x360 with phone insets and at 844x390 without and with them",
   );
   await selector().locator('.ada-route-marker[data-position="2"]').click();
   await destinationReads("Jump to Whirlpool");
