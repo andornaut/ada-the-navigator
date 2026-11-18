@@ -86,7 +86,9 @@ describe("Later chapter first encounters", () => {
     loaded.interact();
     expect(loaded.state.dialogue?.context).toBe("needle.arrival");
     expect(loaded.state.progress[4].needle?.met).toBe(false);
-  });
+    // The prelude's 47 s of line time runs 2,850 flight slices: about 4.3 s in the check container
+    // and 11.2 s on a CI runner.
+  }, 30_000);
 
   it("does not identify Avi at an arbitrary station or apply a queued Talk after Ada leaves Loom", () => {
     const model = launch(4);
