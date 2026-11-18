@@ -7,7 +7,11 @@
 // document launch. Later updates activate through Update now; a newer save is the automatic
 // exception (requireNewerVersion). First visits register only after the prepared reveal.
 import { LOADER_CONFIG } from "@andornaut/game-kit/runtime/load/loaderConfig";
-import { appCannotClose, runsInAppWindow } from "@andornaut/game-kit/runtime/web/pwa/appWindow";
+import {
+  appCannotClose,
+  canExitApp,
+  runsInAppWindow,
+} from "@andornaut/game-kit/runtime/web/pwa/appWindow";
 import {
   backCloseWatcher,
   backGuardState,
@@ -187,7 +191,7 @@ function setupOfflinePlay(): void {
 // open card arms it again (setBackArmed).
 let backArmed = true;
 let backGuardInUse = () => false;
-// Whether Exit shows: an installed app window that can close, read once at load (exitShown).
+// Whether Exit shows: an installed app window that can close (canExitApp), read once at load.
 let exitOffered = false;
 
 // The page's history as the back guard sees it: while released the guard adds no entry.
@@ -228,9 +232,8 @@ function guardBack(): void {
     navigator.userAgent,
     browserCloseWatcher(),
   );
-  const closable = !appCannotClose(createCloseWatcher, window);
-  exitOffered = runsInAppWindow(window) && closable;
-  if (!closable) {
+  exitOffered = canExitApp(createCloseWatcher, window);
+  if (appCannotClose(createCloseWatcher, window)) {
     return;
   }
   backGuardInUse = () => createCloseWatcher === undefined || history.length > 1;
@@ -299,9 +302,8 @@ export function keepScreenOn(on: boolean): void {
 }
 
 // Whether the start screen offers Exit (its Exit, Q and released back), as read at load: only in
-// an installed app window that can close it (the kit's runsInAppWindow and appCannotClose), never
-// in a browser tab or in an app whose platform never closes or whose history holds more than the
-// game's entry.
+// an installed app window that can close it (the kit's canExitApp), never in a browser tab or in
+// an app whose platform never closes or whose history holds more than the game's entry.
 export function exitShown(): boolean {
   return exitOffered;
 }
