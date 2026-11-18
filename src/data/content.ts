@@ -548,7 +548,7 @@ export const CONTENT: GameContent = {
     morningRecharge:
       "Astra recharges overnight. In the morning, the rock is warm again, and Gadget and Kiwi are " +
       "curled at her feet.",
-    motionNote: "Skips screen shakes and flashes",
+    motionNote: "Reduces animation and disables screen shake and flashes.",
     moveControls: "Move controls",
     needleEye: "The Eye",
     needleGoal: "Light the gates of a practice channel.",

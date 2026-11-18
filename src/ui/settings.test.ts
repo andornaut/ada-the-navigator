@@ -438,7 +438,9 @@ describe("Settings current-state labels", () => {
     });
     expect(CONTENT.labels.sound).toBe("Sound effects");
     expect(CONTENT.labels.soundNote).toBe("Controls gameplay sound effects.");
-    expect(CONTENT.labels.motionNote).toBe("Skips screen shakes and flashes");
+    expect(CONTENT.labels.motionNote).toBe(
+      "Reduces animation and disables screen shake and flashes.",
+    );
   });
 
   it("reports visibility and feedback changes through the existing separate callbacks", () => {

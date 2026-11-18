@@ -268,8 +268,9 @@ describe("hit feedback", () => {
         shake.update(time, 16);
         corners.forEach((corner, index) => {
           const held = screen(corner, shakeCounter(shake));
-          expect(held.x).toBeCloseTo(rest[index]!.x, 9);
-          expect(held.y).toBeCloseTo(rest[index]!.y, 9);
+          // Phaser's matrix is single precision: within a hundredth of a device pixel.
+          expect(held.x).toBeCloseTo(rest[index]!.x, 2);
+          expect(held.y).toBeCloseTo(rest[index]!.y, 2);
           const shaken = screen(corner, { x: 0, y: 0 });
           moved = Math.max(moved, Math.abs(shaken.x - rest[index]!.x) / zoom);
         });
