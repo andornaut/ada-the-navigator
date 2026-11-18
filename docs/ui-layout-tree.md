@@ -118,7 +118,7 @@ not establish physical fit, native interaction acceptance or Art acceptance.
 
 ## Galaxy selector
 
-Earth is a selectable marker centered inside the route arc, aligned vertically with Sunflower. Its panel uses the canonical `story-ada-room` asset, Home kicker and Earth title. One centered primary action names the selected destination: Jump to Earth, Jump to the galaxy, Stay on Earth or Stay in the current galaxy. There is no separate Back action. A current-location action invokes the contextual close callback without travel; other destinations retain the existing return-home/jump callbacks and unlock checks. Locked destination actions display “Progress the story to unlock” and retain their guarded refusal behavior.
+Earth is a selectable marker centered inside the route arc, aligned vertically with Sunflower. Its panel uses the canonical `story-ada-room` asset, Home kicker and Earth title. One centered primary action names the selected destination: Jump to Earth, Jump to the galaxy, Stay on Earth or Stay in the current galaxy. There is no separate Back action. Stay in the current galaxy invokes the contextual close callback without travel, returning to the local map; Stay on Earth at boarding returns Ada to her room without a jump; other destinations retain the existing return-home/jump callbacks and unlock checks. Locked destination actions display “Progress the story to unlock” and retain their guarded refusal behavior.
 
 ## Detail actions
 
