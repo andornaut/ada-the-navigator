@@ -104,17 +104,32 @@ export function adaDepth(
 /**
  * The backdrop layers (art/backdrop.md), back to front over the field's background fill: the sky
  * (L0), the fixed layers (Andromeda's haze, Needle's band), far items and planets (L2), the
- * plates (L1, multiply then screen), the stars (L3) and the dust streaks (L4); then the backdrop
- * rocks (-1), the landmarks, the dust specks on the field ink (0) and every play object.
+ * plates (L1, multiply then screen), the stars (L3) and the dust streaks (L4); then the far
+ * backdrop rocks, the backdrop rocks, the landmarks, the dust specks on the field ink (0) and
+ * every play object.
  */
 export const BACKDROP_DEPTH = {
   decorations: -2.65,
   far: -2.7,
+  farRocks: -1.5,
   fixed: -2.8,
   multiply: -2.5,
   planets: -2.6,
+  rocks: -1,
   screen: -2.4,
   sky: -2.9,
   stars: -2.3,
   streaks: -2.2,
 } as const;
+
+/** Half the depth band a backdrop rock depth spreads over, and the layer y it spans. */
+const ROCK_BAND = 0.2;
+const ROCK_REACH = 1e7;
+
+/**
+ * A backdrop rock's depth within its band by its projected layer y, so rocks of one depth draw
+ * back to front. The layer moves as one, so the order needs no update as the camera moves.
+ */
+export function backdropRockDepth(band: number, layerY: number): number {
+  return band + (Math.max(-ROCK_REACH, Math.min(ROCK_REACH, layerY)) / ROCK_REACH) * ROCK_BAND;
+}

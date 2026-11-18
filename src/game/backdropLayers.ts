@@ -1,5 +1,5 @@
 import { SCREEN } from "../data/screen.ts";
-import { unit } from "./asteroidArt.ts";
+import { type BackdropRockRule, unit } from "./asteroidArt.ts";
 import {
   chunkItems,
   layerOrigin,
@@ -62,9 +62,12 @@ export interface BackdropRules {
       readonly tilt: Xy;
     };
   };
+  /** The far backdrop rock depth, under the specks and rocks. */
+  readonly farRocks: BackdropRockRule;
   readonly plates: PlateRules & { readonly parallax: number };
-  readonly rocks: { readonly parallax: number };
-  readonly specks: { readonly parallax: number };
+  readonly rocks: BackdropRockRule;
+  /** Dust specks: one per `cell` layer px at `alpha`. */
+  readonly specks: { readonly alpha: number; readonly cell: number; readonly parallax: number };
   readonly stars: {
     readonly brightness: Xy;
     readonly chunk: number;
@@ -114,6 +117,8 @@ export interface PlateStep {
 
 /** {galaxy}/backdrop.json, version 1: one galaxy's tones and recipes. */
 export interface GalaxyBackdrop {
+  /** The field background the tones derive from and muted rocks move toward. */
+  readonly background: string;
   readonly decorations?: DecorationLayer;
   readonly far: readonly FarRecipe[];
   /** The manifest links of the fixed L2 layers: backdropHaze, needleBand. */
@@ -165,6 +170,18 @@ function must<T>(valid: (value: unknown) => value is T, value: unknown): T {
   return value;
 }
 
+function readRockRule(value: unknown): BackdropRockRule {
+  const data = fields(value);
+  return {
+    cell: must(positive, data.cell),
+    chance: must(fraction, data.chance),
+    parallax: must(fraction, data.parallax),
+    salt: must((entry) => typeof entry === "string", data.salt),
+    scale: must((entry) => pair(entry, positive), data.scale),
+    value: must(fraction, data.value),
+  };
+}
+
 function readChunkLayer(value: unknown): ChunkLayer {
   const data = fields(value);
   return {
@@ -191,6 +208,7 @@ export function readBackdropRules(value: unknown): BackdropRules | undefined {
     const twinkle = fields(starData.twinkle);
     const debris = fields(data.debris);
     const streaks = fields(debris.streaks);
+    const specks = fields(debris.specks);
     const edges = must(
       (entry): entry is [number, number, number, number] =>
         Array.isArray(entry) && entry.length === 4 && entry.every(finite),
@@ -224,6 +242,7 @@ export function readBackdropRules(value: unknown): BackdropRules | undefined {
         },
       },
       far: readChunkLayer(phenomena.far),
+      farRocks: readRockRule(debris.farRocks),
       nebula: { display: must((entry) => pair(entry, positive), fields(phenomena.nebula).display) },
       planets: {
         ...readChunkLayer(planets),
@@ -260,8 +279,12 @@ export function readBackdropRules(value: unknown): BackdropRules | undefined {
         parallax: must(fraction, plateData.parallax),
         patternWeight: must(finite, plateData.patternWeight),
       },
-      rocks: { parallax: must(fraction, fields(debris.rocks).parallax) },
-      specks: { parallax: must(fraction, fields(debris.specks).parallax) },
+      rocks: readRockRule(debris.rocks),
+      specks: {
+        alpha: must(fraction, specks.alpha),
+        cell: must(positive, specks.cell),
+        parallax: must(fraction, specks.parallax),
+      },
       stars: {
         brightness: must(pair, starData.brightness),
         chunk: must(positive, starData.chunk),
@@ -358,6 +381,7 @@ export function readGalaxyBackdrop(value: unknown): GalaxyBackdrop | undefined {
     const list = (entry: unknown): entry is unknown[] => Array.isArray(entry);
     const decorations = readDecorations(data.decorations);
     return {
+      background: must(hex, data.background),
       ...(decorations ? { decorations } : {}),
       far: must(list, data.far).map(readFar),
       fixed: must(list, data.fixed).map((link) =>
@@ -467,6 +491,13 @@ export interface ViewPlanet {
 /** A planet's extent from its centre in units of its radius: the ring's 2 r and its edge. */
 const PLANET_EXTENT = 2.15;
 
+/** Whether an item at view point (x, y) reaching `rx` by `ry` from it meets the view's margin. */
+const meetsView = (x: number, y: number, rx: number, ry: number): boolean =>
+  x + rx > -VIEW_MARGIN &&
+  x - rx < VIEW[0] + VIEW_MARGIN &&
+  y + ry > -VIEW_MARGIN &&
+  y - ry < VIEW[1] + VIEW_MARGIN;
+
 /** The planets that meet the view for a camera at world `camera`. */
 export function viewPlanets(
   rules: BackdropRules,
@@ -480,26 +511,37 @@ export function viewPlanets(
   const rule = rules.planets;
   const origin = layerOrigin(camera, rule.parallax);
   const largest = rule.radius[1] * Math.max(...planets.map(({ size }) => size)) * PLANET_EXTENT;
-  return chunkItems(galaxy.seed, rule.salt, rule, viewRect(origin, VIEW, [largest, largest])).map(
-    (item) => {
-      const recipe =
-        planets[Math.floor(unit(galaxy.seed, item.id, "planet-look") * planets.length)]!;
-      const [x, y] = toView(origin, [item.x, item.y]);
-      return {
+  // The chunk lookup reaches the largest planet's extent; each planet stays only when its own
+  // extent meets the view, so no off-screen planet is baked.
+  return chunkItems(
+    galaxy.seed,
+    rule.salt,
+    rule,
+    viewRect(origin, VIEW, [largest, largest]),
+  ).flatMap((item) => {
+    const recipe = planets[Math.floor(unit(galaxy.seed, item.id, "planet-look") * planets.length)]!;
+    const [x, y] = toView(origin, [item.x, item.y]);
+    const r =
+      (rule.radius[0] +
+        (rule.radius[1] - rule.radius[0]) * unit(galaxy.seed, item.id, "planet-r")) *
+      recipe.size;
+    const reach = r * PLANET_EXTENT;
+    if (!meetsView(x, y, reach, reach)) {
+      return [];
+    }
+    return [
+      {
         id: item.id,
-        r:
-          (rule.radius[0] +
-            (rule.radius[1] - rule.radius[0]) * unit(galaxy.seed, item.id, "planet-r")) *
-          recipe.size,
+        r,
         recipe,
         tilt:
           rule.ring.tilt[0] +
           (rule.ring.tilt[1] - rule.ring.tilt[0]) * unit(galaxy.seed, item.id, "planet-tilt"),
         x,
         y,
-      };
-    },
-  );
+      },
+    ];
+  });
 }
 
 /** A far item in the play view: a nebula texture variant or a star cluster, at its centre. */
@@ -522,20 +564,27 @@ export function viewFar(rules: BackdropRules, galaxy: GalaxyBackdrop, camera: Xy
   }
   const rule = rules.far;
   const origin = layerOrigin(camera, rule.parallax);
-  const { sigma } = rules.cluster.glow;
-  const reach: Xy = [
-    Math.max(rules.nebula.display[0] / 2, sigma[0] * GLOW_REACH),
-    Math.max(rules.nebula.display[1] / 2, sigma[1] * GLOW_REACH),
-  ];
-  return chunkItems(galaxy.seed, rule.salt, rule, viewRect(origin, VIEW, reach)).map((item) => {
+  const nebula: Xy = [rules.nebula.display[0] / 2, rules.nebula.display[1] / 2];
+  const cluster = clusterReach(rules);
+  const reach: Xy = [Math.max(nebula[0], cluster[0]), Math.max(nebula[1], cluster[1])];
+  // The chunk lookup reaches the wider look; each item stays only when its own look's extent
+  // meets the view, so no off-screen cluster is baked.
+  return chunkItems(galaxy.seed, rule.salt, rule, viewRect(origin, VIEW, reach)).flatMap((item) => {
     const [x, y] = toView(origin, [item.x, item.y]);
-    return {
-      id: item.id,
-      recipe: far[Math.floor(unit(galaxy.seed, item.id, "far-look") * far.length)]!,
-      variant: Math.floor(unit(galaxy.seed, item.id, "far-variant") * 2),
-      x,
-      y,
-    };
+    const recipe = far[Math.floor(unit(galaxy.seed, item.id, "far-look") * far.length)]!;
+    const [rx, ry] = recipe.look === "nebula" ? nebula : cluster;
+    if (!meetsView(x, y, rx, ry)) {
+      return [];
+    }
+    return [
+      {
+        id: item.id,
+        recipe,
+        variant: Math.floor(unit(galaxy.seed, item.id, "far-variant") * 2),
+        x,
+        y,
+      },
+    ];
   });
 }
 

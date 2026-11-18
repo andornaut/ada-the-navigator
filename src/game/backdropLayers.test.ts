@@ -15,11 +15,13 @@ import {
   type Xy,
 } from "./backdropField.ts";
 import {
+  clusterReach,
   type GalaxyBackdrop,
   paintCluster,
   paintDisc,
   paintPlanet,
   paintSky,
+  planetReach,
   readBackdropRules,
   readGalaxyBackdrop,
   SKY_AREA,
@@ -49,6 +51,9 @@ const CAMERAS: readonly Xy[] = [
   [-8000, 4200],
   [25000, 31000],
 ];
+/** Whether an item at (x, y) reaching rx by ry from it meets the view and its 16 px margin. */
+const meets = (x: number, y: number, rx: number, ry: number) =>
+  x + rx > -16 && x - rx < SCREEN.width + 16 && y + ry > -16 && y - ry < SCREEN.height + 16;
 const texel = (raster: { data: Uint8ClampedArray; width: number }, x: number, y: number) => [
   ...raster.data.slice((y * raster.width + x) * 4, (y * raster.width + x) * 4 + 4),
 ];
@@ -58,10 +63,25 @@ describe("backdrop layers data", () => {
     expect(rulesFile.view).toEqual([SCREEN.width, SCREEN.height]);
     expect(rules).toMatchObject({
       far: { parallax: 0.05 },
+      farRocks: {
+        cell: 240,
+        chance: 0.7,
+        parallax: 0.45,
+        salt: "backdrop-far",
+        scale: [0.3, 0.5],
+        value: 0.4,
+      },
       planets: { parallax: 0.12 },
       plates: { parallax: 0.15 },
-      rocks: { parallax: 0.8 },
-      specks: { parallax: 0.7 },
+      rocks: {
+        cell: 320,
+        chance: 0.7,
+        parallax: 0.8,
+        salt: "backdrop",
+        scale: [0.6, 1],
+        value: 0.75,
+      },
+      specks: { alpha: 0.45, cell: 112, parallax: 0.7 },
       streaks: { parallax: 0.6 },
     });
     expect(rules.stars.layers.map(({ name, parallax }) => [name, parallax])).toEqual([
@@ -73,6 +93,10 @@ describe("backdrop layers data", () => {
     }
     expect(readBackdropRules({ ...rulesFile, version: 2 })).toBeUndefined();
     expect(readBackdropRules({ ...rulesFile, plates: { parallax: 0.15 } })).toBeUndefined();
+    const debris = rulesFile.debris as Record<string, unknown>;
+    expect(
+      readBackdropRules({ ...rulesFile, debris: { ...debris, farRocks: { parallax: 0.45 } } }),
+    ).toBeUndefined();
     expect(readGalaxyBackdrop({ galaxy: "sunflower", version: 1 })).toBeUndefined();
   });
 
@@ -210,7 +234,7 @@ describe("backdrop layers in the view", () => {
     }
   });
 
-  it("places one or two planets and far items at most, with their recipes", () => {
+  it("keeps at most three planets and three far items, each meeting the view, with their recipes", () => {
     let planets = 0;
     let far = 0;
     for (const galaxy of GALAXY_NUMBERS) {
@@ -218,13 +242,22 @@ describe("backdrop layers in the view", () => {
         const camera: Xy = [k * 2400, k * -1100];
         const seen = viewPlanets(rules, backdropOf(galaxy), camera);
         const items = viewFar(rules, backdropOf(galaxy), camera);
-        expect(seen.length).toBeLessThanOrEqual(4);
-        expect(items.length).toBeLessThanOrEqual(4);
+        expect(seen.length).toBeLessThanOrEqual(3);
+        expect(items.length).toBeLessThanOrEqual(3);
         planets += seen.length;
         far += items.length;
         for (const planet of seen) {
           expect(backdropOf(galaxy).planets).toContain(planet.recipe);
           expect(planet.r).toBeLessThanOrEqual(98 * planet.recipe.size);
+          const reach = planetReach(planet.r);
+          expect(meets(planet.x, planet.y, reach, reach)).toBe(true);
+        }
+        for (const item of items) {
+          const [rx, ry] =
+            item.recipe.look === "nebula"
+              ? [rules.nebula.display[0] / 2, rules.nebula.display[1] / 2]
+              : clusterReach(rules);
+          expect(meets(item.x, item.y, rx, ry)).toBe(true);
         }
       }
     }
@@ -247,9 +280,9 @@ describe("backdrop layers in the view", () => {
     const held = viewStars(rules, backdropOf(3), [0, 0], 0, true);
     expect(viewStars(rules, backdropOf(3), [0, 0], 12.5, true)).toEqual(held);
     expect(viewStars(rules, backdropOf(3), [0, 0], 12.5, false)).not.toEqual(held);
-    // About 60 stars cover the view.
-    expect(held.length).toBeGreaterThan(40);
-    expect(held.length).toBeLessThan(200);
+    // About 185 stars cover the view and its margin.
+    expect(held.length).toBeGreaterThan(150);
+    expect(held.length).toBeLessThan(220);
     for (const star of held) {
       expect(star.alpha).toBeLessThanOrEqual(backdropOf(3).stars.alpha.near);
     }
@@ -314,7 +347,7 @@ describe("backdrop rasters", () => {
     expect(texel(raster, centre + 53, centre)[3]).toBe(Math.round(0.85 * 255));
   });
 
-  it("paints a cluster's glow at 0.7 at its centre and its 90 stars around it", () => {
+  it("paints a cluster's glow at 0.5 at its centre and its 90 stars around it", () => {
     const recipe = backdropOf(5).far[0]!;
     expect(recipe.look).toBe("cluster");
     if (recipe.look !== "cluster") {
@@ -323,7 +356,8 @@ describe("backdrop rasters", () => {
     const raster = paintCluster(rules, backdropOf(5).seed, { id: "3,4" }, recipe, 1);
     expect([raster.width, raster.height]).toEqual([384, 252]);
     const alpha = texel(raster, 192, 126)[3]!;
-    expect(alpha).toBeGreaterThanOrEqual(Math.round(0.7 * 255) - 1);
+    expect(alpha).toBeGreaterThanOrEqual(Math.round(0.5 * 255) - 1);
+    expect(alpha).toBeLessThanOrEqual(Math.round(0.5 * 255) + 8);
     expect(texel(raster, 0, 0)[3]).toBeLessThan(3);
   });
 

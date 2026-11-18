@@ -916,25 +916,30 @@ export class GameScene extends Scene {
       return;
     }
     drawBackdrop(this, flight);
-    // Dust specks, the debris layer's motion cue at its parallax, in the galaxy's backdropSide.
-    const cell = 160;
-    const parallax = this.backdropRules?.specks.parallax ?? 1;
-    const span = Math.ceil(Math.max(SCREEN.width, SCREEN.height) / cell) + 2;
-    const gx = Math.floor((flight.player.x * parallax) / cell);
-    const gy = Math.floor((flight.player.y * parallax) / cell);
+    // Dust specks, the debris layer's motion cue at its parallax and cell, in the galaxy's
+    // backdropSide; projected as projectLayer does, keeping a point only for a speck in view.
     this.specks = [];
-    const speckColor = hexNumber(backdropTint(this.asteroidArt, flight.galaxy).backdropSide);
-    for (let x = gx - span; x <= gx + span; x++) {
-      for (let y = gy - span; y <= gy + span; y++) {
-        const point = this.projectLayer(
-          { x: x * cell + ((y * 37) % 83), y: y * cell + ((x * 53) % 79) },
-          parallax,
-        );
-        if (point.x >= 0 && point.y >= 0 && point.x <= SCREEN.width && point.y <= SCREEN.height) {
-          this.specks.push(point);
+    const specks = this.backdropRules?.specks;
+    if (specks) {
+      const { cell, parallax } = specks;
+      const span = Math.ceil(Math.max(SCREEN.width, SCREEN.height) / cell) + 2;
+      const gx = Math.floor((flight.player.x * parallax) / cell);
+      const gy = Math.floor((flight.player.y * parallax) / cell);
+      const ox = flight.player.x * parallax;
+      const oy = flight.player.y * parallax;
+      const speckColor = hexNumber(backdropTint(this.asteroidArt, flight.galaxy).backdropSide);
+      this.ink.fillStyle(speckColor, specks.alpha);
+      for (let x = gx - span; x <= gx + span; x++) {
+        for (let y = gy - span; y <= gy + span; y++) {
+          const u = x * cell + ((y * 37) % 83) - ox;
+          const v = y * cell + ((x * 53) % 79) - oy;
+          const px = SCREEN.width / 2 + u - v;
+          const py = SCREEN.height / 2 + (u + v) / 2;
+          if (px >= 0 && py >= 0 && px <= SCREEN.width && py <= SCREEN.height) {
+            this.specks.push({ x: px, y: py });
+          }
+          this.ink.fillCircle(px, py, 1);
         }
-        this.ink.fillStyle(speckColor, 0.6);
-        this.ink.fillCircle(point.x, point.y, 1);
       }
     }
     loadGalaxyArt(this, flight.galaxy);

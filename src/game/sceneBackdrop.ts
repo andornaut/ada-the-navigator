@@ -1,13 +1,20 @@
 // The space backdrop: sky, far items, plates, stars and streaks.
 // Functions over the scene's BackdropContext.
 import { MAX_RENDER_SCALE } from "@andornaut/game-kit/runtime/view/renderScale";
-import { BlendModes, Math as PhaserMath } from "phaser";
+import { BlendModes, Math as PhaserMath, TintModes } from "phaser";
 
+import type { AsteroidArtCatalog } from "../data/asteroidCatalog.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { FlightState } from "../model/types.ts";
 import { storyBackdropRect } from "../ui/layout/storyPage.ts";
-import { BACKDROP_FIELD, backdropRock, backdropTint, hexNumber } from "./asteroidArt.ts";
+import {
+  type BackdropRock,
+  backdropRock,
+  type BackdropRockRule,
+  backdropTint,
+  hexNumber,
+} from "./asteroidArt.ts";
 import {
   type BackdropRules,
   clusterReach,
@@ -25,7 +32,7 @@ import {
   viewStars,
   viewStreaks,
 } from "./backdropLayers.ts";
-import { BACKDROP_DEPTH } from "./drawOrder.ts";
+import { BACKDROP_DEPTH, backdropRockDepth } from "./drawOrder.ts";
 import { canvasSize, sceneFit } from "./playCamera.ts";
 import { viewDecorations } from "./rareDecorations.ts";
 import type { GameScene } from "./scene.ts";
@@ -69,7 +76,6 @@ export type BackdropContext = Pick<
   | "partAssets"
   | "partLoads"
   | "plateInk"
-  | "projectLayer"
   | "rasters"
   | "reducedMotion"
   | "resourceFiles"
@@ -346,63 +352,170 @@ export function drawStreaks(
   }
 }
 
+/** A seeded backdrop rock with its drawn size, depth and the keys of its two sprites. */
+interface RockCell {
+  readonly depth: number;
+  /** The background-filled silhouette under the rock. */
+  readonly fill: string;
+  readonly height: number;
+  readonly key: string;
+  readonly rock: BackdropRock;
+  readonly width: number;
+}
+
+/** One rock depth's rocks in the cells around the camera's cell, rebuilt when that cell changes. */
+interface RockWindow {
+  readonly catalog: AsteroidArtCatalog;
+  readonly cells: readonly RockCell[];
+  readonly galaxy: GalaxyNumber;
+  readonly gx: number;
+  readonly gy: number;
+  readonly rule: BackdropRockRule;
+  readonly seed: number;
+}
+
+const rockWindows = new WeakMap<BackdropContext, Map<string, RockWindow>>();
+
+/** The rock depths back to front: far rocks under the specks and rocks. */
+const ROCK_DEPTHS = [
+  { band: BACKDROP_DEPTH.farRocks, name: "far", rule: (rules: BackdropRules) => rules.farRocks },
+  { band: BACKDROP_DEPTH.rocks, name: "near", rule: (rules: BackdropRules) => rules.rocks },
+] as const;
+
+function releaseSprite(scene: BackdropContext, key: string): void {
+  const sprite = scene.backdropSprites.get(key);
+  if (sprite) {
+    sprite.destroy();
+    scene.backdropSprites.delete(key);
+  }
+}
+
+function releaseRock(scene: BackdropContext, cell: RockCell): void {
+  releaseSprite(scene, cell.fill);
+  releaseSprite(scene, cell.key);
+}
+
+/** The window of rock depth `name` for the camera's cell, its sprites released as cells leave. */
+function rockWindow(
+  scene: BackdropContext,
+  catalog: AsteroidArtCatalog,
+  flight: FlightState,
+  depth: (typeof ROCK_DEPTHS)[number],
+  rule: BackdropRockRule,
+): RockWindow {
+  const windows = rockWindows.get(scene) ?? new Map<string, RockWindow>();
+  rockWindows.set(scene, windows);
+  const { cell, parallax } = rule;
+  const gx = Math.floor((flight.player.x * parallax) / cell);
+  const gy = Math.floor((flight.player.y * parallax) / cell);
+  const last = windows.get(depth.name);
+  const same =
+    last?.catalog === catalog &&
+    last.rule === rule &&
+    last.galaxy === flight.galaxy &&
+    last.seed === flight.seed;
+  if (same && last.gx === gx && last.gy === gy) {
+    return last;
+  }
+  const span = Math.ceil((Math.max(SCREEN.width, SCREEN.height) * 1.5) / cell) + 1;
+  const cells: RockCell[] = [];
+  for (let x = gx - span; x <= gx + span; x++) {
+    for (let y = gy - span; y <= gy + span; y++) {
+      const rock = backdropRock(catalog, rule, flight.seed, x, y);
+      if (rock) {
+        const key = `${depth.name}:${x},${y}`;
+        cells.push({
+          depth: backdropRockDepth(depth.band, (rock.x + rock.y) / 2),
+          fill: `${key}:fill`,
+          height: rock.sprite.display.height * rock.scale,
+          key,
+          rock,
+          width: rock.sprite.display.width * rock.scale,
+        });
+      }
+    }
+  }
+  if (last) {
+    // A cell keeps its rock while the seed and rule hold, so its sprites stay with it.
+    const kept = new Set(same ? cells.map(({ key }) => key) : []);
+    for (const old of last.cells) {
+      if (!kept.has(old.key)) {
+        releaseRock(scene, old);
+      }
+    }
+  }
+  const window = { catalog, cells, galaxy: flight.galaxy, gx, gy, rule, seed: flight.seed };
+  windows.set(depth.name, window);
+  return window;
+}
+
 /**
- * Backdrop rocks under every play object, at the debris layer's rock parallax: one greyscale
- * sprite per filled field cell, multiplied by the galaxy's backdropLit, at 0.6 to 1 times its
- * display size.
+ * Backdrop rocks under every play object (art/backdrop.md, Rocks), both depths at their own
+ * parallax and cell: greyscale sprites multiplied by the galaxy's backdropLit and moved toward
+ * the field background to the depth's value while staying opaque. Each rock draws as a
+ * background-filled silhouette and the tinted rock over it at alpha `value`, the pair adjacent
+ * at one depth: equal depths keep their creation order, so pairs never interleave. Rocks of a
+ * depth draw back to front by projected y. The cells are seeded only when the camera's cell
+ * changes, so a frame moves the rocks in view and allocates nothing.
  */
 export function drawBackdrop(
   scene: BackdropContext,
   flight: NonNullable<typeof scene.model.state.flight>,
 ): void {
   const catalog = scene.asteroidArt;
-  if (!catalog) {
+  const rules = scene.backdropRules;
+  const backdrop = scene.galaxyBackdrops.get(flight.galaxy);
+  if (!catalog || !rules || !backdrop) {
     return;
   }
   const tint = hexNumber(backdropTint(catalog, flight.galaxy).backdropLit);
-  const { cell } = BACKDROP_FIELD;
-  const parallax = scene.backdropRules?.rocks.parallax ?? 1;
-  const span = Math.ceil((Math.max(SCREEN.width, SCREEN.height) * 1.5) / cell) + 1;
-  const gx = Math.floor((flight.player.x * parallax) / cell);
-  const gy = Math.floor((flight.player.y * parallax) / cell);
-  const used = new Set<string>();
-  for (let x = gx - span; x <= gx + span; x++) {
-    for (let y = gy - span; y <= gy + span; y++) {
-      const rock = backdropRock(catalog, flight.seed, x, y);
-      if (!rock || !rockTexture(scene, rock.sprite.file)) {
-        continue;
-      }
-      const point = scene.projectLayer(rock, parallax);
-      const width = rock.sprite.display.width * rock.scale;
-      const height = rock.sprite.display.height * rock.scale;
+  const background = hexNumber(backdrop.background);
+  for (const depth of ROCK_DEPTHS) {
+    const rule = depth.rule(rules);
+    const window = rockWindow(scene, catalog, flight, depth, rule);
+    // The layer origin as projectLayer takes it, applied inline so a frame allocates no points.
+    const ox = flight.player.x * rule.parallax;
+    const oy = flight.player.y * rule.parallax;
+    for (const cell of window.cells) {
+      const { height, rock, width } = cell;
+      const x = rock.x - ox;
+      const y = rock.y - oy;
+      const sx = SCREEN.width / 2 + x - y;
+      const sy = SCREEN.height / 2 + (x + y) / 2;
       if (
-        point.x < -width ||
-        point.y < -height ||
-        point.x > SCREEN.width + width ||
-        point.y > SCREEN.height + height
+        !rockTexture(scene, rock.sprite.file) ||
+        sx < -width ||
+        sy < -height ||
+        sx > SCREEN.width + width ||
+        sy > SCREEN.height + height
       ) {
+        releaseRock(scene, cell);
         continue;
       }
-      const key = `${x},${y}`;
-      used.add(key);
-      let sprite = scene.backdropSprites.get(key);
-      if (!sprite) {
-        sprite = scene.add.image(0, 0, rock.sprite.file).setDepth(-1);
-        scene.backdropSprites.set(key, sprite);
+      let fill = scene.backdropSprites.get(cell.fill);
+      let top = scene.backdropSprites.get(cell.key);
+      if (!fill || !top) {
+        releaseRock(scene, cell);
+        const { file, pivot } = rock.sprite;
+        fill = scene.add
+          .image(0, 0, file)
+          .setDepth(cell.depth)
+          .setOrigin(pivot.x, pivot.y)
+          .setDisplaySize(width, height)
+          .setTint(background)
+          .setTintMode(TintModes.FILL);
+        top = scene.add
+          .image(0, 0, file)
+          .setDepth(cell.depth)
+          .setOrigin(pivot.x, pivot.y)
+          .setDisplaySize(width, height)
+          .setTint(tint)
+          .setAlpha(rule.value);
+        scene.backdropSprites.set(cell.fill, fill);
+        scene.backdropSprites.set(cell.key, top);
       }
-      sprite
-        .setTexture(rock.sprite.file)
-        .setOrigin(rock.sprite.pivot.x, rock.sprite.pivot.y)
-        .setDisplaySize(width, height)
-        .setPosition(point.x, point.y)
-        .setTint(tint)
-        .setVisible(true);
-    }
-  }
-  for (const [key, sprite] of scene.backdropSprites) {
-    if (!used.has(key)) {
-      sprite.destroy();
-      scene.backdropSprites.delete(key);
+      fill.setPosition(sx, sy).setVisible(true);
+      top.setPosition(sx, sy).setVisible(true);
     }
   }
 }

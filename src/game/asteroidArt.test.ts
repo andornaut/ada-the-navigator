@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
 import type { Vec } from "../model/types.ts";
+import { CORE_MANIFEST, publicJson } from "../testing/publicArt.ts";
 import {
   asteroidFiles,
   asteroidOutline,
-  BACKDROP_FIELD,
   backdropRock,
   backdropTint,
   driftChips,
@@ -15,8 +15,10 @@ import {
   rockArt,
   unit,
 } from "./asteroidArt.ts";
+import { readBackdropRules } from "./backdropLayers.ts";
 
 const ART = ASTEROID_ART;
+const RULES = readBackdropRules(publicJson(CORE_MANIFEST.backdropLayers as string))!;
 
 describe("footprint outlines", () => {
   it("outlines only the union boundary of a footprint with several parts", () => {
@@ -95,45 +97,44 @@ describe("Art's asteroid sprites", () => {
     expect(driftChips(rock, 3, 0, "drifter", { x: 0, y: 0 })).toEqual([]);
   });
 
-  it("adds decorative rock cells while preserving the existing seeded positions and scale", () => {
-    let previous = 0;
-    let added = 0;
-    for (let x = -30; x < 30; x++) {
-      for (let y = -30; y < 30; y++) {
-        const id = `${x},${y}`;
-        const availability = unit(9, id, "backdrop");
-        const rock = backdropRock(ART, 9, x, y);
-        if (availability < 0.35) {
-          previous++;
-          expect(rock).not.toBeNull();
-          expect(rock!.x).toBe((x + unit(9, id, "backdrop-x")) * 320);
-          expect(rock!.y).toBe((y + unit(9, id, "backdrop-y")) * 320);
-          expect(rock!.scale).toBe(0.6 + unit(9, id, "backdrop-scale") * 0.4);
-        } else if (rock) {
-          added++;
+  it("seeds each rock depth by its own salt, the near depth on the backdrop hashes", () => {
+    for (const rule of [RULES.rocks, RULES.farRocks]) {
+      const { cell, salt } = rule;
+      const [low, high] = rule.scale;
+      let filled = 0;
+      for (let x = -30; x < 30; x++) {
+        for (let y = -30; y < 30; y++) {
+          const id = `${x},${y}`;
+          const rock = backdropRock(ART, rule, 9, x, y);
+          expect(rock !== null, `${salt} ${id}`).toBe(unit(9, id, salt) < rule.chance);
+          if (!rock) {
+            continue;
+          }
+          filled++;
+          expect(rock.x).toBe((x + unit(9, id, `${salt}-x`)) * cell);
+          expect(rock.y).toBe((y + unit(9, id, `${salt}-y`)) * cell);
+          expect(rock.scale).toBe(low + unit(9, id, `${salt}-scale`) * (high - low));
+          expect(rock.scale).toBeGreaterThanOrEqual(low);
+          expect(rock.scale).toBeLessThanOrEqual(high);
         }
       }
+      expect(filled / 3600, salt).toBeGreaterThan(rule.chance - 0.05);
+      expect(filled / 3600, salt).toBeLessThan(rule.chance + 0.05);
     }
-    expect(previous).toBeGreaterThan(0);
-    expect(added / previous).toBeGreaterThan(0.25);
-    expect(added / previous).toBeLessThan(0.5);
+    // The near depth keeps the backdrop salt, so its rocks keep their places.
+    expect(RULES.rocks.salt).toBe("backdrop");
+    expect(backdropRock(ART, RULES.rocks, 9, 4, 4)).toEqual(
+      backdropRock(ART, RULES.rocks, 9, 4, 4),
+    );
+    expect(backdropRock(ART, RULES.farRocks, 9, 4, 4)).not.toEqual(
+      backdropRock(ART, RULES.rocks, 9, 4, 4),
+    );
   });
 
   it("tints the backdrop by galaxy, sorts play objects by pivot y and lists every SVG", () => {
     expect(backdropTint(ART, 1)).toEqual(ART.tints.sunflower);
     expect(backdropTint(ART, 3)).toEqual(ART.tints.whirlpool);
     expect(backdropTint(ART, null)).toEqual(ART.tints.base);
-    const cells = Array.from({ length: 400 }, (_, index) =>
-      backdropRock(ART, 9, index % 20, index),
-    );
-    const filled = cells.filter((cell) => cell !== null);
-    expect(filled.length / cells.length).toBeGreaterThan(BACKDROP_FIELD.chance - 0.1);
-    expect(filled.length / cells.length).toBeLessThan(BACKDROP_FIELD.chance + 0.1);
-    for (const cell of filled) {
-      expect(cell.scale).toBeGreaterThanOrEqual(0.6);
-      expect(cell.scale).toBeLessThanOrEqual(1);
-    }
-    expect(backdropRock(ART, 9, 4, 4)).toEqual(backdropRock(ART, 9, 4, 4));
     expect(playDepth(100)).toBeLessThan(playDepth(101));
     expect(playDepth(-50)).toBeGreaterThan(1.9);
     expect(playDepth(5000)).toBeLessThan(3);

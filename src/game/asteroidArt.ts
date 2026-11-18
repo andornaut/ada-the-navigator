@@ -217,36 +217,48 @@ export function backdropTint(
   return (galaxy === null ? undefined : catalog.tints[GALAXY_ID[galaxy]]) ?? catalog.tints.base!;
 }
 
-/** Decorative backdrop field: world cell size, fill chance and display scale. */
-export const BACKDROP_FIELD = { cell: 320, chance: 0.48, scale: [0.6, 1] } as const;
+/**
+ * One backdrop rock depth (backdrop.json `debris.rocks`, `debris.farRocks`): its parallax, hash
+ * salt, world cell size, fill chance, display scale range and value toward the field background.
+ */
+export interface BackdropRockRule {
+  readonly cell: number;
+  readonly chance: number;
+  readonly parallax: number;
+  readonly salt: string;
+  readonly scale: readonly [number, number];
+  readonly value: number;
+}
 
 export interface BackdropRock extends Vec {
   readonly scale: number;
   readonly sprite: BackdropSprite;
 }
 /**
- * The backdrop rock seeded in cell (x, y) of its layer, or null for an empty cell. At parallax
+ * The backdrop rock seeded in cell (x, y) of its depth, or null for an empty cell. At parallax
  * 0.8 a rock slides past an ore field under its crystals, so it keeps no ore-field clearance.
  */
 export function backdropRock(
   catalog: AsteroidArtCatalog,
+  rule: Pick<BackdropRockRule, "cell" | "chance" | "salt" | "scale">,
   seed: number,
   x: number,
   y: number,
 ): BackdropRock | null {
   const id = `${x},${y}`;
-  if (unit(seed, id, "backdrop") >= BACKDROP_FIELD.chance) {
+  const { cell, salt } = rule;
+  if (unit(seed, id, salt) >= rule.chance) {
     return null;
   }
   const sprites = catalog.backdrop.sprites;
-  const sprite = sprites[Math.floor(unit(seed, id, "backdrop-sprite") * sprites.length)]!;
-  const [low, high] = BACKDROP_FIELD.scale;
-  const { cell } = BACKDROP_FIELD;
-  const at = {
-    x: (x + unit(seed, id, "backdrop-x")) * cell,
-    y: (y + unit(seed, id, "backdrop-y")) * cell,
+  const sprite = sprites[Math.floor(unit(seed, id, `${salt}-sprite`) * sprites.length)]!;
+  const [low, high] = rule.scale;
+  return {
+    scale: low + unit(seed, id, `${salt}-scale`) * (high - low),
+    sprite,
+    x: (x + unit(seed, id, `${salt}-x`)) * cell,
+    y: (y + unit(seed, id, `${salt}-y`)) * cell,
   };
-  return { scale: low + unit(seed, id, "backdrop-scale") * (high - low), sprite, ...at };
 }
 
 /** Every SVG the catalog draws: each rock frame and each backdrop sprite, once. */
