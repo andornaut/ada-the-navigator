@@ -1,21 +1,24 @@
+import { readFileSync } from "node:fs";
+
 import { expect, it } from "vitest";
 
-import rest from "../../../public/art/ui/icons/pause.svg?raw";
-import held from "../../../public/art/ui/icons/pause-held.svg?raw";
-import press from "../../../public/art/ui/icons/pause-press.svg?raw";
-import { menuPoseSvg, NAVIGATION_BUTTON_STYLE } from "./navigationButton.ts";
+import { MENU_ART, PAUSE_ART } from "../pause.ts";
+import { NAVIGATION_BUTTON_STYLE } from "./navigationButton.ts";
 
-it.each([rest, press, held])(
-  "retains actual Pause pose circles and ink around the compact Menu bars",
-  (pause) => {
-    const svg = menuPoseSvg(pause);
-    expect(svg.match(/<circle[^>]+\/>/gu)).toEqual(pause.match(/<circle[^>]+\/>/gu));
-    expect(svg).toContain('viewBox="0 0 35 35"');
-    expect(svg).toContain(`<g fill="${pause.match(/<path fill="([^"]+)"/u)![1]}">`);
-    expect(svg.match(/<rect[^>]+\/>/gu)).toEqual(
+const art = (path: string) =>
+  readFileSync(new URL(`../../../public${path}`, import.meta.url), "utf8");
+
+it.each(["rest", "press", "held"] as const)(
+  "draws the %s Menu pose in the Pause pose's circles with three 11x3 bars",
+  (pose) => {
+    const menu = art(MENU_ART[pose]);
+    const pause = art(PAUSE_ART[pose]);
+    expect(menu.match(/<circle[^>]+\/>/gu)).toEqual(pause.match(/<circle[^>]+\/>/gu));
+    expect(menu).toContain('viewBox="0 0 35 35"');
+    expect(menu.match(/<rect[^>]+\/>/gu)).toEqual(
       [11, 16, 21].map((y) => `<rect x="12" y="${y}" width="11" height="3" />`),
     );
-    expect(svg).not.toContain("<path");
+    expect(NAVIGATION_BUTTON_STYLE).toContain(`url('${MENU_ART[pose]}')`);
   },
 );
 
