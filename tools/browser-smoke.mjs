@@ -1547,6 +1547,9 @@ try {
     assert.equal(await warning.getAttribute("id"), "save-status");
     await closeSettings();
     const blockedPosition = await position();
+    // Keys pressed on a focused page control stay with it (src/input/desktop.ts), and closing the
+    // Paused card returns focus to its opener, so flight keys go to the page.
+    await page.evaluate(() => document.activeElement?.blur());
     await page.keyboard.down("w");
     try {
       await page.waitForFunction(({ x, y }) => {
