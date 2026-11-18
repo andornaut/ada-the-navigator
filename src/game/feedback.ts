@@ -1,4 +1,4 @@
-import type { Rect } from "@andornaut/game-kit/runtime/rect";
+import type { Point, Rect } from "@andornaut/game-kit/runtime/rect";
 
 import { HIT_FLASH, HIT_SHAKE } from "../data/layout.ts";
 import { SCREEN } from "../data/screen.ts";
@@ -196,6 +196,24 @@ export function hitFlashBands(area: Rect): Rect[] {
     { height: height - 2 * band, width: band, x, y: y + band },
     { height: height - 2 * band, width: band, x: x + width - band, y: y + band },
   ];
+}
+
+/**
+ * A camera's shake effect as Phaser's Shake keeps it: while running, its preRender translates the
+ * camera's zoomed view matrix by the offset, in world units.
+ */
+export interface CameraShake {
+  readonly _offsetX: number;
+  readonly _offsetY: number;
+  readonly isRunning: boolean;
+}
+
+/**
+ * Where to place an object, in world units, so the camera's shake leaves it fixed on screen: the
+ * shake's offset reversed, or nothing while no shake runs.
+ */
+export function shakeCounter(shake: CameraShake): Point {
+  return shake.isRunning ? { x: -shake._offsetX, y: -shake._offsetY } : { x: 0, y: 0 };
 }
 
 /**

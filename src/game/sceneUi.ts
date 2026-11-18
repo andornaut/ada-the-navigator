@@ -67,7 +67,7 @@ import { readDestruction, readShards } from "./destructionArt.ts";
 import { EDGE_MARKER_DEPTH, HIT_FLASH_DEPTH } from "./drawOrder.ts";
 import { enemyPartFrame, GALAXY_FAMILIES } from "./enemyArt.ts";
 import { readEnemyWeaponsArt } from "./enemyWeaponsArt.ts";
-import { HIT_SHAKE_SHARE, TELEPORT_DISTANCE } from "./feedback.ts";
+import { type CameraShake, HIT_SHAKE_SHARE, shakeCounter, TELEPORT_DISTANCE } from "./feedback.ts";
 import { LIGHT_FIELD, lightGalaxy, readForegroundEdges, readLightGalaxies } from "./lightField.ts";
 import { saves } from "./persistence.ts";
 import { fitPlayCamera, sceneFit, shakeIntensity } from "./playCamera.ts";
@@ -318,6 +318,14 @@ export function buildScene(scene: UiContext): void {
   scene.indicatorInk = scene.add.graphics().setDepth(3 - 1e-6);
   scene.edgeMarkerInk = scene.add.graphics().setDepth(EDGE_MARKER_DEPTH);
   scene.hitFlashInk = scene.add.graphics().setDepth(HIT_FLASH_DEPTH);
+  // The hit flash stays on the play view's edge while the view shakes: just before the camera
+  // applies each frame's shake, the band moves by that shake's offset reversed.
+  const holdHitFlash = (): void => {
+    const counter = shakeCounter(scene.cameras.main.shakeEffect as unknown as CameraShake);
+    scene.hitFlashInk.setPosition(counter.x, counter.y);
+  };
+  scene.events.on(Scenes.Events.PRE_RENDER, holdHitFlash);
+  partial.push(() => scene.events.off(Scenes.Events.PRE_RENDER, holdHitFlash));
   scene.jetKeyline = scene.add.graphics();
   scene.jets = scene.add.graphics().setDepth(9);
   scene.ship = scene.add.image(0, 0, "ship").setDepth(10);

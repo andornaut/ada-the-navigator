@@ -1,3 +1,7 @@
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
+
+import type { Point } from "@andornaut/game-kit/runtime/rect";
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
@@ -10,12 +14,15 @@ import { syncFlightRegion } from "../model/geography.ts";
 import { playOpening } from "../testing/launch.ts";
 import { publicJson } from "../testing/publicArt.ts";
 import {
+  type CameraShake,
   HIT_FLASH_FILL,
   HIT_SHAKE_SHARE,
   hitFlashAlpha,
   hitFlashBands,
   ModelFeedback,
+  shakeCounter,
 } from "./feedback.ts";
+import { shakeIntensity } from "./playCamera.ts";
 import { readSpacePalette } from "./spacePalette.ts";
 
 function launched() {
@@ -211,6 +218,67 @@ describe("hit feedback", () => {
     ]);
     const covered = bands.reduce((sum, band) => sum + band.width * band.height, 0);
     expect(covered).toBe(720 * 360 - 714 * 354);
+  });
+
+  it("holds the band fixed on the play view's edge through installed Phaser's shake", () => {
+    // Phaser's own Shake and TransformMatrix, as Camera.preRender applies them: the zoomed view
+    // matrix, then the shake's translate inside it.
+    const phaser = dirname(createRequire(import.meta.url).resolve("phaser/package.json"));
+    const load = createRequire(import.meta.url);
+    const Shake = load(join(phaser, "src/cameras/2d/effects/Shake.js")) as new (
+      camera: object,
+    ) => CameraShake & {
+      preRender(): void;
+      start(duration: number, intensity: number): void;
+      update(time: number, delta: number): void;
+    };
+    const TransformMatrix = load(
+      join(phaser, "src/gameobjects/components/TransformMatrix.js"),
+    ) as new () => {
+      applyITRS(x: number, y: number, rotation: number, sx: number, sy: number): void;
+      transformPoint(x: number, y: number, point: { x: number; y: number }): Point;
+      translate(x: number, y: number): void;
+    };
+    for (const zoom of [1, 2.1667]) {
+      const matrix = new TransformMatrix();
+      const camera = {
+        emit: () => undefined,
+        height: 360 * zoom,
+        matrix,
+        roundPixels: false,
+        scene: {},
+        width: 720 * zoom,
+        zoom,
+      };
+      const shake = new Shake(camera);
+      const corners = hitFlashBands({ height: 360, width: 720, x: 0, y: 0 }).flatMap((band) => [
+        { x: band.x, y: band.y },
+        { x: band.x + band.width, y: band.y + band.height },
+      ]);
+      const screen = (point: Point, counter: Point) => {
+        matrix.applyITRS(0, 0, 0, zoom, zoom);
+        matrix.translate(0, 0);
+        shake.preRender();
+        return matrix.transformPoint(point.x + counter.x, point.y + counter.y, { x: 0, y: 0 });
+      };
+      const rest = corners.map((corner) => screen(corner, shakeCounter(shake)));
+      shake.start(HIT_SHAKE.duration, shakeIntensity(zoom, HIT_SHAKE_SHARE));
+      let moved = 0;
+      for (let time = 16; shake.isRunning; time += 16) {
+        shake.update(time, 16);
+        corners.forEach((corner, index) => {
+          const held = screen(corner, shakeCounter(shake));
+          expect(held.x).toBeCloseTo(rest[index]!.x, 9);
+          expect(held.y).toBeCloseTo(rest[index]!.y, 9);
+          const shaken = screen(corner, { x: 0, y: 0 });
+          moved = Math.max(moved, Math.abs(shaken.x - rest[index]!.x) / zoom);
+        });
+      }
+      // The view itself did shake, by up to about 2 logical px.
+      expect(moved).toBeGreaterThan(0);
+      expect(moved).toBeLessThanOrEqual(2 + 1e-9);
+      expect(shakeCounter(shake)).toEqual({ x: 0, y: 0 });
+    }
   });
 
   it("shakes the view 2 logical px of the 720 base width for 100 ms", () => {
