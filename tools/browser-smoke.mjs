@@ -3289,8 +3289,8 @@ try {
 
   // A story run (gameplay/rules.md "Earth scenes"): from Start, Previous on the prologue's first
   // page returns across Grandma's garden into chapter one's opening, Skip from a mid-prologue page aboard
-  // passes the rest of the run to galaxy selection, and Home's run is Ada's room page alone, with
-  // Skip hidden.
+  // passes the rest of the run to galaxy selection, and Stay on Earth lands on Ada's room page,
+  // which starts its run and, like every page with Next or a named action, offers Skip.
   await seedOnce(new GameModel(CONTENT).save(), "ada-browser.story-run.v1");
   await page.locator('[data-action="start"]').click();
   const storyPanel = page.locator(".ada-story-panel:not(.ada-dialogue-panel):not([hidden])");
@@ -3366,12 +3366,12 @@ try {
   assert.equal(aboard.background, "aboard", "Skip is pressed on a page aboard");
   assert.equal(room.background, "adaRoom", "Home from galaxy selection shows Ada's room");
   assert.equal(roomAction, CONTENT.labels.pickUpRock);
-  assert.ok(!room.skipShown, "Skip is hidden on the run's end, Ada's room page");
+  assert.ok(room.skipShown, "Ada's room page offers Skip with its named action");
   assert.ok(!room.previousShown, "Ada's room page from galaxy selection starts its run");
   events.checks.push(
     "A story run's Previous crosses from the prologue across Grandma's garden into chapter one, " +
-      "Skip from aboard passes the run to galaxy selection, and Ada's room page ends a run " +
-      "with Skip hidden",
+      "Skip from aboard passes the run to galaxy selection, and Ada's room page starts a run " +
+      "with its named action and Skip",
   );
 
   // The start screen (art/layout.md "Start screen"): every part in play-view px from the game
