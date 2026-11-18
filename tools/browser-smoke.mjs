@@ -1831,14 +1831,24 @@ try {
     await mapScreen
       .locator(".ada-map-tool")
       .evaluateAll((tools) => tools.map((tool) => tool.dataset.tool)),
-    ["close", "zoomIn", "zoomOut", "recentre"],
-    "The map's tools are close, zoom in, zoom out and recentre",
+    ["zoomOut", "zoomIn", "recentre"],
+    "The map's tools are zoom out, zoom in and recentre, top to bottom",
+  );
+  // No close X: a primary Close in the footer dismisses the map.
+  assert.deepEqual(
+    await mapScreen.locator('[data-action="map-close"]').evaluate((close) => ({
+      primary: close.classList.contains("ada-primary"),
+      text: close.textContent?.trim(),
+      tool: close.classList.contains("ada-map-tool"),
+    })),
+    { primary: true, text: CONTENT.labels.close, tool: false },
+    "The map's Close is its footer primary, not a tool",
   );
   assert.deepEqual(
     await mapScreen
       .locator(".ada-map-tool")
       .evaluateAll((tools) => tools.map((tool) => tool.getAttribute("aria-label"))),
-    ["close", "mapZoomIn", "mapZoomOut", "mapCenterOnAda"].map((key) => CONTENT.labels[key]),
+    ["mapZoomOut", "mapZoomIn", "mapCenterOnAda"].map((key) => CONTENT.labels[key]),
     "The map's tools carry Gameplay's accessible labels",
   );
   // Galaxies on the HUD row: Quests and Galaxies one 98 width, Galaxies' right edge 16 left of
@@ -1930,7 +1940,8 @@ try {
     "In danger with nothing selected the reason-only panel is 360 by 52, or 80 with the empty note",
   );
   await page.screenshot({ path: `${output}/map-earth-danger.png` });
-  // Tab order: the tools, Quests, Galaxies, the places, then Travel here.
+  // Tab order: the tools, the places in reading order, Travel here where offered, Quests,
+  // Galaxies, then Close, wrapping at either end; from Close, Tab starts over at the tools.
   await mapScreen.locator('[data-action="map-close"]').focus();
   // Each press in turn, then what it focused.
   const tabThrough = async (presses, seen = []) => {
@@ -1943,11 +1954,27 @@ try {
     );
     return tabThrough(presses - 1, [...seen, at]);
   };
-  const tabbed = await tabThrough(5);
+  const shownPlaces = await mapScreen.evaluate((screen) =>
+    [...screen.querySelectorAll(".ada-map-places button")]
+      .filter((button) => !button.hidden && !button.closest("[hidden]"))
+      .map((button) => button.dataset.tool ?? button.dataset.action ?? ""),
+  );
+  const travelShown = await mapScreen.locator('[data-action="map-travel"]').isVisible();
+  const tabOrder = [
+    "zoomOut",
+    "zoomIn",
+    "recentre",
+    ...shownPlaces,
+    ...(travelShown ? ["map-travel"] : []),
+    "map-quests",
+    "map-galaxies",
+    "map-close",
+  ];
+  const tabbed = await tabThrough(tabOrder.length);
   assert.deepEqual(
-    tabbed.slice(0, 5),
-    ["zoomIn", "zoomOut", "recentre", "map-quests", "map-galaxies"],
-    `Tab moves through the tools, then Quests and Galaxies: ${tabbed}`,
+    tabbed,
+    tabOrder,
+    `Tab moves through the tools, the places, Quests, Galaxies and back to Close: ${tabbed}`,
   );
   // Quests: the card under a dim over the whole map, focus on its first line button or its X;
   // Escape closes it back to the map, and a mapped line selects its chip.
