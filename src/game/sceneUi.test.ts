@@ -357,7 +357,7 @@ describe("universal pause caller", () => {
     expect(choice).toBe(true);
   });
 
-  it("uses the real Earth Map permission and restores the exact room through scene callbacks", () => {
+  it("offers Earth no Map and leaves the exact room through scene callbacks", () => {
     const model = new GameModel(CONTENT);
     model.state.started = true;
     model.state.prologueSeen = true;
@@ -371,17 +371,13 @@ describe("universal pause caller", () => {
       scene,
     });
     const open = runInContext(callback("scene.openGalaxies"), context) as () => void;
-    const close = runInContext(callback("closeGalaxyMap"), context) as () => void;
-    expect(pauseView(model).canMap).toBe(true);
+    expect(pauseView(model).canMap).toBe(false);
     expect(pauseView(model).place).toBeNull();
     expect(pauseView(model).navigation).toBe("menu");
     open();
-    expect(model.screen).toBe("selector");
-    expect(model.state.flight).toBeNull();
-    expect(pauseView(model).canMap).toBe(false);
-    close();
+    expect(model.screen).toBe("story");
     expect(model.storyView).toEqual(before);
-    expect(pauseView(model).canMap).toBe(true);
+    expect(pauseView(model).canMap).toBe(false);
     expect(scene.controls.focusGalaxies).not.toHaveBeenCalled();
   });
 

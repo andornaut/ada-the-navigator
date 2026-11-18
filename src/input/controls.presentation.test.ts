@@ -41,6 +41,8 @@ function render(enabled: boolean, covered: boolean, coarse = true, map = false, 
     context: { action: "dock" },
     desktopBinding: { active: () => false, touchActive: () => false },
     enabled,
+    // The start screen's Exit disc exists only where Exit shows.
+    exitButton: undefined,
     inCurrentView: () => foreground,
     modalOpen: () => covered,
     navigation,

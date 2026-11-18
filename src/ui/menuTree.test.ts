@@ -46,7 +46,7 @@ describe("production Menu tree", () => {
       ...data,
       closeLabel: "",
       context: "nonplay",
-      labels: { achievements: "Same", backToTitle: "Same", settings: "" },
+      labels: { achievements: "Same", backToTitle: "", settings: "Same" },
     });
     expect(tree.slots!.actions!.map((node) => node.key)).toEqual([
       "achievements",
