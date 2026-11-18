@@ -22,8 +22,8 @@ In-flight chatter and drone/Admiral broadcasts remain in the small conversation
 box with touch dismissal. Automatic gate and battle reactions below stay chatter;
 their presence in a chapter does not turn them into Use interactions.
 
-Essential exchanges below contain roughly four to eight lines and two optional
-Ask more topics per conversation. Runtime keys use galaxy IDs, not chapter
+Each quest step gets roughly four to eight essential lines plus two or three
+optional Ask more topics. Runtime keys use galaxy IDs, not chapter
 order: Sunflower 1, Cartwheel 2, Whirlpool 3, Needle 4, Andromeda 5 and Phantom 6.
 Chapter headings below identify the authored exchanges. Outcome chains keep
 their existing keys and order. Repeated mechanical actions use the short Astra

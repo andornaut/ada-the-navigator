@@ -226,6 +226,7 @@ undock.
 
 Shop, Jobs and Projects use fullscreen views, as do buy and donation confirms
 and detail cards. Their existing contents, actions and dismissal rules apply.
+Pause, Settings and the Map keep their layout.
 
 ### Weapon unlocks
 

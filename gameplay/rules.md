@@ -248,11 +248,25 @@ resolved, and its stations, shops, jobs, activities and any unfinished quests
 stay available. Completing a quest invites a return to Earth without forcing
 immediate exit from space.
 
-Talk conversations in space (with Continue and Ask more) pause play, as cards
-do (the station card, shop, pause card and the rest). They use brief essential
-exchanges with optional questions about character and culture. The in-flight
-speech box and notices never pause play (see
-[Astra and Penny in flight](#astra-and-penny-in-flight)). The first mandatory
+Every Use interaction in space (Talk, Deliver, Tow, Salvage, Deposit and the
+rest) opens the conversation view, except Dock, which opens the station card.
+The conversation view is full screen and pauses play, as cards do (the station
+card, shop, pause card and the rest). The other party's portrait and name show
+at the top; an interaction with no person to address shows Astra's. Each line
+names its speaker, and Ada's, Astra's and Penny's lines show their own
+portraits. The view offers Continue, choice buttons, Ask more, Close and Skip.
+All dialogue is skippable: Skip jumps to the exchange's outcome, and a pending
+choice still asks. Conversations use brief essential exchanges with optional
+questions about character and culture (see [Player copy](player-copy.md)).
+In-flight chatter, drone warnings and the Admiral's broadcasts stay in the small
+in-flight box, and that box and notices never pause play (see
+[Astra and Penny in flight](#astra-and-penny-in-flight)).
+
+The station card with Shop, Jobs and Projects, their buy and donation confirms,
+detail cards and the conversation view are full screen. Pause, Settings and the
+Map keep their layout.
+
+The first mandatory
 introductory encounter occurs after a set distance of fresh exploration,
 measured in fresh chunks, with the distance tunable. It happens only once per
 galaxy; repeat visits resume progress.
@@ -948,7 +962,8 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   with Ada's level 1 damage, blast, spread and reach, plus three enemy-only
   weapons; each enemy
   keeps its own cadence, and enemy projectiles fly at 0.6 times Ada's level 1
-  speed for the weapon (see [Ships](ships.md#enemy-weapons)). An enemy Heavy
+  speed for the weapon (see [Ships](ships.md#enemy-weapons)). An enemy fires
+  only while it is inside the visible game area. An enemy Heavy
   Missile hit (8) removes 8 HP from a base shield, so it fires rarely.
 - Laser bolts travel at 500, 600 and 700 world units per second at weapon
   levels 1, 2 and 3; Multi-Laser bolts at 400, 500 and 600. Ada's bolts and Phaser use the same fire-time rounded coverage envelope,
@@ -1001,6 +1016,12 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   shorten the full refill to 45, then 30 seconds. Only damage restarts the
   delay: enemies nearby, chasing or firing and missing do not hold it back, and
   enemies keep their damage.
+- Recharge burns carried ore: 1 ore per 1% of shield capacity restored, so 10
+  ore per 10% and 100 for a full refill at every Shield level. With no ore
+  aboard, the shield recharges free only up to 10% of capacity; above that it
+  stops until Ada has ore. Ore rocks occur in every galaxy, Cartwheel richest,
+  and Cartwheel's hub deposits remain for the story and the Mining contract.
+  Stardust is never at risk. See [Economy](economy.md#earning-stardust).
 - Ada is in battle while an enemy that is chasing or attacking her is inside the
   battle square: centred on Ada, reaching half the game area's width plus 64
   world units along each axis (424 on the 720-wide view). Idle enemies,
@@ -1044,7 +1065,9 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   while she carries a job or story item or tows a craft, a divider and its icon
   follow last. Each segment leaves when empty. Stardust and ore gains show "+N"
   ticks just below their counts, with the gain in the same at most five
-  character format as the count ("+44.4k").
+  character format as the count ("+44.4k"). Ore spent on shield recharge shows
+  a "−10" tick under the ore count for each 10 ore paid, mirroring the gain
+  ticks.
 - Item notices: when Ada gains anything other than Stardust or ore (a holodisk,
   a story item, a lost item, a job item, anything from an upgrade drop, or a
   towed craft), a small notice shows just below the status
