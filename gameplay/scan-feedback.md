@@ -73,7 +73,11 @@ or replay rewards.
 
 ## Completion presentation
 
-The rectangle originates at the scanned object, moves toward the top and fades.
+The rectangle originates at the scanned object, moves continuously straight up
+toward the top and fades. Its vertical path is chosen once, clear of the HUD,
+and stops below any HUD element above it. Astra's dialogue draws over the
+rectangle; the rectangle never hops, dodges or moves sideways around dialogue.
+With reduced motion it stays at its starting position.
 Art retains rendered visual review and Tech retains implementation. Review task
 and quest treatments, start/mid/top states, and placement against Astra dialogue
 and the HUD. No scan mock-first or sequencing hold applies. Independent input,
