@@ -4,14 +4,13 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import type { Weapon } from "../data/types.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
-import { grantAllWeapons } from "./cheats.ts";
 import { ensureDestination, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
 import { stationSpecialty } from "./stationServices.ts";
 import type { FlightState } from "./types.ts";
-import { collectWeapon, noAmmo } from "./weapons.ts";
+import { collectWeapon } from "./weapons.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function launched(): GameModel {
@@ -353,21 +352,5 @@ describe("ammunition", () => {
     model.state.flight!.objects = [];
     pickup(model, "multiLaser");
     expect(model.state.flight!.ammo.multiLaser).toBe(123 + 300);
-  });
-
-  it("keeps a granted weapon's flight ammunition out of the economy", () => {
-    const model = launched();
-    expect(grantAllWeapons(model.state)).toBe(true);
-    const flight = model.state.flight!;
-    expect(flight.ammo).toEqual({
-      heavyMissile: 120,
-      multiLaser: 900,
-      phaser: 120,
-      rapidMissile: 780,
-      scattershot: 180,
-    });
-    model.step(0.01, idle);
-    expect(model.state.economy.ammo).toEqual(noAmmo());
-    expect(restoreSave(model.save())?.flight?.ammo).toEqual(flight.ammo);
   });
 });

@@ -32,6 +32,7 @@ import type { FlightInput, FlightState, GameSave, Vec } from "../model/types.ts"
 import { shipTuning } from "../model/upgrades.ts";
 import { type ConversationBox } from "../ui/conversation.ts";
 import { createBannerLayer, type PlacedBanner } from "../ui/disabledBanner.ts";
+import { createFpsCounter } from "../ui/fpsCounter.ts";
 import { createGalaxyMap, type GalaxyMapView } from "../ui/galaxyMap.ts";
 import { createJumpOverlay, type WarpPaint } from "../ui/jumpOverlay.ts";
 import { type BoxOccupant } from "../ui/notice.ts";
@@ -50,6 +51,7 @@ import { backdropTint, hexNumber, playDepth } from "./asteroidArt.ts";
 import { type BackdropHaze } from "./backdropHaze.ts";
 import { type BackdropRules, type GalaxyBackdrop } from "./backdropLayers.ts";
 import { craftFrameSets, type HubArt } from "./cartwheelArt.ts";
+import { type CheatSession, NO_CHEAT_SESSION } from "./cheatSession.ts";
 import { type StreakSpec } from "./currentStreaks.ts";
 import { type DebrisArt } from "./debrisArt.ts";
 import {
@@ -403,6 +405,10 @@ export class GameScene extends Scene {
   // Each galaxy's route map marker hue and previews, from Art's galaxies.json and manifest.
   routeGalaxies: () => GalaxyMapView["galaxies"] = () => [];
   restartCard!: ReturnType<typeof createRestartCard>;
+  resetSaveCard!: ReturnType<typeof createRestartCard>;
+  fpsCounter!: ReturnType<typeof createFpsCounter>;
+  // The current cheat session: from the first cheat nothing is saved until play returns to Start.
+  cheatSession: CheatSession = NO_CHEAT_SESSION;
   conversationBox!: ConversationBox;
   // The loader runs the player waits for show the loading bar; on-demand art loads silently. The
   // kit's watch also gives every file the loader's timeout and retries failed loads in rounds.

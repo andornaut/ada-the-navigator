@@ -67,6 +67,7 @@ import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { calfHome, calfRouteMidpoint, calfStart, placedCalf, stepCalf } from "./calf.ts";
 import type { ChapterResult } from "./chapterProtocol.ts";
 import { chapterRuntime } from "./chapters.ts";
+import { applyEconomyCheat, type CheatId, economyCheatAvailable } from "./cheats.ts";
 import {
   ConversationDirector,
   heavyInSight,
@@ -273,7 +274,7 @@ import { applyUpgrade, chooseAmmoPack, chooseUpgrade } from "./upgradeDrops.ts";
 import { newEconomy, shipTuning } from "./upgrades.ts";
 import {
   collectWeapon,
-  ownedForSave,
+  ensureOwnedWeapons,
   ownedWeapons,
   selectFlightWeapon,
   UPGRADE_WEAPONS,
@@ -462,6 +463,11 @@ export class GameModel {
   } | null = null;
   /** Achievements unlocked whose notice has not shown yet; notices show in flight. */
   private achievementNotices: string[] = [];
+  /**
+   * A cheat session is running (gameplay/cheats.md "Cheat session"): nothing is earned, so no
+   * achievement records or unlocks. The scene owns the session and suspends saving.
+   */
+  cheatSession = false;
   private previousSeed = 0;
   // Every launch shows the title. Continue restores a saved story cursor or the held flight.
   private startShown = true;
@@ -1282,14 +1288,8 @@ export class GameModel {
       return;
     }
     const economy = this.state.economy;
-    const owned = ownedForSave(flight);
-    economy.ownedWeapons = owned;
-    // A granted weapon in use saves as the last real selection that is still owned.
-    if (flight.weapon === "laser" || owned.includes(flight.weapon)) {
-      economy.weapon = flight.weapon;
-    } else if (economy.weapon !== "laser" && !owned.includes(economy.weapon)) {
-      economy.weapon = "laser";
-    }
+    economy.ownedWeapons = [...ensureOwnedWeapons(flight)];
+    economy.weapon = flight.weapon;
     economy.levels = structuredClone(flight.levels);
     if (flight.shieldRechargeCredit !== undefined) {
       economy.shieldRechargeCredit = flight.shieldRechargeCredit;
@@ -1297,11 +1297,8 @@ export class GameModel {
     if (flight.shieldOreSpent !== undefined) {
       economy.shieldOreSpent = flight.shieldOreSpent;
     }
-    // A granted weapon's flight ammunition stays out of the economy.
     for (const weapon of UPGRADE_WEAPONS) {
-      if (!flight.grantedWeapons?.includes(weapon)) {
-        economy.ammo[weapon] = flight.ammo[weapon];
-      }
+      economy.ammo[weapon] = flight.ammo[weapon];
     }
   }
   private grantPickupAmmo(weapon: UpgradeWeapon): void {
@@ -1430,21 +1427,10 @@ export class GameModel {
     }
     const economy = this.state.economy;
     const before = shipTuning(ECONOMY, this.content, flight.levels).shieldMax;
-    // A bought weapon stops being granted; other granted weapons stay for the flight.
-    const granted = (flight.grantedWeapons ?? []).filter(
-      (weapon) => !economy.ownedWeapons.includes(weapon),
-    );
-    flight.ownedWeapons = [...economy.ownedWeapons, ...granted];
-    if (granted.length) {
-      flight.grantedWeapons = granted;
-    } else {
-      delete flight.grantedWeapons;
-    }
+    flight.ownedWeapons = [...economy.ownedWeapons];
     flight.levels = structuredClone(economy.levels);
     for (const weapon of UPGRADE_WEAPONS) {
-      if (!granted.includes(weapon)) {
-        flight.ammo[weapon] = economy.ammo[weapon];
-      }
+      flight.ammo[weapon] = economy.ammo[weapon];
     }
     // A bought shield level adds its capacity to the current charge.
     const after = shipTuning(ECONOMY, this.content, flight.levels).shieldMax;
@@ -2026,6 +2012,48 @@ export class GameModel {
   /** Records the chunk Ada is in to the galaxy's explored record, which the Map's fog reveals. */
   private explore(f: FlightState): void {
     recordExplored(this.content.tuning.chunkSize, this.current.explored, f.player);
+  }
+  /** Whether a cheat has anything left to grant (gameplay/cheats.md "Cheats"). */
+  cheatAvailable(id: CheatId): boolean {
+    if (id === "unlockAllGalaxies") {
+      return GALAXY_NUMBERS.some((galaxy) => !this.state.unlocked.includes(galaxy));
+    }
+    this.pullLoadout();
+    return economyCheatAvailable(id, this.state.economy);
+  }
+  /**
+   * Applies a cheat to the current play, in flight or not; false when it has nothing left to
+   * grant. The caller has started the cheat session, so nothing it grants is earned or saved.
+   */
+  cheat(id: CheatId): boolean {
+    if (!this.cheatAvailable(id)) {
+      return false;
+    }
+    if (id === "unlockAllGalaxies") {
+      // The next boarding flies the route from the farthest galaxy so far to the farthest new one.
+      const from = Math.max(...this.state.unlocked.map((galaxy) => ROUTE_POSITION[galaxy]));
+      const fresh = GALAXY_NUMBERS.filter((galaxy) => !this.state.unlocked.includes(galaxy));
+      this.state.unlocked.push(...fresh);
+      const opened = fresh.map((galaxy) => ROUTE_POSITION[galaxy]);
+      this.unlockFlight = {
+        from: from as RoutePosition,
+        opened,
+        to: Math.max(...opened) as RoutePosition,
+      };
+      return true;
+    }
+    applyEconomyCheat(id, this.state);
+    this.pushLoadout();
+    return true;
+  }
+  /** Show tips again: clears the seen first-flight lessons, so each plays under its trigger. */
+  showTipsAgain(): void {
+    const lessons = new Set(
+      CONVERSATIONS.filter(({ trigger }) => trigger.kind === "lesson").map(({ id }) => id),
+    );
+    // In place: the conversation director extends this same list.
+    const seen = this.state.seenConversations;
+    seen.splice(0, seen.length, ...seen.filter((id) => !lessons.has(id)));
   }
   /** Jumps to an unlocked galaxy's flight. */
   startGalaxy(id: GalaxyNumber): void {
@@ -4261,6 +4289,9 @@ export class GameModel {
   }
   /** Unlocks every achievement now reached, queueing its notice for the next flight step. */
   private syncAchievements(): void {
+    if (this.cheatSession) {
+      return;
+    }
     const unlocked = unlockAchievements(
       ACHIEVEMENTS,
       ACHIEVEMENT_TOTALS,
@@ -4271,6 +4302,9 @@ export class GameModel {
   }
   /** Records an achievement event from a system that counts toward one (data/achievements.ts). */
   recordAchievement(event: AchievementEvent): void {
+    if (this.cheatSession) {
+      return;
+    }
     recordAchievement(this.state.achievements, event);
     this.syncAchievements();
   }

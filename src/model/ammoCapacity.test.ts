@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { grantAllWeapons } from "./cheats.ts";
 import { createFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
@@ -87,10 +86,6 @@ describe("finite ammunition capacity", () => {
     expect(flight.ammo[weapon]).toBe(9999);
     flight.ammo[weapon] = 9998;
     expect(collectWeapon(weapon, flight)).toBe(false);
-    expect(flight.ammo[weapon]).toBe(9999);
-    flight.grantedWeapons = [weapon];
-    flight.ammo[weapon] = 9998;
-    expect(collectWeapon(weapon, flight)).toBe(true);
     expect(flight.ammo[weapon]).toBe(9999);
   });
 
@@ -183,7 +178,7 @@ describe("finite ammunition capacity", () => {
     expect(clampAmmo(ECONOMY, loadout.ammo)).not.toBe(loadout.ammo);
   });
 
-  it("keeps invalid negative or fractional saves rejected and run-only cheats capped", () => {
+  it("keeps invalid negative or fractional saves rejected and the weapon cheat capped", () => {
     const model = new GameModel(CONTENT);
     model.startGalaxy(1);
     for (const value of [-1, 0.5]) {
@@ -191,7 +186,8 @@ describe("finite ammunition capacity", () => {
       saved.economy.ammo.multiLaser = value;
       expect(restoreSave(saved)).toBeNull();
     }
-    expect(grantAllWeapons(model.state)).toBe(true);
-    expect(Object.values(model.state.flight!.ammo).every((amount) => amount <= 9999)).toBe(true);
+    model.state.flight!.ammo.multiLaser = 9998;
+    expect(model.cheat("unlockAllWeapons")).toBe(true);
+    expect(model.state.flight!.ammo.multiLaser).toBe(9999);
   });
 });

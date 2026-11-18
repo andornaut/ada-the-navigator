@@ -1,15 +1,17 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { playOpening, relaunch } from "../testing/launch.ts";
-import { grantAllWeapons } from "./cheats.ts";
+import { GALAXY_NUMBERS } from "../data/galaxies.ts";
+import { playOpening, readStory } from "../testing/launch.ts";
+import { CHEAT_AMOUNT, CHEAT_IDS } from "./cheats.ts";
 import { GameModel } from "./game.ts";
-import { stationsNear } from "./stations.ts";
-import { stationSpecialty } from "./stationServices.ts";
-import { collectWeapon } from "./weapons.ts";
+import { addPacks, UPGRADE_WEAPONS } from "./weapons.ts";
 
-const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
+function home(): GameModel {
+  return new GameModel(CONTENT);
+}
 
 function launched(): GameModel {
   const model = new GameModel(CONTENT);
@@ -19,121 +21,132 @@ function launched(): GameModel {
   return model;
 }
 
-describe("grant all weapons", () => {
-  it("adds every weapon to the flight only, leaving selection and saved ownership unchanged", () => {
-    const model = launched();
-    const flight = model.state.flight!;
-    Object.assign(flight, {
-      cargo: 12345,
-      fireCooldown: 0.37,
-      ownedWeapons: ["multiLaser"],
-      shield: 4.2,
-      weapon: "multiLaser",
+describe("cheats", () => {
+  it("unlocks every weapon with a purchase's packs, keeping levels, selection and Stardust", () => {
+    const model = home();
+    const economy = model.state.economy;
+    economy.ownedWeapons = ["multiLaser"];
+    economy.ammo.multiLaser = 5;
+    const before = structuredClone(economy);
+    expect(model.cheatAvailable("unlockAllWeapons")).toBe(true);
+    expect(model.cheat("unlockAllWeapons")).toBe(true);
+    expect([...economy.ownedWeapons].sort()).toEqual([...UPGRADE_WEAPONS].sort());
+    const ammo = structuredClone(before.ammo);
+    for (const weapon of UPGRADE_WEAPONS.filter((weapon) => weapon !== "multiLaser")) {
+      addPacks(ECONOMY, weapon, ECONOMY.ammo.grantPacks, ammo);
+    }
+    expect(economy.ammo).toEqual(ammo);
+    expect(economy).toMatchObject({
+      levels: before.levels,
+      stardust: before.stardust,
+      weapon: before.weapon,
     });
-    model.save();
-    const economy = structuredClone(model.state.economy);
-    expect(grantAllWeapons(model.state)).toBe(true);
-    // The grant adds the four other shop weapons, Heavy Missile and Phaser included.
-    expect(flight.ownedWeapons).toEqual([
-      "multiLaser",
-      "rapidMissile",
-      "heavyMissile",
-      "scattershot",
-      "phaser",
-    ]);
-    expect(flight.grantedWeapons).toEqual([
-      "rapidMissile",
-      "heavyMissile",
-      "scattershot",
-      "phaser",
-    ]);
-    expect(flight).toMatchObject({ cargo: 12345, fireCooldown: 0.37, shield: 4.2 });
-    expect(flight.weapon).toBe("multiLaser");
-    const serialized = model.save();
-    expect(model.state.economy).toEqual(economy);
-    // A resumed flight keeps its granted weapons until the flight ends.
-    expect(relaunch(CONTENT, serialized).state).toEqual(model.state);
-    expect(grantAllWeapons(model.state)).toBe(true);
-    expect(model.save()).toBe(serialized);
+    expect(model.cheatAvailable("unlockAllWeapons")).toBe(false);
+    expect(model.cheat("unlockAllWeapons")).toBe(false);
+    expect(economy.ammo).toEqual(ammo);
   });
 
-  it("ends granted weapons with the flight", () => {
+  it("applies to the current flight's loadout in flight", () => {
     const model = launched();
-    grantAllWeapons(model.state);
-    model.state.flight!.weapon = "rapidMissile";
-    model.save();
-    expect(model.state.economy).toMatchObject({ ownedWeapons: [], weapon: "laser" });
+    const flight = model.state.flight!;
+    const weapon = flight.weapon;
+    expect(model.cheat("unlockAllWeapons")).toBe(true);
+    expect([...flight.ownedWeapons!].sort()).toEqual([...UPGRADE_WEAPONS].sort());
+    expect(flight.weapon).toBe(weapon);
+    expect(UPGRADE_WEAPONS.every((id) => flight.ammo[id] > 0)).toBe(true);
+    expect(model.cheat("maxWeaponLevels")).toBe(true);
+    expect(Object.values(flight.levels.weapons).every((level) => level === 3)).toBe(true);
+    expect(model.cheat("unlockAllEquipment")).toBe(true);
+    expect(flight.levels).toMatchObject({ engine: 3, shield: 3, tractor: 3 });
+  });
+
+  it("raises equipment to level 3 and owns every paint, keeping the selected paint", () => {
+    const model = home();
+    const economy = model.state.economy;
+    const paint = economy.paint;
+    expect(model.cheatAvailable("unlockAllEquipment")).toBe(true);
+    model.cheat("unlockAllEquipment");
+    expect(economy.levels).toMatchObject({ engine: 3, shield: 3, tractor: 3 });
+    expect([...economy.paints].sort()).toEqual([...ECONOMY.paintOrder].sort());
+    expect(economy.paint).toBe(paint);
+    expect(model.cheatAvailable("unlockAllEquipment")).toBe(false);
+    // A level short, or one paint missing, enables it again.
+    economy.levels.tractor = 2;
+    expect(model.cheatAvailable("unlockAllEquipment")).toBe(true);
+    economy.levels.tractor = 3;
+    economy.paints.pop();
+    expect(model.cheatAvailable("unlockAllEquipment")).toBe(true);
+  });
+
+  it("maxes Laser and the owned weapons only", () => {
+    const model = home();
+    const economy = model.state.economy;
+    economy.ownedWeapons = ["scattershot"];
+    model.cheat("maxWeaponLevels");
+    expect(economy.levels.weapons).toMatchObject({ laser: 3, multiLaser: 1, scattershot: 3 });
+    expect(model.cheatAvailable("maxWeaponLevels")).toBe(false);
+    economy.ownedWeapons.push("phaser");
+    expect(model.cheatAvailable("maxWeaponLevels")).toBe(true);
+  });
+
+  it("unlocks every galaxy without clearing anything, then flies the route at the next boarding", () => {
+    const model = launched();
+    const progress = structuredClone(model.state.progress);
+    expect(model.cheatAvailable("unlockAllGalaxies")).toBe(true);
+    model.cheat("unlockAllGalaxies");
+    expect([...model.state.unlocked].sort()).toEqual([...GALAXY_NUMBERS].sort());
+    expect(model.state.progress).toEqual(progress);
+    expect(model.cheatAvailable("unlockAllGalaxies")).toBe(false);
     model.returnHome();
-    model.startGalaxy(1);
-    playOpening(model);
-    expect(model.weapons().map((choice) => choice.id)).toEqual(["laser"]);
+    readStory(model);
+    expect(model.routeFlight).toMatchObject({ from: 1, to: 6 });
   });
 
-  it("keeps every saved weapon and Stardust when a granted weapon is equipped in a jump", () => {
+  it("adds 1,000 ore and 1,000 Stardust on every press, in flight or not", () => {
+    const model = home();
+    for (const press of [1, 2]) {
+      expect(model.cheat("addOre")).toBe(true);
+      expect(model.cheat("addStardust")).toBe(true);
+      expect(model.state.economy.cargo).toBe(press * CHEAT_AMOUNT);
+      expect(model.state.economy.stardust).toBe(press * CHEAT_AMOUNT);
+    }
+    const flying = launched();
+    const cargo = flying.state.flight!.cargo;
+    flying.cheat("addOre");
+    expect(flying.state.flight!.cargo).toBe(cargo + CHEAT_AMOUNT);
+    expect(flying.cheatAvailable("addOre")).toBe(true);
+    expect(flying.cheatAvailable("addStardust")).toBe(true);
+  });
+
+  it("in a cheat session earns no achievement and records nothing toward one", () => {
     const model = launched();
-    const flight = model.state.flight!;
-    flight.levels.weapons.multiLaser = 2;
-    flight.ownedWeapons = ["multiLaser"];
-    grantAllWeapons(model.state);
-    flight.weapon = "rapidMissile";
-    model.state.economy.stardust = 30;
-    flight.shield = CONTENT.tuning.hazardDamage;
-    flight.shots.push({
-      ...flight.player,
-      damage: 1,
-      enemy: true,
-      hitIds: [],
-      id: "hit",
-      life: 1,
-      piercing: false,
-      velocity: { x: 0, y: 0 },
-    });
-    model.step(0.01, idle);
-    expect(model.state.mode).toBe("home");
-    expect(model.state.economy).toMatchObject({ ownedWeapons: ["multiLaser"], stardust: 30 });
-    expect(model.state.economy.levels.weapons.multiLaser).toBe(2);
-    expect(model.storyView?.page.text).toBe(CONTENT.labels.jumpHome);
+    model.state.economy.paints = [...ECONOMY.paintOrder.slice(0, 1)];
+    model.cheatSession = true;
+    const achievements = structuredClone(model.state.achievements);
+    const progress = structuredClone(model.state.progress);
+    for (const id of CHEAT_IDS) {
+      model.cheat(id);
+    }
+    // Owned paints would otherwise count toward the paints achievement at the next sync.
+    model.recordAchievement({ kind: "jobCompleted" });
+    model.recordAchievement({ kind: "activityCompleted" });
+    model.step(0.01, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false });
+    expect(model.state.achievements).toEqual(achievements);
+    expect(model.state.progress).toEqual(progress);
+    expect(model.achievements.every(({ unlocked }) => !unlocked)).toBe(true);
   });
+});
 
-  it("makes a granted weapon really owned when it is found or bought", () => {
-    const model = launched();
-    const flight = model.state.flight!;
-    grantAllWeapons(model.state);
-    collectWeapon("scattershot", flight);
-    model.step(0.01, idle);
-    expect(model.state.economy.ownedWeapons).toEqual(["scattershot"]);
-    expect(model.state.economy.stardust).toBe(0);
-    model.state.docked = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 }).find(
-      (site) => stationSpecialty(1, site.id) === "weaponsAmmo",
-    )!.id;
-    model.state.economy.stardust = 400;
-    expect(model.stationServices?.weaponsAmmo).toBe(true);
-    expect(model.buy({ kind: "weapon", weapon: "multiLaser" })).toEqual({
-      kind: "bought",
-      price: 400,
-    });
-    expect(model.state.economy.ownedWeapons).toEqual(["scattershot", "multiLaser"]);
-    expect(flight.grantedWeapons).toEqual(["rapidMissile", "heavyMissile", "phaser"]);
-    // The HUD discs run Laser, Multi-Laser, Rapid, Heavy, Scattershot, Phaser.
-    expect(model.weapons().map((choice) => choice.id)).toEqual([
-      "laser",
-      "multiLaser",
-      "rapidMissile",
-      "heavyMissile",
-      "scattershot",
-      "phaser",
-    ]);
-  });
-
-  it("does not change a home or dialogue save", () => {
-    const model = new GameModel(CONTENT);
-    const home = model.save();
-    expect(grantAllWeapons(model.state)).toBe(false);
-    expect(model.save()).toBe(home);
-    model.startGalaxy(1);
-    model.state.dialogue = { choices: [], context: "grower", text: "", title: "" };
-    const dialogue = model.save();
-    expect(grantAllWeapons(model.state)).toBe(false);
-    expect(model.save()).toBe(dialogue);
+describe("show tips again", () => {
+  it("clears only the seen first-flight lessons, in the list the director extends", () => {
+    const model = home();
+    const lessons = CONVERSATIONS.filter(({ trigger }) => trigger.kind === "lesson").map(
+      ({ id }) => id,
+    );
+    const seen = model.state.seenConversations;
+    seen.push(...lessons, "meeting:4:avi");
+    model.showTipsAgain();
+    expect(model.state.seenConversations).toBe(seen);
+    expect(seen).toEqual(["meeting:4:avi"]);
   });
 });

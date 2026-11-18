@@ -824,17 +824,6 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
       ) {
         return null;
       }
-      // Run-only granted weapons are a subset of the flight's roster.
-      if (
-        f.grantedWeapons !== undefined &&
-        (!weaponOwnership(f.grantedWeapons, "laser") ||
-          !Array.isArray(f.ownedWeapons) ||
-          !(f.grantedWeapons as unknown[]).every((weapon) =>
-            (f.ownedWeapons as unknown[]).includes(weapon),
-          ))
-      ) {
-        return null;
-      }
       if (
         !Array.isArray(f.objects) ||
         !Array.from(f.objects).every((object) =>

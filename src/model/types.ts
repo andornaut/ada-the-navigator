@@ -207,8 +207,6 @@ export interface FlightState {
   cargo: number;
   weapon: Weapon;
   ownedWeapons?: Exclude<Weapon, "laser">[];
-  /** Run-only weapons from the grant cheat; they never enter saved ownership. */
-  grantedWeapons?: Exclude<Weapon, "laser">[];
   /** Destinations whose blocking guard has been cued this flight (flight.ts cueGuards). */
   guardCues?: string[];
   /** Cued guards flying toward Ada until they are on screen. */

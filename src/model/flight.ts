@@ -4319,9 +4319,9 @@ function dropFromRock(content: GameContent, object: SpaceObject, flight: FlightS
   );
 }
 
-/** The weapons ammo packs drop for: those Ada owns, not those a story grants for the flight. */
+/** The weapons ammo packs drop for: those Ada owns. */
 function ammoOwned(flight: FlightState): readonly Weapon[] {
-  return (flight.ownedWeapons ?? []).filter((weapon) => !flight.grantedWeapons?.includes(weapon));
+  return flight.ownedWeapons ?? [];
 }
 
 /** An ammo pack pickup at `at`, its pack chosen as Ada collects it. */

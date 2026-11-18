@@ -736,12 +736,9 @@ describe("Stardust drops", () => {
           (id) => rollRockAmmoDrop(ECONOMY, ["phaser"], dropRandom(seed, `ammo:${id}`)) === result,
         )!;
         expect(id).toBeDefined();
-        for (const ownership of ["owned", "none", "granted"] as const) {
+        for (const ownership of ["owned", "none"] as const) {
           const value = flight(seed);
           value.ownedWeapons = ownership === "none" ? [] : ["phaser"];
-          if (ownership === "granted") {
-            value.grantedWeapons = ["phaser"];
-          }
           const target: SpaceObject = { hp: 1, id, kind, radius: 20, x: 600, y: 0 };
           value.objects.push(target);
           value.shots.push(killShot(target), killShot(target));

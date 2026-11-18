@@ -1821,7 +1821,6 @@ try {
     const cheatDialog = page.getByRole("dialog", { name: CHEAT_COPY.title, exact: true });
     await cheatDialog.waitFor({ state: "visible" });
     const paused = await position();
-    const beforeGrant = await readSave();
     await page.waitForTimeout(250);
     assert.deepEqual(await position(), paused, "Cheat modal must pause held flight input");
     const behindModal = await page.locator("#game-canvas > canvas").boundingBox();
@@ -1844,51 +1843,130 @@ try {
       await cheatDialog.evaluate((dialog) => dialog.contains(document.activeElement)),
       "Cheat modal must retain keyboard focus",
     );
-    await page.getByRole("button", { name: CHEAT_COPY.grantAllWeapons, exact: true }).click();
-    await page.waitForFunction((key) => {
-      const owned = JSON.parse(localStorage.getItem(key)).flight.ownedWeapons ?? [];
-      return ["rapidMissile", "multiLaser", "heavyMissile", "scattershot", "phaser"].every(
-        (weapon) => owned.includes(weapon),
+    // The Small card's one column: the cheats, Show tips again, the FPS counter and Reset save,
+    // each the list's full width, with Close below it as the bottom primary.
+    const checkCheatsCard = async (_insets, _view, name) => {
+      const rows = await cheatDialog.evaluate((dialog) =>
+        [...dialog.querySelectorAll(".ada-cheat-items > *")].map((row) => ({
+          id: row.dataset.cheat,
+          width: row.getBoundingClientRect().width,
+        })),
       );
-    }, storageKey);
-    const granted = await readSave();
-    assert.deepEqual(granted.progress, beforeGrant.progress);
-    assert.deepEqual(
-      granted.economy,
-      beforeGrant.economy,
-      "Run-only granted weapons must not enter saved ownership, levels or Stardust",
-    );
-    for (const field of ["weapon", "shield", "cargo", "fireCooldown"]) {
       assert.deepEqual(
-        granted.flight[field],
-        beforeGrant.flight[field],
-        `Grant preserves ${field}`,
+        rows.map(({ id }) => id),
+        [
+          "unlockAllWeapons",
+          "unlockAllEquipment",
+          "unlockAllGalaxies",
+          "maxWeaponLevels",
+          "addOre",
+          "addStardust",
+          "showTipsAgain",
+          "fpsCounter",
+          "resetSave",
+        ],
+        `${name}: the Cheats rows in order`,
       );
-    }
-    await page.screenshot({ path: `${output}/cheats.png` });
-    await cheatDialog.getByRole("button", { name: CHEAT_COPY.close, exact: true }).click();
+      const [, , listWidth] = await logicalBox('[role="dialog"] .ada-cheat-items');
+      const [, , cardWidth] = await logicalBox('[role="dialog"]:has(.ada-cheat-items) .ada-card');
+      assert.ok(cardWidth <= 400.5, `${name}: the Cheats card is Small: ${cardWidth}`);
+      const unit = Number(
+        await page.evaluate(() =>
+          getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
+        ),
+      );
+      for (const row of rows) {
+        assert.ok(
+          Math.abs(row.width / unit - listWidth) < 0.5,
+          `${name}: ${row.id} spans the list: ${row.width / unit} of ${listWidth}`,
+        );
+      }
+      const dismiss = cheatDialog.locator('[data-action="dismiss-cheats"]');
+      assert.match((await dismiss.getAttribute("class")) ?? "", /ada-primary/u);
+      const [, listTop, , listHeight] = await logicalBox('[role="dialog"] .ada-cheat-items');
+      const [, closeTop] = await logicalBox('[role="dialog"] [data-action="dismiss-cheats"]');
+      assert.ok(closeTop >= listTop + listHeight, `${name}: Close sits below the list`);
+    };
+    await proofsAt("cheats", checkCheatsCard);
+    await page.waitForTimeout(1200);
+    const beforeCheat = await readSave();
+    const unlock = cheatDialog.locator('[data-cheat="unlockAllWeapons"]');
+    await unlock.click();
+    // The cheat applies to play at once and disables itself, but the save keeps play as it was.
+    await page.waitForFunction(
+      () => document.querySelector('[data-cheat="unlockAllWeapons"]')?.disabled === true,
+    );
+    await page.waitForTimeout(1200);
+    const afterCheat = await readSave();
+    assert.deepEqual(afterCheat.progress, beforeCheat.progress);
+    assert.deepEqual(
+      afterCheat.economy,
+      beforeCheat.economy,
+      "A cheat session saves nothing: ownership, levels and Stardust stay as saved",
+    );
+    assert.deepEqual(afterCheat.flight.ownedWeapons ?? [], beforeCheat.flight.ownedWeapons ?? []);
+    assert.deepEqual(afterCheat.achievements, beforeCheat.achievements);
+    await cheatDialog.locator('[data-action="dismiss-cheats"]').click();
     // Closing Cheats returns to Settings, its parent; closing Settings returns to the Paused card.
     await page.locator('[data-action="close-settings"]').waitFor({ state: "visible" });
     await closeSettings();
-    // Each new weapon queues an item notice: the chip shows under the pill once play resumes,
-    // hidden from assistive technology, and its label is announced politely.
-    const chip = page.locator(".ada-item-notice");
-    await chip.waitFor({ state: "visible" });
-    assert.equal(await chip.getAttribute("aria-hidden"), "true");
-    const weaponNames = ["RapidMissile", "MultiLaser", "HeavyMissile", "Scattershot", "Phaser"].map(
-      (id) => `+ ${CONTENT.labels[`weapon${id}`]}`,
-    );
-    const announced = page.locator(".ada-item-notice-live");
-    assert.equal(await announced.getAttribute("aria-live"), "polite");
-    assert.ok(
-      weaponNames.includes((await announced.textContent()) ?? ""),
-      `A granted weapon's notice reads + {weapon}: ${await announced.textContent()}`,
-    );
   } finally {
     await page.keyboard.up("w");
   }
   await waitForRest(await position());
   await seedOnce(safeSerialized, "ada-browser.before-installed-guard.v1");
+  // The FPS counter, in a fresh fixture: Off by default, then in the device viewport's
+  // bottom-right corner, 8 px inside the game's safe-area insets and above every game layer.
+  await openSettings();
+  await page.getByRole("button", { name: CHEAT_COPY.open, exact: true }).click();
+  const fpsSwitch = page.getByRole("switch", { name: CHEAT_COPY.fpsCounter, exact: true });
+  assert.equal(await fpsSwitch.getAttribute("aria-checked"), "false", "The FPS counter starts Off");
+  await fpsSwitch.click();
+  assert.equal(await fpsSwitch.getAttribute("aria-checked"), "true");
+  await page.locator('[data-action="dismiss-cheats"]').click();
+  await page.locator('[data-action="close-settings"]').waitFor({ state: "visible" });
+  await closeSettings();
+  const fpsCounter = page.locator("#app > .ada-fps");
+  await fpsCounter.waitFor({ state: "visible" });
+  assert.match((await fpsCounter.textContent()) ?? "", /^\d+ FPS$/u);
+  const fpsProof = async (name) => {
+    await page.waitForTimeout(250);
+    await page.screenshot({ path: `${output}/${name}.png` });
+    const placed = await fpsCounter.evaluate((readout) => {
+      const box = readout.getBoundingClientRect();
+      const app = getComputedStyle(document.querySelector("#app"));
+      return {
+        bottom: innerHeight - box.bottom,
+        insetBottom: parseFloat(app.getPropertyValue("--ada-safe-bottom")) || 0,
+        insetRight: parseFloat(app.getPropertyValue("--ada-safe-right")) || 0,
+        right: innerWidth - box.right,
+        z: Number(getComputedStyle(readout).zIndex),
+      };
+    });
+    const layers = await page.evaluate(() =>
+      [...document.querySelectorAll("#app > *")]
+        .filter((element) => !element.classList.contains("ada-fps"))
+        .map((element) => Number(getComputedStyle(element).zIndex) || 0),
+    );
+    assert.ok(placed.z > Math.max(...layers), `${name}: the FPS counter is the top layer`);
+    assert.ok(
+      Math.abs(placed.right - placed.insetRight - 8) < 1 &&
+        Math.abs(placed.bottom - placed.insetBottom - 8) < 1,
+      `${name}: the FPS counter sits 8 px inside the safe area: ${JSON.stringify(placed)}`,
+    );
+    return placed;
+  };
+  const fpsViewport = page.viewportSize();
+  await page.setViewportSize({ height: 720, width: 1280 });
+  await fpsProof("fps-counter-1280x720");
+  await page.setViewportSize({ height: 360, width: 720 });
+  const fpsInsets = await setPhoneInsets();
+  const insetPlaced = await fpsProof("fps-counter-720x360-insets");
+  assert.ok(insetPlaced.insetRight > 0, "The phone insets move the FPS counter in");
+  await fpsInsets.restore();
+  await page.setViewportSize(fpsViewport);
+  await page.waitForTimeout(250);
+  await seedOnce(safeSerialized, "ada-browser.before-installed-guard-fresh.v1");
   await openSettings();
   await page.getByRole("button", { name: CHEAT_COPY.open, exact: true }).click();
   // Exercise the iOS installed-window signal without installing or launching a PWA.
@@ -1905,17 +1983,8 @@ try {
     "An installed-window signal must close the cheats modal",
   );
   await page.locator('[data-action="cheats"]').evaluate((button) => button.click());
-  await page.locator('[data-cheat="grant-all-weapons"]').evaluate((button) => button.click());
-  assert.deepEqual(
-    (await readSave()).flight.ownedWeapons ?? [],
-    [],
-    "Direct hidden-button dispatch in the installed-window fixture must not grant weapons",
-  );
-  save("installed-window-proof.json", {
-    scope:
-      "Navigator standalone eligibility fixture and pageshow recheck, not an actual installed PWA",
-    grantBlocked: (await readSave()).flight.ownedWeapons ?? [],
-  });
+  const guardedSave = await readSave();
+  await page.locator('[data-cheat="unlockAllWeapons"]').evaluate((button) => button.click());
   await page.evaluate(() => {
     Reflect.deleteProperty(navigator, "standalone");
     window.dispatchEvent(new PageTransitionEvent("pageshow"));
@@ -1923,10 +1992,27 @@ try {
   await page.waitForFunction(
     () => document.querySelector('[data-action="cheats"]')?.hidden === false,
   );
+  // Nothing was granted: the cheat still has every weapon left to grant, and nothing saved.
+  await page.locator('[data-action="cheats"]').evaluate((button) => button.click());
+  const grantBlocked = await page
+    .locator('[data-cheat="unlockAllWeapons"]')
+    .evaluate((button) => !button.disabled);
+  assert.ok(
+    grantBlocked,
+    "Direct hidden-button dispatch in the installed-window fixture must not grant weapons",
+  );
+  assert.deepEqual((await readSave()).economy, guardedSave.economy);
+  save("installed-window-proof.json", {
+    scope:
+      "Navigator standalone eligibility fixture and pageshow recheck, not an actual installed PWA",
+    grantBlocked,
+  });
+  await page.locator('[data-action="dismiss-cheats"]').click();
   await seedOnce(safeSerialized, "ada-browser.after-cheats.v1");
   events.checks.push(
-    "Browser-only cheats pause input, retain focus and grant run-only weapons to the flight; " +
-      "an installed-window fixture closes and rejects direct dispatch",
+    "Browser-only cheats pause input, retain focus and apply to play in a session that saves " +
+      "nothing; the FPS counter sits in the safe corner above every layer; an installed-window " +
+      "fixture closes and rejects direct dispatch",
   );
   await page.locator(".ada-use").waitFor({ state: "visible" });
   await contextControlProof(1, "friendly flight");

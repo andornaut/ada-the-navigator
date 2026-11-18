@@ -10,6 +10,7 @@ import { ITEM_NOTICE_STYLE } from "./itemNotice.ts";
 import { KEEPER_STYLE } from "./keeperBlock.ts";
 import { ADA_CONTROL_PRESENTATION_STYLE } from "./layout/controlPresentation.ts";
 import { DETAIL_CARD_STYLE } from "./layout/detailCard.ts";
+import { FPS_STYLE } from "./layout/fpsCounter.ts";
 import { NAVIGATION_BUTTON_STYLE } from "./layout/navigationButton.ts";
 import { PAUSE_GRID_STYLE } from "./layout/pauseCard.ts";
 import { QUESTS_SCREEN_STYLE } from "./layout/questsScreen.ts";
@@ -58,4 +59,5 @@ export const UI_STYLESHEET = [
   STORYBOOK_STYLE,
   GALAXY_MAP_STYLE,
   RESTART_STYLE,
+  FPS_STYLE,
 ].join("\n");

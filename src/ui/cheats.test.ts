@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 import type { CheatAction } from "./cheatActions.ts";
-import { createCheats } from "./cheats.ts";
+import { type CheatSwitch, createCheats } from "./cheats.ts";
 import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
 import { rootPressGuard } from "./pressScope.ts";
 
@@ -44,6 +44,9 @@ class Element extends EventTarget {
   }
   get firstChild(): Element | null {
     return this.children[0] ?? null;
+  }
+  get lastElementChild(): Element | null {
+    return this.children.at(-1) ?? null;
   }
   getClientRects() {
     return [1];
@@ -160,8 +163,19 @@ vi.mock("./modal.ts", () => ({
     }
     return { body, card, close, dispose: vi.fn(), fit: vi.fn(), frame };
   },
+  createSwitchRow: (options: { readonly id: string; readonly label: string }) => {
+    const row = Object.assign(new Element("button"), { textContent: options.label });
+    row.append(new Element(), new Element(), new Element());
+    return {
+      row,
+      show: (on: boolean) => row.setAttribute("aria-checked", String(on)),
+    };
+  },
   setFooterAction: (action: string, row: Element) => {
     row.dataset.footerAction = action;
+  },
+  setScrollGroup: (_parts: unknown, group: Element) => {
+    group.dataset.scroll = "true";
   },
 }));
 
@@ -198,8 +212,7 @@ afterEach(() => {
 });
 
 function setup(
-  footer?: { readonly intent: "back" | "close"; readonly label: string },
-  actionList: readonly CheatAction[] = [],
+  rows: readonly (CheatAction | CheatSwitch)[] = [],
   hold = false,
   placement: "connected" | "detached" | "unowned" = "connected",
 ) {
@@ -229,36 +242,34 @@ function setup(
     textContent: "Close",
   });
   actions.append(close);
-  const run = {};
   const changed = vi.fn();
-  const onSave = vi.fn();
   const beforeOpen = vi.fn();
   const cheats = createCheats(root as unknown as HTMLElement, actions as unknown as HTMLElement, {
-    actions: actionList,
     beforeOpen,
-    canExecute: () => true,
-    ...(footer ? { footer } : {}),
-    labels: {
-      close: "Close",
-      open: "Open cheats",
-      runGroup: "Run",
-      runPersistence: "Run only",
-      saveGroup: "Save",
-      savePersistence: "Saved",
-      title: "Cheats",
-    },
+    labels: { close: "Close", open: "Open Cheats", title: "Cheats" },
     onOpenChange: changed,
-    onSave,
     restoreFocus: vi.fn(),
-    run: () => run,
+    rows,
   });
-  return { actions, beforeOpen, changed, cheats, close, onSave, root };
+  return { actions, beforeOpen, changed, cheats, close, root };
+}
+
+function descendants(root: Element): Element[] {
+  return [root, ...root.children.flatMap(descendants)];
+}
+
+function action(id: string, left = Infinity) {
+  let remaining = left;
+  const run = vi.fn(() => {
+    remaining--;
+  });
+  return { available: () => remaining > 0, id, label: id, run } satisfies CheatAction;
 }
 
 describe("Settings cheat launcher", () => {
   it("places the secondary launcher before the existing primary Close", () => {
     const { actions, cheats, close } = setup();
-    expect(actions.children.map((node) => node.textContent)).toEqual(["Open cheats", "Close"]);
+    expect(actions.children.map((node) => node.textContent)).toEqual(["Open Cheats", "Close"]);
     expect(actions.children[0]!.className).not.toContain("ada-primary");
     expect(actions.children[1]).toBe(close);
     cheats.dispose();
@@ -281,86 +292,72 @@ describe("Settings cheat launcher", () => {
   });
 });
 
-function descendants(root: Element): Element[] {
-  return [root, ...root.children.flatMap(descendants)];
-}
-it("keeps group order, executes actions once and unregisters on disposal", async () => {
-  const root = new Element(),
-    launcher = new Element();
-  fixtureActionRoot(root);
-  mountedRoots.add(root);
-  root.append(launcher);
-  const save = vi.fn(),
-    runEffect = vi.fn(),
-    onSave = vi.fn();
-  const run = {};
-  const cheats = createCheats(root as unknown as HTMLElement, launcher as unknown as HTMLElement, {
-    actions: [
-      {
-        description: "Run description",
-        execute: ({ commit }) => {
-          commit(runEffect);
-        },
-        id: "run",
-        label: "Run action",
-        scope: "run",
-      },
-      {
-        description: "Save description",
-        execute: ({ commit }) => {
-          commit(save);
-        },
-        id: "save",
-        label: "Save action",
-        scope: "save",
-      },
-    ],
-    beforeOpen: vi.fn(),
-    canExecute: () => true,
-    labels: {
-      close: "Close",
-      open: "Open cheats",
-      runGroup: "Run",
-      runPersistence: "Run only",
-      saveGroup: "Save",
-      savePersistence: "Saved",
-      title: "Cheats",
-    },
-    onOpenChange: vi.fn(),
-    onSave,
-    restoreFocus: vi.fn(),
-    run: () => run,
+it("lists one scrolling column in order, runs each press once and disables an exhausted cheat", () => {
+  const unlock = action("unlock", 1);
+  const add = action("add");
+  const reset = action("reset");
+  let fps = false;
+  const set = vi.fn((on: boolean) => {
+    fps = on;
   });
-  const nodes = descendants(root);
-  expect(
-    nodes.filter((n) => n.className === "ada-cheat-section").map((n) => n.children[0]!.textContent),
-  ).toEqual(["Save", "Run"]);
-  expect(nodes.filter((n) => n.className === "ada-prose").map((n) => n.textContent)).toEqual([
-    "Saved",
-    "Save description",
-    "Run only",
-    "Run description",
+  const f = setup([unlock, add, { id: "fps", label: "FPS counter", on: () => fps, set }, reset]);
+  const nodes = descendants(f.root);
+  const list = nodes.find((node) => node.className === "ada-cheat-items")!;
+  expect(list.dataset.scroll).toBe("true");
+  expect(list.children.map((node) => node.dataset.cheat)).toEqual([
+    "unlock",
+    "add",
+    "fps",
+    "reset",
   ]);
-  const buttons = nodes.filter((n) => n.dataset.cheat);
-  launcher.children[0]!.dispatchEvent(new Event("click"));
-  buttons[0]!.dispatchEvent(new Event("click"));
-  buttons[0]!.dispatchEvent(new Event("click"));
-  await Promise.resolve();
-  await Promise.resolve();
-  await Promise.resolve();
-  expect(save).toHaveBeenCalledOnce();
-  expect(onSave).toHaveBeenCalledOnce();
-  expect(runEffect).not.toHaveBeenCalled();
-  cheats.refresh();
-  buttons[1]!.dispatchEvent(new Event("click"));
-  await Promise.resolve();
-  await Promise.resolve();
-  await Promise.resolve();
-  expect(runEffect).toHaveBeenCalledOnce();
-  expect(onSave).toHaveBeenCalledOnce();
-  cheats.dispose();
-  buttons[0]!.dispatchEvent(new Event("click"));
-  expect(save).toHaveBeenCalledOnce();
+  const [unlockButton, addButton, fpsRow, resetButton] = list.children;
+  // Close sits below the scrolling list as the bottom primary.
+  const footer = nodes.find((node) => node.dataset.footerAction === "close")!;
+  expect(footer.parent).toBe(list.parent);
+  expect(footer.parent!.children.indexOf(footer)).toBeGreaterThan(
+    footer.parent!.children.indexOf(list),
+  );
+  f.actions.children[0]!.dispatchEvent(new Event("click"));
+  f.cheats.refresh();
+  expect(unlockButton!.disabled).toBe(false);
+  unlockButton!.dispatchEvent(new Event("click"));
+  expect(unlock.run).toHaveBeenCalledOnce();
+  expect(unlockButton!.disabled).toBe(true);
+  unlockButton!.dispatchEvent(new Event("click"));
+  expect(unlock.run).toHaveBeenCalledOnce();
+  addButton!.dispatchEvent(new Event("click"));
+  addButton!.dispatchEvent(new Event("click"));
+  expect(add.run).toHaveBeenCalledTimes(2);
+  expect(addButton!.disabled).toBe(false);
+  expect(fpsRow!.getAttribute("aria-checked")).toBe("false");
+  fpsRow!.dispatchEvent(new Event("click"));
+  expect(set).toHaveBeenCalledExactlyOnceWith(true);
+  expect(fpsRow!.getAttribute("aria-checked")).toBe("true");
+  resetButton!.dispatchEvent(new Event("click"));
+  expect(reset.run).toHaveBeenCalledOnce();
+  f.cheats.dispose();
+  addButton!.dispatchEvent(new Event("click"));
+  expect(add.run).toHaveBeenCalledTimes(2);
+});
+
+it("rechecks the installed app at the action as well as at open", () => {
+  const add = action("add");
+  const f = setup([add]);
+  const launcher = f.actions.children[0]!;
+  const button = descendants(f.root).find((node) => node.dataset.cheat === "add")!;
+  installed = true;
+  launcher.dispatchEvent(new Event("click"));
+  expect(f.cheats.isOpen()).toBe(false);
+  installed = false;
+  launcher.dispatchEvent(new Event("click"));
+  expect(f.cheats.isOpen()).toBe(true);
+  // Installed after opening: the press runs nothing, and the next refresh closes the modal.
+  installed = true;
+  button.dispatchEvent(new Event("click"));
+  expect(add.run).not.toHaveBeenCalled();
+  expect(f.cheats.isOpen()).toBe(false);
+  expect(launcher.hidden).toBe(true);
+  f.cheats.dispose();
 });
 
 it("gives header and footer one registered close path with foreground and disposal guards", () => {
@@ -383,38 +380,12 @@ it("gives header and footer one registered close path with foreground and dispos
   expect(f.changed.mock.calls).toEqual([[true], [false], [true], [false]]);
 });
 
-it("uses a supplied parent Back only for the footer and preserves one dismissal path", () => {
-  const f = setup({ intent: "back", label: "Back" });
-  const footer = descendants(f.root).find((node) => node.dataset.footerAction === "back")!;
-  const dismiss = footer.children[0]!;
-  expect(dismiss.textContent).toBe("Back");
-  f.actions.children[0]!.dispatchEvent(new Event("click"));
-  dismiss.dispatchEvent(new Event("click"));
-  dismiss.dispatchEvent(new Event("click"));
-  expect(f.changed.mock.calls).toEqual([[true], [false]]);
-  f.cheats.dispose();
-  expect(resolveAdaHoldAction(f.root as unknown as HTMLElement, dismiss)?.available()).not.toBe(
-    true,
-  );
-});
-
-it("holds launcher and execute once while preserving busy and deferred installed-app refusal", async () => {
+it("opens on the launcher's hold and runs a held action once", () => {
   vi.useFakeTimers();
-  const finish: (() => void)[] = [];
-  const effect = vi.fn();
-  const execute = vi.fn(async ({ commit }: Parameters<CheatAction["execute"]>[0]) => {
-    await new Promise<void>((resolve) => {
-      finish.push(resolve);
-    });
-    commit(effect);
-  });
-  const f = setup(
-    undefined,
-    [{ description: "Save description", execute, id: "save", label: "Save action", scope: "save" }],
-    true,
-  );
+  const add = action("add");
+  const f = setup([add], true);
   const launcher = f.actions.children[0]!;
-  const button = descendants(f.root).find((node) => node.dataset.cheat === "save")!;
+  const button = descendants(f.root).find((node) => node.dataset.cheat === "add")!;
   const event = (type: string, target: Element) => {
     const value = new Event(type, { cancelable: true });
     Object.defineProperties(
@@ -446,54 +417,19 @@ it("holds launcher and execute once while preserving busy and deferred installed
     }
     return click;
   };
-  const settle = async () => {
-    for (let n = 0; n < 10; n++) {
-      // Each turn settles the session commit and native refresh boundary.
-      // eslint-disable-next-line no-await-in-loop
-      await Promise.resolve();
-    }
-  };
   down(launcher);
   vi.advanceTimersByTime(499);
   expect(f.cheats.isOpen()).toBe(false);
   vi.advanceTimersByTime(1);
   expect(f.cheats.isOpen()).toBe(true);
   expect(release(launcher).defaultPrevented).toBe(true);
-  expect(f.changed.mock.calls).toEqual([[true]]);
   down(button);
   vi.advanceTimersByTime(500);
-  expect(execute).toHaveBeenCalledOnce();
-  expect(button.disabled).toBe(true);
+  expect(add.run).toHaveBeenCalledOnce();
   expect(release(button).defaultPrevented).toBe(true);
-  button.dispatchEvent(new Event("click"));
-  expect(execute).toHaveBeenCalledOnce();
-  finish.shift()!();
-  await settle();
-  expect(effect).toHaveBeenCalledOnce();
-  expect(f.onSave).toHaveBeenCalledOnce();
-  expect(button.disabled).toBe(false);
-  down(button);
-  vi.advanceTimersByTime(500);
-  release(button);
-  expect(execute).toHaveBeenCalledTimes(2);
-  installed = true;
-  finish.shift()!();
-  await settle();
-  expect(effect).toHaveBeenCalledOnce();
-  expect(f.onSave).toHaveBeenCalledOnce();
-  expect(f.cheats.isOpen()).toBe(false);
-  expect(launcher.hidden).toBe(true);
-  installed = false;
-  f.cheats.refresh();
-  down(launcher);
+  expect(add.run).toHaveBeenCalledOnce();
   f.cheats.dispose();
-  vi.advanceTimersByTime(500);
-  expect(resolveAdaHoldAction(f.root as unknown as HTMLElement, launcher)).toBeNull();
   expect(resolveAdaHoldAction(f.root as unknown as HTMLElement, button)).toBeNull();
-  launcher.dispatchEvent(new Event("click"));
-  button.dispatchEvent(new Event("click"));
-  expect(execute).toHaveBeenCalledTimes(2);
-  expect(f.changed.mock.calls).toEqual([[true], [false]]);
 });
 
 it("rejects an unregistered hidden disabled control in the completed Cheats modal", () => {
@@ -529,8 +465,8 @@ it("rechecks Cheats before opening while ignoring unowned Settings siblings", ()
 });
 
 it("accepts detached Cheats metadata but rejects a connected launcher without ownership", () => {
-  expect(() => setup(undefined, [], false, "unowned")).toThrow("no live action root");
-  const f = setup(undefined, [], false, "detached");
+  expect(() => setup([], false, "unowned")).toThrow("no live action root");
+  const f = setup([], false, "detached");
   expect(f.cheats.isOpen()).toBe(false);
   expect(f.actions.isConnected).toBe(false);
   f.cheats.dispose();

@@ -38,7 +38,7 @@ import {
 import { bindAdaAction } from "../ui/actionBinding.ts";
 import { type BackLayer, createBackStack, pressBack } from "../ui/backStack.ts";
 import type { CheatAction } from "../ui/cheatActions.ts";
-import { type CheatLabels, createCheats } from "../ui/cheats.ts";
+import { type CheatLabels, type CheatSwitch, createCheats } from "../ui/cheats.ts";
 import { consumeContextQuestUse, createContextQuestIcon } from "../ui/contextQuestUse.ts";
 import { bindAdaActionRoot } from "../ui/holdActionsAdapter.ts";
 import { createItemNotices, type NoticePlaces } from "../ui/itemNotice.ts";
@@ -92,11 +92,8 @@ export interface ControlsOptions {
   } | null;
   readonly achievements: AchievementsLabels;
   readonly cheats: {
-    readonly actions: readonly CheatAction[];
-    readonly canExecute: () => boolean;
     readonly labels: CheatLabels;
-    readonly onSave: () => void;
-    readonly run: () => object | null;
+    readonly rows: readonly (CheatAction | CheatSwitch)[];
   };
   // The start screen's Exit where the game offers to leave (exitShown), or undefined where it
   // does not, which makes no Exit at all.
@@ -293,10 +290,6 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       cheatsOpening = true;
       settings.close();
       cheatsOpening = false;
-    },
-    footer: {
-      intent: "back",
-      label: options.pause.labels.mapScreen.questBack ?? options.pause.labels.close,
     },
     onOpenChange: (open) => {
       options.onStartCover?.("cheats", open);

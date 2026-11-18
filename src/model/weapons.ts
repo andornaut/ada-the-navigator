@@ -123,12 +123,6 @@ export function ensureOwnedWeapons(flight: FlightState) {
   return owned;
 }
 
-/** Ada's real weapon ownership: the flight's roster without run-only granted weapons. */
-export function ownedForSave(flight: FlightState): UpgradeWeapon[] {
-  const granted = flight.grantedWeapons ?? [];
-  return ensureOwnedWeapons(flight).filter((weapon) => !granted.includes(weapon));
-}
-
 export function ownedWeapons(flight: FlightState): WeaponChoice[] {
   const choices: WeaponChoice[] = [];
   for (const id of ["laser", ...UPGRADE_WEAPONS] as const) {
@@ -170,12 +164,6 @@ export function selectFlightWeapon(weapon: Weapon, flight: FlightState): boolean
  */
 export function collectWeapon(weapon: UpgradeWeapon, flight: FlightState): boolean {
   const owned = ensureOwnedWeapons(flight);
-  // Finding a run-only granted weapon makes it really owned.
-  if (flight.grantedWeapons?.includes(weapon)) {
-    flight.grantedWeapons = flight.grantedWeapons.filter((entry) => entry !== weapon);
-    addPacks(ECONOMY, weapon, ECONOMY.ammo.grantPacks, flight.ammo);
-    return true;
-  }
   if (owned.includes(weapon)) {
     addPacks(ECONOMY, weapon, ECONOMY.ammo.duplicatePacks, flight.ammo);
     return false;

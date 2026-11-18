@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { createContext, runInContext } from "node:vm";
 
 import ts from "typescript";
@@ -10,12 +10,12 @@ import { ECONOMY, worldAmmoPack } from "../data/economy.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { STATUS_PILL_LAYOUT } from "../data/layout.ts";
 import { SCREEN } from "../data/screen.ts";
-import { grantAllWeapons } from "../model/cheats.ts";
+import { CHEAT_AMOUNT, type CheatId } from "../model/cheats.ts";
 import { GameModel } from "../model/game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
-import { UPGRADE_WEAPONS } from "../model/weapons.ts";
+import type { GameSave } from "../model/types.ts";
 import { readStory, relaunch } from "../testing/launch.ts";
-import { cheatGroups, type CheatSessionOptions, createCheatSession } from "../ui/cheatActions.ts";
+import type { CheatAction } from "../ui/cheatActions.ts";
 import { VIEW_HOST_ID } from "../ui/layout/css.ts";
 import { NO_INSETS, safeGameArea } from "../ui/layout/playView.ts";
 import { createCoveredPaint } from "../ui/modalScenePaint.ts";
@@ -24,6 +24,8 @@ import { BOX_OCCUPANT, boxOccupant } from "../ui/notice.ts";
 import { galaxiesAvailable } from "../ui/pause.ts";
 import type { PauseState } from "../ui/pauseCard.ts";
 import { ShieldOreSpendCounter, type StatusView } from "../ui/statusPill.ts";
+import { beginCheatSession, endsCheatSession, NO_CHEAT_SESSION } from "./cheatSession.ts";
+import { createAdaSaves, SAVE_KEYS } from "./persistence.ts";
 
 // Execute production UI wiring against the real model without loading Phaser's DOM.
 const source = ts.createSourceFile(
@@ -669,30 +671,160 @@ describe("ammo pickup scene drain", () => {
   });
 });
 
-describe("scene cheat action wiring", () => {
-  it("groups the actual grant as Run-only and executes without the scene save callback", async () => {
+// A scene wired with the production apply, cheat, flush and session callbacks over a real store.
+function cheatScene(model: GameModel) {
+  const values = new Map<string, string>([["ada-the-navigator.sound", "off"]]);
+  const port = {
+    read: async (key: string) => values.get(key) ?? null,
+    write: vi.fn(async (key: string, value: string) => {
+      values.set(key, value);
+    }),
+  };
+  const scene = {
+    cheatSession: NO_CHEAT_SESSION,
+    controls: { closePause: vi.fn(), closeSettings: vi.fn(), reset: vi.fn(), setGains: vi.fn() },
+    emergencyReturn: { active: false },
+    entryCurrent: () => true,
+    held: undefined as unknown,
+    model,
+    savingUnavailable: false,
+    shell: { setSavingAvailable: vi.fn() },
+    sys: { isActive: () => true },
+  };
+  const context = createContext({
+    CHEAT_COPY,
+    CONTENT,
+    GameModel,
+    NO_CHEAT_SESSION,
+    beginCheatSession,
+    endsCheatSession,
+    newer: false,
+    observeFeedback: vi.fn(),
+    recordGalaxyUnlocks: vi.fn(),
+    refreshScene: vi.fn(),
+    requiredLoading: { state: { attempt: 1 } },
+    requiredReady: () => true,
+    saves: createAdaSaves(port),
+    scene,
+    scheduleCheatGalaxies: vi.fn(),
+  });
+  for (const name of [
+    "flushScene",
+    "apply",
+    "endCheatSession",
+    "replaceModel",
+    "resetSave",
+    "restoreBeforeCheats",
+  ]) {
+    context[name] = runInContext(callback(name), context);
+  }
+  const cheat = runInContext(callback("cheat"), context) as (id: CheatId) => CheatAction;
+  const settle = async () => {
+    for (let turn = 0; turn < 10; turn++) {
+      // eslint-disable-next-line no-await-in-loop
+      await Promise.resolve();
+    }
+  };
+  const stored = () => JSON.parse(values.get(SAVE_KEYS.save)!) as GameSave;
+  return {
+    apply: context.apply as (action: () => void) => void,
+    cheat,
+    context,
+    flush: () => (context.flushScene as (value: typeof scene) => Promise<void>)(scene),
+    port,
+    scene,
+    settle,
+    stored,
+    values,
+  };
+}
+
+describe("cheat session", () => {
+  it("saves play up to the first cheat, then suspends every save until play returns to Start", async () => {
+    const f = cheatScene(flight());
+    await f.flush();
+    const start = f.scene.model.state.economy.stardust;
+    // Play since the last save is saved by the first cheat, before its session starts.
+    f.scene.model.state.economy.stardust += 7;
+    const achievements = structuredClone(f.scene.model.state.achievements);
+    f.cheat("addStardust").run();
+    await f.settle();
+    expect(f.scene.cheatSession.active).toBe(true);
+    expect(f.scene.model.cheatSession).toBe(true);
+    expect(f.scene.model.state.economy.stardust).toBe(start + 7 + CHEAT_AMOUNT);
+    expect(f.stored().economy.stardust).toBe(start + 7);
+    const writes = f.port.write.mock.calls.length;
+    f.cheat("unlockAllWeapons").run();
+    f.cheat("addOre").run();
+    await f.flush();
+    await f.settle();
+    expect(f.port.write.mock.calls).toHaveLength(writes);
+    expect(f.scene.model.state.achievements).toEqual(achievements);
+    // A reload ends the session: the store still holds play as it was before the first cheat.
+    expect(relaunch(CONTENT, f.stored()).state.economy.stardust).toBe(start + 7);
+    f.apply(() => f.scene.model.backToTitle());
+    await f.settle();
+    expect(f.scene.cheatSession).toEqual(NO_CHEAT_SESSION);
+    expect(f.scene.model.screen).toBe("start");
+    expect(f.scene.model.cheatSession).toBe(false);
+    f.apply(() => f.scene.model.continueGame());
+    expect(f.scene.model.state.mode).toBe("space");
+    expect(f.scene.model.state.economy.stardust).toBe(start + 7);
+    expect(f.scene.model.state.economy.ownedWeapons).toEqual([]);
+    expect(f.port.write.mock.calls.length).toBeGreaterThan(writes);
+  });
+
+  it("applies a cheat on the start screen to the play Continue begins, and restores at title", async () => {
+    const played = flight();
+    const f = cheatScene(new GameModel(CONTENT, played.save()));
+    await f.flush();
+    expect(f.scene.model.screen).toBe("start");
+    f.cheat("unlockAllGalaxies").run();
+    await f.settle();
+    expect(f.scene.cheatSession.active).toBe(true);
+    expect(f.context.scheduleCheatGalaxies).toHaveBeenCalledOnce();
+    f.apply(() => f.scene.model.continueGame());
+    await f.settle();
+    expect(f.scene.cheatSession.active).toBe(true);
+    expect(f.scene.model.state.unlocked).toHaveLength(6);
+    // A reload while the session runs restores the save from before it.
+    expect(f.stored().unlocked).toEqual(played.state.unlocked);
+    f.apply(() => f.scene.model.backToTitle());
+    await f.settle();
+    expect(f.scene.cheatSession.active).toBe(false);
+    expect(f.scene.model.state.unlocked).toEqual(played.state.unlocked);
+  });
+
+  it("resets the whole save, ending the session, keeping device settings", async () => {
     const model = flight();
-    const economy = structuredClone(model.state.economy);
-    const achievements = structuredClone(model.state.achievements);
-    const apply = vi.fn<(effect: () => void) => void>((effect) => effect());
-    const context = createContext({ CHEAT_COPY, apply, grantAllWeapons, scene: { model } });
-    const options = runInContext(callback("cheats"), context) as Omit<CheatSessionOptions, "host">;
-    const session = createCheatSession({
-      ...options,
-      host: {
-        matchMedia: () => ({ matches: false }),
-        navigator: { maxTouchPoints: 0, userAgent: "fixture" },
-      },
-    });
-    expect(cheatGroups(options.actions)).toEqual(["run"]);
-    expect(session.available()).toBe(true);
-    expect(await session.execute("grant-all-weapons")).toBe(true);
-    expect(model.state.flight!.ownedWeapons).toEqual(UPGRADE_WEAPONS);
-    expect(model.state.economy).toEqual(economy);
-    expect(model.state.achievements).toEqual(achievements);
-    expect(apply).not.toHaveBeenCalled();
-    expect(session.available()).toBe(true);
-    session.dispose();
+    model.state.achievements.unlocked.push("prologue");
+    const f = cheatScene(model);
+    f.cheat("addStardust").run();
+    await f.settle();
+    (f.context.resetSave as (value: typeof f.scene) => void)(f.scene);
+    await f.settle();
+    expect(f.scene.cheatSession).toEqual(NO_CHEAT_SESSION);
+    expect(f.scene.controls.closeSettings).toHaveBeenCalledOnce();
+    expect(f.scene.model.screen).toBe("start");
+    expect(f.scene.model.state.started).toBe(false);
+    expect(f.stored()).toEqual(JSON.parse(new GameModel(CONTENT).save()));
+    expect(f.stored().achievements.unlocked).toEqual([]);
+    expect(f.values.get("ada-the-navigator.sound")).toBe("off");
+  });
+
+  it("has one save write, in flushScene, so the session suspends every save path", () => {
+    const writes = readdirSync(new URL("..", import.meta.url), { recursive: true })
+      .map(String)
+      .filter((path) => path.endsWith(".ts") && !path.endsWith(".test.ts"))
+      .flatMap((path) =>
+        [
+          ...readFileSync(new URL(`../${path}`, import.meta.url), "utf8").matchAll(
+            /saves\.save\(/gu,
+          ),
+        ].map(() => path),
+      );
+    expect(writes).toEqual(["game/sceneUi.ts"]);
+    expect(callback("flushScene")).toContain("saves.save(");
   });
 });
 
@@ -706,6 +838,7 @@ describe("canonical save caller", () => {
       .mockResolvedValueOnce({ reason: "quota", status: "unavailable" })
       .mockResolvedValueOnce({ status: "saved" });
     const scene = {
+      cheatSession: NO_CHEAT_SESSION,
       entryCurrent: () => true,
       model: held,
       savingUnavailable: false,
@@ -740,11 +873,14 @@ describe("canonical save caller", () => {
     (newer) => {
       const action = vi.fn();
       const scene = {
+        cheatSession: NO_CHEAT_SESSION,
         controls: { reset: vi.fn() },
         emergencyReturn: { active: false },
         entryCurrent: () => true,
+        model: { screen: "space" },
       };
       const context = createContext({
+        endsCheatSession,
         flushScene: vi.fn(),
         newer,
         observeFeedback: vi.fn(),
@@ -858,6 +994,7 @@ describe("required entry save admission", () => {
     );
     const snapshot = { mode: "home", unlocked: [1] };
     const scene = {
+      cheatSession: NO_CHEAT_SESSION,
       entryCurrent: () => current,
       model: { saveDocument: () => snapshot },
       savingUnavailable: false,
@@ -892,13 +1029,16 @@ describe("required entry save admission", () => {
       current = true;
     const action = vi.fn();
     const scene = {
+      cheatSession: NO_CHEAT_SESSION,
       controls: { reset: vi.fn() },
       emergencyReturn: { active: false },
       entryCurrent: () => current,
+      model: { screen: "space" },
     };
     const apply = runInContext(
       callback("apply"),
       createContext({
+        endsCheatSession,
         flushScene: vi.fn(),
         newer: false,
         observeFeedback: vi.fn(),

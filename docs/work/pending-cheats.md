@@ -1,0 +1,44 @@
+---
+id: TBD
+title: Add session-only cheats, Show tips again, the FPS counter and Reset save
+status: approved
+approved: user, 2026-11-18, gameplay/cheats.md and policy saves and cheats
+design: cheats
+related: [ada-0028, ada-0215]
+---
+
+## Scope
+
+Implement `gameplay/cheats.md` and the shared saves and cheats policy: a browser-tab-only Small
+Cheats modal opened from Settings, one scrolling column of full-width rows with Close as the
+bottom primary. The cheats are Unlock all weapons, Unlock all equipment, Unlock all galaxies, Max
+weapon levels, Add 1,000 ore and Add 1,000 Stardust; then Show tips again, the FPS counter and
+Reset save, which are not cheats. Grant all weapons is retired.
+
+## Criteria
+
+- The app-window check runs at open and at each action; the installed app shows no launcher.
+- Each unlock disables itself when nothing is left to grant; the amount grants add on every press.
+- The first cheat saves play up to that moment, then starts a session: no save write, no
+  achievement record or unlock, until play returns to the start screen by Back to title or a
+  reload. Continue then plays the save from before the first cheat. Cheats on the start screen
+  apply to the play the next Start or Continue begins.
+- Reset save, after its confirm, clears the whole save including achievements, ends any session
+  and returns to the start screen as on a first launch; device settings stay.
+- The FPS counter is Off by default and sits in the device viewport's bottom-right corner, 8 px
+  inside the safe area, above every layer.
+- Browser smoke proofs of the Cheats modal and the FPS counter at 1280x720 and at 720x360 with
+  insets.
+
+## Decisions
+
+- The session suspends saving at `flushScene`, the scene's one save write, and earning at
+  `GameModel.syncAchievements` and `recordAchievement`.
+- Ending the session builds a fresh model from the store's save, falling back to the in-memory
+  copy taken at the first cheat when the store cannot read.
+- Galaxies a cheat unlocks schedule their downloads directly, since the session saves nothing.
+- The FPS counter is held for the page session only, as a display toggle. It sits in the view
+  host, inset by the same safe-area properties the HUD keeps clear of, which the full-viewport
+  policy keeps at zero on devices.
+
+## Outcome

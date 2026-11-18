@@ -584,21 +584,14 @@ ${UI_SCOPE} .ada-steps{
 
 /* Cheats: per scope a heading, its persistence, then items a gap apart, each a button with its
    description a row gap below. */
-${UI_SCOPE} .ada-cheat-section{
-  display:flex;
-  flex-direction:column;
-  gap:${units(CARD_CONTENT.rowGap)};
-  align-self:stretch
-}
 ${UI_SCOPE} .ada-cheat-items{
   display:flex;
   flex-direction:column;
-  gap:${units(CARD_CONTENT.gap)}
+  gap:${units(CARD_CONTENT.gap)};
+  align-self:stretch
 }
-${UI_SCOPE} .ada-cheat-item{
-  display:flex;
-  flex-direction:column;
-  gap:${units(CARD_CONTENT.rowGap)}
+${UI_SCOPE} .ada-cheat-items>*{
+  width:100%
 }
 
 ${UI_SCOPE} .ada-card .ada-button:focus-visible,

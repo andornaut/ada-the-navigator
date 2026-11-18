@@ -1,51 +1,37 @@
 import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
-export interface CheatItemData {
-  readonly description: string;
-  readonly id: string;
-  readonly label: string;
-}
-export interface CheatGroupData {
-  readonly actions: readonly CheatItemData[];
-  readonly label: string;
-  readonly persistence: string;
-  readonly scope: "save" | "run";
-}
+/** One full-width row of the Cheats modal: an action button or the FPS counter switch. */
+export type CheatRowData =
+  | { readonly id: string; readonly kind: "action"; readonly label: string }
+  | { readonly id: string; readonly kind: "switch"; readonly label: string };
+
 export type CheatsSchema = {
-  groups: { props: Record<string, never>; slots: "groups" };
+  list: { props: Record<string, never>; slots: "rows" | "footer" };
   footer: { props: { readonly label: string }; slots: never };
-  group: { props: Pick<CheatGroupData, "label" | "persistence">; slots: "items" };
-  item: { props: CheatItemData; slots: never };
+  action: { props: { readonly id: string; readonly label: string }; slots: never };
+  switch: { props: { readonly id: string; readonly label: string }; slots: never };
 };
 
-/** Caller-selected groups contain presentation facts, never session or execution callbacks. */
+/** One scrolling column of rows in the caller's order, then Close; presentation facts only. */
 export function cheatsTree(
   closeLabel: string,
-  groups: readonly CheatGroupData[],
+  rows: readonly CheatRowData[],
 ): LayoutNode<CheatsSchema> {
   return {
-    component: "groups",
+    component: "list",
     key: "cheats",
     kind: "component",
     props: {},
     slots: {
-      groups: [
-        ...groups.map<LayoutNode<CheatsSchema>>((group) => ({
-          component: "group",
-          key: group.scope,
-          kind: "component",
-          props: { label: group.label, persistence: group.persistence },
-          slots: {
-            items: group.actions.map((action) => ({
-              component: "item",
-              key: action.id,
-              kind: "component",
-              props: action,
-            })),
-          },
-        })),
+      footer: [
         { component: "footer", key: "dismiss", kind: "component", props: { label: closeLabel } },
       ],
+      rows: rows.map<LayoutNode<CheatsSchema>>(({ id, kind, label }) => ({
+        component: kind,
+        key: id,
+        kind: "component",
+        props: { id, label },
+      })),
     },
   };
 }

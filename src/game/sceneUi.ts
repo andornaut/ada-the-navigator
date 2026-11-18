@@ -13,7 +13,7 @@ import { galaxyCard } from "../data/storybook.ts";
 import { coarsePointer } from "../input/coarsePointer.ts";
 import { createControls } from "../input/controls.ts";
 import { requiredLoading, requiredReady } from "../loading/required.ts";
-import { grantAllWeapons } from "../model/cheats.ts";
+import { CHEAT_IDS, type CheatId } from "../model/cheats.ts";
 import type { ImmediateExchangeOrder, ImmediateExchangeResult } from "../model/exchange.ts";
 import { GameModel } from "../model/game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
@@ -41,6 +41,7 @@ import { backReleased } from "../ui/backStack.ts";
 import { createConversationBox, createInteractionCard } from "../ui/conversation.ts";
 import { screenShakes } from "../ui/deviceSettings.ts";
 import { createBannerLayer } from "../ui/disabledBanner.ts";
+import { createFpsCounter } from "../ui/fpsCounter.ts";
 import { createGalaxyMap } from "../ui/galaxyMap.ts";
 import { createJumpOverlay, type SheetArt } from "../ui/jumpOverlay.ts";
 import { VIEW_HOST_ID } from "../ui/layout/css.ts";
@@ -67,6 +68,7 @@ import { loadStoryArt } from "../ui/storyArt.ts";
 import { createStorybook, storyPageView } from "../ui/storybook.ts";
 import { readTitleScreen, type TitleScreenArt } from "../ui/titleScreen.ts";
 import { type CoreManifest, galaxyManifestKey, readGalaxyManifest } from "./artManifest.ts";
+import { beginCheatSession, endsCheatSession, NO_CHEAT_SESSION } from "./cheatSession.ts";
 import { readDestruction, readShards } from "./destructionArt.ts";
 import { EDGE_MARKER_DEPTH, HIT_FLASH_DEPTH } from "./drawOrder.ts";
 import { enemyPartFrame, GALAXY_FAMILIES } from "./enemyArt.ts";
@@ -149,6 +151,7 @@ export type UiContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
     | "cache"
     | "cacheArt"
     | "cameras"
+    | "cheatSession"
     | "children"
     | "controls"
     | "conversationBox"
@@ -172,6 +175,7 @@ export type UiContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
     | "feedback"
     | "feedbackSound"
     | "foregroundEdges"
+    | "fpsCounter"
     | "galaxies"
     | "galaxyBackdrops"
     | "galaxyLoads"
@@ -211,6 +215,7 @@ export type UiContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
     | "quantum"
     | "rasters"
     | "reducedMotion"
+    | "resetSaveCard"
     | "resourceFiles"
     | "resourceRocks"
     | "restartCard"
@@ -398,15 +403,41 @@ export function buildScene(scene: UiContext): void {
     if (!scene.entryCurrent() || !requiredReady()) {
       return;
     }
-    if (newer || scene.emergencyReturn.active) {
+    if (newer || scene.emergencyReturn.active || scene.cheatSession.ending) {
       return;
     }
+    const before = scene.model.screen;
     action();
     observeFeedback(scene);
     scene.controls.reset();
     flushScene(scene);
+    if (endsCheatSession(scene.cheatSession, before, scene.model.screen)) {
+      void endCheatSession(scene);
+    }
     refreshScene(scene);
   };
+  // A cheat joins the cheat session, starting it after saving play so far (cheatSession.ts).
+  const cheat = (id: CheatId) => ({
+    available: () => !scene.cheatSession.ending && scene.model.cheatAvailable(id),
+    id,
+    label: CHEAT_COPY[id],
+    run: () =>
+      apply(() => {
+        scene.cheatSession = beginCheatSession(
+          () => void flushScene(scene),
+          scene.model,
+          scene.cheatSession,
+        );
+        if (scene.model.cheat(id) && id === "unlockAllGalaxies") {
+          scheduleCheatGalaxies(scene);
+        }
+      }),
+  });
+  scene.fpsCounter = createFpsCounter(
+    document.getElementById(VIEW_HOST_ID) ?? document.body,
+    () => scene.game.loop.actualFps,
+  );
+  partial.push(() => scene.fpsCounter.dispose());
   // Every quantum jump plays Art's effect; the game switches once the source is covered.
   const jumpThen = (action: () => void): void => {
     if (scene.jumping) {
@@ -512,23 +543,29 @@ export function buildScene(scene: UiContext): void {
       title: CONTENT.labels.achievements ?? "",
     },
     cheats: {
-      actions: [
+      labels: CHEAT_COPY,
+      rows: [
+        ...CHEAT_IDS.map(cheat),
+        // Not cheats: they start no session (gameplay/cheats.md "Other actions").
         {
-          description: CHEAT_COPY.grantDescription,
-          execute: ({ commit }) => {
-            commit(() => {
-              grantAllWeapons(scene.model.state);
-            });
-          },
-          id: "grant-all-weapons",
-          label: CHEAT_COPY.grantAllWeapons,
-          scope: "run",
+          available: () => !scene.cheatSession.ending,
+          id: "showTipsAgain",
+          label: CHEAT_COPY.showTipsAgain,
+          run: () => apply(() => scene.model.showTipsAgain()),
+        },
+        {
+          id: "fpsCounter",
+          label: CHEAT_COPY.fpsCounter,
+          on: () => scene.fpsCounter.shown(),
+          set: (on) => scene.fpsCounter.set(on),
+        },
+        {
+          available: () => true,
+          id: "resetSave",
+          label: CHEAT_COPY.resetSave,
+          run: () => scene.resetSaveCard.open(),
         },
       ],
-      canExecute: () => scene.model.state.mode === "space" && !scene.model.state.dialogue,
-      labels: CHEAT_COPY,
-      onSave: () => apply(() => {}),
-      run: () => (scene.model.state.mode === "space" ? scene.model.state.flight : null),
     },
     contextQuestDetails: () => scene.model.contextQuestDetails,
     exit: exitShown() ? { label: CONTENT.labels.exit ?? "", onExit: exitGame } : undefined,
@@ -1007,6 +1044,17 @@ export function buildScene(scene: UiContext): void {
     onRestart: () => apply(() => scene.model.restart()),
   });
   partial.push(() => scene.restartCard.dispose());
+  scene.resetSaveCard = createRestartCard(scene.controls.overlay, {
+    kind: "reset-save",
+    labels: {
+      cancel: CHEAT_COPY.cancel,
+      close: CHEAT_COPY.close,
+      restart: CHEAT_COPY.reset,
+      title: CHEAT_COPY.resetSaveTitle,
+    },
+    onRestart: () => resetSave(scene),
+  });
+  partial.push(() => scene.resetSaveCard.dispose());
   const homeLayers = [
     // Back on a storybook page acts as Previous, and does nothing on a scene's first page. On
     // Ada's room page, back and Escape open the Paused card instead.
@@ -1026,6 +1074,10 @@ export function buildScene(scene: UiContext): void {
     scene.controls.registerBack({
       back: () => scene.restartCard.close(),
       isOpen: () => scene.restartCard.isOpen() && !scene.settingsOpen,
+    }),
+    scene.controls.registerBack({
+      back: () => scene.resetSaveCard.close(),
+      isOpen: () => scene.resetSaveCard.isOpen(),
     }),
   ];
   partial.push(() => homeLayers.forEach((unregister) => unregister()));
@@ -1441,8 +1493,9 @@ export function armBack(scene: UiContext): void {
   setBackArmed(!backReleased(scene.startShown, scene.settingsOpen));
 }
 
+/** The one save write: suspended for a cheat session, so every save path stops at once. */
 export async function flushScene(scene: UiContext): Promise<void> {
-  if (!requiredReady() || !scene.entryCurrent()) {
+  if (scene.cheatSession.active || !requiredReady() || !scene.entryCurrent()) {
     return;
   }
   const admitted = scene.entryCurrent;
@@ -1464,4 +1517,61 @@ export async function flushScene(scene: UiContext): Promise<void> {
   const available = result.status === "saved";
   scene.shell.setSavingAvailable(available);
   scene.savingUnavailable = !available;
+}
+
+/** Plays `model` in place of the current one, as a launch would: nothing in flight is kept. */
+function replaceModel(model: GameModel, scene: UiContext): void {
+  scene.model = model;
+  scene.held = undefined;
+  scene.controls.setGains(null);
+  scene.controls.reset();
+  refreshScene(scene);
+}
+
+/**
+ * Ends the cheat session back on the start screen: the pre-cheat save loads in place of the
+ * session's play, so Continue resumes it. Saving and actions wait until it has loaded.
+ */
+export async function endCheatSession(scene: UiContext): Promise<void> {
+  const before = scene.cheatSession.before;
+  scene.cheatSession = { ...scene.cheatSession, ending: true };
+  restoreBeforeCheats(before, await saves.load(), scene);
+}
+
+/** The pre-cheat save, or the copy taken at the first cheat when the store could not read it. */
+function restoreBeforeCheats(
+  before: string | null,
+  loaded: Awaited<ReturnType<typeof saves.load>>,
+  scene: UiContext,
+): void {
+  const save =
+    loaded.status === "unavailable" || loaded.status === "newer"
+      ? before && (JSON.parse(before) as unknown)
+      : loaded.save;
+  scene.cheatSession = NO_CHEAT_SESSION;
+  replaceModel(new GameModel(CONTENT, save ?? undefined), scene);
+}
+
+/**
+ * Reset save (gameplay/cheats.md "Other actions"): ends any cheat session, clears the whole save,
+ * achievements included, and returns to the start screen as on a first launch. Device settings
+ * are stored apart from the save.
+ */
+export function resetSave(scene: UiContext): void {
+  if (scene.cheatSession.ending) {
+    return;
+  }
+  scene.cheatSession = NO_CHEAT_SESSION;
+  scene.controls.closeSettings();
+  scene.controls.closePause();
+  replaceModel(new GameModel(CONTENT), scene);
+  void flushScene(scene);
+}
+
+/**
+ * Galaxies a cheat unlocks need their downloads in the session, which saves nothing to record
+ * them through; recordGalaxyUnlocks otherwise follows saved unlocks only.
+ */
+function scheduleCheatGalaxies(scene: UiContext): void {
+  recordGalaxyUnlocks(scene.model.state.unlocked);
 }
