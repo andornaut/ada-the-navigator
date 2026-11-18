@@ -182,7 +182,7 @@ pages after it, the holodisk narration and memory lines) shows the still aboard
 background, with no animation and no separate holodisk-insert picture; the
 jump-home page after the emergency jump shows the aboard-emergency background. Every quantum jump uses one
 jump effect, with Ada's ship shown in it, arriving on the heading she starts the
-flight with: jumps from the galaxy map (Jump, and Earth in flight), Travel and the
+flight with: jumps from the galaxy map (Jump to a galaxy, and Jump to Earth in flight), Travel and the
 emergency jump. Boarding from her room is the rock's glow, not a jump; Astra's emergency jump when the shield fails tints it red. Jumping
 home, the emergency jump included, arrives in Ada's room. Before a real shield-failure
 return warps, the existing ship damage effect plays and Astra's portrait and name
@@ -194,7 +194,7 @@ home without another cargo penalty or replaying the warning. An emergency jump
 lands at night: its jump-home page shows, then a 2 to 3 second sleep scene (Ada
 asleep with Penny curled up, the rock glowing softly) that a tap skips after a
 moment, then morning, when any waiting home scene plays as on any arrival home. A
-voluntary Earth from the galaxy map has no sleep scene. The holodisk
+voluntary Jump to Earth from the galaxy map has no sleep scene. The holodisk
 drive looks like a CD or cassette player.
 
 Every boarding from Ada's room (picking up the rock), including for a replay of
@@ -204,25 +204,30 @@ maps: the local map (the pause card's Map) charts the current galaxy, and the
 galaxy map moves Ada between galaxies; neither name appears in the interface. The galaxy map is a route map, like Chibi's zone map,
 drawn over a night sky full of stars, galaxies and nebulae above an evening
 grass strip about 50 pixels tall along the bottom, where Ada and Penny stand
-seen from behind, looking up. The panel sits above the grass, with Earth and
-Jump over it. All six galaxies sit
+seen from behind, looking up. The panel sits above the grass, with the
+destination action over it. All six galaxies sit
 in route order from left to right along one arc, with names under the markers, each a marker in its galaxy's own main hue, as
 Chibi's zones have, with Ada's ship, drawn as her current ship sprite, on the selected galaxy. Right moves the ship to the next
 open galaxy in route order and Left to the previous one; both skip locked galaxies, as
 Chibi's walk skips unavailable zones. Tapping an open marker moves the ship
 there. The ship starts on the farthest unlocked galaxy, so on the first boarding
-it sits on Sunflower, the only open galaxy, with Jump as the default action. Tab focuses every marker in route order. Tapping, or focusing with Tab, a locked marker shows its panel while the ship stays
-on its open galaxy, and Jump is then disabled and refuses with the shared
-refusal feedback; Left or Right returns the panel to the
-ship's galaxy. A
-panel under the chart shows the selected galaxy's "Galaxy {number}", its name,
-a small screenshot and one line of flavor text. Earth is on the left and Jump
-on the right as the default action, as Chibi's map places Back to title and
-Continue. A locked galaxy's marker is greyscale, with "..." for its name and
+it sits on Sunflower, the only open galaxy, with "Jump to Sunflower" as the
+action. Tab focuses every galaxy marker in route order, then Earth and the
+destination action. Tapping, or focusing with Tab, a locked marker shows its
+panel while the ship stays on its open galaxy; the action then reads "Progress
+the story to unlock", is unavailable and refuses with the shared refusal
+feedback. Left or Right returns the panel to the ship's galaxy. A panel under
+the chart shows the selected galaxy's "Galaxy {number}", its name, a small
+screenshot and one line of flavor text. Earth is a selectable marker centered
+inside the route arc, labelled "Earth"; its panel shows the kicker "Home", the
+title "Earth", Ada's room picture and "Ada’s life on Earth. Time here stands
+still while she’s aboard the ship." One centered primary action names the
+selected destination: "Jump to {galaxy}", "Stay in {galaxy}", "Jump to Earth"
+or "Stay on Earth". There is no separate Earth or Back button. A locked galaxy's marker is greyscale, with "..." for its name and
 text. A placeholder galaxy, one whose story is not yet built, is flyable: it has
 generic space, enemies and rocks, its position's difficulty and its roster, but no
 story, holodisk or story destinations. Its panel shows its number, name and flavor
-line, then "Story in development.", and Jump works. Its marker is open, in its
+line, then "Story in development.", and its Jump action works. Its marker is open, in its
 galaxy's hue, and its screenshot is a generic space view until its own art lands. At first only the first galaxy
 is unlocked. Completing a galaxy (its holodisk, space quest and home resolution, as above)
 unlocks the next position, every
@@ -235,14 +240,16 @@ ship flies once along the route to the farthest, passing the markers between,
 in at most 2.4 seconds in all, then waits for the player's choice. The galaxy map is the only galaxy
 selection; there is no separate selection card. It opens at every boarding and,
 in flight, from the local map's Galaxies button. Opened in flight, the ship
-starts on the galaxy Ada is flying in, and while it sits there the default
-action reads "Stay here" in place of Jump: it closes both maps and resumes the
-flight with no jump and no new layout. Jump to another galaxy ends the current
-flight, with story progress saved, and quantum jumps into the chosen galaxy;
-Earth ends the flight and jumps Ada home to her room. The galaxy map has the
+starts on the galaxy Ada is flying in, and while it sits there the action
+reads "Stay in {galaxy}": like the close X, it returns to the local map with no
+jump and no new layout. Jump to another galaxy ends the current flight, with
+story progress saved, and quantum jumps into the chosen galaxy; Jump to Earth
+ends the flight and jumps Ada home to her room. At boarding Ada is on Earth, so
+Earth's action reads "Stay on Earth" and returns her to her room with no jump.
+The galaxy map has the
 close X, which with back and Escape goes one step back, to the page Ada just
 left: the local map in flight, or the "Welcome back, Navigator." page at
-boarding. Earth is the way home from boarding.
+boarding. Stay on Earth is the way home from boarding.
 
 Galaxies are named after real galaxies' nicknames, in the route order above.
 Every unlocked galaxy stays replayable in any order. Its resolved story stays

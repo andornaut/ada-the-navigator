@@ -1281,11 +1281,13 @@ beacon light. Welcome!"
   - Install: "Full screen, offline", with an Install button
 - Storybook pages: Previous, Next, Skip. Ada's room page, before boarding:
   Narration: "Ada's rock glows softly on her desk." then Pick up the rock.
-- Galaxy map: Galaxy {number}, Earth, Jump, Stay here (on the galaxy Ada is
-  flying in); Previous and Next as the
-  accessible labels for Left and Right. A locked selection action reads "Progress the story to unlock" exactly; the
-  unlock guard and unlocked named Jump/Stay actions remain. A locked galaxy's name and text: ... A
+- Galaxy map: Galaxy {number}; Earth (marker label); one destination action
+  reading Jump to {galaxy}, Stay in {galaxy} (on the galaxy Ada is flying in),
+  Jump to Earth, or Stay on Earth (at boarding). A locked selection action reads
+  "Progress the story to unlock" exactly. A locked galaxy's name and text: ... A
   placeholder galaxy: its name and flavor text, then Story in development.
+- Earth panel: kicker Home, title Earth, text "Ada’s life on Earth. Time here
+  stands still while she’s aboard the ship."
 - Galaxy names and flavor text, in route order:
   - Sunflower: "Scattered outposts grow, build and salvage, each on
     their own."
