@@ -1276,8 +1276,8 @@ beacon light. Welcome!"
 - Settings rows, each with its note:
   - Move controls: "Touch still works when hidden"
   - Aim controls: "Touch still works when hidden"
-  - Sound: "Mutes sound effects"
-  - Reduced motion: "Skips screen shakes and flashes"
+  - Sound: "Controls gameplay sound effects."
+  - Reduced motion: "Reduces animation and disables screen shake and flashes."
   - Install: "Full screen, offline", with an Install button
 - Storybook pages: Previous, Next, Skip. Ada's room page, before boarding:
   Narration: "Ada's rock glows softly on her desk." then Pick up the rock.

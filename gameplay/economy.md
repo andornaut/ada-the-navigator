@@ -207,7 +207,7 @@ placement rules retroactively to remove or move legacy sites. Tech owns the
 placement algorithm and must measure accepted station density after candidate
 rejections against the approximately doubled target, rather than counting layers. A discovered
 station becomes a travel destination like other destinations. An undiscovered station
-within 3000 world units of Ada is marked by the direction indicator, so stations
+within 5000 world units of Ada is marked by the direction indicator, so stations
 remain findable. A station is a safe
 area. Ada docks with Use (Dock) within Talk range, 160 world units from the
 station's centre, like any other destination; the station has no dock mouth and

@@ -872,10 +872,10 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
     joysticks appear only when the primary pointer is coarse (a touch screen).
   - Each row has its icon and a switch, as in Archie and Chibi. The Move controls
     and Aim controls icons are the move and aim stick control icons.
-  - Sound, as in Archie: a switch, on when sound is enabled, with the note "Mutes
-    sound effects".
+  - Sound, as in Archie: a switch, on when sound is enabled, with the note "Controls
+    gameplay sound effects."
   - Reduced motion, as in Archie: a switch, on when motion is reduced, with the
-    note "Skips screen shakes and flashes". A player's first setting on a device follows the
+    note "Reduces animation and disables screen shake and flashes." A player's first setting on a device follows the
     device's reduced-motion preference.
   - Install, as in Archie: shown only while installation is available and the game
     is not installed, with the note "Full screen, offline" and an Install button.
@@ -1203,12 +1203,6 @@ and enemy retention records. Required guards still follow the current story gate
 resolved story encounters do not return. Within a flight, paging and Continue retain
 the existing enemy state and equipped weapon levels. Uncollected pickups remain
 run-local as specified below.
-
-The supported prior save format preserves its exact active flight seed, coordinates
-and flight state. Migrated stations and landmarks keep their legacy fixed-site
-policy. A home save without a recoverable procedural seed retains its discovered
-IDs, fixed coordinates, explored path and story; initialize only that missing seed
-on first entry. Never reroll known locations or resolved story during migration.
 
 Saves reset before version 1. While the game's version is below 1, a stored save
 that is invalid, incompatible or ambiguous resets to a new game through the
