@@ -686,12 +686,13 @@ try {
     [true],
     "The open Settings modal draws above the Menu disc",
   );
-  // The build line: the card's last text, after the rows, naming package.json's version and the
-  // gated revision, read with the card and never focused.
+  // The build line: the card's last text, right after the rows' layout-tree arrangement
+  // (.ada-settings-rows), naming package.json's version and the gated revision, read with the
+  // card and never focused.
   const { version } = JSON.parse(readFileSync("/source/package.json", "utf8"));
   const commit = process.env.CHECK_REVISION?.slice(0, 8) ?? "dev";
   const buildLine = await page.locator(".ada-build").evaluate((line) => ({
-    afterRows: line.previousElementSibling?.classList.contains("ada-rows") ?? false,
+    afterRows: line.previousElementSibling?.classList.contains("ada-settings-rows") ?? false,
     color: getComputedStyle(line).color,
     hidden: line.closest("[aria-hidden='true']") !== null,
     inCard: line.closest(".ada-card") !== null,
