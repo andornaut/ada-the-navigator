@@ -358,7 +358,9 @@ export const STICK_AREA_MARGIN = 8;
 // drawn pixels: the icon's drawn pixels span x 3 to 17 in its 20 box, so padding.left 5 and
 // iconGap 3 leave 8 and 6 to them, and padding.right 8 follows the bar; the pill is the bar plus
 // 36 wide. It centres across on the HUD rect (the view's centre, as the rect mirrors), so a longer
-// bar grows both ways; its bottom mirrors the status pill's drawn top inset on touch and desktop.
+// bar grows both ways; its drawn bottom sits on the HUD rect's bottom edge, HUD_EDGE above the
+// game area's bottom as the pause disc's drawn top sits HUD_EDGE below its top, on touch and
+// desktop.
 export const SHIELD_BARS = [120, 180, 240] as const;
 
 export const SHIELD_PILL = {

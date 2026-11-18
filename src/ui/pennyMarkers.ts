@@ -6,6 +6,7 @@ import { LIGHT_FIELD } from "../game/lightField.ts";
 import type { PennyMarker } from "../model/pennyMarkers.ts";
 import type { Vec } from "../model/types.ts";
 import { pixels, units, VIEW_PROPERTIES } from "./layout/css.ts";
+import { frameDeviceOrigin, frameRect, readFrameTurn } from "./layout/frameBox.ts";
 import { MAP_COLORS, MAP_FACES, MAP_SYMBOL } from "./layout/mapScreen.ts";
 import { PENNY_MARKER } from "./layout/pennyMarkers.ts";
 import { layoutTargetMarkers, type TargetMarkerExtent } from "./layout/targetMarkers.ts";
@@ -212,9 +213,11 @@ export function createPennyMarkerLayer(
       const unit = readViewUnit(layer);
       const dpr = globalThis.devicePixelRatio || 1;
       const scale = unit * dpr;
-      const layerBox = layer.getBoundingClientRect();
-      const areaLeft =
-        parseFloat(getComputedStyle(layer).getPropertyValue(VIEW_PROPERTIES.areaLeft)) || 0;
+      const layerStyle = getComputedStyle(layer);
+      const areaLeft = parseFloat(layerStyle.getPropertyValue(VIEW_PROPERTIES.areaLeft)) || 0;
+      const areaTop = parseFloat(layerStyle.getPropertyValue(VIEW_PROPERTIES.areaTop)) || 0;
+      const turn = readFrameTurn(layer.ownerDocument?.documentElement);
+      const grid = frameDeviceOrigin(turn, layer.getBoundingClientRect(), dpr);
       const extents = new Map<string, TargetMarkerExtent>();
       const paintSizes = new Map<
         string,
@@ -225,7 +228,8 @@ export function createPennyMarkerLayer(
       >();
       for (const marker of markers) {
         const node = nodes.get(marker.id)!;
-        const body = node.getBoundingClientRect();
+        const page = node.getBoundingClientRect();
+        const body = frameRect(turn, page, page);
         const paint = { height: body.height / unit, width: body.width / unit };
         paintSizes.set(marker.id, paint);
         const outline =
@@ -237,14 +241,15 @@ export function createPennyMarkerLayer(
         let right = paint.width / 2 + outline;
         let bottom = paint.height / 2 + outline;
         const url = pennyGlyph(marker);
-        const glyph = node.firstElementChild?.getBoundingClientRect();
+        const glyphPage = node.firstElementChild?.getBoundingClientRect();
+        const glyph = glyphPage && frameRect(turn, page, glyphPage);
         if (
           url &&
           glyph &&
-          (glyph.left < body.left ||
-            glyph.top < body.top ||
-            glyph.right > body.right ||
-            glyph.bottom > body.bottom)
+          (glyph.x < 0 ||
+            glyph.y < 0 ||
+            glyph.x + glyph.width > body.width ||
+            glyph.y + glyph.height > body.height)
         ) {
           const alpha = assets.read(url, glyph.width * dpr, glyph.height * dpr);
           if (!alpha || (alpha.width > 0 && alpha.height > 0)) {
@@ -254,8 +259,8 @@ export function createPennyMarkerLayer(
               x: 0,
               y: 0,
             };
-            const x = (glyph.left - body.left) / unit - paint.width / 2 + ink.x / scale;
-            const y = (glyph.top - body.top) / unit - paint.height / 2 + ink.y / scale;
+            const x = glyph.x / unit - paint.width / 2 + ink.x / scale;
+            const y = glyph.y / unit - paint.height / 2 + ink.y / scale;
             left = Math.min(left, x);
             top = Math.min(top, y);
             right = Math.max(right, x + ink.width / scale);
@@ -276,8 +281,7 @@ export function createPennyMarkerLayer(
           gap: SPACING.rowGap,
           player,
           raster: {
-            origin: { x: (layerBox.left + areaLeft) * dpr, y: layerBox.top * dpr },
-            pixelRatio: dpr,
+            origin: { x: grid.x + areaLeft * dpr, y: grid.y + areaTop * dpr },
             scale,
           },
         },
@@ -290,7 +294,7 @@ export function createPennyMarkerLayer(
         node.dataset.crowded = String(crowded);
         const paint = paintSizes.get(target.id)!;
         node.style.left = pixels(areaLeft + (at.x - paint.width / 2) * unit);
-        node.style.top = pixels((at.y - paint.height / 2) * unit);
+        node.style.top = pixels(areaTop + (at.y - paint.height / 2) * unit);
       }
       for (const [id, node] of nodes) {
         if (!shown.has(id)) {

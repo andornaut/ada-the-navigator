@@ -144,6 +144,31 @@ describe("displayed marker bearing", () => {
       }
     },
   );
+  it("moves an edge inward to the device pixel grid, never a whole CSS px", () => {
+    // The reported phone: devicePixelRatio 30 / 11 and 1.0333 CSS px per logical px, turned, so
+    // the bottom edge's grid counts from the frame's physical right edge (frameDeviceOrigin).
+    const dpr = 30 / 11;
+    const scale = (744 / 720) * dpr;
+    for (const origin of [
+      { x: 0, y: 0 },
+      { x: 330, y: -1080 + 11 * scale },
+    ]) {
+      const raster = { origin, scale };
+      const [down] = layoutTargetMarkers({ ...context, raster }, [marker("down", 1336, 1336)]);
+      const bottom = down!.at.y + size.height / 2;
+      const inward = (360 - EDGE_MARKERS.gap - bottom) * scale;
+      expect(inward).toBeGreaterThanOrEqual(0);
+      expect(inward).toBeLessThan(1);
+      expect(
+        Math.abs(origin.y + bottom * scale - Math.round(origin.y + bottom * scale)),
+      ).toBeLessThan(1e-6);
+    }
+  });
+  it("keeps an edge already on the device pixel grid in place", () => {
+    const raster = { origin: { x: 0, y: 0 }, scale: 2 };
+    const [down] = layoutTargetMarkers({ ...context, raster }, [marker("down", 1336, 1336)]);
+    expect(down!.at.y + size.height / 2).toBe(360 - EDGE_MARKERS.gap);
+  });
   it("keeps bearings through resize rather than moving to another clear edge", () => {
     for (const area of [
       { height: 360, width: 720, x: 0, y: 0 },

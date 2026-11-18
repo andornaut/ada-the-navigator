@@ -14,7 +14,7 @@ import {
 } from "./galaxyPanelTree.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { CARD_SLICE } from "./layout/controls.ts";
-import { font, fromAreaLeft, safeEdge, slice, units } from "./layout/css.ts";
+import { font, fromAreaLeft, fromAreaTop, safeEdge, slice, units } from "./layout/css.ts";
 import {
   easeInOutSine,
   GALAXY_MAP,
@@ -185,7 +185,7 @@ export const GALAXY_MAP_STYLE = `
   background:center / 100% 100% no-repeat
 }
 .ada-controls .ada-route-sky{
-  top:0;
+  top:${fromAreaTop(0)};
   height:${units(GALAXY_MAP_SKY.sky.height)}
 }
 .ada-controls .ada-route-ground{
@@ -209,7 +209,7 @@ export const GALAXY_MAP_STYLE = `
 /* The chart, in play-view px from the game area's top-left. */
 .ada-controls .ada-route-chart{
   position:absolute;
-  top:0;
+  top:${fromAreaTop(0)};
   left:${fromAreaLeft(0)};
   width:${units(SCREEN.width)};
   height:${units(SCREEN.height)};

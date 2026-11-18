@@ -12,7 +12,8 @@ function fixture() {
   const host = { getBoundingClientRect: () => ({ left: 100, top: 50 }) } as HTMLElement;
   const style = {
     display: "block",
-    getPropertyValue: (name: string) => (name === VIEW_PROPERTIES.unit ? "2" : "10px"),
+    getPropertyValue: (name: string) =>
+      name === VIEW_PROPERTIES.unit ? "2" : name === VIEW_PROPERTIES.areaTop ? "4px" : "10px",
     opacity: "1",
     visibility: "visible",
   };
@@ -25,8 +26,20 @@ afterEach(() => vi.unstubAllGlobals());
 describe("actual marker avoidance footprints", () => {
   it("converts only occupied CSS rectangles into logical game-area coordinates", () => {
     const f = fixture();
-    expect(markerFootprints(f.doc, f.host)).toEqual([{ height: 10, width: 20, x: 20, y: 10 }]);
+    // Less the game area's 10 CSS px left band and 4 CSS px top band, at 2 CSS px per logical px.
+    expect(markerFootprints(f.doc, f.host)).toEqual([{ height: 10, width: 20, x: 20, y: 8 }]);
     expect(markerFootprints(f.doc, null)).toEqual([]);
+  });
+  it("measures in the turned frame's axes, which the page's boxes swap", () => {
+    const f = fixture();
+    f.node.getBoundingClientRect = () => ({ height: 40, left: 300, top: 200, width: 20 });
+    const root = { getAttribute: (name: string) => (name === "data-frame-turn" ? "90" : null) };
+    const host = {
+      getBoundingClientRect: () => ({ height: 744, left: 0, top: 121, width: 396 }),
+      ownerDocument: { documentElement: root },
+    } as unknown as HTMLElement;
+    // Frame x runs down the page from the host's top, frame y leftward from its right edge.
+    expect(markerFootprints(f.doc, host)).toEqual([{ height: 10, width: 20, x: 34.5, y: 36 }]);
   });
   it.each(["hidden", "transparent", "no-layout", "empty"])("omits %s UI", (kind) => {
     const f = fixture();

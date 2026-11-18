@@ -294,11 +294,11 @@ export const STATUS_PILL_STYLE = `
 .ada-controls .ada-pause[hidden] ~ .ada-status{
   left:${fromHudEdge("left", STATUS_PILL.xAlone)}
 }
-/* The shield pill mirrors the status pill's drawn top inset at the viewport bottom. */
+/* The shield pill's drawn bottom on the HUD rect's bottom edge (shieldPillRect). */
 .ada-controls .ada-shield{
   position:absolute;
   left:${hudCentreX()};
-  bottom:${fromHudEdge("top", STATUS_PILL.y)};
+  bottom:${fromHudEdge("bottom")};
   margin-left:calc(var(--shield-pill) / -2);
   box-sizing:border-box;
   width:var(--shield-pill);

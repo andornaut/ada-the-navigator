@@ -2,7 +2,7 @@ import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import type { ScanOutcome } from "../model/scanOutcomes.ts";
 import { createCompletionIndicator } from "./completionIndicator.ts";
-import { font, fromAreaLeft, units } from "./layout/css.ts";
+import { font, fromAreaLeft, fromAreaTop, units } from "./layout/css.ts";
 import { ITEM_NOTICE } from "./layout/itemNotice.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -142,7 +142,7 @@ export function createScanFeedbackView(parent: HTMLElement) {
         height: units(frame.rect.height),
         left: fromAreaLeft(frame.rect.x),
         opacity: String(frame.opacity),
-        top: units(frame.rect.y),
+        top: fromAreaTop(frame.rect.y),
         visibility: "visible",
         width: units(frame.rect.width),
       });

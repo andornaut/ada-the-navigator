@@ -1,4 +1,4 @@
-import { fromAreaLeft, units } from "./layout/css.ts";
+import { fromAreaLeft, fromAreaTop, units } from "./layout/css.ts";
 import { START_SCREEN } from "./layout/startScreen.ts";
 import { createShipTailView } from "./shipTailView.ts";
 import { jetPolygons, type TitleScreenArt, titleShip } from "./titleScreen.ts";
@@ -14,7 +14,7 @@ export const TITLE_SHIP_STYLE = `
 .ada-start .ada-start-ship{
   position:absolute;
   left:${fromAreaLeft(ship.centre.x - ship.size / 2)};
-  top:${units(ship.centre.y - ship.size / 2)};
+  top:${fromAreaTop(ship.centre.y - ship.size / 2)};
   width:${units(ship.size)};
   height:${units(ship.size)};
   overflow:visible;

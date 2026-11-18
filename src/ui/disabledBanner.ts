@@ -1,6 +1,6 @@
 import { SCREEN } from "../data/screen.ts";
 import type { Vec } from "../model/types.ts";
-import { font, fromAreaLeft, units } from "./layout/css.ts";
+import { font, fromAreaLeft, fromAreaTop, units } from "./layout/css.ts";
 import { TYPE } from "./layout/tokens.ts";
 
 // The Disabled banner over each disabled heavy (art/heavies.md "Disabled banner"): an HTML
@@ -91,7 +91,7 @@ export function createBannerLayer(
           elements.set(id, element);
         }
         element.style.left = fromAreaLeft(at.x);
-        element.style.top = units(at.y);
+        element.style.top = fromAreaTop(at.y);
         shown.add(id);
       }
       for (const [id, element] of elements) {

@@ -80,12 +80,13 @@ export interface GalaxyMapRects {
 /** Each route position's marker centre in the view. */
 export function markerCentre(view: Size, position: RoutePosition): Point {
   const centre = GALAXY_MAP.centres[position - 1]!;
-  return { x: playView(view).x + centre.x, y: centre.y };
+  const area = playView(view);
+  return { x: area.x + centre.x, y: area.y + centre.y };
 }
 
 /** Every route map rect at view with insets. */
 export function galaxyMapRects(insets: Insets, view: Size): GalaxyMapRects {
-  const x0 = playView(view).x;
+  const { x: x0, y: y0 } = playView(view);
   const available = safeRect(insets, SAFE_MARGIN.page, view);
   const actionsTop = available.y + available.height - GALAXY_MAP_ACTIONS.height;
   const panelTop = actionsTop - SPACING.gap - GALAXY_MAP_PANEL.height;
@@ -108,7 +109,7 @@ export function galaxyMapRects(insets: Insets, view: Size): GalaxyMapRects {
       height: GALAXY_MAP.press,
       width: GALAXY_MAP.press,
       x: x0 + x - GALAXY_MAP.press / 2,
-      y: y - GALAXY_MAP.press / 2,
+      y: y0 + y - GALAXY_MAP.press / 2,
     })),
     panel: {
       height: GALAXY_MAP_PANEL.height,

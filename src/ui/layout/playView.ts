@@ -88,16 +88,24 @@ export function safeRect(insets: Insets, margin: number, view: Size): Rect {
   };
 }
 
-// Chibi's play view, the game area: the 720x360 base view centred across the logical view, at
-// its top. The camera draws only it; screens of other aspects show bands outside it, and every
-// control sits inside it.
+// The game area: the 720x360 base view centred in the logical view on both axes, its origin on a
+// whole logical px. The camera draws only it; screens of other aspects show bands outside it,
+// split evenly (one a pixel wider where the spare is odd or fractional), and every control sits
+// inside it.
 export function playView(view: Size): Rect {
   return {
     height: SCREEN.height,
     width: SCREEN.width,
-    x: Math.floor((Math.floor(view.width) - SCREEN.width) / 2),
-    y: 0,
+    x: centred(view.width, SCREEN.width),
+    y: centred(view.height, SCREEN.height),
   };
+}
+
+// The offset that centres length in span on a whole logical px: floor((floor(span) - length) / 2).
+// A span a float error short of a whole px (744 / (744 / 720)) counts as that px, so a view that
+// fits the base exactly on an axis has no band there.
+function centred(span: number, length: number): number {
+  return Math.max(0, Math.floor((Math.floor(span + 1e-9) - length) / 2));
 }
 
 // The safe game area in game-area px: the play view clamped by safeRect(insets, SAFE_MARGIN.edge,
@@ -132,14 +140,16 @@ export function mirroredSide(insets: Insets, offset: number, view: Size): number
 }
 
 // The HUD rect (Chibi's topShift): the lines the HUD's drawn art meets, HUD_EDGE in from the game
-// area's top and sides, each clamped by the safe inset on whole pixels, with both sides mirrored
-// (mirroredSide). The top controls anchor to its top, left and right edges, so at every aspect
-// they sit inside the game area, clear of the bands, curved corners and every inset.
+// area's four edges, each clamped by the safe inset on whole pixels, with both sides mirrored
+// (mirroredSide). The top controls anchor to its top, left and right edges and the shield pill
+// to its bottom, so at every aspect they sit inside the game area, clear of the bands, curved
+// corners and every inset.
 export function hudRect(insets: Insets, view: Size): Rect {
+  const area = playView(view);
   const side = mirroredSide(insets, HUD_EDGE, view);
-  const top = Math.ceil(Math.max(HUD_EDGE, insets.top));
+  const top = Math.ceil(Math.max(area.y + HUD_EDGE, insets.top));
   const bottom = Math.min(
-    SCREEN.height - HUD_EDGE,
+    area.y + area.height - HUD_EDGE,
     view.height - Math.ceil(Math.max(HUD_EDGE, insets.bottom)),
   );
   return { height: bottom - top, width: view.width - 2 * side, x: side, y: top };
@@ -278,10 +288,13 @@ export function shieldPillWidth(level: number): number {
   return padding.left + icon + iconGap + shieldBarWidth(level) + padding.right;
 }
 
-/** The shield pill mirrors the status pill's drawn top inset at the viewport bottom. */
+/**
+ * The shield pill's drawn bottom on the HUD rect's bottom edge, HUD_EDGE above the game area's
+ * bottom, as the pause disc's drawn top sits on its top edge.
+ */
 export function shieldPillRect(insets: Insets, view: Size, level = 1): Rect {
   const hud = hudRect(insets, view);
-  const bottom = view.height - (hud.y + STATUS_PILL.y);
+  const bottom = hud.y + hud.height;
   const width = shieldPillWidth(level);
   return {
     height: PILL.height,

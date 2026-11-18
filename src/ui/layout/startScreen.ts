@@ -19,13 +19,13 @@ export function startScreenRects(view: Size): {
   readonly ship: Rect;
   readonly wordmark: Rect;
 } {
-  const x0 = playView(view).x;
+  const { x: x0, y: y0 } = playView(view);
   const { actions, note, ship, wordmark } = START_SCREEN;
   const button = (left: number): Rect => ({
     height: actions.height,
     width: actions.width,
     x: x0 + left,
-    y: actions.top,
+    y: y0 + actions.top,
   });
   return {
     actions: {
@@ -38,19 +38,19 @@ export function startScreenRects(view: Size): {
       height: note.height,
       width: 0,
       x: x0 + note.centre,
-      y: note.top,
+      y: y0 + note.top,
     },
     ship: {
       height: ship.size,
       width: ship.size,
       x: x0 + ship.centre.x - ship.size / 2,
-      y: ship.centre.y - ship.size / 2,
+      y: y0 + ship.centre.y - ship.size / 2,
     },
     wordmark: {
       height: wordmark.height,
       width: wordmark.width,
       x: x0 + wordmark.left,
-      y: wordmark.top,
+      y: y0 + wordmark.top,
     },
   };
 }

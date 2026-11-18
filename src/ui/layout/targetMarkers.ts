@@ -24,12 +24,17 @@ export interface TargetMarkerLayout<T extends TargetMarker = TargetMarker> {
   readonly extent: (target: T) => TargetMarkerExtent;
   readonly gap: number;
   readonly player: Vec;
+  /**
+   * The device pixel grid: area px v lie on a device pixel edge where origin + v * scale is whole
+   * on that axis, in the frame's axes (frameDeviceOrigin); scale is device px per area px.
+   */
   readonly raster?: {
     readonly origin: Vec;
-    readonly pixelRatio?: number;
     readonly scale: number;
   };
 }
+// Device px within which an edge counts as on the grid already, against float error.
+const EPSILON = 1e-6;
 const bounds = (size: TargetMarkerExtent, at: Vec): Rect => ({
   height: size.height,
   width: size.width,
@@ -45,15 +50,15 @@ export function layoutTargetMarkers<T extends TargetMarker>(
 ): TargetMarkerPlacement<T>[] {
   const { area } = context;
   const placed: Rect[] = [];
-  // Match the native CSS paint grid inward, then intersect the ray; never round its axes separately.
+  // Move each edge of the marker rect inward to the nearest device pixel edge, then intersect the
+  // ray; never round its axes separately. EPSILON keeps an edge already on the grid in place.
   const snap = (axis: "x" | "y", value: number, high: boolean): number => {
     const raster = context.raster;
     if (!raster) {
       return value;
     }
-    const pixel = raster.pixelRatio ?? 1;
-    const physical = (raster.origin[axis] + value * raster.scale) / pixel;
-    const aligned = (high ? Math.floor(physical) : Math.ceil(physical)) * pixel;
+    const device = raster.origin[axis] + value * raster.scale;
+    const aligned = high ? Math.floor(device + EPSILON) : Math.ceil(device - EPSILON);
     return (aligned - raster.origin[axis]) / raster.scale;
   };
   const left = snap("x", area.x + EDGE_MARKERS.gap, false);

@@ -6,16 +6,19 @@ import { NO_INSETS, type Side } from "./playView.ts";
 // size is a logical value through these helpers, never raw CSS px.
 export const VIEW_HOST_ID = "app";
 
-// The HUD rect's edges the top controls anchor to.
-export type HudSide = "left" | "right" | "top";
-export const HUD_SIDES: readonly HudSide[] = ["top", "right", "left"];
+// The HUD rect's edges the controls anchor to: the top controls to its top and sides, the shield
+// pill to its bottom.
+export type HudSide = "bottom" | "left" | "right" | "top";
+export const HUD_SIDES: readonly HudSide[] = ["top", "right", "bottom", "left"];
 
 export const VIEW_PROPERTIES = {
   // The band below the game area: the view's bottom edge to the game area's (playView.ts).
   areaBottom: "--ada-area-bottom",
   // The game area's left edge in from the view's: playView(view).x.
   areaLeft: "--ada-area-left",
-  // The HUD rect's top, left and right edges in from the view's (playView.ts hudRect).
+  // The band above the game area: the game area's top edge in from the view's: playView(view).y.
+  areaTop: "--ada-area-top",
+  // The HUD rect's edges in from the view's matching edges (playView.ts hudRect).
   hud: (side: HudSide) => `--ada-hud-${side}`,
   safe: (side: Side) => `--ada-safe-${side}`,
   slice: (edge: number) => `--ada-slice-${edge}`,
@@ -67,6 +70,14 @@ export function fromAreaLeft(offset: number): string {
     : `calc(var(${VIEW_PROPERTIES.areaLeft}) + ${scaled(offset)})`;
 }
 
+// A logical offset below the game area's top edge, as a top offset in the view: a part placed in
+// play-view px.
+export function fromAreaTop(offset: number): string {
+  return offset === 0
+    ? `var(${VIEW_PROPERTIES.areaTop})`
+    : `calc(var(${VIEW_PROPERTIES.areaTop}) + ${scaled(offset)})`;
+}
+
 // The bottom controls' line (playView.ts controlsBottom) as a bottom offset in the view: offset
 // above the view's bottom inside the bottom safe inset, at least areaMargin above the game
 // area's bottom.
@@ -104,6 +115,7 @@ html:root[data-frame-turn]{
   ${VIEW_PROPERTIES.unit}:1;
   ${VIEW_PROPERTIES.areaBottom}:0px;
   ${VIEW_PROPERTIES.areaLeft}:0px;
+  ${VIEW_PROPERTIES.areaTop}:0px;
   ${HUD_SIDES.map((side) => `${VIEW_PROPERTIES.hud(side)}:${units(HUD_EDGE)};`).join("\n  ")}
   ${Object.entries(NO_INSETS)
     .map(([side, value]) => `${VIEW_PROPERTIES.safe(side as Side)}:${value}px;`)

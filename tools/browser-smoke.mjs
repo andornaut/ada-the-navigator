@@ -1514,10 +1514,11 @@ try {
       // The 720x360 game area, from the view properties the play area is laid out by.
       const property = (name) => parseFloat(getComputedStyle(app).getPropertyValue(name)) / unit;
       const left = property("--ada-area-left");
+      const top = property("--ada-area-top");
       const bottom = origin.height / unit - property("--ada-area-bottom");
       return {
         aim: box('[data-control="aim-joystick"]'),
-        area: { bottom, left, right: left + 720 },
+        area: { bottom, left, right: left + 720, top },
         dpr: devicePixelRatio,
         move: box('[data-control="move-joystick"]'),
         shield: box(".ada-shield"),
@@ -1560,7 +1561,10 @@ try {
         bottom: area.bottom - drawn.bottoms[0],
         move: drawn.moveLeft - area.left,
       },
-      shieldBottom: view.height - hud.shield.bottom,
+      // The shield pill's drawn bottom above the game area's bottom, and the status pill's drawn
+      // top below its top.
+      shieldGap: area.bottom - hud.shield.bottom,
+      statusGap: hud.status.top - area.top,
     };
     save(`touch-hud-${name}.json`, proof);
     const detail = `${name}: ${JSON.stringify(proof)}`;
@@ -1575,8 +1579,9 @@ try {
       assert.ok(gap > margin - 1, `Each ring stays the margin inside the game area: ${detail}`);
     }
     assert.ok(
-      Math.abs(proof.shieldBottom - hud.status.top) < 1,
-      `The shield pill's bottom margin mirrors the status pill's top margin: ${detail}`,
+      Math.abs(proof.shieldGap - insetLayout.HUD_EDGE) < 1 &&
+        Math.abs(area.bottom - area.top - 360) < 1,
+      `The shield pill's drawn bottom sits HUD_EDGE above the game area's bottom: ${detail}`,
     );
     await page.screenshot({ path: `${output}/touch-hud-${name}.png` });
     return proof;
@@ -2133,16 +2138,27 @@ try {
     return interactionInsets.view.width - hud.x - hud.width;
   };
   const rowShift = hudRight(PHONE_INSETS) - hudRight(insetLayout.NO_INSETS);
+  // 1280x720's 720x405 view centres the game area 22 down, and the HUD row with it.
+  const rowDrop =
+    insetLayout.hudRect(
+      insetLayout.NO_INSETS,
+      insetLayout.logicalView({ height: 720, width: 1280 }),
+    ).y - insetLayout.hudRect(PHONE_INSETS, interactionInsets.view).y;
   for (const part of ["close", "skip"]) {
     const [plain, inset] = [interactionRows["1280x720"], interactionRows["720x360-insets"]];
     assert.ok(
       near(
         inset[part],
-        [plain[part][0] - rowShift, plain[part][1] - rowShift, plain[part][2], plain[part][3]],
+        [
+          plain[part][0] - rowShift,
+          plain[part][1] - rowShift,
+          plain[part][2] - rowDrop,
+          plain[part][3] - rowDrop,
+        ],
         0.15,
       ),
       `With phone insets the Interaction card's ${part} moves ${rowShift} in from the right: ${JSON.stringify(
-        { inset: inset[part], plain: plain[part] },
+        { inset: inset[part], plain: plain[part], rowDrop },
       )}`,
     );
   }
@@ -4811,8 +4827,8 @@ try {
     x: 180 + (disabledAnchor[0] - capitalLayout.frame / 2) * capitalScale,
     y: 180 + (disabledAnchor[1] - capitalLayout.frame / 2) * capitalScale,
   };
-  // The sampled regions in logical px: projection is anchored to logical SCREEN centre
-  // (360,180), even when the view is taller.
+  // The sampled regions in game-area px: projection is anchored to the game area's centre
+  // (360, 180), which centres in a taller view, so sampling adds the top band.
   const combatRegionsByName = {
     // The 5-width capital centres at (180, 180); its disabled left engine at its anchor.
     capital: { x: 90, y: 130, width: 180, height: 100 },
@@ -4888,7 +4904,10 @@ try {
               const scaleY = sample.height / intrinsic.height;
               const bitmapRegion = {
                 x: Math.floor((region.x + Math.max(0, (intrinsic.width - 720) / 2)) * scaleX),
-                y: Math.floor(region.y * scaleY),
+                y: Math.floor(
+                  (region.y + Math.max(0, Math.floor((Math.floor(intrinsic.height) - 360) / 2))) *
+                    scaleY,
+                ),
                 width: Math.max(1, Math.floor(region.width * scaleX)),
                 height: Math.max(1, Math.floor(region.height * scaleY)),
               };

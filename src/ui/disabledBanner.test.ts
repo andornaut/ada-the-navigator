@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { bannerOnScreen, createBannerLayer, DISABLED_BANNER_STYLE } from "./disabledBanner.ts";
-import { font, fromAreaLeft, units } from "./layout/css.ts";
+import { font, fromAreaLeft, fromAreaTop, units } from "./layout/css.ts";
 import { TYPE } from "./layout/tokens.ts";
 
 /** A stand-in element with the fields the layer uses. */
@@ -74,12 +74,12 @@ describe("disabled banner", () => {
     const [banner] = root.children;
     expect(banner).toMatchObject({
       className: "ada-disabled-banner",
-      style: { left: fromAreaLeft(100), top: units(50) },
+      style: { left: fromAreaLeft(100), top: fromAreaTop(50) },
       textContent: "Disabled",
     });
     layer.place([{ at: { x: 120, y: 60 }, id: "a" }]);
     expect(root.children).toEqual([banner]);
-    expect(banner!.style).toEqual({ left: fromAreaLeft(120), top: units(60) });
+    expect(banner!.style).toEqual({ left: fromAreaLeft(120), top: fromAreaTop(60) });
     layer.place([]);
     expect(root.children).toEqual([]);
     layer.destroy();

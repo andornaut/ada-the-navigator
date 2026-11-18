@@ -48,6 +48,7 @@ export function playLayout(cssSize: Size): PlayLayout {
 export function viewProperties(layout: PlayLayout): readonly (readonly [string, string])[] {
   const hud = hudRect(layout.insets, layout.view);
   const hudEdges: Readonly<Record<HudSide, number>> = {
+    bottom: layout.view.height - hud.y - hud.height,
     left: hud.x,
     right: layout.view.width - hud.x - hud.width,
     top: hud.y,
@@ -65,6 +66,7 @@ export function viewProperties(layout: PlayLayout): readonly (readonly [string, 
     ),
     [VIEW_PROPERTIES.areaBottom, `${areaBottom * layout.s}px`],
     [VIEW_PROPERTIES.areaLeft, `${area.x * layout.s}px`],
+    [VIEW_PROPERTIES.areaTop, `${area.y * layout.s}px`],
   ];
 }
 

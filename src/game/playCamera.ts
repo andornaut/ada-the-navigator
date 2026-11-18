@@ -8,7 +8,7 @@ import {
 import type { Cameras, Scene } from "phaser";
 
 import { SCREEN } from "../data/screen.ts";
-import type { Size } from "../ui/layout/playView.ts";
+import { playView, type Size } from "../ui/layout/playView.ts";
 
 // The canvas's backing is in device pixels: followFrameTurn's deviceResolution sizes the game to
 // the canvas's CSS size times r = min(devicePixelRatio, 2) and zooms the scale manager by 1 / r.
@@ -38,14 +38,16 @@ export function parentFit(
   });
 }
 
-// The game area in the canvas, in device pixels, whole: the 720x360 base at the fit's zoom, at
-// the canvas's top, centred across. A camera's viewport.
+// The game area in the canvas, in device pixels, whole: the 720x360 base at the fit's zoom, its
+// origin at the DOM game area's (playView of the canvas's logical size) on the nearest device
+// pixel, so the canvas and the HTML HUD share one game area. A camera's viewport.
 export function playViewport(fit: RenderFit): Rect {
+  const area = playView(canvasSize(fit));
   return {
     height: fit.view.height,
     width: fit.view.width,
-    x: Math.floor((fit.backing.width - fit.view.width) / 2),
-    y: 0,
+    x: Math.round(area.x * fit.zoom),
+    y: Math.round(area.y * fit.zoom),
   };
 }
 
@@ -111,7 +113,10 @@ export function fitPlayCamera(
     scene,
     camera,
     (fit) => (fullBleed() ? { ...fit.backing, x: 0, y: 0 } : playViewport(fit)),
-    (fit) => ({ x: fullBleed() ? -viewShift(fit).x : 0, y: 0 }),
+    (fit) => {
+      const shift = viewShift(fit);
+      return fullBleed() ? { x: -shift.x, y: -shift.y } : { x: 0, y: 0 };
+    },
   );
   let wide = fullBleed();
   const modeChanged = () => {

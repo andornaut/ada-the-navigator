@@ -23,7 +23,7 @@ import {
   STORY_BUTTON,
   TEXT_BUTTON,
 } from "./layout/controls.ts";
-import { font, fromHudEdge, safeEdge, slice, units, VIEW_PROPERTIES } from "./layout/css.ts";
+import { font, fromHudEdge, slice, units, VIEW_PROPERTIES } from "./layout/css.ts";
 import { PAUSE_BUTTON } from "./layout/playView.ts";
 import { BUTTON_GAP, SPACING, STACK_BUTTON_GAP, TYPE } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
@@ -141,7 +141,8 @@ ${UI_SCOPE} .ada-modal{
   justify-content:center;
   background:#101926b3;
   pointer-events:auto;
-  padding:${safeEdge("top", MODAL_SCREEN_MARGIN)}
+  padding:max(var(${VIEW_PROPERTIES.safe("top")}),
+      calc(var(${VIEW_PROPERTIES.areaTop}) + ${units(MODAL_SCREEN_MARGIN)}))
     max(var(${VIEW_PROPERTIES.safe("right")}),calc(
       max(0px,calc(100% - var(${VIEW_PROPERTIES.areaLeft}) - ${units(SCREEN.width)})) + ${units(MODAL_SCREEN_MARGIN)}
     ))

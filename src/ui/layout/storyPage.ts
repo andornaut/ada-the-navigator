@@ -105,9 +105,12 @@ export function storyContentPadding(view: Size): { readonly left: number; readon
 
 /** Cover the Earth art window with an existing backdrop, keeping its canonical game-area centre. */
 export function storyBackdropRect(view: Size, image: Size): Rect {
-  const centre = playView(view).x + SCREEN.width / 2;
-  const horizontal = 2 * Math.max(centre, view.width - centre);
-  const scale = Math.max(1, horizontal / image.width, view.height / image.height);
+  const area = playView(view);
+  const across = area.x + SCREEN.width / 2;
+  const down = area.y + SCREEN.height / 2;
+  const horizontal = 2 * Math.max(across, view.width - across);
+  const vertical = 2 * Math.max(down, view.height - down);
+  const scale = Math.max(1, horizontal / image.width, vertical / image.height);
   const width = image.width * scale;
   const height = image.height * scale;
   return { height, width, x: SCREEN.width / 2 - width / 2, y: SCREEN.height / 2 - height / 2 };

@@ -21,8 +21,8 @@ export function jumpScene(scene: JumpContext): JumpScene {
   if (!scene.galaxies.isOpen() && scene.model.state.mode === "space" && flight) {
     return spaceJumpScene(scene);
   }
-  const offset = viewShift(sceneFit(scene)).x;
-  const center = { x: offset + SCREEN.width / 2, y: SCREEN.height / 2 };
+  const offset = viewShift(sceneFit(scene));
+  const center = { x: offset.x + SCREEN.width / 2, y: offset.y + SCREEN.height / 2 };
   return {
     center,
     heading: scene.galaxies.isOpen() ? scene.galaxies.shipHeading() : null,
@@ -32,12 +32,12 @@ export function jumpScene(scene: JumpContext): JumpScene {
 
 /** The flight as last drawn: the ship at the play view's centre and the visible specks. */
 export function spaceJumpScene(scene: JumpContext): JumpScene {
-  const offset = viewShift(sceneFit(scene)).x;
+  const offset = viewShift(sceneFit(scene));
   const flight = scene.model.state.flight;
   return {
-    center: { x: offset + SCREEN.width / 2, y: SCREEN.height / 2 },
+    center: { x: offset.x + SCREEN.width / 2, y: offset.y + SCREEN.height / 2 },
     heading: flight ? shipHeading(flight.facing) : null,
-    specks: scene.specks.map((speck) => ({ x: speck.x + offset, y: speck.y })),
+    specks: scene.specks.map((speck) => ({ x: speck.x + offset.x, y: speck.y + offset.y })),
   };
 }
 

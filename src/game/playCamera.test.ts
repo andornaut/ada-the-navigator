@@ -92,8 +92,10 @@ describe("render fit", () => {
   it.each([
     // CSS size, r, zoom, device viewport, logical canvas.
     [{ height: 360, width: 720 }, 1, 1, [0, 0, 720, 360], { height: 360, width: 720 }],
-    [{ height: 390, width: 844 }, 2, 2.1667, [64, 0, 1560, 780], { height: 360, width: 779.08 }],
-    [{ height: 720, width: 1280 }, 2, 3.5556, [0, 0, 2560, 1280], { height: 405, width: 720 }],
+    [{ height: 390, width: 844 }, 2, 2.1667, [63, 0, 1560, 780], { height: 360, width: 779.08 }],
+    [{ height: 720, width: 1280 }, 2, 3.5556, [0, 78, 2560, 1280], { height: 405, width: 720 }],
+    // The turned Firefox phone frame: 744x396 CSS, the area 11 logical px down.
+    [{ height: 396, width: 744 }, 2, 2.0667, [0, 23, 1488, 744], { height: 383.23, width: 720 }],
     [{ height: 600, width: 1600 }, 1, 1.6667, [200, 0, 1200, 600], { height: 360, width: 960 }],
   ])("at %o and r %s zooms %s into %o over a %o canvas", (css, r, zoom, viewport, canvas) => {
     const fit = fitAt(css, r);
@@ -122,14 +124,22 @@ describe("render fit", () => {
     }
   });
 
-  it("shifts the game area by a whole device pixel, within one logical px of the DOM's", () => {
-    const css = { height: 390, width: 844 };
-    for (const r of [1, 2]) {
-      const fit = fitAt(css, r);
-      const shift = viewShift(fit);
-      expect(Number.isInteger(shift.x * fit.zoom)).toBe(true);
-      expect(shift.y).toBe(0);
-      expect(Math.abs(shift.x - playView(logicalView(css)).x)).toBeLessThan(1);
+  it("shifts the game area by a whole device pixel, within half a device pixel of the DOM's", () => {
+    for (const css of [
+      { height: 390, width: 844 },
+      { height: 720, width: 1280 },
+      { height: 396, width: 744 },
+      { height: 844, width: 390 },
+    ]) {
+      for (const r of [1, 2]) {
+        const fit = fitAt(css, r);
+        const shift = viewShift(fit);
+        const area = playView(logicalView(css));
+        for (const axis of ["x", "y"] as const) {
+          expect(Number.isInteger(shift[axis] * fit.zoom)).toBe(true);
+          expect(Math.abs(shift[axis] - area[axis]) * fit.zoom).toBeLessThanOrEqual(0.5);
+        }
+      }
     }
   });
 });
@@ -149,7 +159,7 @@ describe("play cameras", () => {
   it("keeps the main camera on the game area at the fit's zoom from the top-left", () => {
     const fake = fakeScene({ height: 390, width: 844 }, 2);
     fitPlayCamera(fake.scene as unknown as Scene);
-    expect(fake.camera.viewport).toEqual([64, 0, 1560, 780]);
+    expect(fake.camera.viewport).toEqual([63, 0, 1560, 780]);
     expect(fake.camera.origin).toEqual([0, 0]);
     expect(fake.camera.zoom).toBeCloseTo(780 / 360, 9);
     fake.resize({ height: 360, width: 720 }, 1);
@@ -189,9 +199,12 @@ it.each([1, 2])(
     fake.resize({ height: 844, width: 390 }, r);
     expect(fake.camera.viewport).toEqual([0, 0, 390 * r, 844 * r]);
     expect(fake.camera.scroll[0]).toBeCloseTo(0, 9);
+    // Full bleed scrolls the canvas up by the centred area's top, so world y 0 stays put.
+    const top = Math.round(599 * fake.camera.zoom);
+    expect(-fake.camera.scroll[1]! * fake.camera.zoom).toBeCloseTo(top, 9);
     aboard = false;
     fake.tick();
-    expect(fake.camera.viewport).toEqual([0, 0, 390 * r, 195 * r]);
+    expect(fake.camera.viewport).toEqual([0, top, 390 * r, 195 * r]);
     expect(fake.camera.scroll).toEqual([0, 0]);
     fake.shutdown();
     expect(fake.listeners.size).toBe(0);

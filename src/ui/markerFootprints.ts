@@ -1,6 +1,7 @@
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import { VIEW_PROPERTIES } from "./layout/css.ts";
+import { frameRect, readFrameTurn } from "./layout/frameBox.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 
 const MARKER_SELECTORS = [
@@ -34,8 +35,11 @@ export function markerFootprints(
     return [];
   }
   const origin = host.getBoundingClientRect();
+  const turn = readFrameTurn(host.ownerDocument?.documentElement);
   const unit = readViewUnit(host);
-  const left = parseFloat(getComputedStyle(host).getPropertyValue(VIEW_PROPERTIES.areaLeft)) || 0;
+  const hostStyle = getComputedStyle(host);
+  const left = parseFloat(hostStyle.getPropertyValue(VIEW_PROPERTIES.areaLeft)) || 0;
+  const top = parseFloat(hostStyle.getPropertyValue(VIEW_PROPERTIES.areaTop)) || 0;
   const rectangles: Rect[] = [];
   for (const node of doc.querySelectorAll<HTMLElement>(selectors)) {
     if (node.closest("[hidden]") || node.getClientRects().length === 0) {
@@ -49,11 +53,12 @@ export function markerFootprints(
     if (bounds.width <= 0 || bounds.height <= 0) {
       continue;
     }
+    const box = frameRect(turn, origin, bounds);
     rectangles.push({
-      height: bounds.height / unit,
-      width: bounds.width / unit,
-      x: (bounds.left - origin.left - left) / unit,
-      y: (bounds.top - origin.top) / unit,
+      height: box.height / unit,
+      width: box.width / unit,
+      x: (box.x - left) / unit,
+      y: (box.y - top) / unit,
     });
   }
   return rectangles;

@@ -285,7 +285,9 @@ describe("status pill shield bar", () => {
     expect(shield).toContain("margin-left:calc(var(--shield-pill) / -2)");
     expect(shield).toContain("background:transparent");
     expect(shield).toContain("pointer-events:none");
-    expect(shield).toContain(`bottom:${fromHudEdge("top", STATUS_PILL.y)}`);
+    // Its drawn bottom on the HUD rect's bottom edge, HUD_EDGE above the game area's bottom.
+    expect(shield).toContain(`bottom:${fromHudEdge("bottom")}`);
+    expect(fromHudEdge("bottom")).toBe("var(--ada-hud-bottom)");
   });
 
   it("keeps the shield pill button at its own size, clear of the base button's 48 minimum", () => {

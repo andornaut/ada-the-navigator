@@ -2,7 +2,7 @@ import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { SCROLL } from "../data/layout.ts";
 import { assertAdaActionBindings, bindAdaAction } from "./actionBinding.ts";
-import { font, fromAreaLeft, units } from "./layout/css.ts";
+import { font, fromAreaLeft, fromAreaTop, units } from "./layout/css.ts";
 import { START_SCREEN, type StartAction } from "./layout/startScreen.ts";
 import { TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -43,7 +43,7 @@ ${TITLE_SHIP_STYLE}
 
 .${START_SCREEN_CLASS} .ada-start-title{
   left:${fromAreaLeft(wordmark.left)};
-  top:${units(wordmark.top)};
+  top:${fromAreaTop(wordmark.top)};
   width:${units(wordmark.width)};
   height:${units(wordmark.height)};
   margin:0;
@@ -54,7 +54,7 @@ ${TITLE_SHIP_STYLE}
    centred on the game area, cream with no panel. */
 .${START_SCREEN_CLASS} .ada-start-note{
   left:${fromAreaLeft(note.centre)};
-  top:${units(note.top)};
+  top:${fromAreaTop(note.top)};
   transform:translateX(-50%);
   margin:0;
   white-space:nowrap;
@@ -74,7 +74,7 @@ ${TITLE_SHIP_STYLE}
 
 .${START_SCREEN_CLASS} .ada-start-actions > button{
   position:absolute;
-  top:${units(actions.top)};
+  top:${fromAreaTop(actions.top)};
   width:${units(actions.width)};
   height:${units(actions.height)};
   box-sizing:border-box
@@ -128,7 +128,7 @@ export function createStartScreen(
       backgroundImage: `url('${art.field.url}')`,
       height: units(art.field.height),
       left: fromAreaLeft(art.field.at.x),
-      top: units(art.field.at.y),
+      top: fromAreaTop(art.field.at.y),
       width: units(art.field.width),
     });
     parts.push(field, ...titleShipView(art, content.paint));

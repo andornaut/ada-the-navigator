@@ -321,8 +321,9 @@ describe("Interaction card HUD row", () => {
   it("puts the close X in the Settings slot and Skip beside it at 1280x720", () => {
     const hud = hudRect(NO_INSETS, logicalView({ height: 720, width: 1280 }));
     const { close, closeFace, skipRight } = interactionHudRow();
-    expect(inView(hud, close)).toEqual([667.5, 715.5, 4.5, 52.5]);
-    expect(inView(hud, closeFace)).toEqual([679.5, 703.5, 16.5, 40.5]);
+    // The game area sits 22 down the 720x405 view, so the HUD row does too.
+    expect(inView(hud, close)).toEqual([667.5, 715.5, 26.5, 74.5]);
+    expect(inView(hud, closeFace)).toEqual([679.5, 703.5, 38.5, 62.5]);
     expect(skipRight).toBe(STORY_SKIP.right.besideSettings);
     const skip = [
       hud.x + hud.width - skipRight - TEXT_BUTTON.compactWidth,
@@ -331,7 +332,7 @@ describe("Interaction card HUD row", () => {
       hud.y + STORY_SKIP.top + TEXT_BUTTON.compactHeight,
     ];
     // Beside Settings: 57 in from the HUD rect's right (708), so its face ends at 651.
-    expect(skip).toEqual([579, 651, 14.5, 42.5]);
+    expect(skip).toEqual([579, 651, 36.5, 64.5]);
     // The press areas never overlap, and both end above the panel's top cap.
     expect(skip[1]).toBeLessThanOrEqual(inView(hud, close)[0]!);
     expect(Math.max(skip[3]!, inView(hud, close)[3]!)).toBeLessThanOrEqual(hud.y + STORY_PANEL_TOP);

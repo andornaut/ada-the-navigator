@@ -154,9 +154,13 @@ describe("HUD rect", () => {
   const phoneView = logicalView({ height: 390, width: 844 });
   const edges = (rect: Rect) => ({ left: rect.x, right: rect.x + rect.width, top: rect.y });
 
-  it("centres Chibi's 720x360 play view across the logical view, at its top", () => {
+  it("centres the 720x360 play view in the logical view on both axes, on whole pixels", () => {
     expect(playView(phoneView)).toEqual({ height: 360, width: 720, x: 29, y: 0 });
-    expect(playView({ height: 405, width: 720 })).toEqual({ height: 360, width: 720, x: 0, y: 0 });
+    expect(playView({ height: 405, width: 720 })).toEqual({ height: 360, width: 720, x: 0, y: 22 });
+    // A Firefox phone frame turned from portrait: 744x396 CSS is 720x383.23, bands 11 and 12.23.
+    const turned = logicalView({ height: 396, width: 744 });
+    expect(playView(turned)).toEqual({ height: 360, width: 720, x: 0, y: 11 });
+    expect(turned.height - 360 - playView(turned).y).toBeCloseTo(12.23, 2);
   });
 
   it.each([
@@ -164,7 +168,7 @@ describe("HUD rect", () => {
     [844, 390, { bottom: 0, left: 43, right: 43, top: 0 }, { left: 43, right: 736.08, top: 12 }],
     // A one-sided notch moves both sides in alike.
     [844, 390, { bottom: 0, left: 47, right: 0, top: 0 }, { left: 47, right: 732.08, top: 12 }],
-    [1280, 720, NO_INSETS, { left: 12, right: 708, top: 12 }],
+    [1280, 720, NO_INSETS, { left: 12, right: 708, top: 34 }],
     [720, 360, NO_INSETS, { left: 12, right: 708, top: 12 }],
   ])("at %ix%i with insets %o has the edges %o", (width, height, insets, expected) => {
     const rect = edges(hudRect(insets, logicalView({ height, width })));
@@ -180,6 +184,22 @@ describe("HUD rect", () => {
     // The right edge mirrors the left: the same distance in from the view's right.
     expect(parseFloat(properties.get(VIEW_PROPERTIES.hud("right"))!)).toBeCloseTo(41 * layout.s, 6);
     expect(parseFloat(properties.get(VIEW_PROPERTIES.hud("top"))!)).toBeCloseTo(12 * layout.s, 6);
+    expect(parseFloat(properties.get(VIEW_PROPERTIES.hud("bottom"))!)).toBeCloseTo(
+      12 * layout.s,
+      6,
+    );
+  });
+
+  it("gives the bridge the game area's top and bottom bands in CSS px", () => {
+    const layout = playLayout({ height: 720, width: 1280 });
+    const properties = new Map(viewProperties(layout));
+    expect(parseFloat(properties.get(VIEW_PROPERTIES.areaTop)!)).toBeCloseTo(22 * layout.s, 6);
+    expect(parseFloat(properties.get(VIEW_PROPERTIES.areaBottom)!)).toBeCloseTo(23 * layout.s, 6);
+    expect(parseFloat(properties.get(VIEW_PROPERTIES.hud("top"))!)).toBeCloseTo(34 * layout.s, 6);
+    expect(parseFloat(properties.get(VIEW_PROPERTIES.hud("bottom"))!)).toBeCloseTo(
+      35 * layout.s,
+      6,
+    );
   });
 });
 
@@ -378,21 +398,21 @@ describe("HUD anchors", () => {
   });
 
   it.each([
-    ["the 720 base", { height: 360, width: 720 }, NO_INSETS, [282, 252, 222], 317.5],
-    ["1280x720", logicalView({ height: 720, width: 1280 }), NO_INSETS, [282, 252, 222], 362.5],
+    ["the 720 base", { height: 360, width: 720 }, NO_INSETS, [282, 252, 222], 320],
+    ["1280x720", logicalView({ height: 720, width: 1280 }), NO_INSETS, [282, 252, 222], 342],
     [
       "the 720 base with phone insets",
       { height: 360, width: 720 },
       { bottom: 19, left: 43, right: 43, top: 0 },
       [282, 252, 222],
-      317.5,
+      313,
     ],
     [
       "844x390 with phone insets",
       logicalView({ height: 390, width: 844 }),
       { bottom: 19, left: 43, right: 43, top: 0 },
       [311.54, 281.54, 251.54],
-      317.5,
+      313,
     ],
   ] as const)("put the shield pill at the bottom centre at %s", (_, view, insets, xs, y) => {
     const { aim, move } = stickRestCentres(view, insets);
@@ -403,7 +423,8 @@ describe("HUD anchors", () => {
       expect(rect).toMatchObject({ height: 28, width: shieldPillWidth(level) });
       // A longer bar grows both ways about the centre.
       expect(rect.x + rect.width / 2).toBeCloseTo(xs[0]! + 78, 2);
-      // The shield mirrors the drawn status top inset and clears both ring frames.
+      // The shield sits on the HUD rect's bottom edge and clears both ring frames.
+      expect(rect.y + rect.height).toBe(hudRect(insets, view).y + hudRect(insets, view).height);
       expect(rect.y + rect.height).toBe(y + 28);
       expect(rect.x - (move.x + 38)).toBeGreaterThanOrEqual(45);
       expect(aim.x - 37 - (rect.x + rect.width)).toBeGreaterThanOrEqual(45);
@@ -411,14 +432,14 @@ describe("HUD anchors", () => {
   });
 
   it.each([
-    ["the 720 base", { height: 360, width: 720 }, NO_INSETS, 331.5],
+    ["the 720 base", { height: 360, width: 720 }, NO_INSETS, 334],
     [
       "the 720 base with phone insets",
       { height: 360, width: 720 },
       { bottom: 19, left: 43, right: 43, top: 0 },
-      331.5,
+      327,
     ],
-    ["1280x720", logicalView({ height: 720, width: 1280 }), NO_INSETS, 376.5],
+    ["1280x720", logicalView({ height: 720, width: 1280 }), NO_INSETS, 356],
   ] as const)("land a Shield notice on the pill's icon centre at %s", (_, view, insets, y) => {
     const hud = hudRect(insets, view);
     for (const level of [1, 2, 3] as const) {
@@ -508,9 +529,10 @@ describe.each(SCREENS)("every control inside the game area at %o", (screen) => {
       Math.min(view.height - TOUCH_STICK.bottom, area.y + area.height - STICK_AREA_MARGIN),
     );
 
-    it(`with ${name}, keeps the 720x360 game area centred across the view at its top`, () => {
-      expect(area).toMatchObject({ height: 360, width: 720, y: 0 });
+    it(`with ${name}, keeps the 720x360 game area centred in the view on both axes`, () => {
+      expect(area).toMatchObject({ height: 360, width: 720 });
       expect(area.x).toBe(Math.floor((Math.floor(view.width) - 720) / 2));
+      expect(area.y).toBe(Math.floor((Math.floor(view.height) - 360) / 2));
     });
 
     it(`with ${name}, puts the pause disc, the status pill and four weapon discs in it`, () => {
@@ -584,10 +606,10 @@ describe("stick insets", () => {
     // bands, so the ring edges move in to 8 inside the area.
     const wide = stickRestCentres(logicalView({ height: 1080, width: 2560 }), NO_INSETS);
     expect([wide.move.x - 36, wide.aim.x + 37]).toEqual([74, 778]);
-    // 1440x900 is 720x450: 50 above the screen's bottom (400) lies in the band, so the rings
-    // move up to 352.
+    // 1440x900 is 720x450, the area 45 to 405: 50 above the screen's bottom (400) lies within
+    // the margin of the area's bottom, so the rings move up to 397.
     const tall = stickRestCentres(logicalView({ height: 900, width: 1440 }), NO_INSETS);
-    expect(tall.move.y + 37).toBe(360 - STICK_AREA_MARGIN);
+    expect(tall.move.y + 37).toBe(405 - STICK_AREA_MARGIN);
     expect(STICK_AREA_MARGIN).toBe(8);
   });
 });
@@ -603,7 +625,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     [86, 273],
     [633, 273],
     282,
-    [317.5, 345.5],
+    [320, 348],
     [556, 173],
   ],
   [
@@ -613,18 +635,18 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     [86, 273],
     [692, 273],
     311.54,
-    [317.5, 345.5],
+    [313, 341],
     [615, 173],
   ],
   [
     "1280x720",
     { height: 720, width: 1280 },
     NO_INSETS,
-    [86, 315],
-    [633, 315],
+    [86, 318],
+    [633, 318],
     282,
-    [362.5, 390.5],
-    [556, 215],
+    [342, 370],
+    [556, 218],
   ],
   [
     "2404x1080 at dpr 2.5",
@@ -633,7 +655,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     [86, 273],
     [714, 273],
     322.67,
-    [317.5, 345.5],
+    [320, 348],
     [637, 173],
   ],
   [
@@ -643,14 +665,14 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     [110, 273],
     [741, 273],
     348.67,
-    [317.5, 345.5],
+    [320, 348],
     [664, 173],
   ],
 ];
 
 describe("touch controls by view", () => {
   it.each(ART_VIEWS)(
-    "at %s match approved rest centres, independent shield pill and Use",
+    "at %s match approved rest centres, the game-area shield pill and Use",
     (_, screen, insets, move, aim, pillX, pillY, use) => {
       const view = logicalView(screen);
       const centres = stickRestCentres(view, insets);
@@ -676,7 +698,7 @@ describe("touch controls", () => {
     right: centre.x + 37,
   });
 
-  it("reexports the canonical stick geometry with an independent shield anchor", () => {
+  it("reexports the canonical stick geometry", () => {
     expect(TOUCH_STICK).toBe(CANONICAL_TOUCH_STICK);
     expect(CANONICAL_TOUCH_STICK).toMatchObject({ bottom: 50, side: 50 });
     expect(USE_DISC.fromAim).toEqual({ x: -77, y: -100 });
@@ -728,7 +750,7 @@ describe("touch controls", () => {
 
   it.each([
     ["the 720 base", view, NO_INSETS, { x: 556, y: 173 }],
-    ["1280x720", logicalView({ height: 720, width: 1280 }), NO_INSETS, { x: 556, y: 215 }],
+    ["1280x720", logicalView({ height: 720, width: 1280 }), NO_INSETS, { x: 556, y: 218 }],
     ["the 720 base with phone insets", view, phone, { x: 556, y: 173 }],
     [
       "844x390 with phone insets",
@@ -824,7 +846,8 @@ describe("symmetric HUD on every view", () => {
         expect(Number.isInteger(hud.x), label).toBe(true);
         expect(Number.isInteger(hud.y), label).toBe(true);
         expect(hud.x, label).toBe(side);
-        expect(hud.y, label).toBe(Math.ceil(Math.max(HUD_EDGE, insets.top)));
+        const area = playView(view);
+        expect(hud.y, label).toBe(Math.ceil(Math.max(area.y + HUD_EDGE, insets.top)));
         // Left: the pause disc's drawn edge, or with the pause button hidden the pill's.
         const pauseDisc = hud.x + PAUSE_BUTTON.art.x + 1;
         const pillAlone = hud.x + STATUS_PILL.xAlone;
@@ -839,10 +862,15 @@ describe("symmetric HUD on every view", () => {
         for (const index of [0, 1, 2, 3]) {
           expect(hud.y + hudButtonTarget(index).y + HUD_BUTTON_INSET.disc, label).toBe(pauseTop);
         }
-        // Without insets the HUD sits exactly HUD_EDGE in from the game area's left and top.
+        // Without insets the HUD sits exactly HUD_EDGE in from the game area's four edges, and
+        // the shield pill's drawn bottom as far above its bottom as the pause disc's drawn top
+        // below its top.
         if (cssInsets === NO_INSETS) {
           expect(hud.x - gap, label).toBe(HUD_EDGE);
-          expect(hud.y, label).toBe(HUD_EDGE);
+          expect(hud.y - area.y, label).toBe(HUD_EDGE);
+          expect(area.y + area.height - (hud.y + hud.height), label).toBe(HUD_EDGE);
+          const shield = shieldPillRect(insets, view);
+          expect(area.y + area.height - (shield.y + shield.height), label).toBe(pauseTop - area.y);
         }
         // The sticks sit 50 from the outer screen sides regardless of safe insets, mirrored across
         // the view's whole-pixel width at one height, unless the clamp holds a ring
@@ -910,18 +938,23 @@ describe("stick reach on every view", () => {
   });
 });
 
-describe("shield and resource viewport margins", () => {
+describe("shield and pause game-area margins", () => {
   it.each([
     { height: 360, width: 720 },
     { height: 720, width: 1280 },
     { height: 390, width: 844 },
     { height: 844, width: 390 },
-  ])("mirrors the status drawn top at every level in $width x $height", (screen) => {
+    // The turned Firefox phone frame, 1.88:1.
+    { height: 396, width: 744 },
+  ])("mirrors the pause disc's drawn top at every level in $width x $height", (screen) => {
     const view = logicalView(screen);
-    const top = hudRect(NO_INSETS, view).y + STATUS_PILL.y;
+    const area = playView(view);
+    const hud = hudRect(NO_INSETS, view);
+    const pauseGap = hud.y + PAUSE_BUTTON.art.y + 1 - area.y;
+    expect(pauseGap).toBe(HUD_EDGE);
     for (const level of [1, 2, 3]) {
       const shield = shieldPillRect(NO_INSETS, view, level);
-      expect(view.height - shield.y - shield.height).toBeCloseTo(top, 9);
+      expect(area.y + area.height - (shield.y + shield.height)).toBe(pauseGap);
       expect(shield.x + shield.width / 2).toBeCloseTo(view.width / 2, 9);
     }
   });

@@ -401,7 +401,9 @@ it("unions actual native SVG alpha outside the badge and removes pending image c
     const node = root.children[0]!.children[0]!;
     const left = Number.parseFloat(node.style.left) / unit;
     const actualGlyphSupportRight = left + 24 + 1 / unit;
-    expect(720 - actualGlyphSupportRight).toBe(unit === 0.5 ? 2 : 1);
+    // The support's edge moves inward to the device pixel grid only, so the gap stays 1 at
+    // devicePixelRatio 2 too, where a whole CSS px snap would have taken 1 more.
+    expect(720 - actualGlyphSupportRight).toBe(1);
     expect(node.dataset.target).toBe(target.id);
   }
   expect(images).toHaveLength(1);

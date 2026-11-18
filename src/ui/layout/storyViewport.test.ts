@@ -20,15 +20,17 @@ it.each([
   { height: 575, width: 1280 },
   { height: 844, width: 390 },
   { height: 360, width: 720 },
-])("covers the upper art window with the existing galaxy backdrop at%o", (css) => {
+  { height: 396, width: 744 },
+])("covers the whole view, art window included, with the existing galaxy backdrop at%o", (css) => {
   const view = logicalView(css),
     area = playView(view),
     rect = storyBackdropRect(view, { height: 540, width: 960 });
   expect(rect.width / rect.height).toBeCloseTo(960 / 540, 9);
   expect(rect.x + area.x).toBeLessThanOrEqual(0);
   expect(rect.x + area.x + rect.width).toBeGreaterThanOrEqual(view.width);
-  expect(rect.y).toBeLessThanOrEqual(0);
-  expect(rect.y + rect.height).toBeGreaterThanOrEqual(view.height / 2);
+  // In game-area px, so the full view runs from -area.y to view.height - area.y.
+  expect(rect.y + area.y).toBeLessThanOrEqual(0);
+  expect(rect.y + area.y + rect.height).toBeGreaterThanOrEqual(view.height);
   expect(rect.x + rect.width / 2).toBe(360);
   expect(rect.y + rect.height / 2).toBe(180);
 });

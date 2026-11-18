@@ -347,7 +347,7 @@ async function captureRocks() {
     });
   const intrinsic = await canvas.evaluate(logicalSize, SCREEN);
   const overlay = await page.evaluate(
-    async ({ baseWidth, encoded, intrinsic: size, outlines: drawn }) => {
+    async ({ baseHeight, baseWidth, encoded, intrinsic: size, outlines: drawn }) => {
       const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
       const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
       const sample = document.createElement("canvas");
@@ -358,7 +358,9 @@ async function captureRocks() {
       bitmap.close();
       const scale = sample.width / size.width;
       const left = Math.max(0, (size.width - baseWidth) / 2);
-      const map = (point) => [(point.x + left) * scale, point.y * scale];
+      // The game area centres in a taller view too (playView).
+      const top = Math.max(0, Math.floor((Math.floor(size.height) - baseHeight) / 2));
+      const map = (point) => [(point.x + left) * scale, (point.y + top) * scale];
       drawing.lineWidth = 2;
       drawing.strokeStyle = "#ff00ff";
       drawing.fillStyle = "#ff00ff";
@@ -374,7 +376,13 @@ async function captureRocks() {
       }
       return sample.toDataURL("image/png").split(",")[1];
     },
-    { baseWidth: SCREEN.width, encoded: image.toString("base64"), intrinsic, outlines },
+    {
+      baseHeight: SCREEN.height,
+      baseWidth: SCREEN.width,
+      encoded: image.toString("base64"),
+      intrinsic,
+      outlines,
+    },
   );
   writeFileSync(`${output}/asteroids-footprints.png`, Buffer.from(overlay, "base64"));
   events.captures.push("asteroids-footprints.png");
