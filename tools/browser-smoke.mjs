@@ -1517,6 +1517,20 @@ try {
   assert.equal(await page.locator(".ada-use").getAttribute("aria-label"), CONTENT.labels.talk);
   assert.equal(await page.locator(".ada-use").getAttribute("data-use"), "talk");
   assert.equal((await page.locator(".ada-use").textContent()).trim(), "", "Use shows no text");
+  // The save status yields the notice slot to conversation lines (src/ui/notice.ts), so a tap on
+  // the box dismisses the line showing there, as a player would, before saving fails.
+  async function freeNoticeSlot(remaining = 5) {
+    const shown = page.locator(".ada-conversation:not([hidden])");
+    const line = (await shown.count()) ? await shown.boundingBox() : null;
+    if (!line) {
+      return;
+    }
+    assert.ok(remaining > 0, "A conversation line keeps the notice slot");
+    await page.touchscreen.tap(line.x + line.width / 2, line.y + line.height / 2);
+    await page.waitForTimeout(150);
+    await freeNoticeSlot(remaining - 1);
+  }
+  await freeNoticeSlot();
   const beforeStorageFailure = await page.evaluate((key) => {
     const saved = localStorage.getItem(key);
     window.__adaOriginalSetItem = Storage.prototype.setItem;
