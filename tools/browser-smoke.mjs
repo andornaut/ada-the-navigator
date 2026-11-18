@@ -1444,8 +1444,9 @@ try {
   // The first flight's move and aim lessons are seen, so no lesson line holds the notice slot the
   // save status yields to (src/ui/notice.ts).
   safeInput.state.seenConversations.push("lesson:move", "lesson:aim");
-  // Every flight follows the prologue, which unlocks the Paused card's Map.
+  // Every flight follows the prologue, which unlocks the Paused card's Map and New Navigator.
   safeInput.state.prologueSeen = true;
+  safeInput.state.achievements.unlocked.push(ACHIEVEMENTS[0].id);
   assert.equal(safeInput.state.flight.freshChunk, null);
   const safeSerialized = safeInput.save();
   assert.deepEqual(relaunch(CONTENT, safeSerialized).state, safeInput.state);
