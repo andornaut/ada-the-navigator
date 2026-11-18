@@ -36,7 +36,7 @@ import {
   scorch,
   scorchSide,
 } from "./heavies.ts";
-import { replaceEntries } from "./manifest.ts";
+import { craftIds, mergeEntries } from "./manifest.ts";
 import { ENEMY_HEADINGS } from "./projection.ts";
 
 // Crimson lacquer at Oklab hue 14, redder than coral (39) and the claim jumpers' rust (50), with
@@ -162,9 +162,13 @@ for (const [file, content] of files) {
   );
 }
 // In Needle's manifest after the gates and debris, before the story craft.
-replaceEntries(
+// Only these crafts' ids, not the whole `enemy-needle-` family prefix.
+mergeEntries(
   "needle",
-  (id) => id.startsWith(PREFIX),
+  craftIds(
+    PREFIX,
+    [...crafts, ...heavies, ...industrialHeavies].map(({ name }) => name),
+  ),
   entries,
   (id) => id.startsWith("craft-"),
 );

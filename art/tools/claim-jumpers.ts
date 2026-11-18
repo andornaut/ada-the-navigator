@@ -50,7 +50,7 @@ import {
   wreck,
 } from "./heavies.ts";
 import { normalizeHeavy } from "./enemy-size.ts";
-import { replaceEntries } from "./manifest.ts";
+import { craftIds, mergeEntries } from "./manifest.ts";
 import { ENEMY_HEADINGS } from "./projection.ts";
 
 // ---------------------------------------------------------------- palette
@@ -428,9 +428,13 @@ async function main() {
     );
   }
   // In Cartwheel's manifest after the hub and buoy, before the story craft.
-  replaceEntries(
+  // Only these crafts' ids; hostile-station-export.ts writes `enemy-claim-hostileStation-`.
+  mergeEntries(
     "cartwheel",
-    (id) => id.startsWith(PREFIX),
+    craftIds(
+      PREFIX,
+      [...crafts, ...heavies, ...industrialHeavies, platform].map(({ name }) => name),
+    ),
     entries,
     (id) => id.startsWith("craft-"),
   );

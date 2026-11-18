@@ -47,7 +47,7 @@ import {
 } from "./crafts.ts";
 import { traceEnemyFills } from "./enemy-outline.ts";
 import { ADA_MODEL_SPAN, enemySizeRatio, normalizeHeavy, sizeReceipts } from "./enemy-size.ts";
-import { replaceEntries } from "./manifest.ts";
+import { mergeEntries } from "./manifest.ts";
 import {
   anchor,
   depth,
@@ -1554,7 +1554,8 @@ export function checkMounts(craft: HeavyCraft, layout: MountLayout): void {
 
 // Gadget's weapons and tiers are the capital's.
 export function checkGadget(capitalFile: string, gadgetFile: string): void {
-  const [c, g] = [capitalFile, gadgetFile].map((text) => JSON.parse(text) as MountLayout);
+  const c = JSON.parse(capitalFile) as MountLayout;
+  const g = JSON.parse(gadgetFile) as MountLayout;
   if (JSON.stringify(c.weaponTops) !== JSON.stringify(g.weaponTops)) {
     throw new Error("gadget hardpoints: weaponTops differ from the capital's");
   }
@@ -1717,7 +1718,7 @@ async function main() {
     entries.push(...result.entries);
   }
   if (out === undefined) {
-    replaceEntries("core", owns, entries);
+    mergeEntries("core", owns, entries);
   } else {
     writeFileSync(`${dir}manifest-entries.json`, json(entries));
   }

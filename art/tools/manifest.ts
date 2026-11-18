@@ -130,6 +130,48 @@ export function replaceEntries(
   });
 }
 
+// Like replaceEntries, but each owned entry the generator still writes keeps its position, so
+// generators whose entries interleave with another's (the enemy families) rerun byte-identically.
+// Owned entries it no longer writes are dropped; a new entry goes after the one written before
+// it, else where replaceEntries would put the group. Every written id must be owned.
+export function mergeEntries(
+  file: ManifestFile,
+  owns: (id: string) => boolean,
+  entries: readonly { id: string }[],
+  placeBefore: (id: string) => boolean = () => false,
+) {
+  const unowned = entries.filter(({ id }) => !owns(id)).map(({ id }) => id);
+  if (unowned.length > 0) {
+    throw new Error(`${manifestUrl(file)}: ${unowned.join(", ")} not owned by its generator`);
+  }
+  const written = new Map(entries.map((entry) => [entry.id, entry]));
+  editManifest(file, (manifest) => {
+    const first = manifest.assets.findIndex(({ id }) => owns(id));
+    const assets = manifest.assets
+      .filter(({ id }) => !owns(id) || written.has(id))
+      .map((entry) => written.get(entry.id) ?? entry);
+    const next = assets.findIndex(({ id }) => !owns(id) && placeBefore(id));
+    let at = first !== -1 ? first : next !== -1 ? next : assets.length;
+    for (const entry of entries) {
+      const index = assets.findIndex(({ id }) => id === entry.id);
+      if (index === -1) {
+        assets.splice(at, 0, entry);
+        at += 1;
+      } else {
+        at = index + 1;
+      }
+    }
+    manifest.assets = assets;
+  });
+}
+
+// Selects the ids of the named crafts under `prefix`: `{prefix}{name}` and `{prefix}{name}-...`,
+// so `enemy-claim-retaliator-` never selects `enemy-claim-retaliatorCargoHauler-`.
+export const craftIds =
+  (prefix: string, names: readonly string[]) =>
+  (id: string): boolean =>
+    names.some((name) => id === prefix + name || id.startsWith(`${prefix}${name}-`));
+
 // Links data files from a manifest by key, after its existing links.
 export function linkData(file: ManifestFile, links: Readonly<Record<string, string>>) {
   editManifest(file, (manifest) => Object.assign(manifest, links));

@@ -8,7 +8,7 @@ import { recolourGarnet, recolourGarnetJets } from "./garnet-drones.ts";
 import { build, place } from "./heavies.ts";
 import { hostileStation } from "./hostile-station.ts";
 import { hostileStationIcon } from "./hostile-station-icon.ts";
-import { type ManifestFile, replaceEntries } from "./manifest.ts";
+import { craftIds, type ManifestFile, mergeEntries } from "./manifest.ts";
 
 type Entry = { id: string; path?: string } & Record<string, unknown>;
 type Family = {
@@ -73,11 +73,7 @@ async function main() {
       path: `/art/${family.directory}/${String(entry.path).split("/").at(-1)}`,
       ...(family.family ? { family: family.family } : {}),
     }));
-    replaceEntries(
-      family.manifest,
-      (id) => id.startsWith(family.prefix + craft.name + "-"),
-      entries,
-    );
+    mergeEntries(family.manifest, craftIds(family.prefix, [craft.name]), entries);
   }
   console.log(
     `${craft.name}: three existing families, ${result.files.size} native files per family`,

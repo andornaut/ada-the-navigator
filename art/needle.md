@@ -349,8 +349,8 @@ accent and a mic boom).
 
 Rebuild with `node art/tools/needle-drones.ts`, which takes the same
 `--offsets <file.json>` as `heavies.ts`. It draws the shared models in process,
-writes `public/art/needle/enemies/` and replaces its `enemy-needle-` entries in
-Needle's manifest, before the story craft.
+writes `public/art/needle/enemies/` and replaces the `enemy-needle-` entries of
+the crafts it draws in place in Needle's manifest, before the story craft.
 
 Needle's drones and heavies are one family: the four drones, the frigate and
 the capital in crimson lacquer. Needle's roster adds no archetype and no

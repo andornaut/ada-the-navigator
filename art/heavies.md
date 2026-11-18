@@ -17,7 +17,12 @@ each sprite's drawn silhouette ([Collision](#collision)).
 - Models, projection and part order are shared with the
   [sector one enemies](enemies.md) through `art/tools/crafts.ts` and
   `art/tools/projection.ts`. `art/tools/enemies.ts` replaces only its own hull
-  entries, `enemy-{swarm,fighter,interceptor,retaliator}-{k}`.
+  entries, `enemy-{swarm,fighter,interceptor,retaliator}-{k}` and the industrial
+  stems' `enemy-{retaliatorCargoHauler,retaliatorMiningFreighter}-{k}`.
+- Every enemy producer owns exactly the ids of the crafts it draws
+  (`craftIds` in `art/tools/manifest.ts`), never a whole family prefix, and
+  writes them with `mergeEntries`: each existing entry keeps its position, so
+  entries of several producers can interleave and reruns stay byte-identical.
 
 ## Crafts
 
@@ -501,7 +506,8 @@ Its assembled body spans 4 Ada source widths.
 
 `node art/tools/hostile-station-export.ts` exports the normalized station into
 three existing families: coral for Phantom, Garnet for Andromeda and Claim
-for Cartwheel. The stem is `hostileStation`; metadata remains
+for Cartwheel. It owns only the `hostileStation` entries under each family
+prefix; the drone producers own the rest. The stem is `hostileStation`; metadata remains
 `hostileStation-hardpoints.json`, version 1. The friendly station producer and
 assets remain separate.
 

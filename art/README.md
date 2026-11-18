@@ -93,7 +93,8 @@ Tech loads core at boot and a galaxy's manifest with its set.
 
 Generators write through `art/tools/manifest.ts`, naming the target manifest;
 a write fails, leaving the files unchanged, when an id is in two manifests or
-the `galaxies` map lacks a galaxy. Reruns are byte-identical.
+the `galaxies` map lacks a galaxy. Generators that share an id prefix each own
+only their own crafts' ids. Reruns are byte-identical.
 
 Each asset has a stable semantic `id`, public `path`, intrinsic `width` and `height`,
 `facing`, and normalized `pivot`. Portrait sheets also define `frameWidth`,
@@ -125,8 +126,9 @@ debris, project and Andromeda SVGs are deterministic exports from `art/tools/shi
 `art/tools/cartwheel.ts`, `art/tools/cartwheel-props.ts`, `art/tools/asteroids.ts`,
 `art/tools/whales.ts`, `art/tools/whirlpool.ts` and `art/tools/andromeda.ts`, with the
 heavies' layered sprites from `art/tools/heavies.ts`, Cartwheel's claim jumpers from
-`art/tools/claim-jumpers.ts` and Andromeda's garnet drones from
-`art/tools/garnet-drones.ts`. Needle's art comes from `art/tools/needle-station.ts`,
+`art/tools/claim-jumpers.ts`, Andromeda's garnet drones from
+`art/tools/garnet-drones.ts` and the [hostile station](heavies.md#hostile-station)
+in every family from `art/tools/hostile-station-export.ts`. Needle's art comes from `art/tools/needle-station.ts`,
 `needle-gates.ts`, `needle-channels.ts`, `needle-sky.ts`, `needle-craft.ts`,
 `needle-portraits.ts`, `needle-drones.ts` and `needle-projects.ts`. Every
 galaxy's stranded craft but Cartwheel's come from `art/tools/stranded-craft.ts`. The

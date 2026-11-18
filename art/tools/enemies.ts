@@ -11,7 +11,7 @@ import {
   jetsFile,
 } from "./crafts.ts";
 import { traceEnemyFills } from "./enemy-outline.ts";
-import { replaceEntries } from "./manifest.ts";
+import { mergeEntries } from "./manifest.ts";
 import { anchor, ENEMY_HEADINGS, project, vector } from "./projection.ts";
 import { type Fill, type V2 } from "./silhouette.ts";
 
@@ -97,7 +97,7 @@ function main() {
   // Only this tool's hull frames, in place; heavies.ts owns the other `enemy-` entries.
   const names = crafts.map(({ name }) => name).join("|");
   const hull = new RegExp(`^enemy-(${names})-\\d+$`);
-  replaceEntries(
+  mergeEntries(
     "core",
     (id) => hull.test(id),
     crafts.flatMap(({ frame, name }) => hullEntries(name, frame)),
