@@ -34,6 +34,17 @@ function visit(model: GameModel, point: Vec): void {
   model.step(0.001, idle);
   model.dismissNotice();
 }
+/** Lets the showing line run out on its own, so the next line or the queued Talk follows. */
+function waitOutLine(model: GameModel): void {
+  const key = model.conversation?.key;
+  for (
+    let step = 0;
+    model.conversation?.key === key && !model.state.dialogue && step < 2000;
+    step++
+  ) {
+    model.step(0.05, idle);
+  }
+}
 function currentExchange(model: GameModel): void {
   const key = model.conversation?.key;
   const instance = key?.slice(0, key.lastIndexOf(":"));
@@ -43,7 +54,7 @@ function currentExchange(model: GameModel): void {
     model.conversation?.key.startsWith(`${instance}:`) && index < bound;
     index++
   ) {
-    model.advanceConversation();
+    model.dismissConversation();
   }
 }
 
@@ -63,7 +74,7 @@ describe("Later chapter first encounters", () => {
       if (prelude.some(({ id }) => view!.key.startsWith(`${id}:`))) {
         shown.push(view!.text);
       }
-      model.advanceConversation();
+      waitOutLine(model);
     }
     expect(shown).toEqual(prelude.flatMap(({ lines }) => lines.map(({ text }) => text)));
     expect(model.state.dialogue?.context).toBe("needle.arrival");
@@ -87,7 +98,7 @@ describe("Later chapter first encounters", () => {
     visit(model, loom);
     model.interact();
     model.state.flight!.player = { x: loom.x + ECONOMY.station.safeRadius * 2, y: loom.y };
-    prelude.flatMap(({ lines }) => lines).forEach(() => model.advanceConversation());
+    prelude.flatMap(({ lines }) => lines).forEach(() => model.dismissConversation());
     expect(model.state.dialogue).toBeNull();
     expect(model.state.progress[4].needle?.met).toBe(false);
   });

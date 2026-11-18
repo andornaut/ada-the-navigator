@@ -161,7 +161,7 @@ function listen(model: GameModel, point: Vec, seconds: number): string[] {
       if (!heard.includes(instance)) {
         heard.push(instance);
       }
-      model.advanceConversation();
+      model.dismissConversation();
     }
   }
   return heard;

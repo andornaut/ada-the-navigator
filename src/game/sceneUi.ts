@@ -8,6 +8,7 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { BUILT, ROUTE } from "../data/galaxies.ts";
+import { HIT_SHAKE } from "../data/layout.ts";
 import { galaxyCard } from "../data/storybook.ts";
 import { coarsePointer } from "../input/coarsePointer.ts";
 import { createControls } from "../input/controls.ts";
@@ -63,10 +64,10 @@ import { createStorybook, storyPageView } from "../ui/storybook.ts";
 import { readTitleScreen, type TitleScreenArt } from "../ui/titleScreen.ts";
 import { type CoreManifest, galaxyManifestKey, readGalaxyManifest } from "./artManifest.ts";
 import { readDestruction, readShards } from "./destructionArt.ts";
-import { EDGE_MARKER_DEPTH } from "./drawOrder.ts";
+import { EDGE_MARKER_DEPTH, HIT_FLASH_DEPTH } from "./drawOrder.ts";
 import { enemyPartFrame, GALAXY_FAMILIES } from "./enemyArt.ts";
 import { readEnemyWeaponsArt } from "./enemyWeaponsArt.ts";
-import { TELEPORT_DISTANCE } from "./feedback.ts";
+import { HIT_SHAKE_SHARE, TELEPORT_DISTANCE } from "./feedback.ts";
 import { LIGHT_FIELD, lightGalaxy, readForegroundEdges, readLightGalaxies } from "./lightField.ts";
 import { saves } from "./persistence.ts";
 import { fitPlayCamera, sceneFit, shakeIntensity } from "./playCamera.ts";
@@ -176,6 +177,8 @@ export type UiContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
     | "galaxyStations"
     | "game"
     | "held"
+    | "hitAt"
+    | "hitFlashInk"
     | "holodiskArt"
     | "hubArt"
     | "indicatorInk"
@@ -314,6 +317,7 @@ export function buildScene(scene: UiContext): void {
   scene.overlay = scene.add.graphics().setDepth(3);
   scene.indicatorInk = scene.add.graphics().setDepth(3 - 1e-6);
   scene.edgeMarkerInk = scene.add.graphics().setDepth(EDGE_MARKER_DEPTH);
+  scene.hitFlashInk = scene.add.graphics().setDepth(HIT_FLASH_DEPTH);
   scene.jetKeyline = scene.add.graphics();
   scene.jets = scene.add.graphics().setDepth(9);
   scene.ship = scene.add.image(0, 0, "ship").setDepth(10);
@@ -640,7 +644,7 @@ export function buildScene(scene: UiContext): void {
   const label = (key: string): string => labels[key] ?? "";
   const amount = (value: number): string => fill(label("stardustAmount"), { amount: value });
   const item = (key: string): ShopItem => JSON.parse(key) as ShopItem;
-  // The conversation box never pauses play; a tap moves it on.
+  // The conversation box never pauses play; a tap dismisses it.
   const finishConversation = (): void =>
     apply(() => {
       for (let count = 0; count < 20; count++) {
@@ -673,30 +677,14 @@ export function buildScene(scene: UiContext): void {
     isOpen: () => interaction.isOpen() && !scene.settingsOpen,
   });
   partial.push(unregisterInteraction);
-  scene.conversationBox = createConversationBox(
-    () => {
-      if (scene.emergencyReturn.active) {
-        return;
-      }
-      scene.model.advanceConversation();
-      renderConversation(scene);
-    },
-    () => {
-      if (scene.emergencyReturn.active) {
-        return;
-      }
-      const initial = scene.model.conversation?.key;
-      const instance = initial?.slice(0, initial.lastIndexOf(":"));
-      for (let count = 0; count < 100; count++) {
-        const current = scene.model.conversation?.key;
-        if (!instance || !current || current.slice(0, current.lastIndexOf(":")) !== instance) {
-          break;
-        }
-        scene.model.advanceConversation();
-      }
-      renderConversation(scene);
-    },
-  );
+  // A tap on the box dismisses the whole conversation, skipping its remaining lines.
+  scene.conversationBox = createConversationBox(() => {
+    if (scene.emergencyReturn.active) {
+      return;
+    }
+    scene.model.dismissConversation();
+    renderConversation(scene);
+  });
   partial.push(() => scene.conversationBox.dispose());
   scene.station = createStationView(scene.controls.overlay, {
     acceptJob: (id) => {
@@ -1210,9 +1198,14 @@ export function renderConversation(scene: UiContext): void {
 export function observeFeedback(scene: UiContext): void {
   const kinds = scene.feedback.observe(TELEPORT_DISTANCE, scene.model.state);
   scene.feedbackSound.play(kinds);
-  if (scene.screenShake && kinds.includes("damage")) {
+  if (!kinds.includes("damage")) {
+    return;
+  }
+  // Every shield hit restarts the hit flash; the shake and the flash skip under reduced motion.
+  scene.hitAt = scene.time.now;
+  if (scene.screenShake) {
     const camera = scene.cameras.main;
-    camera.shake(100, shakeIntensity(camera.zoom, 0.002));
+    camera.shake(HIT_SHAKE.duration, shakeIntensity(camera.zoom, HIT_SHAKE_SHARE));
   }
 }
 

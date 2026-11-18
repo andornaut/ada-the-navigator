@@ -5,8 +5,9 @@ import type { StickSide } from "../../input/state.ts";
 import { type Insets, playView, type Size } from "./playView.ts";
 export { TOUCH_STICK, USE_DISC } from "../../data/layout.ts";
 
-// Ring edges sit 90 logical pixels from the outer sides and 60 from the bottom, ignoring safe insets.
-// Clamp only where the drawn ring would cross the game area's eight-pixel margin.
+// Ring edges sit TOUCH_STICK.side (50) logical px from the outer sides and TOUCH_STICK.bottom (50)
+// above the screen's bottom, ignoring safe insets. A ring moves inward only where it would cross
+// the game area's STICK_AREA_MARGIN.
 export function stickRestCentres(view: Size, insets: Insets): Readonly<Record<StickSide, Point>> {
   void insets;
   const area = playView(view);

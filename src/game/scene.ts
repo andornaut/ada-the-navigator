@@ -71,7 +71,13 @@ import {
   HitFlashes,
 } from "./enemyArt.ts";
 import { type EnemyWeaponsArt } from "./enemyWeaponsArt.ts";
-import { FeedbackSound, ModelFeedback } from "./feedback.ts";
+import {
+  FeedbackSound,
+  HIT_FLASH_FILL,
+  hitFlashAlpha,
+  hitFlashBands,
+  ModelFeedback,
+} from "./feedback.ts";
 import { type JobArt } from "./jobArt.ts";
 import { blastEdges, foregroundEdge, LIGHT_FIELD, lightGalaxy } from "./lightField.ts";
 import { parentFit, sceneFit, viewShift } from "./playCamera.ts";
@@ -168,6 +174,10 @@ export class GameScene extends Scene {
   /** Shots and feedback draw above enemy sprites. */
   overlay!: GameObjects.Graphics;
   edgeMarkerInk!: GameObjects.Graphics;
+  /** The hit flash's band around the game area, redrawn each frame while it fades. */
+  hitFlashInk!: GameObjects.Graphics;
+  /** When Ada's shield last took damage, in scene time ms. */
+  hitAt = -Infinity;
   enemyJets!: GameObjects.Graphics;
   enemyArt = new Map<string, EnemyArt<Asset>>();
   enemySprites = new Map<string, GameObjects.Image>();
@@ -785,6 +795,23 @@ export class GameScene extends Scene {
     return { x: SCREEN.width / 2 + x - y, y: SCREEN.height / 2 + (x + y) / 2 };
   }
 
+  /** The hit flash over the game area in flight, fading from the latest shield hit. */
+  private drawHitFlash(): void {
+    this.hitFlashInk.clear();
+    const alpha =
+      this.model.state.mode === "space"
+        ? hitFlashAlpha(this.reducedMotion, this.time.now - this.hitAt)
+        : 0;
+    if (alpha <= 0) {
+      return;
+    }
+    this.hitFlashInk.fillStyle(HIT_FLASH_FILL, alpha);
+    const area = { height: SCREEN.height, width: SCREEN.width, x: 0, y: 0 };
+    for (const band of hitFlashBands(area)) {
+      this.hitFlashInk.fillRect(band.x, band.y, band.width, band.height);
+    }
+  }
+
   private draw(): void {
     const flight = this.model.state.flight;
     const galaxy = this.model.state.mode === "space" ? flight?.galaxy : undefined;
@@ -802,6 +829,7 @@ export class GameScene extends Scene {
     this.normalTail?.shape.clear();
     this.overlay.clear();
     this.edgeMarkerInk.clear();
+    this.drawHitFlash();
     this.enemyJets.clear();
     this.jetKeyline.clear();
     this.indicatorInk.clear();

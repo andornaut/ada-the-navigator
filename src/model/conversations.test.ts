@@ -758,8 +758,9 @@ describe("conversations in the game", () => {
     });
     model.step(0.05, idle);
     expect(model.conversation).toMatchObject({ key: "lesson:stardust:0", mood: "neutral" });
-    void model.conversation;
-    model.advanceConversation();
+    for (let i = 0, steps = lineSteps(lineDuration(model.conversation!.text)); i < steps; i++) {
+      model.step(0.05, idle);
+    }
     expect(model.conversation).toMatchObject({
       key: "lesson:stardust:1",
       mood: "happy",
@@ -857,9 +858,7 @@ describe("conversations in the game", () => {
       model.step(0.05, idle);
     }
     void model.conversation;
-    model.advanceConversation();
-    void model.conversation;
-    model.advanceConversation();
+    model.dismissConversation();
     expect(model.warningShowing).toBe(false);
     expect(model.conversation).toBeNull();
     for (let i = 0; i < noticeSteps - 2; i++) {
@@ -891,11 +890,34 @@ describe("conversations in the game", () => {
     expect(model.conversation?.key).not.toBe(key);
   });
 
+  it("dismiss the whole conversation on a tap, so its skipped lines never replay", () => {
+    const model = flying(["lesson:move", "lesson:aim"]);
+    const { player } = model.state.flight!;
+    model.state.flight!.objects.push({
+      amount: 1,
+      hp: 1,
+      id: "test:stardust",
+      kind: "pickup",
+      radius: 4,
+      x: player.x + 300,
+      y: player.y,
+    });
+    model.step(0.05, idle);
+    expect(model.conversation?.key).toBe("lesson:stardust:0");
+    model.dismissConversation();
+    expect(model.conversation).toBeNull();
+    expect(model.state.seenConversations).toContain("lesson:stardust");
+    for (let i = 0; i < 600; i++) {
+      model.step(0.05, idle);
+      expect(model.conversation?.key ?? "").not.toMatch(/^lesson:stardust:/u);
+    }
+  });
+
   it("save what was heard with story progress and do not repeat it after a reload", () => {
     const model = flying();
     model.step(0.05, idle);
     void model.conversation;
-    model.advanceConversation();
+    model.dismissConversation();
     const saved = model.save();
     expect(restoreSave(saved)?.seenConversations).toContain("lesson:move");
     const resumed = new GameModel(CONTENT, saved);

@@ -831,9 +831,9 @@ export class GameModel {
   pennyMarkers(area: Rect, litCaches?: ReadonlySet<string>): PennyMarker[] {
     return this.targetMarkers(area, litCaches);
   }
-  /** A tap on the conversation box: the next line, or the box closes after the last. */
-  advanceConversation(): void {
-    this.talk.advance();
+  /** A tap on the conversation box dismisses the whole conversation, skipping its remaining lines. */
+  dismissConversation(): void {
+    this.talk.skip();
     this.flushNeedleTalk();
   }
   private flushNeedleTalk(): void {

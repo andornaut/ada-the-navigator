@@ -49,7 +49,7 @@ function learn(model: GameModel): void {
   const budget = CONVERSATIONS.reduce((sum, conversation) => sum + conversation.lines.length, 0);
   for (let line = 0; !model.state.dialogue && line < budget; line++) {
     expect(model.conversation).not.toBeNull();
-    model.advanceConversation();
+    model.dismissConversation();
   }
   expect(model.state.dialogue?.context).toBe("needle.arrival");
   expect(interactionCopy(4, model.state.dialogue!).party).toBe("Elder Loom");

@@ -92,7 +92,7 @@ export function readDeviceSettings(
   };
 }
 
-// Damage shakes the screen only while motion is not reduced.
+// Damage shakes the screen and flashes the hit line only while motion is not reduced.
 export function screenShakes(settings: Pick<DeviceSettings, "reducedMotion">): boolean {
   return !settings.reducedMotion;
 }

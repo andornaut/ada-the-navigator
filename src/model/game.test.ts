@@ -177,7 +177,7 @@ function finishNeedle(model: GameModel): void {
     const budget = CONVERSATIONS.reduce((sum, conversation) => sum + conversation.lines.length, 0);
     for (let line = 0; !model.state.dialogue && line < budget; line++) {
       expect(model.conversation, `conversation before ${id}`).not.toBeNull();
-      model.advanceConversation();
+      model.dismissConversation();
     }
   };
   visit("elderLoom");

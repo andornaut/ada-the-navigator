@@ -998,12 +998,12 @@ try {
     return page.locator(selector).boundingBox();
   }
   // The touch HUD's bottom controls, in logical px: each joystick ring's drawn outer side and
-  // bottom (the rings draw 1 inside their 75 frame targets) 60 in from the screen's sides and 40
+  // bottom (the rings draw 1 inside their 75 frame targets) 50 in from the screen's sides and 50
   // above its bottom, the aim ring's from the view's whole-pixel width, unless that would leave less
-  // than the stick area
-  // margin (8) to the game area's edge, where the ring clamps to it; and the shield pill's bottom
-  // level with the rings. The smoke's pages have no safe insets. Saves the proof, with the edges
-  // the clamp moved, and captures the HUD as name.
+  // than the stick area margin (8) to the game area's edge, where the ring moves in to it; and the
+  // shield pill on its own bottom line, its drawn bottom margin mirroring the status pill's drawn
+  // top margin. The smoke's pages have no safe insets. Saves the proof, with the edges the clamp
+  // moved, and captures the HUD as name.
   async function touchHudProof(name) {
     await settledBox('[data-control="aim-joystick"]');
     await page.locator(".ada-shield").waitFor({ state: "visible" });
@@ -1017,6 +1017,7 @@ try {
           bottom: (rect.bottom - origin.top) / unit,
           left: (rect.left - origin.left) / unit,
           right: (rect.right - origin.left) / unit,
+          top: (rect.top - origin.top) / unit,
         };
       };
       // The 720x360 game area, from the view properties the play area is laid out by.
@@ -1029,14 +1030,15 @@ try {
         dpr: devicePixelRatio,
         move: box('[data-control="move-joystick"]'),
         shield: box(".ada-shield"),
+        status: box(".ada-status"),
         unit,
         view: { height: origin.height / unit, width: origin.width / unit },
       };
     });
     const { area, view } = hud;
     const margin = 8;
-    const side = 60;
-    const below = 40;
+    const side = 50;
+    const below = 50;
     const width = Math.floor(view.width);
     const expected = {
       aimRight: Math.min(width - side, area.right - margin),
@@ -1082,8 +1084,8 @@ try {
       assert.ok(gap > margin - 1, `Each ring stays the margin inside the game area: ${detail}`);
     }
     assert.ok(
-      Math.abs(view.height - hud.shield.bottom - (view.height - expected.bottom)) < 1,
-      `The shield pill sits level with the rings: ${detail}`,
+      Math.abs(proof.shieldBottom - hud.status.top) < 1,
+      `The shield pill's bottom margin mirrors the status pill's top margin: ${detail}`,
     );
     await page.screenshot({ path: `${output}/touch-hud-${name}.png` });
     return proof;
@@ -2372,10 +2374,11 @@ try {
   assert.deepEqual(
     narrowHud.clamped,
     { aim: false, bottom: false, move: false },
-    "At 844x390 the rings sit 60 from the screen's sides and 40 from its bottom, unclamped",
+    "At 844x390 the rings sit 50 from the screen's sides and 50 from its bottom, unclamped",
   );
   events.checks.push(
-    "At 844x390 the sticks' rings sit 60 in from the screen's sides and 40 from its bottom, the pill level",
+    "At 844x390 the sticks' rings sit 50 in from the screen's sides and 50 from its bottom, " +
+      "the shield pill on its own line",
   );
   // Compare observable flight response, not the implementation's stick sampling formula. Travel is
   // in logical px, --ada-unit CSS px each.
@@ -4448,14 +4451,16 @@ try {
   await continueFlight();
   const phoneHud = await touchHudProof("2404x1080");
   assert.equal(phoneHud.dpr, 2.5, "The phone context renders at device pixel ratio 2.5");
-  // 2404x1080 at dpr 2.5 is 801x360 logical, the area 40 to 760: 60 from the sides lies 20 inside it.
+  // 2404x1080 at dpr 2.5 is 801x360 logical, the area 40 to 760: 50 from the sides lies at least
+  // 9 inside it, past the 8 margin.
   assert.deepEqual(
     phoneHud.clamped,
     { aim: false, bottom: false, move: false },
-    "At 2404x1080 the rings sit 60 from the screen's sides, unclamped",
+    "At 2404x1080 the rings sit 50 from the screen's sides, unclamped",
   );
   events.checks.push(
-    "At 2404x1080 dpr 2.5 the rings sit 60 from the screen's sides and 40 from its bottom, the pill level",
+    "At 2404x1080 dpr 2.5 the rings sit 50 from the screen's sides and 50 from its bottom, " +
+      "the shield pill on its own line",
   );
   await phoneContext.close();
   // A crash: the kit's crash screen over the game, in the game's words, with the build label in

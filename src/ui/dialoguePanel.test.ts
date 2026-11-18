@@ -197,7 +197,7 @@ const ambientLine = {
   speaker: "penny",
   text: "A line",
 } as const;
-function ambientFixture(onSkip?: () => void) {
+function ambientFixture() {
   vi.useFakeTimers();
   const host = new Element("div");
   setup(host);
@@ -216,8 +216,8 @@ function ambientFixture(onSkip?: () => void) {
     },
     root,
   );
-  const advance = vi.fn();
-  const box = createConversationBox(advance, onSkip);
+  const dismiss = vi.fn();
+  const box = createConversationBox(dismiss);
   box.render(ambientLine, true, true);
   const button = host.children[0]!;
   physical = button;
@@ -253,10 +253,10 @@ function ambientFixture(onSkip?: () => void) {
     return e;
   };
   return {
-    advance,
     box,
     button,
     click,
+    dismiss,
     dispose: () => {
       box.dispose();
       attachment.dispose();
@@ -498,10 +498,10 @@ describe("shared Earth and space dialogue presentation", () => {
   });
 
   it.each(["ada", "penny"] as const)(
-    "advances %s on a secondary touch without relying on a synthesized click",
+    "dismisses %s on a secondary touch without relying on a synthesized click",
     (speaker) => {
       const f = ambientFixture();
-      const { advance, box, button } = f;
+      const { box, button, dismiss } = f;
       box.render(
         {
           elapsed: 0,
@@ -518,13 +518,13 @@ describe("shared Earth and space dialogue presentation", () => {
       );
       f.down();
       expect(f.resolve()?.element).toBe(button);
-      expect(advance).not.toHaveBeenCalled();
+      expect(dismiss).not.toHaveBeenCalled();
       f.up();
-      expect(advance).toHaveBeenCalledTimes(1);
+      expect(dismiss).toHaveBeenCalledTimes(1);
       f.click();
-      expect(advance).toHaveBeenCalledTimes(1);
+      expect(dismiss).toHaveBeenCalledTimes(1);
       f.click({ detail: 0 });
-      expect(advance).toHaveBeenCalledTimes(2);
+      expect(dismiss).toHaveBeenCalledTimes(2);
       f.dispose();
     },
   );
@@ -535,19 +535,18 @@ describe("shared Earth and space dialogue presentation", () => {
     document.dispatchEvent(f.event(type));
     f.up();
     f.click();
-    expect(f.advance).not.toHaveBeenCalled();
+    expect(f.dismiss).not.toHaveBeenCalled();
     f.down({ isPrimary: true });
     f.up({ isPrimary: true });
-    expect(f.advance).toHaveBeenCalledTimes(1);
+    expect(f.dismiss).toHaveBeenCalledTimes(1);
     f.click({ isPrimary: true });
-    expect(f.advance).toHaveBeenCalledTimes(1);
+    expect(f.dismiss).toHaveBeenCalledTimes(1);
     f.dispose();
   });
 
-  it("has no separate ambient Skip button and retains the existing tap advance route", () => {
-    const legacySkip = vi.fn();
-    const f = ambientFixture(legacySkip);
-    const { advance, box, host } = f;
+  it("has no separate ambient Skip button: a tap on the box is its one dismiss route", () => {
+    const f = ambientFixture();
+    const { box, dismiss, host } = f;
     box.render(
       {
         elapsed: 0,
@@ -565,8 +564,7 @@ describe("shared Earth and space dialogue presentation", () => {
     expect(host.all().filter((node) => node.tag === "button")).toHaveLength(1);
     expect(host.all().find((node) => node.dataset.action === "conversation-skip")).toBeUndefined();
     host.children[0]!.click();
-    expect(advance).toHaveBeenCalledTimes(1);
-    expect(legacySkip).not.toHaveBeenCalled();
+    expect(dismiss).toHaveBeenCalledTimes(1);
     f.dispose();
   });
 });
@@ -867,16 +865,16 @@ describe("ambient App-root action generations", () => {
       f.box.render({ ...ambientLine, elapsed: 0.25, name: "Current name" }, true, true);
       expect(f.resolve()!.identity).toBe(first.identity);
       vi.advanceTimersByTime(500);
-      expect(f.advance).toHaveBeenCalledOnce();
+      expect(f.dismiss).toHaveBeenCalledOnce();
       f.up();
       f.click();
-      expect(f.advance).toHaveBeenCalledOnce();
+      expect(f.dismiss).toHaveBeenCalledOnce();
       expect([...f.button.listeners.keys()].filter((key) => key.startsWith("pointer"))).toEqual([]);
     } finally {
       f.dispose();
     }
   });
-  it("does not advance a replacement line from an old captured press or its compatibility click", () => {
+  it("does not dismiss a replacement line from an old captured press or its compatibility click", () => {
     const f = ambientFixture();
     try {
       const old = f.resolve()!;
@@ -886,11 +884,11 @@ describe("ambient App-root action generations", () => {
       old.activate();
       f.up();
       f.click();
-      expect(f.advance).not.toHaveBeenCalled();
+      expect(f.dismiss).not.toHaveBeenCalled();
       f.down();
       f.up();
       f.click();
-      expect(f.advance).toHaveBeenCalledOnce();
+      expect(f.dismiss).toHaveBeenCalledOnce();
     } finally {
       f.dispose();
     }
@@ -898,16 +896,16 @@ describe("ambient App-root action generations", () => {
   it("retains the hold witness when advancing synchronously renders the next line", () => {
     const f = ambientFixture();
     try {
-      f.advance.mockImplementation(() =>
+      f.dismiss.mockImplementation(() =>
         f.box.render({ ...ambientLine, key: "instance:1" }, true, true),
       );
       f.down();
       vi.advanceTimersByTime(500);
       f.up();
       f.click();
-      expect(f.advance).toHaveBeenCalledOnce();
+      expect(f.dismiss).toHaveBeenCalledOnce();
       f.click({ detail: 0 });
-      expect(f.advance).toHaveBeenCalledTimes(2);
+      expect(f.dismiss).toHaveBeenCalledTimes(2);
     } finally {
       f.dispose();
     }
@@ -941,11 +939,11 @@ describe("ambient App-root action generations", () => {
         vi.advanceTimersByTime(500);
         f.up();
         f.click();
-        expect(f.advance).not.toHaveBeenCalled();
+        expect(f.dismiss).not.toHaveBeenCalled();
         f.down();
         f.up();
         f.click();
-        expect(f.advance).toHaveBeenCalledOnce();
+        expect(f.dismiss).toHaveBeenCalledOnce();
       } finally {
         f.dispose();
       }
@@ -958,13 +956,13 @@ describe("ambient App-root action generations", () => {
       document.dispatchEvent(f.event("pointermove", { clientX: 9 }));
       f.up({ clientX: 9 });
       f.click({ clientX: 9 });
-      expect(f.advance).not.toHaveBeenCalled();
+      expect(f.dismiss).not.toHaveBeenCalled();
       f.down();
       document.dispatchEvent(f.event("pointermove", { clientX: 8 }));
       f.up({ clientX: 8 });
       f.click({ clientX: 8 });
-      expect(f.advance).toHaveBeenCalledOnce();
-      f.advance.mockClear();
+      expect(f.dismiss).toHaveBeenCalledOnce();
+      f.dismiss.mockClear();
       const input = new Element("input");
       f.host.append(input);
       f.down();
@@ -972,7 +970,7 @@ describe("ambient App-root action generations", () => {
       document.dispatchEvent(f.event("pointermove", { target: f.button }));
       f.up();
       f.click();
-      expect(f.advance).not.toHaveBeenCalled();
+      expect(f.dismiss).not.toHaveBeenCalled();
     } finally {
       f.dispose();
     }
@@ -984,16 +982,16 @@ describe("ambient App-root action generations", () => {
       f.host.append(canvas);
       f.setPhysical(canvas);
       f.down({ isPrimary: true, pointerId: 1, target: canvas });
-      expect(f.advance).not.toHaveBeenCalled();
+      expect(f.dismiss).not.toHaveBeenCalled();
       f.setPhysical(f.button);
       f.down();
       f.up();
       f.click();
-      expect(f.advance).toHaveBeenCalledOnce();
+      expect(f.dismiss).toHaveBeenCalledOnce();
       document.dispatchEvent(
         f.event("pointerup", { isPrimary: true, pointerId: 1, target: canvas }),
       );
-      expect(f.advance).toHaveBeenCalledOnce();
+      expect(f.dismiss).toHaveBeenCalledOnce();
     } finally {
       f.dispose();
     }
@@ -1006,7 +1004,7 @@ describe("ambient App-root action generations", () => {
       f.box.render(null, true, true);
       f.up();
       f.click();
-      expect(f.advance).not.toHaveBeenCalled();
+      expect(f.dismiss).not.toHaveBeenCalled();
       expect(f.resolve()!.available()).toBe(false);
       f.box.render(ambientLine, true, true);
       expect(f.resolve()!.identity).not.toBe(first.identity);

@@ -506,17 +506,17 @@ export const TOUCH_KNOB_FRAME = 11;
 
 // The on-screen joysticks (art/layout.md "HUD and overlays", Sticks), in logical canvas px: 75
 // frames, each ring's drawn edge side (50) in from the screen's outer left (move) or right (aim)
-// edge and bottom (50) above its outer bottom, ignoring safe insets, then
-// clamped STICK_AREA_MARGIN inside the game area; the drawn knob moves at most knobReach from the
-// ring's centre. Move input reaches full speed moveReach from the touch-down point, past a
-// moveDeadZone.
+// edge and bottom (50) above the screen's bottom, ignoring safe insets, moved inward only as far
+// as needed to stay STICK_AREA_MARGIN inside the game area; the drawn knob moves at most
+// knobReach from the ring's centre. Move input reaches full speed moveReach from the touch-down
+// point, past a moveDeadZone.
 export const TOUCH_STICK = {
-  bottom: 60,
+  bottom: 50,
   frame: TOUCH_CHROME_FRAME,
   knobReach: 12,
   moveDeadZone: 2.4,
   moveReach: 40,
-  side: 90,
+  side: 50,
 } as const;
 
 // Art draws each ring 1 inside its frame, so a frame's centre pixel is this far from the drawn
@@ -532,6 +532,13 @@ export const USE_DISC = {
   fromAim: { x: -77, y: -100 },
   radius: 63 + 37,
 } as const;
+
+// Hit feedback (art/layout.md "Hit flash"; Gameplay's shake): each shield hit flashes a band
+// width logical px wide just inside the game area's edge in the space palette's threat red, its
+// opacity falling linearly from 1 to 0 over duration ms, and shakes the view by about offset
+// logical px for duration ms. Reduced motion skips both.
+export const HIT_FLASH = { colour: "#FF6B6B", duration: 200, width: 3 } as const;
+export const HIT_SHAKE = { duration: 100, offset: 2 } as const;
 
 // stationCard (src/ui/layout/stationCard.ts)
 

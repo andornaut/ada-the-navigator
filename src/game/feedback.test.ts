@@ -2,12 +2,21 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
+import { HIT_FLASH, HIT_SHAKE } from "../data/layout.ts";
 import { createEnemy } from "../model/enemyAi.ts";
 import { wreckId } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { syncFlightRegion } from "../model/geography.ts";
 import { playOpening } from "../testing/launch.ts";
-import { ModelFeedback } from "./feedback.ts";
+import { publicJson } from "../testing/publicArt.ts";
+import {
+  HIT_FLASH_FILL,
+  HIT_SHAKE_SHARE,
+  hitFlashAlpha,
+  hitFlashBands,
+  ModelFeedback,
+} from "./feedback.ts";
+import { readSpacePalette } from "./spacePalette.ts";
 
 function launched() {
   const model = new GameModel(CONTENT);
@@ -168,5 +177,44 @@ describe("model feedback", () => {
     expect(feedback.observe(100, state)).toEqual(["deposit", "teleport"]);
     feedback.advance(0.7);
     expect(feedback.pulses).toEqual([]);
+  });
+});
+
+describe("hit feedback", () => {
+  it("flashes the threat red at full opacity on a hit, fading linearly to 0 over 200 ms", () => {
+    const palette = readSpacePalette(publicJson("/art/space-palette.json"))!;
+    expect(HIT_FLASH).toEqual({ colour: "#FF6B6B", duration: 200, width: 3 });
+    expect(HIT_FLASH_FILL).toBe(palette.threat);
+    expect(hitFlashAlpha(false, 0)).toBe(1);
+    expect(hitFlashAlpha(false, 50)).toBeCloseTo(0.75, 9);
+    expect(hitFlashAlpha(false, 100)).toBeCloseTo(0.5, 9);
+    expect(hitFlashAlpha(false, 199)).toBeCloseTo(0.005, 9);
+    expect(hitFlashAlpha(false, 200)).toBe(0);
+    // Before any hit the latest hit time is -Infinity, so the time since it is Infinity.
+    expect(hitFlashAlpha(false, Infinity)).toBe(0);
+    expect(hitFlashAlpha(false, -1)).toBe(0);
+  });
+
+  it("draws no flash under reduced motion", () => {
+    for (const since of [0, 50, 199]) {
+      expect(hitFlashAlpha(true, since)).toBe(0);
+    }
+  });
+
+  it("bands the game area's edge 3 wide inside it with square corners and no overlap", () => {
+    const bands = hitFlashBands({ height: 360, width: 720, x: 0, y: 0 });
+    expect(bands).toEqual([
+      { height: 3, width: 720, x: 0, y: 0 },
+      { height: 3, width: 720, x: 0, y: 357 },
+      { height: 354, width: 3, x: 0, y: 3 },
+      { height: 354, width: 3, x: 717, y: 3 },
+    ]);
+    const covered = bands.reduce((sum, band) => sum + band.width * band.height, 0);
+    expect(covered).toBe(720 * 360 - 714 * 354);
+  });
+
+  it("shakes the view 2 logical px of the 720 base width for 100 ms", () => {
+    expect(HIT_SHAKE).toEqual({ duration: 100, offset: 2 });
+    expect(HIT_SHAKE_SHARE * 720).toBeCloseTo(2, 9);
   });
 });

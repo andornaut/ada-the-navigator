@@ -496,14 +496,14 @@ export class ConversationDirector {
     });
   }
 
-  /** A tap on the box: the next line, or after the last, the box closes. */
+  /** Moves the active conversation to its next line early; after the last, the box closes. */
   advance(): void {
     if (this.active) {
       this.nextLine();
     }
   }
 
-  /** Dismisses the active exchange, preserving queued warnings and reactions. */
+  /** A tap on the box dismisses the active exchange, preserving queued warnings and reactions. */
   skip(): void {
     this.revalidate();
     if (!this.active) {

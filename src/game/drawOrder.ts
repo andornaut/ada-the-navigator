@@ -49,6 +49,12 @@ export const EDGE_MARKER_DEPTH = 5;
  */
 export const USE_CALLOUT_DEPTH = 4.5;
 
+/**
+ * The hit flash's layer (art/layout.md "Hit flash"): above the backdrop, every play object and
+ * the Use callout, below the edge markers, the sticks and the HTML HUD.
+ */
+export const HIT_FLASH_DEPTH = 4.75;
+
 /** A sprite's drawn rectangle from its pivot, display size and origin. */
 export function drawnBox(sprite: Placed): DrawnBox {
   const left = sprite.x - sprite.originX * sprite.displayWidth;

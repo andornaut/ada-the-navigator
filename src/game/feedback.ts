@@ -1,3 +1,7 @@
+import type { Rect } from "@andornaut/game-kit/runtime/rect";
+
+import { HIT_FLASH, HIT_SHAKE } from "../data/layout.ts";
+import { SCREEN } from "../data/screen.ts";
 import { activeProjectileImpacts, wreckId } from "../model/flight.ts";
 import { archivedObjectIds } from "../model/geography.ts";
 import type { GameState, Vec } from "../model/types.ts";
@@ -167,6 +171,38 @@ export class ModelFeedback {
     return [...events];
   }
 }
+
+/**
+ * The hit flash's opacity sinceMs after the latest shield hit: 1 at the hit, falling linearly to
+ * 0 over HIT_FLASH.duration. Reduced motion never draws it.
+ */
+export function hitFlashAlpha(reducedMotion: boolean, sinceMs: number): number {
+  if (reducedMotion || !(sinceMs >= 0) || sinceMs >= HIT_FLASH.duration) {
+    return 0;
+  }
+  return 1 - sinceMs / HIT_FLASH.duration;
+}
+
+/** HIT_FLASH.colour as the number Phaser's fill style takes. */
+export const HIT_FLASH_FILL = Number.parseInt(HIT_FLASH.colour.slice(1), 16);
+
+/** The hit flash's band: four square-cornered rects HIT_FLASH.width wide just inside area. */
+export function hitFlashBands(area: Rect): Rect[] {
+  const { width: band } = HIT_FLASH;
+  const { height, width, x, y } = area;
+  return [
+    { height: band, width, x, y },
+    { height: band, width, x, y: y + height - band },
+    { height: height - 2 * band, width: band, x, y: y + band },
+    { height: height - 2 * band, width: band, x: x + width - band, y: y + band },
+  ];
+}
+
+/**
+ * The camera shake for a shield hit: HIT_SHAKE.offset logical px of the 720 base view's width,
+ * as an intensity for shakeIntensity.
+ */
+export const HIT_SHAKE_SHARE = HIT_SHAKE.offset / SCREEN.width;
 
 const tones: Record<FeedbackKind, [number, number]> = {
   damage: [110, 70],

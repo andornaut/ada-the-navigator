@@ -200,8 +200,8 @@ export interface ConversationBox {
   render(line: ConversationLineView | null, desktop: boolean, reducedMotion: boolean): void;
 }
 
-export function createConversationBox(onAdvance: () => void, onSkip?: () => void): ConversationBox;
-export function createConversationBox(onAdvance: () => void): ConversationBox {
+/** A tap on the box (its name tab included) calls onDismiss, which ends the whole conversation. */
+export function createConversationBox(onDismiss: () => void): ConversationBox {
   const root = document.createElement("button");
   root.type = "button";
   root.className = "ada-conversation";
@@ -235,7 +235,7 @@ export function createConversationBox(onAdvance: () => void): ConversationBox {
             lineKey !== null && !root.closest("[hidden], [inert]")
               ? { kind: "available" }
               : { kind: "omitted" },
-          run: onAdvance,
+          run: onDismiss,
         },
         current: () => !disposed && lineKey === generation && root.isConnected,
         slopPx: () => SCROLL.dragThreshold * readViewUnit(root),
