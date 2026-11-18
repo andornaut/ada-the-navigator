@@ -4,33 +4,33 @@
       "hardpoints": [
         {
           "id": "engine",
-          "offset": [0, 0.3],
+          "offset": [0, 0.3675428571428571],
           "order": 0,
           "role": "engine"
         },
         {
           "fire": "missile",
           "id": "port",
-          "offset": [-0.3, 0],
+          "offset": [-0.3675428571428571, 0],
           "order": 1,
           "role": "turret"
         },
         {
           "fire": "bolt",
           "id": "starboard",
-          "offset": [0.3, 0],
+          "offset": [0.3675428571428571, 0],
           "order": 2,
           "role": "turret"
         },
         {
           "id": "spine",
-          "offset": [0, 0.025],
+          "offset": [0, 0.03062857142857143],
           "order": 3,
           "role": "turret"
         },
         {
           "id": "bow",
-          "offset": [0, -0.22],
+          "offset": [0, -0.2695314285714286],
           "order": 4,
           "role": "turret"
         }
@@ -47,65 +47,65 @@
         },
         {
           "id": "engine-left",
-          "offset": [-0.25, 0.4],
+          "offset": [-0.24814814814814815, 0.3970370370370371],
           "order": 1,
           "role": "engine"
         },
         {
           "id": "engine-right",
-          "offset": [0.25, 0.4],
+          "offset": [0.24814814814814815, 0.3970370370370371],
           "order": 2,
           "role": "engine"
         },
         {
           "fire": "beam",
           "id": "weapon-left",
-          "offset": [-0.35, -0.3],
+          "offset": [-0.34740740740740744, -0.2977777777777778],
           "order": 3,
           "role": "turret"
         },
         {
           "fire": "dot",
           "id": "weapon-right",
-          "offset": [0.35, -0.3],
+          "offset": [0.34740740740740744, -0.2977777777777778],
           "order": 4,
           "role": "turret"
         },
         {
           "fire": "dot",
           "id": "weapon-rear-left",
-          "offset": [-0.42, 0.08],
+          "offset": [-0.4168888888888889, 0.07940740740740741],
           "order": 5,
           "role": "turret"
         },
         {
           "fire": "dot",
           "id": "weapon-rear-right",
-          "offset": [0.42, 0.08],
+          "offset": [0.4168888888888889, 0.07940740740740741],
           "order": 6,
           "role": "turret"
         },
         {
           "id": "claw-left",
-          "offset": [-0.15, -0.45],
+          "offset": [-0.1488888888888889, -0.4466666666666667],
           "order": 7,
           "role": "turret"
         },
         {
           "id": "claw-right",
-          "offset": [0.15, -0.45],
+          "offset": [0.1488888888888889, -0.4466666666666667],
           "order": 8,
           "role": "turret"
         },
         {
           "id": "stern-left",
-          "offset": [-0.1, 0.31],
+          "offset": [-0.09925925925925927, 0.30770370370370376],
           "order": 9,
           "role": "turret"
         },
         {
           "id": "stern-right",
-          "offset": [0.1, 0.31],
+          "offset": [0.09925925925925927, 0.30770370370370376],
           "order": 10,
           "role": "turret"
         }
@@ -129,20 +129,20 @@
         {
           "fire": "bolt",
           "id": "port",
-          "offset": [-0.29, 0],
+          "offset": [-0.2899999999999999, 0],
           "order": 0,
           "role": "turret"
         },
         {
           "fire": "bolt",
           "id": "starboard",
-          "offset": [0.29, 0],
+          "offset": [0.2899999999999999, 0],
           "order": 1,
           "role": "turret"
         },
         {
           "id": "aft",
-          "offset": [0, 0.29],
+          "offset": [0, 0.2899999999999999],
           "order": 2,
           "role": "turret"
         }

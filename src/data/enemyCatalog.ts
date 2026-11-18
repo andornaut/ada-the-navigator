@@ -249,10 +249,10 @@ const armed = (weapon: EnemyWeapon, level: WeaponLevel = 1): MountedWeapon => ({
 const frigateMounts = {
   fill: ["port", "starboard", "spine", "bow"],
   offsets: {
-    bow: { x: 0, y: -0.22 },
-    port: { x: -0.3, y: 0 },
-    spine: { x: 0, y: 0.025 },
-    starboard: { x: 0.3, y: 0 },
+    bow: { x: 0, y: -0.2695314285714286 },
+    port: { x: -0.3675428571428571, y: 0 },
+    spine: { x: 0, y: 0.03062857142857143 },
+    starboard: { x: 0.3675428571428571, y: 0 },
   },
   tiers: [
     {
@@ -300,14 +300,14 @@ const capitalMounts = {
     "stern-right",
   ],
   offsets: {
-    "claw-left": { x: -0.15, y: -0.45 },
-    "claw-right": { x: 0.15, y: -0.45 },
-    "stern-left": { x: -0.1, y: 0.31 },
-    "stern-right": { x: 0.1, y: 0.31 },
-    "weapon-left": { x: -0.35, y: -0.3 },
-    "weapon-rear-left": { x: -0.42, y: 0.08 },
-    "weapon-rear-right": { x: 0.42, y: 0.08 },
-    "weapon-right": { x: 0.35, y: -0.3 },
+    "claw-left": { x: -0.1488888888888889, y: -0.4466666666666667 },
+    "claw-right": { x: 0.1488888888888889, y: -0.4466666666666667 },
+    "stern-left": { x: -0.09925925925925927, y: 0.30770370370370376 },
+    "stern-right": { x: 0.09925925925925927, y: 0.30770370370370376 },
+    "weapon-left": { x: -0.34740740740740744, y: -0.2977777777777778 },
+    "weapon-rear-left": { x: -0.4168888888888889, y: 0.07940740740740741 },
+    "weapon-rear-right": { x: 0.4168888888888889, y: 0.07940740740740741 },
+    "weapon-right": { x: 0.34740740740740744, y: -0.2977777777777778 },
   },
   tiers: [
     {
@@ -355,7 +355,7 @@ const capitalMounts = {
  * Cartwheel's fixed ore-field guard: two turrets at Art's offsets (art/heavies.md "Turret
  * platform"), as in tools/enemy-hardpoints.json, each firing two-shot Laser bursts.
  */
-const PLATFORM_MOUNT_OFFSET = 0.29;
+const PLATFORM_MOUNT_OFFSET = 0.2899999999999999;
 const platformMounts = {
   fill: PLATFORM_SIGNATURE.fill,
   offsets: {
@@ -491,8 +491,8 @@ export const enemyCatalog = {
     // Five Ada widths across: hit areas stay apart and the whole hull reads on screen.
     hardpoints: [
       command,
-      engine("engine-left", -0.25, 0.4),
-      engine("engine-right", 0.25, 0.4),
+      engine("engine-left", -0.24814814814814815, 0.3970370370370371),
+      engine("engine-right", 0.24814814814814815, 0.3970370370370371),
       ...mountedHardpoints("capital", capitalMounts, capitalMounts.tiers[0], 3),
     ],
     hp: 18,
@@ -514,7 +514,7 @@ export const enemyCatalog = {
     engagement: 500,
     fireClockPolicy: "staggered-and-paused",
     hardpoints: [
-      engine("engine", 0, 0.3),
+      engine("engine", 0, 0.3675428571428571),
       ...mountedHardpoints("frigate", frigateMounts, frigateMounts.tiers[0], 3),
     ],
     hp: 10,

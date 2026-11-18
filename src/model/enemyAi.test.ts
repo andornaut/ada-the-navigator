@@ -917,16 +917,15 @@ describe("enemy ship physics and hull rotation", () => {
   it("rotates legacy fraction offsets with the canonical hull span at exactly 90 degrees", () => {
     const definition = enemyCatalog.capital;
     const facing = { x: 1, y: 0 };
-    const offset = (id: string) =>
-      hardpointOffset(definition, 20, facing, {
-        offset: definition.hardpoints.find((part) => part.id === id)!.offset,
-      });
+    const local = (id: string) => definition.hardpoints.find((part) => part.id === id)!.offset;
+    const offset = (id: string) => hardpointOffset(definition, 20, facing, { offset: local(id) });
     // Omitting an id selects the legacy fallback; raw metadata anchors are covered separately.
     const width = definition.sizeRatio * 20;
-    expect(offset("weapon-left").x).toBeCloseTo(0.3 * width, 9);
-    expect(offset("weapon-left").y).toBeCloseTo(-0.35 * width, 9);
-    expect(offset("weapon-right").x).toBeCloseTo(0.3 * width, 9);
-    expect(offset("weapon-right").y).toBeCloseTo(0.35 * width, 9);
+    for (const id of ["weapon-left", "weapon-right"]) {
+      expect(offset(id).x).toBeCloseTo(-local(id).y * width, 9);
+      expect(offset(id).y).toBeCloseTo(local(id).x * width, 9);
+    }
+    expect(Math.sign(offset("weapon-left").y)).toBe(-1);
     const engine = hardpointOffset(definition, 20, facing, {
       offset: { x: 0.3, y: 0.35 },
     });
