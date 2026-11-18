@@ -2401,15 +2401,6 @@ try {
   await page.locator('[data-action="pause-map"]').click();
   await localMap.locator('[data-action="map-galaxies"]').click();
   await galaxyMap.waitFor({ state: "visible" });
-  // The galaxy map proof with Earth selected, its marker and the destination action Jump to Earth.
-  await galaxyMap.locator(".ada-route-marker[data-earth]").click();
-  await page.waitForFunction(
-    () =>
-      document
-        .querySelector('.ada-route[data-dialog="galaxies"] [data-action="galaxy-jump"]')
-        ?.textContent?.trim() === "Jump to Earth",
-  );
-  await proofsAt("galaxy-map-earth");
   await chooseEarth(galaxyMap, "Jump to Earth");
   await page
     .locator(".ada-story-panel:not(.ada-dialogue-panel):not([hidden])")
@@ -3944,6 +3935,22 @@ try {
     const state = JSON.parse(localStorage.getItem(key));
     return state?.progress[1].resolved && state.unlocked.includes(3);
   }, storageKey);
+  // The galaxy map proof with Earth selected: its marker and the destination action Stay on Earth.
+  // Taken at boarding, with no flight held under the map, so the resizes stay inside the browser's
+  // memory ceiling; Whirlpool is selected again after.
+  const destinationReads = (text) =>
+    page.waitForFunction(
+      (label) =>
+        document
+          .querySelector('.ada-route[data-dialog="galaxies"] [data-action="galaxy-jump"]')
+          ?.textContent?.trim() === label,
+      text,
+    );
+  await selector().locator(".ada-route-marker[data-earth]").click();
+  await destinationReads("Stay on Earth");
+  await proofsAt("galaxy-map-earth");
+  await selector().locator('.ada-route-marker[data-position="2"]').click();
+  await destinationReads("Jump to Whirlpool");
   events.checks.push(
     "Fixture-based home resolution, closing and the next opening lead to galaxy selection on " +
       "the newly unlocked galaxy",
