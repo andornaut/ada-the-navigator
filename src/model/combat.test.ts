@@ -214,6 +214,8 @@ describe("integrated combat", () => {
     }
     const definition = enemyDefinition(4, "frigate", id);
     const target = ship("frigate", { x: 400, y: 0 }, definition, id);
+    // Its 400 offset lies outside the 720x360 base view, where enemies hold fire.
+    const wide = { ...idle, viewportWidth: 2 * SCREEN.width };
     const ordered = definition.mounts!.fill.flatMap((mount) =>
       definition.hardpoints.flatMap((part) =>
         part.kind === "weapon" && part.id === mount ? [part] : [],
@@ -221,7 +223,7 @@ describe("integrated combat", () => {
     );
     const dt = 0.01;
     flight.objects.push(target);
-    stepFlight(CONTENT, dt, idle, flight);
+    stepFlight(CONTENT, dt, wide, flight);
     expect(target.enemy!.firePhasesInitialized).toBe(true);
     expect(flight.shots.map((shot) => shot.projectile)).toEqual(
       ordered[0]!.fire.angles.map(() => ordered[0]!.fire.projectile),
@@ -241,8 +243,8 @@ describe("integrated combat", () => {
     );
     for (let remaining = lastPhase; remaining > 1e-9;) {
       const slice = Math.min(dt, remaining);
-      stepFlight(CONTENT, slice, idle, flight);
-      stepFlight(CONTENT, slice, idle, resumed);
+      stepFlight(CONTENT, slice, wide, flight);
+      stepFlight(CONTENT, slice, wide, resumed);
       expect(resumed).toEqual(flight);
       remaining -= slice;
     }
@@ -272,8 +274,8 @@ describe("integrated combat", () => {
     const position = { x: missile.x, y: missile.y };
     flight.player.y = 200;
     resumed.player.y = 200;
-    stepFlight(CONTENT, 0.1, idle, flight);
-    stepFlight(CONTENT, 0.1, idle, resumed);
+    stepFlight(CONTENT, 0.1, wide, flight);
+    stepFlight(CONTENT, 0.1, wide, resumed);
     expect(resumed).toEqual(flight);
     expect(missile.velocity).toEqual(velocity);
     expect(missile.x).toBeCloseTo(position.x + velocity.x * 0.1);
@@ -284,6 +286,8 @@ describe("integrated combat", () => {
     // Each part consumes only its own HP; separate hull hits must destroy the hull.
     const flight = empty();
     const target = ship("capital", { x: 400, y: 0 }, enemyDefinition(1, "capital", "target"));
+    // Its 400 offset lies outside the 720x360 base view, where enemies hold fire.
+    const wide = { ...idle, viewportWidth: 2 * SCREEN.width };
     flight.objects.push(target);
     target.enemy!.velocity = { x: 20, y: 10 };
     // A moving hull faces its velocity.
@@ -296,7 +300,7 @@ describe("integrated combat", () => {
     };
     destroyPart("engine-left");
     destroyPart("weapon-left");
-    stepFlight(CONTENT, 0.001, idle, flight);
+    stepFlight(CONTENT, 0.001, wide, flight);
     expect(target.enemy!.hp).toBe(hullHp);
     for (const id of ["engine-left", "weapon-left"]) {
       expect(target.enemy!.hardpoints.find((part) => part.id === id)!.hp).toBe(0);
@@ -306,7 +310,7 @@ describe("integrated combat", () => {
     for (const part of target.enemy!.hardpoints) {
       part.cooldown = 0;
     }
-    stepFlight(CONTENT, 0.01, idle, flight);
+    stepFlight(CONTENT, 0.01, wide, flight);
     // One working engine of two still drives the hull at half its top speed, and the other three
     // mounts still fire their loadout's volleys.
     expect({ x: target.x, y: target.y }).not.toEqual(before);
@@ -320,7 +324,7 @@ describe("integrated combat", () => {
     for (const id of ["weapon-right", "weapon-rear-left", "weapon-rear-right"]) {
       destroyPart(id);
     }
-    const disabling = stepFlight(CONTENT, 0.01, idle, flight);
+    const disabling = stepFlight(CONTENT, 0.01, wide, flight);
     expect(disabling).toContainEqual({ id: "target", type: "enemyDisabled" });
     expect(disabling).not.toContainEqual({ id: target.id, type: "enemyDestroyed" });
     expect(hullHp).toBeGreaterThan(0);
@@ -334,13 +338,13 @@ describe("integrated combat", () => {
     target.enemy!.hardpoints.forEach((part) => (part.cooldown = 0));
     const coasting = Math.hypot(target.enemy!.velocity.x, target.enemy!.velocity.y);
     expect(coasting).toBeGreaterThan(0);
-    const later = stepFlight(CONTENT, 20, idle, flight);
+    const later = stepFlight(CONTENT, 20, wide, flight);
     expect(later.some((event) => event.type === "enemyDisabled")).toBe(false);
     expect(flight.shots.filter((shot) => shot.enemy)).toEqual([]);
     expect(Math.hypot(target.enemy!.velocity.x, target.enemy!.velocity.y)).toBeLessThan(0.01);
     // Destroying the command still cannot spill into the hull.
     destroyPart("command");
-    expect(stepFlight(CONTENT, 0.01, idle, flight)).not.toContainEqual({
+    expect(stepFlight(CONTENT, 0.01, wide, flight)).not.toContainEqual({
       id: target.id,
       type: "enemyDestroyed",
     });
@@ -348,16 +352,16 @@ describe("integrated combat", () => {
     expect(target.enemy!.hp).toBe(hullHp);
     // A separate hit on the exposed hull damages only the hull, then the final hit destroys it.
     hit(flight, partPosition(target, "command"));
-    stepFlight(CONTENT, 0.01, idle, flight);
+    stepFlight(CONTENT, 0.01, wide, flight);
     const remainingHull = hullHp - CONTENT.tuning.flight.playerShotDamage;
     expect(target.enemy!.hp).toBe(remainingHull);
     hit(flight, partPosition(target, "command"), remainingHull);
-    expect(stepFlight(CONTENT, 0.01, idle, flight)).toContainEqual({
+    expect(stepFlight(CONTENT, 0.01, wide, flight)).toContainEqual({
       id: target.id,
       type: "enemyDestroyed",
     });
     expect(flight.objects).not.toContain(target);
-    expect(stepFlight(CONTENT, 0.01, idle, flight)).not.toContainEqual({
+    expect(stepFlight(CONTENT, 0.01, wide, flight)).not.toContainEqual({
       id: target.id,
       type: "enemyDestroyed",
     });

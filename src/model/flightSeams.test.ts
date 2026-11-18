@@ -6,6 +6,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog, enemyDefinition, heavyLoadout } from "../data/enemyCatalog.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { PHANTOM_DESTINATIONS, PHANTOM_TUNING } from "../data/phantom.ts";
+import { SCREEN } from "../data/screen.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { rollAsteroidLoot } from "./asteroidLoot.ts";
@@ -237,6 +238,8 @@ describe("reviewed seam guards and drawn pickups", () => {
 
   it("tracks a charged lance along the short seam direction", () => {
     const flight = stationClearFixture({ x: half - 200, y: seamY }, 2);
+    // Ada and the capital sit 400 apart across the seam, outside the 720x360 base view.
+    const wide = { ...idle, viewportWidth: 2 * SCREEN.width };
     const id = Array.from({ length: 500 }, (_, index) => `lance:${index}`).find((candidate) =>
       [...heavyLoadout("capital", ROUTE_POSITION[2], candidate)!.values()].includes("chargedLance"),
     )!;
@@ -262,11 +265,11 @@ describe("reviewed seam guards and drawn pickups", () => {
       radius: definition.sizeRatio * CONTENT.tuning.flight.shipRadius,
       ...point,
     });
-    stepFlight(CONTENT, 1 / 60, idle, flight);
+    stepFlight(CONTENT, 1 / 60, wide, flight);
     const beam = activeEnemyBeams(flight).find(({ kind }) => kind === "lance");
     expect(beam).toBeDefined();
     flight.player.y = seamY + 50;
-    stepFlight(CONTENT, 0.1, idle, flight);
+    stepFlight(CONTENT, 0.1, wide, flight);
     const delta = wrappedDelta(GALAXY_SIDE, beam!.muzzle, flight.player);
     expect(beam!.direction.x).toBeCloseTo(delta.x / Math.hypot(delta.x, delta.y), 8);
     expect(beam!.direction.y).toBeCloseTo(delta.y / Math.hypot(delta.x, delta.y), 8);

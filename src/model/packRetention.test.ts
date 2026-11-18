@@ -132,6 +132,8 @@ describe("casualty-preserving pack retention", () => {
     expect(flight.combat!.initialPackSizes[packId]).toBe(4);
     expect(flight.combat!.unloadedPackMembers).toEqual({ [packId]: 2 });
     expect(model.state.progress[model.state.flight!.galaxy].destroyedEnemies).toBe(1);
+    // The survivor fights inside the play view, so the exact resume covers its fire clocks.
+    reposition(members(model, packId)[0]!, flight.player.x + 150, flight.player.y + 100);
     model.step(0.001, idle);
     expect(members(model, packId)[0]!.enemy!.fleeing).toBe(false);
     const resumed = relaunch(content, model.save());
