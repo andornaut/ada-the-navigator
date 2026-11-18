@@ -159,32 +159,33 @@ Job lore lines, said by Astra after a job completes, one unseen line per job:
 
 ### Player strings
 
-| Key             | Text                                       |
-| --------------- | ------------------------------------------ |
-| `jobs`          | Jobs                                       |
-| `jobBoard`      | Job board                                  |
-| `jobBoardIntro` | People here could use some help.           |
-| `jobObjective`  | Job: {objective}                           |
-| `job`           | Job                                        |
-| `jobAccept`     | Accept                                     |
-| `jobActive`     | Active                                     |
-| `jobDrop`       | Drop                                       |
-| `jobDropTitle`  | Drop this job?                             |
-| `jobDropCancel` | Cancel                                     |
-| `jobBusy`       | Finish or drop your current job first.     |
-| `jobReward`     | {amount} Stardust                          |
-| `jobComplete`   | Job complete: +{amount} Stardust           |
-| `tow`           | Tow                                        |
-| `towTravel`     | Unavailable while towing.                  |
-| `carryTravel`   | Unavailable while carrying a delivery.     |
-| `surveyTitle`   | Chart the {landmark}                       |
-| `surveyAbout`   | Fly close and scan it.                     |
-| `deliveryTitle` | Deliver {item} to {place}                  |
-| `deliveryAbout` | They're waiting for it.                    |
-| `rescueTitle`   | Tow {craft} to safety                      |
-| `rescueAbout`   | Its engine stopped. Towing makes you slow. |
-| `huntTitle`     | Find a lost {item}                         |
-| `huntAbout`     | It's in the marked area. Ask Penny.        |
+| Key                   | Text                                        |
+| --------------------- | ------------------------------------------- |
+| `jobs`                | Jobs                                        |
+| `jobBoard`            | Job board                                   |
+| `jobBoardIntro`       | People here could use some help.            |
+| `jobObjective`        | Job: {objective}                            |
+| `job`                 | Job                                         |
+| `jobAccept`           | Accept                                      |
+| `jobActive`           | Active                                      |
+| `jobDrop`             | Drop                                        |
+| `jobDropTitle`        | Drop this job?                              |
+| `jobDropCancel`       | Cancel                                      |
+| `jobBusy`             | Finish or drop your current job first.      |
+| `jobReward`           | {amount} Stardust                           |
+| `jobComplete`         | Job complete: +{amount} Stardust            |
+| `tow`                 | Tow                                         |
+| `towTravel`           | Unavailable while towing.                   |
+| `carryTravel`         | Unavailable while carrying a delivery.      |
+| `surveyTitle`         | Chart the {landmark}                        |
+| `surveyAbout`         | Fly close and scan it.                      |
+| `deliveryTitle`       | Deliver {item} to {place}                   |
+| `deliveryAbout`       | They're waiting for it.                     |
+| `questDeliveryDetail` | Take {item} to {place}, where it is needed. |
+| `rescueTitle`         | Tow {craft} to safety                       |
+| `rescueAbout`         | Its engine stopped. Towing makes you slow.  |
+| `huntTitle`           | Find a lost {item}                          |
+| `huntAbout`           | It's in the marked area. Ask Penny.         |
 
 In-flight lines, each played once per save:
 
@@ -355,7 +356,8 @@ Activity lines:
 | `calfGuide`         | Guide the calf home.                  |
 
 Templates carry no article; every destination has a sentence name with its
-article, used in objectives and job titles: a station is "the station", an
+article, used in objectives, job titles and details whether or not the place is
+mapped (only the From and To endpoint lines show "Explore to locate"): a station is "the station", an
 outpost "the growers' outpost", "the workshop" or "the salvagers' yard", and
 other places "the mining hub", "the whale family" or "the settlement". So:
 "Deliver seeds to the station" and "Carry fresh food to the station."
