@@ -4784,10 +4784,9 @@ try {
   events.checks.push(
     "Portrait settings and contextual action remain accessible in the turned frame",
   );
-  // A save from a newer version: the start screen offers no action, the save stays as it was
-  // through the page hiding, and the update is required, the loading bar travelling while it
-  // downloads or the update-required message while it cannot. The kit's own update attempts and
-  // reloads are the point here, so only this page's CSP violations count as errors.
+  // A save from a newer version, before version 1 (gameplay/rules.md "Saves reset before version
+  // 1"): it is incompatible, so it resets to a new game through the new-game path, the replaced
+  // data kept as the backup save. The newer-save update path applies from version 1.
   await portraitContext.close();
   const newerSaved = JSON.stringify({
     marker: "from a newer build",
@@ -4813,34 +4812,26 @@ try {
     }
   });
   await page.goto("http://ada-preview:4173/play/");
-  await page.locator(".ada-start").waitFor({ state: "visible" });
-  await page.waitForFunction(
-    (label) =>
-      document.querySelector(".ada-start-note")?.textContent === label ||
-      document.querySelector(".progress-bar:not([hidden])") !== null,
-    CONTENT.labels.updateRequired,
-    { timeout: 15000 },
+  await page.locator('.ada-start-actions > [data-action="start"]').waitFor({ state: "visible" });
+  const newerStart = await page.evaluate(
+    (keys) => ({
+      actions: [...document.querySelectorAll(".ada-start-actions > button")].map(
+        (button) => button.dataset.action,
+      ),
+      backup: localStorage.getItem(keys.backup),
+      version: JSON.parse(localStorage.getItem(keys.save) ?? "null")?.version ?? null,
+    }),
+    { backup: `${storageKey}.backup`, save: storageKey },
   );
-  const newerStart = await page.evaluate(() => ({
-    actions: document.querySelectorAll(".ada-start-actions > button").length,
-    note: document.querySelector(".ada-start-note")?.textContent ?? null,
-  }));
-  assert.equal(newerStart.actions, 0, "A newer save keeps Start closed");
-  assert.ok(
-    newerStart.note === null || newerStart.note === CONTENT.labels.updateRequired,
-    "A newer save shows only Gameplay's update-required message",
-  );
-  await page.evaluate(() => {
-    window.dispatchEvent(new PageTransitionEvent("pagehide"));
-    document.dispatchEvent(new Event("visibilitychange"));
-  });
-  assert.equal(
-    await page.evaluate((key) => localStorage.getItem(key), storageKey),
-    newerSaved,
-    "A newer save is never overwritten",
+  assert.deepEqual(
+    newerStart,
+    { actions: ["start"], backup: newerSaved, version: SAVE_VERSION },
+    "Before version 1 a newer save resets to a new game, kept as the backup save",
   );
   await page.screenshot({ path: `${output}/newer-save.png` });
-  events.checks.push("A newer save keeps Start closed and its save, and requires the update");
+  events.checks.push(
+    "Before version 1 a newer save resets to a new game, Start alone, and is kept as the backup",
+  );
   await newerContext.close();
   // A 2404x1080 phone at device pixel ratio 2.5, in whole CSS px (962x432 is 2405x1080), on touch.
   const phoneContext = await browser.newContext({
