@@ -23,11 +23,11 @@ it("composes the original chip, name, two detail lines and native travel action 
             ],
           },
         },
+        { props: "empty" },
         {
           props: "reason",
           slots: { content: [{ props: "danger" }, { props: "towing" }, { props: "carrying" }] },
         },
-        { props: "empty" },
       ],
     },
   });

@@ -41,6 +41,7 @@ import {
   MAP_TOOLS,
   mapGlyphSize,
   mapHeaderCap,
+  mapHeaderLeft,
   mapImage,
   mapProjection,
   type MapTool,
@@ -753,6 +754,10 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
   margin:0;
   text-align:center
 }
+/* In danger with no places the danger line follows the empty note, centred as it is. */
+.ada-controls .ada-map-empty:not([hidden]) ~ .ada-map-reason{
+  text-align:center
+}
 `;
 
 // The objective's indicator, in px around the chip centre: the flight's arrow pointing down at
@@ -1377,7 +1382,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       pixelUnit,
     );
     const page = safeRect(insets, SPACING.pageInset, size);
-    header.style.left = pixels(Math.round(page.x * pixelUnit) / density);
+    header.style.left = pixels(Math.round(mapHeaderLeft(insets, size) * pixelUnit) / density);
     header.style.top = pixels(Math.round(page.y * pixelUnit) / density);
     header.style.width = units(geometry.width);
     header.style.setProperty("--map-header-gap", units(geometry.gap));

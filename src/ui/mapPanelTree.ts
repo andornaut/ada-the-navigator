@@ -33,7 +33,8 @@ export function mapPanelTree(): LayoutNode<MapPanelSchema> {
       group("text", [leaf("name"), leaf("detail0"), leaf("detail1")]),
       leaf("travel"),
     ]),
-    group("reason", [leaf("danger"), leaf("towing"), leaf("carrying")]),
+    // With no places the empty note comes first and the danger line follows it (art/map.md).
     leaf("empty"),
+    group("reason", [leaf("danger"), leaf("towing"), leaf("carrying")]),
   ]);
 }

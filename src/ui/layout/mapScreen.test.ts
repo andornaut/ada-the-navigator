@@ -23,6 +23,7 @@ import {
   mapGalaxiesRect,
   mapHeaderCap,
   mapHeaderGeometry,
+  mapHeaderLeft,
   mapHeaderWidth,
   mapImage,
   mapProjection,
@@ -132,17 +133,29 @@ describe("map projection and fit", () => {
     expect(mapCloseRect(phone, BASE)).toEqual({ height: 48, width: 98, x: 579, y: 293 });
     expect(MAP_TOOLS.map(({ id }) => id)).toEqual(["zoomOut", "zoomIn", "recentre"]);
     expect(toolColumnLeft(NO_INSETS, BASE)).toBe(542);
-    expect(mapHeaderCap(NO_INSETS, BASE)).toBe(360);
   });
 
-  it("fits all 200 landmark pips inside half the viewport without changing the text widths", () => {
+  it("starts the header a gap right of the pause press area and ends it a gap before the tools", () => {
+    const phone = { bottom: 19, left: 43, right: 43, top: 0 };
+    // The status pill's rule (art/map.md "Header"), clear of the pause disc.
+    expect(mapHeaderLeft(NO_INSETS, BASE)).toBe(62.75);
+    expect(mapHeaderLeft(phone, BASE)).toBe(93.75);
+    // toolColumnLeft - SPACING.gap - header left, with no half-view term: 542 - 8 - 62.75 and
+    // 515 - 8 - 93.75.
+    expect(mapHeaderCap(NO_INSETS, BASE)).toBe(471.25);
+    expect(mapHeaderCap(phone, BASE)).toBe(413.25);
+  });
+
+  it("fits all 200 landmark pips inside the header's cap without changing the text widths", () => {
     const cap = mapHeaderCap(NO_INSETS, BASE);
     const header = containedMapHeader(cap, 100, 65, 200, 300, 1);
-    expect(header.width).toBe(360);
+    expect(header.width).toBe(Math.floor(cap));
     expect(header.pipScale).toBeGreaterThan(0);
     expect(header.pipScale).toBeLessThan(1);
     const pips = ((200 - 1) * MAP_SCREEN.header.pipPitch + MAP_SCREEN.header.pip) * header.pipScale;
-    expect(100 + MAP_SCREEN.header.divider.width + 65 + pips + 5 * header.gap).toBeCloseTo(360);
+    expect(100 + MAP_SCREEN.header.divider.width + 65 + pips + 5 * header.gap).toBeCloseTo(
+      Math.floor(cap),
+    );
     expect(containedMapHeader(cap, 100, 65, 12, 300, 1).pipScale).toBe(1);
   });
 

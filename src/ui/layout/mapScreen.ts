@@ -12,7 +12,7 @@ import {
 } from "../../data/layout.ts";
 import { CHARTING_RADIUS, type MapSymbol } from "../../model/map.ts";
 import { nearestImage, wrapPoint } from "../../model/worldGeometry.ts";
-import { type Insets, safeRect, type Size } from "./playView.ts";
+import { hudRect, type Insets, safeRect, type Size, STATUS_PILL } from "./playView.ts";
 import { BUTTON_GAP, TYPE } from "./tokens.ts";
 export { MAP_PANEL, MAP_SYMBOL } from "../../data/layout.ts";
 
@@ -175,14 +175,19 @@ export function panelMaxWidth(insets: Insets, view: Size): number {
   return Math.max(0, mapQuestsRect(insets, view).x - SPACING.gap - page.x);
 }
 
+/**
+ * The header's left takes the status pill's rule: SPACING.gap right of the pause press area, 62.75
+ * at the 720 base and 93.75 with phone insets. The navigation disc always shows over the map
+ * (src/input/controls.ts syncNavigationEntry), so art/map.md's page-left case for a hidden pause
+ * button does not arise here.
+ */
+export function mapHeaderLeft(insets: Insets, view: Size): number {
+  return hudRect(insets, view).x + STATUS_PILL.x;
+}
+
+/** The header ends SPACING.gap left of the tools: 471.25 at the 720 base, 413.25 with insets. */
 export function mapHeaderCap(insets: Insets, view: Size): number {
-  return Math.max(
-    0,
-    Math.min(
-      view.width / 2,
-      toolColumnLeft(insets, view) - SPACING.gap - safeRect(insets, SPACING.pageInset, view).x,
-    ),
-  );
+  return Math.max(0, toolColumnLeft(insets, view) - SPACING.gap - mapHeaderLeft(insets, view));
 }
 
 /** One equal gap spans both outer edges and each pair of adjacent ink segments. */

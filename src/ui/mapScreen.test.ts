@@ -173,6 +173,13 @@ describe("map screen place panel", () => {
     expect(travelState(false, true, false, null)).toEqual({ offered: false, reason: null });
   });
 
+  it("centres the danger line under the empty note when the map has no places", () => {
+    const rule = MAP_SCREEN_STYLE.match(
+      /\.ada-controls \.ada-map-empty:not\(\[hidden\]\) ~ \.ada-map-reason\{([^}]+)\}/u,
+    )?.[1];
+    expect(rule).toContain("text-align:center");
+  });
+
   it("holds the reason alone in 52, or after the empty note in 80", () => {
     expect(panelHeight(true, 0)).toBe(52);
     expect(emptyPanelHeight(true)).toBe(80);
