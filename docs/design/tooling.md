@@ -34,3 +34,4 @@ Reference: [checks](../checks.md), [container adoption](../container-adoption.md
 | ada-0126 | Preserve committed source identity in isolated checks                     | [ada-0126.md](../work/ada-0126.md) |
 | ada-0131 | Permit optional analytics only on the landing page                        | [ada-0131.md](../work/ada-0131.md) |
 | ada-0203 | Cut over to coordination-kit 1 and delivery-kit 5                         | [ada-0203.md](../work/ada-0203.md) |
+| ada-0276 | Pin delivery-kit 5.0.1 and coordination-kit 1.0.1                         | [ada-0276.md](../work/ada-0276.md) |
