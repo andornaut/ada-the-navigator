@@ -40,7 +40,10 @@ export interface QuestEntry {
 export interface QuestDetailContext {
   readonly galaxy: GalaxyNumber;
   readonly label: (key: string) => string;
-  /** Existing sentence-name resolver; called only for discovered locations. */
+  /**
+   * Existing sentence-name resolver: for discovered locations, and for a delivery job's
+   * destination in its description whether or not the place is mapped.
+   */
   readonly placeLabel: (id: string) => string;
   readonly jobText: (job: Readonly<HeldJob>) => { readonly detail: string; readonly title: string };
   readonly miningMilestones: readonly number[];
@@ -197,7 +200,8 @@ export function questDetails(
           craft: task.item.replace(/^(?:a|an)\s+/iu, ""),
           item: task.item,
           landmark: landmark ? context.label(landmark.name) : context.label("questExplore"),
-          place: place(task.target.id),
+          // The sentence name, as in the title; only the endpoint lines withhold unmapped places.
+          place: task.type === "delivery" ? context.placeLabel(task.target.id) : "",
         }) || context.jobText(task).detail;
       jobDetails = {
         description,

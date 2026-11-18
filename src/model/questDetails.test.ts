@@ -195,10 +195,10 @@ describe("accepted optional task facts", () => {
     });
   }
 
-  it("does not resolve hidden names and distinguishes collecting from the final delivery", () => {
+  it("hides unmapped endpoints but names the destination and tells collecting from delivering", () => {
     const model = flight();
     const task = job("delivery");
-    const placeLabel = vi.fn((id: string) => id);
+    const placeLabel = vi.fn((id: string) => `sentence:${id}`);
     const collecting = questDetails(
       { ...context(), placeLabel },
       snapshot(model, task),
@@ -208,8 +208,8 @@ describe("accepted optional task facts", () => {
       nextStep: "collect:Seeds",
       source: null,
     });
-    expect(placeLabel).not.toHaveBeenCalled();
-    expect(collecting.description).toBe(`seeds|${label("questExplore")}`);
+    expect(placeLabel.mock.calls).toEqual([[task.target.id]]);
+    expect(collecting.description).toBe(`seeds|sentence:${task.target.id}`);
     model.state.progress[1].stations.push(task.station, task.target.id);
     const delivering = questDetails(
       context(),

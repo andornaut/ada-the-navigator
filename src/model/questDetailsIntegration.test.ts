@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { carriedItemName } from "../data/itemNames.ts";
 import { questReward } from "../data/questRewards.ts";
+import { questRoute } from "../ui/questsScreen.ts";
 import { ensureDestination } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { fill } from "./shop.ts";
@@ -74,6 +75,30 @@ describe("GameModel map quest detail integration", () => {
       nextStep: fill(CONTENT.labels.questDeliver!, { item: carriedItemName(task.item) }),
       reward: fill(CONTENT.labels.jobReward!, { amount: questReward(task.reward) }),
     });
+  });
+
+  it("names an unmapped delivery destination by its sentence name while its To endpoint stays unlocated", () => {
+    const model = modelAt(1);
+    model.state.tasks[1] = {
+      carrying: false,
+      id: "unmapped-delivery",
+      item: "a crate of seedling trays",
+      kind: "job",
+      reward: 50,
+      station: "growers",
+      target: { id: "workshop", x: 1000, y: 0 },
+      type: "delivery",
+    };
+    model.state.progress[1].known = ["growers"];
+    const entry = model.quests.find(({ line }) => line.kind === "job")!;
+    expect(entry.line.text).toBe("Deliver a crate of seedling trays to the workshop");
+    expect(entry.line.description).toBe(
+      "Take a crate of seedling trays to the workshop, where it is needed.",
+    );
+    const [from, to] = questRoute(entry, model.map!.places);
+    expect(from?.location?.id).toBe("growers");
+    expect(to).toEqual({ kind: "target", location: null, place: null });
+    expect(CONTENT.labels.questExplore).toBe("Explore to locate");
   });
 
   it("uses current mining cargo and deposits through the public map getter", () => {
