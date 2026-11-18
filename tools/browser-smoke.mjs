@@ -477,9 +477,12 @@ try {
       return pages;
     }
     assert.ok(remaining > 0, "Storybook pages must reach galaxy selection");
-    // The art loads once, after the manifest.
+    // The art loads once, after the manifest: Art's background image, or on an aboard page the
+    // title screen's ship (.ada-story-ship) over the last-played galaxy's backdrop, with no image.
     await page.waitForFunction(
-      () => document.querySelector(".ada-story-art")?.style.backgroundImage,
+      () =>
+        document.querySelector(".ada-story-art")?.style.backgroundImage ||
+        document.querySelector(".ada-story-ship:not([hidden])")?.childElementCount,
     );
     pages.push({
       art: await page
