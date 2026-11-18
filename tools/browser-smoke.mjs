@@ -2416,19 +2416,20 @@ try {
   );
   // The mining hub is a station: Use deposits the ore Ada carries, then docks, and once
   // Cartwheel's space quest is complete the shop's Ship tab heads with the holodisk.
+  // Cartwheel's story is resolved before its flight starts, as src/model/hubStation.test.ts does,
+  // so the world holds the hub with no capital encounter planned around it.
   const hubInput = new GameModel(CONTENT);
   hubInput.state.unlocked = [1, 2];
-  hubInput.startGalaxy(2);
-  playOpening(hubInput);
-  hubInput.state.dialogue = null;
   Object.assign(hubInput.state.progress[2], {
     introduced: true,
-    known: ["hub"],
     questComplete: true,
     resolved: true,
     stage: 5,
-    stations: ["hub"],
   });
+  hubInput.startGalaxy(2);
+  playOpening(hubInput);
+  hubInput.state.dialogue = null;
+  Object.assign(hubInput.state.progress[2], { known: ["hub"], stations: ["hub"] });
   const hubFlight = hubInput.state.flight;
   delete hubFlight.storyScene;
   hubFlight.objects = hubFlight.objects.filter(({ kind }) => kind !== "enemy");
