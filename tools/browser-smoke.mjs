@@ -2226,11 +2226,10 @@ try {
     "Continue resumes the flight from the title",
   );
   // The local map's Galaxies opens the galaxy map over the paused flight: its ship on the galaxy
-  // Ada is flying in, whose default action reads Stay here, and its close X on the HUD rect's
-  // corner. Stay here closes both maps on the same flight; the close X returns to the local map;
-  // Earth lands on Ada's room page, where the Paused card holds only Settings and Back to title,
-  // and closes on Escape and its X. With the opening and prologue seen, Earth lands on the room
-  // page itself.
+  // Ada is flying in, whose single destination action reads Stay in {galaxy}, with no close X or
+  // Back. Stay in and Escape return to the local map on the same flight; Earth lands on Ada's room
+  // page, where the Paused card holds only Settings and Back to title, and closes on Escape and its
+  // X. With the opening and prologue seen, Earth lands on the room page itself.
   const roomInput = relaunch(CONTENT, safeSerialized);
   roomInput.state.progress[1].opened = true;
   roomInput.state.prologueSeen = true;
@@ -2261,9 +2260,13 @@ try {
     CONTENT.labels.galaxyNumber.replace("{number}", "1"),
     "The galaxy map opens on Sunflower, where Ada is flying",
   );
-  const galaxyClose = galaxyMap.locator('[data-action="close-galaxies"]');
-  assert.equal(await galaxyClose.count(), 1, "The galaxy map has its close X");
-  // The galaxy map with its X at 844x390, without and with phone insets.
+  // No close X or Back: the single destination action, back and Escape leave the galaxy map.
+  assert.equal(
+    await galaxyMap.locator('[data-action="close-galaxies"], .ada-close').count(),
+    0,
+    "The galaxy map has no close X or Back",
+  );
+  // The galaxy map at 844x390, without and with phone insets.
   const viewportBefore = page.viewportSize();
   await page.setViewportSize({ height: 390, width: 844 });
   await page.waitForTimeout(250);
@@ -2284,39 +2287,24 @@ try {
   await setInsets({ bottom: 19, left: 43, right: 43, top: 0 });
   await page.waitForTimeout(250);
   await page.screenshot({ path: `${output}/galaxy-map-844-insets.png` });
-  const closeShown = await galaxyClose.evaluate((close) => {
-    const box = close.getBoundingClientRect();
-    return box.width > 0 && box.right <= window.innerWidth && box.top >= 0;
-  });
-  assert.ok(closeShown, "The galaxy map's close X shows on the HUD rect's corner with insets");
   await setInsets({ bottom: null, left: null, right: null, top: null });
   if (viewportBefore) {
     await page.setViewportSize(viewportBefore);
   }
-  // Stay here: both maps close and the same flight resumes, with no jump and no new layout.
+  // Stay in {galaxy}: the destination action on the galaxy Ada is flying in returns to the local
+  // map the galaxy map opened from, focus on its Galaxies, the same flight kept with no jump.
   await galaxyMap.locator('[data-action="galaxy-jump"]').click();
   await galaxyMap.waitFor({ state: "hidden" });
-  await localMap.waitFor({ state: "hidden" });
-  await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
-  await page.waitForTimeout(1200);
+  assert.ok(await localMap.isVisible(), "Stay in returns to the local map");
+  assert.equal(await focusedAction(), "map-galaxies", "Focus returns to the local map's Galaxies");
   const flightAfter = await flightSaved();
   assert.ok(
     flightBefore &&
       flightAfter &&
       flightAfter.seed === flightBefore.seed &&
-      flightAfter.galaxy === flightBefore.galaxy &&
-      (await page.locator('[data-dialog="pause"]').isVisible()) === false,
-    `Stay here resumes the same flight: ${JSON.stringify([flightBefore?.seed, flightAfter?.seed])}`,
+      flightAfter.galaxy === flightBefore.galaxy,
+    `Stay in keeps the same flight: ${JSON.stringify([flightBefore?.seed, flightAfter?.seed])}`,
   );
-  // The close X returns to the local map it opened from.
-  await openPause();
-  await page.locator('[data-action="pause-map"]').click();
-  await localMap.locator('[data-action="map-galaxies"]').click();
-  await galaxyMap.waitFor({ state: "visible" });
-  await galaxyClose.click();
-  await galaxyMap.waitFor({ state: "hidden" });
-  assert.ok(await localMap.isVisible(), "The galaxy map's close X returns to the local map");
-  assert.equal(await focusedAction(), "map-galaxies", "Focus returns to the local map's Galaxies");
   // Escape closes the galaxy map back to the local map too, focus again on Galaxies.
   await localMap.locator('[data-action="map-galaxies"]').click();
   await galaxyMap.waitFor({ state: "visible" });
@@ -2373,10 +2361,9 @@ try {
     "The galaxy map's Earth ends the flight, saved",
   );
   events.checks.push(
-    "The local map's Galaxies opens the galaxy map on the galaxy Ada is flying in, with Stay here " +
-      "and its close X; Stay here resumes the same flight, the X and Escape return to the local " +
-      "map with focus on Galaxies, Jump to another galaxy flies there, and Earth ends the flight " +
-      "home",
+    "The local map's Galaxies opens the galaxy map on the galaxy Ada is flying in, with Stay in " +
+      "and no close X; Stay in and Escape return to the local map on the same flight with focus " +
+      "on Galaxies, Jump to another galaxy flies there, and Earth ends the flight home",
   );
   const roomPause = page.locator('[data-action="pause"]');
   if (await roomPause.isVisible()) {
@@ -3841,9 +3828,10 @@ try {
       "the newly unlocked galaxy",
   );
   // The route runs left to right along one arc, so Left and Right follow screen order and skip
-  // locked galaxies; the galaxy map's close X comes last in Tab order, and Escape, as its X, goes
-  // one step back to the story page the map opened from (here the prologue's last, since this
-  // fixture has not seen it; a boarding from Ada's room returns to "Welcome back, Navigator.").
+  // locked galaxies; Tab runs the markers, Earth, then the single destination action and wraps,
+  // with no close X or Back, and Escape goes one step back to the story page the map opened from
+  // (here the prologue's last, since this fixture has not seen it; a boarding from Ada's room
+  // returns to "Welcome back, Navigator.").
   // The galaxy markers, in route order; the Earth marker sits apart from the route.
   const routeMarkers = selector().locator(".ada-route-marker:not([data-earth])");
   const markerLefts = await routeMarkers.evaluateAll((markers) =>
@@ -3855,16 +3843,25 @@ try {
     "The markers run left to right in route order",
   );
   assert.equal(
-    await selector().locator('[data-action="close-galaxies"]').count(),
-    1,
-    "The galaxy map has its close X",
+    await selector().locator('[data-action="close-galaxies"], .ada-close').count(),
+    0,
+    "The galaxy map has no close X or Back",
   );
+  // The destination action is last in Tab order: Tab from it wraps to the first marker, and
+  // Shift+Tab from it reaches Earth's marker.
   await page.locator('[data-action="galaxy-jump"]').focus();
   await page.keyboard.press("Tab");
   assert.equal(
-    await page.evaluate(() => document.activeElement?.dataset.action ?? ""),
-    "close-galaxies",
-    "The close X follows Jump, last in Tab order",
+    await page.evaluate(() => document.activeElement?.dataset.position ?? ""),
+    "1",
+    "Tab after the destination action wraps to the first marker",
+  );
+  await page.locator('[data-action="galaxy-jump"]').focus();
+  await page.keyboard.press("Shift+Tab");
+  assert.equal(
+    await page.evaluate(() => document.activeElement?.dataset.position ?? ""),
+    "earth",
+    "Earth's marker comes just before the destination action",
   );
   await page.screenshot({ path: `${output}/route-map.png` });
   const panelNumber = (number) => CONTENT.labels.galaxyNumber.replace("{number}", number);
@@ -3943,9 +3940,9 @@ try {
     );
   assert.ok(backFocused, "Closing the galaxy map at boarding focuses the page's Next");
   events.checks.push(
-    "The galaxy map lays the markers left to right on one arc with its close X last in Tab " +
-      "order; Left and Right follow screen order and skip locked galaxies, and Escape goes one " +
-      "step back to the page the map opened from",
+    "The galaxy map lays the markers left to right on one arc with its destination action last " +
+      "in Tab order and no close X; Left and Right follow screen order and skip locked galaxies, " +
+      "and Escape goes one step back to the page the map opened from",
   );
   // Canonical save fixtures exercise rendering and restore boundaries, not natural combat progression.
   const [{ enemyCatalog }, { createEnemy, damageEnemy }, { restoreSave }] = await Promise.all([
