@@ -2033,7 +2033,8 @@ try {
   );
   // Quests: the card under a dim over the whole map, focus on its first line button or its X;
   // Escape closes it back to the map, and a mapped line selects its chip.
-  const questsCard = page.locator('[data-dialog="quests"]');
+  // The map's own Quests modal; the Paused card's Quests list is a separate card.
+  const questsCard = page.locator('.ada-map-quests [data-dialog="quests"]');
   const openQuests = async () => {
     await mapScreen.locator('[data-action="map-quests"]').click();
     await questsCard.waitFor({ state: "visible" });
