@@ -101,33 +101,60 @@ export const toScreen = (world) => ({
 });
 export const toWorld = (screen) => ({ x: screen.x / 2 + screen.y, y: screen.y - screen.x / 2 });
 
-// The first flight seed whose backdrop field shows a rock in the asteroid fixture's open
-// top-centre area, clear of its play rocks (shown), or none in view at all. `rockArt` is Art's
-// served asteroid catalog. Backdrop rocks lie in their layer, about the camera's world position
-// times the rocks' `parallax` (art/backdrop.md).
-export function backdropSeed(rockArt, parallax, shown, player) {
-  const { cell } = asteroidArt.BACKDROP_FIELD;
-  const camera = { x: player.x * parallax, y: player.y * parallax };
-  const cx = Math.floor(camera.x / cell);
-  const cy = Math.floor(camera.y / cell);
-  for (let seed = 1; seed < 2000; seed++) {
-    let near = false;
-    let visible = false;
-    for (let x = cx - 4; x <= cx + 4; x++) {
-      for (let y = cy - 4; y <= cy + 4; y++) {
-        const rock = asteroidArt.backdropRock(rockArt, seed, x, y);
-        if (rock) {
-          const at = toScreen({ x: rock.x - camera.x, y: rock.y - camera.y });
-          near ||= at.x > 250 && at.x < 340 && at.y > 70 && at.y < 140;
-          visible ||= at.x > -120 && at.x < 840 && at.y > -80 && at.y < 440;
-        }
+// The drawn screen rectangles of the backdrop rocks of one depth (backdrop.json `debris.rocks` or
+// `debris.farRocks`) for a flight seed, Ada at `player`. Backdrop rocks lie in their layer, about
+// the camera's world position times the depth's `parallax` (art/backdrop.md).
+function backdropRockBoxes(rockArt, rule, seed, player) {
+  const camera = { x: player.x * rule.parallax, y: player.y * rule.parallax };
+  const cx = Math.floor(camera.x / rule.cell);
+  const cy = Math.floor(camera.y / rule.cell);
+  const span = Math.ceil(1080 / rule.cell) + 1;
+  const boxes = [];
+  for (let x = cx - span; x <= cx + span; x++) {
+    for (let y = cy - span; y <= cy + span; y++) {
+      const rock = asteroidArt.backdropRock(rockArt, rule, seed, x, y);
+      if (rock) {
+        const at = toScreen({ x: rock.x - camera.x, y: rock.y - camera.y });
+        const width = rock.sprite.display.width * rock.scale;
+        const height = rock.sprite.display.height * rock.scale;
+        boxes.push({
+          at,
+          height,
+          width,
+          x: at.x - rock.sprite.pivot.x * width,
+          y: at.y - rock.sprite.pivot.y * height,
+        });
       }
     }
-    if (shown ? near : !visible) {
+  }
+  return boxes;
+}
+
+const meets = (a, b) =>
+  a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+
+// The first flight seed whose near backdrop rocks (`debris.rocks`) put one in the asteroid
+// fixture's open top-centre area, clear of its play rocks; or, with `clear` screen rectangles,
+// whose rocks of both depths (`debris`, backdrop.json) meet none of them. `rockArt` is Art's
+// served asteroid catalog.
+export function backdropSeed(rockArt, debris, player, clear = null) {
+  for (let seed = 1; seed < 2000; seed++) {
+    if (clear) {
+      const boxes = [debris.farRocks, debris.rocks].flatMap((rule) =>
+        backdropRockBoxes(rockArt, rule, seed, player),
+      );
+      if (!boxes.some((box) => clear.some((rect) => meets(box, rect)))) {
+        return seed;
+      }
+    } else if (
+      backdropRockBoxes(rockArt, debris.rocks, seed, player).some(
+        ({ at }) => at.x > 250 && at.x < 340 && at.y > 70 && at.y < 140,
+      )
+    ) {
       return seed;
     }
   }
-  throw new Error(`No backdrop seed ${shown ? "shows" : "hides"} a rock near Ada`);
+  throw new Error(`No backdrop seed ${clear ? "clears the sampled regions" : "shows a rock"}`);
 }
 
 // Art review rocks (art/asteroids.md): one of each size around Ada, plus a drifting rock, with
@@ -149,18 +176,34 @@ export function reseedFlight(model, seed) {
     geography.seed = seed;
   }
 }
-export function asteroidFixture(rockArt, parallax, galaxy, drifting = true) {
+// A flight in `galaxy` with its opening played and no play objects, reseeded so a near backdrop
+// rock shows in the open top centre.
+function emptyFlight(rockArt, debris, galaxy, unlocked) {
   const model = new GameModel(CONTENT);
-  model.state.unlocked = [1, 2, 3];
+  model.state.unlocked = unlocked;
   model.startGalaxy(galaxy);
   playOpening(model);
-  assert.ok(model.state.flight, `Asteroid fixture requires galaxy ${galaxy}'s flight`);
+  assert.ok(model.state.flight, `The fixture requires galaxy ${galaxy}'s flight`);
   const flight = model.state.flight;
   model.state.progress[galaxy].introduced = true;
   model.state.dialogue = null;
   flight.objects = [];
   flight.shots = [];
-  reseedFlight(model, backdropSeed(rockArt, parallax, true, flight.player));
+  reseedFlight(model, backdropSeed(rockArt, debris, flight.player));
+  return model;
+}
+
+// The backdrop proof: galaxy `galaxy`'s backdrop layers and both rock depths with no play objects.
+export function backdropFixture(rockArt, debris, galaxy) {
+  const model = emptyFlight(rockArt, debris, galaxy, [1, 2, 3, 4, 5, 6]);
+  const serialized = model.save();
+  assert.deepEqual(restoreSave(serialized), model.state, "Canonical restore accepts the flight");
+  return serialized;
+}
+
+export function asteroidFixture(rockArt, debris, galaxy, drifting = true) {
+  const model = emptyFlight(rockArt, debris, galaxy, [1, 2, 3]);
+  const flight = model.state.flight;
   const origin = { ...flight.player };
   for (const [size, screen] of Object.entries(ROCK_SCREEN)) {
     const art = ASTEROID_ART.asteroids.find((entry) => entry.size === size);

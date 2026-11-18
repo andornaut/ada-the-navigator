@@ -307,10 +307,10 @@ async function captureRocks() {
   const rockArt = readAsteroidCatalog(await response.json());
   assert.ok(rockArt, "Art's asteroid catalog must read as version 1");
   const backdrop = await page.request.get(`${previewOrigin}/art/backdrop.json`);
-  const parallax = (await backdrop.json()).debris.rocks.parallax;
+  const { debris } = await backdrop.json();
   // Galaxy one's rocks turning: small and medium rocks turn 4 to 18 degrees a second, so 15
   // degree frames change within two seconds of clock time.
-  const spinning = asteroidFixture(rockArt, parallax, 1);
+  const spinning = asteroidFixture(rockArt, debris, 1);
   save("asteroid-fixture-spin.json", {
     scope: "Canonical rock layout for Art review of spin frames",
     state: JSON.parse(spinning),
@@ -323,7 +323,7 @@ async function captureRocks() {
   await shot("asteroids-spin-2.png");
   // Art's footprint overlay: still rocks under reduced motion, so each draws and collides with
   // frame 0; each rock's footprint is outlined over the sprite, with its pivot marked.
-  const still = asteroidFixture(rockArt, parallax, 1, false);
+  const still = asteroidFixture(rockArt, debris, 1, false);
   await openFixture(still, { reducedMotion: true });
   const canvas = page.locator("#game-canvas > canvas");
   const image = await canvas.screenshot();

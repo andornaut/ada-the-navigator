@@ -5,6 +5,7 @@ import { createRequire } from "node:module";
 import { SHIPPED_TITLE_SHIP } from "../src/testing/shippedShipSources.ts";
 import {
   asteroidFixture,
+  backdropFixture,
   backdropSeed,
   hideOverCanvas,
   logicalSize,
@@ -4607,19 +4608,20 @@ try {
     "A Cartwheel flight loads the claim platform's hull and, once Cartwheel's manifest has loaded, " +
       "its part frames",
   );
-  const [{ readAsteroidCatalog }, asteroidArt] = await Promise.all([
+  const [{ readAsteroidCatalog }, asteroidArt, { GALAXY_ID, GALAXY_NUMBERS }] = await Promise.all([
     import(new URL("../src/data/asteroidCatalog.ts", import.meta.url)),
     import(new URL("../src/game/asteroidArt.ts", import.meta.url)),
+    import(new URL("../src/data/galaxies.ts", import.meta.url)),
   ]);
   const asteroidResponse = await page.request.get("http://ada-preview:4173/art/asteroids.json");
   assert.equal(asteroidResponse.status(), 200, "Art's asteroid catalog must be served");
   const rockArt = readAsteroidCatalog(await asteroidResponse.json());
   assert.ok(rockArt, "Art's asteroid catalog must read as version 1");
-  // Backdrop rocks lie in their layer, about the camera's world position times the rocks'
+  // Both backdrop rock depths, each in its layer about the camera's world position times its
   // parallax (art/backdrop.md).
-  const rockParallax = (
+  const rockDebris = (
     await (await page.request.get("http://ada-preview:4173/art/backdrop.json")).json()
-  ).debris.rocks.parallax;
+  ).debris;
   // Live capitals keep a viewport-sized gap, so each large enemy renders from its own canonical
   // save at the offset its sampled screen region expects.
   function combatFixture(archetype, offset, missile) {
@@ -4632,8 +4634,9 @@ try {
     combat.state.dialogue = null;
     flight.objects = [];
     flight.shots = [];
-    // No backdrop rock in view, so the sampled regions see only the combat and empty space.
-    reseedFlight(combat, backdropSeed(rockArt, rockParallax, false, flight.player));
+    // No backdrop rock of either depth meets a sampled region, so they see only the combat and
+    // empty space.
+    reseedFlight(combat, backdropSeed(rockArt, rockDebris, flight.player, combatRegions));
     const origin = { ...flight.player };
     const definition = enemyCatalog[archetype];
     assert.ok(definition.hardpoints.length > 1, "Large enemies require distinct hardpoints");
@@ -4718,6 +4721,20 @@ try {
     (part) => part.id === "engine-left",
   ).anchor;
   const capitalScale = 210 / capitalLayout.frame;
+  const disabledCentre = {
+    x: 180 + (disabledAnchor[0] - capitalLayout.frame / 2) * capitalScale,
+    y: 180 + (disabledAnchor[1] - capitalLayout.frame / 2) * capitalScale,
+  };
+  // The sampled regions in logical px: projection is anchored to logical SCREEN centre
+  // (360,180), even when the view is taller.
+  const combatRegionsByName = {
+    // The 5-width capital centres at (180, 180); its disabled left engine at its anchor.
+    capital: { x: 90, y: 130, width: 180, height: 100 },
+    missile: { x: 510, y: 65, width: 65, height: 55 },
+    disabled: { x: disabledCentre.x - 15, y: disabledCentre.y - 15, width: 30, height: 30 },
+    background: { x: 280, y: 280, width: 160, height: 60 },
+  };
+  const combatRegions = Object.values(combatRegionsByName);
   async function renderCombatView(view) {
     const serialized = combatFixture(view.archetype, view.offset, view.missile);
     const seeded = view.missile ? " and a seeded missile" : "";
@@ -4768,7 +4785,7 @@ try {
       path: `${output}/combat-canvas-${view.archetype}.png`,
     });
     return page.evaluate(
-      async ({ backdropBox, disabled, encoded, heavyColors, intrinsic, names, paletteColors }) => {
+      async ({ backdropBox, encoded, heavyColors, intrinsic, names, paletteColors, regions }) => {
         const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
         const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
         const sample = document.createElement("canvas");
@@ -4777,14 +4794,6 @@ try {
         const drawing = sample.getContext("2d");
         drawing.drawImage(bitmap, 0, 0);
         bitmap.close();
-        // Projection is anchored to logical SCREEN center (360,180), even when the view is taller.
-        const regions = {
-          // The 5-width capital centres at (180, 180); its disabled left engine at its anchor.
-          capital: { x: 90, y: 130, width: 180, height: 100 },
-          missile: { x: 510, y: 65, width: 65, height: 55 },
-          disabled: { x: disabled.x - 15, y: disabled.y - 15, width: 30, height: 30 },
-          background: { x: 280, y: 280, width: 160, height: 60 },
-        };
         return Object.fromEntries(
           names
             .map((name) => [name, regions[name]])
@@ -4878,15 +4887,12 @@ try {
       },
       {
         backdropBox,
-        disabled: {
-          x: 180 + (disabledAnchor[0] - capitalLayout.frame / 2) * capitalScale,
-          y: 180 + (disabledAnchor[1] - capitalLayout.frame / 2) * capitalScale,
-        },
         encoded: combatImage.toString("base64"),
         heavyColors,
         intrinsic,
         names: view.names,
         paletteColors,
+        regions: combatRegionsByName,
       },
     );
   }
@@ -4969,21 +4975,48 @@ try {
     );
   }
   const asteroidCaptures = {};
-  async function captureRocks(galaxy, name) {
+  // A backdrop rock tone moved toward the galaxy's field background to `value` of its distance
+  // (art/backdrop.md, Rock value).
+  const mutedTone = (hex, background, value) =>
+    `#${[1, 3, 5]
+      .map((start) => {
+        const [from, to] = [background, hex].map((tone) =>
+          Number.parseInt(tone.slice(start, start + 2), 16),
+        );
+        return Math.round(from + (to - from) * value)
+          .toString(16)
+          .padStart(2, "0");
+      })
+      .join("")}`;
+  async function galaxyBackdrop(galaxy) {
+    const response = await page.request.get(
+      `http://ada-preview:4173/art/${GALAXY_ID[galaxy]}/backdrop.json`,
+    );
+    assert.equal(response.status(), 200, `Galaxy ${galaxy}'s backdrop must be served`);
+    return response.json();
+  }
+  // The near rocks' lit and side tones, muted toward the field background.
+  async function nearRockTones(galaxy) {
     const tint = asteroidArt.backdropTint(rockArt, galaxy);
+    const { background } = await galaxyBackdrop(galaxy);
+    return [tint.backdropLit, tint.backdropSide].map((hex) =>
+      mutedTone(hex, background, rockDebris.rocks.value),
+    );
+  }
+  async function captureRocks(galaxy, name) {
     // The ramps sample the canvas alone; the conversation box and notices draw over it.
     const showOverCanvas = await hideOverCanvas(page);
     const image = await page
       .locator("#game-canvas > canvas")
       .screenshot({ path: `${output}/${name}` });
     await showOverCanvas();
-    const ramps = { backdrop: [tint.backdropLit, tint.backdropSide], stone: rockArt.stone };
+    const ramps = { backdrop: await nearRockTones(galaxy), stone: rockArt.stone };
     const pixels = await stonePixels(image, ramps);
     asteroidCaptures[galaxy].push({ name, pixels });
     return pixels;
   }
   async function captureGalaxy(galaxy) {
-    const serialized = asteroidFixture(rockArt, rockParallax, galaxy);
+    const serialized = asteroidFixture(rockArt, rockDebris, galaxy);
     save(`asteroid-fixture-${galaxy}.json`, {
       scope: "Canonical rock layout for Art review of sprites, drift chips and the backdrop field",
       state: JSON.parse(serialized),
@@ -5005,7 +5038,7 @@ try {
     asteroidCaptures[galaxy] = [];
     const first = await captureRocks(galaxy, `asteroids-galaxy-${galaxy}.png`);
     assert.ok(first.stone > 2000, `Galaxy ${galaxy} must draw Art's stone rocks`);
-    assert.ok(first.backdrop > 20, `Galaxy ${galaxy} must draw its tinted backdrop rocks`);
+    assert.ok(first.backdrop > 20, `Galaxy ${galaxy} must draw its muted backdrop rocks`);
   }
   await captureGalaxy(1);
   await captureGalaxy(2);
@@ -5015,7 +5048,94 @@ try {
     captures: asteroidCaptures,
   });
   events.checks.push(
-    "Art's rocks draw in neutral stone in every galaxy over a tinted backdrop field",
+    "Art's rocks draw in neutral stone in every galaxy over a muted backdrop field",
+  );
+
+  // Backdrop proofs for Art (art/backdrop.md): each galaxy's flight with no play objects at
+  // 1280x720 and 720x360, its near rocks in their muted tones, and the WebGL draw calls a frame
+  // takes, counted over 30 frames.
+  async function drawCallsPerFrame() {
+    return page.evaluate(async () => {
+      const prototypes = [WebGLRenderingContext.prototype, WebGL2RenderingContext.prototype];
+      const originals = prototypes.map((target) => [target.drawElements, target.drawArrays]);
+      let draws = 0;
+      for (const [index, target] of prototypes.entries()) {
+        const [elements, arrays] = originals[index];
+        target.drawElements = function (...args) {
+          draws++;
+          return elements.apply(this, args);
+        };
+        target.drawArrays = function (...args) {
+          draws++;
+          return arrays.apply(this, args);
+        };
+      }
+      const frames = (count) =>
+        count === 0
+          ? Promise.resolve()
+          : new Promise((resolve) => {
+              requestAnimationFrame(resolve);
+            }).then(() => frames(count - 1));
+      await frames(1);
+      draws = 0;
+      await frames(30);
+      for (const [index, target] of prototypes.entries()) {
+        [target.drawElements, target.drawArrays] = originals[index];
+      }
+      return draws / 30;
+    });
+  }
+  // The rock SVGs load after the scene starts and rasterise again after a resize.
+  async function sampleBackdrop(name, ramps, remaining) {
+    await page.waitForTimeout(250);
+    const showOverCanvas = await hideOverCanvas(page);
+    const image = await page
+      .locator("#game-canvas > canvas")
+      .screenshot({ path: `${output}/${name}` });
+    await showOverCanvas();
+    const pixels = await stonePixels(image, ramps);
+    return pixels.near > 20 || remaining === 0
+      ? pixels
+      : sampleBackdrop(name, ramps, remaining - 1);
+  }
+  const backdropProofs = {};
+  async function proveBackdropView(galaxy, ramps, [width, height]) {
+    await page.setViewportSize({ width, height });
+    const name = `backdrop-${GALAXY_ID[galaxy]}-${width}x${height}.png`;
+    const pixels = await sampleBackdrop(name, ramps, 20);
+    assert.ok(pixels.near > 20, `${name} must draw its muted near backdrop rocks`);
+    backdropProofs[galaxy][`${width}x${height}`] = {
+      drawCalls: await drawCallsPerFrame(),
+      image: name,
+      nearRockPixels: pixels.near,
+    };
+  }
+  async function proveBackdrops([galaxy, ...rest]) {
+    if (galaxy === undefined) {
+      return;
+    }
+    const serialized = backdropFixture(rockArt, rockDebris, galaxy);
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await seedOnce(serialized, `ada-browser.backdrop-proof-${galaxy}.v1`);
+    await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+    await page.locator("#game-canvas > canvas").waitFor({ state: "visible" });
+    const ramps = { near: await nearRockTones(galaxy) };
+    backdropProofs[galaxy] = {};
+    await proveBackdropView(galaxy, ramps, [1280, 720]);
+    await proveBackdropView(galaxy, ramps, [720, 360]);
+    await proveBackdrops(rest);
+  }
+  const proofViewport = page.viewportSize();
+  await proveBackdrops(GALAXY_NUMBERS);
+  await page.setViewportSize(proofViewport);
+  save("backdrop-proof.json", {
+    scope:
+      "Each galaxy's backdrop layers and both rock depths with no play objects, for Art review",
+    debris: rockDebris,
+    proofs: backdropProofs,
+  });
+  events.checks.push(
+    "Every galaxy's flight draws its muted near backdrop rocks at 1280x720 and 720x360",
   );
 
   // At 844x390 the Settings card fits the view with every row's note: the Move and Aim controls
