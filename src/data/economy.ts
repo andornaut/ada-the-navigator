@@ -1,5 +1,6 @@
 import type { EnemyArchetype } from "./enemyCatalog.ts";
 import type { RoutePosition } from "./galaxies.ts";
+import { TARGET_MARKER_RANGE } from "./targetMarkers.ts";
 import type { Weapon } from "./types.ts";
 
 const STATION_CELL_SIZE = 12000;
@@ -128,7 +129,7 @@ export interface EconomyCatalog {
     originClearance: number;
     /** Minimum distance between a station and a story destination. */
     destinationClearance: number;
-    /** World distance within which the direction indicator marks an undiscovered station. */
+    /** World distance within which the direction indicator marks an undiscovered station (TARGET_MARKER_RANGE). */
     indicatorRange: number;
     /** The station's silhouette radius at its display size (art/destinations.md). */
     radius: number;
@@ -295,7 +296,7 @@ export const ECONOMY: EconomyCatalog = {
     // Every cell holds a station; occupancy only gates a cell, so seeded positions never move.
     chance: 1,
     destinationClearance: 1200,
-    indicatorRange: 3000,
+    indicatorRange: TARGET_MARKER_RANGE,
     jitter: STATION_JITTER,
     minimumSpacing: (STATION_CELL_SIZE - STATION_JITTER) / Math.SQRT2,
     originClearance: 3000,

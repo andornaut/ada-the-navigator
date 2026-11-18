@@ -1,5 +1,6 @@
 import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { worldStationIndicatorTarget } from "./stations.ts";
 import type { FlightState, GalaxyProgress } from "./types.ts";
@@ -7,11 +8,11 @@ import { nearestImage } from "./worldGeometry.ts";
 
 // Direction indicators (gameplay/rules.md "Space encounters and feedback"): rare arrows that
 // mark only the current objective's destination, where a carried quest item goes, the holodisk
-// waypoint, the held station job's target (gameplay/quests.md) and an undiscovered station within
-// 3000 world units while off screen. Optional discoveries get none; Penny senses those
-// instead. Seen enemies, heavies and stations get edge markers (edgeMarkers.ts) instead, which
-// give way to an indicator on the same object. Each kind is one source below, so a kind gains its
-// rule without touching the others.
+// waypoint, the held station job's target (gameplay/quests.md) and an undiscovered station, each
+// within TARGET_MARKER_RANGE (gameplay/marker-design.md) while off screen. Optional discoveries
+// get none; Penny senses those instead. Seen enemies, heavies and stations get edge markers
+// (edgeMarkers.ts) instead, which give way to an indicator on the same object. Each kind is one
+// source below, so a kind gains its rule without touching the others.
 
 /** Earlier kinds win when two mark the same place. */
 export const INDICATOR_KINDS = ["holodisk", "objective", "questItem", "job", "station"] as const;
@@ -98,7 +99,7 @@ export function indicatorTargets(
       if (
         marked.has(target.id) ||
         Math.hypot(target.x - context.flight.player.x, target.y - context.flight.player.y) >
-          ECONOMY.station.indicatorRange
+          TARGET_MARKER_RANGE
       ) {
         return false;
       }

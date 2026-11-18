@@ -143,16 +143,20 @@ describe("station placement", () => {
     }
   });
 
-  it("marks the nearest undiscovered station within 3000 for the direction indicator", () => {
+  it("marks the nearest undiscovered station within 5000 for the direction indicator", () => {
     const { indicatorRange } = ECONOMY.station;
-    expect(indicatorRange).toBe(3000);
+    expect(indicatorRange).toBe(5000);
+    // Neighbours sit at least minimumSpacing apart, under 2 x 5000, so discover them first.
+    const others = (point: Vec) =>
+      stationsNear(ECONOMY, 1, indicatorRange, point)
+        .map(({ id }) => id)
+        .filter((id) => id !== site.id);
     const near = { x: site.x + indicatorRange - 1, y: site.y };
-    expect(stationIndicatorTarget(ECONOMY, 1, [], near)).toEqual(site);
+    expect(stationIndicatorTarget(ECONOMY, 1, others(near), near)).toEqual(site);
     expect(stationIndicatorTarget(ECONOMY, 1, [], { x: site.x, y: site.y - 600 })).toEqual(site);
-    expect(
-      stationIndicatorTarget(ECONOMY, 1, [], { x: site.x + indicatorRange + 1, y: site.y }),
-    ).toBeNull();
-    expect(stationIndicatorTarget(ECONOMY, 1, [site.id], near)).toBeNull();
+    const beyond = { x: site.x + indicatorRange + 1, y: site.y };
+    expect(stationIndicatorTarget(ECONOMY, 1, others(beyond), beyond)).toBeNull();
+    expect(stationIndicatorTarget(ECONOMY, 1, [site.id, ...others(near)], near)).toBeNull();
   });
 
   it("keeps story destinations away from stations", () => {
