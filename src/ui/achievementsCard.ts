@@ -10,7 +10,7 @@ import {
 } from "./actionBinding.ts";
 import { COMPLETION_INDICATOR, createCompletionIndicator } from "./completionIndicator.ts";
 import { listCardHeader } from "./layout/cardFrame.ts";
-import { SCROLL } from "./layout/contentCard.ts";
+import { CARD_WIDTH_CAPS, cardWidth, SCROLL } from "./layout/contentCard.ts";
 import { TEXT_BUTTON } from "./layout/controls.ts";
 import { units } from "./layout/css.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
@@ -51,8 +51,8 @@ export interface AchievementsLabels {
 }
 
 /**
- * The entry list's geometry, as Chibi's Achievements card spaces it: two columns up to 312 wide,
- * icon included, a panel padding apart; each entry a 16 badge a gap from its text, centred on
+ * The entry list's geometry, as Chibi's Achievements card spaces it: two columns sharing the
+ * Large card's inner width, icon included, a panel padding apart; each entry a 16 badge a gap from its text, centred on
  * its name's line, the name and a counted entry's count a gap apart, and the condition below
  * in at most two body lines, so every entry is three body lines tall; entries a gap apart. The
  * list starts Chibi's list header below the card's top (listCardHeader), the pager a gap below
@@ -62,14 +62,12 @@ export const ACHIEVEMENTS_CARD = {
   badge: COMPLETION_INDICATOR.size,
   badgeGap: SPACING.gap,
   columnGap: SPACING.panelPadding,
-  columnWidth: 312,
   columns: 2,
   conditionLines: 2,
   rowGap: SPACING.gap,
 } as const;
 
-const { badge, badgeGap, columnGap, columnWidth, columns, conditionLines, rowGap } =
-  ACHIEVEMENTS_CARD;
+const { badge, badgeGap, columnGap, columns, conditionLines, rowGap } = ACHIEVEMENTS_CARD;
 /** One entry's height: its name's line and its condition's lines, each a body line. */
 const ENTRY_HEIGHT = (1 + conditionLines) * TYPE.body.lineHeight;
 /** The list's top below the card's top. */
@@ -91,13 +89,13 @@ export const ACHIEVEMENTS_PER_PAGE =
   columns * achievementRows(SCREEN.height - 2 * SPACING.pageInset);
 
 /**
- * Each column's width for a card in `available` logical px, the page safe rect's width: 312,
- * narrowed where two such columns and the card's padding do not fit, so the card fits instead of
- * scaling and its labels keep their size.
+ * Each column's width in the Large card for `available` logical px, the modal rect's width: the
+ * card's inner width less the column gap, shared by the columns (320 at 688, 293 at 634), so the
+ * card narrows instead of scaling and its labels keep their size.
  */
 export function achievementColumnWidth(available: number): number {
-  const room = available - 2 * SPACING.panelPadding - (columns - 1) * columnGap;
-  return Math.min(columnWidth, room / columns);
+  const card = cardWidth({ availableWidth: available, size: "large" });
+  return (card - 2 * SPACING.panelPadding - (columns - 1) * columnGap) / columns;
 }
 
 export function achievementPages(count: number, perPage = ACHIEVEMENTS_PER_PAGE): number {
@@ -122,10 +120,13 @@ export function fillPage(template: string, page: number, pages: number): string 
   return template.replace("{page}", String(page)).replace("{pages}", String(pages));
 }
 
+/** The columns' width in the full Large card, until the card measures its modal rect. */
+const LARGE_COLUMN_WIDTH = achievementColumnWidth(CARD_WIDTH_CAPS.large);
+
 export const ACHIEVEMENTS_STYLE = `
 ${UI_SCOPE} .ada-achievement-list{
   display:grid;
-  grid-template-columns:repeat(${columns},var(--ada-achievement-column,${units(columnWidth)}));
+  grid-template-columns:repeat(${columns},var(--ada-achievement-column,${units(LARGE_COLUMN_WIDTH)}));
   grid-template-rows:repeat(var(--ada-achievement-rows,1),${units(ENTRY_HEIGHT)});
   grid-auto-flow:column;
   column-gap:${units(columnGap)};

@@ -35,42 +35,36 @@ describe("Achievements card", () => {
     expect(fillPage(CONTENT.labels.achievementsPage ?? "", 1, pages)).toBe("1/3");
   });
 
-  it("spaces its entries as Chibi's card does, inside the base view's page inset", () => {
-    // Chibi's ACHIEVEMENTS_CARD and CARD_CONTENT: 312 columns a card padding apart, a 16 icon a
-    // card gap from its text, entries a card gap apart, three body lines each.
+  it("spaces its entries as Chibi's card does", () => {
+    // Chibi's ACHIEVEMENTS_CARD and CARD_CONTENT: columns a card padding apart, a 16 icon a card
+    // gap from its text, entries a card gap apart, three body lines each.
     expect(ACHIEVEMENTS_CARD).toEqual({
       badge: 16,
       badgeGap: 8,
       columnGap: 16,
-      columnWidth: 312,
       columns: 2,
       conditionLines: 2,
       rowGap: 8,
     });
     expect([SPACING.gap, SPACING.panelPadding, TYPE.body.lineHeight]).toEqual([8, 16, 20]);
-    const { columnGap, columnWidth, columns } = ACHIEVEMENTS_CARD;
-    const card = columns * columnWidth + (columns - 1) * columnGap + 2 * SPACING.panelPadding;
-    expect(card).toBe(672);
-    expect(card + 2 * SPACING.pageInset).toBeLessThanOrEqual(SCREEN.width);
   });
 
-  // The page safe rect's width: the view less max(16, inset) on each side.
+  // The modal rect's width: the view less max(16, inset) on each side.
   const available = (view: number, inset = 0) => view - 2 * Math.max(SPACING.pageInset, inset);
   const cardWidth = (column: number) =>
     ACHIEVEMENTS_CARD.columns * column +
     (ACHIEVEMENTS_CARD.columns - 1) * ACHIEVEMENTS_CARD.columnGap +
     2 * SPACING.panelPadding;
 
-  it("narrows its columns to fit the view rather than scaling the card", () => {
-    expect(achievementColumnWidth(available(SCREEN.width))).toBe(312);
-    expect(achievementColumnWidth(available(779.08, 43))).toBe(312);
+  it("fills the Large card, narrowing its columns rather than scaling the card", () => {
+    expect(achievementColumnWidth(available(SCREEN.width))).toBe(320);
+    expect(achievementColumnWidth(available(779.08, 43))).toBe(320);
     // 720x360 with phone insets, the narrowest view: 634 across.
     expect(achievementColumnWidth(available(SCREEN.width, 43))).toBe(293);
-    // The card follows its columns, never wider than the room, so it never scales.
+    // The columns fill the Large card capped at the room, so it never scales.
+    expect(cardWidth(achievementColumnWidth(available(SCREEN.width)))).toBe(688);
     expect(cardWidth(achievementColumnWidth(available(SCREEN.width, 43)))).toBe(634);
-    for (const room of [available(SCREEN.width, 43), available(SCREEN.width), 900]) {
-      expect(cardWidth(achievementColumnWidth(room))).toBeLessThanOrEqual(room);
-    }
+    expect(cardWidth(achievementColumnWidth(900))).toBe(688);
   });
 
   it("starts the list 50 down and fits three rows in a 318 card at every view", () => {

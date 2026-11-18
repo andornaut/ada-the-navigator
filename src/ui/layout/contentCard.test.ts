@@ -21,11 +21,17 @@ describe("fixed modal width", () => {
     expect(MODAL_SCREEN_MARGIN).toBe(16);
   });
 
+  // Content width is not an input: a card takes its family's width, capped at the modal rect.
   it.each(["small", "medium", "large"] as const)(
-    "keeps %s fixed within available space",
+    "keeps %s at its family width at 720 and 779 logical wide",
     (size) => {
+      for (const view of [720, 779.08]) {
+        const availableWidth = view - 2 * MODAL_SCREEN_MARGIN;
+        expect(cardWidth({ availableWidth, size })).toBe(
+          Math.min(CARD_WIDTH_CAPS[size], availableWidth),
+        );
+      }
       expect(cardWidth({ availableWidth: 688, size })).toBe(CARD_WIDTH_CAPS[size]);
-      expect(cardWidth({ availableWidth: 900, size })).toBe(CARD_WIDTH_CAPS[size]);
     },
   );
 

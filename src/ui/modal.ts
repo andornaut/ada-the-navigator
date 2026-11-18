@@ -264,7 +264,7 @@ ${UI_SCOPE} .ada-card-body > .ada-scroll{
   scrollbar-color:#9690b4 #2f2d3d
 }
 
-/* Prose never widens a card: it wraps to the inner width the other groups and the floor set. */
+/* Prose never widens a card: it wraps to the inner width of the card's width family. */
 ${UI_SCOPE} .ada-prose{
   contain:inline-size;
   align-self:stretch

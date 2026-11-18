@@ -149,9 +149,6 @@ export const UI_FONT_FACE = {
 
 // contentCard (src/ui/layout/contentCard.ts)
 
-// The 50% width floor is half the fixed 720 base view, as in Chibi, at every logical width.
-export const CARD_FLOOR_VIEW_WIDTH = SCREEN.width;
-
 // A card's scrolling region: it reserves a 6 gap and an 8 track on its right inside the padding,
 // the thumb inset 1 in the track, and keeps endPad below its last control at the scroll end. A
 // pointer moving further than dragThreshold scrolls and does not activate.
