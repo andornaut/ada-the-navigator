@@ -2505,7 +2505,24 @@ try {
   towFlight.dangerFor = 0;
   towInput.state.dialogue = null;
   assert.ok(towInput.towing, "The fixture still tows after its calm step");
-  await seedOnce(towInput.save(), "ada-browser.tow-earth.v1");
+  // As the calm launched world: the world holds no enemies to load or spawn, so danger cannot
+  // start while the browser resumes the flight and the Map opens, however long that takes.
+  const towCalm = JSON.parse(towInput.save());
+  for (const [id, object] of Object.entries(towCalm.flight.world.notables)) {
+    if (object?.kind === "enemy") {
+      delete towCalm.flight.world.notables[id];
+    }
+  }
+  if (towCalm.flight.combat) {
+    towCalm.flight.combat.initialPackSizes = {};
+    delete towCalm.flight.combat.unloadedPackMembers;
+  }
+  const towRestored = restoreCalm(towCalm);
+  assert.ok(
+    towRestored?.flight?.tow,
+    "The calm tow fixture remains a canonical save, still towing",
+  );
+  await seedOnce(JSON.stringify(towCalm), "ada-browser.tow-earth.v1");
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   await openPause();
   await page.locator('[data-action="pause-map"]').click();
