@@ -3297,7 +3297,8 @@ try {
   const storyButton = (action) => storyPanel.locator(`[data-action="story-${action}"]`);
   const storyPage = async () => ({
     background: await page.locator(".ada-story-background").getAttribute("data-background"),
-    previousDisabled: await storyButton("previous").isDisabled(),
+    // Unavailable Previous is hidden without a slot (art/layout.md "Station card").
+    previousShown: await storyButton("previous").isVisible(),
     skipShown: await page.locator('[data-action="story-skip"]').isVisible(),
     text: ((await storyPanel.locator(".ada-story-paragraph").textContent()) ?? "").trim(),
   });
@@ -3355,18 +3356,18 @@ try {
   const roomAction = ((await storyButton("next").textContent()) ?? "").trim();
   await page.screenshot({ path: `${output}/story-run-room.png` });
   save("story-run-proof.json", { aboard, back, garden, opening, prologue, room, roomAction });
-  assert.ok(opening.previousDisabled, "Previous is disabled on the run's first page");
+  assert.ok(!opening.previousShown, "Previous is hidden on the run's first page");
   assert.equal(opening.background, "grandmaGarden", "The run opens in Grandma's garden");
   assert.ok(opening.skipShown, "Skip shows inside the run");
-  assert.ok(!prologue.previousDisabled, "Previous crosses back from the prologue");
+  assert.ok(prologue.previousShown, "Previous crosses back from the prologue");
   assert.equal(garden.background, "grandmaGarden", "Previous returns to Grandma's farewell");
   assert.equal(back.text, CONTENT.chapters[1].openingBranches[0]);
-  assert.ok(!back.previousDisabled, "Previous goes on within chapter one's opening");
+  assert.ok(back.previousShown, "Previous goes on within chapter one's opening");
   assert.equal(aboard.background, "aboard", "Skip is pressed on a page aboard");
   assert.equal(room.background, "adaRoom", "Home from galaxy selection shows Ada's room");
   assert.equal(roomAction, CONTENT.labels.pickUpRock);
   assert.ok(!room.skipShown, "Skip is hidden on the run's end, Ada's room page");
-  assert.ok(room.previousDisabled, "Ada's room page from galaxy selection starts its run");
+  assert.ok(!room.previousShown, "Ada's room page from galaxy selection starts its run");
   events.checks.push(
     "A story run's Previous crosses from the prologue across Grandma's garden into chapter one, " +
       "Skip from aboard passes the run to galaxy selection, and Ada's room page ends a run " +
