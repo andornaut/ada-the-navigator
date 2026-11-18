@@ -1697,6 +1697,8 @@ try {
     );
   }, storageKey);
   await closeSettings();
+  // The keyboard Use above switched flight to the desktop controls; a touch brings the disc back.
+  await touchSurface();
   await contextControlProof(1, "recovered flight");
   events.checks.push(
     "Blocked browser storage preserves gameplay and last save; " +
