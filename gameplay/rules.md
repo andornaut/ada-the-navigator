@@ -693,12 +693,14 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   the game area. The drawn knob stays inside the ring, as in
   Chibi. Each joystick draws a line from its origin to the thumb's actual position,
   extending past the ring however far the thumb travels, so the line shows the
-  drag. Both joysticks' drawn rings sit 60 logical pixels from the screen's
-  outer side edges and 40 above its bottom, inside the safe insets, mirrored as
-  in Chibi. Each stick is then clamped so it is drawn fully inside the game
-  area, keeping a small border (8 logical pixels by default; Art sets the exact
-  value) from the game area's edge so it never appears to touch the side bars. Use is
-  Chibi's touch disc, placed beside the aim stick as in Chibi. The move ring lights its left or right marker only when the
+  drag. Stick placement ignores the device-safe insets: each joystick's drawn
+  ring sits 50 logical pixels from the screen's outer side edge and 50 above the
+  screen's bottom, mirrored as in Chibi. A ring moves inward only as far as
+  needed to stay at least 8 logical pixels inside the game area's edge, so it
+  never appears to touch the side bars; the 8 applies only when needed. Use is
+  Chibi's touch disc, placed beside the aim stick as in Chibi, and keeps its
+  offset from the aim stick. The shield pill keeps its own bottom line, not
+  shared with the sticks. The move ring lights its left or right marker only when the
   move direction is within 67.5 degrees of that side.
 - Speed rises steeply with stick deflection so the difference is clearly
   noticeable: small deflections give slow, controlled maneuvering and full
@@ -848,7 +850,7 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   - Sound, as in Archie: a switch, on when sound is enabled, with the note "Mutes
     sound effects".
   - Reduced motion, as in Archie: a switch, on when motion is reduced, with the
-    note "Skips screen shakes". A player's first setting on a device follows the
+    note "Skips screen shakes and flashes". A player's first setting on a device follows the
     device's reduced-motion preference.
   - Install, as in Archie: shown only while installation is available and the game
     is not installed, with the note "Full screen, offline" and an Install button.
@@ -1260,9 +1262,11 @@ and weapon icons stay live while it shows; Talk conversations and cards do
 pause play. Its background is an ink #181425 panel at 0.65 alpha, the opacity of every panel, so it
 stays readable over the brightest space signals; text, tab and portrait stay
 opaque. Each line shows for 5 seconds plus 50 ms per character of the line, or
-until the box (tab included) is tapped; a tap moves to the next line, and the
-last tap closes the conversation. First-flight lessons follow the same timing. Tapping a
-notice dismisses it. A conversation has one to three lines, and only one shows at
+until the box (tab included) is tapped. Tapping the box dismisses the whole
+conversation and skips its remaining lines, for every in-flight line: Ada's,
+Astra's and Penny's lines, drone warnings and the Admiral's broadcasts. The box
+takes the press even where it overlaps the Use disc. First-flight lessons follow
+the same timing. Tapping a notice dismisses it. A conversation has one to three lines, and only one shows at
 a time, with a cooldown between ordinary conversations. Hints are always on.
 
 Conversations come from data, each with a trigger and a priority: warnings
@@ -1344,7 +1348,15 @@ weapons-and-ammunition or jobs specialties, at twice the station density in ever
 galaxy (see [Economy](economy.md#stations)).
 
 Visual effects distinguish hits, shield damage, destroyed ships, pickups and
-deposits. Sound effects remain restrained. Reduced motion skips screen shakes.
+deposits. Sound effects remain restrained. Reduced motion skips screen shakes and the hit flash.
+
+Hit feedback: every time Ada's shield takes damage, from any source including
+scenery bumps, the view gives a small shake and one flash of a thin red line
+around the game area's perimeter. Starting
+values: a 3 logical pixel red border shown once for about 200 ms, and a shake of
+about 2 logical pixels for about 100 ms; Art and Tech pin the final values.
+Reduced motion disables both the shake and the red line.
+
 Asteroids come in more sizes, including much larger ones, with irregular shapes
 and variety. The approved global placement-density target is 20% more ordinary
 and resource asteroids in every galaxy, with no additional galaxy-by-galaxy
