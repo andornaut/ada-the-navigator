@@ -21,7 +21,8 @@ import { restoreCheckSourceIdentity } from "./sourceIdentity.mjs";
 //   container.
 // - lint-only: ShellCheck, Prettier, ESLint and markdownlint.
 // - test: Vitest with at most four workers, then the same suite in further launch-seed worlds
-//   (tools/test-worlds.mjs), so a test that passes only in the default world fails.
+//   (tools/test-worlds.mjs), so a test that passes only in the default world fails, then the
+//   art tools' node:test suites (art/tools/**/*.test.ts) with at most four processes.
 // - build: bundle, then Wrangler's packaging dry run of dist/.
 // - bundle: the Vite build, naming the checked commit.
 const [category = "check", ...args] = process.argv.slice(2);
@@ -83,6 +84,7 @@ const RECIPES = {
   test: [
     node("node_modules/vitest/vitest.mjs", "run", "--maxWorkers=4", ...args),
     node("tools/test-worlds.mjs", "--maxWorkers=4", ...args),
+    ["node", "--test", "--test-concurrency=4", "art/tools/**/*.test.ts"],
   ],
   typecheck: [node("node_modules/typescript/bin/tsc", "--noEmit")],
 };
