@@ -2031,43 +2031,27 @@ try {
     tabOrder,
     `Tab moves through the tools, the places, Quests, Galaxies and back to Close: ${tabbed}`,
   );
-  // Quests: the card under a dim over the whole map, focus on its first line button or its X;
-  // Escape closes it back to the map, and a mapped line selects its chip.
-  // The map's own Quests modal; the Paused card's Quests list is a separate card.
-  const questsCard = page.locator('.ada-map-quests [data-dialog="quests"]');
-  const openQuests = async () => {
-    await mapScreen.locator('[data-action="map-quests"]').click();
-    await questsCard.waitFor({ state: "visible" });
-  };
-  await openQuests();
-  const questLines = await questsCard.evaluate((card) => ({
-    buttons: [...card.querySelectorAll(".ada-map-quest")].map((button) => button.dataset.target),
-    focused: document.activeElement?.dataset.action ?? document.activeElement?.className ?? "",
-    lines: [...card.querySelectorAll(".ada-map-quest-lines > *")].map((line) => line.textContent),
-  }));
-  assert.ok(
-    questLines.lines.length > 0 &&
-      (questLines.buttons.length > 0
-        ? questLines.focused.includes("ada-map-quest")
-        : questLines.focused === "close-quests"),
-    `Quests lists its lines with focus on the first line button or the X: ${JSON.stringify(questLines)}`,
+  // Quests: the shared Quests list over the map (src/ui/questsScreen.ts). Opened from the map, its
+  // footer's primary is Back to the map and takes focus; Escape returns to the map as Back does.
+  const questsCard = page.locator(".ada-quests-screen");
+  await mapScreen.locator('[data-action="map-quests"]').click();
+  await questsCard.waitFor({ state: "visible" });
+  assert.deepEqual(
+    await page.evaluate(() => {
+      const active = document.activeElement;
+      return {
+        inCard: Boolean(active?.closest(".ada-quests-screen")),
+        primary: active?.classList.contains("ada-primary") ?? false,
+        text: active?.textContent?.trim(),
+      };
+    }),
+    { inCard: true, primary: true, text: CONTENT.labels.questBack },
+    "Quests opened from the map focuses its primary Back",
   );
   await page.screenshot({ path: `${output}/map-quests.png` });
   await page.keyboard.press("Escape");
   await questsCard.waitFor({ state: "hidden" });
   assert.ok(await mapScreen.isVisible(), "Escape closes Quests back to the map");
-  if (questLines.buttons.length > 0) {
-    await openQuests();
-    await questsCard.locator(".ada-map-quest").first().click();
-    await questsCard.waitFor({ state: "hidden" });
-    assert.equal(
-      await mapScreen
-        .locator(`.ada-map-places [data-place="${questLines.buttons[0]}"]`)
-        .getAttribute("aria-pressed"),
-      "true",
-      "A mapped Quests line closes the modal and selects its chip",
-    );
-  }
   await mapScreen.locator('[data-action="map-close"]').focus();
   // A refused action stays pressable (aria-disabled), which Playwright treats as disabled.
   await mapEarth.click({ force: true });
