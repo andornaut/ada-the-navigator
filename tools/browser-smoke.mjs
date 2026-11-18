@@ -1777,8 +1777,8 @@ try {
       await shipCard
         .locator(".ada-ship-section h3")
         .evaluateAll((headings) => headings.map((heading) => heading.textContent)),
-      [CONTENT.labels.cargo, CONTENT.labels.equipment],
-      "The Ship card shows Cargo, then Equipment",
+      [CONTENT.labels.cargo, CONTENT.labels.equipment, CONTENT.labels.shopWeapons],
+      "The Ship card shows Cargo, Equipment, then Weapons",
     );
     assert.equal(await focusedAction(), "close-ship", "Focus starts on the Ship card's X");
     if (close === "Escape") {
