@@ -485,6 +485,10 @@ try {
         document.querySelector(".ada-story-ship:not([hidden])")?.childElementCount,
     );
     pages.push({
+      // Whether the title screen's ship draws, as on an ordinary aboard page.
+      aboardShip: await page.evaluate(() =>
+        Boolean(document.querySelector(".ada-story-ship:not([hidden])")?.childElementCount),
+      ),
       art: await page
         .locator(".ada-story-art")
         .first()
@@ -777,15 +781,21 @@ try {
     ["aboard"],
     "Every prologue page from Ada's arrival shows aboard",
   );
-  // Every page shows its location's image from Art's manifest; only the glowing room's press
-  // aboard plays the rock glow, hiding the panel as its first frame fades in.
+  // Every Earth page shows its location's image from Art's manifest; an ordinary aboard page
+  // draws the title screen's ship over the last-played galaxy's backdrop instead, with no image.
+  // Only the glowing room's press aboard plays the rock glow, hiding the panel as its first frame
+  // fades in.
   const { BACKGROUND_ART } = await import(new URL("../src/data/storybook.ts", import.meta.url));
   const artManifest = await (
     await page.request.get("http://ada-preview:4173/art/manifest.json")
   ).json();
   const artUrl = (id) => `url("${artManifest.assets.find((entry) => entry.id === id)?.path}")`;
-  for (const { art, background } of launchPages) {
-    assert.equal(art, artUrl(BACKGROUND_ART[background]), `${background} shows its art`);
+  for (const { aboardShip, art, background } of launchPages) {
+    assert.deepEqual(
+      [aboardShip, art],
+      background === "aboard" ? [true, ""] : [false, artUrl(BACKGROUND_ART[background])],
+      `${background} shows its art`,
+    );
   }
   const glow = launchPages.findIndex(
     ({ background }, index) =>
