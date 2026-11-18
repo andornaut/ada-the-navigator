@@ -29,5 +29,22 @@ dedupe pass point several galaxies at one shared file.
 
 - A craft or kind missing from the map loads no file, so nothing requests a path that does not
   exist.
+- The 18 industrial craft sidecars in Andromeda, Cartwheel and Needle
+  (`retaliatorCargoHauler` and `retaliatorMiningFreighter` jets, hardpoints and shards) move from
+  the mandatory base into their galaxy's precache group. They belong to that galaxy; the base
+  placement came from the derivation keying their frames by `retaliator`, so nothing referenced
+  them.
 
 ## Outcome
+
+Precache groups over the 8,333 files under `public/`, before and after:
+
+| Group     | Before | After |
+| --------- | -----: | ----: |
+| Sunflower |     58 |    58 |
+| Cartwheel |  1,480 | 1,486 |
+| Whirlpool |    340 |   340 |
+| Needle    |  1,036 | 1,042 |
+| Andromeda |  1,426 | 1,432 |
+| Phantom   |     60 |    60 |
+| Base      |  3,933 | 3,915 |
