@@ -1,0 +1,21 @@
+---
+id: TBD
+title: Store shared enemy assets once and reference them from each galaxy
+status: approved
+approved: user, 2026-11-18, download size (policy 820117b)
+design: art
+related: []
+---
+
+## Scope
+
+Remove the 217 duplicate copies in `public/art/` (3.2 MB raw), mostly `enemies/*-hardpoints.json` repeated in each galaxy folder, by storing each shared asset once and referencing it from the galaxy manifests.
+
+## Criteria
+
+- No two files under `public/art/` have identical content.
+- Every galaxy still resolves each enemy asset, and enemy rendering is unchanged.
+
+## Decisions
+
+## Outcome

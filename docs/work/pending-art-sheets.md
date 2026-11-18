@@ -1,0 +1,23 @@
+---
+id: TBD
+title: Consolidate each art set's SVG frames into sheets with frame data
+status: approved
+approved: user, 2026-11-18, download size (policy 820117b)
+design: art
+related: []
+---
+
+## Scope
+
+Replace one SVG file per frame with one SVG sheet per asset set plus frame data, for every set in `public/art/` including Ada's ship and the non-portrait UI icons. Sheets stay vector. Tech owns the loader and manifest side and sets the maximum sheet size from mid-range Android texture limits; a set that does not fit is split.
+
+## Criteria
+
+- Art file count drops from 8,323 to about 150 on the measured build, with every frame still addressable by its current key.
+- Each sheet stays within Tech's verified maximum sheet size.
+- Rendered frames are pixel-identical to the current per-frame SVGs at 1280x720 and 720x360.
+- Before and after file counts and compressed bytes are reported.
+
+## Decisions
+
+## Outcome
