@@ -4,15 +4,15 @@ Each approved task is one file, `docs/work/<id>.md`. It records scope and milest
 progress (claims, blocks, receipts and acceptance) stays in the work protocol state root. The
 [design index](../design/README.md) lists the work items of each area.
 
-| Front matter | Content                                                                           |
-| ------------ | --------------------------------------------------------------------------------- |
-| `id`         | `ada-` and a zero-padded sequence (`ada-0001`), allocated in chronological order. |
-| `title`      | A short imperative title.                                                         |
-| `status`     | `approved`, `done`, `cancelled` or `superseded`.                                  |
-| `approved`   | A short approval reference, such as `user, 2026-11-18`.                           |
-| `design`     | The design area in `docs/design/`.                                                |
-| `related`    | A list of related work IDs.                                                       |
-| `supersedes` | The ID of the item this one replaces; omitted otherwise.                          |
+| Front matter | Content                                                                                                                                                                                                                      |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`         | `ada-` and a zero-padded sequence (`ada-0001`), allocated in chronological order.                                                                                                                                            |
+| `title`      | A short imperative title.                                                                                                                                                                                                    |
+| `status`     | `approved`, `done`, `cancelled` or `superseded`.                                                                                                                                                                             |
+| `approved`   | A short approval reference, such as `user, 2026-11-18`. A backfilled item whose date comes only from history ends `(inferred from handoff history)`; one with no recorded approval is `unrecorded (<role>-shipped, <date>)`. |
+| `design`     | The design area in `docs/design/`.                                                                                                                                                                                           |
+| `related`    | A list of related work IDs.                                                                                                                                                                                                  |
+| `supersedes` | The ID of the item this one replaces; omitted otherwise.                                                                                                                                                                     |
 
 The sections are Scope, Criteria, Decisions and Outcome. Decisions and Outcome state what was
 decided or delivered, and why, in a line or two each.
