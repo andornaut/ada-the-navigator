@@ -126,8 +126,24 @@ try {
   page = await context.newPage();
   page.setDefaultTimeout(10000);
   page.setDefaultNavigationTimeout(15000);
-  // Settings: its own button on the start screen; in play it opens from the Paused card, which
-  // the pause button (a touch control) or Escape opens.
+  // Settings has no standalone button: in play it opens from the Paused card, which the pause
+  // button (a touch control) or Escape opens; elsewhere from the Menu, the three-line disc at
+  // the pause button's place.
+  const menuDisc = () => page.locator('[data-action="menu"]');
+  const menuCard = () => page.locator('[data-dialog="menu"]');
+  // The open Menu's actions in order.
+  const menuActionIds = () =>
+    menuCard()
+      .locator(".ada-actions button:not([hidden])")
+      .evaluateAll((buttons) => buttons.map((button) => button.dataset.action));
+  async function openMenu() {
+    await menuDisc().click();
+    await menuCard().waitFor({ state: "visible" });
+  }
+  async function closeMenu() {
+    await menuCard().locator('[data-action="menu-close"]').click();
+    await menuCard().waitFor({ state: "hidden" });
+  }
   async function openPause() {
     const button = page.locator('[data-action="pause"]');
     // A reloaded game shows the pause button once its controls exist; a fine pointer never does.
@@ -142,17 +158,21 @@ try {
     }
     await page.locator('[data-dialog="pause"]').waitFor({ state: "visible" });
   }
+  // Where the open Settings card came from: "menu" or "pause".
+  let settingsParent = "pause";
   async function openSettings() {
-    const own = page.locator('[data-action="settings"]');
-    if (await own.isVisible()) {
-      await own.click();
+    settingsParent = (await menuDisc().isVisible()) ? "menu" : "pause";
+    if (settingsParent === "menu") {
+      await openMenu();
+      await menuCard().locator('[data-action="menu-settings"]').click();
     } else {
       await openPause();
       await page.locator('[data-action="pause-settings"]').click();
     }
     await page.locator('[data-action="close-settings"]').waitFor({ state: "visible" });
   }
-  // Settings opened in play closes back to the Paused card; Resume returns to play.
+  // Settings opened in play closes back to the Paused card, and from the Menu back to the Menu;
+  // Resume or Close returns to the view beneath.
   async function resumeIfPaused() {
     const resume = page.locator('[data-action="pause-resume"]');
     if (await resume.isVisible()) {
@@ -161,7 +181,12 @@ try {
   }
   async function closeSettings() {
     await page.locator('[data-action="close-settings"]').click();
-    await resumeIfPaused();
+    if (settingsParent === "menu") {
+      await menuCard().waitFor({ state: "visible" });
+      await closeMenu();
+    } else {
+      await resumeIfPaused();
+    }
   }
   const observe = (observed) => observeEvents(events, observed);
   observe(page);
@@ -544,8 +569,8 @@ try {
   }
   // Resolved on the current page, which each fixture replaces.
   const selector = () => page.locator('[data-dialog="galaxies"]');
-  // The start screen's Achievements opens the card on page one, every entry locked in a new game,
-  // and closing it returns to the start screen.
+  // The start screen's Menu opens Achievements on page one, every entry locked in a new game, and
+  // closing it returns to the Menu.
   async function achievementsPage() {
     const card = page.locator('[data-dialog="achievements"]');
     await card.waitFor({ state: "visible" });
@@ -569,57 +594,55 @@ try {
     "The start screen holds only Start before the first flight",
   );
   await assertNoTapFlash(
-    [
-      '[data-action="achievements"]',
-      '[data-action="achievements"] .ada-disc',
-      '[data-action="settings"]',
-      '.ada-start-actions > [data-action="start"]',
-    ],
+    ['[data-action="menu"]', '.ada-start-actions > [data-action="start"]'],
     "The start screen",
   );
-  const [achievementsBox, settingsBox] = await Promise.all(
-    ['[data-action="achievements"]', '[data-action="settings"]'].map((selector) =>
-      page.locator(selector).boundingBox(),
+  // The start screen's one navigation entry is the three-line Menu at the pause button's place
+  // (rules.md "Start, Home and Space"), drawn from the pause pose with its bars replaced; Settings,
+  // Achievements and Exit have no standalone disc.
+  assert.deepEqual(
+    await Promise.all(
+      ["achievements", "settings", "exit"].map((action) =>
+        page.locator(`[data-action="${action}"]`).isVisible(),
+      ),
     ),
+    [false, false, false],
+    "The start screen shows no standalone Achievements, Settings or Exit disc",
   );
-  // hudButtonTarget(1): one pitch, HUD_BUTTON.target + HUD_BUTTON.gap, left of Settings.
-  const startUnit = await page
-    .locator("#app")
-    .evaluate((app) => Number(getComputedStyle(app).getPropertyValue("--ada-unit")));
-  assert.ok(
-    achievementsBox &&
-      settingsBox &&
-      Math.abs(achievementsBox.y - settingsBox.y) < 1 &&
-      Math.abs(achievementsBox.width - settingsBox.width) < 1 &&
-      Math.abs((settingsBox.x - achievementsBox.x) / startUnit - 57) < 0.1,
-    "The start screen's Achievements sits one pitch left of Settings in the same form",
-  );
-  const achievementsButton = page.locator('[data-action="achievements"]');
-  // A url() as written in the stylesheet, its optional quotes dropped: the built CSS writes none.
-  const glyphUrl = (value) => value.replace(/^url\((["']?)(.*)\1\)$/u, "url($2)");
   assert.deepEqual(
     [
-      await achievementsButton.getAttribute("aria-label"),
-      await achievementsButton.locator(".ada-disc").getAttribute("aria-hidden"),
-      glyphUrl(
-        await achievementsButton.evaluate((button) =>
-          getComputedStyle(button).getPropertyValue("--glyph").trim(),
-        ),
+      await menuDisc().getAttribute("aria-label"),
+      await menuDisc().getAttribute("data-navigation"),
+      await menuDisc().evaluate((button) =>
+        getComputedStyle(button, "::before").backgroundImage.startsWith('url("data:image/svg+xml'),
       ),
     ],
-    [CONTENT.labels.achievements, "true", "url(/art/ui/icons/achievements.svg)"],
-    "Achievements is labelled from Gameplay's string with Art's trophy, the glyph hidden",
+    ["Menu", "menu", true],
+    "The start screen's entry is the three-line Menu",
   );
-  assert.equal(
-    glyphUrl(
-      await page
-        .locator('[data-action="settings"]')
-        .evaluate((button) => getComputedStyle(button).getPropertyValue("--glyph").trim()),
-    ),
-    "url(/art/ui/icons/settings.svg)",
-    "Settings draws Art's vector gear, the same mask mechanism as Achievements",
+  const startMenuBox = await menuDisc().boundingBox();
+  assert.ok(startMenuBox, "The start screen's Menu has a box");
+  // The start Menu holds Achievements, Settings and a Chromium tab's Exit, then primary Close,
+  // each labelled from Gameplay's strings.
+  await openMenu();
+  assert.deepEqual(
+    await menuActionIds(),
+    ["menu-achievements", "menu-settings", "menu-exit", "menu-close"],
+    "The start screen's Menu holds Achievements, Settings, Exit, then Close",
   );
-  await page.locator('[data-action="achievements"]').click();
+  assert.deepEqual(
+    await menuCard()
+      .locator(".ada-actions button:not([hidden])")
+      .evaluateAll((buttons) => buttons.map((button) => button.textContent?.trim())),
+    [
+      CONTENT.labels.achievements,
+      CONTENT.labels.settings,
+      CONTENT.labels.exit,
+      CONTENT.labels.close,
+    ],
+    "The start screen's Menu actions read Gameplay's strings",
+  );
+  await menuCard().locator('[data-action="menu-achievements"]').click();
   const firstAchievements = await achievementsPage();
   assert.equal(firstAchievements.count, "1/3", "The 14 achievements page six at a time");
   assert.deepEqual(
@@ -647,20 +670,21 @@ try {
     );
   }
   assert.deepEqual(
-    await modalCovers('[data-dialog="achievements"]', [achievementsBox, settingsBox]),
-    [true, true],
-    "The open Achievements modal draws above the Achievements and Settings buttons",
+    await modalCovers('[data-dialog="achievements"]', [startMenuBox]),
+    [true],
+    "The open Achievements modal draws above the Menu disc",
   );
   await page.locator('[data-action="achievements-next"]').click();
   assert.equal((await achievementsPage()).count, "2/3");
   await page.locator('[data-action="close-achievements"]').click();
   await page.locator('[data-dialog="achievements"]').waitFor({ state: "hidden" });
-  await page.locator('[data-action="settings"]').click();
+  await menuCard().waitFor({ state: "visible" });
+  await menuCard().locator('[data-action="menu-settings"]').click();
   await page.locator('[data-action="close-settings"]').waitFor({ state: "visible" });
   assert.deepEqual(
-    await modalCovers('[data-action="close-settings"]', [achievementsBox]),
+    await modalCovers('[data-action="close-settings"]', [startMenuBox]),
     [true],
-    "The open Settings modal draws above the Achievements button",
+    "The open Settings modal draws above the Menu disc",
   );
   // The build line: the card's last text, after the rows, naming package.json's version and the
   // gated revision, read with the card and never focused.
@@ -693,6 +717,9 @@ try {
   events.checks.push(`Settings shows the build label v${version} · ${commit}`);
   await page.locator('[data-action="close-settings"]').click();
   await page.locator('[data-action="close-settings"]').waitFor({ state: "hidden" });
+  // Closing Settings returns to the Menu; its Close returns to the start screen.
+  await menuCard().waitFor({ state: "visible" });
+  await closeMenu();
   await page.locator('[data-action="start"]').waitFor({ state: "visible" });
   // A first launch: Start, galaxy one's opening, the prologue in Ada's room and aboard, then
   // galaxy selection on galaxy one.
@@ -1815,8 +1842,8 @@ try {
       "no inapplicable or duplicate contextual control shows",
   );
   events.checks.push(
-    "Achievements open from the start screen's button left of Settings in Gameplay's order, " +
-      "paging six at a time; the start screen and the Paused card hold no Achievements",
+    "Achievements open from the start screen's Menu in Gameplay's order, paging six at a time, " +
+      "and close back to the Menu; the start actions and the Paused card hold no Achievements",
   );
   // A held job's long Job line wraps inside the place panel, which stays clear of the tool
   // column, and selecting its target pans the chip clear of the panel's rendered height.
@@ -1905,12 +1932,20 @@ try {
     0,
     "Back to title shows the start screen, not the jump-home page or the sleep scene",
   );
-  // Achievements opens from the title's own button.
-  await page.locator('[data-action="achievements"]').click();
+  // Achievements opens from the title's Menu, which Back to title leaves without Back to title.
+  await openMenu();
+  assert.deepEqual(
+    await menuActionIds(),
+    ["menu-achievements", "menu-settings", "menu-exit", "menu-close"],
+    "The title's Menu is the start Menu",
+  );
+  await menuCard().locator('[data-action="menu-achievements"]').click();
   assert.equal((await achievementsPage()).count, "1/3", "Achievements opens from the title");
   await page.screenshot({ path: `${output}/achievements-title.png` });
   await page.locator('[data-action="close-achievements"]').click();
   await page.locator('[data-dialog="achievements"]').waitFor({ state: "hidden" });
+  await menuCard().waitFor({ state: "visible" });
+  await closeMenu();
   assert.deepEqual(
     await page
       .locator(".ada-start button")
@@ -3043,6 +3078,7 @@ try {
   // area's left edge, at 720x360 and on an 844x390 phone, without and with insets (left and right
   // 43, bottom 19 logical), first run and with a save.
   const { START_SCREEN } = await import(new URL("../src/data/layout.ts", import.meta.url));
+  const startPlayView = await import(new URL("../src/ui/layout/playView.ts", import.meta.url));
   const startScreenAt = async (name, size, insets) => {
     await page.setViewportSize(size);
     await page.evaluate((logical) => {
@@ -3077,11 +3113,16 @@ try {
           box(`.ada-start-actions > [data-action="${button.dataset.action}"]`),
           button.classList.contains("ada-primary") ? "primary" : "secondary",
         ]),
-        achievements: box('[data-action="achievements"]'),
-        exit: box('[data-action="exit"]'),
+        // The retired top-right discs that draw: none.
+        discs: ["achievements", "settings", "exit"].filter((action) => {
+          const button = document.querySelector(`[data-action="${action}"]`);
+          return Boolean(button && !button.hidden && button.getClientRects().length > 0);
+        }),
         focused: document.activeElement?.dataset.action ?? null,
+        menu: box('[data-action="menu"]'),
         note: document.querySelectorAll(".ada-start-note").length,
-        settings: box('[data-action="settings"]'),
+        // The play area's CSS size, which the canvas fills.
+        size: [origin.width, origin.height],
         ship: box(".ada-start-ship"),
         shipSrc: document.querySelector(".ada-start-ship")?.getAttribute("src"),
         title: document.querySelector(".ada-start-title img")?.getAttribute("alt"),
@@ -3166,11 +3207,21 @@ try {
         `${name}: ${action}'s role`,
       );
     }
-    // The HUD row's nav discs, a browser tab's Exit rightmost, Settings one pitch left of it and
-    // Achievements one more, inside the game area.
-    assert.ok(Math.abs(shot.settings[0] - shot.achievements[0] - 57) < 0.1, `${name}: nav pitch`);
-    assert.ok(Math.abs(shot.exit[0] - shot.settings[0] - 57) < 0.1, `${name}: Exit's pitch`);
-    assert.ok(shot.exit[0] + shot.exit[2] <= 720 + 0.1, `${name}: Exit in the game area`);
+    // The Menu's press area is the pause button's, on the HUD rect's top-left corner, inside the
+    // game area. The full-viewport policy keeps hardware insets zero, so insets move nothing.
+    const [width, height] = shot.size;
+    const hud = startPlayView.hudRect(
+      startPlayView.NO_INSETS,
+      startPlayView.logicalView({ height, width }),
+    );
+    const { hit } = startPlayView.PAUSE_BUTTON;
+    const menuPlace = [hud.x + hit.x - shot.x0, hud.y + hit.y, hit.width, hit.height];
+    assert.ok(
+      shot.menu?.every((value, index) => Math.abs(value - menuPlace[index]) <= 0.1),
+      `${name}: the Menu sits at the pause button's place: ${JSON.stringify([shot.menu, menuPlace])}`,
+    );
+    assert.ok(shot.menu[0] >= 0, `${name}: the Menu in the game area`);
+    assert.deepEqual(shot.discs, [], `${name}: no standalone nav disc draws`);
   }
   assert.deepEqual(
     startScreens["new-720"].actions.map(([action]) => action),
@@ -3185,59 +3236,45 @@ try {
   assert.equal(startScreens["new-720"].focused, "start", "Start is the default");
   assert.equal(startScreens["saved-720"].focused, "continue", "Continue is the default");
   assert.equal(startScreens["new-844"].x0, 29, "The 844x390 phone's game area starts at 29");
-  // Insets move the nav discs, never the start screen's parts (Art's table).
-  // The HUD rect's right is 720 - 43 = 677; Exit's target reaches HUD_ROW.reach (7.5) past it, at
-  // 677 + 7.5 - 48, and Settings and Achievements sit one and two pitches (57) left of it.
-  const insetDiscs = startScreens["saved-720-insets"];
-  assert.deepEqual(
-    [insetDiscs.exit[0], insetDiscs.settings[0], insetDiscs.achievements[0]].map(
-      (x) => Math.round((x + insetDiscs.x0) * 10) / 10,
-    ),
-    [636.5, 579.5, 522.5],
-    "Exit, Settings and Achievements clear the right inset",
-  );
-  // Tab order follows the DOM: Restart, Continue, Achievements, Settings, Exit. Focus opens on
-  // Continue, so Tab reaches the nav discs and Shift+Tab reaches Restart.
+  // Tab order follows the DOM: Restart, Continue, then the Menu. Focus opens on Continue, so Tab
+  // reaches the Menu and Shift+Tab reaches Restart.
   const order = [];
   await page.setViewportSize({ height: 360, width: 720 });
   await seedOnce(saved.save(), "ada-browser.start-screen-tabs.v1");
   await page.locator('.ada-start-actions > [data-action="continue"]').waitFor({ state: "visible" });
-  await inTurn([0, 1, 2], async () => {
-    await page.keyboard.press("Tab");
-    order.push(await page.evaluate(() => document.activeElement?.dataset.action ?? null));
-  });
+  await page.keyboard.press("Tab");
+  order.push(await page.evaluate(() => document.activeElement?.dataset.action ?? null));
   await page.locator('.ada-start-actions > [data-action="continue"]').focus();
   await page.keyboard.press("Shift+Tab");
   order.push(await page.evaluate(() => document.activeElement?.dataset.action ?? null));
   await page.setViewportSize({ height: 720, width: 1280 });
-  assert.deepEqual(
-    order,
-    ["achievements", "settings", "exit", "restart"],
-    "Tab follows Continue's lead",
-  );
-  // An open modal is the topmost layer: over Achievements' own disc, Achievements' card shows.
-  await page.locator('[data-action="achievements"]').click();
+  assert.deepEqual(order, ["menu", "restart"], "Tab follows Continue's lead");
+  // An open modal is the topmost layer: over the Menu disc, Achievements' card shows.
+  await openMenu();
+  await menuCard().locator('[data-action="menu-achievements"]').click();
   await page.locator('[data-dialog="achievements"]').waitFor({ state: "visible" });
   const topmost = await page.evaluate(() => {
-    const disc = document.querySelector('[data-action="achievements"]').getBoundingClientRect();
+    const disc = document.querySelector('[data-action="menu"]').getBoundingClientRect();
     const hit = document.elementFromPoint(disc.x + disc.width / 2, disc.y + disc.height / 2);
     return {
-      button: Boolean(hit?.closest('[data-action="achievements"]')),
+      button: Boolean(hit?.closest('[data-action="menu"]')),
       modal: Boolean(hit?.closest(".ada-modal")),
       start: Boolean(hit?.closest(".ada-start")),
     };
   });
   await page.locator('[data-action="close-achievements"]').click();
   await page.locator('[data-dialog="achievements"]').waitFor({ state: "hidden" });
+  await menuCard().waitFor({ state: "visible" });
+  await closeMenu();
   assert.deepEqual(
     topmost,
     { button: false, modal: true, start: false },
-    "An open modal draws over the start screen and its nav discs",
+    "An open modal draws over the start screen and its Menu disc",
   );
   events.checks.push(
     "The start screen draws the field, ship, wordmark and actions at their play-view places " +
-      "at 720x360 and 844x390, with and without insets, defaults to Start or Continue and tabs " +
-      "Continue, Restart, Achievements, Settings",
+      "and the Menu at the pause button's, at 720x360 and 844x390, with and without insets, " +
+      "defaults to Start or Continue and tabs Continue, the Menu, Restart",
   );
 
   const { SCREEN } = await import(new URL("../src/data/screen.ts", import.meta.url));
@@ -4493,51 +4530,30 @@ try {
       events.errors.push(message.text());
     }
   });
-  // Exit: a browser tab offers it, at the far top right of the start screen after Achievements
-  // and Settings, a small button's gap from Settings; Q leaves for the site's home page.
+  // Exit: a browser tab offers it in the start screen's Menu, after Achievements and Settings and
+  // before Close, named from Gameplay's string; it and Q on the bare start screen leave for the
+  // site's home page.
   await page.goto("http://ada-preview:4173/play/");
-  await page.locator('[data-action="exit"]').waitFor({ state: "visible" });
-  const navDiscs = await page.evaluate(() =>
-    ["achievements", "settings", "exit"].map((action) => {
-      const button = document.querySelector(`[data-action="${action}"]`);
-      const disc = button?.querySelector(".ada-disc")?.getBoundingClientRect();
-      return {
-        label: button?.getAttribute("aria-label"),
-        left: disc?.left ?? 0,
-        right: disc?.right ?? 0,
-        tab: [...document.querySelectorAll("button")].indexOf(button),
-      };
-    }),
-  );
-  const navUnit = await page
-    .locator("#app")
-    .evaluate((app) => Number(getComputedStyle(app).getPropertyValue("--ada-unit")));
-  assert.equal(navDiscs[2].label, CONTENT.labels.exit, "Exit is named from Gameplay's string");
+  await menuDisc().waitFor({ state: "visible" });
+  await openMenu();
+  const exitAction = menuCard().locator('[data-action="menu-exit"]');
   assert.equal(
-    glyphUrl(
-      await page
-        .locator('[data-action="exit"]')
-        .evaluate((button) => getComputedStyle(button).getPropertyValue("--glyph").trim()),
-    ),
-    "url(/art/ui/icons/exit.svg)",
-    "Exit draws Art's vector door, the same mask mechanism as Settings",
+    (await exitAction.textContent())?.trim(),
+    CONTENT.labels.exit,
+    "Exit is named from Gameplay's string",
   );
-  assert.ok(
-    navDiscs[0].tab < navDiscs[1].tab && navDiscs[1].tab < navDiscs[2].tab,
-    "The start screen tabs Achievements, Settings, then Exit",
+  assert.deepEqual(
+    (await menuActionIds()).slice(-2),
+    ["menu-exit", "menu-close"],
+    "Exit sits immediately above the Menu's Close",
   );
-  for (const [left, right] of [
-    [navDiscs[0], navDiscs[1]],
-    [navDiscs[1], navDiscs[2]],
-  ]) {
-    assert.ok(
-      Math.abs((right.left - left.right) / navUnit - 24) < 0.1,
-      "The start screen's discs sit a small button's gap apart, Exit rightmost",
-    );
-  }
+  await exitAction.click();
+  await page.waitForURL("http://ada-preview:4173/");
+  await page.goto("http://ada-preview:4173/play/");
+  await menuDisc().waitFor({ state: "visible" });
   await page.keyboard.press("KeyQ");
   await page.waitForURL("http://ada-preview:4173/");
-  events.checks.push("A Chromium tab shows Exit at the start screen's far top right; Q goes home");
+  events.checks.push("A Chromium tab offers Exit in the start screen's Menu; Exit and Q go home");
   await page.goto("http://ada-preview:4173/play/?dev=1");
   await page.locator('[data-action="start"]').waitFor({ state: "visible" });
   const savedBeforeCrash = await page.evaluate((key) => localStorage.getItem(key), storageKey);
