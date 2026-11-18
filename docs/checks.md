@@ -58,7 +58,11 @@ paths, removing stale content.
 
 The `Test` workflow (`.github/workflows/test.yml`) runs on every pushed branch
 and on pull requests to `main`, with two jobs that use Make and this custom
-Dockerfile: `Lint` runs `make lint`; `Test` runs `make test build`. Each job sets
+Dockerfile: `Lint` runs `make lint`; `Test` runs `make test build`. `Lint` runs
+for every change. A `Changes` job compares a push with its previous commit, or a
+pull request with its base, and `Test` reports as skipped when every changed
+path is under `docs/`. A forced push, a new branch, a manual run, a base that
+is not an ancestor or a failed `Changes` job runs `Test`. Both Make jobs set
 up Node.js from `.nvmrc` for the evidence script and pinned Docker and Buildx
 versions. `tools/ci-evidence.mjs` records source fingerprints around those
 commands and copies the actual exported build into `.check-results/ci-test/`. It
