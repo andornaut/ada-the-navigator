@@ -32,8 +32,15 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 /* The play area fills the screen under the safe-area insets; the UI keeps clear of them through
-   the safe-margin clamp (src/ui/layout/playView.ts). */
+   the safe-margin clamp (src/ui/layout/playView.ts). On a screen taller than the 720x360 base
+   view's 2:1 (src/data/screen.ts), the play area keeps that ratio across the full width and is
+   centred down the page, so equal bands show above and below it; on a wider screen it fills the
+   height and the play view's side bands show. The body is the turned frame where one applies.
+   The html prefix outranks the boot stylesheet's #app height whichever loads last. */
 body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   overflow: hidden;
   touch-action: none;
 }
@@ -41,6 +48,12 @@ body {
   position: relative;
   isolation: isolate;
   container-type: size;
+}
+html #app {
+  flex: none;
+  height: auto;
+  max-height: 100%;
+  aspect-ratio: 720 / 360;
 }
 #game-canvas {
   position: absolute;
