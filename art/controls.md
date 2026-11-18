@@ -81,21 +81,27 @@ underneath.
 | `public/art/ui/icons/pause-press.svg` | Press frame 0 (swell)  | r 17.5   | White, r 16.5, 3 px | `#3a4466`, 13.5      |
 | `public/art/ui/icons/pause-held.svg`  | Press frame 1 and held | r 16.5   | White, r 15.5, 3 px | `#3a4466`, 12.5      |
 
+- Menu button: the same frame, poses, timing and press area, with three 11x3
+  bars at x 12, y 11, 16 and 21 (2 apart) in place of the pause bars:
+  `menu.svg`, `menu-press.svg` and `menu-held.svg` beside the pause files. It
+  shows on the Start screen and in Ada's room, where it opens the Menu card.
+
 - Timing stays in the `ui-pause` sheet's JSON, as in Chibi: tags `rest`
   (frame 0, 100ms), `press` (frames 1 and 2, 60ms each, once) and `held`
   (frame 3, 100ms). Frame 0 shows `pause.svg`, frame 1 `pause-press.svg`,
   frames 2 and 3 `pause-held.svg`. The sheet's PNG is no longer drawn.
 - Contrast: cream bars and ring 9.59:1 on the navy face and 10.11:1 on the
   space background `#292734`; pressed white bars 9.55:1 on `#3a4466`.
-- Pause card: Map and Ship, then Settings and Back to title, as a two-column
-  grid, then Resume (primary) full width at the bottom; its groups are in
-  [Layout screens](layout.md#cards). Every action stays
-  available in danger. Map always opens the [map](map.md), which holds
-  Galaxies; in danger Travel here and Galaxies are unavailable there.
-  Settings opens over the same dim; one card or the map shows at a time.
-- Ada's room page has the same pause button at the top left, also touch only
-  (on desktop Escape opens the room's Paused card); its Paused card holds
-  Settings and Back to title.
+- Pause card: Map and Quests, then Settings and Ship, as a two-column grid
+  sorted by label, then Back to title and Resume (primary), each full width,
+  Resume at the bottom; its groups are in [Layout screens](layout.md#cards).
+  Every action stays available in danger. Map always opens the
+  [map](map.md), which holds Galaxies; in danger Travel here and Galaxies are
+  unavailable there. Settings opens over the same dim; one card or the map
+  shows at a time.
+- Ada's room page shows the Menu button at the top left, also touch only (on
+  desktop Escape opens the Menu card): Achievements, Settings, Back to title,
+  then Close (primary).
 - The space screen shows no navigation or destination panel; navigation lives in
   the pause card.
 
