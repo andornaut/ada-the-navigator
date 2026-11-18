@@ -1379,6 +1379,9 @@ try {
     false,
     "The safe input fixture's Growers route is open",
   );
+  // The first flight's move and aim lessons are seen, so no lesson line holds the notice slot the
+  // save status yields to (src/ui/notice.ts).
+  safeInput.state.seenConversations.push("lesson:move", "lesson:aim");
   assert.equal(safeInput.state.flight.freshChunk, null);
   const safeSerialized = safeInput.save();
   assert.deepEqual(relaunch(CONTENT, safeSerialized).state, safeInput.state);
