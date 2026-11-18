@@ -234,22 +234,25 @@ describe("backdrop layers in the view", () => {
     }
   });
 
-  it("keeps at most three planets and three far items, each meeting the view, with their recipes", () => {
+  it("keeps at most four planets and four far items, each meeting the view, with their recipes", () => {
     let planets = 0;
     let far = 0;
     for (const galaxy of GALAXY_NUMBERS) {
-      for (let k = 0; k < 40; k++) {
-        const camera: Xy = [k * 2400, k * -1100];
+      // Cameras 165 world px apart, so the view meets each chunk on the path at many offsets.
+      for (let k = 0; k < 2000; k++) {
+        const camera: Xy = [k * 137.3, k * -91.7];
         const seen = viewPlanets(rules, backdropOf(galaxy), camera);
         const items = viewFar(rules, backdropOf(galaxy), camera);
-        expect(seen.length).toBeLessThanOrEqual(3);
-        expect(items.length).toBeLessThanOrEqual(3);
+        // Every item of each chunk the lookup touches is up to 9 planets and 6 far items; those
+        // whose extent meets the view and its margin are 4 at most.
+        expect(seen.length).toBeLessThanOrEqual(4);
+        expect(items.length).toBeLessThanOrEqual(4);
         planets += seen.length;
         far += items.length;
         for (const planet of seen) {
           expect(backdropOf(galaxy).planets).toContain(planet.recipe);
           expect(planet.r).toBeLessThanOrEqual(98 * planet.recipe.size);
-          const reach = planetReach(planet.r);
+          const reach = planet.recipe.look === "ringed" ? planetReach(planet.r) : planet.r;
           expect(meets(planet.x, planet.y, reach, reach)).toBe(true);
         }
         for (const item of items) {

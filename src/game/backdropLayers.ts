@@ -525,7 +525,8 @@ export function viewPlanets(
       (rule.radius[0] +
         (rule.radius[1] - rule.radius[0]) * unit(galaxy.seed, item.id, "planet-r")) *
       recipe.size;
-    const reach = r * PLANET_EXTENT;
+    // Only a ringed planet draws past its disc.
+    const reach = recipe.look === "ringed" ? r * PLANET_EXTENT : r;
     if (!meetsView(x, y, reach, reach)) {
       return [];
     }
