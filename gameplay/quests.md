@@ -108,8 +108,8 @@ up to the nearest 25. This covers station jobs, repeatable activities and any
 existing story-quest Stardust payout. Current main-story outcomes do not award
 Stardust; this rule adds none. Ordinary drops, discovery caches, shop prices,
 Exchange, donations and nonquest achievement bonuses keep their own rules.
-Pacing, kill-time and ore-income simulations remain deferred; job-assisted
-pacing awaits validation.
+Pacing, kill-time and ore-income simulations remain deferred; [Economy](economy.md)
+records the approved job-assisted pacing.
 
 Keep saved job and activity rewards in base units, including existing saves.
 Offer rows, accepted-task details, completion notices and the actual credited

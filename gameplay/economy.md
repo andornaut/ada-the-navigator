@@ -19,9 +19,12 @@ without jobs as the pacing simulation measures it:
 Without jobs, a price divided by that income gives its pacing estimate: the
 first weapon (400) takes about 50 minutes of Sunflower play, saving 500 for
 Cartwheel's holodisk about 30 minutes of Cartwheel play, and a galaxy's projects
-the time their total takes at its income after its story ends. Job-assisted
-pacing with the approved completion rewards awaits validation. Pacing, kill-time
-and ore-income simulations remain deferred.
+the time their total takes at its income after its story ends. With jobs taken
+back to back at the approved completion rewards, the first weapon takes about 14
+minutes in Sunflower and in Cartwheel, Cartwheel's holodisk about 16 and all three
+Sunflower projects about 22, and jobs supply about three quarters of income or
+more; this job-assisted pacing is approved. Pacing, kill-time and ore-income
+simulations remain deferred.
 Exploring finds a station every few minutes.
 
 ## Earning Stardust
