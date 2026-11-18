@@ -830,18 +830,20 @@ try {
     launchPages.filter(({ looped }) => looped).length === 1,
     "Astra's portrait loop runs on her page aboard",
   );
-  // The light spread: no page scrolls or rises past the top cap, opening, resolution and closing
-  // pages carry the chapter heading, and each background keeps one placement through the run.
+  // The light spread: no page scrolls or rises past the top cap, and each background keeps one
+  // placement through the run.
   for (const { spread, text } of launchPages) {
     assert.ok(
       !spread.scrolls && !spread.choicesScroll && !spread.clipped && spread.top >= 60.5 - 0.01,
       `"${text}" fits: ${JSON.stringify(spread)}`,
     );
   }
+  // Every page of chapter one's opening scene, its first-launch garden arrival and farewell among
+  // them, carries the chapter's panel title; the prologue's pages after it carry none.
   assert.deepEqual(
-    launchPages.filter(({ spread }) => spread.heading).map(({ text }) => text),
-    [CONTENT.chapters[1].opening],
-    "Only the first launch's chapter opening carries the panel title",
+    launchPages.map(({ spread }) => spread.heading),
+    launchPages.map((_, index) => (index < openingAt + 3 ? CONTENT.chapters[1].name : "")),
+    "Chapter one's opening scene carries its panel title on every page, the prologue none",
   );
   for (const background of new Set(launchPages.map(({ background }) => background))) {
     const tops = new Set(
@@ -853,7 +855,7 @@ try {
   }
   events.checks.push(
     "Story pages lay out as the light spread: every launch page fits under the top cap without " +
-      "scrolling, the opening carries the chapter heading, and each background keeps one " +
+      "scrolling, the opening scene carries the chapter heading, and each background keeps one " +
       "placement through the run",
   );
   events.checks.push(
