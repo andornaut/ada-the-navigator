@@ -175,7 +175,7 @@ the face of each state, never the press area.
 
 | Token           | Value                                                                | Rule                                                                                     | Constant                                                           |
 | --------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Card width      | `min(presetWidth, availableGameWidth)`                               | Fixed Large 700, Medium 500 and Small 400 logical px, clamped to the safe game-area rect | `CARD_WIDTH_CAPS`, `cardWidth`, `contentCard.ts`                   |
+| Card width      | `min(presetWidth, availableGameWidth)`                               | Fixed Large 688, Medium 500 and Small 400 logical px, clamped to the safe game-area rect | `CARD_WIDTH_CAPS`, `cardWidth`, `contentCard.ts`                   |
 | Card height     | Content-fitted, capped by the available height                       | No minimum, no reserved space                                                            | `contentCardLayout`, `contentCard.ts`, to implement                |
 | Frame border    | 2                                                                    | Counts inside the 16 padding                                                             | `CARD_CONTENT.frameBorder`, `cardFrame.ts`; now `CARD.frameBorder` |
 | Close face      | 24x24                                                                | `ui-close`                                                                               | `CARD_CONTENT.closeSize`, `cardFrame.ts`; now `CARD.closeSize`     |
@@ -186,14 +186,15 @@ the face of each state, never the press area.
 | Scroll end pad  | 16                                                                   | Below the last control at the scroll end                                                 | `SCROLL.endPad` = `SPACING.panelPadding`                           |
 | Drag threshold  | 8                                                                    | A pointer moving further scrolls and does not activate                                   | `SCROLL.dragThreshold`, to implement                               |
 
-- Shared preset cards have fixed widths: Large 700, Medium 500 and Small 400
-  logical pixels. Their available rect is the actual game area, excluding
-  letterboxing, inset by 10 logical pixels on each side and further constrained
-  by applicable safe-area insets.
-- Cards centre in that rect. Height fits content up to the rect's height: at most
-  game height minus 20. Taller content uses the existing scroll region. A title
-  wider than its slot wraps and grows the header. Large has 10-pixel horizontal
-  margins in the 720-pixel game area when no larger safe-area inset applies.
+- Shared preset cards have fixed widths by width family: Large 688, Medium 500
+  and Small 400 logical pixels. Their available rect is the actual game area,
+  excluding letterboxing, inset by the 16 logical pixel screen margin on each
+  side and further constrained by applicable safe-area insets.
+- Cards centre in that rect. Height follows content up to the rect's height: at
+  most game height minus 32. Taller content uses the existing scroll region.
+  Cards keep the full type sizes; no font scales down to fit. A title wider than
+  its slot wraps and grows the header. Large fills the 720-pixel game area to
+  its 16-pixel margins when no larger safe-area inset applies.
 - Header balance: with line boxes, the title starts at 16 and the first group
   at `2 * 16 - 2 + 28 = 58`. DOM measures line boxes, not ink; canvas-drawn
   text measures ink. The close target's bottom (42) plus 8 never exceeds 58.
@@ -777,6 +778,9 @@ downloads during play, such as on-demand art fetched ahead, show no bar.
   250 ms hold and the 150 ms fade. Its frame border runs on every side, so the
   bottom-only ink rule needs a kit option or Ada CSS on the bar's bottom edge;
   `LOADING_BAR` does not carry it yet.
+- Loading failures show through game-kit's loading-failure presentation. Its
+  Retry label takes the Start button's visible label colour, ink `#181425`
+  (the primary label, 7.27:1 on `#bfa06f`).
 
 ## Screens
 
