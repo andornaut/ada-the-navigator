@@ -269,30 +269,70 @@ export function composedArchetypes(assets: readonly EnemyFrame[]): Set<string> {
   return new Set(assets.filter(enemyPartFrame).flatMap((asset) => enemyFrameKey(asset) ?? []));
 }
 
-/** An archetype's data file sits beside its frames as `{archetype}-{name}.json`. */
-function besideFrames(name: string, archetype: string, frame: Pick<EnemyFrame, "path">): string {
-  const path = frame.path ?? "";
-  return `${path.slice(0, path.lastIndexOf("/") + 1)}${archetype}-${name}.json`;
-}
-
-/** The archetype's jets file sits beside its frames as `{archetype}-jets.json`. */
-export function enemyJetsPath(archetype: string, frame: Pick<EnemyFrame, "path">): string {
-  return besideFrames("jets", archetype, frame);
-}
-
-/** A composed archetype's layout sits beside its frames as `{archetype}-hardpoints.json`. */
-export function enemyHardpointsPath(archetype: string, frame: Pick<EnemyFrame, "path">): string {
-  return besideFrames("hardpoints", archetype, frame);
-}
-
-export function enemyShardsPath(archetype: string, frame: Pick<EnemyFrame, "path">): string {
-  return besideFrames("shards", archetype, frame);
-}
-
 type Fields = Record<string, unknown>;
 
 const fields = (value: unknown): Fields | undefined =>
   value && typeof value === "object" && !Array.isArray(value) ? (value as Fields) : undefined;
+
+/** A craft's data files: its jets, its hardpoint layout and its destruction shards. */
+export const SIDECAR_KINDS = ["jets", "hardpoints", "shards"] as const;
+export type SidecarKind = (typeof SIDECAR_KINDS)[number];
+
+/**
+ * A manifest's `sidecars` map (art/README.md): each craft's data file paths by kind, keyed by its
+ * enemy frame key or story craft name. A craft or kind without a path has no file.
+ */
+export type Sidecars = ReadonlyMap<string, Readonly<Partial<Record<SidecarKind, string>>>>;
+
+/**
+ * A manifest's sidecars map; empty when the manifest has none, undefined when it is not an object
+ * of crafts each mapping known kinds to paths under /art/.
+ */
+export function readSidecars(value: unknown): Sidecars | undefined {
+  if (value === undefined) {
+    return new Map();
+  }
+  const crafts = fields(value);
+  if (!crafts) {
+    return undefined;
+  }
+  const sidecars = new Map<string, Partial<Record<SidecarKind, string>>>();
+  for (const [craft, entry] of Object.entries(crafts)) {
+    const kinds = fields(entry);
+    if (!kinds || Object.keys(kinds).length === 0) {
+      return undefined;
+    }
+    const paths: Partial<Record<SidecarKind, string>> = {};
+    for (const [kind, path] of Object.entries(kinds)) {
+      if (
+        !SIDECAR_KINDS.some((known) => known === kind) ||
+        typeof path !== "string" ||
+        !path.startsWith("/art/") ||
+        !path.endsWith(".json")
+      ) {
+        return undefined;
+      }
+      paths[kind as SidecarKind] = path;
+    }
+    sidecars.set(craft, paths);
+  }
+  return sidecars;
+}
+
+/** The craft's jets file from its manifest's sidecars map, or undefined when it has none. */
+export function enemyJetsPath(sidecars: Sidecars, craft: string): string | undefined {
+  return sidecars.get(craft)?.jets;
+}
+
+/** A composed craft's hardpoint layout file from its manifest's sidecars map. */
+export function enemyHardpointsPath(sidecars: Sidecars, craft: string): string | undefined {
+  return sidecars.get(craft)?.hardpoints;
+}
+
+/** The craft's destruction shards file from its manifest's sidecars map. */
+export function enemyShardsPath(sidecars: Sidecars, craft: string): string | undefined {
+  return sidecars.get(craft)?.shards;
+}
 
 function readVec(value: unknown): Vec | undefined {
   return Array.isArray(value) &&

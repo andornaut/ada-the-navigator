@@ -358,9 +358,13 @@ function queueGalaxyAssets(
   for (const asset of assets) {
     loadGalaxyAsset(scene, asset);
   }
-  for (const [craft, frames] of craftFrameSets(assets)) {
-    if (!scene.cache.json.exists(`craft-jets-${craft}`)) {
-      scene.load.json(`craft-jets-${craft}`, enemyJetsPath(craft, frames[0]!));
+  // Data files come from the manifest's own sidecars map; a Phantom platform subset reads
+  // Cartwheel's.
+  const { sidecars } = manifest;
+  for (const craft of craftFrameSets(assets).keys()) {
+    const jets = enemyJetsPath(sidecars, craft);
+    if (jets && !scene.cache.json.exists(`craft-jets-${craft}`)) {
+      scene.load.json(`craft-jets-${craft}`, jets);
     }
   }
   for (const { family, prefix, wired } of GALAXY_FAMILIES) {
@@ -368,24 +372,27 @@ function queueGalaxyAssets(
       if (!wired.has(archetype)) {
         continue;
       }
-      if (frames.length > 1) {
-        scene.load.json(`${family}-jets-${archetype}`, enemyJetsPath(archetype, frames[0]!));
+      const jets = frames.length > 1 ? enemyJetsPath(sidecars, archetype) : undefined;
+      if (jets) {
+        scene.load.json(`${family}-jets-${archetype}`, jets);
       }
       // Shards, as in coral, for the archetypes Art's destruction data covers.
-      if (
+      const shards =
         scene.destruction &&
         Object.hasOwn(
           scene.destruction.archetypes,
           INDUSTRIAL_BODY_KEYS.some((key) => key === archetype) ? "retaliator" : archetype,
         )
-      ) {
-        scene.load.json(`${family}-shards-${archetype}`, enemyShardsPath(archetype, frames[0]!));
+          ? enemyShardsPath(sidecars, archetype)
+          : undefined;
+      if (shards) {
+        scene.load.json(`${family}-shards-${archetype}`, shards);
       }
-      if (composedArchetypes(scene.familyParts.get(family) ?? []).has(archetype)) {
-        scene.load.json(
-          `${family}-hardpoints-${archetype}`,
-          enemyHardpointsPath(archetype, frames[0]!),
-        );
+      const hardpoints = composedArchetypes(scene.familyParts.get(family) ?? []).has(archetype)
+        ? enemyHardpointsPath(sidecars, archetype)
+        : undefined;
+      if (hardpoints) {
+        scene.load.json(`${family}-hardpoints-${archetype}`, hardpoints);
       }
     }
   }

@@ -65,7 +65,7 @@ function fixture(family: EnemyFamily | undefined = claim) {
     familyParts: new Map(),
     galaxyLoads: new Set(),
     galaxyManifestPaths: { 2: "/art/cartwheel/manifest.json", 6: "/art/phantom/manifest.json" },
-    galaxyManifests: new Map([[6, { assets: [], links: {} }]]),
+    galaxyManifests: new Map([[6, { assets: [], links: {}, sidecars: new Map() }]]),
     load: { json, once: events.once.bind(events), spritesheet: vi.fn(), start },
     loads: { waitFor: vi.fn() },
     manifest: { assets: [] },
@@ -140,6 +140,14 @@ describe("source-family manifest readiness", () => {
       queued.every((asset) => asset.family === "claim" && asset.archetype === "platform"),
     ).toBe(true);
     expect(queued.some(enemyPartFrame)).toBe(true);
+    // Phantom has no sidecars map; the platform's layout comes from Cartwheel's.
+    expect(f.json).toHaveBeenCalledWith(
+      "claim-hardpoints-platform",
+      cartwheel.sidecars.platform.hardpoints,
+    );
+    expect(cartwheel.sidecars.platform.hardpoints).toBe(
+      "/art/cartwheel/enemies/platform-hardpoints.json",
+    );
     // A later own flight still queues Cartwheel's world through its unchanged foreground path.
     f.loadWorld(f.scene, 2);
     expect(f.backdrop).toHaveBeenCalledOnce();

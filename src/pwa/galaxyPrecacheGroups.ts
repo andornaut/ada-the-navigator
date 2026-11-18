@@ -4,11 +4,11 @@ import type { PrecacheGroups } from "@andornaut/game-kit/runtime/web/pwa/precach
 import { ECONOMY } from "../data/economy.ts";
 import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import {
-  enemyHardpointsPath,
-  enemyJetsPath,
-  enemyShardsPath,
+  enemyFrameKey,
   GALAXY_FAMILIES,
   galaxyFamily,
+  readSidecars,
+  type Sidecars,
 } from "../game/enemyArt.ts";
 import { readQuantumJump } from "../game/quantumJump.ts";
 import { readShipMaterialPalettes, readShipMaterials } from "../game/shipMaterials.ts";
@@ -33,6 +33,17 @@ const fields = (value: unknown): Fields | undefined =>
   value !== null && typeof value === "object" && !Array.isArray(value)
     ? (value as Fields)
     : undefined;
+
+/** A manifest document's sidecars map; empty for any other document or a malformed map. */
+const sidecarsOf = (value: unknown): Sidecars => readSidecars(fields(value)?.sidecars) ?? new Map();
+
+/** The sidecars map key of a manifest asset row: its enemy frame key or story craft name. */
+function craftName(asset: Fields): string | undefined {
+  if (typeof asset.archetype === "string" && typeof asset.id === "string") {
+    return enemyFrameKey({ archetype: asset.archetype, id: asset.id });
+  }
+  return typeof asset.craft === "string" ? asset.craft : undefined;
+}
 
 type JsonPath = readonly (string | number)[];
 const location = (document: string, path: JsonPath) => JSON.stringify([document, path]);
@@ -261,20 +272,18 @@ function partition(context: Context, files: HashedFiles): Audit {
     }
     const value = read(url);
     scan(url, [], value, url === CORE);
-    // These are the loader's canonical sidecar paths, not directory ownership rules.
+    // The manifest's sidecars map names each craft's data files, so they follow its frames.
+    const sidecars = sidecarsOf(value);
     for (const asset of assetRows(value)) {
-      const name = typeof asset.archetype === "string" ? asset.archetype : asset.craft;
-      if (typeof name !== "string" || typeof asset.path !== "string") {
+      const name = craftName(asset);
+      const hull = typeof asset.path === "string" ? normalize(url, asset.path) : undefined;
+      if (!name || !hull) {
         continue;
       }
-      for (const path of [enemyJetsPath, enemyHardpointsPath, enemyShardsPath]) {
-        const to = normalize(url, path(name, { path: asset.path }));
-        if (to && available.has(to)) {
-          edge(url, to);
-          const hull = normalize(url, asset.path);
-          if (hull) {
-            edge(hull, to);
-          }
+      for (const path of Object.values(sidecars.get(name) ?? {})) {
+        const to = normalize(url, path);
+        if (to) {
+          edge(hull, to);
         }
       }
     }
@@ -326,8 +335,11 @@ function partition(context: Context, files: HashedFiles): Audit {
             continue;
           }
           visit(BASE, normalize(source, asset.path) ?? "");
-          for (const path of [enemyJetsPath, enemyHardpointsPath, enemyShardsPath]) {
-            visit(BASE, normalize(source, path(archetype, { path: asset.path })) ?? "");
+          const name = craftName(asset);
+          for (const path of Object.values(
+            (name && sidecarsOf(documents.get(source)).get(name)) ?? {},
+          )) {
+            visit(BASE, normalize(source, path) ?? "");
           }
         }
       }

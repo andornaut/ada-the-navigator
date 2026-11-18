@@ -23,7 +23,7 @@ import {
   storyCraftSets,
   storyNoses,
 } from "./cartwheelArt.ts";
-import { enemyJetsPath } from "./enemyArt.ts";
+import { enemyJetsPath, readSidecars } from "./enemyArt.ts";
 
 const json = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public${path}`, import.meta.url), "utf8"));
@@ -199,7 +199,12 @@ describe("Cartwheel art", () => {
     );
     expect(Object.values(STORY_SHIP_CRAFT).filter((craft) => !sets.has(craft))).toEqual([]);
     expect(sets.has("stranded")).toBe(false);
-    const art = craftArt((craft) => json(enemyJetsPath(craft, sets.get(craft)![0]!)), sets);
+    // Each craft's jets file is in the sidecars map of the manifest that lists its frames.
+    const sidecars = new Map([
+      ...readSidecars(CORE_MANIFEST.sidecars)!,
+      ...GALAXY_MANIFESTS.get(2)!.sidecars,
+    ]);
+    const art = craftArt((craft) => json(enemyJetsPath(sidecars, craft)!), sets);
     for (const [craft, entry] of art) {
       expect(entry.frames.map((frame) => frame.directionIndex)).toEqual(
         Array.from({ length: 16 }, (_, k) => k),

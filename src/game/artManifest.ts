@@ -1,7 +1,7 @@
 import { byGalaxy } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { ShipHeadingContract } from "../model/shipHeadingContract.ts";
-import { type EnemyFrame, enemyPartFrame } from "./enemyArt.ts";
+import { type EnemyFrame, enemyPartFrame, readSidecars, type Sidecars } from "./enemyArt.ts";
 import { whaleFrameAsset } from "./whaleArt.ts";
 
 // Art's split manifest (art/README.md): the core manifest at public/art/manifest.json holds the
@@ -26,6 +26,8 @@ export interface CoreManifest<T> {
   readonly enemyWeapons?: string;
   readonly quantumJump?: string;
   readonly resourceRocks?: string;
+  /** Core's enemy and story craft data file paths, read with readSidecars. */
+  readonly sidecars?: unknown;
   readonly spacePalette?: string;
   /** The start screen's field, ship and wordmark placement (public/art/title-screen.json). */
   readonly titleScreen?: string;
@@ -51,6 +53,8 @@ export interface GalaxyLinks {
 export interface GalaxyManifest<T> {
   readonly assets: readonly T[];
   readonly links: GalaxyLinks;
+  /** The galaxy's enemy and story craft data file paths; empty when its manifest has none. */
+  readonly sidecars: Sidecars;
   /**
    * The galaxy's stranded craft data (its tow.json), kept apart from the links so core's `tow`,
    * which also holds the tow line, keeps its name when a galaxy's links merge.
@@ -105,8 +109,8 @@ export function galaxyTowKey(galaxy: GalaxyNumber): string {
 }
 
 /**
- * A galaxy manifest, version 1, with its assets, string data links and string `tow` path;
- * undefined if invalid.
+ * A galaxy manifest, version 1, with its assets, string data links, sidecars map and string `tow`
+ * path; undefined if invalid, a malformed sidecars map included.
  */
 export function readGalaxyManifest<T>(value: unknown): GalaxyManifest<T> | undefined {
   const data = value as { assets?: unknown; version?: unknown } | null | undefined;
@@ -114,6 +118,10 @@ export function readGalaxyManifest<T>(value: unknown): GalaxyManifest<T> | undef
     return undefined;
   }
   const record = data as Record<string, unknown>;
+  const sidecars = readSidecars(record.sidecars);
+  if (!sidecars) {
+    return undefined;
+  }
   const links: Record<string, string> = {};
   for (const name of LINKS) {
     if (typeof record[name] === "string") {
@@ -121,5 +129,10 @@ export function readGalaxyManifest<T>(value: unknown): GalaxyManifest<T> | undef
     }
   }
   const tow = record.tow;
-  return { assets: data.assets as T[], links, ...(typeof tow === "string" ? { tow } : {}) };
+  return {
+    assets: data.assets as T[],
+    links,
+    sidecars,
+    ...(typeof tow === "string" ? { tow } : {}),
+  };
 }

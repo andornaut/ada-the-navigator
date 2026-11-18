@@ -14,7 +14,7 @@ import retaliatorJets from "../../public/art/enemies/retaliator-jets.json";
 import swarmJets from "../../public/art/enemies/swarm-jets.json";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
 import { enemySpeedFraction } from "../model/enemyAi.ts";
-import { ART_MANIFEST as manifest } from "../testing/publicArt.ts";
+import { ART_MANIFEST as manifest, CORE_MANIFEST } from "../testing/publicArt.ts";
 import {
   aimIndex,
   CLAIM,
@@ -38,6 +38,7 @@ import {
   layoutTier,
   type PartPose,
   readHardpointLayout,
+  readSidecars,
   selectEnemyFrame,
   turretMuzzles,
 } from "./enemyArt.ts";
@@ -182,13 +183,11 @@ describe("enemy frame sets", () => {
     }
   });
 
-  it("finds each archetype's jets file beside its frames", () => {
-    expect(enemyJetsPath("fighter", galaxy("fighter").frames[3]!)).toBe(
-      "/art/enemies/fighter-jets.json",
-    );
-    expect(enemyHardpointsPath("capital", galaxy("capital").frames[3]!)).toBe(
-      "/art/enemies/capital-hardpoints.json",
-    );
+  it("finds each archetype's data files in the core sidecars map", () => {
+    const sidecars = readSidecars(CORE_MANIFEST.sidecars)!;
+    expect(enemyJetsPath(sidecars, "fighter")).toBe("/art/enemies/fighter-jets.json");
+    expect(enemyHardpointsPath(sidecars, "capital")).toBe("/art/enemies/capital-hardpoints.json");
+    expect(enemyHardpointsPath(sidecars, "fighter")).toBeUndefined();
   });
 });
 

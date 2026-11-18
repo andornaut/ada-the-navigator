@@ -68,7 +68,10 @@ import {
   enemyFrameSets,
   enemyHardpointsPath,
   enemyJetsPath,
+  enemyShardsPath,
   HitFlashes,
+  readSidecars,
+  type Sidecars,
 } from "./enemyArt.ts";
 import { type EnemyWeaponsArt } from "./enemyWeaponsArt.ts";
 import {
@@ -461,6 +464,22 @@ export class GameScene extends Scene {
         rasterAgain(this, [stale]);
       }
     });
+    // Coral's shards need the destruction data's archetypes and core's sidecars map, so whichever
+    // of the two files completes second queues them.
+    let shardArchetypes: readonly string[] | undefined;
+    let coreSidecars: Sidecars | undefined;
+    const queueShards = () => {
+      if (!shardArchetypes || !coreSidecars) {
+        return;
+      }
+      for (const archetype of shardArchetypes) {
+        const path = enemyShardsPath(coreSidecars, archetype);
+        if (path) {
+          this.load.json(`shards-${archetype}`, path);
+        }
+      }
+      shardArchetypes = undefined;
+    };
     this.load.once("filecomplete-json-art-manifest", () => {
       if (!this.entryCurrent()) {
         return;
@@ -505,21 +524,33 @@ export class GameScene extends Scene {
         if (manifest.titleScreen) {
           this.load.json(TITLE_SCREEN_KEY, manifest.titleScreen);
         }
+        const sidecars = readSidecars(manifest.sidecars);
+        if (!sidecars) {
+          throw new Error("The art manifest's sidecars map is malformed");
+        }
         const materialFrames = queueShipMaterialSources(this, manifest);
         const composed = composedArchetypes(manifest.assets);
-        for (const [archetype, frames] of enemyFrameSets(manifest.assets)) {
-          this.load.json(`enemy-jets-${archetype}`, enemyJetsPath(archetype, frames[0]!));
-          if (composed.has(archetype)) {
-            this.load.json(
-              `enemy-hardpoints-${archetype}`,
-              enemyHardpointsPath(archetype, frames[0]!),
-            );
+        for (const archetype of enemyFrameSets(manifest.assets).keys()) {
+          const jets = enemyJetsPath(sidecars, archetype);
+          if (jets) {
+            this.load.json(`enemy-jets-${archetype}`, jets);
+          }
+          const hardpoints = composed.has(archetype)
+            ? enemyHardpointsPath(sidecars, archetype)
+            : undefined;
+          if (hardpoints) {
+            this.load.json(`enemy-hardpoints-${archetype}`, hardpoints);
           }
         }
         // Story craft that several galaxies fly are in core; their jets load with it.
-        for (const [craft, frames] of craftFrameSets(manifest.assets)) {
-          this.load.json(`craft-jets-${craft}`, enemyJetsPath(craft, frames[0]!));
+        for (const craft of craftFrameSets(manifest.assets).keys()) {
+          const jets = enemyJetsPath(sidecars, craft);
+          if (jets) {
+            this.load.json(`craft-jets-${craft}`, jets);
+          }
         }
+        coreSidecars = sidecars;
+        queueShards();
         for (const asset of manifest.assets) {
           // Painted ship frames load for the scheme in use, thrust frames only without valid jets,
           // a heavy's part frames when that craft first appears and whale frames for a whale. A
@@ -561,9 +592,8 @@ export class GameScene extends Scene {
         path: data.flash.path,
         size: (scale) => ({ scale }),
       });
-      for (const archetype of [...Object.keys(data.archetypes), ...INDUSTRIAL_BODY_KEYS]) {
-        this.load.json(`shards-${archetype}`, `/art/enemies/${archetype}-shards.json`);
-      }
+      shardArchetypes = [...Object.keys(data.archetypes), ...INDUSTRIAL_BODY_KEYS];
+      queueShards();
     });
     this.load.json("art-manifest", "/art/manifest.json");
     this.load.json("destruction", DESTRUCTION_PATH);

@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import type { HashedFiles } from "@andornaut/game-kit/build/precachePlugin";
@@ -225,6 +225,75 @@ describe("physical galaxy precache partition", () => {
       expect(optional.every((url) => f.universe.includes(url))).toBe(true);
     } finally {
       selection.mockRestore();
+    }
+  });
+
+  it("puts a craft's sidecars where its manifest's map names them, shared ones in base", () => {
+    const shared = "/art/enemies/capital-hardpoints.json";
+    const own = "/art/needle/enemies/capital-jets.json";
+    const f = fixture(
+      {
+        [manifest("andromeda")]: {
+          assets: [
+            { archetype: "capital", id: "enemy-garnet-capital-0", path: "/a/capital-0.svg" },
+          ],
+          sidecars: { capital: { hardpoints: shared } },
+        },
+        [manifest("needle")]: {
+          assets: [
+            { archetype: "capital", id: "enemy-needle-capital-0", path: "/n/capital-0.svg" },
+          ],
+          sidecars: { capital: { hardpoints: shared, jets: own } },
+        },
+      },
+      ["/a/capital-0.svg", "/n/capital-0.svg", shared, own],
+    );
+    expect(f.groups.urls.needle).toEqual(expect.arrayContaining([own, "/n/capital-0.svg"]));
+    expect(f.groups.urls.andromeda).toContain("/a/capital-0.svg");
+    expect(f.optional).not.toContain(shared);
+    expect(f.universe).toContain(shared);
+  });
+
+  it("keeps every published sidecar in the same group as its craft's frames", () => {
+    const root = new URL("../../public", import.meta.url).pathname;
+    const urls = readdirSync(root, { recursive: true, withFileTypes: true })
+      .filter((entry) => entry.isFile())
+      .map((entry) => join(entry.parentPath, entry.name).slice(root.length))
+      .sort();
+    const groups = galaxyPrecacheGroups(
+      { readJson: (url) => JSON.parse(readFileSync(join(root, url), "utf8")) },
+      { sounds: {}, urls },
+    );
+    const owner = new Map(
+      Object.entries(groups.urls).flatMap(([galaxy, list]) => list.map((url) => [url, galaxy])),
+    );
+    const group = (url: string) => owner.get(url) ?? "base";
+    let checked = 0;
+    for (const path of ["/art/manifest.json", ...Object.values(core.galaxies)]) {
+      const document = JSON.parse(readFileSync(join(root, path), "utf8")) as {
+        assets: { archetype?: string; craft?: string; id: string; path: string }[];
+        sidecars?: unknown;
+      };
+      const sidecars = enemyArt.readSidecars(document.sidecars)!;
+      for (const asset of document.assets) {
+        const craft = asset.archetype ? enemyArt.enemyFrameKey(asset) : asset.craft;
+        for (const sidecar of Object.values((craft && sidecars.get(craft)) ?? {})) {
+          expect(group(sidecar), `${asset.id} ${sidecar}`).toBe(group(asset.path));
+          checked += 1;
+        }
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
+    for (const galaxy of ["andromeda", "cartwheel", "needle"]) {
+      expect(groups.urls[galaxy]).toEqual(
+        expect.arrayContaining(
+          ["retaliatorCargoHauler", "retaliatorMiningFreighter"].flatMap((craft) =>
+            ["jets", "hardpoints", "shards"].map(
+              (kind) => `/art/${galaxy}/enemies/${craft}-${kind}.json`,
+            ),
+          ),
+        ),
+      );
     }
   });
 
