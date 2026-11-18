@@ -1823,9 +1823,9 @@ try {
     "Map names the galaxy",
   );
   assert.equal(
-    await page.evaluate(() => document.activeElement?.getAttribute("data-tool")),
-    "close",
-    "Focus starts on the map's close tool",
+    await page.evaluate(() => document.activeElement?.getAttribute("data-action")),
+    "map-close",
+    "Focus starts on the map's close",
   );
   assert.deepEqual(
     await mapScreen
@@ -1931,7 +1931,7 @@ try {
   );
   await page.screenshot({ path: `${output}/map-earth-danger.png` });
   // Tab order: the tools, Quests, Galaxies, the places, then Travel here.
-  await mapScreen.locator('[data-tool="close"]').focus();
+  await mapScreen.locator('[data-action="map-close"]').focus();
   // Each press in turn, then what it focused.
   const tabThrough = async (presses, seen = []) => {
     if (presses === 0) {
@@ -1985,7 +1985,7 @@ try {
       "A mapped Quests line closes the modal and selects its chip",
     );
   }
-  await mapScreen.locator('[data-tool="close"]').focus();
+  await mapScreen.locator('[data-action="map-close"]').focus();
   // A refused action stays pressable (aria-disabled), which Playwright treats as disabled.
   await mapEarth.click({ force: true });
   assert.ok(
