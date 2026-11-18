@@ -12,6 +12,7 @@ import {
   output,
   previewOnly,
   reportViolations,
+  reseedFlight,
   save,
   storageKey,
 } from "./browser-support.mjs";
@@ -4111,7 +4112,7 @@ try {
     flight.objects = [];
     flight.shots = [];
     // No backdrop rock in view, so the sampled regions see only the combat and empty space.
-    flight.seed = backdropSeed(rockArt, rockParallax, false, flight.player);
+    reseedFlight(combat, backdropSeed(rockArt, rockParallax, false, flight.player));
     const origin = { ...flight.player };
     const definition = enemyCatalog[archetype];
     assert.ok(definition.hardpoints.length > 1, "Large enemies require distinct hardpoints");

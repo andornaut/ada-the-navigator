@@ -139,6 +139,16 @@ const ROCK_SCREEN = {
   large: { x: -40, y: 165 },
   huge: { x: 235, y: 150 },
 };
+// A flight's seed and its galaxy's persistent geography seed move together: a canonical save
+// requires them equal.
+export function reseedFlight(model, seed) {
+  const flight = model.state.flight;
+  flight.seed = seed;
+  const geography = model.state.progress[flight.galaxy].geography;
+  if (geography) {
+    geography.seed = seed;
+  }
+}
 export function asteroidFixture(rockArt, parallax, galaxy, drifting = true) {
   const model = new GameModel(CONTENT);
   model.state.unlocked = [1, 2, 3];
@@ -150,7 +160,7 @@ export function asteroidFixture(rockArt, parallax, galaxy, drifting = true) {
   model.state.dialogue = null;
   flight.objects = [];
   flight.shots = [];
-  flight.seed = backdropSeed(rockArt, parallax, true, flight.player);
+  reseedFlight(model, backdropSeed(rockArt, parallax, true, flight.player));
   const origin = { ...flight.player };
   for (const [size, screen] of Object.entries(ROCK_SCREEN)) {
     const art = ASTEROID_ART.asteroids.find((entry) => entry.size === size);
