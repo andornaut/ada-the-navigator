@@ -1435,7 +1435,9 @@ try {
     }
     await page.screenshot({ path: `${output}/cheats.png` });
     await cheatDialog.getByRole("button", { name: CHEAT_COPY.close, exact: true }).click();
-    await resumeIfPaused();
+    // Closing Cheats returns to Settings, its parent; closing Settings returns to the Paused card.
+    await page.locator('[data-action="close-settings"]').waitFor({ state: "visible" });
+    await closeSettings();
     // Each new weapon queues an item notice: the chip shows under the pill once play resumes,
     // hidden from assistive technology, and its label is announced politely.
     const chip = page.locator(".ada-item-notice");
