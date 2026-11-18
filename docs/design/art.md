@@ -99,3 +99,4 @@ Reference: [art](../../art/README.md).
 | ada-0282 | Store shared enemy assets once and reference them from each galaxy        | [ada-0282.md](../work/ada-0282.md) |
 | ada-0283 | Round generated SVG coordinates to one decimal and minify                 | [ada-0283.md](../work/ada-0283.md) |
 | ada-0284 | Subset the UI fonts to the glyphs the game's strings use                  | [ada-0284.md](../work/ada-0284.md) |
+| ada-0285 | Encode the story scenes and large root images as lossy WebP               | [ada-0285.md](../work/ada-0285.md) |
