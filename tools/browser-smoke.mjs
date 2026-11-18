@@ -3542,6 +3542,8 @@ try {
   await page.setViewportSize({ height: 360, width: 720 });
   await seedOnce(saved.save(), "ada-browser.start-screen-tabs.v1");
   await page.locator('.ada-start-actions > [data-action="continue"]').waitFor({ state: "visible" });
+  // The boot reveal focuses the default once the screen is ready, after it shows.
+  await page.waitForFunction(() => document.activeElement?.dataset.action === "continue");
   await page.keyboard.press("Tab");
   order.push(await page.evaluate(() => document.activeElement?.dataset.action ?? null));
   await page.locator('.ada-start-actions > [data-action="continue"]').focus();
