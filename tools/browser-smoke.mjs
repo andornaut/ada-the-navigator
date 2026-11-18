@@ -2535,16 +2535,11 @@ try {
     "The local map's Galaxies stays available while towing; leaving the galaxy from the galaxy " +
       "map ends the flight, the rescue still held with its craft where it was stranded",
   );
-  // Station keepers (gameplay/rules.md "Species and greeters", art/layout.md "Station card"): the
-  // first docking's keeper block is one button named Next line that shows the keeper's three lines
-  // a tap apart, its pips filling, then stops being a button with Shop focused; Undock stays live.
-  // A later docking shows one line, without pips or a button. The card is 512 by 228, centred.
-  const { stationKeeper } = await import(new URL("../src/model/keepers.ts", import.meta.url));
-  const { CAST, castSheet } = await import(new URL("../src/data/cast.ts", import.meta.url));
-  const { NO_INSETS } = await import(new URL("../src/ui/layout/playView.ts", import.meta.url));
-  const { KEEPER_BLOCK, keeperPips, stationCardRect } = await import(
-    new URL("../src/ui/layout/stationCard.ts", import.meta.url)
-  );
+  // Station keepers (gameplay/rules.md "Generic station keeper interface and copy", art/layout.md
+  // "Station card"): the station card is the story panel with the keeper's name tab, portrait and
+  // greeting line, Jobs, the single primary Shop, Next line and Undock. The first docking's three
+  // introduction lines step on with Next line, which then goes with Shop focused; a later docking
+  // shows one return line without Next line. The model supplies the name and every line.
   const keeperInput = relaunch(CONTENT, roomInput.save());
   const keeperFlight = keeperInput.state.flight;
   const [keeperSite] = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 }).sort(
@@ -2562,138 +2557,87 @@ try {
   keeperFlight.dangerFor = 0;
   keeperInput.state.dialogue = null;
   keeperInput.state.docked = null;
-  const keeper = stationKeeper(ECONOMY, 1, keeperSite.id);
+  const modelDock = relaunch(CONTENT, keeperInput.save());
+  modelDock.interact();
+  const firstGreeting = [];
+  const readGreeting = (remaining = 5) => {
+    const greeting = modelDock.stationGreeting;
+    if (!greeting || remaining === 0) {
+      return;
+    }
+    firstGreeting.push(greeting.line);
+    if (greeting.index < greeting.count - 1) {
+      modelDock.advanceGreeting();
+      readGreeting(remaining - 1);
+    }
+  };
+  readGreeting();
+  const keeperName = modelDock.stationGreeting?.displayName;
+  modelDock.undock();
+  modelDock.interact();
+  const laterLine = modelDock.stationGreeting?.line;
+  assert.ok(
+    firstGreeting.length === 3 && keeperName && laterLine,
+    `The model docks at the keeper's station: ${JSON.stringify({ firstGreeting, keeperName, laterLine })}`,
+  );
   await seedOnce(keeperInput.save(), "ada-browser.keeper.v1");
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   const stationCard = page.locator('[data-dialog="station"]');
-  const block = stationCard.locator(".ada-keeper");
+  const nextLine = stationCard.getByRole("button", { name: CONTENT.labels.nextLine, exact: true });
   const dockHere = async () => {
     await page.locator('.ada-use[data-use="dock"]').waitFor({ state: "visible" });
     await page.evaluate(() => document.activeElement?.blur());
     await page.keyboard.press("KeyE");
     await stationCard.waitFor({ state: "visible" });
   };
-  // The block as it shows: its element, line, pips and geometry in logical px.
-  const keeperShown = () =>
-    stationCard.evaluate((card) => {
-      const app = document.querySelector("#app");
-      const unit = Number(getComputedStyle(app).getPropertyValue("--ada-unit"));
-      const origin = app.getBoundingClientRect();
-      const rect = (node) => {
-        const box = node.getBoundingClientRect();
-        const round = (value) => Math.round((value / unit) * 100) / 100;
-        return {
-          height: round(box.height),
-          width: round(box.width),
-          x: round(box.left - origin.left),
-          y: round(box.top - origin.top),
-        };
-      };
-      const node = card.querySelector(".ada-keeper");
-      const line = node.querySelector(".ada-keeper-line");
-      const name = node.querySelector(".ada-keeper-name");
-      const body = card.querySelector(".ada-card-body");
-      return {
-        block: rect(node),
-        buttons: [...card.querySelectorAll("button")].map(
-          (button) => button.dataset.action ?? button.getAttribute("aria-label"),
-        ),
-        card: rect(card),
-        discs: [...node.querySelectorAll(".ada-keeper-pip")].map(rect),
-        focused: document.activeElement?.dataset.action ?? null,
-        keeper: node.dataset.keeper,
-        label: node.getAttribute("aria-label"),
-        line: line.textContent,
-        lineRect: rect(line),
-        name: name.textContent,
-        pips: node.hasAttribute("data-pips"),
-        portrait: getComputedStyle(node.querySelector(".ada-keeper-portrait")).backgroundImage,
-        scrolls: body.scrollHeight > body.clientHeight + 1,
-        shown: [...node.querySelectorAll(".ada-keeper-pip")].map((pip) =>
-          pip.hasAttribute("data-shown"),
-        ),
-        tab: getComputedStyle(name).backgroundColor,
-        tabRect: rect(name),
-        tag: node.tagName,
-        view: { height: origin.height / unit, width: origin.width / unit },
-      };
-    });
-  const rgb = (hex) =>
-    `rgb(${[1, 3, 5].map((at) => Number.parseInt(hex.slice(at, at + 2), 16)).join(", ")})`;
-  const near = (a, b) => Math.abs(a - b) <= 0.5;
+  const keeperShown = async () => ({
+    ...(await stationCard.evaluate((card) => ({
+      focused: document.activeElement?.dataset.action ?? null,
+      line: card.querySelector(".ada-story-paragraph")?.textContent ?? "",
+      primaries: [...card.querySelectorAll("button.ada-primary")].map(
+        (button) => button.dataset.action ?? "",
+      ),
+      tab: card.querySelector(".ada-story-tab")?.textContent ?? "",
+    }))),
+    next: await nextLine.isVisible(),
+  });
   await dockHere();
   await page.screenshot({ path: `${output}/station-keeper.png` });
   const first = await keeperShown();
-  const expected = stationCardRect(NO_INSETS, first.view);
-  const lines = Math.round(first.lineRect.height / 20);
-  const pipAt = keeperPips(lines);
-  assert.ok(
-    near(first.card.width, expected.width) &&
-      near(first.card.height, expected.height) &&
-      near(first.card.y, expected.y) &&
-      near(first.card.x, expected.x) &&
-      !first.scrolls &&
-      near(first.block.width, KEEPER_BLOCK.width) &&
-      near(first.block.height, KEEPER_BLOCK.height) &&
-      near(first.tabRect.y, first.block.y - 10) &&
-      near(first.tabRect.x, first.block.x + 8) &&
-      near(first.tabRect.height, 20) &&
-      near(first.lineRect.width, KEEPER_BLOCK.textWithPips) &&
-      near(first.discs[0].x - first.block.x, pipAt.x) &&
-      near(first.discs[0].y - first.block.y, pipAt.y) &&
-      first.discs.every(({ height, width }) => near(width, 6) && near(height, 6)),
-    `The station card is ${expected.width} by ${expected.height} at ${expected.y}, its keeper ` +
-      `block 480 by 60 with its tab and pips in place: ${JSON.stringify({ expected, first })}`,
+  assert.deepEqual(
+    { line: first.line, next: first.next, primaries: first.primaries, tab: first.tab },
+    { line: firstGreeting[0], next: true, primaries: ["open-shop"], tab: keeperName },
+    "The first docking shows the keeper's name and first line, Next line, and Shop as the primary",
   );
-  assert.ok(
-    first.tag === "BUTTON" &&
-      first.label === CONTENT.labels.nextLine &&
-      first.buttons[0] === CONTENT.labels.nextLine &&
-      first.keeper === keeper.key &&
-      first.name === CAST[keeper.key].name &&
-      first.tab === rgb(CAST[keeper.key].tab) &&
-      first.portrait.includes(castSheet(keeper.key, true)) &&
-      first.pips &&
-      first.line === keeper.greetings.first[0] &&
-      first.shown.join() === "true,false,false",
-    `The first docking's block is one button named Next line, first in Tab order, with the ` +
-      `keeper's tab, portrait and first line: ${JSON.stringify(first)}`,
-  );
-  await block.click();
+  await nextLine.click();
   const second = await keeperShown();
-  await block.focus();
+  await nextLine.focus();
   await page.keyboard.press("Enter");
   const third = await keeperShown();
-  await block.click();
-  const held = await keeperShown();
   assert.deepEqual(
-    [second, third, held].map(({ line, shown, tag }) => ({ line, shown: shown.join(), tag })),
+    [second, third].map(({ line, next }) => ({ line, next })),
     [
-      { line: keeper.greetings.first[1], shown: "true,true,false", tag: "BUTTON" },
-      { line: keeper.greetings.first[2], shown: "true,true,true", tag: "DIV" },
-      { line: keeper.greetings.first[2], shown: "true,true,true", tag: "DIV" },
+      { line: firstGreeting[1], next: true },
+      { line: firstGreeting[2], next: false },
     ],
-    "A tap or Enter shows the next line and fills its pip; the third line holds as a status",
+    "A tap or Enter on Next line shows the next line; after the third it goes",
   );
-  assert.equal(third.focused, "open-shop", "Focus moves to Shop when the block stops advancing");
+  assert.equal(third.focused, "open-shop", "Focus moves to Shop once Next line goes");
   await stationCard.locator('[data-action="undock"]').click();
   await stationCard.waitFor({ state: "hidden" });
   await dockHere();
   const later = await keeperShown();
-  assert.ok(
-    later.tag === "DIV" &&
-      !later.pips &&
-      later.line === keeper.greetings.later[0] &&
-      later.buttons[0] === "undock" &&
-      near(later.lineRect.width, KEEPER_BLOCK.text.width),
-    `A later docking shows one later line, without pips or a button: ${JSON.stringify(later)}`,
+  assert.deepEqual(
+    { line: later.line, next: later.next, tab: later.tab },
+    { line: laterLine, next: false, tab: keeperName },
+    "A later docking shows one return line without Next line",
   );
   await stationCard.locator('[data-action="undock"]').click();
   await stationCard.waitFor({ state: "hidden" });
   events.checks.push(
-    "The station card is 512 by 228, centred; its keeper block greets the first docking as one " +
-      "Next line button, first in Tab order, three lines a tap or Enter apart with pips filling, " +
-      "then a status with Shop focused; a later docking shows one later line without pips",
+    "The station card shows the keeper's name, portrait and greeting with Shop as its primary; " +
+      "the first docking's three lines step on with Next line, which then goes with Shop " +
+      "focused, and a later docking shows one return line",
   );
   await seedOnce(safeSerialized, "ada-browser.after-save-proof.v1");
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
