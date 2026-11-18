@@ -23,7 +23,7 @@ export {
 
 // Galaxy selection's route map (art/layout.md "Galaxy selector", art/route-sky.md), after Chibi's
 // zone map: six markers left to right along one arc over the route sky, a panel for the chosen
-// galaxy, and Earth and Jump below it. The chart is in play-view px from the game area's top-left;
+// galaxy, and the one destination action below it. The chart is in play-view px from the game area's top-left;
 // the panel and actions anchor to the available rect's bottom, so a taller view opens the gap.
 
 export interface Point {
@@ -68,9 +68,9 @@ export const GALAXY_MAP = {
 /** The view's route map rects, in logical px from the view's top-left. */
 export interface GalaxyMapRects {
   readonly available: Rect;
+  /** The one destination action, at its 192 width (an unavailable label widens it). */
+  readonly action: Rect;
   readonly capture: Rect;
-  readonly earth: Rect;
-  readonly jump: Rect;
   /** Each route position's 48 press area, in route order. */
   readonly markers: readonly Rect[];
   readonly panel: Rect;
@@ -91,21 +91,19 @@ export function galaxyMapRects(insets: Insets, view: Size): GalaxyMapRects {
   const panelTop = actionsTop - SPACING.gap - GALAXY_MAP_PANEL.height;
   const panelLeft = x0 + (SCREEN.width - GALAXY_MAP_PANEL.width) / 2;
   const inner = { x: panelLeft + GALAXY_MAP_PANEL.padding, y: panelTop + GALAXY_MAP_PANEL.padding };
-  const action = (left: number): Rect => ({
-    height: GALAXY_MAP_ACTIONS.height,
-    width: GALAXY_MAP_ACTIONS.width,
-    x: available.x + left,
-    y: actionsTop,
-  });
   return {
+    action: {
+      height: GALAXY_MAP_ACTIONS.height,
+      width: GALAXY_MAP_ACTIONS.width,
+      x: (view.width - GALAXY_MAP_ACTIONS.width) / 2,
+      y: actionsTop,
+    },
     available,
     capture: {
       height: GALAXY_MAP_PANEL.capture.height + 2 * GALAXY_MAP_PANEL.capture.frame,
       width: GALAXY_MAP_PANEL.capture.width + 2 * GALAXY_MAP_PANEL.capture.frame,
       ...inner,
     },
-    earth: action(0),
-    jump: action(GALAXY_MAP_ACTIONS.width + SPACING.panelPadding),
     markers: GALAXY_MAP.centres.map(({ x, y }) => ({
       height: GALAXY_MAP.press,
       width: GALAXY_MAP.press,

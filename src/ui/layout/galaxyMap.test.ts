@@ -28,7 +28,7 @@ const inside = (outer: Rect, inner: Rect) =>
   inner.y + inner.height <= outer.y + outer.height + 1e-9;
 
 describe("route map layout", () => {
-  it("places the panel, capture, text, Earth, Jump and bottom navigation as Art's table at 720x360", () => {
+  it("places the panel, capture, text and the destination action as Art's table at 720x360", () => {
     const plain = galaxyMapRects(NO_INSETS, BASE);
     const phone = galaxyMapRects(PHONE, BASE);
     expect([plain, phone].map((rects) => box(rects.available))).toEqual([
@@ -47,15 +47,9 @@ describe("route map layout", () => {
       [255, 184, 404],
       [255, 181, 404],
     ]);
-    expect([plain, phone].map(({ earth, jump }) => [box(earth), box(jump)])).toEqual([
-      [
-        [16, 296, 192, 48],
-        [224, 296, 192, 48],
-      ],
-      [
-        [43, 293, 192, 48],
-        [251, 293, 192, 48],
-      ],
+    expect([plain, phone].map(({ action }) => box(action))).toEqual([
+      [264, 296, 192, 48],
+      [264, 293, 192, 48],
     ]);
   });
 
@@ -72,7 +66,7 @@ describe("route map layout", () => {
       [PHONE, 12],
     ] as const) {
       const rects = galaxyMapRects(insets, BASE);
-      for (const rect of [rects.panel, rects.earth, rects.jump, ...rects.markers]) {
+      for (const rect of [rects.panel, rects.action, ...rects.markers]) {
         expect(inside(rects.available, rect)).toBe(true);
       }
       expect(rects.panel.y - Math.max(...labelBottoms)).toBeCloseTo(gap, 9);

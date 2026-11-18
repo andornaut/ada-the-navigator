@@ -735,10 +735,8 @@ export const GALAXY_MAP_ACTION_WIDTH = 192;
 export const GALAXY_MAP_CENTRE = SCREEN.width / 2;
 
 export const GALAXY_MAP_ACTIONS = {
-  // Earth secondary left, Jump primary right, BUTTON_GAP apart about the play view's centre.
-  earth: GALAXY_MAP_CENTRE - BUTTON_GAP / 2 - GALAXY_MAP_ACTION_WIDTH,
+  // The one destination action, a primary centred on the view across: x 264 at the 720 base.
   height: TEXT_BUTTON.height,
-  jump: GALAXY_MAP_CENTRE + BUTTON_GAP / 2,
   width: GALAXY_MAP_ACTION_WIDTH,
 } as const;
 
