@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import { ellipse, line } from "@andornaut/art-kit/build/draw";
 import { blankImage } from "@andornaut/art-kit/build/rgbaImage";
-import { encodeLosslessWebp } from "@andornaut/art-kit/build/webp";
+import { encodeLossyWebp } from "@andornaut/art-kit/build/webp";
 import { format, resolveConfig } from "prettier";
 
 import { linkData, placeEntries } from "./manifest.ts";
@@ -219,11 +219,13 @@ const glowSheet = sheet(
   LEVELS.length,
 );
 const starImage = star();
+// The field and tunnel sheets are opaque lossy WebP at quality 90: every alpha byte maps to 255
+// and the stored RGB channels are encoded without compositing.
+const OPAQUE_WEBP = { quality: 90, method: 6, alphaQuality: 100, exact: false } as const;
 if (!dataOnly && !paintOnly) {
-  // RGB PNG output made every pixel opaque without compositing its stored RGB channels.
   writeFileSync(
     `${art}quantum-jump-field.webp`,
-    await encodeLosslessWebp({
+    await encodeLossyWebp(OPAQUE_WEBP, {
       ...fieldSheet,
       data: fieldSheet.data.map((channel, index) => (index % 4 === 3 ? 255 : channel)),
     }),
@@ -236,10 +238,9 @@ const tunnelSheet = sheet(
   1,
 );
 if (!dataOnly && !paintOnly) {
-  // RGB PNG output made every pixel opaque without compositing its stored RGB channels.
   writeFileSync(
     `${art}quantum-jump-tunnel.webp`,
-    await encodeLosslessWebp({
+    await encodeLossyWebp(OPAQUE_WEBP, {
       ...tunnelSheet,
       data: tunnelSheet.data.map((channel, index) => (index % 4 === 3 ? 255 : channel)),
     }),

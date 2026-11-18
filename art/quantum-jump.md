@@ -190,6 +190,9 @@ one or two laps per loop. `jump` is the next loop frame blended 22% toward
 | `quantum-jump-glow`   | `full`, `mid`, `low`, `emergency`                                              | 112 by 112 each, soft alpha |
 | `quantum-jump-star`   | `jump`                                                                         | 37 by 37, opaque or clear   |
 
+The tunnel and field sheets are lossy WebP at quality 90; the glow and star
+sheets are PNG.
+
 ## Data
 
 `quantum-jump.json` version 1:
