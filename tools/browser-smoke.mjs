@@ -2219,7 +2219,7 @@ try {
   // Map and Quests, then Settings and Ship share two columns; Back to title spans the grid
   // directly above the full-width primary Resume. Proofs at 1280x720 and at 720x360 with phone
   // insets.
-  const near = (a, b) => Math.abs(a - b) <= 0.5;
+  const within = (a, b) => Math.abs(a - b) <= 0.5;
   const pauseGridAt = async (name, size, insets) => {
     await page.setViewportSize(size);
     await page.evaluate((logical) => {
@@ -2261,21 +2261,21 @@ try {
       ["pause-settings", "pause-ship"],
     ]) {
       assert.ok(
-        near(boxes[left].top, boxes[right].top) &&
-          near(boxes[left].left, grid.left) &&
-          near(boxes[right].right, grid.right),
+        within(boxes[left].top, boxes[right].top) &&
+          within(boxes[left].left, grid.left) &&
+          within(boxes[right].right, grid.right),
         `Paused: ${left} and ${right} share a row across the two columns: ${detail}`,
       );
     }
     for (const action of ["pause-backToTitle", "pause-resume"]) {
       assert.ok(
-        near(boxes[action].left, grid.left) && near(boxes[action].right, grid.right),
+        within(boxes[action].left, grid.left) && within(boxes[action].right, grid.right),
         `Paused: ${action} spans the grid's full width: ${detail}`,
       );
     }
     assert.ok(
-      near(boxes["pause-backToTitle"].top, boxes["pause-ship"].bottom + rowGap) &&
-        near(boxes["pause-resume"].top, boxes["pause-backToTitle"].bottom + rowGap),
+      within(boxes["pause-backToTitle"].top, boxes["pause-ship"].bottom + rowGap) &&
+        within(boxes["pause-resume"].top, boxes["pause-backToTitle"].bottom + rowGap),
       `Paused: Back to title sits directly above Resume, under the grid: ${detail}`,
     );
     return pauseGrid;
@@ -2935,8 +2935,8 @@ try {
   // The local map's Galaxies opens the galaxy map over the paused flight: its ship on the galaxy
   // Ada is flying in, whose single destination action reads Stay in {galaxy}, with no close X or
   // Back. Stay in and Escape return to the local map on the same flight; Earth lands on Ada's room
-  // page, where the Paused card holds only Settings and Back to title, and closes on Escape and its
-  // X. With the opening and prologue seen, Earth lands on the room page itself.
+  // page, whose Menu holds Achievements, Settings, Back to title and Close. With the opening and
+  // prologue seen, Earth lands on the room page itself.
   const roomInput = relaunch(CONTENT, safeSerialized);
   roomInput.state.progress[1].opened = true;
   roomInput.state.prologueSeen = true;
@@ -6088,7 +6088,7 @@ try {
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) " +
     "Chrome/142.0 Mobile Safari/537.36";
   const appProofs = {};
-  for (const [name, contextOptions, insets] of [
+  const appWindows = [
     ["1280", { viewport: { height: 720, width: 1280 } }, {}],
     [
       "720-insets",
@@ -6100,7 +6100,8 @@ try {
       },
       { bottom: 19, left: 43, right: 43, top: 0 },
     ],
-  ]) {
+  ];
+  const appWindowAt = async ([name, contextOptions, insets]) => {
     const appContext = await browser.newContext(contextOptions);
     await appContext.addInitScript(reportViolations);
     await appContext.addInitScript(fakeWakeLock);
@@ -6196,11 +6197,12 @@ try {
     );
     // Tab from the default Start reaches the Menu, then Exit.
     await page.locator('.ada-start-actions > [data-action="start"]').focus();
-    const order = [];
-    for (let step = 0; step < 2; step += 1) {
+    const tab = async () => {
       await page.keyboard.press("Tab");
-      order.push(await page.evaluate(() => document.activeElement?.dataset.action ?? null));
-    }
+      return page.evaluate(() => document.activeElement?.dataset.action ?? null);
+    };
+    const order = [await tab()];
+    order.push(await tab());
     assert.deepEqual(order, ["menu", "exit"], `${name}: Tab runs Start, the Menu, then Exit`);
     await openMenu();
     assert.deepEqual(
@@ -6228,7 +6230,9 @@ try {
     );
     assert.equal(page.url(), "http://ada-preview:4173/play/", `${name}: Exit never navigates`);
     await appContext.close();
-  }
+  };
+  // One at a time, in order: each owns the shared page while it runs.
+  await appWindows.reduce((prior, item) => prior.then(() => appWindowAt(item)), Promise.resolve());
   save("exit-app-proof.json", appProofs);
   events.checks.push(
     "An installed app window that can close shows Exit at hudButtonTarget(0) and in the start " +
