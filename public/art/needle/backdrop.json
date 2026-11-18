@@ -14,8 +14,8 @@
   },
   "plates": {
     "lattice": [
-      [895.07, -94.076],
-      [30, 150]
+      [447.535, -47.038],
+      [15, 75]
     ],
     "split": false,
     "jitter": 0.06,
@@ -48,23 +48,23 @@
     "steps": [
       {
         "step": -2,
-        "color": "#B2A895",
-        "multiply": 0.899
+        "color": "#BAB09C",
+        "multiply": 0.939
       },
       {
         "step": -1,
-        "color": "#BDB29E",
-        "multiply": 0.954
+        "color": "#C0B6A1",
+        "multiply": 0.972
       },
       {
         "step": 1,
-        "color": "#C3C1AC",
-        "screen": "#001711"
+        "color": "#C6BFA9",
+        "screen": "#000E0A"
       },
       {
         "step": 2,
-        "color": "#C7C6B4",
-        "screen": "#042928"
+        "color": "#C6C2AE",
+        "screen": "#021918"
       }
     ]
   },
@@ -74,10 +74,10 @@
       "hue": 0,
       "size": 0.65,
       "colors": {
-        "night": "#B8B099",
-        "body": "#C6C0B3",
-        "lit": "#CBC6BE",
-        "ring": "#B5AA93"
+        "night": "#BEB59F",
+        "body": "#C6BEAD",
+        "lit": "#C9C1B3",
+        "ring": "#BDB29C"
       }
     }
   ],
@@ -1881,32 +1881,32 @@
   "stars": {
     "color": "#CFC5BD",
     "alpha": {
-      "far": 0.515,
-      "near": 0.847
+      "far": 0.386,
+      "near": 0.635
     }
   },
   "streaks": {
     "color": "#938A7A",
-    "alpha": 0.537,
+    "alpha": 0.43,
     "angle": -6
   },
   "check": {
     "cameras": 7,
     "today": "#938A7A",
     "todayContrast": 1.796,
-    "extreme": "#AEA58F",
-    "extremeContrast": 1.296,
+    "extreme": "#B5AC95",
+    "extremeContrast": 1.19,
     "signals": {
       "ink": {
         "color": "#181425",
         "today": 5.282,
-        "after": 7.32,
+        "after": 7.974,
         "location": {
           "camera": 0,
           "x": 716,
           "y": 313,
-          "luminance": 0.3765988286251197,
-          "sourceColor": "#AEA58F",
+          "luminance": 0.4147381854996733,
+          "sourceColor": "#B5AC95",
           "sourceX": 719,
           "sourceY": 312
         }
@@ -1915,26 +1915,26 @@
     "shipContrast": {
       "white": {
         "color": "#FFFFFF",
-        "minimum": 1.631,
+        "minimum": 1.696,
         "location": {
-          "camera": 1,
-          "x": 340,
-          "y": 40,
-          "luminance": 0.593851317343446,
-          "sourceColor": "#CBCBC2",
-          "sourceX": 340,
-          "sourceY": 40
+          "camera": 4,
+          "x": 378,
+          "y": 168,
+          "luminance": 0.5691091829685758,
+          "sourceColor": "#C9C7BA",
+          "sourceX": 378,
+          "sourceY": 168
         }
       },
       "hullDark": {
         "color": "#28558A",
-        "minimum": 3.095,
+        "minimum": 3.372,
         "location": {
           "camera": 0,
           "x": 716,
           "y": 313,
-          "luminance": 0.3765988286251197,
-          "sourceColor": "#AEA58F",
+          "luminance": 0.4147381854996733,
+          "sourceColor": "#B5AC95",
           "sourceX": 719,
           "sourceY": 312
         }

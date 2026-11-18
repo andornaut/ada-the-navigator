@@ -28,14 +28,16 @@ empty stretch. Tech draws them at runtime from data; Art owns this spec.
 Back to front. Parallax is the share of the camera's projected motion a layer
 moves by. Play objects, effects and the HUD draw over all of them.
 
-| Layer        | Parallax                           | Content                                                                                                                                                                | Draw                                            |
-| ------------ | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| L0 sky       | 0                                  | A diagonal gradient across the view from the background to a darker tone                                                                                               | One quad, fixed to the view                     |
-| L2 phenomena | 0 fixed, 0.05 far, 0.12 planets    | Fixed layers a galaxy links in `fixed` (Andromeda's [haze](galaxies.md#backdrop-haze), Needle's [band](needle.md#space-look)); nebula banks and star clusters; planets | Fixed layers first, then far items and planets  |
-| L1 plates    | 0.15                               | Large faceted plates on a seeded lattice, a few brightness steps either side of the background                                                                         | Darker steps `MULTIPLY`, lighter steps `SCREEN` |
-| L3 stars     | 0.3 far, 0.5 near                  | Two depths of small stars with a slow twinkle                                                                                                                          | Antialiased discs                               |
-| L4 debris    | 0.6 streaks, 0.7 specks, 0.8 rocks | Dust streaks, the dust specks and the [backdrop rocks](asteroids.md#backdrop)                                                                                          | As today, in layer coordinates                  |
+| Layer        | Parallax                                           | Content                                                                                                                                                                | Draw                                                   |
+| ------------ | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| L0 sky       | 0                                                  | A diagonal gradient across the view from the background to a darker tone                                                                                               | One quad, fixed to the view                            |
+| L2 phenomena | 0 fixed, 0.05 far, 0.12 planets                    | Fixed layers a galaxy links in `fixed` (Andromeda's [haze](galaxies.md#backdrop-haze), Needle's [band](needle.md#space-look)); nebula banks and star clusters; planets | Fixed layers first, then far items and planets         |
+| L1 plates    | 0.15                                               | Faceted plates on a seeded lattice over most of the view, a few brightness steps either side of the background                                                         | Darker steps `MULTIPLY`, lighter steps `SCREEN`        |
+| L3 stars     | 0.3 far, 0.5 near                                  | Two depths of small stars with a slow twinkle                                                                                                                          | Antialiased discs                                      |
+| L4 debris    | 0.6 streaks, 0.7 specks, 0.45 far rocks, 0.8 rocks | Dust streaks, the dust specks, the far rock depth and the [backdrop rocks](asteroids.md#backdrop)                                                                      | In layer coordinates; far rocks under specks and rocks |
 
+- Every layer adds depth by density, not tone: each element is muted toward
+  the field background ([Muting](#muting)), so the extra layers read as haze.
 - L1 draws over L2 although it is listed after it: plates move faster than
   every phenomenon, so they read as nearer. They are tone washes rather than
   paint: a darker plate multiplies what is under it by one grey factor and a
@@ -88,8 +90,9 @@ route-map compositions and story-room art remain separate.
 [backdrop-decorations.ts](tools/backdrop-decorations.ts) is the native
 composition producer. `backdrop.ts` writes its assets and recipes only after
 the existing galaxy contrast checks pass. Each composition uses opaque
-colours from that galaxy's existing planet recipe, so overlapping forms do
-not compound alpha or add palette entries.
+colours from that galaxy's planet recipe at full strength (before
+[muting](#muting)), so overlapping forms do not compound alpha or add palette
+entries.
 
 - Multiply and screen are Phaser `BlendModes.MULTIPLY` and `BlendModes.SCREEN`
   on the plates' Graphics, one object per mode.
@@ -130,18 +133,18 @@ sky when its id changes.
   `b c d`); otherwise the cell is one plate. A plate's value is
   `patternWeight` (0.75) times the pattern at its centroid plus
   `jitterWeight` (1) times `unit - 0.5` (salt `plate-tone-{k}`, `k` the
-  triangle). Its step is the number of `edges` (-0.55, -0.16, 0.22, 0.62) at or
+  triangle). Its step is the number of `edges` (-0.42, -0.05, 0.05, 0.45) at or
   below the value, less 2; step 0 is sky and draws nothing. A galaxy with
   `lighter` false keeps only its darker steps.
 - **Chunks.** A chunked layer holds at most one item per chunk: chunk `(i, j)`
   of size `chunk` has one when `unit(seed, "i,j", salt)` is below `chance`, at
   `((i + 0.2 + 0.6 u) w, (j + 0.2 + 0.6 v) h)` with `u`, `v` from the salts
-  `{salt}-x` and `{salt}-y`. Planets use salt `planet`, chunk 1500 by 1000 and
-  chance 0.92; far items `far`, 2400 by 1500 and 0.75. With the view at 720 by
-  360 and these parallaxes, the large forms remain sparse while occupying more
-  of the layered background.
+  `{salt}-x` and `{salt}-y`. Planets use salt `planet`, chunk 800 by 560 and
+  chance 0.92; far items `far`, 1100 by 700 and 0.95. With the view at 720 by
+  360 and these parallaxes, up to three planets and three far items overlap the
+  view.
 - **Planets.** The look is `planets[floor(unit("planet-look") n)]`; the radius
-  is `(40 + 58 unit("planet-r")) size`. Lit from `light` (-0.62, -0.78), the
+  is `(26 + 64 unit("planet-r")) size`. Lit from `light` (-0.62, -0.78), the
   upper left. Over the disc in `night`, `body` fills where the point lies
   outside a shadow disc of the same radius pushed away from the light by
   `push` r (0.42 for a crescent, 0.7 otherwise), and `lit` where it lies
@@ -155,15 +158,16 @@ sky when its id changes.
 - **Far items.** The look is `far[floor(unit("far-look") n)]`. A `nebula`
   draws one of its two `assets`, `floor(unit("far-variant") 2)`, centred on
   the item at 768 by 320 logical px with linear filtering; the textures are
-  192 by 80 texels, straight alpha. Its `core` and `veil` take the galaxy's
+  192 by 80 texels, straight alpha, the veil at peak alpha 0.4125 and the
+  core over it at 0.6 (`nebula.alpha`). Its `core` and `veil` take the galaxy's
   nebula hue offset and chroma scale: Whirlpool's core +40 at 1.7 and veil -10
   at 1.5; Phantom's core -18 at 1.6 and veil +8 at 1.3, so its smoke stays
   violet. A `cluster` is a Gaussian glow in `glow`
-  (sigma 64 by 42 px, alpha 0.7) with 90 stars in `star` at up to `alpha`,
+  (sigma 64 by 42 px, alpha 0.5) with 90 stars in `star` at up to `alpha`,
   normally spread 47.6 by 34 px (Box-Muller on salts `cluster-{k}-r` and
   `cluster-{k}-a` of the item's cell), radius 0.5 px, or 0.8 px when
   `cluster-{k}-l` is below 0.2, at `alpha` times `0.5 + 0.5 unit("cluster-{k}-b")`.
-- **Stars.** 240 px chunks per depth: 10 far stars of radius 0.55 px and 3
+- **Stars.** 240 px chunks per depth: 28 far stars of radius 0.55 px and 8
   near ones of 0.85 px per chunk. Star `k` of depth `d` (`far`, `near`) in
   chunk `(i, j)` sits at `((i + u) 240, (j + v) 240)` with `u`, `v` from the
   salts `star-{d}-{k}-x` and `-y`; it is 1.25 times larger when `-l` is above
@@ -171,7 +175,7 @@ sky when its id changes.
   `0.55 + 0.45 unit("-b")`, times the twinkle.
 - **Twinkle.** `0.7 + 0.3 sin(2 pi t / period + phase)` per star, with period
   `3 + 3 unit("-p")` s and phase `2 pi unit("-f")`.
-- **Streaks.** Chunks of 260 px at chance 0.45 (salt `streak`), placed as
+- **Streaks.** Chunks of 180 px at chance 0.8 (salt `streak`), placed as
   above: one 1 px line, `26 + 46 unit("streak-length")` px long, at
   `streaks.angle` plus `(unit("streak-angle") - 0.5) 11.5` degrees, in
   `streaks.color` at `streaks.alpha`, fading to clear at both ends along a
@@ -179,6 +183,44 @@ sky when its id changes.
 - **Sky.** `t = smoothstep(clamp(0.45 x' + 0.75 y + offset))` with `x` and `y`
   the view position over its width and height, `x' = 1 - x` when `flip`, and
   `offset` -0.1; the colour runs from `from` (the background) at `t` 0 to `to`.
+- **Specks.** `debris.specks`: one per 112 layer px cell `(x, y)`, at
+  `(112 x + (37 y) % 83, 112 y + (53 x) % 79)` (JavaScript `%`) projected at
+  parallax 0.7, a 1 px radius disc in `backdropSide` at alpha 0.45.
+- **Rocks.** `debris.rocks` and `debris.farRocks` are two depths of the
+  [backdrop rocks](asteroids.md#backdrop) with one rule: world cell `(x, y)`
+  of size `cell` holds a rock when `unit(seed, "x,y", salt)` is below
+  `chance`; its sprite is `sprites[floor(unit("{salt}-sprite") n)]`, its
+  position `((x + unit("{salt}-x")) cell, (y + unit("{salt}-y")) cell)` and
+  its scale `scale[0] + (scale[1] - scale[0]) unit("{salt}-scale")` times
+  its display size. Rocks: salt `backdrop`, cell 320, chance 0.7, scale 0.6 to
+  1, parallax 0.8. Far rocks: salt `backdrop-far`, cell 240, chance 0.7, scale
+  0.3 to 0.5 (52 px wide at the smallest, wider than the 42 px ship),
+  parallax 0.45, drawn under the specks and rocks.
+- **Rock value.** A rock is tinted `backdropLit` (Phaser `setTint`), then
+  each channel is moved toward the field background to `value` of its
+  distance (0.75 for rocks, 0.4 for far rocks): `bg + (tinted - bg) value`.
+  The rock stays opaque, so overlapping rocks never show through each other:
+  a background-filled silhouette under the tinted rock drawn at alpha
+  `value`.
+
+### Muting
+
+The build fixes every tone under its [cap](#contrast-caps), then compresses it
+toward the field background (`MUTE` in the tool) before writing it, so the
+data holds the drawn values:
+
+| Element              | Compression                                                        |
+| -------------------- | ------------------------------------------------------------------ |
+| Plate steps          | 0.6 of the offset: multiply `1 - 0.6 (1 - m)`, screen channels 0.6 |
+| Planet colours       | 0.55 of their sRGB distance from the background                    |
+| Stars                | Alpha times 0.75                                                   |
+| Cluster stars        | `alpha` times 0.8                                                  |
+| Streaks              | Alpha times 0.8                                                    |
+| Nebula, cluster glow | Shared rules: `nebula.alpha` and `cluster.glow.alpha` above        |
+| Rocks, far rocks     | At runtime, by `value` ([Rocks](#generation))                      |
+
+L2 tones are capped under the full-strength brightest plate, and the rare
+decorations keep the full-strength planet tones.
 
 ## Data
 
@@ -186,26 +228,28 @@ sky when its id changes.
 `parallax` with its chunk sizes, chances, salts, sizes and geometry
 (`phenomena.planets`, `phenomena.nebula`, `phenomena.cluster`, `plates`,
 `stars`, `debris`); `plates.blend` (`darker` `multiply`, `lighter` `screen`);
-`stars.twinkle`; `caps`; and `check` (the sampled cameras and the opening
-size).
+`phenomena.nebula.alpha`, baked into the textures; `stars.twinkle`;
+`debris.specks` (`cell`, `alpha`), `debris.rocks` and `debris.farRocks`
+(`salt`, `cell`, `chance`, `scale`, `value`); `caps`; and `check` (the sampled
+cameras and the opening size).
 
 `{galaxy}/backdrop.json`, version 1:
 
-| Key           | Holds                                                                                                                                                            |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `galaxy`      | The galaxy id                                                                                                                                                    |
-| `placeholder` | Whether this is a [placeholder](#placeholder-galaxies) backdrop                                                                                                  |
-| `light`       | Whether the field is light (Sunflower)                                                                                                                           |
-| `seed`        | The galaxy's seed                                                                                                                                                |
-| `background`  | The field background the tones derive from                                                                                                                       |
-| `sky`         | `from`, `to`, `weights`, `offset`, `flip`                                                                                                                        |
-| `plates`      | `lattice`, `split`, `jitter`, `lighter`, `pattern`, and `steps`: per step its resulting `color` over the background and its `multiply` factor or `screen` colour |
-| `planets`     | Each look's `look` (`crescent`, `gibbous`, `ringed`, `moon`), `hue` offset, `size` and `colors` (`night`, `body`, `lit`, `ring`)                                 |
-| `far`         | Each far look: `nebula` with `assets` and `colors`, or `cluster` with `colors` and `alpha`                                                                       |
-| `fixed`       | The manifest links of fixed L2 layers drawn under the plates, fixed to the view: `backdropHaze` on Andromeda, `needleBand` on Needle, empty elsewhere            |
-| `stars`       | `color` and `alpha` per depth. The colour is Oklab L 0.83 at the galaxy's tint hue with twice its tint chroma; Sunflower cream `#FFF7DC`                         |
-| `streaks`     | `color` (`backdropLit`; on a light field `backdropSide`), `alpha`, `angle`                                                                                       |
-| `check`       | The build's measured result: cameras, today's extreme tone, the new extreme tone and each signal's contrast over both                                            |
+| Key           | Holds                                                                                                                                                                  |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `galaxy`      | The galaxy id                                                                                                                                                          |
+| `placeholder` | Whether this is a [placeholder](#placeholder-galaxies) backdrop                                                                                                        |
+| `light`       | Whether the field is light (Sunflower)                                                                                                                                 |
+| `seed`        | The galaxy's seed                                                                                                                                                      |
+| `background`  | The field background the tones derive from                                                                                                                             |
+| `sky`         | `from`, `to`, `weights`, `offset`, `flip`                                                                                                                              |
+| `plates`      | `lattice`, `split`, `jitter`, `lighter`, `pattern`, and `steps`: per step its muted `multiply` factor or `screen` colour and its resulting `color` over the background |
+| `planets`     | Each look's `look` (`crescent`, `gibbous`, `ringed`, `moon`), `hue` offset, `size` and `colors` (`night`, `body`, `lit`, `ring`)                                       |
+| `far`         | Each far look: `nebula` with `assets` and `colors`, or `cluster` with `colors` and `alpha`                                                                             |
+| `fixed`       | The manifest links of fixed L2 layers drawn under the plates, fixed to the view: `backdropHaze` on Andromeda, `needleBand` on Needle, empty elsewhere                  |
+| `stars`       | `color` and `alpha` per depth. The colour is Oklab L 0.83 at the galaxy's tint hue with twice its tint chroma; Sunflower cream `#FFF7DC`                               |
+| `streaks`     | `color` (`backdropLit`; on a light field `backdropSide`), `alpha`, `angle`                                                                                             |
+| `check`       | The build's measured result: cameras, today's extreme tone, the new extreme tone and each signal's contrast over both                                                  |
 
 ## Contrast caps
 
@@ -251,12 +295,12 @@ Measured over the sampled cameras:
 
 | Galaxy    | Recognition edge: reference / sampled minimum | Bare white / darkest hull minimum |
 | --------- | --------------------------------------------- | --------------------------------- |
-| Sunflower | 6.083 / 8.383                                 | 1.387 / 3.545                     |
-| Whirlpool | 6.078 / 8.345                                 | 1.428 / 3.529                     |
-| Needle    | 5.282 / 7.320                                 | 1.631 / 3.095                     |
-| Andromeda | 3.592 / 4.013                                 | 2.547 / 1.697                     |
-| Cartwheel | 4.036 / 5.512                                 | 2.150 / 2.331                     |
-| Phantom   | 4.848 / 4.888                                 | 4.888 / 1.000                     |
+| Sunflower | 6.083 / 9.149                                 | 1.483 / 3.868                     |
+| Whirlpool | 6.078 / 8.688                                 | 1.483 / 3.674                     |
+| Needle    | 5.282 / 7.974                                 | 1.696 / 3.372                     |
+| Andromeda | 3.592 / 4.178                                 | 2.675 / 1.767                     |
+| Cartwheel | 4.036 / 5.727                                 | 2.247 / 2.422                     |
+| Phantom   | 4.848 / 6.136                                 | 6.136 / 1.000                     |
 
 ## Placeholder galaxies
 
@@ -285,17 +329,15 @@ at the capture camera.
 
 ## Performance and device pixels
 
-- L0 is one gradient quad. L1 keeps its large plate lattice in two Graphics
+- L0 is one gradient quad. L1 keeps its plate lattice in two Graphics
   objects, one per blend mode, redrawn when the camera moves.
-- L2 holds one or two items on screen. Planets are vector or baked at
-  min(DPR, 2) when their chunk comes into view and released when it leaves,
-  two at most, up to about 2.8 MB each at DPR 2. The nebula textures are
+- L2 holds up to three planets and three far items on screen. Planets are
+  vector or baked at min(DPR, 2) when their chunk comes into view and released
+  when it leaves, up to about 2.4 MB each at DPR 2. The nebula textures are
   192 by 80 texels, 60 KB each in memory.
-- L3 is about 60 discs per view. L4 keeps its existing rock placement and
-  specks plus two to four streaks; its six rock silhouettes include the
-  180 and 270 logical-px-wide decorative masses.
-- About two to three screens of overdraw in all. Chunk lookups are a few dozen
-  hashes per frame.
+- L3 is about 185 discs per view. L4 holds about six streaks, about 21
+  specks, two to four rocks and three to four far rocks per view; its six rock
+  silhouettes include the 180 and 270 logical-px-wide decorative masses.
 - Draw vector layers at min(DPR, 2). Draw the nebula textures with linear
   filtering, never nearest: at parallax 0.05 to 0.15 a layer moves less than a
   pixel per frame, and nearest filtering would make it crawl. Do not snap stars

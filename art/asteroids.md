@@ -106,18 +106,22 @@ Rocks and specks are the debris layer of the [backdrop layers](backdrop.md),
 at their own depth behind the play plane:
 
 - Backdrop rocks move at parallax 0.8 (`debris.rocks` in
-  [backdrop.json](../public/art/backdrop.json)) and the dust specks at 0.7
-  (`debris.specks`). Each keeps its world rule (cells, density, scale, seed),
-  placed at the parallax times the camera's world position and projected as
-  the scene projects, so its layout stays isometric. The specks' positions
+  [backdrop.json](../public/art/backdrop.json)), a far rock depth at 0.45
+  (`debris.farRocks`) and the dust specks at 0.7 (`debris.specks`). Each
+  keeps its world rule (cells, density, scale, seed), placed at the parallax
+  times the camera's world position and projected as the scene projects, so
+  its layout stays isometric. The specks' positions
   are in layer coordinates, not world coordinates.
 - Backdrop rocks keep no ore-field clearance: at parallax 0.8 they slide past
   an ore field, under its crystals, so a world-space clearance would not hold.
 - A placeholder galaxy's rocks and specks take the base field's tints.
 
-Density: one backdrop rock in 48% of the 320 by 320 world-unit cells. The
-160, 180, 192, 216, 240 and 270 logical-px silhouettes use the same low-detail
-model and tint rule. Their minimum seeded display scale keeps every standalone
+Density: one backdrop rock in 70% of the 320 by 320 world-unit cells at 0.6
+to 1 times its display size, and one far rock in 70% of the 240 by 240 cells
+at 0.3 to 0.5 times. Each is muted toward the field background, rocks to 0.75
+and far rocks to 0.4 of their tinted distance, and stays opaque
+([Rocks](backdrop.md#generation)). The 160, 180, 192, 216, 240 and 270
+logical-px silhouettes use the same low-detail model and tint rule. Their minimum seeded display scale keeps every standalone
 backdrop rock larger than the ship. These are backdrop
 sprites only; the play asteroid shapes, resource rocks and collision data
 remain separate.

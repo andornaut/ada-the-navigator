@@ -158,8 +158,15 @@ const CAPS = {
 const PLATE_RULES: PlateRules = {
   patternWeight: 0.75,
   jitterWeight: 1,
-  edges: [-0.55, -0.16, 0.22, 0.62],
+  edges: [-0.42, -0.05, 0.05, 0.45],
 };
+
+// Value compression toward the field background, baked into each galaxy's tones after the caps
+// fix them (`muted`): a plate step keeps `plates` of its offset (multiply 1 - k (1 - m), screen
+// channels times k); planet colours keep `planets` of their sRGB distance from the background;
+// star, cluster-star and streak alphas scale by `stars`, `clusterStars` and `streaks`. The rare
+// decorations keep the full-strength planet tones.
+const MUTE = { plates: 0.6, planets: 0.55, stars: 0.75, clusterStars: 0.8, streaks: 0.8 };
 
 const RULES = {
   version: 1,
@@ -168,13 +175,13 @@ const RULES = {
   sky: { parallax: 0, anchor: "view" },
   phenomena: {
     fixed: { parallax: 0, anchor: "view" },
-    far: { parallax: 0.05, chunk: [2400, 1500], chance: 0.75, salt: "far" },
+    far: { parallax: 0.05, chunk: [1100, 700], chance: 0.95, salt: "far" },
     planets: {
       parallax: 0.12,
-      chunk: [1500, 1000],
+      chunk: [800, 560],
       chance: 0.92,
       salt: "planet",
-      radius: [40, 98],
+      radius: [26, 90],
       light: [-0.62, -0.78],
       facets: 14,
       push: { crescent: 0.42, gibbous: 0.7 },
@@ -189,9 +196,10 @@ const RULES = {
         ],
       },
     },
-    nebula: { display: [768, 320], scale: 4, filter: "linear" },
+    // `alpha`: the veil's and the core's peak alpha, baked into the textures.
+    nebula: { display: [768, 320], scale: 4, filter: "linear", alpha: { veil: 0.4125, core: 0.6 } },
     cluster: {
-      glow: { sigma: [64, 42], alpha: 0.7 },
+      glow: { sigma: [64, 42], alpha: 0.5 },
       stars: { count: 90, spread: [47.6, 34], radius: [0.5, 0.8], largeShare: 0.2 },
     },
   },
@@ -204,8 +212,8 @@ const RULES = {
     chunk: 240,
     salt: "star",
     layers: [
-      { name: "far", parallax: 0.3, perChunk: 10, radius: 0.55 },
-      { name: "near", parallax: 0.5, perChunk: 3, radius: 0.85 },
+      { name: "far", parallax: 0.3, perChunk: 28, radius: 0.55 },
+      { name: "near", parallax: 0.5, perChunk: 8, radius: 0.85 },
     ],
     large: { share: 0.15, scale: 1.25 },
     brightness: [0.55, 1],
@@ -214,15 +222,35 @@ const RULES = {
   debris: {
     streaks: {
       parallax: 0.6,
-      chunk: [260, 260],
-      chance: 0.45,
+      chunk: [180, 180],
+      chance: 0.8,
       salt: "streak",
       length: [26, 72],
       width: 1,
       spread: 11.5,
     },
-    specks: { parallax: 0.7 },
-    rocks: { parallax: 0.8 },
+    // Dust specks: one per `cell` layer px, a 1 px disc in backdropSide at `alpha`.
+    specks: { parallax: 0.7, cell: 112, alpha: 0.45 },
+    // Backdrop rock depths (art/asteroids.md, Backdrop): one rock in `chance` of the `cell` world
+    // cells, hashed with `salt`, `salt-sprite`, `salt-x`, `salt-y` and `salt-scale`, at `scale`
+    // times its display size, tinted backdropLit and then compressed to `value` of its distance
+    // from the field background while staying opaque. `farRocks` draws under `rocks`.
+    rocks: {
+      parallax: 0.8,
+      salt: "backdrop",
+      cell: 320,
+      chance: 0.7,
+      scale: [0.6, 1],
+      value: 0.75,
+    },
+    farRocks: {
+      parallax: 0.45,
+      salt: "backdrop-far",
+      cell: 240,
+      chance: 0.7,
+      scale: [0.3, 0.5],
+      value: 0.4,
+    },
   },
   caps: CAPS,
   check: { cameras: 6, opening: 5 },
@@ -262,8 +290,8 @@ const fbm = (weight: number) => [
 // has its own recipe now.
 export const PLACEHOLDER: GalaxyConfig = {
   lattice: [
-    [420, 0],
-    [210, 365],
+    [210, 0],
+    [105, 182.5],
   ],
   split: true,
   jitter: 0.3,
@@ -295,8 +323,8 @@ const CONFIG: Record<GalaxyId, GalaxyConfig> = {
   // Diamond plots, as farm fields seen from above in the isometric view.
   sunflower: {
     lattice: [
-      [340, 170],
-      [-340, 170],
+      [170, 85],
+      [-170, 85],
     ],
     split: false,
     jitter: 0.08,
@@ -319,8 +347,8 @@ const CONFIG: Record<GalaxyId, GalaxyConfig> = {
   // Spokes round far hubs.
   cartwheel: {
     lattice: [
-      [380, 0],
-      [190, 330],
+      [190, 0],
+      [95, 165],
     ],
     split: true,
     jitter: 0.28,
@@ -346,8 +374,8 @@ const CONFIG: Record<GalaxyId, GalaxyConfig> = {
   // Flowing wave bands.
   whirlpool: {
     lattice: [
-      [400, 0],
-      [200, 350],
+      [200, 0],
+      [100, 175],
     ],
     split: true,
     jitter: 0.3,
@@ -379,8 +407,8 @@ const CONFIG: Record<GalaxyId, GalaxyConfig> = {
   // brightened (art/andromeda.md).
   andromeda: {
     lattice: [
-      [460, 0],
-      [230, 400],
+      [230, 0],
+      [115, 200],
     ],
     split: true,
     jitter: 0.34,
@@ -400,8 +428,8 @@ const CONFIG: Record<GalaxyId, GalaxyConfig> = {
   // Long slivers parallel to the band.
   needle: {
     lattice: [
-      [900 * Math.cos(-RAD6), 900 * Math.sin(-RAD6)],
-      [30, 150],
+      [450 * Math.cos(-RAD6), 450 * Math.sin(-RAD6)],
+      [15, 75],
     ],
     split: false,
     jitter: 0.06,
@@ -429,8 +457,8 @@ const CONFIG: Record<GalaxyId, GalaxyConfig> = {
   // Smoke: noise-warped drifting bands, lighter wisps over shadow, and violet smoke banks.
   phantom: {
     lattice: [
-      [420, 0],
-      [210, 360],
+      [210, 0],
+      [105, 180],
     ],
     split: true,
     jitter: 0.32,
@@ -699,6 +727,50 @@ function build(galaxy: GalaxyId): GalaxyBackdrop {
 const screen = (c: readonly number[], s: readonly number[]): Float3 =>
   [0, 1, 2].map((k) => 1 - (1 - c[k]!) * (1 - s[k]!)) as Float3;
 
+/** `colour` moved toward `bg` to `k` of its sRGB distance. */
+const toward = (colour: string, bg: string, k: number): string =>
+  hexOf(float(colour).map((v, i) => float(bg)[i]! + (v - float(bg)[i]!) * k));
+
+/**
+ * A galaxy's backdrop with the MUTE value compression applied to its full-strength tones: plate
+ * steps, planet colours, star, cluster-star and streak alphas. Each step's `color` is its
+ * muted result over the background.
+ */
+function muted(data: GalaxyBackdrop): GalaxyBackdrop {
+  const bg = data.background;
+  const steps = data.plates.steps.map((paint): StepPaint => {
+    if (paint.multiply !== undefined) {
+      const multiply = round(1 - (1 - paint.multiply) * MUTE.plates);
+      return { step: paint.step, color: hexOf(float(bg).map((v) => v * multiply)), multiply };
+    }
+    const s = hexOf(float(paint.screen!).map((v) => v * MUTE.plates));
+    return { step: paint.step, color: hexOf(screen(float(bg), float(s))), screen: s };
+  });
+  return {
+    ...data,
+    plates: { ...data.plates, steps },
+    planets: data.planets.map((planet) => ({
+      ...planet,
+      colors: Object.fromEntries(
+        Object.entries(planet.colors).map(([key, c]) => [key, toward(c, bg, MUTE.planets)]),
+      ),
+    })),
+    far: data.far.map((recipe) =>
+      recipe.look === "cluster"
+        ? { ...recipe, alpha: round((recipe.alpha as number) * MUTE.clusterStars) }
+        : recipe,
+    ),
+    stars: {
+      ...data.stars,
+      alpha: {
+        far: round(data.stars.alpha.far * MUTE.stars),
+        near: round(data.stars.alpha.near * MUTE.stars),
+      },
+    },
+    streaks: { ...data.streaks, alpha: round(data.streaks.alpha * MUTE.streaks) },
+  };
+}
+
 // ---------------------------------------------------------------- textures
 
 type Texture = { width: number; height: number; data: Float32Array };
@@ -765,9 +837,9 @@ function nebulaTexture(seed: number, variant: number, colors: Record<string, str
   const data = new Float32Array(w * h * 4);
   const [veilC, coreC] = [float(colors.veil!), float(colors.core!)];
   for (let p = 0; p < w * h; p++) {
-    // The veil at 0.55, then the core over it at 0.8, as one straight-alpha texel.
-    const av = veil[p]! * 0.55;
-    const ac = core[p]! * 0.8;
+    // The veil at its alpha, then the core over it at its own, as one straight-alpha texel.
+    const av = veil[p]! * RULES.phenomena.nebula.alpha.veil;
+    const ac = core[p]! * RULES.phenomena.nebula.alpha.core;
     const a = ac + av * (1 - ac);
     const c = [0, 1, 2].map((k) =>
       a > 1e-6 ? (coreC[k]! * ac + veilC[k]! * av * (1 - ac)) / a : 0,
@@ -1220,8 +1292,9 @@ function centring(
 
 const writes: (() => void)[] = [];
 for (const galaxy of GALAXIES) {
-  const data = build(galaxy);
-  writes.push(() => writeDecorations(data.planets[0]!.colors, galaxy));
+  const full = build(galaxy);
+  writes.push(() => writeDecorations(full.planets[0]!.colors, galaxy));
+  const data = muted(full);
   const bg = data.background;
   const yb = luminance(float(bg));
   const light = data.light;

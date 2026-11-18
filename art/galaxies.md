@@ -254,7 +254,7 @@ Each gets its own character within the system:
 
 On Sunflower the backdrop takes no keyline: the [light-field rule](#light-fields)
 keylines play objects only, and the plates step darker within the caps, so the
-ink keyline keeps 8.8:1 or more over every plate.
+ink keyline keeps 9.6:1 or more over every plate.
 
 ## Placeholder previews
 

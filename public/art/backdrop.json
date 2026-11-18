@@ -13,16 +13,16 @@
     },
     "far": {
       "parallax": 0.05,
-      "chunk": [2400, 1500],
-      "chance": 0.75,
+      "chunk": [1100, 700],
+      "chance": 0.95,
       "salt": "far"
     },
     "planets": {
       "parallax": 0.12,
-      "chunk": [1500, 1000],
+      "chunk": [800, 560],
       "chance": 0.92,
       "salt": "planet",
-      "radius": [40, 98],
+      "radius": [26, 90],
       "light": [-0.62, -0.78],
       "facets": 14,
       "push": {
@@ -54,12 +54,16 @@
     "nebula": {
       "display": [768, 320],
       "scale": 4,
-      "filter": "linear"
+      "filter": "linear",
+      "alpha": {
+        "veil": 0.4125,
+        "core": 0.6
+      }
     },
     "cluster": {
       "glow": {
         "sigma": [64, 42],
-        "alpha": 0.7
+        "alpha": 0.5
       },
       "stars": {
         "count": 90,
@@ -73,7 +77,7 @@
     "parallax": 0.15,
     "patternWeight": 0.75,
     "jitterWeight": 1,
-    "edges": [-0.55, -0.16, 0.22, 0.62],
+    "edges": [-0.42, -0.05, 0.05, 0.45],
     "blend": {
       "darker": "multiply",
       "lighter": "screen"
@@ -86,13 +90,13 @@
       {
         "name": "far",
         "parallax": 0.3,
-        "perChunk": 10,
+        "perChunk": 28,
         "radius": 0.55
       },
       {
         "name": "near",
         "parallax": 0.5,
-        "perChunk": 3,
+        "perChunk": 8,
         "radius": 0.85
       }
     ],
@@ -110,18 +114,33 @@
   "debris": {
     "streaks": {
       "parallax": 0.6,
-      "chunk": [260, 260],
-      "chance": 0.45,
+      "chunk": [180, 180],
+      "chance": 0.8,
       "salt": "streak",
       "length": [26, 72],
       "width": 1,
       "spread": 11.5
     },
     "specks": {
-      "parallax": 0.7
+      "parallax": 0.7,
+      "cell": 112,
+      "alpha": 0.45
     },
     "rocks": {
-      "parallax": 0.8
+      "parallax": 0.8,
+      "salt": "backdrop",
+      "cell": 320,
+      "chance": 0.7,
+      "scale": [0.6, 1],
+      "value": 0.75
+    },
+    "farRocks": {
+      "parallax": 0.45,
+      "salt": "backdrop-far",
+      "cell": 240,
+      "chance": 0.7,
+      "scale": [0.3, 0.5],
+      "value": 0.4
     }
   },
   "caps": {
