@@ -793,7 +793,7 @@ token above; strings are Gameplay's.
 | Cheats        | Header, close. Per scope a section group: heading (`TYPE.label`), persistence (supporting prose), `SPACING.rowGap`, then items `SPACING.gap` apart, each an action stack of one with its description (supporting prose) `SPACING.rowGap` below | Sections     |
 | Paused        | Header, close. Control grid, two columns: Quests and Ship, then Map when permitted and Settings, then Back to title and Resume (primary)                                                                                                       | None         |
 | Paused (room) | Header, close. Equal-size action stack: Map when permitted, Settings, Back to title, primary Resume                                                                                                                                            | None         |
-| Ship          | Header, close. Cargo section. Equipment section ([Ship card](#ship-card))                                                                                                                                                                      | None         |
+| Ship          | Header, close. Cargo, Equipment and Weapons columns. Centred Back ([Ship card](#ship-card))                                                                                                                                                    | None         |
 | Station card  | Keeper portrait, name tab and current greeting. Balance and Jobs/Shop choices. Separate Next line/Undock navigation and close X ([Station card](#station-card)).                                                                               | None         |
 | Shop          | Header, close. Balance. Tabs (action row). Item list (control grid)                                                                                                                                                                            | Item list    |
 | Job board     | Header, close. Balance. Intro (supporting prose, centred). Refusal line (supporting prose, when shown). Job list (one column of job rows)                                                                                                      | Job list     |
@@ -806,7 +806,7 @@ one vertical stack. Space adds Quests and Ship above the shared actions in its
 existing two-column grid, with Resume at the bottom right beside Back to title.
 Map is hidden when its canonical permission is false. All button sizes remain
 unchanged. Earth’s Map opens the galaxy map; flight’s Map opens the local map.
-Ship has primary Back at the bottom right, returning to Paused with the same action
+Ship has one centred primary Back, returning to Paused with the same action
 as its X, Escape and back. Quests list Close restores its actual opener; detail Back returns to
 the list, while a directly opened HUD detail Close returns to gameplay. The X,
 Escape and back match the primary footer action.
@@ -875,75 +875,60 @@ every available height, so the card never scrolls.
 
 ### Ship card
 
-Implementation contract for Tech: the Paused card's Ship opens a
-safe-width card titled "Ship" with the close X; the close X, back and
-Escape return to Paused. The body has exactly two top-aligned columns:
-Equal-width panes contain Equipment then Cargo on the left, and Weapons
-on the right, including narrow views. All three named headings remain visible.
-The central divider and its clearance are outside both panes.
-Each section is one list, never a nested two-column grid. Strings and row
-content remain Gameplay's. Ship geometry belongs in `src/ui/layout/`,
-consuming the existing canonical tokens rather than a second spacing system.
+The Paused card's Ship opens the shared `large` card (`CARD_WIDTH_CAPS.large`
+700, clamped to the available rect) titled "Ship", with the close X and one
+centred primary Back button in its footer. Back, the close X, Escape and back
+return to Paused. Strings and row content are Gameplay's
+([Player copy](../gameplay/player-copy.md)). Constants: `SHIP_CARD` and
+`SHIP_CARD_STYLE` in `src/ui/layout/shipCard.ts`; the column tree is `shipTree`
+in `src/ui/shipTree.ts`.
 
-| Part                | Existing token or derivation                                  | Rule                                                                                        |
-| ------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| Outer padding       | `CARD_CONTENT.padding` (16)                                   | Use the shared content-card padding on every edge                                           |
-| Divider             | `CARD_CONTENT.frameBorder` (2), `TEXT_TOKENS.supporting`      | One decorative vertical rule between the sections, spanning the body                        |
-| Divider clearance   | `SPACING.panelPadding` (16) on each side                      | The total inter-column gutter is `2 * SPACING.panelPadding + CARD_CONTENT.frameBorder` (34) |
-| Section heading     | `TYPE.label`, `TEXT_TOKENS.supporting`                        | Same heading role and top alignment in both columns                                         |
-| Heading-to-list gap | `SPACING.gap` (8)                                             | Separate a heading from its first row                                                       |
-| Equipment/Cargo gap | `SPACING.gap` (8)                                             | Between Equipment and Cargo in the left pane                                                |
-| List row gap        | `SPACING.rowGap` (4)                                          | Between rows within either list or equipment subgroup                                       |
-| Row height          | `max(SHIP_CARD.icon, TYPE.body.lineHeight)` (20 minimum)      | Wrapped text grows the row by its type role's line height                                   |
-| Row icon            | Existing `SHIP_CARD.icon` (20), then `SPACING.markGap` (6)    | Retain the current icons and drawn-pixel spacing                                            |
-| Value gap           | `SPACING.gap` (8)                                             | Between a compact name and its separate value or ammunition                                 |
-| Ammunition width    | Measure the formatted `ECONOMY.ammo.capacity` in `TYPE.label` | Reserve the same right-aligned track for every weapon row                                   |
+The body is three top-aligned columns, Cargo, Equipment and Weapons from left
+to right, at every width and with phone insets. The three content tracks are
+equal (`minmax(0, 1fr)`), so content never sizes a column; a page divider sits
+in its own intrinsic track between each pair. Each section is one list under
+its heading, never a nested grid.
 
-Rows use `TYPE.body` and `TEXT_TOKENS.label`. A level-one item shows only
-its name. Higher levels append the compact suffix `(2)` or `(3)` to the
-name, without "Level", "LVL" or "of 3". Preserve canonical numeric levels
-and full per-track level metadata in each row's accessible name. Counts
-and the separate weapon ammunition track use `TYPE.label` and remain
-left-aligned in a shared column anchored at the right of the Weapons pane.
-Cargo counts stay right-aligned. Labels wrap without shrinking type.
+| Part                | Token or derivation                                                                 | Rule                                                                                      |
+| ------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Outer padding       | `CARD_CONTENT.padding` (16)                                                         | The shared content-card padding on every edge                                             |
+| Divider             | `PAGE_DIVIDER_STYLE`, from `STORY_PANEL.rule`: 1 wide, `#6b6685`                    | One vertical rule between neighbouring columns, spanning the body                         |
+| Divider clearance   | `SPACING.panelPadding` (16) on each side                                            | Each gutter is `2 * SPACING.panelPadding + 1` (33)                                        |
+| Column              | `(inner width - 2 * 33) / 3`                                                        | 200.67 in the full 700 card (inner width 668)                                             |
+| Section heading     | `TYPE.label` on a 20 line, `TEXT_TOKENS.supporting`                                 | Cargo, Equipment and Weapons only, the same role and top in every column                  |
+| Heading-to-list gap | `SPACING.gap` (8)                                                                   | Between a heading and its first row                                                       |
+| List row gap        | `SPACING.rowGap` (4)                                                                | Between rows in a list                                                                    |
+| Row                 | `SHIP_CARD.row`, `TYPE.body.lineHeight` (20), minimum height                        | `TYPE.body`, `TEXT_TOKENS.label`; each wrapped line adds 20                               |
+| Row icon            | `SHIP_CARD.icon` (20), then `SPACING.markGap` (6)                                   | A sprite sheet's first frame, or a weapon glyph masked in `TEXT_TOKENS.label`             |
+| Value               | `TYPE.label` on a 20 line, `SPACING.markGap` (6) after the name                     | A count or ammunition at the row's right end; it wraps under the name when space runs out |
+| Footer              | `SPACING.gap` (8) above Back, `SCROLL.endPad - CARD_CONTENT.frameBorder` (14) below | Back is centred, outside the scrolling body                                               |
 
-1. Equipment, upper left: Engine (`icon-shop-engine-tuning`), Shield
-   (`icon-shop-shield`), Tractor beam (`icon-shop-tractor-beam`), then
-   Paint (`icon-shop-ship-paint`). Preserve the actual paint name and
-   the shop icons' normal frames.
-2. Cargo, lower left: Stardust and Ore with their exact counts, then
-   Holodisks and, when present, the carried item or towed craft. Keep
-   their existing player strings and icons.
-3. Weapons, right: every owned weapon in HUD order, with its actual name,
-   existing weapon icon, compact level suffix and separate ammunition.
-   Keep the Weapons heading when the list is empty; add no empty-state copy.
-   "Ammo" sits on the same heading row, in the same `TYPE.label` font.
-   The shared ammo column reserves enough width for the formatted canonical
-   capacity, including its grouping separator. Each finite weapon holds at
-   most 9,999 rounds: show zero as `0`, preserve a blank Laser cell, and
-   show grouped numbers without the "left" suffix.
+A level-one item shows only its name. Higher levels append `[2]` or `[3]`
+(`compactLevelName`), without "Level", "LVL" or "of 3". Each row's accessible
+name keeps the full label, "Level {n} of {max}", the count and the ammunition.
+Labels and values wrap, including within long unbroken words, without
+shrinking type.
 
-Use the existing shared full safe-width card so short inventories do not
-collapse to the fitted-card floor. Height follows the content up to the
-available rect. Both panes share half the inner width after subtracting
-the central divider gutter. Equipment and Cargo are card groups separated
-by `SPACING.gap`; panel padding remains the inside and divider clearance.
-Preserve title clearance, fonts and the shared safe-area clamp.
+1. Cargo: Stardust (`icon-stardust-20`) and Ore (`icon-ore-20`) with exact
+   grouped counts, "Holodisks: {n} of 6" (`icon-holodisk-20`), one
+   "Carrying: {item}" row per carried item or "Carrying: Nothing"
+   (`icon-cargo-20`), then "Towing: {craft}" or "Towing: Nothing"
+   (`icon-tow-20`). Carrying and Towing rows are always present and
+   independent: each carried item keeps its own row, and a towed craft never
+   hides them. A "Nothing" row is a disabled button out of the Tab order
+   (`tabIndex` -1) and opens nothing.
+2. Equipment: Engine (`icon-shop-engine-tuning`), Shield (`icon-shop-shield`),
+   Tractor beam (`icon-shop-tractor-beam`), then "Paint: {paint}"
+   (`icon-shop-ship-paint`), each with its compact level suffix where it has
+   a level.
+3. Weapons: every owned weapon in HUD order, with its weapon glyph, compact
+   level suffix and ammunition as a grouped count; the Laser's ammunition is
+   blank. With no owned weapons the heading remains and no empty-state copy is
+   added. There is no "Ammo" heading.
 
-Shrink the equal panes together within the available rect. Labels wrap,
-including within long unbroken words, while preserving the existing font
-sizes and content. Keep two columns at narrow widths and with phone insets;
-do not stack sections or add internal columns. Values retain their shared
-tracks and wrap where needed to avoid horizontal overflow.
-
-The taller list sets the body's natural height. Use the shared card header
-and available-height calculation; when that height does not fit, scroll the
-body vertically with both sections and the divider together, keeping the
-title and close control fixed. Do not retain a fixed card size or assume
-that the full equipment list fits without scrolling. Tech owns isolated
-checks and screenshots for the longest content, empty weapon subgroup,
-narrow views, phone insets and desktop; this section specifies the contract,
-not a claim that runtime verification is complete.
+Height follows the content up to the available rect. Past that the body
+scrolls vertically with all three columns and both dividers together, while
+the title, close X and Back stay fixed.
 
 Map, from the Paused card, is a full-screen map rather than a card: the
 galaxy's field under the insets, a header panel on the Map's HUD row at the
@@ -1496,14 +1481,14 @@ leaves and lands standing above the markers.
 
 ## Exceptions
 
-| Exception           | Reason                                                                                                                                                                    | Retained rules                                                                                                   |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Card press areas    | DOM hit-tests element boxes                                                                                                                                               | Each control box is at least 48 per axis; close uses `hitAround`                                                 |
-| Touch sticks        | Continuous input with floating origins                                                                                                                                    | `TOUCH_STICK` anchors, the safe insets, the `STICK_AREA_MARGIN` clamp, 85% opacity                               |
-| Landing page        | Responsive HTML outside the game canvas                                                                                                                                   | Same token numbers in CSS px, CSS safe insets                                                                    |
-| Procedural chrome   | Stick rings, knobs and the speed line draw in frame px                                                                                                                    | Frames and opacity from [touch joystick sheets](touch-joystick.md)                                               |
-| Route panel padding | At 360 high the chart (labels end at 164), the 112 panel and the 48 actions fill the available height; padding 16 makes the panel 128 and runs it 7 into the row 2 labels | `SPACING.gap` (8) as padding, the 2 px frame inside it; type roles, row gaps and the capture unchanged           |
-| Ship card sections  | Equipment and Cargo remain side by side with a decorative divider                                                                                                         | Existing panel padding on both sides of the existing frame-width rule; list row and heading gaps remain distinct |
+| Exception           | Reason                                                                                                                                                                    | Retained rules                                                                                         |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Card press areas    | DOM hit-tests element boxes                                                                                                                                               | Each control box is at least 48 per axis; close uses `hitAround`                                       |
+| Touch sticks        | Continuous input with floating origins                                                                                                                                    | `TOUCH_STICK` anchors, the safe insets, the `STICK_AREA_MARGIN` clamp, 85% opacity                     |
+| Landing page        | Responsive HTML outside the game canvas                                                                                                                                   | Same token numbers in CSS px, CSS safe insets                                                          |
+| Procedural chrome   | Stick rings, knobs and the speed line draw in frame px                                                                                                                    | Frames and opacity from [touch joystick sheets](touch-joystick.md)                                     |
+| Route panel padding | At 360 high the chart (labels end at 164), the 112 panel and the 48 actions fill the available height; padding 16 makes the panel 128 and runs it 7 into the row 2 labels | `SPACING.gap` (8) as padding, the 2 px frame inside it; type roles, row gaps and the capture unchanged |
+| Ship card sections  | Cargo, Equipment and Weapons remain side by side at every width, with decorative dividers                                                                                 | Panel padding on both sides of each 1 px page divider; list row and heading gaps remain distinct       |
 
 ## Verification
 
