@@ -17,13 +17,15 @@ bottom primary button.
 Using any cheat first saves play up to that moment, then starts a cheat
 session. From then on nothing is saved, earned or banked: story progress, unlocks, ownership, levels, Stardust, ore, jobs,
 achievements and statistics all stay as they were in the save before the first
-cheat. Returning to the start screen, by Back to title or by closing and
+cheat. Returning to the start screen from play, by Back to title or by closing and
 reopening the game, ends the session; Continue then loads the save as it was
 before the first cheat. No cheat grants an achievement or counts toward one, and
 an unlock marks nothing cleared: no chapter, holodisk, quest, landmark or
 project counts as done.
 
-Cheats are disabled on the start screen, where a session would end at once.
+Cheats also work on the start screen: their grants apply to the cheat session
+that the next Start or Continue begins, and returning to the start screen from
+play ends it.
 
 ## Cheats
 
