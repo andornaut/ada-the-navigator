@@ -966,10 +966,12 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   fires only while it is inside the visible game area. An enemy Heavy Missile
   hit removes 8, 12 or 16 HP at levels 1, 2 and 3, so it fires rarely.
 - Laser bolts travel at 500, 600 and 700 world units per second at weapon
-  levels 1, 2 and 3; Multi-Laser bolts at 400, 500 and 600. Ada's bolts and Phaser use the same fire-time rounded coverage envelope,
-  half-width 380 and half-height 260 at the 720 x 360 base view. The canonical
-  shape scales with the game area; its centre and heading range are captured
-  once when firing. Bolt lifetime follows weapon speed. Rapid Missile flies at 500, 600 and
+  levels 1, 2 and 3; Multi-Laser bolts at 400, 500 and 600. Laser and Multi-Laser bolts and Phaser
+  beams, Ada's and enemies' alike, use the same fire-time rounded coverage
+  envelope centred on the firing ship, half-width 380 and half-height 260 at the
+  720 x 360 base view, measured from the true muzzle. The canonical shape scales
+  with the game area; its centre and heading range are captured once when
+  firing. Bolt lifetime follows weapon speed. Rapid Missile flies at 500, 600 and
   700, and Heavy Missile at a fixed 400; both missiles reach a fixed 220 at every
   level, so a missile that hits nothing explodes on screen. Enemy missiles share
   this reach. Scattershot dots fly at 600.
@@ -978,12 +980,15 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   measured from there. Enemy shots leave from the drawn muzzle of the gun's
   current aim frame wherever the art defines muzzles, and from the model's fire
   origin otherwise; shot direction always follows the continuous aim.
-- At launch, Ada's projectile world velocity is its weapon heading times weapon
-  speed plus her current flight velocity. This velocity is captured once: later
-  ship turns, acceleration and drag do not affect the released projectile.
-  Lifetime and range fade use weapon speed alone, excluding inherited velocity.
-  The rounded coverage boundary is captured at fire time without changing its
-  dimensions. Instant Phaser beams, allied fire and enemy fire are unchanged.
+- At launch, a traveling projectile's world velocity, Ada's or an enemy's
+  shared weapon alike, is its weapon heading times weapon speed plus the firing
+  ship's current flight velocity. This velocity is captured once per shot,
+  including delayed volley shots: later ship turns, acceleration and drag do not
+  affect the released projectile. Lifetime and range fade use weapon speed
+  alone, excluding inherited velocity. The rounded coverage boundary is captured
+  at fire time without changing its dimensions. Instant Phaser beams have no
+  traveling velocity. Allied fire and the enemy-only ring burst, mine layer and
+  charged lance do not inherit launch velocity.
 - Fan angles are measured in the projected aim plane. Rotate there before
   unprojecting each shot direction; preserve weapon speed before adding launch velocity.
 - Each scattershot dot has 100 weapon-relative world units of travel along its rotated heading on
