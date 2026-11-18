@@ -1009,8 +1009,8 @@ try {
     "The start screen",
   );
   // The start screen's one navigation entry is the three-line Menu at the pause button's place
-  // (rules.md "Start, Home and Space"), drawn from the pause pose with its bars replaced; Settings,
-  // Achievements and Exit have no standalone disc.
+  // (rules.md "Start, Home and Space"), drawn from Art's menu.svg; Settings and Achievements have
+  // no standalone disc, and a browser tab shows no Exit.
   assert.deepEqual(
     await Promise.all(
       ["achievements", "settings", "exit"].map((action) =>
@@ -1018,14 +1018,14 @@ try {
       ),
     ),
     [false, false, false],
-    "The start screen shows no standalone Achievements, Settings or Exit disc",
+    "The start screen in a browser tab shows no standalone Achievements, Settings or Exit disc",
   );
   assert.deepEqual(
     [
       await menuDisc().getAttribute("aria-label"),
       await menuDisc().getAttribute("data-navigation"),
       await menuDisc().evaluate((button) =>
-        getComputedStyle(button, "::before").backgroundImage.startsWith('url("data:image/svg+xml'),
+        getComputedStyle(button, "::before").backgroundImage.includes("/art/ui/icons/menu.svg"),
       ),
     ],
     ["Menu", "menu", true],
@@ -1033,24 +1033,19 @@ try {
   );
   const startMenuBox = await menuDisc().boundingBox();
   assert.ok(startMenuBox, "The start screen's Menu has a box");
-  // The start Menu holds Achievements, Settings and a Chromium tab's Exit, then primary Close,
-  // each labelled from Gameplay's strings.
+  // The start Menu in a browser tab holds Achievements and Settings, then primary Close, each
+  // labelled from Gameplay's strings; Exit shows only in an installed app window.
   await openMenu();
   assert.deepEqual(
     await menuActionIds(),
-    ["menu-achievements", "menu-settings", "menu-exit", "menu-close"],
-    "The start screen's Menu holds Achievements, Settings, Exit, then Close",
+    ["menu-achievements", "menu-settings", "menu-close"],
+    "The start screen's Menu in a tab holds Achievements, Settings, then Close, with no Exit",
   );
   assert.deepEqual(
     await menuCard()
       .locator(".ada-actions button:not([hidden])")
       .evaluateAll((buttons) => buttons.map((button) => button.textContent?.trim())),
-    [
-      CONTENT.labels.achievements,
-      CONTENT.labels.settings,
-      CONTENT.labels.exit,
-      CONTENT.labels.close,
-    ],
+    [CONTENT.labels.achievements, CONTENT.labels.settings, CONTENT.labels.close],
     "The start screen's Menu actions read Gameplay's strings",
   );
   await menuCard().locator('[data-action="menu-achievements"]').click();
@@ -2199,8 +2194,8 @@ try {
   ];
   await seedOnce(dangerInput.save(), "ada-browser.danger-context.v1");
   await openPause();
-  // In flight the card shows Map, Ship, Quests, Settings and Back to title over Resume, every one
-  // available in danger.
+  // In flight the card shows Map, Quests, Settings and Ship by label, then Back to title over
+  // Resume, every one available in danger.
   const pauseActions = () => page.locator('[data-dialog="pause"] .ada-stack button:not([hidden])');
   assert.deepEqual(
     await pauseActions().evaluateAll((buttons) =>
@@ -2212,15 +2207,88 @@ try {
     ),
     [
       ["pause-map", CONTENT.labels.map, null],
-      ["pause-ship", CONTENT.labels.ship, null],
       ["pause-quests", CONTENT.labels.quests, null],
       ["pause-settings", CONTENT.labels.settings, null],
+      ["pause-ship", CONTENT.labels.ship, null],
       ["pause-backToTitle", CONTENT.labels.backToTitle, null],
       ["pause-resume", CONTENT.labels.resume, null],
     ],
-    "The in-flight Paused card shows Map, Ship, Quests, Settings, Back to title and Resume, all " +
+    "The in-flight Paused card shows Map, Quests, Settings, Ship, Back to title and Resume, all " +
       "available in danger",
   );
+  // Map and Quests, then Settings and Ship share two columns; Back to title spans the grid
+  // directly above the full-width primary Resume. Proofs at 1280x720 and at 720x360 with phone
+  // insets.
+  const near = (a, b) => Math.abs(a - b) <= 0.5;
+  const pauseGridAt = async (name, size, insets) => {
+    await page.setViewportSize(size);
+    await page.evaluate((logical) => {
+      const unit = Number(
+        getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
+      );
+      for (const side of ["bottom", "left", "right", "top"]) {
+        if (side in logical) {
+          document.documentElement.style.setProperty(
+            `--inset-${side}`,
+            `${logical[side] * unit}px`,
+          );
+        } else {
+          document.documentElement.style.removeProperty(`--inset-${side}`);
+        }
+      }
+    }, insets);
+    await page.waitForTimeout(250);
+    await page.screenshot({ path: `${output}/pause-flight-${name}.png` });
+    const pauseGrid = await page
+      .locator('[data-dialog="pause"] .ada-pause-grid')
+      .evaluate((grid) => {
+        const box = (node) => {
+          const rect = node.getBoundingClientRect();
+          return { bottom: rect.bottom, left: rect.left, right: rect.right, top: rect.top };
+        };
+        const buttons = Object.fromEntries(
+          [...grid.querySelectorAll("button:not([hidden])")].map((button) => [
+            button.dataset.action,
+            box(button),
+          ]),
+        );
+        return { buttons, grid: box(grid), rowGap: parseFloat(getComputedStyle(grid).rowGap) };
+      });
+    const { buttons: boxes, grid, rowGap } = pauseGrid;
+    const detail = `${name}: ${JSON.stringify(pauseGrid)}`;
+    for (const [left, right] of [
+      ["pause-map", "pause-quests"],
+      ["pause-settings", "pause-ship"],
+    ]) {
+      assert.ok(
+        near(boxes[left].top, boxes[right].top) &&
+          near(boxes[left].left, grid.left) &&
+          near(boxes[right].right, grid.right),
+        `Paused: ${left} and ${right} share a row across the two columns: ${detail}`,
+      );
+    }
+    for (const action of ["pause-backToTitle", "pause-resume"]) {
+      assert.ok(
+        near(boxes[action].left, grid.left) && near(boxes[action].right, grid.right),
+        `Paused: ${action} spans the grid's full width: ${detail}`,
+      );
+    }
+    assert.ok(
+      near(boxes["pause-backToTitle"].top, boxes["pause-ship"].bottom + rowGap) &&
+        near(boxes["pause-resume"].top, boxes["pause-backToTitle"].bottom + rowGap),
+      `Paused: Back to title sits directly above Resume, under the grid: ${detail}`,
+    );
+    return pauseGrid;
+  };
+  save("pause-flight-proof.json", {
+    1280: await pauseGridAt("1280", { height: 720, width: 1280 }, {}),
+    "720-insets": await pauseGridAt(
+      "720-insets",
+      { height: 360, width: 720 },
+      { bottom: 19, left: 43, right: 43, top: 0 },
+    ),
+  });
+  await pauseGridAt("1280-restored", { height: 720, width: 1280 }, {});
   await page.screenshot({ path: `${output}/pause-flight-danger.png` });
   // Ship opens its card in the Paused card's place, focus on its Back; Escape and the X return to
   // the Paused card on its Ship button.
@@ -2840,8 +2908,8 @@ try {
   await openMenu();
   assert.deepEqual(
     await menuActionIds(),
-    ["menu-achievements", "menu-settings", "menu-exit", "menu-close"],
-    "The title's Menu is the start Menu",
+    ["menu-achievements", "menu-settings", "menu-close"],
+    "The title's Menu is the start Menu, with no Exit in a browser tab",
   );
   await menuCard().locator('[data-action="menu-achievements"]').click();
   assert.equal((await achievementsPage()).count, "1/3", "Achievements opens from the title");
@@ -4013,7 +4081,7 @@ try {
           box(`.ada-start-actions > [data-action="${button.dataset.action}"]`),
           button.classList.contains("ada-primary") ? "primary" : "secondary",
         ]),
-        // The retired top-right discs that draw: none.
+        // The top-right discs that draw in a browser tab: none.
         discs: ["achievements", "settings", "exit"].filter((action) => {
           const button = document.querySelector(`[data-action="${action}"]`);
           return Boolean(button && !button.hidden && button.getClientRects().length > 0);
@@ -5992,30 +6060,186 @@ try {
       events.errors.push(message.text());
     }
   });
-  // Exit: a browser tab offers it in the start screen's Menu, after Achievements and Settings and
-  // before Close, named from Gameplay's string; it and Q on the bare start screen leave for the
-  // site's home page.
+  // Exit in a browser tab: no Exit disc, no Exit in the start screen's Menu, and Q does nothing;
+  // nothing navigates.
   await page.goto("http://ada-preview:4173/play/");
   await menuDisc().waitFor({ state: "visible" });
-  await openMenu();
-  const exitAction = menuCard().locator('[data-action="menu-exit"]');
   assert.equal(
-    (await exitAction.textContent())?.trim(),
-    CONTENT.labels.exit,
-    "Exit is named from Gameplay's string",
+    await page.locator('[data-action="exit"]').isVisible(),
+    false,
+    "A browser tab shows no Exit disc",
   );
+  await openMenu();
   assert.deepEqual(
-    (await menuActionIds()).slice(-2),
-    ["menu-exit", "menu-close"],
-    "Exit sits immediately above the Menu's Close",
+    await menuActionIds(),
+    ["menu-achievements", "menu-settings", "menu-close"],
+    "A browser tab's start Menu has no Exit",
   );
-  await exitAction.click();
-  await page.waitForURL("http://ada-preview:4173/");
-  await page.goto("http://ada-preview:4173/play/");
-  await menuDisc().waitFor({ state: "visible" });
+  await closeMenu();
   await page.keyboard.press("KeyQ");
-  await page.waitForURL("http://ada-preview:4173/");
-  events.checks.push("A Chromium tab offers Exit in the start screen's Menu; Exit and Q go home");
+  await page.waitForTimeout(250);
+  assert.equal(page.url(), "http://ada-preview:4173/play/", "Q does nothing in a browser tab");
+  events.checks.push("A browser tab shows no Exit disc or Menu Exit, and Q stays on the game");
+  // Exit in an installed app window that can close: desktop Chromium's app window at 1280x720 and
+  // Chrome's Android app at 720x360 with phone insets, each emulated with an installed display
+  // mode, a close watcher and a counted window.close(). Exit shows at hudButtonTarget(0) and in the
+  // start Menu by label; the disc, the Menu entry and Q each close the window and never navigate.
+  const ANDROID_CHROME =
+    "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) " +
+    "Chrome/142.0 Mobile Safari/537.36";
+  const appProofs = {};
+  for (const [name, contextOptions, insets] of [
+    ["1280", { viewport: { height: 720, width: 1280 } }, {}],
+    [
+      "720-insets",
+      {
+        hasTouch: true,
+        isMobile: true,
+        userAgent: ANDROID_CHROME,
+        viewport: { height: 360, width: 720 },
+      },
+      { bottom: 19, left: 43, right: 43, top: 0 },
+    ],
+  ]) {
+    const appContext = await browser.newContext(contextOptions);
+    await appContext.addInitScript(reportViolations);
+    await appContext.addInitScript(fakeWakeLock);
+    await appContext.route("**/*", previewOnly);
+    await appContext.addInitScript(() => {
+      const matchMedia = window.matchMedia.bind(window);
+      window.matchMedia = (query) => {
+        const list = matchMedia(query);
+        return /display-mode: standalone/u.test(query)
+          ? new Proxy(list, {
+              get: (target, key) =>
+                key === "matches"
+                  ? true
+                  : typeof target[key] === "function"
+                    ? target[key].bind(target)
+                    : target[key],
+            })
+          : list;
+      };
+      if (!("CloseWatcher" in window)) {
+        window.CloseWatcher = class extends EventTarget {
+          close() {}
+          destroy() {}
+          requestClose() {}
+        };
+      }
+      window.adaClosed = 0;
+      window.close = () => {
+        window.adaClosed += 1;
+      };
+    });
+    page = await appContext.newPage();
+    page.setDefaultTimeout(10000);
+    page.setDefaultNavigationTimeout(15000);
+    observe(page);
+    assert.equal((await page.goto("http://ada-preview:4173/play/")).status(), 200);
+    const exitDisc = page.locator('[data-action="exit"]');
+    await exitDisc.waitFor({ state: "visible" });
+    await menuDisc().waitFor({ state: "visible" });
+    await page.evaluate((logical) => {
+      const unit = Number(
+        getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
+      );
+      for (const [side, value] of Object.entries(logical)) {
+        document.documentElement.style.setProperty(`--inset-${side}`, `${value * unit}px`);
+      }
+    }, insets);
+    await page.waitForTimeout(250);
+    await page.screenshot({ path: `${output}/start-screen-app-${name}.png` });
+    const shot = await page.evaluate(() => {
+      const app = document.querySelector("#app");
+      const unit = Number(getComputedStyle(app).getPropertyValue("--ada-unit"));
+      const x0 = parseFloat(getComputedStyle(app).getPropertyValue("--ada-area-left")) / unit;
+      const origin = app.getBoundingClientRect();
+      const box = (selector) => {
+        const rect = document.querySelector(selector).getBoundingClientRect();
+        return [
+          (rect.x - origin.x) / unit - x0,
+          (rect.y - origin.y) / unit,
+          rect.width / unit,
+          rect.height / unit,
+        ].map((value) => Math.round(value * 100) / 100);
+      };
+      return {
+        exit: box('[data-action="exit"]'),
+        history: history.length,
+        menu: box('[data-action="menu"]'),
+        size: [origin.width, origin.height],
+        x0,
+      };
+    });
+    const [width, height] = shot.size;
+    const hud = startPlayView.hudRect(
+      startPlayView.NO_INSETS,
+      startPlayView.logicalView({ height, width }),
+    );
+    const target = startPlayView.hudButtonTarget(0);
+    const exitPlace = [
+      hud.x + hud.width + target.x - shot.x0,
+      hud.y + target.y,
+      target.width,
+      target.height,
+    ];
+    assert.ok(
+      shot.exit.every((value, index) => Math.abs(value - exitPlace[index]) <= 0.1),
+      `${name}: Exit sits at hudButtonTarget(0): ${JSON.stringify([shot.exit, exitPlace])}`,
+    );
+    const { hit } = startPlayView.PAUSE_BUTTON;
+    const menuPlace = [hud.x + hit.x - shot.x0, hud.y + hit.y, hit.width, hit.height];
+    assert.ok(
+      shot.menu.every((value, index) => Math.abs(value - menuPlace[index]) <= 0.1),
+      `${name}: the Menu sits at the pause button's place: ${JSON.stringify([shot.menu, menuPlace])}`,
+    );
+    // Tab from the default Start reaches the Menu, then Exit.
+    await page.locator('.ada-start-actions > [data-action="start"]').focus();
+    const order = [];
+    for (let step = 0; step < 2; step += 1) {
+      await page.keyboard.press("Tab");
+      order.push(await page.evaluate(() => document.activeElement?.dataset.action ?? null));
+    }
+    assert.deepEqual(order, ["menu", "exit"], `${name}: Tab runs Start, the Menu, then Exit`);
+    await openMenu();
+    assert.deepEqual(
+      await menuActionIds(),
+      ["menu-achievements", "menu-exit", "menu-settings", "menu-close"],
+      `${name}: the installed app's start Menu holds Achievements, Exit, Settings, then Close`,
+    );
+    await page.screenshot({ path: `${output}/start-menu-app-${name}.png` });
+    const closes = [];
+    await menuCard().locator('[data-action="menu-exit"]').click();
+    closes.push(await page.evaluate(() => window.adaClosed));
+    if (await menuCard().isVisible()) {
+      await closeMenu();
+    }
+    await exitDisc.click();
+    closes.push(await page.evaluate(() => window.adaClosed));
+    await page.keyboard.press("KeyQ");
+    await page.waitForTimeout(250);
+    closes.push(await page.evaluate(() => window.adaClosed));
+    appProofs[name] = { ...shot, closes, exitPlace, menuPlace, order, url: page.url() };
+    assert.deepEqual(
+      closes,
+      [1, 2, 3],
+      `${name}: the Menu's Exit, the Exit disc and Q each close the installed app's window`,
+    );
+    assert.equal(page.url(), "http://ada-preview:4173/play/", `${name}: Exit never navigates`);
+    await appContext.close();
+  }
+  save("exit-app-proof.json", appProofs);
+  events.checks.push(
+    "An installed app window that can close shows Exit at hudButtonTarget(0) and in the start " +
+      "Menu by label; Exit and Q close the window and never navigate",
+  );
+  page = await crashContext.newPage();
+  page.on("console", (message) => {
+    if (message.text().startsWith("CSP violation")) {
+      events.errors.push(message.text());
+    }
+  });
   await page.goto("http://ada-preview:4173/play/?dev=1");
   await page.locator('[data-action="start"]').waitFor({ state: "visible" });
   const savedBeforeCrash = await page.evaluate((key) => localStorage.getItem(key), storageKey);
