@@ -245,8 +245,10 @@ describe("physical galaxy precache partition", () => {
           ],
           sidecars: { capital: { hardpoints: shared, jets: own } },
         },
+        [own]: {},
+        [shared]: {},
       },
-      ["/a/capital-0.svg", "/n/capital-0.svg", shared, own],
+      ["/a/capital-0.svg", "/n/capital-0.svg"],
     );
     expect(f.groups.urls.needle).toEqual(expect.arrayContaining([own, "/n/capital-0.svg"]));
     expect(f.groups.urls.andromeda).toContain("/a/capital-0.svg");

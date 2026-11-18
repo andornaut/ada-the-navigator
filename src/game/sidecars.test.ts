@@ -53,7 +53,7 @@ describe("sidecars map", () => {
   it("gives a galaxy manifest without the map no sidecars, and rejects one with a malformed map", () => {
     expect(readGalaxyManifest({ assets: [], version: 1 })!.sidecars).toEqual(new Map());
     expect(readGalaxyManifest({ assets: [], sidecars: [], version: 1 })).toBeUndefined();
-    for (const galaxy of [1, 4, 6] as const) {
+    for (const galaxy of [1, 3, 6] as const) {
       expect(publicJson(`/art/${GALAXY_ID[galaxy]}/manifest.json`)).not.toHaveProperty("sidecars");
       expect(GALAXY_MANIFESTS.get(galaxy)!.sidecars.size, GALAXY_ID[galaxy]).toBe(0);
     }

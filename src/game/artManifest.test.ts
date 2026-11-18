@@ -69,6 +69,7 @@ describe("split art manifest", () => {
     expect(readGalaxyManifest({ assets: [], tow: 3, version: 1, whales: "/art/w.json" })).toEqual({
       assets: [],
       links: { whales: "/art/w.json" },
+      sidecars: new Map(),
     });
     expect(readGalaxyManifest({ assets: [], version: 2 })).toBeUndefined();
     expect(readGalaxyManifest({ version: 1 })).toBeUndefined();
@@ -85,6 +86,7 @@ describe("split art manifest", () => {
     expect(readGalaxyManifest({ assets: [], tow: "/art/x/tow.json", version: 1 })).toEqual({
       assets: [],
       links: {},
+      sidecars: new Map(),
       tow: "/art/x/tow.json",
     });
     expect(galaxyTowKey(4)).toBe("tow-galaxy-4");
