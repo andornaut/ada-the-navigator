@@ -8,6 +8,7 @@ import {
   cardActionsSize,
   cardWidth,
   groupX,
+  MODAL_SCREEN_MARGIN,
   rowWidth,
   SCROLL,
 } from "./contentCard.ts";
@@ -15,14 +16,15 @@ import { CONTROL_ROW, TEXT_BUTTON } from "./controls.ts";
 import { BUTTON_GAP, SPACING } from "./tokens.ts";
 
 describe("fixed modal width", () => {
-  it("uses the approved fixed presets", () => {
-    expect(CARD_WIDTH_CAPS).toEqual({ large: 700, medium: 500, small: 400 });
+  it("uses the shared width families and screen margin", () => {
+    expect(CARD_WIDTH_CAPS).toEqual({ large: 688, medium: 500, small: 400 });
+    expect(MODAL_SCREEN_MARGIN).toBe(16);
   });
 
   it.each(["small", "medium", "large"] as const)(
     "keeps %s fixed within available space",
     (size) => {
-      expect(cardWidth({ availableWidth: 700, size })).toBe(CARD_WIDTH_CAPS[size]);
+      expect(cardWidth({ availableWidth: 688, size })).toBe(CARD_WIDTH_CAPS[size]);
       expect(cardWidth({ availableWidth: 900, size })).toBe(CARD_WIDTH_CAPS[size]);
     },
   );

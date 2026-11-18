@@ -4,9 +4,13 @@ import { BUTTON_GAP } from "./tokens.ts";
 export { SCROLL } from "../../data/layout.ts";
 export { CARD_CONTENT, cardHeaderLayout, cardTitleReserve } from "./cardFrame.ts";
 
-/** Fixed modal widths in logical pixels, clamped to the available game-area rect. */
-export const CARD_WIDTH_CAPS = { large: 700, medium: 500, small: 400 } as const;
-export const MODAL_GAME_MARGIN = 10;
+/**
+ * Modal window width families in logical pixels, clamped to the available game-area rect. Height
+ * follows content and fonts stay full size. Full-screen views are not modal windows.
+ */
+export const CARD_WIDTH_CAPS = { large: 688, medium: 500, small: 400 } as const;
+/** The screen margin between a modal window and each game-area edge, in logical pixels. */
+export const MODAL_SCREEN_MARGIN = 16;
 export type CardSize = keyof typeof CARD_WIDTH_CAPS;
 
 export function cardWidth(context: {

@@ -9,7 +9,12 @@ import {
   cardTitleReserve,
   listCardHeader,
 } from "./layout/cardFrame.ts";
-import { CARD_WIDTH_CAPS, type CardSize, MODAL_GAME_MARGIN, SCROLL } from "./layout/contentCard.ts";
+import {
+  CARD_WIDTH_CAPS,
+  type CardSize,
+  MODAL_SCREEN_MARGIN,
+  SCROLL,
+} from "./layout/contentCard.ts";
 import {
   BUTTON_SLICE,
   CARD_SLICE,
@@ -136,14 +141,14 @@ ${UI_SCOPE} .ada-modal{
   justify-content:center;
   background:#101926b3;
   pointer-events:auto;
-  padding:${safeEdge("top", MODAL_GAME_MARGIN)}
+  padding:${safeEdge("top", MODAL_SCREEN_MARGIN)}
     max(var(${VIEW_PROPERTIES.safe("right")}),calc(
-      max(0px,calc(100% - var(${VIEW_PROPERTIES.areaLeft}) - ${units(SCREEN.width)})) + ${units(MODAL_GAME_MARGIN)}
+      max(0px,calc(100% - var(${VIEW_PROPERTIES.areaLeft}) - ${units(SCREEN.width)})) + ${units(MODAL_SCREEN_MARGIN)}
     ))
     max(var(${VIEW_PROPERTIES.safe("bottom")}),
-      calc(var(${VIEW_PROPERTIES.areaBottom}) + ${units(MODAL_GAME_MARGIN)}))
+      calc(var(${VIEW_PROPERTIES.areaBottom}) + ${units(MODAL_SCREEN_MARGIN)}))
     max(var(${VIEW_PROPERTIES.safe("left")}),
-      calc(max(0px,var(${VIEW_PROPERTIES.areaLeft})) + ${units(MODAL_GAME_MARGIN)}));
+      calc(max(0px,var(${VIEW_PROPERTIES.areaLeft})) + ${units(MODAL_SCREEN_MARGIN)}));
   box-sizing:border-box
 }
 

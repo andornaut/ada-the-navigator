@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CARD_WIDTH_CAPS } from "./contentCard.ts";
 import { settingsColumns, settingsTitleInkTop } from "./settings.ts";
 
-const context = { availableWidth: 700 };
+const context = { availableWidth: 688 };
 
 describe("Settings compact width", () => {
   it("aligns visible icon ink to the title using its loaded font metrics", () => {

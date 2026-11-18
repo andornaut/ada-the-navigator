@@ -1,8 +1,9 @@
 # Ship inventory
 
 Ship opens from Pause and presents Cargo, Equipment and Weapons in three columns.
-Weapons includes ammunition on each weapon row. The large modal uses the shared
-700 logical pixel preset, clamped to the game area with its existing margins.
+Weapons includes ammunition on each weapon row. The modal uses the shared Large
+688 logical pixel width family, clamped to the game area inset by the 16 logical
+pixel screen margin.
 The Weapons column takes its natural content width; Cargo and Equipment share
 the remaining width. Inventory does not scroll or paginate.
 
