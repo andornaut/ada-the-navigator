@@ -344,16 +344,17 @@ Activity lines:
   with company."
 - Elder Loom: "The practice channel is open. Thread it again, slowly."
 
-| Key                 | Text                                  |
-| ------------------- | ------------------------------------- |
-| `activityTake`      | Accept                                |
-| `activitySkip`      | Not now                               |
-| `activityBusy`      | Finish your activity first.           |
-| `activityDrop`      | Drop this activity?                   |
-| `supplyObjective`   | Carry {item} to {destination}.        |
-| `contractObjective` | Deposit ore at the hub: {have} of 30. |
-| `calfFind`          | Find the whale calf.                  |
-| `calfGuide`         | Guide the calf home.                  |
+| Key                 | Text                                                                                    |
+| ------------------- | --------------------------------------------------------------------------------------- |
+| `activityTake`      | Accept                                                                                  |
+| `activitySkip`      | Not now                                                                                 |
+| `activityBusy`      | Finish your activity first.                                                             |
+| `activityDrop`      | Drop this activity?                                                                     |
+| `supplyObjective`   | Carry {item} to {destination}.                                                          |
+| `questSupplyDetail` | Carry {item} from {source} to {destination}. The station is waiting for these supplies. |
+| `contractObjective` | Deposit ore at the hub: {have} of 30.                                                   |
+| `calfFind`          | Find the whale calf.                                                                    |
+| `calfGuide`         | Guide the calf home.                                                                    |
 
 Templates carry no article; every destination has a sentence name with its
 article, used in objectives, job titles and details whether or not the place is
