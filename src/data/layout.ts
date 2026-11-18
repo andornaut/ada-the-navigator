@@ -648,16 +648,12 @@ export const MAP_SCREEN_LAYOUT = {
   /** The opening box is at least this many projected units across and down. */
   minBox: { height: 6000, width: 12000 },
   /**
-   * The Quests modal's lines (art/map.md "Quests modal"): a mapped line's chip (MAP_SYMBOL.chip)
-   * overhanging its label's 20 line box by 4 each way, markGap to the label, lines lineGap apart,
-   * plain text from textColumn, and an unmapped line's hollow ring.
+   * The shared Quests list's line buttons (art/map.md "Quests modal"): a chip slot
+   * (MAP_SYMBOL.chip) from the face's inset, markGap, then the label on textColumn.
    */
   quests: {
     chip: 28,
-    lineGap: SPACING.gap,
     markGap: SPACING.markGap,
-    overhang: 4,
-    ring: 1,
     textColumn: TEXT_BUTTON.inset + 28 + SPACING.markGap,
   },
   tools: {

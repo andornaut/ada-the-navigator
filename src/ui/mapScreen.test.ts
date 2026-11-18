@@ -15,7 +15,6 @@ import {
   mapScreenLabels,
   panelHeight,
   placeLines,
-  questEndpoints,
   travelState,
 } from "./mapScreen.ts";
 
@@ -222,46 +221,6 @@ describe("map screen place panel", () => {
     expect(panel).toContain("width:max-content");
     expect(panel).toContain("min-width:");
     expect(panel).not.toContain("max-width");
-  });
-});
-
-describe("quest endpoints", () => {
-  it("uses the map's actual visible source and destination, including their icon metadata", () => {
-    const source = place("station");
-    const target = place("workshop");
-    expect(
-      questEndpoints([source, target], {
-        kind: "story",
-        source: source.id,
-        target: target.id,
-        text: "existing objective",
-      }),
-    ).toEqual([
-      { kind: "source", place: source },
-      { kind: "target", place: target },
-    ]);
-  });
-
-  it("keeps undiscovered source and destination identities outside the presentation", () => {
-    expect(
-      questEndpoints([], {
-        kind: "job",
-        source: "hidden-source",
-        target: "hidden-destination",
-        text: "objective",
-      }),
-    ).toEqual([
-      { kind: "source", place: null },
-      { kind: "target", place: null },
-    ]);
-  });
-
-  it("does not fabricate a source for surveys, hunts, tows or a story without one", () => {
-    expect(questEndpoints([], { kind: "job", target: null, text: "survey" })).toEqual([
-      { kind: "target", place: null },
-    ]);
-    expect(questEndpoints([], { kind: "storyComplete" })).toEqual([]);
-    expect(questEndpoints([], { kind: "jobBoards" })).toEqual([]);
   });
 });
 

@@ -840,7 +840,7 @@ try {
   events.checks.push("Desktop canvas backs its CSS size at min(devicePixelRatio, 2), pixelated");
 
   const [
-    { GameModel },
+    { GameModel, galaxyRoute },
     { CONTENT },
     { ensureDestination, routeBlocked },
     { playOpening, relaunch },
@@ -2596,6 +2596,122 @@ try {
   events.checks.push(
     "At 35% surveyed the map header shows three cream pips and seven rings at 1280x720 and at " +
       "720x360 with phone insets",
+  );
+  // The shared Quests list's proofs (art/map.md "Quests modal"): three quests across two
+  // galaxies page two at a time, and the held job's target is unmapped, so its detail page's To
+  // endpoint is disabled while its From station is on the map.
+  const questsInput = relaunch(CONTENT, safeSerialized);
+  const unmapped = galaxyRoute(1).find((id) => !questsInput.state.progress[1].known.includes(id));
+  const unmappedAt = ensureDestination(CONTENT, unmapped, questsInput.state.flight);
+  const [farIssuer, farTarget] = stationsNear(ECONOMY, 2, 40000, { x: 0, y: 0 });
+  questsInput.state.progress[1].stations = [issuer.id];
+  questsInput.state.tasks = {
+    1: {
+      id: "job:smoke-unmapped",
+      item: "a crate of seedling trays",
+      kind: "job",
+      reward: 20,
+      station: issuer.id,
+      target: { id: unmapped, x: unmappedAt.x, y: unmappedAt.y },
+      type: "delivery",
+    },
+    2: {
+      id: "job:smoke-far",
+      item: "a box of ore samples",
+      kind: "job",
+      reward: 20,
+      station: farIssuer.id,
+      target: { id: farTarget.id, x: farTarget.x, y: farTarget.y },
+      type: "delivery",
+    },
+  };
+  const unmappedJob = "job:1:job:smoke-unmapped";
+  await seedOnce(questsInput.save(), "ada-browser.quests-proofs.v1");
+  await openPause();
+  await page.locator('[data-action="pause-map"]').click();
+  const questsMap = page.locator('[data-dialog="map"]');
+  await questsMap.waitFor({ state: "visible" });
+  await questsMap.locator('[data-action="map-quests"]').click();
+  const questsList = page.locator(".ada-quests-screen");
+  await questsList.waitFor({ state: "visible" });
+  const questsShown = () =>
+    page.evaluate(() => {
+      const card = document.querySelector(".ada-quests-screen");
+      const button = (node) => ({ disabled: node.disabled, text: node.textContent.trim() });
+      return {
+        endpoints: [...card.querySelectorAll(".ada-quest-endpoint")].map((node) => ({
+          disabled: node.disabled,
+          kind: node.querySelector("small")?.textContent ?? "",
+        })),
+        footer: [...card.querySelectorAll(".ada-quest-footer .ada-button")].map(button),
+        lines: [...card.querySelectorAll(".ada-quest-list .ada-button")].map(
+          (node) => node.dataset.questId,
+        ),
+      };
+    });
+  const pager = (footer) =>
+    [CONTENT.labels.previous, CONTENT.labels.next].map(
+      (label) => footer.find(({ text }) => text === label)?.disabled ?? null,
+    );
+  const questProofs = {};
+  async function checkQuestList(insets, view, name, expected) {
+    const shown = await questsShown();
+    questProofs[name] = shown;
+    assert.ok(
+      expected.lines.every((id) => shown.lines.includes(id)) &&
+        shown.lines.length === expected.lines.length &&
+        near(
+          pager(shown.footer).map((disabled) => (disabled === null ? -1 : Number(disabled))),
+          expected.pager,
+          0,
+        ),
+      `${name}: the Quests list shows ${JSON.stringify(expected)}: ${JSON.stringify(shown)}`,
+    );
+  }
+  const footerButton = (label) =>
+    questsList.locator(".ada-quest-footer").getByRole("button", { exact: true, name: label });
+  // One proofsAt pass walks all three states at each size, so the page resizes twice, not six
+  // times, inside the browser container's memory ceiling.
+  await proofsAt("quests-list-unmapped", async (insets, view, name) => {
+    const size = name.slice("quests-list-unmapped-".length);
+    // Page one: the story and the job whose target is unmapped, Previous disabled, Next enabled.
+    await checkQuestList(insets, view, name, {
+      lines: ["story:1:1", unmappedJob],
+      pager: [1, 0],
+    });
+    await checkQuestColumn(insets, view, name);
+    // The job's detail page: From its mapped station, To its unmapped target, disabled.
+    await questsList.locator(`.ada-quest-list [data-quest-id="${unmappedJob}"]`).click();
+    await questsList.locator(".ada-quest-route").waitFor({ state: "visible" });
+    await page.screenshot({ path: `${output}/quests-detail-endpoints-${size}.png` });
+    const detail = await questsShown();
+    questProofs[`quests-detail-endpoints-${size}`] = detail;
+    assert.deepEqual(
+      detail.endpoints,
+      [
+        { disabled: false, kind: CONTENT.labels.questFrom },
+        { disabled: true, kind: CONTENT.labels.questTo },
+      ],
+      `${size}: the detail page shows From enabled and the unmapped To disabled`,
+    );
+    await questsList.locator('[data-action="quest-back"]').click();
+    await questsList.locator(".ada-quest-list").waitFor({ state: "visible" });
+    // Page two: the other galaxy's job, Previous enabled and Next disabled.
+    await footerButton(CONTENT.labels.next).click();
+    await questsList.locator('.ada-quest-list [data-quest-id="job:2:job:smoke-far"]').waitFor();
+    await page.screenshot({ path: `${output}/quests-list-paged-${size}.png` });
+    await checkQuestList(insets, view, `quests-list-paged-${size}`, {
+      lines: ["job:2:job:smoke-far"],
+      pager: [0, 1],
+    });
+    await footerButton(CONTENT.labels.previous).click();
+    await questsList.locator(`.ada-quest-list [data-quest-id="${unmappedJob}"]`).waitFor();
+  });
+  save("quests-proof.json", questProofs);
+  events.checks.push(
+    "The shared Quests list pages three quests two at a time with Previous and Next, keeps a " +
+      "line whose target is unmapped, and its detail page disables the unmapped To endpoint, " +
+      "at 1280x720 and at 720x360 with phone insets",
   );
   // Back to title from a flight in danger: the start screen with the flight kept and saved, no
   // sleep scene; Continue resumes that flight exactly (rules.md "What each event keeps").

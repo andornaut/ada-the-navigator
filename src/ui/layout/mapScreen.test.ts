@@ -181,15 +181,8 @@ describe("map projection and fit", () => {
     expect(mapHeaderCap(phone, BASE)).toBe(413.25);
   });
 
-  it("sets the Quests lines: a 28 chip overhanging the 20 label by 4, text from 50", () => {
-    expect(MAP_SCREEN.quests).toEqual({
-      chip: MAP_SYMBOL.chip,
-      lineGap: 8,
-      markGap: 6,
-      overhang: (MAP_SYMBOL.chip - 20) / 2,
-      ring: 1,
-      textColumn: 50,
-    });
+  it("sets the Quests lines: a 28 chip slot, markGap, then text from 50", () => {
+    expect(MAP_SCREEN.quests).toEqual({ chip: MAP_SYMBOL.chip, markGap: 6, textColumn: 50 });
   });
 
   it("reserves destination details left of footer actions at every supported inset", () => {

@@ -7,7 +7,7 @@ import { mapChromeTrees } from "./mapChromeTree.ts";
 it("preserves header and navigation order in independent retained native chrome roots", () => {
   const trees = mapChromeTrees(MAP_TOOLS.map(({ id }) => id));
   for (const tree of trees) {
-    validateLayoutTree({ card: ["body"], group: ["content"], leaf: [] }, tree);
+    validateLayoutTree({ group: ["content"], leaf: [] }, tree);
   }
   expect(trees).toMatchObject([
     {
@@ -32,27 +32,6 @@ it("preserves header and navigation order in independent retained native chrome 
     {
       props: "navigation",
       slots: { content: [{ props: "quests" }, { props: "galaxies" }, { props: "close" }] },
-    },
-    {
-      props: "questsModal",
-      slots: {
-        content: [
-          {
-            component: "card",
-            slots: {
-              body: [
-                { props: "lines" },
-                {
-                  props: "pager",
-                  slots: {
-                    content: [{ props: "previous" }, { props: "pageCount" }, { props: "next" }],
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
     },
   ]);
 });

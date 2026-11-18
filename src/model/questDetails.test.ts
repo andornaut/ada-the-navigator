@@ -6,11 +6,9 @@ import { JOB_REWARDS, JOB_TYPES } from "../data/jobs.ts";
 import { questReward } from "../data/questRewards.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import { playOpening } from "../testing/launch.ts";
-import { questEndpoints } from "../ui/mapScreen.ts";
 import { activateRequiredRoute, ensureDestination } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
-import type { MapPlace } from "./map.ts";
 import { type QuestDetailContext, questDetails, type QuestDetailSnapshot } from "./questDetails.ts";
 import type { FlightState, HeldJob, OptionalTask } from "./types.ts";
 
@@ -276,27 +274,6 @@ describe("accepted optional task facts", () => {
         .jobDetails?.nextStep,
     ).toBe(label("calfGuide"));
   });
-});
-
-it("keeps explicit destination null unknown instead of falling back to the pickup target", () => {
-  const source: MapPlace = {
-    id: "source",
-    job: false,
-    kind: "station",
-    label: "Source",
-    objective: false,
-    symbol: "station",
-    travel: true,
-    x: 0,
-    y: 0,
-  };
-  const line = { kind: "story", source: source.id, target: source.id, text: "objective" } as const;
-  expect(questEndpoints([source], { ...line, destination: null })[1]?.place).toBeNull();
-  expect(questEndpoints([source], line)[1]?.place).toBe(source);
-  const destination = { ...source, id: "destination", label: "Destination" };
-  expect(
-    questEndpoints([source, destination], { ...line, destination: destination.id })[1]?.place,
-  ).toBe(destination);
 });
 
 describe("rescue description articles", () => {

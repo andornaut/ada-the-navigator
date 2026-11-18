@@ -368,6 +368,7 @@ it("keeps a standalone Map footer Close and invokes its direct caller once", () 
     labels: options.labels.mapScreen,
     onClose,
     onGalaxies: () => {},
+    onQuests: () => {},
     onTravel: () => {},
     reducedMotion: () => true,
   });
@@ -595,24 +596,15 @@ describe("Ship card", () => {
 it("opens the existing Quests route directly from carried cargo and preserves pause until closed", () => {
   const original = mapUI.createMapScreen;
   let mapOpen = false;
-  let questsOpen = false;
-  const openQuests = vi.fn(() => {
-    questsOpen = true;
-  });
   const spy = vi.spyOn(mapUI, "createMapScreen").mockImplementation((...args) => ({
     ...original(...args),
     close: () => {
       mapOpen = false;
     },
-    closeQuests: () => {
-      questsOpen = false;
-    },
     isOpen: () => mapOpen,
     open: () => {
       mapOpen = true;
     },
-    openQuests,
-    questsOpen: () => questsOpen,
   }));
   const { options, pause, root } = cards();
   pause.setState(state({ carrying: true }));
@@ -622,7 +614,6 @@ it("opens the existing Quests route directly from carried cargo and preserves pa
   ).toBe("Back");
   expect(pause.isOpen()).toBe(true);
   expect(pause.mapOpen()).toBe(true);
-  expect(openQuests).not.toHaveBeenCalled();
   expect(options.onOpenChange).toHaveBeenLastCalledWith(true);
   pause.closeMap();
   expect(pause.mapOpen()).toBe(true);
@@ -637,24 +628,15 @@ it("opens the existing Quests route directly from carried cargo and preserves pa
 it("opens Quests from the pause menu and keeps pause through both back layers until Resume", () => {
   const original = mapUI.createMapScreen;
   let mapOpen = false;
-  let questsOpen = false;
-  const openQuests = vi.fn(() => {
-    questsOpen = true;
-  });
   const spy = vi.spyOn(mapUI, "createMapScreen").mockImplementation((...args) => ({
     ...original(...args),
     close: () => {
       mapOpen = false;
     },
-    closeQuests: () => {
-      questsOpen = false;
-    },
     isOpen: () => mapOpen,
     open: () => {
       mapOpen = true;
     },
-    openQuests,
-    questsOpen: () => questsOpen,
   }));
   try {
     const { body, options, pause, root } = cards();
@@ -664,7 +646,6 @@ it("opens Quests from the pause menu and keeps pause through both back layers un
     expect(
       root.querySelectorAll().find((node) => node.dataset.action === "quest-close")!.textContent,
     ).toBe("Back");
-    expect(openQuests).not.toHaveBeenCalled();
     expect(
       root.children.find((child) => child.className.includes("ada-quests-screen"))?.hidden,
     ).toBe(false);
@@ -673,7 +654,6 @@ it("opens Quests from the pause menu and keeps pause through both back layers un
     expect(options.onTravel).not.toHaveBeenCalled();
     expect(options.onBackToTitle).not.toHaveBeenCalled();
     pause.closeMap();
-    expect(questsOpen).toBe(false);
     expect(pause.mapOpen()).toBe(false);
     expect(pause.isOpen()).toBe(true);
     pause.closeMap();

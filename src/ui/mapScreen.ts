@@ -11,18 +11,11 @@ import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import JOBS from "../../public/art/jobs.json" with { type: "json" };
 import { readMapArea } from "../game/jobArt.ts";
-import {
-  type LocalMap,
-  type MapPlace,
-  type MapPlaceType,
-  placeType,
-  type QuestLine,
-} from "../model/map.ts";
+import { type LocalMap, type MapPlace, type MapPlaceType, placeType } from "../model/map.ts";
 import { shipHeading } from "../model/nose.ts";
 import type { Vec } from "../model/types.ts";
 import { bindAdaAction } from "./actionBinding.ts";
-import { cardPages } from "./layout/cardPages.ts";
-import { CARD_SLICE, FOCUS_RING, TEXT_BUTTON } from "./layout/controls.ts";
+import { CARD_SLICE, FOCUS_RING } from "./layout/controls.ts";
 import { font, pixels, safeEdge, slice, units, VIEW_PROPERTIES } from "./layout/css.ts";
 import {
   chipRect,
@@ -57,7 +50,6 @@ import {
   zoomView,
 } from "./layout/mapScreen.ts";
 import { SAFE_MARGIN, safeRect } from "./layout/playView.ts";
-import { questTextParts } from "./layout/questPages.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import {
@@ -79,25 +71,11 @@ import {
   mapPresentationContext,
 } from "./mapRenderQueue.ts";
 import { drawMapSurveyOutline } from "./mapSurveyOutline.ts";
-import { createButton, createCard, TEXT_TOKENS } from "./modal.ts";
+import { createButton, TEXT_TOKENS } from "./modal.ts";
 import { galaxiesAvailable, mapShowsEmpty } from "./pause.ts";
-import { enterPressView, inCurrentView } from "./pressScope.ts";
+import { inCurrentView } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
 import { hudDiscStyle } from "./weapons.ts";
-
-/** Endpoint identities are drawn only from the already discovered map. */
-export function questEndpoints(places: readonly MapPlace[], line: QuestLine) {
-  if (!("target" in line)) {
-    return [];
-  }
-  return [
-    ...(line.source === undefined ? [] : [{ id: line.source, kind: "source" as const }]),
-    {
-      id: line.destination === undefined ? line.target : line.destination,
-      kind: "target" as const,
-    },
-  ].map(({ id, kind }) => ({ kind, place: places.find((place) => place.id === id) ?? null }));
-}
 
 // The pause menu's full-screen map (art/map.md): the galaxy's field under its fog, a chip per
 // discovered place, Ada's arrow, the header, the tool column and the place panel. It takes input
@@ -237,7 +215,8 @@ export interface MapScreenState {
 export interface MapScreenOptions {
   /** Caller-owned dismissal label; standalone maps retain Close. */
   readonly closeLabel?: string;
-  readonly onQuests?: () => void;
+  /** Quests: the caller opens the shared Quests list (questsScreen.ts) over the map. */
+  readonly onQuests: () => void;
   readonly labels: MapScreenLabels;
   readonly onClose: () => void;
   /** Galaxies: the galaxy map; refused in danger, never while towing (pause.ts galaxiesAvailable). */
@@ -558,130 +537,6 @@ export const MAP_SCREEN_STYLE = `
 }
 ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
 
-/* The Quests modal (art/map.md "Quests modal"): the standard card under the modal dim, which
-   covers the whole map. Its lines stack lineGap apart across the inner width: a mapped line is a
-   secondary button with its target's chip, overhanging the label's line box, markGap before the
-   label; a plain line is supporting prose from the text column, with a hollow ring in the chip
-   slot while its target is unmapped; with no lines, the centred empty note. */
-.ada-controls .ada-map-quests{
-  z-index:3
-}
-.ada-controls .ada-map-quests .ada-card-body{
-  overflow:hidden
-}
-.ada-controls .ada-map-quests .ada-card-body > .ada-map-quest-lines{
-  flex:1 1 0;
-  min-height:0;
-  position:relative;
-  box-sizing:border-box;
-  padding:${units(FOCUS_RING.outset)};
-  overflow:hidden
-}
-.ada-controls .ada-map-quest-pager{
-  align-self:stretch;
-  display:grid;
-  grid-template-columns:1fr auto 1fr;
-  align-items:center;
-  gap:${units(SPACING.gap)}
-}
-.ada-controls .ada-map-quest-pager [data-action="quest-previous"]{
-  grid-column:1;
-  justify-self:start
-}
-.ada-controls .ada-map-quest-pager [data-action="quest-next"]{
-  grid-column:3;
-  justify-self:end
-}
-.ada-controls .ada-map-quest-pager output{
-  grid-column:2;
-  grid-row:1;
-  font:${font(TYPE.label)}
-}
-.ada-controls .ada-map-quest-measure{
-  position:absolute;
-  visibility:hidden;
-  left:${units(FOCUS_RING.outset)};
-  right:${units(FOCUS_RING.outset)};
-  top:0;
-  pointer-events:none
-}
-.ada-controls .ada-map-quest-endpoints{
-  display:flex;
-  flex-wrap:wrap;
-  gap:${units(SPACING.gap)}
-}
-.ada-controls .ada-map-quest-lines .ada-map-quest-endpoints .ada-button.ada-map-quest{
-  width:auto;
-  flex:1 1 auto
-}
-.ada-controls .ada-map-quest-endpoints > p{
-  flex:1 1 0;
-  min-width:0
-}
-.ada-controls .ada-map-quest-entry{
-  min-width:0;
-  display:flex;
-  flex-direction:column;
-  gap:${units(SPACING.gap)}
-}
-.ada-controls .ada-map-quest-entry h3,
-.ada-controls .ada-map-quest-entry p{
-  margin:0;
-  white-space:pre-wrap;
-  overflow-wrap:anywhere
-}
-.ada-controls .ada-map-quest-entry .ada-button{
-  height:auto;
-  min-height:${units(TEXT_BUTTON.height)};
-  flex-shrink:0
-}
-.ada-controls .ada-map-quest-lines{
-  align-self:stretch;
-  display:flex;
-  flex-direction:column;
-  gap:${units(MAP_SCREEN.quests.lineGap)}
-}
-.ada-controls .ada-map-quest-lines .ada-button.ada-map-quest{
-  width:100%;
-  display:flex;
-  align-items:center;
-  justify-content:flex-start;
-  gap:${units(MAP_SCREEN.quests.markGap)};
-  text-align:left;
-  white-space:normal;
-  font:${font(TYPE.label)}
-}
-.ada-controls .ada-map-quest .ada-map-place{
-  position:relative;
-  flex:none;
-  margin:${units(-MAP_SCREEN.quests.overhang)} 0
-}
-.ada-controls .ada-map-quest-text,
-.ada-controls .ada-map-quest-empty{
-  position:relative;
-  margin:0;
-  font:${font(TYPE.body)};
-  color:${TEXT_TOKENS.supporting}
-}
-.ada-controls .ada-map-quest-text{
-  padding-left:${units(MAP_SCREEN.quests.textColumn)}
-}
-.ada-controls .ada-map-quest-text[data-ring]::before{
-  content:"";
-  position:absolute;
-  left:${units(TEXT_BUTTON.inset)};
-  top:50%;
-  box-sizing:border-box;
-  width:${units(MAP_SCREEN.quests.chip)};
-  height:${units(MAP_SCREEN.quests.chip)};
-  transform:translateY(-50%);
-  border:${units(MAP_SCREEN.quests.ring)} solid ${MAP_COLORS.supporting};
-  border-radius:50%
-}
-.ada-controls .ada-map-quest-empty{
-  text-align:center
-}
-
 /* The place panel: a card face with no close X, centred in the page safe rect on its bottom. */
 .ada-controls .ada-map-panel{
   position:absolute;
@@ -957,7 +812,6 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     }
   };
   const chipBindings = new Map<string, ReturnType<typeof bindAdaAction>>();
-  const questBindings: ReturnType<typeof bindAdaAction>[] = [];
   const fog = document.createElement("canvas");
   fog.className = "ada-map-fog";
   fog.setAttribute("aria-hidden", "true");
@@ -1103,36 +957,11 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   galaxies.setAttribute("aria-haspopup", "dialog");
   const closeButton = createButton(options.closeLabel ?? labels.close, "primary");
   closeButton.dataset.action = "map-close";
-  // The Quests modal over the whole map.
-  const questsModal = document.createElement("div");
-  questsModal.className = "ada-modal ada-map-quests";
-  questsModal.hidden = true;
-  const questsCard = createCard({
-    closeAction: "close-quests",
-    closeLabel: labels.close,
-    size: "large",
-    title: labels.quests,
-  });
-  questsCard.card.dataset.dialog = "quests";
-  const questLines = document.createElement("div");
-  questLines.className = "ada-map-quest-lines";
-  questLines.dataset.inkTop = "0";
-  const questPager = document.createElement("nav");
-  questPager.className = "ada-map-quest-pager";
-  questPager.setAttribute("aria-label", labels.quests);
-  const questPrevious = createButton(labels.previous, "secondary");
-  questPrevious.dataset.action = "quest-previous";
-  const questNext = createButton(labels.next, "secondary");
-  questNext.dataset.action = "quest-next";
-  const questPageCount = document.createElement("output");
-  questPageCount.setAttribute("aria-live", "polite");
   const chromeGroups: Readonly<Record<MapChromeGroup, HTMLElement>> = {
     column,
     header,
     headerRow,
     navigation: hudRow,
-    pager: questPager,
-    questsModal,
     tools,
   };
   const chromeLeaves: Readonly<Record<MapChromeLeaf, HTMLElement>> = {
@@ -1140,12 +969,8 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     divider,
     galaxies,
     galaxy,
-    lines: questLines,
-    next: questNext,
-    pageCount: questPageCount,
     percent,
     pips,
-    previous: questPrevious,
     quests: questsButton,
     recentre: toolButtons.get("recentre")!,
     surveyInfo,
@@ -1156,15 +981,6 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     mountLayout<MapChromeSchema>(
       {
         components: {
-          card: {
-            create: () => ({
-              dispose() {},
-              element: questsCard.frame,
-              slots: { body: questsCard.body },
-              update() {},
-            }),
-            slots: ["body"],
-          },
           group: {
             create: (name) => ({
               dispose() {},
@@ -1189,7 +1005,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       tree,
     ),
   );
-  screen.append(fog, placesLayer, adaLayer, header, hudRow, tools, panel, questsModal);
+  screen.append(fog, placesLayer, adaLayer, header, hudRow, tools, panel);
   root.append(screen);
 
   let textMeasure: CanvasRenderingContext2D | null | undefined;
@@ -1567,29 +1383,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     },
     travel,
   );
-  // The Quests modal: each line, built as it opens; a mapped line's press centres and selects its
-  // chip. The X, an outside tap, back and Escape close it, leaving the view and selection.
-  const questsOpen = () => !questsModal.hidden;
-  const questText = (line: QuestLine): string => {
-    if (line.kind === "job") {
-      return labels.jobObjective.replace("{objective}", line.text);
-    }
-    if (line.kind === "story") {
-      return line.text;
-    }
-    return line.kind === "jobBoards" ? labels.questsJobBoards : labels.questsStoryComplete;
-  };
-  let leaveQuestsView: (() => void) | undefined;
-  const closeQuests = () => {
-    if (questsOpen()) {
-      leaveQuestsView?.();
-      leaveQuestsView = undefined;
-      questsModal.hidden = true;
-      focusTarget(questsButton);
-    }
-  };
   const goTo = (place: MapPlace) => {
-    closeQuests();
     if (view) {
       view = recentreView(layout().inner, limit(), place, view);
     }
@@ -1599,212 +1393,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       focusTarget(chip);
     }
   };
-  let questBlocks: HTMLElement[] = [];
-  let questPageBlocks: HTMLElement[][] = [];
-  let questPageIndex = 0;
-  const showQuestPage = (focus = false) => {
-    const entry = document.createElement("section");
-    entry.className = "ada-map-quest-entry";
-    entry.append(...(questPageBlocks[questPageIndex] ?? []));
-    questLines.replaceChildren(entry);
-    questPrevious.hidden = questPageIndex === 0;
-    questNext.hidden = questPageIndex >= questPageBlocks.length - 1;
-    questPageCount.textContent = labels.page
-      .replace("{page}", String(questPageIndex + 1))
-      .replace("{pages}", String(questPageBlocks.length));
-    if (focus) {
-      focusTarget(
-        entry.querySelector<HTMLButtonElement>("button") ??
-          (!questNext.hidden
-            ? questNext
-            : !questPrevious.hidden
-              ? questPrevious
-              : questsCard.close),
-      );
-    }
-  };
-  const paginateQuests = () => {
-    if (!questsOpen()) {
-      return;
-    }
-    const focused = document.activeElement;
-    const restoreFocus =
-      focused instanceof HTMLButtonElement &&
-      questsCard.frame.contains(focused) &&
-      focused !== questsCard.close;
-    const unit = readViewUnit(questLines);
-    // Keep a full line clear for text reflow and glyphs at fractional view scales.
-    const available =
-      questLines.clientHeight - (2 * FOCUS_RING.outset + TYPE.body.lineHeight) * unit;
-    const measure = document.createElement("section");
-    measure.className = "ada-map-quest-entry ada-map-quest-measure";
-    questLines.replaceChildren(measure);
-    const blocks = questBlocks.flatMap((block) => {
-      measure.replaceChildren(block);
-      if (block.tagName !== "P" || block.getBoundingClientRect().height <= available) {
-        return [block];
-      }
-      const original = block.textContent ?? "";
-      const parts = questTextParts((text) => {
-        block.textContent = text;
-        return block.getBoundingClientRect().height <= available;
-      }, original);
-      block.textContent = original;
-      return parts.map((part) => {
-        const fragment = block.cloneNode(false) as HTMLElement;
-        fragment.textContent = part;
-        return fragment;
-      });
-    });
-    const heights = blocks.map((block) => {
-      measure.replaceChildren(block);
-      return block.getBoundingClientRect().height;
-    });
-    questPageBlocks = cardPages(available, SPACING.gap * unit, heights).map((indices) =>
-      indices.map((index) => blocks[index]!),
-    );
-    questPageIndex = Math.min(questPageIndex, questPageBlocks.length - 1);
-    showQuestPage();
-    if (restoreFocus) {
-      if (questsCard.frame.contains(focused) && !focused.closest("[hidden]")) {
-        focusTarget(focused);
-      } else {
-        focusTarget(
-          questLines.querySelector<HTMLButtonElement>("button") ??
-            (!questNext.hidden
-              ? questNext
-              : !questPrevious.hidden
-                ? questPrevious
-                : questsCard.close),
-        );
-      }
-    }
-  };
-  registerAction(
-    {
-      run: () => {
-        questPageIndex = Math.max(0, questPageIndex - 1);
-        showQuestPage(true);
-      },
-    },
-    questPrevious,
-  );
-  registerAction(
-    {
-      run: () => {
-        questPageIndex = Math.min(questPageBlocks.length - 1, questPageIndex + 1);
-        showQuestPage(true);
-      },
-    },
-    questNext,
-  );
-  let questRevision = "";
-  const openQuests = (preservePage = false) => {
-    const lines = state?.map.quests ?? [];
-    questRevision = JSON.stringify([lines, places()]);
-    for (const binding of questBindings.splice(0)) {
-      forgetAction(binding);
-    }
-    questLines.replaceChildren(
-      ...lines.map((line) => {
-        const entry = document.createElement("section");
-        entry.className = "ada-map-quest-entry";
-        const text = document.createElement("p");
-        text.className = "ada-map-quest-text ada-prose";
-        text.textContent = questText(line);
-        text.toggleAttribute("data-ring", "target" in line && line.target === null);
-        const heading = document.createElement("h3");
-        heading.textContent =
-          line.kind === "story" || line.kind === "storyComplete"
-            ? (labels.questsStoryHeading ?? "")
-            : (labels.questsJobsHeading ?? "");
-        if (heading.textContent) {
-          entry.append(heading);
-        }
-        entry.append(text);
-        if ("target" in line) {
-          for (const detail of [line.description, line.nextStep, line.progress]) {
-            if (detail) {
-              const description = document.createElement("p");
-              description.className = "ada-prose";
-              description.textContent = detail;
-              entry.append(description);
-            }
-          }
-          const endpoints = document.createElement("div");
-          endpoints.className = "ada-map-quest-endpoints";
-          entry.append(endpoints);
-          // Resolve both ends from the map's visible places; never expose hidden place metadata.
-          for (const { kind, place } of questEndpoints(places(), line)) {
-            const prefix = kind === "source" ? labels.questFrom : labels.questTo;
-            if (!place) {
-              if (labels.questExplore) {
-                const unknown = document.createElement("p");
-                unknown.className = "ada-prose";
-                unknown.textContent = [prefix, labels.questExplore].filter(Boolean).join(": ");
-                endpoints.append(unknown);
-              }
-              continue;
-            }
-            const button = createButton("", "secondary");
-            button.classList.add("ada-map-quest");
-            button.dataset.target = place.id;
-            const chip = document.createElement("span");
-            dressChip(chip, place);
-            chip.setAttribute("aria-hidden", "true");
-            const label = document.createElement("span");
-            label.textContent = [prefix, place.label].filter(Boolean).join(": ");
-            if (labels.questLocate) {
-              button.setAttribute("aria-label", `${labels.questLocate}: ${label.textContent}`);
-            }
-            button.replaceChildren(chip, label);
-            questBindings.push(registerAction({ run: () => goTo(place) }, button));
-            endpoints.append(button);
-          }
-          if (line.reward) {
-            const reward = document.createElement("p");
-            reward.className = "ada-prose";
-            reward.textContent = [labels.questReward, line.reward].filter(Boolean).join(": ");
-            entry.append(reward);
-          }
-          if (line.outcome) {
-            const outcome = document.createElement("p");
-            outcome.className = "ada-prose";
-            outcome.textContent = [labels.questOutcome, line.outcome].filter(Boolean).join(": ");
-            entry.append(outcome);
-          }
-        }
-        return entry;
-      }),
-    );
-    if (lines.length === 0) {
-      const note = document.createElement("p");
-      note.className = "ada-map-quest-empty ada-prose";
-      note.textContent = labels.questsEmpty;
-      questLines.append(note);
-    }
-    questBlocks = [...questLines.children].flatMap((entry) =>
-      entry.classList.contains("ada-map-quest-entry")
-        ? ([...entry.children] as HTMLElement[])
-        : [entry as HTMLElement],
-    );
-    if (!preservePage) {
-      questPageIndex = 0;
-    }
-    questsModal.hidden = false;
-    leaveQuestsView ??= enterPressView(root, questsCard.frame, [], {
-      backdrop: questsModal,
-      close: closeQuests,
-    });
-    questsCard.fit();
-    paginateQuests();
-    focusTarget(questLines.querySelector<HTMLButtonElement>("button") ?? questsCard.close);
-  };
-  registerAction(
-    { run: () => (options.onQuests ? options.onQuests() : openQuests()) },
-    questsButton,
-  );
-  registerAction({ run: closeQuests }, questsCard.close);
+  registerAction({ run: () => options.onQuests() }, questsButton);
   registerAction(
     {
       run: () => {
@@ -1833,9 +1422,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   };
   const onChrome = (event: Event) =>
     event.target instanceof Element &&
-    event.target.closest(
-      ".ada-map-tools,.ada-map-hud-row .ada-button,.ada-map-panel,.ada-map-quests",
-    ) !== null;
+    event.target.closest(".ada-map-tools,.ada-map-hud-row .ada-button,.ada-map-panel") !== null;
   const pinchOf = (): { distance: number; mid: Point } | null => {
     const [a, b] = [...pointers.values()];
     return a && b
@@ -1921,37 +1508,26 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     "wheel",
     (event) => {
       event.preventDefault();
-      if (questsOpen()) {
-        return;
-      }
       const delta =
         event.deltaMode === 1 ? (event.deltaY * MAP_SCREEN.wheelStep) / 3 : event.deltaY;
       zoom(MAP_SCREEN.zoomStep ** (-delta / MAP_SCREEN.wheelStep), local(event));
     },
     { passive: false },
   );
-  // Tab stays on the screen in art/map.md's order: the tools, Quests, Galaxies, the places
-  // in reading order, then Travel here; on the Quests card, its line buttons then its X. It wraps
-  // at either end.
+  // Tab stays on the screen in art/map.md's order: the tools, the places in reading order,
+  // Travel here, Quests, Galaxies, then Close. It wraps at either end.
   screen.addEventListener("keydown", (event) => {
     if (event.key !== "Tab") {
       return;
     }
-    const order = questsOpen()
-      ? [
-          ...questLines.querySelectorAll<HTMLButtonElement>("button"),
-          questPrevious,
-          questNext,
-          questsCard.close,
-        ]
-      : [
-          ...tools.querySelectorAll<HTMLButtonElement>("button"),
-          ...placesLayer.querySelectorAll<HTMLButtonElement>("button"),
-          travel,
-          questsButton,
-          galaxies,
-          closeButton,
-        ];
+    const order = [
+      ...tools.querySelectorAll<HTMLButtonElement>("button"),
+      ...placesLayer.querySelectorAll<HTMLButtonElement>("button"),
+      travel,
+      questsButton,
+      galaxies,
+      closeButton,
+    ];
     const targets = order.filter((button) => !button.closest("[hidden]") && !button.hidden);
     if (targets.length === 0) {
       return;
@@ -1968,7 +1544,6 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       const { inner } = layout();
       view = clampView(inner, limit(), view);
       render();
-      paginateQuests();
     }
   };
   window.addEventListener(VIEW_SCALE_EVENT, refit);
@@ -1979,17 +1554,12 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     close(): void {
       renderQueue.cancel();
       presentation.clear();
-      leaveQuestsView?.();
-      leaveQuestsView = undefined;
-      questsModal.hidden = true;
       screen.hidden = true;
       selected = null;
       view = null;
       pointers.clear();
       press = null;
     },
-    /** Closes the Quests modal, back to the map. */
-    closeQuests,
     dispose(): void {
       if (disposed) {
         return;
@@ -2000,9 +1570,6 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       }
       actionBindings.clear();
       chipBindings.clear();
-      questBindings.length = 0;
-      leaveQuestsView?.();
-      leaveQuestsView = undefined;
       renderQueue.dispose();
       presentation.clear();
       document.fonts.removeEventListener("loadingdone", refit);
@@ -2011,7 +1578,6 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       for (const layout of chromeLayouts) {
         layout.dispose();
       }
-      questsCard.dispose();
       panelLayout.dispose();
       shipMarker.dispose();
       screen.remove();
@@ -2039,19 +1605,12 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       render();
       focusTarget(closeButton);
     },
-    openQuests,
-    questsOpen,
     setState(next: MapScreenState): void {
-      const refreshQuests =
-        questsOpen() && questRevision !== JSON.stringify([next.map.quests, next.map.places]);
       if (state?.map.worldSide !== next.map.worldSide) {
         view = null;
         presentation.clear();
       }
       state = next;
-      if (refreshQuests) {
-        openQuests(true);
-      }
       if (selected !== null && !places().some(({ id }) => id === selected)) {
         selected = null;
       }

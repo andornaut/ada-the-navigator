@@ -8,7 +8,7 @@ import * as actionBinding from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { MAP_SCREEN } from "./layout/mapScreen.ts";
 import { QUEST_ICON, QUESTS_SCREEN_STYLE } from "./layout/questsScreen.ts";
-import { MAP_SCREEN_STYLE, mapScreenLabels } from "./mapScreen.ts";
+import { mapScreenLabels } from "./mapScreen.ts";
 import { createQuestsScreen, questRoute } from "./questsScreen.ts";
 
 const entry: QuestEntry = {
@@ -317,7 +317,7 @@ it("left-aligns a quest line button's chip and label from the button's inset", (
   expect(rule).toContain("text-align:left");
 });
 
-it("starts mapped and plain quest lines on the 50 text column", () => {
+it("starts a quest line's label on the 50 text column, its disc centred in the 28 slot", () => {
   // art/map.md "Quests modal": the 28 chip slot from the face's inset, markGap, then the text.
   const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
   // A declaration's logical length, from the ruleset whose whole selector is the one given.
@@ -332,9 +332,13 @@ it("starts mapped and plain quest lines on the 50 text column", () => {
   expect({
     gap,
     mapped: TEXT_BUTTON.inset + margin + QUEST_ICON + margin + gap,
-    plain: length(MAP_SCREEN_STYLE, ".ada-controls .ada-map-quest-text", "padding-left"),
     slot: margin + QUEST_ICON + margin,
     visibleGap: margin + gap,
-  }).toEqual({ gap: 6, mapped: 50, plain: 50, slot: 28, visibleGap: 8 });
+  }).toEqual({
+    gap: MAP_SCREEN.quests.markGap,
+    mapped: MAP_SCREEN.quests.textColumn,
+    slot: MAP_SCREEN.quests.chip,
+    visibleGap: 8,
+  });
   expect(MAP_SCREEN.quests.textColumn).toBe(50);
 });
