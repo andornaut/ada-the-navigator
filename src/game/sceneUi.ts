@@ -887,6 +887,7 @@ export function buildScene(scene: UiContext): void {
     labels: {
       back: label("questBack"),
       development: label("galaxyInDevelopment"),
+      earthDescription: label("galaxyEarthDescription"),
       earthKicker: label("galaxyEarthKicker"),
       earthTitle: label("galaxyEarthTitle"),
       home: label("homeButton"),

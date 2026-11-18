@@ -10,8 +10,8 @@ related: [ada-0004]
 ## Scope
 
 Move the galaxy map's destination actions ("Jump to {galaxy}", "Stay in {galaxy}", "Jump to
-Earth", "Stay on Earth") and the Earth panel's kicker "Home" and title "Earth" from
-`src/ui/galaxyMap.ts` into the content labels, beside `galaxyLockedAction`.
+Earth", "Stay on Earth") and the Earth panel's kicker "Home", title "Earth" and description
+from `src/ui/galaxyMap.ts` into the content labels, beside `galaxyLockedAction`.
 
 ## Criteria
 

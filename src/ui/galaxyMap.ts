@@ -56,6 +56,8 @@ export interface GalaxyMapLabels {
   readonly back?: string;
   /** A placeholder galaxy's line under its flavour line. */
   readonly development: string;
+  /** The Earth panel's text. */
+  readonly earthDescription: string;
   /** The Earth panel's kicker. */
   readonly earthKicker: string;
   /** Earth's marker label and panel title. */
@@ -141,10 +143,6 @@ export interface GalaxyMapOptions {
   readonly onView: (position: RoutePosition) => void;
   readonly reducedMotion: () => boolean;
 }
-
-export const EARTH_PANEL = {
-  description: "Ada’s life on Earth. Time here stands still while she’s aboard the ship.",
-} as const;
 
 export function destinationAction(
   labels: Pick<GalaxyMapLabels, "jumpEarth" | "jumpTo" | "lockedAction" | "stayEarth" | "stayIn">,
@@ -754,7 +752,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     if (viewingEarth) {
       number.textContent = labels.earthKicker;
       name.textContent = labels.earthTitle;
-      flavor.textContent = EARTH_PANEL.description;
+      flavor.textContent = labels.earthDescription;
       development.hidden = true;
       text.removeAttribute("data-locked");
       screen.setAttribute("aria-label", labels.earthTitle);

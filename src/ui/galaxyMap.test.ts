@@ -24,7 +24,7 @@ const labels = {
 };
 
 it("names the selected destination and preserves current-location actions", async () => {
-  const { EARTH_PANEL, destinationAction } = await import("./galaxyMap.ts");
+  const { destinationAction } = await import("./galaxyMap.ts");
   const galaxies = [
     { name: "Sunflower", unlocked: true },
   ] as unknown as import("./galaxyMap.ts").GalaxyMapView["galaxies"];
@@ -37,9 +37,9 @@ it("names the selected destination and preserves current-location actions", asyn
   expect(
     destinationAction(labels, false, { ...view, galaxies: [{ ...galaxies[0]!, unlocked: false }] }),
   ).toBe("Progress the story to unlock");
-  expect(EARTH_PANEL).toEqual({
-    description: "Ada’s life on Earth. Time here stands still while she’s aboard the ship.",
-  });
+  expect(CONTENT.labels.galaxyEarthDescription).toBe(
+    "Ada’s life on Earth. Time here stands still while she’s aboard the ship.",
+  );
   expect(CONTENT.labels.galaxyEarthKicker).toBe("Home");
   expect(CONTENT.labels.galaxyEarthTitle).toBe("Earth");
 });

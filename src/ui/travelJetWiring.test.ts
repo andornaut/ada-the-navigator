@@ -23,6 +23,7 @@ vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({ focusTa
 const main = readEngineJets(mainData)!;
 // The galaxy map's Earth and destination strings as the scene reads them from content.
 const destinationLabels = {
+  earthDescription: CONTENT.labels.galaxyEarthDescription!,
   earthKicker: CONTENT.labels.galaxyEarthKicker!,
   earthTitle: CONTENT.labels.galaxyEarthTitle!,
   jumpEarth: CONTENT.labels.galaxyJumpEarth!,

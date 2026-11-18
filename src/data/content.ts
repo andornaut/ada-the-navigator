@@ -415,6 +415,8 @@ export const CONTENT: GameContent = {
     equipment: "Equipment",
     exit: "Exit",
     galaxies: "Galaxies",
+    galaxyEarthDescription:
+      "Ada’s life on Earth. Time here stands still while she’s aboard the ship.",
     galaxyEarthKicker: "Home",
     galaxyEarthTitle: "Earth",
     galaxyInDevelopment: "Story in development.",
