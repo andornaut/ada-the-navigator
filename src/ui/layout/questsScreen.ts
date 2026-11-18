@@ -98,6 +98,7 @@ export const QUESTS_SCREEN_STYLE = `
   overflow:visible}
 .ada-controls .ada-quest-list .ada-button{display:flex;
   align-items:center;
+  justify-content:flex-start;
   gap:${units(8)};
   white-space:normal;
   text-align:left;

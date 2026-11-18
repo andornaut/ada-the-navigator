@@ -5,6 +5,7 @@ import type { MapPlace } from "../model/map.ts";
 import type { QuestEntry } from "../model/questDetails.ts";
 import * as actionBinding from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
+import { QUESTS_SCREEN_STYLE } from "./layout/questsScreen.ts";
 import { mapScreenLabels } from "./mapScreen.ts";
 import { createQuestsScreen, questRoute } from "./questsScreen.ts";
 
@@ -303,4 +304,13 @@ it("rejects an unowned connected Quests subtree before reveal without evaluating
   expect(() => screen.open()).toThrow("no live action root");
   expect(producer.reveal).not.toHaveBeenCalled();
   screen.dispose();
+});
+
+it("left-aligns a quest line button's chip and label from the button's inset", () => {
+  // art/map.md "Quests modal": content left-aligned, not the base button's centred content.
+  const rule = QUESTS_SCREEN_STYLE.match(
+    /\.ada-controls \.ada-quest-list \.ada-button\{([^}]+)\}/u,
+  )?.[1];
+  expect(rule).toContain("justify-content:flex-start");
+  expect(rule).toContain("text-align:left");
 });
