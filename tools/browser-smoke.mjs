@@ -2838,7 +2838,16 @@ try {
     "An unowned upgrade must not be offered",
   );
   await missileButton.click();
-  // The next switch waits after this one: an immediate second switch plays the refusal cue.
+  // The next switch waits after this one: a second switch inside that 1 s wait plays the refusal
+  // cue. The flight applies a switch on its next step, so the second press waits for the first to
+  // show, or both could land in one frame before the wait starts.
+  await page.waitForFunction(
+    () =>
+      document.querySelector('[data-weapon="rapidMissile"]')?.getAttribute("aria-pressed") ===
+      "true",
+    null,
+    { timeout: 1000 },
+  );
   await page.locator('[data-weapon="multiLaser"]').click();
   // The kit's refusal cue marks the pressed icon red with its data-ui-refusal-red attribute.
   await page.waitForFunction(
