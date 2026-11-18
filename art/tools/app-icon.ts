@@ -27,29 +27,43 @@ writeFileSync(
   ].join("\n"),
 );
 
-// Raster exports sample the same projected geometry without an external SVG delegate.
+// Raster exports sample the same projected geometry without an external SVG delegate. `fit`
+// scales the composition about the canvas centre.
 const density = 4;
-const master = filled(background, SIZE * density, SIZE * density);
-paintShip(
-  master,
-  polygons.map(({ color, outline }) => ({
-    color,
-    outline: outline.map(
-      ([x, y]) => [(x * SCALE + OFFSET[0]) * density, (y * SCALE + OFFSET[1]) * density] as const,
-    ),
-  })),
-);
+function raster(fit: number) {
+  const centre = SIZE / 2;
+  const master = filled(background, SIZE * density, SIZE * density);
+  paintShip(
+    master,
+    polygons.map(({ color, outline }) => ({
+      color,
+      outline: outline.map(
+        ([x, y]) =>
+          [
+            (centre + (x * SCALE + OFFSET[0] - centre) * fit) * density,
+            (centre + (y * SCALE + OFFSET[1] - centre) * fit) * density,
+          ] as const,
+      ),
+    })),
+  );
+  return master;
+}
+const master = raster(1);
 const images = new Map<number, ReturnType<typeof resize>>();
 for (const size of [16, 32, 180, 192, 512]) images.set(size, resize(master, size, size));
 for (const [name, size] of [
   ["icon-192", 192],
   ["icon-512", 512],
-  ["icon-maskable-512", 512],
   ["apple-touch-icon", 180],
   ["favicon-16", 16],
   ["favicon-32", 32],
 ] as const)
   writePng(`${output}${name}.png`, images.get(size)!, true);
+
+// The maskable safe zone is the centred circle of radius 40%. Scaling the regular composition by
+// 0.8 maps its full canvas onto that circle, so the minimum mask shows the regular icon's framing.
+const SAFE_ZONE = 0.8;
+writePng(`${output}icon-maskable-512.png`, resize(raster(SAFE_ZONE), SIZE, SIZE), true);
 
 // ICO PNG payloads retain the exact exported 16 and 32 pixel favicon images.
 const payloads = [16, 32].map((size) => ({

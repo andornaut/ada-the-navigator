@@ -4,8 +4,7 @@ Ada's ship as the in-game sprite draws it nose up (heading 20, `ship.svg`):
 the pyramid hull with swept wings, blue walls and engine mouths either side of
 the white tail, and the opaque blue canopy, so the icon and the game show the
 same craft. No text or outlines. All exports have an opaque dark lavender
-background; the maskable export uses the same safe composition as the regular
-icon.
+background; the maskable export draws the same artwork scaled to its safe zone.
 
 ## Files
 
@@ -35,9 +34,13 @@ neighbour sampling, 32 px favicon enlarged with nearest neighbour sampling.
 - Walls and canopy sides `#1767b3`, canopy roof `#2585d0`, engine mouths `#64caff`.
 
 The maskable safe zone is the centred circle with diameter 80% of the canvas:
-409.6 px at 512 px, centred at (256, 256), radius 204.8 px. Every hull and
-canopy vertex, its stroke included, lies within radius 185 px; straight polygon
-edges remain inside that circle. Only background extends outside the safe zone. No baked corner rounding.
+409.6 px at 512 px, centred at (256, 256), radius 204.8 px. In the regular
+icon, every hull and canopy vertex, its stroke included, lies within radius
+185 px. `icon-maskable-512.png` scales that composition by 0.8 about the canvas
+centre, so its full canvas maps onto the safe circle and the artwork lies within
+radius 149 px. The background fills the whole square. Under the minimum safe
+circle mask the maskable icon shows the regular icon's framing. No baked corner
+rounding.
 
 ## Export and integration
 
@@ -48,7 +51,8 @@ of `ship.svg` in order, inside one group with
 the canvas and fits it inside radius 185 px. Adjacent equal fills share compound vector paths, with no added stroke or
 keyline growth. Reruns are byte-identical while the model is unchanged.
 
-The same command writes every PNG, the two-size ICO and the contact sheet.
+The same command writes every PNG, the two-size ICO and the contact sheet. The
+maskable PNG is rendered from its own scaled master.
 Raster exports sample the shared projected geometry at 4x the 512px master
 before reduction. The ICO embeds the exact 16px and 32px PNG payloads. No
 external SVG rasterizer or ImageMagick step is required.
