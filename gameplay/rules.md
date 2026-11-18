@@ -806,6 +806,8 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   opened from gameplay returns to gameplay with primary "Close". The close
   X, Escape and back always perform the same action as the current primary footer
   button. Detail never paginates, scrolls or truncates; only the list paginates.
+  The local map has three tools, Zoom out, Zoom in and Center on Ada, and no
+  close X; a primary Close button in its footer dismisses it.
   The local map shows the current galaxy: Ada's position, discovered destinations and
   stations, charted landmarks, the current objective's destination once mapped,
   a known holodisk waypoint until its holodisk is recovered, and how much of the
@@ -864,8 +866,8 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   covers the first-flight lessons and the landing page's mobile line. Keyboard
   text stays words.
 - [Shared product consistency policy](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#product-consistency) applies.
-  Every card's close X uses the local map's close icon, the galaxy map's
-  included, so all close controls look the same.
+  Every close X, the galaxy map's included, uses the same shared close icon, so
+  all close controls look the same.
 - [Shared settings policy](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#settings) applies. Ada's rows, in order:
   - Move controls and Aim controls, as in Chibi: each shows or hides one on-screen
     joystick (left and right). Each is shown unless the player hides it. Hiding a
