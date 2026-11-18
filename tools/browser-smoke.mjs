@@ -2444,6 +2444,9 @@ try {
   await seedOnce(hubInput.save(), "ada-browser.hub-station.v1");
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   await tapUse(CONTENT.labels.deposit);
+  // Depositing opens Astra's Interaction card; leaving it offers Dock.
+  await interactionCard().waitFor({ state: "visible" });
+  await leaveInteraction();
   await tapUse(CONTENT.labels.dock);
   await page.locator('[data-action="open-shop"]').waitFor({ state: "visible" });
   await page.locator('[data-action="open-shop"]').click();
