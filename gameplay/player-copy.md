@@ -1322,6 +1322,8 @@ beacon light. Welcome!"
 - Station welcome: Welcome aboard. Trade your Stardust, or take a job.
 - Crash screen: title "Something went wrong", text "The game stopped. Reload to
   play again.", button "Reload".
+- Loading failure (shared by all games): title "Loading failed", text "Some
+  game files could not load. Try again.", button "Retry".
 - Update required (a save from a newer version, shown while offline or until
   the newer version is available; it retries on its own): Connect to the
   internet to update Ada the Navigator.
