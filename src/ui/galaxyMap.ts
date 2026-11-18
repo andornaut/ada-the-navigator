@@ -45,14 +45,15 @@ import { createShipTailView } from "./shipTailView.ts";
 import { setStoryScenePreview, type StoryScenePreview } from "./storySceneView.ts";
 
 // The galaxy map (art/layout.md "Galaxy selector"), after Chibi's MapScene: the route sky and
-// ground, the chart's legs, markers, labels and Ada's ship, the panel for the chosen galaxy, Earth
-// and Jump (Stay here on the galaxy Ada is flying in), and the close X on the HUD rect's corner.
+// ground, the chart's legs, markers, labels and Ada's ship, the panel for the chosen galaxy, Earth's
+// marker and the single destination action (Jump to the selected galaxy or Earth, Stay in the
+// galaxy Ada is flying in, or Stay on Earth at boarding). It has no close X or Back: back and
+// Escape go one step back.
 // The model holds the ship's galaxy, a locked galaxy viewed in the panel and the unlock flight;
 // this draws them and animates the ship between them.
 
 export interface GalaxyMapLabels {
   readonly back?: string;
-  readonly close: string;
   /** A placeholder galaxy's line under its flavour line. */
   readonly development: string;
   readonly home: string;
@@ -115,7 +116,7 @@ export interface GalaxyMapArt {
 
 export interface GalaxyMapOptions {
   readonly labels: GalaxyMapLabels;
-  /** The close X, as back and Escape (the scene's back layer): where the galaxy map opened from. */
+  /** Back and Escape (the scene's back layer), and Stay: where the galaxy map opened from. */
   readonly onClose: () => void;
   /** Earth: Ada's room. */
   readonly onEarth: () => void;
@@ -377,7 +378,8 @@ export const GALAXY_MAP_STYLE = `
   width:max-content;
   max-width:${units(GALAXY_MAP_PANEL.width)}
 }
-/* A quantum jump from the map: the panel, actions and close X go, then the warp ship covers Ada's. */
+/* A quantum jump from the map: the panel and the destination action go, then the warp ship covers
+   Ada's. */
 .ada-controls .ada-route[data-jumping] .ada-route-panel,
 .ada-controls .ada-route[data-jumping] .ada-route-action,
 .ada-controls .ada-route[data-ship-covered] .ada-route-ship{
@@ -1020,7 +1022,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
       panelLayout.dispose();
     },
     isOpen: () => view !== null,
-    /** A quantum jump begins: the panel, Earth, Jump and the close X hide until the map closes. */
+    /** A quantum jump begins: the panel and the destination action hide until the map closes. */
     jump(): void {
       invalidatePressScope(root);
       screen.dataset.jumping = "";

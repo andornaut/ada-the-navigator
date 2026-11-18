@@ -57,21 +57,6 @@ describe("route map layout", () => {
         [251, 293, 192, 48],
       ],
     ]);
-    expect([plain, phone].map(({ close }) => [box(close.target), box(close.face)])).toEqual([
-      [
-        [606, 296, 98, 48],
-        [606, 296, 98, 48],
-      ],
-      [
-        [579, 293, 98, 48],
-        [579, 293, 98, 48],
-      ],
-    ]);
-  });
-
-  it("puts Close at the shared bottom-right anchor at 844x390 with phone insets", () => {
-    const view = { height: 360, width: (844 * 360) / 390 };
-    expect(galaxyMapRects(PHONE, view).close.face.x).toBeCloseTo(638.08, 2);
   });
 
   it("keeps every rect in the available rect, the end labels 15 and 12 above the panel", () => {
@@ -95,13 +80,12 @@ describe("route map layout", () => {
     }
   });
 
-  it("keeps marker press areas apart from each other and from the close target", () => {
+  it("keeps marker press areas apart from each other", () => {
     for (const insets of [NO_INSETS, PHONE]) {
-      const { close, markers } = galaxyMapRects(insets, BASE);
+      const { markers } = galaxyMapRects(insets, BASE);
       const overlap = (a: Rect, b: Rect) =>
         a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
       for (const [index, marker] of markers.entries()) {
-        expect(overlap(marker, close.target)).toBe(false);
         for (const other of markers.slice(index + 1)) {
           expect(overlap(marker, other)).toBe(false);
         }

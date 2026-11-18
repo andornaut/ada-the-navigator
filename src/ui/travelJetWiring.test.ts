@@ -418,7 +418,6 @@ it("draws route thrust below the painted hull and hides it under reduced motion"
   let reduced = false;
   const options = {
     labels: {
-      close: "",
       development: "",
       home: "",
       jump: "",
@@ -491,7 +490,6 @@ it.each([false, true])(
     const onEarth = vi.fn();
     const map = createGalaxyMap(fixture.host, {
       labels: {
-        close: "Close",
         development: "",
         home: "Home",
         jump: "Jump",
@@ -530,7 +528,6 @@ it("registers native route actions once and releases selection callbacks on disp
     onClose = vi.fn();
   const map = createGalaxyMap(fixture.host, {
     labels: {
-      close: "Close",
       development: "",
       home: "Earth",
       jump: "Jump",

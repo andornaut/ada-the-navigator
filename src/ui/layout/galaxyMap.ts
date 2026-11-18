@@ -12,7 +12,6 @@ import {
 } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import { SHIP_HEADINGS, SHIP_NOSE } from "../../model/nose.ts";
-import { mapCloseRect } from "./mapScreen.ts";
 import { type Insets, playView, safeRect, type Size } from "./playView.ts";
 export {
   GALAXY_MAP_ACTIONS,
@@ -70,8 +69,6 @@ export const GALAXY_MAP = {
 export interface GalaxyMapRects {
   readonly available: Rect;
   readonly capture: Rect;
-  /** The close X's 24 face on the HUD rect's top-right corner, and its 48 press area. */
-  readonly close: { readonly face: Rect; readonly target: Rect };
   readonly earth: Rect;
   readonly jump: Rect;
   /** Each route position's 48 press area, in route order. */
@@ -94,7 +91,6 @@ export function galaxyMapRects(insets: Insets, view: Size): GalaxyMapRects {
   const panelTop = actionsTop - SPACING.gap - GALAXY_MAP_PANEL.height;
   const panelLeft = x0 + (SCREEN.width - GALAXY_MAP_PANEL.width) / 2;
   const inner = { x: panelLeft + GALAXY_MAP_PANEL.padding, y: panelTop + GALAXY_MAP_PANEL.padding };
-  const face = mapCloseRect(insets, view);
   const action = (left: number): Rect => ({
     height: GALAXY_MAP_ACTIONS.height,
     width: GALAXY_MAP_ACTIONS.width,
@@ -108,7 +104,6 @@ export function galaxyMapRects(insets: Insets, view: Size): GalaxyMapRects {
       width: GALAXY_MAP_PANEL.capture.width + 2 * GALAXY_MAP_PANEL.capture.frame,
       ...inner,
     },
-    close: { face, target: face },
     earth: action(0),
     jump: action(GALAXY_MAP_ACTIONS.width + SPACING.panelPadding),
     markers: GALAXY_MAP.centres.map(({ x, y }) => ({

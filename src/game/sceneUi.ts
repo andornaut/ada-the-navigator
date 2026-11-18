@@ -436,7 +436,7 @@ export function buildScene(scene: UiContext): void {
     }
     jumpThen(action);
   };
-  // The galaxy map's close X, back and Escape, one step back: in flight the local map again, focus
+  // The galaxy map's back and Escape, and Stay, one step back: in flight the local map again, focus
   // back on its Galaxies; at boarding the Welcome back page, whose page focuses its Next.
   const closeGalaxyMap = (): void => {
     const inFlight = scene.model.galaxyMapShownInFlight;
@@ -886,7 +886,6 @@ export function buildScene(scene: UiContext): void {
   scene.galaxies = createGalaxyMap(scene.controls.overlay, {
     labels: {
       back: label("questBack"),
-      close: label("close"),
       development: label("galaxyInDevelopment"),
       home: label("homeButton"),
       jump: label("jump"),
@@ -915,7 +914,7 @@ export function buildScene(scene: UiContext): void {
         // Stay here returns to the local map that opened this galaxy map.
         closeGalaxyMap();
       } else if (selected !== null && scene.model.isUnlocked(selected)) {
-        // The map is the jump's source: its panel, actions and close X go at once.
+        // The map is the jump's source: its panel and destination action go at once.
         if (scene.quantum && !scene.jumping) {
           scene.galaxies.jump();
         }
@@ -1004,7 +1003,7 @@ export function buildScene(scene: UiContext): void {
       back: () => apply(() => scene.model.storyPrevious()),
       isOpen: () => scene.model.screen === "story" && !scene.model.roomPage && !scene.settingsOpen,
     }),
-    // Back and Escape on the galaxy map: one step back, as its close X. In flight it opens
+    // Back and Escape on the galaxy map: one step back. In flight it opens
     // over the Paused card's local map, so it is the innermost card while that card is open.
     scene.controls.registerBack({
       back: closeGalaxyMap,
