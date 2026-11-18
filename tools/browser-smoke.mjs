@@ -354,6 +354,41 @@ try {
   // in its frame. Skip goes to its outcome, which ends the exchange where Continue is its only
   // choice; otherwise Continue is taken there.
   const interactionCard = () => page.locator(".ada-interaction-modal");
+  // The Interaction card's HUD row (art/layout.md "Storybook page"): the close X in the Settings
+  // slot and Skip beside it. Their press areas do not overlap, and a press at each one's centre
+  // reaches it. Saves the card as name.
+  async function interactionHudProof(name) {
+    const row = await interactionCard().evaluate((modal) => {
+      const app = document.querySelector("#app");
+      const unit = Number(getComputedStyle(app).getPropertyValue("--ada-unit"));
+      const origin = app.getBoundingClientRect();
+      const box = (node) => {
+        const rect = node.getBoundingClientRect();
+        return [rect.left, rect.right, rect.top, rect.bottom].map(
+          (value, index) =>
+            Math.round(((value - (index < 2 ? origin.left : origin.top)) / unit) * 10) / 10,
+        );
+      };
+      const hits = (node) => {
+        const rect = node.getBoundingClientRect();
+        const at = (x, y) => document.elementFromPoint(x, y)?.closest("button") === node;
+        return [
+          at(rect.left + rect.width / 2, rect.top + rect.height / 2),
+          at(rect.left + 1, rect.top + rect.height / 2),
+          at(rect.right - 1, rect.top + rect.height / 2),
+        ];
+      };
+      const skip = modal.querySelector('[data-action="dialogue-skip"]');
+      const close = modal.querySelector('[data-action="conversation-close"]');
+      return { close: box(close), closeHits: hits(close), skip: box(skip), skipHits: hits(skip) };
+    });
+    await page.screenshot({ path: `${output}/${name}.png` });
+    assert.ok(
+      row.skip[1] <= row.close[0] && row.skipHits.every(Boolean) && row.closeHits.every(Boolean),
+      `${name}: Skip and the close X do not overlap and each takes its own press: ${JSON.stringify(row)}`,
+    );
+    return row;
+  }
   async function leaveInteraction() {
     await interactionCard().locator('[data-action="dialogue-skip"]').click();
     const ended = await interactionCard()
@@ -1592,6 +1627,38 @@ try {
     await tapUse(CONTENT.labels.talk);
     await interactionCard().waitFor({ state: "visible" });
     await contextControlProof(0, "dialogue during save failure");
+    // The card at 1280x720, 844x390 and 720x360 with the phone insets set (the full-viewport
+    // policy keeps hardware insets zero, so they move nothing).
+    const interactionViewport = page.viewportSize();
+    const interactionRows = {
+      "1280x720": await interactionHudProof("interaction-hud-1280x720"),
+    };
+    await page.setViewportSize({ height: 390, width: 844 });
+    await page.waitForTimeout(250);
+    interactionRows["844x390"] = await interactionHudProof("interaction-hud-844x390");
+    await page.setViewportSize({ height: 360, width: 720 });
+    await page.evaluate(() => {
+      const unit = Number(
+        getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
+      );
+      for (const [side, value] of Object.entries({ bottom: 19, left: 43, right: 43, top: 0 })) {
+        document.documentElement.style.setProperty(`--inset-${side}`, `${value * unit}px`);
+      }
+    });
+    await page.waitForTimeout(250);
+    interactionRows["720x360-insets"] = await interactionHudProof("interaction-hud-720x360-insets");
+    await page.evaluate(() => {
+      for (const side of ["bottom", "left", "right", "top"]) {
+        document.documentElement.style.removeProperty(`--inset-${side}`);
+      }
+    });
+    await page.setViewportSize(interactionViewport);
+    await page.waitForTimeout(250);
+    save("interaction-hud-proof.json", interactionRows);
+    events.checks.push(
+      "The Interaction card's close X takes the Settings slot with Skip beside it, their press " +
+        "areas apart, at 1280x720, 844x390 and 720x360 with insets",
+    );
     assert.equal(
       await warning.textContent(),
       CONTENT.labels.savingUnavailable,
