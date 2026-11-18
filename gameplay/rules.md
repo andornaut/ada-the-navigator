@@ -1210,9 +1210,11 @@ Saves reset before version 1. While the game's version is below 1, a stored save
 that is invalid, incompatible or ambiguous resets to a new game through the
 new-game path; the replaced data is kept as the backup save. No other save
 migrations are added before version 1. Font and network loading failures leave
-the save untouched and use the shared game-kit loading-failure presentation; its
-Retry label uses the same text colour as the Start screen's primary Start
-button.
+the save untouched.
+
+When any required asset fails to load, the game shows the shared game-kit
+loading-failure presentation; its Retry label uses the same text colour as the
+Start screen's primary Start button.
 
 Closing the game or Back to title is not leaving the galaxy: resume the same
 flight with exact important state and current nearby space, cargo, owned and
