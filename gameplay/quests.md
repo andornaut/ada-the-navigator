@@ -72,7 +72,7 @@ layout regeneration like stations. Restart clears jobs and boards.
   [Tow handling](#tow-handling).
 - **Lost-item hunt**: search a marked area, 900 world units in radius, for a lost
   item. The indicator points to the area's centre while Ada is outside it and
-  hides while she is inside. Penny's sense helps: when the item is within 1500 world units, Penny's
+  hides while she is inside. Penny's sense helps: when the item is within 5000 world units, Penny's
   "Woof! Woof!" conversation plays once for that item, ignoring its usual 60 second
   limit. The item glints within 160 world units, like a discovery cache, and is
   collected as a pickup by the one pickup rule, and the tractor beam pulls it.
@@ -210,7 +210,7 @@ extent does not expand the mapping-progress or survey-area denominator.
 
 - An uncharted landmark is a point of interest for Penny's sense. A survey's
   target gets a direction indicator. The exact target of an actually displayed
-  Penny notice also gets its marker within 1500 world units: a question mark
+  Penny notice also gets its marker within 5000 world units: a question mark
   until actual on-screen identification, then its matching real glyph, without
   duplicate markers. Sensing and identification alone do not chart it.
 - Within the existing station Talk range of 160 world units, an uncharted
