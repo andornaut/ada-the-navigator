@@ -7,52 +7,50 @@ landmarks, the objective once mapped, and how much of the galaxy is mapped
 appear. Every distance and size comes from [Layout](layout.md) or the tokens
 below; states and colours of shared controls are in [Controls](controls.md).
 
-Constants: `MAP_SCREEN`, `MAP_PANEL`, `MAP_SYMBOL`, `MAP_FACES` and
-`MAP_GLYPHS` in `src/ui/layout/mapScreen.ts`; the panel's height is
+Constants: `MAP_SCREEN`, `MAP_PANEL`, `MAP_SYMBOL`, `MAP_FACES`, `MAP_GLYPHS`
+and `MAP_TOOLS` in `src/ui/layout/mapScreen.ts`; the panel's height is
 `panelHeight` in `src/ui/mapScreen.ts`.
 
 ## Screen
 
 The map is a screen, not a card: the field fills the whole logical view, under
-the insets, and the header, the tools and the place panel float on it. Like a
-modal it takes input exclusively; nothing of the flight HUD shows.
+the insets, and the header, the tools, the footer and the place panel float on
+it. Like a modal it takes input exclusively; nothing of the flight HUD shows.
+Every part anchors to the page rect, `safeRect(insets, SPACING.pageInset, view)`:
+16 in from each view edge, or the safe inset where that is larger. At the 720
+base it spans 16 to 704 across and 16 to 344 down; with phone insets (left and
+right 43, bottom 19) 43 to 677 and 16 to 341.
 
-| Part   | Anchor                                                                                                                                          |
-| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Field  | The whole logical view, in the galaxy's `background` with the fog over it                                                                       |
-| Header | Left on the HUD rect's left (`hudRect`), top on the Map's HUD row (`mapRowTop`)                                                                 |
-| Tools  | One column of `HUD_BUTTON` targets, `pitch` apart, the discs' drawn right edges and the top disc's drawn top on the HUD rect's top-right corner |
-| Row    | Quests, then Galaxies, on the Map's HUD row, ending `SPACING.pageInset` left of the tools                                                       |
-
-The Map's HUD row (`mapRowTop`) is the tool targets' row box: HUD rect top -
-7.5 (`HUD_ROW.reach`), so 4.5 at a top of 12, 48 high, centred on the tool
-discs' centre line (HUD rect top + 16.5). The header, Quests and Galaxies
-draw their 48 boxes on it, so their drawn tops are at 4.5, 7.5 above
-`HUD_EDGE`; the tool discs' drawn tops are at 12.
-| Panel | Centred in `safeRect(insets, SPACING.pageInset, view)`, bottom on that rect's bottom |
-| Fit | The region left for the map: see [Projection and fit](#projection-and-fit) |
-| Quests | A modal card over the map: see [Quests modal](#quests-modal) |
+| Part   | Anchor                                                                                                                    |
+| ------ | ------------------------------------------------------------------------------------------------------------------------- |
+| Field  | The whole logical view, in the galaxy's `background` with the fog over it                                                 |
+| Header | Left and top on the page rect's top-left corner (`mapRowTop`)                                                             |
+| Tools  | One row of three `HUD_BUTTON` targets, the last target's right and every target's top on the page rect's top-right corner |
+| Footer | Quests, Galaxies, then Close, the last's right and every button's bottom on the page rect's bottom-right corner           |
+| Panel  | Left and bottom on the page rect's bottom-left corner                                                                     |
+| Fit    | The region left for the map: see [Projection and fit](#projection-and-fit)                                                |
+| Quests | A modal card over the map: see [Quests modal](#quests-modal)                                                              |
 
 ### Header
 
-One ink panel on its 48 row holding, left to right: the galaxy name
-(`TYPE.heading`, white), a divider, then a column of one pip per landmark over
-"{percent}% mapped" (`TYPE.label`, cream). Strings are Gameplay's: the galaxy
-names and "{percent}% mapped" (`gameplay/player-copy.md`).
+One ink panel holding, left to right: the galaxy name (`TYPE.heading`, white),
+a divider, then a column of one pip per landmark over "{percent}% mapped"
+(`TYPE.label`, cream). Strings are Gameplay's: the galaxy names and
+"{percent}% mapped" (`gameplay/player-copy.md`).
 
-| Token                          | Value | Rule                                                                                    |
-| ------------------------------ | ----- | --------------------------------------------------------------------------------------- |
-| `MAP_SCREEN.header.height`     | 48    | The HUD row: `HUD_BUTTON.target`                                                        |
-| `MAP_SCREEN.header.radius`     | 4     | As `PILL`                                                                               |
-| `MAP_SCREEN.header.alpha`      | 0.65  | Ink `#181425` panel, the HUD panel alpha                                                |
-| `MAP_SCREEN.header.padding`    | 16    | At each end                                                                             |
-| `MAP_SCREEN.header.nameTop`    | 10    | The name's 28 line box top, centring it in the row                                      |
-| `MAP_SCREEN.header.dividerGap` | 12    | Name, 12, a 1x16 divider `#57536e` centred on the row, 12, the column                   |
-| `MAP_SCREEN.header.stackTop`   | 9     | The column's top: `(48 - 30) / 2` for the 6 pips, the gap and the 20 line; to implement |
-| `MAP_SCREEN.header.stackGap`   | 4     | Pips to the percent's line box (`SPACING.rowGap`), which tops at 19; to implement       |
-| `MAP_SCREEN.header.labelTop`   | 14    | The percent's 20 line box top when the galaxy has no landmarks                          |
-| `MAP_SCREEN.header.pip`        | 6     | Pip diameter                                                                            |
-| `MAP_SCREEN.header.pipPitch`   | 8     | Pip centre to centre (2 apart)                                                          |
+| Token                          | Value | Rule                                                                                                   |
+| ------------------------------ | ----- | ------------------------------------------------------------------------------------------------------ |
+| `MAP_SCREEN.header.height`     | 64    | The name row (`rowHeight` 36: the 28 heading line plus `2 * SPACING.rowGap`), a 20 line, `SPACING.gap` |
+| `MAP_SCREEN.header.radius`     | 4     | As `PILL`                                                                                              |
+| `MAP_SCREEN.header.alpha`      | 0.65  | Ink `#181425` panel, the HUD panel alpha                                                               |
+| `MAP_SCREEN.header.padding`    | 16    | At each end                                                                                            |
+| `MAP_SCREEN.header.nameTop`    | 10    | The name's 28 line box top, centring it in the row                                                     |
+| `MAP_SCREEN.header.dividerGap` | 12    | Name, 12, a 1x16 divider `#57536e` centred on the row, 12, the column                                  |
+| `MAP_SCREEN.header.stackTop`   | 9     | The column's top: `(48 - 30) / 2` for the 6 pips, the gap and the 20 line; to implement                |
+| `MAP_SCREEN.header.stackGap`   | 4     | Pips to the percent's line box (`SPACING.rowGap`), which tops at 19; to implement                      |
+| `MAP_SCREEN.header.labelTop`   | 14    | The percent's 20 line box top when the galaxy has no landmarks                                         |
+| `MAP_SCREEN.header.pip`        | 6     | Pip diameter                                                                                           |
+| `MAP_SCREEN.header.pipPitch`   | 8     | Pip centre to centre (2 apart)                                                                         |
 
 - The pips and the percent both start at the column's left. With no
   landmarks the pip row is absent and the percent centres on the row
@@ -63,78 +61,89 @@ names and "{percent}% mapped" (`gameplay/player-copy.md`).
 - A charted landmark's pip is a filled cream `#ead4aa` disc. An uncharted
   landmark's pip is a 1 px `#b8b3c9` ring of the same diameter, hollow, so the
   two read apart by shape as well as colour.
-- The header may reach Quests less `SPACING.gap` (`mapHeaderCap`): 357 wide
-  at the smallest view (720 logical, phone insets 43), 419 at the 720 base. At
-  357 the column may be 184 wide, room for 23 pips; each galaxy
-  has 12 landmarks, 4 of each kind.
-- The header keeps the 48 row, so the fit region's top, `maxScale` and the
-  1020 separation are unchanged.
+- The header's width is capped at `mapHeaderCap`:
+  `min(view width / 2, toolColumnLeft - SPACING.gap - page left)`, 360 at the
+  720 base and with phone insets (the second term is 518 and 464). A header
+  wider than the cap keeps its text widths and scales the pip row to fit
+  (`containedMapHeader`).
+- The fit region's top is `SPACING.gap` below the header's 64.
 - The header takes no input. Its accessible text is the name and the percent;
   the pips are decorative.
 
 ### Tools
 
-Four `HUD_BUTTON` targets in the idle state, top to bottom from the HUD rect's
-top-right corner: close, zoom in, zoom out, recentre. Target `i` is at
-`x = hudRect.right + 7.5 - 48`, `y = hudRect.top - 7.5 + MAP_SCREEN.tools.pitch * i`,
-so the discs span `hudRect.right - 33` to `hudRect.right` and the close disc's
-drawn top is the HUD rect's top. The column's left (`toolColumnLeft`) is
-`hudRect.right - 40.5`: 667.5 at the 720 base, 636.5 with phone insets.
+Three `HUD_BUTTON` targets in the idle state, in one row, left to right: zoom
+out, zoom in, recentre (`MAP_TOOLS`). The row's right and top are the page
+rect's top-right corner, so target `i` (0 to 2) is at
+`x = toolColumnLeft + MAP_SCREEN.tools.pitch * i`, `y = page top`, where
+`toolColumnLeft = page right - MAP_SCREEN.toolRow.width`: 542 at the 720 base,
+515 with phone insets.
 
-| Token                    | Value | Rule                                                                                                                    |
-| ------------------------ | ----- | ----------------------------------------------------------------------------------------------------------------------- |
-| `MAP_SCREEN.tools.pitch` | 57    | Disc 33 plus `SMALL_BUTTON_GAP` (24): the discs are small, so stacked they stay 24 apart face to face (targets 9 apart) |
+| Token                       | Value | Rule                                                                                                           |
+| --------------------------- | ----- | -------------------------------------------------------------------------------------------------------------- |
+| `MAP_SCREEN.toolRow.gap`    | 9     | `HUD_BUTTON.gap`: `SMALL_BUTTON_GAP` (24) less the 15 a target adds to its 33 disc, so the discs stay 24 apart |
+| `MAP_SCREEN.toolRow.height` | 48    | `HUD_BUTTON.target`                                                                                            |
+| `MAP_SCREEN.toolRow.width`  | 162   | `3 * 48 + 2 * 9`                                                                                               |
+| `MAP_SCREEN.tools.pitch`    | 57    | Target to target: `HUD_BUTTON.target + HUD_BUTTON.gap`                                                         |
 
 | Tool     | Glyph              | Glyph colour         | Action                                               |
 | -------- | ------------------ | -------------------- | ---------------------------------------------------- |
-| Close    | `map-close.svg`    | Cream `#ead4aa`      | Back to the Paused card, as back and Escape do       |
-| Zoom in  | `map-zoom-in.svg`  | Supporting `#b8b3c9` | Scale times `zoomStep` about the fit region centre   |
 | Zoom out | `map-zoom-out.svg` | Supporting `#b8b3c9` | Scale over `zoomStep` about the fit region centre    |
+| Zoom in  | `map-zoom-in.svg`  | Supporting `#b8b3c9` | Scale times `zoomStep` about the fit region centre   |
 | Recentre | `map-recentre.svg` | Supporting `#b8b3c9` | Pan so Ada sits at the fit region centre, same scale |
 
+| Tool     | Target, 720 base | Disc, 720 base | Target, phone insets | Disc, phone insets |
+| -------- | ---------------- | -------------- | -------------------- | ------------------ |
+| Zoom out | 542 to 590       | 549.5 to 582.5 | 515 to 563           | 522.5 to 555.5     |
+| Zoom in  | 599 to 647       | 606.5 to 639.5 | 572 to 620           | 579.5 to 612.5     |
+| Recentre | 656 to 704       | 663.5 to 696.5 | 629 to 677           | 636.5 to 669.5     |
+
 - Face, edge and glyph geometry are the idle `HUD_BUTTON`
-  ([Controls](controls.md#top-right-hud-icon-buttons)): navy `#262b44` 33 disc,
-  1 ink edge, 20 glyph mask. Close takes the card close X's cream.
+  ([Controls](controls.md#top-right-hud-icon-buttons), `HUD_DISC_STATES.idle`):
+  navy `#262b44` 33 disc centred in its target (7.5 in on each side), 1 ink
+  edge, 20 glyph mask in supporting `#b8b3c9`.
+- Down, at a top inset up to 16, every target spans 16 to 64 and every disc
+  23.5 to 56.5. The row ends at the page rect's right (704, or 677 with phone
+  insets), the recentre disc's drawn right edge 7.5 inside it (696.5, 669.5).
+  The targets end 24 above the fit region's top (88).
+- The footer and the place panel anchor to the page rect's bottom, so they
+  never reach the tools: the tallest panel (128, the job and reason lines)
+  tops at 216 (213 with phone insets), 152 (149) below the targets' end.
 - At `maxScale`, zoom in plays the [refusal cue](controls.md#refusal-cue) with
   its glyph as the label and does not zoom; zoom out does the same at
   `minScale`. Neither changes face.
-- At a top of 12 the targets are 4.5 to 52.5 (close), 61.5 to 109.5 (zoom
-  in), 118.5 to 166.5 (zoom out) and 175.5 to 223.5 (recentre), and the discs
-  12 to 45, 69 to 102, 126 to 159 and 183 to 216; across, the targets span
-  667.5 to 715.5 and the discs 675 to 708 at the 720 base (636.5 to 684.5 and
-  644 to 677 with phone insets). The column's targets end at HUD rect top +
-  211.5 (223.5) and the last disc's drawn bottom at + 204 (216). At the
-  360-high view a two-line panel with the reason line (108) tops at 236 (233
-  with phone insets), 12.5 (9.5) below the targets. The three-line panel with
-  the reason line (128) tops at 216 (213), 7.5 (10.5) above the targets' end,
-  so the two stay apart only across. The panel's width is capped at
-  `2 * (column left - SPACING.gap - view centre)`, 599 at the 720 base
-  (`2 * (667.5 - 8 - 360)`), 537 with phone insets, so it always clears the
-  column.
-- Accessible labels (Gameplay's): Zoom in, Zoom out and Center on Ada.
+- Accessible labels (Gameplay's): Zoom out, Zoom in and Center on Ada.
 
-### Quests and Galaxies
+### Footer
 
-Two secondary `TEXT_BUTTON`s on the HUD row of every galaxy's Map, left to
-right: "Quests", then "Galaxies" (Gameplay). Constant:
-`MAP_SCREEN.hudRow`, to implement.
+Three `TEXT_BUTTON`s in one action row on the page rect's bottom-right
+corner, left to right: Quests and Galaxies (secondary), then Close (primary,
+action `map-close`), the map's only primary button. Constants:
+`MAP_SCREEN.hudRow`, and the rects `mapQuestsRect`, `mapGalaxiesRect` and
+`mapCloseRect` in `src/ui/layout/mapScreen.ts`.
 
-- Geometry: an action row of one width, as every action row: 48 high, top on
-  the Map's HUD row (`mapRowTop`, HUD rect top - 7.5), each button the wider
-  label plus `2 * TEXT_BUTTON.inset`: Galaxies 66 (`TYPE.label` 65.83, up to
-  the quarter pixel; Quests is 54.24) + 32 = 98, so both are 98 wide.
-- Galaxies' right edge is `SMALL_BUTTON_GAP` (24) left of the close tool's
-  disc, which is small: `hudRect.right - 33 - 24`. Quests ends `BUTTON_GAP`
-  (16) left of Galaxies. Neither moves with the header's width.
+| Token                              | Value | Rule                                                                                                                                   |
+| ---------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `MAP_SCREEN.hudRow.height`         | 48    | `TEXT_BUTTON.height`                                                                                                                   |
+| `MAP_SCREEN.hudRow.close.width`    | 98    | The wider label (`MAP_HUD_LABEL_WIDTHS`, `TYPE.label` up to the quarter pixel: Galaxies 66, Quests 54.25) plus `2 * TEXT_BUTTON.inset` |
+| `MAP_SCREEN.hudRow.galaxies.width` | 98    | As Close                                                                                                                               |
+| `MAP_SCREEN.hudRow.quests.width`   | 98    | As Close                                                                                                                               |
+| `MAP_SCREEN.hudRow.gap`            | 16    | `BUTTON_GAP`, face to face                                                                                                             |
 
-| View, logical            | Header, up to | Quests     | Galaxies   | Tool column left |
-| ------------------------ | ------------- | ---------- | ---------- | ---------------- |
-| 720x360                  | 12 to 431     | 439 to 537 | 553 to 651 | 667.5            |
-| 720x360, phone insets 43 | 43 to 400     | 408 to 506 | 522 to 620 | 636.5            |
+- Close: `x = page right - 98`, `y = page bottom - 48`. Galaxies ends
+  `BUTTON_GAP` left of Close, and Quests `BUTTON_GAP` left of Galaxies.
 
-- Each button is its press area (48, `HIT_RULE.minTarget`). The fit region,
-  the tool column and the place panel are unchanged: the row sits above the
-  fit region's top.
+| View, logical            | Quests     | Galaxies   | Close      | Down       |
+| ------------------------ | ---------- | ---------- | ---------- | ---------- |
+| 720x360                  | 378 to 476 | 492 to 590 | 606 to 704 | 296 to 344 |
+| 720x360, phone insets 43 | 351 to 449 | 465 to 563 | 579 to 677 | 293 to 341 |
+
+- Close's right is the tool row's right, so the two right-align.
+- Close's label is the caller's dismissal: "Back" when the map opens from the
+  Paused card (`questBack`), "Close" otherwise. It returns to the Paused card,
+  as back and Escape do. The width stays 98 for either label.
+- Each button is its press area (48, `HIT_RULE.minTarget`). The fit region's
+  bottom is `SPACING.gap` above the footer's top.
 - Quests opens the [Quests modal](#quests-modal). It is always available, in
   danger and while towing too.
 - Galaxies: Gameplay's action, with no confirm. It opens the
@@ -150,7 +159,8 @@ right: "Quests", then "Galaxies" (Gameplay). Constant:
 
 Shows while a place is selected, holds the empty note while the map has no
 places, and holds the danger reason while Ada is in danger. A
-`ui-settings-card` face (the card nine-slice) with no close X and no dim.
+`ui-settings-card` face (the card nine-slice) with no close X and no dim, its
+left and bottom on the page rect's bottom-left corner.
 
 | Token                 | Value | Rule                                                   |
 | --------------------- | ----- | ------------------------------------------------------ |
@@ -171,7 +181,7 @@ The row, left to right, every part centred on it:
    "{type} · {distance}" (`TYPE.body`, supporting `#b8b3c9`), then, when the
    place is the held job's target, "Job: {objective}" (`TYPE.body`,
    supporting). A job's own spot shows its name only.
-3. Travel here: a primary `TEXT_BUTTON`, 48 high, label width plus
+3. Travel here: a secondary `TEXT_BUTTON`, 48 high, label width plus
    `2 * TEXT_BUTTON.inset`, at the row's right end. Only destinations and
    stations offer it (`MapPlace.travel`); a landmark, the holodisk waypoint or
    a job's own spot shows the chip and text block only.
@@ -187,20 +197,23 @@ unavailable.
 - Height: `2 * padding + row height`, plus `reasonGap + 20` with the reason
   line: 80 or 108 with two lines, 100 or 128 with the job line.
 - Width: the panel sizes to its content,
-  `clamp(minWidth, maxWidth, 2 * padding + max(row, reason))`. `row` is
+  `clamp(floor, maxWidth, 2 * padding + max(row, reason))`. `row` is
   `28 + markGap + text + 8`, plus `markGap + button` when Travel here shows;
   `text` is the widest of its lines. `reason` is the widest reason string
-  while a reason shows (both share one cell), and absent otherwise. `maxWidth`
-  is `min(safe width, column cap)`: the width of
-  `safeRect(insets, SPACING.pageInset, view)` and the column cap above. Text
-  wraps inside it and the panel's measured height grows with it.
+  while a reason shows (both share one cell), and absent otherwise. Text
+  wraps inside `maxWidth` and the panel's measured height grows with it.
+- `maxWidth` (`panelMaxWidth`) is `Quests left - SPACING.gap - page left`, so
+  the panel always ends at least `SPACING.gap` left of the footer: 354 at the
+  720 base (`378 - 8 - 16`) and 300 with phone insets (`351 - 8 - 43`).
+  `floor` is `min(minWidth, maxWidth)`. Both caps are under 360, so at the 720
+  base the panel is 354 wide in every state (300 with phone insets).
 - Empty panel, while the map has no places: one centred `TYPE.body` supporting
   line, "No destinations mapped yet." (Gameplay), height `16 + 20 + 16` = 52,
-  width `clamp(minWidth, maxWidth, text + 32)`.
+  width `clamp(floor, maxWidth, text + 32)`.
 - Reason-only panel, in danger with nothing selected: the danger line alone,
   left-aligned, height `16 + 20 + 16` = 52, width
-  `clamp(minWidth, maxWidth, reason + 32)` = 360. With no places it follows
-  the empty note, `reasonGap` apart: 80 high.
+  `clamp(floor, maxWidth, reason + 32)`. With no places it follows the empty
+  note, `reasonGap` apart: 80 high.
 - Travel here unavailable: the disabled face, focusable; activation plays the
   refusal cue ([Controls](controls.md#buttons)). The reason is "Unavailable
   while you are in danger." or "Unavailable while towing." (Gameplay). One
@@ -215,8 +228,8 @@ unavailable.
 
 The galaxy's current quests fill the available card area
 ([Layout](layout.md#modals)) titled "Quests", with the close X, over the map
-under the modal dim. The dim covers the field, the header, the HUD row, the
-tools and the panel. The header and page controls stay fixed; measured pages
+under the modal dim. The dim covers the field, the header, the tools, the
+footer and the panel. The header and page controls stay fixed; measured pages
 retain every quest entry, description, source and destination icon and label,
 reward and action without scrolling or reducing the text size. Long prose
 continues on subsequent pages. Previous is hidden on the first page; Next
@@ -270,9 +283,10 @@ do.".
 - Press: a mapped line closes the modal, pans so its chip sits at the fit
   region's centre at the current scale (clamped by the pan limit), applies the
   keep-clear rule, then selects the chip; the place panel shows as for any
-  selection. At 720x360 with phone insets the centre is (332, 202.5) and the
-  ring's bottom 221.5: it clears the 80, 100 and 108 panels (tops 261, 241 and 233) by at least `SPACING.gap`, and keep-clear lifts it 16.5 above the 128
-  panel (top 213).
+  selection. At 720x360 with phone insets the centre is (360, 186.5) and the
+  ring's bottom 205.5: it clears the 80, 100 and 108 panels (tops 261, 241
+  and 233) by at least `SPACING.gap`, and keep-clear lifts it 0.5, to
+  `SPACING.gap` above the 128 panel (top 213).
 - Plain lines and the empty note take no input.
 - In danger the modal is unchanged: Quests and every line button stay
   available, and a selection is never refused.
@@ -345,7 +359,7 @@ indicator.
 
 Draw order, bottom to top: field, fog, the search area, landmark chips, other chips, the
 objective indicator, the selected chip and its ring, Ada, then the header,
-tools and panel. Within a layer, later places in the map's order draw on top.
+footer, tools and panel. Within a layer, later places in the map's order draw on top.
 
 ### Glyphs
 
@@ -374,32 +388,32 @@ hunt's own chip, from `mapArea` in [jobs.json](../public/art/jobs.json).
 | `mapArea.minRadius` | 19      | Hidden while `rx` is under the selection ring's outer radius               |
 
 - It draws over the fog and under every chip, so the hunt's chip and its
-  selection ring sit on top. At `maxScale` it is about 51 x 25 at the phone
-  view; at `minScale` (rx about 8.5) it hides and the chip alone marks the
+  selection ring sit on top. At `maxScale` it is about 60 x 30 at the phone
+  view; at `minScale` (rx about 5.5) it hides and the chip alone marks the
   hunt.
 - It takes no press: the hunt's chip is the place.
 - The search area is always explored: the hunt's own spot is a discovered
   place, so the fog reveals 1500 world units around it, past the 900 radius.
 
-| SVG                    | Glyph                                          | SHA-256                                                            |
-| ---------------------- | ---------------------------------------------- | ------------------------------------------------------------------ |
-| `map-station.svg`      | Mast and dome over an elliptical ring          | `c2a127db459dc3ee1d48a4b8a6560ac59b41c35921d4f345fca0cc1e941c6bb1` |
-| `map-growers.svg`      | Sunflower head: an 8 disc in eight petals      | `39afebe5011328317255fefb81f6a1f2ad869d4ef3514aeb034e78f208e9eb6a` |
-| `map-workshop.svg`     | Wrench on the diagonal, jaw to the top right   | `8128bbfe49ad653c57a232531f9418068704f52920c8f4a37e5f8c245c7d152c` |
-| `map-salvagers.svg`    | Electromagnet: horseshoe with gapped pole tips | `cb6121dfddb4782d78fd18f61cb550fb31243736fdc5f57717b988dd9af00ba8` |
-| `map-destination.svg`  | Swallowtail flag on a footed pole              | `9869982e9c42b3d88bc60e10c09fc75ef02b01253d6d5084b37b6474d2c4a922` |
-| `map-holodisk.svg`     | Disc band around a spindle hole                | `8d40d73ea39fb43e51db27fe34a7596714b12f2e331654067313906ed3e15fd6` |
-| `map-nebula.svg`       | Cloud with two stars                           | `ea5ba9ecbcb0e0ba937cf9881b8658fb2c3d7505ca69b2708ad2951824b38594` |
-| `map-wreck.svg`        | Hull split in two with debris                  | `ce77a498d883397da78ab728e2aa8b0745744857738b2d6131bff19e3624519c` |
-| `map-beacon.svg`       | Mast with a lamp and two pairs of signal arcs  | `3666df581a95d05be737af27b8b327fd9a8b386af3c1e0591bce9b21b4e04810` |
-| `map-job-survey.svg`   | Folded chart, middle panel raised, X knockout  | `96af3a92c85b64992f8366d56ac8acd62c95aa6c99748b29111f67aa7f8518d8` |
-| `map-job-delivery.svg` | Parcel: lid over the box, knocked-out label    | `87af099b17421f9bfc05899288bab445c7eae71f86add2a46e087254f070431e` |
-| `map-job-rescue.svg`   | Tow hook hanging from its eye                  | `8d0f32e66855226136d6f518613755b480fb34b1d3706dd13e7755def0f09903` |
-| `map-job-hunt.svg`     | Magnifier with a glint in the lens             | `87b6a33ba4f42714c233f7e7eeaf67ba924a7de70c44ce024a1b3fd8e83d22d0` |
-| `map-close.svg`        | X, 2 to 3 px strokes                           | `dfa06d6c874628b4d8234d834349f9d084329bf797483a8941cb8743a3858835` |
-| `map-zoom-in.svg`      | Plus, 14 long, 2 thick                         | `2941643dfb9821cddf4f9211799ce06a831d4f734dee00b761525faed2185d49` |
-| `map-zoom-out.svg`     | Minus, 14 long, 2 thick                        | `4f12cd67b7dec154e9b555609d22d9a5e92fe74b55f26b70ce64bf7c239fe2c7` |
-| `map-recentre.svg`     | Crosshair: ring, centre dot and four ticks     | `e37051fd500afbb0613a0844f27e96f69011dfcb283e6554ea4fc23c21c723e4` |
+| SVG                    | Glyph                                                             | SHA-256                                                            |
+| ---------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `map-station.svg`      | Mast and dome over an elliptical ring                             | `c2a127db459dc3ee1d48a4b8a6560ac59b41c35921d4f345fca0cc1e941c6bb1` |
+| `map-growers.svg`      | Sunflower head: an 8 disc in eight petals                         | `39afebe5011328317255fefb81f6a1f2ad869d4ef3514aeb034e78f208e9eb6a` |
+| `map-workshop.svg`     | Wrench on the diagonal, jaw to the top right                      | `8128bbfe49ad653c57a232531f9418068704f52920c8f4a37e5f8c245c7d152c` |
+| `map-salvagers.svg`    | Electromagnet: horseshoe with gapped pole tips                    | `cb6121dfddb4782d78fd18f61cb550fb31243736fdc5f57717b988dd9af00ba8` |
+| `map-destination.svg`  | Swallowtail flag on a footed pole                                 | `9869982e9c42b3d88bc60e10c09fc75ef02b01253d6d5084b37b6474d2c4a922` |
+| `map-holodisk.svg`     | Disc band around a spindle hole                                   | `8d40d73ea39fb43e51db27fe34a7596714b12f2e331654067313906ed3e15fd6` |
+| `map-nebula.svg`       | Cloud with two stars                                              | `ea5ba9ecbcb0e0ba937cf9881b8658fb2c3d7505ca69b2708ad2951824b38594` |
+| `map-wreck.svg`        | Hull split in two with debris                                     | `ce77a498d883397da78ab728e2aa8b0745744857738b2d6131bff19e3624519c` |
+| `map-beacon.svg`       | Mast with a lamp and two pairs of signal arcs                     | `3666df581a95d05be737af27b8b327fd9a8b386af3c1e0591bce9b21b4e04810` |
+| `map-job-survey.svg`   | Folded chart, middle panel raised, X knockout                     | `96af3a92c85b64992f8366d56ac8acd62c95aa6c99748b29111f67aa7f8518d8` |
+| `map-job-delivery.svg` | Parcel: lid over the box, knocked-out label                       | `87af099b17421f9bfc05899288bab445c7eae71f86add2a46e087254f070431e` |
+| `map-job-rescue.svg`   | Tow hook hanging from its eye                                     | `8d0f32e66855226136d6f518613755b480fb34b1d3706dd13e7755def0f09903` |
+| `map-job-hunt.svg`     | Magnifier with a glint in the lens                                | `87b6a33ba4f42714c233f7e7eeaf67ba924a7de70c44ce024a1b3fd8e83d22d0` |
+| `map-close.svg`        | X, 2 to 3 px strokes; the shared close grid, not drawn on the Map | `dfa06d6c874628b4d8234d834349f9d084329bf797483a8941cb8743a3858835` |
+| `map-zoom-in.svg`      | Plus, 14 long, 2 thick                                            | `2941643dfb9821cddf4f9211799ce06a831d4f734dee00b761525faed2185d49` |
+| `map-zoom-out.svg`     | Minus, 14 long, 2 thick                                           | `4f12cd67b7dec154e9b555609d22d9a5e92fe74b55f26b70ce64bf7c239fe2c7` |
+| `map-recentre.svg`     | Crosshair: ring, centre dot and four ticks                        | `e37051fd500afbb0613a0844f27e96f69011dfcb283e6554ea4fc23c21c723e4` |
 
 ### Contrast per field
 
@@ -435,7 +449,7 @@ farm-yellow field `#D8C994`; the others are dark.
   8.62:1 on the fog; its orange dash carries it on the dark fields.
 - Glyphs are ink on the face: 6.21:1 (holodisk) to 12.43:1 (landmarks);
   9.71:1 on the job face.
-- Tool glyphs on the navy disc: supporting 6.83:1, cream 9.59:1, as in flight.
+- Tool glyphs on the navy disc: supporting 6.83:1, as in flight.
   On dark fields the disc is 1.04 to 1.22:1 and its glyph carries it.
 - Header, ink at 0.65 over the field: cream text 5.20:1 on Sunflower (composite
   `#5B534C`) and 11.65:1 or more on the dark fields; the white name 7.53:1 and
@@ -443,7 +457,7 @@ farm-yellow field `#D8C994`; the others are dark.
   Over fog: cream 5.80:1 on Sunflower, 10.84:1 or more on the dark fields.
   The divider is decorative.
 - Panel: the card face `#3b3850`; cream name 7.76:1, supporting type line, job
-  line and reason 5.53:1, Travel here as the primary button.
+  line and reason 5.53:1, Travel here as the secondary button.
 
 ## Fog
 
@@ -499,12 +513,15 @@ discovered place for the reveal, so a hunt's search area is never fogged.
   (`chartProjection`), times the map's `scale` in logical px per projected
   unit. Up on the map is up in flight, and Ada's arrow points where her ship
   faces.
-- Fit region: left `safeRect(16).left`, top `mapRowTop + 48 + SPACING.gap` =
-  `hudRect.top + 48.5` (below the header row), right
-  `toolColumnLeft - SPACING.gap` = `hudRect.right - 48.5` (left of the tool
-  column), bottom `safeRect(16).bottom`. Inset by `fitMargin` on every
-  side it is the inner region. The panel floats over its lower part.
-- `maxScale = min(innerWidth / minBox.width, innerHeight / minBox.height)`.
+- Fit region (`fitRegion`): left and right the page rect's, top
+  `page top + MAP_SCREEN.header.height + SPACING.gap` (88 at a top inset up
+  to 16, below the header and the tools), bottom `Close top - SPACING.gap`
+  (288 at the 720 base, 285 with phone insets, above the footer). Inset by
+  `fitMargin` on every side it is the inner region. The panel floats over its
+  lower part.
+- `maxScale = min(innerWidth / minBox.width, zoomHeight / minBox.height)`,
+  where `zoomHeight` is the page rect's height less `2 * fitMargin` (284 at
+  the 720 base).
 - `minScale` fits the charting disc: `min(innerWidth / (2 sqrt(2) R),
 innerHeight / (sqrt(2) R))` for `R = chartRadius`.
 - Opening fit: the bounding box of Ada and every discovered place, projected,
@@ -521,11 +538,11 @@ box width, innerHeight / box height), minScale, maxScale)`; the box centre at
   catalog fills every cell). Once discovered, each is a place, and the opening
   fit and pan limit reach it.
 
-| View, CSS px    | Fit region     | Inner region   | `maxScale` | `minScale` | Zoom steps between |
-| --------------- | -------------- | -------------- | ---------- | ---------- | ------------------ |
-| 844x390, insets | 644.58 x 280.5 | 600.58 x 236.5 | 0.03942    | 0.00669    | 4.37               |
-| 720x360 (base)  | 643.5 x 283.5  | 599.5 x 239.5  | 0.03992    | 0.00677    | 4.37               |
-| 1280x720        | 643.5 x 328.5  | 599.5 x 284.5  | 0.04742    | 0.00805    | 4.37               |
+| View, CSS px    | Fit region      | Inner region    | `maxScale` | `minScale` | Zoom steps between |
+| --------------- | --------------- | --------------- | ---------- | ---------- | ------------------ |
+| 844x390, insets | 692.31 x 196.62 | 648.31 x 152.62 | 0.04677    | 0.00432    | 5.88               |
+| 720x360 (base)  | 688 x 200       | 644 x 156       | 0.04733    | 0.00441    | 5.85               |
+| 1280x720        | 688 x 245       | 644 x 201       | 0.05367    | 0.00569    | 5.54               |
 
 ### Close places
 
@@ -538,21 +555,22 @@ close places' chips then overlap. Two rules keep each one reachable:
    chip is therefore selectable by pressing its own visible centre, however
    its area overlaps a neighbour's. Exact ties go to the chip drawn on top.
 2. Scale rule. Zoom always reaches `maxScale`, where two chips stop
-   overlapping once their places are 710 projected units apart at the phone
-   view (591 at 1280x720). The projection shrinks a world distance by at most
+   overlapping once their places are 599 projected units apart at the phone
+   view (522 at 1280x720). The projection shrinks a world distance by at most
    `sqrt(2)`, so places at least 1020 world units apart are always separable
-   at full zoom. At `minScale` the same holds from about 6000 world units.
+   at full zoom. At `minScale` the same holds from about 9200 world units.
    Gameplay keeps every mapped place at least 1020 world units apart.
 
 The selected chip draws above every other chip, so the place the panel names
-is always fully visible. Header, tools and panel sit above the field and take
-presses first; a chip under them takes no press there.
+is always fully visible. Header, tools, footer and panel sit above the field
+and take presses first; a chip under them takes no press there.
 
 ## Interaction
 
 - Open: Map on the Paused card opens the map at the opening fit. The Paused
   card and its dim hide; one screen shows at a time.
-- Close: the close tool, back and Escape return to the Paused card.
+- Close: the footer's Close (labelled Back from the Paused card), back and
+  Escape return to the Paused card.
 - Pan: a pointer pressed on the field (on a chip or not) that moves more than
   `dragThreshold` pans the map with the pointer and selects nothing.
 - Select: a press released within `dragThreshold` selects the chip that
@@ -570,13 +588,14 @@ presses first; a chip under them takes no press there.
   recentre pans to Ada at the current scale.
 - Every zoom clamps to `minScale`..`maxScale`; every pan clamps to the pan
   limit.
-- Keyboard: Tab moves through the tools (close, zoom in, zoom out, recentre),
-  then Quests and Galaxies, then the places in reading order (drawn centre top to
-  bottom, then left to right), then Travel here. Enter or Space on a place selects it; focusing a
-  place pans it clear by the keep-clear rule. Focus starts on close.
+- Keyboard: Tab moves through the tools (zoom out, zoom in, recentre), then
+  the places in reading order (drawn centre top to bottom, then left to
+  right), then Travel here, then the footer (Quests, Galaxies, Close), and
+  wraps at either end. Enter or Space on a place selects it; focusing a place
+  pans it clear by the keep-clear rule. Focus starts on Close.
 - Travel here: Gameplay's teleport. While Ada is in danger or towing it is
   unavailable, with the reason line; activation plays the refusal cue.
-- Quests and Galaxies: see [Quests and Galaxies](#quests-and-galaxies).
+- Quests and Galaxies: see [Footer](#footer).
 
 ## States
 
@@ -584,7 +603,7 @@ presses first; a chip under them takes no press there.
 | --------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------- |
 | Nothing mapped        | Ada only, fog except around her path            | Empty note, "No destinations mapped yet."                                       |
 | Places, none selected | Chips; the objective's indicator once mapped    | None; in danger, the reason-only panel                                          |
-| Travel place selected | Selection ring on the chip                      | Chip, name, type line, Travel here (primary)                                    |
+| Travel place selected | Selection ring on the chip                      | Chip, name, type line, Travel here (secondary)                                  |
 | Other place selected  | Selection ring on the landmark or holodisk chip | Chip, name, type line; no action                                                |
 | Job target selected   | Selection ring on the orange-faced chip         | Row grows to 68: name, type line, "Job: {objective}"; Travel here where offered |
 | Job spot selected     | Selection ring on the orange job chip           | Job chip and the job's name; no action                                          |
@@ -607,6 +626,7 @@ Gameplay's, from `gameplay/player-copy.md`: Map; "{percent}% mapped"; Travel
 here; Galaxies; Quests; "No destinations mapped yet."; "Unavailable
 while you are in danger.";
 the galaxy names; "Unavailable while towing."; the tools' accessible labels;
+the footer dismissal, Back from the Paused card and Close otherwise;
 "Job: {objective}" (`jobObjective`, also in `gameplay/quests.md`), under the
 type line of the held job's target and on the Quests modal; the Quests modal's
 "Story complete.", "Station job boards have more to do." and "Explore to find

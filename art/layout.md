@@ -132,7 +132,8 @@ space nor a gap.
   48 (`TEXT_BUTTON.height`, face and lip). Small: the 33 HUD and Map discs
   (weapons, pause, Settings, Achievements, the Map tools), compact buttons
   (28: Skip, the Install row action) and the close X (24). Standard: every 48
-  text button and control row, including Quests and Galaxies.
+  text button and control row, including the Map's Quests, Galaxies and
+  Close.
 - Prose groups (wrapping body or supporting text) never widen a card: they
   wrap to the inner width that the other groups and the 50% floor set.
   Single-line labels inside rows and buttons count at their full width.
@@ -946,13 +947,15 @@ scrolls vertically with all three columns and both dividers together, while
 the title, close X and Back stay fixed.
 
 Map, from the Paused card, is a full-screen map rather than a card: the
-galaxy's field under the insets, a header panel on the Map's HUD row at the
-HUD rect's left (the name, then the pips over the percent), Quests and Return
-to Earth on the same row, a column of `HUD_BUTTON` tools on its top-right and the place panel
-on the available rect's bottom. Quests opens a Quests modal card over it. Its tokens
+galaxy's field under the insets, with every part on the page rect
+(`safeRect(insets, SPACING.pageInset, view)`): a header panel on its top-left
+(the name, then the pips over the percent), a row of three `HUD_BUTTON` tools
+(zoom out, zoom in, recentre) on its top-right, the place panel on its
+bottom-left, and the footer of Quests, Galaxies and Close (primary) on its
+bottom-right. Quests opens a Quests modal card over it. Its tokens
 (`MAP_SCREEN`, `MAP_PANEL`, `MAP_SYMBOL`), fit, press areas and states are in
-[Map](map.md). Close, back and Escape return
-to Paused.
+[Map](map.md). Close (labelled Back from the Paused card), back and Escape
+return to Paused.
 
 The balance is one centred group: `icon-stardust-20`, `SPACING.markGap`, the
 amount in `TYPE.label`, on a 20 line. The shop's row and well geometry is in
