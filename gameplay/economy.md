@@ -346,8 +346,8 @@ like Chibi's power-ups.
 ## Detail cards
 
 Pressing and holding a weapon or upgrade opens its detail card: a short,
-plain description with no exact figures. Holding about 0.5 seconds
-(provisional) opens the card instead of acting; a shorter tap acts as before.
+plain description with no exact figures. Holding 500 ms, the shared hold
+duration for discrete controls in every game, opens the card instead of acting; a shorter tap acts as before.
 
 - In flight, holding a top-right weapon icon pauses play and opens that
   weapon's card without selecting it or starting the switch wait. The card's

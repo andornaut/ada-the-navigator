@@ -46,8 +46,10 @@ the game; do not modify the source games.
 
 All UI fits the centered 720-logical-pixel-wide game area. Backgrounds may bleed
 across the phone display. Intersect the actual game area with device-safe insets
-for the common UI rectangle; preserve existing 700/500/400 widths, padding and
-reflow. Do not mask or clip text or buttons to conceal overflow.
+for the common UI rectangle. Modal windows use the shared width families with
+a 16 logical pixel screen margin: Large 688, Medium 500 and Small 400; height
+follows content and fonts stay full size. Full-screen views are not modal
+windows. Preserve existing padding and reflow. Do not mask or clip text or buttons to conceal overflow.
 
 ## Start, Home and Space
 
@@ -1208,7 +1210,9 @@ Saves reset before version 1. While the game's version is below 1, a stored save
 that is invalid, incompatible or ambiguous resets to a new game through the
 new-game path; the replaced data is kept as the backup save. No other save
 migrations are added before version 1. Font and network loading failures leave
-the save untouched.
+the save untouched and use the shared game-kit loading-failure presentation; its
+Retry label uses the same text colour as the Start screen's primary Start
+button.
 
 Closing the game or Back to title is not leaving the galaxy: resume the same
 flight with exact important state and current nearby space, cargo, owned and
