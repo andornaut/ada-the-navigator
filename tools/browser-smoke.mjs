@@ -962,20 +962,20 @@ try {
   }
   const before = await position();
   assert.ok(Number.isFinite(before.x) && Number.isFinite(before.y));
-  await page.keyboard.down("d");
+  await page.keyboard.down("w");
   try {
     await page.waitForFunction(({ x, y }) => {
       const status = document.querySelector("#game-status");
       return Number(status.dataset.x) !== x || Number(status.dataset.y) !== y;
     }, before);
   } finally {
-    await page.keyboard.up("d");
+    await page.keyboard.up("w");
   }
   events.checks.push("Keyboard input changes actual flight coordinates");
   await waitForRest(await position());
   await page.screenshot({ path: `${output}/desktop.png` });
 
-  await page.keyboard.down("d");
+  await page.keyboard.down("w");
   try {
     await openSettings();
     await page.locator('[data-action="close-settings"]').waitFor({ state: "visible" });
@@ -985,7 +985,7 @@ try {
     await closeSettings();
     await waitForRest(await position());
   } finally {
-    await page.keyboard.up("d");
+    await page.keyboard.up("w");
   }
   events.checks.push("Settings pause movement and clear held input on resume");
   // The first flight after a real prologue has New Navigator unlocked, and only it.
@@ -1049,6 +1049,30 @@ try {
       assert.fail(`${selector} has no laid-out box ${timeout} ms after Continue`);
     }
     return page.locator(selector).boundingBox();
+  }
+  // Holds the aim stick deflected exactly screen-right through a native touch, so Ada's guns aim
+  // and fire along it; the returned function lifts the touch. Desktop keys thrust and turn the
+  // ship instead (src/input/desktop.ts), and Space is also Use.
+  async function holdAimRight() {
+    const box = await settledBox('[data-control="aim-joystick"]');
+    const session = await page.context().newCDPSession(page);
+    const origin = {
+      force: 1,
+      id: 1,
+      radiusX: 8,
+      radiusY: 8,
+      x: box.x + box.width / 2,
+      y: box.y + box.height / 2,
+    };
+    await session.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [origin] });
+    await session.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [{ ...origin, x: origin.x + 25 }],
+    });
+    return async () => {
+      await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+      await session.detach();
+    };
   }
   // The touch HUD's bottom controls, in logical px: each joystick ring's drawn outer side and
   // bottom (the rings draw 1 inside their 75 frame targets) 50 in from the screen's sides and 50
@@ -1332,7 +1356,7 @@ try {
     "Model-generated friendly-destination fixture supplies the input-check precondition",
   );
   const { CHEAT_COPY } = await import(new URL("../src/data/cheatCopy.ts", import.meta.url));
-  await page.keyboard.down("d");
+  await page.keyboard.down("w");
   try {
     await openSettings();
     await page.getByRole("button", { name: CHEAT_COPY.open, exact: true }).click();
@@ -1401,7 +1425,7 @@ try {
       `A granted weapon's notice reads + {weapon}: ${await announced.textContent()}`,
     );
   } finally {
-    await page.keyboard.up("d");
+    await page.keyboard.up("w");
   }
   await waitForRest(await position());
   await seedOnce(safeSerialized, "ada-browser.before-installed-guard.v1");
@@ -1466,14 +1490,14 @@ try {
     assert.equal(await warning.getAttribute("id"), "save-status");
     await closeSettings();
     const blockedPosition = await position();
-    await page.keyboard.down("d");
+    await page.keyboard.down("w");
     try {
       await page.waitForFunction(({ x, y }) => {
         const status = document.querySelector("#game-status");
         return Number(status.dataset.x) !== x || Number(status.dataset.y) !== y;
       }, blockedPosition);
     } finally {
-      await page.keyboard.up("d");
+      await page.keyboard.up("w");
     }
     await waitForRest(await position());
     assert.equal(await warning.textContent(), CONTENT.labels.savingUnavailable);
@@ -2673,14 +2697,14 @@ try {
     (key) => JSON.parse(localStorage.getItem(key)).flight.weapon === "multiLaser",
     storageKey,
   );
-  await page.keyboard.down("ArrowRight");
+  const liftFire = await holdAimRight();
   try {
     await page.waitForFunction(
       (key) => JSON.parse(localStorage.getItem(key)).flight.shots.some((shot) => !shot.enemy),
       storageKey,
     );
   } finally {
-    await page.keyboard.up("ArrowRight");
+    await liftFire();
   }
   assert.equal(
     (await readSave()).flight.weapon,
@@ -3312,7 +3336,7 @@ try {
   async function heldVolley(weapon, projectile, minimum, heading = null) {
     await seedOnce(weaponSave, `ada-browser.volley-${weapon}.v1`);
     await page.locator(`button[data-weapon="${weapon}"]`).click();
-    await page.keyboard.down("ArrowRight");
+    const liftAim = await holdAimRight();
     try {
       await page.waitForFunction(
         ({ heading, key, minimum, projectile }) => {
@@ -3340,7 +3364,7 @@ try {
       await page.screenshot({ path: `${output}/volley-${weapon}.png` });
       return snapshot;
     } finally {
-      await page.keyboard.up("ArrowRight");
+      await liftAim();
     }
   }
   // A level 1 Rapid Missile lives 0.44 s (220 at 500) against its 0.30 s interval, so at most
