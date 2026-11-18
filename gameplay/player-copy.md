@@ -1212,6 +1212,10 @@ beacon light. Welcome!"
 - Start screen: Ada the Navigator; Start on first launch, then Continue and
   Restart.
 - Restart card: Restart? with Restart and Cancel.
+- Cheats (browser tab only): Open Cheats (Settings button); the Cheats modal
+  with Run-only and Save-changing headings, the action labels in
+  [Cheats](cheats.md), FPS counter (On or Off) and Close. Reset save card:
+  Reset save? with Reset and Cancel.
 - Galaxy map Earth button: Earth.
 - Earth with nothing new: Narration: "Penny thumps her tail. Ready for another adventure?" then Pick up the rock.
 - Use actions, each the disc's accessible name and drawn as a symbol: Talk,
