@@ -342,6 +342,14 @@ try {
   events.checks.push("Real renderer and accessible home status");
   // Use is Chibi's touch disc, drawn on the canvas: its accessible button takes no pointer input,
   // so a thumb taps the canvas at the disc's centre, where the press circle takes it.
+  // A key press switches flight to the desktop controls, which hide the sticks and the Use disc; a
+  // touch on the game surface switches back (src/input/desktop.ts). The spot is clear of the HUD,
+  // the notice slot and the ship.
+  async function touchSurface() {
+    const canvas = await page.locator("#game-canvas > canvas").boundingBox();
+    assert.ok(canvas, "The game surface has a box");
+    await page.touchscreen.tap(canvas.x + canvas.width * 0.3, canvas.y + canvas.height * 0.55);
+  }
   async function tapUse(name) {
     const use = page.getByRole("button", { name, exact: true });
     await use.waitFor({ state: "visible" });
@@ -1561,6 +1569,7 @@ try {
     }
     await waitForRest(await position());
     assert.equal(await warning.textContent(), CONTENT.labels.savingUnavailable);
+    await touchSurface();
     await tapUse(CONTENT.labels.talk);
     await page.locator('[data-action="dialogue-choice"]').first().waitFor({ state: "visible" });
     await contextControlProof(0, "dialogue during save failure");
@@ -1573,7 +1582,8 @@ try {
     await page.locator(".ada-use").waitFor({ state: "visible" });
     await contextControlProof(1, "resumed flight");
     await page.evaluate(() => document.activeElement?.blur());
-    await page.keyboard.press("Space");
+    // The keyboard's Use is E (or Enter); Space fires (src/input/desktop.ts).
+    await page.keyboard.press("KeyE");
     await page.locator('[data-action="dialogue-choice"]').first().waitFor({ state: "visible" });
     await contextControlProof(0, "keyboard interaction dialogue");
     await page.locator('[data-action="dialogue-choice"][data-choice="continue"]').click();
@@ -2387,7 +2397,7 @@ try {
   const dockHere = async () => {
     await page.locator('.ada-use[data-use="dock"]').waitFor({ state: "visible" });
     await page.evaluate(() => document.activeElement?.blur());
-    await page.keyboard.press("Space");
+    await page.keyboard.press("KeyE");
     await stationCard.waitFor({ state: "visible" });
   };
   // The block as it shows: its element, line, pips and geometry in logical px.
