@@ -2527,11 +2527,28 @@ try {
   await openPause();
   await page.locator('[data-action="pause-map"]').click();
   const towGalaxies = page.locator('[data-dialog="map"] [data-action="map-galaxies"]');
-  assert.equal(
-    await towGalaxies.getAttribute("aria-disabled"),
-    null,
-    "Towing keeps Galaxies available",
-  );
+  const towDisabled = await towGalaxies.getAttribute("aria-disabled");
+  // What put Ada in danger, if anything did: the paused flight's engaged enemies and enemy shots.
+  const towDanger =
+    towDisabled === null
+      ? null
+      : await page.evaluate((key) => {
+          const { flight } = JSON.parse(localStorage.getItem(key));
+          const near = (at) => Math.hypot(at.x - flight.player.x, at.y - flight.player.y);
+          return {
+            dangerFor: flight.dangerFor,
+            enemies: flight.objects
+              .filter((object) => object.kind === "enemy")
+              .map((object) => ({
+                distance: Math.round(near(object)),
+                engaged: object.enemy?.engaged,
+                id: object.id,
+                routeId: object.routeId,
+              })),
+            shots: flight.shots.filter((shot) => shot.enemy).length,
+          };
+        }, storageKey);
+  assert.equal(towDisabled, null, `Towing keeps Galaxies available: ${JSON.stringify(towDanger)}`);
   await towGalaxies.click();
   const towGalaxyMap = page.locator('.ada-route[data-dialog="galaxies"]');
   await towGalaxyMap.waitFor({ state: "visible" });
