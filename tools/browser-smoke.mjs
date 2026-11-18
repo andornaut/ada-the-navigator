@@ -343,30 +343,149 @@ try {
   events.checks.push("Real renderer and accessible home status");
   // Use is Chibi's touch disc, drawn on the canvas: its accessible button takes no pointer input,
   // so a thumb taps the canvas at the disc's centre, where the press circle takes it.
-  // Art review proofs of what shows now: at 1280x720, then at 720x360 with the phone insets set
-  // (the full-viewport policy keeps hardware insets zero). The insets are set before the resize, so
-  // the screens that lay out in script read them on the resize's refit; both are undone after.
-  async function proofsAt(name) {
+  // Phone insets in logical px (art/layout.md): 43 left and right, 19 bottom.
+  const viewScale = await import(new URL("../src/ui/layout/viewScale.ts", import.meta.url));
+  const insetLayout = await import(new URL("../src/ui/layout/playView.ts", import.meta.url));
+  const PHONE_INSETS = { bottom: 19, left: 43, right: 43, top: 0 };
+  // Writes view properties onto #app, where every inset-aware part reads them, and signals a refit.
+  const writeView = (entries) =>
+    page.evaluate(
+      ({ entries, event }) => {
+        const app = document.querySelector("#app");
+        for (const [name, value] of entries) {
+          app.style.setProperty(name, value);
+        }
+        window.dispatchEvent(new Event(event));
+      },
+      { entries, event: viewScale.VIEW_SCALE_EVENT },
+    );
+  // The full-viewport policy keeps hardware insets zero, so an inset proof publishes what the view
+  // scale bridge would for the phone insets: viewProperties of the bridge's own layout with them.
+  // The bridge writes only when the view's size changes, so they hold until restore puts its own
+  // values back. Waits for the bridge to settle on the current size first, and checks that what it
+  // published is the no-inset layout this starts from. Returns the logical view, and restore.
+  async function setPhoneInsets() {
+    const read = () =>
+      page.evaluate(() => {
+        const app = document.querySelector("#app");
+        const canvas = document.querySelector("#game-canvas > canvas").getBoundingClientRect();
+        return {
+          size: { height: canvas.height, width: canvas.width },
+          unit: Number(getComputedStyle(app).getPropertyValue("--ada-unit")),
+          values: Object.fromEntries(
+            [...app.style]
+              .filter((name) => name.startsWith("--ada-"))
+              .map((name) => [name, app.style.getPropertyValue(name)]),
+          ),
+        };
+      });
+    await page.waitForFunction(() => {
+      const canvas = document.querySelector("#game-canvas > canvas").getBoundingClientRect();
+      const unit = Number(
+        getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
+      );
+      return Math.abs(unit - Math.min(canvas.width / 720, canvas.height / 360)) < 1e-6;
+    });
+    const before = await read();
+    const plain = viewScale.playLayout(before.size);
+    const published = viewScale.viewProperties(plain);
+    assert.ok(
+      published.every(
+        ([name, value]) => Math.abs(parseFloat(before.values[name]) - parseFloat(value)) < 0.01,
+      ),
+      `The bridge published the no-inset layout: ${JSON.stringify({ before, published })}`,
+    );
+    const cssInsets = Object.fromEntries(
+      Object.entries(PHONE_INSETS).map(([side, value]) => [side, value * plain.s]),
+    );
+    await writeView(viewScale.viewProperties({ ...plain, cssInsets, insets: { ...PHONE_INSETS } }));
+    await page.waitForTimeout(250);
+    return { restore: () => writeView(published), view: plain.view };
+  }
+  // The phone insets are still in effect, as set: a proof taken now shows them.
+  async function assertPhoneInsets(name) {
+    const left = await page.evaluate(() =>
+      document.querySelector("#app").style.getPropertyValue("--ada-safe-left"),
+    );
+    const unit = Number(
+      await page.evaluate(() =>
+        getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
+      ),
+    );
+    assert.ok(
+      Math.abs(parseFloat(left) - PHONE_INSETS.left * unit) < 0.01,
+      `${name}: the phone insets hold through the proof: ${left}`,
+    );
+  }
+  // A part's box in logical px from #app's top-left: x, y, width, height.
+  const logicalBox = (selector) =>
+    page.evaluate((target) => {
+      const app = document.querySelector("#app");
+      const unit = Number(getComputedStyle(app).getPropertyValue("--ada-unit"));
+      const origin = app.getBoundingClientRect();
+      const rect = document.querySelector(target).getBoundingClientRect();
+      return [rect.left - origin.left, rect.top - origin.top, rect.width, rect.height].map(
+        (value) => Math.round((value / unit) * 100) / 100,
+      );
+    }, selector);
+  // Art review proofs of what shows now: at 1280x720, then at 720x360 with the phone insets. Each
+  // runs check(insets, view) on what it shows; both are undone after.
+  async function proofsAt(name, check = async () => {}) {
     const viewport = page.viewportSize();
     await page.setViewportSize({ height: 720, width: 1280 });
     await page.waitForTimeout(250);
     await page.screenshot({ path: `${output}/${name}-1280x720.png` });
-    // In CSS px, which are logical px at 720x360, where the unit is 1.
-    await page.evaluate(() => {
-      for (const [side, value] of Object.entries({ bottom: 19, left: 43, right: 43, top: 0 })) {
-        document.documentElement.style.setProperty(`--inset-${side}`, `${value}px`);
-      }
-    });
+    await check(insetLayout.NO_INSETS, { height: 360, width: 720 }, `${name}-1280x720`);
     await page.setViewportSize({ height: 360, width: 720 });
-    await page.waitForTimeout(250);
+    const phone = await setPhoneInsets();
     await page.screenshot({ path: `${output}/${name}-720x360-insets.png` });
-    await page.evaluate(() => {
-      for (const side of ["bottom", "left", "right", "top"]) {
-        document.documentElement.style.removeProperty(`--inset-${side}`);
-      }
-    });
+    await assertPhoneInsets(`${name}-720x360-insets`);
+    await check(PHONE_INSETS, phone.view, `${name}-720x360-insets`);
+    await phone.restore();
     await page.setViewportSize(viewport);
     await page.waitForTimeout(250);
+  }
+  const near = (actual, expected, within) =>
+    actual.length === expected.length &&
+    actual.every((value, index) => Math.abs(value - expected[index]) <= within);
+  // The map's header (art/map.md "Header"): its left SPACING.gap right of the pause press area, its
+  // right at most its cap, SPACING.gap short of the tools, from the same insets.
+  const mapLayout = await import(new URL("../src/ui/layout/mapScreen.ts", import.meta.url));
+  const mapHeaders = {};
+  async function checkMapHeader(insets, view, name) {
+    const [x, y, width] = await logicalBox(".ada-map-screen .ada-map-header");
+    const left = mapLayout.mapHeaderLeft(insets, view);
+    const cap = mapLayout.mapHeaderCap(insets, view);
+    mapHeaders[name] = { cap, left: x, right: x + width, top: y, width };
+    assert.ok(
+      Math.abs(x - left) <= 0.5 && x + width <= left + cap + 0.5,
+      `${name}: the map header starts at ${left} and stays in its ${cap} cap: ${JSON.stringify(
+        mapHeaders[name],
+      )}`,
+    );
+  }
+  // The galaxy map's panel and destination action (art/layout.md "Galaxy selector"): where
+  // galaxyMapRects puts them for the same insets; the action centred on the view across.
+  const galaxyLayout = await import(new URL("../src/ui/layout/galaxyMap.ts", import.meta.url));
+  async function checkGalaxyMap(insets, view, name) {
+    const rects = galaxyLayout.galaxyMapRects(insets, view);
+    const dialog = '.ada-route[data-dialog="galaxies"]';
+    const panel = await logicalBox(`${dialog} .ada-route-panel`);
+    const action = await logicalBox(`${dialog} [data-action="galaxy-jump"]`);
+    const { action: a, panel: p } = rects;
+    assert.ok(
+      near(panel, [p.x, p.y, p.width, p.height], 0.5) &&
+        near(
+          [action[0] + action[2] / 2, action[1], action[3]],
+          [a.x + a.width / 2, a.y, a.height],
+          0.5,
+        ),
+      `${name}: the galaxy map panel and action sit as galaxyMapRects: ${JSON.stringify({
+        action,
+        expected: { action: a, panel: p },
+        panel,
+      })}`,
+    );
   }
   // Earth on the galaxy map: its marker selects it, and the single destination action reads Jump to
   // Earth in flight or Stay on Earth at boarding (gameplay/player-copy.md); pressing it goes home.
@@ -1754,8 +1873,8 @@ try {
   assert.equal(await page.locator("#save-status").textContent(), "", "Saving works again");
   await tapUse(CONTENT.labels.talk);
   await interactionCard().waitFor({ state: "visible" });
-  // The card at 1280x720, 844x390 and 720x360 with the phone insets set (the full-viewport
-  // policy keeps hardware insets zero, so they move nothing).
+  // The card at 1280x720, 844x390 and 720x360 with the phone insets, which move the HUD row in
+  // from the right by the HUD rect's right edge.
   const interactionViewport = page.viewportSize();
   const interactionRows = {
     "1280x720": await interactionHudProof("interaction-hud-1280x720"),
@@ -1764,21 +1883,29 @@ try {
   await page.waitForTimeout(250);
   interactionRows["844x390"] = await interactionHudProof("interaction-hud-844x390");
   await page.setViewportSize({ height: 360, width: 720 });
-  await page.evaluate(() => {
-    const unit = Number(
-      getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
-    );
-    for (const [side, value] of Object.entries({ bottom: 19, left: 43, right: 43, top: 0 })) {
-      document.documentElement.style.setProperty(`--inset-${side}`, `${value * unit}px`);
-    }
-  });
-  await page.waitForTimeout(250);
+  const interactionInsets = await setPhoneInsets();
   interactionRows["720x360-insets"] = await interactionHudProof("interaction-hud-720x360-insets");
-  await page.evaluate(() => {
-    for (const side of ["bottom", "left", "right", "top"]) {
-      document.documentElement.style.removeProperty(`--inset-${side}`);
-    }
-  });
+  await assertPhoneInsets("interaction-hud-720x360-insets");
+  await interactionInsets.restore();
+  // 1280x720 is the same 720x360 logical view, so the row moves by the HUD rect's right edge alone.
+  const hudRight = (insets) => {
+    const hud = insetLayout.hudRect(insets, interactionInsets.view);
+    return interactionInsets.view.width - hud.x - hud.width;
+  };
+  const rowShift = hudRight(PHONE_INSETS) - hudRight(insetLayout.NO_INSETS);
+  for (const part of ["close", "skip"]) {
+    const [plain, inset] = [interactionRows["1280x720"], interactionRows["720x360-insets"]];
+    assert.ok(
+      near(
+        inset[part],
+        [plain[part][0] - rowShift, plain[part][1] - rowShift, plain[part][2], plain[part][3]],
+        0.15,
+      ),
+      `With phone insets the Interaction card's ${part} moves ${rowShift} in from the right: ${JSON.stringify(
+        { inset: inset[part], plain: plain[part] },
+      )}`,
+    );
+  }
   await page.setViewportSize(interactionViewport);
   await page.waitForTimeout(250);
   save("interaction-hud-proof.json", interactionRows);
@@ -2044,7 +2171,7 @@ try {
   await page.screenshot({ path: `${output}/map-earth-danger.png` });
   // Map proofs: the local map in danger with nothing mapped, its header, tools, empty panel and
   // footer.
-  await proofsAt("map-local");
+  await proofsAt("map-local", checkMapHeader);
   // Tab order: the tools, the places in reading order, Travel here where offered, Quests,
   // Galaxies, then Close, wrapping at either end; from Close, Tab starts over at the tools.
   await mapScreen.locator('[data-action="map-close"]').focus();
@@ -2098,7 +2225,12 @@ try {
     { inCard: true, primary: true, text: CONTENT.labels.questBack },
     "Quests opened from the map focuses its primary Back",
   );
-  await proofsAt("map-quests");
+  await proofsAt("map-quests", checkMapHeader);
+  save("map-header-proof.json", mapHeaders);
+  events.checks.push(
+    "The map header starts SPACING.gap right of the pause press area and stays in its cap at " +
+      "1280x720 and at 720x360 with phone insets, behind Quests too",
+  );
   await page.keyboard.press("Escape");
   await questsCard.waitFor({ state: "hidden" });
   assert.ok(await mapScreen.isVisible(), "Escape closes Quests back to the map");
@@ -2321,23 +2453,11 @@ try {
   await page.setViewportSize({ height: 390, width: 844 });
   await page.waitForTimeout(250);
   await page.screenshot({ path: `${output}/galaxy-map-844.png` });
-  const setInsets = (logical) =>
-    page.evaluate((insets) => {
-      const unit = Number(
-        getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
-      );
-      for (const [side, value] of Object.entries(insets)) {
-        if (value === null) {
-          document.documentElement.style.removeProperty(`--inset-${side}`);
-        } else {
-          document.documentElement.style.setProperty(`--inset-${side}`, `${value * unit}px`);
-        }
-      }
-    }, logical);
-  await setInsets({ bottom: 19, left: 43, right: 43, top: 0 });
-  await page.waitForTimeout(250);
+  const galaxyInsets = await setPhoneInsets();
   await page.screenshot({ path: `${output}/galaxy-map-844-insets.png` });
-  await setInsets({ bottom: null, left: null, right: null, top: null });
+  await assertPhoneInsets("galaxy-map-844-insets");
+  await checkGalaxyMap(PHONE_INSETS, galaxyInsets.view, "galaxy-map-844-insets");
+  await galaxyInsets.restore();
   if (viewportBefore) {
     await page.setViewportSize(viewportBefore);
   }
@@ -3948,7 +4068,11 @@ try {
     );
   await selector().locator(".ada-route-marker[data-earth]").click();
   await destinationReads("Stay on Earth");
-  await proofsAt("galaxy-map-earth");
+  await proofsAt("galaxy-map-earth", checkGalaxyMap);
+  events.checks.push(
+    "The galaxy map's panel and one destination action sit as galaxyMapRects at 1280x720 and at " +
+      "720x360 with phone insets",
+  );
   await selector().locator('.ada-route-marker[data-position="2"]').click();
   await destinationReads("Jump to Whirlpool");
   events.checks.push(
