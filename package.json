@@ -25,7 +25,7 @@
   },
   "devDependencies": {
     "@andornaut/art-kit": "https://github.com/andornaut/art-kit/releases/download/v0.29.0/art-kit-0.29.0.tgz",
-    "@andornaut/delivery-kit": "https://github.com/andornaut/delivery-kit/releases/download/v4.6.1/delivery-kit-4.6.1.tgz",
+    "@andornaut/delivery-kit": "https://github.com/andornaut/delivery-kit/releases/download/v4.6.2/delivery-kit-4.6.2.tgz",
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.6.6",
     "eslint": "^10.14.0",
