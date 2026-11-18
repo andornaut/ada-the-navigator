@@ -2403,7 +2403,8 @@ try {
   await page.keyboard.press("Escape");
   await menuCard().waitFor({ state: "hidden" });
   await openMenu();
-  await menuCard().locator('[data-action="close-menu"]').click();
+  // The X sits in the card's frame, outside its section.
+  await page.locator('[data-action="close-menu"]').click();
   await menuCard().waitFor({ state: "hidden" });
   await openMenu();
   await menuCard().locator('[data-action="menu-backToTitle"]').click();
