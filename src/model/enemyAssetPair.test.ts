@@ -63,6 +63,7 @@ it("uses each industrial primary turret while emitting one canonical Rapid shot"
       {
         adaWidth: 20,
         dt: 1 / 60,
+        inPlayView: true,
         initialPackSizes: {},
         lead: 1,
         peers: [state],

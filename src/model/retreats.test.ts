@@ -17,6 +17,7 @@ const context = (state: EnemyState): EnemyContext => ({
   adaWidth: 20,
   dt,
   engagementAdmitted: true,
+  inPlayView: true,
   initialPackSizes: {},
   lead: 1,
   peers: [state],

@@ -13,6 +13,7 @@ function fixture() {
   const context: EnemyContext = {
     adaWidth: 20,
     dt: 1 / 60,
+    inPlayView: true,
     initialPackSizes: { pack: 4 },
     lead: 1,
     peers: [state],

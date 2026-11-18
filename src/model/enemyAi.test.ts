@@ -66,6 +66,7 @@ const spawn = (
 const observation = (state: EnemyState): EnemyContext => ({
   adaWidth: 20,
   dt: 1 / 60,
+  inPlayView: true,
   initialPackSizes: {},
   lead: 1,
   peers: [state],
@@ -93,6 +94,20 @@ describe("enemy rules", () => {
     expect(stepEnemy(enemyCatalog.frigate, { ...context, summoned: false }, state)).toEqual(
       stepEnemy(enemyCatalog.frigate, ordinary, state),
     );
+  });
+
+  it("fires only while the ship is inside the current play view, still pursuing outside it", () => {
+    const state = spawn("swarm");
+    const inside = stepEnemy(enemyCatalog.swarm, observation(state), state);
+    expect(inside.fire.length).toBeGreaterThan(0);
+    const outside = stepEnemy(
+      enemyCatalog.swarm,
+      { ...observation(state), inPlayView: false },
+      state,
+    );
+    expect(outside.fire).toEqual([]);
+    expect(outside.state.engaged).toBe(true);
+    expect(outside.state.lastSeen).toEqual(inside.state.lastSeen);
   });
 
   it("flies a summoned guard straight at an unseen Ada past its pursuit limits, holding fire", () => {

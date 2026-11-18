@@ -155,6 +155,7 @@ it("retains industrial variant/cache identity and one canonical Rapid shot despi
       {
         adaWidth: CONTENT.tuning.flight.shipRadius * 2,
         dt: 1 / 60,
+        inPlayView: true,
         initialPackSizes: {},
         lead: 1,
         peers: [enemy],

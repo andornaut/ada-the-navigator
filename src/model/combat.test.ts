@@ -1282,6 +1282,25 @@ describe("combat admission and subframe firing", () => {
     expect(shot.life).toBeCloseTo(before.life - dt, 10);
   });
 
+  it("holds enemy fire outside the visible game area while Ada is within its engagement range", () => {
+    const shots = (offset: Vec, input = idle) => {
+      const flight = empty();
+      const target = ship("swarm", {
+        x: flight.player.x + offset.x,
+        y: flight.player.y + offset.y,
+      });
+      target.cooldown = 999;
+      target.enemy!.primaryCooldown = 0.012;
+      flight.objects.push(target);
+      stepFlight(CONTENT, 1 / 60, input, flight);
+      return flight.shots.filter((shot) => shot.enemy).length;
+    };
+    // Both lie within the swarm's 360 engagement; (220, 220) projects below the 720x360 view.
+    expect(shots({ x: 150, y: 150 })).toBe(1);
+    expect(shots({ x: 220, y: 220 })).toBe(0);
+    expect(shots({ x: 220, y: 220 }, { ...idle, viewportWidth: 2 * SCREEN.width })).toBe(1);
+  });
+
   it("does not hit Ada before a delayed bolt can reach her collision boundary", () => {
     const flight = empty();
     const target = ship("swarm", { x: 15, y: 0 });

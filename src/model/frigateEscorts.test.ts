@@ -149,6 +149,7 @@ it("uses the existing fallback when the escort leader is disabled", () => {
   const context = {
     adaWidth: 20,
     dt: 0.01,
+    inPlayView: true,
     initialPackSizes: {},
     lead: 0,
     peers: [],

@@ -13,6 +13,7 @@ it("preserves an explicitly equipped level without altering mechanism state or f
   const context = {
     adaWidth: 32,
     dt: 0.01,
+    inPlayView: true,
     initialPackSizes: {},
     lead: 1,
     peers: [legacy],
@@ -45,6 +46,7 @@ it("retains legacy absence without rolling or adding an equipped level during re
     {
       adaWidth: 32,
       dt: 0.01,
+      inPlayView: true,
       initialPackSizes: {},
       lead: 1,
       peers: [enemy],

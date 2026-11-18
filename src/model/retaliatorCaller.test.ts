@@ -46,6 +46,7 @@ function fixture(variant: IndustrialBodyKey) {
   const context: EnemyContext = {
     adaWidth: CONTENT.tuning.flight.shipRadius * 2,
     dt: SIMULATION_STEP_SECONDS,
+    inPlayView: true,
     initialPackSizes: {},
     lead: 1,
     peers: [state],

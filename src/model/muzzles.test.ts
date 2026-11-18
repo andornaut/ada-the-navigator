@@ -35,6 +35,7 @@ const spawn = (archetype: "capital" | "fighter" | "frigate" | "retaliator"): Ene
 const context = (state: EnemyState, player = { x: 300, y: 40 }): EnemyContext => ({
   adaWidth: 20,
   dt: 1 / 60,
+  inPlayView: true,
   initialPackSizes: {},
   lead: 1,
   peers: [state],

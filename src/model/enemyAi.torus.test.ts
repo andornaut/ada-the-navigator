@@ -18,6 +18,7 @@ const observation = (state: EnemyState): EnemyContext => ({
   adaWidth: 20,
   dt: 1 / 60,
   engagementAdmitted: true,
+  inPlayView: true,
   initialPackSizes: {},
   lead: 1,
   peers: [state],

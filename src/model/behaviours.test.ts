@@ -46,6 +46,7 @@ const spawn = (archetype: EnemyArchetype, position: { x: number; y: number }, en
 const context = (peers: readonly EnemyState[], player = ada): EnemyContext => ({
   adaWidth: CONTENT.tuning.flight.shipRadius * 2,
   dt,
+  inPlayView: true,
   initialPackSizes: {},
   lead: 1,
   peers,

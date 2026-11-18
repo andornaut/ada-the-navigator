@@ -27,6 +27,7 @@ function context(state: EnemyState, dt = 0.01): EnemyContext {
   return {
     adaWidth: CONTENT.tuning.flight.shipRadius * 2,
     dt,
+    inPlayView: true,
     initialPackSizes: {},
     lead: 1,
     peers: [state],

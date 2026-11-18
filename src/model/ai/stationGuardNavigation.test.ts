@@ -39,6 +39,7 @@ it.each([false, true])(
     const context: EnemyContext = {
       adaWidth: 20,
       dt: SIMULATION_STEP_SECONDS,
+      inPlayView: true,
       initialPackSizes: {},
       lead: 1,
       peers: [],
@@ -88,6 +89,7 @@ it.each(["combat", "summoned", "lastSeen"])(
       adaWidth: 20,
       dt: SIMULATION_STEP_SECONDS,
       engagementAdmitted: true,
+      inPlayView: true,
       initialPackSizes: {},
       lead: 1,
       peers: [],

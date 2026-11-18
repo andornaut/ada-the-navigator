@@ -2152,25 +2152,32 @@ function cueGuards(content: GameContent, flight: FlightState, events: FlightEven
 }
 
 /**
- * A summoned guard holds fire until its centre is inside the current play view, `viewportWidth`
- * wide at the 720x360 base's aspect around Ada, then fights as usual; disabled, destroyed or gone,
- * it is released too.
+ * Whether a point's centre is inside the current play view: `viewportWidth` wide at the 720x360
+ * base's aspect around Ada, by the shortest wrapped image.
+ */
+function insidePlayView(viewportWidth: number, flight: FlightState, point: Vec): boolean {
+  const view = { height: (viewportWidth * SCREEN.height) / SCREEN.width, width: viewportWidth };
+  const image = worldPoint(flightWorldContext(flight), flight.player, point);
+  return onScreen(view, flight.player, { radius: 0, x: image.x, y: image.y });
+}
+
+/**
+ * A summoned guard holds fire until it is inside the current play view (insidePlayView), then
+ * fights as usual; disabled, destroyed or gone, it is released too.
  */
 function releaseSummonedGuards(viewportWidth: number, flight: FlightState): void {
   if (!flight.summonedGuards) {
     return;
   }
-  const view = { height: (viewportWidth * SCREEN.height) / SCREEN.width, width: viewportWidth };
   flight.summonedGuards = flight.summonedGuards.filter((id) => {
     const guard = flight.objects.find((object) => object.id === id);
     if (!guard || guard.hp <= 0 || guard.enemy?.disabled) {
       return false;
     }
-    const context = flightWorldContext(flight);
-    const point = worldPoint(context, flight.player, guard);
-    if (!onScreen(view, flight.player, { radius: 0, x: point.x, y: point.y })) {
+    if (!insidePlayView(viewportWidth, flight, guard)) {
       return true;
     }
+    const context = flightWorldContext(flight);
     if (guard.enemy) {
       const pursuit = enemyEquipmentDefinition(flight.galaxy, guard.enemy).pursuit;
       // A remote summons starts its local fight here instead of immediately leashing back.
@@ -3437,6 +3444,8 @@ function enemies(
         dormantPackMembers: worldRetainedPackMembers(flightWorldContext(flight), content, flight),
         dt,
         engagementAdmitted: admissions.has(object.id),
+        // An enemy fires only while it is inside the visible game area.
+        inPlayView: insidePlayView(viewport.viewportWidth, flight, object),
         initialPackSizes: combat(flight).initialPackSizes,
         lead: ENEMY_AIM.lead[ROUTE_POSITION[flight.galaxy]],
         loadedPackMembers,

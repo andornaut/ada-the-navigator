@@ -247,6 +247,7 @@ describe("platform", () => {
   const context = (state: EnemyState, away: number): EnemyContext => ({
     adaWidth: 20,
     dt: 1 / 60,
+    inPlayView: true,
     initialPackSizes: {},
     lead: 1,
     peers: [state],

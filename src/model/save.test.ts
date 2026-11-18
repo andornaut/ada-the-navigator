@@ -186,6 +186,7 @@ describe("combat save boundary", () => {
     const context = {
       adaWidth: 20,
       dt: 0.5,
+      inPlayView: true,
       initialPackSizes: snapshot.flight.combat.initialPackSizes,
       lead: 1,
       peers: [before],

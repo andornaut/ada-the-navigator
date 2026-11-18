@@ -118,6 +118,8 @@ export interface EnemyContext extends WorldContext {
   dormantPackMembers?: Readonly<Record<string, number>>;
   adaWidth: number;
   dt: number;
+  /** Whether the ship's centre is inside the current play view around Ada; it fires only then. */
+  inPlayView: boolean;
   initialPackSizes: Readonly<Record<string, number>>;
   /** Pre-movement live loaded pack counts, including disabled survivors. */
   loadedPackMembers?: Readonly<Record<string, number>>;
@@ -998,6 +1000,7 @@ export function stepEnemy(
     next.engaged &&
     context.targetable &&
     context.visibility === "visible" &&
+    context.inPlayView &&
     distance <= definition.engagement;
   const phasedHeavy = definition.fireClockPolicy === "staggered-and-paused";
   if (phasedHeavy && canFire && !state.firePhasesInitialized) {
