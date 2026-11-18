@@ -1286,6 +1286,28 @@ try {
       saved?.flight?.player?.y === Number(status.dataset.y)
     );
   }, storageKey);
+  // A save's progress survives a later save of the same flight: Penny keeps sensing while the
+  // resumed flight runs, so a landmark she senses after the earlier save adds its marker knowledge.
+  // Every other progress fact stays exactly as saved, and every marker known then stays known.
+  function assertProgressRetained(after, before, message) {
+    const withoutKnowledge = (progress) =>
+      Object.fromEntries(
+        Object.entries(progress).map(([galaxy, entry]) => {
+          const rest = { ...entry };
+          delete rest.markerKnowledge;
+          return [galaxy, rest];
+        }),
+      );
+    assert.deepEqual(withoutKnowledge(after), withoutKnowledge(before), message);
+    for (const [galaxy, entry] of Object.entries(before)) {
+      for (const id of Object.keys(entry.markerKnowledge ?? {})) {
+        assert.ok(
+          Object.hasOwn(after[galaxy]?.markerKnowledge ?? {}, id),
+          `${message}: galaxy ${galaxy} keeps knowing ${id}`,
+        );
+      }
+    }
+  }
   const persisted = await readSave();
   assert.equal(persisted.version, SAVE_VERSION);
   await page.reload();
@@ -1298,7 +1320,7 @@ try {
       `Reload must retain flight ${field}`,
     );
   }
-  assert.deepEqual(resumed.progress, persisted.progress);
+  assertProgressRetained(resumed.progress, persisted.progress, "Reload must retain progress");
   await page.goto("http://ada-preview:4173/");
   const onLanding = await readSave();
   assert.equal(await page.locator("#game-canvas").count(), 0);
@@ -1324,7 +1346,11 @@ try {
       `Website round trip preserves flight ${field}`,
     );
   }
-  assert.deepEqual(returned.progress, onLanding.progress);
+  assertProgressRetained(
+    returned.progress,
+    onLanding.progress,
+    "Website round trip preserves progress",
+  );
   events.checks.push("Reload resumes the persisted flight without regeneration");
 
   const safeInput = new GameModel(CONTENT);
