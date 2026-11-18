@@ -1444,6 +1444,8 @@ try {
   // The first flight's move and aim lessons are seen, so no lesson line holds the notice slot the
   // save status yields to (src/ui/notice.ts).
   safeInput.state.seenConversations.push("lesson:move", "lesson:aim");
+  // Every flight follows the prologue, which unlocks the Paused card's Map.
+  safeInput.state.prologueSeen = true;
   assert.equal(safeInput.state.flight.freshChunk, null);
   const safeSerialized = safeInput.save();
   assert.deepEqual(relaunch(CONTENT, safeSerialized).state, safeInput.state);
@@ -1729,7 +1731,7 @@ try {
   ];
   await seedOnce(dangerInput.save(), "ada-browser.danger-context.v1");
   await openPause();
-  // In flight the card shows Map, Ship, Settings and Back to title over Resume, every one
+  // In flight the card shows Map, Ship, Quests, Settings and Back to title over Resume, every one
   // available in danger.
   const pauseActions = () => page.locator('[data-dialog="pause"] .ada-stack button:not([hidden])');
   assert.deepEqual(
@@ -1743,11 +1745,12 @@ try {
     [
       ["pause-map", CONTENT.labels.map, null],
       ["pause-ship", CONTENT.labels.ship, null],
+      ["pause-quests", CONTENT.labels.quests, null],
       ["pause-settings", CONTENT.labels.settings, null],
       ["pause-backToTitle", CONTENT.labels.backToTitle, null],
       ["pause-resume", CONTENT.labels.resume, null],
     ],
-    "The in-flight Paused card shows Map, Ship, Settings, Back to title and Resume, all " +
+    "The in-flight Paused card shows Map, Ship, Quests, Settings, Back to title and Resume, all " +
       "available in danger",
   );
   await page.screenshot({ path: `${output}/pause-flight-danger.png` });
