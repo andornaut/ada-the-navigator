@@ -1887,9 +1887,8 @@ try {
     ["mapZoomOut", "mapZoomIn", "mapCenterOnAda"].map((key) => CONTENT.labels[key]),
     "The map's tools carry Gameplay's accessible labels",
   );
-  // Galaxies on the HUD row: Quests and Galaxies one 98 width, Galaxies' right edge 16 left of
-  // the tool column, the header capped SPACING.gap short of Quests, 18 pips included. In danger
-  // it refuses, and the reason-only panel shows the danger line with nothing selected.
+  // Galaxies in the footer with Quests and Close, the header capped SPACING.gap short of the tools.
+  // In danger it refuses, and the reason-only panel shows the danger line with nothing selected.
   const mapEarth = mapScreen.locator('[data-action="map-galaxies"]');
   assert.equal(
     await mapEarth.textContent(),
@@ -1905,45 +1904,42 @@ try {
       getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
     );
     const box = (selector) => screen.querySelector(selector).getBoundingClientRect();
-    const header = screen.querySelector(".ada-map-header");
-    const pips = screen.querySelector(".ada-map-pips");
-    while (pips.children.length < 18) {
-      pips.append(pips.firstElementChild.cloneNode(true));
-    }
-    const result = {
+    return {
+      close: box('[data-action="map-close"]'),
       galaxies: box('[data-action="map-galaxies"]'),
-      quests: box('[data-action="map-quests"]'),
-      fits: header.scrollWidth <= header.clientWidth,
       header: box(".ada-map-header"),
+      quests: box('[data-action="map-quests"]'),
       tools: box(".ada-map-tools"),
       unit,
     };
-    while (pips.children.length > 12) {
-      pips.lastElementChild.remove();
-    }
-    return result;
   });
   const logical = (px) => Math.round((px / hudRow.unit) * 10) / 10;
-  // The close tool's disc is small: its drawn left edge is 7.5 inside its target, and Galaxies
-  // ends SMALL_BUTTON_GAP (24) left of it.
+  // The footer (art/map.md "Footer"): Quests, Galaxies, then Close, each 98 by 48 and BUTTON_GAP
+  // (16) apart face to face on one row, Close's right the tool row's right. Device-pixel snapping
+  // puts each width within 0.1 either side.
+  const footer = [hudRow.quests, hudRow.galaxies, hudRow.close];
   assert.ok(
-    logical(hudRow.galaxies.width) === 98 &&
-      logical(hudRow.galaxies.height) === 48 &&
-      Math.abs(logical(hudRow.tools.left - hudRow.galaxies.right) + 7.5 - 24) <= 0.1 &&
-      Math.abs(hudRow.galaxies.top - hudRow.tools.top) <= 0.5,
-    `Galaxies is 98 by 48 on the HUD row, 24 left of the close disc: ${JSON.stringify(hudRow)}`,
-  );
-  assert.ok(
-    // Device-pixel snapping puts the 98 width within 0.1 either side.
-    Math.abs(hudRow.quests.width / hudRow.unit - 98) <= 0.1 &&
-      logical(hudRow.quests.height) === 48 &&
+    footer.every(
+      (button) =>
+        Math.abs(button.width / hudRow.unit - 98) <= 0.1 &&
+        Math.abs(button.height / hudRow.unit - 48) <= 0.1 &&
+        Math.abs(button.top - hudRow.close.top) <= 0.5,
+    ) &&
       Math.abs(logical(hudRow.galaxies.left - hudRow.quests.right) - 16) <= 0.1 &&
-      Math.abs(hudRow.quests.top - hudRow.galaxies.top) <= 0.5,
-    `Quests is 98 by 48, BUTTON_GAP (16) left of Galaxies: ${JSON.stringify(hudRow)}`,
+      Math.abs(logical(hudRow.close.left - hudRow.galaxies.right) - 16) <= 0.1 &&
+      Math.abs(hudRow.close.right - hudRow.tools.right) <= 0.5,
+    `Quests, Galaxies and Close are 98 by 48, 16 apart, Close under the tools' right: ${JSON.stringify(hudRow)}`,
+  );
+  // The tools: one row of three 48 targets, 9 apart, 162 wide, on the page rect's top-right corner.
+  assert.ok(
+    Math.abs(logical(hudRow.tools.width) - 162) <= 0.1 &&
+      Math.abs(logical(hudRow.tools.height) - 48) <= 0.1 &&
+      hudRow.tools.bottom < hudRow.close.top,
+    `The tools are one 162 by 48 row above the footer: ${JSON.stringify(hudRow)}`,
   );
   assert.ok(
-    hudRow.fits && hudRow.header.right <= hudRow.quests.left - 8 * hudRow.unit + 0.5,
-    `The header holds 18 pips within its cap: ${JSON.stringify(hudRow)}`,
+    hudRow.header.right <= hudRow.tools.left - 8 * hudRow.unit + 0.5,
+    `The header stays SPACING.gap short of the tools: ${JSON.stringify(hudRow)}`,
   );
   assert.equal(await mapEarth.getAttribute("aria-disabled"), "true", "It is disabled in danger");
   const reasonOnly = await mapScreen.evaluate((screen) => {
@@ -1976,6 +1972,28 @@ try {
     "In danger with nothing selected the reason-only panel is 360 by 52, or 80 with the empty note",
   );
   await page.screenshot({ path: `${output}/map-earth-danger.png` });
+  // Map proofs: the local map with its tools, place panel and footer at 1280x720, and at 720x360
+  // with the phone insets set (the full-viewport policy keeps hardware insets zero).
+  await page.screenshot({ path: `${output}/map-local-1280x720.png` });
+  const mapViewport = page.viewportSize();
+  await page.setViewportSize({ height: 360, width: 720 });
+  await page.evaluate(() => {
+    const unit = Number(
+      getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
+    );
+    for (const [side, value] of Object.entries({ bottom: 19, left: 43, right: 43, top: 0 })) {
+      document.documentElement.style.setProperty(`--inset-${side}`, `${value * unit}px`);
+    }
+  });
+  await page.waitForTimeout(250);
+  await page.screenshot({ path: `${output}/map-local-720x360-insets.png` });
+  await page.evaluate(() => {
+    for (const side of ["bottom", "left", "right", "top"]) {
+      document.documentElement.style.removeProperty(`--inset-${side}`);
+    }
+  });
+  await page.setViewportSize(mapViewport);
+  await page.waitForTimeout(250);
   // Tab order: the tools, the places in reading order, Travel here where offered, Quests,
   // Galaxies, then Close, wrapping at either end; from Close, Tab starts over at the tools.
   await mapScreen.locator('[data-action="map-close"]').focus();
