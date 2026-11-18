@@ -532,6 +532,9 @@ export class GameModel {
     }
     this.depletionContinuation =
       navigation?.depletionContinuation === true && this.state.mode === "home";
+    // The save's navigation fields live on the model, not in its state.
+    delete (this.state as GameSave).depletionContinuation;
+    delete (this.state as GameSave).pendingInteraction;
     // Achievements the save already reached unlock without notices.
     unlockAchievements(ACHIEVEMENTS, ACHIEVEMENT_TOTALS, this.state.achievements, this.state);
     this.talk = new ConversationDirector(

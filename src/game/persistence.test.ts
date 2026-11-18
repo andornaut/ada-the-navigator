@@ -99,6 +99,7 @@ describe("canonical Ada save storage", () => {
     expect(loaded.status).toBe("loaded");
     expect(loaded.save.pendingInteraction?.dialogue).toEqual(question);
     const resumed = relaunch(CONTENT, loaded.save);
+    expect(resumed.state).not.toHaveProperty("pendingInteraction");
     expect(resumed.state.tasks[1]).toBeUndefined();
     resumed.interact();
     expect(resumed.state.dialogue).toEqual(question);
@@ -139,6 +140,9 @@ describe("canonical Ada save storage", () => {
     expect(loaded.status).toBe("loaded");
     expect(loaded.save.depletionContinuation).toBe(true);
     const resumed = new GameModel(CONTENT, loaded.save);
+    // The continuation lives on the model: the resumed state is the state that was saved.
+    expect(resumed.state).not.toHaveProperty("depletionContinuation");
+    expect(resumed.state).toEqual(model.state);
     resumed.continueGame();
     expect(resumed.storyView?.page.id).toBe("jumpHome");
     resumed.storyNext();
