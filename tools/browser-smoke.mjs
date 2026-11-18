@@ -2584,8 +2584,10 @@ try {
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   const stationCard = page.locator('[data-dialog="station"]');
   const nextLine = stationCard.getByRole("button", { name: CONTENT.labels.nextLine, exact: true });
+  // Docks with the keyboard's Use. E switches flight to the desktop controls, which hide the Use
+  // disc, so the offer is read from the disc's action rather than its visibility.
   const dockHere = async () => {
-    await page.locator('.ada-use[data-use="dock"]').waitFor({ state: "visible" });
+    await page.locator('.ada-use[data-use="dock"]').waitFor({ state: "attached" });
     await page.evaluate(() => document.activeElement?.blur());
     await page.keyboard.press("KeyE");
     await stationCard.waitFor({ state: "visible" });
