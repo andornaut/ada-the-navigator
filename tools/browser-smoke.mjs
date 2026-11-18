@@ -342,6 +342,20 @@ try {
   events.checks.push("Real renderer and accessible home status");
   // Use is Chibi's touch disc, drawn on the canvas: its accessible button takes no pointer input,
   // so a thumb taps the canvas at the disc's centre, where the press circle takes it.
+  // Earth on the galaxy map: its marker selects it, and the single destination action reads Jump to
+  // Earth in flight or Stay on Earth at boarding (gameplay/player-copy.md); pressing it goes home.
+  async function chooseEarth(map, label) {
+    await map.locator(".ada-route-marker[data-earth]").click();
+    const action = map.locator('[data-action="galaxy-jump"]');
+    await page.waitForFunction(
+      ({ text }) =>
+        document
+          .querySelector('.ada-route[data-dialog="galaxies"] [data-action="galaxy-jump"]')
+          ?.textContent?.trim() === text,
+      { text: label },
+    );
+    await action.click();
+  }
   // A key press switches flight to the desktop controls, which hide the sticks and the Use disc; a
   // touch on the game surface switches back (src/input/desktop.ts). The spot is clear of the HUD,
   // the notice slot and the ship.
@@ -2312,7 +2326,8 @@ try {
   await galaxyMap.waitFor({ state: "hidden" });
   assert.ok(await localMap.isVisible(), "Escape closes the galaxy map back to the local map");
   assert.equal(await focusedAction(), "map-galaxies", "Escape returns focus to Galaxies");
-  // Jump to another unlocked galaxy: Right moves the ship to Whirlpool, where Jump reads Jump, and
+  // Jump to another unlocked galaxy: Right moves the ship to Whirlpool, where the action reads Jump to
+  // Whirlpool, and
   // the flight there begins.
   await localMap.locator('[data-action="map-galaxies"]').click();
   await galaxyMap.waitFor({ state: "visible" });
@@ -2326,8 +2341,8 @@ try {
   );
   assert.equal(
     (await galaxyMap.locator('[data-action="galaxy-jump"]').textContent())?.trim(),
-    CONTENT.labels.jump,
-    "Jump reads Jump on another galaxy",
+    "Jump to Whirlpool",
+    "The destination action reads Jump to Whirlpool on another open galaxy",
   );
   await galaxyMap.locator('[data-action="galaxy-jump"]').click();
   await galaxyMap.waitFor({ state: "hidden" });
@@ -2350,7 +2365,7 @@ try {
   await page.locator('[data-action="pause-map"]').click();
   await localMap.locator('[data-action="map-galaxies"]').click();
   await galaxyMap.waitFor({ state: "visible" });
-  await galaxyMap.locator('[data-action="galaxy-home"]').click();
+  await chooseEarth(galaxyMap, "Jump to Earth");
   await page
     .locator(".ada-story-panel:not(.ada-dialogue-panel):not([hidden])")
     .getByText(CONTENT.labels.pickUpRock, { exact: true })
@@ -2494,7 +2509,7 @@ try {
   await towGalaxies.click();
   const towGalaxyMap = page.locator('.ada-route[data-dialog="galaxies"]');
   await towGalaxyMap.waitFor({ state: "visible" });
-  await towGalaxyMap.locator('[data-action="galaxy-home"]').click();
+  await chooseEarth(towGalaxyMap, "Jump to Earth");
   await page
     .locator(".ada-story-panel:not(.ada-dialogue-panel):not([hidden])")
     .getByText(CONTENT.labels.pickUpRock, { exact: true })
@@ -3306,7 +3321,7 @@ try {
   const aboard = await storyPage();
   await page.locator('[data-action="story-skip"]').click();
   await selector().waitFor({ state: "visible" });
-  await page.locator('[data-action="galaxy-home"]').click();
+  await chooseEarth(selector(), "Stay on Earth");
   await storyButton("next").waitFor({ state: "visible" });
   const room = await storyPage();
   const roomAction = ((await storyButton("next").textContent()) ?? "").trim();
@@ -3809,9 +3824,9 @@ try {
     "Galaxy selection opens on the farthest unlocked galaxy, Whirlpool at route position 2",
   );
   assert.equal(
-    (await page.locator('[data-action="galaxy-home"]').textContent())?.trim(),
+    await selector().locator(".ada-route-marker[data-earth]").getAttribute("aria-label"),
     CONTENT.labels.homeButton,
-    "Galaxy selection's Earth button reads Earth",
+    "Galaxy selection's Earth marker is named Earth",
   );
   await page.screenshot({ path: `${output}/selector-earth.png` });
   assert.equal(
