@@ -362,8 +362,8 @@ try {
   // The full-viewport policy keeps hardware insets zero, so an inset proof publishes what the view
   // scale bridge would for the phone insets: viewProperties of the bridge's own layout with them.
   // The bridge writes only when the view's size changes, so they hold until restore puts its own
-  // values back. Waits for the bridge to settle on the current size first, and checks that what it
-  // published is the no-inset layout this starts from. Returns the logical view, and restore.
+  // values back. Waits for the bridges to settle on the current size first, and checks that what
+  // they published is the no-inset layout this starts from. Returns the logical view, and restore.
   async function setPhoneInsets() {
     const read = () =>
       page.evaluate(() => {
@@ -386,6 +386,24 @@ try {
       );
       return Math.abs(unit - Math.min(canvas.width / 720, canvas.height / 360)) < 1e-6;
     });
+    // Each scene's controls keep their own bridge on #app, and one can publish a frame or more
+    // after another: wait until #app's properties have held for 500 ms.
+    await page.evaluate(
+      () =>
+        new Promise((resolve) => {
+          let quiet;
+          const observer = new MutationObserver(() => {
+            clearTimeout(quiet);
+            quiet = setTimeout(done, 500);
+          });
+          const done = () => {
+            observer.disconnect();
+            resolve();
+          };
+          observer.observe(document.querySelector("#app"), { attributeFilter: ["style"] });
+          quiet = setTimeout(done, 500);
+        }),
+    );
     const before = await read();
     const plain = viewScale.playLayout(before.size);
     const published = viewScale.viewProperties(plain);
