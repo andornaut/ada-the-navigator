@@ -3760,14 +3760,26 @@ try {
       "fan and 100 world-unit scatter particles",
   );
 
-  const cargoModel = new GameModel(CONTENT);
-  cargoModel.state.unlocked = [1, 2];
-  cargoModel.startGalaxy(2);
-  playOpening(cargoModel);
-  Object.assign(cargoModel.state.progress[2], { introduced: true, stage: 1, known: ["hub"] });
-  ensureDestination(CONTENT, "hub", cargoModel.state.flight);
-  cargoModel.teleport("hub");
-  cargoModel.state.flight.cargo = 12345;
+  // As the hub station fixture: Cartwheel's story resolves before its flight starts, so the hub
+  // is in the flight with no capital encounter planned around it.
+  const cargoSetup = new GameModel(CONTENT);
+  cargoSetup.state.unlocked = [1, 2];
+  Object.assign(cargoSetup.state.progress[2], {
+    introduced: true,
+    questComplete: true,
+    resolved: true,
+    stage: 5,
+  });
+  cargoSetup.startGalaxy(2);
+  playOpening(cargoSetup);
+  cargoSetup.state.dialogue = null;
+  Object.assign(cargoSetup.state.progress[2], { known: ["hub"], stations: ["hub"] });
+  ensureDestination(CONTENT, "hub", cargoSetup.state.flight);
+  cargoSetup.teleport("hub");
+  cargoSetup.state.flight.cargo = 12345;
+  // Relaunched, as the browser loads it: a resolved Cartwheel unlocks its achievement on load.
+  const cargoModel = relaunch(CONTENT, cargoSetup.save());
+  assert.equal(cargoModel.contextAction, "deposit", "The wide-cargo fixture offers Deposit");
   const cargoSave = cargoModel.save();
   assert.deepEqual(relaunch(CONTENT, cargoSave).state, cargoModel.state);
   save("cargo-fixture.json", {
