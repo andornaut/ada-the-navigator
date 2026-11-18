@@ -1967,9 +1967,10 @@ try {
       hidden: false,
       reason: [CONTENT.labels.travelUnavailable],
       row: true,
-      width: 360,
+      // maxWidth: Quests' left less SPACING.gap and the page inset (378 - 8 - 16).
+      width: 354,
     },
-    "In danger with nothing selected the reason-only panel is 360 by 52, or 80 with the empty note",
+    "In danger with nothing selected the reason-only panel is 354 by 52, or 80 with the empty note",
   );
   await page.screenshot({ path: `${output}/map-earth-danger.png` });
   // Map proofs: the local map with its tools, place panel and footer at 1280x720, and at 720x360
@@ -2163,7 +2164,8 @@ try {
       jobText: jobLine?.textContent ?? "",
       lineHeight: jobLine ? parseFloat(getComputedStyle(jobLine).lineHeight) : 0,
       panel: box(screen.querySelector(".ada-map-panel")),
-      tools: box(screen.querySelector(".ada-map-tools")),
+      quests: box(screen.querySelector('[data-action="map-quests"]')),
+      unit: Number(getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit")),
     };
   });
   assert.match(jobPanel.jobText, /^Job: Deliver /u, "The job's target shows its Job line");
@@ -2176,9 +2178,10 @@ try {
     jobPanel.jobHeight > 1.5 * jobPanel.lineHeight,
     `A long Job line wraps inside the panel: ${JSON.stringify(jobPanel)}`,
   );
+  // The panel's maxWidth keeps it at least SPACING.gap left of the footer (art/map.md).
   assert.ok(
-    jobPanel.panel.right < jobPanel.tools.left,
-    `The panel stays left of the tool column: ${JSON.stringify(jobPanel)}`,
+    jobPanel.panel.right <= jobPanel.quests.left - 8 * jobPanel.unit + 0.5,
+    `The panel stays SPACING.gap left of the footer: ${JSON.stringify(jobPanel)}`,
   );
   assert.ok(
     jobPanel.chip.bottom < jobPanel.panel.top,
@@ -2186,7 +2189,7 @@ try {
   );
   events.checks.push(
     "A held job's target chip has main's orange face; its long Job line wraps in the place " +
-      "panel, left of the tool column, and the selected target pans clear of the panel's " +
+      "panel, left of the footer, and the selected target pans clear of the panel's " +
       "rendered height",
   );
   // Back to title from a flight in danger: the start screen with the flight kept and saved, no
