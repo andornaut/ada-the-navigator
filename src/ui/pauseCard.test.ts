@@ -299,7 +299,6 @@ afterEach(async () => {
 const MAP: LocalMap = {
   explored: [],
   facing: { x: 0, y: -1 },
-  landmarks: { charted: 0, total: 12 },
   mapped: 25,
   places: [],
   player: { x: 0, y: 0 },

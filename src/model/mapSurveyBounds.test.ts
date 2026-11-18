@@ -30,10 +30,8 @@ describe("landmark survey bounds", () => {
     expect(CHARTING_RADIUS).toBe(25000);
     const centerComplete = localMap(context([near], true));
     expect(centerComplete.mapped).toBe(100);
-    expect(centerComplete.landmarks).toEqual({ charted: 1, total: 2 });
     const withFar = localMap(context([near, far], true));
     expect(withFar.mapped).toBe(100);
-    expect(withFar.landmarks).toEqual({ charted: 2, total: 2 });
     expect(withFar.places).toContainEqual(
       expect.objectContaining({ id: far.id, x: far.x, y: far.y }),
     );

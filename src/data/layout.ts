@@ -635,8 +635,10 @@ export const MAP_SCREEN_LAYOUT = {
     pip: 6,
     /** Pip centre to centre. */
     pipPitch: 8,
-    /** An uncharted pip's ring. */
+    /** An unfilled pip's ring. */
     pipRing: 1,
+    /** Pips in the row, one per tenth of the survey, always drawn at full size. */
+    pips: 10,
     radius: 4,
     /** The pips to the percent's line box (SPACING.rowGap). */
     stackGap: SPACING.rowGap,

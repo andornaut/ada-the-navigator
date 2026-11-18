@@ -27,7 +27,7 @@ import { font, pixels, safeEdge, slice, units, VIEW_PROPERTIES } from "./layout/
 import {
   chipRect,
   clampView,
-  containedMapHeader,
+  filledPips,
   fitRegion,
   innerRegion,
   keepClear,
@@ -40,7 +40,7 @@ import {
   MAP_SYMBOL,
   MAP_TOOLS,
   mapGlyphSize,
-  mapHeaderCap,
+  mapHeaderGeometry,
   mapHeaderLeft,
   mapImage,
   mapProjection,
@@ -526,7 +526,6 @@ export const MAP_SCREEN_STYLE = `
   align-items:center;
   gap:${units(MAP_SCREEN.header.pipPitch - MAP_SCREEN.header.pip)}
 }
-.ada-controls .ada-map-pips:empty{display:none}
 .ada-controls .ada-map-pip{
   box-sizing:border-box;
   width:${units(MAP_SCREEN.header.pip)};
@@ -534,7 +533,7 @@ export const MAP_SCREEN_STYLE = `
   border-radius:50%;
   border:${units(MAP_SCREEN.header.pipRing)} solid ${MAP_COLORS.supporting}
 }
-.ada-controls .ada-map-pip[data-charted]{
+.ada-controls .ada-map-pip[data-filled]{
   border-color:${MAP_COLORS.cream};
   background:${MAP_COLORS.cream}
 }
@@ -982,6 +981,13 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   const pips = document.createElement("span");
   pips.className = "ada-map-pips";
   pips.setAttribute("aria-hidden", "true");
+  pips.append(
+    ...Array.from({ length: MAP_SCREEN.header.pips }, () => {
+      const pip = document.createElement("span");
+      pip.className = "ada-map-pip";
+      return pip;
+    }),
+  );
   const column = document.createElement("span");
   column.className = "ada-map-column";
   const headerRow = document.createElement("div");
@@ -1312,17 +1318,12 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     // Header.
     galaxyInk.textContent = state.field?.name ?? "";
     percentInk.textContent = labels.mapPercent.replace("{percent}", String(state.map.mapped));
-    const { charted, total } = state.map.landmarks;
-    if (pips.childElementCount !== total || pips.dataset.charted !== String(charted)) {
-      pips.dataset.charted = String(charted);
-      pips.replaceChildren(
-        ...Array.from({ length: total }, (_, index) => {
-          const pip = document.createElement("span");
-          pip.className = "ada-map-pip";
-          pip.toggleAttribute("data-charted", index < charted);
-          return pip;
-        }),
-      );
+    const filled = filledPips(state.map.mapped);
+    if (pips.dataset.filled !== String(filled)) {
+      pips.dataset.filled = String(filled);
+      for (const [index, pip] of [...pips.children].entries()) {
+        pip.toggleAttribute("data-filled", index < filled);
+      }
     }
     const density = devicePixelRatio;
     const pixelUnit = unit * density;
@@ -1373,14 +1374,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     const nameWidth = measureInk(galaxy, galaxyInk);
     const percentWidth = measureInk(percent, percentInk);
     const noteWidth = measureInk(noteInk, noteInk);
-    const geometry = containedMapHeader(
-      mapHeaderCap(insets, size),
-      nameWidth,
-      percentWidth,
-      total,
-      noteWidth,
-      pixelUnit,
-    );
+    const geometry = mapHeaderGeometry(nameWidth, percentWidth, noteWidth, pixelUnit);
     const page = safeRect(insets, SPACING.pageInset, size);
     header.style.left = pixels(Math.round(mapHeaderLeft(insets, size) * pixelUnit) / density);
     header.style.top = pixels(Math.round(page.y * pixelUnit) / density);
@@ -1391,23 +1385,17 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     pips.style.position = "relative";
     pips.style.height = pixels(diameter / density);
     pips.style.width = pixels(
-      total > 0
-        ? ((Math.round((total - 1) * MAP_SCREEN.header.pipPitch * pixelUnit) + diameter) *
-            geometry.pipScale) /
-            density
-        : 0,
+      (Math.round((MAP_SCREEN.header.pips - 1) * MAP_SCREEN.header.pipPitch * pixelUnit) +
+        diameter) /
+        density,
     );
     for (const [index, pip] of [...pips.children].entries()) {
       const style = (pip as HTMLElement).style;
       style.position = "absolute";
-      style.left = pixels(
-        (Math.round(index * MAP_SCREEN.header.pipPitch * pixelUnit) * geometry.pipScale) / density,
-      );
+      style.left = pixels(Math.round(index * MAP_SCREEN.header.pipPitch * pixelUnit) / density);
       style.width = pixels(diameter / density);
       style.height = pixels(diameter / density);
       style.borderWidth = pixels(Math.round(MAP_SCREEN.header.pipRing * pixelUnit) / density);
-      style.transformOrigin = "top left";
-      style.transform = geometry.pipScale === 1 ? "" : `scaleX(${geometry.pipScale})`;
     }
     // Chips, kept by id and placed in reading order so Tab follows it.
     const shown = places().map((place) => ({

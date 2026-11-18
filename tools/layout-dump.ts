@@ -384,8 +384,11 @@ function cssCases(call: ReturnType<typeof recorder>): void {
   ]) {
     call("mapScreen.ts", "mapProjection", mapScreen.mapProjection, point);
   }
-  for (const pips of [0, 12, 15]) {
-    call("mapScreen.ts", "mapHeaderWidth", mapScreen.mapHeaderWidth, 120, 100, pips);
+  for (const noteWidth of [0, 346]) {
+    call("mapScreen.ts", "mapHeaderWidth", mapScreen.mapHeaderWidth, 120, 100, noteWidth);
+  }
+  for (const percent of [0, 9, 10, 55, 99, 100]) {
+    call("mapScreen.ts", "filledPips", mapScreen.filledPips, percent);
   }
   for (const [view, insets] of [
     [{ height: 360, width: 720 }, playView.NO_INSETS],

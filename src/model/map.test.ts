@@ -279,7 +279,7 @@ describe("galaxy map", () => {
     expect(model.map?.quests).toEqual([{ kind: "story", target: null, text: model.objective }]);
   });
 
-  it("gives each place its symbol and keeps Ada's facing, the landmark pips and explored chunks", () => {
+  it("gives each place its symbol and keeps Ada's facing and explored chunks", () => {
     const model = flying();
     const flight = model.state.flight!;
     ensureDestination(CONTENT, "workshop", flight);
@@ -300,7 +300,6 @@ describe("galaxy map", () => {
       "station",
       "wreck",
     ]);
-    expect(map.landmarks).toEqual({ charted: 1, total: 12 });
     expect(map.facing).toEqual(flight.facing);
     // The flight starts in chunk 0,0, which the galaxy's explored record holds.
     const size = CONTENT.tuning.chunkSize;
@@ -641,7 +640,6 @@ describe("periodic map metadata and separate procedural places", () => {
       travel: false,
     });
     expect(periodic.mapped).toBe(original.mapped);
-    expect(periodic.landmarks).toEqual(original.landmarks);
     expect(localMap({ ...base, worldSide: 1_152_000 }).places).not.toContainEqual(
       expect.objectContaining({ id: site.id }),
     );

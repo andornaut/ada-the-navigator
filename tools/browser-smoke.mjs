@@ -475,18 +475,145 @@ try {
     actual.length === expected.length &&
     actual.every((value, index) => Math.abs(value - expected[index]) <= within);
   // The map's header (art/map.md "Header"): its left SPACING.gap right of the pause press area, its
-  // right at most its cap, SPACING.gap short of the tools, from the same insets.
+  // right at most its cap, SPACING.gap short of the tools, from the same insets. The pip row is ten
+  // full-size pips, 6 across at an 8 pitch and 78 wide, unscaled, the first floor(percent / 10)
+  // filled cream and the rest hollow rings. The widest header, the longest galaxy name with "100%
+  // mapped", measured in the header's own fonts, stays in the cap.
   const mapLayout = await import(new URL("../src/ui/layout/mapScreen.ts", import.meta.url));
+  const { GALAXIES } = await import(new URL("../src/data/storybook.ts", import.meta.url));
   const mapHeaders = {};
   async function checkMapHeader(insets, view, name) {
     const [x, y, width] = await logicalBox(".ada-map-screen .ada-map-header");
     const left = mapLayout.mapHeaderLeft(insets, view);
     const cap = mapLayout.mapHeaderCap(insets, view);
-    mapHeaders[name] = { cap, left: x, right: x + width, top: y, width };
+    const measured = await page.evaluate(
+      ({ full, names }) => {
+        const unit = Number(
+          getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
+        );
+        const header = document.querySelector(".ada-map-screen .ada-map-header");
+        const row = header.querySelector(".ada-map-pips");
+        const rowBox = row.getBoundingClientRect();
+        const logical = (value) => Math.round((value / unit) * 100) / 100;
+        const pips = [...row.querySelectorAll(".ada-map-pip")].map((pip) => {
+          const box = pip.getBoundingClientRect();
+          const style = getComputedStyle(pip);
+          return {
+            background: style.backgroundColor,
+            border: style.borderTopColor,
+            filled: pip.hasAttribute("data-filled"),
+            transform: style.transform,
+            width: logical(box.width),
+            x: logical(box.left - rowBox.left),
+          };
+        });
+        // Ink widths as the screen measures them: the opaque columns of the text drawn at the
+        // device density.
+        const density = devicePixelRatio;
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+        const ink = (box, text) => {
+          const font = getComputedStyle(box).font;
+          context.font = font;
+          const em = parseFloat(getComputedStyle(box).fontSize);
+          const metrics = context.measureText(text);
+          const origin = Math.ceil(em * density);
+          canvas.width = Math.ceil(metrics.width * density) + 2 * origin;
+          const baseline = Math.ceil(metrics.actualBoundingBoxAscent * density) + origin;
+          canvas.height = baseline + Math.ceil(metrics.actualBoundingBoxDescent * density) + origin;
+          context.setTransform(density, 0, 0, density, 0, 0);
+          context.font = font;
+          context.fillStyle = "white";
+          context.fillText(text, origin / density, baseline / density);
+          const raster = context.getImageData(0, 0, canvas.width, canvas.height);
+          let leftmost = raster.width;
+          let rightmost = -1;
+          for (let line = 0; line < raster.height; line++) {
+            for (let column = 0; column < raster.width; column++) {
+              if (raster.data[(line * raster.width + column) * 4 + 3] >= 128) {
+                leftmost = Math.min(leftmost, column);
+                rightmost = Math.max(rightmost, column);
+              }
+            }
+          }
+          return Math.max(0, rightmost - leftmost + 1) / (unit * density);
+        };
+        const galaxy = header.querySelector(".ada-map-galaxy");
+        const percent = header.querySelector(".ada-map-percent");
+        return {
+          names: Object.fromEntries(names.map((text) => [text, ink(galaxy, text)])),
+          note: ink(
+            header.querySelector(".ada-map-survey-info .ada-map-ink"),
+            header.querySelector(".ada-map-survey-info").textContent,
+          ),
+          percent: percent.textContent,
+          percentFull: ink(percent, full),
+          pips,
+          row: { height: logical(rowBox.height), width: logical(rowBox.width) },
+        };
+      },
+      {
+        full: CONTENT.labels.mapPercent.replace("{percent}", "100"),
+        names: GALAXIES.map((card) => card.name),
+      },
+    );
+    const percent = Number.parseInt(measured.percent, 10);
+    const filled = measured.pips.filter((pip) => pip.filled).length;
+    const longest = Math.max(...Object.values(measured.names));
+    const widest = mapLayout.mapHeaderGeometry(longest, measured.percentFull, measured.note);
+    const narrowest = mapLayout.mapHeaderGeometry(0, 0, measured.note);
+    mapHeaders[name] = {
+      cap,
+      left: x,
+      pips: {
+        filled,
+        percent,
+        width: measured.row.width,
+        x: measured.pips.map((pip) => pip.x),
+      },
+      right: x + width,
+      top: y,
+      widest: {
+        name: Object.entries(measured.names).find(([, ink]) => ink === longest)[0],
+        nameInk: Math.round(longest * 100) / 100,
+        noteInk: Math.round(measured.note * 100) / 100,
+        percentInk: Math.round(measured.percentFull * 100) / 100,
+        minimum: narrowest.width,
+        width: widest.width,
+      },
+      width,
+    };
     assert.ok(
       Math.abs(x - left) <= 0.5 && x + width <= left + cap + 0.5,
       `${name}: the map header starts at ${left} and stays in its ${cap} cap: ${JSON.stringify(
         mapHeaders[name],
+      )}`,
+    );
+    const { pip, pipPitch, pips } = mapLayout.MAP_SCREEN.header;
+    const cream = "rgb(234, 212, 170)";
+    const supporting = "rgb(184, 179, 201)";
+    assert.ok(
+      measured.pips.length === pips &&
+        Math.abs(measured.row.width - mapLayout.MAP_SCREEN.header.pipRow) <= 0.5 &&
+        measured.pips.every(
+          (entry, index) =>
+            Math.abs(entry.x - index * pipPitch) <= 0.5 &&
+            Math.abs(entry.width - pip) <= 0.5 &&
+            entry.transform === "none" &&
+            (entry.filled
+              ? entry.background === cream && entry.border === cream
+              : entry.border === supporting && entry.background === "rgba(0, 0, 0, 0)"),
+        ) &&
+        filled === mapLayout.filledPips(percent) &&
+        measured.pips.every((entry, index) => entry.filled === index < filled),
+      `${name}: the header shows ten unscaled pips, 78 wide, ${mapLayout.filledPips(
+        percent,
+      )} filled at ${percent}%: ${JSON.stringify(measured)}`,
+    );
+    assert.ok(
+      widest.width <= cap && Math.abs(narrowest.width - 378) <= 4,
+      `${name}: the widest header stays in its ${cap} cap and the note sets about 378: ${JSON.stringify(
+        mapHeaders[name].widest,
       )}`,
     );
   }
@@ -2255,7 +2382,8 @@ try {
   save("map-header-proof.json", mapHeaders);
   events.checks.push(
     "The map header starts SPACING.gap right of the pause press area and stays in its cap at " +
-      "1280x720 and at 720x360 with phone insets, behind Quests too",
+      "1280x720 and at 720x360 with phone insets, behind Quests too, with ten unscaled survey " +
+      "pips filled by tenths and the widest galaxy name at 100% inside the cap",
   );
   await page.keyboard.press("Escape");
   await questsCard.waitFor({ state: "hidden" });

@@ -243,8 +243,6 @@ export interface LocalMap {
   readonly explored: readonly Vec[];
   /** Ada's facing, which her arrow points along. */
   readonly facing: Vec;
-  /** The galaxy's landmarks for the header's pips: how many are charted, of how many. */
-  readonly landmarks: { readonly charted: number; readonly total: number };
   /** Whole percent of the charted area's places discovered or charted, rounded down. */
   readonly mapped: number;
   readonly places: readonly MapPlace[];
@@ -492,7 +490,6 @@ export function localMap(context: MapContext): LocalMap {
     ...(context.worldSide === undefined ? {} : { worldSide: context.worldSide }),
     explored: exploredCentres(chunkSize, context.explored),
     facing: { x: flight.facing.x, y: flight.facing.y },
-    landmarks: { charted: landmarks.charted.length, total: landmarks.total },
     mapped: total > 0 ? Math.floor((100 * Math.min(found, total)) / total) : 0,
     places: shown,
     player: { x: flight.player.x, y: flight.player.y },

@@ -79,7 +79,6 @@ try {
         places,
         player: { x: 200, y: 100 },
         facing: { x: 1, y: 0 },
-        landmarks: { charted: 12, total: 12 },
         mapped: 60,
         quests: [],
         searchArea: { x: 4000, y: 2500, radius: 900 },

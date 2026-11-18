@@ -100,7 +100,6 @@ describe("map presentation revision", () => {
     map: {
       explored: [{ x: 1, y: 2 }],
       facing: { x: 1, y: 0 },
-      landmarks: { charted: 1, total: 12 },
       mapped: 10,
       places: [{ id: "station", label: "Station", x: 30, y: 40 }],
       player: { x: 0, y: 0 },

@@ -96,7 +96,6 @@ export interface PauseState {
 const NO_MAP: LocalMap = {
   explored: [],
   facing: { x: 0, y: -1 },
-  landmarks: { charted: 0, total: 0 },
   mapped: 0,
   places: [],
   player: { x: 0, y: 0 },

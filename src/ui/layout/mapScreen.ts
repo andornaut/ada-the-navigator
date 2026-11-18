@@ -30,6 +30,10 @@ export const MAP_SCREEN = {
   header: {
     ...MAP_SCREEN_LAYOUT.header,
     height: TYPE.heading.lineHeight + 2 * SPACING.rowGap + TYPE.body.lineHeight + SPACING.gap,
+    /** The pip row's width: 78. */
+    pipRow:
+      (MAP_SCREEN_LAYOUT.header.pips - 1) * MAP_SCREEN_LAYOUT.header.pipPitch +
+      MAP_SCREEN_LAYOUT.header.pip,
     rowHeight: TYPE.heading.lineHeight + 2 * SPACING.rowGap,
   },
   hudRow: {
@@ -190,23 +194,29 @@ export function mapHeaderCap(insets: Insets, view: Size): number {
   return Math.max(0, toolColumnLeft(insets, view) - SPACING.gap - mapHeaderLeft(insets, view));
 }
 
-/** One equal gap spans both outer edges and each pair of adjacent ink segments. */
+/** Filled survey pips: one per whole tenth of the header's displayed percent. */
+export function filledPips(percent: number): number {
+  return clamp(0, MAP_SCREEN.header.pips, Math.floor(percent / 10));
+}
+
+/**
+ * One equal gap spans both outer edges and each pair of adjacent ink segments: the name, the
+ * divider, the percent and the full-size pip row. The note sets the minimum width.
+ */
 export function mapHeaderGeometry(
   nameWidth: number,
   percentWidth: number,
-  pips: number,
   noteWidth = 0,
   pixelUnit = 1,
 ) {
-  const { divider, padding, pip, pipPitch } = MAP_SCREEN.header;
-  const pipRow =
-    pips > 0 ? Math.round((pips - 1) * pipPitch * pixelUnit) + Math.round(pip * pixelUnit) : 0;
+  const { divider, padding, pip, pipPitch, pips } = MAP_SCREEN.header;
+  const pipRow = Math.round((pips - 1) * pipPitch * pixelUnit) + Math.round(pip * pixelUnit);
   const ink =
     Math.round(nameWidth * pixelUnit) +
     Math.round(divider.width * pixelUnit) +
     Math.round(percentWidth * pixelUnit) +
     pipRow;
-  const gaps = pips > 0 ? 5 : 4;
+  const gaps = 5;
   const minimum = Math.max(
     ink + gaps * Math.round(SPACING.gap * pixelUnit),
     Math.ceil(noteWidth * pixelUnit) + 2 * Math.round(padding * pixelUnit),
@@ -215,41 +225,8 @@ export function mapHeaderGeometry(
   return { gap: gap / pixelUnit, width: (ink + gaps * gap) / pixelUnit };
 }
 
-export function mapHeaderWidth(
-  nameWidth: number,
-  percentWidth: number,
-  pips: number,
-  noteWidth = 0,
-): number {
-  return mapHeaderGeometry(nameWidth, percentWidth, pips, noteWidth).width;
-}
-
-/** Fit the landmark strip inside the identity header without scaling text or changing its count. */
-export function containedMapHeader(
-  availableWidth: number,
-  nameWidth: number,
-  percentWidth: number,
-  pips: number,
-  noteWidth: number,
-  pixelUnit: number,
-) {
-  const natural = mapHeaderGeometry(nameWidth, percentWidth, pips, noteWidth, pixelUnit);
-  if (natural.width <= availableWidth) {
-    return { ...natural, pipScale: 1 };
-  }
-  const { divider, pip, pipPitch } = MAP_SCREEN.header;
-  const width = Math.floor(availableWidth * pixelUnit);
-  const gap = Math.round(SPACING.gap * pixelUnit);
-  const fixedInk =
-    Math.round(nameWidth * pixelUnit) +
-    Math.round(divider.width * pixelUnit) +
-    Math.round(percentWidth * pixelUnit);
-  const pipRow = Math.round((pips - 1) * pipPitch * pixelUnit) + Math.round(pip * pixelUnit);
-  return {
-    gap: gap / pixelUnit,
-    pipScale: pips > 0 ? Math.max(0, width - fixedInk - 5 * gap) / pipRow : 1,
-    width: width / pixelUnit,
-  };
+export function mapHeaderWidth(nameWidth: number, percentWidth: number, noteWidth = 0): number {
+  return mapHeaderGeometry(nameWidth, percentWidth, noteWidth).width;
 }
 
 /** The fit region inset by fitMargin on every side. */
