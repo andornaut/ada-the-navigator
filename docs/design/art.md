@@ -111,3 +111,5 @@ Reference: [art](../../art/README.md).
 | ada-0301 | Ship the Garden Party chapter art                                         | [ada-0301.md](../work/ada-0301.md) |
 | ada-0302 | Ship the finale ally ships and whale aura                                 | [ada-0302.md](../work/ada-0302.md) |
 | ada-0303 | Mock up the finale allies follow-up                                       | [ada-0303.md](../work/ada-0303.md) |
+| ada-0305 | Remove the art files the game never loads                                 | [ada-0305.md](../work/ada-0305.md) |
+| ada-0306 | Regenerate debris, nebulae and Whirlpool art for the light galaxy fields  | [ada-0306.md](../work/ada-0306.md) |
