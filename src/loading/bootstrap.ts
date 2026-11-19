@@ -17,18 +17,27 @@ if (!app) {
 // The launch installs the complete build before the game downloads, under the one loading bar,
 // or activates a staged build; the game module loads from the installed build afterwards.
 const launched = launchPhoneApp();
-const resources: RequiredBootResources = {
-  stopFonts: requireBootFonts(requiredLoading, {
-    document,
-    stylesheets: [...document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')],
-    timer: window,
-  }),
-  ui: requireBootUi(requiredLoading, { document, window }),
+// The boot fonts and UI art load once the launch resolves, from the installed build, so on a slow
+// link they never wait behind the install's download and time out.
+let resources: RequiredBootResources | undefined;
+const bootResources = (): RequiredBootResources => {
+  resources ??= {
+    stopFonts: requireBootFonts(requiredLoading, {
+      document,
+      stylesheets: [...document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')],
+      timer: window,
+    }),
+    ui: requireBootUi(requiredLoading, { document, window }),
+  };
+  return resources;
+};
+const disposeResources = () => {
+  resources?.stopFonts();
+  resources?.ui.dispose();
 };
 const stopUi = requiredLoading.subscribe((state) => {
   if (state.kind === "disposed") {
-    resources.stopFonts();
-    resources.ui.dispose();
+    disposeResources();
   }
 });
 let stopLoading: () => void;
@@ -41,6 +50,7 @@ try {
         // The page is reloading into another build: nothing of this document starts.
         return new Promise<never>(() => {});
       }
+      const boot = bootResources();
       const game = await import("../main.ts").catch((error: unknown) => {
         throw new EntryReloadRequired("module-import", error);
       });
@@ -48,22 +58,20 @@ try {
         commit: game.commitGame,
         dispose: game.disposeGame,
         load: game.startGame,
-        prepare: (required, attempt) => game.prepareGame(required, attempt, resources),
+        prepare: (required, attempt) => game.prepareGame(required, attempt, boot),
       };
     },
     app,
   );
 } catch (error) {
   stopUi();
-  resources.stopFonts();
-  resources.ui.dispose();
+  disposeResources();
   throw error;
 }
 const stop = () => {
   stopLoading();
   stopUi();
-  resources.stopFonts();
-  resources.ui.dispose();
+  disposeResources();
 };
 if (import.meta.hot) {
   import.meta.hot.dispose(stop);
