@@ -17,8 +17,6 @@ FROM toolchain AS check
 
 WORKDIR /opt/check
 COPY --chown=19001:19001 package.json package-lock.json /opt/check/
-# The candidate game-kit archive the lockfile pins by file: path.
-COPY --chown=19001:19001 vendor/game-kit-0.59.0.tgz /opt/check/vendor/
 RUN npm ci --ignore-scripts --no-audit --no-fund
 COPY --chown=19001:19001 tests/container/check /opt/check/run
 COPY --chown=19001:19001 tests/container/check.mjs /opt/check/check.mjs

@@ -1,6 +1,5 @@
 package.json
 package-lock.json
-vendor/game-kit-0.59.0.tgz
 tests/container/Dockerfile
 tests/container/check
 tests/container/check.mjs
