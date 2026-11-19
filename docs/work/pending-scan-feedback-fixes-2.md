@@ -41,5 +41,5 @@ receipt is placed in the HUD controls' rect.
 
 With the conversation dismissed at 1280x720, a centred receipt rises 99 to 8 under the HUD row. A
 start that would fall on the conversation box starts 8 below it at both sizes. The remembered
-start at 720x360 sits 8 left of the aim stick and rises 53 to 8 under the Use disc. Every
+start at 720x360 sits 8 left of the aim stick and rises 48 to 8 under the Use disc. Every
 captured start is clear of each control by at least 8.
