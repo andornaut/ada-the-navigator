@@ -57,10 +57,12 @@ the value currently lives, in CSS px.
   the status pill, weapons, Skip and Settings) are placed relative to the game
   area through `hudRect`, clamped by the safe insets; both sides use the left
   game-area gap and the larger side inset, so the HUD mirrors exactly, notches
-  included. The sticks sit from the screen's edges inside the larger side
-  inset, mirrored as in Chibi, clamped into the game area, and Use follows the
-  aim stick
-  ([HUD and overlays](#hud-and-overlays)). Cards and page content keep the available rect.
+  included. The sticks are placed in the game area and ignore safe-area
+  insets: each sits from its outer screen side and the screen bottom, mirrored
+  as in Chibi, moved inward only to stay inside the game area, and Use follows
+  the aim stick ([HUD and overlays](#hud-and-overlays)). Under the
+  [full-viewport layout](../docs/work/ada-0106.md) the game's layout insets are
+  zero (`playLayout`, `viewScale.ts`). Cards and page content keep the available rect.
 - Nine-slice edges are whole CSS px: each slice edge is `round(edge * s)`, set
   as a variable for `border-image-width` and outset, so edges never blur while
   the body scales freely. Review at native and fractional scales (1.083 and
@@ -223,10 +225,13 @@ and skill row (`chibis-way-home` `src/ui/layout/playView.ts` `playView`,
 `topShift` and `CONTROL_EDGE`; `src/ui/layout/skillHud.ts`). The rect moves
 with the centred base view, so on screens wider than 2:1 the controls sit
 inside the game area, clear of curved screen corners and the bands; the
-safe-rect clamp still keeps them out of every inset. The sticks are placed from
-the screen's edges inside the larger side inset and the bottom inset, mirrored
-as Chibi places its touch controls, then clamped into the game area; Use
-follows the aim stick (see their rows).
+safe-rect clamp still keeps them out of every inset. The sticks are placed in
+the game area and ignore safe-area insets, since the game's layout insets are
+zero under the [full-viewport layout](../docs/work/ada-0106.md): each ring's
+drawn edge sits 50 from its outer screen side and 50 above the screen bottom,
+mirrored as Chibi places its touch controls, moved inward only to stay
+`STICK_AREA_MARGIN` (8) inside the game area; Use follows the aim stick (see
+their rows).
 
 Symmetry: one `HUD_EDGE` (12, as in Chibi) runs from the game area's side to
 the drawn art of the outermost visible element in each top corner, and from
@@ -748,7 +753,7 @@ Clearance along the edges, from the band the 10-across markers can occupy
 | --------------------------------------- | ------: | -----------: | ------: | -----------------: |
 | Top band to the pause and weapon discs  |       1 |            1 |       1 |                  1 |
 | Side band to the pause and weapon discs |       1 |      11 over |       1 |            11 over |
-| Side band to the stick rings            |      29 |      11 over |      29 |                 15 |
+| Side band to the stick rings            |      39 |       4 over |       9 |             4 over |
 | Bottom band to the stick rings          |      39 |           20 |      39 |                 20 |
 | Bottom band to the shield pill bottom   |       1 |      11 over |       1 |            11 over |
 
@@ -759,8 +764,10 @@ Clearance along the edges, from the band the 10-across markers can occupy
 - With phone insets the side bands (44 to 54, or 44 to 56 lit) share their
   columns with the pause disc and the outermost weapon disc, which start at
   the same 43 inset: a side marker in the HUD row's span (12 to 60.5, count
-  pills included) sits under that disc. At 720x360 with phone insets the stick
-  rings start at the 43 inset too, so a side marker in the rings' span (228 to 301) sits under the open ring's band, and shows through its clear centre.
+  pills included) sits under that disc. At 720x360 with phone insets the side
+  bands overlap the stick rings, which sit 50 from the screen's sides whatever
+  the inset, by 4, so a side marker in the rings' span (237 to 310) sits
+  partly under the open ring's band, and shows through its clear centre.
 - Bottom markers draw under the shield pill like other controls: they keep
   their place on the edge. Without a bottom inset the dark band clears the
   pill's drawn bottom by 1 and a light band reaches 1 under it; with the 19
@@ -1017,8 +1024,10 @@ at every aspect.
 - Taller views (1280x720 is 720x405, `y0` 22) keep every part at its
   play-view place, so the parts move down with the centred game area, and show
   more field below. The field's top-left is also from (`x0`, `y0`): at
-  1280x720 it spans view y 22 to 562, and the space background fills the 22
-  band above it.
+  1280x720 it spans view y 22 to 562, so it covers the game area and the band
+  below it. The 22 band above it is the letterbox band above the game area,
+  plain space background as on every other screen; the field does not extend
+  into it.
 
 Rects in logical px. Insets are left and right 43, bottom 19, top 0; at 844x390
 the logical view is 779.08x360 and `x0` is 29.
