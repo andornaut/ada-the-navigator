@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import capitalFile from "../../public/art/enemies/capital-hardpoints.json";
 import frigateFile from "../../public/art/enemies/frigate-hardpoints.json";
-import cargoFile from "../../public/art/enemies/retaliatorCargoHauler-hardpoints.json";
+import retaliatorFile from "../../public/art/enemies/retaliator-hardpoints.json";
 import {
   enemyCatalog,
   type EnemyDefinition,
@@ -92,7 +92,7 @@ describe("drawn muzzles", () => {
   });
 
   it("cycles a triple top's barrels by volley", () => {
-    const tips = cargoFile.tops.turret[3]!.muzzles;
+    const tips = retaliatorFile.tops.turret[3]!.muzzles;
     expect(tips).toHaveLength(3);
     const layout = muzzleLayout(enemyCatalog.retaliator, MUZZLE_ART.retaliatorCargoHauler)!;
     const first = muzzleOffset(layout, null, at(0), at(3 * 22.5), 0)!;

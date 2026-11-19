@@ -4,7 +4,6 @@ import frigate from "../../public/art/enemies/frigate-hardpoints.json" with { ty
 import gadget from "../../public/art/enemies/gadget-hardpoints.json" with { type: "json" };
 import station from "../../public/art/enemies/hostileStation-hardpoints.json" with { type: "json" };
 import retaliator from "../../public/art/enemies/retaliator-hardpoints.json" with { type: "json" };
-import cargo from "../../public/art/enemies/retaliatorCargoHauler-hardpoints.json" with { type: "json" };
 import mining from "../../public/art/enemies/retaliatorMiningFreighter-hardpoints.json" with { type: "json" };
 import type { EnemyDefinition, Point } from "./enemyCatalog.ts";
 import { type EnemyAssetKey } from "./enemyIdentity.ts";
@@ -117,7 +116,7 @@ export const MUZZLE_ART: Partial<Record<EnemyAssetKey, MuzzleArt>> = {
   hostileStation: readMuzzleArt(station),
   platform: readMuzzleArt(platform),
   retaliator: readMuzzleArt(retaliator),
-  retaliatorCargoHauler: readMuzzleArt(cargo),
+  retaliatorCargoHauler: readMuzzleArt(retaliator),
   retaliatorMiningFreighter: readMuzzleArt(mining),
 };
 

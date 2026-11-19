@@ -28,7 +28,7 @@ it("forwards full build identity and complete post-emission discovery to the exi
   });
   const options = captured.options!;
   expect(options.buildId).toBe(full);
-  expect(options.verifiedJsonBodies).toBeTypeOf("function");
+  expect(options.verifiedJsonBodies).toBeUndefined();
   options.hashedFiles!((url) =>
     url === "/art/manifest.json" ? new TextEncoder().encode('{"value":1}') : undefined,
   );

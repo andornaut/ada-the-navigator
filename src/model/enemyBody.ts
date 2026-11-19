@@ -5,9 +5,8 @@ import frigate from "../../public/art/enemies/frigate-hardpoints.json" with { ty
 import gadget from "../../public/art/enemies/gadget-hardpoints.json" with { type: "json" };
 import station from "../../public/art/enemies/hostileStation-hardpoints.json" with { type: "json" };
 import interceptor from "../../public/art/enemies/interceptor-jets.json" with { type: "json" };
+import retaliatorParts from "../../public/art/enemies/retaliator-hardpoints.json" with { type: "json" };
 import retaliator from "../../public/art/enemies/retaliator-jets.json" with { type: "json" };
-import cargoParts from "../../public/art/enemies/retaliatorCargoHauler-hardpoints.json" with { type: "json" };
-import cargoJets from "../../public/art/enemies/retaliatorCargoHauler-jets.json" with { type: "json" };
 import miningParts from "../../public/art/enemies/retaliatorMiningFreighter-hardpoints.json" with { type: "json" };
 import miningJets from "../../public/art/enemies/retaliatorMiningFreighter-jets.json" with { type: "json" };
 import swarm from "../../public/art/enemies/swarm-jets.json" with { type: "json" };
@@ -232,7 +231,10 @@ for (const [archetype, outline] of [
   ["gadget", heavyOutline(gadget as HardpointsFile)],
   ["hostileStation", heavyOutline(station as HardpointsFile)],
   ["platform", heavyOutline(platform as HardpointsFile)],
-  ["retaliatorCargoHauler", heavyOutline(cargoParts as HardpointsFile, cargoJets as JetsFile)],
+  [
+    "retaliatorCargoHauler",
+    heavyOutline(retaliatorParts as HardpointsFile, retaliator as JetsFile),
+  ],
   [
     "retaliatorMiningFreighter",
     heavyOutline(miningParts as HardpointsFile, miningJets as JetsFile),

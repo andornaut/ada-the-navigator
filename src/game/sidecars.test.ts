@@ -2,20 +2,14 @@ import { existsSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { GALAXY_ID } from "../data/galaxies.ts";
 import { CORE_MANIFEST, GALAXY_MANIFESTS, publicJson } from "../testing/publicArt.ts";
 import { readGalaxyManifest } from "./artManifest.ts";
-import { type CartwheelAsset, craftFrameSets } from "./cartwheelArt.ts";
 import {
-  composedArchetypes,
   type EnemyFrame,
-  enemyFrameSets,
   enemyHardpointsPath,
   enemyJetsPath,
-  enemyPartFrame,
   enemyShardsPath,
-  GALAXY_FAMILIES,
   readSidecars,
   type Sidecars,
 } from "./enemyArt.ts";
@@ -74,76 +68,5 @@ describe("sidecars map", () => {
         }
       }
     }
-  });
-
-  // CLEANUP (added 2026-11-18): remove with Art's ada-0282 dedupe pass, which repoints shared
-  // files away from their frames' folders; until then this proves the switch kept every path.
-  it("names the same files the loader derived from each craft's frames before the map", () => {
-    const beside = (kind: string, craft: string, { path }: { readonly path?: string }) =>
-      `${path!.slice(0, path!.lastIndexOf("/") + 1)}${craft}-${kind}.json`;
-    const destruction = publicJson("/art/enemies/destruction.json") as {
-      archetypes: Record<string, unknown>;
-    };
-    const covered = (archetype: string) =>
-      Object.hasOwn(
-        destruction.archetypes,
-        INDUSTRIAL_BODY_KEYS.some((key) => key === archetype) ? "retaliator" : archetype,
-      );
-    const counts: Record<string, readonly [number, number]> = {};
-    for (const [name, assets, sidecars] of manifests) {
-      const derived = new Map<string, string>();
-      for (const [craft, frames] of craftFrameSets(assets as unknown as CartwheelAsset[])) {
-        derived.set(`${craft}.jets`, beside("jets", craft, frames[0]!));
-      }
-      if (name === "core") {
-        const composed = composedArchetypes(assets);
-        for (const [archetype, frames] of enemyFrameSets(assets)) {
-          derived.set(`${archetype}.jets`, beside("jets", archetype, frames[0]!));
-          if (composed.has(archetype)) {
-            derived.set(`${archetype}.hardpoints`, beside("hardpoints", archetype, frames[0]!));
-          }
-        }
-        for (const archetype of [...Object.keys(destruction.archetypes), ...INDUSTRIAL_BODY_KEYS]) {
-          derived.set(`${archetype}.shards`, `/art/enemies/${archetype}-shards.json`);
-        }
-      } else {
-        for (const { family, prefix, wired } of GALAXY_FAMILIES) {
-          const parts = composedArchetypes(
-            assets.filter((asset) => enemyPartFrame(asset) && asset.family === family),
-          );
-          for (const [archetype, frames] of enemyFrameSets(assets, prefix)) {
-            if (!wired.has(archetype)) {
-              continue;
-            }
-            if (frames.length > 1) {
-              derived.set(`${archetype}.jets`, beside("jets", archetype, frames[0]!));
-            }
-            if (covered(archetype)) {
-              derived.set(`${archetype}.shards`, beside("shards", archetype, frames[0]!));
-            }
-            if (parts.has(archetype)) {
-              derived.set(`${archetype}.hardpoints`, beside("hardpoints", archetype, frames[0]!));
-            }
-          }
-        }
-      }
-      const mapped = new Map(
-        [...sidecars].flatMap(([craft, kinds]) =>
-          Object.entries(kinds).map(([kind, path]) => [`${craft}.${kind}`, path] as const),
-        ),
-      );
-      expect(mapped, name).toEqual(derived);
-      counts[name] = [sidecars.size, mapped.size];
-    }
-    // Crafts and paths per manifest.
-    expect(counts).toEqual({
-      andromeda: [9, 21],
-      cartwheel: [13, 25],
-      core: [12, 25],
-      needle: [9, 20],
-      phantom: [0, 0],
-      sunflower: [0, 0],
-      whirlpool: [0, 0],
-    });
   });
 });

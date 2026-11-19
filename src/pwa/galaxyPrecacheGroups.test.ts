@@ -256,7 +256,7 @@ describe("physical galaxy precache partition", () => {
     expect(f.universe).toContain(shared);
   });
 
-  it("keeps every published sidecar in the same group as its craft's frames", () => {
+  it("keeps each galaxy's sidecars with its craft's frames and shared sidecars in base", () => {
     const root = new URL("../../public", import.meta.url).pathname;
     const urls = readdirSync(root, { recursive: true, withFileTypes: true })
       .filter((entry) => entry.isFile())
@@ -270,6 +270,9 @@ describe("physical galaxy precache partition", () => {
       Object.entries(groups.urls).flatMap(([galaxy, list]) => list.map((url) => [url, galaxy])),
     );
     const group = (url: string) => owner.get(url) ?? "base";
+    // A sidecar outside every galaxy's folder is a shared core file.
+    const shared = (url: string) =>
+      !Object.keys(core.galaxies).some((galaxy) => url.startsWith(`/art/${galaxy}/`));
     let checked = 0;
     for (const path of ["/art/manifest.json", ...Object.values(core.galaxies)]) {
       const document = JSON.parse(readFileSync(join(root, path), "utf8")) as {
@@ -280,22 +283,29 @@ describe("physical galaxy precache partition", () => {
       for (const asset of document.assets) {
         const craft = asset.archetype ? enemyArt.enemyFrameKey(asset) : asset.craft;
         for (const sidecar of Object.values((craft && sidecars.get(craft)) ?? {})) {
-          expect(group(sidecar), `${asset.id} ${sidecar}`).toBe(group(asset.path));
+          expect(group(sidecar), `${asset.id} ${sidecar}`).toBe(
+            shared(sidecar) ? "base" : group(asset.path),
+          );
           checked += 1;
         }
       }
     }
     expect(checked).toBeGreaterThan(0);
+    // The cargo hauler flies the retaliator's jets; both industrial crafts share core hardpoints.
     for (const galaxy of ["andromeda", "cartwheel", "needle"]) {
       expect(groups.urls[galaxy]).toEqual(
-        expect.arrayContaining(
-          ["retaliatorCargoHauler", "retaliatorMiningFreighter"].flatMap((craft) =>
-            ["jets", "hardpoints", "shards"].map(
-              (kind) => `/art/${galaxy}/enemies/${craft}-${kind}.json`,
-            ),
-          ),
-        ),
+        expect.arrayContaining([
+          `/art/${galaxy}/enemies/retaliator-jets.json`,
+          `/art/${galaxy}/enemies/retaliatorCargoHauler-shards.json`,
+          `/art/${galaxy}/enemies/retaliatorMiningFreighter-jets.json`,
+          `/art/${galaxy}/enemies/retaliatorMiningFreighter-shards.json`,
+        ]),
       );
+    }
+    const optional = Object.values(groups.urls).flat();
+    for (const craft of ["retaliator", "retaliatorMiningFreighter"]) {
+      expect(optional).not.toContain(`/art/enemies/${craft}-hardpoints.json`);
+      expect(urls).toContain(`/art/enemies/${craft}-hardpoints.json`);
     }
   });
 

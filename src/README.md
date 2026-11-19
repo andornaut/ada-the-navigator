@@ -125,18 +125,6 @@ The page and worker share one clean, full Git build identity; missing or dirty
 identity rejects a production build. Development omits group configuration and
 the group client.
 
-[Verified JSON families](pwa/verifiedJsonFamilies.ts) selects exactly eleven
-hardpoint URLs: `capital-hardpoints.json` and `frigate-hardpoints.json` under
-`/art/enemies/`, `/art/andromeda/enemies/`, `/art/cartwheel/enemies/` and
-`/art/needle/enemies/`, plus `hostileStation-hardpoints.json` under the first
-three directories. The published `verifiedJsonBodies` build callback groups them
-into three full-SHA256-verified body families using `fetch-json-data-v1`.
-All logical URLs, hashes, sizes and galaxy groups remain in the precache inventory.
-Body aliases serve only GET data fetches with an empty request destination,
-non-navigation mode and no Range or If-Range header. Other request contexts retain
-the normal original-response policy; standalone JSON navigation may require the
-network rather than a data alias.
-
 Galaxy staging uses the existing bar with its own progress operation. Required
 foreground loads and root installation/update work retain priority. Failed group
 requests retry on durable unlock changes or readiness/resume events, without
