@@ -959,7 +959,10 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
     2 and 3. Dots do not apply damage over time.
   - Phaser: the long-range weapon, a hitscan beam. Each shot hits instantly
     along the aim to the fire-time rounded coverage boundary at every level,
-    stopping at the first enemy or obstacle it meets, then shows briefly as a visible beam. It fires
+    stopping at the first enemy or obstacle it meets. It then shows briefly as a
+    visible beam that stays attached to the ship that fired it: from its fire
+    origin, along the ship's current aim, at the length it fired with. Only the visible
+    beam follows the ship; the hit stays where it resolved. It fires
     once every 1.0 s and deals 13/3 times Laser damage to the enemy it hits;
     levels grow only its damage (13/3, 6.5, 9.75).
 - Rapid and Heavy Missiles have a full collision width of 12 world units
@@ -993,7 +996,9 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   this reach. Scattershot dots fly at 600.
   None depends on her engine level.
 - Ada's shots and Phaser beams leave from her ship's nose, and weapon ranges are
-  measured from there. Enemy shots leave from the drawn muzzle of the gun's
+  measured from there. Every visible Phaser beam, Ada's or an enemy's, stays on
+  its firing ship's fire origin (Ada's nose, an enemy's muzzle) and current aim
+  while it shows. Enemy shots leave from the drawn muzzle of the gun's
   current aim frame wherever the art defines muzzles, and from the model's fire
   origin otherwise; shot direction always follows the continuous aim.
 - At launch, a traveling projectile's world velocity, Ada's or an enemy's
