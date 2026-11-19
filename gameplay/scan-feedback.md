@@ -66,6 +66,12 @@ repeat the intro for each completion or infer tasks, quests or labels from the
 nearest/current quest. The current single-condition Survey emits a quest
 completion only, never a synthetic task completion.
 
+The receipt has notice priority in the conversation priority order
+([Rules](rules.md#astra-and-penny-in-flight)): a warning, such as "Drones ahead.",
+shows first, and the receipt follows it once the warning ends. A receipt is
+never dropped for a higher-priority line. The completion rectangle's rise runs
+on its own, whether or not the receipt is showing.
+
 Use shared safe token substitution. Do not add generic praise, invented rewards
 or quest associations, restate objective counts, or claim all objectives are done
 without an actual quest completion. Continue must not reconstruct outcome events
