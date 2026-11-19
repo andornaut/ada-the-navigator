@@ -118,12 +118,32 @@ const LIGHT_FIELD = {
     "nebulaStars",
     "huntGlint",
     "strandedCraft",
-    // Cartwheel's traveling debris and Whirlpool's river debris, moving hazards like the drones.
+    // Traveling and channel debris: Cartwheel's, Whirlpool's river debris and Needle's channels.
     "debris",
     // Whirlpool's project world changes, whose lamps meet Whirlpool's floor through the keyline.
     "nurseryBeacon",
     "currentBuoy",
+    // Enemies outside the drone and heavy archetypes: Gadget's capital, the hostile station and
+    // Cartwheel's turret platform.
+    "gadget",
+    "hostileStation",
+    "platform",
+    // Non-hostile story craft: Pip, the miner, the visitors, the blocker and Elder Loom's saucer.
+    "storyCraft",
+    // Scenery and props that are not backdrop: Andromeda's guide beacons, Cartwheel's mooring
+    // buoy, the ore pickup, the holodisk's waypoint beacon, Needle's ring gates and channel
+    // lamps, and the whales.
+    "guideBeacon",
+    "mooringBuoy",
+    "orePickup",
+    "holodiskBeacon",
+    "needleGate",
+    "needleLamp",
+    "whale",
   ],
+  // A craft's jets join its keyline silhouette (hull, hardpoints, turret tops and drawn jets),
+  // except Ada's, which take none (art/ship.md, Speed jets).
+  jetKeyline: { join: true, exempt: ["ship"] },
   effects: ["missile", "blastRing", "blastFlash", "hitSpark", "destructionShards"],
   // Places Ada visits take a wider keyline, so they read at a glance on a light field
   // (art/destinations.md): every station, outpost, settlement and story place.

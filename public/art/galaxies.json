@@ -47,8 +47,23 @@
       "strandedCraft",
       "debris",
       "nurseryBeacon",
-      "currentBuoy"
+      "currentBuoy",
+      "gadget",
+      "hostileStation",
+      "platform",
+      "storyCraft",
+      "guideBeacon",
+      "mooringBuoy",
+      "orePickup",
+      "holodiskBeacon",
+      "needleGate",
+      "needleLamp",
+      "whale"
     ],
+    "jetKeyline": {
+      "join": true,
+      "exempt": ["ship"]
+    },
     "effects": ["missile", "blastRing", "blastFlash", "hitSpark", "destructionShards"],
     "destinationKeyline": {
       "width": 2,
