@@ -5051,6 +5051,225 @@ try {
     "Art's rocks draw in neutral stone in every galaxy over a muted backdrop field",
   );
 
+  // Missile blast proofs (gameplay/rules.md "Missiles"): a Rapid and a Heavy blast over a held
+  // group of interceptors at 1280x720 and 720x360. Continue runs on a paused page clock, and the
+  // flight is then held hidden while its art loads; released, the missile explodes at the end of
+  // its reach, found frame by frame by its amber ring. Frames about 60 ms in and at full growth
+  // show the circle, and the save a second later shows which ships it damaged.
+  const [{ enemyDefinition }, { fromScreen, screenOutlineContact }, { enemyHull }, { weaponAt }] =
+    await Promise.all([
+      import(new URL("../src/data/enemyCatalog.ts", import.meta.url)),
+      import(new URL("../src/model/convex.ts", import.meta.url)),
+      import(new URL("../src/model/enemyBody.ts", import.meta.url)),
+      import(new URL("../src/data/weaponCatalog.ts", import.meta.url)),
+    ]);
+  // The missile's reach in flight seconds, longer than the frames Continue takes to go live.
+  const BLAST_LIFE_SECONDS = 0.5;
+  const BLAST_GROUP = [
+    { x: 0.7, y: -0.3 },
+    { x: -0.75, y: 0.35 },
+    { x: 0.2, y: 0.85 },
+    { x: 1.7, y: 0.6 },
+    { x: -1.6, y: -0.9 },
+  ];
+  function blastFixture(weapon) {
+    const model = new GameModel(CONTENT);
+    model.startGalaxy(1);
+    playOpening(model);
+    const flight = model.state.flight;
+    assert.ok(flight, "The blast proof requires galaxy one's flight");
+    model.state.progress[1].introduced = true;
+    model.state.dialogue = null;
+    flight.objects = [];
+    flight.shots = [];
+    flight.velocity = { x: 0, y: 0 };
+    flight.facing = { x: 1, y: 0 };
+    flight.fireCooldown = 999;
+    const definition = weaponAt(weapon, 1);
+    const radius = definition.blastRadius;
+    const toward = fromScreen({ x: 150, y: -40 });
+    const at = { x: flight.player.x + toward.x, y: flight.player.y + toward.y };
+    const group = BLAST_GROUP.map((offset, index) => {
+      const id = `browser-blast:${index}`;
+      const actor = enemyDefinition(1, "interceptor", id);
+      const world = fromScreen({ x: offset.x * radius, y: offset.y * radius });
+      const position = { x: at.x + world.x, y: at.y + world.y };
+      const enemy = createEnemy(
+        actor,
+        { archetype: "interceptor", id, packId: null, phase: 0 },
+        position,
+      );
+      enemy.primaryCooldown = 999;
+      const object = {
+        ...position,
+        enemy,
+        hp: enemy.hp,
+        id,
+        kind: "enemy",
+        persistent: false,
+        radius: CONTENT.tuning.flight.shipRadius * actor.sizeRatio,
+      };
+      flight.objects.push(object);
+      return { covered: screenOutlineContact(enemyHull(enemy), object, at, radius) !== null, id };
+    });
+    flight.shots.push({
+      ...at,
+      blast: radius,
+      damage: CONTENT.tuning.flight.playerShotDamage * definition.damageRatio,
+      enemy: false,
+      hitIds: [],
+      id: "browser-blast:missile",
+      life: BLAST_LIFE_SECONDS,
+      piercing: false,
+      projectile: "missile",
+      velocity: { x: 0, y: -1 },
+    });
+    const serialized = model.save();
+    assert.deepEqual(restoreSave(serialized), model.state, "Canonical restore accepts the blast");
+    return { group, serialized };
+  }
+  const blastProofs = [];
+  async function proveBlast(weapon, [width, height]) {
+    const { group, serialized } = blastFixture(weapon);
+    const opened = await browser.newContext({ viewport: { width, height }, hasTouch: true });
+    await opened.addInitScript(reportViolations);
+    await opened.addInitScript(() => {
+      Object.defineProperty(Document.prototype, "hidden", {
+        configurable: true,
+        get: () => window.adaSmokeFrozen === true,
+      });
+    });
+    await opened.route("**/*", previewOnly);
+    await opened.addInitScript(
+      ({ key, value }) => {
+        if (!sessionStorage.getItem("ada-browser.blast-proof.v1")) {
+          localStorage.setItem(key, value);
+          sessionStorage.setItem("ada-browser.blast-proof.v1", "1");
+        }
+      },
+      { key: storageKey, value: serialized },
+    );
+    const proof = await opened.newPage();
+    proof.setDefaultTimeout(15000);
+    observe(proof);
+    await proof.clock.install();
+    await proof.goto("http://ada-preview:4173/play/");
+    await proof.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
+    await proof.clock.pauseAt((await proof.evaluate(() => Date.now())) + 100);
+    await proof.locator('.ada-start-actions > [data-action="continue"]').click();
+    const space = proof.locator('#game-status[data-mode="space"]');
+    // Each 16 ms frame may step the flight once Continue has run.
+    async function goLive(frames) {
+      assert.ok(frames < 20, "Continue reaches the flight within 20 frames");
+      await proof.clock.runFor(16);
+      return (await space.count()) > 0 ? frames + 1 : goLive(frames + 1);
+    }
+    await goLive(0);
+    await proof.evaluate(() => {
+      window.adaSmokeFrozen = true;
+    });
+    await proof.clock.resume();
+    await proof.locator('#game-status[data-enemies="art"]').waitFor({ state: "attached" });
+    const canvas = proof.locator("#game-canvas > canvas");
+    await canvas.waitFor({ state: "visible" });
+    await proof.clock.pauseAt((await proof.evaluate(() => Date.now())) + 100);
+    await proof.evaluate(() => {
+      window.adaSmokeFrozen = false;
+    });
+    // Pixels within 3 of the blast ring's amber (EFFECT_COLOURS.amber), decoded on the proof page.
+    async function amber() {
+      const showOverCanvas = await hideOverCanvas(proof);
+      const image = await canvas.screenshot();
+      await showOverCanvas();
+      return proof.evaluate(async (encoded) => {
+        const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
+        const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
+        const sample = document.createElement("canvas");
+        sample.width = bitmap.width;
+        sample.height = bitmap.height;
+        const drawing = sample.getContext("2d");
+        drawing.drawImage(bitmap, 0, 0);
+        bitmap.close();
+        const data = drawing.getImageData(0, 0, sample.width, sample.height).data;
+        const ring = [0xf0, 0xbd, 0x68];
+        let count = 0;
+        for (let offset = 0; offset < data.length; offset += 4) {
+          if (ring.every((channel, index) => Math.abs(data[offset + index] - channel) <= 3)) {
+            count++;
+          }
+        }
+        return count;
+      }, image.toString("base64"));
+    }
+    const before = await amber();
+    // One 16 ms frame at a time until the blast's ring first shows.
+    async function detonate(frames) {
+      assert.ok(frames < 60, `The ${kind} blast shows within 60 frames of release`);
+      await proof.clock.runFor(16);
+      return (await amber()) > before + 40 ? frames : detonate(frames + 1);
+    }
+    const kind = weapon === "heavyMissile" ? "heavy" : "rapid";
+    const frames = [];
+    async function frame(name, after) {
+      await proof.clock.runFor(after);
+      const file = `blast-${kind}-${width}x${height}-${name}.png`;
+      const showOverCanvas = await hideOverCanvas(proof);
+      await canvas.screenshot({ path: `${output}/${file}` });
+      await showOverCanvas();
+      frames.push(file);
+    }
+    await detonate(0);
+    await frame("early", 48);
+    await frame("full", kind === "heavy" ? 120 : 48);
+    // The scene saves each second of its time.
+    await proof.clock.runFor(1200);
+    const saved = await proof.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey);
+    await opened.close();
+    assert.ok(
+      !saved.flight.shots.some((shot) => shot.id === "browser-blast:missile"),
+      `The ${kind} missile has exploded by ${width}x${height}'s save`,
+    );
+    const damaged = group.map(({ covered, id }) => {
+      const after = saved.flight.objects.find((object) => object.id === id);
+      return {
+        covered,
+        damaged: !after || after.hp < enemyDefinition(1, "interceptor", id).hp,
+        id,
+      };
+    });
+    assert.ok(
+      damaged.every(({ covered, damaged: hurt }) => covered === hurt),
+      `The ${kind} blast damages exactly the interceptors it covers: ${JSON.stringify(damaged)}`,
+    );
+    assert.ok(damaged.some(({ covered }) => covered) && damaged.some(({ covered }) => !covered));
+    blastProofs.push({ damaged, frames, size: `${width}x${height}`, weapon });
+  }
+  // One renderer at a time: the run's page closes for the proofs and reopens after them.
+  const beforeBlasts = await leaveFixture();
+  await proveBlast("rapidMissile", [1280, 720]);
+  await proveBlast("rapidMissile", [720, 360]);
+  await proveBlast("heavyMissile", [1280, 720]);
+  await proveBlast("heavyMissile", [720, 360]);
+  const afterBlasts = beforeBlasts.stored.find(([name]) => name === storageKey)[1];
+  const reopened = await openFixture(
+    beforeBlasts,
+    afterBlasts,
+    "ada-browser.blast-proof-return.v1",
+  );
+  context = reopened.context;
+  page = reopened.page;
+  await page.goto(reopened.url);
+  if (JSON.parse(afterBlasts).mode === "space") {
+    await continueFlight();
+  }
+  save("blast-circle-proof.json", {
+    scope: "Rapid and Heavy blasts over a held group of interceptors at both sizes",
+    proofs: blastProofs,
+  });
+  events.checks.push(
+    "Rapid and Heavy blasts draw as circles and damage exactly the interceptors they cover",
+  );
+
   // Backdrop proofs for Art (art/backdrop.md): each galaxy's flight with no play objects at
   // 1280x720 and 720x360, its near rocks in their muted tones, and the WebGL draw calls a frame
   // takes, counted over 30 frames.
