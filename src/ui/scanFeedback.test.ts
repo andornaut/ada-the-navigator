@@ -25,6 +25,7 @@ const context: ScanFeedbackContext = {
   area: { height: 360, width: 720, x: 0, y: 0 },
   blocked: [],
   covered: false,
+  dialogue: [],
   measure: () => ({ height: 40, width: 200 }),
   reducedMotion: false,
   resolveAnchor: () => ({ x: 360, y: 240 }),
@@ -135,6 +136,20 @@ describe("authoritative scan presentation receipts", () => {
     reference.enqueue([receipt()]);
     reference.frame(context, 200);
     expect(third.rect).toEqual(reference.frame(context, 0)!.rect);
+  });
+  it("only rises: a conversation box shown after the receipt passed it never pushes it down", () => {
+    const queue = new ScanFeedbackQueue();
+    queue.enqueue([receipt()]);
+    const dialogue = [{ height: 60, width: 480, x: 120, y: 66 }];
+    const start = queue.frame(context, NOTICE_TIMING.holdMs)!;
+    expect(start.rect.y).toBe(220);
+    const top = queue.frame(context, 0)!;
+    expect(top.rect.y).toBe(0);
+    expect(queue.frame({ ...context, dialogue }, 0)!.rect.y).toBe(0);
+    const stopped = new ScanFeedbackQueue();
+    stopped.enqueue([receipt()]);
+    stopped.frame(context, NOTICE_TIMING.holdMs);
+    expect(stopped.frame({ ...context, dialogue }, 0)!.rect.y).toBe(134);
   });
   it("does not advance on repeated native refreshes at the same scene time", () => {
     const queue = new ScanFeedbackQueue();

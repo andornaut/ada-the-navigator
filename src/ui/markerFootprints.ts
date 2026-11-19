@@ -3,7 +3,7 @@ import type { Rect } from "@andornaut/game-kit/runtime/rect";
 import { VIEW_PROPERTIES } from "./layout/css.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 
-const SELECTORS = [
+const MARKER_SELECTORS = [
   ".ada-status",
   ".ada-shield",
   ".ada-weapon-selector",
@@ -21,10 +21,14 @@ const SELECTORS = [
   "#save-status",
 ].join(",");
 
-/** Actual visible HUD and dialogue rectangles, relative to the canvas's logical game area. */
+/**
+ * Actual visible HUD and dialogue rectangles, relative to the canvas's logical game area, or those
+ * of the elements selectors matches.
+ */
 export function markerFootprints(
   doc: Pick<Document, "querySelectorAll">,
   host: HTMLElement | null,
+  selectors: string = MARKER_SELECTORS,
 ): Rect[] {
   if (!host) {
     return [];
@@ -33,7 +37,7 @@ export function markerFootprints(
   const unit = readViewUnit(host);
   const left = parseFloat(getComputedStyle(host).getPropertyValue(VIEW_PROPERTIES.areaLeft)) || 0;
   const rectangles: Rect[] = [];
-  for (const node of doc.querySelectorAll<HTMLElement>(SELECTORS)) {
+  for (const node of doc.querySelectorAll<HTMLElement>(selectors)) {
     if (node.closest("[hidden]") || node.getClientRects().length === 0) {
       continue;
     }

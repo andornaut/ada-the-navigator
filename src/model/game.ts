@@ -571,9 +571,10 @@ export class GameModel {
     this.state.notice = "";
   }
   /**
-   * A notice shows at once in the conversation box's slot, ahead of every line but a warning's
-   * (BOX_PRIORITIES); lower lines wait under it and resume after. A warning interrupts a notice,
-   * which resumes after it. A game notice clears after a line's time shown in flight.
+   * A notice shows at once in the conversation box's slot, ahead of every line but a warning's or
+   * a scan receipt's (BOX_PRIORITIES); lower lines wait under it and resume after. A warning or
+   * receipt interrupts a notice, which resumes after it. A game notice clears after a line's time
+   * shown in flight.
    */
   private notify(text: string): void {
     this.state.notice = text;
@@ -590,14 +591,17 @@ export class GameModel {
   get warningShowing(): boolean {
     return this.state.mode === "space" && this.talk.warningShowing;
   }
-  /** The line the conversation box shows now, if any: a warning's, or another with no notice. */
+  /**
+   * The line the conversation box shows now, if any: a warning's or scan receipt's, or another
+   * with no notice.
+   */
   get conversation(): ConversationView | null {
     if (
       this.state.mode !== "space" ||
       this.state.dialogue ||
       this.state.docked ||
       this.screen !== "space" ||
-      (this.noticeShowing && !this.talk.warningShowing)
+      (this.noticeShowing && !this.talk.overNoticeShowing)
     ) {
       return null;
     }
@@ -2401,8 +2405,8 @@ export class GameModel {
     const near = (range: number) => (object: { x: number; y: number }) =>
       Math.hypot(object.x - f.player.x, object.y - f.player.y) <= range;
     const held = this.noticeShowing;
-    // A game notice's time runs only while it shows, not under a warning.
-    if (this.state.notice && !this.talk.warningShowing) {
+    // A game notice's time runs only while it shows, not under a warning or scan receipt.
+    if (this.state.notice && !this.talk.overNoticeShowing) {
       this.noticeShownFor += dt;
       if (this.noticeShownFor >= lineDuration(this.state.notice) - 1e-9) {
         this.state.notice = "";

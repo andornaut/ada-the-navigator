@@ -6,6 +6,8 @@ export interface ScanFeedbackLayout {
   readonly anchor: Vec;
   readonly area: Rect;
   readonly blocked: readonly Rect[];
+  /** The shown conversation box's parts; the rise stops SPACING.gap below any above its start. */
+  readonly dialogue: readonly Rect[];
   readonly height: number;
   readonly path?: ScanFeedbackPath;
   readonly progress: number;
@@ -14,6 +16,16 @@ export interface ScanFeedbackLayout {
 }
 const overlaps = (a: Rect, b: Rect): boolean =>
   a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+/** The boxes above from that its column meets. */
+const above = (boxes: readonly Rect[], from: Rect): Rect[] =>
+  boxes.filter(
+    (box) =>
+      box.x < from.x + from.width && box.x + box.width > from.x && box.y + box.height <= from.y,
+  );
+/** The highest y the rise reaches under the dialogue above from, or -Infinity with none. */
+const belowDialogue = (dialogue: readonly Rect[], from: Rect): number =>
+  Math.max(-Infinity, ...above(dialogue, from).map((box) => box.y + box.height + SPACING.gap));
+
 export interface ScanFeedbackPath {
   readonly area: Rect;
   readonly from: Rect;
@@ -45,21 +57,33 @@ export function scanFeedbackPath(context: ScanFeedbackLayout): ScanFeedbackPath 
   if (!from) {
     return null;
   }
-  const above = blocked.filter(
-    (box) => box.x < from.x + width && box.x + box.width > from.x && box.y + box.height <= from.y,
-  );
   return {
     area: { ...area },
     from,
-    top: Math.min(from.y, Math.max(area.y, ...above.map((box) => box.y + box.height + gap))),
+    top: Math.min(
+      from.y,
+      Math.max(
+        area.y,
+        ...above(blocked, from).map((box) => box.y + box.height + gap),
+        belowDialogue(context.dialogue, from),
+      ),
+    ),
   };
 }
-/** Interpolate the retained path without moving sideways or hopping over occupied rectangles. */
+/**
+ * Interpolate the retained path without moving sideways or hopping over occupied rectangles. A
+ * conversation box shown above the start after the path was chosen stops the rise SPACING.gap
+ * below it.
+ */
 export function scanFeedbackRect(context: ScanFeedbackLayout): Rect | null {
   const path = context.path ?? scanFeedbackPath(context);
   if (!path) {
     return null;
   }
   const progress = context.reducedMotion ? 0 : Math.max(0, Math.min(1, context.progress));
-  return { ...path.from, y: path.from.y + (path.top - path.from.y) * progress };
+  const y = path.from.y + (path.top - path.from.y) * progress;
+  return {
+    ...path.from,
+    y: Math.max(y, Math.min(path.from.y, belowDialogue(context.dialogue, path.from))),
+  };
 }

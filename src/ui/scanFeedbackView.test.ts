@@ -2,7 +2,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { immutableScanOutcome, type ScanOutcome } from "../model/scanOutcomes.ts";
 import { NOTICE_TIMING } from "./itemNotice.ts";
-import { createScanFeedbackView, scanFeedbackFootprints } from "./scanFeedbackView.ts";
+import { VIEW_PROPERTIES } from "./layout/css.ts";
+import {
+  createScanFeedbackView,
+  scanFeedbackDialogue,
+  scanFeedbackFootprints,
+} from "./scanFeedbackView.ts";
 class Node {
   readonly style = Object.assign({ setProperty: vi.fn() }, {} as Record<string, string>);
   readonly dataset: Record<string, string> = {};
@@ -50,6 +55,7 @@ const context = {
   area: { height: 360, width: 720, x: 0, y: 0 },
   blocked: [],
   covered: false,
+  dialogue: [],
   reducedMotion: false,
   resolveAnchor: () => ({ x: 360, y: 220 }),
 };
@@ -168,6 +174,33 @@ describe("native scan receipt view", () => {
     const selector = querySelectorAll.mock.calls[0]![0];
     expect(selector).toContain(".ada-shield:not(.ada-conversation, .ada-conversation *)");
     expect(selector).toContain(".ada-conversation:not(.ada-conversation, .ada-conversation *)");
+  });
+  it("grows each shown touch control by SPACING.gap and reads the conversation box's parts", () => {
+    vi.stubGlobal("getComputedStyle", () => ({
+      display: "block",
+      getPropertyValue: (name: string) => (name === VIEW_PROPERTIES.unit ? "1" : "0"),
+      opacity: "1",
+      visibility: "visible",
+    }));
+    const shown = (left: number, top: number, width: number, height: number) => ({
+      closest: () => null,
+      getBoundingClientRect: () => ({ height, left, top, width }),
+      getClientRects: () => [{}],
+    });
+    const host = { getBoundingClientRect: () => ({ left: 0, top: 0 }) } as unknown as HTMLElement;
+    const querySelectorAll = (selector: string) =>
+      selector.includes("aim-joystick")
+        ? [shown(595, 235, 75, 75), shown(518, 135, 75, 75)]
+        : selector.startsWith(".ada-conversation,")
+          ? [shown(120, 66, 480, 60)]
+          : [shown(10, 10, 100, 30)];
+    const doc = { querySelectorAll } as unknown as Document;
+    expect(scanFeedbackFootprints(doc, host)).toEqual([
+      { height: 30, width: 100, x: 10, y: 10 },
+      { height: 91, width: 91, x: 587, y: 227 },
+      { height: 91, width: 91, x: 510, y: 127 },
+    ]);
+    expect(scanFeedbackDialogue(doc, host)).toEqual([{ height: 60, width: 480, x: 120, y: 66 }]);
   });
   it("clears presentation at the model boundary and removes its native node on disposal", () => {
     const { panel, view } = setup();

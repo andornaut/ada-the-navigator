@@ -55,7 +55,11 @@ import { galaxiesAvailable } from "../ui/pause.ts";
 import { createPennyMarkerLayer } from "../ui/pennyMarkers.ts";
 import { questContextIcon } from "../ui/questsScreen.ts";
 import { createRestartCard } from "../ui/restartCard.ts";
-import { createScanFeedbackView, scanFeedbackFootprints } from "../ui/scanFeedbackView.ts";
+import {
+  createScanFeedbackView,
+  scanFeedbackDialogue,
+  scanFeedbackFootprints,
+} from "../ui/scanFeedbackView.ts";
 import { aboardLabel, type ShipView } from "../ui/shipCard.ts";
 import { createStationView } from "../ui/station.ts";
 import { stardustCount } from "../ui/statusPill.ts";
@@ -1178,6 +1182,7 @@ export function renderConversation(scene: UiContext): void {
           document.hidden ||
           scene.model.state.mode !== "space" ||
           !flight,
+        dialogue: scanFeedbackDialogue(document, document.getElementById(VIEW_HOST_ID)),
         reducedMotion: scene.reducedMotion,
         resolveAnchor: (outcome) => {
           if (flight?.galaxy !== outcome.galaxy) {

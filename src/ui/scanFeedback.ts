@@ -76,6 +76,8 @@ export interface ScanFeedbackContext {
   readonly blocked: readonly Rect[];
   /** Covered includes paused, dialog, settings, unavailable renderer and loading states. */
   readonly covered: boolean;
+  /** The shown conversation box's parts, which the rise stops below. */
+  readonly dialogue: readonly Rect[];
   readonly measure: (content: ScanFeedbackContent) => {
     readonly height: number;
     readonly width: number;
@@ -91,6 +93,8 @@ interface Pending {
   elapsed: number;
   anchor?: Vec;
   path?: ScanFeedbackPath;
+  /** The last shown top: the receipt only rises, so a box shown later never pushes it down. */
+  shownY?: number;
   sampledAt?: number;
   sampledElapsed?: number;
 }
@@ -150,6 +154,7 @@ export class ScanFeedbackQueue {
         anchor,
         area: context.area,
         blocked: context.blocked,
+        dialogue: context.dialogue,
         ...context.measure(next.content),
         progress: 0,
         reducedMotion: context.reducedMotion,
@@ -159,18 +164,22 @@ export class ScanFeedbackQueue {
       }
       next.anchor = { ...anchor };
       next.path = path;
+      delete next.shownY;
     }
     const path = next.path!;
-    const rect = scanFeedbackRect({
+    const placed = scanFeedbackRect({
       anchor,
       area: context.area,
       blocked: context.blocked,
+      dialogue: context.dialogue,
       height: path.from.height,
       path,
       progress: elapsed === 0 ? 0 : EASE_OUT(Math.min(1, elapsed / NOTICE_TIMING.holdMs)),
       reducedMotion: context.reducedMotion,
       width: path.from.width,
     })!;
+    const rect = { ...placed, y: Math.min(placed.y, next.shownY ?? placed.y) };
+    next.shownY = rect.y;
     const fade = context.reducedMotion ? NOTICE_TIMING.reducedFadeMs : NOTICE_TIMING.fadeMs;
     const opacity = Math.max(0, 1 - Math.max(0, elapsed - NOTICE_TIMING.holdMs) / fade);
     if (context.time !== undefined) {

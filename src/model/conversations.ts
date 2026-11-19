@@ -7,8 +7,8 @@ import {
 } from "../data/andromeda.ts";
 import { CAST, SPEAKER_CAST } from "../data/cast.ts";
 import {
+  BOX_PRIORITIES,
   type Conversation,
-  CONVERSATION_PRIORITIES,
   CONVERSATION_TUNING,
   type ConversationLine,
   CONVERSATIONS,
@@ -115,6 +115,8 @@ interface Request {
   readonly point?: string;
   /** Where an interrupted conversation resumes. */
   readonly resume?: { readonly elapsed: number; readonly exposed: boolean; readonly line: number };
+  /** A scan receipt, which ranks as a notice: below warnings, above every other line. */
+  readonly notice?: true;
 }
 
 interface Active extends Request {
@@ -123,7 +125,9 @@ interface Active extends Request {
   line: number;
 }
 
-const rank = (conversation: Conversation) => CONVERSATION_PRIORITIES.indexOf(conversation.priority);
+/** A request's place in BOX_PRIORITIES, highest first. */
+const rank = (request: Pick<Request, "conversation" | "notice">) =>
+  BOX_PRIORITIES.indexOf(request.notice ? "notice" : request.conversation.priority);
 
 /** An event's trigger, such as an arrival or a newly mapped place, which keeps holding. */
 const always: Holds = () => true;
@@ -433,7 +437,7 @@ export class ConversationDirector {
       }
       const request = this.queue.find((entry) => entry.conversation.id === id);
       if (request) {
-        if (!this.active || rank(this.active.conversation) >= rank(request.conversation)) {
+        if (!this.active || rank(this.active) >= rank(request)) {
           this.start(request);
         }
         return true;
@@ -465,7 +469,11 @@ export class ConversationDirector {
     this.eventCue([line], id);
   }
 
-  /** One receipt per actual immutable outcome; distinct same-worded events remain distinct. */
+  /**
+   * One receipt per actual immutable outcome; distinct same-worded events remain distinct. The
+   * receipt ranks as a notice and is scheduled at once, so it shows on the step its outcome is
+   * committed unless a warning shows; then it waits, never dropped, and follows the warning.
+   */
   scanOutcome(outcome: ScanOutcome): void {
     if (outcome.galaxy !== this.galaxy || this.handledScanOutcomes.has(outcome)) {
       return;
@@ -475,10 +483,16 @@ export class ConversationDirector {
     this.eventCue(
       scanOutcomeLines(outcome),
       `chapter:cue:scan:${outcome.galaxy}:${this.scanOutcomeSequence}`,
+      true,
     );
+    this.revalidate();
+    const receipt = this.queue.find((request) => request.notice && !request.resume);
+    if (receipt && (!this.active || rank(receipt) < rank(this.active))) {
+      this.start(receipt);
+    }
   }
 
-  private eventCue(lines: readonly ConversationLine[], id: string): void {
+  private eventCue(lines: readonly ConversationLine[], id: string, notice = false): void {
     const galaxy = this.galaxy;
     if (galaxy === null) {
       return;
@@ -493,6 +507,7 @@ export class ConversationDirector {
       },
       holds: always,
       instance: id,
+      ...(notice ? { notice: true as const } : {}),
     });
   }
 
@@ -515,8 +530,8 @@ export class ConversationDirector {
 
   /**
    * One flight step. A notice ranks below warnings and above everything else (BOX_PRIORITIES):
-   * while one shows, requests still queue and a warning may start or keep showing, but any other
-   * line waits where it was and resumes once the notice clears.
+   * while a game notice shows, requests still queue and a warning or scan receipt may start or keep
+   * showing, but any other line waits where it was and resumes once the notice clears.
    */
   step(dt: number, notice: boolean, facts: ConversationFacts): void {
     const galaxy = this.galaxy;
@@ -535,11 +550,13 @@ export class ConversationDirector {
       this.scanLessonAfterPenny = false;
       this.requestScanLesson();
     }
-    if (notice && !this.warningShowing) {
+    if (notice && !this.overNoticeShowing) {
       this.queue = this.queue.filter((request) => this.valid(facts, request));
-      const warning = this.queue.find((request) => request.conversation.priority === "warning");
-      if (warning) {
-        this.start(warning);
+      const [over] = this.queue
+        .filter((request) => rank(request) <= BOX_PRIORITIES.indexOf("notice"))
+        .sort((a, b) => rank(a) - rank(b));
+      if (over) {
+        this.start(over);
       }
       return;
     }
@@ -833,21 +850,20 @@ export class ConversationDirector {
     // By rank, interrupted ones first within a rank, then in request order (a stable sort).
     const [next] = [...this.queue].sort(
       (a, b) =>
-        rank(a.conversation) - rank(b.conversation) ||
-        Number(b.resume !== undefined) - Number(a.resume !== undefined),
+        rank(a) - rank(b) || Number(b.resume !== undefined) - Number(a.resume !== undefined),
     );
     if (!next) {
       return;
     }
     if (this.active) {
-      if (rank(next.conversation) < rank(this.active.conversation)) {
+      if (rank(next) < rank(this.active)) {
         this.start(next);
       }
       return;
     }
     if (
       next.resume !== undefined ||
-      next.conversation.priority === "warning" ||
+      rank(next) <= BOX_PRIORITIES.indexOf("notice") ||
       this.cooldown <= EPSILON
     ) {
       this.start(next);
@@ -888,10 +904,16 @@ export class ConversationDirector {
     return sensed;
   }
 
-  /** Whether a warning shows, which a notice waits under. */
+  /** Whether a warning shows. */
   get warningShowing(): boolean {
     this.revalidate();
-    return this.active?.conversation.priority === "warning";
+    return this.active !== null && rank(this.active) === BOX_PRIORITIES.indexOf("warning");
+  }
+
+  /** Whether a warning or a scan receipt shows, which a game notice waits under. */
+  get overNoticeShowing(): boolean {
+    this.revalidate();
+    return this.active !== null && rank(this.active) <= BOX_PRIORITIES.indexOf("notice");
   }
 
   private markSeen({ conversation, instance }: Request): void {

@@ -44,7 +44,8 @@ it("shares one actual immutable scan receipt with the UI drain and preserves it 
     name: "Astra",
     text: `Scan complete: ${receipt!.target.name}.`,
   });
-  expect(model.conversation!.elapsed).toBe(0);
+  // The receipt started at Use and showed for the one step before the modal, not under it.
+  expect(model.conversation!.elapsed).toBeCloseTo(SIMULATION_STEP_SECONDS);
   expect(model.reopenInteraction()).toBe(true);
   expect(model.state.dialogue).toBe(modal);
   const resumed = relaunch(CONTENT, model.save());

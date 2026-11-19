@@ -6,7 +6,7 @@ import { afterEach, expect, it, vi } from "vitest";
 
 import { VIEW_PROPERTIES } from "../ui/layout/css.ts";
 import { createCoveredPaint } from "../ui/modalScenePaint.ts";
-import { scanFeedbackFootprints } from "../ui/scanFeedbackView.ts";
+import { scanFeedbackDialogue, scanFeedbackFootprints } from "../ui/scanFeedbackView.ts";
 
 afterEach(() => vi.unstubAllGlobals());
 it("retains production scan receipts under cover and resolves only the receipt galaxy's actual target", () => {
@@ -63,6 +63,7 @@ it("retains production scan receipts under cover and resolves only the receipt g
     markerFootprints: () => [{ height: 30, width: 100, x: 0, y: 0 }],
     pennyLayers: { get: () => undefined },
     safeGameArea: () => ({ height: 360, width: 720, x: 0, y: 0 }),
+    scanFeedbackDialogue,
     scanFeedbackFootprints,
     scanViews: { get: () => scan },
     window: {},
@@ -81,7 +82,12 @@ it("retains production scan receipts under cover and resolves only the receipt g
   expect(first[0].covered).toBe(true);
   expect(first[1]).toBe(20);
   expect(first[0].time).toBe(20);
-  expect(first[0].blocked).toEqual([{ height: 30, width: 100, x: 0, y: 0 }]);
+  // The HUD footprint, then the same node as a touch control grown by SPACING.gap.
+  expect(first[0].blocked).toEqual([
+    { height: 30, width: 100, x: 0, y: 0 },
+    { height: 46, width: 116, x: -8, y: -8 },
+  ]);
+  expect(first[0].dialogue).toEqual([{ height: 30, width: 100, x: 0, y: 0 }]);
   expect(querySelectorAll).toHaveBeenCalledWith(
     expect.stringContaining(":not(.ada-conversation, .ada-conversation *)"),
   );

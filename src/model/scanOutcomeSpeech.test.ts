@@ -1,7 +1,10 @@
 import { expect, it } from "vitest";
 
+import { CONTENT } from "../data/content.ts";
 import { CONVERSATION_TUNING, CONVERSATIONS } from "../data/conversations.ts";
 import { ConversationDirector, type ConversationFacts } from "./conversations.ts";
+import { GameModel } from "./game.ts";
+import { landmarkSites } from "./landmarks.ts";
 import { immutableScanOutcome, type ScanCompletion, type ScanOutcome } from "./scanOutcomes.ts";
 import { scanOutcomeLines } from "./scanOutcomeSpeech.ts";
 
@@ -147,4 +150,80 @@ it("resumes the existing lesson and Penny requests through the shared event-cue 
   talk.skip();
   step(talk, facts);
   expect(talk.showing!.instance).toBe(penny);
+});
+
+it("replaces a lower line with the receipt on the step its outcome is committed", () => {
+  const talk = new ConversationDirector(
+    CONVERSATIONS.filter(({ trigger }) => trigger.kind === "penny"),
+    [],
+  );
+  talk.beginFlight(1, { aim: true, dock: true, move: true, scan: true, stardust: true });
+  const facts = { ...calm, pennyPoints: ["landmark:1:0"] };
+  step(talk, facts);
+  const penny = talk.showing!.instance;
+  talk.scanOutcome(outcome());
+  expect(talk.showing!.line.text).toBe("Scan complete: Veil $& {quest}.");
+  talk.skip();
+  step(talk, facts);
+  expect(talk.showing!.instance).toBe(penny);
+});
+
+it("shows the receipt over a game notice and keeps it showing as the notice waits", () => {
+  const { talk } = director();
+  step(talk);
+  talk.scanOutcome(outcome());
+  expect(talk.overNoticeShowing).toBe(true);
+  expect(talk.warningShowing).toBe(false);
+  talk.step(1, true, calm);
+  expect(talk.showing!.line.text).toBe("Scan complete: Veil $& {quest}.");
+  expect(talk.showing!.elapsed).toBeCloseTo(1);
+});
+
+it("queues the receipt behind a drone warning, never dropped, however long the warning lasts", () => {
+  const { talk } = director();
+  const drones = { ...calm, dronesNear: true, inDanger: true };
+  step(talk, drones);
+  const warning = talk.showing!.instance;
+  expect(talk.warningShowing).toBe(true);
+  talk.scanOutcome(outcome());
+  expect(talk.showing!.instance).toBe(warning);
+  // Past the rectangle's 1.5 s and every warning line, the receipt still follows.
+  const shown: string[] = [];
+  for (let t = 0; t < 30 && talk.showing?.instance !== undefined; t += 0.05) {
+    talk.step(0.05, false, drones);
+    const text = talk.showing?.line.text;
+    if (text && shown.at(-1) !== text) {
+      shown.push(text);
+    }
+  }
+  expect(shown.indexOf("Scan complete: Veil $& {quest}.")).toBeGreaterThan(0);
+});
+
+it("lets a warning interrupt the receipt, which resumes after it", () => {
+  const { talk } = director();
+  step(talk);
+  talk.scanOutcome(outcome());
+  const receipt = talk.showing!.instance;
+  talk.step(0.05, false, { ...calm, dronesNear: true, inDanger: true });
+  expect(talk.warningShowing).toBe(true);
+  talk.skip();
+  step(talk, { ...calm, dronesNear: true, inDanger: true });
+  expect(talk.showing!.instance).toBe(receipt);
+  expect(talk.showing!.line.text).toBe("Scan complete: Veil $& {quest}.");
+});
+
+it("shows the receipt in the conversation box as soon as Use scans", () => {
+  const model = new GameModel(CONTENT);
+  model.state.seenConversations.push(...CONVERSATIONS.map(({ id }) => id));
+  model.startGalaxy(1);
+  const flight = model.state.flight!;
+  // No drones: a warning would rightly keep the receipt waiting.
+  flight.objects = flight.objects.filter(({ kind }) => kind !== "enemy");
+  const target = landmarkSites(1).find(({ id }) => !model.state.progress[1].charted.includes(id))!;
+  flight.player = { x: target.x, y: target.y };
+  expect(model.contextAction).toBe("scan");
+  // A flight step runs the conversation director before Use, so no later step is needed.
+  model.interact();
+  expect(model.drainScanOutcomes()).toHaveLength(1);
+  expect(model.conversation?.text).toMatch(/^Scan complete: /);
 });
