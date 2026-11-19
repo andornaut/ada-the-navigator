@@ -537,3 +537,22 @@ it("checks notice reconciliation against the actual live App root", () => {
   expect(() => f.shell.render(f.model.state, "space")).toThrow("no live action root");
   expect(f.actions.dismissNotice).not.toHaveBeenCalled();
 });
+
+describe("save status slot", () => {
+  it("shows the network-play notice over the save status while it shows, with no control", () => {
+    setup();
+    const status = host.children.find((node) => node.id === "save-status")!;
+    expect(status.textContent ?? "").toBe("");
+    shell.setSavingAvailable(false);
+    expect(status.textContent).toBe(CONTENT.labels.savingUnavailable);
+    shell.setNetworkPlay("unsupported");
+    expect(status.textContent).toBe(CONTENT.labels.networkPlayUnsupported);
+    shell.setNetworkPlay("quota");
+    expect(status.textContent).toBe(CONTENT.labels.networkPlayQuota);
+    expect(status.querySelectorAll("button")).toEqual([]);
+    shell.setNetworkPlay(undefined);
+    expect(status.textContent).toBe(CONTENT.labels.savingUnavailable);
+    shell.setSavingAvailable(true);
+    expect(status.textContent).toBe("");
+  });
+});

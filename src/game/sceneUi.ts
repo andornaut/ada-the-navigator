@@ -1,10 +1,12 @@
 // The scene's DOM interface: building the controls, cards and screens, and refreshing them.
 // Functions over the scene's UiContext.
+import type { NetworkPlayNotice } from "@andornaut/game-kit/runtime/web/pwa/buildContract";
 import { Scale, type Scene, Scenes } from "phaser";
 
 import PROJECTS_FILE from "../../public/art/projects.json" with { type: "json" };
 import { CHEAT_COPY } from "../data/cheatCopy.ts";
 import { CONTENT } from "../data/content.ts";
+import { lineDuration } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { BUILT, ROUTE } from "../data/galaxies.ts";
@@ -27,6 +29,7 @@ import {
   installApp,
   installState,
   keepScreenOn,
+  networkPlayNotice,
   offersInstall,
   onInstallStateChange,
   requireNewerVersion,
@@ -1132,6 +1135,9 @@ export function buildScene(scene: UiContext): void {
   if (newer) {
     requireNewerVersion((state) => scene.shell.setRequiredUpdate(state));
   }
+  networkPlayNotice((notice) => {
+    networkPlays.set(scene, { reason: notice.reason });
+  });
   refreshScene(scene);
   loadAsteroidArt(scene);
 }
@@ -1169,6 +1175,28 @@ const coveredScenePaint = new WeakMap<
   }
 >();
 
+// The network-play notice per scene once the launch reports it, with when its showing ends.
+const networkPlays = new WeakMap<object, { reason: NetworkPlayNotice["reason"]; ends?: number }>();
+
+/**
+ * Whether the network-play notice shows: once per launch, for a line's time from the first flight
+ * while the game plays from the network, in the save status slot with no control.
+ */
+export function showNetworkPlay(scene: Pick<UiContext, "model" | "shell" | "time">): boolean {
+  const notice = networkPlays.get(scene);
+  if (!notice) {
+    return false;
+  }
+  const { flight, mode } = scene.model.state;
+  if (notice.ends === undefined && mode === "space" && flight) {
+    const label = notice.reason === "quota" ? "networkPlayQuota" : "networkPlayUnsupported";
+    notice.ends = scene.time.now + lineDuration(CONTENT.labels[label] ?? "") * 1000;
+  }
+  const showing = notice.ends !== undefined && scene.time.now < notice.ends;
+  scene.shell.setNetworkPlay(showing ? notice.reason : undefined);
+  return showing;
+}
+
 /** The conversation box, in the desktop wording without a coarse pointer. */
 export function renderConversation(scene: UiContext): void {
   const emergency = scene.emergencyReturn.line;
@@ -1191,10 +1219,11 @@ export function renderConversation(scene: UiContext): void {
     null;
   scene.conversationBox.render(line, !coarsePointer(window), scene.reducedMotion);
   // UI covers retain the scene box beneath their scrim; actual interaction replaces it.
+  const networkPlay = showNetworkPlay(scene);
   const occupant = boxOccupant({
     line: line !== null && !sceneCovered,
     notice: notice !== "" && !sceneCovered,
-    saveStatus: scene.savingUnavailable,
+    saveStatus: scene.savingUnavailable || networkPlay,
   });
   // Written only on a change: an attribute write restyles the whole play area.
   if (occupant !== scene.boxOccupant) {

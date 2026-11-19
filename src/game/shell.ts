@@ -1,3 +1,4 @@
+import type { NetworkPlayNotice } from "@andornaut/game-kit/runtime/web/pwa/buildContract";
 import type { RequiredUpdateState } from "@andornaut/game-kit/runtime/web/pwa/dom/launch";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 
@@ -42,6 +43,9 @@ export class StoryShell {
   private readonly noticeAction: ReturnType<typeof bindAdaAction>;
   // A newer save's forced update, while it runs: Start stays closed.
   private requiredUpdate: RequiredUpdateState | undefined;
+  // The network-play notice while it shows, which takes the save status slot, and saving.
+  private networkPlay: NetworkPlayNotice["reason"] | undefined;
+  private savingAvailable = true;
   private startScreen: ReturnType<typeof createStartScreen> | undefined;
   // Art's title art, once the scene has read it; the start screen draws without it until then.
   private titleArt: TitleScreenArt | null = null;
@@ -281,7 +285,28 @@ export class StoryShell {
   }
 
   setSavingAvailable(available: boolean): void {
-    const text = available ? "" : (CONTENT.labels.savingUnavailable ?? "");
+    this.savingAvailable = available;
+    this.renderSavingStatus();
+  }
+
+  /**
+   * The network-play notice (rules.md game notices): while shown, the save status slot says the
+   * game plays online, with no control; undefined returns the slot to the save status.
+   */
+  setNetworkPlay(reason: NetworkPlayNotice["reason"] | undefined): void {
+    this.networkPlay = reason;
+    this.renderSavingStatus();
+  }
+
+  private renderSavingStatus(): void {
+    const text =
+      this.networkPlay === "quota"
+        ? (CONTENT.labels.networkPlayQuota ?? "")
+        : this.networkPlay === "unsupported"
+          ? (CONTENT.labels.networkPlayUnsupported ?? "")
+          : this.savingAvailable
+            ? ""
+            : (CONTENT.labels.savingUnavailable ?? "");
     if (this.savingStatus.textContent !== text) {
       this.savingStatus.textContent = text;
     }

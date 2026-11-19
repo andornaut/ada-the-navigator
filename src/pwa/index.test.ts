@@ -15,6 +15,7 @@ const kit = vi.hoisted(() => {
         value: unknown,
         options: {
           onFailure: (failure: { reason: string; retry: () => void }) => void;
+          onNetworkPlay: (notice: { reason: "quota" | "unsupported" }) => void;
           onProgress: (progress: unknown) => void;
           onRequireNewer: (state: "unavailable" | "updating") => void;
           onUpdateReady: (offer: {
@@ -157,6 +158,7 @@ describe("launch", () => {
     });
     expect(Object.keys(options()).sort()).toEqual([
       "onFailure",
+      "onNetworkPlay",
       "onProgress",
       "onRequireNewer",
       "onUpdateReady",
@@ -220,6 +222,23 @@ describe("launch", () => {
     expect(retry).toHaveBeenCalledOnce();
     expect(views.at(-1)!.kind).toBe("loading");
   });
+
+  it.each(["unsupported", "quota"] as const)(
+    "relays a %s first install's network play to the game, before or after it listens",
+    async (reason) => {
+      stubDevice({});
+      const pwa = await import("./index.ts");
+      void pwa.launchPhoneApp();
+      options().onNetworkPlay({ reason });
+      const early = vi.fn();
+      pwa.networkPlayNotice(early);
+      expect(early).toHaveBeenCalledExactlyOnceWith({ reason });
+      const late = vi.fn();
+      pwa.networkPlayNotice(late);
+      options().onNetworkPlay({ reason });
+      expect(late.mock.calls).toEqual([[{ reason }], [{ reason }]]);
+    },
+  );
 
   it("offers a staged version on any screen; Update now saves, then switches", async () => {
     stubDevice({});

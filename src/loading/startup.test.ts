@@ -296,7 +296,7 @@ it("shows a failed first install while the game waits and resumes it on Retry", 
   expect(retry).toHaveBeenCalledOnce();
   stop();
   const calls = view.update.mock.calls.length;
-  presentInstallationFailure({ reason: "quota", retry });
+  presentInstallationFailure({ reason: "verification", retry });
   expect(view.update).toHaveBeenCalledTimes(calls);
   await observedRetry();
 });

@@ -112,8 +112,10 @@ except `app-icon/`, and the galaxy selector previews under `public/previews/`.
 The page's launch ([`src/pwa/index.ts`](pwa/index.ts)) runs from the boot shell
 before the game module downloads. A first visit installs the complete build
 under the one loading bar, verifying each file, then plays from the cache; a
-failed install shows Loading failed, and Retry resumes from the files already
-stored. The router downloads nothing: it serves each window its build from the
+failed download shows Loading failed, and Retry resumes from the files already
+stored. Where the browser refuses the router or storage is full, the game plays
+from the network instead, says so once in the save status slot at the first
+flight, and the next launch tries the install again. The router downloads nothing: it serves each window its build from the
 cache. Later launches play at once and check the pointer in the background, at
 launch and on resume; an update fetches only the changed files and stages them
 apart from the active build. A complete staged build activates silently at the

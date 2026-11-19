@@ -561,6 +561,12 @@ export const CONTENT: GameContent = {
     needleEye: "The Eye",
     needleGoal: "Light the gates of a practice channel.",
     needlePractice: "Practice channel",
+    // A first install that could not complete, so the game plays from the network
+    // (gameplay/player-copy.md).
+    networkPlayQuota:
+      "Playing online. Storage is full, so the game can't download for offline play.",
+    networkPlayUnsupported:
+      "Playing online. This browser can't download the game for offline play.",
     next: "Next",
     nextLine: "Next line",
     ore: "Ore",

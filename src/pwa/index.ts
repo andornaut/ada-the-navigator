@@ -17,7 +17,10 @@ import {
   backGuardState,
   isBackGuardState,
 } from "@andornaut/game-kit/runtime/web/pwa/backNavigation";
-import type { LaunchResult } from "@andornaut/game-kit/runtime/web/pwa/buildContract";
+import type {
+  LaunchResult,
+  NetworkPlayNotice,
+} from "@andornaut/game-kit/runtime/web/pwa/buildContract";
 import {
   browserCloseWatcher,
   type CloseWatcherFactory,
@@ -77,6 +80,10 @@ let screenWakeLock: ScreenWakeLock | undefined;
 // The forced update's state once a newer save requires it, and who hears it.
 let required: RequiredUpdateState | undefined;
 let onRequired: ((state: RequiredUpdateState) => void) | undefined;
+// Why this document plays from the network after a first install could not complete, and who
+// hears it.
+let networkPlay: NetworkPlayNotice | undefined;
+let onNetworkPlay: ((notice: NetworkPlayNotice) => void) | undefined;
 // The game's save, which Update now awaits before it switches builds (saveBeforeUpdate).
 let saveGame: () => void | PromiseLike<void> = () => undefined;
 
@@ -112,6 +119,10 @@ function createPhoneLaunch(): Launch | undefined {
   }
   const created = createLaunch(context, {
     onFailure: presentInstallationFailure,
+    onNetworkPlay(notice) {
+      networkPlay = notice;
+      onNetworkPlay?.(notice);
+    },
     onProgress: launchProgressReport,
     onRequireNewer: requiredUpdate,
     onUpdateReady: updateOffer.offer,
@@ -278,6 +289,16 @@ export function launchPhoneApp(): Promise<LaunchResult> {
     launched = launch?.run() ?? Promise.resolve("play");
   }
   return launched;
+}
+
+// A first install that failed for lack of service workers or storage: the game plays from the
+// network this time, and the next launch tries the install again. onNotice hears it now, if
+// known, and when it happens.
+export function networkPlayNotice(onNotice: (notice: NetworkPlayNotice) => void): void {
+  onNetworkPlay = onNotice;
+  if (networkPlay !== undefined) {
+    onNotice(networkPlay);
+  }
 }
 
 // The game's save, which Update now awaits before it switches builds.

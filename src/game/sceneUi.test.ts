@@ -190,6 +190,7 @@ describe("conversation exposure under covering cards", () => {
       pennyLayers,
       safeGameArea,
       scanViews: new WeakMap(),
+      showNetworkPlay: () => false,
       window: {},
     });
     const update = runInContext(callback("renderConversation"), context) as (
@@ -281,6 +282,54 @@ describe("conversation exposure under covering cards", () => {
       expect(ui.scene.boxOccupant).toBe("line");
     },
   );
+});
+
+describe("network-play notice", () => {
+  it("shows once per launch for a line's time from the first flight, then returns the slot", () => {
+    const networkPlays = new WeakMap<object, { reason: string; ends?: number }>();
+    const show = runInContext(
+      callback("showNetworkPlay"),
+      createContext({
+        CONTENT,
+        lineDuration: (text: string) => 5 + text.length * 0.05,
+        networkPlays,
+      }),
+    ) as (value: typeof scene) => boolean;
+    const scene = {
+      model: { state: { flight: null as object | null, mode: "home" } },
+      shell: { setNetworkPlay: vi.fn() },
+      time: { now: 1000 },
+    };
+    expect(show(scene)).toBe(false);
+    expect(scene.shell.setNetworkPlay).not.toHaveBeenCalled();
+    networkPlays.set(scene, { reason: "quota" });
+    // Not before the first flight.
+    expect(show(scene)).toBe(false);
+    expect(scene.shell.setNetworkPlay).toHaveBeenLastCalledWith(undefined);
+    scene.model.state = { flight: {}, mode: "space" };
+    expect(show(scene)).toBe(true);
+    expect(scene.shell.setNetworkPlay).toHaveBeenLastCalledWith("quota");
+    const shown = (5 + CONTENT.labels.networkPlayQuota!.length * 0.05) * 1000;
+    scene.time.now += shown - 1;
+    expect(show(scene)).toBe(true);
+    scene.time.now += 1;
+    expect(show(scene)).toBe(false);
+    expect(scene.shell.setNetworkPlay).toHaveBeenLastCalledWith(undefined);
+    // A later flight in the same launch does not show it again.
+    scene.model.state = { flight: null, mode: "home" };
+    show(scene);
+    scene.model.state = { flight: {}, mode: "space" };
+    expect(show(scene)).toBe(false);
+  });
+
+  it("holds Gameplay's copy for each reason", () => {
+    expect(CONTENT.labels.networkPlayUnsupported).toBe(
+      "Playing online. This browser can't download the game for offline play.",
+    );
+    expect(CONTENT.labels.networkPlayQuota).toBe(
+      "Playing online. Storage is full, so the game can't download for offline play.",
+    );
+  });
 });
 
 describe("station service caller", () => {
