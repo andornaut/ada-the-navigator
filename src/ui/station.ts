@@ -29,7 +29,14 @@ import {
 import { STATION_SPRITES } from "./layout/stationStyle.ts";
 import { SPACING } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
-import { createActions, createButton, createCard, isTap, setFooterAction } from "./modal.ts";
+import {
+  createActions,
+  createButton,
+  createCard,
+  isTap,
+  SCROLL_RESERVE_CLASS,
+  setFooterAction,
+} from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
@@ -490,6 +497,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   const jobList = document.createElement("div");
   jobList.className = "ada-job-list";
   jobsCard.body.append(jobsBalance, jobsIntro, jobsBusy, jobList);
+  jobsCard.body.classList.add(SCROLL_RESERVE_CLASS);
 
   const pagerLayouts: ReturnType<typeof mountLayout<StationPagerSchema>>[] = [];
   const makePager = (host: HTMLElement) => {

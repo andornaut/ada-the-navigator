@@ -656,6 +656,36 @@ function fitCard(
   // Layout measures from the card's outer edge; its content starts inside the frame.
   card.style.setProperty("--title-top", units(titleTop - CARD_CONTENT.frameBorder));
   card.style.setProperty("--body-gap", units(bodyTop - titleTop - (titleHeight ?? 0)));
+  const group = body.querySelector<HTMLElement>(":scope > .ada-scroll");
+  if (group) {
+    reserveScrollbar(group);
+  } else if (body.classList.contains(SCROLL_RESERVE_CLASS)) {
+    reserveScrollbar(body);
+  }
+}
+
+// A card body that scrolls as a whole but keeps a group's scroll reserve, as the job list does.
+export const SCROLL_RESERVE_CLASS = "ada-scroll-reserve";
+
+/**
+ * While group scrolls, it keeps the scroll reserve (SCROLL.gap + SCROLL.track, 14) on its right in
+ * every browser: right padding makes up whatever the browser's own scrollbar leaves of it, so its
+ * rows keep one width whether that scrollbar is drawn, thin or hidden. Call it after the group's
+ * height can change.
+ */
+export function reserveScrollbar(group: HTMLElement): void {
+  group.style.removeProperty("padding-right");
+  group.classList.remove("ada-scrolls");
+  if (group.scrollHeight <= group.clientHeight + 1) {
+    return;
+  }
+  const unit = readViewUnit(group);
+  const style = getComputedStyle(group);
+  const border = parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth);
+  const bar = Math.max(0, group.offsetWidth - group.clientWidth - border) / unit;
+  const padding = parseFloat(style.paddingRight) / unit;
+  group.classList.add("ada-scrolls");
+  group.style.paddingRight = units(padding + Math.max(0, SCROLL.gap + SCROLL.track - bar));
 }
 
 // A card in its frame, with its title and scrolling body: a dialog with its close X, or a page

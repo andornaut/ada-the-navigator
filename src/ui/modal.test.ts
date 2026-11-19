@@ -16,6 +16,7 @@ import {
   createActions,
   MODAL_LAYER,
   MODAL_STYLE,
+  reserveScrollbar,
   setFooterAction,
   SWITCH_ROW_PARTS,
   switchState,
@@ -173,11 +174,59 @@ describe("modal buttons", () => {
     );
   });
 
+  it("reserves 14 on a scrolling group's right in every browser, whatever its scrollbar takes", () => {
+    const group = (scrollHeight: number, bar: number) => {
+      const classes = new Set<string>(["ada-scroll"]);
+      const style: { paddingRight: string; removeProperty(name: string): void } = {
+        paddingRight: "stale",
+        removeProperty(name: string) {
+          if (name === "padding-right") {
+            style.paddingRight = "";
+          }
+        },
+      };
+      return {
+        classList: {
+          add: (name: string) => classes.add(name),
+          remove: (name: string) => classes.delete(name),
+        },
+        classes,
+        clientHeight: 300,
+        clientWidth: 368 - bar,
+        offsetWidth: 368,
+        scrollHeight,
+        style,
+      };
+    };
+    // The column's own 4 ring padding, at one CSS px per logical px.
+    vi.stubGlobal("getComputedStyle", () => ({
+      borderLeftWidth: "0px",
+      borderRightWidth: "0px",
+      getPropertyValue: () => "1",
+      paddingRight: "4px",
+    }));
+    const hidden = group(500, 0);
+    reserveScrollbar(hidden as unknown as HTMLElement);
+    expect(hidden.classes.has("ada-scrolls")).toBe(true);
+    expect(hidden.style.paddingRight).toBe(units(18));
+    const drawn = group(500, 14);
+    reserveScrollbar(drawn as unknown as HTMLElement);
+    expect(drawn.style.paddingRight).toBe(units(4));
+    const thin = group(500, 8);
+    reserveScrollbar(thin as unknown as HTMLElement);
+    expect(thin.style.paddingRight).toBe(units(10));
+    const fits = group(300, 0);
+    reserveScrollbar(fits as unknown as HTMLElement);
+    expect(fits.classes.has("ada-scrolls")).toBe(false);
+    expect(fits.style.paddingRight).toBe("");
+    vi.unstubAllGlobals();
+  });
+
   it("keeps a focused cheat row's ring inside the column and reserves the scrollbar while it scrolls", () => {
     expect(rule(`${UI_SCOPE} .ada-cheat-items`)).toContain(`padding:${units(FOCUS_RING.outset)}`);
     expect(rule(`${UI_SCOPE} .ada-cheat-items`)).toContain("box-sizing:border-box");
-    // The scroll group's scrollbar is the 14 reserve (SCROLL.gap 6 + SCROLL.track 8): 368 inner,
-    // 360 rows inside the ring padding, 346 while the column scrolls.
+    // The drawn scrollbar is the 14 reserve (SCROLL.gap 6 + SCROLL.track 8), and reserveScrollbar
+    // pads what a thin or hidden one leaves: 368 inner, 360 rows, 346 while the column scrolls.
     const scrollbar = `${UI_SCOPE} .ada-scroll::-webkit-scrollbar{\n  width:${units(14)}`;
     expect(MODAL_STYLE).toContain(scrollbar);
   });
