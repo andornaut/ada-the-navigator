@@ -191,6 +191,35 @@ try {
       await resumeIfPaused();
     }
   }
+  // Settings over its parent card at 1280x720: the parent's card stays drawn beneath, and exactly
+  // one dim covers the view, the open card's, at the 0.70 spec.
+  const dimProofs = {};
+  async function dimProof(name) {
+    const viewport = page.viewportSize();
+    if (viewport?.width !== 1280 || viewport?.height !== 720) {
+      await page.setViewportSize({ height: 720, width: 1280 });
+      await page.waitForTimeout(250);
+    }
+    await page.screenshot({ path: `${output}/settings-over-${name}-1280x720.png` });
+    const dims = await page.evaluate(() =>
+      [...document.querySelectorAll(".ada-modal")]
+        .filter((modal) => modal.getClientRects().length > 0)
+        .map((modal) => ({
+          background: getComputedStyle(modal).backgroundColor,
+          dialog: modal.querySelector("[data-dialog]")?.dataset.dialog ?? null,
+          underlay: modal.hasAttribute("data-ada-modal-underlay"),
+        }))
+        .filter(({ background }) => !/^rgba\(.*,\s*0\)$|^transparent$/u.test(background)),
+    );
+    dimProofs[name] = dims;
+    save("settings-dim-proof.json", dimProofs);
+    assert.equal(
+      dims.length,
+      1,
+      `Settings over ${name} shows exactly one dim: ${JSON.stringify(dims)}`,
+    );
+    assert.match(dims[0].background, /0\.7\)$/u, `Settings over ${name} dims at 0.70`);
+  }
   const observe = (observed) => observeEvents(events, observed);
   observe(page);
   await context.route("**/*", previewOnly);
@@ -2070,6 +2099,7 @@ try {
   // The FPS counter, in a fresh fixture: Off by default, then in the device viewport's
   // bottom-right corner, 8 px inside the game's safe-area insets and above every game layer.
   await openSettings();
+  await dimProof("pause");
   await page.getByRole("button", { name: CHEAT_COPY.open, exact: true }).click();
   const fpsSwitch = page.getByRole("switch", { name: CHEAT_COPY.fpsCounter, exact: true });
   assert.equal(await fpsSwitch.getAttribute("aria-checked"), "false", "The FPS counter starts Off");
@@ -3240,6 +3270,11 @@ try {
     "Ada's room page's Menu holds Achievements, Settings, Back to title, then Close",
   );
   await page.screenshot({ path: `${output}/menu-room.png` });
+  await menuCard().locator('[data-action="menu-settings"]').click();
+  await page.locator('[data-action="close-settings"]').waitFor({ state: "visible" });
+  await dimProof("story-menu");
+  await page.locator('[data-action="close-settings"]').click();
+  await menuCard().waitFor({ state: "visible" });
   await page.keyboard.press("Escape");
   await menuCard().waitFor({ state: "hidden" });
   await openMenu();

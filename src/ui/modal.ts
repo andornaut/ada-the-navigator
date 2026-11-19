@@ -603,9 +603,12 @@ ${UI_SCOPE} .ada-close:focus-visible{${FOCUS_STYLE}
 ${UI_SCOPE} [hidden]{
   display:none!important
 }
+/* A parent card retained under its child (Settings over Pause or Menu) keeps its card's paint
+   but not its own dim: the child's dim alone covers the view, so dims never stack. */
 ${UI_SCOPE} .ada-modal[data-ada-modal-underlay][hidden]{
   z-index:${MODAL_LAYER - 1};
-  display:flex!important
+  display:flex!important;
+  background:transparent
 }
 `;
 

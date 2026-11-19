@@ -282,6 +282,9 @@ describe("modal stacking", () => {
     const underlay = rule(`${UI_SCOPE} .ada-modal[data-ada-modal-underlay][hidden]`);
     expect(underlay).toContain(`z-index:${MODAL_LAYER - 1}`);
     expect(underlay).toContain("display:flex!important");
+    // The retained parent paints no dim of its own, so only the child's dim covers the view.
+    expect(underlay).toContain("background:transparent");
+    expect(rule(`${UI_SCOPE} .ada-modal`)).toContain("background:#101926b3");
   });
 
   it("draws an open modal above every other control in its layer", () => {
