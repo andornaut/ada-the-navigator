@@ -2045,13 +2045,20 @@ try {
         modals: [...document.querySelectorAll(".ada-modal")].map((modal) => [
           modal.querySelector("[data-dialog]")?.dataset.dialog ?? null,
           modal.hidden,
+          modal.inert,
           getComputedStyle(modal).zIndex,
         ]),
         viewport: [innerWidth, innerHeight],
       };
     }),
   );
-  // Escape cancels the confirm, as back does, back to Cheats.
+  // A click on Cancel cancels the confirm back to Cheats, the confirm on top of the shared modal
+  // layer with Cheats inert under it; Escape cancels it too, as back does.
+  await page.locator('[data-action="reset-save-cancel"]').click();
+  await resetConfirm.waitFor({ state: "hidden" });
+  await cheatsProof().waitFor({ state: "visible" });
+  await cheatsProof().locator('[data-cheat="resetSave"]').click();
+  await resetConfirm.waitFor({ state: "visible" });
   await page.keyboard.press("Escape");
   await resetConfirm.waitFor({ state: "hidden" });
   await cheatsProof().waitFor({ state: "visible" });
