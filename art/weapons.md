@@ -132,14 +132,18 @@ Reduced motion holds frame 0.
 
 ## Missile blasts
 
-Rapid and Heavy contacts both use the shared `BLASTS.heavy` recipe through
-`impactEffect`; only the actual event radius changes their spatial envelope.
-A ground-plane circle of world radius `r` projects to an ellipse with half-width
-`r × sqrt(2)` and half-height `r / sqrt(2)`, centred on the actual contact or
-projectile position at range expiry. Screen-space strokes do not scale with `r`.
+Rapid and Heavy contacts, Ada's and enemies', both use the shared
+`BLASTS.heavy` recipe through `impactEffect`; only the actual event radius
+changes their spatial envelope. Every blast draws as an on-screen circle of
+radius `R` (30 Rapid, 60 Heavy, or the level's radius), centred on the actual
+contact or the projectile position at range expiry. It covers the same area as
+the ground-plane ellipse it replaces. Hits test the drawn ship shapes against
+that same circle. Screen-space strokes do not scale with `R`.
 
 The recipe draws a tint, expanding ring, inner line, debris and a brief layered
-flash. Its growth, fade, stroke, alpha and flash coefficients remain in
+flash, all circular: the tint fills the circle, the ring and inner line are
+circles, debris spreads evenly in every screen direction within it, and the
+flash is round. Its growth, fade, stroke, alpha and flash coefficients remain in
 [`weaponEffects.ts`](../src/game/weaponEffects.ts). Each actual detonation has
 one impact effect. A destroyed ship still plays its own independent destruction.
 
