@@ -1890,81 +1890,6 @@ try {
       assert.ok(closeTop >= listTop + listHeight, `${name}: Close sits below the list`);
     };
     await proofsAt("cheats", checkCheatsCard);
-    // Art's proofs at the scroll end: Show tips again, the FPS counter and Reset save, with Close
-    // 16 above the card's bottom edge, frame included, the column's FOCUS_RING.outset padding
-    // around the rows, so a focused row's ring stays inside its clip, and the 14 scroll reserve.
-    const { FOCUS_RING: FOCUS_RING_TOKENS, SPACING: SPACING_TOKENS } = await import(
-      new URL("../src/data/layout.ts", import.meta.url)
-    );
-    const cheatsEnd = {};
-    await proofsAt("cheats-scroll", async (_insets, _view, name) => {
-      await cheatDialog.evaluate((dialog) => {
-        const list = dialog.querySelector(".ada-cheat-items");
-        list.scrollTop = list.scrollHeight;
-      });
-      await page.waitForTimeout(100);
-      await page.screenshot({
-        path: `${output}/cheats-end-${name.replace("cheats-scroll-", "")}.png`,
-      });
-      const [, cardTop, cardWidth, cardHeight] = await logicalBox(
-        '[role="dialog"]:has(.ada-cheat-items) .ada-card',
-      );
-      const [, closeTop, , closeHeight] = await logicalBox(
-        '[role="dialog"] [data-action="dismiss-cheats"]',
-      );
-      const [, listTop, listWidth, listHeight] = await logicalBox(
-        '[role="dialog"] .ada-cheat-items',
-      );
-      const [lastLeft, lastTop, lastWidth, lastHeight] = await logicalBox(
-        '[role="dialog"] .ada-cheat-items > :last-child',
-      );
-      const [listLeft] = await logicalBox('[role="dialog"] .ada-cheat-items');
-      const geometry = await cheatDialog.evaluate((dialog) => {
-        const list = dialog.querySelector(".ada-cheat-items");
-        const style = getComputedStyle(list);
-        return {
-          padding: [style.paddingTop, style.paddingRight, style.paddingBottom, style.paddingLeft],
-          scrolls: list.scrollHeight > list.clientHeight + 1,
-        };
-      });
-      const shot = {
-        closeBottomInset: Math.round((cardTop + cardHeight - (closeTop + closeHeight)) * 100) / 100,
-        cardWidth,
-        closeAfterList: Math.round((closeTop - (listTop + listHeight)) * 100) / 100,
-        lastRowEndInset: Math.round((listTop + listHeight - (lastTop + lastHeight)) * 100) / 100,
-        lastRowLeftInset: Math.round((lastLeft - listLeft) * 100) / 100,
-        lastRowWidth: lastWidth,
-        listTopFromCard: Math.round((listTop - cardTop) * 100) / 100,
-        listWidth,
-        ...geometry,
-      };
-      cheatsEnd[name] = shot;
-      assert.ok(
-        Math.abs(shot.closeBottomInset - SPACING_TOKENS.panelPadding) <= 0.3,
-        `${name}: Close's lip sits 16 above the card's bottom edge, frame included: ${JSON.stringify(shot)}`,
-      );
-      assert.ok(
-        Math.abs(shot.lastRowEndInset - FOCUS_RING_TOKENS.outset) <= 0.3,
-        `${name}: at the scroll end the last row keeps the ring's 4 inside the clip: ${JSON.stringify(shot)}`,
-      );
-      // While the column scrolls it keeps the 14 reserve as padding, whatever the scrollbar takes,
-      // so rows are 368 - 2 * 4 - 14 = 346 in every browser.
-      assert.ok(
-        shot.scrolls &&
-          Math.abs(shot.lastRowLeftInset - FOCUS_RING_TOKENS.outset) <= 0.3 &&
-          Math.abs(lastWidth - 346) <= 0.3,
-        `${name}: the scrolling column's rows are 346, 4 inside its left: ${JSON.stringify(shot)}`,
-      );
-    });
-    save("cheats-end-proof.json", cheatsEnd);
-    // The Reset save confirm, over Cheats: Cancel and Reset, then Cancel back to Cheats.
-    await cheatDialog.locator('[data-cheat="resetSave"]').click();
-    const resetConfirm = page.locator('[data-dialog="reset-save"]');
-    await resetConfirm.waitFor({ state: "visible" });
-    await proofsAt("cheats-reset-confirm");
-    await page.locator('[data-action="reset-save-cancel"]').click();
-    await resetConfirm.waitFor({ state: "hidden" });
-    await cheatDialog.waitFor({ state: "visible" });
     await page.waitForTimeout(1200);
     const beforeCheat = await readSave();
     const unlock = cheatDialog.locator('[data-cheat="unlockAllWeapons"]');
@@ -1991,6 +1916,95 @@ try {
     await page.keyboard.up("w");
   }
   await waitForRest(await position());
+  // The Cheats scroll-end and Reset save proofs resize the view, so they run in a fresh page
+  // fixture rather than piling resizes onto the long-lived page.
+  await seedOnce(safeSerialized, "ada-browser.cheats-proofs.v1");
+  await openSettings();
+  await page.getByRole("button", { name: CHEAT_COPY.open, exact: true }).click();
+  // Bound to the current page, which each fresh fixture replaces.
+  const cheatsProof = () => page.getByRole("dialog", { name: CHEAT_COPY.title, exact: true });
+  await cheatsProof().waitFor({ state: "visible" });
+  // Art's proofs at the scroll end: Show tips again, the FPS counter and Reset save, with Close
+  // 16 above the card's bottom edge, frame included, the column's FOCUS_RING.outset padding
+  // around the rows, so a focused row's ring stays inside its clip, and the 14 scroll reserve.
+  const { FOCUS_RING: FOCUS_RING_TOKENS, SPACING: SPACING_TOKENS } = await import(
+    new URL("../src/data/layout.ts", import.meta.url)
+  );
+  const cheatsEnd = {};
+  await proofsAt("cheats-scroll", async (_insets, _view, name) => {
+    await cheatsProof().evaluate((dialog) => {
+      const list = dialog.querySelector(".ada-cheat-items");
+      list.scrollTop = list.scrollHeight;
+    });
+    await page.waitForTimeout(100);
+    await page.screenshot({
+      path: `${output}/cheats-end-${name.replace("cheats-scroll-", "")}.png`,
+    });
+    const [, cardTop, cardWidth, cardHeight] = await logicalBox(
+      '[role="dialog"]:has(.ada-cheat-items) .ada-card',
+    );
+    const [, closeTop, , closeHeight] = await logicalBox(
+      '[role="dialog"] [data-action="dismiss-cheats"]',
+    );
+    const [, listTop, listWidth, listHeight] = await logicalBox('[role="dialog"] .ada-cheat-items');
+    const [lastLeft, lastTop, lastWidth, lastHeight] = await logicalBox(
+      '[role="dialog"] .ada-cheat-items > :last-child',
+    );
+    const [listLeft] = await logicalBox('[role="dialog"] .ada-cheat-items');
+    const geometry = await cheatsProof().evaluate((dialog) => {
+      const list = dialog.querySelector(".ada-cheat-items");
+      const style = getComputedStyle(list);
+      return {
+        padding: [style.paddingTop, style.paddingRight, style.paddingBottom, style.paddingLeft],
+        scrolls: list.scrollHeight > list.clientHeight + 1,
+      };
+    });
+    const shot = {
+      closeBottomInset: Math.round((cardTop + cardHeight - (closeTop + closeHeight)) * 100) / 100,
+      cardWidth,
+      closeAfterList: Math.round((closeTop - (listTop + listHeight)) * 100) / 100,
+      lastRowEndInset: Math.round((listTop + listHeight - (lastTop + lastHeight)) * 100) / 100,
+      lastRowLeftInset: Math.round((lastLeft - listLeft) * 100) / 100,
+      lastRowWidth: lastWidth,
+      listTopFromCard: Math.round((listTop - cardTop) * 100) / 100,
+      listWidth,
+      ...geometry,
+    };
+    cheatsEnd[name] = shot;
+    assert.ok(
+      Math.abs(shot.closeBottomInset - SPACING_TOKENS.panelPadding) <= 0.3,
+      `${name}: Close's lip sits 16 above the card's bottom edge, frame included: ${JSON.stringify(shot)}`,
+    );
+    assert.ok(
+      Math.abs(shot.lastRowEndInset - FOCUS_RING_TOKENS.outset) <= 0.3,
+      `${name}: at the scroll end the last row keeps the ring's 4 inside the clip: ${JSON.stringify(shot)}`,
+    );
+    // While the column scrolls it keeps the 14 reserve as padding, whatever the scrollbar takes,
+    // so rows are 368 - 2 * 4 - 14 = 346 in every browser.
+    assert.ok(
+      shot.scrolls &&
+        Math.abs(shot.lastRowLeftInset - FOCUS_RING_TOKENS.outset) <= 0.3 &&
+        Math.abs(lastWidth - 346) <= 0.3,
+      `${name}: the scrolling column's rows are 346, 4 inside its left: ${JSON.stringify(shot)}`,
+    );
+  });
+  save("cheats-end-proof.json", cheatsEnd);
+  // The Reset save confirm, over Cheats, in its own fresh fixture: Cancel and Reset, then Cancel
+  // back to Cheats.
+  await seedOnce(safeSerialized, "ada-browser.cheats-reset-proof.v1");
+  await openSettings();
+  await page.getByRole("button", { name: CHEAT_COPY.open, exact: true }).click();
+  await cheatsProof().waitFor({ state: "visible" });
+  await cheatsProof().locator('[data-cheat="resetSave"]').click();
+  const resetConfirm = page.locator('[data-dialog="reset-save"]');
+  await resetConfirm.waitFor({ state: "visible" });
+  await proofsAt("cheats-reset-confirm");
+  await page.locator('[data-action="reset-save-cancel"]').click();
+  await resetConfirm.waitFor({ state: "hidden" });
+  await cheatsProof().waitFor({ state: "visible" });
+  await cheatsProof().locator('[data-action="dismiss-cheats"]').click();
+  await page.locator('[data-action="close-settings"]').waitFor({ state: "visible" });
+  await closeSettings();
   await seedOnce(safeSerialized, "ada-browser.before-installed-guard.v1");
   // The FPS counter, in a fresh fixture: Off by default, then in the device viewport's
   // bottom-right corner, 8 px inside the game's safe-area insets and above every game layer.
