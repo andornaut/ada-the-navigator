@@ -201,11 +201,11 @@ the face of each state, never the press area.
   its 16-pixel margins when no larger safe-area inset applies.
 - Families: every modal takes one family's width, never a content-fitted
   width. Large: Settings in two columns, Ship, Achievements, Quests, Map
-  Quests, the station Shop and Jobs. Medium: Paused, Cheats, Settings in one
-  column, install steps. Small: Menu, Restart, Update offer, resource and
-  weapon details, station drop, the buy confirm. A card created without a
-  family is Medium. Settings is Large when its rows fit two columns and
-  Medium when they take one.
+  Quests, the station Shop and Jobs. Medium: Paused, Settings in one column,
+  install steps. Small: Menu, Restart and the Reset save confirm, Cheats,
+  Update offer, resource and weapon details, station drop, the buy confirm. A
+  card created without a family is Medium. Settings is Large when its rows fit
+  two columns and Medium when they take one.
 - Header balance: with line boxes, the title starts at 16 and the first group
   at `2 * 16 - 2 + 28 = 58`. DOM measures line boxes, not ink; canvas-drawn
   text measures ink. The close target's bottom (42) plus 8 never exceeds 58.
@@ -821,20 +821,20 @@ token above; strings are Gameplay's.
 
 ### Cards
 
-| Screen        | Groups (top to bottom)                                                                                                                                                                                                                         | Scroll group |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Settings      | Header, close. Control rows (switch rows, then the Install row with its compact action). Cheats launcher (single action). Build label, supporting                                                                                              | Rows         |
-| Install steps | Header, close. Step rows: row icon, `SPACING.gap`, wrapped body text, rows `SPACING.rowGap` apart (not buttons), height fits text (not controls)                                                                                               | Steps        |
-| Update offer  | Header, close. Action row: decline (secondary), accept (primary)                                                                                                                                                                               | None         |
-| Cheats        | Header, close. Per scope a section group: heading (`TYPE.label`), persistence (supporting prose), `SPACING.rowGap`, then items `SPACING.gap` apart, each an action stack of one with its description (supporting prose) `SPACING.rowGap` below | Sections     |
-| Menu          | Header, close. Equal-size action stack, alphabetical: Achievements, Exit (Start screen, when shown), Settings; then Back to title (not on the Start screen); then primary Close                                                                | None         |
-| Paused        | Header, close. Control grid, two columns, alphabetical: Map when permitted and Quests, then Settings and Ship. Then Back to title, full width, directly above primary Resume, full width                                                       | None         |
-| Ship          | Header, close. Cargo, Equipment and Weapons columns. Centred Back ([Ship card](#ship-card))                                                                                                                                                    | None         |
-| Station card  | Keeper portrait, name tab and current greeting. Balance and Jobs/Shop choices. Separate Next line/Undock navigation and close X ([Station card](#station-card)).                                                                               | None         |
-| Shop          | Header, close. Balance. Tabs (action row). Item list (control grid)                                                                                                                                                                            | Item list    |
-| Job board     | Header, close. Balance. Intro (supporting prose, centred). Refusal line (supporting prose, when shown). Job list (one column of job rows)                                                                                                      | Job list     |
-| Buy confirm   | Header, close. Item well. Description (weapons). Price. Remaining (supporting). Action row: Cancel, Buy                                                                                                                                        | None         |
-| Achievements  | Header, close. Entry list, two columns ([Achievements card](#achievements-card)). Pager: Previous, the page count, Next                                                                                                                        | None         |
+| Screen        | Groups (top to bottom)                                                                                                                                                                   | Scroll group |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Settings      | Header, close. Control rows (switch rows, then the Install row with its compact action). Build label, supporting. Action row: Open Cheats (browser tab only), Back (primary)             | Rows         |
+| Install steps | Header, close. Step rows: row icon, `SPACING.gap`, wrapped body text, rows `SPACING.rowGap` apart (not buttons), height fits text (not controls)                                         | Steps        |
+| Update offer  | Header, close. Action row: decline (secondary), accept (primary)                                                                                                                         | None         |
+| Cheats        | Header, close. Row column, one full-width row per cheat or action ([Cheats card](#cheats-card)). Close (primary)                                                                         | Rows         |
+| Menu          | Header, close. Equal-size action stack, alphabetical: Achievements, Exit (Start screen, when shown), Settings; then Back to title (not on the Start screen); then primary Close          | None         |
+| Paused        | Header, close. Control grid, two columns, alphabetical: Map when permitted and Quests, then Settings and Ship. Then Back to title, full width, directly above primary Resume, full width | None         |
+| Ship          | Header, close. Cargo, Equipment and Weapons columns. Centred Back ([Ship card](#ship-card))                                                                                              | None         |
+| Station card  | Keeper portrait, name tab and current greeting. Balance and Jobs/Shop choices. Separate Next line/Undock navigation and close X ([Station card](#station-card)).                         | None         |
+| Shop          | Header, close. Balance. Tabs (action row). Item list (control grid)                                                                                                                      | Item list    |
+| Job board     | Header, close. Balance. Intro (supporting prose, centred). Refusal line (supporting prose, when shown). Job list (one column of job rows)                                                | Job list     |
+| Buy confirm   | Header, close. Item well. Description (weapons). Price. Remaining (supporting). Action row: Cancel, Buy                                                                                  | None         |
+| Achievements  | Header, close. Entry list, two columns ([Achievements card](#achievements-card)). Pager: Previous, the page count, Next                                                                  | None         |
 
 The Paused card shows no objective or job lines. Its grid actions sort
 alphabetically by label: Map and Quests, then Settings and Ship. Back to title
@@ -848,6 +848,31 @@ Ship has one centred primary Back, returning to Paused with the same action
 as its X, Escape and back. Quests list Close restores its actual opener; detail Back returns to
 the list, while a directly opened HUD detail Close returns to gameplay. The X,
 Escape and back match the primary footer action.
+
+### Cheats card
+
+Settings' Open Cheats, shown only in a browser tab, opens the shared `small`
+card (`CARD_WIDTH_CAPS.small` 400, clamped to the available rect) titled
+"Cheats", with the close X and Close as its bottom primary. Close, the close X,
+Escape and back close it. Rows and strings are Gameplay's
+([Cheats](../gameplay/cheats.md)). Constants: `createCheats` in
+`src/ui/cheats.ts`; the row tree is `cheatsTree` in `src/ui/cheatsTree.ts`.
+
+The rows, top to bottom: Unlock all weapons, Unlock all equipment, Unlock all
+galaxies, Max weapon levels, Add 1,000 ore and Add 1,000 Stardust (the six
+cheats), then Show tips again, the FPS counter and Reset save.
+
+| Part          | Token or derivation                                                                                                                                        | Rule                                                                                                                                            |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Outer padding | `SPACING.panelPadding` (16), the 2 frame inside it                                                                                                         | Every edge, as every card                                                                                                                       |
+| Header        | The title and close X of every card; header balance puts the first row's face 58 below the card's top                                                      | The row column's clip starts `FOCUS_RING.outset` (4) above it, at 54, clear of the close X's press area bottom (42) plus `SPACING.gap` (50)     |
+| Row column    | The scroll group: one column, rows `STACK_BUTTON_GAP` (8, the `SPACING.gap` value) apart                                                                   | `FOCUS_RING.outset` (4) inside its clip around the rows, and the scroll reserve (14) on its right while it scrolls, as the job list             |
+| Row width     | The row column's content width: inner width - 2 \* 4, 360 in the full 400 card and 346 while the column scrolls                                            | Every row one width; a wrapped label grows its row by 20 per line                                                                               |
+| Action row    | `TEXT_BUTTON`: 48, a 44 secondary face over the 4 lip, label centred                                                                                       | The six cheats, Show tips again and Reset save. A cheat with nothing left to grant shows the disabled face                                      |
+| Switch row    | The FPS counter as a Settings control row: `icon-fps-counter` (16), `CONTROL_ROW.gap` (8), the label, then the switch over its On or Off state             | 48 high, the whole row the press target; the icon's drawn pixels on the row's left edge, level with the faces above and below                   |
+| Reset confirm | Reset save opens the Restart confirm's card titled "Reset save?": Cancel (secondary, left) and Reset (primary, right) in an action row                     | Cancel, the close X, back and Escape cancel                                                                                                     |
+| Footer        | Close (primary), centred at its label width plus `2 * TEXT_BUTTON.inset`, outside the scroll group, its face `SPACING.gap` (8) below the row column's clip | Its lip `SPACING.panelPadding` (16) above the card's bottom edge, frame included (14 below the frame's inner edge), as the Ship card's Back     |
+| Height        | Content-fitted up to the available rect's height                                                                                                           | The nine rows take 496 with their gaps, past the 328 cap of the 720x360 game area, so the column scrolls and the header, close X and Close stay |
 
 ### Station card
 
@@ -1512,7 +1537,7 @@ leaves and lands standing above the markers.
 | Start screen: ship, wordmark and an action row of 192-wide buttons over the title field, Start and Continue primary (`START_SCREEN`)                                                                                         | A page card with a heading, the Ada and Penny portraits and a secondary action stack                                          |
 | Start screen nav discs show a pressed state: white glyph on a `#3a4466` face                                                                                                                                                 | Idle in every state                                                                                                           |
 | Cards scroll one scroll group with the header and close fixed                                                                                                                                                                | The whole card scrolls                                                                                                        |
-| Prose never widens a card; cheats headings and notes use group and row gaps                                                                                                                                                  | 36em prose cap; 16 and 4 margins                                                                                              |
+| Prose never widens a card                                                                                                                                                                                                    | 36em prose cap                                                                                                                |
 | Notices show in the conversation box's slot (`CONVERSATION_BOX`)                                                                                                                                                             | A `NOTICE` strip on the HUD rect's top                                                                                        |
 | Conversation box 480x60: 48 portrait slot in a 52 frame, overhanging name tab, up to two wrapped lines                                                                                                                       | 640x64, 48 frame, name tab inside over one line                                                                               |
 | Story pages use `STORY_PANEL`                                                                                                                                                                                                | `.story-panel` clamp and rem sizes                                                                                            |
