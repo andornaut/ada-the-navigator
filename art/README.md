@@ -106,18 +106,35 @@ kind is present only when its file exists:
 "sidecars": {
   "capital": {
     "jets": "/art/needle/enemies/capital-jets.json",
-    "hardpoints": "/art/needle/enemies/capital-hardpoints.json"
+    "hardpoints": "/art/enemies/capital-hardpoints.json"
   }
 }
 ```
 
-The paths are those of the files beside the craft's frames,
-`{craft}-{kind}.json`, in the manifest that lists the frames; Pip's scooter and
-the miner are in core with their files in their galaxies' folders. Generators
-write the map with `mergeSidecars` in `art/tools/manifest.ts`, each owning only
-its own crafts' kinds, so a rerun updates them in place and keeps every other
-generator's. Crafts sort by name and kinds follow `jets`, `hardpoints`,
-`shards`.
+A craft's own file is `{craft}-{kind}.json` beside its frames; Pip's scooter
+and the miner are in core with their files in their galaxies' folders.
+Generators write the map with `mergeSidecars` in `art/tools/manifest.ts`, each
+owning only its own crafts' kinds, so a rerun updates them in place and keeps
+every other generator's. Crafts sort by name and kinds follow `jets`,
+`hardpoints`, `shards`.
+
+`public/art/` holds each distinct file once. Generators write through
+`writeOnce` in `art/tools/manifest.ts`: a file identical to one the same
+generator already wrote is not written, and its entries and sidecars name the
+first file's path. A recoloured family's hardpoints carry no colour, so its
+`hardpoints` paths name the coral files in `/art/enemies/`, which its generator
+checks byte for byte against its own output and which must be generated first.
+Shared files are:
+
+- `retaliatorCargoHauler` frames, turret parts, `jets` and `hardpoints`: the
+  `retaliator` files in the same folder (the retaliator hull is the cargo
+  hauler). Its `shards` are its own.
+- Every recoloured family's frigate, capital, hostile station, retaliator and
+  industrial stem `hardpoints`: `/art/enemies/{craft}-hardpoints.json`, the
+  cargo hauler's being `retaliator-hardpoints.json`. Only the claim platform's
+  layout is its family's own.
+- Cartwheel's `visitor2` jets: `/art/cartwheel/visitor1-jets.json`.
+- The core `ship-thrust` entry: `/art/ship-thrust-40.svg`.
 
 Each asset has a stable semantic `id`, public `path`, intrinsic `width` and `height`,
 `facing`, and normalized `pivot`. Portrait sheets also define `frameWidth`,

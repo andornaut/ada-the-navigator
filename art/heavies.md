@@ -446,7 +446,10 @@ platform. Sunflower keeps the coral originals. Andromeda's
   `{a}-{k}.svg`, `{a}-jets.json` and `{a}-shards.json` for `swarm`, `fighter`,
   `interceptor` and `retaliator`; every [file](#files) of the frigate and the
   capital; and the platform's files. Each data file sits beside its frames as
-  `{a}-{name}.json`, and Cartwheel's `sidecars` map lists it.
+  `{a}-{name}.json`, and Cartwheel's `sidecars` map lists it, except the
+  [shared files](README.md#ada-contract-and-validation): every layout but the
+  platform's is the coral `/art/enemies/{a}-hardpoints.json`, and the cargo
+  hauler uses the retaliator's files.
 - Ids are the coral ids with `enemy-claim-` in place of `enemy-`, such as
   `enemy-claim-frigate-3` and `enemy-claim-capital-turret-top-9`. Each entry has
   the coral entry's fields, its own `path`, the coral `archetype` and `family`
@@ -517,7 +520,8 @@ three existing families: coral for Phantom, Garnet for Andromeda and Claim
 for Cartwheel. It owns only the `hostileStation` entries under each family
 prefix and the `hostileStation` sidecars in each family's manifest; the drone
 producers own the rest. The stem is `hostileStation`; metadata remains
-`hostileStation-hardpoints.json`, version 1. The friendly station producer and
+`hostileStation-hardpoints.json`, version 1, written once in
+`public/art/enemies/`, which the Garnet and Claim sidecars also name. The friendly station producer and
 assets remain separate.
 
 The complete intact physical assembly spans 7 Ada source widths, from the

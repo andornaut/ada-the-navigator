@@ -156,7 +156,8 @@ holodisk magenta `#E868C8`, the coral drones and the
 
 ### Speed jets
 
-`{craft}-jets.json` beside the frames uses the [enemy speed jets](enemies.md#speed-jets)
+`{craft}-jets.json` beside the frames (`visitor2` uses `visitor1-jets.json`,
+the same shuttle's) uses the [enemy speed jets](enemies.md#speed-jets)
 schema (version 1, outer and core layers, no halo, length
 `(6 + 24 f²) * sqrt(frame / 96)`) in one civil palette for every story craft:
 outer `#c9a978` to `#ffe9b8` and core `#efe4cf` to `#ffffff`.

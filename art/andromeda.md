@@ -238,7 +238,10 @@ the open. Sunflower keeps the coral originals and Cartwheel the
   the [Disabled banner](heavies.md#disabled-banner) centres and the collision.
   Destruction uses the shared `destruction.json` timing and flash with the
   garnet shards.
-- File names are the coral names in `public/art/andromeda/enemies/`. Ids are
+- File names are the coral names in `public/art/andromeda/enemies/`, less the
+  [shared files](README.md#ada-contract-and-validation): the heavies' and
+  industrial stems' hardpoints are the coral files in `public/art/enemies/`,
+  and the cargo hauler uses the retaliator's files. Ids are
   the coral ids with `enemy-garnet-` in place of `enemy-`, such as
   `enemy-garnet-frigate-3` and `enemy-garnet-capital-turret-top-9`. Each entry
   has the coral entry's fields, its own `path`, the coral `archetype` and

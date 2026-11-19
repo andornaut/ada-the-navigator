@@ -47,7 +47,8 @@
   `ship-nose.json` and the [paint schemes](#paint-schemes). Frames, jets and
   nose all derive from the one model, so a model change regenerates them
   together.
-  `ship-thrust.svg` is the index-40 (up) fallback alias. `ship.svg` remains a
+  The `ship-thrust` entry is the index-40 (up) fallback alias and names
+  `ship-thrust-40.svg`. `ship.svg` remains a
   logical manifest alias, resolved from semantic geometry rather than a file.
 - Transparent 96 by 96 viewport, pivot (48, 48), display 42 by 42.
   Keep the viewport intact and render the selected frame with rotation zero.

@@ -369,7 +369,10 @@ platform.
   the coral shape, lengths, layers, mouth data and per-heading
   [collision](enemies.md#collision), and the frames draw the coral notch tips. Destruction uses the shared `destruction.json` timing and flash
   with the Needle shards.
-- File names are the coral names in `public/art/needle/enemies/`. Ids are the
+- File names are the coral names in `public/art/needle/enemies/`, less the
+  [shared files](README.md#ada-contract-and-validation): the heavies' and
+  industrial stems' hardpoints are the coral files in `public/art/enemies/`,
+  and the cargo hauler uses the retaliator's files. Ids are the
   coral ids with `enemy-needle-` in place of `enemy-`, such as
   `enemy-needle-frigate-3` and `enemy-needle-capital-turret-top-9`, with the
   coral entry's fields, its own `path` and `family` `needle`. No Needle id

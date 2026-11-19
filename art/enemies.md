@@ -46,7 +46,10 @@ are excluded. Broken and capped parts inherit the intact assembly transform.
 Industrial asset stems are `retaliatorCargoHauler` and
 `retaliatorMiningFreighter`, under each existing family prefix. Both retain
 archetype `retaliator` and sixteen headings. Each stem has jets/collision,
-shards and hardpoint metadata from the same normalized geometry. The existing
+shards and hardpoint metadata from the same normalized geometry. The
+`retaliator` hull is the cargo hauler, so `retaliatorCargoHauler` entries and
+sidecars name the `retaliator` frames, turret parts, jets and hardpoints; only
+its shards are its own file. The existing
 launcher retains three tips and one non-destructible aimed mount. Variant
 selection belongs to the runtime consumer.
 
