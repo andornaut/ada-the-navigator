@@ -44,7 +44,8 @@ brown-skinned 12-year-old girl. Use Chibi as the settings dialog, positioning,
 fonts, joystick and general UI reference. These explicit reuse permissions apply to
 the game; do not modify the source games.
 
-All UI fits the centered 720-logical-pixel-wide game area. Backgrounds may bleed
+All UI fits the 720 by 360 logical pixel game area, centred on both axes so any
+bands split evenly. Backgrounds may bleed
 across the phone display. Intersect the actual game area with device-safe insets
 for the common UI rectangle. Modal windows use the shared width families with
 a 16 logical pixel screen margin: Large 688, Medium 500 and Small 400; height
@@ -724,8 +725,9 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   needed to stay at least 8 logical pixels inside the game area's edge, so it
   never appears to touch the side bars; the 8 applies only when needed. Use is
   Chibi's touch disc, placed beside the aim stick as in Chibi, and keeps its
-  offset from the aim stick. The shield pill keeps its own bottom line, not
-  shared with the sticks. The move ring lights its left or right marker only when the
+  offset from the aim stick. The shield pill's drawn bottom sits 12 logical
+  pixels above the game area's bottom, as the pause button sits 12 below its top,
+  not shared with the sticks. The move ring lights its left or right marker only when the
   move direction is within 67.5 degrees of that side.
 - Speed rises steeply with stick deflection so the difference is clearly
   noticeable: small deflections give slow, controlled maneuvering and full
@@ -1066,7 +1068,7 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   weapons, levels, Stardust, purchases and story progress persist, and the next
   flight generates a new layout. See [Economy](economy.md) and
   [What each event keeps](#what-each-event-keeps).
-- The shield is a bar at the bottom centre, between the sticks, with a shield
+- The shield is a bar at the bottom centre of the game area, between the sticks, with a shield
   icon, in a pill whose visible gaps are equal as drawn: 8 logical pixels from
   the pill's edge to the drawn icon, 6 from the icon to the bar and 8 from the
   bar to the pill's edge. Its length follows shield capacity: 120 logical pixels at base, 180 at
@@ -1380,7 +1382,8 @@ Exact narration lines are in
 Combat occurs in small groups separated by quiet stretches. Terrain mixes open
 areas, asteroid clusters and narrow passages. There is no spawn warning;
 Astra's drone-arrival line is the only cue.
-All eligible off-screen targets use the [unified marker contract](marker-design.md):
+Bottom edge markers draw under the shield pill, as under other controls. All
+eligible off-screen targets use the [unified marker contract](marker-design.md):
 one target, one marker, a shared 5,000-world-unit range, persistent knowledge,
 and bearing-first near-edge placement. Marker centers remain on the projected
 Ada-to-target ray; temporary HUD/dialogue or marker overlap does not justify
