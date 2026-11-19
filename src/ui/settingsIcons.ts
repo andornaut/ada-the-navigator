@@ -15,6 +15,7 @@ export const SETTING_ICONS: Readonly<Record<DeviceSetting | "install", string>> 
 
 // Transparent source rows above a sprite's visible ink, in its authored 16-pixel frame.
 export const SETTING_ICON_INK_TOP: ReadonlyMap<string, number> = new Map([
+  ["icon-fps-counter", 1],
   [SETTING_ICONS.sound, 1],
 ]);
 

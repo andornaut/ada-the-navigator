@@ -10,7 +10,7 @@ import {
 import { type CheatAction, cheatsAllowed, runCheatAction } from "./cheatActions.ts";
 import { type CheatRowData, type CheatsSchema, cheatsTree } from "./cheatsTree.ts";
 import { SCROLL } from "./layout/contentCard.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
+import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import {
   createActions,
   createButton,
@@ -22,6 +22,7 @@ import {
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
 import { settingsIcon } from "./settingsIcons.ts";
+import { alignSwitchRowIcons, createInkMeasure } from "./switchRowInk.ts";
 
 export interface CheatLabels {
   readonly close: string;
@@ -76,6 +77,14 @@ export function createCheats(
     title: options.labels.title,
   });
   const { body, card, close, frame } = parts;
+  // The FPS counter row's icon follows its label's ink, as every switch row's does.
+  const inkMeasure = createInkMeasure();
+  const fit = () => {
+    parts.fit();
+    if (!modal.hidden) {
+      alignSwitchRowIcons(inkMeasure, body.querySelectorAll<HTMLElement>(".ada-row[role=switch]"));
+    }
+  };
   const dismiss = createButton(options.labels.close, "primary");
   dismiss.dataset.action = "dismiss-cheats";
   const footer = createActions([{ button: dismiss, role: "primary" }]);
@@ -254,7 +263,7 @@ export function createCheats(
     open = value;
     modal.hidden = !value;
     if (value) {
-      parts.fit();
+      fit();
     }
     launcher.setAttribute("aria-expanded", String(value));
     if (!value) {
@@ -328,6 +337,8 @@ export function createCheats(
   media.addEventListener("change", refresh);
   window.addEventListener("pageshow", refresh);
   document.addEventListener("visibilitychange", refresh);
+  window.addEventListener("resize", fit);
+  window.addEventListener(VIEW_SCALE_EVENT, fit);
   refresh();
   return {
     close: dismissAction,
@@ -341,6 +352,8 @@ export function createCheats(
       media.removeEventListener("change", refresh);
       window.removeEventListener("pageshow", refresh);
       document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("resize", fit);
+      window.removeEventListener(VIEW_SCALE_EVENT, fit);
       layer?.dispose();
       for (const binding of closeBindings) {
         binding.dispose();

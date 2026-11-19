@@ -19,17 +19,15 @@ import {
   writeSetting,
 } from "./deviceSettings.ts";
 import { type InstallPort, startInstall, watchInstallRow } from "./installRow.ts";
-import { UI_FONT_FACE } from "./layout/cardFrame.ts";
 import { CARD_CONTENT, SCROLL } from "./layout/contentCard.ts";
 import { CONTROL_ROW, WHOLE_PX_EDGES } from "./layout/controls.ts";
-import { font, fromHudEdge, pixels, units, viewStyle } from "./layout/css.ts";
-import { frameGridOrigin, frameSize } from "./layout/frameBox.ts";
+import { font, fromHudEdge, units, viewStyle } from "./layout/css.ts";
+import { frameSize } from "./layout/frameBox.ts";
 import { hudButtonTarget, startNavOrder } from "./layout/playView.ts";
 import {
   SETTINGS_OUTER_PADDING,
   SETTINGS_TITLE_INK_TOP,
   settingsColumns,
-  settingsTitleInkTop,
 } from "./layout/settings.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { TOUCH_STICK, USE_DISC } from "./layout/touchControls.ts";
@@ -48,6 +46,7 @@ import {
 import { createModalLayer } from "./modalLayer.ts";
 import { SETTING_ICONS, settingsIcon, showIcon, STEPS_GLYPHS } from "./settingsIcons.ts";
 import { type SettingsLayoutSchema, type SettingsNative, settingsTree } from "./settingsTree.ts";
+import { alignSwitchRowIcons, createInkMeasure } from "./switchRowInk.ts";
 import { applyButtonSkin } from "./uiSkin.ts";
 import { hudDiscStyle } from "./weapons.ts";
 
@@ -294,7 +293,7 @@ ${MODAL_STYLE}
 
 // Intrinsic browser text measurement keeps the card centred without shrinking its fonts.
 export function createSettings(parent: HTMLElement, options: SettingsOptions) {
-  const textMeasure = document.createElement("canvas").getContext?.("2d");
+  const textMeasure = createInkMeasure();
   const root = document.createElement("div");
   root.className = "ada-controls";
   applyAdaControlTheme(root);
@@ -587,29 +586,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     divider.hidden = fitted.columns !== 2;
     cardFrame.dataset.cardSize = fitted.columns === 2 ? "large" : "medium";
     settingsCard.fit();
-    for (const row of rows.querySelectorAll<HTMLElement>(".ada-row")) {
-      const caption = row.querySelector<HTMLElement>(".ada-setting-text")?.firstElementChild;
-      if (!caption || !textMeasure || row.getClientRects().length === 0) {
-        continue;
-      }
-      const style = getComputedStyle(caption);
-      textMeasure.font = style.font;
-      const ink = textMeasure.measureText(caption.textContent ?? "");
-      const size = parseFloat(style.fontSize) / unit;
-      const inkTop = settingsTitleInkTop({
-        ascent: UI_FONT_FACE.ascent * size,
-        descent: UI_FONT_FACE.descent * size,
-        inkAscent: ink.actualBoundingBoxAscent / unit,
-        lineHeight: parseFloat(style.lineHeight) / unit,
-      });
-      // The row's top along the frame's vertical axis, on the CSS px grid whose device pixel
-      // edges lie where (top + v) * ratio is whole.
-      const top = frameGridOrigin(row).y;
-      const ratio = window.devicePixelRatio || 1;
-      // Align the visible sprite to the title's device-pixel ink row after the card has fitted.
-      const snapped = Math.floor((top + inkTop * unit) * ratio) / ratio;
-      row.style.setProperty("--setting-title-ink-top", pixels(snapped - top));
-    }
+    alignSwitchRowIcons(textMeasure, rows.querySelectorAll<HTMLElement>(".ada-row"));
   }
   window.addEventListener("resize", fitSettings);
   window.addEventListener(VIEW_SCALE_EVENT, fitSettings);

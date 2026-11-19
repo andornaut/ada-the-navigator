@@ -86,7 +86,10 @@ function firstInkRow(png: Buffer): number {
   return height;
 }
 
-it.each(Object.values(SETTING_ICONS))("matches %s top inset to its authored sprite ink", (key) => {
-  const png = readFileSync(new URL(`../../public/art/ui/sprites/${key}.png`, import.meta.url));
-  expect(SETTING_ICON_INK_TOP.get(key) ?? 0).toBe(firstInkRow(png));
-});
+it.each([...Object.values(SETTING_ICONS), "icon-fps-counter"])(
+  "matches %s top inset to its authored sprite ink",
+  (key) => {
+    const png = readFileSync(new URL(`../../public/art/ui/sprites/${key}.png`, import.meta.url));
+    expect(SETTING_ICON_INK_TOP.get(key) ?? 0).toBe(firstInkRow(png));
+  },
+);

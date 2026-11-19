@@ -145,7 +145,10 @@ vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
   focusTarget: (node: Element) => node.focus(),
 }));
 
-vi.mock("./layout/viewScale.ts", () => ({ readViewUnit: () => 1 }));
+vi.mock("./layout/viewScale.ts", () => ({
+  VIEW_SCALE_EVENT: "ada-view-scale",
+  readViewUnit: () => 1,
+}));
 vi.mock("./modal.ts", () => ({
   createActions: (items: { button: Element }[]) => {
     const row = new Element();
