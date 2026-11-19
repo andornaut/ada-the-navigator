@@ -6,7 +6,7 @@ Reference: [cheats](../../gameplay/cheats.md).
 
 ## Work items
 
-| ID       | Title                                                                    | Link                                           |
-| -------- | ------------------------------------------------------------------------ | ---------------------------------------------- |
-| ada-0215 | Define the browser-only cheats and run-only grants                       | [ada-0215.md](../work/ada-0215.md)             |
-| TBD      | Add session-only cheats, Show tips again, the FPS counter and Reset save | [pending-cheats.md](../work/pending-cheats.md) |
+| ID       | Title                                                                    | Link                               |
+| -------- | ------------------------------------------------------------------------ | ---------------------------------- |
+| ada-0215 | Define the browser-only cheats and run-only grants                       | [ada-0215.md](../work/ada-0215.md) |
+| ada-0311 | Add session-only cheats, Show tips again, the FPS counter and Reset save | [ada-0311.md](../work/ada-0311.md) |
