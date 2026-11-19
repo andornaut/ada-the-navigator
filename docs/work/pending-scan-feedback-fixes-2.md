@@ -1,7 +1,7 @@
 ---
 id: TBD
 title: Place scan receipts by Art's start and rise rules
-status: approved
+status: done
 approved: Art review, 2026-11-18, answers on ada-0309, under the user's scan-feedback contract
 design: ui
 related: [ada-0309, ada-0127]
@@ -38,3 +38,8 @@ receipt is placed in the HUD controls' rect.
   is, so it never hops or moves down.
 
 ## Outcome
+
+With the conversation dismissed at 1280x720, a centred receipt rises 99 to 8 under the HUD row. A
+start that would fall on the conversation box starts 8 below it at both sizes. The remembered
+start at 720x360 sits 8 left of the aim stick and rises 53 to 8 under the Use disc. Every
+captured start is clear of each control by at least 8.
